@@ -814,6 +814,11 @@ extern "C" {
  *  [window attribute](@ref GLFW_TRANSPARENT_FRAMEBUFFER_attrib).
  */
 #define GLFW_TRANSPARENT_FRAMEBUFFER 0x0002000A
+/*! @brief Mouse cursor hover window attribute.
+ *
+ *  Mouse cursor hover [window attribute](@ref GLFW_HOVERED_attrib).
+ */
+#define GLFW_HOVERED                0x0002000B
 
 /*! @brief Framebuffer bit depth hint.
  *
@@ -964,8 +969,11 @@ extern "C" {
 #define GLFW_CONTEXT_CREATION_API   0x0002200B
 
 #define GLFW_COCOA_RETINA_FRAMEBUFFER 0x00023001
-#define GLFW_COCOA_FRAME_AUTOSAVE     0x00023002
+#define GLFW_COCOA_FRAME_NAME         0x00023002
 #define GLFW_COCOA_GRAPHICS_SWITCHING 0x00023003
+
+#define GLFW_X11_CLASS_NAME         0x00024001
+#define GLFW_X11_INSTANCE_NAME      0x00024002
 /*! @} */
 
 #define GLFW_NO_API                          0
@@ -1046,9 +1054,6 @@ extern "C" {
 
 #define GLFW_COCOA_CHDIR_RESOURCES  0x00051001
 #define GLFW_COCOA_MENUBAR          0x00051002
-
-#define GLFW_X11_WM_CLASS_NAME      0x00052001
-#define GLFW_X11_WM_CLASS_CLASS     0x00052002
 /*! @} */
 
 #define GLFW_DONT_CARE              -1
@@ -1067,7 +1072,7 @@ extern "C" {
  *  @sa @ref glfwGetProcAddress
  *
  *  @since Added in version 3.0.
- 
+ *
  *  @ingroup context
  */
 typedef void (*GLFWglproc)(void);
@@ -1278,6 +1283,24 @@ typedef void (* GLFWwindowmaximizefun)(GLFWwindow*,int);
  */
 typedef void (* GLFWframebuffersizefun)(GLFWwindow*,int,int);
 
+/*! @brief The function signature for window content scale callbacks.
+ *
+ *  This is the function signature for window content scale callback
+ *  functions.
+ *
+ *  @param[in] window The window whose content scale changed.
+ *  @param[in] xscale The new x-axis content scale of the window.
+ *  @param[in] yscale The new y-axis content scale of the window.
+ *
+ *  @sa @ref window_scale
+ *  @sa @ref glfwSetWindowContentScaleCallback
+ *
+ *  @since Added in version 3.3.
+ *
+ *  @ingroup window
+ */
+typedef void (* GLFWwindowcontentscalefun)(GLFWwindow*,float,float);
+
 /*! @brief The function signature for mouse button callbacks.
  *
  *  This is the function signature for mouse button callback functions.
@@ -1435,7 +1458,8 @@ typedef void (* GLFWdropfun)(GLFWwindow*,int,const char**);
  *  This is the function signature for monitor configuration callback functions.
  *
  *  @param[in] monitor The monitor that was connected or disconnected.
- *  @param[in] event One of `GLFW_CONNECTED` or `GLFW_DISCONNECTED`.
+ *  @param[in] event One of `GLFW_CONNECTED` or `GLFW_DISCONNECTED`.  Remaining
+ *  values reserved for future use.
  *
  *  @sa @ref monitor_event
  *  @sa @ref glfwSetMonitorCallback
@@ -1452,7 +1476,8 @@ typedef void (* GLFWmonitorfun)(GLFWmonitor*,int);
  *  functions.
  *
  *  @param[in] jid The joystick that was connected or disconnected.
- *  @param[in] event One of `GLFW_CONNECTED` or `GLFW_DISCONNECTED`.
+ *  @param[in] event One of `GLFW_CONNECTED` or `GLFW_DISCONNECTED`.  Remaining
+ *  values reserved for future use.
  *
  *  @sa @ref joystick_event
  *  @sa @ref glfwSetJoystickCallback
@@ -1644,8 +1669,7 @@ GLFWAPI void glfwTerminate(void);
 
 /*! @brief Sets the specified init hint to the desired value.
  *
- *  This function sets hints for the next initialization of GLFW.  Only integer
- *  type hints can be set with this function.
+ *  This function sets hints for the next initialization of GLFW.
  *
  *  The values you set hints to are never reset by GLFW, but they only take
  *  effect during initialization.  Once GLFW has been initialized, any values
@@ -1654,7 +1678,7 @@ GLFWAPI void glfwTerminate(void);
  *
  *  Some hints are platform specific.  These may be set on any platform but they
  *  will only affect their specific platform.  Other platforms will ignore them.
- *  Setting these hints requires no platform specific headers or functions. 
+ *  Setting these hints requires no platform specific headers or functions.
  *
  *  @param[in] hint The [init hint](@ref init_hints) to set.
  *  @param[in] value The new value of the init hint.
@@ -1668,47 +1692,12 @@ GLFWAPI void glfwTerminate(void);
  *
  *  @sa init_hints
  *  @sa glfwInit
- *  @sa glfwInitHintString
  *
  *  @since Added in version 3.3.
  *
  *  @ingroup init
  */
 GLFWAPI void glfwInitHint(int hint, int value);
-
-/*! @brief Sets the specified init hint to the desired value.
- *
- *  This function sets hints for the next initialization of GLFW.  Only string
- *  type hints can be set with this function.
- *
- *  The values you set hints to are never reset by GLFW, but they only take
- *  effect during initialization.  Once GLFW has been initialized, any values
- *  you set will be ignored until the library is terminated and initialized
- *  again.
- *
- *  Some hints are platform specific.  These may be set on any platform but they
- *  will only affect their specific platform.  Other platforms will ignore them.
- *  Setting these hints requires no platform specific headers or functions. 
- *
- *  @param[in] hint The [init hint](@ref init_hints) to set.
- *  @param[in] value The new value of the init hint.
- *
- *  @errors Possible errors include @ref GLFW_INVALID_ENUM and @ref
- *  GLFW_INVALID_VALUE.
- *
- *  @remarks This function may be called before @ref glfwInit.
- *
- *  @thread_safety This function must only be called from the main thread.
- *
- *  @sa init_hints
- *  @sa glfwInit
- *  @sa glfwInitHint
- *
- *  @since Added in version 3.3.
- *
- *  @ingroup init
- */
-GLFWAPI void glfwInitHintString(int hint, const char* value);
 
 /*! @brief Retrieves the version of the GLFW library.
  *
@@ -2006,6 +1995,56 @@ GLFWAPI void glfwGetMonitorContentScale(GLFWmonitor* monitor, float* xscale, flo
  */
 GLFWAPI const char* glfwGetMonitorName(GLFWmonitor* monitor);
 
+/*! @brief Sets the user pointer of the specified monitor.
+ *
+ *  This function sets the user-defined pointer of the specified monitor.  The
+ *  current value is retained until the monitor is disconnected.  The initial
+ *  value is `NULL`.
+ *
+ *  This function may be called from the monitor callback, even for a monitor
+ *  that is being disconnected.
+ *
+ *  @param[in] monitor The monitor whose pointer to set.
+ *  @param[in] pointer The new value.
+ *
+ *  @errors Possible errors include @ref GLFW_NOT_INITIALIZED.
+ *
+ *  @thread_safety This function may be called from any thread.  Access is not
+ *  synchronized.
+ *
+ *  @sa @ref monitor_userptr
+ *  @sa @ref glfwGetMonitorUserPointer
+ *
+ *  @since Added in version 3.3.
+ *
+ *  @ingroup monitor
+ */
+GLFWAPI void glfwSetMonitorUserPointer(GLFWmonitor* monitor, void* pointer);
+
+/*! @brief Returns the user pointer of the specified monitor.
+ *
+ *  This function returns the current value of the user-defined pointer of the
+ *  specified monitor.  The initial value is `NULL`.
+ *
+ *  This function may be called from the monitor callback, even for a monitor
+ *  that is being disconnected.
+ *
+ *  @param[in] monitor The monitor whose pointer to return.
+ *
+ *  @errors Possible errors include @ref GLFW_NOT_INITIALIZED.
+ *
+ *  @thread_safety This function may be called from any thread.  Access is not
+ *  synchronized.
+ *
+ *  @sa @ref monitor_userptr
+ *  @sa @ref glfwSetMonitorUserPointer
+ *
+ *  @since Added in version 3.3.
+ *
+ *  @ingroup monitor
+ */
+GLFWAPI void* glfwGetMonitorUserPointer(GLFWmonitor* monitor);
+
 /*! @brief Sets the monitor configuration callback.
  *
  *  This function sets the monitor configuration callback, or removes the
@@ -2205,6 +2244,7 @@ GLFWAPI void glfwSetGammaRamp(GLFWmonitor* monitor, const GLFWgammaramp* ramp);
  *
  *  @sa @ref window_hints
  *  @sa @ref glfwWindowHint
+ *  @sa @ref glfwWindowHintString
  *
  *  @since Added in version 3.0.
  *
@@ -2215,13 +2255,19 @@ GLFWAPI void glfwDefaultWindowHints(void);
 /*! @brief Sets the specified window hint to the desired value.
  *
  *  This function sets hints for the next call to @ref glfwCreateWindow.  The
- *  hints, once set, retain their values until changed by a call to @ref
- *  glfwWindowHint or @ref glfwDefaultWindowHints, or until the library is
- *  terminated.
+ *  hints, once set, retain their values until changed by a call to this
+ *  function or @ref glfwDefaultWindowHints, or until the library is terminated.
+ *
+ *  Only integer value hints can be set with this function.  String value hints
+ *  are set with @ref glfwWindowHintString.
  *
  *  This function does not check whether the specified hint values are valid.
  *  If you set hints to invalid values this will instead be reported by the next
  *  call to @ref glfwCreateWindow.
+ *
+ *  Some hints are platform specific.  These may be set on any platform but they
+ *  will only affect their specific platform.  Other platforms will ignore them.
+ *  Setting these hints requires no platform specific headers or functions.
  *
  *  @param[in] hint The [window hint](@ref window_hints) to set.
  *  @param[in] value The new value of the window hint.
@@ -2232,6 +2278,7 @@ GLFWAPI void glfwDefaultWindowHints(void);
  *  @thread_safety This function must only be called from the main thread.
  *
  *  @sa @ref window_hints
+ *  @sa @ref glfwWindowHintString
  *  @sa @ref glfwDefaultWindowHints
  *
  *  @since Added in version 3.0.  Replaces `glfwOpenWindowHint`.
@@ -2239,6 +2286,44 @@ GLFWAPI void glfwDefaultWindowHints(void);
  *  @ingroup window
  */
 GLFWAPI void glfwWindowHint(int hint, int value);
+
+/*! @brief Sets the specified window hint to the desired value.
+ *
+ *  This function sets hints for the next call to @ref glfwCreateWindow.  The
+ *  hints, once set, retain their values until changed by a call to this
+ *  function or @ref glfwDefaultWindowHints, or until the library is terminated.
+ *
+ *  Only string type hints can be set with this function.  Integer value hints
+ *  are set with @ref glfwWindowHint.
+ *
+ *  This function does not check whether the specified hint values are valid.
+ *  If you set hints to invalid values this will instead be reported by the next
+ *  call to @ref glfwCreateWindow.
+ *
+ *  Some hints are platform specific.  These may be set on any platform but they
+ *  will only affect their specific platform.  Other platforms will ignore them.
+ *  Setting these hints requires no platform specific headers or functions.
+ *
+ *  @param[in] hint The [window hint](@ref window_hints) to set.
+ *  @param[in] value The new value of the window hint.
+ *
+ *  @errors Possible errors include @ref GLFW_NOT_INITIALIZED and @ref
+ *  GLFW_INVALID_ENUM.
+ *
+ *  @pointer_lifetime The specified string is copied before this function
+ *  returns.
+ *
+ *  @thread_safety This function must only be called from the main thread.
+ *
+ *  @sa @ref window_hints
+ *  @sa @ref glfwWindowHint
+ *  @sa @ref glfwDefaultWindowHints
+ *
+ *  @since Added in version 3.3.
+ *
+ *  @ingroup window
+ */
+GLFWAPI void glfwWindowHintString(int hint, const char* value);
 
 /*! @brief Creates a window and its associated context.
  *
@@ -2350,9 +2435,8 @@ GLFWAPI void glfwWindowHint(int hint, int value);
  *  `CMake/MacOSXBundleInfo.plist.in` in the source tree.
  *
  *  @remark @macos When activating frame autosaving with
- *  [GLFW_COCOA_FRAME_AUTOSAVE](@ref GLFW_COCOA_FRAME_AUTOSAVE_hint), the
- *  specified window size may be overriden by a previously saved size and
- *  position.
+ *  [GLFW_COCOA_FRAME_NAME](@ref GLFW_COCOA_FRAME_NAME_hint), the specified
+ *  window size and position may be overriden by previously saved values.
  *
  *  @remark @x11 Some window managers will not respect the placement of
  *  initially hidden windows.
@@ -2362,22 +2446,21 @@ GLFWAPI void glfwWindowHint(int hint, int value);
  *  query the final size, position or other attributes directly after window
  *  creation.
  *
- *  @remark @x11 The name and class of the `WM_CLASS` window property will by
- *  default be set to the window title passed to this function.  Set the @ref
- *  GLFW_X11_WM_CLASS_NAME and @ref GLFW_X11_WM_CLASS_CLASS init hints before
- *  initialization to override this.
+ *  @remark @x11 The class part of the `WM_CLASS` window property will by
+ *  default be set to the window title passed to this function.  The instance
+ *  part will use the contents of the `RESOURCE_NAME` environment variable, if
+ *  present and not empty, or fall back to the window title.  Set the @ref
+ *  GLFW_X11_CLASS_NAME and @ref GLFW_X11_INSTANCE_NAME window hints to override
+ *  this.
  *
- *  @remark @wayland The window frame is currently unimplemented, as if
- *  [GLFW_DECORATED](@ref GLFW_DECORATED_hint) was always set to `GLFW_FALSE`.
- *  A compositor can still emit close, resize or maximize events, using for
- *  example a keybind mechanism.
+ *  @remark @wayland The window frame is currently very simple, only allowing
+ *  window resize or move.  A compositor can still emit close, maximize or
+ *  fullscreen events, using for example a keybind mechanism.  Additionally,
+ *  the wp_viewporter protocol is required for this feature, otherwise the
+ *  window will not be decorated.
  *
  *  @remark @wayland A full screen window will not attempt to change the mode,
  *  no matter what the requested size or refresh rate.
- *
- *  @remark @wayland The wl_shell protocol does not support window
- *  icons, the window will inherit the one defined in the application's
- *  desktop file, so this function emits @ref GLFW_PLATFORM_ERROR.
  *
  *  @remark @wayland Screensaver inhibition requires the idle-inhibit protocol
  *  to be implemented in the user's compositor.
@@ -2522,9 +2605,9 @@ GLFWAPI void glfwSetWindowTitle(GLFWwindow* window, const char* title);
  *  [Bundle Programming Guide](https://developer.apple.com/library/mac/documentation/CoreFoundation/Conceptual/CFBundles/)
  *  in the Mac Developer Library.
  *
- *  @remark @wayland The wl_shell protocol does not support icons, the window
- *  will inherit the one defined in the application's desktop file, so this
- *  function emits @ref GLFW_PLATFORM_ERROR.
+ *  @remark @wayland There is no existing protocol to change an icon, the
+ *  window will thus inherit the one defined in the application's desktop file.
+ *  This function always emits @ref GLFW_PLATFORM_ERROR.
  *
  *  @thread_safety This function must only be called from the main thread.
  *
@@ -2816,10 +2899,6 @@ GLFWAPI void glfwGetFramebufferSize(GLFWwindow* window, int* width, int* height)
  *  @errors Possible errors include @ref GLFW_NOT_INITIALIZED and @ref
  *  GLFW_PLATFORM_ERROR.
  *
- *  @remark @wayland The window frame is currently unimplemented, as if
- *  [GLFW_DECORATED](@ref GLFW_DECORATED_hint) was always set to `GLFW_FALSE`,
- *  so the returned values will always be zero.
- *
  *  @thread_safety This function must only be called from the main thread.
  *
  *  @sa @ref window_size
@@ -2852,6 +2931,7 @@ GLFWAPI void glfwGetWindowFrameSize(GLFWwindow* window, int* left, int* top, int
  *  @thread_safety This function must only be called from the main thread.
  *
  *  @sa @ref window_scale
+ *  @sa @ref glfwSetWindowContentScaleCallback
  *  @sa @ref glfwGetMonitorContentScale
  *
  *  @since Added in version 3.3.
@@ -2931,7 +3011,8 @@ GLFWAPI void glfwSetWindowOpacity(GLFWwindow* window, float opacity);
  *  GLFW_PLATFORM_ERROR.
  *
  *  @remark @wayland There is no concept of iconification in wl_shell, this
- *  function will always emit @ref GLFW_PLATFORM_ERROR.
+ *  function will emit @ref GLFW_PLATFORM_ERROR when using this deprecated
+ *  protocol.
  *
  *  @thread_safety This function must only be called from the main thread.
  *
@@ -3226,7 +3307,7 @@ GLFWAPI int glfwGetWindowAttrib(GLFWwindow* window, int attrib);
  *  The supported attributes are [GLFW_DECORATED](@ref GLFW_DECORATED_attrib),
  *  [GLFW_RESIZABLE](@ref GLFW_RESIZABLE_attrib),
  *  [GLFW_FLOATING](@ref GLFW_FLOATING_attrib) and
- *  [GLFW_AUTO_ICONIFY](@ref GLFW_AUTO_ICONIFY_attrib).   
+ *  [GLFW_AUTO_ICONIFY](@ref GLFW_AUTO_ICONIFY_attrib).
  *
  *  Some of these attributes are ignored for full screen windows.  The new
  *  value will take effect if the window is later made windowed.
@@ -3456,7 +3537,7 @@ GLFWAPI GLFWwindowfocusfun glfwSetWindowFocusCallback(GLFWwindow* window, GLFWwi
  *  @errors Possible errors include @ref GLFW_NOT_INITIALIZED.
  *
  *  @remark @wayland The wl_shell protocol has no concept of iconification,
- *  this callback will never be called.
+ *  this callback will never be called when using this deprecated protocol.
  *
  *  @thread_safety This function must only be called from the main thread.
  *
@@ -3513,6 +3594,30 @@ GLFWAPI GLFWwindowmaximizefun glfwSetWindowMaximizeCallback(GLFWwindow* window, 
  *  @ingroup window
  */
 GLFWAPI GLFWframebuffersizefun glfwSetFramebufferSizeCallback(GLFWwindow* window, GLFWframebuffersizefun cbfun);
+
+/*! @brief Sets the window content scale callback for the specified window.
+ *
+ *  This function sets the window content scale callback of the specified window,
+ *  which is called when the content scale of the specified window changes.
+ *
+ *  @param[in] window The window whose callback to set.
+ *  @param[in] cbfun The new callback, or `NULL` to remove the currently set
+ *  callback.
+ *  @return The previously set callback, or `NULL` if no callback was set or the
+ *  library had not been [initialized](@ref intro_init).
+ *
+ *  @errors Possible errors include @ref GLFW_NOT_INITIALIZED.
+ *
+ *  @thread_safety This function must only be called from the main thread.
+ *
+ *  @sa @ref window_scale
+ *  @sa @ref glfwGetWindowContentScale
+ *
+ *  @since Added in version 3.3.
+ *
+ *  @ingroup window
+ */
+GLFWAPI GLFWwindowcontentscalefun glfwSetWindowContentScaleCallback(GLFWwindow* window, GLFWwindowcontentscalefun cbfun);
 
 /*! @brief Processes all pending events.
  *
@@ -4476,10 +4581,10 @@ GLFWAPI const unsigned char* glfwGetJoystickButtons(int jid, int* count);
  *  it with the corresponding direction.
  *
  *  @code
- *  if (hats[2] & GLFW_HAT_RIGHT)                                
- *  {                                                            
- *      // State of hat 2 could be right-up, right or right-down 
- *  }                                                            
+ *  if (hats[2] & GLFW_HAT_RIGHT)
+ *  {
+ *      // State of hat 2 could be right-up, right or right-down
+ *  }
  *  @endcode
  *
  *  If the specified joystick is not present this function will return `NULL`
@@ -4582,6 +4687,56 @@ GLFWAPI const char* glfwGetJoystickName(int jid);
  *  @ingroup input
  */
 GLFWAPI const char* glfwGetJoystickGUID(int jid);
+
+/*! @brief Sets the user pointer of the specified joystick.
+ *
+ *  This function sets the user-defined pointer of the specified joystick.  The
+ *  current value is retained until the joystick is disconnected.  The initial
+ *  value is `NULL`.
+ *
+ *  This function may be called from the joystick callback, even for a joystick
+ *  that is being disconnected.
+ *
+ *  @param[in] joystick The joystick whose pointer to set.
+ *  @param[in] pointer The new value.
+ *
+ *  @errors Possible errors include @ref GLFW_NOT_INITIALIZED.
+ *
+ *  @thread_safety This function may be called from any thread.  Access is not
+ *  synchronized.
+ *
+ *  @sa @ref joystick_userptr
+ *  @sa @ref glfwGetJoystickUserPointer
+ *
+ *  @since Added in version 3.3.
+ *
+ *  @ingroup input
+ */
+GLFWAPI void glfwSetJoystickUserPointer(int jid, void* pointer);
+
+/*! @brief Returns the user pointer of the specified joystick.
+ *
+ *  This function returns the current value of the user-defined pointer of the
+ *  specified joystick.  The initial value is `NULL`.
+ *
+ *  This function may be called from the joystick callback, even for a joystick
+ *  that is being disconnected.
+ *
+ *  @param[in] joystick The joystick whose pointer to return.
+ *
+ *  @errors Possible errors include @ref GLFW_NOT_INITIALIZED.
+ *
+ *  @thread_safety This function may be called from any thread.  Access is not
+ *  synchronized.
+ *
+ *  @sa @ref joystick_userptr
+ *  @sa @ref glfwSetJoystickUserPointer
+ *
+ *  @since Added in version 3.3.
+ *
+ *  @ingroup input
+ */
+GLFWAPI void* glfwGetJoystickUserPointer(int jid);
 
 /*! @brief Returns whether the specified joystick has a gamepad mapping.
  *
@@ -4859,7 +5014,7 @@ GLFWAPI void glfwSetTime(double time);
  *  1&nbsp;/&nbsp;frequency seconds.  To get the frequency, call @ref
  *  glfwGetTimerFrequency.
  *
- *  @return The value of the timer, or zero if an 
+ *  @return The value of the timer, or zero if an
  *  [error](@ref error_handling) occurred.
  *
  *  @errors Possible errors include @ref GLFW_NOT_INITIALIZED.
@@ -5285,6 +5440,11 @@ GLFWAPI int glfwGetPhysicalDevicePresentationSupport(VkInstance instance, VkPhys
  *  glfwGetRequiredInstanceExtensions to check what instance extensions are
  *  required.
  *
+ *  The window surface cannot be shared with another API so the window must
+ *  have been created with the [client api hint](@ref GLFW_CLIENT_API_attrib)
+ *  set to `GLFW_NO_API` otherwise it generates a @ref GLFW_INVALID_VALUE error
+ *  and returns `VK_ERROR_NATIVE_WINDOW_IN_USE_KHR`.
+ *
  *  The window surface must be destroyed before the specified Vulkan instance.
  *  It is the responsibility of the caller to destroy the window surface.  GLFW
  *  does not destroy it for you.  Call `vkDestroySurfaceKHR` to destroy the
@@ -5300,7 +5460,7 @@ GLFWAPI int glfwGetPhysicalDevicePresentationSupport(VkInstance instance, VkPhys
  *  [error](@ref error_handling) occurred.
  *
  *  @errors Possible errors include @ref GLFW_NOT_INITIALIZED, @ref
- *  GLFW_API_UNAVAILABLE and @ref GLFW_PLATFORM_ERROR.
+ *  GLFW_API_UNAVAILABLE, @ref GLFW_PLATFORM_ERROR and @ref GLFW_INVALID_VALUE
  *
  *  @remark If an error occurs before the creation call is made, GLFW returns
  *  the Vulkan error code most appropriate for the error.  Appropriate use of

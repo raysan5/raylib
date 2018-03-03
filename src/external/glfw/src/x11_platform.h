@@ -425,7 +425,7 @@ typedef struct _GLFWcursorX11
 
 
 void _glfwPollMonitorsX11(void);
-GLFWbool _glfwSetVideoModeX11(_GLFWmonitor* monitor, const GLFWvidmode* desired);
+void _glfwSetVideoModeX11(_GLFWmonitor* monitor, const GLFWvidmode* desired);
 void _glfwRestoreVideoModeX11(_GLFWmonitor* monitor);
 
 Cursor _glfwCreateCursorX11(const GLFWimage* image, int xhot, int yhot);

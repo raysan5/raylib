@@ -329,20 +329,51 @@ static void destroyContextWGL(_GLFWwindow* window)
     }
 }
 
-// Initialize WGL-specific extensions
+
+//////////////////////////////////////////////////////////////////////////
+//////                       GLFW internal API                      //////
+//////////////////////////////////////////////////////////////////////////
+
+// Initialize WGL
 //
-static void loadWGLExtensions(void)
+GLFWbool _glfwInitWGL(void)
 {
     PIXELFORMATDESCRIPTOR pfd;
-    HGLRC rc;
-    HDC dc = GetDC(_glfw.win32.helperWindowHandle);;
+    HGLRC prc, rc;
+    HDC pdc, dc;
 
-    _glfw.wgl.extensionsLoaded = GLFW_TRUE;
+    if (_glfw.wgl.instance)
+        return GLFW_TRUE;
+
+    _glfw.wgl.instance = LoadLibraryA("opengl32.dll");
+    if (!_glfw.wgl.instance)
+    {
+        _glfwInputErrorWin32(GLFW_PLATFORM_ERROR,
+                             "WGL: Failed to load opengl32.dll");
+        return GLFW_FALSE;
+    }
+
+    _glfw.wgl.CreateContext = (PFN_wglCreateContext)
+        GetProcAddress(_glfw.wgl.instance, "wglCreateContext");
+    _glfw.wgl.DeleteContext = (PFN_wglDeleteContext)
+        GetProcAddress(_glfw.wgl.instance, "wglDeleteContext");
+    _glfw.wgl.GetProcAddress = (PFN_wglGetProcAddress)
+        GetProcAddress(_glfw.wgl.instance, "wglGetProcAddress");
+    _glfw.wgl.GetCurrentDC = (PFN_wglGetCurrentDC)
+        GetProcAddress(_glfw.wgl.instance, "wglGetCurrentDC");
+    _glfw.wgl.GetCurrentContext = (PFN_wglGetCurrentContext)
+        GetProcAddress(_glfw.wgl.instance, "wglGetCurrentContext");
+    _glfw.wgl.MakeCurrent = (PFN_wglMakeCurrent)
+        GetProcAddress(_glfw.wgl.instance, "wglMakeCurrent");
+    _glfw.wgl.ShareLists = (PFN_wglShareLists)
+        GetProcAddress(_glfw.wgl.instance, "wglShareLists");
 
     // NOTE: A dummy context has to be created for opengl32.dll to load the
     //       OpenGL ICD, from which we can then query WGL extensions
     // NOTE: This code will accept the Microsoft GDI ICD; accelerated context
     //       creation failure occurs during manual pixel format enumeration
+
+    dc = GetDC(_glfw.win32.helperWindowHandle);;
 
     ZeroMemory(&pfd, sizeof(pfd));
     pfd.nSize = sizeof(pfd);
@@ -355,7 +386,7 @@ static void loadWGLExtensions(void)
     {
         _glfwInputErrorWin32(GLFW_PLATFORM_ERROR,
                              "WGL: Failed to set pixel format for dummy context");
-        return;
+        return GLFW_FALSE;
     }
 
     rc = wglCreateContext(dc);
@@ -363,15 +394,19 @@ static void loadWGLExtensions(void)
     {
         _glfwInputErrorWin32(GLFW_PLATFORM_ERROR,
                              "WGL: Failed to create dummy context");
-        return;
+        return GLFW_FALSE;
     }
+
+    pdc = wglGetCurrentDC();
+    prc = wglGetCurrentContext();
 
     if (!wglMakeCurrent(dc, rc))
     {
         _glfwInputErrorWin32(GLFW_PLATFORM_ERROR,
                              "WGL: Failed to make dummy context current");
+        wglMakeCurrent(pdc, prc);
         wglDeleteContext(rc);
-        return;
+        return GLFW_FALSE;
     }
 
     // NOTE: Functions must be loaded first as they're needed to retrieve the
@@ -414,43 +449,8 @@ static void loadWGLExtensions(void)
     _glfw.wgl.ARB_context_flush_control =
         extensionSupportedWGL("WGL_ARB_context_flush_control");
 
-    wglMakeCurrent(dc, NULL);
+    wglMakeCurrent(pdc, prc);
     wglDeleteContext(rc);
-}
-
-
-//////////////////////////////////////////////////////////////////////////
-//////                       GLFW internal API                      //////
-//////////////////////////////////////////////////////////////////////////
-
-// Initialize WGL
-//
-GLFWbool _glfwInitWGL(void)
-{
-    if (_glfw.wgl.instance)
-        return GLFW_TRUE;
-
-    _glfw.wgl.instance = LoadLibraryA("opengl32.dll");
-    if (!_glfw.wgl.instance)
-    {
-        _glfwInputErrorWin32(GLFW_PLATFORM_ERROR,
-                             "WGL: Failed to load opengl32.dll");
-        return GLFW_FALSE;
-    }
-
-    _glfw.wgl.CreateContext = (PFN_wglCreateContext)
-        GetProcAddress(_glfw.wgl.instance, "wglCreateContext");
-    _glfw.wgl.DeleteContext = (PFN_wglDeleteContext)
-        GetProcAddress(_glfw.wgl.instance, "wglDeleteContext");
-    _glfw.wgl.GetProcAddress = (PFN_wglGetProcAddress)
-        GetProcAddress(_glfw.wgl.instance, "wglGetProcAddress");
-    _glfw.wgl.GetCurrentDC = (PFN_wglGetCurrentDC)
-        GetProcAddress(_glfw.wgl.instance, "wglGetCurrentDC");
-    _glfw.wgl.MakeCurrent = (PFN_wglMakeCurrent)
-        GetProcAddress(_glfw.wgl.instance, "wglMakeCurrent");
-    _glfw.wgl.ShareLists = (PFN_wglShareLists)
-        GetProcAddress(_glfw.wgl.instance, "wglShareLists");
-
     return GLFW_TRUE;
 }
 
@@ -479,9 +479,6 @@ GLFWbool _glfwCreateContextWGL(_GLFWwindow* window,
     int pixelFormat;
     PIXELFORMATDESCRIPTOR pfd;
     HGLRC share = NULL;
-
-    if (!_glfw.wgl.extensionsLoaded)
-        loadWGLExtensions();
 
     if (ctxconfig->share)
         share = ctxconfig->share->context.wgl.handle;

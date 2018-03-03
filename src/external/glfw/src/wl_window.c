@@ -35,10 +35,8 @@
 #include <string.h>
 #include <fcntl.h>
 #include <sys/mman.h>
+#include <sys/timerfd.h>
 #include <poll.h>
-
-#include <wayland-egl.h>
-#include <wayland-cursor.h>
 
 
 static void handlePing(void* data,
@@ -60,6 +58,16 @@ static void handleConfigure(void* data,
 
     if (!window->monitor)
     {
+        if (_glfw.wl.viewporter && window->decorated)
+        {
+            width -= _GLFW_DECORATION_HORIZONTAL;
+            height -= _GLFW_DECORATION_VERTICAL;
+        }
+        if (width < 1)
+            width = 1;
+        if (height < 1)
+            height = 1;
+
         if (window->numer != GLFW_DONT_CARE && window->denom != GLFW_DONT_CARE)
         {
             aspectRatio = (float)width / (float)height;
@@ -97,9 +105,265 @@ static const struct wl_shell_surface_listener shellSurfaceListener = {
     handlePopupDone
 };
 
+static int
+createTmpfileCloexec(char* tmpname)
+{
+    int fd;
+
+    fd = mkostemp(tmpname, O_CLOEXEC);
+    if (fd >= 0)
+        unlink(tmpname);
+
+    return fd;
+}
+
+/*
+ * Create a new, unique, anonymous file of the given size, and
+ * return the file descriptor for it. The file descriptor is set
+ * CLOEXEC. The file is immediately suitable for mmap()'ing
+ * the given size at offset zero.
+ *
+ * The file should not have a permanent backing store like a disk,
+ * but may have if XDG_RUNTIME_DIR is not properly implemented in OS.
+ *
+ * The file name is deleted from the file system.
+ *
+ * The file is suitable for buffer sharing between processes by
+ * transmitting the file descriptor over Unix sockets using the
+ * SCM_RIGHTS methods.
+ *
+ * posix_fallocate() is used to guarantee that disk space is available
+ * for the file at the given size. If disk space is insufficent, errno
+ * is set to ENOSPC. If posix_fallocate() is not supported, program may
+ * receive SIGBUS on accessing mmap()'ed file contents instead.
+ */
+static int
+createAnonymousFile(off_t size)
+{
+    static const char template[] = "/glfw-shared-XXXXXX";
+    const char* path;
+    char* name;
+    int fd;
+    int ret;
+
+    path = getenv("XDG_RUNTIME_DIR");
+    if (!path)
+    {
+        errno = ENOENT;
+        return -1;
+    }
+
+    name = calloc(strlen(path) + sizeof(template), 1);
+    strcpy(name, path);
+    strcat(name, template);
+
+    fd = createTmpfileCloexec(name);
+
+    free(name);
+
+    if (fd < 0)
+        return -1;
+    ret = posix_fallocate(fd, 0, size);
+    if (ret != 0)
+    {
+        close(fd);
+        errno = ret;
+        return -1;
+    }
+    return fd;
+}
+
+static struct wl_buffer* createShmBuffer(const GLFWimage* image)
+{
+    struct wl_shm_pool* pool;
+    struct wl_buffer* buffer;
+    int stride = image->width * 4;
+    int length = image->width * image->height * 4;
+    void* data;
+    int fd, i;
+
+    fd = createAnonymousFile(length);
+    if (fd < 0)
+    {
+        _glfwInputError(GLFW_PLATFORM_ERROR,
+                        "Wayland: Creating a buffer file for %d B failed: %m",
+                        length);
+        return GLFW_FALSE;
+    }
+
+    data = mmap(NULL, length, PROT_READ | PROT_WRITE, MAP_SHARED, fd, 0);
+    if (data == MAP_FAILED)
+    {
+        _glfwInputError(GLFW_PLATFORM_ERROR,
+                        "Wayland: mmap failed: %m");
+        close(fd);
+        return GLFW_FALSE;
+    }
+
+    pool = wl_shm_create_pool(_glfw.wl.shm, fd, length);
+
+    close(fd);
+    unsigned char* source = (unsigned char*) image->pixels;
+    unsigned char* target = data;
+    for (i = 0;  i < image->width * image->height;  i++, source += 4)
+    {
+        unsigned int alpha = source[3];
+
+        *target++ = (unsigned char) ((source[2] * alpha) / 255);
+        *target++ = (unsigned char) ((source[1] * alpha) / 255);
+        *target++ = (unsigned char) ((source[0] * alpha) / 255);
+        *target++ = (unsigned char) alpha;
+    }
+
+    buffer =
+        wl_shm_pool_create_buffer(pool, 0,
+                                  image->width,
+                                  image->height,
+                                  stride, WL_SHM_FORMAT_ARGB8888);
+    munmap(data, length);
+    wl_shm_pool_destroy(pool);
+
+    return buffer;
+}
+
+static void createDecoration(_GLFWdecorationWayland* decoration,
+                             struct wl_surface* parent,
+                             struct wl_buffer* buffer, GLFWbool opaque,
+                             int x, int y,
+                             int width, int height)
+{
+    struct wl_region* region;
+
+    decoration->surface = wl_compositor_create_surface(_glfw.wl.compositor);
+    decoration->subsurface =
+        wl_subcompositor_get_subsurface(_glfw.wl.subcompositor,
+                                        decoration->surface, parent);
+    wl_subsurface_set_position(decoration->subsurface, x, y);
+    decoration->viewport = wp_viewporter_get_viewport(_glfw.wl.viewporter,
+                                                      decoration->surface);
+    wp_viewport_set_destination(decoration->viewport, width, height);
+    wl_surface_attach(decoration->surface, buffer, 0, 0);
+
+    if (opaque)
+    {
+        region = wl_compositor_create_region(_glfw.wl.compositor);
+        wl_region_add(region, 0, 0, width, height);
+        wl_surface_set_opaque_region(decoration->surface, region);
+        wl_surface_commit(decoration->surface);
+        wl_region_destroy(region);
+    }
+    else
+        wl_surface_commit(decoration->surface);
+}
+
+static void createDecorations(_GLFWwindow* window)
+{
+    unsigned char data[] = { 224, 224, 224, 255 };
+    const GLFWimage image = { 1, 1, data };
+    GLFWbool opaque = (data[3] == 255);
+
+    if (!_glfw.wl.viewporter)
+        return;
+
+    if (!window->wl.decorations.buffer)
+        window->wl.decorations.buffer = createShmBuffer(&image);
+
+    createDecoration(&window->wl.decorations.top, window->wl.surface,
+                     window->wl.decorations.buffer, opaque,
+                     0, -_GLFW_DECORATION_TOP,
+                     window->wl.width, _GLFW_DECORATION_TOP);
+    createDecoration(&window->wl.decorations.left, window->wl.surface,
+                     window->wl.decorations.buffer, opaque,
+                     -_GLFW_DECORATION_WIDTH, -_GLFW_DECORATION_TOP,
+                     _GLFW_DECORATION_WIDTH, window->wl.height + _GLFW_DECORATION_TOP);
+    createDecoration(&window->wl.decorations.right, window->wl.surface,
+                     window->wl.decorations.buffer, opaque,
+                     window->wl.width, -_GLFW_DECORATION_TOP,
+                     _GLFW_DECORATION_WIDTH, window->wl.height + _GLFW_DECORATION_TOP);
+    createDecoration(&window->wl.decorations.bottom, window->wl.surface,
+                     window->wl.decorations.buffer, opaque,
+                     -_GLFW_DECORATION_WIDTH, window->wl.height,
+                     window->wl.width + _GLFW_DECORATION_HORIZONTAL, _GLFW_DECORATION_WIDTH);
+}
+
+static void destroyDecoration(_GLFWdecorationWayland* decoration)
+{
+    if (decoration->surface)
+        wl_surface_destroy(decoration->surface);
+    if (decoration->subsurface)
+        wl_subsurface_destroy(decoration->subsurface);
+    if (decoration->viewport)
+        wp_viewport_destroy(decoration->viewport);
+    decoration->surface = NULL;
+    decoration->subsurface = NULL;
+    decoration->viewport = NULL;
+}
+
+static void destroyDecorations(_GLFWwindow* window)
+{
+    destroyDecoration(&window->wl.decorations.top);
+    destroyDecoration(&window->wl.decorations.left);
+    destroyDecoration(&window->wl.decorations.right);
+    destroyDecoration(&window->wl.decorations.bottom);
+}
+
+// Makes the surface considered as XRGB instead of ARGB.
+static void setOpaqueRegion(_GLFWwindow* window)
+{
+    struct wl_region* region;
+
+    region = wl_compositor_create_region(_glfw.wl.compositor);
+    if (!region)
+        return;
+
+    wl_region_add(region, 0, 0, window->wl.width, window->wl.height);
+    wl_surface_set_opaque_region(window->wl.surface, region);
+    wl_surface_commit(window->wl.surface);
+    wl_region_destroy(region);
+}
+
+
+static void resizeWindow(_GLFWwindow* window)
+{
+    int scale = window->wl.scale;
+    int scaledWidth = window->wl.width * scale;
+    int scaledHeight = window->wl.height * scale;
+    wl_egl_window_resize(window->wl.native, scaledWidth, scaledHeight, 0, 0);
+    if (!window->wl.transparent)
+        setOpaqueRegion(window);
+    _glfwInputFramebufferSize(window, scaledWidth, scaledHeight);
+    _glfwInputWindowContentScale(window, scale, scale);
+
+    if (!window->wl.decorations.top.surface)
+        return;
+
+    // Top decoration.
+    wp_viewport_set_destination(window->wl.decorations.top.viewport,
+                                window->wl.width, _GLFW_DECORATION_TOP);
+    wl_surface_commit(window->wl.decorations.top.surface);
+
+    // Left decoration.
+    wp_viewport_set_destination(window->wl.decorations.left.viewport,
+                                _GLFW_DECORATION_WIDTH, window->wl.height + _GLFW_DECORATION_TOP);
+    wl_surface_commit(window->wl.decorations.left.surface);
+
+    // Right decoration.
+    wl_subsurface_set_position(window->wl.decorations.right.subsurface,
+                               window->wl.width, -_GLFW_DECORATION_TOP);
+    wp_viewport_set_destination(window->wl.decorations.right.viewport,
+                                _GLFW_DECORATION_WIDTH, window->wl.height + _GLFW_DECORATION_TOP);
+    wl_surface_commit(window->wl.decorations.right.surface);
+
+    // Bottom decoration.
+    wl_subsurface_set_position(window->wl.decorations.bottom.subsurface,
+                               -_GLFW_DECORATION_WIDTH, window->wl.height);
+    wp_viewport_set_destination(window->wl.decorations.bottom.viewport,
+                                window->wl.width + _GLFW_DECORATION_HORIZONTAL, _GLFW_DECORATION_WIDTH);
+    wl_surface_commit(window->wl.decorations.bottom.surface);
+}
+
 static void checkScaleChange(_GLFWwindow* window)
 {
-    int scaledWidth, scaledHeight;
     int scale = 1;
     int i;
     int monitorScale;
@@ -120,11 +384,8 @@ static void checkScaleChange(_GLFWwindow* window)
     if (scale != window->wl.scale)
     {
         window->wl.scale = scale;
-        scaledWidth = window->wl.width * scale;
-        scaledHeight = window->wl.height * scale;
         wl_surface_set_buffer_scale(window->wl.surface, scale);
-        wl_egl_window_resize(window->wl.native, scaledWidth, scaledHeight, 0, 0);
-        _glfwInputFramebufferSize(window, scaledWidth, scaledHeight);
+        resizeWindow(window);
     }
 }
 
@@ -174,21 +435,6 @@ static const struct wl_surface_listener surfaceListener = {
     handleLeave
 };
 
-// Makes the surface considered as XRGB instead of ARGB.
-static void setOpaqueRegion(_GLFWwindow* window)
-{
-    struct wl_region* region;
-
-    region = wl_compositor_create_region(_glfw.wl.compositor);
-    if (!region)
-        return;
-
-    wl_region_add(region, 0, 0, window->wl.width, window->wl.height);
-    wl_surface_set_opaque_region(window->wl.surface, region);
-    wl_surface_commit(window->wl.surface);
-    wl_region_destroy(region);
-}
-
 static void setIdleInhibitor(_GLFWwindow* window, GLFWbool enable)
 {
     if (enable && !window->wl.idleInhibitor && _glfw.wl.idleInhibitManager)
@@ -233,15 +479,49 @@ static GLFWbool createSurface(_GLFWwindow* window,
     if (!window->wl.transparent)
         setOpaqueRegion(window);
 
+    if (window->decorated && !window->monitor)
+        createDecorations(window);
+
     return GLFW_TRUE;
+}
+
+static void setFullscreen(_GLFWwindow* window, _GLFWmonitor* monitor, int refreshRate)
+{
+    if (window->wl.xdg.toplevel)
+    {
+        xdg_toplevel_set_fullscreen(
+            window->wl.xdg.toplevel,
+            monitor->wl.output);
+    }
+    else if (window->wl.shellSurface)
+    {
+        wl_shell_surface_set_fullscreen(
+            window->wl.shellSurface,
+            WL_SHELL_SURFACE_FULLSCREEN_METHOD_DEFAULT,
+            refreshRate * 1000, // Convert Hz to mHz.
+            monitor->wl.output);
+    }
+    setIdleInhibitor(window, GLFW_TRUE);
+    destroyDecorations(window);
 }
 
 static GLFWbool createShellSurface(_GLFWwindow* window)
 {
+    if (!_glfw.wl.shell)
+    {
+        _glfwInputError(GLFW_PLATFORM_ERROR,
+                        "Wayland: wl_shell protocol not available");
+        return GLFW_FALSE;
+    }
+
     window->wl.shellSurface = wl_shell_get_shell_surface(_glfw.wl.shell,
                                                          window->wl.surface);
     if (!window->wl.shellSurface)
+    {
+        _glfwInputError(GLFW_PLATFORM_ERROR,
+                        "Wayland: Shell surface creation failed");
         return GLFW_FALSE;
+    }
 
     wl_shell_surface_add_listener(window->wl.shellSurface,
                                   &shellSurfaceListener,
@@ -252,12 +532,7 @@ static GLFWbool createShellSurface(_GLFWwindow* window)
 
     if (window->monitor)
     {
-        wl_shell_surface_set_fullscreen(
-            window->wl.shellSurface,
-            WL_SHELL_SURFACE_FULLSCREEN_METHOD_DEFAULT,
-            0,
-            window->monitor->wl.output);
-        setIdleInhibitor(window, GLFW_TRUE);
+        setFullscreen(window, window->monitor, 0);
     }
     else if (window->wl.maximized)
     {
@@ -275,16 +550,144 @@ static GLFWbool createShellSurface(_GLFWwindow* window)
     return GLFW_TRUE;
 }
 
-static int
-createTmpfileCloexec(char* tmpname)
+static void xdgToplevelHandleConfigure(void* data,
+                                       struct xdg_toplevel* toplevel,
+                                       int32_t width,
+                                       int32_t height,
+                                       struct wl_array* states)
 {
-    int fd;
+    _GLFWwindow* window = data;
+    float aspectRatio;
+    float targetRatio;
+    uint32_t* state;
+    GLFWbool maximized = GLFW_FALSE;
+    GLFWbool fullscreen = GLFW_FALSE;
+    GLFWbool activated = GLFW_FALSE;
 
-    fd = mkostemp(tmpname, O_CLOEXEC);
-    if (fd >= 0)
-        unlink(tmpname);
+    wl_array_for_each(state, states)
+    {
+        switch (*state)
+        {
+            case XDG_TOPLEVEL_STATE_MAXIMIZED:
+                maximized = GLFW_TRUE;
+                break;
+            case XDG_TOPLEVEL_STATE_FULLSCREEN:
+                fullscreen = GLFW_TRUE;
+                break;
+            case XDG_TOPLEVEL_STATE_RESIZING:
+                break;
+            case XDG_TOPLEVEL_STATE_ACTIVATED:
+                activated = GLFW_TRUE;
+                break;
+        }
+    }
 
-    return fd;
+    if (width != 0 && height != 0)
+    {
+        if (!maximized && !fullscreen)
+        {
+            if (window->numer != GLFW_DONT_CARE && window->denom != GLFW_DONT_CARE)
+            {
+                aspectRatio = (float)width / (float)height;
+                targetRatio = (float)window->numer / (float)window->denom;
+                if (aspectRatio < targetRatio)
+                    height = width / targetRatio;
+                else if (aspectRatio > targetRatio)
+                    width = height * targetRatio;
+            }
+        }
+
+        _glfwInputWindowSize(window, width, height);
+        _glfwPlatformSetWindowSize(window, width, height);
+        _glfwInputWindowDamage(window);
+    }
+
+    if (!window->wl.justCreated && !activated && window->autoIconify)
+        _glfwPlatformIconifyWindow(window);
+    _glfwInputWindowFocus(window, activated);
+    window->wl.justCreated = GLFW_FALSE;
+}
+
+static void xdgToplevelHandleClose(void* data,
+                                   struct xdg_toplevel* toplevel)
+{
+    _GLFWwindow* window = data;
+    _glfwInputWindowCloseRequest(window);
+}
+
+static const struct xdg_toplevel_listener xdgToplevelListener = {
+    xdgToplevelHandleConfigure,
+    xdgToplevelHandleClose
+};
+
+static void xdgSurfaceHandleConfigure(void* data,
+                                      struct xdg_surface* surface,
+                                      uint32_t serial)
+{
+    xdg_surface_ack_configure(surface, serial);
+}
+
+static const struct xdg_surface_listener xdgSurfaceListener = {
+    xdgSurfaceHandleConfigure
+};
+
+static GLFWbool createXdgSurface(_GLFWwindow* window)
+{
+    window->wl.xdg.surface = xdg_wm_base_get_xdg_surface(_glfw.wl.wmBase,
+                                                         window->wl.surface);
+    if (!window->wl.xdg.surface)
+    {
+        _glfwInputError(GLFW_PLATFORM_ERROR,
+                        "Wayland: xdg-surface creation failed");
+        return GLFW_FALSE;
+    }
+
+    xdg_surface_add_listener(window->wl.xdg.surface,
+                             &xdgSurfaceListener,
+                             window);
+
+    window->wl.xdg.toplevel = xdg_surface_get_toplevel(window->wl.xdg.surface);
+    if (!window->wl.xdg.toplevel)
+    {
+        _glfwInputError(GLFW_PLATFORM_ERROR,
+                        "Wayland: xdg-toplevel creation failed");
+        return GLFW_FALSE;
+    }
+
+    xdg_toplevel_add_listener(window->wl.xdg.toplevel,
+                              &xdgToplevelListener,
+                              window);
+
+    if (window->wl.title)
+        xdg_toplevel_set_title(window->wl.xdg.toplevel, window->wl.title);
+
+    if (window->minwidth != GLFW_DONT_CARE && window->minheight != GLFW_DONT_CARE)
+        xdg_toplevel_set_min_size(window->wl.xdg.toplevel,
+                                  window->minwidth, window->minheight);
+    if (window->maxwidth != GLFW_DONT_CARE && window->maxheight != GLFW_DONT_CARE)
+        xdg_toplevel_set_max_size(window->wl.xdg.toplevel,
+                                  window->maxwidth, window->maxheight);
+
+    if (window->monitor)
+    {
+        xdg_toplevel_set_fullscreen(window->wl.xdg.toplevel,
+                                    window->monitor->wl.output);
+        setIdleInhibitor(window, GLFW_TRUE);
+    }
+    else if (window->wl.maximized)
+    {
+        xdg_toplevel_set_maximized(window->wl.xdg.toplevel);
+        setIdleInhibitor(window, GLFW_FALSE);
+    }
+    else
+    {
+        setIdleInhibitor(window, GLFW_FALSE);
+    }
+
+    wl_surface_commit(window->wl.surface);
+    wl_display_roundtrip(_glfw.wl.display);
+
+    return GLFW_TRUE;
 }
 
 static void
@@ -293,7 +696,10 @@ handleEvents(int timeout)
     struct wl_display* display = _glfw.wl.display;
     struct pollfd fds[] = {
         { wl_display_get_fd(display), POLLIN },
+        { _glfw.wl.timerfd, POLLIN },
     };
+    ssize_t read_ret;
+    uint64_t repeats, i;
 
     while (wl_display_prepare_read(display) != 0)
         wl_display_dispatch_pending(display);
@@ -313,71 +719,34 @@ handleEvents(int timeout)
         return;
     }
 
-    if (poll(fds, 1, timeout) > 0)
+    if (poll(fds, 2, timeout) > 0)
     {
-        wl_display_read_events(display);
-        wl_display_dispatch_pending(display);
+        if (fds[0].revents & POLLIN)
+        {
+            wl_display_read_events(display);
+            wl_display_dispatch_pending(display);
+        }
+        else
+        {
+            wl_display_cancel_read(display);
+        }
+
+        if (fds[1].revents & POLLIN)
+        {
+            read_ret = read(_glfw.wl.timerfd, &repeats, sizeof(repeats));
+            if (read_ret != 8)
+                return;
+
+            for (i = 0; i < repeats; ++i)
+                _glfwInputKey(_glfw.wl.keyboardFocus, _glfw.wl.keyboardLastKey,
+                              _glfw.wl.keyboardLastScancode, GLFW_REPEAT,
+                              _glfw.wl.xkb.modifiers);
+        }
     }
     else
     {
         wl_display_cancel_read(display);
     }
-}
-
-/*
- * Create a new, unique, anonymous file of the given size, and
- * return the file descriptor for it. The file descriptor is set
- * CLOEXEC. The file is immediately suitable for mmap()'ing
- * the given size at offset zero.
- *
- * The file should not have a permanent backing store like a disk,
- * but may have if XDG_RUNTIME_DIR is not properly implemented in OS.
- *
- * The file name is deleted from the file system.
- *
- * The file is suitable for buffer sharing between processes by
- * transmitting the file descriptor over Unix sockets using the
- * SCM_RIGHTS methods.
- *
- * posix_fallocate() is used to guarantee that disk space is available
- * for the file at the given size. If disk space is insufficent, errno
- * is set to ENOSPC. If posix_fallocate() is not supported, program may
- * receive SIGBUS on accessing mmap()'ed file contents instead.
- */
-int
-createAnonymousFile(off_t size)
-{
-    static const char template[] = "/glfw-shared-XXXXXX";
-    const char* path;
-    char* name;
-    int fd;
-    int ret;
-
-    path = getenv("XDG_RUNTIME_DIR");
-    if (!path)
-    {
-        errno = ENOENT;
-        return -1;
-    }
-
-    name = calloc(strlen(path) + sizeof(template), 1);
-    strcpy(name, path);
-    strcat(name, template);
-
-    fd = createTmpfileCloexec(name);
-
-    free(name);
-
-    if (fd < 0)
-        return -1;
-    ret = posix_fallocate(fd, 0, size);
-    if (ret != 0)
-    {
-        close(fd);
-        errno = ret;
-        return -1;
-    }
-    return fd;
 }
 
 // Translates a GLFW standard cursor to a theme cursor name
@@ -411,6 +780,7 @@ int _glfwPlatformCreateWindow(_GLFWwindow* window,
                               const _GLFWctxconfig* ctxconfig,
                               const _GLFWfbconfig* fbconfig)
 {
+    window->wl.justCreated = GLFW_TRUE;
     window->wl.transparent = fbconfig->transparent;
 
     if (!createSurface(window, wndconfig))
@@ -436,17 +806,27 @@ int _glfwPlatformCreateWindow(_GLFWwindow* window,
     }
 
     if (wndconfig->title)
-        window->wl.title = strdup(wndconfig->title);
+        window->wl.title = _glfw_strdup(wndconfig->title);
 
     if (wndconfig->visible)
     {
-        if (!createShellSurface(window))
-            return GLFW_FALSE;
+        if (_glfw.wl.wmBase)
+        {
+            if (!createXdgSurface(window))
+                return GLFW_FALSE;
+        }
+        else
+        {
+            if (!createShellSurface(window))
+                return GLFW_FALSE;
+        }
 
         window->wl.visible = GLFW_TRUE;
     }
     else
     {
+        window->wl.xdg.surface = NULL;
+        window->wl.xdg.toplevel = NULL;
         window->wl.shellSurface = NULL;
         window->wl.visible = GLFW_FALSE;
     }
@@ -479,11 +859,21 @@ void _glfwPlatformDestroyWindow(_GLFWwindow* window)
     if (window->context.destroy)
         window->context.destroy(window);
 
+    destroyDecorations(window);
+    if (window->wl.decorations.buffer)
+        wl_buffer_destroy(window->wl.decorations.buffer);
+
     if (window->wl.native)
         wl_egl_window_destroy(window->wl.native);
 
     if (window->wl.shellSurface)
         wl_shell_surface_destroy(window->wl.shellSurface);
+
+    if (window->wl.xdg.toplevel)
+        xdg_toplevel_destroy(window->wl.xdg.toplevel);
+
+    if (window->wl.xdg.surface)
+        xdg_surface_destroy(window->wl.xdg.surface);
 
     if (window->wl.surface)
         wl_surface_destroy(window->wl.surface);
@@ -496,8 +886,10 @@ void _glfwPlatformSetWindowTitle(_GLFWwindow* window, const char* title)
 {
     if (window->wl.title)
         free(window->wl.title);
-    window->wl.title = strdup(title);
-    if (window->wl.shellSurface)
+    window->wl.title = _glfw_strdup(title);
+    if (window->wl.xdg.toplevel)
+        xdg_toplevel_set_title(window->wl.xdg.toplevel, title);
+    else if (window->wl.shellSurface)
         wl_shell_surface_set_title(window->wl.shellSurface, title);
 }
 
@@ -535,22 +927,33 @@ void _glfwPlatformGetWindowSize(_GLFWwindow* window, int* width, int* height)
 
 void _glfwPlatformSetWindowSize(_GLFWwindow* window, int width, int height)
 {
-    int scaledWidth = width * window->wl.scale;
-    int scaledHeight = height * window->wl.scale;
     window->wl.width = width;
     window->wl.height = height;
-    wl_egl_window_resize(window->wl.native, scaledWidth, scaledHeight, 0, 0);
-    if (!window->wl.transparent)
-        setOpaqueRegion(window);
-    _glfwInputFramebufferSize(window, scaledWidth, scaledHeight);
+    resizeWindow(window);
 }
 
 void _glfwPlatformSetWindowSizeLimits(_GLFWwindow* window,
                                       int minwidth, int minheight,
                                       int maxwidth, int maxheight)
 {
-    // TODO: find out how to trigger a resize.
-    // The actual limits are checked in the wl_shell_surface::configure handler.
+    if (_glfw.wl.wmBase)
+    {
+        if (window->wl.xdg.toplevel)
+        {
+            if (minwidth == GLFW_DONT_CARE || minheight == GLFW_DONT_CARE)
+                minwidth = minheight = 0;
+            if (maxwidth == GLFW_DONT_CARE || maxheight == GLFW_DONT_CARE)
+                maxwidth = maxheight = 0;
+            xdg_toplevel_set_min_size(window->wl.xdg.toplevel, minwidth, minheight);
+            xdg_toplevel_set_max_size(window->wl.xdg.toplevel, maxwidth, maxheight);
+            wl_surface_commit(window->wl.surface);
+        }
+    }
+    else
+    {
+        // TODO: find out how to trigger a resize.
+        // The actual limits are checked in the wl_shell_surface::configure handler.
+    }
 }
 
 void _glfwPlatformSetWindowAspectRatio(_GLFWwindow* window, int numer, int denom)
@@ -570,8 +973,17 @@ void _glfwPlatformGetWindowFrameSize(_GLFWwindow* window,
                                      int* left, int* top,
                                      int* right, int* bottom)
 {
-    // TODO: will need a proper implementation once decorations are
-    // implemented, but for now just leave everything as 0.
+    if (window->decorated && !window->monitor)
+    {
+        if (top)
+            *top = _GLFW_DECORATION_TOP;
+        if (left)
+            *left = _GLFW_DECORATION_WIDTH;
+        if (right)
+            *right = _GLFW_DECORATION_WIDTH;
+        if (bottom)
+            *bottom = _GLFW_DECORATION_WIDTH;
+    }
 }
 
 void _glfwPlatformGetWindowContentScale(_GLFWwindow* window,
@@ -585,41 +997,59 @@ void _glfwPlatformGetWindowContentScale(_GLFWwindow* window,
 
 void _glfwPlatformIconifyWindow(_GLFWwindow* window)
 {
-    // TODO: move to xdg_shell instead of wl_shell.
-    _glfwInputError(GLFW_PLATFORM_ERROR,
-                    "Wayland: Iconify window not supported");
+    if (_glfw.wl.wmBase)
+    {
+        if (window->wl.xdg.toplevel)
+            xdg_toplevel_set_minimized(window->wl.xdg.toplevel);
+    }
+    else
+    {
+        _glfwInputError(GLFW_PLATFORM_ERROR,
+                        "Wayland: Iconify window not supported on wl_shell");
+    }
 }
 
 void _glfwPlatformRestoreWindow(_GLFWwindow* window)
 {
-    // TODO: also do the same for iconified.
-    if (window->monitor || window->wl.maximized)
+    if (window->wl.xdg.toplevel)
     {
-        if (window->wl.shellSurface)
-            wl_shell_surface_set_toplevel(window->wl.shellSurface);
-
-        window->wl.maximized = GLFW_FALSE;
+        if (window->monitor)
+            xdg_toplevel_unset_fullscreen(window->wl.xdg.toplevel);
+        if (window->wl.maximized)
+            xdg_toplevel_unset_maximized(window->wl.xdg.toplevel);
+        // There is no way to unset minimized, or even to know if we are
+        // minimized, so there is nothing to do here.
     }
+    else if (window->wl.shellSurface)
+    {
+        if (window->monitor || window->wl.maximized)
+            wl_shell_surface_set_toplevel(window->wl.shellSurface);
+    }
+    _glfwInputWindowMonitor(window, NULL);
+    window->wl.maximized = GLFW_FALSE;
 }
 
 void _glfwPlatformMaximizeWindow(_GLFWwindow* window)
 {
-    if (!window->monitor && !window->wl.maximized)
+    if (window->wl.xdg.toplevel)
     {
-        if (window->wl.shellSurface)
-        {
-            // Let the compositor select the best output.
-            wl_shell_surface_set_maximized(window->wl.shellSurface, NULL);
-        }
-        window->wl.maximized = GLFW_TRUE;
+        xdg_toplevel_set_maximized(window->wl.xdg.toplevel);
     }
+    else if (window->wl.shellSurface)
+    {
+        // Let the compositor select the best output.
+        wl_shell_surface_set_maximized(window->wl.shellSurface, NULL);
+    }
+    window->wl.maximized = GLFW_TRUE;
 }
 
 void _glfwPlatformShowWindow(_GLFWwindow* window)
 {
-    if (!window->monitor)
+    if (!window->wl.visible)
     {
-        if (!window->wl.shellSurface)
+        if (_glfw.wl.wmBase)
+            createXdgSurface(window);
+        else if (!window->wl.shellSurface)
             createShellSurface(window);
         window->wl.visible = GLFW_TRUE;
     }
@@ -627,12 +1057,19 @@ void _glfwPlatformShowWindow(_GLFWwindow* window)
 
 void _glfwPlatformHideWindow(_GLFWwindow* window)
 {
-    if (!window->monitor)
+    if (window->wl.xdg.toplevel)
     {
-        if (window->wl.shellSurface)
-            wl_shell_surface_destroy(window->wl.shellSurface);
-        window->wl.visible = GLFW_FALSE;
+        xdg_toplevel_destroy(window->wl.xdg.toplevel);
+        xdg_surface_destroy(window->wl.xdg.surface);
+        window->wl.xdg.toplevel = NULL;
+        window->wl.xdg.surface = NULL;
     }
+    else if (window->wl.shellSurface)
+    {
+        wl_shell_surface_destroy(window->wl.shellSurface);
+        window->wl.shellSurface = NULL;
+    }
+    window->wl.visible = GLFW_FALSE;
 }
 
 void _glfwPlatformRequestWindowAttention(_GLFWwindow* window)
@@ -656,17 +1093,17 @@ void _glfwPlatformSetWindowMonitor(_GLFWwindow* window,
 {
     if (monitor)
     {
-        wl_shell_surface_set_fullscreen(
-            window->wl.shellSurface,
-            WL_SHELL_SURFACE_FULLSCREEN_METHOD_DEFAULT,
-            refreshRate * 1000, // Convert Hz to mHz.
-            monitor->wl.output);
-        setIdleInhibitor(window, GLFW_TRUE);
+        setFullscreen(window, monitor, refreshRate);
     }
     else
     {
-        wl_shell_surface_set_toplevel(window->wl.shellSurface);
+        if (window->wl.xdg.toplevel)
+            xdg_toplevel_unset_fullscreen(window->wl.xdg.toplevel);
+        else if (window->wl.shellSurface)
+            wl_shell_surface_set_toplevel(window->wl.shellSurface);
         setIdleInhibitor(window, GLFW_FALSE);
+        if (window->decorated)
+            createDecorations(window);
     }
     _glfwInputWindowMonitor(window, monitor);
 }
@@ -678,7 +1115,8 @@ int _glfwPlatformWindowFocused(_GLFWwindow* window)
 
 int _glfwPlatformWindowIconified(_GLFWwindow* window)
 {
-    // TODO: move to xdg_shell, wl_shell doesn't have any iconified concept.
+    // wl_shell doesn't have any iconified concept, and xdg-shell doesn’t give
+    // any way to request whether a surface is iconified.
     return GLFW_FALSE;
 }
 
@@ -690,6 +1128,11 @@ int _glfwPlatformWindowVisible(_GLFWwindow* window)
 int _glfwPlatformWindowMaximized(_GLFWwindow* window)
 {
     return window->wl.maximized;
+}
+
+int _glfwPlatformWindowHovered(_GLFWwindow* window)
+{
+    return window->wl.hovered;
 }
 
 int _glfwPlatformFramebufferTransparent(_GLFWwindow* window)
@@ -706,9 +1149,13 @@ void _glfwPlatformSetWindowResizable(_GLFWwindow* window, GLFWbool enabled)
 
 void _glfwPlatformSetWindowDecorated(_GLFWwindow* window, GLFWbool enabled)
 {
-    // TODO
-    _glfwInputError(GLFW_PLATFORM_ERROR,
-                    "Wayland: Window attribute setting not implemented yet");
+    if (!window->monitor)
+    {
+        if (enabled)
+            createDecorations(window);
+        else
+            destroyDecorations(window);
+    }
 }
 
 void _glfwPlatformSetWindowFloating(_GLFWwindow* window, GLFWbool enabled)
@@ -788,53 +1235,7 @@ int _glfwPlatformCreateCursor(_GLFWcursor* cursor,
                               const GLFWimage* image,
                               int xhot, int yhot)
 {
-    struct wl_shm_pool* pool;
-    int stride = image->width * 4;
-    int length = image->width * image->height * 4;
-    void* data;
-    int fd, i;
-
-    fd = createAnonymousFile(length);
-    if (fd < 0)
-    {
-        _glfwInputError(GLFW_PLATFORM_ERROR,
-                        "Wayland: Creating a buffer file for %d B failed: %m",
-                        length);
-        return GLFW_FALSE;
-    }
-
-    data = mmap(NULL, length, PROT_READ | PROT_WRITE, MAP_SHARED, fd, 0);
-    if (data == MAP_FAILED)
-    {
-        _glfwInputError(GLFW_PLATFORM_ERROR,
-                        "Wayland: Cursor mmap failed: %m");
-        close(fd);
-        return GLFW_FALSE;
-    }
-
-    pool = wl_shm_create_pool(_glfw.wl.shm, fd, length);
-
-    close(fd);
-    unsigned char* source = (unsigned char*) image->pixels;
-    unsigned char* target = data;
-    for (i = 0;  i < image->width * image->height;  i++, source += 4)
-    {
-        unsigned int alpha = source[3];
-
-        *target++ = (unsigned char) ((source[2] * alpha) / 255);
-        *target++ = (unsigned char) ((source[1] * alpha) / 255);
-        *target++ = (unsigned char) ((source[0] * alpha) / 255);
-        *target++ = (unsigned char) alpha;
-    }
-
-    cursor->wl.buffer =
-        wl_shm_pool_create_buffer(pool, 0,
-                                  image->width,
-                                  image->height,
-                                  stride, WL_SHM_FORMAT_ARGB8888);
-    munmap(data, length);
-    wl_shm_pool_destroy(pool);
-
+    cursor->wl.buffer = createShmBuffer(image);
     cursor->wl.width = image->width;
     cursor->wl.height = image->height;
     cursor->wl.xhot = xhot;

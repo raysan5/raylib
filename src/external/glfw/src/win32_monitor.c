@@ -241,7 +241,7 @@ void _glfwPollMonitorsWin32(void)
 
 // Change the current video mode
 //
-GLFWbool _glfwSetVideoModeWin32(_GLFWmonitor* monitor, const GLFWvidmode* desired)
+void _glfwSetVideoModeWin32(_GLFWmonitor* monitor, const GLFWvidmode* desired)
 {
     GLFWvidmode current;
     const GLFWvidmode* best;
@@ -251,7 +251,7 @@ GLFWbool _glfwSetVideoModeWin32(_GLFWmonitor* monitor, const GLFWvidmode* desire
     best = _glfwChooseVideoMode(monitor, desired);
     _glfwPlatformGetVideoMode(monitor, &current);
     if (_glfwCompareVideoModes(&current, best) == 0)
-        return GLFW_TRUE;
+        return;
 
     ZeroMemory(&dm, sizeof(dm));
     dm.dmSize = sizeof(dm);
@@ -270,7 +270,9 @@ GLFWbool _glfwSetVideoModeWin32(_GLFWmonitor* monitor, const GLFWvidmode* desire
                                       NULL,
                                       CDS_FULLSCREEN,
                                       NULL);
-    if (result != DISP_CHANGE_SUCCESSFUL)
+    if (result == DISP_CHANGE_SUCCESSFUL)
+        monitor->win32.modeChanged = GLFW_TRUE;
+    else
     {
         const char* description = "Unknown error";
 
@@ -292,12 +294,7 @@ GLFWbool _glfwSetVideoModeWin32(_GLFWmonitor* monitor, const GLFWvidmode* desire
         _glfwInputError(GLFW_PLATFORM_ERROR,
                         "Win32: Failed to set video mode: %s",
                         description);
-
-        return GLFW_FALSE;
     }
-
-    monitor->win32.modeChanged = GLFW_TRUE;
-    return GLFW_TRUE;
 }
 
 // Restore the previously saved (original) video mode
@@ -336,6 +333,10 @@ void _glfwGetMonitorContentScaleWin32(HMONITOR handle, float* xscale, float* ysc
 //////////////////////////////////////////////////////////////////////////
 //////                       GLFW platform API                      //////
 //////////////////////////////////////////////////////////////////////////
+
+void _glfwPlatformFreeMonitor(_GLFWmonitor* monitor)
+{
+}
 
 void _glfwPlatformGetMonitorPos(_GLFWmonitor* monitor, int* xpos, int* ypos)
 {

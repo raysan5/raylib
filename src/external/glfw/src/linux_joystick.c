@@ -38,7 +38,8 @@
 #include <string.h>
 #include <unistd.h>
 
-#ifndef SYN_DROPPED // < 2.6.39 kernel headers
+#ifndef SYN_DROPPED // < v2.6.39 kernel headers
+// Workaround for CentOS-6, which is supported till 2020-11-30, but still on v2.6.32
 #define SYN_DROPPED 3
 #endif
 

@@ -264,7 +264,7 @@ void _glfwPollMonitorsNS(void)
         const CGSize size = CGDisplayScreenSize(displays[i]);
         char* name = getDisplayName(displays[i]);
         if (!name)
-            name = strdup("Unknown");
+            name = _glfw_strdup("Unknown");
 
         monitor = _glfwAllocMonitor(name, size.width, size.height);
         monitor->ns.displayID  = displays[i];
@@ -287,7 +287,7 @@ void _glfwPollMonitorsNS(void)
 
 // Change the current video mode
 //
-GLFWbool _glfwSetVideoModeNS(_GLFWmonitor* monitor, const GLFWvidmode* desired)
+void _glfwSetVideoModeNS(_GLFWmonitor* monitor, const GLFWvidmode* desired)
 {
     CFArrayRef modes;
     CFIndex count, i;
@@ -299,7 +299,7 @@ GLFWbool _glfwSetVideoModeNS(_GLFWmonitor* monitor, const GLFWvidmode* desired)
     best = _glfwChooseVideoMode(monitor, desired);
     _glfwPlatformGetVideoMode(monitor, &current);
     if (_glfwCompareVideoModes(&current, best) == 0)
-        return GLFW_TRUE;
+        return;
 
     CVDisplayLinkCreateWithCGDisplay(monitor->ns.displayID, &link);
 
@@ -332,15 +332,6 @@ GLFWbool _glfwSetVideoModeNS(_GLFWmonitor* monitor, const GLFWvidmode* desired)
 
     CFRelease(modes);
     CVDisplayLinkRelease(link);
-
-    if (!native)
-    {
-        _glfwInputError(GLFW_PLATFORM_ERROR,
-                        "Cocoa: Monitor mode list changed");
-        return GLFW_FALSE;
-    }
-
-    return GLFW_TRUE;
 }
 
 // Restore the previously saved (original) video mode
@@ -363,6 +354,10 @@ void _glfwRestoreVideoModeNS(_GLFWmonitor* monitor)
 //////////////////////////////////////////////////////////////////////////
 //////                       GLFW platform API                      //////
 //////////////////////////////////////////////////////////////////////////
+
+void _glfwPlatformFreeMonitor(_GLFWmonitor* monitor)
+{
+}
 
 void _glfwPlatformGetMonitorPos(_GLFWmonitor* monitor, int* xpos, int* ypos)
 {

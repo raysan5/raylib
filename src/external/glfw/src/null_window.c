@@ -165,6 +165,11 @@ int _glfwPlatformWindowMaximized(_GLFWwindow* window)
     return GLFW_FALSE;
 }
 
+int _glfwPlatformWindowHovered(_GLFWwindow* window)
+{
+    return GLFW_FALSE;
+}
+
 int _glfwPlatformFramebufferTransparent(_GLFWwindow* window)
 {
     return GLFW_FALSE;

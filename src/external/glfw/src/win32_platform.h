@@ -67,11 +67,6 @@
 #include <xinput.h>
 #include <dbt.h>
 
-#if defined(_MSC_VER)
- #include <malloc.h>
- #define strdup _strdup
-#endif
-
 // HACK: Define macros that some windows.h variants don't
 #ifndef WM_MOUSEHWHEEL
  #define WM_MOUSEHWHEEL 0x020E
@@ -288,6 +283,7 @@ typedef struct _GLFWwindowWin32
 typedef struct _GLFWlibraryWin32
 {
     HWND                helperWindowHandle;
+    HDEVNOTIFY          deviceNotificationHandle;
     DWORD               foregroundLockTimeout;
     int                 acquiredMonitorCount;
     char*               clipboardString;
@@ -402,7 +398,7 @@ void _glfwUpdateKeyNamesWin32(void);
 void _glfwInitTimerWin32(void);
 
 void _glfwPollMonitorsWin32(void);
-GLFWbool _glfwSetVideoModeWin32(_GLFWmonitor* monitor, const GLFWvidmode* desired);
+void _glfwSetVideoModeWin32(_GLFWmonitor* monitor, const GLFWvidmode* desired);
 void _glfwRestoreVideoModeWin32(_GLFWmonitor* monitor);
 void _glfwGetMonitorContentScaleWin32(HMONITOR handle, float* xscale, float* yscale);
 

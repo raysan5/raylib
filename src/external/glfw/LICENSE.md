@@ -1,4 +1,4 @@
-Copyright (c) 2002-2006 Marcus Geelnard  
+Copyright (c) 2002-2006 Marcus Geelnard
 Copyright (c) 2006-2016 Camilla Löwy <elmindreda@glfw.org>
 
 This software is provided 'as-is', without any express or implied

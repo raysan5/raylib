@@ -461,17 +461,17 @@ static void detectEWMH(void)
 //
 static GLFWbool initExtensions(void)
 {
-    _glfw.x11.vidmode.handle = dlopen("libXxf86vm.so.1", RTLD_LAZY | RTLD_GLOBAL);
+    _glfw.x11.vidmode.handle = _glfw_dlopen("libXxf86vm.so.1");
     if (_glfw.x11.vidmode.handle)
     {
         _glfw.x11.vidmode.QueryExtension = (PFN_XF86VidModeQueryExtension)
-            dlsym(_glfw.x11.vidmode.handle, "XF86VidModeQueryExtension");
+            _glfw_dlsym(_glfw.x11.vidmode.handle, "XF86VidModeQueryExtension");
         _glfw.x11.vidmode.GetGammaRamp = (PFN_XF86VidModeGetGammaRamp)
-            dlsym(_glfw.x11.vidmode.handle, "XF86VidModeGetGammaRamp");
+            _glfw_dlsym(_glfw.x11.vidmode.handle, "XF86VidModeGetGammaRamp");
         _glfw.x11.vidmode.SetGammaRamp = (PFN_XF86VidModeSetGammaRamp)
-            dlsym(_glfw.x11.vidmode.handle, "XF86VidModeSetGammaRamp");
+            _glfw_dlsym(_glfw.x11.vidmode.handle, "XF86VidModeSetGammaRamp");
         _glfw.x11.vidmode.GetGammaRampSize = (PFN_XF86VidModeGetGammaRampSize)
-            dlsym(_glfw.x11.vidmode.handle, "XF86VidModeGetGammaRampSize");
+            _glfw_dlsym(_glfw.x11.vidmode.handle, "XF86VidModeGetGammaRampSize");
 
         _glfw.x11.vidmode.available =
             XF86VidModeQueryExtension(_glfw.x11.display,
@@ -479,13 +479,13 @@ static GLFWbool initExtensions(void)
                                       &_glfw.x11.vidmode.errorBase);
     }
 
-    _glfw.x11.xi.handle = dlopen("libXi.so.6", RTLD_LAZY | RTLD_GLOBAL);
+    _glfw.x11.xi.handle = _glfw_dlopen("libXi.so.6");
     if (_glfw.x11.xi.handle)
     {
         _glfw.x11.xi.QueryVersion = (PFN_XIQueryVersion)
-            dlsym(_glfw.x11.xi.handle, "XIQueryVersion");
+            _glfw_dlsym(_glfw.x11.xi.handle, "XIQueryVersion");
         _glfw.x11.xi.SelectEvents = (PFN_XISelectEvents)
-            dlsym(_glfw.x11.xi.handle, "XISelectEvents");
+            _glfw_dlsym(_glfw.x11.xi.handle, "XISelectEvents");
 
         if (XQueryExtension(_glfw.x11.display,
                             "XInputExtension",
@@ -505,45 +505,45 @@ static GLFWbool initExtensions(void)
         }
     }
 
-    _glfw.x11.randr.handle = dlopen("libXrandr.so.2", RTLD_LAZY | RTLD_GLOBAL);
+    _glfw.x11.randr.handle = _glfw_dlopen("libXrandr.so.2");
     if (_glfw.x11.randr.handle)
     {
         _glfw.x11.randr.AllocGamma = (PFN_XRRAllocGamma)
-            dlsym(_glfw.x11.randr.handle, "XRRAllocGamma");
+            _glfw_dlsym(_glfw.x11.randr.handle, "XRRAllocGamma");
         _glfw.x11.randr.FreeGamma = (PFN_XRRFreeGamma)
-            dlsym(_glfw.x11.randr.handle, "XRRFreeGamma");
+            _glfw_dlsym(_glfw.x11.randr.handle, "XRRFreeGamma");
         _glfw.x11.randr.FreeCrtcInfo = (PFN_XRRFreeCrtcInfo)
-            dlsym(_glfw.x11.randr.handle, "XRRFreeCrtcInfo");
+            _glfw_dlsym(_glfw.x11.randr.handle, "XRRFreeCrtcInfo");
         _glfw.x11.randr.FreeGamma = (PFN_XRRFreeGamma)
-            dlsym(_glfw.x11.randr.handle, "XRRFreeGamma");
+            _glfw_dlsym(_glfw.x11.randr.handle, "XRRFreeGamma");
         _glfw.x11.randr.FreeOutputInfo = (PFN_XRRFreeOutputInfo)
-            dlsym(_glfw.x11.randr.handle, "XRRFreeOutputInfo");
+            _glfw_dlsym(_glfw.x11.randr.handle, "XRRFreeOutputInfo");
         _glfw.x11.randr.FreeScreenResources = (PFN_XRRFreeScreenResources)
-            dlsym(_glfw.x11.randr.handle, "XRRFreeScreenResources");
+            _glfw_dlsym(_glfw.x11.randr.handle, "XRRFreeScreenResources");
         _glfw.x11.randr.GetCrtcGamma = (PFN_XRRGetCrtcGamma)
-            dlsym(_glfw.x11.randr.handle, "XRRGetCrtcGamma");
+            _glfw_dlsym(_glfw.x11.randr.handle, "XRRGetCrtcGamma");
         _glfw.x11.randr.GetCrtcGammaSize = (PFN_XRRGetCrtcGammaSize)
-            dlsym(_glfw.x11.randr.handle, "XRRGetCrtcGammaSize");
+            _glfw_dlsym(_glfw.x11.randr.handle, "XRRGetCrtcGammaSize");
         _glfw.x11.randr.GetCrtcInfo = (PFN_XRRGetCrtcInfo)
-            dlsym(_glfw.x11.randr.handle, "XRRGetCrtcInfo");
+            _glfw_dlsym(_glfw.x11.randr.handle, "XRRGetCrtcInfo");
         _glfw.x11.randr.GetOutputInfo = (PFN_XRRGetOutputInfo)
-            dlsym(_glfw.x11.randr.handle, "XRRGetOutputInfo");
+            _glfw_dlsym(_glfw.x11.randr.handle, "XRRGetOutputInfo");
         _glfw.x11.randr.GetOutputPrimary = (PFN_XRRGetOutputPrimary)
-            dlsym(_glfw.x11.randr.handle, "XRRGetOutputPrimary");
+            _glfw_dlsym(_glfw.x11.randr.handle, "XRRGetOutputPrimary");
         _glfw.x11.randr.GetScreenResourcesCurrent = (PFN_XRRGetScreenResourcesCurrent)
-            dlsym(_glfw.x11.randr.handle, "XRRGetScreenResourcesCurrent");
+            _glfw_dlsym(_glfw.x11.randr.handle, "XRRGetScreenResourcesCurrent");
         _glfw.x11.randr.QueryExtension = (PFN_XRRQueryExtension)
-            dlsym(_glfw.x11.randr.handle, "XRRQueryExtension");
+            _glfw_dlsym(_glfw.x11.randr.handle, "XRRQueryExtension");
         _glfw.x11.randr.QueryVersion = (PFN_XRRQueryVersion)
-            dlsym(_glfw.x11.randr.handle, "XRRQueryVersion");
+            _glfw_dlsym(_glfw.x11.randr.handle, "XRRQueryVersion");
         _glfw.x11.randr.SelectInput = (PFN_XRRSelectInput)
-            dlsym(_glfw.x11.randr.handle, "XRRSelectInput");
+            _glfw_dlsym(_glfw.x11.randr.handle, "XRRSelectInput");
         _glfw.x11.randr.SetCrtcConfig = (PFN_XRRSetCrtcConfig)
-            dlsym(_glfw.x11.randr.handle, "XRRSetCrtcConfig");
+            _glfw_dlsym(_glfw.x11.randr.handle, "XRRSetCrtcConfig");
         _glfw.x11.randr.SetCrtcGamma = (PFN_XRRSetCrtcGamma)
-            dlsym(_glfw.x11.randr.handle, "XRRSetCrtcGamma");
+            _glfw_dlsym(_glfw.x11.randr.handle, "XRRSetCrtcGamma");
         _glfw.x11.randr.UpdateConfiguration = (PFN_XRRUpdateConfiguration)
-            dlsym(_glfw.x11.randr.handle, "XRRUpdateConfiguration");
+            _glfw_dlsym(_glfw.x11.randr.handle, "XRRUpdateConfiguration");
 
         if (XRRQueryExtension(_glfw.x11.display,
                               &_glfw.x11.randr.eventBase,
@@ -593,26 +593,26 @@ static GLFWbool initExtensions(void)
                        RROutputChangeNotifyMask);
     }
 
-    _glfw.x11.xcursor.handle = dlopen("libXcursor.so.1", RTLD_LAZY | RTLD_GLOBAL);
+    _glfw.x11.xcursor.handle = _glfw_dlopen("libXcursor.so.1");
     if (_glfw.x11.xcursor.handle)
     {
         _glfw.x11.xcursor.ImageCreate = (PFN_XcursorImageCreate)
-            dlsym(_glfw.x11.xcursor.handle, "XcursorImageCreate");
+            _glfw_dlsym(_glfw.x11.xcursor.handle, "XcursorImageCreate");
         _glfw.x11.xcursor.ImageDestroy = (PFN_XcursorImageDestroy)
-            dlsym(_glfw.x11.xcursor.handle, "XcursorImageDestroy");
+            _glfw_dlsym(_glfw.x11.xcursor.handle, "XcursorImageDestroy");
         _glfw.x11.xcursor.ImageLoadCursor = (PFN_XcursorImageLoadCursor)
-            dlsym(_glfw.x11.xcursor.handle, "XcursorImageLoadCursor");
+            _glfw_dlsym(_glfw.x11.xcursor.handle, "XcursorImageLoadCursor");
     }
 
-    _glfw.x11.xinerama.handle = dlopen("libXinerama.so.1", RTLD_LAZY | RTLD_GLOBAL);
+    _glfw.x11.xinerama.handle = _glfw_dlopen("libXinerama.so.1");
     if (_glfw.x11.xinerama.handle)
     {
         _glfw.x11.xinerama.IsActive = (PFN_XineramaIsActive)
-            dlsym(_glfw.x11.xinerama.handle, "XineramaIsActive");
+            _glfw_dlsym(_glfw.x11.xinerama.handle, "XineramaIsActive");
         _glfw.x11.xinerama.QueryExtension = (PFN_XineramaQueryExtension)
-            dlsym(_glfw.x11.xinerama.handle, "XineramaQueryExtension");
+            _glfw_dlsym(_glfw.x11.xinerama.handle, "XineramaQueryExtension");
         _glfw.x11.xinerama.QueryScreens = (PFN_XineramaQueryScreens)
-            dlsym(_glfw.x11.xinerama.handle, "XineramaQueryScreens");
+            _glfw_dlsym(_glfw.x11.xinerama.handle, "XineramaQueryScreens");
 
         if (XineramaQueryExtension(_glfw.x11.display,
                                    &_glfw.x11.xinerama.major,
@@ -644,22 +644,22 @@ static GLFWbool initExtensions(void)
         }
     }
 
-    _glfw.x11.x11xcb.handle = dlopen("libX11-xcb.so.1", RTLD_LAZY | RTLD_GLOBAL);
+    _glfw.x11.x11xcb.handle = _glfw_dlopen("libX11-xcb.so.1");
     if (_glfw.x11.x11xcb.handle)
     {
         _glfw.x11.x11xcb.GetXCBConnection = (PFN_XGetXCBConnection)
-            dlsym(_glfw.x11.x11xcb.handle, "XGetXCBConnection");
+            _glfw_dlsym(_glfw.x11.x11xcb.handle, "XGetXCBConnection");
     }
 
-    _glfw.x11.xrender.handle = dlopen("libXrender.so.1", RTLD_LAZY | RTLD_GLOBAL);
+    _glfw.x11.xrender.handle = _glfw_dlopen("libXrender.so.1");
     if (_glfw.x11.xrender.handle)
     {
         _glfw.x11.xrender.QueryExtension = (PFN_XRenderQueryExtension)
-            dlsym(_glfw.x11.xrender.handle, "XRenderQueryExtension");
+            _glfw_dlsym(_glfw.x11.xrender.handle, "XRenderQueryExtension");
         _glfw.x11.xrender.QueryVersion = (PFN_XRenderQueryVersion)
-            dlsym(_glfw.x11.xrender.handle, "XRenderQueryVersion");
+            _glfw_dlsym(_glfw.x11.xrender.handle, "XRenderQueryVersion");
         _glfw.x11.xrender.FindVisualFormat = (PFN_XRenderFindVisualFormat)
-            dlsym(_glfw.x11.xrender.handle, "XRenderFindVisualFormat");
+            _glfw_dlsym(_glfw.x11.xrender.handle, "XRenderFindVisualFormat");
 
         if (XRenderQueryExtension(_glfw.x11.display,
                                   &_glfw.x11.xrender.errorBase,
@@ -1002,25 +1002,25 @@ void _glfwPlatformTerminate(void)
 
     if (_glfw.x11.x11xcb.handle)
     {
-        dlclose(_glfw.x11.x11xcb.handle);
+        _glfw_dlclose(_glfw.x11.x11xcb.handle);
         _glfw.x11.x11xcb.handle = NULL;
     }
 
     if (_glfw.x11.xcursor.handle)
     {
-        dlclose(_glfw.x11.xcursor.handle);
+        _glfw_dlclose(_glfw.x11.xcursor.handle);
         _glfw.x11.xcursor.handle = NULL;
     }
 
     if (_glfw.x11.randr.handle)
     {
-        dlclose(_glfw.x11.randr.handle);
+        _glfw_dlclose(_glfw.x11.randr.handle);
         _glfw.x11.randr.handle = NULL;
     }
 
     if (_glfw.x11.xinerama.handle)
     {
-        dlclose(_glfw.x11.xinerama.handle);
+        _glfw_dlclose(_glfw.x11.xinerama.handle);
         _glfw.x11.xinerama.handle = NULL;
     }
 
