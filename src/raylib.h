@@ -703,6 +703,7 @@ RLAPI void SetWindowTitle(const char *title);                     // Set title f
 RLAPI void SetWindowPosition(int x, int y);                       // Set window position on screen (only PLATFORM_DESKTOP)
 RLAPI void SetWindowMonitor(int monitor);                         // Set monitor for the current window (fullscreen mode)
 RLAPI void SetWindowMinSize(int width, int height);               // Set window minimum dimensions (for FLAG_WINDOW_RESIZABLE)
+RLAPI void SetWindowSize(int width, int height);                  // Set window dimensions
 RLAPI int GetScreenWidth(void);                                   // Get current screen width
 RLAPI int GetScreenHeight(void);                                  // Get current screen height
 
@@ -805,6 +806,7 @@ RLAPI int GetMouseX(void);                                    // Returns mouse p
 RLAPI int GetMouseY(void);                                    // Returns mouse position Y
 RLAPI Vector2 GetMousePosition(void);                         // Returns mouse position XY
 RLAPI void SetMousePosition(Vector2 position);                // Set mouse position XY
+RLAPI void SetMouseScale(float scale);                        // Set mouse scaling
 RLAPI int GetMouseWheelMove(void);                            // Returns mouse wheel movement Y
 
 // Input-related functions: touch

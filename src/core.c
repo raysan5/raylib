@@ -326,6 +326,7 @@ static int lastGamepadButtonPressed = -1;   // Register last gamepad button pres
 static int gamepadAxisCount = 0;            // Register number of available gamepad axis
 
 static Vector2 mousePosition;               // Mouse position on screen
+static float mouseScale = 1.0f;             // Mouse default scale
 
 #if defined(PLATFORM_WEB)
 static bool toggleCursorLock = false;       // Ask for cursor pointer lock on next click
@@ -735,6 +736,15 @@ void SetWindowMinSize(int width, int height)
     glfwSetWindowSizeLimits(window, width, height, mode->width, mode->height);
 #endif
 }
+
+// Set window dimensions
+void SetWindowSize(int width, int height)
+{
+#if defined(PLATFORM_DESKTOP)
+    glfwSetWindowSize(window, width, height);
+#endif
+}
+
 
 // Get current screen width
 int GetScreenWidth(void)
@@ -1253,7 +1263,7 @@ const char *GetExtension(const char *fileName)
 {
     const char *dot = strrchr(fileName, '.');
     
-    if (!dot || dot == fileName) return "";
+    if (!dot || dot == fileName) return NULL;
     
     return (dot + 1);
 }
@@ -1648,7 +1658,7 @@ int GetMouseX(void)
 #if defined(PLATFORM_ANDROID)
     return (int)touchPosition[0].x;
 #else
-    return (int)mousePosition.x;
+    return (int)(mousePosition.x*mouseScale);
 #endif
 }
 
@@ -1658,7 +1668,7 @@ int GetMouseY(void)
 #if defined(PLATFORM_ANDROID)
     return (int)touchPosition[0].x;
 #else
-    return (int)mousePosition.y;
+    return (int)(mousePosition.y*mouseScale);
 #endif
 }
 
@@ -1668,7 +1678,7 @@ Vector2 GetMousePosition(void)
 #if defined(PLATFORM_ANDROID)
     return GetTouchPosition(0);
 #else
-    return mousePosition;
+    return (Vector2){ mousePosition.x*mouseScale, mousePosition.y*mouseScale };
 #endif
 }
 
@@ -1679,6 +1689,15 @@ void SetMousePosition(Vector2 position)
 #if defined(PLATFORM_DESKTOP) || defined(PLATFORM_WEB)
     // NOTE: emscripten not implemented
     glfwSetCursorPos(window, position.x, position.y);
+#endif
+}
+
+// Set mouse scaling
+// NOTE: Useful when rendering to different size targets
+void SetMouseScale(float scale)
+{
+#if !defined(PLATFORM_ANDROID)
+    mouseScale = scale;
 #endif
 }
 
