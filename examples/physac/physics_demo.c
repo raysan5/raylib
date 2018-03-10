@@ -32,6 +32,7 @@ int main()
     // Physac logo drawing position
     int logoX = screenWidth - MeasureText("Physac", 30) - 10;
     int logoY = 15;
+    bool needsReset = false;
 
     // Initialize physics and default physics bodies
     InitPhysics();
@@ -52,15 +53,21 @@ int main()
     {
         // Update
         //----------------------------------------------------------------------------------
-        if (IsKeyPressed('R'))    // Reset physics input
+        // Delay initialization of variables due to physics reset async
+        if (needsReset)
         {
-            ResetPhysics();
-
             floor = CreatePhysicsBodyRectangle((Vector2){ screenWidth/2, screenHeight }, 500, 100, 10);
             floor->enabled = false;
 
             circle = CreatePhysicsBodyCircle((Vector2){ screenWidth/2, screenHeight/2 }, 45, 10);
             circle->enabled = false;
+        }
+
+        // Reset physics input
+        if (IsKeyPressed('R'))
+        {
+            ResetPhysics();
+            needsReset = true;
         }
 
         // Physics body creation inputs

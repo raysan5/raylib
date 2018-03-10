@@ -32,6 +32,7 @@ int main()
     // Physac logo drawing position
     int logoX = screenWidth - MeasureText("Physac", 30) - 10;
     int logoY = 15;
+    bool needsReset = false;
 
     // Initialize physics and default physics bodies
     InitPhysics();
@@ -48,12 +49,17 @@ int main()
     {
         // Update
         //----------------------------------------------------------------------------------
+        // Delay initialization of variables due to physics reset asynchronous
+        if (needsReset)
+        {
+            // Create random polygon physics body to shatter
+            body = CreatePhysicsBodyPolygon((Vector2){ screenWidth/2, screenHeight/2 }, GetRandomValue(80, 200), GetRandomValue(3, 8), 10);
+        }
+
         if (IsKeyPressed('R'))    // Reset physics input
         {
             ResetPhysics();
-
-            // Create random polygon physics body to shatter
-            body = CreatePhysicsBodyPolygon((Vector2){ screenWidth/2, screenHeight/2 }, GetRandomValue(80, 200), GetRandomValue(3, 8), 10);
+            needsReset = true;
         }
 
         if (IsMouseButtonPressed(MOUSE_LEFT_BUTTON))    // Physics shatter input
