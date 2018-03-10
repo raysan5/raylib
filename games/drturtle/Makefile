@@ -79,7 +79,6 @@ endif
 #  -Wall                turns on most, but not all, compiler warnings
 #  -std=c99             defines C language mode (standard C from 1999 revision)
 #  -std=gnu99           defines C language mode (GNU C from 1999 revision)
-#  -fgnu89-inline       declaring inline functions support (GCC optimized)
 #  -Wno-missing-braces  ignore invalid warning (GCC bug 53119)
 #  -D_DEFAULT_SOURCE    use with -std=c99 on Linux and PLATFORM_WEB, required for timespec
 ifeq ($(PLATFORM),PLATFORM_DESKTOP)
@@ -102,7 +101,7 @@ ifeq ($(PLATFORM),PLATFORM_WEB)
     # --preload-file file.res     # embbed file.res resource into .data file
 endif
 ifeq ($(PLATFORM),PLATFORM_RPI)
-    CFLAGS = -O2 -s -Wall -std=gnu99 -fgnu89-inline
+    CFLAGS = -O2 -s -Wall -std=gnu99
 endif
 #CFLAGSEXTRA = -Wextra -Wmissing-prototypes -Wstrict-prototypes
 

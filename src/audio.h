@@ -10,19 +10,24 @@
 *       - Manage mixing channels
 *       - Manage raw audio context
 *
-*   LIMITATIONS:
+*   LIMITATIONS (only OpenAL Soft):
 *       Only up to two channels supported: MONO and STEREO (for additional channels, use AL_EXT_MCFORMATS)
 *       Only the following sample sizes supported: 8bit PCM, 16bit PCM, 32-bit float PCM (using AL_EXT_FLOAT32)
 *
 *   DEPENDENCIES:
-*       OpenAL Soft - Audio device management (http://kcat.strangesoft.net/openal.html)
+*       mini_al     - Audio device/context management (https://github.com/dr-soft/mini_al)
 *       stb_vorbis  - OGG audio files loading (http://www.nothings.org/stb_vorbis/)
-*       jar_xm      - XM module file loading (#define SUPPORT_FILEFORMAT_XM)
-*       jar_mod     - MOD audio file loading (#define SUPPORT_FILEFORMAT_MOD)
-*       dr_flac     - FLAC audio file loading (#define SUPPORT_FILEFORMAT_FLAC)
+*       jar_xm      - XM module file loading
+*       jar_mod     - MOD audio file loading
+*       dr_flac     - FLAC audio file loading
+*
+*      *OpenAL Soft - Audio device management, still used on HTML5 and OSX platforms
 *
 *   CONTRIBUTORS:
-*       Joshua Reisenauer (github: @kd7tck):
+*       David Reid (github: @mackron) (Nov. 2017):
+*           - Complete port to mini_al library
+*
+*       Joshua Reisenauer (github: @kd7tck) (2015)
 *           - XM audio module support (jar_xm)
 *           - MOD audio module support (jar_mod)
 *           - Mixing channels support
@@ -31,7 +36,7 @@
 *
 *   LICENSE: zlib/libpng
 *
-*   Copyright (c) 2014-2017 Ramon Santamaria (@raysan5)
+*   Copyright (c) 2014-2018 Ramon Santamaria (@raysan5)
 *
 *   This software is provided "as-is", without any express or implied warranty. In no event
 *   will the authors be held liable for any damages arising from the use of this software.
@@ -81,9 +86,11 @@ typedef struct Wave {
 
 // Sound source type
 typedef struct Sound {
-    unsigned int source;        // OpenAL audio source id
-    unsigned int buffer;        // OpenAL audio buffer id
-    int format;                 // OpenAL audio format specifier
+    void *audioBuffer;      // Pointer to internal data used by the audio system
+
+    unsigned int source;    // Audio source id
+    unsigned int buffer;    // Audio buffer id
+    int format;             // Audio format specifier
 } Sound;
 
 // Music type (file streaming from memory)
@@ -97,9 +104,11 @@ typedef struct AudioStream {
     unsigned int sampleSize;    // Bit depth (bits per sample): 8, 16, 32 (24 not supported)
     unsigned int channels;      // Number of channels (1-mono, 2-stereo)
 
-    int format;                 // OpenAL audio format specifier
-    unsigned int source;        // OpenAL audio source id
-    unsigned int buffers[2];    // OpenAL audio buffers (double buffering)
+    void *audioBuffer;          // Pointer to internal data used by the audio system.
+
+    int format;                 // Audio format specifier
+    unsigned int source;        // Audio source id
+    unsigned int buffers[2];    // Audio buffers (double buffering)
 } AudioStream;
 
 #ifdef __cplusplus
@@ -147,12 +156,12 @@ void ResumeMusicStream(Music music);                            // Resume playin
 bool IsMusicPlaying(Music music);                               // Check if music is playing
 void SetMusicVolume(Music music, float volume);                 // Set volume for music (1.0 is max level)
 void SetMusicPitch(Music music, float pitch);                   // Set pitch for a music (1.0 is base level)
-void SetMusicLoopCount(Music music, float count);               // Set music loop count (loop repeats)
+void SetMusicLoopCount(Music music, int count);                 // Set music loop count (loop repeats)
 float GetMusicTimeLength(Music music);                          // Get music time length (in seconds)
 float GetMusicTimePlayed(Music music);                          // Get current music time played (in seconds)
 
-// Raw audio stream functions
-AudioStream InitAudioStream(unsigned int sampleRate,
+// AudioStream management functions
+AudioStream InitAudioStream(unsigned int sampleRate, 
                             unsigned int sampleSize,
                             unsigned int channels);             // Init audio stream (to stream raw audio pcm data)
 void UpdateAudioStream(AudioStream stream, const void *data, int samplesCount); // Update audio stream buffers with data
@@ -161,7 +170,10 @@ bool IsAudioBufferProcessed(AudioStream stream);                // Check if any 
 void PlayAudioStream(AudioStream stream);                       // Play audio stream
 void PauseAudioStream(AudioStream stream);                      // Pause audio stream
 void ResumeAudioStream(AudioStream stream);                     // Resume audio stream
+bool IsAudioStreamPlaying(AudioStream stream);                  // Check if audio stream is playing
 void StopAudioStream(AudioStream stream);                       // Stop audio stream
+void SetAudioStreamVolume(AudioStream stream, float volume);    // Set volume for audio stream (1.0 is max level)
+void SetAudioStreamPitch(AudioStream stream, float pitch);      // Set pitch for audio stream (1.0 is base level)
 
 #ifdef __cplusplus
 }

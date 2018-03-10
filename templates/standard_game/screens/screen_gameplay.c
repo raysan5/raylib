@@ -4,7 +4,7 @@
 *
 *   Gameplay Screen Functions Definitions (Init, Update, Draw, Unload)
 *
-*   Copyright (c) 2014 Ramon Santamaria (@raysan5)
+*   Copyright (c) 2014-2018 Ramon Santamaria (@raysan5)
 *
 *   This software is provided "as-is", without any express or implied warranty. In no event
 *   will the authors be held liable for any damages arising from the use of this software.
@@ -51,8 +51,8 @@ void UpdateGameplayScreen(void)
 {
     // TODO: Update GAMEPLAY screen variables here!
 
-    // Press enter to change to ENDING screen
-    if (IsKeyPressed(KEY_ENTER))
+    // Press enter or tap to change to ENDING screen
+    if (IsKeyPressed(KEY_ENTER) || IsGestureDetected(GESTURE_TAP))
     {
         finishScreen = 1;
     }
@@ -64,7 +64,7 @@ void DrawGameplayScreen(void)
     // TODO: Draw GAMEPLAY screen here!
     DrawRectangle(0, 0, GetScreenWidth(), GetScreenHeight(), PURPLE);
     DrawText("GAMEPLAY SCREEN", 20, 20, 40, MAROON);
-    DrawText("PRESS ENTER to JUMP to ENDING SCREEN", 170, 220, 20, MAROON);
+    DrawText("PRESS ENTER or TAP to JUMP to ENDING SCREEN", 130, 220, 20, MAROON);
 }
 
 // Gameplay Screen Unload logic

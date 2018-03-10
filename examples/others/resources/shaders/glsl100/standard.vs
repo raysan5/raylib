@@ -10,7 +10,7 @@ varying vec2 fragTexCoord;
 varying vec4 fragColor;
 varying vec3 fragNormal;
 
-uniform mat4 mvpMatrix;
+uniform mat4 mvp;
 
 void main()
 {
@@ -19,5 +19,5 @@ void main()
     fragColor = vertexColor;
     fragNormal = vertexNormal;
 
-    gl_Position = mvpMatrix*vec4(vertexPosition, 1.0);
+    gl_Position = mvp*vec4(vertexPosition, 1.0);
 }

@@ -27,7 +27,7 @@
 *   #define SUPPORT_VR_SIMULATION / SUPPORT_STEREO_RENDERING
 *       Support VR simulation functionality (stereo rendering)
 *
-*   #define SUPPORT_SHADER_DISTORTION
+*   #define SUPPORT_DISTORTION_SHADER
 *       Include stereo rendering distortion shader (shader_distortion.h)
 *
 *   DEPENDENCIES:
@@ -145,7 +145,162 @@ typedef unsigned char byte;
     // Boolean type
     typedef enum { false, true } bool;
     #endif
+
+    // Color type, RGBA (32bit)
+    typedef struct Color {
+        unsigned char r;
+        unsigned char g;
+        unsigned char b;
+        unsigned char a;
+    } Color;
     
+    // Rectangle type
+    typedef struct Rectangle {
+        int x;
+        int y;
+        int width;
+        int height;
+    } Rectangle;
+    
+    // Texture2D type
+    // NOTE: Data stored in GPU memory
+    typedef struct Texture2D {
+        unsigned int id;        // OpenGL texture id
+        int width;              // Texture base width
+        int height;             // Texture base height
+        int mipmaps;            // Mipmap levels, 1 by default
+        int format;             // Data format (PixelFormat)
+    } Texture2D;
+
+    // RenderTexture2D type, for texture rendering
+    typedef struct RenderTexture2D {
+        unsigned int id;        // Render texture (fbo) id
+        Texture2D texture;      // Color buffer attachment texture
+        Texture2D depth;        // Depth buffer attachment texture
+    } RenderTexture2D;
+
+    // Vertex data definning a mesh
+    typedef struct Mesh {
+        int vertexCount;        // number of vertices stored in arrays
+        int triangleCount;      // number of triangles stored (indexed or not)
+        float *vertices;        // vertex position (XYZ - 3 components per vertex) (shader-location = 0)
+        float *texcoords;       // vertex texture coordinates (UV - 2 components per vertex) (shader-location = 1)
+        float *texcoords2;      // vertex second texture coordinates (useful for lightmaps) (shader-location = 5)
+        float *normals;         // vertex normals (XYZ - 3 components per vertex) (shader-location = 2)
+        float *tangents;        // vertex tangents (XYZW - 4 components per vertex) (shader-location = 4)
+        unsigned char *colors;  // vertex colors (RGBA - 4 components per vertex) (shader-location = 3)
+        unsigned short *indices;// vertex indices (in case vertex data comes indexed)
+
+        unsigned int vaoId;     // OpenGL Vertex Array Object id
+        unsigned int vboId[7];  // OpenGL Vertex Buffer Objects id (7 types of vertex data)
+    } Mesh;
+    
+    // Shader and material limits
+    #define MAX_SHADER_LOCATIONS    32
+    #define MAX_MATERIAL_MAPS       12
+    
+    // Shader type (generic)
+    typedef struct Shader {
+        unsigned int id;                // Shader program id
+        int locs[MAX_SHADER_LOCATIONS]; // Shader locations array
+    } Shader;
+
+    // Material texture map
+    typedef struct MaterialMap {
+        Texture2D texture;      // Material map texture
+        Color color;            // Material map color
+        float value;            // Material map value
+    } MaterialMap;
+
+    // Material type (generic)
+    typedef struct Material {
+        Shader shader;          // Material shader
+        MaterialMap maps[MAX_MATERIAL_MAPS]; // Material maps
+        float *params;          // Material generic parameters (if required)
+    } Material;
+
+    // Camera type, defines a camera position/orientation in 3d space
+    typedef struct Camera {
+        Vector3 position;       // Camera position
+        Vector3 target;         // Camera target it looks-at
+        Vector3 up;             // Camera up vector (rotation over its axis)
+        float fovy;             // Camera field-of-view apperture in Y (degrees)
+    } Camera;
+    
+    // Head-Mounted-Display device parameters
+    typedef struct VrDeviceInfo {
+        int hResolution;                // HMD horizontal resolution in pixels
+        int vResolution;                // HMD vertical resolution in pixels
+        float hScreenSize;              // HMD horizontal size in meters
+        float vScreenSize;              // HMD vertical size in meters
+        float vScreenCenter;            // HMD screen center in meters
+        float eyeToScreenDistance;      // HMD distance between eye and display in meters
+        float lensSeparationDistance;   // HMD lens separation distance in meters
+        float interpupillaryDistance;   // HMD IPD (distance between pupils) in meters
+        float lensDistortionValues[4];  // HMD lens distortion constant parameters
+        float chromaAbCorrection[4];    // HMD chromatic aberration correction parameters
+    } VrDeviceInfo;
+    
+    // TraceLog message types
+    typedef enum { 
+        LOG_INFO = 0, 
+        LOG_ERROR, 
+        LOG_WARNING, 
+        LOG_DEBUG, 
+        LOG_OTHER 
+    } TraceLogType;
+    
+    // Texture formats (support depends on OpenGL version)
+    typedef enum {
+        UNCOMPRESSED_GRAYSCALE = 1,     // 8 bit per pixel (no alpha)
+        UNCOMPRESSED_GRAY_ALPHA,
+        UNCOMPRESSED_R5G6B5,            // 16 bpp
+        UNCOMPRESSED_R8G8B8,            // 24 bpp
+        UNCOMPRESSED_R5G5B5A1,          // 16 bpp (1 bit alpha)
+        UNCOMPRESSED_R4G4B4A4,          // 16 bpp (4 bit alpha)
+        UNCOMPRESSED_R8G8B8A8,          // 32 bpp
+        UNCOMPRESSED_R32,               // 32 bpp (1 channel - float)
+        UNCOMPRESSED_R32G32B32,         // 32*3 bpp (3 channels - float)
+        UNCOMPRESSED_R32G32B32A32,      // 32*4 bpp (4 channels - float)
+        COMPRESSED_DXT1_RGB,            // 4 bpp (no alpha)
+        COMPRESSED_DXT1_RGBA,           // 4 bpp (1 bit alpha)
+        COMPRESSED_DXT3_RGBA,           // 8 bpp
+        COMPRESSED_DXT5_RGBA,           // 8 bpp
+        COMPRESSED_ETC1_RGB,            // 4 bpp
+        COMPRESSED_ETC2_RGB,            // 4 bpp
+        COMPRESSED_ETC2_EAC_RGBA,       // 8 bpp
+        COMPRESSED_PVRT_RGB,            // 4 bpp
+        COMPRESSED_PVRT_RGBA,           // 4 bpp
+        COMPRESSED_ASTC_4x4_RGBA,       // 8 bpp
+        COMPRESSED_ASTC_8x8_RGBA        // 2 bpp
+    } PixelFormat;
+
+    // Texture parameters: filter mode
+    // NOTE 1: Filtering considers mipmaps if available in the texture
+    // NOTE 2: Filter is accordingly set for minification and magnification
+    typedef enum { 
+        FILTER_POINT = 0,               // No filter, just pixel aproximation
+        FILTER_BILINEAR,                // Linear filtering
+        FILTER_TRILINEAR,               // Trilinear filtering (linear with mipmaps)
+        FILTER_ANISOTROPIC_4X,          // Anisotropic filtering 4x
+        FILTER_ANISOTROPIC_8X,          // Anisotropic filtering 8x
+        FILTER_ANISOTROPIC_16X,         // Anisotropic filtering 16x
+    } TextureFilterMode;
+    
+    // Texture parameters: wrap mode
+    typedef enum { 
+        WRAP_REPEAT = 0, 
+        WRAP_CLAMP, 
+        WRAP_MIRROR 
+    } TextureWrapMode;
+
+    // Color blending modes (pre-defined)
+    typedef enum { 
+        BLEND_ALPHA = 0, 
+        BLEND_ADDITIVE, 
+        BLEND_MULTIPLIED 
+    } BlendMode;
+
     // Shader location point type
     typedef enum {
         LOC_VERTEX_POSITION = 0,
@@ -196,148 +351,14 @@ typedef unsigned char byte;
     #define MAP_DIFFUSE      MAP_ALBEDO
     #define MAP_SPECULAR     MAP_METALNESS
 
-    // Color type, RGBA (32bit)
-    typedef struct Color {
-        unsigned char r;
-        unsigned char g;
-        unsigned char b;
-        unsigned char a;
-    } Color;
-    
-    // Texture2D type
-    // NOTE: Data stored in GPU memory
-    typedef struct Texture2D {
-        unsigned int id;        // OpenGL texture id
-        int width;              // Texture base width
-        int height;             // Texture base height
-        int mipmaps;            // Mipmap levels, 1 by default
-        int format;             // Data format (TextureFormat)
-    } Texture2D;
-
-    // RenderTexture2D type, for texture rendering
-    typedef struct RenderTexture2D {
-        unsigned int id;        // Render texture (fbo) id
-        Texture2D texture;      // Color buffer attachment texture
-        Texture2D depth;        // Depth buffer attachment texture
-    } RenderTexture2D;
-
-    // Vertex data definning a mesh
-    typedef struct Mesh {
-        int vertexCount;        // number of vertices stored in arrays
-        int triangleCount;      // number of triangles stored (indexed or not)
-        float *vertices;        // vertex position (XYZ - 3 components per vertex) (shader-location = 0)
-        float *texcoords;       // vertex texture coordinates (UV - 2 components per vertex) (shader-location = 1)
-        float *texcoords2;      // vertex second texture coordinates (useful for lightmaps) (shader-location = 5)
-        float *normals;         // vertex normals (XYZ - 3 components per vertex) (shader-location = 2)
-        float *tangents;        // vertex tangents (XYZ - 3 components per vertex) (shader-location = 4)
-        unsigned char *colors;  // vertex colors (RGBA - 4 components per vertex) (shader-location = 3)
-        unsigned short *indices;// vertex indices (in case vertex data comes indexed)
-
-        unsigned int vaoId;     // OpenGL Vertex Array Object id
-        unsigned int vboId[7];  // OpenGL Vertex Buffer Objects id (7 types of vertex data)
-    } Mesh;
-    
-    // Shader and material limits
-    #define MAX_SHADER_LOCATIONS    32
-    #define MAX_MATERIAL_MAPS       12
-    
-    // Shader type (generic)
-    typedef struct Shader {
-        unsigned int id;                // Shader program id
-        int locs[MAX_SHADER_LOCATIONS]; // Shader locations array
-    } Shader;
-
-    // Material texture map
-    typedef struct MaterialMap {
-        Texture2D texture;      // Material map texture
-        Color color;            // Material map color
-        float value;            // Material map value
-    } MaterialMap;
-
-    // Material type (generic)
-    typedef struct Material {
-        Shader shader;          // Material shader
-        MaterialMap maps[MAX_MATERIAL_MAPS]; // Material maps
-        float *params;          // Material generic parameters (if required)
-    } Material;
-
-    // Camera type, defines a camera position/orientation in 3d space
-    typedef struct Camera {
-        Vector3 position;       // Camera position
-        Vector3 target;         // Camera target it looks-at
-        Vector3 up;             // Camera up vector (rotation over its axis)
-        float fovy;             // Camera field-of-view apperture in Y (degrees)
-    } Camera;
-    
-    // TraceLog message types
-    typedef enum { 
-        LOG_INFO = 0, 
-        LOG_ERROR, 
-        LOG_WARNING, 
-        LOG_DEBUG, 
-        LOG_OTHER 
-    } TraceLogType;
-    
-    // Texture formats (support depends on OpenGL version)
-    typedef enum {
-        UNCOMPRESSED_GRAYSCALE = 1,     // 8 bit per pixel (no alpha)
-        UNCOMPRESSED_GRAY_ALPHA,
-        UNCOMPRESSED_R5G6B5,            // 16 bpp
-        UNCOMPRESSED_R8G8B8,            // 24 bpp
-        UNCOMPRESSED_R5G5B5A1,          // 16 bpp (1 bit alpha)
-        UNCOMPRESSED_R4G4B4A4,          // 16 bpp (4 bit alpha)
-        UNCOMPRESSED_R8G8B8A8,          // 32 bpp
-        UNCOMPRESSED_R32G32B32,         // 32 bit per channel (float) - HDR
-        COMPRESSED_DXT1_RGB,            // 4 bpp (no alpha)
-        COMPRESSED_DXT1_RGBA,           // 4 bpp (1 bit alpha)
-        COMPRESSED_DXT3_RGBA,           // 8 bpp
-        COMPRESSED_DXT5_RGBA,           // 8 bpp
-        COMPRESSED_ETC1_RGB,            // 4 bpp
-        COMPRESSED_ETC2_RGB,            // 4 bpp
-        COMPRESSED_ETC2_EAC_RGBA,       // 8 bpp
-        COMPRESSED_PVRT_RGB,            // 4 bpp
-        COMPRESSED_PVRT_RGBA,           // 4 bpp
-        COMPRESSED_ASTC_4x4_RGBA,       // 8 bpp
-        COMPRESSED_ASTC_8x8_RGBA        // 2 bpp
-    } TextureFormat;
-
-    // Texture parameters: filter mode
-    // NOTE 1: Filtering considers mipmaps if available in the texture
-    // NOTE 2: Filter is accordingly set for minification and magnification
-    typedef enum { 
-        FILTER_POINT = 0,               // No filter, just pixel aproximation
-        FILTER_BILINEAR,                // Linear filtering
-        FILTER_TRILINEAR,               // Trilinear filtering (linear with mipmaps)
-        FILTER_ANISOTROPIC_4X,          // Anisotropic filtering 4x
-        FILTER_ANISOTROPIC_8X,          // Anisotropic filtering 8x
-        FILTER_ANISOTROPIC_16X,         // Anisotropic filtering 16x
-    } TextureFilterMode;
-    
-    // Texture parameters: wrap mode
-    typedef enum { 
-        WRAP_REPEAT = 0, 
-        WRAP_CLAMP, 
-        WRAP_MIRROR 
-    } TextureWrapMode;
-
-    // Color blending modes (pre-defined)
-    typedef enum { 
-        BLEND_ALPHA = 0, 
-        BLEND_ADDITIVE, 
-        BLEND_MULTIPLIED 
-    } BlendMode;
-
     // VR Head Mounted Display devices
     typedef enum {
         HMD_DEFAULT_DEVICE = 0,
         HMD_OCULUS_RIFT_DK2,
         HMD_OCULUS_RIFT_CV1,
+        HMD_OCULUS_GO,
         HMD_VALVE_HTC_VIVE,
-        HMD_SAMSUNG_GEAR_VR,
-        HMD_GOOGLE_CARDBOARD,
-        HMD_SONY_PLAYSTATION_VR,
-        HMD_RAZER_OSVR,
-        HMD_FOVE_VR,
+        HMD_SONY_PSVR
     } VrDevice;
 #endif
 
@@ -403,6 +424,7 @@ void rlglClose(void);                           // De-inititialize rlgl (buffers
 void rlglDraw(void);                            // Update and Draw default buffers (lines, triangles, quads)
 
 int rlGetVersion(void);                         // Returns current OpenGL version
+void rlSetDebugMarker(const char *text);        // Set debug marker for analysis
 void rlLoadExtensions(void *loader);            // Load OpenGL extensions
 Vector3 rlUnproject(Vector3 source, Matrix proj, Matrix view);  // Get world coordinates from screen coordinates
 
@@ -437,11 +459,13 @@ Texture2D GetTextureDefault(void);                      // Get default texture
 
 // Shader configuration functions
 int GetShaderLocation(Shader shader, const char *uniformName);              // Get shader uniform location
-void SetShaderValue(Shader shader, int uniformLoc, float *value, int size); // Set shader uniform value (float)
-void SetShaderValuei(Shader shader, int uniformLoc, int *value, int size);  // Set shader uniform value (int)
+void SetShaderValue(Shader shader, int uniformLoc, const float *value, int size); // Set shader uniform value (float)
+void SetShaderValuei(Shader shader, int uniformLoc, const int *value, int size);  // Set shader uniform value (int)
 void SetShaderValueMatrix(Shader shader, int uniformLoc, Matrix mat);       // Set shader uniform value (matrix 4x4)
-void SetMatrixProjection(Matrix proj);                              // Set a custom projection matrix (replaces internal projection matrix)
-void SetMatrixModelview(Matrix view);                               // Set a custom modelview matrix (replaces internal modelview matrix)
+void SetMatrixProjection(Matrix proj);                  // Set a custom projection matrix (replaces internal projection matrix)
+void SetMatrixModelview(Matrix view);                   // Set a custom modelview matrix (replaces internal modelview matrix)
+Matrix GetMatrixModelview();                            // Get internal modelview matrix            
+
 
 // Texture maps generation (PBR)
 // NOTE: Required shaders should be provided
@@ -457,7 +481,8 @@ void BeginBlendMode(int mode);                          // Begin blending mode (
 void EndBlendMode(void);                                // End blending mode (reset to default: alpha blending)
 
 // VR simulator functionality
-void InitVrSimulator(int vrDevice);                     // Init VR simulator for selected device
+VrDeviceInfo GetVrDeviceInfo(int vrDeviceType);         // Get VR device information for some standard devices
+void InitVrSimulator(VrDeviceInfo info);                // Init VR simulator for selected device parameters
 void CloseVrSimulator(void);                            // Close VR simulator for current device
 void UpdateVrTracking(Camera *camera);                  // Update VR tracking (position and orientation) and camera
 void ToggleVrMode(void);                                // Enable/Disable VR experience (device or simulator)

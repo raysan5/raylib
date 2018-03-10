@@ -4,7 +4,7 @@
 *
 *   Title Screen Functions Definitions (Init, Update, Draw, Unload)
 *
-*   Copyright (c) 2014 Ramon Santamaria (@raysan5)
+*   Copyright (c) 2014-2018 Ramon Santamaria (@raysan5)
 *
 *   This software is provided "as-is", without any express or implied warranty. In no event
 *   will the authors be held liable for any damages arising from the use of this software.
@@ -51,8 +51,8 @@ void UpdateTitleScreen(void)
 {
     // TODO: Update TITLE screen variables here!
 
-    // Press enter to change to GAMEPLAY screen
-    if (IsKeyPressed(KEY_ENTER))
+    // Press enter or tap to change to GAMEPLAY screen
+    if (IsKeyPressed(KEY_ENTER) || IsGestureDetected(GESTURE_TAP))
     {
         //finishScreen = 1;   // OPTIONS
         finishScreen = 2;   // GAMEPLAY
@@ -65,7 +65,7 @@ void DrawTitleScreen(void)
     // TODO: Draw TITLE screen here!
     DrawRectangle(0, 0, GetScreenWidth(), GetScreenHeight(), GREEN);
     DrawText("TITLE SCREEN", 20, 20, 40, DARKGREEN);
-    DrawText("PRESS ENTER to JUMP to GAMEPLAY SCREEN", 160, 220, 20, DARKGREEN);
+    DrawText("PRESS ENTER or TAP to JUMP to GAMEPLAY SCREEN", 120, 220, 20, DARKGREEN);
 }
 
 // Title Screen Unload logic

@@ -855,7 +855,7 @@ void DrawTitleScreen(void)
 {
     BeginShaderMode(colorBlend);
     
-    DrawTexturePro(atlas02,gameplay_background, (Rectangle){0, 0, gameplay_background.width*2, gameplay_background.height*2}, (Vector2){0, 0}, 0, color02);
+    DrawTexturePro(atlas02, gameplay_background, (Rectangle){0, 0, gameplay_background.width*2, gameplay_background.height*2}, (Vector2){0, 0}, 0, color02);
 
     // Draw parallax
     DrawParallaxBack();
@@ -946,7 +946,6 @@ void DrawTitleScreen(void)
                                                (Rectangle){ rainParticle.particle[i].position.x, rainParticle.particle[i].position.y, particle_waterdrop.width*rainParticle.particle[i].size, particle_waterdrop.height*rainParticle.particle[i].size },
                                                (Vector2){ particle_waterdrop.width*rainParticle.particle[i].size/2, particle_waterdrop.height*rainParticle.particle[i].size/2 }, rainParticle.particle[i].rotation,
                                                Fade(rainParticle.particle[i].color, rainParticle.particle[i].alpha));
-
     }
 
     for (int i = 0; i < 1024; i++)
@@ -959,7 +958,6 @@ void DrawTitleScreen(void)
 
     for (int i = 0; i < 256; i++)
     {
-
         if (snowStormParticle.particle[i].active) DrawTexturePro(atlas01, particle_icecrystal,
                                                (Rectangle){ snowStormParticle.particle[i].position.x, snowStormParticle.particle[i].position.y, particle_icecrystal.width*snowStormParticle.particle[i].size, particle_icecrystal.height*snowStormParticle.particle[i].size },
                                                (Vector2){ particle_icecrystal.width*snowStormParticle.particle[i].size/2, particle_icecrystal.height*snowStormParticle.particle[i].size/2 }, snowStormParticle.particle[i].rotation,
@@ -969,8 +967,7 @@ void DrawTitleScreen(void)
 
     for (int i = 0; i < 20; i++)
     {
-
-       if (rayparticle.particle[i].active) DrawTexturePro(atlas01, gameplay_fx_lightraymid,
+        if (rayparticle.particle[i].active) DrawTexturePro(atlas01, gameplay_fx_lightraymid,
                                                (Rectangle){ rayparticle.particle[i].position.x, rayparticle.particle[i].position.y, gameplay_fx_lightraymid.width*rayparticle.particle[i].size, gameplay_fx_lightraymid.height*rayparticle.particle[i].size },
                                                (Vector2){ gameplay_fx_lightraymid.width*rayparticle.particle[i].size/2, gameplay_fx_lightraymid.height*rayparticle.particle[i].size/2 }, rayparticle.particle[i].rotation,
                                                Fade(rayparticle.particle[i].color, rayparticle.particle[i].alpha));
@@ -1016,7 +1013,7 @@ static void DrawParallaxFront(void)
     DrawTexturePro(atlas02, gameplay_back_tree08_layer01, (Rectangle){(int)parallaxFrontOffset + 140*7, 60, gameplay_back_tree08_layer01.width*2, gameplay_back_tree08_layer01.height*2}, (Vector2){0,0}, 0, color02);
     DrawTexturePro(atlas02, gameplay_back_ground01, (Rectangle){0, 559, ground01.width*2, ground01.height*2}, (Vector2){0,0}, 0, color01);
     DrawTexturePro(atlas02, (Rectangle){ground01.x, ground01.y + ground01.height, ground01.width, -ground01.height}, (Rectangle){0, -33, ground01.width*2, ground01.height*2}, (Vector2){0,0}, 0, color01);
- }
+}
 
 static void DrawParallaxMiddle(void)
 {

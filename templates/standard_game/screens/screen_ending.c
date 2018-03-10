@@ -4,7 +4,7 @@
 *
 *   Ending Screen Functions Definitions (Init, Update, Draw, Unload)
 *
-*   Copyright (c) 2014 Ramon Santamaria (@raysan5)
+*   Copyright (c) 2014-2018 Ramon Santamaria (@raysan5)
 *
 *   This software is provided "as-is", without any express or implied warranty. In no event
 *   will the authors be held liable for any damages arising from the use of this software.
@@ -51,8 +51,8 @@ void UpdateEndingScreen(void)
 {
     // TODO: Update ENDING screen variables here!
 
-    // Press enter to return to TITLE screen
-    if (IsKeyPressed(KEY_ENTER))
+    // Press enter or tap to return to TITLE screen
+    if (IsKeyPressed(KEY_ENTER) || IsGestureDetected(GESTURE_TAP))
     {
         finishScreen = 1;
     }
@@ -64,7 +64,7 @@ void DrawEndingScreen(void)
     // TODO: Draw ENDING screen here!
     DrawRectangle(0, 0, GetScreenWidth(), GetScreenHeight(), BLUE);
     DrawText("ENDING SCREEN", 20, 20, 40, DARKBLUE);
-    DrawText("PRESS ENTER to RETURN to TITLE SCREEN", 160, 220, 20, DARKBLUE);
+    DrawText("PRESS ENTER to RETURN to TITLE SCREEN", 120, 220, 20, DARKBLUE);
 }
 
 // Ending Screen Unload logic

@@ -3,17 +3,19 @@
 *   raylib.core - Basic functions to manage windows, OpenGL context and input on multiple platforms
 *
 *   PLATFORMS SUPPORTED: 
-*       - Windows (win32/Win64)
-*       - Linux (tested on Ubuntu)
-*       - OSX (Mac)
-*       - Android (ARM or ARM64) 
-*       - Raspberry Pi (Raspbian)
-*       - HTML5 (Chrome, Firefox)
+*       - PLATFORM_DESKTOP: Windows (Win32, Win64)
+*       - PLATFORM_DESKTOP: Linux (X11 desktop mode)
+*       - PLATFORM_DESKTOP: FreeBSD (X11 desktop)
+*       - PLATFORM_DESKTOP: OSX/macOS
+*       - PLATFORM_ANDROID: Android 4.0 (ARM, ARM64) 
+*       - PLATFORM_RPI:     Raspberry Pi 0,1,2,3 (Raspbian)
+*       - PLATFORM_WEB:     HTML5 with asm.js (Chrome, Firefox)
+*       - PLATFORM_UWP:     Windows 10 App, Windows Phone, Xbox One
 *
 *   CONFIGURATION:
 *
 *   #define PLATFORM_DESKTOP
-*       Windowing and input system configured for desktop platforms: Windows, Linux, OSX (managed by GLFW3 library)
+*       Windowing and input system configured for desktop platforms: Windows, Linux, OSX, FreeBSD
 *       NOTE: Oculus Rift CV1 requires PLATFORM_DESKTOP for mirror rendering - View [rlgl] module to enable it
 *
 *   #define PLATFORM_ANDROID
@@ -21,12 +23,16 @@
 *       NOTE: OpenGL ES 2.0 is required and graphic device is managed by EGL
 *
 *   #define PLATFORM_RPI
-*       Windowing and input system configured for Raspberry Pi (tested on Raspbian), graphic device is managed by EGL 
-*       and inputs are processed is raw mode, reading from /dev/input/
+*       Windowing and input system configured for Raspberry Pi i native mode (no X.org required, tested on Raspbian), 
+*       graphic device is managed by EGL and inputs are processed is raw mode, reading from /dev/input/
 *
 *   #define PLATFORM_WEB
 *       Windowing and input system configured for HTML5 (run on browser), code converted from C to asm.js
 *       using emscripten compiler. OpenGL ES 2.0 required for direct translation to WebGL equivalent code.
+*
+*   #define PLATFORM_UWP
+*       Universal Windows Platform support, using OpenGL ES 2.0 through ANGLE on multiple Windows platforms,
+*       including Windows 10 App, Windows Phone and Xbox One platforms.
 *
 *   #define SUPPORT_DEFAULT_FONT (default)
 *       Default font is loaded on window initialization to be available for the user to render simple text.
@@ -48,15 +54,15 @@
 *       Allow automatic gif recording of current screen pressing CTRL+F12, defined in KeyCallback()
 *
 *   DEPENDENCIES:
-*       GLFW3    - Manage graphic device, OpenGL context and inputs on PLATFORM_DESKTOP (Windows, Linux, OSX)
-*       raymath  - 3D math functionality (Vector3, Matrix, Quaternion)
+*       rglfw    - Manage graphic device, OpenGL context and inputs on PLATFORM_DESKTOP (Windows, Linux, OSX. FreeBSD)
+*       raymath  - 3D math functionality (Vector2, Vector3, Matrix, Quaternion)
 *       camera   - Multiple 3D camera modes (free, orbital, 1st person, 3rd person)
 *       gestures - Gestures system for touch-ready devices (or simulated from mouse inputs)
 *
 *
 *   LICENSE: zlib/libpng
 *
-*   Copyright (c) 2014-2017 Ramon Santamaria (@raysan5)
+*   Copyright (c) 2014-2018 Ramon Santamaria (@raysan5)
 *
 *   This software is provided "as-is", without any express or implied warranty. In no event
 *   will the authors be held liable for any damages arising from the use of this software.
@@ -87,6 +93,11 @@
 
 #include "raylib.h"
 
+#if (defined(__linux__) || defined(PLATFORM_WEB)) && _POSIX_C_SOURCE < 199309L
+    #undef _POSIX_C_SOURCE
+    #define _POSIX_C_SOURCE 199309L // Required for CLOCK_MONOTONIC if compiled with c99 without gnu ext.
+#endif
+
 #include "rlgl.h"           // raylib OpenGL abstraction layer to OpenGL 1.1, 3.3+ or ES2
 #include "utils.h"          // Required for: fopen() Android mapping
 
@@ -105,12 +116,8 @@
 #endif
 
 #if defined(SUPPORT_GIF_RECORDING)
-    #define GIF_IMPLEMENTATION
-    #include "external/gif.h"   // Support GIF recording
-#endif
-
-#if defined(__linux__) || defined(PLATFORM_WEB)
-    #define _POSIX_C_SOURCE 199309L // Required for CLOCK_MONOTONIC if compiled with c99 without gnu ext.
+    #define RGIF_IMPLEMENTATION
+    #include "external/rgif.h"   // Support GIF recording
 #endif
 
 #include <stdio.h>          // Standard input / output lib
@@ -121,7 +128,7 @@
 #include <string.h>         // Required for: strrchr(), strcmp()
 //#include <errno.h>          // Macros for reporting and retrieving error conditions through error codes
 
-#ifdef _WIN32
+#if defined(_WIN32)
     #include <direct.h>             // Required for: _getch(), _chdir()
     #define GETCWD _getcwd          // NOTE: MSDN recommends not to use getcwd(), chdir()
     #define CHDIR _chdir
@@ -147,12 +154,11 @@
         #include <GLFW/glfw3native.h>    // which are required for hiding mouse
     #endif
     //#include <GL/gl.h>        // OpenGL functions (GLFW3 already includes gl.h)
-    //#define GLFW_DLL          // Using GLFW DLL on Windows -> No, we use static version!
-    
+
     #if !defined(SUPPORT_BUSY_WAIT_LOOP) && defined(_WIN32)
     // NOTE: Those functions require linking with winmm library
-    __stdcall unsigned int timeBeginPeriod(unsigned int uPeriod);
-    __stdcall unsigned int timeEndPeriod(unsigned int uPeriod);
+    unsigned int __stdcall timeBeginPeriod(unsigned int uPeriod);
+    unsigned int __stdcall timeEndPeriod(unsigned int uPeriod);
     #endif
 #endif
 
@@ -178,6 +184,12 @@
 
     #include "bcm_host.h"       // Raspberry Pi VideoCore IV access functions
 
+    #include "EGL/egl.h"        // Khronos EGL library - Native platform display device control functions
+    #include "EGL/eglext.h"     // Khronos EGL library - Extensions
+    #include "GLES2/gl2.h"      // Khronos OpenGL ES 2.0 library
+#endif
+
+#if defined(PLATFORM_UWP)
     #include "EGL/egl.h"        // Khronos EGL library - Native platform display device control functions
     #include "EGL/eglext.h"     // Khronos EGL library - Extensions
     #include "GLES2/gl2.h"      // Khronos OpenGL ES 2.0 library
@@ -222,8 +234,10 @@
 //----------------------------------------------------------------------------------
 #if defined(PLATFORM_DESKTOP) || defined(PLATFORM_WEB)
 static GLFWwindow *window;                      // Native window (graphic device)
-static bool windowMinimized = false;
 #endif
+
+static bool windowReady = false;                // Check if window has been initialized successfully
+static bool windowMinimized = false;            // Check if window has been minimized
 
 #if defined(PLATFORM_ANDROID)
 static struct android_app *app;                 // Android activity
@@ -231,7 +245,6 @@ static struct android_poll_source *source;      // Android events polling source
 static int ident, events;                       // Android ALooper_pollAll() variables
 static const char *internalDataPath;            // Android internal data path to write data (/data/data/<package>/files)
 
-static bool windowReady = false;                // Used to detect display initialization
 static bool appEnabled = true;                  // Used to detec if app is active
 static bool contextRebindRequired = false;      // Used to know context rebind required
 #endif
@@ -260,13 +273,17 @@ static pthread_t gamepadThreadId;               // Gamepad reading thread id
 static char gamepadName[64];                    // Gamepad name holder
 #endif
 
-#if defined(PLATFORM_ANDROID) || defined(PLATFORM_RPI)
+#if defined(PLATFORM_ANDROID) || defined(PLATFORM_RPI) || defined(PLATFORM_UWP)
 static EGLDisplay display;              // Native display device (physical screen connection)
 static EGLSurface surface;              // Surface to draw on, framebuffers (connected to context)
 static EGLContext context;              // Graphic context, mode in which drawing can be done
 static EGLConfig config;                // Graphic config
 static uint64_t baseTime;               // Base time measure for hi-res timer
 static bool windowShouldClose = false;  // Flag to set window for closing
+#endif
+
+#if defined(PLATFORM_UWP)
+static EGLNativeWindowType uwpWindow;
 #endif
 
 // Display size-related data
@@ -277,11 +294,11 @@ static int renderOffsetX = 0;               // Offset X from render area (must b
 static int renderOffsetY = 0;               // Offset Y from render area (must be divided by 2)
 static bool fullscreen = false;             // Fullscreen mode (useful only for PLATFORM_DESKTOP)
 static Matrix downscaleView;                // Matrix to downscale view (in case screen size bigger than display size)
-
-#if defined(PLATFORM_DESKTOP) || defined(PLATFORM_RPI) || defined(PLATFORM_WEB)
-static const char *windowTitle;             // Window text title...
-static bool cursorOnScreen = false;         // Tracks if cursor is inside client area
 static bool cursorHidden = false;           // Track if cursor is hidden
+static bool cursorOnScreen = false;         // Tracks if cursor is inside client area
+
+#if defined(PLATFORM_DESKTOP) || defined(PLATFORM_RPI) || defined(PLATFORM_WEB) || defined(PLATFORM_UWP)
+static const char *windowTitle = NULL;      // Window text title...
 static int screenshotCounter = 0;           // Screenshots counter
 
 // Register mouse states
@@ -309,14 +326,13 @@ static int lastGamepadButtonPressed = -1;   // Register last gamepad button pres
 static int gamepadAxisCount = 0;            // Register number of available gamepad axis
 
 static Vector2 mousePosition;               // Mouse position on screen
+static float mouseScale = 1.0f;             // Mouse default scale
 
 #if defined(PLATFORM_WEB)
 static bool toggleCursorLock = false;       // Ask for cursor pointer lock on next click
 #endif
 
-#if defined(SUPPORT_GESTURES_SYSTEM)
 static Vector2 touchPosition[MAX_TOUCH_POINTS]; // Touch position on screen
-#endif
 
 #if defined(PLATFORM_DESKTOP)
 static char **dropFilesPath;                // Store dropped files paths as strings
@@ -328,7 +344,7 @@ static double updateTime, drawTime;         // Time measures for update and draw
 static double frameTime = 0.0;              // Time measure for one frame
 static double targetTime = 0.0;             // Desired time for one frame, if 0 not applied
 
-static char configFlags = 0;                // Configuration flags (bit based)
+static unsigned char configFlags = 0;       // Configuration flags (bit based)
 static bool showLogo = false;               // Track if showing logo at init is enabled
 
 #if defined(SUPPORT_GIF_RECORDING)
@@ -347,10 +363,9 @@ extern void UnloadDefaultFont(void);        // [Module: text] Unloads default fo
 //----------------------------------------------------------------------------------
 // Module specific Functions Declaration
 //----------------------------------------------------------------------------------
-static void InitGraphicsDevice(int width, int height);  // Initialize graphics device
+static bool InitGraphicsDevice(int width, int height);  // Initialize graphics device
 static void SetupFramebufferSize(int displayWidth, int displayHeight);
 static void InitTimer(void);                            // Initialize timer
-static double GetTime(void);                            // Returns time since InitTimer() was run
 static void Wait(float ms);                             // Wait for some milliseconds (stop program execution)
 static bool GetKeyStatus(int key);                      // Returns if a key has been pressed
 static bool GetMouseButtonStatus(int button);           // Returns if a mouse button has been pressed
@@ -400,6 +415,10 @@ static void InitGamepad(void);                          // Init raw gamepad inpu
 static void *GamepadThread(void *arg);                  // Mouse reading thread
 #endif
 
+#if defined(PLATFORM_UWP)
+// Define functions required to manage inputs
+#endif
+
 #if defined(_WIN32)
     // NOTE: We include Sleep() function signature here to avoid windows.h inclusion
     void __stdcall Sleep(unsigned long msTimeout);      // Required for Wait()
@@ -408,26 +427,34 @@ static void *GamepadThread(void *arg);                  // Mouse reading thread
 //----------------------------------------------------------------------------------
 // Module Functions Definition - Window and OpenGL Context Functions
 //----------------------------------------------------------------------------------
-#if defined(PLATFORM_DESKTOP) || defined(PLATFORM_RPI) || defined(PLATFORM_WEB)
+#if defined(PLATFORM_DESKTOP) || defined(PLATFORM_RPI) || defined(PLATFORM_WEB) || defined(PLATFORM_UWP)
 // Initialize window and OpenGL context
-void InitWindow(int width, int height, const char *title)
+// NOTE: data parameter could be used to pass any kind of required data to the initialization
+void InitWindow(int width, int height, void *data)
 {
-    TraceLog(LOG_INFO, "Initializing raylib (v1.8.0)");
+    TraceLog(LOG_INFO, "Initializing raylib (v1.9.4-dev)");
 
-    // Store window title (could be useful...)
-    windowTitle = title;
+#if defined(PLATFORM_DESKTOP)
+    windowTitle = (char *)data;
+#endif
+
+#if defined(PLATFORM_UWP)
+    uwpWindow = (EGLNativeWindowType)data;
+#endif
+
+    // Init hi-res timer
+    InitTimer();
 
     // Init graphics device (display device and OpenGL context)
-    InitGraphicsDevice(width, height);
+    // NOTE: returns true if window and graphic device has been initialized successfully
+    windowReady = InitGraphicsDevice(width, height);
+    if (!windowReady) return;
 
 #if defined(SUPPORT_DEFAULT_FONT)
     // Load default font
     // NOTE: External function (defined in module: text)
     LoadDefaultFont();
 #endif
-
-    // Init hi-res timer
-    InitTimer();
 
 #if defined(PLATFORM_RPI)
     // Init raw input system
@@ -472,17 +499,17 @@ void InitWindow(int width, int height, const char *title)
 #endif
 
 #if defined(PLATFORM_ANDROID)
-// Initialize Android activity
-void InitWindow(int width, int height, void *state)
+// Initialize window and OpenGL context (and Android activity)
+// NOTE: data parameter could be used to pass any kind of required data to the initialization
+void InitWindow(int width, int height, void *data)
 {
-    TraceLog(LOG_INFO, "Initializing raylib (v1.8.0)");
-
-    app_dummy();
+    TraceLog(LOG_INFO, "Initializing raylib (v1.9.4-dev)");
 
     screenWidth = width;
     screenHeight = height;
 
-    app = (struct android_app *)state;
+    // Input data is android app pointer
+    app = (struct android_app *)data;
     internalDataPath = app->activity->internalDataPath;
 
     // Set desired windows flags before initializing anything
@@ -511,7 +538,6 @@ void InitWindow(int width, int height, void *state)
     //AConfiguration_getScreenSize(app->config);
     //AConfiguration_getScreenLong(app->config);
 
-    //state->userData = &engine;
     app->onAppCmd = AndroidCommandCallback;
     app->onInputEvent = AndroidInputCallback;
 
@@ -561,7 +587,7 @@ void CloseWindow(void)
     timeEndPeriod(1);           // Restore time period
 #endif
 
-#if defined(PLATFORM_ANDROID) || defined(PLATFORM_RPI)
+#if defined(PLATFORM_ANDROID) || defined(PLATFORM_RPI) || defined(PLATFORM_UWP)
     // Close surface, context and display
     if (display != EGL_NO_DISPLAY)
     {
@@ -599,25 +625,36 @@ void CloseWindow(void)
     TraceLog(LOG_INFO, "Window closed successfully");
 }
 
+// Check if window has been initialized successfully
+bool IsWindowReady(void)
+{
+    return windowReady;
+}
+
 // Check if KEY_ESCAPE pressed or Close icon pressed
 bool WindowShouldClose(void)
 {
 #if defined(PLATFORM_DESKTOP) || defined(PLATFORM_WEB)
-    // While window minimized, stop loop execution
-    while (windowMinimized) glfwWaitEvents();
+    if (windowReady)
+    {
+        // While window minimized, stop loop execution
+        while (windowMinimized) glfwWaitEvents();
 
-    return (glfwWindowShouldClose(window));
+        return (glfwWindowShouldClose(window));
+    }
+    else return true;
 #endif
 
-#if defined(PLATFORM_ANDROID) || defined(PLATFORM_RPI)
-    return windowShouldClose;
+#if defined(PLATFORM_ANDROID) || defined(PLATFORM_RPI) || defined(PLATFORM_UWP)
+    if (windowReady) return windowShouldClose;
+    else return true;
 #endif
 }
 
 // Check if window has been minimized (or lost focus)
 bool IsWindowMinimized(void)
 {
-#if defined(PLATFORM_DESKTOP) || defined(PLATFORM_WEB)
+#if defined(PLATFORM_DESKTOP) || defined(PLATFORM_WEB) || defined(PLATFORM_UWP)
     return windowMinimized;
 #else
     return false;
@@ -659,6 +696,14 @@ void SetWindowIcon(Image image)
 #endif
 }
 
+// Set title for window (only PLATFORM_DESKTOP)
+void SetWindowTitle(const char *title)
+{
+#if defined(PLATFORM_DESKTOP)
+    glfwSetWindowTitle(window, title);
+#endif
+}
+
 // Set window position on screen (windowed mode)
 void SetWindowPosition(int x, int y)
 {
@@ -676,7 +721,7 @@ void SetWindowMonitor(int monitor)
     
     if ((monitor >= 0) && (monitor < monitorCount)) 
     {
-        glfwSetWindowMonitor(window, monitors[monitor], 0, 0, screenWidth, screenHeight, GLFW_DONT_CARE);
+        //glfwSetWindowMonitor(window, monitors[monitor], 0, 0, screenWidth, screenHeight, GLFW_DONT_CARE);
         TraceLog(LOG_INFO, "Selected fullscreen monitor: [%i] %s", monitor, glfwGetMonitorName(monitors[monitor]));
     }
     else TraceLog(LOG_WARNING, "Selected monitor not found");
@@ -692,6 +737,15 @@ void SetWindowMinSize(int width, int height)
 #endif
 }
 
+// Set window dimensions
+void SetWindowSize(int width, int height)
+{
+#if defined(PLATFORM_DESKTOP)
+    glfwSetWindowSize(window, width, height);
+#endif
+}
+
+
 // Get current screen width
 int GetScreenWidth(void)
 {
@@ -704,16 +758,11 @@ int GetScreenHeight(void)
     return screenHeight;
 }
 
-#if !defined(PLATFORM_ANDROID)
 // Show mouse cursor
 void ShowCursor()
 {
 #if defined(PLATFORM_DESKTOP)
-    #if defined(__linux__)
-        XUndefineCursor(glfwGetX11Display(), glfwGetX11Window(window));
-    #else
-        glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_NORMAL);
-    #endif
+    glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_NORMAL);
 #endif
     cursorHidden = false;
 }
@@ -722,18 +771,7 @@ void ShowCursor()
 void HideCursor()
 {
 #if defined(PLATFORM_DESKTOP)
-    #if defined(__linux__)
-        XColor col;
-        const char nil[] = {0};
-
-        Pixmap pix = XCreateBitmapFromData(glfwGetX11Display(), glfwGetX11Window(window), nil, 1, 1);
-        Cursor cur = XCreatePixmapCursor(glfwGetX11Display(), pix, pix, &col, &col, 0, 0);
-
-        XDefineCursor(glfwGetX11Display(), glfwGetX11Window(window), cur);
-        XFreeCursor(glfwGetX11Display(), cur);
-    #else
-        glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_HIDDEN);
-    #endif
+    glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_HIDDEN);
 #endif
     cursorHidden = true;
 }
@@ -767,23 +805,21 @@ void DisableCursor()
 #endif
     cursorHidden = true;
 }
-#endif  // !defined(PLATFORM_ANDROID)
 
 // Set background color (framebuffer clear color)
 void ClearBackground(Color color)
 {
-    // Clear full framebuffer (not only render area) to color
-    rlClearColor(color.r, color.g, color.b, color.a);
+    rlClearColor(color.r, color.g, color.b, color.a);   // Set clear color
+    rlClearScreenBuffers();                             // Clear current framebuffers
 }
 
 // Setup canvas (framebuffer) to start drawing
 void BeginDrawing(void)
 {
-    currentTime = GetTime();            // Number of elapsed seconds since InitTimer() was called
+    currentTime = GetTime();            // Number of elapsed seconds since InitTimer()
     updateTime = currentTime - previousTime;
     previousTime = currentTime;
 
-    rlClearScreenBuffers();             // Clear current framebuffers
     rlLoadIdentity();                   // Reset current matrix (MODELVIEW)
     rlMultMatrixf(MatrixToFloat(downscaleView));       // If downscale required, apply it here
 
@@ -921,7 +957,7 @@ void BeginTextureMode(RenderTexture2D target)
     rlglDraw();                         // Draw Buffers (Only OpenGL 3+ and ES2)
 
     rlEnableRenderTexture(target.id);   // Enable render target
-
+    
     rlClearScreenBuffers();             // Clear render texture buffers
 
     // Set viewport to framebuffer size
@@ -1053,7 +1089,25 @@ float GetFrameTime(void)
     return (float)frameTime;
 }
 
-// Converts Color to float array and normalizes
+// Get elapsed time measure in seconds since InitTimer()
+// NOTE: On PLATFORM_DESKTOP InitTimer() is called on InitWindow()
+// NOTE: On PLATFORM_DESKTOP, timer is initialized on glfwInit()
+double GetTime(void)
+{
+#if defined(PLATFORM_DESKTOP) || defined(PLATFORM_WEB)
+    return glfwGetTime();                   // Elapsed time since glfwInit()
+#endif
+
+#if defined(PLATFORM_ANDROID) || defined(PLATFORM_RPI)
+    struct timespec ts;
+    clock_gettime(CLOCK_MONOTONIC, &ts);
+    uint64_t time = (uint64_t)ts.tv_sec*1000000000LLU + (uint64_t)ts.tv_nsec;
+
+    return (double)(time - baseTime)*1e-9;  // Elapsed time since InitTimer()
+#endif
+}
+
+// Returns normalized float array for a Color
 float *ColorToFloat(Color color)
 {
     static float buffer[4];
@@ -1064,6 +1118,64 @@ float *ColorToFloat(Color color)
     buffer[3] = (float)color.a/255;
 
     return buffer;
+}
+
+// Returns hexadecimal value for a Color
+int ColorToInt(Color color)
+{
+    return (((int)color.r << 24) | ((int)color.g << 16) | ((int)color.b << 8) | (int)color.a);
+}
+
+// Returns HSV values for a Color
+// NOTE: Hue is returned as degrees [0..360]
+Vector3 ColorToHSV(Color color)
+{
+    Vector3 rgb = { (float)color.r/255.0f, (float)color.g/255.0f, (float)color.b/255.0f };
+    Vector3 hsv = { 0.0f, 0.0f, 0.0f };
+    float min, max, delta;
+
+    min = rgb.x < rgb.y ? rgb.x : rgb.y;
+    min = min  < rgb.z ? min  : rgb.z;
+
+    max = rgb.x > rgb.y ? rgb.x : rgb.y;
+    max = max  > rgb.z ? max  : rgb.z;
+
+    hsv.z = max;            // Value
+    delta = max - min;
+    
+    if (delta < 0.00001f)
+    {
+        hsv.y = 0.0f;
+        hsv.x = 0.0f;       // Undefined, maybe NAN?
+        return hsv;
+    }
+    
+    if (max > 0.0f) 
+    {
+        // NOTE: If max is 0, this divide would cause a crash
+        hsv.y = (delta/max);    // Saturation
+    } 
+    else 
+    {
+        // NOTE: If max is 0, then r = g = b = 0, s = 0, h is undefined
+        hsv.y = 0.0f;
+        hsv.x = NAN;        // Undefined
+        return hsv;
+    }
+    
+    // NOTE: Comparing float values could not work properly
+    if (rgb.x >= max) hsv.x = (rgb.y - rgb.z)/delta;    // Between yellow & magenta
+    else
+    {
+        if (rgb.y >= max) hsv.x = 2.0f + (rgb.z - rgb.x)/delta;  // Between cyan & yellow
+        else hsv.x = 4.0f + (rgb.x - rgb.y)/delta;      // Between magenta & cyan
+    }
+    
+    hsv.x *= 60.0f;     // Convert to degrees
+
+    if (hsv.x < 0.0f) hsv.x += 360.0f;
+
+    return hsv;
 }
 
 // Returns a Color struct from hexadecimal value
@@ -1079,11 +1191,7 @@ Color GetColor(int hexValue)
     return color;
 }
 
-// Returns hexadecimal value for a Color
-int GetHexValue(Color color)
-{
-    return (((int)color.r << 24) | ((int)color.g << 16) | ((int)color.b << 8) | (int)color.a);
-}
+
 
 // Returns a random value between min and max (both included)
 int GetRandomValue(int min, int max)
@@ -1104,9 +1212,7 @@ Color Fade(Color color, float alpha)
     if (alpha < 0.0f) alpha = 0.0f;
     else if (alpha > 1.0f) alpha = 1.0f;
 
-    float colorAlpha = (float)color.a*alpha;
-
-    return (Color){color.r, color.g, color.b, (unsigned char)colorAlpha};
+    return (Color){color.r, color.g, color.b, (unsigned char)(255.0f*alpha)};
 }
 
 // Activate raylib logo at startup (can be done with flags)
@@ -1116,7 +1222,7 @@ void ShowLogo(void)
 }
 
 // Setup window configuration flags (view FLAGS)
-void SetConfigFlags(char flags)
+void SetConfigFlags(unsigned char flags)
 {
     configFlags = flags;
 
@@ -1151,6 +1257,27 @@ bool IsFileExtension(const char *fileName, const char *ext)
 
     return result;
 }
+
+// Get pointer to extension for a filename string
+const char *GetExtension(const char *fileName)
+{
+    const char *dot = strrchr(fileName, '.');
+    
+    if (!dot || dot == fileName) return NULL;
+    
+    return (dot + 1);
+}
+
+// Get pointer to filename for a path string
+const char *GetFileName(const char *filePath)
+{
+    const char *fileName = strrchr(filePath, '\\');
+    
+    if (!fileName || fileName == filePath) return filePath;
+
+    return fileName + 1;
+}
+
 
 // Get directory for a given fileName (with path)
 const char *GetDirectoryPath(const char *fileName)
@@ -1477,6 +1604,7 @@ bool IsMouseButtonPressed(int button)
 {
     bool pressed = false;
 
+// TODO: Review, gestures could be not supported despite being on Android platform!
 #if defined(PLATFORM_ANDROID)
     if (IsGestureDetected(GESTURE_TAP)) pressed = true;
 #else
@@ -1530,7 +1658,7 @@ int GetMouseX(void)
 #if defined(PLATFORM_ANDROID)
     return (int)touchPosition[0].x;
 #else
-    return (int)mousePosition.x;
+    return (int)(mousePosition.x*mouseScale);
 #endif
 }
 
@@ -1540,7 +1668,7 @@ int GetMouseY(void)
 #if defined(PLATFORM_ANDROID)
     return (int)touchPosition[0].x;
 #else
-    return (int)mousePosition.y;
+    return (int)(mousePosition.y*mouseScale);
 #endif
 }
 
@@ -1550,7 +1678,7 @@ Vector2 GetMousePosition(void)
 #if defined(PLATFORM_ANDROID)
     return GetTouchPosition(0);
 #else
-    return mousePosition;
+    return (Vector2){ mousePosition.x*mouseScale, mousePosition.y*mouseScale };
 #endif
 }
 
@@ -1561,6 +1689,15 @@ void SetMousePosition(Vector2 position)
 #if defined(PLATFORM_DESKTOP) || defined(PLATFORM_WEB)
     // NOTE: emscripten not implemented
     glfwSetCursorPos(window, position.x, position.y);
+#endif
+}
+
+// Set mouse scaling
+// NOTE: Useful when rendering to different size targets
+void SetMouseScale(float scale)
+{
+#if !defined(PLATFORM_ANDROID)
+    mouseScale = scale;
 #endif
 }
 
@@ -1631,7 +1768,8 @@ Vector2 GetTouchPosition(int index)
 // Initialize display device and framebuffer
 // NOTE: width and height represent the screen (framebuffer) desired size, not actual display size
 // If width or height are 0, default display size will be used for framebuffer size
-static void InitGraphicsDevice(int width, int height)
+// NOTE: returns false in case graphic device could not be created
+static bool InitGraphicsDevice(int width, int height)
 {
     screenWidth = width;        // User desired width
     screenHeight = height;      // User desired height
@@ -1645,12 +1783,22 @@ static void InitGraphicsDevice(int width, int height)
 #if defined(PLATFORM_DESKTOP) || defined(PLATFORM_WEB)
     glfwSetErrorCallback(ErrorCallback);
 
-    if (!glfwInit()) TraceLog(LOG_ERROR, "Failed to initialize GLFW");
+    if (!glfwInit())
+    {
+        TraceLog(LOG_WARNING, "Failed to initialize GLFW");
+        return false;
+    }
 
     // NOTE: Getting video modes is not implemented in emscripten GLFW3 version
 #if defined(PLATFORM_DESKTOP)
     // Find monitor resolution
-    const GLFWvidmode *mode = glfwGetVideoMode(glfwGetPrimaryMonitor());
+    GLFWmonitor *monitor = glfwGetPrimaryMonitor();
+    if (!monitor)
+    {
+        TraceLog(LOG_WARNING, "Failed to get monitor");
+        return false;
+    }
+    const GLFWvidmode *mode = glfwGetVideoMode(monitor);
 
     displayWidth = mode->width;
     displayHeight = mode->height;
@@ -1756,24 +1904,28 @@ static void InitGraphicsDevice(int width, int height)
         // No-fullscreen window creation
         window = glfwCreateWindow(screenWidth, screenHeight, windowTitle, NULL, NULL);
 
+        if (window)
+        {
 #if defined(PLATFORM_DESKTOP)
-        // Center window on screen
-        int windowPosX = displayWidth/2 - screenWidth/2;
-        int windowPosY = displayHeight/2 - screenHeight/2;
+            // Center window on screen
+            int windowPosX = displayWidth/2 - screenWidth/2;
+            int windowPosY = displayHeight/2 - screenHeight/2;
 
-        if (windowPosX < 0) windowPosX = 0;
-        if (windowPosY < 0) windowPosY = 0;
+            if (windowPosX < 0) windowPosX = 0;
+            if (windowPosY < 0) windowPosY = 0;
 
-        glfwSetWindowPos(window, windowPosX, windowPosY);
+            glfwSetWindowPos(window, windowPosX, windowPosY);
 #endif
-        renderWidth = screenWidth;
-        renderHeight = screenHeight;
+            renderWidth = screenWidth;
+            renderHeight = screenHeight;
+        }
     }
 
     if (!window)
     {
         glfwTerminate();
-        TraceLog(LOG_ERROR, "GLFW Failed to initialize Window");
+        TraceLog(LOG_WARNING, "GLFW Failed to initialize Window");
+        return false;
     }
     else
     {
@@ -1819,7 +1971,7 @@ static void InitGraphicsDevice(int width, int height)
     }
 #endif // defined(PLATFORM_DESKTOP) || defined(PLATFORM_WEB)
 
-#if defined(PLATFORM_ANDROID) || defined(PLATFORM_RPI)
+#if defined(PLATFORM_ANDROID) || defined(PLATFORM_RPI) || defined(PLATFORM_UWP)
     fullscreen = true;
 
     // Screen size security check
@@ -1862,19 +2014,194 @@ static void InitGraphicsDevice(int width, int height)
         EGL_NONE
     };
 
-    EGLint contextAttribs[] =
+    const EGLint contextAttribs[] =
     {
         EGL_CONTEXT_CLIENT_VERSION, 2,
         EGL_NONE
     };
 
+#if defined(PLATFORM_UWP)
+    const EGLint surfaceAttributes[] =
+    {
+        // EGL_ANGLE_SURFACE_RENDER_TO_BACK_BUFFER is part of the same optimization as EGL_ANGLE_DISPLAY_ALLOW_RENDER_TO_BACK_BUFFER (see above).
+        // If you have compilation issues with it then please update your Visual Studio templates.
+        EGL_ANGLE_SURFACE_RENDER_TO_BACK_BUFFER, EGL_TRUE,
+        EGL_NONE
+    };
+
+    const EGLint defaultDisplayAttributes[] =
+    {
+        // These are the default display attributes, used to request ANGLE's D3D11 renderer.
+        // eglInitialize will only succeed with these attributes if the hardware supports D3D11 Feature Level 10_0+.
+        EGL_PLATFORM_ANGLE_TYPE_ANGLE, EGL_PLATFORM_ANGLE_TYPE_D3D11_ANGLE,
+
+        // EGL_ANGLE_DISPLAY_ALLOW_RENDER_TO_BACK_BUFFER is an optimization that can have large performance benefits on mobile devices.
+        // Its syntax is subject to change, though. Please update your Visual Studio templates if you experience compilation issues with it.
+        EGL_ANGLE_DISPLAY_ALLOW_RENDER_TO_BACK_BUFFER, EGL_TRUE,
+        
+        // EGL_PLATFORM_ANGLE_ENABLE_AUTOMATIC_TRIM_ANGLE is an option that enables ANGLE to automatically call 
+        // the IDXGIDevice3::Trim method on behalf of the application when it gets suspended. 
+        // Calling IDXGIDevice3::Trim when an application is suspended is a Windows Store application certification requirement.
+        EGL_PLATFORM_ANGLE_ENABLE_AUTOMATIC_TRIM_ANGLE, EGL_TRUE,
+        EGL_NONE,
+    };
+    
+    const EGLint fl9_3DisplayAttributes[] =
+    {
+        // These can be used to request ANGLE's D3D11 renderer, with D3D11 Feature Level 9_3.
+        // These attributes are used if the call to eglInitialize fails with the default display attributes.
+        EGL_PLATFORM_ANGLE_TYPE_ANGLE, EGL_PLATFORM_ANGLE_TYPE_D3D11_ANGLE,
+        EGL_PLATFORM_ANGLE_MAX_VERSION_MAJOR_ANGLE, 9,
+        EGL_PLATFORM_ANGLE_MAX_VERSION_MINOR_ANGLE, 3,
+        EGL_ANGLE_DISPLAY_ALLOW_RENDER_TO_BACK_BUFFER, EGL_TRUE,
+        EGL_PLATFORM_ANGLE_ENABLE_AUTOMATIC_TRIM_ANGLE, EGL_TRUE,
+        EGL_NONE,
+    };
+
+    const EGLint warpDisplayAttributes[] =
+    {
+        // These attributes can be used to request D3D11 WARP.
+        // They are used if eglInitialize fails with both the default display attributes and the 9_3 display attributes.
+        EGL_PLATFORM_ANGLE_TYPE_ANGLE, EGL_PLATFORM_ANGLE_TYPE_D3D11_ANGLE,
+        EGL_PLATFORM_ANGLE_DEVICE_TYPE_ANGLE, EGL_PLATFORM_ANGLE_DEVICE_TYPE_WARP_ANGLE,
+        EGL_ANGLE_DISPLAY_ALLOW_RENDER_TO_BACK_BUFFER, EGL_TRUE,
+        EGL_PLATFORM_ANGLE_ENABLE_AUTOMATIC_TRIM_ANGLE, EGL_TRUE,
+        EGL_NONE,
+    };
+    
+    EGLConfig config = NULL;
+
+    // eglGetPlatformDisplayEXT is an alternative to eglGetDisplay. It allows us to pass in display attributes, used to configure D3D11.
+    PFNEGLGETPLATFORMDISPLAYEXTPROC eglGetPlatformDisplayEXT = (PFNEGLGETPLATFORMDISPLAYEXTPROC)(eglGetProcAddress("eglGetPlatformDisplayEXT"));
+    if (!eglGetPlatformDisplayEXT)
+    {
+        TraceLog(LOG_WARNING, "Failed to get function eglGetPlatformDisplayEXT");
+        return false;
+    }
+
+    //
+    // To initialize the display, we make three sets of calls to eglGetPlatformDisplayEXT and eglInitialize, with varying 
+    // parameters passed to eglGetPlatformDisplayEXT:
+    // 1) The first calls uses "defaultDisplayAttributes" as a parameter. This corresponds to D3D11 Feature Level 10_0+.
+    // 2) If eglInitialize fails for step 1 (e.g. because 10_0+ isn't supported by the default GPU), then we try again 
+    //    using "fl9_3DisplayAttributes". This corresponds to D3D11 Feature Level 9_3.
+    // 3) If eglInitialize fails for step 2 (e.g. because 9_3+ isn't supported by the default GPU), then we try again 
+    //    using "warpDisplayAttributes".  This corresponds to D3D11 Feature Level 11_0 on WARP, a D3D11 software rasterizer.
+    //
+    
+    // This tries to initialize EGL to D3D11 Feature Level 10_0+. See above comment for details.
+    display = eglGetPlatformDisplayEXT(EGL_PLATFORM_ANGLE_ANGLE, EGL_DEFAULT_DISPLAY, defaultDisplayAttributes);
+    if (display == EGL_NO_DISPLAY)
+    {
+        TraceLog(LOG_WARNING, "Failed to initialize EGL display");
+        return false;
+    }
+        
+    if (eglInitialize(display, NULL, NULL) == EGL_FALSE)
+    {
+        // This tries to initialize EGL to D3D11 Feature Level 9_3, if 10_0+ is unavailable (e.g. on some mobile devices).
+        display = eglGetPlatformDisplayEXT(EGL_PLATFORM_ANGLE_ANGLE, EGL_DEFAULT_DISPLAY, fl9_3DisplayAttributes);
+        if (display == EGL_NO_DISPLAY)
+        {
+            TraceLog(LOG_WARNING, "Failed to initialize EGL display");
+            return false;
+        }
+
+        if (eglInitialize(display, NULL, NULL) == EGL_FALSE)
+        {
+            // This initializes EGL to D3D11 Feature Level 11_0 on WARP, if 9_3+ is unavailable on the default GPU.
+            display = eglGetPlatformDisplayEXT(EGL_PLATFORM_ANGLE_ANGLE, EGL_DEFAULT_DISPLAY, warpDisplayAttributes);
+            if (display == EGL_NO_DISPLAY) 
+            {
+                TraceLog(LOG_WARNING, "Failed to initialize EGL display");
+                return false;
+            }
+
+            if (eglInitialize(display, NULL, NULL) == EGL_FALSE)
+            {
+                // If all of the calls to eglInitialize returned EGL_FALSE then an error has occurred.
+                TraceLog(LOG_WARNING, "Failed to initialize EGL");
+                return false;
+            }
+        }
+    }
+
+	//SetupFramebufferSize(displayWidth, displayHeight);
+
+    EGLint numConfigs = 0;
+    if ((eglChooseConfig(display, framebufferAttribs, &config, 1, &numConfigs) == EGL_FALSE) || (numConfigs == 0))
+    {
+        TraceLog(LOG_WARNING, "Failed to choose first EGLConfig");
+        return false;
+    }
+
+    // Create a PropertySet and initialize with the EGLNativeWindowType.
+    //PropertySet^ surfaceCreationProperties = ref new PropertySet();
+    //surfaceCreationProperties->Insert(ref new String(EGLNativeWindowTypeProperty), window);     // CoreWindow^ window
+
+    // You can configure the surface to render at a lower resolution and be scaled up to 
+    // the full window size. The scaling is often free on mobile hardware.
+    //
+    // One way to configure the SwapChainPanel is to specify precisely which resolution it should render at.
+    // Size customRenderSurfaceSize = Size(800, 600);
+    // surfaceCreationProperties->Insert(ref new String(EGLRenderSurfaceSizeProperty), PropertyValue::CreateSize(customRenderSurfaceSize));
+    //
+    // Another way is to tell the SwapChainPanel to render at a certain scale factor compared to its size.
+    // e.g. if the SwapChainPanel is 1920x1280 then setting a factor of 0.5f will make the app render at 960x640
+    // float customResolutionScale = 0.5f;
+    // surfaceCreationProperties->Insert(ref new String(EGLRenderResolutionScaleProperty), PropertyValue::CreateSingle(customResolutionScale));
+
+    
+    // eglCreateWindowSurface() requires a EGLNativeWindowType parameter, 
+    // In Windows platform: typedef HWND EGLNativeWindowType;
+    
+    
+    // Property: EGLNativeWindowTypeProperty
+    // Type: IInspectable
+    // Description: Set this property to specify the window type to use for creating a surface.
+    //              If this property is missing, surface creation will fail.
+    //
+    //const wchar_t EGLNativeWindowTypeProperty[] = L"EGLNativeWindowTypeProperty";
+    
+    //https://stackoverflow.com/questions/46550182/how-to-create-eglsurface-using-c-winrt-and-angle
+    
+    //surface = eglCreateWindowSurface(display, config, reinterpret_cast<IInspectable*>(surfaceCreationProperties), surfaceAttributes);
+    surface = eglCreateWindowSurface(display, config, uwpWindow, surfaceAttributes);
+    if (surface == EGL_NO_SURFACE)
+    {
+        TraceLog(LOG_WARNING, "Failed to create EGL fullscreen surface");
+        return false;
+    }
+
+    context = eglCreateContext(display, config, EGL_NO_CONTEXT, contextAttribs);
+    if (context == EGL_NO_CONTEXT)
+    {
+        TraceLog(LOG_WARNING, "Failed to create EGL context");
+        return false;
+    }
+
+	// Get EGL display window size 
+	eglQuerySurface(display, surface, EGL_WIDTH, &screenWidth);
+	eglQuerySurface(display, surface, EGL_HEIGHT, &screenHeight);
+    
+#else   // PLATFORM_ANDROID, PLATFORM_RPI
     EGLint numConfigs;
 
     // Get an EGL display connection
     display = eglGetDisplay(EGL_DEFAULT_DISPLAY);
+    if (display == EGL_NO_DISPLAY) 
+    {
+        TraceLog(LOG_WARNING, "Failed to initialize EGL display");
+        return false;
+    }
 
     // Initialize the EGL display connection
-    eglInitialize(display, NULL, NULL);
+    if (eglInitialize(display, NULL, NULL) == EGL_FALSE)
+    {
+        // If all of the calls to eglInitialize returned EGL_FALSE then an error has occurred.
+        TraceLog(LOG_WARNING, "Failed to initialize EGL");
+        return false;
+    }
 
     // Get an appropriate EGL framebuffer configuration
     eglChooseConfig(display, framebufferAttribs, &config, 1, &numConfigs);
@@ -1884,6 +2211,12 @@ static void InitGraphicsDevice(int width, int height)
 
     // Create an EGL rendering context
     context = eglCreateContext(display, config, EGL_NO_CONTEXT, contextAttribs);
+    if (context == EGL_NO_CONTEXT)
+    {
+        TraceLog(LOG_WARNING, "Failed to create EGL context");
+        return false;
+    }
+#endif
 
     // Create an EGL window surface
     //---------------------------------------------------------------------------------
@@ -1951,7 +2284,8 @@ static void InitGraphicsDevice(int width, int height)
 
     if (eglMakeCurrent(display, surface, surface, context) == EGL_FALSE)
     {
-        TraceLog(LOG_ERROR, "Unable to attach EGL rendering context to EGL surface");
+        TraceLog(LOG_WARNING, "Unable to attach EGL rendering context to EGL surface");
+        return false;
     }
     else
     {
@@ -1966,6 +2300,9 @@ static void InitGraphicsDevice(int width, int height)
         TraceLog(LOG_INFO, "Viewport offsets: %i, %i", renderOffsetX, renderOffsetY);
     }
 #endif // defined(PLATFORM_ANDROID) || defined(PLATFORM_RPI)
+
+	renderWidth = screenWidth;
+	renderHeight = screenHeight;
 
     // Initialize OpenGL context (states and resources)
     // NOTE: screenWidth and screenHeight not used, just stored as globals
@@ -1987,6 +2324,7 @@ static void InitGraphicsDevice(int width, int height)
 #if defined(PLATFORM_ANDROID)
     windowReady = true;             // IMPORTANT!
 #endif
+    return true;
 }
 
 // Set viewport parameters
@@ -2100,22 +2438,6 @@ static void InitTimer(void)
 #endif
 
     previousTime = GetTime();       // Get time as double
-}
-
-// Get current time measure (in seconds) since InitTimer()
-static double GetTime(void)
-{
-#if defined(PLATFORM_DESKTOP) || defined(PLATFORM_WEB)
-    return glfwGetTime();
-#endif
-
-#if defined(PLATFORM_ANDROID) || defined(PLATFORM_RPI)
-    struct timespec ts;
-    clock_gettime(CLOCK_MONOTONIC, &ts);
-    uint64_t time = (uint64_t)ts.tv_sec*1000000000LLU + (uint64_t)ts.tv_nsec;
-
-    return (double)(time - baseTime)*1e-9;
-#endif
 }
 
 // Wait for some milliseconds (stop program execution)
@@ -2351,7 +2673,7 @@ static void SwapBuffers(void)
     glfwSwapBuffers(window);
 #endif
 
-#if defined(PLATFORM_ANDROID) || defined(PLATFORM_RPI)
+#if defined(PLATFORM_ANDROID) || defined(PLATFORM_RPI) || defined(PLATFORM_UWP)
     eglSwapBuffers(display, surface);
 #endif
 }
@@ -2415,7 +2737,9 @@ static void KeyCallback(GLFWwindow *window, int key, int scancode, int action, i
     else
     {
         currentKeyState[key] = action;
-        if (action == GLFW_PRESS) lastKeyPressed = key;
+        
+        // NOTE: lastKeyPressed already registered on CharCallback()
+        //if (action == GLFW_PRESS) lastKeyPressed = key;
     }
 }
 
@@ -2481,12 +2805,15 @@ static void MouseCursorPosCallback(GLFWwindow *window, double x, double y)
 #endif
 }
 
-// GLFW3 Char Key Callback, runs on key pressed (get char value)
+// GLFW3 Char Key Callback, runs on key down (get unicode char value)
 static void CharCallback(GLFWwindow *window, unsigned int key)
-{
+{  
+    // NOTE: Registers any key down considering OS keyboard layout but
+    // do not detects action events, those should be managed by user...
+    // https://github.com/glfw/glfw/issues/668#issuecomment-166794907
+    // http://www.glfw.org/docs/latest/input_guide.html#input_char
+    
     lastKeyPressed = key;
-
-    //TraceLog(LOG_INFO, "Char Callback Key pressed: %i\n", key);
 }
 
 // GLFW3 CursorEnter Callback, when cursor enters the window
@@ -2510,6 +2837,8 @@ static void WindowSizeCallback(GLFWwindow *window, int width, int height)
     rlClearScreenBuffers();                     // Clear screen buffers (color and depth)
 
     // Window size must be updated to be used on 3D mode to get new aspect ratio (Begin3dMode())
+    // NOTE: Be careful! GLFW3 will choose the closest fullscreen resolution supported by current monitor,
+    // for example, if reescaling back to 800x450 (desired), it could set 720x480 (closest fullscreen supported)
     screenWidth = width;
     screenHeight = height;
     renderWidth = width;
@@ -2584,6 +2913,9 @@ static void AndroidCommandCallback(struct android_app *app, int32_t cmd)
                 {
                     // Init graphics device (display device and OpenGL context)
                     InitGraphicsDevice(screenWidth, screenHeight);
+                    
+                    // Init hi-res timer
+                    InitTimer();
 
                     #if defined(SUPPORT_DEFAULT_FONT)
                     // Load default font
@@ -2605,9 +2937,6 @@ static void AndroidCommandCallback(struct android_app *app, int32_t cmd)
                         }
                     }
                     */
-
-                    // Init hi-res timer
-                    InitTimer();
 
                     // raylib logo appearing animation (if enabled)
                     if (showLogo)
@@ -2730,6 +3059,7 @@ static int32_t AndroidInputCallback(struct android_app *app, AInputEvent *event)
     int32_t action = AMotionEvent_getAction(event);
     unsigned int flags = action & AMOTION_EVENT_ACTION_MASK;
 
+#if defined(SUPPORT_GESTURES_SYSTEM)
     GestureEvent gestureEvent;
 
     // Register touch actions
@@ -2758,8 +3088,21 @@ static int32_t AndroidInputCallback(struct android_app *app, AInputEvent *event)
 
     // Gesture data is sent to gestures system for processing
     ProcessGestureEvent(gestureEvent);
+#else
+    
+    // Support only simple touch position
+    if (flags == AMOTION_EVENT_ACTION_DOWN)
+    {
+        // Get first touch position
+        touchPosition[0].x = AMotionEvent_getX(event, 0);
+        touchPosition[0].y = AMotionEvent_getY(event, 0);
+        
+        touchPosition[0].x /= (float)GetScreenWidth();
+        touchPosition[0].y /= (float)GetScreenHeight();
+    }
+#endif
 
-    return 0;   // return 1;
+    return 0;
 }
 #endif
 

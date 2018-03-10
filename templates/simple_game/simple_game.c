@@ -8,44 +8,50 @@
 *   This game has been created using raylib (www.raylib.com)
 *   raylib is licensed under an unmodified zlib/libpng license (View raylib.h for details)
 *
-*   raylib - Copyright (c) 2014 Ramon Santamaria (@raysan5)
+*   Copyright (c) 2014-2018 Ramon Santamaria (@raysan5)
 *
 ********************************************************************************************/
 
 #include "raylib.h"
 
-#include "screens.h"
+#if defined(PLATFORM_ANDROID)
+    #include "android_native_app_glue.h"
+#endif
 
 //----------------------------------------------------------------------------------
-// Global Variables Defined in other modules
+// Types and Structures Definition
 //----------------------------------------------------------------------------------
-extern GameScreen currentScreen;    // Defined in screens.c
+typedef enum GameScreen { LOGO = 0, TITLE, GAMEPLAY, ENDING } GameScreen;
 
 //----------------------------------------------------------------------------------
 // Main entry point
 //----------------------------------------------------------------------------------
+#if defined(PLATFORM_ANDROID)
+void android_main(struct android_app *app) 
+#else
 int main(void)
+#endif
 {
-	// Initialization
-	//---------------------------------------------------------
+    // Initialization
+    //--------------------------------------------------------------------------------------
     const int screenWidth = 800;
     const int screenHeight = 450;
-	const char windowTitle[30] = "<game name goes here>";
 
-    InitWindow(screenWidth, screenHeight, windowTitle);
+#if defined(PLATFORM_ANDROID)
+    InitWindow(screenWidth, screenHeight, app);
+#else
+    InitWindow(screenWidth, screenHeight, "raylib template - simple game");
+#endif
 
-    // Initialize all screens
-    InitLogoScreen();
-    InitTitleScreen();
-    InitGameplayScreen();
-    InitEndingScreen();
+    GameScreen currentScreen = LOGO;
 
-    // Define first screen
-    currentScreen = LOGO;
+    // TODO: Initialize all required variables and load all required data here!
+
+    int framesCounter = 0;          // Useful to count frames
+
+    SetTargetFPS(60);               // Set desired framerate (frames-per-second)
+    //--------------------------------------------------------------------------------------
     
-	SetTargetFPS(60);
-	//----------------------------------------------------------
-
     // Main game loop
     while (!WindowShouldClose())    // Detect window close button or ESC key
     {
@@ -53,10 +59,48 @@ int main(void)
         //----------------------------------------------------------------------------------
         switch(currentScreen) 
         {
-            case LOGO:      UpdateLogoScreen(); break;      // Update LOGO currentScreen
-            case TITLE:     UpdateTitleScreen(); break;     // Update TITLE currentScreen
-            case GAMEPLAY:  UpdateGameplayScreen(); break;  // Update GAMEPLAY currentScreen
-            case ENDING:    UpdateEndingScreen(); break;       // Update END currentScreen
+            case LOGO: 
+            {
+                // TODO: Update LOGO screen variables here!
+
+                framesCounter++;    // Count frames
+
+                // Wait for 2 seconds (120 frames) before jumping to TITLE screen
+                if (framesCounter > 120)
+                {
+                    currentScreen = TITLE;
+                }
+            } break;
+            case TITLE: 
+            {
+                // TODO: Update TITLE screen variables here!
+
+                // Press enter to change to GAMEPLAY screen
+                if (IsKeyPressed(KEY_ENTER) || IsGestureDetected(GESTURE_TAP))
+                {
+                    currentScreen = GAMEPLAY;
+                }
+            } break;
+            case GAMEPLAY:
+            { 
+                // TODO: Update GAMEPLAY screen variables here!
+
+                // Press enter to change to ENDING screen
+                if (IsKeyPressed(KEY_ENTER) || IsGestureDetected(GESTURE_TAP))
+                {
+                    currentScreen = ENDING;
+                } 
+            } break;
+            case ENDING: 
+            {
+                // TODO: Update ENDING screen variables here!
+
+                // Press enter to return to TITLE screen
+                if (IsKeyPressed(KEY_ENTER) || IsGestureDetected(GESTURE_TAP))
+                {
+                    currentScreen = TITLE;
+                }  
+            } break;
             default: break;
         }
         //----------------------------------------------------------------------------------
@@ -69,14 +113,39 @@ int main(void)
             
             switch(currentScreen) 
             {
-                case LOGO:      DrawLogoScreen(); break;        // Draw LOGO currentScreen
-                case TITLE:     DrawTitleScreen(); break;       // Draw TITLE currentScreen
-                case GAMEPLAY:  DrawGameplayScreen(); break;    // Draw GAMEPLAY currentScreen
-                case ENDING:    DrawEndingScreen(); break;         // Draw END currentScreen
+                case LOGO: 
+                {
+                    // TODO: Draw LOGO screen here!
+                    DrawText("LOGO SCREEN", 20, 20, 40, LIGHTGRAY);
+                    DrawText("WAIT for 2 SECONDS...", 290, 220, 20, GRAY);
+                    
+                } break;
+                case TITLE: 
+                {
+                    // TODO: Draw TITLE screen here!
+                    DrawRectangle(0, 0, screenWidth, screenHeight, GREEN);
+                    DrawText("TITLE SCREEN", 20, 20, 40, DARKGREEN);
+                    DrawText("PRESS ENTER or TAP to JUMP to GAMEPLAY SCREEN", 120, 220, 20, DARKGREEN);
+                    
+                } break;
+                case GAMEPLAY:
+                { 
+                    // TODO: Draw GAMEPLAY screen here!
+                    DrawRectangle(0, 0, screenWidth, screenHeight, PURPLE);
+                    DrawText("GAMEPLAY SCREEN", 20, 20, 40, MAROON);
+                    DrawText("PRESS ENTER or TAP to JUMP to ENDING SCREEN", 130, 220, 20, MAROON);
+
+                } break;
+                case ENDING: 
+                {
+                    // TODO: Draw ENDING screen here!
+                    DrawRectangle(0, 0, screenWidth, screenHeight, BLUE);
+                    DrawText("ENDING SCREEN", 20, 20, 40, DARKBLUE);
+                    DrawText("PRESS ENTER or TAP to RETURN to TITLE SCREEN", 120, 220, 20, DARKBLUE);
+                    
+                } break;
                 default: break;
             }
-        
-            DrawFPS(screenWidth - 100, 20);
         
         EndDrawing();
         //----------------------------------------------------------------------------------
@@ -85,14 +154,11 @@ int main(void)
     // De-Initialization
     //--------------------------------------------------------------------------------------
     
-    // Unload all loaded data (textures, fonts, audio)
-    UnloadLogoScreen();
-    UnloadTitleScreen();
-    UnloadGameplayScreen();
-    UnloadEndingScreen();
+    // TODO: Unload all loaded data (textures, fonts, audio) here!
     
     CloseWindow();        // Close window and OpenGL context
     //--------------------------------------------------------------------------------------
-	
+#if !defined(PLATFORM_ANDROID)
     return 0;
+#endif
 }

@@ -15,6 +15,10 @@
 #include "raylib.h"
 #include "screens/screens.h"    // NOTE: Defines currentScreen
 
+#if defined(PLATFORM_ANDROID)
+    #include "android_native_app_glue.h"
+#endif
+
 #if defined(PLATFORM_WEB)
     #include <emscripten/emscripten.h>
 #endif

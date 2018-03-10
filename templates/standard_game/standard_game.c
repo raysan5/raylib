@@ -8,25 +8,36 @@
 *   This game has been created using raylib (www.raylib.com)
 *   raylib is licensed under an unmodified zlib/libpng license (View raylib.h for details)
 *
-*   raylib - Copyright (c) 2014 Ramon Santamaria (@raysan5)
+*   Copyright (c) 2014-2018 Ramon Santamaria (@raysan5)
 *
 ********************************************************************************************/
 
 #include "raylib.h"
-#include "screens/screens.h"    // NOTE: Defines currentScreen
+#include "screens/screens.h"    // NOTE: Defines global variable: currentScreen
+
+#if defined(PLATFORM_ANDROID)
+    #include "android_native_app_glue.h"
+#endif
 
 //----------------------------------------------------------------------------------
 // Main entry point
 //----------------------------------------------------------------------------------
+#if defined(PLATFORM_ANDROID)
+void android_main(struct android_app *app) 
+#else
 int main(void)
+#endif
 {
-	// Initialization
-	//---------------------------------------------------------
+    // Initialization
+    //---------------------------------------------------------
     const int screenWidth = 800;
     const int screenHeight = 450;
-	const char windowTitle[30] = "<game name goes here>";
-    
-    InitWindow(screenWidth, screenHeight, windowTitle);
+
+#if defined(PLATFORM_ANDROID)
+    InitWindow(screenWidth, screenHeight, app);
+#else
+    InitWindow(screenWidth, screenHeight, "raylib template - standard game");
+#endif
 
     // TODO: Load global data here (assets that must be available in all screens, i.e. fonts)
     
@@ -34,8 +45,8 @@ int main(void)
     currentScreen = LOGO;   // NOTE: currentScreen is defined in screens.h as a global variable
     InitLogoScreen();
     
-	SetTargetFPS(60);
-	//----------------------------------------------------------
+    SetTargetFPS(60);
+    //----------------------------------------------------------
 
     // Main game loop
     while (!WindowShouldClose())    // Detect window close button or ESC key
@@ -139,6 +150,7 @@ int main(void)
     
     CloseWindow();        // Close window and OpenGL context
     //--------------------------------------------------------------------------------------
-	
+#if !defined(PLATFORM_ANDROID)
     return 0;
+#endif
 }

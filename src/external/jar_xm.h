@@ -612,6 +612,8 @@ int jar_xm_create_context(jar_xm_context_t** ctxp, const char* moddata, uint32_t
     return jar_xm_create_context_safe(ctxp, moddata, SIZE_MAX, rate);
 }
 
+#define ALIGN(x, b) (((x) + ((b) - 1)) & ~((b) - 1))
+#define ALIGN_PTR(x, b) (void*)(((uintptr_t)(x) + ((b) - 1)) & ~((b) - 1))
 int jar_xm_create_context_safe(jar_xm_context_t** ctxp, const char* moddata, size_t moddata_length, uint32_t rate) {
 #if JAR_XM_DEFENSIVE
     int ret;
@@ -644,9 +646,11 @@ int jar_xm_create_context_safe(jar_xm_context_t** ctxp, const char* moddata, siz
 
     ctx->rate = rate;
     mempool = jar_xm_load_module(ctx, moddata, moddata_length, mempool);
+    mempool = ALIGN_PTR(mempool, 16);
 
     ctx->channels = (jar_xm_channel_context_t*)mempool;
     mempool += ctx->module.num_channels * sizeof(jar_xm_channel_context_t);
+    mempool = ALIGN_PTR(mempool, 16);
 
     ctx->global_volume = 1.f;
     ctx->amplification = .25f; /* XXX: some bad modules may still clip. Find out something better. */
@@ -671,6 +675,7 @@ int jar_xm_create_context_safe(jar_xm_context_t** ctxp, const char* moddata, siz
         ch->actual_panning = .5f;
     }
 
+    mempool = ALIGN_PTR(mempool, 16);
     ctx->row_loop_count = (uint8_t*)mempool;
     mempool += MAX_NUM_ROWS * sizeof(uint8_t);
 
@@ -856,9 +861,11 @@ size_t jar_xm_get_memory_needed_for_context(const char* moddata, size_t moddata_
 
     num_patterns = READ_U16(offset + 10);
     memory_needed += num_patterns * sizeof(jar_xm_pattern_t);
+    memory_needed  = ALIGN(memory_needed, 16);
 
     num_instruments = READ_U16(offset + 12);
     memory_needed += num_instruments * sizeof(jar_xm_instrument_t);
+    memory_needed  = ALIGN(memory_needed, 16);
 
     memory_needed += MAX_NUM_ROWS * READ_U16(offset + 4) * sizeof(uint8_t); /* Module length */
 
@@ -875,6 +882,7 @@ size_t jar_xm_get_memory_needed_for_context(const char* moddata, size_t moddata_
         /* Pattern header length + packed pattern data size */
         offset += READ_U32(offset) + READ_U16(offset + 7);
     }
+    memory_needed  = ALIGN(memory_needed, 16);
 
     /* Read instrument headers */
     for(uint16_t i = 0; i < num_instruments; ++i) {
@@ -940,9 +948,11 @@ char* jar_xm_load_module(jar_xm_context_t* ctx, const char* moddata, size_t modd
 
     mod->patterns = (jar_xm_pattern_t*)mempool;
     mempool += mod->num_patterns * sizeof(jar_xm_pattern_t);
+    mempool = ALIGN_PTR(mempool, 16);
 
     mod->instruments = (jar_xm_instrument_t*)mempool;
     mempool += mod->num_instruments * sizeof(jar_xm_instrument_t);
+    mempool = ALIGN_PTR(mempool, 16);
 
     uint16_t flags = READ_U32(offset + 14);
     mod->frequency_type = (flags & (1 << 0)) ? jar_xm_LINEAR_FREQUENCIES : jar_xm_AMIGA_FREQUENCIES;
@@ -1032,6 +1042,7 @@ char* jar_xm_load_module(jar_xm_context_t* ctx, const char* moddata, size_t modd
 
         offset += packed_patterndata_size;
     }
+    mempool = ALIGN_PTR(mempool, 16);
 
     /* Read instruments */
     for(uint16_t i = 0; i < ctx->module.num_instruments; ++i) {
@@ -2599,6 +2610,7 @@ uint64_t jar_xm_get_remaining_samples(jar_xm_context_t* ctx)
 int jar_xm_create_context_from_file(jar_xm_context_t** ctx, uint32_t rate, const char* filename) {
     FILE* xmf;
     int size;
+    int ret;
 
     xmf = fopen(filename, "rb");
     if(xmf == NULL) {
@@ -2618,16 +2630,20 @@ int jar_xm_create_context_from_file(jar_xm_context_t** ctx, uint32_t rate, const
     }
 
     char* data = malloc(size + 1);
-    if(fread(data, 1, size, xmf) < size) {
+    if(!data || fread(data, 1, size, xmf) < size) {
         fclose(xmf);
-        DEBUG_ERR("fread() failed");
+        DEBUG_ERR(data ? "fread() failed" : "malloc() failed");
+        free(data);
         *ctx = NULL;
         return 5;
     }
 
     fclose(xmf);
 
-    switch(jar_xm_create_context_safe(ctx, data, size, rate)) {
+    ret = jar_xm_create_context_safe(ctx, data, size, rate);
+    free(data);
+
+    switch(ret) {
     case 0:
         break;
 

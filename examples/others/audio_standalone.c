@@ -6,16 +6,17 @@
 *
 *   [audio] module requires some external libs:
 *       OpenAL Soft - Audio device management lib (http://kcat.strangesoft.net/openal.html)
-*       stb_vorbis - Ogg audio files loading (http://www.nothings.org/stb_vorbis/)
-*       jar_xm - XM module file loading
-*       jar_mod - MOD audio file loading
+*       stb_vorbis  - Ogg audio files loading (http://www.nothings.org/stb_vorbis/)
+*       jar_xm      - XM module file loading
+*       jar_mod     - MOD audio file loading
+*       dr_flac     - FLAC audio file loading
 *
 *   Compile audio module using:
 *       gcc -c audio.c stb_vorbis.c -Wall -std=c99 -DAUDIO_STANDALONE -DAL_LIBTYPE_STATIC
 *
 *   Compile example using:
 *       gcc -o audio_standalone.exe audio_standalone.c audio.o stb_vorbis.o -lopenal32 -lwinmm /
-*           -Wall -std=c99 -Wl,-allow-multiple-definition
+*           -s -Wall -std=c99 -Wl,-allow-multiple-definition
 *
 *   This example has been created using raylib 1.7 (www.raylib.com)
 *   raylib is licensed under an unmodified zlib/libpng license (View raylib.h for details)
@@ -25,14 +26,11 @@
 ********************************************************************************************/
 
 #include <stdio.h>
+#include "audio.h"
 #if defined(_WIN32)
 #include <conio.h>          // Windows only, no stardard library
-#endif
 
-#include "audio.h"
-
-#if defined(__linux__)
-
+#else
 #include <stdio.h>
 #include <termios.h>
 #include <unistd.h>

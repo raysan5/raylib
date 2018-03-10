@@ -27,7 +27,7 @@ applications, and to alter it and redistribute it freely, subject to the followi
 fonts
 ------
 
-The following fonts [provided with raylib](https://github.com/raysan5/raylib/tree/develop/examples/text/resources/fonts) are free to use (freeware) and have been designed by the following people:
+The following fonts [provided with raylib](https://github.com/raysan5/raylib/tree/master/examples/text/resources/fonts) are free to use (freeware) and have been designed by the following people:
 
  * Alpha Beta - Brian Kent (AEnigma)
  * Setback - Brian Kent (AEnigma)
@@ -41,9 +41,9 @@ The following fonts [provided with raylib](https://github.com/raysan5/raylib/tre
 2d art
 ------
 
-[scarfy spritesheet](https://github.com/raysan5/raylib/blob/develop/examples/textures/resources/scarfy.png) and [fudesumi image](https://github.com/raysan5/raylib/blob/develop/examples/textures/resources/fudesumi.png) have been created by [Eiden Marsal](https://www.artstation.com/artist/marshall_z) and licensed as [Creative Commons Attribution-NonCommercial 3.0](https://creativecommons.org/licenses/by-nc/3.0/legalcode)
+[scarfy spritesheet](https://github.com/raysan5/raylib/blob/master/examples/textures/resources/scarfy.png) and [fudesumi image](https://github.com/raysan5/raylib/blob/master/examples/textures/resources/fudesumi.png) have been created by [Eiden Marsal](https://www.artstation.com/artist/marshall_z) and licensed as [Creative Commons Attribution-NonCommercial 3.0](https://creativecommons.org/licenses/by-nc/3.0/legalcode)
 
 3d models
 ---------
 
-[dwarf 3d model and textures](https://github.com/raysan5/raylib/tree/develop/examples/models/resources/model) have been created by David Moreno and licensed as [Creative Commons Attribution-NonCommercial 3.0](https://creativecommons.org/licenses/by-nc/3.0/legalcode)
+[dwarf 3d model and textures](https://github.com/raysan5/raylib/tree/master/examples/models/resources/model) have been created by David Moreno and licensed as [Creative Commons Attribution-NonCommercial 3.0](https://creativecommons.org/licenses/by-nc/3.0/legalcode)

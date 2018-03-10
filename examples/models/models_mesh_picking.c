@@ -38,7 +38,7 @@ int main()
     tower.material.maps[MAP_DIFFUSE].texture = texture;         // Set model diffuse texture
     
     Vector3 towerPos = { 0.0f, 0.0f, 0.0f };                    // Set model position
-    BoundingBox towerBBox = CalculateBoundingBox(tower.mesh);    
+    BoundingBox towerBBox = MeshBoundingBox(tower.mesh);        // Get mesh bounding box
     bool hitMeshBBox = false;
     bool hitTriangle = false;
 
@@ -89,7 +89,7 @@ int main()
             cursorColor = PURPLE;
             hitObjectName = "Triangle";
 
-            bary = VectorBarycenter(nearestHit.position, ta, tb, tc);
+            bary = Vector3Barycenter(nearestHit.position, ta, tb, tc);
             hitTriangle = true;
         } 
         else hitTriangle = false;

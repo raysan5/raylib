@@ -22,6 +22,10 @@
 #include <stdio.h>              // Required for: printf()
 #include <string.h>             // Required for: strcpy()
 
+#if defined(PLATFORM_ANDROID)
+    #include "android_native_app_glue.h"
+#endif
+
 #if defined(PLATFORM_WEB)
     #include <emscripten/emscripten.h>
 #endif
@@ -56,11 +60,15 @@ static void UpdateDrawFrame(void);          // Update and Draw one frame
 //----------------------------------------------------------------------------------
 // Main entry point
 //----------------------------------------------------------------------------------
+#if defined(PLATFORM_ANDROID)
+void android_main(struct android_app *app) 
+#else
 int main(int argc, char *argv[])
+#endif
 {
 	// Initialization
 	//---------------------------------------------------------
-#if !defined(PLATFORM_WEB)
+#if defined(PLATFORM_DESKTOP)
     // TODO: Support for dropped files on the exe
     
     // Support command line argument for custom music file
@@ -81,8 +89,12 @@ int main(int argc, char *argv[])
     }
 #endif
 
+#if defined(PLATFORM_ANDROID)
+    InitWindow(screenWidth, screenHeight, app);
+#else
     SetConfigFlags(FLAG_MSAA_4X_HINT);
     InitWindow(screenWidth, screenHeight, "GGJ17 - WAVE COLLECTOR");
+#endif
 
     // Global data loading (assets that must be available in all screens, i.e. fonts)
     InitAudioDevice();
@@ -131,8 +143,9 @@ int main(int argc, char *argv[])
     
     CloseWindow();          // Close window and OpenGL context
     //--------------------------------------------------------------------------------------
-	
+#if !defined(PLATFORM_ANDROID)
     return 0;
+#endif
 }
 
 //----------------------------------------------------------------------------------

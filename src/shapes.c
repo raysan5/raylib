@@ -10,10 +10,14 @@
 *   #define SUPPORT_TRIANGLES_ONLY
 *       Draw shapes using only TRIANGLES, vertex are accumulated in TRIANGLES arrays
 *
+*   #define USE_DEFAULT_FONT_TEXTURE
+*       Draw rectangle shapes using font texture white character instead of default white texture
+*       Allows drawing rectangles and text with a single draw call, very useful for GUI systems!
+*
 *
 *   LICENSE: zlib/libpng
 *
-*   Copyright (c) 2014-2017 Ramon Santamaria (@raysan5)
+*   Copyright (c) 2014-2018 Ramon Santamaria (@raysan5)
 *
 *   This software is provided "as-is", without any express or implied warranty. In no event
 *   will the authors be held liable for any damages arising from the use of this software.
@@ -31,6 +35,8 @@
 *     3. This notice may not be removed or altered from any source distribution.
 *
 **********************************************************************************************/
+
+#define USE_DEFAULT_FONT_TEXTURE
 
 #include "raylib.h"
 
@@ -245,6 +251,78 @@ void DrawRectangle(int posX, int posY, int width, int height, Color color)
     DrawRectangleV(position, size, color);
 }
 
+// Draw a color-filled rectangle (Vector version)
+// NOTE: On OpenGL 3.3 and ES2 we use QUADS to avoid drawing order issues (view rlglDraw)
+void DrawRectangleV(Vector2 position, Vector2 size, Color color)
+{
+    if (rlGetVersion() == OPENGL_11)
+    {
+        rlBegin(RL_TRIANGLES);
+            rlColor4ub(color.r, color.g, color.b, color.a);
+
+            rlVertex2i(position.x, position.y);
+            rlVertex2i(position.x, position.y + size.y);
+            rlVertex2i(position.x + size.x, position.y + size.y);
+
+            rlVertex2i(position.x, position.y);
+            rlVertex2i(position.x + size.x, position.y + size.y);
+            rlVertex2i(position.x + size.x, position.y);
+        rlEnd();
+    }
+    else if ((rlGetVersion() == OPENGL_21) || (rlGetVersion() == OPENGL_33) || (rlGetVersion() == OPENGL_ES_20))
+    {
+#if defined(USE_DEFAULT_FONT_TEXTURE)
+        // Draw rectangle using font texture white character
+        rlEnableTexture(GetDefaultFont().texture.id);
+
+        rlBegin(RL_QUADS);
+            rlColor4ub(color.r, color.g, color.b, color.a);
+            rlNormal3f(0.0f, 0.0f, 1.0f);
+
+            // NOTE: Default raylib font character 95 is a white square
+            rlTexCoord2f((float)GetDefaultFont().chars[95].rec.x/GetDefaultFont().texture.width, 
+                         (float)GetDefaultFont().chars[95].rec.y/GetDefaultFont().texture.height);
+            rlVertex2f(position.x, position.y);
+            
+            rlTexCoord2f((float)GetDefaultFont().chars[95].rec.x/GetDefaultFont().texture.width, 
+                         (float)(GetDefaultFont().chars[95].rec.y + GetDefaultFont().chars[95].rec.height)/GetDefaultFont().texture.height);
+            rlVertex2f(position.x, position.y + size.y);
+            
+            rlTexCoord2f((float)(GetDefaultFont().chars[95].rec.x + GetDefaultFont().chars[95].rec.width)/GetDefaultFont().texture.width, 
+                         (float)(GetDefaultFont().chars[95].rec.y + GetDefaultFont().chars[95].rec.height)/GetDefaultFont().texture.height);
+            rlVertex2f(position.x + size.x, position.y + size.y);
+            
+            rlTexCoord2f((float)(GetDefaultFont().chars[95].rec.x + GetDefaultFont().chars[95].rec.width)/GetDefaultFont().texture.width, 
+                         (float)GetDefaultFont().chars[95].rec.y/GetDefaultFont().texture.height);
+            rlVertex2f(position.x + size.x, position.y);
+        rlEnd();
+        
+        rlDisableTexture();
+#else
+        rlEnableTexture(GetTextureDefault().id); // Default white texture
+
+        rlBegin(RL_QUADS);
+            rlColor4ub(color.r, color.g, color.b, color.a);
+            rlNormal3f(0.0f, 0.0f, 1.0f);
+
+            rlTexCoord2f(0.0f, 0.0f);
+            rlVertex2f(position.x, position.y);
+
+            rlTexCoord2f(0.0f, 1.0f);
+            rlVertex2f(position.x, position.y + size.y);
+
+            rlTexCoord2f(1.0f, 1.0f);
+            rlVertex2f(position.x + size.x, position.y + size.y);
+
+            rlTexCoord2f(1.0f, 0.0f);
+            rlVertex2f(position.x + size.x, position.y);
+        rlEnd();
+
+        rlDisableTexture();
+#endif
+    }
+}
+
 // Draw a color-filled rectangle
 void DrawRectangleRec(Rectangle rec, Color color)
 {
@@ -274,62 +352,79 @@ void DrawRectanglePro(Rectangle rec, Vector2 origin, float rotation, Color color
     rlDisableTexture();
 }
 
-// Draw a gradient-filled rectangle
+// Draw a vertical-gradient-filled rectangle
 // NOTE: Gradient goes from bottom (color1) to top (color2)
-void DrawRectangleGradient(int posX, int posY, int width, int height, Color color1, Color color2)
+void DrawRectangleGradientV(int posX, int posY, int width, int height, Color color1, Color color2)
 {
-    rlBegin(RL_TRIANGLES);
-        rlColor4ub(color1.r, color1.g, color1.b, color1.a); rlVertex2i(posX, posY);
-        rlColor4ub(color2.r, color2.g, color2.b, color2.a); rlVertex2i(posX, posY + height);
-        rlColor4ub(color2.r, color2.g, color2.b, color2.a); rlVertex2i(posX + width, posY + height);
-
-        rlColor4ub(color1.r, color1.g, color1.b, color1.a); rlVertex2i(posX, posY);
-        rlColor4ub(color2.r, color2.g, color2.b, color2.a); rlVertex2i(posX + width, posY + height);
-        rlColor4ub(color1.r, color1.g, color1.b, color1.a); rlVertex2i(posX + width, posY);
-    rlEnd();
+    DrawRectangleGradientEx((Rectangle){ posX, posY, width, height }, color1, color2, color2, color1);
 }
 
-// Draw a color-filled rectangle (Vector version)
-// NOTE: On OpenGL 3.3 and ES2 we use QUADS to avoid drawing order issues (view rlglDraw)
-void DrawRectangleV(Vector2 position, Vector2 size, Color color)
+// Draw a horizontal-gradient-filled rectangle
+// NOTE: Gradient goes from bottom (color1) to top (color2)
+void DrawRectangleGradientH(int posX, int posY, int width, int height, Color color1, Color color2)
 {
-    if (rlGetVersion() == OPENGL_11)
-    {
-        rlBegin(RL_TRIANGLES);
-            rlColor4ub(color.r, color.g, color.b, color.a);
+    DrawRectangleGradientEx((Rectangle){ posX, posY, width, height }, color1, color1, color2, color2);
+}
 
-            rlVertex2i(position.x, position.y);
-            rlVertex2i(position.x, position.y + size.y);
-            rlVertex2i(position.x + size.x, position.y + size.y);
+// Draw a gradient-filled rectangle
+// NOTE: Colors refer to corners, starting at top-lef corner and counter-clockwise
+void DrawRectangleGradientEx(Rectangle rec, Color col1, Color col2, Color col3, Color col4)
+{
+#if defined(USE_DEFAULT_FONT_TEXTURE)
+    // Draw rectangle using font texture white character
+    rlEnableTexture(GetDefaultFont().texture.id);
 
-            rlVertex2i(position.x, position.y);
-            rlVertex2i(position.x + size.x, position.y + size.y);
-            rlVertex2i(position.x + size.x, position.y);
-        rlEnd();
-    }
-    else if ((rlGetVersion() == OPENGL_21) || (rlGetVersion() == OPENGL_33) || (rlGetVersion() == OPENGL_ES_20))
-    {
-        rlEnableTexture(GetTextureDefault().id); // Default white texture
+    rlBegin(RL_QUADS);
+        rlNormal3f(0.0f, 0.0f, 1.0f);
 
-        rlBegin(RL_QUADS);
-            rlColor4ub(color.r, color.g, color.b, color.a);
-            rlNormal3f(0.0f, 0.0f, 1.0f);
+        // NOTE: Default raylib font character 95 is a white square
+        rlColor4ub(col1.r, col1.g, col1.b, col1.a);
+        rlTexCoord2f((float)GetDefaultFont().chars[95].rec.x/GetDefaultFont().texture.width, 
+                     (float)GetDefaultFont().chars[95].rec.y/GetDefaultFont().texture.height);
+        rlVertex2f(rec.x, rec.y);
+        
+        rlColor4ub(col2.r, col2.g, col2.b, col2.a);
+        rlTexCoord2f((float)GetDefaultFont().chars[95].rec.x/GetDefaultFont().texture.width, 
+                     (float)(GetDefaultFont().chars[95].rec.y + GetDefaultFont().chars[95].rec.height)/GetDefaultFont().texture.height);
+        rlVertex2f(rec.x, rec.y + rec.height);
+        
+        rlColor4ub(col3.r, col3.g, col3.b, col3.a);
+        rlTexCoord2f((float)(GetDefaultFont().chars[95].rec.x + GetDefaultFont().chars[95].rec.width)/GetDefaultFont().texture.width, 
+                     (float)(GetDefaultFont().chars[95].rec.y + GetDefaultFont().chars[95].rec.height)/GetDefaultFont().texture.height);
+        rlVertex2f(rec.x + rec.width, rec.y + rec.height);
+        
+        rlColor4ub(col4.r, col4.g, col4.b, col4.a);
+        rlTexCoord2f((float)(GetDefaultFont().chars[95].rec.x + GetDefaultFont().chars[95].rec.width)/GetDefaultFont().texture.width, 
+                     (float)GetDefaultFont().chars[95].rec.y/GetDefaultFont().texture.height);
+        rlVertex2f(rec.x + rec.width, rec.y);
+    rlEnd();
+    
+    rlDisableTexture();
+#else
+    rlEnableTexture(GetTextureDefault().id);    // Default white texture
 
-            rlTexCoord2f(0.0f, 0.0f);
-            rlVertex2f(position.x, position.y);
+    rlBegin(RL_QUADS);
+        rlNormal3f(0.0f, 0.0f, 1.0f);
 
-            rlTexCoord2f(0.0f, 1.0f);
-            rlVertex2f(position.x, position.y + size.y);
+        rlColor4ub(col1.r, col1.g, col1.b, col1.a);
+        rlTexCoord2f(0.0f, 0.0f);
+        rlVertex2f(rec.x, rec.y);
 
-            rlTexCoord2f(1.0f, 1.0f);
-            rlVertex2f(position.x + size.x, position.y + size.y);
+        rlColor4ub(col2.r, col2.g, col2.b, col2.a);
+        rlTexCoord2f(0.0f, 1.0f);
+        rlVertex2f(rec.x, rec.y + rec.height);
 
-            rlTexCoord2f(1.0f, 0.0f);
-            rlVertex2f(position.x + size.x, position.y);
-        rlEnd();
+        rlColor4ub(col3.r, col3.g, col3.b, col3.a);
+        rlTexCoord2f(1.0f, 1.0f);
+        rlVertex2f(rec.x + rec.width, rec.y + rec.height);
 
-        rlDisableTexture();
-    }
+        rlColor4ub(col4.r, col4.g, col4.b, col4.a);
+        rlTexCoord2f(1.0f, 0.0f);
+        rlVertex2f(rec.x + rec.width, rec.y);
+    rlEnd();
+
+    rlDisableTexture();
+#endif
 }
 
 // Draw rectangle outline
@@ -360,6 +455,21 @@ void DrawRectangleLines(int posX, int posY, int width, int height, Color color)
         DrawRectangle(posX, posY + height - 1, width, 1, color);
         DrawRectangle(posX, posY + 1, 1, height - 2, color);
     }
+}
+
+// Draw rectangle outline with extended parameters
+void DrawRectangleLinesEx(Rectangle rec, int lineThick, Color color)
+{   
+    if (lineThick > rec.width || lineThick > rec.height)
+    {
+        if(rec.width > rec.height) lineThick = rec.height/2;
+        else if (rec.width < rec.height) lineThick = rec.width/2;
+    }        
+    
+    DrawRectangle(rec.x, rec.y, rec.width, lineThick, color);
+    DrawRectangle(rec.x - lineThick + rec.width, rec.y + lineThick, lineThick, rec.height - lineThick*2, color);
+    DrawRectangle(rec.x, rec.y + rec.height - lineThick, rec.width, lineThick, color);
+    DrawRectangle(rec.x, rec.y + lineThick, lineThick, rec.height - lineThick*2, color);
 }
 
 // Draw a triangle
@@ -627,6 +737,8 @@ Rectangle GetCollisionRec(Rectangle rec1, Rectangle rec2)
 // NOTE: Required for DrawLineBezier()
 static float EaseCubicInOut(float t, float b, float c, float d) 
 { 
-    if ((t/=d/2) < 1) return (c/2*t*t*t + b);
-    return (c/2*((t-=2)*t*t + 2) + b);
+    if ((t /= 0.5*d) < 1)
+        return 0.5*c*t*t*t + b;
+    t -= 2;
+    return 0.5*c*(t*t*t + 2) + b;
 }

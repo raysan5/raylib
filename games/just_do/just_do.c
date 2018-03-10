@@ -16,6 +16,10 @@
 #include "raylib.h"
 #include "screens/screens.h"    // NOTE: Defines currentScreen
 
+#if defined(PLATFORM_ANDROID)
+    #include "android_native_app_glue.h"
+#endif
+
 #if defined(PLATFORM_WEB)
     #include <emscripten/emscripten.h>
 #endif
@@ -49,14 +53,19 @@ void UpdateDrawFrame(void);     // Update and Draw one frame
 //----------------------------------------------------------------------------------
 // Main entry point
 //----------------------------------------------------------------------------------
+#if defined(PLATFORM_ANDROID)
+void android_main(struct android_app *app) 
+#else
 int main(void)
+#endif
 {
 	// Initialization
 	//---------------------------------------------------------
-	const char windowTitle[30] = "JUST DO";
-    
-    //SetupFlags(FLAG_FULLSCREEN_MODE);
-    InitWindow(screenWidth, screenHeight, windowTitle);
+#if defined(PLATFORM_ANDROID)
+    InitWindow(screenWidth, screenHeight, app);
+#else
+    InitWindow(screenWidth, screenHeight, "GGJ15 - JUST DO");
+#endif
 
     // Load global data here (assets that must be available in all screens, i.e. fonts)
     InitAudioDevice();
@@ -95,8 +104,9 @@ int main(void)
     
     CloseWindow();        // Close window and OpenGL context
     //--------------------------------------------------------------------------------------
-    
+#if !defined(PLATFORM_ANDROID)
     return 0;
+#endif
 }
 
 //----------------------------------------------------------------------------------
