@@ -10,7 +10,7 @@
 *   gcc -o $(NAME_PART).exe $(FILE_NAME) -s $(RAYLIB_DIR)\raylib\raylib_icon -static -lraylib -lpthread 
 *   -lglfw3 -lopengl32 -lgdi32 -lopenal32 -lwinmm -std=c99 -Wl,--subsystem,windows -Wl,-allow-multiple-definition
 *   
-*   Copyright (c) 2017 Victor Fisac
+*   Copyright (c) 2016-2018 Victor Fisac
 *
 ********************************************************************************************/
 
@@ -32,6 +32,7 @@ int main()
     // Physac logo drawing position
     int logoX = screenWidth - MeasureText("Physac", 30) - 10;
     int logoY = 15;
+    bool needsReset = false;
 
     // Initialize physics and default physics bodies
     InitPhysics();
@@ -52,15 +53,21 @@ int main()
     {
         // Update
         //----------------------------------------------------------------------------------
-        if (IsKeyPressed('R'))    // Reset physics input
+        // Delay initialization of variables due to physics reset async
+        if (needsReset)
         {
-            ResetPhysics();
-
             floor = CreatePhysicsBodyRectangle((Vector2){ screenWidth/2, screenHeight }, 500, 100, 10);
             floor->enabled = false;
 
             circle = CreatePhysicsBodyCircle((Vector2){ screenWidth/2, screenHeight/2 }, 45, 10);
             circle->enabled = false;
+        }
+
+        // Reset physics input
+        if (IsKeyPressed('R'))
+        {
+            ResetPhysics();
+            needsReset = true;
         }
 
         // Physics body creation inputs
