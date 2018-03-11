@@ -1179,9 +1179,9 @@ Mesh GenMeshHeightmap(Image heightmap, Vector3 size)
     Color *pixels = GetImageData(heightmap);
 
     // NOTE: One vertex per pixel
-    int triangleCount = (mapX-1)*(mapZ-1)*2;    // One quad every four pixels
+    mesh.triangleCount = (mapX-1)*(mapZ-1)*2;    // One quad every four pixels
 
-    mesh.vertexCount = triangleCount*3;
+    mesh.vertexCount = mesh.triangleCount*3;
 
     mesh.vertices = (float *)malloc(mesh.vertexCount*3*sizeof(float));
     mesh.normals = (float *)malloc(mesh.vertexCount*3*sizeof(float));
@@ -1584,6 +1584,7 @@ Mesh GenMeshCubicmap(Image cubicmap, Vector3 cubeSize)
 
     // Move data from mapVertices temp arays to vertices float array
     mesh.vertexCount = vCounter;
+    mesh.triangleCount = vCounter/3;
 
     mesh.vertices = (float *)malloc(mesh.vertexCount*3*sizeof(float));
     mesh.normals = (float *)malloc(mesh.vertexCount*3*sizeof(float));
