@@ -113,7 +113,7 @@ static Material LoadMaterialPBR(Color albedo, float metalness, float roughness)
     mat.shader.locs[LOC_MAP_METALNESS] = GetShaderLocation(mat.shader, "metalness.sampler");
     mat.shader.locs[LOC_MAP_NORMAL] = GetShaderLocation(mat.shader, "normals.sampler");
     mat.shader.locs[LOC_MAP_ROUGHNESS] = GetShaderLocation(mat.shader, "roughness.sampler");
-    mat.shader.locs[LOC_MAP_OCCUSION] = GetShaderLocation(mat.shader, "occlusion.sampler");
+    mat.shader.locs[LOC_MAP_OCCLUSION] = GetShaderLocation(mat.shader, "occlusion.sampler");
     //mat.shader.locs[LOC_MAP_EMISSION] = GetShaderLocation(mat.shader, "emission.sampler");
     //mat.shader.locs[LOC_MAP_HEIGHT] = GetShaderLocation(mat.shader, "height.sampler");
     mat.shader.locs[LOC_MAP_IRRADIANCE] = GetShaderLocation(mat.shader, "irradianceMap");
