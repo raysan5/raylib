@@ -46,6 +46,10 @@ if (ENABLE_MSAN)
     add_if_flag_works(-fsanitize=memory CMAKE_C_FLAGS CMAKE_LINKER_FLAGS)
 endif()
 
+if (ENABLE_MSAN AND ENABLE_ASAN)
+    MESSAGE(WARNING "Compiling with both AddressSanitizer and MemorySanitizer is not recommended")
+endif()
+
 add_subdirectory(src release)
 
 if (${BUILD_EXAMPLES})
