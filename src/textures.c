@@ -16,7 +16,7 @@
 *   #define SUPPORT_FILEFORMAT_KTX
 *   #define SUPPORT_FILEFORMAT_PVR
 *   #define SUPPORT_FILEFORMAT_ASTC
-*       Selecte desired fileformats to be supported for image data loading. Some of those formats are 
+*       Selecte desired fileformats to be supported for image data loading. Some of those formats are
 *       supported by default, to remove support, just comment unrequired #define in this module
 *
 *   #define SUPPORT_IMAGE_MANIPULATION
@@ -112,7 +112,7 @@
     #include "external/stb_image.h"     // Required for: stbi_load_from_file()
                                         // NOTE: Used to read image data (multiple formats support)
 #endif
-                                
+
 #if defined(SUPPORT_IMAGE_MANIPULATION)
     #define STB_IMAGE_RESIZE_IMPLEMENTATION
     #include "external/stb_image_resize.h"  // Required for: stbir_resize_uint8()
@@ -188,14 +188,14 @@ Image LoadImage(const char *fileName)
         int imgWidth = 0;
         int imgHeight = 0;
         int imgBpp = 0;
-        
+
         FILE *imFile = fopen(fileName, "rb");
-        
+
         if (imFile != NULL)
         {
             // NOTE: Using stb_image to load images (Supports: BMP, TGA, PNG, JPG, ...)
             image.data = stbi_load_from_file(imFile, &imgWidth, &imgHeight, &imgBpp, 0);
-            
+
             fclose(imFile);
 
             image.width = imgWidth;
@@ -212,24 +212,24 @@ Image LoadImage(const char *fileName)
     else if (IsFileExtension(fileName, ".hdr"))
     {
         int imgBpp = 0;
-        
+
         FILE *imFile = fopen(fileName, "rb");
-        
+
         stbi_set_flip_vertically_on_load(true);
-        
-        // Load 32 bit per channel floats data 
+
+        // Load 32 bit per channel floats data
         image.data = stbi_loadf_from_file(imFile, &image.width, &image.height, &imgBpp, 0);
-        
+
         stbi_set_flip_vertically_on_load(false);
 
         fclose(imFile);
-        
+
         image.mipmaps = 1;
-        
+
         if (imgBpp == 1) image.format = UNCOMPRESSED_R32;
         else if (imgBpp == 3) image.format = UNCOMPRESSED_R32G32B32;
         else if (imgBpp == 4) image.format = UNCOMPRESSED_R32G32B32A32;
-        else 
+        else
         {
             TraceLog(LOG_WARNING, "[%s] Image fileformat not supported", fileName);
             UnloadImage(image);
@@ -319,10 +319,10 @@ Image LoadImageRaw(const char *fileName, int width, int height, int format, int 
         if (headerSize > 0) fseek(rawFile, headerSize, SEEK_SET);
 
         unsigned int size = GetPixelDataSize(width, height, format);
-        
+
         image.data = malloc(size);      // Allocate required memory in bytes
 
-        // NOTE: fread() returns num read elements instead of bytes, 
+        // NOTE: fread() returns num read elements instead of bytes,
         // to get bytes we need to read (1 byte size, elements) instead of (x byte size, 1 element)
         int bytes = fread(image.data, 1, size, rawFile);
 
@@ -430,7 +430,7 @@ Color *GetImageData(Image image)
                 pixels[i].g = ((unsigned char *)image.data)[i];
                 pixels[i].b = ((unsigned char *)image.data)[i];
                 pixels[i].a = 255;
-                
+
             } break;
             case UNCOMPRESSED_GRAY_ALPHA:
             {
@@ -469,7 +469,7 @@ Color *GetImageData(Image image)
                 pixels[i].g = (unsigned char)((float)((pixel & 0b0000111100000000) >> 8)*(255/15));
                 pixels[i].b = (unsigned char)((float)((pixel & 0b0000000011110000) >> 4)*(255/15));
                 pixels[i].a = (unsigned char)((float)(pixel & 0b0000000000001111)*(255/15));
-                
+
             } break;
             case UNCOMPRESSED_R8G8B8A8:
             {
@@ -516,7 +516,7 @@ int GetPixelDataSize(int width, int height, int format)
         case UNCOMPRESSED_R32G32B32: bpp = 32*3; break;
         case UNCOMPRESSED_R32G32B32A32: bpp = 32*4; break;
         case COMPRESSED_DXT1_RGB:
-        case COMPRESSED_DXT1_RGBA: 
+        case COMPRESSED_DXT1_RGBA:
         case COMPRESSED_ETC1_RGB:
         case COMPRESSED_ETC2_RGB:
         case COMPRESSED_PVRT_RGB:
@@ -530,7 +530,7 @@ int GetPixelDataSize(int width, int height, int format)
     }
 
     dataSize = width*height*bpp/8;  // Total data size in bytes
-    
+
     return dataSize;
 }
 
@@ -539,7 +539,7 @@ int GetPixelDataSize(int width, int height, int format)
 Image GetTextureData(Texture2D texture)
 {
     Image image = { 0 };
-    
+
     if (texture.format < 8)
     {
         image.data = rlReadTexturePixels(texture);
@@ -550,7 +550,7 @@ Image GetTextureData(Texture2D texture)
             image.height = texture.height;
             image.format = texture.format;
             image.mipmaps = 1;
-            
+
             // NOTE: Data retrieved on OpenGL ES 2.0 should be RGBA
             // coming from FBO color buffer, but it seems original
             // texture format is retrieved on RPI... weird...
@@ -597,15 +597,15 @@ Image ImageCopy(Image image)
     for (int i = 0; i < image.mipmaps; i++)
     {
         size += GetPixelDataSize(width, height, image.format);
-        
+
         width /= 2;
         height /= 2;
-        
+
         // Security check for NPOT textures
         if (width < 1) width = 1;
         if (height < 1) height = 1;
     }
-    
+
     newImage.data = malloc(size);
 
     if (newImage.data != NULL)
@@ -677,7 +677,7 @@ void ImageFormat(Image *image, int newFormat)
             Color *pixels = GetImageData(*image);
 
             free(image->data);      // WARNING! We loose mipmaps data --> Regenerated at the end...
-
+            image->data = NULL;
             image->format = newFormat;
 
             int k = 0;
@@ -771,7 +771,7 @@ void ImageFormat(Image *image, int newFormat)
                         g = (unsigned char)(round((float)pixels[i].g*15.0f/255));
                         b = (unsigned char)(round((float)pixels[i].b*15.0f/255));
                         a = (unsigned char)(round((float)pixels[i].a*15.0f/255));
-                        
+
                         ((unsigned short *)image->data)[i] = (unsigned short)r << 12 | (unsigned short)g << 8 | (unsigned short)b << 4 | (unsigned short)a;
                     }
 
@@ -791,7 +791,7 @@ void ImageFormat(Image *image, int newFormat)
                 case UNCOMPRESSED_R32:
                 {
                     image->data = (float *)malloc(image->width*image->height*sizeof(float));
-                    
+
                     for (int i = 0; i < image->width*image->height; i++)
                     {
                         ((float *)image->data)[i] = (float)((float)pixels[i].r*0.299f/255.0f + (float)pixels[i].g*0.587f/255.0f + (float)pixels[i].b*0.114f/255.0f);
@@ -824,12 +824,13 @@ void ImageFormat(Image *image, int newFormat)
             }
 
             free(pixels);
-            
+            pixels = NULL;
             // In case original image had mipmaps, generate mipmaps for formated image
             // NOTE: Original mipmaps are replaced by new ones, if custom mipmaps were used, they are lost
-            if (image->mipmaps > 1) 
+            if (image->mipmaps > 1)
             {
                 image->mipmaps = 1;
+		assert(image->data != NULL);
                 ImageMipmaps(image);
             }
         }
