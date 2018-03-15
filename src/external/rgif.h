@@ -911,7 +911,6 @@ static void GifWriteLzwImage(FILE *f, unsigned char *image, unsigned int left, u
                     GifWriteCode(f, &stat, clearCode, codeSize); // clear tree
                     
                     memset(codetree, 0, sizeof(GifLzwNode)*4096);
-                    curCode = -1;
                     codeSize = minCodeSize + 1;
                     maxCode = clearCode + 1;
                 }
