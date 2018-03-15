@@ -1,6 +1,6 @@
 /**********************************************************************************************
 *
-*   raymath v1.1 - Math functions to work with Vector3, Matrix and Quaternions
+*   raymath v1.2 - Math functions to work with Vector3, Matrix and Quaternions
 *
 *   CONFIGURATION:
 *
@@ -83,6 +83,11 @@
     #define RAD2DEG (180.0f/PI)
 #endif
 
+// Return float vector
+#ifndef MatrixToFloat
+    #define MatrixToFloat(mat) (MatrixToFloatV(mat).v)
+#endif
+
 //----------------------------------------------------------------------------------
 // Types and Structures Definition
 //----------------------------------------------------------------------------------
@@ -110,13 +115,9 @@
     } Matrix;
 #endif
 
-// Helper types to be used instead of array return types for *ToFloat functions
-typedef struct Float3 {
-    float f[3];
-} Float3;
-typedef struct Float16 {
-    float f[16];
-} Float16;
+// NOTE: Helper types to be used instead of array return types for *ToFloat functions
+typedef struct float3 { float v[3]; } float3;
+typedef struct float16 { float v[16]; } float16;
 
 // Quaternion type
 typedef struct Quaternion {
@@ -465,18 +466,18 @@ RMDEF Vector3 Vector3Barycenter(Vector3 p, Vector3 a, Vector3 b, Vector3 c)
 }
 
 // Returns Vector3 as float array
-RMDEF Float3 Vector3ToFloat_(Vector3 vec)
+RMDEF float3 Vector3ToFloat_(Vector3 vec)
 {
-    Float3 buffer;
+    float3 buffer;
 
-    buffer.f[0] = vec.x;
-    buffer.f[1] = vec.y;
-    buffer.f[2] = vec.z;
+    buffer.v[0] = vec.x;
+    buffer.v[1] = vec.y;
+    buffer.v[2] = vec.z;
 
     return buffer;
 }
 #ifndef Vector3ToFloat
-#define Vector3ToFloat(vec) (Vector3ToFloat_(vec).f) 
+#define Vector3ToFloat(vec) (Vector3ToFloat_(vec).v) 
 #endif
 
 //----------------------------------------------------------------------------------
@@ -913,32 +914,29 @@ RMDEF Matrix MatrixLookAt(Vector3 eye, Vector3 target, Vector3 up)
 }
 
 // Returns float array of matrix data
-RMDEF Float16 MatrixToFloat_(Matrix mat)
+RMDEF float16 MatrixToFloatV(Matrix mat)
 {
-    Float16 buffer;
+    float16 buffer;
 
-    buffer.f[0] = mat.m0;
-    buffer.f[1] = mat.m1;
-    buffer.f[2] = mat.m2;
-    buffer.f[3] = mat.m3;
-    buffer.f[4] = mat.m4;
-    buffer.f[5] = mat.m5;
-    buffer.f[6] = mat.m6;
-    buffer.f[7] = mat.m7;
-    buffer.f[8] = mat.m8;
-    buffer.f[9] = mat.m9;
-    buffer.f[10] = mat.m10;
-    buffer.f[11] = mat.m11;
-    buffer.f[12] = mat.m12;
-    buffer.f[13] = mat.m13;
-    buffer.f[14] = mat.m14;
-    buffer.f[15] = mat.m15;
+    buffer.v[0] = mat.m0;
+    buffer.v[1] = mat.m1;
+    buffer.v[2] = mat.m2;
+    buffer.v[3] = mat.m3;
+    buffer.v[4] = mat.m4;
+    buffer.v[5] = mat.m5;
+    buffer.v[6] = mat.m6;
+    buffer.v[7] = mat.m7;
+    buffer.v[8] = mat.m8;
+    buffer.v[9] = mat.m9;
+    buffer.v[10] = mat.m10;
+    buffer.v[11] = mat.m11;
+    buffer.v[12] = mat.m12;
+    buffer.v[13] = mat.m13;
+    buffer.v[14] = mat.m14;
+    buffer.v[15] = mat.m15;
 
     return buffer;
 }
-#ifndef MatrixToFloat
-#define MatrixToFloat(mat) (MatrixToFloat_(mat).f)
-#endif
 
 //----------------------------------------------------------------------------------
 // Module Functions Definition - Quaternion math
