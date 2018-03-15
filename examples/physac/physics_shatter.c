@@ -38,8 +38,8 @@ int main()
     SetPhysicsGravity(0, 0);
 
     // Create random polygon physics body to shatter
-    PhysicsBody body = CreatePhysicsBodyPolygon((Vector2){ screenWidth/2, screenHeight/2 }, GetRandomValue(80, 200), GetRandomValue(3, 8), 10);
-    
+    CreatePhysicsBodyPolygon((Vector2){ screenWidth/2, screenHeight/2 }, GetRandomValue(80, 200), GetRandomValue(3, 8), 10);
+
     SetTargetFPS(60);
     //--------------------------------------------------------------------------------------
 
@@ -53,7 +53,7 @@ int main()
             ResetPhysics();
 
             // Create random polygon physics body to shatter
-            body = CreatePhysicsBodyPolygon((Vector2){ screenWidth/2, screenHeight/2 }, GetRandomValue(80, 200), GetRandomValue(3, 8), 10);
+            CreatePhysicsBodyPolygon((Vector2){ screenWidth/2, screenHeight/2 }, GetRandomValue(80, 200), GetRandomValue(3, 8), 10);
         }
 
         if (IsMouseButtonPressed(MOUSE_LEFT_BUTTON))    // Physics shatter input
