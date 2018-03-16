@@ -499,17 +499,33 @@ void InitWindow(int width, int height, void *data)
 #endif
 
 #if defined(PLATFORM_ANDROID)
+/* To allow easier porting to android, we allow the user to define a main function
+ * which we call from android_main, that we define ourselves
+ */
+extern int main(int argc, char *argv[]);
+void android_main(struct android_app *_app) {
+    char arg0[] = "raylib"; /* argv[] are mutable */
+    app = _app;
+    /* TODO should we maybe report != 0 return codes somewhere? */
+    (void)main(1, (char*[]){ arg0, NULL });
+}
+/* TODO add this to header, if apps really need it) */
+struct android_app *GetAndroidApp(void)
+{
+    return app;
+}
+
 // Initialize window and OpenGL context (and Android activity)
 // NOTE: data parameter could be used to pass any kind of required data to the initialization
 void InitWindow(int width, int height, void *data)
 {
+    (void)data; // ignored
     TraceLog(LOG_INFO, "Initializing raylib (v1.9.6-dev)");
 
     screenWidth = width;
     screenHeight = height;
 
     // Input data is android app pointer
-    app = (struct android_app *)data;
     internalDataPath = app->activity->internalDataPath;
 
     // Set desired windows flags before initializing anything
