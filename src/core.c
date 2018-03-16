@@ -126,6 +126,7 @@
 #include <math.h>           // Required for: tan() [Used in Begin3dMode() to set perspective]
 #include <string.h>         // Required for: strrchr(), strcmp()
 //#include <errno.h>          // Macros for reporting and retrieving error conditions through error codes
+#include <ctype.h>          // Required for: tolower() [Used in IsFileExtension()]
 
 #if defined(_WIN32)
     #include <direct.h>             // Required for: _getch(), _chdir()
@@ -1252,6 +1253,28 @@ bool IsFileExtension(const char *fileName, const char *ext)
     if ((fileExt = strrchr(fileName, '.')) != NULL)
     {
         if (strcmp(fileExt, ext) == 0) result = true;
+    }
+    
+    if ((fileExt = strrchr(fileName, '.')) != NULL)
+    {
+    #if defined(_WIN32)
+        result = true;
+        int extLen = strlen(ext);
+        
+        if (strlen(fileExt) == extLen)
+        {
+            for (int i = 0; i < extLen; i++)
+            {
+                if (tolower(fileExt[i]) != tolower(ext[i]))
+                {
+                    result = false;
+                    break;
+                }
+            }
+        }
+    #else
+        if (strcmp(fileExt, ext) == 0) result = true;
+    #endif
     }
 
     return result;
