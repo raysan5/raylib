@@ -83,9 +83,14 @@
     #define RAD2DEG (180.0f/PI)
 #endif
 
-// Return float vector
+// Return float vector for Matrix
 #ifndef MatrixToFloat
     #define MatrixToFloat(mat) (MatrixToFloatV(mat).v)
+#endif
+
+// Return float vector for Vector3
+#ifndef Vector3ToFloat
+    #define Vector3ToFloat(vec) (Vector3ToFloatV(vec).v) 
 #endif
 
 //----------------------------------------------------------------------------------
@@ -147,84 +152,86 @@ RMDEF float Clamp(float value, float min, float max)
 // Vector with components value 0.0f
 RMDEF Vector2 Vector2Zero(void) 
 { 
-    Vector2 tmp = {0.0f, 0.0f};
-    return tmp;
+    Vector2 result = { 0.0f, 0.0f };
+    return result;
 }
 
 // Vector with components value 1.0f
 RMDEF Vector2 Vector2One(void) 
 { 
-    Vector2 tmp = {1.0f, 1.0f};
-    return tmp;
+    Vector2 result = { 1.0f, 1.0f };
+    return result;
 }
 
 // Add two vectors (v1 + v2)
 RMDEF Vector2 Vector2Add(Vector2 v1, Vector2 v2)
 {
-    Vector2 tmp = { v1.x + v2.x, v1.y + v2.y };
-    return tmp;
+    Vector2 result = { v1.x + v2.x, v1.y + v2.y };
+    return result;
 }
 
 // Subtract two vectors (v1 - v2)
 RMDEF Vector2 Vector2Subtract(Vector2 v1, Vector2 v2)
 {
-    Vector2 tmp = { v1.x - v2.x, v1.y - v2.y };
-    return tmp;
+    Vector2 result = { v1.x - v2.x, v1.y - v2.y };
+    return result;
 }
 
 // Calculate vector length
 RMDEF float Vector2Length(Vector2 v)
 {
-    return sqrtf((v.x*v.x) + (v.y*v.y));
+    float result = sqrtf((v.x*v.x) + (v.y*v.y));
+    return result;
 }
 
 // Calculate two vectors dot product
 RMDEF float Vector2DotProduct(Vector2 v1, Vector2 v2)
 {
-    return (v1.x*v2.x + v1.y*v2.y);
+    float result = (v1.x*v2.x + v1.y*v2.y);
+    return result;
 }
 
 // Calculate distance between two vectors
 RMDEF float Vector2Distance(Vector2 v1, Vector2 v2)
 {
-    return sqrtf((v1.x - v2.x)*(v1.x - v2.x) + (v1.y - v2.y)*(v1.y - v2.y));
+    float result = sqrtf((v1.x - v2.x)*(v1.x - v2.x) + (v1.y - v2.y)*(v1.y - v2.y));
+    return result;
 }
 
 // Calculate angle from two vectors in X-axis
 RMDEF float Vector2Angle(Vector2 v1, Vector2 v2)
 {
-    float angle = atan2f(v2.y - v1.y, v2.x - v1.x)*(180.0f/PI);
-    
-    if (angle < 0) angle += 360.0f;
-
-    return angle;
+    float result = atan2f(v2.y - v1.y, v2.x - v1.x)*(180.0f/PI);
+    if (result < 0) result += 360.0f;
+    return result;
 }
 
 // Scale vector (multiply by value)
-RMDEF void Vector2Scale(Vector2 *v, float scale)
+RMDEF Vector2 Vector2Scale(Vector2 v, float scale)
 {
-    v->x *= scale;
-    v->y *= scale;
+    Vector2 result = { v.x*scale, v.y*scale };
+    return result;
 }
 
 // Negate vector
-RMDEF void Vector2Negate(Vector2 *v)
+RMDEF Vector2 Vector2Negate(Vector2 v)
 {
-    v->x = -v->x;
-    v->y = -v->y;
+    Vector2 result = { -v.x, -v.y };
+    return result;
 }
 
 // Divide vector by a float value
-RMDEF void Vector2Divide(Vector2 *v, float div)
+RMDEF Vector2 Vector2Divide(Vector2 v, float div)
 {
-    Vector2 tmp = {v->x/div, v->y/div};
-    *v = tmp;
+    Vector2 result = { v.x/div, v.y/div };
+    return result;
 }
 
 // Normalize provided vector
-RMDEF void Vector2Normalize(Vector2 *v)
+RMDEF Vector2 Vector2Normalize(Vector2 v)
 {
-    Vector2Divide(v, Vector2Length(*v));
+    Vector2 result = Vector2Divide(v, Vector2Length(v));
+    return result;
 }
 
 //----------------------------------------------------------------------------------
@@ -234,69 +241,56 @@ RMDEF void Vector2Normalize(Vector2 *v)
 // Vector with components value 0.0f
 RMDEF Vector3 Vector3Zero(void) 
 { 
-    Vector3 tmp = { 0.0f, 0.0f, 0.0f };
-    return tmp; 
+    Vector3 result = { 0.0f, 0.0f, 0.0f };
+    return result; 
 }
 
 // Vector with components value 1.0f
 RMDEF Vector3 Vector3One(void) 
 { 
-    Vector3 tmp = { 1.0f, 1.0f, 1.0f };
-    return tmp; 
+    Vector3 result = { 1.0f, 1.0f, 1.0f };
+    return result; 
 }
 
 // Add two vectors
 RMDEF Vector3 Vector3Add(Vector3 v1, Vector3 v2)
 {
-    Vector3 tmp = { v1.x + v2.x, v1.y + v2.y, v1.z + v2.z };
-    return tmp; 
+    Vector3 result = { v1.x + v2.x, v1.y + v2.y, v1.z + v2.z };
+    return result; 
 }
 
 // Substract two vectors
 RMDEF Vector3 Vector3Subtract(Vector3 v1, Vector3 v2)
 {
-    Vector3 tmp = { v1.x - v2.x, v1.y - v2.y, v1.z - v2.z };
-    return tmp; 
+    Vector3 result = { v1.x - v2.x, v1.y - v2.y, v1.z - v2.z };
+    return result; 
 }
 
 // Multiply vector by scalar
 RMDEF Vector3 Vector3Multiply(Vector3 v, float scalar)
-{	
-    v.x *= scalar;
-    v.y *= scalar;
-    v.z *= scalar;
-
-    return v;
+{
+    Vector3 result = { v.x*scalar, v.y*scalar, v.z*scalar };
+    return result;
 }
 
 // Multiply vector by vector
 RMDEF Vector3 Vector3MultiplyV(Vector3 v1, Vector3 v2)
 {	
-    Vector3 result;
-
-    result.x = v1.x * v2.x;
-    result.y = v1.y * v2.y;
-    result.z = v1.z * v2.z;
-
+    Vector3 result = { v1.x*v2.x, v1.y*v2.y, v1.z*v2.z };
     return result;
 }
 
 // Calculate two vectors cross product
 RMDEF Vector3 Vector3CrossProduct(Vector3 v1, Vector3 v2)
 {
-    Vector3 result;
-
-    result.x = v1.y*v2.z - v1.z*v2.y;
-    result.y = v1.z*v2.x - v1.x*v2.z;
-    result.z = v1.x*v2.y - v1.y*v2.x;
-
+    Vector3 result = { v1.y*v2.z - v1.z*v2.y, v1.z*v2.x - v1.x*v2.z, v1.x*v2.y - v1.y*v2.x };
     return result;
 }
 
 // Calculate one vector perpendicular vector
 RMDEF Vector3 Vector3Perpendicular(Vector3 v)
 {
-    Vector3 result;
+    Vector3 result = { 0 };
 
     float min = fabsf(v.x);
     Vector3 cardinalAxis = {1.0f, 0.0f, 0.0f};
@@ -322,13 +316,15 @@ RMDEF Vector3 Vector3Perpendicular(Vector3 v)
 // Calculate vector length
 RMDEF float Vector3Length(const Vector3 v)
 {
-    return sqrtf(v.x*v.x + v.y*v.y + v.z*v.z);
+    float result = sqrtf(v.x*v.x + v.y*v.y + v.z*v.z);
+    return result;
 }
 
 // Calculate two vectors dot product
 RMDEF float Vector3DotProduct(Vector3 v1, Vector3 v2)
 {
-    return (v1.x*v2.x + v1.y*v2.y + v1.z*v2.z);
+    float result = (v1.x*v2.x + v1.y*v2.y + v1.z*v2.z);
+    return result;
 }
 
 // Calculate distance between two vectors
@@ -337,58 +333,60 @@ RMDEF float Vector3Distance(Vector3 v1, Vector3 v2)
     float dx = v2.x - v1.x;
     float dy = v2.y - v1.y;
     float dz = v2.z - v1.z;
-
-    return sqrtf(dx*dx + dy*dy + dz*dz);
+    float result = sqrtf(dx*dx + dy*dy + dz*dz);
+    return result;
 }
 
 // Scale provided vector
-RMDEF void Vector3Scale(Vector3 *v, float scale)
+RMDEF Vector3 Vector3Scale(Vector3 v, float scale)
 {
-    v->x *= scale;
-    v->y *= scale;
-    v->z *= scale;
+    Vector3 result = { v.x*scale, v.y*scale, v.z*scale };
+    return result;
 }
 
 // Negate provided vector (invert direction)
-RMDEF void Vector3Negate(Vector3 *v)
+RMDEF Vector3 Vector3Negate(Vector3 v)
 {
-    v->x = -v->x;
-    v->y = -v->y;
-    v->z = -v->z;
+    Vector3 result = { -v.x, -v.y, -v.z };
+    return result;
 }
 
 // Normalize provided vector
-RMDEF void Vector3Normalize(Vector3 *v)
+RMDEF Vector3 Vector3Normalize(Vector3 v)
 {
+    Vector3 result = v;
+    
     float length, ilength;
-
-    length = Vector3Length(*v);
-
+    length = Vector3Length(v);
     if (length == 0.0f) length = 1.0f;
-
     ilength = 1.0f/length;
 
-    v->x *= ilength;
-    v->y *= ilength;
-    v->z *= ilength;
+    result.x *= ilength;
+    result.y *= ilength;
+    result.z *= ilength;
+
+    return result;
 }
 
 // Transforms a Vector3 by a given Matrix
-RMDEF void Vector3Transform(Vector3 *v, Matrix mat)
+RMDEF Vector3 Vector3Transform(Vector3 v, Matrix mat)
 {
-    float x = v->x;
-    float y = v->y;
-    float z = v->z;
+    Vector3 result = { 0 };
+    float x = v.x;
+    float y = v.y;
+    float z = v.z;
 
-    v->x = mat.m0*x + mat.m4*y + mat.m8*z + mat.m12;
-    v->y = mat.m1*x + mat.m5*y + mat.m9*z + mat.m13;
-    v->z = mat.m2*x + mat.m6*y + mat.m10*z + mat.m14;
+    result.x = mat.m0*x + mat.m4*y + mat.m8*z + mat.m12;
+    result.y = mat.m1*x + mat.m5*y + mat.m9*z + mat.m13;
+    result.z = mat.m2*x + mat.m6*y + mat.m10*z + mat.m14;
+    
+    return result;
 };
 
 // Calculate linear interpolation between two vectors
 RMDEF Vector3 Vector3Lerp(Vector3 v1, Vector3 v2, float amount)
 {
-    Vector3 result;
+    Vector3 result = { 0 };
 
     result.x = v1.x + amount*(v2.x - v1.x);
     result.y = v1.y + amount*(v2.y - v1.y);
@@ -398,43 +396,43 @@ RMDEF Vector3 Vector3Lerp(Vector3 v1, Vector3 v2, float amount)
 }
 
 // Calculate reflected vector to normal
-RMDEF Vector3 Vector3Reflect(Vector3 vector, Vector3 normal)
+RMDEF Vector3 Vector3Reflect(Vector3 v, Vector3 normal)
 {
     // I is the original vector
     // N is the normal of the incident plane
     // R = I - (2*N*( DotProduct[ I,N] ))
 
-    Vector3 result;
+    Vector3 result = { 0 };
 
-    float dotProduct = Vector3DotProduct(vector, normal);
+    float dotProduct = Vector3DotProduct(v, normal);
 
-    result.x = vector.x - (2.0f*normal.x)*dotProduct;
-    result.y = vector.y - (2.0f*normal.y)*dotProduct;
-    result.z = vector.z - (2.0f*normal.z)*dotProduct;
+    result.x = v.x - (2.0f*normal.x)*dotProduct;
+    result.y = v.y - (2.0f*normal.y)*dotProduct;
+    result.z = v.z - (2.0f*normal.z)*dotProduct;
 
     return result;
 }
 
 // Return min value for each pair of components
-RMDEF Vector3 Vector3Min(Vector3 vec1, Vector3 vec2)
+RMDEF Vector3 Vector3Min(Vector3 v1, Vector3 v2)
 {
-    Vector3 result;
+    Vector3 result = { 0 };
     
-    result.x = fminf(vec1.x, vec2.x);
-    result.y = fminf(vec1.y, vec2.y);
-    result.z = fminf(vec1.z, vec2.z);
+    result.x = fminf(v1.x, v2.x);
+    result.y = fminf(v1.y, v2.y);
+    result.z = fminf(v1.z, v2.z);
     
     return result;
 }
 
 // Return max value for each pair of components
-RMDEF Vector3 Vector3Max(Vector3 vec1, Vector3 vec2)
+RMDEF Vector3 Vector3Max(Vector3 v1, Vector3 v2)
 {
-    Vector3 result;
+    Vector3 result = { 0 };
     
-    result.x = fmaxf(vec1.x, vec2.x);
-    result.y = fmaxf(vec1.y, vec2.y);
-    result.z = fmaxf(vec1.z, vec2.z);
+    result.x = fmaxf(v1.x, v2.x);
+    result.y = fmaxf(v1.y, v2.y);
+    result.z = fmaxf(v1.z, v2.z);
     
     return result;
 }
@@ -456,7 +454,7 @@ RMDEF Vector3 Vector3Barycenter(Vector3 p, Vector3 a, Vector3 b, Vector3 c)
     
     float denom = d00*d11 - d01*d01;
     
-    Vector3 result;
+    Vector3 result = { 0 };
     
     result.y = (d11*d20 - d01*d21)/denom;
     result.z = (d00*d21 - d01*d20)/denom;
@@ -466,19 +464,16 @@ RMDEF Vector3 Vector3Barycenter(Vector3 p, Vector3 a, Vector3 b, Vector3 c)
 }
 
 // Returns Vector3 as float array
-RMDEF float3 Vector3ToFloat_(Vector3 vec)
+RMDEF float3 Vector3ToFloatV(Vector3 v)
 {
-    float3 buffer;
+    float3 buffer = { 0 };
 
-    buffer.v[0] = vec.x;
-    buffer.v[1] = vec.y;
-    buffer.v[2] = vec.z;
+    buffer.v[0] = v.x;
+    buffer.v[1] = v.y;
+    buffer.v[2] = v.z;
 
     return buffer;
 }
-#ifndef Vector3ToFloat
-#define Vector3ToFloat(vec) (Vector3ToFloat_(vec).v) 
-#endif
 
 //----------------------------------------------------------------------------------
 // Module Functions Definition - Matrix math
@@ -487,7 +482,7 @@ RMDEF float3 Vector3ToFloat_(Vector3 vec)
 // Compute matrix determinant
 RMDEF float MatrixDeterminant(Matrix mat)
 {
-    float result;
+    float result = { 0 };
 
     // Cache the matrix values (speed optimization)
     float a00 = mat.m0, a01 = mat.m1, a02 = mat.m2, a03 = mat.m3;
@@ -508,44 +503,45 @@ RMDEF float MatrixDeterminant(Matrix mat)
 // Returns the trace of the matrix (sum of the values along the diagonal)
 RMDEF float MatrixTrace(Matrix mat)
 {
-    return (mat.m0 + mat.m5 + mat.m10 + mat.m15);
+    float result = (mat.m0 + mat.m5 + mat.m10 + mat.m15);
+    return result;
 }
 
 // Transposes provided matrix
-RMDEF void MatrixTranspose(Matrix *mat)
+RMDEF Matrix MatrixTranspose(Matrix mat)
 {
-    Matrix temp;
+    Matrix result = { 0 };
 
-    temp.m0 = mat->m0;
-    temp.m1 = mat->m4;
-    temp.m2 = mat->m8;
-    temp.m3 = mat->m12;
-    temp.m4 = mat->m1;
-    temp.m5 = mat->m5;
-    temp.m6 = mat->m9;
-    temp.m7 = mat->m13;
-    temp.m8 = mat->m2;
-    temp.m9 = mat->m6;
-    temp.m10 = mat->m10;
-    temp.m11 = mat->m14;
-    temp.m12 = mat->m3;
-    temp.m13 = mat->m7;
-    temp.m14 = mat->m11;
-    temp.m15 = mat->m15;
+    result.m0 = mat.m0;
+    result.m1 = mat.m4;
+    result.m2 = mat.m8;
+    result.m3 = mat.m12;
+    result.m4 = mat.m1;
+    result.m5 = mat.m5;
+    result.m6 = mat.m9;
+    result.m7 = mat.m13;
+    result.m8 = mat.m2;
+    result.m9 = mat.m6;
+    result.m10 = mat.m10;
+    result.m11 = mat.m14;
+    result.m12 = mat.m3;
+    result.m13 = mat.m7;
+    result.m14 = mat.m11;
+    result.m15 = mat.m15;
 
-    *mat = temp;
+    return result;
 }
 
 // Invert provided matrix
-RMDEF void MatrixInvert(Matrix *mat)
+RMDEF Matrix MatrixInvert(Matrix mat)
 {
-    Matrix temp;
+    Matrix result = { 0 };
 
     // Cache the matrix values (speed optimization)
-    float a00 = mat->m0, a01 = mat->m1, a02 = mat->m2, a03 = mat->m3;
-    float a10 = mat->m4, a11 = mat->m5, a12 = mat->m6, a13 = mat->m7;
-    float a20 = mat->m8, a21 = mat->m9, a22 = mat->m10, a23 = mat->m11;
-    float a30 = mat->m12, a31 = mat->m13, a32 = mat->m14, a33 = mat->m15;
+    float a00 = mat.m0, a01 = mat.m1, a02 = mat.m2, a03 = mat.m3;
+    float a10 = mat.m4, a11 = mat.m5, a12 = mat.m6, a13 = mat.m7;
+    float a20 = mat.m8, a21 = mat.m9, a22 = mat.m10, a23 = mat.m11;
+    float a30 = mat.m12, a31 = mat.m13, a32 = mat.m14, a33 = mat.m15;
 
     float b00 = a00*a11 - a01*a10;
     float b01 = a00*a12 - a02*a10;
@@ -563,47 +559,51 @@ RMDEF void MatrixInvert(Matrix *mat)
     // Calculate the invert determinant (inlined to avoid double-caching)
     float invDet = 1.0f/(b00*b11 - b01*b10 + b02*b09 + b03*b08 - b04*b07 + b05*b06);
 
-    temp.m0 = (a11*b11 - a12*b10 + a13*b09)*invDet;
-    temp.m1 = (-a01*b11 + a02*b10 - a03*b09)*invDet;
-    temp.m2 = (a31*b05 - a32*b04 + a33*b03)*invDet;
-    temp.m3 = (-a21*b05 + a22*b04 - a23*b03)*invDet;
-    temp.m4 = (-a10*b11 + a12*b08 - a13*b07)*invDet;
-    temp.m5 = (a00*b11 - a02*b08 + a03*b07)*invDet;
-    temp.m6 = (-a30*b05 + a32*b02 - a33*b01)*invDet;
-    temp.m7 = (a20*b05 - a22*b02 + a23*b01)*invDet;
-    temp.m8 = (a10*b10 - a11*b08 + a13*b06)*invDet;
-    temp.m9 = (-a00*b10 + a01*b08 - a03*b06)*invDet;
-    temp.m10 = (a30*b04 - a31*b02 + a33*b00)*invDet;
-    temp.m11 = (-a20*b04 + a21*b02 - a23*b00)*invDet;
-    temp.m12 = (-a10*b09 + a11*b07 - a12*b06)*invDet;
-    temp.m13 = (a00*b09 - a01*b07 + a02*b06)*invDet;
-    temp.m14 = (-a30*b03 + a31*b01 - a32*b00)*invDet;
-    temp.m15 = (a20*b03 - a21*b01 + a22*b00)*invDet;
+    result.m0 = (a11*b11 - a12*b10 + a13*b09)*invDet;
+    result.m1 = (-a01*b11 + a02*b10 - a03*b09)*invDet;
+    result.m2 = (a31*b05 - a32*b04 + a33*b03)*invDet;
+    result.m3 = (-a21*b05 + a22*b04 - a23*b03)*invDet;
+    result.m4 = (-a10*b11 + a12*b08 - a13*b07)*invDet;
+    result.m5 = (a00*b11 - a02*b08 + a03*b07)*invDet;
+    result.m6 = (-a30*b05 + a32*b02 - a33*b01)*invDet;
+    result.m7 = (a20*b05 - a22*b02 + a23*b01)*invDet;
+    result.m8 = (a10*b10 - a11*b08 + a13*b06)*invDet;
+    result.m9 = (-a00*b10 + a01*b08 - a03*b06)*invDet;
+    result.m10 = (a30*b04 - a31*b02 + a33*b00)*invDet;
+    result.m11 = (-a20*b04 + a21*b02 - a23*b00)*invDet;
+    result.m12 = (-a10*b09 + a11*b07 - a12*b06)*invDet;
+    result.m13 = (a00*b09 - a01*b07 + a02*b06)*invDet;
+    result.m14 = (-a30*b03 + a31*b01 - a32*b00)*invDet;
+    result.m15 = (a20*b03 - a21*b01 + a22*b00)*invDet;
 
-    *mat = temp;
+    return result;
 }
 
 // Normalize provided matrix
-RMDEF void MatrixNormalize(Matrix *mat)
+RMDEF Matrix MatrixNormalize(Matrix mat)
 {
-    float det = MatrixDeterminant(*mat);
+    Matrix result = { 0 };
+    
+    float det = MatrixDeterminant(mat);
 
-    mat->m0 /= det;
-    mat->m1 /= det;
-    mat->m2 /= det;
-    mat->m3 /= det;
-    mat->m4 /= det;
-    mat->m5 /= det;
-    mat->m6 /= det;
-    mat->m7 /= det;
-    mat->m8 /= det;
-    mat->m9 /= det;
-    mat->m10 /= det;
-    mat->m11 /= det;
-    mat->m12 /= det;
-    mat->m13 /= det;
-    mat->m14 /= det;
-    mat->m15 /= det;
+    result.m0 = mat.m0/det;
+    result.m1 = mat.m1/det;
+    result.m2 = mat.m2/det;
+    result.m3 = mat.m3/det;
+    result.m4 = mat.m4/det;
+    result.m5 = mat.m5/det;
+    result.m6 = mat.m6/det;
+    result.m7 = mat.m7/det;
+    result.m8 = mat.m8/det;
+    result.m9 = mat.m9/det;
+    result.m10 = mat.m10/det;
+    result.m11 = mat.m11/det;
+    result.m12 = mat.m12/det;
+    result.m13 = mat.m13/det;
+    result.m14 = mat.m14/det;
+    result.m15 = mat.m15/det;
+    
+    return result;
 }
 
 // Returns identity matrix
@@ -682,7 +682,7 @@ RMDEF Matrix MatrixTranslate(float x, float y, float z)
 // NOTE: Angle should be provided in radians
 RMDEF Matrix MatrixRotate(Vector3 axis, float angle)
 {
-    Matrix result;
+    Matrix result = { 0 };
 
     float x = axis.x, y = axis.y, z = axis.z;
 
@@ -786,7 +786,7 @@ RMDEF Matrix MatrixScale(float x, float y, float z)
 // NOTE: When multiplying matrices... the order matters!
 RMDEF Matrix MatrixMultiply(Matrix left, Matrix right)
 {
-    Matrix result;
+    Matrix result = { 0 };
 
     result.m0 = left.m0*right.m0 + left.m1*right.m4 + left.m2*right.m8 + left.m3*right.m12;
     result.m1 = left.m0*right.m1 + left.m1*right.m5 + left.m2*right.m9 + left.m3*right.m13;
@@ -811,7 +811,7 @@ RMDEF Matrix MatrixMultiply(Matrix left, Matrix right)
 // Returns perspective projection matrix
 RMDEF Matrix MatrixFrustum(double left, double right, double bottom, double top, double near, double far)
 {
-    Matrix result;
+    Matrix result = { 0 };
 
     float rl = (right - left);
     float tb = (top - bottom);
@@ -846,14 +846,15 @@ RMDEF Matrix MatrixPerspective(double fovy, double aspect, double near, double f
 {
     double top = near*tan(fovy*0.5); 
     double right = top*aspect;
+    Matrix result = MatrixFrustum(-right, right, -top, top, near, far);
 
-    return MatrixFrustum(-right, right, -top, top, near, far);
+    return result; 
 }
 
 // Returns orthographic projection matrix
 RMDEF Matrix MatrixOrtho(double left, double right, double bottom, double top, double near, double far)
 {
-    Matrix result;
+    Matrix result = { 0 };
 
     float rl = (right - left);
     float tb = (top - bottom);
@@ -882,14 +883,14 @@ RMDEF Matrix MatrixOrtho(double left, double right, double bottom, double top, d
 // Returns camera look-at matrix (view matrix)
 RMDEF Matrix MatrixLookAt(Vector3 eye, Vector3 target, Vector3 up)
 {
-    Matrix result;
+    Matrix result = { 0 };
 
     Vector3 z = Vector3Subtract(eye, target);
-    Vector3Normalize(&z);
+    z = Vector3Normalize(z);
     Vector3 x = Vector3CrossProduct(up, z);
-    Vector3Normalize(&x);
+    x = Vector3Normalize(x);
     Vector3 y = Vector3CrossProduct(z, x);
-    Vector3Normalize(&y);
+    y = Vector3Normalize(y);
     
     result.m0 = x.x;
     result.m1 = x.y;
@@ -908,7 +909,7 @@ RMDEF Matrix MatrixLookAt(Vector3 eye, Vector3 target, Vector3 up)
     result.m14 = eye.z;
     result.m15 = 1.0f;
 
-    MatrixInvert(&result);
+    result = MatrixInvert(result);
 
     return result;
 }
@@ -916,7 +917,7 @@ RMDEF Matrix MatrixLookAt(Vector3 eye, Vector3 target, Vector3 up)
 // Returns float array of matrix data
 RMDEF float16 MatrixToFloatV(Matrix mat)
 {
-    float16 buffer;
+    float16 buffer = { 0 };
 
     buffer.v[0] = mat.m0;
     buffer.v[1] = mat.m1;
@@ -945,54 +946,59 @@ RMDEF float16 MatrixToFloatV(Matrix mat)
 // Returns identity quaternion
 RMDEF Quaternion QuaternionIdentity(void)
 {
-    Quaternion q = { 0.0f, 0.0f, 0.0f, 1.0f };
-    return q;
+    Quaternion result = { 0.0f, 0.0f, 0.0f, 1.0f };
+    return result;
 }
 
 // Computes the length of a quaternion
-RMDEF float QuaternionLength(Quaternion quat)
+RMDEF float QuaternionLength(Quaternion q)
 {
-    return sqrt(quat.x*quat.x + quat.y*quat.y + quat.z*quat.z + quat.w*quat.w);
+    float result = sqrt(q.x*q.x + q.y*q.y + q.z*q.z + q.w*q.w);
+    return result;
 }
 
 // Normalize provided quaternion
-RMDEF void QuaternionNormalize(Quaternion *q)
+RMDEF Quaternion QuaternionNormalize(Quaternion q)
 {
+    Quaternion result = { 0 };
+    
     float length, ilength;
-
-    length = QuaternionLength(*q);
-
+    length = QuaternionLength(q);
     if (length == 0.0f) length = 1.0f;
-
     ilength = 1.0f/length;
 
-    q->x *= ilength;
-    q->y *= ilength;
-    q->z *= ilength;
-    q->w *= ilength;
+    result.x = q.x*ilength;
+    result.y = q.y*ilength;
+    result.z = q.z*ilength;
+    result.w = q.w*ilength;
+    
+    return result;
 }
 
 // Invert provided quaternion
-RMDEF void QuaternionInvert(Quaternion *quat)
+RMDEF Quaternion QuaternionInvert(Quaternion q)
 {
-    float length = QuaternionLength(*quat);
+    Quaternion result = q;
+    float length = QuaternionLength(q);
     float lengthSq = length*length;
     
     if (lengthSq != 0.0)
     {
         float i = 1.0f/lengthSq;
         
-        quat->x *= -i;
-        quat->y *= -i;
-        quat->z *= -i;
-        quat->w *= i;
+        result.x *= -i;
+        result.y *= -i;
+        result.z *= -i;
+        result.w *= i;
     }
+    
+    return result;
 }
 
 // Calculate two quaternion multiplication
 RMDEF Quaternion QuaternionMultiply(Quaternion q1, Quaternion q2)
 {
-    Quaternion result;
+    Quaternion result = { 0 };
 
     float qax = q1.x, qay = q1.y, qaz = q1.z, qaw = q1.w;
     float qbx = q2.x, qby = q2.y, qbz = q2.z, qbw = q2.w;
@@ -1008,7 +1014,7 @@ RMDEF Quaternion QuaternionMultiply(Quaternion q1, Quaternion q2)
 // Calculate linear interpolation between two quaternions
 RMDEF Quaternion QuaternionLerp(Quaternion q1, Quaternion q2, float amount)
 {
-    Quaternion result;
+    Quaternion result = { 0 };
 
     result.x = q1.x + amount*(q2.x - q1.x);
     result.y = q1.y + amount*(q2.y - q1.y);
@@ -1022,7 +1028,7 @@ RMDEF Quaternion QuaternionLerp(Quaternion q1, Quaternion q2, float amount)
 RMDEF Quaternion QuaternionNlerp(Quaternion q1, Quaternion q2, float amount)
 {
     Quaternion result = QuaternionLerp(q1, q2, amount);
-    QuaternionNormalize(&result);
+    result = QuaternionNormalize(result);
     
     return result;
 }
@@ -1030,7 +1036,7 @@ RMDEF Quaternion QuaternionNlerp(Quaternion q1, Quaternion q2, float amount)
 // Calculates spherical linear interpolation between two quaternions
 RMDEF Quaternion QuaternionSlerp(Quaternion q1, Quaternion q2, float amount)
 {
-    Quaternion result;
+    Quaternion result = { 0 };
 
     float cosHalfTheta =  q1.x*q2.x + q1.y*q2.y + q1.z*q2.z + q1.w*q2.w;
 
@@ -1066,31 +1072,31 @@ RMDEF Quaternion QuaternionSlerp(Quaternion q1, Quaternion q2, float amount)
 // Calculate quaternion based on the rotation from one vector to another
 RMDEF Quaternion QuaternionFromVector3ToVector3(Vector3 from, Vector3 to)
 {
-    Quaternion q = { 0 };
+    Quaternion result = { 0 };
 
     float cos2Theta = Vector3DotProduct(from, to);
     Vector3 cross = Vector3CrossProduct(from, to);
 
-    q.x = cross.x;
-    q.y = cross.y;
-    q.z = cross.y;
-    q.w = 1.0f + cos2Theta;     // NOTE: Added QuaternioIdentity()
+    result.x = cross.x;
+    result.y = cross.y;
+    result.z = cross.y;
+    result.w = 1.0f + cos2Theta;     // NOTE: Added QuaternioIdentity()
     
     // Normalize to essentially nlerp the original and identity to 0.5
-    QuaternionNormalize(&q);    
+    result = QuaternionNormalize(result);    
     
     // Above lines are equivalent to:
     //Quaternion result = QuaternionNlerp(q, QuaternionIdentity(), 0.5f);
     
-	return q;
+	return result;
 }
 
 // Returns a quaternion for a given rotation matrix
-RMDEF Quaternion QuaternionFromMatrix(Matrix matrix)
+RMDEF Quaternion QuaternionFromMatrix(Matrix mat)
 {
-    Quaternion result;
+    Quaternion result = { 0 };
 
-    float trace = MatrixTrace(matrix);
+    float trace = MatrixTrace(mat);
 
     if (trace > 0.0f)
     {
@@ -1098,42 +1104,42 @@ RMDEF Quaternion QuaternionFromMatrix(Matrix matrix)
         float invS = 1.0f/s;
 
         result.w = s*0.25f;
-        result.x = (matrix.m6 - matrix.m9)*invS;
-        result.y = (matrix.m8 - matrix.m2)*invS;
-        result.z = (matrix.m1 - matrix.m4)*invS;
+        result.x = (mat.m6 - mat.m9)*invS;
+        result.y = (mat.m8 - mat.m2)*invS;
+        result.z = (mat.m1 - mat.m4)*invS;
     }
     else
     {
-        float m00 = matrix.m0, m11 = matrix.m5, m22 = matrix.m10;
+        float m00 = mat.m0, m11 = mat.m5, m22 = mat.m10;
 
         if (m00 > m11 && m00 > m22)
         {
             float s = (float)sqrt(1.0f + m00 - m11 - m22)*2.0f;
             float invS = 1.0f/s;
 
-            result.w = (matrix.m6 - matrix.m9)*invS;
+            result.w = (mat.m6 - mat.m9)*invS;
             result.x = s*0.25f;
-            result.y = (matrix.m4 + matrix.m1)*invS;
-            result.z = (matrix.m8 + matrix.m2)*invS;
+            result.y = (mat.m4 + mat.m1)*invS;
+            result.z = (mat.m8 + mat.m2)*invS;
         }
         else if (m11 > m22)
         {
             float s = (float)sqrt(1.0f + m11 - m00 - m22)*2.0f;
             float invS = 1.0f/s;
 
-            result.w = (matrix.m8 - matrix.m2)*invS;
-            result.x = (matrix.m4 + matrix.m1)*invS;
+            result.w = (mat.m8 - mat.m2)*invS;
+            result.x = (mat.m4 + mat.m1)*invS;
             result.y = s*0.25f;
-            result.z = (matrix.m9 + matrix.m6)*invS;
+            result.z = (mat.m9 + mat.m6)*invS;
         }
         else
         {
             float s = (float)sqrt(1.0f + m22 - m00 - m11)*2.0f;
             float invS = 1.0f/s;
 
-            result.w = (matrix.m1 - matrix.m4)*invS;
-            result.x = (matrix.m8 + matrix.m2)*invS;
-            result.y = (matrix.m9 + matrix.m6)*invS;
+            result.w = (mat.m1 - mat.m4)*invS;
+            result.x = (mat.m8 + mat.m2)*invS;
+            result.y = (mat.m9 + mat.m6)*invS;
             result.z = s*0.25f;
         }
     }
@@ -1144,7 +1150,7 @@ RMDEF Quaternion QuaternionFromMatrix(Matrix matrix)
 // Returns a matrix for a given quaternion
 RMDEF Matrix QuaternionToMatrix(Quaternion q)
 {
-    Matrix result;
+    Matrix result = { 0 };
 
     float x = q.x, y = q.y, z = q.z, w = q.w;
 
@@ -1197,7 +1203,7 @@ RMDEF Quaternion QuaternionFromAxisAngle(Vector3 axis, float angle)
 
     angle *= 0.5f;
 
-    Vector3Normalize(&axis);
+    axis = Vector3Normalize(axis);
     
     float sinres = sinf(angle);
     float cosres = cosf(angle);
@@ -1207,7 +1213,7 @@ RMDEF Quaternion QuaternionFromAxisAngle(Vector3 axis, float angle)
     result.z = axis.z*sinres;
     result.w = cosres;
 
-    QuaternionNormalize(&result);
+    result = QuaternionNormalize(result);
 
     return result;
 }
@@ -1215,7 +1221,7 @@ RMDEF Quaternion QuaternionFromAxisAngle(Vector3 axis, float angle)
 // Returns the rotation angle and axis for a given quaternion
 RMDEF void QuaternionToAxisAngle(Quaternion q, Vector3 *outAxis, float *outAngle)
 {
-    if (fabs(q.w) > 1.0f) QuaternionNormalize(&q);
+    if (fabs(q.w) > 1.0f) q = QuaternionNormalize(q);
 
     Vector3 resAxis = { 0.0f, 0.0f, 0.0f };
     float resAngle = 0.0f;
@@ -1264,39 +1270,38 @@ RMDEF Quaternion QuaternionFromEuler(float roll, float pitch, float yaw)
 // NOTE: Angles are returned in a Vector3 struct in degrees
 RMDEF Vector3 QuaternionToEuler(Quaternion q)
 {
-    Vector3 v = { 0 };
+    Vector3 result = { 0 };
 
 	// roll (x-axis rotation)
 	float x0 = 2.0f*(q.w*q.x + q.y*q.z);
 	float x1 = 1.0f - 2.0f*(q.x*q.x + q.y*q.y);
-	v.x = atan2f(x0, x1)*RAD2DEG;
+	result.x = atan2f(x0, x1)*RAD2DEG;
 
 	// pitch (y-axis rotation)
 	float y0 = 2.0f*(q.w*q.y - q.z*q.x);
 	y0 = y0 > 1.0f ? 1.0f : y0;
 	y0 = y0 < -1.0f ? -1.0f : y0;
-	v.y = asinf(y0)*RAD2DEG;
+	result.y = asinf(y0)*RAD2DEG;
 
 	// yaw (z-axis rotation)
 	float z0 = 2.0f*(q.w*q.z + q.x*q.y);
 	float z1 = 1.0f - 2.0f*(q.y*q.y + q.z*q.z);  
-	v.z = atan2f(z0, z1)*RAD2DEG;
+	result.z = atan2f(z0, z1)*RAD2DEG;
     
-    return v;
+    return result;
 }
 
 // Transform a quaternion given a transformation matrix
-RMDEF void QuaternionTransform(Quaternion *q, Matrix mat)
+RMDEF Quaternion QuaternionTransform(Quaternion q, Matrix mat)
 {
-    float x = q->x;
-    float y = q->y;
-    float z = q->z;
-    float w = q->w;
+    Quaternion result = { 0 };
 
-    q->x = mat.m0*x + mat.m4*y + mat.m8*z + mat.m12*w;
-    q->y = mat.m1*x + mat.m5*y + mat.m9*z + mat.m13*w;
-    q->z = mat.m2*x + mat.m6*y + mat.m10*z + mat.m14*w;
-    q->w = mat.m3*x + mat.m7*y + mat.m11*z + mat.m15*w;
+    result.x = mat.m0*q.x + mat.m4*q.y + mat.m8*q.z + mat.m12*q.w;
+    result.y = mat.m1*q.x + mat.m5*q.y + mat.m9*q.z + mat.m13*q.w;
+    result.z = mat.m2*q.x + mat.m6*q.y + mat.m10*q.z + mat.m14*q.w;
+    result.w = mat.m3*q.x + mat.m7*q.y + mat.m11*q.z + mat.m15*q.w;
+    
+    return result;
 }
 
 #endif  // RAYMATH_H

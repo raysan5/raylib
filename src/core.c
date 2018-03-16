@@ -432,7 +432,7 @@ static void *GamepadThread(void *arg);                  // Mouse reading thread
 // NOTE: data parameter could be used to pass any kind of required data to the initialization
 void InitWindow(int width, int height, void *data)
 {
-    TraceLog(LOG_INFO, "Initializing raylib (v1.9.5-dev)");
+    TraceLog(LOG_INFO, "Initializing raylib (v1.9.6-dev)");
 
 #if defined(PLATFORM_DESKTOP)
     windowTitle = (char *)data;
@@ -503,7 +503,7 @@ void InitWindow(int width, int height, void *data)
 // NOTE: data parameter could be used to pass any kind of required data to the initialization
 void InitWindow(int width, int height, void *data)
 {
-    TraceLog(LOG_INFO, "Initializing raylib (v1.9.5-dev)");
+    TraceLog(LOG_INFO, "Initializing raylib (v1.9.6-dev)");
 
     screenWidth = width;
     screenHeight = height;
@@ -1025,7 +1025,7 @@ Ray GetMouseRay(Vector2 mousePosition, Camera camera)
 
     // Calculate normalized direction vector
     Vector3 direction = Vector3Subtract(farPoint, nearPoint);
-    Vector3Normalize(&direction);
+    direction = Vector3Normalize(direction);
 
     // Apply calculated vectors to ray
     ray.position = camera.position;
@@ -1047,10 +1047,10 @@ Vector2 GetWorldToScreen(Vector3 position, Camera camera)
     Quaternion worldPos = { position.x, position.y, position.z, 1.0f };
 
     // Transform world position to view
-    QuaternionTransform(&worldPos, matView);
+    worldPos = QuaternionTransform(worldPos, matView);
 
     // Transform result to projection (clip space position)
-    QuaternionTransform(&worldPos, matProj);
+    worldPos = QuaternionTransform(worldPos, matProj);
 
     // Calculate normalized device coordinates (inverted y)
     Vector3 ndcPos = { worldPos.x/worldPos.w, -worldPos.y/worldPos.w, worldPos.z/worldPos.w };

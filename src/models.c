@@ -1759,8 +1759,8 @@ void DrawBillboardRec(Camera camera, Texture2D texture, Rectangle sourceRec, Vec
     |       |
     d-------c
 */
-    Vector3Scale(&right, sizeRatio.x/2);
-    Vector3Scale(&up, sizeRatio.y/2);
+    right = Vector3Scale(right, sizeRatio.x/2);
+    up = Vector3Scale(up, sizeRatio.y/2);
 
     Vector3 p1 = Vector3Add(right, up);
     Vector3 p2 = Vector3Subtract(right, up);
@@ -1897,7 +1897,7 @@ bool CheckCollisionRaySphereEx(Ray ray, Vector3 spherePosition, float sphereRadi
     if (distance < sphereRadius) collisionDistance = vector + sqrtf(d);
     else collisionDistance = vector - sqrtf(d);
 
-    Vector3Scale(&offset, collisionDistance);
+    offset = Vector3Scale(offset, collisionDistance);
     Vector3 cPoint = Vector3Add(ray.position, offset);
 
     collisionPoint->x = cPoint.x;
@@ -2022,9 +2022,9 @@ RayHitInfo GetCollisionRayTriangle(Ray ray, Vector3 p1, Vector3 p2, Vector3 p3)
         result.distance = t;
         result.hit = true;
         result.normal = Vector3CrossProduct(edge1, edge2);
-        Vector3Normalize(&result.normal);
+        result.normal = Vector3Normalize(result.normal);
         Vector3 rayDir = ray.direction;
-        Vector3Scale(&rayDir, t);
+        rayDir = Vector3Scale(rayDir, t);
         result.position = Vector3Add(ray.position, rayDir);
     }
 
@@ -2045,7 +2045,7 @@ RayHitInfo GetCollisionRayGround(Ray ray, float groundHeight)
         if (t >= 0.0)
         {
             Vector3 rayDir = ray.direction;
-            Vector3Scale(&rayDir, t);
+            rayDir = Vector3Scale(rayDir, t);
             result.hit = true;
             result.distance = t;
             result.normal = (Vector3){ 0.0, 1.0, 0.0 };
@@ -2300,7 +2300,7 @@ static Mesh LoadOBJ(const char *fileName)
                 {
                     // If normals not defined, they are calculated from the 3 vertices [N = (V2 - V1) x (V3 - V1)]
                     Vector3 norm = Vector3CrossProduct(Vector3Subtract(midVertices[vCount[1]-1], midVertices[vCount[0]-1]), Vector3Subtract(midVertices[vCount[2]-1], midVertices[vCount[0]-1]));
-                    Vector3Normalize(&norm);
+                    norm = Vector3Normalize(norm);
 
                     mesh.normals[nCounter] = norm.x;
                     mesh.normals[nCounter + 1] = norm.y;

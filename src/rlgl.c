@@ -470,7 +470,7 @@ void rlRotatef(float angleDeg, float x, float y, float z)
     Matrix matRotation = MatrixIdentity();
 
     Vector3 axis = (Vector3){ x, y, z };
-    Vector3Normalize(&axis);
+    axis = Vector3Normalize(axis);
     matRotation = MatrixRotate(axis, angleDeg*DEG2RAD);
 
     // NOTE: We transpose matrix with multiplication order
@@ -570,7 +570,7 @@ void rlEnd(void)
         // This way, rlTranslatef(), rlRotatef()... behaviour is the same than OpenGL 1.1
 
         // Apply transformation matrix to all temp vertices
-        for (int i = 0; i < tempBufferCount; i++) Vector3Transform(&tempBuffer[i], *currentMatrix);
+        for (int i = 0; i < tempBufferCount; i++) tempBuffer[i] = Vector3Transform(tempBuffer[i], *currentMatrix);
 
         // Deactivate tempBuffer usage to allow rlVertex3f do its job
         useTempBuffer = false;
@@ -1356,13 +1356,13 @@ Vector3 rlUnproject(Vector3 source, Matrix proj, Matrix view)
 
     // Calculate unproject matrix (multiply view patrix by projection matrix) and invert it
     Matrix matViewProj = MatrixMultiply(view, proj);
-    MatrixInvert(&matViewProj);
+    matViewProj= MatrixInvert(matViewProj);
 
     // Create quaternion from source point
     Quaternion quat = { source.x, source.y, source.z, 1.0f };
 
     // Multiply quat point by unproject matrix
-    QuaternionTransform(&quat, matViewProj);
+    quat = QuaternionTransform(quat, matViewProj);
 
     // Normalized world points in vectors
     result.x = quat.x/quat.w;
