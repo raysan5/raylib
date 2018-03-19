@@ -450,8 +450,8 @@ else
 			@echo "raylib dynamic library (raylib.dll) and import library (libraylibdll.a) generated!"
         endif
         ifeq ($(PLATFORM_OS),LINUX)
-			# Compile raylib shared library version $(RAYLIB_VERSION).
-			# WARNING: you should type "make clean" before doing this target
+            # Compile raylib shared library version $(RAYLIB_VERSION).
+            # WARNING: you should type "make clean" before doing this target
 			$(CC) -shared -o $(RAYLIB_RELEASE_PATH)/libraylib.so.$(RAYLIB_VERSION) $(OBJS) -shared -Wl,-soname,libraylib.so.$(RAYLIB_API_VERSION) -lGL -lc -lm -lpthread -ldl -lrt
 			@echo "raylib shared library generated (libraylib.so.$(RAYLIB_VERSION)) in $(RAYLIB_RELEASE_PATH)!"
 			cd $(RAYLIB_RELEASE_PATH) && ln -fsv libraylib.so.$(RAYLIB_VERSION) libraylib.so.$(RAYLIB_API_VERSION)
@@ -465,7 +465,7 @@ else
 			cd $(RAYLIB_RELEASE_PATH) && ln -fs libraylib.$(RAYLIB_VERSION).dylib libraylib.dylib
         endif
         ifeq ($(PLATFORM_OS),FREEBSD)
-			# WARNING: you should type "gmake clean" before doing this target
+            # WARNING: you should type "gmake clean" before doing this target
 			$(CC) -shared -o $(RAYLIB_RELEASE_PATH)/libraylib.$(RAYLIB_VERSION).so $(OBJS) -Wl,-soname,libraylib.$(RAYLIB_API_VERSION).so -lGL -lpthread
 			@echo "raylib shared library generated (libraylib.$(RAYLIB_VERSION).so)!"
 			cd $(RAYLIB_RELEASE_PATH) && ln -fs libraylib.$(RAYLIB_VERSION).so libraylib.$(RAYLIB_API_VERSION).so
@@ -478,8 +478,8 @@ else
 			cd $(RAYLIB_RELEASE_PATH) && ln -fs libraylib.$(RAYLIB_VERSION).so libraylib.so
         endif
     else
-		# Compile raylib static library version $(RAYLIB_VERSION)
-		# WARNING: You should type "make clean" before doing this target.
+        # Compile raylib static library version $(RAYLIB_VERSION)
+        # WARNING: You should type "make clean" before doing this target.
 		$(AR) rcs $(RAYLIB_RELEASE_PATH)/libraylib.a $(OBJS)
 		@echo "raylib static library generated (libraylib.a) in $(RAYLIB_RELEASE_PATH)!"
     endif
@@ -552,24 +552,24 @@ RAYLIB_H_INSTALL_PATH ?= $(DESTDIR)/include
 install :
 ifeq ($(ROOT),root)
     ifeq ($(PLATFORM_OS),LINUX)
-		# Attention! You are root, writing files to $(RAYLIB_INSTALL_PATH)
-		# and $(RAYLIB_H_INSTALL_PATH). Consult this Makefile for more information.
-		# Prepare the environment as needed.
+        # Attention! You are root, writing files to $(RAYLIB_INSTALL_PATH)
+        # and $(RAYLIB_H_INSTALL_PATH). Consult this Makefile for more information.
+        # Prepare the environment as needed.
 		mkdir --parents --verbose $(RAYLIB_INSTALL_PATH)
 		mkdir --parents --verbose $(RAYLIB_H_INSTALL_PATH)
-                ifeq ($(RAYLIB_LIBTYPE),SHARED)
-			# Installing raylib to $(RAYLIB_INSTALL_PATH).
+        ifeq ($(RAYLIB_LIBTYPE),SHARED)
+            # Installing raylib to $(RAYLIB_INSTALL_PATH).
 			cp --update --verbose $(RAYLIB_RELEASE_PATH)/libraylib.so.$(RAYLIB_VERSION) $(RAYLIB_INSTALL_PATH)/libraylib.so.$(RAYLIB_VERSION)
 			cd $(RAYLIB_INSTALL_PATH); ln -fsv libraylib.so.$(RAYLIB_VERSION) libraylib.so.$(RAYLIB_API_VERSION)
 			cd $(RAYLIB_INSTALL_PATH); ln -fsv libraylib.so.$(RAYLIB_API_VERSION) libraylib.so
-                        # Uncomment to update the runtime linker cache with RAYLIB_INSTALL_PATH.
-                        # Not necessary if later embedding RPATH in your executable. See examples/Makefile.
+            # Uncomment to update the runtime linker cache with RAYLIB_INSTALL_PATH.
+            # Not necessary if later embedding RPATH in your executable. See examples/Makefile.
 			ldconfig $(RAYLIB_INSTALL_PATH)
-                else
-			# Installing raylib to $(RAYLIB_INSTALL_PATH).
+        else
+            # Installing raylib to $(RAYLIB_INSTALL_PATH).
 			cp --update --verbose $(RAYLIB_RELEASE_PATH)/libraylib.a $(RAYLIB_INSTALL_PATH)/libraylib.a
-                endif
-		# Copying raylib development files to $(RAYLIB_H_INSTALL_PATH).
+        endif
+        # Copying raylib development files to $(RAYLIB_H_INSTALL_PATH).
 		cp --update raylib.h $(RAYLIB_H_INSTALL_PATH)/raylib.h
 		cp --update raymath.h $(RAYLIB_H_INSTALL_PATH)/raymath.h
 		cp --update rlgl.h $(RAYLIB_H_INSTALL_PATH)/rlgl.h
@@ -587,14 +587,14 @@ endif
 # TODO: see 'install' target.
 uninstall :
 ifeq ($(ROOT),root)
-		# WARNING: You are root, about to delete items from $(RAYLIB_INSTALL_PATH).
-		# and $(RAYLIB_H_INSTALL_PATH). Please confirm each item.
+    # WARNING: You are root, about to delete items from $(RAYLIB_INSTALL_PATH).
+    # and $(RAYLIB_H_INSTALL_PATH). Please confirm each item.
     ifeq ($(PLATFORM_OS),LINUX)
         ifeq ($(RAYLIB_LIBTYPE),SHARED)
 		rm --force --interactive --verbose $(RAYLIB_INSTALL_PATH)/libraylib.so
 		rm --force --interactive --verbose $(RAYLIB_INSTALL_PATH)/libraylib.so.$(RAYLIB_API_VERSION)
 		rm --force --interactive --verbose $(RAYLIB_INSTALL_PATH)/libraylib.so.$(RAYLIB_VERSION)
-                # Uncomment to clean up the runtime linker cache. See install target.
+        # Uncomment to clean up the runtime linker cache. See install target.
 		ldconfig
         else
 		rm --force --interactive --verbose $(RAYLIB_INSTALL_PATH)/libraylib.a
