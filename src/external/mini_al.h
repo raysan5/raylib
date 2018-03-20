@@ -6412,6 +6412,7 @@ static mal_result mal_device_init__alsa(mal_context* pContext, mal_device_type t
                         free(NAME);
                         free(DESC);
                         free(IOID);
+                        ppNextDeviceHint += 1;
 
                         if (foundDevice) {
                             break;
