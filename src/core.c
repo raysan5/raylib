@@ -919,13 +919,26 @@ void Begin3dMode(Camera camera)
     rlPushMatrix();                     // Save previous matrix, which contains the settings for the 2d ortho projection
     rlLoadIdentity();                   // Reset current matrix (PROJECTION)
 
-    // Setup perspective projection
-    float aspect = (float)screenWidth/(float)screenHeight;
-    double top = 0.01*tan(camera.fovy*0.5*DEG2RAD);
-    double right = top*aspect;
+    if(camera.type == CAMERA_PERSPECTIVE) 
+    {
+        // Setup perspective projection
+        float aspect = (float)screenWidth/(float)screenHeight;
+        double top = 0.01*tan(camera.fovy*0.5*DEG2RAD);
+        double right = top*aspect;
+
+        rlFrustum(-right, right, -top, top, 0.01, 1000.0);
+    }
+    else if(camera.type == CAMERA_ORTHOGRAPHIC)
+    {
+        // Setup orthographic projection
+        float aspect = (float)screenWidth/(float)screenHeight;
+        double top = camera.fovy/2.0;
+        double right = top*aspect;
+
+        rlOrtho(-right,right,-top,top, 0.01, 1000.0);
+    }
 
     // NOTE: zNear and zFar values are important when computing depth buffer values
-    rlFrustum(-right, right, -top, top, 0.01, 1000.0);
 
     rlMatrixMode(RL_MODELVIEW);         // Switch back to modelview matrix
     rlLoadIdentity();                   // Reset current matrix (MODELVIEW)
@@ -1013,22 +1026,48 @@ Ray GetMouseRay(Vector2 mousePosition, Camera camera)
 
     TraceLog(LOG_DEBUG, "Device coordinates: (%f, %f, %f)", deviceCoords.x, deviceCoords.y, deviceCoords.z);
 
-    // Calculate projection matrix from perspective
-    Matrix matProj = MatrixPerspective(camera.fovy*DEG2RAD, ((double)GetScreenWidth()/(double)GetScreenHeight()), 0.01, 1000.0);
-
     // Calculate view matrix from camera look at
     Matrix matView = MatrixLookAt(camera.position, camera.target, camera.up);
+
+    Matrix matProj;
+
+    if(camera.type == CAMERA_PERSPECTIVE) 
+    {
+        // Calculate projection matrix from perspective
+        matProj = MatrixPerspective(camera.fovy*DEG2RAD, ((double)GetScreenWidth()/(double)GetScreenHeight()), 0.01, 1000.0);
+    }
+    else if(camera.type == CAMERA_ORTHOGRAPHIC)
+    {
+        float aspect = (float)screenWidth/(float)screenHeight;
+        double top = camera.fovy/2.0;
+        double right = top*aspect;
+        // Calculate projection matrix from orthographic
+        matProj = MatrixOrtho(-right, right, -top, top, 0.01, 1000.0);
+    }
 
     // Unproject far/near points
     Vector3 nearPoint = rlUnproject((Vector3){ deviceCoords.x, deviceCoords.y, 0.0f }, matProj, matView);
     Vector3 farPoint = rlUnproject((Vector3){ deviceCoords.x, deviceCoords.y, 1.0f }, matProj, matView);
 
+    // Unproject the mouse cursor in the near plane.
+    // We need this as the source position because orthographic projects, compared to perspect doesn't have a 
+    // convergence point, meaning that the "eye" of the camera is more like a plane than a point.
+    Vector3 cameraPlanePointerPos = rlUnproject((Vector3){ deviceCoords.x, deviceCoords.y, -1.0f }, matProj, matView);
+
     // Calculate normalized direction vector
     Vector3 direction = Vector3Subtract(farPoint, nearPoint);
     direction = Vector3Normalize(direction);
 
+    if(camera.type == CAMERA_PERSPECTIVE)
+    {
+        ray.position = camera.position;
+    }
+    else if(camera.type == CAMERA_ORTHOGRAPHIC) 
+    {
+        ray.position = cameraPlanePointerPos;
+    }
+
     // Apply calculated vectors to ray
-    ray.position = camera.position;
     ray.direction = direction;
 
     return ray;
@@ -1038,7 +1077,21 @@ Ray GetMouseRay(Vector2 mousePosition, Camera camera)
 Vector2 GetWorldToScreen(Vector3 position, Camera camera)
 {
     // Calculate projection matrix (from perspective instead of frustum
-    Matrix matProj = MatrixPerspective(camera.fovy*DEG2RAD, (double)GetScreenWidth()/(double)GetScreenHeight(), 0.01, 1000.0);
+    Matrix matProj;
+
+    if(camera.type == CAMERA_PERSPECTIVE) 
+    {
+        // Calculate projection matrix from perspective
+        matProj = MatrixPerspective(camera.fovy*DEG2RAD, ((double)GetScreenWidth()/(double)GetScreenHeight()), 0.01, 1000.0);
+    }
+    else if(camera.type == CAMERA_ORTHOGRAPHIC)
+    {
+        float aspect = (float)screenWidth/(float)screenHeight;
+        double top = camera.fovy/2.0;
+        double right = top*aspect;
+        // Calculate projection matrix from orthographic
+        matProj = MatrixOrtho(-right, right, -top, top, 0.01, 1000.0);
+    }
 
     // Calculate view matrix from camera look at (and transpose it)
     Matrix matView = MatrixLookAt(camera.position, camera.target, camera.up);

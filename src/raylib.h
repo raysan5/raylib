@@ -398,12 +398,19 @@ typedef struct SpriteFont {
     CharInfo *chars;        // Characters info data
 } SpriteFont;
 
+// Camera projection modes
+typedef enum {
+    CAMERA_PERSPECTIVE = 0,
+    CAMERA_ORTHOGRAPHIC
+} CameraType;
+
 // Camera type, defines a camera position/orientation in 3d space
 typedef struct Camera {
     Vector3 position;       // Camera position
     Vector3 target;         // Camera target it looks-at
     Vector3 up;             // Camera up vector (rotation over its axis)
-    float fovy;             // Camera field-of-view apperture in Y (degrees)
+    float fovy;             // Camera field-of-view apperture in Y (degrees) in perspective, used as near plane width in orthographic
+    CameraType type;        // Camera type, controlling projection type, either CAMERA_PERSPECTIVE or CAMERA_ORTHOGRAPHIC.
 } Camera;
 
 // Camera2D type, defines a 2d camera
@@ -726,7 +733,7 @@ RLAPI void BeginTextureMode(RenderTexture2D target);              // Initializes
 RLAPI void EndTextureMode(void);                                  // Ends drawing to render texture
 
 // Screen-space-related functions
-RLAPI Ray GetMouseRay(Vector2 mousePosition, Camera camera);      // Returns a ray trace from mouse position
+RLAPI Ray GetMouseRay(Vector2 mousePosition, Camera camera);            // Returns a ray trace from mouse position
 RLAPI Vector2 GetWorldToScreen(Vector3 position, Camera camera);  // Returns the screen space position for a 3d world space position
 RLAPI Matrix GetCameraMatrix(Camera camera);                      // Returns camera transform matrix (view matrix)
 
