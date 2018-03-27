@@ -19,12 +19,13 @@ int main()
     //--------------------------------------------------------------------------------------
     int screenWidth = 800;
     int screenHeight = 450;
-    bool view_ortho = true;
 
     InitWindow(screenWidth, screenHeight, "raylib [models] example - geometric shapes");
 
+    const Camera perspective_camera = (Camera){{ 0.0f, 10.0f, 10.0f }, { 0.0f, 0.0f, 0.0f }, { 0.0f, 1.0f, 0.0f }, 45.0f, CAMERA_PERSPECTIVE };
+    const Camera orthographic_camera = (Camera){{ 0.0f, 10.0f, 10.0f }, { 0.0f, 0.0f, 0.0f }, { 0.0f, 1.0f, 0.0f }, 10.0f, CAMERA_ORTHOGRAPHIC };
     // Define the camera to look into our 3d world
-    Camera camera; 
+    Camera camera = perspective_camera;
 
     SetTargetFPS(60);   // Set our game to run at 60 frames-per-second
     //--------------------------------------------------------------------------------------
@@ -42,21 +43,20 @@ int main()
         //----------------------------------------------------------------------------------
         if(IsKeyPressed(KEY_SPACE)) 
         {
-            view_ortho = !view_ortho;
+            if(camera.type == CAMERA_PERSPECTIVE) 
+            {
+                camera = orthographic_camera;
+            } 
+            else 
+            {
+                camera = perspective_camera;
+            }
         }
 
 
         // Draw
         //----------------------------------------------------------------------------------
 
-        if(view_ortho) 
-        {
-            camera = (Camera){{ 0.0f, 10.0f, 10.0f }, { 0.0f, 0.0f, 0.0f }, { 0.0f, 1.0f, 0.0f }, 10.0f, CAMERA_ORTHOGRAPHIC };
-        } 
-        else 
-        {
-            camera = (Camera){{ 0.0f, 10.0f, 10.0f }, { 0.0f, 0.0f, 0.0f }, { 0.0f, 1.0f, 0.0f }, 45.0f, CAMERA_PERSPECTIVE };
-        }
 
         BeginDrawing();
 
@@ -86,11 +86,11 @@ int main()
 
             DrawText("Press Spacebar to switch camera type", 10, 40, 24, BLACK);
 
-            if(view_ortho)
+            if(camera.type == CAMERA_ORTHOGRAPHIC)
             {
                 DrawText("Orthographic", 10, 65, 24, BLACK);
             }
-            else
+            else if(camera.type == CAMERA_PERSPECTIVE)
             {
                 DrawText("Perspective", 10, 65, 24, BLACK);
             }
