@@ -13,6 +13,9 @@
 
 #include "raylib.h"
 
+#define FOVY_PERSPECTIVE 45.0f
+#define WIDTH_ORTHOGRAPHIC 10.0f
+
 int main()
 {
     // Initialization
@@ -22,10 +25,8 @@ int main()
 
     InitWindow(screenWidth, screenHeight, "raylib [models] example - geometric shapes");
 
-    const Camera perspective_camera = (Camera){{ 0.0f, 10.0f, 10.0f }, { 0.0f, 0.0f, 0.0f }, { 0.0f, 1.0f, 0.0f }, 45.0f, CAMERA_PERSPECTIVE };
-    const Camera orthographic_camera = (Camera){{ 0.0f, 10.0f, 10.0f }, { 0.0f, 0.0f, 0.0f }, { 0.0f, 1.0f, 0.0f }, 10.0f, CAMERA_ORTHOGRAPHIC };
     // Define the camera to look into our 3d world
-    Camera camera = perspective_camera;
+    Camera camera = {{ 0.0f, 10.0f, 10.0f }, { 0.0f, 0.0f, 0.0f }, { 0.0f, 1.0f, 0.0f }, FOVY_PERSPECTIVE, CAMERA_PERSPECTIVE };
 
     SetTargetFPS(60);   // Set our game to run at 60 frames-per-second
     //--------------------------------------------------------------------------------------
@@ -45,11 +46,13 @@ int main()
         {
             if(camera.type == CAMERA_PERSPECTIVE) 
             {
-                camera = orthographic_camera;
+                camera.fovy = WIDTH_ORTHOGRAPHIC;
+                camera.type = CAMERA_ORTHOGRAPHIC;
             } 
             else 
             {
-                camera = perspective_camera;
+                camera.fovy = FOVY_PERSPECTIVE;
+                camera.type = CAMERA_PERSPECTIVE;
             }
         }
 
