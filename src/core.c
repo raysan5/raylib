@@ -919,10 +919,11 @@ void Begin3dMode(Camera camera)
     rlPushMatrix();                     // Save previous matrix, which contains the settings for the 2d ortho projection
     rlLoadIdentity();                   // Reset current matrix (PROJECTION)
 
+    float aspect = (float)screenWidth/(float)screenHeight;
+
     if(camera.type == CAMERA_PERSPECTIVE) 
     {
         // Setup perspective projection
-        float aspect = (float)screenWidth/(float)screenHeight;
         double top = 0.01*tan(camera.fovy*0.5*DEG2RAD);
         double right = top*aspect;
 
@@ -931,7 +932,6 @@ void Begin3dMode(Camera camera)
     else if(camera.type == CAMERA_ORTHOGRAPHIC)
     {
         // Setup orthographic projection
-        float aspect = (float)screenWidth/(float)screenHeight;
         double top = camera.fovy/2.0;
         double right = top*aspect;
 
