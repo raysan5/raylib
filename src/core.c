@@ -442,13 +442,13 @@ void InitWindow(int width, int height, void *data)
     uwpWindow = (EGLNativeWindowType)data;
 #endif
 
-    // Init hi-res timer
-    InitTimer();
-
     // Init graphics device (display device and OpenGL context)
     // NOTE: returns true if window and graphic device has been initialized successfully
     windowReady = InitGraphicsDevice(width, height);
     if (!windowReady) return;
+
+    // Init hi-res timer
+    InitTimer();
 
 #if defined(SUPPORT_DEFAULT_FONT)
     // Load default font
