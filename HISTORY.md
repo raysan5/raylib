@@ -73,12 +73,12 @@ attached to 3d models or used as fullscreen postrocessing effects. A bunch of po
 in this release, check raylib/shaders folder.
 
 Textures module has grown to support most of the internal texture formats available in OpenGL (RGB565, RGB888, RGBA5551, RGBA4444, etc.), including compressed texture formats (DXT, ETC1, ETC2, ASTC, PVRT); raylib 1.3 can load .dds, .pkm, .ktx, .astc and .pvr files. 
-A brand new [camera](https://github.com/raysan5/raylib/blob/develop/src/camera.c) module offers to the user multiple preconfigured ready-to-use camera systems (free camera, 1st person, 3rd person).
-Camera modes are very easy to use, just check examples: [core_3d_camera_free.c](https://github.com/raysan5/raylib/blob/develop/examples/core_3d_camera_free.c) and [core_3d_camera_first_person.c](https://github.com/raysan5/raylib/blob/develop/examples/core_3d_camera_first_person.c).
+A brand new [camera](https://github.com/raysan5/raylib/blob/master/src/camera.c) module offers to the user multiple preconfigured ready-to-use camera systems (free camera, 1st person, 3rd person).
+Camera modes are very easy to use, just check examples: [core_3d_camera_free.c](https://github.com/raysan5/raylib/blob/master/examples/core_3d_camera_free.c) and [core_3d_camera_first_person.c](https://github.com/raysan5/raylib/blob/master/examples/core_3d_camera_first_person.c).
 
-New [gestures](https://github.com/raysan5/raylib/blob/develop/src/gestures.h) module simplifies gestures detection on Android and HTML5 programs.
+New [gestures](https://github.com/raysan5/raylib/blob/master/src/gestures.h) module simplifies gestures detection on Android and HTML5 programs.
 
-[raygui](https://github.com/raysan5/raylib/blob/develop/src/raygui.h), the new IMGUI (Immediate Mode GUI) module offers a set of functions to create simple user interfaces,
+[raygui](https://github.com/raysan5/raylib/blob/master/src/raygui.h), the new IMGUI (Immediate Mode GUI) module offers a set of functions to create simple user interfaces,
 primary intended for tools development. It's still in experimental state but already fully functional.
 
 Most of the examples have been completely rewritten and +10 new examples have been added to show the new raylib features.
@@ -91,18 +91,18 @@ notes on raylib 1.4
 On February 2016, after 4 months of raylib 1.3 release, it comes raylib 1.4. For this new version, 
 lots of parts of the library have been reviewed, lots of bugs have been solved and some interesting features have been added.
 
-First big addition is a set of [Image manipulation functions](https://github.com/raysan5/raylib/blob/develop/src/raylib.h#L673) have been added to crop, resize, colorize, flip, dither and even draw image-to-image or text-to-image.
+First big addition is a set of [Image manipulation functions](https://github.com/raysan5/raylib/blob/master/src/raylib.h#L673) have been added to crop, resize, colorize, flip, dither and even draw image-to-image or text-to-image.
 Now a basic image processing can be done before converting the image to texture for usage.
 
 SpriteFonts system has been improved, adding support for AngelCode fonts (.fnt) and TrueType Fonts (using [stb_truetype](https://github.com/nothings/stb/blob/master/stb_truetype.h) helper library). 
 Now raylib can read standard .fnt font data and also generate at loading a SpriteFont from a TTF file.
 
-New [physac](https://github.com/raysan5/raylib/blob/develop/src/physac.h) physics module for basic 2D physics support. Still in development but already functional. 
+New [physac](https://github.com/raysan5/raylib/blob/master/src/physac.h) physics module for basic 2D physics support. Still in development but already functional. 
 Module comes with some usage examples for basic jump and level interaction and also force-based physic movements.
 
-[raymath](https://github.com/raysan5/raylib/blob/develop/src/raymath.h) module has been reviewed; some bugs have been solved and the module has been converted to a header-only file for easier portability, optionally, functions can also be used as inline. 
+[raymath](https://github.com/raysan5/raylib/blob/master/src/raymath.h) module has been reviewed; some bugs have been solved and the module has been converted to a header-only file for easier portability, optionally, functions can also be used as inline. 
 
-[gestures](https://github.com/raysan5/raylib/blob/develop/src/gestures.c) module has redesigned and simplified, now it can process touch events from any source, including mouse. 
+[gestures](https://github.com/raysan5/raylib/blob/master/src/gestures.c) module has redesigned and simplified, now it can process touch events from any source, including mouse. 
 This way, gestures system can be used on any platform providing an unified way to work with inputs and allowing the user to create multiplatform games with only one source code.
 
 Raspberry Pi input system has been redesigned to better read raw inputs using generic Linux event handlers (keyboard:`stdin`, mouse:`/dev/input/mouse0`, gamepad:`/dev/input/js0`). 
@@ -110,7 +110,7 @@ Gamepad support has also been added (experimental).
 
 Other important improvements are the functional raycast system for 3D picking, including some ray collision-detection functions, 
 and the addition of two simple functions for persistent data storage. Now raylib user can save and load game data in a file (only some platforms supported). 
-A simple [easings](https://github.com/raysan5/raylib/blob/develop/src/easings.h) module has also been added for values animation.
+A simple [easings](https://github.com/raysan5/raylib/blob/master/src/easings.h) module has also been added for values animation.
 
 Up to 8 new code examples have been added to show the new raylib features and +10 complete game samples have been provided to learn 
 how to create some classic games like Arkanoid, Asteroids, Missile Commander, Snake or Tetris.
@@ -122,7 +122,7 @@ notes on raylib 1.5
 
 On July 2016, after 5 months of raylib 1.4 release, arrives raylib 1.5. This new version is the biggest boost of the library until now, lots of parts of the library have been redesigned, lots of bugs have been solved and some **AMAZING** new features have been added.
 
-VR support: raylib supports **Oculus Rift CV1**, one of the most anticipated VR devices in the market. Additionally, raylib supports simulated VR stereo rendering, independent of the VR device; it means, raylib can generate stereo renders with custom head-mounted-display device parameteres, that way, any VR device in the market can be **simulated in any platform** just configuring device parameters (and consequently, lens distortion). To enable VR is [extremely easy](https://github.com/raysan5/raylib/blob/develop/examples/core_oculus_rift.c).
+VR support: raylib supports **Oculus Rift CV1**, one of the most anticipated VR devices in the market. Additionally, raylib supports simulated VR stereo rendering, independent of the VR device; it means, raylib can generate stereo renders with custom head-mounted-display device parameteres, that way, any VR device in the market can be **simulated in any platform** just configuring device parameters (and consequently, lens distortion). To enable VR is [extremely easy](https://github.com/raysan5/raylib/blob/master/examples/core_oculus_rift.c).
 
 New materials system: now raylib supports standard material properties for 3D models, including diffuse-ambient-specular colors and diffuse-normal-specular textures. Just assign values to standard material and everything is processed internally.
 
@@ -130,15 +130,15 @@ New lighting system: added support for up to 8 configurable lights and 3 light t
 
 Complete gamepad support on Raspberry Pi: Gamepad system has been completely redesigned. Now multiple gamepads can be easily configured and used; gamepad data is read and processed in raw mode in a second thread.
 
-Redesigned physics module: [physac](https://github.com/raysan5/raylib/blob/develop/src/physac.h) module has been converted to header only and usage [has been simplified](https://github.com/raysan5/raylib/blob/develop/examples/physics_basic_rigidbody.c). Performance has also been singnificantly improved, now physic objects are managed internally in a second thread.
+Redesigned physics module: [physac](https://github.com/raysan5/raylib/blob/master/src/physac.h) module has been converted to header only and usage [has been simplified](https://github.com/raysan5/raylib/blob/master/examples/physics_basic_rigidbody.c). Performance has also been singnificantly improved, now physic objects are managed internally in a second thread.
 
 Audio chiptunese support and mixing channels: Added support for module audio music (.xm, .mod) loading and playing. Multiple mixing channels are now also supported. All this features thanks to the amazing work of @kd7tck.
 
-Other additions include a [2D camera system](https://github.com/raysan5/raylib/blob/develop/examples/core_2d_camera.c), render textures for offline render (and most comprehensive [postprocessing](https://github.com/raysan5/raylib/blob/develop/examples/shaders_postprocessing.c)) or support for legacy OpenGL 2.1 on desktop platforms.
+Other additions include a [2D camera system](https://github.com/raysan5/raylib/blob/master/examples/core_2d_camera.c), render textures for offline render (and most comprehensive [postprocessing](https://github.com/raysan5/raylib/blob/master/examples/shaders_postprocessing.c)) or support for legacy OpenGL 2.1 on desktop platforms.
 
-This new version is so massive that is difficult to list all the improvements, most of raylib modules have been reviewed and [rlgl](https://github.com/raysan5/raylib/blob/develop/src/rlgl.c) module has been completely redesigned to accomodate to new material-lighting systems and stereo rendering. You can check [CHANGELOG](https://github.com/raysan5/raylib/blob/develop/CHANGELOG) file for a more detailed list of changes.
+This new version is so massive that is difficult to list all the improvements, most of raylib modules have been reviewed and [rlgl](https://github.com/raysan5/raylib/blob/master/src/rlgl.c) module has been completely redesigned to accomodate to new material-lighting systems and stereo rendering. You can check [CHANGELOG](https://github.com/raysan5/raylib/blob/master/CHANGELOG) file for a more detailed list of changes.
 
-Up to 8 new code examples have been added to show the new raylib features and also some samples to show the usage of [rlgl](https://github.com/raysan5/raylib/blob/develop/examples/rlgl_standalone.c) and [audio](https://github.com/raysan5/raylib/blob/develop/examples/audio_standalone.c) raylib modules as standalone libraries.
+Up to 8 new code examples have been added to show the new raylib features and also some samples to show the usage of [rlgl](https://github.com/raysan5/raylib/blob/master/examples/rlgl_standalone.c) and [audio](https://github.com/raysan5/raylib/blob/master/examples/audio_standalone.c) raylib modules as standalone libraries.
 
 Lots of code changes (+400 commits) and lots of hours of hard work have concluded in this amazing new raylib 1.5.
 
@@ -149,7 +149,7 @@ On November 2016, only 4 months after raylib 1.5, arrives raylib 1.6. This new v
 
 Complete [raylib Lua binding](https://github.com/raysan5/raylib-lua). All raylib functions plus the +60 code examples have been ported to Lua, now Lua users can enjoy coding videogames in Lua while using all the internal power of raylib. This addition also open the doors to Lua scripting support for a future raylib-based engine, being able to move game logic (Init, Update, Draw, De-Init) to Lua scripts while keep using raylib functionality.
 
-Completely redesigned [audio module](https://github.com/raysan5/raylib/blob/develop/src/audio.c). Based on the new direction taken in raylib 1.5, it has been further improved and more functionality added (+20 new functions) to allow raw audio processing and streaming. [FLAC file format support](https://github.com/raysan5/raylib/blob/develop/src/external/dr_flac.h) has also been added. In the same line, [OpenAL Soft](https://github.com/kcat/openal-soft) backend is now provided as a static library in Windows to allow static linking and get ride of OpenAL32.dll. Now raylib Windows games are completey self-contained, no external libraries required any more!
+Completely redesigned [audio module](https://github.com/raysan5/raylib/blob/master/src/audio.c). Based on the new direction taken in raylib 1.5, it has been further improved and more functionality added (+20 new functions) to allow raw audio processing and streaming. [FLAC file format support](https://github.com/raysan5/raylib/blob/master/src/external/dr_flac.h) has also been added. In the same line, [OpenAL Soft](https://github.com/kcat/openal-soft) backend is now provided as a static library in Windows to allow static linking and get ride of OpenAL32.dll. Now raylib Windows games are completey self-contained, no external libraries required any more!
 
 [Physac](https://github.com/victorfisac/Physac) module has been moved to its own repository and it has been improved A LOT, actually, library has been completely rewritten from scratch by [@victorfisac](https://github.com/victorfisac), multiple samples have been added together with countless new features to match current standard 2D physic libraries. Results are amazing!
 
@@ -187,17 +187,17 @@ notes on raylib 1.8
 
 October 2017, around 5 months after latest raylib version, another release is published: raylib 1.8. Again, several modules of the library have been reviewed and some new functionality added. Main changes of this new release are:
 
-[Procedural image generation](https://github.com/raysan5/raylib/blob/develop/examples/textures/textures_image_generation.c) function, a set of new functions have been added to generate gradients, checked, noise and cellular images from scratch. Image generation could be useful for certain textures or learning pourpouses.
+[Procedural image generation](https://github.com/raysan5/raylib/blob/master/examples/textures/textures_image_generation.c) function, a set of new functions have been added to generate gradients, checked, noise and cellular images from scratch. Image generation could be useful for certain textures or learning pourpouses.
 
-[Parametric mesh generation](https://github.com/raysan5/raylib/blob/develop/examples/models/models_mesh_generation.c) functions, create 3d meshes from scratch just defining a set of parameters, meshes like cube, sphere, cylinder, torus, knot and more can be very useful for prototyping or for lighting and texture testing.
+[Parametric mesh generation](https://github.com/raysan5/raylib/blob/master/examples/models/models_mesh_generation.c) functions, create 3d meshes from scratch just defining a set of parameters, meshes like cube, sphere, cylinder, torus, knot and more can be very useful for prototyping or for lighting and texture testing.
 
-PBR Materials support, a completely redesigned shaders and material system allows advance materials definition and usage, with fully customizable shaders. Some new functions have been added to generate the environment textures required for PBR shading and a a new complete [PBR material example](https://github.com/raysan5/raylib/blob/develop/examples/models/models_material_pbr.c) is also provided for reference.
+PBR Materials support, a completely redesigned shaders and material system allows advance materials definition and usage, with fully customizable shaders. Some new functions have been added to generate the environment textures required for PBR shading and a a new complete [PBR material example](https://github.com/raysan5/raylib/blob/master/examples/models/models_material_pbr.c) is also provided for reference.
 
-Custom Android APK build pipeline with [simple Makefile](https://github.com/raysan5/raylib/blob/develop/templates/simple_game/Makefile). Actually, full code building mechanism based on plain Makefile has been completely reviewed and Android building has been added for sources and also for examples and templates building into final APK package. This way, raylib Android building has been greatly simplified and integrated seamlessly into standard build scripts.
+Custom Android APK build pipeline with [simple Makefile](https://github.com/raysan5/raylib/blob/master/templates/simple_game/Makefile). Actually, full code building mechanism based on plain Makefile has been completely reviewed and Android building has been added for sources and also for examples and templates building into final APK package. This way, raylib Android building has been greatly simplified and integrated seamlessly into standard build scripts.
 
-[rlgl](https://github.com/raysan5/raylib/blob/develop/src/rlgl.c) module has been completely reviewed and most of the functions renamed for consistency. This way, standalone usage of rlgl is promoted, with a [complete example provided](https://github.com/raysan5/raylib/blob/develop/examples/others/rlgl_standalone.c). rlgl offers a pseudo-OpenGL 1.1 immediate-mode programming-style layer, with backends to multiple OpenGL versions.
+[rlgl](https://github.com/raysan5/raylib/blob/master/src/rlgl.c) module has been completely reviewed and most of the functions renamed for consistency. This way, standalone usage of rlgl is promoted, with a [complete example provided](https://github.com/raysan5/raylib/blob/master/examples/others/rlgl_standalone.c). rlgl offers a pseudo-OpenGL 1.1 immediate-mode programming-style layer, with backends to multiple OpenGL versions.
 
-[raymath](https://github.com/raysan5/raylib/blob/develop/src/rlgl.c) library has been also reviewed to align with other advance math libraries like [GLM](https://github.com/g-truc/glm). Matrix math has been improved and simplified, some new Quaternion functions have been added and Vector3 functions have been renamed all around the library for consistency with new Vector2 functionality.
+[raymath](https://github.com/raysan5/raylib/blob/master/src/rlgl.c) library has been also reviewed to align with other advance math libraries like [GLM](https://github.com/g-truc/glm). Matrix math has been improved and simplified, some new Quaternion functions have been added and Vector3 functions have been renamed all around the library for consistency with new Vector2 functionality.
 
 Additionally, as always, examples and templates have been reviewed to work with new version (some new examples have been added), all external libraries have been updated to latest stable version and latest Notepad++ and MinGW have been configured to work with new raylib. For a full list of changes, just check [CHANGELOG](CHANGELOG).
 
