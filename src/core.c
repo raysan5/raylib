@@ -238,9 +238,10 @@ static GLFWwindow *window;                      // Native window (graphic device
 
 static bool windowReady = false;                // Check if window has been initialized successfully
 static bool windowMinimized = false;            // Check if window has been minimized
+static const char *windowTitle = NULL;          // Window text title...
 
 #if defined(PLATFORM_ANDROID)
-static struct android_app *app;                 // Android activity
+static struct android_app *androidApp;          // Android activity
 static struct android_poll_source *source;      // Android events polling source
 static int ident, events;                       // Android ALooper_pollAll() variables
 static const char *internalDataPath;            // Android internal data path to write data (/data/data/<package>/files)
@@ -283,10 +284,10 @@ static bool windowShouldClose = false;  // Flag to set window for closing
 #endif
 
 #if defined(PLATFORM_UWP)
-static EGLNativeWindowType uwpWindow;
+extern EGLNativeWindowType uwpWindow;   // Native EGL window handler for UWP (external, defined in UWP App)
 #endif
 
-// Display size-related data
+// Screen related variables
 static unsigned int displayWidth, displayHeight; // Display width and height (monitor, device-screen, LCD, ...)
 static int screenWidth, screenHeight;       // Screen width and height (used render area)
 static int renderWidth, renderHeight;       // Framebuffer width and height (render area, including black bars if required)
@@ -294,11 +295,11 @@ static int renderOffsetX = 0;               // Offset X from render area (must b
 static int renderOffsetY = 0;               // Offset Y from render area (must be divided by 2)
 static bool fullscreen = false;             // Fullscreen mode (useful only for PLATFORM_DESKTOP)
 static Matrix downscaleView;                // Matrix to downscale view (in case screen size bigger than display size)
+
 static bool cursorHidden = false;           // Track if cursor is hidden
 static bool cursorOnScreen = false;         // Tracks if cursor is inside client area
 
 #if defined(PLATFORM_DESKTOP) || defined(PLATFORM_RPI) || defined(PLATFORM_WEB) || defined(PLATFORM_UWP)
-static const char *windowTitle = NULL;      // Window text title...
 static int screenshotCounter = 0;           // Screenshots counter
 
 // Register mouse states
@@ -416,7 +417,7 @@ static void *GamepadThread(void *arg);                  // Mouse reading thread
 #endif
 
 #if defined(PLATFORM_UWP)
-// Define functions required to manage inputs
+// TODO: Define functions required to manage inputs
 #endif
 
 #if defined(_WIN32)
@@ -427,21 +428,89 @@ static void *GamepadThread(void *arg);                  // Mouse reading thread
 //----------------------------------------------------------------------------------
 // Module Functions Definition - Window and OpenGL Context Functions
 //----------------------------------------------------------------------------------
-#if defined(PLATFORM_DESKTOP) || defined(PLATFORM_RPI) || defined(PLATFORM_WEB) || defined(PLATFORM_UWP)
+
+#if defined(PLATFORM_ANDROID)
+// To allow easier porting to android, we allow the user to define a 
+// main function which we call from android_main, defined by ourselves
+extern int main(int argc, char *argv[]);
+
+void android_main(struct android_app *app)
+{
+    char arg0[] = "raylib";     // NOTE: argv[] are mutable
+    androidApp = app;
+
+    // TODO: Should we maybe report != 0 return codes somewhere?
+    (void)main(1, (char*[]) { arg0, NULL });
+}
+
+// TODO: Add this to header (if apps really need it)
+struct android_app *GetAndroidApp(void)
+{
+    return androidApp;
+}
+#endif
+
 // Initialize window and OpenGL context
 // NOTE: data parameter could be used to pass any kind of required data to the initialization
-void InitWindow(int width, int height, void *data)
+void InitWindow(int width, int height, const char *title)
 {
     TraceLog(LOG_INFO, "Initializing raylib (v1.9.6-dev)");
 
-#if defined(PLATFORM_DESKTOP)
-    windowTitle = (char *)data;
-#endif
+    windowTitle = title;
+#if defined(PLATFORM_ANDROID)
+    screenWidth = width;
+    screenHeight = height;
 
-#if defined(PLATFORM_UWP)
-    uwpWindow = (EGLNativeWindowType)data;
-#endif
+    // Input data is android app pointer
+    internalDataPath = androidApp->activity->internalDataPath;
 
+    // Set desired windows flags before initializing anything
+    ANativeActivity_setWindowFlags(androidApp->activity, AWINDOW_FLAG_FULLSCREEN, 0);  //AWINDOW_FLAG_SCALED, AWINDOW_FLAG_DITHER
+    //ANativeActivity_setWindowFlags(androidApp->activity, AWINDOW_FLAG_FORCE_NOT_FULLSCREEN, AWINDOW_FLAG_FULLSCREEN);
+
+    int orientation = AConfiguration_getOrientation(androidApp->config);
+
+    if (orientation == ACONFIGURATION_ORIENTATION_PORT) TraceLog(LOG_INFO, "PORTRAIT window orientation");
+    else if (orientation == ACONFIGURATION_ORIENTATION_LAND) TraceLog(LOG_INFO, "LANDSCAPE window orientation");
+
+    // TODO: Automatic orientation doesn't seem to work
+    if (width <= height)
+    {
+        AConfiguration_setOrientation(androidApp->config, ACONFIGURATION_ORIENTATION_PORT);
+        TraceLog(LOG_WARNING, "Window set to portraid mode");
+    }
+    else
+    {
+        AConfiguration_setOrientation(androidApp->config, ACONFIGURATION_ORIENTATION_LAND);
+        TraceLog(LOG_WARNING, "Window set to landscape mode");
+    }
+
+    //AConfiguration_getDensity(androidApp->config);
+    //AConfiguration_getKeyboard(androidApp->config);
+    //AConfiguration_getScreenSize(androidApp->config);
+    //AConfiguration_getScreenLong(androidApp->config);
+
+    androidApp->onAppCmd = AndroidCommandCallback;
+    androidApp->onInputEvent = AndroidInputCallback;
+
+    InitAssetManager(androidApp->activity->assetManager);
+
+    TraceLog(LOG_INFO, "Android app initialized successfully");
+
+    // Wait for window to be initialized (display and context)
+    while (!windowReady)
+    {
+        // Process events loop
+        while ((ident = ALooper_pollAll(0, NULL, &events, (void**)&source)) >= 0)
+        {
+            // Process this event
+            if (source != NULL) source->process(androidApp, source);
+
+            // NOTE: Never close window, native activity is controlled by the system!
+            //if (androidApp->destroyRequested != 0) windowShouldClose = true;
+        }
+    }
+#else
     // Init graphics device (display device and OpenGL context)
     // NOTE: returns true if window and graphic device has been initialized successfully
     windowReady = InitGraphicsDevice(width, height);
@@ -495,87 +564,8 @@ void InitWindow(int width, int height, void *data)
         SetTargetFPS(60);
         LogoAnimation();
     }
+#endif        // defined(PLATFORM_ANDROID)
 }
-#endif
-
-#if defined(PLATFORM_ANDROID)
-/* To allow easier porting to android, we allow the user to define a main function
- * which we call from android_main, that we define ourselves
- */
-extern int main(int argc, char *argv[]);
-void android_main(struct android_app *_app) {
-    char arg0[] = "raylib"; /* argv[] are mutable */
-    app = _app;
-    /* TODO should we maybe report != 0 return codes somewhere? */
-    (void)main(1, (char*[]){ arg0, NULL });
-}
-/* TODO add this to header, if apps really need it) */
-struct android_app *GetAndroidApp(void)
-{
-    return app;
-}
-
-// Initialize window and OpenGL context (and Android activity)
-// NOTE: data parameter could be used to pass any kind of required data to the initialization
-void InitWindow(int width, int height, void *data)
-{
-    (void)data; // ignored
-    TraceLog(LOG_INFO, "Initializing raylib (v1.9.6-dev)");
-
-    screenWidth = width;
-    screenHeight = height;
-
-    // Input data is android app pointer
-    internalDataPath = app->activity->internalDataPath;
-
-    // Set desired windows flags before initializing anything
-    ANativeActivity_setWindowFlags(app->activity, AWINDOW_FLAG_FULLSCREEN, 0);  //AWINDOW_FLAG_SCALED, AWINDOW_FLAG_DITHER
-    //ANativeActivity_setWindowFlags(app->activity, AWINDOW_FLAG_FORCE_NOT_FULLSCREEN, AWINDOW_FLAG_FULLSCREEN);
-
-    int orientation = AConfiguration_getOrientation(app->config);
-
-    if (orientation == ACONFIGURATION_ORIENTATION_PORT) TraceLog(LOG_INFO, "PORTRAIT window orientation");
-    else if (orientation == ACONFIGURATION_ORIENTATION_LAND) TraceLog(LOG_INFO, "LANDSCAPE window orientation");
-
-    // TODO: Automatic orientation doesn't seem to work
-    if (width <= height)
-    {
-        AConfiguration_setOrientation(app->config, ACONFIGURATION_ORIENTATION_PORT);
-        TraceLog(LOG_WARNING, "Window set to portraid mode");
-    }
-    else
-    {
-        AConfiguration_setOrientation(app->config, ACONFIGURATION_ORIENTATION_LAND);
-        TraceLog(LOG_WARNING, "Window set to landscape mode");
-    }
-
-    //AConfiguration_getDensity(app->config);
-    //AConfiguration_getKeyboard(app->config);
-    //AConfiguration_getScreenSize(app->config);
-    //AConfiguration_getScreenLong(app->config);
-
-    app->onAppCmd = AndroidCommandCallback;
-    app->onInputEvent = AndroidInputCallback;
-
-    InitAssetManager(app->activity->assetManager);
-
-    TraceLog(LOG_INFO, "Android app initialized successfully");
-
-    // Wait for window to be initialized (display and context)
-    while (!windowReady)
-    {
-        // Process events loop
-        while ((ident = ALooper_pollAll(0, NULL, &events,(void**)&source)) >= 0)
-        {
-            // Process this event
-            if (source != NULL) source->process(app, source);
-
-            // NOTE: Never close window, native activity is controlled by the system!
-            //if (app->destroyRequested != 0) windowShouldClose = true;
-        }
-    }
-}
-#endif
 
 // Close window and unload OpenGL context
 void CloseWindow(void)
@@ -2217,7 +2207,7 @@ static bool InitGraphicsDevice(int width, int height)
         }
     }
 
-	//SetupFramebufferSize(displayWidth, displayHeight);
+    //SetupFramebufferSize(displayWidth, displayHeight);
 
     EGLint numConfigs = 0;
     if ((eglChooseConfig(display, framebufferAttribs, &config, 1, &numConfigs) == EGL_FALSE) || (numConfigs == 0))
@@ -2271,9 +2261,9 @@ static bool InitGraphicsDevice(int width, int height)
         return false;
     }
 
-	// Get EGL display window size 
-	eglQuerySurface(display, surface, EGL_WIDTH, &screenWidth);
-	eglQuerySurface(display, surface, EGL_HEIGHT, &screenHeight);
+    // Get EGL display window size 
+    eglQuerySurface(display, surface, EGL_WIDTH, &screenWidth);
+    eglQuerySurface(display, surface, EGL_HEIGHT, &screenHeight);
     
 #else   // PLATFORM_ANDROID, PLATFORM_RPI
     EGLint numConfigs;
@@ -2314,8 +2304,8 @@ static bool InitGraphicsDevice(int width, int height)
 #if defined(PLATFORM_ANDROID)
     EGLint displayFormat;
 
-    displayWidth = ANativeWindow_getWidth(app->window);
-    displayHeight = ANativeWindow_getHeight(app->window);
+    displayWidth = ANativeWindow_getWidth(androidApp->window);
+    displayHeight = ANativeWindow_getHeight(androidApp->window);
 
     // EGL_NATIVE_VISUAL_ID is an attribute of the EGLConfig that is guaranteed to be accepted by ANativeWindow_setBuffersGeometry()
     // As soon as we picked a EGLConfig, we can safely reconfigure the ANativeWindow buffers to match, using EGL_NATIVE_VISUAL_ID
@@ -2325,10 +2315,10 @@ static bool InitGraphicsDevice(int width, int height)
     // NOTE: This function use and modify global module variables: screenWidth/screenHeight and renderWidth/renderHeight and downscaleView
     SetupFramebufferSize(displayWidth, displayHeight);
 
-    ANativeWindow_setBuffersGeometry(app->window, renderWidth, renderHeight, displayFormat);
-    //ANativeWindow_setBuffersGeometry(app->window, 0, 0, displayFormat);       // Force use of native display size
+    ANativeWindow_setBuffersGeometry(androidApp->window, renderWidth, renderHeight, displayFormat);
+    //ANativeWindow_setBuffersGeometry(androidApp->window, 0, 0, displayFormat);       // Force use of native display size
 
-    surface = eglCreateWindowSurface(display, config, app->window, NULL);
+    surface = eglCreateWindowSurface(display, config, androidApp->window, NULL);
 #endif  // defined(PLATFORM_ANDROID)
 
 #if defined(PLATFORM_RPI)
@@ -2392,8 +2382,8 @@ static bool InitGraphicsDevice(int width, int height)
     }
 #endif // defined(PLATFORM_ANDROID) || defined(PLATFORM_RPI)
 
-	renderWidth = screenWidth;
-	renderHeight = screenHeight;
+    renderWidth = screenWidth;
+    renderHeight = screenHeight;
 
     // Initialize OpenGL context (states and resources)
     // NOTE: screenWidth and screenHeight not used, just stored as globals
@@ -2734,14 +2724,14 @@ static void PollInputEvents(void)
     while ((ident = ALooper_pollAll(appEnabled ? 0 : -1, NULL, &events,(void**)&source)) >= 0)
     {
         // Process this event
-        if (source != NULL) source->process(app, source);
+        if (source != NULL) source->process(androidApp, source);
 
         // NOTE: Never close window, native activity is controlled by the system!
-        if (app->destroyRequested != 0)
+        if (androidApp->destroyRequested != 0)
         {
             //TraceLog(LOG_INFO, "Closing Window...");
             //windowShouldClose = true;
-            //ANativeActivity_finish(app->activity);
+            //ANativeActivity_finish(androidApp->activity);
         }
     }
 #endif
@@ -3078,14 +3068,14 @@ static void AndroidCommandCallback(struct android_app *app, int32_t cmd)
         case APP_CMD_DESTROY:
         {
             // TODO: Finish activity?
-            //ANativeActivity_finish(app->activity);
+            //ANativeActivity_finish(androidApp->activity);
 
             TraceLog(LOG_INFO, "APP_CMD_DESTROY");
         } break;
         case APP_CMD_CONFIG_CHANGED:
         {
-            //AConfiguration_fromAssetManager(app->config, app->activity->assetManager);
-            //print_cur_config(app);
+            //AConfiguration_fromAssetManager(androidApp->config, androidApp->activity->assetManager);
+            //print_cur_config(androidApp);
 
             // Check screen orientation here!
 
