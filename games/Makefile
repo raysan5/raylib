@@ -32,12 +32,6 @@ PROJECT_NAME ?= sample_game
 # Library type used for raylib and OpenAL Soft: STATIC (.a) or SHARED (.so/.dll)
 # NOTE: Libraries should be provided in the selected form
 RAYLIB_LIBTYPE ?= STATIC
-OPENAL_LIBTYPE ?= STATIC
-
-# On PLATFORM_WEB force OpenAL Soft shared library
-ifeq ($(PLATFORM),PLATFORM_WEB)
-    OPENAL_LIBTYPE = SHARED
-endif
 
 # Determine PLATFORM_OS in case PLATFORM_DESKTOP selected
 ifeq ($(PLATFORM),PLATFORM_DESKTOP)
@@ -178,21 +172,12 @@ ifeq ($(PLATFORM),PLATFORM_DESKTOP)
     ifeq ($(PLATFORM_OS),WINDOWS)
         # Libraries for Windows desktop compiling
         # NOTE: GLFW3 and OpenAL Soft libraries should be installed
-        LDLIBS = -lraylib -lglfw3 -lopengl32 -lgdi32
-
-        # Define required flags and libs for OpenAL Soft STATIC/SHARED usage
-        # NOTE: ALLIBS flag only required for raylib Win32 SHARED library building
-        ifeq ($(OPENAL_LIBTYPE),STATIC)
-            LDLIBS += -lopenal32 -lwinmm
-            CFLAGS += -DAL_LIBTYPE_STATIC -Wl,-allow-multiple-definition
-        else
-            LDLIBS += -lopenal32dll
-        endif
+        LDLIBS = -lraylib -lopengl32 -lgdi32
     endif
     ifeq ($(PLATFORM_OS),LINUX)
         # Libraries for Debian GNU/Linux desktop compiling
         # NOTE: Required packages: libglfw3-dev libopenal-dev libegl1-mesa-dev
-        LDLIBS = -lraylib -lglfw3 -lGL -lopenal -lm -lpthread -ldl
+        LDLIBS = -lraylib -lGL -lm -lpthread -ldl
         
         # On XWindow requires also below libraries
         LDLIBS += -lX11 -lXrandr -lXinerama -lXi -lXxf86vm -lXcursor
@@ -200,13 +185,13 @@ ifeq ($(PLATFORM),PLATFORM_DESKTOP)
     ifeq ($(PLATFORM_OS),OSX)
         # Libraries for OSX 10.9 desktop compiling
         # NOTE: Required packages: libglfw3-dev libopenal-dev libegl1-mesa-dev
-        LDLIBS = -lraylib -lglfw -framework OpenGL -framework OpenAL -framework Cocoa
+        LDLIBS = -lraylib -framework OpenGL -framework Cocoa
     endif
 endif
 ifeq ($(PLATFORM),PLATFORM_RPI)
     # Libraries for Raspberry Pi compiling
     # NOTE: Required packages: libopenal1
-    LDLIBS = -lraylib -lGLESv2 -lEGL -lpthread -lrt -lm -lbcm_host -lopenal
+    LDLIBS = -lraylib -lGLESv2 -lEGL -lpthread -lrt -lm -lbcm_host
 endif
 ifeq ($(PLATFORM),PLATFORM_WEB)
     # Libraries for web (HTML5) compiling
@@ -248,12 +233,6 @@ ifeq ($(PLATFORM),PLATFORM_ANDROID)
 	mingw32-make -f Makefile.Android PROJECT_NAME=$@ PROJECT_SOURCE_FILES=$<
 else
 	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM)
-endif
-
-# fix dylib install path name for each executable (MAC)
-fix_dylib:
-ifeq ($(PLATFORM_OS),OSX)
-	find . -type f -perm +ugo+x -print0 | xargs -t -0 -R 1 -I file install_name_tool -change libglfw.3.0.dylib ../external/glfw3/lib/osx/libglfw.3.0.dylib file
 endif
 
 # Clean everything
