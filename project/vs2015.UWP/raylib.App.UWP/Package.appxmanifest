@@ -4,7 +4,7 @@
   <mp:PhoneIdentity PhoneProductId="56d2ca94-c361-4e9f-9a33-bacd751552fa" PhonePublisherId="00000000-0000-0000-0000-000000000000" />
   <Properties>
     <DisplayName>raylibUWP</DisplayName>
-    <PublisherDisplayName>Alumno</PublisherDisplayName>
+    <PublisherDisplayName>raysan5</PublisherDisplayName>
     <Logo>Assets\StoreLogo.png</Logo>
   </Properties>
   <Dependencies>

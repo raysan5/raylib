@@ -18,16 +18,21 @@ using namespace Platform;
 using namespace raylibUWP;
 
 /*
-To-do list
+TODO list:
 	- Cache reference to our CoreWindow?
-	- Implement gestures
+	- Implement gestures support
 */
+
+// Declare uwpWindow as exter to be used by raylib internals
+// NOTE: It should be properly assigned before calling InitWindow()
+extern "C" { EGLNativeWindowType uwpWindow; };
 
 /* INPUT CODE */
 // Stand-ins for "core.c" variables
 #define MAX_GAMEPADS              4         // Max number of gamepads supported
 #define MAX_GAMEPAD_BUTTONS       32        // Max bumber of buttons supported (per gamepad)
 #define MAX_GAMEPAD_AXIS          8         // Max number of axis supported (per gamepad)
+
 static bool gamepadReady[MAX_GAMEPADS] = { false };             // Flag to know if gamepad is ready
 static float gamepadAxisState[MAX_GAMEPADS][MAX_GAMEPAD_AXIS];  // Gamepad axis state
 static char previousGamepadState[MAX_GAMEPADS][MAX_GAMEPAD_BUTTONS];    // Previous gamepad buttons state
@@ -36,7 +41,6 @@ static char currentGamepadState[MAX_GAMEPADS][MAX_GAMEPAD_BUTTONS];     // Curre
 static char previousKeyState[512] = { 0 };  // Contains previous frame keyboard state
 static char currentKeyState[512] = { 0 };   // Contains current frame keyboard state
 
-//...
 static char previousMouseState[3] = { 0 };  // Registers previous mouse button state
 static char currentMouseState[3] = { 0 };   // Registers current mouse button state
 static int previousMouseWheelY = 0;         // Registers previous mouse wheel variation
@@ -46,7 +50,7 @@ static bool cursorOnScreen = false;         // Tracks if cursor is inside client
 static bool cursorHidden = false;           // Track if cursor is hidden
 
 static Vector2 mousePosition;
-static Vector2 mouseDelta; // NOTE: Added to keep track of mouse movement while the cursor is locked - no equivalent in "core.c"
+static Vector2 mouseDelta;					// NOTE: Added to keep track of mouse movement while the cursor is locked - no equivalent in "core.c"
 static bool toggleCursorLock;
 
 CoreCursor ^regularCursor = ref new CoreCursor(CoreCursorType::Arrow, 0); // The "visible arrow" cursor type
@@ -122,7 +126,7 @@ void ProcessKeyEvent(Windows::System::VirtualKey key, int action)
 	}
 }
 
-/* CALLBACKS */
+// Callbacks
 void App::PointerPressed(CoreWindow^ window, PointerEventArgs^ args)
 {
 	if (args->CurrentPoint->Properties->IsLeftButtonPressed)
@@ -206,6 +210,7 @@ void UWPSetMousePosition(Vector2 position)
 	window->PointerPosition = mousePosScreen;
 	mousePosition = position;
 }
+
 // Enables cursor (unlock cursor)
 void UWPEnableCursor()
 {
@@ -321,8 +326,7 @@ bool UWPIsKeyPressed(int key)
 {
 	bool pressed = false;
 	
-	if ((currentKeyState[key] != previousKeyState[key]) && (currentKeyState[key] == 1))
-		pressed = true;
+	if ((currentKeyState[key] != previousKeyState[key]) && (currentKeyState[key] == 1)) pressed = true;
 	else pressed = false;
 
 	return pressed;
@@ -422,7 +426,10 @@ void App::SetWindow(CoreWindow^ window)
 	currentDisplayInformation->OrientationChanged += ref new TypedEventHandler<DisplayInformation^, Object^>(this, &App::OnOrientationChanged);
 
     // The CoreWindow has been created, so EGL can be initialized.
-	InitWindow(800, 450, (EGLNativeWindowType)window);
+
+	uwpWindow = (EGLNativeWindowType)window;
+
+	InitWindow(800, 450, NULL);
 }
 
 // Initializes scene resources
@@ -446,7 +453,6 @@ void App::Run()
 
 				ClearBackground(RAYWHITE);
 				
-				
 				posX += gamepadAxisState[GAMEPAD_PLAYER1][GAMEPAD_XBOX_AXIS_LEFT_X] * 5;
 				posY += gamepadAxisState[GAMEPAD_PLAYER1][GAMEPAD_XBOX_AXIS_LEFT_Y] * -5;
 				DrawRectangle(posX, posY, 400, 100, RED);
@@ -455,38 +461,32 @@ void App::Run()
 
 				DrawCircle(mousePosition.x, mousePosition.y, 40, BLUE);
 
-				if(UWPIsKeyDown(KEY_S))
-				{
-					DrawCircle(100, 100, 100, BLUE);
-				}
+				if (UWPIsKeyDown(KEY_S)) DrawCircle(100, 100, 100, BLUE);
 
-				if(UWPIsKeyPressed(KEY_A))
+				if (UWPIsKeyPressed(KEY_A))
 				{
 					posX -= 50;
 					UWPEnableCursor();
 				}
+
 				if (UWPIsKeyPressed(KEY_D))
 				{
 					posX += 50;
-
 					UWPDisableCursor();
 				}
 
-				if(currentKeyState[KEY_LEFT_ALT])
-					DrawRectangle(250, 250, 20, 20, BLACK);
-				if (currentKeyState[KEY_BACKSPACE])
-					DrawRectangle(280, 250, 20, 20, BLACK);
-
-				if (currentMouseState[MOUSE_LEFT_BUTTON])
-					DrawRectangle(280, 250, 20, 20, BLACK);
+				if (currentKeyState[KEY_LEFT_ALT]) DrawRectangle(250, 250, 20, 20, BLACK);
+				if (currentKeyState[KEY_BACKSPACE]) DrawRectangle(280, 250, 20, 20, BLACK);
+				if (currentMouseState[MOUSE_LEFT_BUTTON]) DrawRectangle(280, 250, 20, 20, BLACK);
 
 				static int pos = 0;
 				pos -= currentMouseWheelY;
-				DrawRectangle(280, pos + 50, 20, 20, BLACK);
 
+				DrawRectangle(280, pos + 50, 20, 20, BLACK);
 				DrawRectangle(250, 280 + (time++ % 60), 10, 10, PURPLE);
 
 		    EndDrawing();
+
 			UWP_PollInput();
 
 			CoreWindow::GetForCurrentThread()->Dispatcher->ProcessEvents(CoreProcessEventsOption::ProcessAllIfPresent);
