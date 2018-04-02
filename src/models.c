@@ -1889,16 +1889,14 @@ bool CheckCollisionRaySphereEx(Ray ray, Vector3 spherePosition, float sphereRadi
 
     if (d >= 0.0f) collision = true;
 
-    // Calculate collision point
-    Vector3 offset = ray.direction;
+    // Check if ray origin is inside the sphere to calculate the correct collision point
     float collisionDistance = 0;
 
-    // Check if ray origin is inside the sphere to calculate the correct collision point
     if (distance < sphereRadius) collisionDistance = vector + sqrtf(d);
     else collisionDistance = vector - sqrtf(d);
-
-    offset = Vector3Scale(offset, collisionDistance);
-    Vector3 cPoint = Vector3Add(ray.position, offset);
+    
+    // Calculate collision point
+    Vector3 cPoint = Vector3Add(ray.position, Vector3Scale(ray.direction, collisionDistance));
 
     collisionPoint->x = cPoint.x;
     collisionPoint->y = cPoint.y;
@@ -2021,11 +2019,8 @@ RayHitInfo GetCollisionRayTriangle(Ray ray, Vector3 p1, Vector3 p2, Vector3 p3)
         result.hit = true;
         result.distance = t;
         result.hit = true;
-        result.normal = Vector3CrossProduct(edge1, edge2);
-        result.normal = Vector3Normalize(result.normal);
-        Vector3 rayDir = ray.direction;
-        rayDir = Vector3Scale(rayDir, t);
-        result.position = Vector3Add(ray.position, rayDir);
+        result.normal = Vector3Normalize(Vector3CrossProduct(edge1, edge2));
+        result.position = Vector3Add(ray.position, Vector3Scale(ray.direction, t));
     }
 
     return result;
@@ -2040,16 +2035,14 @@ RayHitInfo GetCollisionRayGround(Ray ray, float groundHeight)
 
     if (fabsf(ray.direction.y) > EPSILON)
     {
-        float t = (ray.position.y - groundHeight)/-ray.direction.y;
+        float distance = (ray.position.y - groundHeight)/-ray.direction.y;
 
-        if (t >= 0.0)
+        if (distance >= 0.0)
         {
-            Vector3 rayDir = ray.direction;
-            rayDir = Vector3Scale(rayDir, t);
             result.hit = true;
-            result.distance = t;
+            result.distance = distance;
             result.normal = (Vector3){ 0.0, 1.0, 0.0 };
-            result.position = Vector3Add(ray.position, rayDir);
+            result.position = Vector3Add(ray.position, Vector3Scale(ray.direction, distance));
         }
     }
 

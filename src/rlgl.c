@@ -470,8 +470,7 @@ void rlRotatef(float angleDeg, float x, float y, float z)
     Matrix matRotation = MatrixIdentity();
 
     Vector3 axis = (Vector3){ x, y, z };
-    axis = Vector3Normalize(axis);
-    matRotation = MatrixRotate(axis, angleDeg*DEG2RAD);
+    matRotation = MatrixRotate(Vector3Normalize(axis), angleDeg*DEG2RAD);
 
     // NOTE: We transpose matrix with multiplication order
     *currentMatrix = MatrixMultiply(matRotation, *currentMatrix);
@@ -1356,7 +1355,7 @@ Vector3 rlUnproject(Vector3 source, Matrix proj, Matrix view)
 
     // Calculate unproject matrix (multiply view patrix by projection matrix) and invert it
     Matrix matViewProj = MatrixMultiply(view, proj);
-    matViewProj= MatrixInvert(matViewProj);
+    matViewProj = MatrixInvert(matViewProj);
 
     // Create quaternion from source point
     Quaternion quat = { source.x, source.y, source.z, 1.0f };
