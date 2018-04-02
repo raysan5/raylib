@@ -855,8 +855,6 @@ size_t jar_xm_get_memory_needed_for_context(const char* moddata, size_t moddata_
     uint16_t num_instruments;
 
     /* Read the module header */
-
-    num_channels = READ_U16(offset + 8);
     num_channels = READ_U16(offset + 8);
 
     num_patterns = READ_U16(offset + 10);
@@ -2561,27 +2559,21 @@ uint64_t jar_xm_get_remaining_samples(jar_xm_context_t* ctx)
     uint64_t total = 0;
     uint8_t currentLoopCount = jar_xm_get_loop_count(ctx);
     jar_xm_set_max_loop_count(ctx, 0);
-    
+
     while(jar_xm_get_loop_count(ctx) == currentLoopCount)
     {
         total += ctx->remaining_samples_in_tick;
         ctx->remaining_samples_in_tick = 0;
         jar_xm_tick(ctx);
     }
-    
+
     ctx->loop_count = currentLoopCount;
     return total;
 }
 
-
-
-
-
 //--------------------------------------------
 //FILE LOADER - TODO - NEEDS TO BE CLEANED UP
 //--------------------------------------------
-
-
 
 #undef DEBUG
 #define DEBUG(...) do {      \
@@ -2668,13 +2660,7 @@ int jar_xm_create_context_from_file(jar_xm_context_t** ctx, uint32_t rate, const
     return 0;
 }
 
-
-
-
 #endif//end of JAR_XM_IMPLEMENTATION
 //-------------------------------------------------------------------------------
-
-
-
 
 #endif//end of INCLUDE_JAR_XM_H

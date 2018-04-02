@@ -1553,7 +1553,7 @@ void UpdateMusicStream(Music music)
             case MUSIC_AUDIO_OGG:
             {
                 // NOTE: Returns the number of samples to process (be careful! we ask for number of shorts!)
-                int numSamplesOgg = stb_vorbis_get_samples_short_interleaved(music->ctxOgg, music->stream.channels, (short *)pcm, samplesCount*music->stream.channels);
+                stb_vorbis_get_samples_short_interleaved(music->ctxOgg, music->stream.channels, (short *)pcm, samplesCount*music->stream.channels);
 
             } break;
         #if defined(SUPPORT_FILEFORMAT_FLAC)

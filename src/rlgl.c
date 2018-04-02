@@ -3373,9 +3373,9 @@ static void LoadBuffersDefault(void)
     quads.texcoords = (float *)malloc(sizeof(float)*2*4*MAX_QUADS_BATCH);       // 2 float by texcoord, 4 texcoord by quad
     quads.colors = (unsigned char *)malloc(sizeof(unsigned char)*4*4*MAX_QUADS_BATCH);  // 4 float by color, 4 colors by quad
 #if defined(GRAPHICS_API_OPENGL_33)
-    quads.indices = (unsigned int *)malloc(sizeof(int)*6*MAX_QUADS_BATCH);      // 6 int by quad (indices)
+    quads.indices = (unsigned int *)malloc(sizeof(unsigned int)*6*MAX_QUADS_BATCH);      // 6 int by quad (indices)
 #elif defined(GRAPHICS_API_OPENGL_ES2)
-    quads.indices = (unsigned short *)malloc(sizeof(short)*6*MAX_QUADS_BATCH);  // 6 int by quad (indices)
+    quads.indices = (unsigned short *)malloc(sizeof(unsigned short)*6*MAX_QUADS_BATCH);  // 6 int by quad (indices)
 #endif
 
     for (int i = 0; i < (3*4*MAX_QUADS_BATCH); i++) quads.vertices[i] = 0.0f;

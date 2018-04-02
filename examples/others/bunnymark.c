@@ -10,7 +10,6 @@
 ********************************************************************************************/
 
 #include "raylib.h"
-
 #include <stdlib.h>     // Required for: malloc(), free()
 
 #define MAX_BUNNIES     100000       // 100K bunnies
@@ -29,15 +28,16 @@ int main()
     int screenHeight = 960;
 
     InitWindow(screenWidth, screenHeight, "raylib example - Bunnymark");
-    
+
     Texture2D texBunny = LoadTexture("resources/wabbit_alpha.png");
-    
+
     Bunny *bunnies = (Bunny *)malloc(MAX_BUNNIES*sizeof(Bunny));          // Bunnies array
+
     int bunniesCount = 0;    // Bunnies counter
 
     SetTargetFPS(60);
     //--------------------------------------------------------------------------------------
-    
+
     // Main game loop
     while (!WindowShouldClose())    // Detect window close button or ESC key
     {
@@ -54,7 +54,7 @@ int main()
                 bunniesCount++;
             }
         }
-        
+
         // Update bunnies
         for (int i = 0; i < bunniesCount; i++)
         {
@@ -65,14 +65,14 @@ int main()
             if ((bunnies[i].position.y > GetScreenHeight()) || (bunnies[i].position.y < 0)) bunnies[i].speed.y *= -1;
         }
         //----------------------------------------------------------------------------------
-        
+
         // Draw
         //----------------------------------------------------------------------------------
         BeginDrawing();
 
             ClearBackground(RAYWHITE);
-            
-            for (int i = 0; i <= bunniesCount; i++)
+
+            for (int i = 0; i < bunniesCount; i++)
             {
                 // NOTE: When internal QUADS batch limit is reached, a draw call is launched and
                 // batching buffer starts being filled again; before launching the draw call,
@@ -80,11 +80,10 @@ int main()
                 // a stall and consequently a frame drop, limiting number of bunnies drawn at 60 fps
                 DrawTexture(texBunny, bunnies[i].position.x, bunnies[i].position.y, RAYWHITE);
             }
-            
+
             DrawRectangle(0, 0, screenWidth, 40, LIGHTGRAY);
             DrawText("raylib bunnymark", 10, 10, 20, DARKGRAY);
             DrawText(FormatText("bunnies: %i", bunniesCount), 400, 10, 20, RED);
-            
             DrawFPS(260, 10);
 
         EndDrawing();
@@ -94,7 +93,7 @@ int main()
     // De-Initialization
     //--------------------------------------------------------------------------------------
     free(bunnies);
-    
+
     CloseWindow();        // Close window and OpenGL context
     //--------------------------------------------------------------------------------------
 
