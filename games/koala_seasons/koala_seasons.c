@@ -15,10 +15,6 @@
 #include "raylib.h"
 #include "screens/screens.h"    // NOTE: Defines currentScreen
 
-#if defined(PLATFORM_ANDROID)
-    #include "android_native_app_glue.h"
-#endif
-
 #if defined(PLATFORM_WEB)
     #include <emscripten/emscripten.h>
 #endif
@@ -47,12 +43,7 @@ void UpdateDrawFrame(void);     // Update and Draw one frame
 //----------------------------------------------------------------------------------
 // Main entry point
 //----------------------------------------------------------------------------------
-#if defined(PLATFORM_ANDROID)
-void android_main(struct android_app *app)
-#else
-int main(void)
-#endif
-{
+int main(void) {
 	// Initialization
 	//---------------------------------------------------------
     const int screenWidth = 1280;
@@ -62,11 +53,8 @@ int main(void)
     //ShowLogo();
     //SetConfigFlags(FLAG_FULLSCREEN_MODE);
     
-#if defined(PLATFORM_ANDROID)
-    InitWindow(screenWidth, screenHeight, app);
-#else
+    // Note that windowTitle is ignored on Android
     InitWindow(screenWidth, screenHeight, windowTitle);
-#endif
 
     // Load global data here (assets that must be available in all screens, i.e. fonts)
     font = LoadSpriteFont("resources/graphics/mainfont.png");
@@ -145,9 +133,8 @@ int main(void)
 
     CloseWindow();              // Close window and OpenGL context
     //--------------------------------------------------------------------------------------
-#if !defined(PLATFORM_ANDROID)
+
     return 0;
-#endif
 }
 
 void TransitionToScreen(int screen)
