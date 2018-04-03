@@ -1,6 +1,7 @@
 # Setup the project and settings
 project(raylib)
 include("../utils.cmake")
+include(GNUInstallDirs)
 
 set(PROJECT_VERSION 1.9.4)
 set(API_VERSION 1)
@@ -12,6 +13,7 @@ option(WITH_PIC "Compile static library as position-independent code" OFF)
 # Build a static and/or shared raylib?
 option(SHARED "Build raylib as a dynamic library" OFF)
 option(STATIC "Build raylib as a static library" ON)
+option(USE_AUDIO "Build raylib with audio module" ON)
 option(MACOS_FATLIB  "Build fat library for both i386 and x86_64 on macOS" ON)
 
 if(NOT (STATIC OR SHARED))
@@ -43,9 +45,15 @@ else()
   include_directories(external/glfw/include)
 endif()
 
-file(GLOB stb_vorbis external/stb_vorbis.c)
-file(GLOB mini_al external/mini_al.c ${stb_vorbis})
-set(sources ${raylib_sources} ${mini_al})
+if(USE_AUDIO)
+  file(GLOB stb_vorbis external/stb_vorbis.c)
+  file(GLOB mini_al external/mini_al.c ${stb_vorbis})
+  set(sources ${raylib_sources} ${mini_al})
+else()
+  set(INCLUDE_AUDIO_MODULE 0) 
+  list(REMOVE_ITEM raylib_sources ${CMAKE_CURRENT_SOURCE_DIR}/audio.c)
+  set(sources ${raylib_sources})
+endif()
 
 ### Config options ###
 # Translate the config options to what raylib wants
@@ -112,7 +120,7 @@ if(${PLATFORM} MATCHES "PLATFORM_DESKTOP")
     )
 
     set_property(TARGET ${RAYLIB}_shared PROPERTY POSITION_INDEPENDENT_CODE ON)
-    set(CMAKE_INSTALL_RPATH "${CMAKE_INSTALL_PREFIX}/lib")
+    set(CMAKE_INSTALL_RPATH "${CMAKE_INSTALL_LIBDIR}")
     set(CMAKE_INSTALL_RPATH_USE_LINK_PATH TRUE)
     set(CMAKE_MACOSX_RPATH ON)
 
@@ -132,8 +140,8 @@ if(${PLATFORM} MATCHES "PLATFORM_DESKTOP")
       set_target_properties(${RAYLIB}_shared PROPERTIES OUTPUT_NAME ${RAYLIB})
       install(
         TARGETS ${RAYLIB}_shared
-        LIBRARY DESTINATION lib
-        PUBLIC_HEADER DESTINATION include
+        LIBRARY DESTINATION "${CMAKE_INSTALL_LIBDIR}"
+        PUBLIC_HEADER DESTINATION "${CMAKE_INSTALL_INCLUDEDIR}"
       )
     endif()
   endif(${SHARED})
@@ -153,13 +161,13 @@ if(${PLATFORM} MATCHES "PLATFORM_DESKTOP")
     endif()
     set_target_properties(${RAYLIB} PROPERTIES PUBLIC_HEADER "raylib.h")
     install(TARGETS ${RAYLIB}
-      ARCHIVE DESTINATION lib
-      PUBLIC_HEADER DESTINATION include
+      ARCHIVE DESTINATION "${CMAKE_INSTALL_LIBDIR}"
+      PUBLIC_HEADER DESTINATION "${CMAKE_INSTALL_INCLUDEDIR}"
     )
   endif(${STATIC})
 
   configure_file(../raylib.pc.in raylib.pc @ONLY)
-  install(FILES ${CMAKE_BINARY_DIR}/release/raylib.pc DESTINATION lib/pkgconfig)
+  install(FILES ${CMAKE_BINARY_DIR}/release/raylib.pc DESTINATION "${CMAKE_INSTALL_LIBDIR}/pkgconfig")
 
   # Copy the header files to the build directory
   file(COPY "raylib.h" DESTINATION ".")
