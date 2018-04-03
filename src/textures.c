@@ -1337,11 +1337,30 @@ void ImageDraw(Image *dst, Image src, Rectangle srcRec, Rectangle dstRec)
             // Alpha blending implementation
             dstCol = dstPixels[j*dst->width + i];
             srcCol = srcPixels[(j - dstRec.y)*dstRec.width + (i - dstRec.x)];
+            
+            /*
+            // Pre-multiply alpha
+            Vector3 dstColf = { (float)dstCol.r/255.0f, (float)dstCol.g/255.0f, (float)dstCol.b/255.0f };
+            dstColf = Vector3Multiply(dstColf, (float)dstCol.a/255.0f);
+            Vector3 srcColf = { (float)srcCol.r/255.0f, (float)srcCol.g/255.0f, (float)srcCol.b/255.0f };
+            srcColf = Vector3Multiply(srcColf, (float)srcCol.a/255.0f);
+            
+            dstColf = Vector3Add(dstColf, srcColf);
+            
+            if (dstColf.x > 1.0f) dstColf.x = 1.0f;
+            if (dstColf.y > 1.0f) dstColf.y = 1.0f;
+            if (dstColf.z > 1.0f) dstColf.z = 1.0f;
+            
+            dstCol.r = (unsigned char)(dstColf.x*255.0f);
+            dstCol.g = (unsigned char)(dstColf.y*255.0f);
+            dstCol.b = (unsigned char)(dstColf.z*255.0f);
+            dstCol.a = srcCol.a;
+            */
 
             dstCol.r = ((srcCol.a*(srcCol.r - dstCol.r)) >> 8) + dstCol.r;
             dstCol.g = ((srcCol.a*(srcCol.g - dstCol.g)) >> 8) + dstCol.g;
             dstCol.b = ((srcCol.a*(srcCol.b - dstCol.b)) >> 8) + dstCol.b;
-            dstCol.a = ((srcCol.a*(srcCol.a - dstCol.a)) >> 8) + dstCol.a;
+            dstCol.a = srcCol.a;
 
             dstPixels[j*dst->width + i] = dstCol;
 
