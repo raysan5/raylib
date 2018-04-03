@@ -1307,12 +1307,7 @@ bool IsFileExtension(const char *fileName, const char *ext)
 {
     bool result = false;
     const char *fileExt;
-    
-    if ((fileExt = strrchr(fileName, '.')) != NULL)
-    {
-        if (strcmp(fileExt, ext) == 0) result = true;
-    }
-    
+
     if ((fileExt = strrchr(fileName, '.')) != NULL)
     {
     #if defined(_WIN32)
