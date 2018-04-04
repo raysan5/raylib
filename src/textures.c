@@ -572,8 +572,8 @@ void UpdateTexture(Texture2D texture, const void *pixels)
     rlUpdateTexture(texture.id, texture.width, texture.height, texture.format, pixels);
 }
 
-// Save image to a PNG file
-void SaveImageAs(const char *fileName, Image image)
+// Export image as a PNG file
+void ExportImage(const char *fileName, Image image)
 {
 #if defined(PLATFORM_DESKTOP) || defined(PLATFORM_RPI)
     // NOTE: Getting Color array as RGBA unsigned char values
@@ -1360,6 +1360,7 @@ void ImageDraw(Image *dst, Image src, Rectangle srcRec, Rectangle dstRec)
             dstCol.r = ((srcCol.a*(srcCol.r - dstCol.r)) >> 8) + dstCol.r;
             dstCol.g = ((srcCol.a*(srcCol.g - dstCol.g)) >> 8) + dstCol.g;
             dstCol.b = ((srcCol.a*(srcCol.b - dstCol.b)) >> 8) + dstCol.b;
+            //dstCol.a = ((srcCol.a*(srcCol.a - dstCol.a)) >> 8) + dstCol.a;
             dstCol.a = srcCol.a;
 
             dstPixels[j*dst->width + i] = dstCol;
@@ -1463,6 +1464,18 @@ Image ImageTextEx(SpriteFont font, const char *text, float fontSize, int spacing
     }
 
     return imText;
+}
+
+// Draw rectangle within an image
+void ImageDrawRectangle(Image *dst, Vector2 position, Rectangle rec, Color color)
+{
+    Image imRec = GenImageColor(rec.width, rec.height, color);
+    
+    Rectangle dstRec = { (int)position.x, (int)position.y, imRec.width, imRec.height };
+
+    ImageDraw(dst, imRec, rec, dstRec);
+    
+    UnloadImage(imRec);
 }
 
 // Draw text (default font) within an image (destination)
