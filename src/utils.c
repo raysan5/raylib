@@ -141,13 +141,14 @@ void TraceLog(int msgType, const char *text, ...)
 #endif  // SUPPORT_TRACELOG
 }
 
-#if defined(PLATFORM_DESKTOP) || defined(PLATFORM_RPI)
-
 #if defined(SUPPORT_SAVE_BMP)
 // Creates a BMP image file from an array of pixel data
 void SaveBMP(const char *fileName, unsigned char *imgData, int width, int height, int compSize)
 {
+#if defined(PLATFORM_DESKTOP) || defined(PLATFORM_RPI)
     stbi_write_bmp(fileName, width, height, compSize, imgData);
+    TraceLog(LOG_INFO, "BMP Image saved: %s", fileName);
+#endif
 }
 #endif
 
@@ -155,9 +156,11 @@ void SaveBMP(const char *fileName, unsigned char *imgData, int width, int height
 // Creates a PNG image file from an array of pixel data
 void SavePNG(const char *fileName, unsigned char *imgData, int width, int height, int compSize)
 {
+#if defined(PLATFORM_DESKTOP) || defined(PLATFORM_RPI)
     stbi_write_png(fileName, width, height, compSize, imgData, width*compSize);
-}
+    TraceLog(LOG_INFO, "PNG Image saved: %s", fileName);
 #endif
+}
 #endif
 
 // Keep track of memory allocated

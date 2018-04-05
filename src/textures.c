@@ -575,14 +575,10 @@ void UpdateTexture(Texture2D texture, const void *pixels)
 // Export image as a PNG file
 void ExportImage(const char *fileName, Image image)
 {
-#if defined(PLATFORM_DESKTOP) || defined(PLATFORM_RPI)
     // NOTE: Getting Color array as RGBA unsigned char values
     unsigned char *imgData = (unsigned char *)GetImageData(image);
     SavePNG(fileName, imgData, image.width, image.height, 4);
     free(imgData);
-
-    TraceLog(LOG_INFO, "Image saved: %s", fileName);
-#endif
 }
 
 // Copy an image to a new image
@@ -1930,12 +1926,8 @@ Image GenImageCellular(int width, int height, int tileSize)
 void GenTextureMipmaps(Texture2D *texture)
 {
 #if defined(PLATFORM_WEB)
-    // Calculate next power-of-two values
-    int potWidth = (int)powf(2, ceilf(logf((float)texture->width)/logf(2)));
-    int potHeight = (int)powf(2, ceilf(logf((float)texture->height)/logf(2)));
-
     // Check if texture is POT
-    if ((potWidth != texture->width) || (potHeight != texture->height))
+    if (((texture->width & (texture->width - 1)) != 0) || ((texture->height & (texture->height - 1)) != 0))
     {
         TraceLog(LOG_WARNING, "Limited NPOT support, no mipmaps available for NPOT textures");
     }
