@@ -1925,16 +1925,9 @@ Image GenImageCellular(int width, int height, int tileSize)
 // Generate GPU mipmaps for a texture
 void GenTextureMipmaps(Texture2D *texture)
 {
-#if defined(PLATFORM_WEB)
-    // Check if texture is POT
-    if (((texture->width & (texture->width - 1)) != 0) || ((texture->height & (texture->height - 1)) != 0))
-    {
-        TraceLog(LOG_WARNING, "Limited NPOT support, no mipmaps available for NPOT textures");
-    }
-    else rlGenerateMipmaps(texture);
-#else
+    // NOTE: NPOT textures support check inside function
+    // On WebGL (OpenGL ES 2.0) NPOT textures support is limited
     rlGenerateMipmaps(texture);
-#endif
 }
 
 // Set texture scaling filter mode
