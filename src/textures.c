@@ -52,17 +52,7 @@
 *     3. This notice may not be removed or altered from any source distribution.
 *
 **********************************************************************************************/
-
-// Default configuration flags (supported features)
-//-------------------------------------------------
-#define SUPPORT_FILEFORMAT_PNG
-#define SUPPORT_FILEFORMAT_DDS
-#define SUPPORT_FILEFORMAT_HDR
-#define SUPPORT_FILEFORMAT_KTX
-#define SUPPORT_FILEFORMAT_ASTC
-#define SUPPORT_IMAGE_MANIPULATION
-#define SUPPORT_IMAGE_GENERATION
-//-------------------------------------------------
+#include "config.h"
 
 #include "raylib.h"
 

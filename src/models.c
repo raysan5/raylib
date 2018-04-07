@@ -36,12 +36,7 @@
 *
 **********************************************************************************************/
 
-// Default configuration flags (supported features)
-//-------------------------------------------------
-#define SUPPORT_FILEFORMAT_OBJ
-#define SUPPORT_FILEFORMAT_MTL
-#define SUPPORT_MESH_GENERATION
-//-------------------------------------------------
+#include "config.h"
 
 #include "raylib.h"
 

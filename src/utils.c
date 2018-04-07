@@ -41,7 +41,7 @@
 *
 **********************************************************************************************/
 
-#define SUPPORT_TRACELOG            // Output tracelog messages
+#include "config.h"
 
 #include "raylib.h"                 // WARNING: Required for: LogType enum
 #include "utils.h"
