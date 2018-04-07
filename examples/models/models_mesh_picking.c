@@ -101,8 +101,8 @@ int main()
         {
             hitMeshBBox = true;
             
-            // Check ray collision against mesh
-            meshHitInfo = GetCollisionRayMesh(ray, &tower.mesh);    
+            // Check ray collision against model
+            meshHitInfo = GetCollisionRayModel(ray, &tower);   
             
             if ((meshHitInfo.hit) && (meshHitInfo.distance < nearestHit.distance)) 
             {
