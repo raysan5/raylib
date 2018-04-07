@@ -4,6 +4,10 @@ cmake_minimum_required(VERSION 2.8.0)
 set(USE_EXTERNAL_GLFW  OFF  CACHE STRING "Link raylib against system GLFW instead of embedded one")
 set_property(CACHE USE_EXTERNAL_GLFW PROPERTY STRINGS ON OFF IF_POSSIBLE)
 
+if(UNIX AND NOT APPLE)
+    option(USE_WAYLAND "Use Wayland for window creation" OFF)
+endif()
+
 # Linking for OS X -framework options
 # Will do nothing on other OSes
 if(APPLE)
@@ -18,25 +22,47 @@ if(APPLE)
 elseif(WIN32)
   # no pkg-config --static on Windows yet...
 else()
+  if(USE_WAYLAND)
+    set(_GLFW_WAYLAND 1)
+  else()
+    set(_GLFW_X11 1)
+  endif()
+
   find_library(pthread NAMES pthread)
   find_package(OpenGL)
   if ("${OPENGL_LIBRARIES}" STREQUAL "")
-    # CFLAGS=-m32 cmake on Linux fails for some reason, so fallback to hardcoding
-    set(LIBS_PRIVATE m pthread GL X11 Xrandr Xinerama Xi Xxf86vm Xcursor)
+    if(NOT USE_WAYLAND)
+      # CFLAGS=-m32 cmake on Linux fails for some reason, so fallback to hardcoding
+      set(LIBS_PRIVATE m pthread GL X11 Xrandr Xinerama Xi Xxf86vm Xcursor)
+    else()
+      # CFLAGS=-m32 cmake on Linux fails for some reason, so fallback to hardcoding
+      set(LIBS_PRIVATE m pthread GL wayland-client wayland-cursor wayland-egl)
+    endif()
   else()
-    find_package(X11 REQUIRED X11)
-    find_library(XRANDR_LIBRARY Xrandr)
-    find_library(XI_LIBRARY Xi)
-    find_library(XINERAMA_LIBRARY Xinerama)
-    find_library(XXF86VM_LIBRARY Xxf86vm)
-    find_library(XCURSOR_LIBRARY Xcursor)
+    if(NOT USE_WAYLAND)
+      find_package(X11 REQUIRED X11)
+      find_library(XRANDR_LIBRARY Xrandr)
+      find_library(XI_LIBRARY Xi)
+      find_library(XINERAMA_LIBRARY Xinerama)
+      find_library(XXF86VM_LIBRARY Xxf86vm)
+      find_library(XCURSOR_LIBRARY Xcursor)
+    else()
+      find_library(WAYLAND_CLIENT_LIBRARY wayland-client)
+      find_library(WAYLAND_CURSOR_LIBRARY wayland-cursor)
+      find_library(WAYLAND_EGL_LIBRARY wayland-egl)
+    endif()
+
     include_directories(${OPENGL_INCLUDE_DIR})
 
     if ("${CMAKE_SYSTEM_NAME}" MATCHES "(Net|Open)BSD")
       find_library(OSS_LIBRARY ossaudio)
     endif()
 
-    set(LIBS_PRIVATE m ${pthread} ${OPENGL_LIBRARIES} ${X11_LIBRARIES} ${XRANDR_LIBRARY} ${XINERAMA_LIBRARY} ${XI_LIBRARY} ${XXF86VM_LIBRARY} ${XCURSOR_LIBRARY} ${OSS_LIBRARY})
+    if(NOT USE_WAYLAND)
+      set(LIBS_PRIVATE m ${pthread} ${OPENGL_LIBRARIES} ${X11_LIBRARIES} ${XRANDR_LIBRARY} ${XINERAMA_LIBRARY} ${XI_LIBRARY} ${XXF86VM_LIBRARY} ${XCURSOR_LIBRARY} ${OSS_LIBRARY})
+    else()
+      set(LIBS_PRIVATE m ${pthread} ${OPENGL_LIBRARIES} ${WAYLAND_CLIENT_LIBRARY} ${WAYLAND_CURSOR_LIBRARY} ${WAYLAND_EGL_LIBRARY} ${OSS_LIBRARY})
+    endif()
   endif()
 endif()
 
@@ -48,7 +74,6 @@ endif()
 if (glfw3_FOUND)
   set(LIBS_PRIVATE ${LIBS_PRIVATE} glfw)
 endif()
-
 
 if(CMAKE_SYSTEM_NAME STREQUAL Linux)
   set(LINUX TRUE)
