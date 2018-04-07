@@ -1,21 +1,25 @@
 # Setup the project and settings
 project(raylib)
-include("../utils.cmake")
 include(GNUInstallDirs)
 
 set(PROJECT_VERSION 1.9.4)
 set(API_VERSION 1)
 set(RAYLIB raylib)    # Name of the generated library
 
+include("CMakeOptions.txt")
+configure_file(config.h.in ${CMAKE_BINARY_DIR}/cmake/config.h)
+include_directories(${CMAKE_BINARY_DIR})
+
+include("../utils.cmake")
+
 # Get the sources together
 file(GLOB raylib_sources *.c)
+
 if(glfw3_FOUND)
   list(REMOVE_ITEM raylib_sources ${CMAKE_CURRENT_SOURCE_DIR}/rglfw.c)
 else()
   include_directories(external/glfw/include)
 endif()
-
-include("CMakeOptions.txt")
 
 if(USE_AUDIO)
   file(GLOB stb_vorbis external/stb_vorbis.c)
