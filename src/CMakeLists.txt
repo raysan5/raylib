@@ -7,36 +7,6 @@ set(PROJECT_VERSION 1.9.4)
 set(API_VERSION 1)
 set(RAYLIB raylib)    # Name of the generated library
 
-### Config options ###
-# Shared library is always PIC. Static library should be PIC too if linked into a shared library
-option(WITH_PIC "Compile static library as position-independent code" OFF)
-# Build a static and/or shared raylib?
-option(SHARED "Build raylib as a dynamic library" OFF)
-option(STATIC "Build raylib as a static library" ON)
-option(USE_AUDIO "Build raylib with audio module" ON)
-option(MACOS_FATLIB  "Build fat library for both i386 and x86_64 on macOS" ON)
-
-if(NOT (STATIC OR SHARED))
-  message(FATAL_ERROR "Nothing to do if both -DSHARED=OFF and -DSTATIC=OFF...")
-endif()
-
-if(DEFINED SHARED_RAYLIB)
-  set(SHARED ${SHARED_RAYLIB})
-  message(DEPRECATION "-DSHARED_RAYLIB is deprecated. Please use -DSHARED instead.")
-endif()
-if(DEFINED STATIC_RAYLIB)
-  set(STATIC ${STATIC_RAYLIB})
-  message(DEPRECATION "-DSTATIC_RAYLIB is deprecated. Please use -DSTATIC instead.")
-endif()
-
-# Platform
-set(PLATFORM "Desktop" CACHE STRING "Platform to build for.")
-set_property(CACHE PLATFORM PROPERTY STRINGS "Desktop" "Web" "Android" "Raspberry Pi")
-
-# OpenGL version
-set(OPENGL_VERSION "3.3" CACHE STRING "OpenGL Version to build raylib with")
-set_property(CACHE OPENGL_VERSION PROPERTY STRINGS "3.3" "2.1" "1.1" "ES 2.0")
-
 # Get the sources together
 file(GLOB raylib_sources *.c)
 if(glfw3_FOUND)
@@ -45,12 +15,14 @@ else()
   include_directories(external/glfw/include)
 endif()
 
+include("CMakeOptions.txt")
+
 if(USE_AUDIO)
   file(GLOB stb_vorbis external/stb_vorbis.c)
   file(GLOB mini_al external/mini_al.c ${stb_vorbis})
   set(sources ${raylib_sources} ${mini_al})
 else()
-  set(INCLUDE_AUDIO_MODULE 0) 
+  set(INCLUDE_AUDIO_MODULE 0)
   list(REMOVE_ITEM raylib_sources ${CMAKE_CURRENT_SOURCE_DIR}/audio.c)
   set(sources ${raylib_sources})
 endif()
