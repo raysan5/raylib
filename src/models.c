@@ -1966,28 +1966,28 @@ bool CheckCollisionRayBox(Ray ray, BoundingBox box)
     return collision;
 }
 
-// Get collision info between ray and mesh
-RayHitInfo GetCollisionRayMesh(Ray ray, Mesh *mesh)
+// Get collision info between ray and model
+RayHitInfo GetCollisionRayModel(Ray ray, Model *model)
 {
     RayHitInfo result = { 0 };
 
     // If mesh doesn't have vertex data on CPU, can't test it.
-    if (!mesh->vertices) return result;
+    if (!model->mesh.vertices) return result;
 
-    // mesh->triangleCount may not be set, vertexCount is more reliable
-    int triangleCount = mesh->vertexCount/3;
+    // model->mesh.triangleCount may not be set, vertexCount is more reliable
+    int triangleCount = model->mesh.vertexCount/3;
 
     // Test against all triangles in mesh
     for (int i = 0; i < triangleCount; i++)
     {
         Vector3 a, b, c;
-        Vector3 *vertdata = (Vector3 *)mesh->vertices;
+        Vector3 *vertdata = (Vector3 *)model->mesh.vertices;
 
-        if (mesh->indices)
+        if (model->mesh.indices)
         {
-            a = vertdata[mesh->indices[i*3 + 0]];
-            b = vertdata[mesh->indices[i*3 + 1]];
-            c = vertdata[mesh->indices[i*3 + 2]];
+            a = vertdata[model->mesh.indices[i*3 + 0]];
+            b = vertdata[model->mesh.indices[i*3 + 1]];
+            c = vertdata[model->mesh.indices[i*3 + 2]];
         }
         else
         {
@@ -1995,6 +1995,10 @@ RayHitInfo GetCollisionRayMesh(Ray ray, Mesh *mesh)
             b = vertdata[i*3 + 1];
             c = vertdata[i*3 + 2];
         }
+        
+        a = Vector3Transform(a, model->transform);
+        b = Vector3Transform(b, model->transform);
+        c = Vector3Transform(c, model->transform);
 
         RayHitInfo triHitInfo = GetCollisionRayTriangle(ray, a, b, c);
 
