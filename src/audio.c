@@ -11,7 +11,7 @@
 *       - Manage raw audio context
 *
 *   CONFIGURATION:
-*   
+*
 *   #define AUDIO_STANDALONE
 *       Define to use the module as standalone library (independently of raylib).
 *       Required types and functions are defined in the same module.
@@ -24,7 +24,7 @@
 *   #define SUPPORT_FILEFORMAT_XM
 *   #define SUPPORT_FILEFORMAT_MOD
 *   #define SUPPORT_FILEFORMAT_FLAC
-*       Selected desired fileformats to be supported for loading. Some of those formats are 
+*       Selected desired fileformats to be supported for loading. Some of those formats are
 *       supported by default, to remove support, just comment unrequired #define in this module
 *
 *   LIMITATIONS (only OpenAL Soft):
@@ -72,13 +72,7 @@
 *
 **********************************************************************************************/
 
-// Default configuration flags (supported features)
-//-------------------------------------------------
-#define SUPPORT_FILEFORMAT_WAV
-#define SUPPORT_FILEFORMAT_OGG
-#define SUPPORT_FILEFORMAT_XM
-#define SUPPORT_FILEFORMAT_MOD
-//-------------------------------------------------
+#include "config.h"
 
 #if !defined(USE_OPENAL_BACKEND)
     #define USE_MINI_AL 1       // Set to 1 to use mini_al; 0 to use OpenAL.

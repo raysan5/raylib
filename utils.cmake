@@ -1,12 +1,7 @@
 # All sorts of things that we need cross project
 cmake_minimum_required(VERSION 2.8.0)
 
-set(USE_EXTERNAL_GLFW  OFF  CACHE STRING "Link raylib against system GLFW instead of embedded one")
-set_property(CACHE USE_EXTERNAL_GLFW PROPERTY STRINGS ON OFF IF_POSSIBLE)
-
-if(UNIX AND NOT APPLE)
-    option(USE_WAYLAND "Use Wayland for window creation" OFF)
-endif()
+add_definitions("-DRAYLIB_CMAKE=1")
 
 # Linking for OS X -framework options
 # Will do nothing on other OSes
@@ -29,7 +24,7 @@ else()
   endif()
 
   find_library(pthread NAMES pthread)
-  find_package(OpenGL)
+  find_package(OpenGL QUIET)
   if ("${OPENGL_LIBRARIES}" STREQUAL "")
     if(NOT USE_WAYLAND)
       # CFLAGS=-m32 cmake on Linux fails for some reason, so fallback to hardcoding
@@ -69,7 +64,7 @@ endif()
 if(USE_EXTERNAL_GLFW STREQUAL "ON")
     find_package(glfw3 3.2.1 REQUIRED)
 elseif(USE_EXTERNAL_GLFW STREQUAL "IF_POSSIBLE")
-    find_package(glfw3 3.2.1)
+    find_package(glfw3 3.2.1 QUIET)
 endif()
 if (glfw3_FOUND)
   set(LIBS_PRIVATE ${LIBS_PRIVATE} glfw)
@@ -114,4 +109,3 @@ function(link_libraries_to_executable executable)
     target_link_libraries(${executable} raylib ${__PKG_CONFIG_LIBS_PRIVATE})
   endif()
 endfunction()
-

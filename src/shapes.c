@@ -4,12 +4,6 @@
 *
 *   CONFIGURATION:
 *
-*   #define SUPPORT_QUADS_ONLY
-*       Draw shapes using only QUADS, vertex are accumulated in QUADS arrays (like textures)
-*
-*   #define SUPPORT_TRIANGLES_ONLY
-*       Draw shapes using only TRIANGLES, vertex are accumulated in TRIANGLES arrays
-*
 *   #define USE_DEFAULT_FONT_TEXTURE
 *       Draw rectangle shapes using font texture white character instead of default white texture
 *       Allows drawing rectangles and text with a single draw call, very useful for GUI systems!
@@ -36,7 +30,7 @@
 *
 **********************************************************************************************/
 
-#define USE_DEFAULT_FONT_TEXTURE
+#include "config.h"
 
 #include "raylib.h"
 

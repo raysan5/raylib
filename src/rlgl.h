@@ -24,7 +24,7 @@
 *   #define RLGL_STANDALONE
 *       Use rlgl as standalone library (no raylib dependency)
 *
-*   #define SUPPORT_VR_SIMULATION / SUPPORT_STEREO_RENDERING
+*   #define SUPPORT_VR_SIMULATOR
 *       Support VR simulation functionality (stereo rendering)
 *
 *   #define SUPPORT_DISTORTION_SHADER

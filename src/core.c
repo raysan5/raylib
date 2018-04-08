@@ -48,7 +48,7 @@
 *       Mouse gestures are directly mapped like touches and processed by gestures system.
 *
 *   #define SUPPORT_BUSY_WAIT_LOOP
-*       Use busy wait loop for timming sync, if not defined, a high-resolution timer is setup and used
+*       Use busy wait loop for timing sync, if not defined, a high-resolution timer is setup and used
 *
 *   #define SUPPORT_GIF_RECORDING
 *       Allow automatic gif recording of current screen pressing CTRL+F12, defined in KeyCallback()
@@ -81,15 +81,7 @@
 *
 **********************************************************************************************/
 
-// Default configuration flags (supported features)
-//-------------------------------------------------
-#define SUPPORT_DEFAULT_FONT
-#define SUPPORT_MOUSE_GESTURES
-#define SUPPORT_CAMERA_SYSTEM
-#define SUPPORT_GESTURES_SYSTEM
-#define SUPPORT_BUSY_WAIT_LOOP
-#define SUPPORT_GIF_RECORDING
-//-------------------------------------------------
+#include "config.h"
 
 #include "raylib.h"
 

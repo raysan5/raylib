@@ -6,7 +6,7 @@
 *
 *   #define SUPPORT_FILEFORMAT_FNT
 *   #define SUPPORT_FILEFORMAT_TTF
-*       Selected desired fileformats to be supported for loading. Some of those formats are 
+*       Selected desired fileformats to be supported for loading. Some of those formats are
 *       supported by default, to remove support, just comment unrequired #define in this module
 *
 *   #define SUPPORT_DEFAULT_FONT
@@ -36,12 +36,7 @@
 *
 **********************************************************************************************/
 
-// Default supported features
-//-------------------------------------
-#define SUPPORT_DEFAULT_FONT
-#define SUPPORT_FILEFORMAT_FNT
-#define SUPPORT_FILEFORMAT_TTF
-//-------------------------------------
+#include "config.h"
 
 #include "raylib.h"
 

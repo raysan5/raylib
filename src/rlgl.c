@@ -54,11 +54,7 @@
 *
 **********************************************************************************************/
 
-// Default configuration flags (supported features)
-//-------------------------------------------------
-#define SUPPORT_VR_SIMULATOR
-#define SUPPORT_DISTORTION_SHADER
-//-------------------------------------------------
+#include "config.h"
 
 #include "rlgl.h"
 

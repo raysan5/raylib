@@ -32,7 +32,9 @@
     #include <android/asset_manager.h>      // Required for: AAssetManager
 #endif
 
-#define SUPPORT_SAVE_PNG
+#ifndef SUPPORT_SAVE_PNG
+#define SUPPORT_SAVE_PNG 1
+#endif
 
 //----------------------------------------------------------------------------------
 // Some basic Defines
