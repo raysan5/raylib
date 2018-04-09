@@ -448,7 +448,7 @@ struct android_app *GetAndroidApp(void)
 // NOTE: data parameter could be used to pass any kind of required data to the initialization
 void InitWindow(int width, int height, const char *title)
 {
-    TraceLog(LOG_INFO, "Initializing raylib (v1.9.6-dev)");
+    TraceLog(LOG_INFO, "Initializing raylib %s", RAYLIB_VERSION);
 
     windowTitle = title;
 #if defined(PLATFORM_ANDROID)

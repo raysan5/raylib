@@ -1,8 +1,6 @@
 /**********************************************************************************************
 *
-*   raylib v1.9.6-dev
-*
-*   A simple and easy-to-use library to learn videogames programming (www.raylib.com)
+*   raylib - A simple and easy-to-use library to learn videogames programming (www.raylib.com)
 *
 *   FEATURES:
 *       - Written in plain C code (C99) in PascalCase/camelCase notation
