@@ -332,8 +332,10 @@ static char **dropFilesPath;                // Store dropped files paths as stri
 static int dropFilesCount = 0;              // Count stored strings
 #endif
 
-static double currentTime, previousTime;    // Used to track timmings
-static double updateTime, drawTime;         // Time measures for update and draw
+static double currentTime = 0.0;            // Current time measure
+static double previousTime = 0.0;           // Previous time measure
+static double updateTime = 0.0;             // Time measure for frame update
+static double drawTime = 0.0;               // Time measure for frame draw
 static double frameTime = 0.0;              // Time measure for one frame
 static double targetTime = 0.0;             // Desired time for one frame, if 0 not applied
 
