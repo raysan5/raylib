@@ -25,7 +25,7 @@
 
 # Define required raylib variables
 PROJECT_NAME       ?= raylib_examples
-RAYLIB_VERSION     ?= 1.9.4
+RAYLIB_VERSION     ?= 1.9.7
 RAYLIB_API_VERSION ?= 1
 RAYLIB_PATH        ?= ..
 
