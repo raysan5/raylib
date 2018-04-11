@@ -2037,7 +2037,7 @@ static inline float mal_mix_f32(float x, float y, float a)
 // Atomics
 //
 ///////////////////////////////////////////////////////////////////////////////
-#if defined(_WIN32) && defined(_MSC_VER)
+#if defined(_WIN32) && !defined(__GNUC__)
 #define mal_memory_barrier()            MemoryBarrier()
 #define mal_atomic_exchange_32(a, b)    InterlockedExchange((LONG*)a, (LONG)b)
 #define mal_atomic_exchange_64(a, b)    InterlockedExchange64((LONGLONG*)a, (LONGLONG)b)
