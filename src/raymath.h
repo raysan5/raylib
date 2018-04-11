@@ -64,7 +64,11 @@
 #elif defined RAYMATH_HEADER_ONLY
     #define RMDEF static inline // Functions may be inlined, no external out-of-line definition
 #else
-    #define RMDEF inline        // Functions may be inlined or external definition used
+    #ifdef __TINYC__
+        #define RMDEF static inline // plain inline not supported by tinycc (See issue #435)
+    #else
+        #define RMDEF inline        // Functions may be inlined or external definition used
+    #endif
 #endif
 
 
