@@ -21,7 +21,12 @@ int main()
     InitWindow(screenWidth, screenHeight, "raylib [models] example - obj model loading");
 
     // Define the camera to look into our 3d world
-    Camera camera = {{ 3.0f, 3.0f, 3.0f }, { 0.0f, 1.5f, 0.0f }, { 0.0f, 1.0f, 0.0f }, 45.0f };
+    Camera camera = { 0 };
+    camera.position = (Vector3){ 3.0f, 3.0f, 3.0f };
+    camera.target = (Vector3){ 0.0f, 1.5f, 0.0f };
+    camera.up = (Vector3){ 0.0f, 1.0f, 0.0f };
+    camera.fovy = 45.0f;
+    camera.type = CAMERA_PERSPECTIVE;
 
     Model dwarf = LoadModel("resources/model/dwarf.obj");                   // Load OBJ model
     Texture2D texture = LoadTexture("resources/model/dwarf_diffuse.png");   // Load model texture

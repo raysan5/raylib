@@ -48,6 +48,7 @@ int main()
     camera.target = (Vector3){ 0.0f, 12.0f, 0.0f };     // Camera looking at point
     camera.up = (Vector3){ 0.0f, 1.0f, 0.0f };          // Camera up vector (rotation towards target)
     camera.fovy = 30.0f;                                // Camera field-of-view Y
+    camera.type = CAMERA_PERSPECTIVE;                   // Camera type
 
     float pitch = 0.0f;
     float roll = 0.0f;

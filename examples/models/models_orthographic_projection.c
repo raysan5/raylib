@@ -4,17 +4,17 @@
 *
 *   This program is heavily based on the geometric objects example
 *
-*   This example has been created using raylib 1.0 (www.raylib.com)
+*   This example has been created using raylib 1.9.7 (www.raylib.com)
 *   raylib is licensed under an unmodified zlib/libpng license (View raylib.h for details)
 *
-*   Copyright (c) 2014 Ramon Santamaria (@raysan5)
+*   Copyright (c) 2018 Max Danielsson & Ramon Santamaria (@raysan5)
 *
 ********************************************************************************************/
 
 #include "raylib.h"
 
-#define FOVY_PERSPECTIVE 45.0f
-#define WIDTH_ORTHOGRAPHIC 10.0f
+#define FOVY_PERSPECTIVE    45.0f
+#define WIDTH_ORTHOGRAPHIC  10.0f
 
 int main()
 {
@@ -36,15 +36,9 @@ int main()
     {
         // Update
         //----------------------------------------------------------------------------------
-        // TODO: Update your variables here
-        //----------------------------------------------------------------------------------
-        //
-
-        // Input
-        //----------------------------------------------------------------------------------
-        if(IsKeyPressed(KEY_SPACE)) 
+        if (IsKeyPressed(KEY_SPACE)) 
         {
-            if(camera.type == CAMERA_PERSPECTIVE) 
+            if (camera.type == CAMERA_PERSPECTIVE) 
             {
                 camera.fovy = WIDTH_ORTHOGRAPHIC;
                 camera.type = CAMERA_ORTHOGRAPHIC;
@@ -55,12 +49,10 @@ int main()
                 camera.type = CAMERA_PERSPECTIVE;
             }
         }
-
+        //----------------------------------------------------------------------------------
 
         // Draw
         //----------------------------------------------------------------------------------
-
-
         BeginDrawing();
 
             ClearBackground(RAYWHITE);
@@ -85,19 +77,12 @@ int main()
 
             End3dMode();
 
+            DrawText("Press Spacebar to switch camera type", 10, GetScreenHeight() - 30, 20, DARKGRAY);
+
+            if (camera.type == CAMERA_ORTHOGRAPHIC) DrawText("ORTHOGRAPHIC", 10, 40, 20, BLACK);
+            else if (camera.type == CAMERA_PERSPECTIVE) DrawText("PERSPECTIVE", 10, 40, 20, BLACK);
+
             DrawFPS(10, 10);
-
-            DrawText("Press Spacebar to switch camera type", 10, 40, 24, BLACK);
-
-            if(camera.type == CAMERA_ORTHOGRAPHIC)
-            {
-                DrawText("Orthographic", 10, 65, 24, BLACK);
-            }
-            else if(camera.type == CAMERA_PERSPECTIVE)
-            {
-                DrawText("Perspective", 10, 65, 24, BLACK);
-            }
-
 
         EndDrawing();
         //----------------------------------------------------------------------------------
