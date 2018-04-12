@@ -143,31 +143,27 @@ void TraceLog(int msgType, const char *text, ...)
     va_end(args);
 
     if (msgType == LOG_ERROR) exit(1);  // If LOG_ERROR message, exit program
-    
+
 #endif  // SUPPORT_TRACELOG
 }
 
-#if defined(SUPPORT_SAVE_BMP)
 // Creates a BMP image file from an array of pixel data
 void SaveBMP(const char *fileName, unsigned char *imgData, int width, int height, int compSize)
 {
-#if defined(PLATFORM_DESKTOP) || defined(PLATFORM_RPI)
+#if defined(SUPPORT_SAVE_BMP) && (defined(PLATFORM_DESKTOP) || defined(PLATFORM_RPI))
     stbi_write_bmp(fileName, width, height, compSize, imgData);
     TraceLog(LOG_INFO, "BMP Image saved: %s", fileName);
 #endif
 }
-#endif
 
-#if defined(SUPPORT_SAVE_PNG)
 // Creates a PNG image file from an array of pixel data
 void SavePNG(const char *fileName, unsigned char *imgData, int width, int height, int compSize)
 {
-#if defined(PLATFORM_DESKTOP) || defined(PLATFORM_RPI)
+#if defined(SUPPORT_SAVE_PNG) && (defined(PLATFORM_DESKTOP) || defined(PLATFORM_RPI))
     stbi_write_png(fileName, width, height, compSize, imgData, width*compSize);
     TraceLog(LOG_INFO, "PNG Image saved: %s", fileName);
 #endif
 }
-#endif
 
 // Keep track of memory allocated
 // NOTE: mallocType defines the type of data allocated

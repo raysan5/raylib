@@ -1,5 +1,7 @@
 /* config.h.in */
 
+#cmakedefine USE_OPENAL_BACKEND 1
+
 // core.c
 /* Camera module is included (camera.h) and multiple predefined cameras are available: free, 1st/3rd person, orbital */
 #cmakedefine SUPPORT_CAMERA_SYSTEM 1

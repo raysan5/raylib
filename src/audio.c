@@ -73,6 +73,7 @@
 *
 **********************************************************************************************/
 
+#include "config.h"
 #if !defined(USE_OPENAL_BACKEND)
     #define USE_MINI_AL 1       // Set to 1 to use mini_al; 0 to use OpenAL.
 #endif
