@@ -136,6 +136,9 @@
 #define KEY_RIGHT_SHIFT     344
 #define KEY_RIGHT_CONTROL   345
 #define KEY_RIGHT_ALT       346
+#define KEY_GRAVE            96
+#define KEY_SLASH            47
+#define KEY_BACKSLASH        92
 
 // Keyboard Alpha Numeric Keys
 #define KEY_ZERO             48
