@@ -921,7 +921,7 @@ void Begin3dMode(Camera camera)
 
     float aspect = (float)screenWidth/(float)screenHeight;
 
-    if(camera.type == CAMERA_PERSPECTIVE) 
+    if (camera.type == CAMERA_PERSPECTIVE) 
     {
         // Setup perspective projection
         double top = 0.01*tan(camera.fovy*0.5*DEG2RAD);
@@ -929,7 +929,7 @@ void Begin3dMode(Camera camera)
 
         rlFrustum(-right, right, -top, top, 0.01, 1000.0);
     }
-    else if(camera.type == CAMERA_ORTHOGRAPHIC)
+    else if (camera.type == CAMERA_ORTHOGRAPHIC)
     {
         // Setup orthographic projection
         double top = camera.fovy/2.0;
@@ -1031,12 +1031,12 @@ Ray GetMouseRay(Vector2 mousePosition, Camera camera)
 
     Matrix matProj;
 
-    if(camera.type == CAMERA_PERSPECTIVE) 
+    if (camera.type == CAMERA_PERSPECTIVE) 
     {
         // Calculate projection matrix from perspective
         matProj = MatrixPerspective(camera.fovy*DEG2RAD, ((double)GetScreenWidth()/(double)GetScreenHeight()), 0.01, 1000.0);
     }
-    else if(camera.type == CAMERA_ORTHOGRAPHIC)
+    else if (camera.type == CAMERA_ORTHOGRAPHIC)
     {
         float aspect = (float)screenWidth/(float)screenHeight;
         double top = camera.fovy/2.0;
@@ -1057,14 +1057,8 @@ Ray GetMouseRay(Vector2 mousePosition, Camera camera)
     // Calculate normalized direction vector
     Vector3 direction = Vector3Normalize(Vector3Subtract(farPoint, nearPoint));
 
-    if(camera.type == CAMERA_PERSPECTIVE)
-    {
-        ray.position = camera.position;
-    }
-    else if(camera.type == CAMERA_ORTHOGRAPHIC) 
-    {
-        ray.position = cameraPlanePointerPos;
-    }
+    if (camera.type == CAMERA_PERSPECTIVE) ray.position = camera.position;
+    else if (camera.type == CAMERA_ORTHOGRAPHIC) ray.position = cameraPlanePointerPos;
 
     // Apply calculated vectors to ray
     ray.direction = direction;
