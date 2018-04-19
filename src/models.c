@@ -631,10 +631,12 @@ Mesh LoadMesh(const char *fileName)
     TraceLog(LOG_WARNING, "[%s] Mesh fileformat not supported, it can't be loaded", fileName);
 #endif
 
-    if (mesh.vertexCount == 0) TraceLog(LOG_WARNING, "Mesh could not be loaded");
+    if (mesh.vertexCount == 0)
+    {
+        TraceLog(LOG_WARNING, "Mesh could not be loaded! Let's load a cube to replace it!");
+        mesh = GenMeshCube(1.0f, 1.0f, 1.0f);
+    }
     else rlLoadMesh(&mesh, false);  // Upload vertex data to GPU (static mesh)
-
-    // TODO: Initialize default mesh data in case loading fails, maybe a cube?
 
     return mesh;
 }
