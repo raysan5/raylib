@@ -2410,7 +2410,7 @@ mal_uint64 mal_sine_wave_read(mal_sine_wave* pSignWave, mal_uint64 count, float*
     #elif defined(__GNUC__) || defined(__clang__)
         static MAL_INLINE void mal_cpuid(int info[4], int fid)
         {
-            asm (
+            __asm__ (
                 "movl %[fid], %%eax\n\t"
                 "cpuid\n\t"
                 "movl %%eax, %[info0]\n\t"
@@ -2431,7 +2431,7 @@ mal_uint64 mal_sine_wave_read(mal_sine_wave* pSignWave, mal_uint64 count, float*
             unsigned int hi;
             unsigned int lo;
 
-            asm (
+            __asm__ (
                 "movl %[reg], %%ecx\n\t"
                 "xgetbv\n\t"
                 "movl %%eax, %[lo]\n\t"
