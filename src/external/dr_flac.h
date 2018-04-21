@@ -1,5 +1,5 @@
 // FLAC audio decoder. Public domain. See "unlicense" statement at the end of this file.
-// dr_flac - v0.8d - 2017-09-22
+// dr_flac - v0.8g - 2018-04-19
 //
 // David Reid - mackron@gmail.com
 
@@ -106,6 +106,7 @@
 //
 //
 // QUICK NOTES
+// - dr_flac does not currently support changing the sample rate nor channel count mid stream.
 // - Audio data is output as signed 32-bit PCM, regardless of the bits per sample the FLAC stream is encoded as.
 // - This has not been tested on big-endian architectures.
 // - Rice codes in unencoded binary form (see https://xiph.org/flac/format.html#rice_partition) has not been tested. If anybody
@@ -759,6 +760,8 @@ const char* drflac_next_vorbis_comment(drflac_vorbis_comment_iterator* pIter, dr
 #define DRFLAC_X64
 #elif defined(__i386) || defined(_M_IX86)
 #define DRFLAC_X86
+#elif defined(__arm__) || defined(_M_ARM)
+#define DRFLAC_ARM
 #endif
 
 // Compile-time CPU feature support.
@@ -806,7 +809,7 @@ const char* drflac_next_vorbis_comment(drflac_vorbis_comment_iterator* pIter, dr
 #include <endian.h>
 #endif
 
-#if defined(_MSC_VER) && _MSC_VER >= 1500
+#if defined(_MSC_VER) && _MSC_VER >= 1500 && (defined(DRFLAC_X86) || defined(DRFLAC_X64))
 #define DRFLAC_HAS_LZCNT_INTRINSIC
 #elif (defined(__GNUC__) && ((__GNUC__ > 4) || (__GNUC__ == 4 && __GNUC_MINOR__ >= 7)))
 #define DRFLAC_HAS_LZCNT_INTRINSIC
@@ -1694,7 +1697,7 @@ static drflac_bool32 drflac__find_and_seek_to_next_sync_code(drflac_bs* bs)
 #if !defined(DR_FLAC_NO_SIMD) && defined(DRFLAC_HAS_LZCNT_INTRINSIC)
 #define DRFLAC_IMPLEMENT_CLZ_LZCNT
 #endif
-#if  defined(_MSC_VER) && _MSC_VER >= 1400
+#if  defined(_MSC_VER) && _MSC_VER >= 1400 && (defined(DRFLAC_X64) || defined(DRFLAC_X86))
 #define DRFLAC_IMPLEMENT_CLZ_MSVC
 #endif
 
@@ -2402,6 +2405,16 @@ static drflac_bool32 drflac__decode_samples_with_residual(drflac_bs* bs, drflac_
         return DRFLAC_FALSE;
     }
 
+    // From the FLAC spec:
+    //   The Rice partition order in a Rice-coded residual section must be less than or equal to 8.
+    if (partitionOrder > 8) {
+        return DRFLAC_FALSE;
+    }
+
+    // Validation check.
+    if ((blockSize / (1 << partitionOrder)) <= order) {
+        return DRFLAC_FALSE;
+    }
 
     drflac_uint32 samplesInPartition = (blockSize / (1 << partitionOrder)) - order;
     drflac_uint32 partitionsRemaining = (1 << partitionOrder);
@@ -2446,7 +2459,10 @@ static drflac_bool32 drflac__decode_samples_with_residual(drflac_bs* bs, drflac_
         }
 
         partitionsRemaining -= 1;
-        samplesInPartition = blockSize / (1 << partitionOrder);
+
+        if (partitionOrder != 0) {
+            samplesInPartition = blockSize / (1 << partitionOrder);
+        }
     }
 
     return DRFLAC_TRUE;
@@ -2982,7 +2998,17 @@ static drflac_result drflac__decode_frame(drflac* pFlac)
     // This function should be called while the stream is sitting on the first byte after the frame header.
     drflac_zero_memory(pFlac->currentFrame.subframes, sizeof(pFlac->currentFrame.subframes));
 
+    // The frame block size must never be larger than the maximum block size defined by the FLAC stream.
+    if (pFlac->currentFrame.header.blockSize > pFlac->maxBlockSize) {
+        return DRFLAC_ERROR;
+    }
+
+    // The number of channels in the frame must match the channel count from the STREAMINFO block.
     int channelCount = drflac__get_channel_count_from_channel_assignment(pFlac->currentFrame.header.channelAssignment);
+    if (channelCount != (int)pFlac->channels) {
+        return DRFLAC_ERROR;
+    }
+
     for (int i = 0; i < channelCount; ++i) {
         if (!drflac__decode_subframe(&pFlac->bs, &pFlac->currentFrame, i, pFlac->pDecodedSamples + (pFlac->currentFrame.header.blockSize * i))) {
             return DRFLAC_ERROR;
@@ -5497,6 +5523,16 @@ const char* drflac_next_vorbis_comment(drflac_vorbis_comment_iterator* pIter, dr
 
 
 // REVISION HISTORY
+//
+// v0.8g - 2018-04-19
+//   - Fix build on non-x86/x64 architectures.
+//
+// v0.8f - 2018-02-02
+//   - Stop pretending to support changing rate/channels mid stream.
+//
+// v0.8e - 2018-02-01
+//   - Fix a crash when the block size of a frame is larger than the maximum block size defined by the FLAC stream.
+//   - Fix a crash the the Rice partition order is invalid.
 //
 // v0.8d - 2017-09-22
 //   - Add support for decoding streams with ID3 tags. ID3 tags are just skipped.
