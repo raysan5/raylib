@@ -5,18 +5,14 @@
 *   <Game title>
 *   <Game description>
 *
-*   This game has been created using raylib v1.2 (www.raylib.com)
+*   This game has been created using raylib (www.raylib.com)
 *   raylib is licensed under an unmodified zlib/libpng license (View raylib.h for details)
 *
-*   Copyright (c) 2014-2017 Ramon Santamaria (@raysan5)
+*   Copyright (c) 2014-2018 Ramon Santamaria (@raysan5)
 *
 ********************************************************************************************/
 
 #include "raylib.h"
-
-#if defined(PLATFORM_ANDROID)
-    #include "android_native_app_glue.h"
-#endif
 
 //----------------------------------------------------------------------------------
 // Types and Structures Definition
@@ -26,22 +22,14 @@ typedef enum GameScreen { LOGO = 0, TITLE, GAMEPLAY, ENDING } GameScreen;
 //----------------------------------------------------------------------------------
 // Main entry point
 //----------------------------------------------------------------------------------
-#if defined(PLATFORM_ANDROID)
-void android_main(struct android_app *app) 
-#else
 int main(void)
-#endif
 {
-    // Initialization
+    // Initialization (Note windowTitle is unused on Android)
     //--------------------------------------------------------------------------------------
     const int screenWidth = 800;
     const int screenHeight = 450;
 
-#if defined(PLATFORM_ANDROID)
-    InitWindow(screenWidth, screenHeight, app);
-#else
     InitWindow(screenWidth, screenHeight, "raylib template - simple game");
-#endif
 
     GameScreen currentScreen = LOGO;
 
@@ -158,7 +146,6 @@ int main(void)
     
     CloseWindow();        // Close window and OpenGL context
     //--------------------------------------------------------------------------------------
-#if !defined(PLATFORM_ANDROID)
+
     return 0;
-#endif
 }

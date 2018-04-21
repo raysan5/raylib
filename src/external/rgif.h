@@ -1,6 +1,6 @@
 /**********************************************************************************************
 *
-*   rgif.h original implementation by Charlie Tangora [ctangora -at- gmail -dot- com]
+*   rgif.h original implementation (gif.h) by Charlie Tangora [ctangora -at- gmail -dot- com]
 *   adapted to C99, reformatted and renamed by Ramon Santamaria (@raysan5)
 *
 *   This file offers a simple, very limited way to create animated GIFs directly in code.
@@ -28,7 +28,32 @@
 *       3) Finally, call GifEnd() to close the file handle and free memory.
 *
 *
-*   LICENSE: public domain (www.unlicense.org)
+*   LICENSE: This software is available under 2 licenses -- choose whichever you prefer
+*
+*   ALTERNATIVE A - MIT License
+*
+*   Copyright (c) 2017 Ramon Santamaria
+*
+*   Permission is hereby granted, free of charge, to any person obtaining a copy of 
+*   this software and associated documentation files (the "Software"), to deal in 
+*   the Software without restriction, including without limitation the rights to 
+*   use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies 
+*   of the Software, and to permit persons to whom the Software is furnished to do 
+*   so, subject to the following conditions:
+*
+*   The above copyright notice and this permission notice shall be included in all 
+*   copies or substantial portions of the Software.
+*
+*   THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR 
+*   IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, 
+*   FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE 
+*   AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER 
+*   LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, 
+*   OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+*
+*   ------------------------------------------------------------------------------
+*
+*   ALTERNATIVE B - public domain (www.unlicense.org)
 *
 *   This is free and unencumbered software released into the public domain.
 *   Anyone is free to copy, modify, publish, use, compile, sell, or distribute this
@@ -150,7 +175,7 @@ typedef struct GifBitStatus {
 // The LZW dictionary is a 256-ary tree constructed 
 // as the file is encoded, this is one node
 typedef struct GifLzwNode {
-    uint16_t m_next[256];
+    unsigned short m_next[256];
 } GifLzwNode;
 
 //----------------------------------------------------------------------------------
@@ -299,9 +324,9 @@ static void GifGetClosestPaletteColor(GifPalette *pPal, int r, int g, int b, int
         if (ind == gifTransparentIndex) return;
         
         // check whether this color is better than the current winner
-        int r_err = r - ((int32_t)pPal->r[ind]);
-        int g_err = g - ((int32_t)pPal->g[ind]);
-        int b_err = b - ((int32_t)pPal->b[ind]);
+        int r_err = r - ((int)pPal->r[ind]);
+        int g_err = g - ((int)pPal->g[ind]);
+        int b_err = b - ((int)pPal->b[ind]);
         int diff = GIFABS(r_err)+GIFABS(g_err)+GIFABS(b_err);
         
         if (diff < *bestDiff)
@@ -463,7 +488,7 @@ static void GifSplitPalette(unsigned char *image, int numPixels, int firstElt, i
         }
         
         // otherwise, take the average of all colors in this subcube
-        uint64_t r=0, g=0, b=0;
+        unsigned long long r=0, g=0, b=0;
         for (int ii=0; ii<numPixels; ++ii)
         {
             r += image[ii*4+0];
@@ -594,12 +619,12 @@ static void GifDitherImage(const unsigned char *lastFrame, const unsigned char *
     // quantPixels initially holds color*256 for all pixels
     // The extra 8 bits of precision allow for sub-single-color error values
     // to be propagated
-    int32_t *quantPixels = (int32_t*)GIF_TEMP_MALLOC(sizeof(int32_t)*numPixels*4);
+    int *quantPixels = (int*)GIF_TEMP_MALLOC(sizeof(int)*numPixels*4);
     
     for (int ii=0; ii<numPixels*4; ++ii)
     {
         unsigned char pix = nextFrame[ii];
-        int32_t pix16 = (int32_t)pix*256;
+        int pix16 = (int)pix*256;
         quantPixels[ii] = pix16;
     }
     
@@ -607,13 +632,13 @@ static void GifDitherImage(const unsigned char *lastFrame, const unsigned char *
     {
         for (unsigned int xx=0; xx<width; ++xx)
         {
-            int32_t *nextPix = quantPixels + 4*(yy*width+xx);
+            int *nextPix = quantPixels + 4*(yy*width+xx);
             const unsigned char *lastPix = lastFrame? lastFrame + 4*(yy*width+xx) : NULL;
             
             // Compute the colors we want (rounding to nearest)
-            int32_t rr = (nextPix[0] + 127) / 256;
-            int32_t gg = (nextPix[1] + 127) / 256;
-            int32_t bb = (nextPix[2] + 127) / 256;
+            int rr = (nextPix[0] + 127) / 256;
+            int gg = (nextPix[1] + 127) / 256;
+            int bb = (nextPix[2] + 127) / 256;
             
             // if it happens that we want the color from last frame, then just write out
             // a transparent pixel
@@ -629,16 +654,16 @@ static void GifDitherImage(const unsigned char *lastFrame, const unsigned char *
                 continue;
             }
             
-            int32_t bestDiff = 1000000;
-            int32_t bestInd = gifTransparentIndex;
+            int bestDiff = 1000000;
+            int bestInd = gifTransparentIndex;
             
             // Search the palete
             GifGetClosestPaletteColor(pPal, rr, gg, bb, &bestInd, &bestDiff, 1);
             
             // Write the result to the temp buffer
-            int32_t r_err = nextPix[0] - (int32_t)(pPal->r[bestInd])*256;
-            int32_t g_err = nextPix[1] - (int32_t)(pPal->g[bestInd])*256;
-            int32_t b_err = nextPix[2] - (int32_t)(pPal->b[bestInd])*256;
+            int r_err = nextPix[0] - (int)(pPal->r[bestInd])*256;
+            int g_err = nextPix[1] - (int)(pPal->g[bestInd])*256;
+            int b_err = nextPix[2] - (int)(pPal->b[bestInd])*256;
             
             nextPix[0] = pPal->r[bestInd];
             nextPix[1] = pPal->g[bestInd];
@@ -654,7 +679,7 @@ static void GifDitherImage(const unsigned char *lastFrame, const unsigned char *
             
             if (quantloc_7 < numPixels)
             {
-                int32_t *pix7 = quantPixels+4*quantloc_7;
+                int *pix7 = quantPixels+4*quantloc_7;
                 pix7[0] += GIFMAX(-pix7[0], r_err*7 / 16);
                 pix7[1] += GIFMAX(-pix7[1], g_err*7 / 16);
                 pix7[2] += GIFMAX(-pix7[2], b_err*7 / 16);
@@ -662,7 +687,7 @@ static void GifDitherImage(const unsigned char *lastFrame, const unsigned char *
             
             if (quantloc_3 < numPixels)
             {
-                int32_t *pix3 = quantPixels+4*quantloc_3;
+                int *pix3 = quantPixels+4*quantloc_3;
                 pix3[0] += GIFMAX(-pix3[0], r_err*3 / 16);
                 pix3[1] += GIFMAX(-pix3[1], g_err*3 / 16);
                 pix3[2] += GIFMAX(-pix3[2], b_err*3 / 16);
@@ -670,7 +695,7 @@ static void GifDitherImage(const unsigned char *lastFrame, const unsigned char *
             
             if (quantloc_5 < numPixels)
             {
-                int32_t *pix5 = quantPixels+4*quantloc_5;
+                int *pix5 = quantPixels+4*quantloc_5;
                 pix5[0] += GIFMAX(-pix5[0], r_err*5 / 16);
                 pix5[1] += GIFMAX(-pix5[1], g_err*5 / 16);
                 pix5[2] += GIFMAX(-pix5[2], b_err*5 / 16);
@@ -678,7 +703,7 @@ static void GifDitherImage(const unsigned char *lastFrame, const unsigned char *
             
             if (quantloc_1 < numPixels)
             {
-                int32_t *pix1 = quantPixels+4*quantloc_1;
+                int *pix1 = quantPixels+4*quantloc_1;
                 pix1[0] += GIFMAX(-pix1[0], r_err / 16);
                 pix1[1] += GIFMAX(-pix1[1], g_err / 16);
                 pix1[2] += GIFMAX(-pix1[2], b_err / 16);
@@ -716,8 +741,8 @@ static void GifThresholdImage(const unsigned char *lastFrame, const unsigned cha
         else
         {
             // palettize the pixel
-            int32_t bestDiff = 1000000;
-            int32_t bestInd = 1;
+            int bestDiff = 1000000;
+            int bestInd = 1;
             GifGetClosestPaletteColor(pPal, nextFrame[0], nextFrame[1], nextFrame[2], &bestInd, &bestDiff, 1);
             
             // Write the resulting color to the output buffer
@@ -835,7 +860,7 @@ static void GifWriteLzwImage(FILE *f, unsigned char *image, unsigned int left, u
     GifLzwNode *codetree = (GifLzwNode *)GIF_TEMP_MALLOC(sizeof(GifLzwNode)*4096);
     
     memset(codetree, 0, sizeof(GifLzwNode)*4096);
-    int32_t curCode = -1;
+    int curCode = -1;
     unsigned int codeSize = minCodeSize + 1;
     unsigned int maxCode = clearCode + 1;
     
@@ -886,7 +911,6 @@ static void GifWriteLzwImage(FILE *f, unsigned char *image, unsigned int left, u
                     GifWriteCode(f, &stat, clearCode, codeSize); // clear tree
                     
                     memset(codetree, 0, sizeof(GifLzwNode)*4096);
-                    curCode = -1;
                     codeSize = minCodeSize + 1;
                     maxCode = clearCode + 1;
                 }

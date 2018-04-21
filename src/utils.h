@@ -5,7 +5,7 @@
 *
 *   LICENSE: zlib/libpng
 *
-*   Copyright (c) 2014-2017 Ramon Santamaria (@raysan5)
+*   Copyright (c) 2014-2018 Ramon Santamaria (@raysan5)
 *
 *   This software is provided "as-is", without any express or implied warranty. In no event
 *   will the authors be held liable for any damages arising from the use of this software.
@@ -32,9 +32,9 @@
     #include <android/asset_manager.h>      // Required for: AAssetManager
 #endif
 
-#include "rres.h"
-
-#define SUPPORT_SAVE_PNG
+#ifndef SUPPORT_SAVE_PNG
+#define SUPPORT_SAVE_PNG 1
+#endif
 
 //----------------------------------------------------------------------------------
 // Some basic Defines

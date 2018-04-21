@@ -52,7 +52,7 @@ int main()
                 letterCount++;
             }
             
-            if (key == KEY_BACKSPACE)
+            if (IsKeyPressed(KEY_BACKSPACE))
             {
                 letterCount--;
                 name[letterCount] = '\0';

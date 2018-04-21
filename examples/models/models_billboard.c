@@ -21,7 +21,13 @@ int main()
     InitWindow(screenWidth, screenHeight, "raylib [models] example - drawing billboards");
 
     // Define the camera to look into our 3d world
-    Camera camera = {{ 5.0f, 4.0f, 5.0f }, { 0.0f, 2.0f, 0.0f }, { 0.0f, 1.0f, 0.0f }, 45.0f };
+    Camera camera = { 0 };
+    camera.position = (Vector3){ 5.0f, 4.0f, 5.0f };
+    camera.target = (Vector3){ 0.0f, 2.0f, 0.0f };
+    camera.up = (Vector3){ 0.0f, 1.0f, 0.0f };
+    camera.fovy = 45.0f;
+    camera.type = CAMERA_PERSPECTIVE;
+    
 
     Texture2D bill = LoadTexture("resources/billboard.png");     // Our texture billboard
     Vector3 billPosition = { 0.0f, 2.0f, 0.0f };                 // Position where draw billboard

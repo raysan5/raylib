@@ -1,0 +1,13 @@
+prefix=@CMAKE_INSTALL_PREFIX@
+exec_prefix=${prefix}
+libdir=${exec_prefix}/lib
+includedir=${prefix}/include
+
+Name: raylib
+Description: Simple and easy-to-use library to learn videogames programming
+URL: http://github.com/raysan5/raylib
+Version: @PROJECT_VERSION@
+Libs: -L${libdir} -lraylib
+Libs.private: @PKG_CONFIG_LIBS_PRIVATE@
+Requires.private:
+Cflags: -I${includedir}

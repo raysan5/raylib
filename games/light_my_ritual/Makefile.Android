@@ -53,25 +53,20 @@ APP_COMPANY_NAME ?= raylib
 APP_PRODUCT_NAME ?= rgame
 APP_VERSION_CODE ?= 1
 APP_VERSION_NAME ?= 1.0
-APP_ICON_LDPI ?= $(RAYLIB_PATH)\logo\logo36x36.png
-APP_ICON_MDPI ?= $(RAYLIB_PATH)\logo\logo48x48.png
-APP_ICON_HDPI ?= $(RAYLIB_PATH)\logo\logo72x72.png
+APP_ICON_LDPI ?= $(RAYLIB_PATH)\logo\raylib_36x36.png
+APP_ICON_MDPI ?= $(RAYLIB_PATH)\logo\raylib_48x48.png
+APP_ICON_HDPI ?= $(RAYLIB_PATH)\logo\raylib_72x72.png
 APP_SCREEN_ORIENTATION ?= landscape
 APP_KEYSTORE_PASS ?= raylib
 
-# Library type used for raylib and OpenAL Soft: STATIC (.a) or SHARED (.so/.dll)
+# Library type used for raylib: STATIC (.a) or SHARED (.so/.dll)
 RAYLIB_LIBTYPE ?= STATIC
-OPENAL_LIBTYPE ?= STATIC
 RAYLIB_LIB_PATH = $(RAYLIB_PATH)\release\libs\android\armeabi-v7a
-OPENAL_LIB_PATH = $(RAYLIB_PATH)\release\libs\android\armeabi-v7a
 
 # Shared libs must be added to APK if required
 # NOTE: Generated NativeLoader.java automatically load those libraries
 ifeq ($(RAYLIB_LIBTYPE),SHARED)
     PROJECT_SHARED_LIBS = lib/armeabi-v7a/libraylib.so 
-endif
-ifeq ($(OPENAL_LIBTYPE),SHARED)
-    PROJECT_SHARED_LIBS += lib/armeabi-v7a/libopenal.so
 endif
 
 # Compiler and archiver
@@ -101,7 +96,7 @@ LDFLAGS += -L. -L$(PROJECT_BUILD_PATH)/obj -L$(PROJECT_BUILD_PATH)/lib/armeabi-v
 
 # Define any libraries to link into executable
 # if you want to link libraries (libname.so or libname.a), use the -lname
-LDLIBS = -lraylib -lnative_app_glue -lopenal -llog -landroid -lEGL -lGLESv2 -lOpenSLES -latomic -lc -lm -ldl
+LDLIBS = -lraylib -lnative_app_glue -llog -landroid -lEGL -lGLESv2 -lOpenSLES -latomic -lc -lm -ldl
 
 # Generate target objects list from PROJECT_SOURCE_FILES
 OBJS = $(patsubst %.c, $(PROJECT_BUILD_PATH)/obj/%.o, $(PROJECT_SOURCE_FILES))
@@ -154,14 +149,8 @@ copy_project_required_libs:
 ifeq ($(RAYLIB_LIBTYPE),SHARED)
 	copy /Y $(RAYLIB_LIB_PATH)\libraylib.so $(PROJECT_BUILD_PATH)\lib\armeabi-v7a\libraylib.so 
 endif
-ifeq ($(OPENAL_LIBTYPE),SHARED)
-	copy /Y $(OPENAL_LIB_PATH)\libopenal.so $(PROJECT_BUILD_PATH)\lib\armeabi-v7a\libopenal.so
-endif
 ifeq ($(RAYLIB_LIBTYPE),STATIC)
 	copy /Y $(RAYLIB_LIB_PATH)\libraylib.a $(PROJECT_BUILD_PATH)\lib\armeabi-v7a\libraylib.a 
-endif
-ifeq ($(OPENAL_LIBTYPE),STATIC)
-	copy /Y $(OPENAL_LIB_PATH)\libopenal.a $(PROJECT_BUILD_PATH)\lib\armeabi-v7a\libopenal.a
 endif
 
 # Copy project required resources: strings.xml, icon.png, assets
@@ -182,9 +171,6 @@ generate_loader_script:
 	@echo. >> $(PROJECT_BUILD_PATH)/src/com/$(APP_COMPANY_NAME)/$(APP_PRODUCT_NAME)/NativeLoader.java
 	@echo public class NativeLoader extends android.app.NativeActivity { >> $(PROJECT_BUILD_PATH)/src/com/$(APP_COMPANY_NAME)/$(APP_PRODUCT_NAME)/NativeLoader.java
 	@echo     static { >> $(PROJECT_BUILD_PATH)/src/com/$(APP_COMPANY_NAME)/$(APP_PRODUCT_NAME)/NativeLoader.java
-ifeq ($(OPENAL_LIBTYPE),SHARED)
-	@echo         System.loadLibrary("openal"); >> $(PROJECT_BUILD_PATH)/src/com/$(APP_COMPANY_NAME)/$(APP_PRODUCT_NAME)/NativeLoader.java
-endif
 ifeq ($(RAYLIB_LIBTYPE),SHARED)
 	@echo         System.loadLibrary("raylib"); >> $(PROJECT_BUILD_PATH)/src/com/$(APP_COMPANY_NAME)/$(APP_PRODUCT_NAME)/NativeLoader.java
 endif

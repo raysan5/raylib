@@ -38,7 +38,7 @@ int main()
     tower.material.maps[MAP_DIFFUSE].texture = texture;         // Set model diffuse texture
     
     Vector3 towerPos = { 0.0f, 0.0f, 0.0f };                    // Set model position
-    BoundingBox towerBBox = CalculateBoundingBox(tower.mesh);    
+    BoundingBox towerBBox = MeshBoundingBox(tower.mesh);        // Get mesh bounding box
     bool hitMeshBBox = false;
     bool hitTriangle = false;
 
@@ -101,8 +101,8 @@ int main()
         {
             hitMeshBBox = true;
             
-            // Check ray collision against mesh
-            meshHitInfo = GetCollisionRayMesh(ray, &tower.mesh);    
+            // Check ray collision against model
+            meshHitInfo = GetCollisionRayModel(ray, &tower);   
             
             if ((meshHitInfo.hit) && (meshHitInfo.distance < nearestHit.distance)) 
             {

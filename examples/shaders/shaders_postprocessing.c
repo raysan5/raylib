@@ -20,10 +20,8 @@
 
 #if defined(PLATFORM_DESKTOP)
     #define GLSL_VERSION            330
-    #define DEFAULT_VERTEX_SHADER   "resources/shaders/glsl330/base.vs"
 #else   // PLATFORM_RPI, PLATFORM_ANDROID, PLATFORM_WEB
     #define GLSL_VERSION            100
-    #define DEFAULT_VERTEX_SHADER   "resources/shaders/glsl100/base.vs"
 #endif
 
 #define MAX_POSTPRO_SHADERS         12
@@ -72,7 +70,7 @@ int main()
     InitWindow(screenWidth, screenHeight, "raylib [shaders] example - postprocessing shader");
 
     // Define the camera to look into our 3d world
-    Camera camera = {{ 3.0f, 3.0f, 3.0f }, { 0.0f, 1.5f, 0.0f }, { 0.0f, 1.0f, 0.0f }, 45.0f };
+    Camera camera = {{ 3.0f, 3.0f, 3.0f }, { 0.0f, 1.5f, 0.0f }, { 0.0f, 1.0f, 0.0f }, 45.0f, 0 };
     
     Model dwarf = LoadModel("resources/model/dwarf.obj");                   // Load OBJ model
     Texture2D texture = LoadTexture("resources/model/dwarf_diffuse.png");   // Load model texture (diffuse map)
@@ -85,18 +83,19 @@ int main()
     // NOTE 2: We load the correct shader depending on GLSL version
     Shader shaders[MAX_POSTPRO_SHADERS];
     
-    shaders[FX_GRAYSCALE] = LoadShader(DEFAULT_VERTEX_SHADER, FormatText("resources/shaders/glsl%i/grayscale.fs", GLSL_VERSION));
-    shaders[FX_POSTERIZATION] = LoadShader(DEFAULT_VERTEX_SHADER, FormatText("resources/shaders/glsl%i/posterization.fs", GLSL_VERSION));
-    shaders[FX_DREAM_VISION] = LoadShader(DEFAULT_VERTEX_SHADER, FormatText("resources/shaders/glsl%i/dream_vision.fs", GLSL_VERSION));
-    shaders[FX_PIXELIZER] = LoadShader(DEFAULT_VERTEX_SHADER, FormatText("resources/shaders/glsl%i/pixelizer.fs", GLSL_VERSION));
-    shaders[FX_CROSS_HATCHING] = LoadShader(DEFAULT_VERTEX_SHADER, FormatText("resources/shaders/glsl%i/cross_hatching.fs", GLSL_VERSION));
-    shaders[FX_CROSS_STITCHING] = LoadShader(DEFAULT_VERTEX_SHADER, FormatText("resources/shaders/glsl%i/cross_stitching.fs", GLSL_VERSION));
-    shaders[FX_PREDATOR_VIEW] = LoadShader(DEFAULT_VERTEX_SHADER, FormatText("resources/shaders/glsl%i/predator.fs", GLSL_VERSION));
-    shaders[FX_SCANLINES] = LoadShader(DEFAULT_VERTEX_SHADER, FormatText("resources/shaders/glsl%i/scanlines.fs", GLSL_VERSION));
-    shaders[FX_FISHEYE] = LoadShader(DEFAULT_VERTEX_SHADER, FormatText("resources/shaders/glsl%i/fisheye.fs", GLSL_VERSION));
-    shaders[FX_SOBEL] = LoadShader(DEFAULT_VERTEX_SHADER, FormatText("resources/shaders/glsl%i/sobel.fs", GLSL_VERSION));
-    shaders[FX_BLOOM] = LoadShader(DEFAULT_VERTEX_SHADER, FormatText("resources/shaders/glsl%i/bloom.fs", GLSL_VERSION));
-    shaders[FX_BLUR] = LoadShader(DEFAULT_VERTEX_SHADER, FormatText("resources/shaders/glsl%i/blur.fs", GLSL_VERSION));
+    // NOTE: Defining 0 (NULL) for vertex shader forces usage of internal default vertex shader
+    shaders[FX_GRAYSCALE] = LoadShader(0, FormatText("resources/shaders/glsl%i/grayscale.fs", GLSL_VERSION));
+    shaders[FX_POSTERIZATION] = LoadShader(0, FormatText("resources/shaders/glsl%i/posterization.fs", GLSL_VERSION));
+    shaders[FX_DREAM_VISION] = LoadShader(0, FormatText("resources/shaders/glsl%i/dream_vision.fs", GLSL_VERSION));
+    shaders[FX_PIXELIZER] = LoadShader(0, FormatText("resources/shaders/glsl%i/pixelizer.fs", GLSL_VERSION));
+    shaders[FX_CROSS_HATCHING] = LoadShader(0, FormatText("resources/shaders/glsl%i/cross_hatching.fs", GLSL_VERSION));
+    shaders[FX_CROSS_STITCHING] = LoadShader(0, FormatText("resources/shaders/glsl%i/cross_stitching.fs", GLSL_VERSION));
+    shaders[FX_PREDATOR_VIEW] = LoadShader(0, FormatText("resources/shaders/glsl%i/predator.fs", GLSL_VERSION));
+    shaders[FX_SCANLINES] = LoadShader(0, FormatText("resources/shaders/glsl%i/scanlines.fs", GLSL_VERSION));
+    shaders[FX_FISHEYE] = LoadShader(0, FormatText("resources/shaders/glsl%i/fisheye.fs", GLSL_VERSION));
+    shaders[FX_SOBEL] = LoadShader(0, FormatText("resources/shaders/glsl%i/sobel.fs", GLSL_VERSION));
+    shaders[FX_BLOOM] = LoadShader(0, FormatText("resources/shaders/glsl%i/bloom.fs", GLSL_VERSION));
+    shaders[FX_BLUR] = LoadShader(0, FormatText("resources/shaders/glsl%i/blur.fs", GLSL_VERSION));
     
     int currentShader = FX_GRAYSCALE;
 

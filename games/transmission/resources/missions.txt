@@ -1,0 +1,65 @@
+# Total missions
+# NOTE: Missions follow the order of this file
+t 4
+# -----------------------------------------------------------------
+# Briefing of the mission
+b Se ha visto al Presidente en actitud cariñosa con una persona que no es la Primera Dama. Una situación comprometida que definirá el curso de la historia... Especialmente en campaña electoral y siendo del partido conservador... ¡El pueblo debe saber!
+#
+# Mission keyword
+k oviparo
+#
+# Message to be coded
+# NOTE: Sensible words must be noted using @ 
+m El @presidente es visto en un  @hotel   acompañado de su  @amante.
+#
+# Solution to mission
+# NOTE: Provide the correct solution nums, according to above words
+# WARNING: Always provide 8 values, use -1 for not used ones
+# Coding Words: POLLO = 0, CONEJO, HUEVO, NIDO, AIRE, ARMARIO, AGUJERO, PLATANO, PASTEL, MERCADO, RATON, MELON
+s 0 3 2 -1 -1 -1 -1 -1
+# -----------------------------------------------------------------
+# Briefing of the mission
+b Se ha visto un ovni sobrevolando la ciudad, al parecer se prevee un ataque alienígena inminente que definirá el curso de la historia... ¡El pueblo debe saber!
+#
+# Mission keyword
+k roedor
+#
+# Message to be coded
+# NOTE: Sensible words must be noted using @ 
+m Un   @ovni    ha sido detectado en el    @cielo    del    @pais  . Preparaos para el ataque de un   @alien.
+#
+# NOTE: Provide the correct solution nums, according to above words
+# WARNING: Always provide 8 values, use -1 for not used ones
+# Coding Words: POLLO = 0, CONEJO, HUEVO, NIDO, AIRE, ARMARIO, AGUJERO, PLATANO, PASTEL, MERCADO, RATON, MELON
+s 1 6 5 10 -1 -1 -1 -1
+# -----------------------------------------------------------------
+# Briefing of the mission
+b Se ha filtrado una inminente subida del precio de un producto básico para todo el mundo: el ajo. Le evolución de su precio de mercado definirá el curso de la historia... ¡El pueblo debe saber!
+#
+# Mission keyword
+k comida
+#
+# Message to be coded
+# NOTE: Sensible words must be noted using @ 
+m Sube el   @precio   del     @ajo.     ¡Un   @desastre     inminente!
+#
+# NOTE: Provide the correct solution nums, according to above words
+# WARNING: Always provide 8 values, use -1 for not used ones
+# Coding Words: POLLO = 0, CONEJO, HUEVO, NIDO, AIRE, ARMARIO, AGUJERO, PLATANO, PASTEL, MERCADO, RATON, MELON
+s 9 7 2 -1 -1 -1 -1 -1
+# -----------------------------------------------------------------
+# Briefing of the mission
+b Se ha visto a un famoso presentador de TV deshaciéndose del cuerpo de un rival de otra cadena. Una pérdida que definirá el curso de la historia... Especialmente cuando su programa podría no continuar... ¡El pueblo debe saber!
+#
+# Mission keyword
+k postre
+#
+# Message to be coded
+# NOTE: Sensible words must be noted using @ 
+m Un  @presentador  se deshace del  @cuerpo   de su rival. ¡Peligra el  @programa  del Prime Time!
+#
+# NOTE: Provide the correct solution nums, according to above words
+# WARNING: Always provide 8 values, use -1 for not used ones
+# Coding Words: POLLO = 0, CONEJO, HUEVO, NIDO, AIRE, ARMARIO, AGUJERO, PLATANO, PASTEL, MERCADO, RATON, MELON
+s 7 11 8 -1 -1 -1 -1 -1
+# -----------------------------------------------------------------

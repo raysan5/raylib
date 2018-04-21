@@ -1,4 +1,4 @@
-// stb_truetype.h - v1.17 - public domain
+// stb_truetype.h - v1.18 - public domain
 // authored from 2009-2016 by Sean Barrett / RAD Game Tools
 //
 //   This library processes TrueType files:
@@ -30,33 +30,24 @@
 //       Imanol Celaya
 //
 //   Bug/warning reports/fixes:
-//       "Zer" on mollyrocket
-//       Cass Everitt
-//       stoiko (Haemimont Games)
-//       Brian Hook 
-//       Walter van Niftrik
-//       David Gow
-//       David Given
-//       Ivan-Assen Ivanov
-//       Anthony Pesch
-//       Johan Duparc
-//       Hou Qiming
-//       Fabian "ryg" Giesen
-//       Martins Mozeiko
-//       Cap Petschulat
-//       Omar Cornut
-//       github:aloucks
-//       Peter LaValle
-//       Sergey Popov
-//       Giumo X. Clanjor
-//       Higor Euripedes
-//       Thomas Fields
-//       Derek Vinyard
-//       Cort Stratton
-//       github:oyvindjam
-//
+//       "Zer" on mollyrocket       Fabian "ryg" Giesen
+//       Cass Everitt               Martins Mozeiko
+//       stoiko (Haemimont Games)   Cap Petschulat
+//       Brian Hook                 Omar Cornut
+//       Walter van Niftrik         github:aloucks
+//       David Gow                  Peter LaValle
+//       David Given                Sergey Popov
+//       Ivan-Assen Ivanov          Giumo X. Clanjor
+//       Anthony Pesch              Higor Euripedes
+//       Johan Duparc               Thomas Fields
+//       Hou Qiming                 Derek Vinyard
+//       Rob Loach                  Cort Stratton
+//       Kenney Phillis Jr.         github:oyvindjam
+//       Brian Costabile            github:vassvik
+//       
 // VERSION HISTORY
 //
+//   1.18 (2018-01-29) add missing function
 //   1.17 (2017-07-23) make more arguments const; doc fix
 //   1.16 (2017-07-12) SDF support
 //   1.15 (2017-03-03) make more arguments const
@@ -171,7 +162,7 @@
 //         measurement for describing font size, defined as 72 points per inch.
 //         stb_truetype provides a point API for compatibility. However, true
 //         "per inch" conventions don't make much sense on computer displays
-//         since they different monitors have different number of pixels per
+//         since different monitors have different number of pixels per
 //         inch. For example, Windows traditionally uses a convention that
 //         there are 96 pixels per inch, thus making 'inch' measurements have
 //         nothing to do with inches, and thus effectively defining a point to
@@ -180,6 +171,39 @@
 //         but the author has observed that this scale factor is often wrong
 //         for non-commercial fonts, thus making fonts scaled in points
 //         according to the TrueType spec incoherently sized in practice.
+//
+// DETAILED USAGE:
+//
+//  Scale:
+//    Select how high you want the font to be, in points or pixels.
+//    Call ScaleForPixelHeight or ScaleForMappingEmToPixels to compute
+//    a scale factor SF that will be used by all other functions.
+//
+//  Baseline:
+//    You need to select a y-coordinate that is the baseline of where
+//    your text will appear. Call GetFontBoundingBox to get the baseline-relative
+//    bounding box for all characters. SF*-y0 will be the distance in pixels
+//    that the worst-case character could extend above the baseline, so if
+//    you want the top edge of characters to appear at the top of the
+//    screen where y=0, then you would set the baseline to SF*-y0.
+//
+//  Current point:
+//    Set the current point where the first character will appear. The
+//    first character could extend left of the current point; this is font
+//    dependent. You can either choose a current point that is the leftmost
+//    point and hope, or add some padding, or check the bounding box or
+//    left-side-bearing of the first character to be displayed and set
+//    the current point based on that.
+//
+//  Displaying a character:
+//    Compute the bounding box of the character. It will contain signed values
+//    relative to <current_point, baseline>. I.e. if it returns x0,y0,x1,y1,
+//    then the character should be displayed in the rectangle from
+//    <current_point+SF*x0, baseline+SF*y0> to <current_point+SF*x1,baseline+SF*y1).
+//
+//  Advancing for the next character:
+//    Call GlyphHMetrics, and compute 'current_point += SF * advance'.
+// 
 //
 // ADVANCED USAGE
 //
@@ -420,11 +444,6 @@ int main(int arg, char **argv)
    #include <math.h>
    #define STBTT_cos(x)       cos(x)
    #define STBTT_acos(x)      acos(x)
-   #endif
-
-   #ifndef STBTT_fabs
-   #include <math.h>
-   #define STBTT_fabs(x)      fabs(x)
    #endif
 
    #ifndef STBTT_fabs
@@ -2172,7 +2191,7 @@ static int stbtt__run_charstring(const stbtt_fontinfo *info, int glyph_index, st
 
          // push immediate
          if (b0 == 255) {
-            f = (float)stbtt__buf_get32(&b) / 0x10000;
+            f = (float)(stbtt_int32)stbtt__buf_get32(&b) / 0x10000;
          } else {
             stbtt__buf_skip(&b, -1);
             f = (float)(stbtt_int16)stbtt__cff_int(&b);
@@ -2210,12 +2229,10 @@ static int stbtt__GetGlyphInfoT2(const stbtt_fontinfo *info, int glyph_index, in
 {
    stbtt__csctx c = STBTT__CSCTX_INIT(1);
    int r = stbtt__run_charstring(info, glyph_index, &c);
-   if (x0) {
-      *x0 = r ? c.min_x : 0;
-      *y0 = r ? c.min_y : 0;
-      *x1 = r ? c.max_x : 0;
-      *y1 = r ? c.max_y : 0;
-   }
+   if (x0)  *x0 = r ? c.min_x : 0;
+   if (y0)  *y0 = r ? c.min_y : 0;
+   if (x1)  *x1 = r ? c.max_x : 0;
+   if (y1)  *y1 = r ? c.max_y : 0;
    return r ? c.num_vertices : 0;
 }
 
@@ -2395,7 +2412,7 @@ static void *stbtt__hheap_alloc(stbtt__hheap *hh, size_t size, void *userdata)
          hh->num_remaining_in_head_chunk = count;
       }
       --hh->num_remaining_in_head_chunk;
-      return (char *) (hh->head) + size * hh->num_remaining_in_head_chunk;
+      return (char *) (hh->head) + sizeof(stbtt__hheap_chunk) + size * hh->num_remaining_in_head_chunk;
    }
 }
 
@@ -3229,8 +3246,9 @@ error:
 
 STBTT_DEF void stbtt_Rasterize(stbtt__bitmap *result, float flatness_in_pixels, stbtt_vertex *vertices, int num_verts, float scale_x, float scale_y, float shift_x, float shift_y, int x_off, int y_off, int invert, void *userdata)
 {
-   float scale = scale_x > scale_y ? scale_y : scale_x;
-   int winding_count, *winding_lengths;
+   float scale            = scale_x > scale_y ? scale_y : scale_x;
+   int winding_count      = 0;
+   int *winding_lengths   = NULL;
    stbtt__point *windings = stbtt_FlattenCurves(vertices, num_verts, flatness_in_pixels / scale, &winding_lengths, &winding_count, userdata);
    if (windings) {
       stbtt__rasterize(result, windings, winding_lengths, winding_count, scale_x, scale_y, shift_x, shift_y, x_off, y_off, invert, userdata);
@@ -3317,6 +3335,11 @@ STBTT_DEF unsigned char *stbtt_GetCodepointBitmapSubpixel(const stbtt_fontinfo *
 {
    return stbtt_GetGlyphBitmapSubpixel(info, scale_x, scale_y,shift_x,shift_y, stbtt_FindGlyphIndex(info,codepoint), width,height,xoff,yoff);
 }   
+
+STBTT_DEF void stbtt_MakeCodepointBitmapSubpixelPrefilter(const stbtt_fontinfo *info, unsigned char *output, int out_w, int out_h, int out_stride, float scale_x, float scale_y, float shift_x, float shift_y, int oversample_x, int oversample_y, float *sub_x, float *sub_y, int codepoint)
+{
+   stbtt_MakeGlyphBitmapSubpixelPrefilter(info, output, out_w, out_h, out_stride, scale_x, scale_y, shift_x, shift_y, oversample_x, oversample_y, sub_x, sub_y, stbtt_FindGlyphIndex(info,codepoint));
+}
 
 STBTT_DEF void stbtt_MakeCodepointBitmapSubpixel(const stbtt_fontinfo *info, unsigned char *output, int out_w, int out_h, int out_stride, float scale_x, float scale_y, float shift_x, float shift_y, int codepoint)
 {

@@ -1,5 +1,5 @@
 // Audio playback and capture library. Public domain. See "unlicense" statement at the end of this file.
-// mini_al - v0.x - 2017-xx-xx
+// mini_al - v0.6b - 2018-02-03
 //
 // David Reid - davidreidsoftware@gmail.com
 
@@ -59,7 +59,7 @@
 //
 // Building (BSD)
 // --------------
-// The BSD build uses OSS and should Just Work without any linking nor include path configuration.
+// BSD build uses OSS. Requires linking to -lossaudio on {Open,Net}BSD, but not FreeBSD.
 //
 // Building (Emscripten)
 // ---------------------
@@ -1422,10 +1422,11 @@ mal_uint32 mal_src_read_frames(mal_src* pSRC, mal_uint32 frameCount, void* pFram
 // The same mal_src_read_frames() with extra control over whether or not the internal buffers should be flushed at the end.
 //
 // Internally there exists a buffer that keeps track of the previous and next samples for sample rate conversion. The simple
-// version of this function does _not_ flush this buffer because otherwise it causes clitches for streaming based conversion
+// version of this function does _not_ flush this buffer because otherwise it causes glitches for streaming based conversion
 // pipelines. The problem, however, is that sometimes you need those last few samples (such as if you're doing a bulk conversion
 // of a static file). Enabling flushing will fix this for you.
 mal_uint32 mal_src_read_frames_ex(mal_src* pSRC, mal_uint32 frameCount, void* pFramesOut, mal_bool32 flush);
+
 
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -1464,6 +1465,8 @@ mal_uint32 mal_convert_frames(void* pOut, mal_format formatOut, mal_uint32 chann
 
 // Helper for initializing a mal_dsp_config object.
 mal_dsp_config mal_dsp_config_init(mal_format formatIn, mal_uint32 channelsIn, mal_uint32 sampleRateIn, mal_format formatOut, mal_uint32 channelsOut, mal_uint32 sampleRateOut);
+
+
 
 ///////////////////////////////////////////////////////////////////////////////
 //
@@ -1554,6 +1557,10 @@ void mal_pcm_convert(void* pOut, mal_format formatOut, const void* pIn, mal_form
 #include <string.h> // For memset()
 #endif
 
+#if defined(MAL_APPLE) && (__MAC_OS_X_VERSION_MIN_REQUIRED < 101200)
+#include <mach/mach_time.h> // For mach_absolute_time()
+#endif
+
 #ifdef MAL_POSIX
 #include <unistd.h>
 #include <dlfcn.h>
@@ -1635,7 +1642,14 @@ void mal_pcm_convert(void* pOut, mal_format formatOut, const void* pIn, mal_form
     #define MAL_HAS_OPENSL  // Like OSS, OpenSL is the only supported backend for Android. It must be present.
 #endif
 #ifdef MAL_ENABLE_OPENAL
-    #define MAL_HAS_OPENAL  // mini_al inlines the necessary OpenAL stuff.
+    #define MAL_HAS_OPENAL
+    #ifdef MAL_NO_RUNTIME_LINKING
+        #ifdef __has_include
+            #if !__has_include(<AL/al.h>)
+                #undef MAL_HAS_OPENAL
+            #endif
+        #endif
+    #endif
 #endif
 #ifdef MAL_ENABLE_SDL
     #define MAL_HAS_SDL
@@ -1764,7 +1778,10 @@ typedef HWND (WINAPI * MAL_PFN_GetDesktopWindow)();
 #define mal_buffer_frame_capacity(buffer, channels, format) (sizeof(buffer) / mal_get_sample_size_in_bytes(format) / (channels))
 
 // Some of these string utility functions are unused on some platforms.
-#if defined(__GNUC__)
+#if defined(_MSC_VER)
+    #pragma warning(push)
+    #pragma warning(disable:4505)
+#elif defined(__GNUC__)
     #pragma GCC diagnostic push
     #pragma GCC diagnostic ignored "-Wunused-function"
 #endif
@@ -1962,7 +1979,9 @@ static int mal_strcmp(const char* str1, const char* str2)
 
     return ((unsigned char*)str1)[0] - ((unsigned char*)str2)[0];
 }
-#if defined(__GNUC__)
+#if defined(_MSC_VER)
+    #pragma warning(pop)
+#elif defined(__GNUC__)
     #pragma GCC diagnostic pop
 #endif
 
@@ -2018,7 +2037,7 @@ static inline float mal_mix_f32(float x, float y, float a)
 // Atomics
 //
 ///////////////////////////////////////////////////////////////////////////////
-#if defined(_WIN32) && defined(_MSC_VER)
+#if defined(_WIN32) && !defined(__GNUC__)
 #define mal_memory_barrier()            MemoryBarrier()
 #define mal_atomic_exchange_32(a, b)    InterlockedExchange((LONG*)a, (LONG)b)
 #define mal_atomic_exchange_64(a, b)    InterlockedExchange64((LONGLONG*)a, (LONGLONG)b)
@@ -2066,6 +2085,24 @@ double mal_timer_get_time_in_seconds(mal_timer* pTimer)
     }
 
     return (counter.QuadPart - pTimer->counter) / (double)g_mal_TimerFrequency.QuadPart;
+}
+#elif defined(MAL_APPLE) && (__MAC_OS_X_VERSION_MIN_REQUIRED < 101200)
+static uint64_t g_mal_TimerFrequency = 0;
+void mal_timer_init(mal_timer* pTimer)
+{
+    mach_timebase_info_data_t baseTime;
+    mach_timebase_info(&baseTime);
+    g_mal_TimerFrequency = (baseTime.denom * 1e9) / baseTime.numer;
+    
+    pTimer->counter = mach_absolute_time();
+}
+
+double mal_timer_get_time_in_seconds(mal_timer* pTimer)
+{
+    uint64_t newTimeCounter = mach_absolute_time();
+    uint64_t oldTimeCounter = pTimer->counter;
+    
+    return (newTimeCounter - oldTimeCounter) / g_mal_TimerFrequency;
 }
 #else
 void mal_timer_init(mal_timer* pTimer)
@@ -5486,8 +5523,8 @@ struct
     const char* name;
     float scale;
 } g_malDefaultBufferSizeScalesALSA[] = {
-    {"bcm2835 IEC958/HDMI", 32},
-    {"bcm2835 ALSA",        32}
+    {"bcm2835 IEC958/HDMI", 20},
+    {"bcm2835 ALSA",        20}
 };
 
 static float mal_find_default_buffer_size_scale__alsa(const char* deviceName)
@@ -6375,6 +6412,7 @@ static mal_result mal_device_init__alsa(mal_context* pContext, mal_device_type t
                         free(NAME);
                         free(DESC);
                         free(IOID);
+                        ppNextDeviceHint += 1;
 
                         if (foundDevice) {
                             break;
@@ -6697,6 +6735,10 @@ static mal_result mal_device__main_loop__alsa(mal_device* pDevice)
 #include <fcntl.h>
 #include <sys/soundcard.h>
 
+#ifndef SNDCTL_DSP_HALT
+#define SNDCTL_DSP_HALT SNDCTL_DSP_RESET
+#endif
+
 int mal_open_temp_device__oss()
 {
     // The OSS sample code uses "/dev/mixer" as the device for getting system properties so I'm going to do the same.
@@ -6933,7 +6975,7 @@ static mal_result mal_device_init__oss(mal_context* pContext, mal_device_type ty
 
     // When not using MMAP mode, we need to use an intermediary buffer for the client <-> device transfer. We do
     // everything by the size of a fragment.
-    pDevice->oss.pIntermediaryBuffer = mal_malloc(fragmentSizeInBytes);
+    pDevice->oss.pIntermediaryBuffer = mal_malloc(actualFragmentSizeInBytes);
     if (pDevice->oss.pIntermediaryBuffer == NULL) {
         close(pDevice->oss.fd);
         return mal_post_error(pDevice, "[OSS] Failed to allocate memory for intermediary buffer.", MAL_OUT_OF_MEMORY);
@@ -8832,6 +8874,8 @@ mal_result mal_device_init__sdl(mal_context* pContext, mal_device_type type, mal
     mal_assert(pContext != NULL);
     mal_assert(pConfig != NULL);
     mal_assert(pDevice != NULL);
+
+    (void)pContext;
 
     // SDL wants the buffer size to be a power of 2. The SDL_AudioSpec property for this is only a Uint16, so we need
     // to explicitly clamp this because it will be easy to overflow.
@@ -10750,7 +10794,7 @@ static void mal_dsp_mix_channels__inc(float* pFramesOut, mal_uint32 channelsOut,
     (void)channelMapOut;
     (void)channelMapIn;
 
-    if (mode == mal_channel_mix_mode_basic) {\
+    if (mode == mal_channel_mix_mode_basic) {
         // Basic mode is where we just zero out extra channels.
         for (mal_uint32 iFrame = 0; iFrame < frameCount; ++iFrame) {
             switch (channelsIn) {
@@ -10775,23 +10819,23 @@ static void mal_dsp_mix_channels__inc(float* pFramesOut, mal_uint32 channelsOut,
 
             // Zero out extra channels.
             switch (channelsOut - channelsIn) {
-                case 17: pFramesOut[iFrame*channelsOut+16] = 0;
-                case 16: pFramesOut[iFrame*channelsOut+15] = 0;
-                case 15: pFramesOut[iFrame*channelsOut+14] = 0;
-                case 14: pFramesOut[iFrame*channelsOut+13] = 0;
-                case 13: pFramesOut[iFrame*channelsOut+12] = 0;
-                case 12: pFramesOut[iFrame*channelsOut+11] = 0;
-                case 11: pFramesOut[iFrame*channelsOut+10] = 0;
-                case 10: pFramesOut[iFrame*channelsOut+ 9] = 0;
-                case  9: pFramesOut[iFrame*channelsOut+ 8] = 0;
-                case  8: pFramesOut[iFrame*channelsOut+ 7] = 0;
-                case  7: pFramesOut[iFrame*channelsOut+ 6] = 0;
-                case  6: pFramesOut[iFrame*channelsOut+ 5] = 0;
-                case  5: pFramesOut[iFrame*channelsOut+ 4] = 0;
-                case  4: pFramesOut[iFrame*channelsOut+ 3] = 0;
-                case  3: pFramesOut[iFrame*channelsOut+ 2] = 0;
-                case  2: pFramesOut[iFrame*channelsOut+ 1] = 0;
-                case  1: pFramesOut[iFrame*channelsOut+ 0] = 0;
+                case 17: pFramesOut[iFrame*channelsOut+16 + channelsIn] = 0;
+                case 16: pFramesOut[iFrame*channelsOut+15 + channelsIn] = 0;
+                case 15: pFramesOut[iFrame*channelsOut+14 + channelsIn] = 0;
+                case 14: pFramesOut[iFrame*channelsOut+13 + channelsIn] = 0;
+                case 13: pFramesOut[iFrame*channelsOut+12 + channelsIn] = 0;
+                case 12: pFramesOut[iFrame*channelsOut+11 + channelsIn] = 0;
+                case 11: pFramesOut[iFrame*channelsOut+10 + channelsIn] = 0;
+                case 10: pFramesOut[iFrame*channelsOut+ 9 + channelsIn] = 0;
+                case  9: pFramesOut[iFrame*channelsOut+ 8 + channelsIn] = 0;
+                case  8: pFramesOut[iFrame*channelsOut+ 7 + channelsIn] = 0;
+                case  7: pFramesOut[iFrame*channelsOut+ 6 + channelsIn] = 0;
+                case  6: pFramesOut[iFrame*channelsOut+ 5 + channelsIn] = 0;
+                case  5: pFramesOut[iFrame*channelsOut+ 4 + channelsIn] = 0;
+                case  4: pFramesOut[iFrame*channelsOut+ 3 + channelsIn] = 0;
+                case  3: pFramesOut[iFrame*channelsOut+ 2 + channelsIn] = 0;
+                case  2: pFramesOut[iFrame*channelsOut+ 1 + channelsIn] = 0;
+                case  1: pFramesOut[iFrame*channelsOut+ 0 + channelsIn] = 0;
             }
         }
     } else {
@@ -10822,10 +10866,10 @@ static void mal_dsp_mix_channels__inc(float* pFramesOut, mal_uint32 channelsOut,
             }
         } else if (channelsIn == 2) {
             // TODO: Implement an optimized stereo conversion.
-            mal_dsp_mix_channels__dec(pFramesOut, channelsOut, channelMapOut, pFramesIn, channelsIn, channelMapIn, frameCount, mal_channel_mix_mode_basic);
+            mal_dsp_mix_channels__inc(pFramesOut, channelsOut, channelMapOut, pFramesIn, channelsIn, channelMapIn, frameCount, mal_channel_mix_mode_basic);
         } else {
             // Fall back to basic mixing mode.
-            mal_dsp_mix_channels__dec(pFramesOut, channelsOut, channelMapOut, pFramesIn, channelsIn, channelMapIn, frameCount, mal_channel_mix_mode_basic);
+            mal_dsp_mix_channels__inc(pFramesOut, channelsOut, channelMapOut, pFramesIn, channelsIn, channelMapIn, frameCount, mal_channel_mix_mode_basic);
         }
     }
 }
@@ -11484,7 +11528,15 @@ void mal_pcm_f32_to_s32(int* pOut, const float* pIn, unsigned int count)
 // REVISION HISTORY
 // ================
 //
-// v0.x - 2017-xx-xx
+// v0.6b - 2018-02-03
+//   - Fix some warnings when compiling with Visual C++.
+//
+// v0.6a - 2018-01-26
+//   - Fix errors with channel mixing when increasing the channel count.
+//   - Improvements to the build system for the OpenAL backend.
+//   - Documentation fixes.
+//
+// v0.6 - 2017-12-08
 //   - API CHANGE: Expose and improve mutex APIs. If you were using the mutex APIs before this version you'll
 //     need to update.
 //   - API CHANGE: SRC and DSP callbacks now take a pointer to a mal_src and mal_dsp object respectively.
@@ -11497,7 +11549,7 @@ void mal_pcm_f32_to_s32(int* pOut, const float* pIn, unsigned int count)
 //   - Add mal_convert_frames(). This is a high-level helper API for performing a one-time, bulk conversion of
 //     audio data to a different format.
 //   - Improvements to f32 -> u8/s16/s24/s32 conversion routines.
-//   - Fix a bug where the wrong value is returned from mal_device_start() for the OpenSL and SDL backends.
+//   - Fix a bug where the wrong value is returned from mal_device_start() for the OpenSL backend.
 //   - Fixes and improvements for Raspberry Pi.
 //   - Warning fixes.
 //

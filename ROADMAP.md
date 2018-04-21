@@ -4,7 +4,7 @@ roadmap
 Current version of raylib is complete and functional but there is still a lot of room for improvement.
 Here it is a wish-list with features and ideas to improve the library.
 
-Note that [raylib source code](https://github.com/raysan5/raylib/tree/develop/src) has some *TODO* marks around code with pending things to review and improve. Check [GitHub Issues](https://github.com/raysan5/raylib/issues) for further details!
+Note that [raylib source code](https://github.com/raysan5/raylib/tree/master/src) has some *TODO* marks around code with pending things to review and improve. Check [GitHub Issues](https://github.com/raysan5/raylib/issues) for further details!
 
 **raylib 1.x**
  - [ ] Basic GPU stats sytem (memory, draws, time...)

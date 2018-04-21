@@ -17,7 +17,7 @@
 *
 *   LICENSE: zlib/libpng
 *
-*   Copyright (c) 2014-2017 Ramon Santamaria (@raysan5)
+*   Copyright (c) 2014-2018 Ramon Santamaria (@raysan5)
 *
 *   This software is provided "as-is", without any express or implied warranty. In no event
 *   will the authors be held liable for any damages arising from the use of this software.
@@ -36,18 +36,11 @@
 *
 **********************************************************************************************/
 
-// Default configuration flags (supported features)
-//-------------------------------------------------
-#define SUPPORT_FILEFORMAT_OBJ
-#define SUPPORT_FILEFORMAT_MTL
-#define SUPPORT_MESH_GENERATION
-//-------------------------------------------------
+#include "config.h"
 
 #include "raylib.h"
 
-#if defined(PLATFORM_ANDROID)
-    #include "utils.h"      // Android fopen function map
-#endif
+#include "utils.h"          // Required for: fopen() Android mapping
 
 #include <stdio.h>          // Required for: FILE, fopen(), fclose(), fscanf(), feof(), rewind(), fgets()
 #include <stdlib.h>         // Required for: malloc(), free()
@@ -57,7 +50,7 @@
 #include "rlgl.h"           // raylib OpenGL abstraction layer to OpenGL 1.1, 2.1, 3.3+ or ES2
 
 #define PAR_SHAPES_IMPLEMENTATION
-#include "external/par_shapes.h"
+#include "external/par_shapes.h"    // Shapes 3d parametric generation
 
 //----------------------------------------------------------------------------------
 // Defines and Macros
@@ -638,10 +631,12 @@ Mesh LoadMesh(const char *fileName)
     TraceLog(LOG_WARNING, "[%s] Mesh fileformat not supported, it can't be loaded", fileName);
 #endif
 
-    if (mesh.vertexCount == 0) TraceLog(LOG_WARNING, "Mesh could not be loaded");
+    if (mesh.vertexCount == 0)
+    {
+        TraceLog(LOG_WARNING, "Mesh could not be loaded! Let's load a cube to replace it!");
+        mesh = GenMeshCube(1.0f, 1.0f, 1.0f);
+    }
     else rlLoadMesh(&mesh, false);  // Upload vertex data to GPU (static mesh)
-
-    // TODO: Initialize default mesh data in case loading fails, maybe a cube?
 
     return mesh;
 }
@@ -650,6 +645,47 @@ Mesh LoadMesh(const char *fileName)
 void UnloadMesh(Mesh *mesh)
 {
     rlUnloadMesh(mesh);
+}
+
+// Export mesh as an OBJ file
+void ExportMesh(const char *fileName, Mesh mesh)
+{
+    FILE *objFile = fopen(fileName, "wt");
+    
+    fprintf(objFile, "# raylib Mesh OBJ exporter v1.0\n\n");
+    fprintf(objFile, "# Mesh exported as triangle faces and not optimized.\n");
+    fprintf(objFile, "#     Vertex Count:     %i\n", mesh.vertexCount);
+    fprintf(objFile, "#     Triangle Count:   %i\n\n", mesh.triangleCount);
+    fprintf(objFile, "# LICENSE: zlib/libpng\n");
+    fprintf(objFile, "# Copyright (c) 2018 Ramon Santamaria (@raysan5)\n\n");
+    
+    fprintf(objFile, "g mesh\n");
+    
+    for (int i = 0, v = 0; i < mesh.vertexCount; i++, v += 3)
+    {
+        fprintf(objFile, "v %.2f %.2f %.2f\n", mesh.vertices[v], mesh.vertices[v + 1], mesh.vertices[v + 2]);
+    }
+    
+    for (int i = 0, v = 0; i < mesh.vertexCount; i++, v += 2)
+    {
+        fprintf(objFile, "vt %.2f %.2f\n", mesh.texcoords[v], mesh.texcoords[v + 1]);
+    }
+    
+    for (int i = 0, v = 0; i < mesh.vertexCount; i++, v += 3)
+    {
+        fprintf(objFile, "vn %.2f %.2f %.2f\n", mesh.normals[v], mesh.normals[v + 1], mesh.normals[v + 2]);
+    }
+    
+    for (int i = 0; i < mesh.triangleCount; i += 3)
+    {
+        fprintf(objFile, "f %i/%i/%i %i/%i/%i %i/%i/%i\n", i, i, i, i + 1, i + 1, i + 1, i + 2, i + 2, i + 2);
+    }
+    
+    fprintf(objFile, "\n");
+    
+    fclose(objFile);
+
+    TraceLog(LOG_INFO, "Mesh saved: %s", fileName);
 }
 
 #if defined(SUPPORT_MESH_GENERATION)
@@ -1181,9 +1217,9 @@ Mesh GenMeshHeightmap(Image heightmap, Vector3 size)
     Color *pixels = GetImageData(heightmap);
 
     // NOTE: One vertex per pixel
-    int triangleCount = (mapX-1)*(mapZ-1)*2;    // One quad every four pixels
+    mesh.triangleCount = (mapX-1)*(mapZ-1)*2;    // One quad every four pixels
 
-    mesh.vertexCount = triangleCount*3;
+    mesh.vertexCount = mesh.triangleCount*3;
 
     mesh.vertices = (float *)malloc(mesh.vertexCount*3*sizeof(float));
     mesh.normals = (float *)malloc(mesh.vertexCount*3*sizeof(float));
@@ -1586,6 +1622,7 @@ Mesh GenMeshCubicmap(Image cubicmap, Vector3 cubeSize)
 
     // Move data from mapVertices temp arays to vertices float array
     mesh.vertexCount = vCounter;
+    mesh.triangleCount = vCounter/3;
 
     mesh.vertices = (float *)malloc(mesh.vertexCount*3*sizeof(float));
     mesh.normals = (float *)malloc(mesh.vertexCount*3*sizeof(float));
@@ -1673,14 +1710,13 @@ Material LoadMaterialDefault(void)
 // Unload material from memory
 void UnloadMaterial(Material material)
 {
-    // Unload material shader
-    UnloadShader(material.shader);
+    // Unload material shader (avoid unloading default shader, managed by raylib)
+    if (material.shader.id != GetShaderDefault().id) UnloadShader(material.shader);
 
-    // Unload loaded texture maps
+    // Unload loaded texture maps (avoid unloading default texture, managed by raylib)
     for (int i = 0; i < MAX_MATERIAL_MAPS; i++)
     {
-        // NOTE: We already check for (tex.id > 0) inside function
-        rlDeleteTextures(material.maps[i].texture.id); 
+        if (material.maps[i].texture.id != GetTextureDefault().id) rlDeleteTextures(material.maps[i].texture.id); 
     }
 }
 
@@ -1761,8 +1797,8 @@ void DrawBillboardRec(Camera camera, Texture2D texture, Rectangle sourceRec, Vec
     |       |
     d-------c
 */
-    Vector3Scale(&right, sizeRatio.x/2);
-    Vector3Scale(&up, sizeRatio.y/2);
+    right = Vector3Scale(right, sizeRatio.x/2);
+    up = Vector3Scale(up, sizeRatio.y/2);
 
     Vector3 p1 = Vector3Add(right, up);
     Vector3 p2 = Vector3Subtract(right, up);
@@ -1891,16 +1927,14 @@ bool CheckCollisionRaySphereEx(Ray ray, Vector3 spherePosition, float sphereRadi
 
     if (d >= 0.0f) collision = true;
 
-    // Calculate collision point
-    Vector3 offset = ray.direction;
+    // Check if ray origin is inside the sphere to calculate the correct collision point
     float collisionDistance = 0;
 
-    // Check if ray origin is inside the sphere to calculate the correct collision point
     if (distance < sphereRadius) collisionDistance = vector + sqrtf(d);
     else collisionDistance = vector - sqrtf(d);
-
-    Vector3Scale(&offset, collisionDistance);
-    Vector3 cPoint = Vector3Add(ray.position, offset);
+    
+    // Calculate collision point
+    Vector3 cPoint = Vector3Add(ray.position, Vector3Scale(ray.direction, collisionDistance));
 
     collisionPoint->x = cPoint.x;
     collisionPoint->y = cPoint.y;
@@ -1929,28 +1963,28 @@ bool CheckCollisionRayBox(Ray ray, BoundingBox box)
     return collision;
 }
 
-// Get collision info between ray and mesh
-RayHitInfo GetCollisionRayMesh(Ray ray, Mesh *mesh)
+// Get collision info between ray and model
+RayHitInfo GetCollisionRayModel(Ray ray, Model *model)
 {
     RayHitInfo result = { 0 };
 
     // If mesh doesn't have vertex data on CPU, can't test it.
-    if (!mesh->vertices) return result;
+    if (!model->mesh.vertices) return result;
 
-    // mesh->triangleCount may not be set, vertexCount is more reliable
-    int triangleCount = mesh->vertexCount/3;
+    // model->mesh.triangleCount may not be set, vertexCount is more reliable
+    int triangleCount = model->mesh.vertexCount/3;
 
     // Test against all triangles in mesh
     for (int i = 0; i < triangleCount; i++)
     {
         Vector3 a, b, c;
-        Vector3 *vertdata = (Vector3 *)mesh->vertices;
+        Vector3 *vertdata = (Vector3 *)model->mesh.vertices;
 
-        if (mesh->indices)
+        if (model->mesh.indices)
         {
-            a = vertdata[mesh->indices[i*3 + 0]];
-            b = vertdata[mesh->indices[i*3 + 1]];
-            c = vertdata[mesh->indices[i*3 + 2]];
+            a = vertdata[model->mesh.indices[i*3 + 0]];
+            b = vertdata[model->mesh.indices[i*3 + 1]];
+            c = vertdata[model->mesh.indices[i*3 + 2]];
         }
         else
         {
@@ -1958,6 +1992,10 @@ RayHitInfo GetCollisionRayMesh(Ray ray, Mesh *mesh)
             b = vertdata[i*3 + 1];
             c = vertdata[i*3 + 2];
         }
+        
+        a = Vector3Transform(a, model->transform);
+        b = Vector3Transform(b, model->transform);
+        c = Vector3Transform(c, model->transform);
 
         RayHitInfo triHitInfo = GetCollisionRayTriangle(ray, a, b, c);
 
@@ -2023,11 +2061,8 @@ RayHitInfo GetCollisionRayTriangle(Ray ray, Vector3 p1, Vector3 p2, Vector3 p3)
         result.hit = true;
         result.distance = t;
         result.hit = true;
-        result.normal = Vector3CrossProduct(edge1, edge2);
-        Vector3Normalize(&result.normal);
-        Vector3 rayDir = ray.direction;
-        Vector3Scale(&rayDir, t);
-        result.position = Vector3Add(ray.position, rayDir);
+        result.normal = Vector3Normalize(Vector3CrossProduct(edge1, edge2));
+        result.position = Vector3Add(ray.position, Vector3Scale(ray.direction, t));
     }
 
     return result;
@@ -2042,25 +2077,23 @@ RayHitInfo GetCollisionRayGround(Ray ray, float groundHeight)
 
     if (fabsf(ray.direction.y) > EPSILON)
     {
-        float t = (ray.position.y - groundHeight)/-ray.direction.y;
+        float distance = (ray.position.y - groundHeight)/-ray.direction.y;
 
-        if (t >= 0.0)
+        if (distance >= 0.0)
         {
-            Vector3 rayDir = ray.direction;
-            Vector3Scale(&rayDir, t);
             result.hit = true;
-            result.distance = t;
+            result.distance = distance;
             result.normal = (Vector3){ 0.0, 1.0, 0.0 };
-            result.position = Vector3Add(ray.position, rayDir);
+            result.position = Vector3Add(ray.position, Vector3Scale(ray.direction, distance));
         }
     }
 
     return result;
 }
 
-// Calculate mesh bounding box limits
+// Compute mesh bounding box limits
 // NOTE: minVertex and maxVertex should be transformed by model transform matrix
-BoundingBox CalculateBoundingBox(Mesh mesh)
+BoundingBox MeshBoundingBox(Mesh mesh)
 {
     // Get min and max vertex to construct bounds (AABB)
     Vector3 minVertex = { 0 };
@@ -2084,6 +2117,18 @@ BoundingBox CalculateBoundingBox(Mesh mesh)
     box.max = maxVertex;
 
     return box;
+}
+
+// Compute mesh tangents 
+void MeshTangents(Mesh *mesh)
+{
+    // TODO: Compute mesh tangents
+}
+
+// Compute mesh binormals
+void MeshBinormals(Mesh *mesh)
+{
+    // TODO: Compute mesh binormals
 }
 
 //----------------------------------------------------------------------------------
@@ -2290,7 +2335,7 @@ static Mesh LoadOBJ(const char *fileName)
                 {
                     // If normals not defined, they are calculated from the 3 vertices [N = (V2 - V1) x (V3 - V1)]
                     Vector3 norm = Vector3CrossProduct(Vector3Subtract(midVertices[vCount[1]-1], midVertices[vCount[0]-1]), Vector3Subtract(midVertices[vCount[2]-1], midVertices[vCount[0]-1]));
-                    Vector3Normalize(&norm);
+                    norm = Vector3Normalize(norm);
 
                     mesh.normals[nCounter] = norm.x;
                     mesh.normals[nCounter + 1] = norm.y;
@@ -2327,79 +2372,6 @@ static Mesh LoadOBJ(const char *fileName)
 
     fclose(objFile);
 
-    // Security check, just in case no normals or no texcoords defined in OBJ
-    if (texcoordCount == 0) for (int i = 0; i < (2*mesh.vertexCount); i++) mesh.texcoords[i] = 0.0f;
-    else
-    {
-        // Attempt to calculate mesh tangents and binormals using positions and texture coordinates
-        mesh.tangents = (float *)malloc(mesh.vertexCount*3*sizeof(float));
-        // mesh.binormals = (float *)malloc(mesh.vertexCount*3*sizeof(float));
-
-        int vCount = 0;
-        int uvCount = 0;
-        while (vCount < mesh.vertexCount*3)
-        {
-            // Calculate mesh vertex positions as Vector3
-            Vector3 v0 = { mesh.vertices[vCount], mesh.vertices[vCount + 1], mesh.vertices[vCount + 2] };
-            Vector3 v1 = { mesh.vertices[vCount + 3], mesh.vertices[vCount + 4], mesh.vertices[vCount + 5] };
-            Vector3 v2 = { mesh.vertices[vCount + 6], mesh.vertices[vCount + 7], mesh.vertices[vCount + 8] };
-
-            // Calculate mesh texture coordinates as Vector2
-            Vector2 uv0 = { mesh.texcoords[uvCount + 0], mesh.texcoords[uvCount + 1] };
-            Vector2 uv1 = { mesh.texcoords[uvCount + 2], mesh.texcoords[uvCount + 3] };
-            Vector2 uv2 = { mesh.texcoords[uvCount + 4], mesh.texcoords[uvCount + 5] };
-
-            // Calculate edges of the triangle (position delta)
-            Vector3 deltaPos1 = Vector3Subtract(v1, v0);
-            Vector3 deltaPos2 = Vector3Subtract(v2, v0);
-
-            // UV delta
-            Vector2 deltaUV1 = { uv1.x - uv0.x, uv1.y - uv0.y };
-            Vector2 deltaUV2 = { uv2.x - uv0.x, uv2.y - uv0.y };
-
-            float r = 1.0f/(deltaUV1.x*deltaUV2.y - deltaUV1.y*deltaUV2.x);
-            Vector3 t1 = { deltaPos1.x*deltaUV2.y, deltaPos1.y*deltaUV2.y, deltaPos1.z*deltaUV2.y };
-            Vector3 t2 = { deltaPos2.x*deltaUV1.y, deltaPos2.y*deltaUV1.y, deltaPos2.z*deltaUV1.y };
-            // Vector3 b1 = { deltaPos2.x*deltaUV1.x, deltaPos2.y*deltaUV1.x, deltaPos2.z*deltaUV1.x };
-            // Vector3 b2 = { deltaPos1.x*deltaUV2.x, deltaPos1.y*deltaUV2.x, deltaPos1.z*deltaUV2.x };
-
-            // Calculate vertex tangent
-            Vector3 tangent = Vector3Subtract(t1, t2);
-            Vector3Scale(&tangent, r);
-
-            // Apply calculated tangents data to mesh struct
-            mesh.tangents[vCount + 0] = tangent.x;
-            mesh.tangents[vCount + 1] = tangent.y;
-            mesh.tangents[vCount + 2] = tangent.z;
-            mesh.tangents[vCount + 3] = tangent.x;
-            mesh.tangents[vCount + 4] = tangent.y;
-            mesh.tangents[vCount + 5] = tangent.z;
-            mesh.tangents[vCount + 6] = tangent.x;
-            mesh.tangents[vCount + 7] = tangent.y;
-            mesh.tangents[vCount + 8] = tangent.z;
-
-            // TODO: add binormals to mesh struct and assign buffers id and locations properly
-            /* // Calculate vertex binormal
-            Vector3 binormal = Vector3Subtract(b1, b2);
-            Vector3Scale(&binormal, r);
-
-            // Apply calculated binormals data to mesh struct
-            mesh.binormals[vCount + 0] = binormal.x;
-            mesh.binormals[vCount + 1] = binormal.y;
-            mesh.binormals[vCount + 2] = binormal.z;
-            mesh.binormals[vCount + 3] = binormal.x;
-            mesh.binormals[vCount + 4] = binormal.y;
-            mesh.binormals[vCount + 5] = binormal.z;
-            mesh.binormals[vCount + 6] = binormal.x;
-            mesh.binormals[vCount + 7] = binormal.y;
-            mesh.binormals[vCount + 8] = binormal.z; */
-
-            // Update vertex position and texture coordinates counters
-            vCount += 9;
-            uvCount += 6;
-        }
-    }
-
     // Now we can free temp mid* arrays
     free(midVertices);
     free(midNormals);
@@ -2417,7 +2389,7 @@ static Mesh LoadOBJ(const char *fileName)
 // NOTE: Texture map parameters are not supported
 static Material LoadMTL(const char *fileName)
 {
-    #define MAX_BUFFER_SIZE     128
+    #define MAX_BUFFER_SIZE 128
 
     Material material = { 0 };
 
@@ -2445,7 +2417,7 @@ static Material LoadMTL(const char *fileName)
             case 'n':   // newmtl string    Material name. Begins a new material description.
             {
                 // TODO: Support multiple materials in a single .mtl
-                sscanf(buffer, "newmtl %s", mapFileName);
+                sscanf(buffer, "newmtl %127s", mapFileName);
 
                 TraceLog(LOG_INFO, "[%s] Loading material...", mapFileName);
             }
@@ -2510,12 +2482,12 @@ static Material LoadMTL(const char *fileName)
                     {
                         if (buffer[5] == 'd')       // map_Kd string    Diffuse color texture map.
                         {
-                            result = sscanf(buffer, "map_Kd %s", mapFileName);
+                            result = sscanf(buffer, "map_Kd %127s", mapFileName);
                             if (result != EOF) material.maps[MAP_DIFFUSE].texture = LoadTexture(mapFileName);
                         }
                         else if (buffer[5] == 's')  // map_Ks string    Specular color texture map.
                         {
-                            result = sscanf(buffer, "map_Ks %s", mapFileName);
+                            result = sscanf(buffer, "map_Ks %127s", mapFileName);
                             if (result != EOF) material.maps[MAP_SPECULAR].texture = LoadTexture(mapFileName);
                         }
                         else if (buffer[5] == 'a')  // map_Ka string    Ambient color texture map.
@@ -2525,12 +2497,12 @@ static Material LoadMTL(const char *fileName)
                     } break;
                     case 'B':       // map_Bump string      Bump texture map.
                     {
-                        result = sscanf(buffer, "map_Bump %s", mapFileName);
+                        result = sscanf(buffer, "map_Bump %127s", mapFileName);
                         if (result != EOF) material.maps[MAP_NORMAL].texture = LoadTexture(mapFileName);
                     } break;
                     case 'b':       // map_bump string      Bump texture map.
                     {
-                        result = sscanf(buffer, "map_bump %s", mapFileName);
+                        result = sscanf(buffer, "map_bump %127s", mapFileName);
                         if (result != EOF) material.maps[MAP_NORMAL].texture = LoadTexture(mapFileName);
                     } break;
                     case 'd':       // map_d string         Opacity texture map.
@@ -2555,7 +2527,7 @@ static Material LoadMTL(const char *fileName)
             } break;
             case 'b':   // bump string      Bump texture map
             {
-                result = sscanf(buffer, "bump %s", mapFileName);
+                result = sscanf(buffer, "bump %127s", mapFileName);
                 if (result != EOF) material.maps[MAP_NORMAL].texture = LoadTexture(mapFileName);
             } break;
             case 'T':   // Tr float         Transparency Tr (alpha). Tr is inverse of d

@@ -26,14 +26,11 @@
 ********************************************************************************************/
 
 #include <stdio.h>
+#include "audio.h"
 #if defined(_WIN32)
 #include <conio.h>          // Windows only, no stardard library
-#endif
 
-#include "audio.h"
-
-#if defined(__linux__)
-
+#else
 #include <stdio.h>
 #include <termios.h>
 #include <unistd.h>
@@ -79,13 +76,13 @@ int main()
 {
     // Initialization
     //--------------------------------------------------------------------------------------
-    unsigned char key;
-    
+    static unsigned char key;
+
     InitAudioDevice();
-    
+
     Sound fxWav = LoadSound("resources/audio/weird.wav");         // Load WAV audio file
     Sound fxOgg = LoadSound("resources/audio/tanatana.ogg");      // Load OGG audio file
-    
+
     Music music = LoadMusicStream("resources/audio/guitar_noodling.ogg");
     PlayMusicStream(music);
 
@@ -102,23 +99,23 @@ int main()
             PlaySound(fxWav);
             key = 0;
         }
-        
+
         if (key == 'd')
         {
             PlaySound(fxOgg);
             key = 0;
         }
-        
+
         UpdateMusicStream(music);
     }
-    
+
     // De-Initialization
     //--------------------------------------------------------------------------------------
     UnloadSound(fxWav);         // Unload sound data
     UnloadSound(fxOgg);         // Unload sound data
-    
+
     UnloadMusicStream(music);   // Unload music stream data
-    
+
     CloseAudioDevice();
     //--------------------------------------------------------------------------------------
 

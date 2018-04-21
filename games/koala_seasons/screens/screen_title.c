@@ -858,8 +858,8 @@ void DrawTitleScreen(void)
     DrawTexturePro(atlas02, gameplay_background, (Rectangle){0, 0, gameplay_background.width*2, gameplay_background.height*2}, (Vector2){0, 0}, 0, color02);
 
     // Draw parallax
-    //DrawParallaxBack();
-    //DrawParallaxMiddle();
+    DrawParallaxBack();
+    DrawParallaxMiddle();
 
     for (int i = 0; i < MAX_particle; i++)
     {
@@ -984,8 +984,6 @@ void DrawTitleScreen(void)
     if (musicActive)DrawTexturePro(atlas01, title_speaker_on, (Rectangle){speakerButton.x, speakerButton.y, title_speaker_on.width, title_speaker_on.height}, (Vector2){0,0}, 0, WHITE);
     else DrawTexturePro(atlas01, title_speaker_off, (Rectangle){speakerButton.x, speakerButton.y, title_speaker_off.width, title_speaker_off.height}, (Vector2){0,0}, 0, WHITE);
     */
-    
-    DrawParallaxFront();
 }
 
 // Title Screen Unload logic
@@ -1003,10 +1001,7 @@ int FinishTitleScreen(void)
 static void DrawParallaxFront(void)
 {
     Rectangle ground01 = gameplay_back_ground01;
-    
-    DrawTexturePro(atlas02, gameplay_back_tree01_layer01, (Rectangle){0, 0, gameplay_back_tree01_layer01.width*2, gameplay_back_tree01_layer01.height*2}, (Vector2){0,0}, 0, WHITE);
 
-    /*
     //DrawTexturePro(atlas02, gameplay_back_tree01_layer03, (Rectangle){0, 21, gameplay_back_tree01_layer03.width*2, gameplay_back_tree01_layer03.height*2}, (Vector2){0,0}, 0, color02);
     DrawTexturePro(atlas02, gameplay_back_tree01_layer01, (Rectangle){(int)parallaxFrontOffset, 60, gameplay_back_tree01_layer01.width*2, gameplay_back_tree01_layer01.height*2}, (Vector2){0,0}, 0, color02);
     DrawTexturePro(atlas02, gameplay_back_tree02_layer01, (Rectangle){(int)parallaxFrontOffset + 140, 60, gameplay_back_tree02_layer01.width*2, gameplay_back_tree02_layer01.height*2}, (Vector2){0,0}, 0, color02);
@@ -1018,7 +1013,6 @@ static void DrawParallaxFront(void)
     DrawTexturePro(atlas02, gameplay_back_tree08_layer01, (Rectangle){(int)parallaxFrontOffset + 140*7, 60, gameplay_back_tree08_layer01.width*2, gameplay_back_tree08_layer01.height*2}, (Vector2){0,0}, 0, color02);
     DrawTexturePro(atlas02, gameplay_back_ground01, (Rectangle){0, 559, ground01.width*2, ground01.height*2}, (Vector2){0,0}, 0, color01);
     DrawTexturePro(atlas02, (Rectangle){ground01.x, ground01.y + ground01.height, ground01.width, -ground01.height}, (Rectangle){0, -33, ground01.width*2, ground01.height*2}, (Vector2){0,0}, 0, color01);
-    */
 }
 
 static void DrawParallaxMiddle(void)

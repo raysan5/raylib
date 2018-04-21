@@ -1,6 +1,6 @@
 
 // Vertex shader definition to embed, no external file required
-static const char vDistortionShaderStr[] = 
+static const char distortionVShaderStr[] = 
 #if defined(GRAPHICS_API_OPENGL_21)
 "#version 120                       \n"
 #elif defined(GRAPHICS_API_OPENGL_ES2)
@@ -29,7 +29,7 @@ static const char vDistortionShaderStr[] =
 "}                                  \n";
 
 // Fragment shader definition to embed, no external file required
-static const char fDistortionShaderStr[] = 
+static const char distortionFShaderStr[] = 
 #if defined(GRAPHICS_API_OPENGL_21)
 "#version 120                       \n"
 #elif defined(GRAPHICS_API_OPENGL_ES2)

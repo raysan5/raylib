@@ -21,7 +21,7 @@ int main()
     InitWindow(screenWidth, screenHeight, "raylib [models] example - skybox loading and drawing");
 
     // Define the camera to look into our 3d world
-    Camera camera = {{ 1.0f, 1.0f, 1.0f }, { 0.0f, 0.0f, 0.0f }, { 0.0f, 1.0f, 0.0f }, 45.0f };
+    Camera camera = {{ 1.0f, 1.0f, 1.0f }, { 0.0f, 0.0f, 0.0f }, { 0.0f, 1.0f, 0.0f }, 45.0f, 0 };
 
     // Load skybox model   
     Mesh cube = GenMeshCube(1.0f, 1.0f, 1.0f);
@@ -62,7 +62,7 @@ int main()
 
             Begin3dMode(camera);
 
-                DrawModel(skybox, Vector3Zero(), 1.0f, WHITE);
+                DrawModel(skybox, (Vector3){0, 0, 0}, 1.0f, WHITE);
                 
                 DrawGrid(10, 1.0f);
 

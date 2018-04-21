@@ -21,7 +21,12 @@ int main()
     InitWindow(screenWidth, screenHeight, "raylib [core] example - 3d camera free");
 
     // Define the camera to look into our 3d world
-    Camera camera = {{ 10.0f, 10.0f, 10.0f }, { 0.0f, 0.0f, 0.0f }, { 0.0f, 1.0f, 0.0f }, 45.0f };
+    Camera camera = { 0 };
+    camera.position = (Vector3){ 10.0f, 10.0f, 10.0f };
+    camera.target = (Vector3){ 0.0f, 0.0f, 0.0f };
+    camera.up = (Vector3){ 0.0f, 1.0f, 0.0f };
+    camera.fovy = 45.0f;
+    camera.type = CAMERA_PERSPECTIVE;
 
     Vector3 cubePosition = { 0.0f, 0.0f, 0.0f };
     

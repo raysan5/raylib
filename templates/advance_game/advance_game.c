@@ -8,16 +8,12 @@
 *   This game has been created using raylib (www.raylib.com)
 *   raylib is licensed under an unmodified zlib/libpng license (View raylib.h for details)
 *
-*   Copyright (c) 2014-2017 Ramon Santamaria (@raysan5)
+*   Copyright (c) 2014-2018 Ramon Santamaria (@raysan5)
 *
 ********************************************************************************************/
 
 #include "raylib.h"
 #include "screens/screens.h"    // NOTE: Defines global variable: currentScreen
-
-#if defined(PLATFORM_ANDROID)
-    #include "android_native_app_glue.h"
-#endif
 
 #if defined(PLATFORM_WEB)
     #include <emscripten/emscripten.h>
@@ -53,19 +49,11 @@ static void UpdateDrawFrame(void);          // Update and Draw one frame
 //----------------------------------------------------------------------------------
 // Main entry point
 //----------------------------------------------------------------------------------
-#if defined(PLATFORM_ANDROID)
-void android_main(struct android_app *app) 
-#else
 int main(void)
-#endif
 {
-    // Initialization
+    // Initialization (Note windowTitle is unused on Android)
     //---------------------------------------------------------
-#if defined(PLATFORM_ANDROID)
-    InitWindow(screenWidth, screenHeight, app);
-#else
     InitWindow(screenWidth, screenHeight, "raylib template - advance game");
-#endif
 
     // Global data loading (assets that must be available in all screens, i.e. fonts)
     InitAudioDevice();
@@ -116,9 +104,8 @@ int main(void)
     
     CloseWindow();          // Close window and OpenGL context
     //--------------------------------------------------------------------------------------
-#if !defined(PLATFORM_ANDROID)
+
     return 0;
-#endif
 }
 
 //----------------------------------------------------------------------------------
