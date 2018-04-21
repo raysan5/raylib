@@ -17343,6 +17343,10 @@ mal_uint64 mal_format_converter_read(mal_format_converter* pConverter, mal_uint6
 
                 totalFramesRead += framesJustRead;
                 pNextFramesOut  += framesJustRead * frameSizeOut;
+
+                if (framesJustRead < framesToReadRightNow) {
+                    break;
+                }
             }
         } else {
             // Conversion required.
@@ -17367,6 +17371,10 @@ mal_uint64 mal_format_converter_read(mal_format_converter* pConverter, mal_uint6
 
                 totalFramesRead += framesJustRead;
                 pNextFramesOut  += framesJustRead * frameSizeOut;
+
+                if (framesJustRead < framesToReadRightNow) {
+                    break;
+                }
             }
         }
     } else {
@@ -17421,6 +17429,10 @@ mal_uint64 mal_format_converter_read(mal_format_converter* pConverter, mal_uint6
 
             totalFramesRead += framesJustRead;
             pNextFramesOut  += framesJustRead * frameSizeOut;
+
+            if (framesJustRead < framesToReadRightNow) {
+                break;
+            }
         }
     }
 
@@ -17480,6 +17492,10 @@ mal_uint64 mal_format_converter_read_deinterleaved(mal_format_converter* pConver
             for (mal_uint32 iChannel = 0; iChannel < pConverter->config.channels; ++iChannel) {
                 ppNextSamplesOut[iChannel] += framesJustRead * sampleSizeOut;
             }
+
+            if (framesJustRead < framesToReadRightNow) {
+                break;
+            }
         }
     } else {
         // Input data is deinterleaved.
@@ -17500,6 +17516,10 @@ mal_uint64 mal_format_converter_read_deinterleaved(mal_format_converter* pConver
                 totalFramesRead += framesJustRead;
                 for (mal_uint32 iChannel = 0; iChannel < pConverter->config.channels; ++iChannel) {
                     ppNextSamplesOut[iChannel] += framesJustRead * sampleSizeOut;
+                }
+
+                if (framesJustRead < framesToReadRightNow) {
+                    break;
                 }
             }
         } else {
@@ -17531,6 +17551,10 @@ mal_uint64 mal_format_converter_read_deinterleaved(mal_format_converter* pConver
                 }
 
                 totalFramesRead += framesJustRead;
+
+                if (framesJustRead < framesToReadRightNow) {
+                    break;
+                }
             }
         }
     }
@@ -18114,6 +18138,10 @@ mal_uint64 mal_channel_router_read_deinterleaved(mal_channel_router* pRouter, ma
                 for (mal_uint32 iChannel = 0; iChannel < pRouter->config.channelsOut; ++iChannel) {
                     ppNextSamplesOut[iChannel] += framesJustRead;
                 }
+
+                if (framesJustRead < framesToReadRightNow) {
+                    break;
+                }
             }
         }
     }
@@ -18151,6 +18179,10 @@ mal_uint64 mal_channel_router_read_deinterleaved(mal_channel_router* pRouter, ma
             for (mal_uint32 iChannel = 0; iChannel < pRouter->config.channelsIn; iChannel += 1) {
                 ppNextSamplesOut[iChannel] += framesJustRead;
             }
+        }
+
+        if (framesJustRead < framesToReadRightNow) {
+            break;
         }
     }
 
@@ -18303,14 +18335,18 @@ mal_uint64 mal_src_read_deinterleaved__passthrough(mal_src* pSRC, mal_uint64 fra
                 framesToReadRightNow = 0xFFFFFFFF;
             }
 
-            mal_uint32 framesRead = (mal_uint32)pSRC->config.onReadDeinterleaved(pSRC, (mal_uint32)framesToReadRightNow, (void**)ppNextSamplesOut, pUserData);
-            if (framesRead == 0) {
+            mal_uint32 framesJustRead = (mal_uint32)pSRC->config.onReadDeinterleaved(pSRC, (mal_uint32)framesToReadRightNow, (void**)ppNextSamplesOut, pUserData);
+            if (framesJustRead == 0) {
                 break;
             }
 
-            totalFramesRead += framesRead;
+            totalFramesRead += framesJustRead;
             for (mal_uint32 iChannel = 0; iChannel < pSRC->config.channels; ++iChannel) {
-                ppNextSamplesOut[iChannel] += framesRead;
+                ppNextSamplesOut[iChannel] += framesJustRead;
+            }
+
+            if (framesJustRead < framesToReadRightNow) {
+                break;
             }
         }
 
