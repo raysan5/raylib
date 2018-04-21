@@ -18709,6 +18709,7 @@ mal_result mal_dsp_init(const mal_dsp_config* pConfig, mal_dsp* pDSP)
     mal_zero_object(pDSP);
     pDSP->onRead = pConfig->onRead;
     pDSP->pUserData = pConfig->pUserData;
+    pDSP->isDynamicSampleRateAllowed = pConfig->allowDynamicSampleRate;
 
     // This is generally the pipeline used for data conversion. Note that this can actually change which is explained later.
     //
