@@ -67,7 +67,7 @@ contact
    * Facebook: [http://www.facebook.com/raylibgames](http://www.facebook.com/raylibgames)
    * Reddit: [https://www.reddit.com/r/raylib](https://www.reddit.com/r/raylib)
    * Twitch: [http://www.twitch.tv/raysan5](http://www.twitch.tv/raysan5)
-   * Patreon: [https://www.patreon.com/raysan5](https://www.patreon.com/raysan5)
+   * Patreon: [https://www.patreon.com/raylib](https://www.patreon.com/raylib)
    * YouTube: [https://www.youtube.com/channel/raylib](https://www.youtube.com/channel/UC8WIBkhYb5sBNqXO1mZ7WSQ)
 
 If you are using raylib and you enjoy it, please, [let me know][raysan5].
