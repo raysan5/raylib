@@ -84,9 +84,8 @@
 *
 **********************************************************************************************/
 
-#include "config.h"
-
-#include "raylib.h"
+#include "config.h"             // Defines module configuration flags
+#include "raylib.h"             // Declares module functions
 
 #if (defined(__linux__) || defined(PLATFORM_WEB)) && _POSIX_C_SOURCE < 199309L
     #undef _POSIX_C_SOURCE
@@ -96,8 +95,8 @@
 #define RAYMATH_IMPLEMENTATION  // Define external out-of-line implementation of raymath here
 #include "raymath.h"            // Required for: Vector3 and Matrix functions
 
-#include "rlgl.h"           // raylib OpenGL abstraction layer to OpenGL 1.1, 3.3+ or ES2
-#include "utils.h"          // Required for: fopen() Android mapping
+#include "rlgl.h"               // raylib OpenGL abstraction layer to OpenGL 1.1, 3.3+ or ES2
+#include "utils.h"              // Required for: fopen() Android mapping
 
 #if defined(SUPPORT_GESTURES_SYSTEM)
     #define GESTURES_IMPLEMENTATION
@@ -111,7 +110,7 @@
 
 #if defined(SUPPORT_GIF_RECORDING)
     #define RGIF_IMPLEMENTATION
-    #include "external/rgif.h"   // Support GIF recording
+    #include "external/rgif.h"  // Support GIF recording
 #endif
 
 #include <stdio.h>          // Standard input / output lib
@@ -295,8 +294,6 @@ static bool cursorHidden = false;           // Track if cursor is hidden
 static bool cursorOnScreen = false;         // Tracks if cursor is inside client area
 
 #if defined(PLATFORM_DESKTOP) || defined(PLATFORM_RPI) || defined(PLATFORM_WEB) || defined(PLATFORM_UWP)
-static int screenshotCounter = 0;           // Screenshots counter
-
 // Register mouse states
 static char previousMouseState[3] = { 0 };  // Registers previous mouse button state
 static char currentMouseState[3] = { 0 };   // Registers current mouse button state
@@ -345,9 +342,13 @@ static double targetTime = 0.0;             // Desired time for one frame, if 0 
 static unsigned char configFlags = 0;       // Configuration flags (bit based)
 static bool showLogo = false;               // Track if showing logo at init is enabled
 
+#if defined(SUPPORT_SCREEN_CAPTURE)
+static int screenshotCounter = 0;           // Screenshots counter
+#endif
+
 #if defined(SUPPORT_GIF_RECORDING)
-static int gifFramesCounter = 0;
-static bool gifRecording = false;
+static int gifFramesCounter = 0;            // GIF frames counter
+static bool gifRecording = false;           // GIF recording state
 #endif
 
 //----------------------------------------------------------------------------------
@@ -747,7 +748,6 @@ void SetWindowSize(int width, int height)
     glfwSetWindowSize(window, width, height);
 #endif
 }
-
 
 // Get current screen width
 int GetScreenWidth(void)
@@ -1376,24 +1376,32 @@ bool ChangeDirectory(const char *dir)
     return (CHDIR(dir) == 0);
 }
 
-#if defined(PLATFORM_DESKTOP)
 // Check if a file has been dropped into window
 bool IsFileDropped(void)
 {
+#if defined(PLATFORM_DESKTOP)
     if (dropFilesCount > 0) return true;
     else return false;
+#else
+    return false;
+#endif
 }
 
 // Get dropped files names
 char **GetDroppedFiles(int *count)
 {
+#if defined(PLATFORM_DESKTOP)
     *count = dropFilesCount;
     return dropFilesPath;
+#else
+    return NULL;
+#endif
 }
 
 // Clear dropped files paths buffer
 void ClearDroppedFiles(void)
 {
+#if defined(PLATFORM_DESKTOP)
     if (dropFilesCount > 0)
     {
         for (int i = 0; i < dropFilesCount; i++) free(dropFilesPath[i]);
@@ -1402,8 +1410,8 @@ void ClearDroppedFiles(void)
 
         dropFilesCount = 0;
     }
-}
 #endif
+}
 
 // Save integer value to storage file (to defined position)
 // NOTE: Storage positions is directly related to file memory layout (4 bytes each integer)
