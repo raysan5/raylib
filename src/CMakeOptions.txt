@@ -25,6 +25,7 @@ set_property(CACHE OPENGL_VERSION PROPERTY STRINGS "3.3" "2.1" "1.1" "ES 2.0")
 option(SUPPORT_BUSY_WAIT_LOOP "Use busy wait loop for timing sync instead of a high-resolution timer" ON)
 option(SUPPORT_CAMERA_SYSTEM "Provide camera module (camera.h) with multiple predefined cameras: free, 1st/3rd person, orbital" ON)
 option(SUPPORT_DEFAULT_FONT "Default font is loaded on window initialization to be available for the user to render simple text. If enabled, uses external module functions to load default raylib font (module: text)" ON)
+option(SUPPORT_SCREEN_CAPTURE "Allow automatic screen capture of current screen pressing F12, defined in KeyCallback()" ON)
 option(SUPPORT_GIF_RECORDING "Allow automatic gif recording of current screen pressing CTRL+F12, defined in KeyCallback()" ON)
 option(SUPPORT_GESTURES_SYSTEM "Gestures module is included (gestures.h) to support gestures detection: tap, hold, swipe, drag" ON)
 option(SUPPORT_MOUSE_GESTURES "Mouse gestures are directly mapped like touches and processed by gestures system" ON)
@@ -33,10 +34,9 @@ option(SUPPORT_MOUSE_GESTURES "Mouse gestures are directly mapped like touches a
 option(SUPPORT_VR_SIMULATOR "Support VR simulation functionality (stereo rendering)" ON)
 option(SUPPORT_DISTORTION_SHADER "Include stereo rendering distortion shader (shader_distortion.h)" ON)
 
-# models.c
-option(SUPPORT_FILEFORMAT_OBJ "Support loading OBJ file format" ON)
-option(SUPPORT_FILEFORMAT_MTL "Support loading MTL file format" ON)
-option(SUPPORT_MESH_GENERATION "Support procedural mesh generation functions, uses external par_shapes.h library. NOTE: Some generated meshes DO NOT include generated texture coordinates" ON)
+# shapes.c
+option(SUPPORT_FONT_TEXTURE "Draw rectangle shapes using font texture white character instead of default white texture. Allows drawing rectangles and text with a single draw call, very useful for GUI systems!" ON)
+option(SUPPORT_QUADS_DRAW_MODE "Use QUADS instead of TRIANGLES for drawing when possible. Some lines-based shapes could still use lines" ON)
 
 # textures.c
 option(SUPPORT_IMAGE_GENERATION "Support proedural image generation functionality (gradient, spot, perlin-noise, cellular)" ON)
@@ -53,15 +53,17 @@ option(SUPPORT_FILEFORMAT_PSD "Support loading PSD as textures" OFF)
 option(SUPPORT_FILEFORMAT_PKM "Support loading PKM as textures" OFF)
 option(SUPPORT_FILEFORMAT_PVR "Support loading PVR as textures" OFF)
 
+# models.c
+option(SUPPORT_FILEFORMAT_OBJ "Support loading OBJ file format" ON)
+option(SUPPORT_FILEFORMAT_MTL "Support loading MTL file format" ON)
+option(SUPPORT_MESH_GENERATION "Support procedural mesh generation functions, uses external par_shapes.h library. NOTE: Some generated meshes DO NOT include generated texture coordinates" ON)
+
 # audio.c
 option(SUPPORT_FILEFORMAT_WAV  "Support loading WAV for sound" ON)
 option(SUPPORT_FILEFORMAT_OGG  "Support loading OGG for sound" ON)
 option(SUPPORT_FILEFORMAT_XM   "Support loading XM for sound" ON)
 option(SUPPORT_FILEFORMAT_MOD  "Support loading MOD for sound" ON)
 option(SUPPORT_FILEFORMAT_FLAC "Support loading FLAC for sound" OFF)
-
-# shapes.c
-option(USE_DEFAULT_FONT_TEXTURE "Draw rectangle shapes using font texture white character instead of default white texture. Allows drawing rectangles and text with a single draw call, very useful for GUI systems!" ON)
 
 # utils.c
 option(SUPPORT_SAVE_PNG "Support saving image data in PNG file format" ON)

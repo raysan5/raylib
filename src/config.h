@@ -60,6 +60,16 @@
 
 
 //------------------------------------------------------------------------------------
+// Module: shapes - Configuration Flags
+//------------------------------------------------------------------------------------
+// Draw rectangle shapes using font texture white character instead of default white texture
+// Allows drawing rectangles and text with a single draw call, very useful for GUI systems!
+#define SUPPORT_FONT_TEXTURE
+// Use QUADS instead of TRIANGLES for drawing when possible
+// Some lines-based shapes could still use lines
+#define SUPPORT_QUADS_DRAW_MODE
+
+//------------------------------------------------------------------------------------
 // Module: textures - Configuration Flags
 //------------------------------------------------------------------------------------
 // Selecte desired fileformats to be supported for image data loading

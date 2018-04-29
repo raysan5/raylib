@@ -1,11 +1,28 @@
 /* config.h.in */
 
-// text.c
-/* Default font is loaded on window initialization to be available for the user to render simple text. NOTE: If enabled, uses external module functions to load default raylib font (module: text) */
-#cmakedefine SUPPORT_DEFAULT_FONT 1
-/* Selected desired fileformats to be supported for loading.  */
-#cmakedefine SUPPORT_FILEFORMAT_FNT 1
-#cmakedefine SUPPORT_FILEFORMAT_TTF 1
+// core.c
+/* Camera module is included (camera.h) and multiple predefined cameras are available: free, 1st/3rd person, orbital */
+#cmakedefine SUPPORT_CAMERA_SYSTEM 1
+/* Gestures module is included (gestures.h) to support gestures detection: tap, hold, swipe, drag */
+#cmakedefine SUPPORT_GESTURES_SYSTEM 1
+/* Mouse gestures are directly mapped like touches and processed by gestures system. */
+#cmakedefine SUPPORT_MOUSE_GESTURES 1
+/* Use busy wait loop for timing sync, if not defined, a high-resolution timer is setup and used */
+#cmakedefine SUPPORT_BUSY_WAIT_LOOP 1
+/* Allow automatic screen capture of current screen pressing F12, defined in KeyCallback() */
+#cmakedefine SUPPORT_SCREEN_CAPTURE 1
+/* Allow automatic gif recording of current screen pressing CTRL+F12, defined in KeyCallback() */
+#cmakedefine SUPPORT_GIF_RECORDING 1
+
+// rlgl.c
+/* Support VR simulation functionality (stereo rendering) */
+#cmakedefine SUPPORT_VR_SIMULATOR 1
+/* Include stereo rendering distortion shader (shader_distortion.h) */
+#cmakedefine SUPPORT_DISTORTION_SHADER 1
+
+// shapes.c
+#cmakedefine SUPPORT_FONT_TEXTURE 1
+#cmakedefine SUPPORT_QUADS_DRAW_MODE 1
 
 // textures.c
 /* Selecte desired fileformats to be supported for image data loading. */
@@ -28,23 +45,20 @@
 /* Support proedural image generation functionality (gradient, spot, perlin-noise, cellular) */
 #cmakedefine SUPPORT_IMAGE_GENERATION 1
 
-// rlgl.c
-/* Support VR simulation functionality (stereo rendering) */
-#cmakedefine SUPPORT_VR_SIMULATOR 1
-/* Include stereo rendering distortion shader (shader_distortion.h) */
-#cmakedefine SUPPORT_DISTORTION_SHADER 1
+// text.c
+/* Default font is loaded on window initialization to be available for the user to render simple text. NOTE: If enabled, uses external module functions to load default raylib font (module: text) */
+#cmakedefine SUPPORT_DEFAULT_FONT 1
+/* Selected desired fileformats to be supported for loading.  */
+#cmakedefine SUPPORT_FILEFORMAT_FNT 1
+#cmakedefine SUPPORT_FILEFORMAT_TTF 1
 
-// core.c
-/* Camera module is included (camera.h) and multiple predefined cameras are available: free, 1st/3rd person, orbital */
-#cmakedefine SUPPORT_CAMERA_SYSTEM 1
-/* Gestures module is included (gestures.h) to support gestures detection: tap, hold, swipe, drag */
-#cmakedefine SUPPORT_GESTURES_SYSTEM 1
-/* Mouse gestures are directly mapped like touches and processed by gestures system. */
-#cmakedefine SUPPORT_MOUSE_GESTURES 1
-/* Use busy wait loop for timing sync, if not defined, a high-resolution timer is setup and used */
-#cmakedefine SUPPORT_BUSY_WAIT_LOOP 1
-/* Allow automatic gif recording of current screen pressing CTRL+F12, defined in KeyCallback() */
-#cmakedefine SUPPORT_GIF_RECORDING 1
+// models.c
+/* Selected desired fileformats to be supported for loading. */
+#cmakedefine SUPPORT_FILEFORMAT_OBJ 1
+#cmakedefine SUPPORT_FILEFORMAT_MTL 1
+/* Support procedural mesh generation functions, uses external par_shapes.h library
+ * NOTE: Some generated meshes DO NOT include generated texture coordinates */
+#cmakedefine SUPPORT_MESH_GENERATION 1
 
 // audio.c
 /* Desired fileformats to be supported for loading. */
@@ -54,20 +68,9 @@
 #cmakedefine SUPPORT_FILEFORMAT_MOD 1
 #cmakedefine SUPPORT_FILEFORMAT_FLAC 1
 
-// models.c
-/* Selected desired fileformats to be supported for loading. */
-#cmakedefine SUPPORT_FILEFORMAT_OBJ 1
-#cmakedefine SUPPORT_FILEFORMAT_MTL 1
-
-/* Support procedural mesh generation functions, uses external par_shapes.h library
- * NOTE: Some generated meshes DO NOT include generated texture coordinates
- */
-#cmakedefine SUPPORT_MESH_GENERATION 1
-
 // utils.c
 /* Show TraceLog() output messages. NOTE: By default LOG_DEBUG traces not shown */
 #cmakedefine SUPPORT_TRACELOG 1
-
 /* Support saving image data as PNG fileformat. NOTE: Requires stb_image_write library */
 #cmakedefine SUPPORT_SAVE_PNG 1
 /* Support saving image data as PMP fileformat. NOTE: Requires stb_image_write library */
