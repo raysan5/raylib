@@ -50,6 +50,9 @@
 *   #define SUPPORT_BUSY_WAIT_LOOP
 *       Use busy wait loop for timing sync, if not defined, a high-resolution timer is setup and used
 *
+*   #define SUPPORT_SCREEN_CAPTURE
+*       Allow automatic screen capture of current screen pressing F12, defined in KeyCallback()
+*
 *   #define SUPPORT_GIF_RECORDING
 *       Allow automatic gif recording of current screen pressing CTRL+F12, defined in KeyCallback()
 *
@@ -2791,10 +2794,12 @@ static void KeyCallback(GLFWwindow *window, int key, int scancode, int action, i
         }
         else
     #endif  // SUPPORT_GIF_RECORDING
+    #if defined(SUPPORT_SCREEN_CAPTURE)
         {
             TakeScreenshot(FormatText("screenshot%03i.png", screenshotCounter));
             screenshotCounter++;
         }
+    #endif  // SUPPORT_SCREEN_CAPTURE
     }
 #endif  // PLATFORM_DESKTOP
     else
@@ -3456,12 +3461,14 @@ static void ProcessKeyboard(void)
     // Check exit key (same functionality as GLFW3 KeyCallback())
     if (currentKeyState[exitKey] == 1) windowShouldClose = true;
 
+#if defined(SUPPORT_SCREEN_CAPTURE)
     // Check screen capture key (raylib key: KEY_F12)
     if (currentKeyState[301] == 1)
     {
         TakeScreenshot(FormatText("screenshot%03i.png", screenshotCounter));
         screenshotCounter++;
     }
+#endif
 }
 
 // Restore default keyboard input
