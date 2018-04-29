@@ -1156,23 +1156,23 @@ double GetTime(void)
 #endif
 }
 
-// Returns normalized float array for a Color
-float *ColorToFloat(Color color)
-{
-    static float buffer[4];
-
-    buffer[0] = (float)color.r/255;
-    buffer[1] = (float)color.g/255;
-    buffer[2] = (float)color.b/255;
-    buffer[3] = (float)color.a/255;
-
-    return buffer;
-}
-
 // Returns hexadecimal value for a Color
 int ColorToInt(Color color)
 {
     return (((int)color.r << 24) | ((int)color.g << 16) | ((int)color.b << 8) | (int)color.a);
+}
+
+// Returns color normalized as float [0..1]
+Vector4 ColorNormalize(Color color)
+{
+    Vector4 result;
+
+    result.x = (float)color.r/255.0f;
+    result.y = (float)color.g/255.0f;
+    result.z = (float)color.b/255.0f;
+    result.w = (float)color.a/255.0f;
+    
+    return result;
 }
 
 // Returns HSV values for a Color

@@ -745,8 +745,8 @@ RLAPI float GetFrameTime(void);                                   // Returns tim
 RLAPI double GetTime(void);                                       // Returns elapsed time in seconds since InitWindow()
 
 // Color-related functions
-RLAPI float *ColorToFloat(Color color);                           // Returns normalized float array for a Color
 RLAPI int ColorToInt(Color color);                                // Returns hexadecimal value for a Color
+RLAPI Vector4 ColorNormalize(Color color);                        // Returns color normalized as float [0..1]
 RLAPI Vector3 ColorToHSV(Color color);                            // Returns HSV values for a Color
 RLAPI Color GetColor(int hexValue);                               // Returns a Color struct from hexadecimal value
 RLAPI Color Fade(Color color, float alpha);                       // Color fade-in or fade-out, alpha goes from 0.0f to 1.0f
