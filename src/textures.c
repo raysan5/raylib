@@ -1312,44 +1312,38 @@ void ImageDraw(Image *dst, Image src, Rectangle srcRec, Rectangle dstRec)
 
     UnloadImage(srcCopy);       // Source copy not required any more...
 
-    Color srcCol, dstCol;
-
+    Vector4 fsrc, fdst, fout;   // float based versions of pixel data
+    
     // Blit pixels, copy source image into destination
     // TODO: Probably out-of-bounds blitting could be considered here instead of so much cropping...
     for (int j = dstRec.y; j < (dstRec.y + dstRec.height); j++)
     {
         for (int i = dstRec.x; i < (dstRec.x + dstRec.width); i++)
         {
-            // Alpha blending implementation
-            dstCol = dstPixels[j*dst->width + i];
-            srcCol = srcPixels[(j - dstRec.y)*dstRec.width + (i - dstRec.x)];
+            // Alpha blending (https://en.wikipedia.org/wiki/Alpha_compositing)
             
-            /*
-            // Pre-multiply alpha
-            Vector3 dstColf = { (float)dstCol.r/255.0f, (float)dstCol.g/255.0f, (float)dstCol.b/255.0f };
-            dstColf = Vector3Multiply(dstColf, (float)dstCol.a/255.0f);
-            Vector3 srcColf = { (float)srcCol.r/255.0f, (float)srcCol.g/255.0f, (float)srcCol.b/255.0f };
-            srcColf = Vector3Multiply(srcColf, (float)srcCol.a/255.0f);
-            
-            dstColf = Vector3Add(dstColf, srcColf);
-            
-            if (dstColf.x > 1.0f) dstColf.x = 1.0f;
-            if (dstColf.y > 1.0f) dstColf.y = 1.0f;
-            if (dstColf.z > 1.0f) dstColf.z = 1.0f;
-            
-            dstCol.r = (unsigned char)(dstColf.x*255.0f);
-            dstCol.g = (unsigned char)(dstColf.y*255.0f);
-            dstCol.b = (unsigned char)(dstColf.z*255.0f);
-            dstCol.a = srcCol.a;
-            */
+            fdst = ColorNormalize(dstPixels[j*dst->width + i]);
+            fsrc = ColorNormalize(srcPixels[(j - dstRec.y)*dstRec.width + (i - dstRec.x)]);
 
-            dstCol.r = ((srcCol.a*(srcCol.r - dstCol.r)) >> 8) + dstCol.r;
-            dstCol.g = ((srcCol.a*(srcCol.g - dstCol.g)) >> 8) + dstCol.g;
-            dstCol.b = ((srcCol.a*(srcCol.b - dstCol.b)) >> 8) + dstCol.b;
-            //dstCol.a = ((srcCol.a*(srcCol.a - dstCol.a)) >> 8) + dstCol.a;
-            dstCol.a = srcCol.a;
+            fout.w = fsrc.w + fdst.w*(1.0f - fsrc.w);
+            
+            if (fout.w <= 0.0f)
+            {
+                fout.x = 0.0f;
+                fout.y = 0.0f;
+                fout.z = 0.0f;
+            }
+            else
+            {
+                fout.x = (fsrc.x*fsrc.w + fdst.x*fdst.w*(1 - fsrc.w))/fout.w;
+                fout.y = (fsrc.y*fsrc.w + fdst.y*fdst.w*(1 - fsrc.w))/fout.w;
+                fout.z = (fsrc.z*fsrc.w + fdst.z*fdst.w*(1 - fsrc.w))/fout.w;
+            }
 
-            dstPixels[j*dst->width + i] = dstCol;
+            dstPixels[j*dst->width + i] = (Color){ (unsigned char)(fout.x*255.0f), 
+                                                   (unsigned char)(fout.y*255.0f), 
+                                                   (unsigned char)(fout.z*255.0f), 
+                                                   (unsigned char)(fout.w*255.0f) };
 
             // TODO: Support other blending options
         }
