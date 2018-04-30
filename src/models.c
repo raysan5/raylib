@@ -2175,14 +2175,21 @@ void MeshTangents(Mesh *mesh)
         Vector3 normal = { mesh->normals[i*3 + 0], mesh->normals[i*3 + 1], mesh->normals[i*3 + 2] };
         Vector3 tangent = tan1[i];
 
-        //Vector3 tmp = (t - n * Vector3.Dot(n, t)).normalized;
-        //tangents[i] = (Vector4){ tmp.x, tmp.y, tmp.z };
+        // TODO: Review, not sure if tangent computation is right, just used reference proposed maths...
+    #if defined(COMPUTE_TANGENTS_METHOD_01)
+        Vector3 tmp = Vector3Subtract(tangent, Vector3Multiply(normal, Vector3DotProduct(normal, tangent)));
+        tmp = Vector3Normalize(tmp);
+        mesh->tangents[i*4 + 0] = tmp.x;
+        mesh->tangents[i*4 + 1] = tmp.y;
+        mesh->tangents[i*4 + 2] = tmp.z;
+        mesh->tangents[i*4 + 3] = 1.0f;
+    #else
         Vector3OrthoNormalize(&normal, &tangent);
-        
         mesh->tangents[i*4 + 0] = tangent.x;
         mesh->tangents[i*4 + 1] = tangent.y;
         mesh->tangents[i*4 + 2] = tangent.z;
         mesh->tangents[i*4 + 3] = (Vector3DotProduct(Vector3CrossProduct(normal, tangent), tan2[i]) < 0.0f) ? -1.0f : 1.0f;
+    #endif
     }
     
     free(tan1);
