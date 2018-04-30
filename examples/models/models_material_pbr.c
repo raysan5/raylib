@@ -38,6 +38,7 @@ int main()
 
     // Load model and PBR material
     Model model = LoadModel("resources/pbr/trooper.obj");
+    MeshTangents(&model.mesh);
     model.material = LoadMaterialPBR((Color){ 255, 255, 255, 255 }, 1.0f, 1.0f);
 
     // Define lights attributes
