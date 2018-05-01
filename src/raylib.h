@@ -400,13 +400,15 @@ typedef struct SpriteFont {
 } SpriteFont;
 
 // Camera type, defines a camera position/orientation in 3d space
-typedef struct Camera {
+typedef struct Camera3D {
     Vector3 position;       // Camera position
     Vector3 target;         // Camera target it looks-at
     Vector3 up;             // Camera up vector (rotation over its axis)
     float fovy;             // Camera field-of-view apperture in Y (degrees) in perspective, used as near plane width in orthographic
     int type;               // Camera type, defines projection type: CAMERA_PERSPECTIVE or CAMERA_ORTHOGRAPHIC
-} Camera;
+} Camera3D;
+
+#define Camera  Camera3D    // Camera type fallback, defaults to Camera3D
 
 // Camera2D type, defines a 2d camera
 typedef struct Camera2D {
