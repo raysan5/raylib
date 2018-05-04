@@ -42,7 +42,7 @@ typedef enum GameScreen { LOGO, TITLE, OPTIONS, GAMEPLAY, ENDING } GameScreen;
 GameScreen currentScreen;
 
 // NOTE: This is all the data used in the game
-SpriteFont font;
+Font font;
 Shader colorBlend;
 Texture2D atlas01;
 Texture2D atlas02;

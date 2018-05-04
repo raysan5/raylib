@@ -26,16 +26,16 @@ int main()
     InitWindow(screenWidth, screenHeight, "raylib [text] example - raylib fonts");
 
     // NOTE: Textures MUST be loaded after Window initialization (OpenGL context is required)
-    SpriteFont fonts[MAX_FONTS];
+    Font fonts[MAX_FONTS];
     
-    fonts[0] = LoadSpriteFont("resources/fonts/alagard.png");
-    fonts[1] = LoadSpriteFont("resources/fonts/pixelplay.png");
-    fonts[2] = LoadSpriteFont("resources/fonts/mecha.png");
-    fonts[3] = LoadSpriteFont("resources/fonts/setback.png");
-    fonts[4] = LoadSpriteFont("resources/fonts/romulus.png");
-    fonts[5] = LoadSpriteFont("resources/fonts/pixantiqua.png");
-    fonts[6] = LoadSpriteFont("resources/fonts/alpha_beta.png");
-    fonts[7] = LoadSpriteFont("resources/fonts/jupiter_crash.png");
+    fonts[0] = LoadFont("resources/fonts/alagard.png");
+    fonts[1] = LoadFont("resources/fonts/pixelplay.png");
+    fonts[2] = LoadFont("resources/fonts/mecha.png");
+    fonts[3] = LoadFont("resources/fonts/setback.png");
+    fonts[4] = LoadFont("resources/fonts/romulus.png");
+    fonts[5] = LoadFont("resources/fonts/pixantiqua.png");
+    fonts[6] = LoadFont("resources/fonts/alpha_beta.png");
+    fonts[7] = LoadFont("resources/fonts/jupiter_crash.png");
     
     const char *messages[MAX_FONTS] = { "ALAGARD FONT designed by Hewett Tsoi", 
                                 "PIXELPLAY FONT designed by Aleksander Shevchuk",
@@ -93,8 +93,8 @@ int main()
     // De-Initialization
     //--------------------------------------------------------------------------------------
     
-    // SpriteFonts unloading
-    for (int i = 0; i < MAX_FONTS; i++) UnloadSpriteFont(fonts[i]);
+    // Fonts unloading
+    for (int i = 0; i < MAX_FONTS; i++) UnloadFont(fonts[i]);
 
     CloseWindow();                 // Close window and OpenGL context
     //--------------------------------------------------------------------------------------

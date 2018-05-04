@@ -35,7 +35,7 @@ typedef enum GameScreen { LOGO = 0, TITLE, OPTIONS, GAMEPLAY, ENDING } GameScree
 // Global Variables Definition
 //----------------------------------------------------------------------------------
 GameScreen currentScreen;
-SpriteFont font;
+Font font;
 Music music;
 Sound fxCoin;
 

@@ -20,8 +20,8 @@ int main()
 
     InitWindow(screenWidth, screenHeight, "raylib [texture] example - image text drawing");
     
-    // TTF SpriteFont loading with custom generation parameters
-    SpriteFont font = LoadSpriteFontEx("resources/KAISG.ttf", 64, 0, 0);
+    // TTF Font loading with custom generation parameters
+    Font font = LoadFontEx("resources/KAISG.ttf", 64, 0, 0);
     
     Image parrots = LoadImage("resources/parrots.png"); // Load image in CPU memory (RAM)
 
@@ -74,7 +74,7 @@ int main()
     //--------------------------------------------------------------------------------------
     UnloadTexture(texture);     // Texture unloading
         
-    UnloadSpriteFont(font);     // Unload custom spritefont
+    UnloadFont(font);     // Unload custom spritefont
     
     CloseWindow();              // Close window and OpenGL context
     //--------------------------------------------------------------------------------------

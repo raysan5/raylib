@@ -90,7 +90,7 @@ int main(int argc, char *argv[])
     // Global data loading (assets that must be available in all screens, i.e. fonts)
     InitAudioDevice();
 
-    font = LoadSpriteFont("resources/font.fnt");
+    font = LoadFont("resources/font.fnt");
     music = LoadMusicStream("resources/audio/wave.ogg");
     
     SetMusicVolume(music, 1.0f);
@@ -127,7 +127,7 @@ int main(int argc, char *argv[])
     }
     
     // Unload all global loaded data (i.e. fonts) here!
-    UnloadSpriteFont(font);
+    UnloadFont(font);
     UnloadMusicStream(music);
 
     CloseAudioDevice();     // Close audio context

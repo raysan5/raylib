@@ -1,6 +1,6 @@
 /**********************************************************************************************
 *
-*   raylib.text - Basic functions to load SpriteFonts and draw Text
+*   raylib.text - Basic functions to load Fonts and draw Text
 *
 *   CONFIGURATION:
 *
@@ -73,7 +73,7 @@
 // Global variables
 //----------------------------------------------------------------------------------
 #if defined(SUPPORT_DEFAULT_FONT)
-static SpriteFont defaultFont;        // Default font provided by raylib
+static Font defaultFont;        // Default font provided by raylib
 // NOTE: defaultFont is loaded on InitWindow and disposed on CloseWindow [module: core]
 #endif
 
@@ -85,12 +85,12 @@ static SpriteFont defaultFont;        // Default font provided by raylib
 //----------------------------------------------------------------------------------
 // Module specific Functions Declaration
 //----------------------------------------------------------------------------------
-static SpriteFont LoadImageFont(Image image, Color key, int firstChar); // Load a Image font file (XNA style)
+static Font LoadImageFont(Image image, Color key, int firstChar); // Load a Image font file (XNA style)
 #if defined(SUPPORT_FILEFORMAT_FNT)
-static SpriteFont LoadBMFont(const char *fileName);     // Load a BMFont file (AngelCode font file)
+static Font LoadBMFont(const char *fileName);     // Load a BMFont file (AngelCode font file)
 #endif
 #if defined(SUPPORT_FILEFORMAT_TTF)
-static SpriteFont LoadTTF(const char *fileName, int fontSize, int charsCount, int *fontChars); // Load spritefont from TTF data
+static Font LoadTTF(const char *fileName, int fontSize, int charsCount, int *fontChars); // Load spritefont from TTF data
 #endif
 
 #if defined(SUPPORT_DEFAULT_FONT)
@@ -114,7 +114,7 @@ extern void LoadDefaultFont(void)
     defaultFont.charsCount = 224;             // Number of chars included in our default font
 
     // Default font is directly defined here (data generated from a sprite font image)
-    // This way, we reconstruct SpriteFont without creating large global variables
+    // This way, we reconstruct Font without creating large global variables
     // This data is automatically allocated to Stack and automatically deallocated at the end of this function
     int defaultFontData[512] = {
         0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00200020, 0x0001b000, 0x00000000, 0x00000000, 0x8ef92520, 0x00020a00, 0x7dbe8000, 0x1f7df45f,
@@ -261,28 +261,28 @@ extern void UnloadDefaultFont(void)
 #endif      // SUPPORT_DEFAULT_FONT
 
 // Get the default font, useful to be used with extended parameters
-SpriteFont GetDefaultFont()
+Font GetDefaultFont()
 {
 #if defined(SUPPORT_DEFAULT_FONT)
     return defaultFont;
 #else
-    SpriteFont font = { 0 };
+    Font font = { 0 };
     return font;
 #endif   
 }
 
-// Load SpriteFont from file into GPU memory (VRAM)
-SpriteFont LoadSpriteFont(const char *fileName)
+// Load Font from file into GPU memory (VRAM)
+Font LoadFont(const char *fileName)
 {
     // Default hardcoded values for ttf file loading
     #define DEFAULT_TTF_FONTSIZE    32      // Font first character (32 - space)
     #define DEFAULT_TTF_NUMCHARS    95      // ASCII 32..126 is 95 glyphs
     #define DEFAULT_FIRST_CHAR      32      // Expected first char for image spritefont
 
-    SpriteFont spriteFont = { 0 };
+    Font spriteFont = { 0 };
 
 #if defined(SUPPORT_FILEFORMAT_TTF)
-    if (IsFileExtension(fileName, ".ttf")) spriteFont = LoadSpriteFontEx(fileName, DEFAULT_TTF_FONTSIZE, 0, NULL);
+    if (IsFileExtension(fileName, ".ttf")) spriteFont = LoadFontEx(fileName, DEFAULT_TTF_FONTSIZE, 0, NULL);
     else
 #endif
 #if defined(SUPPORT_FILEFORMAT_FNT)
@@ -297,7 +297,7 @@ SpriteFont LoadSpriteFont(const char *fileName)
 
     if (spriteFont.texture.id == 0)
     {
-        TraceLog(LOG_WARNING, "[%s] SpriteFont could not be loaded, using default font", fileName);
+        TraceLog(LOG_WARNING, "[%s] Font could not be loaded, using default font", fileName);
         spriteFont = GetDefaultFont();
     }
     else SetTextureFilter(spriteFont.texture, FILTER_POINT);    // By default we set point filter (best performance)
@@ -305,12 +305,12 @@ SpriteFont LoadSpriteFont(const char *fileName)
     return spriteFont;
 }
 
-// Load SpriteFont from TTF font file with generation parameters
+// Load Font from TTF font file with generation parameters
 // NOTE: You can pass an array with desired characters, those characters should be available in the font
 // if array is NULL, default char set is selected 32..126
-SpriteFont LoadSpriteFontEx(const char *fileName, int fontSize, int charsCount, int *fontChars)
+Font LoadFontEx(const char *fileName, int fontSize, int charsCount, int *fontChars)
 {
-    SpriteFont spriteFont = { 0 };
+    Font spriteFont = { 0 };
     int totalChars = 95;            // Default charset [32..126]
 
 #if defined(SUPPORT_FILEFORMAT_TTF)
@@ -330,15 +330,15 @@ SpriteFont LoadSpriteFontEx(const char *fileName, int fontSize, int charsCount, 
 
     if (spriteFont.texture.id == 0)
     {
-        TraceLog(LOG_WARNING, "[%s] SpriteFont could not be generated, using default font", fileName);
+        TraceLog(LOG_WARNING, "[%s] Font could not be generated, using default font", fileName);
         spriteFont = GetDefaultFont();
     }
 
     return spriteFont;
 }
 
-// Unload SpriteFont from GPU memory (VRAM)
-void UnloadSpriteFont(SpriteFont font)
+// Unload Font from GPU memory (VRAM)
+void UnloadFont(Font font)
 {
     // NOTE: Make sure spriteFont is not default font (fallback)
     if (font.texture.id != GetDefaultFont().texture.id)
@@ -368,9 +368,9 @@ void DrawText(const char *text, int posX, int posY, int fontSize, Color color)
     }
 }
 
-// Draw text using SpriteFont
+// Draw text using Font
 // NOTE: chars spacing is NOT proportional to fontSize
-void DrawTextEx(SpriteFont font, const char *text, Vector2 position, float fontSize, float spacing, Color tint)
+void DrawTextEx(Font font, const char *text, Vector2 position, float fontSize, float spacing, Color tint)
 {
     int length = strlen(text);
     int textOffsetX = 0;        // Offset between characters
@@ -482,8 +482,8 @@ int MeasureText(const char *text, int fontSize)
     return (int)vec.x;
 }
 
-// Measure string size for SpriteFont
-Vector2 MeasureTextEx(SpriteFont font, const char *text, float fontSize, float spacing)
+// Measure string size for Font
+Vector2 MeasureTextEx(Font font, const char *text, float fontSize, float spacing)
 {
     int len = strlen(text);
     int tempLen = 0;                // Used to count longer text line num chars
@@ -527,7 +527,7 @@ Vector2 MeasureTextEx(SpriteFont font, const char *text, float fontSize, float s
 }
 
 // Returns index position for a unicode character on spritefont
-int GetGlyphIndex(SpriteFont font, int character)
+int GetGlyphIndex(Font font, int character)
 {
 #define UNORDERED_CHARSET
 #if defined(UNORDERED_CHARSET)
@@ -575,7 +575,7 @@ void DrawFPS(int posX, int posY)
 //----------------------------------------------------------------------------------
 
 // Load an Image font file (XNA style)
-static SpriteFont LoadImageFont(Image image, Color key, int firstChar)
+static Font LoadImageFont(Image image, Color key, int firstChar)
 {
     #define COLOR_EQUAL(col1, col2) ((col1.r == col2.r)&&(col1.g == col2.g)&&(col1.b == col2.b)&&(col1.a == col2.a))
 
@@ -648,7 +648,7 @@ static SpriteFont LoadImageFont(Image image, Color key, int firstChar)
         xPosToRead = charSpacing;
     }
 
-    TraceLog(LOG_DEBUG, "SpriteFont data parsed correctly from image");
+    TraceLog(LOG_DEBUG, "Font data parsed correctly from image");
 
     // NOTE: We need to remove key color borders from image to avoid weird
     // artifacts on texture scaling when using FILTER_BILINEAR or FILTER_TRILINEAR
@@ -660,7 +660,7 @@ static SpriteFont LoadImageFont(Image image, Color key, int firstChar)
     free(pixels);    // Free pixels array memory
 
     // Create spritefont with all data parsed from image
-    SpriteFont spriteFont = { 0 };
+    Font spriteFont = { 0 };
 
     spriteFont.texture = LoadTextureFromImage(fontClear); // Convert processed image to OpenGL texture
     spriteFont.charsCount = index;
@@ -684,18 +684,18 @@ static SpriteFont LoadImageFont(Image image, Color key, int firstChar)
 
     spriteFont.baseSize = spriteFont.chars[0].rec.height;
 
-    TraceLog(LOG_INFO, "Image file loaded correctly as SpriteFont");
+    TraceLog(LOG_INFO, "Image file loaded correctly as Font");
 
     return spriteFont;
 }
 
 #if defined(SUPPORT_FILEFORMAT_FNT)
 // Load a BMFont file (AngelCode font file)
-static SpriteFont LoadBMFont(const char *fileName)
+static Font LoadBMFont(const char *fileName)
 {
     #define MAX_BUFFER_SIZE     256
 
-    SpriteFont font = { 0 };
+    Font font = { 0 };
     font.texture.id = 0;
 
     char buffer[MAX_BUFFER_SIZE];
@@ -800,10 +800,10 @@ static SpriteFont LoadBMFont(const char *fileName)
 
     if (font.texture.id == 0)
     {
-        UnloadSpriteFont(font);
+        UnloadFont(font);
         font = GetDefaultFont();
     }
-    else TraceLog(LOG_INFO, "[%s] SpriteFont loaded successfully", fileName);
+    else TraceLog(LOG_INFO, "[%s] Font loaded successfully", fileName);
 
     return font;
 }
@@ -812,7 +812,7 @@ static SpriteFont LoadBMFont(const char *fileName)
 #if defined(SUPPORT_FILEFORMAT_TTF)
 // Generate a sprite font from TTF file data (font size required)
 // TODO: Review texture packing method and generation (use oversampling)
-static SpriteFont LoadTTF(const char *fileName, int fontSize, int charsCount, int *fontChars)
+static Font LoadTTF(const char *fileName, int fontSize, int charsCount, int *fontChars)
 {
     #define MAX_TTF_SIZE    16      // Maximum ttf file size in MB
     
@@ -830,7 +830,7 @@ static SpriteFont LoadTTF(const char *fileName, int fontSize, int charsCount, in
     unsigned char *dataBitmap = (unsigned char *)malloc(textureSize*textureSize*sizeof(unsigned char));   // One channel bitmap returned!
     stbtt_bakedchar *charData = (stbtt_bakedchar *)malloc(sizeof(stbtt_bakedchar)*charsCount);
 
-    SpriteFont font = { 0 };
+    Font font = { 0 };
 
     FILE *ttfFile = fopen(fileName, "rb");
 

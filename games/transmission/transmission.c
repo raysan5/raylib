@@ -70,7 +70,7 @@ int main(void)
     SetMusicVolume(music, 1.0f);
     PlayMusicStream(music);
     
-    fontMission = LoadSpriteFontEx("resources/fonts/traveling_typewriter.ttf", 64, 250, 0);
+    fontMission = LoadFontEx("resources/fonts/traveling_typewriter.ttf", 64, 250, 0);
     texButton = LoadTexture("resources/textures/title_ribbon.png");
     
 	// UI BUTTON
@@ -122,7 +122,7 @@ int main(void)
     UnloadMusicStream(music);
     UnloadSound(fxButton);
     
-    UnloadSpriteFont(fontMission);
+    UnloadFont(fontMission);
     UnloadTexture(texButton);
 	
     CloseAudioDevice();     // Close audio context

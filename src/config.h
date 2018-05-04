@@ -25,7 +25,7 @@
 *
 **********************************************************************************************/
 
-#define RAYLIB_VERSION  "1.9.7-dev"
+#define RAYLIB_VERSION  "2.0-dev"
 
 // Edit to control what features Makefile'd raylib is compiled with
 #if defined(RAYLIB_CMAKE)
@@ -124,6 +124,7 @@
 #define SUPPORT_FILEFORMAT_XM       1
 #define SUPPORT_FILEFORMAT_MOD      1
 //#define SUPPORT_FILEFORMAT_FLAC   1
+//#define SUPPORT_FILEFORMAT_MP3    1
 
 
 //------------------------------------------------------------------------------------

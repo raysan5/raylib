@@ -68,7 +68,7 @@ static Mission *missions = NULL;
 
 static char headline[MAX_TITLE_CHAR] = "\0";
 
-SpriteFont fontNews;
+Font fontNews;
 
 // String (const char *) replacement function
 static char *StringReplace(char *orig, char *rep, char *with);
@@ -121,11 +121,11 @@ void InitEndingScreen(void)
     
     // Generate newspaper with title and subtitle
     Image imNewspaper = LoadImage("resources/textures/ending_newspaper.png");
-    fontNews = LoadSpriteFontEx("resources/fonts/Lora-Bold.ttf", 32, 250, 0);
+    fontNews = LoadFontEx("resources/fonts/Lora-Bold.ttf", 32, 250, 0);
     ImageDrawTextEx(&imNewspaper, (Vector2){ 50, 220 }, fontNews, headline, fontNews.baseSize, 0, DARKGRAY);
     
     texNewspaper = LoadTextureFromImage(imNewspaper);
-    //UnloadSpriteFont(fontNews);
+    //UnloadFont(fontNews);
     UnloadImage(imNewspaper);
 }
 

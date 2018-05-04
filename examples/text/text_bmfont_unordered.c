@@ -25,7 +25,7 @@ int main()
     const char msg[256] = "ASCII extended characters:\n¡¢£¤¥¦§¨©ª«¬®¯°±²³´µ¶·¸¹º»¼½¾¿ÀÁÂÃÄÅÆ\nÇÈÉÊËÌÍÎÏÐÑÒÓÔÕÖ×ØÙÚÛÜÝÞßàáâãäåæ\nçèéêëìíîïðñòóôõö÷øùúûüýþÿ";
 
     // NOTE: Loaded font has an unordered list of characters (chars in the range 32..255)
-    SpriteFont font = LoadSpriteFont("resources/pixantiqua.fnt");       // BMFont (AngelCode)
+    Font font = LoadFont("resources/pixantiqua.fnt");       // BMFont (AngelCode)
 
     SetTargetFPS(60);
     //--------------------------------------------------------------------------------------
@@ -56,7 +56,7 @@ int main()
 
     // De-Initialization
     //--------------------------------------------------------------------------------------
-    UnloadSpriteFont(font);     // AngelCode SpriteFont unloading
+    UnloadFont(font);     // AngelCode Font unloading
     
     CloseWindow();                // Close window and OpenGL context
     //--------------------------------------------------------------------------------------

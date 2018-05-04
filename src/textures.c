@@ -1371,7 +1371,7 @@ Image ImageText(const char *text, int fontSize, Color color)
 }
 
 // Create an image from text (custom sprite font)
-Image ImageTextEx(SpriteFont font, const char *text, float fontSize, float spacing, Color tint)
+Image ImageTextEx(Font font, const char *text, float fontSize, float spacing, Color tint)
 {
     int length = strlen(text);
     int posX = 0;
@@ -1385,7 +1385,7 @@ Image ImageTextEx(SpriteFont font, const char *text, float fontSize, float spaci
 
     // NOTE: glGetTexImage() not available in OpenGL ES
     // TODO: This is horrible, retrieving font texture from GPU!!! 
-    // Define ImageFont struct? or include Image spritefont in SpriteFont struct?
+    // Define ImageFont struct? or include Image spritefont in Font struct?
     Image imFont = GetTextureData(font.texture);
     
     ImageColorTint(&imFont, tint);                    // Apply color tint to font
@@ -1466,7 +1466,7 @@ void ImageDrawText(Image *dst, Vector2 position, const char *text, int fontSize,
 }
 
 // Draw text (custom sprite font) within an image (destination)
-void ImageDrawTextEx(Image *dst, Vector2 position, SpriteFont font, const char *text, float fontSize, float spacing, Color color)
+void ImageDrawTextEx(Image *dst, Vector2 position, Font font, const char *text, float fontSize, float spacing, Color color)
 {
     Image imText = ImageTextEx(font, text, fontSize, spacing, color);
 

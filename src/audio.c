@@ -24,6 +24,7 @@
 *   #define SUPPORT_FILEFORMAT_XM
 *   #define SUPPORT_FILEFORMAT_MOD
 *   #define SUPPORT_FILEFORMAT_FLAC
+*   #define SUPPORT_FILEFORMAT_MP3
 *       Selected desired fileformats to be supported for loading. Some of those formats are
 *       supported by default, to remove support, just comment unrequired #define in this module
 *
@@ -125,6 +126,11 @@
     #define DR_FLAC_IMPLEMENTATION
     #define DR_FLAC_NO_WIN32_IO
     #include "external/dr_flac.h"       // FLAC loading functions
+#endif
+
+#if defined(SUPPORT_FILEFORMAT_MP3)
+    #define DR_MP3_IMPLEMENTATION
+    #include "external/dr_mp3.h"       // MP3 loading functions
 #endif
 
 #ifdef _MSC_VER

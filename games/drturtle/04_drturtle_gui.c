@@ -49,7 +49,7 @@ int main()
     Texture2D gframe = LoadTexture("resources/gframe.png");
     
     // Load game resources: fonts
-    SpriteFont font = LoadSpriteFont("resources/komika.png");
+    Font font = LoadFont("resources/komika.png");
 
     // Define scrolling variables
     int backScrolling = 0;
@@ -438,7 +438,7 @@ int main()
     UnloadTexture(gamera);
     
     // Unload font texture
-    UnloadSpriteFont(font);
+    UnloadFont(font);
     
     CloseWindow();          // Close window and OpenGL context
     //--------------------------------------------------------------------------------------

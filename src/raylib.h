@@ -382,7 +382,7 @@ typedef struct RenderTexture2D {
     Texture2D depth;        // Depth buffer attachment texture
 } RenderTexture2D;
 
-// SpriteFont character info
+// Font character info
 typedef struct CharInfo {
     int value;              // Character value (Unicode)
     Rectangle rec;          // Character rectangle in sprite font
@@ -391,13 +391,15 @@ typedef struct CharInfo {
     int advanceX;           // Character advance position X
 } CharInfo;
 
-// SpriteFont type, includes texture and charSet array data
-typedef struct SpriteFont {
+// Font type, includes texture and charSet array data
+typedef struct Font {
     Texture2D texture;      // Font texture
     int baseSize;           // Base size (default chars height)
     int charsCount;         // Number of characters
     CharInfo *chars;        // Characters info data
-} SpriteFont;
+} Font;
+
+#define SpriteFont  Font    // SpriteFont type fallback, defaults to Font
 
 // Camera type, defines a camera position/orientation in 3d space
 typedef struct Camera3D {
@@ -915,11 +917,11 @@ RLAPI void ImageResizeNN(Image *image,int newWidth,int newHeight);              
 RLAPI void ImageMipmaps(Image *image);                                                                   // Generate all mipmap levels for a provided image
 RLAPI void ImageDither(Image *image, int rBpp, int gBpp, int bBpp, int aBpp);                            // Dither image data to 16bpp or lower (Floyd-Steinberg dithering)
 RLAPI Image ImageText(const char *text, int fontSize, Color color);                                      // Create an image from text (default font)
-RLAPI Image ImageTextEx(SpriteFont font, const char *text, float fontSize, float spacing, Color tint);     // Create an image from text (custom sprite font)
+RLAPI Image ImageTextEx(Font font, const char *text, float fontSize, float spacing, Color tint);     // Create an image from text (custom sprite font)
 RLAPI void ImageDraw(Image *dst, Image src, Rectangle srcRec, Rectangle dstRec);                         // Draw a source image within a destination image
 RLAPI void ImageDrawRectangle(Image *dst, Vector2 position, Rectangle rec, Color color);                 // Draw rectangle within an image
 RLAPI void ImageDrawText(Image *dst, Vector2 position, const char *text, int fontSize, Color color);     // Draw text (default font) within an image (destination)
-RLAPI void ImageDrawTextEx(Image *dst, Vector2 position, SpriteFont font, const char *text, float fontSize, float spacing, Color color); // Draw text (custom sprite font) within an image (destination)
+RLAPI void ImageDrawTextEx(Image *dst, Vector2 position, Font font, const char *text, float fontSize, float spacing, Color color); // Draw text (custom sprite font) within an image (destination)
 RLAPI void ImageFlipVertical(Image *image);                                                              // Flip image vertically
 RLAPI void ImageFlipHorizontal(Image *image);                                                            // Flip image horizontally
 RLAPI void ImageColorTint(Image *image, Color color);                                                    // Modify image color: tint
@@ -955,23 +957,23 @@ RLAPI void DrawTexturePro(Texture2D texture, Rectangle sourceRec, Rectangle dest
 // Font Loading and Text Drawing Functions (Module: text)
 //------------------------------------------------------------------------------------
 
-// SpriteFont loading/unloading functions
-RLAPI SpriteFont GetDefaultFont(void);                                                                   // Get the default SpriteFont
-RLAPI SpriteFont LoadSpriteFont(const char *fileName);                                                   // Load SpriteFont from file into GPU memory (VRAM)
-RLAPI SpriteFont LoadSpriteFontEx(const char *fileName, int fontSize, int charsCount, int *fontChars);   // Load SpriteFont from file with extended parameters
-RLAPI void UnloadSpriteFont(SpriteFont font);                                                            // Unload SpriteFont from GPU memory (VRAM)
+// Font loading/unloading functions
+RLAPI Font GetDefaultFont(void);                                                                   // Get the default Font
+RLAPI Font LoadFont(const char *fileName);                                                   // Load Font from file into GPU memory (VRAM)
+RLAPI Font LoadFontEx(const char *fileName, int fontSize, int charsCount, int *fontChars);   // Load Font from file with extended parameters
+RLAPI void UnloadFont(Font font);                                                            // Unload Font from GPU memory (VRAM)
 
 // Text drawing functions
 RLAPI void DrawFPS(int posX, int posY);                                                                  // Shows current FPS
 RLAPI void DrawText(const char *text, int posX, int posY, int fontSize, Color color);                    // Draw text (using default font)
-RLAPI void DrawTextEx(SpriteFont font, const char* text, Vector2 position, float fontSize, float spacing, Color tint); // Draw text using SpriteFont and additional parameters
+RLAPI void DrawTextEx(Font font, const char* text, Vector2 position, float fontSize, float spacing, Color tint); // Draw text using Font and additional parameters
 
 // Text misc. functions
 RLAPI int MeasureText(const char *text, int fontSize);                                                   // Measure string width for default font
-RLAPI Vector2 MeasureTextEx(SpriteFont font, const char *text, float fontSize, float spacing);           // Measure string size for SpriteFont
+RLAPI Vector2 MeasureTextEx(Font font, const char *text, float fontSize, float spacing);           // Measure string size for Font
 RLAPI const char *FormatText(const char *text, ...);                                                     // Formatting of text with variables to 'embed'
 RLAPI const char *SubText(const char *text, int position, int length);                                   // Get a piece of a text string
-RLAPI int GetGlyphIndex(SpriteFont font, int character);                                                 // Returns index position for a unicode character on sprite font
+RLAPI int GetGlyphIndex(Font font, int character);                                                 // Returns index position for a unicode character on sprite font
 
 //------------------------------------------------------------------------------------
 // Basic 3d Shapes Drawing Functions (Module: models)

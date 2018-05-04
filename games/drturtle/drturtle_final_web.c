@@ -48,7 +48,7 @@ Texture2D swhale;
 Texture2D fish;
 Texture2D gframe;
 
-SpriteFont font;
+Font font;
 
 Sound eat;
 Sound die;
@@ -119,7 +119,7 @@ int main()
     gframe = LoadTexture("resources/gframe.png");
     
     // Load game resources: fonts
-    font = LoadSpriteFont("resources/komika.png");
+    font = LoadFont("resources/komika.png");
     
     // Load game resources: sounds
     eat = LoadSound("resources/eat.wav");
@@ -186,7 +186,7 @@ int main()
     UnloadTexture(gamera);
     
     // Unload font texture
-    UnloadSpriteFont(font);
+    UnloadFont(font);
     
     // Unload sounds
     UnloadSound(eat);

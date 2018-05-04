@@ -57,7 +57,7 @@ int main(void) {
     InitWindow(screenWidth, screenHeight, windowTitle);
 
     // Load global data here (assets that must be available in all screens, i.e. fonts)
-    font = LoadSpriteFont("resources/graphics/mainfont.png");
+    font = LoadFont("resources/graphics/mainfont.png");
 
     atlas01 = LoadTexture("resources/graphics/atlas01.png");
     atlas02 = LoadTexture("resources/graphics/atlas02.png");
@@ -114,7 +114,7 @@ int main(void) {
     
     UnloadTexture(atlas01);
     UnloadTexture(atlas02);
-    UnloadSpriteFont(font);
+    UnloadFont(font);
     
     UnloadShader(colorBlend);   // Unload color overlay blending shader
     
