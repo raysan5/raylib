@@ -50,7 +50,7 @@ int main()
 
             ClearBackground(RAYWHITE);
 
-            Begin3dMode(camera);
+            BeginMode3D(camera);
 
                 DrawModel(dwarf, position, 2.0f, WHITE);   // Draw 3d model with texture
 
@@ -58,7 +58,7 @@ int main()
 
                 DrawGizmo(position);        // Draw gizmo
 
-            End3dMode();
+            EndMode3D();
             
             DrawText("(c) Dwarf 3D model by David Moreno", screenWidth - 200, screenHeight - 20, 10, GRAY);
 

@@ -6,7 +6,7 @@
 *       - Written in plain C code (C99) in PascalCase/camelCase notation
 *       - Hardware accelerated with OpenGL (1.1, 2.1, 3.3 or ES2 - choose at compile)
 *       - Unique OpenGL abstraction layer (usable as standalone module): [rlgl]
-*       - Powerful fonts module with SpriteFonts support (XNA fonts, AngelCode fonts, TTF)
+*       - Powerful fonts module with Fonts support (XNA fonts, AngelCode fonts, TTF)
 *       - Outstanding texture formats support, including compressed formats (DXT, ETC, ASTC)
 *       - Full 3d support for 3d Shapes, Models, Billboards, Heightmaps and more!
 *       - Flexible Materials system, supporting classic maps and PBR maps
@@ -728,10 +728,10 @@ RLAPI void DisableCursor(void);                                   // Disables cu
 RLAPI void ClearBackground(Color color);                          // Set background color (framebuffer clear color)
 RLAPI void BeginDrawing(void);                                    // Setup canvas (framebuffer) to start drawing
 RLAPI void EndDrawing(void);                                      // End canvas drawing and swap buffers (double buffering)
-RLAPI void Begin2dMode(Camera2D camera);                          // Initialize 2D mode with custom camera (2D)
-RLAPI void End2dMode(void);                                       // Ends 2D mode with custom camera
-RLAPI void Begin3dMode(Camera camera);                            // Initializes 3D mode with custom camera (3D)
-RLAPI void End3dMode(void);                                       // Ends 3D mode and returns to default 2D orthographic mode
+RLAPI void BeginMode2D(Camera2D camera);                          // Initialize 2D mode with custom camera (2D)
+RLAPI void EndMode2D(void);                                       // Ends 2D mode with custom camera
+RLAPI void BeginMode3D(Camera3D camera);                          // Initializes 3D mode with custom camera (3D)
+RLAPI void EndMode3D(void);                                       // Ends 3D mode and returns to default 2D orthographic mode
 RLAPI void BeginTextureMode(RenderTexture2D target);              // Initializes render texture for drawing
 RLAPI void EndTextureMode(void);                                  // Ends drawing to render texture
 

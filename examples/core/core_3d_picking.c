@@ -63,7 +63,7 @@ int main()
 
             ClearBackground(RAYWHITE);
 
-            Begin3dMode(camera);
+            BeginMode3D(camera);
 
                 if (collision)
                 {
@@ -81,7 +81,7 @@ int main()
                 DrawRay(ray, MAROON);
                 DrawGrid(10, 1.0f);
 
-            End3dMode();
+            EndMode3D();
 
             DrawText("Try selecting the box with mouse!", 240, 10, 20, DARKGRAY);
 

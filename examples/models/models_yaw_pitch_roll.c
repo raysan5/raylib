@@ -137,12 +137,12 @@ int main()
             EndTextureMode();
 
             // Draw 3D model (recomended to draw 3D always before 2D)
-            Begin3dMode(camera);
+            BeginMode3D(camera);
 
                 DrawModel(model, (Vector3){ 0, 6.0f, 0 }, 1.0f, WHITE);   // Draw 3d model with texture
                 DrawGrid(10, 10.0f);
 
-            End3dMode();
+            EndMode3D();
 
             // Draw 2D GUI stuff
             DrawAngleGauge(texAngleGauge, 80, 70, roll, "roll", RED);

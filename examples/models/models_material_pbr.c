@@ -73,13 +73,13 @@ int main()
 
             ClearBackground(RAYWHITE);
 
-            Begin3dMode(camera);
+            BeginMode3D(camera);
 
                 DrawModel(model, Vector3Zero(), 1.0f, WHITE);
                 
                 DrawGrid(10, 1.0f);
 
-            End3dMode();
+            EndMode3D();
 
             DrawFPS(10, 10);
 

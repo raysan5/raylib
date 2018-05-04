@@ -46,14 +46,14 @@ int main()
 
             ClearBackground(RAYWHITE);
 
-            Begin3dMode(camera);
+            BeginMode3D(camera);
 
                 DrawCube(cubePosition, 2.0f, 2.0f, 2.0f, RED);
                 DrawCubeWires(cubePosition, 2.0f, 2.0f, 2.0f, MAROON);
 
                 DrawGrid(10, 1.0f);
 
-            End3dMode();
+            EndMode3D();
 
             DrawText("Welcome to the third dimension!", 10, 40, 20, DARKGRAY);
 

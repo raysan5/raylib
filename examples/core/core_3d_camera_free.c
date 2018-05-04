@@ -50,14 +50,14 @@ int main()
 
             ClearBackground(RAYWHITE);
 
-            Begin3dMode(camera);
+            BeginMode3D(camera);
 
                 DrawCube(cubePosition, 2.0f, 2.0f, 2.0f, RED);
                 DrawCubeWires(cubePosition, 2.0f, 2.0f, 2.0f, MAROON);
 
                 DrawGrid(10, 1.0f);
 
-            End3dMode();
+            EndMode3D();
             
             DrawRectangle( 10, 10, 320, 133, Fade(SKYBLUE, 0.5f));
             DrawRectangleLines( 10, 10, 320, 133, BLUE);

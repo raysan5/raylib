@@ -51,13 +51,13 @@ int main()
 
             ClearBackground(RAYWHITE);
 
-            Begin3dMode(camera);
+            BeginMode3D(camera);
             
                 DrawBillboard(camera, bill, billPosition, 2.0f, WHITE);
                 
                 DrawGrid(10, 1.0f);        // Draw a grid
 
-            End3dMode();
+            EndMode3D();
 
             DrawFPS(10, 10);
 

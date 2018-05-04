@@ -120,7 +120,7 @@ int main()
 
             ClearBackground(RAYWHITE);
 
-            Begin3dMode(camera);
+            BeginMode3D(camera);
 
                 // Draw the tower
                 DrawModel(tower, towerPos, 1.0, WHITE);
@@ -151,7 +151,7 @@ int main()
                 
                 DrawGrid(100, 1.0f);
 
-            End3dMode();
+            EndMode3D();
             
             // Draw some debug GUI text
             DrawText(FormatText("Hit Object: %s", hitObjectName), 10, 50, 10, BLACK);

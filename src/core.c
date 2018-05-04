@@ -117,7 +117,7 @@
 #include <stdlib.h>         // Required for: malloc(), free(), rand(), atexit()
 #include <stdint.h>         // Required for: typedef unsigned long long int uint64_t, used by hi-res timer
 #include <time.h>           // Required for: time() - Android/RPI hi-res timer (NOTE: Linux only!)
-#include <math.h>           // Required for: tan() [Used in Begin3dMode() to set perspective]
+#include <math.h>           // Required for: tan() [Used in BeginMode3D() to set perspective]
 #include <string.h>         // Required for: strrchr(), strcmp()
 //#include <errno.h>          // Macros for reporting and retrieving error conditions through error codes
 #include <ctype.h>          // Required for: tolower() [Used in IsFileExtension()]
@@ -888,7 +888,7 @@ void EndDrawing(void)
 }
 
 // Initialize 2D mode with custom camera (2D)
-void Begin2dMode(Camera2D camera)
+void BeginMode2D(Camera2D camera)
 {
     rlglDraw();                         // Draw Buffers (Only OpenGL 3+ and ES2)
 
@@ -906,7 +906,7 @@ void Begin2dMode(Camera2D camera)
 }
 
 // Ends 2D mode with custom camera
-void End2dMode(void)
+void EndMode2D(void)
 {
     rlglDraw();                         // Draw Buffers (Only OpenGL 3+ and ES2)
 
@@ -914,7 +914,7 @@ void End2dMode(void)
 }
 
 // Initializes 3D mode with custom camera (3D)
-void Begin3dMode(Camera camera)
+void BeginMode3D(Camera3D camera)
 {
     rlglDraw();                         // Draw Buffers (Only OpenGL 3+ and ES2)
     
@@ -954,7 +954,7 @@ void Begin3dMode(Camera camera)
 }
 
 // Ends 3D mode and returns to default 2D orthographic mode
-void End3dMode(void)
+void EndMode3D(void)
 {
     rlglDraw();                         // Process internal buffers (update + draw)
 
@@ -2912,7 +2912,7 @@ static void WindowSizeCallback(GLFWwindow *window, int width, int height)
     rlLoadIdentity();                           // Reset current matrix (MODELVIEW)
     rlClearScreenBuffers();                     // Clear screen buffers (color and depth)
 
-    // Window size must be updated to be used on 3D mode to get new aspect ratio (Begin3dMode())
+    // Window size must be updated to be used on 3D mode to get new aspect ratio (BeginMode3D())
     // NOTE: Be careful! GLFW3 will choose the closest fullscreen resolution supported by current monitor,
     // for example, if reescaling back to 800x450 (desired), it could set 720x480 (closest fullscreen supported)
     screenWidth = width;
