@@ -141,13 +141,7 @@
 #if defined(PLATFORM_DESKTOP) || defined(PLATFORM_WEB)
     //#define GLFW_INCLUDE_NONE     // Disable the standard OpenGL header inclusion on GLFW3
     #include <GLFW/glfw3.h>         // GLFW3 library: Windows, OpenGL context and Input management
-
-    #if defined(__linux__)
-        #define GLFW_EXPOSE_NATIVE_X11   // Linux specific definitions for getting
-        #define GLFW_EXPOSE_NATIVE_GLX   // native functions like glfwGetX11Window
-        #include <GLFW/glfw3native.h>    // which are required for hiding mouse
-    #endif
-    //#include <GL/gl.h>        // OpenGL functions (GLFW3 already includes gl.h)
+                                    // NOTE: GLFW3 already includes gl.h (OpenGL) headers
 
     #if !defined(SUPPORT_BUSY_WAIT_LOOP) && defined(_WIN32)
     // NOTE: Those functions require linking with winmm library
