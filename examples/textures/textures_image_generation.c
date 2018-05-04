@@ -58,7 +58,7 @@ int main()
     {
         // Update
         //----------------------------------------------------------------------------------
-        if (IsMouseButtonPressed(MOUSE_LEFT_BUTTON))
+        if (IsMouseButtonPressed(MOUSE_LEFT_BUTTON) || IsKeyPressed(KEY_RIGHT))
         {
             currentTexture = (currentTexture + 1)%NUM_TEXTURES; // Cycle between the textures
         }

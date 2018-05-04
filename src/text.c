@@ -364,13 +364,13 @@ void DrawText(const char *text, int posX, int posY, int fontSize, Color color)
         if (fontSize < defaultFontSize) fontSize = defaultFontSize;
         int spacing = fontSize/defaultFontSize;
 
-        DrawTextEx(GetDefaultFont(), text, position, (float)fontSize, spacing, color);
+        DrawTextEx(GetDefaultFont(), text, position, (float)fontSize, (float)spacing, color);
     }
 }
 
 // Draw text using SpriteFont
 // NOTE: chars spacing is NOT proportional to fontSize
-void DrawTextEx(SpriteFont font, const char *text, Vector2 position, float fontSize, int spacing, Color tint)
+void DrawTextEx(SpriteFont font, const char *text, Vector2 position, float fontSize, float spacing, Color tint)
 {
     int length = strlen(text);
     int textOffsetX = 0;        // Offset between characters
@@ -476,14 +476,14 @@ int MeasureText(const char *text, int fontSize)
         if (fontSize < defaultFontSize) fontSize = defaultFontSize;
         int spacing = fontSize/defaultFontSize;
 
-        vec = MeasureTextEx(GetDefaultFont(), text, (float)fontSize, spacing);
+        vec = MeasureTextEx(GetDefaultFont(), text, (float)fontSize, (float)spacing);
     }
 
     return (int)vec.x;
 }
 
 // Measure string size for SpriteFont
-Vector2 MeasureTextEx(SpriteFont font, const char *text, float fontSize, int spacing)
+Vector2 MeasureTextEx(SpriteFont font, const char *text, float fontSize, float spacing)
 {
     int len = strlen(text);
     int tempLen = 0;                // Used to count longer text line num chars

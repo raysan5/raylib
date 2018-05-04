@@ -51,7 +51,7 @@ int main()
     // NOTE: Textures MUST be loaded after Window initialization (OpenGL context is required)
 
     Image image = LoadImage("resources/parrots.png");   // Loaded in CPU memory (RAM)
-    ImageFormat(&image, UNCOMPRESSED_R8G8B8A8);         // Format image to RGBA 32bit (required for texture update)
+    ImageFormat(&image, UNCOMPRESSED_R8G8B8A8);         // Format image to RGBA 32bit (required for texture update) <-- ISSUE
     Texture2D texture = LoadTextureFromImage(image);    // Image converted to texture, GPU memory (VRAM)
 
     int currentProcess = NONE;
@@ -121,18 +121,9 @@ int main()
             // Draw rectangles
             for (int i = 0; i < NUM_PROCESSES; i++)
             {
-                if (i == currentProcess)
-                {
-                    DrawRectangleRec(selectRecs[i], SKYBLUE);
-                    DrawRectangleLines(selectRecs[i].x, selectRecs[i].y, selectRecs[i].width, selectRecs[i].height, BLUE);
-                    DrawText(processText[i], selectRecs[i].x + selectRecs[i].width/2 - MeasureText(processText[i], 10)/2, selectRecs[i].y + 11, 10, DARKBLUE);
-                }
-                else
-                {
-                    DrawRectangleRec(selectRecs[i], LIGHTGRAY);
-                    DrawRectangleLines(selectRecs[i].x, selectRecs[i].y, selectRecs[i].width, selectRecs[i].height, GRAY);
-                    DrawText(processText[i], selectRecs[i].x + selectRecs[i].width/2 - MeasureText(processText[i], 10)/2, selectRecs[i].y + 11, 10, DARKGRAY);
-                }
+                DrawRectangleRec(selectRecs[i], (i == currentProcess) ? SKYBLUE : LIGHTGRAY);
+                DrawRectangleLines(selectRecs[i].x, selectRecs[i].y, selectRecs[i].width, selectRecs[i].height, (i == currentProcess) ? BLUE : GRAY);
+                DrawText(processText[i], selectRecs[i].x + selectRecs[i].width/2 - MeasureText(processText[i], 10)/2, selectRecs[i].y + 11, 10, (i == currentProcess) ? DARKBLUE : DARKGRAY);
             }
 
             DrawTexture(texture, screenWidth - texture.width - 60, screenHeight/2 - texture.height/2, WHITE);

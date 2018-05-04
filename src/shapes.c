@@ -324,7 +324,7 @@ void DrawRectanglePro(Rectangle rec, Vector2 origin, float rotation, Color color
     rlEnableTexture(GetTextureDefault().id);
 
     rlPushMatrix();
-        rlTranslatef((float)rec.x, (float)rec.y, 0);
+        rlTranslatef(rec.x, rec.y, 0);
         rlRotatef(rotation, 0, 0, 1);
         rlTranslatef(-origin.x, -origin.y, 0);
 
@@ -333,9 +333,9 @@ void DrawRectanglePro(Rectangle rec, Vector2 origin, float rotation, Color color
             rlNormal3f(0.0f, 0.0f, 1.0f);                          // Normal vector pointing towards viewer
 
             rlVertex2f(0.0f, 0.0f);
-            rlVertex2f(0.0f, (float)rec.height);
-            rlVertex2f((float)rec.width, (float)rec.height);
-            rlVertex2f((float)rec.width, 0.0f);
+            rlVertex2f(0.0f, rec.height);
+            rlVertex2f(rec.width, rec.height);
+            rlVertex2f(rec.width, 0.0f);
         rlEnd();
     rlPopMatrix();
 
@@ -369,23 +369,23 @@ void DrawRectangleGradientEx(Rectangle rec, Color col1, Color col2, Color col3, 
 
         // NOTE: Default raylib font character 95 is a white square
         rlColor4ub(col1.r, col1.g, col1.b, col1.a);
-        rlTexCoord2f((float)GetDefaultFont().chars[95].rec.x/GetDefaultFont().texture.width, 
-                     (float)GetDefaultFont().chars[95].rec.y/GetDefaultFont().texture.height);
+        rlTexCoord2f(GetDefaultFont().chars[95].rec.x/GetDefaultFont().texture.width, 
+                     GetDefaultFont().chars[95].rec.y/GetDefaultFont().texture.height);
         rlVertex2f(rec.x, rec.y);
         
         rlColor4ub(col2.r, col2.g, col2.b, col2.a);
-        rlTexCoord2f((float)GetDefaultFont().chars[95].rec.x/GetDefaultFont().texture.width, 
-                     (float)(GetDefaultFont().chars[95].rec.y + GetDefaultFont().chars[95].rec.height)/GetDefaultFont().texture.height);
+        rlTexCoord2f(GetDefaultFont().chars[95].rec.x/GetDefaultFont().texture.width, 
+                     (GetDefaultFont().chars[95].rec.y + GetDefaultFont().chars[95].rec.height)/GetDefaultFont().texture.height);
         rlVertex2f(rec.x, rec.y + rec.height);
         
         rlColor4ub(col3.r, col3.g, col3.b, col3.a);
-        rlTexCoord2f((float)(GetDefaultFont().chars[95].rec.x + GetDefaultFont().chars[95].rec.width)/GetDefaultFont().texture.width, 
-                     (float)(GetDefaultFont().chars[95].rec.y + GetDefaultFont().chars[95].rec.height)/GetDefaultFont().texture.height);
+        rlTexCoord2f((GetDefaultFont().chars[95].rec.x + GetDefaultFont().chars[95].rec.width)/GetDefaultFont().texture.width, 
+                     (GetDefaultFont().chars[95].rec.y + GetDefaultFont().chars[95].rec.height)/GetDefaultFont().texture.height);
         rlVertex2f(rec.x + rec.width, rec.y + rec.height);
         
         rlColor4ub(col4.r, col4.g, col4.b, col4.a);
-        rlTexCoord2f((float)(GetDefaultFont().chars[95].rec.x + GetDefaultFont().chars[95].rec.width)/GetDefaultFont().texture.width, 
-                     (float)GetDefaultFont().chars[95].rec.y/GetDefaultFont().texture.height);
+        rlTexCoord2f((GetDefaultFont().chars[95].rec.x + GetDefaultFont().chars[95].rec.width)/GetDefaultFont().texture.width, 
+                     GetDefaultFont().chars[95].rec.y/GetDefaultFont().texture.height);
         rlVertex2f(rec.x + rec.width, rec.y);
     rlEnd();
     
@@ -667,14 +667,14 @@ bool CheckCollisionCircleRec(Vector2 center, float radius, Rectangle rec)
     float dx = fabsf(center.x - recCenterX);
     float dy = fabsf(center.y - recCenterY);
 
-    if (dx > ((float)rec.width/2.0f + radius)) { return false; }
-    if (dy > ((float)rec.height/2.0f + radius)) { return false; }
+    if (dx > (rec.width/2.0f + radius)) { return false; }
+    if (dy > (rec.height/2.0f + radius)) { return false; }
 
-    if (dx <= ((float)rec.width/2.0f)) { return true; }
-    if (dy <= ((float)rec.height/2.0f)) { return true; }
+    if (dx <= (rec.width/2.0f)) { return true; }
+    if (dy <= (rec.height/2.0f)) { return true; }
 
-    float cornerDistanceSq = (dx - (float)rec.width/2.0f)*(dx - (float)rec.width/2.0f) + 
-						     (dy - (float)rec.height/2.0f)*(dy - (float)rec.height/2.0f);
+    float cornerDistanceSq = (dx - rec.width/2.0f)*(dx - rec.width/2.0f) + 
+						     (dy - rec.height/2.0f)*(dy - rec.height/2.0f);
 
     return (cornerDistanceSq <= (radius*radius));
 }
