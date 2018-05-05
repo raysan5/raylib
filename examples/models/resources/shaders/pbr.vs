@@ -16,7 +16,7 @@ in vec4 vertexTangent;
 
 // Input uniform values
 uniform mat4 mvp;
-uniform mat4 mMatrix;
+uniform mat4 matModel;
 
 // Output vertex attributes (to fragment shader)
 out vec3 fragPosition;
@@ -31,10 +31,10 @@ void main()
     vec3 vertexBinormal = cross(vertexNormal, vec3(vertexTangent));
 
     // Calculate fragment normal based on normal transformations
-    mat3 normalMatrix = transpose(inverse(mat3(mMatrix)));
+    mat3 normalMatrix = transpose(inverse(mat3(matModel)));
 
     // Calculate fragment position based on model transformations
-    fragPosition = vec3(mMatrix*vec4(vertexPosition, 1.0f));
+    fragPosition = vec3(matModel*vec4(vertexPosition, 1.0f));
 
     // Send vertex attributes to fragment shader
     fragTexCoord = vertexTexCoord;
