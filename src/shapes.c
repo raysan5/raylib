@@ -634,8 +634,8 @@ bool CheckCollisionRecs(Rectangle rec1, Rectangle rec2)
 {
     bool collision = false;
 
-    int dx = abs((rec1.x + rec1.width/2) - (rec2.x + rec2.width/2));
-    int dy = abs((rec1.y + rec1.height/2) - (rec2.y + rec2.height/2));
+    float dx = fabsf((rec1.x + rec1.width/2) - (rec2.x + rec2.width/2));
+    float dy = fabsf((rec1.y + rec1.height/2) - (rec2.y + rec2.height/2));
 
     if ((dx <= (rec1.width/2 + rec2.width/2)) && ((dy <= (rec1.height/2 + rec2.height/2)))) collision = true;
 
@@ -686,8 +686,8 @@ Rectangle GetCollisionRec(Rectangle rec1, Rectangle rec2)
 
     if (CheckCollisionRecs(rec1, rec2))
     {
-        int dxx = abs(rec1.x - rec2.x);
-        int dyy = abs(rec1.y - rec2.y);
+        float dxx = fabsf(rec1.x - rec2.x);
+        float dyy = fabsf(rec1.y - rec2.y);
 
         if (rec1.x <= rec2.x)
         {
