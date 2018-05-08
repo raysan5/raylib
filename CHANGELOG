@@ -4,6 +4,104 @@ changelog
 Current Release:    raylib 1.8.0 (Oct 2017)
 
 -----------------------------------------------
+Release:     raylib 2.0 (June 2017 ?)
+-----------------------------------------------
+KEY CHANGES:
+  - Removed external dependencies (GLFW3 and OpenAL)
+  - Complete redesign of audio module to use mini_al audio library
+  - Support AppVeyor and Travis CI (continuous integration) build
+  - Reviewed raymath.h for better consistency and performance (inlining)
+  - Refactor all #define SUPPORT_* into a single config.h
+  - Support TCC compiler
+
+Detailed changes:
+[build] REMOVED: GitHub develop branch
+[build] ADDED: FreeBSD OS support
+[build] ADDED: Universal Windows Platform (UWP) support
+[build] ADDED: Wayland Linux desktop support
+[build] REMOVED: External dependencies GLFW and OpenAL
+[build] ADDED: AppVeyor CI for automatic Windows builds
+[build] ADDED: Travis CI for automatic Linux/macOS builds
+[build] ADDED: rglfw (GLFW3 module) to avoid external dependency
+[build] ADDED: VS2017 UWP project
+[build] ADDED: Builder project template
+[build] REVIEWED: VS2015 and VS2017 projects
+[build] ADDED: Compiler memory sanitizer for better debug
+[build] Setup CMake package target and CI auto-deploy tags
+[build] Support DEBUG library building
+[core] Unified InitWindow() between platforms
+[core] Export Android main entry point
+[core] RENAMED: Begin3dMode() to BeginMode3D()
+[core] RENAMED: End3dMode() to EndMode3D()
+[core] RENAMED: Begin2dMode() to BeginMode2D()
+[core] RENAMED: End2dMode() to EndMode2D()
+[core] RENAMED: struct Camera to Camera3D
+[core] RENAMED: struct SpriteFont to Font -> plus all required functions!
+[core] RENAMED: enum TextureFormat to PixelFormat
+[core] REVIEWED: Rectangle params int to float
+[core] REVIEWED: timming system for macOS
+[core] REMOVED: ColorToFloat()
+[core] ADDED: GetCurrentTime() on macOS
+[core] ADDED: GetTime()
+[core] ADDED: struct Vector4
+[core] ADDED: SetTraceLog() to define trace log messages type
+[core] ADDED: GetFileName() to get filename from path string
+[core] ADDED: ColorToHSV()
+[core] ADDED: ColorNormalize()
+[core] ADDED: SetWindowSize() to scale Windows in runtime
+[core] ADDED: SetMouseScale() to scale mouse input
+[core] ADDED: key definitions - KEY_GRAVE, KEY_SLASH, KEY_BACKSLASH
+[core] RENAMED: GetHexValue() to ColorToInt()
+[core] REVIEWED: Fade()
+[core] REVIEWED: InitWindow() to avoid void pointer (safety)
+[core] Support camera 3d orthographic projection mode
+[shapes] ADDED: DrawRectangleLinesEx()
+[textures] Improved pixel formats support (32bit channels)
+[textures] Improved textures support for OpenGL 2.1
+[textures] REMOVED: DrawRectangleT() --> Added support to DrawRectangle()
+[textures] ADDED: GetPixelDataSize(); pixel data size in bytes (image or texture)
+[textures] ADDED: ImageAlphaClear() --> Clear alpha channel to desired color
+[textures] ADDED: ImageAlphaCrop() --> Crop image depending on alpha value
+[textures] ADDED: ImageAlphaPremultiply() --> Premultiply alpha channel
+[textures] ADDED: ImageDrawRectangle()
+[textures] ADDED: ImageMipmaps()
+[textures] ADDED: GenImageColor()
+[textures] ADDED: GetPixelDataSize()
+[textures] REVIEWED: GenImagePerlinNoise()
+[textures] REVIEWED: ImageTextEx() to support UTF8 basic characters
+[textures] REVIEWED: GetTextureData() for RPI - requires some work
+[textures] Added new example: text drawing on image
+[text] Corrected issue with ttf font y-offset
+[text] REVIEWED: DrawTextEx() - avoid rendering SPACE character!
+[rlgl] ADDED: LoadShaderCode()
+[rlgl] ADDED: GetMatrixModelview()
+[rlgl] ADDED: SetVrDistortionShader(Shader shader)
+[rlgl] REVIEWED: rlLoadTexture() - added mipmaps support, improved compressed textures loading
+[rlgl] REVIEWED: rlReadTexturePixels()
+[models] Support 4 components mesh.tangent data
+[models] Removed tangents generation from LoadOBJ()
+[models] ADDED: MeshTangents()
+[models] ADDED: MeshBinormals()
+[models] ADDED: ExportMesh()
+[models] ADDED: GetCollisionRayModel()
+[models] RENAMED: CalculateBoundingBox() to MeshBoundingBox()
+[models] REMOVED: GetCollisionRayMesh() - does not consider model transform
+[models] REVIEWED: LoadMesh() - fallback to default cube mesh if loading fails
+[audio] ADDED: IsAudioStreamPlaying()
+[audio] ADDED: SetAudioStreamVolume()
+[audio] ADDED: SetAudioStreamPitch()
+[utils] Corrected issue with SaveImageAs()
+[utils] RENAMED: SaveImageAs() to ExportImage()
+[utils] REMOVED: rres support - moved to external library (rres.h)
+[shaders] REVIEWED: GLSL 120 shaders
+[raymath] REVIEWED: math usage to reduce temp variables
+[raymath] REVIEWED: Avoid pointer-based parameters for API consistency
+[physac] REVIEWED: physac.h timming system
+[games] ADDED: GGJ18 game - transmission mission
+[*] Updated external libraries to latest version
+[*] Multiple bugs corrected (check github issues)
+
+-----------------------------------------------
 Release:     raylib 1.8.0 (Oct 2017)
 -----------------------------------------------
 NOTE: 
