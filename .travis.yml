@@ -18,6 +18,15 @@ matrix:
     - os: linux
       env: ARCH=amd64 GLFW=SYSTEM
       sudo: required
+    - os: linux
+      env: USE_WAYLAND=ON ARCH=amd64
+      sudo: required
+      addons:
+          apt:
+              packages:
+                  - libwayland-dev
+                  - libxkbcommon-dev
+                  - libegl1-mesa-dev
     - os: osx
       env: ARCH=universal
 
@@ -49,7 +58,15 @@ before_install:
 script:
   - mkdir build
   - cd build
-  - cmake $CMAKE_ARCH_ARGS -DMACOS_FATLIB=ON -DSTATIC=ON -DSHARED=ON -DBUILD_EXAMPLES=ON -DBUILD_GAMES=ON -DUSE_EXTERNAL_GLFW=IF_POSSIBLE ..
+  - if test -n "${USE_WAYLAND}";
+      then wget https://mirrors.kernel.org/ubuntu/pool/universe/e/extra-cmake-modules/extra-cmake-modules_5.38.0a-0ubuntu1_amd64.deb;
+      sudo dpkg -i extra-cmake-modules_5.38.0a-0ubuntu1_amd64.deb;
+      git clone git://anongit.freedesktop.org/wayland/wayland-protocols;
+      pushd wayland-protocols;
+      git checkout 1.12 && ./autogen.sh --prefix=/usr && make && sudo make install;
+      popd;
+    fi
+  - cmake $CMAKE_ARCH_ARGS -DMACOS_FATLIB=ON -DSTATIC=ON -DSHARED=ON -DBUILD_EXAMPLES=ON -DBUILD_GAMES=ON -DUSE_EXTERNAL_GLFW=IF_POSSIBLE -DUSE_WAYLAND=${USE_WAYLAND} ..
   - make VERBOSE=1
   - if [ "$GLFW" != "SYSTEM" ]; then make package; fi;
   - sudo make install
