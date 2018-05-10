@@ -571,6 +571,61 @@ static void updateCursorImage(_GLFWwindow* window)
     }
 }
 
+// Apply disabled cursor mode to a focused window
+//
+static void disableCursor(_GLFWwindow* window)
+{
+    if (_glfw.x11.xi.available)
+    {
+        XIEventMask em;
+        unsigned char mask[XIMaskLen(XI_RawMotion)] = { 0 };
+
+        em.deviceid = XIAllMasterDevices;
+        em.mask_len = sizeof(mask);
+        em.mask = mask;
+        XISetMask(mask, XI_RawMotion);
+
+        XISelectEvents(_glfw.x11.display, _glfw.x11.root, &em, 1);
+    }
+
+    _glfw.x11.disabledCursorWindow = window;
+    _glfwPlatformGetCursorPos(window,
+                              &_glfw.x11.restoreCursorPosX,
+                              &_glfw.x11.restoreCursorPosY);
+    updateCursorImage(window);
+    centerCursor(window);
+    XGrabPointer(_glfw.x11.display, window->x11.handle, True,
+                 ButtonPressMask | ButtonReleaseMask | PointerMotionMask,
+                 GrabModeAsync, GrabModeAsync,
+                 window->x11.handle,
+                 _glfw.x11.hiddenCursorHandle,
+                 CurrentTime);
+}
+
+// Exit disabled cursor mode for the specified window
+//
+static void enableCursor(_GLFWwindow* window)
+{
+    if (_glfw.x11.xi.available)
+    {
+        XIEventMask em;
+        unsigned char mask[] = { 0 };
+
+        em.deviceid = XIAllMasterDevices;
+        em.mask_len = sizeof(mask);
+        em.mask = mask;
+
+        XISelectEvents(_glfw.x11.display, _glfw.x11.root, &em, 1);
+    }
+
+    _glfw.x11.disabledCursorWindow = NULL;
+    XUngrabPointer(_glfw.x11.display, CurrentTime);
+    _glfwPlatformSetCursorPos(window,
+                              _glfw.x11.restoreCursorPosX,
+                              _glfw.x11.restoreCursorPosY);
+    updateCursorImage(window);
+}
+
 // Create the X11 window (and its colormap)
 //
 static GLFWbool createNativeWindow(_GLFWwindow* window,
@@ -1432,7 +1487,7 @@ static void processEvent(XEvent *event)
             // HACK: This is a workaround for WMs (KWM, Fluxbox) that otherwise
             //       ignore the defined cursor for hidden cursor mode
             if (window->cursorMode == GLFW_CURSOR_HIDDEN)
-                _glfwPlatformSetCursorMode(window, GLFW_CURSOR_HIDDEN);
+                updateCursorImage(window);
 
             _glfwInputCursorEnter(window, GLFW_TRUE);
             return;
@@ -1725,7 +1780,7 @@ static void processEvent(XEvent *event)
         case FocusIn:
         {
             if (window->cursorMode == GLFW_CURSOR_DISABLED)
-                _glfwPlatformSetCursorMode(window, GLFW_CURSOR_DISABLED);
+                disableCursor(window);
 
             if (event->xfocus.mode == NotifyGrab ||
                 event->xfocus.mode == NotifyUngrab)
@@ -1745,7 +1800,7 @@ static void processEvent(XEvent *event)
         case FocusOut:
         {
             if (window->cursorMode == GLFW_CURSOR_DISABLED)
-                _glfwPlatformSetCursorMode(window, GLFW_CURSOR_NORMAL);
+                enableCursor(window);
 
             if (event->xfocus.mode == NotifyGrab ||
                 event->xfocus.mode == NotifyUngrab)
@@ -2708,53 +2763,14 @@ void _glfwPlatformSetCursorMode(_GLFWwindow* window, int mode)
 {
     if (mode == GLFW_CURSOR_DISABLED)
     {
-        if (_glfw.x11.xi.available)
-        {
-            XIEventMask em;
-            unsigned char mask[XIMaskLen(XI_RawMotion)] = { 0 };
-
-            em.deviceid = XIAllMasterDevices;
-            em.mask_len = sizeof(mask);
-            em.mask = mask;
-            XISetMask(mask, XI_RawMotion);
-
-            XISelectEvents(_glfw.x11.display, _glfw.x11.root, &em, 1);
-        }
-
-        _glfw.x11.disabledCursorWindow = window;
-        _glfwPlatformGetCursorPos(window,
-                                  &_glfw.x11.restoreCursorPosX,
-                                  &_glfw.x11.restoreCursorPosY);
-        centerCursor(window);
-        XGrabPointer(_glfw.x11.display, window->x11.handle, True,
-                     ButtonPressMask | ButtonReleaseMask | PointerMotionMask,
-                     GrabModeAsync, GrabModeAsync,
-                     window->x11.handle,
-                     _glfw.x11.hiddenCursorHandle,
-                     CurrentTime);
+        if (_glfwPlatformWindowFocused(window))
+            disableCursor(window);
     }
     else if (_glfw.x11.disabledCursorWindow == window)
-    {
-        if (_glfw.x11.xi.available)
-        {
-            XIEventMask em;
-            unsigned char mask[] = { 0 };
+        enableCursor(window);
+    else
+        updateCursorImage(window);
 
-            em.deviceid = XIAllMasterDevices;
-            em.mask_len = sizeof(mask);
-            em.mask = mask;
-
-            XISelectEvents(_glfw.x11.display, _glfw.x11.root, &em, 1);
-        }
-
-        _glfw.x11.disabledCursorWindow = NULL;
-        XUngrabPointer(_glfw.x11.display, CurrentTime);
-        _glfwPlatformSetCursorPos(window,
-                                  _glfw.x11.restoreCursorPosX,
-                                  _glfw.x11.restoreCursorPosY);
-    }
-
-    updateCursorImage(window);
     XFlush(_glfw.x11.display);
 }
 

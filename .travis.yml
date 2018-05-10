@@ -15,6 +15,18 @@ matrix:
     - os: linux
       env: ARCH=amd64
       sudo: required
+    - os: linux
+      env: ARCH=amd64 GLFW=SYSTEM
+      sudo: required
+    - os: linux
+      env: USE_WAYLAND=ON ARCH=amd64
+      sudo: required
+      addons:
+          apt:
+              packages:
+                  - libwayland-dev
+                  - libxkbcommon-dev
+                  - libegl1-mesa-dev
     - os: osx
       env: ARCH=universal
 
@@ -25,11 +37,12 @@ before_install:
       sudo apt-get install -y gcc-multilib
                               libasound2-dev:$ARCH
                               libxcursor-dev:$ARCH libxinerama-dev:$ARCH mesa-common-dev:$ARCH
-                              libx11-dev:$ARCH libxrandr-dev:$ARCH libxi-dev:$ARCH
+                              libx11-dev:$ARCH libxrandr-dev:$ARCH libxrandr2:$ARCH libxi-dev:$ARCH
                               libgl1-mesa-dev:$ARCH libglu1-mesa-dev:$ARCH;
+      if [ "$ARCH" == "i386" ]; then
+        export CMAKE_ARCH_ARGS='-DCMAKE_C_FLAGS=-m32 -DCMAKE_SYSTEM_LIBRARY_PATH=/usr/lib/i386-linux-gnu';
+      fi;
       export RAYLIB_PACKAGE_SUFFIX="-Linux-$ARCH";
-      if [ "$ARCH" == "i386" ]; then export CFLAGS="-m32"; fi;
-      if [ "$ARCH" == "amd64" ]; then export CFLAGS="-m64"; fi;
       if [ "$GLFW" == "SYSTEM" ]; then
         wget 'http://ftp.de.debian.org/debian/pool/main/g/glfw3/libglfw3_3.2.1-1_amd64.deb';
         wget 'http://ftp.de.debian.org/debian/pool/main/g/glfw3/libglfw3-dev_3.2.1-1_amd64.deb';
@@ -45,9 +58,19 @@ before_install:
 script:
   - mkdir build
   - cd build
-  - cmake -DMACOS_FATLIB=ON -DSTATIC=ON -DSHARED=ON -DBUILD_EXAMPLES=ON -DBUILD_GAMES=ON -DUSE_EXTERNAL_GLFW=IF_POSSIBLE ..
+  - if test -n "${USE_WAYLAND}";
+      then wget https://mirrors.kernel.org/ubuntu/pool/universe/e/extra-cmake-modules/extra-cmake-modules_5.38.0a-0ubuntu1_amd64.deb;
+      sudo dpkg -i extra-cmake-modules_5.38.0a-0ubuntu1_amd64.deb;
+      git clone git://anongit.freedesktop.org/wayland/wayland-protocols;
+      pushd wayland-protocols;
+      git checkout 1.12 && ./autogen.sh --prefix=/usr && make && sudo make install;
+      popd;
+    fi
+  - cmake $CMAKE_ARCH_ARGS -DMACOS_FATLIB=ON -DSTATIC=ON -DSHARED=ON -DBUILD_EXAMPLES=ON -DBUILD_GAMES=ON -DUSE_EXTERNAL_GLFW=IF_POSSIBLE -DUSE_WAYLAND=${USE_WAYLAND} ..
   - make VERBOSE=1
-  - make package
+  - if [ "$GLFW" != "SYSTEM" ]; then make package; fi;
+  - sudo make install
+  - pkg-config --static --libs raylib
 
 deploy:
   provider: releases

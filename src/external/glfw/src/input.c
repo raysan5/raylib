@@ -509,9 +509,7 @@ GLFWAPI void glfwSetInputMode(GLFWwindow* handle, int mode, int value)
         _glfwPlatformGetCursorPos(window,
                                   &window->virtualCursorPosX,
                                   &window->virtualCursorPosY);
-
-        if (_glfwPlatformWindowFocused(window))
-            _glfwPlatformSetCursorMode(window, value);
+        _glfwPlatformSetCursorMode(window, value);
     }
     else if (mode == GLFW_STICKY_KEYS)
     {

@@ -2,7 +2,7 @@
 // File: vk_platform.h
 //
 /*
-** Copyright (c) 2014-2015 The Khronos Group Inc.
+** Copyright (c) 2014-2017 The Khronos Group Inc.
 **
 ** Licensed under the Apache License, Version 2.0 (the "License");
 ** you may not use this file except in compliance with the License.
@@ -88,33 +88,5 @@ extern "C"
 #ifdef __cplusplus
 } // extern "C"
 #endif // __cplusplus
-
-// Platform-specific headers required by platform window system extensions.
-// These are enabled prior to #including "vulkan.h". The same enable then
-// controls inclusion of the extension interfaces in vulkan.h.
-
-#ifdef VK_USE_PLATFORM_ANDROID_KHR
-#include <android/native_window.h>
-#endif
-
-#ifdef VK_USE_PLATFORM_MIR_KHR
-#include <mir_toolkit/client_types.h>
-#endif
-
-#ifdef VK_USE_PLATFORM_WAYLAND_KHR
-#include <wayland-client.h>
-#endif
-
-#ifdef VK_USE_PLATFORM_WIN32_KHR
-#include <windows.h>
-#endif
-
-#ifdef VK_USE_PLATFORM_XLIB_KHR
-#include <X11/Xlib.h>
-#endif
-
-#ifdef VK_USE_PLATFORM_XCB_KHR
-#include <xcb/xcb.h>
-#endif
 
 #endif

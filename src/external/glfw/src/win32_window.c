@@ -235,26 +235,6 @@ static void centerCursor(_GLFWwindow* window)
     _glfwPlatformSetCursorPos(window, width / 2.0, height / 2.0);
 }
 
-// Returns whether the cursor is in the client area of the specified window
-//
-static GLFWbool cursorInClientArea(_GLFWwindow* window)
-{
-    RECT area;
-    POINT pos;
-
-    if (!GetCursorPos(&pos))
-        return GLFW_FALSE;
-
-    if (WindowFromPoint(pos) != window->win32.handle)
-        return GLFW_FALSE;
-
-    GetClientRect(window->win32.handle, &area);
-    ClientToScreen(window->win32.handle, (POINT*) &area.left);
-    ClientToScreen(window->win32.handle, (POINT*) &area.right);
-
-    return PtInRect(&area, pos);
-}
-
 // Updates the cursor image according to its cursor mode
 //
 static void updateCursorImage(_GLFWwindow* window)
@@ -284,6 +264,67 @@ static void updateClipRect(_GLFWwindow* window)
     }
     else
         ClipCursor(NULL);
+}
+
+// Apply disabled cursor mode to a focused window
+//
+static void disableCursor(_GLFWwindow* window)
+{
+    const RAWINPUTDEVICE rid = { 0x01, 0x02, 0, window->win32.handle };
+
+    _glfw.win32.disabledCursorWindow = window;
+    _glfwPlatformGetCursorPos(window,
+                              &_glfw.win32.restoreCursorPosX,
+                              &_glfw.win32.restoreCursorPosY);
+    updateCursorImage(window);
+    centerCursor(window);
+    updateClipRect(window);
+
+    if (!RegisterRawInputDevices(&rid, 1, sizeof(rid)))
+    {
+        _glfwInputErrorWin32(GLFW_PLATFORM_ERROR,
+                             "Win32: Failed to register raw input device");
+    }
+}
+
+// Exit disabled cursor mode for the specified window
+//
+static void enableCursor(_GLFWwindow* window)
+{
+    const RAWINPUTDEVICE rid = { 0x01, 0x02, RIDEV_REMOVE, NULL };
+
+    _glfw.win32.disabledCursorWindow = NULL;
+    updateClipRect(NULL);
+    _glfwPlatformSetCursorPos(window,
+                              _glfw.win32.restoreCursorPosX,
+                              _glfw.win32.restoreCursorPosY);
+    updateCursorImage(window);
+
+    if (!RegisterRawInputDevices(&rid, 1, sizeof(rid)))
+    {
+        _glfwInputErrorWin32(GLFW_PLATFORM_ERROR,
+                             "Win32: Failed to remove raw input device");
+    }
+}
+
+// Returns whether the cursor is in the client area of the specified window
+//
+static GLFWbool cursorInClientArea(_GLFWwindow* window)
+{
+    RECT area;
+    POINT pos;
+
+    if (!GetCursorPos(&pos))
+        return GLFW_FALSE;
+
+    if (WindowFromPoint(pos) != window->win32.handle)
+        return GLFW_FALSE;
+
+    GetClientRect(window->win32.handle, &area);
+    ClientToScreen(window->win32.handle, (POINT*) &area.left);
+    ClientToScreen(window->win32.handle, (POINT*) &area.right);
+
+    return PtInRect(&area, pos);
 }
 
 // Update native window styles to match attributes
@@ -575,7 +616,7 @@ static LRESULT CALLBACK windowProc(HWND hWnd, UINT uMsg,
             if (lParam == 0 && window->win32.frameAction)
             {
                 if (window->cursorMode == GLFW_CURSOR_DISABLED)
-                    _glfwPlatformSetCursorMode(window, GLFW_CURSOR_DISABLED);
+                    disableCursor(window);
 
                 window->win32.frameAction = GLFW_FALSE;
             }
@@ -593,7 +634,7 @@ static LRESULT CALLBACK windowProc(HWND hWnd, UINT uMsg,
                 break;
 
             if (window->cursorMode == GLFW_CURSOR_DISABLED)
-                _glfwPlatformSetCursorMode(window, GLFW_CURSOR_DISABLED);
+                disableCursor(window);
 
             return 0;
         }
@@ -601,7 +642,7 @@ static LRESULT CALLBACK windowProc(HWND hWnd, UINT uMsg,
         case WM_KILLFOCUS:
         {
             if (window->cursorMode == GLFW_CURSOR_DISABLED)
-                _glfwPlatformSetCursorMode(window, GLFW_CURSOR_NORMAL);
+                enableCursor(window);
 
             if (window->monitor && window->autoIconify)
                 _glfwPlatformIconifyWindow(window);
@@ -857,10 +898,10 @@ static LRESULT CALLBACK windowProc(HWND hWnd, UINT uMsg,
         case WM_ENTERSIZEMOVE:
         case WM_ENTERMENULOOP:
         {
-            // HACK: Postpone cursor disabling while the user is moving or
-            //       resizing the window or using the menu
+            // HACK: Enable the cursor while the user is moving or
+            //       resizing the window or using the window menu
             if (window->cursorMode == GLFW_CURSOR_DISABLED)
-                _glfwPlatformSetCursorMode(window, GLFW_CURSOR_NORMAL);
+                enableCursor(window);
 
             break;
         }
@@ -871,7 +912,7 @@ static LRESULT CALLBACK windowProc(HWND hWnd, UINT uMsg,
             // HACK: Disable the cursor once the user is done moving or
             //       resizing the window or using the menu
             if (window->cursorMode == GLFW_CURSOR_DISABLED)
-                _glfwPlatformSetCursorMode(window, GLFW_CURSOR_DISABLED);
+                disableCursor(window);
 
             break;
         }
@@ -1772,39 +1813,12 @@ void _glfwPlatformSetCursorMode(_GLFWwindow* window, int mode)
 {
     if (mode == GLFW_CURSOR_DISABLED)
     {
-        const RAWINPUTDEVICE rid = { 0x01, 0x02, 0, window->win32.handle };
-
-        _glfw.win32.disabledCursorWindow = window;
-        _glfwPlatformGetCursorPos(window,
-                                  &_glfw.win32.restoreCursorPosX,
-                                  &_glfw.win32.restoreCursorPosY);
-        centerCursor(window);
-        updateClipRect(window);
-
-        if (!RegisterRawInputDevices(&rid, 1, sizeof(rid)))
-        {
-            _glfwInputErrorWin32(GLFW_PLATFORM_ERROR,
-                                 "Win32: Failed to register raw input device");
-        }
+        if (_glfwPlatformWindowFocused(window))
+            disableCursor(window);
     }
     else if (_glfw.win32.disabledCursorWindow == window)
-    {
-        const RAWINPUTDEVICE rid = { 0x01, 0x02, RIDEV_REMOVE, NULL };
-
-        _glfw.win32.disabledCursorWindow = NULL;
-        updateClipRect(NULL);
-        _glfwPlatformSetCursorPos(window,
-                                  _glfw.win32.restoreCursorPosX,
-                                  _glfw.win32.restoreCursorPosY);
-
-        if (!RegisterRawInputDevices(&rid, 1, sizeof(rid)))
-        {
-            _glfwInputErrorWin32(GLFW_PLATFORM_ERROR,
-                                 "Win32: Failed to remove raw input device");
-        }
-    }
-
-    if (cursorInClientArea(window))
+        enableCursor(window);
+    else if (cursorInClientArea(window))
         updateCursorImage(window);
 }
 

@@ -175,7 +175,7 @@ GLFWbool _glfwCreateContextNSGL(_GLFWwindow* window,
         //       Info.plist for unbundled applications
         // HACK: This assumes that NSOpenGLPixelFormat will remain
         //       a straightforward wrapper of its CGL counterpart
-#if MAC_OS_X_VERSION_MAX_ALLOWED >= 100800
+#if MAC_OS_X_VERSION_MAX_ALLOWED >= 1080
         addAttrib(kCGLPFASupportsAutomaticGraphicsSwitching);
 #endif /*MAC_OS_X_VERSION_MAX_ALLOWED*/
     }
