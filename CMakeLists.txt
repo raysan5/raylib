@@ -33,6 +33,18 @@ add_if_flag_works(-Werror=implicit-function-declaration CMAKE_C_FLAGS)
 # src/external/jar_xm.h does shady stuff
 add_if_flag_works(-fno-strict-aliasing CMAKE_C_FLAGS)
 
+message(STATUS "Check for symlink support in file system")
+execute_process(
+  COMMAND ${CMAKE_COMMAND} -E create_symlink CMakeLists.txt "${CMAKE_CURRENT_BINARY_DIR}/TestingIfSymlinkWorks"
+    WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
+    RESULT_VARIABLE FILESYSTEM_LACKS_SYMLINKS
+)
+If (FILESYSTEM_LACKS_SYMLINKS)
+  message(STATUS "Testing if file system supports symlinks -- unsupported")
+else()
+  message(STATUS "Testing if file system supports symlinks -- supported")
+endif()
+
 if (ENABLE_ASAN)
     add_if_flag_works(-fno-omit-frame-pointer CMAKE_C_FLAGS CMAKE_LINKER_FLAGS)
     add_if_flag_works(-fsanitize=address CMAKE_C_FLAGS CMAKE_LINKER_FLAGS)

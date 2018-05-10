@@ -98,7 +98,7 @@ project/vs2015.UWP/*.db
 !project/vs2015.UWP/*.sln
 !project/vs2015.UWP/raylib.App.UWP/*.vcxproj
 
-# Web examples 
+# Web examples
 docs/examples/web/*.html
 docs/examples/web/*/*.html
 !docs/examples/web/loader.html
@@ -116,6 +116,7 @@ CMakeCache.txt
 CMakeFiles
 CMakeScripts
 Testing
+TestingIfSymlinkWorks
 cmake_install.cmake
 install_manifest.txt
 compile_commands.json

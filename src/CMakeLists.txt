@@ -101,9 +101,15 @@ if(${PLATFORM} MATCHES "PLATFORM_DESKTOP")
     set(CMAKE_MACOSX_RPATH ON)
 
     target_link_libraries(${RAYLIB}_shared ${LIBS_PRIVATE})
+    if (UNIX AND ${FILESYSTEM_LACKS_SYMLINKS})
+      MESSAGE(WARNING "Can't version UNIX shared library on file system without symlink support")
+    else()
+        set_target_properties(${RAYLIB}_shared PROPERTIES
+            VERSION   ${PROJECT_VERSION}
+            SOVERSION ${API_VERSION}
+        )
+    endif()
     set_target_properties(${RAYLIB}_shared PROPERTIES
-        VERSION   ${PROJECT_VERSION}
-        SOVERSION ${API_VERSION}
         PUBLIC_HEADER "raylib.h"
     )
     if(WIN32)
