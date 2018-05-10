@@ -23,20 +23,12 @@ elseif (_GLFW_X11)
     set(glfw_SOURCES ${common_SOURCES} x11_init.c x11_monitor.c x11_window.c
                      xkb_unicode.c posix_time.c posix_thread.c glx_context.c
                      egl_context.c osmesa_context.c)
-
-    if ("${CMAKE_SYSTEM_NAME}" STREQUAL "Linux")
-        set(glfw_HEADERS ${glfw_HEADERS} linux_joystick.h)
-        set(glfw_SOURCES ${glfw_SOURCES} linux_joystick.c)
-    else()
-        set(glfw_HEADERS ${glfw_HEADERS} null_joystick.h)
-        set(glfw_SOURCES ${glfw_SOURCES} null_joystick.c)
-    endif()
 elseif (_GLFW_WAYLAND)
-    set(glfw_HEADERS ${common_HEADERS} wl_platform.h linux_joystick.h
+    set(glfw_HEADERS ${common_HEADERS} wl_platform.h
                      posix_time.h posix_thread.h xkb_unicode.h egl_context.h
                      osmesa_context.h)
     set(glfw_SOURCES ${common_SOURCES} wl_init.c wl_monitor.c wl_window.c
-                     linux_joystick.c posix_time.c posix_thread.c xkb_unicode.c
+                     posix_time.c posix_thread.c xkb_unicode.c
                      egl_context.c osmesa_context.c)
 
     ecm_add_wayland_client_protocol(glfw_SOURCES
@@ -71,6 +63,16 @@ elseif (_GLFW_OSMESA)
                      posix_time.h posix_thread.h osmesa_context.h)
     set(glfw_SOURCES ${common_SOURCES} null_init.c null_monitor.c null_window.c
                      null_joystick.c posix_time.c posix_thread.c osmesa_context.c)
+endif()
+
+if (_GLFW_X11 OR _GLFW_WAYLAND)
+    if ("${CMAKE_SYSTEM_NAME}" STREQUAL "Linux")
+        set(glfw_HEADERS ${glfw_HEADERS} linux_joystick.h)
+        set(glfw_SOURCES ${glfw_SOURCES} linux_joystick.c)
+    else()
+        set(glfw_HEADERS ${glfw_HEADERS} null_joystick.h)
+        set(glfw_SOURCES ${glfw_SOURCES} null_joystick.c)
+    endif()
 endif()
 
 if (APPLE)

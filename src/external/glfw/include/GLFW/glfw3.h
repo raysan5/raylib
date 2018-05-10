@@ -4697,7 +4697,7 @@ GLFWAPI const char* glfwGetJoystickGUID(int jid);
  *  This function may be called from the joystick callback, even for a joystick
  *  that is being disconnected.
  *
- *  @param[in] joystick The joystick whose pointer to set.
+ *  @param[in] jid The joystick whose pointer to set.
  *  @param[in] pointer The new value.
  *
  *  @errors Possible errors include @ref GLFW_NOT_INITIALIZED.
@@ -4722,7 +4722,7 @@ GLFWAPI void glfwSetJoystickUserPointer(int jid, void* pointer);
  *  This function may be called from the joystick callback, even for a joystick
  *  that is being disconnected.
  *
- *  @param[in] joystick The joystick whose pointer to return.
+ *  @param[in] jid The joystick whose pointer to return.
  *
  *  @errors Possible errors include @ref GLFW_NOT_INITIALIZED.
  *
@@ -4874,7 +4874,7 @@ GLFWAPI const char* glfwGetGamepadName(int jid);
  *
  *  Not all devices have all the buttons or axes provided by @ref
  *  GLFWgamepadstate.  Unavailable buttons and axes will always report
- *  `GLFW_RELEASE` and 1.0 respectively.
+ *  `GLFW_RELEASE` and 0.0 respectively.
  *
  *  @param[in] jid The [joystick](@ref joysticks) to query.
  *  @param[out] state The gamepad input state of the joystick.
