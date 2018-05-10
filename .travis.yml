@@ -15,6 +15,9 @@ matrix:
     - os: linux
       env: ARCH=amd64
       sudo: required
+    - os: linux
+      env: ARCH=amd64 GLFW=SYSTEM
+      sudo: required
     - os: osx
       env: ARCH=universal
 
@@ -48,7 +51,9 @@ script:
   - cd build
   - cmake $CMAKE_ARCH_ARGS -DMACOS_FATLIB=ON -DSTATIC=ON -DSHARED=ON -DBUILD_EXAMPLES=ON -DBUILD_GAMES=ON -DUSE_EXTERNAL_GLFW=IF_POSSIBLE ..
   - make VERBOSE=1
-  - make package
+  - if [ "$GLFW" != "SYSTEM" ]; then make package; fi;
+  - sudo make install
+  - pkg-config --static --libs raylib
 
 deploy:
   provider: releases
