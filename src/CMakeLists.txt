@@ -10,28 +10,16 @@ include("CMakeOptions.txt")
 configure_file(config.h.in ${CMAKE_BINARY_DIR}/cmake/config.h)
 include_directories(${CMAKE_BINARY_DIR})
 
-if(MACOS_FATLIB)
-    if (CMAKE_OSX_ARCHITECTURES)
-        message(FATAL_ERROR "User supplied -DCMAKE_OSX_ARCHITECTURES overrides -DMACOS_FATLIB=ON")
-    else()
-        SET(CMAKE_OSX_ARCHITECTURES "x86_64;i386")
-    endif()
-endif()
-
-if(NOT glfw3_FOUND)
-  set(GLFW_BUILD_DOCS OFF CACHE BOOL "" FORCE)
-  set(GLFW_BUILD_TESTS OFF CACHE BOOL "" FORCE)
-  set(GLFW_BUILD_EXAMPLES OFF CACHE BOOL "" FORCE)
-  set(GLFW_USE_WAYLAND ${USE_WAYLAND} CACHE BOOL "" FORCE)
-
-  add_subdirectory(external/glfw)
-endif()
-
 include("../utils.cmake")
 
 # Get the sources together
 file(GLOB raylib_sources *.c)
-list(REMOVE_ITEM raylib_sources ${CMAKE_CURRENT_SOURCE_DIR}/rglfw.c)
+
+if(glfw3_FOUND)
+  list(REMOVE_ITEM raylib_sources ${CMAKE_CURRENT_SOURCE_DIR}/rglfw.c)
+else()
+  include_directories(external/glfw/include)
+endif()
 
 if(USE_AUDIO)
   file(GLOB stb_vorbis external/stb_vorbis.c)
@@ -63,6 +51,7 @@ if(${PLATFORM} MATCHES "Desktop")
   # See: https://github.com/raysan5/raylib/issues/341
   if(APPLE)
     set(GRAPHICS "GRAPHICS_API_OPENGL_33")
+    set_source_files_properties(rglfw.c PROPERTIES COMPILE_FLAGS "-x objective-c")
     link_libraries("${LIBS_PRIVATE}")
   elseif(WIN32)
     add_definitions(-D_CRT_SECURE_NO_WARNINGS)
@@ -87,6 +76,14 @@ elseif(${PLATFORM} MATCHES "Raspberry Pi")
   set(GRAPHICS "GRAPHICS_API_OPENGL_ES2")
 endif()
 
+if(MACOS_FATLIB)
+    if (CMAKE_OSX_ARCHITECTURES)
+        message(FATAL_ERROR "User supplied -DCMAKE_OSX_ARCHITECTURES overrides -DMACOS_FATLIB=ON")
+    else()
+        SET(CMAKE_OSX_ARCHITECTURES "x86_64;i386")
+    endif()
+endif()
+
 # Which platform?
 if(${PLATFORM} MATCHES "PLATFORM_DESKTOP")
 
@@ -103,7 +100,7 @@ if(${PLATFORM} MATCHES "PLATFORM_DESKTOP")
     set(CMAKE_INSTALL_RPATH_USE_LINK_PATH TRUE)
     set(CMAKE_MACOSX_RPATH ON)
 
-    target_link_libraries(${RAYLIB}_shared ${LIBS_PRIVATE} glfw)
+    target_link_libraries(${RAYLIB}_shared ${LIBS_PRIVATE})
     if (UNIX AND ${FILESYSTEM_LACKS_SYMLINKS})
       MESSAGE(WARNING "Can't version UNIX shared library on file system without symlink support")
     else()
@@ -140,7 +137,6 @@ if(${PLATFORM} MATCHES "PLATFORM_DESKTOP")
     )
 
     set(PKG_CONFIG_LIBS_PRIVATE ${__PKG_CONFIG_LIBS_PRIVATE})
-    target_link_libraries(${RAYLIB} glfw)
 
     if (WITH_PIC)
       set_property(TARGET ${RAYLIB} PROPERTY POSITION_INDEPENDENT_CODE ON)
