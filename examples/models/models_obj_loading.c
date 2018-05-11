@@ -22,11 +22,11 @@ int main()
 
     // Define the camera to look into our 3d world
     Camera camera = { 0 };
-    camera.position = (Vector3){ 3.0f, 3.0f, 3.0f };
-    camera.target = (Vector3){ 0.0f, 1.5f, 0.0f };
-    camera.up = (Vector3){ 0.0f, 1.0f, 0.0f };
-    camera.fovy = 45.0f;
-    camera.type = CAMERA_PERSPECTIVE;
+    camera.position = (Vector3){ 3.0f, 3.0f, 3.0f };    // Camera position
+    camera.target = (Vector3){ 0.0f, 1.5f, 0.0f };      // Camera looking at point
+    camera.up = (Vector3){ 0.0f, 1.0f, 0.0f };          // Camera up vector (rotation towards target)
+    camera.fovy = 45.0f;                                // Camera field-of-view Y
+    camera.type = CAMERA_PERSPECTIVE;                   // Camera mode type
 
     Model dwarf = LoadModel("resources/model/dwarf.obj");                   // Load OBJ model
     Texture2D texture = LoadTexture("resources/model/dwarf_diffuse.png");   // Load model texture
