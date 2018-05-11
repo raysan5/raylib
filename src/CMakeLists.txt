@@ -2,7 +2,7 @@
 project(raylib)
 include(GNUInstallDirs)
 
-set(PROJECT_VERSION 1.9.7)
+set(PROJECT_VERSION 2.0.0)
 set(API_VERSION 1)
 set(RAYLIB raylib)    # Name of the generated library
 

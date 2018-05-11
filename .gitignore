@@ -45,7 +45,6 @@ ipch/
 # Ignore compiled binaries
 *.o
 *.exe
-!tools/rREM/rrem.exe
 
 # Ignore all examples files
 examples/*

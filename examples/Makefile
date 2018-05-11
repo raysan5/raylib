@@ -25,7 +25,7 @@
 
 # Define required raylib variables
 PROJECT_NAME       ?= raylib_examples
-RAYLIB_VERSION     ?= 1.9.7
+RAYLIB_VERSION     ?= 2.0.0
 RAYLIB_API_VERSION ?= 1
 RAYLIB_PATH        ?= ..
 
@@ -207,7 +207,7 @@ ifeq ($(PLATFORM),PLATFORM_DESKTOP)
     ifeq ($(PLATFORM_OS),WINDOWS)
         # resources file contains windows exe icon
         # -Wl,--subsystem,windows hides the console window
-        CFLAGS += $(RAYLIB_PATH)/src/resources -Wl,--subsystem,windows
+        CFLAGS += $(RAYLIB_PATH)/src/raylib_icon -Wl,--subsystem,windows
     endif
     ifeq ($(PLATFORM_OS),LINUX)
         ifeq ($(RAYLIB_BUILD_MODE),DEBUG)
