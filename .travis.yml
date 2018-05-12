@@ -18,18 +18,17 @@ matrix:
     - os: linux
       env: ARCH=amd64 GLFW=SYSTEM
       sudo: required
+    - os: linux
+      env: USE_WAYLAND=ON ARCH=amd64
+      sudo: required
+      addons:
+          apt:
+              packages:
+                  - libwayland-dev
+                  - libxkbcommon-dev
+                  - libegl1-mesa-dev
     - os: osx
       env: ARCH=universal
-
-#   - os: linux
-#     env: USE_WAYLAND=ON ARCH=amd64
-#     sudo: required
-#     addons:
-#         apt:
-#             packages:
-#                 - libwayland-dev
-#                 - libxkbcommon-dev
-#                 - libegl1-mesa-dev
 
 before_script:
 
@@ -38,11 +37,12 @@ before_install:
       sudo apt-get install -y gcc-multilib
                               libasound2-dev:$ARCH
                               libxcursor-dev:$ARCH libxinerama-dev:$ARCH mesa-common-dev:$ARCH
-                              libx11-dev:$ARCH libxrandr-dev:$ARCH libxi-dev:$ARCH
+                              libx11-dev:$ARCH libxrandr-dev:$ARCH libxrandr2:$ARCH libxi-dev:$ARCH
                               libgl1-mesa-dev:$ARCH libglu1-mesa-dev:$ARCH;
+      if [ "$ARCH" == "i386" ]; then
+        export CMAKE_ARCH_ARGS='-DCMAKE_C_FLAGS=-m32 -DCMAKE_SYSTEM_LIBRARY_PATH=/usr/lib/i386-linux-gnu';
+      fi;
       export RAYLIB_PACKAGE_SUFFIX="-Linux-$ARCH";
-      if [ "$ARCH" == "i386" ]; then export CFLAGS="-m32"; fi;
-      if [ "$ARCH" == "amd64" ]; then export CFLAGS="-m64"; fi;
       if [ "$GLFW" == "SYSTEM" ]; then
         wget 'http://ftp.de.debian.org/debian/pool/main/g/glfw3/libglfw3_3.2.1-1_amd64.deb';
         wget 'http://ftp.de.debian.org/debian/pool/main/g/glfw3/libglfw3-dev_3.2.1-1_amd64.deb';
@@ -71,6 +71,7 @@ script:
   - if [ "$GLFW" != "SYSTEM" ]; then make package; fi;
   - sudo make install
   - pkg-config --static --libs raylib
+  - nm -g release/libraylib.a | grep glfwGetProcAddress || (echo "libraylib.a doesn't contain GLFW symbols! Aborting..." && false)
 
 deploy:
   provider: releases
