@@ -163,7 +163,7 @@ ifeq ($(PLATFORM),PLATFORM_DESKTOP)
         CFLAGS += $(RAYLIB_PATH)/src/raylib_icon -Wl,--subsystem,windows
     endif
     ifeq ($(PLATFORM_OS),LINUX)
-        CFLAGS += -no-pie -D_DEFAULT_SOURCE
+        CFLAGS += -D_DEFAULT_SOURCE
     endif
 endif
 ifeq ($(PLATFORM),PLATFORM_RPI)
