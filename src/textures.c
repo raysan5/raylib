@@ -2674,7 +2674,7 @@ static Image LoadASTC(const char *fileName)
                 fread(image.data, dataSize, 1, astcFile);
 
                 if (bpp == 8) image.format = COMPRESSED_ASTC_4x4_RGBA;
-                else if (bpp == 2) image.format = COMPRESSED_ASTC_4x4_RGBA;
+                else if (bpp == 2) image.format = COMPRESSED_ASTC_8x8_RGBA;
             }
             else TraceLog(LOG_WARNING, "[%s] ASTC block size configuration not supported", fileName);
         }
