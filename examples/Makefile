@@ -215,7 +215,7 @@ ifeq ($(PLATFORM),PLATFORM_DESKTOP)
             #CC = clang
         endif
         ifeq ($(RAYLIB_LIBTYPE),STATIC)
-        CFLAGS += -no-pie -D_DEFAULT_SOURCE
+        CFLAGS += -D_DEFAULT_SOURCE
         endif
         ifeq ($(RAYLIB_LIBTYPE),SHARED)
         # Explicitly enable runtime link to libraylib.so
