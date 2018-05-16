@@ -36,9 +36,8 @@
 *
 **********************************************************************************************/
 
-#include "config.h"
-
-#include "raylib.h"
+#include "config.h"         // Defines module configuration flags
+#include "raylib.h"         // Declares module functions
 
 #include <stdlib.h>         // Required for: malloc(), free()
 #include <string.h>         // Required for: strlen()

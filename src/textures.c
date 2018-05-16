@@ -52,9 +52,9 @@
 *     3. This notice may not be removed or altered from any source distribution.
 *
 **********************************************************************************************/
-#include "config.h"
 
-#include "raylib.h"
+#include "config.h"             // Defines module configuration flags
+#include "raylib.h"             // Declares module functions
 
 #include <stdlib.h>             // Required for: malloc(), free()
 #include <string.h>             // Required for: strcmp(), strrchr(), strncmp()
