@@ -1026,7 +1026,7 @@ Ray GetMouseRay(Vector2 mousePosition, Camera camera)
     // Calculate view matrix from camera look at
     Matrix matView = MatrixLookAt(camera.position, camera.target, camera.up);
 
-    Matrix matProj;
+    Matrix matProj = MatrixIdentity();
 
     if (camera.type == CAMERA_PERSPECTIVE) 
     {
@@ -1038,6 +1038,7 @@ Ray GetMouseRay(Vector2 mousePosition, Camera camera)
         float aspect = (float)screenWidth/(float)screenHeight;
         double top = camera.fovy/2.0;
         double right = top*aspect;
+        
         // Calculate projection matrix from orthographic
         matProj = MatrixOrtho(-right, right, -top, top, 0.01, 1000.0);
     }
@@ -1067,18 +1068,19 @@ Ray GetMouseRay(Vector2 mousePosition, Camera camera)
 Vector2 GetWorldToScreen(Vector3 position, Camera camera)
 {
     // Calculate projection matrix (from perspective instead of frustum
-    Matrix matProj;
+    Matrix matProj = MatrixIdentity();
 
-    if(camera.type == CAMERA_PERSPECTIVE) 
+    if (camera.type == CAMERA_PERSPECTIVE)
     {
         // Calculate projection matrix from perspective
         matProj = MatrixPerspective(camera.fovy*DEG2RAD, ((double)GetScreenWidth()/(double)GetScreenHeight()), 0.01, 1000.0);
     }
-    else if(camera.type == CAMERA_ORTHOGRAPHIC)
+    else if (camera.type == CAMERA_ORTHOGRAPHIC)
     {
         float aspect = (float)screenWidth/(float)screenHeight;
         double top = camera.fovy/2.0;
         double right = top*aspect;
+        
         // Calculate projection matrix from orthographic
         matProj = MatrixOrtho(-right, right, -top, top, 0.01, 1000.0);
     }
