@@ -163,10 +163,10 @@ endif
 ifeq ($(PLATFORM),PLATFORM_ANDROID)
     # Android required path variables
     ANDROID_NDK = C:/android-ndk
-    ANDROID_TOOLCHAIN = C:/android_toolchain_arm_api16
+    ANDROID_TOOLCHAIN = C:/android_toolchain_arm64_api21
 
     # Android architecture: ARM or ARM64
-    ANDROID_ARCH ?= ARM
+    ANDROID_ARCH ?= ARM64
 endif
 
 # RAYLIB_RELEASE_PATH points to provided binaries or your immediate build of raylib.
@@ -251,12 +251,11 @@ ifeq ($(PLATFORM),PLATFORM_WEB)
 endif
 ifeq ($(PLATFORM),PLATFORM_ANDROID)
     # Android toolchain (must be provided for desired architecture and compiler)
-    # NOTE: gcc compiler is being deprecated in Android NDK r16
     ifeq ($(ANDROID_ARCH),ARM)
-        CC = $(ANDROID_TOOLCHAIN)/bin/arm-linux-androideabi-gcc
+        CC = $(ANDROID_TOOLCHAIN)/bin/arm-linux-androideabi-clang
     endif
     ifeq ($(ANDROID_ARCH),ARM64)
-        CC = $(ANDROID_TOOLCHAIN)/bin/aarch64-linux-android-gcc
+        CC = $(ANDROID_TOOLCHAIN)/bin/aarch64-linux-android-clang
     endif
 endif
 
@@ -316,15 +315,15 @@ ifeq ($(PLATFORM),PLATFORM_WEB)
     CFLAGS += -s USE_GLFW=3 -s ASSERTIONS=1 --profiling
 endif
 ifeq ($(PLATFORM),PLATFORM_ANDROID)
-    # Compiler flags for arquitecture
-    CFLAGS += -march=armv7-a -mfloat-abi=softfp -mfpu=vfpv3-d16
+    # Compiler flags for arquitecture (only ARM, not ARM64)
+    #CFLAGS += -march=armv7-a -mfloat-abi=softfp -mfpu=vfpv3-d16
     # Compilation functions attributes options
-    CFLAGS += -ffunction-sections -funwind-tables -fstack-protector-strong -fPIC
+    CFLAGS += -ffunction-sections -funwind-tables -fstack-protector-strong -fPIE -fPIC
     # Compiler options for the linker
     # -Werror=format-security
     CFLAGS += -Wa,--noexecstack -Wformat -no-canonical-prefixes
     # Preprocessor macro definitions
-    CFLAGS += -DANDROID -DPLATFORM_ANDROID -D__ANDROID_API__=16
+    CFLAGS += -DANDROID -DPLATFORM_ANDROID -D__ANDROID_API__=21
 endif
 
 # Define required compilation flags for raylib SHARED lib
