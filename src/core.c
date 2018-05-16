@@ -1310,6 +1310,7 @@ bool IsFileExtension(const char *fileName, const char *ext)
                 }
             }
         }
+        else result = false;
     #else
         if (strcmp(fileExt, ext) == 0) result = true;
     #endif
