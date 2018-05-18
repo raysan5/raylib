@@ -3,7 +3,7 @@ project(raylib)
 include(GNUInstallDirs)
 
 set(PROJECT_VERSION 2.0.0)
-set(API_VERSION 1)
+set(API_VERSION 2)
 set(RAYLIB raylib)    # Name of the generated library
 
 include("CMakeOptions.txt")
