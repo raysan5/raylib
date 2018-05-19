@@ -763,21 +763,22 @@ static Font LoadBMFont(const char *fileName)
     {
         Image imCopy = ImageCopy(imFont);
 
-        for (int i = 0; i < imCopy.width*imCopy.height; i++) ((unsigned char *)imCopy.data)[i] = 0xff;  // WHITE pixel
+        for (int i = 0; i < imCopy.width*imCopy.height; i++) ((unsigned char *)imCopy.data)[i] = 0xff;
 
         ImageAlphaMask(&imCopy, imFont);
         font.texture = LoadTextureFromImage(imCopy);
         UnloadImage(imCopy);
     }
     else font.texture = LoadTextureFromImage(imFont);
+    
+    UnloadImage(imFont);
+    free(texPath);
+    
 
+    // Fill font characters info data
     font.baseSize = fontSize;
     font.charsCount = charsCount;
     font.chars = (CharInfo *)malloc(charsCount*sizeof(CharInfo));
-
-    UnloadImage(imFont);
-
-    free(texPath);
 
     int charId, charX, charY, charWidth, charHeight, charOffsetX, charOffsetY, charAdvanceX;
 
@@ -870,7 +871,7 @@ static Font LoadTTF(const char *fileName, int fontSize, int charsCount, int *fon
 
     for (int i = 0, k = 0; i < textureSize*textureSize; i++, k += 2)
     {
-        dataGrayAlpha[k] = 255;
+        dataGrayAlpha[k] = 0xff;
         dataGrayAlpha[k + 1] = dataBitmap[i];
     }
 
@@ -883,13 +884,11 @@ static Font LoadTTF(const char *fileName, int fontSize, int charsCount, int *fon
     image.mipmaps = 1;
     image.format = UNCOMPRESSED_GRAY_ALPHA;
     image.data = dataGrayAlpha;
+    font.texture = LoadTextureFromImage(image); // Load image into texture
+    UnloadImage(image);                         // Unloads image data (dataGrayAlpha)
 
-    font.texture = LoadTextureFromImage(image);
-
-    //SavePNG("generated_ttf_image.png", (unsigned char *)image.data, image.width, image.height, 2);
-
-    UnloadImage(image);     // Unloads dataGrayAlpha
-
+    
+    // Fill font characters info data
     font.baseSize = fontSize;
     font.charsCount = charsCount;
     font.chars = (CharInfo *)malloc(font.charsCount*sizeof(CharInfo));
