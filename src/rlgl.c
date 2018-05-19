@@ -1448,7 +1448,7 @@ unsigned int rlLoadTexture(void *data, int width, int height, int format, int mi
             else glCompressedTexImage2D(GL_TEXTURE_2D, i, glInternalFormat, mipWidth, mipHeight, 0, mipSize, (unsigned char *)data + mipOffset);
         #endif
         
-        #if defined(GRAPHICS_API_OPENGL_33)
+        #if defined(GRAPHICS_API_OPENGL_21) || defined(GRAPHICS_API_OPENGL_33)
             if (format == UNCOMPRESSED_GRAYSCALE)
             {
                 GLint swizzleMask[] = { GL_RED, GL_RED, GL_RED, GL_ONE };
@@ -1648,37 +1648,40 @@ void rlGenerateMipmaps(Texture2D *texture)
     if ((texIsPOT) || (texNPOTSupported))
     {
 #if defined(GRAPHICS_API_OPENGL_11)
-        // Compute required mipmaps
-        void *data = rlReadTexturePixels(*texture);
-
-        // NOTE: data size is reallocated to fit mipmaps data
-        // NOTE: CPU mipmap generation only supports RGBA 32bit data
-        int mipmapCount = GenerateMipmaps(data, texture->width, texture->height);
-
-        int size = texture->width*texture->height*4;  // RGBA 32bit only
-        int offset = size;
-
-        int mipWidth = texture->width/2;
-        int mipHeight = texture->height/2;
-
-        // Load the mipmaps
-        for (int level = 1; level < mipmapCount; level++)
+        // WARNING: Manual mipmap generation only works for RGBA 32bit textures!
+        if (texture->format == UNCOMPRESSED_R8G8B8A8)
         {
-            glTexImage2D(GL_TEXTURE_2D, level, GL_RGBA8, mipWidth, mipHeight, 0, GL_RGBA, GL_UNSIGNED_BYTE, (unsigned char *)data + offset);
+            // Retrieve texture data from VRAM
+            void *data = rlReadTexturePixels(*texture);
+            
+            // NOTE: data size is reallocated to fit mipmaps data
+            // NOTE: CPU mipmap generation only supports RGBA 32bit data
+            int mipmapCount = GenerateMipmaps(data, texture->width, texture->height);
 
-            size = mipWidth*mipHeight*4;
-            offset += size;
+            int size = texture->width*texture->height*4;
+            int offset = size;
 
-            mipWidth /= 2;
-            mipHeight /= 2;
+            int mipWidth = texture->width/2;
+            int mipHeight = texture->height/2;
+
+            // Load the mipmaps
+            for (int level = 1; level < mipmapCount; level++)
+            {
+                glTexImage2D(GL_TEXTURE_2D, level, GL_RGBA8, mipWidth, mipHeight, 0, GL_RGBA, GL_UNSIGNED_BYTE, (unsigned char *)data + offset);
+
+                size = mipWidth*mipHeight*4;
+                offset += size;
+
+                mipWidth /= 2;
+                mipHeight /= 2;
+            }
+
+            texture->mipmaps = mipmapCount + 1;
+            free(data); // Once mipmaps have been generated and data has been uploaded to GPU VRAM, we can discard RAM data
+            
+            TraceLog(LOG_WARNING, "[TEX ID %i] Mipmaps [%i] generated manually on CPU side", texture->id, texture->mipmaps);
         }
-
-        TraceLog(LOG_WARNING, "[TEX ID %i] Mipmaps generated manually on CPU side", texture->id);
-
-        // NOTE: Once mipmaps have been generated and data has been uploaded to GPU VRAM, we can discard RAM data
-        free(data);
-
-        texture->mipmaps = mipmapCount + 1;
+        else TraceLog(LOG_WARNING, "[TEX ID %i] Mipmaps could not be generated for texture format", texture->id);
 #endif
 
 #if defined(GRAPHICS_API_OPENGL_33) || defined(GRAPHICS_API_OPENGL_ES2)
@@ -4058,6 +4061,7 @@ static void GetGlFormats(int format, int *glInternalFormat, int *glFormat, int *
 
 #if defined(GRAPHICS_API_OPENGL_11)
 // Mipmaps data is generated after image data
+// NOTE: Only works with RGBA (4 bytes) data!
 static int GenerateMipmaps(unsigned char *data, int baseWidth, int baseHeight)
 {
     int mipmapCount = 1;                // Required mipmap levels count (including base level)
