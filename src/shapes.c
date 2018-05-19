@@ -173,6 +173,8 @@ void DrawCircle(int centerX, int centerY, float radius, Color color)
 // NOTE: Gradient goes from center (color1) to border (color2)
 void DrawCircleGradient(int centerX, int centerY, float radius, Color color1, Color color2)
 {
+    if (rlCheckBufferLimit(RL_TRIANGLES, 3*36)) rlglDraw();
+    
     rlBegin(RL_TRIANGLES);
         for (int i = 0; i < 360; i += 10)
         {
@@ -189,8 +191,10 @@ void DrawCircleGradient(int centerX, int centerY, float radius, Color color1, Co
 // Draw a color-filled circle (Vector version)
 // NOTE: On OpenGL 3.3 and ES2 we use QUADS to avoid drawing order issues (view rlglDraw)
 void DrawCircleV(Vector2 center, float radius, Color color)
-{
+{   
 #if defined(SUPPORT_QUADS_DRAW_MODE)
+    if (rlCheckBufferLimit(RL_QUADS, 4*(36/2))) rlglDraw();
+    
     rlEnableTexture(GetTextureDefault().id);    // Default white texture
 
     rlBegin(RL_QUADS);
@@ -207,6 +211,8 @@ void DrawCircleV(Vector2 center, float radius, Color color)
         
     rlDisableTexture();
 #else
+    if (rlCheckBufferLimit(RL_TRIANGLES, 3*(36/2))) rlglDraw();
+
     rlBegin(RL_TRIANGLES);
         for (int i = 0; i < 360; i += 10)
         {
@@ -223,6 +229,8 @@ void DrawCircleV(Vector2 center, float radius, Color color)
 // Draw circle outline
 void DrawCircleLines(int centerX, int centerY, float radius, Color color)
 {
+    if (rlCheckBufferLimit(RL_LINES, 2*36)) rlglDraw();
+    
     rlBegin(RL_LINES);
         rlColor4ub(color.r, color.g, color.b, color.a);
 
@@ -504,6 +512,8 @@ void DrawTriangleLines(Vector2 v1, Vector2 v2, Vector2 v3, Color color)
 void DrawPoly(Vector2 center, int sides, float radius, float rotation, Color color)
 {
     if (sides < 3) sides = 3;
+    
+    if (rlCheckBufferLimit(RL_QUADS, 4*(360/sides))) rlglDraw();
 
     rlPushMatrix();
         rlTranslatef(center.x, center.y, 0.0);
@@ -544,6 +554,8 @@ void DrawPolyEx(Vector2 *points, int pointsCount, Color color)
 {
     if (pointsCount >= 3)
     {
+        if (rlCheckBufferLimit(RL_QUADS, pointsCount)) rlglDraw();
+        
     #if defined(SUPPORT_QUADS_DRAW_MODE)
         rlEnableTexture(GetTextureDefault().id); // Default white texture
 
@@ -579,6 +591,8 @@ void DrawPolyExLines(Vector2 *points, int pointsCount, Color color)
 {
     if (pointsCount >= 2)
     {
+        if (rlCheckBufferLimit(RL_LINES, pointsCount)) rlglDraw();
+
         rlBegin(RL_LINES);
             rlColor4ub(color.r, color.g, color.b, color.a);
 
