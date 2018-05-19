@@ -1456,7 +1456,11 @@ unsigned int rlLoadTexture(void *data, int width, int height, int format, int mi
             }
             else if (format == UNCOMPRESSED_GRAY_ALPHA)
             {
+            #if defined(GRAPHICS_API_OPENGL_21)
+                GLint swizzleMask[] = { GL_RED, GL_RED, GL_RED, GL_ALPHA };
+            #elif defined(GRAPHICS_API_OPENGL_33)
                 GLint swizzleMask[] = { GL_RED, GL_RED, GL_RED, GL_GREEN };
+            #endif
                 glTexParameteriv(GL_TEXTURE_2D, GL_TEXTURE_SWIZZLE_RGBA, swizzleMask);
             }
         #endif
