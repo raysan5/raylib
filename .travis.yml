@@ -29,24 +29,39 @@ matrix:
                   - libegl1-mesa-dev
     - os: osx
       env: ARCH=universal
+    - os: linux
+      env: ARCH=arm64-android
+      sudo: required
 
 before_script:
 
 before_install:
+  - export PLATFORM=Desktop
   - if [ "$TRAVIS_OS_NAME" == "linux" ]; then
-      sudo apt-get install -y gcc-multilib
-                              libasound2-dev:$ARCH
-                              libxcursor-dev:$ARCH libxinerama-dev:$ARCH mesa-common-dev:$ARCH
-                              libx11-dev:$ARCH libxrandr-dev:$ARCH libxrandr2:$ARCH libxi-dev:$ARCH
-                              libgl1-mesa-dev:$ARCH libglu1-mesa-dev:$ARCH;
-      if [ "$ARCH" == "i386" ]; then
-        export CMAKE_ARCH_ARGS='-DCMAKE_C_FLAGS=-m32 -DCMAKE_SYSTEM_LIBRARY_PATH=/usr/lib/i386-linux-gnu';
-      fi;
-      export RAYLIB_PACKAGE_SUFFIX="-Linux-$ARCH";
-      if [ "$GLFW" == "SYSTEM" ]; then
-        wget 'http://ftp.de.debian.org/debian/pool/main/g/glfw3/libglfw3_3.2.1-1_amd64.deb';
-        wget 'http://ftp.de.debian.org/debian/pool/main/g/glfw3/libglfw3-dev_3.2.1-1_amd64.deb';
-        sudo dpkg -i libglfw3_3.2.1-1_amd64.deb libglfw3-dev_3.2.1-1_amd64.deb;
+      if [[ "$ARCH" == *-android ]]; then
+        export RAYLIB_PACKAGE_SUFFIX="-Android-arm64";
+        wget https://dl.google.com/android/repository/android-ndk-r17-linux-x86_64.zip;
+        unzip -qq android-ndk*.zip;
+        android-ndk*/build/tools/make_standalone_toolchain.py --arch arm64 --api 21 --install-dir /tmp/android-toolchain;
+        export PATH=/tmp/android-toolchain/bin:$PATH;
+        export PLATFORM=Android;
+        export CC=aarch64-linux-android-clang;
+        export CXX=aarch64-linux-android-clang++;
+      else
+        sudo apt-get install -y gcc-multilib
+                                libasound2-dev:$ARCH
+                                libxcursor-dev:$ARCH libxinerama-dev:$ARCH mesa-common-dev:$ARCH
+                                libx11-dev:$ARCH libxrandr-dev:$ARCH libxrandr2:$ARCH libxi-dev:$ARCH
+                                libgl1-mesa-dev:$ARCH libglu1-mesa-dev:$ARCH;
+        if [ "$ARCH" == "i386" ]; then
+          export CMAKE_ARCH_ARGS='-DCMAKE_C_FLAGS=-m32 -DCMAKE_SYSTEM_LIBRARY_PATH=/usr/lib/i386-linux-gnu';
+        fi;
+        export RAYLIB_PACKAGE_SUFFIX="-Linux-$ARCH";
+        if [ "$GLFW" == "SYSTEM" ]; then
+          wget 'http://ftp.de.debian.org/debian/pool/main/g/glfw3/libglfw3_3.2.1-1_amd64.deb';
+          wget 'http://ftp.de.debian.org/debian/pool/main/g/glfw3/libglfw3-dev_3.2.1-1_amd64.deb';
+          sudo dpkg -i libglfw3_3.2.1-1_amd64.deb libglfw3-dev_3.2.1-1_amd64.deb;
+        fi;
       fi;
     fi
   - if [ "$TRAVIS_OS_NAME" == "osx" ]; then
@@ -66,12 +81,14 @@ script:
       git checkout 1.12 && ./autogen.sh --prefix=/usr && make && sudo make install;
       popd;
     fi
-  - cmake $CMAKE_ARCH_ARGS -DMACOS_FATLIB=ON -DSTATIC=ON -DSHARED=ON -DBUILD_EXAMPLES=ON -DBUILD_GAMES=ON -DUSE_EXTERNAL_GLFW=IF_POSSIBLE -DUSE_WAYLAND=${USE_WAYLAND} ..
+  - cmake $CMAKE_ARCH_ARGS -DMACOS_FATLIB=ON -DSTATIC=ON -DSHARED=ON -DBUILD_EXAMPLES=ON -DBUILD_GAMES=ON -DUSE_EXTERNAL_GLFW=IF_POSSIBLE -DUSE_WAYLAND=${USE_WAYLAND} -DPLATFORM=${PLATFORM} ..
   - make VERBOSE=1
   - if [ "$GLFW" != "SYSTEM" ]; then make package; fi;
   - sudo make install
   - pkg-config --static --libs raylib
-  - nm -g release/libraylib.a | grep glfwGetProcAddress || (echo "libraylib.a doesn't contain GLFW symbols! Aborting..." && false)
+  - if [[ "$ARCH" != *-android ]]; then
+      nm -g release/libraylib.a | grep glfwGetProcAddress || (echo "libraylib.a doesn't contain GLFW symbols! Aborting..." && false);
+    fi
 
 deploy:
   provider: releases

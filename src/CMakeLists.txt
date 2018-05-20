@@ -1,14 +1,17 @@
 # Setup the project and settings
 project(raylib)
 include(GNUInstallDirs)
+list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/../cmake")
 
 set(PROJECT_VERSION 2.0.0)
 set(API_VERSION 2)
 set(RAYLIB raylib)    # Name of the generated library
 
 include("CMakeOptions.txt")
+include(BuildType)
 configure_file(config.h.in ${CMAKE_BINARY_DIR}/cmake/config.h)
 include_directories(${CMAKE_BINARY_DIR})
+include_directories(SYSTEM .)
 
 if(MACOS_FATLIB)
     if (CMAKE_OSX_ARCHITECTURES)
@@ -22,7 +25,7 @@ endif()
 file(GLOB raylib_sources *.c)
 list(REMOVE_ITEM raylib_sources ${CMAKE_CURRENT_SOURCE_DIR}/rglfw.c)
 
-if(NOT glfw3_FOUND)
+if(NOT glfw3_FOUND AND "${PLATFORM}" MATCHES "Desktop")
   set(GLFW_BUILD_DOCS OFF CACHE BOOL "" FORCE)
   set(GLFW_BUILD_TESTS OFF CACHE BOOL "" FORCE)
   set(GLFW_BUILD_EXAMPLES OFF CACHE BOOL "" FORCE)
@@ -39,7 +42,7 @@ if(NOT glfw3_FOUND)
   list(APPEND raylib_sources $<TARGET_OBJECTS:glfw_objlib>)
 endif()
 
-include("../utils.cmake")
+include(utils)
 
 if(USE_AUDIO)
   file(GLOB stb_vorbis external/stb_vorbis.c)
@@ -50,6 +53,8 @@ else()
   list(REMOVE_ITEM raylib_sources ${CMAKE_CURRENT_SOURCE_DIR}/audio.c)
   set(sources ${raylib_sources})
 endif()
+
+include(AddIfFlagCompiles)
 
 ### Config options ###
 # Translate the config options to what raylib wants
@@ -90,14 +95,27 @@ elseif(${PLATFORM} MATCHES "Web")
 elseif(${PLATFORM} MATCHES "Android")
   set(PLATFORM "PLATFORM_ANDROID")
   set(GRAPHICS "GRAPHICS_API_OPENGL_ES2")
+  add_if_flag_compiles(-ffunction-sections CMAKE_C_FLAGS)
+  add_if_flag_compiles(-funwind-tables CMAKE_C_FLAGS)
+  add_if_flag_compiles(-fstack-protector-strong CMAKE_C_FLAGS)
+  set(CMAKE_POSITION_INDEPENDENT_CODE ON)
+  add_if_flag_compiles(-Wa,--noexecstack CMAKE_C_FLAGS)
+  add_if_flag_compiles(-no-canonical-prefixes CMAKE_C_FLAGS)
+  add_definitions(-DANDROID -D__ANDROID_API__=21)
+  include_directories(external/android/native_app_glue )
+  set(CMAKE_SHARED_LINKER_FLAGS "${CMAKE_SHARED_LINKER_FLAGS} -Wl,--exclude-libs,libatomic.a -Wl,--build-id -Wl,-z,noexecstack -Wl,-z,relro -Wl,-z,now -Wl,--warn-shared-textrel -Wl,--fatal-warnings -uANativeActivity_onCreate")
+
 elseif(${PLATFORM} MATCHES "Raspberry Pi")
   set(PLATFORM "PLATFORM_RPI")
   set(GRAPHICS "GRAPHICS_API_OPENGL_ES2")
 endif()
 
 # Which platform?
-if(${PLATFORM} MATCHES "PLATFORM_DESKTOP")
+if(${PLATFORM} MATCHES "PLATFORM_WEB")
+  # For the web.
+  add_executable(${RAYLIB} ${sources})
 
+else()
   if(${SHARED})
     add_library(${RAYLIB}_shared SHARED ${sources})
 
@@ -111,7 +129,10 @@ if(${PLATFORM} MATCHES "PLATFORM_DESKTOP")
     set(CMAKE_INSTALL_RPATH_USE_LINK_PATH TRUE)
     set(CMAKE_MACOSX_RPATH ON)
 
-    target_link_libraries(${RAYLIB}_shared ${LIBS_PRIVATE} glfw ${GLFW_LIBRARIES})
+    target_link_libraries(${RAYLIB}_shared ${LIBS_PRIVATE})
+    if (${PLATFORM} MATCHES "Desktop")
+      target_link_libraries(${RAYLIB}_shared glfw ${GLFW_LIBRARIES})
+    endif()
     if (UNIX AND ${FILESYSTEM_LACKS_SYMLINKS})
       MESSAGE(WARNING "Can't version UNIX shared library on file system without symlink support")
     else()
@@ -148,7 +169,9 @@ if(${PLATFORM} MATCHES "PLATFORM_DESKTOP")
     )
 
     set(PKG_CONFIG_LIBS_PRIVATE ${__PKG_CONFIG_LIBS_PRIVATE})
-    target_link_libraries(${RAYLIB} glfw ${GLFW_LIBRARIES})
+    if (${PLATFORM} MATCHES "Desktop")
+      target_link_libraries(${RAYLIB} glfw ${GLFW_LIBRARIES})
+    endif()
 
     if (WITH_PIC)
       set_property(TARGET ${RAYLIB} PROPERTY POSITION_INDEPENDENT_CODE ON)
@@ -169,9 +192,6 @@ if(${PLATFORM} MATCHES "PLATFORM_DESKTOP")
   file(COPY "physac.h" DESTINATION ".")
   file(COPY "raymath.h" DESTINATION ".")
   file(COPY "audio.h" DESTINATION ".")
-elseif(${PLATFORM} MATCHES "PLATFORM_WEB")
-  # For the web.
-  add_executable(${RAYLIB} ${sources})
 endif()
 
 # Print the flags for the user

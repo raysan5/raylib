@@ -1,7 +1,7 @@
 # Setup the project and settings
 project(wave_collector)
 
-include("../../utils.cmake")
+include("../../cmake/utils.cmake")
 
 
 # Make sure raylib has been built
