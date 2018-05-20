@@ -86,7 +86,9 @@ script:
   - if [ "$GLFW" != "SYSTEM" ]; then make package; fi;
   - sudo make install
   - pkg-config --static --libs raylib
-  - nm -g release/libraylib.a | grep glfwGetProcAddress || (echo "libraylib.a doesn't contain GLFW symbols! Aborting..." && false)
+  - if [[ "$ARCH" != *-android ]]; then
+      nm -g release/libraylib.a | grep glfwGetProcAddress || (echo "libraylib.a doesn't contain GLFW symbols! Aborting..." && false);
+    fi
 
 deploy:
   provider: releases
