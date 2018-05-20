@@ -1,7 +1,7 @@
 # Setup the project and settings
 project(light_my_ritual)
 
-include("../../utils.cmake")
+include("../../cmake/utils.cmake")
 
 
 # Make sure raylib has been built

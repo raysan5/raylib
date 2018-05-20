@@ -39,7 +39,7 @@ if(NOT glfw3_FOUND)
   list(APPEND raylib_sources $<TARGET_OBJECTS:glfw_objlib>)
 endif()
 
-include("../utils.cmake")
+include("../cmake/utils.cmake")
 
 if(USE_AUDIO)
   file(GLOB stb_vorbis external/stb_vorbis.c)

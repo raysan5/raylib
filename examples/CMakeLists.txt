@@ -1,7 +1,7 @@
 # Setup the project and settings
 project(examples)
 
-include("../utils.cmake")
+include("../cmake/utils.cmake")
 
 # Make sure raylib has been built
 # TODO `build` directory should maybe be something else...
