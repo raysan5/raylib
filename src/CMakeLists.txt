@@ -1,7 +1,7 @@
 # Setup the project and settings
 project(raylib)
 include(GNUInstallDirs)
-set(CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/../cmake")
+list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/../cmake")
 
 set(PROJECT_VERSION 2.0.0)
 set(API_VERSION 2)

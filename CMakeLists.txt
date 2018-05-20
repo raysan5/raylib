@@ -1,4 +1,5 @@
 cmake_minimum_required(VERSION 3.0)
+set(CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/cmake)
 
 # Config options
 option(BUILD_EXAMPLES "Build the examples." ON)
@@ -15,47 +16,25 @@ else()
   set (CMAKE_C_STANDARD 99)
 endif()
 
-include(CheckCCompilerFlag)
-function(add_if_flag_works flag)
-    CHECK_C_COMPILER_FLAG("${flag}" COMPILER_HAS_THOSE_TOGGLES)
-    set(outcome "Failed")
-    if(COMPILER_HAS_THOSE_TOGGLES)
-        foreach(var ${ARGN})
-            set(${var} "${flag} ${${var}}" PARENT_SCOPE)
-        endforeach()
-        set(outcome "works")
-    endif()
-    message(STATUS "Testing if ${flag} can be used -- ${outcome}")
-endfunction()
-
-add_if_flag_works(-Werror=pointer-arith CMAKE_C_FLAGS)
-add_if_flag_works(-Werror=implicit-function-declaration CMAKE_C_FLAGS)
+include(AddIfFlagCompiles)
+add_if_flag_compiles(-Werror=pointer-arith CMAKE_C_FLAGS)
+add_if_flag_compiles(-Werror=implicit-function-declaration CMAKE_C_FLAGS)
 # src/external/jar_xm.h does shady stuff
-add_if_flag_works(-fno-strict-aliasing CMAKE_C_FLAGS)
+add_if_flag_compiles(-fno-strict-aliasing CMAKE_C_FLAGS)
 
-message(STATUS "Testing if file system supports symlinks")
-execute_process(
-  COMMAND ${CMAKE_COMMAND} -E create_symlink CMakeLists.txt "${CMAKE_CURRENT_BINARY_DIR}/TestingIfSymlinkWorks"
-    WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
-    RESULT_VARIABLE FILESYSTEM_LACKS_SYMLINKS
-)
-If (FILESYSTEM_LACKS_SYMLINKS)
-  message(STATUS "Testing if file system supports symlinks -- unsupported")
-else()
-  message(STATUS "Testing if file system supports symlinks -- supported")
-endif()
+include(CheckFileSystemSymlinkSupport)
 
 if (ENABLE_ASAN)
-    add_if_flag_works(-fno-omit-frame-pointer CMAKE_C_FLAGS CMAKE_LINKER_FLAGS)
-    add_if_flag_works(-fsanitize=address CMAKE_C_FLAGS CMAKE_LINKER_FLAGS)
+    add_if_flag_compiles(-fno-omit-frame-pointer CMAKE_C_FLAGS CMAKE_LINKER_FLAGS)
+    add_if_flag_compiles(-fsanitize=address CMAKE_C_FLAGS CMAKE_LINKER_FLAGS)
 endif()
 if (ENABLE_UBSAN)
-    add_if_flag_works(-fno-omit-frame-pointer CMAKE_C_FLAGS CMAKE_LINKER_FLAGS)
-    add_if_flag_works(-fsanitize=undefined CMAKE_C_FLAGS CMAKE_LINKER_FLAGS)
+    add_if_flag_compiles(-fno-omit-frame-pointer CMAKE_C_FLAGS CMAKE_LINKER_FLAGS)
+    add_if_flag_compiles(-fsanitize=undefined CMAKE_C_FLAGS CMAKE_LINKER_FLAGS)
 endif()
 if (ENABLE_MSAN)
-    add_if_flag_works(-fno-omit-frame-pointer CMAKE_C_FLAGS CMAKE_LINKER_FLAGS)
-    add_if_flag_works(-fsanitize=memory CMAKE_C_FLAGS CMAKE_LINKER_FLAGS)
+    add_if_flag_compiles(-fno-omit-frame-pointer CMAKE_C_FLAGS CMAKE_LINKER_FLAGS)
+    add_if_flag_compiles(-fsanitize=memory CMAKE_C_FLAGS CMAKE_LINKER_FLAGS)
 endif()
 
 if (ENABLE_MSAN AND ENABLE_ASAN)
