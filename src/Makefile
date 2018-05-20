@@ -383,11 +383,13 @@ endif
 # Define linker options
 ifeq ($(PLATFORM),PLATFORM_ANDROID)
     LDFLAGS = -Wl,-soname,libraylib.$(API_VERSION).so -Wl,--exclude-libs,libatomic.a
-    LDFLAGS += -Wl,--build-id -Wl,--no-undefined -Wl,-z,noexecstack -Wl,-z,relro -Wl,-z,now -Wl,--warn-shared-textrel -Wl,--fatal-warnings
+    LDFLAGS += -Wl,--build-id -Wl,-z,noexecstack -Wl,-z,relro -Wl,-z,now -Wl,--warn-shared-textrel -Wl,--fatal-warnings
     # Force linking of library module to define symbol
     LDFLAGS += -u ANativeActivity_onCreate
     # Library paths containing required libs
     LDFLAGS += -L. -Lsrc -L$(RAYLIB_RELEASE_PATH)
+    # Avoid unresolved symbol pointing to external main()
+    LDFLAGS += -Wl,-undefined,dynamic_lookup
 
     LDLIBS = -llog -landroid -lEGL -lGLESv2 -lOpenSLES -latomic -lc -lm
 endif
@@ -473,6 +475,7 @@ else
         ifeq ($(PLATFORM),PLATFORM_ANDROID)
 			$(CC) -shared -o $(RAYLIB_RELEASE_PATH)/libraylib.$(RAYLIB_VERSION).so $(OBJS) $(LDFLAGS) $(LDLIBS)
 			@echo "raylib shared library generated (libraylib.$(RAYLIB_VERSION).so)!"
+			# WARNING: symbolic links creation on Windows should be done using mklink command, no ln available
 			cd $(RAYLIB_RELEASE_PATH) && ln -fs libraylib.$(RAYLIB_VERSION).so libraylib.$(RAYLIB_API_VERSION).so
 			cd $(RAYLIB_RELEASE_PATH) && ln -fs libraylib.$(RAYLIB_VERSION).so libraylib.so
         endif
