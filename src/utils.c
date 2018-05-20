@@ -57,6 +57,12 @@
 #include <stdarg.h>                 // Required for: va_list, va_start(), vfprintf(), va_end()
 #include <string.h>                 // Required for: strlen(), strrchr(), strcmp()
 
+/* This should be in <stdio.h>, but Travis doesn't find it... */
+FILE *funopen(const void *cookie, int (*readfn)(void *, char *, int),
+              int (*writefn)(void *, const char *, int),
+              fpos_t (*seekfn)(void *, fpos_t, int), int (*closefn)(void *));
+
+
 #if defined(PLATFORM_DESKTOP) || defined(PLATFORM_RPI)
     #define STB_IMAGE_WRITE_IMPLEMENTATION
     #include "external/stb_image_write.h"   // Required for: stbi_write_bmp(), stbi_write_png()
