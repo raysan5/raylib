@@ -165,7 +165,8 @@ ifeq ($(PLATFORM),PLATFORM_ANDROID)
     ANDROID_NDK = C:/android-ndk
     ANDROID_TOOLCHAIN = C:/android_toolchain_arm64_api21
 
-    # Android architecture: ARM or ARM64
+    # Android architecture: ARM64
+    # Starting at 2019 using ARM64 is mandatory for published apps
     ANDROID_ARCH ?= ARM64
 endif
 
@@ -195,9 +196,6 @@ ifeq ($(PLATFORM),PLATFORM_WEB)
     RAYLIB_RELEASE_PATH = $(RAYLIB_PATH)/release/libs/html5
 endif
 ifeq ($(PLATFORM),PLATFORM_ANDROID)
-    ifeq ($(ANDROID_ARCH),ARM)
-        RAYLIB_RELEASE_PATH = $(RAYLIB_PATH)/release/libs/android/armeabi-v7a
-    endif
     ifeq ($(ANDROID_ARCH),ARM64)
         RAYLIB_RELEASE_PATH = $(RAYLIB_PATH)/release/libs/android/arm64-v8a
     endif
@@ -251,9 +249,6 @@ ifeq ($(PLATFORM),PLATFORM_WEB)
 endif
 ifeq ($(PLATFORM),PLATFORM_ANDROID)
     # Android toolchain (must be provided for desired architecture and compiler)
-    ifeq ($(ANDROID_ARCH),ARM)
-        CC = $(ANDROID_TOOLCHAIN)/bin/arm-linux-androideabi-clang
-    endif
     ifeq ($(ANDROID_ARCH),ARM64)
         CC = $(ANDROID_TOOLCHAIN)/bin/aarch64-linux-android-clang
     endif
@@ -272,9 +267,6 @@ endif
 
 # Android archiver (also depends on desired architecture)
 ifeq ($(PLATFORM),PLATFORM_ANDROID)
-    ifeq ($(ANDROID_ARCH),ARM)
-        AR = $(ANDROID_TOOLCHAIN)/bin/arm-linux-androideabi-ar
-    endif
     ifeq ($(ANDROID_ARCH),ARM64)
         AR = $(ANDROID_TOOLCHAIN)/bin/aarch64-linux-android-ar
     endif
@@ -430,9 +422,6 @@ all: raylib
 # NOTE: Android toolchain could already be provided
 generate_android_toolchain:
 ifeq ($(PLATFORM),PLATFORM_ANDROID)
-    ifeq ($(ANDROID_ARCH),ARM)
-		$(ANDROID_NDK)/build/tools/make-standalone-toolchain.sh --platform=android-9 --toolchain=arm-linux-androideabi-4.9 --use-llvm --install-dir=$(ANDROID_TOOLCHAIN)
-    endif
     ifeq ($(ANDROID_ARCH),ARM64)
 		$(ANDROID_NDK)/build/tools/make-standalone-toolchain.sh --platform=android-21 --toolchain=aarch64-linux-androideabi-4.9 --use-llvm --install-dir=$(ANDROID_TOOLCHAIN)
     endif
