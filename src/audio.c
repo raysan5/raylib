@@ -1344,7 +1344,7 @@ Music LoadMusicStream(const char *fileName)
             music->ctxType = MUSIC_AUDIO_OGG;
             music->loopCount = -1;                       // Infinite loop by default
 
-            TraceLog(LOG_DEBUG, "[%s] FLAC total samples: %i", fileName, music->totalSamples);
+            TraceLog(LOG_DEBUG, "[%s] OGG total samples: %i", fileName, music->totalSamples);
             TraceLog(LOG_DEBUG, "[%s] OGG sample rate: %i", fileName, info.sample_rate);
             TraceLog(LOG_DEBUG, "[%s] OGG channels: %i", fileName, info.channels);
             TraceLog(LOG_DEBUG, "[%s] OGG memory required: %i", fileName, info.temp_memory_required);
