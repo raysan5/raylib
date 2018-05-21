@@ -311,6 +311,7 @@ Font LoadFontEx(const char *fileName, int fontSize, int charsCount, int *fontCha
 {
     Font spriteFont = { 0 };
     int totalChars = 95;            // Default charset [32..126]
+    bool fontCharsLoaded = false;
 
 #if defined(SUPPORT_FILEFORMAT_TTF)
     if (IsFileExtension(fileName, ".ttf"))
@@ -321,9 +322,12 @@ Font LoadFontEx(const char *fileName, int fontSize, int charsCount, int *fontCha
         {
             fontChars = (int *)malloc(totalChars*sizeof(int));
             for (int i = 0; i < totalChars; i++) fontChars[i] = i + 32; // Default first character: SPACE[32]
+            fontCharsLoaded = true;
         }
         
         spriteFont = LoadTTF(fileName, fontSize, totalChars, fontChars);
+        
+        if (fontCharsLoaded) free(fontChars);
     }
 #endif
 
