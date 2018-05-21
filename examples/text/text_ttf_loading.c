@@ -20,12 +20,12 @@ int main()
 
     InitWindow(screenWidth, screenHeight, "raylib [text] example - ttf loading");
     
-    const char msg[50] = "TTF SpriteFont";
+    const char msg[50] = "TTF Font";
 
     // NOTE: Textures/Fonts MUST be loaded after Window initialization (OpenGL context is required)
     
-    // TTF SpriteFont loading with custom generation parameters
-    SpriteFont font = LoadSpriteFontEx("resources/KAISG.ttf", 96, 0, 0);
+    // TTF Font loading with custom generation parameters
+    Font font = LoadFontEx("resources/KAISG.ttf", 96, 0, 0);
     
     // Generate mipmap levels to use trilinear filtering
     // NOTE: On 2D drawing it won't be noticeable, it looks like FILTER_BILINEAR
@@ -85,8 +85,8 @@ int main()
             
             if (count == 1) // Only support one ttf file dropped
             {
-                UnloadSpriteFont(font);
-                font = LoadSpriteFontEx(droppedFiles[0], fontSize, 0, 0);
+                UnloadFont(font);
+                font = LoadFontEx(droppedFiles[0], fontSize, 0, 0);
                 ClearDroppedFiles();
             }
         }
@@ -127,7 +127,7 @@ int main()
 #if defined(PLATFORM_DESKTOP)
     ClearDroppedFiles();        // Clear internal buffers
 #endif
-    UnloadSpriteFont(font);     // SpriteFont unloading
+    UnloadFont(font);     // Font unloading
     
     CloseWindow();              // Close window and OpenGL context
     //--------------------------------------------------------------------------------------

@@ -57,7 +57,7 @@ int main()
 
             ClearBackground(RAYWHITE);
 
-            Begin3dMode(camera);
+            BeginMode3D(camera);
 
                 DrawCube((Vector3){-4.0f, 0.0f, 2.0f}, 2.0f, 5.0f, 2.0f, RED);
                 DrawCubeWires((Vector3){-4.0f, 0.0f, 2.0f}, 2.0f, 5.0f, 2.0f, GOLD);
@@ -75,7 +75,7 @@ int main()
 
                 DrawGrid(10, 1.0f);        // Draw a grid
 
-            End3dMode();
+            EndMode3D();
 
             DrawText("Press Spacebar to switch camera type", 10, GetScreenHeight() - 30, 20, DARKGRAY);
 

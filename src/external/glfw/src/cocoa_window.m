@@ -128,6 +128,32 @@ static void updateCursorImage(_GLFWwindow* window)
         hideCursor(window);
 }
 
+// Apply chosen cursor mode to a focused window
+//
+static void updateCursorMode(_GLFWwindow* window)
+{
+    if (window->cursorMode == GLFW_CURSOR_DISABLED)
+    {
+        _glfw.ns.disabledCursorWindow = window;
+        _glfwPlatformGetCursorPos(window,
+                                  &_glfw.ns.restoreCursorPosX,
+                                  &_glfw.ns.restoreCursorPosY);
+        centerCursor(window);
+        CGAssociateMouseAndMouseCursorPosition(false);
+    }
+    else if (_glfw.ns.disabledCursorWindow == window)
+    {
+        _glfw.ns.disabledCursorWindow = NULL;
+        CGAssociateMouseAndMouseCursorPosition(true);
+        _glfwPlatformSetCursorPos(window,
+                                  _glfw.ns.restoreCursorPosX,
+                                  _glfw.ns.restoreCursorPosY);
+    }
+
+    if (cursorInClientArea(window))
+        updateCursorImage(window);
+}
+
 // Transforms the specified y-coordinate between the CG display and NS screen
 // coordinate systems
 //
@@ -321,7 +347,7 @@ static const NSRange kEmptyRange = { NSNotFound, 0 };
         centerCursor(window);
 
     _glfwInputWindowFocus(window, GLFW_TRUE);
-    _glfwPlatformSetCursorMode(window, window->cursorMode);
+    updateCursorMode(window);
 }
 
 - (void)windowDidResignKey:(NSNotification *)notification
@@ -582,6 +608,9 @@ static const NSRange kEmptyRange = { NSNotFound, 0 };
         window->ns.xscale = xscale;
         window->ns.yscale = yscale;
         _glfwInputWindowContentScale(window, xscale, yscale);
+
+        if (window->ns.layer)
+            [window->ns.layer setContentsScale:[window->ns.object backingScaleFactor]];
     }
 }
 
@@ -872,7 +901,7 @@ static const NSRange kEmptyRange = { NSNotFound, 0 };
 
 - (void)loadMainMenu
 {
-#if MAC_OS_X_VERSION_MAX_ALLOWED >= 100800
+#if MAC_OS_X_VERSION_MAX_ALLOWED >= 1080
     [[NSBundle mainBundle] loadNibNamed:@"MainMenu"
                                   owner:NSApp
                         topLevelObjects:&nibObjects];
@@ -1635,26 +1664,8 @@ void _glfwPlatformSetCursorPos(_GLFWwindow* window, double x, double y)
 
 void _glfwPlatformSetCursorMode(_GLFWwindow* window, int mode)
 {
-    if (mode == GLFW_CURSOR_DISABLED)
-    {
-        _glfw.ns.disabledCursorWindow = window;
-        _glfwPlatformGetCursorPos(window,
-                                  &_glfw.ns.restoreCursorPosX,
-                                  &_glfw.ns.restoreCursorPosY);
-        centerCursor(window);
-        CGAssociateMouseAndMouseCursorPosition(false);
-    }
-    else if (_glfw.ns.disabledCursorWindow == window)
-    {
-        _glfw.ns.disabledCursorWindow = NULL;
-        CGAssociateMouseAndMouseCursorPosition(true);
-        _glfwPlatformSetCursorPos(window,
-                                  _glfw.ns.restoreCursorPosX,
-                                  _glfw.ns.restoreCursorPosY);
-    }
-
-    if (cursorInClientArea(window))
-        updateCursorImage(window);
+    if (_glfwPlatformWindowFocused(window))
+        updateCursorMode(window);
 }
 
 const char* _glfwPlatformGetScancodeName(int scancode)
@@ -1871,6 +1882,7 @@ VkResult _glfwPlatformCreateWindowSurface(VkInstance instance,
         return VK_ERROR_EXTENSION_NOT_PRESENT;
     }
 
+    [window->ns.layer setContentsScale:[window->ns.object backingScaleFactor]];
     [window->ns.view setWantsLayer:YES];
 
     memset(&sci, 0, sizeof(sci));

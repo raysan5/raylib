@@ -120,6 +120,8 @@ typedef struct
     HRGN hRgnBlur;
     BOOL fTransitionOnMaximized;
 } DWM_BLURBEHIND;
+#else
+ #include <dwmapi.h>
 #endif /*Windows Vista*/
 
 #ifndef DPI_ENUMS_DECLARED

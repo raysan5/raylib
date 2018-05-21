@@ -35,7 +35,7 @@ typedef enum GameScreen { LOGO_RL = 0, TITLE, GAMEPLAY } GameScreen;
 // Global Variables Definition
 //----------------------------------------------------------------------------------
 GameScreen currentScreen;
-SpriteFont font;
+Font font;
 
 Color *lightsMap;
 int lightsMapWidth, lightsMapHeight;

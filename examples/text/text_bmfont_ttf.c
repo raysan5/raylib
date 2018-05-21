@@ -1,6 +1,6 @@
 /*******************************************************************************************
 *
-*   raylib [text] example - BMFont and TTF SpriteFonts loading
+*   raylib [text] example - BMFont and TTF Fonts loading
 *
 *   This example has been created using raylib 1.4 (www.raylib.com)
 *   raylib is licensed under an unmodified zlib/libpng license (View raylib.h for details)
@@ -24,8 +24,8 @@ int main()
     const char msgTtf[64] = "THIS SPRITE FONT has been GENERATED from a TTF";
 
     // NOTE: Textures/Fonts MUST be loaded after Window initialization (OpenGL context is required)
-    SpriteFont fontBm = LoadSpriteFont("resources/bmfont.fnt");       // BMFont (AngelCode)
-    SpriteFont fontTtf = LoadSpriteFont("resources/pixantiqua.ttf");  // TTF font
+    Font fontBm = LoadFont("resources/bmfont.fnt");       // BMFont (AngelCode)
+    Font fontTtf = LoadFont("resources/pixantiqua.ttf");  // TTF font
 
     Vector2 fontPosition;
 
@@ -58,8 +58,8 @@ int main()
 
     // De-Initialization
     //--------------------------------------------------------------------------------------
-    UnloadSpriteFont(fontBm);     // AngelCode SpriteFont unloading
-    UnloadSpriteFont(fontTtf);    // TTF SpriteFont unloading
+    UnloadFont(fontBm);     // AngelCode Font unloading
+    UnloadFont(fontTtf);    // TTF Font unloading
 
     CloseWindow();                // Close window and OpenGL context
     //--------------------------------------------------------------------------------------

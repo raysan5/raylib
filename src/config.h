@@ -25,7 +25,7 @@
 *
 **********************************************************************************************/
 
-#define RAYLIB_VERSION  "1.9.7-dev"
+#define RAYLIB_VERSION  "2.0-dev"
 
 // Edit to control what features Makefile'd raylib is compiled with
 #if defined(RAYLIB_CMAKE)
@@ -44,6 +44,8 @@
 #define SUPPORT_MOUSE_GESTURES      1
 // Use busy wait loop for timing sync, if not defined, a high-resolution timer is setup and used
 #define SUPPORT_BUSY_WAIT_LOOP      1
+// Allow automatic screen capture of current screen pressing F12, defined in KeyCallback()
+#define SUPPORT_SCREEN_CAPTURE      1
 // Allow automatic gif recording of current screen pressing CTRL+F12, defined in KeyCallback()
 #define SUPPORT_GIF_RECORDING       1
 
@@ -56,6 +58,16 @@
 // Include stereo rendering distortion shader (shader_distortion.h)
 #define SUPPORT_DISTORTION_SHADER   1
 
+
+//------------------------------------------------------------------------------------
+// Module: shapes - Configuration Flags
+//------------------------------------------------------------------------------------
+// Draw rectangle shapes using font texture white character instead of default white texture
+// Allows drawing rectangles and text with a single draw call, very useful for GUI systems!
+#define SUPPORT_FONT_TEXTURE
+// Use QUADS instead of TRIANGLES for drawing when possible
+// Some lines-based shapes could still use lines
+#define SUPPORT_QUADS_DRAW_MODE
 
 //------------------------------------------------------------------------------------
 // Module: textures - Configuration Flags
@@ -112,6 +124,7 @@
 #define SUPPORT_FILEFORMAT_XM       1
 #define SUPPORT_FILEFORMAT_MOD      1
 //#define SUPPORT_FILEFORMAT_FLAC   1
+//#define SUPPORT_FILEFORMAT_MP3    1
 
 
 //------------------------------------------------------------------------------------

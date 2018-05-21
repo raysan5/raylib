@@ -87,7 +87,7 @@ int main()
 
             ClearBackground(RAYWHITE);
 
-            Begin3dMode(camera);
+            BeginMode3D(camera);
 
                 // Draw enemy-box
                 DrawCube(enemyBoxPos, enemyBoxSize.x, enemyBoxSize.y, enemyBoxSize.z, GRAY);
@@ -102,7 +102,7 @@ int main()
 
                 DrawGrid(10, 1.0f);        // Draw a grid
 
-            End3dMode();
+            EndMode3D();
             
             DrawText("Move player with cursors to collide", 220, 40, 20, GRAY);
 

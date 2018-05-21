@@ -42,8 +42,8 @@
 .PHONY: all clean install uninstall
 
 # Define required raylib variables
-RAYLIB_VERSION     = 1.9.7
-RAYLIB_API_VERSION = 1
+RAYLIB_VERSION     = 2.0.0
+RAYLIB_API_VERSION = 2
 
 # See below for alternatives.
 RAYLIB_PATH        = ..
@@ -163,10 +163,11 @@ endif
 ifeq ($(PLATFORM),PLATFORM_ANDROID)
     # Android required path variables
     ANDROID_NDK = C:/android-ndk
-    ANDROID_TOOLCHAIN = C:/android_toolchain_arm_api16
+    ANDROID_TOOLCHAIN = C:/android_toolchain_arm64_api21
 
-    # Android architecture: ARM or ARM64
-    ANDROID_ARCH ?= ARM
+    # Android architecture: ARM64
+    # Starting at 2019 using ARM64 is mandatory for published apps
+    ANDROID_ARCH ?= ARM64
 endif
 
 # RAYLIB_RELEASE_PATH points to provided binaries or your immediate build of raylib.
@@ -195,9 +196,6 @@ ifeq ($(PLATFORM),PLATFORM_WEB)
     RAYLIB_RELEASE_PATH = $(RAYLIB_PATH)/release/libs/html5
 endif
 ifeq ($(PLATFORM),PLATFORM_ANDROID)
-    ifeq ($(ANDROID_ARCH),ARM)
-        RAYLIB_RELEASE_PATH = $(RAYLIB_PATH)/release/libs/android/armeabi-v7a
-    endif
     ifeq ($(ANDROID_ARCH),ARM64)
         RAYLIB_RELEASE_PATH = $(RAYLIB_PATH)/release/libs/android/arm64-v8a
     endif
@@ -251,12 +249,8 @@ ifeq ($(PLATFORM),PLATFORM_WEB)
 endif
 ifeq ($(PLATFORM),PLATFORM_ANDROID)
     # Android toolchain (must be provided for desired architecture and compiler)
-    # NOTE: gcc compiler is being deprecated in Android NDK r16
-    ifeq ($(ANDROID_ARCH),ARM)
-        CC = $(ANDROID_TOOLCHAIN)/bin/arm-linux-androideabi-gcc
-    endif
     ifeq ($(ANDROID_ARCH),ARM64)
-        CC = $(ANDROID_TOOLCHAIN)/bin/aarch64-linux-android-gcc
+        CC = $(ANDROID_TOOLCHAIN)/bin/aarch64-linux-android-clang
     endif
 endif
 
@@ -273,9 +267,6 @@ endif
 
 # Android archiver (also depends on desired architecture)
 ifeq ($(PLATFORM),PLATFORM_ANDROID)
-    ifeq ($(ANDROID_ARCH),ARM)
-        AR = $(ANDROID_TOOLCHAIN)/bin/arm-linux-androideabi-ar
-    endif
     ifeq ($(ANDROID_ARCH),ARM64)
         AR = $(ANDROID_TOOLCHAIN)/bin/aarch64-linux-android-ar
     endif
@@ -316,15 +307,15 @@ ifeq ($(PLATFORM),PLATFORM_WEB)
     CFLAGS += -s USE_GLFW=3 -s ASSERTIONS=1 --profiling
 endif
 ifeq ($(PLATFORM),PLATFORM_ANDROID)
-    # Compiler flags for arquitecture
-    CFLAGS += -march=armv7-a -mfloat-abi=softfp -mfpu=vfpv3-d16
+    # Compiler flags for arquitecture (only ARM, not ARM64)
+    #CFLAGS += -march=armv7-a -mfloat-abi=softfp -mfpu=vfpv3-d16
     # Compilation functions attributes options
-    CFLAGS += -ffunction-sections -funwind-tables -fstack-protector-strong -fPIC
+    CFLAGS += -ffunction-sections -funwind-tables -fstack-protector-strong -fPIE -fPIC
     # Compiler options for the linker
     # -Werror=format-security
     CFLAGS += -Wa,--noexecstack -Wformat -no-canonical-prefixes
     # Preprocessor macro definitions
-    CFLAGS += -DANDROID -DPLATFORM_ANDROID -D__ANDROID_API__=16
+    CFLAGS += -DANDROID -DPLATFORM_ANDROID -D__ANDROID_API__=21
 endif
 
 # Define required compilation flags for raylib SHARED lib
@@ -384,11 +375,13 @@ endif
 # Define linker options
 ifeq ($(PLATFORM),PLATFORM_ANDROID)
     LDFLAGS = -Wl,-soname,libraylib.$(API_VERSION).so -Wl,--exclude-libs,libatomic.a
-    LDFLAGS += -Wl,--build-id -Wl,--no-undefined -Wl,-z,noexecstack -Wl,-z,relro -Wl,-z,now -Wl,--warn-shared-textrel -Wl,--fatal-warnings
+    LDFLAGS += -Wl,--build-id -Wl,-z,noexecstack -Wl,-z,relro -Wl,-z,now -Wl,--warn-shared-textrel -Wl,--fatal-warnings
     # Force linking of library module to define symbol
     LDFLAGS += -u ANativeActivity_onCreate
     # Library paths containing required libs
     LDFLAGS += -L. -Lsrc -L$(RAYLIB_RELEASE_PATH)
+    # Avoid unresolved symbol pointing to external main()
+    LDFLAGS += -Wl,-undefined,dynamic_lookup
 
     LDLIBS = -llog -landroid -lEGL -lGLESv2 -lOpenSLES -latomic -lc -lm
 endif
@@ -429,9 +422,6 @@ all: raylib
 # NOTE: Android toolchain could already be provided
 generate_android_toolchain:
 ifeq ($(PLATFORM),PLATFORM_ANDROID)
-    ifeq ($(ANDROID_ARCH),ARM)
-		$(ANDROID_NDK)/build/tools/make-standalone-toolchain.sh --platform=android-9 --toolchain=arm-linux-androideabi-4.9 --use-llvm --install-dir=$(ANDROID_TOOLCHAIN)
-    endif
     ifeq ($(ANDROID_ARCH),ARM64)
 		$(ANDROID_NDK)/build/tools/make-standalone-toolchain.sh --platform=android-21 --toolchain=aarch64-linux-androideabi-4.9 --use-llvm --install-dir=$(ANDROID_TOOLCHAIN)
     endif
@@ -474,6 +464,7 @@ else
         ifeq ($(PLATFORM),PLATFORM_ANDROID)
 			$(CC) -shared -o $(RAYLIB_RELEASE_PATH)/libraylib.$(RAYLIB_VERSION).so $(OBJS) $(LDFLAGS) $(LDLIBS)
 			@echo "raylib shared library generated (libraylib.$(RAYLIB_VERSION).so)!"
+			# WARNING: symbolic links creation on Windows should be done using mklink command, no ln available
 			cd $(RAYLIB_RELEASE_PATH) && ln -fs libraylib.$(RAYLIB_VERSION).so libraylib.$(RAYLIB_API_VERSION).so
 			cd $(RAYLIB_RELEASE_PATH) && ln -fs libraylib.$(RAYLIB_VERSION).so libraylib.so
         endif

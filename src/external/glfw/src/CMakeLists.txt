@@ -23,20 +23,12 @@ elseif (_GLFW_X11)
     set(glfw_SOURCES ${common_SOURCES} x11_init.c x11_monitor.c x11_window.c
                      xkb_unicode.c posix_time.c posix_thread.c glx_context.c
                      egl_context.c osmesa_context.c)
-
-    if ("${CMAKE_SYSTEM_NAME}" STREQUAL "Linux")
-        set(glfw_HEADERS ${glfw_HEADERS} linux_joystick.h)
-        set(glfw_SOURCES ${glfw_SOURCES} linux_joystick.c)
-    else()
-        set(glfw_HEADERS ${glfw_HEADERS} null_joystick.h)
-        set(glfw_SOURCES ${glfw_SOURCES} null_joystick.c)
-    endif()
 elseif (_GLFW_WAYLAND)
-    set(glfw_HEADERS ${common_HEADERS} wl_platform.h linux_joystick.h
+    set(glfw_HEADERS ${common_HEADERS} wl_platform.h
                      posix_time.h posix_thread.h xkb_unicode.h egl_context.h
                      osmesa_context.h)
     set(glfw_SOURCES ${common_SOURCES} wl_init.c wl_monitor.c wl_window.c
-                     linux_joystick.c posix_time.c posix_thread.c xkb_unicode.c
+                     posix_time.c posix_thread.c xkb_unicode.c
                      egl_context.c osmesa_context.c)
 
     ecm_add_wayland_client_protocol(glfw_SOURCES
@@ -73,6 +65,16 @@ elseif (_GLFW_OSMESA)
                      null_joystick.c posix_time.c posix_thread.c osmesa_context.c)
 endif()
 
+if (_GLFW_X11 OR _GLFW_WAYLAND)
+    if ("${CMAKE_SYSTEM_NAME}" STREQUAL "Linux")
+        set(glfw_HEADERS ${glfw_HEADERS} linux_joystick.h)
+        set(glfw_SOURCES ${glfw_SOURCES} linux_joystick.c)
+    else()
+        set(glfw_HEADERS ${glfw_HEADERS} null_joystick.h)
+        set(glfw_SOURCES ${glfw_SOURCES} null_joystick.c)
+    endif()
+endif()
+
 if (APPLE)
     # For some reason, CMake doesn't know about .m
     set_source_files_properties(${glfw_SOURCES} PROPERTIES LANGUAGE C)
@@ -90,7 +92,9 @@ if (${CMAKE_C_COMPILER_ID} STREQUAL GNU OR ${CMAKE_C_COMPILER_ID} STREQUAL Clang
         COMPILE_FLAGS -Wdeclaration-after-statement)
 endif()
 
-add_library(glfw ${glfw_SOURCES} ${glfw_HEADERS})
+add_library(glfw_objlib OBJECT ${glfw_SOURCES} ${glfw_HEADERS})
+add_library(glfw $<TARGET_OBJECTS:glfw_objlib>)
+
 set_target_properties(glfw PROPERTIES
                       OUTPUT_NAME ${GLFW_LIB_NAME}
                       VERSION ${GLFW_VERSION}
@@ -98,11 +102,11 @@ set_target_properties(glfw PROPERTIES
                       POSITION_INDEPENDENT_CODE ON
                       FOLDER "GLFW3")
 
-target_compile_definitions(glfw PRIVATE _GLFW_USE_CONFIG_H)
-target_include_directories(glfw PUBLIC
+target_compile_definitions(glfw_objlib PRIVATE _GLFW_USE_CONFIG_H)
+target_include_directories(glfw_objlib PUBLIC
                            "$<BUILD_INTERFACE:${GLFW_SOURCE_DIR}/include>"
                            "$<INSTALL_INTERFACE:$<INSTALL_PREFIX>/include>")
-target_include_directories(glfw PRIVATE
+target_include_directories(glfw_objlib PRIVATE
                            "${GLFW_SOURCE_DIR}/src"
                            "${GLFW_BINARY_DIR}/src"
                            ${glfw_INCLUDE_DIRS})
@@ -111,11 +115,11 @@ target_include_directories(glfw PRIVATE
 # the inclusion of stddef.h (by glfw3.h), which is itself included before
 # win32_platform.h.  We define them here until a saner solution can be found
 # NOTE: MinGW-w64 and Visual C++ do /not/ need this hack.
-target_compile_definitions(glfw PRIVATE
+target_compile_definitions(glfw_objlib PRIVATE
                            "$<$<BOOL:${MINGW}>:UNICODE;WINVER=0x0501>")
 
 # Enable a reasonable set of warnings (no, -Wextra is not reasonable)
-target_compile_options(glfw PRIVATE
+target_compile_options(glfw_objlib PRIVATE
                        "$<$<C_COMPILER_ID:Clang>:-Wall>"
                        "$<$<C_COMPILER_ID:GNU>:-Wall>")
 
@@ -133,7 +137,7 @@ if (BUILD_SHARED_LIBS)
         endif()
     elseif (APPLE)
         # Add -fno-common to work around a bug in Apple's GCC
-        target_compile_options(glfw PRIVATE "-fno-common")
+        target_compile_options(glfw_objlib PRIVATE "-fno-common")
 
         set_target_properties(glfw PROPERTIES
                               INSTALL_NAME_DIR "lib${LIB_SUFFIX}")

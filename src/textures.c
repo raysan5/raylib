@@ -52,9 +52,9 @@
 *     3. This notice may not be removed or altered from any source distribution.
 *
 **********************************************************************************************/
-#include "config.h"
 
-#include "raylib.h"
+#include "config.h"             // Defines module configuration flags
+#include "raylib.h"             // Declares module functions
 
 #include <stdlib.h>             // Required for: malloc(), free()
 #include <string.h>             // Required for: strcmp(), strrchr(), strncmp()
@@ -568,6 +568,7 @@ void ExportImage(const char *fileName, Image image)
     // NOTE: Getting Color array as RGBA unsigned char values
     unsigned char *imgData = (unsigned char *)GetImageData(image);
     SavePNG(fileName, imgData, image.width, image.height, 4);
+    // FIXME ^ this fails on PLATFORM_WEB, what should we do?
     free(imgData);
 }
 
@@ -713,7 +714,7 @@ void ImageFormat(Image *image, int newFormat)
                 {
                     image->data = (unsigned char *)malloc(image->width*image->height*3*sizeof(unsigned char));
 
-                    for (int i = 0; i < image->width*image->height*3; i += 3, k++)
+                    for (int i = 0, k = 0; i < image->width*image->height*3; i += 3, k++)
                     {
                         ((unsigned char *)image->data)[i] = pixels[k].r;
                         ((unsigned char *)image->data)[i + 1] = pixels[k].g;
@@ -766,7 +767,7 @@ void ImageFormat(Image *image, int newFormat)
                 {
                     image->data = (unsigned char *)malloc(image->width*image->height*4*sizeof(unsigned char));
 
-                    for (int i = 0; i < image->width*image->height*3; i += 3, k++)
+                    for (int i = 0, k = 0; i < image->width*image->height*4; i += 4, k++)
                     {
                         ((unsigned char *)image->data)[i] = pixels[k].r;
                         ((unsigned char *)image->data)[i + 1] = pixels[k].g;
@@ -787,7 +788,7 @@ void ImageFormat(Image *image, int newFormat)
                 {
                     image->data = (float *)malloc(image->width*image->height*3*sizeof(float));
 
-                    for (int i = 0; i < image->width*image->height*3; i += 3, k++)
+                    for (int i = 0, k = 0; i < image->width*image->height*3; i += 3, k++)
                     {
                         ((float *)image->data)[i] = (float)pixels[k].r/255.0f;
                         ((float *)image->data)[i + 1] = (float)pixels[k].g/255.0f;
@@ -798,7 +799,7 @@ void ImageFormat(Image *image, int newFormat)
                 {
                     image->data = (float *)malloc(image->width*image->height*4*sizeof(float));
 
-                    for (int i = 0; i < image->width*image->height*4; i += 4, k++)
+                    for (int i = 0, k = 0; i < image->width*image->height*4; i += 4, k++)
                     {
                         ((float *)image->data)[i] = (float)pixels[k].r/255.0f;
                         ((float *)image->data)[i + 1] = (float)pixels[k].g/255.0f;
@@ -977,13 +978,13 @@ void ImageCrop(Image *image, Rectangle crop)
     {
         // Start the cropping process
         Color *pixels = GetImageData(*image);   // Get data as Color pixels array
-        Color *cropPixels = (Color *)malloc(crop.width*crop.height*sizeof(Color));
+        Color *cropPixels = (Color *)malloc((int)crop.width*(int)crop.height*sizeof(Color));
 
-        for (int j = crop.y; j < (crop.y + crop.height); j++)
+        for (int j = (int)crop.y; j < (int)(crop.y + crop.height); j++)
         {
-            for (int i = crop.x; i < (crop.x + crop.width); i++)
+            for (int i = (int)crop.x; i < (int)(crop.x + crop.width); i++)
             {
-                cropPixels[(j - crop.y)*crop.width + (i - crop.x)] = pixels[j*image->width + i];
+                cropPixels[(j - (int)crop.y)*(int)crop.width + (i - (int)crop.x)] = pixels[j*image->width + i];
             }
         }
 
@@ -993,7 +994,7 @@ void ImageCrop(Image *image, Rectangle crop)
 
         UnloadImage(*image);
 
-        *image = LoadImageEx(cropPixels, crop.width, crop.height);
+        *image = LoadImageEx(cropPixels, (int)crop.width, (int)crop.height);
 
         free(cropPixels);
 
@@ -1312,44 +1313,38 @@ void ImageDraw(Image *dst, Image src, Rectangle srcRec, Rectangle dstRec)
 
     UnloadImage(srcCopy);       // Source copy not required any more...
 
-    Color srcCol, dstCol;
-
+    Vector4 fsrc, fdst, fout;   // float based versions of pixel data
+    
     // Blit pixels, copy source image into destination
     // TODO: Probably out-of-bounds blitting could be considered here instead of so much cropping...
-    for (int j = dstRec.y; j < (dstRec.y + dstRec.height); j++)
+    for (int j = (int)dstRec.y; j < (int)(dstRec.y + dstRec.height); j++)
     {
-        for (int i = dstRec.x; i < (dstRec.x + dstRec.width); i++)
+        for (int i = (int)dstRec.x; i < (int)(dstRec.x + dstRec.width); i++)
         {
-            // Alpha blending implementation
-            dstCol = dstPixels[j*dst->width + i];
-            srcCol = srcPixels[(j - dstRec.y)*dstRec.width + (i - dstRec.x)];
+            // Alpha blending (https://en.wikipedia.org/wiki/Alpha_compositing)
             
-            /*
-            // Pre-multiply alpha
-            Vector3 dstColf = { (float)dstCol.r/255.0f, (float)dstCol.g/255.0f, (float)dstCol.b/255.0f };
-            dstColf = Vector3Multiply(dstColf, (float)dstCol.a/255.0f);
-            Vector3 srcColf = { (float)srcCol.r/255.0f, (float)srcCol.g/255.0f, (float)srcCol.b/255.0f };
-            srcColf = Vector3Multiply(srcColf, (float)srcCol.a/255.0f);
-            
-            dstColf = Vector3Add(dstColf, srcColf);
-            
-            if (dstColf.x > 1.0f) dstColf.x = 1.0f;
-            if (dstColf.y > 1.0f) dstColf.y = 1.0f;
-            if (dstColf.z > 1.0f) dstColf.z = 1.0f;
-            
-            dstCol.r = (unsigned char)(dstColf.x*255.0f);
-            dstCol.g = (unsigned char)(dstColf.y*255.0f);
-            dstCol.b = (unsigned char)(dstColf.z*255.0f);
-            dstCol.a = srcCol.a;
-            */
+            fdst = ColorNormalize(dstPixels[j*(int)dst->width + i]);
+            fsrc = ColorNormalize(srcPixels[(j - (int)dstRec.y)*(int)dstRec.width + (i - (int)dstRec.x)]);
 
-            dstCol.r = ((srcCol.a*(srcCol.r - dstCol.r)) >> 8) + dstCol.r;
-            dstCol.g = ((srcCol.a*(srcCol.g - dstCol.g)) >> 8) + dstCol.g;
-            dstCol.b = ((srcCol.a*(srcCol.b - dstCol.b)) >> 8) + dstCol.b;
-            //dstCol.a = ((srcCol.a*(srcCol.a - dstCol.a)) >> 8) + dstCol.a;
-            dstCol.a = srcCol.a;
+            fout.w = fsrc.w + fdst.w*(1.0f - fsrc.w);
+            
+            if (fout.w <= 0.0f)
+            {
+                fout.x = 0.0f;
+                fout.y = 0.0f;
+                fout.z = 0.0f;
+            }
+            else
+            {
+                fout.x = (fsrc.x*fsrc.w + fdst.x*fdst.w*(1 - fsrc.w))/fout.w;
+                fout.y = (fsrc.y*fsrc.w + fdst.y*fdst.w*(1 - fsrc.w))/fout.w;
+                fout.z = (fsrc.z*fsrc.w + fdst.z*fdst.w*(1 - fsrc.w))/fout.w;
+            }
 
-            dstPixels[j*dst->width + i] = dstCol;
+            dstPixels[j*(int)dst->width + i] = (Color){ (unsigned char)(fout.x*255.0f), 
+                                                        (unsigned char)(fout.y*255.0f), 
+                                                        (unsigned char)(fout.z*255.0f), 
+                                                        (unsigned char)(fout.w*255.0f) };
 
             // TODO: Support other blending options
         }
@@ -1357,7 +1352,7 @@ void ImageDraw(Image *dst, Image src, Rectangle srcRec, Rectangle dstRec)
 
     UnloadImage(*dst);  // NOTE: Only dst->data is unloaded
 
-    *dst = LoadImageEx(dstPixels, dst->width, dst->height);
+    *dst = LoadImageEx(dstPixels, (int)dst->width, (int)dst->height);
     ImageFormat(dst, dst->format);
 
     free(srcPixels);
@@ -1369,15 +1364,15 @@ Image ImageText(const char *text, int fontSize, Color color)
 {
     int defaultFontSize = 10;   // Default Font chars height in pixel
     if (fontSize < defaultFontSize) fontSize = defaultFontSize;
-    int spacing = fontSize/defaultFontSize;
+    int spacing = (float)fontSize/defaultFontSize;
 
-    Image imText = ImageTextEx(GetDefaultFont(), text, (float)fontSize, spacing, color);
+    Image imText = ImageTextEx(GetDefaultFont(), text, (float)fontSize, (float)spacing, color);
 
     return imText;
 }
 
 // Create an image from text (custom sprite font)
-Image ImageTextEx(SpriteFont font, const char *text, float fontSize, int spacing, Color tint)
+Image ImageTextEx(Font font, const char *text, float fontSize, float spacing, Color tint)
 {
     int length = strlen(text);
     int posX = 0;
@@ -1391,7 +1386,7 @@ Image ImageTextEx(SpriteFont font, const char *text, float fontSize, int spacing
 
     // NOTE: glGetTexImage() not available in OpenGL ES
     // TODO: This is horrible, retrieving font texture from GPU!!! 
-    // Define ImageFont struct? or include Image spritefont in SpriteFont struct?
+    // Define ImageFont struct? or include Image spritefont in Font struct?
     Image imFont = GetTextureData(font.texture);
     
     ImageColorTint(&imFont, tint);                    // Apply color tint to font
@@ -1457,7 +1452,7 @@ void ImageDrawRectangle(Image *dst, Vector2 position, Rectangle rec, Color color
 {
     Image imRec = GenImageColor(rec.width, rec.height, color);
     
-    Rectangle dstRec = { (int)position.x, (int)position.y, imRec.width, imRec.height };
+    Rectangle dstRec = { position.x, position.y, imRec.width, imRec.height };
 
     ImageDraw(dst, imRec, rec, dstRec);
     
@@ -1468,16 +1463,16 @@ void ImageDrawRectangle(Image *dst, Vector2 position, Rectangle rec, Color color
 void ImageDrawText(Image *dst, Vector2 position, const char *text, int fontSize, Color color)
 {
     // NOTE: For default font, sapcing is set to desired font size / default font size (10)
-    ImageDrawTextEx(dst, position, GetDefaultFont(), text, (float)fontSize, fontSize/10, color);
+    ImageDrawTextEx(dst, position, GetDefaultFont(), text, (float)fontSize, (float)fontSize/10, color);
 }
 
 // Draw text (custom sprite font) within an image (destination)
-void ImageDrawTextEx(Image *dst, Vector2 position, SpriteFont font, const char *text, float fontSize, int spacing, Color color)
+void ImageDrawTextEx(Image *dst, Vector2 position, Font font, const char *text, float fontSize, float spacing, Color color)
 {
     Image imText = ImageTextEx(font, text, fontSize, spacing, color);
 
     Rectangle srcRec = { 0, 0, imText.width, imText.height };
-    Rectangle dstRec = { (int)position.x, (int)position.y, imText.width, imText.height };
+    Rectangle dstRec = { position.x, position.y, imText.width, imText.height };
 
     ImageDraw(dst, imText, srcRec, dstRec);
 
@@ -2026,7 +2021,7 @@ void DrawTextureV(Texture2D texture, Vector2 position, Color tint)
 void DrawTextureEx(Texture2D texture, Vector2 position, float rotation, float scale, Color tint)
 {
     Rectangle sourceRec = { 0, 0, texture.width, texture.height };
-    Rectangle destRec = { (int)position.x, (int)position.y, texture.width*scale, texture.height*scale };
+    Rectangle destRec = { position.x, position.y, texture.width*scale, texture.height*scale };
     Vector2 origin = { 0, 0 };
 
     DrawTexturePro(texture, sourceRec, destRec, origin, rotation, tint);
@@ -2035,7 +2030,7 @@ void DrawTextureEx(Texture2D texture, Vector2 position, float rotation, float sc
 // Draw a part of a texture (defined by a rectangle)
 void DrawTextureRec(Texture2D texture, Rectangle sourceRec, Vector2 position, Color tint)
 {
-    Rectangle destRec = { (int)position.x, (int)position.y, abs(sourceRec.width), abs(sourceRec.height) };
+    Rectangle destRec = { position.x, position.y, sourceRec.width, fabsf(sourceRec.height) };
     Vector2 origin = { 0, 0 };
 
     DrawTexturePro(texture, sourceRec, destRec, origin, 0.0f, tint);
@@ -2054,7 +2049,7 @@ void DrawTexturePro(Texture2D texture, Rectangle sourceRec, Rectangle destRec, V
         rlEnableTexture(texture.id);
 
         rlPushMatrix();
-            rlTranslatef((float)destRec.x, (float)destRec.y, 0);
+            rlTranslatef(destRec.x, destRec.y, 0);
             rlRotatef(rotation, 0, 0, 1);
             rlTranslatef(-origin.x, -origin.y, 0);
 
@@ -2063,20 +2058,20 @@ void DrawTexturePro(Texture2D texture, Rectangle sourceRec, Rectangle destRec, V
                 rlNormal3f(0.0f, 0.0f, 1.0f);                          // Normal vector pointing towards viewer
 
                 // Bottom-left corner for texture and quad
-                rlTexCoord2f((float)sourceRec.x/texture.width, (float)sourceRec.y/texture.height);
+                rlTexCoord2f(sourceRec.x/texture.width, sourceRec.y/texture.height);
                 rlVertex2f(0.0f, 0.0f);
 
                 // Bottom-right corner for texture and quad
-                rlTexCoord2f((float)sourceRec.x/texture.width, (float)(sourceRec.y + sourceRec.height)/texture.height);
-                rlVertex2f(0.0f, (float)destRec.height);
+                rlTexCoord2f(sourceRec.x/texture.width, (sourceRec.y + sourceRec.height)/texture.height);
+                rlVertex2f(0.0f, destRec.height);
 
                 // Top-right corner for texture and quad
-                rlTexCoord2f((float)(sourceRec.x + sourceRec.width)/texture.width, (float)(sourceRec.y + sourceRec.height)/texture.height);
-                rlVertex2f((float)destRec.width, (float)destRec.height);
+                rlTexCoord2f((sourceRec.x + sourceRec.width)/texture.width, (sourceRec.y + sourceRec.height)/texture.height);
+                rlVertex2f(destRec.width, destRec.height);
 
                 // Top-left corner for texture and quad
-                rlTexCoord2f((float)(sourceRec.x + sourceRec.width)/texture.width, (float)sourceRec.y/texture.height);
-                rlVertex2f((float)destRec.width, 0.0f);
+                rlTexCoord2f((sourceRec.x + sourceRec.width)/texture.width, sourceRec.y/texture.height);
+                rlVertex2f(destRec.width, 0.0f);
             rlEnd();
         rlPopMatrix();
 
@@ -2680,7 +2675,7 @@ static Image LoadASTC(const char *fileName)
                 fread(image.data, dataSize, 1, astcFile);
 
                 if (bpp == 8) image.format = COMPRESSED_ASTC_4x4_RGBA;
-                else if (bpp == 2) image.format = COMPRESSED_ASTC_4x4_RGBA;
+                else if (bpp == 2) image.format = COMPRESSED_ASTC_8x8_RGBA;
             }
             else TraceLog(LOG_WARNING, "[%s] ASTC block size configuration not supported", fileName);
         }

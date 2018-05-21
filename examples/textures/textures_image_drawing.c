@@ -38,12 +38,12 @@ int main()
     UnloadImage(cat);       // Unload image from RAM
     
     // Load custom font for frawing on image
-    SpriteFont font = LoadSpriteFont("resources/custom_jupiter_crash.png");
+    Font font = LoadFont("resources/custom_jupiter_crash.png");
     
     // Draw over image using custom font
     ImageDrawTextEx(&parrots, (Vector2){ 300, 230 }, font, "PARROTS & CAT", font.baseSize, -2, WHITE);
     
-    UnloadSpriteFont(font); // Unload custom spritefont (already drawn used on image)
+    UnloadFont(font); // Unload custom spritefont (already drawn used on image)
 
     Texture2D texture = LoadTextureFromImage(parrots);      // Image converted to texture, uploaded to GPU memory (VRAM)
     UnloadImage(parrots);   // Once image has been converted to texture and uploaded to VRAM, it can be unloaded from RAM

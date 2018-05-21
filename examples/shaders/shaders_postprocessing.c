@@ -130,13 +130,13 @@ int main()
 
             BeginTextureMode(target);   // Enable drawing to texture
             
-                Begin3dMode(camera);
+                BeginMode3D(camera);
 
                     DrawModel(dwarf, position, 2.0f, WHITE);   // Draw 3d model with texture
 
                     DrawGrid(10, 1.0f);     // Draw a grid
 
-                End3dMode();
+                EndMode3D();
                 
             EndTextureMode();           // End drawing to texture (now we have a texture available for next passes)
             

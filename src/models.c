@@ -36,9 +36,8 @@
 *
 **********************************************************************************************/
 
-#include "config.h"
-
-#include "raylib.h"
+#include "config.h"         // Defines module configuration flags
+#include "raylib.h"         // Declares module functions
 
 #include "utils.h"          // Required for: fopen() Android mapping
 
@@ -2119,16 +2118,98 @@ BoundingBox MeshBoundingBox(Mesh mesh)
     return box;
 }
 
-// Compute mesh tangents 
+// Compute mesh tangents
+// NOTE: To calculate mesh tangents and binormals we need mesh vertex positions and texture coordinates
+// Implementation base don: https://answers.unity.com/questions/7789/calculating-tangents-vector4.html
 void MeshTangents(Mesh *mesh)
 {
-    // TODO: Compute mesh tangents
+    if (mesh->tangents == NULL) mesh->tangents = (float *)malloc(mesh->vertexCount*4*sizeof(float));
+    else TraceLog(LOG_WARNING, "Mesh tangents already exist");
+    
+    Vector3 *tan1 = (Vector3 *)malloc(mesh->vertexCount*sizeof(Vector3));
+    Vector3 *tan2 = (Vector3 *)malloc(mesh->vertexCount*sizeof(Vector3));
+
+    for (int i = 0; i < mesh->vertexCount; i += 3)
+    {
+        // Get triangle vertices
+        Vector3 v1 = { mesh->vertices[(i + 0)*3 + 0], mesh->vertices[(i + 0)*3 + 1], mesh->vertices[(i + 0)*3 + 2] };
+        Vector3 v2 = { mesh->vertices[(i + 1)*3 + 0], mesh->vertices[(i + 1)*3 + 1], mesh->vertices[(i + 1)*3 + 2] };
+        Vector3 v3 = { mesh->vertices[(i + 2)*3 + 0], mesh->vertices[(i + 2)*3 + 1], mesh->vertices[(i + 2)*3 + 2] };
+
+        // Get triangle texcoords
+        Vector2 uv1 = { mesh->texcoords[(i + 0)*2 + 0], mesh->texcoords[(i + 0)*2 + 1] };
+        Vector2 uv2 = { mesh->texcoords[(i + 1)*2 + 0], mesh->texcoords[(i + 1)*2 + 1] };
+        Vector2 uv3 = { mesh->texcoords[(i + 2)*2 + 0], mesh->texcoords[(i + 2)*2 + 1] };
+
+        float x1 = v2.x - v1.x;
+        float y1 = v2.y - v1.y;
+        float z1 = v2.z - v1.z;
+        float x2 = v3.x - v1.x;
+        float y2 = v3.y - v1.y;
+        float z2 = v3.z - v1.z;
+
+        float s1 = uv2.x - uv1.x;
+        float t1 = uv2.y - uv1.y;
+        float s2 = uv3.x - uv1.x;
+        float t2 = uv3.y - uv1.y;
+
+        float div = s1*t2 - s2*t1;
+        float r = (div == 0.0f) ? 0.0f : 1.0f/div;
+
+        Vector3 sdir = { (t2*x1 - t1*x2)*r, (t2*y1 - t1*y2)*r, (t2*z1 - t1*z2)*r };
+        Vector3 tdir = { (s1*x2 - s2*x1)*r, (s1*y2 - s2*y1)*r, (s1*z2 - s2*z1)*r };
+        
+        tan1[i + 0] = sdir;
+        tan1[i + 1] = sdir;
+        tan1[i + 2] = sdir;
+
+        tan2[i + 0] = tdir;
+        tan2[i + 1] = tdir;
+        tan2[i + 2] = tdir;
+    }
+
+    // Compute tangents considering normals
+    for (int i = 0; i < mesh->vertexCount; ++i)
+    {
+        Vector3 normal = { mesh->normals[i*3 + 0], mesh->normals[i*3 + 1], mesh->normals[i*3 + 2] };
+        Vector3 tangent = tan1[i];
+
+        // TODO: Review, not sure if tangent computation is right, just used reference proposed maths...
+    #if defined(COMPUTE_TANGENTS_METHOD_01)
+        Vector3 tmp = Vector3Subtract(tangent, Vector3Multiply(normal, Vector3DotProduct(normal, tangent)));
+        tmp = Vector3Normalize(tmp);
+        mesh->tangents[i*4 + 0] = tmp.x;
+        mesh->tangents[i*4 + 1] = tmp.y;
+        mesh->tangents[i*4 + 2] = tmp.z;
+        mesh->tangents[i*4 + 3] = 1.0f;
+    #else
+        Vector3OrthoNormalize(&normal, &tangent);
+        mesh->tangents[i*4 + 0] = tangent.x;
+        mesh->tangents[i*4 + 1] = tangent.y;
+        mesh->tangents[i*4 + 2] = tangent.z;
+        mesh->tangents[i*4 + 3] = (Vector3DotProduct(Vector3CrossProduct(normal, tangent), tan2[i]) < 0.0f) ? -1.0f : 1.0f;
+    #endif
+    }
+    
+    free(tan1);
+    free(tan2);
+    
+    TraceLog(LOG_INFO, "Tangents computed for mesh");
 }
 
-// Compute mesh binormals
+// Compute mesh binormals (aka bitangent)
 void MeshBinormals(Mesh *mesh)
 {
-    // TODO: Compute mesh binormals
+    for (int i = 0; i < mesh->vertexCount; i++)
+    {
+        Vector3 normal = { mesh->normals[i*3 + 0], mesh->normals[i*3 + 1], mesh->normals[i*3 + 2] };
+        Vector3 tangent = { mesh->tangents[i*4 + 0], mesh->tangents[i*4 + 1], mesh->tangents[i*4 + 2] };
+        float tangentW = mesh->tangents[i*4 + 3];
+    
+        Vector3 binormal = Vector3Multiply(Vector3CrossProduct(normal, tangent), tangentW);
+        
+        // TODO: Register computed binormal in mesh->binormal ?
+    }
 }
 
 //----------------------------------------------------------------------------------

@@ -76,7 +76,7 @@ Color textColorButton;
 int currentMission;
 int totalMissions;
 
-SpriteFont fontMission;
+Font fontMission;
 
 Word messageWords[MAX_MISSION_WORDS];
 

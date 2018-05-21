@@ -36,7 +36,7 @@ static int framesCounter;
 static int finishScreen;
 
 static Texture2D texBackground;
-static SpriteFont fontTitle;
+static Font fontTitle;
 static Sound fxTyping;
 
 static float titleSize;
@@ -71,7 +71,7 @@ void InitTitleScreen(void)
     
     texBackground = LoadTexture("resources/textures/title_background.png");
     fxTyping = LoadSound("resources/audio/fx_typing.ogg");
-    fontTitle = LoadSpriteFontEx("resources/fonts/mom_typewritter.ttf", 96, 0, 0);
+    fontTitle = LoadFontEx("resources/fonts/mom_typewritter.ttf", 96, 0, 0);
     
     titleSize = 44;
     transmissionPosition = (Vector2){519, 221};
@@ -148,7 +148,7 @@ void UnloadTitleScreen(void)
 {
     UnloadTexture(texBackground);
     UnloadSound(fxTyping);
-    UnloadSpriteFont(fontTitle);
+    UnloadFont(fontTitle);
 }
 
 // Title Screen should finish?

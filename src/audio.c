@@ -24,6 +24,7 @@
 *   #define SUPPORT_FILEFORMAT_XM
 *   #define SUPPORT_FILEFORMAT_MOD
 *   #define SUPPORT_FILEFORMAT_FLAC
+*   #define SUPPORT_FILEFORMAT_MP3
 *       Selected desired fileformats to be supported for loading. Some of those formats are
 *       supported by default, to remove support, just comment unrequired #define in this module
 *
@@ -73,7 +74,6 @@
 **********************************************************************************************/
 
 #include "config.h"
-
 #if !defined(USE_OPENAL_BACKEND)
     #define USE_MINI_AL 1       // Set to 1 to use mini_al; 0 to use OpenAL.
 #endif
@@ -82,7 +82,8 @@
     #include "audio.h"
     #include <stdarg.h>         // Required for: va_list, va_start(), vfprintf(), va_end()
 #else
-    #include "raylib.h"
+    #include "config.h"         // Defines module configuration flags
+    #include "raylib.h"         // Declares module functions
     #include "utils.h"          // Required for: fopen() Android mapping
 #endif
 
@@ -127,6 +128,11 @@
     #include "external/dr_flac.h"       // FLAC loading functions
 #endif
 
+#if defined(SUPPORT_FILEFORMAT_MP3)
+    #define DR_MP3_IMPLEMENTATION
+    #include "external/dr_mp3.h"       // MP3 loading functions
+#endif
+
 #ifdef _MSC_VER
     #undef bool
 #endif
@@ -158,6 +164,7 @@
 typedef enum { 
     MUSIC_AUDIO_OGG = 0, 
     MUSIC_AUDIO_FLAC, 
+    MUSIC_AUDIO_MP3, 
     MUSIC_MODULE_XM, 
     MUSIC_MODULE_MOD 
 } MusicContextType;
@@ -170,6 +177,9 @@ typedef struct MusicData {
 #endif
 #if defined(SUPPORT_FILEFORMAT_FLAC)
     drflac *ctxFlac;                    // FLAC audio context
+#endif
+#if defined(SUPPORT_FILEFORMAT_MP3)
+    drmp3 ctxMp3;                       // MP3 audio context
 #endif
 #if defined(SUPPORT_FILEFORMAT_XM)
     jar_xm_context_t *ctxXm;            // XM chiptune context
@@ -1365,6 +1375,27 @@ Music LoadMusicStream(const char *fileName)
         }
     }
 #endif
+#if defined(SUPPORT_FILEFORMAT_MP3)
+    else if (IsFileExtension(fileName, ".mp3"))
+    {
+        drmp3_init_file(&music->ctxMp3, fileName, NULL)
+
+        if (music->ctxMp3 == NULL) TraceLog(LOG_WARNING, "[%s] MP3 audio file could not be opened", fileName);
+        else
+        {
+            music->stream = InitAudioStream(music->ctxMp3.sampleRate, 16, music->ctxMp3.channels);
+            //music->totalSamples = (unsigned int)music->ctxMp3.totalSampleCount/music->ctxMp3.channels;    //TODO!
+            music->samplesLeft = music->totalSamples;
+            music->ctxType = MUSIC_AUDIO_MP3;
+            music->loopCount = -1;                       // Infinite loop by default
+
+            TraceLog(LOG_DEBUG, "[%s] MP3 total samples: %i", fileName, music->totalSamples);
+            TraceLog(LOG_DEBUG, "[%s] MP3 sample rate: %i", fileName, music->ctxMp3.sampleRate);
+            //TraceLog(LOG_DEBUG, "[%s] MP3 bits per sample: %i", fileName, music->ctxMp3.bitsPerSample);
+            TraceLog(LOG_DEBUG, "[%s] MP3 channels: %i", fileName, music->ctxMp3.channels);
+        }
+    }
+#endif
 #if defined(SUPPORT_FILEFORMAT_XM)
     else if (IsFileExtension(fileName, ".xm"))
     {
@@ -1419,6 +1450,9 @@ void UnloadMusicStream(Music music)
     if (music->ctxType == MUSIC_AUDIO_OGG) stb_vorbis_close(music->ctxOgg);
 #if defined(SUPPORT_FILEFORMAT_FLAC)
     else if (music->ctxType == MUSIC_AUDIO_FLAC) drflac_free(music->ctxFlac);
+#endif
+#if defined(SUPPORT_FILEFORMAT_MP3)
+    else if (music->ctxType == MUSIC_AUDIO_MP3) drmp3_uninit(&music->ctxMp3);
 #endif
 #if defined(SUPPORT_FILEFORMAT_XM)
     else if (music->ctxType == MUSIC_MODULE_XM) jar_xm_free_context(music->ctxXm);
@@ -1558,6 +1592,14 @@ void UpdateMusicStream(Music music)
             {
                 // NOTE: Returns the number of samples to process
                 unsigned int numSamplesFlac = (unsigned int)drflac_read_s16(music->ctxFlac, samplesCount*music->stream.channels, (short *)pcm);
+
+            } break;
+        #endif
+        #if defined(SUPPORT_FILEFORMAT_MP3)
+            case MUSIC_AUDIO_MP3: 
+            {
+                // NOTE: Returns the number of samples to process
+                unsigned int numSamplesMp3 = (unsigned int)drmp3_read_f32(music->ctxMp3, samplesCount*music->stream.channels, (short *)pcm);
 
             } break;
         #endif

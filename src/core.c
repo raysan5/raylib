@@ -50,6 +50,9 @@
 *   #define SUPPORT_BUSY_WAIT_LOOP
 *       Use busy wait loop for timing sync, if not defined, a high-resolution timer is setup and used
 *
+*   #define SUPPORT_SCREEN_CAPTURE
+*       Allow automatic screen capture of current screen pressing F12, defined in KeyCallback()
+*
 *   #define SUPPORT_GIF_RECORDING
 *       Allow automatic gif recording of current screen pressing CTRL+F12, defined in KeyCallback()
 *
@@ -81,9 +84,8 @@
 *
 **********************************************************************************************/
 
-#include "config.h"
-
-#include "raylib.h"
+#include "config.h"             // Defines module configuration flags
+#include "raylib.h"             // Declares module functions
 
 #if (defined(__linux__) || defined(PLATFORM_WEB)) && _POSIX_C_SOURCE < 199309L
     #undef _POSIX_C_SOURCE
@@ -93,8 +95,8 @@
 #define RAYMATH_IMPLEMENTATION  // Define external out-of-line implementation of raymath here
 #include "raymath.h"            // Required for: Vector3 and Matrix functions
 
-#include "rlgl.h"           // raylib OpenGL abstraction layer to OpenGL 1.1, 3.3+ or ES2
-#include "utils.h"          // Required for: fopen() Android mapping
+#include "rlgl.h"               // raylib OpenGL abstraction layer to OpenGL 1.1, 3.3+ or ES2
+#include "utils.h"              // Required for: fopen() Android mapping
 
 #if defined(SUPPORT_GESTURES_SYSTEM)
     #define GESTURES_IMPLEMENTATION
@@ -108,14 +110,14 @@
 
 #if defined(SUPPORT_GIF_RECORDING)
     #define RGIF_IMPLEMENTATION
-    #include "external/rgif.h"   // Support GIF recording
+    #include "external/rgif.h"  // Support GIF recording
 #endif
 
 #include <stdio.h>          // Standard input / output lib
 #include <stdlib.h>         // Required for: malloc(), free(), rand(), atexit()
 #include <stdint.h>         // Required for: typedef unsigned long long int uint64_t, used by hi-res timer
 #include <time.h>           // Required for: time() - Android/RPI hi-res timer (NOTE: Linux only!)
-#include <math.h>           // Required for: tan() [Used in Begin3dMode() to set perspective]
+#include <math.h>           // Required for: tan() [Used in BeginMode3D() to set perspective]
 #include <string.h>         // Required for: strrchr(), strcmp()
 //#include <errno.h>          // Macros for reporting and retrieving error conditions through error codes
 #include <ctype.h>          // Required for: tolower() [Used in IsFileExtension()]
@@ -139,13 +141,7 @@
 #if defined(PLATFORM_DESKTOP) || defined(PLATFORM_WEB)
     //#define GLFW_INCLUDE_NONE     // Disable the standard OpenGL header inclusion on GLFW3
     #include <GLFW/glfw3.h>         // GLFW3 library: Windows, OpenGL context and Input management
-
-    #if defined(__linux__)
-        #define GLFW_EXPOSE_NATIVE_X11   // Linux specific definitions for getting
-        #define GLFW_EXPOSE_NATIVE_GLX   // native functions like glfwGetX11Window
-        #include <GLFW/glfw3native.h>    // which are required for hiding mouse
-    #endif
-    //#include <GL/gl.h>        // OpenGL functions (GLFW3 already includes gl.h)
+                                    // NOTE: GLFW3 already includes gl.h (OpenGL) headers
 
     #if !defined(SUPPORT_BUSY_WAIT_LOOP) && defined(_WIN32)
     // NOTE: Those functions require linking with winmm library
@@ -292,8 +288,6 @@ static bool cursorHidden = false;           // Track if cursor is hidden
 static bool cursorOnScreen = false;         // Tracks if cursor is inside client area
 
 #if defined(PLATFORM_DESKTOP) || defined(PLATFORM_RPI) || defined(PLATFORM_WEB) || defined(PLATFORM_UWP)
-static int screenshotCounter = 0;           // Screenshots counter
-
 // Register mouse states
 static char previousMouseState[3] = { 0 };  // Registers previous mouse button state
 static char currentMouseState[3] = { 0 };   // Registers current mouse button state
@@ -342,9 +336,13 @@ static double targetTime = 0.0;             // Desired time for one frame, if 0 
 static unsigned char configFlags = 0;       // Configuration flags (bit based)
 static bool showLogo = false;               // Track if showing logo at init is enabled
 
+#if defined(SUPPORT_SCREEN_CAPTURE)
+static int screenshotCounter = 0;           // Screenshots counter
+#endif
+
 #if defined(SUPPORT_GIF_RECORDING)
-static int gifFramesCounter = 0;
-static bool gifRecording = false;
+static int gifFramesCounter = 0;            // GIF frames counter
+static bool gifRecording = false;           // GIF recording state
 #endif
 
 //----------------------------------------------------------------------------------
@@ -745,7 +743,6 @@ void SetWindowSize(int width, int height)
 #endif
 }
 
-
 // Get current screen width
 int GetScreenWidth(void)
 {
@@ -885,7 +882,7 @@ void EndDrawing(void)
 }
 
 // Initialize 2D mode with custom camera (2D)
-void Begin2dMode(Camera2D camera)
+void BeginMode2D(Camera2D camera)
 {
     rlglDraw();                         // Draw Buffers (Only OpenGL 3+ and ES2)
 
@@ -903,7 +900,7 @@ void Begin2dMode(Camera2D camera)
 }
 
 // Ends 2D mode with custom camera
-void End2dMode(void)
+void EndMode2D(void)
 {
     rlglDraw();                         // Draw Buffers (Only OpenGL 3+ and ES2)
 
@@ -911,7 +908,7 @@ void End2dMode(void)
 }
 
 // Initializes 3D mode with custom camera (3D)
-void Begin3dMode(Camera camera)
+void BeginMode3D(Camera3D camera)
 {
     rlglDraw();                         // Draw Buffers (Only OpenGL 3+ and ES2)
     
@@ -951,7 +948,7 @@ void Begin3dMode(Camera camera)
 }
 
 // Ends 3D mode and returns to default 2D orthographic mode
-void End3dMode(void)
+void EndMode3D(void)
 {
     rlglDraw();                         // Process internal buffers (update + draw)
 
@@ -1029,7 +1026,7 @@ Ray GetMouseRay(Vector2 mousePosition, Camera camera)
     // Calculate view matrix from camera look at
     Matrix matView = MatrixLookAt(camera.position, camera.target, camera.up);
 
-    Matrix matProj;
+    Matrix matProj = MatrixIdentity();
 
     if (camera.type == CAMERA_PERSPECTIVE) 
     {
@@ -1041,6 +1038,7 @@ Ray GetMouseRay(Vector2 mousePosition, Camera camera)
         float aspect = (float)screenWidth/(float)screenHeight;
         double top = camera.fovy/2.0;
         double right = top*aspect;
+        
         // Calculate projection matrix from orthographic
         matProj = MatrixOrtho(-right, right, -top, top, 0.01, 1000.0);
     }
@@ -1070,18 +1068,19 @@ Ray GetMouseRay(Vector2 mousePosition, Camera camera)
 Vector2 GetWorldToScreen(Vector3 position, Camera camera)
 {
     // Calculate projection matrix (from perspective instead of frustum
-    Matrix matProj;
+    Matrix matProj = MatrixIdentity();
 
-    if(camera.type == CAMERA_PERSPECTIVE) 
+    if (camera.type == CAMERA_PERSPECTIVE)
     {
         // Calculate projection matrix from perspective
         matProj = MatrixPerspective(camera.fovy*DEG2RAD, ((double)GetScreenWidth()/(double)GetScreenHeight()), 0.01, 1000.0);
     }
-    else if(camera.type == CAMERA_ORTHOGRAPHIC)
+    else if (camera.type == CAMERA_ORTHOGRAPHIC)
     {
         float aspect = (float)screenWidth/(float)screenHeight;
         double top = camera.fovy/2.0;
         double right = top*aspect;
+        
         // Calculate projection matrix from orthographic
         matProj = MatrixOrtho(-right, right, -top, top, 0.01, 1000.0);
     }
@@ -1153,23 +1152,23 @@ double GetTime(void)
 #endif
 }
 
-// Returns normalized float array for a Color
-float *ColorToFloat(Color color)
-{
-    static float buffer[4];
-
-    buffer[0] = (float)color.r/255;
-    buffer[1] = (float)color.g/255;
-    buffer[2] = (float)color.b/255;
-    buffer[3] = (float)color.a/255;
-
-    return buffer;
-}
-
 // Returns hexadecimal value for a Color
 int ColorToInt(Color color)
 {
     return (((int)color.r << 24) | ((int)color.g << 16) | ((int)color.b << 8) | (int)color.a);
+}
+
+// Returns color normalized as float [0..1]
+Vector4 ColorNormalize(Color color)
+{
+    Vector4 result;
+
+    result.x = (float)color.r/255.0f;
+    result.y = (float)color.g/255.0f;
+    result.z = (float)color.b/255.0f;
+    result.w = (float)color.a/255.0f;
+    
+    return result;
 }
 
 // Returns HSV values for a Color
@@ -1313,6 +1312,7 @@ bool IsFileExtension(const char *fileName, const char *ext)
                 }
             }
         }
+        else result = false;
     #else
         if (strcmp(fileExt, ext) == 0) result = true;
     #endif
@@ -1373,24 +1373,32 @@ bool ChangeDirectory(const char *dir)
     return (CHDIR(dir) == 0);
 }
 
-#if defined(PLATFORM_DESKTOP)
 // Check if a file has been dropped into window
 bool IsFileDropped(void)
 {
+#if defined(PLATFORM_DESKTOP)
     if (dropFilesCount > 0) return true;
     else return false;
+#else
+    return false;
+#endif
 }
 
 // Get dropped files names
 char **GetDroppedFiles(int *count)
 {
+#if defined(PLATFORM_DESKTOP)
     *count = dropFilesCount;
     return dropFilesPath;
+#else
+    return NULL;
+#endif
 }
 
 // Clear dropped files paths buffer
 void ClearDroppedFiles(void)
 {
+#if defined(PLATFORM_DESKTOP)
     if (dropFilesCount > 0)
     {
         for (int i = 0; i < dropFilesCount; i++) free(dropFilesPath[i]);
@@ -1399,8 +1407,8 @@ void ClearDroppedFiles(void)
 
         dropFilesCount = 0;
     }
-}
 #endif
+}
 
 // Save integer value to storage file (to defined position)
 // NOTE: Storage positions is directly related to file memory layout (4 bytes each integer)
@@ -2791,10 +2799,12 @@ static void KeyCallback(GLFWwindow *window, int key, int scancode, int action, i
         }
         else
     #endif  // SUPPORT_GIF_RECORDING
+    #if defined(SUPPORT_SCREEN_CAPTURE)
         {
             TakeScreenshot(FormatText("screenshot%03i.png", screenshotCounter));
             screenshotCounter++;
         }
+    #endif  // SUPPORT_SCREEN_CAPTURE
     }
 #endif  // PLATFORM_DESKTOP
     else
@@ -2899,7 +2909,7 @@ static void WindowSizeCallback(GLFWwindow *window, int width, int height)
     rlLoadIdentity();                           // Reset current matrix (MODELVIEW)
     rlClearScreenBuffers();                     // Clear screen buffers (color and depth)
 
-    // Window size must be updated to be used on 3D mode to get new aspect ratio (Begin3dMode())
+    // Window size must be updated to be used on 3D mode to get new aspect ratio (BeginMode3D())
     // NOTE: Be careful! GLFW3 will choose the closest fullscreen resolution supported by current monitor,
     // for example, if reescaling back to 800x450 (desired), it could set 720x480 (closest fullscreen supported)
     screenWidth = width;
@@ -3456,12 +3466,14 @@ static void ProcessKeyboard(void)
     // Check exit key (same functionality as GLFW3 KeyCallback())
     if (currentKeyState[exitKey] == 1) windowShouldClose = true;
 
+#if defined(SUPPORT_SCREEN_CAPTURE)
     // Check screen capture key (raylib key: KEY_F12)
     if (currentKeyState[301] == 1)
     {
         TakeScreenshot(FormatText("screenshot%03i.png", screenshotCounter));
         screenshotCounter++;
     }
+#endif
 }
 
 // Restore default keyboard input

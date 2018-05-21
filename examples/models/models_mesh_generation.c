@@ -72,13 +72,13 @@ int main()
 
             ClearBackground(RAYWHITE);
 
-            Begin3dMode(camera);
+            BeginMode3D(camera);
 
                 DrawModel(models[currentModel], position, 1.0f, WHITE);
 
                 DrawGrid(10, 1.0);
 
-            End3dMode();
+            EndMode3D();
             
             DrawRectangle(30, 400, 310, 30, Fade(SKYBLUE, 0.5f));
             DrawRectangleLines(30, 400, 310, 30, Fade(DARKBLUE, 0.5f));

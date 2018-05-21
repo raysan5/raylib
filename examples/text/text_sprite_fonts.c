@@ -1,6 +1,6 @@
 /*******************************************************************************************
 *
-*   raylib [text] example - SpriteFont loading and usage
+*   raylib [text] example - Font loading and usage
 *
 *   This example has been created using raylib 1.0 (www.raylib.com)
 *   raylib is licensed under an unmodified zlib/libpng license (View raylib.h for details)
@@ -25,9 +25,9 @@ int main()
     const char msg3[50] = "...and a THIRD one! GREAT! :D";
 
     // NOTE: Textures/Fonts MUST be loaded after Window initialization (OpenGL context is required)
-    SpriteFont font1 = LoadSpriteFont("resources/custom_mecha.png");          // SpriteFont loading
-    SpriteFont font2 = LoadSpriteFont("resources/custom_alagard.png");        // SpriteFont loading
-    SpriteFont font3 = LoadSpriteFont("resources/custom_jupiter_crash.png");  // SpriteFont loading
+    Font font1 = LoadFont("resources/custom_mecha.png");          // Font loading
+    Font font2 = LoadFont("resources/custom_alagard.png");        // Font loading
+    Font font3 = LoadFont("resources/custom_jupiter_crash.png");  // Font loading
 
     Vector2 fontPosition1, fontPosition2, fontPosition3;
 
@@ -66,9 +66,9 @@ int main()
 
     // De-Initialization
     //--------------------------------------------------------------------------------------
-    UnloadSpriteFont(font1);      // SpriteFont unloading
-    UnloadSpriteFont(font2);      // SpriteFont unloading
-    UnloadSpriteFont(font3);      // SpriteFont unloading
+    UnloadFont(font1);      // Font unloading
+    UnloadFont(font2);      // Font unloading
+    UnloadFont(font3);      // Font unloading
 
     CloseWindow();                // Close window and OpenGL context
     //--------------------------------------------------------------------------------------

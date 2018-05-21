@@ -1,25 +1,40 @@
 # Setup the project and settings
-project(raylib)
+project(raylib C)
 include(GNUInstallDirs)
+list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/../cmake")
 
-set(PROJECT_VERSION 1.9.7)
-set(API_VERSION 1)
+set(PROJECT_VERSION 2.0.0)
+set(API_VERSION 2)
 set(RAYLIB raylib)    # Name of the generated library
 
 include("CMakeOptions.txt")
+include(BuildType)
 configure_file(config.h.in ${CMAKE_BINARY_DIR}/cmake/config.h)
 include_directories(${CMAKE_BINARY_DIR})
-
-include("../utils.cmake")
+include_directories(SYSTEM .)
 
 # Get the sources together
 file(GLOB raylib_sources *.c)
+list(REMOVE_ITEM raylib_sources ${CMAKE_CURRENT_SOURCE_DIR}/rglfw.c)
 
-if(glfw3_FOUND)
-  list(REMOVE_ITEM raylib_sources ${CMAKE_CURRENT_SOURCE_DIR}/rglfw.c)
-else()
+if(NOT glfw3_FOUND AND "${PLATFORM}" MATCHES "Desktop")
+  set(GLFW_BUILD_DOCS OFF CACHE BOOL "" FORCE)
+  set(GLFW_BUILD_TESTS OFF CACHE BOOL "" FORCE)
+  set(GLFW_BUILD_EXAMPLES OFF CACHE BOOL "" FORCE)
+  set(GLFW_INSTALL OFF CACHE BOOL "" FORCE)
+  set(BUILD_SHARED_LIBS OFF CACHE BOOL " " FORCE)
+  set(GLFW_USE_WAYLAND ${USE_WAYLAND} CACHE BOOL "" FORCE)
+  if (WITH_PIC OR SHARED)
+    set(CMAKE_POSITION_INDEPENDENT_CODE ON)
+  endif()
+
+  add_subdirectory(external/glfw)
   include_directories(external/glfw/include)
+
+  list(APPEND raylib_sources $<TARGET_OBJECTS:glfw_objlib>)
 endif()
+
+include(utils)
 
 if(USE_AUDIO)
   file(GLOB stb_vorbis external/stb_vorbis.c)
@@ -30,6 +45,8 @@ else()
   list(REMOVE_ITEM raylib_sources ${CMAKE_CURRENT_SOURCE_DIR}/audio.c)
   set(sources ${raylib_sources})
 endif()
+
+include(AddIfFlagCompiles)
 
 ### Config options ###
 # Translate the config options to what raylib wants
@@ -47,11 +64,10 @@ if(${PLATFORM} MATCHES "Desktop")
     set(GRAPHICS "GRAPHICS_API_OPENGL_ES2")
   endif()
 
-  # Need to force OpenGL 3.3 on OS X
-  # See: https://github.com/raysan5/raylib/issues/341
   if(APPLE)
+    # Need to force OpenGL 3.3 on OS X
+    # See: https://github.com/raysan5/raylib/issues/341
     set(GRAPHICS "GRAPHICS_API_OPENGL_33")
-    set_source_files_properties(rglfw.c PROPERTIES COMPILE_FLAGS "-x objective-c")
     link_libraries("${LIBS_PRIVATE}")
   elseif(WIN32)
     add_definitions(-D_CRT_SECURE_NO_WARNINGS)
@@ -61,100 +77,109 @@ elseif(${PLATFORM} MATCHES "Web")
   set(PLATFORM "PLATFORM_WEB")
   set(GRAPHICS "GRAPHICS_API_OPENGL_ES2")
 
-  # Need to use `emcc`
-  set(CMAKE_C_COMPILER "emcc")
-  set(CMAKE_CXX_COMPILER "em++")
+  set(CMAKE_C_FLAGS "-s USE_GLFW=3 -s ASSERTIONS=1 --profiling")
 
   # Change the name of the output library
-  set(RAYLIB "libraylib.bc")
 
 elseif(${PLATFORM} MATCHES "Android")
   set(PLATFORM "PLATFORM_ANDROID")
   set(GRAPHICS "GRAPHICS_API_OPENGL_ES2")
+  add_if_flag_compiles(-ffunction-sections CMAKE_C_FLAGS)
+  add_if_flag_compiles(-funwind-tables CMAKE_C_FLAGS)
+  add_if_flag_compiles(-fstack-protector-strong CMAKE_C_FLAGS)
+  set(CMAKE_POSITION_INDEPENDENT_CODE ON)
+  add_if_flag_compiles(-Wa,--noexecstack CMAKE_C_FLAGS)
+  add_if_flag_compiles(-no-canonical-prefixes CMAKE_C_FLAGS)
+  add_definitions(-DANDROID -D__ANDROID_API__=21)
+  include_directories(external/android/native_app_glue )
+  set(CMAKE_SHARED_LINKER_FLAGS "${CMAKE_SHARED_LINKER_FLAGS} -Wl,--exclude-libs,libatomic.a -Wl,--build-id -Wl,-z,noexecstack -Wl,-z,relro -Wl,-z,now -Wl,--warn-shared-textrel -Wl,--fatal-warnings -uANativeActivity_onCreate")
+
 elseif(${PLATFORM} MATCHES "Raspberry Pi")
   set(PLATFORM "PLATFORM_RPI")
   set(GRAPHICS "GRAPHICS_API_OPENGL_ES2")
 endif()
 
-if(MACOS_FATLIB)
-    if (CMAKE_OSX_ARCHITECTURES)
-        message(FATAL_ERROR "User supplied -DCMAKE_OSX_ARCHITECTURES overrides -DMACOS_FATLIB=ON")
-    else()
-        SET(CMAKE_OSX_ARCHITECTURES "x86_64;i386")
-    endif()
-endif()
+if(${SHARED})
+  add_library(${RAYLIB}_shared SHARED ${sources})
 
-# Which platform?
-if(${PLATFORM} MATCHES "PLATFORM_DESKTOP")
+  target_compile_definitions(${RAYLIB}_shared
+      PUBLIC ${PLATFORM}
+      PUBLIC ${GRAPHICS}
+  )
 
-  if(${SHARED})
-    add_library(${RAYLIB}_shared SHARED ${sources})
+  set_property(TARGET ${RAYLIB}_shared PROPERTY POSITION_INDEPENDENT_CODE ON)
+  set(CMAKE_INSTALL_RPATH "${CMAKE_INSTALL_LIBDIR}")
+  set(CMAKE_INSTALL_RPATH_USE_LINK_PATH TRUE)
+  set(CMAKE_MACOSX_RPATH ON)
 
-    target_compile_definitions(${RAYLIB}_shared
-        PUBLIC ${PLATFORM}
-        PUBLIC ${GRAPHICS}
-    )
-
-    set_property(TARGET ${RAYLIB}_shared PROPERTY POSITION_INDEPENDENT_CODE ON)
-    set(CMAKE_INSTALL_RPATH "${CMAKE_INSTALL_LIBDIR}")
-    set(CMAKE_INSTALL_RPATH_USE_LINK_PATH TRUE)
-    set(CMAKE_MACOSX_RPATH ON)
-
-    target_link_libraries(${RAYLIB}_shared ${LIBS_PRIVATE})
-    set_target_properties(${RAYLIB}_shared PROPERTIES
-        VERSION   ${PROJECT_VERSION}
-        SOVERSION ${API_VERSION}
-        PUBLIC_HEADER "raylib.h"
-    )
-    if(WIN32)
-      install(
-        TARGETS ${RAYLIB}_shared
-        RUNTIME DESTINATION lib
-        PUBLIC_HEADER DESTINATION include
+  target_link_libraries(${RAYLIB}_shared ${LIBS_PRIVATE})
+  if (${PLATFORM} MATCHES "Desktop")
+    target_link_libraries(${RAYLIB}_shared glfw ${GLFW_LIBRARIES})
+  endif()
+  if (UNIX AND ${FILESYSTEM_LACKS_SYMLINKS})
+    MESSAGE(WARNING "Can't version UNIX shared library on file system without symlink support")
+  else()
+      set_target_properties(${RAYLIB}_shared PROPERTIES
+          VERSION   ${PROJECT_VERSION}
+          SOVERSION ${API_VERSION}
       )
-    else() # Keep lib*.(a|dll) name, but avoid *.lib files overwriting each other on Windows
-      set_target_properties(${RAYLIB}_shared PROPERTIES OUTPUT_NAME ${RAYLIB})
-      install(
-        TARGETS ${RAYLIB}_shared
-        LIBRARY DESTINATION "${CMAKE_INSTALL_LIBDIR}"
-        PUBLIC_HEADER DESTINATION "${CMAKE_INSTALL_INCLUDEDIR}"
-      )
-    endif()
-  endif(${SHARED})
-
-  if(${STATIC})
-    add_library(${RAYLIB} STATIC ${sources})
-
-    target_compile_definitions(${RAYLIB}
-        PUBLIC ${PLATFORM}
-        PUBLIC ${GRAPHICS}
+  endif()
+  set_target_properties(${RAYLIB}_shared PROPERTIES
+      PUBLIC_HEADER "raylib.h"
+  )
+  if(WIN32)
+    install(
+      TARGETS ${RAYLIB}_shared
+      RUNTIME DESTINATION lib
+      PUBLIC_HEADER DESTINATION include
     )
-
-    set(PKG_CONFIG_LIBS_PRIVATE ${__PKG_CONFIG_LIBS_PRIVATE})
-
-    if (WITH_PIC)
-      set_property(TARGET ${RAYLIB} PROPERTY POSITION_INDEPENDENT_CODE ON)
-    endif()
-    set_target_properties(${RAYLIB} PROPERTIES PUBLIC_HEADER "raylib.h")
-    install(TARGETS ${RAYLIB}
-      ARCHIVE DESTINATION "${CMAKE_INSTALL_LIBDIR}"
+  else() # Keep lib*.(a|dll) name, but avoid *.lib files overwriting each other on Windows
+    set_target_properties(${RAYLIB}_shared PROPERTIES OUTPUT_NAME ${RAYLIB})
+    install(
+      TARGETS ${RAYLIB}_shared
+      LIBRARY DESTINATION "${CMAKE_INSTALL_LIBDIR}"
       PUBLIC_HEADER DESTINATION "${CMAKE_INSTALL_INCLUDEDIR}"
     )
-  endif(${STATIC})
+  endif()
+endif(${SHARED})
 
-  configure_file(../raylib.pc.in raylib.pc @ONLY)
-  install(FILES ${CMAKE_BINARY_DIR}/release/raylib.pc DESTINATION "${CMAKE_INSTALL_LIBDIR}/pkgconfig")
+if(${STATIC})
+  if(${PLATFORM} MATCHES "PLATFORM_WEB")
+    set(CMAKE_STATIC_LIBRARY_SUFFIX ".bc")
+  endif()
 
-  # Copy the header files to the build directory
-  file(COPY "raylib.h" DESTINATION ".")
-  file(COPY "rlgl.h" DESTINATION ".")
-  file(COPY "physac.h" DESTINATION ".")
-  file(COPY "raymath.h" DESTINATION ".")
-  file(COPY "audio.h" DESTINATION ".")
-elseif(${PLATFORM} MATCHES "PLATFORM_WEB")
-  # For the web.
-  add_executable(${RAYLIB} ${sources})
-endif()
+  add_library(${RAYLIB} STATIC ${sources})
+
+  set(PKG_CONFIG_LIBS_PRIVATE ${__PKG_CONFIG_LIBS_PRIVATE})
+  if (${PLATFORM} MATCHES "Desktop")
+    target_link_libraries(${RAYLIB} glfw ${GLFW_LIBRARIES})
+  endif()
+
+  if (WITH_PIC)
+    set_property(TARGET ${RAYLIB} PROPERTY POSITION_INDEPENDENT_CODE ON)
+  endif()
+  set_target_properties(${RAYLIB} PROPERTIES PUBLIC_HEADER "raylib.h")
+  install(TARGETS ${RAYLIB}
+    ARCHIVE DESTINATION "${CMAKE_INSTALL_LIBDIR}"
+    PUBLIC_HEADER DESTINATION "${CMAKE_INSTALL_INCLUDEDIR}"
+  )
+endif(${STATIC})
+
+configure_file(../raylib.pc.in raylib.pc @ONLY)
+install(FILES ${CMAKE_BINARY_DIR}/release/raylib.pc DESTINATION "${CMAKE_INSTALL_LIBDIR}/pkgconfig")
+
+# Copy the header files to the build directory
+file(COPY "raylib.h" DESTINATION ".")
+file(COPY "rlgl.h" DESTINATION ".")
+file(COPY "physac.h" DESTINATION ".")
+file(COPY "raymath.h" DESTINATION ".")
+file(COPY "audio.h" DESTINATION ".")
+
+target_compile_definitions(${RAYLIB}
+    PUBLIC ${PLATFORM}
+    PUBLIC ${GRAPHICS}
+)
+
 
 # Print the flags for the user
 message(STATUS "Compiling with the flags:")

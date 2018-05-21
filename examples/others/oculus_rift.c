@@ -151,14 +151,14 @@ int main()
             if (vrDeviceReady) BeginOculusDrawing();
             else BeginVrDrawing();
 
-            Begin3dMode(camera);
+            BeginMode3D(camera);
 
                 DrawCube(cubePosition, 2.0f, 2.0f, 2.0f, RED);
                 DrawCubeWires(cubePosition, 2.0f, 2.0f, 2.0f, MAROON);
 
                 DrawGrid(40, 1.0f);
 
-            End3dMode();
+            EndMode3D();
             
             if (vrDeviceReady) EndOculusDrawing();
             else EndVrDrawing();

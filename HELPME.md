@@ -13,7 +13,7 @@ The following help is highly appreciated:
 	- Testers of current features and multiple systems - Can you find some bug on raylib?
 
 If you can not help on any of the above points but you still want to contribute in some way... please, consider helping 
-with a small [donation](http://www.raylib.com/helpme.html) or contributing with [raylib patreon](https://www.patreon.com/raysan5). It will really motivate to continue improving this project...
+with a small [donation](http://www.raylib.com/helpme.html) or contributing with [raylib patreon](https://www.patreon.com/raylib). It will really motivate to continue improving this project...
 
 raylib philosophy
 ------------------
@@ -32,6 +32,6 @@ contact
    * Facebook: [http://www.facebook.com/raylibgames](http://www.facebook.com/raylibgames)
    * Reddit: [https://www.reddit.com/r/raylib](https://www.reddit.com/r/raylib)
    * Twitch: [http://www.twitch.tv/raysan5](http://www.twitch.tv/raysan5)
-   * Patreon: [https://www.patreon.com/raysan5](https://www.patreon.com/raysan5)
+   * Patreon: [https://www.patreon.com/raylib](https://www.patreon.com/raylib)
    
 [raysan5]: mailto:ray@raylib.com "Ramon Santamaria - Ray San"

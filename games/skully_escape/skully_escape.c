@@ -60,7 +60,7 @@ int main(void)
     music = LoadMusicStream("resources/audio/come_play_with_me.ogg");
     PlayMusicStream(music);
     
-    font = LoadSpriteFont("resources/textures/alagard.png");
+    font = LoadFont("resources/textures/alagard.png");
 	doors = LoadTexture("resources/textures/doors.png");
     sndDoor = LoadSound("resources/audio/door.ogg");
     sndScream = LoadSound("resources/audio/scream.ogg");
@@ -89,7 +89,7 @@ int main(void)
     
     // Unload all global loaded data (i.e. fonts) here!
 	UnloadPlayer();
-    UnloadSpriteFont(font);
+    UnloadFont(font);
     UnloadTexture(doors);
     UnloadSound(sndDoor);
     UnloadSound(sndScream);

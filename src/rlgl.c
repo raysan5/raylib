@@ -85,18 +85,18 @@
             #define WINGDIAPI __declspec(dllimport)
         #endif
 
-		#include <GL/gl.h>          // OpenGL 1.1 library
+		#include <GL/gl.h>              // OpenGL 1.1 library
     #endif
 #endif
 
 #if defined(GRAPHICS_API_OPENGL_21)
-    #define GRAPHICS_API_OPENGL_33
+    #define GRAPHICS_API_OPENGL_33      // OpenGL 2.1 uses mostly OpenGL 3.3 Core functionality
 #endif
 
 #if defined(GRAPHICS_API_OPENGL_33)
     #if defined(__APPLE__)
-        #include <OpenGL/gl3.h>     // OpenGL 3 library for OSX
-        #include <OpenGL/gl3ext.h>
+        #include <OpenGL/gl3.h>         // OpenGL 3 library for OSX
+        #include <OpenGL/gl3ext.h>      // OpenGL 3 extensions library for OSX
     #else
         #define GLAD_IMPLEMENTATION
         #if defined(RLGL_STANDALONE)
@@ -108,17 +108,17 @@
 #endif
 
 #if defined(GRAPHICS_API_OPENGL_ES2)
-    #include <EGL/egl.h>            // EGL library
-    #include <GLES2/gl2.h>          // OpenGL ES 2.0 library
-    #include <GLES2/gl2ext.h>       // OpenGL ES 2.0 extensions library
+    #include <EGL/egl.h>                // EGL library
+    #include <GLES2/gl2.h>              // OpenGL ES 2.0 library
+    #include <GLES2/gl2ext.h>           // OpenGL ES 2.0 extensions library
 #endif
 
 #if defined(RLGL_STANDALONE)
-    #include <stdarg.h>             // Required for: va_list, va_start(), vfprintf(), va_end() [Used only on TraceLog()]
+    #include <stdarg.h>                 // Required for: va_list, va_start(), vfprintf(), va_end() [Used only on TraceLog()]
 #endif
 
 #if !defined(GRAPHICS_API_OPENGL_11) && defined(SUPPORT_DISTORTION_SHADER)
-    #include "shader_distortion.h"  // Distortion shader to be embedded
+    #include "shader_distortion.h"      // Distortion shader to be embedded
 #endif
 
 
@@ -307,17 +307,17 @@ static bool vrStereoRender = false;     // VR stereo rendering enabled/disabled 
 
 // Extension supported flag: Anisotropic filtering
 static bool texAnisotropicFilterSupported = false;  // Anisotropic texture filtering support
-static float maxAnisotropicLevel = 0.0f;        // Maximum anisotropy level supported (minimum is 2.0f)
+static float maxAnisotropicLevel = 0.0f;            // Maximum anisotropy level supported (minimum is 2.0f)
 
 // Extension supported flag: Clamp mirror wrap mode
-static bool texClampMirrorSupported = false;    // Clamp mirror wrap mode supported
+static bool texClampMirrorSupported = false;        // Clamp mirror wrap mode supported
 
 #if defined(GRAPHICS_API_OPENGL_ES2)
 // NOTE: VAO functionality is exposed through extensions (OES)
 static PFNGLGENVERTEXARRAYSOESPROC glGenVertexArrays;
 static PFNGLBINDVERTEXARRAYOESPROC glBindVertexArray;
 static PFNGLDELETEVERTEXARRAYSOESPROC glDeleteVertexArrays;
-//static PFNGLISVERTEXARRAYOESPROC glIsVertexArray;        // NOTE: Fails in WebGL, omitted
+//static PFNGLISVERTEXARRAYOESPROC glIsVertexArray;   // NOTE: Fails in WebGL, omitted
 #endif
 
 static bool debugMarkerSupported = false;
@@ -658,13 +658,11 @@ void rlEnd(void)
     // Correct increment formula would be: depthInc = (zfar - znear)/pow(2, bits)
     currentDepth += (1.0f/20000.0f);
     
-    // TODO: Verify internal buffers limits
-    // NOTE: Before launching draw, verify no matrix are left in the stack!
-    // NOTE: Probably a lines/triangles margin should be left, rlEnd could be called
-    // after an undetermined number of triangles buffered (check shapes::DrawPoly())
+    // Verify internal buffers limits
+    // NOTE: This check is combined with usage of rlCheckBufferLimit()
     if ((lines.vCounter/2 >= MAX_LINES_BATCH - 2) ||
-        (triangles.vCounter/3 >= MAX_TRIANGLES_BATCH - 16) ||
-        (quads.vCounter/4 >= MAX_QUADS_BATCH - 2)) rlglDraw();
+        (triangles.vCounter/3 >= MAX_TRIANGLES_BATCH - 3) ||
+        (quads.vCounter/4 >= MAX_QUADS_BATCH - 4)) rlglDraw();
 }
 
 // Define one vertex (position)
@@ -1313,6 +1311,22 @@ int rlGetVersion(void)
 #endif
 }
 
+// Check internal buffer overflow for a given number of vertex
+bool rlCheckBufferLimit(int type, int vCount)
+{
+    bool overflow = false;
+#if defined(GRAPHICS_API_OPENGL_33) || defined(GRAPHICS_API_OPENGL_ES2)
+    switch (type)
+    {
+        case RL_LINES: overflow = ((lines.vCounter + vCount)/2 >= MAX_LINES_BATCH); break;
+        case RL_TRIANGLES: overflow = ((triangles.vCounter + vCount)/3 >= MAX_TRIANGLES_BATCH); break;
+        case RL_QUADS: overflow = ((quads.vCounter + vCount)/4 >= MAX_QUADS_BATCH); break;
+        default: break;
+    }
+#endif
+    return overflow;
+}
+
 // Set debug marker
 void rlSetDebugMarker(const char *text)
 {
@@ -1325,7 +1339,7 @@ void rlSetDebugMarker(const char *text)
 // NOTE: External loader function could be passed as a pointer
 void rlLoadExtensions(void *loader)
 {
-#if defined(GRAPHICS_API_OPENGL_21) || defined(GRAPHICS_API_OPENGL_33)
+#if defined(GRAPHICS_API_OPENGL_33)
     // NOTE: glad is generated and contains only required OpenGL 3.3 Core extensions (and lower versions)
     #if !defined(__APPLE__)
         if (!gladLoadGLLoader((GLADloadproc)loader)) TraceLog(LOG_WARNING, "GLAD: Cannot load OpenGL extensions");
@@ -1456,7 +1470,11 @@ unsigned int rlLoadTexture(void *data, int width, int height, int format, int mi
             }
             else if (format == UNCOMPRESSED_GRAY_ALPHA)
             {
+            #if defined(GRAPHICS_API_OPENGL_21)
+                GLint swizzleMask[] = { GL_RED, GL_RED, GL_RED, GL_ALPHA };
+            #elif defined(GRAPHICS_API_OPENGL_33)
                 GLint swizzleMask[] = { GL_RED, GL_RED, GL_RED, GL_GREEN };
+            #endif
                 glTexParameteriv(GL_TEXTURE_2D, GL_TEXTURE_SWIZZLE_RGBA, swizzleMask);
             }
         #endif
@@ -1648,37 +1666,40 @@ void rlGenerateMipmaps(Texture2D *texture)
     if ((texIsPOT) || (texNPOTSupported))
     {
 #if defined(GRAPHICS_API_OPENGL_11)
-        // Compute required mipmaps
-        void *data = rlReadTexturePixels(*texture);
-
-        // NOTE: data size is reallocated to fit mipmaps data
-        // NOTE: CPU mipmap generation only supports RGBA 32bit data
-        int mipmapCount = GenerateMipmaps(data, texture->width, texture->height);
-
-        int size = texture->width*texture->height*4;  // RGBA 32bit only
-        int offset = size;
-
-        int mipWidth = texture->width/2;
-        int mipHeight = texture->height/2;
-
-        // Load the mipmaps
-        for (int level = 1; level < mipmapCount; level++)
+        // WARNING: Manual mipmap generation only works for RGBA 32bit textures!
+        if (texture->format == UNCOMPRESSED_R8G8B8A8)
         {
-            glTexImage2D(GL_TEXTURE_2D, level, GL_RGBA8, mipWidth, mipHeight, 0, GL_RGBA, GL_UNSIGNED_BYTE, (unsigned char *)data + offset);
+            // Retrieve texture data from VRAM
+            void *data = rlReadTexturePixels(*texture);
+            
+            // NOTE: data size is reallocated to fit mipmaps data
+            // NOTE: CPU mipmap generation only supports RGBA 32bit data
+            int mipmapCount = GenerateMipmaps(data, texture->width, texture->height);
 
-            size = mipWidth*mipHeight*4;
-            offset += size;
+            int size = texture->width*texture->height*4;
+            int offset = size;
 
-            mipWidth /= 2;
-            mipHeight /= 2;
+            int mipWidth = texture->width/2;
+            int mipHeight = texture->height/2;
+
+            // Load the mipmaps
+            for (int level = 1; level < mipmapCount; level++)
+            {
+                glTexImage2D(GL_TEXTURE_2D, level, GL_RGBA8, mipWidth, mipHeight, 0, GL_RGBA, GL_UNSIGNED_BYTE, (unsigned char *)data + offset);
+
+                size = mipWidth*mipHeight*4;
+                offset += size;
+
+                mipWidth /= 2;
+                mipHeight /= 2;
+            }
+
+            texture->mipmaps = mipmapCount + 1;
+            free(data); // Once mipmaps have been generated and data has been uploaded to GPU VRAM, we can discard RAM data
+            
+            TraceLog(LOG_WARNING, "[TEX ID %i] Mipmaps [%i] generated manually on CPU side", texture->id, texture->mipmaps);
         }
-
-        TraceLog(LOG_WARNING, "[TEX ID %i] Mipmaps generated manually on CPU side", texture->id);
-
-        // NOTE: Once mipmaps have been generated and data has been uploaded to GPU VRAM, we can discard RAM data
-        free(data);
-
-        texture->mipmaps = mipmapCount + 1;
+        else TraceLog(LOG_WARNING, "[TEX ID %i] Mipmaps could not be generated for texture format", texture->id);
 #endif
 
 #if defined(GRAPHICS_API_OPENGL_33) || defined(GRAPHICS_API_OPENGL_ES2)
@@ -1947,7 +1968,7 @@ void rlDrawMesh(Mesh mesh, Material material, Matrix transform)
     if (material.shader.locs[LOC_MATRIX_PROJECTION] != -1) SetShaderValueMatrix(material.shader, material.shader.locs[LOC_MATRIX_PROJECTION], projection);
 
     // At this point the modelview matrix just contains the view matrix (camera)
-    // That's because Begin3dMode() sets it an no model-drawing function modifies it, all use rlPushMatrix() and rlPopMatrix()
+    // That's because BeginMode3D() sets it an no model-drawing function modifies it, all use rlPushMatrix() and rlPopMatrix()
     Matrix matView = modelview;         // View matrix (camera)
     Matrix matProjection = projection;  // Projection matrix (perspective)
 
@@ -4058,6 +4079,7 @@ static void GetGlFormats(int format, int *glInternalFormat, int *glFormat, int *
 
 #if defined(GRAPHICS_API_OPENGL_11)
 // Mipmaps data is generated after image data
+// NOTE: Only works with RGBA (4 bytes) data!
 static int GenerateMipmaps(unsigned char *data, int baseWidth, int baseHeight)
 {
     int mipmapCount = 1;                // Required mipmap levels count (including base level)

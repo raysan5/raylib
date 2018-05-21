@@ -47,7 +47,11 @@ typedef VkBool32 (APIENTRY *PFN_vkGetPhysicalDeviceWaylandPresentationSupportKHR
 
 #include "posix_thread.h"
 #include "posix_time.h"
+#ifdef __linux__
 #include "linux_joystick.h"
+#else
+#include "null_joystick.h"
+#endif
 #include "xkb_unicode.h"
 #include "egl_context.h"
 #include "osmesa_context.h"

@@ -47,7 +47,7 @@ typedef struct Door {
 // Global Variables Definition
 //----------------------------------------------------------------------------------
 GameScreen currentScreen;
-SpriteFont font;
+Font font;
 
 Texture2D doors;
 Sound sndDoor;

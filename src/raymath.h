@@ -372,6 +372,17 @@ RMDEF Vector3 Vector3Normalize(Vector3 v)
     return result;
 }
 
+// Orthonormalize provided vectors
+// Makes vectors normalized and orthogonal to each other
+// Gram-Schmidt function implementation
+RMDEF void Vector3OrthoNormalize(Vector3 *v1, Vector3 *v2)
+{
+    *v1 = Vector3Normalize(*v1);
+    Vector3 vn = Vector3CrossProduct(*v1, *v2);
+    vn = Vector3Normalize(vn);
+    *v2 = Vector3CrossProduct(vn, *v1);
+}
+
 // Transforms a Vector3 by a given Matrix
 RMDEF Vector3 Vector3Transform(Vector3 v, Matrix mat)
 {

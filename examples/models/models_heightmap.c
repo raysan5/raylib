@@ -53,13 +53,13 @@ int main()
 
             ClearBackground(RAYWHITE);
 
-            Begin3dMode(camera);
+            BeginMode3D(camera);
 
                 DrawModel(model, mapPosition, 1.0f, RED);
 
                 DrawGrid(20, 1.0f);
 
-            End3dMode();
+            EndMode3D();
             
             DrawTexture(texture, screenWidth - texture.width - 20, 20, WHITE);
             DrawRectangleLines(screenWidth - texture.width - 20, 20, texture.width, texture.height, GREEN);

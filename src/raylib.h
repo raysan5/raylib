@@ -6,7 +6,7 @@
 *       - Written in plain C code (C99) in PascalCase/camelCase notation
 *       - Hardware accelerated with OpenGL (1.1, 2.1, 3.3 or ES2 - choose at compile)
 *       - Unique OpenGL abstraction layer (usable as standalone module): [rlgl]
-*       - Powerful fonts module with SpriteFonts support (XNA fonts, AngelCode fonts, TTF)
+*       - Powerful fonts module with Fonts support (XNA fonts, AngelCode fonts, TTF)
 *       - Outstanding texture formats support, including compressed formats (DXT, ETC, ASTC)
 *       - Full 3d support for 3d Shapes, Models, Billboards, Heightmaps and more!
 *       - Flexible Materials system, supporting classic maps and PBR maps
@@ -190,7 +190,7 @@
 #define MOUSE_MIDDLE_BUTTON   2
 
 // Touch points registered
-#define MAX_TOUCH_POINTS     2
+#define MAX_TOUCH_POINTS      2
 
 // Gamepad Number
 #define GAMEPAD_PLAYER1       0
@@ -349,10 +349,10 @@ typedef struct Color {
 
 // Rectangle type
 typedef struct Rectangle {
-    int x;
-    int y;
-    int width;
-    int height;
+    float x;
+    float y;
+    float width;
+    float height;
 } Rectangle;
 
 // Image type, bpp always RGBA (32bit)
@@ -382,7 +382,7 @@ typedef struct RenderTexture2D {
     Texture2D depth;        // Depth buffer attachment texture
 } RenderTexture2D;
 
-// SpriteFont character info
+// Font character info
 typedef struct CharInfo {
     int value;              // Character value (Unicode)
     Rectangle rec;          // Character rectangle in sprite font
@@ -391,22 +391,26 @@ typedef struct CharInfo {
     int advanceX;           // Character advance position X
 } CharInfo;
 
-// SpriteFont type, includes texture and charSet array data
-typedef struct SpriteFont {
+// Font type, includes texture and charSet array data
+typedef struct Font {
     Texture2D texture;      // Font texture
     int baseSize;           // Base size (default chars height)
     int charsCount;         // Number of characters
     CharInfo *chars;        // Characters info data
-} SpriteFont;
+} Font;
+
+#define SpriteFont  Font    // SpriteFont type fallback, defaults to Font
 
 // Camera type, defines a camera position/orientation in 3d space
-typedef struct Camera {
+typedef struct Camera3D {
     Vector3 position;       // Camera position
     Vector3 target;         // Camera target it looks-at
     Vector3 up;             // Camera up vector (rotation over its axis)
     float fovy;             // Camera field-of-view apperture in Y (degrees) in perspective, used as near plane width in orthographic
     int type;               // Camera type, defines projection type: CAMERA_PERSPECTIVE or CAMERA_ORTHOGRAPHIC
-} Camera;
+} Camera3D;
+
+#define Camera  Camera3D    // Camera type fallback, defaults to Camera3D
 
 // Camera2D type, defines a 2d camera
 typedef struct Camera2D {
@@ -726,15 +730,15 @@ RLAPI void DisableCursor(void);                                   // Disables cu
 RLAPI void ClearBackground(Color color);                          // Set background color (framebuffer clear color)
 RLAPI void BeginDrawing(void);                                    // Setup canvas (framebuffer) to start drawing
 RLAPI void EndDrawing(void);                                      // End canvas drawing and swap buffers (double buffering)
-RLAPI void Begin2dMode(Camera2D camera);                          // Initialize 2D mode with custom camera (2D)
-RLAPI void End2dMode(void);                                       // Ends 2D mode with custom camera
-RLAPI void Begin3dMode(Camera camera);                            // Initializes 3D mode with custom camera (3D)
-RLAPI void End3dMode(void);                                       // Ends 3D mode and returns to default 2D orthographic mode
+RLAPI void BeginMode2D(Camera2D camera);                          // Initialize 2D mode with custom camera (2D)
+RLAPI void EndMode2D(void);                                       // Ends 2D mode with custom camera
+RLAPI void BeginMode3D(Camera3D camera);                          // Initializes 3D mode with custom camera (3D)
+RLAPI void EndMode3D(void);                                       // Ends 3D mode and returns to default 2D orthographic mode
 RLAPI void BeginTextureMode(RenderTexture2D target);              // Initializes render texture for drawing
 RLAPI void EndTextureMode(void);                                  // Ends drawing to render texture
 
 // Screen-space-related functions
-RLAPI Ray GetMouseRay(Vector2 mousePosition, Camera camera);            // Returns a ray trace from mouse position
+RLAPI Ray GetMouseRay(Vector2 mousePosition, Camera camera);      // Returns a ray trace from mouse position
 RLAPI Vector2 GetWorldToScreen(Vector3 position, Camera camera);  // Returns the screen space position for a 3d world space position
 RLAPI Matrix GetCameraMatrix(Camera camera);                      // Returns camera transform matrix (view matrix)
 
@@ -745,8 +749,8 @@ RLAPI float GetFrameTime(void);                                   // Returns tim
 RLAPI double GetTime(void);                                       // Returns elapsed time in seconds since InitWindow()
 
 // Color-related functions
-RLAPI float *ColorToFloat(Color color);                           // Returns normalized float array for a Color
 RLAPI int ColorToInt(Color color);                                // Returns hexadecimal value for a Color
+RLAPI Vector4 ColorNormalize(Color color);                        // Returns color normalized as float [0..1]
 RLAPI Vector3 ColorToHSV(Color color);                            // Returns HSV values for a Color
 RLAPI Color GetColor(int hexValue);                               // Returns a Color struct from hexadecimal value
 RLAPI Color Fade(Color color, float alpha);                       // Color fade-in or fade-out, alpha goes from 0.0f to 1.0f
@@ -837,9 +841,7 @@ RLAPI void UpdateCamera(Camera *camera);                          // Update came
 RLAPI void SetCameraPanControl(int panKey);                       // Set camera pan key to combine with mouse movement (free camera)
 RLAPI void SetCameraAltControl(int altKey);                       // Set camera alt key to combine with mouse movement (free camera)
 RLAPI void SetCameraSmoothZoomControl(int szKey);                 // Set camera smooth zoom key to combine with mouse (free camera)
-RLAPI void SetCameraMoveControls(int frontKey, int backKey,
-                                 int rightKey, int leftKey,
-                                 int upKey, int downKey);         // Set camera move controls (1st person and 3rd person cameras)
+RLAPI void SetCameraMoveControls(int frontKey, int backKey, int rightKey, int leftKey, int upKey, int downKey); // Set camera move controls (1st person and 3rd person cameras)
 
 //------------------------------------------------------------------------------------
 // Basic Shapes Drawing Functions (Module: shapes)
@@ -901,7 +903,6 @@ RLAPI int GetPixelDataSize(int width, int height, int format);                  
 RLAPI Image GetTextureData(Texture2D texture);                                                           // Get pixel data from GPU texture and return an Image
 RLAPI void UpdateTexture(Texture2D texture, const void *pixels);                                         // Update GPU texture with new data
 
-
 // Image manipulation functions
 RLAPI Image ImageCopy(Image image);                                                                      // Create an image duplicate (useful for transformations)
 RLAPI void ImageToPOT(Image *image, Color fillColor);                                                    // Convert image to POT (power-of-two)
@@ -916,12 +917,11 @@ RLAPI void ImageResizeNN(Image *image,int newWidth,int newHeight);              
 RLAPI void ImageMipmaps(Image *image);                                                                   // Generate all mipmap levels for a provided image
 RLAPI void ImageDither(Image *image, int rBpp, int gBpp, int bBpp, int aBpp);                            // Dither image data to 16bpp or lower (Floyd-Steinberg dithering)
 RLAPI Image ImageText(const char *text, int fontSize, Color color);                                      // Create an image from text (default font)
-RLAPI Image ImageTextEx(SpriteFont font, const char *text, float fontSize, int spacing, Color tint);     // Create an image from text (custom sprite font)
+RLAPI Image ImageTextEx(Font font, const char *text, float fontSize, float spacing, Color tint);     // Create an image from text (custom sprite font)
 RLAPI void ImageDraw(Image *dst, Image src, Rectangle srcRec, Rectangle dstRec);                         // Draw a source image within a destination image
 RLAPI void ImageDrawRectangle(Image *dst, Vector2 position, Rectangle rec, Color color);                 // Draw rectangle within an image
 RLAPI void ImageDrawText(Image *dst, Vector2 position, const char *text, int fontSize, Color color);     // Draw text (default font) within an image (destination)
-RLAPI void ImageDrawTextEx(Image *dst, Vector2 position, SpriteFont font, const char *text,
-                           float fontSize, int spacing, Color color);                                    // Draw text (custom sprite font) within an image (destination)
+RLAPI void ImageDrawTextEx(Image *dst, Vector2 position, Font font, const char *text, float fontSize, float spacing, Color color); // Draw text (custom sprite font) within an image (destination)
 RLAPI void ImageFlipVertical(Image *image);                                                              // Flip image vertically
 RLAPI void ImageFlipHorizontal(Image *image);                                                            // Flip image horizontally
 RLAPI void ImageColorTint(Image *image, Color color);                                                    // Modify image color: tint
@@ -950,31 +950,30 @@ RLAPI void DrawTexture(Texture2D texture, int posX, int posY, Color tint);      
 RLAPI void DrawTextureV(Texture2D texture, Vector2 position, Color tint);                                // Draw a Texture2D with position defined as Vector2
 RLAPI void DrawTextureEx(Texture2D texture, Vector2 position, float rotation, float scale, Color tint);  // Draw a Texture2D with extended parameters
 RLAPI void DrawTextureRec(Texture2D texture, Rectangle sourceRec, Vector2 position, Color tint);         // Draw a part of a texture defined by a rectangle
-RLAPI void DrawTexturePro(Texture2D texture, Rectangle sourceRec, Rectangle destRec, Vector2 origin,     // Draw a part of a texture defined by a rectangle with 'pro' parameters
-                    float rotation, Color tint);
+RLAPI void DrawTexturePro(Texture2D texture, Rectangle sourceRec, Rectangle destRec, Vector2 origin, float rotation, Color tint); // Draw a part of a texture defined by a rectangle with 'pro' parameters
+                    
 
 //------------------------------------------------------------------------------------
 // Font Loading and Text Drawing Functions (Module: text)
 //------------------------------------------------------------------------------------
 
-// SpriteFont loading/unloading functions
-RLAPI SpriteFont GetDefaultFont(void);                                                                   // Get the default SpriteFont
-RLAPI SpriteFont LoadSpriteFont(const char *fileName);                                                   // Load SpriteFont from file into GPU memory (VRAM)
-RLAPI SpriteFont LoadSpriteFontEx(const char *fileName, int fontSize, int charsCount, int *fontChars);   // Load SpriteFont from file with extended parameters
-RLAPI void UnloadSpriteFont(SpriteFont font);                                                            // Unload SpriteFont from GPU memory (VRAM)
+// Font loading/unloading functions
+RLAPI Font GetDefaultFont(void);                                                                   // Get the default Font
+RLAPI Font LoadFont(const char *fileName);                                                   // Load Font from file into GPU memory (VRAM)
+RLAPI Font LoadFontEx(const char *fileName, int fontSize, int charsCount, int *fontChars);   // Load Font from file with extended parameters
+RLAPI void UnloadFont(Font font);                                                            // Unload Font from GPU memory (VRAM)
 
 // Text drawing functions
 RLAPI void DrawFPS(int posX, int posY);                                                                  // Shows current FPS
 RLAPI void DrawText(const char *text, int posX, int posY, int fontSize, Color color);                    // Draw text (using default font)
-RLAPI void DrawTextEx(SpriteFont font, const char* text, Vector2 position,                               // Draw text using SpriteFont and additional parameters
-                float fontSize, int spacing, Color tint);
+RLAPI void DrawTextEx(Font font, const char* text, Vector2 position, float fontSize, float spacing, Color tint); // Draw text using Font and additional parameters
 
 // Text misc. functions
 RLAPI int MeasureText(const char *text, int fontSize);                                                   // Measure string width for default font
-RLAPI Vector2 MeasureTextEx(SpriteFont font, const char *text, float fontSize, int spacing);             // Measure string size for SpriteFont
+RLAPI Vector2 MeasureTextEx(Font font, const char *text, float fontSize, float spacing);           // Measure string size for Font
 RLAPI const char *FormatText(const char *text, ...);                                                     // Formatting of text with variables to 'embed'
 RLAPI const char *SubText(const char *text, int position, int length);                                   // Get a piece of a text string
-RLAPI int GetGlyphIndex(SpriteFont font, int character);                                                 // Returns index position for a unicode character on sprite font
+RLAPI int GetGlyphIndex(Font font, int character);                                                 // Returns index position for a unicode character on sprite font
 
 //------------------------------------------------------------------------------------
 // Basic 3d Shapes Drawing Functions (Module: models)
@@ -1035,23 +1034,19 @@ RLAPI void UnloadMaterial(Material material);                                   
 
 // Model drawing functions
 RLAPI void DrawModel(Model model, Vector3 position, float scale, Color tint);                           // Draw a model (with texture if set)
-RLAPI void DrawModelEx(Model model, Vector3 position, Vector3 rotationAxis,
-                       float rotationAngle, Vector3 scale, Color tint);                                 // Draw a model with extended parameters
+RLAPI void DrawModelEx(Model model, Vector3 position, Vector3 rotationAxis, float rotationAngle, Vector3 scale, Color tint); // Draw a model with extended parameters
 RLAPI void DrawModelWires(Model model, Vector3 position, float scale, Color tint);                      // Draw a model wires (with texture if set)
-RLAPI void DrawModelWiresEx(Model model, Vector3 position, Vector3 rotationAxis,
-                            float rotationAngle, Vector3 scale, Color tint);                            // Draw a model wires (with texture if set) with extended parameters
+RLAPI void DrawModelWiresEx(Model model, Vector3 position, Vector3 rotationAxis, float rotationAngle, Vector3 scale, Color tint); // Draw a model wires (with texture if set) with extended parameters
 RLAPI void DrawBoundingBox(BoundingBox box, Color color);                                               // Draw bounding box (wires)
 RLAPI void DrawBillboard(Camera camera, Texture2D texture, Vector3 center, float size, Color tint);     // Draw a billboard texture
-RLAPI void DrawBillboardRec(Camera camera, Texture2D texture, Rectangle sourceRec,
-                            Vector3 center, float size, Color tint);                                    // Draw a billboard texture defined by sourceRec
+RLAPI void DrawBillboardRec(Camera camera, Texture2D texture, Rectangle sourceRec, Vector3 center, float size, Color tint); // Draw a billboard texture defined by sourceRec
 
 // Collision detection functions
 RLAPI bool CheckCollisionSpheres(Vector3 centerA, float radiusA, Vector3 centerB, float radiusB);       // Detect collision between two spheres
 RLAPI bool CheckCollisionBoxes(BoundingBox box1, BoundingBox box2);                                     // Detect collision between two bounding boxes
 RLAPI bool CheckCollisionBoxSphere(BoundingBox box, Vector3 centerSphere, float radiusSphere);          // Detect collision between box and sphere
 RLAPI bool CheckCollisionRaySphere(Ray ray, Vector3 spherePosition, float sphereRadius);                // Detect collision between ray and sphere
-RLAPI bool CheckCollisionRaySphereEx(Ray ray, Vector3 spherePosition, float sphereRadius,
-                                     Vector3 *collisionPoint);                                          // Detect collision between ray and sphere, returns collision point
+RLAPI bool CheckCollisionRaySphereEx(Ray ray, Vector3 spherePosition, float sphereRadius, Vector3 *collisionPoint); // Detect collision between ray and sphere, returns collision point
 RLAPI bool CheckCollisionRayBox(Ray ray, BoundingBox box);                                              // Detect collision between ray and box
 RLAPI RayHitInfo GetCollisionRayModel(Ray ray, Model *model);                                           // Get collision info between ray and model
 RLAPI RayHitInfo GetCollisionRayTriangle(Ray ray, Vector3 p1, Vector3 p2, Vector3 p3);                  // Get collision info between ray and triangle
@@ -1152,8 +1147,7 @@ RLAPI float GetMusicTimeLength(Music music);                          // Get mus
 RLAPI float GetMusicTimePlayed(Music music);                          // Get current music time played (in seconds)
 
 // AudioStream management functions
-RLAPI AudioStream InitAudioStream(unsigned int sampleRate, unsigned int sampleSize,
-                                  unsigned int channels);             // Init audio stream (to stream raw audio pcm data)
+RLAPI AudioStream InitAudioStream(unsigned int sampleRate, unsigned int sampleSize, unsigned int channels); // Init audio stream (to stream raw audio pcm data)
 RLAPI void UpdateAudioStream(AudioStream stream, const void *data, int samplesCount); // Update audio stream buffers with data
 RLAPI void CloseAudioStream(AudioStream stream);                      // Close audio stream and free memory
 RLAPI bool IsAudioBufferProcessed(AudioStream stream);                // Check if any audio stream buffers requires refill

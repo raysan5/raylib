@@ -97,7 +97,7 @@ int main()
         
             ClearBackground(RAYWHITE);
         
-            Begin2dMode(camera);
+            BeginMode2D(camera);
 
                 DrawRectangle(-6000, 320, 13000, 8000, DARKGRAY);
                 
@@ -108,7 +108,7 @@ int main()
                 DrawRectangle(camera.target.x, -500, 1, screenHeight*4, GREEN);
                 DrawRectangle(-500, camera.target.y, screenWidth*4, 1, GREEN);
                 
-            End2dMode();
+            EndMode2D();
             
             DrawText("SCREEN AREA", 640, 10, 20, RED);
             

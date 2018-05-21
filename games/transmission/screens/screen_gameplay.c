@@ -95,7 +95,7 @@ static int framesCounter;
 static int finishScreen;
 
 static Texture2D texBackground;
-static SpriteFont fontMessage;
+static Font fontMessage;
 static Texture2D texWordsAtlas;
 static Texture2D texVignette;
 
@@ -126,7 +126,7 @@ void InitGameplayScreen(void)
     framesCounter = 0;
     finishScreen = 0;
     
-    fontMessage = LoadSpriteFontEx("resources/fonts/traveling_typewriter.ttf", 30, 250, 0);
+    fontMessage = LoadFontEx("resources/fonts/traveling_typewriter.ttf", 30, 250, 0);
     
     texBackground = LoadTexture("resources/textures/message_background.png");
     texVignette = LoadTexture("resources/textures/message_vignette.png");

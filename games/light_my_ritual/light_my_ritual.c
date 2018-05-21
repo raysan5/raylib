@@ -68,7 +68,7 @@ int main(void)
     
     UnloadImage(image);                         // Unload image from CPU memory (RAM)
     
-    font = LoadSpriteFont("resources/font_arcadian.png");
+    font = LoadFont("resources/font_arcadian.png");
 	//doors = LoadTexture("resources/textures/doors.png");
     //sndDoor = LoadSound("resources/audio/door.ogg");
     
@@ -106,7 +106,7 @@ int main(void)
     }
     
     // Unload all global loaded data (i.e. fonts) here!
-    UnloadSpriteFont(font);
+    UnloadFont(font);
     //UnloadSound(sndDoor);
     
     UnloadMusicStream(music);

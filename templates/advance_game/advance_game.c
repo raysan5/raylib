@@ -58,7 +58,7 @@ int main(void)
     // Global data loading (assets that must be available in all screens, i.e. fonts)
     InitAudioDevice();
 
-    font = LoadSpriteFont("resources/mecha.png");
+    font = LoadFont("resources/mecha.png");
     music = LoadMusicStream("resources/ambient.ogg");
     fxCoin = LoadSound("resources/coin.wav");
     
@@ -96,7 +96,7 @@ int main(void)
     }
     
     // Unload all global loaded data (i.e. fonts) here!
-    UnloadSpriteFont(font);
+    UnloadFont(font);
     UnloadMusicStream(music);
     UnloadSound(fxCoin);
 

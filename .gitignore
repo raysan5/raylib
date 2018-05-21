@@ -13,9 +13,10 @@ Thumbs.db
 # *.obj --> Can be confused with 3d model!
 *.pdb
 *.aps
-*.vcproj.*.user
-*.vcxproj*
-*.sln
+*.user
+# *.vcproj
+# *.vcxproj*
+# *.sln
 *.vspscc
 *_i.c
 *.i
@@ -41,11 +42,12 @@ _ReSharper*/
 [Tt]est[Rr]esult*
 ipch/
 *.opensdf
+*.db
+*.opendb
 
 # Ignore compiled binaries
 *.o
 *.exe
-!tools/rREM/rrem.exe
 
 # Ignore all examples files
 examples/*
@@ -84,21 +86,10 @@ xcuserdata/
 DerivedData/
 
 # Visual Studio project
-project/vs2015/*.db
-project/vs2015/*.opendb
-project/vs2015.UWP/packages
-project/vs2015.UWP/*.db
-!project/vs2015/raylib.sln
-!project/vs2015/raylib/*.vcxproj
-!project/vs2015/examples/*.vcxproj
-!project/vs2017/raylib.sln
-!project/vs2017/raylib/*.vcxproj
-!project/vs2017/examples/*.vcxproj
-!project/vs2015.UWP/raylib/*.vcxproj
-!project/vs2015.UWP/*.sln
-!project/vs2015.UWP/raylib.App.UWP/*.vcxproj
+project/VS2015.UWP/packages
+project/VS2017/packages
 
-# Web examples 
+# Web examples
 docs/examples/web/*.html
 docs/examples/web/*/*.html
 !docs/examples/web/loader.html
@@ -116,6 +107,7 @@ CMakeCache.txt
 CMakeFiles
 CMakeScripts
 Testing
+TestingIfSymlinkWorks
 cmake_install.cmake
 install_manifest.txt
 compile_commands.json
