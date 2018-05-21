@@ -1285,7 +1285,7 @@ Wave WaveCopy(Wave wave)
 void WaveCrop(Wave *wave, int initSample, int finalSample)
 {
     if ((initSample >= 0) && (initSample < finalSample) &&
-        (finalSample > 0) && (finalSample < wave->sampleCount))
+        (finalSample > 0) && ((unsigned int)finalSample < wave->sampleCount))
     {
         int sampleCount = finalSample - initSample;
 
@@ -1305,9 +1305,9 @@ float *GetWaveData(Wave wave)
 {
     float *samples = (float *)malloc(wave.sampleCount*wave.channels*sizeof(float));
 
-    for (int i = 0; i < wave.sampleCount; i++)
+    for (unsigned int i = 0; i < wave.sampleCount; i++)
     {
-        for (int j = 0; j < wave.channels; j++)
+        for (unsigned int j = 0; j < wave.channels; j++)
         {
             if (wave.sampleSize == 8) samples[wave.channels*i + j] = (float)(((unsigned char *)wave.data)[wave.channels*i + j] - 127)/256.0f;
             else if (wave.sampleSize == 16) samples[wave.channels*i + j] = (float)((short *)wave.data)[wave.channels*i + j]/32767.0f;
