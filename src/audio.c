@@ -340,11 +340,7 @@ static mal_uint32 OnSendAudioDataToDevice(mal_device *pDevice, mal_uint32 frameC
                         framesToReadRightNow = sizeof(tempBuffer)/sizeof(tempBuffer[0])/DEVICE_CHANNELS;
                     }
 
-                    // If we're not looping, we need to make sure we flush the internal buffers of the DSP pipeline to ensure we get the
-                    // last few samples.
-                    bool flushDSP = !audioBuffer->looping;
-
-                    mal_uint32 framesJustRead = mal_dsp_read_ex(&audioBuffer->dsp, framesToReadRightNow, tempBuffer, flushDSP, audioBuffer->dsp.pUserData);
+                    mal_uint32 framesJustRead = (mal_uint32)mal_dsp_read(&audioBuffer->dsp, framesToReadRightNow, tempBuffer, audioBuffer->dsp.pUserData);
                     if (framesJustRead > 0) 
                     {
                         float *framesOut = (float *)pFramesOut + (framesRead*device.channels);
@@ -920,13 +916,13 @@ Sound LoadSoundFromWave(Wave wave)
         mal_format formatIn  = ((wave.sampleSize == 8) ? mal_format_u8 : ((wave.sampleSize == 16) ? mal_format_s16 : mal_format_f32));
         mal_uint32 frameCountIn = wave.sampleCount;  // Is wave->sampleCount actually the frame count? That terminology needs to change, if so.
 
-        mal_uint32 frameCount = mal_convert_frames(NULL, DEVICE_FORMAT, DEVICE_CHANNELS, DEVICE_SAMPLE_RATE, NULL, formatIn, wave.channels, wave.sampleRate, frameCountIn);
+        mal_uint32 frameCount = (mal_uint32)mal_convert_frames(NULL, DEVICE_FORMAT, DEVICE_CHANNELS, DEVICE_SAMPLE_RATE, NULL, formatIn, wave.channels, wave.sampleRate, frameCountIn);
         if (frameCount == 0) TraceLog(LOG_WARNING, "LoadSoundFromWave() : Failed to get frame count for format conversion");
 
         AudioBuffer* audioBuffer = CreateAudioBuffer(DEVICE_FORMAT, DEVICE_CHANNELS, DEVICE_SAMPLE_RATE, frameCount, AUDIO_BUFFER_USAGE_STATIC);
         if (audioBuffer == NULL) TraceLog(LOG_WARNING, "LoadSoundFromWave() : Failed to create audio buffer");
 
-        frameCount = mal_convert_frames(audioBuffer->buffer, audioBuffer->dsp.formatConverterIn.config.formatIn, audioBuffer->dsp.formatConverterIn.config.channels, audioBuffer->dsp.src.config.sampleRateIn, wave.data, formatIn, wave.channels, wave.sampleRate, frameCountIn);
+        frameCount = (mal_uint32)mal_convert_frames(audioBuffer->buffer, audioBuffer->dsp.formatConverterIn.config.formatIn, audioBuffer->dsp.formatConverterIn.config.channels, audioBuffer->dsp.src.config.sampleRateIn, wave.data, formatIn, wave.channels, wave.sampleRate, frameCountIn);
         if (frameCount == 0) TraceLog(LOG_WARNING, "LoadSoundFromWave() : Format conversion failed");
 
         sound.audioBuffer = audioBuffer;
@@ -1158,7 +1154,7 @@ void WaveFormat(Wave *wave, int sampleRate, int sampleSize, int channels)
 
     mal_uint32 frameCountIn = wave->sampleCount;  // Is wave->sampleCount actually the frame count? That terminology needs to change, if so.
 
-    mal_uint32 frameCount = mal_convert_frames(NULL, formatOut, channels, sampleRate, NULL, formatIn, wave->channels, wave->sampleRate, frameCountIn);
+    mal_uint32 frameCount = (mal_uint32)mal_convert_frames(NULL, formatOut, channels, sampleRate, NULL, formatIn, wave->channels, wave->sampleRate, frameCountIn);
     if (frameCount == 0) 
     {
         TraceLog(LOG_ERROR, "WaveFormat() : Failed to get frame count for format conversion.");
@@ -1167,7 +1163,7 @@ void WaveFormat(Wave *wave, int sampleRate, int sampleSize, int channels)
 
     void *data = malloc(frameCount*channels*(sampleSize/8));
 
-    frameCount = mal_convert_frames(data, formatOut, channels, sampleRate, wave->data, formatIn, wave->channels, wave->sampleRate, frameCountIn);
+    frameCount = (mal_uint32)mal_convert_frames(data, formatOut, channels, sampleRate, wave->data, formatIn, wave->channels, wave->sampleRate, frameCountIn);
     if (frameCount == 0) 
     {
         TraceLog(LOG_ERROR, "WaveFormat() : Format conversion failed.");

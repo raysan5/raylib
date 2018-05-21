@@ -38,7 +38,7 @@
 // USAGE
 // =====
 // mini_al is a single-file library. To use it, do something like the following in one .c file.
-//   #define MAL_IMPLEMENTATION
+//   #define MINI_AL_IMPLEMENTATION
 //   #include "mini_al.h"
 //
 // You can then #include this file in other parts of the program as you would with any other header file.
@@ -62,8 +62,8 @@
 //
 // Building for BSD
 // ----------------
-// The BSD build uses OSS. Requires linking to -lpthread. Also requires linking to -lossaudio on {Open,Net}BSD, but
-// not FreeBSD.
+// The BSD build uses OSS. Requires linking to -lpthread and -lm. Also requires linking to -lossaudio on {Open,Net}BSD,
+// but not FreeBSD.
 //
 // Building for Android
 // --------------------
@@ -189,13 +189,14 @@
 // #define MAL_NO_NULL
 //   Disables the null backend.
 //
-// #define MAL_DEFAULT_BUFFER_SIZE_IN_MILLISECONDS
-//   When a buffer size of 0 is specified when a device is initialized, it will default to a size with
-//   this number of milliseconds worth of data. Note that some backends may adjust this setting if that
-//   particular backend has unusual latency characteristics.
-//
 // #define MAL_DEFAULT_PERIODS
 //   When a period count of 0 is specified when a device is initialized, it will default to this.
+//
+// #define MAL_BASE_BUFFER_SIZE_IN_MILLISECONDS_LOW_LATENCY
+// #define MAL_BASE_BUFFER_SIZE_IN_MILLISECONDS_CONSERVATIVE
+//   When a buffer size of 0 is specified when a device is initialized it will default to a buffer of this size (depending
+//   on the chosen performance profile) multiplied by a weight which is calculated at run-time. These can be increased or
+//   decreased depending on your specific requirements.
 //
 // #define MAL_NO_DECODING
 //   Disables the decoding APIs.
@@ -238,7 +239,12 @@ extern "C" {
     #define MAL_POSIX
     #include <pthread.h>    // Unfortunate #include, but needed for pthread_t, pthread_mutex_t and pthread_cond_t types.
 
-    #define MAL_UNIX
+    #ifdef __unix__
+        #define MAL_UNIX
+        #if defined(__DragonFly__) || defined(__FreeBSD__) || defined(__NetBSD__) || defined(__OpenBSD__)
+            #define MAL_BSD
+        #endif
+    #endif
     #ifdef __linux__
         #define MAL_LINUX
     #endif
@@ -268,7 +274,7 @@ extern "C" {
             #define MAL_SUPPORT_ALSA
         #endif
     #endif
-    #if !defined(MAL_ANDROID) && !defined(MAL_EMSCRIPTEN)
+    #if !defined(MAL_BSD) && !defined(MAL_ANDROID) && !defined(MAL_EMSCRIPTEN)
         #define MAL_SUPPORT_PULSEAUDIO
         #define MAL_SUPPORT_JACK
     #endif
@@ -337,8 +343,10 @@ extern "C" {
             #define MAL_HAS_STDINT
         #endif
     #else
-        #if defined(__has_include) && __has_include(<stdint.h>)
-            #define MAL_HAS_STDINT
+        #if defined(__has_include)
+            #if __has_include(<stdint.h>)
+                #define MAL_HAS_STDINT
+            #endif
         #endif
     #endif
 #endif
@@ -353,7 +361,7 @@ typedef unsigned int                mal_uint32;
     #if defined(_MSC_VER)
     typedef   signed __int64        mal_int64;
     typedef unsigned __int64        mal_uint64;
-    #elif defined(__GNUC__)
+    #else
     typedef   signed long long int  mal_int64;
     typedef unsigned long long int  mal_uint64;
     #endif
@@ -417,8 +425,10 @@ typedef mal_uint16 wchar_t;
 
 #ifdef _MSC_VER
 #define MAL_ALIGN(alignment) __declspec(align(alignment))
-#else
+#elif !defined(__DMC__)
 #define MAL_ALIGN(alignment) __attribute__((aligned(alignment)))
+#else
+#define MAL_ALIGN(alignment)
 #endif
 
 #ifdef _MSC_VER
@@ -540,6 +550,11 @@ typedef struct
 #define MAL_MAX_CHANNELS                                32
 #define MAL_MIN_SAMPLE_RATE                             MAL_SAMPLE_RATE_8000
 #define MAL_MAX_SAMPLE_RATE                             MAL_SAMPLE_RATE_384000
+#define MAL_SRC_SINC_MIN_WINDOW_WIDTH                   2
+#define MAL_SRC_SINC_MAX_WINDOW_WIDTH                   32
+#define MAL_SRC_SINC_DEFAULT_WINDOW_WIDTH               16
+#define MAL_SRC_SINC_LOOKUP_TABLE_RESOLUTION            8
+#define MAL_SRC_INPUT_BUFFER_SIZE_IN_SAMPLES            256
 
 typedef mal_uint8 mal_channel;
 #define MAL_CHANNEL_NONE                                0
@@ -630,6 +645,7 @@ typedef int mal_result;
 #define MAL_FAILED_TO_CREATE_THREAD                     -28
 #define MAL_INVALID_DEVICE_CONFIG                       -29
 #define MAL_ACCESS_DENIED                               -30
+#define MAL_TOO_LARGE                                   -31
 
 typedef void       (* mal_log_proc) (mal_context* pContext, mal_device* pDevice, const char* message);
 typedef void       (* mal_recv_proc)(mal_device* pDevice, mal_uint32 frameCount, const void* pSamples);
@@ -677,8 +693,8 @@ typedef enum
 typedef enum
 {
     mal_dither_mode_none = 0,
-    //mal_dither_mode_rectangle,
-    //mal_dither_mode_triangle
+    mal_dither_mode_rectangle,
+    mal_dither_mode_triangle
 } mal_dither_mode;
 
 typedef enum
@@ -691,6 +707,7 @@ typedef enum
     mal_format_s24     = 3,     // Tightly packed. 3 bytes per sample.
     mal_format_s32     = 4,
     mal_format_f32     = 5,
+    mal_format_count
 } mal_format;
 
 typedef enum
@@ -709,6 +726,12 @@ typedef enum
     mal_standard_channel_map_vorbis,
     mal_standard_channel_map_default = mal_standard_channel_map_microsoft
 } mal_standard_channel_map;
+
+typedef enum
+{
+    mal_performance_profile_low_latency = 0,
+    mal_performance_profile_conservative
+} mal_performance_profile;
 
 typedef union
 {
@@ -756,8 +779,18 @@ typedef struct
     mal_device_id id;
     char name[256];
 
-    // Detailed info. As much of this is filled as possible with mal_context_get_device_info().
-    // TODO: Implement me.
+    // Detailed info. As much of this is filled as possible with mal_context_get_device_info(). Note that you are allowed to initialize
+    // a device with settings outside of this range, but it just means the data will be converted using mini_al's data conversion
+    // pipeline before sending the data to/from the device. Most programs will need to not worry about these values, but it's provided
+    // here mainly for informational purposes or in the rare case that someone might find it useful.
+    //
+    // These will be set to 0 when returned by mal_context_enumerate_devices() or mal_context_get_devices().
+    mal_uint32 formatCount;
+    mal_format formats[mal_format_count];
+    mal_uint32 minChannels;
+    mal_uint32 maxChannels;
+    mal_uint32 minSampleRate;
+    mal_uint32 maxSampleRate;
 } mal_device_info;
 
 typedef struct
@@ -828,15 +861,23 @@ struct mal_channel_router
 
 
 typedef struct mal_src mal_src;
-typedef mal_uint32 (* mal_src_read_proc)(mal_src* pSRC, mal_uint32 frameCount, void* pFramesOut, void* pUserData); // Returns the number of frames that were read.
+//typedef mal_uint32 (* mal_src_read_proc)(mal_src* pSRC, mal_uint32 frameCount, void* pFramesOut, void* pUserData); // Returns the number of frames that were read.
 typedef mal_uint32 (* mal_src_read_deinterleaved_proc)(mal_src* pSRC, mal_uint32 frameCount, void** ppSamplesOut, void* pUserData); // Returns the number of frames that were read.
 
 typedef enum
 {
-    mal_src_algorithm_linear = 0,
+    mal_src_algorithm_sinc = 0,
+    mal_src_algorithm_linear,
     mal_src_algorithm_none,
     mal_src_algorithm_default = mal_src_algorithm_linear
 } mal_src_algorithm;
+
+typedef enum
+{
+    mal_src_sinc_window_function_hann = 0,
+    mal_src_sinc_window_function_rectangular,
+    mal_src_sinc_window_function_default = mal_src_sinc_window_function_hann
+} mal_src_sinc_window_function;
 
 typedef struct
 {
@@ -846,21 +887,38 @@ typedef struct
     mal_src_algorithm algorithm;
     mal_src_read_deinterleaved_proc onReadDeinterleaved;
     void* pUserData;
-} mal_src_config;
-
-MAL_ALIGNED_STRUCT(MAL_SIMD_ALIGNMENT) mal_src
-{
-    MAL_ALIGN(MAL_SIMD_ALIGNMENT) float samplesFromClient[MAL_MAX_CHANNELS][256];
-    mal_src_config config;
-
     union
     {
         struct
         {
-            float t;
+            mal_src_sinc_window_function windowFunction;
+            mal_uint32 windowWidth;
+        } sinc;
+    };
+} mal_src_config;
+
+MAL_ALIGNED_STRUCT(MAL_SIMD_ALIGNMENT) mal_src
+{
+    union
+    {
+        struct
+        {
+            MAL_ALIGN(MAL_SIMD_ALIGNMENT) float input[MAL_MAX_CHANNELS][MAL_SRC_INPUT_BUFFER_SIZE_IN_SAMPLES];
+            float timeIn;
             mal_uint32 leftoverFrames;
         } linear;
+
+        struct
+        {
+            MAL_ALIGN(MAL_SIMD_ALIGNMENT) float input[MAL_MAX_CHANNELS][MAL_SRC_SINC_MAX_WINDOW_WIDTH*2 + MAL_SRC_INPUT_BUFFER_SIZE_IN_SAMPLES];
+            float timeIn;
+            mal_uint32 inputFrameCount;     // The number of frames sitting in the input buffer, not including the first half of the window.
+            mal_uint32 windowPosInSamples;  // An offset of <input>.
+            float table[MAL_SRC_SINC_MAX_WINDOW_WIDTH * MAL_SRC_SINC_LOOKUP_TABLE_RESOLUTION]; // Precomputed lookup table.
+        } sinc;
     };
+
+    mal_src_config config;
 };
 
 typedef struct mal_dsp mal_dsp;
@@ -877,10 +935,19 @@ typedef struct
     mal_uint32 sampleRateOut;
     mal_channel channelMapOut[MAL_MAX_CHANNELS];
     mal_channel_mix_mode channelMixMode;
+    mal_dither_mode ditherMode;
     mal_src_algorithm srcAlgorithm;
     mal_bool32 allowDynamicSampleRate;
     mal_dsp_read_proc onRead;
     void* pUserData;
+    union
+    {
+        struct
+        {
+            mal_src_sinc_window_function windowFunction;
+            mal_uint32 windowWidth;
+        } sinc;
+    };
 } mal_dsp_config;
 
 MAL_ALIGNED_STRUCT(MAL_SIMD_ALIGNMENT) mal_dsp
@@ -910,6 +977,7 @@ typedef struct
     mal_uint32 bufferSizeInFrames;
     mal_uint32 periods;
     mal_share_mode shareMode;
+    mal_performance_profile performanceProfile;
     mal_recv_proc onRecvCallback;
     mal_send_proc onSendCallback;
     mal_stop_proc onStopCallback;
@@ -1026,7 +1094,11 @@ struct mal_context
             mal_proc snd_pcm_hw_params_set_access;
             mal_proc snd_pcm_hw_params_get_format;
             mal_proc snd_pcm_hw_params_get_channels;
+            mal_proc snd_pcm_hw_params_get_channels_min;
+            mal_proc snd_pcm_hw_params_get_channels_max;
             mal_proc snd_pcm_hw_params_get_rate;
+            mal_proc snd_pcm_hw_params_get_rate_min;
+            mal_proc snd_pcm_hw_params_get_rate_max;
             mal_proc snd_pcm_hw_params_get_buffer_size;
             mal_proc snd_pcm_hw_params_get_periods;
             mal_proc snd_pcm_hw_params_get_access;
@@ -1278,6 +1350,11 @@ struct mal_context
             /*HMODULE*/ mal_handle hUser32DLL;
             mal_proc GetForegroundWindow;
             mal_proc GetDesktopWindow;
+
+            /*HMODULE*/ mal_handle hAdvapi32DLL;
+            mal_proc RegOpenKeyExA;
+            mal_proc RegCloseKey;
+            mal_proc RegQueryValueExA;
         } win32;
 #endif
 #ifdef MAL_POSIX
@@ -1876,7 +1953,7 @@ static MAL_INLINE mal_device_config mal_device_config_init_playback(mal_format f
 void mal_get_standard_channel_map(mal_standard_channel_map standardChannelMap, mal_uint32 channels, mal_channel channelMap[MAL_MAX_CHANNELS]);
 
 // Copies a channel map.
-void mal_channel_map_copy(mal_channel* pOut, mal_channel* pIn, mal_uint32 channels);
+void mal_channel_map_copy(mal_channel* pOut, const mal_channel* pIn, mal_uint32 channels);
 
 
 // Determines whether or not a channel map is valid.
@@ -1904,6 +1981,39 @@ mal_bool32 mal_channel_map_contains_channel_position(mal_uint32 channels, const 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 //
 // Format Conversion
+// =================
+// The format converter serves two purposes:
+//   1) Conversion between data formats (u8 to f32, etc.)
+//   2) Interleaving and deinterleaving
+//
+// When initializing a converter, you specify the input and output formats (u8, s16, etc.) and read callbacks. There are two read callbacks - one for
+// interleaved input data (onRead) and another for deinterleaved input data (onReadDeinterleaved). You implement whichever is most convenient for you. You
+// can implement both, but it's not recommended as it just introduces unnecessary complexity.
+//
+// To read data as interleaved samples, use mal_format_converter_read(). Otherwise use mal_format_converter_read_deinterleaved().
+//
+// Dithering
+// ---------
+// The format converter also supports dithering. Dithering can be set using ditherMode variable in the config, like so.
+//
+//   pConfig->ditherMode = mal_dither_mode_rectangle;
+//
+// The different dithering modes include the following, in order of efficiency:
+//   - None:      mal_dither_mode_none
+//   - Rectangle: mal_dither_mode_rectangle
+//   - Triangle:  mal_dither_mode_triangle
+//
+// Note that even if the dither mode is set to something other than mal_dither_mode_none, it will be ignored for conversions where dithering is not needed.
+// Dithering is available for the following conversions:
+//   - s16 -> u8
+//   - s24 -> u8
+//   - s32 -> u8
+//   - f32 -> u8
+//   - s24 -> s16
+//   - s32 -> s16
+//   - f32 -> s16
+//
+// Note that it is not an error to pass something other than mal_dither_mode_none for conversions where dither is not used. It will just be ignored.
 //
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -1915,6 +2025,12 @@ mal_uint64 mal_format_converter_read(mal_format_converter* pConverter, mal_uint6
 
 // Reads data from the format converter as deinterleaved channels.
 mal_uint64 mal_format_converter_read_deinterleaved(mal_format_converter* pConverter, mal_uint64 frameCount, void** ppSamplesOut, void* pUserData);
+
+
+// Helper for initializing a format converter config.
+mal_format_converter_config mal_format_converter_config_init_new();
+mal_format_converter_config mal_format_converter_config_init(mal_format formatIn, mal_format formatOut, mal_uint32 channels, mal_format_converter_read_proc onRead, void* pUserData);
+mal_format_converter_config mal_format_converter_config_init_deinterleaved(mal_format formatIn, mal_format formatOut, mal_uint32 channels, mal_format_converter_read_deinterleaved_proc onReadDeinterleaved, void* pUserData);
 
 
 
@@ -1996,7 +2112,6 @@ mal_channel_router_config mal_channel_router_config_init(mal_uint32 channelsIn, 
 //
 // Sample Rate Conversion
 // ======================
-// Note that mini_al currently only supports low quality linear sample rate conversion.
 //
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -2017,14 +2132,10 @@ mal_result mal_src_set_output_sample_rate(mal_src* pSRC, mal_uint32 sampleRateOu
 // Returns the number of frames actually read.
 mal_uint64 mal_src_read_deinterleaved(mal_src* pSRC, mal_uint64 frameCount, void** ppSamplesOut, void* pUserData);
 
-// The same mal_src_read_deinterleaved() with extra control over whether or not the internal buffers should be flushed at the end.
-//
-// Internally there exists a buffer that keeps track of the previous and next samples for sample rate conversion. The simple
-// version of this function does _not_ flush this buffer because otherwise it causes glitches for streaming based conversion
-// pipelines. The problem, however, is that sometimes you need those last few samples (such as if you're doing a bulk conversion
-// of a static file). Enabling flushing will fix this for you.
-mal_uint64 mal_src_read_deinterleaved_ex(mal_src* pSRC, mal_uint64 frameCount, void** ppSamplesOut, mal_bool32 flush, void* pUserData);
 
+// Helper for creating a sample rate conversion config.
+mal_src_config mal_src_config_init_new();
+mal_src_config mal_src_config_init(mal_uint32 sampleRateIn, mal_uint32 sampleRateOut, mal_uint32 channels, mal_src_read_deinterleaved_proc onReadDeinterleaved, void* pUserData);
 
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -2050,15 +2161,7 @@ mal_result mal_dsp_set_input_sample_rate(mal_dsp* pDSP, mal_uint32 sampleRateOut
 mal_result mal_dsp_set_output_sample_rate(mal_dsp* pDSP, mal_uint32 sampleRateOut);
 
 // Reads a number of frames and runs them through the DSP processor.
-//
-// This this _not_ flush the internal buffers which means you may end up with a few less frames than you may expect. Look at
-// mal_dsp_read_frames_ex() if you want to flush the buffers at the end of the read.
 mal_uint64 mal_dsp_read(mal_dsp* pDSP, mal_uint64 frameCount, void* pFramesOut, void* pUserData);
-
-// The same mal_dsp_read_frames() with extra control over whether or not the internal buffers should be flushed at the end.
-//
-// See documentation for mal_src_read_frames_ex() for an explanation on flushing.
-mal_uint64 mal_dsp_read_ex(mal_dsp* pDSP, mal_uint64 frameCount, void* pFramesOut, mal_bool32 flush, void* pUserData);
 
 // Helper for initializing a mal_dsp_config object.
 mal_dsp_config mal_dsp_config_init_new();
@@ -2105,6 +2208,15 @@ void mal_mutex_unlock(mal_mutex* pMutex);
 //
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
+// malloc(). Calls MAL_MALLOC().
+void* mal_malloc(size_t sz);
+
+// realloc(). Calls MAL_REALLOC().
+void* mal_realloc(void* p, size_t sz);
+
+// free(). Calls MAL_FREE().
+void mal_free(void* p);
+
 // Performs an aligned malloc, with the assumption that the alignment is a power of 2.
 void* mal_aligned_malloc(size_t sz, size_t alignment);
 
@@ -2119,6 +2231,21 @@ const char* mal_get_format_name(mal_format format);
 
 // Blends two frames in floating point format.
 void mal_blend_f32(float* pOut, float* pInA, float* pInB, float factor, mal_uint32 channels);
+
+// Calculates a scaling factor relative to speed of the system.
+//
+// This could be useful for dynamically determining the size of a device's internal buffer based on the speed of the system.
+//
+// This is a slow API because it performs a profiling test.
+float mal_calculate_cpu_speed_factor();
+
+// Adjust buffer size based on a scaling factor.
+//
+// This just multiplies the base size by the scaling factor, making sure it's a size of at least 1.
+mal_uint32 mal_scale_buffer_size(mal_uint32 baseBufferSize, float scale);
+
+// Calculates a buffer size in frames for the specified performance profile and scale factor.
+mal_uint32 mal_calculate_default_buffer_size_in_frames(mal_performance_profile performanceProfile, mal_uint32 sampleRate, float scale);
 
 
 
@@ -2173,10 +2300,10 @@ typedef mal_result (* mal_decoder_uninit_proc)       (mal_decoder* pDecoder);
 
 typedef struct
 {
-    mal_format  outputFormat;       // Set to 0 or mal_format_unknown to use the stream's internal format.
-    mal_uint32  outputChannels;     // Set to 0 to use the stream's internal channels.
-    mal_uint32  outputSampleRate;   // Set to 0 to use the stream's internal sample rate.
-    mal_channel outputChannelMap[MAL_MAX_CHANNELS];
+    mal_format  format;       // Set to 0 or mal_format_unknown to use the stream's internal format.
+    mal_uint32  channels;     // Set to 0 to use the stream's internal channels.
+    mal_uint32  sampleRate;   // Set to 0 to use the stream's internal sample rate.
+    mal_channel channelMap[MAL_MAX_CHANNELS];
 } mal_decoder_config;
 
 struct mal_decoder
@@ -2211,12 +2338,14 @@ mal_result mal_decoder_init_wav(mal_decoder_read_proc onRead, mal_decoder_seek_p
 mal_result mal_decoder_init_flac(mal_decoder_read_proc onRead, mal_decoder_seek_proc onSeek, void* pUserData, const mal_decoder_config* pConfig, mal_decoder* pDecoder);
 mal_result mal_decoder_init_vorbis(mal_decoder_read_proc onRead, mal_decoder_seek_proc onSeek, void* pUserData, const mal_decoder_config* pConfig, mal_decoder* pDecoder);
 mal_result mal_decoder_init_mp3(mal_decoder_read_proc onRead, mal_decoder_seek_proc onSeek, void* pUserData, const mal_decoder_config* pConfig, mal_decoder* pDecoder);
+mal_result mal_decoder_init_raw(mal_decoder_read_proc onRead, mal_decoder_seek_proc onSeek, void* pUserData, const mal_decoder_config* pConfigIn, const mal_decoder_config* pConfigOut, mal_decoder* pDecoder);
 
 mal_result mal_decoder_init_memory(const void* pData, size_t dataSize, const mal_decoder_config* pConfig, mal_decoder* pDecoder);
 mal_result mal_decoder_init_memory_wav(const void* pData, size_t dataSize, const mal_decoder_config* pConfig, mal_decoder* pDecoder);
 mal_result mal_decoder_init_memory_flac(const void* pData, size_t dataSize, const mal_decoder_config* pConfig, mal_decoder* pDecoder);
 mal_result mal_decoder_init_memory_vorbis(const void* pData, size_t dataSize, const mal_decoder_config* pConfig, mal_decoder* pDecoder);
 mal_result mal_decoder_init_memory_mp3(const void* pData, size_t dataSize, const mal_decoder_config* pConfig, mal_decoder* pDecoder);
+mal_result mal_decoder_init_memory_raw(const void* pData, size_t dataSize, const mal_decoder_config* pConfigIn, const mal_decoder_config* pConfigOut, mal_decoder* pDecoder);
 
 #ifndef MAL_NO_STDIO
 mal_result mal_decoder_init_file(const char* pFilePath, const mal_decoder_config* pConfig, mal_decoder* pDecoder);
@@ -2227,6 +2356,14 @@ mal_result mal_decoder_uninit(mal_decoder* pDecoder);
 
 mal_uint64 mal_decoder_read(mal_decoder* pDecoder, mal_uint64 frameCount, void* pFramesOut);
 mal_result mal_decoder_seek_to_frame(mal_decoder* pDecoder, mal_uint64 frameIndex);
+
+
+// Helper for opening and decoding a file into a heap allocated block of memory. Free the returned pointer with mal_free(). On input,
+// pConfig should be set to what you want. On output it will be set to what you got.
+#ifndef MAL_NO_STDIO
+mal_result mal_decode_file(const char* pFilePath, mal_decoder_config* pConfig, mal_uint64* pFrameCountOut, void** ppDataOut);
+#endif
+mal_result mal_decode_memory(const void* pData, size_t dataSize, mal_decoder_config* pConfig, mal_uint64* pFrameCountOut, void** ppDataOut);
 
 #endif  // MAL_NO_DECODING
 
@@ -2255,14 +2392,14 @@ mal_uint64 mal_sine_wave_read(mal_sine_wave* pSignWave, mal_uint64 count, float*
 #endif  //mini_al_h
 
 
-///////////////////////////////////////////////////////////////////////////////
-///////////////////////////////////////////////////////////////////////////////
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 //
 // IMPLEMENTATION
 //
-///////////////////////////////////////////////////////////////////////////////
-///////////////////////////////////////////////////////////////////////////////
-#ifdef MAL_IMPLEMENTATION
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+#if defined(MINI_AL_IMPLEMENTATION) || defined(MAL_IMPLEMENTATION)
 #include <assert.h>
 #include <limits.h> // For INT_MAX
 #include <math.h>   // sin(), etc.
@@ -2323,7 +2460,7 @@ mal_uint64 mal_sine_wave_read(mal_sine_wave* pSignWave, mal_uint64 count, float*
 
 // Intrinsics Support
 #if defined(MAL_X64) || defined(MAL_X86)
-    #if defined(_MSC_VER)
+    #if defined(_MSC_VER) && !defined(__clang__)
         // MSVC.
         #if !defined(MAL_NO_SSE2)   // Assume all MSVC compilers support SSE2 intrinsics.
             #define MAL_SUPPORT_SSE2
@@ -2348,7 +2485,7 @@ mal_uint64 mal_sine_wave_read(mal_sine_wave* pSignWave, mal_uint64 count, float*
     #endif
 
     // If at this point we still haven't determined compiler support for the intrinsics just fall back to __has_include.
-    #if !defined(__GNUC__) && defined(__has_include)
+    #if !defined(__GNUC__) && !defined(__clang__) && defined(__has_include)
         #if !defined(MAL_SUPPORT_SSE2)   && !defined(MAL_NO_SSE2)   && __has_include(<emmintrin.h>)
             #define MAL_SUPPORT_SSE2
         #endif
@@ -2375,7 +2512,7 @@ mal_uint64 mal_sine_wave_read(mal_sine_wave* pSignWave, mal_uint64 count, float*
     #endif
 
     // Fall back to looking for the #include file.
-    #if !defined(__GNUC__) && defined(__has_include)
+    #if !defined(__GNUC__) && !defined(__clang__) && defined(__has_include)
         #if !defined(MAL_SUPPORT_NEON) && !defined(MAL_NO_NEON) && __has_include(<arm_neon.h>)
             #define MAL_SUPPORT_NEON
         #endif
@@ -2388,7 +2525,7 @@ mal_uint64 mal_sine_wave_read(mal_sine_wave* pSignWave, mal_uint64 count, float*
 
 
 #if defined(MAL_X64) || defined(MAL_X86)
-    #if defined(_MSC_VER)
+    #if defined(_MSC_VER) && !defined(__clang__)
         #if _MSC_VER >= 1400
             #include <intrin.h>
             static MAL_INLINE void mal_cpuid(int info[4], int fid)
@@ -2407,22 +2544,11 @@ mal_uint64 mal_sine_wave_read(mal_sine_wave* pSignWave, mal_uint64 count, float*
         #else
             #define MAL_NO_XGETBV
         #endif
-    #elif defined(__GNUC__) || defined(__clang__)
+    #elif (defined(__GNUC__) || defined(__clang__)) && !defined(MAL_ANDROID)
         static MAL_INLINE void mal_cpuid(int info[4], int fid)
         {
-            __asm__ (
-                "movl %[fid], %%eax\n\t"
-                "cpuid\n\t"
-                "movl %%eax, %[info0]\n\t"
-                "movl %%ebx, %[info1]\n\t"
-                "movl %%ecx, %[info2]\n\t"
-                "movl %%edx, %[info3]\n\t"
-                : [info0] "=rm"(info[0]),
-                  [info1] "=rm"(info[1]),
-                  [info2] "=rm"(info[2]),
-                  [info3] "=rm"(info[3])
-                : [fid] "rm"(fid)
-                : "eax", "ebx", "ecx", "edx"
+            __asm__ __volatile__ (
+                "cpuid" : "=a"(info[0]), "=b"(info[1]), "=c"(info[2]), "=d"(info[3]) : "a"(fid), "c"(0)
             );
         }
 
@@ -2431,15 +2557,8 @@ mal_uint64 mal_sine_wave_read(mal_sine_wave* pSignWave, mal_uint64 count, float*
             unsigned int hi;
             unsigned int lo;
 
-            __asm__ (
-                "movl %[reg], %%ecx\n\t"
-                "xgetbv\n\t"
-                "movl %%eax, %[lo]\n\t"
-                "movl %%edx, %[hi]\n\t"
-                : [lo] "=rm"(lo),
-                  [hi] "=rm"(hi)
-                : [reg] "rm"(reg)
-                : "eax", "ecx", "edx"
+            __asm__ __volatile__ (
+                "xgetbv" : "=a"(lo), "=d"(hi) : "c"(reg)
             );
 
             return ((unsigned long long)hi << 32ULL) | (unsigned long long)lo;
@@ -2455,94 +2574,110 @@ mal_uint64 mal_sine_wave_read(mal_sine_wave* pSignWave, mal_uint64 count, float*
 
 static MAL_INLINE mal_bool32 mal_has_sse2()
 {
-#if (defined(MAL_X64) || defined(MAL_X86)) && !defined(MAL_NO_SSE2)
-    #if defined(MAL_X64)
-        return MAL_TRUE;    // 64-bit targets always support SSE2.
-    #elif (defined(_M_IX86_FP) && _M_IX86_FP == 2) || defined(__SSE2__)
-        return MAL_TRUE;    // If the compiler is allowed to freely generate SSE2 code we can assume support.
-    #else
-        #if defined(MAL_NO_CPUID)
-            return MAL_FALSE;
+#if defined(MAL_SUPPORT_SSE2)
+    #if (defined(MAL_X64) || defined(MAL_X86)) && !defined(MAL_NO_SSE2)
+        #if defined(MAL_X64)
+            return MAL_TRUE;    // 64-bit targets always support SSE2.
+        #elif (defined(_M_IX86_FP) && _M_IX86_FP == 2) || defined(__SSE2__)
+            return MAL_TRUE;    // If the compiler is allowed to freely generate SSE2 code we can assume support.
         #else
-            int info[4];
-            mal_cpuid(info, 1);
-            return (info[3] & (1 << 26)) != 0;
+            #if defined(MAL_NO_CPUID)
+                return MAL_FALSE;
+            #else
+                int info[4];
+                mal_cpuid(info, 1);
+                return (info[3] & (1 << 26)) != 0;
+            #endif
         #endif
+    #else
+        return MAL_FALSE;       // SSE2 is only supported on x86 and x64 architectures.
     #endif
 #else
-    return MAL_FALSE;       // SSE2 is only supported on x86 and x64 architectures.
+    return MAL_FALSE;           // No compiler support.
 #endif
 }
 
 static MAL_INLINE mal_bool32 mal_has_avx()
 {
-#if (defined(MAL_X64) || defined(MAL_X86)) && !defined(MAL_NO_AVX)
-    #if defined(_AVX_) || defined(__AVX__)
-        return MAL_TRUE;    // If the compiler is allowed to freely generate AVX code we can assume support.
-    #else
-        // AVX requires both CPU and OS support.
-        #if defined(MAL_NO_CPUID) || defined(MAL_NO_XGETBV)
-            return MAL_FALSE;
+#if defined(MAL_SUPPORT_AVX)
+    #if (defined(MAL_X64) || defined(MAL_X86)) && !defined(MAL_NO_AVX)
+        #if defined(_AVX_) || defined(__AVX__)
+            return MAL_TRUE;    // If the compiler is allowed to freely generate AVX code we can assume support.
         #else
-            int info[4];
-            mal_cpuid(info, 1);
-            if (((info[2] & (1 << 27)) != 0) && ((info[2] & (1 << 28)) != 0)) {
-                mal_uint64 xrc = mal_xgetbv(0);
-                if ((xrc & 0x06) == 0x06) {
-                    return MAL_TRUE;
+            // AVX requires both CPU and OS support.
+            #if defined(MAL_NO_CPUID) || defined(MAL_NO_XGETBV)
+                return MAL_FALSE;
+            #else
+                int info[4];
+                mal_cpuid(info, 1);
+                if (((info[2] & (1 << 27)) != 0) && ((info[2] & (1 << 28)) != 0)) {
+                    mal_uint64 xrc = mal_xgetbv(0);
+                    if ((xrc & 0x06) == 0x06) {
+                        return MAL_TRUE;
+                    } else {
+                        return MAL_FALSE;
+                    }
                 } else {
                     return MAL_FALSE;
                 }
-            } else {
-                return MAL_FALSE;
-            }
+            #endif
         #endif
+    #else
+        return MAL_FALSE;       // AVX is only supported on x86 and x64 architectures.
     #endif
 #else
-    return MAL_FALSE;       // AVX is only supported on x86 and x64 architectures.
+    return MAL_FALSE;           // No compiler support.
 #endif
 }
 
 static MAL_INLINE mal_bool32 mal_has_avx512f()
 {
-#if (defined(MAL_X64) || defined(MAL_X86)) && !defined(MAL_NO_AVX512)
-    #if defined(__AVX512F__)
-        return MAL_TRUE;    // If the compiler is allowed to freely generate AVX-512F code we can assume support.
-    #else
-        // AVX-512 requires both CPU and OS support.
-        #if defined(MAL_NO_CPUID) || defined(MAL_NO_XGETBV)
-            return MAL_FALSE;
+#if defined(MAL_SUPPORT_AVX512)
+    #if (defined(MAL_X64) || defined(MAL_X86)) && !defined(MAL_NO_AVX512)
+        #if defined(__AVX512F__)
+            return MAL_TRUE;    // If the compiler is allowed to freely generate AVX-512F code we can assume support.
         #else
-            int info[4];
-            mal_cpuid(info, 1);
-            if (((info[2] & (1 << 27)) != 0) && ((info[1] & (1 << 16)) != 0)) {
-                mal_uint64 xrc = mal_xgetbv(0);
-                if ((xrc & 0xE6) == 0xE6) {
-                    return MAL_TRUE;
+            // AVX-512 requires both CPU and OS support.
+            #if defined(MAL_NO_CPUID) || defined(MAL_NO_XGETBV)
+                return MAL_FALSE;
+            #else
+                int info[4];
+                mal_cpuid(info, 1);
+                if (((info[2] & (1 << 27)) != 0) && ((info[1] & (1 << 16)) != 0)) {
+                    mal_uint64 xrc = mal_xgetbv(0);
+                    if ((xrc & 0xE6) == 0xE6) {
+                        return MAL_TRUE;
+                    } else {
+                        return MAL_FALSE;
+                    }
                 } else {
                     return MAL_FALSE;
                 }
-            } else {
-                return MAL_FALSE;
-            }
+            #endif
         #endif
+    #else
+        return MAL_FALSE;       // AVX-512F is only supported on x86 and x64 architectures.
     #endif
 #else
-    return MAL_FALSE;       // AVX-512F is only supported on x86 and x64 architectures.
+    return MAL_FALSE;           // No compiler support.
 #endif
 }
 
 static MAL_INLINE mal_bool32 mal_has_neon()
 {
-#if defined(MAL_ARM) && !defined(MAL_NO_NEON)
-    #if (defined(__ARM_NEON) || defined(__aarch64__) || defined(_M_ARM64))
-        return MAL_TRUE;    // If the compiler is allowed to freely generate NEON code we can assume support.
+#if defined(MAL_SUPPORT_NEON)
+    #if defined(MAL_ARM) && !defined(MAL_NO_NEON)
+        #if (defined(__ARM_NEON) || defined(__aarch64__) || defined(_M_ARM64))
+            return MAL_TRUE;    // If the compiler is allowed to freely generate NEON code we can assume support.
+        #else
+            // TODO: Runtime check.
+            return MAL_FALSE;
+        #endif
     #else
-        // TODO: Runtime check.
-        return MAL_FALSE;
+        return MAL_FALSE;       // NEON is only supported on ARM architectures.
     #endif
 #else
-    return MAL_FALSE;       // NEON is only supported on ARM architectures.
+    return MAL_FALSE;           // No compiler support.
 #endif
 }
 
@@ -2670,6 +2805,11 @@ typedef int     (WINAPI * MAL_PFN_StringFromGUID2)(const GUID* const rguid, LPOL
 
 typedef HWND (WINAPI * MAL_PFN_GetForegroundWindow)();
 typedef HWND (WINAPI * MAL_PFN_GetDesktopWindow)();
+
+// Microsoft documents these APIs as returning LSTATUS, but the Win32 API shipping with some compilers do not define it. It's just a LONG.
+typedef LONG (WINAPI * MAL_PFN_RegOpenKeyExA)(HKEY hKey, LPCSTR lpSubKey, DWORD ulOptions, REGSAM samDesired, PHKEY phkResult);
+typedef LONG (WINAPI * MAL_PFN_RegCloseKey)(HKEY hKey);
+typedef LONG (WINAPI * MAL_PFN_RegQueryValueExA)(HKEY hKey, LPCSTR lpValueName, LPDWORD lpReserved, LPDWORD lpType, LPBYTE lpData, LPDWORD lpcbData);
 #endif
 
 
@@ -2682,31 +2822,34 @@ typedef HWND (WINAPI * MAL_PFN_GetDesktopWindow)();
 
 // The default format when mal_format_unknown (0) is requested when initializing a device.
 #ifndef MAL_DEFAULT_FORMAT
-#define MAL_DEFAULT_FORMAT                          mal_format_f32
+#define MAL_DEFAULT_FORMAT                                  mal_format_f32
 #endif
 
 // The default channel count to use when 0 is used when initializing a device.
 #ifndef MAL_DEFAULT_CHANNELS
-#define MAL_DEFAULT_CHANNELS                        2
+#define MAL_DEFAULT_CHANNELS                                2
 #endif
 
 // The default sample rate to use when 0 is used when initializing a device.
 #ifndef MAL_DEFAULT_SAMPLE_RATE
-#define MAL_DEFAULT_SAMPLE_RATE                     48000
-#endif
-
-// The default size of the device's buffer in milliseconds.
-//
-// If this is too small you may get underruns and overruns in which case you'll need to either increase
-// this value or use an explicit buffer size.
-#ifndef MAL_DEFAULT_BUFFER_SIZE_IN_MILLISECONDS
-#define MAL_DEFAULT_BUFFER_SIZE_IN_MILLISECONDS     25
+#define MAL_DEFAULT_SAMPLE_RATE                             48000
 #endif
 
 // Default periods when none is specified in mal_device_init(). More periods means more work on the CPU.
 #ifndef MAL_DEFAULT_PERIODS
-#define MAL_DEFAULT_PERIODS                         2
+#define MAL_DEFAULT_PERIODS                                 2
 #endif
+
+// The base buffer size in milliseconds for low latency mode.
+#ifndef MAL_BASE_BUFFER_SIZE_IN_MILLISECONDS_LOW_LATENCY
+#define MAL_BASE_BUFFER_SIZE_IN_MILLISECONDS_LOW_LATENCY    10
+#endif
+
+// The base buffer size in milliseconds for conservative mode.
+#ifndef MAL_BASE_BUFFER_SIZE_IN_MILLISECONDS_CONSERVATIVE
+#define MAL_BASE_BUFFER_SIZE_IN_MILLISECONDS_CONSERVATIVE   50
+#endif
+
 
 // Standard sample rates, in order of priority.
 mal_uint32 g_malStandardSampleRatePriorities[] = {
@@ -2738,60 +2881,64 @@ mal_uint32 g_malStandardSampleRatePriorities[] = {
 // Standard Library Stuff
 //
 ///////////////////////////////////////////////////////////////////////////////
-#ifndef mal_zero_memory
+#ifndef MAL_MALLOC
 #ifdef MAL_WIN32
-#define mal_zero_memory(p, sz) ZeroMemory((p), (sz))
+#define MAL_MALLOC(sz) HeapAlloc(GetProcessHeap(), 0, (sz))
 #else
-#define mal_zero_memory(p, sz) memset((p), 0, (sz))
+#define MAL_MALLOC(sz) malloc((sz))
 #endif
 #endif
 
-#define mal_zero_object(p) mal_zero_memory((p), sizeof(*(p)))
-
-#ifndef mal_copy_memory
+#ifndef MAL_REALLOC
 #ifdef MAL_WIN32
-#define mal_copy_memory(dst, src, sz) CopyMemory((dst), (src), (sz))
+#define MAL_REALLOC(p, sz) (((sz) > 0) ? ((p) ? HeapReAlloc(GetProcessHeap(), 0, (p), (sz)) : HeapAlloc(GetProcessHeap(), 0, (sz))) : ((VOID*)(size_t)(HeapFree(GetProcessHeap(), 0, (p)) & 0)))
 #else
-#define mal_copy_memory(dst, src, sz) memcpy((dst), (src), (sz))
+#define MAL_REALLOC(p, sz) realloc((p), (sz))
 #endif
 #endif
 
-#ifndef mal_malloc
+#ifndef MAL_FREE
 #ifdef MAL_WIN32
-#define mal_malloc(sz) HeapAlloc(GetProcessHeap(), 0, (sz))
+#define MAL_FREE(p) HeapFree(GetProcessHeap(), 0, (p))
 #else
-#define mal_malloc(sz) malloc((sz))
+#define MAL_FREE(p) free((p))
 #endif
 #endif
 
-#ifndef mal_realloc
+#ifndef MAL_ZERO_MEMORY
 #ifdef MAL_WIN32
-#define mal_realloc(p, sz) (((sz) > 0) ? ((p) ? HeapReAlloc(GetProcessHeap(), 0, (p), (sz)) : HeapAlloc(GetProcessHeap(), 0, (sz))) : ((VOID*)(SIZE_T)(HeapFree(GetProcessHeap(), 0, (p)) & 0)))
+#define MAL_ZERO_MEMORY(p, sz) ZeroMemory((p), (sz))
 #else
-#define mal_realloc(p, sz) realloc((p), (sz))
+#define MAL_ZERO_MEMORY(p, sz) memset((p), 0, (sz))
 #endif
 #endif
 
-#ifndef mal_free
+#ifndef MAL_COPY_MEMORY
 #ifdef MAL_WIN32
-#define mal_free(p) HeapFree(GetProcessHeap(), 0, (p))
+#define MAL_COPY_MEMORY(dst, src, sz) CopyMemory((dst), (src), (sz))
 #else
-#define mal_free(p) free((p))
+#define MAL_COPY_MEMORY(dst, src, sz) memcpy((dst), (src), (sz))
 #endif
 #endif
 
-#ifndef mal_assert
+#ifndef MAL_ASSERT
 #ifdef MAL_WIN32
-#define mal_assert(condition) assert(condition)
+#define MAL_ASSERT(condition) assert(condition)
 #else
-#define mal_assert(condition) assert(condition)
+#define MAL_ASSERT(condition) assert(condition)
 #endif
 #endif
 
-#define mal_countof(x)  (sizeof(x) / sizeof(x[0]))
-#define mal_max(x, y)   (((x) > (y)) ? (x) : (y))
-#define mal_min(x, y)   (((x) < (y)) ? (x) : (y))
-#define mal_offset_ptr(p, offset) (((mal_uint8*)(p)) + (offset))
+#define mal_zero_memory MAL_ZERO_MEMORY
+#define mal_copy_memory MAL_COPY_MEMORY
+#define mal_assert      MAL_ASSERT
+
+#define mal_zero_object(p)          mal_zero_memory((p), sizeof(*(p)))
+#define mal_countof(x)              (sizeof(x) / sizeof(x[0]))
+#define mal_max(x, y)               (((x) > (y)) ? (x) : (y))
+#define mal_min(x, y)               (((x) < (y)) ? (x) : (y))
+#define mal_clamp(x, lo, hi)        (mal_max(lo, mal_min(x, hi)))
+#define mal_offset_ptr(p, offset)   (((mal_uint8*)(p)) + (offset))
 
 #define mal_buffer_frame_capacity(buffer, channels, format) (sizeof(buffer) / mal_get_bytes_per_sample(format) / (channels))
 
@@ -3035,6 +3182,103 @@ static MAL_INLINE float mal_clip_f32(float x)
 static MAL_INLINE float mal_mix_f32(float x, float y, float a)
 {
     return x*(1-a) + y*a;
+}
+static MAL_INLINE float mal_mix_f32_fast(float x, float y, float a)
+{
+    return x + (y - x)*a;
+}
+
+static MAL_INLINE double mal_mix_f64(double x, double y, double a)
+{
+    return x*(1-a) + y*a;
+}
+static MAL_INLINE double mal_mix_f64_fast(double x, double y, double a)
+{
+    return x + (y - x)*a;
+}
+
+static MAL_INLINE float mal_scale_to_range_f32(float x, float lo, float hi)
+{
+    return lo + x*(hi-lo);
+}
+
+
+
+// Random Number Generation
+//
+// mini_al uses the LCG random number generation algorithm. This is good enough for audio.
+//
+// Note that mini_al's LCG implementation uses global state which is _not_ thread-local. When this is called across
+// multiple threads, results will be unpredictable. However, it won't crash and results will still be random enough
+// for mini_al's purposes.
+#define MAL_LCG_M   4294967296
+#define MAL_LCG_A   1103515245
+#define MAL_LCG_C   12345
+static mal_int32 g_malLCG;
+
+void mal_seed(mal_int32 seed)
+{
+    g_malLCG = seed;
+}
+
+mal_int32 mal_rand_s32()
+{
+    mal_int32 lcg = g_malLCG;
+    mal_int32 r = (MAL_LCG_A * lcg + MAL_LCG_C) % MAL_LCG_M;
+    g_malLCG = r;
+    return r;
+}
+
+double mal_rand_f64()
+{
+    return (mal_rand_s32() + 0x80000000) / (double)0x7FFFFFFF;
+}
+
+float mal_rand_f32()
+{
+    return (float)mal_rand_f64();
+}
+
+static MAL_INLINE float mal_rand_range_f32(float lo, float hi)
+{
+    return mal_scale_to_range_f32(mal_rand_f32(), lo, hi);
+}
+
+static MAL_INLINE mal_int32 mal_rand_range_s32(mal_int32 lo, mal_int32 hi)
+{
+    double x = mal_rand_f64();
+    return lo + (mal_int32)(x*(hi-lo));
+}
+
+
+static MAL_INLINE float mal_dither_f32(mal_dither_mode ditherMode, float ditherMin, float ditherMax)
+{
+    if (ditherMode == mal_dither_mode_rectangle) {
+        float a = mal_rand_range_f32(ditherMin, ditherMax);
+        return a;
+    }
+    if (ditherMode == mal_dither_mode_triangle) {
+        float a = mal_rand_range_f32(ditherMin, 0);
+        float b = mal_rand_range_f32(0, ditherMax);
+        return a + b;
+    }
+
+    return 0;
+}
+
+static MAL_INLINE mal_int32 mal_dither_s32(mal_dither_mode ditherMode, mal_int32 ditherMin, mal_int32 ditherMax)
+{
+    if (ditherMode == mal_dither_mode_rectangle) {
+        mal_int32 a = mal_rand_range_s32(ditherMin, ditherMax);
+        return a;
+    }
+    if (ditherMode == mal_dither_mode_triangle) {
+        mal_int32 a = mal_rand_range_s32(ditherMin, 0);
+        mal_int32 b = mal_rand_range_s32(0, ditherMax);
+        return a + b;
+    }
+
+    return 0;
 }
 
 
@@ -3332,6 +3576,7 @@ mal_bool32 mal_thread_create__posix(mal_context* pContext, mal_thread* pThread, 
 {
     pthread_attr_t* pAttr = NULL;
 
+#if !defined(__EMSCRIPTEN__)
     // Try setting the thread priority. It's not critical if anything fails here.
     pthread_attr_t attr;
     if (((mal_pthread_attr_init_proc)pContext->posix.pthread_attr_init)(&attr) == 0) {
@@ -3381,6 +3626,7 @@ mal_bool32 mal_thread_create__posix(mal_context* pContext, mal_thread* pThread, 
 
         ((mal_pthread_attr_destroy_proc)pContext->posix.pthread_attr_destroy)(&attr);
     }
+#endif
 
     int result = ((mal_pthread_create_proc)pContext->posix.pthread_create)(&pThread->posix.thread, pAttr, entryProc, pData);
     if (result != 0) {
@@ -3643,6 +3889,34 @@ mal_uint32 mal_get_best_sample_rate_within_range(mal_uint32 sampleRateMin, mal_u
     // Should never get here.
     mal_assert(MAL_FALSE);
     return 0;
+}
+
+mal_uint32 mal_get_closest_standard_sample_rate(mal_uint32 sampleRateIn)
+{
+    mal_uint32 closestRate = 0;
+    mal_uint32 closestDiff = 0xFFFFFFFF;
+
+    for (size_t iStandardRate = 0; iStandardRate < mal_countof(g_malStandardSampleRatePriorities); ++iStandardRate) {
+        mal_uint32 standardRate = g_malStandardSampleRatePriorities[iStandardRate];
+
+        mal_uint32 diff;
+        if (sampleRateIn > standardRate) {
+            diff = sampleRateIn - standardRate;
+        } else {
+            diff = standardRate - sampleRateIn;
+        }
+
+        if (diff == 0) {
+            return standardRate;    // The input sample rate is a standard rate.
+        }
+
+        if (closestDiff > diff) {
+            closestDiff = diff;
+            closestRate = standardRate;
+        }
+    }
+
+    return closestRate;
 }
 
 
@@ -3922,6 +4196,17 @@ mal_result mal_context_get_device_info__null(mal_context* pContext, mal_device_t
         mal_strncpy_s(pDeviceInfo->name, sizeof(pDeviceInfo->name), "NULL Capture Device", (size_t)-1);
     }
 
+    // Support everything on the null backend.
+    pDeviceInfo->formatCount = mal_format_count - 1;    // Minus one because we don't want to include mal_format_unknown.
+    for (mal_uint32 iFormat = 0; iFormat < pDeviceInfo->formatCount; ++iFormat) {
+        pDeviceInfo->formats[iFormat] = (mal_format)(iFormat + 1);  // +1 to skip over mal_format_unknown.
+    }
+
+    pDeviceInfo->minChannels   = 1;
+    pDeviceInfo->maxChannels   = MAL_MAX_CHANNELS;
+    pDeviceInfo->minSampleRate = MAL_SAMPLE_RATE_8000;
+    pDeviceInfo->maxSampleRate = MAL_SAMPLE_RATE_384000;
+
     return MAL_SUCCESS;
 }
 
@@ -4188,7 +4473,7 @@ typedef size_t DWORD_PTR;
 
 // The SDK that comes with old versions of MSVC (VC6, for example) does not appear to define WAVEFORMATEXTENSIBLE. We
 // define our own implementation in this case.
-#if defined(_MSC_VER) && !defined(_WAVEFORMATEXTENSIBLE_)
+#if (defined(_MSC_VER) && !defined(_WAVEFORMATEXTENSIBLE_)) || defined(__DMC__)
 typedef struct
 {
     WAVEFORMATEX Format;
@@ -4204,7 +4489,11 @@ typedef struct
 #endif
 
 #ifndef WAVE_FORMAT_EXTENSIBLE
-#define WAVE_FORMAT_EXTENSIBLE 0xFFFE
+#define WAVE_FORMAT_EXTENSIBLE  0xFFFE
+#endif
+
+#ifndef WAVE_FORMAT_IEEE_FLOAT
+#define WAVE_FORMAT_IEEE_FLOAT  0x0003
 #endif
 
 GUID MAL_GUID_NULL = {0x00000000, 0x0000, 0x0000, {0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00}};
@@ -4307,12 +4596,12 @@ void mal_channel_mask_to_channel_map__win32(DWORD dwChannelMask, mal_uint32 chan
 #define mal_is_guid_equal(a, b) IsEqualGUID((const GUID*)a, (const GUID*)b)
 #endif
 
-mal_format mal_format_from_WAVEFORMATEX(WAVEFORMATEX* pWF)
+mal_format mal_format_from_WAVEFORMATEX(const WAVEFORMATEX* pWF)
 {
     mal_assert(pWF != NULL);
 
     if (pWF->wFormatTag == WAVE_FORMAT_EXTENSIBLE) {
-        WAVEFORMATEXTENSIBLE* pWFEX = (WAVEFORMATEXTENSIBLE*)pWF;
+        const WAVEFORMATEXTENSIBLE* pWFEX = (const WAVEFORMATEXTENSIBLE*)pWF;
         if (mal_is_guid_equal(&pWFEX->SubFormat, &MAL_GUID_KSDATAFORMAT_SUBTYPE_PCM)) {
             if (pWFEX->Samples.wValidBitsPerSample == 32) {
                 return mal_format_s32;
@@ -4386,6 +4675,36 @@ mal_format mal_format_from_WAVEFORMATEX(WAVEFORMATEX* pWF)
 //    #pragma warning(pop)
 //#endif
 
+
+// Some compilers don't define VerifyVersionInfoW. Need to write this ourselves.
+#if defined(__DMC__)
+#define _WIN32_WINNT_VISTA      0x0600
+#define VER_MINORVERSION        0x01
+#define VER_MAJORVERSION        0x02
+#define VER_SERVICEPACKMAJOR    0x20
+#define VER_GREATER_EQUAL       0x03
+
+typedef struct  {
+    DWORD dwOSVersionInfoSize;
+    DWORD dwMajorVersion;
+    DWORD dwMinorVersion;
+    DWORD dwBuildNumber;
+    DWORD dwPlatformId;
+    WCHAR szCSDVersion[128];
+    WORD  wServicePackMajor;
+    WORD  wServicePackMinor;
+    WORD  wSuiteMask;
+    BYTE  wProductType;
+    BYTE  wReserved;
+} mal_OSVERSIONINFOEXW;
+
+BOOL WINAPI VerifyVersionInfoW(mal_OSVERSIONINFOEXW* lpVersionInfo, DWORD dwTypeMask, DWORDLONG dwlConditionMask);
+ULONGLONG WINAPI VerSetConditionMask(ULONGLONG dwlConditionMask, DWORD dwTypeBitMask, BYTE dwConditionMask);
+#else
+typedef OSVERSIONINFOEXW mal_OSVERSIONINFOEXW;
+#endif
+
+
 #ifndef PROPERTYKEY_DEFINED
 #define PROPERTYKEY_DEFINED
 typedef struct
@@ -4454,6 +4773,7 @@ typedef mal_int64                                           MAL_REFERENCE_TIME;
 #define MAL_AUDCLNT_SESSIONFLAGS_DISPLAY_HIDEWHENEXPIRED    0x40000000
 
 // We only care about a few error codes.
+#define MAL_AUDCLNT_E_INVALID_DEVICE_PERIOD                 (-2004287456)
 #define MAL_AUDCLNT_E_BUFFER_SIZE_NOT_ALIGNED               (-2004287463)
 #define MAL_AUDCLNT_S_BUFFER_EMPTY                          (143196161)
 
@@ -4617,9 +4937,9 @@ typedef struct
 
     // IAudioClient
     HRESULT (STDMETHODCALLTYPE * Initialize)       (mal_IAudioClient* pThis, MAL_AUDCLNT_SHAREMODE shareMode, DWORD streamFlags, MAL_REFERENCE_TIME bufferDuration, MAL_REFERENCE_TIME periodicity, const WAVEFORMATEX* pFormat, const GUID* pAudioSessionGuid);
-    HRESULT (STDMETHODCALLTYPE * GetBufferSize)    (mal_IAudioClient* pThis, UINT32* pNumBufferFrames);
+    HRESULT (STDMETHODCALLTYPE * GetBufferSize)    (mal_IAudioClient* pThis, mal_uint32* pNumBufferFrames);
     HRESULT (STDMETHODCALLTYPE * GetStreamLatency) (mal_IAudioClient* pThis, MAL_REFERENCE_TIME* pLatency);
-    HRESULT (STDMETHODCALLTYPE * GetCurrentPadding)(mal_IAudioClient* pThis, UINT32* pNumPaddingFrames);
+    HRESULT (STDMETHODCALLTYPE * GetCurrentPadding)(mal_IAudioClient* pThis, mal_uint32* pNumPaddingFrames);
     HRESULT (STDMETHODCALLTYPE * IsFormatSupported)(mal_IAudioClient* pThis, MAL_AUDCLNT_SHAREMODE shareMode, const WAVEFORMATEX* pFormat, WAVEFORMATEX** ppClosestMatch);
     HRESULT (STDMETHODCALLTYPE * GetMixFormat)     (mal_IAudioClient* pThis, WAVEFORMATEX** ppDeviceFormat);
     HRESULT (STDMETHODCALLTYPE * GetDevicePeriod)  (mal_IAudioClient* pThis, MAL_REFERENCE_TIME* pDefaultDevicePeriod, MAL_REFERENCE_TIME* pMinimumDevicePeriod);
@@ -4637,9 +4957,9 @@ HRESULT mal_IAudioClient_QueryInterface(mal_IAudioClient* pThis, const IID* cons
 ULONG   mal_IAudioClient_AddRef(mal_IAudioClient* pThis)                                                 { return pThis->lpVtbl->AddRef(pThis); }
 ULONG   mal_IAudioClient_Release(mal_IAudioClient* pThis)                                                { return pThis->lpVtbl->Release(pThis); }
 HRESULT mal_IAudioClient_Initialize(mal_IAudioClient* pThis, MAL_AUDCLNT_SHAREMODE shareMode, DWORD streamFlags, MAL_REFERENCE_TIME bufferDuration, MAL_REFERENCE_TIME periodicity, const WAVEFORMATEX* pFormat, const GUID* pAudioSessionGuid) { return pThis->lpVtbl->Initialize(pThis, shareMode, streamFlags, bufferDuration, periodicity, pFormat, pAudioSessionGuid); }
-HRESULT mal_IAudioClient_GetBufferSize(mal_IAudioClient* pThis, UINT32* pNumBufferFrames)                { return pThis->lpVtbl->GetBufferSize(pThis, pNumBufferFrames); }
+HRESULT mal_IAudioClient_GetBufferSize(mal_IAudioClient* pThis, mal_uint32* pNumBufferFrames)                { return pThis->lpVtbl->GetBufferSize(pThis, pNumBufferFrames); }
 HRESULT mal_IAudioClient_GetStreamLatency(mal_IAudioClient* pThis, MAL_REFERENCE_TIME* pLatency)             { return pThis->lpVtbl->GetStreamLatency(pThis, pLatency); }
-HRESULT mal_IAudioClient_GetCurrentPadding(mal_IAudioClient* pThis, UINT32* pNumPaddingFrames)           { return pThis->lpVtbl->GetCurrentPadding(pThis, pNumPaddingFrames); }
+HRESULT mal_IAudioClient_GetCurrentPadding(mal_IAudioClient* pThis, mal_uint32* pNumPaddingFrames)           { return pThis->lpVtbl->GetCurrentPadding(pThis, pNumPaddingFrames); }
 HRESULT mal_IAudioClient_IsFormatSupported(mal_IAudioClient* pThis, MAL_AUDCLNT_SHAREMODE shareMode, const WAVEFORMATEX* pFormat, WAVEFORMATEX** ppClosestMatch) { return pThis->lpVtbl->IsFormatSupported(pThis, shareMode, pFormat, ppClosestMatch); }
 HRESULT mal_IAudioClient_GetMixFormat(mal_IAudioClient* pThis, WAVEFORMATEX** ppDeviceFormat)            { return pThis->lpVtbl->GetMixFormat(pThis, ppDeviceFormat); }
 HRESULT mal_IAudioClient_GetDevicePeriod(mal_IAudioClient* pThis, MAL_REFERENCE_TIME* pDefaultDevicePeriod, MAL_REFERENCE_TIME* pMinimumDevicePeriod) { return pThis->lpVtbl->GetDevicePeriod(pThis, pDefaultDevicePeriod, pMinimumDevicePeriod); }
@@ -4659,8 +4979,8 @@ typedef struct
     ULONG   (STDMETHODCALLTYPE * Release)       (mal_IAudioRenderClient* pThis);
 
     // IAudioRenderClient
-    HRESULT (STDMETHODCALLTYPE * GetBuffer)    (mal_IAudioRenderClient* pThis, UINT32 numFramesRequested, BYTE** ppData);
-    HRESULT (STDMETHODCALLTYPE * ReleaseBuffer)(mal_IAudioRenderClient* pThis, UINT32 numFramesWritten, DWORD dwFlags);
+    HRESULT (STDMETHODCALLTYPE * GetBuffer)    (mal_IAudioRenderClient* pThis, mal_uint32 numFramesRequested, BYTE** ppData);
+    HRESULT (STDMETHODCALLTYPE * ReleaseBuffer)(mal_IAudioRenderClient* pThis, mal_uint32 numFramesWritten, DWORD dwFlags);
 } mal_IAudioRenderClientVtbl;
 struct mal_IAudioRenderClient
 {
@@ -4669,8 +4989,8 @@ struct mal_IAudioRenderClient
 HRESULT mal_IAudioRenderClient_QueryInterface(mal_IAudioRenderClient* pThis, const IID* const riid, void** ppObject) { return pThis->lpVtbl->QueryInterface(pThis, riid, ppObject); }
 ULONG   mal_IAudioRenderClient_AddRef(mal_IAudioRenderClient* pThis)                                                 { return pThis->lpVtbl->AddRef(pThis); }
 ULONG   mal_IAudioRenderClient_Release(mal_IAudioRenderClient* pThis)                                                { return pThis->lpVtbl->Release(pThis); }
-HRESULT mal_IAudioRenderClient_GetBuffer(mal_IAudioRenderClient* pThis, UINT32 numFramesRequested, BYTE** ppData)    { return pThis->lpVtbl->GetBuffer(pThis, numFramesRequested, ppData); }
-HRESULT mal_IAudioRenderClient_ReleaseBuffer(mal_IAudioRenderClient* pThis, UINT32 numFramesWritten, DWORD dwFlags)  { return pThis->lpVtbl->ReleaseBuffer(pThis, numFramesWritten, dwFlags); }
+HRESULT mal_IAudioRenderClient_GetBuffer(mal_IAudioRenderClient* pThis, mal_uint32 numFramesRequested, BYTE** ppData)    { return pThis->lpVtbl->GetBuffer(pThis, numFramesRequested, ppData); }
+HRESULT mal_IAudioRenderClient_ReleaseBuffer(mal_IAudioRenderClient* pThis, mal_uint32 numFramesWritten, DWORD dwFlags)  { return pThis->lpVtbl->ReleaseBuffer(pThis, numFramesWritten, dwFlags); }
 
 
 // IAudioCaptureClient
@@ -4682,9 +5002,9 @@ typedef struct
     ULONG   (STDMETHODCALLTYPE * Release)       (mal_IAudioCaptureClient* pThis);
 
     // IAudioRenderClient
-    HRESULT (STDMETHODCALLTYPE * GetBuffer)        (mal_IAudioCaptureClient* pThis, BYTE** ppData, UINT32* pNumFramesToRead, DWORD* pFlags, UINT64* pDevicePosition, UINT64* pQPCPosition);
-    HRESULT (STDMETHODCALLTYPE * ReleaseBuffer)    (mal_IAudioCaptureClient* pThis, UINT32 numFramesRead);
-    HRESULT (STDMETHODCALLTYPE * GetNextPacketSize)(mal_IAudioCaptureClient* pThis, UINT32* pNumFramesInNextPacket);
+    HRESULT (STDMETHODCALLTYPE * GetBuffer)        (mal_IAudioCaptureClient* pThis, BYTE** ppData, mal_uint32* pNumFramesToRead, DWORD* pFlags, mal_uint64* pDevicePosition, mal_uint64* pQPCPosition);
+    HRESULT (STDMETHODCALLTYPE * ReleaseBuffer)    (mal_IAudioCaptureClient* pThis, mal_uint32 numFramesRead);
+    HRESULT (STDMETHODCALLTYPE * GetNextPacketSize)(mal_IAudioCaptureClient* pThis, mal_uint32* pNumFramesInNextPacket);
 } mal_IAudioCaptureClientVtbl;
 struct mal_IAudioCaptureClient
 {
@@ -4693,9 +5013,64 @@ struct mal_IAudioCaptureClient
 HRESULT mal_IAudioCaptureClient_QueryInterface(mal_IAudioCaptureClient* pThis, const IID* const riid, void** ppObject) { return pThis->lpVtbl->QueryInterface(pThis, riid, ppObject); }
 ULONG   mal_IAudioCaptureClient_AddRef(mal_IAudioCaptureClient* pThis)                                                 { return pThis->lpVtbl->AddRef(pThis); }
 ULONG   mal_IAudioCaptureClient_Release(mal_IAudioCaptureClient* pThis)                                                { return pThis->lpVtbl->Release(pThis); }
-HRESULT mal_IAudioCaptureClient_GetBuffer(mal_IAudioCaptureClient* pThis, BYTE** ppData, UINT32* pNumFramesToRead, DWORD* pFlags, UINT64* pDevicePosition, UINT64* pQPCPosition) { return pThis->lpVtbl->GetBuffer(pThis, ppData, pNumFramesToRead, pFlags, pDevicePosition, pQPCPosition); }
-HRESULT mal_IAudioCaptureClient_ReleaseBuffer(mal_IAudioCaptureClient* pThis, UINT32 numFramesRead)                    { return pThis->lpVtbl->ReleaseBuffer(pThis, numFramesRead); }
-HRESULT mal_IAudioCaptureClient_GetNextPacketSize(mal_IAudioCaptureClient* pThis, UINT32* pNumFramesInNextPacket)      { return pThis->lpVtbl->GetNextPacketSize(pThis, pNumFramesInNextPacket); }
+HRESULT mal_IAudioCaptureClient_GetBuffer(mal_IAudioCaptureClient* pThis, BYTE** ppData, mal_uint32* pNumFramesToRead, DWORD* pFlags, mal_uint64* pDevicePosition, mal_uint64* pQPCPosition) { return pThis->lpVtbl->GetBuffer(pThis, ppData, pNumFramesToRead, pFlags, pDevicePosition, pQPCPosition); }
+HRESULT mal_IAudioCaptureClient_ReleaseBuffer(mal_IAudioCaptureClient* pThis, mal_uint32 numFramesRead)                    { return pThis->lpVtbl->ReleaseBuffer(pThis, numFramesRead); }
+HRESULT mal_IAudioCaptureClient_GetNextPacketSize(mal_IAudioCaptureClient* pThis, mal_uint32* pNumFramesInNextPacket)      { return pThis->lpVtbl->GetNextPacketSize(pThis, pNumFramesInNextPacket); }
+
+// This is the part that's preventing mini_al from being compiled as C with UWP. We need to implement IActivateAudioInterfaceCompletionHandler
+// in C which is quite annoying.
+#ifndef MAL_WIN32_DESKTOP
+    #ifdef __cplusplus
+    #include <mmdeviceapi.h>
+    #include <wrl\implements.h>
+
+    class malCompletionHandler : public Microsoft::WRL::RuntimeClass< Microsoft::WRL::RuntimeClassFlags< Microsoft::WRL::ClassicCom >, Microsoft::WRL::FtmBase, IActivateAudioInterfaceCompletionHandler >
+    {
+    public:
+
+        malCompletionHandler()
+            : m_hEvent(NULL)
+        {
+        }
+
+        mal_result Init()
+        {
+            m_hEvent = CreateEventA(NULL, FALSE, FALSE, NULL);
+            if (m_hEvent == NULL) {
+                return MAL_ERROR;
+            }
+
+            return MAL_SUCCESS;
+        }
+
+        void Uninit()
+        {
+            if (m_hEvent != NULL) {
+                CloseHandle(m_hEvent);
+            }
+        }
+
+        void Wait()
+        {
+            WaitForSingleObject(m_hEvent, INFINITE);
+        }
+
+        HRESULT STDMETHODCALLTYPE ActivateCompleted(IActivateAudioInterfaceAsyncOperation *activateOperation)
+        {
+            (void)activateOperation;
+            SetEvent(m_hEvent);
+            return S_OK;
+        }
+
+    private:
+        HANDLE m_hEvent;  // This is created in Init(), deleted in Uninit(), waited on in Wait() and signaled in ActivateCompleted().
+    };
+    #else
+    #error "The UWP build is currently only supported in C++."
+    #endif
+#endif  // !MAL_WIN32_DESKTOP
+
+
 
 mal_bool32 mal_context_is_device_id_equal__wasapi(mal_context* pContext, const mal_device_id* pID0, const mal_device_id* pID1)
 {
@@ -4705,6 +5080,227 @@ mal_bool32 mal_context_is_device_id_equal__wasapi(mal_context* pContext, const m
     (void)pContext;
 
     return memcmp(pID0->wasapi, pID1->wasapi, sizeof(pID0->wasapi)) == 0;
+}
+
+void mal_set_device_info_from_WAVEFORMATEX(const WAVEFORMATEX* pWF, mal_device_info* pInfo)
+{
+    mal_assert(pWF != NULL);
+    mal_assert(pInfo != NULL);
+
+    pInfo->formatCount   = 1;
+    pInfo->formats[0]    = mal_format_from_WAVEFORMATEX(pWF);
+    pInfo->minChannels   = pWF->nChannels;
+    pInfo->maxChannels   = pWF->nChannels;
+    pInfo->minSampleRate = pWF->nSamplesPerSec;
+    pInfo->maxSampleRate = pWF->nSamplesPerSec;
+}
+
+#ifndef MAL_WIN32_DESKTOP
+mal_result mal_context_get_IAudioClient_UWP__wasapi(mal_context* pContext, mal_device_type deviceType, const mal_device_id* pDeviceID, mal_IAudioClient** ppAudioClient, IUnknown** ppActivatedInterface)
+{
+    mal_assert(pContext != NULL);
+    mal_assert(ppAudioClient != NULL);
+
+    mal_IActivateAudioInterfaceAsyncOperation *pAsyncOp = NULL;
+    malCompletionHandler completionHandler;
+
+    IID iid;
+    if (pDeviceID != NULL) {
+        mal_copy_memory(&iid, pDeviceID->wasapi, sizeof(iid));
+    } else {
+        if (deviceType == mal_device_type_playback) {
+            iid = MAL_IID_DEVINTERFACE_AUDIO_RENDER;
+        } else {
+            iid = MAL_IID_DEVINTERFACE_AUDIO_CAPTURE;
+        }
+    }
+
+    LPOLESTR iidStr;
+    HRESULT hr = StringFromIID(iid, &iidStr);
+    if (FAILED(hr)) {
+        return mal_context_post_error(pContext, NULL, "[WASAPI] Failed to convert device IID to string for ActivateAudioInterfaceAsync(). Out of memory.", MAL_OUT_OF_MEMORY);
+    }
+
+    mal_result result = completionHandler.Init();
+    if (result != MAL_SUCCESS) {
+        mal_CoTaskMemFree(pContext, iidStr);
+        return mal_context_post_error(pContext, NULL, "[WASAPI] Failed to create event for waiting for ActivateAudioInterfaceAsync().", MAL_FAILED_TO_OPEN_BACKEND_DEVICE);
+    }
+
+    hr = ActivateAudioInterfaceAsync(iidStr, MAL_IID_IAudioClient, NULL, (IActivateAudioInterfaceCompletionHandler*)&completionHandler, (IActivateAudioInterfaceAsyncOperation**)&pAsyncOp);
+    if (FAILED(hr)) {
+        completionHandler.Uninit();
+        mal_CoTaskMemFree(pContext, iidStr);
+        return mal_context_post_error(pContext, NULL, "[WASAPI] ActivateAudioInterfaceAsync() failed.", MAL_FAILED_TO_OPEN_BACKEND_DEVICE);
+    }
+
+    mal_CoTaskMemFree(pContext, iidStr);
+
+    // Wait for the async operation for finish.
+    completionHandler.Wait();
+    completionHandler.Uninit();
+
+    HRESULT activateResult;
+    IUnknown* pActivatedInterface;
+    hr = mal_IActivateAudioInterfaceAsyncOperation_GetActivateResult(pAsyncOp, &activateResult, &pActivatedInterface);
+    mal_IActivateAudioInterfaceAsyncOperation_Release(pAsyncOp);
+
+    if (FAILED(hr) || FAILED(activateResult)) {
+        return mal_context_post_error(pContext, NULL, "[WASAPI] Failed to activate device.", MAL_FAILED_TO_OPEN_BACKEND_DEVICE);
+    }
+
+    // Here is where we grab the IAudioClient interface.
+    hr = pActivatedInterface->QueryInterface(MAL_IID_IAudioClient, (void**)ppAudioClient);
+    if (FAILED(hr)) {
+        return mal_context_post_error(pContext, NULL, "[WASAPI] Failed to query IAudioClient interface.", MAL_FAILED_TO_OPEN_BACKEND_DEVICE);
+    }
+
+    if (ppActivatedInterface) {
+        *ppActivatedInterface = pActivatedInterface;
+    } else {
+        pActivatedInterface->Release();
+    }
+
+    return MAL_SUCCESS;
+}
+#endif
+
+mal_result mal_context_get_device_info_from_IAudioClient__wasapi(mal_context* pContext, /*mal_IMMDevice**/void* pMMDevice, mal_IAudioClient* pAudioClient, mal_share_mode shareMode, mal_device_info* pInfo)
+{
+    mal_assert(pAudioClient != NULL);
+    mal_assert(pInfo != NULL);
+
+    // We use a different technique to retrieve the device information depending on whether or not we are using shared or exclusive mode.
+    if (shareMode == mal_share_mode_shared) {
+        // Shared Mode. We use GetMixFormat() here.
+        WAVEFORMATEX* pWF = NULL;
+        HRESULT hr = mal_IAudioClient_GetMixFormat((mal_IAudioClient*)pAudioClient, (WAVEFORMATEX**)&pWF);
+        if (SUCCEEDED(hr)) {
+            mal_set_device_info_from_WAVEFORMATEX(pWF, pInfo);
+            return MAL_SUCCESS;
+        } else {
+            return mal_context_post_error(pContext, NULL, "[WASAPI] Failed to retrieve mix format for device info retrieval.", MAL_FAILED_TO_OPEN_BACKEND_DEVICE);
+        }
+    } else {
+        // Exlcusive Mode. We repeatedly call IsFormatSupported() here. This is not currently support on UWP.
+#ifdef MAL_WIN32_DESKTOP
+        // The first thing to do is get the format from PKEY_AudioEngine_DeviceFormat. This should give us a channel count we assume is
+        // correct which will simplify our searching.
+        mal_IPropertyStore *pProperties;
+        HRESULT hr = mal_IMMDevice_OpenPropertyStore((mal_IMMDevice*)pMMDevice, STGM_READ, &pProperties);
+        if (SUCCEEDED(hr)) {
+            PROPVARIANT var;
+            mal_PropVariantInit(&var);
+
+            hr = mal_IPropertyStore_GetValue(pProperties, &MAL_PKEY_AudioEngine_DeviceFormat, &var);
+            if (SUCCEEDED(hr)) {
+                WAVEFORMATEX* pWF = (WAVEFORMATEX*)var.blob.pBlobData;
+                mal_set_device_info_from_WAVEFORMATEX(pWF, pInfo);
+
+                // In my testing, the format returned by PKEY_AudioEngine_DeviceFormat is suitable for exclusive mode so we check this format
+                // first. If this fails, fall back to a search.
+                hr = mal_IAudioClient_IsFormatSupported((mal_IAudioClient*)pAudioClient, MAL_AUDCLNT_SHAREMODE_EXCLUSIVE, pWF, NULL);
+                mal_PropVariantClear(pContext, &var);
+
+                if (FAILED(hr)) {
+                    // The format returned by PKEY_AudioEngine_DeviceFormat is not supported, so fall back to a search. We assume the channel
+                    // count returned by MAL_PKEY_AudioEngine_DeviceFormat is valid and correct. For simplicity we're only returning one format.
+                    mal_uint32 channels = pInfo->minChannels;
+
+                    mal_format formatsToSearch[] = {
+                        mal_format_s16,
+                        mal_format_s24,
+                        //mal_format_s24_32,
+                        mal_format_f32,
+                        mal_format_s32,
+                        mal_format_u8
+                    };
+
+                    mal_channel defaultChannelMap[MAL_MAX_CHANNELS];
+                    mal_get_standard_channel_map(mal_standard_channel_map_microsoft, channels, defaultChannelMap);
+
+                    WAVEFORMATEXTENSIBLE wf;
+                    mal_zero_object(&wf);
+                    wf.Format.cbSize     = sizeof(wf);
+                    wf.Format.wFormatTag = WAVE_FORMAT_EXTENSIBLE;
+                    wf.Format.nChannels  = (WORD)channels;
+                    wf.dwChannelMask     = mal_channel_map_to_channel_mask__win32(defaultChannelMap, channels);
+
+                    mal_bool32 found = MAL_FALSE;
+                    for (mal_uint32 iFormat = 0; iFormat < mal_countof(formatsToSearch); ++iFormat) {
+                        mal_format format = formatsToSearch[iFormat];
+
+                        wf.Format.wBitsPerSample       = (WORD)mal_get_bytes_per_sample(format)*8;
+                        wf.Format.nBlockAlign          = (wf.Format.nChannels * wf.Format.wBitsPerSample) / 8;
+                        wf.Format.nAvgBytesPerSec      = wf.Format.nBlockAlign * wf.Format.nSamplesPerSec;
+                        wf.Samples.wValidBitsPerSample = /*(format == mal_format_s24_32) ? 24 :*/ wf.Format.wBitsPerSample;
+                        if (format == mal_format_f32) {
+                            wf.SubFormat = MAL_GUID_KSDATAFORMAT_SUBTYPE_IEEE_FLOAT;
+                        } else {
+                            wf.SubFormat = MAL_GUID_KSDATAFORMAT_SUBTYPE_PCM;
+                        }
+
+                        for (mal_uint32 iSampleRate = 0; iSampleRate < mal_countof(g_malStandardSampleRatePriorities); ++iSampleRate) {
+                            wf.Format.nSamplesPerSec = g_malStandardSampleRatePriorities[iSampleRate];
+
+                            hr = mal_IAudioClient_IsFormatSupported((mal_IAudioClient*)pAudioClient, MAL_AUDCLNT_SHAREMODE_EXCLUSIVE, (WAVEFORMATEX*)&wf, NULL);
+                            if (SUCCEEDED(hr)) {
+                                mal_set_device_info_from_WAVEFORMATEX((WAVEFORMATEX*)&wf, pInfo);
+                                found = MAL_TRUE;
+                                break;
+                            }
+                        }
+
+                        if (found) {
+                            break;
+                        }
+                    }
+
+                    if (!found) {
+                        mal_IPropertyStore_Release(pProperties);
+                        return mal_context_post_error(pContext, NULL, "[WASAPI] Failed to find suitable device format for device info retrieval.", MAL_FAILED_TO_OPEN_BACKEND_DEVICE);
+                    }
+                }
+            } else {
+                mal_IPropertyStore_Release(pProperties);
+                return mal_context_post_error(pContext, NULL, "[WASAPI] Failed to retrieve device format for device info retrieval.", MAL_FAILED_TO_OPEN_BACKEND_DEVICE);
+            }
+        } else {
+            return mal_context_post_error(pContext, NULL, "[WASAPI] Failed to open property store for device info retrieval.", MAL_FAILED_TO_OPEN_BACKEND_DEVICE);
+        }
+
+        return MAL_SUCCESS;
+#else
+        // Exclusive mode not fully supported in UWP right now.
+        return MAL_ERROR;
+#endif
+    }
+}
+
+#ifdef MAL_WIN32_DESKTOP
+mal_result mal_context_get_MMDevice__wasapi(mal_context* pContext, mal_device_type deviceType, const mal_device_id* pDeviceID, mal_IMMDevice** ppMMDevice)
+{
+    mal_assert(pContext != NULL);
+    mal_assert(ppMMDevice != NULL);
+
+    mal_IMMDeviceEnumerator* pDeviceEnumerator;
+    HRESULT hr = mal_CoCreateInstance(pContext, MAL_CLSID_MMDeviceEnumerator, NULL, CLSCTX_ALL, MAL_IID_IMMDeviceEnumerator, (void**)&pDeviceEnumerator);
+    if (FAILED(hr)) {
+        return mal_context_post_error(pContext, NULL, "[WASAPI] Failed to create IMMDeviceEnumerator.", MAL_FAILED_TO_INIT_BACKEND);
+    }
+
+    if (pDeviceID == NULL) {
+        hr = mal_IMMDeviceEnumerator_GetDefaultAudioEndpoint(pDeviceEnumerator, (deviceType == mal_device_type_playback) ? mal_eRender : mal_eCapture, mal_eConsole, ppMMDevice);
+    } else {
+        hr = mal_IMMDeviceEnumerator_GetDevice(pDeviceEnumerator, pDeviceID->wasapi, ppMMDevice);
+    }
+
+    mal_IMMDeviceEnumerator_Release(pDeviceEnumerator);
+    if (FAILED(hr)) {
+        return mal_context_post_error(pContext, NULL, "[WASAPI] Failed to retrieve IMMDevice.", MAL_FAILED_TO_OPEN_BACKEND_DEVICE);
+    }
+
+    return MAL_SUCCESS;
 }
 
 mal_result mal_context_get_device_info_from_MMDevice__wasapi(mal_context* pContext, mal_IMMDevice* pMMDevice, mal_share_mode shareMode, mal_bool32 onlySimpleInfo, mal_device_info* pInfo)
@@ -4730,31 +5326,36 @@ mal_result mal_context_get_device_info_from_MMDevice__wasapi(mal_context* pConte
         mal_CoTaskMemFree(pContext, id);
     }
 
-    mal_IPropertyStore *pProperties;
-    hr = mal_IMMDevice_OpenPropertyStore(pMMDevice, STGM_READ, &pProperties);
-    if (SUCCEEDED(hr)) {
-        PROPVARIANT var;
-
-        // Description / Friendly Name
-        mal_PropVariantInit(&var);
-        hr = mal_IPropertyStore_GetValue(pProperties, &MAL_PKEY_Device_FriendlyName, &var);
+    {
+        mal_IPropertyStore *pProperties;
+        hr = mal_IMMDevice_OpenPropertyStore(pMMDevice, STGM_READ, &pProperties);
         if (SUCCEEDED(hr)) {
-            WideCharToMultiByte(CP_UTF8, 0, var.pwszVal, -1, pInfo->name, sizeof(pInfo->name), 0, FALSE);
-            mal_PropVariantClear(pContext, &var);
-        }
+            PROPVARIANT var;
 
-        // Format
-        if (!onlySimpleInfo) {
-            // TODO:
-            // - Get MAL_PKEY_AudioEngine_DeviceFormat for the channel count
-            // - Open the device
-            // - If shared mode, call GetMixFormat()
-            // - If exclusive mode, loop over most common formats (s16, s24, f32), then each of the standard sample rates.
-            //   - If anything fails, don't allow exclusive mode for this device.
-            (void)shareMode;
-        }
+            // Description / Friendly Name
+            mal_PropVariantInit(&var);
+            hr = mal_IPropertyStore_GetValue(pProperties, &MAL_PKEY_Device_FriendlyName, &var);
+            if (SUCCEEDED(hr)) {
+                WideCharToMultiByte(CP_UTF8, 0, var.pwszVal, -1, pInfo->name, sizeof(pInfo->name), 0, FALSE);
+                mal_PropVariantClear(pContext, &var);
+            }
 
-        mal_IPropertyStore_Release(pProperties);
+            mal_IPropertyStore_Release(pProperties);
+        }
+    }
+
+    // Format
+    if (!onlySimpleInfo) {
+        mal_IAudioClient* pAudioClient;
+        hr = mal_IMMDevice_Activate(pMMDevice, &MAL_IID_IAudioClient, CLSCTX_ALL, NULL, (void**)&pAudioClient);
+        if (SUCCEEDED(hr)) {
+            mal_result result = mal_context_get_device_info_from_IAudioClient__wasapi(pContext, pMMDevice, pAudioClient, shareMode, pInfo);
+            
+            mal_IAudioClient_Release(pAudioClient);
+            return result;
+        } else {
+            return mal_context_post_error(pContext, NULL, "[WASAPI] Failed to activate audio client for device info retrieval.", MAL_FAILED_TO_OPEN_BACKEND_DEVICE);
+        }
     }
 
     return MAL_SUCCESS;
@@ -4792,6 +5393,7 @@ mal_result mal_context_enumerate_device_collection__wasapi(mal_context* pContext
 
     return MAL_SUCCESS;
 }
+#endif
 
 mal_result mal_context_enumerate_devices__wasapi(mal_context* pContext, mal_enum_devices_callback_proc callback, void* pUserData)
 {
@@ -4857,28 +5459,41 @@ mal_result mal_context_enumerate_devices__wasapi(mal_context* pContext, mal_enum
 
 mal_result mal_context_get_device_info__wasapi(mal_context* pContext, mal_device_type deviceType, const mal_device_id* pDeviceID, mal_share_mode shareMode, mal_device_info* pDeviceInfo)
 {
-    mal_IMMDeviceEnumerator* pDeviceEnumerator;
-    HRESULT hr = mal_CoCreateInstance(pContext, MAL_CLSID_MMDeviceEnumerator, NULL, CLSCTX_ALL, MAL_IID_IMMDeviceEnumerator, (void**)&pDeviceEnumerator);
-    if (FAILED(hr)) {
-        return mal_context_post_error(pContext, NULL, "[WASAPI] Failed to create IMMDeviceEnumerator.", MAL_FAILED_TO_INIT_BACKEND);
-    }
-
+#ifdef MAL_WIN32_DESKTOP
     mal_IMMDevice* pMMDevice = NULL;
-    if (pDeviceID == NULL) {
-        hr = mal_IMMDeviceEnumerator_GetDefaultAudioEndpoint(pDeviceEnumerator, (deviceType == mal_device_type_playback) ? mal_eRender : mal_eCapture, mal_eConsole, &pMMDevice);
-    } else {
-        hr = mal_IMMDeviceEnumerator_GetDevice(pDeviceEnumerator, pDeviceID->wasapi, &pMMDevice);
+    mal_result result = mal_context_get_MMDevice__wasapi(pContext, deviceType, pDeviceID, &pMMDevice);
+    if (result != MAL_SUCCESS) {
+        return result;
     }
 
-    mal_IMMDeviceEnumerator_Release(pDeviceEnumerator);
-    if (FAILED(hr)) {
-        return mal_context_post_error(pContext, NULL, "[WASAPI] Failed to retrieve IMMDevice.", MAL_FAILED_TO_OPEN_BACKEND_DEVICE);
-    }
-
-    mal_result result = mal_context_get_device_info_from_MMDevice__wasapi(pContext, pMMDevice, shareMode, MAL_FALSE, pDeviceInfo);   // MAL_FALSE = !onlySimpleInfo.
+    result = mal_context_get_device_info_from_MMDevice__wasapi(pContext, pMMDevice, shareMode, MAL_FALSE, pDeviceInfo);   // MAL_FALSE = !onlySimpleInfo.
 
     mal_IMMDevice_Release(pMMDevice);
     return result;
+#else
+    // UWP currently only uses default devices.
+    if (deviceType == mal_device_type_playback) {
+        mal_strncpy_s(pDeviceInfo->name, sizeof(pDeviceInfo->name), MAL_DEFAULT_PLAYBACK_DEVICE_NAME, (size_t)-1);
+    } else {
+        mal_strncpy_s(pDeviceInfo->name, sizeof(pDeviceInfo->name), MAL_DEFAULT_CAPTURE_DEVICE_NAME, (size_t)-1);
+    }
+
+    // Not currently supporting exclusive mode on UWP.
+    if (shareMode == mal_share_mode_exclusive) {
+        return MAL_ERROR;
+    }
+
+    mal_IAudioClient* pAudioClient;
+    mal_result result = mal_context_get_IAudioClient_UWP__wasapi(pContext, deviceType, pDeviceID, &pAudioClient, NULL);
+    if (result != MAL_SUCCESS) {
+        return result;
+    }
+
+    result = mal_context_get_device_info_from_IAudioClient__wasapi(pContext, NULL, pAudioClient, shareMode, pDeviceInfo);
+
+    mal_IAudioClient_Release(pAudioClient);
+    return result;
+#endif
 }
 
 
@@ -4892,7 +5507,7 @@ mal_result mal_context_init__wasapi(mal_context* pContext)
 #ifdef MAL_WIN32_DESKTOP
     // WASAPI is only supported in Vista SP1 and newer. The reason for SP1 and not the base version of Vista is that event-driven
     // exclusive mode does not work until SP1.
-    OSVERSIONINFOEXW osvi;
+    mal_OSVERSIONINFOEXW osvi;
     mal_zero_object(&osvi);
     osvi.dwOSVersionInfoSize = sizeof(osvi);
     osvi.dwMajorVersion = HIBYTE(_WIN32_WINNT_VISTA);
@@ -4947,59 +5562,6 @@ void mal_device_uninit__wasapi(mal_device* pDevice)
     }
 }
 
-// This is the part that's preventing mini_al from being compiled as C with UWP. We need to implement IActivateAudioInterfaceCompletionHandler
-// in C which is quite annoying.
-#ifndef MAL_WIN32_DESKTOP
-    #ifdef __cplusplus
-    #include <mmdeviceapi.h>
-    #include <wrl\implements.h>
-
-    class malCompletionHandler : public Microsoft::WRL::RuntimeClass< Microsoft::WRL::RuntimeClassFlags< Microsoft::WRL::ClassicCom >, Microsoft::WRL::FtmBase, IActivateAudioInterfaceCompletionHandler >
-    {
-    public:
-
-        malCompletionHandler()
-            : m_hEvent(NULL)
-        {
-        }
-
-        mal_result Init()
-        {
-            m_hEvent = CreateEventA(NULL, FALSE, FALSE, NULL);
-            if (m_hEvent == NULL) {
-                return MAL_ERROR;
-            }
-
-            return MAL_SUCCESS;
-        }
-
-        void Uninit()
-        {
-            if (m_hEvent != NULL) {
-                CloseHandle(m_hEvent);
-            }
-        }
-
-        void Wait()
-        {
-            WaitForSingleObject(m_hEvent, INFINITE);
-        }
-
-        HRESULT STDMETHODCALLTYPE ActivateCompleted(IActivateAudioInterfaceAsyncOperation *activateOperation)
-        {
-            (void)activateOperation;
-            SetEvent(m_hEvent);
-            return S_OK;
-        }
-
-    private:
-        HANDLE m_hEvent;  // This is created in Init(), deleted in Uninit(), waited on in Wait() and signaled in ActivateCompleted().
-    };
-    #else
-    #error "The UWP build is currently only supported in C++."
-    #endif
-#endif  // !MAL_WIN32_DESKTOP
-
 mal_result mal_device_init__wasapi(mal_context* pContext, mal_device_type type, mal_device_id* pDeviceID, const mal_device_config* pConfig, mal_device* pDevice)
 {
     (void)pContext;
@@ -5011,32 +5573,16 @@ mal_result mal_device_init__wasapi(mal_context* pContext, mal_device_type type, 
     mal_result result = MAL_SUCCESS;
     const char* errorMsg = "";
     MAL_AUDCLNT_SHAREMODE shareMode = MAL_AUDCLNT_SHAREMODE_SHARED;
-    MAL_REFERENCE_TIME bufferDurationInMicroseconds = ((mal_uint64)pDevice->bufferSizeInFrames * 1000 * 1000) / pConfig->sampleRate;
     WAVEFORMATEXTENSIBLE* pBestFormatTemp = NULL;
+    MAL_REFERENCE_TIME bufferDurationInMicroseconds;
+    
 
 #ifdef MAL_WIN32_DESKTOP
     mal_IMMDevice* pMMDevice = NULL;
-
-    mal_IMMDeviceEnumerator* pDeviceEnumerator;
-    hr = mal_CoCreateInstance(pContext, MAL_CLSID_MMDeviceEnumerator, NULL, CLSCTX_ALL, MAL_IID_IMMDeviceEnumerator, (void**)&pDeviceEnumerator);
-    if (FAILED(hr)) {
-        errorMsg = "[WASAPI] Failed to create IMMDeviceEnumerator.", result = MAL_FAILED_TO_OPEN_BACKEND_DEVICE;
+    result = mal_context_get_MMDevice__wasapi(pContext, type, pDeviceID, &pMMDevice);
+    if (result != MAL_SUCCESS) {
         goto done;
     }
-
-    if (pDeviceID == NULL) {
-        hr = mal_IMMDeviceEnumerator_GetDefaultAudioEndpoint(pDeviceEnumerator, (type == mal_device_type_playback) ? mal_eRender : mal_eCapture, mal_eConsole, &pMMDevice);
-    } else {
-        hr = mal_IMMDeviceEnumerator_GetDevice(pDeviceEnumerator, pDeviceID->wasapi, &pMMDevice);
-    }
-
-    if (FAILED(hr)) {
-        mal_IMMDeviceEnumerator_Release(pDeviceEnumerator);
-        errorMsg = "[WASAPI] Failed to create backend device.", result = MAL_FAILED_TO_OPEN_BACKEND_DEVICE;
-        goto done;
-    }
-
-    mal_IMMDeviceEnumerator_Release(pDeviceEnumerator);
 
     hr = mal_IMMDevice_Activate(pMMDevice, &MAL_IID_IAudioClient, CLSCTX_ALL, NULL, &pDevice->wasapi.pAudioClient);
     if (FAILED(hr)) {
@@ -5044,62 +5590,9 @@ mal_result mal_device_init__wasapi(mal_context* pContext, mal_device_type type, 
         goto done;
     }
 #else
-    mal_IActivateAudioInterfaceAsyncOperation *pAsyncOp = NULL;
-    malCompletionHandler completionHandler;
-
-    IID iid;
-    if (pDeviceID != NULL) {
-        mal_copy_memory(&iid, pDeviceID->wasapi, sizeof(iid));
-    } else {
-        if (type == mal_device_type_playback) {
-            iid = MAL_IID_DEVINTERFACE_AUDIO_RENDER;
-        } else {
-            iid = MAL_IID_DEVINTERFACE_AUDIO_CAPTURE;
-        }
-    }
-
-    LPOLESTR iidStr;
-    hr = StringFromIID(iid, &iidStr);
-    if (FAILED(hr)) {
-        errorMsg = "[WASAPI] Failed to convert device IID to string for ActivateAudioInterfaceAsync(). Out of memory.", result = MAL_OUT_OF_MEMORY;
-        goto done;
-    }
-
-    result = completionHandler.Init();
+    IUnknown* pActivatedInterface = NULL;
+    result = mal_context_get_IAudioClient_UWP__wasapi(pContext, type, pDeviceID, (mal_IAudioClient**)&pDevice->wasapi.pAudioClient, &pActivatedInterface);
     if (result != MAL_SUCCESS) {
-        mal_CoTaskMemFree(pContext, iidStr);
-
-        errorMsg = "[WASAPI] Failed to create event for waiting for ActivateAudioInterfaceAsync().", result = MAL_FAILED_TO_OPEN_BACKEND_DEVICE;
-        goto done;
-    }
-
-    hr = ActivateAudioInterfaceAsync(iidStr, MAL_IID_IAudioClient, NULL, (IActivateAudioInterfaceCompletionHandler*)&completionHandler, (IActivateAudioInterfaceAsyncOperation**)&pAsyncOp);
-    if (FAILED(hr)) {
-        completionHandler.Uninit();
-        mal_CoTaskMemFree(pContext, iidStr);
-
-        errorMsg = "[WASAPI] ActivateAudioInterfaceAsync() failed.", result = MAL_FAILED_TO_OPEN_BACKEND_DEVICE;
-        goto done;
-    }
-
-    mal_CoTaskMemFree(pContext, iidStr);
-
-    // Wait for the async operation for finish.
-    completionHandler.Wait();
-    completionHandler.Uninit();
-
-    HRESULT activateResult;
-    IUnknown* pActivatedInterface;
-    hr = mal_IActivateAudioInterfaceAsyncOperation_GetActivateResult(pAsyncOp, &activateResult, &pActivatedInterface);
-    if (FAILED(hr) || FAILED(activateResult)) {
-        errorMsg = "[WASAPI] Failed to activate device.", result = MAL_FAILED_TO_OPEN_BACKEND_DEVICE;
-        goto done;
-    }
-
-    // Here is where we grab the IAudioClient interface.
-    hr = pActivatedInterface->QueryInterface(MAL_IID_IAudioClient, &pDevice->wasapi.pAudioClient);
-    if (FAILED(hr)) {
-        errorMsg = "[WASAPI] Failed to query IAudioClient interface.", result = MAL_FAILED_TO_OPEN_BACKEND_DEVICE;
         goto done;
     }
 #endif
@@ -5216,24 +5709,61 @@ mal_result mal_device_init__wasapi(mal_context* pContext, mal_device_type type, 
     // Get the internal channel map based on the channel mask.
     mal_channel_mask_to_channel_map__win32(wf.dwChannelMask, pDevice->internalChannels, pDevice->internalChannelMap);
 
-    // Slightly different initialization for shared and exclusive modes.
-    if (shareMode == MAL_AUDCLNT_SHAREMODE_SHARED) {
-        // Shared.
-        MAL_REFERENCE_TIME bufferDuration = bufferDurationInMicroseconds*10;
-        hr = mal_IAudioClient_Initialize((mal_IAudioClient*)pDevice->wasapi.pAudioClient, shareMode, MAL_AUDCLNT_STREAMFLAGS_EVENTCALLBACK, bufferDuration, 0, (WAVEFORMATEX*)&wf, NULL);
-        if (FAILED(hr)) {
-            if (hr == E_ACCESSDENIED) {
-                errorMsg = "[WASAPI] Failed to initialize device. Access denied.", result = MAL_ACCESS_DENIED;
-            } else {
-                errorMsg = "[WASAPI] Failed to initialize device.", result = MAL_FAILED_TO_OPEN_BACKEND_DEVICE;
-            }
+    // If we're using a default buffer size we need to calculate it based on the efficiency of the system.
+    if (pDevice->usingDefaultBufferSize) {
+        // CPU speed is a factor to consider when determine how large of a buffer we need.
+        float fCPUSpeed = mal_calculate_cpu_speed_factor();
 
-            goto done;
+        // We need a slightly bigger buffer if we're using shared mode to cover the inherent tax association with shared mode.
+        float fShareMode;
+        if (pConfig->shareMode == mal_share_mode_shared) {
+            fShareMode = 1.0f;
+        } else {
+            fShareMode = 0.8f;
         }
-    } else {
+
+        // In my testing, capture seems to have worse latency than playback for some reason.
+        float fType;
+        if (type == mal_device_type_playback) {
+            fType = 1.0f;
+        } else {
+            fType = 2.0f;
+        }
+
+        // Backend tax. Need to fiddle with this.
+        float fBackend = 1.0;
+
+        pDevice->bufferSizeInFrames = mal_calculate_default_buffer_size_in_frames(pConfig->performanceProfile, pConfig->sampleRate, fCPUSpeed*fShareMode*fType*fBackend);
+    }
+
+    bufferDurationInMicroseconds = ((mal_uint64)pDevice->bufferSizeInFrames * 1000 * 1000) / pConfig->sampleRate;
+
+    // Slightly different initialization for shared and exclusive modes. We try exclusive mode first, and if it fails, fall back to shared mode.
+    if (shareMode == MAL_AUDCLNT_SHAREMODE_EXCLUSIVE) {
         // Exclusive.
         MAL_REFERENCE_TIME bufferDuration = bufferDurationInMicroseconds*10;
-        hr = mal_IAudioClient_Initialize((mal_IAudioClient*)pDevice->wasapi.pAudioClient, shareMode, MAL_AUDCLNT_STREAMFLAGS_EVENTCALLBACK, bufferDuration, bufferDuration, (WAVEFORMATEX*)&wf, NULL);
+
+        // If the periodicy is too small, Initialize() will fail with AUDCLNT_E_INVALID_DEVICE_PERIOD. In this case we should just keep increasing
+        // it and trying it again.
+        hr = E_FAIL;
+        for (;;) {
+            hr = mal_IAudioClient_Initialize((mal_IAudioClient*)pDevice->wasapi.pAudioClient, shareMode, MAL_AUDCLNT_STREAMFLAGS_EVENTCALLBACK, bufferDuration, bufferDuration, (WAVEFORMATEX*)&wf, NULL);
+            if (hr == MAL_AUDCLNT_E_INVALID_DEVICE_PERIOD) {
+                if (bufferDuration > 500*10000) {
+                    break;
+                } else {
+                    if (bufferDuration == 0) {  // <-- Just a sanity check to prevent an infinit loop. Should never happen, but it makes me feel better.
+                        break;
+                    }
+
+                    bufferDuration = bufferDuration * 2;
+                    continue;
+                }
+            } else {
+                break;
+            }
+        }
+        
         if (hr == MAL_AUDCLNT_E_BUFFER_SIZE_NOT_ALIGNED) {
             UINT bufferSizeInFrames;
             hr = mal_IAudioClient_GetBufferSize((mal_IAudioClient*)pDevice->wasapi.pAudioClient, &bufferSizeInFrames);
@@ -5256,7 +5786,25 @@ mal_result mal_device_init__wasapi(mal_context* pContext, mal_device_type type, 
         }
 
         if (FAILED(hr)) {
-            errorMsg = "[WASAPI] Failed to initialize device.", result = MAL_FAILED_TO_OPEN_BACKEND_DEVICE;
+            // Failed to initialize in exclusive mode. We don't return an error here, but instead fall back to shared mode.
+            shareMode = MAL_AUDCLNT_SHAREMODE_SHARED;
+
+            //errorMsg = "[WASAPI] Failed to initialize device.", result = MAL_FAILED_TO_OPEN_BACKEND_DEVICE;
+            //goto done;
+        }
+    }
+
+    if (shareMode == MAL_AUDCLNT_SHAREMODE_SHARED) {
+        // Shared.
+        MAL_REFERENCE_TIME bufferDuration = bufferDurationInMicroseconds*10;
+        hr = mal_IAudioClient_Initialize((mal_IAudioClient*)pDevice->wasapi.pAudioClient, shareMode, MAL_AUDCLNT_STREAMFLAGS_EVENTCALLBACK, bufferDuration, 0, (WAVEFORMATEX*)&wf, NULL);
+        if (FAILED(hr)) {
+            if (hr == E_ACCESSDENIED) {
+                errorMsg = "[WASAPI] Failed to initialize device. Access denied.", result = MAL_ACCESS_DENIED;
+            } else {
+                errorMsg = "[WASAPI] Failed to initialize device.", result = MAL_FAILED_TO_OPEN_BACKEND_DEVICE;
+            }
+
             goto done;
         }
     }
@@ -5332,8 +5880,8 @@ done:
         mal_IMMDevice_Release(pMMDevice);
     }
 #else
-    if (pAsyncOp != NULL) {
-        mal_IActivateAudioInterfaceAsyncOperation_Release(pAsyncOp);
+    if (pActivatedInterface != NULL) {
+        pActivatedInterface->Release();
     }
 #endif
 
@@ -5382,6 +5930,12 @@ mal_result mal_device__stop_backend__wasapi(mal_device* pDevice)
         return mal_post_error(pDevice, "[WASAPI] Failed to stop internal device.", MAL_FAILED_TO_STOP_BACKEND_DEVICE);
     }
 
+    // The client needs to be reset or else we won't be able to resume it again.
+    hr = mal_IAudioClient_Reset((mal_IAudioClient*)pDevice->wasapi.pAudioClient);
+    if (FAILED(hr)) {
+        return mal_post_error(pDevice, "[WASAPI] Failed to reset internal device.", MAL_FAILED_TO_STOP_BACKEND_DEVICE);
+    }
+
     return MAL_SUCCESS;
 }
 
@@ -5402,7 +5956,7 @@ mal_uint32 mal_device__get_available_frames__wasapi(mal_device* pDevice)
 
 #if 1
     if (pDevice->type == mal_device_type_playback) {
-        UINT32 paddingFramesCount;
+        mal_uint32 paddingFramesCount;
         HRESULT hr = mal_IAudioClient_GetCurrentPadding((mal_IAudioClient*)pDevice->wasapi.pAudioClient, &paddingFramesCount);
         if (FAILED(hr)) {
             return 0;
@@ -5414,7 +5968,7 @@ mal_uint32 mal_device__get_available_frames__wasapi(mal_device* pDevice)
             return pDevice->bufferSizeInFrames - paddingFramesCount;
         }
     } else {
-        UINT32 framesAvailable;
+        mal_uint32 framesAvailable;
         HRESULT hr = mal_IAudioCaptureClient_GetNextPacketSize((mal_IAudioCaptureClient*)pDevice->wasapi.pCaptureClient, &framesAvailable);
         if (FAILED(hr)) {
             return 0;
@@ -5423,7 +5977,7 @@ mal_uint32 mal_device__get_available_frames__wasapi(mal_device* pDevice)
         return framesAvailable;
     }
 #else
-    UINT32 paddingFramesCount;
+    mal_uint32 paddingFramesCount;
     HRESULT hr = mal_IAudioClient_GetCurrentPadding(pDevice->wasapi.pAudioClient, &paddingFramesCount);
     if (FAILED(hr)) {
         return 0;
@@ -5499,10 +6053,10 @@ mal_result mal_device__main_loop__wasapi(mal_device* pDevice)
                 return mal_post_error(pDevice, "[WASAPI] Failed to release internal buffer from playback device in preparation for sending new data to the device.", MAL_FAILED_TO_UNMAP_DEVICE_BUFFER);
             }
         } else {
-            UINT32 framesRemaining = framesAvailable;
+            mal_uint32 framesRemaining = framesAvailable;
             while (framesRemaining > 0) {
                 BYTE* pData;
-                UINT32 framesToSend;
+                mal_uint32 framesToSend;
                 DWORD flags;
                 HRESULT hr = mal_IAudioCaptureClient_GetBuffer((mal_IAudioCaptureClient*)pDevice->wasapi.pCaptureClient, &pData, &framesToSend, &flags, NULL, NULL);
                 if (FAILED(hr)) {
@@ -5898,6 +6452,147 @@ void mal_get_channels_from_speaker_config__dsound(DWORD speakerConfig, WORD* pCh
 }
 
 
+mal_result mal_context_create_IDirectSound__dsound(mal_context* pContext, mal_share_mode shareMode, const mal_device_id* pDeviceID, mal_IDirectSound** ppDirectSound)
+{
+    mal_assert(pContext != NULL);
+    mal_assert(ppDirectSound != NULL);
+
+    *ppDirectSound = NULL;
+    mal_IDirectSound* pDirectSound = NULL;
+
+    if (FAILED(((mal_DirectSoundCreateProc)pContext->dsound.DirectSoundCreate)((pDeviceID == NULL) ? NULL : (const GUID*)pDeviceID->dsound, &pDirectSound, NULL))) {
+        return mal_context_post_error(pContext, NULL, "[DirectSound] DirectSoundCreate() failed for playback device.", MAL_FAILED_TO_OPEN_BACKEND_DEVICE);
+    }
+
+    // The cooperative level must be set before doing anything else.
+    HWND hWnd = ((MAL_PFN_GetForegroundWindow)pContext->win32.GetForegroundWindow)();
+    if (hWnd == NULL) {
+        hWnd = ((MAL_PFN_GetDesktopWindow)pContext->win32.GetDesktopWindow)();
+    }
+    if (FAILED(mal_IDirectSound_SetCooperativeLevel(pDirectSound, hWnd, (shareMode == mal_share_mode_exclusive) ? MAL_DSSCL_EXCLUSIVE : MAL_DSSCL_PRIORITY))) {
+        return mal_context_post_error(pContext, NULL, "[DirectSound] IDirectSound_SetCooperateiveLevel() failed for playback device.", MAL_FAILED_TO_OPEN_BACKEND_DEVICE);
+    }
+
+    *ppDirectSound = pDirectSound;
+    return MAL_SUCCESS;
+}
+
+mal_result mal_context_create_IDirectSoundCapture__dsound(mal_context* pContext, mal_share_mode shareMode, const mal_device_id* pDeviceID, mal_IDirectSoundCapture** ppDirectSoundCapture)
+{
+    mal_assert(pContext != NULL);
+    mal_assert(ppDirectSoundCapture != NULL);
+
+    // Everything is shared in capture mode by the looks of it.
+    (void)shareMode;
+
+    *ppDirectSoundCapture = NULL;
+    mal_IDirectSoundCapture* pDirectSoundCapture = NULL;
+
+    if (FAILED(((mal_DirectSoundCaptureCreateProc)pContext->dsound.DirectSoundCaptureCreate)((pDeviceID == NULL) ? NULL : (const GUID*)pDeviceID->dsound, &pDirectSoundCapture, NULL))) {
+        return mal_context_post_error(pContext, NULL, "[DirectSound] DirectSoundCaptureCreate() failed for capture device.", MAL_FAILED_TO_OPEN_BACKEND_DEVICE);
+    }
+
+    *ppDirectSoundCapture = pDirectSoundCapture;
+    return MAL_SUCCESS;
+}
+
+mal_result mal_context_get_format_info_for_IDirectSoundCapture__dsound(mal_context* pContext, mal_IDirectSoundCapture* pDirectSoundCapture, WORD* pChannels, WORD* pBitsPerSample, DWORD* pSampleRate)
+{
+    mal_assert(pContext != NULL);
+    mal_assert(pDirectSoundCapture != NULL);
+
+    if (pChannels) {
+        *pChannels = 0;
+    }
+    if (pBitsPerSample) {
+        *pBitsPerSample = 0;
+    }
+    if (pSampleRate) {
+        *pSampleRate = 0;
+    }
+
+    MAL_DSCCAPS caps;
+    mal_zero_object(&caps);
+    caps.dwSize = sizeof(caps);
+    if (FAILED(mal_IDirectSoundCapture_GetCaps(pDirectSoundCapture, &caps))) {
+        return mal_context_post_error(pContext, NULL, "[DirectSound] IDirectSoundCapture_GetCaps() failed for capture device.", MAL_FAILED_TO_OPEN_BACKEND_DEVICE);
+    }
+
+    if (pChannels) {
+        *pChannels = (WORD)caps.dwChannels;
+    }
+
+    // The device can support multiple formats. We just go through the different formats in order of priority and
+    // pick the first one. This the same type of system as the WinMM backend.
+    WORD bitsPerSample = 16;
+    DWORD sampleRate = 48000;
+
+    if (caps.dwChannels == 1) {
+        if ((caps.dwFormats & WAVE_FORMAT_48M16) != 0) {
+            sampleRate = 48000;
+        } else if ((caps.dwFormats & WAVE_FORMAT_44M16) != 0) {
+            sampleRate = 44100;
+        } else if ((caps.dwFormats & WAVE_FORMAT_2M16) != 0) {
+            sampleRate = 22050;
+        } else if ((caps.dwFormats & WAVE_FORMAT_1M16) != 0) {
+            sampleRate = 11025;
+        } else if ((caps.dwFormats & WAVE_FORMAT_96M16) != 0) {
+            sampleRate = 96000;
+        } else {
+            bitsPerSample = 8;
+            if ((caps.dwFormats & WAVE_FORMAT_48M08) != 0) {
+                sampleRate = 48000;
+            } else if ((caps.dwFormats & WAVE_FORMAT_44M08) != 0) {
+                sampleRate = 44100;
+            } else if ((caps.dwFormats & WAVE_FORMAT_2M08) != 0) {
+                sampleRate = 22050;
+            } else if ((caps.dwFormats & WAVE_FORMAT_1M08) != 0) {
+                sampleRate = 11025;
+            } else if ((caps.dwFormats & WAVE_FORMAT_96M08) != 0) {
+                sampleRate = 96000;
+            } else {
+                bitsPerSample = 16;  // Didn't find it. Just fall back to 16-bit.
+            }
+        }
+    } else if (caps.dwChannels == 2) {
+        if ((caps.dwFormats & WAVE_FORMAT_48S16) != 0) {
+            sampleRate = 48000;
+        } else if ((caps.dwFormats & WAVE_FORMAT_44S16) != 0) {
+            sampleRate = 44100;
+        } else if ((caps.dwFormats & WAVE_FORMAT_2S16) != 0) {
+            sampleRate = 22050;
+        } else if ((caps.dwFormats & WAVE_FORMAT_1S16) != 0) {
+            sampleRate = 11025;
+        } else if ((caps.dwFormats & WAVE_FORMAT_96S16) != 0) {
+            sampleRate = 96000;
+        } else {
+            bitsPerSample = 8;
+            if ((caps.dwFormats & WAVE_FORMAT_48S08) != 0) {
+                sampleRate = 48000;
+            } else if ((caps.dwFormats & WAVE_FORMAT_44S08) != 0) {
+                sampleRate = 44100;
+            } else if ((caps.dwFormats & WAVE_FORMAT_2S08) != 0) {
+                sampleRate = 22050;
+            } else if ((caps.dwFormats & WAVE_FORMAT_1S08) != 0) {
+                sampleRate = 11025;
+            } else if ((caps.dwFormats & WAVE_FORMAT_96S08) != 0) {
+                sampleRate = 96000;
+            } else {
+                bitsPerSample = 16;  // Didn't find it. Just fall back to 16-bit.
+            }
+        }
+    }
+
+    if (pBitsPerSample) {
+        *pBitsPerSample = bitsPerSample;
+    }
+    if (pSampleRate) {
+        *pSampleRate = sampleRate;
+    }
+
+    return MAL_SUCCESS;
+}
+
 mal_bool32 mal_context_is_device_id_equal__dsound(mal_context* pContext, const mal_device_id* pID0, const mal_device_id* pID1)
 {
     mal_assert(pContext != NULL);
@@ -6027,9 +6722,7 @@ mal_result mal_context_get_device_info__dsound(mal_context* pContext, mal_device
             ((mal_DirectSoundCaptureEnumerateAProc)pContext->dsound.DirectSoundCaptureEnumerateA)(mal_context_get_device_info_callback__dsound, &data);
         }
 
-        if (data.found) {
-            return MAL_SUCCESS;
-        } else {
+        if (!data.found) {
             return MAL_NO_DEVICE;
         }
     } else {
@@ -6044,6 +6737,108 @@ mal_result mal_context_get_device_info__dsound(mal_context* pContext, mal_device
         } else {
             mal_strncpy_s(pDeviceInfo->name, sizeof(pDeviceInfo->name), MAL_DEFAULT_CAPTURE_DEVICE_NAME, (size_t)-1);
         }
+    }
+
+    // Retrieving detailed information is slightly different depending on the device type.
+    if (deviceType == mal_device_type_playback) {
+        // Playback.
+        mal_IDirectSound* pDirectSound;
+        mal_result result = mal_context_create_IDirectSound__dsound(pContext, shareMode, pDeviceID, &pDirectSound);
+        if (result != MAL_SUCCESS) {
+            return result;
+        }
+
+        MAL_DSCAPS caps;
+        mal_zero_object(&caps);
+        caps.dwSize = sizeof(caps);
+        if (FAILED(mal_IDirectSound_GetCaps(pDirectSound, &caps))) {
+            return mal_context_post_error(pContext, NULL, "[DirectSound] IDirectSound_GetCaps() failed for playback device.", MAL_FAILED_TO_OPEN_BACKEND_DEVICE);
+        }
+
+        if ((caps.dwFlags & MAL_DSCAPS_PRIMARYSTEREO) != 0) {
+            // It supports at least stereo, but could support more.
+            pDeviceInfo->minChannels = 2;
+            pDeviceInfo->maxChannels = 2;
+
+            // Look at the speaker configuration to get a better idea on the channel count.
+            DWORD speakerConfig;
+            if (SUCCEEDED(mal_IDirectSound_GetSpeakerConfig(pDirectSound, &speakerConfig))) {
+                WORD actualChannels;
+                mal_get_channels_from_speaker_config__dsound(speakerConfig, &actualChannels, NULL);
+
+                pDeviceInfo->minChannels = actualChannels;
+                pDeviceInfo->maxChannels = actualChannels;
+            }
+        } else {
+            // It does not support stereo, which means we are stuck with mono.
+            pDeviceInfo->minChannels = 1;
+            pDeviceInfo->maxChannels = 1;
+        }
+
+        // Sample rate.
+        if ((caps.dwFlags & MAL_DSCAPS_CONTINUOUSRATE) != 0) {
+            pDeviceInfo->minSampleRate = caps.dwMinSecondarySampleRate;
+            pDeviceInfo->maxSampleRate = caps.dwMaxSecondarySampleRate;
+
+            // On my machine the min and max sample rates can return 100 and 200000 respectively. I'd rather these be within
+            // the range of our standard sample rates so I'm clamping.
+            if (caps.dwMinSecondarySampleRate < MAL_MIN_SAMPLE_RATE && caps.dwMaxSecondarySampleRate >= MAL_MIN_SAMPLE_RATE) {
+                pDeviceInfo->minSampleRate = MAL_MIN_SAMPLE_RATE;
+            }
+            if (caps.dwMaxSecondarySampleRate > MAL_MAX_SAMPLE_RATE && caps.dwMinSecondarySampleRate <= MAL_MAX_SAMPLE_RATE) {
+                pDeviceInfo->maxSampleRate = MAL_MAX_SAMPLE_RATE;
+            }
+        } else {
+            // Only supports a single sample rate. Set both min an max to the same thing. Do not clamp within the standard rates.
+            pDeviceInfo->minSampleRate = caps.dwMaxSecondarySampleRate;
+            pDeviceInfo->maxSampleRate = caps.dwMaxSecondarySampleRate;
+        }
+
+        // DirectSound can support all formats.
+        pDeviceInfo->formatCount = mal_format_count - 1;    // Minus one because we don't want to include mal_format_unknown.
+        for (mal_uint32 iFormat = 0; iFormat < pDeviceInfo->formatCount; ++iFormat) {
+            pDeviceInfo->formats[iFormat] = (mal_format)(iFormat + 1);  // +1 to skip over mal_format_unknown.
+        }
+
+        mal_IDirectSound_Release(pDirectSound);
+    } else {
+        // Capture. This is a little different to playback due to the say the supported formats are reported. Technically capture
+        // devices can support a number of different formats, but for simplicity and consistency with mal_device_init() I'm just
+        // reporting the best format.
+        mal_IDirectSoundCapture* pDirectSoundCapture;
+        mal_result result = mal_context_create_IDirectSoundCapture__dsound(pContext, shareMode, pDeviceID, &pDirectSoundCapture);
+        if (result != MAL_SUCCESS) {
+            return result;
+        }
+
+        WORD channels;
+        WORD bitsPerSample;
+        DWORD sampleRate;
+        result = mal_context_get_format_info_for_IDirectSoundCapture__dsound(pContext, pDirectSoundCapture, &channels, &bitsPerSample, &sampleRate);
+        if (result != MAL_SUCCESS) {
+            mal_IDirectSoundCapture_Release(pDirectSoundCapture);
+            return result;
+        }
+
+        pDeviceInfo->minChannels = channels;
+        pDeviceInfo->maxChannels = channels;
+        pDeviceInfo->minSampleRate = sampleRate;
+        pDeviceInfo->maxSampleRate = sampleRate;
+        pDeviceInfo->formatCount = 1;
+        if (bitsPerSample == 8) {
+            pDeviceInfo->formats[0] = mal_format_u8;
+        } else if (bitsPerSample == 16) {
+            pDeviceInfo->formats[0] = mal_format_s16;
+        } else if (bitsPerSample == 24) {
+            pDeviceInfo->formats[0] = mal_format_s24;
+        } else if (bitsPerSample == 32) {
+            pDeviceInfo->formats[0] = mal_format_s32;
+        } else {
+            mal_IDirectSoundCapture_Release(pDirectSoundCapture);
+            return MAL_FORMAT_NOT_SUPPORTED;
+        }
+
+        mal_IDirectSoundCapture_Release(pDirectSoundCapture);
     }
 
     return MAL_SUCCESS;
@@ -6181,6 +6976,24 @@ mal_result mal_device_init__dsound(mal_context* pContext, mal_device_type type, 
         return MAL_FORMAT_NOT_SUPPORTED;
     }
 
+    if (pDevice->usingDefaultBufferSize) {
+        // CPU speed is a factor to consider when determine how large of a buffer we need.
+        float fCPUSpeed = mal_calculate_cpu_speed_factor();
+
+        // In my testing, capture seems to have worse latency than playback for some reason.
+        float fType;
+        if (type == mal_device_type_playback) {
+            fType = 1.0f;
+        } else {
+            fType = 2.0f;
+        }
+
+        // Backend tax. Need to fiddle with this.
+        float fBackend = 3.0;
+
+        pDevice->bufferSizeInFrames = mal_calculate_default_buffer_size_in_frames(pConfig->performanceProfile, pConfig->sampleRate, fCPUSpeed*fType*fBackend);
+    }
+
 
     WAVEFORMATEXTENSIBLE wf;
     mal_zero_object(&wf);
@@ -6199,19 +7012,10 @@ mal_result mal_device_init__dsound(mal_context* pContext, mal_device_type type, 
 
     // Unfortunately DirectSound uses different APIs and data structures for playback and catpure devices :(
     if (type == mal_device_type_playback) {
-        if (FAILED(((mal_DirectSoundCreateProc)pContext->dsound.DirectSoundCreate)((pDeviceID == NULL) ? NULL : (const GUID*)pDeviceID->dsound, (mal_IDirectSound**)&pDevice->dsound.pPlayback, NULL))) {
+        mal_result result = mal_context_create_IDirectSound__dsound(pContext, pConfig->shareMode, pDeviceID, (mal_IDirectSound**)&pDevice->dsound.pPlayback);
+        if (result != MAL_SUCCESS) {
             mal_device_uninit__dsound(pDevice);
-            return mal_post_error(pDevice, "[DirectSound] DirectSoundCreate() failed for playback device.", MAL_FAILED_TO_OPEN_BACKEND_DEVICE);
-        }
-
-        // The cooperative level must be set before doing anything else.
-        HWND hWnd = ((MAL_PFN_GetForegroundWindow)pContext->win32.GetForegroundWindow)();
-        if (hWnd == NULL) {
-            hWnd = ((MAL_PFN_GetDesktopWindow)pContext->win32.GetDesktopWindow)();
-        }
-        if (FAILED(mal_IDirectSound_SetCooperativeLevel((mal_IDirectSound*)pDevice->dsound.pPlayback, hWnd, (pConfig->shareMode == mal_share_mode_exclusive) ? MAL_DSSCL_EXCLUSIVE : MAL_DSSCL_PRIORITY))) {
-            mal_device_uninit__dsound(pDevice);
-            return mal_post_error(pDevice, "[DirectSound] IDirectSound_SetCooperateiveLevel() failed for playback device.", MAL_FAILED_TO_OPEN_BACKEND_DEVICE);
+            return result;
         }
 
         MAL_DSBUFFERDESC descDSPrimary;
@@ -6330,81 +7134,16 @@ mal_result mal_device_init__dsound(mal_context* pContext, mal_device_type type, 
             pDevice->bufferSizeInFrames *= 2; // <-- Might need to fiddle with this to find a more ideal value. May even be able to just add a fixed amount rather than scaling.
         }
 
-        if (FAILED(((mal_DirectSoundCaptureCreateProc)pContext->dsound.DirectSoundCaptureCreate)((pDeviceID == NULL) ? NULL : (const GUID*)pDeviceID->dsound, (mal_IDirectSoundCapture**)&pDevice->dsound.pCapture, NULL))) {
+        mal_result result = mal_context_create_IDirectSoundCapture__dsound(pContext, pConfig->shareMode, pDeviceID, (mal_IDirectSoundCapture**)&pDevice->dsound.pCapture);
+        if (result != MAL_SUCCESS) {
             mal_device_uninit__dsound(pDevice);
-            return mal_post_error(pDevice, "[DirectSound] DirectSoundCaptureCreate() failed for capture device.", MAL_FAILED_TO_OPEN_BACKEND_DEVICE);
+            return result;
         }
 
-
-        MAL_DSCCAPS caps;
-        mal_zero_object(&caps);
-        caps.dwSize = sizeof(caps);
-        if (FAILED(mal_IDirectSoundCapture_GetCaps((mal_IDirectSoundCapture*)pDevice->dsound.pCapture, &caps))) {
+        result = mal_context_get_format_info_for_IDirectSoundCapture__dsound(pContext, (mal_IDirectSoundCapture*)pDevice->dsound.pCapture, &wf.Format.nChannels, &wf.Format.wBitsPerSample, &wf.Format.nSamplesPerSec);
+        if (result != MAL_SUCCESS) {
             mal_device_uninit__dsound(pDevice);
-            return mal_post_error(pDevice, "[DirectSound] IDirectSoundCapture_GetCaps() failed for capture device.", MAL_FAILED_TO_OPEN_BACKEND_DEVICE);
-        }
-
-        wf.Format.nChannels = (WORD)caps.dwChannels;
-
-        // The device can support multiple formats. We just go through the different formats in order of priority and
-        // pick the first one. This the same type of system as the WinMM backend.
-        wf.Format.wBitsPerSample = 16;
-        wf.Format.nSamplesPerSec = 48000;
-
-        if (caps.dwChannels == 1) {
-            if ((caps.dwFormats & WAVE_FORMAT_48M16) != 0) {
-                wf.Format.nSamplesPerSec = 48000;
-            } else if ((caps.dwFormats & WAVE_FORMAT_44M16) != 0) {
-                wf.Format.nSamplesPerSec = 44100;
-            } else if ((caps.dwFormats & WAVE_FORMAT_2M16) != 0) {
-                wf.Format.nSamplesPerSec = 22050;
-            } else if ((caps.dwFormats & WAVE_FORMAT_1M16) != 0) {
-                wf.Format.nSamplesPerSec = 11025;
-            } else if ((caps.dwFormats & WAVE_FORMAT_96M16) != 0) {
-                wf.Format.nSamplesPerSec = 96000;
-            } else {
-                wf.Format.wBitsPerSample = 8;
-                if ((caps.dwFormats & WAVE_FORMAT_48M08) != 0) {
-                    wf.Format.nSamplesPerSec = 48000;
-                } else if ((caps.dwFormats & WAVE_FORMAT_44M08) != 0) {
-                    wf.Format.nSamplesPerSec = 44100;
-                } else if ((caps.dwFormats & WAVE_FORMAT_2M08) != 0) {
-                    wf.Format.nSamplesPerSec = 22050;
-                } else if ((caps.dwFormats & WAVE_FORMAT_1M08) != 0) {
-                    wf.Format.nSamplesPerSec = 11025;
-                } else if ((caps.dwFormats & WAVE_FORMAT_96M08) != 0) {
-                    wf.Format.nSamplesPerSec = 96000;
-                } else {
-                    wf.Format.wBitsPerSample = 16;  // Didn't find it. Just fall back to 16-bit.
-                }
-            }
-        } else if (caps.dwChannels == 2) {
-            if ((caps.dwFormats & WAVE_FORMAT_48S16) != 0) {
-                wf.Format.nSamplesPerSec = 48000;
-            } else if ((caps.dwFormats & WAVE_FORMAT_44S16) != 0) {
-                wf.Format.nSamplesPerSec = 44100;
-            } else if ((caps.dwFormats & WAVE_FORMAT_2S16) != 0) {
-                wf.Format.nSamplesPerSec = 22050;
-            } else if ((caps.dwFormats & WAVE_FORMAT_1S16) != 0) {
-                wf.Format.nSamplesPerSec = 11025;
-            } else if ((caps.dwFormats & WAVE_FORMAT_96S16) != 0) {
-                wf.Format.nSamplesPerSec = 96000;
-            } else {
-                wf.Format.wBitsPerSample = 8;
-                if ((caps.dwFormats & WAVE_FORMAT_48S08) != 0) {
-                    wf.Format.nSamplesPerSec = 48000;
-                } else if ((caps.dwFormats & WAVE_FORMAT_44S08) != 0) {
-                    wf.Format.nSamplesPerSec = 44100;
-                } else if ((caps.dwFormats & WAVE_FORMAT_2S08) != 0) {
-                    wf.Format.nSamplesPerSec = 22050;
-                } else if ((caps.dwFormats & WAVE_FORMAT_1S08) != 0) {
-                    wf.Format.nSamplesPerSec = 11025;
-                } else if ((caps.dwFormats & WAVE_FORMAT_96S08) != 0) {
-                    wf.Format.nSamplesPerSec = 96000;
-                } else {
-                    wf.Format.wBitsPerSample = 16;  // Didn't find it. Just fall back to 16-bit.
-                }
-            }
+            return result;
         }
 
         wf.Format.nBlockAlign          = (wf.Format.nChannels * wf.Format.wBitsPerSample) / 8;
@@ -6740,7 +7479,7 @@ typedef struct
 } MAL_WAVEINCAPS2A;
 
 typedef UINT     (WINAPI * MAL_PFN_waveOutGetNumDevs)(void);
-typedef MMRESULT (WINAPI * MAL_PFN_waveOutGetDevCapsA)(UINT_PTR uDeviceID, LPWAVEOUTCAPSA pwoc, UINT cbwoc);
+typedef MMRESULT (WINAPI * MAL_PFN_waveOutGetDevCapsA)(mal_uintptr uDeviceID, LPWAVEOUTCAPSA pwoc, UINT cbwoc);
 typedef MMRESULT (WINAPI * MAL_PFN_waveOutOpen)(LPHWAVEOUT phwo, UINT uDeviceID, LPCWAVEFORMATEX pwfx, DWORD_PTR dwCallback, DWORD_PTR dwInstance, DWORD fdwOpen);
 typedef MMRESULT (WINAPI * MAL_PFN_waveOutClose)(HWAVEOUT hwo);
 typedef MMRESULT (WINAPI * MAL_PFN_waveOutPrepareHeader)(HWAVEOUT hwo, LPWAVEHDR pwh, UINT cbwh);
@@ -6748,7 +7487,7 @@ typedef MMRESULT (WINAPI * MAL_PFN_waveOutUnprepareHeader)(HWAVEOUT hwo, LPWAVEH
 typedef MMRESULT (WINAPI * MAL_PFN_waveOutWrite)(HWAVEOUT hwo, LPWAVEHDR pwh, UINT cbwh);
 typedef MMRESULT (WINAPI * MAL_PFN_waveOutReset)(HWAVEOUT hwo);
 typedef UINT     (WINAPI * MAL_PFN_waveInGetNumDevs)(void);
-typedef MMRESULT (WINAPI * MAL_PFN_waveInGetDevCapsA)(UINT_PTR uDeviceID, LPWAVEINCAPSA pwic, UINT cbwic);
+typedef MMRESULT (WINAPI * MAL_PFN_waveInGetDevCapsA)(mal_uintptr uDeviceID, LPWAVEINCAPSA pwic, UINT cbwic);
 typedef MMRESULT (WINAPI * MAL_PFN_waveInOpen)(LPHWAVEIN phwi, UINT uDeviceID, LPCWAVEFORMATEX pwfx, DWORD_PTR dwCallback, DWORD_PTR dwInstance, DWORD fdwOpen);
 typedef MMRESULT (WINAPI * MAL_PFN_waveInClose)(HWAVEIN hwi);
 typedef MMRESULT (WINAPI * MAL_PFN_waveInPrepareHeader)(HWAVEIN hwi, LPWAVEHDR pwh, UINT cbwh);
@@ -6801,6 +7540,86 @@ typedef struct
     GUID NameGuid;
 } MAL_WAVECAPSA;
 
+mal_result mal_get_best_info_from_formats_flags__winmm(DWORD dwFormats, WORD channels, WORD* pBitsPerSample, DWORD* pSampleRate)
+{
+    if (pBitsPerSample) {
+        *pBitsPerSample = 0;
+    }
+    if (pSampleRate) {
+        *pSampleRate = 0;
+    }
+
+    WORD bitsPerSample = 0;
+    DWORD sampleRate = 0;
+
+    if (channels == 1) {
+        bitsPerSample = 16;
+        if ((dwFormats & WAVE_FORMAT_48M16) != 0) {
+            sampleRate = 48000;
+        } else if ((dwFormats & WAVE_FORMAT_44M16) != 0) {
+            sampleRate = 44100;
+        } else if ((dwFormats & WAVE_FORMAT_2M16) != 0) {
+            sampleRate = 22050;
+        } else if ((dwFormats & WAVE_FORMAT_1M16) != 0) {
+            sampleRate = 11025;
+        } else if ((dwFormats & WAVE_FORMAT_96M16) != 0) {
+            sampleRate = 96000;
+        } else {
+            bitsPerSample = 8;
+            if ((dwFormats & WAVE_FORMAT_48M08) != 0) {
+                sampleRate = 48000;
+            } else if ((dwFormats & WAVE_FORMAT_44M08) != 0) {
+                sampleRate = 44100;
+            } else if ((dwFormats & WAVE_FORMAT_2M08) != 0) {
+                sampleRate = 22050;
+            } else if ((dwFormats & WAVE_FORMAT_1M08) != 0) {
+                sampleRate = 11025;
+            } else if ((dwFormats & WAVE_FORMAT_96M08) != 0) {
+                sampleRate = 96000;
+            } else {
+                return MAL_FORMAT_NOT_SUPPORTED;
+            }
+        }
+    } else {
+        bitsPerSample = 16;
+        if ((dwFormats & WAVE_FORMAT_48S16) != 0) {
+            sampleRate = 48000;
+        } else if ((dwFormats & WAVE_FORMAT_44S16) != 0) {
+            sampleRate = 44100;
+        } else if ((dwFormats & WAVE_FORMAT_2S16) != 0) {
+            sampleRate = 22050;
+        } else if ((dwFormats & WAVE_FORMAT_1S16) != 0) {
+            sampleRate = 11025;
+        } else if ((dwFormats & WAVE_FORMAT_96S16) != 0) {
+            sampleRate = 96000;
+        } else {
+            bitsPerSample = 8;
+            if ((dwFormats & WAVE_FORMAT_48S08) != 0) {
+                sampleRate = 48000;
+            } else if ((dwFormats & WAVE_FORMAT_44S08) != 0) {
+                sampleRate = 44100;
+            } else if ((dwFormats & WAVE_FORMAT_2S08) != 0) {
+                sampleRate = 22050;
+            } else if ((dwFormats & WAVE_FORMAT_1S08) != 0) {
+                sampleRate = 11025;
+            } else if ((dwFormats & WAVE_FORMAT_96S08) != 0) {
+                sampleRate = 96000;
+            } else {
+                return MAL_FORMAT_NOT_SUPPORTED;
+            }
+        }
+    }
+
+    if (pBitsPerSample) {
+        *pBitsPerSample = bitsPerSample;
+    }
+    if (pSampleRate) {
+        *pSampleRate = sampleRate;
+    }
+
+    return MAL_SUCCESS;
+}
+
 mal_result mal_context_get_device_info_from_WAVECAPS(mal_context* pContext, MAL_WAVECAPSA* pCaps, mal_device_info* pDeviceInfo)
 {
     mal_assert(pContext != NULL);
@@ -6835,12 +7654,12 @@ mal_result mal_context_get_device_info_from_WAVECAPS(mal_context* pContext, MAL_
             mal_strcat_s(keyStr, sizeof(keyStr), guidStr);
 
             HKEY hKey;
-            LONG result = RegOpenKeyExA(HKEY_LOCAL_MACHINE, keyStr, 0, KEY_READ, &hKey);
+            LONG result = ((MAL_PFN_RegOpenKeyExA)pContext->win32.RegOpenKeyExA)(HKEY_LOCAL_MACHINE, keyStr, 0, KEY_READ, &hKey);
             if (result == ERROR_SUCCESS) {
                 BYTE nameFromReg[512];
                 DWORD nameFromRegSize = sizeof(nameFromReg);
-                result = RegQueryValueExA(hKey, "Name", 0, NULL, (LPBYTE)nameFromReg, (LPDWORD)&nameFromRegSize);
-                RegCloseKey(hKey);
+                result = ((MAL_PFN_RegQueryValueExA)pContext->win32.RegQueryValueExA)(hKey, "Name", 0, NULL, (LPBYTE)nameFromReg, (LPDWORD)&nameFromRegSize);
+                ((MAL_PFN_RegCloseKey)pContext->win32.RegCloseKey)(hKey);
 
                 if (result == ERROR_SUCCESS) {
                     // We have the value from the registry, so now we need to construct the name string.
@@ -6862,6 +7681,31 @@ mal_result mal_context_get_device_info_from_WAVECAPS(mal_context* pContext, MAL_
                 }
             }
         }
+    }
+
+    
+    WORD bitsPerSample;
+    DWORD sampleRate;
+    mal_result result = mal_get_best_info_from_formats_flags__winmm(pCaps->dwFormats, pCaps->wChannels, &bitsPerSample, &sampleRate);
+    if (result != MAL_SUCCESS) {
+        return result;
+    }
+
+    pDeviceInfo->minChannels = pCaps->wChannels;
+    pDeviceInfo->maxChannels = pCaps->wChannels;
+    pDeviceInfo->minSampleRate = sampleRate;
+    pDeviceInfo->maxSampleRate = sampleRate;
+    pDeviceInfo->formatCount = 1;
+    if (bitsPerSample == 8) {
+        pDeviceInfo->formats[0] = mal_format_u8;
+    } else if (bitsPerSample == 16) {
+        pDeviceInfo->formats[0] = mal_format_s16;
+    } else if (bitsPerSample == 24) {
+        pDeviceInfo->formats[0] = mal_format_s24;
+    } else if (bitsPerSample == 32) {
+        pDeviceInfo->formats[0] = mal_format_s32;
+    } else {
+        return MAL_FORMAT_NOT_SUPPORTED;
     }
 
     return MAL_SUCCESS;
@@ -7059,7 +7903,7 @@ mal_result mal_device_init__winmm(mal_context* pContext, mal_device_type type, m
 
     const char* errorMsg = "";
     mal_result errorCode = MAL_ERROR;
-
+    mal_result result = MAL_SUCCESS;
 
     // WinMM doesn't seem to have a good way to query the format of the device. Therefore, we'll restrict the formats to the
     // standard formats documented here https://msdn.microsoft.com/en-us/library/windows/desktop/dd743855(v=vs.85).aspx. If
@@ -7125,66 +7969,12 @@ mal_result mal_device_init__winmm(mal_context* pContext, mal_device_type type, m
         goto on_error;
     }
 
-    if (wChannels == 1) {
-        wf.nChannels = 1;
-        wf.wBitsPerSample = 16;
-        if ((dwFormats & WAVE_FORMAT_48M16) != 0) {
-            wf.nSamplesPerSec = 48000;
-        } else if ((dwFormats & WAVE_FORMAT_44M16) != 0) {
-            wf.nSamplesPerSec = 44100;
-        } else if ((dwFormats & WAVE_FORMAT_2M16) != 0) {
-            wf.nSamplesPerSec = 22050;
-        } else if ((dwFormats & WAVE_FORMAT_1M16) != 0) {
-            wf.nSamplesPerSec = 11025;
-        } else if ((dwFormats & WAVE_FORMAT_96M16) != 0) {
-            wf.nSamplesPerSec = 96000;
-        } else {
-            wf.wBitsPerSample = 8;
-            if ((dwFormats & WAVE_FORMAT_48M08) != 0) {
-                wf.nSamplesPerSec = 48000;
-            } else if ((dwFormats & WAVE_FORMAT_44M08) != 0) {
-                wf.nSamplesPerSec = 44100;
-            } else if ((dwFormats & WAVE_FORMAT_2M08) != 0) {
-                wf.nSamplesPerSec = 22050;
-            } else if ((dwFormats & WAVE_FORMAT_1M08) != 0) {
-                wf.nSamplesPerSec = 11025;
-            } else if ((dwFormats & WAVE_FORMAT_96M08) != 0) {
-                wf.nSamplesPerSec = 96000;
-            } else {
-                errorMsg = "[WinMM] Could not find appropriate format for internal device.", errorCode = MAL_FORMAT_NOT_SUPPORTED;
-                goto on_error;
-            }
-        }
-    } else {
-        wf.nChannels = 2;
-        wf.wBitsPerSample = 16;
-        if ((dwFormats & WAVE_FORMAT_48S16) != 0) {
-            wf.nSamplesPerSec = 48000;
-        } else if ((dwFormats & WAVE_FORMAT_44S16) != 0) {
-            wf.nSamplesPerSec = 44100;
-        } else if ((dwFormats & WAVE_FORMAT_2S16) != 0) {
-            wf.nSamplesPerSec = 22050;
-        } else if ((dwFormats & WAVE_FORMAT_1S16) != 0) {
-            wf.nSamplesPerSec = 11025;
-        } else if ((dwFormats & WAVE_FORMAT_96S16) != 0) {
-            wf.nSamplesPerSec = 96000;
-        } else {
-            wf.wBitsPerSample = 8;
-            if ((dwFormats & WAVE_FORMAT_48S08) != 0) {
-                wf.nSamplesPerSec = 48000;
-            } else if ((dwFormats & WAVE_FORMAT_44S08) != 0) {
-                wf.nSamplesPerSec = 44100;
-            } else if ((dwFormats & WAVE_FORMAT_2S08) != 0) {
-                wf.nSamplesPerSec = 22050;
-            } else if ((dwFormats & WAVE_FORMAT_1S08) != 0) {
-                wf.nSamplesPerSec = 11025;
-            } else if ((dwFormats & WAVE_FORMAT_96S08) != 0) {
-                wf.nSamplesPerSec = 96000;
-            } else {
-                errorMsg = "[WinMM] Could not find appropriate format for internal device.", errorCode = MAL_FORMAT_NOT_SUPPORTED;
-                goto on_error;
-            }
-        }
+    wf.nChannels = wChannels;
+
+    result = mal_get_best_info_from_formats_flags__winmm(dwFormats, wChannels, &wf.wBitsPerSample, &wf.nSamplesPerSec);
+    if (result != MAL_SUCCESS) {
+        errorMsg = "[WinMM] Could not find appropriate format for internal device.", errorCode = result;
+        goto on_error;
     }
 
     wf.nBlockAlign     = (wf.nChannels * wf.wBitsPerSample) / 8;
@@ -7200,14 +7990,14 @@ mal_result mal_device_init__winmm(mal_context* pContext, mal_device_type type, m
 
 
     if (type == mal_device_type_playback) {
-        MMRESULT result = ((MAL_PFN_waveOutOpen)pContext->winmm.waveOutOpen)((LPHWAVEOUT)&pDevice->winmm.hDevice, winMMDeviceID, &wf, (DWORD_PTR)pDevice->winmm.hEvent, (DWORD_PTR)pDevice, CALLBACK_EVENT | WAVE_ALLOWSYNC);
-        if (result != MMSYSERR_NOERROR) {
+        MMRESULT resultMM = ((MAL_PFN_waveOutOpen)pContext->winmm.waveOutOpen)((LPHWAVEOUT)&pDevice->winmm.hDevice, winMMDeviceID, &wf, (DWORD_PTR)pDevice->winmm.hEvent, (DWORD_PTR)pDevice, CALLBACK_EVENT | WAVE_ALLOWSYNC);
+        if (resultMM != MMSYSERR_NOERROR) {
             errorMsg = "[WinMM] Failed to open playback device.", errorCode = MAL_FAILED_TO_OPEN_BACKEND_DEVICE;
             goto on_error;
         }
     } else {
-        MMRESULT result = ((MAL_PFN_waveInOpen)pDevice->pContext->winmm.waveInOpen)((LPHWAVEIN)&pDevice->winmm.hDevice, winMMDeviceID, &wf, (DWORD_PTR)pDevice->winmm.hEvent, (DWORD_PTR)pDevice, CALLBACK_EVENT | WAVE_ALLOWSYNC);
-        if (result != MMSYSERR_NOERROR) {
+        MMRESULT resultMM = ((MAL_PFN_waveInOpen)pDevice->pContext->winmm.waveInOpen)((LPHWAVEIN)&pDevice->winmm.hDevice, winMMDeviceID, &wf, (DWORD_PTR)pDevice->winmm.hEvent, (DWORD_PTR)pDevice, CALLBACK_EVENT | WAVE_ALLOWSYNC);
+        if (resultMM != MMSYSERR_NOERROR) {
             errorMsg = "[WinMM] Failed to open capture device.", errorCode = MAL_FAILED_TO_OPEN_BACKEND_DEVICE;
             goto on_error;
         }
@@ -7238,11 +8028,21 @@ mal_result mal_device_init__winmm(mal_context* pContext, mal_device_type type, m
 
     // Latency with WinMM seems pretty bad from my testing... Need to increase the default buffer size.
     if (pDevice->usingDefaultBufferSize) {
-        if (pDevice->type == mal_device_type_playback) {
-            pDevice->bufferSizeInFrames *= 4; // <-- Might need to fiddle with this to find a more ideal value. May even be able to just add a fixed amount rather than scaling.
+        // CPU speed is a factor to consider when determine how large of a buffer we need.
+        float fCPUSpeed = mal_calculate_cpu_speed_factor();
+
+        // In my testing, capture seems to have worse latency than playback for some reason.
+        float fType;
+        if (type == mal_device_type_playback) {
+            fType = 1.0f;
         } else {
-            pDevice->bufferSizeInFrames *= 2;
+            fType = 2.0f;
         }
+
+        // Backend tax. Need to fiddle with this.
+        float fBackend = 12.0;
+
+        pDevice->bufferSizeInFrames = mal_calculate_default_buffer_size_in_frames(pConfig->performanceProfile, pConfig->sampleRate, fCPUSpeed*fType*fBackend);
     }
 
     // The size of the intermediary buffer needs to be able to fit every fragment.
@@ -7705,7 +8505,11 @@ typedef int                   (* mal_snd_pcm_hw_params_set_periods_near_proc)   
 typedef int                   (* mal_snd_pcm_hw_params_set_access_proc)          (mal_snd_pcm_t *pcm, mal_snd_pcm_hw_params_t *params, mal_snd_pcm_access_t _access);
 typedef int                   (* mal_snd_pcm_hw_params_get_format_proc)          (const mal_snd_pcm_hw_params_t *params, mal_snd_pcm_format_t *format);
 typedef int                   (* mal_snd_pcm_hw_params_get_channels_proc)        (const mal_snd_pcm_hw_params_t *params, unsigned int *val);
+typedef int                   (* mal_snd_pcm_hw_params_get_channels_min_proc)    (const mal_snd_pcm_hw_params_t *params, unsigned int *val);
+typedef int                   (* mal_snd_pcm_hw_params_get_channels_max_proc)    (const mal_snd_pcm_hw_params_t *params, unsigned int *val);
 typedef int                   (* mal_snd_pcm_hw_params_get_rate_proc)            (const mal_snd_pcm_hw_params_t *params, unsigned int *rate, int *dir);
+typedef int                   (* mal_snd_pcm_hw_params_get_rate_min_proc)        (const mal_snd_pcm_hw_params_t *params, unsigned int *rate, int *dir);
+typedef int                   (* mal_snd_pcm_hw_params_get_rate_max_proc)        (const mal_snd_pcm_hw_params_t *params, unsigned int *rate, int *dir);
 typedef int                   (* mal_snd_pcm_hw_params_get_buffer_size_proc)     (const mal_snd_pcm_hw_params_t *params, mal_snd_pcm_uframes_t *val);
 typedef int                   (* mal_snd_pcm_hw_params_get_periods_proc)         (const mal_snd_pcm_hw_params_t *params, unsigned int *val, int *dir);
 typedef int                   (* mal_snd_pcm_hw_params_get_access_proc)          (const mal_snd_pcm_hw_params_t *params, mal_snd_pcm_access_t *_access);
@@ -7774,8 +8578,8 @@ static struct
     const char* name;
     float scale;
 } g_malDefaultBufferSizeScalesALSA[] = {
-    {"bcm2835 IEC958/HDMI", 20},
-    {"bcm2835 ALSA",        20}
+    {"bcm2835 IEC958/HDMI", 8.0f},
+    {"bcm2835 ALSA",        8.0f}
 };
 
 float mal_find_default_buffer_size_scale__alsa(const char* deviceName)
@@ -7805,7 +8609,7 @@ mal_format mal_convert_alsa_format_to_mal_format(mal_snd_pcm_format_t formatALSA
         case MAL_SND_PCM_FORMAT_U8:       return mal_format_u8;
         case MAL_SND_PCM_FORMAT_S16_LE:   return mal_format_s16;
         case MAL_SND_PCM_FORMAT_S24_3LE:  return mal_format_s24;
-        //MAL_SND_PCM_FORMAT_S24_LE,        return mal_format_s24_32
+        //case MAL_SND_PCM_FORMAT_S24_LE:   return mal_format_s24_32
         case MAL_SND_PCM_FORMAT_S32_LE:   return mal_format_s32;
         case MAL_SND_PCM_FORMAT_FLOAT_LE: return mal_format_f32;
         default:                          return mal_format_unknown;
@@ -8027,6 +8831,123 @@ mal_bool32 mal_does_id_exist_in_list__alsa(mal_device_id* pUniqueIDs, mal_uint32
 }
 
 
+mal_result mal_context_open_pcm__alsa(mal_context* pContext, mal_share_mode shareMode, mal_device_type type, const mal_device_id* pDeviceID, mal_snd_pcm_t** ppPCM)
+{
+    mal_assert(pContext != NULL);
+    mal_assert(ppPCM != NULL);
+
+    *ppPCM = NULL;
+
+    mal_snd_pcm_t* pPCM = NULL;
+
+    
+
+    mal_snd_pcm_stream_t stream = (type == mal_device_type_playback) ? MAL_SND_PCM_STREAM_PLAYBACK : MAL_SND_PCM_STREAM_CAPTURE;
+    int openMode = MAL_SND_PCM_NO_AUTO_RESAMPLE | MAL_SND_PCM_NO_AUTO_CHANNELS | MAL_SND_PCM_NO_AUTO_FORMAT;
+
+    if (pDeviceID == NULL) {
+        // We're opening the default device. I don't know if trying anything other than "default" is necessary, but it makes
+        // me feel better to try as hard as we can get to get _something_ working.
+        const char* defaultDeviceNames[] = {
+            "default",
+            NULL,
+            NULL,
+            NULL,
+            NULL,
+            NULL,
+            NULL
+        };
+
+        if (shareMode == mal_share_mode_exclusive) {
+            defaultDeviceNames[1] = "hw";
+            defaultDeviceNames[2] = "hw:0";
+            defaultDeviceNames[3] = "hw:0,0";
+        } else {
+            if (type == mal_device_type_playback) {
+                defaultDeviceNames[1] = "dmix";
+                defaultDeviceNames[2] = "dmix:0";
+                defaultDeviceNames[3] = "dmix:0,0";
+            } else {
+                defaultDeviceNames[1] = "dsnoop";
+                defaultDeviceNames[2] = "dsnoop:0";
+                defaultDeviceNames[3] = "dsnoop:0,0";
+            }
+            defaultDeviceNames[4] = "hw";
+            defaultDeviceNames[5] = "hw:0";
+            defaultDeviceNames[6] = "hw:0,0";
+        }
+
+        mal_bool32 isDeviceOpen = MAL_FALSE;
+        for (size_t i = 0; i < mal_countof(defaultDeviceNames); ++i) {
+            if (defaultDeviceNames[i] != NULL && defaultDeviceNames[i][0] != '\0') {
+                if (((mal_snd_pcm_open_proc)pContext->alsa.snd_pcm_open)(&pPCM, defaultDeviceNames[i], stream, openMode) == 0) {
+                    isDeviceOpen = MAL_TRUE;
+                    break;
+                }
+            }
+        }
+
+        if (!isDeviceOpen) {
+            return mal_context_post_error(pContext, NULL, "[ALSA] snd_pcm_open() failed when trying to open an appropriate default device.", MAL_FAILED_TO_OPEN_BACKEND_DEVICE);
+        }
+    } else {
+        // We're trying to open a specific device. There's a few things to consider here:
+        //
+        // mini_al recongnizes a special format of device id that excludes the "hw", "dmix", etc. prefix. It looks like this: ":0,0", ":0,1", etc. When
+        // an ID of this format is specified, it indicates to mini_al that it can try different combinations of plugins ("hw", "dmix", etc.) until it
+        // finds an appropriate one that works. This comes in very handy when trying to open a device in shared mode ("dmix"), vs exclusive mode ("hw").
+
+        // May end up needing to make small adjustments to the ID, so make a copy.
+        mal_device_id deviceID = *pDeviceID;
+
+        mal_bool32 isDeviceOpen = MAL_FALSE;
+        if (deviceID.alsa[0] != ':') {
+            // The ID is not in ":0,0" format. Use the ID exactly as-is.
+            if (((mal_snd_pcm_open_proc)pContext->alsa.snd_pcm_open)(&pPCM, deviceID.alsa, stream, openMode) == 0) {
+                isDeviceOpen = MAL_TRUE;
+            }
+        } else {
+            // The ID is in ":0,0" format. Try different plugins depending on the shared mode.
+            if (deviceID.alsa[1] == '\0') {
+                deviceID.alsa[0] = '\0';  // An ID of ":" should be converted to "".
+            }
+
+            char hwid[256];
+            if (shareMode == mal_share_mode_shared) {
+                if (type == mal_device_type_playback) {
+                    mal_strcpy_s(hwid, sizeof(hwid), "dmix");
+                } else {
+                    mal_strcpy_s(hwid, sizeof(hwid), "dsnoop");
+                }
+
+                if (mal_strcat_s(hwid, sizeof(hwid), deviceID.alsa) == 0) {
+                    if (((mal_snd_pcm_open_proc)pContext->alsa.snd_pcm_open)(&pPCM, hwid, stream, openMode) == 0) {
+                        isDeviceOpen = MAL_TRUE;
+                    }
+                }
+            }
+
+            // If at this point we still don't have an open device it means we're either preferencing exclusive mode or opening with "dmix"/"dsnoop" failed.
+            if (!isDeviceOpen) {
+                mal_strcpy_s(hwid, sizeof(hwid), "hw");
+                if (mal_strcat_s(hwid, sizeof(hwid), deviceID.alsa) == 0) {
+                    if (((mal_snd_pcm_open_proc)pContext->alsa.snd_pcm_open)(&pPCM, hwid, stream, openMode) == 0) {
+                        isDeviceOpen = MAL_TRUE;
+                    }
+                }
+            }
+        }
+
+        if (!isDeviceOpen) {
+            return mal_context_post_error(pContext, NULL, "[ALSA] snd_pcm_open() failed.", MAL_FAILED_TO_OPEN_BACKEND_DEVICE);
+        }
+    }
+
+    *ppPCM = pPCM;
+    return MAL_SUCCESS;
+}
+
+
 mal_bool32 mal_context_is_device_id_equal__alsa(mal_context* pContext, const mal_device_id* pID0, const mal_device_id* pID1)
 {
     mal_assert(pContext != NULL);
@@ -8242,11 +9163,57 @@ mal_result mal_context_get_device_info__alsa(mal_context* pContext, mal_device_t
         return result;
     }
 
-    if (data.foundDevice) {
-        return MAL_SUCCESS;
-    } else {
+    if (!data.foundDevice) {
         return MAL_NO_DEVICE;
     }
+
+
+    // For detailed info we need to open the device.
+    mal_snd_pcm_t* pPCM;
+    result = mal_context_open_pcm__alsa(pContext, shareMode, deviceType, pDeviceID, &pPCM);
+    if (result != MAL_SUCCESS) {
+        return result;
+    }
+
+    // We need to initialize a HW parameters object in order to know what formats are supported.
+    mal_snd_pcm_hw_params_t* pHWParams = (mal_snd_pcm_hw_params_t*)alloca(((mal_snd_pcm_hw_params_sizeof_proc)pContext->alsa.snd_pcm_hw_params_sizeof)());
+    mal_zero_memory(pHWParams, ((mal_snd_pcm_hw_params_sizeof_proc)pContext->alsa.snd_pcm_hw_params_sizeof)());
+
+    if (((mal_snd_pcm_hw_params_any_proc)pContext->alsa.snd_pcm_hw_params_any)(pPCM, pHWParams) < 0) {
+        return mal_context_post_error(pContext, NULL, "[ALSA] Failed to initialize hardware parameters. snd_pcm_hw_params_any() failed.", MAL_FAILED_TO_CONFIGURE_BACKEND_DEVICE);
+    }
+
+    int sampleRateDir = 0;
+
+    ((mal_snd_pcm_hw_params_get_channels_min_proc)pContext->alsa.snd_pcm_hw_params_get_channels_min)(pHWParams, &pDeviceInfo->minChannels);
+    ((mal_snd_pcm_hw_params_get_channels_max_proc)pContext->alsa.snd_pcm_hw_params_get_channels_max)(pHWParams, &pDeviceInfo->maxChannels);
+    ((mal_snd_pcm_hw_params_get_rate_min_proc)pContext->alsa.snd_pcm_hw_params_get_rate_min)(pHWParams, &pDeviceInfo->minSampleRate, &sampleRateDir);
+    ((mal_snd_pcm_hw_params_get_rate_max_proc)pContext->alsa.snd_pcm_hw_params_get_rate_max)(pHWParams, &pDeviceInfo->maxSampleRate, &sampleRateDir);
+
+    // Formats.
+    mal_snd_pcm_format_mask_t* pFormatMask = (mal_snd_pcm_format_mask_t*)alloca(((mal_snd_pcm_format_mask_sizeof_proc)pContext->alsa.snd_pcm_format_mask_sizeof)());
+    mal_zero_memory(pFormatMask, ((mal_snd_pcm_format_mask_sizeof_proc)pContext->alsa.snd_pcm_format_mask_sizeof)());
+    ((mal_snd_pcm_hw_params_get_format_mask_proc)pContext->alsa.snd_pcm_hw_params_get_format_mask)(pHWParams, pFormatMask);
+
+    pDeviceInfo->formatCount = 0;
+    if (((mal_snd_pcm_format_mask_test_proc)pContext->alsa.snd_pcm_format_mask_test)(pFormatMask, MAL_SND_PCM_FORMAT_U8)) {
+        pDeviceInfo->formats[pDeviceInfo->formatCount++] = mal_format_u8;
+    }
+    if (((mal_snd_pcm_format_mask_test_proc)pContext->alsa.snd_pcm_format_mask_test)(pFormatMask, MAL_SND_PCM_FORMAT_S16_LE)) {
+        pDeviceInfo->formats[pDeviceInfo->formatCount++] = mal_format_s16;
+    }
+    if (((mal_snd_pcm_format_mask_test_proc)pContext->alsa.snd_pcm_format_mask_test)(pFormatMask, MAL_SND_PCM_FORMAT_S24_3LE)) {
+        pDeviceInfo->formats[pDeviceInfo->formatCount++] = mal_format_s24;
+    }
+    if (((mal_snd_pcm_format_mask_test_proc)pContext->alsa.snd_pcm_format_mask_test)(pFormatMask, MAL_SND_PCM_FORMAT_S32_LE)) {
+        pDeviceInfo->formats[pDeviceInfo->formatCount++] = mal_format_s32;
+    }
+    if (((mal_snd_pcm_format_mask_test_proc)pContext->alsa.snd_pcm_format_mask_test)(pFormatMask, MAL_SND_PCM_FORMAT_FLOAT_LE)) {
+        pDeviceInfo->formats[pDeviceInfo->formatCount++] = mal_format_f32;
+    }
+
+    ((mal_snd_pcm_close_proc)pContext->alsa.snd_pcm_close)(pPCM);
+    return MAL_SUCCESS;
 }
 
 mal_result mal_context_init__alsa(mal_context* pContext)
@@ -8274,7 +9241,11 @@ mal_result mal_context_init__alsa(mal_context* pContext)
     pContext->alsa.snd_pcm_hw_params_set_access           = (mal_proc)mal_dlsym(pContext->alsa.asoundSO, "snd_pcm_hw_params_set_access");
     pContext->alsa.snd_pcm_hw_params_get_format           = (mal_proc)mal_dlsym(pContext->alsa.asoundSO, "snd_pcm_hw_params_get_format");
     pContext->alsa.snd_pcm_hw_params_get_channels         = (mal_proc)mal_dlsym(pContext->alsa.asoundSO, "snd_pcm_hw_params_get_channels");
+    pContext->alsa.snd_pcm_hw_params_get_channels_min     = (mal_proc)mal_dlsym(pContext->alsa.asoundSO, "snd_pcm_hw_params_get_channels_min");
+    pContext->alsa.snd_pcm_hw_params_get_channels_max     = (mal_proc)mal_dlsym(pContext->alsa.asoundSO, "snd_pcm_hw_params_get_channels_max");
     pContext->alsa.snd_pcm_hw_params_get_rate             = (mal_proc)mal_dlsym(pContext->alsa.asoundSO, "snd_pcm_hw_params_get_rate");
+    pContext->alsa.snd_pcm_hw_params_get_rate_min         = (mal_proc)mal_dlsym(pContext->alsa.asoundSO, "snd_pcm_hw_params_get_rate_min");
+    pContext->alsa.snd_pcm_hw_params_get_rate_max         = (mal_proc)mal_dlsym(pContext->alsa.asoundSO, "snd_pcm_hw_params_get_rate_max");
     pContext->alsa.snd_pcm_hw_params_get_buffer_size      = (mal_proc)mal_dlsym(pContext->alsa.asoundSO, "snd_pcm_hw_params_get_buffer_size");
     pContext->alsa.snd_pcm_hw_params_get_periods          = (mal_proc)mal_dlsym(pContext->alsa.asoundSO, "snd_pcm_hw_params_get_periods");
     pContext->alsa.snd_pcm_hw_params_get_access           = (mal_proc)mal_dlsym(pContext->alsa.asoundSO, "snd_pcm_hw_params_get_access");
@@ -8323,7 +9294,11 @@ mal_result mal_context_init__alsa(mal_context* pContext)
     mal_snd_pcm_hw_params_set_access_proc           _snd_pcm_hw_params_set_access           = snd_pcm_hw_params_set_access;
     mal_snd_pcm_hw_params_get_format_proc           _snd_pcm_hw_params_get_format           = snd_pcm_hw_params_get_format;
     mal_snd_pcm_hw_params_get_channels_proc         _snd_pcm_hw_params_get_channels         = snd_pcm_hw_params_get_channels;
+    mal_snd_pcm_hw_params_get_channels_min_proc     _snd_pcm_hw_params_get_channels_min     = snd_pcm_hw_params_get_channels_min;
+    mal_snd_pcm_hw_params_get_channels_max_proc     _snd_pcm_hw_params_get_channels_max     = snd_pcm_hw_params_get_channels_max;
     mal_snd_pcm_hw_params_get_rate_proc             _snd_pcm_hw_params_get_rate             = snd_pcm_hw_params_get_rate;
+    mal_snd_pcm_hw_params_get_rate_min_proc         _snd_pcm_hw_params_get_rate_min         = snd_pcm_hw_params_get_rate_min;
+    mal_snd_pcm_hw_params_get_rate_max_proc         _snd_pcm_hw_params_get_rate_max         = snd_pcm_hw_params_get_rate_max;
     mal_snd_pcm_hw_params_get_buffer_size_proc      _snd_pcm_hw_params_get_buffer_size      = snd_pcm_hw_params_get_buffer_size;
     mal_snd_pcm_hw_params_get_periods_proc          _snd_pcm_hw_params_get_periods          = snd_pcm_hw_params_get_periods;
     mal_snd_pcm_hw_params_get_access_proc           _snd_pcm_hw_params_get_access           = snd_pcm_hw_params_get_access;
@@ -8371,6 +9346,8 @@ mal_result mal_context_init__alsa(mal_context* pContext)
     pContext->alsa.snd_pcm_hw_params_set_access           = (mal_proc)_snd_pcm_hw_params_set_access;
     pContext->alsa.snd_pcm_hw_params_get_format           = (mal_proc)_snd_pcm_hw_params_get_format;
     pContext->alsa.snd_pcm_hw_params_get_channels         = (mal_proc)_snd_pcm_hw_params_get_channels;
+    pContext->alsa.snd_pcm_hw_params_get_channels_min     = (mal_proc)_snd_pcm_hw_params_get_channels_min;
+    pContext->alsa.snd_pcm_hw_params_get_channels_max     = (mal_proc)_snd_pcm_hw_params_get_channels_max;
     pContext->alsa.snd_pcm_hw_params_get_rate             = (mal_proc)_snd_pcm_hw_params_get_rate;
     pContext->alsa.snd_pcm_hw_params_get_buffer_size      = (mal_proc)_snd_pcm_hw_params_get_buffer_size;
     pContext->alsa.snd_pcm_hw_params_get_periods          = (mal_proc)_snd_pcm_hw_params_get_periods;
@@ -8708,7 +9685,7 @@ void mal_device_uninit__alsa(mal_device* pDevice)
     }
 }
 
-mal_result mal_device_init__alsa(mal_context* pContext, mal_device_type type, mal_device_id* pDeviceID, const mal_device_config* pConfig, mal_device* pDevice)
+mal_result mal_device_init__alsa(mal_context* pContext, mal_device_type type, const mal_device_id* pDeviceID, const mal_device_config* pConfig, mal_device* pDevice)
 {
     (void)pContext;
 
@@ -8716,114 +9693,39 @@ mal_result mal_device_init__alsa(mal_context* pContext, mal_device_type type, ma
     mal_zero_object(&pDevice->alsa);
 
     mal_snd_pcm_format_t formatALSA = mal_convert_mal_format_to_alsa_format(pConfig->format);
-    mal_snd_pcm_stream_t stream = (type == mal_device_type_playback) ? MAL_SND_PCM_STREAM_PLAYBACK : MAL_SND_PCM_STREAM_CAPTURE;
 
-    int openMode = MAL_SND_PCM_NO_AUTO_RESAMPLE | MAL_SND_PCM_NO_AUTO_CHANNELS | MAL_SND_PCM_NO_AUTO_FORMAT;
-
-    if (pDeviceID == NULL) {
-        // We're opening the default device. I don't know if trying anything other than "default" is necessary, but it makes
-        // me feel better to try as hard as we can get to get _something_ working.
-        const char* defaultDeviceNames[] = {
-            "default",
-            NULL,
-            NULL,
-            NULL,
-            NULL,
-            NULL,
-            NULL
-        };
-
-        if (pConfig->shareMode == mal_share_mode_exclusive) {
-            defaultDeviceNames[1] = "hw";
-            defaultDeviceNames[2] = "hw:0";
-            defaultDeviceNames[3] = "hw:0,0";
-        } else {
-            if (type == mal_device_type_playback) {
-                defaultDeviceNames[1] = "dmix";
-                defaultDeviceNames[2] = "dmix:0";
-                defaultDeviceNames[3] = "dmix:0,0";
-            } else {
-                defaultDeviceNames[1] = "dsnoop";
-                defaultDeviceNames[2] = "dsnoop:0";
-                defaultDeviceNames[3] = "dsnoop:0,0";
-            }
-            defaultDeviceNames[4] = "hw";
-            defaultDeviceNames[5] = "hw:0";
-            defaultDeviceNames[6] = "hw:0,0";
-        }
-
-        mal_bool32 isDeviceOpen = MAL_FALSE;
-        for (size_t i = 0; i < mal_countof(defaultDeviceNames); ++i) {
-            if (defaultDeviceNames[i] != NULL && defaultDeviceNames[i][0] != '\0') {
-                if (((mal_snd_pcm_open_proc)pContext->alsa.snd_pcm_open)((mal_snd_pcm_t**)&pDevice->alsa.pPCM, defaultDeviceNames[i], stream, openMode) == 0) {
-                    isDeviceOpen = MAL_TRUE;
-                    break;
-                }
-            }
-        }
-
-        if (!isDeviceOpen) {
-            mal_device_uninit__alsa(pDevice);
-            return mal_post_error(pDevice, "[ALSA] snd_pcm_open() failed when trying to open an appropriate default device.", MAL_FAILED_TO_OPEN_BACKEND_DEVICE);
-        }
-    } else {
-        // We're trying to open a specific device. There's a few things to consider here:
-        //
-        // mini_al recongnizes a special format of device id that excludes the "hw", "dmix", etc. prefix. It looks like this: ":0,0", ":0,1", etc. When
-        // an ID of this format is specified, it indicates to mini_al that it can try different combinations of plugins ("hw", "dmix", etc.) until it
-        // finds an appropriate one that works. This comes in very handy when trying to open a device in shared mode ("dmix"), vs exclusive mode ("hw").
-        mal_bool32 isDeviceOpen = MAL_FALSE;
-        if (pDeviceID->alsa[0] != ':') {
-            // The ID is not in ":0,0" format. Use the ID exactly as-is.
-            if (((mal_snd_pcm_open_proc)pContext->alsa.snd_pcm_open)((mal_snd_pcm_t**)&pDevice->alsa.pPCM, pDeviceID->alsa, stream, openMode) == 0) {
-                isDeviceOpen = MAL_TRUE;
-            }
-        } else {
-            // The ID is in ":0,0" format. Try different plugins depending on the shared mode.
-            if (pDeviceID->alsa[1] == '\0') {
-                pDeviceID->alsa[0] = '\0';  // An ID of ":" should be converted to "".
-            }
-
-            char hwid[256];
-            if (pConfig->shareMode == mal_share_mode_shared) {
-                if (type == mal_device_type_playback) {
-                    mal_strcpy_s(hwid, sizeof(hwid), "dmix");
-                } else {
-                    mal_strcpy_s(hwid, sizeof(hwid), "dsnoop");
-                }
-
-                if (mal_strcat_s(hwid, sizeof(hwid), pDeviceID->alsa) == 0) {
-                    if (((mal_snd_pcm_open_proc)pContext->alsa.snd_pcm_open)((mal_snd_pcm_t**)&pDevice->alsa.pPCM, hwid, stream, openMode) == 0) {
-                        isDeviceOpen = MAL_TRUE;
-                    }
-                }
-            }
-
-            // If at this point we still don't have an open device it means we're either preferencing exclusive mode or opening with "dmix"/"dsnoop" failed.
-            if (!isDeviceOpen) {
-                mal_strcpy_s(hwid, sizeof(hwid), "hw");
-                if (mal_strcat_s(hwid, sizeof(hwid), pDeviceID->alsa) == 0) {
-                    if (((mal_snd_pcm_open_proc)pContext->alsa.snd_pcm_open)((mal_snd_pcm_t**)&pDevice->alsa.pPCM, hwid, stream, openMode) == 0) {
-                        isDeviceOpen = MAL_TRUE;
-                    }
-                }
-            }
-        }
-
-        if (!isDeviceOpen) {
-            mal_device_uninit__alsa(pDevice);
-            return mal_post_error(pDevice, "[ALSA] snd_pcm_open() failed.", MAL_FAILED_TO_OPEN_BACKEND_DEVICE);
-        }
+    mal_result result = mal_context_open_pcm__alsa(pContext, pConfig->shareMode, type, pDeviceID, (mal_snd_pcm_t**)&pDevice->alsa.pPCM);
+    if (result != MAL_SUCCESS) {
+        return result;
     }
 
-    // We may need to scale the size of the buffer depending on the device.
+    // If using the default buffer size we do some calculations based on a simple profiling test.
     if (pDevice->usingDefaultBufferSize) {
         mal_snd_pcm_info_t* pInfo = (mal_snd_pcm_info_t*)alloca(((mal_snd_pcm_info_sizeof_proc)pContext->alsa.snd_pcm_info_sizeof)());
         mal_zero_memory(pInfo, ((mal_snd_pcm_info_sizeof_proc)pContext->alsa.snd_pcm_info_sizeof)());
 
-        if (((mal_snd_pcm_info_proc)pContext->alsa.snd_pcm_info)((mal_snd_pcm_t*)pDevice->alsa.pPCM, pInfo) == 0) {
-            float bufferSizeScale = 1;
+        // CPU speed is a factor to consider when determine how large of a buffer we need.
+        float fCPUSpeed = mal_calculate_cpu_speed_factor();
 
+        // We need a slightly bigger buffer if we're using shared mode to cover the inherent tax association with shared mode.
+        float fShareMode;
+        if (pConfig->shareMode == mal_share_mode_shared) {
+            fShareMode = 1.0f;
+        } else {
+            fShareMode = 0.8f;
+        }
+
+        // In my testing, capture seems to have worse latency than playback for some reason.
+        float fType;
+        if (type == mal_device_type_playback) {
+            fType = 1.0f;
+        } else {
+            fType = 2.0f;
+        }
+
+        // We may need to scale the size of the buffer depending on the device.
+        float fDevice = 1;
+        if (((mal_snd_pcm_info_proc)pContext->alsa.snd_pcm_info)((mal_snd_pcm_t*)pDevice->alsa.pPCM, pInfo) == 0) {
             const char* deviceName = ((mal_snd_pcm_info_get_name_proc)pContext->alsa.snd_pcm_info_get_name)(pInfo);
             if (deviceName != NULL) {
                 if (mal_strcmp(deviceName, "default") == 0) {
@@ -8843,7 +9745,7 @@ mal_result mal_device_init__alsa(mal_context* pContext, mal_device_type type, ma
                         if ((type == mal_device_type_playback && (IOID == NULL || mal_strcmp(IOID, "Output") == 0)) ||
                             (type == mal_device_type_capture  && (IOID != NULL && mal_strcmp(IOID, "Input" ) == 0))) {
                             if (mal_strcmp(NAME, deviceName) == 0) {
-                                bufferSizeScale = mal_find_default_buffer_size_scale__alsa(DESC);
+                                fDevice = mal_find_default_buffer_size_scale__alsa(DESC);
                                 foundDevice = MAL_TRUE;
                             }
                         }
@@ -8860,11 +9762,11 @@ mal_result mal_device_init__alsa(mal_context* pContext, mal_device_type type, ma
 
                     ((mal_snd_device_name_free_hint_proc)pContext->alsa.snd_device_name_free_hint)((void**)ppDeviceHints);
                 } else {
-                    bufferSizeScale = mal_find_default_buffer_size_scale__alsa(deviceName);
+                    fDevice = mal_find_default_buffer_size_scale__alsa(deviceName);
                 }
             }
 
-            pDevice->bufferSizeInFrames = (mal_uint32)(pDevice->bufferSizeInFrames * bufferSizeScale);
+            pDevice->bufferSizeInFrames = mal_calculate_default_buffer_size_in_frames(pConfig->performanceProfile, pConfig->sampleRate, fCPUSpeed*fShareMode*fType*fDevice);
         }
     }
 
@@ -10070,6 +10972,13 @@ void mal_context_get_device_info_sink_callback__pulse(mal_pa_context* pPulseCont
     if (pInfo->description != NULL) {
         mal_strncpy_s(pData->pDeviceInfo->name, sizeof(pData->pDeviceInfo->name), pInfo->description, (size_t)-1);
     }
+
+    pData->pDeviceInfo->minChannels   = pInfo->sample_spec.channels;
+    pData->pDeviceInfo->maxChannels   = pInfo->sample_spec.channels;
+    pData->pDeviceInfo->minSampleRate = pInfo->sample_spec.rate;
+    pData->pDeviceInfo->maxSampleRate = pInfo->sample_spec.rate;
+    pData->pDeviceInfo->formatCount = 1;
+    pData->pDeviceInfo->formats[0] = mal_format_from_pulse(pInfo->sample_spec.format);
 }
 
 void mal_context_get_device_info_source_callback__pulse(mal_pa_context* pPulseContext, const mal_pa_source_info* pInfo, int endOfList, void* pUserData)
@@ -10089,6 +10998,13 @@ void mal_context_get_device_info_source_callback__pulse(mal_pa_context* pPulseCo
     if (pInfo->description != NULL) {
         mal_strncpy_s(pData->pDeviceInfo->name, sizeof(pData->pDeviceInfo->name), pInfo->description, (size_t)-1);
     }
+
+    pData->pDeviceInfo->minChannels = pInfo->sample_spec.channels;
+    pData->pDeviceInfo->maxChannels = pInfo->sample_spec.channels;
+    pData->pDeviceInfo->minSampleRate = pInfo->sample_spec.rate;
+    pData->pDeviceInfo->maxSampleRate = pInfo->sample_spec.rate;
+    pData->pDeviceInfo->formatCount = 1;
+    pData->pDeviceInfo->formats[0] = mal_format_from_pulse(pInfo->sample_spec.format);
 }
 
 mal_result mal_context_get_device_info__pulse(mal_context* pContext, mal_device_type deviceType, const mal_device_id* pDeviceID, mal_share_mode shareMode, mal_device_info* pDeviceInfo)
@@ -10496,6 +11412,8 @@ mal_result mal_device_init__pulse(mal_context* pContext, mal_device_type type, m
         dev = pDeviceID->pulse;
     }
 
+    mal_uint32 bufferSizeInFrames = pConfig->bufferSizeInFrames;
+
     mal_pa_sink_info sinkInfo;
     mal_pa_source_info sourceInfo;
     mal_pa_operation* pOP = NULL;
@@ -10632,7 +11550,26 @@ mal_result mal_device_init__pulse(mal_context* pContext, mal_device_type type, m
     }
 #endif
 
-    attr.maxlength = pConfig->bufferSizeInFrames * mal_get_bytes_per_sample(mal_format_from_pulse(ss.format))*ss.channels;
+    // If using the default buffer size try to find an appropriate default.
+    if (pDevice->usingDefaultBufferSize) {
+        // CPU speed is a factor to consider when determine how large of a buffer we need.
+        float fCPUSpeed = mal_calculate_cpu_speed_factor();
+
+        // In my testing, capture seems to have worse latency than playback for some reason.
+        float fType;
+        if (type == mal_device_type_playback) {
+            fType = 1.0f;
+        } else {
+            fType = 2.0f;
+        }
+
+        // Backend tax. Need to fiddle with this.
+        float fBackend = 1.2;
+
+        bufferSizeInFrames = mal_calculate_default_buffer_size_in_frames(pConfig->performanceProfile, pConfig->sampleRate, fCPUSpeed*fType*fBackend);
+    }
+
+    attr.maxlength = bufferSizeInFrames * mal_get_bytes_per_sample(mal_format_from_pulse(ss.format))*ss.channels;
     attr.tlength   = attr.maxlength / pConfig->periods;
     attr.prebuf    = (mal_uint32)-1;
     attr.minreq    = attr.tlength;
@@ -10952,6 +11889,36 @@ typedef const char*        (* mal_jack_port_name_proc)               (const mal_
 typedef void*              (* mal_jack_port_get_buffer_proc)         (mal_jack_port_t* port, mal_jack_nframes_t nframes);
 typedef void               (* mal_jack_free_proc)                    (void* ptr);
 
+mal_result mal_context_open_client__jack(mal_context* pContext, mal_device_type type, const mal_device_id* pDeviceID, mal_jack_client_t** ppClient)
+{
+    mal_assert(pContext != NULL);
+    mal_assert(ppClient != NULL);
+
+    (void)type;
+    (void)pDeviceID;
+
+    if (ppClient) {
+        *ppClient = NULL;
+    }
+
+    size_t maxClientNameSize = ((mal_jack_client_name_size_proc)pContext->jack.jack_client_name_size)(); // Includes null terminator.
+
+    char clientName[256];
+    mal_strncpy_s(clientName, mal_min(sizeof(clientName), maxClientNameSize), (pContext->config.jack.pClientName != NULL) ? pContext->config.jack.pClientName : "mini_al", (size_t)-1);
+
+    mal_jack_status_t status;
+    mal_jack_client_t* pClient = ((mal_jack_client_open_proc)pContext->jack.jack_client_open)(clientName, (pContext->config.jack.tryStartServer) ? 0 : mal_JackNoStartServer, &status, NULL);
+    if (pClient == NULL) {
+        return mal_context_post_error(pContext, NULL, "[JACK] Failed to open client.", MAL_FAILED_TO_OPEN_BACKEND_DEVICE);
+    }
+
+    if (ppClient) {
+        *ppClient = pClient;
+    }
+
+    return MAL_SUCCESS;
+}
+
 mal_bool32 mal_context_is_device_id_equal__jack(mal_context* pContext, const mal_device_id* pID0, const mal_device_id* pID1)
 {
     mal_assert(pContext != NULL);
@@ -11005,6 +11972,37 @@ mal_result mal_context_get_device_info__jack(mal_context* pContext, mal_device_t
     } else {
         mal_strncpy_s(pDeviceInfo->name, sizeof(pDeviceInfo->name), MAL_DEFAULT_CAPTURE_DEVICE_NAME, (size_t)-1);
     }
+
+    // Jack only supports f32 and has a specific channel count and sample rate.
+    pDeviceInfo->formatCount = 1;
+    pDeviceInfo->formats[0] = mal_format_f32;
+
+    // The channel count and sample rate can only be determined by opening the device.
+    mal_jack_client_t* pClient;
+    mal_result result = mal_context_open_client__jack(pContext, deviceType, pDeviceID, &pClient);
+    if (result != MAL_SUCCESS) {
+        return result;
+    }
+
+    pDeviceInfo->minSampleRate = ((mal_jack_get_sample_rate_proc)pContext->jack.jack_get_sample_rate)((mal_jack_client_t*)pClient);
+    pDeviceInfo->maxSampleRate = pDeviceInfo->minSampleRate;
+
+    pDeviceInfo->minChannels = 0;
+    pDeviceInfo->maxChannels = 0;
+
+    const char** ppPorts = ((mal_jack_get_ports_proc)pContext->jack.jack_get_ports)((mal_jack_client_t*)pClient, NULL, NULL, mal_JackPortIsPhysical | ((deviceType == mal_device_type_playback) ? mal_JackPortIsInput : mal_JackPortIsOutput));
+    if (ppPorts == NULL) {
+        ((mal_jack_client_close_proc)pContext->jack.jack_client_close)((mal_jack_client_t*)pClient);
+        return mal_context_post_error(pContext, NULL, "[JACK] Failed to query physical ports.", MAL_FAILED_TO_OPEN_BACKEND_DEVICE);
+    }
+
+    while (ppPorts[pDeviceInfo->minChannels] != NULL) {
+        pDeviceInfo->minChannels += 1;
+        pDeviceInfo->maxChannels += 1;
+    }
+
+    ((mal_jack_free_proc)pContext->jack.jack_free)((void*)ppPorts);
+    ((mal_jack_client_close_proc)pContext->jack.jack_client_close)((mal_jack_client_t*)pClient);
 
     return MAL_SUCCESS;
 }
@@ -11206,15 +12204,9 @@ mal_result mal_device_init__jack(mal_context* pContext, mal_device_type type, ma
 
 
     // Open the client.
-    size_t maxClientNameSize = ((mal_jack_client_name_size_proc)pContext->jack.jack_client_name_size)(); // Includes null terminator.
-
-    char clientName[256];
-    mal_strncpy_s(clientName, mal_min(sizeof(clientName), maxClientNameSize), (pContext->config.jack.pClientName != NULL) ? pContext->config.jack.pClientName : "mini_al", (size_t)-1);
-
-    mal_jack_status_t status;
-    pDevice->jack.pClient = ((mal_jack_client_open_proc)pContext->jack.jack_client_open)(clientName, (pContext->config.jack.tryStartServer) ? 0 : mal_JackNoStartServer, &status, NULL);
-    if (pDevice->jack.pClient == NULL) {
-        return mal_post_error(pDevice, "[JACK] Failed to open client.", MAL_FAILED_TO_OPEN_BACKEND_DEVICE);
+    mal_result result = mal_context_open_client__jack(pContext, type, pDeviceID, (mal_jack_client_t**)&pDevice->jack.pClient);
+    if (result != MAL_SUCCESS) {
+        return result;
     }
 
     // Callbacks.
@@ -11384,6 +12376,29 @@ int mal_open_temp_device__oss()
     return -1;
 }
 
+mal_result mal_context_open_device__oss(mal_context* pContext, mal_device_type type, const mal_device_id* pDeviceID, int* pfd)
+{
+    mal_assert(pContext != NULL);
+    mal_assert(pfd != NULL);
+    (void)pContext;
+
+    *pfd = -1;
+
+    char deviceName[64];
+    if (pDeviceID != NULL) {
+        mal_strncpy_s(deviceName, sizeof(deviceName), pDeviceID->oss, (size_t)-1);
+    } else {
+        mal_strncpy_s(deviceName, sizeof(deviceName), "/dev/dsp", (size_t)-1);
+    }
+
+    *pfd = open(deviceName, (type == mal_device_type_playback) ? O_WRONLY : O_RDONLY, 0);
+    if (*pfd == -1) {
+        return MAL_FAILED_TO_OPEN_BACKEND_DEVICE;
+    }
+
+    return MAL_SUCCESS;
+}
+
 mal_bool32 mal_context_is_device_id_equal__oss(mal_context* pContext, const mal_device_id* pID0, const mal_device_id* pID1)
 {
     mal_assert(pContext != NULL);
@@ -11472,18 +12487,18 @@ mal_result mal_context_get_device_info__oss(mal_context* pContext, mal_device_ty
     // If we get here it means we are _not_ using the default device.
     mal_bool32 foundDevice = MAL_FALSE;
 
-    int fd = mal_open_temp_device__oss();
-    if (fd == -1) {
+    int fdTemp = mal_open_temp_device__oss();
+    if (fdTemp == -1) {
         return mal_context_post_error(pContext, NULL, "[OSS] Failed to open a temporary device for retrieving system information used for device enumeration.", MAL_NO_BACKEND);
     }
 
     oss_sysinfo si;
-    int result = ioctl(fd, SNDCTL_SYSINFO, &si);
+    int result = ioctl(fdTemp, SNDCTL_SYSINFO, &si);
     if (result != -1) {
         for (int iAudioDevice = 0; iAudioDevice < si.numaudios; ++iAudioDevice) {
             oss_audioinfo ai;
             ai.dev = iAudioDevice;
-            result = ioctl(fd, SNDCTL_AUDIOINFO, &ai);
+            result = ioctl(fdTemp, SNDCTL_AUDIOINFO, &ai);
             if (result != -1) {
                 if (mal_strcmp(ai.devnode, pDeviceID->oss) == 0) {
                     // It has the same name, so now just confirm the type.
@@ -11501,6 +12516,29 @@ mal_result mal_context_get_device_info__oss(mal_context* pContext, mal_device_ty
                             mal_strncpy_s(pDeviceInfo->name, sizeof(pDeviceInfo->name), ai.name, (size_t)-1);
                         }
 
+                        pDeviceInfo->minChannels = ai.min_channels;
+                        pDeviceInfo->maxChannels = ai.max_channels;
+                        pDeviceInfo->minSampleRate = ai.min_rate;
+                        pDeviceInfo->maxSampleRate = ai.max_rate;
+                        pDeviceInfo->formatCount = 0;
+
+                        unsigned int formatMask;
+                        if (deviceType == mal_device_type_playback) {
+                            formatMask = ai.oformats;
+                        } else {
+                            formatMask = ai.iformats;
+                        }
+
+                        if ((formatMask & AFMT_U8) != 0) {
+                            pDeviceInfo->formats[pDeviceInfo->formatCount++] = mal_format_u8;
+                        }
+                        if ((formatMask & AFMT_S16_LE) != 0) {
+                            pDeviceInfo->formats[pDeviceInfo->formatCount++] = mal_format_s16;
+                        }
+                        if ((formatMask & AFMT_S32_LE) != 0) {
+                            pDeviceInfo->formats[pDeviceInfo->formatCount++] = mal_format_s32;
+                        }
+
                         foundDevice = MAL_TRUE;
                         break;
                     }
@@ -11508,18 +12546,19 @@ mal_result mal_context_get_device_info__oss(mal_context* pContext, mal_device_ty
             }
         }
     } else {
-        close(fd);
+        close(fdTemp);
         return mal_context_post_error(pContext, NULL, "[OSS] Failed to retrieve system information for device enumeration.", MAL_NO_BACKEND);
     }
 
 
-    close(fd);
+    close(fdTemp);
 
-    if (foundDevice) {
-        return MAL_SUCCESS;
-    } else {
+    if (!foundDevice) {
         return MAL_NO_DEVICE;
     }
+
+
+    return MAL_SUCCESS;
 }
 
 mal_result mal_context_init__oss(mal_context* pContext)
@@ -11575,15 +12614,8 @@ mal_result mal_device_init__oss(mal_context* pContext, mal_device_type type, mal
     mal_assert(pDevice != NULL);
     mal_zero_object(&pDevice->oss);
 
-    char deviceName[64];
-    if (pDeviceID != NULL) {
-        mal_strncpy_s(deviceName, sizeof(deviceName), pDeviceID->oss, (size_t)-1);
-    } else {
-        mal_strncpy_s(deviceName, sizeof(deviceName), "/dev/dsp", (size_t)-1);
-    }
-
-    pDevice->oss.fd = open(deviceName, (type == mal_device_type_playback) ? O_WRONLY : O_RDONLY, 0);
-    if (pDevice->oss.fd == -1) {
+    mal_result result = mal_context_open_device__oss(pContext, type, pDeviceID, &pDevice->oss.fd);
+    if (result != MAL_SUCCESS) {
         return mal_post_error(pDevice, "[OSS] Failed to open device.", MAL_FAILED_TO_OPEN_BACKEND_DEVICE);
     }
 
@@ -11602,8 +12634,8 @@ mal_result mal_device_init__oss(mal_context* pContext, mal_device_type type, mal
         case mal_format_u8:
         default: ossFormat = AFMT_U8; break;
     }
-    int result = ioctl(pDevice->oss.fd, SNDCTL_DSP_SETFMT, &ossFormat);
-    if (result == -1) {
+    int ossResult = ioctl(pDevice->oss.fd, SNDCTL_DSP_SETFMT, &ossFormat);
+    if (ossResult == -1) {
         close(pDevice->oss.fd);
         return mal_post_error(pDevice, "[OSS] Failed to set format.", MAL_FORMAT_NOT_SUPPORTED);
     }
@@ -11618,8 +12650,8 @@ mal_result mal_device_init__oss(mal_context* pContext, mal_device_type type, mal
 
     // Channels.
     int ossChannels = (int)pConfig->channels;
-    result = ioctl(pDevice->oss.fd, SNDCTL_DSP_CHANNELS, &ossChannels);
-    if (result == -1) {
+    ossResult = ioctl(pDevice->oss.fd, SNDCTL_DSP_CHANNELS, &ossChannels);
+    if (ossResult == -1) {
         close(pDevice->oss.fd);
         return mal_post_error(pDevice, "[OSS] Failed to set channel count.", MAL_FORMAT_NOT_SUPPORTED);
     }
@@ -11629,8 +12661,8 @@ mal_result mal_device_init__oss(mal_context* pContext, mal_device_type type, mal
 
     // Sample rate.
     int ossSampleRate = (int)pConfig->sampleRate;
-    result = ioctl(pDevice->oss.fd, SNDCTL_DSP_SPEED, &ossSampleRate);
-    if (result == -1) {
+    ossResult = ioctl(pDevice->oss.fd, SNDCTL_DSP_SPEED, &ossSampleRate);
+    if (ossResult == -1) {
         close(pDevice->oss.fd);
         return mal_post_error(pDevice, "[OSS] Failed to set sample rate.", MAL_FORMAT_NOT_SUPPORTED);
     }
@@ -11638,6 +12670,24 @@ mal_result mal_device_init__oss(mal_context* pContext, mal_device_type type, mal
     pDevice->internalSampleRate = ossSampleRate;
 
 
+    // Try calculating an appropriate default buffer size.
+    if (pDevice->usingDefaultBufferSize) {
+        // CPU speed is a factor to consider when determine how large of a buffer we need.
+        float fCPUSpeed = mal_calculate_cpu_speed_factor();
+
+        // In my testing, capture seems to have worse latency than playback for some reason.
+        float fType;
+        if (type == mal_device_type_playback) {
+            fType = 1.0f;
+        } else {
+            fType = 2.0f;
+        }
+
+        // Backend tax. Need to fiddle with this.
+        float fBackend = 1.0;
+
+        pDevice->bufferSizeInFrames = mal_calculate_default_buffer_size_in_frames(pConfig->performanceProfile, pConfig->sampleRate, fCPUSpeed*fType*fBackend);
+    }
 
     // The documentation says that the fragment settings should be set as soon as possible, but I'm not sure if
     // it should be done before or after format/channels/rate.
@@ -11656,8 +12706,8 @@ mal_result mal_device_init__oss(mal_context* pContext, mal_device_type type, mal
     }
 
     int ossFragment = (int)((pDevice->periods << 16) | ossFragmentSizePower);
-    result = ioctl(pDevice->oss.fd, SNDCTL_DSP_SETFRAGMENT, &ossFragment);
-    if (result == -1) {
+    ossResult = ioctl(pDevice->oss.fd, SNDCTL_DSP_SETFRAGMENT, &ossFragment);
+    if (ossResult == -1) {
         close(pDevice->oss.fd);
         return mal_post_error(pDevice, "[OSS] Failed to set fragment size and period count.", MAL_FORMAT_NOT_SUPPORTED);
     }
@@ -12087,6 +13137,8 @@ mal_result mal_context_get_device_info__opensl(mal_context* pContext, mal_device
 
         mal_strncpy_s(pDeviceInfo->name, sizeof(pDeviceInfo->name), (const char*)desc.deviceName, (size_t)-1);
     }
+
+    goto return_detailed_info;
 #else
     goto return_default_device;
 #endif
@@ -12105,6 +13157,26 @@ return_default_device:
     } else {
         mal_strncpy_s(pDeviceInfo->name, sizeof(pDeviceInfo->name), MAL_DEFAULT_CAPTURE_DEVICE_NAME, (size_t)-1);
     }
+
+    goto return_detailed_info;
+
+
+return_detailed_info:
+
+    // For now we're just outputting a set of values that are supported by the API but not necessarily supported
+    // by the device natively. Later on we should work on this so that it more closely reflects the device's
+    // actual native format.
+    pDeviceInfo->minChannels = 1;
+    pDeviceInfo->maxChannels = 2;
+    pDeviceInfo->minSampleRate = 8000;
+    pDeviceInfo->maxSampleRate = 48000;
+    pDeviceInfo->formatCount = 2;
+    pDeviceInfo->formats[0] = mal_format_u8;
+    pDeviceInfo->formats[1] = mal_format_s16;
+#if defined(MAL_ANDROID) && __ANDROID_API__ >= 21
+    pDeviceInfo->formats[pDeviceInfo->formatCount] = mal_format_f32;
+    pDeviceInfo->formatCount += 1;
+#endif
 
     return MAL_SUCCESS;
 }
@@ -12240,6 +13312,25 @@ mal_result mal_device_init__opensl(mal_context* pContext, mal_device_type type, 
     // Now we can start initializing the device properly.
     mal_assert(pDevice != NULL);
     mal_zero_object(&pDevice->opensl);
+
+    // Try calculating an appropriate default buffer size.
+    if (pDevice->usingDefaultBufferSize) {
+        // CPU speed is a factor to consider when determine how large of a buffer we need.
+        float fCPUSpeed = mal_calculate_cpu_speed_factor();
+
+        // In my testing, capture seems to have worse latency than playback for some reason.
+        float fType;
+        if (type == mal_device_type_playback) {
+            fType = 1.0f;
+        } else {
+            fType = 2.0f;
+        }
+
+        // Backend tax. Need to fiddle with this.
+        float fBackend = 1.5f;
+
+        pDevice->bufferSizeInFrames = mal_calculate_default_buffer_size_in_frames(pConfig->performanceProfile, pConfig->sampleRate, fCPUSpeed*fType*fBackend);
+    }
 
     pDevice->opensl.currentBufferIndex = 0;
     pDevice->opensl.periodSizeInFrames = pDevice->bufferSizeInFrames / pConfig->periods;
@@ -12865,12 +13956,28 @@ mal_result mal_context_get_device_info__openal(mal_context* pContext, mal_device
             return result;
         }
 
-        if (data.foundDevice) {
-            return MAL_SUCCESS;
-        } else {
+        if (!data.foundDevice) {
             return MAL_NO_DEVICE;
         }
     }
+
+    // mini_al's OpenAL backend only supports:
+    //   - mono and stereo
+    //   - u8, s16 and f32
+    //   - All standard sample rates
+    pDeviceInfo->minChannels = 1;
+    pDeviceInfo->maxChannels = 2;
+    pDeviceInfo->minSampleRate = MAL_MIN_SAMPLE_RATE;
+    pDeviceInfo->maxSampleRate = MAL_MAX_SAMPLE_RATE;
+    pDeviceInfo->formatCount = 2;
+    pDeviceInfo->formats[0] = mal_format_u8;
+    pDeviceInfo->formats[1] = mal_format_s16;
+    if (pContext->openal.isFloat32Supported) {
+        pDeviceInfo->formats[pDeviceInfo->formatCount] = mal_format_f32;
+        pDeviceInfo->formatCount += 1;
+    }
+
+    return MAL_SUCCESS;
 }
 
 mal_result mal_context_init__openal(mal_context* pContext)
@@ -13120,9 +14227,23 @@ mal_result mal_device_init__openal(mal_context* pContext, mal_device_type type, 
         pDevice->periods = MAL_MAX_PERIODS_OPENAL;
     }
 
-    // OpenAL has bad latency in my testing :(
+    // Try calculating an appropriate default buffer size.
     if (pDevice->usingDefaultBufferSize) {
-        pDevice->bufferSizeInFrames *= 4;
+        // CPU speed is a factor to consider when determine how large of a buffer we need.
+        float fCPUSpeed = mal_calculate_cpu_speed_factor();
+
+        // In my testing, capture seems to have worse latency than playback for some reason.
+        float fType;
+        if (type == mal_device_type_playback) {
+            fType = 1.0f;
+        } else {
+            fType = 2.0f;
+        }
+
+        // Backend tax. Need to fiddle with this. OpenAL has bad latency in my testing :(
+        float fBackend = 8.0;
+
+        pDevice->bufferSizeInFrames = mal_calculate_default_buffer_size_in_frames(pConfig->performanceProfile, pConfig->sampleRate, fCPUSpeed*fType*fBackend);
     }
 
     mal_ALCsizei bufferSizeInSamplesAL = pDevice->bufferSizeInFrames;
@@ -13647,7 +14768,7 @@ mal_result mal_context_enumerate_devices__sdl(mal_context* pContext, mal_enum_de
     } else
 #endif
     {
-        // SDL1 only uses default devices.
+        // SDL1 only uses default devices, and does not support capture.
         mal_bool32 cbResult = MAL_TRUE;
 
         // Playback.
@@ -13658,6 +14779,7 @@ mal_result mal_context_enumerate_devices__sdl(mal_context* pContext, mal_enum_de
             cbResult = callback(pContext, mal_device_type_playback, &deviceInfo, pUserData);
         }
 
+#if 0   // No capture with SDL1.
         // Capture.
         if (cbResult) {
             mal_device_info deviceInfo;
@@ -13665,6 +14787,7 @@ mal_result mal_context_enumerate_devices__sdl(mal_context* pContext, mal_enum_de
             mal_strncpy_s(deviceInfo.name, sizeof(deviceInfo.name), MAL_DEFAULT_CAPTURE_DEVICE_NAME, (size_t)-1);
             cbResult = callback(pContext, mal_device_type_capture, &deviceInfo, pUserData);
         }
+#endif
     }
 
     return MAL_SUCCESS;
@@ -13701,6 +14824,79 @@ mal_result mal_context_get_device_info__sdl(mal_context* pContext, mal_device_ty
             mal_strncpy_s(pDeviceInfo->name, sizeof(pDeviceInfo->name), MAL_DEFAULT_CAPTURE_DEVICE_NAME, (size_t)-1);
         }
     }
+
+    // To get an accurate idea on the backend's native format we need to open the device. Not ideal, but it's the only way. An
+    // alternative to this is to report all channel counts, sample rates and formats, but that doesn't offer a good representation
+    // of the device's _actual_ ideal format.
+    //
+    // Note: With Emscripten, it looks like non-zero values need to be specified for desiredSpec. Whatever is specified in
+    // desiredSpec will be used by SDL since it uses it just does it's own format conversion internally. Therefore, from what
+    // I can tell, there's no real way to know the device's actual format which means I'm just going to fall back to the full
+    // range of channels and sample rates on Emscripten builds.
+#if defined(__EMSCRIPTEN__)
+    pDeviceInfo->minChannels = MAL_MIN_CHANNELS;
+    pDeviceInfo->maxChannels = MAL_MAX_CHANNELS;
+    pDeviceInfo->minSampleRate = MAL_MIN_SAMPLE_RATE;
+    pDeviceInfo->maxSampleRate = MAL_MAX_SAMPLE_RATE;
+    pDeviceInfo->formatCount = 3;
+    pDeviceInfo->formats[0] = mal_format_u8;
+    pDeviceInfo->formats[1] = mal_format_s16;
+    pDeviceInfo->formats[2] = mal_format_s32;
+#else
+    MAL_SDL_AudioSpec desiredSpec, obtainedSpec;
+    mal_zero_memory(&desiredSpec, sizeof(desiredSpec));
+
+#ifndef MAL_USE_SDL_1
+    if (!pContext->sdl.usingSDL1) {
+        int isCapture = (deviceType == mal_device_type_playback) ? 0 : 1;
+
+        const char* pDeviceName = NULL;
+        if (pDeviceID != NULL) {
+            pDeviceName = ((MAL_PFN_SDL_GetAudioDeviceName)pContext->sdl.SDL_GetAudioDeviceName)(pDeviceID->sdl, isCapture);
+        }
+
+        MAL_SDL_AudioDeviceID tempDeviceID = ((MAL_PFN_SDL_OpenAudioDevice)pContext->sdl.SDL_OpenAudioDevice)(pDeviceName, isCapture, &desiredSpec, &obtainedSpec, MAL_SDL_AUDIO_ALLOW_ANY_CHANGE);
+        if (tempDeviceID == 0) {
+            return mal_context_post_error(pContext, NULL, "Failed to open SDL device.", MAL_FAILED_TO_OPEN_BACKEND_DEVICE);
+        }
+
+        ((MAL_PFN_SDL_CloseAudioDevice)pContext->sdl.SDL_CloseAudioDevice)(tempDeviceID);
+    } else
+#endif
+    {
+        // SDL1 uses default devices.
+        (void)pDeviceID;
+
+        // SDL1 only supports playback as far as I can tell.
+        if (deviceType != mal_device_type_playback) {
+            return MAL_NO_DEVICE;
+        }
+
+        MAL_SDL_AudioDeviceID tempDeviceID = ((MAL_PFN_SDL_OpenAudio)pContext->sdl.SDL_OpenAudio)(&desiredSpec, &obtainedSpec);
+        if (tempDeviceID != 0) {
+            return mal_context_post_error(pContext, NULL, "Failed to open SDL device.", MAL_FAILED_TO_OPEN_BACKEND_DEVICE);
+        }
+
+        ((MAL_PFN_SDL_CloseAudio)pContext->sdl.SDL_CloseAudio)();
+    }
+
+    pDeviceInfo->minChannels = obtainedSpec.channels;
+    pDeviceInfo->maxChannels = obtainedSpec.channels;
+    pDeviceInfo->minSampleRate = obtainedSpec.freq;
+    pDeviceInfo->maxSampleRate = obtainedSpec.freq;
+    pDeviceInfo->formatCount = 1;
+    if (obtainedSpec.format == MAL_AUDIO_U8) {
+        pDeviceInfo->formats[0] = mal_format_u8;
+    } else if (obtainedSpec.format == MAL_AUDIO_S16) {
+        pDeviceInfo->formats[0] = mal_format_s16;
+    } else if (obtainedSpec.format == MAL_AUDIO_S32) {
+        pDeviceInfo->formats[0] = mal_format_s32;
+    } else if (obtainedSpec.format == MAL_AUDIO_F32) {
+        pDeviceInfo->formats[0] = mal_format_f32;
+    } else {
+        return MAL_FORMAT_NOT_SUPPORTED;
+    }
+#endif
 
     return MAL_SUCCESS;
 }
@@ -13834,6 +15030,28 @@ mal_result mal_device_init__sdl(mal_context* pContext, mal_device_type type, mal
     // SDL wants the buffer size to be a power of 2. The SDL_AudioSpec property for this is only a Uint16, so we need
     // to explicitly clamp this because it will be easy to overflow.
     mal_uint32 bufferSize = pConfig->bufferSizeInFrames;
+    if (pDevice->usingDefaultBufferSize) {
+        // CPU speed is a factor to consider when determine how large of a buffer we need.
+        float fCPUSpeed = mal_calculate_cpu_speed_factor();
+
+        // In my testing, capture seems to have worse latency than playback for some reason.
+        float fType;
+        if (type == mal_device_type_playback) {
+            fType = 1.0f;
+        } else {
+            fType = 2.0f;
+        }
+
+        // Backend tax. Need to fiddle with this. Special case for Emscripten.
+    #if defined(__EMSCRIPTEN__)
+        float fBackend = 4.0f;
+    #else
+        float fBackend = 2.0f;
+    #endif
+
+        bufferSize = mal_calculate_default_buffer_size_in_frames(pConfig->performanceProfile, pConfig->sampleRate, fCPUSpeed*fType*fBackend);
+    }
+
     if (bufferSize > 32768) {
         bufferSize = 32768;
     } else {
@@ -14250,6 +15468,7 @@ mal_result mal_context_uninit_backend_apis__win32(mal_context* pContext)
     mal_CoUninitialize(pContext);
     mal_dlclose(pContext->win32.hUser32DLL);
     mal_dlclose(pContext->win32.hOle32DLL);
+    mal_dlclose(pContext->win32.hAdvapi32DLL);
 
     return MAL_SUCCESS;
 }
@@ -14279,6 +15498,17 @@ mal_result mal_context_init_backend_apis__win32(mal_context* pContext)
 
     pContext->win32.GetForegroundWindow = (mal_proc)mal_dlsym(pContext->win32.hUser32DLL, "GetForegroundWindow");
     pContext->win32.GetDesktopWindow    = (mal_proc)mal_dlsym(pContext->win32.hUser32DLL, "GetDesktopWindow");
+
+
+    // Advapi32.dll
+    pContext->win32.hAdvapi32DLL = mal_dlopen("advapi32.dll");
+    if (pContext->win32.hAdvapi32DLL == NULL) {
+        return MAL_FAILED_TO_INIT_BACKEND;
+    }
+
+    pContext->win32.RegOpenKeyExA    = (mal_proc)mal_dlsym(pContext->win32.hAdvapi32DLL, "RegOpenKeyExA");
+    pContext->win32.RegCloseKey      = (mal_proc)mal_dlsym(pContext->win32.hAdvapi32DLL, "RegCloseKey");
+    pContext->win32.RegQueryValueExA = (mal_proc)mal_dlsym(pContext->win32.hAdvapi32DLL, "RegQueryValueExA");
 #endif
 
     mal_CoInitializeEx(pContext, NULL, 0);  // 0 = COINIT_MULTITHREADED
@@ -14345,9 +15575,11 @@ mal_result mal_context_init_backend_apis__nix(mal_context* pContext)
     pContext->posix.pthread_cond_signal         = (mal_proc)pthread_cond_signal;
     pContext->posix.pthread_attr_init           = (mal_proc)pthread_attr_init;
     pContext->posix.pthread_attr_destroy        = (mal_proc)pthread_attr_destroy;
+#if !defined(__EMSCRIPTEN__)
     pContext->posix.pthread_attr_setschedpolicy = (mal_proc)pthread_attr_setschedpolicy;
     pContext->posix.pthread_attr_getschedparam  = (mal_proc)pthread_attr_getschedparam;
     pContext->posix.pthread_attr_setschedparam  = (mal_proc)pthread_attr_setschedparam;
+#endif
 #endif
 
     return MAL_SUCCESS;
@@ -14421,15 +15653,17 @@ mal_result mal_context_init(const mal_backend backends[], mal_uint32 backendCoun
         return result;
     }
 
-    if (backends == NULL) {
-        backends = g_malDefaultBackends;
-        backendCount = mal_countof(g_malDefaultBackends);
+    mal_backend* pBackendsToIterate = (mal_backend*)backends;
+    mal_uint32 backendsToIterateCount = backendCount;
+    if (pBackendsToIterate == NULL) {
+        pBackendsToIterate = (mal_backend*)g_malDefaultBackends;
+        backendsToIterateCount = mal_countof(g_malDefaultBackends);
     }
 
-    mal_assert(backends != NULL);
+    mal_assert(pBackendsToIterate != NULL);
 
-    for (mal_uint32 iBackend = 0; iBackend < backendCount; ++iBackend) {
-        mal_backend backend = backends[iBackend];
+    for (mal_uint32 iBackend = 0; iBackend < backendsToIterateCount; ++iBackend) {
+        mal_backend backend = pBackendsToIterate[iBackend];
 
         result = MAL_NO_BACKEND;
         switch (backend) {
@@ -14740,6 +15974,12 @@ mal_result mal_context_get_device_info(mal_context* pContext, mal_device_type ty
         }
         mal_mutex_unlock(&pContext->deviceInfoLock);
 
+        // Clamp ranges.
+        deviceInfo.minChannels   = mal_max(deviceInfo.minChannels,   MAL_MIN_CHANNELS);
+        deviceInfo.maxChannels   = mal_min(deviceInfo.maxChannels,   MAL_MAX_CHANNELS);
+        deviceInfo.minSampleRate = mal_max(deviceInfo.minSampleRate, MAL_MIN_SAMPLE_RATE);
+        deviceInfo.maxSampleRate = mal_min(deviceInfo.maxSampleRate, MAL_MAX_SAMPLE_RATE);
+
         *pDeviceInfo = deviceInfo;
         return result;
     }
@@ -14814,7 +16054,7 @@ mal_result mal_device_init(mal_context* pContext, mal_device_type type, mal_devi
 
     // Default buffer size and periods.
     if (config.bufferSizeInFrames == 0) {
-        config.bufferSizeInFrames = (config.sampleRate/1000) * MAL_DEFAULT_BUFFER_SIZE_IN_MILLISECONDS;
+        config.bufferSizeInFrames = (config.sampleRate/1000) * MAL_BASE_BUFFER_SIZE_IN_MILLISECONDS_LOW_LATENCY;
         pDevice->usingDefaultBufferSize = MAL_TRUE;
     }
     if (config.periods == 0) {
@@ -15030,15 +16270,17 @@ mal_result mal_device_init_ex(const mal_backend backends[], mal_uint32 backendCo
         return MAL_OUT_OF_MEMORY;
     }
 
-    if (backends == NULL) {
-        backends = g_malDefaultBackends;
-        backendCount = mal_countof(g_malDefaultBackends);
+    mal_backend* pBackendsToIterate = (mal_backend*)backends;
+    mal_uint32 backendsToIterateCount = backendCount;
+    if (pBackendsToIterate == NULL) {
+        pBackendsToIterate = (mal_backend*)g_malDefaultBackends;
+        backendsToIterateCount = mal_countof(g_malDefaultBackends);
     }
 
     mal_result result = MAL_NO_BACKEND;
 
-    for (mal_uint32 iBackend = 0; iBackend < backendCount; ++iBackend) {
-        result = mal_context_init(&backends[iBackend], 1, pContextConfig, pContext);
+    for (mal_uint32 iBackend = 0; iBackend < backendsToIterateCount; ++iBackend) {
+        result = mal_context_init(&pBackendsToIterate[iBackend], 1, pContextConfig, pContext);
         if (result == MAL_SUCCESS) {
             result = mal_device_init(pContext, type, pDeviceID, pConfig, pUserData, pDevice);
             if (result == MAL_SUCCESS) {
@@ -15367,14 +16609,18 @@ mal_device_config mal_device_config_init_ex(mal_format format, mal_uint32 channe
     config.onRecvCallback = onRecvCallback;
     config.onSendCallback = onSendCallback;
 
-    if (channelMap == NULL) {
-        if (channels > 8) {
-            mal_zero_memory(channelMap, sizeof(mal_channel)*MAL_MAX_CHANNELS);
+    if (channels > 0) {
+        if (channelMap == NULL) {
+            if (channels > 8) {
+                mal_zero_memory(config.channelMap, sizeof(mal_channel)*MAL_MAX_CHANNELS);
+            } else {
+                mal_get_standard_channel_map(mal_standard_channel_map_default, channels, config.channelMap);
+            }
         } else {
-            mal_get_standard_channel_map(mal_standard_channel_map_default, channels, config.channelMap);
+            mal_copy_memory(config.channelMap, channelMap, sizeof(config.channelMap));
         }
     } else {
-        mal_copy_memory(config.channelMap, channelMap, sizeof(config.channelMap));
+        mal_zero_memory(config.channelMap, sizeof(mal_channel)*MAL_MAX_CHANNELS);
     }
 
     return config;
@@ -15812,7 +17058,7 @@ void mal_get_standard_channel_map(mal_standard_channel_map standardChannelMap, m
     }
 }
 
-void mal_channel_map_copy(mal_channel* pOut, mal_channel* pIn, mal_uint32 channels)
+void mal_channel_map_copy(mal_channel* pOut, const mal_channel* pIn, mal_uint32 channels)
 {
     if (pOut != NULL && pIn != NULL && channels > 0) {
         mal_copy_memory(pOut, pIn, sizeof(*pOut) * channels);
@@ -16195,17 +17441,34 @@ void mal_pcm_deinterleave_u8(void** dst, const void* src, mal_uint64 frameCount,
 // s16
 void mal_pcm_s16_to_u8__reference(void* dst, const void* src, mal_uint64 count, mal_dither_mode ditherMode)
 {
-    (void)ditherMode;
-
     mal_uint8* dst_u8 = (mal_uint8*)dst;
     const mal_int16* src_s16 = (const mal_int16*)src;
 
-    mal_uint64 i;
-    for (i = 0; i < count; i += 1) {
-        mal_int16 x = src_s16[i];
-        x = x >> 8;
-        x = x + 128;
-        dst_u8[i] = (mal_uint8)x;
+    if (ditherMode == mal_dither_mode_none) {
+        mal_uint64 i;
+        for (i = 0; i < count; i += 1) {
+            mal_int16 x = src_s16[i];
+            x = x >> 8;
+            x = x + 128;
+            dst_u8[i] = (mal_uint8)x;
+        }
+    } else {
+        mal_uint64 i;
+        for (i = 0; i < count; i += 1) {
+            mal_int16 x = src_s16[i];
+
+            // Dither. Don't overflow.
+            mal_int32 dither = mal_dither_s32(ditherMode, -0x80, 0x7F);
+            if ((x + dither) <= 0x7FFF) {
+                x = (mal_int16)(x + dither);
+            } else {
+                x = 0x7FFF;
+            }
+
+            x = x >> 8;
+            x = x + 128;
+            dst_u8[i] = (mal_uint8)x;
+        }
     }
 }
 
@@ -16434,15 +17697,32 @@ void mal_pcm_deinterleave_s16(void** dst, const void* src, mal_uint64 frameCount
 // s24
 void mal_pcm_s24_to_u8__reference(void* dst, const void* src, mal_uint64 count, mal_dither_mode ditherMode)
 {
-    (void)ditherMode;
-
     mal_uint8* dst_u8 = (mal_uint8*)dst;
     const mal_uint8* src_s24 = (const mal_uint8*)src;
 
-    mal_uint64 i;
-    for (i = 0; i < count; i += 1) {
-        mal_int8 x = (mal_int8)src_s24[i*3 + 2] + 128;
-        dst_u8[i] = (mal_uint8)x;
+    if (ditherMode == mal_dither_mode_none) {
+        mal_uint64 i;
+        for (i = 0; i < count; i += 1) {
+            mal_int8 x = (mal_int8)src_s24[i*3 + 2] + 128;
+            dst_u8[i] = (mal_uint8)x;
+        }
+    } else {
+        mal_uint64 i;
+        for (i = 0; i < count; i += 1) {
+            mal_int32 x = (mal_int32)(((mal_uint32)(src_s24[i*3+0]) << 8) | ((mal_uint32)(src_s24[i*3+1]) << 16) | ((mal_uint32)(src_s24[i*3+2])) << 24);
+
+            // Dither. Don't overflow.
+            mal_int32 dither = mal_dither_s32(ditherMode, -0x800000, 0x7FFFFF);
+            if ((mal_int64)x + dither <= 0x7FFFFFFF) {
+                x = x + dither;
+            } else {
+                x = 0x7FFFFFFF;
+            }
+            
+            x = x >> 24;
+            x = x + 128;
+            dst_u8[i] = (mal_uint8)x;
+        }
     }
 }
 
@@ -16474,16 +17754,32 @@ void mal_pcm_s24_to_u8(void* dst, const void* src, mal_uint64 count, mal_dither_
 
 void mal_pcm_s24_to_s16__reference(void* dst, const void* src, mal_uint64 count, mal_dither_mode ditherMode)
 {
-    (void)ditherMode;
-
     mal_int16* dst_s16 = (mal_int16*)dst;
     const mal_uint8* src_s24 = (const mal_uint8*)src;
 
-    mal_uint64 i;
-    for (i = 0; i < count; i += 1) {
-        mal_uint16 dst_lo = ((mal_uint16)src_s24[i*3 + 1]);
-        mal_uint16 dst_hi = ((mal_uint16)src_s24[i*3 + 2]) << 8;
-        dst_s16[i] = (mal_int16)dst_lo | dst_hi;
+    if (ditherMode == mal_dither_mode_none) {
+        mal_uint64 i;
+        for (i = 0; i < count; i += 1) {
+            mal_uint16 dst_lo = ((mal_uint16)src_s24[i*3 + 1]);
+            mal_uint16 dst_hi = ((mal_uint16)src_s24[i*3 + 2]) << 8;
+            dst_s16[i] = (mal_int16)dst_lo | dst_hi;
+        }
+    } else {
+        mal_uint64 i;
+        for (i = 0; i < count; i += 1) {
+            mal_int32 x = (mal_int32)(((mal_uint32)(src_s24[i*3+0]) << 8) | ((mal_uint32)(src_s24[i*3+1]) << 16) | ((mal_uint32)(src_s24[i*3+2])) << 24);
+
+            // Dither. Don't overflow.
+            mal_int32 dither = mal_dither_s32(ditherMode, -0x8000, 0x7FFF);
+            if ((mal_int64)x + dither <= 0x7FFFFFFF) {
+                x = x + dither;
+            } else {
+                x = 0x7FFFFFFF;
+            }
+
+            x = x >> 16;
+            dst_s16[i] = (mal_int16)x;
+        }
     }
 }
 
@@ -16677,17 +17973,34 @@ void mal_pcm_deinterleave_s24(void** dst, const void* src, mal_uint64 frameCount
 // s32
 void mal_pcm_s32_to_u8__reference(void* dst, const void* src, mal_uint64 count, mal_dither_mode ditherMode)
 {
-    (void)ditherMode;
-
     mal_uint8* dst_u8 = (mal_uint8*)dst;
     const mal_int32* src_s32 = (const mal_int32*)src;
 
-    mal_uint64 i;
-    for (i = 0; i < count; i += 1) {
-        mal_int32 x = src_s32[i];
-        x = x >> 24;
-        x = x + 128;
-        dst_u8[i] = (mal_uint8)x;
+    if (ditherMode == mal_dither_mode_none) {
+        mal_uint64 i;
+        for (i = 0; i < count; i += 1) {
+            mal_int32 x = src_s32[i];
+            x = x >> 24;
+            x = x + 128;
+            dst_u8[i] = (mal_uint8)x;
+        }
+    } else {
+        mal_uint64 i;
+        for (i = 0; i < count; i += 1) {
+            mal_int32 x = src_s32[i];
+
+            // Dither. Don't overflow.
+            mal_int32 dither = mal_dither_s32(ditherMode, -0x800000, 0x7FFFFF);
+            if ((mal_int64)x + dither <= 0x7FFFFFFF) {
+                x = x + dither;
+            } else {
+                x = 0x7FFFFFFF;
+            }
+            
+            x = x >> 24;
+            x = x + 128;
+            dst_u8[i] = (mal_uint8)x;
+        }
     }
 }
 
@@ -16719,16 +18032,32 @@ void mal_pcm_s32_to_u8(void* dst, const void* src, mal_uint64 count, mal_dither_
 
 void mal_pcm_s32_to_s16__reference(void* dst, const void* src, mal_uint64 count, mal_dither_mode ditherMode)
 {
-    (void)ditherMode;
-
     mal_int16* dst_s16 = (mal_int16*)dst;
     const mal_int32* src_s32 = (const mal_int32*)src;
 
-    mal_uint64 i;
-    for (i = 0; i < count; i += 1) {
-        mal_int32 x = src_s32[i];
-        x = x >> 16;
-        dst_s16[i] = (mal_int16)x;
+    if (ditherMode == mal_dither_mode_none) {
+        mal_uint64 i;
+        for (i = 0; i < count; i += 1) {
+            mal_int32 x = src_s32[i];
+            x = x >> 16;
+            dst_s16[i] = (mal_int16)x;
+        }
+    } else {
+        mal_uint64 i;
+        for (i = 0; i < count; i += 1) {
+            mal_int32 x = src_s32[i];
+
+            // Dither. Don't overflow.
+            mal_int32 dither = mal_dither_s32(ditherMode, -0x8000, 0x7FFF);
+            if ((mal_int64)x + dither <= 0x7FFFFFFF) {
+                x = x + dither;
+            } else {
+                x = 0x7FFFFFFF;
+            }
+            
+            x = x >> 16;
+            dst_s16[i] = (mal_int16)x;
+        }
     }
 }
 
@@ -16760,7 +18089,7 @@ void mal_pcm_s32_to_s16(void* dst, const void* src, mal_uint64 count, mal_dither
 
 void mal_pcm_s32_to_s24__reference(void* dst, const void* src, mal_uint64 count, mal_dither_mode ditherMode)
 {
-    (void)ditherMode;
+    (void)ditherMode;   // No dithering for s32 -> s24.
 
     mal_uint8* dst_s24 = (mal_uint8*)dst;
     const mal_int32* src_s32 = (const mal_int32*)src;
@@ -16810,7 +18139,7 @@ void mal_pcm_s32_to_s32(void* dst, const void* src, mal_uint64 count, mal_dither
 
 void mal_pcm_s32_to_f32__reference(void* dst, const void* src, mal_uint64 count, mal_dither_mode ditherMode)
 {
-    (void)ditherMode;
+    (void)ditherMode;   // No dithering for s32 -> f32.
 
     float* dst_f32 = (float*)dst;
     const mal_int32* src_s32 = (const mal_int32*)src;
@@ -16918,14 +18247,20 @@ void mal_pcm_deinterleave_s32(void** dst, const void* src, mal_uint64 frameCount
 // f32
 void mal_pcm_f32_to_u8__reference(void* dst, const void* src, mal_uint64 count, mal_dither_mode ditherMode)
 {
-    (void)ditherMode;
-
     mal_uint8* dst_u8 = (mal_uint8*)dst;
     const float* src_f32 = (const float*)src;
+
+    float ditherMin = 0;
+    float ditherMax = 0;
+    if (ditherMode != mal_dither_mode_none) {
+        ditherMin = 1.0f / -128;
+        ditherMax = 1.0f /  127;
+    }
 
     mal_uint64 i;
     for (i = 0; i < count; i += 1) {
         float x = src_f32[i];
+        x = x + mal_dither_f32(ditherMode, ditherMin, ditherMax);
         x = ((x < -1) ? -1 : ((x > 1) ? 1 : x));    // clip
         x = x + 1;                                  // -1..1 to 0..2
         x = x * 127.5f;                             // 0..2 to 0..255
@@ -16962,14 +18297,20 @@ void mal_pcm_f32_to_u8(void* dst, const void* src, mal_uint64 count, mal_dither_
 
 void mal_pcm_f32_to_s16__reference(void* dst, const void* src, mal_uint64 count, mal_dither_mode ditherMode)
 {
-    (void)ditherMode;
-
     mal_int16* dst_s16 = (mal_int16*)dst;
     const float* src_f32 = (const float*)src;
+
+    float ditherMin = 0;
+    float ditherMax = 0;
+    if (ditherMode != mal_dither_mode_none) {
+        ditherMin = 1.0f / -32768;
+        ditherMax = 1.0f /  32767;
+    }
 
     mal_uint64 i;
     for (i = 0; i < count; i += 1) {
         float x = src_f32[i];
+        x = x + mal_dither_f32(ditherMode, ditherMin, ditherMax);
         x = ((x < -1) ? -1 : ((x > 1) ? 1 : x));    // clip
 
 #if 0
@@ -17014,7 +18355,7 @@ void mal_pcm_f32_to_s16(void* dst, const void* src, mal_uint64 count, mal_dither
 
 void mal_pcm_f32_to_s24__reference(void* dst, const void* src, mal_uint64 count, mal_dither_mode ditherMode)
 {
-    (void)ditherMode;
+    (void)ditherMode;   // No dithering for f32 -> s24.
 
     mal_uint8* dst_s24 = (mal_uint8*)dst;
     const float* src_f32 = (const float*)src;
@@ -17069,7 +18410,7 @@ void mal_pcm_f32_to_s24(void* dst, const void* src, mal_uint64 count, mal_dither
 
 void mal_pcm_f32_to_s32__reference(void* dst, const void* src, mal_uint64 count, mal_dither_mode ditherMode)
 {
-    (void)ditherMode;
+    (void)ditherMode;   // No dithering for f32 -> s32.
 
     mal_int32* dst_s32 = (mal_int32*)dst;
     const float* src_f32 = (const float*)src;
@@ -17563,6 +18904,36 @@ mal_uint64 mal_format_converter_read_deinterleaved(mal_format_converter* pConver
 }
 
 
+mal_format_converter_config mal_format_converter_config_init_new()
+{
+    mal_format_converter_config config;
+    mal_zero_object(&config);
+
+    return config;
+}
+
+mal_format_converter_config mal_format_converter_config_init(mal_format formatIn, mal_format formatOut, mal_uint32 channels, mal_format_converter_read_proc onRead, void* pUserData)
+{
+    mal_format_converter_config config = mal_format_converter_config_init_new();
+    config.formatIn = formatIn;
+    config.formatOut = formatOut;
+    config.channels = channels;
+    config.onRead = onRead;
+    config.onReadDeinterleaved = NULL;
+    config.pUserData = pUserData;
+
+    return config;
+}
+
+mal_format_converter_config mal_format_converter_config_init_deinterleaved(mal_format formatIn, mal_format formatOut, mal_uint32 channels, mal_format_converter_read_deinterleaved_proc onReadDeinterleaved, void* pUserData)
+{
+    mal_format_converter_config config = mal_format_converter_config_init(formatIn, formatOut, channels, NULL, pUserData);
+    config.onReadDeinterleaved = onReadDeinterleaved;
+
+    return config;
+}
+
+
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 //
@@ -18037,7 +19408,21 @@ void mal_channel_router__do_routing(mal_channel_router* pRouter, mal_uint64 fram
         for (mal_uint32 iChannelIn = 0; iChannelIn < pRouter->config.channelsIn; ++iChannelIn) {
             for (mal_uint32 iChannelOut = 0; iChannelOut < pRouter->config.channelsOut; ++iChannelOut) {
                 mal_uint64 iFrame = 0;
+#if defined(MAL_SUPPORT_NEON)
+                if (mal_channel_router__can_use_neon(pRouter, ppSamplesOut[iChannelOut], ppSamplesIn[iChannelIn])) {
+                    float32x4_t weight = vmovq_n_f32(pRouter->weights[iChannelIn][iChannelOut]);
 
+                    mal_uint64 frameCount4 = frameCount/4;
+                    for (mal_uint64 iFrame4 = 0; iFrame4 < frameCount4; iFrame4 += 1) {
+                        float32x4_t* pO = (float32x4_t*)ppSamplesOut[iChannelOut] + iFrame4;
+                        float32x4_t* pI = (float32x4_t*)ppSamplesIn [iChannelIn ] + iFrame4;
+                        *pO = vaddq_f32(*pO, vmulq_f32(*pI, weight));
+                    }
+
+                    iFrame += frameCount4*4;
+                }
+                else
+#endif
 #if defined(MAL_SUPPORT_AVX512)
                 if (mal_channel_router__can_use_avx512(pRouter, ppSamplesOut[iChannelOut], ppSamplesIn[iChannelIn])) {
                     __m512 weight = _mm512_set1_ps(pRouter->weights[iChannelIn][iChannelOut]);
@@ -18219,6 +19604,21 @@ mal_channel_router_config mal_channel_router_config_init(mal_uint32 channelsIn, 
 //
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
+#define mal_floorf(x) ((float)floor((double)(x)))
+#define mal_sinf(x)   ((float)sin((double)(x)))
+#define mal_cosf(x)   ((float)cos((double)(x)))
+
+static MAL_INLINE double mal_sinc(double x)
+{
+    if (x != 0) {
+        return sin(MAL_PI_D*x) / (MAL_PI_D*x);
+    } else {
+        return 1;
+    }
+}
+
+#define mal_sincf(x) ((float)mal_sinc((double)(x)))
+
 mal_uint64 mal_calculate_frame_count_after_src(mal_uint32 sampleRateOut, mal_uint32 sampleRateIn, mal_uint64 frameCountIn)
 {
     double srcRatio = (double)sampleRateOut / sampleRateIn;
@@ -18235,8 +19635,40 @@ mal_uint64 mal_calculate_frame_count_after_src(mal_uint32 sampleRateOut, mal_uin
 }
 
 
-mal_uint64 mal_src_read_deinterleaved__passthrough(mal_src* pSRC, mal_uint64 frameCount, void** ppSamplesOut, mal_bool32 flush, void* pUserData);
-mal_uint64 mal_src_read_deinterleaved__linear(mal_src* pSRC, mal_uint64 frameCount, void** ppSamplesOut, mal_bool32 flush, void* pUserData);
+mal_uint64 mal_src_read_deinterleaved__passthrough(mal_src* pSRC, mal_uint64 frameCount, void** ppSamplesOut, void* pUserData);
+mal_uint64 mal_src_read_deinterleaved__linear(mal_src* pSRC, mal_uint64 frameCount, void** ppSamplesOut, void* pUserData);
+mal_uint64 mal_src_read_deinterleaved__sinc(mal_src* pSRC, mal_uint64 frameCount, void** ppSamplesOut, void* pUserData);
+
+void mal_src__build_sinc_table__sinc(mal_src* pSRC)
+{
+    mal_assert(pSRC != NULL);
+
+    pSRC->sinc.table[0] = 1.0f;
+    for (int i = 1; i < mal_countof(pSRC->sinc.table); i += 1) {
+        double x = i*MAL_PI_D / MAL_SRC_SINC_LOOKUP_TABLE_RESOLUTION;
+        pSRC->sinc.table[i] = (float)(sin(x)/x);
+    }
+}
+
+void mal_src__build_sinc_table__rectangular(mal_src* pSRC)
+{
+    // This is the same as the base sinc table.
+    mal_src__build_sinc_table__sinc(pSRC);
+}
+
+void mal_src__build_sinc_table__hann(mal_src* pSRC)
+{
+    mal_src__build_sinc_table__sinc(pSRC);
+
+    for (int i = 0; i < mal_countof(pSRC->sinc.table); i += 1) {
+        double x = pSRC->sinc.table[i];
+        double N = MAL_SRC_SINC_MAX_WINDOW_WIDTH*2;
+        double n = ((double)(i) / MAL_SRC_SINC_LOOKUP_TABLE_RESOLUTION) + MAL_SRC_SINC_MAX_WINDOW_WIDTH;
+        double w = 0.5 * (1 - cos((2*MAL_PI_D*n) / (N)));
+
+        pSRC->sinc.table[i] = (float)(x * w);
+    }
+}
 
 mal_result mal_src_init(const mal_src_config* pConfig, mal_src* pSRC)
 {
@@ -18254,6 +19686,26 @@ mal_result mal_src_init(const mal_src_config* pConfig, mal_src* pSRC)
     }
 
     pSRC->config = *pConfig;
+
+    if (pSRC->config.algorithm == mal_src_algorithm_sinc) {
+        // Make sure the window width within bounds.
+        if (pSRC->config.sinc.windowWidth == 0) {
+            pSRC->config.sinc.windowWidth = MAL_SRC_SINC_DEFAULT_WINDOW_WIDTH;
+        }
+        if (pSRC->config.sinc.windowWidth < MAL_SRC_SINC_MIN_WINDOW_WIDTH) {
+            pSRC->config.sinc.windowWidth = MAL_SRC_SINC_MIN_WINDOW_WIDTH;
+        }
+        if (pSRC->config.sinc.windowWidth > MAL_SRC_SINC_MAX_WINDOW_WIDTH) {
+            pSRC->config.sinc.windowWidth = MAL_SRC_SINC_MAX_WINDOW_WIDTH;
+        }
+
+        // Set up the lookup table.
+        switch (pSRC->config.sinc.windowFunction) {
+            case mal_src_sinc_window_function_hann:        mal_src__build_sinc_table__hann(pSRC);        break;
+            case mal_src_sinc_window_function_rectangular: mal_src__build_sinc_table__rectangular(pSRC); break;
+            default: return MAL_INVALID_ARGS;   // <-- Hitting this means the window function is unknown to mini_al.
+        }
+    }
 
     return MAL_SUCCESS;
 }
@@ -18290,24 +19742,20 @@ mal_result mal_src_set_output_sample_rate(mal_src* pSRC, mal_uint32 sampleRateOu
 
 mal_uint64 mal_src_read_deinterleaved(mal_src* pSRC, mal_uint64 frameCount, void** ppSamplesOut, void* pUserData)
 {
-    return mal_src_read_deinterleaved_ex(pSRC, frameCount, ppSamplesOut, MAL_FALSE, pUserData);
-}
-
-mal_uint64 mal_src_read_deinterleaved_ex(mal_src* pSRC, mal_uint64 frameCount, void** ppSamplesOut, mal_bool32 flush, void* pUserData)
-{
     if (pSRC == NULL || frameCount == 0 || ppSamplesOut == NULL) {
         return 0;
     }
 
     mal_src_algorithm algorithm = pSRC->config.algorithm;
     if (pSRC->config.sampleRateIn == pSRC->config.sampleRateOut) {
-        algorithm = mal_src_algorithm_none;
+        //algorithm = mal_src_algorithm_none;
     }
 
     // Can use a function pointer for this.
     switch (algorithm) {
-        case mal_src_algorithm_none:   return mal_src_read_deinterleaved__passthrough(pSRC, frameCount, ppSamplesOut, flush, pUserData);
-        case mal_src_algorithm_linear: return mal_src_read_deinterleaved__linear(     pSRC, frameCount, ppSamplesOut, flush, pUserData);
+        case mal_src_algorithm_none:   return mal_src_read_deinterleaved__passthrough(pSRC, frameCount, ppSamplesOut, pUserData);
+        case mal_src_algorithm_linear: return mal_src_read_deinterleaved__linear(     pSRC, frameCount, ppSamplesOut, pUserData);
+        case mal_src_algorithm_sinc:   return mal_src_read_deinterleaved__sinc(       pSRC, frameCount, ppSamplesOut, pUserData);
         default: break;
     }
 
@@ -18315,10 +19763,8 @@ mal_uint64 mal_src_read_deinterleaved_ex(mal_src* pSRC, mal_uint64 frameCount, v
     return 0;
 }
 
-mal_uint64 mal_src_read_deinterleaved__passthrough(mal_src* pSRC, mal_uint64 frameCount, void** ppSamplesOut, mal_bool32 flush, void* pUserData)
+mal_uint64 mal_src_read_deinterleaved__passthrough(mal_src* pSRC, mal_uint64 frameCount, void** ppSamplesOut, void* pUserData)
 {
-    (void)flush;    // Passthrough need not care about flushing.
-
     if (frameCount <= 0xFFFFFFFF) {
         return pSRC->config.onReadDeinterleaved(pSRC, (mal_uint32)frameCount, ppSamplesOut, pUserData);
     } else {
@@ -18354,10 +19800,8 @@ mal_uint64 mal_src_read_deinterleaved__passthrough(mal_src* pSRC, mal_uint64 fra
     }
 }
 
-mal_uint64 mal_src_read_deinterleaved__linear(mal_src* pSRC, mal_uint64 frameCount, void** ppSamplesOut, mal_bool32 flush, void* pUserData)
+mal_uint64 mal_src_read_deinterleaved__linear(mal_src* pSRC, mal_uint64 frameCount, void** ppSamplesOut, void* pUserData)
 {
-    (void)flush;    // No flushing at the moment.
-
     mal_assert(pSRC != NULL);
     mal_assert(frameCount > 0);
     mal_assert(ppSamplesOut != NULL);
@@ -18368,7 +19812,7 @@ mal_uint64 mal_src_read_deinterleaved__linear(mal_src* pSRC, mal_uint64 frameCou
 
     float factor = (float)pSRC->config.sampleRateIn / pSRC->config.sampleRateOut;
 
-    mal_uint32 maxFrameCountPerChunkIn = mal_countof(pSRC->samplesFromClient[0]);
+    mal_uint32 maxFrameCountPerChunkIn = mal_countof(pSRC->linear.input[0]);
 
     mal_uint64 totalFramesRead = 0;
     while (totalFramesRead < frameCount) {
@@ -18381,7 +19825,7 @@ mal_uint64 mal_src_read_deinterleaved__linear(mal_src* pSRC, mal_uint64 frameCou
 
         // Read Input Data
         // ===============
-        float tBeg = pSRC->linear.t;
+        float tBeg = pSRC->linear.timeIn;
         float tEnd = tBeg + (framesToRead*factor);
 
         mal_uint32 framesToReadFromClient = (mal_uint32)(tEnd) + 1 + 1;   // +1 to make tEnd 1-based and +1 because we always need to an extra sample for interpolation.
@@ -18391,7 +19835,7 @@ mal_uint64 mal_src_read_deinterleaved__linear(mal_src* pSRC, mal_uint64 frameCou
 
         float* ppSamplesFromClient[MAL_MAX_CHANNELS];
         for (mal_uint32 iChannel = 0; iChannel < pSRC->config.channels; ++iChannel) {
-            ppSamplesFromClient[iChannel] = pSRC->samplesFromClient[iChannel] + pSRC->linear.leftoverFrames;
+            ppSamplesFromClient[iChannel] = pSRC->linear.input[iChannel] + pSRC->linear.leftoverFrames;
         }
         
         mal_uint32 framesReadFromClient = 0;
@@ -18405,7 +19849,7 @@ mal_uint64 mal_src_read_deinterleaved__linear(mal_src* pSRC, mal_uint64 frameCou
         }
 
         for (mal_uint32 iChannel = 0; iChannel < pSRC->config.channels; ++iChannel) {
-            ppSamplesFromClient[iChannel] = pSRC->samplesFromClient[iChannel];
+            ppSamplesFromClient[iChannel] = pSRC->linear.input[iChannel];
         }
 
 
@@ -18427,10 +19871,10 @@ mal_uint64 mal_src_read_deinterleaved__linear(mal_src* pSRC, mal_uint64 frameCou
         // Output frames are always read in groups of 4 because I'm planning on using this as a reference for some SIMD-y stuff later.
         mal_uint32 maxOutputFramesToRead4 = maxOutputFramesToRead/4;
         for (mal_uint32 iChannel = 0; iChannel < pSRC->config.channels; ++iChannel) {
-            float t0 = pSRC->linear.t + factor*0;
-            float t1 = pSRC->linear.t + factor*1;
-            float t2 = pSRC->linear.t + factor*2;
-            float t3 = pSRC->linear.t + factor*3;
+            float t0 = pSRC->linear.timeIn + factor*0;
+            float t1 = pSRC->linear.timeIn + factor*1;
+            float t2 = pSRC->linear.timeIn + factor*2;
+            float t3 = pSRC->linear.timeIn + factor*3;
 
             for (mal_uint32 iFrameOut = 0; iFrameOut < maxOutputFramesToRead4; iFrameOut += 1) {
                 float iPrevSample0 = (float)floor(t0);
@@ -18458,10 +19902,10 @@ mal_uint64 mal_src_read_deinterleaved__linear(mal_src* pSRC, mal_uint64 frameCou
                 float nextSample2 = ppSamplesFromClient[iChannel][(mal_uint32)iNextSample2];
                 float nextSample3 = ppSamplesFromClient[iChannel][(mal_uint32)iNextSample3];
 
-                ppNextSamplesOut[iChannel][iFrameOut*4 + 0] = mal_mix_f32(prevSample0, nextSample0, alpha0);
-                ppNextSamplesOut[iChannel][iFrameOut*4 + 1] = mal_mix_f32(prevSample1, nextSample1, alpha1);
-                ppNextSamplesOut[iChannel][iFrameOut*4 + 2] = mal_mix_f32(prevSample2, nextSample2, alpha2);
-                ppNextSamplesOut[iChannel][iFrameOut*4 + 3] = mal_mix_f32(prevSample3, nextSample3, alpha3);
+                ppNextSamplesOut[iChannel][iFrameOut*4 + 0] = mal_mix_f32_fast(prevSample0, nextSample0, alpha0);
+                ppNextSamplesOut[iChannel][iFrameOut*4 + 1] = mal_mix_f32_fast(prevSample1, nextSample1, alpha1);
+                ppNextSamplesOut[iChannel][iFrameOut*4 + 2] = mal_mix_f32_fast(prevSample2, nextSample2, alpha2);
+                ppNextSamplesOut[iChannel][iFrameOut*4 + 3] = mal_mix_f32_fast(prevSample3, nextSample3, alpha3);
 
                 t0 += factor*4;
                 t1 += factor*4;
@@ -18469,7 +19913,7 @@ mal_uint64 mal_src_read_deinterleaved__linear(mal_src* pSRC, mal_uint64 frameCou
                 t3 += factor*4;
             }
 
-            float t = pSRC->linear.t + (factor*maxOutputFramesToRead4*4);
+            float t = pSRC->linear.timeIn + (factor*maxOutputFramesToRead4*4);
             for (mal_uint32 iFrameOut = (maxOutputFramesToRead4*4); iFrameOut < maxOutputFramesToRead; iFrameOut += 1) {
                 float iPrevSample = (float)floor(t);
                 float iNextSample = iPrevSample + 1;
@@ -18478,7 +19922,7 @@ mal_uint64 mal_src_read_deinterleaved__linear(mal_src* pSRC, mal_uint64 frameCou
                 float prevSample = ppSamplesFromClient[iChannel][(mal_uint32)iPrevSample];
                 float nextSample = ppSamplesFromClient[iChannel][(mal_uint32)iNextSample];
 
-                ppNextSamplesOut[iChannel][iFrameOut] = mal_mix_f32(prevSample, nextSample, alpha);
+                ppNextSamplesOut[iChannel][iFrameOut] = mal_mix_f32_fast(prevSample, nextSample, alpha);
 
                 t += factor;
             }
@@ -18491,14 +19935,14 @@ mal_uint64 mal_src_read_deinterleaved__linear(mal_src* pSRC, mal_uint64 frameCou
 
         // Residual
         // ========
-        float tNext = pSRC->linear.t + (maxOutputFramesToRead*factor);
+        float tNext = pSRC->linear.timeIn + (maxOutputFramesToRead*factor);
 
-        pSRC->linear.t = tNext;
+        pSRC->linear.timeIn = tNext;
         mal_assert(tNext <= framesReadFromClient+1);
 
         mal_uint32 iNextFrame = (mal_uint32)floor(tNext);
         pSRC->linear.leftoverFrames = framesReadFromClient - iNextFrame;
-        pSRC->linear.t = tNext - iNextFrame;
+        pSRC->linear.timeIn = tNext - iNextFrame;
 
         for (mal_uint32 iChannel = 0; iChannel < pSRC->config.channels; ++iChannel) {
             for (mal_uint32 iFrame = 0; iFrame < pSRC->linear.leftoverFrames; ++iFrame) {
@@ -18515,6 +19959,211 @@ mal_uint64 mal_src_read_deinterleaved__linear(mal_src* pSRC, mal_uint64 frameCou
     }
 
     return totalFramesRead;
+}
+
+
+mal_src_config mal_src_config_init_new()
+{
+    mal_src_config config;
+    mal_zero_object(&config);
+
+    return config;
+}
+
+mal_src_config mal_src_config_init(mal_uint32 sampleRateIn, mal_uint32 sampleRateOut, mal_uint32 channels, mal_src_read_deinterleaved_proc onReadDeinterleaved, void* pUserData)
+{
+    mal_src_config config = mal_src_config_init_new();
+    config.sampleRateIn = sampleRateIn;
+    config.sampleRateOut = sampleRateOut;
+    config.channels = channels;
+    config.onReadDeinterleaved = onReadDeinterleaved;
+    config.pUserData = pUserData;
+
+    return config;
+}
+
+
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+//
+// Sinc Sample Rate Conversion
+// ===========================
+//
+// The sinc SRC algorithm uses a windowed sinc to perform interpolation of samples. Currently, mini_al's implementation supports rectangular and Hann window
+// methods.
+//
+// Whenever an output sample is being computed, it looks at a sub-section of the input samples. I've called this sub-section in the code below the "window",
+// which I realize is a bit ambigous with the mathematical "window", but it works for me when I need to conceptualize things in my head. The window is made up
+// of two halves. The first half contains past input samples (initialized to zero), and the second half contains future input samples. As time moves forward
+// and input samples are consumed, the window moves forward. The larger the window, the better the quality at the expense of slower processing. The window is
+// limited the range [MAL_SRC_SINC_MIN_WINDOW_WIDTH, MAL_SRC_SINC_MAX_WINDOW_WIDTH] and defaults to MAL_SRC_SINC_DEFAULT_WINDOW_WIDTH.
+//
+// Input samples are cached for efficiency (to prevent frequently requesting tiny numbers of samples from the client). When the window gets to the end of the
+// cache, it's moved back to the start, and more samples are read from the client. If the client has no more data to give, the cache is filled with zeros and
+// the last of the input samples will be consumed. Once the last of the input samples have been consumed, no more samples will be output.
+//
+//
+// When reading output samples, we always first read whatever is already in the input cache. Only when the cache has been fully consumed do we read more data
+// from the client.
+//
+// To access samples in the input buffer you do so relative to the window. When the window itself is at position 0, the first item in the buffer is accessed
+// with "windowPos + windowWidth". Generally, to access any sample relative to the window you do "windowPos + windowWidth + sampleIndexRelativeToWindow".
+//
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+// Retrieves a sample from the input buffer's window. Values >= 0 retrieve future samples. Negative values return past samples.
+static MAL_INLINE float mal_src_sinc__get_input_sample_from_window(const mal_src* pSRC, mal_uint32 channel, mal_uint32 windowPosInSamples, mal_int32 sampleIndex)
+{
+    mal_assert(pSRC != NULL);
+    mal_assert(channel < pSRC->config.channels);
+    mal_assert(sampleIndex >= -(mal_int32)pSRC->config.sinc.windowWidth);
+    mal_assert(sampleIndex <   (mal_int32)pSRC->config.sinc.windowWidth);
+
+    // The window should always be contained within the input cache.
+    mal_assert(windowPosInSamples >= 0);
+    mal_assert(windowPosInSamples <  mal_countof(pSRC->sinc.input[0]) - pSRC->config.sinc.windowWidth);
+    
+    return pSRC->sinc.input[channel][windowPosInSamples + pSRC->config.sinc.windowWidth + sampleIndex];
+}
+
+static MAL_INLINE float mal_src_sinc__interpolation_factor(const mal_src* pSRC, float x)
+{
+    mal_assert(pSRC != NULL);
+
+    float xabs = (float)fabs(x);
+    if (xabs >= MAL_SRC_SINC_MAX_WINDOW_WIDTH /*pSRC->config.sinc.windowWidth*/) {
+        return 0;
+    }
+
+    xabs = xabs * MAL_SRC_SINC_LOOKUP_TABLE_RESOLUTION;
+    mal_int32 ixabs = (mal_int32)xabs;
+
+#if 1
+    float a = xabs - ixabs;
+    return mal_mix_f32_fast(pSRC->sinc.table[ixabs], pSRC->sinc.table[ixabs+1], a);
+#else
+    return pSRC->sinc.table[ixabs];
+#endif
+}
+
+mal_uint64 mal_src_read_deinterleaved__sinc(mal_src* pSRC, mal_uint64 frameCount, void** ppSamplesOut, void* pUserData)
+{
+    mal_assert(pSRC != NULL);
+    mal_assert(frameCount > 0);
+    mal_assert(ppSamplesOut != NULL);
+
+    float factor = (float)pSRC->config.sampleRateIn / pSRC->config.sampleRateOut;
+    float inverseFactor = 1/factor;
+
+    mal_int32 windowWidth  = (mal_int32)pSRC->config.sinc.windowWidth;
+    mal_int32 windowWidth2 = windowWidth*2;
+
+    float* ppNextSamplesOut[MAL_MAX_CHANNELS];
+    mal_copy_memory(ppNextSamplesOut, ppSamplesOut, sizeof(void*) * pSRC->config.channels);
+
+    mal_uint64 totalOutputFramesRead = 0;
+    while (totalOutputFramesRead < frameCount) {
+        // The maximum number of frames we can read this iteration depends on how many input samples we have available to us. This is the number
+        // of input samples between the end of the window and the end of the cache.
+        mal_uint32 maxInputSamplesAvailableInCache = mal_countof(pSRC->sinc.input[0]) - (pSRC->config.sinc.windowWidth*2) - pSRC->sinc.windowPosInSamples;
+        if (maxInputSamplesAvailableInCache > pSRC->sinc.inputFrameCount) {
+            maxInputSamplesAvailableInCache = pSRC->sinc.inputFrameCount;
+        }
+
+        float timeInBeg = pSRC->sinc.timeIn;
+        float timeInEnd = (float)(pSRC->sinc.windowPosInSamples + maxInputSamplesAvailableInCache);
+
+        mal_assert(timeInBeg >= 0);
+        mal_assert(timeInBeg <= timeInEnd);
+
+        mal_uint64 maxOutputFramesToRead = (mal_uint64)(((timeInEnd - timeInBeg) * inverseFactor));
+
+        mal_uint64 outputFramesRemaining = frameCount - totalOutputFramesRead;
+        mal_uint64 outputFramesToRead = outputFramesRemaining;
+        if (outputFramesToRead > maxOutputFramesToRead) {
+            outputFramesToRead = maxOutputFramesToRead;
+        }
+
+        for (mal_uint32 iChannel = 0; iChannel < pSRC->config.channels; iChannel += 1) {
+            // Do SRC.
+            float timeIn = timeInBeg;
+            for (mal_uint32 iSample = 0; iSample < outputFramesToRead; iSample += 1) {
+                mal_int32 iTimeIn  = (mal_int32)timeIn;
+
+                float sampleOut = 0;
+                for (mal_int32 iWindow = -windowWidth+1; iWindow < windowWidth; iWindow += 1) {
+                    float t = (timeIn - iTimeIn);
+                    float w = (float)(iWindow);
+
+                    float a = mal_src_sinc__interpolation_factor(pSRC, (t - w));
+                    float s = mal_src_sinc__get_input_sample_from_window(pSRC, iChannel, iTimeIn, iWindow);
+
+                    sampleOut += s * a;
+                }
+
+                ppNextSamplesOut[iChannel][iSample] = (float)sampleOut;
+
+                timeIn += factor;
+            }
+
+            ppNextSamplesOut[iChannel] += outputFramesToRead;
+        }
+
+        mal_uint32 prevWindowPosInSamples = pSRC->sinc.windowPosInSamples;
+
+        pSRC->sinc.timeIn            += (outputFramesToRead * factor);
+        pSRC->sinc.windowPosInSamples = (mal_uint32)pSRC->sinc.timeIn;
+        pSRC->sinc.inputFrameCount   -= pSRC->sinc.windowPosInSamples - prevWindowPosInSamples;
+
+        // If the window has reached a point where we cannot read a whole output sample it needs to be moved back to the start.
+        mal_uint32 availableOutputFrames = (mal_uint32)((timeInEnd - pSRC->sinc.timeIn) * inverseFactor);
+
+        if (availableOutputFrames == 0) {
+            size_t samplesToMove = mal_countof(pSRC->sinc.input[0]) - pSRC->sinc.windowPosInSamples;
+
+            pSRC->sinc.timeIn            -= mal_floorf(pSRC->sinc.timeIn);
+            pSRC->sinc.windowPosInSamples = 0;
+
+            // Move everything from the end of the cache up to the front.
+            for (mal_uint32 iChannel = 0; iChannel < pSRC->config.channels; iChannel += 1) {
+                memmove(pSRC->sinc.input[iChannel], pSRC->sinc.input[iChannel] + mal_countof(pSRC->sinc.input[iChannel]) - samplesToMove, samplesToMove * sizeof(*pSRC->sinc.input[iChannel]));
+            }
+        }
+
+        // Read more data from the client if required.
+        if (pSRC->sinc.inputFrameCount < pSRC->config.sinc.windowWidth || pSRC->sinc.windowPosInSamples == 0) {
+            float* ppInputDst[MAL_MAX_CHANNELS] = {0};
+            for (mal_uint32 iChannel = 0; iChannel < pSRC->config.channels; iChannel += 1) {
+                ppInputDst[iChannel] = pSRC->sinc.input[iChannel] + pSRC->config.sinc.windowWidth + pSRC->sinc.inputFrameCount;
+            }
+
+            // Now read data from the client.
+            mal_uint32 framesToReadFromClient = mal_countof(pSRC->sinc.input[0]) - (pSRC->config.sinc.windowWidth + pSRC->sinc.inputFrameCount);
+            if (framesToReadFromClient > 0) {
+                mal_uint32 framesReadFromClient = pSRC->config.onReadDeinterleaved(pSRC, framesToReadFromClient, (void**)ppInputDst, pUserData);
+                if (framesReadFromClient != 0) {
+                    pSRC->sinc.inputFrameCount += framesReadFromClient;
+                } else {
+                    // We couldn't get anything more from the client. If not more output samples can be computed from the available input samples
+                    // we need to return.
+                    if (((pSRC->sinc.timeIn - pSRC->sinc.inputFrameCount) * inverseFactor) < 1) {
+                        break;
+                    }
+                }
+            }
+
+            // Anything left over in the cache must be set to zero.
+            mal_uint32 leftoverFrames = mal_countof(pSRC->sinc.input[0]) - (pSRC->config.sinc.windowWidth + pSRC->sinc.inputFrameCount);
+            if (leftoverFrames > 0) {
+                for (mal_uint32 iChannel = 0; iChannel < pSRC->config.channels; iChannel += 1) {
+                    mal_zero_memory(pSRC->sinc.input[iChannel] + pSRC->config.sinc.windowWidth + pSRC->sinc.inputFrameCount, leftoverFrames * sizeof(float));
+                }
+            }
+        }
+
+        totalOutputFramesRead += outputFramesToRead;
+    }
+
+    return totalOutputFramesRead;
 }
 
 
@@ -18604,7 +20253,6 @@ void mal_pcm_convert(void* pOut, mal_format formatOut, const void* pIn, mal_form
 typedef struct
 {
     mal_dsp* pDSP;
-    mal_bool32 flush;
     void* pUserDataForClient;
 } mal_dsp_callback_data;
 
@@ -18653,9 +20301,9 @@ mal_uint32 mal_dsp__post_format_converter_on_read_deinterleaved(mal_format_conve
         return (mal_uint32)mal_channel_router_read_deinterleaved(&pDSP->channelRouter, frameCount, ppSamplesOut, pUserData);
     } else {
         if (pDSP->isSRCRequired) {
-            return (mal_uint32)mal_src_read_deinterleaved_ex(&pDSP->src, frameCount, ppSamplesOut, pData->flush, pUserData);
+            return (mal_uint32)mal_src_read_deinterleaved(&pDSP->src, frameCount, ppSamplesOut, pUserData);
         } else {
-            return (mal_uint32)mal_format_converter_read_deinterleaved(&pDSP->formatConverterIn, frameCount, ppSamplesOut, pUserData);
+            return (mal_uint32)mal_channel_router_read_deinterleaved(&pDSP->channelRouter, frameCount, ppSamplesOut, pUserData);
         }
     }
 }
@@ -18693,7 +20341,7 @@ mal_uint32 mal_dsp__channel_router_on_read_deinterleaved(mal_channel_router* pRo
         return (mal_uint32)mal_format_converter_read_deinterleaved(&pDSP->formatConverterIn, frameCount, ppSamplesOut, pUserData);
     } else {
         if (pDSP->isSRCRequired) {
-            return (mal_uint32)mal_src_read_deinterleaved_ex(&pDSP->src, frameCount, ppSamplesOut, pData->flush, pUserData);
+            return (mal_uint32)mal_src_read_deinterleaved(&pDSP->src, frameCount, ppSamplesOut, pUserData);
         } else {
             return (mal_uint32)mal_format_converter_read_deinterleaved(&pDSP->formatConverterIn, frameCount, ppSamplesOut, pUserData);
         }
@@ -18799,15 +20447,15 @@ mal_result mal_dsp_init(const mal_dsp_config* pConfig, mal_dsp* pDSP)
 
     // Pre format conversion.
     {
-        mal_format_converter_config preFormatConverterConfig;
-        mal_zero_object(&preFormatConverterConfig);
-        preFormatConverterConfig.formatIn = pConfig->formatIn;
-        preFormatConverterConfig.formatOut = mal_format_f32;
-        preFormatConverterConfig.channels = pConfig->channelsIn;
-        preFormatConverterConfig.streamFormatIn = mal_stream_format_pcm;
-        preFormatConverterConfig.streamFormatOut = mal_stream_format_pcm;
-        preFormatConverterConfig.onRead = mal_dsp__pre_format_converter_on_read;
-        preFormatConverterConfig.pUserData = pDSP;
+        mal_format_converter_config preFormatConverterConfig = mal_format_converter_config_init(
+            pConfig->formatIn,
+            mal_format_f32,
+            pConfig->channelsIn,
+            mal_dsp__pre_format_converter_on_read,
+            pDSP
+        );
+        preFormatConverterConfig.ditherMode = pConfig->ditherMode;
+
         result = mal_format_converter_init(&preFormatConverterConfig, &pDSP->formatConverterIn);
         if (result != MAL_SUCCESS) {
             return result;
@@ -18817,14 +20465,11 @@ mal_result mal_dsp_init(const mal_dsp_config* pConfig, mal_dsp* pDSP)
     // Post format conversion. The exact configuration for this depends on whether or not we are reading data directly from the client
     // or from an earlier stage in the pipeline.
     {
-        mal_format_converter_config postFormatConverterConfig;
-        mal_zero_object(&postFormatConverterConfig);
+        mal_format_converter_config postFormatConverterConfig = mal_format_converter_config_init_new();
         postFormatConverterConfig.formatIn = pConfig->formatIn;
         postFormatConverterConfig.formatOut = pConfig->formatOut;
         postFormatConverterConfig.channels = pConfig->channelsOut;
-        postFormatConverterConfig.streamFormatIn = mal_stream_format_pcm;
-        postFormatConverterConfig.streamFormatOut = mal_stream_format_pcm;
-        postFormatConverterConfig.pUserData = pDSP;
+        postFormatConverterConfig.ditherMode = pConfig->ditherMode;
         if (pDSP->isPreFormatConversionRequired) {
             postFormatConverterConfig.onReadDeinterleaved = mal_dsp__post_format_converter_on_read_deinterleaved;
             postFormatConverterConfig.formatIn = mal_format_f32;
@@ -18840,14 +20485,16 @@ mal_result mal_dsp_init(const mal_dsp_config* pConfig, mal_dsp* pDSP)
 
     // SRC
     {
-        mal_src_config srcConfig;
-        mal_zero_object(&srcConfig);
-        srcConfig.sampleRateIn = pConfig->sampleRateIn;
-        srcConfig.sampleRateOut = pConfig->sampleRateOut;
-        srcConfig.channels = (pConfig->channelsIn < pConfig->channelsOut) ? pConfig->channelsIn : pConfig->channelsOut;
+        mal_src_config srcConfig = mal_src_config_init(
+            pConfig->sampleRateIn,
+            pConfig->sampleRateOut,
+            ((pConfig->channelsIn < pConfig->channelsOut) ? pConfig->channelsIn : pConfig->channelsOut),
+            mal_dsp__src_on_read_deinterleaved,
+            pDSP
+        );
         srcConfig.algorithm = pConfig->srcAlgorithm;
-        srcConfig.onReadDeinterleaved = mal_dsp__src_on_read_deinterleaved;
-        srcConfig.pUserData = pDSP;
+        mal_copy_memory(&srcConfig.sinc, &pConfig->sinc, sizeof(pConfig->sinc));
+
         result = mal_src_init(&srcConfig, &pDSP->src);
         if (result != MAL_SUCCESS) {
             return result;
@@ -18864,6 +20511,7 @@ mal_result mal_dsp_init(const mal_dsp_config* pConfig, mal_dsp* pDSP)
             pConfig->channelMixMode,
             mal_dsp__channel_router_on_read_deinterleaved,
             pDSP);
+
         result = mal_channel_router_init(&routerConfig, &pDSP->channelRouter);
         if (result != MAL_SUCCESS) {
             return result;
@@ -18925,11 +20573,6 @@ mal_result mal_dsp_set_output_sample_rate(mal_dsp* pDSP, mal_uint32 sampleRateOu
 
 mal_uint64 mal_dsp_read(mal_dsp* pDSP, mal_uint64 frameCount, void* pFramesOut, void* pUserData)
 {
-    return mal_dsp_read_ex(pDSP, frameCount, pFramesOut, MAL_FALSE, pUserData);
-}
-
-mal_uint64 mal_dsp_read_ex(mal_dsp* pDSP, mal_uint64 frameCount, void* pFramesOut, mal_bool32 flush, void* pUserData)
-{
     if (pDSP == NULL || pFramesOut == NULL) return 0;
 
     // Fast path.
@@ -18965,7 +20608,6 @@ mal_uint64 mal_dsp_read_ex(mal_dsp* pDSP, mal_uint64 frameCount, void* pFramesOu
 
     mal_dsp_callback_data data;
     data.pDSP = pDSP;
-    data.flush = flush;
     data.pUserDataForClient = pUserData;
     return mal_format_converter_read(&pDSP->formatConverterOut, frameCount, pFramesOut, &data);
 }
@@ -19096,7 +20738,7 @@ mal_uint64 mal_convert_frames_ex(void* pOut, mal_format formatOut, mal_uint32 ch
         return 0;
     }
 
-    return mal_dsp_read_ex(&dsp, frameCountOut, pOut, MAL_TRUE, dsp.pUserData);
+    return mal_dsp_read(&dsp, frameCountOut, pOut, dsp.pUserData);
 }
 
 
@@ -19109,6 +20751,21 @@ mal_uint64 mal_convert_frames_ex(void* pOut, mal_format formatOut, mal_uint32 ch
 //
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+void* mal_malloc(size_t sz)
+{
+    return MAL_MALLOC(sz);
+}
+
+void* mal_realloc(void* p, size_t sz)
+{
+    return MAL_REALLOC(p, sz);
+}
+
+void mal_free(void* p)
+{
+    MAL_FREE(p);
+}
 
 void* mal_aligned_malloc(size_t sz, size_t alignment)
 {
@@ -19176,6 +20833,109 @@ void mal_blend_f32(float* pOut, float* pInA, float* pInB, float factor, mal_uint
 }
 
 
+typedef struct
+{
+    mal_uint8* pInputFrames;
+    mal_uint32 framesRemaining;
+} mal_calculate_cpu_speed_factor_data;
+
+mal_uint32 mal_calculate_cpu_speed_factor__on_read(mal_dsp* pDSP, mal_uint32 framesToRead, void* pFramesOut, void* pUserData)
+{
+    mal_calculate_cpu_speed_factor_data* pData = (mal_calculate_cpu_speed_factor_data*)pUserData;
+    mal_assert(pData != NULL);
+
+    if (framesToRead > pData->framesRemaining) {
+        framesToRead = pData->framesRemaining;
+    }
+
+    mal_copy_memory(pFramesOut, pData->pInputFrames, framesToRead*pDSP->formatConverterIn.config.channels * sizeof(*pData->pInputFrames));
+
+    pData->pInputFrames += framesToRead;
+    pData->framesRemaining -= framesToRead;
+
+    return framesToRead;
+}
+
+float mal_calculate_cpu_speed_factor()
+{
+    // Our profiling test is based on how quick it can process 1 second worth of samples through mini_al's data conversion pipeline.
+
+    // This factor is multiplied with the profiling time. May need to fiddle with this to get an accurate value.
+    float f = 1000;
+
+    // Experiment: Reduce the factor a little when debug mode is used to reduce a blowout.
+#if !defined(NDEBUG) || defined(_DEBUG)
+    f /= 2;
+#endif
+
+    mal_uint32 sampleRateIn  = 44100;
+    mal_uint32 sampleRateOut = 48000;
+    mal_uint32 channelsIn    = 2;
+    mal_uint32 channelsOut   = 6;
+
+    // Using the heap here to avoid an unnecessary static memory allocation. Also too big for the stack.
+    mal_uint8* pInputFrames = (mal_uint8*)mal_aligned_malloc(sampleRateIn * channelsIn * sizeof(*pInputFrames), MAL_SIMD_ALIGNMENT);
+    if (pInputFrames == NULL) {
+        return 1;
+    }
+
+    float* pOutputFrames = (float*)mal_aligned_malloc(sampleRateOut * channelsOut * sizeof(*pOutputFrames), MAL_SIMD_ALIGNMENT);
+    if (pOutputFrames == NULL) {
+        mal_aligned_free(pInputFrames);
+        return 1;
+    }
+
+    mal_calculate_cpu_speed_factor_data data;
+    data.pInputFrames = pInputFrames;
+    data.framesRemaining = sampleRateIn;
+    
+    mal_dsp_config config = mal_dsp_config_init(mal_format_u8, channelsIn, sampleRateIn, mal_format_f32, channelsOut, sampleRateOut, mal_calculate_cpu_speed_factor__on_read, &data);
+    mal_dsp dsp;
+    mal_result result = mal_dsp_init(&config, &dsp);
+    if (result != MAL_SUCCESS) {
+        mal_aligned_free(pInputFrames);
+        mal_aligned_free(pOutputFrames);
+        return 1;
+    }
+
+
+    int iterationCount = 2;
+
+    mal_timer timer;
+    mal_timer_init(&timer);
+    double startTime = mal_timer_get_time_in_seconds(&timer);
+    {
+        for (int i = 0; i < iterationCount; ++i) {
+            mal_dsp_read(&dsp, sampleRateOut, pOutputFrames, &data);
+            data.pInputFrames = pInputFrames;
+            data.framesRemaining = sampleRateIn;
+        }
+    }
+    double executionTimeInSeconds = mal_timer_get_time_in_seconds(&timer) - startTime;
+    executionTimeInSeconds /= iterationCount;
+
+    
+    mal_aligned_free(pInputFrames);
+    mal_aligned_free(pOutputFrames);
+
+    return (float)(executionTimeInSeconds * f);
+}
+
+mal_uint32 mal_scale_buffer_size(mal_uint32 baseBufferSize, float scale)
+{
+    return mal_max(1, (mal_uint32)(baseBufferSize*scale));
+}
+
+mal_uint32 mal_calculate_default_buffer_size_in_frames(mal_performance_profile performanceProfile, mal_uint32 sampleRate, float scale)
+{
+    if (performanceProfile == mal_performance_profile_low_latency) {
+        return mal_scale_buffer_size((sampleRate/1000) * MAL_BASE_BUFFER_SIZE_IN_MILLISECONDS_LOW_LATENCY, scale);
+    } else {
+        return mal_scale_buffer_size((sampleRate/1000) * MAL_BASE_BUFFER_SIZE_IN_MILLISECONDS_CONSERVATIVE, scale);
+    }
+}
+
+
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -19190,10 +20950,10 @@ mal_decoder_config mal_decoder_config_init(mal_format outputFormat, mal_uint32 o
 {
     mal_decoder_config config;
     mal_zero_object(&config);
-    config.outputFormat = outputFormat;
-    config.outputChannels = outputChannels;
-    config.outputSampleRate = outputSampleRate;
-    mal_get_standard_channel_map(mal_standard_channel_map_default, config.outputChannels, config.outputChannelMap);
+    config.format = outputFormat;
+    config.channels = outputChannels;
+    config.sampleRate = outputSampleRate;
+    mal_get_standard_channel_map(mal_standard_channel_map_default, config.channels, config.channelMap);
 
     return config;
 }
@@ -19215,28 +20975,28 @@ mal_result mal_decoder__init_dsp(mal_decoder* pDecoder, const mal_decoder_config
     mal_assert(pDecoder != NULL);
 
     // Output format.
-    if (pConfig->outputFormat == mal_format_unknown) {
+    if (pConfig->format == mal_format_unknown) {
         pDecoder->outputFormat = pDecoder->internalFormat;
     } else {
-        pDecoder->outputFormat = pConfig->outputFormat;
+        pDecoder->outputFormat = pConfig->format;
     }
 
-    if (pConfig->outputChannels == 0) {
+    if (pConfig->channels == 0) {
         pDecoder->outputChannels = pDecoder->internalChannels;
     } else {
-        pDecoder->outputChannels = pConfig->outputChannels;
+        pDecoder->outputChannels = pConfig->channels;
     }
 
-    if (pConfig->outputSampleRate == 0) {
+    if (pConfig->sampleRate == 0) {
         pDecoder->outputSampleRate = pDecoder->internalSampleRate;
     } else {
-        pDecoder->outputSampleRate = pConfig->outputSampleRate;
+        pDecoder->outputSampleRate = pConfig->sampleRate;
     }
 
-    if (mal_channel_map_blank(pDecoder->outputChannels, pConfig->outputChannelMap)) {
+    if (mal_channel_map_blank(pDecoder->outputChannels, pConfig->channelMap)) {
         mal_get_standard_channel_map(mal_standard_channel_map_default, pDecoder->outputChannels, pDecoder->outputChannelMap);
     } else {
-        mal_copy_memory(pDecoder->outputChannelMap, pConfig->outputChannelMap, sizeof(pConfig->outputChannelMap));
+        mal_copy_memory(pDecoder->outputChannelMap, pConfig->channelMap, sizeof(pConfig->channelMap));
     }
 
 
@@ -19817,7 +21577,7 @@ mal_result mal_decoder_init_mp3__internal(const mal_decoder_config* pConfig, mal
     drmp3_config mp3Config;
     mal_zero_object(&mp3Config);
     mp3Config.outputChannels = 2;
-    mp3Config.outputSampleRate = (pConfig->outputSampleRate != 0) ? pConfig->outputSampleRate : 44100;
+    mp3Config.outputSampleRate = (pConfig->sampleRate != 0) ? pConfig->sampleRate : 44100;
     if (!drmp3_init(pMP3, mal_decoder_internal_on_read__mp3, mal_decoder_internal_on_seek__mp3, pDecoder, &mp3Config)) {
         return MAL_ERROR;
     }
@@ -19842,6 +21602,92 @@ mal_result mal_decoder_init_mp3__internal(const mal_decoder_config* pConfig, mal
     return MAL_SUCCESS;
 }
 #endif
+
+// Raw
+mal_result mal_decoder_internal_on_seek_to_frame__raw(mal_decoder* pDecoder, mal_uint64 frameIndex)
+{
+    mal_assert(pDecoder != NULL);
+
+    if (pDecoder->onSeek == NULL) {
+        return MAL_ERROR;
+    }
+
+    mal_bool32 result = MAL_FALSE;
+
+    // The callback uses a 32 bit integer whereas we use a 64 bit unsigned integer. We just need to continuously seek until we're at the correct position.
+    mal_uint64 totalBytesToSeek = frameIndex * mal_get_bytes_per_frame(pDecoder->internalFormat, pDecoder->internalChannels);
+    if (totalBytesToSeek < 0x7FFFFFFF) {
+        // Simple case.
+        result = pDecoder->onSeek(pDecoder, (int)(frameIndex * mal_get_bytes_per_frame(pDecoder->internalFormat, pDecoder->internalChannels)), mal_seek_origin_start);
+    } else {
+        // Complex case. Start by doing a seek relative to the start. Then keep looping using offset seeking.
+        result = pDecoder->onSeek(pDecoder, 0x7FFFFFFF, mal_seek_origin_start);
+        if (result == MAL_TRUE) {
+            totalBytesToSeek -= 0x7FFFFFFF;
+
+            while (totalBytesToSeek > 0) {
+                mal_uint64 bytesToSeekThisIteration = totalBytesToSeek;
+                if (bytesToSeekThisIteration > 0x7FFFFFFF) {
+                    bytesToSeekThisIteration = 0x7FFFFFFF;
+                }
+
+                result = pDecoder->onSeek(pDecoder, (int)bytesToSeekThisIteration, mal_seek_origin_current);
+                if (result != MAL_TRUE) {
+                    break;
+                }
+
+                totalBytesToSeek -= bytesToSeekThisIteration;
+            }
+        }
+    }
+
+    if (result) {
+        return MAL_SUCCESS;
+    } else {
+        return MAL_ERROR;
+    }
+}
+
+mal_result mal_decoder_internal_on_uninit__raw(mal_decoder* pDecoder)
+{
+    (void)pDecoder;
+    return MAL_SUCCESS;
+}
+
+mal_uint32 mal_decoder_internal_on_read_frames__raw(mal_dsp* pDSP, mal_uint32 frameCount, void* pSamplesOut, void* pUserData)
+{
+    (void)pDSP;
+
+    mal_decoder* pDecoder = (mal_decoder*)pUserData;
+    mal_assert(pDecoder != NULL);
+
+    // For raw decoding we just read directly from the decoder's callbacks.
+    mal_uint32 bpf = mal_get_bytes_per_frame(pDecoder->internalFormat, pDecoder->internalChannels);
+    return pDecoder->onRead(pDecoder, pSamplesOut, frameCount * bpf) / bpf;
+}
+
+mal_result mal_decoder_init_raw__internal(const mal_decoder_config* pConfigIn, const mal_decoder_config* pConfigOut, mal_decoder* pDecoder)
+{
+    mal_assert(pConfigIn != NULL);
+    mal_assert(pConfigOut != NULL);
+    mal_assert(pDecoder != NULL);
+
+    pDecoder->onSeekToFrame = mal_decoder_internal_on_seek_to_frame__raw;
+    pDecoder->onUninit = mal_decoder_internal_on_uninit__raw;
+
+    // Internal format.
+    pDecoder->internalFormat = pConfigIn->format;
+    pDecoder->internalChannels = pConfigIn->channels;
+    pDecoder->internalSampleRate = pConfigIn->sampleRate;
+    mal_channel_map_copy(pDecoder->internalChannelMap, pConfigIn->channelMap, pConfigIn->channels);
+
+    mal_result result = mal_decoder__init_dsp(pDecoder, pConfigOut, mal_decoder_internal_on_read_frames__raw);
+    if (result != MAL_SUCCESS) {
+        return result;
+    }
+
+    return MAL_SUCCESS;
+}
 
 mal_result mal_decoder__preinit(mal_decoder_read_proc onRead, mal_decoder_seek_proc onSeek, void* pUserData, const mal_decoder_config* pConfig, mal_decoder* pDecoder)
 {
@@ -19929,21 +21775,29 @@ mal_result mal_decoder_init_mp3(mal_decoder_read_proc onRead, mal_decoder_seek_p
 #endif
 }
 
-mal_result mal_decoder_init(mal_decoder_read_proc onRead, mal_decoder_seek_proc onSeek, void* pUserData, const mal_decoder_config* pConfig, mal_decoder* pDecoder)
+mal_result mal_decoder_init_raw(mal_decoder_read_proc onRead, mal_decoder_seek_proc onSeek, void* pUserData, const mal_decoder_config* pConfigIn, const mal_decoder_config* pConfigOut, mal_decoder* pDecoder)
 {
-    mal_decoder_config config = mal_decoder_config_init_copy(pConfig);
+    mal_decoder_config config = mal_decoder_config_init_copy(pConfigOut);
 
     mal_result result = mal_decoder__preinit(onRead, onSeek, pUserData, &config, pDecoder);
     if (result != MAL_SUCCESS) {
         return result;
     }
 
+    return mal_decoder_init_raw__internal(pConfigIn, &config, pDecoder);
+}
+
+mal_result mal_decoder_init__internal(mal_decoder_read_proc onRead, mal_decoder_seek_proc onSeek, void* pUserData, const mal_decoder_config* pConfig, mal_decoder* pDecoder)
+{
+    mal_assert(pConfig != NULL);
+    mal_assert(pDecoder != NULL);
+
     // We use trial and error to open a decoder.
-    result = MAL_NO_BACKEND;
+    mal_result result = MAL_NO_BACKEND;
 
 #ifdef MAL_HAS_WAV
     if (result != MAL_SUCCESS) {
-        result = mal_decoder_init_wav__internal(&config, pDecoder);
+        result = mal_decoder_init_wav__internal(pConfig, pDecoder);
         if (result != MAL_SUCCESS) {
             onSeek(pDecoder, 0, mal_seek_origin_start);
         }
@@ -19951,15 +21805,7 @@ mal_result mal_decoder_init(mal_decoder_read_proc onRead, mal_decoder_seek_proc 
 #endif
 #ifdef MAL_HAS_FLAC
     if (result != MAL_SUCCESS) {
-        result = mal_decoder_init_flac__internal(&config, pDecoder);
-        if (result != MAL_SUCCESS) {
-            onSeek(pDecoder, 0, mal_seek_origin_start);
-        }
-    }
-#endif
-#ifdef MAL_HAS_MP3
-    if (result != MAL_SUCCESS) {
-        result = mal_decoder_init_mp3__internal(&config, pDecoder);
+        result = mal_decoder_init_flac__internal(pConfig, pDecoder);
         if (result != MAL_SUCCESS) {
             onSeek(pDecoder, 0, mal_seek_origin_start);
         }
@@ -19967,7 +21813,15 @@ mal_result mal_decoder_init(mal_decoder_read_proc onRead, mal_decoder_seek_proc 
 #endif
 #ifdef MAL_HAS_VORBIS
     if (result != MAL_SUCCESS) {
-        result = mal_decoder_init_vorbis__internal(&config, pDecoder);
+        result = mal_decoder_init_vorbis__internal(pConfig, pDecoder);
+        if (result != MAL_SUCCESS) {
+            onSeek(pDecoder, 0, mal_seek_origin_start);
+        }
+    }
+#endif
+#ifdef MAL_HAS_MP3
+    if (result != MAL_SUCCESS) {
+        result = mal_decoder_init_mp3__internal(pConfig, pDecoder);
         if (result != MAL_SUCCESS) {
             onSeek(pDecoder, 0, mal_seek_origin_start);
         }
@@ -19979,6 +21833,18 @@ mal_result mal_decoder_init(mal_decoder_read_proc onRead, mal_decoder_seek_proc 
     }
 
     return result;
+}
+
+mal_result mal_decoder_init(mal_decoder_read_proc onRead, mal_decoder_seek_proc onSeek, void* pUserData, const mal_decoder_config* pConfig, mal_decoder* pDecoder)
+{
+    mal_decoder_config config = mal_decoder_config_init_copy(pConfig);
+
+    mal_result result = mal_decoder__preinit(onRead, onSeek, pUserData, &config, pDecoder);
+    if (result != MAL_SUCCESS) {
+        return result;
+    }
+
+    return mal_decoder_init__internal(onRead, onSeek, pUserData, &config, pDecoder);
 }
 
 
@@ -20027,11 +21893,10 @@ mal_bool32 mal_decoder__on_seek_memory(mal_decoder* pDecoder, int byteOffset, ma
 
 mal_result mal_decoder__preinit_memory(const void* pData, size_t dataSize, const mal_decoder_config* pConfig, mal_decoder* pDecoder)
 {
-    if (pDecoder == NULL) {
-        return MAL_INVALID_ARGS;
+    mal_result result = mal_decoder__preinit(mal_decoder__on_read_memory, mal_decoder__on_seek_memory, NULL, pConfig, pDecoder);
+    if (result != MAL_SUCCESS) {
+        return result;
     }
-
-    mal_zero_object(pDecoder);
 
     if (pData == NULL || dataSize == 0) {
         return MAL_INVALID_ARGS;
@@ -20047,57 +21912,95 @@ mal_result mal_decoder__preinit_memory(const void* pData, size_t dataSize, const
 
 mal_result mal_decoder_init_memory(const void* pData, size_t dataSize, const mal_decoder_config* pConfig, mal_decoder* pDecoder)
 {
-    mal_result result = mal_decoder__preinit_memory(pData, dataSize, pConfig, pDecoder);
+    mal_decoder_config config = mal_decoder_config_init_copy(pConfig);  // Make sure the config is not NULL.
+
+    mal_result result = mal_decoder__preinit_memory(pData, dataSize, &config, pDecoder);
     if (result != MAL_SUCCESS) {
         return result;
     }
 
-    return mal_decoder_init(mal_decoder__on_read_memory, mal_decoder__on_seek_memory, NULL, pConfig, pDecoder);
+    return mal_decoder_init__internal(mal_decoder__on_read_memory, mal_decoder__on_seek_memory, NULL, &config, pDecoder);
 }
 
 mal_result mal_decoder_init_memory_wav(const void* pData, size_t dataSize, const mal_decoder_config* pConfig, mal_decoder* pDecoder)
 {
-    mal_result result = mal_decoder__preinit_memory(pData, dataSize, pConfig, pDecoder);
+    mal_decoder_config config = mal_decoder_config_init_copy(pConfig);  // Make sure the config is not NULL.
+
+    mal_result result = mal_decoder__preinit_memory(pData, dataSize, &config, pDecoder);
     if (result != MAL_SUCCESS) {
         return result;
     }
 
-    return mal_decoder_init_wav(mal_decoder__on_read_memory, mal_decoder__on_seek_memory, NULL, pConfig, pDecoder);
+#ifdef MAL_HAS_WAV
+    return mal_decoder_init_wav__internal(&config, pDecoder);
+#else
+    return MAL_NO_BACKEND;
+#endif
 }
 
 mal_result mal_decoder_init_memory_flac(const void* pData, size_t dataSize, const mal_decoder_config* pConfig, mal_decoder* pDecoder)
 {
-    mal_result result = mal_decoder__preinit_memory(pData, dataSize, pConfig, pDecoder);
+    mal_decoder_config config = mal_decoder_config_init_copy(pConfig);  // Make sure the config is not NULL.
+
+    mal_result result = mal_decoder__preinit_memory(pData, dataSize, &config, pDecoder);
     if (result != MAL_SUCCESS) {
         return result;
     }
 
-    return mal_decoder_init_flac(mal_decoder__on_read_memory, mal_decoder__on_seek_memory, NULL, pConfig, pDecoder);
+#ifdef MAL_HAS_FLAC
+    return mal_decoder_init_flac__internal(&config, pDecoder);
+#else
+    return MAL_NO_BACKEND;
+#endif
 }
 
 mal_result mal_decoder_init_memory_vorbis(const void* pData, size_t dataSize, const mal_decoder_config* pConfig, mal_decoder* pDecoder)
 {
-    mal_result result = mal_decoder__preinit_memory(pData, dataSize, pConfig, pDecoder);
+    mal_decoder_config config = mal_decoder_config_init_copy(pConfig);  // Make sure the config is not NULL.
+
+    mal_result result = mal_decoder__preinit_memory(pData, dataSize, &config, pDecoder);
     if (result != MAL_SUCCESS) {
         return result;
     }
 
-    return mal_decoder_init_vorbis(mal_decoder__on_read_memory, mal_decoder__on_seek_memory, NULL, pConfig, pDecoder);
+#ifdef MAL_HAS_VORBIS
+    return mal_decoder_init_vorbis__internal(&config, pDecoder);
+#else
+    return MAL_NO_BACKEND;
+#endif
 }
 
 mal_result mal_decoder_init_memory_mp3(const void* pData, size_t dataSize, const mal_decoder_config* pConfig, mal_decoder* pDecoder)
 {
-    mal_result result = mal_decoder__preinit_memory(pData, dataSize, pConfig, pDecoder);
+    mal_decoder_config config = mal_decoder_config_init_copy(pConfig);  // Make sure the config is not NULL.
+
+    mal_result result = mal_decoder__preinit_memory(pData, dataSize, &config, pDecoder);
     if (result != MAL_SUCCESS) {
         return result;
     }
 
-    return mal_decoder_init_mp3(mal_decoder__on_read_memory, mal_decoder__on_seek_memory, NULL, pConfig, pDecoder);
+#ifdef MAL_HAS_MP3
+    return mal_decoder_init_mp3__internal(&config, pDecoder);
+#else
+    return MAL_NO_BACKEND;
+#endif
+}
+
+mal_result mal_decoder_init_memory_raw(const void* pData, size_t dataSize, const mal_decoder_config* pConfigIn, const mal_decoder_config* pConfigOut, mal_decoder* pDecoder)
+{
+    mal_decoder_config config = mal_decoder_config_init_copy(pConfigOut);  // Make sure the config is not NULL.
+
+    mal_result result = mal_decoder__preinit_memory(pData, dataSize, &config, pDecoder);
+    if (result != MAL_SUCCESS) {
+        return result;
+    }
+
+    return mal_decoder_init_raw__internal(pConfigIn, &config, pDecoder);
 }
 
 #ifndef MAL_NO_STDIO
 #include <stdio.h>
-#ifndef _MSC_VER
+#if !defined(_MSC_VER) && !defined(__DMC__)
 #include <strings.h>    // For strcasecmp().
 #endif
 
@@ -20157,7 +22060,7 @@ mal_bool32 mal_path_extension_equal(const char* path, const char* extension)
     const char* ext1 = extension;
     const char* ext2 = mal_path_extension(path);
 
-#ifdef _MSC_VER
+#if defined(_MSC_VER) || defined(__DMC__)
     return _stricmp(ext1, ext2) == 0;
 #else
     return strcasecmp(ext1, ext2) == 0;
@@ -20311,7 +22214,7 @@ mal_uint64 mal_decoder_read(mal_decoder* pDecoder, mal_uint64 frameCount, void* 
 {
     if (pDecoder == NULL) return 0;
 
-    return mal_dsp_read_ex(&pDecoder->dsp, frameCount, pFramesOut, MAL_TRUE, pDecoder->dsp.pUserData);
+    return mal_dsp_read(&pDecoder->dsp, frameCount, pFramesOut, pDecoder->dsp.pUserData);
 }
 
 mal_result mal_decoder_seek_to_frame(mal_decoder* pDecoder, mal_uint64 frameIndex)
@@ -20325,6 +22228,125 @@ mal_result mal_decoder_seek_to_frame(mal_decoder* pDecoder, mal_uint64 frameInde
     // Should never get here, but if we do it means onSeekToFrame was not set by the backend.
     return MAL_INVALID_ARGS;
 }
+
+
+mal_result mal_decoder__full_decode_and_uninit(mal_decoder* pDecoder, mal_decoder_config* pConfigOut, mal_uint64* pFrameCountOut, void** ppDataOut)
+{
+    mal_assert(pDecoder != NULL);
+    
+    mal_uint64 totalFrameCount = 0;
+    mal_uint64 bpf = mal_get_bytes_per_frame(pDecoder->outputFormat, pDecoder->outputChannels);
+
+    // The frame count is unknown until we try reading. Thus, we just run in a loop.
+    mal_uint64 dataCapInFrames = 0;
+    void* pDataOut = NULL;
+    for (;;) {
+        // Make room if there's not enough.
+        if (totalFrameCount == dataCapInFrames) {
+            mal_uint64 newDataCapInFrames = dataCapInFrames*2;
+            if (newDataCapInFrames == 0) {
+                newDataCapInFrames = 4096;
+            }
+
+            if ((newDataCapInFrames * bpf) > SIZE_MAX) {
+                mal_free(pDataOut);
+                return MAL_TOO_LARGE;
+            }
+
+
+            void* pNewDataOut = (void*)mal_realloc(pDataOut, (size_t)(newDataCapInFrames * bpf));
+            if (pNewDataOut == NULL) {
+                mal_free(pDataOut);
+                return MAL_OUT_OF_MEMORY;
+            }
+
+            dataCapInFrames = newDataCapInFrames;
+            pDataOut = pNewDataOut;
+        }
+
+        mal_uint64 frameCountToTryReading = dataCapInFrames - totalFrameCount;
+        mal_assert(frameCountToTryReading > 0);
+
+        mal_uint64 framesJustRead = mal_decoder_read(pDecoder, frameCountToTryReading, (mal_uint8*)pDataOut + (totalFrameCount * bpf));
+        totalFrameCount += framesJustRead;
+
+        if (framesJustRead < frameCountToTryReading) {
+            break;
+        }
+    }
+
+    
+    if (pConfigOut != NULL) {
+        pConfigOut->format = pDecoder->outputFormat;
+        pConfigOut->channels = pDecoder->outputChannels;
+        pConfigOut->sampleRate = pDecoder->outputSampleRate;
+        mal_channel_map_copy(pConfigOut->channelMap, pDecoder->outputChannelMap, pDecoder->outputChannels);
+    }
+
+    if (ppDataOut != NULL) {
+        *ppDataOut = pDataOut;
+    } else {
+        mal_free(pDataOut);
+    }
+
+    if (pFrameCountOut != NULL) {
+        *pFrameCountOut = totalFrameCount;
+    }
+
+    mal_decoder_uninit(pDecoder);
+    return MAL_SUCCESS;
+}
+
+#ifndef MAL_NO_STDIO
+mal_result mal_decode_file(const char* pFilePath, mal_decoder_config* pConfig, mal_uint64* pFrameCountOut, void** ppDataOut)
+{
+    if (pFrameCountOut != NULL) {
+        *pFrameCountOut = 0;
+    }
+    if (ppDataOut != NULL) {
+        *ppDataOut = NULL;
+    }
+
+    if (pFilePath == NULL) {
+        return MAL_INVALID_ARGS;
+    }
+
+    mal_decoder_config config = mal_decoder_config_init_copy(pConfig);
+    
+    mal_decoder decoder;
+    mal_result result = mal_decoder_init_file(pFilePath, &config, &decoder);
+    if (result != MAL_SUCCESS) {
+        return result;
+    }
+
+    return mal_decoder__full_decode_and_uninit(&decoder, pConfig, pFrameCountOut, ppDataOut);
+}
+#endif
+
+mal_result mal_decode_memory(const void* pData, size_t dataSize, mal_decoder_config* pConfig, mal_uint64* pFrameCountOut, void** ppDataOut)
+{
+    if (pFrameCountOut != NULL) {
+        *pFrameCountOut = 0;
+    }
+    if (ppDataOut != NULL) {
+        *ppDataOut = NULL;
+    }
+
+    if (pData == NULL || dataSize == 0) {
+        return MAL_INVALID_ARGS;
+    }
+
+    mal_decoder_config config = mal_decoder_config_init_copy(pConfig);
+    
+    mal_decoder decoder;
+    mal_result result = mal_decoder_init_memory(pData, dataSize, &config, &decoder);
+    if (result != MAL_SUCCESS) {
+        return result;
+    }
+
+    return mal_decoder__full_decode_and_uninit(&decoder, pConfig, pFrameCountOut, ppDataOut);
+}
+
 #endif  // MAL_NO_DECODING
 
 
@@ -20383,13 +22405,15 @@ mal_uint64 mal_sine_wave_read(mal_sine_wave* pSineWave, mal_uint64 count, float*
 }
 
 
-#endif  // MAL_IMPLEMENTATION
+#endif  // MINI_AL_IMPLEMENTATION
 
 
 // REVISION HISTORY
 // ================
 //
 // v0.x - 2018-xx-xx
+//   - Changed MAL_IMPLEMENTATION to MINI_AL_IMPLEMENTATION for consistency with other libraries. The old
+//     way is still supported for now, but you should update as it may be removed in the future.
 //   - API CHANGE: Replace device enumeration APIs. mal_enumerate_devices() has been replaced with
 //     mal_context_get_devices(). An additional low-level device enumration API has been introduced called
 //     mal_context_enumerate_devices() which uses a callback to report devices.
@@ -20415,6 +22439,7 @@ mal_uint64 mal_sine_wave_read(mal_sine_wave* pSineWave, mal_uint64 count, float*
 //     distributions of MinGW.
 //   - Remove dependency on audioclient.h for the WASAPI backend. This fixes build issues with some
 //     distributions of MinGW.
+//   - Add support for dithering to format conversion.
 //   - Add support for configuring the priority of the worker thread.
 //   - Add a sine wave generator.
 //   - Improve efficiency of sample rate conversion.
@@ -20427,6 +22452,8 @@ mal_uint64 mal_sine_wave_read(mal_sine_wave* pSineWave, mal_uint64 count, float*
 //   - Make some APIs more const-correct.
 //   - Fix errors with OpenAL detection.
 //   - Fix some memory leaks.
+//   - Fix a bug with opening decoders from memory.
+//   - Add support for decoding from raw PCM data (mal_decoder_init_raw(), etc.)
 //   - Miscellaneous bug fixes.
 //   - Documentation updates.
 //
