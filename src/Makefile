@@ -309,6 +309,7 @@ endif
 ifeq ($(PLATFORM),PLATFORM_ANDROID)
     # Compiler flags for arquitecture (only ARM, not ARM64)
     #CFLAGS += -march=armv7-a -mfloat-abi=softfp -mfpu=vfpv3-d16
+    CFLAGS += -target aarch64 -mfix-cortex-a53-835769 -mgeneral-regs-only
     # Compilation functions attributes options
     CFLAGS += -ffunction-sections -funwind-tables -fstack-protector-strong -fPIE -fPIC
     # Compiler options for the linker

@@ -29,13 +29,14 @@ RAYLIB_PATH ?= ..\..
 # NOTE: JAVA_HOME must be set to JDK
 ANDROID_HOME = C:/android-sdk
 ANDROID_NDK = C:/android-ndk
+ANDROID_API_VERSION = 21
 ANDROID_TOOLCHAIN = C:/android_toolchain_arm64_api21
 ANDROID_BUILD_TOOLS = $(ANDROID_HOME)/build-tools/26.0.2
 ANDROID_PLATFORM_TOOLS = $(ANDROID_HOME)/platform-tools
 JAVA_HOME = C:/PROGRA~1/Java/jdk1.8.0_144
 
 # Android project configuration variables
-PROJECT_NAME ?= raylib_game
+PROJECT_NAME ?= standard_game
 PROJECT_LIBRARY_NAME ?= main
 PROJECT_BUILD_PATH ?= android.$(PROJECT_NAME)
 PROJECT_RESOURCES_PATH ?= resources
@@ -76,13 +77,13 @@ AR = $(ANDROID_TOOLCHAIN)/bin/aarch64-linux-android-ar
 
 # Compiler flags for arquitecture
 #CFLAGS = -std=c99 -march=armv7-a -mfloat-abi=softfp -mfpu=vfpv3-d16 --> Old 32bit
-CFLAGS = -std=c99 -march=arm64-v8a
+CFLAGS = -std=c99 -target aarch64
 # Compilation functions attributes options
 CFLAGS += -ffunction-sections -funwind-tables -fstack-protector-strong -fPIC
 # Compiler options for the linker
 CFLAGS += -Wall -Wa,--noexecstack -Wformat -Werror=format-security -no-canonical-prefixes
 # Preprocessor macro definitions
-CFLAGS += -DANDROID -DPLATFORM_ANDROID -D__ANDROID_API__=16
+CFLAGS += -DANDROID -DPLATFORM_ANDROID -D__ANDROID_API__=21
 
 # Paths containing required header files
 INCLUDE_PATHS = -I. -I$(RAYLIB_PATH)/release/include -I$(RAYLIB_PATH)/src/external/android/native_app_glue
@@ -93,11 +94,11 @@ LDFLAGS += -Wl,--build-id -Wl,--no-undefined -Wl,-z,noexecstack -Wl,-z,relro -Wl
 # Force linking of library module to define symbol
 LDFLAGS += -u ANativeActivity_onCreate
 # Library paths containing required libs
-LDFLAGS += -L. -L$(PROJECT_BUILD_PATH)/obj -L$(PROJECT_BUILD_PATH)/lib/arm64-v8a
+LDFLAGS += -L. -L$(PROJECT_BUILD_PATH)/obj -L$(PROJECT_BUILD_PATH)/lib/arm64-v8a -L$(ANDROID_TOOLCHAIN)\sysroot\usr\lib
 
 # Define any libraries to link into executable
 # if you want to link libraries (libname.so or libname.a), use the -lname
-LDLIBS = -lraylib -lnative_app_glue -llog -landroid -lEGL -lGLESv2 -lOpenSLES -latomic -lc -lm -ldl
+LDLIBS = -static -lraylib -lnative_app_glue -llog -landroid -lEGL -lGLESv2 -lOpenSLES -lm -ldl -lc
 
 # Generate target objects list from PROJECT_SOURCE_FILES
 OBJS = $(patsubst %.c, $(PROJECT_BUILD_PATH)/obj/%.o, $(PROJECT_SOURCE_FILES))
@@ -211,7 +212,7 @@ generate_apk_keystore:
 # Config project package and resource using AndroidManifest.xml and res/values/strings.xml
 # NOTE: Generates resources file: src/com/$(APP_COMPANY_NAME)/$(APP_PRODUCT_NAME)/R.java
 config_project_package:
-	$(ANDROID_BUILD_TOOLS)/aapt package -f -m -S $(PROJECT_BUILD_PATH)/res -J $(PROJECT_BUILD_PATH)/src -M $(PROJECT_BUILD_PATH)/AndroidManifest.xml -I $(ANDROID_HOME)/platforms/android-16/android.jar
+	$(ANDROID_BUILD_TOOLS)/aapt package -f -m -S $(PROJECT_BUILD_PATH)/res -J $(PROJECT_BUILD_PATH)/src -M $(PROJECT_BUILD_PATH)/AndroidManifest.xml -I $(ANDROID_HOME)/platforms/android-$(ANDROID_API_VERSION)/android.jar
 
 # Compile native_app_glue code as static library: obj/libnative_app_glue.a
 compile_native_app_glue:
@@ -229,7 +230,7 @@ $(PROJECT_BUILD_PATH)/obj/%.o:%.c
     
 # Compile project .java code into .class (Java bytecode) 
 compile_project_class:
-	$(JAVA_HOME)/bin/javac -verbose -source 1.7 -target 1.7 -d $(PROJECT_BUILD_PATH)/obj -bootclasspath $(JAVA_HOME)/jre/lib/rt.jar -classpath $(ANDROID_HOME)/platforms/android-16/android.jar;$(PROJECT_BUILD_PATH)/obj -sourcepath $(PROJECT_BUILD_PATH)/src $(PROJECT_BUILD_PATH)/src/com/$(APP_COMPANY_NAME)/$(APP_PRODUCT_NAME)/R.java $(PROJECT_BUILD_PATH)/src/com/$(APP_COMPANY_NAME)/$(APP_PRODUCT_NAME)/NativeLoader.java
+	$(JAVA_HOME)/bin/javac -verbose -source 1.7 -target 1.7 -d $(PROJECT_BUILD_PATH)/obj -bootclasspath $(JAVA_HOME)/jre/lib/rt.jar -classpath $(ANDROID_HOME)/platforms/android-$(ANDROID_API_VERSION)/android.jar;$(PROJECT_BUILD_PATH)/obj -sourcepath $(PROJECT_BUILD_PATH)/src $(PROJECT_BUILD_PATH)/src/com/$(APP_COMPANY_NAME)/$(APP_PRODUCT_NAME)/R.java $(PROJECT_BUILD_PATH)/src/com/$(APP_COMPANY_NAME)/$(APP_PRODUCT_NAME)/NativeLoader.java
 
 # Compile .class files into Dalvik executable bytecode (.dex)
 # NOTE: Since Android 5.0, Dalvik interpreter (JIT) has been replaced by ART (AOT)
@@ -240,7 +241,7 @@ compile_project_class_dex:
 # NOTE: Requires compiled classes.dex and lib$(PROJECT_LIBRARY_NAME).so
 # NOTE: Use -A resources to define additional directory in which to find raw asset files
 create_project_apk_package:
-	$(ANDROID_BUILD_TOOLS)/aapt package -f -M $(PROJECT_BUILD_PATH)/AndroidManifest.xml -S $(PROJECT_BUILD_PATH)/res -A $(PROJECT_BUILD_PATH)/assets -I $(ANDROID_HOME)/platforms/android-16/android.jar -F $(PROJECT_BUILD_PATH)/bin/$(PROJECT_NAME).unsigned.apk $(PROJECT_BUILD_PATH)/bin
+	$(ANDROID_BUILD_TOOLS)/aapt package -f -M $(PROJECT_BUILD_PATH)/AndroidManifest.xml -S $(PROJECT_BUILD_PATH)/res -A $(PROJECT_BUILD_PATH)/assets -I $(ANDROID_HOME)/platforms/android-$(ANDROID_API_VERSION)/android.jar -F $(PROJECT_BUILD_PATH)/bin/$(PROJECT_NAME).unsigned.apk $(PROJECT_BUILD_PATH)/bin
 	cd $(PROJECT_BUILD_PATH) && $(ANDROID_BUILD_TOOLS)/aapt add bin/$(PROJECT_NAME).unsigned.apk lib/arm64-v8a/lib$(PROJECT_LIBRARY_NAME).so $(PROJECT_SHARED_LIBS)
 
 # Create signed APK package using generated Key: bin/$(PROJECT_NAME).signed.apk 
