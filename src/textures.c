@@ -567,8 +567,10 @@ void ExportImage(const char *fileName, Image image)
 {
     // NOTE: Getting Color array as RGBA unsigned char values
     unsigned char *imgData = (unsigned char *)GetImageData(image);
+    
+    // NOTE: SavePNG() not supported by some platforms: PLATFORM_WEB, PLATFORM_ANDROID
     SavePNG(fileName, imgData, image.width, image.height, 4);
-    // FIXME ^ this fails on PLATFORM_WEB, what should we do?
+
     free(imgData);
 }
 
