@@ -17,7 +17,7 @@
 *       Required types and functions are defined in the same module.
 *
 *   #define USE_OPENAL_BACKEND
-*       Use OpenAL Soft audio backend usage
+*       Use OpenAL Soft audio backend
 *
 *   #define SUPPORT_FILEFORMAT_WAV
 *   #define SUPPORT_FILEFORMAT_OGG
@@ -73,11 +73,6 @@
 *
 **********************************************************************************************/
 
-#include "config.h"
-#if !defined(USE_OPENAL_BACKEND)
-    #define USE_MINI_AL 1       // Set to 1 to use mini_al; 0 to use OpenAL.
-#endif
-
 #if defined(AUDIO_STANDALONE)
     #include "audio.h"
     #include <stdarg.h>         // Required for: va_list, va_start(), vfprintf(), va_end()
@@ -85,6 +80,10 @@
     #include "config.h"         // Defines module configuration flags
     #include "raylib.h"         // Declares module functions
     #include "utils.h"          // Required for: fopen() Android mapping
+#endif
+
+#if !defined(USE_OPENAL_BACKEND)
+    #define USE_MINI_AL 1       // Set to 1 to use mini_al; 0 to use OpenAL.
 #endif
 
 #include "external/mini_al.h"   // Implemented in mini_al.c. Cannot implement this here because it conflicts with Win32 APIs such as CloseWindow(), etc.
