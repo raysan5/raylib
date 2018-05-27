@@ -27,7 +27,7 @@ int main()
     Texture2D scarfy = LoadTexture("resources/scarfy.png");        // Texture loading
 
     Vector2 position = { 350.0f, 280.0f };
-    Rectangle frameRec = { 0, 0, scarfy.width/6, scarfy.height };
+    Rectangle frameRec = { 0.0f, 0.0f, (float)scarfy.width/6, (float)scarfy.height };
     int currentFrame = 0;
     
     int framesCounter = 0;
@@ -50,7 +50,7 @@ int main()
             
             if (currentFrame > 5) currentFrame = 0;
             
-            frameRec.x = currentFrame*scarfy.width/6;
+            frameRec.x = (float)currentFrame*(float)scarfy.width/6;
         }
         
         if (IsKeyPressed(KEY_RIGHT)) framesSpeed++;

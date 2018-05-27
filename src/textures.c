@@ -2022,9 +2022,9 @@ void DrawTextureV(Texture2D texture, Vector2 position, Color tint)
 // Draw a Texture2D with extended parameters
 void DrawTextureEx(Texture2D texture, Vector2 position, float rotation, float scale, Color tint)
 {
-    Rectangle sourceRec = { 0, 0, texture.width, texture.height };
-    Rectangle destRec = { position.x, position.y, texture.width*scale, texture.height*scale };
-    Vector2 origin = { 0, 0 };
+    Rectangle sourceRec = { 0.0f, 0.0f, (float)texture.width, (float)texture.height };
+    Rectangle destRec = { position.x, position.y, (float)texture.width*scale, (float)texture.height*scale };
+    Vector2 origin = { 0.0f, 0.0f };
 
     DrawTexturePro(texture, sourceRec, destRec, origin, rotation, tint);
 }
@@ -2032,8 +2032,8 @@ void DrawTextureEx(Texture2D texture, Vector2 position, float rotation, float sc
 // Draw a part of a texture (defined by a rectangle)
 void DrawTextureRec(Texture2D texture, Rectangle sourceRec, Vector2 position, Color tint)
 {
-    Rectangle destRec = { position.x, position.y, sourceRec.width, fabsf(sourceRec.height) };
-    Vector2 origin = { 0, 0 };
+    Rectangle destRec = { position.x, position.y, sourceRec.width, fabs(sourceRec.height) };
+    Vector2 origin = { 0.0f, 0.0f };
 
     DrawTexturePro(texture, sourceRec, destRec, origin, 0.0f, tint);
 }
@@ -2045,6 +2045,9 @@ void DrawTexturePro(Texture2D texture, Rectangle sourceRec, Rectangle destRec, V
     // Check if texture is valid
     if (texture.id > 0)
     {
+        float width = (float)texture.width;
+        float height = (float)texture.height;
+        
         if (sourceRec.width < 0) sourceRec.x -= sourceRec.width;
         if (sourceRec.height < 0) sourceRec.y -= sourceRec.height;
 
@@ -2060,19 +2063,19 @@ void DrawTexturePro(Texture2D texture, Rectangle sourceRec, Rectangle destRec, V
                 rlNormal3f(0.0f, 0.0f, 1.0f);                          // Normal vector pointing towards viewer
 
                 // Bottom-left corner for texture and quad
-                rlTexCoord2f(sourceRec.x/texture.width, sourceRec.y/texture.height);
+                rlTexCoord2f(sourceRec.x/width, sourceRec.y/height);
                 rlVertex2f(0.0f, 0.0f);
 
                 // Bottom-right corner for texture and quad
-                rlTexCoord2f(sourceRec.x/texture.width, (sourceRec.y + sourceRec.height)/texture.height);
+                rlTexCoord2f(sourceRec.x/width, (sourceRec.y + sourceRec.height)/height);
                 rlVertex2f(0.0f, destRec.height);
 
                 // Top-right corner for texture and quad
-                rlTexCoord2f((sourceRec.x + sourceRec.width)/texture.width, (sourceRec.y + sourceRec.height)/texture.height);
+                rlTexCoord2f((sourceRec.x + sourceRec.width)/width, (sourceRec.y + sourceRec.height)/height);
                 rlVertex2f(destRec.width, destRec.height);
 
                 // Top-left corner for texture and quad
-                rlTexCoord2f((sourceRec.x + sourceRec.width)/texture.width, sourceRec.y/texture.height);
+                rlTexCoord2f((sourceRec.x + sourceRec.width)/width, sourceRec.y/height);
                 rlVertex2f(destRec.width, 0.0f);
             rlEnd();
         rlPopMatrix();
