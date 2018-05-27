@@ -77,7 +77,7 @@ AR = $(ANDROID_TOOLCHAIN)/bin/aarch64-linux-android-ar
 
 # Compiler flags for arquitecture
 #CFLAGS = -std=c99 -march=armv7-a -mfloat-abi=softfp -mfpu=vfpv3-d16 --> Old 32bit
-CFLAGS = -std=c99 -target aarch64
+CFLAGS = -std=c99 -target aarch64 -mfix-cortex-a53-835769
 # Compilation functions attributes options
 CFLAGS += -ffunction-sections -funwind-tables -fstack-protector-strong -fPIC
 # Compiler options for the linker
@@ -98,7 +98,7 @@ LDFLAGS += -L. -L$(PROJECT_BUILD_PATH)/obj -L$(PROJECT_BUILD_PATH)/lib/arm64-v8a
 
 # Define any libraries to link into executable
 # if you want to link libraries (libname.so or libname.a), use the -lname
-LDLIBS = -static -lraylib -lnative_app_glue -llog -landroid -lEGL -lGLESv2 -lOpenSLES -lm -ldl -lc
+LDLIBS = -lm -lc -lraylib -llog -landroid -lEGL -lGLESv2 -lOpenSLES -ldl
 
 # Generate target objects list from PROJECT_SOURCE_FILES
 OBJS = $(patsubst %.c, $(PROJECT_BUILD_PATH)/obj/%.o, $(PROJECT_SOURCE_FILES))
@@ -112,7 +112,6 @@ all: create_temp_project_dirs \
      generate_android_manifest \
      generate_apk_keystore \
      config_project_package \
-     compile_native_app_glue \
      compile_project_code \
      compile_project_class \
      compile_project_class_dex \

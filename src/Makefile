@@ -309,14 +309,14 @@ endif
 ifeq ($(PLATFORM),PLATFORM_ANDROID)
     # Compiler flags for arquitecture (only ARM, not ARM64)
     #CFLAGS += -march=armv7-a -mfloat-abi=softfp -mfpu=vfpv3-d16
-    CFLAGS += -target aarch64 -mfix-cortex-a53-835769 -mgeneral-regs-only
+    CFLAGS += -target aarch64 -mfix-cortex-a53-835769
     # Compilation functions attributes options
     CFLAGS += -ffunction-sections -funwind-tables -fstack-protector-strong -fPIE -fPIC
     # Compiler options for the linker
     # -Werror=format-security
     CFLAGS += -Wa,--noexecstack -Wformat -no-canonical-prefixes
     # Preprocessor macro definitions
-    CFLAGS += -DANDROID -DPLATFORM_ANDROID -D__ANDROID_API__=21
+    CFLAGS += -DANDROID -DPLATFORM_ANDROID -D__ANDROID_API__=21 -DMAL_NO_OSS
 endif
 
 # Define required compilation flags for raylib SHARED lib
@@ -414,6 +414,10 @@ ifeq ($(INCLUDE_AUDIO_MODULE),TRUE)
     ifeq ($(USE_OPENAL_BACKEND),FALSE)
         OBJS += mini_al.o
     endif
+endif
+
+ifeq ($(PLATFORM),PLATFORM_ANDROID)
+    OBJS += external/android/native_app_glue/android_native_app_glue.o
 endif
 
 # Default target entry
