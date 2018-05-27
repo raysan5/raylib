@@ -3948,7 +3948,7 @@ static void SetStereoConfig(VrDeviceInfo hmd)
 
     // Compute distortion scale parameters
     // NOTE: To get lens max radius, lensShift must be normalized to [-1..1]
-    float lensRadius = fabsf(-1.0f - 4.0f*lensShift);
+    float lensRadius = fabs(-1.0f - 4.0f*lensShift);
     float lensRadiusSq = lensRadius*lensRadius;
     float distortionScale = hmd.lensDistortionValues[0] +
                             hmd.lensDistortionValues[1]*lensRadiusSq +

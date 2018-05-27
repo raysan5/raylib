@@ -648,8 +648,8 @@ bool CheckCollisionRecs(Rectangle rec1, Rectangle rec2)
 {
     bool collision = false;
 
-    float dx = fabsf((rec1.x + rec1.width/2) - (rec2.x + rec2.width/2));
-    float dy = fabsf((rec1.y + rec1.height/2) - (rec2.y + rec2.height/2));
+    float dx = fabs((rec1.x + rec1.width/2) - (rec2.x + rec2.width/2));
+    float dy = fabs((rec1.y + rec1.height/2) - (rec2.y + rec2.height/2));
 
     if ((dx <= (rec1.width/2 + rec2.width/2)) && ((dy <= (rec1.height/2 + rec2.height/2)))) collision = true;
 
@@ -678,8 +678,8 @@ bool CheckCollisionCircleRec(Vector2 center, float radius, Rectangle rec)
     int recCenterX = rec.x + rec.width/2;
     int recCenterY = rec.y + rec.height/2;
     
-    float dx = fabsf(center.x - recCenterX);
-    float dy = fabsf(center.y - recCenterY);
+    float dx = fabs(center.x - recCenterX);
+    float dy = fabs(center.y - recCenterY);
 
     if (dx > (rec.width/2.0f + radius)) { return false; }
     if (dy > (rec.height/2.0f + radius)) { return false; }
@@ -700,8 +700,8 @@ Rectangle GetCollisionRec(Rectangle rec1, Rectangle rec2)
 
     if (CheckCollisionRecs(rec1, rec2))
     {
-        float dxx = fabsf(rec1.x - rec2.x);
-        float dyy = fabsf(rec1.y - rec2.y);
+        float dxx = fabs(rec1.x - rec2.x);
+        float dyy = fabs(rec1.y - rec2.y);
 
         if (rec1.x <= rec2.x)
         {

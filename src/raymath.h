@@ -296,17 +296,17 @@ RMDEF Vector3 Vector3Perpendicular(Vector3 v)
 {
     Vector3 result = { 0 };
 
-    float min = fabsf(v.x);
+    float min = fabs(v.x);
     Vector3 cardinalAxis = {1.0f, 0.0f, 0.0f};
 
-    if (fabsf(v.y) < min)
+    if (fabs(v.y) < min)
     {
-        min = fabsf(v.y);
+        min = fabs(v.y);
         Vector3 tmp = {0.0f, 1.0f, 0.0f};
         cardinalAxis = tmp;
     }
 
-    if (fabsf(v.z) < min)
+    if (fabs(v.z) < min)
     {
         Vector3 tmp = {0.0f, 0.0f, 1.0f};
         cardinalAxis = tmp;
