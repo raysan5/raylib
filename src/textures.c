@@ -814,13 +814,13 @@ void ImageFormat(Image *image, int newFormat)
 
             free(pixels);
             pixels = NULL;
+            
             // In case original image had mipmaps, generate mipmaps for formated image
             // NOTE: Original mipmaps are replaced by new ones, if custom mipmaps were used, they are lost
             if (image->mipmaps > 1)
             {
                 image->mipmaps = 1;
-        assert(image->data != NULL);
-                ImageMipmaps(image);
+                if (image->data != NULL) ImageMipmaps(image);
             }
         }
         else TraceLog(LOG_WARNING, "Image data format is compressed, can not be converted");
