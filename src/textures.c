@@ -819,7 +819,7 @@ void ImageFormat(Image *image, int newFormat)
             if (image->mipmaps > 1)
             {
                 image->mipmaps = 1;
-		assert(image->data != NULL);
+        assert(image->data != NULL);
                 ImageMipmaps(image);
             }
         }
