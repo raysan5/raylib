@@ -664,6 +664,7 @@ void ImageFormat(Image *image, int newFormat)
         if ((image->format < COMPRESSED_DXT1_RGB) && (newFormat < COMPRESSED_DXT1_RGB))
         {
             Color *pixels = GetImageData(*image);
+            //Vector4 *pixels = GetImageDataNormalized(*image);     // TODO: Support 8->32bit channels
 
             free(image->data);      // WARNING! We loose mipmaps data --> Regenerated at the end...
             image->data = NULL;
@@ -1064,6 +1065,20 @@ void ImageResizeNN(Image *image,int newWidth,int newHeight)
 
     free(output);
     free(pixels);
+}
+
+// Resize canvas, using anchor point and color filling
+void ImageResizeCanvas(Image *image, int newWidth,int newHeight, int anchor, Color color)
+{
+    Image imTemp = GenImageColor(newWidth, newHeight, color);
+    Rectangle rec = { 0, 0, image->width, image->height };
+    
+    // TODO: consider anchor properly
+    
+    ImageDraw(&imTemp, *image, rec, rec);
+    ImageFormat(&imTemp, image->format);
+    UnloadImage(*image);
+    *image = imTemp;
 }
 
 // Generate all mipmap levels for a provided image
