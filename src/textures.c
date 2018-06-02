@@ -1067,18 +1067,58 @@ void ImageResizeNN(Image *image,int newWidth,int newHeight)
     free(pixels);
 }
 
-// Resize canvas, using anchor point and color filling
-void ImageResizeCanvas(Image *image, int newWidth,int newHeight, int anchor, Color color)
+// Resize canvas and fill with color
+// NOTE: Resize offset is relative to the top-left corner of the original image
+void ImageResizeCanvas(Image *image, int newWidth,int newHeight, int offsetX, int offsetY, Color color)
 {
     Image imTemp = GenImageColor(newWidth, newHeight, color);
-    Rectangle rec = { 0, 0, image->width, image->height };
+    Rectangle srcRec = { 0, 0, image->width, image->height };
+    Rectangle dstRec = { offsetX, offsetY, srcRec.width, srcRec.height };
     
-    // TODO: consider anchor properly
-    
-    ImageDraw(&imTemp, *image, rec, rec);
-    ImageFormat(&imTemp, image->format);
-    UnloadImage(*image);
-    *image = imTemp;
+    if ((newWidth > image->width) && (newHeight > image->height))
+    {
+        // Consider anchor properly
+        /*
+        switch (anchor)
+        {
+            case 0: break;      // TOP-LEFT corner --> dstRec = srcRec
+            case 1: dstRec.x = (newWidth - image->width)/2; break;   // TOP side
+            case 2: dstRec.x = newWidth - image->width; break;       // TOP-RIGHT corner
+            case 3: dstRec.y = (newHeight - image->height)/2; break; // LEFT side
+            case 4:             // CENTER
+            {
+                dstRec.x = (newWidth - image->width)/2;
+                dstRec.y = (newHeight - image->height)/2;
+            } break;
+            case 5:             // RIGHT side
+            {
+                dstRec.x = newWidth - image->width;
+                dstRec.y = (newHeight - image->height)/2;
+            } break;
+            case 6: dstRec.y = newHeight - image->height; break;     // BOTTOM-LEFT corner
+            case 7:             // BOTTOM side
+            {
+                dstRec.x = (newWidth - image->width)/2;
+                dstRec.y = newHeight - image->height;
+            } break;
+            case 8:             // BOTTOM-RIGHT side
+            {
+                dstRec.x = newWidth - image->width;
+                dstRec.y = newHeight - image->height;
+            } break;
+            default: break;
+        }
+        */
+        ImageDraw(&imTemp, *image, srcRec, dstRec);
+        ImageFormat(&imTemp, image->format);
+        UnloadImage(*image);
+        *image = imTemp;
+    }
+    else
+    {
+        // TODO: ImageCrop(), define proper cropping rectangle
+    }
+
 }
 
 // Generate all mipmap levels for a provided image
