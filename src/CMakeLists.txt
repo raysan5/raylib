@@ -31,7 +31,7 @@ if(NOT glfw3_FOUND AND "${PLATFORM}" MATCHES "Desktop")
   add_subdirectory(external/glfw)
   include_directories(external/glfw/include)
 
-  list(APPEND raylib_sources $<TARGET_OBJECTS:glfw_objlib>)
+  list(APPEND raylib_sources $<TARGET_OBJECTS:glfw>)
 endif()
 
 include(utils)
