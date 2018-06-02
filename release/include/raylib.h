@@ -92,7 +92,7 @@
 #define FLAG_SHOW_LOGO              1       // Set to show raylib logo at startup
 #define FLAG_FULLSCREEN_MODE        2       // Set to run program in fullscreen
 #define FLAG_WINDOW_RESIZABLE       4       // Set to allow resizable window
-#define FLAG_WINDOW_DECORATED       8       // Set to show window decoration (frame and buttons)
+#define FLAG_WINDOW_UNDECORATED     8       // Set to disable window decoration (frame and buttons)
 #define FLAG_WINDOW_TRANSPARENT    16       // Set to allow transparent window
 #define FLAG_MSAA_4X_HINT          32       // Set to try enabling MSAA 4X
 #define FLAG_VSYNC_HINT            64       // Set to try enabling V-Sync on GPU
