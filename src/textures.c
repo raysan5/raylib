@@ -1118,7 +1118,6 @@ void ImageResizeCanvas(Image *image, int newWidth,int newHeight, int offsetX, in
     {
         // TODO: ImageCrop(), define proper cropping rectangle
     }
-
 }
 
 // Generate all mipmap levels for a provided image
