@@ -1539,7 +1539,7 @@ void ImageDrawTextEx(Image *dst, Vector2 position, Font font, const char *text, 
 void ImageFlipVertical(Image *image)
 {
     Color *srcPixels = GetImageData(*image);
-    Color *dstPixels = (Color *)malloc(sizeof(Color)*image->width*image->height);
+    Color *dstPixels = (Color *)malloc(image->width*image->height*sizeof(Color));
 
     for (int y = 0; y < image->height; y++)
     {
@@ -1563,7 +1563,7 @@ void ImageFlipVertical(Image *image)
 void ImageFlipHorizontal(Image *image)
 {
     Color *srcPixels = GetImageData(*image);
-    Color *dstPixels = (Color *)malloc(sizeof(Color)*image->width*image->height);
+    Color *dstPixels = (Color *)malloc(image->width*image->height*sizeof(Color));
 
     for (int y = 0; y < image->height; y++)
     {
@@ -1581,6 +1581,58 @@ void ImageFlipHorizontal(Image *image)
     free(dstPixels);
 
     image->data = processed.data;
+}
+
+// Rotate image clockwise 90deg
+void ImageRotateCW(Image *image)
+{
+    Color *srcPixels = GetImageData(*image);
+    Color *rotPixels = (Color *)malloc(image->width*image->height*sizeof(Color));
+
+    for (int y = 0; y < image->height; y++)
+    {
+        for (int x = 0; x < image->width; x++)
+        {
+            rotPixels[x*image->height + (image->height - y - 1)] = srcPixels[y*image->width + x];
+        }
+    }
+
+    Image processed = LoadImageEx(rotPixels, image->height, image->width);
+    ImageFormat(&processed, image->format);
+    UnloadImage(*image);
+
+    free(srcPixels);
+    free(rotPixels);
+
+    image->data = processed.data;
+    image->width = processed.width;
+    image->height = processed.height;
+}
+
+// Rotate image counter-clockwise 90deg
+void ImageRotateCCW(Image *image)
+{
+    Color *srcPixels = GetImageData(*image);
+    Color *rotPixels = (Color *)malloc(image->width*image->height*sizeof(Color));
+
+    for (int y = 0; y < image->height; y++)
+    {
+        for (int x = 0; x < image->width; x++)
+        {
+            rotPixels[x*image->height + y] = srcPixels[y*image->width + (image->width - x - 1)];
+        }
+    }
+
+    Image processed = LoadImageEx(rotPixels, image->height, image->width);
+    ImageFormat(&processed, image->format);
+    UnloadImage(*image);
+
+    free(srcPixels);
+    free(rotPixels);
+
+    image->data = processed.data;
+    image->width = processed.width;
+    image->height = processed.height;
 }
 
 // Modify image color: tint
