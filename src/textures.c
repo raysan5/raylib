@@ -1075,40 +1075,10 @@ void ImageResizeCanvas(Image *image, int newWidth,int newHeight, int offsetX, in
     Rectangle srcRec = { 0, 0, image->width, image->height };
     Rectangle dstRec = { offsetX, offsetY, srcRec.width, srcRec.height };
     
+    // TODO: Review different scaling situations
+    
     if ((newWidth > image->width) && (newHeight > image->height))
     {
-        // Consider anchor properly
-        /*
-        switch (anchor)
-        {
-            case 0: break;      // TOP-LEFT corner --> dstRec = srcRec
-            case 1: dstRec.x = (newWidth - image->width)/2; break;   // TOP side
-            case 2: dstRec.x = newWidth - image->width; break;       // TOP-RIGHT corner
-            case 3: dstRec.y = (newHeight - image->height)/2; break; // LEFT side
-            case 4:             // CENTER
-            {
-                dstRec.x = (newWidth - image->width)/2;
-                dstRec.y = (newHeight - image->height)/2;
-            } break;
-            case 5:             // RIGHT side
-            {
-                dstRec.x = newWidth - image->width;
-                dstRec.y = (newHeight - image->height)/2;
-            } break;
-            case 6: dstRec.y = newHeight - image->height; break;     // BOTTOM-LEFT corner
-            case 7:             // BOTTOM side
-            {
-                dstRec.x = (newWidth - image->width)/2;
-                dstRec.y = newHeight - image->height;
-            } break;
-            case 8:             // BOTTOM-RIGHT side
-            {
-                dstRec.x = newWidth - image->width;
-                dstRec.y = newHeight - image->height;
-            } break;
-            default: break;
-        }
-        */
         ImageDraw(&imTemp, *image, srcRec, dstRec);
         ImageFormat(&imTemp, image->format);
         UnloadImage(*image);
@@ -1325,7 +1295,6 @@ void ImageDraw(Image *dst, Image src, Rectangle srcRec, Rectangle dstRec)
     {
         srcRec.height = src.height - srcRec.y;
         TraceLog(LOG_WARNING, "Source rectangle height out of bounds, rescaled height: %i", srcRec.height);
-        cropRequired = true;
     }
 
     Image srcCopy = ImageCopy(src);     // Make a copy of source image to work with it
@@ -1337,10 +1306,7 @@ void ImageDraw(Image *dst, Image src, Rectangle srcRec, Rectangle dstRec)
     if (dstRec.y < 0) dstRec.y = 0;
 
     // Scale source image in case destination rec size is different than source rec size
-    if ((dstRec.width != srcRec.width) || (dstRec.height != srcRec.height))
-    {
-        ImageResize(&srcCopy, dstRec.width, dstRec.height);
-    }
+    if ((dstRec.width != srcRec.width) || (dstRec.height != srcRec.height)) ImageResize(&srcCopy, dstRec.width, dstRec.height);
 
     if ((dstRec.x + dstRec.width) > dst->width)
     {
