@@ -1982,10 +1982,9 @@ Image GenImageCellular(int width, int height, int tileSize)
 
 // Generate image: font atlas. Requires TTF as input file.
 // NOTE: Generated atlas packs characters in order and rectangles are defined with magenta borders (?)
+// NOTE: Characters info data should be allocated by user for charsCount
 Image GenImageFont(const char *fileName, int fontSize, int charsCount, int *fontChars, CharInfo *chars)
 {
-    CharInfo *chars;    // Characters info (if required)
-    
     // TODO.
 }
 #endif      // SUPPORT_IMAGE_GENERATION
