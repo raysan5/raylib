@@ -405,7 +405,6 @@ void UnloadRenderTexture(RenderTexture2D target)
 }
 
 // Get pixel data from image in the form of Color struct array
-// TODO: Support float pixel data retrieval
 Color *GetImageData(Image image)
 {
     Color *pixels = (Color *)malloc(image.width*image.height*sizeof(Color));
@@ -479,10 +478,145 @@ Color *GetImageData(Image image)
 
                 k += 3;
             } break;
+            case UNCOMPRESSED_R32:
+            {
+                TraceLog(LOG_WARNING, "32bit pixel format converted to 8bit per channel"); break;
+                
+                pixels[i].r = (unsigned char)(((float *)image.data)[k]*255.0f);
+                pixels[i].g = 0;
+                pixels[i].b = 0;
+                pixels[i].a = 255;
+                
+            } break;
+            case UNCOMPRESSED_R32G32B32:
+            {
+                pixels[i].r = (unsigned char)(((float *)image.data)[k]*255.0f);
+                pixels[i].g = (unsigned char)(((float *)image.data)[k + 1]*255.0f);
+                pixels[i].b = (unsigned char)(((float *)image.data)[k + 2]*255.0f);
+                pixels[i].a = 255;
+                
+                k += 3;
+            }
+            case UNCOMPRESSED_R32G32B32A32:
+            {
+                pixels[i].r = (unsigned char)(((float *)image.data)[k]*255.0f);
+                pixels[i].g = (unsigned char)(((float *)image.data)[k]*255.0f);
+                pixels[i].b = (unsigned char)(((float *)image.data)[k]*255.0f);
+                pixels[i].a = (unsigned char)(((float *)image.data)[k]*255.0f);
+                
+                k += 4;
+            }
             default: TraceLog(LOG_WARNING, "Format not supported for pixel data retrieval"); break;
         }
     }
 
+    return pixels;
+}
+
+// Get pixel data from image as Vector4 array (float normalized)
+Vector4 *GetImageDataNormalized(Image image)
+{
+    Vector4 *pixels = (Vector4 *)malloc(image.width*image.height*sizeof(Vector4));
+    
+    for (int i = 0, k = 0; i < image.width*image.height; i++)
+    {
+        switch (image.format)
+        {
+            case UNCOMPRESSED_GRAYSCALE:
+            {
+                pixels[i].x = (float)((unsigned char *)image.data)[i]/255.0f;
+                pixels[i].y = (float)((unsigned char *)image.data)[i]/255.0f;
+                pixels[i].z = (float)((unsigned char *)image.data)[i]/255.0f;
+                pixels[i].w = 1.0f;
+
+            } break;
+            case UNCOMPRESSED_GRAY_ALPHA:
+            {
+                pixels[i].x = (float)((unsigned char *)image.data)[k]/255.0f;
+                pixels[i].y = (float)((unsigned char *)image.data)[k]/255.0f;
+                pixels[i].z = (float)((unsigned char *)image.data)[k]/255.0f;
+                pixels[i].w = (float)((unsigned char *)image.data)[k + 1]/255.0f;
+
+                k += 2;
+            } break;
+            case UNCOMPRESSED_R5G5B5A1:
+            {
+                unsigned short pixel = ((unsigned short *)image.data)[i];
+
+                pixels[i].x = (float)((pixel & 0b1111100000000000) >> 11)*(1.0f/31);
+                pixels[i].y = (float)((pixel & 0b0000011111000000) >> 6)*(1.0f/31);
+                pixels[i].z = (float)((pixel & 0b0000000000111110) >> 1)*(1.0f/31);
+                pixels[i].w = ((pixel & 0b0000000000000001) == 0) ? 0.0f : 1.0f;
+
+            } break;
+            case UNCOMPRESSED_R5G6B5:
+            {
+                unsigned short pixel = ((unsigned short *)image.data)[i];
+
+                pixels[i].x = (float)((pixel & 0b1111100000000000) >> 11)*(1.0f/31);
+                pixels[i].y = (float)((pixel & 0b0000011111100000) >> 5)*(1.0f/63);
+                pixels[i].z = (float)(pixel & 0b0000000000011111)*(1.0f/31);
+                pixels[i].w = 1.0f;
+
+            } break;
+            case UNCOMPRESSED_R4G4B4A4:
+            {
+                unsigned short pixel = ((unsigned short *)image.data)[i];
+
+                pixels[i].x = (float)((pixel & 0b1111000000000000) >> 12)*(1.0f/15);
+                pixels[i].y = (float)((pixel & 0b0000111100000000) >> 8)*(1.0f/15);
+                pixels[i].z = (float)((pixel & 0b0000000011110000) >> 4)*(1.0f/15);
+                pixels[i].w = (float)(pixel & 0b0000000000001111)*(1.0f/15);
+
+            } break;
+            case UNCOMPRESSED_R8G8B8A8:
+            {
+                pixels[i].x = (float)((unsigned char *)image.data)[k]/255.0f;
+                pixels[i].y = (float)((unsigned char *)image.data)[k + 1]/255.0f;
+                pixels[i].z = (float)((unsigned char *)image.data)[k + 2]/255.0f;
+                pixels[i].w = (float)((unsigned char *)image.data)[k + 3]/255.0f;
+
+                k += 4;
+            } break;
+            case UNCOMPRESSED_R8G8B8:
+            {
+                pixels[i].x = (float)((unsigned char *)image.data)[k]/255.0f;
+                pixels[i].y = (float)((unsigned char *)image.data)[k + 1]/255.0f;
+                pixels[i].z = (float)((unsigned char *)image.data)[k + 2]/255.0f;
+                pixels[i].w = 1.0f;
+
+                k += 3;
+            } break;
+            case UNCOMPRESSED_R32:
+            {
+                pixels[i].x = ((float *)image.data)[k];
+                pixels[i].y = 0.0f;
+                pixels[i].z = 0.0f;
+                pixels[i].w = 1.0f;
+                
+            } break;
+            case UNCOMPRESSED_R32G32B32:
+            {
+                pixels[i].x = ((float *)image.data)[k];
+                pixels[i].y = ((float *)image.data)[k + 1];
+                pixels[i].z = ((float *)image.data)[k + 2];
+                pixels[i].w = 1.0f;
+                
+                k += 3;
+            }
+            case UNCOMPRESSED_R32G32B32A32:
+            {
+                pixels[i].x = ((float *)image.data)[k];
+                pixels[i].y = ((float *)image.data)[k + 1];
+                pixels[i].z = ((float *)image.data)[k + 2];
+                pixels[i].w = ((float *)image.data)[k + 3];
+                
+                k += 4;
+            }
+            default: TraceLog(LOG_WARNING, "Format not supported for pixel data retrieval"); break;
+        }
+    }
+    
     return pixels;
 }
 
@@ -663,8 +797,7 @@ void ImageFormat(Image *image, int newFormat)
     {
         if ((image->format < COMPRESSED_DXT1_RGB) && (newFormat < COMPRESSED_DXT1_RGB))
         {
-            Color *pixels = GetImageData(*image);
-            //Vector4 *pixels = GetImageDataNormalized(*image);     // TODO: Support 8->32bit channels
+            Vector4 *pixels = GetImageDataNormalized(*image);     // Supports 8 to 32 bit per channel
 
             free(image->data);      // WARNING! We loose mipmaps data --> Regenerated at the end...
             image->data = NULL;
@@ -680,7 +813,7 @@ void ImageFormat(Image *image, int newFormat)
 
                     for (int i = 0; i < image->width*image->height; i++)
                     {
-                        ((unsigned char *)image->data)[i] = (unsigned char)((float)pixels[i].r*0.299f + (float)pixels[i].g*0.587f + (float)pixels[i].b*0.114f);
+                        ((unsigned char *)image->data)[i] = (unsigned char)((pixels[i].x*0.299f + pixels[i].y*0.587f + pixels[i].z*0.114f)*255.0f);
                     }
 
                 } break;
@@ -690,8 +823,8 @@ void ImageFormat(Image *image, int newFormat)
 
                    for (int i = 0; i < image->width*image->height*2; i += 2, k++)
                     {
-                        ((unsigned char *)image->data)[i] = (unsigned char)((float)pixels[k].r*0.299f + (float)pixels[k].g*0.587f + (float)pixels[k].b*0.114f);
-                        ((unsigned char *)image->data)[i + 1] = pixels[k].a;
+                        ((unsigned char *)image->data)[i] = (unsigned char)((pixels[k].x*0.299f + (float)pixels[k].y*0.587f + (float)pixels[k].z*0.114f)*255.0f);
+                        ((unsigned char *)image->data)[i + 1] = (unsigned char)(pixels[k].w*255.0f);
                     }
 
                 } break;
@@ -705,9 +838,9 @@ void ImageFormat(Image *image, int newFormat)
 
                     for (int i = 0; i < image->width*image->height; i++)
                     {
-                        r = (unsigned char)(round((float)pixels[i].r*31.0f/255));
-                        g = (unsigned char)(round((float)pixels[i].g*63.0f/255));
-                        b = (unsigned char)(round((float)pixels[i].b*31.0f/255));
+                        r = (unsigned char)(round(pixels[i].x*31.0f));
+                        g = (unsigned char)(round(pixels[i].y*63.0f));
+                        b = (unsigned char)(round(pixels[i].z*31.0f));
 
                         ((unsigned short *)image->data)[i] = (unsigned short)r << 11 | (unsigned short)g << 5 | (unsigned short)b;
                     }
@@ -719,9 +852,9 @@ void ImageFormat(Image *image, int newFormat)
 
                     for (int i = 0, k = 0; i < image->width*image->height*3; i += 3, k++)
                     {
-                        ((unsigned char *)image->data)[i] = pixels[k].r;
-                        ((unsigned char *)image->data)[i + 1] = pixels[k].g;
-                        ((unsigned char *)image->data)[i + 2] = pixels[k].b;
+                        ((unsigned char *)image->data)[i] = (unsigned char)(pixels[k].x*255.0f);
+                        ((unsigned char *)image->data)[i + 1] = (unsigned char)(pixels[k].y*255.0f);
+                        ((unsigned char *)image->data)[i + 2] = (unsigned char)(pixels[k].z*255.0f);
                     }
                 } break;
                 case UNCOMPRESSED_R5G5B5A1:
@@ -737,10 +870,10 @@ void ImageFormat(Image *image, int newFormat)
 
                     for (int i = 0; i < image->width*image->height; i++)
                     {
-                        r = (unsigned char)(round((float)pixels[i].r*31.0f/255));
-                        g = (unsigned char)(round((float)pixels[i].g*31.0f/255));
-                        b = (unsigned char)(round((float)pixels[i].b*31.0f/255));
-                        a = (pixels[i].a > ALPHA_THRESHOLD) ? 1 : 0;
+                        r = (unsigned char)(round(pixels[i].x*31.0f));
+                        g = (unsigned char)(round(pixels[i].y*31.0f));
+                        b = (unsigned char)(round(pixels[i].z*31.0f));
+                        a = (pixels[i].w > ((float)ALPHA_THRESHOLD/255.0f)) ? 1 : 0;
 
                         ((unsigned short *)image->data)[i] = (unsigned short)r << 11 | (unsigned short)g << 6 | (unsigned short)b << 1 | (unsigned short)a;
                     }
@@ -757,10 +890,10 @@ void ImageFormat(Image *image, int newFormat)
 
                     for (int i = 0; i < image->width*image->height; i++)
                     {
-                        r = (unsigned char)(round((float)pixels[i].r*15.0f/255));
-                        g = (unsigned char)(round((float)pixels[i].g*15.0f/255));
-                        b = (unsigned char)(round((float)pixels[i].b*15.0f/255));
-                        a = (unsigned char)(round((float)pixels[i].a*15.0f/255));
+                        r = (unsigned char)(round(pixels[i].x*15.0f));
+                        g = (unsigned char)(round(pixels[i].y*15.0f));
+                        b = (unsigned char)(round(pixels[i].z*15.0f));
+                        a = (unsigned char)(round(pixels[i].w*15.0f));
 
                         ((unsigned short *)image->data)[i] = (unsigned short)r << 12 | (unsigned short)g << 8 | (unsigned short)b << 4 | (unsigned short)a;
                     }
@@ -772,19 +905,21 @@ void ImageFormat(Image *image, int newFormat)
 
                     for (int i = 0, k = 0; i < image->width*image->height*4; i += 4, k++)
                     {
-                        ((unsigned char *)image->data)[i] = pixels[k].r;
-                        ((unsigned char *)image->data)[i + 1] = pixels[k].g;
-                        ((unsigned char *)image->data)[i + 2] = pixels[k].b;
-                        ((unsigned char *)image->data)[i + 3] = pixels[k].a;
+                        ((unsigned char *)image->data)[i] = (unsigned char)(pixels[k].x*255.0f);
+                        ((unsigned char *)image->data)[i + 1] = (unsigned char)(pixels[k].y*255.0f);
+                        ((unsigned char *)image->data)[i + 2] = (unsigned char)(pixels[k].z*255.0f);
+                        ((unsigned char *)image->data)[i + 3] = (unsigned char)(pixels[k].w*255.0f);
                     }
                 } break;
                 case UNCOMPRESSED_R32:
                 {
+                    // WARNING: Image is converted to GRAYSCALE eqeuivalent 32bit
+                    
                     image->data = (float *)malloc(image->width*image->height*sizeof(float));
 
                     for (int i = 0; i < image->width*image->height; i++)
                     {
-                        ((float *)image->data)[i] = (float)((float)pixels[i].r*0.299f/255.0f + (float)pixels[i].g*0.587f/255.0f + (float)pixels[i].b*0.114f/255.0f);
+                        ((float *)image->data)[i] = (float)(pixels[i].x*0.299f + pixels[i].y*0.587f + pixels[i].z*0.114f);
                     }
                 } break;
                 case UNCOMPRESSED_R32G32B32:
@@ -793,9 +928,9 @@ void ImageFormat(Image *image, int newFormat)
 
                     for (int i = 0, k = 0; i < image->width*image->height*3; i += 3, k++)
                     {
-                        ((float *)image->data)[i] = (float)pixels[k].r/255.0f;
-                        ((float *)image->data)[i + 1] = (float)pixels[k].g/255.0f;
-                        ((float *)image->data)[i + 2] = (float)pixels[k].b/255.0f;
+                        ((float *)image->data)[i] = pixels[k].x;
+                        ((float *)image->data)[i + 1] = pixels[k].y;
+                        ((float *)image->data)[i + 2] = pixels[k].z;
                     }
                 } break;
                 case UNCOMPRESSED_R32G32B32A32:
@@ -804,10 +939,10 @@ void ImageFormat(Image *image, int newFormat)
 
                     for (int i = 0, k = 0; i < image->width*image->height*4; i += 4, k++)
                     {
-                        ((float *)image->data)[i] = (float)pixels[k].r/255.0f;
-                        ((float *)image->data)[i + 1] = (float)pixels[k].g/255.0f;
-                        ((float *)image->data)[i + 2] = (float)pixels[k].b/255.0f;
-                        ((float *)image->data)[i + 3] = (float)pixels[k].a/255.0f;
+                        ((float *)image->data)[i] = pixels[k].x;
+                        ((float *)image->data)[i + 1] = pixels[k].y;
+                        ((float *)image->data)[i + 2] = pixels[k].z;
+                        ((float *)image->data)[i + 3] = pixels[k].w;
                     }
                 } break;
                 default: break;
