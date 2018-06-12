@@ -409,104 +409,110 @@ Color *GetImageData(Image image)
 {
     Color *pixels = (Color *)malloc(image.width*image.height*sizeof(Color));
 
-    for (int i = 0, k = 0; i < image.width*image.height; i++)
+    if (image.format >= COMPRESSED_DXT1_RGB) TraceLog(LOG_WARNING, "Pixel data retrieval not supported for compressed image formats");
+    else
     {
-        switch (image.format)
+        if ((image.format == UNCOMPRESSED_R32) ||
+            (image.format == UNCOMPRESSED_R32G32B32) ||
+            (image.format == UNCOMPRESSED_R32G32B32A32)) TraceLog(LOG_WARNING, "32bit pixel format converted to 8bit per channel");
+                    
+        for (int i = 0, k = 0; i < image.width*image.height; i++)
         {
-            case UNCOMPRESSED_GRAYSCALE:
+            switch (image.format)
             {
-                pixels[i].r = ((unsigned char *)image.data)[i];
-                pixels[i].g = ((unsigned char *)image.data)[i];
-                pixels[i].b = ((unsigned char *)image.data)[i];
-                pixels[i].a = 255;
+                case UNCOMPRESSED_GRAYSCALE:
+                {
+                    pixels[i].r = ((unsigned char *)image.data)[i];
+                    pixels[i].g = ((unsigned char *)image.data)[i];
+                    pixels[i].b = ((unsigned char *)image.data)[i];
+                    pixels[i].a = 255;
 
-            } break;
-            case UNCOMPRESSED_GRAY_ALPHA:
-            {
-                pixels[i].r = ((unsigned char *)image.data)[k];
-                pixels[i].g = ((unsigned char *)image.data)[k];
-                pixels[i].b = ((unsigned char *)image.data)[k];
-                pixels[i].a = ((unsigned char *)image.data)[k + 1];
+                } break;
+                case UNCOMPRESSED_GRAY_ALPHA:
+                {
+                    pixels[i].r = ((unsigned char *)image.data)[k];
+                    pixels[i].g = ((unsigned char *)image.data)[k];
+                    pixels[i].b = ((unsigned char *)image.data)[k];
+                    pixels[i].a = ((unsigned char *)image.data)[k + 1];
 
-                k += 2;
-            } break;
-            case UNCOMPRESSED_R5G5B5A1:
-            {
-                unsigned short pixel = ((unsigned short *)image.data)[i];
+                    k += 2;
+                } break;
+                case UNCOMPRESSED_R5G5B5A1:
+                {
+                    unsigned short pixel = ((unsigned short *)image.data)[i];
 
-                pixels[i].r = (unsigned char)((float)((pixel & 0b1111100000000000) >> 11)*(255/31));
-                pixels[i].g = (unsigned char)((float)((pixel & 0b0000011111000000) >> 6)*(255/31));
-                pixels[i].b = (unsigned char)((float)((pixel & 0b0000000000111110) >> 1)*(255/31));
-                pixels[i].a = (unsigned char)((pixel & 0b0000000000000001)*255);
+                    pixels[i].r = (unsigned char)((float)((pixel & 0b1111100000000000) >> 11)*(255/31));
+                    pixels[i].g = (unsigned char)((float)((pixel & 0b0000011111000000) >> 6)*(255/31));
+                    pixels[i].b = (unsigned char)((float)((pixel & 0b0000000000111110) >> 1)*(255/31));
+                    pixels[i].a = (unsigned char)((pixel & 0b0000000000000001)*255);
 
-            } break;
-            case UNCOMPRESSED_R5G6B5:
-            {
-                unsigned short pixel = ((unsigned short *)image.data)[i];
+                } break;
+                case UNCOMPRESSED_R5G6B5:
+                {
+                    unsigned short pixel = ((unsigned short *)image.data)[i];
 
-                pixels[i].r = (unsigned char)((float)((pixel & 0b1111100000000000) >> 11)*(255/31));
-                pixels[i].g = (unsigned char)((float)((pixel & 0b0000011111100000) >> 5)*(255/63));
-                pixels[i].b = (unsigned char)((float)(pixel & 0b0000000000011111)*(255/31));
-                pixels[i].a = 255;
+                    pixels[i].r = (unsigned char)((float)((pixel & 0b1111100000000000) >> 11)*(255/31));
+                    pixels[i].g = (unsigned char)((float)((pixel & 0b0000011111100000) >> 5)*(255/63));
+                    pixels[i].b = (unsigned char)((float)(pixel & 0b0000000000011111)*(255/31));
+                    pixels[i].a = 255;
 
-            } break;
-            case UNCOMPRESSED_R4G4B4A4:
-            {
-                unsigned short pixel = ((unsigned short *)image.data)[i];
+                } break;
+                case UNCOMPRESSED_R4G4B4A4:
+                {
+                    unsigned short pixel = ((unsigned short *)image.data)[i];
 
-                pixels[i].r = (unsigned char)((float)((pixel & 0b1111000000000000) >> 12)*(255/15));
-                pixels[i].g = (unsigned char)((float)((pixel & 0b0000111100000000) >> 8)*(255/15));
-                pixels[i].b = (unsigned char)((float)((pixel & 0b0000000011110000) >> 4)*(255/15));
-                pixels[i].a = (unsigned char)((float)(pixel & 0b0000000000001111)*(255/15));
+                    pixels[i].r = (unsigned char)((float)((pixel & 0b1111000000000000) >> 12)*(255/15));
+                    pixels[i].g = (unsigned char)((float)((pixel & 0b0000111100000000) >> 8)*(255/15));
+                    pixels[i].b = (unsigned char)((float)((pixel & 0b0000000011110000) >> 4)*(255/15));
+                    pixels[i].a = (unsigned char)((float)(pixel & 0b0000000000001111)*(255/15));
 
-            } break;
-            case UNCOMPRESSED_R8G8B8A8:
-            {
-                pixels[i].r = ((unsigned char *)image.data)[k];
-                pixels[i].g = ((unsigned char *)image.data)[k + 1];
-                pixels[i].b = ((unsigned char *)image.data)[k + 2];
-                pixels[i].a = ((unsigned char *)image.data)[k + 3];
+                } break;
+                case UNCOMPRESSED_R8G8B8A8:
+                {
+                    pixels[i].r = ((unsigned char *)image.data)[k];
+                    pixels[i].g = ((unsigned char *)image.data)[k + 1];
+                    pixels[i].b = ((unsigned char *)image.data)[k + 2];
+                    pixels[i].a = ((unsigned char *)image.data)[k + 3];
 
-                k += 4;
-            } break;
-            case UNCOMPRESSED_R8G8B8:
-            {
-                pixels[i].r = (unsigned char)((unsigned char *)image.data)[k];
-                pixels[i].g = (unsigned char)((unsigned char *)image.data)[k + 1];
-                pixels[i].b = (unsigned char)((unsigned char *)image.data)[k + 2];
-                pixels[i].a = 255;
+                    k += 4;
+                } break;
+                case UNCOMPRESSED_R8G8B8:
+                {
+                    pixels[i].r = (unsigned char)((unsigned char *)image.data)[k];
+                    pixels[i].g = (unsigned char)((unsigned char *)image.data)[k + 1];
+                    pixels[i].b = (unsigned char)((unsigned char *)image.data)[k + 2];
+                    pixels[i].a = 255;
 
-                k += 3;
-            } break;
-            case UNCOMPRESSED_R32:
-            {
-                TraceLog(LOG_WARNING, "32bit pixel format converted to 8bit per channel"); break;
-                
-                pixels[i].r = (unsigned char)(((float *)image.data)[k]*255.0f);
-                pixels[i].g = 0;
-                pixels[i].b = 0;
-                pixels[i].a = 255;
-                
-            } break;
-            case UNCOMPRESSED_R32G32B32:
-            {
-                pixels[i].r = (unsigned char)(((float *)image.data)[k]*255.0f);
-                pixels[i].g = (unsigned char)(((float *)image.data)[k + 1]*255.0f);
-                pixels[i].b = (unsigned char)(((float *)image.data)[k + 2]*255.0f);
-                pixels[i].a = 255;
-                
-                k += 3;
+                    k += 3;
+                } break;
+                case UNCOMPRESSED_R32:
+                {
+                    pixels[i].r = (unsigned char)(((float *)image.data)[k]*255.0f);
+                    pixels[i].g = 0;
+                    pixels[i].b = 0;
+                    pixels[i].a = 255;
+                    
+                } break;
+                case UNCOMPRESSED_R32G32B32:
+                {
+                    pixels[i].r = (unsigned char)(((float *)image.data)[k]*255.0f);
+                    pixels[i].g = (unsigned char)(((float *)image.data)[k + 1]*255.0f);
+                    pixels[i].b = (unsigned char)(((float *)image.data)[k + 2]*255.0f);
+                    pixels[i].a = 255;
+                    
+                    k += 3;
+                }
+                case UNCOMPRESSED_R32G32B32A32:
+                {
+                    pixels[i].r = (unsigned char)(((float *)image.data)[k]*255.0f);
+                    pixels[i].g = (unsigned char)(((float *)image.data)[k]*255.0f);
+                    pixels[i].b = (unsigned char)(((float *)image.data)[k]*255.0f);
+                    pixels[i].a = (unsigned char)(((float *)image.data)[k]*255.0f);
+                    
+                    k += 4;
+                }
+                default: break;
             }
-            case UNCOMPRESSED_R32G32B32A32:
-            {
-                pixels[i].r = (unsigned char)(((float *)image.data)[k]*255.0f);
-                pixels[i].g = (unsigned char)(((float *)image.data)[k]*255.0f);
-                pixels[i].b = (unsigned char)(((float *)image.data)[k]*255.0f);
-                pixels[i].a = (unsigned char)(((float *)image.data)[k]*255.0f);
-                
-                k += 4;
-            }
-            default: TraceLog(LOG_WARNING, "Format not supported for pixel data retrieval"); break;
         }
     }
 
@@ -518,102 +524,106 @@ Vector4 *GetImageDataNormalized(Image image)
 {
     Vector4 *pixels = (Vector4 *)malloc(image.width*image.height*sizeof(Vector4));
     
-    for (int i = 0, k = 0; i < image.width*image.height; i++)
+    if (image.format >= COMPRESSED_DXT1_RGB) TraceLog(LOG_WARNING, "Pixel data retrieval not supported for compressed image formats");
+    else
     {
-        switch (image.format)
+        for (int i = 0, k = 0; i < image.width*image.height; i++)
         {
-            case UNCOMPRESSED_GRAYSCALE:
+            switch (image.format)
             {
-                pixels[i].x = (float)((unsigned char *)image.data)[i]/255.0f;
-                pixels[i].y = (float)((unsigned char *)image.data)[i]/255.0f;
-                pixels[i].z = (float)((unsigned char *)image.data)[i]/255.0f;
-                pixels[i].w = 1.0f;
+                case UNCOMPRESSED_GRAYSCALE:
+                {
+                    pixels[i].x = (float)((unsigned char *)image.data)[i]/255.0f;
+                    pixels[i].y = (float)((unsigned char *)image.data)[i]/255.0f;
+                    pixels[i].z = (float)((unsigned char *)image.data)[i]/255.0f;
+                    pixels[i].w = 1.0f;
 
-            } break;
-            case UNCOMPRESSED_GRAY_ALPHA:
-            {
-                pixels[i].x = (float)((unsigned char *)image.data)[k]/255.0f;
-                pixels[i].y = (float)((unsigned char *)image.data)[k]/255.0f;
-                pixels[i].z = (float)((unsigned char *)image.data)[k]/255.0f;
-                pixels[i].w = (float)((unsigned char *)image.data)[k + 1]/255.0f;
+                } break;
+                case UNCOMPRESSED_GRAY_ALPHA:
+                {
+                    pixels[i].x = (float)((unsigned char *)image.data)[k]/255.0f;
+                    pixels[i].y = (float)((unsigned char *)image.data)[k]/255.0f;
+                    pixels[i].z = (float)((unsigned char *)image.data)[k]/255.0f;
+                    pixels[i].w = (float)((unsigned char *)image.data)[k + 1]/255.0f;
 
-                k += 2;
-            } break;
-            case UNCOMPRESSED_R5G5B5A1:
-            {
-                unsigned short pixel = ((unsigned short *)image.data)[i];
+                    k += 2;
+                } break;
+                case UNCOMPRESSED_R5G5B5A1:
+                {
+                    unsigned short pixel = ((unsigned short *)image.data)[i];
 
-                pixels[i].x = (float)((pixel & 0b1111100000000000) >> 11)*(1.0f/31);
-                pixels[i].y = (float)((pixel & 0b0000011111000000) >> 6)*(1.0f/31);
-                pixels[i].z = (float)((pixel & 0b0000000000111110) >> 1)*(1.0f/31);
-                pixels[i].w = ((pixel & 0b0000000000000001) == 0) ? 0.0f : 1.0f;
+                    pixels[i].x = (float)((pixel & 0b1111100000000000) >> 11)*(1.0f/31);
+                    pixels[i].y = (float)((pixel & 0b0000011111000000) >> 6)*(1.0f/31);
+                    pixels[i].z = (float)((pixel & 0b0000000000111110) >> 1)*(1.0f/31);
+                    pixels[i].w = ((pixel & 0b0000000000000001) == 0) ? 0.0f : 1.0f;
 
-            } break;
-            case UNCOMPRESSED_R5G6B5:
-            {
-                unsigned short pixel = ((unsigned short *)image.data)[i];
+                } break;
+                case UNCOMPRESSED_R5G6B5:
+                {
+                    unsigned short pixel = ((unsigned short *)image.data)[i];
 
-                pixels[i].x = (float)((pixel & 0b1111100000000000) >> 11)*(1.0f/31);
-                pixels[i].y = (float)((pixel & 0b0000011111100000) >> 5)*(1.0f/63);
-                pixels[i].z = (float)(pixel & 0b0000000000011111)*(1.0f/31);
-                pixels[i].w = 1.0f;
+                    pixels[i].x = (float)((pixel & 0b1111100000000000) >> 11)*(1.0f/31);
+                    pixels[i].y = (float)((pixel & 0b0000011111100000) >> 5)*(1.0f/63);
+                    pixels[i].z = (float)(pixel & 0b0000000000011111)*(1.0f/31);
+                    pixels[i].w = 1.0f;
 
-            } break;
-            case UNCOMPRESSED_R4G4B4A4:
-            {
-                unsigned short pixel = ((unsigned short *)image.data)[i];
+                } break;
+                case UNCOMPRESSED_R4G4B4A4:
+                {
+                    unsigned short pixel = ((unsigned short *)image.data)[i];
 
-                pixels[i].x = (float)((pixel & 0b1111000000000000) >> 12)*(1.0f/15);
-                pixels[i].y = (float)((pixel & 0b0000111100000000) >> 8)*(1.0f/15);
-                pixels[i].z = (float)((pixel & 0b0000000011110000) >> 4)*(1.0f/15);
-                pixels[i].w = (float)(pixel & 0b0000000000001111)*(1.0f/15);
+                    pixels[i].x = (float)((pixel & 0b1111000000000000) >> 12)*(1.0f/15);
+                    pixels[i].y = (float)((pixel & 0b0000111100000000) >> 8)*(1.0f/15);
+                    pixels[i].z = (float)((pixel & 0b0000000011110000) >> 4)*(1.0f/15);
+                    pixels[i].w = (float)(pixel & 0b0000000000001111)*(1.0f/15);
 
-            } break;
-            case UNCOMPRESSED_R8G8B8A8:
-            {
-                pixels[i].x = (float)((unsigned char *)image.data)[k]/255.0f;
-                pixels[i].y = (float)((unsigned char *)image.data)[k + 1]/255.0f;
-                pixels[i].z = (float)((unsigned char *)image.data)[k + 2]/255.0f;
-                pixels[i].w = (float)((unsigned char *)image.data)[k + 3]/255.0f;
+                } break;
+                case UNCOMPRESSED_R8G8B8A8:
+                {
+                    pixels[i].x = (float)((unsigned char *)image.data)[k]/255.0f;
+                    pixels[i].y = (float)((unsigned char *)image.data)[k + 1]/255.0f;
+                    pixels[i].z = (float)((unsigned char *)image.data)[k + 2]/255.0f;
+                    pixels[i].w = (float)((unsigned char *)image.data)[k + 3]/255.0f;
 
-                k += 4;
-            } break;
-            case UNCOMPRESSED_R8G8B8:
-            {
-                pixels[i].x = (float)((unsigned char *)image.data)[k]/255.0f;
-                pixels[i].y = (float)((unsigned char *)image.data)[k + 1]/255.0f;
-                pixels[i].z = (float)((unsigned char *)image.data)[k + 2]/255.0f;
-                pixels[i].w = 1.0f;
+                    k += 4;
+                } break;
+                case UNCOMPRESSED_R8G8B8:
+                {
+                    pixels[i].x = (float)((unsigned char *)image.data)[k]/255.0f;
+                    pixels[i].y = (float)((unsigned char *)image.data)[k + 1]/255.0f;
+                    pixels[i].z = (float)((unsigned char *)image.data)[k + 2]/255.0f;
+                    pixels[i].w = 1.0f;
 
-                k += 3;
-            } break;
-            case UNCOMPRESSED_R32:
-            {
-                pixels[i].x = ((float *)image.data)[k];
-                pixels[i].y = 0.0f;
-                pixels[i].z = 0.0f;
-                pixels[i].w = 1.0f;
-                
-            } break;
-            case UNCOMPRESSED_R32G32B32:
-            {
-                pixels[i].x = ((float *)image.data)[k];
-                pixels[i].y = ((float *)image.data)[k + 1];
-                pixels[i].z = ((float *)image.data)[k + 2];
-                pixels[i].w = 1.0f;
-                
-                k += 3;
+                    k += 3;
+                } break;
+                case UNCOMPRESSED_R32:
+                {
+                    pixels[i].x = ((float *)image.data)[k];
+                    pixels[i].y = 0.0f;
+                    pixels[i].z = 0.0f;
+                    pixels[i].w = 1.0f;
+                    
+                } break;
+                case UNCOMPRESSED_R32G32B32:
+                {
+                    pixels[i].x = ((float *)image.data)[k];
+                    pixels[i].y = ((float *)image.data)[k + 1];
+                    pixels[i].z = ((float *)image.data)[k + 2];
+                    pixels[i].w = 1.0f;
+                    
+                    k += 3;
+                }
+                case UNCOMPRESSED_R32G32B32A32:
+                {
+                    pixels[i].x = ((float *)image.data)[k];
+                    pixels[i].y = ((float *)image.data)[k + 1];
+                    pixels[i].z = ((float *)image.data)[k + 2];
+                    pixels[i].w = ((float *)image.data)[k + 3];
+                    
+                    k += 4;
+                }
+                default: break;
             }
-            case UNCOMPRESSED_R32G32B32A32:
-            {
-                pixels[i].x = ((float *)image.data)[k];
-                pixels[i].y = ((float *)image.data)[k + 1];
-                pixels[i].z = ((float *)image.data)[k + 2];
-                pixels[i].w = ((float *)image.data)[k + 3];
-                
-                k += 4;
-            }
-            default: TraceLog(LOG_WARNING, "Format not supported for pixel data retrieval"); break;
         }
     }
     
@@ -792,7 +802,7 @@ void ImageToPOT(Image *image, Color fillColor)
 // Convert image data to desired format
 void ImageFormat(Image *image, int newFormat)
 {
-    if (image->format != newFormat)
+    if ((newFormat != 0) && (image->format != newFormat))
     {
         if ((image->format < COMPRESSED_DXT1_RGB) && (newFormat < COMPRESSED_DXT1_RGB))
         {
@@ -2119,7 +2129,11 @@ Image GenImageCellular(int width, int height, int tileSize)
 // NOTE: Characters info data should be allocated by user for charsCount
 Image GenImageFont(const char *fileName, int fontSize, int charsCount, int *fontChars, CharInfo *chars)
 {
+    Image image = { 0 };
+    
     // TODO.
+    
+    return image;
 }
 #endif      // SUPPORT_IMAGE_GENERATION
 
