@@ -92,7 +92,9 @@ if (${CMAKE_C_COMPILER_ID} STREQUAL GNU OR ${CMAKE_C_COMPILER_ID} STREQUAL Clang
         COMPILE_FLAGS -Wdeclaration-after-statement)
 endif()
 
-add_library(glfw ${glfw_SOURCES} ${glfw_HEADERS})
+add_library(glfw_objlib OBJECT ${glfw_SOURCES} ${glfw_HEADERS})
+add_library(glfw $<TARGET_OBJECTS:glfw_objlib>)
+
 set_target_properties(glfw PROPERTIES
                       OUTPUT_NAME ${GLFW_LIB_NAME}
                       VERSION ${GLFW_VERSION}
@@ -100,11 +102,11 @@ set_target_properties(glfw PROPERTIES
                       POSITION_INDEPENDENT_CODE ON
                       FOLDER "GLFW3")
 
-target_compile_definitions(glfw PRIVATE _GLFW_USE_CONFIG_H)
-target_include_directories(glfw PUBLIC
+target_compile_definitions(glfw_objlib PRIVATE _GLFW_USE_CONFIG_H)
+target_include_directories(glfw_objlib PUBLIC
                            "$<BUILD_INTERFACE:${GLFW_SOURCE_DIR}/include>"
                            "$<INSTALL_INTERFACE:$<INSTALL_PREFIX>/include>")
-target_include_directories(glfw PRIVATE
+target_include_directories(glfw_objlib PRIVATE
                            "${GLFW_SOURCE_DIR}/src"
                            "${GLFW_BINARY_DIR}/src"
                            ${glfw_INCLUDE_DIRS})
@@ -113,11 +115,11 @@ target_include_directories(glfw PRIVATE
 # the inclusion of stddef.h (by glfw3.h), which is itself included before
 # win32_platform.h.  We define them here until a saner solution can be found
 # NOTE: MinGW-w64 and Visual C++ do /not/ need this hack.
-target_compile_definitions(glfw PRIVATE
+target_compile_definitions(glfw_objlib PRIVATE
                            "$<$<BOOL:${MINGW}>:UNICODE;WINVER=0x0501>")
 
 # Enable a reasonable set of warnings (no, -Wextra is not reasonable)
-target_compile_options(glfw PRIVATE
+target_compile_options(glfw_objlib PRIVATE
                        "$<$<C_COMPILER_ID:Clang>:-Wall>"
                        "$<$<C_COMPILER_ID:GNU>:-Wall>")
 
@@ -135,7 +137,7 @@ if (BUILD_SHARED_LIBS)
         endif()
     elseif (APPLE)
         # Add -fno-common to work around a bug in Apple's GCC
-        target_compile_options(glfw PRIVATE "-fno-common")
+        target_compile_options(glfw_objlib PRIVATE "-fno-common")
 
         set_target_properties(glfw PROPERTIES
                               INSTALL_NAME_DIR "lib${LIB_SUFFIX}")
@@ -161,4 +163,3 @@ if (GLFW_INSTALL)
             ARCHIVE DESTINATION "lib${LIB_SUFFIX}"
             LIBRARY DESTINATION "lib${LIB_SUFFIX}")
 endif()
-
