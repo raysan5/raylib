@@ -780,8 +780,7 @@ void ImageToPOT(Image *image, Color fillColor)
 
         int format = image->format;         // Store image data format to reconvert later
 
-        // TODO: Image width and height changes... do we want to store new values or keep the old ones?
-        // NOTE: Issues when using image.width and image.height for sprite animations...
+        // NOTE: Image size changes, new width and height
         *image = LoadImageEx(pixelsPOT, potWidth, potHeight);
 
         free(pixelsPOT);                    // Free POT pixels data
