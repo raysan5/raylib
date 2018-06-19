@@ -828,9 +828,9 @@ void ImageFormat(Image *image, int newFormat)
                 } break;
                 case UNCOMPRESSED_GRAY_ALPHA:
                 {
-                   image->data = (unsigned char *)malloc(image->width*image->height*2*sizeof(unsigned char));
+                    image->data = (unsigned char *)malloc(image->width*image->height*2*sizeof(unsigned char));
 
-                   for (int i = 0; i < image->width*image->height*2; i += 2, k++)
+                    for (int i = 0; i < image->width*image->height*2; i += 2, k++)
                     {
                         ((unsigned char *)image->data)[i] = (unsigned char)((pixels[k].x*0.299f + (float)pixels[k].y*0.587f + (float)pixels[k].z*0.114f)*255.0f);
                         ((unsigned char *)image->data)[i + 1] = (unsigned char)(pixels[k].w*255.0f);
