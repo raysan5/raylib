@@ -36,12 +36,12 @@ int main()
     Shader shdrCubemap = LoadShader("resources/shaders/cubemap.vs", "resources/shaders/cubemap.fs");
     SetShaderValuei(shdrCubemap, GetShaderLocation(shdrCubemap, "equirectangularMap"), (int[1]){ 0 }, 1);
     
-    Texture2D texHDR = LoadTexture("resources/pinetree.hdr");
+    Texture2D texHDR = LoadTexture("resources/dresden_square.hdr");
     skybox.material.maps[MAP_CUBEMAP].texture = GenTextureCubemap(shdrCubemap, texHDR, 512);
     
     UnloadShader(shdrCubemap);  // Cubemap generation shader not required any more
     
-    SetCameraMode(camera, CAMERA_ORBITAL);  // Set an orbital camera mode
+    SetCameraMode(camera, CAMERA_FIRST_PERSON);  // Set a first person camera mode
 
     SetTargetFPS(60);                       // Set our game to run at 60 frames-per-second
     //--------------------------------------------------------------------------------------
