@@ -284,7 +284,7 @@ Font LoadFont(const char *fileName)
         font.baseSize = DEFAULT_TTF_FONTSIZE;
         font.charsCount = DEFAULT_TTF_NUMCHARS;
         font.chars = LoadFontData(fileName, font.baseSize, NULL, font.charsCount, false);
-        Image atlas = GenImageFontAtlas(font.chars, font.charsCount, font.baseSize, 0);
+        Image atlas = GenImageFontAtlas(font.chars, font.charsCount, font.baseSize, 4, 0);
         font.texture = LoadTextureFromImage(atlas);
         UnloadImage(atlas);
     }
@@ -398,20 +398,12 @@ CharInfo *LoadFontData(const char *fileName, int fontSize, int *fontChars, int c
 
 // Generate image font atlas using chars info
 // NOTE: Packing method: 0-Default, 1-Skyline
-Image GenImageFontAtlas(CharInfo *chars, int charsCount, int fontSize, int packing)
+Image GenImageFontAtlas(CharInfo *chars, int charsCount, int fontSize, int padding, int packMethod)
 {
     Image atlas = { 0 };
     
-    int padding = 10;
-    
-    // Calculate atlas texture size based on fontSize
-    // NOTE: Font texture size is predicted (being as much conservative as possible)
-    // Predictive method consist of supposing same number of chars by line-column (sqrtf)
-    // and a maximum character width of 3/4 of fontSize... it worked ok with all my tests...
-    //float guessSize = ceilf((float)fontSize*3/4)*ceilf(sqrtf((float)charsCount));
-    //int textureSize = (int)powf(2, ceilf(logf((float)guessSize)/logf(2)));  // Calculate next POT
-    
-    // TODO: TEXTURE SIZE NOT GOOD ENOUGH! -> Calculate chars area -> guess texture size?
+    // Calculate texture size based on required pixel area
+    // NOTE: Texture is forced to be squared and POT
     float requiredArea = 0;
     for (int i = 0; i < charsCount; i++) requiredArea += ((chars[i].rec.width + 2*padding)*(chars[i].rec.height + 2*padding));
     float guessSize = sqrtf(requiredArea)*1.25f;
@@ -423,7 +415,7 @@ Image GenImageFontAtlas(CharInfo *chars, int charsCount, int fontSize, int packi
     atlas.format = UNCOMPRESSED_GRAYSCALE;
     atlas.mipmaps = 1;
 
-    if (packing == 0)   // Use basic packing algorythm
+    if (packMethod == 0)   // Use basic packing algorythm
     {
         int offsetX = padding;
         int offsetY = padding;
@@ -455,7 +447,7 @@ Image GenImageFontAtlas(CharInfo *chars, int charsCount, int fontSize, int packi
             }
         }
     }
-    else if (packing == 1)  // Use Skyline rect packing algorythm 
+    else if (packMethod == 1)  // Use Skyline rect packing algorythm (stb_pack_rect)
     {
         stbrp_context *context = (stbrp_context *)malloc(sizeof(*context));
         stbrp_node *nodes = (stbrp_node *)malloc(charsCount*sizeof(*nodes));
@@ -498,7 +490,7 @@ Image GenImageFontAtlas(CharInfo *chars, int charsCount, int fontSize, int packi
     }
     
     // Convert image data from GRAYSCALE to GRAY_ALPHA
-    //ImageAlphaMask(&atlas, atlas);    // WARNING: Not working in this case, requires manual operation
+    // WARNING: ImageAlphaMask(&atlas, atlas) does not work in this case, requires manual operation
     unsigned char *dataGrayAlpha = (unsigned char *)malloc(textureSize*textureSize*sizeof(unsigned char)*2); // Two channels
 
     for (int i = 0, k = 0; i < atlas.width*atlas.height; i++, k += 2)
