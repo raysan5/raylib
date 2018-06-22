@@ -54,8 +54,8 @@ if(${PLATFORM} MATCHES "Desktop")
 endif()
 
 # Ugly crutch. Temporary workaround for #551
-if("${CMAKE_SYSTEM_NAME}" MATCHES "(Free|Net|Open)BSD")
-    link_directories("/usr/local/lib")
+if("${CMAKE_SYSTEM_NAME}" MATCHES "(Free|Net|Open)BSD|DragonFly")
+    link_directories("${CMAKE_INSTALL_PREFIX}/lib")
 endif()
 
 if(CMAKE_SYSTEM_NAME STREQUAL Linux)
