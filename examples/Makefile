@@ -76,7 +76,16 @@ ifeq ($(PLATFORM),PLATFORM_DESKTOP)
             PLATFORM_OS=LINUX
         endif
         ifeq ($(UNAMEOS),FreeBSD)
-            PLATFORM_OS=FREEBSD
+            PLATFORM_OS=BSD
+        endif
+        ifeq ($(UNAMEOS),OpenBSD)
+            PLATFORM_OS=BSD
+        endif
+        ifeq ($(UNAMEOS),NetBSD)
+            PLATFORM_OS=BSD
+        endif
+        ifeq ($(UNAMEOS),DragonFly)
+            PLATFORM_OS=BSD
         endif
         ifeq ($(UNAMEOS),Darwin)
             PLATFORM_OS=OSX
@@ -129,8 +138,8 @@ ifeq ($(PLATFORM),PLATFORM_DESKTOP)
     ifeq ($(PLATFORM_OS),OSX)
         RAYLIB_RELEASE_PATH = $(RAYLIB_PATH)/release/libs/osx
     endif
-    ifeq ($(PLATFORM_OS),FREEBSD)
-        RAYLIB_RELEASE_PATH = $(RAYLIB_PATH)/release/libs/freebsd
+    ifeq ($(PLATFORM_OS),BSD)
+        RAYLIB_RELEASE_PATH = $(RAYLIB_PATH)/release/libs/bsd
     endif
 endif
 ifeq ($(PLATFORM),PLATFORM_RPI)
@@ -163,8 +172,8 @@ ifeq ($(PLATFORM),PLATFORM_DESKTOP)
         # OSX default compiler
         CC = clang
     endif
-    ifeq ($(PLATFORM_OS),FREEBSD)
-        # FreeBSD default compiler
+    ifeq ($(PLATFORM_OS),BSD)
+        # FreeBSD, OpenBSD, NetBSD, DragonFly default compiler
         CC = clang
     endif
 endif
@@ -254,7 +263,7 @@ ifeq ($(PLATFORM),PLATFORM_RPI)
     INCLUDE_PATHS += -I/opt/vc/include/interface/vcos/pthreads
 endif
 ifeq ($(PLATFORM),PLATFORM_DESKTOP)
-    ifeq ($(PLATFORM_OS),FREEBSD)
+    ifeq ($(PLATFORM_OS),BSD)
         # Consider -L$(RAYLIB_H_INSTALL_PATH)
         INCLUDE_PATHS += -I/usr/local/include
     endif
@@ -270,7 +279,7 @@ endif
 LDFLAGS = -L. -L$(RAYLIB_RELEASE_PATH) -L$(RAYLIB_PATH)/src
 
 ifeq ($(PLATFORM),PLATFORM_DESKTOP)
-    ifeq ($(PLATFORM_OS),FREEBSD)
+    ifeq ($(PLATFORM_OS),BSD)
         # Consider -L$(RAYLIB_INSTALL_PATH)
         LDFLAGS += -L. -Lsrc -L/usr/local/lib
     endif
@@ -316,8 +325,8 @@ ifeq ($(PLATFORM),PLATFORM_DESKTOP)
         # NOTE: Required packages: libopenal-dev libegl1-mesa-dev
         LDLIBS = -lraylib -framework OpenGL -framework OpenAL -framework Cocoa
     endif
-    ifeq ($(PLATFORM_OS),FREEBSD)
-        # Libraries for FreeBSD desktop compiling
+    ifeq ($(PLATFORM_OS),BSD)
+        # Libraries for FreeBSD, OpenBSD, NetBSD, DragonFly desktop compiling
         # NOTE: Required packages: mesa-libs
         LDLIBS = -lraylib -lGL -lpthread -lm
         # On XWindow requires also below libraries
