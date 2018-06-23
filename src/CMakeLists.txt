@@ -17,7 +17,7 @@ include_directories(SYSTEM .)
 file(GLOB raylib_sources *.c)
 list(REMOVE_ITEM raylib_sources ${CMAKE_CURRENT_SOURCE_DIR}/rglfw.c)
 
-if(NOT glfw3_FOUND AND "${PLATFORM}" MATCHES "Desktop")
+if(NOT glfw3_FOUND AND NOT USE_EXTERNAL_GLFW AND "${PLATFORM}" MATCHES "Desktop")
   set(GLFW_BUILD_DOCS OFF CACHE BOOL "" FORCE)
   set(GLFW_BUILD_TESTS OFF CACHE BOOL "" FORCE)
   set(GLFW_BUILD_EXAMPLES OFF CACHE BOOL "" FORCE)
