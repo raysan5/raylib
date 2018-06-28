@@ -668,7 +668,7 @@ AudioBuffer *CreateAudioBuffer(mal_format format, mal_uint32 channels, mal_uint3
     mal_result resultMAL = mal_dsp_init(&dspConfig, OnAudioBufferDSPRead, audioBuffer, &audioBuffer->dsp);
     if (resultMAL != MAL_SUCCESS) 
     {
-        TraceLog(LOG_ERROR, "LoadSoundFromWave() : Failed to create data conversion pipeline");
+        TraceLog(LOG_ERROR, "CreateAudioBuffer() : Failed to create data conversion pipeline");
         free(audioBuffer);
         return NULL;
     }
@@ -696,7 +696,7 @@ void DeleteAudioBuffer(AudioBuffer *audioBuffer)
 {
     if (audioBuffer == NULL)
     {
-        TraceLog(LOG_ERROR, "PlayAudioBuffer() : No audio buffer");
+        TraceLog(LOG_ERROR, "DeleteAudioBuffer() : No audio buffer");
         return;
     }
 
@@ -709,7 +709,7 @@ bool IsAudioBufferPlaying(AudioBuffer *audioBuffer)
 {
     if (audioBuffer == NULL)
     {
-        TraceLog(LOG_ERROR, "PlayAudioBuffer() : No audio buffer");
+        TraceLog(LOG_ERROR, "IsAudioBufferPlaying() : No audio buffer");
         return false;
     }
 
@@ -737,7 +737,7 @@ void StopAudioBuffer(AudioBuffer *audioBuffer)
 {
     if (audioBuffer == NULL)
     {
-        TraceLog(LOG_ERROR, "PlayAudioBuffer() : No audio buffer");
+        TraceLog(LOG_ERROR, "StopAudioBuffer() : No audio buffer");
         return;
     }
 
@@ -756,7 +756,7 @@ void PauseAudioBuffer(AudioBuffer *audioBuffer)
 {
     if (audioBuffer == NULL)
     {
-        TraceLog(LOG_ERROR, "PlayAudioBuffer() : No audio buffer");
+        TraceLog(LOG_ERROR, "PauseAudioBuffer() : No audio buffer");
         return;
     }
 
@@ -768,7 +768,7 @@ void ResumeAudioBuffer(AudioBuffer *audioBuffer)
 {
     if (audioBuffer == NULL)
     {
-        TraceLog(LOG_ERROR, "PlayAudioBuffer() : No audio buffer");
+        TraceLog(LOG_ERROR, "ResumeAudioBuffer() : No audio buffer");
         return;
     }
 
@@ -780,7 +780,7 @@ void SetAudioBufferVolume(AudioBuffer *audioBuffer, float volume)
 {
     if (audioBuffer == NULL)
     {
-        TraceLog(LOG_ERROR, "PlayAudioBuffer() : No audio buffer");
+        TraceLog(LOG_ERROR, "SetAudioBufferVolume() : No audio buffer");
         return;
     }
 
@@ -792,7 +792,7 @@ void SetAudioBufferPitch(AudioBuffer *audioBuffer, float pitch)
 {
     if (audioBuffer == NULL)
     {
-        TraceLog(LOG_ERROR, "PlayAudioBuffer() : No audio buffer");
+        TraceLog(LOG_ERROR, "SetAudioBufferPitch() : No audio buffer");
         return;
     }
 
