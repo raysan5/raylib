@@ -541,12 +541,12 @@ typedef struct VrDeviceInfo {
 // Enumerators Definition
 //----------------------------------------------------------------------------------
 // Trace log type
-typedef enum { 
+typedef enum {
     LOG_INFO    = 1,
-    LOG_WARNING = 2, 
-    LOG_ERROR   = 4, 
-    LOG_DEBUG   = 8, 
-    LOG_OTHER   = 16 
+    LOG_WARNING = 2,
+    LOG_ERROR   = 4,
+    LOG_DEBUG   = 8,
+    LOG_OTHER   = 16
 } LogType;
 
 // Shader location point type
@@ -638,16 +638,16 @@ typedef enum {
 } TextureFilterMode;
 
 // Texture parameters: wrap mode
-typedef enum { 
-    WRAP_REPEAT = 0, 
-    WRAP_CLAMP, 
-    WRAP_MIRROR 
+typedef enum {
+    WRAP_REPEAT = 0,
+    WRAP_CLAMP,
+    WRAP_MIRROR
 } TextureWrapMode;
 
 // Color blending modes (pre-defined)
-typedef enum { 
-    BLEND_ALPHA = 0, 
-    BLEND_ADDITIVE, 
+typedef enum {
+    BLEND_ALPHA = 0,
+    BLEND_ADDITIVE,
     BLEND_MULTIPLIED
 } BlendMode;
 
@@ -1020,7 +1020,7 @@ RLAPI void ExportMesh(const char *fileName, Mesh mesh);                         
 
 // Mesh manipulation functions
 RLAPI BoundingBox MeshBoundingBox(Mesh mesh);                                                           // Compute mesh bounding box limits
-RLAPI void MeshTangents(Mesh *mesh);                                                                    // Compute mesh tangents 
+RLAPI void MeshTangents(Mesh *mesh);                                                                    // Compute mesh tangents
 RLAPI void MeshBinormals(Mesh *mesh);                                                                   // Compute mesh binormals
 
 // Mesh generation functions
