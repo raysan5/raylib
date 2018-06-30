@@ -31,19 +31,19 @@ int main()
 
     // Define the camera to look into our 3d world
     Camera camera = { 0 };
-    camera.position = (Vector3){ 3.0f, 3.0f, 3.0f };
-    camera.target = (Vector3){ 0.0f, 1.5f, 0.0f };
+    camera.position = (Vector3){ 4.0f, 4.0f, 4.0f };
+    camera.target = (Vector3){ 0.0f, 1.0f, -1.0f };
     camera.up = (Vector3){ 0.0f, 1.0f, 0.0f };
     camera.fovy = 45.0f;
     camera.type = CAMERA_PERSPECTIVE;
 
-    Model dwarf = LoadModel("resources/model/dwarf.obj");                   // Load OBJ model
-    Texture2D texture = LoadTexture("resources/model/dwarf_diffuse.png");   // Load model texture
+    Model model = LoadModel("resources/models/watermill.obj");                   // Load OBJ model
+    Texture2D texture = LoadTexture("resources/models/watermill_diffuse.png");   // Load model texture
     Shader shader = LoadShader("resources/shaders/glsl330/base.vs", 
                                "resources/shaders/glsl330/grayscale.fs");   // Load model shader
 
-    dwarf.material.shader = shader;                     // Set shader effect to 3d model
-    dwarf.material.maps[MAP_DIFFUSE].texture = texture; // Bind texture to model
+    model.material.shader = shader;                     // Set shader effect to 3d model
+    model.material.maps[MAP_DIFFUSE].texture = texture; // Bind texture to model
     
     Vector3 position = { 0.0f, 0.0f, 0.0f };    // Set model position
     
@@ -68,13 +68,13 @@ int main()
 
             BeginMode3D(camera);
 
-                DrawModel(dwarf, position, 2.0f, WHITE);   // Draw 3d model with texture
+                DrawModel(model, position, 0.2f, WHITE);   // Draw 3d model with texture
 
                 DrawGrid(10, 1.0f);     // Draw a grid
 
             EndMode3D();
             
-            DrawText("(c) Dwarf 3D model by David Moreno", screenWidth - 200, screenHeight - 20, 10, GRAY);
+            DrawText("(c) Watermill 3D model by Alberto Cano", screenWidth - 210, screenHeight - 20, 10, GRAY);
             
             DrawText(FormatText("Camera position: (%.2f, %.2f, %.2f)", camera.position.x, camera.position.y, camera.position.z), 600, 20, 10, BLACK);
             DrawText(FormatText("Camera target: (%.2f, %.2f, %.2f)", camera.target.x, camera.target.y, camera.target.z), 600, 40, 10, GRAY);
@@ -89,7 +89,7 @@ int main()
     //--------------------------------------------------------------------------------------
     UnloadShader(shader);       // Unload shader
     UnloadTexture(texture);     // Unload texture
-    UnloadModel(dwarf);         // Unload model
+    UnloadModel(model);         // Unload model
 
     CloseWindow();              // Close window and OpenGL context
     //--------------------------------------------------------------------------------------
