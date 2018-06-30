@@ -310,6 +310,23 @@ Font LoadFont(const char *fileName)
     return font;
 }
 
+// Load Font from TTF font file with generation parameters
+// NOTE: You can pass an array with desired characters, those characters should be available in the font
+// if array is NULL, default char set is selected 32..126
+Font LoadFontEx(const char *fileName, int fontSize, int charsCount, int *fontChars)
+{
+    Font font = { 0 };
+    
+    font.baseSize = fontSize;
+    font.charsCount = (charsCount > 0) ? charsCount : 95;
+    font.chars = LoadFontData(fileName, font.baseSize, fontChars, font.charsCount, false);
+    Image atlas = GenImageFontAtlas(font.chars, font.charsCount, font.baseSize, 0, 0);
+    font.texture = LoadTextureFromImage(atlas);
+    UnloadImage(atlas);
+    
+    return font;
+}
+
 // Load font data for further use
 // NOTE: Requires TTF font and can generate SDF data
 CharInfo *LoadFontData(const char *fileName, int fontSize, int *fontChars, int charsCount, bool sdf)
