@@ -32,7 +32,6 @@
 #include <math.h>
 #include <stdlib.h>
 #include <string.h>
-#include <ctype.h>
 
 // Internal key state used for sticky keys
 #define _GLFW_STICK 3
@@ -1086,7 +1085,9 @@ GLFWAPI int glfwUpdateGamepadMappings(const char* string)
 
     while (*c)
     {
-        if (isxdigit(*c))
+        if ((*c >= '0' && *c <= '9') ||
+            (*c >= 'a' && *c <= 'f') ||
+            (*c >= 'A' && *c <= 'F'))
         {
             char line[1024];
 

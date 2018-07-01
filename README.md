@@ -30,7 +30,7 @@ features
    *  Shaders support, including Model shaders and Postprocessing shaders
    *  Powerful math module for Vector, Matrix and Quaternion operations: [raymath](https://github.com/raysan5/raylib/blob/master/src/raymath.h)
    *  Audio loading and playing with streaming support (WAV, OGG, FLAC, XM, MOD)
-   *  Multiple platforms support: Windows, Linux, FreeBSD, MacOS, UWP, Android, Raspberry Pi, HTML5.
+   *  Multiple platforms support: Windows, Linux, FreeBSD, OpenBSD, NetBSD, DragonFly, MacOS, UWP, Android, Raspberry Pi, HTML5.
    *  VR stereo rendering with configurable HMD device parameters
    *  NO external dependencies, all required libraries included with raylib
    *  Complete bindings to LUA ([raylib-lua](https://github.com/raysan5/raylib-lua)) and Go ([raylib-go](https://github.com/gen2brain/raylib-go))

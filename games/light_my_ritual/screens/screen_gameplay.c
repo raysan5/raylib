@@ -609,19 +609,11 @@ void DrawGameplayScreen(void)
             {
                 //if (lightsIII[i].active) DrawCircleV(lightsIII[i].position, lightsIII[i].radius, GOLD);
                 //else DrawCircleLines(lightsIII[i].position.x, lightsIII[i].position.y, lightsIII[i].radius, GRAY);
-                
-                if (lightsIII[i].active)
-                {
-                    DrawTextureRec(texLight, lightsIII[i].frameRec, (Vector2){ lightsIII[i].position.x - 32, lightsIII[i].position.y - 32 }, WHITE);
-                    DrawTexture(lightGlow, lightsIII[i].position.x - lightGlow.width/2, lightsIII[i].position.y - lightGlow.height/2, Fade(WHITE, 0.3f));
-                    DrawText(FormatText("%02i", lightsIII[i].requiredEnergy), lightsIII[i].position.x - 10, lightsIII[i].position.y + 14, 20, GRAY);
-                }
-                else 
-                {
-                    DrawTextureRec(texLight, lightsIII[i].frameRec, (Vector2){ lightsIII[i].position.x - 32, lightsIII[i].position.y - 32 }, WHITE);
-                    DrawText(FormatText("%02i", lightsIII[i].requiredEnergy), lightsIII[i].position.x - 10, lightsIII[i].position.y + 14, 20, YELLOW);
-                }
+                DrawTextureRec(texLight, lightsIII[i].frameRec, (Vector2){ lightsIII[i].position.x - 32, lightsIII[i].position.y - 32 }, WHITE);
             }
+            
+            for (int i = 0; i < MAX_LIGHTS_III; i++) if (lightsIII[i].active) DrawTexture(lightGlow, lightsIII[i].position.x - lightGlow.width/2, lightsIII[i].position.y - lightGlow.height/2, Fade(WHITE, 0.3f));
+            for (int i = 0; i < MAX_LIGHTS_III; i++) DrawText(FormatText("%02i", lightsIII[i].requiredEnergy), lightsIII[i].position.x - 10, lightsIII[i].position.y + 14, 20, lightsIII[i].active ? GRAY : YELLOW);
         }
         case LEVEL_II:
         {
@@ -629,19 +621,11 @@ void DrawGameplayScreen(void)
             {
                 //if (lightsII[i].active) DrawCircleV(lightsII[i].position, lightsII[i].radius, GOLD);
                 //else DrawCircleLines(lightsI[i].position.x, lightsI[i].position.y, lightsI[i].radius, GRAY);
-                
-                if (lightsII[i].active)
-                {
-                    DrawTextureRec(texLight, lightsII[i].frameRec, (Vector2){ lightsII[i].position.x - 32, lightsII[i].position.y - 32 }, WHITE);
-                    DrawTexture(lightGlow, lightsII[i].position.x - lightGlow.width/2, lightsII[i].position.y - lightGlow.height/2, Fade(WHITE, 0.3f));
-                    DrawText(FormatText("%02i", lightsII[i].requiredEnergy), lightsII[i].position.x - 10, lightsII[i].position.y + 14, 20, GRAY);
-                }
-                else
-                {
-                    DrawTextureRec(texLight, lightsII[i].frameRec, (Vector2){ lightsII[i].position.x - 32, lightsII[i].position.y - 32 }, WHITE);
-                    DrawText(FormatText("%02i", lightsII[i].requiredEnergy), lightsII[i].position.x - 10, lightsII[i].position.y + 14, 20, YELLOW);
-                }
+                DrawTextureRec(texLight, lightsII[i].frameRec, (Vector2){ lightsII[i].position.x - 32, lightsII[i].position.y - 32 }, WHITE);
             }
+            
+            for (int i = 0; i < MAX_LIGHTS_II; i++) if (lightsII[i].active) DrawTexture(lightGlow, lightsII[i].position.x - lightGlow.width/2, lightsII[i].position.y - lightGlow.height/2, Fade(WHITE, 0.3f));
+            for (int i = 0; i < MAX_LIGHTS_II; i++) DrawText(FormatText("%02i", lightsII[i].requiredEnergy), lightsII[i].position.x - 10, lightsII[i].position.y + 14, 20, lightsII[i].active ? GRAY : YELLOW);
         }
         case LEVEL_I:
         {
@@ -649,19 +633,11 @@ void DrawGameplayScreen(void)
             {
                 //if (lightsI[i].active) DrawCircleV(lightsI[i].position, lightsI[i].radius, GOLD);
                 //else DrawCircleLines(lightsI[i].position.x, lightsI[i].position.y, lightsI[i].radius, GRAY);
-                
-                if (lightsI[i].active) 
-                {    
-                    DrawTextureRec(texLight, lightsI[i].frameRec, (Vector2){ lightsI[i].position.x - 32, lightsI[i].position.y - 32 }, WHITE);
-                    DrawTexture(lightGlow, lightsI[i].position.x - lightGlow.width/2, lightsI[i].position.y - lightGlow.height/2, Fade(WHITE, 0.3f));
-                    DrawText(FormatText("%02i", lightsI[i].requiredEnergy), lightsI[i].position.x - 10, lightsI[i].position.y + 14, 20, GRAY);
-                }
-                else
-                {
-                    DrawTextureRec(texLight, lightsI[i].frameRec, (Vector2){ lightsI[i].position.x - 32, lightsI[i].position.y - 32 }, WHITE);
-                    DrawText(FormatText("%02i", lightsI[i].requiredEnergy), lightsI[i].position.x - 10, lightsI[i].position.y + 14, 20, YELLOW);
-                }
+                DrawTextureRec(texLight, lightsI[i].frameRec, (Vector2){ lightsI[i].position.x - 32, lightsI[i].position.y - 32 }, WHITE);
             }
+            
+            for (int i = 0; i < MAX_LIGHTS_I; i++) if (lightsI[i].active) DrawTexture(lightGlow, lightsI[i].position.x - lightGlow.width/2, lightsI[i].position.y - lightGlow.height/2, Fade(WHITE, 0.3f));
+            for (int i = 0; i < MAX_LIGHTS_I; i++) DrawText(FormatText("%02i", lightsI[i].requiredEnergy), lightsI[i].position.x - 10, lightsI[i].position.y + 14, 20, lightsI[i].active ? GRAY : YELLOW);
         }
         default: break;
     }

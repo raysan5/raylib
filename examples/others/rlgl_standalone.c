@@ -15,7 +15,7 @@
 *       raymath.h - Vector and matrix math functions
 *
 *   Compile example using:
-*       gcc -o rlgl_standalone.exe rlgl_standalone.c rlgl.o -s $(RAYLIB_DIR)\raylib\raylib_icon -I$(RAYLIB_DIR)\raylib\src /
+*       gcc -o rlgl_standalone.exe rlgl_standalone.c rlgl.o -s $(RAYLIB_DIR)\raylib\raylib.rc.o -I$(RAYLIB_DIR)\raylib\src /
 *           -L. -L$(RAYLIB_DIR)\raylib\src -lglfw3 -lopengl32 -lgdi32 -Wall -std=c99
 *
 *   This example has been created using raylib 1.7 (www.raylib.com)

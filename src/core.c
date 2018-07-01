@@ -5,7 +5,7 @@
 *   PLATFORMS SUPPORTED: 
 *       - PLATFORM_DESKTOP: Windows (Win32, Win64)
 *       - PLATFORM_DESKTOP: Linux (X11 desktop mode)
-*       - PLATFORM_DESKTOP: FreeBSD (X11 desktop)
+*       - PLATFORM_DESKTOP: FreeBSD, OpenBSD, NetBSD, DragonFly (X11 desktop)
 *       - PLATFORM_DESKTOP: OSX/macOS
 *       - PLATFORM_ANDROID: Android 4.0 (ARM, ARM64) 
 *       - PLATFORM_RPI:     Raspberry Pi 0,1,2,3 (Raspbian)
@@ -15,7 +15,7 @@
 *   CONFIGURATION:
 *
 *   #define PLATFORM_DESKTOP
-*       Windowing and input system configured for desktop platforms: Windows, Linux, OSX, FreeBSD
+*       Windowing and input system configured for desktop platforms: Windows, Linux, OSX, FreeBSD, OpenBSD, NetBSD, DragonFly
 *       NOTE: Oculus Rift CV1 requires PLATFORM_DESKTOP for mirror rendering - View [rlgl] module to enable it
 *
 *   #define PLATFORM_ANDROID
@@ -57,7 +57,7 @@
 *       Allow automatic gif recording of current screen pressing CTRL+F12, defined in KeyCallback()
 *
 *   DEPENDENCIES:
-*       rglfw    - Manage graphic device, OpenGL context and inputs on PLATFORM_DESKTOP (Windows, Linux, OSX. FreeBSD)
+*       rglfw    - Manage graphic device, OpenGL context and inputs on PLATFORM_DESKTOP (Windows, Linux, OSX. FreeBSD, OpenBSD, NetBSD, DragonFly)
 *       raymath  - 3D math functionality (Vector2, Vector3, Matrix, Quaternion)
 *       camera   - Multiple 3D camera modes (free, orbital, 1st person, 3rd person)
 *       gestures - Gestures system for touch-ready devices (or simulated from mouse inputs)
@@ -1884,31 +1884,30 @@ static bool InitGraphicsDevice(int width, int height)
     displayHeight = screenHeight;
 #endif  // defined(PLATFORM_WEB)
 
-    glfwDefaultWindowHints();                       // Set default windows hints
-
-    // Check some Window creation flags
-    if (configFlags & FLAG_WINDOW_RESIZABLE) glfwWindowHint(GLFW_RESIZABLE, GL_TRUE);   // Resizable window
-    else glfwWindowHint(GLFW_RESIZABLE, GL_FALSE);  // Avoid window being resizable
-
-    if (configFlags & FLAG_WINDOW_DECORATED) glfwWindowHint(GLFW_DECORATED, GL_TRUE);   // Border and buttons on Window
-    
-    if (configFlags & FLAG_WINDOW_TRANSPARENT)
-    {
-        // TODO: Enable transparent window (not ready yet on GLFW 3.2)
-    }
-
-    if (configFlags & FLAG_MSAA_4X_HINT)
-    {
-        glfwWindowHint(GLFW_SAMPLES, 4);            // Enables multisampling x4 (MSAA), default is 0
-        TraceLog(LOG_INFO, "Trying to enable MSAA x4");
-    }
-    
+    glfwDefaultWindowHints();                   // Set default windows hints:
     //glfwWindowHint(GLFW_RED_BITS, 8);             // Framebuffer red color component bits
-    //glfwWindowHint(GLFW_DEPTH_BITS, 16);          // Depthbuffer bits (24 by default)
+    //glfwWindowHint(GLFW_GREEN_BITS, 8);           // Framebuffer green color component bits
+    //glfwWindowHint(GLFW_BLUE_BITS, 8);            // Framebuffer blue color component bits
+    //glfwWindowHint(GLFW_ALPHA_BITS, 8);           // Framebuffer alpha color component bits
+    //glfwWindowHint(GLFW_DEPTH_BITS, 24);          // Depthbuffer bits
     //glfwWindowHint(GLFW_REFRESH_RATE, 0);         // Refresh rate for fullscreen window
-    //glfwWindowHint(GLFW_CLIENT_API, GLFW_OPENGL_API);    // Default OpenGL API to use. Alternative: GLFW_OPENGL_ES_API
+    //glfwWindowHint(GLFW_CLIENT_API, GLFW_OPENGL_API); // OpenGL API to use. Alternative: GLFW_OPENGL_ES_API
     //glfwWindowHint(GLFW_AUX_BUFFERS, 0);          // Number of auxiliar buffers
 
+    // Check some Window creation flags
+    if (configFlags & FLAG_WINDOW_RESIZABLE) glfwWindowHint(GLFW_RESIZABLE, GL_TRUE);       // Resizable window
+    else glfwWindowHint(GLFW_RESIZABLE, GL_FALSE);  // Avoid window being resizable
+
+    if (configFlags & FLAG_WINDOW_UNDECORATED) glfwWindowHint(GLFW_DECORATED, GL_FALSE);    // Border and buttons on Window
+    else glfwWindowHint(GLFW_DECORATED, GL_TRUE);   // Decorated window
+    
+#if !defined(PLATFORM_WEB)  // FLAG_WINDOW_TRANSPARENT not supported on HTML5
+    if (configFlags & FLAG_WINDOW_TRANSPARENT) glfwWindowHint(GLFW_TRANSPARENT_FRAMEBUFFER, GLFW_TRUE);     // Transparent framebuffer
+    else glfwWindowHint(GLFW_TRANSPARENT_FRAMEBUFFER, GLFW_FALSE);  // Opaque framebuffer
+#endif
+
+    if (configFlags & FLAG_MSAA_4X_HINT) glfwWindowHint(GLFW_SAMPLES, 4);   // Tries to enable multisampling x4 (MSAA), default is 0
+    
     // NOTE: When asking for an OpenGL context version, most drivers provide highest supported version
     // with forward compatibility to older OpenGL versions.
     // For example, if using OpenGL 1.1, driver can provide a 4.3 context forward compatible.
@@ -1926,11 +1925,11 @@ static bool InitGraphicsDevice(int width, int height)
         glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE); // Profiles Hint: Only 3.3 and above!
                                                                        // Other values: GLFW_OPENGL_ANY_PROFILE, GLFW_OPENGL_COMPAT_PROFILE
 #if defined(__APPLE__)
-        glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE);  // OSX Requires
+        glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE);  // OSX Requires fordward compatibility
 #else
         glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_FALSE); // Fordward Compatibility Hint: Only 3.3 and above!
 #endif
-        //glfwWindowHint(GLFW_OPENGL_DEBUG_CONTEXT, GL_TRUE);
+        //glfwWindowHint(GLFW_OPENGL_DEBUG_CONTEXT, GL_TRUE); // Request OpenGL DEBUG context
     }
 
     if (fullscreen)

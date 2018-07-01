@@ -22,15 +22,15 @@ int main()
 
     // Define the camera to look into our 3d world
     Camera camera = { 0 };
-    camera.position = (Vector3){ 3.0f, 3.0f, 3.0f };    // Camera position
-    camera.target = (Vector3){ 0.0f, 1.5f, 0.0f };      // Camera looking at point
+    camera.position = (Vector3){ 8.0f, 8.0f, 8.0f };    // Camera position
+    camera.target = (Vector3){ 0.0f, 2.5f, 0.0f };      // Camera looking at point
     camera.up = (Vector3){ 0.0f, 1.0f, 0.0f };          // Camera up vector (rotation towards target)
     camera.fovy = 45.0f;                                // Camera field-of-view Y
     camera.type = CAMERA_PERSPECTIVE;                   // Camera mode type
 
-    Model dwarf = LoadModel("resources/model/dwarf.obj");                   // Load OBJ model
-    Texture2D texture = LoadTexture("resources/model/dwarf_diffuse.png");   // Load model texture
-    dwarf.material.maps[MAP_DIFFUSE].texture = texture;                     // Set map diffuse texture
+    Model model = LoadModel("resources/models/castle.obj");                 // Load OBJ model
+    Texture2D texture = LoadTexture("resources/models/castle_diffuse.png"); // Load model texture
+    model.material.maps[MAP_DIFFUSE].texture = texture;                     // Set map diffuse texture
     Vector3 position = { 0.0f, 0.0f, 0.0f };                                // Set model position
 
     SetTargetFPS(60);   // Set our game to run at 60 frames-per-second
@@ -52,7 +52,7 @@ int main()
 
             BeginMode3D(camera);
 
-                DrawModel(dwarf, position, 2.0f, WHITE);   // Draw 3d model with texture
+                DrawModel(model, position, 0.2f, WHITE);   // Draw 3d model with texture
 
                 DrawGrid(10, 1.0f);         // Draw a grid
 
@@ -60,7 +60,7 @@ int main()
 
             EndMode3D();
             
-            DrawText("(c) Dwarf 3D model by David Moreno", screenWidth - 200, screenHeight - 20, 10, GRAY);
+            DrawText("(c) Castle 3D model by Alberto Cano", screenWidth - 200, screenHeight - 20, 10, GRAY);
 
             DrawFPS(10, 10);
 
@@ -71,7 +71,7 @@ int main()
     // De-Initialization
     //--------------------------------------------------------------------------------------
     UnloadTexture(texture);     // Unload texture
-    UnloadModel(dwarf);         // Unload model
+    UnloadModel(model);         // Unload model
 
     CloseWindow();              // Close window and OpenGL context
     //--------------------------------------------------------------------------------------

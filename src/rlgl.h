@@ -2,10 +2,10 @@
 *
 *   rlgl - raylib OpenGL abstraction layer
 *
-*   rlgl is a wrapper for multiple OpenGL versions (1.1, 2.1, 3.3 Core, ES 2.0) to 
-*   pseudo-OpenGL 1.1 style functions (rlVertex, rlTranslate, rlRotate...). 
+*   rlgl is a wrapper for multiple OpenGL versions (1.1, 2.1, 3.3 Core, ES 2.0) to
+*   pseudo-OpenGL 1.1 style functions (rlVertex, rlTranslate, rlRotate...).
 *
-*   When chosing an OpenGL version greater than OpenGL 1.1, rlgl stores vertex data on internal 
+*   When chosing an OpenGL version greater than OpenGL 1.1, rlgl stores vertex data on internal
 *   VBO buffers (and VAOs if available). It requires calling 3 functions:
 *       rlglInit()  - Initialize internal buffers and auxiliar resources
 *       rlglDraw()  - Process internal buffers and send required draw calls
@@ -18,7 +18,7 @@
 *   #define GRAPHICS_API_OPENGL_33
 *   #define GRAPHICS_API_OPENGL_ES2
 *       Use selected OpenGL graphics backend, should be supported by platform
-*       Those preprocessor defines are only used on rlgl module, if OpenGL version is 
+*       Those preprocessor defines are only used on rlgl module, if OpenGL version is
 *       required by any other module, use rlGetVersion() tocheck it
 *
 *   #define RLGL_STANDALONE
@@ -124,7 +124,7 @@
 #define RL_WRAP_CLAMP_MIRROR            0x8742      // GL_MIRROR_CLAMP_EXT
 
 // Matrix modes (equivalent to OpenGL)
-#define RL_MODELVIEW                    0x1700      // GL_MODELVIEW 
+#define RL_MODELVIEW                    0x1700      // GL_MODELVIEW
 #define RL_PROJECTION                   0x1701      // GL_PROJECTION
 #define RL_TEXTURE                      0x1702      // GL_TEXTURE
 
@@ -153,7 +153,7 @@ typedef unsigned char byte;
         unsigned char b;
         unsigned char a;
     } Color;
-    
+
     // Rectangle type
     typedef struct Rectangle {
         int x;
@@ -161,7 +161,7 @@ typedef unsigned char byte;
         int width;
         int height;
     } Rectangle;
-    
+
     // Texture2D type
     // NOTE: Data stored in GPU memory
     typedef struct Texture2D {
@@ -194,11 +194,11 @@ typedef unsigned char byte;
         unsigned int vaoId;     // OpenGL Vertex Array Object id
         unsigned int vboId[7];  // OpenGL Vertex Buffer Objects id (7 types of vertex data)
     } Mesh;
-    
+
     // Shader and material limits
     #define MAX_SHADER_LOCATIONS    32
     #define MAX_MATERIAL_MAPS       12
-    
+
     // Shader type (generic)
     typedef struct Shader {
         unsigned int id;                // Shader program id
@@ -226,7 +226,7 @@ typedef unsigned char byte;
         Vector3 up;             // Camera up vector (rotation over its axis)
         float fovy;             // Camera field-of-view apperture in Y (degrees)
     } Camera;
-    
+
     // Head-Mounted-Display device parameters
     typedef struct VrDeviceInfo {
         int hResolution;                // HMD horizontal resolution in pixels
@@ -240,16 +240,16 @@ typedef unsigned char byte;
         float lensDistortionValues[4];  // HMD lens distortion constant parameters
         float chromaAbCorrection[4];    // HMD chromatic aberration correction parameters
     } VrDeviceInfo;
-    
+
     // TraceLog message types
-    typedef enum { 
-        LOG_INFO = 0, 
-        LOG_ERROR, 
-        LOG_WARNING, 
-        LOG_DEBUG, 
-        LOG_OTHER 
+    typedef enum {
+        LOG_INFO = 0,
+        LOG_ERROR,
+        LOG_WARNING,
+        LOG_DEBUG,
+        LOG_OTHER
     } TraceLogType;
-    
+
     // Texture formats (support depends on OpenGL version)
     typedef enum {
         UNCOMPRESSED_GRAYSCALE = 1,     // 8 bit per pixel (no alpha)
@@ -278,7 +278,7 @@ typedef unsigned char byte;
     // Texture parameters: filter mode
     // NOTE 1: Filtering considers mipmaps if available in the texture
     // NOTE 2: Filter is accordingly set for minification and magnification
-    typedef enum { 
+    typedef enum {
         FILTER_POINT = 0,               // No filter, just pixel aproximation
         FILTER_BILINEAR,                // Linear filtering
         FILTER_TRILINEAR,               // Trilinear filtering (linear with mipmaps)
@@ -286,19 +286,19 @@ typedef unsigned char byte;
         FILTER_ANISOTROPIC_8X,          // Anisotropic filtering 8x
         FILTER_ANISOTROPIC_16X,         // Anisotropic filtering 16x
     } TextureFilterMode;
-    
+
     // Texture parameters: wrap mode
-    typedef enum { 
-        WRAP_REPEAT = 0, 
-        WRAP_CLAMP, 
-        WRAP_MIRROR 
+    typedef enum {
+        WRAP_REPEAT = 0,
+        WRAP_CLAMP,
+        WRAP_MIRROR
     } TextureWrapMode;
 
     // Color blending modes (pre-defined)
-    typedef enum { 
-        BLEND_ALPHA = 0, 
-        BLEND_ADDITIVE, 
-        BLEND_MULTIPLIED 
+    typedef enum {
+        BLEND_ALPHA = 0,
+        BLEND_ADDITIVE,
+        BLEND_MULTIPLIED
     } BlendMode;
 
     // Shader location point type
@@ -465,7 +465,7 @@ void SetShaderValuei(Shader shader, int uniformLoc, const int *value, int size);
 void SetShaderValueMatrix(Shader shader, int uniformLoc, Matrix mat);       // Set shader uniform value (matrix 4x4)
 void SetMatrixProjection(Matrix proj);                  // Set a custom projection matrix (replaces internal projection matrix)
 void SetMatrixModelview(Matrix view);                   // Set a custom modelview matrix (replaces internal modelview matrix)
-Matrix GetMatrixModelview();                            // Get internal modelview matrix            
+Matrix GetMatrixModelview();                            // Get internal modelview matrix
 
 
 // Texture maps generation (PBR)

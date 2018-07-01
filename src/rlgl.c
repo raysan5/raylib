@@ -2,8 +2,8 @@
 *
 *   rlgl - raylib OpenGL abstraction layer
 *
-*   rlgl is a wrapper for multiple OpenGL versions (1.1, 2.1, 3.3 Core, ES 2.0) to 
-*   pseudo-OpenGL 1.1 style functions (rlVertex, rlTranslate, rlRotate...). 
+*   rlgl is a wrapper for multiple OpenGL versions (1.1, 2.1, 3.3 Core, ES 2.0) to
+*   pseudo-OpenGL 1.1 style functions (rlVertex, rlTranslate, rlRotate...).
 *
 *   When chosing an OpenGL version greater than OpenGL 1.1, rlgl stores vertex data on internal
 *   VBO buffers (and VAOs if available). It requires calling 3 functions:
@@ -657,7 +657,7 @@ void rlEnd(void)
     // as well as depth buffer bit-depth (16bit or 24bit or 32bit)
     // Correct increment formula would be: depthInc = (zfar - znear)/pow(2, bits)
     currentDepth += (1.0f/20000.0f);
-    
+
     // Verify internal buffers limits
     // NOTE: This check is combined with usage of rlCheckBufferLimit()
     if ((lines.vCounter/2 >= MAX_LINES_BATCH - 2) ||
@@ -829,7 +829,7 @@ void rlEnableTexture(unsigned int id)
     if (draws[drawsCounter - 1].textureId != id)
     {
         if (draws[drawsCounter - 1].vertexCount > 0) drawsCounter++;
-        
+
         if (drawsCounter >= MAX_DRAWS_BY_TEXTURE)
         {
             rlglDraw();
@@ -1126,7 +1126,7 @@ void rlglInit(int width, int height)
         // Check NPOT textures support
         // NOTE: Only check on OpenGL ES, OpenGL 3.3 has NPOT textures full support as core feature
         if (strcmp(extList[i], (const char *)"GL_OES_texture_npot") == 0) texNPOTSupported = true;
-        
+
         // Check texture float support
         if (strcmp(extList[i], (const char *)"GL_OES_texture_float") == 0) texFloatSupported = true;
 #endif
@@ -1158,7 +1158,7 @@ void rlglInit(int width, int height)
 
         // Clamp mirror wrap mode supported
         if (strcmp(extList[i], (const char *)"GL_EXT_texture_mirror_clamp") == 0) texClampMirrorSupported = true;
-        
+
         // Debug marker support
         if(strcmp(extList[i], (const char *)"GL_EXT_debug_marker") == 0) debugMarkerSupported = true;
     }
@@ -1271,9 +1271,9 @@ void rlglClose(void)
 {
 #if defined(GRAPHICS_API_OPENGL_33) || defined(GRAPHICS_API_OPENGL_ES2)
     UnloadShaderDefault();              // Unload default shader
-    UnloadBuffersDefault();             // Unload default buffers (lines, triangles, quads)  
+    UnloadBuffersDefault();             // Unload default buffers (lines, triangles, quads)
     glDeleteTextures(1, &whiteTexture); // Unload default texture
-    
+
     TraceLog(LOG_INFO, "[TEX ID %i] Unloaded texture data (base white texture) from VRAM", whiteTexture);
 
     free(draws);
@@ -1438,30 +1438,30 @@ unsigned int rlLoadTexture(void *data, int width, int height, int format, int mi
 #endif
 
     glBindTexture(GL_TEXTURE_2D, id);
-    
+
     int mipWidth = width;
     int mipHeight = height;
     int mipOffset = 0;          // Mipmap data offset
-    
+
     TraceLog(LOG_DEBUG, "Load texture from data memory address: 0x%x", data);
-    
+
     // Load the different mipmap levels
     for (int i = 0; i < mipmapCount; i++)
     {
         unsigned int mipSize = GetPixelDataSize(mipWidth, mipHeight, format);
-        
+
         int glInternalFormat, glFormat, glType;
         GetGlFormats(format, &glInternalFormat, &glFormat, &glType);
-        
+
         TraceLog(LOG_DEBUG, "Load mipmap level %i (%i x %i), size: %i, offset: %i", i, mipWidth, mipHeight, mipSize, mipOffset);
-        
+
         if (glInternalFormat != -1)
         {
             if (format < COMPRESSED_DXT1_RGB) glTexImage2D(GL_TEXTURE_2D, i, glInternalFormat, mipWidth, mipHeight, 0, glFormat, glType, (unsigned char *)data + mipOffset);
-        #if !defined(GRAPHICS_API_OPENGL_11)        
+        #if !defined(GRAPHICS_API_OPENGL_11)
             else glCompressedTexImage2D(GL_TEXTURE_2D, i, glInternalFormat, mipWidth, mipHeight, 0, mipSize, (unsigned char *)data + mipOffset);
         #endif
-        
+
         #if defined(GRAPHICS_API_OPENGL_33)
             if (format == UNCOMPRESSED_GRAYSCALE)
             {
@@ -1479,11 +1479,11 @@ unsigned int rlLoadTexture(void *data, int width, int height, int format, int mi
             }
         #endif
         }
-    
+
         mipWidth /= 2;
         mipHeight /= 2;
         mipOffset += mipSize;
-        
+
         // Security check for NPOT textures
         if (mipWidth < 1) mipWidth = 1;
         if (mipHeight < 1) mipHeight = 1;
@@ -1539,7 +1539,7 @@ unsigned int rlLoadTexture(void *data, int width, int height, int format, int mi
 void rlUpdateTexture(unsigned int id, int width, int height, int format, const void *data)
 {
     glBindTexture(GL_TEXTURE_2D, id);
-   
+
     int glInternalFormat, glFormat, glType;
     GetGlFormats(format, &glInternalFormat, &glFormat, &glType);
 
@@ -1671,7 +1671,7 @@ void rlGenerateMipmaps(Texture2D *texture)
         {
             // Retrieve texture data from VRAM
             void *data = rlReadTexturePixels(*texture);
-            
+
             // NOTE: data size is reallocated to fit mipmaps data
             // NOTE: CPU mipmap generation only supports RGBA 32bit data
             int mipmapCount = GenerateMipmaps(data, texture->width, texture->height);
@@ -1696,7 +1696,7 @@ void rlGenerateMipmaps(Texture2D *texture)
 
             texture->mipmaps = mipmapCount + 1;
             free(data); // Once mipmaps have been generated and data has been uploaded to GPU VRAM, we can discard RAM data
-            
+
             TraceLog(LOG_WARNING, "[TEX ID %i] Mipmaps [%i] generated manually on CPU side", texture->id, texture->mipmaps);
         }
         else TraceLog(LOG_WARNING, "[TEX ID %i] Mipmaps could not be generated for texture format", texture->id);
@@ -1943,27 +1943,27 @@ void rlDrawMesh(Mesh mesh, Material material, Matrix transform)
 
 #if defined(GRAPHICS_API_OPENGL_33) || defined(GRAPHICS_API_OPENGL_ES2)
     // Bind shader program
-    glUseProgram(material.shader.id);   
+    glUseProgram(material.shader.id);
 
     // Matrices and other values required by shader
     //-----------------------------------------------------
     // Calculate and send to shader model matrix (used by PBR shader)
     if (material.shader.locs[LOC_MATRIX_MODEL] != -1) SetShaderValueMatrix(material.shader, material.shader.locs[LOC_MATRIX_MODEL], transform);
-    
+
     // Upload to shader material.colDiffuse
     if (material.shader.locs[LOC_COLOR_DIFFUSE] != -1)
-        glUniform4f(material.shader.locs[LOC_COLOR_DIFFUSE], (float)material.maps[MAP_DIFFUSE].color.r/255.0f, 
-                                                           (float)material.maps[MAP_DIFFUSE].color.g/255.0f, 
-                                                           (float)material.maps[MAP_DIFFUSE].color.b/255.0f, 
+        glUniform4f(material.shader.locs[LOC_COLOR_DIFFUSE], (float)material.maps[MAP_DIFFUSE].color.r/255.0f,
+                                                           (float)material.maps[MAP_DIFFUSE].color.g/255.0f,
+                                                           (float)material.maps[MAP_DIFFUSE].color.b/255.0f,
                                                            (float)material.maps[MAP_DIFFUSE].color.a/255.0f);
 
     // Upload to shader material.colSpecular (if available)
-    if (material.shader.locs[LOC_COLOR_SPECULAR] != -1) 
-        glUniform4f(material.shader.locs[LOC_COLOR_SPECULAR], (float)material.maps[MAP_SPECULAR].color.r/255.0f, 
-                                                               (float)material.maps[MAP_SPECULAR].color.g/255.0f, 
-                                                               (float)material.maps[MAP_SPECULAR].color.b/255.0f, 
+    if (material.shader.locs[LOC_COLOR_SPECULAR] != -1)
+        glUniform4f(material.shader.locs[LOC_COLOR_SPECULAR], (float)material.maps[MAP_SPECULAR].color.r/255.0f,
+                                                               (float)material.maps[MAP_SPECULAR].color.g/255.0f,
+                                                               (float)material.maps[MAP_SPECULAR].color.b/255.0f,
                                                                (float)material.maps[MAP_SPECULAR].color.a/255.0f);
-                                                               
+
     if (material.shader.locs[LOC_MATRIX_VIEW] != -1) SetShaderValueMatrix(material.shader, material.shader.locs[LOC_MATRIX_VIEW], modelview);
     if (material.shader.locs[LOC_MATRIX_PROJECTION] != -1) SetShaderValueMatrix(material.shader, material.shader.locs[LOC_MATRIX_PROJECTION], projection);
 
@@ -2054,7 +2054,7 @@ void rlDrawMesh(Mesh mesh, Material material, Matrix transform)
 #if defined(SUPPORT_VR_SIMULATOR)
     if (vrStereoRender) eyesCount = 2;
 #endif
-    
+
     for (int eye = 0; eye < eyesCount; eye++)
     {
         if (eyesCount == 1) modelview = matModelView;
@@ -2072,7 +2072,7 @@ void rlDrawMesh(Mesh mesh, Material material, Matrix transform)
         if (mesh.indices != NULL) glDrawElements(GL_TRIANGLES, mesh.triangleCount*3, GL_UNSIGNED_SHORT, 0); // Indexed vertices draw
         else glDrawArrays(GL_TRIANGLES, 0, mesh.vertexCount);
     }
-    
+
     // Unbind all binded texture maps
     for (int i = 0; i < MAX_MATERIAL_MAPS; i++)
     {
@@ -2168,7 +2168,7 @@ void *rlReadTexturePixels(Texture2D texture)
     glGetTexLevelParameteriv(GL_TEXTURE_2D, 0, GL_TEXTURE_INTERNAL_FORMAT, &format);
     // Other texture info: GL_TEXTURE_RED_SIZE, GL_TEXTURE_GREEN_SIZE, GL_TEXTURE_BLUE_SIZE, GL_TEXTURE_ALPHA_SIZE
     */
-    
+
     // NOTE: Each row written to or read from by OpenGL pixel operations like glGetTexImage are aligned to a 4 byte boundary by default, which may add some padding.
     // Use glPixelStorei to modify padding with the GL_[UN]PACK_ALIGNMENT setting.
     // GL_PACK_ALIGNMENT affects operations that read from OpenGL memory (glReadPixels, glGetTexImage, etc.)
@@ -2178,7 +2178,7 @@ void *rlReadTexturePixels(Texture2D texture)
     int glInternalFormat, glFormat, glType;
 	GetGlFormats(texture.format, &glInternalFormat, &glFormat, &glType);
     unsigned int size = GetPixelDataSize(texture.width, texture.height, texture.format);
-    
+
     if ((glInternalFormat != -1) && (texture.format < COMPRESSED_DXT1_RGB))
     {
         pixels = (unsigned char *)malloc(size);
@@ -2224,7 +2224,7 @@ void *rlReadTexturePixels(Texture2D texture)
     //glDisable(GL_TEXTURE_2D);
     glEnable(GL_DEPTH_TEST);
     //glDisable(GL_BLEND);
-    
+
     glViewport(0, 0, texture.width, texture.height);
     rlOrtho(0.0, texture.width, texture.height, 0.0, 0.0, 1.0);
 
@@ -2234,17 +2234,17 @@ void *rlReadTexturePixels(Texture2D texture)
     GenDrawQuad();
     glBindTexture(GL_TEXTURE_2D, 0);
     glUseProgram(0);
-    
+
     pixels = (unsigned char *)malloc(texture.width*texture.height*4*sizeof(unsigned char));
 
     glReadPixels(0, 0, texture.width, texture.height, GL_RGBA, GL_UNSIGNED_BYTE, pixels);
 
     // Bind framebuffer 0, which means render to back buffer
     glBindFramebuffer(GL_FRAMEBUFFER, 0);
-    
+
     // Reset viewport dimensions to default
     glViewport(0, 0, screenWidth, screenHeight);
-    
+
 #endif // GET_TEXTURE_FBO_OPTION
 
     // Clean up temporal fbo
@@ -2349,9 +2349,9 @@ Shader LoadShader(const char *vsFileName, const char *fsFileName)
 
     if (vsFileName != NULL) vShaderStr = LoadText(vsFileName);
     if (fsFileName != NULL) fShaderStr = LoadText(fsFileName);
-    
+
     shader = LoadShaderCode(vShaderStr, fShaderStr);
-        
+
     if (vShaderStr != NULL) free(vShaderStr);
     if (fShaderStr != NULL) free(fShaderStr);
 
@@ -2366,16 +2366,16 @@ Shader LoadShaderCode(char *vsCode, char *fsCode)
 
     // NOTE: All locations must be reseted to -1 (no location)
     for (int i = 0; i < MAX_SHADER_LOCATIONS; i++) shader.locs[i] = -1;
-    
+
 #if defined(GRAPHICS_API_OPENGL_33) || defined(GRAPHICS_API_OPENGL_ES2)
     unsigned int vertexShaderId = defaultVShaderId;
     unsigned int fragmentShaderId = defaultFShaderId;
-    
+
     if (vsCode != NULL) vertexShaderId = CompileShader(vsCode, GL_VERTEX_SHADER);
     if (fsCode != NULL) fragmentShaderId = CompileShader(fsCode, GL_FRAGMENT_SHADER);
-    
+
     if ((vertexShaderId == defaultVShaderId) && (fragmentShaderId == defaultFShaderId)) shader = defaultShader;
-    else 
+    else
     {
         shader.id = LoadShaderProgram(vertexShaderId, fragmentShaderId);
 
@@ -2387,17 +2387,17 @@ Shader LoadShaderCode(char *vsCode, char *fsCode)
             TraceLog(LOG_WARNING, "Custom shader could not be loaded");
             shader = defaultShader;
         }
-        
+
         // After shader loading, we TRY to set default location names
         if (shader.id > 0) SetShaderDefaultLocations(&shader);
     }
-    
+
     // Get available shader uniforms
     // NOTE: This information is useful for debug...
     int uniformCount = -1;
-    
+
     glGetProgramiv(shader.id, GL_ACTIVE_UNIFORMS, &uniformCount);
-    
+
     for(int i = 0; i < uniformCount; i++)
     {
         int namelen = -1;
@@ -2407,16 +2407,16 @@ Shader LoadShaderCode(char *vsCode, char *fsCode)
 
         // Get the name of the uniforms
         glGetActiveUniform(shader.id, i,sizeof(name) - 1, &namelen, &num, &type, name);
-        
+
         name[namelen] = 0;
 
         // Get the location of the named uniform
         GLuint location = glGetUniformLocation(shader.id, name);
-        
+
         TraceLog(LOG_DEBUG, "[SHDR ID %i] Active uniform [%s] set at location: %i", shader.id, name, location);
     }
 #endif
-    
+
     return shader;
 }
 
@@ -2524,7 +2524,7 @@ void SetMatrixModelview(Matrix view)
 }
 
 // Return internal modelview matrix
-Matrix GetMatrixModelview() 
+Matrix GetMatrixModelview()
 {
     Matrix matrix = MatrixIdentity();
 #if defined(GRAPHICS_API_OPENGL_11)
@@ -2541,16 +2541,16 @@ Matrix GetMatrixModelview()
 Texture2D GenTextureCubemap(Shader shader, Texture2D skyHDR, int size)
 {
     Texture2D cubemap = { 0 };
-#if defined(GRAPHICS_API_OPENGL_33) // || defined(GRAPHICS_API_OPENGL_ES2)  
+#if defined(GRAPHICS_API_OPENGL_33) // || defined(GRAPHICS_API_OPENGL_ES2)
     // NOTE: SetShaderDefaultLocations() already setups locations for projection and view Matrix in shader
     // Other locations should be setup externally in shader before calling the function
-    
+
     // Set up depth face culling and cubemap seamless
     glDisable(GL_CULL_FACE);
 #if defined(GRAPHICS_API_OPENGL_33)
     glEnable(GL_TEXTURE_CUBE_MAP_SEAMLESS);     // Flag not supported on OpenGL ES 2.0
 #endif
-    
+
 
     // Setup framebuffer
     unsigned int fbo, rbo;
@@ -2565,7 +2565,7 @@ Texture2D GenTextureCubemap(Shader shader, Texture2D skyHDR, int size)
     // NOTE: faces are stored with 16 bit floating point values
     glGenTextures(1, &cubemap.id);
     glBindTexture(GL_TEXTURE_CUBE_MAP, cubemap.id);
-    for (unsigned int i = 0; i < 6; i++) 
+    for (unsigned int i = 0; i < 6; i++)
         glTexImage2D(GL_TEXTURE_CUBE_MAP_POSITIVE_X + i, 0, GL_RGB16F, size, size, 0, GL_RGB, GL_FLOAT, NULL);
     glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
     glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
@@ -2607,7 +2607,7 @@ Texture2D GenTextureCubemap(Shader shader, Texture2D skyHDR, int size)
 
     // Unbind framebuffer and textures
     glBindFramebuffer(GL_FRAMEBUFFER, 0);
-    
+
     // Reset viewport dimensions to default
     glViewport(0, 0, screenWidth, screenHeight);
     //glEnable(GL_CULL_FACE);
@@ -2623,11 +2623,11 @@ Texture2D GenTextureCubemap(Shader shader, Texture2D skyHDR, int size)
 Texture2D GenTextureIrradiance(Shader shader, Texture2D cubemap, int size)
 {
     Texture2D irradiance = { 0 };
-    
+
 #if defined(GRAPHICS_API_OPENGL_33) // || defined(GRAPHICS_API_OPENGL_ES2)
     // NOTE: SetShaderDefaultLocations() already setups locations for projection and view Matrix in shader
     // Other locations should be setup externally in shader before calling the function
-    
+
     // Setup framebuffer
     unsigned int fbo, rbo;
     glGenFramebuffers(1, &fbo);
@@ -2636,18 +2636,18 @@ Texture2D GenTextureIrradiance(Shader shader, Texture2D cubemap, int size)
     glBindRenderbuffer(GL_RENDERBUFFER, rbo);
     glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH_COMPONENT24, size, size);
     glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_RENDERBUFFER, rbo);
-    
+
     // Create an irradiance cubemap, and re-scale capture FBO to irradiance scale
     glGenTextures(1, &irradiance.id);
     glBindTexture(GL_TEXTURE_CUBE_MAP, irradiance.id);
-    for (unsigned int i = 0; i < 6; i++) 
+    for (unsigned int i = 0; i < 6; i++)
         glTexImage2D(GL_TEXTURE_CUBE_MAP_POSITIVE_X + i, 0, GL_RGB16F, size, size, 0, GL_RGB, GL_FLOAT, NULL);
     glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
     glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
     glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_R, GL_CLAMP_TO_EDGE);
     glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
     glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-    
+
     // Create projection (transposed) and different views for each face
     Matrix fboProjection = MatrixPerspective(90.0*DEG2RAD, 1.0, 0.01, 1000.0);
     //MatrixTranspose(&fboProjection);
@@ -2680,7 +2680,7 @@ Texture2D GenTextureIrradiance(Shader shader, Texture2D cubemap, int size)
 
     // Unbind framebuffer and textures
     glBindFramebuffer(GL_FRAMEBUFFER, 0);
-    
+
     // Reset viewport dimensions to default
     glViewport(0, 0, screenWidth, screenHeight);
 
@@ -2695,13 +2695,13 @@ Texture2D GenTextureIrradiance(Shader shader, Texture2D cubemap, int size)
 Texture2D GenTexturePrefilter(Shader shader, Texture2D cubemap, int size)
 {
     Texture2D prefilter = { 0 };
-    
+
 #if defined(GRAPHICS_API_OPENGL_33) // || defined(GRAPHICS_API_OPENGL_ES2)
     // NOTE: SetShaderDefaultLocations() already setups locations for projection and view Matrix in shader
     // Other locations should be setup externally in shader before calling the function
     // TODO: Locations should be taken out of this function... too shader dependant...
     int roughnessLoc = GetShaderLocation(shader, "roughness");
-    
+
     // Setup framebuffer
     unsigned int fbo, rbo;
     glGenFramebuffers(1, &fbo);
@@ -2710,11 +2710,11 @@ Texture2D GenTexturePrefilter(Shader shader, Texture2D cubemap, int size)
     glBindRenderbuffer(GL_RENDERBUFFER, rbo);
     glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH_COMPONENT24, size, size);
     glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_RENDERBUFFER, rbo);
-    
+
     // Create a prefiltered HDR environment map
     glGenTextures(1, &prefilter.id);
     glBindTexture(GL_TEXTURE_CUBE_MAP, prefilter.id);
-    for (unsigned int i = 0; i < 6; i++) 
+    for (unsigned int i = 0; i < 6; i++)
         glTexImage2D(GL_TEXTURE_CUBE_MAP_POSITIVE_X + i, 0, GL_RGB16F, size, size, 0, GL_RGB, GL_FLOAT, NULL);
     glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
     glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
@@ -2724,7 +2724,7 @@ Texture2D GenTexturePrefilter(Shader shader, Texture2D cubemap, int size)
 
     // Generate mipmaps for the prefiltered HDR texture
     glGenerateMipmap(GL_TEXTURE_CUBE_MAP);
-    
+
     // Create projection (transposed) and different views for each face
     Matrix fboProjection = MatrixPerspective(90.0*DEG2RAD, 1.0, 0.01, 1000.0);
     //MatrixTranspose(&fboProjection);
@@ -2744,7 +2744,7 @@ Texture2D GenTexturePrefilter(Shader shader, Texture2D cubemap, int size)
     SetShaderValueMatrix(shader, shader.locs[LOC_MATRIX_PROJECTION], fboProjection);
 
     glBindFramebuffer(GL_FRAMEBUFFER, fbo);
-    
+
     #define MAX_MIPMAP_LEVELS   5   // Max number of prefilter texture mipmaps
 
     for (unsigned int mip = 0; mip < MAX_MIPMAP_LEVELS; mip++)
@@ -2752,7 +2752,7 @@ Texture2D GenTexturePrefilter(Shader shader, Texture2D cubemap, int size)
         // Resize framebuffer according to mip-level size.
         unsigned int mipWidth  = size*powf(0.5f, mip);
         unsigned int mipHeight = size*powf(0.5f, mip);
-        
+
         glBindRenderbuffer(GL_RENDERBUFFER, rbo);
         glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH_COMPONENT24, mipWidth, mipHeight);
         glViewport(0, 0, mipWidth, mipHeight);
@@ -2771,7 +2771,7 @@ Texture2D GenTexturePrefilter(Shader shader, Texture2D cubemap, int size)
 
     // Unbind framebuffer and textures
     glBindFramebuffer(GL_FRAMEBUFFER, 0);
-    
+
     // Reset viewport dimensions to default
     glViewport(0, 0, screenWidth, screenHeight);
 
@@ -2804,7 +2804,7 @@ Texture2D GenTextureBRDF(Shader shader, Texture2D cubemap, int size)
     glBindRenderbuffer(GL_RENDERBUFFER, rbo);
     glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH_COMPONENT24, size, size);
     glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, brdf.id, 0);
-    
+
     glViewport(0, 0, size, size);
     glUseProgram(shader.id);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
@@ -2812,10 +2812,10 @@ Texture2D GenTextureBRDF(Shader shader, Texture2D cubemap, int size)
 
     // Unbind framebuffer and textures
     glBindFramebuffer(GL_FRAMEBUFFER, 0);
-    
+
     // Reset viewport dimensions to default
     glViewport(0, 0, screenWidth, screenHeight);
-   
+
     brdf.width = size;
     brdf.height = size;
 #endif
@@ -2853,7 +2853,7 @@ void EndBlendMode(void)
 VrDeviceInfo GetVrDeviceInfo(int vrDeviceType)
 {
     VrDeviceInfo hmd = { 0 };                // Current VR device info
-    
+
     switch (vrDeviceType)
     {
         case HMD_DEFAULT_DEVICE:
@@ -2881,7 +2881,7 @@ VrDeviceInfo GetVrDeviceInfo(int vrDeviceType)
             hmd.chromaAbCorrection[1] = -0.004f;    // HMD chromatic aberration correction parameter 1
             hmd.chromaAbCorrection[2] = 1.014f;     // HMD chromatic aberration correction parameter 2
             hmd.chromaAbCorrection[3] = 0.0f;       // HMD chromatic aberration correction parameter 3
-            
+
             TraceLog(LOG_INFO, "Initializing VR Simulator (Oculus Rift CV1)");
         } break;
         case HMD_OCULUS_RIFT_DK2:
@@ -2903,9 +2903,9 @@ VrDeviceInfo GetVrDeviceInfo(int vrDeviceType)
             hmd.chromaAbCorrection[1] = -0.004f;    // HMD chromatic aberration correction parameter 1
             hmd.chromaAbCorrection[2] = 1.014f;     // HMD chromatic aberration correction parameter 2
             hmd.chromaAbCorrection[3] = 0.0f;       // HMD chromatic aberration correction parameter 3
-            
+
             TraceLog(LOG_INFO, "Initializing VR Simulator (Oculus Rift DK2)");
-        } break; 
+        } break;
         case HMD_OCULUS_GO:
         {
             // TODO: Provide device display and lens parameters
@@ -2920,7 +2920,7 @@ VrDeviceInfo GetVrDeviceInfo(int vrDeviceType)
         }
         default: break;
     }
-    
+
     return hmd;
 }
 
@@ -2932,12 +2932,12 @@ void InitVrSimulator(VrDeviceInfo info)
     // Initialize framebuffer and textures for stereo rendering
     // NOTE: Screen size should match HMD aspect ratio
     vrConfig.stereoFbo = rlLoadRenderTexture(screenWidth, screenHeight);
-    
+
 #if defined(SUPPORT_DISTORTION_SHADER)
     // Load distortion shader
     unsigned int vertexShaderId = CompileShader(distortionVShaderStr, GL_VERTEX_SHADER);
     unsigned int fragmentShaderId = CompileShader(distortionFShaderStr, GL_FRAGMENT_SHADER);
-    
+
     vrConfig.distortionShader.id = LoadShaderProgram(vertexShaderId, fragmentShaderId);
     if (vrConfig.distortionShader.id > 0) SetShaderDefaultLocations(&vrConfig.distortionShader);
 #endif
@@ -2997,7 +2997,7 @@ void ToggleVrMode(void)
     if (!vrSimulatorReady)
     {
         vrStereoRender = false;
-        
+
         // Reset viewport and default projection-modelview matrices
         rlViewport(0, 0, screenWidth, screenHeight);
         projection = MatrixOrtho(0.0, screenWidth, screenHeight, 0.0, 0.0, 1.0);
@@ -3031,7 +3031,7 @@ void BeginVrDrawing(void)
 
         //glViewport(0, 0, buffer.width, buffer.height);        // Useful if rendering to separate framebuffers (every eye)
         rlClearScreenBuffers();             // Clear current framebuffer(s)
-        
+
         vrStereoRender = true;
     }
 #endif
@@ -3044,7 +3044,7 @@ void EndVrDrawing(void)
     if (vrSimulatorReady)
     {
         vrStereoRender = false;         // Disable stereo render
-        
+
         rlDisableRenderTexture();       // Unbind current framebuffer
 
         rlClearScreenBuffers();         // Clear current framebuffer
@@ -3096,7 +3096,7 @@ void EndVrDrawing(void)
         // Update and draw render texture fbo with distortion to backbuffer
         UpdateBuffersDefault();
         DrawBuffersDefault();
-        
+
         // Restore defaultShader
         currentShader = defaultShader;
 
@@ -3104,7 +3104,7 @@ void EndVrDrawing(void)
         rlViewport(0, 0, screenWidth, screenHeight);
         projection = MatrixOrtho(0.0, screenWidth, screenHeight, 0.0, 0.0, 1.0);
         modelview = MatrixIdentity();
-        
+
         rlDisableDepthTest();
     }
 #endif
@@ -3216,7 +3216,7 @@ static unsigned int LoadShaderProgram(unsigned int vShaderId, unsigned int fShad
 static Shader LoadShaderDefault(void)
 {
     Shader shader = { 0 };
-    
+
     // NOTE: All locations must be reseted to -1 (no location)
     for (int i = 0; i < MAX_SHADER_LOCATIONS; i++) shader.locs[i] = -1;
 
@@ -3282,10 +3282,10 @@ static Shader LoadShaderDefault(void)
     // NOTE: Compiled vertex/fragment shaders are kept for re-use
     defaultVShaderId = CompileShader(defaultVShaderStr, GL_VERTEX_SHADER);     // Compile default vertex shader
     defaultFShaderId = CompileShader(defaultFShaderStr, GL_FRAGMENT_SHADER);   // Compile default fragment shader
-    
+
     shader.id = LoadShaderProgram(defaultVShaderId, defaultFShaderId);
 
-    if (shader.id > 0) 
+    if (shader.id > 0)
     {
         TraceLog(LOG_INFO, "[SHDR ID %i] Default shader loaded successfully", shader.id);
 
@@ -3298,7 +3298,7 @@ static Shader LoadShaderDefault(void)
         shader.locs[LOC_MATRIX_MVP]  = glGetUniformLocation(shader.id, "mvp");
         shader.locs[LOC_COLOR_DIFFUSE] = glGetUniformLocation(shader.id, "colDiffuse");
         shader.locs[LOC_MAP_DIFFUSE] = glGetUniformLocation(shader.id, "texture0");
-        
+
         // NOTE: We could also use below function but in case DEFAULT_ATTRIB_* points are
         // changed for external custom shaders, we just use direct bindings above
         //SetShaderDefaultLocations(&shader);
@@ -3349,7 +3349,7 @@ static void UnloadShaderDefault(void)
     glDetachShader(defaultShader.id, defaultFShaderId);
     glDeleteShader(defaultVShaderId);
     glDeleteShader(defaultFShaderId);
-  
+
     glDeleteProgram(defaultShader.id);
 }
 
@@ -3601,7 +3601,7 @@ static void DrawBuffersDefault(void)
 {
     Matrix matProjection = projection;
     Matrix matModelView = modelview;
-    
+
     int eyesCount = 1;
 #if defined(SUPPORT_VR_SIMULATOR)
     if (vrStereoRender) eyesCount = 2;
@@ -3825,7 +3825,7 @@ static void GenDrawQuad(void)
 {
     unsigned int quadVAO = 0;
     unsigned int quadVBO = 0;
-    
+
     float vertices[] = {
         // Positions        // Texture Coords
         -1.0f, 1.0f, 0.0f, 0.0f, 1.0f,
@@ -3853,7 +3853,7 @@ static void GenDrawQuad(void)
     glBindVertexArray(quadVAO);
     glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
     glBindVertexArray(0);
-    
+
     glDeleteBuffers(1, &quadVBO);
     glDeleteVertexArrays(1, &quadVAO);
 }
@@ -3926,7 +3926,7 @@ static void GenDrawCube(void)
     glBindVertexArray(cubeVAO);
     glDrawArrays(GL_TRIANGLES, 0, 36);
     glBindVertexArray(0);
-    
+
     glDeleteBuffers(1, &cubeVBO);
     glDeleteVertexArrays(1, &cubeVAO);
 }
@@ -3948,7 +3948,7 @@ static void SetStereoConfig(VrDeviceInfo hmd)
 
     // Compute distortion scale parameters
     // NOTE: To get lens max radius, lensShift must be normalized to [-1..1]
-    float lensRadius = fabsf(-1.0f - 4.0f*lensShift);
+    float lensRadius = fabs(-1.0f - 4.0f*lensShift);
     float lensRadiusSq = lensRadius*lensRadius;
     float distortionScale = hmd.lensDistortionValues[0] +
                             hmd.lensDistortionValues[1]*lensRadiusSq +
@@ -4031,7 +4031,7 @@ static void GetGlFormats(int format, int *glInternalFormat, int *glFormat, int *
     *glInternalFormat = -1;
     *glFormat = -1;
     *glType = -1;
-    
+
     switch (format)
     {
     #if defined(GRAPHICS_API_OPENGL_11) || defined(GRAPHICS_API_OPENGL_21) || defined(GRAPHICS_API_OPENGL_ES2)

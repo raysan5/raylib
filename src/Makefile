@@ -6,7 +6,7 @@
 #    PLATFORM_DESKTOP:  Windows (Win32, Win64)
 #    PLATFORM_DESKTOP:  Linux (32 and 64 bit)
 #    PLATFORM_DESKTOP:  OSX/macOS
-#    PLATFORM_DESKTOP:  FreeBSD
+#    PLATFORM_DESKTOP:  FreeBSD, OpenBSD, NetBSD, DragonFly
 #    PLATFORM_ANDROID:  Android (ARM, ARM64)
 #    PLATFORM_RPI:      Raspberry Pi (Raspbian)
 #    PLATFORM_WEB:      HTML5 (Chrome, Firefox)
@@ -111,7 +111,16 @@ ifeq ($(PLATFORM),PLATFORM_DESKTOP)
             PLATFORM_OS=LINUX
         endif
         ifeq ($(UNAMEOS),FreeBSD)
-            PLATFORM_OS=FREEBSD
+            PLATFORM_OS=BSD
+        endif
+        ifeq ($(UNAMEOS),OpenBSD)
+            PLATFORM_OS=BSD
+        endif
+        ifeq ($(UNAMEOS),NetBSD)
+            PLATFORM_OS=BSD
+        endif
+        ifeq ($(UNAMEOS),DragonFly)
+            PLATFORM_OS=BSD
         endif
         ifeq ($(UNAMEOS),Darwin)
             PLATFORM_OS=OSX
@@ -185,8 +194,8 @@ ifeq ($(PLATFORM),PLATFORM_DESKTOP)
     ifeq ($(PLATFORM_OS),OSX)
         RAYLIB_RELEASE_PATH = $(RAYLIB_PATH)/release/libs/osx
     endif
-    ifeq ($(PLATFORM_OS),FREEBSD)
-        RAYLIB_RELEASE_PATH = $(RAYLIB_PATH)/release/libs/freebsd
+    ifeq ($(PLATFORM_OS),BSD)
+        RAYLIB_RELEASE_PATH = $(RAYLIB_PATH)/release/libs/bsd
     endif
 endif
 ifeq ($(PLATFORM),PLATFORM_RPI)
@@ -231,8 +240,8 @@ ifeq ($(PLATFORM),PLATFORM_DESKTOP)
         CC = clang
         GLFW_CFLAGS = -x objective-c
     endif
-    ifeq ($(PLATFORM_OS),FREEBSD)
-        # FreeBSD default compiler
+    ifeq ($(PLATFORM_OS),BSD)
+        # FreeBSD, OpenBSD, NetBSD, DragonFly default compiler
         CC = clang
     endif
 endif
@@ -309,13 +318,14 @@ endif
 ifeq ($(PLATFORM),PLATFORM_ANDROID)
     # Compiler flags for arquitecture (only ARM, not ARM64)
     #CFLAGS += -march=armv7-a -mfloat-abi=softfp -mfpu=vfpv3-d16
+    CFLAGS += -target aarch64 -mfix-cortex-a53-835769
     # Compilation functions attributes options
     CFLAGS += -ffunction-sections -funwind-tables -fstack-protector-strong -fPIE -fPIC
     # Compiler options for the linker
     # -Werror=format-security
     CFLAGS += -Wa,--noexecstack -Wformat -no-canonical-prefixes
     # Preprocessor macro definitions
-    CFLAGS += -DANDROID -DPLATFORM_ANDROID -D__ANDROID_API__=21
+    CFLAGS += -DANDROID -DPLATFORM_ANDROID -D__ANDROID_API__=21 -DMAL_NO_OSS
 endif
 
 # Define required compilation flags for raylib SHARED lib
@@ -345,7 +355,7 @@ endif
 INCLUDE_PATHS = -I. -Iexternal -Iexternal/glfw/include
 
 ifeq ($(PLATFORM),PLATFORM_DESKTOP)
-    ifeq ($(PLATFORM_OS),FREEBSD)
+    ifeq ($(PLATFORM_OS),BSD)
         INCLUDE_PATHS += -I/usr/local/include
         LDFLAGS += -L. -Lsrc -L/usr/local/lib -L$(RAYLIB_RELEASE_PATH)
     endif
@@ -415,6 +425,10 @@ ifeq ($(INCLUDE_AUDIO_MODULE),TRUE)
     endif
 endif
 
+ifeq ($(PLATFORM),PLATFORM_ANDROID)
+    OBJS += external/android/native_app_glue/android_native_app_glue.o
+endif
+
 # Default target entry
 all: raylib
 
@@ -454,7 +468,7 @@ else
 			cd $(RAYLIB_RELEASE_PATH) && ln -fs libraylib.$(RAYLIB_VERSION).dylib libraylib.$(RAYLIB_API_VERSION).dylib
 			cd $(RAYLIB_RELEASE_PATH) && ln -fs libraylib.$(RAYLIB_VERSION).dylib libraylib.dylib
         endif
-        ifeq ($(PLATFORM_OS),FREEBSD)
+        ifeq ($(PLATFORM_OS),BSD)
             # WARNING: you should type "gmake clean" before doing this target
 			$(CC) -shared -o $(RAYLIB_RELEASE_PATH)/libraylib.$(RAYLIB_VERSION).so $(OBJS) -Wl,-soname,libraylib.$(RAYLIB_API_VERSION).so -lGL -lpthread
 			@echo "raylib shared library generated (libraylib.$(RAYLIB_VERSION).so)!"

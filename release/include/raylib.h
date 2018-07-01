@@ -13,7 +13,7 @@
 *       - Shaders support, including Model shaders and Postprocessing shaders
 *       - Powerful math module for Vector, Matrix and Quaternion operations: [raymath]
 *       - Audio loading and playing with streaming support (WAV, OGG, FLAC, XM, MOD)
-*       - Multiple platforms support: Windows, Linux, FreeBSD, MacOS, UWP, Android, Raspberry Pi, HTML5.
+*       - Multiple platforms support: Windows, Linux, FreeBSD, OpenBSD, NetBSD, DragonFly, MacOS, UWP, Android, Raspberry Pi, HTML5.
 *       - VR stereo rendering with configurable HMD device parameters
 *       - NO external dependencies, all required libraries included with raylib
 *       - Complete bindings to LUA (raylib-lua) and Go (raylib-go)
@@ -92,7 +92,7 @@
 #define FLAG_SHOW_LOGO              1       // Set to show raylib logo at startup
 #define FLAG_FULLSCREEN_MODE        2       // Set to run program in fullscreen
 #define FLAG_WINDOW_RESIZABLE       4       // Set to allow resizable window
-#define FLAG_WINDOW_DECORATED       8       // Set to show window decoration (frame and buttons)
+#define FLAG_WINDOW_UNDECORATED     8       // Set to disable window decoration (frame and buttons)
 #define FLAG_WINDOW_TRANSPARENT    16       // Set to allow transparent window
 #define FLAG_MSAA_4X_HINT          32       // Set to try enabling MSAA 4X
 #define FLAG_VSYNC_HINT            64       // Set to try enabling V-Sync on GPU
@@ -389,6 +389,7 @@ typedef struct CharInfo {
     int offsetX;            // Character offset X when drawing
     int offsetY;            // Character offset Y when drawing
     int advanceX;           // Character advance position X
+    unsigned char *data;    // Character pixel data (grayscale)
 } CharInfo;
 
 // Font type, includes texture and charSet array data
@@ -899,6 +900,7 @@ RLAPI void UnloadImage(Image image);                                            
 RLAPI void UnloadTexture(Texture2D texture);                                                             // Unload texture from GPU memory (VRAM)
 RLAPI void UnloadRenderTexture(RenderTexture2D target);                                                  // Unload render texture from GPU memory (VRAM)
 RLAPI Color *GetImageData(Image image);                                                                  // Get pixel data from image as a Color struct array
+RLAPI Vector4 *GetImageDataNormalized(Image image);                                                      // Get pixel data from image as Vector4 array (float normalized)
 RLAPI int GetPixelDataSize(int width, int height, int format);                                           // Get pixel data size in bytes (image or texture)
 RLAPI Image GetTextureData(Texture2D texture);                                                           // Get pixel data from GPU texture and return an Image
 RLAPI void UpdateTexture(Texture2D texture, const void *pixels);                                         // Update GPU texture with new data
@@ -912,8 +914,9 @@ RLAPI void ImageAlphaClear(Image *image, Color color, float threshold);         
 RLAPI void ImageAlphaCrop(Image *image, float threshold);                                                // Crop image depending on alpha value
 RLAPI void ImageAlphaPremultiply(Image *image);                                                          // Premultiply alpha channel
 RLAPI void ImageCrop(Image *image, Rectangle crop);                                                      // Crop an image to a defined rectangle
-RLAPI void ImageResize(Image *image, int newWidth, int newHeight);                                       // Resize and image (bilinear filtering)
-RLAPI void ImageResizeNN(Image *image,int newWidth,int newHeight);                                       // Resize and image (Nearest-Neighbor scaling algorithm)
+RLAPI void ImageResize(Image *image, int newWidth, int newHeight);                                       // Resize image (bilinear filtering)
+RLAPI void ImageResizeNN(Image *image, int newWidth,int newHeight);                                      // Resize image (Nearest-Neighbor scaling algorithm)
+RLAPI void ImageResizeCanvas(Image *image, int newWidth, int newHeight, int offsetX, int offsetY, Color color);  // Resize canvas and fill with color
 RLAPI void ImageMipmaps(Image *image);                                                                   // Generate all mipmap levels for a provided image
 RLAPI void ImageDither(Image *image, int rBpp, int gBpp, int bBpp, int aBpp);                            // Dither image data to 16bpp or lower (Floyd-Steinberg dithering)
 RLAPI Image ImageText(const char *text, int fontSize, Color color);                                      // Create an image from text (default font)
@@ -924,6 +927,8 @@ RLAPI void ImageDrawText(Image *dst, Vector2 position, const char *text, int fon
 RLAPI void ImageDrawTextEx(Image *dst, Vector2 position, Font font, const char *text, float fontSize, float spacing, Color color); // Draw text (custom sprite font) within an image (destination)
 RLAPI void ImageFlipVertical(Image *image);                                                              // Flip image vertically
 RLAPI void ImageFlipHorizontal(Image *image);                                                            // Flip image horizontally
+RLAPI void ImageRotateCW(Image *image);                                                                  // Rotate image clockwise 90deg
+RLAPI void ImageRotateCCW(Image *image);                                                                 // Rotate image counter-clockwise 90deg
 RLAPI void ImageColorTint(Image *image, Color color);                                                    // Modify image color: tint
 RLAPI void ImageColorInvert(Image *image);                                                               // Modify image color: invert
 RLAPI void ImageColorGrayscale(Image *image);                                                            // Modify image color: grayscale
@@ -951,29 +956,29 @@ RLAPI void DrawTextureV(Texture2D texture, Vector2 position, Color tint);       
 RLAPI void DrawTextureEx(Texture2D texture, Vector2 position, float rotation, float scale, Color tint);  // Draw a Texture2D with extended parameters
 RLAPI void DrawTextureRec(Texture2D texture, Rectangle sourceRec, Vector2 position, Color tint);         // Draw a part of a texture defined by a rectangle
 RLAPI void DrawTexturePro(Texture2D texture, Rectangle sourceRec, Rectangle destRec, Vector2 origin, float rotation, Color tint); // Draw a part of a texture defined by a rectangle with 'pro' parameters
-                    
 
 //------------------------------------------------------------------------------------
 // Font Loading and Text Drawing Functions (Module: text)
 //------------------------------------------------------------------------------------
 
 // Font loading/unloading functions
-RLAPI Font GetDefaultFont(void);                                                                   // Get the default Font
-RLAPI Font LoadFont(const char *fileName);                                                   // Load Font from file into GPU memory (VRAM)
-RLAPI Font LoadFontEx(const char *fileName, int fontSize, int charsCount, int *fontChars);   // Load Font from file with extended parameters
-RLAPI void UnloadFont(Font font);                                                            // Unload Font from GPU memory (VRAM)
+RLAPI Font GetDefaultFont(void);                                                            // Get the default Font
+RLAPI Font LoadFont(const char *fileName);                                                  // Load font from file into GPU memory (VRAM)
+RLAPI CharInfo *LoadFontData(const char *fileName, int fontSize, int *fontChars, int charsCount, bool sdf); // Load font data for further use
+RLAPI Image GenImageFontAtlas(CharInfo *chars, int fontSize, int charsCount, int padding, int packMethod);  // Generate image font atlas using chars info
+RLAPI void UnloadFont(Font font);                                                           // Unload Font from GPU memory (VRAM)
 
 // Text drawing functions
-RLAPI void DrawFPS(int posX, int posY);                                                                  // Shows current FPS
-RLAPI void DrawText(const char *text, int posX, int posY, int fontSize, Color color);                    // Draw text (using default font)
-RLAPI void DrawTextEx(Font font, const char* text, Vector2 position, float fontSize, float spacing, Color tint); // Draw text using Font and additional parameters
+RLAPI void DrawFPS(int posX, int posY);                                                     // Shows current FPS
+RLAPI void DrawText(const char *text, int posX, int posY, int fontSize, Color color);       // Draw text (using default font)
+RLAPI void DrawTextEx(Font font, const char* text, Vector2 position, float fontSize, float spacing, Color tint); // Draw text using font and additional parameters
 
 // Text misc. functions
-RLAPI int MeasureText(const char *text, int fontSize);                                                   // Measure string width for default font
-RLAPI Vector2 MeasureTextEx(Font font, const char *text, float fontSize, float spacing);           // Measure string size for Font
-RLAPI const char *FormatText(const char *text, ...);                                                     // Formatting of text with variables to 'embed'
-RLAPI const char *SubText(const char *text, int position, int length);                                   // Get a piece of a text string
-RLAPI int GetGlyphIndex(Font font, int character);                                                 // Returns index position for a unicode character on sprite font
+RLAPI int MeasureText(const char *text, int fontSize);                                      // Measure string width for default font
+RLAPI Vector2 MeasureTextEx(Font font, const char *text, float fontSize, float spacing);    // Measure string size for Font
+RLAPI const char *FormatText(const char *text, ...);                                        // Formatting of text with variables to 'embed'
+RLAPI const char *SubText(const char *text, int position, int length);                      // Get a piece of a text string
+RLAPI int GetGlyphIndex(Font font, int character);                                          // Get index position for a unicode character on sprite font
 
 //------------------------------------------------------------------------------------
 // Basic 3d Shapes Drawing Functions (Module: models)

@@ -46,4 +46,4 @@ The following fonts [provided with raylib](https://github.com/raysan5/raylib/tre
 3d models
 ---------
 
-[dwarf 3d model and textures](https://github.com/raysan5/raylib/tree/master/examples/models/resources/model) have been created by David Moreno and licensed as [Creative Commons Attribution-NonCommercial 3.0](https://creativecommons.org/licenses/by-nc/3.0/legalcode)
+[medieval city 3d models and textures](https://github.com/raysan5/raylib/tree/master/examples/models/resources/medieval) have been created by Alberto Cano and licensed as [Creative Commons Attribution-NonCommercial 4.0](https://creativecommons.org/licenses/by-nc/4.0/legalcode)
