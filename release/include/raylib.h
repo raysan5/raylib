@@ -937,6 +937,7 @@ RLAPI void ImageColorInvert(Image *image);                                      
 RLAPI void ImageColorGrayscale(Image *image);                                                            // Modify image color: grayscale
 RLAPI void ImageColorContrast(Image *image, float contrast);                                             // Modify image color: contrast (-100 to 100)
 RLAPI void ImageColorBrightness(Image *image, int brightness);                                           // Modify image color: brightness (-255 to 255)
+RLAPI void ImageColorReplace(Image *image, Color color, Color replace);                                  // Modify image color: replace color
 
 // Image generation functions
 RLAPI Image GenImageColor(int width, int height, Color color);                                           // Generate image: plain color

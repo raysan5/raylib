@@ -1901,6 +1901,36 @@ void ImageColorBrightness(Image *image, int brightness)
 
     image->data = processed.data;
 }
+
+// Modify image color: replace color
+void ImageColorReplace(Image *image, Color color, Color replace)
+{
+    Color *pixels = GetImageData(*image);
+
+    for (int y = 0; y < image->height; y++)
+    {
+        for (int x = 0; x < image->width; x++)
+        {
+            if ((pixels[y*image->width + x].r == color.r) &&
+                (pixels[y*image->width + x].g == color.g) &&
+                (pixels[y*image->width + x].b == color.b) &&
+                (pixels[y*image->width + x].a == color.a))
+            {
+                pixels[y*image->width + x].r = replace.r;
+                pixels[y*image->width + x].g = replace.g;
+                pixels[y*image->width + x].b = replace.b;
+                pixels[y*image->width + x].a = replace.a;
+            }
+        }
+    }
+
+    Image processed = LoadImageEx(pixels, image->width, image->height);
+    ImageFormat(&processed, image->format);
+    UnloadImage(*image);
+    free(pixels);
+
+    image->data = processed.data;
+}
 #endif      // SUPPORT_IMAGE_MANIPULATION
 
 #if defined(SUPPORT_IMAGE_GENERATION)
