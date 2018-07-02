@@ -332,6 +332,8 @@ typedef struct Vector4 {
     float w;
 } Vector4;
 
+typedef Vector4 Quaternion;
+
 // Matrix type (OpenGL style 4x4 - right handed, column major)
 typedef struct Matrix {
     float m0, m4, m8, m12;

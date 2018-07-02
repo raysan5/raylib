@@ -3,6 +3,8 @@
 *   raylib - A simple and easy-to-use library to learn videogames programming (www.raylib.com)
 *
 *   FEATURES:
+*       - NO external dependencies, all required libraries included with raylib
+*       - Multiple platforms support: Windows, Linux, FreeBSD, OpenBSD, NetBSD, DragonFly, MacOS, UWP, Android, Raspberry Pi, HTML5.
 *       - Written in plain C code (C99) in PascalCase/camelCase notation
 *       - Hardware accelerated with OpenGL (1.1, 2.1, 3.3 or ES2 - choose at compile)
 *       - Unique OpenGL abstraction layer (usable as standalone module): [rlgl]
@@ -12,10 +14,8 @@
 *       - Flexible Materials system, supporting classic maps and PBR maps
 *       - Shaders support, including Model shaders and Postprocessing shaders
 *       - Powerful math module for Vector, Matrix and Quaternion operations: [raymath]
-*       - Audio loading and playing with streaming support (WAV, OGG, FLAC, XM, MOD)
-*       - Multiple platforms support: Windows, Linux, FreeBSD, OpenBSD, NetBSD, DragonFly, MacOS, UWP, Android, Raspberry Pi, HTML5.
+*       - Audio loading and playing with streaming support (WAV, OGG, MP3, FLAC, XM, MOD)
 *       - VR stereo rendering with configurable HMD device parameters
-*       - NO external dependencies, all required libraries included with raylib
 *       - Complete bindings to LUA (raylib-lua) and Go (raylib-go)
 *
 *   NOTES:
@@ -33,14 +33,15 @@
 *       stb_image_resize (Sean Barret) for image resizing algorythms [textures]
 *       stb_image_write (Sean Barret) for image writting (PNG) [utils]
 *       stb_truetype (Sean Barret) for ttf fonts loading [text]
+*       stb_rect_pack (Sean Barret) for rectangles packing [text]
 *       stb_vorbis (Sean Barret) for OGG audio loading [audio]
 *       stb_perlin (Sean Barret) for Perlin noise image generation [textures]
 *       par_shapes (Philip Rideout) for parametric 3d shapes generation [models]
 *       jar_xm (Joshua Reisenauer) for XM audio module loading [audio]
 *       jar_mod (Joshua Reisenauer) for MOD audio module loading [audio]
 *       dr_flac (David Reid) for FLAC audio file loading [audio]
+*       dr_mp3 (David Reid) for MP3 audio file loading [audio]
 *       rgif (Charlie Tangora, Ramon Santamaria) for GIF recording [core]
-*       tinfl for data decompression (DEFLATE algorithm) [rres]
 *
 *
 *   LICENSE: zlib/libpng
@@ -331,6 +332,8 @@ typedef struct Vector4 {
     float w;
 } Vector4;
 
+typedef Vector4 Quaternion;
+
 // Matrix type (OpenGL style 4x4 - right handed, column major)
 typedef struct Matrix {
     float m0, m4, m8, m12;
@@ -540,12 +543,12 @@ typedef struct VrDeviceInfo {
 // Enumerators Definition
 //----------------------------------------------------------------------------------
 // Trace log type
-typedef enum { 
+typedef enum {
     LOG_INFO    = 1,
-    LOG_WARNING = 2, 
-    LOG_ERROR   = 4, 
-    LOG_DEBUG   = 8, 
-    LOG_OTHER   = 16 
+    LOG_WARNING = 2,
+    LOG_ERROR   = 4,
+    LOG_DEBUG   = 8,
+    LOG_OTHER   = 16
 } LogType;
 
 // Shader location point type
@@ -637,16 +640,16 @@ typedef enum {
 } TextureFilterMode;
 
 // Texture parameters: wrap mode
-typedef enum { 
-    WRAP_REPEAT = 0, 
-    WRAP_CLAMP, 
-    WRAP_MIRROR 
+typedef enum {
+    WRAP_REPEAT = 0,
+    WRAP_CLAMP,
+    WRAP_MIRROR
 } TextureWrapMode;
 
 // Color blending modes (pre-defined)
-typedef enum { 
-    BLEND_ALPHA = 0, 
-    BLEND_ADDITIVE, 
+typedef enum {
+    BLEND_ALPHA = 0,
+    BLEND_ADDITIVE,
     BLEND_MULTIPLIED
 } BlendMode;
 
@@ -964,6 +967,7 @@ RLAPI void DrawTexturePro(Texture2D texture, Rectangle sourceRec, Rectangle dest
 // Font loading/unloading functions
 RLAPI Font GetDefaultFont(void);                                                            // Get the default Font
 RLAPI Font LoadFont(const char *fileName);                                                  // Load font from file into GPU memory (VRAM)
+RLAPI Font LoadFontEx(const char *fileName, int fontSize, int charsCount, int *fontChars);  // Load font from file with extended parameters
 RLAPI CharInfo *LoadFontData(const char *fileName, int fontSize, int *fontChars, int charsCount, bool sdf); // Load font data for further use
 RLAPI Image GenImageFontAtlas(CharInfo *chars, int fontSize, int charsCount, int padding, int packMethod);  // Generate image font atlas using chars info
 RLAPI void UnloadFont(Font font);                                                           // Unload Font from GPU memory (VRAM)
@@ -1018,7 +1022,7 @@ RLAPI void ExportMesh(const char *fileName, Mesh mesh);                         
 
 // Mesh manipulation functions
 RLAPI BoundingBox MeshBoundingBox(Mesh mesh);                                                           // Compute mesh bounding box limits
-RLAPI void MeshTangents(Mesh *mesh);                                                                    // Compute mesh tangents 
+RLAPI void MeshTangents(Mesh *mesh);                                                                    // Compute mesh tangents
 RLAPI void MeshBinormals(Mesh *mesh);                                                                   // Compute mesh binormals
 
 // Mesh generation functions

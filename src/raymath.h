@@ -114,6 +114,14 @@
         float y;
         float z;
     } Vector3;
+    
+    // Quaternion type
+    typedef struct Quaternion {
+        float x;
+        float y;
+        float z;
+        float w;
+    } Quaternion;
 
     // Matrix type (OpenGL style 4x4 - right handed, column major)
     typedef struct Matrix {
@@ -122,14 +130,6 @@
         float m2, m6, m10, m14;
         float m3, m7, m11, m15;
     } Matrix;
-
-    // Quaternion type
-    typedef struct Quaternion {
-        float x;
-        float y;
-        float z;
-        float w;
-    } Quaternion;
 #endif
 
 // NOTE: Helper types to be used instead of array return types for *ToFloat functions
