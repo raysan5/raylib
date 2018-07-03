@@ -144,6 +144,8 @@ if(${SHARED})
       PUBLIC_HEADER DESTINATION "${CMAKE_INSTALL_INCLUDEDIR}"
     )
   endif()
+
+  add_test("pkg-config" ${PROJECT_SOURCE_DIR}/../cmake/test-pkgconfig.sh)
 endif(${SHARED})
 
 if(${STATIC})
@@ -167,6 +169,8 @@ if(${STATIC})
     ARCHIVE DESTINATION "${CMAKE_INSTALL_LIBDIR}"
     PUBLIC_HEADER DESTINATION "${CMAKE_INSTALL_INCLUDEDIR}"
   )
+
+  add_test("pkg-config--static" ${PROJECT_SOURCE_DIR}/../cmake/test-pkgconfig.sh --static)
 endif(${STATIC})
 
 configure_file(../raylib.pc.in raylib.pc @ONLY)
@@ -203,3 +207,5 @@ SET(CPACK_RESOURCE_FILE_LICENSE "${PROJECT_SOURCE_DIR}/../LICENSE.md")
 SET(CPACK_PACKAGE_FILE_NAME "raylib-${PROJECT_VERSION}$ENV{RAYLIB_PACKAGE_SUFFIX}")
 SET(CPACK_GENERATOR "ZIP;TGZ") # Remove this, if you want the NSIS installer on Windows
 include(CPack)
+
+enable_testing()

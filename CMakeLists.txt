@@ -50,3 +50,5 @@ endif()
 if (${BUILD_GAMES})
   add_subdirectory(games)
 endif()
+
+enable_testing()
