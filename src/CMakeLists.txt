@@ -33,6 +33,8 @@ if(NOT glfw3_FOUND AND NOT USE_EXTERNAL_GLFW STREQUAL "ON" AND "${PLATFORM}" MAT
   include_directories(external/glfw/include)
 
   list(APPEND raylib_sources $<TARGET_OBJECTS:glfw_objlib>)
+else()
+  set(GLFW_PKG_DEPS glfw)
 endif()
 
 include(utils)
@@ -92,7 +94,7 @@ elseif(${PLATFORM} MATCHES "Android")
   add_if_flag_compiles(-Wa,--noexecstack CMAKE_C_FLAGS)
   add_if_flag_compiles(-no-canonical-prefixes CMAKE_C_FLAGS)
   add_definitions(-DANDROID -D__ANDROID_API__=21)
-  include_directories(external/android/native_app_glue )
+  include_directories(external/android/native_app_glue)
   set(CMAKE_SHARED_LINKER_FLAGS "${CMAKE_SHARED_LINKER_FLAGS} -Wl,--exclude-libs,libatomic.a -Wl,--build-id -Wl,-z,noexecstack -Wl,-z,relro -Wl,-z,now -Wl,--warn-shared-textrel -Wl,--fatal-warnings -uANativeActivity_onCreate")
 
 elseif(${PLATFORM} MATCHES "Raspberry Pi")
@@ -114,8 +116,8 @@ if(${SHARED})
   set(CMAKE_MACOSX_RPATH ON)
 
   target_link_libraries(${RAYLIB}_shared ${LIBS_PRIVATE})
-  if (${PLATFORM} MATCHES "Desktop")
-    target_link_libraries(${RAYLIB}_shared glfw ${GLFW_LIBRARIES})
+  if (${PLATFORM} MATCHES "PLATFORM_DESKTOP")
+    target_link_libraries(${RAYLIB}_shared glfw)
   endif()
   if (UNIX AND ${FILESYSTEM_LACKS_SYMLINKS})
     MESSAGE(WARNING "Can't version UNIX shared library on file system without symlink support")
@@ -151,8 +153,9 @@ if(${STATIC})
 
   add_library(${RAYLIB} STATIC ${sources})
 
-  set(PKG_CONFIG_LIBS_PRIVATE ${__PKG_CONFIG_LIBS_PRIVATE})
-  if (${PLATFORM} MATCHES "Desktop")
+  set(PKG_CONFIG_LIBS_PRIVATE ${__PKG_CONFIG_LIBS_PRIVATE} ${GLFW_PKG_LIBS})
+  string (REPLACE ";" " " PKG_CONFIG_LIBS_PRIVATE "${PKG_CONFIG_LIBS_PRIVATE}")
+  if (${PLATFORM} MATCHES "PLATFORM_DESKTOP")
     target_link_libraries(${RAYLIB} glfw ${GLFW_LIBRARIES})
   endif()
 
