@@ -327,10 +327,10 @@ endif()
 # Export GLFW library dependencies
 #--------------------------------------------------------------------
 foreach(arg ${glfw_PKG_DEPS})
-    set(GLFW_PKG_DEPS "${GLFW_PKG_DEPS} ${arg}")
+    set(GLFW_PKG_DEPS "${GLFW_PKG_DEPS} ${arg}" PARENT_SCOPE)
 endforeach()
 foreach(arg ${glfw_PKG_LIBS})
-    set(GLFW_PKG_LIBS "${GLFW_PKG_LIBS} ${arg}")
+    set(GLFW_PKG_LIBS "${GLFW_PKG_LIBS} ${arg}" PARENT_SCOPE)
 endforeach()
 
 #--------------------------------------------------------------------

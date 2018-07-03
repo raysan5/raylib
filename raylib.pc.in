@@ -9,5 +9,5 @@ URL: http://github.com/raysan5/raylib
 Version: @PROJECT_VERSION@
 Libs: -L${libdir} -lraylib
 Libs.private: @PKG_CONFIG_LIBS_PRIVATE@
-Requires.private:
+Requires.private: @GLFW_PKG_DEPS@
 Cflags: -I${includedir}
