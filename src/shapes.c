@@ -259,27 +259,27 @@ void DrawRectangleV(Vector2 position, Vector2 size, Color color)
 #if defined(SUPPORT_QUADS_DRAW_MODE)
     #if defined(SUPPORT_FONT_TEXTURE)
     // Draw rectangle using font texture white character
-    rlEnableTexture(GetDefaultFont().texture.id);
+    rlEnableTexture(GetFontDefault()().texture.id);
 
     rlBegin(RL_QUADS);
         rlColor4ub(color.r, color.g, color.b, color.a);
         rlNormal3f(0.0f, 0.0f, 1.0f);
 
         // NOTE: Default raylib font character 95 is a white square
-        rlTexCoord2f((float)GetDefaultFont().chars[95].rec.x/GetDefaultFont().texture.width, 
-                     (float)GetDefaultFont().chars[95].rec.y/GetDefaultFont().texture.height);
+        rlTexCoord2f((float)GetFontDefault()().chars[95].rec.x/GetFontDefault()().texture.width, 
+                     (float)GetFontDefault()().chars[95].rec.y/GetFontDefault()().texture.height);
         rlVertex2f(position.x, position.y);
         
-        rlTexCoord2f((float)GetDefaultFont().chars[95].rec.x/GetDefaultFont().texture.width, 
-                     (float)(GetDefaultFont().chars[95].rec.y + GetDefaultFont().chars[95].rec.height)/GetDefaultFont().texture.height);
+        rlTexCoord2f((float)GetFontDefault()().chars[95].rec.x/GetFontDefault()().texture.width, 
+                     (float)(GetFontDefault()().chars[95].rec.y + GetFontDefault()().chars[95].rec.height)/GetFontDefault()().texture.height);
         rlVertex2f(position.x, position.y + size.y);
         
-        rlTexCoord2f((float)(GetDefaultFont().chars[95].rec.x + GetDefaultFont().chars[95].rec.width)/GetDefaultFont().texture.width, 
-                     (float)(GetDefaultFont().chars[95].rec.y + GetDefaultFont().chars[95].rec.height)/GetDefaultFont().texture.height);
+        rlTexCoord2f((float)(GetFontDefault()().chars[95].rec.x + GetFontDefault()().chars[95].rec.width)/GetFontDefault()().texture.width, 
+                     (float)(GetFontDefault()().chars[95].rec.y + GetFontDefault()().chars[95].rec.height)/GetFontDefault()().texture.height);
         rlVertex2f(position.x + size.x, position.y + size.y);
         
-        rlTexCoord2f((float)(GetDefaultFont().chars[95].rec.x + GetDefaultFont().chars[95].rec.width)/GetDefaultFont().texture.width, 
-                     (float)GetDefaultFont().chars[95].rec.y/GetDefaultFont().texture.height);
+        rlTexCoord2f((float)(GetFontDefault()().chars[95].rec.x + GetFontDefault()().chars[95].rec.width)/GetFontDefault()().texture.width, 
+                     (float)GetFontDefault()().chars[95].rec.y/GetFontDefault()().texture.height);
         rlVertex2f(position.x + size.x, position.y);
     rlEnd();
     
@@ -370,30 +370,30 @@ void DrawRectangleGradientEx(Rectangle rec, Color col1, Color col2, Color col3, 
 {
 #if defined(SUPPORT_FONT_TEXTURE)
     // Draw rectangle using font texture white character
-    rlEnableTexture(GetDefaultFont().texture.id);
+    rlEnableTexture(GetFontDefault()().texture.id);
 
     rlBegin(RL_QUADS);
         rlNormal3f(0.0f, 0.0f, 1.0f);
 
         // NOTE: Default raylib font character 95 is a white square
         rlColor4ub(col1.r, col1.g, col1.b, col1.a);
-        rlTexCoord2f(GetDefaultFont().chars[95].rec.x/GetDefaultFont().texture.width, 
-                     GetDefaultFont().chars[95].rec.y/GetDefaultFont().texture.height);
+        rlTexCoord2f(GetFontDefault()().chars[95].rec.x/GetFontDefault()().texture.width, 
+                     GetFontDefault()().chars[95].rec.y/GetFontDefault()().texture.height);
         rlVertex2f(rec.x, rec.y);
         
         rlColor4ub(col2.r, col2.g, col2.b, col2.a);
-        rlTexCoord2f(GetDefaultFont().chars[95].rec.x/GetDefaultFont().texture.width, 
-                     (GetDefaultFont().chars[95].rec.y + GetDefaultFont().chars[95].rec.height)/GetDefaultFont().texture.height);
+        rlTexCoord2f(GetFontDefault()().chars[95].rec.x/GetFontDefault()().texture.width, 
+                     (GetFontDefault()().chars[95].rec.y + GetFontDefault()().chars[95].rec.height)/GetFontDefault()().texture.height);
         rlVertex2f(rec.x, rec.y + rec.height);
         
         rlColor4ub(col3.r, col3.g, col3.b, col3.a);
-        rlTexCoord2f((GetDefaultFont().chars[95].rec.x + GetDefaultFont().chars[95].rec.width)/GetDefaultFont().texture.width, 
-                     (GetDefaultFont().chars[95].rec.y + GetDefaultFont().chars[95].rec.height)/GetDefaultFont().texture.height);
+        rlTexCoord2f((GetFontDefault()().chars[95].rec.x + GetFontDefault()().chars[95].rec.width)/GetFontDefault()().texture.width, 
+                     (GetFontDefault()().chars[95].rec.y + GetFontDefault()().chars[95].rec.height)/GetFontDefault()().texture.height);
         rlVertex2f(rec.x + rec.width, rec.y + rec.height);
         
         rlColor4ub(col4.r, col4.g, col4.b, col4.a);
-        rlTexCoord2f((GetDefaultFont().chars[95].rec.x + GetDefaultFont().chars[95].rec.width)/GetDefaultFont().texture.width, 
-                     GetDefaultFont().chars[95].rec.y/GetDefaultFont().texture.height);
+        rlTexCoord2f((GetFontDefault()().chars[95].rec.x + GetFontDefault()().chars[95].rec.width)/GetFontDefault()().texture.width, 
+                     GetFontDefault()().chars[95].rec.y/GetFontDefault()().texture.height);
         rlVertex2f(rec.x + rec.width, rec.y);
     rlEnd();
     

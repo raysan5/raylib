@@ -258,7 +258,7 @@ extern void UnloadDefaultFont(void)
 #endif      // SUPPORT_DEFAULT_FONT
 
 // Get the default font, useful to be used with extended parameters
-Font GetDefaultFont()
+Font GetFontDefault()()
 {
 #if defined(SUPPORT_DEFAULT_FONT)
     return defaultFont;
@@ -303,7 +303,7 @@ Font LoadFont(const char *fileName)
     if (font.texture.id == 0)
     {
         TraceLog(LOG_WARNING, "[%s] Font could not be loaded, using default font", fileName);
-        font = GetDefaultFont();
+        font = GetFontDefault()();
     }
     else SetTextureFilter(font.texture, FILTER_POINT);    // By default we set point filter (best performance)
 
@@ -527,7 +527,7 @@ Image GenImageFontAtlas(CharInfo *chars, int charsCount, int fontSize, int paddi
 void UnloadFont(Font font)
 {
     // NOTE: Make sure spriteFont is not default font (fallback)
-    if (font.texture.id != GetDefaultFont().texture.id)
+    if (font.texture.id != GetFontDefault()().texture.id)
     {
         UnloadTexture(font.texture);
         free(font.chars);
@@ -542,7 +542,7 @@ void UnloadFont(Font font)
 void DrawText(const char *text, int posX, int posY, int fontSize, Color color)
 {
     // Check if default font has been loaded
-    if (GetDefaultFont().texture.id != 0)
+    if (GetFontDefault()().texture.id != 0)
     {
         Vector2 position = { (float)posX, (float)posY };
 
@@ -550,7 +550,7 @@ void DrawText(const char *text, int posX, int posY, int fontSize, Color color)
         if (fontSize < defaultFontSize) fontSize = defaultFontSize;
         int spacing = fontSize/defaultFontSize;
 
-        DrawTextEx(GetDefaultFont(), text, position, (float)fontSize, (float)spacing, color);
+        DrawTextEx(GetFontDefault()(), text, position, (float)fontSize, (float)spacing, color);
     }
 }
 
@@ -656,13 +656,13 @@ int MeasureText(const char *text, int fontSize)
     Vector2 vec = { 0.0f, 0.0f };
 
     // Check if default font has been loaded
-    if (GetDefaultFont().texture.id != 0)
+    if (GetFontDefault()().texture.id != 0)
     {
         int defaultFontSize = 10;   // Default Font chars height in pixel
         if (fontSize < defaultFontSize) fontSize = defaultFontSize;
         int spacing = fontSize/defaultFontSize;
 
-        vec = MeasureTextEx(GetDefaultFont(), text, (float)fontSize, (float)spacing);
+        vec = MeasureTextEx(GetFontDefault()(), text, (float)fontSize, (float)spacing);
     }
 
     return (int)vec.x;
@@ -988,7 +988,7 @@ static Font LoadBMFont(const char *fileName)
     if (font.texture.id == 0)
     {
         UnloadFont(font);
-        font = GetDefaultFont();
+        font = GetFontDefault()();
     }
     else TraceLog(LOG_INFO, "[%s] Font loaded successfully", fileName);
 

@@ -88,6 +88,7 @@ Detailed changes:
 [text] ADDED: LoadFontData() to load data from TTF file
 [text] REMOVED: LoadTTF() internal function
 [text] REVIEWED: DrawTextEx() - avoid rendering SPACE character!
+[text] RENAMED: GetDefaultFont() to GetFontDefault()
 [rlgl] ADDED: rlCheckBufferLimit()
 [rlgl] ADDED: LoadShaderCode()
 [rlgl] ADDED: GetMatrixModelview()
