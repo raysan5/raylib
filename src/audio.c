@@ -305,7 +305,7 @@ static mal_uint32 OnSendAudioDataToDevice(mal_device *pDevice, mal_uint32 frameC
     (void)pDevice;
 
     // Mixing is basically just an accumulation. We need to initialize the output buffer to 0.
-    memset(pFramesOut, 0, frameCount*pDevice->channels*mal_get_sample_size_in_bytes(pDevice->format));
+    memset(pFramesOut, 0, frameCount*pDevice->channels*mal_get_bytes_per_sample(pDevice->format));
 
     // Using a mutex here for thread-safety which makes things not real-time. This is unlikely to be necessary for this project, but may
     // want to consider how you might want to avoid this.
@@ -339,11 +339,7 @@ static mal_uint32 OnSendAudioDataToDevice(mal_device *pDevice, mal_uint32 frameC
                         framesToReadRightNow = sizeof(tempBuffer)/sizeof(tempBuffer[0])/DEVICE_CHANNELS;
                     }
 
-                    // If we're not looping, we need to make sure we flush the internal buffers of the DSP pipeline to ensure we get the
-                    // last few samples.
-                    bool flushDSP = !audioBuffer->looping;
-
-                    mal_uint32 framesJustRead = mal_dsp_read_frames_ex(&audioBuffer->dsp, framesToReadRightNow, tempBuffer, flushDSP);
+                    mal_uint32 framesJustRead = (mal_uint32)mal_dsp_read(&audioBuffer->dsp, framesToReadRightNow, tempBuffer, audioBuffer->dsp.pUserData);
                     if (framesJustRead > 0) 
                     {
                         float *framesOut = (float *)pFramesOut + (framesRead*device.channels);
@@ -403,7 +399,7 @@ static mal_uint32 OnAudioBufferDSPRead(mal_dsp *pDSP, mal_uint32 frameCount, voi
     isSubBufferProcessed[0] = audioBuffer->isSubBufferProcessed[0];
     isSubBufferProcessed[1] = audioBuffer->isSubBufferProcessed[1];
 
-    mal_uint32 frameSizeInBytes = mal_get_sample_size_in_bytes(audioBuffer->dsp.config.formatIn)*audioBuffer->dsp.config.channelsIn;
+    mal_uint32 frameSizeInBytes = mal_get_bytes_per_sample(audioBuffer->dsp.formatConverterIn.config.formatIn)*audioBuffer->dsp.formatConverterIn.config.channels;
 
     // Fill out every frame until we find a buffer that's marked as processed. Then fill the remainder with 0.
     mal_uint32 framesRead = 0;
@@ -649,7 +645,7 @@ void SetMasterVolume(float volume)
 // Create a new audio buffer. Initially filled with silence
 AudioBuffer *CreateAudioBuffer(mal_format format, mal_uint32 channels, mal_uint32 sampleRate, mal_uint32 bufferSizeInFrames, AudioBufferUsage usage)
 {
-    AudioBuffer *audioBuffer = (AudioBuffer *)calloc(sizeof(*audioBuffer) + (bufferSizeInFrames*channels*mal_get_sample_size_in_bytes(format)), 1);
+    AudioBuffer *audioBuffer = (AudioBuffer *)calloc(sizeof(*audioBuffer) + (bufferSizeInFrames*channels*mal_get_bytes_per_sample(format)), 1);
     if (audioBuffer == NULL)
     {
         TraceLog(LOG_ERROR, "CreateAudioBuffer() : Failed to allocate memory for audio buffer");
@@ -665,7 +661,10 @@ AudioBuffer *CreateAudioBuffer(mal_format format, mal_uint32 channels, mal_uint3
     dspConfig.channelsOut = DEVICE_CHANNELS;
     dspConfig.sampleRateIn = sampleRate;
     dspConfig.sampleRateOut = DEVICE_SAMPLE_RATE;
-    mal_result resultMAL = mal_dsp_init(&dspConfig, OnAudioBufferDSPRead, audioBuffer, &audioBuffer->dsp);
+    dspConfig.onRead = OnAudioBufferDSPRead;
+    dspConfig.pUserData = audioBuffer;
+    dspConfig.allowDynamicSampleRate = MAL_TRUE;    // <-- Required for pitch shifting.
+    mal_result resultMAL = mal_dsp_init(&dspConfig, &audioBuffer->dsp);
     if (resultMAL != MAL_SUCCESS) 
     {
         TraceLog(LOG_ERROR, "CreateAudioBuffer() : Failed to create data conversion pipeline");
@@ -800,7 +799,7 @@ void SetAudioBufferPitch(AudioBuffer *audioBuffer, float pitch)
 
     // Pitching is just an adjustment of the sample rate. Note that this changes the duration of the sound - higher pitches
     // will make the sound faster; lower pitches make it slower.
-    mal_uint32 newOutputSampleRate = (mal_uint32)((((float)audioBuffer->dsp.config.sampleRateOut / (float)audioBuffer->dsp.config.sampleRateIn) / pitch) * audioBuffer->dsp.config.sampleRateIn);
+    mal_uint32 newOutputSampleRate = (mal_uint32)((((float)audioBuffer->dsp.src.config.sampleRateOut / (float)audioBuffer->dsp.src.config.sampleRateIn) / pitch) * audioBuffer->dsp.src.config.sampleRateIn);
     mal_dsp_set_output_sample_rate(&audioBuffer->dsp, newOutputSampleRate);
 }
 
@@ -916,13 +915,13 @@ Sound LoadSoundFromWave(Wave wave)
         mal_format formatIn  = ((wave.sampleSize == 8) ? mal_format_u8 : ((wave.sampleSize == 16) ? mal_format_s16 : mal_format_f32));
         mal_uint32 frameCountIn = wave.sampleCount;  // Is wave->sampleCount actually the frame count? That terminology needs to change, if so.
 
-        mal_uint32 frameCount = mal_convert_frames(NULL, DEVICE_FORMAT, DEVICE_CHANNELS, DEVICE_SAMPLE_RATE, NULL, formatIn, wave.channels, wave.sampleRate, frameCountIn);
+        mal_uint32 frameCount = (mal_uint32)mal_convert_frames(NULL, DEVICE_FORMAT, DEVICE_CHANNELS, DEVICE_SAMPLE_RATE, NULL, formatIn, wave.channels, wave.sampleRate, frameCountIn);
         if (frameCount == 0) TraceLog(LOG_WARNING, "LoadSoundFromWave() : Failed to get frame count for format conversion");
 
         AudioBuffer* audioBuffer = CreateAudioBuffer(DEVICE_FORMAT, DEVICE_CHANNELS, DEVICE_SAMPLE_RATE, frameCount, AUDIO_BUFFER_USAGE_STATIC);
         if (audioBuffer == NULL) TraceLog(LOG_WARNING, "LoadSoundFromWave() : Failed to create audio buffer");
 
-        frameCount = mal_convert_frames(audioBuffer->buffer, audioBuffer->dsp.config.formatIn, audioBuffer->dsp.config.channelsIn, audioBuffer->dsp.config.sampleRateIn, wave.data, formatIn, wave.channels, wave.sampleRate, frameCountIn);
+        frameCount = (mal_uint32)mal_convert_frames(audioBuffer->buffer, audioBuffer->dsp.formatConverterIn.config.formatIn, audioBuffer->dsp.formatConverterIn.config.channels, audioBuffer->dsp.src.config.sampleRateIn, wave.data, formatIn, wave.channels, wave.sampleRate, frameCountIn);
         if (frameCount == 0) TraceLog(LOG_WARNING, "LoadSoundFromWave() : Format conversion failed");
 
         sound.audioBuffer = audioBuffer;
@@ -1024,7 +1023,7 @@ void UpdateSound(Sound sound, const void *data, int samplesCount)
     StopAudioBuffer(audioBuffer);
 
     // TODO: May want to lock/unlock this since this data buffer is read at mixing time.
-    memcpy(audioBuffer->buffer, data, samplesCount*audioBuffer->dsp.config.channelsIn*mal_get_sample_size_in_bytes(audioBuffer->dsp.config.formatIn));
+    memcpy(audioBuffer->buffer, data, samplesCount*audioBuffer->dsp.formatConverterIn.config.channels*mal_get_bytes_per_sample(audioBuffer->dsp.formatConverterIn.config.formatIn));
 #else
     ALint sampleRate, sampleSize, channels;
     alGetBufferi(sound.buffer, AL_FREQUENCY, &sampleRate);
@@ -1154,7 +1153,7 @@ void WaveFormat(Wave *wave, int sampleRate, int sampleSize, int channels)
 
     mal_uint32 frameCountIn = wave->sampleCount;  // Is wave->sampleCount actually the frame count? That terminology needs to change, if so.
 
-    mal_uint32 frameCount = mal_convert_frames(NULL, formatOut, channels, sampleRate, NULL, formatIn, wave->channels, wave->sampleRate, frameCountIn);
+    mal_uint32 frameCount = (mal_uint32)mal_convert_frames(NULL, formatOut, channels, sampleRate, NULL, formatIn, wave->channels, wave->sampleRate, frameCountIn);
     if (frameCount == 0) 
     {
         TraceLog(LOG_ERROR, "WaveFormat() : Failed to get frame count for format conversion.");
@@ -1163,7 +1162,7 @@ void WaveFormat(Wave *wave, int sampleRate, int sampleSize, int channels)
 
     void *data = malloc(frameCount*channels*(sampleSize/8));
 
-    frameCount = mal_convert_frames(data, formatOut, channels, sampleRate, wave->data, formatIn, wave->channels, wave->sampleRate, frameCountIn);
+    frameCount = (mal_uint32)mal_convert_frames(data, formatOut, channels, sampleRate, wave->data, formatIn, wave->channels, wave->sampleRate, frameCountIn);
     if (frameCount == 0) 
     {
         TraceLog(LOG_ERROR, "WaveFormat() : Format conversion failed.");
@@ -1285,7 +1284,7 @@ Wave WaveCopy(Wave wave)
 void WaveCrop(Wave *wave, int initSample, int finalSample)
 {
     if ((initSample >= 0) && (initSample < finalSample) &&
-        (finalSample > 0) && (finalSample < wave->sampleCount))
+        (finalSample > 0) && ((unsigned int)finalSample < wave->sampleCount))
     {
         int sampleCount = finalSample - initSample;
 
@@ -1305,9 +1304,9 @@ float *GetWaveData(Wave wave)
 {
     float *samples = (float *)malloc(wave.sampleCount*wave.channels*sizeof(float));
 
-    for (int i = 0; i < wave.sampleCount; i++)
+    for (unsigned int i = 0; i < wave.sampleCount; i++)
     {
-        for (int j = 0; j < wave.channels; j++)
+        for (unsigned int j = 0; j < wave.channels; j++)
         {
             if (wave.sampleSize == 8) samples[wave.channels*i + j] = (float)(((unsigned char *)wave.data)[wave.channels*i + j] - 127)/256.0f;
             else if (wave.sampleSize == 16) samples[wave.channels*i + j] = (float)((short *)wave.data)[wave.channels*i + j]/32767.0f;
@@ -1344,7 +1343,7 @@ Music LoadMusicStream(const char *fileName)
             music->ctxType = MUSIC_AUDIO_OGG;
             music->loopCount = -1;                       // Infinite loop by default
 
-            TraceLog(LOG_DEBUG, "[%s] FLAC total samples: %i", fileName, music->totalSamples);
+            TraceLog(LOG_DEBUG, "[%s] OGG total samples: %i", fileName, music->totalSamples);
             TraceLog(LOG_DEBUG, "[%s] OGG sample rate: %i", fileName, info.sample_rate);
             TraceLog(LOG_DEBUG, "[%s] OGG channels: %i", fileName, info.channels);
             TraceLog(LOG_DEBUG, "[%s] OGG memory required: %i", fileName, info.temp_memory_required);
@@ -1541,7 +1540,7 @@ void StopMusicStream(Music music)
     {
         case MUSIC_AUDIO_OGG: stb_vorbis_seek_start(music->ctxOgg); break;
 #if defined(SUPPORT_FILEFORMAT_FLAC)
-        case MUSIC_MODULE_FLAC: /* TODO: Restart FLAC context */ break;
+        case MUSIC_AUDIO_FLAC: /* TODO: Restart FLAC context */ break;
 #endif
 #if defined(SUPPORT_FILEFORMAT_XM)
         case MUSIC_MODULE_XM: /* TODO: Restart XM context */ break;
