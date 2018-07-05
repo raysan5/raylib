@@ -34,6 +34,11 @@
 #ifndef RIQM_H
 #define RIQM_H
 
+// TODO dont break everything
+static bool vaoSupported = false;
+static Matrix modelview;
+static Matrix projection;
+
 #include <stdio.h>          // Required for: FILE
 
 //#define RIQM_STATIC
@@ -68,26 +73,26 @@ typedef struct Pose {
 typedef struct Animation {
     int jointCount;
     Joint *joints;      // NOTE: Joints in anims do not have names
-    
+
     int frameCount;
     float framerate;
-    
+
     Pose **framepose;
 } Animation;
 
 typedef struct AnimatedMesh {
     char name[MESH_NAME_LENGTH];
-    
+
     int vertexCount;
     int triangleCount;
-    
+
     float *vertices;
     float *normals;
     float *texcoords;
     float *animVertices;
     float *animNormals;
     unsigned short *triangles;
-    
+
     int *weightId;
     float *weightBias;
 
@@ -98,14 +103,14 @@ typedef struct AnimatedMesh {
 typedef struct AnimatedModel {
     int meshCount;
     AnimatedMesh *mesh;
-    
+
     int materialCount;
     int *meshMaterialId;
     Material *materials;
-    
+
     int jointCount;
     Joint *joints;
-    
+
     Pose *basepose;
     Matrix transform;
 } AnimatedModel;
@@ -268,6 +273,18 @@ void rlLoadAnimatedMesh(AnimatedMesh *amesh, bool dynamic)
     amesh->vboId[5] = 0;     // Vertex texcoords2 VBO     UNUSED
     amesh->vboId[6] = 0;     // Vertex indices VBO
 
+#if defined(GRAPHICS_API_OPENGL_11)
+TraceLog(LOG_WARNING, "OGL 11");
+#endif
+#if defined(GRAPHICS_API_OPENGL_21)
+TraceLog(LOG_WARNING, "OGL 21");
+#endif
+#if defined(GRAPHICS_API_OPENGL_33)
+TraceLog(LOG_WARNING, "OGL 33");
+#endif
+#if defined(GRAPHICS_API_OPENGL_ES2)
+TraceLog(LOG_WARNING, "OGL ES2");
+#endif
 #if defined(GRAPHICS_API_OPENGL_33) || defined(GRAPHICS_API_OPENGL_ES2)
     int drawHint = GL_STATIC_DRAW;
     if (dynamic) drawHint = GL_DYNAMIC_DRAW;
@@ -467,7 +484,7 @@ void rlDrawAnimatedMesh(AnimatedMesh amesh, Material material, Matrix transform)
 
     rlPushMatrix();
         rlMultMatrixf(MatrixToFloat(transform));
-        rlColor4ub(material.maps[MAP_DIFFUSE].color.rotation, material.maps[MAP_DIFFUSE].color.g, material.maps[MAP_DIFFUSE].color.b, material.maps[MAP_DIFFUSE].color.a);
+        rlColor4ub(material.maps[MAP_DIFFUSE].color.r, material.maps[MAP_DIFFUSE].color.g, material.maps[MAP_DIFFUSE].color.b, material.maps[MAP_DIFFUSE].color.a);
 
         if (amesh.triangles != NULL) glDrawElements(GL_TRIANGLES, amesh.triangleCount*3, GL_UNSIGNED_SHORT, amesh.triangles);
         else glDrawArrays(GL_TRIANGLES, 0, amesh.vertexCount);
@@ -485,29 +502,29 @@ void rlDrawAnimatedMesh(AnimatedMesh amesh, Material material, Matrix transform)
 
 #if defined(GRAPHICS_API_OPENGL_33) || defined(GRAPHICS_API_OPENGL_ES2)
     // Bind shader program
-    glUseProgram(material.scalehader.id);
+    glUseProgram(material.shader.id);
 
     // Matrices and other values required by shader
     //-----------------------------------------------------
     // Calculate and send to shader model matrix (used by PBR shader)
-    if (material.scalehader.locs[LOC_MATRIX_MODEL] != -1) SetShaderValueMatrix(material.scalehader, material.scalehader.locs[LOC_MATRIX_MODEL], transform);
+    if (material.shader.locs[LOC_MATRIX_MODEL] != -1) SetShaderValueMatrix(material.shader, material.shader.locs[LOC_MATRIX_MODEL], transform);
 
     // Upload to shader material.colDiffuse
-    if (material.scalehader.locs[LOC_COLOR_DIFFUSE] != -1)
-        glUniform4f(material.scalehader.locs[LOC_COLOR_DIFFUSE], (float)material.maps[MAP_DIFFUSE].color.rotation/255.0f,
+    if (material.shader.locs[LOC_COLOR_DIFFUSE] != -1)
+        glUniform4f(material.shader.locs[LOC_COLOR_DIFFUSE], (float)material.maps[MAP_DIFFUSE].color.r/255.0f,
                                                            (float)material.maps[MAP_DIFFUSE].color.g/255.0f,
                                                            (float)material.maps[MAP_DIFFUSE].color.b/255.0f,
                                                            (float)material.maps[MAP_DIFFUSE].color.a/255.0f);
 
     // Upload to shader material.colSpecular (if available)
-    if (material.scalehader.locs[LOC_COLOR_SPECULAR] != -1)
-        glUniform4f(material.scalehader.locs[LOC_COLOR_SPECULAR], (float)material.maps[MAP_SPECULAR].color.rotation/255.0f,
+    if (material.shader.locs[LOC_COLOR_SPECULAR] != -1)
+        glUniform4f(material.shader.locs[LOC_COLOR_SPECULAR], (float)material.maps[MAP_SPECULAR].color.r/255.0f,
                                                                (float)material.maps[MAP_SPECULAR].color.g/255.0f,
                                                                (float)material.maps[MAP_SPECULAR].color.b/255.0f,
                                                                (float)material.maps[MAP_SPECULAR].color.a/255.0f);
 
-    if (material.scalehader.locs[LOC_MATRIX_VIEW] != -1) SetShaderValueMatrix(material.scalehader, material.scalehader.locs[LOC_MATRIX_VIEW], modelview);
-    if (material.scalehader.locs[LOC_MATRIX_PROJECTION] != -1) SetShaderValueMatrix(material.scalehader, material.scalehader.locs[LOC_MATRIX_PROJECTION], projection);
+    if (material.shader.locs[LOC_MATRIX_VIEW] != -1) SetShaderValueMatrix(material.shader, material.shader.locs[LOC_MATRIX_VIEW], modelview);
+    if (material.shader.locs[LOC_MATRIX_PROJECTION] != -1) SetShaderValueMatrix(material.shader, material.shader.locs[LOC_MATRIX_PROJECTION], projection);
 
     // At this point the modelview matrix just contains the view matrix (camera)
     // That's because BeginMode3D() sets it an no model-drawing function modifies it, all use rlPushMatrix() and rlPopMatrix()
@@ -527,7 +544,7 @@ void rlDrawAnimatedMesh(AnimatedMesh amesh, Material material, Matrix transform)
             if ((i == MAP_IRRADIANCE) || (i == MAP_PREFILTER) || (i == MAP_CUBEMAP)) glBindTexture(GL_TEXTURE_CUBE_MAP, material.maps[i].texture.id);
             else glBindTexture(GL_TEXTURE_2D, material.maps[i].texture.id);
 
-            glUniform1i(material.scalehader.locs[LOC_MAP_DIFFUSE + i], i);
+            glUniform1i(material.shader.locs[LOC_MAP_DIFFUSE + i], i);
         }
     }
 
@@ -539,54 +556,54 @@ void rlDrawAnimatedMesh(AnimatedMesh amesh, Material material, Matrix transform)
 
         // Bind mesh VBO data: vertex position (shader-location = 0)
         glBindBuffer(GL_ARRAY_BUFFER, amesh.vboId[0]);
-        glVertexAttribPointer(material.scalehader.locs[LOC_VERTEX_POSITION], 3, GL_FLOAT, 0, 0, 0);
-        glEnableVertexAttribArray(material.scalehader.locs[LOC_VERTEX_POSITION]);
+        glVertexAttribPointer(material.shader.locs[LOC_VERTEX_POSITION], 3, GL_FLOAT, 0, 0, 0);
+        glEnableVertexAttribArray(material.shader.locs[LOC_VERTEX_POSITION]);
 
         // Bind mesh VBO data: vertex texcoords (shader-location = 1)
         glBindBuffer(GL_ARRAY_BUFFER, amesh.vboId[1]);
-        glVertexAttribPointer(material.scalehader.locs[LOC_VERTEX_TEXCOORD01], 2, GL_FLOAT, 0, 0, 0);
-        glEnableVertexAttribArray(material.scalehader.locs[LOC_VERTEX_TEXCOORD01]);
+        glVertexAttribPointer(material.shader.locs[LOC_VERTEX_TEXCOORD01], 2, GL_FLOAT, 0, 0, 0);
+        glEnableVertexAttribArray(material.shader.locs[LOC_VERTEX_TEXCOORD01]);
 
         // Bind mesh VBO data: vertex normals (shader-location = 2, if available)
-        if (material.scalehader.locs[LOC_VERTEX_NORMAL] != -1)
+        if (material.shader.locs[LOC_VERTEX_NORMAL] != -1)
         {
             glBindBuffer(GL_ARRAY_BUFFER, amesh.vboId[2]);
-            glVertexAttribPointer(material.scalehader.locs[LOC_VERTEX_NORMAL], 3, GL_FLOAT, 0, 0, 0);
-            glEnableVertexAttribArray(material.scalehader.locs[LOC_VERTEX_NORMAL]);
+            glVertexAttribPointer(material.shader.locs[LOC_VERTEX_NORMAL], 3, GL_FLOAT, 0, 0, 0);
+            glEnableVertexAttribArray(material.shader.locs[LOC_VERTEX_NORMAL]);
         }
 
         // Bind mesh VBO data: vertex colors (shader-location = 3, if available)
-        if (material.scalehader.locs[LOC_VERTEX_COLOR] != -1)
+        if (material.shader.locs[LOC_VERTEX_COLOR] != -1)
         {
             if (amesh.vboId[3] != 0)
             {
                 glBindBuffer(GL_ARRAY_BUFFER, amesh.vboId[3]);
-                glVertexAttribPointer(material.scalehader.locs[LOC_VERTEX_COLOR], 4, GL_UNSIGNED_BYTE, GL_TRUE, 0, 0);
-                glEnableVertexAttribArray(material.scalehader.locs[LOC_VERTEX_COLOR]);
+                glVertexAttribPointer(material.shader.locs[LOC_VERTEX_COLOR], 4, GL_UNSIGNED_BYTE, GL_TRUE, 0, 0);
+                glEnableVertexAttribArray(material.shader.locs[LOC_VERTEX_COLOR]);
             }
             else
             {
                 // Set default value for unused attribute
                 // NOTE: Required when using default shader and no VAO support
-                glVertexAttrib4f(material.scalehader.locs[LOC_VERTEX_COLOR], 1.0f, 1.0f, 1.0f, 1.0f);
-                glDisableVertexAttribArray(material.scalehader.locs[LOC_VERTEX_COLOR]);
+                glVertexAttrib4f(material.shader.locs[LOC_VERTEX_COLOR], 1.0f, 1.0f, 1.0f, 1.0f);
+                glDisableVertexAttribArray(material.shader.locs[LOC_VERTEX_COLOR]);
             }
         }
 
         // Bind mesh VBO data: vertex tangents (shader-location = 4, if available)
-        if (material.scalehader.locs[LOC_VERTEX_TANGENT] != -1)
+        if (material.shader.locs[LOC_VERTEX_TANGENT] != -1)
         {
             glBindBuffer(GL_ARRAY_BUFFER, amesh.vboId[4]);
-            glVertexAttribPointer(material.scalehader.locs[LOC_VERTEX_TANGENT], 4, GL_FLOAT, 0, 0, 0);
-            glEnableVertexAttribArray(material.scalehader.locs[LOC_VERTEX_TANGENT]);
+            glVertexAttribPointer(material.shader.locs[LOC_VERTEX_TANGENT], 4, GL_FLOAT, 0, 0, 0);
+            glEnableVertexAttribArray(material.shader.locs[LOC_VERTEX_TANGENT]);
         }
 
         // Bind mesh VBO data: vertex texcoords2 (shader-location = 5, if available)
-        if (material.scalehader.locs[LOC_VERTEX_TEXCOORD02] != -1)
+        if (material.shader.locs[LOC_VERTEX_TEXCOORD02] != -1)
         {
             glBindBuffer(GL_ARRAY_BUFFER, amesh.vboId[5]);
-            glVertexAttribPointer(material.scalehader.locs[LOC_VERTEX_TEXCOORD02], 2, GL_FLOAT, 0, 0, 0);
-            glEnableVertexAttribArray(material.scalehader.locs[LOC_VERTEX_TEXCOORD02]);
+            glVertexAttribPointer(material.shader.locs[LOC_VERTEX_TEXCOORD02], 2, GL_FLOAT, 0, 0, 0);
+            glEnableVertexAttribArray(material.shader.locs[LOC_VERTEX_TEXCOORD02]);
         }
 
         if (amesh.triangles != NULL) glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, amesh.vboId[6]);
@@ -608,7 +625,7 @@ void rlDrawAnimatedMesh(AnimatedMesh amesh, Material material, Matrix transform)
         Matrix matMVP = MatrixMultiply(modelview, projection);        // Transform to screen-space coordinates
 
         // Send combined model-view-projection matrix to shader
-        glUniformMatrix4fv(material.scalehader.locs[LOC_MATRIX_MVP], 1, false, MatrixToFloat(matMVP));
+        glUniformMatrix4fv(material.shader.locs[LOC_MATRIX_MVP], 1, false, MatrixToFloat(matMVP));
 
         // Draw call!
         if (amesh.triangles != NULL) glDrawElements(GL_TRIANGLES, amesh.triangleCount*3, GL_UNSIGNED_SHORT, 0); // Indexed vertices draw
@@ -649,14 +666,14 @@ extern "C" {            // Prevents name mangling of functions
 AnimatedModel LoadAnimatedModel(const char *filename)
 {
     AnimatedModel out = LoadIQM(filename);
-    
+
     for (int i = 0; i < out.meshCount; i++) rlLoadAnimatedMesh(&out.mesh[i], false);
 
     out.transform = MatrixIdentity();
     out.meshMaterialId = malloc(sizeof(int)*out.meshCount);
     out.materials = NULL;
     out.materialCount = 0;
-    
+
     for (int i = 0; i < out.meshCount; i++) out.meshMaterialId[i] = -1;
 
     return out;
@@ -666,32 +683,32 @@ AnimatedModel LoadAnimatedModel(const char *filename)
 AnimatedModel AnimatedModelAddTexture(AnimatedModel model, const char *filename)
 {
     Texture2D texture = LoadTexture(filename);
-    
+
     model.materials = realloc(model.materials, sizeof(Material)*(model.materialCount + 1));
     model.materials[model.materialCount] = LoadMaterialDefault();
     model.materials[model.materialCount].maps[MAP_DIFFUSE].texture = texture;
     model.materialCount++;
-    
+
     return model;
 }
 
 // Set the material for a mesh
 AnimatedModel SetMeshMaterial(AnimatedModel model, int meshid, int textureid)
 {
-    if (meshid > model.meshCount) 
+    if (meshid > model.meshCount)
     {
         TraceLog(LOG_WARNING, "MeshId greater than meshCount\n");
         return model;
     }
 
-    if (textureid > model.materialCount) 
+    if (textureid > model.materialCount)
     {
         TraceLog(LOG_WARNING,"textureid greater than materialCount\n");
         return model;
     }
 
     model.meshMaterialId[meshid] = textureid;
-    
+
     return model;
 }
 
@@ -699,18 +716,18 @@ AnimatedModel SetMeshMaterial(AnimatedModel model, int meshid, int textureid)
 Animation LoadAnimationFromIQM(const char *filename)
 {
     Animation animation = { 0 };
-    
+
     FILE *iqmFile;
     IQMHeader iqm;
 
     iqmFile = fopen(filename,"rb");
-    
+
     if (!iqmFile)
     {
         TraceLog(LOG_ERROR, "[%s] Unable to open file", filename);
         return animation;
     }
-    
+
     // header
     fread(&iqm, sizeof(IQMHeader), 1, iqmFile);
 
@@ -720,17 +737,17 @@ Animation LoadAnimationFromIQM(const char *filename)
         fclose(iqmFile);
         return animation;
     }
-    
+
     if (iqm.version != IQM_VERSION)
     {
         TraceLog(LOG_ERROR, "IQM version %i is incorrect.", iqm.version);
         fclose(iqmFile);
         return animation;
     }
-    
+
     // header
     if (iqm.num_anims > 1) TraceLog(LOG_WARNING, "More than 1 animation in file, only the first one will get loaded");
-    
+
     // joints
     IQMPose *poses;
     poses = malloc(sizeof(IQMPose)*iqm.num_poses);
@@ -739,7 +756,7 @@ Animation LoadAnimationFromIQM(const char *filename)
 
     animation.jointCount = iqm.num_poses;
     animation.joints = malloc(sizeof(Joint)*iqm.num_poses);
-    
+
     for (int j = 0; j < iqm.num_poses; j++)
     {
         strcpy(animation.joints[j].name, ANIMJOINTNAME);
@@ -763,91 +780,91 @@ Animation LoadAnimationFromIQM(const char *filename)
     for (int j = 0; j < anim.num_frames; j++) animation.framepose[j] = malloc(sizeof(Pose)*iqm.num_poses);
 
     int dcounter = anim.first_frame*iqm.num_framechannels;
-    
+
     for (int frame = 0; frame < anim.num_frames; frame++)
     {
         for (int i = 0; i < iqm.num_poses; i++)
         {
             animation.framepose[frame][i].translation.x = poses[i].channeloffset[0];
-            
+
             if (poses[i].mask & 0x01)
             {
                 animation.framepose[frame][i].translation.x += framedata[dcounter]*poses[i].channelscale[0];
                 dcounter++;
             }
-            
+
             animation.framepose[frame][i].translation.y = poses[i].channeloffset[1];
-            
+
             if (poses[i].mask & 0x02)
             {
                 animation.framepose[frame][i].translation.y += framedata[dcounter]*poses[i].channelscale[1];
                 dcounter++;
             }
-            
+
             animation.framepose[frame][i].translation.z = poses[i].channeloffset[2];
-            
+
             if (poses[i].mask & 0x04)
             {
                 animation.framepose[frame][i].translation.z += framedata[dcounter]*poses[i].channelscale[2];
                 dcounter++;
             }
-            
+
             animation.framepose[frame][i].rotation.x = poses[i].channeloffset[3];
-            
+
             if (poses[i].mask & 0x08)
             {
                 animation.framepose[frame][i].rotation.x += framedata[dcounter]*poses[i].channelscale[3];
                 dcounter++;
             }
-            
+
             animation.framepose[frame][i].rotation.y = poses[i].channeloffset[4];
-            
+
             if (poses[i].mask & 0x10)
             {
                 animation.framepose[frame][i].rotation.y += framedata[dcounter]*poses[i].channelscale[4];
                 dcounter++;
             }
-            
+
             animation.framepose[frame][i].rotation.z = poses[i].channeloffset[5];
-            
+
             if (poses[i].mask & 0x20)
             {
                 animation.framepose[frame][i].rotation.z += framedata[dcounter]*poses[i].channelscale[5];
                 dcounter++;
             }
-            
+
             animation.framepose[frame][i].rotation.w = poses[i].channeloffset[6];
-            
+
             if (poses[i].mask & 0x40)
             {
                 animation.framepose[frame][i].rotation.w += framedata[dcounter]*poses[i].channelscale[6];
                 dcounter++;
             }
-            
+
             animation.framepose[frame][i].scale.x = poses[i].channeloffset[7];
-            
+
             if (poses[i].mask & 0x80)
             {
                 animation.framepose[frame][i].scale.x += framedata[dcounter]*poses[i].channelscale[7];
                 dcounter++;
             }
-            
+
             animation.framepose[frame][i].scale.y = poses[i].channeloffset[8];
-            
+
             if (poses[i].mask & 0x100)
             {
                 animation.framepose[frame][i].scale.y += framedata[dcounter]*poses[i].channelscale[8];
                 dcounter++;
             }
-            
+
             animation.framepose[frame][i].scale.z = poses[i].channeloffset[9];
-            
+
             if (poses[i].mask & 0x200)
             {
                 animation.framepose[frame][i].scale.z += framedata[dcounter]*poses[i].channelscale[9];
                 dcounter++;
             }
-            
+
             animation.framepose[frame][i].rotation = QuaternionNormalize(animation.framepose[frame][i].rotation);
         }
     }
@@ -869,7 +886,7 @@ Animation LoadAnimationFromIQM(const char *filename)
 
     free(framedata);
     free(poses);
-    
+
     fclose(iqmFile);
 
     return animation;
@@ -882,7 +899,7 @@ void UnloadAnimatedModel(AnimatedModel model)
     free(model.meshMaterialId);
     free(model.joints);
     free(model.basepose);
-    
+
     for (int i = 0; i < model.meshCount; i++) rlUnloadAnimatedMesh(&model.mesh[i]);
 
     free(model.mesh);
@@ -893,7 +910,7 @@ void UnloadAnimation(Animation anim)
 {
     free(anim.joints);
     free(anim.framepose);
-    
+
     for (int i = 0; i < anim.frameCount; i++) free(anim.framepose[i]);
 }
 
@@ -901,12 +918,12 @@ void UnloadAnimation(Animation anim)
 bool CheckSkeletonsMatch(AnimatedModel model, Animation anim)
 {
     if (model.jointCount != anim.jointCount) return 0;
-    
+
     for (int i = 0; i < model.jointCount; i++)
     {
         if (model.joints[i].parent != anim.joints[i].parent) return 0;
     }
-    
+
     return 1;
 }
 
@@ -931,7 +948,7 @@ void AnimateModel(AnimatedModel model, Animation anim, int frame)
         int vcounter = 0;
         int wcounter = 0;
         int weightId = 0;
-    
+
         for (int i = 0; i < model.mesh[m].vertexCount; i++)
         {
             weightId = model.mesh[m].weightId[wcounter];
@@ -941,7 +958,7 @@ void AnimateModel(AnimatedModel model, Animation anim, int frame)
             outt = anim.framepose[frame][weightId].translation;
             outr = anim.framepose[frame][weightId].rotation;
             outs = anim.framepose[frame][weightId].scale;
-            
+
             // vertices
             outv = (Vector3){model.mesh[m].vertices[vcounter],model.mesh[m].vertices[vcounter + 1],model.mesh[m].vertices[vcounter + 2]};
             outv = Vector3MultiplyV(outv,outs);
@@ -951,7 +968,7 @@ void AnimateModel(AnimatedModel model, Animation anim, int frame)
             model.mesh[m].animVertices[vcounter] = outv.x;
             model.mesh[m].animVertices[vcounter + 1] = outv.y;
             model.mesh[m].animVertices[vcounter + 2] = outv.z;
-            
+
             // normals
             outn = (Vector3){model.mesh[m].normals[vcounter],model.mesh[m].normals[vcounter + 1],model.mesh[m].normals[vcounter + 2]};
             outn = Vector3RotateByQuaternion(outn,QuaternionMultiply(outr,QuaternionInvert(baser)));
@@ -969,7 +986,7 @@ void DrawAnimatedModel(AnimatedModel model,Vector3 position,float scale,Color ti
 {
     Vector3 vScale = { scale, scale, scale };
     Vector3 rotationAxis = { 0.0f,0.0f,0.0f };
-    
+
     DrawAnimatedModelEx(model, position, rotationAxis, 0.0f, vScale, tint);
 }
 
@@ -981,14 +998,14 @@ void DrawAnimatedModelEx(AnimatedModel model,Vector3 position,Vector3 rotationAx
         TraceLog(LOG_WARNING,"No materials set, can't draw animated mesh\n");
         return;
     }
-    
+
     Matrix matScale = MatrixScale(scale.x,scale.y,scale.z);
     Matrix matRotation = MatrixRotate(rotationAxis,rotationAngle*DEG2RAD);
     Matrix matTranslation = MatrixTranslate(position.x,position.y,position.z);
 
     Matrix matTransform = MatrixMultiply(MatrixMultiply(matScale,matRotation),matTranslation);
     model.transform = MatrixMultiply(model.transform,matTransform);
-    
+
     for (int i = 0; i < model.meshCount; i++)
     {
         rlUpdateAnimatedMesh(&model.mesh[i]);
@@ -1005,7 +1022,7 @@ void DrawAnimatedModelEx(AnimatedModel model,Vector3 position,Vector3 rotationAx
 static AnimatedModel LoadIQM(const char *filename)
 {
     AnimatedModel model = { 0 };
-    
+
     FILE *iqmFile;
     IQMHeader iqm;
 
@@ -1013,7 +1030,7 @@ static AnimatedModel LoadIQM(const char *filename)
     IQMTriangle *tri;
     IQMVertexArray *va;
     IQMJoint *ijoint;
-    
+
     float *vertex;
     float *normal;
     float *text;
@@ -1021,13 +1038,13 @@ static AnimatedModel LoadIQM(const char *filename)
     unsigned char *blendw;
 
     iqmFile = fopen(filename, "rb");
-    
+
     if (!iqmFile)
     {
         TraceLog(LOG_ERROR, "[%s] Unable to open file", filename);
         return model;
     }
-    
+
     // header
     fread(&iqm,sizeof(IQMHeader), 1, iqmFile);
 
@@ -1037,14 +1054,14 @@ static AnimatedModel LoadIQM(const char *filename)
         fclose(iqmFile);
         return model;
     }
-    
+
     if(iqm.version != IQM_VERSION)
     {
         TraceLog(LOG_ERROR, "IQM version %i is incorrect.", iqm.version);
         fclose(iqmFile);
         return model;
     }
-    
+
     // meshes
     imesh = malloc(sizeof(IQMMesh)*iqm.num_meshes);
     fseek(iqmFile, iqm.ofs_meshes, SEEK_SET);
@@ -1052,7 +1069,7 @@ static AnimatedModel LoadIQM(const char *filename)
 
     model.meshCount = iqm.num_meshes;
     model.mesh = malloc(sizeof(AnimatedMesh)*iqm.num_meshes);
-    
+
     for (int i = 0; i < iqm.num_meshes; i++)
     {
         fseek(iqmFile,iqm.ofs_text+imesh[i].name,SEEK_SET);
@@ -1068,7 +1085,7 @@ static AnimatedModel LoadIQM(const char *filename)
         model.mesh[i].animVertices = malloc(sizeof(float)*imesh[i].num_vertexes*3);
         model.mesh[i].animNormals = malloc(sizeof(float)*imesh[i].num_vertexes*3);
     }
-    
+
     // tris
     tri = malloc(sizeof(IQMTriangle)*iqm.num_triangles);
     fseek(iqmFile, iqm.ofs_triangles, SEEK_SET);
@@ -1077,7 +1094,7 @@ static AnimatedModel LoadIQM(const char *filename)
     for (int m = 0; m < iqm.num_meshes; m++)
     {
         int tcounter = 0;
-        
+
         for (int i=imesh[m].first_triangle; i < imesh[m].first_triangle+imesh[m].num_triangles; i++)
         {
             // IQM triangles are stored counter clockwise, but raylib sets opengl to clockwise drawing, so we swap them around
@@ -1087,7 +1104,7 @@ static AnimatedModel LoadIQM(const char *filename)
             tcounter += 3;
         }
     }
-    
+
     // vertarrays
     va = malloc(sizeof(IQMVertexArray)*iqm.num_vertexarrays);
     fseek(iqmFile, iqm.ofs_vertexarrays, SEEK_SET);
@@ -1102,7 +1119,7 @@ static AnimatedModel LoadIQM(const char *filename)
                 vertex = malloc(sizeof(float)*iqm.num_vertexes*3);
                 fseek(iqmFile, va[i].offset, SEEK_SET);
                 fread(vertex, sizeof(float)*iqm.num_vertexes*3, 1, iqmFile);
-                
+
                 for (int m = 0; m < iqm.num_meshes; m++)
                 {
                     int vcounter = 0;
@@ -1119,7 +1136,7 @@ static AnimatedModel LoadIQM(const char *filename)
                 normal = malloc(sizeof(float)*iqm.num_vertexes*3);
                 fseek(iqmFile, va[i].offset, SEEK_SET);
                 fread(normal, sizeof(float)*iqm.num_vertexes*3, 1, iqmFile);
-                
+
                 for (int m = 0; m < iqm.num_meshes; m++)
                 {
                     int vcounter = 0;
@@ -1136,7 +1153,7 @@ static AnimatedModel LoadIQM(const char *filename)
                 text = malloc(sizeof(float)*iqm.num_vertexes*2);
                 fseek(iqmFile, va[i].offset, SEEK_SET);
                 fread(text, sizeof(float)*iqm.num_vertexes*2, 1, iqmFile);
-                
+
                 for (int m = 0; m < iqm.num_meshes; m++)
                 {
                     int vcounter = 0;
@@ -1181,7 +1198,7 @@ static AnimatedModel LoadIQM(const char *filename)
             } break;
         }
     }
-    
+
     // joints, include base poses
     ijoint = malloc(sizeof(IQMJoint)*iqm.num_joints);
     fseek(iqmFile, iqm.ofs_joints, SEEK_SET);
@@ -1190,14 +1207,14 @@ static AnimatedModel LoadIQM(const char *filename)
     model.jointCount = iqm.num_joints;
     model.joints = malloc(sizeof(Joint)*iqm.num_joints);
     model.basepose = malloc(sizeof(Pose)*iqm.num_joints);
-    
+
     for (int i = 0; i < iqm.num_joints; i++)
     {
         // joints
         model.joints[i].parent = ijoint[i].parent;
         fseek(iqmFile, iqm.ofs_text + ijoint[i].name, SEEK_SET);
         fread(model.joints[i].name,sizeof(char)*JOINT_NAME_LENGTH, 1, iqmFile);
-        
+
         // basepose
         model.basepose[i].translation.x = ijoint[i].translate[0];
         model.basepose[i].translation.y = ijoint[i].translate[1];
@@ -1212,7 +1229,7 @@ static AnimatedModel LoadIQM(const char *filename)
         model.basepose[i].scale.y = ijoint[i].scale[1];
         model.basepose[i].scale.z = ijoint[i].scale[2];
     }
-    
+
     // build base pose
     for (int i = 0; i < model.jointCount; i++)
     {
@@ -1224,7 +1241,7 @@ static AnimatedModel LoadIQM(const char *filename)
             model.basepose[i].scale = Vector3MultiplyV(model.basepose[i].scale, model.basepose[model.joints[i].parent].scale);
         }
     }
-    
+
     fclose(iqmFile);
     free(imesh);
     free(tri);
@@ -1235,7 +1252,7 @@ static AnimatedModel LoadIQM(const char *filename)
     free(blendi);
     free(blendw);
     free(ijoint);
-    
+
     return model;
 }
 
