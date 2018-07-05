@@ -1,5 +1,5 @@
 // Audio playback and capture library. Public domain. See "unlicense" statement at the end of this file.
-// mini_al - v0.x - 2018-xx-xx
+// mini_al - v0.8 - 2018-07-05
 //
 // David Reid - davidreidsoftware@gmail.com
 
@@ -25822,7 +25822,7 @@ mal_uint64 mal_sine_wave_read(mal_sine_wave* pSineWave, mal_uint64 count, float*
 // REVISION HISTORY
 // ================
 //
-// v0.x - 2018-xx-xx
+// v0.8 - 2018-07-05
 //   - Changed MAL_IMPLEMENTATION to MINI_AL_IMPLEMENTATION for consistency with other libraries. The old
 //     way is still supported for now, but you should update as it may be removed in the future.
 //   - API CHANGE: Replace device enumeration APIs. mal_enumerate_devices() has been replaced with
