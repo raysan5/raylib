@@ -1540,7 +1540,7 @@ void StopMusicStream(Music music)
     {
         case MUSIC_AUDIO_OGG: stb_vorbis_seek_start(music->ctxOgg); break;
 #if defined(SUPPORT_FILEFORMAT_FLAC)
-        case MUSIC_MODULE_FLAC: /* TODO: Restart FLAC context */ break;
+        case MUSIC_AUDIO_FLAC: /* TODO: Restart FLAC context */ break;
 #endif
 #if defined(SUPPORT_FILEFORMAT_XM)
         case MUSIC_MODULE_XM: /* TODO: Restart XM context */ break;
