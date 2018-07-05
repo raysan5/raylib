@@ -48,6 +48,7 @@ ipch/
 # Ignore compiled binaries
 *.o
 *.exe
+!src/raylib.rc.o
 
 # Ignore all examples files
 examples/*

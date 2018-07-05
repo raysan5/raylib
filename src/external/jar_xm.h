@@ -2365,7 +2365,7 @@ static void jar_xm_tick(jar_xm_context_t* ctx) {
         float panning, volume;
 
         panning = ch->panning +
-            (ch->panning_envelope_panning - .5f) * (.5f - fabsf(ch->panning - .5f)) * 2.0f;
+            (ch->panning_envelope_panning - .5f) * (.5f - fabs(ch->panning - .5f)) * 2.0f;
 
         if(ch->tremor_on) {
                 volume = .0f;

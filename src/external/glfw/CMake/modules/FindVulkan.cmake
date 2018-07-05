@@ -27,11 +27,6 @@ if (WIN32)
             "$ENV{VULKAN_SDK}/Bin32"
             "$ENV{VK_SDK_PATH}/Bin32")
     endif()
-elseif (APPLE)
-    find_library(VULKAN_LIBRARY vulkan.1 HINTS
-        "$ENV{VULKAN_SDK}/macOS/lib")
-    find_path(VULKAN_INCLUDE_DIR NAMES vulkan/vulkan.h HINTS
-        "$ENV{VULKAN_SDK}/macOS/include")
 else()
     find_path(VULKAN_INCLUDE_DIR NAMES vulkan/vulkan.h HINTS
         "$ENV{VULKAN_SDK}/include")

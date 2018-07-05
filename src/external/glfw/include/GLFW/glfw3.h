@@ -819,6 +819,12 @@ extern "C" {
  *  Mouse cursor hover [window attribute](@ref GLFW_HOVERED_attrib).
  */
 #define GLFW_HOVERED                0x0002000B
+/*! @brief Input focus on calling show window hint and attribute
+ *
+ *  Input focus [window hint](@ref GLFW_FOCUS_ON_SHOW_hint) or
+ *  [window attribute](@ref GLFW_FOCUS_ON_SHOW_attrib).
+ */
+#define GLFW_FOCUS_ON_SHOW          0x0002000C
 
 /*! @brief Framebuffer bit depth hint.
  *
@@ -3085,6 +3091,11 @@ GLFWAPI void glfwMaximizeWindow(GLFWwindow* window);
  *  hidden.  If the window is already visible or is in full screen mode, this
  *  function does nothing.
  *
+ *  By default, windowed mode windows are focused when shown
+ *  Set the [GLFW_FOCUS_ON_SHOW](@ref GLFW_FOCUS_ON_SHOW_hint) window hint
+ *  to change this behavior for all newly created windows, or change the
+ *  behavior for an existing window with @ref glfwSetWindowAttrib.
+ *
  *  @param[in] window The window to make visible.
  *
  *  @errors Possible errors include @ref GLFW_NOT_INITIALIZED and @ref
@@ -3131,6 +3142,10 @@ GLFWAPI void glfwHideWindow(GLFWwindow* window);
  *  By default, both windowed and full screen mode windows are focused when
  *  initially created.  Set the [GLFW_FOCUSED](@ref GLFW_FOCUSED_hint) to
  *  disable this behavior.
+ *
+ *  Also by default, windowed mode windows are focused when shown
+ *  with @ref glfwShowWindow. Set the
+ *  [GLFW_FOCUS_ON_SHOW](@ref GLFW_FOCUS_ON_SHOW_hint) to disable this behavior.
  *
  *  __Do not use this function__ to steal focus from other applications unless
  *  you are certain that is what the user wants.  Focus stealing can be
@@ -3306,8 +3321,9 @@ GLFWAPI int glfwGetWindowAttrib(GLFWwindow* window, int attrib);
  *
  *  The supported attributes are [GLFW_DECORATED](@ref GLFW_DECORATED_attrib),
  *  [GLFW_RESIZABLE](@ref GLFW_RESIZABLE_attrib),
- *  [GLFW_FLOATING](@ref GLFW_FLOATING_attrib) and
- *  [GLFW_AUTO_ICONIFY](@ref GLFW_AUTO_ICONIFY_attrib).
+ *  [GLFW_FLOATING](@ref GLFW_FLOATING_attrib),
+ *  [GLFW_AUTO_ICONIFY](@ref GLFW_AUTO_ICONIFY_attrib) and
+ *  [GLFW_FOCUS_ON_SHOW](@ref GLFW_FOCUS_ON_SHOW_attrib).
  *
  *  Some of these attributes are ignored for full screen windows.  The new
  *  value will take effect if the window is later made windowed.

@@ -26,17 +26,17 @@ int main()
 
     // Define the camera to look into our 3d world
     Camera camera;
-    camera.position = (Vector3){ 10.0f, 8.0f, 10.0f };  // Camera position
-    camera.target = (Vector3){ 0.0f, 2.3f, 0.0f };      // Camera looking at point
+    camera.position = (Vector3){ 20.0f, 20.0f, 20.0f };  // Camera position
+    camera.target = (Vector3){ 0.0f, 8.0f, 0.0f };      // Camera looking at point
     camera.up = (Vector3){ 0.0f, 1.6f, 0.0f };          // Camera up vector (rotation towards target)
     camera.fovy = 45.0f;                                // Camera field-of-view Y
     camera.type = CAMERA_PERSPECTIVE;                   // Camera mode type
 
     Ray ray;        // Picking ray
     
-    Model tower = LoadModel("resources/tower.obj");             // Load OBJ model
-    Texture2D texture = LoadTexture("resources/tower.png");     // Load model texture
-    tower.material.maps[MAP_DIFFUSE].texture = texture;         // Set model diffuse texture
+    Model tower = LoadModel("resources/models/turret.obj");                 // Load OBJ model
+    Texture2D texture = LoadTexture("resources/models/turret_diffuse.png"); // Load model texture
+    tower.material.maps[MAP_DIFFUSE].texture = texture;                     // Set model diffuse texture
     
     Vector3 towerPos = { 0.0f, 0.0f, 0.0f };                    // Set model position
     BoundingBox towerBBox = MeshBoundingBox(tower.mesh);        // Get mesh bounding box
@@ -103,6 +103,7 @@ int main()
             hitMeshBBox = true;
             
             // Check ray collision against model
+            // NOTE: It considers model.transform matrix!
             meshHitInfo = GetCollisionRayModel(ray, &tower);   
             
             if ((meshHitInfo.hit) && (meshHitInfo.distance < nearestHit.distance)) 
@@ -124,7 +125,9 @@ int main()
             BeginMode3D(camera);
 
                 // Draw the tower
-                DrawModel(tower, towerPos, 1.0, WHITE);
+                // WARNING: If scale is different than 1.0f, 
+                // not considered by GetCollisionRayModel()
+                DrawModel(tower, towerPos, 1.0f, WHITE);
                 
                 // Draw the test triangle
                 DrawLine3D(ta, tb, PURPLE);
@@ -150,7 +153,7 @@ int main()
 
                 DrawRay(ray, MAROON);
                 
-                DrawGrid(100, 1.0f);
+                DrawGrid(10, 10.0f);
 
             EndMode3D();
             
@@ -177,6 +180,8 @@ int main()
             }
 
             DrawText("Use Mouse to Move Camera", 10, 430, 10, GRAY);
+            
+            DrawText("(c) Turret 3D model by Alberto Cano", screenWidth - 200, screenHeight - 20, 10, GRAY);
 
             DrawFPS(10, 10);
 

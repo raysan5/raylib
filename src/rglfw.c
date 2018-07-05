@@ -37,7 +37,7 @@
         #define _GLFW_X11
     #endif
 #endif
-#if defined(__FreeBSD__) || defined(__OpenBSD__) || defined( __NetBSD__)
+#if defined(__FreeBSD__) || defined(__OpenBSD__) || defined(__NetBSD__) || defined(__DragonFly__)
     #define _GLFW_X11
 #endif
 #if defined(__APPLE__)
@@ -91,7 +91,7 @@
     #include "external/glfw/src/osmesa_context.c"
 #endif
 
-#if defined(__FreeBSD__) || defined(__OpenBSD__) || defined( __NetBSD__)
+#if defined(__FreeBSD__) || defined(__OpenBSD__) || defined( __NetBSD__) || defined(__DragonFly__)
     #include "external/glfw/src/x11_init.c"
     #include "external/glfw/src/x11_monitor.c"
     #include "external/glfw/src/x11_window.c"

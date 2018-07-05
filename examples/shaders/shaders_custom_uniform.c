@@ -31,15 +31,15 @@ int main()
 
     // Define the camera to look into our 3d world
     Camera camera = { 0 };
-    camera.position = (Vector3){ 3.0f, 3.0f, 3.0f };
+    camera.position = (Vector3){ 8.0f, 8.0f, 8.0f };
     camera.target = (Vector3){ 0.0f, 1.5f, 0.0f };
     camera.up = (Vector3){ 0.0f, 1.0f, 0.0f };
     camera.fovy = 45.0f;
     camera.type = CAMERA_PERSPECTIVE;
 
-    Model dwarf = LoadModel("resources/model/dwarf.obj");                   // Load OBJ model
-    Texture2D texture = LoadTexture("resources/model/dwarf_diffuse.png");   // Load model texture (diffuse map)
-    dwarf.material.maps[MAP_DIFFUSE].texture = texture;                     // Set dwarf model diffuse texture
+    Model model = LoadModel("resources/models/barracks.obj");                   // Load OBJ model
+    Texture2D texture = LoadTexture("resources/models/barracks_diffuse.png");   // Load model texture (diffuse map)
+    model.material.maps[MAP_DIFFUSE].texture = texture;                         // Set model diffuse texture
 
     Vector3 position = { 0.0f, 0.0f, 0.0f };                                // Set model position
     
@@ -87,7 +87,7 @@ int main()
 
                 BeginMode3D(camera);
 
-                    DrawModel(dwarf, position, 2.0f, WHITE);   // Draw 3d model with texture
+                    DrawModel(model, position, 0.5f, WHITE);   // Draw 3d model with texture
 
                     DrawGrid(10, 1.0f);     // Draw a grid
 
@@ -104,8 +104,8 @@ int main()
             
             EndShaderMode();
             
-            DrawText("(c) Dwarf 3D model by David Moreno", screenWidth - 200, screenHeight - 20, 10, GRAY);
-
+            DrawText("(c) Barracks 3D model by Alberto Cano", screenWidth - 220, screenHeight - 20, 10, GRAY);
+            
             DrawFPS(10, 10);
 
         EndDrawing();
@@ -116,7 +116,7 @@ int main()
     //--------------------------------------------------------------------------------------
     UnloadShader(shader);           // Unload shader
     UnloadTexture(texture);         // Unload texture
-    UnloadModel(dwarf);             // Unload model
+    UnloadModel(model);             // Unload model
     UnloadRenderTexture(target);    // Unload render texture
 
     CloseWindow();                  // Close window and OpenGL context

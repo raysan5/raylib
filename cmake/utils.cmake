@@ -11,13 +11,8 @@ if(${PLATFORM} MATCHES "Android")
 elseif(${PLATFORM} MATCHES "Web")
 elseif(APPLE)
   find_library(OPENGL_LIBRARY OpenGL)
-  find_library(COCOA_LIBRARY Cocoa)
-  find_library(IOKIT_LIBRARY IOKit)
-  find_library(COREFOUNDATION_LIBRARY CoreFoundation)
-  find_library(COREVIDEO_LIBRARY CoreVideo)
 
-  set(LIBS_PRIVATE ${OPENGL_LIBRARY} ${COCOA_LIBRARY}
-                   ${IOKIT_LIBRARY} ${COREFOUNDATION_LIBRARY} ${COREVIDEO_LIBRARY})
+  set(LIBS_PRIVATE ${OPENGL_LIBRARY})
 elseif(WIN32)
   # no pkg-config --static on Windows yet...
 else()
@@ -34,12 +29,6 @@ else()
   endif()
 
   set(LIBS_PRIVATE m pthread ${OPENGL_LIBRARIES} ${OSS_LIBRARY})
-  # TODO: maybe read those out of glfw's cmake config?
-  if(USE_WAYLAND)
-    set(LIBS_PRIVATE ${LIBS_PRIVATE} wayland-client wayland-cursor wayland-egl)
-  else()
-    set(LIBS_PRIVATE ${LIBS_PRIVATE} X11 Xrandr Xinerama Xi Xxf86vm Xcursor)
-  endif()
 endif()
 
 if(${PLATFORM} MATCHES "Desktop")
@@ -55,7 +44,6 @@ endif()
 
 if(CMAKE_SYSTEM_NAME STREQUAL Linux)
   set(LINUX TRUE)
-  set(LIBS_PRIVATE dl ${LIBS_PRIVATE})
 endif()
 
 foreach(L ${LIBS_PRIVATE})

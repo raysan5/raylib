@@ -47,15 +47,13 @@
 #include "utils.h"          // Required for: fopen() Android mapping
 
 #if defined(SUPPORT_FILEFORMAT_TTF)
-    // Following libs are used on LoadTTF()
-    #define STBTT_STATIC        // Define stb_truetype functions static to this module
-    #define STB_TRUETYPE_IMPLEMENTATION
-    #include "external/stb_truetype.h"      // Required for: stbtt_BakeFontBitmap()
-#endif
+    #define STB_RECT_PACK_IMPLEMENTATION
+    #include "external/stb_rect_pack.h"     // Required for: ttf font rectangles packaging
 
-// Rectangle packing functions (not used at the moment)
-//#define STB_RECT_PACK_IMPLEMENTATION
-//#include "stb_rect_pack.h"
+    #define STBTT_STATIC
+    #define STB_TRUETYPE_IMPLEMENTATION
+    #include "external/stb_truetype.h"      // Required for: ttf font data reading
+#endif
 
 //----------------------------------------------------------------------------------
 // Defines and Macros
@@ -89,7 +87,7 @@ static Font LoadImageFont(Image image, Color key, int firstChar); // Load a Imag
 static Font LoadBMFont(const char *fileName);     // Load a BMFont file (AngelCode font file)
 #endif
 #if defined(SUPPORT_FILEFORMAT_TTF)
-static Font LoadTTF(const char *fileName, int fontSize, int charsCount, int *fontChars); // Load spritefont from TTF data
+//static Font LoadTTF(const char *fileName, int fontSize, int charsCount, int *fontChars); // Load spritefont from TTF data
 #endif
 
 #if defined(SUPPORT_DEFAULT_FONT)
@@ -276,32 +274,40 @@ Font LoadFont(const char *fileName)
     // Default hardcoded values for ttf file loading
     #define DEFAULT_TTF_FONTSIZE    32      // Font first character (32 - space)
     #define DEFAULT_TTF_NUMCHARS    95      // ASCII 32..126 is 95 glyphs
-    #define DEFAULT_FIRST_CHAR      32      // Expected first char for image spritefont
+    #define DEFAULT_FIRST_CHAR      32      // Expected first char for image sprite font
 
-    Font spriteFont = { 0 };
+    Font font = { 0 };
 
 #if defined(SUPPORT_FILEFORMAT_TTF)
-    if (IsFileExtension(fileName, ".ttf")) spriteFont = LoadFontEx(fileName, DEFAULT_TTF_FONTSIZE, 0, NULL);
+    if (IsFileExtension(fileName, ".ttf"))
+    {
+        font.baseSize = DEFAULT_TTF_FONTSIZE;
+        font.charsCount = DEFAULT_TTF_NUMCHARS;
+        font.chars = LoadFontData(fileName, font.baseSize, NULL, font.charsCount, false);
+        Image atlas = GenImageFontAtlas(font.chars, font.charsCount, font.baseSize, 4, 0);
+        font.texture = LoadTextureFromImage(atlas);
+        UnloadImage(atlas);
+    }
     else
 #endif
 #if defined(SUPPORT_FILEFORMAT_FNT)
-    if (IsFileExtension(fileName, ".fnt")) spriteFont = LoadBMFont(fileName);
+    if (IsFileExtension(fileName, ".fnt")) font = LoadBMFont(fileName);
     else
 #endif
     {
         Image image = LoadImage(fileName);
-        if (image.data != NULL) spriteFont = LoadImageFont(image, MAGENTA, DEFAULT_FIRST_CHAR);
+        if (image.data != NULL) font = LoadImageFont(image, MAGENTA, DEFAULT_FIRST_CHAR);
         UnloadImage(image);
     }
 
-    if (spriteFont.texture.id == 0)
+    if (font.texture.id == 0)
     {
         TraceLog(LOG_WARNING, "[%s] Font could not be loaded, using default font", fileName);
-        spriteFont = GetDefaultFont();
+        font = GetDefaultFont();
     }
-    else SetTextureFilter(spriteFont.texture, FILTER_POINT);    // By default we set point filter (best performance)
+    else SetTextureFilter(font.texture, FILTER_POINT);    // By default we set point filter (best performance)
 
-    return spriteFont;
+    return font;
 }
 
 // Load Font from TTF font file with generation parameters
@@ -309,31 +315,212 @@ Font LoadFont(const char *fileName)
 // if array is NULL, default char set is selected 32..126
 Font LoadFontEx(const char *fileName, int fontSize, int charsCount, int *fontChars)
 {
-    Font spriteFont = { 0 };
-    int totalChars = 95;            // Default charset [32..126]
+    Font font = { 0 };
+    
+    font.baseSize = fontSize;
+    font.charsCount = (charsCount > 0) ? charsCount : 95;
+    font.chars = LoadFontData(fileName, font.baseSize, fontChars, font.charsCount, false);
+    Image atlas = GenImageFontAtlas(font.chars, font.charsCount, font.baseSize, 0, 0);
+    font.texture = LoadTextureFromImage(atlas);
+    UnloadImage(atlas);
+    
+    return font;
+}
 
-#if defined(SUPPORT_FILEFORMAT_TTF)
-    if (IsFileExtension(fileName, ".ttf"))
+// Load font data for further use
+// NOTE: Requires TTF font and can generate SDF data
+CharInfo *LoadFontData(const char *fileName, int fontSize, int *fontChars, int charsCount, bool sdf)
+{
+    // NOTE: Using some SDF generation default values,
+    // trades off precision with ability to handle *smaller* sizes
+    #define SDF_CHAR_PADDING            4
+    #define SDF_ON_EDGE_VALUE         128
+    #define SDF_PIXEL_DIST_SCALE     64.0f
+    
+    CharInfo *chars = (CharInfo *)malloc(charsCount*sizeof(CharInfo));
+    
+    // Load font data (including pixel data) from TTF file
+    // NOTE: Loaded information should be enough to generate font image atlas,
+    // using any packaging method
+    FILE *fontFile = fopen(fileName, "rb");     // Load font file
+    
+    fseek(fontFile, 0, SEEK_END);
+    long size = ftell(fontFile);    // Get file size
+    fseek(fontFile, 0, SEEK_SET);   // Reset file pointer
+    
+    unsigned char *fontBuffer = (unsigned char *)malloc(size);
+    
+    fread(fontBuffer, size, 1, fontFile);
+    fclose(fontFile);
+    
+    // Init font for data reading
+    stbtt_fontinfo fontInfo;
+    if (!stbtt_InitFont(&fontInfo, fontBuffer, 0)) TraceLog(LOG_WARNING, "Failed to init font!");
+
+    // Calculate font scale factor
+    float scaleFactor = stbtt_ScaleForPixelHeight(&fontInfo, fontSize);
+
+    // Calculate font basic metrics
+    // NOTE: ascent is equivalent to font baseline
+    int ascent, descent, lineGap;
+    stbtt_GetFontVMetrics(&fontInfo, &ascent, &descent, &lineGap);
+    ascent *= scaleFactor;
+    descent *= scaleFactor;
+    
+    // Fill fontChars in case not provided externally
+    // NOTE: By default we fill charsCount consecutevely, starting at 32 (Space)
+    int genFontChars = false;
+    if (fontChars == NULL) genFontChars = true;   
+    if (genFontChars) 
     {
-        if (charsCount != 0) totalChars = charsCount;
+        fontChars = (int *)malloc(charsCount*sizeof(int));
+        for (int i = 0; i < charsCount; i++) fontChars[i] = i + 32;
+    }
+    
+    // NOTE: Using simple packaging, one char after another
+    for (int i = 0; i < charsCount; i++) 
+    {
+        int chw = 0, chh = 0;   // Character width and height (on generation)
+        int ch = fontChars[i];  // Character value to get info for
+        chars[i].value = ch;
         
-        if (fontChars == NULL)
+        //  Render a unicode codepoint to a bitmap
+        //      stbtt_GetCodepointBitmap()           -- allocates and returns a bitmap
+        //      stbtt_GetCodepointBitmapBox()        -- how big the bitmap must be
+        //      stbtt_MakeCodepointBitmap()          -- renders into bitmap you provide
+        
+        if (!sdf) chars[i].data = stbtt_GetCodepointBitmap(&fontInfo, scaleFactor, scaleFactor, ch, &chw, &chh, &chars[i].offsetX, &chars[i].offsetY);
+        else if (ch != 32) chars[i].data = stbtt_GetCodepointSDF(&fontInfo, scaleFactor, ch, SDF_CHAR_PADDING, SDF_ON_EDGE_VALUE, SDF_PIXEL_DIST_SCALE, &chw, &chh, &chars[i].offsetX, &chars[i].offsetY);
+        
+        chars[i].rec.width = (float)chw;
+        chars[i].rec.height = (float)chh;
+        chars[i].offsetY += ascent;
+    
+        // Get bounding box for character (may be offset to account for chars that dip above or below the line)
+        int chX1, chY1, chX2, chY2;
+        stbtt_GetCodepointBitmapBox(&fontInfo, ch, scaleFactor, scaleFactor, &chX1, &chY1, &chX2, &chY2);
+        
+        TraceLog(LOG_DEBUG, "Character box measures: %i, %i, %i, %i", chX1, chY1, chX2 - chX1, chY2 - chY1);
+        TraceLog(LOG_DEBUG, "Character offsetY: %i", ascent + chY1);
+
+        stbtt_GetCodepointHMetrics(&fontInfo, ch, &chars[i].advanceX, NULL);
+        chars[i].advanceX *= scaleFactor;
+    }
+    
+    free(fontBuffer);
+    if (genFontChars) free(fontChars);
+    
+    return chars;
+}
+
+// Generate image font atlas using chars info
+// NOTE: Packing method: 0-Default, 1-Skyline
+Image GenImageFontAtlas(CharInfo *chars, int charsCount, int fontSize, int padding, int packMethod)
+{
+    Image atlas = { 0 };
+    
+    // Calculate texture size based on required pixel area
+    // NOTE: Texture is forced to be squared and POT
+    float requiredArea = 0;
+    for (int i = 0; i < charsCount; i++) requiredArea += ((chars[i].rec.width + 2*padding)*(chars[i].rec.height + 2*padding));
+    float guessSize = sqrtf(requiredArea)*1.25f;
+    int textureSize = (int)powf(2, ceilf(logf((float)guessSize)/logf(2)));  // Calculate next POT
+    
+    atlas.width = textureSize;   // Atlas bitmap width
+    atlas.height = textureSize;  // Atlas bitmap height
+    atlas.data = (unsigned char *)calloc(1, atlas.width*atlas.height);      // Create a bitmap to store characters (8 bpp)
+    atlas.format = UNCOMPRESSED_GRAYSCALE;
+    atlas.mipmaps = 1;
+
+    if (packMethod == 0)   // Use basic packing algorythm
+    {
+        int offsetX = padding;
+        int offsetY = padding;
+        
+        // NOTE: Using simple packaging, one char after another
+        for (int i = 0; i < charsCount; i++) 
         {
-            fontChars = (int *)malloc(totalChars*sizeof(int));
-            for (int i = 0; i < totalChars; i++) fontChars[i] = i + 32; // Default first character: SPACE[32]
+            // Copy pixel data from fc.data to atlas
+            for (int y = 0; y < (int)chars[i].rec.height; y++)
+            {
+                for (int x = 0; x < (int)chars[i].rec.width; x++)
+                {
+                    ((unsigned char *)atlas.data)[(offsetY + y)*atlas.width + (offsetX + x)] = chars[i].data[y*(int)chars[i].rec.width + x];
+                }
+            }
+            
+            chars[i].rec.x = offsetX;
+            chars[i].rec.y = offsetY;
+            
+            // Move atlas position X for next character drawing
+            offsetX += ((int)chars[i].advanceX + 2*padding);
+            
+            if (offsetX >= (atlas.width - (int)chars[i].rec.width - padding))
+            {
+                offsetX = padding;
+                offsetY += (fontSize + 2*padding);
+                
+                if (offsetY > (atlas.height - fontSize - padding)) break;
+            }
         }
-        
-        spriteFont = LoadTTF(fileName, fontSize, totalChars, fontChars);
     }
-#endif
-
-    if (spriteFont.texture.id == 0)
+    else if (packMethod == 1)  // Use Skyline rect packing algorythm (stb_pack_rect)
     {
-        TraceLog(LOG_WARNING, "[%s] Font could not be generated, using default font", fileName);
-        spriteFont = GetDefaultFont();
+        stbrp_context *context = (stbrp_context *)malloc(sizeof(*context));
+        stbrp_node *nodes = (stbrp_node *)malloc(charsCount*sizeof(*nodes));
+
+        stbrp_init_target(context, atlas.width, atlas.height, nodes, charsCount);
+        stbrp_rect *rects = (stbrp_rect *)malloc(charsCount*sizeof(stbrp_rect));
+        
+        // Fill rectangles for packaging
+        for (int i = 0; i < charsCount; i++)
+        {
+            rects[i].id = i;
+            rects[i].w = (int)chars[i].rec.width + 2*padding;
+            rects[i].h = (int)chars[i].rec.height + 2*padding;
+        }
+
+        // Package rectangles into atlas
+        stbrp_pack_rects(context, rects, charsCount);
+        
+        for (int i = 0; i < charsCount; i++)
+        {
+            chars[i].rec.x = rects[i].x + padding;
+            chars[i].rec.y = rects[i].y + padding;
+            
+            if (rects[i].was_packed)
+            {
+                // Copy pixel data from fc.data to atlas
+                for (int y = 0; y < (int)chars[i].rec.height; y++)
+                {
+                    for (int x = 0; x < (int)chars[i].rec.width; x++)
+                    {
+                        ((unsigned char *)atlas.data)[(rects[i].y + padding + y)*atlas.width + (rects[i].x + padding + x)] = chars[i].data[y*(int)chars[i].rec.width + x];
+                    }
+                }
+            }
+            else TraceLog(LOG_WARNING, "Character could not be packed: %i", i);
+        }
+
+        free(nodes);
+        free(context);
+    }
+    
+    // Convert image data from GRAYSCALE to GRAY_ALPHA
+    // WARNING: ImageAlphaMask(&atlas, atlas) does not work in this case, requires manual operation
+    unsigned char *dataGrayAlpha = (unsigned char *)malloc(textureSize*textureSize*sizeof(unsigned char)*2); // Two channels
+
+    for (int i = 0, k = 0; i < atlas.width*atlas.height; i++, k += 2)
+    {
+        dataGrayAlpha[k] = 255;
+        dataGrayAlpha[k + 1] = ((unsigned char *)atlas.data)[i];
     }
 
-    return spriteFont;
+    free(atlas.data);
+    atlas.data = dataGrayAlpha;
+    atlas.format = UNCOMPRESSED_GRAY_ALPHA;
+    
+    return atlas;
 }
 
 // Unload Font from GPU memory (VRAM)
@@ -804,110 +991,6 @@ static Font LoadBMFont(const char *fileName)
         font = GetDefaultFont();
     }
     else TraceLog(LOG_INFO, "[%s] Font loaded successfully", fileName);
-
-    return font;
-}
-#endif
-
-#if defined(SUPPORT_FILEFORMAT_TTF)
-// Generate a sprite font from TTF file data (font size required)
-// TODO: Review texture packing method and generation (use oversampling)
-static Font LoadTTF(const char *fileName, int fontSize, int charsCount, int *fontChars)
-{
-    #define MAX_TTF_SIZE    16      // Maximum ttf file size in MB
-    
-    // NOTE: Font texture size is predicted (being as much conservative as possible)
-    // Predictive method consist of supposing same number of chars by line-column (sqrtf)
-    // and a maximum character width of 3/4 of fontSize... it worked ok with all my tests...
-
-    // Calculate next power-of-two value
-    float guessSize = ceilf((float)fontSize*3/4)*ceilf(sqrtf((float)charsCount));
-    int textureSize = (int)powf(2, ceilf(logf((float)guessSize)/logf(2)));      // Calculate next POT
-
-    TraceLog(LOG_INFO, "TTF spritefont loading: Predicted texture size: %ix%i", textureSize, textureSize);
-
-    unsigned char *ttfBuffer = (unsigned char *)malloc(MAX_TTF_SIZE*1024*1024);
-    unsigned char *dataBitmap = (unsigned char *)malloc(textureSize*textureSize*sizeof(unsigned char));   // One channel bitmap returned!
-    stbtt_bakedchar *charData = (stbtt_bakedchar *)malloc(sizeof(stbtt_bakedchar)*charsCount);
-
-    Font font = { 0 };
-
-    FILE *ttfFile = fopen(fileName, "rb");
-
-    if (ttfFile == NULL)
-    {
-        TraceLog(LOG_WARNING, "[%s] TTF file could not be opened", fileName);
-        return font;
-    }
-
-    // NOTE: We try reading up to 16 MB of elements of 1 byte
-    fread(ttfBuffer, 1, MAX_TTF_SIZE*1024*1024, ttfFile);
-    
-    // Find font baseline (vertical origin of the font)
-    // NOTE: This value is required because y-offset depends on it!
-    stbtt_fontinfo fontInfo;
-    int ascent, baseline;
-    float scale;
-
-    stbtt_InitFont(&fontInfo, ttfBuffer, 0);
-    scale = stbtt_ScaleForPixelHeight(&fontInfo, fontSize);
-    stbtt_GetFontVMetrics(&fontInfo, &ascent, 0, 0);
-    baseline = (int)(ascent*scale);
-    
-    if (fontChars[0] != 32) TraceLog(LOG_WARNING, "TTF spritefont loading: first character is not SPACE(32) character");
-
-    // NOTE: Using stb_truetype crappy packing method, no guarantee the font fits the image...
-    // TODO: Replace this function by a proper packing method and support random chars order,
-    // we already receive a list (fontChars) with the ordered expected characters
-    int result = stbtt_BakeFontBitmap(ttfBuffer, 0, fontSize, dataBitmap, textureSize, textureSize, fontChars[0], charsCount, charData);
-    
-    //if (result > 0) TraceLog(LOG_INFO, "TTF spritefont loading: first unused row of generated bitmap: %i", result);
-    if (result < 0) TraceLog(LOG_WARNING, "TTF spritefont loading: Not all the characters fit in the font");
-
-    free(ttfBuffer);
-
-    // Convert image data from grayscale to to UNCOMPRESSED_GRAY_ALPHA
-    unsigned char *dataGrayAlpha = (unsigned char *)malloc(textureSize*textureSize*sizeof(unsigned char)*2); // Two channels
-
-    for (int i = 0, k = 0; i < textureSize*textureSize; i++, k += 2)
-    {
-        dataGrayAlpha[k] = 0xff;
-        dataGrayAlpha[k + 1] = dataBitmap[i];
-    }
-
-    free(dataBitmap);
-
-    // Sprite font generation from TTF extracted data
-    Image image;
-    image.width = textureSize;
-    image.height = textureSize;
-    image.mipmaps = 1;
-    image.format = UNCOMPRESSED_GRAY_ALPHA;
-    image.data = dataGrayAlpha;
-    font.texture = LoadTextureFromImage(image); // Load image into texture
-    UnloadImage(image);                         // Unloads image data (dataGrayAlpha)
-
-    
-    // Fill font characters info data
-    font.baseSize = fontSize;
-    font.charsCount = charsCount;
-    font.chars = (CharInfo *)malloc(font.charsCount*sizeof(CharInfo));
-
-    for (int i = 0; i < font.charsCount; i++)
-    {
-        font.chars[i].value = fontChars[i];
-
-        font.chars[i].rec.x = (int)charData[i].x0;
-        font.chars[i].rec.y = (int)charData[i].y0;
-        font.chars[i].rec.width = (int)charData[i].x1 - (int)charData[i].x0;
-        font.chars[i].rec.height = (int)charData[i].y1 - (int)charData[i].y0;
-
-        font.chars[i].offsetX = charData[i].xoff;
-        font.chars[i].offsetY = baseline + charData[i].yoff;
-        font.chars[i].advanceX = (int)charData[i].xadvance;
-    }
-
-    free(charData);
 
     return font;
 }

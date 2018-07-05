@@ -152,7 +152,7 @@ static Material LoadMaterialPBR(Color albedo, float metalness, float roughness)
     SetShaderValuei(shdrIrradiance, GetShaderLocation(shdrIrradiance, "environmentMap"), (int[1]){ 0 }, 1);
     SetShaderValuei(shdrPrefilter, GetShaderLocation(shdrPrefilter, "environmentMap"), (int[1]){ 0 }, 1);
 
-    Texture2D texHDR = LoadTexture("resources/pinetree.hdr");
+    Texture2D texHDR = LoadTexture("resources/dresden_square.hdr");
     Texture2D cubemap = GenTextureCubemap(shdrCubemap, texHDR, CUBEMAP_SIZE);
     mat.maps[MAP_IRRADIANCE].texture = GenTextureIrradiance(shdrIrradiance, cubemap, IRRADIANCE_SIZE);
     mat.maps[MAP_PREFILTER].texture = GenTexturePrefilter(shdrPrefilter, cubemap, PREFILTERED_SIZE);

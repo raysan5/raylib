@@ -17,7 +17,8 @@ include_directories(SYSTEM .)
 file(GLOB raylib_sources *.c)
 list(REMOVE_ITEM raylib_sources ${CMAKE_CURRENT_SOURCE_DIR}/rglfw.c)
 
-if(NOT glfw3_FOUND AND "${PLATFORM}" MATCHES "Desktop")
+# Explicitly check against "ON", because USE_EXTERNAL_GLFW is a tristate option
+if(NOT glfw3_FOUND AND NOT USE_EXTERNAL_GLFW STREQUAL "ON" AND "${PLATFORM}" MATCHES "Desktop")
   set(GLFW_BUILD_DOCS OFF CACHE BOOL "" FORCE)
   set(GLFW_BUILD_TESTS OFF CACHE BOOL "" FORCE)
   set(GLFW_BUILD_EXAMPLES OFF CACHE BOOL "" FORCE)
@@ -32,6 +33,8 @@ if(NOT glfw3_FOUND AND "${PLATFORM}" MATCHES "Desktop")
   include_directories(external/glfw/include)
 
   list(APPEND raylib_sources $<TARGET_OBJECTS:glfw_objlib>)
+else()
+  set(GLFW_PKG_DEPS glfw)
 endif()
 
 include(utils)
@@ -91,7 +94,7 @@ elseif(${PLATFORM} MATCHES "Android")
   add_if_flag_compiles(-Wa,--noexecstack CMAKE_C_FLAGS)
   add_if_flag_compiles(-no-canonical-prefixes CMAKE_C_FLAGS)
   add_definitions(-DANDROID -D__ANDROID_API__=21)
-  include_directories(external/android/native_app_glue )
+  include_directories(external/android/native_app_glue)
   set(CMAKE_SHARED_LINKER_FLAGS "${CMAKE_SHARED_LINKER_FLAGS} -Wl,--exclude-libs,libatomic.a -Wl,--build-id -Wl,-z,noexecstack -Wl,-z,relro -Wl,-z,now -Wl,--warn-shared-textrel -Wl,--fatal-warnings -uANativeActivity_onCreate")
 
 elseif(${PLATFORM} MATCHES "Raspberry Pi")
@@ -113,8 +116,8 @@ if(${SHARED})
   set(CMAKE_MACOSX_RPATH ON)
 
   target_link_libraries(${RAYLIB}_shared ${LIBS_PRIVATE})
-  if (${PLATFORM} MATCHES "Desktop")
-    target_link_libraries(${RAYLIB}_shared glfw ${GLFW_LIBRARIES})
+  if (${PLATFORM} MATCHES "PLATFORM_DESKTOP")
+    target_link_libraries(${RAYLIB}_shared glfw)
   endif()
   if (UNIX AND ${FILESYSTEM_LACKS_SYMLINKS})
     MESSAGE(WARNING "Can't version UNIX shared library on file system without symlink support")
@@ -141,6 +144,8 @@ if(${SHARED})
       PUBLIC_HEADER DESTINATION "${CMAKE_INSTALL_INCLUDEDIR}"
     )
   endif()
+
+  add_test("pkg-config" ${PROJECT_SOURCE_DIR}/../cmake/test-pkgconfig.sh)
 endif(${SHARED})
 
 if(${STATIC})
@@ -150,8 +155,9 @@ if(${STATIC})
 
   add_library(${RAYLIB} STATIC ${sources})
 
-  set(PKG_CONFIG_LIBS_PRIVATE ${__PKG_CONFIG_LIBS_PRIVATE})
-  if (${PLATFORM} MATCHES "Desktop")
+  set(PKG_CONFIG_LIBS_PRIVATE ${__PKG_CONFIG_LIBS_PRIVATE} ${GLFW_PKG_LIBS})
+  string (REPLACE ";" " " PKG_CONFIG_LIBS_PRIVATE "${PKG_CONFIG_LIBS_PRIVATE}")
+  if (${PLATFORM} MATCHES "PLATFORM_DESKTOP")
     target_link_libraries(${RAYLIB} glfw ${GLFW_LIBRARIES})
   endif()
 
@@ -163,6 +169,8 @@ if(${STATIC})
     ARCHIVE DESTINATION "${CMAKE_INSTALL_LIBDIR}"
     PUBLIC_HEADER DESTINATION "${CMAKE_INSTALL_INCLUDEDIR}"
   )
+
+  add_test("pkg-config--static" ${PROJECT_SOURCE_DIR}/../cmake/test-pkgconfig.sh --static)
 endif(${STATIC})
 
 configure_file(../raylib.pc.in raylib.pc @ONLY)
@@ -199,3 +207,5 @@ SET(CPACK_RESOURCE_FILE_LICENSE "${PROJECT_SOURCE_DIR}/../LICENSE.md")
 SET(CPACK_PACKAGE_FILE_NAME "raylib-${PROJECT_VERSION}$ENV{RAYLIB_PACKAGE_SUFFIX}")
 SET(CPACK_GENERATOR "ZIP;TGZ") # Remove this, if you want the NSIS installer on Windows
 include(CPack)
+
+enable_testing()

@@ -9,26 +9,30 @@ Release:     raylib 2.0 (June 2017 ?)
 KEY CHANGES:
   - Removed external dependencies (GLFW3 and OpenAL)
   - Complete redesign of audio module to use mini_al audio library
-  - Support AppVeyor and Travis CI (continuous integration) build
+  - Support AppVeyor and Travis CI (continuous integration) building
   - Reviewed raymath.h for better consistency and performance (inlining)
   - Refactor all #define SUPPORT_* into a single config.h
-  - Support TCC compiler
+  - Support TCC compiler (32bit and 64bit)
 
 Detailed changes:
 [build] REMOVED: GitHub develop branch
-[build] ADDED: FreeBSD OS support
+[build] REMOVED: External dependencies GLFW and OpenAL
+[build] REMOVED: Android 32bit ARM support (only 64bit building supported)
+[build] ADDED: FreeBSD, OpenBSD, NetBSD, Dragon Fly OS support
 [build] ADDED: Universal Windows Platform (UWP) support
 [build] ADDED: Wayland Linux desktop support
-[build] REMOVED: External dependencies GLFW and OpenAL
 [build] ADDED: AppVeyor CI for automatic Windows builds
 [build] ADDED: Travis CI for automatic Linux/macOS builds
 [build] ADDED: rglfw (GLFW3 module) to avoid external dependency
 [build] ADDED: VS2017 UWP project
 [build] ADDED: Builder project template
-[build] REVIEWED: VS2015 and VS2017 projects
 [build] ADDED: Compiler memory sanitizer for better debug
-[build] Setup CMake package target and CI auto-deploy tags
-[build] Support DEBUG library building
+[build] ADDED: CMake package target and CI auto-deploy tags
+[build] ADDED: DEBUG library building support
+[build] ADDED: Notepad++ NppExec scripts
+[build] REVIEWED: VS2015 and VS2017 projects
+[build] REVIEWED: Android APK build pipeline
+[core] REVIEWED: Window creation hints to support transparent windows
 [core] Unified InitWindow() between platforms
 [core] Export Android main entry point
 [core] RENAMED: Begin3dMode() to BeginMode3D()
@@ -67,12 +71,24 @@ Detailed changes:
 [textures] ADDED: ImageMipmaps()
 [textures] ADDED: GenImageColor()
 [textures] ADDED: GetPixelDataSize()
+[textures] ADDED: ImageRotateCW()
+[textures] ADDED: ImageRotateCCW()
+[textures] ADDED: ImageResizeCanvas()
+[textures] ADDED: GetImageDataNormalized()
+[textures] REVIEWED: ImageFormat() to use normalized data
+[textures] REVIEWED: Manual mipmap generation
+[textures] REVIEWED: LoadASTC()
 [textures] REVIEWED: GenImagePerlinNoise()
 [textures] REVIEWED: ImageTextEx() to support UTF8 basic characters
 [textures] REVIEWED: GetTextureData() for RPI - requires some work
 [textures] Added new example: text drawing on image
 [text] Corrected issue with ttf font y-offset
+[text] Support SDF font data generation
+[text] ADDED: GenImageFontAtlas()
+[text] ADDED: LoadFontData() to load data from TTF file
+[text] REMOVED: LoadTTF() internal function
 [text] REVIEWED: DrawTextEx() - avoid rendering SPACE character!
+[rlgl] ADDED: rlCheckBufferLimit()
 [rlgl] ADDED: LoadShaderCode()
 [rlgl] ADDED: GetMatrixModelview()
 [rlgl] ADDED: SetVrDistortionShader(Shader shader)
@@ -87,6 +103,7 @@ Detailed changes:
 [models] RENAMED: CalculateBoundingBox() to MeshBoundingBox()
 [models] REMOVED: GetCollisionRayMesh() - does not consider model transform
 [models] REVIEWED: LoadMesh() - fallback to default cube mesh if loading fails
+[audio] ADDED: Support for MP3 fileformat
 [audio] ADDED: IsAudioStreamPlaying()
 [audio] ADDED: SetAudioStreamVolume()
 [audio] ADDED: SetAudioStreamPitch()
@@ -94,10 +111,14 @@ Detailed changes:
 [utils] RENAMED: SaveImageAs() to ExportImage()
 [utils] REMOVED: rres support - moved to external library (rres.h)
 [shaders] REVIEWED: GLSL 120 shaders
+[raymath] ADDED: Vector3RotateByQuaternion()
 [raymath] REVIEWED: math usage to reduce temp variables
 [raymath] REVIEWED: Avoid pointer-based parameters for API consistency
 [physac] REVIEWED: physac.h timming system
+[examples] Replaced dwarf model by brand new 3d assets: 3d medieval buildings
+[examples] Assets cleaning and some replacements
 [games] ADDED: GGJ18 game - transmission mission
+[games] REVIEWED: Light my Ritual game - improved gameplay drawing
 [*] Updated external libraries to latest version
 [*] Multiple bugs corrected (check github issues)
 

@@ -17,7 +17,7 @@
 *       Required types and functions are defined in the same module.
 *
 *   #define USE_OPENAL_BACKEND
-*       Use OpenAL Soft audio backend usage
+*       Use OpenAL Soft audio backend
 *
 *   #define SUPPORT_FILEFORMAT_WAV
 *   #define SUPPORT_FILEFORMAT_OGG
@@ -73,11 +73,6 @@
 *
 **********************************************************************************************/
 
-#include "config.h"
-#if !defined(USE_OPENAL_BACKEND)
-    #define USE_MINI_AL 1       // Set to 1 to use mini_al; 0 to use OpenAL.
-#endif
-
 #if defined(AUDIO_STANDALONE)
     #include "audio.h"
     #include <stdarg.h>         // Required for: va_list, va_start(), vfprintf(), va_end()
@@ -85,6 +80,10 @@
     #include "config.h"         // Defines module configuration flags
     #include "raylib.h"         // Declares module functions
     #include "utils.h"          // Required for: fopen() Android mapping
+#endif
+
+#if !defined(USE_OPENAL_BACKEND)
+    #define USE_MINI_AL 1       // Set to 1 to use mini_al; 0 to use OpenAL.
 #endif
 
 #include "external/mini_al.h"   // Implemented in mini_al.c. Cannot implement this here because it conflicts with Win32 APIs such as CloseWindow(), etc.
@@ -668,7 +667,7 @@ AudioBuffer *CreateAudioBuffer(mal_format format, mal_uint32 channels, mal_uint3
     mal_result resultMAL = mal_dsp_init(&dspConfig, &audioBuffer->dsp);
     if (resultMAL != MAL_SUCCESS) 
     {
-        TraceLog(LOG_ERROR, "LoadSoundFromWave() : Failed to create data conversion pipeline");
+        TraceLog(LOG_ERROR, "CreateAudioBuffer() : Failed to create data conversion pipeline");
         free(audioBuffer);
         return NULL;
     }
@@ -696,7 +695,7 @@ void DeleteAudioBuffer(AudioBuffer *audioBuffer)
 {
     if (audioBuffer == NULL)
     {
-        TraceLog(LOG_ERROR, "PlayAudioBuffer() : No audio buffer");
+        TraceLog(LOG_ERROR, "DeleteAudioBuffer() : No audio buffer");
         return;
     }
 
@@ -709,7 +708,7 @@ bool IsAudioBufferPlaying(AudioBuffer *audioBuffer)
 {
     if (audioBuffer == NULL)
     {
-        TraceLog(LOG_ERROR, "PlayAudioBuffer() : No audio buffer");
+        TraceLog(LOG_ERROR, "IsAudioBufferPlaying() : No audio buffer");
         return false;
     }
 
@@ -737,7 +736,7 @@ void StopAudioBuffer(AudioBuffer *audioBuffer)
 {
     if (audioBuffer == NULL)
     {
-        TraceLog(LOG_ERROR, "PlayAudioBuffer() : No audio buffer");
+        TraceLog(LOG_ERROR, "StopAudioBuffer() : No audio buffer");
         return;
     }
 
@@ -756,7 +755,7 @@ void PauseAudioBuffer(AudioBuffer *audioBuffer)
 {
     if (audioBuffer == NULL)
     {
-        TraceLog(LOG_ERROR, "PlayAudioBuffer() : No audio buffer");
+        TraceLog(LOG_ERROR, "PauseAudioBuffer() : No audio buffer");
         return;
     }
 
@@ -768,7 +767,7 @@ void ResumeAudioBuffer(AudioBuffer *audioBuffer)
 {
     if (audioBuffer == NULL)
     {
-        TraceLog(LOG_ERROR, "PlayAudioBuffer() : No audio buffer");
+        TraceLog(LOG_ERROR, "ResumeAudioBuffer() : No audio buffer");
         return;
     }
 
@@ -780,7 +779,7 @@ void SetAudioBufferVolume(AudioBuffer *audioBuffer, float volume)
 {
     if (audioBuffer == NULL)
     {
-        TraceLog(LOG_ERROR, "PlayAudioBuffer() : No audio buffer");
+        TraceLog(LOG_ERROR, "SetAudioBufferVolume() : No audio buffer");
         return;
     }
 
@@ -792,7 +791,7 @@ void SetAudioBufferPitch(AudioBuffer *audioBuffer, float pitch)
 {
     if (audioBuffer == NULL)
     {
-        TraceLog(LOG_ERROR, "PlayAudioBuffer() : No audio buffer");
+        TraceLog(LOG_ERROR, "SetAudioBufferPitch() : No audio buffer");
         return;
     }
 

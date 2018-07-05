@@ -36,12 +36,17 @@ int main()
     Shader shdrCubemap = LoadShader("resources/shaders/cubemap.vs", "resources/shaders/cubemap.fs");
     SetShaderValuei(shdrCubemap, GetShaderLocation(shdrCubemap, "equirectangularMap"), (int[1]){ 0 }, 1);
     
-    Texture2D texHDR = LoadTexture("resources/pinetree.hdr");
+    // Load HDR panorama (sphere) texture
+    Texture2D texHDR = LoadTexture("resources/dresden_square.hdr");
+    
+    // Generate cubemap (texture with 6 quads-cube-mapping) from panorama HDR texture
+    // NOTE: New texture is generated rendering to texture, shader computes the sphre->cube coordinates mapping
     skybox.material.maps[MAP_CUBEMAP].texture = GenTextureCubemap(shdrCubemap, texHDR, 512);
     
-    UnloadShader(shdrCubemap);  // Cubemap generation shader not required any more
+    UnloadTexture(texHDR);      // Texture not required anymore, cubemap already generated
+    UnloadShader(shdrCubemap);  // Unload cubemap generation shader, not required anymore
     
-    SetCameraMode(camera, CAMERA_ORBITAL);  // Set an orbital camera mode
+    SetCameraMode(camera, CAMERA_FIRST_PERSON);  // Set a first person camera mode
 
     SetTargetFPS(60);                       // Set our game to run at 60 frames-per-second
     //--------------------------------------------------------------------------------------
@@ -76,7 +81,7 @@ int main()
 
     // De-Initialization
     //--------------------------------------------------------------------------------------
-    UnloadModel(skybox);        // Unload skybox model
+    UnloadModel(skybox);        // Unload skybox model (and textures)
 
     CloseWindow();              // Close window and OpenGL context
     //--------------------------------------------------------------------------------------

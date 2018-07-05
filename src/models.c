@@ -1837,9 +1837,9 @@ void DrawBoundingBox(BoundingBox box, Color color)
 {
     Vector3 size;
 
-    size.x = fabsf(box.max.x - box.min.x);
-    size.y = fabsf(box.max.y - box.min.y);
-    size.z = fabsf(box.max.z - box.min.z);
+    size.x = fabs(box.max.x - box.min.x);
+    size.y = fabs(box.max.y - box.min.y);
+    size.z = fabs(box.max.z - box.min.z);
 
     Vector3 center = { box.min.x + size.x/2.0f, box.min.y + size.y/2.0f, box.min.z + size.z/2.0f };
 
@@ -2074,7 +2074,7 @@ RayHitInfo GetCollisionRayGround(Ray ray, float groundHeight)
 
     RayHitInfo result = { 0 };
 
-    if (fabsf(ray.direction.y) > EPSILON)
+    if (fabs(ray.direction.y) > EPSILON)
     {
         float distance = (ray.position.y - groundHeight)/-ray.direction.y;
 

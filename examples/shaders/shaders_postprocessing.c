@@ -70,13 +70,13 @@ int main()
     InitWindow(screenWidth, screenHeight, "raylib [shaders] example - postprocessing shader");
 
     // Define the camera to look into our 3d world
-    Camera camera = {{ 3.0f, 3.0f, 3.0f }, { 0.0f, 1.5f, 0.0f }, { 0.0f, 1.0f, 0.0f }, 45.0f, 0 };
+    Camera camera = {{ 2.0f, 3.0f, 2.0f }, { 0.0f, 1.0f, 0.0f }, { 0.0f, 1.0f, 0.0f }, 45.0f, 0 };
     
-    Model dwarf = LoadModel("resources/model/dwarf.obj");                   // Load OBJ model
-    Texture2D texture = LoadTexture("resources/model/dwarf_diffuse.png");   // Load model texture (diffuse map)
-    dwarf.material.maps[MAP_DIFFUSE].texture = texture;                     // Set dwarf model diffuse texture
+    Model model = LoadModel("resources/models/church.obj");                 // Load OBJ model
+    Texture2D texture = LoadTexture("resources/models/church_diffuse.png"); // Load model texture (diffuse map)
+    model.material.maps[MAP_DIFFUSE].texture = texture;                     // Set model diffuse texture
 
-    Vector3 position = { 0.0f, 0.0f, 0.0f };                                // Set model position
+    Vector3 position = { 0.0f, 0.0f, 0.0f };                             // Set model position
     
     // Load all postpro shaders
     // NOTE 1: All postpro shader use the base vertex shader (DEFAULT_VERTEX_SHADER)
@@ -132,7 +132,7 @@ int main()
             
                 BeginMode3D(camera);
 
-                    DrawModel(dwarf, position, 2.0f, WHITE);   // Draw 3d model with texture
+                    DrawModel(model, position, 0.1f, WHITE);   // Draw 3d model with texture
 
                     DrawGrid(10, 1.0f);     // Draw a grid
 
@@ -150,7 +150,7 @@ int main()
             
             DrawRectangle(0, 9, 580, 30, Fade(LIGHTGRAY, 0.7f));
             
-            DrawText("(c) Dwarf 3D model by David Moreno", screenWidth - 200, screenHeight - 20, 10, DARKGRAY);
+            DrawText("(c) Church 3D model by Alberto Cano", screenWidth - 200, screenHeight - 20, 10, GRAY);
             
             DrawText("CURRENT POSTPRO SHADER:", 10, 15, 20, BLACK);
             DrawText(postproShaderText[currentShader], 330, 15, 20, RED);
@@ -169,7 +169,7 @@ int main()
     for (int i = 0; i < MAX_POSTPRO_SHADERS; i++) UnloadShader(shaders[i]);
     
     UnloadTexture(texture);         // Unload texture
-    UnloadModel(dwarf);             // Unload model
+    UnloadModel(model);             // Unload model
     UnloadRenderTexture(target);    // Unload render texture
 
     CloseWindow();                  // Close window and OpenGL context
