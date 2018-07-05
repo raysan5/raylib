@@ -69,7 +69,7 @@
 
 // Security check in case no GRAPHICS_API_OPENGL_* defined
 #if !defined(GRAPHICS_API_OPENGL_11) && !defined(GRAPHICS_API_OPENGL_21) && !defined(GRAPHICS_API_OPENGL_33) && !defined(GRAPHICS_API_OPENGL_ES2)
-    #define GRAPHICS_API_OPENGL_11
+    #define GRAPHICS_API_OPENGL_33
 #endif
 
 // Security check in case multiple GRAPHICS_API_OPENGL_* defined
