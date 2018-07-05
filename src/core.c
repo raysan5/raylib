@@ -3079,7 +3079,8 @@ static void AndroidCommandCallback(struct android_app *app, int32_t cmd)
 // Android: Get input events
 static int32_t AndroidInputCallback(struct android_app *app, AInputEvent *event)
 {
-    //http://developer.android.com/ndk/reference/index.html
+    // If additional inputs are required check:
+    // https://developer.android.com/ndk/reference/group/input
 
     int type = AInputEvent_getType(event);
 
@@ -3092,6 +3093,11 @@ static int32_t AndroidInputCallback(struct android_app *app, AInputEvent *event)
         // Get second touch position
         touchPosition[1].x = AMotionEvent_getX(event, 1);
         touchPosition[1].y = AMotionEvent_getY(event, 1);
+        
+        // Useful functions for gamepad inputs:
+        //AMotionEvent_getAction()
+        //AMotionEvent_getAxisValue()
+        //AMotionEvent_getButtonState()
     }
     else if (type == AINPUT_EVENT_TYPE_KEY)
     {
