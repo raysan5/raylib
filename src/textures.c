@@ -1532,7 +1532,7 @@ Image ImageText(const char *text, int fontSize, Color color)
     if (fontSize < defaultFontSize) fontSize = defaultFontSize;
     int spacing = (float)fontSize/defaultFontSize;
 
-    Image imText = ImageTextEx(GetFontDefault()(), text, (float)fontSize, (float)spacing, color);
+    Image imText = ImageTextEx(GetFontDefault(), text, (float)fontSize, (float)spacing, color);
 
     return imText;
 }
@@ -1606,7 +1606,7 @@ Image ImageTextEx(Font font, const char *text, float fontSize, float spacing, Co
         TraceLog(LOG_INFO, "Image text scaled by factor: %f", scaleFactor);
 
         // Using nearest-neighbor scaling algorithm for default font
-        if (font.texture.id == GetFontDefault()().texture.id) ImageResizeNN(&imText, (int)(imSize.x*scaleFactor), (int)(imSize.y*scaleFactor));
+        if (font.texture.id == GetFontDefault().texture.id) ImageResizeNN(&imText, (int)(imSize.x*scaleFactor), (int)(imSize.y*scaleFactor));
         else ImageResize(&imText, (int)(imSize.x*scaleFactor), (int)(imSize.y*scaleFactor));
     }
 
@@ -1629,7 +1629,7 @@ void ImageDrawRectangle(Image *dst, Vector2 position, Rectangle rec, Color color
 void ImageDrawText(Image *dst, Vector2 position, const char *text, int fontSize, Color color)
 {
     // NOTE: For default font, sapcing is set to desired font size / default font size (10)
-    ImageDrawTextEx(dst, position, GetFontDefault()(), text, (float)fontSize, (float)fontSize/10, color);
+    ImageDrawTextEx(dst, position, GetFontDefault(), text, (float)fontSize, (float)fontSize/10, color);
 }
 
 // Draw text (custom sprite font) within an image (destination)
