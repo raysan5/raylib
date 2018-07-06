@@ -15075,7 +15075,7 @@ mal_result mal_context_enumerate_devices__opensl(mal_context* pContext, mal_enum
     goto return_default_device;
 #endif
 
-return_default_device:
+return_default_device:;
     mal_bool32 cbResult = MAL_TRUE;
 
     // Playback.
