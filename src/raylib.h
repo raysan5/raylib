@@ -241,6 +241,24 @@
 #define GAMEPAD_XBOX_BUTTON_LEFT    13
 #define GAMEPAD_XBOX_BUTTON_HOME    8
 
+// 8BitDo Gamepad SNES CLASSIC
+#define GAMEPAD_SNES_DPAD_UP        19
+#define GAMEPAD_SNES_DPAD_DOWN      20
+#define GAMEPAD_SNES_DPAD_LEFT      21
+#define GAMEPAD_SNES_DPAD_RIGHT     22
+#define GAMEPAD_SNES_DPAD_CENTER    23
+
+#define GAMEPAD_SNES_BUTTON_A       96
+#define GAMEPAD_SNES_BUTTON_B       97
+#define GAMEPAD_SNES_BUTTON_C       98
+#define GAMEPAD_SNES_BUTTON_X       99
+#define GAMEPAD_SNES_BUTTON_Y       100
+#define GAMEPAD_SNES_BUTTON_Z       101
+#define GAMEPAD_SNES_BUTTON_L1      102
+#define GAMEPAD_SNES_BUTTON_R1      103
+#define GAMEPAD_SNES_BUTTON_L2      104
+#define GAMEPAD_SNES_BUTTON_R2      105
+
 // Xbox360 USB Controller Axis
 // NOTE: For Raspberry Pi, axis must be reconfigured
 #if defined(PLATFORM_RPI)

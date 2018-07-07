@@ -208,6 +208,9 @@ ifeq ($(PLATFORM),PLATFORM_ANDROID)
     ifeq ($(ANDROID_ARCH),ARM64)
         RAYLIB_RELEASE_PATH = $(RAYLIB_PATH)/release/libs/android/arm64-v8a
     endif
+    ifeq ($(ANDROID_ARCH),ARM)
+        RAYLIB_RELEASE_PATH = $(RAYLIB_PATH)/release/libs/android/armeabi-v7a
+    endif
 endif
 
 # Define raylib graphics api depending on selected platform
@@ -261,6 +264,9 @@ ifeq ($(PLATFORM),PLATFORM_ANDROID)
     ifeq ($(ANDROID_ARCH),ARM64)
         CC = $(ANDROID_TOOLCHAIN)/bin/aarch64-linux-android-clang
     endif
+    ifeq ($(ANDROID_ARCH),ARM)
+        CC = $(ANDROID_TOOLCHAIN)/bin/arm-linux-androideabi-clang
+    endif
 endif
 
 # Default archiver program to pack libraries
@@ -278,6 +284,9 @@ endif
 ifeq ($(PLATFORM),PLATFORM_ANDROID)
     ifeq ($(ANDROID_ARCH),ARM64)
         AR = $(ANDROID_TOOLCHAIN)/bin/aarch64-linux-android-ar
+    endif
+    ifeq ($(ANDROID_ARCH),ARM)
+        AR = $(ANDROID_TOOLCHAIN)/bin/arm-linux-androideabi-ar
     endif
 endif
 
@@ -317,8 +326,12 @@ ifeq ($(PLATFORM),PLATFORM_WEB)
 endif
 ifeq ($(PLATFORM),PLATFORM_ANDROID)
     # Compiler flags for arquitecture (only ARM, not ARM64)
-    #CFLAGS += -march=armv7-a -mfloat-abi=softfp -mfpu=vfpv3-d16
-    CFLAGS += -target aarch64 -mfix-cortex-a53-835769
+    ifeq ($(ANDROID_ARCH),ARM64)
+		CFLAGS += -target aarch64 -mfix-cortex-a53-835769
+	endif
+    ifeq ($(ANDROID_ARCH),ARM)
+		CFLAGS += -march=armv7-a -mfloat-abi=softfp -mfpu=vfpv3-d16
+	endif
     # Compilation functions attributes options
     CFLAGS += -ffunction-sections -funwind-tables -fstack-protector-strong -fPIE -fPIC
     # Compiler options for the linker
@@ -438,6 +451,9 @@ generate_android_toolchain:
 ifeq ($(PLATFORM),PLATFORM_ANDROID)
     ifeq ($(ANDROID_ARCH),ARM64)
 		$(ANDROID_NDK)/build/tools/make-standalone-toolchain.sh --platform=android-21 --toolchain=aarch64-linux-androideabi-4.9 --use-llvm --install-dir=$(ANDROID_TOOLCHAIN)
+    endif
+    ifeq ($(ANDROID_ARCH),ARM)
+		$(ANDROID_NDK)/build/tools/make-standalone-toolchain.sh --platform=android-21 --toolchain=arm-linux-androideabi-4.9 --use-llvm --install-dir=$(ANDROID_TOOLCHAIN)
     endif
 endif
 
