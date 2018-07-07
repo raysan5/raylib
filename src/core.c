@@ -3099,14 +3099,17 @@ static int32_t AndroidInputCallback(struct android_app *app, AInputEvent *event)
         //AMotionEvent_getAxisValue()
         //AMotionEvent_getButtonState()
         
-        // This is all it takes to capture gamepad dpad button presses
+        // Gamepad dpad button presses capturing
+        // TODO: That's weird, key input (or button)
+        // shouldn't come as a TYPE_MOTION event... 
         int32_t keycode = AKeyEvent_getKeyCode(event);
-        if (AKeyEvent_getAction(event) == 0)
+        if (AKeyEvent_getAction(event) == AKEY_EVENT_ACTION_DOWN)
         {
             currentKeyState[keycode] = 1;  // Key down
             lastKeyPressed = keycode;
         }
         else currentKeyState[keycode] = 0;  // Key up
+
     }
     else if (type == AINPUT_EVENT_TYPE_KEY)
     {
@@ -3115,9 +3118,9 @@ static int32_t AndroidInputCallback(struct android_app *app, AInputEvent *event)
 
         // Save current button and its state
         // NOTE: Android key action is 0 for down and 1 for up
-        if (AKeyEvent_getAction(event) == 0)
+        if (AKeyEvent_getAction(event) == AKEY_EVENT_ACTION_DOWN)
         {
-            currentKeyState[keycode] = 1;  // Key down
+            currentKeyState[keycode] = 1;   // Key down
             lastKeyPressed = keycode;
         }
         else currentKeyState[keycode] = 0;  // Key up
@@ -3146,14 +3149,7 @@ static int32_t AndroidInputCallback(struct android_app *app, AInputEvent *event)
     int32_t action = AMotionEvent_getAction(event);
     unsigned int flags = action & AMOTION_EVENT_ACTION_MASK;
 
-
 #if defined(SUPPORT_GESTURES_SYSTEM)
-
-    // @Completeness: Fix this so that gamepad does not cause this to crash
-    // If actions is not caputred in the above, then it may not be a gesture at all. 
-    // If we do not end here, when we reach getPointerId there is a high likelyhood of crashing
-    return 0;
-
     GestureEvent gestureEvent;
 
     // Register touch actions
@@ -3162,29 +3158,32 @@ static int32_t AndroidInputCallback(struct android_app *app, AInputEvent *event)
     else if (flags == AMOTION_EVENT_ACTION_MOVE) gestureEvent.touchAction = TOUCH_MOVE;
 
     // Register touch points count
+    // NOTE: Documentation says pointerCount is Always >= 1,
+    // but in practice it can be 0 or over a million
     gestureEvent.pointCount = AMotionEvent_getPointerCount(event);
-    // Documentation says pointerCount is Always >= 1. 
-    // But in practice it can be 0 or over a million
 
-    // Register touch points id
-    
-    // Register touch points position
-    // NOTE: Only two points registered
-    // @Fix: This is where the break happens for dpads
-    gestureEvent.pointerId[0] = AMotionEvent_getPointerId(event, 0);
-    gestureEvent.pointerId[1] = AMotionEvent_getPointerId(event, 1);
+    // Only enable gestures for 1-3 touch points
+    if ((gestureEvent.pointCount > 0) && (gestureEvent.pointCount < 4))
+    {
+        // Register touch points id
+        // NOTE: Only two points registered
+        gestureEvent.pointerId[0] = AMotionEvent_getPointerId(event, 0);
+        gestureEvent.pointerId[1] = AMotionEvent_getPointerId(event, 1);
 
-    gestureEvent.position[0] = (Vector2){ AMotionEvent_getX(event, 0), AMotionEvent_getY(event, 0) };
-    gestureEvent.position[1] = (Vector2){ AMotionEvent_getX(event, 1), AMotionEvent_getY(event, 1) };
+        // Register touch points position
+        gestureEvent.position[0] = (Vector2){ AMotionEvent_getX(event, 0), AMotionEvent_getY(event, 0) };
+        gestureEvent.position[1] = (Vector2){ AMotionEvent_getX(event, 1), AMotionEvent_getY(event, 1) };
 
-    // Normalize gestureEvent.position[x] for screenWidth and screenHeight
-    gestureEvent.position[0].x /= (float)GetScreenWidth();
-    gestureEvent.position[1].x /= (float)GetScreenWidth();
-    gestureEvent.position[0].y /= (float)GetScreenHeight();
-    gestureEvent.position[1].y /= (float)GetScreenHeight();
+        // Normalize gestureEvent.position[x] for screenWidth and screenHeight
+        gestureEvent.position[0].x /= (float)GetScreenWidth();
+        gestureEvent.position[0].y /= (float)GetScreenHeight();
+        
+        gestureEvent.position[1].x /= (float)GetScreenWidth();
+        gestureEvent.position[1].y /= (float)GetScreenHeight();
 
-    // Gesture data is sent to gestures system for processing
-    ProcessGestureEvent(gestureEvent);
+        // Gesture data is sent to gestures system for processing
+        ProcessGestureEvent(gestureEvent);
+    }
 #else
     
     // Support only simple touch position
