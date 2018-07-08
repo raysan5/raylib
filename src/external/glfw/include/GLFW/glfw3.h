@@ -480,6 +480,7 @@ extern "C" {
 #define GLFW_KEY_RIGHT_SUPER        347
 #define GLFW_KEY_MENU               348
 
+#define GLFW_KEY_FIRST              19
 #define GLFW_KEY_LAST               GLFW_KEY_MENU
 
 /*! @} */

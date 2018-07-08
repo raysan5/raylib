@@ -3109,7 +3109,6 @@ static int32_t AndroidInputCallback(struct android_app *app, AInputEvent *event)
             lastKeyPressed = keycode;
         }
         else currentKeyState[keycode] = 0;  // Key up
-
     }
     else if (type == AINPUT_EVENT_TYPE_KEY)
     {
@@ -3163,6 +3162,7 @@ static int32_t AndroidInputCallback(struct android_app *app, AInputEvent *event)
     gestureEvent.pointCount = AMotionEvent_getPointerCount(event);
 
     // Only enable gestures for 1-3 touch points
+    // @Todo: If someone is using a gamepad and hits 1-3 buttons, then this condition will be satisfied and the system will crash
     if ((gestureEvent.pointCount > 0) && (gestureEvent.pointCount < 4))
     {
         // Register touch points id
