@@ -579,7 +579,7 @@ GLFWAPI int glfwGetKeyScancode(int key)
 {
     _GLFW_REQUIRE_INIT_OR_RETURN(-1);
 
-    if (key < GLFW_KEY_SPACE || key > GLFW_KEY_LAST)
+    if (key < GLFW_KEY_FIRST || key > GLFW_KEY_LAST)
     {
         _glfwInputError(GLFW_INVALID_ENUM, "Invalid key %i", key);
         return GLFW_RELEASE;
@@ -595,7 +595,7 @@ GLFWAPI int glfwGetKey(GLFWwindow* handle, int key)
 
     _GLFW_REQUIRE_INIT_OR_RETURN(GLFW_RELEASE);
 
-    if (key < GLFW_KEY_SPACE || key > GLFW_KEY_LAST)
+    if (key < GLFW_KEY_FIRST || key > GLFW_KEY_LAST)
     {
         _glfwInputError(GLFW_INVALID_ENUM, "Invalid key %i", key);
         return GLFW_RELEASE;
