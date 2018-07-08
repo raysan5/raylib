@@ -170,13 +170,22 @@ ifeq ($(PLATFORM),PLATFORM_WEB)
 endif
 
 ifeq ($(PLATFORM),PLATFORM_ANDROID)
-    # Android required path variables
-    ANDROID_NDK = C:/android-ndk
-    ANDROID_TOOLCHAIN = C:/android_toolchain_arm64_api21
-
     # Android architecture: ARM64
     # Starting at 2019 using ARM64 is mandatory for published apps
     ANDROID_ARCH ?= ARM64
+    
+    # Android required path variables
+    # NOTE: Android NDK is just required to generate the standalone toolchain,
+    # in case is not already provided
+    ANDROID_NDK = C:/android-ndk
+
+    # Android standalone toolchain path
+    ifeq ($(ANDROID_ARCH),ARM64)
+        ANDROID_TOOLCHAIN = C:/android_toolchain_arm64_api21
+    endif
+    ifeq ($(ANDROID_ARCH),ARM)
+        ANDROID_TOOLCHAIN = C:/android_toolchain_arm_api21
+    endif
 endif
 
 # RAYLIB_RELEASE_PATH points to provided binaries or your immediate build of raylib.
@@ -233,9 +242,10 @@ ifeq ($(PLATFORM),PLATFORM_ANDROID)
     GRAPHICS = GRAPHICS_API_OPENGL_ES2
 endif
 
-# Define default C compiler: gcc
+# Define default C compiler and archiver to pack library
 # NOTE: define g++ compiler if using C++
 CC = gcc
+AR = ar
 
 ifeq ($(PLATFORM),PLATFORM_DESKTOP)
     ifeq ($(PLATFORM_OS),OSX)
@@ -253,6 +263,7 @@ ifeq ($(PLATFORM),PLATFORM_RPI)
         # Define RPI cross-compiler
         #CC = armv6j-hardfloat-linux-gnueabi-gcc
         CC = $(RPI_TOOLCHAIN)/bin/arm-linux-gnueabihf-gcc
+        AR = $(RPI_TOOLCHAIN)/bin/arm-linux-gnueabihf-ar
     endif
 endif
 ifeq ($(PLATFORM),PLATFORM_WEB)
@@ -263,32 +274,14 @@ ifeq ($(PLATFORM),PLATFORM_ANDROID)
     # Android toolchain (must be provided for desired architecture and compiler)
     ifeq ($(ANDROID_ARCH),ARM64)
         CC = $(ANDROID_TOOLCHAIN)/bin/aarch64-linux-android-clang
-    endif
-    ifeq ($(ANDROID_ARCH),ARM)
-        CC = $(ANDROID_TOOLCHAIN)/bin/arm-linux-androideabi-clang
-    endif
-endif
-
-# Default archiver program to pack libraries
-AR = ar
-
-ifeq ($(PLATFORM),PLATFORM_RPI)
-    ifeq ($(USE_RPI_CROSS_COMPILER),TRUE)
-        # Define RPI cross-archiver
-        #CC = armv6j-hardfloat-linux-gnueabi-gcc
-        AR = $(RPI_TOOLCHAIN)/bin/arm-linux-gnueabihf-ar
-    endif
-endif
-
-# Android archiver (also depends on desired architecture)
-ifeq ($(PLATFORM),PLATFORM_ANDROID)
-    ifeq ($(ANDROID_ARCH),ARM64)
         AR = $(ANDROID_TOOLCHAIN)/bin/aarch64-linux-android-ar
     endif
     ifeq ($(ANDROID_ARCH),ARM)
+        CC = $(ANDROID_TOOLCHAIN)/bin/arm-linux-androideabi-clang
         AR = $(ANDROID_TOOLCHAIN)/bin/arm-linux-androideabi-ar
     endif
 endif
+
 
 # Define compiler flags:
 #  -O1                   defines optimization level
@@ -327,11 +320,11 @@ endif
 ifeq ($(PLATFORM),PLATFORM_ANDROID)
     # Compiler flags for arquitecture (only ARM, not ARM64)
     ifeq ($(ANDROID_ARCH),ARM64)
-		CFLAGS += -target aarch64 -mfix-cortex-a53-835769
-	endif
+        CFLAGS += -target aarch64 -mfix-cortex-a53-835769
+    endif
     ifeq ($(ANDROID_ARCH),ARM)
-		CFLAGS += -march=armv7-a -mfloat-abi=softfp -mfpu=vfpv3-d16
-	endif
+        CFLAGS += -march=armv7-a -mfloat-abi=softfp -mfpu=vfpv3-d16
+    endif
     # Compilation functions attributes options
     CFLAGS += -ffunction-sections -funwind-tables -fstack-protector-strong -fPIE -fPIC
     # Compiler options for the linker
@@ -551,6 +544,7 @@ stb_vorbis.o: external/stb_vorbis.c external/stb_vorbis.h
 # Compile utils module
 utils.o : utils.c utils.h
 	$(CC) -c $< $(CFLAGS) $(INCLUDE_PATHS) -D$(PLATFORM)
+
 
 # Install generated and needed files to desired directories.
 # On GNU/Linux and BSDs, there are some standard directories that contain extra
