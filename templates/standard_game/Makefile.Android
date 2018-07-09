@@ -80,8 +80,14 @@ endif
 
 # Compiler and archiver
 # NOTE: GCC is being deprecated in Android NDK r16
-CC = $(ANDROID_TOOLCHAIN)/bin/aarch64-linux-android-clang
-AR = $(ANDROID_TOOLCHAIN)/bin/aarch64-linux-android-ar
+ifeq ($(ANDROID_ARCH),ARM)
+    CC = $(ANDROID_TOOLCHAIN)/bin/arm-linux-androideabi-clang
+    AR = $(ANDROID_TOOLCHAIN)/bin/arm-linux-androideabi-ar
+endif
+ifeq ($(ANDROID_ARCH),ARM64)
+    CC = $(ANDROID_TOOLCHAIN)/bin/aarch64-linux-android-clang
+    AR = $(ANDROID_TOOLCHAIN)/bin/aarch64-linux-android-ar
+endif
 
 # Compiler flags for arquitecture
 ifeq ($(ANDROID_ARCH),ARM)
