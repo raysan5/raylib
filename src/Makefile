@@ -99,38 +99,41 @@ endif
 # user, "whoami" prints "root").
 ROOT = $(shell whoami)
 
+# By default we suppose we are working on Windows
+HOST_PLATFORM_OS ?= WINDOWS
+
 # Determine PLATFORM_OS in case PLATFORM_DESKTOP selected
 ifeq ($(PLATFORM),PLATFORM_DESKTOP)
     # No uname.exe on MinGW!, but OS=Windows_NT on Windows!
     # ifeq ($(UNAME),Msys) -> Windows
     ifeq ($(OS),Windows_NT)
-        PLATFORM_OS=WINDOWS
+        PLATFORM_OS = WINDOWS
     else
-        UNAMEOS=$(shell uname)
+        UNAMEOS = $(shell uname)
         ifeq ($(UNAMEOS),Linux)
-            PLATFORM_OS=LINUX
+            PLATFORM_OS = LINUX
         endif
         ifeq ($(UNAMEOS),FreeBSD)
-            PLATFORM_OS=BSD
+            PLATFORM_OS = BSD
         endif
         ifeq ($(UNAMEOS),OpenBSD)
-            PLATFORM_OS=BSD
+            PLATFORM_OS = BSD
         endif
         ifeq ($(UNAMEOS),NetBSD)
-            PLATFORM_OS=BSD
+            PLATFORM_OS = BSD
         endif
         ifeq ($(UNAMEOS),DragonFly)
-            PLATFORM_OS=BSD
+            PLATFORM_OS = BSD
         endif
         ifeq ($(UNAMEOS),Darwin)
-            PLATFORM_OS=OSX
+            PLATFORM_OS = OSX
         endif
     endif
 endif
 ifeq ($(PLATFORM),PLATFORM_RPI)
-    UNAMEOS=$(shell uname)
+    UNAMEOS = $(shell uname)
     ifeq ($(UNAMEOS),Linux)
-        PLATFORM_OS=LINUX
+        PLATFORM_OS = LINUX
     endif
 endif
 
@@ -160,19 +163,20 @@ endif
 
 ifeq ($(PLATFORM),PLATFORM_WEB)
     # Emscripten required variables
-    EMSDK_PATH = C:/emsdk
-    EMSCRIPTEN_VERSION = 1.37.28
-    CLANG_VERSION=e1.37.28_64bit
-    PYTHON_VERSION=2.7.5.3_64bit
-    NODE_VERSION=4.1.1_64bit
-    export PATH=$(EMSDK_PATH);$(EMSDK_PATH)\clang\$(CLANG_VERSION);$(EMSDK_PATH)\node\$(NODE_VERSION)\bin;$(EMSDK_PATH)\python\$(PYTHON_VERSION);$(EMSDK_PATH)\emscripten\$(EMSCRIPTEN_VERSION);C:\raylib\MinGW\bin:$$(PATH)
-    EMSCRIPTEN=$(EMSDK_PATH)\emscripten\$(EMSCRIPTEN_VERSION)
+    EMSDK_PATH          = C:/emsdk
+    EMSCRIPTEN_VERSION  = 1.38.8
+    CLANG_VERSION       = e1.38.8_64bit
+    PYTHON_VERSION      = 2.7.13.1_64bit\python-2.7.13.amd64
+    NODE_VERSION        = 8.9.1_64bit
+    export PATH         = $(EMSDK_PATH);$(EMSDK_PATH)\clang\$(CLANG_VERSION);$(EMSDK_PATH)\node\$(NODE_VERSION)\bin;$(EMSDK_PATH)\python\$(PYTHON_VERSION);$(EMSDK_PATH)\emscripten\$(EMSCRIPTEN_VERSION);C:\raylib\MinGW\bin:$$(PATH)
+    EMSCRIPTEN          = $(EMSDK_PATH)\emscripten\$(EMSCRIPTEN_VERSION)
 endif
 
 ifeq ($(PLATFORM),PLATFORM_ANDROID)
     # Android architecture: ARM64
     # Starting at 2019 using ARM64 is mandatory for published apps
-    ANDROID_ARCH ?= ARM64
+    ANDROID_ARCH ?= ARM
+    ANDROID_API_VERSION = 21
     
     # Android required path variables
     # NOTE: Android NDK is just required to generate the standalone toolchain,
@@ -180,11 +184,13 @@ ifeq ($(PLATFORM),PLATFORM_ANDROID)
     ANDROID_NDK = C:/android-ndk
 
     # Android standalone toolchain path
-    ifeq ($(ANDROID_ARCH),ARM64)
-        ANDROID_TOOLCHAIN = C:/android_toolchain_arm64_api21
-    endif
+    ANDROID_TOOLCHAIN = C:/android_toolchain_$(ANDROID_ARCH)_API$(ANDROID_API_VERSION)
+    
     ifeq ($(ANDROID_ARCH),ARM)
-        ANDROID_TOOLCHAIN = C:/android_toolchain_arm_api21
+        ANDROID_ARCH_NAME = armeabi-v7a
+    endif
+    ifeq ($(ANDROID_ARCH),ARM64)
+        ANDROID_ARCH_NAME = arm64-v8a
     endif
 endif
 
@@ -214,12 +220,7 @@ ifeq ($(PLATFORM),PLATFORM_WEB)
     RAYLIB_RELEASE_PATH = $(RAYLIB_PATH)/release/libs/html5
 endif
 ifeq ($(PLATFORM),PLATFORM_ANDROID)
-    ifeq ($(ANDROID_ARCH),ARM64)
-        RAYLIB_RELEASE_PATH = $(RAYLIB_PATH)/release/libs/android/arm64-v8a
-    endif
-    ifeq ($(ANDROID_ARCH),ARM)
-        RAYLIB_RELEASE_PATH = $(RAYLIB_PATH)/release/libs/android/armeabi-v7a
-    endif
+    RAYLIB_RELEASE_PATH = $(RAYLIB_PATH)/release/libs/android/$(ANDROID_ARCH_NAME)
 endif
 
 # Define raylib graphics api depending on selected platform
@@ -272,13 +273,13 @@ ifeq ($(PLATFORM),PLATFORM_WEB)
 endif
 ifeq ($(PLATFORM),PLATFORM_ANDROID)
     # Android toolchain (must be provided for desired architecture and compiler)
-    ifeq ($(ANDROID_ARCH),ARM64)
-        CC = $(ANDROID_TOOLCHAIN)/bin/aarch64-linux-android-clang
-        AR = $(ANDROID_TOOLCHAIN)/bin/aarch64-linux-android-ar
-    endif
     ifeq ($(ANDROID_ARCH),ARM)
         CC = $(ANDROID_TOOLCHAIN)/bin/arm-linux-androideabi-clang
         AR = $(ANDROID_TOOLCHAIN)/bin/arm-linux-androideabi-ar
+    endif
+    ifeq ($(ANDROID_ARCH),ARM64)
+        CC = $(ANDROID_TOOLCHAIN)/bin/aarch64-linux-android-clang
+        AR = $(ANDROID_TOOLCHAIN)/bin/aarch64-linux-android-ar
     endif
 endif
 
@@ -318,12 +319,12 @@ ifeq ($(PLATFORM),PLATFORM_WEB)
     CFLAGS += -s USE_GLFW=3 -s ASSERTIONS=1 --profiling
 endif
 ifeq ($(PLATFORM),PLATFORM_ANDROID)
-    # Compiler flags for arquitecture (only ARM, not ARM64)
-    ifeq ($(ANDROID_ARCH),ARM64)
-        CFLAGS += -target aarch64 -mfix-cortex-a53-835769
-    endif
+    # Compiler flags for arquitecture
     ifeq ($(ANDROID_ARCH),ARM)
         CFLAGS += -march=armv7-a -mfloat-abi=softfp -mfpu=vfpv3-d16
+    endif
+    ifeq ($(ANDROID_ARCH),ARM64)
+        CFLAGS += -target aarch64 -mfix-cortex-a53-835769
     endif
     # Compilation functions attributes options
     CFLAGS += -ffunction-sections -funwind-tables -fstack-protector-strong -fPIE -fPIC
@@ -331,7 +332,7 @@ ifeq ($(PLATFORM),PLATFORM_ANDROID)
     # -Werror=format-security
     CFLAGS += -Wa,--noexecstack -Wformat -no-canonical-prefixes
     # Preprocessor macro definitions
-    CFLAGS += -DANDROID -DPLATFORM_ANDROID -D__ANDROID_API__=21 -DMAL_NO_OSS
+    CFLAGS += -DANDROID -DPLATFORM_ANDROID -D__ANDROID_API__=$(ANDROID_API_VERSION) -DMAL_NO_OSS
 endif
 
 # Define required compilation flags for raylib SHARED lib
@@ -399,7 +400,7 @@ ifeq ($(PLATFORM),PLATFORM_ANDROID)
     # Avoid unresolved symbol pointing to external main()
     LDFLAGS += -Wl,-undefined,dynamic_lookup
 
-    LDLIBS = -llog -landroid -lEGL -lGLESv2 -lOpenSLES -latomic -lc -lm
+    LDLIBS = -llog -landroid -lEGL -lGLESv2 -lOpenSLES -lc -lm
 endif
 
 # Define all object files required with a wildcard
@@ -439,14 +440,23 @@ endif
 all: raylib
 
 # Generate standalone Android toolchain
-# NOTE: Android toolchain could already be provided
+# NOTE: If the host system is Windows or Linux, generation is different
 generate_android_toolchain:
-ifeq ($(PLATFORM),PLATFORM_ANDROID)
-    ifeq ($(ANDROID_ARCH),ARM64)
-		$(ANDROID_NDK)/build/tools/make-standalone-toolchain.sh --platform=android-21 --toolchain=aarch64-linux-androideabi-4.9 --use-llvm --install-dir=$(ANDROID_TOOLCHAIN)
-    endif
+ifeq ($(PLATFORM_OS),WINDOWS)
+    # NOTE: python should be available in the path
     ifeq ($(ANDROID_ARCH),ARM)
-		$(ANDROID_NDK)/build/tools/make-standalone-toolchain.sh --platform=android-21 --toolchain=arm-linux-androideabi-4.9 --use-llvm --install-dir=$(ANDROID_TOOLCHAIN)
+		$(ANDROID_NDK)/build/tools/python make_standalone_toolchain.py --arch arm --api $(ANDROID_API_VERSION) --install-dir $(ANDROID_TOOLCHAIN)
+    endif
+    ifeq ($(ANDROID_ARCH),ARM64)
+		$(ANDROID_NDK)/build/tools/python make_standalone_toolchain.py --arch arm64 --api $(ANDROID_API_VERSION) --install-dir $(ANDROID_TOOLCHAIN)
+    endif
+endif
+ifeq ($(PLATFORM_OS),LINUX)
+    ifeq ($(ANDROID_ARCH),ARM)
+		$(ANDROID_NDK)/build/tools/make-standalone-toolchain.sh --platform=android-$(ANDROID_API_VERSION) --toolchain=arm-linux-androideabi-4.9 --use-llvm --install-dir=$(ANDROID_TOOLCHAIN)
+    endif
+    ifeq ($(ANDROID_ARCH),ARM64)
+		$(ANDROID_NDK)/build/tools/make-standalone-toolchain.sh --platform=android-$(ANDROID_API_VERSION) --toolchain=aarch64-linux-androideabi-4.9 --use-llvm --install-dir=$(ANDROID_TOOLCHAIN)
     endif
 endif
 
@@ -487,9 +497,11 @@ else
         ifeq ($(PLATFORM),PLATFORM_ANDROID)
 			$(CC) -shared -o $(RAYLIB_RELEASE_PATH)/libraylib.$(RAYLIB_VERSION).so $(OBJS) $(LDFLAGS) $(LDLIBS)
 			@echo "raylib shared library generated (libraylib.$(RAYLIB_VERSION).so)!"
-			# WARNING: symbolic links creation on Windows should be done using mklink command, no ln available
-			cd $(RAYLIB_RELEASE_PATH) && ln -fs libraylib.$(RAYLIB_VERSION).so libraylib.$(RAYLIB_API_VERSION).so
-			cd $(RAYLIB_RELEASE_PATH) && ln -fs libraylib.$(RAYLIB_VERSION).so libraylib.so
+            # WARNING: symbolic links creation on Windows should be done using mklink command, no ln available
+            ifeq ($(HOST_PLATFORM_OS),LINUX)
+				cd $(RAYLIB_RELEASE_PATH) && ln -fs libraylib.$(RAYLIB_VERSION).so libraylib.$(RAYLIB_API_VERSION).so
+				cd $(RAYLIB_RELEASE_PATH) && ln -fs libraylib.$(RAYLIB_VERSION).so libraylib.so
+            endif
         endif
     else
         # Compile raylib static library version $(RAYLIB_VERSION)
