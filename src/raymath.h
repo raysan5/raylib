@@ -153,6 +153,20 @@ RMDEF float Clamp(float value, float min, float max)
 // Module Functions Definition - Vector2 math
 //----------------------------------------------------------------------------------
 
+// Create a vector
+RMDEF Vector2 Vector2New(float x, float y)
+{
+    Vector2 result = { x, y };
+    return result;
+}
+
+// Create a vector from a float array
+RMDEF Vector2 Vector2NewV(float arr[2])
+{
+    Vector2 result = { arr[0], arr[1] };
+    return result;
+}
+
 // Vector with components value 0.0f
 RMDEF Vector2 Vector2Zero(void)
 {
@@ -241,6 +255,20 @@ RMDEF Vector2 Vector2Normalize(Vector2 v)
 //----------------------------------------------------------------------------------
 // Module Functions Definition - Vector3 math
 //----------------------------------------------------------------------------------
+
+// Create a vector
+RMDEF Vector3 Vector3New(float x, float y, float z)
+{
+    Vector3 result = { x, y, z };
+    return result;
+}
+
+// Create a vector from a float array
+RMDEF Vector3 Vector3NewV(float arr[3])
+{
+    Vector3 result = { arr[0], arr[1], arr[2] };
+    return result;
+}
 
 // Vector with components value 0.0f
 RMDEF Vector3 Vector3Zero(void)
@@ -505,6 +533,17 @@ RMDEF float3 Vector3ToFloatV(Vector3 v)
 //----------------------------------------------------------------------------------
 // Module Functions Definition - Matrix math
 //----------------------------------------------------------------------------------
+
+// Create a matrix from a float array
+RMDEF Matrix MatrixNewV(float m[16])
+{
+    Matrix result = {  m[0],  m[1],  m[2],  m[3],
+                       m[4],  m[5],  m[6],  m[7],
+                       m[8],  m[9], m[10], m[11],
+                      m[12], m[13], m[14], m[15] };
+
+    return result;
+}
 
 // Compute matrix determinant
 RMDEF float MatrixDeterminant(Matrix mat)
@@ -969,6 +1008,20 @@ RMDEF float16 MatrixToFloatV(Matrix mat)
 //----------------------------------------------------------------------------------
 // Module Functions Definition - Quaternion math
 //----------------------------------------------------------------------------------
+
+// Create a quaternion
+RMDEF Quaternion QuaternionNew(float x, float y, float z, float w)
+{
+    Quaternion result = { x, y, z, w };
+    return result;
+}
+
+// Create a quaternion from a float array
+RMDEF Quaternion QuaternionNewV(float arr[4])
+{
+    Quaternion result = { arr[0], arr[1], arr[2], arr[3] };
+    return result;
+}
 
 // Returns identity quaternion
 RMDEF Quaternion QuaternionIdentity(void)
