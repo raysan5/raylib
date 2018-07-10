@@ -44,7 +44,7 @@ ANDROID_BUILD_TOOLS = $(ANDROID_HOME)/build-tools/28.0.1
 ANDROID_PLATFORM_TOOLS = $(ANDROID_HOME)/platform-tools
 
 # Android project configuration variables
-PROJECT_NAME ?= standard_game
+PROJECT_NAME ?= raylib_game
 PROJECT_LIBRARY_NAME ?= main
 PROJECT_BUILD_PATH ?= android.$(PROJECT_NAME)
 PROJECT_RESOURCES_PATH ?= resources

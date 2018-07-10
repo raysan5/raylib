@@ -60,6 +60,7 @@ examples/*
 !examples/*.png
 # Unignore examples Makefile
 !examples/Makefile
+!examples/Makefile.Android
 
 # Ignore all games files
 games/*
