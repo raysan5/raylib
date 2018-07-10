@@ -110,6 +110,8 @@ if(${SHARED})
       PUBLIC ${GRAPHICS}
   )
 
+  set(PKG_CONFIG_LIBS_EXTRA "")
+
   set_property(TARGET ${RAYLIB}_shared PROPERTY POSITION_INDEPENDENT_CODE ON)
   set(CMAKE_INSTALL_RPATH "${CMAKE_INSTALL_LIBDIR}")
   set(CMAKE_INSTALL_RPATH_USE_LINK_PATH TRUE)
@@ -155,6 +157,11 @@ if(${STATIC})
 
   add_library(${RAYLIB} STATIC ${sources})
 
+  target_compile_definitions(${RAYLIB}
+      PUBLIC ${PLATFORM}
+      PUBLIC ${GRAPHICS}
+  )
+
   set(PKG_CONFIG_LIBS_PRIVATE ${__PKG_CONFIG_LIBS_PRIVATE} ${GLFW_PKG_LIBS})
   string (REPLACE ";" " " PKG_CONFIG_LIBS_PRIVATE "${PKG_CONFIG_LIBS_PRIVATE}")
   if (${PLATFORM} MATCHES "PLATFORM_DESKTOP")
@@ -173,6 +180,9 @@ if(${STATIC})
   add_test("pkg-config--static" ${PROJECT_SOURCE_DIR}/../cmake/test-pkgconfig.sh --static)
 endif(${STATIC})
 
+if (NOT DEFINED PKG_CONFIG_LIBS_EXTRA)
+  set(PKG_CONFIG_LIBS_EXTRA "${PKG_CONFIG_LIBS_PRIVATE}")
+endif()
 configure_file(../raylib.pc.in raylib.pc @ONLY)
 install(FILES ${CMAKE_BINARY_DIR}/release/raylib.pc DESTINATION "${CMAKE_INSTALL_LIBDIR}/pkgconfig")
 
@@ -182,12 +192,6 @@ file(COPY "rlgl.h" DESTINATION ".")
 file(COPY "physac.h" DESTINATION ".")
 file(COPY "raymath.h" DESTINATION ".")
 file(COPY "audio.h" DESTINATION ".")
-
-target_compile_definitions(${RAYLIB}
-    PUBLIC ${PLATFORM}
-    PUBLIC ${GRAPHICS}
-)
-
 
 # Print the flags for the user
 message(STATUS "Compiling with the flags:")
