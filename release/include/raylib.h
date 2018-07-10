@@ -350,6 +350,7 @@ typedef struct Vector4 {
     float w;
 } Vector4;
 
+// Quaternion type, same as Vector4
 typedef Vector4 Quaternion;
 
 // Matrix type (OpenGL style 4x4 - right handed, column major)
@@ -396,12 +397,18 @@ typedef struct Texture2D {
     int format;             // Data format (PixelFormat type)
 } Texture2D;
 
+// Texture type, same as Texture2D
+typedef Texture2D Texture;
+
 // RenderTexture2D type, for texture rendering
 typedef struct RenderTexture2D {
     unsigned int id;        // OpenGL Framebuffer Object (FBO) id
     Texture2D texture;      // Color buffer attachment texture
     Texture2D depth;        // Depth buffer attachment texture
 } RenderTexture2D;
+
+// RenderTexture type, same as RenderTexture2D
+typedef RenderTexture2D RenderTexture;
 
 // Font character info
 typedef struct CharInfo {
@@ -421,7 +428,7 @@ typedef struct Font {
     CharInfo *chars;        // Characters info data
 } Font;
 
-#define SpriteFont  Font    // SpriteFont type fallback, defaults to Font
+#define SpriteFont Font     // SpriteFont type fallback, defaults to Font
 
 // Camera type, defines a camera position/orientation in 3d space
 typedef struct Camera3D {
@@ -432,7 +439,7 @@ typedef struct Camera3D {
     int type;               // Camera type, defines projection type: CAMERA_PERSPECTIVE or CAMERA_ORTHOGRAPHIC
 } Camera3D;
 
-#define Camera  Camera3D    // Camera type fallback, defaults to Camera3D
+#define Camera Camera3D     // Camera type fallback, defaults to Camera3D
 
 // Camera2D type, defines a 2d camera
 typedef struct Camera2D {
