@@ -4263,7 +4263,7 @@ static MAL_INLINE void mal_device__send_frames_to_client(mal_device* pDevice, ma
         pDevice->_dspFrames = (const mal_uint8*)pSamples;
 
         mal_uint8 chunkBuffer[4096];
-        mal_uint32 chunkFrameCount = sizeof(chunkBuffer) / mal_get_bytes_per_sample(pDevice->format) / pDevice->channels;
+        mal_uint32 chunkFrameCount = sizeof(chunkBuffer) / mal_get_bytes_per_frame(pDevice->format, pDevice->channels);
 
         for (;;) {
             mal_uint32 framesJustRead = (mal_uint32)mal_dsp_read(&pDevice->dsp, chunkFrameCount, chunkBuffer, pDevice->dsp.pUserData);
@@ -11337,7 +11337,6 @@ done:
     return result;
 }
 
-
 mal_result mal_context_init__pulse(mal_context* pContext)
 {
     mal_assert(pContext != NULL);
@@ -11489,6 +11488,36 @@ mal_result mal_context_init__pulse(mal_context* pContext)
     pContext->onEnumDevices   = mal_context_enumerate_devices__pulse;
     pContext->onGetDeviceInfo = mal_context_get_device_info__pulse;
 
+    
+    // Although we have found the libpulse library, it doesn't necessarily mean PulseAudio is useable. We need to initialize
+    // and connect a dummy PulseAudio context to test PulseAudio's usability.
+    mal_pa_mainloop* pMainLoop = ((mal_pa_mainloop_new_proc)pContext->pulse.pa_mainloop_new)();
+    if (pMainLoop == NULL) {
+        return MAL_NO_BACKEND;
+    }
+
+    mal_pa_mainloop_api* pAPI = ((mal_pa_mainloop_get_api_proc)pContext->pulse.pa_mainloop_get_api)(pMainLoop);
+    if (pAPI == NULL) {
+        ((mal_pa_mainloop_free_proc)pContext->pulse.pa_mainloop_free)(pMainLoop);
+        return MAL_NO_BACKEND;
+    }
+
+    mal_pa_context* pPulseContext = ((mal_pa_context_new_proc)pContext->pulse.pa_context_new)(pAPI, pContext->config.pulse.pApplicationName);
+    if (pPulseContext == NULL) {
+        ((mal_pa_mainloop_free_proc)pContext->pulse.pa_mainloop_free)(pMainLoop);
+        return MAL_NO_BACKEND;
+    }
+
+    int error = ((mal_pa_context_connect_proc)pContext->pulse.pa_context_connect)(pPulseContext, pContext->config.pulse.pServerName, 0, NULL);
+    if (error != MAL_PA_OK) {
+        ((mal_pa_context_unref_proc)pContext->pulse.pa_context_unref)(pPulseContext);
+        ((mal_pa_mainloop_free_proc)pContext->pulse.pa_mainloop_free)(pMainLoop);
+        return MAL_NO_BACKEND;
+    }
+
+    ((mal_pa_context_disconnect_proc)pContext->pulse.pa_context_disconnect)(pPulseContext);
+    ((mal_pa_context_unref_proc)pContext->pulse.pa_context_unref)(pPulseContext);
+    ((mal_pa_mainloop_free_proc)pContext->pulse.pa_mainloop_free)(pMainLoop);
     return MAL_SUCCESS;
 }
 
@@ -12147,13 +12176,10 @@ typedef const char*        (* mal_jack_port_name_proc)               (const mal_
 typedef void*              (* mal_jack_port_get_buffer_proc)         (mal_jack_port_t* port, mal_jack_nframes_t nframes);
 typedef void               (* mal_jack_free_proc)                    (void* ptr);
 
-mal_result mal_context_open_client__jack(mal_context* pContext, mal_device_type type, const mal_device_id* pDeviceID, mal_jack_client_t** ppClient)
+mal_result mal_context_open_client__jack(mal_context* pContext, mal_jack_client_t** ppClient)
 {
     mal_assert(pContext != NULL);
     mal_assert(ppClient != NULL);
-
-    (void)type;
-    (void)pDeviceID;
 
     if (ppClient) {
         *ppClient = NULL;
@@ -12167,7 +12193,7 @@ mal_result mal_context_open_client__jack(mal_context* pContext, mal_device_type 
     mal_jack_status_t status;
     mal_jack_client_t* pClient = ((mal_jack_client_open_proc)pContext->jack.jack_client_open)(clientName, (pContext->config.jack.tryStartServer) ? 0 : mal_JackNoStartServer, &status, NULL);
     if (pClient == NULL) {
-        return mal_context_post_error(pContext, NULL, MAL_LOG_LEVEL_ERROR, "[JACK] Failed to open client.", MAL_FAILED_TO_OPEN_BACKEND_DEVICE);
+        return MAL_FAILED_TO_OPEN_BACKEND_DEVICE;
     }
 
     if (ppClient) {
@@ -12237,9 +12263,9 @@ mal_result mal_context_get_device_info__jack(mal_context* pContext, mal_device_t
 
     // The channel count and sample rate can only be determined by opening the device.
     mal_jack_client_t* pClient;
-    mal_result result = mal_context_open_client__jack(pContext, deviceType, pDeviceID, &pClient);
+    mal_result result = mal_context_open_client__jack(pContext, &pClient);
     if (result != MAL_SUCCESS) {
-        return result;
+        return mal_context_post_error(pContext, NULL, MAL_LOG_LEVEL_ERROR, "[JACK] Failed to open client.", MAL_FAILED_TO_OPEN_BACKEND_DEVICE);
     }
 
     pDeviceInfo->minSampleRate = ((mal_jack_get_sample_rate_proc)pContext->jack.jack_get_sample_rate)((mal_jack_client_t*)pClient);
@@ -12349,6 +12375,16 @@ mal_result mal_context_init__jack(mal_context* pContext)
     pContext->onEnumDevices   = mal_context_enumerate_devices__jack;
     pContext->onGetDeviceInfo = mal_context_get_device_info__jack;
 
+
+    // Getting here means the JACK library is installed, but it doesn't necessarily mean it's usable. We need to quickly test this by connecting
+    // a temporary client.
+    mal_jack_client_t* pDummyClient;
+    mal_result result = mal_context_open_client__jack(pContext, &pDummyClient);
+    if (result != MAL_SUCCESS) {
+        return MAL_NO_BACKEND;
+    }
+
+    ((mal_jack_client_close_proc)pContext->jack.jack_client_close)((mal_jack_client_t*)pDummyClient);
     return MAL_SUCCESS;
 }
 
@@ -12462,9 +12498,9 @@ mal_result mal_device_init__jack(mal_context* pContext, mal_device_type type, ma
 
 
     // Open the client.
-    mal_result result = mal_context_open_client__jack(pContext, type, pDeviceID, (mal_jack_client_t**)&pDevice->jack.pClient);
+    mal_result result = mal_context_open_client__jack(pContext, (mal_jack_client_t**)&pDevice->jack.pClient);
     if (result != MAL_SUCCESS) {
-        return result;
+        return mal_post_error(pDevice, MAL_LOG_LEVEL_ERROR, "[JACK] Failed to open client.", MAL_FAILED_TO_OPEN_BACKEND_DEVICE);
     }
 
     // Callbacks.
@@ -12861,9 +12897,9 @@ mal_result mal_format_from_AudioStreamBasicDescription(const AudioStreamBasicDes
     }
     
     // We are not currently supporting non-interleaved formats (this will be added in a future version of mini_al).
-    if ((pDescription->mFormatFlags & kAudioFormatFlagIsNonInterleaved) != 0) {
-        return MAL_FORMAT_NOT_SUPPORTED;
-    }
+    //if ((pDescription->mFormatFlags & kAudioFormatFlagIsNonInterleaved) != 0) {
+    //    return MAL_FORMAT_NOT_SUPPORTED;
+    //}
 
     if ((pDescription->mFormatFlags & kLinearPCMFormatFlagIsFloat) != 0) {
         if (pDescription->mBitsPerChannel == 32) {
@@ -13395,14 +13431,13 @@ mal_result mal_set_AudioObject_buffer_size_in_frames(mal_context* pContext, Audi
     propAddress.mScope    = (deviceType == mal_device_type_playback) ? kAudioObjectPropertyScopeOutput : kAudioObjectPropertyScopeInput;
     propAddress.mElement  = kAudioObjectPropertyElementMaster;
     
-    OSStatus status = ((mal_AudioObjectSetPropertyData_proc)pContext->coreaudio.AudioObjectSetPropertyData)(deviceObjectID, &propAddress, 0, NULL, sizeof(chosenBufferSizeInFrames), &chosenBufferSizeInFrames);
+    ((mal_AudioObjectSetPropertyData_proc)pContext->coreaudio.AudioObjectSetPropertyData)(deviceObjectID, &propAddress, 0, NULL, sizeof(chosenBufferSizeInFrames), &chosenBufferSizeInFrames);
+    
+    // Get the actual size of the buffer.
+    UInt32 dataSize = sizeof(*pBufferSizeInOut);
+    OSStatus status = ((mal_AudioObjectGetPropertyData_proc)pContext->coreaudio.AudioObjectGetPropertyData)(deviceObjectID, &propAddress, 0, NULL, &dataSize, &chosenBufferSizeInFrames);
     if (status != noErr) {
-        // Getting here means we were unable to set the buffer size. In this case just use whatever is currently selected.
-        UInt32 dataSize = sizeof(*pBufferSizeInOut);
-        OSStatus status = ((mal_AudioObjectGetPropertyData_proc)pContext->coreaudio.AudioObjectGetPropertyData)(deviceObjectID, &propAddress, 0, NULL, &dataSize, pBufferSizeInOut);
-        if (status != noErr) {
-            return mal_result_from_OSStatus(status);
-        }
+        return mal_result_from_OSStatus(status);
     }
     
     *pBufferSizeInOut = chosenBufferSizeInFrames;
@@ -13903,7 +13938,7 @@ mal_result mal_context_init__coreaudio(mal_context* pContext)
     
     
     // It looks like Apple has moved some APIs from AudioUnit into AudioToolbox on more recent versions of macOS. They are still
-    // defined in AudioUnit, but just in case they decided to remove them from there entirely I'm going to do implement a fallback.
+    // defined in AudioUnit, but just in case they decide to remove them from there entirely I'm going to implement a fallback.
     // The way it'll work is that it'll first try AudioUnit, and if the required symbols are not present there we'll fall back to
     // AudioToolbox.
     pContext->coreaudio.hAudioUnit = mal_dlopen("AudioUnit.framework/AudioUnit");
@@ -14040,27 +14075,28 @@ OSStatus mal_on_input__coreaudio(void* pUserData, AudioUnitRenderActionFlags* pA
     mal_device* pDevice = (mal_device*)pUserData;
     mal_assert(pDevice != NULL);
     
-    // I'm not going to trust the input frame count. I'm instead going to base this off the size of the first buffer.
-    UInt32 actualFrameCount = ((AudioBufferList*)pDevice->coreaudio.pAudioBufferList)->mBuffers[0].mDataByteSize / mal_get_bytes_per_sample(pDevice->internalFormat) / ((AudioBufferList*)pDevice->coreaudio.pAudioBufferList)->mBuffers[0].mNumberChannels;
-    if (actualFrameCount == 0) {
-        return noErr;
-    }
-    
-    OSStatus status = ((mal_AudioUnitRender_proc)pDevice->pContext->coreaudio.AudioUnitRender)((AudioUnit)pDevice->coreaudio.audioUnit, pActionFlags, pTimeStamp, busNumber, actualFrameCount, (AudioBufferList*)pDevice->coreaudio.pAudioBufferList);
-    if (status != noErr) {
-        return status;
-    }
-    
     AudioBufferList* pRenderedBufferList = (AudioBufferList*)pDevice->coreaudio.pAudioBufferList;
     mal_assert(pRenderedBufferList);
+    
+#if defined(MAL_DEBUG_OUTPUT)
+    printf("INFO: Input Callback: busNumber=%d, frameCount=%d, mNumberBuffers=%d\n", busNumber, frameCount, pRenderedBufferList->mNumberBuffers);
+#endif
+    
+    OSStatus status = ((mal_AudioUnitRender_proc)pDevice->pContext->coreaudio.AudioUnitRender)((AudioUnit)pDevice->coreaudio.audioUnit, pActionFlags, pTimeStamp, busNumber, frameCount, pRenderedBufferList);
+    if (status != noErr) {
+    #if defined(MAL_DEBUG_OUTPUT)
+        printf("  ERROR: AudioUnitRender() failed with %d\n", status);
+    #endif
+        return status;
+    }
     
     // For now we can assume everything is interleaved.
     for (UInt32 iBuffer = 0; iBuffer < pRenderedBufferList->mNumberBuffers; ++iBuffer) {
         if (pRenderedBufferList->mBuffers[iBuffer].mNumberChannels == pDevice->internalChannels) {
-            mal_uint32 frameCountForThisBuffer = pRenderedBufferList->mBuffers[iBuffer].mDataByteSize / mal_get_bytes_per_frame(pDevice->internalFormat, pDevice->internalChannels);
-            if (frameCountForThisBuffer > 0) {
-                mal_device__send_frames_to_client(pDevice, frameCountForThisBuffer, pRenderedBufferList->mBuffers[iBuffer].mData);
-            }
+            mal_device__send_frames_to_client(pDevice, frameCount, pRenderedBufferList->mBuffers[iBuffer].mData);
+        #if defined(MAL_DEBUG_OUTPUT)
+            printf("  mDataByteSize=%d\n", pRenderedBufferList->mBuffers[iBuffer].mDataByteSize);
+        #endif
         } else {
             // This case is where the number of channels in the output buffer do not match our internal channels. It could mean that it's
             // not interleaved, in which case we can't handle right now since mini_al does not yet support non-interleaved streams.
@@ -14185,11 +14221,11 @@ mal_result mal_device_init__coreaudio(mal_context* pContext, mal_device_type dev
     // for the sample data format. If the sample data format is not supported by mini_al it must be ignored completely.
     //
     // On mobile platforms this is a bit different. We just force the use of whatever the audio unit's current format is set to.
+    AudioStreamBasicDescription bestFormat;
     {
         AudioUnitScope   formatScope   = (deviceType == mal_device_type_playback) ? kAudioUnitScope_Input : kAudioUnitScope_Output;
         AudioUnitElement formatElement = (deviceType == mal_device_type_playback) ? MAL_COREAUDIO_OUTPUT_BUS : MAL_COREAUDIO_INPUT_BUS;
     
-        AudioStreamBasicDescription bestFormat;
     #if defined(MAL_APPLE_DESKTOP)
         result = mal_device_find_best_format__coreaudio(pDevice, &bestFormat);
         if (result != MAL_SUCCESS) {
@@ -14197,15 +14233,26 @@ mal_result mal_device_init__coreaudio(mal_context* pContext, mal_device_type dev
             return result;
         }
         
+        // From what I can see, Apple's documentation implies that we should keep the sample rate consistent.
+        AudioStreamBasicDescription origFormat;
+        UInt32 origFormatSize = sizeof(origFormat);
+        if (deviceType == mal_device_type_playback) {
+            status = ((mal_AudioUnitGetProperty_proc)pContext->coreaudio.AudioUnitGetProperty)((AudioUnit)pDevice->coreaudio.audioUnit, kAudioUnitProperty_StreamFormat, kAudioUnitScope_Output, MAL_COREAUDIO_OUTPUT_BUS, &origFormat, &origFormatSize);
+        } else {
+            status = ((mal_AudioUnitGetProperty_proc)pContext->coreaudio.AudioUnitGetProperty)((AudioUnit)pDevice->coreaudio.audioUnit, kAudioUnitProperty_StreamFormat, kAudioUnitScope_Input, MAL_COREAUDIO_INPUT_BUS, &origFormat, &origFormatSize);
+        }
+        
+        if (status != noErr) {
+            ((mal_AudioComponentInstanceDispose_proc)pContext->coreaudio.AudioComponentInstanceDispose)((AudioUnit)pDevice->coreaudio.audioUnit);
+            return result;
+        }
+        
+        bestFormat.mSampleRate = origFormat.mSampleRate;
+        
         status = ((mal_AudioUnitSetProperty_proc)pContext->coreaudio.AudioUnitSetProperty)((AudioUnit)pDevice->coreaudio.audioUnit, kAudioUnitProperty_StreamFormat, formatScope, formatElement, &bestFormat, sizeof(bestFormat));
         if (status != noErr) {
             // We failed to set the format, so fall back to the current format of the audio unit.
-            UInt32 propSize = sizeof(bestFormat);
-            status = ((mal_AudioUnitGetProperty_proc)pContext->coreaudio.AudioUnitGetProperty)((AudioUnit)pDevice->coreaudio.audioUnit, kAudioUnitProperty_StreamFormat, formatScope, formatElement, &bestFormat, &propSize);
-            if (status != noErr) {
-                ((mal_AudioComponentInstanceDispose_proc)pContext->coreaudio.AudioComponentInstanceDispose)((AudioUnit)pDevice->coreaudio.audioUnit);
-                return mal_result_from_OSStatus(status);
-            }
+            bestFormat = origFormat;
         }
     #else
         UInt32 propSize = sizeof(bestFormat);
@@ -14280,7 +14327,7 @@ mal_result mal_device_init__coreaudio(mal_context* pContext, mal_device_type dev
         if (deviceType == mal_device_type_playback) {
             fDeviceType = 1.0f;
         } else {
-            fDeviceType = 1.0f;
+            fDeviceType = 6.0f;
         }
 
         // Backend tax. Need to fiddle with this.
@@ -14310,10 +14357,16 @@ mal_result mal_device_init__coreaudio(mal_context* pContext, mal_device_type dev
     // Note how inFramesToProcess is smaller than mMaxFramesPerSlice. To fix, we need to set kAudioUnitProperty_MaximumFramesPerSlice to that
     // of the size of our buffer, or do it the other way around and set our buffer size to the kAudioUnitProperty_MaximumFramesPerSlice.
     {
-        AudioUnitScope propScope = (deviceType == mal_device_type_playback) ? kAudioUnitScope_Input : kAudioUnitScope_Output;
+        /*AudioUnitScope propScope = (deviceType == mal_device_type_playback) ? kAudioUnitScope_Input : kAudioUnitScope_Output;
         AudioUnitElement propBus = (deviceType == mal_device_type_playback) ? MAL_COREAUDIO_OUTPUT_BUS : MAL_COREAUDIO_INPUT_BUS;
     
         status = ((mal_AudioUnitSetProperty_proc)pContext->coreaudio.AudioUnitSetProperty)((AudioUnit)pDevice->coreaudio.audioUnit, kAudioUnitProperty_MaximumFramesPerSlice, propScope, propBus, &actualBufferSizeInFrames, sizeof(actualBufferSizeInFrames));
+        if (status != noErr) {
+            ((mal_AudioComponentInstanceDispose_proc)pContext->coreaudio.AudioComponentInstanceDispose)((AudioUnit)pDevice->coreaudio.audioUnit);
+            return mal_result_from_OSStatus(status);
+        }*/
+        
+        status = ((mal_AudioUnitSetProperty_proc)pContext->coreaudio.AudioUnitSetProperty)((AudioUnit)pDevice->coreaudio.audioUnit, kAudioUnitProperty_MaximumFramesPerSlice, kAudioUnitScope_Global, 0, &actualBufferSizeInFrames, sizeof(actualBufferSizeInFrames));
         if (status != noErr) {
             ((mal_AudioComponentInstanceDispose_proc)pContext->coreaudio.AudioComponentInstanceDispose)((AudioUnit)pDevice->coreaudio.audioUnit);
             return mal_result_from_OSStatus(status);
@@ -14350,7 +14403,7 @@ mal_result mal_device_init__coreaudio(mal_context* pContext, mal_device_type dev
     
     // We need a buffer list if this is an input device. We render into this in the input callback.
     if (deviceType == mal_device_type_capture) {
-        mal_bool32 isInterleaved = MAL_TRUE;    // TODO: Add support for non-interleaved streams.
+        mal_bool32 isInterleaved = (bestFormat.mFormatFlags & kAudioFormatFlagIsNonInterleaved) == 0;
         
         size_t allocationSize = sizeof(AudioBufferList) - sizeof(AudioBuffer);  // Subtract sizeof(AudioBuffer) because that part is dynamically sized.
         if (isInterleaved) {
@@ -23547,7 +23600,7 @@ mal_uint64 mal_src_read_deinterleaved__sinc(mal_src* pSRC, mal_uint64 frameCount
                 if (framesReadFromClient != 0) {
                     pSRC->sinc.inputFrameCount += framesReadFromClient;
                 } else {
-                    // We couldn't get anything more from the client. If not more output samples can be computed from the available input samples
+                    // We couldn't get anything more from the client. If no more output samples can be computed from the available input samples
                     // we need to return.
                     if (((pSRC->sinc.timeIn - pSRC->sinc.inputFrameCount) * inverseFactor) < 1) {
                         break;
