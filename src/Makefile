@@ -468,31 +468,41 @@ ifeq ($(PLATFORM),PLATFORM_WEB)
 	@echo "raylib library generated (libraylib.bc)!"
 else
     ifeq ($(RAYLIB_LIBTYPE),SHARED)
-        ifeq ($(PLATFORM_OS),WINDOWS)
-			$(CC) -shared -o $(RAYLIB_RELEASE_PATH)/raylib.dll $(OBJS) -L$(RAYLIB_RELEASE_PATH) -static-libgcc -lopengl32 -lgdi32 -Wl,--out-implib,$(RAYLIB_RELEASE_PATH)/libraylibdll.a
-			@echo "raylib dynamic library (raylib.dll) and import library (libraylibdll.a) generated!"
+        ifeq ($(PLATFORM),PLATFORM_DESKTOP)
+            ifeq ($(PLATFORM_OS),WINDOWS)
+				$(CC) -shared -o $(RAYLIB_RELEASE_PATH)/raylib.dll $(OBJS) -L$(RAYLIB_RELEASE_PATH) -static-libgcc -lopengl32 -lgdi32 -Wl,--out-implib,$(RAYLIB_RELEASE_PATH)/libraylibdll.a
+				@echo "raylib dynamic library (raylib.dll) and import library (libraylibdll.a) generated!"
+            endif
+            ifeq ($(PLATFORM_OS),LINUX)
+                # Compile raylib shared library version $(RAYLIB_VERSION).
+                # WARNING: you should type "make clean" before doing this target
+				$(CC) -shared -o $(RAYLIB_RELEASE_PATH)/libraylib.so.$(RAYLIB_VERSION) $(OBJS) -Wl,-soname,libraylib.so.$(RAYLIB_API_VERSION) -lGL -lc -lm -lpthread -ldl -lrt
+				@echo "raylib shared library generated (libraylib.so.$(RAYLIB_VERSION)) in $(RAYLIB_RELEASE_PATH)!"
+				cd $(RAYLIB_RELEASE_PATH) && ln -fsv libraylib.so.$(RAYLIB_VERSION) libraylib.so.$(RAYLIB_API_VERSION)
+				cd $(RAYLIB_RELEASE_PATH) && ln -fsv libraylib.so.$(RAYLIB_API_VERSION) libraylib.so
+            endif
+            ifeq ($(PLATFORM_OS),OSX)
+				$(CC) -dynamiclib -o $(RAYLIB_RELEASE_PATH)/libraylib.$(RAYLIB_VERSION).dylib $(OBJS) -compatibility_version $(RAYLIB_API_VERSION) -current_version $(RAYLIB_VERSION) -framework OpenGL -framework OpenAL -framework IOKit -framework CoreVideo -framework Cocoa
+				install_name_tool -id "libraylib.$(VERSION).dylib" $(RAYLIB_RELEASE_PATH)/libraylib.$(RAYLIB_VERSION).dylib
+				@echo "raylib shared library generated (libraylib.$(RAYLIB_VERSION).dylib)!"
+				cd $(RAYLIB_RELEASE_PATH) && ln -fs libraylib.$(RAYLIB_VERSION).dylib libraylib.$(RAYLIB_API_VERSION).dylib
+				cd $(RAYLIB_RELEASE_PATH) && ln -fs libraylib.$(RAYLIB_VERSION).dylib libraylib.dylib
+            endif
+            ifeq ($(PLATFORM_OS),BSD)
+                # WARNING: you should type "gmake clean" before doing this target
+				$(CC) -shared -o $(RAYLIB_RELEASE_PATH)/libraylib.$(RAYLIB_VERSION).so $(OBJS) -Wl,-soname,libraylib.$(RAYLIB_API_VERSION).so -lGL -lpthread
+				@echo "raylib shared library generated (libraylib.$(RAYLIB_VERSION).so)!"
+				cd $(RAYLIB_RELEASE_PATH) && ln -fs libraylib.$(RAYLIB_VERSION).so libraylib.$(RAYLIB_API_VERSION).so
+				cd $(RAYLIB_RELEASE_PATH) && ln -fs libraylib.$(RAYLIB_VERSION).so libraylib.so
+            endif
         endif
-        ifeq ($(PLATFORM_OS),LINUX)
-            # Compile raylib shared library version $(RAYLIB_VERSION).
-            # WARNING: you should type "make clean" before doing this target
-			$(CC) -shared -o $(RAYLIB_RELEASE_PATH)/libraylib.so.$(RAYLIB_VERSION) $(OBJS) -shared -Wl,-soname,libraylib.so.$(RAYLIB_API_VERSION) -lGL -lc -lm -lpthread -ldl -lrt
-			@echo "raylib shared library generated (libraylib.so.$(RAYLIB_VERSION)) in $(RAYLIB_RELEASE_PATH)!"
-			cd $(RAYLIB_RELEASE_PATH) && ln -fsv libraylib.so.$(RAYLIB_VERSION) libraylib.so.$(RAYLIB_API_VERSION)
-			cd $(RAYLIB_RELEASE_PATH) && ln -fsv libraylib.so.$(RAYLIB_API_VERSION) libraylib.so
-        endif
-        ifeq ($(PLATFORM_OS),OSX)
-			$(CC) -dynamiclib -o $(RAYLIB_RELEASE_PATH)/libraylib.$(RAYLIB_VERSION).dylib $(OBJS) -compatibility_version $(RAYLIB_API_VERSION) -current_version $(RAYLIB_VERSION) -framework OpenGL -framework OpenAL -framework IOKit -framework CoreVideo -framework Cocoa
-			install_name_tool -id "libraylib.$(VERSION).dylib" $(RAYLIB_RELEASE_PATH)/libraylib.$(RAYLIB_VERSION).dylib
-			@echo "raylib shared library generated (libraylib.$(RAYLIB_VERSION).dylib)!"
-			cd $(RAYLIB_RELEASE_PATH) && ln -fs libraylib.$(RAYLIB_VERSION).dylib libraylib.$(RAYLIB_API_VERSION).dylib
-			cd $(RAYLIB_RELEASE_PATH) && ln -fs libraylib.$(RAYLIB_VERSION).dylib libraylib.dylib
-        endif
-        ifeq ($(PLATFORM_OS),BSD)
-            # WARNING: you should type "gmake clean" before doing this target
-			$(CC) -shared -o $(RAYLIB_RELEASE_PATH)/libraylib.$(RAYLIB_VERSION).so $(OBJS) -Wl,-soname,libraylib.$(RAYLIB_API_VERSION).so -lGL -lpthread
-			@echo "raylib shared library generated (libraylib.$(RAYLIB_VERSION).so)!"
-			cd $(RAYLIB_RELEASE_PATH) && ln -fs libraylib.$(RAYLIB_VERSION).so libraylib.$(RAYLIB_API_VERSION).so
-			cd $(RAYLIB_RELEASE_PATH) && ln -fs libraylib.$(RAYLIB_VERSION).so libraylib.so
+        ifeq ($(PLATFORM),PLATFORM_RPI)
+                # Compile raylib shared library version $(RAYLIB_VERSION).
+                # WARNING: you should type "make clean" before doing this target
+				$(CC) -shared -o $(RAYLIB_RELEASE_PATH)/libraylib.so.$(RAYLIB_VERSION) $(OBJS) -Wl,-soname,libraylib.so.$(RAYLIB_API_VERSION) -L/opt/vc/lib -lbrcmGLESv2 -lbrcmEGL -lpthread -lrt -lm -lbcm_host -ldl
+				@echo "raylib shared library generated (libraylib.so.$(RAYLIB_VERSION)) in $(RAYLIB_RELEASE_PATH)!"
+				cd $(RAYLIB_RELEASE_PATH) && ln -fsv libraylib.so.$(RAYLIB_VERSION) libraylib.so.$(RAYLIB_API_VERSION)
+				cd $(RAYLIB_RELEASE_PATH) && ln -fsv libraylib.so.$(RAYLIB_API_VERSION) libraylib.so
         endif
         ifeq ($(PLATFORM),PLATFORM_ANDROID)
 			$(CC) -shared -o $(RAYLIB_RELEASE_PATH)/libraylib.$(RAYLIB_VERSION).so $(OBJS) $(LDFLAGS) $(LDLIBS)
