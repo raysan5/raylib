@@ -32,7 +32,7 @@ int main()
     GenTextureMipmaps(&font.texture);
 
     float fontSize = font.baseSize;
-    Vector2 fontPosition = { 40, screenHeight/2 - 50 };
+    Vector2 fontPosition = { 40, screenHeight/2 - 80 };
     Vector2 textSize;
 
     SetTextureFilter(font.texture, FILTER_POINT);
