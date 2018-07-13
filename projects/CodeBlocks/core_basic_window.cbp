@@ -2,12 +2,12 @@
 <CodeBlocks_project_file>
 	<FileVersion major="1" minor="6" />
 	<Project>
-		<Option title="raylib_codeblocks_tpl" />
+		<Option title="core_basic_window" />
 		<Option pch_mode="2" />
 		<Option compiler="gcc" />
 		<Build>
 			<Target title="Debug">
-				<Option output="bin/Debug/raylib_codeblocks_tpl" prefix_auto="1" extension_auto="1" />
+				<Option output="bin/Debug/core_basic_window" prefix_auto="1" extension_auto="1" />
 				<Option object_output="obj/Debug/" />
 				<Option type="1" />
 				<Option compiler="gcc" />
@@ -16,32 +16,30 @@
 					<Add directory="../../raylib/raylib/release/include" />
 				</Compiler>
 				<Linker>
-					<Add option="-lraylib -lglfw3 -lopengl32 -lgdi32 -lopenal32 -lwinmm" />
-					<Add library="../../raylib/MinGW/lib/libraylib.a" />
-					<Add library="../../raylib/MinGW/lib/libraylibdll.a" />
+					<Add option="-lraylib -lopengl32 -lgdi32 -lwinmm" />
+					<Add library="../../../../raylib/raylib/release/libs/win32/mingw32/libraylib.a" />
 				</Linker>
 			</Target>
 			<Target title="Release">
-				<Option output="bin/Release/raylib_codeblocks_tpl" prefix_auto="1" extension_auto="1" />
+				<Option output="bin/Release/core_basic_window" prefix_auto="1" extension_auto="1" />
 				<Option object_output="obj/Release/" />
 				<Option type="1" />
 				<Option compiler="gcc" />
 				<Compiler>
 					<Add option="-O2" />
-					<Add directory="../../raylib/raylib/release/include" />
+					<Add directory="../../../../raylib/raylib/release/include" />
 				</Compiler>
 				<Linker>
 					<Add option="-s" />
-					<Add option="-lraylib -lglfw3 -lopengl32 -lgdi32 -lopenal32 -lwinmm" />
-					<Add library="../../raylib/raylib/release/libs/win32/mingw32/libraylib.a" />
-					<Add library="../../raylib/raylib/release/libs/win32/mingw32/libraylibdll.a" />
+					<Add option="-lraylib -lopengl32 -lgdi32" />
+					<Add library="../../../../raylib/raylib/release/libs/win32/mingw32/libraylib.a" />
 				</Linker>
 			</Target>
 		</Build>
 		<Compiler>
-			<Add option="-Wall" />
+			<Add option="-Wall -std=c99" />
 		</Compiler>
-		<Unit filename="main.c">
+		<Unit filename="core_basic_window.c">
 			<Option compilerVar="CC" />
 		</Unit>
 		<Extensions>
