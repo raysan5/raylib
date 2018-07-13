@@ -5,7 +5,7 @@ This folder contains raylib templates for some common IDEs.
 IDE | Platform | Template type | State
 ----| ---------| ------------- | -----
 [Builder](https://wiki.gnome.org/Apps/Builder) | Linux | example compiling | DONE
-[CodeBlocks](http://www.codeblocks.org/) | Linux, Windows | - | INCOMPLETE
+[CodeBlocks](http://www.codeblocks.org/) | Linux, Windows | example compiling | DONE
 [Geany](https://www.geany.org/) | Linux, Windows | - | INCOMPLETE
 [KDevelop](https://www.kdevelop.org/) | Linux, Windows, macOS | - | INCOMPLETE
 [Notepad++](https://notepad-plus-plus.org/) | Windows | source/example compiling | DONE
