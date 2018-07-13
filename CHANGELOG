@@ -17,7 +17,7 @@ KEY CHANGES:
 Detailed changes:
 [build] REMOVED: GitHub develop branch
 [build] REMOVED: External dependencies GLFW and OpenAL
-[build] REMOVED: Android 32bit ARM support (only 64bit building supported)
+[build] ADDED: Android 64bit ARM support
 [build] ADDED: FreeBSD, OpenBSD, NetBSD, Dragon Fly OS support
 [build] ADDED: Universal Windows Platform (UWP) support
 [build] ADDED: Wayland Linux desktop support
