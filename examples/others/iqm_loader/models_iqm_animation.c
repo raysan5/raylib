@@ -12,7 +12,6 @@
 #include "raylib.h"
 
 #define RIQM_IMPLEMENTATION
-#define RAYMATH_IMPLEMENTATION
 #include "riqm.h"
 
 int main()
@@ -34,7 +33,7 @@ int main()
 
     // Load the animated model mesh and basic data
     AnimatedModel model = LoadAnimatedModel("resources/guy.iqm");
-printf("VER %i\n",rlGetVersion());
+
     // Load model texture and set material
     // NOTE: There is only 1 mesh and 1 material (both at index 0), thats what the 2 0's are
     model = AnimatedModelAddTexture(model, "resources/guytex.png");   // REPLACE!

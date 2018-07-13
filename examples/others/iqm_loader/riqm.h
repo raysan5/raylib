@@ -34,13 +34,6 @@
 #ifndef RIQM_H
 #define RIQM_H
 
-// TODO dont break everything
-static bool vaoSupported = false;
-static Matrix modelview;
-static Matrix projection;
-
-#include <stdio.h>          // Required for: FILE
-
 //#define RIQM_STATIC
 #ifdef RIQM_STATIC
     #define RIQMDEF static              // Functions just visible to module including this file
@@ -81,23 +74,30 @@ typedef struct Animation {
 } Animation;
 
 typedef struct AnimatedMesh {
-    char name[MESH_NAME_LENGTH];
 
+    //Mesh mesh;
+
+    // Mesh struct defines:
+    //-------------------------
     int vertexCount;
     int triangleCount;
 
     float *vertices;
     float *normals;
     float *texcoords;
-    float *animVertices;
-    float *animNormals;
-    unsigned short *triangles;
-
-    int *weightId;
-    float *weightBias;
-
+    unsigned short *triangles;    //equivalent to mes.indices
+    
     unsigned int vaoId;
     unsigned int vboId[7];
+    //-------------------------
+    
+    char name[MESH_NAME_LENGTH];
+    
+    float *animVertices;
+    float *animNormals;
+    float *weightBias;
+    int *weightId;
+
 } AnimatedMesh;
 
 typedef struct AnimatedModel {
@@ -155,7 +155,7 @@ RIQMDEF void DrawAnimatedModelEx(AnimatedModel model,Vector3 position,Vector3 ro
 #include "raymath.h"        // Required for: Vector3, Quaternion functions
 #include "rlgl.h"           // raylib OpenGL abstraction layer to OpenGL 1.1, 2.1, 3.3+ or ES2
 
-#include "glad.h"
+#include "glad.h"           // Required for OpenGL functions > TO BE REMOVED!
 
 
 //----------------------------------------------------------------------------------
@@ -192,17 +192,6 @@ typedef struct IQMMesh {
     unsigned int first_vertex, num_vertexes;
     unsigned int first_triangle, num_triangles;
 } IQMMesh;
-
-typedef enum {
-    IQM_POSITION     = 0,
-    IQM_TEXCOORD     = 1,
-    IQM_NORMAL       = 2,
-    IQM_TANGENT      = 3,                     // tangents unused by default
-    IQM_BLENDINDEXES = 4,
-    IQM_BLENDWEIGHTS = 5,
-    IQM_COLOR        = 6,                    // vertex colors unused by default
-    IQM_CUSTOM       = 0x10                  // custom vertex values unused by default
-} IQMVertexType;
 
 typedef struct IQMTriangle {
     unsigned int vertex[3];
@@ -244,6 +233,18 @@ typedef struct IQMBounds {                    // bounds unused by default
     float bbmin[3], bbmax[3];
     float xyradius, radius;
 } IQMBounds;
+
+
+typedef enum {
+    IQM_POSITION     = 0,
+    IQM_TEXCOORD     = 1,
+    IQM_NORMAL       = 2,
+    IQM_TANGENT      = 3,                    // tangents unused by default
+    IQM_BLENDINDEXES = 4,
+    IQM_BLENDWEIGHTS = 5,
+    IQM_COLOR        = 6,                    // vertex colors unused by default
+    IQM_CUSTOM       = 0x10                  // custom vertex values unused by default
+} IQMVertexType;
 
 //----------------------------------------------------------------------------------
 // Global Variables Definition
@@ -289,7 +290,7 @@ TraceLog(LOG_WARNING, "OGL ES2");
     int drawHint = GL_STATIC_DRAW;
     if (dynamic) drawHint = GL_DYNAMIC_DRAW;
 
-    if (vaoSupported)
+    //if (vaoSupported)
     {
         // Initialize Quads VAO (Buffer A)
         glGenVertexArrays(1, &amesh->vaoId);
@@ -400,15 +401,8 @@ TraceLog(LOG_WARNING, "OGL ES2");
         glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(unsigned short)*amesh->triangleCount*3, amesh->triangles, GL_STATIC_DRAW);
     }
 
-    if (vaoSupported)
-    {
-        if (amesh->vaoId > 0) TraceLog(LOG_INFO, "[VAO ID %i] Mesh uploaded successfully to VRAM (GPU)", amesh->vaoId);
-        else TraceLog(LOG_WARNING, "Mesh could not be uploaded to VRAM (GPU)");
-    }
-    else
-    {
-        TraceLog(LOG_INFO, "[VBOs] Mesh uploaded successfully to VRAM (GPU)");
-    }
+    if (amesh->vaoId > 0) TraceLog(LOG_INFO, "[VAO ID %i] Mesh uploaded successfully to VRAM (GPU)", amesh->vaoId);
+    else TraceLog(LOG_WARNING, "Mesh could not be uploaded to VRAM (GPU)");
 #endif
 }
 
@@ -443,7 +437,7 @@ void rlUpdateAnimatedMesh(AnimatedMesh *amesh)
 {
 #if defined(GRAPHICS_API_OPENGL_33) || defined(GRAPHICS_API_OPENGL_ES2)
     // Activate mesh VAO
-    if (vaoSupported) glBindVertexArray(amesh->vaoId);
+    glBindVertexArray(amesh->vaoId);
 
     // Update positions data
     glBindBuffer(GL_ARRAY_BUFFER, amesh->vboId[0]);
@@ -454,7 +448,7 @@ void rlUpdateAnimatedMesh(AnimatedMesh *amesh)
     glBufferSubData(GL_ARRAY_BUFFER, 0, sizeof(float)*3*amesh->vertexCount, amesh->animNormals);
 
     // Unbind the current VAO
-    if (vaoSupported) glBindVertexArray(0);
+    glBindVertexArray(0);
 
     //mesh.vertices = glMapBuffer(GL_ARRAY_BUFFER, GL_READ_WRITE);
     // Now we can modify vertices
@@ -523,12 +517,12 @@ void rlDrawAnimatedMesh(AnimatedMesh amesh, Material material, Matrix transform)
                                                                (float)material.maps[MAP_SPECULAR].color.b/255.0f,
                                                                (float)material.maps[MAP_SPECULAR].color.a/255.0f);
 
-    if (material.shader.locs[LOC_MATRIX_VIEW] != -1) SetShaderValueMatrix(material.shader, material.shader.locs[LOC_MATRIX_VIEW], modelview);
+    if (material.shader.locs[LOC_MATRIX_VIEW] != -1) SetShaderValueMatrix(material.shader, material.shader.locs[LOC_MATRIX_VIEW], GetMatrixModelview());
     if (material.shader.locs[LOC_MATRIX_PROJECTION] != -1) SetShaderValueMatrix(material.shader, material.shader.locs[LOC_MATRIX_PROJECTION], projection);
 
     // At this point the modelview matrix just contains the view matrix (camera)
     // That's because BeginMode3D() sets it an no model-drawing function modifies it, all use rlPushMatrix() and rlPopMatrix()
-    Matrix matView = modelview;         // View matrix (camera)
+    Matrix matView = GetMatrixModelview();         // View matrix (camera)
     Matrix matProjection = projection;  // Projection matrix (perspective)
 
     // Calculate model-view matrix combining matModel and matView
@@ -547,7 +541,10 @@ void rlDrawAnimatedMesh(AnimatedMesh amesh, Material material, Matrix transform)
             glUniform1i(material.shader.locs[LOC_MAP_DIFFUSE + i], i);
         }
     }
+    
+    glBindVertexArray(amesh.vaoId);
 
+    /*
     // Bind vertex array objects (or VBOs)
     if (vaoSupported) glBindVertexArray(amesh.vaoId);
     else
@@ -608,6 +605,7 @@ void rlDrawAnimatedMesh(AnimatedMesh amesh, Material material, Matrix transform)
 
         if (amesh.triangles != NULL) glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, amesh.vboId[6]);
     }
+    */
 
     int eyesCount = 1;
 #if defined(SUPPORT_VR_SIMULATOR)
@@ -640,6 +638,9 @@ void rlDrawAnimatedMesh(AnimatedMesh amesh, Material material, Matrix transform)
         else glBindTexture(GL_TEXTURE_2D, 0);   // Unbind current active texture
     }
 
+    glBindVertexArray(0);
+    
+    /*
     // Unind vertex array objects (or VBOs)
     if (vaoSupported) glBindVertexArray(0);
     else
@@ -647,7 +648,7 @@ void rlDrawAnimatedMesh(AnimatedMesh amesh, Material material, Matrix transform)
         glBindBuffer(GL_ARRAY_BUFFER, 0);
         if (amesh.triangles != NULL) glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
     }
-
+    */
     // Unbind shader program
     glUseProgram(0);
 
