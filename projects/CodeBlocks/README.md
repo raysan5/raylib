@@ -1,6 +1,6 @@
 # Raylib for Code::Blocks
 **By D3nX**<br />
-<br /><br />
+<br />
 Hey ! There is the template for use with Code::Blocks =)
 <br /><br />
 First, you will need to download the raylib installer and run it from the raylib website (https://www.raylib.com).
