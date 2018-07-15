@@ -811,6 +811,11 @@
                 <Param name="Image image" />
             </Overload>
         </KeyWord>
+        <KeyWord name="GetImageDataNormalized" func="yes">
+            <Overload retVal="Vector4" descr="Get pixel data from image as Vector4 array (float normalized)">
+                <Param name="Image image" />
+            </Overload>
+        </KeyWord>
         <KeyWord name="GetPixelDataSize" func="yes">
             <Overload retVal="int" descr="Get pixel data size in bytes (image or texture)">
                 <Param name="int width" />
@@ -892,6 +897,16 @@
                 <Param name="int newHeight" />
             </Overload>
         </KeyWord>
+        <KeyWord name="ImageResizeCanvas" func="yes">
+            <Overload retVal="void" descr="Resize canvas and fill with color">
+                <Param name="Image *image" />
+                <Param name="int newWidth" />
+                <Param name="int newHeight" />
+                <Param name="int offsetX" />
+                <Param name="int offsetY" />
+                <Param name="Color color" />
+            </Overload>
+        </KeyWord>
         <KeyWord name="ImageMipmaps" func="yes">
             <Overload retVal="void" descr="Generate all mipmap levels for a provided image">
                 <Param name="Image *image" />
@@ -968,6 +983,16 @@
                 <Param name="Image *image" />
             </Overload>
         </KeyWord>
+        <KeyWord name="ImageRotateCW" func="yes">
+            <Overload retVal="void" descr="Rotate image clockwise 90deg">
+                <Param name="Image *image" />
+            </Overload>
+        </KeyWord>
+        <KeyWord name="ImageRotateCCW" func="yes">
+            <Overload retVal="void" descr="Rotate image counter-clockwise 90deg">
+                <Param name="Image *image" />
+            </Overload>
+        </KeyWord>
         <KeyWord name="ImageColorTint" func="yes">
             <Overload retVal="void" descr="Modify image color: tint">
                 <Param name="Image *image" />
@@ -994,6 +1019,13 @@
             <Overload retVal="void" descr="Modify image color: brightness (-255 to 255)">
                 <Param name="Image *image" />
                 <Param name="int brightness" />
+            </Overload>
+        </KeyWord>
+        <KeyWord name="ImageColorReplace" func="yes">
+            <Overload retVal="void" descr="Modify image color: replace color">
+                <Param name="Image *image" />
+                <Param name="Color color" />
+                <Param name="Color replace" />
             </Overload>
         </KeyWord>
 
@@ -1132,20 +1164,38 @@
         <!-------------------------------------------------------------------------------------- -->
 
         <!-- Font loading/unloading functions -->
-        <KeyWord name="GetDefaultFont" func="yes">
+        <KeyWord name="GetFontDefault" func="yes">
             <Overload retVal="Font" descr="Get the default Font"></Overload>
         </KeyWord>
         <KeyWord name="LoadFont" func="yes">
-            <Overload retVal="Font" descr="Load Font from file into GPU memory (VRAM)">
+            <Overload retVal="Font" descr="Load font from file into GPU memory (VRAM)">
                 <Param name="const char *fileName" />
             </Overload>
         </KeyWord>
         <KeyWord name="LoadFontEx" func="yes">
-            <Overload retVal="Font" descr="Load Font from file with extended parameters">
+            <Overload retVal="Font" descr="Load font from file with extended parameters">
                 <Param name="const char *fileName" />
                 <Param name="int fontSize" />
                 <Param name="int charsCount" />
                 <Param name="int *fontChars" />
+            </Overload>
+        </KeyWord>
+        <KeyWord name="LoadFontData" func="yes">
+            <Overload retVal="CharInfo" descr="Load font data for further use">
+                <Param name="const char *fileName" />
+                <Param name="int fontSize" />
+                <Param name="int *fontChars" />
+                <Param name="int charsCount" />
+                <Param name="bool sdf" />
+            </Overload>
+        </KeyWord>
+        <KeyWord name="GenImageFontAtlas" func="yes">
+            <Overload retVal="Image" descr="Generate image font atlas using chars info">
+                <Param name="CharInfo *chars" />
+                <Param name="int fontSize" />
+                <Param name="int charsCount" />
+                <Param name="int padding" />
+                <Param name="int packMethod" />
             </Overload>
         </KeyWord>
         <KeyWord name="UnloadFont" func="yes">
