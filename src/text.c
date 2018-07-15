@@ -337,6 +337,9 @@ CharInfo *LoadFontData(const char *fileName, int fontSize, int *fontChars, int c
     #define SDF_ON_EDGE_VALUE         128
     #define SDF_PIXEL_DIST_SCALE     64.0f
     
+    // In case no chars count provided, default to 95
+    charsCount = (charsCount > 0) ? charsCount : 95;
+    
     CharInfo *chars = (CharInfo *)malloc(charsCount*sizeof(CharInfo));
     
     // Load font data (including pixel data) from TTF file
@@ -419,18 +422,26 @@ Image GenImageFontAtlas(CharInfo *chars, int charsCount, int fontSize, int paddi
 {
     Image atlas = { 0 };
     
-    // Calculate texture size based on required pixel area
-    // NOTE: Texture is forced to be squared and POT
+    // In case no chars count provided we suppose default of 95
+    charsCount = (charsCount > 0) ? charsCount : 95;
+    
+    // Calculate image size based on required pixel area
+    // NOTE 1: Image is forced to be squared and POT... very conservative!
+    // NOTE 2: SDF font characters already contain an internal padding, 
+    // so image size would result bigger than default font type
     float requiredArea = 0;
     for (int i = 0; i < charsCount; i++) requiredArea += ((chars[i].rec.width + 2*padding)*(chars[i].rec.height + 2*padding));
     float guessSize = sqrtf(requiredArea)*1.25f;
-    int textureSize = (int)powf(2, ceilf(logf((float)guessSize)/logf(2)));  // Calculate next POT
+    int imageSize = (int)powf(2, ceilf(logf((float)guessSize)/logf(2)));  // Calculate next POT
     
-    atlas.width = textureSize;   // Atlas bitmap width
-    atlas.height = textureSize;  // Atlas bitmap height
+    atlas.width = imageSize;   // Atlas bitmap width
+    atlas.height = imageSize;  // Atlas bitmap height
     atlas.data = (unsigned char *)calloc(1, atlas.width*atlas.height);      // Create a bitmap to store characters (8 bpp)
     atlas.format = UNCOMPRESSED_GRAYSCALE;
     atlas.mipmaps = 1;
+    
+    // DEBUG: We can see padding in the generated image setting a gray background...
+    //for (int i = 0; i < atlas.width*atlas.height; i++) ((unsigned char *)atlas.data)[i] = 100;
 
     if (packMethod == 0)   // Use basic packing algorythm
     {
@@ -453,11 +464,15 @@ Image GenImageFontAtlas(CharInfo *chars, int charsCount, int fontSize, int paddi
             chars[i].rec.y = offsetY;
             
             // Move atlas position X for next character drawing
-            offsetX += ((int)chars[i].advanceX + 2*padding);
+            offsetX += ((int)chars[i].rec.width + 2*padding);
             
             if (offsetX >= (atlas.width - (int)chars[i].rec.width - padding))
             {
                 offsetX = padding;
+                
+                // NOTE: Be careful on offsetY for SDF fonts, by default SDF 
+                // use an internal padding of 4 pixels, it means char rectangle
+                // height is bigger than fontSize, it could be up to (fontSize + 8)
                 offsetY += (fontSize + 2*padding);
                 
                 if (offsetY > (atlas.height - fontSize - padding)) break;
@@ -466,6 +481,8 @@ Image GenImageFontAtlas(CharInfo *chars, int charsCount, int fontSize, int paddi
     }
     else if (packMethod == 1)  // Use Skyline rect packing algorythm (stb_pack_rect)
     {
+        TraceLog(LOG_DEBUG, "Using Skyline packing algorythm!");
+        
         stbrp_context *context = (stbrp_context *)malloc(sizeof(*context));
         stbrp_node *nodes = (stbrp_node *)malloc(charsCount*sizeof(*nodes));
 
@@ -506,9 +523,11 @@ Image GenImageFontAtlas(CharInfo *chars, int charsCount, int fontSize, int paddi
         free(context);
     }
     
+    // TODO: Crop image if required for smaller size
+    
     // Convert image data from GRAYSCALE to GRAY_ALPHA
     // WARNING: ImageAlphaMask(&atlas, atlas) does not work in this case, requires manual operation
-    unsigned char *dataGrayAlpha = (unsigned char *)malloc(textureSize*textureSize*sizeof(unsigned char)*2); // Two channels
+    unsigned char *dataGrayAlpha = (unsigned char *)malloc(imageSize*imageSize*sizeof(unsigned char)*2); // Two channels
 
     for (int i = 0, k = 0; i < atlas.width*atlas.height; i++, k += 2)
     {
