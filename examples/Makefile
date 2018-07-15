@@ -390,6 +390,7 @@ EXAMPLES = \
     text/text_ttf_loading \
     text/text_bmfont_unordered \
     text/text_input_box \
+    text/text_font_sdf \
     models/models_geometric_shapes \
     models/models_box_collisions \
     models/models_billboard \
