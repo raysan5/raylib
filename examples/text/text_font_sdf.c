@@ -98,6 +98,9 @@ int main()
                 DrawTextEx(fontDefault, msg, fontPosition, fontSize, 0, BLACK);
                 DrawTexture(fontDefault.texture, 10, 10, BLACK);
             }
+            
+            if (currentFont == 1) DrawText("SDF!", 320, 20, 80, RED);
+            else DrawText("default font", 315, 40, 30, GRAY);
 
             DrawText("FONT SIZE: 16.0", GetScreenWidth() - 240, 20, 20, DARKGRAY);
             DrawText(FormatText("RENDER SIZE: %02.02f", fontSize), GetScreenWidth() - 240, 50, 20, DARKGRAY);
