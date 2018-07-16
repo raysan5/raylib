@@ -107,13 +107,11 @@ int main()
     // Try to get lights location points (if available)
     GetShaderLightsLocations(material.shader);
     
-    material.texDiffuse = LoadTexture("resources/model/dwarf_diffuse.png");   // Load model diffuse texture
-    material.texNormal = LoadTexture("resources/model/dwarf_normal.png");     // Load model normal texture
-    material.texSpecular = LoadTexture("resources/model/dwarf_specular.png"); // Load model specular texture
-    material.colDiffuse = WHITE;
-    material.colAmbient = (Color){0, 0, 10, 255};
-    material.colSpecular = WHITE;
-    material.glossiness = 50.0f;
+    material.maps[MAP_DIFFUSE].texture = LoadTexture("resources/model/dwarf_diffuse.png");   // Load model diffuse texture
+    material.maps[MAP_NORMAL].texture = LoadTexture("resources/model/dwarf_normal.png");     // Load model normal texture
+    material.maps[MAP_SPECULAR].texture = LoadTexture("resources/model/dwarf_specular.png"); // Load model specular texture
+    material.maps[MAP_DIFFUSE].color = WHITE;
+    material.maps[MAP_SPECULAR].color = WHITE;
     
     dwarf.material = material;      // Apply material to model
 
