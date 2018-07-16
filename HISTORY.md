@@ -201,4 +201,27 @@ Custom Android APK build pipeline with [simple Makefile](https://github.com/rays
 
 Additionally, as always, examples and templates have been reviewed to work with new version (some new examples have been added), all external libraries have been updated to latest stable version and latest Notepad++ and MinGW have been configured to work with new raylib. For a full list of changes, just check [CHANGELOG](CHANGELOG).
 
-New installer provided, web updated, examples re-builded, documentation reviewed... **new raylib 1.8 published**. Enjoy coding games. 
+New installer provided, web updated, examples re-builded, documentation reviewed... **new raylib 1.8 published**. Enjoy coding games.
+
+notes on raylib 2.0
+-------------------
+
+It's been 9 month since last raylib version was published, a lots of things have changed since then... This new raylib version represents an inflexion point in the development of the library and so, we jump to a new major version... Here it is the result of almost 5 years and thousands of hours of hard work... here it is... **raylib 2.0**
+
+In raylib 2.0 the full API has been carefully reviewed for better consistency, some new functionality has been added and the overall raylib experience has been greatly improved... The key features of new version are:
+
+Complete removal of external dependencies. Finally, raylib does not require external libraries to be installed and linked along with raylib, all required libraries are contained and compiled within raylib. Obviously some external libraries are related but only the strictly platform-dependant required ones, that comes installed with the OS. So, raylib becomes a self-contained platform-independent games development library. 
+
+Full redesign of audio module to use the amazing mini_al audio library, along with external dependencies removal, OpenAL library has been replaced by mini_al, this brand new library offers automatic dynamic linking with default OS audio systems. Undoubtly, the perfect low-level companion for raylib audio module!
+
+Support for continuous integration building through AppVeyor and Travis CI. As a consequence, raylib GitHub develop branch has been completely removed simplyfing the code-base to a single master branch, always stable. Every time a new commit is deployed, library is compiled for up-to 12 different configurations, including multiple platforms, 32bit/64bit and multiple compiler options! All those binaries are automatically attached to any new release!
+
+More platforms supported and tested, including BSD family (FreeBSD, openBSD, NetBSD, DragonFly) and Linux-based family platforms (openSUSE, Debian, Ubuntu, Arch, NixOS...). raylib has already been added to some package managers! Oh, and last but not less important, Android 64bit is already supported by raylib!
+
+Support for TCC compiler! Thanks to lack of external dependencies, raylib can now be easily compiled with a minimal toolchain, like the one provide by Tiny C Compiler. It opens the door to an amazing future, allowing, for example, static linkage of libtcc for runtime compiling of raylib-based code... and the library itself if required! Moreover, TCC is blazing fast, it can compile all raylib in a couple of seconds!
+
+Refactored all raylib configuration #defines into a centralized `config.h` header, with more than **40 possible configuration options** to compile a totally customizable raylib version including only desired options like supported file-formats or specific functionality support. It allows generating a trully ligth-weight version of the library if desired!
+
+A part of that, lots of new features, like a brand new font rendering and packaging system for TTF fonts with SDF support (thanks to the amazing STB headers), new functions for CPU image data manipulation, new orthographic 3d camera mode, a complete review of raymath.h single-file header-only library for better consistency and performance, new examples and way, [way more](https://github.com/raysan5/raylib/blob/master/CHANGELOG).
+
+Probably by now, raylib 2.0 is the simpler and easier-to-use library to learn (and understand) videogames programming... but, undoubtly its development has exceeded any initial objective, becoming a simple and easy-to-use trully multiplatform portable standalone media library with thousands of possibilities... and that's just the beginning!
