@@ -34,10 +34,6 @@ foreach(example_dir ${example_dirs})
 endforeach()
 
 include(CheckIncludeFiles)
-check_include_files(OVR_CAPI_GL.h HAVE_OCULUS_CAPI)
-if(NOT HAVE_OCULUS_CAPI)
-  list(REMOVE_ITEM example_sources ${CMAKE_CURRENT_SOURCE_DIR}/others/oculus_rift.c)
-endif()
 list(REMOVE_ITEM example_sources ${CMAKE_CURRENT_SOURCE_DIR}/others/standard_lighting.c)
 
 if(${PLATFORM} MATCHES "Android")

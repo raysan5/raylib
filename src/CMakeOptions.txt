@@ -35,7 +35,7 @@ option(SUPPORT_GIF_RECORDING "Allow automatic gif recording of current screen pr
 option(SUPPORT_GESTURES_SYSTEM "Gestures module is included (gestures.h) to support gestures detection: tap, hold, swipe, drag" ON)
 option(SUPPORT_MOUSE_GESTURES "Mouse gestures are directly mapped like touches and processed by gestures system" ON)
 
-# rlgl.c
+# rlgl.h
 option(SUPPORT_VR_SIMULATOR "Support VR simulation functionality (stereo rendering)" ON)
 option(SUPPORT_DISTORTION_SHADER "Include stereo rendering distortion shader (shader_distortion.h)" ON)
 

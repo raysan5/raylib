@@ -16,7 +16,7 @@
 /* Allow automatic gif recording of current screen pressing CTRL+F12, defined in KeyCallback() */
 #cmakedefine SUPPORT_GIF_RECORDING 1
 
-// rlgl.c
+// rlgl.h
 /* Support VR simulation functionality (stereo rendering) */
 #cmakedefine SUPPORT_VR_SIMULATOR 1
 /* Include stereo rendering distortion shader (shader_distortion.h) */

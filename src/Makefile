@@ -411,7 +411,6 @@ endif
 
 # Define object required on compilation
 OBJS = core.o \
-       rlgl.o \
        shapes.o \
        textures.o \
        text.o \
@@ -524,23 +523,19 @@ endif
 # Compile all modules with their prerequisites
 
 # Compile core module
-core.o : core.c raylib.h rlgl.h utils.h raymath.h gestures.h
+core.o : core.c raylib.h rlgl.h utils.h raymath.h camera.h gestures.h
 	$(CC) -c $< $(CFLAGS) $(INCLUDE_PATHS) -D$(PLATFORM) -D$(GRAPHICS)
 
 # Compile rglfw module
 rglfw.o : rglfw.c
 	$(CC) $(GLFW_CFLAGS) -c $< $(CFLAGS) $(INCLUDE_PATHS) -D$(PLATFORM) -D$(GRAPHICS)
 
-# Compile rlgl module
-rlgl.o : rlgl.c rlgl.h raymath.h
-	$(CC) -c $< $(CFLAGS) $(INCLUDE_PATHS) -D$(PLATFORM) -D$(GRAPHICS)
-
 # Compile shapes module
 shapes.o : shapes.c raylib.h rlgl.h
 	$(CC) -c $< $(CFLAGS) $(INCLUDE_PATHS) -D$(PLATFORM) -D$(GRAPHICS)
 
 # Compile textures module
-textures.o : textures.c rlgl.h utils.h
+textures.o : textures.c raylib.h rlgl.h utils.h
 	$(CC) -c $< $(CFLAGS) $(INCLUDE_PATHS) -D$(PLATFORM) -D$(GRAPHICS)
 
 # Compile text module
@@ -610,7 +605,6 @@ ifeq ($(ROOT),root)
 		cp --update raylib.h $(RAYLIB_H_INSTALL_PATH)/raylib.h
 		cp --update raymath.h $(RAYLIB_H_INSTALL_PATH)/raymath.h
 		cp --update rlgl.h $(RAYLIB_H_INSTALL_PATH)/rlgl.h
-		cp --update rlgl.c $(RAYLIB_H_INSTALL_PATH)/rlgl.c
 		cp --update physac.h $(RAYLIB_H_INSTALL_PATH)/physac.h
 		@echo "raylib development files installed/updated!"
     else
@@ -639,7 +633,6 @@ ifeq ($(ROOT),root)
 		rm --force --interactive --verbose $(RAYLIB_H_INSTALL_PATH)/raylib.h
 		rm --force --interactive --verbose $(RAYLIB_H_INSTALL_PATH)/raymath.h
 		rm --force --interactive --verbose $(RAYLIB_H_INSTALL_PATH)/rlgl.h
-		rm --force --interactive --verbose $(RAYLIB_H_INSTALL_PATH)/rlgl.c
 		rm --force --interactive --verbose $(RAYLIB_H_INSTALL_PATH)/physac.h
 		@echo "raylib development files removed!"
         else
