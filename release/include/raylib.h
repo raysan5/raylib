@@ -1008,7 +1008,7 @@ RLAPI int MeasureText(const char *text, int fontSize);                          
 RLAPI Vector2 MeasureTextEx(Font font, const char *text, float fontSize, float spacing);    // Measure string size for Font
 RLAPI const char *FormatText(const char *text, ...);                                        // Formatting of text with variables to 'embed'
 RLAPI const char *SubText(const char *text, int position, int length);                      // Get a piece of a text string
-RLAPI int GetGlyphIndex(Font font, int character);                                          // Get index position for a unicode character on sprite font
+RLAPI int GetGlyphIndex(Font font, int character);                                          // Get index position for a unicode character on font
 
 //------------------------------------------------------------------------------------
 // Basic 3d Shapes Drawing Functions (Module: models)
