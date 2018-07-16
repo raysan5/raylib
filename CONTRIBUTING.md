@@ -21,7 +21,7 @@ Use your best judgement, and feel free to propose changes to this document in a 
  - [raylib roadmap](ROADMAP.md)
  
 [raylib Wiki](https://github.com/raysan5/raylib/wiki) contains some information about the library and is open to anyone for edit. 
-Feel free to review it if required, just take care not to break anything.
+Feel free to review it if required, just take care not to break something.
 
 ### raylib C coding conventions
 
@@ -66,6 +66,8 @@ Some people ported raylib to other languages in form of bindings or wrappers to 
  - [raylib Crystal binding](https://gitlab.com/Zatherz/cray) 
  - [raylib Perl wrapper](https://metacpan.org/pod/Graphics::Raylib) 
  - raylib Pascal binding with custom IDE (closed-source)
+ - [raylib flat-assembler Usage example] (http://forum.raylib.com/index.php?p=/discussion/comment/425/#Comment_425)
+ - [raylib COBOL Usage example](https://github.com/Martinfx/Cobol/tree/master/OpenCobol/Games/raylib)
  
 Usually, raylib bindings follow the convention: `raylib-{language}`
 
@@ -78,7 +80,7 @@ If you have any doubt, don't hesitate to [contact me](mailto:ray@raylib.com)!.
 You can write me a direct mail but you can also contact me on the following networks:
 
  - [raylib forum](http://forum.raylib.com/) - A good place for discussions or to ask for help.
- - [raylib gitter](https://gitter.im/raylib) - A direct communication channel for project discussions.
+ - [raylib Discord](https://discord.gg/VkzNHUE) - A direct communication channel for project discussions.
  - [raylib twitter](https://twitter.com/raysan5) - My personal twitter account, I usually post about raylib, you can send me PMs.
  - [raylib web](http://www.raylib.com/) - On top-right corner there is a bunch of networks where you can find me.
 
@@ -115,14 +117,20 @@ contributing (in some way or another) to make the raylib project better. Huge th
  - [Joel Davis](https://github.com/joeld42) for adding raycast picking utilities and a [great example](https://github.com/raysan5/raylib/blob/master/examples/models/models_mesh_picking.c)
  - [Richard Goodwin](https://github.com/AudioMorphology) for adding RPI touchscreen support
  - [Milan Nikolic](https://github.com/gen2brain) for adding Android build support with custom standalone toolchain
- - [Michael Vetter](https://github.com/jubalh) for improvements on build system and adding meson support for Linux
+ - [Michael Vetter](https://github.com/jubalh) for improvements on build system and his work on Suse Linux package... and multiple fixes!
  - [Wilhem Barbier](https://github.com/nounoursheureux) for adding Image generation functions and some fixes
  - [Benjamin Summerton](https://github.com/define-private-public) for improving OSX building and his amazing work on CMake build sytem
- - [MartinFX](https://github.com/Martinfx) for adding compilation support for FreeBSD OS
+ - [MartinFX](https://github.com/Martinfx) for adding compilation support for FreeBSD OS and derivatives
  - [Wilhem Barbier](https://github.com/nounoursheureux) for supporting default shaders on shader loading, if shader not provided
  - [Ahmad Fatoum](https://github.com/a3f) for implementing continuus integration support for raylib (Travis and AppVeyor) and greatly improving build system.
  - [SamNChiet](https://github.com/SamNChiet) for his work on UWP inputs implementation.
  - [David Reid](https://github.com/mackron) for a complete review of audio module to support his amazing mini_al audio library.
  - [Kai](https://github.com/questor) for multiple code reviews and improvements.
+ - [RDR8](https://github.com/RDR8) for his work on Makefiles for Linux
+ - [Max Danielsson](https://github.com/autious) for adding support for orthographic 3d camera projection
+ - [Lumaio](https://github.com/TheLumaio) for his great work on GBuffers and GetCollisionRayModel()
+ - [Jonas Daeyaert](https://github.com/culacant) for his amazing work on IQM animated models support
+ - [Seth Archambault](https://github.com/SethArchambault) for his work on Android Gamepad support (SNES model)
+ - [D3nX](https://github.com/D3nX) for adding Code::Blocks project template.
  
-Please, if I forget someone in this list, excuse me and write me an email to remind me to add you!
+Please, if I forget someone in this list, excuse me and send a PR!

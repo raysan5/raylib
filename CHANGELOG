@@ -1,10 +1,10 @@
 changelog
 ---------
 
-Current Release:    raylib 1.8.0 (Oct 2017)
+Current Release:    raylib 2.0.0 (July 2018)
 
 -----------------------------------------------
-Release:     raylib 2.0 (June 2017 ?)
+Release:     raylib 2.0 (July 2018)
 -----------------------------------------------
 KEY CHANGES:
   - Removed external dependencies (GLFW3 and OpenAL)

@@ -33,5 +33,7 @@ contact
    * Reddit: [https://www.reddit.com/r/raylib](https://www.reddit.com/r/raylib)
    * Twitch: [http://www.twitch.tv/raysan5](http://www.twitch.tv/raysan5)
    * Patreon: [https://www.patreon.com/raylib](https://www.patreon.com/raylib)
+   * Discord: [https://discord.gg/raylib](https://discord.gg/VkzNHUE)
+   * YouTube: [https://www.youtube.com/channel/raylib](https://www.youtube.com/channel/UC8WIBkhYb5sBNqXO1mZ7WSQ)
    
 [raysan5]: mailto:ray@raylib.com "Ramon Santamaria - Ray San"
