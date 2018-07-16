@@ -5,30 +5,50 @@
 *   NOTE: This example requires OpenGL 3.3 or ES2 versions for shaders support,
 *         OpenGL 1.1 does not support shaders but it can also be used.
 *
-*   Compile rlgl module using:
-*       gcc -c $(RAYLIB_DIR)\raylib\src\rlgl.c -DRLGL_STANDALONE -DRAYMATH_IMPLEMENTATION -DGRAPHICS_API_OPENGL_33 /
-*           -I$(RAYLIB_DIR)\raylib\src\external -Wall -std=c99
+*   DEPENDENCIES:
+*       rlgl.h    - OpenGL 1.1 immediate-mode style coding translation layer
+*       glad.h    - OpenGL extensions initialization library (required by rlgl)
+*       raymath.h - 3D math library (required by rlgl)
+*       glfw3     - Windows and context initialization library 
 *
-*   NOTE: rlgl module requires the following header-only files:
-*       external/glad.h - OpenGL extensions loader (stripped to only required extensions)
-*       shader_distortion.h - Distortion shader for VR
-*       raymath.h - Vector and matrix math functions
+*   rlgl library is provided as a single-file header-only library, this library
+*   allows coding in a pseudo-OpenGL 1.1 style while translating calls to multiple
+*   OpenGL versions backends (1.1, 2.1, 3.3, ES 2.0).
 *
-*   Compile example using:
-*       gcc -o rlgl_standalone.exe rlgl_standalone.c rlgl.o -s $(RAYLIB_DIR)\raylib\raylib.rc.o -I$(RAYLIB_DIR)\raylib\src /
-*           -L. -L$(RAYLIB_DIR)\raylib\src -lglfw3 -lopengl32 -lgdi32 -Wall -std=c99
+*   COMPILATION:
+*       gcc -o rlgl_standalone.exe rlgl_standalone.c -s -Iexternal\include -I..\..\src  \
+*           -L. -Lexternal\lib -lglfw3 -lopengl32 -lgdi32 -Wall -std=c99  \
+*           -DRAYMATH_IMPLEMENTATION -DGRAPHICS_API_OPENGL_33
 *
-*   This example has been created using raylib 1.7 (www.raylib.com)
-*   raylib is licensed under an unmodified zlib/libpng license (View raylib.h for details)
+*   LICENSE: zlib/libpng
 *
-*   Copyright (c) 2017 Ramon Santamaria (@raysan5)
+*   This example is licensed under an unmodified zlib/libpng license, which is an OSI-certified,
+*   BSD-like license that allows static linking with closed source software:
+*
+*   Copyright (c) 2014-2018 Ramon Santamaria (@raysan5)
+*
+*   This software is provided "as-is", without any express or implied warranty. In no event
+*   will the authors be held liable for any damages arising from the use of this software.
+*
+*   Permission is granted to anyone to use this software for any purpose, including commercial
+*   applications, and to alter it and redistribute it freely, subject to the following restrictions:
+*
+*     1. The origin of this software must not be misrepresented; you must not claim that you
+*     wrote the original software. If you use this software in a product, an acknowledgment
+*     in the product documentation would be appreciated but is not required.
+*
+*     2. Altered source versions must be plainly marked as such, and must not be misrepresented
+*     as being the original software.
+*
+*     3. This notice may not be removed or altered from any source distribution.
 *
 ********************************************************************************************/
 
-#include <GLFW/glfw3.h>         // Windows/Context and inputs management
-
+#define RLGL_IMPLEMENTATION
 #define RLGL_STANDALONE
-#include "rlgl.h"               // rlgl library: OpenGL 1.1 immediate-mode style coding
+#include "rlgl.h"               // OpenGL 1.1 immediate-mode style coding
+
+#include <GLFW/glfw3.h>         // Windows/Context and inputs management
 
 #define RED        (Color){ 230, 41, 55, 255 }     // Red
 #define RAYWHITE   (Color){ 245, 245, 245, 255 }   // My own White (raylib logo)

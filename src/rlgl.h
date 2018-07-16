@@ -460,45 +460,50 @@ void rlUnloadMesh(Mesh *mesh);                                      // Unload me
 // Shaders System Functions (Module: rlgl)
 // NOTE: This functions are useless when using OpenGL 1.1
 //------------------------------------------------------------------------------------
-Shader LoadShader(char *vsFileName, char *fsFileName);  // Load a custom shader and bind default locations
-void UnloadShader(Shader shader);                       // Unload a custom shader from memory
+// Shader loading/unloading functions
+char *LoadText(const char *fileName);                               // Load chars array from text file
+Shader LoadShader(const char *vsFileName, const char *fsFileName);  // Load shader from files and bind default locations
+Shader LoadShaderCode(char *vsCode, char *fsCode);                  // Load shader from code strings and bind default locations
+void UnloadShader(Shader shader);                                   // Unload shader from GPU memory (VRAM)
 
-Shader GetShaderDefault(void);                          // Get default shader
-Texture2D GetTextureDefault(void);                      // Get default texture
+Shader GetShaderDefault(void);                                      // Get default shader
+Texture2D GetTextureDefault(void);                                  // Get default texture
 
 // Shader configuration functions
 int GetShaderLocation(Shader shader, const char *uniformName);              // Get shader uniform location
 void SetShaderValue(Shader shader, int uniformLoc, const float *value, int size); // Set shader uniform value (float)
 void SetShaderValuei(Shader shader, int uniformLoc, const int *value, int size);  // Set shader uniform value (int)
 void SetShaderValueMatrix(Shader shader, int uniformLoc, Matrix mat);       // Set shader uniform value (matrix 4x4)
-void SetMatrixProjection(Matrix proj);                  // Set a custom projection matrix (replaces internal projection matrix)
-void SetMatrixModelview(Matrix view);                   // Set a custom modelview matrix (replaces internal modelview matrix)
-Matrix GetMatrixModelview();                            // Get internal modelview matrix
-
+void SetMatrixProjection(Matrix proj);                              // Set a custom projection matrix (replaces internal projection matrix)
+void SetMatrixModelview(Matrix view);                               // Set a custom modelview matrix (replaces internal modelview matrix)
+Matrix GetMatrixModelview();                                        // Get internal modelview matrix
 
 // Texture maps generation (PBR)
 // NOTE: Required shaders should be provided
-Texture2D GenTextureCubemap(Shader shader, Texture2D skyHDR, int size);     // Generate cubemap texture from HDR texture
-Texture2D GenTextureIrradiance(Shader shader, Texture2D cubemap, int size); // Generate irradiance texture using cubemap data
-Texture2D GenTexturePrefilter(Shader shader, Texture2D cubemap, int size);  // Generate prefilter texture using cubemap data
-Texture2D GenTextureBRDF(Shader shader, Texture2D cubemap, int size);       // Generate BRDF texture using cubemap data
+Texture2D GenTextureCubemap(Shader shader, Texture2D skyHDR, int size);       // Generate cubemap texture from HDR texture
+Texture2D GenTextureIrradiance(Shader shader, Texture2D cubemap, int size);   // Generate irradiance texture using cubemap data
+Texture2D GenTexturePrefilter(Shader shader, Texture2D cubemap, int size);    // Generate prefilter texture using cubemap data
+Texture2D GenTextureBRDF(Shader shader, Texture2D cubemap, int size);         // Generate BRDF texture using cubemap data
 
-// Shading and blending
-void BeginShaderMode(Shader shader);                    // Begin custom shader drawing
-void EndShaderMode(void);                               // End custom shader drawing (use default shader)
-void BeginBlendMode(int mode);                          // Begin blending mode (alpha, additive, multiplied)
-void EndBlendMode(void);                                // End blending mode (reset to default: alpha blending)
+// Shading begin/end functions
+void BeginShaderMode(Shader shader);              // Begin custom shader drawing
+void EndShaderMode(void);                         // End custom shader drawing (use default shader)
+void BeginBlendMode(int mode);                    // Begin blending mode (alpha, additive, multiplied)
+void EndBlendMode(void);                          // End blending mode (reset to default: alpha blending)
 
-// VR simulator functionality
-VrDeviceInfo GetVrDeviceInfo(int vrDeviceType);         // Get VR device information for some standard devices
-void InitVrSimulator(VrDeviceInfo info);                // Init VR simulator for selected device parameters
-void CloseVrSimulator(void);                            // Close VR simulator for current device
-void UpdateVrTracking(Camera *camera);                  // Update VR tracking (position and orientation) and camera
-void ToggleVrMode(void);                                // Enable/Disable VR experience (device or simulator)
-void BeginVrDrawing(void);                              // Begin VR stereo rendering
-void EndVrDrawing(void);                                // End VR stereo rendering
+// VR control functions
+VrDeviceInfo GetVrDeviceInfo(int vrDeviceType);   // Get VR device information for some standard devices
+void InitVrSimulator(VrDeviceInfo info);          // Init VR simulator for selected device parameters
+void CloseVrSimulator(void);                      // Close VR simulator for current device
+bool IsVrSimulatorReady(void);                    // Detect if VR simulator is ready
+void SetVrDistortionShader(Shader shader);        // Set VR distortion shader for stereoscopic rendering
+void UpdateVrTracking(Camera *camera);            // Update VR tracking (position and orientation) and camera
+void ToggleVrMode(void);                          // Enable/Disable VR experience
+void BeginVrDrawing(void);                        // Begin VR simulator stereo rendering
+void EndVrDrawing(void);                          // End VR simulator stereo rendering
 
 void TraceLog(int msgType, const char *text, ...);      // Show trace log messages (LOG_INFO, LOG_WARNING, LOG_ERROR, LOG_DEBUG)
+int GetPixelDataSize(int width, int height, int format);// Get pixel data size in bytes (image or texture)
 #endif
 
 #ifdef __cplusplus
@@ -4758,6 +4763,44 @@ void TraceLog(int msgType, const char *text, ...)
     va_end(args);
 
     if (msgType == LOG_ERROR) exit(1);
+}
+
+// Get pixel data size in bytes (image or texture)
+// NOTE: Size depends on pixel format
+int GetPixelDataSize(int width, int height, int format)
+{
+    int dataSize = 0;       // Size in bytes
+    int bpp = 0;            // Bits per pixel
+
+    switch (format)
+    {
+        case UNCOMPRESSED_GRAYSCALE: bpp = 8; break;
+        case UNCOMPRESSED_GRAY_ALPHA:
+        case UNCOMPRESSED_R5G6B5:
+        case UNCOMPRESSED_R5G5B5A1:
+        case UNCOMPRESSED_R4G4B4A4: bpp = 16; break;
+        case UNCOMPRESSED_R8G8B8A8: bpp = 32; break;
+        case UNCOMPRESSED_R8G8B8: bpp = 24; break;
+        case UNCOMPRESSED_R32: bpp = 32; break;
+        case UNCOMPRESSED_R32G32B32: bpp = 32*3; break;
+        case UNCOMPRESSED_R32G32B32A32: bpp = 32*4; break;
+        case COMPRESSED_DXT1_RGB:
+        case COMPRESSED_DXT1_RGBA:
+        case COMPRESSED_ETC1_RGB:
+        case COMPRESSED_ETC2_RGB:
+        case COMPRESSED_PVRT_RGB:
+        case COMPRESSED_PVRT_RGBA: bpp = 4; break;
+        case COMPRESSED_DXT3_RGBA:
+        case COMPRESSED_DXT5_RGBA:
+        case COMPRESSED_ETC2_EAC_RGBA:
+        case COMPRESSED_ASTC_4x4_RGBA: bpp = 8; break;
+        case COMPRESSED_ASTC_8x8_RGBA: bpp = 2; break;
+        default: break;
+    }
+
+    dataSize = width*height*bpp/8;  // Total data size in bytes
+
+    return dataSize;
 }
 #endif
 
