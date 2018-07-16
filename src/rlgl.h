@@ -520,7 +520,12 @@ int GetPixelDataSize(int width, int height, int format);// Get pixel data size i
 
 #if defined(RLGL_IMPLEMENTATION)
 
-#include "config.h"
+#if defined(RLGL_STANDALONE)
+    #define SUPPORT_VR_SIMULATOR
+    #define SUPPORT_DISTORTION_SHADER
+#else
+    #include "config.h"             // rlgl module configuration
+#endif
 
 #include <stdio.h>                  // Required for: fopen(), fclose(), fread()... [Used only on LoadText()]
 #include <stdlib.h>                 // Required for: malloc(), free(), rand()
