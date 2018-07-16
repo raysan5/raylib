@@ -66,7 +66,7 @@ Some people ported raylib to other languages in form of bindings or wrappers to 
  - [raylib Crystal binding](https://gitlab.com/Zatherz/cray) 
  - [raylib Perl wrapper](https://metacpan.org/pod/Graphics::Raylib) 
  - raylib Pascal binding with custom IDE (closed-source)
- - [raylib flat-assembler Usage example] (http://forum.raylib.com/index.php?p=/discussion/comment/425/#Comment_425)
+ - [raylib flat-assembler Usage example](http://forum.raylib.com/index.php?p=/discussion/comment/425/#Comment_425)
  - [raylib COBOL Usage example](https://github.com/Martinfx/Cobol/tree/master/OpenCobol/Games/raylib)
  
 Usually, raylib bindings follow the convention: `raylib-{language}`
