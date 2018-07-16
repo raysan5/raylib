@@ -1,5 +1,5 @@
 // Audio playback and capture library. Public domain. See "unlicense" statement at the end of this file.
-// mini_al - v0.8.2 - 2018-07-07
+// mini_al - v0.8.3 - 2018-07-15
 //
 // David Reid - davidreidsoftware@gmail.com
 
@@ -16,12 +16,12 @@
 //   - WASAPI
 //   - DirectSound
 //   - WinMM
-//   - Core Audio (macOS, iOS)
+//   - Core Audio (Apple)
 //   - ALSA
 //   - PulseAudio
 //   - JACK
 //   - OSS
-//   - OpenSL|ES / Android
+//   - OpenSL|ES (Android only)
 //   - OpenAL
 //   - SDL
 //   - Null (Silence)
@@ -919,7 +919,7 @@ typedef enum
     mal_src_algorithm_sinc = 0,
     mal_src_algorithm_linear,
     mal_src_algorithm_none,
-    mal_src_algorithm_default = mal_src_algorithm_linear
+    mal_src_algorithm_default = mal_src_algorithm_sinc
 } mal_src_algorithm;
 
 typedef enum
@@ -935,6 +935,7 @@ typedef struct
     mal_uint32 sampleRateOut;
     mal_uint32 channels;
     mal_src_algorithm algorithm;
+    mal_bool32 neverConsumeEndOfInput : 1;
     mal_bool32 noSSE2   : 1;
     mal_bool32 noAVX2   : 1;
     mal_bool32 noAVX512 : 1;
@@ -973,6 +974,7 @@ MAL_ALIGNED_STRUCT(MAL_SIMD_ALIGNMENT) mal_src
     };
 
     mal_src_config config;
+    mal_bool32 isEndOfInputLoaded : 1;
     mal_bool32 useSSE2   : 1;
     mal_bool32 useAVX2   : 1;
     mal_bool32 useAVX512 : 1;
@@ -996,6 +998,7 @@ typedef struct
     mal_dither_mode ditherMode;
     mal_src_algorithm srcAlgorithm;
     mal_bool32 allowDynamicSampleRate;
+    mal_bool32 neverConsumeEndOfInput : 1;  // <-- For SRC.
     mal_bool32 noSSE2   : 1;
     mal_bool32 noAVX2   : 1;
     mal_bool32 noAVX512 : 1;
@@ -1091,10 +1094,18 @@ struct mal_context
     mal_uint32 playbackDeviceInfoCount;
     mal_uint32 captureDeviceInfoCount;
     mal_device_info* pDeviceInfos;          // Playback devices first, then capture.
+    mal_bool32 isBackendAsynchronous : 1;   // Set when the context is initialized. Set to 1 for asynchronous backends such as Core Audio and JACK. Do not modify.
 
-    mal_bool32 (* onDeviceIDEqual)(mal_context* pContext, const mal_device_id* pID0, const mal_device_id* pID1);
-    mal_result (* onEnumDevices  )(mal_context* pContext, mal_enum_devices_callback_proc callback, void* pUserData);    // Return false from the callback to stop enumeration.
-    mal_result (* onGetDeviceInfo)(mal_context* pContext, mal_device_type type, const mal_device_id* pDeviceID, mal_share_mode shareMode, mal_device_info* pDeviceInfo);
+    mal_result (* onUninit             )(mal_context* pContext);
+    mal_bool32 (* onDeviceIDEqual      )(mal_context* pContext, const mal_device_id* pID0, const mal_device_id* pID1);
+    mal_result (* onEnumDevices        )(mal_context* pContext, mal_enum_devices_callback_proc callback, void* pUserData);    // Return false from the callback to stop enumeration.
+    mal_result (* onGetDeviceInfo      )(mal_context* pContext, mal_device_type type, const mal_device_id* pDeviceID, mal_share_mode shareMode, mal_device_info* pDeviceInfo);
+    mal_result (* onDeviceInit         )(mal_context* pContext, mal_device_type type, const mal_device_id* pDeviceID, const mal_device_config* pConfig, mal_device* pDevice);
+    void       (* onDeviceUninit       )(mal_device* pDevice);
+    mal_result (* onDeviceStart        )(mal_device* pDevice);
+    mal_result (* onDeviceStop         )(mal_device* pDevice);
+    mal_result (* onDeviceBreakMainLoop)(mal_device* pDevice);
+    mal_result (* onDeviceMainLoop     )(mal_device* pDevice);
 
     union
     {
@@ -2544,6 +2555,11 @@ mal_uint64 mal_sine_wave_read(mal_sine_wave* pSignWave, mal_uint64 count, float*
 #define MAL_X86
 #elif defined(__arm__) || defined(_M_ARM)
 #define MAL_ARM
+#endif
+
+// Cannot currently support AVX-512 if AVX is disabled.
+#if !defined(MAL_NO_AVX512) && defined(MAL_NO_AVX2)
+#define MAL_NO_AVX512
 #endif
 
 // Intrinsics Support
@@ -4463,26 +4479,6 @@ mal_result mal_context_get_device_info__null(mal_context* pContext, mal_device_t
     return MAL_SUCCESS;
 }
 
-mal_result mal_context_init__null(mal_context* pContext)
-{
-    mal_assert(pContext != NULL);
-
-    pContext->onDeviceIDEqual = mal_context_is_device_id_equal__null;
-    pContext->onEnumDevices   = mal_context_enumerate_devices__null;
-    pContext->onGetDeviceInfo = mal_context_get_device_info__null;
-
-    // The null backend always works.
-    return MAL_SUCCESS;
-}
-
-mal_result mal_context_uninit__null(mal_context* pContext)
-{
-    mal_assert(pContext != NULL);
-    mal_assert(pContext->backend == mal_backend_null);
-
-    (void)pContext;
-    return MAL_SUCCESS;
-}
 
 void mal_device_uninit__null(mal_device* pDevice)
 {
@@ -4490,7 +4486,7 @@ void mal_device_uninit__null(mal_device* pDevice)
     mal_free(pDevice->null_device.pBuffer);
 }
 
-mal_result mal_device_init__null(mal_context* pContext, mal_device_type type, mal_device_id* pDeviceID, const mal_device_config* pConfig, mal_device* pDevice)
+mal_result mal_device_init__null(mal_context* pContext, mal_device_type type, const mal_device_id* pDeviceID, const mal_device_config* pConfig, mal_device* pDevice)
 {
     (void)pContext;
     (void)type;
@@ -4652,6 +4648,35 @@ mal_result mal_device__main_loop__null(mal_device* pDevice)
         pDevice->null_device.lastProcessedFrame = (pDevice->null_device.lastProcessedFrame + framesAvailable) % pDevice->bufferSizeInFrames;
     }
 
+    return MAL_SUCCESS;
+}
+
+
+mal_result mal_context_uninit__null(mal_context* pContext)
+{
+    mal_assert(pContext != NULL);
+    mal_assert(pContext->backend == mal_backend_null);
+
+    (void)pContext;
+    return MAL_SUCCESS;
+}
+
+mal_result mal_context_init__null(mal_context* pContext)
+{
+    mal_assert(pContext != NULL);
+
+    pContext->onUninit              = mal_context_uninit__null;
+    pContext->onDeviceIDEqual       = mal_context_is_device_id_equal__null;
+    pContext->onEnumDevices         = mal_context_enumerate_devices__null;
+    pContext->onGetDeviceInfo       = mal_context_get_device_info__null;
+    pContext->onDeviceInit          = mal_device_init__null;
+    pContext->onDeviceUninit        = mal_device_uninit__null;
+    pContext->onDeviceStart         = mal_device__start_backend__null;
+    pContext->onDeviceStop          = mal_device__stop_backend__null;
+    pContext->onDeviceBreakMainLoop = mal_device__break_main_loop__null;
+    pContext->onDeviceMainLoop      = mal_device__main_loop__null;
+
+    // The null backend always works.
     return MAL_SUCCESS;
 }
 #endif
@@ -5752,50 +5777,6 @@ mal_result mal_context_get_device_info__wasapi(mal_context* pContext, mal_device
 #endif
 }
 
-
-mal_result mal_context_init__wasapi(mal_context* pContext)
-{
-    mal_assert(pContext != NULL);
-    (void)pContext;
-
-    mal_result result = MAL_SUCCESS;
-
-#ifdef MAL_WIN32_DESKTOP
-    // WASAPI is only supported in Vista SP1 and newer. The reason for SP1 and not the base version of Vista is that event-driven
-    // exclusive mode does not work until SP1.
-    mal_OSVERSIONINFOEXW osvi;
-    mal_zero_object(&osvi);
-    osvi.dwOSVersionInfoSize = sizeof(osvi);
-    osvi.dwMajorVersion = HIBYTE(_WIN32_WINNT_VISTA);
-    osvi.dwMinorVersion = LOBYTE(_WIN32_WINNT_VISTA);
-    osvi.wServicePackMajor = 1;
-    if (VerifyVersionInfoW(&osvi, VER_MAJORVERSION | VER_MINORVERSION | VER_SERVICEPACKMAJOR, VerSetConditionMask(VerSetConditionMask(VerSetConditionMask(0, VER_MAJORVERSION, VER_GREATER_EQUAL), VER_MINORVERSION, VER_GREATER_EQUAL), VER_SERVICEPACKMAJOR, VER_GREATER_EQUAL))) {
-        result = MAL_SUCCESS;
-    } else {
-        result = MAL_NO_BACKEND;
-    }
-#endif
-
-    if (result != MAL_SUCCESS) {
-        return result;
-    }
-
-    pContext->onDeviceIDEqual = mal_context_is_device_id_equal__wasapi;
-    pContext->onEnumDevices   = mal_context_enumerate_devices__wasapi;
-    pContext->onGetDeviceInfo = mal_context_get_device_info__wasapi;
-
-    return result;
-}
-
-mal_result mal_context_uninit__wasapi(mal_context* pContext)
-{
-    mal_assert(pContext != NULL);
-    mal_assert(pContext->backend == mal_backend_wasapi);
-    (void)pContext;
-
-    return MAL_SUCCESS;
-}
-
 void mal_device_uninit__wasapi(mal_device* pDevice)
 {
     mal_assert(pDevice != NULL);
@@ -5818,7 +5799,7 @@ void mal_device_uninit__wasapi(mal_device* pDevice)
     }
 }
 
-mal_result mal_device_init__wasapi(mal_context* pContext, mal_device_type type, mal_device_id* pDeviceID, const mal_device_config* pConfig, mal_device* pDevice)
+mal_result mal_device_init__wasapi(mal_context* pContext, mal_device_type type, const mal_device_id* pDeviceID, const mal_device_config* pConfig, mal_device* pDevice)
 {
     (void)pContext;
 
@@ -6340,6 +6321,56 @@ mal_result mal_device__main_loop__wasapi(mal_device* pDevice)
     }
 
     return MAL_SUCCESS;
+}
+
+mal_result mal_context_uninit__wasapi(mal_context* pContext)
+{
+    mal_assert(pContext != NULL);
+    mal_assert(pContext->backend == mal_backend_wasapi);
+    (void)pContext;
+
+    return MAL_SUCCESS;
+}
+
+mal_result mal_context_init__wasapi(mal_context* pContext)
+{
+    mal_assert(pContext != NULL);
+    (void)pContext;
+
+    mal_result result = MAL_SUCCESS;
+
+#ifdef MAL_WIN32_DESKTOP
+    // WASAPI is only supported in Vista SP1 and newer. The reason for SP1 and not the base version of Vista is that event-driven
+    // exclusive mode does not work until SP1.
+    mal_OSVERSIONINFOEXW osvi;
+    mal_zero_object(&osvi);
+    osvi.dwOSVersionInfoSize = sizeof(osvi);
+    osvi.dwMajorVersion = HIBYTE(_WIN32_WINNT_VISTA);
+    osvi.dwMinorVersion = LOBYTE(_WIN32_WINNT_VISTA);
+    osvi.wServicePackMajor = 1;
+    if (VerifyVersionInfoW(&osvi, VER_MAJORVERSION | VER_MINORVERSION | VER_SERVICEPACKMAJOR, VerSetConditionMask(VerSetConditionMask(VerSetConditionMask(0, VER_MAJORVERSION, VER_GREATER_EQUAL), VER_MINORVERSION, VER_GREATER_EQUAL), VER_SERVICEPACKMAJOR, VER_GREATER_EQUAL))) {
+        result = MAL_SUCCESS;
+    } else {
+        result = MAL_NO_BACKEND;
+    }
+#endif
+
+    if (result != MAL_SUCCESS) {
+        return result;
+    }
+
+    pContext->onUninit              = mal_context_uninit__wasapi;
+    pContext->onDeviceIDEqual       = mal_context_is_device_id_equal__wasapi;
+    pContext->onEnumDevices         = mal_context_enumerate_devices__wasapi;
+    pContext->onGetDeviceInfo       = mal_context_get_device_info__wasapi;
+    pContext->onDeviceInit          = mal_device_init__wasapi;
+    pContext->onDeviceUninit        = mal_device_uninit__wasapi;
+    pContext->onDeviceStart         = mal_device__start_backend__wasapi;
+    pContext->onDeviceStop          = mal_device__stop_backend__wasapi;
+    pContext->onDeviceBreakMainLoop = mal_device__break_main_loop__wasapi;
+    pContext->onDeviceMainLoop      = mal_device__main_loop__wasapi;
+
+    return result;
 }
 #endif
 
@@ -7013,18 +7044,16 @@ mal_result mal_context_get_device_info__dsound(mal_context* pContext, mal_device
 
         if ((caps.dwFlags & MAL_DSCAPS_PRIMARYSTEREO) != 0) {
             // It supports at least stereo, but could support more.
-            pDeviceInfo->minChannels = 2;
-            pDeviceInfo->maxChannels = 2;
+            WORD channels = 2;
 
             // Look at the speaker configuration to get a better idea on the channel count.
             DWORD speakerConfig;
             if (SUCCEEDED(mal_IDirectSound_GetSpeakerConfig(pDirectSound, &speakerConfig))) {
-                WORD actualChannels;
-                mal_get_channels_from_speaker_config__dsound(speakerConfig, &actualChannels, NULL);
-
-                pDeviceInfo->minChannels = actualChannels;
-                pDeviceInfo->maxChannels = actualChannels;
+                mal_get_channels_from_speaker_config__dsound(speakerConfig, &channels, NULL);
             }
+
+            pDeviceInfo->minChannels = channels;
+            pDeviceInfo->maxChannels = channels;
         } else {
             // It does not support stereo, which means we are stuck with mono.
             pDeviceInfo->minChannels = 1;
@@ -7096,37 +7125,6 @@ mal_result mal_context_get_device_info__dsound(mal_context* pContext, mal_device
 
         mal_IDirectSoundCapture_Release(pDirectSoundCapture);
     }
-
-    return MAL_SUCCESS;
-}
-
-mal_result mal_context_init__dsound(mal_context* pContext)
-{
-    mal_assert(pContext != NULL);
-
-    pContext->dsound.hDSoundDLL = mal_dlopen("dsound.dll");
-    if (pContext->dsound.hDSoundDLL == NULL) {
-        return MAL_API_NOT_FOUND;
-    }
-
-    pContext->dsound.DirectSoundCreate            = mal_dlsym(pContext->dsound.hDSoundDLL, "DirectSoundCreate");
-    pContext->dsound.DirectSoundEnumerateA        = mal_dlsym(pContext->dsound.hDSoundDLL, "DirectSoundEnumerateA");
-    pContext->dsound.DirectSoundCaptureCreate     = mal_dlsym(pContext->dsound.hDSoundDLL, "DirectSoundCaptureCreate");
-    pContext->dsound.DirectSoundCaptureEnumerateA = mal_dlsym(pContext->dsound.hDSoundDLL, "DirectSoundCaptureEnumerateA");
-
-    pContext->onDeviceIDEqual = mal_context_is_device_id_equal__dsound;
-    pContext->onEnumDevices   = mal_context_enumerate_devices__dsound;
-    pContext->onGetDeviceInfo = mal_context_get_device_info__dsound;
-
-    return MAL_SUCCESS;
-}
-
-mal_result mal_context_uninit__dsound(mal_context* pContext)
-{
-    mal_assert(pContext != NULL);
-    mal_assert(pContext->backend == mal_backend_dsound);
-
-    mal_dlclose(pContext->dsound.hDSoundDLL);
 
     return MAL_SUCCESS;
 }
@@ -7203,7 +7201,7 @@ void mal_device_uninit__dsound(mal_device* pDevice)
     }
 }
 
-mal_result mal_device_init__dsound(mal_context* pContext, mal_device_type type, mal_device_id* pDeviceID, const mal_device_config* pConfig, mal_device* pDevice)
+mal_result mal_device_init__dsound(mal_context* pContext, mal_device_type type, const mal_device_id* pDeviceID, const mal_device_config* pConfig, mal_device* pDevice)
 {
     (void)pContext;
 
@@ -7692,6 +7690,45 @@ mal_result mal_device__main_loop__dsound(mal_device* pDevice)
 
     return MAL_SUCCESS;
 }
+
+
+mal_result mal_context_uninit__dsound(mal_context* pContext)
+{
+    mal_assert(pContext != NULL);
+    mal_assert(pContext->backend == mal_backend_dsound);
+
+    mal_dlclose(pContext->dsound.hDSoundDLL);
+
+    return MAL_SUCCESS;
+}
+
+mal_result mal_context_init__dsound(mal_context* pContext)
+{
+    mal_assert(pContext != NULL);
+
+    pContext->dsound.hDSoundDLL = mal_dlopen("dsound.dll");
+    if (pContext->dsound.hDSoundDLL == NULL) {
+        return MAL_API_NOT_FOUND;
+    }
+
+    pContext->dsound.DirectSoundCreate            = mal_dlsym(pContext->dsound.hDSoundDLL, "DirectSoundCreate");
+    pContext->dsound.DirectSoundEnumerateA        = mal_dlsym(pContext->dsound.hDSoundDLL, "DirectSoundEnumerateA");
+    pContext->dsound.DirectSoundCaptureCreate     = mal_dlsym(pContext->dsound.hDSoundDLL, "DirectSoundCaptureCreate");
+    pContext->dsound.DirectSoundCaptureEnumerateA = mal_dlsym(pContext->dsound.hDSoundDLL, "DirectSoundCaptureEnumerateA");
+
+    pContext->onUninit              = mal_context_uninit__dsound;
+    pContext->onDeviceIDEqual       = mal_context_is_device_id_equal__dsound;
+    pContext->onEnumDevices         = mal_context_enumerate_devices__dsound;
+    pContext->onGetDeviceInfo       = mal_context_get_device_info__dsound;
+    pContext->onDeviceInit          = mal_device_init__dsound;
+    pContext->onDeviceUninit        = mal_device_uninit__dsound;
+    pContext->onDeviceStart         = mal_device__start_backend__dsound;
+    pContext->onDeviceStop          = mal_device__stop_backend__dsound;
+    pContext->onDeviceBreakMainLoop = mal_device__break_main_loop__dsound;
+    pContext->onDeviceMainLoop      = mal_device__main_loop__dsound;
+
+    return MAL_SUCCESS;
+}
 #endif
 
 
@@ -8086,49 +8123,6 @@ mal_result mal_context_get_device_info__winmm(mal_context* pContext, mal_device_
 }
 
 
-mal_result mal_context_init__winmm(mal_context* pContext)
-{
-    mal_assert(pContext != NULL);
-
-    pContext->winmm.hWinMM = mal_dlopen("winmm.dll");
-    if (pContext->winmm.hWinMM == NULL) {
-        return MAL_NO_BACKEND;
-    }
-
-    pContext->winmm.waveOutGetNumDevs      = mal_dlsym(pContext->winmm.hWinMM, "waveOutGetNumDevs");
-    pContext->winmm.waveOutGetDevCapsA     = mal_dlsym(pContext->winmm.hWinMM, "waveOutGetDevCapsA");
-    pContext->winmm.waveOutOpen            = mal_dlsym(pContext->winmm.hWinMM, "waveOutOpen");
-    pContext->winmm.waveOutClose           = mal_dlsym(pContext->winmm.hWinMM, "waveOutClose");
-    pContext->winmm.waveOutPrepareHeader   = mal_dlsym(pContext->winmm.hWinMM, "waveOutPrepareHeader");
-    pContext->winmm.waveOutUnprepareHeader = mal_dlsym(pContext->winmm.hWinMM, "waveOutUnprepareHeader");
-    pContext->winmm.waveOutWrite           = mal_dlsym(pContext->winmm.hWinMM, "waveOutWrite");
-    pContext->winmm.waveOutReset           = mal_dlsym(pContext->winmm.hWinMM, "waveOutReset");
-    pContext->winmm.waveInGetNumDevs       = mal_dlsym(pContext->winmm.hWinMM, "waveInGetNumDevs");
-    pContext->winmm.waveInGetDevCapsA      = mal_dlsym(pContext->winmm.hWinMM, "waveInGetDevCapsA");
-    pContext->winmm.waveInOpen             = mal_dlsym(pContext->winmm.hWinMM, "waveInOpen");
-    pContext->winmm.waveInClose            = mal_dlsym(pContext->winmm.hWinMM, "waveInClose");
-    pContext->winmm.waveInPrepareHeader    = mal_dlsym(pContext->winmm.hWinMM, "waveInPrepareHeader");
-    pContext->winmm.waveInUnprepareHeader  = mal_dlsym(pContext->winmm.hWinMM, "waveInUnprepareHeader");
-    pContext->winmm.waveInAddBuffer        = mal_dlsym(pContext->winmm.hWinMM, "waveInAddBuffer");
-    pContext->winmm.waveInStart            = mal_dlsym(pContext->winmm.hWinMM, "waveInStart");
-    pContext->winmm.waveInReset            = mal_dlsym(pContext->winmm.hWinMM, "waveInReset");
-
-    pContext->onDeviceIDEqual = mal_context_is_device_id_equal__winmm;
-    pContext->onEnumDevices   = mal_context_enumerate_devices__winmm;
-    pContext->onGetDeviceInfo = mal_context_get_device_info__winmm;
-
-    return MAL_SUCCESS;
-}
-
-mal_result mal_context_uninit__winmm(mal_context* pContext)
-{
-    mal_assert(pContext != NULL);
-    mal_assert(pContext->backend == mal_backend_winmm);
-
-    mal_dlclose(pContext->winmm.hWinMM);
-    return MAL_SUCCESS;
-}
-
 void mal_device_uninit__winmm(mal_device* pDevice)
 {
     mal_assert(pDevice != NULL);
@@ -8143,7 +8137,7 @@ void mal_device_uninit__winmm(mal_device* pDevice)
     CloseHandle((HANDLE)pDevice->winmm.hEvent);
 }
 
-mal_result mal_device_init__winmm(mal_context* pContext, mal_device_type type, mal_device_id* pDeviceID, const mal_device_config* pConfig, mal_device* pDevice)
+mal_result mal_device_init__winmm(mal_context* pContext, mal_device_type type, const mal_device_id* pDeviceID, const mal_device_config* pConfig, mal_device* pDevice)
 {
     (void)pContext;
 
@@ -8546,6 +8540,57 @@ mal_result mal_device__main_loop__winmm(mal_device* pDevice)
             }
         }
     }
+
+    return MAL_SUCCESS;
+}
+
+
+mal_result mal_context_uninit__winmm(mal_context* pContext)
+{
+    mal_assert(pContext != NULL);
+    mal_assert(pContext->backend == mal_backend_winmm);
+
+    mal_dlclose(pContext->winmm.hWinMM);
+    return MAL_SUCCESS;
+}
+
+mal_result mal_context_init__winmm(mal_context* pContext)
+{
+    mal_assert(pContext != NULL);
+
+    pContext->winmm.hWinMM = mal_dlopen("winmm.dll");
+    if (pContext->winmm.hWinMM == NULL) {
+        return MAL_NO_BACKEND;
+    }
+
+    pContext->winmm.waveOutGetNumDevs      = mal_dlsym(pContext->winmm.hWinMM, "waveOutGetNumDevs");
+    pContext->winmm.waveOutGetDevCapsA     = mal_dlsym(pContext->winmm.hWinMM, "waveOutGetDevCapsA");
+    pContext->winmm.waveOutOpen            = mal_dlsym(pContext->winmm.hWinMM, "waveOutOpen");
+    pContext->winmm.waveOutClose           = mal_dlsym(pContext->winmm.hWinMM, "waveOutClose");
+    pContext->winmm.waveOutPrepareHeader   = mal_dlsym(pContext->winmm.hWinMM, "waveOutPrepareHeader");
+    pContext->winmm.waveOutUnprepareHeader = mal_dlsym(pContext->winmm.hWinMM, "waveOutUnprepareHeader");
+    pContext->winmm.waveOutWrite           = mal_dlsym(pContext->winmm.hWinMM, "waveOutWrite");
+    pContext->winmm.waveOutReset           = mal_dlsym(pContext->winmm.hWinMM, "waveOutReset");
+    pContext->winmm.waveInGetNumDevs       = mal_dlsym(pContext->winmm.hWinMM, "waveInGetNumDevs");
+    pContext->winmm.waveInGetDevCapsA      = mal_dlsym(pContext->winmm.hWinMM, "waveInGetDevCapsA");
+    pContext->winmm.waveInOpen             = mal_dlsym(pContext->winmm.hWinMM, "waveInOpen");
+    pContext->winmm.waveInClose            = mal_dlsym(pContext->winmm.hWinMM, "waveInClose");
+    pContext->winmm.waveInPrepareHeader    = mal_dlsym(pContext->winmm.hWinMM, "waveInPrepareHeader");
+    pContext->winmm.waveInUnprepareHeader  = mal_dlsym(pContext->winmm.hWinMM, "waveInUnprepareHeader");
+    pContext->winmm.waveInAddBuffer        = mal_dlsym(pContext->winmm.hWinMM, "waveInAddBuffer");
+    pContext->winmm.waveInStart            = mal_dlsym(pContext->winmm.hWinMM, "waveInStart");
+    pContext->winmm.waveInReset            = mal_dlsym(pContext->winmm.hWinMM, "waveInReset");
+
+    pContext->onUninit              = mal_context_uninit__winmm;
+    pContext->onDeviceIDEqual       = mal_context_is_device_id_equal__winmm;
+    pContext->onEnumDevices         = mal_context_enumerate_devices__winmm;
+    pContext->onGetDeviceInfo       = mal_context_get_device_info__winmm;
+    pContext->onDeviceInit          = mal_device_init__winmm;
+    pContext->onDeviceUninit        = mal_device_uninit__winmm;
+    pContext->onDeviceStart         = mal_device__start_backend__winmm;
+    pContext->onDeviceStop          = mal_device__stop_backend__winmm;
+    pContext->onDeviceBreakMainLoop = mal_device__break_main_loop__winmm;
+    pContext->onDeviceMainLoop      = mal_device__main_loop__winmm;
 
     return MAL_SUCCESS;
 }
@@ -9472,200 +9517,6 @@ mal_result mal_context_get_device_info__alsa(mal_context* pContext, mal_device_t
     return MAL_SUCCESS;
 }
 
-mal_result mal_context_init__alsa(mal_context* pContext)
-{
-    mal_assert(pContext != NULL);
-
-#ifndef MAL_NO_RUNTIME_LINKING
-    pContext->alsa.asoundSO = mal_dlopen("libasound.so");
-    if (pContext->alsa.asoundSO == NULL) {
-        return MAL_NO_BACKEND;
-    }
-
-    pContext->alsa.snd_pcm_open                           = (mal_proc)mal_dlsym(pContext->alsa.asoundSO, "snd_pcm_open");
-    pContext->alsa.snd_pcm_close                          = (mal_proc)mal_dlsym(pContext->alsa.asoundSO, "snd_pcm_close");
-    pContext->alsa.snd_pcm_hw_params_sizeof               = (mal_proc)mal_dlsym(pContext->alsa.asoundSO, "snd_pcm_hw_params_sizeof");
-    pContext->alsa.snd_pcm_hw_params_any                  = (mal_proc)mal_dlsym(pContext->alsa.asoundSO, "snd_pcm_hw_params_any");
-    pContext->alsa.snd_pcm_hw_params_set_format           = (mal_proc)mal_dlsym(pContext->alsa.asoundSO, "snd_pcm_hw_params_set_format");
-    pContext->alsa.snd_pcm_hw_params_set_format_first     = (mal_proc)mal_dlsym(pContext->alsa.asoundSO, "snd_pcm_hw_params_set_format_first");
-    pContext->alsa.snd_pcm_hw_params_get_format_mask      = (mal_proc)mal_dlsym(pContext->alsa.asoundSO, "snd_pcm_hw_params_get_format_mask");
-    pContext->alsa.snd_pcm_hw_params_set_channels_near    = (mal_proc)mal_dlsym(pContext->alsa.asoundSO, "snd_pcm_hw_params_set_channels_near");
-    pContext->alsa.snd_pcm_hw_params_set_rate_resample    = (mal_proc)mal_dlsym(pContext->alsa.asoundSO, "snd_pcm_hw_params_set_rate_resample");
-    pContext->alsa.snd_pcm_hw_params_set_rate_near        = (mal_proc)mal_dlsym(pContext->alsa.asoundSO, "snd_pcm_hw_params_set_rate_near");
-    pContext->alsa.snd_pcm_hw_params_set_buffer_size_near = (mal_proc)mal_dlsym(pContext->alsa.asoundSO, "snd_pcm_hw_params_set_buffer_size_near");
-    pContext->alsa.snd_pcm_hw_params_set_periods_near     = (mal_proc)mal_dlsym(pContext->alsa.asoundSO, "snd_pcm_hw_params_set_periods_near");
-    pContext->alsa.snd_pcm_hw_params_set_access           = (mal_proc)mal_dlsym(pContext->alsa.asoundSO, "snd_pcm_hw_params_set_access");
-    pContext->alsa.snd_pcm_hw_params_get_format           = (mal_proc)mal_dlsym(pContext->alsa.asoundSO, "snd_pcm_hw_params_get_format");
-    pContext->alsa.snd_pcm_hw_params_get_channels         = (mal_proc)mal_dlsym(pContext->alsa.asoundSO, "snd_pcm_hw_params_get_channels");
-    pContext->alsa.snd_pcm_hw_params_get_channels_min     = (mal_proc)mal_dlsym(pContext->alsa.asoundSO, "snd_pcm_hw_params_get_channels_min");
-    pContext->alsa.snd_pcm_hw_params_get_channels_max     = (mal_proc)mal_dlsym(pContext->alsa.asoundSO, "snd_pcm_hw_params_get_channels_max");
-    pContext->alsa.snd_pcm_hw_params_get_rate             = (mal_proc)mal_dlsym(pContext->alsa.asoundSO, "snd_pcm_hw_params_get_rate");
-    pContext->alsa.snd_pcm_hw_params_get_rate_min         = (mal_proc)mal_dlsym(pContext->alsa.asoundSO, "snd_pcm_hw_params_get_rate_min");
-    pContext->alsa.snd_pcm_hw_params_get_rate_max         = (mal_proc)mal_dlsym(pContext->alsa.asoundSO, "snd_pcm_hw_params_get_rate_max");
-    pContext->alsa.snd_pcm_hw_params_get_buffer_size      = (mal_proc)mal_dlsym(pContext->alsa.asoundSO, "snd_pcm_hw_params_get_buffer_size");
-    pContext->alsa.snd_pcm_hw_params_get_periods          = (mal_proc)mal_dlsym(pContext->alsa.asoundSO, "snd_pcm_hw_params_get_periods");
-    pContext->alsa.snd_pcm_hw_params_get_access           = (mal_proc)mal_dlsym(pContext->alsa.asoundSO, "snd_pcm_hw_params_get_access");
-    pContext->alsa.snd_pcm_hw_params                      = (mal_proc)mal_dlsym(pContext->alsa.asoundSO, "snd_pcm_hw_params");
-    pContext->alsa.snd_pcm_sw_params_sizeof               = (mal_proc)mal_dlsym(pContext->alsa.asoundSO, "snd_pcm_sw_params_sizeof");
-    pContext->alsa.snd_pcm_sw_params_current              = (mal_proc)mal_dlsym(pContext->alsa.asoundSO, "snd_pcm_sw_params_current");
-    pContext->alsa.snd_pcm_sw_params_set_avail_min        = (mal_proc)mal_dlsym(pContext->alsa.asoundSO, "snd_pcm_sw_params_set_avail_min");
-    pContext->alsa.snd_pcm_sw_params_set_start_threshold  = (mal_proc)mal_dlsym(pContext->alsa.asoundSO, "snd_pcm_sw_params_set_start_threshold");
-    pContext->alsa.snd_pcm_sw_params                      = (mal_proc)mal_dlsym(pContext->alsa.asoundSO, "snd_pcm_sw_params");
-    pContext->alsa.snd_pcm_format_mask_sizeof             = (mal_proc)mal_dlsym(pContext->alsa.asoundSO, "snd_pcm_format_mask_sizeof");
-    pContext->alsa.snd_pcm_format_mask_test               = (mal_proc)mal_dlsym(pContext->alsa.asoundSO, "snd_pcm_format_mask_test");
-    pContext->alsa.snd_pcm_get_chmap                      = (mal_proc)mal_dlsym(pContext->alsa.asoundSO, "snd_pcm_get_chmap");
-    pContext->alsa.snd_pcm_prepare                        = (mal_proc)mal_dlsym(pContext->alsa.asoundSO, "snd_pcm_prepare");
-    pContext->alsa.snd_pcm_start                          = (mal_proc)mal_dlsym(pContext->alsa.asoundSO, "snd_pcm_start");
-    pContext->alsa.snd_pcm_drop                           = (mal_proc)mal_dlsym(pContext->alsa.asoundSO, "snd_pcm_drop");
-    pContext->alsa.snd_device_name_hint                   = (mal_proc)mal_dlsym(pContext->alsa.asoundSO, "snd_device_name_hint");
-    pContext->alsa.snd_device_name_get_hint               = (mal_proc)mal_dlsym(pContext->alsa.asoundSO, "snd_device_name_get_hint");
-    pContext->alsa.snd_card_get_index                     = (mal_proc)mal_dlsym(pContext->alsa.asoundSO, "snd_card_get_index");
-    pContext->alsa.snd_device_name_free_hint              = (mal_proc)mal_dlsym(pContext->alsa.asoundSO, "snd_device_name_free_hint");
-    pContext->alsa.snd_pcm_mmap_begin                     = (mal_proc)mal_dlsym(pContext->alsa.asoundSO, "snd_pcm_mmap_begin");
-    pContext->alsa.snd_pcm_mmap_commit                    = (mal_proc)mal_dlsym(pContext->alsa.asoundSO, "snd_pcm_mmap_commit");
-    pContext->alsa.snd_pcm_recover                        = (mal_proc)mal_dlsym(pContext->alsa.asoundSO, "snd_pcm_recover");
-    pContext->alsa.snd_pcm_readi                          = (mal_proc)mal_dlsym(pContext->alsa.asoundSO, "snd_pcm_readi");
-    pContext->alsa.snd_pcm_writei                         = (mal_proc)mal_dlsym(pContext->alsa.asoundSO, "snd_pcm_writei");
-    pContext->alsa.snd_pcm_avail                          = (mal_proc)mal_dlsym(pContext->alsa.asoundSO, "snd_pcm_avail");
-    pContext->alsa.snd_pcm_avail_update                   = (mal_proc)mal_dlsym(pContext->alsa.asoundSO, "snd_pcm_avail_update");
-    pContext->alsa.snd_pcm_wait                           = (mal_proc)mal_dlsym(pContext->alsa.asoundSO, "snd_pcm_wait");
-    pContext->alsa.snd_pcm_info                           = (mal_proc)mal_dlsym(pContext->alsa.asoundSO, "snd_pcm_info");
-    pContext->alsa.snd_pcm_info_sizeof                    = (mal_proc)mal_dlsym(pContext->alsa.asoundSO, "snd_pcm_info_sizeof");
-    pContext->alsa.snd_pcm_info_get_name                  = (mal_proc)mal_dlsym(pContext->alsa.asoundSO, "snd_pcm_info_get_name");
-    pContext->alsa.snd_config_update_free_global          = (mal_proc)mal_dlsym(pContext->alsa.asoundSO, "snd_config_update_free_global");
-#else
-    // The system below is just for type safety.
-    mal_snd_pcm_open_proc                           _snd_pcm_open                           = snd_pcm_open;
-    mal_snd_pcm_close_proc                          _snd_pcm_close                          = snd_pcm_close;
-    mal_snd_pcm_hw_params_sizeof_proc               _snd_pcm_hw_params_sizeof               = snd_pcm_hw_params_sizeof;
-    mal_snd_pcm_hw_params_any_proc                  _snd_pcm_hw_params_any                  = snd_pcm_hw_params_any;
-    mal_snd_pcm_hw_params_set_format_proc           _snd_pcm_hw_params_set_format           = snd_pcm_hw_params_set_format;
-    mal_snd_pcm_hw_params_set_format_first_proc     _snd_pcm_hw_params_set_format_first     = snd_pcm_hw_params_set_format_first;
-    mal_snd_pcm_hw_params_get_format_mask_proc      _snd_pcm_hw_params_get_format_mask      = snd_pcm_hw_params_get_format_mask;
-    mal_snd_pcm_hw_params_set_channels_near_proc    _snd_pcm_hw_params_set_channels_near    = snd_pcm_hw_params_set_channels_near;
-    mal_snd_pcm_hw_params_set_rate_resample_proc    _snd_pcm_hw_params_set_rate_resample    = snd_pcm_hw_params_set_rate_resample;
-    mal_snd_pcm_hw_params_set_rate_near_proc        _snd_pcm_hw_params_set_rate_near        = snd_pcm_hw_params_set_rate_near;
-    mal_snd_pcm_hw_params_set_buffer_size_near_proc _snd_pcm_hw_params_set_buffer_size_near = snd_pcm_hw_params_set_buffer_size_near;
-    mal_snd_pcm_hw_params_set_periods_near_proc     _snd_pcm_hw_params_set_periods_near     = snd_pcm_hw_params_set_periods_near;
-    mal_snd_pcm_hw_params_set_access_proc           _snd_pcm_hw_params_set_access           = snd_pcm_hw_params_set_access;
-    mal_snd_pcm_hw_params_get_format_proc           _snd_pcm_hw_params_get_format           = snd_pcm_hw_params_get_format;
-    mal_snd_pcm_hw_params_get_channels_proc         _snd_pcm_hw_params_get_channels         = snd_pcm_hw_params_get_channels;
-    mal_snd_pcm_hw_params_get_channels_min_proc     _snd_pcm_hw_params_get_channels_min     = snd_pcm_hw_params_get_channels_min;
-    mal_snd_pcm_hw_params_get_channels_max_proc     _snd_pcm_hw_params_get_channels_max     = snd_pcm_hw_params_get_channels_max;
-    mal_snd_pcm_hw_params_get_rate_proc             _snd_pcm_hw_params_get_rate             = snd_pcm_hw_params_get_rate;
-    mal_snd_pcm_hw_params_get_rate_min_proc         _snd_pcm_hw_params_get_rate_min         = snd_pcm_hw_params_get_rate_min;
-    mal_snd_pcm_hw_params_get_rate_max_proc         _snd_pcm_hw_params_get_rate_max         = snd_pcm_hw_params_get_rate_max;
-    mal_snd_pcm_hw_params_get_buffer_size_proc      _snd_pcm_hw_params_get_buffer_size      = snd_pcm_hw_params_get_buffer_size;
-    mal_snd_pcm_hw_params_get_periods_proc          _snd_pcm_hw_params_get_periods          = snd_pcm_hw_params_get_periods;
-    mal_snd_pcm_hw_params_get_access_proc           _snd_pcm_hw_params_get_access           = snd_pcm_hw_params_get_access;
-    mal_snd_pcm_hw_params_proc                      _snd_pcm_hw_params                      = snd_pcm_hw_params;
-    mal_snd_pcm_sw_params_sizeof_proc               _snd_pcm_sw_params_sizeof               = snd_pcm_sw_params_sizeof;
-    mal_snd_pcm_sw_params_current_proc              _snd_pcm_sw_params_current              = snd_pcm_sw_params_current;
-    mal_snd_pcm_sw_params_set_avail_min_proc        _snd_pcm_sw_params_set_avail_min        = snd_pcm_sw_params_set_avail_min;
-    mal_snd_pcm_sw_params_set_start_threshold_proc  _snd_pcm_sw_params_set_start_threshold  = snd_pcm_sw_params_set_start_threshold;
-    mal_snd_pcm_sw_params_proc                      _snd_pcm_sw_params                      = snd_pcm_sw_params;
-    mal_snd_pcm_format_mask_sizeof_proc             _snd_pcm_format_mask_sizeof             = snd_pcm_format_mask_sizeof;
-    mal_snd_pcm_format_mask_test_proc               _snd_pcm_format_mask_test               = snd_pcm_format_mask_test;
-    mal_snd_pcm_get_chmap_proc                      _snd_pcm_get_chmap                      = snd_pcm_get_chmap;
-    mal_snd_pcm_prepare_proc                        _snd_pcm_prepare                        = snd_pcm_prepare;
-    mal_snd_pcm_start_proc                          _snd_pcm_start                          = snd_pcm_start;
-    mal_snd_pcm_drop_proc                           _snd_pcm_drop                           = snd_pcm_drop;
-    mal_snd_device_name_hint_proc                   _snd_device_name_hint                   = snd_device_name_hint;
-    mal_snd_device_name_get_hint_proc               _snd_device_name_get_hint               = snd_device_name_get_hint;
-    mal_snd_card_get_index_proc                     _snd_card_get_index                     = snd_card_get_index;
-    mal_snd_device_name_free_hint_proc              _snd_device_name_free_hint              = snd_device_name_free_hint;
-    mal_snd_pcm_mmap_begin_proc                     _snd_pcm_mmap_begin                     = snd_pcm_mmap_begin;
-    mal_snd_pcm_mmap_commit_proc                    _snd_pcm_mmap_commit                    = snd_pcm_mmap_commit;
-    mal_snd_pcm_recover_proc                        _snd_pcm_recover                        = snd_pcm_recover;
-    mal_snd_pcm_readi_proc                          _snd_pcm_readi                          = snd_pcm_readi;
-    mal_snd_pcm_writei_proc                         _snd_pcm_writei                         = snd_pcm_writei;
-    mal_snd_pcm_avail_proc                          _snd_pcm_avail                          = snd_pcm_avail;
-    mal_snd_pcm_avail_update_proc                   _snd_pcm_avail_update                   = snd_pcm_avail_update;
-    mal_snd_pcm_wait_proc                           _snd_pcm_wait                           = snd_pcm_wait;
-    mal_snd_pcm_info_proc                           _snd_pcm_info                           = snd_pcm_info;
-    mal_snd_pcm_info_sizeof_proc                    _snd_pcm_info_sizeof                    = snd_pcm_info_sizeof;
-    mal_snd_pcm_info_get_name_proc                  _snd_pcm_info_get_name                  = snd_pcm_info_get_name;
-    mal_snd_config_update_free_global_proc          _snd_config_update_free_global          = snd_config_update_free_global;
-
-    pContext->alsa.snd_pcm_open                           = (mal_proc)_snd_pcm_open;
-    pContext->alsa.snd_pcm_close                          = (mal_proc)_snd_pcm_close;
-    pContext->alsa.snd_pcm_hw_params_sizeof               = (mal_proc)_snd_pcm_hw_params_sizeof;
-    pContext->alsa.snd_pcm_hw_params_any                  = (mal_proc)_snd_pcm_hw_params_any;
-    pContext->alsa.snd_pcm_hw_params_set_format           = (mal_proc)_snd_pcm_hw_params_set_format;
-    pContext->alsa.snd_pcm_hw_params_set_format_first     = (mal_proc)_snd_pcm_hw_params_set_format_first;
-    pContext->alsa.snd_pcm_hw_params_get_format_mask      = (mal_proc)_snd_pcm_hw_params_get_format_mask;
-    pContext->alsa.snd_pcm_hw_params_set_channels_near    = (mal_proc)_snd_pcm_hw_params_set_channels_near;
-    pContext->alsa.snd_pcm_hw_params_set_rate_resample    = (mal_proc)_snd_pcm_hw_params_set_rate_resample;
-    pContext->alsa.snd_pcm_hw_params_set_rate_near        = (mal_proc)_snd_pcm_hw_params_set_rate_near;
-    pContext->alsa.snd_pcm_hw_params_set_buffer_size_near = (mal_proc)_snd_pcm_hw_params_set_buffer_size_near;
-    pContext->alsa.snd_pcm_hw_params_set_periods_near     = (mal_proc)_snd_pcm_hw_params_set_periods_near;
-    pContext->alsa.snd_pcm_hw_params_set_access           = (mal_proc)_snd_pcm_hw_params_set_access;
-    pContext->alsa.snd_pcm_hw_params_get_format           = (mal_proc)_snd_pcm_hw_params_get_format;
-    pContext->alsa.snd_pcm_hw_params_get_channels         = (mal_proc)_snd_pcm_hw_params_get_channels;
-    pContext->alsa.snd_pcm_hw_params_get_channels_min     = (mal_proc)_snd_pcm_hw_params_get_channels_min;
-    pContext->alsa.snd_pcm_hw_params_get_channels_max     = (mal_proc)_snd_pcm_hw_params_get_channels_max;
-    pContext->alsa.snd_pcm_hw_params_get_rate             = (mal_proc)_snd_pcm_hw_params_get_rate;
-    pContext->alsa.snd_pcm_hw_params_get_buffer_size      = (mal_proc)_snd_pcm_hw_params_get_buffer_size;
-    pContext->alsa.snd_pcm_hw_params_get_periods          = (mal_proc)_snd_pcm_hw_params_get_periods;
-    pContext->alsa.snd_pcm_hw_params_get_access           = (mal_proc)_snd_pcm_hw_params_get_access;
-    pContext->alsa.snd_pcm_hw_params                      = (mal_proc)_snd_pcm_hw_params;
-    pContext->alsa.snd_pcm_sw_params_sizeof               = (mal_proc)_snd_pcm_sw_params_sizeof;
-    pContext->alsa.snd_pcm_sw_params_current              = (mal_proc)_snd_pcm_sw_params_current;
-    pContext->alsa.snd_pcm_sw_params_set_avail_min        = (mal_proc)_snd_pcm_sw_params_set_avail_min;
-    pContext->alsa.snd_pcm_sw_params_set_start_threshold  = (mal_proc)_snd_pcm_sw_params_set_start_threshold;
-    pContext->alsa.snd_pcm_sw_params                      = (mal_proc)_snd_pcm_sw_params;
-    pContext->alsa.snd_pcm_format_mask_sizeof             = (mal_proc)_snd_pcm_format_mask_sizeof;
-    pContext->alsa.snd_pcm_format_mask_test               = (mal_proc)_snd_pcm_format_mask_test;
-    pContext->alsa.snd_pcm_get_chmap                      = (mal_proc)_snd_pcm_get_chmap;
-    pContext->alsa.snd_pcm_prepare                        = (mal_proc)_snd_pcm_prepare;
-    pContext->alsa.snd_pcm_start                          = (mal_proc)_snd_pcm_start;
-    pContext->alsa.snd_pcm_drop                           = (mal_proc)_snd_pcm_drop;
-    pContext->alsa.snd_device_name_hint                   = (mal_proc)_snd_device_name_hint;
-    pContext->alsa.snd_device_name_get_hint               = (mal_proc)_snd_device_name_get_hint;
-    pContext->alsa.snd_card_get_index                     = (mal_proc)_snd_card_get_index;
-    pContext->alsa.snd_device_name_free_hint              = (mal_proc)_snd_device_name_free_hint;
-    pContext->alsa.snd_pcm_mmap_begin                     = (mal_proc)_snd_pcm_mmap_begin;
-    pContext->alsa.snd_pcm_mmap_commit                    = (mal_proc)_snd_pcm_mmap_commit;
-    pContext->alsa.snd_pcm_recover                        = (mal_proc)_snd_pcm_recover;
-    pContext->alsa.snd_pcm_readi                          = (mal_proc)_snd_pcm_readi;
-    pContext->alsa.snd_pcm_writei                         = (mal_proc)_snd_pcm_writei;
-    pContext->alsa.snd_pcm_avail                          = (mal_proc)_snd_pcm_avail;
-    pContext->alsa.snd_pcm_avail_update                   = (mal_proc)_snd_pcm_avail_update;
-    pContext->alsa.snd_pcm_wait                           = (mal_proc)_snd_pcm_wait;
-    pContext->alsa.snd_pcm_info                           = (mal_proc)_snd_pcm_info;
-    pContext->alsa.snd_pcm_info_sizeof                    = (mal_proc)_snd_pcm_info_sizeof;
-    pContext->alsa.snd_pcm_info_get_name                  = (mal_proc)_snd_pcm_info_get_name;
-    pContext->alsa.snd_config_update_free_global          = (mal_proc)_snd_config_update_free_global;
-#endif
-
-    if (mal_mutex_init(pContext, &pContext->alsa.internalDeviceEnumLock) != MAL_SUCCESS) {
-        mal_context_post_error(pContext, NULL, MAL_LOG_LEVEL_ERROR, "[ALSA] WARNING: Failed to initialize mutex for internal device enumeration.", MAL_ERROR);
-    }
-
-    pContext->onDeviceIDEqual = mal_context_is_device_id_equal__alsa;
-    pContext->onEnumDevices   = mal_context_enumerate_devices__alsa;
-    pContext->onGetDeviceInfo = mal_context_get_device_info__alsa;
-
-    return MAL_SUCCESS;
-}
-
-mal_result mal_context_uninit__alsa(mal_context* pContext)
-{
-    mal_assert(pContext != NULL);
-    mal_assert(pContext->backend == mal_backend_alsa);
-
-    // Clean up memory for memory leak checkers.
-    ((mal_snd_config_update_free_global_proc)pContext->alsa.snd_config_update_free_global)();
-
-#ifndef MAL_NO_RUNTIME_LINKING
-    mal_dlclose(pContext->alsa.asoundSO);
-#endif
-
-    mal_mutex_uninit(&pContext->alsa.internalDeviceEnumLock);
-
-    return MAL_SUCCESS;
-}
-
 
 // Waits for a number of frames to become available for either capture or playback. The return
 // value is the number of frames available.
@@ -9746,7 +9597,6 @@ mal_bool32 mal_device_write__alsa(mal_device* pDevice)
         return MAL_FALSE;
     }
 
-
     if (pDevice->alsa.isUsingMMap) {
         // mmap.
         mal_bool32 requiresRestart;
@@ -9786,7 +9636,11 @@ mal_bool32 mal_device_write__alsa(mal_device* pDevice)
                 }
             }
 
-            framesAvailable -= mappedFrames;
+            if (framesAvailable >= mappedFrames) {
+                framesAvailable -= mappedFrames;
+            } else {
+                framesAvailable = 0;
+            }
         }
     } else {
         // readi/writei.
@@ -9880,7 +9734,11 @@ mal_bool32 mal_device_read__alsa(mal_device* pDevice)
                 }
             }
 
-            framesAvailable -= mappedFrames;
+            if (framesAvailable >= mappedFrames) {
+                framesAvailable -= mappedFrames;
+            } else {
+                framesAvailable = 0;
+            }
         }
     } else {
         // readi/writei.
@@ -10319,6 +10177,208 @@ mal_result mal_device__main_loop__alsa(mal_device* pDevice)
         while (!pDevice->alsa.breakFromMainLoop && mal_device_read__alsa(pDevice)) {
         }
     }
+
+    return MAL_SUCCESS;
+}
+
+
+mal_result mal_context_uninit__alsa(mal_context* pContext)
+{
+    mal_assert(pContext != NULL);
+    mal_assert(pContext->backend == mal_backend_alsa);
+
+    // Clean up memory for memory leak checkers.
+    ((mal_snd_config_update_free_global_proc)pContext->alsa.snd_config_update_free_global)();
+
+#ifndef MAL_NO_RUNTIME_LINKING
+    mal_dlclose(pContext->alsa.asoundSO);
+#endif
+
+    mal_mutex_uninit(&pContext->alsa.internalDeviceEnumLock);
+
+    return MAL_SUCCESS;
+}
+
+mal_result mal_context_init__alsa(mal_context* pContext)
+{
+    mal_assert(pContext != NULL);
+
+#ifndef MAL_NO_RUNTIME_LINKING
+    pContext->alsa.asoundSO = mal_dlopen("libasound.so");
+    if (pContext->alsa.asoundSO == NULL) {
+        return MAL_NO_BACKEND;
+    }
+
+    pContext->alsa.snd_pcm_open                           = (mal_proc)mal_dlsym(pContext->alsa.asoundSO, "snd_pcm_open");
+    pContext->alsa.snd_pcm_close                          = (mal_proc)mal_dlsym(pContext->alsa.asoundSO, "snd_pcm_close");
+    pContext->alsa.snd_pcm_hw_params_sizeof               = (mal_proc)mal_dlsym(pContext->alsa.asoundSO, "snd_pcm_hw_params_sizeof");
+    pContext->alsa.snd_pcm_hw_params_any                  = (mal_proc)mal_dlsym(pContext->alsa.asoundSO, "snd_pcm_hw_params_any");
+    pContext->alsa.snd_pcm_hw_params_set_format           = (mal_proc)mal_dlsym(pContext->alsa.asoundSO, "snd_pcm_hw_params_set_format");
+    pContext->alsa.snd_pcm_hw_params_set_format_first     = (mal_proc)mal_dlsym(pContext->alsa.asoundSO, "snd_pcm_hw_params_set_format_first");
+    pContext->alsa.snd_pcm_hw_params_get_format_mask      = (mal_proc)mal_dlsym(pContext->alsa.asoundSO, "snd_pcm_hw_params_get_format_mask");
+    pContext->alsa.snd_pcm_hw_params_set_channels_near    = (mal_proc)mal_dlsym(pContext->alsa.asoundSO, "snd_pcm_hw_params_set_channels_near");
+    pContext->alsa.snd_pcm_hw_params_set_rate_resample    = (mal_proc)mal_dlsym(pContext->alsa.asoundSO, "snd_pcm_hw_params_set_rate_resample");
+    pContext->alsa.snd_pcm_hw_params_set_rate_near        = (mal_proc)mal_dlsym(pContext->alsa.asoundSO, "snd_pcm_hw_params_set_rate_near");
+    pContext->alsa.snd_pcm_hw_params_set_buffer_size_near = (mal_proc)mal_dlsym(pContext->alsa.asoundSO, "snd_pcm_hw_params_set_buffer_size_near");
+    pContext->alsa.snd_pcm_hw_params_set_periods_near     = (mal_proc)mal_dlsym(pContext->alsa.asoundSO, "snd_pcm_hw_params_set_periods_near");
+    pContext->alsa.snd_pcm_hw_params_set_access           = (mal_proc)mal_dlsym(pContext->alsa.asoundSO, "snd_pcm_hw_params_set_access");
+    pContext->alsa.snd_pcm_hw_params_get_format           = (mal_proc)mal_dlsym(pContext->alsa.asoundSO, "snd_pcm_hw_params_get_format");
+    pContext->alsa.snd_pcm_hw_params_get_channels         = (mal_proc)mal_dlsym(pContext->alsa.asoundSO, "snd_pcm_hw_params_get_channels");
+    pContext->alsa.snd_pcm_hw_params_get_channels_min     = (mal_proc)mal_dlsym(pContext->alsa.asoundSO, "snd_pcm_hw_params_get_channels_min");
+    pContext->alsa.snd_pcm_hw_params_get_channels_max     = (mal_proc)mal_dlsym(pContext->alsa.asoundSO, "snd_pcm_hw_params_get_channels_max");
+    pContext->alsa.snd_pcm_hw_params_get_rate             = (mal_proc)mal_dlsym(pContext->alsa.asoundSO, "snd_pcm_hw_params_get_rate");
+    pContext->alsa.snd_pcm_hw_params_get_rate_min         = (mal_proc)mal_dlsym(pContext->alsa.asoundSO, "snd_pcm_hw_params_get_rate_min");
+    pContext->alsa.snd_pcm_hw_params_get_rate_max         = (mal_proc)mal_dlsym(pContext->alsa.asoundSO, "snd_pcm_hw_params_get_rate_max");
+    pContext->alsa.snd_pcm_hw_params_get_buffer_size      = (mal_proc)mal_dlsym(pContext->alsa.asoundSO, "snd_pcm_hw_params_get_buffer_size");
+    pContext->alsa.snd_pcm_hw_params_get_periods          = (mal_proc)mal_dlsym(pContext->alsa.asoundSO, "snd_pcm_hw_params_get_periods");
+    pContext->alsa.snd_pcm_hw_params_get_access           = (mal_proc)mal_dlsym(pContext->alsa.asoundSO, "snd_pcm_hw_params_get_access");
+    pContext->alsa.snd_pcm_hw_params                      = (mal_proc)mal_dlsym(pContext->alsa.asoundSO, "snd_pcm_hw_params");
+    pContext->alsa.snd_pcm_sw_params_sizeof               = (mal_proc)mal_dlsym(pContext->alsa.asoundSO, "snd_pcm_sw_params_sizeof");
+    pContext->alsa.snd_pcm_sw_params_current              = (mal_proc)mal_dlsym(pContext->alsa.asoundSO, "snd_pcm_sw_params_current");
+    pContext->alsa.snd_pcm_sw_params_set_avail_min        = (mal_proc)mal_dlsym(pContext->alsa.asoundSO, "snd_pcm_sw_params_set_avail_min");
+    pContext->alsa.snd_pcm_sw_params_set_start_threshold  = (mal_proc)mal_dlsym(pContext->alsa.asoundSO, "snd_pcm_sw_params_set_start_threshold");
+    pContext->alsa.snd_pcm_sw_params                      = (mal_proc)mal_dlsym(pContext->alsa.asoundSO, "snd_pcm_sw_params");
+    pContext->alsa.snd_pcm_format_mask_sizeof             = (mal_proc)mal_dlsym(pContext->alsa.asoundSO, "snd_pcm_format_mask_sizeof");
+    pContext->alsa.snd_pcm_format_mask_test               = (mal_proc)mal_dlsym(pContext->alsa.asoundSO, "snd_pcm_format_mask_test");
+    pContext->alsa.snd_pcm_get_chmap                      = (mal_proc)mal_dlsym(pContext->alsa.asoundSO, "snd_pcm_get_chmap");
+    pContext->alsa.snd_pcm_prepare                        = (mal_proc)mal_dlsym(pContext->alsa.asoundSO, "snd_pcm_prepare");
+    pContext->alsa.snd_pcm_start                          = (mal_proc)mal_dlsym(pContext->alsa.asoundSO, "snd_pcm_start");
+    pContext->alsa.snd_pcm_drop                           = (mal_proc)mal_dlsym(pContext->alsa.asoundSO, "snd_pcm_drop");
+    pContext->alsa.snd_device_name_hint                   = (mal_proc)mal_dlsym(pContext->alsa.asoundSO, "snd_device_name_hint");
+    pContext->alsa.snd_device_name_get_hint               = (mal_proc)mal_dlsym(pContext->alsa.asoundSO, "snd_device_name_get_hint");
+    pContext->alsa.snd_card_get_index                     = (mal_proc)mal_dlsym(pContext->alsa.asoundSO, "snd_card_get_index");
+    pContext->alsa.snd_device_name_free_hint              = (mal_proc)mal_dlsym(pContext->alsa.asoundSO, "snd_device_name_free_hint");
+    pContext->alsa.snd_pcm_mmap_begin                     = (mal_proc)mal_dlsym(pContext->alsa.asoundSO, "snd_pcm_mmap_begin");
+    pContext->alsa.snd_pcm_mmap_commit                    = (mal_proc)mal_dlsym(pContext->alsa.asoundSO, "snd_pcm_mmap_commit");
+    pContext->alsa.snd_pcm_recover                        = (mal_proc)mal_dlsym(pContext->alsa.asoundSO, "snd_pcm_recover");
+    pContext->alsa.snd_pcm_readi                          = (mal_proc)mal_dlsym(pContext->alsa.asoundSO, "snd_pcm_readi");
+    pContext->alsa.snd_pcm_writei                         = (mal_proc)mal_dlsym(pContext->alsa.asoundSO, "snd_pcm_writei");
+    pContext->alsa.snd_pcm_avail                          = (mal_proc)mal_dlsym(pContext->alsa.asoundSO, "snd_pcm_avail");
+    pContext->alsa.snd_pcm_avail_update                   = (mal_proc)mal_dlsym(pContext->alsa.asoundSO, "snd_pcm_avail_update");
+    pContext->alsa.snd_pcm_wait                           = (mal_proc)mal_dlsym(pContext->alsa.asoundSO, "snd_pcm_wait");
+    pContext->alsa.snd_pcm_info                           = (mal_proc)mal_dlsym(pContext->alsa.asoundSO, "snd_pcm_info");
+    pContext->alsa.snd_pcm_info_sizeof                    = (mal_proc)mal_dlsym(pContext->alsa.asoundSO, "snd_pcm_info_sizeof");
+    pContext->alsa.snd_pcm_info_get_name                  = (mal_proc)mal_dlsym(pContext->alsa.asoundSO, "snd_pcm_info_get_name");
+    pContext->alsa.snd_config_update_free_global          = (mal_proc)mal_dlsym(pContext->alsa.asoundSO, "snd_config_update_free_global");
+#else
+    // The system below is just for type safety.
+    mal_snd_pcm_open_proc                           _snd_pcm_open                           = snd_pcm_open;
+    mal_snd_pcm_close_proc                          _snd_pcm_close                          = snd_pcm_close;
+    mal_snd_pcm_hw_params_sizeof_proc               _snd_pcm_hw_params_sizeof               = snd_pcm_hw_params_sizeof;
+    mal_snd_pcm_hw_params_any_proc                  _snd_pcm_hw_params_any                  = snd_pcm_hw_params_any;
+    mal_snd_pcm_hw_params_set_format_proc           _snd_pcm_hw_params_set_format           = snd_pcm_hw_params_set_format;
+    mal_snd_pcm_hw_params_set_format_first_proc     _snd_pcm_hw_params_set_format_first     = snd_pcm_hw_params_set_format_first;
+    mal_snd_pcm_hw_params_get_format_mask_proc      _snd_pcm_hw_params_get_format_mask      = snd_pcm_hw_params_get_format_mask;
+    mal_snd_pcm_hw_params_set_channels_near_proc    _snd_pcm_hw_params_set_channels_near    = snd_pcm_hw_params_set_channels_near;
+    mal_snd_pcm_hw_params_set_rate_resample_proc    _snd_pcm_hw_params_set_rate_resample    = snd_pcm_hw_params_set_rate_resample;
+    mal_snd_pcm_hw_params_set_rate_near_proc        _snd_pcm_hw_params_set_rate_near        = snd_pcm_hw_params_set_rate_near;
+    mal_snd_pcm_hw_params_set_buffer_size_near_proc _snd_pcm_hw_params_set_buffer_size_near = snd_pcm_hw_params_set_buffer_size_near;
+    mal_snd_pcm_hw_params_set_periods_near_proc     _snd_pcm_hw_params_set_periods_near     = snd_pcm_hw_params_set_periods_near;
+    mal_snd_pcm_hw_params_set_access_proc           _snd_pcm_hw_params_set_access           = snd_pcm_hw_params_set_access;
+    mal_snd_pcm_hw_params_get_format_proc           _snd_pcm_hw_params_get_format           = snd_pcm_hw_params_get_format;
+    mal_snd_pcm_hw_params_get_channels_proc         _snd_pcm_hw_params_get_channels         = snd_pcm_hw_params_get_channels;
+    mal_snd_pcm_hw_params_get_channels_min_proc     _snd_pcm_hw_params_get_channels_min     = snd_pcm_hw_params_get_channels_min;
+    mal_snd_pcm_hw_params_get_channels_max_proc     _snd_pcm_hw_params_get_channels_max     = snd_pcm_hw_params_get_channels_max;
+    mal_snd_pcm_hw_params_get_rate_proc             _snd_pcm_hw_params_get_rate             = snd_pcm_hw_params_get_rate;
+    mal_snd_pcm_hw_params_get_rate_min_proc         _snd_pcm_hw_params_get_rate_min         = snd_pcm_hw_params_get_rate_min;
+    mal_snd_pcm_hw_params_get_rate_max_proc         _snd_pcm_hw_params_get_rate_max         = snd_pcm_hw_params_get_rate_max;
+    mal_snd_pcm_hw_params_get_buffer_size_proc      _snd_pcm_hw_params_get_buffer_size      = snd_pcm_hw_params_get_buffer_size;
+    mal_snd_pcm_hw_params_get_periods_proc          _snd_pcm_hw_params_get_periods          = snd_pcm_hw_params_get_periods;
+    mal_snd_pcm_hw_params_get_access_proc           _snd_pcm_hw_params_get_access           = snd_pcm_hw_params_get_access;
+    mal_snd_pcm_hw_params_proc                      _snd_pcm_hw_params                      = snd_pcm_hw_params;
+    mal_snd_pcm_sw_params_sizeof_proc               _snd_pcm_sw_params_sizeof               = snd_pcm_sw_params_sizeof;
+    mal_snd_pcm_sw_params_current_proc              _snd_pcm_sw_params_current              = snd_pcm_sw_params_current;
+    mal_snd_pcm_sw_params_set_avail_min_proc        _snd_pcm_sw_params_set_avail_min        = snd_pcm_sw_params_set_avail_min;
+    mal_snd_pcm_sw_params_set_start_threshold_proc  _snd_pcm_sw_params_set_start_threshold  = snd_pcm_sw_params_set_start_threshold;
+    mal_snd_pcm_sw_params_proc                      _snd_pcm_sw_params                      = snd_pcm_sw_params;
+    mal_snd_pcm_format_mask_sizeof_proc             _snd_pcm_format_mask_sizeof             = snd_pcm_format_mask_sizeof;
+    mal_snd_pcm_format_mask_test_proc               _snd_pcm_format_mask_test               = snd_pcm_format_mask_test;
+    mal_snd_pcm_get_chmap_proc                      _snd_pcm_get_chmap                      = snd_pcm_get_chmap;
+    mal_snd_pcm_prepare_proc                        _snd_pcm_prepare                        = snd_pcm_prepare;
+    mal_snd_pcm_start_proc                          _snd_pcm_start                          = snd_pcm_start;
+    mal_snd_pcm_drop_proc                           _snd_pcm_drop                           = snd_pcm_drop;
+    mal_snd_device_name_hint_proc                   _snd_device_name_hint                   = snd_device_name_hint;
+    mal_snd_device_name_get_hint_proc               _snd_device_name_get_hint               = snd_device_name_get_hint;
+    mal_snd_card_get_index_proc                     _snd_card_get_index                     = snd_card_get_index;
+    mal_snd_device_name_free_hint_proc              _snd_device_name_free_hint              = snd_device_name_free_hint;
+    mal_snd_pcm_mmap_begin_proc                     _snd_pcm_mmap_begin                     = snd_pcm_mmap_begin;
+    mal_snd_pcm_mmap_commit_proc                    _snd_pcm_mmap_commit                    = snd_pcm_mmap_commit;
+    mal_snd_pcm_recover_proc                        _snd_pcm_recover                        = snd_pcm_recover;
+    mal_snd_pcm_readi_proc                          _snd_pcm_readi                          = snd_pcm_readi;
+    mal_snd_pcm_writei_proc                         _snd_pcm_writei                         = snd_pcm_writei;
+    mal_snd_pcm_avail_proc                          _snd_pcm_avail                          = snd_pcm_avail;
+    mal_snd_pcm_avail_update_proc                   _snd_pcm_avail_update                   = snd_pcm_avail_update;
+    mal_snd_pcm_wait_proc                           _snd_pcm_wait                           = snd_pcm_wait;
+    mal_snd_pcm_info_proc                           _snd_pcm_info                           = snd_pcm_info;
+    mal_snd_pcm_info_sizeof_proc                    _snd_pcm_info_sizeof                    = snd_pcm_info_sizeof;
+    mal_snd_pcm_info_get_name_proc                  _snd_pcm_info_get_name                  = snd_pcm_info_get_name;
+    mal_snd_config_update_free_global_proc          _snd_config_update_free_global          = snd_config_update_free_global;
+
+    pContext->alsa.snd_pcm_open                           = (mal_proc)_snd_pcm_open;
+    pContext->alsa.snd_pcm_close                          = (mal_proc)_snd_pcm_close;
+    pContext->alsa.snd_pcm_hw_params_sizeof               = (mal_proc)_snd_pcm_hw_params_sizeof;
+    pContext->alsa.snd_pcm_hw_params_any                  = (mal_proc)_snd_pcm_hw_params_any;
+    pContext->alsa.snd_pcm_hw_params_set_format           = (mal_proc)_snd_pcm_hw_params_set_format;
+    pContext->alsa.snd_pcm_hw_params_set_format_first     = (mal_proc)_snd_pcm_hw_params_set_format_first;
+    pContext->alsa.snd_pcm_hw_params_get_format_mask      = (mal_proc)_snd_pcm_hw_params_get_format_mask;
+    pContext->alsa.snd_pcm_hw_params_set_channels_near    = (mal_proc)_snd_pcm_hw_params_set_channels_near;
+    pContext->alsa.snd_pcm_hw_params_set_rate_resample    = (mal_proc)_snd_pcm_hw_params_set_rate_resample;
+    pContext->alsa.snd_pcm_hw_params_set_rate_near        = (mal_proc)_snd_pcm_hw_params_set_rate_near;
+    pContext->alsa.snd_pcm_hw_params_set_buffer_size_near = (mal_proc)_snd_pcm_hw_params_set_buffer_size_near;
+    pContext->alsa.snd_pcm_hw_params_set_periods_near     = (mal_proc)_snd_pcm_hw_params_set_periods_near;
+    pContext->alsa.snd_pcm_hw_params_set_access           = (mal_proc)_snd_pcm_hw_params_set_access;
+    pContext->alsa.snd_pcm_hw_params_get_format           = (mal_proc)_snd_pcm_hw_params_get_format;
+    pContext->alsa.snd_pcm_hw_params_get_channels         = (mal_proc)_snd_pcm_hw_params_get_channels;
+    pContext->alsa.snd_pcm_hw_params_get_channels_min     = (mal_proc)_snd_pcm_hw_params_get_channels_min;
+    pContext->alsa.snd_pcm_hw_params_get_channels_max     = (mal_proc)_snd_pcm_hw_params_get_channels_max;
+    pContext->alsa.snd_pcm_hw_params_get_rate             = (mal_proc)_snd_pcm_hw_params_get_rate;
+    pContext->alsa.snd_pcm_hw_params_get_buffer_size      = (mal_proc)_snd_pcm_hw_params_get_buffer_size;
+    pContext->alsa.snd_pcm_hw_params_get_periods          = (mal_proc)_snd_pcm_hw_params_get_periods;
+    pContext->alsa.snd_pcm_hw_params_get_access           = (mal_proc)_snd_pcm_hw_params_get_access;
+    pContext->alsa.snd_pcm_hw_params                      = (mal_proc)_snd_pcm_hw_params;
+    pContext->alsa.snd_pcm_sw_params_sizeof               = (mal_proc)_snd_pcm_sw_params_sizeof;
+    pContext->alsa.snd_pcm_sw_params_current              = (mal_proc)_snd_pcm_sw_params_current;
+    pContext->alsa.snd_pcm_sw_params_set_avail_min        = (mal_proc)_snd_pcm_sw_params_set_avail_min;
+    pContext->alsa.snd_pcm_sw_params_set_start_threshold  = (mal_proc)_snd_pcm_sw_params_set_start_threshold;
+    pContext->alsa.snd_pcm_sw_params                      = (mal_proc)_snd_pcm_sw_params;
+    pContext->alsa.snd_pcm_format_mask_sizeof             = (mal_proc)_snd_pcm_format_mask_sizeof;
+    pContext->alsa.snd_pcm_format_mask_test               = (mal_proc)_snd_pcm_format_mask_test;
+    pContext->alsa.snd_pcm_get_chmap                      = (mal_proc)_snd_pcm_get_chmap;
+    pContext->alsa.snd_pcm_prepare                        = (mal_proc)_snd_pcm_prepare;
+    pContext->alsa.snd_pcm_start                          = (mal_proc)_snd_pcm_start;
+    pContext->alsa.snd_pcm_drop                           = (mal_proc)_snd_pcm_drop;
+    pContext->alsa.snd_device_name_hint                   = (mal_proc)_snd_device_name_hint;
+    pContext->alsa.snd_device_name_get_hint               = (mal_proc)_snd_device_name_get_hint;
+    pContext->alsa.snd_card_get_index                     = (mal_proc)_snd_card_get_index;
+    pContext->alsa.snd_device_name_free_hint              = (mal_proc)_snd_device_name_free_hint;
+    pContext->alsa.snd_pcm_mmap_begin                     = (mal_proc)_snd_pcm_mmap_begin;
+    pContext->alsa.snd_pcm_mmap_commit                    = (mal_proc)_snd_pcm_mmap_commit;
+    pContext->alsa.snd_pcm_recover                        = (mal_proc)_snd_pcm_recover;
+    pContext->alsa.snd_pcm_readi                          = (mal_proc)_snd_pcm_readi;
+    pContext->alsa.snd_pcm_writei                         = (mal_proc)_snd_pcm_writei;
+    pContext->alsa.snd_pcm_avail                          = (mal_proc)_snd_pcm_avail;
+    pContext->alsa.snd_pcm_avail_update                   = (mal_proc)_snd_pcm_avail_update;
+    pContext->alsa.snd_pcm_wait                           = (mal_proc)_snd_pcm_wait;
+    pContext->alsa.snd_pcm_info                           = (mal_proc)_snd_pcm_info;
+    pContext->alsa.snd_pcm_info_sizeof                    = (mal_proc)_snd_pcm_info_sizeof;
+    pContext->alsa.snd_pcm_info_get_name                  = (mal_proc)_snd_pcm_info_get_name;
+    pContext->alsa.snd_config_update_free_global          = (mal_proc)_snd_config_update_free_global;
+#endif
+
+    if (mal_mutex_init(pContext, &pContext->alsa.internalDeviceEnumLock) != MAL_SUCCESS) {
+        mal_context_post_error(pContext, NULL, MAL_LOG_LEVEL_ERROR, "[ALSA] WARNING: Failed to initialize mutex for internal device enumeration.", MAL_ERROR);
+    }
+
+    pContext->onUninit              = mal_context_uninit__alsa;
+    pContext->onDeviceIDEqual       = mal_context_is_device_id_equal__alsa;
+    pContext->onEnumDevices         = mal_context_enumerate_devices__alsa;
+    pContext->onGetDeviceInfo       = mal_context_get_device_info__alsa;
+    pContext->onDeviceInit          = mal_device_init__alsa;
+    pContext->onDeviceUninit        = mal_device_uninit__alsa;
+    pContext->onDeviceStart         = mal_device__start_backend__alsa;
+    pContext->onDeviceStop          = mal_device__stop_backend__alsa;
+    pContext->onDeviceBreakMainLoop = mal_device__break_main_loop__alsa;
+    pContext->onDeviceMainLoop      = mal_device__main_loop__alsa;
 
     return MAL_SUCCESS;
 }
@@ -11337,202 +11397,6 @@ done:
     return result;
 }
 
-mal_result mal_context_init__pulse(mal_context* pContext)
-{
-    mal_assert(pContext != NULL);
-
-#ifndef MAL_NO_RUNTIME_LINKING
-    // libpulse.so
-    const char* libpulseNames[] = {
-        "libpulse.so",
-        "libpulse.so.0"
-    };
-
-    for (size_t i = 0; i < mal_countof(libpulseNames); ++i) {
-        pContext->pulse.pulseSO = mal_dlopen(libpulseNames[i]);
-        if (pContext->pulse.pulseSO != NULL) {
-            break;
-        }
-    }
-
-    if (pContext->pulse.pulseSO == NULL) {
-        return MAL_NO_BACKEND;
-    }
-
-    pContext->pulse.pa_mainloop_new                    = (mal_proc)mal_dlsym(pContext->pulse.pulseSO, "pa_mainloop_new");
-    pContext->pulse.pa_mainloop_free                   = (mal_proc)mal_dlsym(pContext->pulse.pulseSO, "pa_mainloop_free");
-    pContext->pulse.pa_mainloop_get_api                = (mal_proc)mal_dlsym(pContext->pulse.pulseSO, "pa_mainloop_get_api");
-    pContext->pulse.pa_mainloop_iterate                = (mal_proc)mal_dlsym(pContext->pulse.pulseSO, "pa_mainloop_iterate");
-    pContext->pulse.pa_mainloop_wakeup                 = (mal_proc)mal_dlsym(pContext->pulse.pulseSO, "pa_mainloop_wakeup");
-    pContext->pulse.pa_context_new                     = (mal_proc)mal_dlsym(pContext->pulse.pulseSO, "pa_context_new");
-    pContext->pulse.pa_context_unref                   = (mal_proc)mal_dlsym(pContext->pulse.pulseSO, "pa_context_unref");
-    pContext->pulse.pa_context_connect                 = (mal_proc)mal_dlsym(pContext->pulse.pulseSO, "pa_context_connect");
-    pContext->pulse.pa_context_disconnect              = (mal_proc)mal_dlsym(pContext->pulse.pulseSO, "pa_context_disconnect");
-    pContext->pulse.pa_context_set_state_callback      = (mal_proc)mal_dlsym(pContext->pulse.pulseSO, "pa_context_set_state_callback");
-    pContext->pulse.pa_context_get_state               = (mal_proc)mal_dlsym(pContext->pulse.pulseSO, "pa_context_get_state");
-    pContext->pulse.pa_context_get_sink_info_list      = (mal_proc)mal_dlsym(pContext->pulse.pulseSO, "pa_context_get_sink_info_list");
-    pContext->pulse.pa_context_get_source_info_list    = (mal_proc)mal_dlsym(pContext->pulse.pulseSO, "pa_context_get_source_info_list");
-    pContext->pulse.pa_context_get_sink_info_by_name   = (mal_proc)mal_dlsym(pContext->pulse.pulseSO, "pa_context_get_sink_info_by_name");
-    pContext->pulse.pa_context_get_source_info_by_name = (mal_proc)mal_dlsym(pContext->pulse.pulseSO, "pa_context_get_source_info_by_name");
-    pContext->pulse.pa_operation_unref                 = (mal_proc)mal_dlsym(pContext->pulse.pulseSO, "pa_operation_unref");
-    pContext->pulse.pa_operation_get_state             = (mal_proc)mal_dlsym(pContext->pulse.pulseSO, "pa_operation_get_state");
-    pContext->pulse.pa_channel_map_init_extend         = (mal_proc)mal_dlsym(pContext->pulse.pulseSO, "pa_channel_map_init_extend");
-    pContext->pulse.pa_channel_map_valid               = (mal_proc)mal_dlsym(pContext->pulse.pulseSO, "pa_channel_map_valid");
-    pContext->pulse.pa_channel_map_compatible          = (mal_proc)mal_dlsym(pContext->pulse.pulseSO, "pa_channel_map_compatible");
-    pContext->pulse.pa_stream_new                      = (mal_proc)mal_dlsym(pContext->pulse.pulseSO, "pa_stream_new");
-    pContext->pulse.pa_stream_unref                    = (mal_proc)mal_dlsym(pContext->pulse.pulseSO, "pa_stream_unref");
-    pContext->pulse.pa_stream_connect_playback         = (mal_proc)mal_dlsym(pContext->pulse.pulseSO, "pa_stream_connect_playback");
-    pContext->pulse.pa_stream_connect_record           = (mal_proc)mal_dlsym(pContext->pulse.pulseSO, "pa_stream_connect_record");
-    pContext->pulse.pa_stream_disconnect               = (mal_proc)mal_dlsym(pContext->pulse.pulseSO, "pa_stream_disconnect");
-    pContext->pulse.pa_stream_get_state                = (mal_proc)mal_dlsym(pContext->pulse.pulseSO, "pa_stream_get_state");
-    pContext->pulse.pa_stream_get_sample_spec          = (mal_proc)mal_dlsym(pContext->pulse.pulseSO, "pa_stream_get_sample_spec");
-    pContext->pulse.pa_stream_get_channel_map          = (mal_proc)mal_dlsym(pContext->pulse.pulseSO, "pa_stream_get_channel_map");
-    pContext->pulse.pa_stream_get_buffer_attr          = (mal_proc)mal_dlsym(pContext->pulse.pulseSO, "pa_stream_get_buffer_attr");
-    pContext->pulse.pa_stream_get_device_name          = (mal_proc)mal_dlsym(pContext->pulse.pulseSO, "pa_stream_get_device_name");
-    pContext->pulse.pa_stream_set_write_callback       = (mal_proc)mal_dlsym(pContext->pulse.pulseSO, "pa_stream_set_write_callback");
-    pContext->pulse.pa_stream_set_read_callback        = (mal_proc)mal_dlsym(pContext->pulse.pulseSO, "pa_stream_set_read_callback");
-    pContext->pulse.pa_stream_flush                    = (mal_proc)mal_dlsym(pContext->pulse.pulseSO, "pa_stream_flush");
-    pContext->pulse.pa_stream_drain                    = (mal_proc)mal_dlsym(pContext->pulse.pulseSO, "pa_stream_drain");
-    pContext->pulse.pa_stream_cork                     = (mal_proc)mal_dlsym(pContext->pulse.pulseSO, "pa_stream_cork");
-    pContext->pulse.pa_stream_trigger                  = (mal_proc)mal_dlsym(pContext->pulse.pulseSO, "pa_stream_trigger");
-    pContext->pulse.pa_stream_begin_write              = (mal_proc)mal_dlsym(pContext->pulse.pulseSO, "pa_stream_begin_write");
-    pContext->pulse.pa_stream_write                    = (mal_proc)mal_dlsym(pContext->pulse.pulseSO, "pa_stream_write");
-    pContext->pulse.pa_stream_peek                     = (mal_proc)mal_dlsym(pContext->pulse.pulseSO, "pa_stream_peek");
-    pContext->pulse.pa_stream_drop                     = (mal_proc)mal_dlsym(pContext->pulse.pulseSO, "pa_stream_drop");
-#else
-    // This strange assignment system is just for type safety.
-    mal_pa_mainloop_new_proc                    _pa_mainloop_new                   = pa_mainloop_new;
-    mal_pa_mainloop_free_proc                   _pa_mainloop_free                  = pa_mainloop_free;
-    mal_pa_mainloop_get_api_proc                _pa_mainloop_get_api               = pa_mainloop_get_api;
-    mal_pa_mainloop_iterate_proc                _pa_mainloop_iterate               = pa_mainloop_iterate;
-    mal_pa_mainloop_wakeup_proc                 _pa_mainloop_wakeup                = pa_mainloop_wakeup;
-    mal_pa_context_new_proc                     _pa_context_new                    = pa_context_new;
-    mal_pa_context_unref_proc                   _pa_context_unref                  = pa_context_unref;
-    mal_pa_context_connect_proc                 _pa_context_connect                = pa_context_connect;
-    mal_pa_context_disconnect_proc              _pa_context_disconnect             = pa_context_disconnect;
-    mal_pa_context_set_state_callback_proc      _pa_context_set_state_callback     = pa_context_set_state_callback;
-    mal_pa_context_get_state_proc               _pa_context_get_state              = pa_context_get_state;
-    mal_pa_context_get_sink_info_list_proc      _pa_context_get_sink_info_list     = pa_context_get_sink_info_list;
-    mal_pa_context_get_source_info_list_proc    _pa_context_get_source_info_list   = pa_context_get_source_info_list;
-    mal_pa_context_get_sink_info_by_name_proc   _pa_context_get_sink_info_by_name  = pa_context_get_sink_info_by_name;
-    mal_pa_context_get_source_info_by_name_proc _pa_context_get_source_info_by_name= pa_context_get_source_info_by_name;
-    mal_pa_operation_unref_proc                 _pa_operation_unref                = pa_operation_unref;
-    mal_pa_operation_get_state_proc             _pa_operation_get_state            = pa_operation_get_state;
-    mal_pa_channel_map_init_extend_proc         _pa_channel_map_init_extend        = pa_channel_map_init_extend;
-    mal_pa_channel_map_valid_proc               _pa_channel_map_valid              = pa_channel_map_valid;
-    mal_pa_channel_map_compatible_proc          _pa_channel_map_compatible         = pa_channel_map_compatible;
-    mal_pa_stream_new_proc                      _pa_stream_new                     = pa_stream_new;
-    mal_pa_stream_unref_proc                    _pa_stream_unref                   = pa_stream_unref;
-    mal_pa_stream_connect_playback_proc         _pa_stream_connect_playback        = pa_stream_connect_playback;
-    mal_pa_stream_connect_record_proc           _pa_stream_connect_record          = pa_stream_connect_record;
-    mal_pa_stream_disconnect_proc               _pa_stream_disconnect              = pa_stream_disconnect;
-    mal_pa_stream_get_state_proc                _pa_stream_get_state               = pa_stream_get_state;
-    mal_pa_stream_get_sample_spec_proc          _pa_stream_get_sample_spec         = pa_stream_get_sample_spec;
-    mal_pa_stream_get_channel_map_proc          _pa_stream_get_channel_map         = pa_stream_get_channel_map;
-    mal_pa_stream_get_buffer_attr_proc          _pa_stream_get_buffer_attr         = pa_stream_get_buffer_attr;
-    mal_pa_stream_get_device_name_proc          _pa_stream_get_device_name         = pa_stream_get_device_name;
-    mal_pa_stream_set_write_callback_proc       _pa_stream_set_write_callback      = pa_stream_set_write_callback;
-    mal_pa_stream_set_read_callback_proc        _pa_stream_set_read_callback       = pa_stream_set_read_callback;
-    mal_pa_stream_flush_proc                    _pa_stream_flush                   = pa_stream_flush;
-    mal_pa_stream_drain_proc                    _pa_stream_drain                   = pa_stream_drain;
-    mal_pa_stream_cork_proc                     _pa_stream_cork                    = pa_stream_cork;
-    mal_pa_stream_trigger_proc                  _pa_stream_trigger                 = pa_stream_trigger;
-    mal_pa_stream_begin_write_proc              _pa_stream_begin_write             = pa_stream_begin_write;
-    mal_pa_stream_write_proc                    _pa_stream_write                   = pa_stream_write;
-    mal_pa_stream_peek_proc                     _pa_stream_peek                    = pa_stream_peek;
-    mal_pa_stream_drop_proc                     _pa_stream_drop                    = pa_stream_drop;
-
-    pContext->pulse.pa_mainloop_new                    = (mal_proc)_pa_mainloop_new;
-    pContext->pulse.pa_mainloop_free                   = (mal_proc)_pa_mainloop_free;
-    pContext->pulse.pa_mainloop_get_api                = (mal_proc)_pa_mainloop_get_api;
-    pContext->pulse.pa_mainloop_iterate                = (mal_proc)_pa_mainloop_iterate;
-    pContext->pulse.pa_mainloop_wakeup                 = (mal_proc)_pa_mainloop_wakeup;
-    pContext->pulse.pa_context_new                     = (mal_proc)_pa_context_new;
-    pContext->pulse.pa_context_unref                   = (mal_proc)_pa_context_unref;
-    pContext->pulse.pa_context_connect                 = (mal_proc)_pa_context_connect;
-    pContext->pulse.pa_context_disconnect              = (mal_proc)_pa_context_disconnect;
-    pContext->pulse.pa_context_set_state_callback      = (mal_proc)_pa_context_set_state_callback;
-    pContext->pulse.pa_context_get_state               = (mal_proc)_pa_context_get_state;
-    pContext->pulse.pa_context_get_sink_info_list      = (mal_proc)_pa_context_get_sink_info_list;
-    pContext->pulse.pa_context_get_source_info_list    = (mal_proc)_pa_context_get_source_info_list;
-    pContext->pulse.pa_context_get_sink_info_by_name   = (mal_proc)_pa_context_get_sink_info_by_name;
-    pContext->pulse.pa_context_get_source_info_by_name = (mal_proc)_pa_context_get_source_info_by_name;
-    pContext->pulse.pa_operation_unref                 = (mal_proc)_pa_operation_unref;
-    pContext->pulse.pa_operation_get_state             = (mal_proc)_pa_operation_get_state;
-    pContext->pulse.pa_channel_map_init_extend         = (mal_proc)_pa_channel_map_init_extend;
-    pContext->pulse.pa_channel_map_valid               = (mal_proc)_pa_channel_map_valid;
-    pContext->pulse.pa_channel_map_compatible          = (mal_proc)_pa_channel_map_compatible;
-    pContext->pulse.pa_stream_new                      = (mal_proc)_pa_stream_new;
-    pContext->pulse.pa_stream_unref                    = (mal_proc)_pa_stream_unref;
-    pContext->pulse.pa_stream_connect_playback         = (mal_proc)_pa_stream_connect_playback;
-    pContext->pulse.pa_stream_connect_record           = (mal_proc)_pa_stream_connect_record;
-    pContext->pulse.pa_stream_disconnect               = (mal_proc)_pa_stream_disconnect;
-    pContext->pulse.pa_stream_get_state                = (mal_proc)_pa_stream_get_state;
-    pContext->pulse.pa_stream_get_sample_spec          = (mal_proc)_pa_stream_get_sample_spec;
-    pContext->pulse.pa_stream_get_channel_map          = (mal_proc)_pa_stream_get_channel_map;
-    pContext->pulse.pa_stream_get_buffer_attr          = (mal_proc)_pa_stream_get_buffer_attr;
-    pContext->pulse.pa_stream_get_device_name          = (mal_proc)_pa_stream_get_device_name;
-    pContext->pulse.pa_stream_set_write_callback       = (mal_proc)_pa_stream_set_write_callback;
-    pContext->pulse.pa_stream_set_read_callback        = (mal_proc)_pa_stream_set_read_callback;
-    pContext->pulse.pa_stream_flush                    = (mal_proc)_pa_stream_flush;
-    pContext->pulse.pa_stream_drain                    = (mal_proc)_pa_stream_drain;
-    pContext->pulse.pa_stream_cork                     = (mal_proc)_pa_stream_cork;
-    pContext->pulse.pa_stream_trigger                  = (mal_proc)_pa_stream_trigger;
-    pContext->pulse.pa_stream_begin_write              = (mal_proc)_pa_stream_begin_write;
-    pContext->pulse.pa_stream_write                    = (mal_proc)_pa_stream_write;
-    pContext->pulse.pa_stream_peek                     = (mal_proc)_pa_stream_peek;
-    pContext->pulse.pa_stream_drop                     = (mal_proc)_pa_stream_drop;
-#endif
-
-    pContext->onDeviceIDEqual = mal_context_is_device_id_equal__pulse;
-    pContext->onEnumDevices   = mal_context_enumerate_devices__pulse;
-    pContext->onGetDeviceInfo = mal_context_get_device_info__pulse;
-
-    
-    // Although we have found the libpulse library, it doesn't necessarily mean PulseAudio is useable. We need to initialize
-    // and connect a dummy PulseAudio context to test PulseAudio's usability.
-    mal_pa_mainloop* pMainLoop = ((mal_pa_mainloop_new_proc)pContext->pulse.pa_mainloop_new)();
-    if (pMainLoop == NULL) {
-        return MAL_NO_BACKEND;
-    }
-
-    mal_pa_mainloop_api* pAPI = ((mal_pa_mainloop_get_api_proc)pContext->pulse.pa_mainloop_get_api)(pMainLoop);
-    if (pAPI == NULL) {
-        ((mal_pa_mainloop_free_proc)pContext->pulse.pa_mainloop_free)(pMainLoop);
-        return MAL_NO_BACKEND;
-    }
-
-    mal_pa_context* pPulseContext = ((mal_pa_context_new_proc)pContext->pulse.pa_context_new)(pAPI, pContext->config.pulse.pApplicationName);
-    if (pPulseContext == NULL) {
-        ((mal_pa_mainloop_free_proc)pContext->pulse.pa_mainloop_free)(pMainLoop);
-        return MAL_NO_BACKEND;
-    }
-
-    int error = ((mal_pa_context_connect_proc)pContext->pulse.pa_context_connect)(pPulseContext, pContext->config.pulse.pServerName, 0, NULL);
-    if (error != MAL_PA_OK) {
-        ((mal_pa_context_unref_proc)pContext->pulse.pa_context_unref)(pPulseContext);
-        ((mal_pa_mainloop_free_proc)pContext->pulse.pa_mainloop_free)(pMainLoop);
-        return MAL_NO_BACKEND;
-    }
-
-    ((mal_pa_context_disconnect_proc)pContext->pulse.pa_context_disconnect)(pPulseContext);
-    ((mal_pa_context_unref_proc)pContext->pulse.pa_context_unref)(pPulseContext);
-    ((mal_pa_mainloop_free_proc)pContext->pulse.pa_mainloop_free)(pMainLoop);
-    return MAL_SUCCESS;
-}
-
-mal_result mal_context_uninit__pulse(mal_context* pContext)
-{
-    mal_assert(pContext != NULL);
-    mal_assert(pContext->backend == mal_backend_pulseaudio);
-
-#ifndef MAL_NO_RUNTIME_LINKING
-    mal_dlclose(pContext->pulse.pulseSO);
-#endif
-
-    return MAL_SUCCESS;
-}
-
 
 void mal_pulse_device_state_callback(mal_pa_context* pPulseContext, void* pUserData)
 {
@@ -11684,7 +11548,7 @@ void mal_device_uninit__pulse(mal_device* pDevice)
     ((mal_pa_mainloop_free_proc)pContext->pulse.pa_mainloop_free)((mal_pa_mainloop*)pDevice->pulse.pMainLoop);
 }
 
-mal_result mal_device_init__pulse(mal_context* pContext, mal_device_type type, mal_device_id* pDeviceID, const mal_device_config* pConfig, mal_device* pDevice)
+mal_result mal_device_init__pulse(mal_context* pContext, mal_device_type type, const mal_device_id* pDeviceID, const mal_device_config* pConfig, mal_device* pDevice)
 {
     (void)pContext;
 
@@ -12116,6 +11980,210 @@ mal_result mal_device__main_loop__pulse(mal_device* pDevice)
 
     return MAL_SUCCESS;
 }
+
+
+mal_result mal_context_uninit__pulse(mal_context* pContext)
+{
+    mal_assert(pContext != NULL);
+    mal_assert(pContext->backend == mal_backend_pulseaudio);
+
+#ifndef MAL_NO_RUNTIME_LINKING
+    mal_dlclose(pContext->pulse.pulseSO);
+#endif
+
+    return MAL_SUCCESS;
+}
+
+mal_result mal_context_init__pulse(mal_context* pContext)
+{
+    mal_assert(pContext != NULL);
+
+#ifndef MAL_NO_RUNTIME_LINKING
+    // libpulse.so
+    const char* libpulseNames[] = {
+        "libpulse.so",
+        "libpulse.so.0"
+    };
+
+    for (size_t i = 0; i < mal_countof(libpulseNames); ++i) {
+        pContext->pulse.pulseSO = mal_dlopen(libpulseNames[i]);
+        if (pContext->pulse.pulseSO != NULL) {
+            break;
+        }
+    }
+
+    if (pContext->pulse.pulseSO == NULL) {
+        return MAL_NO_BACKEND;
+    }
+
+    pContext->pulse.pa_mainloop_new                    = (mal_proc)mal_dlsym(pContext->pulse.pulseSO, "pa_mainloop_new");
+    pContext->pulse.pa_mainloop_free                   = (mal_proc)mal_dlsym(pContext->pulse.pulseSO, "pa_mainloop_free");
+    pContext->pulse.pa_mainloop_get_api                = (mal_proc)mal_dlsym(pContext->pulse.pulseSO, "pa_mainloop_get_api");
+    pContext->pulse.pa_mainloop_iterate                = (mal_proc)mal_dlsym(pContext->pulse.pulseSO, "pa_mainloop_iterate");
+    pContext->pulse.pa_mainloop_wakeup                 = (mal_proc)mal_dlsym(pContext->pulse.pulseSO, "pa_mainloop_wakeup");
+    pContext->pulse.pa_context_new                     = (mal_proc)mal_dlsym(pContext->pulse.pulseSO, "pa_context_new");
+    pContext->pulse.pa_context_unref                   = (mal_proc)mal_dlsym(pContext->pulse.pulseSO, "pa_context_unref");
+    pContext->pulse.pa_context_connect                 = (mal_proc)mal_dlsym(pContext->pulse.pulseSO, "pa_context_connect");
+    pContext->pulse.pa_context_disconnect              = (mal_proc)mal_dlsym(pContext->pulse.pulseSO, "pa_context_disconnect");
+    pContext->pulse.pa_context_set_state_callback      = (mal_proc)mal_dlsym(pContext->pulse.pulseSO, "pa_context_set_state_callback");
+    pContext->pulse.pa_context_get_state               = (mal_proc)mal_dlsym(pContext->pulse.pulseSO, "pa_context_get_state");
+    pContext->pulse.pa_context_get_sink_info_list      = (mal_proc)mal_dlsym(pContext->pulse.pulseSO, "pa_context_get_sink_info_list");
+    pContext->pulse.pa_context_get_source_info_list    = (mal_proc)mal_dlsym(pContext->pulse.pulseSO, "pa_context_get_source_info_list");
+    pContext->pulse.pa_context_get_sink_info_by_name   = (mal_proc)mal_dlsym(pContext->pulse.pulseSO, "pa_context_get_sink_info_by_name");
+    pContext->pulse.pa_context_get_source_info_by_name = (mal_proc)mal_dlsym(pContext->pulse.pulseSO, "pa_context_get_source_info_by_name");
+    pContext->pulse.pa_operation_unref                 = (mal_proc)mal_dlsym(pContext->pulse.pulseSO, "pa_operation_unref");
+    pContext->pulse.pa_operation_get_state             = (mal_proc)mal_dlsym(pContext->pulse.pulseSO, "pa_operation_get_state");
+    pContext->pulse.pa_channel_map_init_extend         = (mal_proc)mal_dlsym(pContext->pulse.pulseSO, "pa_channel_map_init_extend");
+    pContext->pulse.pa_channel_map_valid               = (mal_proc)mal_dlsym(pContext->pulse.pulseSO, "pa_channel_map_valid");
+    pContext->pulse.pa_channel_map_compatible          = (mal_proc)mal_dlsym(pContext->pulse.pulseSO, "pa_channel_map_compatible");
+    pContext->pulse.pa_stream_new                      = (mal_proc)mal_dlsym(pContext->pulse.pulseSO, "pa_stream_new");
+    pContext->pulse.pa_stream_unref                    = (mal_proc)mal_dlsym(pContext->pulse.pulseSO, "pa_stream_unref");
+    pContext->pulse.pa_stream_connect_playback         = (mal_proc)mal_dlsym(pContext->pulse.pulseSO, "pa_stream_connect_playback");
+    pContext->pulse.pa_stream_connect_record           = (mal_proc)mal_dlsym(pContext->pulse.pulseSO, "pa_stream_connect_record");
+    pContext->pulse.pa_stream_disconnect               = (mal_proc)mal_dlsym(pContext->pulse.pulseSO, "pa_stream_disconnect");
+    pContext->pulse.pa_stream_get_state                = (mal_proc)mal_dlsym(pContext->pulse.pulseSO, "pa_stream_get_state");
+    pContext->pulse.pa_stream_get_sample_spec          = (mal_proc)mal_dlsym(pContext->pulse.pulseSO, "pa_stream_get_sample_spec");
+    pContext->pulse.pa_stream_get_channel_map          = (mal_proc)mal_dlsym(pContext->pulse.pulseSO, "pa_stream_get_channel_map");
+    pContext->pulse.pa_stream_get_buffer_attr          = (mal_proc)mal_dlsym(pContext->pulse.pulseSO, "pa_stream_get_buffer_attr");
+    pContext->pulse.pa_stream_get_device_name          = (mal_proc)mal_dlsym(pContext->pulse.pulseSO, "pa_stream_get_device_name");
+    pContext->pulse.pa_stream_set_write_callback       = (mal_proc)mal_dlsym(pContext->pulse.pulseSO, "pa_stream_set_write_callback");
+    pContext->pulse.pa_stream_set_read_callback        = (mal_proc)mal_dlsym(pContext->pulse.pulseSO, "pa_stream_set_read_callback");
+    pContext->pulse.pa_stream_flush                    = (mal_proc)mal_dlsym(pContext->pulse.pulseSO, "pa_stream_flush");
+    pContext->pulse.pa_stream_drain                    = (mal_proc)mal_dlsym(pContext->pulse.pulseSO, "pa_stream_drain");
+    pContext->pulse.pa_stream_cork                     = (mal_proc)mal_dlsym(pContext->pulse.pulseSO, "pa_stream_cork");
+    pContext->pulse.pa_stream_trigger                  = (mal_proc)mal_dlsym(pContext->pulse.pulseSO, "pa_stream_trigger");
+    pContext->pulse.pa_stream_begin_write              = (mal_proc)mal_dlsym(pContext->pulse.pulseSO, "pa_stream_begin_write");
+    pContext->pulse.pa_stream_write                    = (mal_proc)mal_dlsym(pContext->pulse.pulseSO, "pa_stream_write");
+    pContext->pulse.pa_stream_peek                     = (mal_proc)mal_dlsym(pContext->pulse.pulseSO, "pa_stream_peek");
+    pContext->pulse.pa_stream_drop                     = (mal_proc)mal_dlsym(pContext->pulse.pulseSO, "pa_stream_drop");
+#else
+    // This strange assignment system is just for type safety.
+    mal_pa_mainloop_new_proc                    _pa_mainloop_new                   = pa_mainloop_new;
+    mal_pa_mainloop_free_proc                   _pa_mainloop_free                  = pa_mainloop_free;
+    mal_pa_mainloop_get_api_proc                _pa_mainloop_get_api               = pa_mainloop_get_api;
+    mal_pa_mainloop_iterate_proc                _pa_mainloop_iterate               = pa_mainloop_iterate;
+    mal_pa_mainloop_wakeup_proc                 _pa_mainloop_wakeup                = pa_mainloop_wakeup;
+    mal_pa_context_new_proc                     _pa_context_new                    = pa_context_new;
+    mal_pa_context_unref_proc                   _pa_context_unref                  = pa_context_unref;
+    mal_pa_context_connect_proc                 _pa_context_connect                = pa_context_connect;
+    mal_pa_context_disconnect_proc              _pa_context_disconnect             = pa_context_disconnect;
+    mal_pa_context_set_state_callback_proc      _pa_context_set_state_callback     = pa_context_set_state_callback;
+    mal_pa_context_get_state_proc               _pa_context_get_state              = pa_context_get_state;
+    mal_pa_context_get_sink_info_list_proc      _pa_context_get_sink_info_list     = pa_context_get_sink_info_list;
+    mal_pa_context_get_source_info_list_proc    _pa_context_get_source_info_list   = pa_context_get_source_info_list;
+    mal_pa_context_get_sink_info_by_name_proc   _pa_context_get_sink_info_by_name  = pa_context_get_sink_info_by_name;
+    mal_pa_context_get_source_info_by_name_proc _pa_context_get_source_info_by_name= pa_context_get_source_info_by_name;
+    mal_pa_operation_unref_proc                 _pa_operation_unref                = pa_operation_unref;
+    mal_pa_operation_get_state_proc             _pa_operation_get_state            = pa_operation_get_state;
+    mal_pa_channel_map_init_extend_proc         _pa_channel_map_init_extend        = pa_channel_map_init_extend;
+    mal_pa_channel_map_valid_proc               _pa_channel_map_valid              = pa_channel_map_valid;
+    mal_pa_channel_map_compatible_proc          _pa_channel_map_compatible         = pa_channel_map_compatible;
+    mal_pa_stream_new_proc                      _pa_stream_new                     = pa_stream_new;
+    mal_pa_stream_unref_proc                    _pa_stream_unref                   = pa_stream_unref;
+    mal_pa_stream_connect_playback_proc         _pa_stream_connect_playback        = pa_stream_connect_playback;
+    mal_pa_stream_connect_record_proc           _pa_stream_connect_record          = pa_stream_connect_record;
+    mal_pa_stream_disconnect_proc               _pa_stream_disconnect              = pa_stream_disconnect;
+    mal_pa_stream_get_state_proc                _pa_stream_get_state               = pa_stream_get_state;
+    mal_pa_stream_get_sample_spec_proc          _pa_stream_get_sample_spec         = pa_stream_get_sample_spec;
+    mal_pa_stream_get_channel_map_proc          _pa_stream_get_channel_map         = pa_stream_get_channel_map;
+    mal_pa_stream_get_buffer_attr_proc          _pa_stream_get_buffer_attr         = pa_stream_get_buffer_attr;
+    mal_pa_stream_get_device_name_proc          _pa_stream_get_device_name         = pa_stream_get_device_name;
+    mal_pa_stream_set_write_callback_proc       _pa_stream_set_write_callback      = pa_stream_set_write_callback;
+    mal_pa_stream_set_read_callback_proc        _pa_stream_set_read_callback       = pa_stream_set_read_callback;
+    mal_pa_stream_flush_proc                    _pa_stream_flush                   = pa_stream_flush;
+    mal_pa_stream_drain_proc                    _pa_stream_drain                   = pa_stream_drain;
+    mal_pa_stream_cork_proc                     _pa_stream_cork                    = pa_stream_cork;
+    mal_pa_stream_trigger_proc                  _pa_stream_trigger                 = pa_stream_trigger;
+    mal_pa_stream_begin_write_proc              _pa_stream_begin_write             = pa_stream_begin_write;
+    mal_pa_stream_write_proc                    _pa_stream_write                   = pa_stream_write;
+    mal_pa_stream_peek_proc                     _pa_stream_peek                    = pa_stream_peek;
+    mal_pa_stream_drop_proc                     _pa_stream_drop                    = pa_stream_drop;
+
+    pContext->pulse.pa_mainloop_new                    = (mal_proc)_pa_mainloop_new;
+    pContext->pulse.pa_mainloop_free                   = (mal_proc)_pa_mainloop_free;
+    pContext->pulse.pa_mainloop_get_api                = (mal_proc)_pa_mainloop_get_api;
+    pContext->pulse.pa_mainloop_iterate                = (mal_proc)_pa_mainloop_iterate;
+    pContext->pulse.pa_mainloop_wakeup                 = (mal_proc)_pa_mainloop_wakeup;
+    pContext->pulse.pa_context_new                     = (mal_proc)_pa_context_new;
+    pContext->pulse.pa_context_unref                   = (mal_proc)_pa_context_unref;
+    pContext->pulse.pa_context_connect                 = (mal_proc)_pa_context_connect;
+    pContext->pulse.pa_context_disconnect              = (mal_proc)_pa_context_disconnect;
+    pContext->pulse.pa_context_set_state_callback      = (mal_proc)_pa_context_set_state_callback;
+    pContext->pulse.pa_context_get_state               = (mal_proc)_pa_context_get_state;
+    pContext->pulse.pa_context_get_sink_info_list      = (mal_proc)_pa_context_get_sink_info_list;
+    pContext->pulse.pa_context_get_source_info_list    = (mal_proc)_pa_context_get_source_info_list;
+    pContext->pulse.pa_context_get_sink_info_by_name   = (mal_proc)_pa_context_get_sink_info_by_name;
+    pContext->pulse.pa_context_get_source_info_by_name = (mal_proc)_pa_context_get_source_info_by_name;
+    pContext->pulse.pa_operation_unref                 = (mal_proc)_pa_operation_unref;
+    pContext->pulse.pa_operation_get_state             = (mal_proc)_pa_operation_get_state;
+    pContext->pulse.pa_channel_map_init_extend         = (mal_proc)_pa_channel_map_init_extend;
+    pContext->pulse.pa_channel_map_valid               = (mal_proc)_pa_channel_map_valid;
+    pContext->pulse.pa_channel_map_compatible          = (mal_proc)_pa_channel_map_compatible;
+    pContext->pulse.pa_stream_new                      = (mal_proc)_pa_stream_new;
+    pContext->pulse.pa_stream_unref                    = (mal_proc)_pa_stream_unref;
+    pContext->pulse.pa_stream_connect_playback         = (mal_proc)_pa_stream_connect_playback;
+    pContext->pulse.pa_stream_connect_record           = (mal_proc)_pa_stream_connect_record;
+    pContext->pulse.pa_stream_disconnect               = (mal_proc)_pa_stream_disconnect;
+    pContext->pulse.pa_stream_get_state                = (mal_proc)_pa_stream_get_state;
+    pContext->pulse.pa_stream_get_sample_spec          = (mal_proc)_pa_stream_get_sample_spec;
+    pContext->pulse.pa_stream_get_channel_map          = (mal_proc)_pa_stream_get_channel_map;
+    pContext->pulse.pa_stream_get_buffer_attr          = (mal_proc)_pa_stream_get_buffer_attr;
+    pContext->pulse.pa_stream_get_device_name          = (mal_proc)_pa_stream_get_device_name;
+    pContext->pulse.pa_stream_set_write_callback       = (mal_proc)_pa_stream_set_write_callback;
+    pContext->pulse.pa_stream_set_read_callback        = (mal_proc)_pa_stream_set_read_callback;
+    pContext->pulse.pa_stream_flush                    = (mal_proc)_pa_stream_flush;
+    pContext->pulse.pa_stream_drain                    = (mal_proc)_pa_stream_drain;
+    pContext->pulse.pa_stream_cork                     = (mal_proc)_pa_stream_cork;
+    pContext->pulse.pa_stream_trigger                  = (mal_proc)_pa_stream_trigger;
+    pContext->pulse.pa_stream_begin_write              = (mal_proc)_pa_stream_begin_write;
+    pContext->pulse.pa_stream_write                    = (mal_proc)_pa_stream_write;
+    pContext->pulse.pa_stream_peek                     = (mal_proc)_pa_stream_peek;
+    pContext->pulse.pa_stream_drop                     = (mal_proc)_pa_stream_drop;
+#endif
+
+    pContext->onUninit              = mal_context_uninit__pulse;
+    pContext->onDeviceIDEqual       = mal_context_is_device_id_equal__pulse;
+    pContext->onEnumDevices         = mal_context_enumerate_devices__pulse;
+    pContext->onGetDeviceInfo       = mal_context_get_device_info__pulse;
+    pContext->onDeviceInit          = mal_device_init__pulse;
+    pContext->onDeviceUninit        = mal_device_uninit__pulse;
+    pContext->onDeviceStart         = mal_device__start_backend__pulse;
+    pContext->onDeviceStop          = mal_device__stop_backend__pulse;
+    pContext->onDeviceBreakMainLoop = mal_device__break_main_loop__pulse;
+    pContext->onDeviceMainLoop      = mal_device__main_loop__pulse;
+
+    
+    // Although we have found the libpulse library, it doesn't necessarily mean PulseAudio is useable. We need to initialize
+    // and connect a dummy PulseAudio context to test PulseAudio's usability.
+    mal_pa_mainloop* pMainLoop = ((mal_pa_mainloop_new_proc)pContext->pulse.pa_mainloop_new)();
+    if (pMainLoop == NULL) {
+        return MAL_NO_BACKEND;
+    }
+
+    mal_pa_mainloop_api* pAPI = ((mal_pa_mainloop_get_api_proc)pContext->pulse.pa_mainloop_get_api)(pMainLoop);
+    if (pAPI == NULL) {
+        ((mal_pa_mainloop_free_proc)pContext->pulse.pa_mainloop_free)(pMainLoop);
+        return MAL_NO_BACKEND;
+    }
+
+    mal_pa_context* pPulseContext = ((mal_pa_context_new_proc)pContext->pulse.pa_context_new)(pAPI, pContext->config.pulse.pApplicationName);
+    if (pPulseContext == NULL) {
+        ((mal_pa_mainloop_free_proc)pContext->pulse.pa_mainloop_free)(pMainLoop);
+        return MAL_NO_BACKEND;
+    }
+
+    int error = ((mal_pa_context_connect_proc)pContext->pulse.pa_context_connect)(pPulseContext, pContext->config.pulse.pServerName, 0, NULL);
+    if (error != MAL_PA_OK) {
+        ((mal_pa_context_unref_proc)pContext->pulse.pa_context_unref)(pPulseContext);
+        ((mal_pa_mainloop_free_proc)pContext->pulse.pa_mainloop_free)(pMainLoop);
+        return MAL_NO_BACKEND;
+    }
+
+    ((mal_pa_context_disconnect_proc)pContext->pulse.pa_context_disconnect)(pPulseContext);
+    ((mal_pa_context_unref_proc)pContext->pulse.pa_context_unref)(pPulseContext);
+    ((mal_pa_mainloop_free_proc)pContext->pulse.pa_mainloop_free)(pMainLoop);
+    return MAL_SUCCESS;
+}
 #endif
 
 
@@ -12291,114 +12359,6 @@ mal_result mal_context_get_device_info__jack(mal_context* pContext, mal_device_t
     return MAL_SUCCESS;
 }
 
-mal_result mal_context_init__jack(mal_context* pContext)
-{
-    mal_assert(pContext != NULL);
-
-#ifndef MAL_NO_RUNTIME_LINKING
-    // libjack.so
-    const char* libjackNames[] = {
-#ifdef MAL_WIN32
-        "libjack.dll"
-#else
-        "libjack.so",
-        "libjack.so.0"
-#endif
-    };
-
-    for (size_t i = 0; i < mal_countof(libjackNames); ++i) {
-        pContext->jack.jackSO = mal_dlopen(libjackNames[i]);
-        if (pContext->jack.jackSO != NULL) {
-            break;
-        }
-    }
-
-    if (pContext->jack.jackSO == NULL) {
-        return MAL_NO_BACKEND;
-    }
-
-    pContext->jack.jack_client_open              = (mal_proc)mal_dlsym(pContext->jack.jackSO, "jack_client_open");
-    pContext->jack.jack_client_close             = (mal_proc)mal_dlsym(pContext->jack.jackSO, "jack_client_close");
-    pContext->jack.jack_client_name_size         = (mal_proc)mal_dlsym(pContext->jack.jackSO, "jack_client_name_size");
-    pContext->jack.jack_set_process_callback     = (mal_proc)mal_dlsym(pContext->jack.jackSO, "jack_set_process_callback");
-    pContext->jack.jack_set_buffer_size_callback = (mal_proc)mal_dlsym(pContext->jack.jackSO, "jack_set_buffer_size_callback");
-    pContext->jack.jack_on_shutdown              = (mal_proc)mal_dlsym(pContext->jack.jackSO, "jack_on_shutdown");
-    pContext->jack.jack_get_sample_rate          = (mal_proc)mal_dlsym(pContext->jack.jackSO, "jack_get_sample_rate");
-    pContext->jack.jack_get_buffer_size          = (mal_proc)mal_dlsym(pContext->jack.jackSO, "jack_get_buffer_size");
-    pContext->jack.jack_get_ports                = (mal_proc)mal_dlsym(pContext->jack.jackSO, "jack_get_ports");
-    pContext->jack.jack_activate                 = (mal_proc)mal_dlsym(pContext->jack.jackSO, "jack_activate");
-    pContext->jack.jack_deactivate               = (mal_proc)mal_dlsym(pContext->jack.jackSO, "jack_deactivate");
-    pContext->jack.jack_connect                  = (mal_proc)mal_dlsym(pContext->jack.jackSO, "jack_connect");
-    pContext->jack.jack_port_register            = (mal_proc)mal_dlsym(pContext->jack.jackSO, "jack_port_register");
-    pContext->jack.jack_port_name                = (mal_proc)mal_dlsym(pContext->jack.jackSO, "jack_port_name");
-    pContext->jack.jack_port_get_buffer          = (mal_proc)mal_dlsym(pContext->jack.jackSO, "jack_port_get_buffer");
-    pContext->jack.jack_free                     = (mal_proc)mal_dlsym(pContext->jack.jackSO, "jack_free");
-#else
-    // This strange assignment system is here just to ensure type safety of mini_al's function pointer
-    // types. If anything differs slightly the compiler should throw a warning.
-    mal_jack_client_open_proc              _jack_client_open              = jack_client_open;
-    mal_jack_client_close_proc             _jack_client_close             = jack_client_close;
-    mal_jack_client_name_size_proc         _jack_client_name_size         = jack_client_name_size;
-    mal_jack_set_process_callback_proc     _jack_set_process_callback     = jack_set_process_callback;
-    mal_jack_set_buffer_size_callback_proc _jack_set_buffer_size_callback = jack_set_buffer_size_callback;
-    mal_jack_on_shutdown_proc              _jack_on_shutdown              = jack_on_shutdown;
-    mal_jack_get_sample_rate_proc          _jack_get_sample_rate          = jack_get_sample_rate;
-    mal_jack_get_buffer_size_proc          _jack_get_buffer_size          = jack_get_buffer_size;
-    mal_jack_get_ports_proc                _jack_get_ports                = jack_get_ports;
-    mal_jack_activate_proc                 _jack_activate                 = jack_activate;
-    mal_jack_deactivate_proc               _jack_deactivate               = jack_deactivate;
-    mal_jack_connect_proc                  _jack_connect                  = jack_connect;
-    mal_jack_port_register_proc            _jack_port_register            = jack_port_register;
-    mal_jack_port_name_proc                _jack_port_name                = jack_port_name;
-    mal_jack_port_get_buffer_proc          _jack_port_get_buffer          = jack_port_get_buffer;
-    mal_jack_free_proc                     _jack_free                     = jack_free;
-
-    pContext->jack.jack_client_open              = (mal_proc)_jack_client_open;
-    pContext->jack.jack_client_close             = (mal_proc)_jack_client_close;
-    pContext->jack.jack_client_name_size         = (mal_proc)_jack_client_name_size;
-    pContext->jack.jack_set_process_callback     = (mal_proc)_jack_set_process_callback;
-    pContext->jack.jack_set_buffer_size_callback = (mal_proc)_jack_set_buffer_size_callback;
-    pContext->jack.jack_on_shutdown              = (mal_proc)_jack_on_shutdown;
-    pContext->jack.jack_get_sample_rate          = (mal_proc)_jack_get_sample_rate;
-    pContext->jack.jack_get_buffer_size          = (mal_proc)_jack_get_buffer_size;
-    pContext->jack.jack_get_ports                = (mal_proc)_jack_get_ports;
-    pContext->jack.jack_activate                 = (mal_proc)_jack_activate;
-    pContext->jack.jack_deactivate               = (mal_proc)_jack_deactivate;
-    pContext->jack.jack_connect                  = (mal_proc)_jack_connect;
-    pContext->jack.jack_port_register            = (mal_proc)_jack_port_register;
-    pContext->jack.jack_port_name                = (mal_proc)_jack_port_name;
-    pContext->jack.jack_port_get_buffer          = (mal_proc)_jack_port_get_buffer;
-    pContext->jack.jack_free                     = (mal_proc)_jack_free;
-#endif
-
-    pContext->onDeviceIDEqual = mal_context_is_device_id_equal__jack;
-    pContext->onEnumDevices   = mal_context_enumerate_devices__jack;
-    pContext->onGetDeviceInfo = mal_context_get_device_info__jack;
-
-
-    // Getting here means the JACK library is installed, but it doesn't necessarily mean it's usable. We need to quickly test this by connecting
-    // a temporary client.
-    mal_jack_client_t* pDummyClient;
-    mal_result result = mal_context_open_client__jack(pContext, &pDummyClient);
-    if (result != MAL_SUCCESS) {
-        return MAL_NO_BACKEND;
-    }
-
-    ((mal_jack_client_close_proc)pContext->jack.jack_client_close)((mal_jack_client_t*)pDummyClient);
-    return MAL_SUCCESS;
-}
-
-mal_result mal_context_uninit__jack(mal_context* pContext)
-{
-    mal_assert(pContext != NULL);
-    mal_assert(pContext->backend == mal_backend_jack);
-
-#ifndef MAL_NO_RUNTIME_LINKING
-    mal_dlclose(pContext->jack.jackSO);
-#endif
-
-    return MAL_SUCCESS;
-}
 
 void mal_device_uninit__jack(mal_device* pDevice)
 {
@@ -12482,7 +12442,7 @@ int mal_device__jack_process_callback(mal_jack_nframes_t frameCount, void* pUser
     return 0;
 }
 
-mal_result mal_device_init__jack(mal_context* pContext, mal_device_type type, mal_device_id* pDeviceID, const mal_device_config* pConfig, mal_device* pDevice)
+mal_result mal_device_init__jack(mal_context* pContext, mal_device_type type, const mal_device_id* pDeviceID, const mal_device_config* pConfig, mal_device* pDevice)
 {
     mal_assert(pContext != NULL);
     mal_assert(pConfig != NULL);
@@ -12644,6 +12604,123 @@ mal_result mal_device__stop_backend__jack(mal_device* pDevice)
         onStop(pDevice);
     }
 
+    return MAL_SUCCESS;
+}
+
+
+mal_result mal_context_uninit__jack(mal_context* pContext)
+{
+    mal_assert(pContext != NULL);
+    mal_assert(pContext->backend == mal_backend_jack);
+
+#ifndef MAL_NO_RUNTIME_LINKING
+    mal_dlclose(pContext->jack.jackSO);
+#endif
+
+    return MAL_SUCCESS;
+}
+
+mal_result mal_context_init__jack(mal_context* pContext)
+{
+    mal_assert(pContext != NULL);
+
+#ifndef MAL_NO_RUNTIME_LINKING
+    // libjack.so
+    const char* libjackNames[] = {
+#ifdef MAL_WIN32
+        "libjack.dll"
+#else
+        "libjack.so",
+        "libjack.so.0"
+#endif
+    };
+
+    for (size_t i = 0; i < mal_countof(libjackNames); ++i) {
+        pContext->jack.jackSO = mal_dlopen(libjackNames[i]);
+        if (pContext->jack.jackSO != NULL) {
+            break;
+        }
+    }
+
+    if (pContext->jack.jackSO == NULL) {
+        return MAL_NO_BACKEND;
+    }
+
+    pContext->jack.jack_client_open              = (mal_proc)mal_dlsym(pContext->jack.jackSO, "jack_client_open");
+    pContext->jack.jack_client_close             = (mal_proc)mal_dlsym(pContext->jack.jackSO, "jack_client_close");
+    pContext->jack.jack_client_name_size         = (mal_proc)mal_dlsym(pContext->jack.jackSO, "jack_client_name_size");
+    pContext->jack.jack_set_process_callback     = (mal_proc)mal_dlsym(pContext->jack.jackSO, "jack_set_process_callback");
+    pContext->jack.jack_set_buffer_size_callback = (mal_proc)mal_dlsym(pContext->jack.jackSO, "jack_set_buffer_size_callback");
+    pContext->jack.jack_on_shutdown              = (mal_proc)mal_dlsym(pContext->jack.jackSO, "jack_on_shutdown");
+    pContext->jack.jack_get_sample_rate          = (mal_proc)mal_dlsym(pContext->jack.jackSO, "jack_get_sample_rate");
+    pContext->jack.jack_get_buffer_size          = (mal_proc)mal_dlsym(pContext->jack.jackSO, "jack_get_buffer_size");
+    pContext->jack.jack_get_ports                = (mal_proc)mal_dlsym(pContext->jack.jackSO, "jack_get_ports");
+    pContext->jack.jack_activate                 = (mal_proc)mal_dlsym(pContext->jack.jackSO, "jack_activate");
+    pContext->jack.jack_deactivate               = (mal_proc)mal_dlsym(pContext->jack.jackSO, "jack_deactivate");
+    pContext->jack.jack_connect                  = (mal_proc)mal_dlsym(pContext->jack.jackSO, "jack_connect");
+    pContext->jack.jack_port_register            = (mal_proc)mal_dlsym(pContext->jack.jackSO, "jack_port_register");
+    pContext->jack.jack_port_name                = (mal_proc)mal_dlsym(pContext->jack.jackSO, "jack_port_name");
+    pContext->jack.jack_port_get_buffer          = (mal_proc)mal_dlsym(pContext->jack.jackSO, "jack_port_get_buffer");
+    pContext->jack.jack_free                     = (mal_proc)mal_dlsym(pContext->jack.jackSO, "jack_free");
+#else
+    // This strange assignment system is here just to ensure type safety of mini_al's function pointer
+    // types. If anything differs slightly the compiler should throw a warning.
+    mal_jack_client_open_proc              _jack_client_open              = jack_client_open;
+    mal_jack_client_close_proc             _jack_client_close             = jack_client_close;
+    mal_jack_client_name_size_proc         _jack_client_name_size         = jack_client_name_size;
+    mal_jack_set_process_callback_proc     _jack_set_process_callback     = jack_set_process_callback;
+    mal_jack_set_buffer_size_callback_proc _jack_set_buffer_size_callback = jack_set_buffer_size_callback;
+    mal_jack_on_shutdown_proc              _jack_on_shutdown              = jack_on_shutdown;
+    mal_jack_get_sample_rate_proc          _jack_get_sample_rate          = jack_get_sample_rate;
+    mal_jack_get_buffer_size_proc          _jack_get_buffer_size          = jack_get_buffer_size;
+    mal_jack_get_ports_proc                _jack_get_ports                = jack_get_ports;
+    mal_jack_activate_proc                 _jack_activate                 = jack_activate;
+    mal_jack_deactivate_proc               _jack_deactivate               = jack_deactivate;
+    mal_jack_connect_proc                  _jack_connect                  = jack_connect;
+    mal_jack_port_register_proc            _jack_port_register            = jack_port_register;
+    mal_jack_port_name_proc                _jack_port_name                = jack_port_name;
+    mal_jack_port_get_buffer_proc          _jack_port_get_buffer          = jack_port_get_buffer;
+    mal_jack_free_proc                     _jack_free                     = jack_free;
+
+    pContext->jack.jack_client_open              = (mal_proc)_jack_client_open;
+    pContext->jack.jack_client_close             = (mal_proc)_jack_client_close;
+    pContext->jack.jack_client_name_size         = (mal_proc)_jack_client_name_size;
+    pContext->jack.jack_set_process_callback     = (mal_proc)_jack_set_process_callback;
+    pContext->jack.jack_set_buffer_size_callback = (mal_proc)_jack_set_buffer_size_callback;
+    pContext->jack.jack_on_shutdown              = (mal_proc)_jack_on_shutdown;
+    pContext->jack.jack_get_sample_rate          = (mal_proc)_jack_get_sample_rate;
+    pContext->jack.jack_get_buffer_size          = (mal_proc)_jack_get_buffer_size;
+    pContext->jack.jack_get_ports                = (mal_proc)_jack_get_ports;
+    pContext->jack.jack_activate                 = (mal_proc)_jack_activate;
+    pContext->jack.jack_deactivate               = (mal_proc)_jack_deactivate;
+    pContext->jack.jack_connect                  = (mal_proc)_jack_connect;
+    pContext->jack.jack_port_register            = (mal_proc)_jack_port_register;
+    pContext->jack.jack_port_name                = (mal_proc)_jack_port_name;
+    pContext->jack.jack_port_get_buffer          = (mal_proc)_jack_port_get_buffer;
+    pContext->jack.jack_free                     = (mal_proc)_jack_free;
+#endif
+
+    pContext->isBackendAsynchronous = MAL_TRUE;
+
+    pContext->onUninit        = mal_context_uninit__jack;
+    pContext->onDeviceIDEqual = mal_context_is_device_id_equal__jack;
+    pContext->onEnumDevices   = mal_context_enumerate_devices__jack;
+    pContext->onGetDeviceInfo = mal_context_get_device_info__jack;
+    pContext->onDeviceInit    = mal_device_init__jack;
+    pContext->onDeviceUninit  = mal_device_uninit__jack;
+    pContext->onDeviceStart   = mal_device__start_backend__jack;
+    pContext->onDeviceStop    = mal_device__stop_backend__jack;
+
+
+    // Getting here means the JACK library is installed, but it doesn't necessarily mean it's usable. We need to quickly test this by connecting
+    // a temporary client.
+    mal_jack_client_t* pDummyClient;
+    mal_result result = mal_context_open_client__jack(pContext, &pDummyClient);
+    if (result != MAL_SUCCESS) {
+        return MAL_NO_BACKEND;
+    }
+
+    ((mal_jack_client_close_proc)pContext->jack.jack_client_close)((mal_jack_client_t*)pDummyClient);
     return MAL_SUCCESS;
 }
 #endif  // JACK
@@ -13913,104 +13990,6 @@ mal_result mal_context_get_device_info__coreaudio(mal_context* pContext, mal_dev
     return MAL_SUCCESS;
 }
 
-mal_result mal_context_init__coreaudio(mal_context* pContext)
-{
-    mal_assert(pContext != NULL);
-    
-#if !defined(MAL_NO_RUNTIME_LINKING) && !defined(MAL_APPLE_MOBILE)
-    pContext->coreaudio.hCoreFoundation = mal_dlopen("CoreFoundation.framework/CoreFoundation");
-    if (pContext->coreaudio.hCoreFoundation == NULL) {
-        return MAL_API_NOT_FOUND;
-    }
-    
-    pContext->coreaudio.CFStringGetCString             = mal_dlsym(pContext->coreaudio.hCoreFoundation, "CFStringGetCString");
-    
-    
-    pContext->coreaudio.hCoreAudio = mal_dlopen("CoreAudio.framework/CoreAudio");
-    if (pContext->coreaudio.hCoreAudio == NULL) {
-        mal_dlclose(pContext->coreaudio.hCoreFoundation);
-        return MAL_API_NOT_FOUND;
-    }
-    
-    pContext->coreaudio.AudioObjectGetPropertyData     = mal_dlsym(pContext->coreaudio.hCoreAudio, "AudioObjectGetPropertyData");
-    pContext->coreaudio.AudioObjectGetPropertyDataSize = mal_dlsym(pContext->coreaudio.hCoreAudio, "AudioObjectGetPropertyDataSize");
-    pContext->coreaudio.AudioObjectSetPropertyData     = mal_dlsym(pContext->coreaudio.hCoreAudio, "AudioObjectSetPropertyData");
-    
-    
-    // It looks like Apple has moved some APIs from AudioUnit into AudioToolbox on more recent versions of macOS. They are still
-    // defined in AudioUnit, but just in case they decide to remove them from there entirely I'm going to implement a fallback.
-    // The way it'll work is that it'll first try AudioUnit, and if the required symbols are not present there we'll fall back to
-    // AudioToolbox.
-    pContext->coreaudio.hAudioUnit = mal_dlopen("AudioUnit.framework/AudioUnit");
-    if (pContext->coreaudio.hAudioUnit == NULL) {
-        mal_dlclose(pContext->coreaudio.hCoreAudio);
-        mal_dlclose(pContext->coreaudio.hCoreFoundation);
-        return MAL_API_NOT_FOUND;
-    }
-    
-    if (mal_dlsym(pContext->coreaudio.hAudioUnit, "AudioComponentFindNext") == NULL) {
-        // Couldn't find the required symbols in AudioUnit, so fall back to AudioToolbox.
-        mal_dlclose(pContext->coreaudio.hAudioUnit);
-        pContext->coreaudio.hAudioUnit = mal_dlopen("AudioToolbox.framework/AudioToolbox");
-        if (pContext->coreaudio.hAudioUnit == NULL) {
-            mal_dlclose(pContext->coreaudio.hCoreAudio);
-            mal_dlclose(pContext->coreaudio.hCoreFoundation);
-            return MAL_API_NOT_FOUND;
-        }
-    }
-    
-    pContext->coreaudio.AudioComponentFindNext         = mal_dlsym(pContext->coreaudio.hAudioUnit, "AudioComponentFindNext");
-    pContext->coreaudio.AudioComponentInstanceDispose  = mal_dlsym(pContext->coreaudio.hAudioUnit, "AudioComponentInstanceDispose");
-    pContext->coreaudio.AudioComponentInstanceNew      = mal_dlsym(pContext->coreaudio.hAudioUnit, "AudioComponentInstanceNew");
-    pContext->coreaudio.AudioOutputUnitStart           = mal_dlsym(pContext->coreaudio.hAudioUnit, "AudioOutputUnitStart");
-    pContext->coreaudio.AudioOutputUnitStop            = mal_dlsym(pContext->coreaudio.hAudioUnit, "AudioOutputUnitStop");
-    pContext->coreaudio.AudioUnitAddPropertyListener   = mal_dlsym(pContext->coreaudio.hAudioUnit, "AudioUnitAddPropertyListener");
-    pContext->coreaudio.AudioUnitGetProperty           = mal_dlsym(pContext->coreaudio.hAudioUnit, "AudioUnitGetProperty");
-    pContext->coreaudio.AudioUnitSetProperty           = mal_dlsym(pContext->coreaudio.hAudioUnit, "AudioUnitSetProperty");
-    pContext->coreaudio.AudioUnitInitialize            = mal_dlsym(pContext->coreaudio.hAudioUnit, "AudioUnitInitialize");
-    pContext->coreaudio.AudioUnitRender                = mal_dlsym(pContext->coreaudio.hAudioUnit, "AudioUnitRender");
-#else
-    pContext->coreaudio.CFStringGetCString             = (mal_proc)CFStringGetCString;
-    
-    #if defined(MAL_APPLE_DESKTOP)
-    pContext->coreaudio.AudioObjectGetPropertyData     = (mal_proc)AudioObjectGetPropertyData;
-    pContext->coreaudio.AudioObjectGetPropertyDataSize = (mal_proc)AudioObjectGetPropertyDataSize;
-    pContext->coreaudio.AudioObjectSetPropertyData     = (mal_proc)AudioObjectSetPropertyData;
-    #endif
-    
-    pContext->coreaudio.AudioComponentFindNext         = (mal_proc)AudioComponentFindNext;
-    pContext->coreaudio.AudioComponentInstanceDispose  = (mal_proc)AudioComponentInstanceDispose;
-    pContext->coreaudio.AudioComponentInstanceNew      = (mal_proc)AudioComponentInstanceNew;
-    pContext->coreaudio.AudioOutputUnitStart           = (mal_proc)AudioOutputUnitStart;
-    pContext->coreaudio.AudioOutputUnitStop            = (mal_proc)AudioOutputUnitStop;
-    pContext->coreaudio.AudioUnitAddPropertyListener   = (mal_proc)AudioUnitAddPropertyListener;
-    pContext->coreaudio.AudioUnitGetProperty           = (mal_proc)AudioUnitGetProperty;
-    pContext->coreaudio.AudioUnitSetProperty           = (mal_proc)AudioUnitSetProperty;
-    pContext->coreaudio.AudioUnitInitialize            = (mal_proc)AudioUnitInitialize;
-    pContext->coreaudio.AudioUnitRender                = (mal_proc)AudioUnitRender;
-#endif
-    
-    pContext->onDeviceIDEqual = mal_context_is_device_id_equal__coreaudio;
-    pContext->onEnumDevices   = mal_context_enumerate_devices__coreaudio;
-    pContext->onGetDeviceInfo = mal_context_get_device_info__coreaudio;
-
-    return MAL_SUCCESS;
-}
-
-mal_result mal_context_uninit__coreaudio(mal_context* pContext)
-{
-    mal_assert(pContext != NULL);
-    mal_assert(pContext->backend == mal_backend_coreaudio);
-    
-#if !defined(MAL_NO_RUNTIME_LINKING) && !defined(MAL_APPLE_MOBILE)
-    mal_dlclose(pContext->coreaudio.hAudioUnit);
-    mal_dlclose(pContext->coreaudio.hCoreAudio);
-    mal_dlclose(pContext->coreaudio.hCoreFoundation);
-#endif
-
-    (void)pContext;
-    return MAL_SUCCESS;
-}
 
 void mal_device_uninit__coreaudio(mal_device* pDevice)
 {
@@ -14475,6 +14454,113 @@ mal_result mal_device__stop_backend__coreaudio(mal_device* pDevice)
     
     return MAL_SUCCESS;
 }
+
+
+mal_result mal_context_uninit__coreaudio(mal_context* pContext)
+{
+    mal_assert(pContext != NULL);
+    mal_assert(pContext->backend == mal_backend_coreaudio);
+    
+#if !defined(MAL_NO_RUNTIME_LINKING) && !defined(MAL_APPLE_MOBILE)
+    mal_dlclose(pContext->coreaudio.hAudioUnit);
+    mal_dlclose(pContext->coreaudio.hCoreAudio);
+    mal_dlclose(pContext->coreaudio.hCoreFoundation);
+#endif
+
+    (void)pContext;
+    return MAL_SUCCESS;
+}
+
+mal_result mal_context_init__coreaudio(mal_context* pContext)
+{
+    mal_assert(pContext != NULL);
+    
+#if !defined(MAL_NO_RUNTIME_LINKING) && !defined(MAL_APPLE_MOBILE)
+    pContext->coreaudio.hCoreFoundation = mal_dlopen("CoreFoundation.framework/CoreFoundation");
+    if (pContext->coreaudio.hCoreFoundation == NULL) {
+        return MAL_API_NOT_FOUND;
+    }
+    
+    pContext->coreaudio.CFStringGetCString             = mal_dlsym(pContext->coreaudio.hCoreFoundation, "CFStringGetCString");
+    
+    
+    pContext->coreaudio.hCoreAudio = mal_dlopen("CoreAudio.framework/CoreAudio");
+    if (pContext->coreaudio.hCoreAudio == NULL) {
+        mal_dlclose(pContext->coreaudio.hCoreFoundation);
+        return MAL_API_NOT_FOUND;
+    }
+    
+    pContext->coreaudio.AudioObjectGetPropertyData     = mal_dlsym(pContext->coreaudio.hCoreAudio, "AudioObjectGetPropertyData");
+    pContext->coreaudio.AudioObjectGetPropertyDataSize = mal_dlsym(pContext->coreaudio.hCoreAudio, "AudioObjectGetPropertyDataSize");
+    pContext->coreaudio.AudioObjectSetPropertyData     = mal_dlsym(pContext->coreaudio.hCoreAudio, "AudioObjectSetPropertyData");
+    
+    
+    // It looks like Apple has moved some APIs from AudioUnit into AudioToolbox on more recent versions of macOS. They are still
+    // defined in AudioUnit, but just in case they decide to remove them from there entirely I'm going to implement a fallback.
+    // The way it'll work is that it'll first try AudioUnit, and if the required symbols are not present there we'll fall back to
+    // AudioToolbox.
+    pContext->coreaudio.hAudioUnit = mal_dlopen("AudioUnit.framework/AudioUnit");
+    if (pContext->coreaudio.hAudioUnit == NULL) {
+        mal_dlclose(pContext->coreaudio.hCoreAudio);
+        mal_dlclose(pContext->coreaudio.hCoreFoundation);
+        return MAL_API_NOT_FOUND;
+    }
+    
+    if (mal_dlsym(pContext->coreaudio.hAudioUnit, "AudioComponentFindNext") == NULL) {
+        // Couldn't find the required symbols in AudioUnit, so fall back to AudioToolbox.
+        mal_dlclose(pContext->coreaudio.hAudioUnit);
+        pContext->coreaudio.hAudioUnit = mal_dlopen("AudioToolbox.framework/AudioToolbox");
+        if (pContext->coreaudio.hAudioUnit == NULL) {
+            mal_dlclose(pContext->coreaudio.hCoreAudio);
+            mal_dlclose(pContext->coreaudio.hCoreFoundation);
+            return MAL_API_NOT_FOUND;
+        }
+    }
+    
+    pContext->coreaudio.AudioComponentFindNext         = mal_dlsym(pContext->coreaudio.hAudioUnit, "AudioComponentFindNext");
+    pContext->coreaudio.AudioComponentInstanceDispose  = mal_dlsym(pContext->coreaudio.hAudioUnit, "AudioComponentInstanceDispose");
+    pContext->coreaudio.AudioComponentInstanceNew      = mal_dlsym(pContext->coreaudio.hAudioUnit, "AudioComponentInstanceNew");
+    pContext->coreaudio.AudioOutputUnitStart           = mal_dlsym(pContext->coreaudio.hAudioUnit, "AudioOutputUnitStart");
+    pContext->coreaudio.AudioOutputUnitStop            = mal_dlsym(pContext->coreaudio.hAudioUnit, "AudioOutputUnitStop");
+    pContext->coreaudio.AudioUnitAddPropertyListener   = mal_dlsym(pContext->coreaudio.hAudioUnit, "AudioUnitAddPropertyListener");
+    pContext->coreaudio.AudioUnitGetProperty           = mal_dlsym(pContext->coreaudio.hAudioUnit, "AudioUnitGetProperty");
+    pContext->coreaudio.AudioUnitSetProperty           = mal_dlsym(pContext->coreaudio.hAudioUnit, "AudioUnitSetProperty");
+    pContext->coreaudio.AudioUnitInitialize            = mal_dlsym(pContext->coreaudio.hAudioUnit, "AudioUnitInitialize");
+    pContext->coreaudio.AudioUnitRender                = mal_dlsym(pContext->coreaudio.hAudioUnit, "AudioUnitRender");
+#else
+    pContext->coreaudio.CFStringGetCString             = (mal_proc)CFStringGetCString;
+    
+    #if defined(MAL_APPLE_DESKTOP)
+    pContext->coreaudio.AudioObjectGetPropertyData     = (mal_proc)AudioObjectGetPropertyData;
+    pContext->coreaudio.AudioObjectGetPropertyDataSize = (mal_proc)AudioObjectGetPropertyDataSize;
+    pContext->coreaudio.AudioObjectSetPropertyData     = (mal_proc)AudioObjectSetPropertyData;
+    #endif
+    
+    pContext->coreaudio.AudioComponentFindNext         = (mal_proc)AudioComponentFindNext;
+    pContext->coreaudio.AudioComponentInstanceDispose  = (mal_proc)AudioComponentInstanceDispose;
+    pContext->coreaudio.AudioComponentInstanceNew      = (mal_proc)AudioComponentInstanceNew;
+    pContext->coreaudio.AudioOutputUnitStart           = (mal_proc)AudioOutputUnitStart;
+    pContext->coreaudio.AudioOutputUnitStop            = (mal_proc)AudioOutputUnitStop;
+    pContext->coreaudio.AudioUnitAddPropertyListener   = (mal_proc)AudioUnitAddPropertyListener;
+    pContext->coreaudio.AudioUnitGetProperty           = (mal_proc)AudioUnitGetProperty;
+    pContext->coreaudio.AudioUnitSetProperty           = (mal_proc)AudioUnitSetProperty;
+    pContext->coreaudio.AudioUnitInitialize            = (mal_proc)AudioUnitInitialize;
+    pContext->coreaudio.AudioUnitRender                = (mal_proc)AudioUnitRender;
+#endif
+
+    pContext->isBackendAsynchronous = MAL_TRUE;
+    
+    pContext->onUninit        = mal_context_uninit__coreaudio;
+    pContext->onDeviceIDEqual = mal_context_is_device_id_equal__coreaudio;
+    pContext->onEnumDevices   = mal_context_enumerate_devices__coreaudio;
+    pContext->onGetDeviceInfo = mal_context_get_device_info__coreaudio;
+    pContext->onDeviceInit    = mal_device_init__coreaudio;
+    pContext->onDeviceUninit  = mal_device_uninit__coreaudio;
+    pContext->onDeviceStart   = mal_device__start_backend__coreaudio;
+    pContext->onDeviceStop    = mal_device__stop_backend__coreaudio;
+
+    return MAL_SUCCESS;
+}
 #endif  // Core Audio
 
 
@@ -14690,44 +14776,6 @@ mal_result mal_context_get_device_info__oss(mal_context* pContext, mal_device_ty
     return MAL_SUCCESS;
 }
 
-mal_result mal_context_init__oss(mal_context* pContext)
-{
-    mal_assert(pContext != NULL);
-
-    // Try opening a temporary device first so we can get version information. This is closed at the end.
-    int fd = mal_open_temp_device__oss();
-    if (fd == -1) {
-        return mal_context_post_error(pContext, NULL, MAL_LOG_LEVEL_ERROR, "[OSS] Failed to open temporary device for retrieving system properties.", MAL_NO_BACKEND);   // Looks liks OSS isn't installed, or there are no available devices.
-    }
-
-    // Grab the OSS version.
-    int ossVersion = 0;
-    int result = ioctl(fd, OSS_GETVERSION, &ossVersion);
-    if (result == -1) {
-        close(fd);
-        return mal_context_post_error(pContext, NULL, MAL_LOG_LEVEL_ERROR, "[OSS] Failed to retrieve OSS version.", MAL_NO_BACKEND);
-    }
-
-    pContext->oss.versionMajor = ((ossVersion & 0xFF0000) >> 16);
-    pContext->oss.versionMinor = ((ossVersion & 0x00FF00) >> 8);
-
-    pContext->onDeviceIDEqual = mal_context_is_device_id_equal__oss;
-    pContext->onEnumDevices   = mal_context_enumerate_devices__oss;
-    pContext->onGetDeviceInfo = mal_context_get_device_info__oss;
-
-    close(fd);
-    return MAL_SUCCESS;
-}
-
-mal_result mal_context_uninit__oss(mal_context* pContext)
-{
-    mal_assert(pContext != NULL);
-    mal_assert(pContext->backend == mal_backend_oss);
-
-    (void)pContext;
-    return MAL_SUCCESS;
-}
-
 void mal_device_uninit__oss(mal_device* pDevice)
 {
     mal_assert(pDevice != NULL);
@@ -14736,7 +14784,7 @@ void mal_device_uninit__oss(mal_device* pDevice)
     mal_free(pDevice->oss.pIntermediaryBuffer);
 }
 
-mal_result mal_device_init__oss(mal_context* pContext, mal_device_type type, mal_device_id* pDeviceID, const mal_device_config* pConfig, mal_device* pDevice)
+mal_result mal_device_init__oss(mal_context* pContext, mal_device_type type, const mal_device_id* pDeviceID, const mal_device_config* pConfig, mal_device* pDevice)
 {
     (void)pContext;
 
@@ -14949,6 +14997,51 @@ mal_result mal_device__main_loop__oss(mal_device* pDevice)
         }
     }
 
+    return MAL_SUCCESS;
+}
+
+mal_result mal_context_uninit__oss(mal_context* pContext)
+{
+    mal_assert(pContext != NULL);
+    mal_assert(pContext->backend == mal_backend_oss);
+
+    (void)pContext;
+    return MAL_SUCCESS;
+}
+
+mal_result mal_context_init__oss(mal_context* pContext)
+{
+    mal_assert(pContext != NULL);
+
+    // Try opening a temporary device first so we can get version information. This is closed at the end.
+    int fd = mal_open_temp_device__oss();
+    if (fd == -1) {
+        return mal_context_post_error(pContext, NULL, MAL_LOG_LEVEL_ERROR, "[OSS] Failed to open temporary device for retrieving system properties.", MAL_NO_BACKEND);   // Looks liks OSS isn't installed, or there are no available devices.
+    }
+
+    // Grab the OSS version.
+    int ossVersion = 0;
+    int result = ioctl(fd, OSS_GETVERSION, &ossVersion);
+    if (result == -1) {
+        close(fd);
+        return mal_context_post_error(pContext, NULL, MAL_LOG_LEVEL_ERROR, "[OSS] Failed to retrieve OSS version.", MAL_NO_BACKEND);
+    }
+
+    pContext->oss.versionMajor = ((ossVersion & 0xFF0000) >> 16);
+    pContext->oss.versionMinor = ((ossVersion & 0x00FF00) >> 8);
+
+    pContext->onUninit              = mal_context_uninit__oss;
+    pContext->onDeviceIDEqual       = mal_context_is_device_id_equal__oss;
+    pContext->onEnumDevices         = mal_context_enumerate_devices__oss;
+    pContext->onGetDeviceInfo       = mal_context_get_device_info__oss;
+    pContext->onDeviceInit          = mal_device_init__oss;
+    pContext->onDeviceUninit        = mal_device_uninit__oss;
+    pContext->onDeviceStart         = mal_device__start_backend__oss;
+    pContext->onDeviceStop          = mal_device__stop_backend__oss;
+    pContext->onDeviceBreakMainLoop = mal_device__break_main_loop__oss;
+    pContext->onDeviceMainLoop      = mal_device__main_loop__oss;
+
+    close(fd);
     return MAL_SUCCESS;
 }
 #endif  // OSS
@@ -15310,52 +15403,6 @@ return_detailed_info:
     return MAL_SUCCESS;
 }
 
-mal_result mal_context_init__opensl(mal_context* pContext)
-{
-    mal_assert(pContext != NULL);
-    (void)pContext;
-
-    // Initialize global data first if applicable.
-    if (mal_atomic_increment_32(&g_malOpenSLInitCounter) == 1) {
-        SLresult resultSL = slCreateEngine(&g_malEngineObjectSL, 0, NULL, 0, NULL, NULL);
-        if (resultSL != SL_RESULT_SUCCESS) {
-            mal_atomic_decrement_32(&g_malOpenSLInitCounter);
-            return MAL_NO_BACKEND;
-        }
-
-        (*g_malEngineObjectSL)->Realize(g_malEngineObjectSL, SL_BOOLEAN_FALSE);
-
-        resultSL = (*g_malEngineObjectSL)->GetInterface(g_malEngineObjectSL, SL_IID_ENGINE, &g_malEngineSL);
-        if (resultSL != SL_RESULT_SUCCESS) {
-            (*g_malEngineObjectSL)->Destroy(g_malEngineObjectSL);
-            mal_atomic_decrement_32(&g_malOpenSLInitCounter);
-            return MAL_NO_BACKEND;
-        }
-    }
-
-    pContext->onDeviceIDEqual = mal_context_is_device_id_equal__opensl;
-    pContext->onEnumDevices   = mal_context_enumerate_devices__opensl;
-    pContext->onGetDeviceInfo = mal_context_get_device_info__opensl;
-
-    return MAL_SUCCESS;
-}
-
-mal_result mal_context_uninit__opensl(mal_context* pContext)
-{
-    mal_assert(pContext != NULL);
-    mal_assert(pContext->backend == mal_backend_opensl);
-    (void)pContext;
-
-    // Uninit global data.
-    if (g_malOpenSLInitCounter > 0) {
-        if (mal_atomic_decrement_32(&g_malOpenSLInitCounter) == 0) {
-            (*g_malEngineObjectSL)->Destroy(g_malEngineObjectSL);
-        }
-    }
-
-    return MAL_SUCCESS;
-}
-
 
 #ifdef MAL_ANDROID
 //void mal_buffer_queue_callback__opensl_android(SLAndroidSimpleBufferQueueItf pBufferQueue, SLuint32 eventFlags, const void* pBuffer, SLuint32 bufferSize, SLuint32 dataUsed, void* pContext)
@@ -15422,7 +15469,7 @@ void mal_device_uninit__opensl(mal_device* pDevice)
     mal_free(pDevice->opensl.pBuffer);
 }
 
-mal_result mal_device_init__opensl(mal_context* pContext, mal_device_type type, mal_device_id* pDeviceID, const mal_device_config* pConfig, mal_device* pDevice)
+mal_result mal_device_init__opensl(mal_context* pContext, mal_device_type type, const mal_device_id* pDeviceID, const mal_device_config* pConfig, mal_device* pDevice)
 {
     (void)pContext;
 
@@ -15768,6 +15815,60 @@ mal_result mal_device__stop_backend__opensl(mal_device* pDevice)
 
     return MAL_SUCCESS;
 }
+
+
+mal_result mal_context_uninit__opensl(mal_context* pContext)
+{
+    mal_assert(pContext != NULL);
+    mal_assert(pContext->backend == mal_backend_opensl);
+    (void)pContext;
+
+    // Uninit global data.
+    if (g_malOpenSLInitCounter > 0) {
+        if (mal_atomic_decrement_32(&g_malOpenSLInitCounter) == 0) {
+            (*g_malEngineObjectSL)->Destroy(g_malEngineObjectSL);
+        }
+    }
+
+    return MAL_SUCCESS;
+}
+
+mal_result mal_context_init__opensl(mal_context* pContext)
+{
+    mal_assert(pContext != NULL);
+    (void)pContext;
+
+    // Initialize global data first if applicable.
+    if (mal_atomic_increment_32(&g_malOpenSLInitCounter) == 1) {
+        SLresult resultSL = slCreateEngine(&g_malEngineObjectSL, 0, NULL, 0, NULL, NULL);
+        if (resultSL != SL_RESULT_SUCCESS) {
+            mal_atomic_decrement_32(&g_malOpenSLInitCounter);
+            return MAL_NO_BACKEND;
+        }
+
+        (*g_malEngineObjectSL)->Realize(g_malEngineObjectSL, SL_BOOLEAN_FALSE);
+
+        resultSL = (*g_malEngineObjectSL)->GetInterface(g_malEngineObjectSL, SL_IID_ENGINE, &g_malEngineSL);
+        if (resultSL != SL_RESULT_SUCCESS) {
+            (*g_malEngineObjectSL)->Destroy(g_malEngineObjectSL);
+            mal_atomic_decrement_32(&g_malOpenSLInitCounter);
+            return MAL_NO_BACKEND;
+        }
+    }
+
+    pContext->isBackendAsynchronous = MAL_TRUE;
+
+    pContext->onUninit        = mal_context_uninit__opensl;
+    pContext->onDeviceIDEqual = mal_context_is_device_id_equal__opensl;
+    pContext->onEnumDevices   = mal_context_enumerate_devices__opensl;
+    pContext->onGetDeviceInfo = mal_context_get_device_info__opensl;
+    pContext->onDeviceInit    = mal_device_init__opensl;
+    pContext->onDeviceUninit  = mal_device_uninit__opensl;
+    pContext->onDeviceStart   = mal_device__start_backend__opensl;
+    pContext->onDeviceStop    = mal_device__stop_backend__opensl;
+
+    return MAL_SUCCESS;
+}
 #endif  // OpenSL|ES
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -16110,223 +16211,10 @@ mal_result mal_context_get_device_info__openal(mal_context* pContext, mal_device
     return MAL_SUCCESS;
 }
 
-mal_result mal_context_init__openal(mal_context* pContext)
-{
-    mal_assert(pContext != NULL);
-
-#ifndef MAL_NO_RUNTIME_LINKING
-    const char* libNames[] = {
-#if defined(MAL_WIN32)
-        "OpenAL32.dll",
-        "soft_oal.dll"
-#endif
-#if defined(MAL_UNIX) && !defined(MAL_APPLE)
-        "libopenal.so",
-        "libopenal.so.1"
-#endif
-#if defined(MAL_APPLE)
-        "OpenAL.framework/OpenAL"
-#endif
-    };
-
-    for (size_t i = 0; i < mal_countof(libNames); ++i) {
-        pContext->openal.hOpenAL = mal_dlopen(libNames[i]);
-        if (pContext->openal.hOpenAL != NULL) {
-            break;
-        }
-    }
-
-    if (pContext->openal.hOpenAL == NULL) {
-        return MAL_FAILED_TO_INIT_BACKEND;
-    }
-
-    pContext->openal.alcCreateContext       = (mal_proc)mal_dlsym(pContext->openal.hOpenAL, "alcCreateContext");
-    pContext->openal.alcMakeContextCurrent  = (mal_proc)mal_dlsym(pContext->openal.hOpenAL, "alcMakeContextCurrent");
-    pContext->openal.alcProcessContext      = (mal_proc)mal_dlsym(pContext->openal.hOpenAL, "alcProcessContext");
-    pContext->openal.alcSuspendContext      = (mal_proc)mal_dlsym(pContext->openal.hOpenAL, "alcSuspendContext");
-    pContext->openal.alcDestroyContext      = (mal_proc)mal_dlsym(pContext->openal.hOpenAL, "alcDestroyContext");
-    pContext->openal.alcGetCurrentContext   = (mal_proc)mal_dlsym(pContext->openal.hOpenAL, "alcGetCurrentContext");
-    pContext->openal.alcGetContextsDevice   = (mal_proc)mal_dlsym(pContext->openal.hOpenAL, "alcGetContextsDevice");
-    pContext->openal.alcOpenDevice          = (mal_proc)mal_dlsym(pContext->openal.hOpenAL, "alcOpenDevice");
-    pContext->openal.alcCloseDevice         = (mal_proc)mal_dlsym(pContext->openal.hOpenAL, "alcCloseDevice");
-    pContext->openal.alcGetError            = (mal_proc)mal_dlsym(pContext->openal.hOpenAL, "alcGetError");
-    pContext->openal.alcIsExtensionPresent  = (mal_proc)mal_dlsym(pContext->openal.hOpenAL, "alcIsExtensionPresent");
-    pContext->openal.alcGetProcAddress      = (mal_proc)mal_dlsym(pContext->openal.hOpenAL, "alcGetProcAddress");
-    pContext->openal.alcGetEnumValue        = (mal_proc)mal_dlsym(pContext->openal.hOpenAL, "alcGetEnumValue");
-    pContext->openal.alcGetString           = (mal_proc)mal_dlsym(pContext->openal.hOpenAL, "alcGetString");
-    pContext->openal.alcGetIntegerv         = (mal_proc)mal_dlsym(pContext->openal.hOpenAL, "alcGetIntegerv");
-    pContext->openal.alcCaptureOpenDevice   = (mal_proc)mal_dlsym(pContext->openal.hOpenAL, "alcCaptureOpenDevice");
-    pContext->openal.alcCaptureCloseDevice  = (mal_proc)mal_dlsym(pContext->openal.hOpenAL, "alcCaptureCloseDevice");
-    pContext->openal.alcCaptureStart        = (mal_proc)mal_dlsym(pContext->openal.hOpenAL, "alcCaptureStart");
-    pContext->openal.alcCaptureStop         = (mal_proc)mal_dlsym(pContext->openal.hOpenAL, "alcCaptureStop");
-    pContext->openal.alcCaptureSamples      = (mal_proc)mal_dlsym(pContext->openal.hOpenAL, "alcCaptureSamples");
-
-    pContext->openal.alEnable               = (mal_proc)mal_dlsym(pContext->openal.hOpenAL, "alEnable");
-    pContext->openal.alDisable              = (mal_proc)mal_dlsym(pContext->openal.hOpenAL, "alDisable");
-    pContext->openal.alIsEnabled            = (mal_proc)mal_dlsym(pContext->openal.hOpenAL, "alIsEnabled");
-    pContext->openal.alGetString            = (mal_proc)mal_dlsym(pContext->openal.hOpenAL, "alGetString");
-    pContext->openal.alGetBooleanv          = (mal_proc)mal_dlsym(pContext->openal.hOpenAL, "alGetBooleanv");
-    pContext->openal.alGetIntegerv          = (mal_proc)mal_dlsym(pContext->openal.hOpenAL, "alGetIntegerv");
-    pContext->openal.alGetFloatv            = (mal_proc)mal_dlsym(pContext->openal.hOpenAL, "alGetFloatv");
-    pContext->openal.alGetDoublev           = (mal_proc)mal_dlsym(pContext->openal.hOpenAL, "alGetDoublev");
-    pContext->openal.alGetBoolean           = (mal_proc)mal_dlsym(pContext->openal.hOpenAL, "alGetBoolean");
-    pContext->openal.alGetInteger           = (mal_proc)mal_dlsym(pContext->openal.hOpenAL, "alGetInteger");
-    pContext->openal.alGetFloat             = (mal_proc)mal_dlsym(pContext->openal.hOpenAL, "alGetFloat");
-    pContext->openal.alGetDouble            = (mal_proc)mal_dlsym(pContext->openal.hOpenAL, "alGetDouble");
-    pContext->openal.alGetError             = (mal_proc)mal_dlsym(pContext->openal.hOpenAL, "alGetError");
-    pContext->openal.alIsExtensionPresent   = (mal_proc)mal_dlsym(pContext->openal.hOpenAL, "alIsExtensionPresent");
-    pContext->openal.alGetProcAddress       = (mal_proc)mal_dlsym(pContext->openal.hOpenAL, "alGetProcAddress");
-    pContext->openal.alGetEnumValue         = (mal_proc)mal_dlsym(pContext->openal.hOpenAL, "alGetEnumValue");
-    pContext->openal.alGenSources           = (mal_proc)mal_dlsym(pContext->openal.hOpenAL, "alGenSources");
-    pContext->openal.alDeleteSources        = (mal_proc)mal_dlsym(pContext->openal.hOpenAL, "alDeleteSources");
-    pContext->openal.alIsSource             = (mal_proc)mal_dlsym(pContext->openal.hOpenAL, "alIsSource");
-    pContext->openal.alSourcef              = (mal_proc)mal_dlsym(pContext->openal.hOpenAL, "alSourcef");
-    pContext->openal.alSource3f             = (mal_proc)mal_dlsym(pContext->openal.hOpenAL, "alSource3f");
-    pContext->openal.alSourcefv             = (mal_proc)mal_dlsym(pContext->openal.hOpenAL, "alSourcefv");
-    pContext->openal.alSourcei              = (mal_proc)mal_dlsym(pContext->openal.hOpenAL, "alSourcei");
-    pContext->openal.alSource3i             = (mal_proc)mal_dlsym(pContext->openal.hOpenAL, "alSource3i");
-    pContext->openal.alSourceiv             = (mal_proc)mal_dlsym(pContext->openal.hOpenAL, "alSourceiv");
-    pContext->openal.alGetSourcef           = (mal_proc)mal_dlsym(pContext->openal.hOpenAL, "alGetSourcef");
-    pContext->openal.alGetSource3f          = (mal_proc)mal_dlsym(pContext->openal.hOpenAL, "alGetSource3f");
-    pContext->openal.alGetSourcefv          = (mal_proc)mal_dlsym(pContext->openal.hOpenAL, "alGetSourcefv");
-    pContext->openal.alGetSourcei           = (mal_proc)mal_dlsym(pContext->openal.hOpenAL, "alGetSourcei");
-    pContext->openal.alGetSource3i          = (mal_proc)mal_dlsym(pContext->openal.hOpenAL, "alGetSource3i");
-    pContext->openal.alGetSourceiv          = (mal_proc)mal_dlsym(pContext->openal.hOpenAL, "alGetSourceiv");
-    pContext->openal.alSourcePlayv          = (mal_proc)mal_dlsym(pContext->openal.hOpenAL, "alSourcePlayv");
-    pContext->openal.alSourceStopv          = (mal_proc)mal_dlsym(pContext->openal.hOpenAL, "alSourceStopv");
-    pContext->openal.alSourceRewindv        = (mal_proc)mal_dlsym(pContext->openal.hOpenAL, "alSourceRewindv");
-    pContext->openal.alSourcePausev         = (mal_proc)mal_dlsym(pContext->openal.hOpenAL, "alSourcePausev");
-    pContext->openal.alSourcePlay           = (mal_proc)mal_dlsym(pContext->openal.hOpenAL, "alSourcePlay");
-    pContext->openal.alSourceStop           = (mal_proc)mal_dlsym(pContext->openal.hOpenAL, "alSourceStop");
-    pContext->openal.alSourceRewind         = (mal_proc)mal_dlsym(pContext->openal.hOpenAL, "alSourceRewind");
-    pContext->openal.alSourcePause          = (mal_proc)mal_dlsym(pContext->openal.hOpenAL, "alSourcePause");
-    pContext->openal.alSourceQueueBuffers   = (mal_proc)mal_dlsym(pContext->openal.hOpenAL, "alSourceQueueBuffers");
-    pContext->openal.alSourceUnqueueBuffers = (mal_proc)mal_dlsym(pContext->openal.hOpenAL, "alSourceUnqueueBuffers");
-    pContext->openal.alGenBuffers           = (mal_proc)mal_dlsym(pContext->openal.hOpenAL, "alGenBuffers");
-    pContext->openal.alDeleteBuffers        = (mal_proc)mal_dlsym(pContext->openal.hOpenAL, "alDeleteBuffers");
-    pContext->openal.alIsBuffer             = (mal_proc)mal_dlsym(pContext->openal.hOpenAL, "alIsBuffer");
-    pContext->openal.alBufferData           = (mal_proc)mal_dlsym(pContext->openal.hOpenAL, "alBufferData");
-    pContext->openal.alBufferf              = (mal_proc)mal_dlsym(pContext->openal.hOpenAL, "alBufferf");
-    pContext->openal.alBuffer3f             = (mal_proc)mal_dlsym(pContext->openal.hOpenAL, "alBuffer3f");
-    pContext->openal.alBufferfv             = (mal_proc)mal_dlsym(pContext->openal.hOpenAL, "alBufferfv");
-    pContext->openal.alBufferi              = (mal_proc)mal_dlsym(pContext->openal.hOpenAL, "alBufferi");
-    pContext->openal.alBuffer3i             = (mal_proc)mal_dlsym(pContext->openal.hOpenAL, "alBuffer3i");
-    pContext->openal.alBufferiv             = (mal_proc)mal_dlsym(pContext->openal.hOpenAL, "alBufferiv");
-    pContext->openal.alGetBufferf           = (mal_proc)mal_dlsym(pContext->openal.hOpenAL, "alGetBufferf");
-    pContext->openal.alGetBuffer3f          = (mal_proc)mal_dlsym(pContext->openal.hOpenAL, "alGetBuffer3f");
-    pContext->openal.alGetBufferfv          = (mal_proc)mal_dlsym(pContext->openal.hOpenAL, "alGetBufferfv");
-    pContext->openal.alGetBufferi           = (mal_proc)mal_dlsym(pContext->openal.hOpenAL, "alGetBufferi");
-    pContext->openal.alGetBuffer3i          = (mal_proc)mal_dlsym(pContext->openal.hOpenAL, "alGetBuffer3i");
-    pContext->openal.alGetBufferiv          = (mal_proc)mal_dlsym(pContext->openal.hOpenAL, "alGetBufferiv");
-#else
-    pContext->openal.alcCreateContext       = (mal_proc)alcCreateContext;
-    pContext->openal.alcMakeContextCurrent  = (mal_proc)alcMakeContextCurrent;
-    pContext->openal.alcProcessContext      = (mal_proc)alcProcessContext;
-    pContext->openal.alcSuspendContext      = (mal_proc)alcSuspendContext;
-    pContext->openal.alcDestroyContext      = (mal_proc)alcDestroyContext;
-    pContext->openal.alcGetCurrentContext   = (mal_proc)alcGetCurrentContext;
-    pContext->openal.alcGetContextsDevice   = (mal_proc)alcGetContextsDevice;
-    pContext->openal.alcOpenDevice          = (mal_proc)alcOpenDevice;
-    pContext->openal.alcCloseDevice         = (mal_proc)alcCloseDevice;
-    pContext->openal.alcGetError            = (mal_proc)alcGetError;
-    pContext->openal.alcIsExtensionPresent  = (mal_proc)alcIsExtensionPresent;
-    pContext->openal.alcGetProcAddress      = (mal_proc)alcGetProcAddress;
-    pContext->openal.alcGetEnumValue        = (mal_proc)alcGetEnumValue;
-    pContext->openal.alcGetString           = (mal_proc)alcGetString;
-    pContext->openal.alcGetIntegerv         = (mal_proc)alcGetIntegerv;
-    pContext->openal.alcCaptureOpenDevice   = (mal_proc)alcCaptureOpenDevice;
-    pContext->openal.alcCaptureCloseDevice  = (mal_proc)alcCaptureCloseDevice;
-    pContext->openal.alcCaptureStart        = (mal_proc)alcCaptureStart;
-    pContext->openal.alcCaptureStop         = (mal_proc)alcCaptureStop;
-    pContext->openal.alcCaptureSamples      = (mal_proc)alcCaptureSamples;
-
-    pContext->openal.alEnable               = (mal_proc)alEnable;
-    pContext->openal.alDisable              = (mal_proc)alDisable;
-    pContext->openal.alIsEnabled            = (mal_proc)alIsEnabled;
-    pContext->openal.alGetString            = (mal_proc)alGetString;
-    pContext->openal.alGetBooleanv          = (mal_proc)alGetBooleanv;
-    pContext->openal.alGetIntegerv          = (mal_proc)alGetIntegerv;
-    pContext->openal.alGetFloatv            = (mal_proc)alGetFloatv;
-    pContext->openal.alGetDoublev           = (mal_proc)alGetDoublev;
-    pContext->openal.alGetBoolean           = (mal_proc)alGetBoolean;
-    pContext->openal.alGetInteger           = (mal_proc)alGetInteger;
-    pContext->openal.alGetFloat             = (mal_proc)alGetFloat;
-    pContext->openal.alGetDouble            = (mal_proc)alGetDouble;
-    pContext->openal.alGetError             = (mal_proc)alGetError;
-    pContext->openal.alIsExtensionPresent   = (mal_proc)alIsExtensionPresent;
-    pContext->openal.alGetProcAddress       = (mal_proc)alGetProcAddress;
-    pContext->openal.alGetEnumValue         = (mal_proc)alGetEnumValue;
-    pContext->openal.alGenSources           = (mal_proc)alGenSources;
-    pContext->openal.alDeleteSources        = (mal_proc)alDeleteSources;
-    pContext->openal.alIsSource             = (mal_proc)alIsSource;
-    pContext->openal.alSourcef              = (mal_proc)alSourcef;
-    pContext->openal.alSource3f             = (mal_proc)alSource3f;
-    pContext->openal.alSourcefv             = (mal_proc)alSourcefv;
-    pContext->openal.alSourcei              = (mal_proc)alSourcei;
-    pContext->openal.alSource3i             = (mal_proc)alSource3i;
-    pContext->openal.alSourceiv             = (mal_proc)alSourceiv;
-    pContext->openal.alGetSourcef           = (mal_proc)alGetSourcef;
-    pContext->openal.alGetSource3f          = (mal_proc)alGetSource3f;
-    pContext->openal.alGetSourcefv          = (mal_proc)alGetSourcefv;
-    pContext->openal.alGetSourcei           = (mal_proc)alGetSourcei;
-    pContext->openal.alGetSource3i          = (mal_proc)alGetSource3i;
-    pContext->openal.alGetSourceiv          = (mal_proc)alGetSourceiv;
-    pContext->openal.alSourcePlayv          = (mal_proc)alSourcePlayv;
-    pContext->openal.alSourceStopv          = (mal_proc)alSourceStopv;
-    pContext->openal.alSourceRewindv        = (mal_proc)alSourceRewindv;
-    pContext->openal.alSourcePausev         = (mal_proc)alSourcePausev;
-    pContext->openal.alSourcePlay           = (mal_proc)alSourcePlay;
-    pContext->openal.alSourceStop           = (mal_proc)alSourceStop;
-    pContext->openal.alSourceRewind         = (mal_proc)alSourceRewind;
-    pContext->openal.alSourcePause          = (mal_proc)alSourcePause;
-    pContext->openal.alSourceQueueBuffers   = (mal_proc)alSourceQueueBuffers;
-    pContext->openal.alSourceUnqueueBuffers = (mal_proc)alSourceUnqueueBuffers;
-    pContext->openal.alGenBuffers           = (mal_proc)alGenBuffers;
-    pContext->openal.alDeleteBuffers        = (mal_proc)alDeleteBuffers;
-    pContext->openal.alIsBuffer             = (mal_proc)alIsBuffer;
-    pContext->openal.alBufferData           = (mal_proc)alBufferData;
-    pContext->openal.alBufferf              = (mal_proc)alBufferf;
-    pContext->openal.alBuffer3f             = (mal_proc)alBuffer3f;
-    pContext->openal.alBufferfv             = (mal_proc)alBufferfv;
-    pContext->openal.alBufferi              = (mal_proc)alBufferi;
-    pContext->openal.alBuffer3i             = (mal_proc)alBuffer3i;
-    pContext->openal.alBufferiv             = (mal_proc)alBufferiv;
-    pContext->openal.alGetBufferf           = (mal_proc)alGetBufferf;
-    pContext->openal.alGetBuffer3f          = (mal_proc)alGetBuffer3f;
-    pContext->openal.alGetBufferfv          = (mal_proc)alGetBufferfv;
-    pContext->openal.alGetBufferi           = (mal_proc)alGetBufferi;
-    pContext->openal.alGetBuffer3i          = (mal_proc)alGetBuffer3i;
-    pContext->openal.alGetBufferiv          = (mal_proc)alGetBufferiv;
-#endif
-
-    // We depend on the ALC_ENUMERATION_EXT extension for enumeration. If this is not supported we fall back to default devices.
-    pContext->openal.isEnumerationSupported = ((MAL_LPALCISEXTENSIONPRESENT)pContext->openal.alcIsExtensionPresent)(NULL, "ALC_ENUMERATION_EXT");
-    pContext->openal.isFloat32Supported     = ((MAL_LPALISEXTENSIONPRESENT)pContext->openal.alIsExtensionPresent)("AL_EXT_float32");
-    pContext->openal.isMCFormatsSupported   = ((MAL_LPALISEXTENSIONPRESENT)pContext->openal.alIsExtensionPresent)("AL_EXT_MCFORMATS");
-
-    pContext->onDeviceIDEqual = mal_context_is_device_id_equal__openal;
-    pContext->onEnumDevices   = mal_context_enumerate_devices__openal;
-    pContext->onGetDeviceInfo = mal_context_get_device_info__openal;
-
-    return MAL_SUCCESS;
-}
-
-mal_result mal_context_uninit__openal(mal_context* pContext)
-{
-    mal_assert(pContext != NULL);
-    mal_assert(pContext->backend == mal_backend_openal);
-
-#ifndef MAL_NO_RUNTIME_LINKING
-    mal_dlclose(pContext->openal.hOpenAL);
-#endif
-
-    return MAL_SUCCESS;
-}
 
 void mal_device_uninit__openal(mal_device* pDevice)
 {
     mal_assert(pDevice != NULL);
-
 
     // Delete buffers and source first.
     ((MAL_LPALCMAKECONTEXTCURRENT)pDevice->pContext->openal.alcMakeContextCurrent)((mal_ALCcontext*)pDevice->openal.pContextALC);
@@ -16351,7 +16239,7 @@ void mal_device_uninit__openal(mal_device* pDevice)
     mal_free(pDevice->openal.pIntermediaryBuffer);
 }
 
-mal_result mal_device_init__openal(mal_context* pContext, mal_device_type type, mal_device_id* pDeviceID, const mal_device_config* pConfig, mal_device* pDevice)
+mal_result mal_device_init__openal(mal_context* pContext, mal_device_type type, const mal_device_id* pDeviceID, const mal_device_config* pConfig, mal_device* pDevice)
 {
     if (pDevice->periods > MAL_MAX_PERIODS_OPENAL) {
         pDevice->periods = MAL_MAX_PERIODS_OPENAL;
@@ -16744,6 +16632,227 @@ mal_result mal_device__main_loop__openal(mal_device* pDevice)
 
     return MAL_SUCCESS;
 }
+
+
+mal_result mal_context_uninit__openal(mal_context* pContext)
+{
+    mal_assert(pContext != NULL);
+    mal_assert(pContext->backend == mal_backend_openal);
+
+#ifndef MAL_NO_RUNTIME_LINKING
+    mal_dlclose(pContext->openal.hOpenAL);
+#endif
+
+    return MAL_SUCCESS;
+}
+
+mal_result mal_context_init__openal(mal_context* pContext)
+{
+    mal_assert(pContext != NULL);
+
+#ifndef MAL_NO_RUNTIME_LINKING
+    const char* libNames[] = {
+#if defined(MAL_WIN32)
+        "OpenAL32.dll",
+        "soft_oal.dll"
+#endif
+#if defined(MAL_UNIX) && !defined(MAL_APPLE)
+        "libopenal.so",
+        "libopenal.so.1"
+#endif
+#if defined(MAL_APPLE)
+        "OpenAL.framework/OpenAL"
+#endif
+    };
+
+    for (size_t i = 0; i < mal_countof(libNames); ++i) {
+        pContext->openal.hOpenAL = mal_dlopen(libNames[i]);
+        if (pContext->openal.hOpenAL != NULL) {
+            break;
+        }
+    }
+
+    if (pContext->openal.hOpenAL == NULL) {
+        return MAL_FAILED_TO_INIT_BACKEND;
+    }
+
+    pContext->openal.alcCreateContext       = (mal_proc)mal_dlsym(pContext->openal.hOpenAL, "alcCreateContext");
+    pContext->openal.alcMakeContextCurrent  = (mal_proc)mal_dlsym(pContext->openal.hOpenAL, "alcMakeContextCurrent");
+    pContext->openal.alcProcessContext      = (mal_proc)mal_dlsym(pContext->openal.hOpenAL, "alcProcessContext");
+    pContext->openal.alcSuspendContext      = (mal_proc)mal_dlsym(pContext->openal.hOpenAL, "alcSuspendContext");
+    pContext->openal.alcDestroyContext      = (mal_proc)mal_dlsym(pContext->openal.hOpenAL, "alcDestroyContext");
+    pContext->openal.alcGetCurrentContext   = (mal_proc)mal_dlsym(pContext->openal.hOpenAL, "alcGetCurrentContext");
+    pContext->openal.alcGetContextsDevice   = (mal_proc)mal_dlsym(pContext->openal.hOpenAL, "alcGetContextsDevice");
+    pContext->openal.alcOpenDevice          = (mal_proc)mal_dlsym(pContext->openal.hOpenAL, "alcOpenDevice");
+    pContext->openal.alcCloseDevice         = (mal_proc)mal_dlsym(pContext->openal.hOpenAL, "alcCloseDevice");
+    pContext->openal.alcGetError            = (mal_proc)mal_dlsym(pContext->openal.hOpenAL, "alcGetError");
+    pContext->openal.alcIsExtensionPresent  = (mal_proc)mal_dlsym(pContext->openal.hOpenAL, "alcIsExtensionPresent");
+    pContext->openal.alcGetProcAddress      = (mal_proc)mal_dlsym(pContext->openal.hOpenAL, "alcGetProcAddress");
+    pContext->openal.alcGetEnumValue        = (mal_proc)mal_dlsym(pContext->openal.hOpenAL, "alcGetEnumValue");
+    pContext->openal.alcGetString           = (mal_proc)mal_dlsym(pContext->openal.hOpenAL, "alcGetString");
+    pContext->openal.alcGetIntegerv         = (mal_proc)mal_dlsym(pContext->openal.hOpenAL, "alcGetIntegerv");
+    pContext->openal.alcCaptureOpenDevice   = (mal_proc)mal_dlsym(pContext->openal.hOpenAL, "alcCaptureOpenDevice");
+    pContext->openal.alcCaptureCloseDevice  = (mal_proc)mal_dlsym(pContext->openal.hOpenAL, "alcCaptureCloseDevice");
+    pContext->openal.alcCaptureStart        = (mal_proc)mal_dlsym(pContext->openal.hOpenAL, "alcCaptureStart");
+    pContext->openal.alcCaptureStop         = (mal_proc)mal_dlsym(pContext->openal.hOpenAL, "alcCaptureStop");
+    pContext->openal.alcCaptureSamples      = (mal_proc)mal_dlsym(pContext->openal.hOpenAL, "alcCaptureSamples");
+
+    pContext->openal.alEnable               = (mal_proc)mal_dlsym(pContext->openal.hOpenAL, "alEnable");
+    pContext->openal.alDisable              = (mal_proc)mal_dlsym(pContext->openal.hOpenAL, "alDisable");
+    pContext->openal.alIsEnabled            = (mal_proc)mal_dlsym(pContext->openal.hOpenAL, "alIsEnabled");
+    pContext->openal.alGetString            = (mal_proc)mal_dlsym(pContext->openal.hOpenAL, "alGetString");
+    pContext->openal.alGetBooleanv          = (mal_proc)mal_dlsym(pContext->openal.hOpenAL, "alGetBooleanv");
+    pContext->openal.alGetIntegerv          = (mal_proc)mal_dlsym(pContext->openal.hOpenAL, "alGetIntegerv");
+    pContext->openal.alGetFloatv            = (mal_proc)mal_dlsym(pContext->openal.hOpenAL, "alGetFloatv");
+    pContext->openal.alGetDoublev           = (mal_proc)mal_dlsym(pContext->openal.hOpenAL, "alGetDoublev");
+    pContext->openal.alGetBoolean           = (mal_proc)mal_dlsym(pContext->openal.hOpenAL, "alGetBoolean");
+    pContext->openal.alGetInteger           = (mal_proc)mal_dlsym(pContext->openal.hOpenAL, "alGetInteger");
+    pContext->openal.alGetFloat             = (mal_proc)mal_dlsym(pContext->openal.hOpenAL, "alGetFloat");
+    pContext->openal.alGetDouble            = (mal_proc)mal_dlsym(pContext->openal.hOpenAL, "alGetDouble");
+    pContext->openal.alGetError             = (mal_proc)mal_dlsym(pContext->openal.hOpenAL, "alGetError");
+    pContext->openal.alIsExtensionPresent   = (mal_proc)mal_dlsym(pContext->openal.hOpenAL, "alIsExtensionPresent");
+    pContext->openal.alGetProcAddress       = (mal_proc)mal_dlsym(pContext->openal.hOpenAL, "alGetProcAddress");
+    pContext->openal.alGetEnumValue         = (mal_proc)mal_dlsym(pContext->openal.hOpenAL, "alGetEnumValue");
+    pContext->openal.alGenSources           = (mal_proc)mal_dlsym(pContext->openal.hOpenAL, "alGenSources");
+    pContext->openal.alDeleteSources        = (mal_proc)mal_dlsym(pContext->openal.hOpenAL, "alDeleteSources");
+    pContext->openal.alIsSource             = (mal_proc)mal_dlsym(pContext->openal.hOpenAL, "alIsSource");
+    pContext->openal.alSourcef              = (mal_proc)mal_dlsym(pContext->openal.hOpenAL, "alSourcef");
+    pContext->openal.alSource3f             = (mal_proc)mal_dlsym(pContext->openal.hOpenAL, "alSource3f");
+    pContext->openal.alSourcefv             = (mal_proc)mal_dlsym(pContext->openal.hOpenAL, "alSourcefv");
+    pContext->openal.alSourcei              = (mal_proc)mal_dlsym(pContext->openal.hOpenAL, "alSourcei");
+    pContext->openal.alSource3i             = (mal_proc)mal_dlsym(pContext->openal.hOpenAL, "alSource3i");
+    pContext->openal.alSourceiv             = (mal_proc)mal_dlsym(pContext->openal.hOpenAL, "alSourceiv");
+    pContext->openal.alGetSourcef           = (mal_proc)mal_dlsym(pContext->openal.hOpenAL, "alGetSourcef");
+    pContext->openal.alGetSource3f          = (mal_proc)mal_dlsym(pContext->openal.hOpenAL, "alGetSource3f");
+    pContext->openal.alGetSourcefv          = (mal_proc)mal_dlsym(pContext->openal.hOpenAL, "alGetSourcefv");
+    pContext->openal.alGetSourcei           = (mal_proc)mal_dlsym(pContext->openal.hOpenAL, "alGetSourcei");
+    pContext->openal.alGetSource3i          = (mal_proc)mal_dlsym(pContext->openal.hOpenAL, "alGetSource3i");
+    pContext->openal.alGetSourceiv          = (mal_proc)mal_dlsym(pContext->openal.hOpenAL, "alGetSourceiv");
+    pContext->openal.alSourcePlayv          = (mal_proc)mal_dlsym(pContext->openal.hOpenAL, "alSourcePlayv");
+    pContext->openal.alSourceStopv          = (mal_proc)mal_dlsym(pContext->openal.hOpenAL, "alSourceStopv");
+    pContext->openal.alSourceRewindv        = (mal_proc)mal_dlsym(pContext->openal.hOpenAL, "alSourceRewindv");
+    pContext->openal.alSourcePausev         = (mal_proc)mal_dlsym(pContext->openal.hOpenAL, "alSourcePausev");
+    pContext->openal.alSourcePlay           = (mal_proc)mal_dlsym(pContext->openal.hOpenAL, "alSourcePlay");
+    pContext->openal.alSourceStop           = (mal_proc)mal_dlsym(pContext->openal.hOpenAL, "alSourceStop");
+    pContext->openal.alSourceRewind         = (mal_proc)mal_dlsym(pContext->openal.hOpenAL, "alSourceRewind");
+    pContext->openal.alSourcePause          = (mal_proc)mal_dlsym(pContext->openal.hOpenAL, "alSourcePause");
+    pContext->openal.alSourceQueueBuffers   = (mal_proc)mal_dlsym(pContext->openal.hOpenAL, "alSourceQueueBuffers");
+    pContext->openal.alSourceUnqueueBuffers = (mal_proc)mal_dlsym(pContext->openal.hOpenAL, "alSourceUnqueueBuffers");
+    pContext->openal.alGenBuffers           = (mal_proc)mal_dlsym(pContext->openal.hOpenAL, "alGenBuffers");
+    pContext->openal.alDeleteBuffers        = (mal_proc)mal_dlsym(pContext->openal.hOpenAL, "alDeleteBuffers");
+    pContext->openal.alIsBuffer             = (mal_proc)mal_dlsym(pContext->openal.hOpenAL, "alIsBuffer");
+    pContext->openal.alBufferData           = (mal_proc)mal_dlsym(pContext->openal.hOpenAL, "alBufferData");
+    pContext->openal.alBufferf              = (mal_proc)mal_dlsym(pContext->openal.hOpenAL, "alBufferf");
+    pContext->openal.alBuffer3f             = (mal_proc)mal_dlsym(pContext->openal.hOpenAL, "alBuffer3f");
+    pContext->openal.alBufferfv             = (mal_proc)mal_dlsym(pContext->openal.hOpenAL, "alBufferfv");
+    pContext->openal.alBufferi              = (mal_proc)mal_dlsym(pContext->openal.hOpenAL, "alBufferi");
+    pContext->openal.alBuffer3i             = (mal_proc)mal_dlsym(pContext->openal.hOpenAL, "alBuffer3i");
+    pContext->openal.alBufferiv             = (mal_proc)mal_dlsym(pContext->openal.hOpenAL, "alBufferiv");
+    pContext->openal.alGetBufferf           = (mal_proc)mal_dlsym(pContext->openal.hOpenAL, "alGetBufferf");
+    pContext->openal.alGetBuffer3f          = (mal_proc)mal_dlsym(pContext->openal.hOpenAL, "alGetBuffer3f");
+    pContext->openal.alGetBufferfv          = (mal_proc)mal_dlsym(pContext->openal.hOpenAL, "alGetBufferfv");
+    pContext->openal.alGetBufferi           = (mal_proc)mal_dlsym(pContext->openal.hOpenAL, "alGetBufferi");
+    pContext->openal.alGetBuffer3i          = (mal_proc)mal_dlsym(pContext->openal.hOpenAL, "alGetBuffer3i");
+    pContext->openal.alGetBufferiv          = (mal_proc)mal_dlsym(pContext->openal.hOpenAL, "alGetBufferiv");
+#else
+    pContext->openal.alcCreateContext       = (mal_proc)alcCreateContext;
+    pContext->openal.alcMakeContextCurrent  = (mal_proc)alcMakeContextCurrent;
+    pContext->openal.alcProcessContext      = (mal_proc)alcProcessContext;
+    pContext->openal.alcSuspendContext      = (mal_proc)alcSuspendContext;
+    pContext->openal.alcDestroyContext      = (mal_proc)alcDestroyContext;
+    pContext->openal.alcGetCurrentContext   = (mal_proc)alcGetCurrentContext;
+    pContext->openal.alcGetContextsDevice   = (mal_proc)alcGetContextsDevice;
+    pContext->openal.alcOpenDevice          = (mal_proc)alcOpenDevice;
+    pContext->openal.alcCloseDevice         = (mal_proc)alcCloseDevice;
+    pContext->openal.alcGetError            = (mal_proc)alcGetError;
+    pContext->openal.alcIsExtensionPresent  = (mal_proc)alcIsExtensionPresent;
+    pContext->openal.alcGetProcAddress      = (mal_proc)alcGetProcAddress;
+    pContext->openal.alcGetEnumValue        = (mal_proc)alcGetEnumValue;
+    pContext->openal.alcGetString           = (mal_proc)alcGetString;
+    pContext->openal.alcGetIntegerv         = (mal_proc)alcGetIntegerv;
+    pContext->openal.alcCaptureOpenDevice   = (mal_proc)alcCaptureOpenDevice;
+    pContext->openal.alcCaptureCloseDevice  = (mal_proc)alcCaptureCloseDevice;
+    pContext->openal.alcCaptureStart        = (mal_proc)alcCaptureStart;
+    pContext->openal.alcCaptureStop         = (mal_proc)alcCaptureStop;
+    pContext->openal.alcCaptureSamples      = (mal_proc)alcCaptureSamples;
+
+    pContext->openal.alEnable               = (mal_proc)alEnable;
+    pContext->openal.alDisable              = (mal_proc)alDisable;
+    pContext->openal.alIsEnabled            = (mal_proc)alIsEnabled;
+    pContext->openal.alGetString            = (mal_proc)alGetString;
+    pContext->openal.alGetBooleanv          = (mal_proc)alGetBooleanv;
+    pContext->openal.alGetIntegerv          = (mal_proc)alGetIntegerv;
+    pContext->openal.alGetFloatv            = (mal_proc)alGetFloatv;
+    pContext->openal.alGetDoublev           = (mal_proc)alGetDoublev;
+    pContext->openal.alGetBoolean           = (mal_proc)alGetBoolean;
+    pContext->openal.alGetInteger           = (mal_proc)alGetInteger;
+    pContext->openal.alGetFloat             = (mal_proc)alGetFloat;
+    pContext->openal.alGetDouble            = (mal_proc)alGetDouble;
+    pContext->openal.alGetError             = (mal_proc)alGetError;
+    pContext->openal.alIsExtensionPresent   = (mal_proc)alIsExtensionPresent;
+    pContext->openal.alGetProcAddress       = (mal_proc)alGetProcAddress;
+    pContext->openal.alGetEnumValue         = (mal_proc)alGetEnumValue;
+    pContext->openal.alGenSources           = (mal_proc)alGenSources;
+    pContext->openal.alDeleteSources        = (mal_proc)alDeleteSources;
+    pContext->openal.alIsSource             = (mal_proc)alIsSource;
+    pContext->openal.alSourcef              = (mal_proc)alSourcef;
+    pContext->openal.alSource3f             = (mal_proc)alSource3f;
+    pContext->openal.alSourcefv             = (mal_proc)alSourcefv;
+    pContext->openal.alSourcei              = (mal_proc)alSourcei;
+    pContext->openal.alSource3i             = (mal_proc)alSource3i;
+    pContext->openal.alSourceiv             = (mal_proc)alSourceiv;
+    pContext->openal.alGetSourcef           = (mal_proc)alGetSourcef;
+    pContext->openal.alGetSource3f          = (mal_proc)alGetSource3f;
+    pContext->openal.alGetSourcefv          = (mal_proc)alGetSourcefv;
+    pContext->openal.alGetSourcei           = (mal_proc)alGetSourcei;
+    pContext->openal.alGetSource3i          = (mal_proc)alGetSource3i;
+    pContext->openal.alGetSourceiv          = (mal_proc)alGetSourceiv;
+    pContext->openal.alSourcePlayv          = (mal_proc)alSourcePlayv;
+    pContext->openal.alSourceStopv          = (mal_proc)alSourceStopv;
+    pContext->openal.alSourceRewindv        = (mal_proc)alSourceRewindv;
+    pContext->openal.alSourcePausev         = (mal_proc)alSourcePausev;
+    pContext->openal.alSourcePlay           = (mal_proc)alSourcePlay;
+    pContext->openal.alSourceStop           = (mal_proc)alSourceStop;
+    pContext->openal.alSourceRewind         = (mal_proc)alSourceRewind;
+    pContext->openal.alSourcePause          = (mal_proc)alSourcePause;
+    pContext->openal.alSourceQueueBuffers   = (mal_proc)alSourceQueueBuffers;
+    pContext->openal.alSourceUnqueueBuffers = (mal_proc)alSourceUnqueueBuffers;
+    pContext->openal.alGenBuffers           = (mal_proc)alGenBuffers;
+    pContext->openal.alDeleteBuffers        = (mal_proc)alDeleteBuffers;
+    pContext->openal.alIsBuffer             = (mal_proc)alIsBuffer;
+    pContext->openal.alBufferData           = (mal_proc)alBufferData;
+    pContext->openal.alBufferf              = (mal_proc)alBufferf;
+    pContext->openal.alBuffer3f             = (mal_proc)alBuffer3f;
+    pContext->openal.alBufferfv             = (mal_proc)alBufferfv;
+    pContext->openal.alBufferi              = (mal_proc)alBufferi;
+    pContext->openal.alBuffer3i             = (mal_proc)alBuffer3i;
+    pContext->openal.alBufferiv             = (mal_proc)alBufferiv;
+    pContext->openal.alGetBufferf           = (mal_proc)alGetBufferf;
+    pContext->openal.alGetBuffer3f          = (mal_proc)alGetBuffer3f;
+    pContext->openal.alGetBufferfv          = (mal_proc)alGetBufferfv;
+    pContext->openal.alGetBufferi           = (mal_proc)alGetBufferi;
+    pContext->openal.alGetBuffer3i          = (mal_proc)alGetBuffer3i;
+    pContext->openal.alGetBufferiv          = (mal_proc)alGetBufferiv;
+#endif
+
+    // We depend on the ALC_ENUMERATION_EXT extension for enumeration. If this is not supported we fall back to default devices.
+    pContext->openal.isEnumerationSupported = ((MAL_LPALCISEXTENSIONPRESENT)pContext->openal.alcIsExtensionPresent)(NULL, "ALC_ENUMERATION_EXT");
+    pContext->openal.isFloat32Supported     = ((MAL_LPALISEXTENSIONPRESENT)pContext->openal.alIsExtensionPresent)("AL_EXT_float32");
+    pContext->openal.isMCFormatsSupported   = ((MAL_LPALISEXTENSIONPRESENT)pContext->openal.alIsExtensionPresent)("AL_EXT_MCFORMATS");
+
+    pContext->onUninit              = mal_context_uninit__openal;
+    pContext->onDeviceIDEqual       = mal_context_is_device_id_equal__openal;
+    pContext->onEnumDevices         = mal_context_enumerate_devices__openal;
+    pContext->onGetDeviceInfo       = mal_context_get_device_info__openal;
+    pContext->onDeviceInit          = mal_device_init__openal;
+    pContext->onDeviceUninit        = mal_device_uninit__openal;
+    pContext->onDeviceStart         = mal_device__start_backend__openal;
+    pContext->onDeviceStop          = mal_device__stop_backend__openal;
+    pContext->onDeviceBreakMainLoop = mal_device__break_main_loop__openal;
+    pContext->onDeviceMainLoop      = mal_device__main_loop__openal;
+
+    return MAL_SUCCESS;
+}
 #endif  // OpenAL
 
 
@@ -17031,94 +17140,6 @@ mal_result mal_context_get_device_info__sdl(mal_context* pContext, mal_device_ty
     return MAL_SUCCESS;
 }
 
-mal_result mal_context_init__sdl(mal_context* pContext)
-{
-    mal_assert(pContext != NULL);
-
-#ifndef MAL_NO_RUNTIME_LINKING
-    // Run-time linking.
-    const char* libNames[] = {
-#if defined(MAL_WIN32)
-        "SDL2.dll",
-        "SDL.dll"
-#elif defined(MAL_APPLE)
-        "SDL2.framework/SDL2",
-        "SDL.framework/SDL"
-#else
-        "libSDL2-2.0.so.0",
-        "libSDL-1.2.so.0"
-#endif
-    };
-
-    for (size_t i = 0; i < mal_countof(libNames); ++i) {
-        pContext->sdl.hSDL = mal_dlopen(libNames[i]);
-        if (pContext->sdl.hSDL != NULL) {
-            break;
-        }
-    }
-
-    if (pContext->sdl.hSDL == NULL) {
-        return MAL_NO_BACKEND;  // Couldn't find SDL2.dll, etc. Most likely it's not installed.
-    }
-
-    pContext->sdl.SDL_InitSubSystem      = mal_dlsym(pContext->sdl.hSDL, "SDL_InitSubSystem");
-    pContext->sdl.SDL_QuitSubSystem      = mal_dlsym(pContext->sdl.hSDL, "SDL_QuitSubSystem");
-    pContext->sdl.SDL_CloseAudio         = mal_dlsym(pContext->sdl.hSDL, "SDL_CloseAudio");
-    pContext->sdl.SDL_OpenAudio          = mal_dlsym(pContext->sdl.hSDL, "SDL_OpenAudio");
-    pContext->sdl.SDL_PauseAudio         = mal_dlsym(pContext->sdl.hSDL, "SDL_PauseAudio");
-#ifndef MAL_USE_SDL_1
-    pContext->sdl.SDL_GetNumAudioDevices = mal_dlsym(pContext->sdl.hSDL, "SDL_GetNumAudioDevices");
-    pContext->sdl.SDL_GetAudioDeviceName = mal_dlsym(pContext->sdl.hSDL, "SDL_GetAudioDeviceName");
-    pContext->sdl.SDL_CloseAudioDevice   = mal_dlsym(pContext->sdl.hSDL, "SDL_CloseAudioDevice");
-    pContext->sdl.SDL_OpenAudioDevice    = mal_dlsym(pContext->sdl.hSDL, "SDL_OpenAudioDevice");
-    pContext->sdl.SDL_PauseAudioDevice   = mal_dlsym(pContext->sdl.hSDL, "SDL_PauseAudioDevice");
-#endif
-#else
-    // Compile-time linking.
-    pContext->sdl.SDL_InitSubSystem      = (mal_proc)SDL_InitSubSystem;
-    pContext->sdl.SDL_QuitSubSystem      = (mal_proc)SDL_QuitSubSystem;
-    pContext->sdl.SDL_CloseAudio         = (mal_proc)SDL_CloseAudio;
-    pContext->sdl.SDL_OpenAudio          = (mal_proc)SDL_OpenAudio;
-    pContext->sdl.SDL_PauseAudio         = (mal_proc)SDL_PauseAudio;
-#ifndef MAL_USE_SDL_1
-    pContext->sdl.SDL_GetNumAudioDevices = (mal_proc)SDL_GetNumAudioDevices;
-    pContext->sdl.SDL_GetAudioDeviceName = (mal_proc)SDL_GetAudioDeviceName;
-    pContext->sdl.SDL_CloseAudioDevice   = (mal_proc)SDL_CloseAudioDevice;
-    pContext->sdl.SDL_OpenAudioDevice    = (mal_proc)SDL_OpenAudioDevice;
-    pContext->sdl.SDL_PauseAudioDevice   = (mal_proc)SDL_PauseAudioDevice;
-#endif
-#endif
-
-    // We need to determine whether or not we are using SDL2 or SDL1. We can know this by looking at whether or not certain
-    // function pointers are NULL.
-    if (pContext->sdl.SDL_GetNumAudioDevices == NULL ||
-        pContext->sdl.SDL_GetAudioDeviceName == NULL ||
-        pContext->sdl.SDL_CloseAudioDevice   == NULL ||
-        pContext->sdl.SDL_OpenAudioDevice    == NULL ||
-        pContext->sdl.SDL_PauseAudioDevice   == NULL) {
-        pContext->sdl.usingSDL1 = MAL_TRUE;
-    }
-
-    int resultSDL = ((MAL_PFN_SDL_InitSubSystem)pContext->sdl.SDL_InitSubSystem)(MAL_SDL_INIT_AUDIO);
-    if (resultSDL != 0) {
-        return MAL_ERROR;
-    }
-
-    pContext->onDeviceIDEqual = mal_context_is_device_id_equal__sdl;
-    pContext->onEnumDevices   = mal_context_enumerate_devices__sdl;
-    pContext->onGetDeviceInfo = mal_context_get_device_info__sdl;
-
-    return MAL_SUCCESS;
-}
-
-mal_result mal_context_uninit__sdl(mal_context* pContext)
-{
-    mal_assert(pContext != NULL);
-    mal_assert(pContext->backend == mal_backend_sdl);
-
-    ((MAL_PFN_SDL_QuitSubSystem)pContext->sdl.SDL_QuitSubSystem)(MAL_SDL_INIT_AUDIO);
-    return MAL_SUCCESS;
-}
 
 void mal_device_uninit__sdl(mal_device* pDevice)
 {
@@ -17149,7 +17170,7 @@ void mal_audio_callback__sdl(void* pUserData, mal_uint8* pBuffer, int bufferSize
     }
 }
 
-mal_result mal_device_init__sdl(mal_context* pContext, mal_device_type type, mal_device_id* pDeviceID, const mal_device_config* pConfig, mal_device* pDevice)
+mal_result mal_device_init__sdl(mal_context* pContext, mal_device_type type, const mal_device_id* pDeviceID, const mal_device_config* pConfig, mal_device* pDevice)
 {
     mal_assert(pContext != NULL);
     mal_assert(pConfig != NULL);
@@ -17296,8 +17317,104 @@ mal_result mal_device__stop_backend__sdl(mal_device* pDevice)
 
     return MAL_SUCCESS;
 }
-#endif  // SDL
 
+
+mal_result mal_context_uninit__sdl(mal_context* pContext)
+{
+    mal_assert(pContext != NULL);
+    mal_assert(pContext->backend == mal_backend_sdl);
+
+    ((MAL_PFN_SDL_QuitSubSystem)pContext->sdl.SDL_QuitSubSystem)(MAL_SDL_INIT_AUDIO);
+    return MAL_SUCCESS;
+}
+
+mal_result mal_context_init__sdl(mal_context* pContext)
+{
+    mal_assert(pContext != NULL);
+
+#ifndef MAL_NO_RUNTIME_LINKING
+    // Run-time linking.
+    const char* libNames[] = {
+#if defined(MAL_WIN32)
+        "SDL2.dll",
+        "SDL.dll"
+#elif defined(MAL_APPLE)
+        "SDL2.framework/SDL2",
+        "SDL.framework/SDL"
+#else
+        "libSDL2-2.0.so.0",
+        "libSDL-1.2.so.0"
+#endif
+    };
+
+    for (size_t i = 0; i < mal_countof(libNames); ++i) {
+        pContext->sdl.hSDL = mal_dlopen(libNames[i]);
+        if (pContext->sdl.hSDL != NULL) {
+            break;
+        }
+    }
+
+    if (pContext->sdl.hSDL == NULL) {
+        return MAL_NO_BACKEND;  // Couldn't find SDL2.dll, etc. Most likely it's not installed.
+    }
+
+    pContext->sdl.SDL_InitSubSystem      = mal_dlsym(pContext->sdl.hSDL, "SDL_InitSubSystem");
+    pContext->sdl.SDL_QuitSubSystem      = mal_dlsym(pContext->sdl.hSDL, "SDL_QuitSubSystem");
+    pContext->sdl.SDL_CloseAudio         = mal_dlsym(pContext->sdl.hSDL, "SDL_CloseAudio");
+    pContext->sdl.SDL_OpenAudio          = mal_dlsym(pContext->sdl.hSDL, "SDL_OpenAudio");
+    pContext->sdl.SDL_PauseAudio         = mal_dlsym(pContext->sdl.hSDL, "SDL_PauseAudio");
+#ifndef MAL_USE_SDL_1
+    pContext->sdl.SDL_GetNumAudioDevices = mal_dlsym(pContext->sdl.hSDL, "SDL_GetNumAudioDevices");
+    pContext->sdl.SDL_GetAudioDeviceName = mal_dlsym(pContext->sdl.hSDL, "SDL_GetAudioDeviceName");
+    pContext->sdl.SDL_CloseAudioDevice   = mal_dlsym(pContext->sdl.hSDL, "SDL_CloseAudioDevice");
+    pContext->sdl.SDL_OpenAudioDevice    = mal_dlsym(pContext->sdl.hSDL, "SDL_OpenAudioDevice");
+    pContext->sdl.SDL_PauseAudioDevice   = mal_dlsym(pContext->sdl.hSDL, "SDL_PauseAudioDevice");
+#endif
+#else
+    // Compile-time linking.
+    pContext->sdl.SDL_InitSubSystem      = (mal_proc)SDL_InitSubSystem;
+    pContext->sdl.SDL_QuitSubSystem      = (mal_proc)SDL_QuitSubSystem;
+    pContext->sdl.SDL_CloseAudio         = (mal_proc)SDL_CloseAudio;
+    pContext->sdl.SDL_OpenAudio          = (mal_proc)SDL_OpenAudio;
+    pContext->sdl.SDL_PauseAudio         = (mal_proc)SDL_PauseAudio;
+#ifndef MAL_USE_SDL_1
+    pContext->sdl.SDL_GetNumAudioDevices = (mal_proc)SDL_GetNumAudioDevices;
+    pContext->sdl.SDL_GetAudioDeviceName = (mal_proc)SDL_GetAudioDeviceName;
+    pContext->sdl.SDL_CloseAudioDevice   = (mal_proc)SDL_CloseAudioDevice;
+    pContext->sdl.SDL_OpenAudioDevice    = (mal_proc)SDL_OpenAudioDevice;
+    pContext->sdl.SDL_PauseAudioDevice   = (mal_proc)SDL_PauseAudioDevice;
+#endif
+#endif
+
+    // We need to determine whether or not we are using SDL2 or SDL1. We can know this by looking at whether or not certain
+    // function pointers are NULL.
+    if (pContext->sdl.SDL_GetNumAudioDevices == NULL ||
+        pContext->sdl.SDL_GetAudioDeviceName == NULL ||
+        pContext->sdl.SDL_CloseAudioDevice   == NULL ||
+        pContext->sdl.SDL_OpenAudioDevice    == NULL ||
+        pContext->sdl.SDL_PauseAudioDevice   == NULL) {
+        pContext->sdl.usingSDL1 = MAL_TRUE;
+    }
+
+    int resultSDL = ((MAL_PFN_SDL_InitSubSystem)pContext->sdl.SDL_InitSubSystem)(MAL_SDL_INIT_AUDIO);
+    if (resultSDL != 0) {
+        return MAL_ERROR;
+    }
+
+    pContext->isBackendAsynchronous = MAL_TRUE;
+
+    pContext->onUninit        = mal_context_uninit__sdl;
+    pContext->onDeviceIDEqual = mal_context_is_device_id_equal__sdl;
+    pContext->onEnumDevices   = mal_context_enumerate_devices__sdl;
+    pContext->onGetDeviceInfo = mal_context_get_device_info__sdl;
+    pContext->onDeviceInit    = mal_device_init__sdl;
+    pContext->onDeviceUninit  = mal_device_uninit__sdl;
+    pContext->onDeviceStart   = mal_device__start_backend__sdl;
+    pContext->onDeviceStop    = mal_device__stop_backend__sdl;
+
+    return MAL_SUCCESS;
+}
+#endif  // SDL
 
 
 
@@ -17323,202 +17440,6 @@ mal_bool32 mal__is_channel_map_valid(const mal_channel* channelMap, mal_uint32 c
 }
 
 
-mal_result mal_device__start_backend(mal_device* pDevice)
-{
-    mal_assert(pDevice != NULL);
-
-    mal_result result = MAL_NO_BACKEND;
-#ifdef MAL_HAS_WASAPI
-    if (pDevice->pContext->backend == mal_backend_wasapi) {
-        result = mal_device__start_backend__wasapi(pDevice);
-    }
-#endif
-#ifdef MAL_HAS_DSOUND
-    if (pDevice->pContext->backend == mal_backend_dsound) {
-        result = mal_device__start_backend__dsound(pDevice);
-    }
-#endif
-#ifdef MAL_HAS_WINMM
-    if (pDevice->pContext->backend == mal_backend_winmm) {
-        result = mal_device__start_backend__winmm(pDevice);
-    }
-#endif
-#ifdef MAL_HAS_ALSA
-    if (pDevice->pContext->backend == mal_backend_alsa) {
-        result = mal_device__start_backend__alsa(pDevice);
-    }
-#endif
-#ifdef MAL_HAS_PULSEAUDIO
-    if (pDevice->pContext->backend == mal_backend_pulseaudio) {
-        result = mal_device__start_backend__pulse(pDevice);
-    }
-#endif
-#ifdef MAL_HAS_OSS
-    if (pDevice->pContext->backend == mal_backend_oss) {
-        result = mal_device__start_backend__oss(pDevice);
-    }
-#endif
-#ifdef MAL_HAS_OPENAL
-    if (pDevice->pContext->backend == mal_backend_openal) {
-        result = mal_device__start_backend__openal(pDevice);
-    }
-#endif
-#ifdef MAL_HAS_NULL
-    if (pDevice->pContext->backend == mal_backend_null) {
-        result = mal_device__start_backend__null(pDevice);
-    }
-#endif
-
-    return result;
-}
-
-mal_result mal_device__stop_backend(mal_device* pDevice)
-{
-    mal_assert(pDevice != NULL);
-
-    mal_result result = MAL_NO_BACKEND;
-#ifdef MAL_HAS_WASAPI
-    if (pDevice->pContext->backend == mal_backend_wasapi) {
-        result = mal_device__stop_backend__wasapi(pDevice);
-    }
-#endif
-#ifdef MAL_HAS_DSOUND
-    if (pDevice->pContext->backend == mal_backend_dsound) {
-        result = mal_device__stop_backend__dsound(pDevice);
-    }
-#endif
-#ifdef MAL_HAS_WINMM
-    if (pDevice->pContext->backend == mal_backend_winmm) {
-        result = mal_device__stop_backend__winmm(pDevice);
-    }
-#endif
-#ifdef MAL_HAS_ALSA
-    if (pDevice->pContext->backend == mal_backend_alsa) {
-        result = mal_device__stop_backend__alsa(pDevice);
-    }
-#endif
-#ifdef MAL_HAS_PULSEAUDIO
-    if (pDevice->pContext->backend == mal_backend_pulseaudio) {
-        result = mal_device__stop_backend__pulse(pDevice);
-    }
-#endif
-#ifdef MAL_HAS_OSS
-    if (pDevice->pContext->backend == mal_backend_oss) {
-        result = mal_device__stop_backend__oss(pDevice);
-    }
-#endif
-#ifdef MAL_HAS_OPENAL
-    if (pDevice->pContext->backend == mal_backend_openal) {
-        result = mal_device__stop_backend__openal(pDevice);
-    }
-#endif
-#ifdef MAL_HAS_NULL
-    if (pDevice->pContext->backend == mal_backend_null) {
-        result = mal_device__stop_backend__null(pDevice);
-    }
-#endif
-
-    return result;
-}
-
-mal_result mal_device__break_main_loop(mal_device* pDevice)
-{
-    mal_assert(pDevice != NULL);
-
-    mal_result result = MAL_NO_BACKEND;
-#ifdef MAL_HAS_WASAPI
-    if (pDevice->pContext->backend == mal_backend_wasapi) {
-        result = mal_device__break_main_loop__wasapi(pDevice);
-    }
-#endif
-#ifdef MAL_HAS_DSOUND
-    if (pDevice->pContext->backend == mal_backend_dsound) {
-        result = mal_device__break_main_loop__dsound(pDevice);
-    }
-#endif
-#ifdef MAL_HAS_WINMM
-    if (pDevice->pContext->backend == mal_backend_winmm) {
-        result = mal_device__break_main_loop__winmm(pDevice);
-    }
-#endif
-#ifdef MAL_HAS_ALSA
-    if (pDevice->pContext->backend == mal_backend_alsa) {
-        result = mal_device__break_main_loop__alsa(pDevice);
-    }
-#endif
-#ifdef MAL_HAS_PULSEAUDIO
-    if (pDevice->pContext->backend == mal_backend_pulseaudio) {
-        result = mal_device__break_main_loop__pulse(pDevice);
-    }
-#endif
-#ifdef MAL_HAS_OSS
-    if (pDevice->pContext->backend == mal_backend_oss) {
-        result = mal_device__break_main_loop__oss(pDevice);
-    }
-#endif
-#ifdef MAL_HAS_OPENAL
-    if (pDevice->pContext->backend == mal_backend_openal) {
-        result = mal_device__break_main_loop__openal(pDevice);
-    }
-#endif
-#ifdef MAL_HAS_NULL
-    if (pDevice->pContext->backend == mal_backend_null) {
-        result = mal_device__break_main_loop__null(pDevice);
-    }
-#endif
-
-    return result;
-}
-
-mal_result mal_device__main_loop(mal_device* pDevice)
-{
-    mal_assert(pDevice != NULL);
-
-    mal_result result = MAL_NO_BACKEND;
-#ifdef MAL_HAS_WASAPI
-    if (pDevice->pContext->backend == mal_backend_wasapi) {
-        result = mal_device__main_loop__wasapi(pDevice);
-    }
-#endif
-#ifdef MAL_HAS_DSOUND
-    if (pDevice->pContext->backend == mal_backend_dsound) {
-        result = mal_device__main_loop__dsound(pDevice);
-    }
-#endif
-#ifdef MAL_HAS_WINMM
-    if (pDevice->pContext->backend == mal_backend_winmm) {
-        result = mal_device__main_loop__winmm(pDevice);
-    }
-#endif
-#ifdef MAL_HAS_ALSA
-    if (pDevice->pContext->backend == mal_backend_alsa) {
-        result = mal_device__main_loop__alsa(pDevice);
-    }
-#endif
-#ifdef MAL_HAS_PULSEAUDIO
-    if (pDevice->pContext->backend == mal_backend_pulseaudio) {
-        result = mal_device__main_loop__pulse(pDevice);
-    }
-#endif
-#ifdef MAL_HAS_OSS
-    if (pDevice->pContext->backend == mal_backend_oss) {
-        result = mal_device__main_loop__oss(pDevice);
-    }
-#endif
-#ifdef MAL_HAS_OPENAL
-    if (pDevice->pContext->backend == mal_backend_openal) {
-        result = mal_device__main_loop__openal(pDevice);
-    }
-#endif
-#ifdef MAL_HAS_NULL
-    if (pDevice->pContext->backend == mal_backend_null) {
-        result = mal_device__main_loop__null(pDevice);
-    }
-#endif
-
-    return result;
-}
-
 mal_thread_result MAL_THREADCALL mal_worker_thread(void* pData)
 {
     mal_device* pDevice = (mal_device*)pData;
@@ -17533,7 +17454,7 @@ mal_thread_result MAL_THREADCALL mal_worker_thread(void* pData)
 
     for (;;) {
         // At the start of iteration the device is stopped - we must explicitly mark it as such.
-        mal_device__stop_backend(pDevice);
+        pDevice->pContext->onDeviceStop(pDevice);
 
         if (!skipNextStopEvent) {
             mal_stop_proc onStop = pDevice->onStop;
@@ -17565,7 +17486,7 @@ mal_thread_result MAL_THREADCALL mal_worker_thread(void* pData)
         // either deliver us data (recording) or request more data (playback).
         mal_assert(mal_device__get_state(pDevice) == MAL_STATE_STARTING);
 
-        pDevice->workResult = mal_device__start_backend(pDevice);
+        pDevice->workResult = pDevice->pContext->onDeviceStart(pDevice);
         if (pDevice->workResult != MAL_SUCCESS) {
             mal_event_signal(&pDevice->startEvent);
             continue;
@@ -17577,7 +17498,7 @@ mal_thread_result MAL_THREADCALL mal_worker_thread(void* pData)
         mal_event_signal(&pDevice->startEvent);
 
         // Now we just enter the main loop. The main loop can be broken with mal_device__break_main_loop().
-        mal_device__main_loop(pDevice);
+        pDevice->pContext->onDeviceMainLoop(pDevice);
     }
 
     // Make sure we aren't continuously waiting on a stop event.
@@ -17762,13 +17683,9 @@ const mal_backend g_malDefaultBackends[] = {
     mal_backend_null
 };
 
-mal_bool32 mal_is_backend_asynchronous(mal_backend backend)
+mal_bool32 mal_context_is_backend_asynchronous(mal_context* pContext)
 {
-    return
-        backend == mal_backend_jack      ||
-        backend == mal_backend_coreaudio ||
-        backend == mal_backend_opensl    ||
-        backend == mal_backend_sdl;
+    return pContext->isBackendAsynchronous;
 }
 
 mal_result mal_context_init(const mal_backend backends[], mal_uint32 backendCount, const mal_context_config* pConfig, mal_context* pContext)
@@ -17909,82 +17826,7 @@ mal_result mal_context_uninit(mal_context* pContext)
         return MAL_INVALID_ARGS;
     }
 
-    switch (pContext->backend) {
-    #ifdef MAL_HAS_WASAPI
-        case mal_backend_wasapi:
-        {
-            mal_context_uninit__wasapi(pContext);
-        } break;
-    #endif
-    #ifdef MAL_HAS_DSOUND
-        case mal_backend_dsound:
-        {
-            mal_context_uninit__dsound(pContext);
-        } break;
-    #endif
-    #ifdef MAL_HAS_WINMM
-        case mal_backend_winmm:
-        {
-            mal_context_uninit__winmm(pContext);
-        } break;
-    #endif
-    #ifdef MAL_HAS_ALSA
-        case mal_backend_alsa:
-        {
-            mal_context_uninit__alsa(pContext);
-        } break;
-    #endif
-    #ifdef MAL_HAS_PULSEAUDIO
-        case mal_backend_pulseaudio:
-        {
-            mal_context_uninit__pulse(pContext);
-        } break;
-    #endif
-    #ifdef MAL_HAS_JACK
-        case mal_backend_jack:
-        {
-            mal_context_uninit__jack(pContext);
-        } break;
-    #endif
-    #ifdef MAL_HAS_COREAUDIO
-        case mal_backend_coreaudio:
-        {
-            mal_context_uninit__coreaudio(pContext);
-        } break;
-    #endif
-    #ifdef MAL_HAS_OSS
-        case mal_backend_oss:
-        {
-            mal_context_uninit__oss(pContext);
-        } break;
-    #endif
-    #ifdef MAL_HAS_OPENSL
-        case mal_backend_opensl:
-        {
-            mal_context_uninit__opensl(pContext);
-        } break;
-    #endif
-    #ifdef MAL_HAS_OPENAL
-        case mal_backend_openal:
-        {
-            mal_context_uninit__openal(pContext);
-        } break;
-    #endif
-    #ifdef MAL_HAS_SDL
-        case mal_backend_sdl:
-        {
-            mal_context_uninit__sdl(pContext);
-        } break;
-    #endif
-    #ifdef MAL_HAS_NULL
-        case mal_backend_null:
-        {
-            mal_context_uninit__null(pContext);
-        } break;
-    #endif
-
-        default: break;
-    }
+    pContext->onUninit(pContext);
 
     mal_context_uninit_backend_apis(pContext);
     mal_mutex_uninit(&pContext->deviceEnumLock);
@@ -18253,85 +18095,7 @@ mal_result mal_device_init(mal_context* pContext, mal_device_type type, mal_devi
     }
 
 
-    mal_result result = MAL_NO_BACKEND;
-    switch (pContext->backend)
-    {
-    #ifdef MAL_HAS_WASAPI
-        case mal_backend_wasapi:
-        {
-            result = mal_device_init__wasapi(pContext, type, pDeviceID, &config, pDevice);
-        } break;
-    #endif
-    #ifdef MAL_HAS_DSOUND
-        case mal_backend_dsound:
-        {
-            result = mal_device_init__dsound(pContext, type, pDeviceID, &config, pDevice);
-        } break;
-    #endif
-    #ifdef MAL_HAS_WINMM
-        case mal_backend_winmm:
-        {
-            result = mal_device_init__winmm(pContext, type, pDeviceID, &config, pDevice);
-        } break;
-    #endif
-    #ifdef MAL_HAS_ALSA
-        case mal_backend_alsa:
-        {
-            result = mal_device_init__alsa(pContext, type, pDeviceID, &config, pDevice);
-        } break;
-    #endif
-    #ifdef MAL_HAS_PULSEAUDIO
-        case mal_backend_pulseaudio:
-        {
-            result = mal_device_init__pulse(pContext, type, pDeviceID, &config, pDevice);
-        } break;
-    #endif
-    #ifdef MAL_HAS_JACK
-        case mal_backend_jack:
-        {
-            result = mal_device_init__jack(pContext, type, pDeviceID, &config, pDevice);
-        } break;
-    #endif
-    #ifdef MAL_HAS_COREAUDIO
-        case mal_backend_coreaudio:
-        {
-            result = mal_device_init__coreaudio(pContext, type, pDeviceID, &config, pDevice);
-        } break;
-    #endif
-    #ifdef MAL_HAS_OSS
-        case mal_backend_oss:
-        {
-            result = mal_device_init__oss(pContext, type, pDeviceID, &config, pDevice);
-        } break;
-    #endif
-    #ifdef MAL_HAS_OPENSL
-        case mal_backend_opensl:
-        {
-            result = mal_device_init__opensl(pContext, type, pDeviceID, &config, pDevice);
-        } break;
-    #endif
-    #ifdef MAL_HAS_OPENAL
-        case mal_backend_openal:
-        {
-            result = mal_device_init__openal(pContext, type, pDeviceID, &config, pDevice);
-        } break;
-    #endif
-    #ifdef MAL_HAS_SDL
-        case mal_backend_sdl:
-        {
-            result = mal_device_init__sdl(pContext, type, pDeviceID, &config, pDevice);
-        } break;
-    #endif
-    #ifdef MAL_HAS_NULL
-        case mal_backend_null:
-        {
-            result = mal_device_init__null(pContext, type, pDeviceID, &config, pDevice);
-        } break;
-    #endif
-
-        default: break;
-    }
-
+    mal_result result = pContext->onDeviceInit(pContext, type, pDeviceID, &config, pDevice);
     if (result != MAL_SUCCESS) {
         return MAL_NO_BACKEND;  // The error message will have been posted with mal_post_error() by the source of the error so don't bother calling it here.
     }
@@ -18375,6 +18139,7 @@ mal_result mal_device_init(mal_context* pContext, mal_device_type type, mal_devi
     // We need a DSP object which is where samples are moved through in order to convert them to the
     // format required by the backend.
     mal_dsp_config dspConfig = mal_dsp_config_init_new();
+    dspConfig.neverConsumeEndOfInput = MAL_TRUE;
     dspConfig.pUserData = pDevice;
     if (type == mal_device_type_playback) {
         dspConfig.formatIn      = pDevice->format;
@@ -18403,7 +18168,7 @@ mal_result mal_device_init(mal_context* pContext, mal_device_type type, mal_devi
 
 
     // Some backends don't require the worker thread.
-    if (!mal_is_backend_asynchronous(pContext->backend)) {
+    if (!mal_context_is_backend_asynchronous(pContext)) {
         // The worker thread.
         if (mal_thread_create(pContext, &pDevice->thread, mal_worker_thread, pDevice) != MAL_SUCCESS) {
             mal_device_uninit(pDevice);
@@ -18473,71 +18238,12 @@ void mal_device_uninit(mal_device* pDevice)
     mal_device__set_state(pDevice, MAL_STATE_UNINITIALIZED);
 
     // Wake up the worker thread and wait for it to properly terminate.
-    if (!mal_is_backend_asynchronous(pDevice->pContext->backend)) {
+    if (!mal_context_is_backend_asynchronous(pDevice->pContext)) {
         mal_event_signal(&pDevice->wakeupEvent);
         mal_thread_wait(&pDevice->thread);
     }
 
-#ifdef MAL_HAS_WASAPI
-    if (pDevice->pContext->backend == mal_backend_wasapi) {
-        mal_device_uninit__wasapi(pDevice);
-    }
-#endif
-#ifdef MAL_HAS_DSOUND
-    if (pDevice->pContext->backend == mal_backend_dsound) {
-        mal_device_uninit__dsound(pDevice);
-    }
-#endif
-#ifdef MAL_HAS_WINMM
-    if (pDevice->pContext->backend == mal_backend_winmm) {
-        mal_device_uninit__winmm(pDevice);
-    }
-#endif
-#ifdef MAL_HAS_ALSA
-    if (pDevice->pContext->backend == mal_backend_alsa) {
-        mal_device_uninit__alsa(pDevice);
-    }
-#endif
-#ifdef MAL_HAS_PULSEAUDIO
-    if (pDevice->pContext->backend == mal_backend_pulseaudio) {
-        mal_device_uninit__pulse(pDevice);
-    }
-#endif
-#ifdef MAL_HAS_JACK
-    if (pDevice->pContext->backend == mal_backend_jack) {
-        mal_device_uninit__jack(pDevice);
-    }
-#endif
-#ifdef MAL_HAS_COREAUDIO
-    if (pDevice->pContext->backend == mal_backend_coreaudio) {
-        mal_device_uninit__coreaudio(pDevice);
-    }
-#endif
-#ifdef MAL_HAS_OSS
-    if (pDevice->pContext->backend == mal_backend_oss) {
-        mal_device_uninit__oss(pDevice);
-    }
-#endif
-#ifdef MAL_HAS_OPENSL
-    if (pDevice->pContext->backend == mal_backend_opensl) {
-        mal_device_uninit__opensl(pDevice);
-    }
-#endif
-#ifdef MAL_HAS_OPENAL
-    if (pDevice->pContext->backend == mal_backend_openal) {
-        mal_device_uninit__openal(pDevice);
-    }
-#endif
-#ifdef MAL_HAS_SDL
-    if (pDevice->pContext->backend == mal_backend_sdl) {
-        mal_device_uninit__sdl(pDevice);
-    }
-#endif
-#ifdef MAL_HAS_NULL
-    if (pDevice->pContext->backend == mal_backend_null) {
-        mal_device_uninit__null(pDevice);
-    }
-#endif
+    pDevice->pContext->onDeviceUninit(pDevice);
 
     mal_event_uninit(&pDevice->stopEvent);
     mal_event_uninit(&pDevice->startEvent);
@@ -18598,40 +18304,14 @@ mal_result mal_device_start(mal_device* pDevice)
         mal_device__set_state(pDevice, MAL_STATE_STARTING);
 
         // Asynchronous backends need to be handled differently.
-#ifdef MAL_HAS_JACK
-        if (pDevice->pContext->backend == mal_backend_jack) {
-            result = mal_device__start_backend__jack(pDevice);
+        if (mal_context_is_backend_asynchronous(pDevice->pContext)) {
+            result = pDevice->pContext->onDeviceStart(pDevice);
             if (result == MAL_SUCCESS) {
                 mal_device__set_state(pDevice, MAL_STATE_STARTED);
             }
-        } else
-#endif
-#ifdef MAL_HAS_COREAUDIO
-        if (pDevice->pContext->backend == mal_backend_coreaudio) {
-            result = mal_device__start_backend__coreaudio(pDevice);
-            if (result == MAL_SUCCESS) {
-                mal_device__set_state(pDevice, MAL_STATE_STARTED);
-            }
-        } else
-#endif
-#ifdef MAL_HAS_OPENSL
-        if (pDevice->pContext->backend == mal_backend_opensl) {
-            result = mal_device__start_backend__opensl(pDevice);
-            if (result == MAL_SUCCESS) {
-                mal_device__set_state(pDevice, MAL_STATE_STARTED);
-            }
-        } else
-#endif
-#ifdef MAL_HAS_SDL
-        if (pDevice->pContext->backend == mal_backend_sdl) {
-            result = mal_device__start_backend__sdl(pDevice);
-            if (result == MAL_SUCCESS) {
-                mal_device__set_state(pDevice, MAL_STATE_STARTED);
-            }
-        } else
-#endif
-        // Synchronous backends.
-        {
+        } else {
+            // Synchronous backends are started by signaling an event that's being waited on in the worker thread. We first wake up the
+            // thread and then wait for the start event.
             mal_event_signal(&pDevice->wakeupEvent);
 
             // Wait for the worker thread to finish starting the device. Note that the worker thread will be the one
@@ -18675,31 +18355,14 @@ mal_result mal_device_stop(mal_device* pDevice)
         // There's no need to wake up the thread like we do when starting.
 
         // Asynchronous backends need to be handled differently.
-#ifdef MAL_HAS_JACK
-        if (pDevice->pContext->backend == mal_backend_jack) {
-            mal_device__stop_backend__jack(pDevice);
-        } else
-#endif
-#ifdef MAL_HAS_COREAUDIO
-        if (pDevice->pContext->backend == mal_backend_coreaudio) {
-            mal_device__stop_backend__coreaudio(pDevice);
-        } else
-#endif
-#ifdef MAL_HAS_OPENSL
-        if (pDevice->pContext->backend == mal_backend_opensl) {
-            mal_device__stop_backend__opensl(pDevice);
-        } else
-#endif
-#ifdef MAL_HAS_SDL
-        if (pDevice->pContext->backend == mal_backend_sdl) {
-            mal_device__stop_backend__sdl(pDevice);
-        } else
-#endif
-        // Synchronous backends.
-        {
+        if (mal_context_is_backend_asynchronous(pDevice->pContext)) {
+            pDevice->pContext->onDeviceStop(pDevice);
+        } else {
+            // Synchronous backends.
+
             // When we get here the worker thread is likely in a wait state while waiting for the backend device to deliver or request
             // audio data. We need to force these to return as quickly as possible.
-            mal_device__break_main_loop(pDevice);
+            pDevice->pContext->onDeviceBreakMainLoop(pDevice);
 
             // We need to wait for the worker thread to become available for work before returning. Note that the worker thread will be
             // the one who puts the device into the stopped state. Don't call mal_device__set_state() here.
@@ -23357,28 +23020,16 @@ mal_uint64 mal_src_read_deinterleaved__sinc(mal_src* pSRC, mal_uint64 frameCount
     // There are cases where it's actually more efficient to increase the window width so that it's aligned with the respective
     // SIMD pipeline being used.
     mal_int32 windowWidthSIMD = windowWidth;
-#if defined(MAL_SUPPORT_NEON)
     if (pSRC->useNEON) {
         windowWidthSIMD = (windowWidthSIMD + 1) & ~(1);
-    }
-#endif
-#if defined(MAL_SUPPORT_AVX512)
-    if (pSRC->useAVX512) {
+    } else  if (pSRC->useAVX512) {
         windowWidthSIMD = (windowWidthSIMD + 7) & ~(7);
-    }
-    else
-#endif
-#if defined(MAL_SUPPORT_AVX2)
-    if (pSRC->useAVX2) {
+    } else if (pSRC->useAVX2) {
         windowWidthSIMD = (windowWidthSIMD + 3) & ~(3);
-    }
-    else
-#endif
-#if defined(MAL_SUPPORT_SSE2)
-    if (pSRC->useSSE2) {
+    } else if (pSRC->useSSE2) {
         windowWidthSIMD = (windowWidthSIMD + 1) & ~(1);
     }
-#endif
+
     mal_int32 windowWidthSIMD2 = windowWidthSIMD*2;
     (void)windowWidthSIMD2; // <-- Silence a warning when SIMD is disabled.
 
@@ -23403,6 +23054,15 @@ mal_uint64 mal_src_read_deinterleaved__sinc(mal_src* pSRC, mal_uint64 frameCount
         mal_uint32 maxInputSamplesAvailableInCache = mal_countof(pSRC->sinc.input[0]) - (pSRC->config.sinc.windowWidth*2) - pSRC->sinc.windowPosInSamples;
         if (maxInputSamplesAvailableInCache > pSRC->sinc.inputFrameCount) {
             maxInputSamplesAvailableInCache = pSRC->sinc.inputFrameCount;
+        }
+
+        // If the last of the input data has been loaded, we need to ensure we don't read into it if it's configured such.
+        if (pSRC->config.neverConsumeEndOfInput && pSRC->isEndOfInputLoaded) {
+            if (maxInputSamplesAvailableInCache >= pSRC->config.sinc.windowWidth) {
+                maxInputSamplesAvailableInCache -= pSRC->config.sinc.windowWidth;
+            } else {
+                maxInputSamplesAvailableInCache  = 0;
+            }
         }
 
         float timeInBeg = pSRC->sinc.timeIn;
@@ -23565,6 +23225,8 @@ mal_uint64 mal_src_read_deinterleaved__sinc(mal_src* pSRC, mal_uint64 frameCount
             ppNextSamplesOut[iChannel] += outputFramesToRead;
         }
 
+        totalOutputFramesRead += outputFramesToRead;
+
         mal_uint32 prevWindowPosInSamples = pSRC->sinc.windowPosInSamples;
 
         pSRC->sinc.timeIn            += (outputFramesToRead * factor);
@@ -23587,7 +23249,7 @@ mal_uint64 mal_src_read_deinterleaved__sinc(mal_src* pSRC, mal_uint64 frameCount
         }
 
         // Read more data from the client if required.
-        if (pSRC->sinc.inputFrameCount < pSRC->config.sinc.windowWidth || pSRC->sinc.windowPosInSamples == 0) {
+        if (pSRC->sinc.inputFrameCount <= pSRC->config.sinc.windowWidth || availableOutputFrames == 0) {
             float* ppInputDst[MAL_MAX_CHANNELS] = {0};
             for (mal_uint32 iChannel = 0; iChannel < pSRC->config.channels; iChannel += 1) {
                 ppInputDst[iChannel] = pSRC->sinc.input[iChannel] + pSRC->config.sinc.windowWidth + pSRC->sinc.inputFrameCount;
@@ -23597,6 +23259,12 @@ mal_uint64 mal_src_read_deinterleaved__sinc(mal_src* pSRC, mal_uint64 frameCount
             mal_uint32 framesToReadFromClient = mal_countof(pSRC->sinc.input[0]) - (pSRC->config.sinc.windowWidth + pSRC->sinc.inputFrameCount);
             if (framesToReadFromClient > 0) {
                 mal_uint32 framesReadFromClient = pSRC->config.onReadDeinterleaved(pSRC, framesToReadFromClient, (void**)ppInputDst, pUserData);
+                if (framesReadFromClient != framesToReadFromClient) {
+                    pSRC->isEndOfInputLoaded = MAL_TRUE;
+                } else {
+                    pSRC->isEndOfInputLoaded = MAL_FALSE;
+                }
+
                 if (framesReadFromClient != 0) {
                     pSRC->sinc.inputFrameCount += framesReadFromClient;
                 } else {
@@ -23616,8 +23284,6 @@ mal_uint64 mal_src_read_deinterleaved__sinc(mal_src* pSRC, mal_uint64 frameCount
                 }
             }
         }
-
-        totalOutputFramesRead += outputFramesToRead;
     }
 
     return totalOutputFramesRead;
@@ -23869,7 +23535,7 @@ mal_result mal_dsp_init(const mal_dsp_config* pConfig, mal_dsp* pDSP)
     //
     // Notice how the Channel Routing and Sample Rate Conversion stages are swapped so that the SRC stage has less data to process.
 
-    // First we need to determin what's required and what's not.
+    // First we need to determine what's required and what's not.
     if (pConfig->sampleRateIn != pConfig->sampleRateOut || pConfig->allowDynamicSampleRate) {
         pDSP->isSRCRequired = MAL_TRUE;
     }
@@ -23958,11 +23624,12 @@ mal_result mal_dsp_init(const mal_dsp_config* pConfig, mal_dsp* pDSP)
             mal_dsp__src_on_read_deinterleaved,
             pDSP
         );
-        srcConfig.algorithm = pConfig->srcAlgorithm;
-        srcConfig.noSSE2    = pConfig->noSSE2;
-        srcConfig.noAVX2    = pConfig->noAVX2;
-        srcConfig.noAVX512  = pConfig->noAVX512;
-        srcConfig.noNEON    = pConfig->noNEON;
+        srcConfig.algorithm              = pConfig->srcAlgorithm;
+        srcConfig.neverConsumeEndOfInput = pConfig->neverConsumeEndOfInput;
+        srcConfig.noSSE2                 = pConfig->noSSE2;
+        srcConfig.noAVX2                 = pConfig->noAVX2;
+        srcConfig.noAVX512               = pConfig->noAVX512;
+        srcConfig.noNEON                 = pConfig->noNEON;
         mal_copy_memory(&srcConfig.sinc, &pConfig->sinc, sizeof(pConfig->sinc));
 
         result = mal_src_init(&srcConfig, &pDSP->src);
@@ -25956,6 +25623,13 @@ mal_uint64 mal_sine_wave_read(mal_sine_wave* pSineWave, mal_uint64 count, float*
 
 // REVISION HISTORY
 // ================
+//
+// v0.8.3 - 2018-07-15
+//   - Fix a crackling bug when resampling in capture mode.
+//   - Core Audio: Fix a bug where capture does not work.
+//   - ALSA: Fix a bug where the worker thread can get stuck in an infinite loop.
+//   - PulseAudio: Fix a bug where mal_context_init() succeeds when PulseAudio is unusable.
+//   - JACK: Fix a bug where mal_context_init() succeeds when JACK is unusable.
 //
 // v0.8.2 - 2018-07-07
 //   - Fix a bug on macOS with Core Audio where the internal callback is not called.
