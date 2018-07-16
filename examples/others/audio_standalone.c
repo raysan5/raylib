@@ -4,38 +4,58 @@
 *
 *   NOTE: This example does not require any graphic device, it can run directly on console.
 *
-*   [audio] module requires some external libs:
-*       OpenAL Soft - Audio device management lib (http://kcat.strangesoft.net/openal.html)
-*       stb_vorbis  - Ogg audio files loading (http://www.nothings.org/stb_vorbis/)
-*       jar_xm      - XM module file loading
-*       jar_mod     - MOD audio file loading
-*       dr_flac     - FLAC audio file loading
+*   DEPENDENCIES:
+*       mini_al.h    - Audio device management lib (http://kcat.strangesoft.net/openal.html)
+*       stb_vorbis.c - Ogg audio files loading (http://www.nothings.org/stb_vorbis/)
+*       jar_xm.h     - XM module file loading
+*       jar_mod.h    - MOD audio file loading
+*       dr_flac.h    - FLAC audio file loading
 *
-*   Compile audio module using:
-*       gcc -c audio.c stb_vorbis.c -Wall -std=c99 -DAUDIO_STANDALONE -DAL_LIBTYPE_STATIC
+*   COMPILATION:
+*       gcc -c ..\..\src\external\mini_al.c -Wall -I.
+*       gcc -o audio_standalone.exe audio_standalone.c ..\..\src\audio.c ..\..\src\external\stb_vorbis.c mini_al.o  /
+*           -I..\..\src -I..\..\src\external -L. -Wall -std=c99  / 
+*           -DAUDIO_STANDALONE -DSUPPORT_FILEFORMAT_WAV -DSUPPORT_FILEFORMAT_OGG
 *
-*   Compile example using:
-*       gcc -o audio_standalone.exe audio_standalone.c audio.o stb_vorbis.o -lopenal32 -lwinmm /
-*           -s -Wall -std=c99 -Wl,-allow-multiple-definition
+*   LICENSE: zlib/libpng
 *
-*   This example has been created using raylib 1.7 (www.raylib.com)
-*   raylib is licensed under an unmodified zlib/libpng license (View raylib.h for details)
+*   This example is licensed under an unmodified zlib/libpng license, which is an OSI-certified,
+*   BSD-like license that allows static linking with closed source software:
 *
-*   Copyright (c) 2017 Ramon Santamaria (@raysan5)
+*   Copyright (c) 2014-2018 Ramon Santamaria (@raysan5)
+*
+*   This software is provided "as-is", without any express or implied warranty. In no event
+*   will the authors be held liable for any damages arising from the use of this software.
+*
+*   Permission is granted to anyone to use this software for any purpose, including commercial
+*   applications, and to alter it and redistribute it freely, subject to the following restrictions:
+*
+*     1. The origin of this software must not be misrepresented; you must not claim that you
+*     wrote the original software. If you use this software in a product, an acknowledgment
+*     in the product documentation would be appreciated but is not required.
+*
+*     2. Altered source versions must be plainly marked as such, and must not be misrepresented
+*     as being the original software.
+*
+*     3. This notice may not be removed or altered from any source distribution.
 *
 ********************************************************************************************/
 
-#include <stdio.h>
-#include "audio.h"
-#if defined(_WIN32)
-#include <conio.h>          // Windows only, no stardard library
+#include "audio.h"              // Audio library
 
+#include <stdio.h>              // Required for: printf()
+
+#if defined(_WIN32)
+    #include <conio.h>          // Windows only, no stardard library
 #else
+    
+// Provide kbhit() function in non-Windows platforms
 #include <stdio.h>
 #include <termios.h>
 #include <unistd.h>
 #include <fcntl.h>
 
+// Check if a key has been pressed
 static int kbhit(void)
 {
 	struct termios oldt, newt;
@@ -54,7 +74,7 @@ static int kbhit(void)
 	tcsetattr(STDIN_FILENO, TCSANOW, &oldt);
 	fcntl(STDIN_FILENO, F_SETFL, oldf);
 
-	if(ch != EOF)
+	if (ch != EOF)
 	{
 		ungetc(ch, stdin);
 		return 1;
@@ -63,10 +83,8 @@ static int kbhit(void)
 	return 0;
 }
 
-static char getch()
-{
-	return getchar();
-}
+// Get pressed character
+static char getch() { return getchar(); }
 
 #endif
 
