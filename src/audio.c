@@ -1373,13 +1373,13 @@ Music LoadMusicStream(const char *fileName)
 #if defined(SUPPORT_FILEFORMAT_MP3)
     else if (IsFileExtension(fileName, ".mp3"))
     {
-        drmp3_init_file(&music->ctxMp3, fileName, NULL)
+        drmp3_init_file(&music->ctxMp3, fileName, NULL);
 
-        if (music->ctxMp3 == NULL) TraceLog(LOG_WARNING, "[%s] MP3 audio file could not be opened", fileName);
+        if (music->ctxMp3.framesRemaining <= 0) TraceLog(LOG_WARNING, "[%s] MP3 audio file could not be opened", fileName);
         else
         {
             music->stream = InitAudioStream(music->ctxMp3.sampleRate, 16, music->ctxMp3.channels);
-            //music->totalSamples = (unsigned int)music->ctxMp3.totalSampleCount/music->ctxMp3.channels;    //TODO!
+            music->totalSamples = (unsigned int)music->ctxMp3.framesRemaining*music->ctxMp3.channels;
             music->samplesLeft = music->totalSamples;
             music->ctxType = MUSIC_AUDIO_MP3;
             music->loopCount = -1;                       // Infinite loop by default
@@ -1594,7 +1594,7 @@ void UpdateMusicStream(Music music)
             case MUSIC_AUDIO_MP3: 
             {
                 // NOTE: Returns the number of samples to process
-                unsigned int numSamplesMp3 = (unsigned int)drmp3_read_f32(music->ctxMp3, samplesCount*music->stream.channels, (short *)pcm);
+                unsigned int numSamplesMp3 = (unsigned int)drmp3_read_f32(&music->ctxMp3, samplesCount*music->stream.channels, (float *)pcm);
 
             } break;
         #endif
