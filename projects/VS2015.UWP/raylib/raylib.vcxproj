@@ -155,7 +155,6 @@
     <ClCompile Include="..\..\..\src\core.c" />
     <ClCompile Include="..\..\..\src\external\stb_vorbis.c" />
     <ClCompile Include="..\..\..\src\models.c" />
-    <ClCompile Include="..\..\..\src\rlgl.c" />
     <ClCompile Include="..\..\..\src\shapes.c" />
     <ClCompile Include="..\..\..\src\text.c" />
     <ClCompile Include="..\..\..\src\textures.c" />
@@ -176,8 +175,6 @@
     <ClInclude Include="..\..\..\src\raylib.h" />
     <ClInclude Include="..\..\..\src\raymath.h" />
     <ClInclude Include="..\..\..\src\rlgl.h" />
-    <ClInclude Include="..\..\..\src\shader_distortion.h" />
-    <ClInclude Include="..\..\..\src\shader_standard.h" />
     <ClInclude Include="..\..\..\src\utils.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
