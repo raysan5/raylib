@@ -48,6 +48,10 @@
 #define RLGL_STANDALONE
 #include "rlgl.h"               // OpenGL 1.1 immediate-mode style coding
 
+#ifdef __EMSCRIPTEN__
+#define GLFW_INCLUDE_ES2
+#endif
+
 #include <GLFW/glfw3.h>         // Windows/Context and inputs management
 
 #define RED        (Color){ 230, 41, 55, 255 }     // Red
