@@ -72,6 +72,7 @@ games/*
 !games/*.png
 # Unignore games makefile
 !games/Makefile
+!games/Makefile.Android
 
 # Ignore files build by xcode
 *.mode*v*
