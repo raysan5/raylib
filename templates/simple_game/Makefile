@@ -25,20 +25,20 @@
 
 # Define required raylib variables
 # WARNING: To compile to HTML5, code must be redesigned to use emscripten.h and emscripten_set_main_loop()
-PLATFORM ?= PLATFORM_DESKTOP
-RAYLIB_PATH ?= ../..
-PROJECT_NAME ?= simple_game
+PLATFORM            ?= PLATFORM_DESKTOP
+RAYLIB_PATH         ?= ../..
+PROJECT_NAME        ?= simple_game
 
 # Default path for raylib on Raspberry Pi, if installed in different path, update it!
 ifeq ($(PLATFORM),PLATFORM_RPI)
-    RAYLIB_PATH ?= /home/pi/raylib
+    RAYLIB_PATH     ?= /home/pi/raylib
 endif
 
 # Library type used for raylib: STATIC (.a) or SHARED (.so/.dll)
-RAYLIB_LIBTYPE ?= STATIC
+RAYLIB_LIBTYPE      ?= STATIC
 
 # Use external GLFW library instead of rglfw module
-USE_EXTERNAL_GLFW ?= FALSE
+USE_EXTERNAL_GLFW   ?= FALSE
 
 # Use Wayland display server protocol on Linux desktop
 # by default it uses X11 windowing system

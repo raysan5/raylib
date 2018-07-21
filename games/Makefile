@@ -25,20 +25,20 @@
 
 # Define required raylib variables
 # WARNING: To compile to HTML5, code must be redesigned to use emscripten.h and emscripten_set_main_loop()
-PLATFORM ?= PLATFORM_DESKTOP
-RAYLIB_PATH ?= ..
-PROJECT_NAME ?= sample_game
+PLATFORM            ?= PLATFORM_DESKTOP
+RAYLIB_PATH         ?= ..
+PROJECT_NAME        ?= sample_game
 
 # Default path for raylib on Raspberry Pi, if installed in different path, update it!
 ifeq ($(PLATFORM),PLATFORM_RPI)
-    RAYLIB_PATH ?= /home/pi/raylib
+    RAYLIB_PATH     ?= /home/pi/raylib
 endif
 
 # Library type used for raylib: STATIC (.a) or SHARED (.so/.dll)
-RAYLIB_LIBTYPE ?= STATIC
+RAYLIB_LIBTYPE      ?= STATIC
 
 # Use external GLFW library instead of rglfw module
-USE_EXTERNAL_GLFW ?= FALSE
+USE_EXTERNAL_GLFW   ?= FALSE
 
 # Use Wayland display server protocol on Linux desktop
 # by default it uses X11 windowing system
@@ -84,13 +84,13 @@ endif
 
 ifeq ($(PLATFORM),PLATFORM_WEB)
     # Emscripten required variables
-    EMSDK_PATH = C:/emsdk
-    EMSCRIPTEN_VERSION = 1.37.28
-    CLANG_VERSION=e1.37.28_64bit
-    PYTHON_VERSION=2.7.5.3_64bit
-    NODE_VERSION=4.1.1_64bit
-    export PATH=$(EMSDK_PATH);$(EMSDK_PATH)\clang\$(CLANG_VERSION);$(EMSDK_PATH)\node\$(NODE_VERSION)\bin;$(EMSDK_PATH)\python\$(PYTHON_VERSION);$(EMSDK_PATH)\emscripten\$(EMSCRIPTEN_VERSION);C:\raylib\MinGW\bin:$$(PATH)
-    EMSCRIPTEN=$(EMSDK_PATH)\emscripten\$(EMSCRIPTEN_VERSION)
+    EMSDK_PATH          = C:/emsdk
+    EMSCRIPTEN_VERSION  = 1.38.8
+    CLANG_VERSION       = e1.38.8_64bit
+    PYTHON_VERSION      = 2.7.13.1_64bit\python-2.7.13.amd64
+    NODE_VERSION        = 8.9.1_64bit
+    export PATH         = $(EMSDK_PATH);$(EMSDK_PATH)\clang\$(CLANG_VERSION);$(EMSDK_PATH)\node\$(NODE_VERSION)\bin;$(EMSDK_PATH)\python\$(PYTHON_VERSION);$(EMSDK_PATH)\emscripten\$(EMSCRIPTEN_VERSION);C:\raylib\MinGW\bin:$$(PATH)
+    EMSCRIPTEN          = $(EMSDK_PATH)\emscripten\$(EMSCRIPTEN_VERSION)
 endif
 
 RAYLIB_RELEASE_PATH ?= $(RAYLIB_PATH)/release/libs
