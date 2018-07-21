@@ -117,13 +117,13 @@ endif
 
 ifeq ($(PLATFORM),PLATFORM_WEB)
     # Emscripten required variables
-    EMSDK_PATH = C:/emsdk
-    EMSCRIPTEN_VERSION = 1.37.28
-    CLANG_VERSION=e1.37.28_64bit
-    PYTHON_VERSION=2.7.5.3_64bit
-    NODE_VERSION=4.1.1_64bit
-    export PATH=$(EMSDK_PATH);$(EMSDK_PATH)\clang\$(CLANG_VERSION);$(EMSDK_PATH)\node\$(NODE_VERSION)\bin;$(EMSDK_PATH)\python\$(PYTHON_VERSION);$(EMSDK_PATH)\emscripten\$(EMSCRIPTEN_VERSION);C:\raylib\MinGW\bin:$$(PATH)
-    EMSCRIPTEN=$(EMSDK_PATH)\emscripten\$(EMSCRIPTEN_VERSION)
+    EMSDK_PATH          = C:/emsdk
+    EMSCRIPTEN_VERSION  = 1.38.8
+    CLANG_VERSION       = e1.38.8_64bit
+    PYTHON_VERSION      = 2.7.13.1_64bit\python-2.7.13.amd64
+    NODE_VERSION        = 8.9.1_64bit
+    export PATH         = $(EMSDK_PATH);$(EMSDK_PATH)\clang\$(CLANG_VERSION);$(EMSDK_PATH)\node\$(NODE_VERSION)\bin;$(EMSDK_PATH)\python\$(PYTHON_VERSION);$(EMSDK_PATH)\emscripten\$(EMSCRIPTEN_VERSION);C:\raylib\MinGW\bin:$$(PATH)
+    EMSCRIPTEN          = $(EMSDK_PATH)\emscripten\$(EMSCRIPTEN_VERSION)
 endif
 
 # Define raylib release directory for compiled library.
@@ -236,14 +236,23 @@ ifeq ($(PLATFORM),PLATFORM_RPI)
     CFLAGS += -std=gnu99
 endif
 ifeq ($(PLATFORM),PLATFORM_WEB)
-    # -O2                        # if used, also set --memory-init-file 0
+    # -Os                        # size optimization
+    # -O2                        # optimization level 2, if used, also set --memory-init-file 0
     # --memory-init-file 0       # to avoid an external memory initialization code file (.mem)
     # -s ALLOW_MEMORY_GROWTH=1   # to allow memory resizing
     # -s TOTAL_MEMORY=16777216   # to specify heap memory size (default = 16MB)
     # -s USE_PTHREADS=1          # multithreading support
     # -s WASM=1                  # support Web Assembly (https://github.com/kripken/emscripten/wiki/WebAssembly)
+    # -s EMTERPRETIFY=1          # enable emscripten code interpreter (very slow)
+    # -s EMTERPRETIFY_ASYNC=1    # support synchronous loops by emterpreter
+    # --profiling                # include information for code profiling
     # --preload-file resources   # specify a resources folder for data compilation
-    CFLAGS += -s USE_GLFW=3 -s ASSERTIONS=1 -s WASM=1 --profiling --preload-file resources
+    CFLAGS += -Os -s USE_GLFW=3 -s ASSERTIONS=1 -s WASM=1 -s EMTERPRETIFY=1 -s EMTERPRETIFY_ASYNC=1
+    
+    # NOTE: Simple raylib examples are compiled to be interpreter by emterpreter, that way,
+    # we can compile same code for ALL platforms with no change required, but, working on bigger
+    # projects, code needs to be refactored to avoid a blocking while() loop, moving Update and Draw
+    # logic to a self contained function: UpdateDrawFrame(), check core_basic_window_web.c for reference.
 
     # Define a custom shell .html and output extension
     CFLAGS += --shell-file $(RAYLIB_PATH)\templates\web_shell\shell.html
