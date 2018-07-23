@@ -1,11 +1,10 @@
 ### Config options ###
 include(CMakeDependentOption)
+include(EnumOption)
 
-set(PLATFORM "Desktop" CACHE STRING "Platform to build for.")
-set_property(CACHE PLATFORM PROPERTY STRINGS "Desktop" "Web" "Android" "Raspberry Pi")
+enum_option(PLATFORM "Desktop;Web;Android;Raspberry Pi" "Platform to build for.")
 
-set(OPENGL_VERSION "3.3" CACHE STRING "OpenGL Version to build raylib with")
-set_property(CACHE OPENGL_VERSION PROPERTY STRINGS "3.3" "2.1" "1.1" "ES 2.0")
+enum_option(OPENGL_VERSION "3.3;2.1;1.1;ES 2.0" "OpenGL Version to build raylib with")
 
 # Shared library is always PIC. Static library should be PIC too if linked into a shared library
 option(WITH_PIC "Compile static library as position-independent code" OFF)
@@ -19,10 +18,9 @@ else()
   cmake_dependent_option(USE_OPENAL_BACKEND "Link raylib with openAL instead of mini-al" OFF "USE_AUDIO" OFF)
 endif()
 
-set(USE_EXTERNAL_GLFW  OFF  CACHE STRING "Link raylib against system GLFW instead of embedded one")
-set_property(CACHE USE_EXTERNAL_GLFW PROPERTY STRINGS ON OFF IF_POSSIBLE)
+enum_option(USE_EXTERNAL_GLFW "OFF;IF_POSSIBLE;ON" "Link raylib against system GLFW instead of embedded one")
 if(UNIX AND NOT APPLE)
-    option(USE_WAYLAND "Use Wayland for window creation" OFF)
+  option(USE_WAYLAND "Use Wayland for window creation" OFF)
 endif()
 
 
@@ -49,7 +47,7 @@ option(SUPPORT_FILEFORMAT_PNG "Support loading PNG as textures" ON)
 option(SUPPORT_FILEFORMAT_DDS "Support loading DDS as textures" ON)
 option(SUPPORT_FILEFORMAT_HDR "Support loading HDR as textures" ON)
 option(SUPPORT_FILEFORMAT_KTX "Support loading KTX as textures" ON)
-option(SUPPORT_FILEFORMAT_ASTC "Support loading ASTC as  textures" ON)
+option(SUPPORT_FILEFORMAT_ASTC "Support loading ASTC as textures" ON)
 option(SUPPORT_FILEFORMAT_BMP "Support loading BMP as textures" OFF)
 option(SUPPORT_FILEFORMAT_TGA "Support loading TGA as textures" OFF)
 option(SUPPORT_FILEFORMAT_JPG "Support loading JPG as textures" OFF)
