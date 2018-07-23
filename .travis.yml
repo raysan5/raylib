@@ -14,10 +14,10 @@ matrix:
       env: ARCH=i386
       sudo: required
     - os: linux
-      env: ARCH=amd64
+      env: ARCH=amd64 INSTALL_GLFW=YES USE_EXTERNAL_GLFW=NO
       sudo: required
     - os: linux
-      env: ARCH=amd64 GLFW=SYSTEM RELEASE=NO
+      env: ARCH=amd64 INSTALL_GLFW=YES RELEASE=NO
       sudo: required
     - os: linux
       env: USE_WAYLAND=ON ARCH=amd64 RELEASE=NO
@@ -43,6 +43,9 @@ matrix:
 before_script:
 
 before_install:
+  - if [ -z "$USE_EXTERNAL_GLFW" ]; then
+       export USE_EXTERNAL_GLFW=IF_POSSIBLE;
+    fi
   - if [ "$TRAVIS_OS_NAME" == "linux" ]; then
       if [[ "$ARCH" == *-android ]]; then
         export RAYLIB_PACKAGE_SUFFIX="-Android-arm64";
@@ -77,7 +80,7 @@ before_install:
           export CMAKE_ARCH_ARGS='-DCMAKE_C_FLAGS=-m32 -DCMAKE_SYSTEM_LIBRARY_PATH=/usr/lib/i386-linux-gnu';
         fi;
         export RAYLIB_PACKAGE_SUFFIX="-Linux-$ARCH";
-        if [ "$GLFW" == "SYSTEM" ]; then
+        if [ "$INSTALL_GLFW" == "YES" ]; then
           wget 'http://ftp.de.debian.org/debian/pool/main/g/glfw3/libglfw3_3.2.1-1_amd64.deb';
           wget 'http://ftp.de.debian.org/debian/pool/main/g/glfw3/libglfw3-dev_3.2.1-1_amd64.deb';
           sudo dpkg -i libglfw3_3.2.1-1_amd64.deb libglfw3-dev_3.2.1-1_amd64.deb;
@@ -86,7 +89,7 @@ before_install:
     fi
   - if [ "$TRAVIS_OS_NAME" == "osx" ]; then
       export RAYLIB_PACKAGE_SUFFIX="-macOS";
-      if [ "$GLFW" == "SYSTEM" ]; then brew update; brew install glfw; fi;
+      if [ "$INSTALL_GLFW" == "YES" ]; then brew update; brew install glfw; fi;
     fi
   - mkdir build
   - $RUNNER $CC --version
@@ -101,7 +104,7 @@ script:
       git checkout 1.12 && ./autogen.sh --prefix=/usr && make && sudo make install;
       popd;
     fi
-  - $RUNNER cmake $CMAKE_ARCH_ARGS -DMACOS_FATLIB=ON -DSTATIC=ON -DSHARED=ON -DBUILD_EXAMPLES=ON -DBUILD_GAMES=ON -DUSE_EXTERNAL_GLFW=IF_POSSIBLE -DUSE_WAYLAND=${USE_WAYLAND} ..
+  - $RUNNER cmake $CMAKE_ARCH_ARGS -DMACOS_FATLIB=ON -DSTATIC=ON -DSHARED=ON -DBUILD_EXAMPLES=ON -DBUILD_GAMES=ON -DUSE_EXTERNAL_GLFW=$USE_EXTERNAL_GLFW$ -DUSE_WAYLAND=${USE_WAYLAND} ..
   - $RUNNER make VERBOSE=1
   - if [ "$RELEASE" != "NO" ]; then $RUNNER make package; fi;
   - sudo $RUNNER make install
