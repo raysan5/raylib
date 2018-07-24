@@ -35,6 +35,7 @@ endforeach()
 
 include(CheckIncludeFiles)
 list(REMOVE_ITEM example_sources ${CMAKE_CURRENT_SOURCE_DIR}/others/standard_lighting.c)
+set(OUTPUT_EXT)
 
 if(${PLATFORM} MATCHES "Android")
   list(REMOVE_ITEM example_sources ${CMAKE_CURRENT_SOURCE_DIR}/others/rlgl_standalone.c)
@@ -56,7 +57,10 @@ if(${PLATFORM} MATCHES "Android")
   list(REMOVE_ITEM example_sources ${CMAKE_CURRENT_SOURCE_DIR}/shaders/shaders_custom_uniform.c)
   list(REMOVE_ITEM example_sources ${CMAKE_CURRENT_SOURCE_DIR}/shaders/shaders_model_shader.c)
   list(REMOVE_ITEM example_sources ${CMAKE_CURRENT_SOURCE_DIR}/shaders/shaders_postprocessing.c)
-  
+elseif(${PLATFORM} MATCHES "Web")
+  set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Os -s USE_GLFW=3 -s ASSERTIONS=1 -s WASM=1 -s EMTERPRETIFY=1 -s EMTERPRETIFY_ASYNC=1")
+  set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} --shell-file ${CMAKE_SOURCE_DIR}/templates/web_shell/shell.html")
+  set(OUTPUT_EXT ".html")
 endif()
 
 
@@ -64,7 +68,7 @@ endif()
 foreach(example_source ${example_sources})
   # Create the basename for the example
   get_filename_component(example_name ${example_source} NAME)
-  string(REPLACE ".c" "" example_name ${example_name})
+  string(REPLACE ".c" "${OUTPUT_EXT}" example_name ${example_name})
 
   # Setup the example
   add_executable(${example_name} ${example_source})
