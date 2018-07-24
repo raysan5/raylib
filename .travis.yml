@@ -30,6 +30,9 @@ matrix:
                   - libegl1-mesa-dev
     - os: osx
       env: ARCH=universal
+    - os: osx
+      osx_image: xcode9.4
+      env: ARCH=universal SHARED=OFF RELEASE=NO
     - os: linux
       env: ARCH=arm64-android RELEASE=NO
       sudo: required
@@ -45,6 +48,9 @@ before_script:
 before_install:
   - if [ -z "$USE_EXTERNAL_GLFW" ]; then
        export USE_EXTERNAL_GLFW=IF_POSSIBLE;
+    fi
+  - if [ -z "$SHARED" ]; then
+       export SHARED=ON;
     fi
   - if [ "$TRAVIS_OS_NAME" == "linux" ]; then
       if [[ "$ARCH" == *-android ]]; then
@@ -104,7 +110,7 @@ script:
       git checkout 1.12 && ./autogen.sh --prefix=/usr && make && sudo make install;
       popd;
     fi
-  - $RUNNER cmake $CMAKE_ARCH_ARGS -DMACOS_FATLIB=ON -DSTATIC=ON -DSHARED=ON -DBUILD_EXAMPLES=ON -DBUILD_GAMES=ON -DUSE_EXTERNAL_GLFW=$USE_EXTERNAL_GLFW -DUSE_WAYLAND=${USE_WAYLAND} ..
+  - $RUNNER cmake $CMAKE_ARCH_ARGS -DMACOS_FATLIB=ON -DSTATIC=ON -DSHARED=$SHARED -DBUILD_EXAMPLES=ON -DBUILD_GAMES=ON -DUSE_EXTERNAL_GLFW=$USE_EXTERNAL_GLFW -DUSE_WAYLAND=${USE_WAYLAND} ..
   - $RUNNER make VERBOSE=1
   - if [ "$RELEASE" != "NO" ]; then $RUNNER make package; fi;
   - sudo $RUNNER make install
