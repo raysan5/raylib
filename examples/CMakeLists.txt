@@ -35,6 +35,7 @@ endforeach()
 
 include(CheckIncludeFiles)
 list(REMOVE_ITEM example_sources ${CMAKE_CURRENT_SOURCE_DIR}/others/standard_lighting.c)
+list(REMOVE_ITEM example_sources ${CMAKE_CURRENT_SOURCE_DIR}/others/rlgl_standalone.c) # see #588
 set(OUTPUT_EXT)
 
 if(${PLATFORM} MATCHES "Android")
