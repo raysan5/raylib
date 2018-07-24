@@ -198,7 +198,14 @@ typedef unsigned char byte;
         float *tangents;        // vertex tangents (XYZW - 4 components per vertex) (shader-location = 4)
         unsigned char *colors;  // vertex colors (RGBA - 4 components per vertex) (shader-location = 3)
         unsigned short *indices;// vertex indices (in case vertex data comes indexed)
+        
+        // Animation vertex data
+        float *baseVertices;    // Vertex base position (required to apply bones transformations)
+        float *baseNormals;     // Vertex base normals (required to apply bones transformations)
+        float *weightBias;      // Vertex weight bias
+        int *weightId;          // Vertex weight id
 
+        // OpenGL identifiers
         unsigned int vaoId;     // OpenGL Vertex Array Object id
         unsigned int vboId[7];  // OpenGL Vertex Buffer Objects id (7 types of vertex data)
     } Mesh;
