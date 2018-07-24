@@ -2652,6 +2652,11 @@ void rlUnloadMesh(Mesh *mesh)
     if (mesh->tangents != NULL) free(mesh->tangents);
     if (mesh->texcoords2 != NULL) free(mesh->texcoords2);
     if (mesh->indices != NULL) free(mesh->indices);
+    
+    if (mesh->baseVertices != NULL) free(mesh->baseVertices);
+    if (mesh->baseNormals != NULL) free(mesh->baseNormals);
+    if (mesh->weightBias != NULL) free(mesh->weightBias);
+    if (mesh->weightId != NULL) free(mesh->weightId);
 
     rlDeleteBuffers(mesh->vboId[0]);   // vertex
     rlDeleteBuffers(mesh->vboId[1]);   // texcoords

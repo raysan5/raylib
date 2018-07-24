@@ -77,10 +77,10 @@ int main()
                 DrawGrid(10, 1.0f);         // Draw a grid
 
             EndMode3D();
+            
+            DrawText("PRESS SPACE to PLAY IQM MODEL ANIMATION", 10, 10, 20, MAROON);
 
-            DrawText("(c) Guy IQM 3D model by -------", screenWidth - 200, screenHeight - 20, 10, GRAY);
-
-            DrawFPS(10, 10);
+            DrawText("(c) Guy IQM 3D model by @culacant", screenWidth - 200, screenHeight - 20, 10, GRAY);
 
         EndDrawing();
         //----------------------------------------------------------------------------------
