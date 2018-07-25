@@ -7,7 +7,7 @@
 *   This example has been created using raylib 1.6 (www.raylib.com)
 *   raylib is licensed under an unmodified zlib/libpng license (View raylib.h for details)
 *
-*   Copyright (c) 2015 Ramon Santamaria (@raysan5)
+*   Copyright (c) 2015-2018 Ramon Santamaria (@raysan5) and James Hofmann (@triplefox)
 *
 ********************************************************************************************/
 
@@ -17,7 +17,7 @@
 #include <math.h>           // Required for: sinf()
 #include <string.h>         // Required for: memcpy()
 
-#define MAX_SAMPLES             512
+#define MAX_SAMPLES               512
 #define MAX_SAMPLES_PER_UPDATE   4096
 
 int main()
@@ -70,16 +70,17 @@ int main()
         
         // Sample mouse input.
         mousePosition = GetMousePosition();
-        if (IsMouseButtonDown(MOUSE_LEFT_BUTTON)) {
+        
+        if (IsMouseButtonDown(MOUSE_LEFT_BUTTON)) 
+        {
             float fp = (float)(mousePosition.y);
             frequency = 40.0f + (float)(fp);
         }
         
         // Rewrite the sine wave.
-        // Compute two cycles to allow the buffer padding, simplifying
-        // any modulation, resampling, etc.
-        if (frequency != oldFrequency) {
-            
+        // Compute two cycles to allow the buffer padding, simplifying any modulation, resampling, etc.
+        if (frequency != oldFrequency) 
+        {
             // Compute wavelength. Limit size in both directions.
             int oldWavelength = waveLength;
             waveLength = (int)(22050/frequency);
@@ -100,28 +101,29 @@ int main()
         // Refill audio stream if required
         if (IsAudioBufferProcessed(stream)) 
         {
-            
             // Synthesize a buffer that is exactly the requested size
             int writeCursor = 0;
-            while(writeCursor < MAX_SAMPLES_PER_UPDATE) {
-                
+            
+            while (writeCursor < MAX_SAMPLES_PER_UPDATE) 
+            {
                 // Start by trying to write the whole chunk at once
                 int writeLength = MAX_SAMPLES_PER_UPDATE-writeCursor;
+                
                 // Limit to the maximum readable size
                 int readLength = waveLength-readCursor;
-                if (writeLength > readLength)
-                {
-                    writeLength = readLength;
-                }
+                
+                if (writeLength > readLength) writeLength = readLength;
 
                 // Write the slice
                 memcpy(writeBuf + writeCursor, data + readCursor, writeLength*sizeof(short));
+                
                 // Update cursors and loop audio
                 readCursor = (readCursor + writeLength) % waveLength;
+                
                 writeCursor += writeLength;
             }
             
-            // copy finished frame to audio stream
+            // Copy finished frame to audio stream
             UpdateAudioStream(stream, writeBuf, MAX_SAMPLES_PER_UPDATE);
         }
         //----------------------------------------------------------------------------------
@@ -132,7 +134,7 @@ int main()
 
             ClearBackground(RAYWHITE);
 
-            DrawText(FormatText("Sine frequency: %i",(int)frequency), 240, 140, 20, LIGHTGRAY);
+            DrawText(FormatText("sine frequency: %i",(int)frequency), GetScreenWidth() - 220, 10, 20, RED);
             DrawText("click mouse button to change frequency", 10, 10, 20, DARKGRAY);
             
             // Draw the current buffer state proportionate to the screen
@@ -154,7 +156,6 @@ int main()
     free(writeBuf);             // Unload write buffer
     
     CloseAudioStream(stream);   // Close raw audio stream and delete buffers from RAM
-
     CloseAudioDevice();         // Close audio device (music streaming is automatically stopped)
 
     CloseWindow();              // Close window and OpenGL context
