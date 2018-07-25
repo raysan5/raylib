@@ -66,6 +66,7 @@
 
 #if defined(RLGL_STANDALONE)
     #define RAYMATH_STANDALONE
+    #define RAYMATH_HEADER_ONLY
 #else
     #include "raylib.h"         // Required for: Model, Shader, Texture2D, TraceLog()
 #endif
