@@ -9,9 +9,7 @@ project('core_basic_window', 'c', version: '1.0',
 cc = meson.get_compiler('c')
 
 # Find dependencies
-glfw_dep = dependency('glfw3')
 gl_dep = dependency('gl')
-openal_dep = dependency('openal')
 m_dep = cc.find_library('m', required : false)
 raylib_dep = cc.find_library('raylib', required : false)
 
@@ -23,5 +21,5 @@ source_c = [
 # Build executable
 core_basic_window = executable('core_basic_window',
   source_c,
-  dependencies : [ raylib_dep, glfw_dep, gl_dep, openal_dep, m_dep ],
+  dependencies : [ raylib_dep, gl_dep, m_dep ],
   install : true)
