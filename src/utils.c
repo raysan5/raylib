@@ -74,6 +74,7 @@ FILE *funopen(const void *cookie, int (*readfn)(void *, char *, int),
 
 // Log types messages supported flags (bit based)
 static unsigned char logTypeFlags = LOG_INFO | LOG_WARNING | LOG_ERROR;
+static TraceLogCallback logCallback = NULL;
 
 #if defined(PLATFORM_ANDROID)
 AAssetManager *assetManager;
@@ -99,11 +100,26 @@ void SetTraceLog(unsigned char types)
     logTypeFlags = types;
 }
 
+// Set a trace log callback to enable custom logging bypassing raylib's one
+void SetTraceLogCallback(TraceLogCallback callback)
+{
+    logCallback = callback;
+}
+
 // Show trace log messages (LOG_INFO, LOG_WARNING, LOG_ERROR, LOG_DEBUG)
 void TraceLog(int msgType, const char *text, ...)
 {
 #if defined(SUPPORT_TRACELOG)
     static char buffer[128];
+    va_list args;
+    va_start(args, text);
+
+    if (logCallback)
+    {
+        logCallback(msgType, text, args);
+        va_end(args);
+        return;
+    }
 
     switch(msgType)
     {
@@ -116,9 +132,6 @@ void TraceLog(int msgType, const char *text, ...)
 
     strcat(buffer, text);
     strcat(buffer, "\n");
-
-    va_list args;
-    va_start(args, text);
 
 #if defined(PLATFORM_ANDROID)
     switch(msgType)
