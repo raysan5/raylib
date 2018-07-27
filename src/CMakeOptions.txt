@@ -23,6 +23,9 @@ if(UNIX AND NOT APPLE)
   option(USE_WAYLAND "Use Wayland for window creation" OFF)
 endif()
 
+option(INCLUDE_EVERYTHING "Include everything disabled by default (for CI usage" OFF)
+set(OFF ${INCLUDE_EVERYTHING} CACHE INTERNAL "Replace any OFF by default with \${OFF} to have it covered by this option")
+
 
 # core.c
 option(SUPPORT_BUSY_WAIT_LOOP "Use busy wait loop for timing sync instead of a high-resolution timer" ON)
@@ -48,13 +51,13 @@ option(SUPPORT_FILEFORMAT_DDS "Support loading DDS as textures" ON)
 option(SUPPORT_FILEFORMAT_HDR "Support loading HDR as textures" ON)
 option(SUPPORT_FILEFORMAT_KTX "Support loading KTX as textures" ON)
 option(SUPPORT_FILEFORMAT_ASTC "Support loading ASTC as textures" ON)
-option(SUPPORT_FILEFORMAT_BMP "Support loading BMP as textures" OFF)
-option(SUPPORT_FILEFORMAT_TGA "Support loading TGA as textures" OFF)
-option(SUPPORT_FILEFORMAT_JPG "Support loading JPG as textures" OFF)
-option(SUPPORT_FILEFORMAT_GIF "Support loading GIF as textures" OFF)
-option(SUPPORT_FILEFORMAT_PSD "Support loading PSD as textures" OFF)
-option(SUPPORT_FILEFORMAT_PKM "Support loading PKM as textures" OFF)
-option(SUPPORT_FILEFORMAT_PVR "Support loading PVR as textures" OFF)
+option(SUPPORT_FILEFORMAT_BMP "Support loading BMP as textures" ${OFF})
+option(SUPPORT_FILEFORMAT_TGA "Support loading TGA as textures" ${OFF})
+option(SUPPORT_FILEFORMAT_JPG "Support loading JPG as textures" ${OFF})
+option(SUPPORT_FILEFORMAT_GIF "Support loading GIF as textures" ${OFF})
+option(SUPPORT_FILEFORMAT_PSD "Support loading PSD as textures" ${OFF})
+option(SUPPORT_FILEFORMAT_PKM "Support loading PKM as textures" ${OFF})
+option(SUPPORT_FILEFORMAT_PVR "Support loading PVR as textures" ${OFF})
 
 # models.c
 option(SUPPORT_FILEFORMAT_OBJ "Support loading OBJ file format" ON)
@@ -70,7 +73,7 @@ option(SUPPORT_FILEFORMAT_FLAC "Support loading FLAC for sound" OFF)
 
 # utils.c
 option(SUPPORT_SAVE_PNG "Support saving image data in PNG file format" ON)
-option(SUPPORT_SAVE_BMP "Support saving image data in BMP file format" OFF)
+option(SUPPORT_SAVE_BMP "Support saving image data in BMP file format" ${OFF})
 option(SUPPORT_TRACELOG "Show TraceLog() output messages. NOTE: By default LOG_DEBUG traces not shown" ON)
 
 option(SUPPORT_FILEFORMAT_FNT "Support loading fonts in FNT format" ON)
