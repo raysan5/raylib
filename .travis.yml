@@ -17,10 +17,10 @@ matrix:
       env: ARCH=amd64 INSTALL_GLFW=YES USE_EXTERNAL_GLFW=OFF
       sudo: required
     - os: linux
-      env: ARCH=amd64 INSTALL_GLFW=YES RELEASE=NO
+      env: ARCH=amd64 INSTALL_GLFW=YES OPENAL=YES RELEASE=NO
       sudo: required
     - os: linux
-      env: USE_WAYLAND=ON ARCH=amd64 RELEASE=NO
+      env: WAYLAND=ON ARCH=amd64 RELEASE=NO
       sudo: required
       addons:
           apt:
@@ -46,12 +46,9 @@ matrix:
 before_script:
 
 before_install:
-  - if [ -z "$USE_EXTERNAL_GLFW" ]; then
-       export USE_EXTERNAL_GLFW=IF_POSSIBLE;
-    fi
-  - if [ -z "$SHARED" ]; then
-       export SHARED=ON;
-    fi
+  - if [ -z "$USE_EXTERNAL_GLFW" ]; then USE_EXTERNAL_GLFW=IF_POSSIBLE; fi
+  - if [ -z "$SHARED"            ]; then            SHARED=ON         ; fi
+  - if [ -z "$OPENAL"            ]; then            OPENAL=OFF        ; fi
   - if [ "$TRAVIS_OS_NAME" == "linux" ]; then
       if [[ "$ARCH" == *-android ]]; then
         export RAYLIB_PACKAGE_SUFFIX="-Android-arm64";
@@ -59,32 +56,30 @@ before_install:
         unzip -qq android-ndk*.zip;
         if [[ "$ARCH" == arm64-* ]]; then
           export RAYLIB_PACKAGE_SUFFIX="-Android-arm64";
-          export TOOLCHAIN_ARCH=arm64;
-          export PREFIX=aarch64-linux-android-;
+          TOOLCHAIN_ARCH=arm64;
+          PREFIX=aarch64-linux-android-;
         else
           export RAYLIB_PACKAGE_SUFFIX="-Android-arm32";
-          export TOOLCHAIN_ARCH=arm;
-          export PREFIX=arm-linux-androideabi-;
+          TOOLCHAIN_ARCH=arm;
+          PREFIX=arm-linux-androideabi-;
         fi;
         android-ndk*/build/tools/make_standalone_toolchain.py --arch $TOOLCHAIN_ARCH --api 21 --install-dir /tmp/android-toolchain;
         export PATH=/tmp/android-toolchain/bin:$PATH;
         export CC=${PREFIX}clang;
         export CXX=${PREFIX}clang++;
-        export CMAKE_ARCH_ARGS='-DPLATFORM=Android';
+        CMAKE_ARCH_ARGS='-DPLATFORM=Android';
       elif [ "$ARCH" == "html5" ]; then
         export RAYLIB_PACKAGE_SUFFIX="-html5";
         docker run --privileged=true -dit --name emscripten -v $(pwd):/src trzeci/emscripten:sdk-incoming-64bit bash;
-        export CMAKE_ARCH_ARGS='-DPLATFORM=Web -DCMAKE_TOOLCHAIN_FILE=../cmake/emscripten.cmake';
-        export RUNNER='docker exec -it emscripten cmake -E chdir build';
+        CMAKE_ARCH_ARGS='-DPLATFORM=Web -DCMAKE_TOOLCHAIN_FILE=../cmake/emscripten.cmake';
+        RUNNER='docker exec -it emscripten cmake -E chdir build';
       else
         sudo apt-get install -y gcc-multilib
                                 libasound2-dev:$ARCH
                                 libxcursor-dev:$ARCH libxinerama-dev:$ARCH mesa-common-dev:$ARCH
                                 libx11-dev:$ARCH libxrandr-dev:$ARCH libxrandr2:$ARCH libxi-dev:$ARCH
                                 libgl1-mesa-dev:$ARCH libglu1-mesa-dev:$ARCH;
-        if [ "$ARCH" == "i386" ]; then
-          export CMAKE_ARCH_ARGS='-DCMAKE_C_FLAGS=-m32 -DCMAKE_SYSTEM_LIBRARY_PATH=/usr/lib/i386-linux-gnu';
-        fi;
+        if [ "$ARCH" == "i386" ]; then CMAKE_ARCH_ARGS='-DCMAKE_C_FLAGS=-m32 -DCMAKE_SYSTEM_LIBRARY_PATH=/usr/lib/i386-linux-gnu'; fi;
         export RAYLIB_PACKAGE_SUFFIX="-Linux-$ARCH";
         if [ "$INSTALL_GLFW" == "YES" ]; then
           wget 'http://ftp.de.debian.org/debian/pool/main/g/glfw3/libglfw3_3.2.1-1_amd64.deb';
@@ -102,7 +97,7 @@ before_install:
 
 script:
   - cd build
-  - if test -n "${USE_WAYLAND}";
+  - if test -n "$WAYLAND";
       then wget https://mirrors.kernel.org/ubuntu/pool/universe/e/extra-cmake-modules/extra-cmake-modules_5.38.0a-0ubuntu1_amd64.deb;
       sudo dpkg -i extra-cmake-modules_5.38.0a-0ubuntu1_amd64.deb;
       git clone git://anongit.freedesktop.org/wayland/wayland-protocols;
@@ -110,9 +105,16 @@ script:
       git checkout 1.12 && ./autogen.sh --prefix=/usr && make && sudo make install;
       popd;
     fi
-  - $RUNNER cmake $CMAKE_ARCH_ARGS -DMACOS_FATLIB=ON -DSTATIC=ON -DSHARED=$SHARED -DBUILD_EXAMPLES=ON -DBUILD_GAMES=ON -DUSE_EXTERNAL_GLFW=$USE_EXTERNAL_GLFW -DUSE_WAYLAND=${USE_WAYLAND} ..
+  - $RUNNER cmake $CMAKE_ARCH_ARGS
+      -DMACOS_FATLIB=ON
+      -DSTATIC=ON -DSHARED=$SHARED
+      -DBUILD_EXAMPLES=ON -DBUILD_GAMES=ON
+      -DUSE_EXTERNAL_GLFW=$USE_EXTERNAL_GLFW
+      -DUSE_WAYLAND=$WAYLAND
+      -DUSE_OPENAL_BACKEND=$OPENAL
+      ..
   - $RUNNER make VERBOSE=1
-  - if [ "$RELEASE" != "NO" ]; then $RUNNER make package; fi;
+  - if [ "$RELEASE" != "NO" ]; then $RUNNER make package; fi
   - sudo $RUNNER make install
   - if [[ "$ARCH" != *-android && "$ARCH" != html5 ]]; then
       pkg-config --static --libs raylib;
