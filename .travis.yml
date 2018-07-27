@@ -11,14 +11,20 @@ services:
 matrix:
   include:
     - os: linux
-      env: ARCH=i386
+      env: ARCH=i386 SHARED=OFF
       sudo: required
     - os: linux
       env: ARCH=amd64 INSTALL_GLFW=YES USE_EXTERNAL_GLFW=OFF
       sudo: required
     - os: linux
-      env: ARCH=amd64 INSTALL_GLFW=YES OPENAL=YES STATIC=OFF RELEASE=NO
+      env: ARCH=amd64 INSTALL_GLFW=YES OPENAL=ON STATIC=OFF RELEASE=NO
       sudo: required
+      addons:
+          apt:
+              sources:
+                  - ubuntu-toolchain-r-test
+              packages:
+                  - gcc-5
     - os: linux
       env: WAYLAND=ON ARCH=amd64 RELEASE=NO
       sudo: required
@@ -41,11 +47,12 @@ matrix:
       sudo: required
     - os: linux
       env: ARCH=html5 RELEASE=NO
-      sudo: required
+      sudo: requir
 
 before_script:
 
 before_install:
+  - if [ -x "$(which gcc-5)"     ]; then         export CC=gcc-5; fi
   - if [ -z "$USE_EXTERNAL_GLFW" ]; then USE_EXTERNAL_GLFW=IF_POSSIBLE; fi
   - if [ -z "$SHARED"            ]; then            SHARED=ON         ; fi
   - if [ -z "$STATIC"            ]; then            STATIC=ON         ; fi
@@ -80,6 +87,8 @@ before_install:
                                 libxcursor-dev:$ARCH libxinerama-dev:$ARCH mesa-common-dev:$ARCH
                                 libx11-dev:$ARCH libxrandr-dev:$ARCH libxrandr2:$ARCH libxi-dev:$ARCH
                                 libgl1-mesa-dev:$ARCH libglu1-mesa-dev:$ARCH;
+
+        if [ "$OPENAL" == "ON" ]; then sudo apt-get install -y libopenal-dev; fi;
         if [ "$ARCH" == "i386" ]; then CMAKE_ARCH_ARGS='-DCMAKE_C_FLAGS=-m32 -DCMAKE_SYSTEM_LIBRARY_PATH=/usr/lib/i386-linux-gnu'; fi;
         export RAYLIB_PACKAGE_SUFFIX="-Linux-$ARCH";
         if [ "$INSTALL_GLFW" == "YES" ]; then
@@ -108,7 +117,6 @@ script:
     fi
   - $RUNNER cmake $CMAKE_ARCH_ARGS
       -DMACOS_FATLIB=ON
-      -DSTATIC=ON -DSHARED=$SHARED
       -DSTATIC=$STATIC -DSHARED=$SHARED
       -DBUILD_EXAMPLES=ON -DBUILD_GAMES=ON
       -DUSE_EXTERNAL_GLFW=$USE_EXTERNAL_GLFW

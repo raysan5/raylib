@@ -69,7 +69,7 @@ option(SUPPORT_FILEFORMAT_WAV  "Support loading WAV for sound" ON)
 option(SUPPORT_FILEFORMAT_OGG  "Support loading OGG for sound" ON)
 option(SUPPORT_FILEFORMAT_XM   "Support loading XM for sound" ON)
 option(SUPPORT_FILEFORMAT_MOD  "Support loading MOD for sound" ON)
-option(SUPPORT_FILEFORMAT_FLAC "Support loading FLAC for sound" ${OFF})
+option(SUPPORT_FILEFORMAT_FLAC "Support loading FLAC for sound" OFF)
 
 # utils.c
 option(SUPPORT_SAVE_PNG "Support saving image data in PNG file format" ON)
