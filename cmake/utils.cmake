@@ -3,8 +3,10 @@ cmake_minimum_required(VERSION 2.8.0)
 
 add_definitions("-DRAYLIB_CMAKE=1")
 
-# Linking for OS X -framework options
-# Will do nothing on other OSes
+if (${USE_OPENAL_BACKEND})
+  find_package(OpenAL REQUIRED)
+endif()
+
 if(${PLATFORM} MATCHES "Android")
   find_library(OPENGL_LIBRARY OpenGL)
   set(LIBS_PRIVATE m log android EGL GLESv2 OpenSLES atomic c)
@@ -22,14 +24,15 @@ else()
     set(OPENGL_LIBRARIES "GL")
   endif()
 
-  include_directories(${OPENGL_INCLUDE_DIR})
-
   if ("${CMAKE_SYSTEM_NAME}" MATCHES "(Net|Open)BSD")
     find_library(OSS_LIBRARY ossaudio)
   endif()
 
   set(LIBS_PRIVATE m pthread ${OPENGL_LIBRARIES} ${OSS_LIBRARY})
 endif()
+
+include_directories(${OPENGL_INCLUDE_DIR} ${OPENAL_INCLUDE_DIR})
+set(LIBS_PRIVATE ${LIBS_PRIVATE} ${OPENAL_LIBRARY})
 
 if(${PLATFORM} MATCHES "Desktop")
   if(USE_EXTERNAL_GLFW STREQUAL "ON")
