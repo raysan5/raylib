@@ -17,7 +17,7 @@ matrix:
       env: ARCH=amd64 INSTALL_GLFW=YES USE_EXTERNAL_GLFW=OFF
       sudo: required
     - os: linux
-      env: ARCH=amd64 INSTALL_GLFW=YES OPENAL=YES RELEASE=NO
+      env: ARCH=amd64 INSTALL_GLFW=YES OPENAL=YES STATIC=OFF RELEASE=NO
       sudo: required
     - os: linux
       env: WAYLAND=ON ARCH=amd64 RELEASE=NO
@@ -48,6 +48,7 @@ before_script:
 before_install:
   - if [ -z "$USE_EXTERNAL_GLFW" ]; then USE_EXTERNAL_GLFW=IF_POSSIBLE; fi
   - if [ -z "$SHARED"            ]; then            SHARED=ON         ; fi
+  - if [ -z "$STATIC"            ]; then            STATIC=ON         ; fi
   - if [ -z "$OPENAL"            ]; then            OPENAL=OFF        ; fi
   - if [ "$TRAVIS_OS_NAME" == "linux" ]; then
       if [[ "$ARCH" == *-android ]]; then
@@ -108,10 +109,12 @@ script:
   - $RUNNER cmake $CMAKE_ARCH_ARGS
       -DMACOS_FATLIB=ON
       -DSTATIC=ON -DSHARED=$SHARED
+      -DSTATIC=$STATIC -DSHARED=$SHARED
       -DBUILD_EXAMPLES=ON -DBUILD_GAMES=ON
       -DUSE_EXTERNAL_GLFW=$USE_EXTERNAL_GLFW
       -DUSE_WAYLAND=$WAYLAND
       -DUSE_OPENAL_BACKEND=$OPENAL
+      -DINCLUDE_EVERYTHING=ON
       ..
   - $RUNNER make VERBOSE=1
   - if [ "$RELEASE" != "NO" ]; then $RUNNER make package; fi
