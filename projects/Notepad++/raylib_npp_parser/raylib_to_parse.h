@@ -41,7 +41,7 @@ RLAPI Ray GetMouseRay(Vector2 mousePosition, Camera camera);      // Returns a r
 RLAPI Vector2 GetWorldToScreen(Vector3 position, Camera camera);  // Returns the screen space position for a 3d world space position
 RLAPI Matrix GetCameraMatrix(Camera camera);                      // Returns camera transform matrix (view matrix)
 
-// Timming-related functions
+// Timing-related functions
 RLAPI void SetTargetFPS(int fps);                                 // Set target FPS (maximum)
 RLAPI int GetFPS(void);                                           // Returns current FPS
 RLAPI float GetFrameTime(void);                                   // Returns time in seconds for last frame drawn

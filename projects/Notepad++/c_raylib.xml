@@ -173,7 +173,7 @@
             </Overload>
         </KeyWord>
 
-        <!-- Timming-related functions -->
+        <!-- Timing-related functions -->
         <KeyWord name="SetTargetFPS" func="yes">
             <Overload retVal="void" descr="Set target FPS (maximum)">
                 <Param name="int fps" />

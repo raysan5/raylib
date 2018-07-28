@@ -43,7 +43,7 @@ Detailed changes:
 [core] RENAMED: struct SpriteFont to Font -> plus all required functions!
 [core] RENAMED: enum TextureFormat to PixelFormat
 [core] REVIEWED: Rectangle params int to float
-[core] REVIEWED: timming system for macOS
+[core] REVIEWED: timing system for macOS
 [core] REMOVED: ColorToFloat()
 [core] ADDED: GetCurrentTime() on macOS
 [core] ADDED: GetTime()
@@ -115,7 +115,7 @@ Detailed changes:
 [raymath] ADDED: Vector3RotateByQuaternion()
 [raymath] REVIEWED: math usage to reduce temp variables
 [raymath] REVIEWED: Avoid pointer-based parameters for API consistency
-[physac] REVIEWED: physac.h timming system
+[physac] REVIEWED: physac.h timing system
 [examples] Replaced dwarf model by brand new 3d assets: 3d medieval buildings
 [examples] Assets cleaning and some replacements
 [games] ADDED: GGJ18 game - transmission mission
@@ -238,7 +238,7 @@ other changes:
 [core] Added function: GetWorkingDirectory(), get current working directory
 [core] Added function: ChangeDirectory(), change working directory
 [core] Added function: TraceLog(), made public to API
-[core] Improved timming system to avoid busy wait loop on frame sync: Wait()
+[core] Improved timing system to avoid busy wait loop on frame sync: Wait()
 [core] Added support for gamepad on HTML5 platform
 [core] Support mouse lock, useful for camera system
 [core] Review functions description comments
@@ -752,7 +752,7 @@ Release:    raylib 1.0.0 (18 November 2013)
 -----------------------------------------------
 * Initial version
 * 6 Modules provided:
-    - core:     basic window/context creation functions, input management, timming functions
+    - core:     basic window/context creation functions, input management, timing functions
     - shapes:   basic shapes drawing functions
     - textures: image data loading and conversion to OpenGL textures
     - text:     text drawing, sprite fonts loading, default font loading
