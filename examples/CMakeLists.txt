@@ -1,15 +1,6 @@
 # Setup the project and settings
 project(examples)
 
-include("../cmake/utils.cmake")
-
-# Make sure raylib has been built
-# TODO `build` directory should maybe be something else...
-# TODO place somewhere else?
-include_directories("../build/release")
-include_directories("../src/external")
-include_directories("../src/external/glfw/include")
-
 # Get the sources together
 set(example_dirs audio core models others shaders shapes text textures)
 set(CMAKE_REQUIRED_DEFINITIONS -D_POSIX_C_SOURCE=199309L)
@@ -64,6 +55,9 @@ elseif(${PLATFORM} MATCHES "Web")
   set(OUTPUT_EXT ".html")
 endif()
 
+if (NOT TARGET raylib)
+  find_package(raylib 2.0 REQUIRED)
+endif()
 
 # Do each example
 foreach(example_source ${example_sources})
@@ -75,7 +69,7 @@ foreach(example_source ${example_sources})
   add_executable(${example_name} ${example_source})
 
   # Link the libraries
-  link_libraries_to_executable(${example_name})
+  target_link_libraries(${example_name} raylib)
 endforeach()
 
 # Copy all of the resource files to the destination

@@ -4,7 +4,7 @@ include(EnumOption)
 
 enum_option(PLATFORM "Desktop;Web;Android;Raspberry Pi" "Platform to build for.")
 
-enum_option(OPENGL_VERSION "3.3;2.1;1.1;ES 2.0" "OpenGL Version to build raylib with")
+enum_option(OPENGL_VERSION "OFF;3.3;2.1;1.1;ES 2.0" "Force a specific OpenGL Version?")
 
 # Shared library is always PIC. Static library should be PIC too if linked into a shared library
 option(WITH_PIC "Compile static library as position-independent code" OFF)

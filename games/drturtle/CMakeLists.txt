@@ -1,18 +1,13 @@
-# Setup the project and settings
+cmake_minimum_required(VERSION 2.6)
 project(drturtle)
 
-include("../../cmake/utils.cmake")
-
-
-# Make sure raylib has been built
-# TODO `build` directory should maybe be something else...
-include_directories("../../build/release")
-
 # Executable & linking
-add_executable(drturtle 06_drturtle_final.c)
-link_libraries_to_executable(drturtle)
+add_executable(${PROJECT_NAME} 06_drturtle_final.c)
+if (NOT TARGET raylib)
+  find_package(raylib 2.0 REQUIRED)
+endif()
+target_link_libraries(${PROJECT_NAME} raylib)
 
 # Resources
 # Copy all of the resource files to the destination
 file(COPY "resources/"  DESTINATION "resources/")
-
