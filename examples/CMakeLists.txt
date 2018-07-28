@@ -25,12 +25,12 @@ foreach(example_dir ${example_dirs})
 endforeach()
 
 include(CheckIncludeFiles)
-list(REMOVE_ITEM example_sources ${CMAKE_CURRENT_SOURCE_DIR}/others/standard_lighting.c)
-list(REMOVE_ITEM example_sources ${CMAKE_CURRENT_SOURCE_DIR}/others/rlgl_standalone.c) # see #588
 set(OUTPUT_EXT)
+list(REMOVE_ITEM example_sources ${CMAKE_CURRENT_SOURCE_DIR}/others/rlgl_standalone.c)
 
 if(${PLATFORM} MATCHES "Android")
   list(REMOVE_ITEM example_sources ${CMAKE_CURRENT_SOURCE_DIR}/others/rlgl_standalone.c)
+  list(REMOVE_ITEM example_sources ${CMAKE_CURRENT_SOURCE_DIR}/others/standard_lighting.c)
   list(REMOVE_ITEM example_sources ${CMAKE_CURRENT_SOURCE_DIR}/core/core_3d_picking.c)
   list(REMOVE_ITEM example_sources ${CMAKE_CURRENT_SOURCE_DIR}/core/core_vr_simulator.c)
   list(REMOVE_ITEM example_sources ${CMAKE_CURRENT_SOURCE_DIR}/core/core_3d_camera_free.c)
@@ -49,11 +49,15 @@ if(${PLATFORM} MATCHES "Android")
   list(REMOVE_ITEM example_sources ${CMAKE_CURRENT_SOURCE_DIR}/shaders/shaders_custom_uniform.c)
   list(REMOVE_ITEM example_sources ${CMAKE_CURRENT_SOURCE_DIR}/shaders/shaders_model_shader.c)
   list(REMOVE_ITEM example_sources ${CMAKE_CURRENT_SOURCE_DIR}/shaders/shaders_postprocessing.c)
+
 elseif(${PLATFORM} MATCHES "Web")
   set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Os -s USE_GLFW=3 -s ASSERTIONS=1 -s WASM=1 -s EMTERPRETIFY=1 -s EMTERPRETIFY_ASYNC=1")
   set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} --shell-file ${CMAKE_SOURCE_DIR}/templates/web_shell/shell.html")
   set(OUTPUT_EXT ".html")
+
 endif()
+
+include_directories(BEFORE SYSTEM others/external/include)
 
 if (NOT TARGET raylib)
   find_package(raylib 2.0 REQUIRED)
@@ -68,9 +72,22 @@ foreach(example_source ${example_sources})
   # Setup the example
   add_executable(${example_name} ${example_source})
 
-  # Link the libraries
   target_link_libraries(${example_name} raylib)
 endforeach()
+
+if (${PLATFORM} MATCHES "Desktop")
+  # rlgl_standalone can't be linked with raylib because of duplicate rlgl symbols
+  foreach (example_source "others/rlgl_standalone.c")
+    # Create the basename for the example
+    get_filename_component(example_name ${example_source} NAME)
+    string(REPLACE ".c" "${OUTPUT_EXT}" example_name ${example_name})
+    add_executable(${example_name} ${example_source})
+    add_dependencies(${example_name} raylib)
+    target_link_libraries(${example_name} ${raylib_LDFLAGS})
+    target_include_directories(${example_name} PRIVATE ${raylib_INCLUDE_DIRS})
+
+  endforeach()
+endif()
 
 # Copy all of the resource files to the destination
 file(COPY ${example_resources} DESTINATION "resources/")
