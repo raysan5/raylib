@@ -2,17 +2,7 @@
 *
 *   raylib [core] example - Custom logging
 *
-*   Welcome to raylib!
-*
-*   To test examples, just press F6 and execute raylib_compile_execute script
-*   Note that compiled executable is placed in the same folder as .c file
-*
-*   You can find all basic examples on C:\raylib\raylib\examples folder or
-*   raylib official webpage: www.raylib.com
-*
-*   Enjoy using raylib. :)
-*
-*   This example has been created using raylib 2.0 (www.raylib.com)
+*   This example has been created using raylib 2.1 (www.raylib.com)
 *   raylib is licensed under an unmodified zlib/libpng license (View raylib.h for details)
 *
 *   Copyright (c) 2018 Ramon Santamaria (@raysan5) and Pablo Marcos Oltra (@pamarcos)
@@ -24,7 +14,8 @@
 #include <stdio.h>                  // Required for: fopen(), fclose(), fputc(), fwrite(), printf(), fprintf(), funopen()
 #include <time.h>                   // Required for: time_t, tm, time(), localtime(), strftime()
 
-void logCustom(int msgType, const char *text, va_list args)
+// Custom logging funtion
+void LogCustom(int msgType, const char *text, va_list args)
 {
 	char timeStr[64];
 	time_t now = time(NULL);
@@ -41,6 +32,7 @@ void logCustom(int msgType, const char *text, va_list args)
 		case LOG_DEBUG: printf("[DEBUG]: "); break;
 		default: break;
 	}
+    
 	vprintf(text, args);
 	printf("\n");
 }
@@ -54,7 +46,7 @@ int main(int argc, char* argv[])
 
 	// First thing we do is setting our custom logger to ensure everything raylib logs
 	// will use our own logger instead of its internal one
-	SetTraceLogCallback(logCustom);
+	SetTraceLogCallback(LogCustom);
 
 	InitWindow(screenWidth, screenHeight, "raylib [core] example - custom logging");
 
