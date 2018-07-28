@@ -1321,6 +1321,32 @@ float *GetWaveData(Wave wave)
 // Module Functions Definition - Music loading and stream playing (.OGG)
 //----------------------------------------------------------------------------------
 
+// Set music to NULL in case of error and print warning
+static void LoadMusicStreamError(MusicData **music, const char *fileName, const char *format)
+{
+    free(*music);
+    *music = NULL;
+
+    if ((*music)->ctxType == MUSIC_AUDIO_OGG) stb_vorbis_close((*music)->ctxOgg);
+#if defined(SUPPORT_FILEFORMAT_FLAC)
+    else if ((*music)->ctxType == MUSIC_AUDIO_FLAC) drflac_free((*music)->ctxFlac);
+#endif
+#if defined(SUPPORT_FILEFORMAT_MP3)
+    else if ((*music)->ctxType == MUSIC_AUDIO_MP3) drmp3_uninit(&(*music)->ctxMp3);
+#endif
+#if defined(SUPPORT_FILEFORMAT_XM)
+    else if ((*music)->ctxType == MUSIC_MODULE_XM) jar_xm_free_context((*music)->ctxXm);
+#endif
+#if defined(SUPPORT_FILEFORMAT_MOD)
+    else if ((*music)->ctxType == MUSIC_MODULE_MOD) jar_mod_unload(&(*music)->ctxMod);
+#endif
+
+    if (format)
+        TraceLog(LOG_WARNING, "[%s] %s audio file could not be opened", fileName, format);
+    else
+        TraceLog(LOG_WARNING, "[%s] Audio fileformat not supported, it can't be loaded", fileName);
+}
+
 // Load music stream from file
 Music LoadMusicStream(const char *fileName)
 {
@@ -1331,7 +1357,7 @@ Music LoadMusicStream(const char *fileName)
         // Open ogg audio stream
         music->ctxOgg = stb_vorbis_open_filename(fileName, NULL, NULL);
 
-        if (music->ctxOgg == NULL) TraceLog(LOG_WARNING, "[%s] OGG audio file could not be opened", fileName);
+        if (music->ctxOgg == NULL) LoadMusicStreamError(&music, fileName, "OGG");
         else
         {
             stb_vorbis_info info = stb_vorbis_get_info(music->ctxOgg);  // Get Ogg file info
@@ -1354,7 +1380,7 @@ Music LoadMusicStream(const char *fileName)
     {
         music->ctxFlac = drflac_open_file(fileName);
 
-        if (music->ctxFlac == NULL) TraceLog(LOG_WARNING, "[%s] FLAC audio file could not be opened", fileName);
+        if (music->ctxFlac == NULL) LoadMusicStreamError(&music, fileName, "FLAC");
         else
         {
             music->stream = InitAudioStream(music->ctxFlac->sampleRate, music->ctxFlac->bitsPerSample, music->ctxFlac->channels);
@@ -1375,7 +1401,7 @@ Music LoadMusicStream(const char *fileName)
     {
         drmp3_init_file(&music->ctxMp3, fileName, NULL);
 
-        if (music->ctxMp3.framesRemaining <= 0) TraceLog(LOG_WARNING, "[%s] MP3 audio file could not be opened", fileName);
+        if (music->ctxMp3.framesRemaining <= 0) LoadMusicStreamError(&music, fileName, "MP3");
         else
         {
             music->stream = InitAudioStream(music->ctxMp3.sampleRate, 16, music->ctxMp3.channels);
@@ -1410,7 +1436,7 @@ Music LoadMusicStream(const char *fileName)
             TraceLog(LOG_DEBUG, "[%s] XM number of samples: %i", fileName, music->totalSamples);
             TraceLog(LOG_DEBUG, "[%s] XM track length: %11.6f sec", fileName, (float)music->totalSamples/48000.0f);
         }
-        else TraceLog(LOG_WARNING, "[%s] XM file could not be opened", fileName);
+        else LoadMusicStreamError(&music, fileName, "XM");
     }
 #endif
 #if defined(SUPPORT_FILEFORMAT_MOD)
@@ -1429,10 +1455,10 @@ Music LoadMusicStream(const char *fileName)
             TraceLog(LOG_DEBUG, "[%s] MOD number of samples: %i", fileName, music->samplesLeft);
             TraceLog(LOG_DEBUG, "[%s] MOD track length: %11.6f sec", fileName, (float)music->totalSamples/48000.0f);
         }
-        else TraceLog(LOG_WARNING, "[%s] MOD file could not be opened", fileName);
+        else LoadMusicStreamError(&music, fileName, "MOD");
     }
 #endif
-    else TraceLog(LOG_WARNING, "[%s] Audio fileformat not supported, it can't be loaded", fileName);
+    else LoadMusicStreamError(&music, fileName, NULL);
 
     return music;
 }
