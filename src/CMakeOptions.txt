@@ -10,7 +10,7 @@ enum_option(OPENGL_VERSION "OFF;3.3;2.1;1.1;ES 2.0" "Force a specific OpenGL Ver
 option(WITH_PIC "Compile static library as position-independent code" OFF)
 option(SHARED "Build raylib as a dynamic library" OFF)
 option(STATIC "Build raylib as a static library" ON)
-option(MACOS_FATLIB  "Build fat library for both i386 and x86_64 on macOS" ON)
+option(MACOS_FATLIB  "Build fat library for both i386 and x86_64 on macOS" OFF)
 option(USE_AUDIO "Build raylib with audio module" ON)
 if(${PLATFORM} MATCHES "Web")
   cmake_dependent_option(USE_OPENAL_BACKEND "Link raylib with openAL instead of mini-al" ON "USE_AUDIO" OFF)
