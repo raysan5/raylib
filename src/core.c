@@ -1869,6 +1869,10 @@ static bool InitGraphicsDevice(int width, int height)
 #if defined(PLATFORM_DESKTOP) || defined(PLATFORM_WEB)
     glfwSetErrorCallback(ErrorCallback);
 
+#if defined(__APPLE__)
+    glfwInitHint(GLFW_COCOA_CHDIR_RESOURCES, GLFW_FALSE);
+#endif
+
     if (!glfwInit())
     {
         TraceLog(LOG_WARNING, "Failed to initialize GLFW");
