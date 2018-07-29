@@ -1437,9 +1437,6 @@ Music LoadMusicStream(const char *fileName)
     
     if (!musicLoaded)
     {
-        free(music);
-        music = NULL;
-
         if (music->ctxType == MUSIC_AUDIO_OGG) stb_vorbis_close(music->ctxOgg);
     #if defined(SUPPORT_FILEFORMAT_FLAC)
         else if (music->ctxType == MUSIC_AUDIO_FLAC) drflac_free(music->ctxFlac);
@@ -1453,6 +1450,9 @@ Music LoadMusicStream(const char *fileName)
     #if defined(SUPPORT_FILEFORMAT_MOD)
         else if (music->ctxType == MUSIC_MODULE_MOD) jar_mod_unload(&music->ctxMod);
     #endif
+
+        free(music);
+        music = NULL;
 
         TraceLog(LOG_WARNING, "[%s] Music file could not be opened", fileName);
     }
