@@ -94,16 +94,18 @@ endif()
 
 add_library(glfw_objlib OBJECT ${glfw_SOURCES} ${glfw_HEADERS})
 add_library(glfw $<TARGET_OBJECTS:glfw_objlib>)
-
+set_target_properties(glfw_objlib PROPERTIES POSITION_INDEPENDENT_CODE ON)
 set_target_properties(glfw PROPERTIES
                       OUTPUT_NAME ${GLFW_LIB_NAME}
                       VERSION ${GLFW_VERSION}
                       SOVERSION ${GLFW_VERSION_MAJOR}
-                      POSITION_INDEPENDENT_CODE ON
                       FOLDER "GLFW3")
 
 target_compile_definitions(glfw_objlib PRIVATE _GLFW_USE_CONFIG_H)
 target_include_directories(glfw_objlib PUBLIC
+                           "$<BUILD_INTERFACE:${GLFW_SOURCE_DIR}/include>"
+                           "$<INSTALL_INTERFACE:$<INSTALL_PREFIX>/include>")
+target_include_directories(glfw PUBLIC
                            "$<BUILD_INTERFACE:${GLFW_SOURCE_DIR}/include>"
                            "$<INSTALL_INTERFACE:$<INSTALL_PREFIX>/include>")
 target_include_directories(glfw_objlib PRIVATE
@@ -143,17 +145,17 @@ if (BUILD_SHARED_LIBS)
                               INSTALL_NAME_DIR "lib${LIB_SUFFIX}")
     elseif (UNIX)
         # Hide symbols not explicitly tagged for export from the shared library
-        target_compile_options(glfw PRIVATE "-fvisibility=hidden")
+        target_compile_options(glfw_objlib PRIVATE "-fvisibility=hidden")
     endif()
 
-    target_compile_definitions(glfw INTERFACE GLFW_DLL)
+    target_compile_definitions(glfw_objlib INTERFACE GLFW_DLL)
     target_link_libraries(glfw PRIVATE ${glfw_LIBRARIES})
 else()
     target_link_libraries(glfw INTERFACE ${glfw_LIBRARIES})
 endif()
 
 if (MSVC)
-    target_compile_definitions(glfw PRIVATE _CRT_SECURE_NO_WARNINGS)
+    target_compile_definitions(glfw_objlib PRIVATE _CRT_SECURE_NO_WARNINGS)
 endif()
 
 if (GLFW_INSTALL)
@@ -163,3 +165,4 @@ if (GLFW_INSTALL)
             ARCHIVE DESTINATION "lib${LIB_SUFFIX}"
             LIBRARY DESTINATION "lib${LIB_SUFFIX}")
 endif()
+
