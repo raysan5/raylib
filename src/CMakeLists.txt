@@ -179,7 +179,7 @@ if(STATIC)
       ARCHIVE DESTINATION "${CMAKE_INSTALL_LIBDIR}"
       PUBLIC_HEADER DESTINATION "${CMAKE_INSTALL_INCLUDEDIR}"
   )
-set_target_properties(raylib_static PROPERTIES INTERFACE_INCLUDE_DIRECTORIES "${CMAKE_BINARY_DIR}/release")
+set_target_properties(raylib_static PROPERTIES INTERFACE_INCLUDE_DIRECTORIES "${CMAKE_CURRENT_BINARY_DIR}")
 
   add_test("pkg-config--static" ${PROJECT_SOURCE_DIR}/../cmake/test-pkgconfig.sh --static)
 endif(STATIC)
@@ -229,7 +229,7 @@ if(SHARED)
         PUBLIC_HEADER DESTINATION "${CMAKE_INSTALL_INCLUDEDIR}"
     )
   endif()
-  set_target_properties(raylib PROPERTIES INTERFACE_INCLUDE_DIRECTORIES "${CMAKE_BINARY_DIR}/release")
+  set_target_properties(raylib PROPERTIES INTERFACE_INCLUDE_DIRECTORIES "${CMAKE_CURRENT_BINARY_DIR}")
 
   add_test("pkg-config" ${PROJECT_SOURCE_DIR}/../cmake/test-pkgconfig.sh)
 else(SHARED)
@@ -240,9 +240,9 @@ if (NOT DEFINED PKG_CONFIG_LIBS_EXTRA)
   set(PKG_CONFIG_LIBS_EXTRA "${PKG_CONFIG_LIBS_PRIVATE}")
 endif()
 configure_file(../raylib.pc.in raylib.pc @ONLY)
-install(FILES ${CMAKE_BINARY_DIR}/release/raylib.pc DESTINATION "${CMAKE_INSTALL_LIBDIR}/pkgconfig")
+install(FILES ${CMAKE_CURRENT_BINARY_DIR}/raylib.pc DESTINATION "${CMAKE_INSTALL_LIBDIR}/pkgconfig")
 configure_file(../cmake/raylib-config-version.cmake raylib-config-version.cmake @ONLY)
-install(FILES ${CMAKE_BINARY_DIR}/release/raylib-config-version.cmake DESTINATION "${CMAKE_INSTALL_LIBDIR}/cmake/raylib")
+install(FILES ${CMAKE_CURRENT_BINARY_DIR}/raylib-config-version.cmake DESTINATION "${CMAKE_INSTALL_LIBDIR}/cmake/raylib")
 install(FILES ${PROJECT_SOURCE_DIR}/../cmake/raylib-config.cmake DESTINATION "${CMAKE_INSTALL_LIBDIR}/cmake/raylib")
 
 # populates raylib_{FOUND, INCLUDE_DIRS, LIBRARIES, LDFLAGS, DEFINITIONS}

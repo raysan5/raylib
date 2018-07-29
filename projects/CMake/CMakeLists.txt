@@ -18,8 +18,8 @@ if (NOT raylib_FOUND) # If there's none, fetch and build raylib
     set(FETCHCONTENT_QUIET NO)
     FetchContent_Populate(raylib)
 
-    set(BUILD_EXAMPLES OFF) # don't build the supplied examples
-    set(BUILD_GAMES OFF) # or games
+    set(BUILD_EXAMPLES OFF CACHE BOOL "" FORCE) # don't build the supplied examples
+    set(BUILD_GAMES    OFF CACHE BOOL "" FORCE) # or games
 
     # build raylib
     add_subdirectory(${raylib_SOURCE_DIR} ${raylib_BINARY_DIR})
