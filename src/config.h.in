@@ -44,7 +44,7 @@
 /* Support multiple image editing functions to scale, adjust colors, flip, draw on images, crop... If not defined only three image editing functions supported: ImageFormat(), ImageAlphaMask(), ImageToPOT() */
 #cmakedefine SUPPORT_IMAGE_MANIPULATION 1
 
-/* Support proedural image generation functionality (gradient, spot, perlin-noise, cellular) */
+/* Support procedural image generation functionality (gradient, spot, perlin-noise, cellular) */
 #cmakedefine SUPPORT_IMAGE_GENERATION 1
 
 // text.c

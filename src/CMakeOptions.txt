@@ -45,7 +45,7 @@ option(SUPPORT_FONT_TEXTURE "Draw rectangle shapes using font texture white char
 option(SUPPORT_QUADS_DRAW_MODE "Use QUADS instead of TRIANGLES for drawing when possible. Some lines-based shapes could still use lines" ON)
 
 # textures.c
-option(SUPPORT_IMAGE_GENERATION "Support proedural image generation functionality (gradient, spot, perlin-noise, cellular)" ON)
+option(SUPPORT_IMAGE_GENERATION "Support procedural image generation functionality (gradient, spot, perlin-noise, cellular)" ON)
 option(SUPPORT_FILEFORMAT_PNG "Support loading PNG as textures" ON)
 option(SUPPORT_FILEFORMAT_DDS "Support loading DDS as textures" ON)
 option(SUPPORT_FILEFORMAT_HDR "Support loading HDR as textures" ON)

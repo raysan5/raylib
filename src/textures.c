@@ -24,7 +24,7 @@
 *       If not defined only three image editing functions supported: ImageFormat(), ImageAlphaMask(), ImageToPOT()
 *
 *   #define SUPPORT_IMAGE_GENERATION
-*       Support proedural image generation functionality (gradient, spot, perlin-noise, cellular)
+*       Support procedural image generation functionality (gradient, spot, perlin-noise, cellular)
 *
 *   DEPENDENCIES:
 *       stb_image        - Multiple image formats loading (JPEG, PNG, BMP, TGA, PSD, GIF, PIC)

@@ -86,10 +86,10 @@
 //#define SUPPORT_FILEFORMAT_PKM    1
 //#define SUPPORT_FILEFORMAT_PVR    1
 
-// Support multiple image editing functions to scale, adjust colors, flip, draw on images, crop... 
+// Support multiple image editing functions to scale, adjust colors, flip, draw on images, crop...
 // If not defined only three image editing functions supported: ImageFormat(), ImageAlphaMask(), ImageToPOT()
 #define SUPPORT_IMAGE_MANIPULATION  1
-// Support proedural image generation functionality (gradient, spot, perlin-noise, cellular)
+// Support procedural image generation functionality (gradient, spot, perlin-noise, cellular)
 #define SUPPORT_IMAGE_GENERATION    1
 
 
