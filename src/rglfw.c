@@ -42,7 +42,6 @@
 #endif
 #if defined(__APPLE__)
     #define _GLFW_COCOA
-    #define _GLFW_USE_CHDIR         // To chdir to the Resources subdirectory of the application bundle during glfwInit
     #define _GLFW_USE_MENUBAR       // To create and populate the menu bar when the first window is created
     #define _GLFW_USE_RETINA        // To have windows use the full resolution of Retina displays
 #endif
