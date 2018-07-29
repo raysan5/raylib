@@ -1915,14 +1915,14 @@ static bool InitGraphicsDevice(int width, int height)
 
     if (configFlags & FLAG_WINDOW_UNDECORATED) glfwWindowHint(GLFW_DECORATED, GL_FALSE);    // Border and buttons on Window
     else glfwWindowHint(GLFW_DECORATED, GL_TRUE);   // Decorated window
-    
-#if !defined(PLATFORM_WEB)  // FLAG_WINDOW_TRANSPARENT not supported on HTML5
+    // FLAG_WINDOW_TRANSPARENT not supported on HTML5 and not included in any released GLFW version yet
+#if defined(GLFW_TRANSPARENT_FRAMEBUFFER)
     if (configFlags & FLAG_WINDOW_TRANSPARENT) glfwWindowHint(GLFW_TRANSPARENT_FRAMEBUFFER, GLFW_TRUE);     // Transparent framebuffer
     else glfwWindowHint(GLFW_TRANSPARENT_FRAMEBUFFER, GLFW_FALSE);  // Opaque framebuffer
 #endif
 
     if (configFlags & FLAG_MSAA_4X_HINT) glfwWindowHint(GLFW_SAMPLES, 4);   // Tries to enable multisampling x4 (MSAA), default is 0
-    
+
     // NOTE: When asking for an OpenGL context version, most drivers provide highest supported version
     // with forward compatibility to older OpenGL versions.
     // For example, if using OpenGL 1.1, driver can provide a 4.3 context forward compatible.
