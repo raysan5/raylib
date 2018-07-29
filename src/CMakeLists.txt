@@ -43,7 +43,7 @@ if(NOT glfw3_FOUND AND NOT USE_EXTERNAL_GLFW STREQUAL "ON" AND "${PLATFORM}" MAT
   list(APPEND raylib_sources $<TARGET_OBJECTS:glfw_objlib>)
 else()
   MESSAGE(STATUS "Using external GLFW")
-  set(GLFW_PKG_DEPS glfw)
+  set(GLFW_PKG_DEPS glfw3)
 endif()
 
 add_definitions("-DRAYLIB_CMAKE=1")
