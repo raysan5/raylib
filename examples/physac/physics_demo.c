@@ -17,6 +17,7 @@
 #include "raylib.h"
 
 #define PHYSAC_IMPLEMENTATION
+#define PHYSAC_NO_THREADS
 #include "physac.h"
 
 int main()
@@ -54,6 +55,8 @@ int main()
         // Update
         //----------------------------------------------------------------------------------
         // Delay initialization of variables due to physics reset async
+        RunPhysicsStep();
+
         if (needsReset)
         {
             floor = CreatePhysicsBodyRectangle((Vector2){ screenWidth/2, screenHeight }, 500, 100, 10);
@@ -61,6 +64,8 @@ int main()
 
             circle = CreatePhysicsBodyCircle((Vector2){ screenWidth/2, screenHeight/2 }, 45, 10);
             circle->enabled = false;
+
+            needsReset = false;
         }
 
         // Reset physics input
@@ -134,4 +139,3 @@ int main()
 
     return 0;
 }
-

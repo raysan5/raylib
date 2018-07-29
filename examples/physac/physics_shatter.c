@@ -17,7 +17,8 @@
 #include "raylib.h"
 
 #define PHYSAC_IMPLEMENTATION
-#include "physac.h" 
+#define PHYSAC_NO_THREADS
+#include "physac.h"
 
 int main()
 {
@@ -48,12 +49,15 @@ int main()
     while (!WindowShouldClose())    // Detect window close button or ESC key
     {
         // Update
+        RunPhysicsStep();
+
         //----------------------------------------------------------------------------------
         // Delay initialization of variables due to physics reset asynchronous
         if (needsReset)
         {
             // Create random polygon physics body to shatter
             CreatePhysicsBodyPolygon((Vector2){ screenWidth/2, screenHeight/2 }, GetRandomValue(80, 200), GetRandomValue(3, 8), 10);
+            needsReset = false;
         }
 
         if (IsKeyPressed('R'))    // Reset physics input
@@ -118,4 +122,3 @@ int main()
 
     return 0;
 }
-
