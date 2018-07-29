@@ -6,7 +6,7 @@ option(BUILD_EXAMPLES "Build the examples." ON)
 option(BUILD_GAMES "Build the example games." ON)
 option(ENABLE_ASAN  "Enable AddressSanitizer (ASAN) for debugging (degrades performance)" OFF)
 option(ENABLE_UBSAN "Enable UndefinedBehaviorSanitizer (UBSan) for debugging" OFF)
-option(ENABLE_MSAN "Enable MemorySanitizer (MSan) for debugging (not recommended for run with ASAN)" OFF)
+option(ENABLE_MSAN "Enable MemorySanitizer (MSan) for debugging (not recommended to run with ASAN)" OFF)
 
 if(CMAKE_VERSION VERSION_LESS "3.1")
   if(CMAKE_C_COMPILER_ID STREQUAL "GNU")
