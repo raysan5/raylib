@@ -2330,6 +2330,225 @@ void DrawTexturePro(Texture2D texture, Rectangle sourceRec, Rectangle destRec, V
     }
 }
 
+void DrawNinePatch(NinePatch ninePatch, Rectangle destRec, bool usePadding, Vector2 origin, float rotation, Color tint)
+{
+    // Check if n-patch texture is valid
+    if (ninePatch.texture.id > 0)
+    {
+        float width = (float)ninePatch.texture.width;
+        float height = (float)ninePatch.texture.height;
+
+        float contentsWidth = (destRec.width >= ninePatch.minSize.x)? destRec.width : ninePatch.minSize.x;
+        float contentsHeight = (destRec.height >= ninePatch.minSize.y)? destRec.height : ninePatch.minSize.y;
+
+        if (usePadding)
+        {
+            contentsWidth  += (float)(ninePatch.padding[0] + ninePatch.padding[2]);
+            contentsHeight += (float)(ninePatch.padding[1] + ninePatch.padding[3]);
+        }
+        
+        if (ninePatch.sourceRec.width < 0) ninePatch.sourceRec.x -= ninePatch.sourceRec.width;
+        if (ninePatch.sourceRec.height < 0) ninePatch.sourceRec.y -= ninePatch.sourceRec.height;
+
+        rlEnableTexture(ninePatch.texture.id);
+
+        bool drawCenter = true;
+        bool drawMiddle = true;
+
+        float borderWidth[4];   // copy the ninePatch.borderWidth[4] values so they can be adjusted
+        for (int i = 0; i < 4; i++) { borderWidth[i] = ninePatch.borderWidth[i]; }
+
+        // adjust the lateral (left and right) border widths in case contentsWidth < ninePatch.texture.width
+        if (contentsWidth <= ninePatch.borderWidth[0] + ninePatch.borderWidth[2])
+        {
+            drawCenter = false;
+            borderWidth[0] = (borderWidth[0] / (ninePatch.borderWidth[0] + ninePatch.borderWidth[2])) * (borderWidth[0] + borderWidth[2]);
+            borderWidth[2] = contentsWidth - borderWidth[0];
+        }
+        // adjust the lateral (top and bottom) border heights in case contentsHeight < ninePatch.texture.height
+        if (contentsHeight <= ninePatch.borderWidth[1] + ninePatch.borderWidth[3])
+        {
+            drawMiddle = false;
+            borderWidth[1] = (borderWidth[1] / (ninePatch.borderWidth[1] + ninePatch.borderWidth[3])) * (borderWidth[1] + borderWidth[3]);
+            borderWidth[3] = contentsHeight - borderWidth[1];
+        }
+
+        Vector2 vertA, vertB, vertC, vertD;
+        vertA.x = 0.0f;
+        vertA.y = 0.0f;
+        vertB.x = borderWidth[0];
+        vertB.y = borderWidth[1];
+        vertC.x = contentsWidth  - borderWidth[2];
+        vertC.y = contentsHeight - borderWidth[3];
+        vertD.x = contentsWidth;
+        vertD.y = contentsHeight;
+
+        Vector2 coordA, coordB, coordC, coordD;
+        coordA.x = ninePatch.sourceRec.x / width;
+        coordA.y = ninePatch.sourceRec.y / height;
+        coordB.x = (ninePatch.sourceRec.x + borderWidth[0]) / width;
+        coordB.y = (ninePatch.sourceRec.y + borderWidth[1]) / height;
+        coordC.x = (ninePatch.sourceRec.x + ninePatch.sourceRec.width  - borderWidth[2]) / width;
+        coordC.y = (ninePatch.sourceRec.y + ninePatch.sourceRec.height - borderWidth[3]) / height;
+        coordD.x = (ninePatch.sourceRec.x + ninePatch.sourceRec.width)  / width;
+        coordD.y = (ninePatch.sourceRec.y + ninePatch.sourceRec.height) / height;
+
+        rlPushMatrix();
+            if (usePadding)
+            {
+                rlTranslatef(destRec.x - (float)ninePatch.padding[0], destRec.y - (float)ninePatch.padding[2], 0);
+            }
+            else
+            {
+                rlTranslatef(destRec.x, destRec.y, 0);
+            }
+            rlRotatef(rotation, 0, 0, 1);
+            rlTranslatef(-origin.x, -origin.y, 0);
+
+            rlBegin(RL_QUADS);
+                rlColor4ub(tint.r, tint.g, tint.b, tint.a);
+                rlNormal3f(0.0f, 0.0f, 1.0f);                          // Normal vector pointing towards viewer
+
+                // ------------------------------------------------------------
+                // TOP-LEFT QUAD
+                // Bottom-left corner for texture and quad
+                rlTexCoord2f(coordA.x, coordB.y); rlVertex2f(vertA.x, vertB.y);
+
+                // Bottom-right corner for texture and quad
+                rlTexCoord2f(coordB.x, coordB.y); rlVertex2f(vertB.x, vertB.y);
+
+                // Top-right corner for texture and quad
+                rlTexCoord2f(coordB.x, coordA.y); rlVertex2f(vertB.x, vertA.y);
+
+                // Top-left corner for texture and quad
+                rlTexCoord2f(coordA.x, coordA.y); rlVertex2f(vertA.x, vertA.y);
+
+                if (drawCenter)
+                {
+                    // TOP-CENTER QUAD
+                    // Bottom-left corner for texture and quad
+                    rlTexCoord2f(coordB.x, coordB.y); rlVertex2f(vertB.x, vertB.y);
+
+                    // Bottom-right corner for texture and quad
+                    rlTexCoord2f(coordC.x, coordB.y); rlVertex2f(vertC.x, vertB.y);
+
+                    // Top-right corner for texture and quad
+                    rlTexCoord2f(coordC.x, coordA.y); rlVertex2f(vertC.x, vertA.y);
+
+                    // Top-left corner for texture and quad
+                    rlTexCoord2f(coordB.x, coordA.y); rlVertex2f(vertB.x, vertA.y);
+                }
+
+                // TOP-RIGHT QUAD
+                // Bottom-left corner for texture and quad
+                rlTexCoord2f(coordC.x, coordB.y); rlVertex2f(vertC.x, vertB.y);
+
+                // Bottom-right corner for texture and quad
+                rlTexCoord2f(coordD.x, coordB.y); rlVertex2f(vertD.x, vertB.y);
+
+                // Top-right corner for texture and quad
+                rlTexCoord2f(coordD.x, coordA.y); rlVertex2f(vertD.x, vertA.y);
+
+                // Top-left corner for texture and quad
+                rlTexCoord2f(coordC.x, coordA.y); rlVertex2f(vertC.x, vertA.y);
+
+
+                if (drawMiddle)
+                {
+                    // ------------------------------------------------------------
+                    // MIDDLE-LEFT QUAD
+                    // Bottom-left corner for texture and quad
+                    rlTexCoord2f(coordA.x, coordC.y); rlVertex2f(vertA.x, vertC.y);
+
+                    // Bottom-right corner for texture and quad
+                    rlTexCoord2f(coordB.x, coordC.y); rlVertex2f(vertB.x, vertC.y);
+
+                    // Top-right corner for texture and quad
+                    rlTexCoord2f(coordB.x, coordB.y); rlVertex2f(vertB.x, vertB.y);
+
+                    // Top-left corner for texture and quad
+                    rlTexCoord2f(coordA.x, coordB.y); rlVertex2f(vertA.x, vertB.y);
+
+                    if (drawCenter)
+                    {
+                        // MIDDLE-CENTER QUAD
+                        // Bottom-left corner for texture and quad
+                        rlTexCoord2f(coordB.x, coordC.y); rlVertex2f(vertB.x, vertC.y);
+
+                        // Bottom-right corner for texture and quad
+                        rlTexCoord2f(coordC.x, coordC.y); rlVertex2f(vertC.x, vertC.y);
+
+                        // Top-right corner for texture and quad
+                        rlTexCoord2f(coordC.x, coordB.y); rlVertex2f(vertC.x, vertB.y);
+
+                        // Top-left corner for texture and quad
+                        rlTexCoord2f(coordB.x, coordB.y); rlVertex2f(vertB.x, vertB.y);
+                    }
+
+                    // MIDDLE-RIGHT QUAD
+                    // Bottom-left corner for texture and quad
+                    rlTexCoord2f(coordC.x, coordC.y); rlVertex2f(vertC.x, vertC.y);
+
+                    // Bottom-right corner for texture and quad
+                    rlTexCoord2f(coordD.x, coordC.y); rlVertex2f(vertD.x, vertC.y);
+
+                    // Top-right corner for texture and quad
+                    rlTexCoord2f(coordD.x, coordB.y); rlVertex2f(vertD.x, vertB.y);
+
+                    // Top-left corner for texture and quad
+                    rlTexCoord2f(coordC.x, coordB.y); rlVertex2f(vertC.x, vertB.y);
+                }
+
+                // ------------------------------------------------------------
+                // BOTTOM-LEFT QUAD
+                // Bottom-left corner for texture and quad
+                rlTexCoord2f(coordA.x, coordD.y); rlVertex2f(vertA.x, vertD.y);
+
+                // Bottom-right corner for texture and quad
+                rlTexCoord2f(coordB.x, coordD.y); rlVertex2f(vertB.x, vertD.y);
+
+                // Top-right corner for texture and quad
+                rlTexCoord2f(coordB.x, coordC.y); rlVertex2f(vertB.x, vertC.y);
+
+                // Top-left corner for texture and quad
+                rlTexCoord2f(coordA.x, coordC.y); rlVertex2f(vertA.x, vertC.y);
+
+                if (drawCenter)
+                {
+                    // BOTTOM-CENTER QUAD
+                    // Bottom-left corner for texture and quad
+                    rlTexCoord2f(coordB.x, coordD.y); rlVertex2f(vertB.x, vertD.y);
+
+                    // Bottom-right corner for texture and quad
+                    rlTexCoord2f(coordC.x, coordD.y); rlVertex2f(vertC.x, vertD.y);
+
+                    // Top-right corner for texture and quad
+                    rlTexCoord2f(coordC.x, coordC.y); rlVertex2f(vertC.x, vertC.y);
+
+                    // Top-left corner for texture and quad
+                    rlTexCoord2f(coordB.x, coordC.y); rlVertex2f(vertB.x, vertC.y);
+                }
+
+                // BOTTOM-RIGHT QUAD
+                // Bottom-left corner for texture and quad
+                rlTexCoord2f(coordC.x, coordD.y); rlVertex2f(vertC.x, vertD.y);
+
+                // Bottom-right corner for texture and quad
+                rlTexCoord2f(coordD.x, coordD.y); rlVertex2f(vertD.x, vertD.y);
+
+                // Top-right corner for texture and quad
+                rlTexCoord2f(coordD.x, coordC.y); rlVertex2f(vertD.x, vertC.y);
+
+                // Top-left corner for texture and quad
+                rlTexCoord2f(coordC.x, coordC.y); rlVertex2f(vertC.x, vertC.y);
+
+            rlEnd();
+        rlPopMatrix();
+
+        rlDisableTexture();
+    }
+}
+
 //----------------------------------------------------------------------------------
 // Module specific Functions Definition
 //----------------------------------------------------------------------------------
