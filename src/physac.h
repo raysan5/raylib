@@ -196,6 +196,7 @@ extern "C" {                                    // Prevents name mangling of fun
 // Module Functions Declaration
 //----------------------------------------------------------------------------------
 PHYSACDEF void InitPhysics(void);                                                                           // Initializes physics values, pointers and creates physics loop thread
+PHYSACDEF void RunPhysicsStep(void);                                                                        // Run physics step, to be used if PHYSICS_NO_THREADS is set in your main loop
 PHYSACDEF bool IsPhysicsEnabled(void);                                                                      // Returns true if physics thread is currently enabled
 PHYSACDEF void SetPhysicsGravity(float x, float y);                                                         // Sets physics global gravity force
 PHYSACDEF PhysicsBody CreatePhysicsBodyCircle(Vector2 pos, float radius, float density);                    // Creates a new circle physics body with generic parameters
@@ -245,19 +246,18 @@ PHYSACDEF void ClosePhysics(void);                                              
 #endif
 
 // Time management functionality
+#include <time.h>                   // Required for: time(), clock_gettime()
 #if defined(_WIN32)
     // Functions required to query time on Windows
     int __stdcall QueryPerformanceCounter(unsigned long long int *lpPerformanceCount);
     int __stdcall QueryPerformanceFrequency(unsigned long long int *lpFrequency);
-    #include <time.h>
 #elif defined(__linux__)
     #if _POSIX_C_SOURCE < 199309L
         #undef _POSIX_C_SOURCE
         #define _POSIX_C_SOURCE 199309L // Required for CLOCK_MONOTONIC if compiled with c99 without gnu ext.
     #endif
     #include <sys/time.h>           // Required for: timespec
-    #include <time.h>               // Required for: clock_gettime()
-#elif defined(__APPLE__)        // macOS also defines __MACH__
+#elif defined(__APPLE__)            // macOS also defines __MACH__
     #include <mach/mach_time.h>     // Required for: mach_absolute_time()
 #endif
 
@@ -356,7 +356,10 @@ PHYSACDEF void InitPhysics(void)
         // Create physics thread using POSIXS thread libraries
         pthread_create(&physicsThreadId, NULL, &PhysicsLoop, NULL);
     #endif
-    
+
+    // Initialize high resolution timer
+    InitTimer();
+
     #if defined(PHYSAC_DEBUG)
         printf("[PHYSAC] physics module initialized successfully\n");
     #endif
@@ -1010,33 +1013,10 @@ static void *PhysicsLoop(void *arg)
     physicsThreadEnabled = true;
     accumulator = 0;
 
-    // Initialize high resolution timer
-    InitTimer();
-
     // Physics update loop
     while (physicsThreadEnabled)
     {
-        // Calculate current time
-        currentTime = GetCurrentTime();
-
-        // Calculate current delta time
-        deltaTime = currentTime - startTime;
-
-        // Store the time elapsed since the last frame began
-        accumulator += deltaTime;
-
-        // Clamp accumulator to max time step to avoid bad performance
-        MathClamp(&accumulator, 0.0, PHYSAC_MAX_TIMESTEP);
-
-        // Fixed time stepping loop
-        while (accumulator >= PHYSAC_DESIRED_DELTATIME)
-        {
-            PhysicsStep();
-            accumulator -= deltaTime;
-        }
-
-        // Record the starting of this frame
-        startTime = currentTime;
+        RunPhysicsStep();
     }
 
     // Unitialize physics manifolds dynamic memory allocations
@@ -1158,6 +1138,32 @@ static void PhysicsStep(void)
             body->torque = 0.0f;
         }
     }
+}
+
+// Wrapper to ensure PhysicsStep is run with at a fixed time step
+PHYSACDEF void RunPhysicsStep(void)
+{
+    // Calculate current time
+    currentTime = GetCurrentTime();
+
+    // Calculate current delta time
+    deltaTime = currentTime - startTime;
+
+    // Store the time elapsed since the last frame began
+    accumulator += deltaTime;
+
+    // Clamp accumulator to max time step to avoid bad performance
+    MathClamp(&accumulator, 0.0, PHYSAC_MAX_TIMESTEP);
+
+    // Fixed time stepping loop
+    while (accumulator >= PHYSAC_DESIRED_DELTATIME)
+    {
+        PhysicsStep();
+        accumulator -= deltaTime;
+    }
+
+    // Record the starting of this frame
+    startTime = currentTime;
 }
 
 // Finds a valid index for a new manifold initialization
