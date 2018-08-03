@@ -412,6 +412,14 @@ typedef struct RenderTexture2D {
 // RenderTexture type, same as RenderTexture2D
 typedef RenderTexture2D RenderTexture;
 
+typedef struct NinePatch {
+    Texture2D texture;      // The texture associated with the 9-patch (maybe Texture2D *, instead?)
+    Rectangle sourceRec;    // The 9-patch region in the texture
+    Vector2 minSize;        // The minimum size the 9-patch can be shrunk to
+    float borderWidth[4];   // The widths of the left, top, right and bottom borders
+    int padding[4];         // Helps the n-patch contents fit nicely inside
+} NinePatch;
+
 // Font character info
 typedef struct CharInfo {
     int value;              // Character value (Unicode)
@@ -999,6 +1007,7 @@ RLAPI void DrawTextureV(Texture2D texture, Vector2 position, Color tint);       
 RLAPI void DrawTextureEx(Texture2D texture, Vector2 position, float rotation, float scale, Color tint);  // Draw a Texture2D with extended parameters
 RLAPI void DrawTextureRec(Texture2D texture, Rectangle sourceRec, Vector2 position, Color tint);         // Draw a part of a texture defined by a rectangle
 RLAPI void DrawTexturePro(Texture2D texture, Rectangle sourceRec, Rectangle destRec, Vector2 origin, float rotation, Color tint); // Draw a part of a texture defined by a rectangle with 'pro' parameters
+RLAPI void DrawNinePatch(NinePatch ninePatch, Rectangle destRec, bool usePadding, Vector2 origin, float rotation, Color tint);
 
 //------------------------------------------------------------------------------------
 // Font Loading and Text Drawing Functions (Module: text)
