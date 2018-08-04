@@ -59,7 +59,7 @@ int main()
 
     Rectangle selectRecs[NUM_PROCESSES];
     
-    for (int i = 0; i < NUM_PROCESSES; i++) selectRecs[i] = (Rectangle){ 40, 50 + 32*i, 150, 30 };
+    for (int i = 0; i < NUM_PROCESSES; i++) selectRecs[i] = (Rectangle){ 40.0f, (float)(50 + 32*i), 150.0f, 30.0f };
     
     SetTargetFPS(60);
     //---------------------------------------------------------------------------------------
@@ -123,7 +123,7 @@ int main()
             {
                 DrawRectangleRec(selectRecs[i], (i == currentProcess) ? SKYBLUE : LIGHTGRAY);
                 DrawRectangleLines(selectRecs[i].x, selectRecs[i].y, selectRecs[i].width, selectRecs[i].height, (i == currentProcess) ? BLUE : GRAY);
-                DrawText(processText[i], selectRecs[i].x + selectRecs[i].width/2 - MeasureText(processText[i], 10)/2, selectRecs[i].y + 11, 10, (i == currentProcess) ? DARKBLUE : DARKGRAY);
+                DrawText(processText[i], selectRecs[i].x + selectRecs[i].width/2 - MeasureText(processText[i], 10)/2, selectRecs[i].y + 11, 10.0f, (i == currentProcess) ? DARKBLUE : DARKGRAY);
             }
 
             DrawTexture(texture, screenWidth - texture.width - 60, screenHeight/2 - texture.height/2, WHITE);

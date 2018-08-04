@@ -296,12 +296,12 @@ RMDEF Vector3 Vector3Perpendicular(Vector3 v)
 {
     Vector3 result = { 0 };
 
-    float min = fabs(v.x);
+    float min = (float) fabs(v.x);
     Vector3 cardinalAxis = {1.0f, 0.0f, 0.0f};
 
     if (fabs(v.y) < min)
     {
-        min = fabs(v.y);
+        min = (float) fabs(v.y);
         Vector3 tmp = {0.0f, 1.0f, 0.0f};
         cardinalAxis = tmp;
     }
@@ -840,28 +840,28 @@ RMDEF Matrix MatrixFrustum(double left, double right, double bottom, double top,
 {
     Matrix result = { 0 };
 
-    float rl = (right - left);
-    float tb = (top - bottom);
-    float fn = (far - near);
+    float rl = (float)(right - left);
+    float tb = (float)(top - bottom);
+    float fn = (float)(far - near);
 
-    result.m0 = (near*2.0f)/rl;
+    result.m0 = ((float) near*2.0f)/rl;
     result.m1 = 0.0f;
     result.m2 = 0.0f;
     result.m3 = 0.0f;
 
     result.m4 = 0.0f;
-    result.m5 = (near*2.0f)/tb;
+    result.m5 = ((float) near*2.0f)/tb;
     result.m6 = 0.0f;
     result.m7 = 0.0f;
 
-    result.m8 = (right + left)/rl;
-    result.m9 = (top + bottom)/tb;
-    result.m10 = -(far + near)/fn;
+    result.m8 = ((float)right + (float)left)/rl;
+    result.m9 = ((float)top + (float)bottom)/tb;
+    result.m10 = -((float)far + (float)near)/fn;
     result.m11 = -1.0f;
 
     result.m12 = 0.0f;
     result.m13 = 0.0f;
-    result.m14 = -(far*near*2.0f)/fn;
+    result.m14 = -((float)far*(float)near*2.0f)/fn;
     result.m15 = 0.0f;
 
     return result;
@@ -899,9 +899,9 @@ RMDEF Matrix MatrixOrtho(double left, double right, double bottom, double top, d
     result.m9 = 0.0f;
     result.m10 = -2.0f/fn;
     result.m11 = 0.0f;
-    result.m12 = -(left + right)/rl;
-    result.m13 = -(top + bottom)/tb;
-    result.m14 = -(far + near)/fn;
+    result.m12 = -((float)left + (float)right)/rl;
+    result.m13 = -((float)top + (float)bottom)/tb;
+    result.m14 = -((float)far + (float)near)/fn;
     result.m15 = 1.0f;
 
     return result;
