@@ -153,9 +153,9 @@ void DrawLineBezier(Vector2 startPos, Vector2 endPos, float thick, Color color)
     for (int i = 1; i <= LINE_DIVISIONS; i++)
     {
         // Cubic easing in-out
-        // NOTE: Easing is calcutated only for y position value 
-        current.y = EaseCubicInOut(i, startPos.y, endPos.y - startPos.y, LINE_DIVISIONS);
-        current.x = previous.x + (endPos.x - startPos.x)/LINE_DIVISIONS;
+        // NOTE: Easing is calculated only for y position value 
+        current.y = EaseCubicInOut(i, startPos.y, endPos.y - startPos.y, (float) LINE_DIVISIONS);
+        current.x = previous.x + (endPos.x - startPos.x)/ (float) LINE_DIVISIONS;
         
         DrawLineEx(previous, current, thick, color);
         
@@ -324,7 +324,7 @@ void DrawRectangleV(Vector2 position, Vector2 size, Color color)
 // Draw a color-filled rectangle
 void DrawRectangleRec(Rectangle rec, Color color)
 {
-    DrawRectangle(rec.x, rec.y, rec.width, rec.height, color);
+    DrawRectangle((int)rec.x, (int)rec.y, (int)rec.width, (int)rec.height, color);
 }
 
 void DrawRectanglePro(Rectangle rec, Vector2 origin, float rotation, Color color)
@@ -354,14 +354,14 @@ void DrawRectanglePro(Rectangle rec, Vector2 origin, float rotation, Color color
 // NOTE: Gradient goes from bottom (color1) to top (color2)
 void DrawRectangleGradientV(int posX, int posY, int width, int height, Color color1, Color color2)
 {
-    DrawRectangleGradientEx((Rectangle){ posX, posY, width, height }, color1, color2, color2, color1);
+    DrawRectangleGradientEx((Rectangle){ (float)posX, (float)posY, (float)width, (float)height }, color1, color2, color2, color1);
 }
 
 // Draw a horizontal-gradient-filled rectangle
 // NOTE: Gradient goes from bottom (color1) to top (color2)
 void DrawRectangleGradientH(int posX, int posY, int width, int height, Color color1, Color color2)
 {
-    DrawRectangleGradientEx((Rectangle){ posX, posY, width, height }, color1, color1, color2, color2);
+    DrawRectangleGradientEx((Rectangle){ (float)posX, (float)posY, (float)width, (float)height }, color1, color1, color2, color2);
 }
 
 // Draw a gradient-filled rectangle

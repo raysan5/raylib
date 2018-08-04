@@ -3306,8 +3306,8 @@ Texture2D GenTexturePrefilter(Shader shader, Texture2D cubemap, int size)
     for (unsigned int mip = 0; mip < MAX_MIPMAP_LEVELS; mip++)
     {
         // Resize framebuffer according to mip-level size.
-        unsigned int mipWidth  = size*powf(0.5f, mip);
-        unsigned int mipHeight = size*powf(0.5f, mip);
+        unsigned int mipWidth  = size*(int) powf(0.5f, mip);
+        unsigned int mipHeight = size* (int) powf(0.5f, mip);
 
         glBindRenderbuffer(GL_RENDERBUFFER, rbo);
         glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH_COMPONENT24, mipWidth, mipHeight);
@@ -3633,15 +3633,15 @@ void EndVrDrawing(void)
 
                 // Bottom-right corner for texture and quad
                 rlTexCoord2f(0.0f, 0.0f);
-                rlVertex2f(0.0f, vrConfig.stereoFbo.texture.height);
+                rlVertex2f(0.0f, (float)vrConfig.stereoFbo.texture.height);
 
                 // Top-right corner for texture and quad
                 rlTexCoord2f(1.0f, 0.0f);
-                rlVertex2f(vrConfig.stereoFbo.texture.width, vrConfig.stereoFbo.texture.height);
+                rlVertex2f( (float)vrConfig.stereoFbo.texture.width, (float)vrConfig.stereoFbo.texture.height);
 
                 // Top-left corner for texture and quad
                 rlTexCoord2f(1.0f, 1.0f);
-                rlVertex2f(vrConfig.stereoFbo.texture.width, 0.0f);
+                rlVertex2f( (float)vrConfig.stereoFbo.texture.width, 0.0f);
             rlEnd();
         rlPopMatrix();
 
@@ -4502,7 +4502,7 @@ static void SetStereoConfig(VrDeviceInfo hmd)
 
     // Compute distortion scale parameters
     // NOTE: To get lens max radius, lensShift must be normalized to [-1..1]
-    float lensRadius = fabs(-1.0f - 4.0f*lensShift);
+    float lensRadius = (float)fabs(-1.0f - 4.0f*lensShift);
     float lensRadiusSq = lensRadius*lensRadius;
     float distortionScale = hmd.lensDistortionValues[0] +
                             hmd.lensDistortionValues[1]*lensRadiusSq +
@@ -4553,8 +4553,8 @@ static void SetStereoConfig(VrDeviceInfo hmd)
     vrConfig.eyesViewOffset[1] = MatrixTranslate(hmd.interpupillaryDistance*0.5f, 0.075f, 0.045f);
 
     // Compute eyes Viewports
-    vrConfig.eyesViewport[0] = (Rectangle){ 0, 0, hmd.hResolution/2, hmd.vResolution };
-    vrConfig.eyesViewport[1] = (Rectangle){ hmd.hResolution/2, 0, hmd.hResolution/2, hmd.vResolution };
+    vrConfig.eyesViewport[0] = (Rectangle){ 0.0f, 0.0f, (float)hmd.hResolution/2, (float)hmd.vResolution };
+    vrConfig.eyesViewport[1] = (Rectangle){ hmd.hResolution/2.0f, 0.0f, (float)hmd.hResolution/2, (float) hmd.vResolution };
 }
 
 // Set internal projection and modelview matrix depending on eyes tracking data

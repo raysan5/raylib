@@ -122,8 +122,8 @@ int main()
             for (int i = 0; i < NUM_PROCESSES; i++)
             {
                 DrawRectangleRec(selectRecs[i], (i == currentProcess) ? SKYBLUE : LIGHTGRAY);
-                DrawRectangleLines(selectRecs[i].x, selectRecs[i].y, selectRecs[i].width, selectRecs[i].height, (i == currentProcess) ? BLUE : GRAY);
-                DrawText(processText[i], selectRecs[i].x + selectRecs[i].width/2 - MeasureText(processText[i], 10)/2, selectRecs[i].y + 11, 10.0f, (i == currentProcess) ? DARKBLUE : DARKGRAY);
+                DrawRectangleLines((int)selectRecs[i].x, (int) selectRecs[i].y, (int) selectRecs[i].width, (int) selectRecs[i].height, (i == currentProcess) ? BLUE : GRAY);
+                DrawText( processText[i], (int)( selectRecs[i].x + selectRecs[i].width/2 - MeasureText(processText[i], 10)/2), (int) selectRecs[i].y + 11, 10, (i == currentProcess) ? DARKBLUE : DARKGRAY);
             }
 
             DrawTexture(texture, screenWidth - texture.width - 60, screenHeight/2 - texture.height/2, WHITE);

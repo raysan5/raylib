@@ -883,9 +883,9 @@ RMDEF Matrix MatrixOrtho(double left, double right, double bottom, double top, d
 {
     Matrix result = { 0 };
 
-    float rl = (right - left);
-    float tb = (top - bottom);
-    float fn = (far - near);
+    float rl = (float)(right - left);
+    float tb = (float)(top - bottom);
+    float fn = (float)(far - near);
 
     result.m0 = 2.0f/rl;
     result.m1 = 0.0f;
@@ -980,7 +980,7 @@ RMDEF Quaternion QuaternionIdentity(void)
 // Computes the length of a quaternion
 RMDEF float QuaternionLength(Quaternion q)
 {
-    float result = sqrt(q.x*q.x + q.y*q.y + q.z*q.z + q.w*q.w);
+    float result = (float)sqrt(q.x*q.x + q.y*q.y + q.z*q.z + q.w*q.w);
     return result;
 }
 
@@ -1071,8 +1071,8 @@ RMDEF Quaternion QuaternionSlerp(Quaternion q1, Quaternion q2, float amount)
     else if (cosHalfTheta > 0.95f) result = QuaternionNlerp(q1, q2, amount);
     else
     {
-        float halfTheta = acos(cosHalfTheta);
-        float sinHalfTheta = sqrt(1.0f - cosHalfTheta*cosHalfTheta);
+        float halfTheta = (float) acos(cosHalfTheta);
+        float sinHalfTheta = (float) sqrt(1.0f - cosHalfTheta*cosHalfTheta);
 
         if (fabs(sinHalfTheta) < 0.001f)
         {

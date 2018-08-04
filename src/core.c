@@ -886,7 +886,7 @@ void EndDrawing(void)
     // Wait for some milliseconds...
     if (frameTime < targetTime)
     {
-        Wait((targetTime - frameTime)*1000.0f);
+        Wait( (float)(targetTime - frameTime)*1000.0f);
 
         currentTime = GetTime();
         double extraTime = currentTime - previousTime;
@@ -2510,7 +2510,7 @@ static void SetupFramebufferSize(int displayWidth, int displayHeight)
 // Initialize hi-resolution timer
 static void InitTimer(void)
 {
-    srand(time(NULL));              // Initialize random seed
+    srand((unsigned int)time(NULL));              // Initialize random seed
     
 #if !defined(SUPPORT_BUSY_WAIT_LOOP) && defined(_WIN32)
     timeBeginPeriod(1);             // Setup high-resolution timer to 1ms (granularity of 1-2 ms)

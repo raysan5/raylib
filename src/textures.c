@@ -314,7 +314,7 @@ Image LoadImageRaw(const char *fileName, int width, int height, int format, int 
 
         // NOTE: fread() returns num read elements instead of bytes,
         // to get bytes we need to read (1 byte size, elements) instead of (x byte size, 1 element)
-        int bytes = fread(image.data, 1, size, rawFile);
+        size_t bytes = fread(image.data, 1, size, rawFile);
 
         // Check if data has been read successfully
         if (bytes < size)
@@ -1051,16 +1051,16 @@ void ImageAlphaCrop(Image *image, float threshold)
             minx = i%image->width;
             miny = -(-((i/image->width) + 1) + 1);
 
-            if (crop.y == 0) crop.y = miny;
+            if (crop.y == 0.0f) crop.y = (float)miny;
 
-            if (crop.x == 0) crop.x = minx;
-            else if (minx < crop.x) crop.x = minx;
+            if (crop.x == 0.0f) crop.x = (float)minx;
+            else if (minx < crop.x) crop.x = (float)minx;
 
-            if (crop.width == 0) crop.width = minx; 
-            else if (crop.width < minx) crop.width = minx;
+            if (crop.width == 0.0f) crop.width = (float)minx;
+            else if (crop.width < minx) crop.width = (float)minx;
 
-            if (crop.height == 0) crop.height = miny;
-            else if (crop.height < miny) crop.height = miny;
+            if (crop.height == 0.0f) crop.height = (float)miny;
+            else if (crop.height < (float) miny) crop.height = (float)miny;
         }
     }
     
@@ -1216,8 +1216,8 @@ void ImageResizeNN(Image *image,int newWidth,int newHeight)
 void ImageResizeCanvas(Image *image, int newWidth,int newHeight, int offsetX, int offsetY, Color color)
 {
     Image imTemp = GenImageColor(newWidth, newHeight, color);
-    Rectangle srcRec = { 0, 0, image->width, image->height };
-    Rectangle dstRec = { offsetX, offsetY, srcRec.width, srcRec.height };
+    Rectangle srcRec = { 0.0f, 0.0f, (float)image->width, (float)image->height };
+    Rectangle dstRec = { (float)offsetX, (float)offsetY, (float)srcRec.width, (float)srcRec.height };
     
     // TODO: Review different scaling situations
     
@@ -1450,7 +1450,7 @@ void ImageDraw(Image *dst, Image src, Rectangle srcRec, Rectangle dstRec)
     if (dstRec.y < 0) dstRec.y = 0;
 
     // Scale source image in case destination rec size is different than source rec size
-    if ((dstRec.width != srcRec.width) || (dstRec.height != srcRec.height)) ImageResize(&srcCopy, dstRec.width, dstRec.height);
+    if ((dstRec.width != srcRec.width) || (dstRec.height != srcRec.height)) ImageResize(&srcCopy, (int)dstRec.width, (int)dstRec.height);
 
     if ((dstRec.x + dstRec.width) > dst->width)
     {
@@ -1530,7 +1530,7 @@ Image ImageText(const char *text, int fontSize, Color color)
 {
     int defaultFontSize = 10;   // Default Font chars height in pixel
     if (fontSize < defaultFontSize) fontSize = defaultFontSize;
-    int spacing = (float)fontSize/defaultFontSize;
+    int spacing = fontSize / defaultFontSize;
 
     Image imText = ImageTextEx(GetFontDefault(), text, (float)fontSize, (float)spacing, color);
 
@@ -1546,7 +1546,7 @@ Image ImageTextEx(Font font, const char *text, float fontSize, float spacing, Co
     unsigned char character;    // Current character
 
     // TODO: ISSUE: Measured text size does not seem to be correct... issue on ImageDraw()
-    Vector2 imSize = MeasureTextEx(font, text, font.baseSize, spacing);
+    Vector2 imSize = MeasureTextEx(font, text, (float)font.baseSize, spacing);
     
     TraceLog(LOG_DEBUG, "Text Image size: %f, %f", imSize.x, imSize.y);
 
@@ -1588,12 +1588,12 @@ Image ImageTextEx(Font font, const char *text, float fontSize, float spacing, Co
             
             if ((unsigned char)text[i] != ' ')
             {
-                ImageDraw(&imText, imFont, letter.rec, (Rectangle){ posX + letter.offsetX, 
-                          letter.offsetY, letter.rec.width, letter.rec.height });
+                ImageDraw(&imText, imFont, letter.rec, (Rectangle){ (float) (posX + letter.offsetX), 
+                    (float)letter.offsetY, (float)letter.rec.width, (float)letter.rec.height });
             }
 
-            if (letter.advanceX == 0) posX += letter.rec.width + spacing;
-            else posX += letter.advanceX + spacing;
+            if (letter.advanceX == 0) posX += (int)(letter.rec.width + spacing);
+            else posX += letter.advanceX + (int) spacing;
         }
     }
 
@@ -1616,9 +1616,9 @@ Image ImageTextEx(Font font, const char *text, float fontSize, float spacing, Co
 // Draw rectangle within an image
 void ImageDrawRectangle(Image *dst, Vector2 position, Rectangle rec, Color color)
 {
-    Image imRec = GenImageColor(rec.width, rec.height, color);
+    Image imRec = GenImageColor((int)rec.width, (int)rec.height, color);
     
-    Rectangle dstRec = { position.x, position.y, imRec.width, imRec.height };
+    Rectangle dstRec = { position.x, position.y, (float)imRec.width, (float)imRec.height };
 
     ImageDraw(dst, imRec, rec, dstRec);
     
@@ -1637,8 +1637,8 @@ void ImageDrawTextEx(Image *dst, Vector2 position, Font font, const char *text, 
 {
     Image imText = ImageTextEx(font, text, fontSize, spacing, color);
 
-    Rectangle srcRec = { 0, 0, imText.width, imText.height };
-    Rectangle dstRec = { position.x, position.y, imText.width, imText.height };
+    Rectangle srcRec = { 0.0f, 0.0f, (float)imText.width, (float)imText.height };
+    Rectangle dstRec = { position.x, position.y, (float)imText.width, (float)imText.height };
 
     ImageDraw(dst, imText, srcRec, dstRec);
 
@@ -1759,10 +1759,11 @@ void ImageColorTint(Image *image, Color color)
     {
         for (int x = 0; x < image->width; x++)
         {
-            unsigned char r = 255*((float)pixels[y*image->width + x].r/255*cR);
-            unsigned char g = 255*((float)pixels[y*image->width + x].g/255*cG);
-            unsigned char b = 255*((float)pixels[y*image->width + x].b/255*cB);
-            unsigned char a = 255*((float)pixels[y*image->width + x].a/255*cA);
+            int index = y * image->width + x;
+            unsigned char r = 255*((float)pixels[index].r/255*cR);
+            unsigned char g = 255*((float)pixels[index].g/255*cG);
+            unsigned char b = 255*((float)pixels[index].b/255*cB);
+            unsigned char a = 255*((float)pixels[index].a/255*cA);
 
             pixels[y*image->width + x].r = r;
             pixels[y*image->width + x].g = g;
@@ -2010,8 +2011,8 @@ Image GenImageGradientRadial(int width, int height, float density, Color inner, 
             float dist = hypotf((float)x - centerX, (float)y - centerY);
             float factor = (dist - radius*density)/(radius*(1.0f - density));
             
-            factor = fmax(factor, 0.f);
-            factor = fmin(factor, 1.f); // dist can be bigger than radius so we have to check
+            factor = (float)fmax(factor, 0.f);
+            factor = (float)fmin(factor, 1.f); // dist can be bigger than radius so we have to check
             
             pixels[y*width + x].r = (int)((float)outer.r*factor + (float)inner.r*(1.0f - factor));
             pixels[y*width + x].g = (int)((float)outer.g*factor + (float)inner.g*(1.0f - factor));
@@ -2109,7 +2110,7 @@ Image GenImageCellular(int width, int height, int tileSize)
     {
         int y = (i/seedsPerRow)*tileSize + GetRandomValue(0, tileSize - 1);
         int x = (i%seedsPerRow)*tileSize + GetRandomValue(0, tileSize - 1);
-        seeds[i] = (Vector2){x, y};
+        seeds[i] = (Vector2){ (float)x, (float)y};
     }
 
     for (int y = 0; y < height; y++)
@@ -2120,7 +2121,7 @@ Image GenImageCellular(int width, int height, int tileSize)
         {
             int tileX = x/tileSize;
 
-            float minDistance = strtod("Inf", NULL);
+            float minDistance = (float)strtod("Inf", NULL);
 
             // Check all adjacent tiles
             for (int i = -1; i < 2; i++)
@@ -2133,8 +2134,8 @@ Image GenImageCellular(int width, int height, int tileSize)
 
                     Vector2 neighborSeed = seeds[(tileY + j)*seedsPerRow + tileX + i];
 
-                    float dist = hypot(x - (int)neighborSeed.x, y - (int)neighborSeed.y);
-                    minDistance = fmin(minDistance, dist);
+                    float dist = (float)hypot(x - (int)neighborSeed.x, y - (int)neighborSeed.y);
+                    minDistance = (float)fmin(minDistance, dist);
                 }
             }
 
@@ -2278,7 +2279,7 @@ void DrawTextureEx(Texture2D texture, Vector2 position, float rotation, float sc
 // Draw a part of a texture (defined by a rectangle)
 void DrawTextureRec(Texture2D texture, Rectangle sourceRec, Vector2 position, Color tint)
 {
-    Rectangle destRec = { position.x, position.y, sourceRec.width, fabs(sourceRec.height) };
+    Rectangle destRec = { position.x, position.y, sourceRec.width, (float)fabs(sourceRec.height) };
     Vector2 origin = { 0.0f, 0.0f };
 
     DrawTexturePro(texture, sourceRec, destRec, origin, 0.0f, tint);
@@ -2684,7 +2685,7 @@ static Image LoadKTX(const char *fileName)
 
             if (ktxHeader.keyValueDataSize > 0)
             {
-                for (int i = 0; i < ktxHeader.keyValueDataSize; i++) fread(&unused, sizeof(unsigned char), 1, ktxFile);
+                for (unsigned int i = 0; i < ktxHeader.keyValueDataSize; i++) fread(&unused, sizeof(unsigned char), 1U, ktxFile);
             }
 
             int dataSize;
