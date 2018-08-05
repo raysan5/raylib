@@ -3306,8 +3306,8 @@ Texture2D GenTexturePrefilter(Shader shader, Texture2D cubemap, int size)
     for (unsigned int mip = 0; mip < MAX_MIPMAP_LEVELS; mip++)
     {
         // Resize framebuffer according to mip-level size.
-        unsigned int mipWidth  = size*(int) powf(0.5f, mip);
-        unsigned int mipHeight = size* (int) powf(0.5f, mip);
+        unsigned int mipWidth  = size*(int) powf(0.5f, (float) mip);
+        unsigned int mipHeight = size* (int) powf(0.5f, (float) mip);
 
         glBindRenderbuffer(GL_RENDERBUFFER, rbo);
         glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH_COMPONENT24, mipWidth, mipHeight);

@@ -154,7 +154,7 @@ void DrawLineBezier(Vector2 startPos, Vector2 endPos, float thick, Color color)
     {
         // Cubic easing in-out
         // NOTE: Easing is calculated only for y position value 
-        current.y = EaseCubicInOut(i, startPos.y, endPos.y - startPos.y, (float) LINE_DIVISIONS);
+        current.y = EaseCubicInOut((float)i, startPos.y, endPos.y - startPos.y, (float) LINE_DIVISIONS);
         current.x = previous.x + (endPos.x - startPos.x)/ (float) LINE_DIVISIONS;
         
         DrawLineEx(previous, current, thick, color);
@@ -457,14 +457,14 @@ void DrawRectangleLinesEx(Rectangle rec, int lineThick, Color color)
 {   
     if (lineThick > rec.width || lineThick > rec.height)
     {
-        if(rec.width > rec.height) lineThick = rec.height/2;
-        else if (rec.width < rec.height) lineThick = rec.width/2;
+        if(rec.width > rec.height) lineThick = (int)rec.height/2;
+        else if (rec.width < rec.height) lineThick = (int)rec.width/2;
     }        
     
-    DrawRectangle(rec.x, rec.y, rec.width, lineThick, color);
-    DrawRectangle(rec.x - lineThick + rec.width, rec.y + lineThick, lineThick, rec.height - lineThick*2, color);
-    DrawRectangle(rec.x, rec.y + rec.height - lineThick, rec.width, lineThick, color);
-    DrawRectangle(rec.x, rec.y + lineThick, lineThick, rec.height - lineThick*2, color);
+    DrawRectangle( (int)rec.x, (int)rec.y, (int)rec.width, lineThick, color);
+    DrawRectangle( (int)(rec.x - lineThick + rec.width), (int)(rec.y + lineThick), lineThick, (int)(rec.height - lineThick*2.0f), color);
+    DrawRectangle( (int)rec.x, (int)(rec.y + rec.height - lineThick), (int)rec.width, lineThick, color);
+    DrawRectangle( (int)rec.x, (int)(rec.y + lineThick), lineThick, (int)(rec.height - lineThick*2), color);
 }
 
 // Draw a triangle
@@ -648,8 +648,8 @@ bool CheckCollisionRecs(Rectangle rec1, Rectangle rec2)
 {
     bool collision = false;
 
-    float dx = fabs((rec1.x + rec1.width/2) - (rec2.x + rec2.width/2));
-    float dy = fabs((rec1.y + rec1.height/2) - (rec2.y + rec2.height/2));
+    float dx = (float)fabs((rec1.x + rec1.width/2) - (rec2.x + rec2.width/2));
+    float dy = (float)fabs((rec1.y + rec1.height/2) - (rec2.y + rec2.height/2));
 
     if ((dx <= (rec1.width/2 + rec2.width/2)) && ((dy <= (rec1.height/2 + rec2.height/2)))) collision = true;
 
@@ -675,11 +675,11 @@ bool CheckCollisionCircles(Vector2 center1, float radius1, Vector2 center2, floa
 // NOTE: Reviewed version to take into account corner limit case
 bool CheckCollisionCircleRec(Vector2 center, float radius, Rectangle rec)
 {
-    int recCenterX = rec.x + rec.width/2;
-    int recCenterY = rec.y + rec.height/2;
+    int recCenterX = (int)(rec.x + rec.width/2.0f);
+    int recCenterY = (int)(rec.y + rec.height/2.0f);
     
-    float dx = fabs(center.x - recCenterX);
-    float dy = fabs(center.y - recCenterY);
+    float dx = (float)fabs(center.x - recCenterX);
+    float dy = (float)fabs(center.y - recCenterY);
 
     if (dx > (rec.width/2.0f + radius)) { return false; }
     if (dy > (rec.height/2.0f + radius)) { return false; }
@@ -700,8 +700,8 @@ Rectangle GetCollisionRec(Rectangle rec1, Rectangle rec2)
 
     if (CheckCollisionRecs(rec1, rec2))
     {
-        float dxx = fabs(rec1.x - rec2.x);
-        float dyy = fabs(rec1.y - rec2.y);
+        float dxx = (float)fabs(rec1.x - rec2.x);
+        float dyy = (float)fabs(rec1.y - rec2.y);
 
         if (rec1.x <= rec2.x)
         {
@@ -768,8 +768,8 @@ Rectangle GetCollisionRec(Rectangle rec1, Rectangle rec2)
 // NOTE: Required for DrawLineBezier()
 static float EaseCubicInOut(float t, float b, float c, float d) 
 { 
-    if ((t /= 0.5*d) < 1)
-        return 0.5*c*t*t*t + b;
+    if ((t /= 0.5f*d) < 1)
+        return 0.5f*c*t*t*t + b;
     t -= 2;
-    return 0.5*c*(t*t*t + 2) + b;
+    return 0.5f*c*(t*t*t + 2.0f) + b;
 }
