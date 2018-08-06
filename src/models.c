@@ -1771,7 +1771,7 @@ void DrawModelWiresEx(Model model, Vector3 position, Vector3 rotationAxis, float
 // Draw a billboard
 void DrawBillboard(Camera camera, Texture2D texture, Vector3 center, float size, Color tint)
 {
-    Rectangle sourceRec = { 0, 0, texture.width, texture.height };
+    Rectangle sourceRec = { 0.0f, 0.0f, (float)texture.width, (float)texture.height };
 
     DrawBillboardRec(camera, texture, sourceRec, center, size, tint);
 }
@@ -1837,9 +1837,9 @@ void DrawBoundingBox(BoundingBox box, Color color)
 {
     Vector3 size;
 
-    size.x = fabs(box.max.x - box.min.x);
-    size.y = fabs(box.max.y - box.min.y);
-    size.z = fabs(box.max.z - box.min.z);
+    size.x = (float)fabs(box.max.x - box.min.x);
+    size.y = (float)fabs(box.max.y - box.min.y);
+    size.z = (float)fabs(box.max.z - box.min.z);
 
     Vector3 center = { box.min.x + size.x/2.0f, box.min.y + size.y/2.0f, box.min.z + size.z/2.0f };
 
@@ -2206,9 +2206,9 @@ void MeshBinormals(Mesh *mesh)
         Vector3 tangent = { mesh->tangents[i*4 + 0], mesh->tangents[i*4 + 1], mesh->tangents[i*4 + 2] };
         float tangentW = mesh->tangents[i*4 + 3];
     
-        Vector3 binormal = Vector3Multiply(Vector3CrossProduct(normal, tangent), tangentW);
         
         // TODO: Register computed binormal in mesh->binormal ?
+        // Vector3 binormal = Vector3Multiply( Vector3CrossProduct( normal, tangent ), tangentW );
     }
 }
 

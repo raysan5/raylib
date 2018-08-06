@@ -220,12 +220,12 @@ extern void LoadDefaultFont(void)
     {
         defaultFont.chars[i].value = 32 + i;  // First char is 32
 
-        defaultFont.chars[i].rec.x = currentPosX;
-        defaultFont.chars[i].rec.y = charsDivisor + currentLine*(charsHeight + charsDivisor);
-        defaultFont.chars[i].rec.width = charsWidth[i];
-        defaultFont.chars[i].rec.height = charsHeight;
+        defaultFont.chars[i].rec.x = (float) currentPosX;
+        defaultFont.chars[i].rec.y = (float) charsDivisor + currentLine*(charsHeight + charsDivisor);
+        defaultFont.chars[i].rec.width = (float) charsWidth[i];
+        defaultFont.chars[i].rec.height = (float) charsHeight;
 
-        testPosX += (defaultFont.chars[i].rec.width + charsDivisor);
+        testPosX += (int) (defaultFont.chars[i].rec.width + (float) charsDivisor);
 
         if (testPosX >= defaultFont.texture.width)
         {
@@ -233,8 +233,8 @@ extern void LoadDefaultFont(void)
             currentPosX = 2*charsDivisor + charsWidth[i];
             testPosX = currentPosX;
 
-            defaultFont.chars[i].rec.x = charsDivisor;
-            defaultFont.chars[i].rec.y = charsDivisor + currentLine*(charsHeight + charsDivisor);
+            defaultFont.chars[i].rec.x = (float)charsDivisor;
+            defaultFont.chars[i].rec.y = (float)charsDivisor + currentLine*(charsHeight + charsDivisor);
         }
         else currentPosX = testPosX;
 
@@ -244,7 +244,7 @@ extern void LoadDefaultFont(void)
         defaultFont.chars[i].advanceX = 0;
     }
 
-    defaultFont.baseSize = defaultFont.chars[0].rec.height;
+    defaultFont.baseSize = (int) defaultFont.chars[0].rec.height;
     
     TraceLog(LOG_INFO, "[TEX ID %i] Default font loaded successfully", defaultFont.texture.id);
 }
@@ -361,14 +361,14 @@ CharInfo *LoadFontData(const char *fileName, int fontSize, int *fontChars, int c
     if (!stbtt_InitFont(&fontInfo, fontBuffer, 0)) TraceLog(LOG_WARNING, "Failed to init font!");
 
     // Calculate font scale factor
-    float scaleFactor = stbtt_ScaleForPixelHeight(&fontInfo, fontSize);
+    float scaleFactor = stbtt_ScaleForPixelHeight(&fontInfo, (float) fontSize);
 
     // Calculate font basic metrics
     // NOTE: ascent is equivalent to font baseline
     int ascent, descent, lineGap;
     stbtt_GetFontVMetrics(&fontInfo, &ascent, &descent, &lineGap);
-    ascent *= scaleFactor;
-    descent *= scaleFactor;
+    ascent *= (int) scaleFactor;
+    descent *= (int) scaleFactor;
     
     // Fill fontChars in case not provided externally
     // NOTE: By default we fill charsCount consecutevely, starting at 32 (Space)
@@ -407,7 +407,7 @@ CharInfo *LoadFontData(const char *fileName, int fontSize, int *fontChars, int c
         TraceLog(LOG_DEBUG, "Character offsetY: %i", ascent + chY1);
 
         stbtt_GetCodepointHMetrics(&fontInfo, ch, &chars[i].advanceX, NULL);
-        chars[i].advanceX *= scaleFactor;
+        chars[i].advanceX *= (int) scaleFactor;
     }
     
     free(fontBuffer);
@@ -460,8 +460,8 @@ Image GenImageFontAtlas(CharInfo *chars, int charsCount, int fontSize, int paddi
                 }
             }
             
-            chars[i].rec.x = offsetX;
-            chars[i].rec.y = offsetY;
+            chars[i].rec.x = (float) offsetX;
+            chars[i].rec.y = (float) offsetY;
             
             // Move atlas position X for next character drawing
             offsetX += ((int)chars[i].rec.width + 2*padding);
@@ -502,8 +502,8 @@ Image GenImageFontAtlas(CharInfo *chars, int charsCount, int fontSize, int paddi
         
         for (int i = 0; i < charsCount; i++)
         {
-            chars[i].rec.x = rects[i].x + padding;
-            chars[i].rec.y = rects[i].y + padding;
+            chars[i].rec.x = rects[i].x + (float) padding;
+            chars[i].rec.y = rects[i].y + (float) padding;
             
             if (rects[i].was_packed)
             {
@@ -834,15 +834,15 @@ static Font LoadImageFont(Image image, Color key, int firstChar)
         {
             tempCharValues[index] = firstChar + index;
 
-            tempCharRecs[index].x = xPosToRead;
-            tempCharRecs[index].y = lineSpacing + lineToRead*(charHeight + lineSpacing);
-            tempCharRecs[index].height = charHeight;
+            tempCharRecs[index].x = (float) xPosToRead;
+            tempCharRecs[index].y = (float) (lineSpacing + lineToRead*(charHeight + lineSpacing));
+            tempCharRecs[index].height = (float) charHeight;
 
             int charWidth = 0;
 
             while (!COLOR_EQUAL(pixels[(lineSpacing + (charHeight+lineSpacing)*lineToRead)*image.width + xPosToRead + charWidth], key)) charWidth++;
 
-            tempCharRecs[index].width = charWidth;
+            tempCharRecs[index].width = (float) charWidth;
 
             index++;
 
@@ -887,7 +887,7 @@ static Font LoadImageFont(Image image, Color key, int firstChar)
         spriteFont.chars[i].advanceX = 0;
     }
 
-    spriteFont.baseSize = spriteFont.chars[0].rec.height;
+    spriteFont.baseSize = (int) spriteFont.chars[0].rec.height;
 
     TraceLog(LOG_INFO, "Image file loaded correctly as Font");
 
@@ -996,7 +996,7 @@ static Font LoadBMFont(const char *fileName)
 
         // Save data properly in sprite font
         font.chars[i].value = charId;
-        font.chars[i].rec = (Rectangle){ charX, charY, charWidth, charHeight };
+        font.chars[i].rec = (Rectangle){ (float) charX, (float) charY, (float) charWidth, (float) charHeight };
         font.chars[i].offsetX = charOffsetX;
         font.chars[i].offsetY = charOffsetY;
         font.chars[i].advanceX = charAdvanceX;
