@@ -30,10 +30,10 @@ int main()
     Rectangle sourceRec = { 0.0f, 0.0f, (float)frameWidth, (float)frameHeight };
 
     // NOTE: Destination rectangle (screen rectangle where drawing part of texture)
-    Rectangle destRec = { (float) screenWidth/2, (float)screenHeight/2, (float)frameWidth*2, (float)frameHeight*2 };
+    Rectangle destRec = { (float)screenWidth/2, (float)screenHeight/2, (float)frameWidth*2, (float)frameHeight*2 };
 
     // NOTE: Origin of the texture (rotation/scale point), it's relative to destination rectangle size
-    Vector2 origin = { (float) frameWidth, (float) frameHeight };
+    Vector2 origin = { (float)frameWidth, (float)frameHeight };
     
     int rotation = 0;
     

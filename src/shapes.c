@@ -154,8 +154,8 @@ void DrawLineBezier(Vector2 startPos, Vector2 endPos, float thick, Color color)
     {
         // Cubic easing in-out
         // NOTE: Easing is calculated only for y position value 
-        current.y = EaseCubicInOut((float)i, startPos.y, endPos.y - startPos.y, (float) LINE_DIVISIONS);
-        current.x = previous.x + (endPos.x - startPos.x)/ (float) LINE_DIVISIONS;
+        current.y = EaseCubicInOut((float)i, startPos.y, endPos.y - startPos.y, (float)LINE_DIVISIONS);
+        current.x = previous.x + (endPos.x - startPos.x)/ (float)LINE_DIVISIONS;
         
         DrawLineEx(previous, current, thick, color);
         

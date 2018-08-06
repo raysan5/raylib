@@ -1060,7 +1060,7 @@ void ImageAlphaCrop(Image *image, float threshold)
             else if (crop.width < minx) crop.width = (float)minx;
 
             if (crop.height == 0.0f) crop.height = (float)miny;
-            else if (crop.height < (float) miny) crop.height = (float)miny;
+            else if (crop.height < (float)miny) crop.height = (float)miny;
         }
     }
     
@@ -1588,12 +1588,12 @@ Image ImageTextEx(Font font, const char *text, float fontSize, float spacing, Co
             
             if ((unsigned char)text[i] != ' ')
             {
-                ImageDraw(&imText, imFont, letter.rec, (Rectangle){ (float) (posX + letter.offsetX), 
+                ImageDraw(&imText, imFont, letter.rec, (Rectangle){ (float)(posX + letter.offsetX), 
                     (float)letter.offsetY, (float)letter.rec.width, (float)letter.rec.height });
             }
 
             if (letter.advanceX == 0) posX += (int)(letter.rec.width + spacing);
-            else posX += letter.advanceX + (int) spacing;
+            else posX += letter.advanceX + (int)spacing;
         }
     }
 
