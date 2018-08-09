@@ -412,6 +412,15 @@ typedef struct RenderTexture2D {
 // RenderTexture type, same as RenderTexture2D
 typedef RenderTexture2D RenderTexture;
 
+typedef struct NPatchInfo {
+    Rectangle sourceRec;   // Region in the texture
+    int left;              // left border offset
+    int top;               // top border offset
+    int right;             // right border offset
+    int bottom;            // bottom border offset
+    int type;              // layout of the n-patch: 3x3, 1x3 or 3x1
+} NPatchInfo;
+
 // Font character info
 typedef struct CharInfo {
     int value;              // Character value (Unicode)
@@ -729,6 +738,13 @@ typedef enum {
     HMD_SONY_PSVR
 } VrDeviceType;
 
+// Type of n-patch
+typedef enum {
+    NPT_9PATCH = 0,         // 3x3
+    NPT_3PATCH_VERTICAL,    // 1x3
+    NPT_3PATCH_HORIZONTAL   // 3x1
+} NPatchType;
+
 // Callbacks to be implemented by users
 typedef void (*TraceLogCallback)(int msgType, const char *text, va_list args);
 
@@ -999,6 +1015,7 @@ RLAPI void DrawTextureV(Texture2D texture, Vector2 position, Color tint);       
 RLAPI void DrawTextureEx(Texture2D texture, Vector2 position, float rotation, float scale, Color tint);  // Draw a Texture2D with extended parameters
 RLAPI void DrawTextureRec(Texture2D texture, Rectangle sourceRec, Vector2 position, Color tint);         // Draw a part of a texture defined by a rectangle
 RLAPI void DrawTexturePro(Texture2D texture, Rectangle sourceRec, Rectangle destRec, Vector2 origin, float rotation, Color tint); // Draw a part of a texture defined by a rectangle with 'pro' parameters
+RLAPI void DrawTextureNPatch(Texture2D texture, NPatchInfo nPatchInfo, Rectangle destRec, Vector2 origin, float rotation, Color tint); // Draws a texture (or part of it) that stretches or shrinks nicely.
 
 //------------------------------------------------------------------------------------
 // Font Loading and Text Drawing Functions (Module: text)
