@@ -1,5 +1,5 @@
 // Audio playback and capture library. Public domain. See "unlicense" statement at the end of this file.
-// mini_al - v0.8.5-rc - 2018-xx-xx
+// mini_al - v0.8.5 - 2018-08-12
 //
 // David Reid - davidreidsoftware@gmail.com
 
@@ -21,7 +21,7 @@
 //   - PulseAudio
 //   - JACK
 //   - sndio (OpenBSD)
-//   - audioio (NetBSD)
+//   - audio(4) (NetBSD and OpenBSD)
 //   - OSS (FreeBSD)
 //   - OpenSL|ES (Android only)
 //   - OpenAL
@@ -121,6 +121,7 @@
 // - Sample data is always native-endian and interleaved. For example, mal_format_s16 means signed 16-bit
 //   integer samples, interleaved. Let me know if you need non-interleaved and I'll look into it.
 // - The sndio backend is currently only enabled on OpenBSD builds.
+// - The audio(4) backend is supported on OpenBSD, but you may need to disable sndiod before you can use it.
 //
 //
 //
@@ -186,8 +187,8 @@
 // #define MAL_NO_SNDIO
 //   Disables the sndio backend.
 //
-// #define MAL_NO_AUDIOIO
-//   Disables the audioio backend.
+// #define MAL_NO_AUDIO4
+//   Disables the audio(4) backend.
 //
 // #define MAL_NO_OSS
 //   Disables the OSS backend.
@@ -244,6 +245,9 @@
 //
 // #define MAL_DEBUT_OUTPUT
 //   Enable printf() debug output.
+//
+// #ifndef MAL_COINIT_VALUE
+//   Windows only. The value to pass to internal calls to CoInitializeEx(). Defaults to COINIT_MULTITHREADED.
 
 #ifndef mini_al_h
 #define mini_al_h
@@ -508,6 +512,7 @@ typedef int mal_result;
 #define MAL_INVALID_DEVICE_CONFIG                       -31
 #define MAL_ACCESS_DENIED                               -32
 #define MAL_TOO_LARGE                                   -33
+#define MAL_DEVICE_UNAVAILABLE                          -34
 
 // Standard sample rates.
 #define MAL_SAMPLE_RATE_8000                            8000
@@ -582,6 +587,7 @@ typedef enum
     mal_standard_channel_map_rfc3551,   // Based off AIFF.
     mal_standard_channel_map_flac,
     mal_standard_channel_map_vorbis,
+    mal_standard_channel_map_sound4,    // FreeBSD's sound(4).
     mal_standard_channel_map_sndio,     // www.sndio.org/tips.html
     mal_standard_channel_map_default = mal_standard_channel_map_microsoft
 } mal_standard_channel_map;
@@ -1155,8 +1161,8 @@ void mal_pcm_convert(void* pOut, mal_format formatOut, const void* pIn, mal_form
     #if defined(__OpenBSD__)    // <-- Change this to "#if defined(MAL_BSD)" to enable sndio on all BSD flavors.
         #define MAL_SUPPORT_SNDIO   // sndio is only supported on OpenBSD for now. May be expanded later if there's demand.
     #endif
-    #if defined(__NetBSD__)
-        #define MAL_SUPPORT_AUDIOIO // Only support audioio on platforms with known support.
+    #if defined(__NetBSD__) || defined(__OpenBSD__)
+        #define MAL_SUPPORT_AUDIO4  // Only support audio(4) on platforms with known support.
     #endif
     #if defined(__FreeBSD__) || defined(__DragonFly__)
         #define MAL_SUPPORT_OSS     // Only support OSS on specific platforms with known support.
@@ -1199,8 +1205,8 @@ void mal_pcm_convert(void* pOut, mal_format formatOut, const void* pIn, mal_form
 #if !defined(MAL_NO_SNDIO) && defined(MAL_SUPPORT_SNDIO)
     #define MAL_ENABLE_SNDIO
 #endif
-#if !defined(MAL_NO_AUDIOIO) && defined(MAL_SUPPORT_AUDIOIO)
-    #define MAL_ENABLE_AUDIOIO
+#if !defined(MAL_NO_AUDIO4) && defined(MAL_SUPPORT_AUDIO4)
+    #define MAL_ENABLE_AUDIO4
 #endif
 #if !defined(MAL_NO_OSS) && defined(MAL_SUPPORT_OSS)
     #define MAL_ENABLE_OSS
@@ -1230,7 +1236,7 @@ typedef enum
     mal_backend_jack,
     mal_backend_coreaudio,
     mal_backend_sndio,
-    mal_backend_audioio,
+    mal_backend_audio4,
     mal_backend_oss,
     mal_backend_opensl,
     mal_backend_openal,
@@ -1368,8 +1374,8 @@ typedef union
 #ifdef MAL_SUPPORT_SNDIO
     char sndio[256];                // "snd/0", etc.
 #endif
-#ifdef MAL_SUPPORT_AUDIOIO
-    char audioio[256];              // "/dev/audio", etc.
+#ifdef MAL_SUPPORT_AUDIO4
+    char audio4[256];               // "/dev/audio", etc.
 #endif
 #ifdef MAL_SUPPORT_OSS
     char oss[64];                   // "dev/dsp0", etc. "dev/dsp" for the default device.
@@ -1420,6 +1426,7 @@ typedef struct
     mal_uint32 sampleRate;
     mal_channel channelMap[MAL_MAX_CHANNELS];
     mal_uint32 bufferSizeInFrames;
+    mal_uint32 bufferSizeInMilliseconds;
     mal_uint32 periods;
     mal_share_mode shareMode;
     mal_performance_profile performanceProfile;
@@ -1702,11 +1709,11 @@ struct mal_context
             mal_proc sio_initpar;
         } sndio;
 #endif
-#ifdef MAL_SUPPORT_AUDIOIO
+#ifdef MAL_SUPPORT_AUDIO4
         struct
         {
             int _unused;
-        } audioio;
+        } audio4;
 #endif
 #ifdef MAL_SUPPORT_OSS
         struct
@@ -1891,6 +1898,7 @@ MAL_ALIGNED_STRUCT(MAL_SIMD_ALIGNMENT) mal_device
     mal_uint32 sampleRate;
     mal_channel channelMap[MAL_MAX_CHANNELS];
     mal_uint32 bufferSizeInFrames;
+    mal_uint32 bufferSizeInMilliseconds;
     mal_uint32 periods;
     mal_uint32 state;
     mal_recv_proc onRecv;
@@ -2009,14 +2017,14 @@ MAL_ALIGNED_STRUCT(MAL_SIMD_ALIGNMENT) mal_device
             void* pIntermediaryBuffer;
         } sndio;
 #endif
-#ifdef MAL_SUPPORT_AUDIOIO
+#ifdef MAL_SUPPORT_AUDIO4
         struct
         {
             int fd;
             mal_uint32 fragmentSizeInFrames;
             mal_bool32 breakFromMainLoop;
             void* pIntermediaryBuffer;
-        } audioio;
+        } audio4;
 #endif
 #ifdef MAL_SUPPORT_OSS
         struct
@@ -2092,7 +2100,7 @@ MAL_ALIGNED_STRUCT(MAL_SIMD_ALIGNMENT) mal_device
 //   - WinMM
 //   - Core Audio (Apple)
 //   - sndio
-//   - audioio
+//   - audio(4)
 //   - OSS
 //   - PulseAudio
 //   - ALSA
@@ -2220,9 +2228,11 @@ mal_result mal_context_get_device_info(mal_context* pContext, mal_device_type ty
 //
 // Passing in 0 to any property in pConfig will force the use of a default value. In the case of
 // sample format, channel count, sample rate and channel map it will default to the values used by
-// the backend's internal device. If <bufferSizeInFrames> is 0, it will default to
-// MAL_DEFAULT_BUFFER_SIZE_IN_MILLISECONDS. If <periods> is set to 0 it will default to
-// MAL_DEFAULT_PERIODS.
+// the backend's internal device. For the size of the buffer you can set bufferSizeInFrames or
+// bufferSizeInMilliseconds (if both are set it will prioritize bufferSizeInFrames). If both are
+// set to zero, it will default to MAL_BASE_BUFFER_SIZE_IN_MILLISECONDS_LOW_LATENCY or
+// MAL_BASE_BUFFER_SIZE_IN_MILLISECONDS_CONSERVATIVE, depending on whether or not performanceProfile
+// is set to mal_performance_profile_low_latency or mal_performance_profile_conservative.
 //
 // When sending or receiving data to/from a device, mini_al will internally perform a format
 // conversion to convert between the format specified by pConfig and the format used internally by
@@ -2489,20 +2499,22 @@ void mal_mutex_unlock(mal_mutex* pMutex);
 // Retrieves a friendly name for a backend.
 const char* mal_get_backend_name(mal_backend backend);
 
-// Calculates a scaling factor relative to speed of the system.
-//
-// This could be useful for dynamically determining the size of a device's internal buffer based on the speed of the system.
-//
-// This is a slow API because it performs a profiling test.
-float mal_calculate_cpu_speed_factor(void);
-
 // Adjust buffer size based on a scaling factor.
 //
 // This just multiplies the base size by the scaling factor, making sure it's a size of at least 1.
 mal_uint32 mal_scale_buffer_size(mal_uint32 baseBufferSize, float scale);
 
+// Calculates a buffer size in milliseconds from the specified number of frames and sample rate.
+mal_uint32 mal_calculate_buffer_size_in_milliseconds_from_frames(mal_uint32 bufferSizeInFrames, mal_uint32 sampleRate);
+
+// Calculates a buffer size in frames from the specified number of milliseconds and sample rate.
+mal_uint32 mal_calculate_buffer_size_in_frames_from_milliseconds(mal_uint32 bufferSizeInMilliseconds, mal_uint32 sampleRate);
+
+// Retrieves the default buffer size in milliseconds based on the specified performance profile.
+mal_uint32 mal_get_default_buffer_size_in_milliseconds(mal_performance_profile performanceProfile);
+
 // Calculates a buffer size in frames for the specified performance profile and scale factor.
-mal_uint32 mal_calculate_default_buffer_size_in_frames(mal_performance_profile performanceProfile, mal_uint32 sampleRate, float scale);
+mal_uint32 mal_get_default_buffer_size_in_frames(mal_performance_profile performanceProfile, mal_uint32 sampleRate);
 
 #endif  // MAL_NO_DEVICE_IO
 
@@ -2620,8 +2632,9 @@ typedef struct
     double time;
 } mal_sine_wave;
 
-mal_result mal_sine_wave_init(double amplitude, double period, mal_uint32 sampleRate, mal_sine_wave* pSignWave);
-mal_uint64 mal_sine_wave_read(mal_sine_wave* pSignWave, mal_uint64 count, float* pSamples);
+mal_result mal_sine_wave_init(double amplitude, double period, mal_uint32 sampleRate, mal_sine_wave* pSineWave);
+mal_uint64 mal_sine_wave_read(mal_sine_wave* pSineWave, mal_uint64 count, float* pSamples);
+mal_uint64 mal_sine_wave_read_ex(mal_sine_wave* pSineWave, mal_uint64 frameCount, mal_uint32 channels, mal_stream_layout layout, float** ppFrames);
 
 
 #ifdef __cplusplus
@@ -3007,6 +3020,11 @@ static MAL_INLINE mal_bool32 mal_is_big_endian()
 }
 
 
+#ifndef MAL_COINIT_VALUE
+#define MAL_COINIT_VALUE    0   /* 0 = COINIT_MULTITHREADED*/
+#endif
+
+
 
 #ifndef MAL_PI
 #define MAL_PI      3.14159265358979323846264f
@@ -3044,12 +3062,12 @@ static MAL_INLINE mal_bool32 mal_is_big_endian()
 
 // The base buffer size in milliseconds for low latency mode.
 #ifndef MAL_BASE_BUFFER_SIZE_IN_MILLISECONDS_LOW_LATENCY
-#define MAL_BASE_BUFFER_SIZE_IN_MILLISECONDS_LOW_LATENCY    10
+#define MAL_BASE_BUFFER_SIZE_IN_MILLISECONDS_LOW_LATENCY    25
 #endif
 
 // The base buffer size in milliseconds for conservative mode.
 #ifndef MAL_BASE_BUFFER_SIZE_IN_MILLISECONDS_CONSERVATIVE
-#define MAL_BASE_BUFFER_SIZE_IN_MILLISECONDS_CONSERVATIVE   50
+#define MAL_BASE_BUFFER_SIZE_IN_MILLISECONDS_CONSERVATIVE   150
 #endif
 
 
@@ -3694,8 +3712,8 @@ mal_uint32 mal_get_standard_sample_rate_priority_index(mal_uint32 sampleRate)   
 #ifdef MAL_ENABLE_SNDIO
     #define MAL_HAS_SNDIO
 #endif
-#ifdef MAL_ENABLE_AUDIOIO
-    #define MAL_HAS_AUDIOIO     // When enabled, always assume audioio is available.
+#ifdef MAL_ENABLE_AUDIO4
+    #define MAL_HAS_AUDIO4      // When enabled, always assume audio(4) is available.
 #endif
 #ifdef MAL_ENABLE_OSS
     #define MAL_HAS_OSS         // OSS is the only supported backend for Unix and BSD, so it must be present else this library is useless.
@@ -3741,7 +3759,7 @@ const mal_backend g_malDefaultBackends[] = {
     mal_backend_winmm,
     mal_backend_coreaudio,
     mal_backend_sndio,
-    mal_backend_audioio,
+    mal_backend_audio4,
     mal_backend_oss,
     mal_backend_pulseaudio,
     mal_backend_alsa,
@@ -3765,7 +3783,7 @@ const char* mal_get_backend_name(mal_backend backend)
         case mal_backend_jack:       return "JACK";
         case mal_backend_coreaudio:  return "Core Audio";
         case mal_backend_sndio:      return "sndio";
-        case mal_backend_audioio:    return "audioio";
+        case mal_backend_audio4:     return "audio(4)";
         case mal_backend_oss:        return "OSS";
         case mal_backend_opensl:     return "OpenSL|ES";
         case mal_backend_openal:     return "OpenAL";
@@ -4398,133 +4416,43 @@ mal_uint32 mal_get_closest_standard_sample_rate(mal_uint32 sampleRateIn)
 }
 
 
-typedef struct
-{
-    mal_uint8* pInputFrames;
-    mal_uint32 framesRemaining;
-} mal_calculate_cpu_speed_factor_data;
-
-mal_uint32 mal_calculate_cpu_speed_factor__on_read(mal_dsp* pDSP, mal_uint32 framesToRead, void* pFramesOut, void* pUserData)
-{
-    mal_calculate_cpu_speed_factor_data* pData = (mal_calculate_cpu_speed_factor_data*)pUserData;
-    mal_assert(pData != NULL);
-
-    if (framesToRead > pData->framesRemaining) {
-        framesToRead = pData->framesRemaining;
-    }
-
-    mal_copy_memory(pFramesOut, pData->pInputFrames, framesToRead*pDSP->formatConverterIn.config.channels * sizeof(*pData->pInputFrames));
-
-    pData->pInputFrames += framesToRead;
-    pData->framesRemaining -= framesToRead;
-
-    return framesToRead;
-}
-
-float mal_calculate_cpu_speed_factor()
-{
-    // Our profiling test is based on how quick it can process 1 second worth of samples through mini_al's data conversion pipeline.
-
-    // This factor is multiplied with the profiling time. May need to fiddle with this to get an accurate value.
-    double f = 1000;
-
-    // Experiment: Reduce the factor a little when debug mode is used to reduce a blowout.
-#if !defined(NDEBUG) || defined(_DEBUG)
-    f /= 2;
-#endif
-
-    mal_uint32 sampleRateIn  = 44100;
-    mal_uint32 sampleRateOut = 48000;
-    mal_uint32 channelsIn    = 2;
-    mal_uint32 channelsOut   = 6;
-
-    // Using the heap here to avoid an unnecessary static memory allocation. Also too big for the stack.
-    mal_uint8* pInputFrames  = NULL;
-    float*     pOutputFrames = NULL;
-
-    size_t inputDataSize  = sampleRateIn  * channelsIn  * sizeof(*pInputFrames);
-    size_t outputDataSize = sampleRateOut * channelsOut * sizeof(*pOutputFrames);
-
-    void* pData = mal_malloc(inputDataSize + outputDataSize);
-    if (pData == NULL) {
-        return 1;
-    }
-
-    pInputFrames  = (mal_uint8*)pData;
-    pOutputFrames = (float*)(pInputFrames + inputDataSize);
-
-
-    
-
-    mal_calculate_cpu_speed_factor_data data;
-    data.pInputFrames = pInputFrames;
-    data.framesRemaining = sampleRateIn;
-    
-    mal_dsp_config config = mal_dsp_config_init(mal_format_u8, channelsIn, sampleRateIn, mal_format_f32, channelsOut, sampleRateOut, mal_calculate_cpu_speed_factor__on_read, &data);
-
-    // Use linear sample rate conversion because it's the simplest and least likely to cause skewing as a result of tweaks to default
-    // configurations in the future.
-    config.srcAlgorithm = mal_src_algorithm_linear;
-
-    // Experiment: Disable SIMD extensions when profiling just to try and keep things a bit more consistent. The idea is to get a general
-    // indication on the speed of the system, but SIMD is used more heavily in the DSP pipeline than in the general case which may make
-    // the results a little less realistic.
-    config.noSSE2   = MAL_TRUE;
-    config.noAVX2   = MAL_TRUE;
-    config.noAVX512 = MAL_TRUE;
-    config.noNEON   = MAL_TRUE;
-
-    mal_dsp dsp;
-    mal_result result = mal_dsp_init(&config, &dsp);
-    if (result != MAL_SUCCESS) {
-        mal_free(pData);
-        return 1;
-    }
-
-
-    int iterationCount = 2;
-
-    mal_timer timer;
-    mal_timer_init(&timer);
-    double startTime = mal_timer_get_time_in_seconds(&timer);
-    {
-        for (int i = 0; i < iterationCount; ++i) {
-            mal_dsp_read(&dsp, sampleRateOut, pOutputFrames, &data);
-            data.pInputFrames = pInputFrames;
-            data.framesRemaining = sampleRateIn;
-        }
-    }
-    double executionTimeInSeconds = mal_timer_get_time_in_seconds(&timer) - startTime;
-    executionTimeInSeconds /= iterationCount;
-
-
-    mal_free(pData);
-
-    // Guard against extreme blowouts.
-    return (float)mal_clamp(executionTimeInSeconds * f, 0.1, 100.0);
-}
-
 mal_uint32 mal_scale_buffer_size(mal_uint32 baseBufferSize, float scale)
 {
     return mal_max(1, (mal_uint32)(baseBufferSize*scale));
 }
 
-mal_uint32 mal_calculate_default_buffer_size_in_frames(mal_performance_profile performanceProfile, mal_uint32 sampleRate, float scale)
+mal_uint32 mal_calculate_buffer_size_in_milliseconds_from_frames(mal_uint32 bufferSizeInFrames, mal_uint32 sampleRate)
 {
-    mal_uint32 baseLatency;
+    return bufferSizeInFrames / (sampleRate/1000);
+}
+
+mal_uint32 mal_calculate_buffer_size_in_frames_from_milliseconds(mal_uint32 bufferSizeInMilliseconds, mal_uint32 sampleRate)
+{
+    return bufferSizeInMilliseconds * (sampleRate/1000); 
+}
+
+mal_uint32 mal_get_default_buffer_size_in_milliseconds(mal_performance_profile performanceProfile)
+{
     if (performanceProfile == mal_performance_profile_low_latency) {
-        baseLatency = MAL_BASE_BUFFER_SIZE_IN_MILLISECONDS_LOW_LATENCY;
+        return MAL_BASE_BUFFER_SIZE_IN_MILLISECONDS_LOW_LATENCY;
     } else {
-        baseLatency = MAL_BASE_BUFFER_SIZE_IN_MILLISECONDS_CONSERVATIVE;
+        return MAL_BASE_BUFFER_SIZE_IN_MILLISECONDS_CONSERVATIVE;
+    }
+}
+
+mal_uint32 mal_get_default_buffer_size_in_frames(mal_performance_profile performanceProfile, mal_uint32 sampleRate)
+{
+    mal_uint32 bufferSizeInMilliseconds = mal_get_default_buffer_size_in_milliseconds(performanceProfile);
+    if (bufferSizeInMilliseconds == 0) {
+        bufferSizeInMilliseconds = 1;
     }
 
     mal_uint32 sampleRateMS = (sampleRate/1000);
+    if (sampleRateMS == 0) {
+        sampleRateMS = 1;
+    }
 
-    mal_uint32 minBufferSize = sampleRateMS * mal_min(baseLatency / 5, 1);  // <-- Guard against multiply by zero.
-    mal_uint32 maxBufferSize = sampleRateMS *        (baseLatency * 40);
-
-    mal_uint32 bufferSize = mal_scale_buffer_size((sampleRate/1000) * baseLatency, scale);
-    return mal_clamp(bufferSize, minBufferSize, maxBufferSize);
+    return bufferSizeInMilliseconds * sampleRateMS;
 }
 
 
@@ -4865,17 +4793,19 @@ mal_result mal_device_init__null(mal_context* pContext, mal_device_type type, co
     (void)pContext;
     (void)type;
     (void)pDeviceID;
+    (void)pConfig;
 
     mal_assert(pDevice != NULL);
     mal_zero_object(&pDevice->null_device);
-
-    pDevice->bufferSizeInFrames = pConfig->bufferSizeInFrames;
-    pDevice->periods = pConfig->periods;
 
     if (type == mal_device_type_playback) {
         mal_strncpy_s(pDevice->name, sizeof(pDevice->name), "NULL Playback Device", (size_t)-1);
     } else {
         mal_strncpy_s(pDevice->name, sizeof(pDevice->name), "NULL Capture Device", (size_t)-1);
+    }
+
+    if (pDevice->bufferSizeInFrames == 0) {
+        pDevice->bufferSizeInFrames = mal_calculate_buffer_size_in_frames_from_milliseconds(pDevice->bufferSizeInMilliseconds, pDevice->sampleRate);
     }
 
     pDevice->null_device.pBuffer = (mal_uint8*)mal_malloc(pDevice->bufferSizeInFrames * pDevice->channels * mal_get_bytes_per_sample(pDevice->format));
@@ -6321,33 +6251,11 @@ mal_result mal_device_init__wasapi(mal_context* pContext, mal_device_type type, 
     mal_channel_mask_to_channel_map__win32(wf.dwChannelMask, pDevice->internalChannels, pDevice->internalChannelMap);
 
     // If we're using a default buffer size we need to calculate it based on the efficiency of the system.
-    if (pDevice->usingDefaultBufferSize) {
-        // CPU speed is a factor to consider when determine how large of a buffer we need.
-        float fCPUSpeed = mal_calculate_cpu_speed_factor();
-
-        // We need a slightly bigger buffer if we're using shared mode to cover the inherent tax association with shared mode.
-        float fShareMode;
-        if (pConfig->shareMode == mal_share_mode_shared) {
-            fShareMode = 1.0f;
-        } else {
-            fShareMode = 0.8f;
-        }
-
-        // In my testing, capture seems to have worse latency than playback for some reason.
-        float fType;
-        if (type == mal_device_type_playback) {
-            fType = 1.0f;
-        } else {
-            fType = 2.0f;
-        }
-
-        // Backend tax. Need to fiddle with this.
-        float fBackend = 1.0;
-
-        pDevice->bufferSizeInFrames = mal_calculate_default_buffer_size_in_frames(pConfig->performanceProfile, pConfig->sampleRate, fCPUSpeed*fShareMode*fType*fBackend);
+    if (pDevice->bufferSizeInFrames == 0) {
+        pDevice->bufferSizeInFrames = mal_calculate_buffer_size_in_frames_from_milliseconds(pDevice->bufferSizeInMilliseconds, pDevice->internalSampleRate);
     }
 
-    bufferDurationInMicroseconds = ((mal_uint64)pDevice->bufferSizeInFrames * 1000 * 1000) / pConfig->sampleRate;
+    bufferDurationInMicroseconds = ((mal_uint64)pDevice->bufferSizeInFrames * 1000 * 1000) / pDevice->internalSampleRate;
 
     // Slightly different initialization for shared and exclusive modes. We try exclusive mode first, and if it fails, fall back to shared mode.
     if (shareMode == MAL_AUDCLNT_SHAREMODE_EXCLUSIVE) {
@@ -6561,55 +6469,65 @@ mal_result mal_device__break_main_loop__wasapi(mal_device* pDevice)
     return MAL_SUCCESS;
 }
 
-mal_uint32 mal_device__get_available_frames__wasapi(mal_device* pDevice)
+mal_result mal_device__get_available_frames__wasapi(mal_device* pDevice, mal_uint32* pFrameCount)
 {
     mal_assert(pDevice != NULL);
+    mal_assert(pFrameCount != NULL);
+    
+    *pFrameCount = 0;
 
 #if 0
     if (pDevice->type == mal_device_type_playback) {
         mal_uint32 paddingFramesCount;
         HRESULT hr = mal_IAudioClient_GetCurrentPadding((mal_IAudioClient*)pDevice->wasapi.pAudioClient, &paddingFramesCount);
         if (FAILED(hr)) {
-            return 0;
+            return MAL_ERROR;
         }
 
         if (pDevice->exclusiveMode) {
-            return paddingFramesCount;
+            *pFrameCount = paddingFramesCount;
+            return MAL_SUCCESS;
         } else {
-            return pDevice->bufferSizeInFrames - paddingFramesCount;
+            *pFrameCount = pDevice->bufferSizeInFrames - paddingFramesCount;
+            return MAL_SUCCESS;
         }
     } else {
         mal_uint32 framesAvailable;
         HRESULT hr = mal_IAudioCaptureClient_GetNextPacketSize((mal_IAudioCaptureClient*)pDevice->wasapi.pCaptureClient, &framesAvailable);
         if (FAILED(hr)) {
-            return 0;
+            return MAL_ERROR;
         }
 
-        return framesAvailable;
+        *pFrameCount = framesAvailable;
+        return MAL_SUCCESS;
     }
 #else
     mal_uint32 paddingFramesCount;
     HRESULT hr = mal_IAudioClient_GetCurrentPadding((mal_IAudioClient*)pDevice->wasapi.pAudioClient, &paddingFramesCount);
     if (FAILED(hr)) {
-        return 0;
+        return MAL_DEVICE_UNAVAILABLE;
     }
 
     // Slightly different rules for exclusive and shared modes.
     if (pDevice->exclusiveMode) {
-        return paddingFramesCount;
+        *pFrameCount = paddingFramesCount;
     } else {
         if (pDevice->type == mal_device_type_playback) {
-            return pDevice->bufferSizeInFrames - paddingFramesCount;
+            *pFrameCount = pDevice->bufferSizeInFrames - paddingFramesCount;
         } else {
-            return paddingFramesCount;
+            *pFrameCount = paddingFramesCount;
         }
     }
+
+    return MAL_SUCCESS;
 #endif
 }
 
-mal_uint32 mal_device__wait_for_frames__wasapi(mal_device* pDevice)
+mal_result mal_device__wait_for_frames__wasapi(mal_device* pDevice, mal_uint32* pFrameCount)
 {
     mal_assert(pDevice != NULL);
+
+    mal_result result;
 
     while (!pDevice->wasapi.breakFromMainLoop) {
         // Wait for a buffer to become available or for the stop event to be signalled.
@@ -6626,14 +6544,18 @@ mal_uint32 mal_device__wait_for_frames__wasapi(mal_device* pDevice)
             break;
         }
 
-        mal_uint32 framesAvailable = mal_device__get_available_frames__wasapi(pDevice);
-        if (framesAvailable > 0) {
-            return framesAvailable;
+        result = mal_device__get_available_frames__wasapi(pDevice, pFrameCount);
+        if (result != MAL_SUCCESS) {
+            return result;
+        }
+
+        if (*pFrameCount > 0) {
+            return MAL_SUCCESS;
         }
     }
 
     // We'll get here if the loop was terminated. Just return whatever's available.
-    return mal_device__get_available_frames__wasapi(pDevice);
+    return mal_device__get_available_frames__wasapi(pDevice, pFrameCount);
 }
 
 mal_result mal_device__main_loop__wasapi(mal_device* pDevice)
@@ -6645,14 +6567,19 @@ mal_result mal_device__main_loop__wasapi(mal_device* pDevice)
 
     pDevice->wasapi.breakFromMainLoop = MAL_FALSE;
     while (!pDevice->wasapi.breakFromMainLoop) {
-        mal_uint32 framesAvailable = mal_device__wait_for_frames__wasapi(pDevice);
+        mal_uint32 framesAvailable;
+        mal_result result = mal_device__wait_for_frames__wasapi(pDevice, &framesAvailable);
+        if (result != MAL_SUCCESS) {
+            return result;
+        }
+
         if (framesAvailable == 0) {
             continue;
         }
 
         // If it's a playback device, don't bother grabbing more data if the device is being stopped.
         if (pDevice->wasapi.breakFromMainLoop && pDevice->type == mal_device_type_playback) {
-            return MAL_FALSE;
+            return MAL_SUCCESS;
         }
 
         if (pDevice->type == mal_device_type_playback) {
@@ -7609,25 +7536,6 @@ mal_result mal_device_init__dsound(mal_context* pContext, mal_device_type type, 
         return MAL_FORMAT_NOT_SUPPORTED;
     }
 
-    if (pDevice->usingDefaultBufferSize) {
-        // CPU speed is a factor to consider when determine how large of a buffer we need.
-        float fCPUSpeed = mal_calculate_cpu_speed_factor();
-
-        // In my testing, capture seems to have worse latency than playback for some reason.
-        float fType;
-        if (type == mal_device_type_playback) {
-            fType = 1.0f;
-        } else {
-            fType = 2.0f;
-        }
-
-        // Backend tax. Need to fiddle with this.
-        float fBackend = 3.0;
-
-        pDevice->bufferSizeInFrames = mal_calculate_default_buffer_size_in_frames(pConfig->performanceProfile, pConfig->sampleRate, fCPUSpeed*fType*fBackend);
-    }
-
-
     WAVEFORMATEXTENSIBLE wf;
     mal_zero_object(&wf);
     wf.Format.cbSize               = sizeof(wf);
@@ -7727,6 +7635,11 @@ mal_result mal_device_init__dsound(mal_context* pContext, mal_device_type type, 
             mal_channel_mask_to_channel_map__win32(wf.dwChannelMask, pDevice->internalChannels, pDevice->internalChannelMap);
         }
 
+        // We need to wait until we know the sample rate before we can calculate the buffer size.
+        if (pDevice->bufferSizeInFrames == 0) {
+            pDevice->bufferSizeInFrames = mal_calculate_buffer_size_in_frames_from_milliseconds(pDevice->bufferSizeInMilliseconds, pDevice->internalSampleRate);
+        }
+
         bufferSizeInBytes = pDevice->bufferSizeInFrames * pDevice->internalChannels * mal_get_bytes_per_sample(pDevice->internalFormat);
 
 
@@ -7783,6 +7696,10 @@ mal_result mal_device_init__dsound(mal_context* pContext, mal_device_type type, 
         wf.Format.nAvgBytesPerSec      = wf.Format.nBlockAlign * wf.Format.nSamplesPerSec;
         wf.Samples.wValidBitsPerSample = wf.Format.wBitsPerSample;
         wf.SubFormat                   = MAL_GUID_KSDATAFORMAT_SUBTYPE_PCM;
+
+        if (pDevice->bufferSizeInFrames == 0) {
+            pDevice->bufferSizeInFrames = mal_calculate_buffer_size_in_frames_from_milliseconds(pDevice->bufferSizeInMilliseconds, wf.Format.nSamplesPerSec);
+        }
 
         bufferSizeInBytes = pDevice->bufferSizeInFrames * wf.Format.nChannels * mal_get_bytes_per_sample(pDevice->format);
 
@@ -8655,23 +8572,12 @@ mal_result mal_device_init__winmm(mal_context* pContext, mal_device_type type, c
     mal_get_standard_channel_map(mal_standard_channel_map_microsoft, pDevice->internalChannels, pDevice->internalChannelMap);
 
 
-    // Latency with WinMM seems pretty bad from my testing... Need to increase the default buffer size.
-    if (pDevice->usingDefaultBufferSize) {
-        // CPU speed is a factor to consider when determine how large of a buffer we need.
-        float fCPUSpeed = mal_calculate_cpu_speed_factor();
-
-        // In my testing, capture seems to have worse latency than playback for some reason.
-        float fType;
-        if (type == mal_device_type_playback) {
-            fType = 1.0f;
-        } else {
-            fType = 2.0f;
+    if (pDevice->bufferSizeInFrames == 0) {
+        pDevice->bufferSizeInFrames = mal_calculate_buffer_size_in_frames_from_milliseconds(pDevice->bufferSizeInMilliseconds, pDevice->internalSampleRate);
+        if (pDevice->usingDefaultBufferSize) {
+            float bufferSizeScaleFactor = 4;    // <-- Latency with WinMM seems pretty bad from my testing...
+            pDevice->bufferSizeInFrames = mal_scale_buffer_size(pDevice->bufferSizeInFrames, bufferSizeScaleFactor);
         }
-
-        // Backend tax. Need to fiddle with this.
-        float fBackend = 10.0;
-
-        pDevice->bufferSizeInFrames = mal_calculate_default_buffer_size_in_frames(pConfig->performanceProfile, pConfig->sampleRate, fCPUSpeed*fType*fBackend);
     }
 
     // The size of the intermediary buffer needs to be able to fit every fragment.
@@ -8847,7 +8753,7 @@ mal_result mal_device__main_loop__winmm(mal_device* pDevice)
                 MMRESULT resultMM = ((MAL_PFN_waveOutUnprepareHeader)pDevice->pContext->winmm.waveOutUnprepareHeader)((HWAVEOUT)pDevice->winmm.hDevice, &((LPWAVEHDR)pDevice->winmm.pWAVEHDR)[i], sizeof(WAVEHDR));
                 if (resultMM != MMSYSERR_NOERROR) {
                     mal_post_error(pDevice, MAL_LOG_LEVEL_ERROR, "[WinMM] Failed to unprepare header for playback device in preparation for sending a new block of data to the device for playback.", mal_result_from_MMRESULT(resultMM));
-                    break;
+                    return MAL_DEVICE_UNAVAILABLE;
                 }
 
                 mal_zero_object(&((LPWAVEHDR)pDevice->winmm.pWAVEHDR)[i]);
@@ -8861,7 +8767,7 @@ mal_result mal_device__main_loop__winmm(mal_device* pDevice)
                 resultMM = ((MAL_PFN_waveOutPrepareHeader)pDevice->pContext->winmm.waveOutPrepareHeader)((HWAVEOUT)pDevice->winmm.hDevice, &((LPWAVEHDR)pDevice->winmm.pWAVEHDR)[i], sizeof(WAVEHDR));
                 if (resultMM != MMSYSERR_NOERROR) {
                     mal_post_error(pDevice, MAL_LOG_LEVEL_ERROR, "[WinMM] Failed to prepare header for playback device in preparation for sending a new block of data to the device for playback.", mal_result_from_MMRESULT(resultMM));
-                    break;
+                    return MAL_DEVICE_UNAVAILABLE;
                 }
             } else {
                 // Capture.
@@ -8873,7 +8779,7 @@ mal_result mal_device__main_loop__winmm(mal_device* pDevice)
                 MMRESULT resultMM = ((MAL_PFN_waveInUnprepareHeader)pDevice->pContext->winmm.waveInUnprepareHeader)((HWAVEIN)pDevice->winmm.hDevice, &((LPWAVEHDR)pDevice->winmm.pWAVEHDR)[i], sizeof(WAVEHDR));
                 if (resultMM != MMSYSERR_NOERROR) {
                     mal_post_error(pDevice, MAL_LOG_LEVEL_ERROR, "[WinMM] Failed to unprepare header for capture device in preparation for adding a new capture buffer for the device.", mal_result_from_MMRESULT(resultMM));
-                    break;
+                    return MAL_DEVICE_UNAVAILABLE;
                 }
 
                 mal_zero_object(&((LPWAVEHDR)pDevice->winmm.pWAVEHDR)[i]);
@@ -8886,7 +8792,7 @@ mal_result mal_device__main_loop__winmm(mal_device* pDevice)
                 resultMM = ((MAL_PFN_waveInPrepareHeader)pDevice->pContext->winmm.waveInPrepareHeader)((HWAVEIN)pDevice->winmm.hDevice, &((LPWAVEHDR)pDevice->winmm.pWAVEHDR)[i], sizeof(WAVEHDR));
                 if (resultMM != MMSYSERR_NOERROR) {
                     mal_post_error(pDevice, MAL_LOG_LEVEL_ERROR, "[WinMM] Failed to prepare header for capture device in preparation for adding a new capture buffer for the device.", mal_result_from_MMRESULT(resultMM));
-                    break;
+                    return MAL_DEVICE_UNAVAILABLE;
                 }
             }
 
@@ -8906,14 +8812,14 @@ mal_result mal_device__main_loop__winmm(mal_device* pDevice)
                     MMRESULT resultMM = ((MAL_PFN_waveOutWrite)pDevice->pContext->winmm.waveOutWrite)((HWAVEOUT)pDevice->winmm.hDevice, &((LPWAVEHDR)pDevice->winmm.pWAVEHDR)[i], sizeof(WAVEHDR));
                     if (resultMM != MMSYSERR_NOERROR) {
                         mal_post_error(pDevice, MAL_LOG_LEVEL_ERROR, "[WinMM] Failed to write data to the internal playback device.", mal_result_from_MMRESULT(resultMM));
-                        break;
+                        return MAL_DEVICE_UNAVAILABLE;
                     }
                 } else {
                     // Capture.
                     MMRESULT resultMM = ((MAL_PFN_waveInAddBuffer)pDevice->pContext->winmm.waveInAddBuffer)((HWAVEIN)pDevice->winmm.hDevice, &((LPWAVEHDR)pDevice->winmm.pWAVEHDR)[i], sizeof(WAVEHDR));
                     if (resultMM != MMSYSERR_NOERROR) {
                         mal_post_error(pDevice, MAL_LOG_LEVEL_ERROR, "[WinMM] Failed to add new capture buffer to the internal capture device.", mal_result_from_MMRESULT(resultMM));
-                        break;
+                        return MAL_DEVICE_UNAVAILABLE;
                     }
                 }
             }
@@ -8985,6 +8891,7 @@ mal_result mal_context_init__winmm(mal_context* pContext)
 ///////////////////////////////////////////////////////////////////////////////
 #ifdef MAL_HAS_ALSA
 
+#include <alsa/asoundlib.h>
 #ifdef MAL_NO_RUNTIME_LINKING
 #include <alsa/asoundlib.h>
 typedef snd_pcm_uframes_t                       mal_snd_pcm_uframes_t;
@@ -9248,8 +9155,8 @@ static struct
     const char* name;
     float scale;
 } g_malDefaultBufferSizeScalesALSA[] = {
-    {"bcm2835 IEC958/HDMI", 6.0f},
-    {"bcm2835 ALSA",        6.0f}
+    {"bcm2835 IEC958/HDMI", 2.0f},
+    {"bcm2835 ALSA",        2.0f}
 };
 
 float mal_find_default_buffer_size_scale__alsa(const char* deviceName)
@@ -9929,22 +9836,9 @@ mal_uint32 mal_device__wait_for_frames__alsa(mal_device* pDevice, mal_bool32* pR
 
     if (pRequiresRestart) *pRequiresRestart = MAL_FALSE;
 
+    // I want it so that this function returns the period size in frames. We just wait until that number of frames are available and then return.
+    mal_uint32 periodSizeInFrames = pDevice->bufferSizeInFrames / pDevice->periods;
     while (!pDevice->alsa.breakFromMainLoop) {
-        int waitResult = ((mal_snd_pcm_wait_proc)pDevice->pContext->alsa.snd_pcm_wait)((mal_snd_pcm_t*)pDevice->alsa.pPCM, -1);
-        if (waitResult < 0) {
-            if (waitResult == -EPIPE) {
-                if (((mal_snd_pcm_recover_proc)pDevice->pContext->alsa.snd_pcm_recover)((mal_snd_pcm_t*)pDevice->alsa.pPCM, waitResult, MAL_TRUE) < 0) {
-                    return 0;
-                }
-
-                if (pRequiresRestart) *pRequiresRestart = MAL_TRUE; // A device recovery means a restart for mmap mode.
-            }
-        }
-
-        if (pDevice->alsa.breakFromMainLoop) {
-            return 0;
-        }
-
         mal_snd_pcm_sframes_t framesAvailable = ((mal_snd_pcm_avail_update_proc)pDevice->pContext->alsa.snd_pcm_avail_update)((mal_snd_pcm_t*)pDevice->alsa.pPCM);
         if (framesAvailable < 0) {
             if (framesAvailable == -EPIPE) {
@@ -9952,7 +9846,10 @@ mal_uint32 mal_device__wait_for_frames__alsa(mal_device* pDevice, mal_bool32* pR
                     return 0;
                 }
 
-                if (pRequiresRestart) *pRequiresRestart = MAL_TRUE; // A device recovery means a restart for mmap mode.
+                // A device recovery means a restart for mmap mode.
+                if (pRequiresRestart) {
+                    *pRequiresRestart = MAL_TRUE;
+                }
 
                 // Try again, but if it fails this time just return an error.
                 framesAvailable = ((mal_snd_pcm_avail_update_proc)pDevice->pContext->alsa.snd_pcm_avail_update)((mal_snd_pcm_t*)pDevice->alsa.pPCM);
@@ -9962,21 +9859,26 @@ mal_uint32 mal_device__wait_for_frames__alsa(mal_device* pDevice, mal_bool32* pR
             }
         }
 
-        // Ideally I'd like to keep the number of frames consistent with the period size, but unfortunately it appears
-        // this does not work correctly in some situations. In my testing, this breaks when the period size is <= 1024
-        // when using "hw:0,0" in a VirtualBox guest. What's happening is that it looks like snd_pcm_writei() (and
-        // snd_pcm_mmap_commit() in MMAP mode) are not physically writing the data to the internal buffers. As a result,
-        // snd_pcm_wait() is returning immediately, always reporting the full buffer size as available. I'm not sure if
-        // this is me not doing something right, or if it's some kind of driver bug, but to fix this we just need to
-        // report the exact value returned by snd_pcm_avail_update() and not clamp it to the period size.
-#if 1
-        return framesAvailable;
-#else
-        mal_uint32 periodSizeInFrames = pDevice->bufferSizeInFrames / pDevice->periods;
         if (framesAvailable >= periodSizeInFrames) {
             return periodSizeInFrames;
         }
-#endif
+
+        if (framesAvailable < periodSizeInFrames) {
+            // Less than a whole period is available so keep waiting.
+            int waitResult = ((mal_snd_pcm_wait_proc)pDevice->pContext->alsa.snd_pcm_wait)((mal_snd_pcm_t*)pDevice->alsa.pPCM, -1);
+            if (waitResult < 0) {
+                if (waitResult == -EPIPE) {
+                    if (((mal_snd_pcm_recover_proc)pDevice->pContext->alsa.snd_pcm_recover)((mal_snd_pcm_t*)pDevice->alsa.pPCM, waitResult, MAL_TRUE) < 0) {
+                        return 0;
+                    }
+
+                    // A device recovery means a restart for mmap mode.
+                    if (pRequiresRestart) {
+                        *pRequiresRestart = MAL_TRUE;
+                    }
+                }
+            }
+        }
     }
 
     // We'll get here if the loop was terminated. Just return whatever's available.
@@ -10214,32 +10116,15 @@ mal_result mal_device_init__alsa(mal_context* pContext, mal_device_type type, co
         return result;
     }
 
-    // If using the default buffer size we do some calculations based on a simple profiling test.
+    // We may be scaling the size of the buffer.
+    float bufferSizeScaleFactor = 1;
+
+    // If using the default buffer size we may want to apply some device-specific scaling for known devices that have peculiar  latency characteristics (looking at you Raspberry Pi!).
     if (pDevice->usingDefaultBufferSize) {
         mal_snd_pcm_info_t* pInfo = (mal_snd_pcm_info_t*)alloca(((mal_snd_pcm_info_sizeof_proc)pContext->alsa.snd_pcm_info_sizeof)());
         mal_zero_memory(pInfo, ((mal_snd_pcm_info_sizeof_proc)pContext->alsa.snd_pcm_info_sizeof)());
 
-        // CPU speed is a factor to consider when determine how large of a buffer we need.
-        float fCPUSpeed = mal_calculate_cpu_speed_factor();
-
-        // We need a slightly bigger buffer if we're using shared mode to cover the inherent tax association with shared mode.
-        float fShareMode;
-        if (pConfig->shareMode == mal_share_mode_shared) {
-            fShareMode = 1.0f;
-        } else {
-            fShareMode = 0.8f;
-        }
-
-        // In my testing, capture seems to have worse latency than playback for some reason.
-        float fType;
-        if (type == mal_device_type_playback) {
-            fType = 1.0f;
-        } else {
-            fType = 2.0f;
-        }
-
         // We may need to scale the size of the buffer depending on the device.
-        float fDevice = 1;
         if (((mal_snd_pcm_info_proc)pContext->alsa.snd_pcm_info)((mal_snd_pcm_t*)pDevice->alsa.pPCM, pInfo) == 0) {
             const char* deviceName = ((mal_snd_pcm_info_get_name_proc)pContext->alsa.snd_pcm_info_get_name)(pInfo);
             if (deviceName != NULL) {
@@ -10260,7 +10145,7 @@ mal_result mal_device_init__alsa(mal_context* pContext, mal_device_type type, co
                         if ((type == mal_device_type_playback && (IOID == NULL || mal_strcmp(IOID, "Output") == 0)) ||
                             (type == mal_device_type_capture  && (IOID != NULL && mal_strcmp(IOID, "Input" ) == 0))) {
                             if (mal_strcmp(NAME, deviceName) == 0) {
-                                fDevice = mal_find_default_buffer_size_scale__alsa(DESC);
+                                bufferSizeScaleFactor = mal_find_default_buffer_size_scale__alsa(DESC);
                                 foundDevice = MAL_TRUE;
                             }
                         }
@@ -10277,15 +10162,11 @@ mal_result mal_device_init__alsa(mal_context* pContext, mal_device_type type, co
 
                     ((mal_snd_device_name_free_hint_proc)pContext->alsa.snd_device_name_free_hint)((void**)ppDeviceHints);
                 } else {
-                    fDevice = mal_find_default_buffer_size_scale__alsa(deviceName);
+                    bufferSizeScaleFactor = mal_find_default_buffer_size_scale__alsa(deviceName);
                 }
             }
-
-            pDevice->bufferSizeInFrames = mal_calculate_default_buffer_size_in_frames(pConfig->performanceProfile, pConfig->sampleRate, fCPUSpeed*fShareMode*fType*fDevice);
         }
     }
-
-
 
 
     // Hardware parameters.
@@ -10302,7 +10183,7 @@ mal_result mal_device_init__alsa(mal_context* pContext, mal_device_type type, co
     //
     // Try using interleaved MMAP access. If this fails, fall back to standard readi/writei.
     pDevice->alsa.isUsingMMap = MAL_FALSE;
-    if (!pConfig->alsa.noMMap && pDevice->type != mal_device_type_capture) {    // <-- Disabling MMAP mode for capture devices because I apparently do not have a device that supports it so I can test it... Contributions welcome.
+    if (!pConfig->alsa.noMMap && pDevice->type != mal_device_type_capture) {    // <-- Disabling MMAP mode for capture devices because I apparently do not have a device that supports it which means I can't test it... Contributions welcome.
         if (((mal_snd_pcm_hw_params_set_access_proc)pContext->alsa.snd_pcm_hw_params_set_access)((mal_snd_pcm_t*)pDevice->alsa.pPCM, pHWParams, MAL_SND_PCM_ACCESS_MMAP_INTERLEAVED) == 0) {
             pDevice->alsa.isUsingMMap = MAL_TRUE;
         }
@@ -10331,18 +10212,18 @@ mal_result mal_device_init__alsa(mal_context* pContext, mal_device_type type, co
     if (!((mal_snd_pcm_format_mask_test_proc)pContext->alsa.snd_pcm_format_mask_test)(pFormatMask, formatALSA)) {
         // The requested format is not supported so now try running through the list of formats and return the best one.
         mal_snd_pcm_format_t preferredFormatsALSA[] = {
+            MAL_SND_PCM_FORMAT_S16_LE,      // mal_format_s16
             MAL_SND_PCM_FORMAT_FLOAT_LE,    // mal_format_f32
             MAL_SND_PCM_FORMAT_S32_LE,      // mal_format_s32
             MAL_SND_PCM_FORMAT_S24_3LE,     // mal_format_s24
-            MAL_SND_PCM_FORMAT_S16_LE,      // mal_format_s16
             MAL_SND_PCM_FORMAT_U8           // mal_format_u8
         };
 
         if (mal_is_big_endian()) {
-            preferredFormatsALSA[0] = MAL_SND_PCM_FORMAT_FLOAT_BE;
-            preferredFormatsALSA[1] = MAL_SND_PCM_FORMAT_S32_BE;
-            preferredFormatsALSA[2] = MAL_SND_PCM_FORMAT_S24_3BE;
-            preferredFormatsALSA[3] = MAL_SND_PCM_FORMAT_S16_BE;
+            preferredFormatsALSA[0] = MAL_SND_PCM_FORMAT_S16_BE;
+            preferredFormatsALSA[1] = MAL_SND_PCM_FORMAT_FLOAT_BE;
+            preferredFormatsALSA[2] = MAL_SND_PCM_FORMAT_S32_BE;
+            preferredFormatsALSA[3] = MAL_SND_PCM_FORMAT_S24_3BE;
             preferredFormatsALSA[4] = MAL_SND_PCM_FORMAT_U8;
         }
 
@@ -10407,14 +10288,10 @@ mal_result mal_device_init__alsa(mal_context* pContext, mal_device_type type, co
     pDevice->internalSampleRate = (mal_uint32)sampleRate;
 
 
-    // Periods.
-    mal_uint32 periods = pConfig->periods;
-    int dir = 0;
-    if (((mal_snd_pcm_hw_params_set_periods_near_proc)pContext->alsa.snd_pcm_hw_params_set_periods_near)((mal_snd_pcm_t*)pDevice->alsa.pPCM, pHWParams, &periods, &dir) < 0) {
-        mal_device_uninit__alsa(pDevice);
-        return mal_post_error(pDevice, MAL_LOG_LEVEL_ERROR, "[ALSA] Failed to set period count. snd_pcm_hw_params_set_periods_near() failed.", MAL_FORMAT_NOT_SUPPORTED);
+    // At this point we know the internal sample rate which means we can calculate the buffer size in frames.
+    if (pDevice->bufferSizeInFrames == 0) {
+        pDevice->bufferSizeInFrames = mal_scale_buffer_size(mal_calculate_buffer_size_in_frames_from_milliseconds(pDevice->bufferSizeInMilliseconds, pDevice->internalSampleRate), bufferSizeScaleFactor);
     }
-    pDevice->periods = periods;
 
     // Buffer Size
     mal_snd_pcm_uframes_t actualBufferSize = pDevice->bufferSizeInFrames;
@@ -10423,6 +10300,14 @@ mal_result mal_device_init__alsa(mal_context* pContext, mal_device_type type, co
         return mal_post_error(pDevice, MAL_LOG_LEVEL_ERROR, "[ALSA] Failed to set buffer size for device. snd_pcm_hw_params_set_buffer_size() failed.", MAL_FORMAT_NOT_SUPPORTED);
     }
     pDevice->bufferSizeInFrames = actualBufferSize;
+
+    // Periods.
+    mal_uint32 periods = pConfig->periods;
+    if (((mal_snd_pcm_hw_params_set_periods_near_proc)pContext->alsa.snd_pcm_hw_params_set_periods_near)((mal_snd_pcm_t*)pDevice->alsa.pPCM, pHWParams, &periods, NULL) < 0) {
+        mal_device_uninit__alsa(pDevice);
+        return mal_post_error(pDevice, MAL_LOG_LEVEL_ERROR, "[ALSA] Failed to set period count. snd_pcm_hw_params_set_periods_near() failed.", MAL_FORMAT_NOT_SUPPORTED);
+    }
+    pDevice->periods = periods;
 
 
     // Apply hardware parameters.
@@ -12124,23 +12009,20 @@ mal_result mal_device_init__pulse(mal_context* pContext, mal_device_type type, c
     }
 #endif
 
-    // If using the default buffer size try to find an appropriate default.
-    if (pDevice->usingDefaultBufferSize) {
-        // CPU speed is a factor to consider when determine how large of a buffer we need.
-        float fCPUSpeed = mal_calculate_cpu_speed_factor();
+    // Buffer size.
+    bufferSizeInFrames = pDevice->bufferSizeInFrames;
+    if (bufferSizeInFrames == 0) {
+        bufferSizeInFrames = mal_calculate_buffer_size_in_frames_from_milliseconds(pDevice->bufferSizeInMilliseconds, ss.rate);
 
-        // In my testing, capture seems to have worse latency than playback for some reason.
-        float fType;
-        if (type == mal_device_type_playback) {
-            fType = 1.0f;
-        } else {
-            fType = 2.0f;
+        // PulseAudio seems to need a bit of an bit of size to the buffer to be reliable.
+        if (pDevice->usingDefaultBufferSize) {
+            float bufferSizeScaleFactor = 1.0f;
+            if (type == mal_device_type_capture) {
+                bufferSizeScaleFactor = 2.0f;
+            }
+
+            bufferSizeInFrames = mal_scale_buffer_size(bufferSizeInFrames, bufferSizeScaleFactor);
         }
-
-        // Backend tax. Need to fiddle with this.
-        float fBackend = 1.2;
-
-        bufferSizeInFrames = mal_calculate_default_buffer_size_in_frames(pConfig->performanceProfile, pConfig->sampleRate, fCPUSpeed*fType*fBackend);
     }
 
     attr.maxlength = bufferSizeInFrames * mal_get_bytes_per_sample(mal_format_from_pulse(ss.format))*ss.channels;
@@ -14713,32 +14595,10 @@ mal_result mal_device_init__coreaudio(mal_context* pContext, mal_device_type dev
     
     // Buffer size. Not allowing this to be configurable on iOS.
     mal_uint32 actualBufferSizeInFrames = pDevice->bufferSizeInFrames;
-    if (actualBufferSizeInFrames < pDevice->periods) {
-        actualBufferSizeInFrames = pDevice->periods;
-    }
     
 #if defined(MAL_APPLE_DESKTOP)
-    if (pDevice->usingDefaultBufferSize) {
-        // CPU speed is a factor to consider when determine how large of a buffer we need.
-        float fCPUSpeed = mal_calculate_cpu_speed_factor();
-
-        // In my admittedly limited testing, capture latency seems to be about the same as playback with Core Audio, at least on my MacBook Pro. On other
-        // backends, however, this is often different. I am therefore leaving the logic below in place just in case I need to do some capture/playback
-        // specific tweaking.
-        float fDeviceType;
-        if (deviceType == mal_device_type_playback) {
-            fDeviceType = 1.0f;
-        } else {
-            fDeviceType = 6.0f;
-        }
-
-        // Backend tax. Need to fiddle with this.
-        float fBackend = 1.0f;
-
-        actualBufferSizeInFrames = mal_calculate_default_buffer_size_in_frames(pConfig->performanceProfile, pConfig->sampleRate, fCPUSpeed*fDeviceType*fBackend);
-        if (actualBufferSizeInFrames < pDevice->periods) {
-            actualBufferSizeInFrames = pDevice->periods;
-        }
+    if (actualBufferSizeInFrames == 0) {
+        actualBufferSizeInFrames = mal_calculate_buffer_size_in_frames_from_milliseconds(pDevice->bufferSizeInMilliseconds, pDevice->internalSampleRate);
     }
     
     actualBufferSizeInFrames = actualBufferSizeInFrames / pDevice->periods;
@@ -15550,19 +15410,10 @@ mal_result mal_device_init__sndio(mal_context* pContext, mal_device_type deviceT
     
     // Try calculating an appropriate default buffer size after we have the sample rate.
     mal_uint32 desiredBufferSizeInFrames = pDevice->bufferSizeInFrames;
-    if (pDevice->usingDefaultBufferSize) {
-        // CPU speed factor.
-        float fCPUSpeed = mal_calculate_cpu_speed_factor();
-
-        // Playback vs capture latency.
-        float fDeviceType = 1;
-
-        // Backend tax.
-        float fBackend = 1;
-
-        desiredBufferSizeInFrames = mal_calculate_default_buffer_size_in_frames(pConfig->performanceProfile, par.rate, fCPUSpeed*fDeviceType*fBackend);
+    if (desiredBufferSizeInFrames == 0) {
+        desiredBufferSizeInFrames = mal_calculate_buffer_size_in_frames_from_milliseconds(pDevice->bufferSizeInMilliseconds, par.rate);
     }
-    
+
     par.round = desiredBufferSizeInFrames / pDevice->periods;
     par.appbufsz = par.round * pDevice->periods;
     
@@ -15766,17 +15617,24 @@ mal_result mal_context_init__sndio(mal_context* pContext)
 
 ///////////////////////////////////////////////////////////////////////////////
 //
-// audioio Backend
+// audio(4) Backend
 //
 ///////////////////////////////////////////////////////////////////////////////
-#ifdef MAL_HAS_AUDIOIO
+#ifdef MAL_HAS_AUDIO4
 #include <fcntl.h>
 #include <sys/stat.h>
 #include <sys/types.h>
 #include <sys/ioctl.h>
 #include <sys/audioio.h>
 
-void mal_construct_device_id__audioio(char* id, size_t idSize, const char* base, int deviceIndex)
+#if defined(__OpenBSD__)
+    #include <sys/param.h>
+    #if defined(OpenBSD) && OpenBSD >= 201709
+        #define MAL_AUDIO4_USE_NEW_API
+    #endif
+#endif
+
+void mal_construct_device_id__audio4(char* id, size_t idSize, const char* base, int deviceIndex)
 {
     mal_assert(id != NULL);
     mal_assert(idSize > 0);
@@ -15789,7 +15647,7 @@ void mal_construct_device_id__audioio(char* id, size_t idSize, const char* base,
     mal_itoa_s(deviceIndex, id+baseLen, idSize-baseLen, 10);
 }
 
-mal_result mal_extract_device_index_from_id__audioio(const char* id, const char* base, int* pIndexOut)
+mal_result mal_extract_device_index_from_id__audio4(const char* id, const char* base, int* pIndexOut)
 {
     mal_assert(id != NULL);
     mal_assert(base != NULL);
@@ -15817,17 +15675,18 @@ mal_result mal_extract_device_index_from_id__audioio(const char* id, const char*
     return MAL_SUCCESS;
 }
 
-mal_bool32 mal_context_is_device_id_equal__audioio(mal_context* pContext, const mal_device_id* pID0, const mal_device_id* pID1)
+mal_bool32 mal_context_is_device_id_equal__audio4(mal_context* pContext, const mal_device_id* pID0, const mal_device_id* pID1)
 {
     mal_assert(pContext != NULL);
     mal_assert(pID0 != NULL);
     mal_assert(pID1 != NULL);
     (void)pContext;
 
-    return mal_strcmp(pID0->audioio, pID1->audioio) == 0;
+    return mal_strcmp(pID0->audio4, pID1->audio4) == 0;
 }
 
-mal_format mal_format_from_encoding__audioio(unsigned int encoding, unsigned int precision)
+#if !defined(MAL_AUDIO4_USE_NEW_API)
+mal_format mal_format_from_encoding__audio4(unsigned int encoding, unsigned int precision)
 {
     if (precision == 8 && (encoding == AUDIO_ENCODING_ULINEAR || encoding == AUDIO_ENCODING_ULINEAR || encoding == AUDIO_ENCODING_ULINEAR_LE || encoding == AUDIO_ENCODING_ULINEAR_BE)) {
         return mal_format_u8;
@@ -15854,12 +15713,32 @@ mal_format mal_format_from_encoding__audioio(unsigned int encoding, unsigned int
     return mal_format_unknown;  // Encoding not supported.
 }
 
-mal_format mal_format_from_prinfo__audioio(struct audio_prinfo* prinfo)
+mal_format mal_format_from_prinfo__audio4(struct audio_prinfo* prinfo)
 {
-    return mal_format_from_encoding__audioio(prinfo->encoding, prinfo->precision);
+    return mal_format_from_encoding__audio4(prinfo->encoding, prinfo->precision);
 }
+#else
+mal_format mal_format_from_swpar__audio4(struct audio_swpar* par)
+{
+    if (par->bits == 8 && par->bps == 1 && par->sig == 0) {
+        return mal_format_u8;
+    }
+    if (par->bits == 16 && par->bps == 2 && par->sig == 1 && par->le == mal_is_little_endian()) {
+        return mal_format_s16;
+    }
+    if (par->bits == 24 && par->bps == 3 && par->sig == 1 && par->le == mal_is_little_endian()) {
+        return mal_format_s24;
+    }
+    if (par->bits == 32 && par->bps == 4 && par->sig == 1 && par->le == mal_is_little_endian()) {
+        return mal_format_f32;
+    }
 
-mal_result mal_context_get_device_info_from_fd__audioio(mal_context* pContext, mal_device_type deviceType, int fd, mal_device_info* pInfoOut)
+    // Format not supported.
+    return mal_format_unknown;
+}
+#endif
+
+mal_result mal_context_get_device_info_from_fd__audio4(mal_context* pContext, mal_device_type deviceType, int fd, mal_device_info* pInfoOut)
 {
     mal_assert(pContext != NULL);
     mal_assert(fd >= 0);
@@ -15876,6 +15755,7 @@ mal_result mal_context_get_device_info_from_fd__audioio(mal_context* pContext, m
     // Name.
     mal_strcpy_s(pInfoOut->name, sizeof(pInfoOut->name), fdDevice.name);
 
+#if !defined(MAL_AUDIO4_USE_NEW_API)
     // Supported formats. We get this by looking at the encodings. 
     int counter = 0;
     for (;;) {
@@ -15886,7 +15766,7 @@ mal_result mal_context_get_device_info_from_fd__audioio(mal_context* pContext, m
             break;
         }
 
-        mal_format format = mal_format_from_encoding__audioio(encoding.encoding, encoding.precision);
+        mal_format format = mal_format_from_encoding__audio4(encoding.encoding, encoding.precision);
         if (format != mal_format_unknown) {
             pInfoOut->formats[pInfoOut->formatCount++] = format;
         }
@@ -15910,11 +15790,34 @@ mal_result mal_context_get_device_info_from_fd__audioio(mal_context* pContext, m
         pInfoOut->minSampleRate = fdInfo.record.sample_rate;
         pInfoOut->maxSampleRate = fdInfo.record.sample_rate;
     }
+#else
+    struct audio_swpar fdPar;
+    if (ioctl(fd, AUDIO_GETPAR, &fdPar) < 0) {
+        return MAL_ERROR;
+    }
+    
+    mal_format format = mal_format_from_swpar__audio4(&fdPar);
+    if (format == mal_format_unknown) {
+        return MAL_FORMAT_NOT_SUPPORTED;
+    }
+    pInfoOut->formats[pInfoOut->formatCount++] = format;
+    
+    if (deviceType == mal_device_type_playback) {
+        pInfoOut->minChannels = fdPar.pchan;
+        pInfoOut->maxChannels = fdPar.pchan;
+    } else {
+        pInfoOut->minChannels = fdPar.rchan;
+        pInfoOut->maxChannels = fdPar.rchan;
+    }
+    
+    pInfoOut->minSampleRate = fdPar.rate;
+    pInfoOut->maxSampleRate = fdPar.rate;
+#endif
     
     return MAL_SUCCESS;
 }
 
-mal_result mal_context_enumerate_devices__audioio(mal_context* pContext, mal_enum_devices_callback_proc callback, void* pUserData)
+mal_result mal_context_enumerate_devices__audio4(mal_context* pContext, mal_enum_devices_callback_proc callback, void* pUserData)
 {
     mal_assert(pContext != NULL);
     mal_assert(callback != NULL);
@@ -15944,8 +15847,8 @@ mal_result mal_context_enumerate_devices__audioio(mal_context* pContext, mal_enu
                 // Supports playback.
                 mal_device_info deviceInfo;
                 mal_zero_object(&deviceInfo);
-                mal_construct_device_id__audioio(deviceInfo.id.audioio, sizeof(deviceInfo.id.audioio), "/dev/audio", iDevice);
-                if (mal_context_get_device_info_from_fd__audioio(pContext, mal_device_type_playback, fd, &deviceInfo) == MAL_SUCCESS) {
+                mal_construct_device_id__audio4(deviceInfo.id.audio4, sizeof(deviceInfo.id.audio4), "/dev/audio", iDevice);
+                if (mal_context_get_device_info_from_fd__audio4(pContext, mal_device_type_playback, fd, &deviceInfo) == MAL_SUCCESS) {
                     isTerminating = !callback(pContext, mal_device_type_playback, &deviceInfo, pUserData);
                 }
                 
@@ -15960,8 +15863,8 @@ mal_result mal_context_enumerate_devices__audioio(mal_context* pContext, mal_enu
                 // Supports capture.
                 mal_device_info deviceInfo;
                 mal_zero_object(&deviceInfo);
-                mal_construct_device_id__audioio(deviceInfo.id.audioio, sizeof(deviceInfo.id.audioio), "/dev/audio", iDevice);
-                if (mal_context_get_device_info_from_fd__audioio(pContext, mal_device_type_capture, fd, &deviceInfo) == MAL_SUCCESS) {
+                mal_construct_device_id__audio4(deviceInfo.id.audio4, sizeof(deviceInfo.id.audio4), "/dev/audio", iDevice);
+                if (mal_context_get_device_info_from_fd__audio4(pContext, mal_device_type_capture, fd, &deviceInfo) == MAL_SUCCESS) {
                     isTerminating = !callback(pContext, mal_device_type_capture, &deviceInfo, pUserData);
                 }
                 
@@ -15977,7 +15880,7 @@ mal_result mal_context_enumerate_devices__audioio(mal_context* pContext, mal_enu
     return MAL_SUCCESS;
 }
 
-mal_result mal_context_get_device_info__audioio(mal_context* pContext, mal_device_type deviceType, const mal_device_id* pDeviceID, mal_share_mode shareMode, mal_device_info* pDeviceInfo)
+mal_result mal_context_get_device_info__audio4(mal_context* pContext, mal_device_type deviceType, const mal_device_id* pDeviceID, mal_share_mode shareMode, mal_device_info* pDeviceInfo)
 {
     mal_assert(pContext != NULL);
     (void)shareMode;
@@ -15992,12 +15895,12 @@ mal_result mal_context_get_device_info__audioio(mal_context* pContext, mal_devic
         mal_strcpy_s(ctlid, sizeof(ctlid), "/dev/audioctl");
     } else {
         // Specific device. We need to convert from "/dev/audioN" to "/dev/audioctlN".
-        mal_result result = mal_extract_device_index_from_id__audioio(pDeviceID->audioio, "/dev/audio", &deviceIndex);
+        mal_result result = mal_extract_device_index_from_id__audio4(pDeviceID->audio4, "/dev/audio", &deviceIndex);
         if (result != MAL_SUCCESS) {
             return result;
         }
         
-        mal_construct_device_id__audioio(ctlid, sizeof(ctlid), "/dev/audioctl", deviceIndex);
+        mal_construct_device_id__audio4(ctlid, sizeof(ctlid), "/dev/audioctl", deviceIndex);
     }
     
     fd = open(ctlid, (deviceType == mal_device_type_playback) ? O_WRONLY : O_RDONLY, 0);
@@ -16006,43 +15909,44 @@ mal_result mal_context_get_device_info__audioio(mal_context* pContext, mal_devic
     }
     
     if (deviceIndex == -1) {
-        mal_strcpy_s(pDeviceInfo->id.audioio, sizeof(pDeviceInfo->id.audioio), "/dev/audio");
+        mal_strcpy_s(pDeviceInfo->id.audio4, sizeof(pDeviceInfo->id.audio4), "/dev/audio");
     } else {
-        mal_construct_device_id__audioio(pDeviceInfo->id.audioio, sizeof(pDeviceInfo->id.audioio), "/dev/audio", deviceIndex);
+        mal_construct_device_id__audio4(pDeviceInfo->id.audio4, sizeof(pDeviceInfo->id.audio4), "/dev/audio", deviceIndex);
     }
     
-    mal_result result = mal_context_get_device_info_from_fd__audioio(pContext, deviceType, fd, pDeviceInfo);
+    mal_result result = mal_context_get_device_info_from_fd__audio4(pContext, deviceType, fd, pDeviceInfo);
     
     close(fd);
     return result;
 }
 
-void mal_device_uninit__audioio(mal_device* pDevice)
+void mal_device_uninit__audio4(mal_device* pDevice)
 {
     mal_assert(pDevice != NULL);
 
-    close(pDevice->audioio.fd);
-    mal_free(pDevice->audioio.pIntermediaryBuffer);
+    close(pDevice->audio4.fd);
+    mal_free(pDevice->audio4.pIntermediaryBuffer);
 }
 
-mal_result mal_device_init__audioio(mal_context* pContext, mal_device_type deviceType, const mal_device_id* pDeviceID, const mal_device_config* pConfig, mal_device* pDevice)
+mal_result mal_device_init__audio4(mal_context* pContext, mal_device_type deviceType, const mal_device_id* pDeviceID, const mal_device_config* pConfig, mal_device* pDevice)
 {
     (void)pContext;
 
     mal_assert(pDevice != NULL);
-    mal_zero_object(&pDevice->audioio);
+    mal_zero_object(&pDevice->audio4);
     
     // The first thing to do is open the file.
     const char* deviceName = "/dev/audio";
     if (pDeviceID != NULL) {
-        deviceName = pDeviceID->audioio;
+        deviceName = pDeviceID->audio4;
     }
     
-    pDevice->audioio.fd = open(deviceName, (deviceType == mal_device_type_playback) ? O_WRONLY : O_RDONLY, 0);
-    if (pDevice->audioio.fd == -1) {
-        return mal_post_error(pDevice, MAL_LOG_LEVEL_ERROR, "[audioio] Failed to open device.", MAL_FAILED_TO_OPEN_BACKEND_DEVICE);
+    pDevice->audio4.fd = open(deviceName, (deviceType == mal_device_type_playback) ? O_WRONLY : O_RDONLY, 0);
+    if (pDevice->audio4.fd == -1) {
+        return mal_post_error(pDevice, MAL_LOG_LEVEL_ERROR, "[audio4] Failed to open device.", MAL_FAILED_TO_OPEN_BACKEND_DEVICE);
     }
 
+#if !defined(MAL_AUDIO4_USE_NEW_API)
     audio_info_t fdInfo;
     AUDIO_INITINFO(&fdInfo);
 
@@ -16055,7 +15959,7 @@ mal_result mal_device_init__audioio(mal_context* pContext, mal_device_type devic
         fdInfo.mode = AUMODE_RECORD;
     }
 
-    // Format. Note that it looks like audioio does not support floating point formats. In this case
+    // Format. Note that it looks like audio4 does not support floating point formats. In this case
     // we just fall back to s16.
     switch (pDevice->format)
     {
@@ -16090,8 +15994,8 @@ mal_result mal_device_init__audioio(mal_context* pContext, mal_device_type devic
     mal_device_info nativeInfo;
     mal_result result = mal_context_get_device_info(pContext, deviceType, pDeviceID, pConfig->shareMode, &nativeInfo);
     if (result != MAL_SUCCESS) {
-        close(pDevice->audioio.fd);
-        return mal_post_error(pDevice, MAL_LOG_LEVEL_ERROR, "[audioio] Failed to retrieve device format.", result);
+        close(pDevice->audio4.fd);
+        return mal_post_error(pDevice, MAL_LOG_LEVEL_ERROR, "[audio4] Failed to retrieve device format.", result);
     }
 
     prinfo->channels = nativeInfo.maxChannels;
@@ -16099,20 +16003,20 @@ mal_result mal_device_init__audioio(mal_context* pContext, mal_device_type devic
     
     // We need to apply the settings so far so we can get back the actual sample rate which we need for calculating
     // the default buffer size below.
-    if (ioctl(pDevice->audioio.fd, AUDIO_SETINFO, &fdInfo) < 0) {
-        close(pDevice->audioio.fd);
-        return mal_post_error(pDevice, MAL_LOG_LEVEL_ERROR, "[audioio] Failed to set device format. AUDIO_SETINFO failed.", MAL_FORMAT_NOT_SUPPORTED);
+    if (ioctl(pDevice->audio4.fd, AUDIO_SETINFO, &fdInfo) < 0) {
+        close(pDevice->audio4.fd);
+        return mal_post_error(pDevice, MAL_LOG_LEVEL_ERROR, "[audio4] Failed to set device format. AUDIO_SETINFO failed.", MAL_FORMAT_NOT_SUPPORTED);
     }
     
-    if (ioctl(pDevice->audioio.fd, AUDIO_GETINFO, &fdInfo) < 0) {
-        close(pDevice->audioio.fd);
-        return mal_post_error(pDevice, MAL_LOG_LEVEL_ERROR, "[audioio] AUDIO_GETINFO failed.", MAL_FORMAT_NOT_SUPPORTED);
+    if (ioctl(pDevice->audio4.fd, AUDIO_GETINFO, &fdInfo) < 0) {
+        close(pDevice->audio4.fd);
+        return mal_post_error(pDevice, MAL_LOG_LEVEL_ERROR, "[audio4] AUDIO_GETINFO failed.", MAL_FORMAT_NOT_SUPPORTED);
     }
     
-    pDevice->internalFormat = mal_format_from_prinfo__audioio(prinfo);
+    pDevice->internalFormat = mal_format_from_prinfo__audio4(prinfo);
     if (pDevice->internalFormat == mal_format_unknown) {
-        close(pDevice->audioio.fd);
-        return mal_post_error(pDevice, MAL_LOG_LEVEL_ERROR, "[audioio] The device's internal device format is not supported by mini_al. The device is unusable.", MAL_FORMAT_NOT_SUPPORTED);
+        close(pDevice->audio4.fd);
+        return mal_post_error(pDevice, MAL_LOG_LEVEL_ERROR, "[audio4] The device's internal device format is not supported by mini_al. The device is unusable.", MAL_FORMAT_NOT_SUPPORTED);
     }
 
     pDevice->internalChannels = prinfo->channels;
@@ -16121,20 +16025,11 @@ mal_result mal_device_init__audioio(mal_context* pContext, mal_device_type devic
 
 
     // Try calculating an appropriate default buffer size.
-    if (pDevice->usingDefaultBufferSize) {
-        // CPU speed factor.
-        float fCPUSpeed = mal_calculate_cpu_speed_factor();
-
-        // Playback vs capture latency.
-        float fDeviceType = 1;
-
-        // Backend tax.
-        float fBackend = 1;
-
-        pDevice->bufferSizeInFrames = mal_calculate_default_buffer_size_in_frames(pConfig->performanceProfile, pDevice->internalSampleRate, fCPUSpeed*fDeviceType*fBackend);
+    if (pDevice->bufferSizeInFrames == 0) {
+        pDevice->bufferSizeInFrames = mal_calculate_buffer_size_in_frames_from_milliseconds(pDevice->bufferSizeInMilliseconds, pDevice->internalSampleRate);
     }
 
-    // What mini_al calls a fragment, audioio calls a block.
+    // What mini_al calls a fragment, audio4 calls a block.
     mal_uint32 fragmentSizeInBytes = pDevice->bufferSizeInFrames * mal_get_bytes_per_frame(pDevice->internalFormat, pDevice->internalChannels);
     if (fragmentSizeInBytes < 16) {
         fragmentSizeInBytes = 16;
@@ -16142,38 +16037,90 @@ mal_result mal_device_init__audioio(mal_context* pContext, mal_device_type devic
 
     
     AUDIO_INITINFO(&fdInfo);
-    fdInfo.blocksize = fragmentSizeInBytes;
     fdInfo.hiwat = mal_max(pDevice->periods, 5);
     fdInfo.lowat = (unsigned int)(fdInfo.hiwat * 0.75);
-    if (ioctl(pDevice->audioio.fd, AUDIO_SETINFO, &fdInfo) < 0) {
-        close(pDevice->audioio.fd);
-        return mal_post_error(pDevice, MAL_LOG_LEVEL_ERROR, "[audioio] Failed to set internal buffer size. AUDIO_SETINFO failed.", MAL_FORMAT_NOT_SUPPORTED);
+    fdInfo.blocksize = fragmentSizeInBytes / fdInfo.hiwat;
+    if (ioctl(pDevice->audio4.fd, AUDIO_SETINFO, &fdInfo) < 0) {
+        close(pDevice->audio4.fd);
+        return mal_post_error(pDevice, MAL_LOG_LEVEL_ERROR, "[audio4] Failed to set internal buffer size. AUDIO_SETINFO failed.", MAL_FORMAT_NOT_SUPPORTED);
     }
     
     pDevice->periods = fdInfo.hiwat;
     pDevice->bufferSizeInFrames = (fdInfo.blocksize * fdInfo.hiwat) / mal_get_bytes_per_frame(pDevice->internalFormat, pDevice->internalChannels);
-
-    pDevice->audioio.fragmentSizeInFrames = fdInfo.blocksize / mal_get_bytes_per_frame(pDevice->internalFormat, pDevice->internalChannels);
+    pDevice->audio4.fragmentSizeInFrames = fdInfo.blocksize / mal_get_bytes_per_frame(pDevice->internalFormat, pDevice->internalChannels);
+#else
+    // We need to retrieve the format of the device so we can know the channel count and sample rate. Then we
+    // can calculate the buffer size.
+    struct audio_swpar fdPar;
+    if (ioctl(pDevice->audio4.fd, AUDIO_GETPAR, &fdPar) < 0) {
+        close(pDevice->audio4.fd);
+        return mal_post_error(pDevice, MAL_LOG_LEVEL_ERROR, "[audio4] Failed to retrieve initial device parameters.", MAL_FORMAT_NOT_SUPPORTED);
+    }
+    
+    // Set the initial internal formats so we can do calculations below.
+    pDevice->internalFormat = mal_format_from_swpar__audio4(&fdPar);
+    if (deviceType == mal_device_type_playback) {
+        pDevice->internalChannels = fdPar.pchan;
+    } else {
+        pDevice->internalChannels = fdPar.rchan;
+    }
+    pDevice->internalSampleRate = fdPar.rate;
+    
+    if (pDevice->bufferSizeInFrames == 0) {
+        pDevice->bufferSizeInFrames = mal_calculate_buffer_size_in_frames_from_milliseconds(pDevice->bufferSizeInMilliseconds, pDevice->internalSampleRate);
+    }
+    
+    // What mini_al calls a fragment, audio4 calls a block.
+    mal_uint32 bufferSizeInBytes = pDevice->bufferSizeInFrames * mal_get_bytes_per_frame(pDevice->internalFormat, pDevice->internalChannels);
+    if (bufferSizeInBytes < 16) {
+        bufferSizeInBytes = 16;
+    }
+    
+    fdPar.nblks = pDevice->periods;
+    fdPar.round = bufferSizeInBytes / fdPar.nblks;
+    
+    if (ioctl(pDevice->audio4.fd, AUDIO_SETPAR, &fdPar) < 0) {
+        close(pDevice->audio4.fd);
+        return mal_post_error(pDevice, MAL_LOG_LEVEL_ERROR, "[audio4] Failed to set device parameters.", MAL_FORMAT_NOT_SUPPORTED);
+    }
+    
+    if (ioctl(pDevice->audio4.fd, AUDIO_GETPAR, &fdPar) < 0) {
+        close(pDevice->audio4.fd);
+        return mal_post_error(pDevice, MAL_LOG_LEVEL_ERROR, "[audio4] Failed to retrieve actual device parameters.", MAL_FORMAT_NOT_SUPPORTED);
+    }
+    
+    pDevice->internalFormat = mal_format_from_swpar__audio4(&fdPar);
+    if (deviceType == mal_device_type_playback) {
+        pDevice->internalChannels = fdPar.pchan;
+    } else {
+        pDevice->internalChannels = fdPar.rchan;
+    }
+    pDevice->internalSampleRate = fdPar.rate;
+    
+    pDevice->periods = fdPar.nblks;
+    pDevice->bufferSizeInFrames = (fdPar.nblks * fdPar.round) / mal_get_bytes_per_frame(pDevice->internalFormat, pDevice->internalChannels);
+    pDevice->audio4.fragmentSizeInFrames = fdPar.round / mal_get_bytes_per_frame(pDevice->internalFormat, pDevice->internalChannels);
+#endif
 
 
     // For the channel map, I'm not sure how to query the channel map (or if it's even possible). I'm just
-    // using mini_al's default channel map for now.
-    mal_get_standard_channel_map(mal_standard_channel_map_default, pDevice->internalChannels, pDevice->internalChannelMap);
+    // using the channels defined in FreeBSD's sound(4) man page.
+    mal_get_standard_channel_map(mal_standard_channel_map_sound4, pDevice->internalChannels, pDevice->internalChannelMap);
 
     
     // When not using MMAP mode we need to use an intermediary buffer to the data transfer between the client
     // and device. Everything is done by the size of a fragment.
-    pDevice->audioio.pIntermediaryBuffer = mal_malloc(fdInfo.blocksize);
-    if (pDevice->audioio.pIntermediaryBuffer == NULL) {
-        close(pDevice->audioio.fd);
-        return mal_post_error(pDevice, MAL_LOG_LEVEL_ERROR, "[audioio] Failed to allocate memory for intermediary buffer.", MAL_OUT_OF_MEMORY);
+    pDevice->audio4.pIntermediaryBuffer = mal_malloc(pDevice->audio4.fragmentSizeInFrames * mal_get_bytes_per_frame(pDevice->internalFormat, pDevice->internalChannels));
+    if (pDevice->audio4.pIntermediaryBuffer == NULL) {
+        close(pDevice->audio4.fd);
+        return mal_post_error(pDevice, MAL_LOG_LEVEL_ERROR, "[audio4] Failed to allocate memory for intermediary buffer.", MAL_OUT_OF_MEMORY);
     }
 
     
     return MAL_SUCCESS;
 }
 
-mal_result mal_device__start_backend__audioio(mal_device* pDevice)
+mal_result mal_device__start_backend__audio4(mal_device* pDevice)
 {
     mal_assert(pDevice != NULL);
 
@@ -16184,11 +16131,11 @@ mal_result mal_device__start_backend__audioio(mal_device* pDevice)
     if (pDevice->type == mal_device_type_playback) {
         // Playback. Need to load the entire buffer, which means we need to write a fragment for each period.
         for (mal_uint32 iPeriod = 0; iPeriod < pDevice->periods; iPeriod += 1) { 
-            mal_device__read_frames_from_client(pDevice, pDevice->audioio.fragmentSizeInFrames, pDevice->audioio.pIntermediaryBuffer);
+            mal_device__read_frames_from_client(pDevice, pDevice->audio4.fragmentSizeInFrames, pDevice->audio4.pIntermediaryBuffer);
 
-            int bytesWritten = write(pDevice->audioio.fd, pDevice->audioio.pIntermediaryBuffer, pDevice->audioio.fragmentSizeInFrames * mal_get_bytes_per_frame(pDevice->internalFormat, pDevice->internalChannels));
+            int bytesWritten = write(pDevice->audio4.fd, pDevice->audio4.pIntermediaryBuffer, pDevice->audio4.fragmentSizeInFrames * mal_get_bytes_per_frame(pDevice->internalFormat, pDevice->internalChannels));
             if (bytesWritten == -1) {
-                return mal_post_error(pDevice, MAL_LOG_LEVEL_ERROR, "[audioio] Failed to send initial chunk of data to the device.", MAL_FAILED_TO_SEND_DATA_TO_DEVICE);
+                return mal_post_error(pDevice, MAL_LOG_LEVEL_ERROR, "[audio4] Failed to send initial chunk of data to the device.", MAL_FAILED_TO_SEND_DATA_TO_DEVICE);
             }
         }
     } else {
@@ -16198,31 +16145,37 @@ mal_result mal_device__start_backend__audioio(mal_device* pDevice)
     return MAL_SUCCESS;
 }
 
-mal_result mal_device__stop_backend__audioio(mal_device* pDevice)
+mal_result mal_device__stop_backend__audio4(mal_device* pDevice)
 {
     mal_assert(pDevice != NULL);
 
-    if (ioctl(pDevice->audioio.fd, AUDIO_FLUSH, 0) < 0) {
-        return mal_post_error(pDevice, MAL_LOG_LEVEL_ERROR, "[audioio] Failed to stop device. AUDIO_FLUSH failed.", MAL_FAILED_TO_STOP_BACKEND_DEVICE);
+#if defined(__NetBSD__)
+    if (ioctl(pDevice->audio4.fd, AUDIO_FLUSH, 0) < 0) {
+        return mal_post_error(pDevice, MAL_LOG_LEVEL_ERROR, "[audio4] Failed to stop device. AUDIO_FLUSH failed.", MAL_FAILED_TO_STOP_BACKEND_DEVICE);
     }
+#else
+    if (ioctl(pDevice->audio4.fd, AUDIO_STOP, 0) < 0) {
+        return mal_post_error(pDevice, MAL_LOG_LEVEL_ERROR, "[audio4] Failed to stop device. AUDIO_FLUSH failed.", MAL_FAILED_TO_STOP_BACKEND_DEVICE);
+    }
+#endif
 
     return MAL_SUCCESS;
 }
 
-mal_result mal_device__break_main_loop__audioio(mal_device* pDevice)
+mal_result mal_device__break_main_loop__audio4(mal_device* pDevice)
 {
     mal_assert(pDevice != NULL);
 
-    pDevice->audioio.breakFromMainLoop = MAL_TRUE;
+    pDevice->audio4.breakFromMainLoop = MAL_TRUE;
     return MAL_SUCCESS;
 }
 
-mal_result mal_device__main_loop__audioio(mal_device* pDevice)
+mal_result mal_device__main_loop__audio4(mal_device* pDevice)
 {
     mal_assert(pDevice != NULL);
 
-    pDevice->audioio.breakFromMainLoop = MAL_FALSE;
-    while (!pDevice->audioio.breakFromMainLoop) {
+    pDevice->audio4.breakFromMainLoop = MAL_FALSE;
+    while (!pDevice->audio4.breakFromMainLoop) {
         // Break from the main loop if the device isn't started anymore. Likely what's happened is the application
         // has requested that the device be stopped.
         if (!mal_device_is_started(pDevice)) {
@@ -16231,54 +16184,54 @@ mal_result mal_device__main_loop__audioio(mal_device* pDevice)
 
         if (pDevice->type == mal_device_type_playback) {
             // Playback.
-            mal_device__read_frames_from_client(pDevice, pDevice->audioio.fragmentSizeInFrames, pDevice->audioio.pIntermediaryBuffer);
+            mal_device__read_frames_from_client(pDevice, pDevice->audio4.fragmentSizeInFrames, pDevice->audio4.pIntermediaryBuffer);
 
-            int bytesWritten = write(pDevice->audioio.fd, pDevice->audioio.pIntermediaryBuffer, pDevice->audioio.fragmentSizeInFrames * pDevice->internalChannels * mal_get_bytes_per_sample(pDevice->internalFormat));
+            int bytesWritten = write(pDevice->audio4.fd, pDevice->audio4.pIntermediaryBuffer, pDevice->audio4.fragmentSizeInFrames * pDevice->internalChannels * mal_get_bytes_per_sample(pDevice->internalFormat));
             if (bytesWritten < 0) {
-                return mal_post_error(pDevice, MAL_LOG_LEVEL_ERROR, "[audioio] Failed to send data from the client to the device.", MAL_FAILED_TO_SEND_DATA_TO_DEVICE);
+                return mal_post_error(pDevice, MAL_LOG_LEVEL_ERROR, "[audio4] Failed to send data from the client to the device.", MAL_FAILED_TO_SEND_DATA_TO_DEVICE);
             }
         } else {
             // Capture.
-            int bytesRead = read(pDevice->audioio.fd, pDevice->audioio.pIntermediaryBuffer, pDevice->audioio.fragmentSizeInFrames * mal_get_bytes_per_sample(pDevice->internalFormat));
+            int bytesRead = read(pDevice->audio4.fd, pDevice->audio4.pIntermediaryBuffer, pDevice->audio4.fragmentSizeInFrames * mal_get_bytes_per_sample(pDevice->internalFormat));
             if (bytesRead < 0) {
-                return mal_post_error(pDevice, MAL_LOG_LEVEL_ERROR, "[audioio] Failed to read data from the device to be sent to the client.", MAL_FAILED_TO_READ_DATA_FROM_DEVICE);
+                return mal_post_error(pDevice, MAL_LOG_LEVEL_ERROR, "[audio4] Failed to read data from the device to be sent to the client.", MAL_FAILED_TO_READ_DATA_FROM_DEVICE);
             }
 
             mal_uint32 framesRead = (mal_uint32)bytesRead / pDevice->internalChannels / mal_get_bytes_per_sample(pDevice->internalFormat);
-            mal_device__send_frames_to_client(pDevice, framesRead, pDevice->audioio.pIntermediaryBuffer);
+            mal_device__send_frames_to_client(pDevice, framesRead, pDevice->audio4.pIntermediaryBuffer);
         }
     }
 
     return MAL_SUCCESS;
 }
 
-mal_result mal_context_uninit__audioio(mal_context* pContext)
+mal_result mal_context_uninit__audio4(mal_context* pContext)
 {
     mal_assert(pContext != NULL);
-    mal_assert(pContext->backend == mal_backend_audioio);
+    mal_assert(pContext->backend == mal_backend_audio4);
 
     (void)pContext;
     return MAL_SUCCESS;
 }
 
-mal_result mal_context_init__audioio(mal_context* pContext)
+mal_result mal_context_init__audio4(mal_context* pContext)
 {
     mal_assert(pContext != NULL);
 
-    pContext->onUninit              = mal_context_uninit__audioio;
-    pContext->onDeviceIDEqual       = mal_context_is_device_id_equal__audioio;
-    pContext->onEnumDevices         = mal_context_enumerate_devices__audioio;
-    pContext->onGetDeviceInfo       = mal_context_get_device_info__audioio;
-    pContext->onDeviceInit          = mal_device_init__audioio;
-    pContext->onDeviceUninit        = mal_device_uninit__audioio;
-    pContext->onDeviceStart         = mal_device__start_backend__audioio;
-    pContext->onDeviceStop          = mal_device__stop_backend__audioio;
-    pContext->onDeviceBreakMainLoop = mal_device__break_main_loop__audioio;
-    pContext->onDeviceMainLoop      = mal_device__main_loop__audioio;
+    pContext->onUninit              = mal_context_uninit__audio4;
+    pContext->onDeviceIDEqual       = mal_context_is_device_id_equal__audio4;
+    pContext->onEnumDevices         = mal_context_enumerate_devices__audio4;
+    pContext->onGetDeviceInfo       = mal_context_get_device_info__audio4;
+    pContext->onDeviceInit          = mal_device_init__audio4;
+    pContext->onDeviceUninit        = mal_device_uninit__audio4;
+    pContext->onDeviceStart         = mal_device__start_backend__audio4;
+    pContext->onDeviceStop          = mal_device__stop_backend__audio4;
+    pContext->onDeviceBreakMainLoop = mal_device__break_main_loop__audio4;
+    pContext->onDeviceMainLoop      = mal_device__main_loop__audio4;
 
     return MAL_SUCCESS;
 }
-#endif  // audioio
+#endif  // audio4
 
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -16574,22 +16527,8 @@ mal_result mal_device_init__oss(mal_context* pContext, mal_device_type type, con
 
 
     // Try calculating an appropriate default buffer size.
-    if (pDevice->usingDefaultBufferSize) {
-        // CPU speed is a factor to consider when determine how large of a buffer we need.
-        float fCPUSpeed = mal_calculate_cpu_speed_factor();
-
-        // In my testing, capture seems to have worse latency than playback for some reason.
-        float fType;
-        if (type == mal_device_type_playback) {
-            fType = 1.0f;
-        } else {
-            fType = 2.0f;
-        }
-
-        // Backend tax. Need to fiddle with this.
-        float fBackend = 1.0;
-
-        pDevice->bufferSizeInFrames = mal_calculate_default_buffer_size_in_frames(pConfig->performanceProfile, pConfig->sampleRate, fCPUSpeed*fType*fBackend);
+    if (pDevice->bufferSizeInFrames == 0) {
+        pDevice->bufferSizeInFrames = mal_calculate_buffer_size_in_frames_from_milliseconds(pDevice->bufferSizeInMilliseconds, pDevice->internalSampleRate);
     }
 
     // The documentation says that the fragment settings should be set as soon as possible, but I'm not sure if
@@ -16621,8 +16560,8 @@ mal_result mal_device_init__oss(mal_context* pContext, mal_device_type type, con
     pDevice->periods = (mal_uint32)(ossFragment >> 16);
     pDevice->bufferSizeInFrames = (mal_uint32)(pDevice->oss.fragmentSizeInFrames * pDevice->periods);
 
-    // Set the internal channel map. Not sure if this can be queried. For now just using our default assumptions.
-    mal_get_standard_channel_map(mal_standard_channel_map_default, pDevice->internalChannels, pDevice->internalChannelMap);
+    // Set the internal channel map. Not sure if this can be queried. For now just using the channel layouts defined in FreeBSD's sound(4) man page.
+    mal_get_standard_channel_map(mal_standard_channel_map_sound4, pDevice->internalChannels, pDevice->internalChannelMap);
 
 
     // When not using MMAP mode, we need to use an intermediary buffer for the client <-> device transfer. We do
@@ -17215,29 +17154,6 @@ mal_result mal_device_init__opensl(mal_context* pContext, mal_device_type type, 
     mal_assert(pDevice != NULL);
     mal_zero_object(&pDevice->opensl);
 
-    // Try calculating an appropriate default buffer size.
-    if (pDevice->usingDefaultBufferSize) {
-        // CPU speed is a factor to consider when determine how large of a buffer we need.
-        float fCPUSpeed = mal_calculate_cpu_speed_factor();
-
-        // In my testing, capture seems to have worse latency than playback for some reason.
-        float fType;
-        if (type == mal_device_type_playback) {
-            fType = 1.0f;
-        } else {
-            fType = 2.0f;
-        }
-
-        // Backend tax. Need to fiddle with this.
-        float fBackend = 1.5f;
-
-        pDevice->bufferSizeInFrames = mal_calculate_default_buffer_size_in_frames(pConfig->performanceProfile, pConfig->sampleRate, fCPUSpeed*fType*fBackend);
-    }
-
-    pDevice->opensl.currentBufferIndex = 0;
-    pDevice->opensl.periodSizeInFrames = pDevice->bufferSizeInFrames / pConfig->periods;
-    pDevice->bufferSizeInFrames = pDevice->opensl.periodSizeInFrames * pConfig->periods;
-
     SLDataLocator_AndroidSimpleBufferQueue queue;
     queue.locatorType = SL_DATALOCATOR_ANDROIDSIMPLEBUFFERQUEUE;
     queue.numBuffers = pConfig->periods;
@@ -17461,6 +17377,14 @@ mal_result mal_device_init__opensl(mal_context* pContext, mal_device_type type, 
     pDevice->internalSampleRate = pFormat->samplesPerSec / 1000;
     mal_channel_mask_to_channel_map__opensl(pFormat->channelMask, pDevice->internalChannels, pDevice->internalChannelMap);
 
+    // Try calculating an appropriate default buffer size.
+    if (pDevice->bufferSizeInFrames == 0) {
+        pDevice->bufferSizeInFrames = mal_calculate_buffer_size_in_frames_from_milliseconds(pDevice->bufferSizeInMilliseconds, pDevice->internalSampleRate);
+    }
+
+    pDevice->opensl.currentBufferIndex = 0;
+    pDevice->opensl.periodSizeInFrames = pDevice->bufferSizeInFrames / pConfig->periods;
+    pDevice->bufferSizeInFrames = pDevice->opensl.periodSizeInFrames * pConfig->periods;
 
     size_t bufferSizeInBytes = pDevice->bufferSizeInFrames * pDevice->internalChannels * mal_get_bytes_per_sample(pDevice->internalFormat);
     pDevice->opensl.pBuffer = (mal_uint8*)mal_malloc(bufferSizeInBytes);
@@ -17973,22 +17897,12 @@ mal_result mal_device_init__openal(mal_context* pContext, mal_device_type type, 
     }
 
     // Try calculating an appropriate default buffer size.
-    if (pDevice->usingDefaultBufferSize) {
-        // CPU speed is a factor to consider when determine how large of a buffer we need.
-        float fCPUSpeed = mal_calculate_cpu_speed_factor();
-
-        // In my testing, capture seems to have worse latency than playback for some reason.
-        float fType;
-        if (type == mal_device_type_playback) {
-            fType = 1.0f;
-        } else {
-            fType = 2.0f;
+    if (pDevice->bufferSizeInFrames == 0) {
+        pDevice->bufferSizeInFrames = mal_calculate_buffer_size_in_frames_from_milliseconds(pDevice->bufferSizeInMilliseconds, pDevice->sampleRate);
+        if (pDevice->usingDefaultBufferSize) {
+            float bufferSizeScaleFactor = 3;
+            pDevice->bufferSizeInFrames = mal_scale_buffer_size(pDevice->bufferSizeInFrames, bufferSizeScaleFactor);
         }
-
-        // Backend tax. Need to fiddle with this. OpenAL has bad latency in my testing :(
-        float fBackend = 8.0;
-
-        pDevice->bufferSizeInFrames = mal_calculate_default_buffer_size_in_frames(pConfig->performanceProfile, pConfig->sampleRate, fCPUSpeed*fType*fBackend);
     }
 
     mal_ALCsizei bufferSizeInSamplesAL = pDevice->bufferSizeInFrames;
@@ -18905,32 +18819,13 @@ mal_result mal_device_init__sdl(mal_context* pContext, mal_device_type type, con
 
     (void)pContext;
 
+    if (pDevice->bufferSizeInFrames == 0) {
+        pDevice->bufferSizeInFrames = mal_calculate_buffer_size_in_frames_from_milliseconds(pDevice->bufferSizeInMilliseconds, pDevice->sampleRate);
+    }
+
     // SDL wants the buffer size to be a power of 2. The SDL_AudioSpec property for this is only a Uint16, so we need
     // to explicitly clamp this because it will be easy to overflow.
     mal_uint32 bufferSize = pConfig->bufferSizeInFrames;
-    if (pDevice->usingDefaultBufferSize) {
-        // CPU speed is a factor to consider when determine how large of a buffer we need.
-        float fCPUSpeed = mal_calculate_cpu_speed_factor();
-
-        // In my testing, capture seems to have worse latency than playback for some reason.
-        float fType;
-        if (type == mal_device_type_playback) {
-            fType = 1.0f;
-        } else {
-            fType = 2.0f;
-        }
-
-        // Backend tax. Need to fiddle with this. Keep in mind that SDL always rounds the buffer size up to the next
-        // power of two which should cover the natural API overhead. Special case for Emscripten.
-    #if defined(__EMSCRIPTEN__)
-        float fBackend = 1.0f;
-    #else
-        float fBackend = 1.0f;
-    #endif
-
-        bufferSize = mal_calculate_default_buffer_size_in_frames(pConfig->performanceProfile, pConfig->sampleRate, fCPUSpeed*fType*fBackend);
-    }
-
     if (bufferSize > 32768) {
         bufferSize = 32768;
     } else {
@@ -18992,10 +18887,11 @@ mal_result mal_device_init__sdl(mal_context* pContext, mal_device_type type, con
     pDevice->internalFormat     = mal_format_from_sdl(obtainedSpec.format);
     pDevice->internalChannels   = obtainedSpec.channels;
     pDevice->internalSampleRate = (mal_uint32)obtainedSpec.freq;
+    mal_get_standard_channel_map(mal_standard_channel_map_default, pDevice->internalChannels, pDevice->internalChannelMap);
     pDevice->bufferSizeInFrames = obtainedSpec.samples;
     pDevice->periods            = 1;    // SDL doesn't seem to tell us what the period count is. Just set this 1.
 
-#if 0
+#ifdef MAL_DEBUG_OUTPUT
     printf("=== SDL CONFIG ===\n");
     printf("REQUESTED -> RECEIVED\n");
     printf("    FORMAT:                 %s -> %s\n", mal_get_format_name(pConfig->format), mal_get_format_name(pDevice->internalFormat));
@@ -19173,7 +19069,7 @@ mal_thread_result MAL_THREADCALL mal_worker_thread(void* pData)
     mal_assert(pDevice != NULL);
 
 #ifdef MAL_WIN32
-    mal_CoInitializeEx(pDevice->pContext, NULL, 0); // 0 = COINIT_MULTITHREADED
+    mal_CoInitializeEx(pDevice->pContext, NULL, MAL_COINIT_VALUE);
 #endif
 
 #if 1
@@ -19353,7 +19249,7 @@ mal_result mal_context_init_backend_apis__win32(mal_context* pContext)
     pContext->win32.RegQueryValueExA = (mal_proc)mal_dlsym(pContext->win32.hAdvapi32DLL, "RegQueryValueExA");
 #endif
 
-    mal_CoInitializeEx(pContext, NULL, 0);  // 0 = COINIT_MULTITHREADED
+    mal_CoInitializeEx(pContext, NULL, MAL_COINIT_VALUE);
     return MAL_SUCCESS;
 }
 #else
@@ -19541,10 +19437,10 @@ mal_result mal_context_init(const mal_backend backends[], mal_uint32 backendCoun
                 result = mal_context_init__sndio(pContext);
             } break;
         #endif
-        #ifdef MAL_HAS_AUDIOIO
-            case mal_backend_audioio:
+        #ifdef MAL_HAS_AUDIO4
+            case mal_backend_audio4:
             {
-                result = mal_context_init__audioio(pContext);
+                result = mal_context_init__audio4(pContext);
             } break;
         #endif
         #ifdef MAL_HAS_OSS
@@ -19827,11 +19723,13 @@ mal_result mal_device_init(mal_context* pContext, mal_device_type type, mal_devi
     }
 
 
-    // Default buffer size and periods.
-    if (config.bufferSizeInFrames == 0) {
-        config.bufferSizeInFrames = (config.sampleRate/1000) * MAL_BASE_BUFFER_SIZE_IN_MILLISECONDS_LOW_LATENCY;
+    // Default buffer size.
+    if (config.bufferSizeInMilliseconds == 0 && config.bufferSizeInFrames == 0) {
+        config.bufferSizeInMilliseconds = (config.performanceProfile == mal_performance_profile_low_latency) ? MAL_BASE_BUFFER_SIZE_IN_MILLISECONDS_LOW_LATENCY : MAL_BASE_BUFFER_SIZE_IN_MILLISECONDS_CONSERVATIVE;
         pDevice->usingDefaultBufferSize = MAL_TRUE;
     }
+
+    // Default periods.
     if (config.periods == 0) {
         config.periods = MAL_DEFAULT_PERIODS;
         pDevice->usingDefaultPeriods = MAL_TRUE;
@@ -19843,6 +19741,7 @@ mal_result mal_device_init(mal_context* pContext, mal_device_type type, mal_devi
     pDevice->sampleRate = config.sampleRate;
     mal_copy_memory(pDevice->channelMap, config.channelMap, sizeof(config.channelMap[0]) * config.channels);
     pDevice->bufferSizeInFrames = config.bufferSizeInFrames;
+    pDevice->bufferSizeInMilliseconds = config.bufferSizeInMilliseconds;
     pDevice->periods = config.periods;
 
     // The internal format, channel count and sample rate can be modified by the backend.
@@ -19903,6 +19802,13 @@ mal_result mal_device_init(mal_context* pContext, mal_device_type type, mal_devi
         }
     }
 
+
+    // Make sure the internal channel map was set correctly by the backend. If it's not valid, just fall back to defaults.
+    if (!mal_channel_map_valid(pDevice->internalChannels, pDevice->internalChannelMap)) {
+        mal_get_standard_channel_map(mal_standard_channel_map_default, pDevice->internalChannels, pDevice->internalChannelMap);
+    }
+
+
     // If the format/channels/rate is using defaults we need to set these to be the same as the internal config.
     if (pDevice->usingDefaultFormat) {
         pDevice->format = pDevice->internalFormat;
@@ -19916,6 +19822,9 @@ mal_result mal_device_init(mal_context* pContext, mal_device_type type, mal_devi
     if (pDevice->usingDefaultChannelMap) {
         mal_copy_memory(pDevice->channelMap, pDevice->internalChannelMap, sizeof(pDevice->channelMap));
     }
+
+    // Buffer size. The backend will have set bufferSizeInFrames. We need to calculate bufferSizeInMilliseconds here.
+    pDevice->bufferSizeInMilliseconds = pDevice->bufferSizeInFrames / (pDevice->internalSampleRate/1000);
 
 
     // We need a DSP object which is where samples are moved through in order to convert them to the
@@ -20633,6 +20542,88 @@ void mal_get_standard_channel_map_vorbis(mal_uint32 channels, mal_channel channe
     }
 }
 
+void mal_get_standard_channel_map_sound4(mal_uint32 channels, mal_channel channelMap[MAL_MAX_CHANNELS])
+{
+    switch (channels)
+    {
+        case 1:
+        {
+            channelMap[0] = MAL_CHANNEL_MONO;
+        } break;
+
+        case 2:
+        {
+            channelMap[0] = MAL_CHANNEL_LEFT;
+            channelMap[1] = MAL_CHANNEL_RIGHT;
+        } break;
+
+        case 3:
+        {
+            channelMap[0] = MAL_CHANNEL_FRONT_LEFT;
+            channelMap[1] = MAL_CHANNEL_FRONT_RIGHT;
+            channelMap[2] = MAL_CHANNEL_BACK_CENTER;
+        } break;
+
+        case 4:
+        {
+            channelMap[0] = MAL_CHANNEL_FRONT_LEFT;
+            channelMap[1] = MAL_CHANNEL_FRONT_RIGHT;
+            channelMap[2] = MAL_CHANNEL_BACK_LEFT;
+            channelMap[3] = MAL_CHANNEL_BACK_RIGHT;
+        } break;
+
+        case 5:
+        {
+            channelMap[0] = MAL_CHANNEL_FRONT_LEFT;
+            channelMap[1] = MAL_CHANNEL_FRONT_RIGHT;
+            channelMap[2] = MAL_CHANNEL_BACK_LEFT;
+            channelMap[3] = MAL_CHANNEL_BACK_RIGHT;
+            channelMap[4] = MAL_CHANNEL_FRONT_CENTER;
+        } break;
+
+        case 6:
+        {
+            channelMap[0] = MAL_CHANNEL_FRONT_LEFT;
+            channelMap[1] = MAL_CHANNEL_FRONT_RIGHT;
+            channelMap[2] = MAL_CHANNEL_BACK_LEFT;
+            channelMap[3] = MAL_CHANNEL_BACK_RIGHT;
+            channelMap[4] = MAL_CHANNEL_FRONT_CENTER;
+            channelMap[5] = MAL_CHANNEL_LFE;
+        } break;
+
+        case 7:
+        {
+            channelMap[0] = MAL_CHANNEL_FRONT_LEFT;
+            channelMap[1] = MAL_CHANNEL_FRONT_RIGHT;
+            channelMap[2] = MAL_CHANNEL_BACK_LEFT;
+            channelMap[3] = MAL_CHANNEL_BACK_RIGHT;
+            channelMap[4] = MAL_CHANNEL_FRONT_CENTER;
+            channelMap[5] = MAL_CHANNEL_BACK_CENTER;
+            channelMap[6] = MAL_CHANNEL_LFE;
+        } break;
+
+        case 8:
+        default:
+        {
+            channelMap[0] = MAL_CHANNEL_FRONT_LEFT;
+            channelMap[1] = MAL_CHANNEL_FRONT_RIGHT;
+            channelMap[2] = MAL_CHANNEL_BACK_LEFT;
+            channelMap[3] = MAL_CHANNEL_BACK_RIGHT;
+            channelMap[4] = MAL_CHANNEL_FRONT_CENTER;
+            channelMap[5] = MAL_CHANNEL_LFE;
+            channelMap[6] = MAL_CHANNEL_SIDE_LEFT;
+            channelMap[7] = MAL_CHANNEL_SIDE_RIGHT;
+        } break;
+    }
+
+    // Remainder.
+    if (channels > 8) {
+        for (mal_uint32 iChannel = 8; iChannel < MAL_MAX_CHANNELS; ++iChannel) {
+            channelMap[iChannel] = (mal_channel)(MAL_CHANNEL_AUX_0 + (iChannel-8));
+        }
+    }
+}
+
 void mal_get_standard_channel_map_sndio(mal_uint32 channels, mal_channel channelMap[MAL_MAX_CHANNELS])
 {
     switch (channels)
@@ -20714,6 +20705,11 @@ void mal_get_standard_channel_map(mal_standard_channel_map standardChannelMap, m
         case mal_standard_channel_map_vorbis:
         {
             mal_get_standard_channel_map_vorbis(channels, channelMap);
+        } break;
+
+        case mal_standard_channel_map_sound4:
+        {
+            mal_get_standard_channel_map_sound4(channels, channelMap);
         } break;
         
         case mal_standard_channel_map_sndio:
@@ -27360,20 +27356,35 @@ mal_result mal_sine_wave_init(double amplitude, double periodsPerSecond, mal_uin
 
 mal_uint64 mal_sine_wave_read(mal_sine_wave* pSineWave, mal_uint64 count, float* pSamples)
 {
+    return mal_sine_wave_read_ex(pSineWave, count, 1, mal_stream_layout_interleaved, &pSamples);
+}
+
+mal_uint64 mal_sine_wave_read_ex(mal_sine_wave* pSineWave, mal_uint64 frameCount, mal_uint32 channels, mal_stream_layout layout, float** ppFrames)
+{
     if (pSineWave == NULL) {
         return 0;
     }
 
-    if (pSamples != NULL) {
-        for (mal_uint64 i = 0; i < count; i += 1) {
-            pSamples[i] = (float)(sin(pSineWave->time * pSineWave->periodsPerSecond) * pSineWave->amplitude);
+    if (ppFrames != NULL) {
+        for (mal_uint64 iFrame = 0; iFrame < frameCount; iFrame += 1) {
+            float s = (float)(sin(pSineWave->time * pSineWave->periodsPerSecond) * pSineWave->amplitude);
             pSineWave->time += pSineWave->delta;
+
+            if (layout == mal_stream_layout_interleaved) {
+                for (mal_uint32 iChannel = 0; iChannel < channels; iChannel += 1) {
+                    ppFrames[0][iFrame*channels + iChannel] = s;
+                }
+            } else {
+                for (mal_uint32 iChannel = 0; iChannel < channels; iChannel += 1) {
+                    ppFrames[iChannel][iFrame] = s;
+                }
+            }
         }
     } else {
-        pSineWave->time += pSineWave->delta * count;
+        pSineWave->time += pSineWave->delta * frameCount;
     }
 
-    return count;
+    return frameCount;
 }
 
 
@@ -27383,12 +27394,20 @@ mal_uint64 mal_sine_wave_read(mal_sine_wave* pSineWave, mal_uint64 count, float*
 // REVISION HISTORY
 // ================
 //
-// v0.8.5-rc - 2018-xx-xx
+// v0.8.5 - 2018-08-12
+//   - Add support for specifying the size of a device's buffer in milliseconds. You can still set the buffer size in
+//     frames if that suits you. When bufferSizeInFrames is 0, bufferSizeInMilliseconds will be used. If both are non-0
+//     then bufferSizeInFrames will take priority. If both are set to 0 the default buffer size is used.
+//   - Add support for the audio(4) backend to OpenBSD.
+//   - Fix a bug with the ALSA backend that was causing problems on Raspberry Pi. This significantly improves the
+//     Raspberry Pi experience.
 //   - Fix a bug where an incorrect number of samples is returned from sinc resampling.
+//   - Add support for setting the value to be passed to internal calls to CoInitializeEx().
+//   - WASAPI and WinMM: Stop the device when it is unplugged.
 //
 // v0.8.4 - 2018-08-06
 //   - Add sndio backend for OpenBSD.
-//   - Add audioio backend for NetBSD.
+//   - Add audio(4) backend for NetBSD.
 //   - Drop support for the OSS backend on everything except FreeBSD and DragonFly BSD.
 //   - Formats are now native-endian (were previously little-endian).
 //   - Mark some APIs as deprecated:
