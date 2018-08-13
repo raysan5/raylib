@@ -203,7 +203,7 @@ void UpdateGame(void)
                 if ((snake[0].position.x == snake[i].position.x) && (snake[0].position.y == snake[i].position.y)) gameOver = true;
             }
 
-            // TODO: review logic: fruit.position calculation
+            // fruit.position calculation
             if (!fruit.active)
             {
                 fruit.active = true;
@@ -211,11 +211,11 @@ void UpdateGame(void)
 
                 for (int i = 0; i < counterTail; i++)
                 {
-                       while ((fruit.position.x == snake[i].position.x) && (fruit.position.y == snake[i].position.y))
-                       {
-                           fruit.position = (Vector2){ GetRandomValue(0, (screenWidth/SQUARE_SIZE) - 1)*SQUARE_SIZE, GetRandomValue(0, (screenHeight/SQUARE_SIZE) - 1)*SQUARE_SIZE };
-                           i = 0;
-                       }
+                    while ((fruit.position.x == snake[i].position.x) && (fruit.position.y == snake[i].position.y))
+                    {
+                        fruit.position = (Vector2){ GetRandomValue(0, (screenWidth/SQUARE_SIZE) - 1)*SQUARE_SIZE + offset.x/2, GetRandomValue(0, (screenHeight/SQUARE_SIZE) - 1)*SQUARE_SIZE + offset.y/2 };
+                        i = 0;
+                    }
                 }
             }
 
