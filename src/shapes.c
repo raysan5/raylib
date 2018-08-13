@@ -646,14 +646,11 @@ bool CheckCollisionPointTriangle(Vector2 point, Vector2 p1, Vector2 p2, Vector2 
 // Check collision between two rectangles
 bool CheckCollisionRecs(Rectangle rec1, Rectangle rec2)
 {
-    bool collision = false;
-
-    float dx = (float)fabs((rec1.x + rec1.width/2) - (rec2.x + rec2.width/2));
-    float dy = (float)fabs((rec1.y + rec1.height/2) - (rec2.y + rec2.height/2));
-
-    if ((dx <= (rec1.width/2 + rec2.width/2)) && ((dy <= (rec1.height/2 + rec2.height/2)))) collision = true;
-
-    return collision;
+    if ((rec1.x <= (rec2.x + rec2.width) && (rec1.x + rec1.width) >= rec2.x) &&
+        (rec1.y <= (rec2.y + rec2.height) && (rec1.y + rec1.height) >= rec2.y))
+        return true;
+    else
+        return false;
 }
 
 // Check collision between two circles
