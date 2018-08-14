@@ -203,7 +203,7 @@ void UpdateGame(void)
                 if ((snake[0].position.x == snake[i].position.x) && (snake[0].position.y == snake[i].position.y)) gameOver = true;
             }
 
-            // TODO: review logic: fruit.position calculation
+            // fruit.position calculation
             if (!fruit.active)
             {
                 fruit.active = true;
@@ -211,17 +211,17 @@ void UpdateGame(void)
 
                 for (int i = 0; i < counterTail; i++)
                 {
-                       while ((fruit.position.x == snake[i].position.x) && (fruit.position.y == snake[i].position.y))
-                       {
-                           fruit.position = (Vector2){ GetRandomValue(0, (screenWidth/SQUARE_SIZE) - 1)*SQUARE_SIZE, GetRandomValue(0, (screenHeight/SQUARE_SIZE) - 1)*SQUARE_SIZE };
-                           i = 0;
-                       }
+                    while ((fruit.position.x == snake[i].position.x) && (fruit.position.y == snake[i].position.y))
+                    {
+                        fruit.position = (Vector2){ GetRandomValue(0, (screenWidth/SQUARE_SIZE) - 1)*SQUARE_SIZE + offset.x/2, GetRandomValue(0, (screenHeight/SQUARE_SIZE) - 1)*SQUARE_SIZE + offset.y/2 };
+                        i = 0;
+                    }
                 }
             }
 
             // collision
-            if (CheckCollisionRecs((Rectangle){(int)snake[0].position.x, (int)snake[0].position.y, (int)snake[0].size.x, (int)snake[0].size.y},
-                                   (Rectangle){(int)fruit.position.x, (int)fruit.position.y, (int)fruit.size.x, (int)fruit.size.y}))
+            if ((snake[0].position.x < (fruit.position.x + fruit.size.x) && (snake[0].position.x + snake[0].size.x) > fruit.position.x) &&
+                (snake[0].position.y < (fruit.position.y + fruit.size.y) && (snake[0].position.y + snake[0].size.y) > fruit.position.y))
             {
                 snake[counterTail].position = snakePosition[counterTail - 1];
                 counterTail += 1;
