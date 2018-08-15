@@ -1,0 +1,13 @@
+{
+	"variants": [
+		{ 
+			"name": "desktop",
+			"shell_cmd": "cd ${folder}\\src && mingw32-make PLATFORM=PLATFORM_DESKTOP"
+		},
+
+		{ 
+			"name": "examples",
+			"shell_cmd": "cd ${folder}\\examples && mingw32-make PLATFORM=PLATFORM_DESKTOP"
+		},
+	]
+}
