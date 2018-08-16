@@ -60,10 +60,12 @@
 #endif
 
 #ifdef RAYMATH_IMPLEMENTATION
-    #if defined(_WIN32)
-        #define RMDEF __declspec(dllexport) extern inline // Provide external definition
+    #if defined(_WIN32) && defined(BUILD_LIBTYPE_SHARED)
+        #define RMDEF __declspec(dllexport) extern inline // We are building raylib as a Win32 shared library (.dll).
+    #elif defined(_WIN32) && defined(USE_LIBTYPE_SHARED) 
+        #define RLAPI __declspec(dllimport)         // We are using raylib as a Win32 shared library (.dll)
     #else
-        #define RMDEF extern inline
+        #define RMDEF extern inline // Provide external definition
     #endif
 #elif defined RAYMATH_HEADER_ONLY
     #define RMDEF static inline // Functions may be inlined, no external out-of-line definition
