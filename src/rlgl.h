@@ -562,7 +562,7 @@ int GetPixelDataSize(int width, int height, int format);// Get pixel data size i
             #define WINGDIAPI __declspec(dllimport)
         #endif
 
-		#include <GL/gl.h>              // OpenGL 1.1 library
+        #include <GL/gl.h>              // OpenGL 1.1 library
     #endif
 #endif
 
@@ -822,11 +822,11 @@ static DynamicBuffer triangles;             // Default dynamic buffer for triang
 static DynamicBuffer quads;                 // Default dynamic buffer for quads data (used to draw textures)
 
 // Default buffers draw calls
-static DrawCall *draws;
-static int drawsCounter;
+static DrawCall *draws = NULL;
+static int drawsCounter = 0;
 
 // Temp vertex buffer to be used with rlTranslate, rlRotate, rlScale
-static Vector3 *tempBuffer;
+static Vector3 *tempBuffer = NULL;
 static int tempBufferCount = 0;
 static bool useTempBuffer = false;
 
@@ -1211,9 +1211,13 @@ void rlEnd(void)
 
     // Verify internal buffers limits
     // NOTE: This check is combined with usage of rlCheckBufferLimit()
-    if ((lines.vCounter/2 >= MAX_LINES_BATCH - 2) ||
-        (triangles.vCounter/3 >= MAX_TRIANGLES_BATCH - 3) ||
-        (quads.vCounter/4 >= MAX_QUADS_BATCH - 4)) rlglDraw();
+    if ((lines.vCounter/2 >= (MAX_LINES_BATCH - 2)) ||
+        (triangles.vCounter/3 >= (MAX_TRIANGLES_BATCH - 3)) ||
+        (quads.vCounter/4 >= (MAX_QUADS_BATCH - 4)))
+    {
+        TraceLog(LOG_INFO, "Max batch limit reached. Forcing draw call launch.");
+        rlglDraw();
+    }
 }
 
 // Define one vertex (position)
@@ -1221,10 +1225,13 @@ void rlVertex3f(float x, float y, float z)
 {
     if (useTempBuffer)
     {
-        tempBuffer[tempBufferCount].x = x;
-        tempBuffer[tempBufferCount].y = y;
-        tempBuffer[tempBufferCount].z = z;
-        tempBufferCount++;
+        if (tempBufferCount < TEMP_VERTEX_BUFFER_SIZE)
+        {
+            tempBuffer[tempBufferCount].x = x;
+            tempBuffer[tempBufferCount].y = y;
+            tempBuffer[tempBufferCount].z = z;
+            tempBufferCount++;
+        }
     }
     else
     {
@@ -1828,6 +1835,7 @@ void rlglClose(void)
     TraceLog(LOG_INFO, "[TEX ID %i] Unloaded texture data (base white texture) from VRAM", whiteTexture);
 
     free(draws);
+    free(tempBuffer);
 #endif
 }
 
@@ -2732,7 +2740,7 @@ void *rlReadTexturePixels(Texture2D texture)
     glPixelStorei(GL_PACK_ALIGNMENT, 1);
 
     int glInternalFormat, glFormat, glType;
-	GetGlFormats(texture.format, &glInternalFormat, &glFormat, &glType);
+    GetGlFormats(texture.format, &glInternalFormat, &glFormat, &glType);
     unsigned int size = GetPixelDataSize(texture.width, texture.height, texture.format);
 
     if ((glInternalFormat != -1) && (texture.format < COMPRESSED_DXT1_RGB))
@@ -4309,11 +4317,6 @@ static void DrawBuffersDefault(void)
         glUseProgram(0);    // Unbind shader program
     }
 
-    // Reset draws counter
-    drawsCounter = 1;
-    draws[0].textureId = whiteTexture;
-    draws[0].vertexCount = 0;
-
     // Reset vertex counters for next frame
     lines.vCounter = 0;
     lines.cCounter = 0;
@@ -4323,12 +4326,20 @@ static void DrawBuffersDefault(void)
     quads.tcCounter = 0;
     quads.cCounter = 0;
 
+    tempBufferCount = 0;
+    useTempBuffer = false;
+
     // Reset depth for next draw
     currentDepth = -1.0f;
 
     // Restore projection/modelview matrices
     projection = matProjection;
     modelview = matModelView;
+
+    // Reset draws counter
+    drawsCounter = 1;
+    draws[0].textureId = whiteTexture;
+    draws[0].vertexCount = 0;
 }
 
 // Unload default internal buffers vertex data from CPU and GPU
