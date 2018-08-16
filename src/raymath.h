@@ -60,7 +60,11 @@
 #endif
 
 #ifdef RAYMATH_IMPLEMENTATION
-    #define RMDEF __declspec(dllexport) extern inline // Provide external definition
+    #if defined(_WIN32)
+        #define RMDEF __declspec(dllexport) extern inline // Provide external definition
+    #else
+        #define RMDEF extern inline
+    #endif
 #elif defined RAYMATH_HEADER_ONLY
     #define RMDEF static inline // Functions may be inlined, no external out-of-line definition
 #else
