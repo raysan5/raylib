@@ -1213,21 +1213,30 @@ void rlEnd(void)
     // NOTE: This check is combined with usage of rlCheckBufferLimit()
     if ((lines.vCounter/2 >= (MAX_LINES_BATCH - 2)) ||
         (triangles.vCounter/3 >= (MAX_TRIANGLES_BATCH - 3)) ||
-        (quads.vCounter/4 >= (MAX_QUADS_BATCH - 4))) rlglDraw();
+        (quads.vCounter/4 >= (MAX_QUADS_BATCH - 4)))
+    {
+        // WARNING: If we are between rlPushMatrix() and rlPopMatrix() and we need to force a rlglDraw(),
+        // we need to call rlPopMatrix() before to recover *currentMatrix (modelview) for the next forced draw call!
+        // Also noted that if we had multiple matrix pushed, it will require "stackCounter" pops before launching the draw
+        
+        // TODO: Undoubtely, current rlPushMatrix/rlPopMatrix should be redesigned... or removed... it's not working properly
+        
+        rlPopMatrix();
+        rlglDraw();
+    }
 }
 
 // Define one vertex (position)
 void rlVertex3f(float x, float y, float z)
 {
-    if (useTempBuffer)
+    // NOTE: Temp buffer is processed and resetted at rlEnd()
+    // Between rlBegin() and rlEnd() can not be more than TEMP_VERTEX_BUFFER_SIZE rlVertex3f() calls
+    if (useTempBuffer && (tempBufferCount < TEMP_VERTEX_BUFFER_SIZE))
     {
-        if (tempBufferCount < TEMP_VERTEX_BUFFER_SIZE)
-        {
-            tempBuffer[tempBufferCount].x = x;
-            tempBuffer[tempBufferCount].y = y;
-            tempBuffer[tempBufferCount].z = z;
-            tempBufferCount++;
-        }
+        tempBuffer[tempBufferCount].x = x;
+        tempBuffer[tempBufferCount].y = y;
+        tempBuffer[tempBufferCount].z = z;
+        tempBufferCount++;
     }
     else
     {
@@ -4320,9 +4329,6 @@ static void DrawBuffersDefault(void)
     quads.vCounter = 0;
     quads.tcCounter = 0;
     quads.cCounter = 0;
-
-    tempBufferCount = 0;
-    useTempBuffer = false;
 
     // Reset depth for next draw
     currentDepth = -1.0f;
