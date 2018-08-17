@@ -808,18 +808,18 @@ typedef struct VrStereoConfig {
 static Matrix stack[MATRIX_STACK_SIZE];
 static int stackCounter = 0;
 
-static Matrix modelview;
-static Matrix projection;
-static Matrix *currentMatrix;
-static int currentMatrixMode;
+static Matrix modelview = { 0 };
+static Matrix projection = { 0 };
+static Matrix *currentMatrix = NULL;
+static int currentMatrixMode = -1;
 
-static int currentDrawMode;
+static int currentDrawMode = -1;
 
 static float currentDepth = -1.0f;
 
-static DynamicBuffer lines;                 // Default dynamic buffer for lines data
-static DynamicBuffer triangles;             // Default dynamic buffer for triangles data
-static DynamicBuffer quads;                 // Default dynamic buffer for quads data (used to draw textures)
+static DynamicBuffer lines = { 0 };         // Default dynamic buffer for lines data
+static DynamicBuffer triangles = { 0 };     // Default dynamic buffer for triangles data
+static DynamicBuffer quads = { 0 };         // Default dynamic buffer for quads data (used to draw textures)
 
 // Default buffers draw calls
 static DrawCall *draws = NULL;
@@ -1213,11 +1213,7 @@ void rlEnd(void)
     // NOTE: This check is combined with usage of rlCheckBufferLimit()
     if ((lines.vCounter/2 >= (MAX_LINES_BATCH - 2)) ||
         (triangles.vCounter/3 >= (MAX_TRIANGLES_BATCH - 3)) ||
-        (quads.vCounter/4 >= (MAX_QUADS_BATCH - 4)))
-    {
-        TraceLog(LOG_INFO, "Max batch limit reached. Forcing draw call launch.");
-        rlglDraw();
-    }
+        (quads.vCounter/4 >= (MAX_QUADS_BATCH - 4))) rlglDraw();
 }
 
 // Define one vertex (position)
@@ -1388,11 +1384,7 @@ void rlEnableTexture(unsigned int id)
     {
         if (draws[drawsCounter - 1].vertexCount > 0) drawsCounter++;
 
-        if (drawsCounter >= MAX_DRAWS_BY_TEXTURE)
-        {
-            rlglDraw();
-            drawsCounter = 1;
-        }
+        if (drawsCounter >= MAX_DRAWS_BY_TEXTURE) rlglDraw();
 
         draws[drawsCounter - 1].textureId = id;
         draws[drawsCounter - 1].vertexCount = 0;
@@ -1772,13 +1764,18 @@ void rlglInit(int width, int height)
 
     for (int i = 0; i < MAX_DRAWS_BY_TEXTURE; i++)
     {
-        draws[i].textureId = 0;
         draws[i].vertexCount = 0;
+        draws[i].vaoId = 0;
+        draws[i].shaderId = 0;
+        draws[i].textureId = 0;
+
+        draws[i].projection = MatrixIdentity();
+        draws[i].modelview = MatrixIdentity();
     }
 
     drawsCounter = 1;
-    draws[drawsCounter - 1].textureId = whiteTexture;
-    currentDrawMode = RL_TRIANGLES;     // Set default draw mode
+    draws[0].textureId = whiteTexture;      // Set default draw texture id
+    currentDrawMode = RL_TRIANGLES;         // Set default draw mode
 
     // Init internal matrix stack (emulating OpenGL 1.1)
     for (int i = 0; i < MATRIX_STACK_SIZE; i++) stack[i] = MatrixIdentity();
@@ -2826,12 +2823,12 @@ void rlRecordDraw(void)
 {
     // TODO: Before adding a new draw, check if anything changed from last stored draw
 #if defined(GRAPHICS_API_OPENGL_33) || defined(GRAPHICS_API_OPENGL_ES2)
+    draws[drawsCounter].vertexCount = currentState.vertexCount;
     draws[drawsCounter].vaoId = currentState.vaoId;             // lines.id, trangles.id, quads.id?
     draws[drawsCounter].textureId = currentState.textureId;     // whiteTexture?
     draws[drawsCounter].shaderId = currentState.shaderId;       // defaultShader.id
     draws[drawsCounter].projection = projection;
     draws[drawsCounter].modelview = modelview;
-    draws[drawsCounter].vertexCount = currentState.vertexCount;
 
     drawsCounter++;
 #endif
@@ -4278,8 +4275,6 @@ static void DrawBuffersDefault(void)
 
                 glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, quads.vboId[3]);
             }
-
-            //TraceLog(LOG_DEBUG, "Draws required per frame: %i", drawsCounter);
 
             for (int i = 0; i < drawsCounter; i++)
             {
