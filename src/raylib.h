@@ -133,21 +133,45 @@
 #define KEY_F10             299
 #define KEY_F11             300
 #define KEY_F12             301
-#define KEY_KP_SUBTRACT     333
-#define KEY_KP_ADD          334
 #define KEY_LEFT_SHIFT      340
 #define KEY_LEFT_CONTROL    341
 #define KEY_LEFT_ALT        342
+#define KEY_LEFT_SUPER      343
 #define KEY_RIGHT_SHIFT     344
 #define KEY_RIGHT_CONTROL   345
 #define KEY_RIGHT_ALT       346
-#define KEY_GRAVE            96
-#define KEY_MINUS            45
-#define KEY_SLASH            47
-#define KEY_EQUAL            61
+#define KEY_RIGHT_SUPER     347
+#define KEY_KB_MENU         348
+#define KEY_LEFT_BRACKET     91
 #define KEY_BACKSLASH        92
+#define KEY_RIGHT_BRACKET    93
+#define KEY_GRAVE            96
+
+// Keyboard Number Pad Keys
+#define KEY_KP_0            320
+#define KEY_KP_1            321
+#define KEY_KP_2            322
+#define KEY_KP_3            323
+#define KEY_KP_4            324
+#define KEY_KP_5            325
+#define KEY_KP_6            326
+#define KEY_KP_7            327
+#define KEY_KP_8            328
+#define KEY_KP_9            329
+#define KEY_KP_DECIMAL      330
+#define KEY_KP_DIVIDE       331
+#define KEY_KP_MULTIPLY     332
+#define KEY_KP_SUBTRACT     333
+#define KEY_KP_ADD          334
+#define KEY_KP_ENTER        335
+#define KEY_KP_EQUAL        336
 
 // Keyboard Alpha Numeric Keys
+#define KEY_APOSTROPHE       39
+#define KEY_COMMA            44
+#define KEY_MINUS            45
+#define KEY_PERIOD           46
+#define KEY_SLASH            47
 #define KEY_ZERO             48
 #define KEY_ONE              49
 #define KEY_TWO              50
@@ -158,6 +182,8 @@
 #define KEY_SEVEN            55
 #define KEY_EIGHT            56
 #define KEY_NINE             57
+#define KEY_SEMICOLON        59
+#define KEY_EQUAL            61
 #define KEY_A                65
 #define KEY_B                66
 #define KEY_C                67
