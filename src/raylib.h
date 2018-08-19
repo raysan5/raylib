@@ -133,6 +133,8 @@
 #define KEY_F10             299
 #define KEY_F11             300
 #define KEY_F12             301
+#define KEY_KP_SUBTRACT     333
+#define KEY_KP_ADD          334
 #define KEY_LEFT_SHIFT      340
 #define KEY_LEFT_CONTROL    341
 #define KEY_LEFT_ALT        342
@@ -140,7 +142,9 @@
 #define KEY_RIGHT_CONTROL   345
 #define KEY_RIGHT_ALT       346
 #define KEY_GRAVE            96
+#define KEY_MINUS            45
 #define KEY_SLASH            47
+#define KEY_EQUAL            61
 #define KEY_BACKSLASH        92
 
 // Keyboard Alpha Numeric Keys
