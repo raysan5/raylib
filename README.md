@@ -22,7 +22,7 @@ features
   - Multiple platforms supported: **Windows, Linux, MacOS, Android... and many more!**
   - Written in plain C code (C99) in PascalCase/camelCase notation
   - Hardware accelerated with OpenGL (**1.1, 2.1, 3.3 or ES 2.0**)
-  - **Unique OpenGL abstraction layer** (usable as standalone module): [rlgl](https://github.com/raysan5/raylib/blob/master/src/rlgl.c)
+  - **Unique OpenGL abstraction layer** (usable as standalone module): [rlgl](https://github.com/raysan5/raylib/blob/master/src/rlgl.h)
   - Multiple Fonts formats supported (XNA fonts, AngelCode fonts, TTF)
   - Outstanding texture formats support, including compressed formats (DXT, ETC, ASTC)
   - **Full 3d support** for 3d Shapes, Models, Billboards, Heightmaps and more! 
