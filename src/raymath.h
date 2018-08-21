@@ -155,6 +155,12 @@ RMDEF float Clamp(float value, float min, float max)
     return res > max ? max : res;
 }
 
+// Calculate linear interpolation between two vectors
+RMDEF float Lerp(float start, float end, float amount)
+{
+    return start + amount*(end - start);
+}
+
 //----------------------------------------------------------------------------------
 // Module Functions Definition - Vector2 math
 //----------------------------------------------------------------------------------
@@ -241,6 +247,17 @@ RMDEF Vector2 Vector2Divide(Vector2 v, float div)
 RMDEF Vector2 Vector2Normalize(Vector2 v)
 {
     Vector2 result = Vector2Divide(v, Vector2Length(v));
+    return result;
+}
+
+// Calculate linear interpolation between two vectors
+RMDEF Vector2 Vector2Lerp(Vector2 v1, Vector2 v2, float amount)
+{
+    Vector2 result = { 0 };
+
+    result.x = v1.x + amount*(v2.x - v1.x);
+    result.y = v1.y + amount*(v2.y - v1.y);
+
     return result;
 }
 
