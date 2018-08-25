@@ -1346,11 +1346,20 @@ const char *GetExtension(const char *fileName)
     return (dot + 1);
 }
 
+/* "string pointer reverse break": return right-most occurrence of charset in s */
+static const char *strprbrk(const char *s, const char *charset)
+{
+    const char *latest_match = NULL;
+    for(; s = strpbrk(s, charset), s != NULL; latest_match=s++)
+        ;
+    return latest_match;
+}
+
 // Get pointer to filename for a path string
 const char *GetFileName(const char *filePath)
 {
-    const char *fileName = strrchr(filePath, '\\');
-    
+    const char *fileName = strprbrk(filePath, "\\/");
+
     if (!fileName || fileName == filePath) return filePath;
 
     return fileName + 1;
@@ -1360,14 +1369,14 @@ const char *GetFileName(const char *filePath)
 // Get directory for a given fileName (with path)
 const char *GetDirectoryPath(const char *fileName)
 {
-    char *lastSlash = NULL;
+    const char *lastSlash = NULL;
     static char filePath[256];      // MAX_DIRECTORY_PATH_SIZE = 256
     memset(filePath, 0, 256);
-    
-    lastSlash = strrchr(fileName, '\\');
+
+    lastSlash = strprbrk(fileName, "\\/");
     strncpy(filePath, fileName, strlen(fileName) - (strlen(lastSlash) - 1));
     filePath[strlen(fileName) - strlen(lastSlash)] = '\0';
-    
+
     return filePath;
 }
 
