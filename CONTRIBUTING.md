@@ -73,6 +73,7 @@ Some people ported raylib to other languages in form of bindings or wrappers to 
  - [raylib Ruby binding](https://github.com/D3nX/raylib-ruby-ffi)
  - [raylib Rust binding](https://github.com/deltaphc/raylib-rs)
  - [raylib Python binding](https://github.com/overdev/raylibpy)
+ - [raylib Haskell binding](https://github.com/DevJac/raylib-haskell)
  
 Usually, raylib bindings follow the convention: `raylib-{language}`
 
