@@ -1346,13 +1346,12 @@ const char *GetExtension(const char *fileName)
     return (dot + 1);
 }
 
-/* "string pointer reverse break": return right-most occurrence of charset in s */
+// String pointer reverse break: returns right-most occurrence of charset in s
 static const char *strprbrk(const char *s, const char *charset)
 {
-    const char *latest_match = NULL;
-    for(; s = strpbrk(s, charset), s != NULL; latest_match=s++)
-        ;
-    return latest_match;
+    const char *latestMatch = NULL;
+    for (; s = strpbrk(s, charset), s != NULL; latestMatch = s++) { }
+    return latestMatch;
 }
 
 // Get pointer to filename for a path string
