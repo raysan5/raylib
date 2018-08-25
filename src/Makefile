@@ -201,7 +201,7 @@ RAYLIB_RELEASE_PATH  ?= $(RAYLIB_PATH)/release/libs
 # Define output directory for compiled library
 ifeq ($(PLATFORM),PLATFORM_DESKTOP)
     ifeq ($(PLATFORM_OS),WINDOWS)
-        RAYLIB_RELEASE_PATH = $(RAYLIB_PATH)/release/libs/win32/mingw32
+        RAYLIB_RELEASE_PATH = $(RAYLIB_PATH)\release\libs\win32\mingw32
     endif
     ifeq ($(PLATFORM_OS),LINUX)
         RAYLIB_RELEASE_PATH = $(RAYLIB_PATH)/release/libs/linux
@@ -460,7 +460,13 @@ ifeq ($(PLATFORM_OS),LINUX)
 endif
 
 # Compile raylib library
+# NOTE: Release directory is created if not exist
 raylib: $(OBJS)
+ifeq ($(PLATFORM_OS),WINDOWS)
+	if not exist $(RAYLIB_RELEASE_PATH) mkdir $(RAYLIB_RELEASE_PATH)
+else
+	mkdir -p $(RAYLIB_RELEASE_PATH)
+endif
 ifeq ($(PLATFORM),PLATFORM_WEB)
     # Compile raylib for web.
 	emcc -O1 $(OBJS) -o $(RAYLIB_RELEASE_PATH)/libraylib.bc
