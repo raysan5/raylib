@@ -4,30 +4,49 @@
     "version": "2.0.0",
     "tasks": [
         {
-            "label": "build release",
+            "label": "(WIN) build release",
             "type": "process",
             "command": "C:/raylib/mingw/bin/mingw32-make.exe",
             "args": [
                 "PLATFORM=PLATFORM_DESKTOP",
                 "RAYLIB_PATH=C:/raylib/raylib",
-                "PROJECT_NAME=game",
             ],
             "group": "build"
         },
         {
-            "label": "build debug",
+            "label": "(WIN) build debug",
             "type": "process",
             "command": "C:/raylib/mingw/bin/mingw32-make.exe",
             "args": [
                 "PLATFORM=PLATFORM_DESKTOP",
                 "RAYLIB_PATH=C:/raylib/raylib",
-                "PROJECT_NAME=game",
-                "DEBUGGING=TRUE",
+                "DEBUGGING=TRUE"
+            ],
+            "group": "build"
+        },
+        {
+            "label": "(OSX) build debug",
+            "type": "process",
+            "command": "make",
+            "args": [
+                "PLATFORM=PLATFORM_DESKTOP",
+                "RAYLIB_PATH=<path_to_raylib>",
+                "DEBUGGING=TRUE"
             ],
             "group": {
                 "kind": "build",
                 "isDefault": true
             }
+        },
+        {
+            "label": "(OSX) build release",
+            "type": "process",
+            "command": "make",
+            "args": [
+                "PLATFORM=PLATFORM_DESKTOP",
+                "RAYLIB_PATH=<path_to_raylib>",
+            ],
+            "group": "build"
         }
     ]
 }
