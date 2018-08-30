@@ -5,7 +5,7 @@
         "version": "0.2.0",
         "configurations": [
           {
-            "name": "Debug",
+            "name": "(WIN) Debug",
             "type": "cppdbg",
             "request": "launch",
             "program": "${workspaceFolder}/game.exe",
@@ -23,10 +23,10 @@
                 "ignoreFailures": false
               }
             ],
-            "preLaunchTask": "build debug"
+            "preLaunchTask": "(WIN) build debug"
           },
           {
-            "name": "Run",
+            "name": "(WIN) Run",
             "type": "cppdbg",
             "request": "launch",
             "program": "${workspaceFolder}/game.exe",
@@ -44,7 +44,25 @@
                 "ignoreFailures": false
               }
             ],
-            "preLaunchTask": "build release"
+            "preLaunchTask": "(WIN) build release"
+          },
+          {
+            "name": "(OSX) Debug",
+            "type": "lldb",
+            "request": "launch",
+            "program": "${workspaceFolder}/game",
+            "args": [],
+            "cwd": "${workspaceFolder}",
+            "preLaunchTask": "(OSX) build debug"
+          },
+          {
+            "name": "(OSX) Run",
+            "type": "lldb",
+            "request": "launch",
+            "program": "${workspaceFolder}/game",
+            "args": [],
+            "cwd": "${workspaceFolder}",
+            "preLaunchTask": "(OSX) build release"
           },
         ]
       }
