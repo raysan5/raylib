@@ -5,10 +5,10 @@
 *   CONFIGURATION:
 *
 *   #define SUPPORT_FILEFORMAT_OBJ
-*       Selected desired fileformats to be supported for loading.
-*
 *   #define SUPPORT_FILEFORMAT_MTL
-*       Selected desired fileformats to be supported for loading.
+*   #define SUPPORT_FILEFORMAT_IQM
+*   #define SUPPORT_FILEFORMAT_GLTF
+*       Selected desired fileformats to be supported for model data loading.
 *
 *   #define SUPPORT_MESH_GENERATION
 *       Support procedural mesh generation functions, uses external par_shapes.h library
@@ -48,8 +48,20 @@
 
 #include "rlgl.h"           // raylib OpenGL abstraction layer to OpenGL 1.1, 2.1, 3.3+ or ES2
 
-#define PAR_SHAPES_IMPLEMENTATION
-#include "external/par_shapes.h"    // Shapes 3d parametric generation
+#if defined(SUPPORT_FILEFORMAT_IQM)
+    #define RIQM_IMPLEMENTATION
+    #include "external/riqm.h"          // IQM file format loading
+#endif
+
+#if defined(SUPPORT_FILEFORMAT_GLTF)
+    #define CGLTF_IMPLEMENTATION
+    #include "external/cgltf.h"         // glTF file format loading
+#endif
+
+#if defined(SUPPORT_MESH_GENERATION)
+    #define PAR_SHAPES_IMPLEMENTATION
+    #include "external/par_shapes.h"    // Shapes 3d parametric generation
+#endif
 
 //----------------------------------------------------------------------------------
 // Defines and Macros
@@ -74,6 +86,12 @@ static Mesh LoadOBJ(const char *fileName);      // Load OBJ mesh data
 #endif
 #if defined(SUPPORT_FILEFORMAT_MTL)
 static Material LoadMTL(const char *fileName);  // Load MTL material data
+#endif
+#if defined(SUPPORT_FILEFORMAT_GLTF)
+static Mesh LoadIQM(const char *fileName);      // Load IQM mesh data
+#endif
+#if defined(SUPPORT_FILEFORMAT_GLTF)
+static Mesh LoadGLTF(const char *fileName);     // Load GLTF mesh data
 #endif
 
 //----------------------------------------------------------------------------------
@@ -2206,9 +2224,8 @@ void MeshBinormals(Mesh *mesh)
         Vector3 tangent = { mesh->tangents[i*4 + 0], mesh->tangents[i*4 + 1], mesh->tangents[i*4 + 2] };
         float tangentW = mesh->tangents[i*4 + 3];
     
-        
         // TODO: Register computed binormal in mesh->binormal ?
-        // Vector3 binormal = Vector3Multiply( Vector3CrossProduct( normal, tangent ), tangentW );
+        // Vector3 binormal = Vector3Multiply(Vector3CrossProduct(normal, tangent), tangentW);
     }
 }
 
@@ -2629,5 +2646,61 @@ static Material LoadMTL(const char *fileName)
     TraceLog(LOG_INFO, "[%s] Material loaded successfully", fileName);
 
     return material;
+}
+#endif
+
+#if defined(SUPPORT_FILEFORMAT_GLTF)
+// Load IQM mesh data
+static Mesh LoadIQM(const char *fileName)
+{
+    Mesh mesh = { 0 };
+    
+    // TODO: Load IQM file
+    
+    return mesh;
+} 
+#endif
+
+#if defined(SUPPORT_FILEFORMAT_GLTF)
+// Load GLTF mesh data
+static Mesh LoadGLTF(const char *fileName)
+{
+    Mesh mesh = { 0 };
+    
+    // GLTF file loading
+    FILE *gltfFile = fopen(fileName, "rb");
+    
+    if (gltfFile == NULL)
+    {
+        TraceLog(LOG_WARNING, "[%s] GLTF file could not be opened", fileName);
+        return mesh;
+    }
+
+	fseek(gltfFile, 0, SEEK_END);
+	int size = ftell(gltfFile);
+	fseek(gltfFile, 0, SEEK_SET);
+
+	void *buffer = malloc(size);
+	fread(buffer, size, 1, gltfFile);
+    
+	fclose(gltfFile);
+
+    // GLTF data loading
+	cgltf_options options = {0};
+	cgltf_data data;
+	cgltf_result result = cgltf_parse(&options, buffer, size, &data);
+
+	if (result == cgltf_result_success)
+	{
+		printf("Type: %u\n", data.file_type);
+		printf("Version: %d\n", data.version);
+		printf("Meshes: %lu\n", data.meshes_count);
+	}
+    else TraceLog(LOG_WARNING, "[%s] GLTF data could not be loaded", fileName);
+
+	free(buffer);
+	cgltf_free(&data);
+    
+    return mesh; 
 }
 #endif

@@ -442,6 +442,7 @@ typedef struct RenderTexture2D {
 // RenderTexture type, same as RenderTexture2D
 typedef RenderTexture2D RenderTexture;
 
+// N-Patch layout info
 typedef struct NPatchInfo {
     Rectangle sourceRec;   // Region in the texture
     int left;              // left border offset
