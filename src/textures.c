@@ -1555,7 +1555,9 @@ Image ImageTextEx(Font font, const char *text, float fontSize, float spacing, Co
     // Define ImageFont struct? or include Image spritefont in Font struct?
     Image imFont = GetTextureData(font.texture);
     
-    ImageColorTint(&imFont, tint);                    // Apply color tint to font
+    ImageFormat(&imFont, UNCOMPRESSED_R8G8B8A8);    // Make sure image format could be properly colored!
+    
+    ImageColorTint(&imFont, tint);                  // Apply color tint to font
 
     // Create image to store text
     Image imText = GenImageColor((int)imSize.x, (int)imSize.y, BLANK);
