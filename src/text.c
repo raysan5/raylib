@@ -221,7 +221,7 @@ extern void LoadDefaultFont(void)
         defaultFont.chars[i].value = 32 + i;  // First char is 32
 
         defaultFont.chars[i].rec.x = (float)currentPosX;
-        defaultFont.chars[i].rec.y = (float)charsDivisor + currentLine*(charsHeight + charsDivisor);
+        defaultFont.chars[i].rec.y = (float)(charsDivisor + currentLine*(charsHeight + charsDivisor));
         defaultFont.chars[i].rec.width = (float)charsWidth[i];
         defaultFont.chars[i].rec.height = (float)charsHeight;
 
@@ -234,7 +234,7 @@ extern void LoadDefaultFont(void)
             testPosX = currentPosX;
 
             defaultFont.chars[i].rec.x = (float)charsDivisor;
-            defaultFont.chars[i].rec.y = (float)charsDivisor + currentLine*(charsHeight + charsDivisor);
+            defaultFont.chars[i].rec.y = (float)(charsDivisor + currentLine*(charsHeight + charsDivisor));
         }
         else currentPosX = testPosX;
 
@@ -244,7 +244,7 @@ extern void LoadDefaultFont(void)
         defaultFont.chars[i].advanceX = 0;
     }
 
-    defaultFont.baseSize = (int) defaultFont.chars[0].rec.height;
+    defaultFont.baseSize = (int)defaultFont.chars[0].rec.height;
     
     TraceLog(LOG_INFO, "[TEX ID %i] Default font loaded successfully", defaultFont.texture.id);
 }
@@ -367,8 +367,6 @@ CharInfo *LoadFontData(const char *fileName, int fontSize, int *fontChars, int c
     // NOTE: ascent is equivalent to font baseline
     int ascent, descent, lineGap;
     stbtt_GetFontVMetrics(&fontInfo, &ascent, &descent, &lineGap);
-    ascent *= (int) scaleFactor;
-    descent *= (int) scaleFactor;
     
     // Fill fontChars in case not provided externally
     // NOTE: By default we fill charsCount consecutevely, starting at 32 (Space)
@@ -397,17 +395,17 @@ CharInfo *LoadFontData(const char *fileName, int fontSize, int *fontChars, int c
         
         chars[i].rec.width = (float)chw;
         chars[i].rec.height = (float)chh;
-        chars[i].offsetY += ascent;
+        chars[i].offsetY += (int)((float)ascent*scaleFactor);
     
         // Get bounding box for character (may be offset to account for chars that dip above or below the line)
         int chX1, chY1, chX2, chY2;
         stbtt_GetCodepointBitmapBox(&fontInfo, ch, scaleFactor, scaleFactor, &chX1, &chY1, &chX2, &chY2);
         
         TraceLog(LOG_DEBUG, "Character box measures: %i, %i, %i, %i", chX1, chY1, chX2 - chX1, chY2 - chY1);
-        TraceLog(LOG_DEBUG, "Character offsetY: %i", ascent + chY1);
+        TraceLog(LOG_DEBUG, "Character offsetY: %i", (int)((float)ascent*scaleFactor) + chY1);
 
         stbtt_GetCodepointHMetrics(&fontInfo, ch, &chars[i].advanceX, NULL);
-        chars[i].advanceX *= (int) scaleFactor;
+        chars[i].advanceX *= scaleFactor;
     }
     
     free(fontBuffer);
@@ -887,7 +885,7 @@ static Font LoadImageFont(Image image, Color key, int firstChar)
         spriteFont.chars[i].advanceX = 0;
     }
 
-    spriteFont.baseSize = (int) spriteFont.chars[0].rec.height;
+    spriteFont.baseSize = (int)spriteFont.chars[0].rec.height;
 
     TraceLog(LOG_INFO, "Image file loaded correctly as Font");
 
