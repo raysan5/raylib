@@ -717,7 +717,7 @@ Mesh GenMeshPlane(float width, float length, int resX, int resZ)
     resZ++;
     
     // Vertices definition
-    int vertexCount = resX*resZ*6;  // 6 vertex by quad
+    int vertexCount = resX*resZ; // vertices get reused for the faces
 
     Vector3 *vertices = (Vector3 *)malloc(vertexCount*sizeof(Vector3));
     for (int z = 0; z < resZ; z++)
