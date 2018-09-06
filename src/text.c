@@ -283,7 +283,7 @@ Font LoadFont(const char *fileName)
     {
         font.baseSize = DEFAULT_TTF_FONTSIZE;
         font.charsCount = DEFAULT_TTF_NUMCHARS;
-        font.chars = LoadFontData(fileName, font.baseSize, NULL, font.charsCount, false);
+        font.chars = LoadFontData(fileName, font.baseSize, NULL, font.charsCount, FONT_DEFAULT);
         Image atlas = GenImageFontAtlas(font.chars, font.charsCount, font.baseSize, 4, 0);
         font.texture = LoadTextureFromImage(atlas);
         UnloadImage(atlas);
@@ -319,8 +319,8 @@ Font LoadFontEx(const char *fileName, int fontSize, int charsCount, int *fontCha
     
     font.baseSize = fontSize;
     font.charsCount = (charsCount > 0) ? charsCount : 95;
-    font.chars = LoadFontData(fileName, font.baseSize, fontChars, font.charsCount, false);
-    Image atlas = GenImageFontAtlas(font.chars, font.charsCount, font.baseSize, 0, 0);
+    font.chars = LoadFontData(fileName, font.baseSize, fontChars, font.charsCount, FONT_DEFAULT);
+    Image atlas = GenImageFontAtlas(font.chars, font.charsCount, font.baseSize, 2, 0);
     font.texture = LoadTextureFromImage(atlas);
     UnloadImage(atlas);
     
@@ -329,13 +329,15 @@ Font LoadFontEx(const char *fileName, int fontSize, int charsCount, int *fontCha
 
 // Load font data for further use
 // NOTE: Requires TTF font and can generate SDF data
-CharInfo *LoadFontData(const char *fileName, int fontSize, int *fontChars, int charsCount, bool sdf)
+CharInfo *LoadFontData(const char *fileName, int fontSize, int *fontChars, int charsCount, int type)
 {
     // NOTE: Using some SDF generation default values,
     // trades off precision with ability to handle *smaller* sizes
     #define SDF_CHAR_PADDING            4
     #define SDF_ON_EDGE_VALUE         128
     #define SDF_PIXEL_DIST_SCALE     64.0f
+    
+    #define BITMAP_ALPHA_THRESHOLD     80
     
     // In case no chars count provided, default to 95
     charsCount = (charsCount > 0) ? charsCount : 95;
@@ -390,8 +392,19 @@ CharInfo *LoadFontData(const char *fileName, int fontSize, int *fontChars, int c
         //      stbtt_GetCodepointBitmapBox()        -- how big the bitmap must be
         //      stbtt_MakeCodepointBitmap()          -- renders into bitmap you provide
         
-        if (!sdf) chars[i].data = stbtt_GetCodepointBitmap(&fontInfo, scaleFactor, scaleFactor, ch, &chw, &chh, &chars[i].offsetX, &chars[i].offsetY);
+        if (type != FONT_SDF) chars[i].data = stbtt_GetCodepointBitmap(&fontInfo, scaleFactor, scaleFactor, ch, &chw, &chh, &chars[i].offsetX, &chars[i].offsetY);
         else if (ch != 32) chars[i].data = stbtt_GetCodepointSDF(&fontInfo, scaleFactor, ch, SDF_CHAR_PADDING, SDF_ON_EDGE_VALUE, SDF_PIXEL_DIST_SCALE, &chw, &chh, &chars[i].offsetX, &chars[i].offsetY);
+        
+        if (type == FONT_BITMAP)
+        {
+            // Aliased bitmap (black & white) font generation, avoiding anti-aliasing
+            // NOTE: For optimum results, bitmap font should be generated at base pixel size
+            for (int p = 0; p < chw*chh; p++)
+            {
+                if (chars[i].data[p] < BITMAP_ALPHA_THRESHOLD) chars[i].data[p] = 0;
+                else chars[i].data[p] = 255;
+            }
+        }
         
         chars[i].rec.width = (float)chw;
         chars[i].rec.height = (float)chh;

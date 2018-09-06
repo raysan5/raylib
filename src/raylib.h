@@ -721,6 +721,13 @@ typedef enum {
     WRAP_MIRROR
 } TextureWrapMode;
 
+// Font type, defines generation method
+typedef enum {
+    FONT_DEFAULT = 0,   // Default font generation, anti-aliased
+    FONT_BITMAP,        // Bitmap font generation, no anti-aliasing
+    FONT_SDF            // SDF font generation, requires external shader
+} FontType;
+
 // Color blending modes (pre-defined)
 typedef enum {
     BLEND_ALPHA = 0,
@@ -1056,7 +1063,7 @@ RLAPI void DrawTextureNPatch(Texture2D texture, NPatchInfo nPatchInfo, Rectangle
 RLAPI Font GetFontDefault(void);                                                            // Get the default Font
 RLAPI Font LoadFont(const char *fileName);                                                  // Load font from file into GPU memory (VRAM)
 RLAPI Font LoadFontEx(const char *fileName, int fontSize, int charsCount, int *fontChars);  // Load font from file with extended parameters
-RLAPI CharInfo *LoadFontData(const char *fileName, int fontSize, int *fontChars, int charsCount, bool sdf); // Load font data for further use
+RLAPI CharInfo *LoadFontData(const char *fileName, int fontSize, int *fontChars, int charsCount, int type); // Load font data for further use
 RLAPI Image GenImageFontAtlas(CharInfo *chars, int fontSize, int charsCount, int padding, int packMethod);  // Generate image font atlas using chars info
 RLAPI void UnloadFont(Font font);                                                           // Unload Font from GPU memory (VRAM)
 
