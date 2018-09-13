@@ -229,6 +229,13 @@ RMDEF Vector2 Vector2Scale(Vector2 v, float scale)
     return result;
 }
 
+// Multiply vector by vector
+RMDEF Vector2 Vector2MultiplyV(Vector2 v1, Vector2 v2)
+{
+	Vector2 result = { v1.x*v2.x, v1.y*v2.y };
+	return result;
+}
+
 // Negate vector
 RMDEF Vector2 Vector2Negate(Vector2 v)
 {
@@ -241,6 +248,13 @@ RMDEF Vector2 Vector2Divide(Vector2 v, float div)
 {
     Vector2 result = { v.x/div, v.y/div };
     return result;
+}
+
+// Divide vector by vector
+RMDEF Vector2 Vector2DivideV(Vector2 v1, Vector2 v2)
+{
+	Vector2 result = { v1.x/v2.x, v1.y/v2.y };
+	return result;
 }
 
 // Normalize provided vector
@@ -376,6 +390,20 @@ RMDEF Vector3 Vector3Negate(Vector3 v)
 {
     Vector3 result = { -v.x, -v.y, -v.z };
     return result;
+}
+
+// Divide vector by a float value
+RMDEF Vector3 Vector3Divide(Vector3 v, float div)
+{
+	Vector3 result = { v.x / div, v.y / div, v.z / div };
+	return result;
+}
+
+// Divide vector by vector
+RMDEF Vector3 Vector3DivideV(Vector3 v1, Vector3 v2)
+{
+	Vector3 result = { v1.x/v2.x, v1.y/v2.y, v1.z/v2.z };
+	return result;
 }
 
 // Normalize provided vector
