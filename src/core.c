@@ -886,7 +886,7 @@ void EndDrawing(void)
     // Wait for some milliseconds...
     if (frameTime < targetTime)
     {
-        Wait( (float)(targetTime - frameTime)*1000.0f);
+        Wait((float)(targetTime - frameTime)*1000.0f);
 
         currentTime = GetTime();
         double extraTime = currentTime - previousTime;

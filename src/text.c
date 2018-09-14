@@ -671,11 +671,11 @@ const char *SubText(const char *text, int position, int length)
 
     for (int c = 0 ; c < length ; c++)
     {
-        *(buffer+c) = *(text+position);
+        *(buffer + c) = *(text + position);
         text++;
     }
 
-    *(buffer+length) = '\0';
+    *(buffer + length) = '\0';
 
     return buffer;
 }
