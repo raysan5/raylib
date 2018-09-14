@@ -736,7 +736,7 @@ Mesh GenMeshPlane(float width, float length, int resX, int resZ)
     Vector3 *normals = (Vector3 *)malloc(vertexCount*sizeof(Vector3));
     for (int n = 0; n < vertexCount; n++) normals[n] = (Vector3){ 0.0f, 1.0f, 0.0f };   // Vector3.up;
 
-    // TexCoords definition		
+    // TexCoords definition        
     Vector2 *texcoords = (Vector2 *)malloc(vertexCount*sizeof(Vector2));
     for (int v = 0; v < resZ; v++)
     {
@@ -759,7 +759,7 @@ Mesh GenMeshPlane(float width, float length, int resX, int resZ)
         triangles[t++] = i + 1;
         triangles[t++] = i;
 
-        triangles[t++] = i + resX;	
+        triangles[t++] = i + resX;    
         triangles[t++] = i + resX + 1;
         triangles[t++] = i + 1;
     }
@@ -2676,30 +2676,30 @@ static Mesh LoadGLTF(const char *fileName)
         return mesh;
     }
 
-	fseek(gltfFile, 0, SEEK_END);
-	int size = ftell(gltfFile);
-	fseek(gltfFile, 0, SEEK_SET);
+    fseek(gltfFile, 0, SEEK_END);
+    int size = ftell(gltfFile);
+    fseek(gltfFile, 0, SEEK_SET);
 
-	void *buffer = malloc(size);
-	fread(buffer, size, 1, gltfFile);
+    void *buffer = malloc(size);
+    fread(buffer, size, 1, gltfFile);
     
-	fclose(gltfFile);
+    fclose(gltfFile);
 
     // GLTF data loading
-	cgltf_options options = {0};
-	cgltf_data data;
-	cgltf_result result = cgltf_parse(&options, buffer, size, &data);
+    cgltf_options options = {0};
+    cgltf_data data;
+    cgltf_result result = cgltf_parse(&options, buffer, size, &data);
 
-	if (result == cgltf_result_success)
-	{
-		printf("Type: %u\n", data.file_type);
-		printf("Version: %d\n", data.version);
-		printf("Meshes: %lu\n", data.meshes_count);
-	}
+    if (result == cgltf_result_success)
+    {
+        printf("Type: %u\n", data.file_type);
+        printf("Version: %d\n", data.version);
+        printf("Meshes: %lu\n", data.meshes_count);
+    }
     else TraceLog(LOG_WARNING, "[%s] GLTF data could not be loaded", fileName);
 
-	free(buffer);
-	cgltf_free(&data);
+    free(buffer);
+    cgltf_free(&data);
     
     return mesh; 
 }
