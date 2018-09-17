@@ -108,7 +108,7 @@
 
 #if defined(SUPPORT_IMAGE_EXPORT)
     #define STB_IMAGE_WRITE_IMPLEMENTATION
-    #include "external/stb_image_write.h"   // Required for: stbi_write_bmp(), stbi_write_png()
+    #include "external/stb_image_write.h"   // Required for: stbi_write_*()
 #endif
 
 #if defined(SUPPORT_IMAGE_MANIPULATION)
