@@ -727,7 +727,14 @@ void ExportImage(Image image, const char *fileName)
     else if (IsFileExtension(fileName, ".bmp")) success = stbi_write_bmp(fileName, image.width, image.height, 4, imgData);
     else if (IsFileExtension(fileName, ".tga")) success = stbi_write_tga(fileName, image.width, image.height, 4, imgData);
     else if (IsFileExtension(fileName, ".jpg")) success = stbi_write_jpg(fileName, image.width, image.height, 4, imgData, 80);  // Between 1 and 100
-    else if (IsFileExtension(fileName, ".raw")) { }  // TODO: Export raw pixel data
+    else if (IsFileExtension(fileName, ".raw")) 
+    {
+        // Export raw pixel data
+        // NOTE: It's up to the user to track image parameters
+        FILE *rawFile = fopen(fileName, "wb");
+        fwrite(image.data, GetPixelDataSize(image.width, image.height, image.format), 1, rawFile);
+        fclose(rawFile);
+    }
     else if (IsFileExtension(fileName, ".h")) { }    // TODO: Export pixel data as an array of bytes
     
     if (success != 0) TraceLog(LOG_INFO, "Image exported successfully: %s", fileName);
@@ -2847,7 +2854,11 @@ static Image LoadKTX(const char *fileName)
     // GL_COMPRESSED_RGBA8_ETC2_EAC     0x9278
 
     // KTX file Header (64 bytes)
-    // https://www.khronos.org/opengles/sdk/tools/KTX/file_format_spec/
+    // v1.1 - https://www.khronos.org/opengles/sdk/tools/KTX/file_format_spec/
+    // v2.0 - http://github.khronos.org/KTX-Specification/
+    
+    // TODO: Support KTX 2.2 specs!
+    
     typedef struct {
         char id[12];                        // Identifier: "«KTX 11»\r\n\x1A\n"
         unsigned int endianness;            // Little endian: 0x01 0x02 0x03 0x04
