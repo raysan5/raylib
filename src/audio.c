@@ -1049,6 +1049,89 @@ void UpdateSound(Sound sound, const void *data, int samplesCount)
 #endif
 }
 
+// Export wave data to file
+void ExportWave(Wave wave, const char *fileName)
+{
+    bool success = false;
+    
+    if (IsFileExtension(fileName, ".wav"))
+    {
+        // Basic WAV headers structs
+        typedef struct {
+            char chunkID[4];
+            int chunkSize;
+            char format[4];
+        } RiffHeader;
+
+        typedef struct {
+            char subChunkID[4];
+            int subChunkSize;
+            short audioFormat;
+            short numChannels;
+            int sampleRate;
+            int byteRate;
+            short blockAlign;
+            short bitsPerSample;
+        } WaveFormat;
+
+        typedef struct {
+            char subChunkID[4];
+            int subChunkSize;
+        } WaveData;
+    
+        RiffHeader riffHeader;
+        WaveFormat waveFormat;
+        WaveData waveData;
+
+        // Fill structs with data
+        riffHeader.chunkID[0] = 'R';
+        riffHeader.chunkID[1] = 'I';
+        riffHeader.chunkID[2] = 'F';
+        riffHeader.chunkID[3] = 'F';
+        riffHeader.chunkSize = 44 - 4 + wave.sampleCount*wave.sampleSize/8;
+        riffHeader.format[0] = 'W';
+        riffHeader.format[1] = 'A';
+        riffHeader.format[2] = 'V';
+        riffHeader.format[3] = 'E';
+
+        waveFormat.subChunkID[0] = 'f';
+        waveFormat.subChunkID[1] = 'm';
+        waveFormat.subChunkID[2] = 't';
+        waveFormat.subChunkID[3] = ' ';
+        waveFormat.subChunkSize = 16;
+        waveFormat.audioFormat = 1;
+        waveFormat.numChannels = wave.channels;
+        waveFormat.sampleRate = wave.sampleRate;
+        waveFormat.byteRate = wave.sampleRate*wave.sampleSize/8;
+        waveFormat.blockAlign = wave.sampleSize/8;
+        waveFormat.bitsPerSample = wave.sampleSize;
+
+        waveData.subChunkID[0] = 'd';
+        waveData.subChunkID[1] = 'a';
+        waveData.subChunkID[2] = 't';
+        waveData.subChunkID[3] = 'a';
+        waveData.subChunkSize = wave.sampleCount*wave.channels*wave.sampleSize/8;
+
+        FILE *wavFile = fopen(fileName, "wb");
+        
+        if (wavFile == NULL) return;
+
+        fwrite(&riffHeader, 1, sizeof(RiffHeader), wavFile);
+        fwrite(&waveFormat, 1, sizeof(WaveFormat), wavFile);
+        fwrite(&waveData, 1, sizeof(WaveData), wavFile);
+
+        fwrite(wave.data, 1, wave.sampleCount*wave.channels*wave.sampleSize/8, wavFile);
+
+        fclose(wavFile);
+        
+        success = true;
+    }
+    else if (IsFileExtension(fileName, ".raw")) { }   // TODO: Support additional file formats to export wave sample data
+
+    if (success) TraceLog(LOG_INFO, "Wave exported successfully: %s", fileName);
+    else TraceLog(LOG_WARNING, "Wave could not be exported.");
+}
+
 // Play a sound
 void PlaySound(Sound sound)
 {

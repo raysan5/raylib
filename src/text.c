@@ -86,9 +86,6 @@ static Font LoadImageFont(Image image, Color key, int firstChar); // Load a Imag
 #if defined(SUPPORT_FILEFORMAT_FNT)
 static Font LoadBMFont(const char *fileName);     // Load a BMFont file (AngelCode font file)
 #endif
-#if defined(SUPPORT_FILEFORMAT_TTF)
-//static Font LoadTTF(const char *fileName, int fontSize, int charsCount, int *fontChars); // Load spritefont from TTF data
-#endif
 
 #if defined(SUPPORT_DEFAULT_FONT)
 extern void LoadDefaultFont(void);

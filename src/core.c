@@ -1297,7 +1297,9 @@ void TakeScreenshot(const char *fileName)
 {
 #if defined(PLATFORM_DESKTOP) || defined(PLATFORM_RPI)
     unsigned char *imgData = rlReadScreenPixels(renderWidth, renderHeight);
-    SavePNG(fileName, imgData, renderWidth, renderHeight, 4); // Save image as PNG
+
+    Image image = { imgData, renderWidth, renderHeight, 1, UNCOMPRESSED_R8G8B8A8 };
+    ExportImage(image, fileName);
     free(imgData);
 
     TraceLog(LOG_INFO, "Screenshot taken: %s", fileName);

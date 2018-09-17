@@ -45,6 +45,7 @@ option(SUPPORT_FONT_TEXTURE "Draw rectangle shapes using font texture white char
 option(SUPPORT_QUADS_DRAW_MODE "Use QUADS instead of TRIANGLES for drawing when possible. Some lines-based shapes could still use lines" ON)
 
 # textures.c
+option(SUPPORT_IMAGE_EXPORT "Support image exporting to file" ON)
 option(SUPPORT_IMAGE_GENERATION "Support procedural image generation functionality (gradient, spot, perlin-noise, cellular)" ON)
 option(SUPPORT_FILEFORMAT_PNG "Support loading PNG as textures" ON)
 option(SUPPORT_FILEFORMAT_DDS "Support loading DDS as textures" ON)
@@ -72,8 +73,6 @@ option(SUPPORT_FILEFORMAT_MOD  "Support loading MOD for sound" ON)
 option(SUPPORT_FILEFORMAT_FLAC "Support loading FLAC for sound" ${OFF})
 
 # utils.c
-option(SUPPORT_SAVE_PNG "Support saving image data in PNG file format" ON)
-option(SUPPORT_SAVE_BMP "Support saving image data in BMP file format" ${OFF})
 option(SUPPORT_TRACELOG "Show TraceLog() output messages. NOTE: By default LOG_DEBUG traces not shown" ON)
 
 option(SUPPORT_FILEFORMAT_FNT "Support loading fonts in FNT format" ON)

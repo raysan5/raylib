@@ -664,45 +664,54 @@ void UnloadMesh(Mesh *mesh)
     rlUnloadMesh(mesh);
 }
 
-// Export mesh as an OBJ file
-void ExportMesh(const char *fileName, Mesh mesh)
+// Export mesh data to file
+void ExportMesh(Mesh mesh, const char *fileName)
 {
-    FILE *objFile = fopen(fileName, "wt");
+    bool success = false;
     
-    fprintf(objFile, "# raylib Mesh OBJ exporter v1.0\n\n");
-    fprintf(objFile, "# Mesh exported as triangle faces and not optimized.\n");
-    fprintf(objFile, "#     Vertex Count:     %i\n", mesh.vertexCount);
-    fprintf(objFile, "#     Triangle Count:   %i\n\n", mesh.triangleCount);
-    fprintf(objFile, "# LICENSE: zlib/libpng\n");
-    fprintf(objFile, "# Copyright (c) 2018 Ramon Santamaria (@raysan5)\n\n");
-    
-    fprintf(objFile, "g mesh\n");
-    
-    for (int i = 0, v = 0; i < mesh.vertexCount; i++, v += 3)
+    if (IsFileExtension(fileName, ".obj"))
     {
-        fprintf(objFile, "v %.2f %.2f %.2f\n", mesh.vertices[v], mesh.vertices[v + 1], mesh.vertices[v + 2]);
+        FILE *objFile = fopen(fileName, "wt");
+        
+        fprintf(objFile, "# raylib Mesh OBJ exporter v1.0\n\n");
+        fprintf(objFile, "# Mesh exported as triangle faces and not optimized.\n");
+        fprintf(objFile, "#     Vertex Count:     %i\n", mesh.vertexCount);
+        fprintf(objFile, "#     Triangle Count:   %i\n\n", mesh.triangleCount);
+        fprintf(objFile, "# LICENSE: zlib/libpng\n");
+        fprintf(objFile, "# Copyright (c) 2018 Ramon Santamaria (@raysan5)\n\n");
+        
+        fprintf(objFile, "g mesh\n");
+        
+        for (int i = 0, v = 0; i < mesh.vertexCount; i++, v += 3)
+        {
+            fprintf(objFile, "v %.2f %.2f %.2f\n", mesh.vertices[v], mesh.vertices[v + 1], mesh.vertices[v + 2]);
+        }
+        
+        for (int i = 0, v = 0; i < mesh.vertexCount; i++, v += 2)
+        {
+            fprintf(objFile, "vt %.2f %.2f\n", mesh.texcoords[v], mesh.texcoords[v + 1]);
+        }
+        
+        for (int i = 0, v = 0; i < mesh.vertexCount; i++, v += 3)
+        {
+            fprintf(objFile, "vn %.2f %.2f %.2f\n", mesh.normals[v], mesh.normals[v + 1], mesh.normals[v + 2]);
+        }
+        
+        for (int i = 0; i < mesh.triangleCount; i += 3)
+        {
+            fprintf(objFile, "f %i/%i/%i %i/%i/%i %i/%i/%i\n", i, i, i, i + 1, i + 1, i + 1, i + 2, i + 2, i + 2);
+        }
+        
+        fprintf(objFile, "\n");
+        
+        fclose(objFile);
+        
+        success = true;
     }
-    
-    for (int i = 0, v = 0; i < mesh.vertexCount; i++, v += 2)
-    {
-        fprintf(objFile, "vt %.2f %.2f\n", mesh.texcoords[v], mesh.texcoords[v + 1]);
-    }
-    
-    for (int i = 0, v = 0; i < mesh.vertexCount; i++, v += 3)
-    {
-        fprintf(objFile, "vn %.2f %.2f %.2f\n", mesh.normals[v], mesh.normals[v + 1], mesh.normals[v + 2]);
-    }
-    
-    for (int i = 0; i < mesh.triangleCount; i += 3)
-    {
-        fprintf(objFile, "f %i/%i/%i %i/%i/%i %i/%i/%i\n", i, i, i, i + 1, i + 1, i + 1, i + 2, i + 2, i + 2);
-    }
-    
-    fprintf(objFile, "\n");
-    
-    fclose(objFile);
+    else if (IsFileExtension(fileName, ".raw")) { }   // TODO: Support additional file formats to export mesh vertex data
 
-    TraceLog(LOG_INFO, "Mesh saved: %s", fileName);
+    if (success) TraceLog(LOG_INFO, "Mesh exported successfully: %s", fileName);
+    else TraceLog(LOG_WARNING, "Mesh could not be exported.");
 }
 
 #if defined(SUPPORT_MESH_GENERATION)

@@ -988,7 +988,7 @@ RLAPI Image LoadImage(const char *fileName);                                    
 RLAPI Image LoadImageEx(Color *pixels, int width, int height);                                           // Load image from Color array data (RGBA - 32bit)
 RLAPI Image LoadImagePro(void *data, int width, int height, int format);                                 // Load image from raw data with parameters
 RLAPI Image LoadImageRaw(const char *fileName, int width, int height, int format, int headerSize);       // Load image from RAW file data
-RLAPI void ExportImage(const char *fileName, Image image);                                               // Export image as a PNG file
+RLAPI void ExportImage(Image image, const char *fileName);                                               // Export image data to file
 RLAPI Texture2D LoadTexture(const char *fileName);                                                       // Load texture from file into GPU memory (VRAM)
 RLAPI Texture2D LoadTextureFromImage(Image image);                                                       // Load texture from image data
 RLAPI RenderTexture2D LoadRenderTexture(int width, int height);                                          // Load texture for rendering (framebuffer)
@@ -1113,7 +1113,7 @@ RLAPI void UnloadModel(Model model);                                            
 // Mesh loading/unloading functions
 RLAPI Mesh LoadMesh(const char *fileName);                                                              // Load mesh from file
 RLAPI void UnloadMesh(Mesh *mesh);                                                                      // Unload mesh from memory (RAM and/or VRAM)
-RLAPI void ExportMesh(const char *fileName, Mesh mesh);                                                 // Export mesh as an OBJ file
+RLAPI void ExportMesh(Mesh mesh, const char *fileName);                                                 // Export mesh data to file
 
 // Mesh manipulation functions
 RLAPI BoundingBox MeshBoundingBox(Mesh mesh);                                                           // Compute mesh bounding box limits
@@ -1221,6 +1221,7 @@ RLAPI Sound LoadSoundFromWave(Wave wave);                             // Load so
 RLAPI void UpdateSound(Sound sound, const void *data, int samplesCount);// Update sound buffer with new data
 RLAPI void UnloadWave(Wave wave);                                     // Unload wave data
 RLAPI void UnloadSound(Sound sound);                                  // Unload sound
+RLAPI void ExportWave(Wave wave, const char *fileName);               // Export wave data to file
 
 // Wave/Sound management functions
 RLAPI void PlaySound(Sound sound);                                    // Play a sound
