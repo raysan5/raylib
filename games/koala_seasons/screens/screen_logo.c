@@ -37,7 +37,7 @@ static int framesCounter;
 static int finishScreen;
 
 const char msgLogoA[64] = "A simple and easy-to-use library";
-const char msgLogoB[64] = "to learn videogames programming";
+const char msgLogoB[64] = "to enjoy videogames programming";
 
 int logoPositionX;
 int logoPositionY;
