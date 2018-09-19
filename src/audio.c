@@ -221,6 +221,9 @@ static Wave LoadOGG(const char *fileName);          // Load OGG file
 #if defined(SUPPORT_FILEFORMAT_FLAC)
 static Wave LoadFLAC(const char *fileName);         // Load FLAC file
 #endif
+#if defined(SUPPORT_FILEFORMAT_MP3)
+static Wave LoadMP3(const char *fileName);          // Load MP3 file
+#endif
 
 #if defined(AUDIO_STANDALONE)
 bool IsFileExtension(const char *fileName, const char *ext);    // Check file extension
@@ -857,6 +860,9 @@ Wave LoadWave(const char *fileName)
 #endif
 #if defined(SUPPORT_FILEFORMAT_FLAC)
     else if (IsFileExtension(fileName, ".flac")) wave = LoadFLAC(fileName);
+#endif
+#if defined(SUPPORT_FILEFORMAT_MP3)
+    else if (IsFileExtension(fileName, ".mp3")) wave = LoadMP3(fileName);
 #endif
     else TraceLog(LOG_WARNING, "[%s] Audio fileformat not supported, it can't be loaded", fileName);
 
@@ -1648,6 +1654,9 @@ void StopMusicStream(Music music)
 #if defined(SUPPORT_FILEFORMAT_FLAC)
         case MUSIC_AUDIO_FLAC: /* TODO: Restart FLAC context */ break;
 #endif
+#if defined(SUPPORT_FILEFORMAT_MP3)
+        case MUSIC_AUDIO_MP3: /* TODO: Restart MP3 context */ break;
+#endif
 #if defined(SUPPORT_FILEFORMAT_XM)
         case MUSIC_MODULE_XM: /* TODO: Restart XM context */ break;
 #endif
@@ -1786,6 +1795,13 @@ void UpdateMusicStream(Music music)
                     // NOTE: Returns the number of samples to process
                     unsigned int numSamplesFlac = (unsigned int)drflac_read_s16(music->ctxFlac, samplesCount*music->stream.channels, (short *)pcm);
 
+                } break;
+            #endif
+            #if defined(SUPPORT_FILEFORMAT_MP3)
+                case MUSIC_AUDIO_MP3:
+                {
+                    // NOTE: Returns the number of samples to process
+                    unsigned int numSamplesMp3 = (unsigned int)drmp3_read_f32(&music->ctxMp3, samplesCount*music->stream.channels, (float *)pcm);
                 } break;
             #endif
             #if defined(SUPPORT_FILEFORMAT_XM)
@@ -2372,6 +2388,33 @@ static Wave LoadFLAC(const char *fileName)
 
     if (wave.data == NULL) TraceLog(LOG_WARNING, "[%s] FLAC data could not be loaded", fileName);
     else TraceLog(LOG_INFO, "[%s] FLAC file loaded successfully (%i Hz, %i bit, %s)", fileName, wave.sampleRate, wave.sampleSize, (wave.channels == 1) ? "Mono" : "Stereo");
+
+    return wave;
+}
+#endif
+
+#if defined(SUPPORT_FILEFORMAT_MP3)
+// Load MP3 file into Wave structure
+// NOTE: Using dr_mp3 library
+static Wave LoadMP3(const char *fileName)
+{
+    Wave wave;
+
+    // Decode an entire MP3 file in one go
+    uint64_t totalSampleCount;
+    drmp3_config *config;
+    wave.data = drmp3_open_and_decode_file_f32(fileName, config, &totalSampleCount);
+    
+    wave.channels = config->outputChannels;
+    wave.sampleRate = config->outputSampleRate;
+    wave.sampleCount = (int)totalSampleCount/wave.channels;
+    wave.sampleSize = 16;
+
+    // NOTE: Only support up to 2 channels (mono, stereo)
+    if (wave.channels > 2) TraceLog(LOG_WARNING, "[%s] MP3 channels number (%i) not supported", fileName, wave.channels);
+
+    if (wave.data == NULL) TraceLog(LOG_WARNING, "[%s] MP3 data could not be loaded", fileName);
+    else TraceLog(LOG_INFO, "[%s] MP3 file loaded successfully (%i Hz, %i bit, %s)", fileName, wave.sampleRate, wave.sampleSize, (wave.channels == 1) ? "Mono" : "Stereo");
 
     return wave;
 }
