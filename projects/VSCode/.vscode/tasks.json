@@ -33,10 +33,7 @@
                 "RAYLIB_PATH=<path_to_raylib>",
                 "DEBUGGING=TRUE"
             ],
-            "group": {
-                "kind": "build",
-                "isDefault": true
-            }
+            "group": "build"
         },
         {
             "label": "(OSX) build release",
@@ -45,6 +42,28 @@
             "args": [
                 "PLATFORM=PLATFORM_DESKTOP",
                 "RAYLIB_PATH=<path_to_raylib>",
+            ],
+            "group": "build"
+        },
+        {
+            "label": "(GNU) build debug",
+            "type": "process",
+            "command": "make",
+            "args": [
+                "PLATFORM=PLATFORM_DESKTOP",
+                "DEBUGGING=TRUE"
+            ],
+            "group": {
+                "kind": "build",
+                "isDefault": true
+            }
+        },
+        {
+            "label": "(GNU) build release",
+            "type": "process",
+            "command": "make",
+            "args": [
+                "PLATFORM=PLATFORM_DESKTOP",
             ],
             "group": "build"
         }
