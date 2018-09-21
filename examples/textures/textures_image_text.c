@@ -26,7 +26,7 @@ int main()
     Image parrots = LoadImage("resources/parrots.png"); // Load image in CPU memory (RAM)
 
     // Draw over image using custom font
-    ImageDrawTextEx(&parrots, (Vector2){ 20.0f, 20.0f }, font, "[Parrots font drawing]", (float)font.baseSize, 0.0f, WHITE);
+    ImageDrawTextEx(&parrots, (Vector2){ 20.0f, 20.0f }, font, "[Parrots font drawing]", (float)font.baseSize, 0.0f, RED);
 
     Texture2D texture = LoadTextureFromImage(parrots);  // Image converted to texture, uploaded to GPU memory (VRAM)
     UnloadImage(parrots);   // Once image has been converted to texture and uploaded to VRAM, it can be unloaded from RAM

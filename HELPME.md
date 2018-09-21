@@ -18,7 +18,7 @@ with a small [donation](http://www.raylib.com/helpme.html) or contributing with 
 raylib philosophy
 ------------------
 
-   * raylib is a tool to LEARN videogames programming, every single function in raylib should be a tutorial on itself.
+   * raylib is a tool to enjoy videogames programming, every single function in raylib should be a tutorial on itself.
    * raylib is SIMPLE and EASY-TO-USE, I tried to keep it compact with a small set of functions, if a function is too complex or has not a clear usefulness, better not to include it.
    * raylib is open source and free; educators and institutions can use this tool to TEACH videogames programming completely by free. 
    * raylib is collaborative; contribution of tutorials / code-examples / bugs-solving / code-comments are highly appreciated.

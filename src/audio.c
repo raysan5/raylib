@@ -221,6 +221,9 @@ static Wave LoadOGG(const char *fileName);          // Load OGG file
 #if defined(SUPPORT_FILEFORMAT_FLAC)
 static Wave LoadFLAC(const char *fileName);         // Load FLAC file
 #endif
+#if defined(SUPPORT_FILEFORMAT_MP3)
+static Wave LoadMP3(const char *fileName);          // Load MP3 file
+#endif
 
 #if defined(AUDIO_STANDALONE)
 bool IsFileExtension(const char *fileName, const char *ext);    // Check file extension
@@ -858,6 +861,9 @@ Wave LoadWave(const char *fileName)
 #if defined(SUPPORT_FILEFORMAT_FLAC)
     else if (IsFileExtension(fileName, ".flac")) wave = LoadFLAC(fileName);
 #endif
+#if defined(SUPPORT_FILEFORMAT_MP3)
+    else if (IsFileExtension(fileName, ".mp3")) wave = LoadMP3(fileName);
+#endif
     else TraceLog(LOG_WARNING, "[%s] Audio fileformat not supported, it can't be loaded", fileName);
 
     return wave;
@@ -1047,6 +1053,89 @@ void UpdateSound(Sound sound, const void *data, int samplesCount)
     // Attach sound buffer to source again
     alSourcei(sound.source, AL_BUFFER, sound.buffer);
 #endif
+}
+
+// Export wave data to file
+void ExportWave(Wave wave, const char *fileName)
+{
+    bool success = false;
+    
+    if (IsFileExtension(fileName, ".wav"))
+    {
+        // Basic WAV headers structs
+        typedef struct {
+            char chunkID[4];
+            int chunkSize;
+            char format[4];
+        } RiffHeader;
+
+        typedef struct {
+            char subChunkID[4];
+            int subChunkSize;
+            short audioFormat;
+            short numChannels;
+            int sampleRate;
+            int byteRate;
+            short blockAlign;
+            short bitsPerSample;
+        } WaveFormat;
+
+        typedef struct {
+            char subChunkID[4];
+            int subChunkSize;
+        } WaveData;
+    
+        RiffHeader riffHeader;
+        WaveFormat waveFormat;
+        WaveData waveData;
+
+        // Fill structs with data
+        riffHeader.chunkID[0] = 'R';
+        riffHeader.chunkID[1] = 'I';
+        riffHeader.chunkID[2] = 'F';
+        riffHeader.chunkID[3] = 'F';
+        riffHeader.chunkSize = 44 - 4 + wave.sampleCount*wave.sampleSize/8;
+        riffHeader.format[0] = 'W';
+        riffHeader.format[1] = 'A';
+        riffHeader.format[2] = 'V';
+        riffHeader.format[3] = 'E';
+
+        waveFormat.subChunkID[0] = 'f';
+        waveFormat.subChunkID[1] = 'm';
+        waveFormat.subChunkID[2] = 't';
+        waveFormat.subChunkID[3] = ' ';
+        waveFormat.subChunkSize = 16;
+        waveFormat.audioFormat = 1;
+        waveFormat.numChannels = wave.channels;
+        waveFormat.sampleRate = wave.sampleRate;
+        waveFormat.byteRate = wave.sampleRate*wave.sampleSize/8;
+        waveFormat.blockAlign = wave.sampleSize/8;
+        waveFormat.bitsPerSample = wave.sampleSize;
+
+        waveData.subChunkID[0] = 'd';
+        waveData.subChunkID[1] = 'a';
+        waveData.subChunkID[2] = 't';
+        waveData.subChunkID[3] = 'a';
+        waveData.subChunkSize = wave.sampleCount*wave.channels*wave.sampleSize/8;
+
+        FILE *wavFile = fopen(fileName, "wb");
+        
+        if (wavFile == NULL) return;
+
+        fwrite(&riffHeader, 1, sizeof(RiffHeader), wavFile);
+        fwrite(&waveFormat, 1, sizeof(WaveFormat), wavFile);
+        fwrite(&waveData, 1, sizeof(WaveData), wavFile);
+
+        fwrite(wave.data, 1, wave.sampleCount*wave.channels*wave.sampleSize/8, wavFile);
+
+        fclose(wavFile);
+        
+        success = true;
+    }
+    else if (IsFileExtension(fileName, ".raw")) { }   // TODO: Support additional file formats to export wave sample data
+
+    if (success) TraceLog(LOG_INFO, "Wave exported successfully: %s", fileName);
+    else TraceLog(LOG_WARNING, "Wave could not be exported.");
 }
 
 // Play a sound
@@ -1565,6 +1654,9 @@ void StopMusicStream(Music music)
 #if defined(SUPPORT_FILEFORMAT_FLAC)
         case MUSIC_AUDIO_FLAC: /* TODO: Restart FLAC context */ break;
 #endif
+#if defined(SUPPORT_FILEFORMAT_MP3)
+        case MUSIC_AUDIO_MP3: /* TODO: Restart MP3 context */ break;
+#endif
 #if defined(SUPPORT_FILEFORMAT_XM)
         case MUSIC_MODULE_XM: /* TODO: Restart XM context */ break;
 #endif
@@ -1703,6 +1795,13 @@ void UpdateMusicStream(Music music)
                     // NOTE: Returns the number of samples to process
                     unsigned int numSamplesFlac = (unsigned int)drflac_read_s16(music->ctxFlac, samplesCount*music->stream.channels, (short *)pcm);
 
+                } break;
+            #endif
+            #if defined(SUPPORT_FILEFORMAT_MP3)
+                case MUSIC_AUDIO_MP3:
+                {
+                    // NOTE: Returns the number of samples to process
+                    unsigned int numSamplesMp3 = (unsigned int)drmp3_read_f32(&music->ctxMp3, samplesCount*music->stream.channels, (float *)pcm);
                 } break;
             #endif
             #if defined(SUPPORT_FILEFORMAT_XM)
@@ -2289,6 +2388,33 @@ static Wave LoadFLAC(const char *fileName)
 
     if (wave.data == NULL) TraceLog(LOG_WARNING, "[%s] FLAC data could not be loaded", fileName);
     else TraceLog(LOG_INFO, "[%s] FLAC file loaded successfully (%i Hz, %i bit, %s)", fileName, wave.sampleRate, wave.sampleSize, (wave.channels == 1) ? "Mono" : "Stereo");
+
+    return wave;
+}
+#endif
+
+#if defined(SUPPORT_FILEFORMAT_MP3)
+// Load MP3 file into Wave structure
+// NOTE: Using dr_mp3 library
+static Wave LoadMP3(const char *fileName)
+{
+    Wave wave;
+
+    // Decode an entire MP3 file in one go
+    uint64_t totalSampleCount;
+    drmp3_config *config;
+    wave.data = drmp3_open_and_decode_file_f32(fileName, config, &totalSampleCount);
+    
+    wave.channels = config->outputChannels;
+    wave.sampleRate = config->outputSampleRate;
+    wave.sampleCount = (int)totalSampleCount/wave.channels;
+    wave.sampleSize = 16;
+
+    // NOTE: Only support up to 2 channels (mono, stereo)
+    if (wave.channels > 2) TraceLog(LOG_WARNING, "[%s] MP3 channels number (%i) not supported", fileName, wave.channels);
+
+    if (wave.data == NULL) TraceLog(LOG_WARNING, "[%s] MP3 data could not be loaded", fileName);
+    else TraceLog(LOG_INFO, "[%s] MP3 file loaded successfully (%i Hz, %i bit, %s)", fileName, wave.sampleRate, wave.sampleSize, (wave.channels == 1) ? "Mono" : "Stereo");
 
     return wave;
 }

@@ -4,20 +4,9 @@
 *
 *   CONFIGURATION:
 *
-*   #define SUPPORT_SAVE_PNG (defined by default)
-*       Support saving image data as PNG fileformat
-*       NOTE: Requires stb_image_write library
-*
-*   #define SUPPORT_SAVE_BMP
-*       Support saving image data as BMP fileformat
-*       NOTE: Requires stb_image_write library
-*
 *   #define SUPPORT_TRACELOG
 *       Show TraceLog() output messages
 *       NOTE: By default LOG_DEBUG traces not shown
-*
-*   DEPENDENCIES:
-*       stb_image_write - BMP/PNG writting functions
 *
 *
 *   LICENSE: zlib/libpng
@@ -61,12 +50,6 @@
 FILE *funopen(const void *cookie, int (*readfn)(void *, char *, int),
               int (*writefn)(void *, const char *, int),
               fpos_t (*seekfn)(void *, fpos_t, int), int (*closefn)(void *));
-
-
-#if defined(PLATFORM_DESKTOP) || defined(PLATFORM_RPI)
-    #define STB_IMAGE_WRITE_IMPLEMENTATION
-    #include "external/stb_image_write.h"   // Required for: stbi_write_bmp(), stbi_write_png()
-#endif
 
 //----------------------------------------------------------------------------------
 // Global Variables Definition
@@ -158,24 +141,6 @@ void TraceLog(int msgType, const char *text, ...)
     if (msgType == LOG_ERROR) exit(1);  // If LOG_ERROR message, exit program
 
 #endif  // SUPPORT_TRACELOG
-}
-
-// Creates a BMP image file from an array of pixel data
-void SaveBMP(const char *fileName, unsigned char *imgData, int width, int height, int compSize)
-{
-#if defined(SUPPORT_SAVE_BMP) && (defined(PLATFORM_DESKTOP) || defined(PLATFORM_RPI))
-    stbi_write_bmp(fileName, width, height, compSize, imgData);
-    TraceLog(LOG_INFO, "BMP Image saved: %s", fileName);
-#endif
-}
-
-// Creates a PNG image file from an array of pixel data
-void SavePNG(const char *fileName, unsigned char *imgData, int width, int height, int compSize)
-{
-#if defined(SUPPORT_SAVE_PNG) && (defined(PLATFORM_DESKTOP) || defined(PLATFORM_RPI))
-    stbi_write_png(fileName, width, height, compSize, imgData, width*compSize);
-    TraceLog(LOG_INFO, "PNG Image saved: %s", fileName);
-#endif
 }
 
 // Keep track of memory allocated

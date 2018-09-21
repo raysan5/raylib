@@ -4,7 +4,7 @@ libdir=${exec_prefix}/lib
 includedir=${prefix}/include
 
 Name: raylib
-Description: Simple and easy-to-use library to learn videogames programming
+Description: Simple and easy-to-use library to enjoy videogames programming
 URL: http://github.com/raysan5/raylib
 Version: @PROJECT_VERSION@
 Libs: -L${libdir} -lraylib @PKG_CONFIG_LIBS_EXTRA@

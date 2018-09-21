@@ -19,6 +19,9 @@
 *       Selecte desired fileformats to be supported for image data loading. Some of those formats are
 *       supported by default, to remove support, just comment unrequired #define in this module
 *
+*   #define SUPPORT_IMAGE_EXPORT
+*       Support image export in multiple file formats
+*
 *   #define SUPPORT_IMAGE_MANIPULATION
 *       Support multiple image editing functions to scale, adjust colors, flip, draw on images, crop...
 *       If not defined only three image editing functions supported: ImageFormat(), ImageAlphaMask(), ImageToPOT()
@@ -101,6 +104,11 @@
     #define STB_IMAGE_IMPLEMENTATION
     #include "external/stb_image.h"     // Required for: stbi_load_from_file()
                                         // NOTE: Used to read image data (multiple formats support)
+#endif
+
+#if defined(SUPPORT_IMAGE_EXPORT)
+    #define STB_IMAGE_WRITE_IMPLEMENTATION
+    #include "external/stb_image_write.h"   // Required for: stbi_write_*()
 #endif
 
 #if defined(SUPPORT_IMAGE_MANIPULATION)
@@ -706,15 +714,32 @@ void UpdateTexture(Texture2D texture, const void *pixels)
     rlUpdateTexture(texture.id, texture.width, texture.height, texture.format, pixels);
 }
 
-// Export image as a PNG file
-void ExportImage(const char *fileName, Image image)
+// Export image data to file
+// NOTE: File format depends on fileName extension
+void ExportImage(Image image, const char *fileName)
 {
+    int success = 0;
+    
     // NOTE: Getting Color array as RGBA unsigned char values
     unsigned char *imgData = (unsigned char *)GetImageData(image);
     
-    // NOTE: SavePNG() not supported by some platforms: PLATFORM_WEB, PLATFORM_ANDROID
-    SavePNG(fileName, imgData, image.width, image.height, 4);
-
+    if (IsFileExtension(fileName, ".png")) success = stbi_write_png(fileName, image.width, image.height, 4, imgData, image.width*4);
+    else if (IsFileExtension(fileName, ".bmp")) success = stbi_write_bmp(fileName, image.width, image.height, 4, imgData);
+    else if (IsFileExtension(fileName, ".tga")) success = stbi_write_tga(fileName, image.width, image.height, 4, imgData);
+    else if (IsFileExtension(fileName, ".jpg")) success = stbi_write_jpg(fileName, image.width, image.height, 4, imgData, 80);  // Between 1 and 100
+    else if (IsFileExtension(fileName, ".raw")) 
+    {
+        // Export raw pixel data
+        // NOTE: It's up to the user to track image parameters
+        FILE *rawFile = fopen(fileName, "wb");
+        fwrite(image.data, GetPixelDataSize(image.width, image.height, image.format), 1, rawFile);
+        fclose(rawFile);
+    }
+    else if (IsFileExtension(fileName, ".h")) { }    // TODO: Export pixel data as an array of bytes
+    
+    if (success != 0) TraceLog(LOG_INFO, "Image exported successfully: %s", fileName);
+    else TraceLog(LOG_WARNING, "Image could not be exported.");
+    
     free(imgData);
 }
 
@@ -1555,7 +1580,9 @@ Image ImageTextEx(Font font, const char *text, float fontSize, float spacing, Co
     // Define ImageFont struct? or include Image spritefont in Font struct?
     Image imFont = GetTextureData(font.texture);
     
-    ImageColorTint(&imFont, tint);                    // Apply color tint to font
+    ImageFormat(&imFont, UNCOMPRESSED_R8G8B8A8);    // Make sure image format could be properly colored!
+    
+    ImageColorTint(&imFont, tint);                  // Apply color tint to font
 
     // Create image to store text
     Image imText = GenImageColor((int)imSize.x, (int)imSize.y, BLANK);
@@ -2827,7 +2854,11 @@ static Image LoadKTX(const char *fileName)
     // GL_COMPRESSED_RGBA8_ETC2_EAC     0x9278
 
     // KTX file Header (64 bytes)
-    // https://www.khronos.org/opengles/sdk/tools/KTX/file_format_spec/
+    // v1.1 - https://www.khronos.org/opengles/sdk/tools/KTX/file_format_spec/
+    // v2.0 - http://github.khronos.org/KTX-Specification/
+    
+    // TODO: Support KTX 2.2 specs!
+    
     typedef struct {
         char id[12];                        // Identifier: "«KTX 11»\r\n\x1A\n"
         unsigned int endianness;            // Little endian: 0x01 0x02 0x03 0x04

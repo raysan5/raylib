@@ -259,7 +259,7 @@ message(STATUS "  GRAPHICS=" ${GRAPHICS})
 
 # Packaging
 SET(CPACK_PACKAGE_NAME "raylib")
-SET(CPACK_PACKAGE_DESCRIPTION_SUMMARY "Simple and easy-to-use library to learn videogames programming")
+SET(CPACK_PACKAGE_DESCRIPTION_SUMMARY "Simple and easy-to-use library to enjoy videogames programming")
 SET(CPACK_PACKAGE_VERSION "${PROJECT_VERSION}")
 SET(CPACK_PACKAGE_VERSION_MAJOR "${PROJECT_VERSION_MAJOR}")
 SET(CPACK_PACKAGE_VERSION_MINOR "${PROJECT_VERSION_MINOR}")

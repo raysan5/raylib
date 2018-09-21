@@ -1,6 +1,6 @@
 /**********************************************************************************************
 *
-*   raylib - A simple and easy-to-use library to learn videogames programming (www.raylib.com)
+*   raylib - A simple and easy-to-use library to enjoy videogames programming (www.raylib.com)
 *
 *   FEATURES:
 *       - NO external dependencies, all required libraries included with raylib
@@ -442,6 +442,7 @@ typedef struct RenderTexture2D {
 // RenderTexture type, same as RenderTexture2D
 typedef RenderTexture2D RenderTexture;
 
+// N-Patch layout info
 typedef struct NPatchInfo {
     Rectangle sourceRec;   // Region in the texture
     int left;              // left border offset
@@ -720,6 +721,13 @@ typedef enum {
     WRAP_MIRROR
 } TextureWrapMode;
 
+// Font type, defines generation method
+typedef enum {
+    FONT_DEFAULT = 0,   // Default font generation, anti-aliased
+    FONT_BITMAP,        // Bitmap font generation, no anti-aliasing
+    FONT_SDF            // SDF font generation, requires external shader
+} FontType;
+
 // Color blending modes (pre-defined)
 typedef enum {
     BLEND_ALPHA = 0,
@@ -980,7 +988,7 @@ RLAPI Image LoadImage(const char *fileName);                                    
 RLAPI Image LoadImageEx(Color *pixels, int width, int height);                                           // Load image from Color array data (RGBA - 32bit)
 RLAPI Image LoadImagePro(void *data, int width, int height, int format);                                 // Load image from raw data with parameters
 RLAPI Image LoadImageRaw(const char *fileName, int width, int height, int format, int headerSize);       // Load image from RAW file data
-RLAPI void ExportImage(const char *fileName, Image image);                                               // Export image as a PNG file
+RLAPI void ExportImage(Image image, const char *fileName);                                               // Export image data to file
 RLAPI Texture2D LoadTexture(const char *fileName);                                                       // Load texture from file into GPU memory (VRAM)
 RLAPI Texture2D LoadTextureFromImage(Image image);                                                       // Load texture from image data
 RLAPI RenderTexture2D LoadRenderTexture(int width, int height);                                          // Load texture for rendering (framebuffer)
@@ -1055,7 +1063,7 @@ RLAPI void DrawTextureNPatch(Texture2D texture, NPatchInfo nPatchInfo, Rectangle
 RLAPI Font GetFontDefault(void);                                                            // Get the default Font
 RLAPI Font LoadFont(const char *fileName);                                                  // Load font from file into GPU memory (VRAM)
 RLAPI Font LoadFontEx(const char *fileName, int fontSize, int charsCount, int *fontChars);  // Load font from file with extended parameters
-RLAPI CharInfo *LoadFontData(const char *fileName, int fontSize, int *fontChars, int charsCount, bool sdf); // Load font data for further use
+RLAPI CharInfo *LoadFontData(const char *fileName, int fontSize, int *fontChars, int charsCount, int type); // Load font data for further use
 RLAPI Image GenImageFontAtlas(CharInfo *chars, int fontSize, int charsCount, int padding, int packMethod);  // Generate image font atlas using chars info
 RLAPI void UnloadFont(Font font);                                                           // Unload Font from GPU memory (VRAM)
 
@@ -1105,7 +1113,7 @@ RLAPI void UnloadModel(Model model);                                            
 // Mesh loading/unloading functions
 RLAPI Mesh LoadMesh(const char *fileName);                                                              // Load mesh from file
 RLAPI void UnloadMesh(Mesh *mesh);                                                                      // Unload mesh from memory (RAM and/or VRAM)
-RLAPI void ExportMesh(const char *fileName, Mesh mesh);                                                 // Export mesh as an OBJ file
+RLAPI void ExportMesh(Mesh mesh, const char *fileName);                                                 // Export mesh data to file
 
 // Mesh manipulation functions
 RLAPI BoundingBox MeshBoundingBox(Mesh mesh);                                                           // Compute mesh bounding box limits
@@ -1213,6 +1221,7 @@ RLAPI Sound LoadSoundFromWave(Wave wave);                             // Load so
 RLAPI void UpdateSound(Sound sound, const void *data, int samplesCount);// Update sound buffer with new data
 RLAPI void UnloadWave(Wave wave);                                     // Unload wave data
 RLAPI void UnloadSound(Sound sound);                                  // Unload sound
+RLAPI void ExportWave(Wave wave, const char *fileName);               // Export wave data to file
 
 // Wave/Sound management functions
 RLAPI void PlaySound(Sound sound);                                    // Play a sound
