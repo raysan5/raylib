@@ -1375,8 +1375,7 @@ const char *GetDirectoryPath(const char *fileName)
     memset(filePath, 0, 256);
 
     lastSlash = strprbrk(fileName, "\\/");
-    if (!lastSlash)
-        return NULL;
+    if (!lastSlash) return NULL;
 
     strncpy(filePath, fileName, strlen(fileName) - (strlen(lastSlash) - 1));
     filePath[strlen(fileName) - strlen(lastSlash)] = '\0';
