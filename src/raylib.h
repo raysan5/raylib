@@ -814,11 +814,11 @@ RLAPI void SetWindowMinSize(int width, int height);               // Set window 
 RLAPI void SetWindowSize(int width, int height);                  // Set window dimensions
 RLAPI int GetScreenWidth(void);                                   // Get current screen width
 RLAPI int GetScreenHeight(void);                                  // Get current screen height
-RLAPI int GetMonitorCount(void);								  // Get number of connected monitors
-RLAPI int GetMonitorWidth(void);								  // Get primary monitor width
-RLAPI int GetMonitorHeight(void);								  // Get primary monitor height
-RLAPI int GetMonitorPhysicalWidth(void);					      // Get primary monitor physical width in millimetres
-RLAPI int GetMonitorPhysicalHeight(void);						  // Get primary monitor physical height in millimetres
+RLAPI int GetMonitorCount(void);                                  // Get number of connected monitors
+RLAPI int GetMonitorWidth(void);                                  // Get primary monitor width
+RLAPI int GetMonitorHeight(void);                                 // Get primary monitor height
+RLAPI int GetMonitorPhysicalWidth(void);                          // Get primary monitor physical width in millimetres
+RLAPI int GetMonitorPhysicalHeight(void);                         // Get primary monitor physical height in millimetres
 RLAPI const char *GetMonitorName(void);                           // Get the human-readable, UTF-8 encoded name of the primary monitor
 
 // Cursor-related functions
