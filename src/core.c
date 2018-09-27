@@ -770,6 +770,55 @@ int GetScreenHeight(void)
     return screenHeight;
 }
 
+// Get number of monitors
+int GetMonitorCount(void)
+{
+	int monitorCount;
+	glfwGetMonitors(&monitorCount);
+	return monitorCount;
+}
+
+// Get primary monitor width
+int GetMonitorWidth(void)
+{   
+    GLFWmonitor *monitor = glfwGetPrimaryMonitor();
+    const GLFWvidmode * mode = glfwGetVideoMode(monitor);
+    return mode->width;
+}
+
+// Get primary monitor height
+int GetMonitorHeight(void)
+{
+	GLFWmonitor *monitor = glfwGetPrimaryMonitor();
+	const GLFWvidmode * mode = glfwGetVideoMode(monitor);
+	return mode->height;
+}
+
+// Get primary montior physical width in millimetres
+int GetMonitorPhysicalWidth(void)
+{
+	int physicalWidth;
+	GLFWmonitor *monitor = glfwGetPrimaryMonitor();
+	glfwGetMonitorPhysicalSize(monitor, &physicalWidth, NULL);
+	return physicalWidth;
+}
+
+// Get primary monitor physical height in millimetres
+int GetMonitorPhysicalHeight(void)
+{
+	int physicalHeight;
+	GLFWmonitor *monitor = glfwGetPrimaryMonitor();
+	glfwGetMonitorPhysicalSize(monitor, NULL, &physicalHeight);
+	return physicalHeight;
+}
+
+// Get the human-readable, UTF-8 encoded name of the primary monitor
+const char *GetMonitorName(void)
+{
+	GLFWmonitor *monitor = glfwGetPrimaryMonitor();
+	return glfwGetMonitorName(monitor);
+}
+
 // Show mouse cursor
 void ShowCursor()
 {
