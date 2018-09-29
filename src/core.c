@@ -773,50 +773,68 @@ int GetScreenHeight(void)
 // Get number of monitors
 int GetMonitorCount(void)
 {
+#if defined(PLATFORM_DESKTOP)
     int monitorCount;
     glfwGetMonitors(&monitorCount);
     return monitorCount;
+#endif
+    return 1;
 }
 
 // Get primary monitor width
 int GetMonitorWidth(void)
 {   
+#if defined(PLATFORM_DESKTOP)
     GLFWmonitor *monitor = glfwGetPrimaryMonitor();
     const GLFWvidmode * mode = glfwGetVideoMode(monitor);
     return mode->width;
+#endif
+    return GetScreenWidth();
 }
 
 // Get primary monitor height
 int GetMonitorHeight(void)
 {
+#if defined(PLATFORM_DESKTOP)
     GLFWmonitor *monitor = glfwGetPrimaryMonitor();
     const GLFWvidmode * mode = glfwGetVideoMode(monitor);
     return mode->height;
+#endif
+    return GetScreenHeight();
 }
 
 // Get primary montior physical width in millimetres
 int GetMonitorPhysicalWidth(void)
 {
+#if defined(PLATFORM_DESKTOP)
     int physicalWidth;
     GLFWmonitor *monitor = glfwGetPrimaryMonitor();
     glfwGetMonitorPhysicalSize(monitor, &physicalWidth, NULL);
     return physicalWidth;
+#endif
+    return 0;
 }
 
 // Get primary monitor physical height in millimetres
 int GetMonitorPhysicalHeight(void)
 {
+#if defined(PLATFORM_DESKTOP)    
     int physicalHeight;
     GLFWmonitor *monitor = glfwGetPrimaryMonitor();
     glfwGetMonitorPhysicalSize(monitor, NULL, &physicalHeight);
     return physicalHeight;
+#endif
+    return 0;
 }
 
 // Get the human-readable, UTF-8 encoded name of the primary monitor
 const char *GetMonitorName(void)
 {
+#if defined(PLATFORM_DESKTOP) 
     GLFWmonitor *monitor = glfwGetPrimaryMonitor();
     return glfwGetMonitorName(monitor);
+#endif
+    return "";
 }
 
 // Show mouse cursor
