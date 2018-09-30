@@ -770,6 +770,104 @@ int GetScreenHeight(void)
     return screenHeight;
 }
 
+// Get number of monitors
+int GetMonitorCount(void)
+{
+#if defined(PLATFORM_DESKTOP)
+    int monitorCount;
+    glfwGetMonitors(&monitorCount);
+    return monitorCount;
+#else
+    return 1;
+#endif
+}
+
+// Get primary monitor width
+int GetMonitorWidth(int monitor)
+{   
+#if defined(PLATFORM_DESKTOP)
+    int monitorCount;
+    GLFWmonitor** monitors = glfwGetMonitors(&monitorCount);
+    
+    if ((monitor >= 0) && (monitor < monitorCount)) 
+    {
+        const GLFWvidmode *mode = glfwGetVideoMode(monitors[monitor]);
+        return mode->width;
+    }
+    else TraceLog(LOG_WARNING, "Selected monitor not found");
+#endif
+    return 0;
+}
+
+// Get primary monitor width
+int GetMonitorHeight(int monitor)
+{   
+#if defined(PLATFORM_DESKTOP)
+    int monitorCount;
+    GLFWmonitor** monitors = glfwGetMonitors(&monitorCount);
+    
+    if ((monitor >= 0) && (monitor < monitorCount)) 
+    {
+        const GLFWvidmode *mode = glfwGetVideoMode(monitors[monitor]);
+        return mode->height;
+    }
+    else TraceLog(LOG_WARNING, "Selected monitor not found");
+#endif
+    return 0;
+}
+
+// Get primary montior physical width in millimetres
+int GetMonitorPhysicalWidth(int monitor)
+{
+#if defined(PLATFORM_DESKTOP)
+    int monitorCount;
+    GLFWmonitor** monitors = glfwGetMonitors(&monitorCount);
+    
+    if ((monitor >= 0) && (monitor < monitorCount)) 
+    {
+        int physicalWidth;
+        glfwGetMonitorPhysicalSize(monitors[monitor], &physicalWidth, NULL);
+        return physicalWidth;
+    }
+    else TraceLog(LOG_WARNING, "Selected monitor not found");
+#endif
+    return 0;
+}
+
+// Get primary monitor physical height in millimetres
+int GetMonitorPhysicalHeight(int monitor)
+{
+#if defined(PLATFORM_DESKTOP)
+    int monitorCount;
+    GLFWmonitor** monitors = glfwGetMonitors(&monitorCount);
+    
+    if ((monitor >= 0) && (monitor < monitorCount)) 
+    {
+        int physicalHeight;
+        glfwGetMonitorPhysicalSize(monitors[monitor], NULL, &physicalHeight);
+        return physicalHeight;
+    }
+    else TraceLog(LOG_WARNING, "Selected monitor not found");
+#endif
+    return 0;
+}
+
+// Get the human-readable, UTF-8 encoded name of the primary monitor
+const char *GetMonitorName(int monitor)
+{
+#if defined(PLATFORM_DESKTOP) 
+    int monitorCount;
+    GLFWmonitor** monitors = glfwGetMonitors(&monitorCount);
+    
+    if ((monitor >= 0) && (monitor < monitorCount)) 
+    {
+        return glfwGetMonitorName(monitors[monitor]);
+    }
+    else TraceLog(LOG_WARNING, "Selected monitor not found");
+#endif
+    return "";
+}
+
 // Show mouse cursor
 void ShowCursor()
 {
