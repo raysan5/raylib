@@ -3010,7 +3010,7 @@ static void SaveKTX(Image image, const char *fileName)
             {
                 unsigned int dataSize = GetPixelDataSize(width, height, image.format);
                 fwrite(&dataSize, 1, sizeof(unsigned int), ktxFile);
-                fwrite(image.data + dataOffset, 1, dataSize, ktxFile);
+                fwrite((unsigned char *)image.data + dataOffset, 1, dataSize, ktxFile);
                 
                 width /= 2;
                 height /= 2;
