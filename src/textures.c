@@ -148,6 +148,7 @@ static Image LoadPKM(const char *fileName);   // Load PKM file
 #endif
 #if defined(SUPPORT_FILEFORMAT_KTX)
 static Image LoadKTX(const char *fileName);   // Load KTX file
+static void SaveKTX(Image image, const char *fileName); // Save image data as KTX file
 #endif
 #if defined(SUPPORT_FILEFORMAT_PVR)
 static Image LoadPVR(const char *fileName);   // Load PVR file
@@ -726,10 +727,11 @@ void ExportImage(Image image, const char *fileName)
     if (IsFileExtension(fileName, ".png")) success = stbi_write_png(fileName, image.width, image.height, 4, imgData, image.width*4);
     else if (IsFileExtension(fileName, ".bmp")) success = stbi_write_bmp(fileName, image.width, image.height, 4, imgData);
     else if (IsFileExtension(fileName, ".tga")) success = stbi_write_tga(fileName, image.width, image.height, 4, imgData);
-    else if (IsFileExtension(fileName, ".jpg")) success = stbi_write_jpg(fileName, image.width, image.height, 4, imgData, 80);  // Between 1 and 100
+    else if (IsFileExtension(fileName, ".jpg")) success = stbi_write_jpg(fileName, image.width, image.height, 4, imgData, 80);  // JPG quality: between 1 and 100
+    else if (IsFileExtension(fileName, ".ktx")) SaveKTX(image, fileName);
     else if (IsFileExtension(fileName, ".raw")) 
     {
-        // Export raw pixel data
+        // Export raw pixel data (without header)
         // NOTE: It's up to the user to track image parameters
         FILE *rawFile = fopen(fileName, "wb");
         fwrite(image.data, GetPixelDataSize(image.width, image.height, image.format), 1, rawFile);
@@ -2931,6 +2933,93 @@ static Image LoadKTX(const char *fileName)
     }
 
     return image;
+}
+
+// Save image data as KTX file
+// NOTE: By default KTX 1.1 spec is used, 2.0 is still on draft (01Oct2018)
+static void SaveKTX(Image image, const char *fileName)
+{
+    // KTX file Header (64 bytes)
+    // v1.1 - https://www.khronos.org/opengles/sdk/tools/KTX/file_format_spec/
+    // v2.0 - http://github.khronos.org/KTX-Specification/ - still on draft, not ready for implementation
+    
+    typedef struct {
+        char id[12];                        // Identifier: "«KTX 11»\r\n\x1A\n"             // KTX 2.0: "«KTX 22»\r\n\x1A\n"
+        unsigned int endianness;            // Little endian: 0x01 0x02 0x03 0x04
+        unsigned int glType;                // For compressed textures, glType must equal 0
+        unsigned int glTypeSize;            // For compressed texture data, usually 1
+        unsigned int glFormat;              // For compressed textures is 0
+        unsigned int glInternalFormat;      // Compressed internal format
+        unsigned int glBaseInternalFormat;  // Same as glFormat (RGB, RGBA, ALPHA...)       // KTX 2.0: UInt32 vkFormat
+        unsigned int width;                 // Texture image width in pixels
+        unsigned int height;                // Texture image height in pixels
+        unsigned int depth;                 // For 2D textures is 0
+        unsigned int elements;              // Number of array elements, usually 0
+        unsigned int faces;                 // Cubemap faces, for no-cubemap = 1
+        unsigned int mipmapLevels;          // Non-mipmapped textures = 1
+        unsigned int keyValueDataSize;      // Used to encode any arbitrary data...         // KTX 2.0: UInt32 levelOrder - ordering of the mipmap levels, usually 0
+                                                                                            // KTX 2.0: UInt32 supercompressionScheme - 0 (None), 1 (Crunch CRN), 2 (Zlib DEFLATE)...
+        // KTX 2.0 defines additional header elements...
+    } KTXHeader;
+
+    // NOTE: Before start of every mipmap data block, we have: unsigned int dataSize
+
+    FILE *ktxFile = fopen(fileName, "wb");
+
+    if (ktxFile == NULL) TraceLog(LOG_WARNING, "[%s] KTX image file could not be created", fileName);
+    else
+    {
+        KTXHeader ktxHeader;
+        
+        // KTX identifier (v2.2)
+        //unsigned char id[12] = { '«', 'K', 'T', 'X', ' ', '1', '1', '»', '\r', '\n', '\x1A', '\n' };
+        //unsigned char id[12] = { 0xAB, 0x4B, 0x54, 0x58, 0x20, 0x31, 0x31, 0xBB, 0x0D, 0x0A, 0x1A, 0x0A };
+        
+        // Get the image header
+        strcpy(ktxHeader.id, "«KTX 11»\r\n\x1A\n");     // KTX 1.1 signature
+        ktxHeader.endianness = 0;
+        ktxHeader.glType = 0;                   // Obtained from image.format
+        ktxHeader.glTypeSize = 1;
+        ktxHeader.glFormat = 0;                 // Obtained from image.format
+        ktxHeader.glInternalFormat = 0;         // Obtained from image.format
+        ktxHeader.glBaseInternalFormat = 0;
+        ktxHeader.width = image.width;
+        ktxHeader.height = image.height;
+        ktxHeader.depth = 0;
+        ktxHeader.elements = 0;
+        ktxHeader.faces = 1;
+        ktxHeader.mipmapLevels = image.mipmaps; // If it was 0, it means mipmaps should be generated on loading (not for compressed formats)
+        ktxHeader.keyValueDataSize = 0;         // No extra data after the header
+        
+        rlGetGlTextureFormats(image.format, &ktxHeader.glInternalFormat, &ktxHeader.glFormat, &ktxHeader.glType);   // rlgl module function
+        ktxHeader.glBaseInternalFormat = ktxHeader.glFormat;    // KTX 1.1 only
+        
+        // NOTE: We can save into a .ktx all PixelFormats supported by raylib, including compressed formats like DXT, ETC or ASTC
+        
+        if (ktxHeader.glFormat == -1) TraceLog(LOG_WARNING, "Image format not supported for KTX export.");
+        else
+        {
+            fwrite(&ktxHeader, 1, sizeof(KTXHeader), ktxFile);
+            
+            int width = image.width;
+            int height = image.height;
+            int dataOffset = 0;
+            
+            // Save all mipmaps data
+            for (int i = 0; i < image.mipmaps; i++)
+            {
+                unsigned int dataSize = GetPixelDataSize(width, height, image.format);
+                fwrite(&dataSize, 1, sizeof(unsigned int), ktxFile);
+                fwrite(image.data + dataOffset, 1, dataSize, ktxFile);
+                
+                width /= 2;
+                height /= 2;
+                dataOffset += dataSize;
+            }
+        }
+
+        fclose(ktxFile);    // Close file pointer
+    }
 }
 #endif
 
