@@ -354,11 +354,11 @@
 //----------------------------------------------------------------------------------
 // Structures Definition
 //----------------------------------------------------------------------------------
-#ifndef __cplusplus
 // Boolean type
-    #ifndef bool
-        typedef enum { false, true } bool;
-    #endif
+#if defined(__STDC__) && __STDC_VERSION__ >= 199901L
+    #include <stdbool.h>
+#elif !defined(__cplusplus) && !defined(bool)
+    typedef enum { false, true } bool;
 #endif
 
 // Vector2 type
