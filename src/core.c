@@ -134,12 +134,6 @@
     #define CHDIR chdir
 #endif
 
-#if defined(__linux__) || defined(PLATFORM_WEB)
-    #include <sys/time.h>           // Required for: timespec, nanosleep(), select() - POSIX
-#elif defined(__APPLE__)
-    #include <unistd.h>             // Required for: usleep()
-#endif
-
 #if defined(PLATFORM_DESKTOP) || defined(PLATFORM_WEB)
     #if defined(PLATFORM_WEB)
         #define GLFW_INCLUDE_ES2
@@ -153,6 +147,15 @@
     unsigned int __stdcall timeBeginPeriod(unsigned int uPeriod);
     unsigned int __stdcall timeEndPeriod(unsigned int uPeriod);
     #endif
+#endif
+
+#if defined(__linux__) || defined(PLATFORM_WEB)
+    #include <sys/time.h>           // Required for: timespec, nanosleep(), select() - POSIX
+#elif defined(__APPLE__)
+    #include <unistd.h>             // Required for: usleep()
+    #include <objc/message.h>       // Required for: objc_msgsend(), sel_registerName()
+    #define GLFW_EXPOSE_NATIVE_NSGL
+    #include <GLFW/glfw3native.h>   // Required for: glfwGetNSGLContext()
 #endif
 
 #if defined(PLATFORM_ANDROID)
@@ -232,6 +235,11 @@ static GLFWwindow *window;                      // Native window (graphic device
 static bool windowReady = false;                // Check if window has been initialized successfully
 static bool windowMinimized = false;            // Check if window has been minimized
 static const char *windowTitle = NULL;          // Window text title...
+
+#if defined(__APPLE__)
+static int windowNeedsUpdating = 2;             // Times the Cocoa window needs to be updated initially
+#endif
+
 
 #if defined(PLATFORM_ANDROID)
 static struct android_app *androidApp;          // Android activity
@@ -2870,6 +2878,15 @@ static void SwapBuffers(void)
 {
 #if defined(PLATFORM_DESKTOP) || defined(PLATFORM_WEB)
     glfwSwapBuffers(window);
+#if __APPLE__
+    // workaround for missing/erroneous initial rendering on macOS
+    if (windowNeedsUpdating) {
+        // Desugared version of Objective C: [glfwGetNSGLContext(window) update]
+        ((id (*)(id, SEL))objc_msgSend)(glfwGetNSGLContext(window),
+                                        sel_registerName("update"));
+        windowNeedsUpdating--;
+    }
+#endif
 #endif
 
 #if defined(PLATFORM_ANDROID) || defined(PLATFORM_RPI) || defined(PLATFORM_UWP)
