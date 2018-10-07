@@ -150,6 +150,7 @@ include(LibraryPathToLinkerFlags)
 library_path_to_linker_flags(__PKG_CONFIG_LIBS_PRIVATE "${LIBS_PRIVATE}")
 
 if(STATIC)
+  MESSAGE(STATUS "Building raylib static library")
   if(${PLATFORM} MATCHES "Web")
     set(CMAKE_STATIC_LIBRARY_SUFFIX ".bc")
   endif()
@@ -186,6 +187,7 @@ endif(STATIC)
 
 
 if(SHARED)
+  MESSAGE(STATUS "Building raylib shared library")
   add_library(raylib SHARED ${sources})
 
   target_compile_definitions(raylib
