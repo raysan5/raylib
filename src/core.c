@@ -147,11 +147,11 @@
     #if defined(_WIN32)
         #define GLFW_EXPOSE_NATIVE_WIN32    
     #elif defined(__linux__)
-        #define GLFW_EXPOSE_NATIVE_X11
+        //#define GLFW_EXPOSE_NATIVE_X11    // WARNING: Exposing Xlib.h > X.h results in dup symbols for Font type
         //GLFW_EXPOSE_NATIVE_WAYLAND
         //GLFW_EXPOSE_NATIVE_MIR
     #elif defined(__APPLE__)
-        #define GLFW_EXPOSE_NATIVE_COCOA
+        //#define GLFW_EXPOSE_NATIVE_COCOA  // WARNING: NSGL typedef redefinition with different types ('struct objc_object *' vs 'void *') > glfw3native issue?
     #endif
     #include <GLFW/glfw3native.h>   // WARNING: It requires customization to avoid windows.h inclusion!
 
@@ -813,11 +813,11 @@ void *GetWindowHandle(void)
     // NOTE: Returned handle is: unsigned long Window (X.h)
     // typedef unsigned long XID;
     // typedef XID Window;
-    unsigned long id = (unsigned long)glfwGetX11Window(window);
+    //unsigned long id = (unsigned long)glfwGetX11Window(window);
     return NULL;    // TODO: Find a way to return value... cast to void *?
 #elif defined(__APPLE__)
     // NOTE: Returned handle is: void *id 
-    return glfwGetCocoaWindow(window);
+    return NULL; //glfwGetCocoaWindow(window);
 #else
     return NULL;
 #endif
