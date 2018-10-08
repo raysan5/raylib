@@ -1,127 +1,199 @@
+#ifndef DIRENT_H
+#define DIRENT_H
+
 /*
- * DIRENT.H (formerly DIRLIB.H)
- * This file has no copyright assigned and is placed in the Public Domain.
- * This file is part of the mingw-runtime package.
- * No warranty is given; refer to the file DISCLAIMER within the package.
- *
- */
 
-#ifndef _DIRENT_H_
-#define _DIRENT_H_
+    Declaration of POSIX directory browsing functions and types for Win32.
 
-/* All the headers include this file. */
-#include <crtdefs.h>
-
-#include <io.h>
-
-#ifndef RC_INVOKED
-
-#pragma pack(push,_CRT_PACKING)
+    Author:  Kevlin Henney (kevlin@acm.org, kevlin@curbralan.com)
+    History: Created March 1997. Updated June 2003.
+    Rights:  See end of file.
+    
+*/
 
 #ifdef __cplusplus
-extern "C" {
+extern "C"
+{
 #endif
+
+typedef struct DIR DIR;
 
 struct dirent
 {
-	long		d_ino;		/* Always zero. */
-	unsigned short	d_reclen;	/* Always zero. */
-	unsigned short	d_namlen;	/* Length of name in d_name. */
-	char		d_name[260]; /* [FILENAME_MAX] */ /* File name. */
+    char *d_name;
 };
 
-/*
- * This is an internal data structure. Good programmers will not use it
- * except as an argument to one of the functions below.
- * dd_stat field is now int (was short in older versions).
- */
-typedef struct
-{
-	/* disk transfer area for this dir */
-	struct _finddata_t	dd_dta;
-
-	/* dirent struct to return from dir (NOTE: this makes this thread
-	 * safe as long as only one thread uses a particular DIR struct at
-	 * a time) */
-	struct dirent		dd_dir;
-
-	/* _findnext handle */
-	intptr_t		dd_handle;
-
-	/*
-	 * Status of search:
-	 *   0 = not started yet (next entry to read is first entry)
-	 *  -1 = off the end
-	 *   positive = 0 based index of next entry
-	 */
-	int			dd_stat;
-
-	/* given path for dir with search pattern (struct is extended) */
-	char			dd_name[1];
-} DIR;
-
-DIR* __cdecl __MINGW_NOTHROW opendir (const char*);
-struct dirent* __cdecl __MINGW_NOTHROW readdir (DIR*);
-int __cdecl __MINGW_NOTHROW closedir (DIR*);
-void __cdecl __MINGW_NOTHROW rewinddir (DIR*);
-long __cdecl __MINGW_NOTHROW telldir (DIR*);
-void __cdecl __MINGW_NOTHROW seekdir (DIR*, long);
-
-
-/* wide char versions */
-
-struct _wdirent
-{
-	long		d_ino;		/* Always zero. */
-	unsigned short	d_reclen;	/* Always zero. */
-	unsigned short	d_namlen;	/* Length of name in d_name. */
-	wchar_t		d_name[260]; /* [FILENAME_MAX] */ /* File name. */
-};
+DIR           *opendir(const char *);
+int           closedir(DIR *);
+struct dirent *readdir(DIR *);
+void          rewinddir(DIR *);
 
 /*
- * This is an internal data structure. Good programmers will not use it
- * except as an argument to one of the functions below.
- */
-typedef struct
-{
-	/* disk transfer area for this dir */
-	struct _wfinddata_t	dd_dta;
 
-	/* dirent struct to return from dir (NOTE: this makes this thread
-	 * safe as long as only one thread uses a particular DIR struct at
-	 * a time) */
-	struct _wdirent		dd_dir;
+    Copyright Kevlin Henney, 1997, 2003. All rights reserved.
 
-	/* _findnext handle */
-	intptr_t		dd_handle;
+    Permission to use, copy, modify, and distribute this software and its
+    documentation for any purpose is hereby granted without fee, provided
+    that this copyright and permissions notice appear in all copies and
+    derivatives.
+    
+    This software is supplied "as is" without express or implied warranty.
 
-	/*
-	 * Status of search:
-	 *   0 = not started yet (next entry to read is first entry)
-	 *  -1 = off the end
-	 *   positive = 0 based index of next entry
-	 */
-	int			dd_stat;
+    But that said, if there are any problems please get in touch.
 
-	/* given path for dir with search pattern (struct is extended) */
-	wchar_t			dd_name[1];
-} _WDIR;
+*/
 
-_WDIR* __cdecl __MINGW_NOTHROW _wopendir (const wchar_t*);
-struct _wdirent* __cdecl __MINGW_NOTHROW _wreaddir (_WDIR*);
-int __cdecl __MINGW_NOTHROW _wclosedir (_WDIR*);
-void __cdecl __MINGW_NOTHROW _wrewinddir (_WDIR*);
-long __cdecl __MINGW_NOTHROW _wtelldir (_WDIR*);
-void __cdecl __MINGW_NOTHROW _wseekdir (_WDIR*, long);
-
-
-#ifdef	__cplusplus
+#ifdef __cplusplus
 }
 #endif
 
-#pragma pack(pop)
+#endif      // DIRENT_H
 
-#endif	/* Not RC_INVOKED */
+/*
 
-#endif	/* Not _DIRENT_H_ */
+    Implementation of POSIX directory browsing functions and types for Win32.
 
+    Author:  Kevlin Henney (kevlin@acm.org, kevlin@curbralan.com)
+    History: Created March 1997. Updated June 2003 and July 2012.
+    Rights:  See end of file.
+
+*/
+
+#include <dirent.h>
+#include <errno.h>
+#include <io.h>         /* _findfirst and _findnext set errno iff they return -1 */
+#include <stdlib.h>
+#include <string.h>
+
+#ifdef __cplusplus
+extern "C"
+{
+#endif
+
+typedef ptrdiff_t handle_type; /* C99's intptr_t not sufficiently portable */
+
+struct DIR
+{
+    handle_type         handle; /* -1 for failed rewind */
+    struct _finddata_t  info;
+    struct dirent       result; /* d_name null iff first time */
+    char                *name;  /* null-terminated char string */
+};
+
+DIR *opendir(const char *name)
+{
+    DIR *dir = 0;
+
+    if(name && name[0])
+    {
+        size_t base_length = strlen(name);
+        const char *all = /* search pattern must end with suitable wildcard */
+            strchr("/\\", name[base_length - 1]) ? "*" : "/*";
+
+        if((dir = (DIR *) malloc(sizeof *dir)) != 0 &&
+           (dir->name = (char *) malloc(base_length + strlen(all) + 1)) != 0)
+        {
+            strcat(strcpy(dir->name, name), all);
+
+            if((dir->handle =
+                (handle_type) _findfirst(dir->name, &dir->info)) != -1)
+            {
+                dir->result.d_name = 0;
+            }
+            else /* rollback */
+            {
+                free(dir->name);
+                free(dir);
+                dir = 0;
+            }
+        }
+        else /* rollback */
+        {
+            free(dir);
+            dir   = 0;
+            errno = ENOMEM;
+        }
+    }
+    else
+    {
+        errno = EINVAL;
+    }
+
+    return dir;
+}
+
+int closedir(DIR *dir)
+{
+    int result = -1;
+
+    if(dir)
+    {
+        if(dir->handle != -1)
+        {
+            result = _findclose(dir->handle);
+        }
+
+        free(dir->name);
+        free(dir);
+    }
+
+    if(result == -1) /* map all errors to EBADF */
+    {
+        errno = EBADF;
+    }
+
+    return result;
+}
+
+struct dirent *readdir(DIR *dir)
+{
+    struct dirent *result = 0;
+
+    if(dir && dir->handle != -1)
+    {
+        if(!dir->result.d_name || _findnext(dir->handle, &dir->info) != -1)
+        {
+            result         = &dir->result;
+            result->d_name = dir->info.name;
+        }
+    }
+    else
+    {
+        errno = EBADF;
+    }
+
+    return result;
+}
+
+void rewinddir(DIR *dir)
+{
+    if(dir && dir->handle != -1)
+    {
+        _findclose(dir->handle);
+        dir->handle = (handle_type) _findfirst(dir->name, &dir->info);
+        dir->result.d_name = 0;
+    }
+    else
+    {
+        errno = EBADF;
+    }
+}
+
+#ifdef __cplusplus
+}
+#endif
+
+/*
+
+    Copyright Kevlin Henney, 1997, 2003, 2012. All rights reserved.
+
+    Permission to use, copy, modify, and distribute this software and its
+    documentation for any purpose is hereby granted without fee, provided
+    that this copyright and permissions notice appear in all copies and
+    derivatives.
+    
+    This software is supplied "as is" without express or implied warranty.
+
+    But that said, if there are any problems please get in touch.
+
+*/
