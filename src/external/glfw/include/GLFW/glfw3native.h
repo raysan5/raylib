@@ -101,7 +101,10 @@ extern "C" {
  #if defined(__OBJC__)
   #import <Cocoa/Cocoa.h>
  #else
-  typedef void* id;
+  // RAY: Added protection in case OBJC types defined
+  #if !defined(OBJC_TYPES_DEFINED)
+   typedef void* id;
+  #endif
  #endif
 #elif defined(GLFW_EXPOSE_NATIVE_X11)
  #include <X11/Xlib.h>

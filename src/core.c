@@ -141,7 +141,8 @@
 #endif
 
 #if defined(PLATFORM_DESKTOP)
-    //#define GLFW_INCLUDE_NONE     // Disable the standard OpenGL header inclusion on GLFW3
+    #define GLFW_INCLUDE_NONE       // Disable the standard OpenGL header inclusion on GLFW3
+                                    // NOTE: Already provided by rlgl implementation (on glad.h)
     #include <GLFW/glfw3.h>         // GLFW3 library: Windows, OpenGL context and Input management
                                     // NOTE: GLFW3 already includes gl.h (OpenGL) headers
 
@@ -166,7 +167,7 @@
         #include <unistd.h>             // Required for: usleep()
         #include <objc/message.h>       // Required for: objc_msgsend(), sel_registerName()
         
-        //#define GLFW_EXPOSE_NATIVE_COCOA      // WARNING: typedef redefinition with different types ('void *' vs 'struct objc_object *')
+        #define GLFW_EXPOSE_NATIVE_COCOA
         #define GLFW_EXPOSE_NATIVE_NSGL
         #include <GLFW/glfw3native.h>   // Required for: glfwGetCocoaWindow(), glfwGetNSGLContext()
     #endif
@@ -821,8 +822,8 @@ void *GetWindowHandle(void)
     //unsigned long id = (unsigned long)glfwGetX11Window(window);
     return NULL;    // TODO: Find a way to return value... cast to void *?
 #elif defined(__APPLE__)
-    // NOTE: Returned handle is: void *id 
-    return NULL; //glfwGetCocoaWindow(window);  //
+    // NOTE: Returned handle is: (objc_object *)
+    return (void *)glfwGetCocoaWindow(window);
 #else
     return NULL;
 #endif
