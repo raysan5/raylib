@@ -125,7 +125,7 @@
 #include <ctype.h>          // Required for: tolower() [Used in IsFileExtension()]
 
 #if defined(_MSC_VER)
-    #include <external/dirent.h>    // Required for: DIR, opendir(), closedir() [Used in GetDirectoryFiles()]
+    #include "external/dirent.h"    // Required for: DIR, opendir(), closedir() [Used in GetDirectoryFiles()]
 #else
     #include <dirent.h>             // Required for: DIR, opendir(), closedir() [Used in GetDirectoryFiles()]
 #endif

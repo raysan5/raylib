@@ -102,7 +102,7 @@ extern "C" {
   #import <Cocoa/Cocoa.h>
  #else
   // RAY: Added protection in case OBJC types defined
-  #if !defined(OBJC_TYPES_DEFINED)
+  #if !OBJC_TYPES_DEFINED
    typedef void* id;
   #endif
  #endif
