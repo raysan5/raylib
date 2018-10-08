@@ -145,15 +145,14 @@
                                     
     // Support retrieving native window handlers
     #if defined(_WIN32)
-        #define GLFW_EXPOSE_NATIVE_WIN32    
+        #define GLFW_EXPOSE_NATIVE_WIN32
+        #include <GLFW/glfw3native.h>       // WARNING: It requires customization to avoid windows.h inclusion!
     #elif defined(__linux__)
         //#define GLFW_EXPOSE_NATIVE_X11    // WARNING: Exposing Xlib.h > X.h results in dup symbols for Font type
         //GLFW_EXPOSE_NATIVE_WAYLAND
         //GLFW_EXPOSE_NATIVE_MIR
-    #elif defined(__APPLE__)
-        //#define GLFW_EXPOSE_NATIVE_COCOA  // WARNING: NSGL typedef redefinition with different types ('struct objc_object *' vs 'void *') > glfw3native issue?
     #endif
-    #include <GLFW/glfw3native.h>   // WARNING: It requires customization to avoid windows.h inclusion!
+
 
     #if !defined(SUPPORT_BUSY_WAIT_LOOP) && defined(_WIN32)
     // NOTE: Those functions require linking with winmm library
@@ -167,8 +166,9 @@
 #elif defined(__APPLE__)
     #include <unistd.h>             // Required for: usleep()
     #include <objc/message.h>       // Required for: objc_msgsend(), sel_registerName()
+    #define GLFW_EXPOSE_NATIVE_COCOA
     #define GLFW_EXPOSE_NATIVE_NSGL
-    #include <GLFW/glfw3native.h>   // Required for: glfwGetNSGLContext()
+    #include <GLFW/glfw3native.h>   // Required for: glfwGetCocoaWindow(), glfwGetNSGLContext()
 #endif
 
 #if defined(PLATFORM_ANDROID)
@@ -817,7 +817,7 @@ void *GetWindowHandle(void)
     return NULL;    // TODO: Find a way to return value... cast to void *?
 #elif defined(__APPLE__)
     // NOTE: Returned handle is: void *id 
-    return NULL; //glfwGetCocoaWindow(window);
+    return glfwGetCocoaWindow(window);
 #else
     return NULL;
 #endif
