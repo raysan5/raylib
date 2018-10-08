@@ -135,40 +135,36 @@
     #define CHDIR chdir
 #endif
 
-#if defined(PLATFORM_DESKTOP) || defined(PLATFORM_WEB)
-    #if defined(PLATFORM_WEB)
-        #define GLFW_INCLUDE_ES2
-    #endif
+#if defined(PLATFORM_DESKTOP)
     //#define GLFW_INCLUDE_NONE     // Disable the standard OpenGL header inclusion on GLFW3
     #include <GLFW/glfw3.h>         // GLFW3 library: Windows, OpenGL context and Input management
                                     // NOTE: GLFW3 already includes gl.h (OpenGL) headers
-                                    
+
     // Support retrieving native window handlers
     #if defined(_WIN32)
         #define GLFW_EXPOSE_NATIVE_WIN32
         #include <GLFW/glfw3native.h>       // WARNING: It requires customization to avoid windows.h inclusion!
+        
+        #if !defined(SUPPORT_BUSY_WAIT_LOOP)
+            // NOTE: Those functions require linking with winmm library
+            unsigned int __stdcall timeBeginPeriod(unsigned int uPeriod);
+            unsigned int __stdcall timeEndPeriod(unsigned int uPeriod);
+        #endif
     #elif defined(__linux__)
-        //#define GLFW_EXPOSE_NATIVE_X11    // WARNING: Exposing Xlib.h > X.h results in dup symbols for Font type
-        //GLFW_EXPOSE_NATIVE_WAYLAND
-        //GLFW_EXPOSE_NATIVE_MIR
+        #include <sys/time.h>           // Required for: timespec, nanosleep(), select() - POSIX
+        
+        //#define GLFW_EXPOSE_NATIVE_X11        // WARNING: Exposing Xlib.h > X.h results in dup symbols for Font type
+        //#define GLFW_EXPOSE_NATIVE_WAYLAND
+        //#define GLFW_EXPOSE_NATIVE_MIR
+        #include <GLFW/glfw3native.h>   // Required for: glfwGetX11Window()
+    #elif defined(__APPLE__)
+        #include <unistd.h>             // Required for: usleep()
+        #include <objc/message.h>       // Required for: objc_msgsend(), sel_registerName()
+        
+        //#define GLFW_EXPOSE_NATIVE_COCOA      // WARNING: typedef redefinition with different types ('void *' vs 'struct objc_object *')
+        #define GLFW_EXPOSE_NATIVE_NSGL
+        #include <GLFW/glfw3native.h>   // Required for: glfwGetCocoaWindow(), glfwGetNSGLContext()
     #endif
-
-
-    #if !defined(SUPPORT_BUSY_WAIT_LOOP) && defined(_WIN32)
-    // NOTE: Those functions require linking with winmm library
-    unsigned int __stdcall timeBeginPeriod(unsigned int uPeriod);
-    unsigned int __stdcall timeEndPeriod(unsigned int uPeriod);
-    #endif
-#endif
-
-#if defined(__linux__) || defined(PLATFORM_WEB)
-    #include <sys/time.h>           // Required for: timespec, nanosleep(), select() - POSIX
-#elif defined(__APPLE__)
-    #include <unistd.h>             // Required for: usleep()
-    #include <objc/message.h>       // Required for: objc_msgsend(), sel_registerName()
-    #define GLFW_EXPOSE_NATIVE_COCOA
-    #define GLFW_EXPOSE_NATIVE_NSGL
-    #include <GLFW/glfw3native.h>   // Required for: glfwGetCocoaWindow(), glfwGetNSGLContext()
 #endif
 
 #if defined(PLATFORM_ANDROID)
@@ -205,8 +201,12 @@
 #endif
 
 #if defined(PLATFORM_WEB)
-    #include <emscripten/emscripten.h>
-    #include <emscripten/html5.h>
+    #define GLFW_INCLUDE_ES2        // GLFW3: Enable OpenGL ES 2.0 (translated to WebGL)
+    #include <GLFW/glfw3.h>         // GLFW3 library: Windows, OpenGL context and Input management
+    #include <sys/time.h>           // Required for: timespec, nanosleep(), select() - POSIX
+ 
+    #include <emscripten/emscripten.h>  // Emscripten library - LLVM to JavaScript compiler
+    #include <emscripten/html5.h>       // Emscripten HTML5 library
 #endif
 
 //----------------------------------------------------------------------------------
@@ -817,7 +817,7 @@ void *GetWindowHandle(void)
     return NULL;    // TODO: Find a way to return value... cast to void *?
 #elif defined(__APPLE__)
     // NOTE: Returned handle is: void *id 
-    return glfwGetCocoaWindow(window);
+    return NULL; //glfwGetCocoaWindow(window);  //
 #else
     return NULL;
 #endif
@@ -2975,11 +2975,12 @@ static void SwapBuffers(void)
 #if defined(PLATFORM_DESKTOP) || defined(PLATFORM_WEB)
     glfwSwapBuffers(window);
 #if __APPLE__
-    // workaround for missing/erroneous initial rendering on macOS
-    if (windowNeedsUpdating) {
+    // Workaround for missing/erroneous initial rendering on macOS
+    if (windowNeedsUpdating) 
+    {
         // Desugared version of Objective C: [glfwGetNSGLContext(window) update]
-        ((id (*)(id, SEL))objc_msgSend)(glfwGetNSGLContext(window),
-                                        sel_registerName("update"));
+        ((id (*)(id, SEL))objc_msgSend)(glfwGetNSGLContext(window), sel_registerName("update"));
+        
         windowNeedsUpdating--;
     }
 #endif
