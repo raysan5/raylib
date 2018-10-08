@@ -123,7 +123,12 @@
 #include <string.h>         // Required for: strrchr(), strcmp()
 //#include <errno.h>          // Macros for reporting and retrieving error conditions through error codes
 #include <ctype.h>          // Required for: tolower() [Used in IsFileExtension()]
-#include <dirent.h>         // Required for: DIR, opendir(), closedir() [Used in GetDirectoryFiles()]
+
+#if defined(_MSC_VER)
+    #include <external/dirent.h>    // Required for: DIR, opendir(), closedir() [Used in GetDirectoryFiles()]
+#else
+    #include <dirent.h>             // Required for: DIR, opendir(), closedir() [Used in GetDirectoryFiles()]
+#endif
 
 #if defined(_WIN32)
     #include <direct.h>             // Required for: _getch(), _chdir()
