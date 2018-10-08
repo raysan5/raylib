@@ -1445,6 +1445,57 @@ void ImageDither(Image *image, int rBpp, int gBpp, int bBpp, int aBpp)
     }
 }
 
+// Extract color palette from image to maximum size
+// NOTE: Memory allocated should be freed manually!
+Color *ImageExtractPalette(Image image, int maxPaletteSize, int *extractCount)
+{
+    #define COLOR_EQUAL(col1, col2) ((col1.r == col2.r)&&(col1.g == col2.g)&&(col1.b == col2.b)&&(col1.a == col2.a))
+    
+    Color *pixels = GetImageData(image);
+    Color *palette = (Color *)malloc(maxPaletteSize*sizeof(Color));
+    
+    int palCount = 0;
+    for (int i = 0; i < maxPaletteSize; i++) palette[i] = BLANK;   // Set all colors to BLANK
+
+    for (int i = 0; i < image.width*image.height; i++)
+    {
+        if (pixels[i].a > 0)
+        {
+            bool colorInPalette = false;
+            
+            // Check if the color is already on palette
+            for (int j = 0; j < maxPaletteSize; j++)
+            {
+                if (COLOR_EQUAL(pixels[i], palette[j])) 
+                {
+                    colorInPalette = true;
+                    break;
+                }
+            }
+            
+            // Store color if not on the palette
+            if (!colorInPalette)
+            {
+                palette[palCount] = pixels[i];      // Add pixels[i] to palette
+                palCount++;
+                
+                // We reached the limit of colors supported by palette
+                if (palCount >= maxPaletteSize)
+                {
+                    i = image.width*image.height;   // Finish palette get
+                    printf("WARNING: Image palette is greater than %i colors!\n", maxPaletteSize);
+                }
+            }
+        }
+    }
+
+    free(pixels);
+    
+    *extractCount = palCount;
+    
+    return palette;
+}
+
 // Draw an image (source) within an image (destination)
 // TODO: Feel this function could be simplified...
 void ImageDraw(Image *dst, Image src, Rectangle srcRec, Rectangle dstRec)
