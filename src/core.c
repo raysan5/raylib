@@ -167,7 +167,7 @@
         #include <unistd.h>             // Required for: usleep()
         #include <objc/message.h>       // Required for: objc_msgsend(), sel_registerName()
         
-        #define GLFW_EXPOSE_NATIVE_COCOA
+        //#define GLFW_EXPOSE_NATIVE_COCOA      // WARNING: Fails due to type redefinition
         #define GLFW_EXPOSE_NATIVE_NSGL
         #include <GLFW/glfw3native.h>   // Required for: glfwGetCocoaWindow(), glfwGetNSGLContext()
     #endif
@@ -823,7 +823,7 @@ void *GetWindowHandle(void)
     return NULL;    // TODO: Find a way to return value... cast to void *?
 #elif defined(__APPLE__)
     // NOTE: Returned handle is: (objc_object *)
-    return (void *)glfwGetCocoaWindow(window);
+    return NULL;    // TODO: return (void *)glfwGetCocoaWindow(window);
 #else
     return NULL;
 #endif
