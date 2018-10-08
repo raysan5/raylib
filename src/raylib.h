@@ -814,6 +814,7 @@ RLAPI void SetWindowMinSize(int width, int height);               // Set window 
 RLAPI void SetWindowSize(int width, int height);                  // Set window dimensions
 RLAPI int GetScreenWidth(void);                                   // Get current screen width
 RLAPI int GetScreenHeight(void);                                  // Get current screen height
+RLAPI void *GetWindowHandle(void);                                // Get native window handle
 RLAPI int GetMonitorCount(void);                                  // Get number of connected monitors
 RLAPI int GetMonitorWidth(int monitor);                           // Get primary monitor width
 RLAPI int GetMonitorHeight(int monitor);                          // Get primary monitor height
@@ -872,10 +873,12 @@ RLAPI const char *GetExtension(const char *fileName);             // Get pointer
 RLAPI const char *GetFileName(const char *filePath);              // Get pointer to filename for a path string
 RLAPI const char *GetDirectoryPath(const char *fileName);         // Get full path for a given fileName (uses static string)
 RLAPI const char *GetWorkingDirectory(void);                      // Get current working directory (uses static string)
+RLAPI char **GetDirectoryFiles(const char *dirPath, int *count);  // Get filenames in a directory path (memory should be freed)
+RLAPI void ClearDirectoryFiles(void);                             // Clear directory files paths buffers (free memory)
 RLAPI bool ChangeDirectory(const char *dir);                      // Change working directory, returns true if success
 RLAPI bool IsFileDropped(void);                                   // Check if a file has been dropped into window
-RLAPI char **GetDroppedFiles(int *count);                         // Get dropped files names
-RLAPI void ClearDroppedFiles(void);                               // Clear dropped files paths buffer
+RLAPI char **GetDroppedFiles(int *count);                         // Get dropped files names (memory should be freed)
+RLAPI void ClearDroppedFiles(void);                               // Clear dropped files paths buffer (free memory)
 
 // Persistent storage management
 RLAPI void StorageSaveValue(int position, int value);             // Save integer value to storage file (to defined position)

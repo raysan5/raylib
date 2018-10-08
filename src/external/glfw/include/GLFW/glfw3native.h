@@ -90,7 +90,12 @@ extern "C" {
   #undef APIENTRY
   #undef GLFW_APIENTRY_DEFINED
  #endif
- #include <windows.h>
+// RAY: Actually, only HWND handler needs to be defined
+// Including windows.h could suppose symbols re-definition issues (i.e Rectangle type)
+//#include <windows.h>
+ typedef void *PVOID;
+ typedef PVOID HANDLE;
+ typedef HANDLE HWND;
 #elif defined(GLFW_EXPOSE_NATIVE_COCOA)
  #include <ApplicationServices/ApplicationServices.h>
  #if defined(__OBJC__)
