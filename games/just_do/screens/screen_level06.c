@@ -132,7 +132,7 @@ void DrawLevel06Screen(void)
         DrawRectangleRec(movingRecs[i], GRAY);
     }
     
-    if (!done & (mouseOverNum >= 0)) DrawRectangleLines(movingRecs[mouseOverNum].x - 5, movingRecs[mouseOverNum].y - 5, movingRecs[mouseOverNum].width + 10, movingRecs[mouseOverNum].height + 10, Fade(LIGHTGRAY, 0.8f));
+    if (!done && (mouseOverNum >= 0)) DrawRectangleLines(movingRecs[mouseOverNum].x - 5, movingRecs[mouseOverNum].y - 5, movingRecs[mouseOverNum].width + 10, movingRecs[mouseOverNum].height + 10, Fade(LIGHTGRAY, 0.8f));
         
     if (levelFinished)
     {
