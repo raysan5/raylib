@@ -1523,6 +1523,41 @@ const char *GetFileName(const char *filePath)
     return fileName + 1;
 }
 
+// Get filename string without extension (memory should be freed)
+const char *GetFileNameWithoutExt(const char *filePath)
+{
+    char *result, *lastDot, *lastSep;
+    
+    char nameDot = '.';     // Default filename to extension separator character
+    char pathSep = '/';     // Default filepath separator character
+
+    // Error checks and allocate string
+    if (filePath == NULL) return NULL;
+    
+    // Try to allocate new string, same size as original
+    // NOTE: By default strlen() does not count the '\0' character
+    if ((result = malloc(strlen(filePath) + 1)) == NULL) return NULL;
+    
+    strcpy(result, filePath);   // Make a copy of the string
+    
+    // NOTE: strrchr() returns a pointer to the last occurrence of character
+    lastDot = strrchr(result, nameDot);
+    lastSep = (pathSep == 0) ? NULL : strrchr(result, pathSep);
+
+    if (lastDot != NULL)            // Check if it has an extension separator...
+    {
+        if (lastSep != NULL)        // ...and it's before the extenstion separator...
+        {
+            if (lastSep < lastDot) 
+            {
+                *lastDot = '\0';    // ...then remove it
+            }
+        } 
+        else *lastDot = '\0';       // Has extension separator with no path separator
+    }
+
+    return result;                  // Return the modified string
+}
 
 // Get directory for a given fileName (with path)
 const char *GetDirectoryPath(const char *fileName)
