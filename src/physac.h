@@ -606,7 +606,7 @@ PHYSACDEF void PhysicsShatter(PhysicsBody body, Vector2 position, float force)
             {
                 int count = vertexData.vertexCount;
                 Vector2 bodyPos = body->position;
-                Vector2 vertices[count];
+                Vector2 *vertices = (Vector2*)malloc(sizeof(Vector2) * count);
                 Mat2 trans = body->shape.transform;
                 for (int i = 0; i < count; i++) vertices[i] = vertexData.positions[i];
 
@@ -698,6 +698,8 @@ PHYSACDEF void PhysicsShatter(PhysicsBody body, Vector2 position, float force)
                     // Apply force to new physics body
                     PhysicsAddForce(newBody, forceDirection);
                 }
+
+                free(vertices);
             }
         }
     }
