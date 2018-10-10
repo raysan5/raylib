@@ -110,10 +110,12 @@ void InitEndingScreen(void)
         {
             // WARNING: It fails if the last sentence word has a '.' after space
             char *title = StringReplace(headline, messageWords[i].text, codingWords[messageWords[i].id]);
-            
-            strcpy(headline, title);     // Base headline updated
-            
-            if (title != NULL) free(title);
+           
+            if (title != NULL)
+            {
+                strcpy(headline, title);     // Base headline updated
+                free(title);
+            }
         }
     }
     
