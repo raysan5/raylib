@@ -1569,8 +1569,9 @@ const char *GetDirectoryPath(const char *fileName)
     lastSlash = strprbrk(fileName, "\\/");
     if (!lastSlash) return NULL;
 
+    // NOTE: Be careful, strncpy() is not safe, it does not care about '\0'
     strncpy(filePath, fileName, strlen(fileName) - (strlen(lastSlash) - 1));
-    filePath[strlen(fileName) - strlen(lastSlash)] = '\0';
+    filePath[strlen(fileName) - strlen(lastSlash)] = '\0';  // Add '\0' manually
 
     return filePath;
 }

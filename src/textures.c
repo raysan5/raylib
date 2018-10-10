@@ -323,7 +323,7 @@ Image LoadImageRaw(const char *fileName, int width, int height, int format, int 
 
         // NOTE: fread() returns num read elements instead of bytes,
         // to get bytes we need to read (1 byte size, elements) instead of (x byte size, 1 element)
-        size_t bytes = fread(image.data, 1, size, rawFile);
+        int bytes = fread(image.data, 1, size, rawFile);
 
         // Check if data has been read successfully
         if (bytes < size)

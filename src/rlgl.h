@@ -1631,17 +1631,13 @@ void rlglInit(int width, int height)
 #elif defined(GRAPHICS_API_OPENGL_ES2)
     char *extensions = (char *)glGetString(GL_EXTENSIONS);  // One big const string
 
-    // NOTE: We have to duplicate string because glGetString() returns a const value
-    // If not duplicated, it fails in some systems (Raspberry Pi)
-    // Equivalent to function: char *strdup(const char *str)
-    char *extensionsDup;
-    size_t len = strlen(extensions) + 1;
-    void *newstr = malloc(len);
-    if (newstr == NULL) extensionsDup = NULL;
-    extensionsDup = (char *)memcpy(newstr, extensions, len);
+    // NOTE: We have to duplicate string because glGetString() returns a const string
+    int len = strlen(extensions) + 1;   
+    char *extensionsDup = (char *)malloc(len);
+    strcpy(extensionsDup, extensions);
 
     // NOTE: String could be splitted using strtok() function (string.h)
-    // NOTE: strtok() modifies the received string, it can not be const
+    // NOTE: strtok() modifies the passed string, it can not be const
 
     char *extList[512];     // Allocate 512 strings pointers (2 KB)
 
