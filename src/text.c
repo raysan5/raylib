@@ -527,6 +527,7 @@ Image GenImageFontAtlas(CharInfo *chars, int charsCount, int fontSize, int paddi
             else TraceLog(LOG_WARNING, "Character could not be packed: %i", i);
         }
 
+        free(rects);
         free(nodes);
         free(context);
     }
