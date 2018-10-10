@@ -2402,7 +2402,7 @@ static Wave LoadMP3(const char *fileName)
 
     // Decode an entire MP3 file in one go
     uint64_t totalSampleCount;
-    drmp3_config *config;
+    drmp3_config *config = NULL;
     wave.data = drmp3_open_and_decode_file_f32(fileName, config, &totalSampleCount);
     
     wave.channels = config->outputChannels;
