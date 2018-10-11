@@ -71,7 +71,7 @@ Some people ported raylib to other languages in form of bindings or wrappers to 
  - [raylib-ruby-ffi](https://github.com/D3nX/raylib-ruby-ffi) : raylib **Ruby** binding
  - [raylib-rs](https://github.com/deltaphc/raylib-rs) : raylib **Rust** binding
  - [raylib-rust](https://github.com/dtcristo/raylib-rust) : raylib **Rust** binding
- - [raylibpy](https://github.com/overdev/raylibpy) : raylib **Python** binding
+ - [raylib-py](https://github.com/overdev/raylib-py) : raylib **Python** binding
  - [raylib-haskell](https://github.com/DevJac/raylib-haskell) : raylib **Haskell** binding
  - [raylib-java]() : raylib **Java** binding
  - *[raylib flat-assembler Usage example](http://forum.raylib.com/index.php?p=/discussion/comment/425/#Comment_425)*
