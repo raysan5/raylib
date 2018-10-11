@@ -125,7 +125,6 @@ elseif(${PLATFORM} MATCHES "Raspberry Pi")
 endif()
 
 if (${OPENGL_VERSION})
-  MESSAGE(STATUS "Detected OpenGL version: ${OPENGL_VERSION}")
   set(${SUGGESTED_GRAPHICS} "${GRAPHICS}")
   if (${OPENGL_VERSION} MATCHES "3.3")
     set(GRAPHICS "GRAPHICS_API_OPENGL_33")
