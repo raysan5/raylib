@@ -123,6 +123,7 @@
 #include <string.h>         // Required for: strrchr(), strcmp()
 //#include <errno.h>          // Macros for reporting and retrieving error conditions through error codes
 #include <ctype.h>          // Required for: tolower() [Used in IsFileExtension()]
+#include <sys/stat.h>       // Required for stat() [Used in GetLastWriteTime()]
 
 #if defined(_MSC_VER)
     #include "external/dirent.h"    // Required for: DIR, opendir(), closedir() [Used in GetDirectoryFiles()]
@@ -1679,6 +1680,18 @@ void ClearDroppedFiles(void)
         dropFilesCount = 0;
     }
 #endif
+}
+
+// Get the last write time of a file
+long GetLastWriteTime(const char *fileName)
+{
+    struct stat result = {0}; 
+    if (stat(fileName, &result) == 0)
+    {
+        time_t mod = result.st_mtime;
+        return mod;
+    }
+    return 0;
 }
 
 // Save integer value to storage file (to defined position)
