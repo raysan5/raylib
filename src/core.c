@@ -1682,15 +1682,18 @@ void ClearDroppedFiles(void)
 #endif
 }
 
-// Get the last write time of a file
-long GetLastWriteTime(const char *fileName)
+// Get file modification time (last write time)
+RLAPI long GetFileModTime(const char *fileName)
 {
-    struct stat result = {0}; 
+    struct stat result = { 0 };
+    
     if (stat(fileName, &result) == 0)
     {
         time_t mod = result.st_mtime;
-        return mod;
+        
+        return (long)mod;
     }
+    
     return 0;
 }
 
