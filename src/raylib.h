@@ -880,6 +880,7 @@ RLAPI bool ChangeDirectory(const char *dir);                      // Change work
 RLAPI bool IsFileDropped(void);                                   // Check if a file has been dropped into window
 RLAPI char **GetDroppedFiles(int *count);                         // Get dropped files names (memory should be freed)
 RLAPI void ClearDroppedFiles(void);                               // Clear dropped files paths buffer (free memory)
+RLAPI long GetLastWriteTime(const char *fileName);                // Get last write time of a file
 
 // Persistent storage management
 RLAPI void StorageSaveValue(int position, int value);             // Save integer value to storage file (to defined position)
