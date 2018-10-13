@@ -300,7 +300,7 @@ RMDEF Vector3 Vector3Add(Vector3 v1, Vector3 v2)
     return result;
 }
 
-// Substract two vectors
+// Subtract two vectors
 RMDEF Vector3 Vector3Subtract(Vector3 v1, Vector3 v2)
 {
     Vector3 result = { v1.x - v2.x, v1.y - v2.y, v1.z - v2.z };
@@ -720,8 +720,8 @@ RMDEF Matrix MatrixAdd(Matrix left, Matrix right)
     return result;
 }
 
-// Substract two matrices (left - right)
-RMDEF Matrix MatrixSubstract(Matrix left, Matrix right)
+// Subtract two matrices (left - right)
+RMDEF Matrix MatrixSubtract(Matrix left, Matrix right)
 {
     Matrix result = MatrixIdentity();
 
