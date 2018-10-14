@@ -135,8 +135,9 @@
     #include <direct.h>             // Required for: _getch(), _chdir()
     #define GETCWD _getcwd          // NOTE: MSDN recommends not to use getcwd(), chdir()
     #define CHDIR _chdir
+    #include <io.h>                 // Required for _access() [Used in FileExists()]
 #else
-    #include "unistd.h"             // Required for: getch(), chdir() (POSIX)
+    #include "unistd.h"             // Required for: getch(), chdir() (POSIX), access()
     #define GETCWD getcwd
     #define CHDIR chdir
 #endif
@@ -1512,6 +1513,21 @@ static const char *strprbrk(const char *s, const char *charset)
     const char *latestMatch = NULL;
     for (; s = strpbrk(s, charset), s != NULL; latestMatch = s++) { }
     return latestMatch;
+}
+
+// Return true if the file exists
+bool FileExists(const char *fileName)
+{
+    bool result = false;
+
+#if defined(_WIN32)
+    if (_access(fileName, 0) != -1)
+#else
+    if (access(fileName, F_OK) != -1)
+#endif
+        result = true;
+
+    return result;
 }
 
 // Get pointer to filename for a path string
