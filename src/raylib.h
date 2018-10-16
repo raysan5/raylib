@@ -870,6 +870,7 @@ RLAPI int GetRandomValue(int min, int max);                       // Returns a r
 // Files management functions
 RLAPI bool IsFileExtension(const char *fileName, const char *ext);// Check file extension
 RLAPI const char *GetExtension(const char *fileName);             // Get pointer to extension for a filename string
+RLAPI bool FileExists(const char *fileName);                      // Return true if file exists
 RLAPI const char *GetFileName(const char *filePath);              // Get pointer to filename for a path string
 RLAPI const char *GetFileNameWithoutExt(const char *filePath);    // Get filename string without extension (memory should be freed)
 RLAPI const char *GetDirectoryPath(const char *fileName);         // Get full path for a given fileName (uses static string)
