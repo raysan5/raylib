@@ -125,7 +125,7 @@
 #include <ctype.h>          // Required for: tolower() [Used in IsFileExtension()]
 #include <sys/stat.h>       // Required for stat() [Used in GetLastWriteTime()]
 
-#if defined(_MSC_VER)
+#if defined(_WIN32) && defined(_MSC_VER)
     #include "external/dirent.h"    // Required for: DIR, opendir(), closedir() [Used in GetDirectoryFiles()]
 #else
     #include <dirent.h>             // Required for: DIR, opendir(), closedir() [Used in GetDirectoryFiles()]
@@ -1465,6 +1465,21 @@ void TakeScreenshot(const char *fileName)
 #endif
 }
 
+// Check if the file exists
+bool FileExists(const char *fileName)
+{
+    bool result = false;
+
+#if defined(_WIN32)
+    if (_access(fileName, 0) != -1)
+#else
+    if (access(fileName, F_OK) != -1)
+#endif
+        result = true;
+
+    return result;
+}
+
 // Check file extension
 bool IsFileExtension(const char *fileName, const char *ext)
 {
@@ -1513,21 +1528,6 @@ static const char *strprbrk(const char *s, const char *charset)
     const char *latestMatch = NULL;
     for (; s = strpbrk(s, charset), s != NULL; latestMatch = s++) { }
     return latestMatch;
-}
-
-// Return true if the file exists
-bool FileExists(const char *fileName)
-{
-    bool result = false;
-
-#if defined(_WIN32)
-    if (_access(fileName, 0) != -1)
-#else
-    if (access(fileName, F_OK) != -1)
-#endif
-        result = true;
-
-    return result;
 }
 
 // Get pointer to filename for a path string

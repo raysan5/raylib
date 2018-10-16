@@ -132,7 +132,7 @@
     #include "external/dr_mp3.h"       // MP3 loading functions
 #endif
 
-#ifdef _MSC_VER
+#if defined(_MSC_VER)
     #undef bool
 #endif
 

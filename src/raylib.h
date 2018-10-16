@@ -311,7 +311,7 @@
 
 // NOTE: MSC C++ compiler does not support compound literals (C99 feature)
 // Plain structures in C++ (without constructors) can be initialized from { } initializers.
-#ifdef __cplusplus
+#if defined(__cplusplus)
     #define CLITERAL
 #else
     #define CLITERAL    (Color)
@@ -786,7 +786,7 @@ typedef enum {
 // Callbacks to be implemented by users
 typedef void (*TraceLogCallback)(int msgType, const char *text, va_list args);
 
-#ifdef __cplusplus
+#if defined(__cplusplus)
 extern "C" {            // Prevents name mangling of functions
 #endif
 
@@ -868,9 +868,9 @@ RLAPI void TakeScreenshot(const char *fileName);                  // Takes a scr
 RLAPI int GetRandomValue(int min, int max);                       // Returns a random value between min and max (both included)
 
 // Files management functions
+RLAPI bool FileExists(const char *fileName);                      // Check if file exists
 RLAPI bool IsFileExtension(const char *fileName, const char *ext);// Check file extension
 RLAPI const char *GetExtension(const char *fileName);             // Get pointer to extension for a filename string
-RLAPI bool FileExists(const char *fileName);                      // Return true if file exists
 RLAPI const char *GetFileName(const char *filePath);              // Get pointer to filename for a path string
 RLAPI const char *GetFileNameWithoutExt(const char *filePath);    // Get filename string without extension (memory should be freed)
 RLAPI const char *GetDirectoryPath(const char *fileName);         // Get full path for a given fileName (uses static string)
@@ -1277,7 +1277,7 @@ RLAPI void StopAudioStream(AudioStream stream);                       // Stop au
 RLAPI void SetAudioStreamVolume(AudioStream stream, float volume);    // Set volume for audio stream (1.0 is max level)
 RLAPI void SetAudioStreamPitch(AudioStream stream, float pitch);      // Set pitch for audio stream (1.0 is base level)
 
-#ifdef __cplusplus
+#if defined(__cplusplus)
 }
 #endif
 

@@ -378,7 +378,7 @@ typedef unsigned char byte;
     } VrDevice;
 #endif
 
-#ifdef __cplusplus
+#if defined(__cplusplus)
 extern "C" {            // Prevents name mangling of functions
 #endif
 
@@ -516,7 +516,7 @@ void TraceLog(int msgType, const char *text, ...);      // Show trace log messag
 int GetPixelDataSize(int width, int height, int format);// Get pixel data size in bytes (image or texture)
 #endif
 
-#ifdef __cplusplus
+#if defined(__cplusplus)
 }
 #endif
 
@@ -553,7 +553,7 @@ int GetPixelDataSize(int width, int height, int format);// Get pixel data size i
     #else
         // APIENTRY for OpenGL function pointer declarations is required
         #ifndef APIENTRY
-            #ifdef _WIN32
+            #if defined(_WIN32)
                 #define APIENTRY __stdcall
             #else
                 #define APIENTRY
@@ -1620,7 +1620,7 @@ void rlglInit(int width, int height)
     // NOTE: We don't need to check again supported extensions but we do (GLAD already dealt with that)
     glGetIntegerv(GL_NUM_EXTENSIONS, &numExt);
 
-#ifdef _MSC_VER
+#if defined(_MSC_VER)
     const char **extList = malloc(sizeof(const char *)*numExt);
 #else
     const char *extList[numExt];
@@ -3803,7 +3803,7 @@ static unsigned int LoadShaderProgram(unsigned int vShaderId, unsigned int fShad
 
         glGetProgramiv(program, GL_INFO_LOG_LENGTH, &maxLength);
 
-#ifdef _MSC_VER
+#if defined(_MSC_VER)
         char *log = malloc(maxLength);
 #else
         char log[maxLength];
@@ -3812,7 +3812,7 @@ static unsigned int LoadShaderProgram(unsigned int vShaderId, unsigned int fShad
 
         TraceLog(LOG_INFO, "%s", log);
 
-#ifdef _MSC_VER
+#if defined(_MSC_VER)
         free(log);
 #endif
         glDeleteProgram(program);
