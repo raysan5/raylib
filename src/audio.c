@@ -1463,21 +1463,25 @@ Music LoadMusicStream(const char *fileName)
 #if defined(SUPPORT_FILEFORMAT_MP3)
     else if (IsFileExtension(fileName, ".mp3"))
     {
-        drmp3_init_file(&music->ctxMp3, fileName, NULL);
+        int result = drmp3_init_file(&music->ctxMp3, fileName, NULL);
 
-        if (music->ctxMp3.framesRemaining <= 0) musicLoaded = false;
+        if (!result) musicLoaded = false;
         else
         {
-            music->stream = InitAudioStream(music->ctxMp3.sampleRate, 16, music->ctxMp3.channels);
+            TraceLog(LOG_INFO, "[%s] MP3 sample rate: %i", fileName, music->ctxMp3.sampleRate);
+            TraceLog(LOG_INFO, "[%s] MP3 bits per sample: %i", fileName, 32);
+            TraceLog(LOG_INFO, "[%s] MP3 channels: %i", fileName, music->ctxMp3.channels);
+            TraceLog(LOG_INFO, "[%s] MP3 frames remaining: %i", fileName, (unsigned int)music->ctxMp3.framesRemaining);
+            
+            music->stream = InitAudioStream(music->ctxMp3.sampleRate, 32, music->ctxMp3.channels);
+            
+            // TODO: It seems the total number of samples is not obtained correctly...
             music->totalSamples = (unsigned int)music->ctxMp3.framesRemaining*music->ctxMp3.channels;
             music->samplesLeft = music->totalSamples;
             music->ctxType = MUSIC_AUDIO_MP3;
             music->loopCount = -1;                       // Infinite loop by default
-
-            TraceLog(LOG_DEBUG, "[%s] MP3 total samples: %i", fileName, music->totalSamples);
-            TraceLog(LOG_DEBUG, "[%s] MP3 sample rate: %i", fileName, music->ctxMp3.sampleRate);
-            //TraceLog(LOG_DEBUG, "[%s] MP3 bits per sample: %i", fileName, music->ctxMp3.bitsPerSample);
-            TraceLog(LOG_DEBUG, "[%s] MP3 channels: %i", fileName, music->ctxMp3.channels);
+            
+            TraceLog(LOG_INFO, "[%s] MP3 total samples: %i", fileName, music->totalSamples);
         }
     }
 #endif
@@ -1940,7 +1944,7 @@ AudioStream InitAudioStream(unsigned int sampleRate, unsigned int sampleSize, un
     mal_format formatIn = ((stream.sampleSize == 8) ? mal_format_u8 : ((stream.sampleSize == 16) ? mal_format_s16 : mal_format_f32));
 
     // The size of a streaming buffer must be at least double the size of a period.
-    unsigned int periodSize = device.bufferSizeInFrames / device.periods;
+    unsigned int periodSize = device.bufferSizeInFrames/device.periods;
     unsigned int subBufferSize = AUDIO_BUFFER_SIZE;
     if (subBufferSize < periodSize) subBufferSize = periodSize;
 
@@ -1951,7 +1955,7 @@ AudioStream InitAudioStream(unsigned int sampleRate, unsigned int sampleSize, un
         return stream;
     }
 
-    audioBuffer->looping = true;    // Always loop for streaming buffers.
+    audioBuffer->looping = true;        // Always loop for streaming buffers.
     stream.audioBuffer = audioBuffer;
 #else
     // Setup OpenAL format
@@ -2398,17 +2402,17 @@ static Wave LoadFLAC(const char *fileName)
 // NOTE: Using dr_mp3 library
 static Wave LoadMP3(const char *fileName)
 {
-    Wave wave;
+    Wave wave = { 0 };
 
     // Decode an entire MP3 file in one go
-    uint64_t totalSampleCount;
-    drmp3_config *config = NULL;
-    wave.data = drmp3_open_and_decode_file_f32(fileName, config, &totalSampleCount);
+    uint64_t totalSampleCount = 0;
+    drmp3_config config = { 0 };
+    wave.data = drmp3_open_and_decode_file_f32(fileName, &config, &totalSampleCount);
     
-    wave.channels = config->outputChannels;
-    wave.sampleRate = config->outputSampleRate;
-    wave.sampleCount = (int)totalSampleCount/wave.channels;
-    wave.sampleSize = 16;
+    wave.channels = config.outputChannels;
+    wave.sampleRate = config.outputSampleRate;
+    wave.sampleCount = (int)totalSampleCount;
+    wave.sampleSize = 32;
 
     // NOTE: Only support up to 2 channels (mono, stereo)
     if (wave.channels > 2) TraceLog(LOG_WARNING, "[%s] MP3 channels number (%i) not supported", fileName, wave.channels);
