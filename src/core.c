@@ -478,7 +478,7 @@ void android_main(struct android_app *app)
     androidApp = app;
 
     // TODO: Should we maybe report != 0 return codes somewhere?
-    (void)main(1, (char*[]) { arg0, NULL });
+    (void)main(1, (char *[]) { arg0, NULL });
 }
 
 // TODO: Add this to header (if apps really need it)

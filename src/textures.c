@@ -2780,7 +2780,7 @@ static Image LoadDDS(const char *fileName)
 
                 TraceLog(LOG_DEBUG, "Pitch or linear size: %i", ddsHeader.pitchOrLinearSize);
 
-                image.data = (unsigned char*)malloc(size*sizeof(unsigned char));
+                image.data = (unsigned char *)malloc(size*sizeof(unsigned char));
 
                 fread(image.data, size, 1, ddsFile);
 
@@ -2877,7 +2877,7 @@ static Image LoadPKM(const char *fileName)
 
             int size = image.width*image.height*bpp/8;  // Total data size in bytes
 
-            image.data = (unsigned char*)malloc(size*sizeof(unsigned char));
+            image.data = (unsigned char *)malloc(size*sizeof(unsigned char));
 
             fread(image.data, size, 1, pkmFile);
 
@@ -2971,7 +2971,7 @@ static Image LoadKTX(const char *fileName)
             int dataSize;
             fread(&dataSize, sizeof(unsigned int), 1, ktxFile);
 
-            image.data = (unsigned char*)malloc(dataSize*sizeof(unsigned char));
+            image.data = (unsigned char *)malloc(dataSize*sizeof(unsigned char));
 
             fread(image.data, dataSize, 1, ktxFile);
 
@@ -3213,7 +3213,7 @@ static Image LoadPVR(const char *fileName)
                 }
 
                 int dataSize = image.width*image.height*bpp/8;  // Total data size in bytes
-                image.data = (unsigned char*)malloc(dataSize*sizeof(unsigned char));
+                image.data = (unsigned char *)malloc(dataSize*sizeof(unsigned char));
 
                 // Read data from file
                 fread(image.data, dataSize, 1, pvrFile);

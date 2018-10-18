@@ -431,7 +431,7 @@ static mal_uint32 OnAudioBufferDSPRead(mal_dsp *pDSP, mal_uint32 frameCount, voi
     mal_uint32 totalFramesRemaining = (frameCount - framesRead);
     if (totalFramesRemaining > 0) 
     {
-        memset((unsigned char*)pFramesOut + (framesRead*frameSizeInBytes), 0, totalFramesRemaining*frameSizeInBytes);
+        memset((unsigned char *)pFramesOut + (framesRead*frameSizeInBytes), 0, totalFramesRemaining*frameSizeInBytes);
 
         // For static buffers we can fill the remaining frames with silence for safety, but we don't want
         // to report those frames as "read". The reason for this is that the caller uses the return value
@@ -1062,7 +1062,7 @@ void WaveCrop(Wave *wave, int initSample, int finalSample)
 
         void *data = malloc(sampleCount*wave->sampleSize/8*wave->channels);
 
-        memcpy(data, (unsigned char*)wave->data + (initSample*wave->channels*wave->sampleSize/8), sampleCount*wave->channels*wave->sampleSize/8);
+        memcpy(data, (unsigned char *)wave->data + (initSample*wave->channels*wave->sampleSize/8), sampleCount*wave->channels*wave->sampleSize/8);
 
         free(wave->data);
         wave->data = data;

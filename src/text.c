@@ -589,10 +589,10 @@ void DrawTextEx(Font font, const char *text, Vector2 position, float fontSize, f
     int length = strlen(text);
     int textOffsetX = 0;        // Offset between characters
     int textOffsetY = 0;        // Required for line break!
-    float scaleFactor;
+    float scaleFactor = 0.0f;
 
-    unsigned char letter;       // Current character
-    int index;                  // Index position in sprite font
+    unsigned char letter = 0;   // Current character
+    int index = 0;              // Index position in sprite font
 
     scaleFactor = fontSize/font.baseSize;
 
@@ -656,7 +656,7 @@ const char *FormatText(const char *text, ...)
 // Get a piece of a text string
 const char *SubText(const char *text, int position, int length)
 {
-    static char buffer[MAX_SUBTEXT_LENGTH];
+    static char buffer[MAX_SUBTEXT_LENGTH] = { 0 };
     int textLength = strlen(text);
 
     if (position >= textLength)
@@ -703,8 +703,8 @@ Vector2 MeasureTextEx(Font font, const char *text, float fontSize, float spacing
     int tempLen = 0;                // Used to count longer text line num chars
     int lenCounter = 0;
 
-    float textWidth = 0;
-    float tempTextWidth = 0;        // Used to count longer text line width
+    float textWidth = 0.0f;
+    float tempTextWidth = 0.0f;     // Used to count longer text line width
 
     float textHeight = (float)font.baseSize;
     float scaleFactor = fontSize/(float)font.baseSize;
@@ -912,17 +912,18 @@ static Font LoadBMFont(const char *fileName)
     Font font = { 0 };
     font.texture.id = 0;
 
-    char buffer[MAX_BUFFER_SIZE];
+    char buffer[MAX_BUFFER_SIZE] = { 0 };
     char *searchPoint = NULL;
 
     int fontSize = 0;
-    int texWidth, texHeight;
+    int texWidth = 0;
+    int texHeight = 0;
     char texFileName[129];
     int charsCount = 0;
 
-    int base;   // Useless data
+    int base = 0;   // Useless data
 
-    FILE *fntFile;
+    FILE *fntFile = NULL;
 
     fntFile = fopen(fileName, "rt");
 
