@@ -63,14 +63,6 @@ RAYLIB_BUILD_MODE    ?= RELEASE
 # NOTE: Some programs like tools could not require audio support
 INCLUDE_AUDIO_MODULE ?= TRUE
 
-# Use OpenAL Soft backend for audio
-USE_OPENAL_BACKEND   ?= FALSE
-
-# OpenAL Soft audio backend forced on HTML5 and OSX (see below)
-ifeq ($(PLATFORM),PLATFORM_WEB)
-    USE_OPENAL_BACKEND = TRUE
-endif
-
 # Use external GLFW library instead of rglfw module
 # TODO: Review usage of examples on Linux.
 USE_EXTERNAL_GLFW    ?= FALSE
@@ -153,13 +145,6 @@ endif
 #ifeq ($(PLATFORM),PLATFORM_RPI)
 #    RAYLIB_PATH       ?= /home/pi/raylib
 #endif
-
-# Force OpenAL Soft audio backend for OSX platform
-# NOTE 1: mini_al library does not support CoreAudio yet
-# NOTE 2: Required OpenAL libraries should be available on OSX
-ifeq ($(PLATFORM_OS),OSX)
-    USE_OPENAL_BACKEND = TRUE
-endif
 
 ifeq ($(PLATFORM),PLATFORM_WEB)
     # Emscripten required variables
@@ -343,11 +328,6 @@ ifeq ($(RAYLIB_LIBTYPE),SHARED)
     CFLAGS += -fPIC -DBUILD_LIBTYPE_SHARED
 endif
 
-# Use OpenAL Soft backend instead of mini_al
-ifeq ($(USE_OPENAL_BACKEND),TRUE)
-    CFLAGS += -DUSE_OPENAL_BACKEND
-endif
-
 # Use Wayland display on Linux desktop
 ifeq ($(PLATFORM),PLATFORM_DESKTOP)
     ifeq ($(PLATFORM_OS), LINUX)
@@ -426,9 +406,7 @@ endif
 ifeq ($(INCLUDE_AUDIO_MODULE),TRUE)
     OBJS += audio.o
     OBJS += stb_vorbis.o
-    ifeq ($(USE_OPENAL_BACKEND),FALSE)
-        OBJS += mini_al.o
-    endif
+    OBJS += mini_al.o
 endif
 
 ifeq ($(PLATFORM),PLATFORM_ANDROID)
