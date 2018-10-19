@@ -1506,9 +1506,17 @@ void rlDeleteTextures(unsigned int id)
 void rlDeleteRenderTextures(RenderTexture2D target)
 {
 #if defined(GRAPHICS_API_OPENGL_33) || defined(GRAPHICS_API_OPENGL_ES2)
-    if (target.id > 0) glDeleteFramebuffers(1, &target.id);
     if (target.texture.id > 0) glDeleteTextures(1, &target.texture.id);
-    if (target.depth.id > 0) glDeleteTextures(1, &target.depth.id);
+    if (target.depth.id > 0) 
+    {
+#if defined(GRAPHICS_API_OPENGL_ES2)
+        glDeleteRenderBuffers(1, &target.depth.id);
+#elif defined(GRAPHICS_API_OPENGL_33)
+        glDeleteTextures(1, &target.depth.id);
+#endif
+    }
+
+    if (target.id > 0) glDeleteFramebuffers(1, &target.id);
 
     TraceLog(LOG_INFO, "[FBO ID %i] Unloaded render texture data from VRAM (GPU)", target.id);
 #endif
@@ -2171,7 +2179,7 @@ void rlUnloadTexture(unsigned int id)
 // Load a texture to be used for rendering (fbo with color and depth attachments)
 RenderTexture2D rlLoadRenderTexture(int width, int height)
 {
-    RenderTexture2D target;
+    RenderTexture2D target = { 0 };
 
     target.id = 0;
 
@@ -2251,8 +2259,16 @@ RenderTexture2D rlLoadRenderTexture(int width, int height)
             default: break;
         }
 
-        glDeleteTextures(1, &target.texture.id);
-        glDeleteTextures(1, &target.depth.id);
+        if (target.texture.id > 0) glDeleteTextures(1, &target.texture.id);
+        if (target.depth.id > 0) 
+        {
+#if defined(GRAPHICS_API_OPENGL_ES2)
+            glDeleteRenderBuffers(1, &target.depth.id);
+#elif defined(GRAPHICS_API_OPENGL_33)
+            glDeleteTextures(1, &target.depth.id);
+#endif
+        }
+        
         glDeleteFramebuffers(1, &target.id);
     }
     else TraceLog(LOG_INFO, "[FBO ID %i] Framebuffer object created successfully", target.id);
