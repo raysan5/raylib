@@ -1509,7 +1509,7 @@ void rlDeleteRenderTextures(RenderTexture2D target)
     if (target.texture.id > 0) glDeleteTextures(1, &target.texture.id);
     if (target.depth.id > 0) 
     {
-#if defined(GRAPHICS_API_OPENGL_ES2)
+#if defined(GRAPHICS_API_OPENGL_21) || defined(GRAPHICS_API_OPENGL_ES2)
         glDeleteRenderbuffers(1, &target.depth.id);
 #elif defined(GRAPHICS_API_OPENGL_33)
         glDeleteTextures(1, &target.depth.id);
@@ -2262,9 +2262,9 @@ RenderTexture2D rlLoadRenderTexture(int width, int height)
         if (target.texture.id > 0) glDeleteTextures(1, &target.texture.id);
         if (target.depth.id > 0) 
         {
-#if defined(GRAPHICS_API_OPENGL_ES2)
+#if defined(USE_DEPTH_RENDERBUFFER)
             glDeleteRenderbuffers(1, &target.depth.id);
-#elif defined(GRAPHICS_API_OPENGL_33)
+#elif defined(USE_DEPTH_TEXTURE)
             glDeleteTextures(1, &target.depth.id);
 #endif
         }
