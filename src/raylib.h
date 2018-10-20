@@ -223,7 +223,7 @@
 #define MOUSE_MIDDLE_BUTTON   2
 
 // Touch points registered
-#define MAX_TOUCH_POINTS      2
+#define MAX_TOUCH_POINTS      10
 
 // Gamepad Number
 #define GAMEPAD_PLAYER1       0
