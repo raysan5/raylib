@@ -1158,8 +1158,9 @@ Music LoadMusicStream(const char *fileName)
             
             music->stream = InitAudioStream(music->ctxMp3.sampleRate, 32, music->ctxMp3.channels);
             
-            // TODO: It seems the total number of samples is not obtained correctly...
-            music->totalSamples = (unsigned int)music->ctxMp3.framesRemaining*music->ctxMp3.channels;
+            // TODO: There is not an easy way to compute the total number of samples available
+            // in an MP3, frames size could be variable... we tried with a 60 seconds music... but crashes...
+            music->totalSamples = 60*music->ctxMp3.sampleRate*music->ctxMp3.channels;
             music->samplesLeft = music->totalSamples;
             music->ctxType = MUSIC_AUDIO_MP3;
             music->loopCount = -1;                       // Infinite loop by default
