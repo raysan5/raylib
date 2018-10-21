@@ -17,6 +17,7 @@
 #include "raylib.h"
 
 #define PHYSAC_IMPLEMENTATION
+#define PHYSAC_NO_THREADS
 #include "physac.h"
 
 #define VELOCITY    0.5f
@@ -64,6 +65,8 @@ int main()
     {
         // Update
         //----------------------------------------------------------------------------------
+        RunPhysicsStep();
+
         if (IsKeyPressed('R'))    // Reset physics input
         {
             // Reset movement physics body position, velocity and rotation
@@ -127,4 +130,3 @@ int main()
 
     return 0;
 }
-

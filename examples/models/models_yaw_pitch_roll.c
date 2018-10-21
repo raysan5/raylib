@@ -5,8 +5,7 @@
 *   This example has been created using raylib 1.8 (www.raylib.com)
 *   raylib is licensed under an unmodified zlib/libpng license (View raylib.h for details)
 *
-*   Example based on Berni work on Raspberry Pi:
-*   http://forum.raylib.com/index.php?p=/discussion/124/line-versus-triangle-drawing-order
+*   Example based on Berni work on Raspberry Pi.
 *
 *   Copyright (c) 2017 Ramon Santamaria (@raysan5)
 *

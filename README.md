@@ -1,12 +1,12 @@
 <img align="left" src="https://github.com/raysan5/raylib/blob/master/logo/raylib_256x256.png" width=256>
 
-**raylib is a simple and easy-to-use library to learn videogames programming.**
+**raylib is a simple and easy-to-use library to enjoy videogames programming.**
 
 raylib is highly inspired by Borland BGI graphics lib and by XNA framework.
 
 raylib could be useful for prototyping, tools development, graphic applications, embedded systems and education.
 
-NOTE for ADVENTURERS: raylib is a programming library to learn videogames programming; 
+NOTE for ADVENTURERS: raylib is a programming library to enjoy videogames programming; 
 no fancy interface, no visual helpers, no auto-debugging... just coding in the most 
 pure spartan-programmers way. Are you ready to learn? Jump to [code examples!](http://www.raylib.com/examples.html)
 
@@ -22,7 +22,7 @@ features
   - Multiple platforms supported: **Windows, Linux, MacOS, Android... and many more!**
   - Written in plain C code (C99) in PascalCase/camelCase notation
   - Hardware accelerated with OpenGL (**1.1, 2.1, 3.3 or ES 2.0**)
-  - **Unique OpenGL abstraction layer** (usable as standalone module): [rlgl](https://github.com/raysan5/raylib/blob/master/src/rlgl.c)
+  - **Unique OpenGL abstraction layer** (usable as standalone module): [rlgl](https://github.com/raysan5/raylib/blob/master/src/rlgl.h)
   - Multiple Fonts formats supported (XNA fonts, AngelCode fonts, TTF)
   - Outstanding texture formats support, including compressed formats (DXT, ETC, ASTC)
   - **Full 3d support** for 3d Shapes, Models, Billboards, Heightmaps and more! 
@@ -31,7 +31,7 @@ features
   - **Powerful math module** for Vector, Matrix and Quaternion operations: [raymath](https://github.com/raysan5/raylib/blob/master/src/raymath.h)
   - Audio loading and playing with streaming support (WAV, OGG, MP3, FLAC, XM, MOD)
   - **VR stereo rendering** support with configurable HMD device parameters
-  - Bindings to **Lua** ([raylib-lua](https://github.com/raysan5/raylib-lua)), **Go** ([raylib-go](https://github.com/gen2brain/raylib-go)) and more!
+  - Bindings to **Lua** ([raylib-lua](https://github.com/raysan5/raylib-lua)), **Go** ([raylib-go](https://github.com/gen2brain/raylib-go)) and [more](https://github.com/raysan5/raylib/blob/master/CONTRIBUTING.md#raylib-bindings)!
 
 raylib uses on its [core](https://github.com/raysan5/raylib/blob/master/src/core.c) module the outstanding [GLFW3](http://www.glfw.org/) library, embedded inside raylib in the form of [rglfw](https://github.com/raysan5/raylib/blob/master/src/rglfw.c) module, avoiding that way external dependencies.
 

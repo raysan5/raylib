@@ -5,10 +5,10 @@
 *   CONFIGURATION:
 *
 *   #define SUPPORT_FILEFORMAT_OBJ
-*       Selected desired fileformats to be supported for loading.
-*
 *   #define SUPPORT_FILEFORMAT_MTL
-*       Selected desired fileformats to be supported for loading.
+*   #define SUPPORT_FILEFORMAT_IQM
+*   #define SUPPORT_FILEFORMAT_GLTF
+*       Selected desired fileformats to be supported for model data loading.
 *
 *   #define SUPPORT_MESH_GENERATION
 *       Support procedural mesh generation functions, uses external par_shapes.h library
@@ -48,8 +48,20 @@
 
 #include "rlgl.h"           // raylib OpenGL abstraction layer to OpenGL 1.1, 2.1, 3.3+ or ES2
 
-#define PAR_SHAPES_IMPLEMENTATION
-#include "external/par_shapes.h"    // Shapes 3d parametric generation
+#if defined(SUPPORT_FILEFORMAT_IQM)
+    #define RIQM_IMPLEMENTATION
+    #include "external/riqm.h"          // IQM file format loading
+#endif
+
+#if defined(SUPPORT_FILEFORMAT_GLTF)
+    #define CGLTF_IMPLEMENTATION
+    #include "external/cgltf.h"         // glTF file format loading
+#endif
+
+#if defined(SUPPORT_MESH_GENERATION)
+    #define PAR_SHAPES_IMPLEMENTATION
+    #include "external/par_shapes.h"    // Shapes 3d parametric generation
+#endif
 
 //----------------------------------------------------------------------------------
 // Defines and Macros
@@ -74,6 +86,12 @@ static Mesh LoadOBJ(const char *fileName);      // Load OBJ mesh data
 #endif
 #if defined(SUPPORT_FILEFORMAT_MTL)
 static Material LoadMTL(const char *fileName);  // Load MTL material data
+#endif
+#if defined(SUPPORT_FILEFORMAT_GLTF)
+static Mesh LoadIQM(const char *fileName);      // Load IQM mesh data
+#endif
+#if defined(SUPPORT_FILEFORMAT_GLTF)
+static Mesh LoadGLTF(const char *fileName);     // Load GLTF mesh data
 #endif
 
 //----------------------------------------------------------------------------------
@@ -646,45 +664,54 @@ void UnloadMesh(Mesh *mesh)
     rlUnloadMesh(mesh);
 }
 
-// Export mesh as an OBJ file
-void ExportMesh(const char *fileName, Mesh mesh)
+// Export mesh data to file
+void ExportMesh(Mesh mesh, const char *fileName)
 {
-    FILE *objFile = fopen(fileName, "wt");
+    bool success = false;
     
-    fprintf(objFile, "# raylib Mesh OBJ exporter v1.0\n\n");
-    fprintf(objFile, "# Mesh exported as triangle faces and not optimized.\n");
-    fprintf(objFile, "#     Vertex Count:     %i\n", mesh.vertexCount);
-    fprintf(objFile, "#     Triangle Count:   %i\n\n", mesh.triangleCount);
-    fprintf(objFile, "# LICENSE: zlib/libpng\n");
-    fprintf(objFile, "# Copyright (c) 2018 Ramon Santamaria (@raysan5)\n\n");
-    
-    fprintf(objFile, "g mesh\n");
-    
-    for (int i = 0, v = 0; i < mesh.vertexCount; i++, v += 3)
+    if (IsFileExtension(fileName, ".obj"))
     {
-        fprintf(objFile, "v %.2f %.2f %.2f\n", mesh.vertices[v], mesh.vertices[v + 1], mesh.vertices[v + 2]);
+        FILE *objFile = fopen(fileName, "wt");
+        
+        fprintf(objFile, "# raylib Mesh OBJ exporter v1.0\n\n");
+        fprintf(objFile, "# Mesh exported as triangle faces and not optimized.\n");
+        fprintf(objFile, "#     Vertex Count:     %i\n", mesh.vertexCount);
+        fprintf(objFile, "#     Triangle Count:   %i\n\n", mesh.triangleCount);
+        fprintf(objFile, "# LICENSE: zlib/libpng\n");
+        fprintf(objFile, "# Copyright (c) 2018 Ramon Santamaria (@raysan5)\n\n");
+        
+        fprintf(objFile, "g mesh\n");
+        
+        for (int i = 0, v = 0; i < mesh.vertexCount; i++, v += 3)
+        {
+            fprintf(objFile, "v %.2f %.2f %.2f\n", mesh.vertices[v], mesh.vertices[v + 1], mesh.vertices[v + 2]);
+        }
+        
+        for (int i = 0, v = 0; i < mesh.vertexCount; i++, v += 2)
+        {
+            fprintf(objFile, "vt %.2f %.2f\n", mesh.texcoords[v], mesh.texcoords[v + 1]);
+        }
+        
+        for (int i = 0, v = 0; i < mesh.vertexCount; i++, v += 3)
+        {
+            fprintf(objFile, "vn %.2f %.2f %.2f\n", mesh.normals[v], mesh.normals[v + 1], mesh.normals[v + 2]);
+        }
+        
+        for (int i = 0; i < mesh.triangleCount; i += 3)
+        {
+            fprintf(objFile, "f %i/%i/%i %i/%i/%i %i/%i/%i\n", i, i, i, i + 1, i + 1, i + 1, i + 2, i + 2, i + 2);
+        }
+        
+        fprintf(objFile, "\n");
+        
+        fclose(objFile);
+        
+        success = true;
     }
-    
-    for (int i = 0, v = 0; i < mesh.vertexCount; i++, v += 2)
-    {
-        fprintf(objFile, "vt %.2f %.2f\n", mesh.texcoords[v], mesh.texcoords[v + 1]);
-    }
-    
-    for (int i = 0, v = 0; i < mesh.vertexCount; i++, v += 3)
-    {
-        fprintf(objFile, "vn %.2f %.2f %.2f\n", mesh.normals[v], mesh.normals[v + 1], mesh.normals[v + 2]);
-    }
-    
-    for (int i = 0; i < mesh.triangleCount; i += 3)
-    {
-        fprintf(objFile, "f %i/%i/%i %i/%i/%i %i/%i/%i\n", i, i, i, i + 1, i + 1, i + 1, i + 2, i + 2, i + 2);
-    }
-    
-    fprintf(objFile, "\n");
-    
-    fclose(objFile);
+    else if (IsFileExtension(fileName, ".raw")) { }   // TODO: Support additional file formats to export mesh vertex data
 
-    TraceLog(LOG_INFO, "Mesh saved: %s", fileName);
+    if (success) TraceLog(LOG_INFO, "Mesh exported successfully: %s", fileName);
+    else TraceLog(LOG_WARNING, "Mesh could not be exported.");
 }
 
 #if defined(SUPPORT_MESH_GENERATION)
@@ -699,7 +726,7 @@ Mesh GenMeshPlane(float width, float length, int resX, int resZ)
     resZ++;
     
     // Vertices definition
-    int vertexCount = resX*resZ*6;  // 6 vertex by quad
+    int vertexCount = resX*resZ; // vertices get reused for the faces
 
     Vector3 *vertices = (Vector3 *)malloc(vertexCount*sizeof(Vector3));
     for (int z = 0; z < resZ; z++)
@@ -718,7 +745,7 @@ Mesh GenMeshPlane(float width, float length, int resX, int resZ)
     Vector3 *normals = (Vector3 *)malloc(vertexCount*sizeof(Vector3));
     for (int n = 0; n < vertexCount; n++) normals[n] = (Vector3){ 0.0f, 1.0f, 0.0f };   // Vector3.up;
 
-    // TexCoords definition		
+    // TexCoords definition        
     Vector2 *texcoords = (Vector2 *)malloc(vertexCount*sizeof(Vector2));
     for (int v = 0; v < resZ; v++)
     {
@@ -741,7 +768,7 @@ Mesh GenMeshPlane(float width, float length, int resX, int resZ)
         triangles[t++] = i + 1;
         triangles[t++] = i;
 
-        triangles[t++] = i + resX;	
+        triangles[t++] = i + resX;    
         triangles[t++] = i + resX + 1;
         triangles[t++] = i + 1;
     }
@@ -1771,7 +1798,7 @@ void DrawModelWiresEx(Model model, Vector3 position, Vector3 rotationAxis, float
 // Draw a billboard
 void DrawBillboard(Camera camera, Texture2D texture, Vector3 center, float size, Color tint)
 {
-    Rectangle sourceRec = { 0, 0, texture.width, texture.height };
+    Rectangle sourceRec = { 0.0f, 0.0f, (float)texture.width, (float)texture.height };
 
     DrawBillboardRec(camera, texture, sourceRec, center, size, tint);
 }
@@ -1837,9 +1864,9 @@ void DrawBoundingBox(BoundingBox box, Color color)
 {
     Vector3 size;
 
-    size.x = fabs(box.max.x - box.min.x);
-    size.y = fabs(box.max.y - box.min.y);
-    size.z = fabs(box.max.z - box.min.z);
+    size.x = (float)fabs(box.max.x - box.min.x);
+    size.y = (float)fabs(box.max.y - box.min.y);
+    size.z = (float)fabs(box.max.z - box.min.z);
 
     Vector3 center = { box.min.x + size.x/2.0f, box.min.y + size.y/2.0f, box.min.z + size.z/2.0f };
 
@@ -2206,9 +2233,8 @@ void MeshBinormals(Mesh *mesh)
         Vector3 tangent = { mesh->tangents[i*4 + 0], mesh->tangents[i*4 + 1], mesh->tangents[i*4 + 2] };
         float tangentW = mesh->tangents[i*4 + 3];
     
-        Vector3 binormal = Vector3Multiply(Vector3CrossProduct(normal, tangent), tangentW);
-        
         // TODO: Register computed binormal in mesh->binormal ?
+        // Vector3 binormal = Vector3Multiply(Vector3CrossProduct(normal, tangent), tangentW);
     }
 }
 
@@ -2222,7 +2248,7 @@ static Mesh LoadOBJ(const char *fileName)
 {
     Mesh mesh = { 0 };
 
-    char dataType;
+    char dataType = 0;
     char comments[200];
 
     int vertexCount = 0;
@@ -2245,7 +2271,7 @@ static Mesh LoadOBJ(const char *fileName)
     // NOTE: faces MUST be defined as TRIANGLES (3 vertex per face)
     while (!feof(objFile))
     {
-        dataType = '\0';
+        dataType = 0;
         fscanf(objFile, "%c", &dataType);
 
         switch (dataType)
@@ -2629,5 +2655,61 @@ static Material LoadMTL(const char *fileName)
     TraceLog(LOG_INFO, "[%s] Material loaded successfully", fileName);
 
     return material;
+}
+#endif
+
+#if defined(SUPPORT_FILEFORMAT_GLTF)
+// Load IQM mesh data
+static Mesh LoadIQM(const char *fileName)
+{
+    Mesh mesh = { 0 };
+    
+    // TODO: Load IQM file
+    
+    return mesh;
+} 
+#endif
+
+#if defined(SUPPORT_FILEFORMAT_GLTF)
+// Load GLTF mesh data
+static Mesh LoadGLTF(const char *fileName)
+{
+    Mesh mesh = { 0 };
+    
+    // GLTF file loading
+    FILE *gltfFile = fopen(fileName, "rb");
+    
+    if (gltfFile == NULL)
+    {
+        TraceLog(LOG_WARNING, "[%s] GLTF file could not be opened", fileName);
+        return mesh;
+    }
+
+    fseek(gltfFile, 0, SEEK_END);
+    int size = ftell(gltfFile);
+    fseek(gltfFile, 0, SEEK_SET);
+
+    void *buffer = malloc(size);
+    fread(buffer, size, 1, gltfFile);
+    
+    fclose(gltfFile);
+
+    // GLTF data loading
+    cgltf_options options = {0};
+    cgltf_data data;
+    cgltf_result result = cgltf_parse(&options, buffer, size, &data);
+
+    if (result == cgltf_result_success)
+    {
+        printf("Type: %u\n", data.file_type);
+        printf("Version: %d\n", data.version);
+        printf("Meshes: %lu\n", data.meshes_count);
+    }
+    else TraceLog(LOG_WARNING, "[%s] GLTF data could not be loaded", fileName);
+
+    free(buffer);
+    cgltf_free(&data);
+    
+    return mesh; 
 }
 #endif

@@ -244,8 +244,8 @@ void SetCameraMode(Camera camera, int mode)
     distance.y = sqrtf(dx*dx + dy*dy);
     
     // Camera angle calculation
-    cameraAngle.x = asinf(fabs(dx)/distance.x);  // Camera angle in plane XZ (0 aligned with Z, move positive CCW)
-    cameraAngle.y = -asinf(fabs(dy)/distance.y); // Camera angle in plane XY (0 aligned with X, move positive CW)
+    cameraAngle.x = asinf( (float)fabs(dx)/distance.x);  // Camera angle in plane XZ (0 aligned with Z, move positive CCW)
+    cameraAngle.y = -asinf( (float)fabs(dy)/distance.y); // Camera angle in plane XY (0 aligned with X, move positive CW)
     
     // NOTE: Just testing what cameraAngle means
     //cameraAngle.x = 0.0f*DEG2RAD;       // Camera angle in plane XZ (0 aligned with Z, move positive CCW)

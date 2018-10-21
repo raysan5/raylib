@@ -60,7 +60,13 @@
 #endif
 
 #ifdef RAYMATH_IMPLEMENTATION
-    #define RMDEF extern inline // Provide external definition
+    #if defined(_WIN32) && defined(BUILD_LIBTYPE_SHARED)
+        #define RMDEF __declspec(dllexport) extern inline // We are building raylib as a Win32 shared library (.dll).
+    #elif defined(_WIN32) && defined(USE_LIBTYPE_SHARED) 
+        #define RLAPI __declspec(dllimport)         // We are using raylib as a Win32 shared library (.dll)
+    #else
+        #define RMDEF extern inline // Provide external definition
+    #endif
 #elif defined RAYMATH_HEADER_ONLY
     #define RMDEF static inline // Functions may be inlined, no external out-of-line definition
 #else
@@ -149,6 +155,12 @@ RMDEF float Clamp(float value, float min, float max)
     return res > max ? max : res;
 }
 
+// Calculate linear interpolation between two vectors
+RMDEF float Lerp(float start, float end, float amount)
+{
+    return start + amount*(end - start);
+}
+
 //----------------------------------------------------------------------------------
 // Module Functions Definition - Vector2 math
 //----------------------------------------------------------------------------------
@@ -217,6 +229,13 @@ RMDEF Vector2 Vector2Scale(Vector2 v, float scale)
     return result;
 }
 
+// Multiply vector by vector
+RMDEF Vector2 Vector2MultiplyV(Vector2 v1, Vector2 v2)
+{
+	Vector2 result = { v1.x*v2.x, v1.y*v2.y };
+	return result;
+}
+
 // Negate vector
 RMDEF Vector2 Vector2Negate(Vector2 v)
 {
@@ -231,10 +250,28 @@ RMDEF Vector2 Vector2Divide(Vector2 v, float div)
     return result;
 }
 
+// Divide vector by vector
+RMDEF Vector2 Vector2DivideV(Vector2 v1, Vector2 v2)
+{
+	Vector2 result = { v1.x/v2.x, v1.y/v2.y };
+	return result;
+}
+
 // Normalize provided vector
 RMDEF Vector2 Vector2Normalize(Vector2 v)
 {
     Vector2 result = Vector2Divide(v, Vector2Length(v));
+    return result;
+}
+
+// Calculate linear interpolation between two vectors
+RMDEF Vector2 Vector2Lerp(Vector2 v1, Vector2 v2, float amount)
+{
+    Vector2 result = { 0 };
+
+    result.x = v1.x + amount*(v2.x - v1.x);
+    result.y = v1.y + amount*(v2.y - v1.y);
+
     return result;
 }
 
@@ -263,7 +300,7 @@ RMDEF Vector3 Vector3Add(Vector3 v1, Vector3 v2)
     return result;
 }
 
-// Substract two vectors
+// Subtract two vectors
 RMDEF Vector3 Vector3Subtract(Vector3 v1, Vector3 v2)
 {
     Vector3 result = { v1.x - v2.x, v1.y - v2.y, v1.z - v2.z };
@@ -296,12 +333,12 @@ RMDEF Vector3 Vector3Perpendicular(Vector3 v)
 {
     Vector3 result = { 0 };
 
-    float min = fabs(v.x);
+    float min = (float) fabs(v.x);
     Vector3 cardinalAxis = {1.0f, 0.0f, 0.0f};
 
     if (fabs(v.y) < min)
     {
-        min = fabs(v.y);
+        min = (float) fabs(v.y);
         Vector3 tmp = {0.0f, 1.0f, 0.0f};
         cardinalAxis = tmp;
     }
@@ -353,6 +390,20 @@ RMDEF Vector3 Vector3Negate(Vector3 v)
 {
     Vector3 result = { -v.x, -v.y, -v.z };
     return result;
+}
+
+// Divide vector by a float value
+RMDEF Vector3 Vector3Divide(Vector3 v, float div)
+{
+	Vector3 result = { v.x / div, v.y / div, v.z / div };
+	return result;
+}
+
+// Divide vector by vector
+RMDEF Vector3 Vector3DivideV(Vector3 v1, Vector3 v2)
+{
+	Vector3 result = { v1.x/v2.x, v1.y/v2.y, v1.z/v2.z };
+	return result;
 }
 
 // Normalize provided vector
@@ -669,8 +720,8 @@ RMDEF Matrix MatrixAdd(Matrix left, Matrix right)
     return result;
 }
 
-// Substract two matrices (left - right)
-RMDEF Matrix MatrixSubstract(Matrix left, Matrix right)
+// Subtract two matrices (left - right)
+RMDEF Matrix MatrixSubtract(Matrix left, Matrix right)
 {
     Matrix result = MatrixIdentity();
 
@@ -840,28 +891,28 @@ RMDEF Matrix MatrixFrustum(double left, double right, double bottom, double top,
 {
     Matrix result = { 0 };
 
-    float rl = (right - left);
-    float tb = (top - bottom);
-    float fn = (far - near);
+    float rl = (float)(right - left);
+    float tb = (float)(top - bottom);
+    float fn = (float)(far - near);
 
-    result.m0 = (near*2.0f)/rl;
+    result.m0 = ((float) near*2.0f)/rl;
     result.m1 = 0.0f;
     result.m2 = 0.0f;
     result.m3 = 0.0f;
 
     result.m4 = 0.0f;
-    result.m5 = (near*2.0f)/tb;
+    result.m5 = ((float) near*2.0f)/tb;
     result.m6 = 0.0f;
     result.m7 = 0.0f;
 
-    result.m8 = (right + left)/rl;
-    result.m9 = (top + bottom)/tb;
-    result.m10 = -(far + near)/fn;
+    result.m8 = ((float)right + (float)left)/rl;
+    result.m9 = ((float)top + (float)bottom)/tb;
+    result.m10 = -((float)far + (float)near)/fn;
     result.m11 = -1.0f;
 
     result.m12 = 0.0f;
     result.m13 = 0.0f;
-    result.m14 = -(far*near*2.0f)/fn;
+    result.m14 = -((float)far*(float)near*2.0f)/fn;
     result.m15 = 0.0f;
 
     return result;
@@ -883,9 +934,9 @@ RMDEF Matrix MatrixOrtho(double left, double right, double bottom, double top, d
 {
     Matrix result = { 0 };
 
-    float rl = (right - left);
-    float tb = (top - bottom);
-    float fn = (far - near);
+    float rl = (float)(right - left);
+    float tb = (float)(top - bottom);
+    float fn = (float)(far - near);
 
     result.m0 = 2.0f/rl;
     result.m1 = 0.0f;
@@ -899,9 +950,9 @@ RMDEF Matrix MatrixOrtho(double left, double right, double bottom, double top, d
     result.m9 = 0.0f;
     result.m10 = -2.0f/fn;
     result.m11 = 0.0f;
-    result.m12 = -(left + right)/rl;
-    result.m13 = -(top + bottom)/tb;
-    result.m14 = -(far + near)/fn;
+    result.m12 = -((float)left + (float)right)/rl;
+    result.m13 = -((float)top + (float)bottom)/tb;
+    result.m14 = -((float)far + (float)near)/fn;
     result.m15 = 1.0f;
 
     return result;
@@ -980,7 +1031,7 @@ RMDEF Quaternion QuaternionIdentity(void)
 // Computes the length of a quaternion
 RMDEF float QuaternionLength(Quaternion q)
 {
-    float result = sqrt(q.x*q.x + q.y*q.y + q.z*q.z + q.w*q.w);
+    float result = (float)sqrt(q.x*q.x + q.y*q.y + q.z*q.z + q.w*q.w);
     return result;
 }
 
@@ -1071,8 +1122,8 @@ RMDEF Quaternion QuaternionSlerp(Quaternion q1, Quaternion q2, float amount)
     else if (cosHalfTheta > 0.95f) result = QuaternionNlerp(q1, q2, amount);
     else
     {
-        float halfTheta = acos(cosHalfTheta);
-        float sinHalfTheta = sqrt(1.0f - cosHalfTheta*cosHalfTheta);
+        float halfTheta = (float) acos(cosHalfTheta);
+        float sinHalfTheta = (float) sqrt(1.0f - cosHalfTheta*cosHalfTheta);
 
         if (fabs(sinHalfTheta) < 0.001f)
         {

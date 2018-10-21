@@ -337,8 +337,8 @@ void UpdateTitleScreen(void)
 
     if (framesCounter < duration)
     {
-        currentValue1 = BounceEaseOut((float) framesCounter, initValue1, (finishValue1 - initValue1), duration);
-        currentValue2 = BounceEaseOut((float) framesCounter, initValue2, (finishValue2 - initValue2), duration);
+        currentValue1 = BounceEaseOut((float)framesCounter, initValue1, (finishValue1 - initValue1), duration);
+        currentValue2 = BounceEaseOut((float)framesCounter, initValue2, (finishValue2 - initValue2), duration);
     }
     
     thisFrame += 1*TIME_FACTOR;

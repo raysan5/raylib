@@ -64,29 +64,32 @@ typedef struct Pose {
 } Pose;
 
 typedef struct Animation {
-    int jointCount;
-    Joint *joints;      // NOTE: Joints in anims do not have names
+    int jointCount;         // Number of joints (bones)
+    Joint *joints;          // Joints array
+                            // NOTE: Joints in anims do not have names
 
-    int frameCount;
-    float framerate;
+    int frameCount;         // Number of animation frames
+    float framerate;        // Frame change speed
 
-    Pose **framepose;
+    Pose **framepose;       // Poses array by frame (and one pose by joint)
 } Animation;
 
 // Animated Model type
 typedef struct AnimatedModel {
-    int meshCount;
-    Mesh *mesh;
+    Matrix transform;       // Local transform matrix
+    
+    int meshCount;          // Number of meshes
+    Mesh *meshes;           // Meshes array
 
-    int materialCount;
-    int *meshMaterialId;
-    Material *materials;
+    int materialCount;      // Number of materials
+    Material *materials;    // Materials array
+    
+    int *meshMaterialId;    // Mesh materials ids
 
-    int jointCount;
-    Joint *joints;
-
-    Pose *basepose;
-    Matrix transform;
+    // Animation required data
+    int jointCount;         // Number of joints (and keyposes)
+    Joint *joints;          // Mesh joints (bones)
+    Pose *basepose;         // Mesh base-poses by joint
 } AnimatedModel;
 
 //----------------------------------------------------------------------------------
@@ -233,7 +236,7 @@ AnimatedModel LoadAnimatedModel(const char *filename)
 {
     AnimatedModel out = LoadIQM(filename);
 
-    for (int i = 0; i < out.meshCount; i++) rlLoadMesh(&out.mesh[i], false);
+    for (int i = 0; i < out.meshCount; i++) rlLoadMesh(&out.meshes[i], false);
 
     out.transform = MatrixIdentity();
     out.meshMaterialId = malloc(sizeof(int)*out.meshCount);
@@ -258,7 +261,7 @@ AnimatedModel AnimatedModelAddTexture(AnimatedModel model, const char *filename)
     return model;
 }
 
-// Set the material for a mesh
+// Set the material for a meshes
 AnimatedModel SetMeshMaterial(AnimatedModel model, int meshid, int textureid)
 {
     if (meshid > model.meshCount)
@@ -466,9 +469,9 @@ void UnloadAnimatedModel(AnimatedModel model)
     free(model.joints);
     free(model.basepose);
 
-    for (int i = 0; i < model.meshCount; i++) rlUnloadMesh(&model.mesh[i]);
+    for (int i = 0; i < model.meshCount; i++) rlUnloadMesh(&model.meshes[i]);
 
-    free(model.mesh);
+    free(model.meshes);
 }
 
 // Unload animation
@@ -515,9 +518,9 @@ void AnimateModel(AnimatedModel model, Animation anim, int frame)
         int wcounter = 0;
         int weightId = 0;
 
-        for (int i = 0; i < model.mesh[m].vertexCount; i++)
+        for (int i = 0; i < model.meshes[m].vertexCount; i++)
         {
-            weightId = model.mesh[m].weightId[wcounter];
+            weightId = model.meshes[m].weightId[wcounter];
             baset = model.basepose[weightId].translation;
             baser = model.basepose[weightId].rotation;
             bases = model.basepose[weightId].scale;
@@ -526,23 +529,23 @@ void AnimateModel(AnimatedModel model, Animation anim, int frame)
             outs = anim.framepose[frame][weightId].scale;
 
             // vertices
-            // NOTE: We use mesh.baseVertices (default position) to calculate mesh.vertices (animated position)
-            outv = (Vector3){ model.mesh[m].baseVertices[vcounter], model.mesh[m].baseVertices[vcounter + 1], model.mesh[m].baseVertices[vcounter + 2] };
+            // NOTE: We use meshes.baseVertices (default position) to calculate meshes.vertices (animated position)
+            outv = (Vector3){ model.meshes[m].baseVertices[vcounter], model.meshes[m].baseVertices[vcounter + 1], model.meshes[m].baseVertices[vcounter + 2] };
             outv = Vector3MultiplyV(outv, outs);
             outv = Vector3Subtract(outv, baset);
             outv = Vector3RotateByQuaternion(outv, QuaternionMultiply(outr, QuaternionInvert(baser)));
             outv = Vector3Add(outv, outt);
-            model.mesh[m].vertices[vcounter] = outv.x;
-            model.mesh[m].vertices[vcounter + 1] = outv.y;
-            model.mesh[m].vertices[vcounter + 2] = outv.z;
+            model.meshes[m].vertices[vcounter] = outv.x;
+            model.meshes[m].vertices[vcounter + 1] = outv.y;
+            model.meshes[m].vertices[vcounter + 2] = outv.z;
 
             // normals
-            // NOTE: We use mesh.baseNormals (default normal) to calculate mesh.normals (animated normals)
-            outn = (Vector3){ model.mesh[m].baseNormals[vcounter], model.mesh[m].baseNormals[vcounter + 1], model.mesh[m].baseNormals[vcounter + 2] };
+            // NOTE: We use meshes.baseNormals (default normal) to calculate meshes.normals (animated normals)
+            outn = (Vector3){ model.meshes[m].baseNormals[vcounter], model.meshes[m].baseNormals[vcounter + 1], model.meshes[m].baseNormals[vcounter + 2] };
             outn = Vector3RotateByQuaternion(outn, QuaternionMultiply(outr, QuaternionInvert(baser)));
-            model.mesh[m].normals[vcounter] = outn.x;
-            model.mesh[m].normals[vcounter + 1] = outn.y;
-            model.mesh[m].normals[vcounter + 2] = outn.z;
+            model.meshes[m].normals[vcounter] = outn.x;
+            model.meshes[m].normals[vcounter + 1] = outn.y;
+            model.meshes[m].normals[vcounter + 2] = outn.z;
             vcounter += 3;
             wcounter += 4;
         }
@@ -563,7 +566,7 @@ void DrawAnimatedModelEx(AnimatedModel model, Vector3 position, Vector3 rotation
 {
     if (model.materialCount == 0)
     {
-        TraceLog(LOG_WARNING,"No materials set, can't draw animated mesh\n");
+        TraceLog(LOG_WARNING,"No materials set, can't draw animated meshes\n");
         return;
     }
 
@@ -576,9 +579,9 @@ void DrawAnimatedModelEx(AnimatedModel model, Vector3 position, Vector3 rotation
 
     for (int i = 0; i < model.meshCount; i++)
     {
-        rlUpdateMesh(model.mesh[i], 0, model.mesh[i].vertexCount);      // Update vertex position
-        rlUpdateMesh(model.mesh[i], 2, model.mesh[i].vertexCount);      // Update vertex normals
-        rlDrawMesh(model.mesh[i], model.materials[model.meshMaterialId[i]], model.transform);   // Draw mesh
+        rlUpdateMesh(model.meshes[i], 0, model.meshes[i].vertexCount);      // Update vertex position
+        rlUpdateMesh(model.meshes[i], 2, model.meshes[i].vertexCount);      // Update vertex normals
+        rlDrawMesh(model.meshes[i], model.materials[model.meshMaterialId[i]], model.transform);   // Draw meshes
     }
 }
 
@@ -632,7 +635,7 @@ static AnimatedModel LoadIQM(const char *filename)
     fread(imesh, sizeof(IQMMesh)*iqm.num_meshes, 1, iqmFile);
 
     model.meshCount = iqm.num_meshes;
-    model.mesh = malloc(sizeof(Mesh)*iqm.num_meshes);
+    model.meshes = malloc(sizeof(Mesh)*iqm.num_meshes);
     
     char name[MESH_NAME_LENGTH];
 
@@ -640,21 +643,21 @@ static AnimatedModel LoadIQM(const char *filename)
     {
         fseek(iqmFile,iqm.ofs_text+imesh[i].name,SEEK_SET);
         fread(name, sizeof(char)*MESH_NAME_LENGTH, 1, iqmFile);         // Mesh name not used...
-        model.mesh[i].vertexCount = imesh[i].num_vertexes;
+        model.meshes[i].vertexCount = imesh[i].num_vertexes;
         
-        model.mesh[i].baseVertices = malloc(sizeof(float)*imesh[i].num_vertexes*3);     // Default IQM base position
-        model.mesh[i].baseNormals = malloc(sizeof(float)*imesh[i].num_vertexes*3);      // Default IQM base normal
+        model.meshes[i].baseVertices = malloc(sizeof(float)*imesh[i].num_vertexes*3);     // Default IQM base position
+        model.meshes[i].baseNormals = malloc(sizeof(float)*imesh[i].num_vertexes*3);      // Default IQM base normal
         
-        model.mesh[i].texcoords = malloc(sizeof(float)*imesh[i].num_vertexes*2);
-        model.mesh[i].weightId = malloc(sizeof(int)*imesh[i].num_vertexes*4);
-        model.mesh[i].weightBias = malloc(sizeof(float)*imesh[i].num_vertexes*4);
+        model.meshes[i].texcoords = malloc(sizeof(float)*imesh[i].num_vertexes*2);
+        model.meshes[i].weightId = malloc(sizeof(int)*imesh[i].num_vertexes*4);
+        model.meshes[i].weightBias = malloc(sizeof(float)*imesh[i].num_vertexes*4);
         
-        model.mesh[i].triangleCount = imesh[i].num_triangles;
-        model.mesh[i].indices = malloc(sizeof(unsigned short)*imesh[i].num_triangles*3);
+        model.meshes[i].triangleCount = imesh[i].num_triangles;
+        model.meshes[i].indices = malloc(sizeof(unsigned short)*imesh[i].num_triangles*3);
         
-        // What we actually process for rendering, should be updated transforming mesh.vertices and mesh.normals
-        model.mesh[i].vertices = malloc(sizeof(float)*imesh[i].num_vertexes*3);     
-        model.mesh[i].normals = malloc(sizeof(float)*imesh[i].num_vertexes*3);
+        // What we actually process for rendering, should be updated transforming meshes.vertices and meshes.normals
+        model.meshes[i].vertices = malloc(sizeof(float)*imesh[i].num_vertexes*3);     
+        model.meshes[i].normals = malloc(sizeof(float)*imesh[i].num_vertexes*3);
     }
 
     // tris
@@ -669,9 +672,9 @@ static AnimatedModel LoadIQM(const char *filename)
         for (int i = imesh[m].first_triangle; i < imesh[m].first_triangle+imesh[m].num_triangles; i++)
         {
             // IQM triangles are stored counter clockwise, but raylib sets opengl to clockwise drawing, so we swap them around
-            model.mesh[m].indices[tcounter+2] = tri[i].vertex[0] - imesh[m].first_vertex;
-            model.mesh[m].indices[tcounter+1] = tri[i].vertex[1] - imesh[m].first_vertex;
-            model.mesh[m].indices[tcounter] = tri[i].vertex[2] - imesh[m].first_vertex;
+            model.meshes[m].indices[tcounter+2] = tri[i].vertex[0] - imesh[m].first_vertex;
+            model.meshes[m].indices[tcounter+1] = tri[i].vertex[1] - imesh[m].first_vertex;
+            model.meshes[m].indices[tcounter] = tri[i].vertex[2] - imesh[m].first_vertex;
             tcounter += 3;
         }
     }
@@ -696,8 +699,8 @@ static AnimatedModel LoadIQM(const char *filename)
                     int vcounter = 0;
                     for (int i = imesh[m].first_vertex*3; i < (imesh[m].first_vertex + imesh[m].num_vertexes)*3; i++)
                     {
-                        model.mesh[m].vertices[vcounter] = vertex[i];
-                        model.mesh[m].baseVertices[vcounter] = vertex[i];
+                        model.meshes[m].vertices[vcounter] = vertex[i];
+                        model.meshes[m].baseVertices[vcounter] = vertex[i];
                         vcounter++;
                     }
                 }
@@ -713,8 +716,8 @@ static AnimatedModel LoadIQM(const char *filename)
                     int vcounter = 0;
                     for (int i = imesh[m].first_vertex*3; i < (imesh[m].first_vertex + imesh[m].num_vertexes)*3; i++)
                     {
-                        model.mesh[m].normals[vcounter] = normal[i];
-                        model.mesh[m].baseNormals[vcounter] = normal[i];
+                        model.meshes[m].normals[vcounter] = normal[i];
+                        model.meshes[m].baseNormals[vcounter] = normal[i];
                         vcounter++;
                     }
                 }
@@ -730,7 +733,7 @@ static AnimatedModel LoadIQM(const char *filename)
                     int vcounter = 0;
                     for (int i = imesh[m].first_vertex*2; i < (imesh[m].first_vertex + imesh[m].num_vertexes)*2; i++)
                     {
-                        model.mesh[m].texcoords[vcounter] = text[i];
+                        model.meshes[m].texcoords[vcounter] = text[i];
                         vcounter++;
                     }
                 }
@@ -746,7 +749,7 @@ static AnimatedModel LoadIQM(const char *filename)
                     int vcounter = 0;
                     for (int i = imesh[m].first_vertex*4; i < (imesh[m].first_vertex + imesh[m].num_vertexes)*4; i++)
                     {
-                        model.mesh[m].weightId[vcounter] = blendi[i];
+                        model.meshes[m].weightId[vcounter] = blendi[i];
                         vcounter++;
                     }
                 }
@@ -762,7 +765,7 @@ static AnimatedModel LoadIQM(const char *filename)
                     int vcounter = 0;
                     for (int i = imesh[m].first_vertex*4; i < (imesh[m].first_vertex + imesh[m].num_vertexes)*4; i++)
                     {
-                        model.mesh[m].weightBias[vcounter] = blendw[i]/255.0f;
+                        model.meshes[m].weightBias[vcounter] = blendw[i]/255.0f;
                         vcounter++;
                     }
                 }

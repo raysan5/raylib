@@ -29,19 +29,18 @@ int main()
     fontDefault.baseSize = 16;
     fontDefault.charsCount = 95;
     // Parameters > font size: 16, no chars array provided (0), chars count: 95 (autogenerate chars array)
-    fontDefault.chars = LoadFontData("resources/AnonymousPro-Bold.ttf", 16, 0, 95, false);
+    fontDefault.chars = LoadFontData("resources/AnonymousPro-Bold.ttf", 16, 0, 95, FONT_DEFAULT);
     // Parameters > chars count: 95, font size: 16, chars padding in image: 4 px, pack method: 0 (default)
     Image atlas = GenImageFontAtlas(fontDefault.chars, 95, 16, 4, 0);
     fontDefault.texture = LoadTextureFromImage(atlas);
     UnloadImage(atlas);
     
     // SDF font generation from TTF font
-    // NOTE: SDF chars data is generated with LoadFontData(), it's just a bool option
     Font fontSDF = { 0 };
     fontSDF.baseSize = 16;
     fontSDF.charsCount = 95;
     // Parameters > font size: 16, no chars array provided (0), chars count: 0 (defaults to 95)
-    fontSDF.chars = LoadFontData("resources/AnonymousPro-Bold.ttf", 16, 0, 0, true);
+    fontSDF.chars = LoadFontData("resources/AnonymousPro-Bold.ttf", 16, 0, 0, FONT_SDF);
     // Parameters > chars count: 95, font size: 16, chars padding in image: 0 px, pack method: 1 (Skyline algorythm)
     atlas = GenImageFontAtlas(fontSDF.chars, 95, 16, 0, 1);
     fontSDF.texture = LoadTextureFromImage(atlas);

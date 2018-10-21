@@ -19,6 +19,9 @@
 *       Selecte desired fileformats to be supported for image data loading. Some of those formats are
 *       supported by default, to remove support, just comment unrequired #define in this module
 *
+*   #define SUPPORT_IMAGE_EXPORT
+*       Support image export in multiple file formats
+*
 *   #define SUPPORT_IMAGE_MANIPULATION
 *       Support multiple image editing functions to scale, adjust colors, flip, draw on images, crop...
 *       If not defined only three image editing functions supported: ImageFormat(), ImageAlphaMask(), ImageToPOT()
@@ -103,6 +106,11 @@
                                         // NOTE: Used to read image data (multiple formats support)
 #endif
 
+#if defined(SUPPORT_IMAGE_EXPORT)
+    #define STB_IMAGE_WRITE_IMPLEMENTATION
+    #include "external/stb_image_write.h"   // Required for: stbi_write_*()
+#endif
+
 #if defined(SUPPORT_IMAGE_MANIPULATION)
     #define STB_IMAGE_RESIZE_IMPLEMENTATION
     #include "external/stb_image_resize.h"  // Required for: stbir_resize_uint8()
@@ -140,6 +148,7 @@ static Image LoadPKM(const char *fileName);   // Load PKM file
 #endif
 #if defined(SUPPORT_FILEFORMAT_KTX)
 static Image LoadKTX(const char *fileName);   // Load KTX file
+static void SaveKTX(Image image, const char *fileName); // Save image data as KTX file
 #endif
 #if defined(SUPPORT_FILEFORMAT_PVR)
 static Image LoadPVR(const char *fileName);   // Load PVR file
@@ -706,15 +715,33 @@ void UpdateTexture(Texture2D texture, const void *pixels)
     rlUpdateTexture(texture.id, texture.width, texture.height, texture.format, pixels);
 }
 
-// Export image as a PNG file
-void ExportImage(const char *fileName, Image image)
+// Export image data to file
+// NOTE: File format depends on fileName extension
+void ExportImage(Image image, const char *fileName)
 {
+    int success = 0;
+    
     // NOTE: Getting Color array as RGBA unsigned char values
     unsigned char *imgData = (unsigned char *)GetImageData(image);
     
-    // NOTE: SavePNG() not supported by some platforms: PLATFORM_WEB, PLATFORM_ANDROID
-    SavePNG(fileName, imgData, image.width, image.height, 4);
-
+    if (IsFileExtension(fileName, ".png")) success = stbi_write_png(fileName, image.width, image.height, 4, imgData, image.width*4);
+    else if (IsFileExtension(fileName, ".bmp")) success = stbi_write_bmp(fileName, image.width, image.height, 4, imgData);
+    else if (IsFileExtension(fileName, ".tga")) success = stbi_write_tga(fileName, image.width, image.height, 4, imgData);
+    else if (IsFileExtension(fileName, ".jpg")) success = stbi_write_jpg(fileName, image.width, image.height, 4, imgData, 80);  // JPG quality: between 1 and 100
+    else if (IsFileExtension(fileName, ".ktx")) SaveKTX(image, fileName);
+    else if (IsFileExtension(fileName, ".raw")) 
+    {
+        // Export raw pixel data (without header)
+        // NOTE: It's up to the user to track image parameters
+        FILE *rawFile = fopen(fileName, "wb");
+        fwrite(image.data, GetPixelDataSize(image.width, image.height, image.format), 1, rawFile);
+        fclose(rawFile);
+    }
+    else if (IsFileExtension(fileName, ".h")) { }    // TODO: Export pixel data as an array of bytes
+    
+    if (success != 0) TraceLog(LOG_INFO, "Image exported successfully: %s", fileName);
+    else TraceLog(LOG_WARNING, "Image could not be exported.");
+    
     free(imgData);
 }
 
@@ -1051,16 +1078,16 @@ void ImageAlphaCrop(Image *image, float threshold)
             minx = i%image->width;
             miny = -(-((i/image->width) + 1) + 1);
 
-            if (crop.y == 0) crop.y = miny;
+            if (crop.y == 0.0f) crop.y = (float)miny;
 
-            if (crop.x == 0) crop.x = minx;
-            else if (minx < crop.x) crop.x = minx;
+            if (crop.x == 0.0f) crop.x = (float)minx;
+            else if (minx < crop.x) crop.x = (float)minx;
 
-            if (crop.width == 0) crop.width = minx; 
-            else if (crop.width < minx) crop.width = minx;
+            if (crop.width == 0.0f) crop.width = (float)minx;
+            else if (crop.width < minx) crop.width = (float)minx;
 
-            if (crop.height == 0) crop.height = miny;
-            else if (crop.height < miny) crop.height = miny;
+            if (crop.height == 0.0f) crop.height = (float)miny;
+            else if (crop.height < (float)miny) crop.height = (float)miny;
         }
     }
     
@@ -1216,8 +1243,8 @@ void ImageResizeNN(Image *image,int newWidth,int newHeight)
 void ImageResizeCanvas(Image *image, int newWidth,int newHeight, int offsetX, int offsetY, Color color)
 {
     Image imTemp = GenImageColor(newWidth, newHeight, color);
-    Rectangle srcRec = { 0, 0, image->width, image->height };
-    Rectangle dstRec = { offsetX, offsetY, srcRec.width, srcRec.height };
+    Rectangle srcRec = { 0.0f, 0.0f, (float)image->width, (float)image->height };
+    Rectangle dstRec = { (float)offsetX, (float)offsetY, (float)srcRec.width, (float)srcRec.height };
     
     // TODO: Review different scaling situations
     
@@ -1418,6 +1445,57 @@ void ImageDither(Image *image, int rBpp, int gBpp, int bBpp, int aBpp)
     }
 }
 
+// Extract color palette from image to maximum size
+// NOTE: Memory allocated should be freed manually!
+Color *ImageExtractPalette(Image image, int maxPaletteSize, int *extractCount)
+{
+    #define COLOR_EQUAL(col1, col2) ((col1.r == col2.r)&&(col1.g == col2.g)&&(col1.b == col2.b)&&(col1.a == col2.a))
+    
+    Color *pixels = GetImageData(image);
+    Color *palette = (Color *)malloc(maxPaletteSize*sizeof(Color));
+    
+    int palCount = 0;
+    for (int i = 0; i < maxPaletteSize; i++) palette[i] = BLANK;   // Set all colors to BLANK
+
+    for (int i = 0; i < image.width*image.height; i++)
+    {
+        if (pixels[i].a > 0)
+        {
+            bool colorInPalette = false;
+            
+            // Check if the color is already on palette
+            for (int j = 0; j < maxPaletteSize; j++)
+            {
+                if (COLOR_EQUAL(pixels[i], palette[j])) 
+                {
+                    colorInPalette = true;
+                    break;
+                }
+            }
+            
+            // Store color if not on the palette
+            if (!colorInPalette)
+            {
+                palette[palCount] = pixels[i];      // Add pixels[i] to palette
+                palCount++;
+                
+                // We reached the limit of colors supported by palette
+                if (palCount >= maxPaletteSize)
+                {
+                    i = image.width*image.height;   // Finish palette get
+                    printf("WARNING: Image palette is greater than %i colors!\n", maxPaletteSize);
+                }
+            }
+        }
+    }
+
+    free(pixels);
+    
+    *extractCount = palCount;
+    
+    return palette;
+}
+
 // Draw an image (source) within an image (destination)
 // TODO: Feel this function could be simplified...
 void ImageDraw(Image *dst, Image src, Rectangle srcRec, Rectangle dstRec)
@@ -1450,7 +1528,7 @@ void ImageDraw(Image *dst, Image src, Rectangle srcRec, Rectangle dstRec)
     if (dstRec.y < 0) dstRec.y = 0;
 
     // Scale source image in case destination rec size is different than source rec size
-    if ((dstRec.width != srcRec.width) || (dstRec.height != srcRec.height)) ImageResize(&srcCopy, dstRec.width, dstRec.height);
+    if ((dstRec.width != srcRec.width) || (dstRec.height != srcRec.height)) ImageResize(&srcCopy, (int)dstRec.width, (int)dstRec.height);
 
     if ((dstRec.x + dstRec.width) > dst->width)
     {
@@ -1530,7 +1608,7 @@ Image ImageText(const char *text, int fontSize, Color color)
 {
     int defaultFontSize = 10;   // Default Font chars height in pixel
     if (fontSize < defaultFontSize) fontSize = defaultFontSize;
-    int spacing = (float)fontSize/defaultFontSize;
+    int spacing = fontSize / defaultFontSize;
 
     Image imText = ImageTextEx(GetFontDefault(), text, (float)fontSize, (float)spacing, color);
 
@@ -1546,7 +1624,7 @@ Image ImageTextEx(Font font, const char *text, float fontSize, float spacing, Co
     unsigned char character;    // Current character
 
     // TODO: ISSUE: Measured text size does not seem to be correct... issue on ImageDraw()
-    Vector2 imSize = MeasureTextEx(font, text, font.baseSize, spacing);
+    Vector2 imSize = MeasureTextEx(font, text, (float)font.baseSize, spacing);
     
     TraceLog(LOG_DEBUG, "Text Image size: %f, %f", imSize.x, imSize.y);
 
@@ -1555,7 +1633,9 @@ Image ImageTextEx(Font font, const char *text, float fontSize, float spacing, Co
     // Define ImageFont struct? or include Image spritefont in Font struct?
     Image imFont = GetTextureData(font.texture);
     
-    ImageColorTint(&imFont, tint);                    // Apply color tint to font
+    ImageFormat(&imFont, UNCOMPRESSED_R8G8B8A8);    // Make sure image format could be properly colored!
+    
+    ImageColorTint(&imFont, tint);                  // Apply color tint to font
 
     // Create image to store text
     Image imText = GenImageColor((int)imSize.x, (int)imSize.y, BLANK);
@@ -1588,12 +1668,12 @@ Image ImageTextEx(Font font, const char *text, float fontSize, float spacing, Co
             
             if ((unsigned char)text[i] != ' ')
             {
-                ImageDraw(&imText, imFont, letter.rec, (Rectangle){ posX + letter.offsetX, 
-                          letter.offsetY, letter.rec.width, letter.rec.height });
+                ImageDraw(&imText, imFont, letter.rec, (Rectangle){ (float)(posX + letter.offsetX), 
+                    (float)letter.offsetY, (float)letter.rec.width, (float)letter.rec.height });
             }
 
-            if (letter.advanceX == 0) posX += letter.rec.width + spacing;
-            else posX += letter.advanceX + spacing;
+            if (letter.advanceX == 0) posX += (int)(letter.rec.width + spacing);
+            else posX += letter.advanceX + (int)spacing;
         }
     }
 
@@ -1616,9 +1696,9 @@ Image ImageTextEx(Font font, const char *text, float fontSize, float spacing, Co
 // Draw rectangle within an image
 void ImageDrawRectangle(Image *dst, Vector2 position, Rectangle rec, Color color)
 {
-    Image imRec = GenImageColor(rec.width, rec.height, color);
+    Image imRec = GenImageColor((int)rec.width, (int)rec.height, color);
     
-    Rectangle dstRec = { position.x, position.y, imRec.width, imRec.height };
+    Rectangle dstRec = { position.x, position.y, (float)imRec.width, (float)imRec.height };
 
     ImageDraw(dst, imRec, rec, dstRec);
     
@@ -1637,8 +1717,8 @@ void ImageDrawTextEx(Image *dst, Vector2 position, Font font, const char *text, 
 {
     Image imText = ImageTextEx(font, text, fontSize, spacing, color);
 
-    Rectangle srcRec = { 0, 0, imText.width, imText.height };
-    Rectangle dstRec = { position.x, position.y, imText.width, imText.height };
+    Rectangle srcRec = { 0.0f, 0.0f, (float)imText.width, (float)imText.height };
+    Rectangle dstRec = { position.x, position.y, (float)imText.width, (float)imText.height };
 
     ImageDraw(dst, imText, srcRec, dstRec);
 
@@ -1759,10 +1839,11 @@ void ImageColorTint(Image *image, Color color)
     {
         for (int x = 0; x < image->width; x++)
         {
-            unsigned char r = 255*((float)pixels[y*image->width + x].r/255*cR);
-            unsigned char g = 255*((float)pixels[y*image->width + x].g/255*cG);
-            unsigned char b = 255*((float)pixels[y*image->width + x].b/255*cB);
-            unsigned char a = 255*((float)pixels[y*image->width + x].a/255*cA);
+            int index = y * image->width + x;
+            unsigned char r = 255*((float)pixels[index].r/255*cR);
+            unsigned char g = 255*((float)pixels[index].g/255*cG);
+            unsigned char b = 255*((float)pixels[index].b/255*cB);
+            unsigned char a = 255*((float)pixels[index].a/255*cA);
 
             pixels[y*image->width + x].r = r;
             pixels[y*image->width + x].g = g;
@@ -2010,8 +2091,8 @@ Image GenImageGradientRadial(int width, int height, float density, Color inner, 
             float dist = hypotf((float)x - centerX, (float)y - centerY);
             float factor = (dist - radius*density)/(radius*(1.0f - density));
             
-            factor = fmax(factor, 0.f);
-            factor = fmin(factor, 1.f); // dist can be bigger than radius so we have to check
+            factor = (float)fmax(factor, 0.f);
+            factor = (float)fmin(factor, 1.f); // dist can be bigger than radius so we have to check
             
             pixels[y*width + x].r = (int)((float)outer.r*factor + (float)inner.r*(1.0f - factor));
             pixels[y*width + x].g = (int)((float)outer.g*factor + (float)inner.g*(1.0f - factor));
@@ -2109,7 +2190,7 @@ Image GenImageCellular(int width, int height, int tileSize)
     {
         int y = (i/seedsPerRow)*tileSize + GetRandomValue(0, tileSize - 1);
         int x = (i%seedsPerRow)*tileSize + GetRandomValue(0, tileSize - 1);
-        seeds[i] = (Vector2){x, y};
+        seeds[i] = (Vector2){ (float)x, (float)y};
     }
 
     for (int y = 0; y < height; y++)
@@ -2120,7 +2201,7 @@ Image GenImageCellular(int width, int height, int tileSize)
         {
             int tileX = x/tileSize;
 
-            float minDistance = strtod("Inf", NULL);
+            float minDistance = (float)strtod("Inf", NULL);
 
             // Check all adjacent tiles
             for (int i = -1; i < 2; i++)
@@ -2133,8 +2214,8 @@ Image GenImageCellular(int width, int height, int tileSize)
 
                     Vector2 neighborSeed = seeds[(tileY + j)*seedsPerRow + tileX + i];
 
-                    float dist = hypot(x - (int)neighborSeed.x, y - (int)neighborSeed.y);
-                    minDistance = fmin(minDistance, dist);
+                    float dist = (float)hypot(x - (int)neighborSeed.x, y - (int)neighborSeed.y);
+                    minDistance = (float)fmin(minDistance, dist);
                 }
             }
 
@@ -2278,7 +2359,7 @@ void DrawTextureEx(Texture2D texture, Vector2 position, float rotation, float sc
 // Draw a part of a texture (defined by a rectangle)
 void DrawTextureRec(Texture2D texture, Rectangle sourceRec, Vector2 position, Color tint)
 {
-    Rectangle destRec = { position.x, position.y, sourceRec.width, fabs(sourceRec.height) };
+    Rectangle destRec = { position.x, position.y, sourceRec.width, (float)fabs(sourceRec.height) };
     Vector2 origin = { 0.0f, 0.0f };
 
     DrawTexturePro(texture, sourceRec, destRec, origin, 0.0f, tint);
@@ -2327,6 +2408,202 @@ void DrawTexturePro(Texture2D texture, Rectangle sourceRec, Rectangle destRec, V
         rlPopMatrix();
 
         rlDisableTexture();
+    }
+}
+
+void DrawTextureNPatch(Texture2D texture, NPatchInfo nPatchInfo, Rectangle destRec, Vector2 origin, float rotation, Color tint)
+{
+    if (texture.id > 0)
+    {
+        float width = (float)texture.width;
+        float height = (float)texture.height;
+
+        float patchWidth = (destRec.width <= 0.0f)? 0.0f : destRec.width;
+        float patchHeight = (destRec.height <= 0.0f)? 0.0f : destRec.height;
+
+        if (nPatchInfo.sourceRec.width < 0) nPatchInfo.sourceRec.x -= nPatchInfo.sourceRec.width;
+        if (nPatchInfo.sourceRec.height < 0) nPatchInfo.sourceRec.y -= nPatchInfo.sourceRec.height;
+        if (nPatchInfo.type == NPT_3PATCH_HORIZONTAL) patchHeight = nPatchInfo.sourceRec.height;
+        if (nPatchInfo.type == NPT_3PATCH_VERTICAL) patchWidth = nPatchInfo.sourceRec.width;
+
+        bool drawCenter = true;
+        bool drawMiddle = true;
+        float leftBorder = (float)nPatchInfo.left;
+        float topBorder = (float)nPatchInfo.top;
+        float rightBorder = (float)nPatchInfo.right;
+        float bottomBorder = (float)nPatchInfo.bottom;
+
+        // adjust the lateral (left and right) border widths in case patchWidth < texture.width
+        if (patchWidth <= (leftBorder + rightBorder) && nPatchInfo.type != NPT_3PATCH_VERTICAL)
+        {
+            drawCenter = false;
+            leftBorder = (leftBorder / (leftBorder + rightBorder)) * patchWidth;
+            rightBorder = patchWidth - leftBorder;
+        }
+        // adjust the lateral (top and bottom) border heights in case patchHeight < texture.height
+        if (patchHeight <= (topBorder + bottomBorder) && nPatchInfo.type != NPT_3PATCH_HORIZONTAL)
+        {
+            drawMiddle = false;
+            topBorder = (topBorder / (topBorder + bottomBorder)) * patchHeight;
+            bottomBorder = patchHeight - topBorder;
+        }
+
+        Vector2 vertA, vertB, vertC, vertD;
+        vertA.x = 0.0f;                             // outer left
+        vertA.y = 0.0f;                             // outer top
+        vertB.x = leftBorder;                       // inner left
+        vertB.y = topBorder;                        // inner top
+        vertC.x = patchWidth  - rightBorder;        // inner right
+        vertC.y = patchHeight - bottomBorder;       // inner bottom
+        vertD.x = patchWidth;                       // outer right
+        vertD.y = patchHeight;                      // outer bottom
+
+        Vector2 coordA, coordB, coordC, coordD;
+        coordA.x = nPatchInfo.sourceRec.x / width;
+        coordA.y = nPatchInfo.sourceRec.y / height;
+        coordB.x = (nPatchInfo.sourceRec.x + leftBorder) / width;
+        coordB.y = (nPatchInfo.sourceRec.y + topBorder) / height;
+        coordC.x = (nPatchInfo.sourceRec.x + nPatchInfo.sourceRec.width  - rightBorder) / width;
+        coordC.y = (nPatchInfo.sourceRec.y + nPatchInfo.sourceRec.height - bottomBorder) / height;
+        coordD.x = (nPatchInfo.sourceRec.x + nPatchInfo.sourceRec.width)  / width;
+        coordD.y = (nPatchInfo.sourceRec.y + nPatchInfo.sourceRec.height) / height;
+
+        rlEnableTexture(texture.id);
+
+        rlPushMatrix();
+            rlTranslatef(destRec.x, destRec.y, 0);
+            rlRotatef(rotation, 0, 0, 1);
+            rlTranslatef(-origin.x, -origin.y, 0);
+
+            rlBegin(RL_QUADS);
+                rlColor4ub(tint.r, tint.g, tint.b, tint.a);
+                rlNormal3f(0.0f, 0.0f, 1.0f);                          // Normal vector pointing towards viewer
+
+                if (nPatchInfo.type == NPT_9PATCH)
+                {
+                    // ------------------------------------------------------------
+                    // TOP-LEFT QUAD
+                    rlTexCoord2f(coordA.x, coordB.y); rlVertex2f(vertA.x, vertB.y);  // Bottom-left corner for texture and quad
+                    rlTexCoord2f(coordB.x, coordB.y); rlVertex2f(vertB.x, vertB.y);  // Bottom-right corner for texture and quad
+                    rlTexCoord2f(coordB.x, coordA.y); rlVertex2f(vertB.x, vertA.y);  // Top-right corner for texture and quad
+                    rlTexCoord2f(coordA.x, coordA.y); rlVertex2f(vertA.x, vertA.y);  // Top-left corner for texture and quad
+                    if (drawCenter)
+                    {
+                        // TOP-CENTER QUAD
+                        rlTexCoord2f(coordB.x, coordB.y); rlVertex2f(vertB.x, vertB.y);  // Bottom-left corner for texture and quad
+                        rlTexCoord2f(coordC.x, coordB.y); rlVertex2f(vertC.x, vertB.y);  // Bottom-right corner for texture and quad
+                        rlTexCoord2f(coordC.x, coordA.y); rlVertex2f(vertC.x, vertA.y);  // Top-right corner for texture and quad
+                        rlTexCoord2f(coordB.x, coordA.y); rlVertex2f(vertB.x, vertA.y);  // Top-left corner for texture and quad
+                    }
+                    // TOP-RIGHT QUAD
+                    rlTexCoord2f(coordC.x, coordB.y); rlVertex2f(vertC.x, vertB.y);  // Bottom-left corner for texture and quad
+                    rlTexCoord2f(coordD.x, coordB.y); rlVertex2f(vertD.x, vertB.y);  // Bottom-right corner for texture and quad
+                    rlTexCoord2f(coordD.x, coordA.y); rlVertex2f(vertD.x, vertA.y);  // Top-right corner for texture and quad
+                    rlTexCoord2f(coordC.x, coordA.y); rlVertex2f(vertC.x, vertA.y);  // Top-left corner for texture and quad
+                    if (drawMiddle)
+                    {
+                        // ------------------------------------------------------------
+                        // MIDDLE-LEFT QUAD
+                        rlTexCoord2f(coordA.x, coordC.y); rlVertex2f(vertA.x, vertC.y);  // Bottom-left corner for texture and quad
+                        rlTexCoord2f(coordB.x, coordC.y); rlVertex2f(vertB.x, vertC.y);  // Bottom-right corner for texture and quad
+                        rlTexCoord2f(coordB.x, coordB.y); rlVertex2f(vertB.x, vertB.y);  // Top-right corner for texture and quad
+                        rlTexCoord2f(coordA.x, coordB.y); rlVertex2f(vertA.x, vertB.y);  // Top-left corner for texture and quad
+                        if (drawCenter)
+                        {
+                            // MIDDLE-CENTER QUAD
+                            rlTexCoord2f(coordB.x, coordC.y); rlVertex2f(vertB.x, vertC.y);  // Bottom-left corner for texture and quad
+                            rlTexCoord2f(coordC.x, coordC.y); rlVertex2f(vertC.x, vertC.y);  // Bottom-right corner for texture and quad
+                            rlTexCoord2f(coordC.x, coordB.y); rlVertex2f(vertC.x, vertB.y);  // Top-right corner for texture and quad
+                            rlTexCoord2f(coordB.x, coordB.y); rlVertex2f(vertB.x, vertB.y);  // Top-left corner for texture and quad
+                        }
+
+                        // MIDDLE-RIGHT QUAD
+                        rlTexCoord2f(coordC.x, coordC.y); rlVertex2f(vertC.x, vertC.y);  // Bottom-left corner for texture and quad
+                        rlTexCoord2f(coordD.x, coordC.y); rlVertex2f(vertD.x, vertC.y);  // Bottom-right corner for texture and quad
+                        rlTexCoord2f(coordD.x, coordB.y); rlVertex2f(vertD.x, vertB.y);  // Top-right corner for texture and quad
+                        rlTexCoord2f(coordC.x, coordB.y); rlVertex2f(vertC.x, vertB.y);  // Top-left corner for texture and quad
+                    }
+
+                    // ------------------------------------------------------------
+                    // BOTTOM-LEFT QUAD
+                    rlTexCoord2f(coordA.x, coordD.y); rlVertex2f(vertA.x, vertD.y);  // Bottom-left corner for texture and quad
+                    rlTexCoord2f(coordB.x, coordD.y); rlVertex2f(vertB.x, vertD.y);  // Bottom-right corner for texture and quad
+                    rlTexCoord2f(coordB.x, coordC.y); rlVertex2f(vertB.x, vertC.y);  // Top-right corner for texture and quad
+                    rlTexCoord2f(coordA.x, coordC.y); rlVertex2f(vertA.x, vertC.y);  // Top-left corner for texture and quad
+                    if (drawCenter)
+                    {
+                        // BOTTOM-CENTER QUAD
+                        rlTexCoord2f(coordB.x, coordD.y); rlVertex2f(vertB.x, vertD.y);  // Bottom-left corner for texture and quad
+                        rlTexCoord2f(coordC.x, coordD.y); rlVertex2f(vertC.x, vertD.y);  // Bottom-right corner for texture and quad
+                        rlTexCoord2f(coordC.x, coordC.y); rlVertex2f(vertC.x, vertC.y);  // Top-right corner for texture and quad
+                        rlTexCoord2f(coordB.x, coordC.y); rlVertex2f(vertB.x, vertC.y);  // Top-left corner for texture and quad
+                    }
+
+                    // BOTTOM-RIGHT QUAD
+                    rlTexCoord2f(coordC.x, coordD.y); rlVertex2f(vertC.x, vertD.y);  // Bottom-left corner for texture and quad
+                    rlTexCoord2f(coordD.x, coordD.y); rlVertex2f(vertD.x, vertD.y);  // Bottom-right corner for texture and quad
+                    rlTexCoord2f(coordD.x, coordC.y); rlVertex2f(vertD.x, vertC.y);  // Top-right corner for texture and quad
+                    rlTexCoord2f(coordC.x, coordC.y); rlVertex2f(vertC.x, vertC.y);  // Top-left corner for texture and quad
+                }
+                else if (nPatchInfo.type == NPT_3PATCH_VERTICAL)
+                {
+                    // TOP QUAD
+                    // -----------------------------------------------------------
+                    // Texture coords                 Vertices
+                    rlTexCoord2f(coordA.x, coordB.y); rlVertex2f(vertA.x, vertB.y);  // Bottom-left corner for texture and quad
+                    rlTexCoord2f(coordD.x, coordB.y); rlVertex2f(vertD.x, vertB.y);  // Bottom-right corner for texture and quad
+                    rlTexCoord2f(coordD.x, coordA.y); rlVertex2f(vertD.x, vertA.y);  // Top-right corner for texture and quad
+                    rlTexCoord2f(coordA.x, coordA.y); rlVertex2f(vertA.x, vertA.y);  // Top-left corner for texture and quad
+                    if (drawCenter)
+                    {
+                        // MIDDLE QUAD
+                        // -----------------------------------------------------------
+                        // Texture coords                 Vertices
+                        rlTexCoord2f(coordA.x, coordC.y); rlVertex2f(vertA.x, vertC.y);  // Bottom-left corner for texture and quad
+                        rlTexCoord2f(coordD.x, coordC.y); rlVertex2f(vertD.x, vertC.y);  // Bottom-right corner for texture and quad
+                        rlTexCoord2f(coordD.x, coordB.y); rlVertex2f(vertD.x, vertB.y);  // Top-right corner for texture and quad
+                        rlTexCoord2f(coordA.x, coordB.y); rlVertex2f(vertA.x, vertB.y);  // Top-left corner for texture and quad
+                    }
+                    // BOTTOM QUAD
+                    // -----------------------------------------------------------
+                    // Texture coords                 Vertices
+                    rlTexCoord2f(coordA.x, coordD.y); rlVertex2f(vertA.x, vertD.y);  // Bottom-left corner for texture and quad
+                    rlTexCoord2f(coordD.x, coordD.y); rlVertex2f(vertD.x, vertD.y);  // Bottom-right corner for texture and quad
+                    rlTexCoord2f(coordD.x, coordC.y); rlVertex2f(vertD.x, vertC.y);  // Top-right corner for texture and quad
+                    rlTexCoord2f(coordA.x, coordC.y); rlVertex2f(vertA.x, vertC.y);  // Top-left corner for texture and quad
+                }
+                else if (nPatchInfo.type == NPT_3PATCH_HORIZONTAL)
+                {
+                    // LEFT QUAD
+                    // -----------------------------------------------------------
+                    // Texture coords                 Vertices
+                    rlTexCoord2f(coordA.x, coordD.y); rlVertex2f(vertA.x, vertD.y);  // Bottom-left corner for texture and quad
+                    rlTexCoord2f(coordB.x, coordD.y); rlVertex2f(vertB.x, vertD.y);  // Bottom-right corner for texture and quad
+                    rlTexCoord2f(coordB.x, coordA.y); rlVertex2f(vertB.x, vertA.y);  // Top-right corner for texture and quad
+                    rlTexCoord2f(coordA.x, coordA.y); rlVertex2f(vertA.x, vertA.y);  // Top-left corner for texture and quad
+                    if (drawCenter)
+                    {
+                        // CENTER QUAD
+                        // -----------------------------------------------------------
+                        // Texture coords                 Vertices
+                        rlTexCoord2f(coordB.x, coordD.y); rlVertex2f(vertB.x, vertD.y);  // Bottom-left corner for texture and quad
+                        rlTexCoord2f(coordC.x, coordD.y); rlVertex2f(vertC.x, vertD.y);  // Bottom-right corner for texture and quad
+                        rlTexCoord2f(coordC.x, coordA.y); rlVertex2f(vertC.x, vertA.y);  // Top-right corner for texture and quad
+                        rlTexCoord2f(coordB.x, coordA.y); rlVertex2f(vertB.x, vertA.y);  // Top-left corner for texture and quad
+                    }
+                    // RIGHT QUAD
+                    // -----------------------------------------------------------
+                    // Texture coords                 Vertices
+                    rlTexCoord2f(coordC.x, coordD.y); rlVertex2f(vertC.x, vertD.y);  // Bottom-left corner for texture and quad
+                    rlTexCoord2f(coordD.x, coordD.y); rlVertex2f(vertD.x, vertD.y);  // Bottom-right corner for texture and quad
+                    rlTexCoord2f(coordD.x, coordA.y); rlVertex2f(vertD.x, vertA.y);  // Top-right corner for texture and quad
+                    rlTexCoord2f(coordC.x, coordA.y); rlVertex2f(vertC.x, vertA.y);  // Top-left corner for texture and quad
+                }
+            rlEnd();
+        rlPopMatrix();
+
+        rlDisableTexture();
+
     }
 }
 
@@ -2503,7 +2780,7 @@ static Image LoadDDS(const char *fileName)
 
                 TraceLog(LOG_DEBUG, "Pitch or linear size: %i", ddsHeader.pitchOrLinearSize);
 
-                image.data = (unsigned char*)malloc(size*sizeof(unsigned char));
+                image.data = (unsigned char *)malloc(size*sizeof(unsigned char));
 
                 fread(image.data, size, 1, ddsFile);
 
@@ -2600,7 +2877,7 @@ static Image LoadPKM(const char *fileName)
 
             int size = image.width*image.height*bpp/8;  // Total data size in bytes
 
-            image.data = (unsigned char*)malloc(size*sizeof(unsigned char));
+            image.data = (unsigned char *)malloc(size*sizeof(unsigned char));
 
             fread(image.data, size, 1, pkmFile);
 
@@ -2630,7 +2907,11 @@ static Image LoadKTX(const char *fileName)
     // GL_COMPRESSED_RGBA8_ETC2_EAC     0x9278
 
     // KTX file Header (64 bytes)
-    // https://www.khronos.org/opengles/sdk/tools/KTX/file_format_spec/
+    // v1.1 - https://www.khronos.org/opengles/sdk/tools/KTX/file_format_spec/
+    // v2.0 - http://github.khronos.org/KTX-Specification/
+    
+    // TODO: Support KTX 2.2 specs!
+    
     typedef struct {
         char id[12];                        // Identifier: "«KTX 11»\r\n\x1A\n"
         unsigned int endianness;            // Little endian: 0x01 0x02 0x03 0x04
@@ -2684,13 +2965,13 @@ static Image LoadKTX(const char *fileName)
 
             if (ktxHeader.keyValueDataSize > 0)
             {
-                for (int i = 0; i < ktxHeader.keyValueDataSize; i++) fread(&unused, sizeof(unsigned char), 1, ktxFile);
+                for (unsigned int i = 0; i < ktxHeader.keyValueDataSize; i++) fread(&unused, sizeof(unsigned char), 1U, ktxFile);
             }
 
             int dataSize;
             fread(&dataSize, sizeof(unsigned int), 1, ktxFile);
 
-            image.data = (unsigned char*)malloc(dataSize*sizeof(unsigned char));
+            image.data = (unsigned char *)malloc(dataSize*sizeof(unsigned char));
 
             fread(image.data, dataSize, 1, ktxFile);
 
@@ -2703,6 +2984,93 @@ static Image LoadKTX(const char *fileName)
     }
 
     return image;
+}
+
+// Save image data as KTX file
+// NOTE: By default KTX 1.1 spec is used, 2.0 is still on draft (01Oct2018)
+static void SaveKTX(Image image, const char *fileName)
+{
+    // KTX file Header (64 bytes)
+    // v1.1 - https://www.khronos.org/opengles/sdk/tools/KTX/file_format_spec/
+    // v2.0 - http://github.khronos.org/KTX-Specification/ - still on draft, not ready for implementation
+    
+    typedef struct {
+        char id[12];                        // Identifier: "«KTX 11»\r\n\x1A\n"             // KTX 2.0: "«KTX 22»\r\n\x1A\n"
+        unsigned int endianness;            // Little endian: 0x01 0x02 0x03 0x04
+        unsigned int glType;                // For compressed textures, glType must equal 0
+        unsigned int glTypeSize;            // For compressed texture data, usually 1
+        unsigned int glFormat;              // For compressed textures is 0
+        unsigned int glInternalFormat;      // Compressed internal format
+        unsigned int glBaseInternalFormat;  // Same as glFormat (RGB, RGBA, ALPHA...)       // KTX 2.0: UInt32 vkFormat
+        unsigned int width;                 // Texture image width in pixels
+        unsigned int height;                // Texture image height in pixels
+        unsigned int depth;                 // For 2D textures is 0
+        unsigned int elements;              // Number of array elements, usually 0
+        unsigned int faces;                 // Cubemap faces, for no-cubemap = 1
+        unsigned int mipmapLevels;          // Non-mipmapped textures = 1
+        unsigned int keyValueDataSize;      // Used to encode any arbitrary data...         // KTX 2.0: UInt32 levelOrder - ordering of the mipmap levels, usually 0
+                                                                                            // KTX 2.0: UInt32 supercompressionScheme - 0 (None), 1 (Crunch CRN), 2 (Zlib DEFLATE)...
+        // KTX 2.0 defines additional header elements...
+    } KTXHeader;
+
+    // NOTE: Before start of every mipmap data block, we have: unsigned int dataSize
+
+    FILE *ktxFile = fopen(fileName, "wb");
+
+    if (ktxFile == NULL) TraceLog(LOG_WARNING, "[%s] KTX image file could not be created", fileName);
+    else
+    {
+        KTXHeader ktxHeader;
+        
+        // KTX identifier (v2.2)
+        //unsigned char id[12] = { '«', 'K', 'T', 'X', ' ', '1', '1', '»', '\r', '\n', '\x1A', '\n' };
+        //unsigned char id[12] = { 0xAB, 0x4B, 0x54, 0x58, 0x20, 0x31, 0x31, 0xBB, 0x0D, 0x0A, 0x1A, 0x0A };
+        
+        // Get the image header
+        strcpy(ktxHeader.id, "«KTX 11»\r\n\x1A\n");     // KTX 1.1 signature
+        ktxHeader.endianness = 0;
+        ktxHeader.glType = 0;                   // Obtained from image.format
+        ktxHeader.glTypeSize = 1;
+        ktxHeader.glFormat = 0;                 // Obtained from image.format
+        ktxHeader.glInternalFormat = 0;         // Obtained from image.format
+        ktxHeader.glBaseInternalFormat = 0;
+        ktxHeader.width = image.width;
+        ktxHeader.height = image.height;
+        ktxHeader.depth = 0;
+        ktxHeader.elements = 0;
+        ktxHeader.faces = 1;
+        ktxHeader.mipmapLevels = image.mipmaps; // If it was 0, it means mipmaps should be generated on loading (not for compressed formats)
+        ktxHeader.keyValueDataSize = 0;         // No extra data after the header
+        
+        rlGetGlTextureFormats(image.format, &ktxHeader.glInternalFormat, &ktxHeader.glFormat, &ktxHeader.glType);   // rlgl module function
+        ktxHeader.glBaseInternalFormat = ktxHeader.glFormat;    // KTX 1.1 only
+        
+        // NOTE: We can save into a .ktx all PixelFormats supported by raylib, including compressed formats like DXT, ETC or ASTC
+        
+        if (ktxHeader.glFormat == -1) TraceLog(LOG_WARNING, "Image format not supported for KTX export.");
+        else
+        {
+            fwrite(&ktxHeader, 1, sizeof(KTXHeader), ktxFile);
+            
+            int width = image.width;
+            int height = image.height;
+            int dataOffset = 0;
+            
+            // Save all mipmaps data
+            for (int i = 0; i < image.mipmaps; i++)
+            {
+                unsigned int dataSize = GetPixelDataSize(width, height, image.format);
+                fwrite(&dataSize, 1, sizeof(unsigned int), ktxFile);
+                fwrite((unsigned char *)image.data + dataOffset, 1, dataSize, ktxFile);
+                
+                width /= 2;
+                height /= 2;
+                dataOffset += dataSize;
+            }
+        }
+
+        fclose(ktxFile);    // Close file pointer
+    }
 }
 #endif
 
@@ -2845,7 +3213,7 @@ static Image LoadPVR(const char *fileName)
                 }
 
                 int dataSize = image.width*image.height*bpp/8;  // Total data size in bytes
-                image.data = (unsigned char*)malloc(dataSize*sizeof(unsigned char));
+                image.data = (unsigned char *)malloc(dataSize*sizeof(unsigned char));
 
                 // Read data from file
                 fread(image.data, dataSize, 1, pvrFile);

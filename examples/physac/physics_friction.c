@@ -17,6 +17,7 @@
 #include "raylib.h"
 
 #define PHYSAC_IMPLEMENTATION
+#define PHYSAC_NO_THREADS
 #include "physac.h"
 
 int main()
@@ -71,6 +72,8 @@ int main()
     {
         // Update
         //----------------------------------------------------------------------------------
+        RunPhysicsStep();
+
         if (IsKeyPressed('R'))    // Reset physics input
         {
             // Reset dynamic physics bodies position, velocity and rotation
@@ -141,4 +144,3 @@ int main()
 
     return 0;
 }
-

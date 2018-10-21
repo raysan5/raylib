@@ -27,7 +27,7 @@
 # WARNING: To compile to HTML5, code must be redesigned to use emscripten.h and emscripten_set_main_loop()
 PLATFORM            ?= PLATFORM_DESKTOP
 RAYLIB_PATH         ?= ../..
-PROJECT_NAME        ?= standard_game
+PROJECT_NAME        ?= game
 DEBUGGING           ?= FALSE
 
 # Default path for raylib on Raspberry Pi, if installed in different path, update it!
@@ -254,7 +254,7 @@ ifeq ($(PLATFORM),PLATFORM_DESKTOP)
     ifeq ($(PLATFORM_OS),OSX)
         # Libraries for OSX 10.9 desktop compiling
         # NOTE: Required packages: libopenal-dev libegl1-mesa-dev
-        LDLIBS = -lraylib -framework OpenGL -framework OpenAL -framework Cocoa
+        LDLIBS = -lraylib -framework OpenGL -framework Cocoa -framework IOKit -framework CoreFoundation -framework CoreVideo
     endif
     ifeq ($(PLATFORM_OS),BSD)
         # Libraries for FreeBSD, OpenBSD, NetBSD, DragonFly desktop compiling
