@@ -375,6 +375,7 @@ EXAMPLES = \
     core/core_2d_camera \
     core/core_world_screen \
     core/core_vr_simulator \
+    core/core_multitouch \
     shapes/shapes_logo_raylib \
     shapes/shapes_basic_shapes \
     shapes/shapes_colors_palette \
