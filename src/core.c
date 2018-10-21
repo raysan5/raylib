@@ -226,6 +226,7 @@
     #define DEFAULT_KEYBOARD_DEV      STDIN_FILENO              // Standard input
     #define DEFAULT_GAMEPAD_DEV       "/dev/input/js"           // Gamepad input (base dev for all gamepads: js0, js1, ...)
     #define DEFAULT_EVDEV_PATH        "/dev/input/"             // Path to the linux input events
+    #define USE_LAST_TOUCH_DEVICE     true                      // If true: When multiple touchscreens are connected then only use the one with the highest event<N> number
 
     // New device input events (evdev) (must be detected)
     //#define DEFAULT_KEYBOARD_DEV    "/dev/input/eventN"
@@ -328,12 +329,11 @@ static int currentMouseWheelY = 0;              // Registers current mouse wheel
 #endif
 
 #if defined(PLATFORM_RPI)
-static int mouseStream = -1;                    // Mouse device file descriptor
 static char currentMouseStateEvdev[3] = { 0 };  // Holds the new mouse state for the next polling event to grab (Can't be written directly due to multithreading, app could miss the update)
 typedef struct {
   pthread_t threadId;                           // Event reading thread id
   int fd;                                       // File descriptor to the device it is assigned to
-  float sensitivity;                            // Sensitivitzy multiplier for relative mouse movements
+  int eventNum;                                 // Number of 'event<N>' device
   Rectangle absRange;                           // Range of values for absolute pointing devices (touchscreens)
   int touchSlot;                                // Hold the touch slot number of the currently being sent multitouch block
   bool isMouse;                                 // True if device supports relative X Y movements
@@ -3944,6 +3944,16 @@ static void EventThreadSpawn(char* device)
     }
     Worker->fd = fd;
 
+    //Grab number on the end of the devices name "event<N>"
+    int DevNum;
+    char* ptrDevName = strrchr(device, 't');
+    Worker->eventNum = -1;
+    if(ptrDevName != NULL)
+    {
+        if(sscanf(ptrDevName, "t%d", &DevNum) == 1)
+            Worker->eventNum = DevNum;
+    }
+
     // At this point we have a connection to the device, 
     // but we don't yet know what the device is (Could be 
     // many things, even as simple as a power button)
@@ -4048,6 +4058,7 @@ static void EventThreadSpawn(char* device)
             Worker->isGamepad ? "gamepad " : "",
             Worker->isKeyboard ? "keyboard " : ""
             );
+
         // Create a thread for this device
         int error = pthread_create(&Worker->threadId, NULL, &EventThread, (void*)Worker);
         if(error != 0)
@@ -4055,6 +4066,31 @@ static void EventThreadSpawn(char* device)
             TraceLog(LOG_WARNING, "Error creating input device thread for '%s': Can't create thread (Err: %d)", device, error);
             Worker->threadId = 0;
             close(fd);
+        }
+
+        // Kill off duplicate touchscreens if needed
+        if(USE_LAST_TOUCH_DEVICE)
+        {
+            // Find touchscreen with the highest index
+            int MaxTouchNumber = -1;
+            for (int i = 0; i < sizeof(eventWorkers)/sizeof(InputEventWorker); ++i)
+            {
+                if(eventWorkers[i].isTouch && (eventWorkers[i].eventNum > MaxTouchNumber))
+                    MaxTouchNumber = eventWorkers[i].eventNum;
+            }
+            // Find toucnscreens with lower indexes
+            for (int i = 0; i < sizeof(eventWorkers)/sizeof(InputEventWorker); ++i)
+            {
+                if(eventWorkers[i].isTouch && (eventWorkers[i].eventNum < MaxTouchNumber))
+                {
+                    if(eventWorkers[i].threadId != 0)
+                    {
+                        TraceLog(LOG_WARNING, "Duplicate touchscreen found, killing toucnscreen on event%d", i);
+                        pthread_cancel(eventWorkers[i].threadId);
+                        close(eventWorkers[i].fd);
+                    }
+                }
+            }
         }
     }
     else
@@ -4207,6 +4243,7 @@ static void *EventThread(void *arg)
             usleep(5000); //Sleep for 5ms to avoid hogging CPU time
         }
     }
+    close(Worker->fd);
     return NULL;
 }
 
