@@ -222,11 +222,12 @@
 // Defines and Macros
 //----------------------------------------------------------------------------------
 #if defined(PLATFORM_RPI)
+    #define USE_LAST_TOUCH_DEVICE       // When multiple touchscreens are connected, only use the one with the highest event<N> number
+
     // Old device inputs system
     #define DEFAULT_KEYBOARD_DEV      STDIN_FILENO              // Standard input
     #define DEFAULT_GAMEPAD_DEV       "/dev/input/js"           // Gamepad input (base dev for all gamepads: js0, js1, ...)
     #define DEFAULT_EVDEV_PATH        "/dev/input/"             // Path to the linux input events
-    #define USE_LAST_TOUCH_DEVICE     true                      // If true: When multiple touchscreens are connected then only use the one with the highest event<N> number
 
     // New device input events (evdev) (must be detected)
     //#define DEFAULT_KEYBOARD_DEV    "/dev/input/eventN"
@@ -458,7 +459,7 @@ static void InitKeyboard(void);                         // Init raw keyboard sys
 static void ProcessKeyboard(void);                      // Process keyboard events
 static void RestoreKeyboard(void);                      // Restore keyboard system
 static void InitMouse(void);                            // Mouse initialization (including mouse thread)
-static void EventThreadSpawn(char* device);             // Indetifies a input device and spawns a thread to handle it if needed
+static void EventThreadSpawn(char *device);             // Indetifies a input device and spawns a thread to handle it if needed
 static void *EventThread(void *arg);                    // Input device event reading thread
 static void InitGamepad(void);                          // Init raw gamepad input
 static void *GamepadThread(void *arg);                  // Mouse reading thread
@@ -672,7 +673,7 @@ void CloseWindow(void)
 
     for (int i = 0; i < sizeof(eventWorkers)/sizeof(InputEventWorker); ++i)
     {
-        if(eventWorkers[i].threadId == 0)
+        if (eventWorkers[i].threadId == 0)
         {
             pthread_join(eventWorkers[i].threadId, NULL);
         }
@@ -785,7 +786,7 @@ void SetWindowMonitor(int monitor)
 {
 #if defined(PLATFORM_DESKTOP)
     int monitorCount;
-    GLFWmonitor** monitors = glfwGetMonitors(&monitorCount);
+    GLFWmonitor **monitors = glfwGetMonitors(&monitorCount);
     
     if ((monitor >= 0) && (monitor < monitorCount)) 
     {
@@ -862,7 +863,7 @@ int GetMonitorWidth(int monitor)
 {   
 #if defined(PLATFORM_DESKTOP)
     int monitorCount;
-    GLFWmonitor** monitors = glfwGetMonitors(&monitorCount);
+    GLFWmonitor **monitors = glfwGetMonitors(&monitorCount);
     
     if ((monitor >= 0) && (monitor < monitorCount)) 
     {
@@ -879,7 +880,7 @@ int GetMonitorHeight(int monitor)
 {   
 #if defined(PLATFORM_DESKTOP)
     int monitorCount;
-    GLFWmonitor** monitors = glfwGetMonitors(&monitorCount);
+    GLFWmonitor **monitors = glfwGetMonitors(&monitorCount);
     
     if ((monitor >= 0) && (monitor < monitorCount)) 
     {
@@ -896,7 +897,7 @@ int GetMonitorPhysicalWidth(int monitor)
 {
 #if defined(PLATFORM_DESKTOP)
     int monitorCount;
-    GLFWmonitor** monitors = glfwGetMonitors(&monitorCount);
+    GLFWmonitor **monitors = glfwGetMonitors(&monitorCount);
     
     if ((monitor >= 0) && (monitor < monitorCount)) 
     {
@@ -914,7 +915,7 @@ int GetMonitorPhysicalHeight(int monitor)
 {
 #if defined(PLATFORM_DESKTOP)
     int monitorCount;
-    GLFWmonitor** monitors = glfwGetMonitors(&monitorCount);
+    GLFWmonitor **monitors = glfwGetMonitors(&monitorCount);
     
     if ((monitor >= 0) && (monitor < monitorCount)) 
     {
@@ -932,7 +933,7 @@ const char *GetMonitorName(int monitor)
 {
 #if defined(PLATFORM_DESKTOP) 
     int monitorCount;
-    GLFWmonitor** monitors = glfwGetMonitors(&monitorCount);
+    GLFWmonitor **monitors = glfwGetMonitors(&monitorCount);
     
     if ((monitor >= 0) && (monitor < monitorCount)) 
     {
@@ -3268,7 +3269,7 @@ static void WindowSizeCallback(GLFWwindow *window, int width, int height)
 }
 
 // GLFW3 WindowIconify Callback, runs when window is minimized/restored
-static void WindowIconifyCallback(GLFWwindow* window, int iconified)
+static void WindowIconifyCallback(GLFWwindow *window, int iconified)
 {
     if (iconified) windowMinimized = true;  // The window was iconified
     else windowMinimized = false;           // The window was restored
@@ -3861,8 +3862,8 @@ static void RestoreKeyboard(void)
 static void InitMouse(void)
 {
     char Path[256];
-    DIR *d;
-    struct dirent *dir;
+    DIR *directory;
+    struct dirent *entity;
 
     // Reset variables
     for (int i = 0; i < MAX_TOUCH_POINTS; ++i)
@@ -3872,18 +3873,19 @@ static void InitMouse(void)
     }
 
     // Open the linux directory of "/dev/input"
-    d = opendir(DEFAULT_EVDEV_PATH);
-    if (d) 
+    directory = opendir(DEFAULT_EVDEV_PATH);
+    if (directory) 
     {
-        while ((dir = readdir(d)) != NULL) 
+        while ((entity = readdir(directory)) != NULL) 
         {
-            if(strncmp("event", dir->d_name, strlen("event")) == 0)         // Search for devices named "event*"
+            if (strncmp("event", entity->d_name, strlen("event")) == 0)         // Search for devices named "event*"
             {
-                sprintf(Path, "%s%s", DEFAULT_EVDEV_PATH, dir->d_name);
-                EventThreadSpawn(Path);                                     // Identify the device and spawn a thread for it
+                sprintf(Path, "%s%s", DEFAULT_EVDEV_PATH, entity->d_name);
+                EventThreadSpawn(Path);                                         // Identify the device and spawn a thread for it
             }
         }
-        closedir(d);
+        
+        closedir(directory);
     }
     else
     {
@@ -3891,43 +3893,45 @@ static void InitMouse(void)
     }
 }
 
-static void EventThreadSpawn(char* device)
+static void EventThreadSpawn(char *device)
 {
-    #define BITS_PER_LONG (sizeof(long) * 8)
-    #define NBITS(x) ((((x)-1)/BITS_PER_LONG)+1)
-    #define OFF(x)  ((x)%BITS_PER_LONG)
-    #define BIT(x)  (1UL<<OFF(x))
-    #define LONG(x) ((x)/BITS_PER_LONG)
+    #define BITS_PER_LONG   (sizeof(long)*8)
+    #define NBITS(x)        ((((x) - 1)/BITS_PER_LONG) + 1)
+    #define OFF(x)          ((x)%BITS_PER_LONG)
+    #define BIT(x)          (1UL<<OFF(x))
+    #define LONG(x)         ((x)/BITS_PER_LONG)
     #define TEST_BIT(array, bit) ((array[LONG(bit)] >> OFF(bit)) & 1)
+    
     struct input_absinfo absinfo;
-    unsigned long ev_bits[NBITS(EV_MAX)];
-    unsigned long abs_bits[NBITS(ABS_MAX)];
-    unsigned long rel_bits[NBITS(REL_MAX)];
-    unsigned long key_bits[NBITS(KEY_MAX)];
+    unsigned long evBits[NBITS(EV_MAX)];
+    unsigned long absBits[NBITS(ABS_MAX)];
+    unsigned long relBits[NBITS(REL_MAX)];
+    unsigned long keyBits[NBITS(KEY_MAX)];
     bool hasAbs = false;
     bool hasRel = false;
     bool hasAbsMulti = false;
-    int FreeWorkerId = -1;
+    int freeWorkerId = -1;
     int fd = -1;
-    InputEventWorker* Worker;
+    
+    InputEventWorker *worker;
 
     /////////////////////////////////// Open the device and allocate worker  /////////////////////////////////////////////
 
     // Find a free spot in the workers array
     for (int i = 0; i < sizeof(eventWorkers)/sizeof(InputEventWorker); ++i)
     {
-        if(eventWorkers[i].threadId == 0)
+        if (eventWorkers[i].threadId == 0)
         {
-            FreeWorkerId = i;
+            freeWorkerId = i;
             break;
         }
     }
 
     // Select the free worker from array
-    if(FreeWorkerId >= 0)
+    if (freeWorkerId >= 0)
     {
-        Worker = &(eventWorkers[FreeWorkerId]);       // Grab a pointer to the worker
-        memset(Worker, 0, sizeof(InputEventWorker));  // Clear the worker
+        worker = &(eventWorkers[freeWorkerId]);       // Grab a pointer to the worker
+        memset(worker, 0, sizeof(InputEventWorker));  // Clear the worker
     }
     else
     {
@@ -3937,296 +3941,265 @@ static void EventThreadSpawn(char* device)
 
     // Open the device
     fd = open(device, O_RDONLY | O_NONBLOCK);
-    if(fd < 0)
+    if (fd < 0)
     {
-        TraceLog(LOG_WARNING, "Error creating input device thread for '%s': Can't open device (Err: %d)", device, Worker->fd);
+        TraceLog(LOG_WARNING, "Error creating input device thread for '%s': Can't open device (Err: %d)", device, worker->fd);
         return;
     }
-    Worker->fd = fd;
+    worker->fd = fd;
 
     //Grab number on the end of the devices name "event<N>"
-    int DevNum;
-    char* ptrDevName = strrchr(device, 't');
-    Worker->eventNum = -1;
-    if(ptrDevName != NULL)
+    int devNum = 0;
+    char *ptrDevName = strrchr(device, 't');
+    worker->eventNum = -1;
+    
+    if (ptrDevName != NULL)
     {
-        if(sscanf(ptrDevName, "t%d", &DevNum) == 1)
-            Worker->eventNum = DevNum;
+        if (sscanf(ptrDevName, "t%d", &devNum) == 1)
+            worker->eventNum = devNum;
     }
 
     // At this point we have a connection to the device, 
     // but we don't yet know what the device is (Could be 
     // many things, even as simple as a power button)
 
-    /////////////////////////////////// Identify the device  /////////////////////////////////////////////
+    /////////////////////////////////// Identify the device /////////////////////////////////////////////
 
-    ioctl(fd, EVIOCGBIT(0, sizeof(ev_bits)), ev_bits);              // Read a bitfield of the avalable device properties
+    ioctl(fd, EVIOCGBIT(0, sizeof(evBits)), evBits);              // Read a bitfield of the avalable device properties
 
     // Check for absolute input devices
-    if (TEST_BIT(ev_bits, EV_ABS)) 
+    if (TEST_BIT(evBits, EV_ABS)) 
     {
-        ioctl(fd, EVIOCGBIT(EV_ABS, sizeof(abs_bits)),abs_bits);
+        ioctl(fd, EVIOCGBIT(EV_ABS, sizeof(absBits)), absBits);
 
         // Check for absolute movement support (usualy touchscreens, but also joysticks)
-        if (TEST_BIT(abs_bits, ABS_X) && TEST_BIT(abs_bits, ABS_Y)) 
+        if (TEST_BIT(absBits, ABS_X) && TEST_BIT(absBits, ABS_Y)) 
         {
             hasAbs = true;
+            
             // Get the scaling values
             ioctl(fd, EVIOCGABS(ABS_X), &absinfo);
-            Worker->absRange.x = absinfo.minimum;
-            Worker->absRange.width = absinfo.maximum - absinfo.minimum;
+            worker->absRange.x = absinfo.minimum;
+            worker->absRange.width = absinfo.maximum - absinfo.minimum;
             ioctl(fd, EVIOCGABS(ABS_Y), &absinfo);
-            Worker->absRange.y = absinfo.minimum;
-            Worker->absRange.height = absinfo.maximum - absinfo.minimum;
+            worker->absRange.y = absinfo.minimum;
+            worker->absRange.height = absinfo.maximum - absinfo.minimum;
         }
         
         // Check for multiple absolute movement support (usualy multitouch touchscreens)
-        if (TEST_BIT(abs_bits, ABS_MT_POSITION_X) && TEST_BIT(abs_bits, ABS_MT_POSITION_Y)) 
+        if (TEST_BIT(absBits, ABS_MT_POSITION_X) && TEST_BIT(absBits, ABS_MT_POSITION_Y)) 
         {
             hasAbsMulti = true;
+            
             // Get the scaling values
             ioctl(fd, EVIOCGABS(ABS_X), &absinfo);
-            Worker->absRange.x = absinfo.minimum;
-            Worker->absRange.width = absinfo.maximum - absinfo.minimum;
+            worker->absRange.x = absinfo.minimum;
+            worker->absRange.width = absinfo.maximum - absinfo.minimum;
             ioctl(fd, EVIOCGABS(ABS_Y), &absinfo);
-            Worker->absRange.y = absinfo.minimum;
-            Worker->absRange.height = absinfo.maximum - absinfo.minimum;
+            worker->absRange.y = absinfo.minimum;
+            worker->absRange.height = absinfo.maximum - absinfo.minimum;
         }
     }
 
     // Check for relative movement support (usualy mouse)
-    if (TEST_BIT(ev_bits, EV_REL)) 
+    if (TEST_BIT(evBits, EV_REL)) 
     {
-        ioctl(fd, EVIOCGBIT(EV_REL, sizeof(rel_bits)),rel_bits);
-        if (TEST_BIT(rel_bits, REL_X) && TEST_BIT(rel_bits, REL_Y))
-        {
-            hasRel = true;
-        }
+        ioctl(fd, EVIOCGBIT(EV_REL, sizeof(relBits)), relBits);
+        
+        if (TEST_BIT(relBits, REL_X) && TEST_BIT(relBits, REL_Y)) hasRel = true;
     }
 
     // Check for button support to determine the device type(usualy on all input devices)
-    if (TEST_BIT(ev_bits, EV_KEY)) 
+    if (TEST_BIT(evBits, EV_KEY)) 
     {
-        ioctl(fd, EVIOCGBIT(EV_KEY, sizeof(key_bits)),key_bits);
+        ioctl(fd, EVIOCGBIT(EV_KEY, sizeof(keyBits)), keyBits);
 
-        if(hasAbs || hasAbsMulti)
+        if (hasAbs || hasAbsMulti)
         {
-            if(TEST_BIT(key_bits, BTN_TOUCH))
-                Worker->isTouch = true;                 // This is a touchscreen
-            if(TEST_BIT(key_bits, BTN_TOOL_FINGER))
-                Worker->isTouch = true;                 // This is a drawing tablet
-            if(TEST_BIT(key_bits, BTN_TOOL_PEN))
-                Worker->isTouch = true;                 // This is a drawing tablet
-            if(TEST_BIT(key_bits, BTN_STYLUS))
-                Worker->isTouch = true;                 // This is a drawing tablet
-            if(Worker->isTouch || hasAbsMulti)
-                Worker->isMultitouch = true;            // This is a multitouch capable device
+            if (TEST_BIT(keyBits, BTN_TOUCH)) worker->isTouch = true;          // This is a touchscreen
+            if (TEST_BIT(keyBits, BTN_TOOL_FINGER)) worker->isTouch = true;    // This is a drawing tablet
+            if (TEST_BIT(keyBits, BTN_TOOL_PEN)) worker->isTouch = true;       // This is a drawing tablet
+            if (TEST_BIT(keyBits, BTN_STYLUS)) worker->isTouch = true;         // This is a drawing tablet
+            if (worker->isTouch || hasAbsMulti) worker->isMultitouch = true;   // This is a multitouch capable device
         }
 
-        if(hasRel)
+        if (hasRel)
         {
-            if (TEST_BIT(key_bits, BTN_LEFT))
-                Worker->isMouse = true;                  // This is a mouse
-            if (TEST_BIT(key_bits, BTN_RIGHT))
-                Worker->isMouse = true;                  // This is a mouse
+            if (TEST_BIT(keyBits, BTN_LEFT)) worker->isMouse = true;           // This is a mouse
+            if (TEST_BIT(keyBits, BTN_RIGHT)) worker->isMouse = true;          // This is a mouse
         }
 
-        if (TEST_BIT(key_bits, BTN_A))
-            Worker->isGamepad = true;                   // This is a gamepad
-        if (TEST_BIT(key_bits, BTN_TRIGGER))
-            Worker->isGamepad = true;                   // This is a gamepad
-        if (TEST_BIT(key_bits, BTN_START))
-            Worker->isGamepad = true;                   // This is a gamepad
-        if (TEST_BIT(key_bits, BTN_TL))
-            Worker->isGamepad = true;                   // This is a gamepad
-        if (TEST_BIT(key_bits, BTN_TL))
-            Worker->isGamepad = true;                   // This is a gamepad
+        if (TEST_BIT(keyBits, BTN_A)) worker->isGamepad = true;                // This is a gamepad
+        if (TEST_BIT(keyBits, BTN_TRIGGER)) worker->isGamepad = true;          // This is a gamepad
+        if (TEST_BIT(keyBits, BTN_START)) worker->isGamepad = true;            // This is a gamepad
+        if (TEST_BIT(keyBits, BTN_TL)) worker->isGamepad = true;               // This is a gamepad
+        if (TEST_BIT(keyBits, BTN_TL)) worker->isGamepad = true;               // This is a gamepad
 
-        if (TEST_BIT(key_bits, KEY_SPACE))
-            Worker->isKeyboard = true;                  // This is a keyboard
+        if (TEST_BIT(keyBits, KEY_SPACE)) worker->isKeyboard = true;           // This is a keyboard
     }
 
 
     /////////////////////////////////// Decide what to do with the device  /////////////////////////////////////////////
-    if(Worker->isTouch || Worker->isMouse)
+    if (worker->isTouch || worker->isMouse)
     {
         // Looks like a interesting device
         TraceLog(LOG_INFO, "Opening input device '%s' (%s%s%s%s%s)", device,
-            Worker->isMouse ? "mouse " : "",
-            Worker->isMultitouch ? "multitouch " : "",
-            Worker->isTouch ? "touchscreen " : "",
-            Worker->isGamepad ? "gamepad " : "",
-            Worker->isKeyboard ? "keyboard " : ""
-            );
+            worker->isMouse ? "mouse " : "",
+            worker->isMultitouch ? "multitouch " : "",
+            worker->isTouch ? "touchscreen " : "",
+            worker->isGamepad ? "gamepad " : "",
+            worker->isKeyboard ? "keyboard " : "");
 
         // Create a thread for this device
-        int error = pthread_create(&Worker->threadId, NULL, &EventThread, (void*)Worker);
-        if(error != 0)
+        int error = pthread_create(&worker->threadId, NULL, &EventThread, (void *)worker);
+        if (error != 0)
         {
             TraceLog(LOG_WARNING, "Error creating input device thread for '%s': Can't create thread (Err: %d)", device, error);
-            Worker->threadId = 0;
+            worker->threadId = 0;
             close(fd);
         }
 
-        // Kill off duplicate touchscreens if needed
-        if(USE_LAST_TOUCH_DEVICE)
+#if defined(USE_LAST_TOUCH_DEVICE)
+        // Find touchscreen with the highest index
+        int maxTouchNumber = -1;
+        
+        for (int i = 0; i < sizeof(eventWorkers)/sizeof(InputEventWorker); ++i)
         {
-            // Find touchscreen with the highest index
-            int MaxTouchNumber = -1;
-            for (int i = 0; i < sizeof(eventWorkers)/sizeof(InputEventWorker); ++i)
+            if (eventWorkers[i].isTouch && (eventWorkers[i].eventNum > maxTouchNumber)) maxTouchNumber = eventWorkers[i].eventNum;
+        }
+        
+        // Find toucnscreens with lower indexes
+        for (int i = 0; i < sizeof(eventWorkers)/sizeof(InputEventWorker); ++i)
+        {
+            if (eventWorkers[i].isTouch && (eventWorkers[i].eventNum < maxTouchNumber))
             {
-                if(eventWorkers[i].isTouch && (eventWorkers[i].eventNum > MaxTouchNumber))
-                    MaxTouchNumber = eventWorkers[i].eventNum;
-            }
-            // Find toucnscreens with lower indexes
-            for (int i = 0; i < sizeof(eventWorkers)/sizeof(InputEventWorker); ++i)
-            {
-                if(eventWorkers[i].isTouch && (eventWorkers[i].eventNum < MaxTouchNumber))
+                if (eventWorkers[i].threadId != 0)
                 {
-                    if(eventWorkers[i].threadId != 0)
-                    {
-                        TraceLog(LOG_WARNING, "Duplicate touchscreen found, killing toucnscreen on event%d", i);
-                        pthread_cancel(eventWorkers[i].threadId);
-                        close(eventWorkers[i].fd);
-                    }
+                    TraceLog(LOG_WARNING, "Duplicate touchscreen found, killing toucnscreen on event%d", i);
+                    pthread_cancel(eventWorkers[i].threadId);
+                    close(eventWorkers[i].fd);
                 }
             }
         }
+#endif
     }
-    else
-    {
-        // We are not interested in this device
-        close(fd);
-    }
+    else close(fd);  // We are not interested in this device
 }
 
 static void *EventThread(void *arg)
 {
-    struct input_event ev;
+    struct input_event event;
     GestureEvent gestureEvent;
-    InputEventWorker* Worker = (InputEventWorker*)arg;
+    InputEventWorker *worker = (InputEventWorker *)arg;
     bool GestureNeedsUpdate = false;
 
     while (!windowShouldClose)
     {
-        if (read(Worker->fd, &ev, sizeof(ev)) == (int)sizeof(ev))
+        if (read(worker->fd, &event, sizeof(event)) == (int)sizeof(event))
         {
             /////////////////////////////// Relative movement parsing ////////////////////////////////////
-            if(ev.type == EV_REL)
+            if (event.type == EV_REL)
             {
-                if(ev.code == REL_X)
+                if (event.code == REL_X)
                 {
-                    mousePosition.x += ev.value;
+                    mousePosition.x += event.value;
                     touchPosition[0].x = mousePosition.x;
                     gestureEvent.touchAction = TOUCH_MOVE;
                     GestureNeedsUpdate = true;
                 }
 
-                if(ev.code == REL_Y)
+                if (event.code == REL_Y)
                 {
-                    mousePosition.y += ev.value;
+                    mousePosition.y += event.value;
                     touchPosition[0].y = mousePosition.y;
                     gestureEvent.touchAction = TOUCH_MOVE;
                     GestureNeedsUpdate = true;
                 }
 
-                if(ev.code == REL_WHEEL)
+                if (event.code == REL_WHEEL)
                 {
-                    currentMouseWheelY += ev.value;
+                    currentMouseWheelY += event.value;
                 }              
             }
 
             /////////////////////////////// Absolute movement parsing ////////////////////////////////////
-            if(ev.type == EV_ABS)
+            if (event.type == EV_ABS)
             {
                 // Basic movement
-                if(ev.code == ABS_X)
+                if (event.code == ABS_X)
                 {
-                    mousePosition.x = (ev.value - Worker->absRange.x) * screenWidth / Worker->absRange.width;  //Scale acording to absRange
+                    mousePosition.x = (event.value - worker->absRange.x)*screenWidth/worker->absRange.width;   // Scale acording to absRange
                     gestureEvent.touchAction = TOUCH_MOVE;
                     GestureNeedsUpdate = true;
                 }
 
-                if(ev.code == ABS_Y)
+                if (event.code == ABS_Y)
                 {
-                    mousePosition.y = (ev.value - Worker->absRange.y) * screenHeight / Worker->absRange.height;  //Scale acording to absRange
+                    mousePosition.y = (event.value - worker->absRange.y)*screenHeight/worker->absRange.height; // Scale acording to absRange
                     gestureEvent.touchAction = TOUCH_MOVE;
                     GestureNeedsUpdate = true;
                 }
 
-                //Multitouch movement
-                if(ev.code == ABS_MT_SLOT)
+                // Multitouch movement
+                if (event.code == ABS_MT_SLOT)
                 {
-                    Worker->touchSlot = ev.value;   //Remeber the slot number for the folowing events
+                    worker->touchSlot = event.value;   // Remeber the slot number for the folowing events
                 }
 
-                if(ev.code == ABS_MT_POSITION_X)
+                if (event.code == ABS_MT_POSITION_X)
                 {
-                    if(Worker->touchSlot < MAX_TOUCH_POINTS)
-                        touchPosition[Worker->touchSlot].x = (ev.value - Worker->absRange.x) * screenWidth / Worker->absRange.width; //Scale acording to absRange
+                    if (worker->touchSlot < MAX_TOUCH_POINTS)
+                        touchPosition[worker->touchSlot].x = (event.value - worker->absRange.x)*screenWidth/worker->absRange.width;    // Scale acording to absRange
                 }
 
-                if(ev.code == ABS_MT_POSITION_Y)
+                if (event.code == ABS_MT_POSITION_Y)
                 {
-                    if(Worker->touchSlot < MAX_TOUCH_POINTS)
-                        touchPosition[Worker->touchSlot].y = (ev.value - Worker->absRange.y) * screenHeight / Worker->absRange.height; //Scale acording to absRange
+                    if (worker->touchSlot < MAX_TOUCH_POINTS)
+                        touchPosition[worker->touchSlot].y = (event.value - worker->absRange.y)*screenHeight/worker->absRange.height;  // Scale acording to absRange
                 }
 
-                if(ev.code == ABS_MT_TRACKING_ID)
+                if (event.code == ABS_MT_TRACKING_ID)
                 {
-                    if( (ev.value < 0) && (Worker->touchSlot < MAX_TOUCH_POINTS) )
+                    if ( (event.value < 0) && (worker->touchSlot < MAX_TOUCH_POINTS) )
                     {
-                        //Touch has ended for this point
-                        touchPosition[Worker->touchSlot].x = -1;
-                        touchPosition[Worker->touchSlot].y = -1;
+                        // Touch has ended for this point
+                        touchPosition[worker->touchSlot].x = -1;
+                        touchPosition[worker->touchSlot].y = -1;
                     }
                 }
             }
 
             /////////////////////////////// Button parsing ////////////////////////////////////
-            if(ev.type == EV_KEY)
+            if (event.type == EV_KEY)
             {
-                if((ev.code == BTN_TOUCH) || (ev.code == BTN_LEFT))
+                if((event.code == BTN_TOUCH) || (event.code == BTN_LEFT))
                 {
-                    currentMouseStateEvdev[MOUSE_LEFT_BUTTON] = ev.value;
-                    if(ev.value > 0)
-                        gestureEvent.touchAction = TOUCH_DOWN;
-                    else
-                        gestureEvent.touchAction = TOUCH_UP;
+                    currentMouseStateEvdev[MOUSE_LEFT_BUTTON] = event.value;
+                    if (event.value > 0) gestureEvent.touchAction = TOUCH_DOWN;
+                    else gestureEvent.touchAction = TOUCH_UP;
                     GestureNeedsUpdate = true;
                 }
 
-                if(ev.code == BTN_RIGHT)
-                {
-                    currentMouseStateEvdev[MOUSE_RIGHT_BUTTON] =  ev.value;
-                }
+                if (event.code == BTN_RIGHT) currentMouseStateEvdev[MOUSE_RIGHT_BUTTON] =  event.value;
 
-                if(ev.code == BTN_MIDDLE)
-                {
-                    currentMouseStateEvdev[MOUSE_MIDDLE_BUTTON] =  ev.value;
-                }
-
+                if (event.code == BTN_MIDDLE) currentMouseStateEvdev[MOUSE_MIDDLE_BUTTON] =  event.value;
             }
 
             /////////////////////////////// Screen confinement ////////////////////////////////////
-            if(mousePosition.x < 0)
-                mousePosition.x = 0;
-            if(mousePosition.x > screenWidth / mouseScale)
-                mousePosition.x = screenWidth / mouseScale;
+            if (mousePosition.x < 0) mousePosition.x = 0;
+            if (mousePosition.x > screenWidth/mouseScale) mousePosition.x = screenWidth/mouseScale;
 
-            if(mousePosition.y < 0)
-                mousePosition.y = 0;
-            if(mousePosition.y > screenHeight / mouseScale)
-                mousePosition.y = screenHeight / mouseScale;
+            if (mousePosition.y < 0) mousePosition.y = 0;
+            if (mousePosition.y > screenHeight/mouseScale) mousePosition.y = screenHeight/mouseScale;
 
             /////////////////////////////// Gesture update ////////////////////////////////////
-            if(GestureNeedsUpdate)
+            if (GestureNeedsUpdate)
             {
                 gestureEvent.pointCount = 0;
-                if(touchPosition[0].x >= 0) gestureEvent.pointCount++;
-                if(touchPosition[1].x >= 0) gestureEvent.pointCount++;
-                if(touchPosition[2].x >= 0) gestureEvent.pointCount++;
-                if(touchPosition[3].x >= 0) gestureEvent.pointCount++;
+                if (touchPosition[0].x >= 0) gestureEvent.pointCount++;
+                if (touchPosition[1].x >= 0) gestureEvent.pointCount++;
+                if (touchPosition[2].x >= 0) gestureEvent.pointCount++;
+                if (touchPosition[3].x >= 0) gestureEvent.pointCount++;
                 gestureEvent.pointerId[0] = 0;
                 gestureEvent.pointerId[1] = 1;
                 gestureEvent.pointerId[2] = 2;
@@ -4240,10 +4213,12 @@ static void *EventThread(void *arg)
         }
         else
         {
-            usleep(5000); //Sleep for 5ms to avoid hogging CPU time
+            usleep(5000); // Sleep for 5ms to avoid hogging CPU time
         }
     }
-    close(Worker->fd);
+    
+    close(worker->fd);
+    
     return NULL;
 }
 
