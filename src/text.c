@@ -566,6 +566,28 @@ void UnloadFont(Font font)
     }
 }
 
+// Shows current FPS on top-left corner
+// NOTE: Uses default font
+void DrawFPS(int posX, int posY)
+{
+    // NOTE: We are rendering fps every second for better viewing on high framerates
+
+    static int fps = 0;
+    static int counter = 0;
+    static int refreshRate = 20;
+
+    if (counter < refreshRate) counter++;
+    else
+    {
+        fps = GetFPS();
+        refreshRate = fps;
+        counter = 0;
+    }
+    
+    // NOTE: We have rounding errors every frame, so it oscillates a lot
+    DrawText(FormatText("%2i FPS", fps), posX, posY, 20, LIME);
+}
+
 // Draw text (using default font)
 // NOTE: fontSize work like in any drawing program but if fontSize is lower than font-base-size, then font-base-size is used
 // NOTE: chars spacing is proportional to fontSize
@@ -640,44 +662,6 @@ void DrawTextEx(Font font, const char *text, Vector2 position, float fontSize, f
             else textOffsetX += (int)(font.chars[index].advanceX*scaleFactor + spacing);
         }
     }
-}
-
-// Formatting of text with variables to 'embed'
-const char *FormatText(const char *text, ...)
-{
-    static char buffer[MAX_FORMATTEXT_LENGTH];
-
-    va_list args;
-    va_start(args, text);
-    vsprintf(buffer, text, args);
-    va_end(args);
-
-    return buffer;
-}
-
-// Get a piece of a text string
-const char *SubText(const char *text, int position, int length)
-{
-    static char buffer[MAX_SUBTEXT_LENGTH] = { 0 };
-    int textLength = strlen(text);
-
-    if (position >= textLength)
-    {
-        position = textLength - 1;
-        length = 0;
-    }
-
-    if (length >= textLength) length = textLength;
-
-    for (int c = 0 ; c < length ; c++)
-    {
-        *(buffer + c) = *(text + position);
-        text++;
-    }
-
-    *(buffer + length) = '\0';
-
-    return buffer;
 }
 
 // Measure string width for default font
@@ -764,26 +748,78 @@ int GetGlyphIndex(Font font, int character)
 #endif
 }
 
-// Shows current FPS on top-left corner
-// NOTE: Uses default font
-void DrawFPS(int posX, int posY)
+// Formatting of text with variables to 'embed'
+const char *FormatText(const char *text, ...)
 {
-    // NOTE: We are rendering fps every second for better viewing on high framerates
+    static char buffer[MAX_FORMATTEXT_LENGTH];
 
-    static int fps = 0;
-    static int counter = 0;
-    static int refreshRate = 20;
+    va_list args;
+    va_start(args, text);
+    vsprintf(buffer, text, args);
+    va_end(args);
 
-    if (counter < refreshRate) counter++;
-    else
+    return buffer;
+}
+
+// Get a piece of a text string
+const char *SubText(const char *text, int position, int length)
+{
+    static char buffer[MAX_SUBTEXT_LENGTH] = { 0 };
+    int textLength = strlen(text);
+
+    if (position >= textLength)
     {
-        fps = GetFPS();
-        refreshRate = fps;
-        counter = 0;
+        position = textLength - 1;
+        length = 0;
+    }
+
+    if (length >= textLength) length = textLength;
+
+    for (int c = 0 ; c < length ; c++)
+    {
+        *(buffer + c) = *(text + position);
+        text++;
+    }
+
+    *(buffer + length) = '\0';
+
+    return buffer;
+}
+
+// Split string into multiple strings
+// NOTE: Files count is returned by parameters pointer
+// NOTE: Allocated memory should be manually freed
+char **SplitText(char *text, char delimiter, int *strCount)
+{
+    #define MAX_SUBSTRING_LENGTH 128
+
+    char **strings = NULL;
+    int len = strlen(text);
+    char *strDup = (char *)malloc(len + 1);
+    strcpy(strDup, text);
+    int counter = 1;
+    
+    // Count how many substrings we have on string
+    for (int i = 0; i < len; i++) if (text[i] == delimiter) counter++;
+    
+    // Memory allocation for substrings
+    strings = (char **)malloc(sizeof(char *)*counter);
+    for (int i = 0; i < counter; i++) strings[i] = (char *)malloc(sizeof(char)*MAX_SUBSTRING_LENGTH);
+    
+    char *substrPtr = NULL;
+    char delimiters[1] = { delimiter };         // Only caring for one delimiter
+    substrPtr = strtok(strDup, delimiters);
+    
+    for (int i = 0; (i < counter) && (substrPtr != NULL); i++)
+    {
+        strcpy(strings[i], substrPtr);
+        substrPtr = strtok(NULL, delimiters);
     }
     
-    // NOTE: We have rounding errors every frame, so it oscillates a lot
-    DrawText(FormatText("%2i FPS", fps), posX, posY, 20, LIME);
+    *strCount = counter;
+    free(strDup);
+    
+    return strings;
 }
 
 //----------------------------------------------------------------------------------

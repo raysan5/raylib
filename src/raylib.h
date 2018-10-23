@@ -1088,9 +1088,12 @@ RLAPI void DrawTextEx(Font font, const char *text, Vector2 position, float fontS
 // Text misc. functions
 RLAPI int MeasureText(const char *text, int fontSize);                                      // Measure string width for default font
 RLAPI Vector2 MeasureTextEx(Font font, const char *text, float fontSize, float spacing);    // Measure string size for Font
-RLAPI const char *FormatText(const char *text, ...);                                        // Formatting of text with variables to 'embed'
-RLAPI const char *SubText(const char *text, int position, int length);                      // Get a piece of a text string
 RLAPI int GetGlyphIndex(Font font, int character);                                          // Get index position for a unicode character on font
+
+// Text string edition functions
+RLAPI const char *FormatText(const char *text, ...);                    // Formatting of text with variables to 'embed'
+RLAPI const char *SubText(const char *text, int position, int length);  // Get a piece of a text string
+RLAPI char **SplitText(char *text, char delimiter, int *strCount);      // Split text string into multiple strings (memory should be freed manually!)
 
 //------------------------------------------------------------------------------------
 // Basic 3d Shapes Drawing Functions (Module: models)
