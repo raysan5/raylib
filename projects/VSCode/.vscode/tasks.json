@@ -4,67 +4,47 @@
     "version": "2.0.0",
     "tasks": [
         {
-            "label": "(WIN) build release",
-            "type": "process",
-            "command": "C:/raylib/mingw/bin/mingw32-make.exe",
-            "args": [
-                "PLATFORM=PLATFORM_DESKTOP",
-                "RAYLIB_PATH=C:/raylib/raylib",
-            ],
-            "group": "build"
-        },
-        {
-            "label": "(WIN) build debug",
-            "type": "process",
-            "command": "C:/raylib/mingw/bin/mingw32-make.exe",
-            "args": [
-                "PLATFORM=PLATFORM_DESKTOP",
-                "RAYLIB_PATH=C:/raylib/raylib",
-                "DEBUGGING=TRUE"
-            ],
-            "group": "build"
-        },
-        {
-            "label": "(OSX) build debug",
-            "type": "process",
-            "command": "make",
-            "args": [
-                "PLATFORM=PLATFORM_DESKTOP",
-                "RAYLIB_PATH=<path_to_raylib>",
-                "DEBUGGING=TRUE"
-            ],
-            "group": "build"
-        },
-        {
-            "label": "(OSX) build release",
-            "type": "process",
-            "command": "make",
-            "args": [
-                "PLATFORM=PLATFORM_DESKTOP",
-                "RAYLIB_PATH=<path_to_raylib>",
-            ],
-            "group": "build"
-        },
-        {
-            "label": "(GNU) build debug",
+            "label": "build debug",
             "type": "process",
             "command": "make",
             "args": [
                 "PLATFORM=PLATFORM_DESKTOP",
                 "DEBUGGING=TRUE"
             ],
+            "windows": {
+                "command": "C:/raylib/mingw/bin/mingw32-make.exe",
+                "args": [
+                    "RAYLIB_PATH=C:/raylib/raylib"
+                ],
+            },
+            "osx": {
+                "args": [
+                    "RAYLIB_PATH=/Users/murray/work/ray/raylib"
+                ],
+            },
             "group": {
                 "kind": "build",
                 "isDefault": true
             }
         },
         {
-            "label": "(GNU) build release",
+            "label": "build release",
             "type": "process",
             "command": "make",
             "args": [
                 "PLATFORM=PLATFORM_DESKTOP",
             ],
+            "windows": {
+                "command": "C:/raylib/mingw/bin/mingw32-make.exe",
+                "args": [
+                    "RAYLIB_PATH=C:/raylib/raylib",
+                ],
+            },
+            "osx": {
+                "args": [
+                    "RAYLIB_PATH=/Users/murray/work/ray/raylib",
+                ],
+            },
             "group": "build"
         }
     ]
