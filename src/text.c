@@ -316,6 +316,7 @@ Font LoadFontEx(const char *fileName, int fontSize, int charsCount, int *fontCha
         font.texture = LoadTextureFromImage(atlas);
         UnloadImage(atlas);
     }
+    else font = GetFontDefault();
     
     return font;
 }
@@ -331,9 +332,9 @@ CharInfo *LoadFontData(const char *fileName, int fontSize, int *fontChars, int c
     #define SDF_PIXEL_DIST_SCALE     64.0f
     
     #define BITMAP_ALPHA_THRESHOLD     80
-       
+
     CharInfo *chars = NULL;
-    
+
     // Load font data (including pixel data) from TTF file
     // NOTE: Loaded information should be enough to generate font image atlas,
     // using any packaging method
@@ -349,7 +350,7 @@ CharInfo *LoadFontData(const char *fileName, int fontSize, int *fontChars, int c
         
         fread(fontBuffer, size, 1, fontFile);
         fclose(fontFile);
-        
+
         // Init font for data reading
         stbtt_fontinfo fontInfo;
         if (!stbtt_InitFont(&fontInfo, fontBuffer, 0)) TraceLog(LOG_WARNING, "Failed to init font!");
@@ -368,11 +369,11 @@ CharInfo *LoadFontData(const char *fileName, int fontSize, int *fontChars, int c
         // Fill fontChars in case not provided externally
         // NOTE: By default we fill charsCount consecutevely, starting at 32 (Space)
         int genFontChars = false;
-        if (fontChars == NULL) genFontChars = true;   
-        if (genFontChars) 
+        if (fontChars == NULL)
         {
             fontChars = (int *)malloc(charsCount*sizeof(int));
             for (int i = 0; i < charsCount; i++) fontChars[i] = i + 32;
+            genFontChars = true;
         }
 
         chars = (CharInfo *)malloc(charsCount*sizeof(CharInfo));
@@ -417,7 +418,7 @@ CharInfo *LoadFontData(const char *fileName, int fontSize, int *fontChars, int c
             stbtt_GetCodepointHMetrics(&fontInfo, ch, &chars[i].advanceX, NULL);
             chars[i].advanceX *= scaleFactor;
         }
-        
+
         free(fontBuffer);
         if (genFontChars) free(fontChars);
     }

@@ -331,18 +331,19 @@ static int currentMouseWheelY = 0;              // Registers current mouse wheel
 
 #if defined(PLATFORM_RPI)
 static char currentMouseStateEvdev[3] = { 0 };  // Holds the new mouse state for the next polling event to grab (Can't be written directly due to multithreading, app could miss the update)
+
 typedef struct {
-  pthread_t threadId;                           // Event reading thread id
-  int fd;                                       // File descriptor to the device it is assigned to
-  int eventNum;                                 // Number of 'event<N>' device
-  Rectangle absRange;                           // Range of values for absolute pointing devices (touchscreens)
-  int touchSlot;                                // Hold the touch slot number of the currently being sent multitouch block
-  bool isMouse;                                 // True if device supports relative X Y movements
-  bool isTouch;                                 // True if device supports absolute X Y movements and has BTN_TOUCH
-  bool isMultitouch;                            // True if device supports multiple absolute movevents and has BTN_TOUCH
-  bool isKeyboard;                              // True if device has letter keycodes
-  bool isGamepad;                               // True if device has gamepad buttons
-}InputEventWorker;
+    pthread_t threadId;                         // Event reading thread id
+    int fd;                                     // File descriptor to the device it is assigned to
+    int eventNum;                               // Number of 'event<N>' device
+    Rectangle absRange;                         // Range of values for absolute pointing devices (touchscreens)
+    int touchSlot;                              // Hold the touch slot number of the currently being sent multitouch block
+    bool isMouse;                               // True if device supports relative X Y movements
+    bool isTouch;                               // True if device supports absolute X Y movements and has BTN_TOUCH
+    bool isMultitouch;                          // True if device supports multiple absolute movevents and has BTN_TOUCH
+    bool isKeyboard;                            // True if device has letter keycodes
+    bool isGamepad;                             // True if device has gamepad buttons
+} InputEventWorker;
 
 static InputEventWorker eventWorkers[10];       // List of worker threads for every monitored "/dev/input/event<N>"
 
