@@ -151,6 +151,9 @@ ifeq ($(PLATFORM),PLATFORM_DESKTOP)
     ifeq ($(PLATFORM_OS),LINUX)
         MAKE = make
     endif
+    ifeq ($(PLATFORM_OS),OSX)
+        MAKE = make
+    endif
 endif
 
 # Define compiler flags:
@@ -279,17 +282,22 @@ ifeq ($(PLATFORM),PLATFORM_WEB)
     LDLIBS = $(RAYLIB_RELEASE_PATH)/libraylib.bc
 endif
 
+# Define a recursive wildcard function
+rwildcard=$(foreach d,$(wildcard $1*),$(call rwildcard,$d/,$2) $(filter $(subst *,%,$2),$d))
+
 # Define all source files required
-PROJECT_SOURCE_FILES ?= main.c
+SRC_DIR = src
+OBJ_DIR = obj
 
 # Define all object files from source files
-OBJS = $(patsubst %.c, %.o, $(PROJECT_SOURCE_FILES))
+SRC = $(call rwildcard, *.c, *.h)
+OBJS = $(SRC:$(SRC_DIR)/%.c=$(OBJ_DIR)/%.o)
 
 # For Android platform we call a custom Makefile.Android
 ifeq ($(PLATFORM),PLATFORM_ANDROID)
     MAKEFILE_PARAMS = -f Makefile.Android 
     export PROJECT_NAME
-    export PROJECT_SOURCE_FILES
+    export SRC_DIR
 else
     MAKEFILE_PARAMS = $(PROJECT_NAME)
 endif
@@ -305,7 +313,8 @@ $(PROJECT_NAME): $(OBJS)
 
 # Compile source files
 # NOTE: This pattern will compile every module defined on $(OBJS)
-%.o: %.c
+#%.o: %.c
+$(OBJ_DIR)/%.o: $(SRC_DIR)/%.c
 	$(CC) -c $< -o $@ $(CFLAGS) $(INCLUDE_PATHS) -D$(PLATFORM)
 
 # Clean everything
