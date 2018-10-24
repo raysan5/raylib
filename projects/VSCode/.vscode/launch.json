@@ -5,67 +5,7 @@
         "version": "0.2.0",
         "configurations": [
           {
-            "name": "(WIN) Debug",
-            "type": "cppdbg",
-            "request": "launch",
-            "program": "${workspaceFolder}/game.exe",
-            "args": [],
-            "stopAtEntry": false,
-            "cwd": "${workspaceFolder}",
-            "environment": [],
-            "externalConsole": false,
-            "MIMode": "gdb",
-            "miDebuggerPath": "C:/raylib/mingw/bin/gdb.exe",
-            "setupCommands": [
-              {
-                "description": "Enable pretty-printing for gdb",
-                "text": "-enable-pretty-printing",
-                "ignoreFailures": false
-              }
-            ],
-            "preLaunchTask": "(WIN) build debug"
-          },
-          {
-            "name": "(WIN) Run",
-            "type": "cppdbg",
-            "request": "launch",
-            "program": "${workspaceFolder}/game.exe",
-            "args": [],
-            "stopAtEntry": false,
-            "cwd": "${workspaceFolder}",
-            "environment": [],
-            "externalConsole": false,
-            "MIMode": "gdb",
-            "miDebuggerPath": "C:/raylib/mingw/bin/gdb.exe",
-            "setupCommands": [
-              {
-                "description": "Enable pretty-printing for gdb",
-                "text": "-enable-pretty-printing",
-                "ignoreFailures": false
-              }
-            ],
-            "preLaunchTask": "(WIN) build release"
-          },
-          {
-            "name": "(OSX) Debug",
-            "type": "lldb",
-            "request": "launch",
-            "program": "${workspaceFolder}/game",
-            "args": [],
-            "cwd": "${workspaceFolder}",
-            "preLaunchTask": "(OSX) build debug"
-          },
-          {
-            "name": "(OSX) Run",
-            "type": "lldb",
-            "request": "launch",
-            "program": "${workspaceFolder}/game",
-            "args": [],
-            "cwd": "${workspaceFolder}",
-            "preLaunchTask": "(OSX) build release"
-          },
-          {
-            "name": "(GNU) Debug",
+            "name": "Debug",
             "type": "cppdbg",
             "request": "launch",
             "program": "${workspaceFolder}/game",
@@ -75,7 +15,6 @@
             "environment": [],
             "externalConsole": false,
             "MIMode": "gdb",
-            "miDebuggerPath": "/usr/bin/gdb",
             "setupCommands": [
               {
                 "description": "Enable pretty-printing for gdb",
@@ -83,28 +22,39 @@
                 "ignoreFailures": false
               }
             ],
-            "preLaunchTask": "(GNU) build debug"
+            "windows": {
+              "miDebuggerPath": "C:/raylib/mingw/bin/gdb.exe",
+            },
+            "osx": {
+              "MIMode": "lldb"
+            },
+            "linux": {
+              "miDebuggerPath": "/usr/bin/gdb",
+            },
+            "preLaunchTask": "build debug"
           },
           {
-            "name": "(GNU) Run",
+            "name": "Run",
             "type": "cppdbg",
             "request": "launch",
-            "program": "${workspaceFolder}/game",
             "args": [],
             "stopAtEntry": false,
             "cwd": "${workspaceFolder}",
             "environment": [],
             "externalConsole": false,
+            "program": "${workspaceFolder}/game",
             "MIMode": "gdb",
-            "miDebuggerPath": "/usr/bin/gdb",
-            "setupCommands": [
-              {
-                "description": "Enable pretty-printing for gdb",
-                "text": "-enable-pretty-printing",
-                "ignoreFailures": false
-              }
-            ],
-            "preLaunchTask": "(GNU) build release"
+            "windows": {
+              "program": "${workspaceFolder}/game.exe",
+              "miDebuggerPath": "C:/raylib/mingw/bin/gdb.exe"
+            },
+            "osx": {
+              "MIMode": "lldb"
+            },
+            "linux": {
+              "miDebuggerPath": "/usr/bin/gdb"
+            },
+            "preLaunchTask": "build release",
           }
         ]
       }
