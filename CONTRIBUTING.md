@@ -59,21 +59,23 @@ To open new issue for raylib (bug, enhancement, discussion...), just try to foll
 
 Some people ported raylib to other languages in form of bindings or wrappers to the library, here is a list with the ones I'm aware of:
 
- - [raylib C/C++ version (default)](https://github.com/raysan5/raylib)
- - [raylib Lua binding](https://github.com/raysan5/raylib-lua)
- - [raylib Go binding](https://github.com/gen2brain/raylib-go)
- - [raylib Nim binding](https://gitlab.com/define-private-public/raylib-Nim)
- - [raylib Crystal binding](https://gitlab.com/Zatherz/cray) 
- - [raylib Perl wrapper](https://metacpan.org/pod/Graphics::Raylib) 
- - [raylib Pascal binding](https://github.com/drezgames/raylib-pascal)
- - [raylib flat-assembler Usage example](http://forum.raylib.com/index.php?p=/discussion/comment/425/#Comment_425)
- - [raylib COBOL Usage example](https://github.com/Martinfx/Cobol/tree/master/OpenCobol/Games/raylib)
- - [raylib C# binding](https://github.com/ChrisDill/Raylib-cs)
- - [raylib C# binding](https://github.com/TheLumaio/RaylibSharp)
- - [raylib Ruby binding](https://github.com/D3nX/raylib-ruby-ffi)
- - [raylib Rust binding](https://github.com/deltaphc/raylib-rs)
- - [raylib Python binding](https://github.com/overdev/raylibpy)
- - [raylib Haskell binding](https://github.com/DevJac/raylib-haskell)
+ - [raylib](https://github.com/raysan5/raylib) : raylib **C/C++** version (default)
+ - [raylib-lua](https://github.com/raysan5/raylib-lua) : raylib **Lua** binding
+ - [raylib-go](https://github.com/gen2brain/raylib-go) : raylib **Go** binding
+ - [raylib-Nim](https://gitlab.com/define-private-public/raylib-Nim) : raylib **Nim** binding
+ - [cray](https://gitlab.com/Zatherz/cray) - raylib **Crystal** binding
+ - [Graphics::Raylib](https://metacpan.org/pod/Graphics::Raylib) : raylib **Perl** wrapper
+ - [raylib-pascal](https://github.com/drezgames/raylib-pascal) - raylib **Pascal** binding
+ - [Raylib-cs](https://github.com/ChrisDill/Raylib-cs) : raylib **C#** binding
+ - [RaylibSharp](https://github.com/TheLumaio/RaylibSharp) : raylib **C#** binding
+ - [raylib-ruby-ffi](https://github.com/D3nX/raylib-ruby-ffi) : raylib **Ruby** binding
+ - [raylib-rs](https://github.com/deltaphc/raylib-rs) : raylib **Rust** binding
+ - [raylib-rust](https://github.com/dtcristo/raylib-rust) : raylib **Rust** binding
+ - [raylib-py](https://github.com/overdev/raylib-py) : raylib **Python** binding
+ - [raylib-haskell](https://github.com/DevJac/raylib-haskell) : raylib **Haskell** binding
+ - [raylib-java]() : raylib **Java** binding
+ - *[raylib flat-assembler Usage example](http://forum.raylib.com/index.php?p=/discussion/comment/425/#Comment_425)*
+ - *[raylib COBOL Usage example](https://github.com/Martinfx/Cobol/tree/master/OpenCobol/Games/raylib)*
  
 Usually, raylib bindings follow the convention: `raylib-{language}`
 
@@ -85,7 +87,7 @@ provide the icon/logo for that new language binding.
 If you have any doubt, don't hesitate to [contact me](mailto:ray@raylib.com)!.
 You can write me a direct mail but you can also contact me on the following networks:
 
- - [raylib forum](http://forum.raylib.com/) - A good place for discussions or to ask for help.
+ - [raylib reddit](https://www.reddit.com/r/raylib/) - A good place for discussions or to ask for help.
  - [raylib Discord](https://discord.gg/VkzNHUE) - A direct communication channel for project discussions.
  - [raylib twitter](https://twitter.com/raysan5) - My personal twitter account, I usually post about raylib, you can send me PMs.
  - [raylib web](http://www.raylib.com/) - On top-right corner there is a bunch of networks where you can find me.

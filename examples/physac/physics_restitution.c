@@ -51,6 +51,9 @@ int main()
     circleC->restitution = 1;
     
     SetTargetFPS(60);
+
+    // Restitution demo needs a very tiny physics time step for a proper simulation
+    SetPhysicsTimeStep(1.0/60.0/100 * 1000);
     //--------------------------------------------------------------------------------------
 
     // Main game loop

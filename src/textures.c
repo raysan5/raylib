@@ -148,6 +148,7 @@ static Image LoadPKM(const char *fileName);   // Load PKM file
 #endif
 #if defined(SUPPORT_FILEFORMAT_KTX)
 static Image LoadKTX(const char *fileName);   // Load KTX file
+static void SaveKTX(Image image, const char *fileName); // Save image data as KTX file
 #endif
 #if defined(SUPPORT_FILEFORMAT_PVR)
 static Image LoadPVR(const char *fileName);   // Load PVR file
@@ -322,7 +323,7 @@ Image LoadImageRaw(const char *fileName, int width, int height, int format, int 
 
         // NOTE: fread() returns num read elements instead of bytes,
         // to get bytes we need to read (1 byte size, elements) instead of (x byte size, 1 element)
-        size_t bytes = fread(image.data, 1, size, rawFile);
+        int bytes = fread(image.data, 1, size, rawFile);
 
         // Check if data has been read successfully
         if (bytes < size)
@@ -726,10 +727,11 @@ void ExportImage(Image image, const char *fileName)
     if (IsFileExtension(fileName, ".png")) success = stbi_write_png(fileName, image.width, image.height, 4, imgData, image.width*4);
     else if (IsFileExtension(fileName, ".bmp")) success = stbi_write_bmp(fileName, image.width, image.height, 4, imgData);
     else if (IsFileExtension(fileName, ".tga")) success = stbi_write_tga(fileName, image.width, image.height, 4, imgData);
-    else if (IsFileExtension(fileName, ".jpg")) success = stbi_write_jpg(fileName, image.width, image.height, 4, imgData, 80);  // Between 1 and 100
+    else if (IsFileExtension(fileName, ".jpg")) success = stbi_write_jpg(fileName, image.width, image.height, 4, imgData, 80);  // JPG quality: between 1 and 100
+    else if (IsFileExtension(fileName, ".ktx")) SaveKTX(image, fileName);
     else if (IsFileExtension(fileName, ".raw")) 
     {
-        // Export raw pixel data
+        // Export raw pixel data (without header)
         // NOTE: It's up to the user to track image parameters
         FILE *rawFile = fopen(fileName, "wb");
         fwrite(image.data, GetPixelDataSize(image.width, image.height, image.format), 1, rawFile);
@@ -1441,6 +1443,57 @@ void ImageDither(Image *image, int rBpp, int gBpp, int bBpp, int aBpp)
 
         free(pixels);
     }
+}
+
+// Extract color palette from image to maximum size
+// NOTE: Memory allocated should be freed manually!
+Color *ImageExtractPalette(Image image, int maxPaletteSize, int *extractCount)
+{
+    #define COLOR_EQUAL(col1, col2) ((col1.r == col2.r)&&(col1.g == col2.g)&&(col1.b == col2.b)&&(col1.a == col2.a))
+    
+    Color *pixels = GetImageData(image);
+    Color *palette = (Color *)malloc(maxPaletteSize*sizeof(Color));
+    
+    int palCount = 0;
+    for (int i = 0; i < maxPaletteSize; i++) palette[i] = BLANK;   // Set all colors to BLANK
+
+    for (int i = 0; i < image.width*image.height; i++)
+    {
+        if (pixels[i].a > 0)
+        {
+            bool colorInPalette = false;
+            
+            // Check if the color is already on palette
+            for (int j = 0; j < maxPaletteSize; j++)
+            {
+                if (COLOR_EQUAL(pixels[i], palette[j])) 
+                {
+                    colorInPalette = true;
+                    break;
+                }
+            }
+            
+            // Store color if not on the palette
+            if (!colorInPalette)
+            {
+                palette[palCount] = pixels[i];      // Add pixels[i] to palette
+                palCount++;
+                
+                // We reached the limit of colors supported by palette
+                if (palCount >= maxPaletteSize)
+                {
+                    i = image.width*image.height;   // Finish palette get
+                    printf("WARNING: Image palette is greater than %i colors!\n", maxPaletteSize);
+                }
+            }
+        }
+    }
+
+    free(pixels);
+    
+    *extractCount = palCount;
+    
+    return palette;
 }
 
 // Draw an image (source) within an image (destination)
@@ -2727,7 +2780,7 @@ static Image LoadDDS(const char *fileName)
 
                 TraceLog(LOG_DEBUG, "Pitch or linear size: %i", ddsHeader.pitchOrLinearSize);
 
-                image.data = (unsigned char*)malloc(size*sizeof(unsigned char));
+                image.data = (unsigned char *)malloc(size*sizeof(unsigned char));
 
                 fread(image.data, size, 1, ddsFile);
 
@@ -2824,7 +2877,7 @@ static Image LoadPKM(const char *fileName)
 
             int size = image.width*image.height*bpp/8;  // Total data size in bytes
 
-            image.data = (unsigned char*)malloc(size*sizeof(unsigned char));
+            image.data = (unsigned char *)malloc(size*sizeof(unsigned char));
 
             fread(image.data, size, 1, pkmFile);
 
@@ -2918,7 +2971,7 @@ static Image LoadKTX(const char *fileName)
             int dataSize;
             fread(&dataSize, sizeof(unsigned int), 1, ktxFile);
 
-            image.data = (unsigned char*)malloc(dataSize*sizeof(unsigned char));
+            image.data = (unsigned char *)malloc(dataSize*sizeof(unsigned char));
 
             fread(image.data, dataSize, 1, ktxFile);
 
@@ -2931,6 +2984,93 @@ static Image LoadKTX(const char *fileName)
     }
 
     return image;
+}
+
+// Save image data as KTX file
+// NOTE: By default KTX 1.1 spec is used, 2.0 is still on draft (01Oct2018)
+static void SaveKTX(Image image, const char *fileName)
+{
+    // KTX file Header (64 bytes)
+    // v1.1 - https://www.khronos.org/opengles/sdk/tools/KTX/file_format_spec/
+    // v2.0 - http://github.khronos.org/KTX-Specification/ - still on draft, not ready for implementation
+    
+    typedef struct {
+        char id[12];                        // Identifier: "«KTX 11»\r\n\x1A\n"             // KTX 2.0: "«KTX 22»\r\n\x1A\n"
+        unsigned int endianness;            // Little endian: 0x01 0x02 0x03 0x04
+        unsigned int glType;                // For compressed textures, glType must equal 0
+        unsigned int glTypeSize;            // For compressed texture data, usually 1
+        unsigned int glFormat;              // For compressed textures is 0
+        unsigned int glInternalFormat;      // Compressed internal format
+        unsigned int glBaseInternalFormat;  // Same as glFormat (RGB, RGBA, ALPHA...)       // KTX 2.0: UInt32 vkFormat
+        unsigned int width;                 // Texture image width in pixels
+        unsigned int height;                // Texture image height in pixels
+        unsigned int depth;                 // For 2D textures is 0
+        unsigned int elements;              // Number of array elements, usually 0
+        unsigned int faces;                 // Cubemap faces, for no-cubemap = 1
+        unsigned int mipmapLevels;          // Non-mipmapped textures = 1
+        unsigned int keyValueDataSize;      // Used to encode any arbitrary data...         // KTX 2.0: UInt32 levelOrder - ordering of the mipmap levels, usually 0
+                                                                                            // KTX 2.0: UInt32 supercompressionScheme - 0 (None), 1 (Crunch CRN), 2 (Zlib DEFLATE)...
+        // KTX 2.0 defines additional header elements...
+    } KTXHeader;
+
+    // NOTE: Before start of every mipmap data block, we have: unsigned int dataSize
+
+    FILE *ktxFile = fopen(fileName, "wb");
+
+    if (ktxFile == NULL) TraceLog(LOG_WARNING, "[%s] KTX image file could not be created", fileName);
+    else
+    {
+        KTXHeader ktxHeader;
+        
+        // KTX identifier (v2.2)
+        //unsigned char id[12] = { '«', 'K', 'T', 'X', ' ', '1', '1', '»', '\r', '\n', '\x1A', '\n' };
+        //unsigned char id[12] = { 0xAB, 0x4B, 0x54, 0x58, 0x20, 0x31, 0x31, 0xBB, 0x0D, 0x0A, 0x1A, 0x0A };
+        
+        // Get the image header
+        strcpy(ktxHeader.id, "«KTX 11»\r\n\x1A\n");     // KTX 1.1 signature
+        ktxHeader.endianness = 0;
+        ktxHeader.glType = 0;                   // Obtained from image.format
+        ktxHeader.glTypeSize = 1;
+        ktxHeader.glFormat = 0;                 // Obtained from image.format
+        ktxHeader.glInternalFormat = 0;         // Obtained from image.format
+        ktxHeader.glBaseInternalFormat = 0;
+        ktxHeader.width = image.width;
+        ktxHeader.height = image.height;
+        ktxHeader.depth = 0;
+        ktxHeader.elements = 0;
+        ktxHeader.faces = 1;
+        ktxHeader.mipmapLevels = image.mipmaps; // If it was 0, it means mipmaps should be generated on loading (not for compressed formats)
+        ktxHeader.keyValueDataSize = 0;         // No extra data after the header
+        
+        rlGetGlTextureFormats(image.format, &ktxHeader.glInternalFormat, &ktxHeader.glFormat, &ktxHeader.glType);   // rlgl module function
+        ktxHeader.glBaseInternalFormat = ktxHeader.glFormat;    // KTX 1.1 only
+        
+        // NOTE: We can save into a .ktx all PixelFormats supported by raylib, including compressed formats like DXT, ETC or ASTC
+        
+        if (ktxHeader.glFormat == -1) TraceLog(LOG_WARNING, "Image format not supported for KTX export.");
+        else
+        {
+            fwrite(&ktxHeader, 1, sizeof(KTXHeader), ktxFile);
+            
+            int width = image.width;
+            int height = image.height;
+            int dataOffset = 0;
+            
+            // Save all mipmaps data
+            for (int i = 0; i < image.mipmaps; i++)
+            {
+                unsigned int dataSize = GetPixelDataSize(width, height, image.format);
+                fwrite(&dataSize, 1, sizeof(unsigned int), ktxFile);
+                fwrite((unsigned char *)image.data + dataOffset, 1, dataSize, ktxFile);
+                
+                width /= 2;
+                height /= 2;
+                dataOffset += dataSize;
+            }
+        }
+
+        fclose(ktxFile);    // Close file pointer
+    }
 }
 #endif
 
@@ -3073,7 +3213,7 @@ static Image LoadPVR(const char *fileName)
                 }
 
                 int dataSize = image.width*image.height*bpp/8;  // Total data size in bytes
-                image.data = (unsigned char*)malloc(dataSize*sizeof(unsigned char));
+                image.data = (unsigned char *)malloc(dataSize*sizeof(unsigned char));
 
                 // Read data from file
                 fread(image.data, dataSize, 1, pvrFile);

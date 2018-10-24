@@ -954,7 +954,7 @@ void UpdateGameplayScreen(void)
                     playerActive = false;
                     killer = 5;
                 }
-                else if (CheckCollisionRecs(bee, player) && (state == FINALFORM) && (state != KICK))
+                else if (CheckCollisionRecs(bee, player) && (state == FINALFORM))
                 {
                     isHitBee = true;
                     beeVelocity = 8;

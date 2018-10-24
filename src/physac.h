@@ -96,8 +96,6 @@
 #define     PHYSAC_MAX_VERTICES             24
 #define     PHYSAC_CIRCLE_VERTICES          24
 
-#define     PHYSAC_DESIRED_DELTATIME        1.0/60.0
-#define     PHYSAC_MAX_TIMESTEP             0.02
 #define     PHYSAC_COLLISION_ITERATIONS     100
 #define     PHYSAC_PENETRATION_ALLOWANCE    0.05f
 #define     PHYSAC_PENETRATION_CORRECTION   0.4f
@@ -197,6 +195,7 @@ extern "C" {                                    // Prevents name mangling of fun
 //----------------------------------------------------------------------------------
 PHYSACDEF void InitPhysics(void);                                                                           // Initializes physics values, pointers and creates physics loop thread
 PHYSACDEF void RunPhysicsStep(void);                                                                        // Run physics step, to be used if PHYSICS_NO_THREADS is set in your main loop
+PHYSACDEF void SetPhysicsTimeStep(double delta);                                                            // Sets physics fixed time step in milliseconds. 1.666666 by default
 PHYSACDEF bool IsPhysicsEnabled(void);                                                                      // Returns true if physics thread is currently enabled
 PHYSACDEF void SetPhysicsGravity(float x, float y);                                                         // Sets physics global gravity force
 PHYSACDEF PhysicsBody CreatePhysicsBodyCircle(Vector2 pos, float radius, float density);                    // Creates a new circle physics body with generic parameters
@@ -279,16 +278,15 @@ static pthread_t physicsThreadId;                           // Physics thread id
 #endif
 static unsigned int usedMemory = 0;                         // Total allocated dynamic memory
 static bool physicsThreadEnabled = false;                   // Physics thread enabled state
-
 static double baseTime = 0.0;                               // Offset time for MONOTONIC clock
 static double startTime = 0.0;                              // Start time in milliseconds
-static double deltaTime = 0.0;                              // Delta time used for physics steps
+static double deltaTime = 1.0/60.0/10.0 * 1000;             // Delta time used for physics steps, in milliseconds
 static double currentTime = 0.0;                            // Current time in milliseconds
 static uint64_t frequency = 0;                              // Hi-res clock frequency
 
 static double accumulator = 0.0;                            // Physics time step delta time accumulator
 static unsigned int stepsCount = 0;                         // Total physics steps processed
-static Vector2 gravityForce = { 0.0f, 9.81f/1000 };         // Physics world gravity force
+static Vector2 gravityForce = { 0.0f, 9.81f };              // Physics world gravity force
 static PhysicsBody bodies[PHYSAC_MAX_BODIES];               // Physics bodies pointers array
 static unsigned int physicsBodiesCount = 0;                 // Physics world current bodies counter
 static PhysicsManifold contacts[PHYSAC_MAX_MANIFOLDS];      // Physics bodies pointers array
@@ -322,13 +320,12 @@ static bool BiasGreaterThan(float valueA, float valueB);                        
 static Vector2 TriangleBarycenter(Vector2 v1, Vector2 v2, Vector2 v3);                                      // Returns the barycenter of a triangle given by 3 points
 
 static void InitTimer(void);                                                                                // Initializes hi-resolution MONOTONIC timer
-static uint64_t GetTimeCount(void);                                                                         // Get hi-res MONOTONIC time measure in seconds
-static double GetCurrentTime(void);                                                                         // // Get hi-res MONOTONIC time measure in seconds
+static uint64_t GetTimeCount(void);                                                                         // Get hi-res MONOTONIC time measure in mseconds
+static double GetCurrentTime(void);                                                                         // Get current time measure in milliseconds
 
 static int GetRandomNumber(int min, int max);                                                               // Returns a random number between min and max (both included)
 
 // Math functions
-static void MathClamp(double *value, double min, double max);                                               // Clamp a value in a range
 static Vector2 MathCross(float value, Vector2 vector);                                                      // Returns the cross product of a vector and a value
 static float MathCrossVector2(Vector2 v1, Vector2 v2);                                                      // Returns the cross product of two vectors
 static float MathLenSqr(Vector2 vector);                                                                    // Returns the len square root of a vector
@@ -363,6 +360,8 @@ PHYSACDEF void InitPhysics(void)
     #if defined(PHYSAC_DEBUG)
         printf("[PHYSAC] physics module initialized successfully\n");
     #endif
+
+    accumulator = 0.0;
 }
 
 // Returns true if physics thread is currently enabled
@@ -607,7 +606,7 @@ PHYSACDEF void PhysicsShatter(PhysicsBody body, Vector2 position, float force)
             {
                 int count = vertexData.vertexCount;
                 Vector2 bodyPos = body->position;
-                Vector2 vertices[count];
+                Vector2 *vertices = (Vector2*)malloc(sizeof(Vector2) * count);
                 Mat2 trans = body->shape.transform;
                 for (int i = 0; i < count; i++) vertices[i] = vertexData.positions[i];
 
@@ -699,6 +698,8 @@ PHYSACDEF void PhysicsShatter(PhysicsBody body, Vector2 position, float force)
                     // Apply force to new physics body
                     PhysicsAddForce(newBody, forceDirection);
                 }
+
+                free(vertices);
             }
         }
     }
@@ -917,6 +918,18 @@ PHYSACDEF void ClosePhysics(void)
     #if !defined(PHYSAC_NO_THREADS)
         pthread_join(physicsThreadId, NULL);
     #endif
+
+    // Unitialize physics manifolds dynamic memory allocations
+    for (int i = physicsManifoldsCount - 1; i >= 0; i--) DestroyPhysicsManifold(contacts[i]);
+
+    // Unitialize physics bodies dynamic memory allocations
+    for (int i = physicsBodiesCount - 1; i >= 0; i--) DestroyPhysicsBody(bodies[i]);
+
+    #if defined(PHYSAC_DEBUG)
+        if (physicsBodiesCount > 0 || usedMemory != 0) printf("[PHYSAC] physics module closed with %i still allocated bodies [MEMORY: %i bytes]\n", physicsBodiesCount, usedMemory);
+        else if (physicsManifoldsCount > 0 || usedMemory != 0) printf("[PHYSAC] physics module closed with %i still allocated manifolds [MEMORY: %i bytes]\n", physicsManifoldsCount, usedMemory);
+        else printf("[PHYSAC] physics module closed successfully\n");
+    #endif
 }
 
 //----------------------------------------------------------------------------------
@@ -1011,25 +1024,12 @@ static void *PhysicsLoop(void *arg)
 
     // Initialize physics loop thread values
     physicsThreadEnabled = true;
-    accumulator = 0;
 
     // Physics update loop
     while (physicsThreadEnabled)
     {
         RunPhysicsStep();
     }
-
-    // Unitialize physics manifolds dynamic memory allocations
-    for (int i = physicsManifoldsCount - 1; i >= 0; i--) DestroyPhysicsManifold(contacts[i]);
-
-    // Unitialize physics bodies dynamic memory allocations
-    for (int i = physicsBodiesCount - 1; i >= 0; i--) DestroyPhysicsBody(bodies[i]);
-
-    #if defined(PHYSAC_DEBUG)
-        if (physicsBodiesCount > 0 || usedMemory != 0) printf("[PHYSAC] physics module closed with %i still allocated bodies [MEMORY: %i bytes]\n", physicsBodiesCount, usedMemory);
-        else if (physicsManifoldsCount > 0 || usedMemory != 0) printf("[PHYSAC] physics module closed with %i still allocated manifolds [MEMORY: %i bytes]\n", physicsManifoldsCount, usedMemory);
-        else printf("[PHYSAC] physics module closed successfully\n");
-    #endif
 
     return NULL;
 }
@@ -1147,23 +1147,29 @@ PHYSACDEF void RunPhysicsStep(void)
     currentTime = GetCurrentTime();
 
     // Calculate current delta time
-    deltaTime = currentTime - startTime;
+    const double delta = currentTime - startTime;
 
     // Store the time elapsed since the last frame began
-    accumulator += deltaTime;
-
-    // Clamp accumulator to max time step to avoid bad performance
-    MathClamp(&accumulator, 0.0, PHYSAC_MAX_TIMESTEP);
+    accumulator += delta;
 
     // Fixed time stepping loop
-    while (accumulator >= PHYSAC_DESIRED_DELTATIME)
+    while (accumulator >= deltaTime)
     {
+#ifdef PHYSAC_DEBUG
+        //printf("currentTime %f, startTime %f, accumulator-pre %f, accumulator-post %f, delta %f, deltaTime %f\n",
+        //       currentTime, startTime, accumulator, accumulator-deltaTime, delta, deltaTime);
+#endif
         PhysicsStep();
         accumulator -= deltaTime;
     }
 
     // Record the starting of this frame
     startTime = currentTime;
+}
+
+PHYSACDEF void SetPhysicsTimeStep(double delta)
+{
+    deltaTime = delta;
 }
 
 // Finds a valid index for a new manifold initialization
@@ -1557,8 +1563,8 @@ static void IntegratePhysicsForces(PhysicsBody body)
 
     if (body->useGravity)
     {
-        body->velocity.x += gravityForce.x*(deltaTime/2.0);
-        body->velocity.y += gravityForce.y*(deltaTime/2.0);
+        body->velocity.x += gravityForce.x*(deltaTime/1000/2.0);
+        body->velocity.y += gravityForce.y*(deltaTime/1000/2.0);
     }
 
     if (!body->freezeOrient) body->angularVelocity += body->torque*body->inverseInertia*(deltaTime/2.0);
@@ -1592,7 +1598,7 @@ static void InitializePhysicsManifolds(PhysicsManifold manifold)
 
         // Determine if we should perform a resting collision or not;
         // The idea is if the only thing moving this object is gravity, then the collision should be performed without any restitution
-        if (MathLenSqr(radiusV) < (MathLenSqr((Vector2){ gravityForce.x*deltaTime, gravityForce.y*deltaTime }) + PHYSAC_EPSILON)) manifold->restitution = 0;
+        if (MathLenSqr(radiusV) < (MathLenSqr((Vector2){ gravityForce.x*deltaTime/1000, gravityForce.y*deltaTime/1000 }) + PHYSAC_EPSILON)) manifold->restitution = 0;
     }
 }
 
@@ -1951,13 +1957,6 @@ static int GetRandomNumber(int min, int max)
     }
 
     return (rand()%(abs(max - min) + 1) + min);
-}
-
-// Clamp a value in a range
-static inline void MathClamp(double *value, double min, double max)
-{
-    if (*value < min) *value = min;
-    else if (*value > max) *value = max;
 }
 
 // Returns the cross product of a vector and a value
