@@ -159,7 +159,6 @@
             unsigned int __stdcall timeEndPeriod(unsigned int uPeriod);
         #endif
 
-        #define MAX_FILEPATH_LENGTH 256
     #elif defined(__linux__)
         #include <sys/time.h>           // Required for: timespec, nanosleep(), select() - POSIX
         
@@ -175,9 +174,14 @@
         #define GLFW_EXPOSE_NATIVE_NSGL
         #include <GLFW/glfw3native.h>   // Required for: glfwGetCocoaWindow(), glfwGetNSGLContext()
 
+    #endif
+#endif
+
+#if defined(__linux__)
         #include <linux/limits.h> // for NAME_MAX and PATH_MAX defines
         #define MAX_FILEPATH_LENGTH PATH_MAX // Use Linux define (4096)
-    #endif
+#else
+        #define MAX_FILEPATH_LENGTH 256 // Use common value
 #endif
 
 #if defined(PLATFORM_ANDROID)
