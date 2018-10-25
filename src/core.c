@@ -158,6 +158,8 @@
             unsigned int __stdcall timeBeginPeriod(unsigned int uPeriod);
             unsigned int __stdcall timeEndPeriod(unsigned int uPeriod);
         #endif
+
+        #define MAX_FILEPATH_LENGTH 256
     #elif defined(__linux__)
         #include <sys/time.h>           // Required for: timespec, nanosleep(), select() - POSIX
         
@@ -172,6 +174,9 @@
         //#define GLFW_EXPOSE_NATIVE_COCOA      // WARNING: Fails due to type redefinition
         #define GLFW_EXPOSE_NATIVE_NSGL
         #include <GLFW/glfw3native.h>   // Required for: glfwGetCocoaWindow(), glfwGetNSGLContext()
+
+        #include <linux/limits.h> // for NAME_MAX and PATH_MAX defines
+        #define MAX_FILEPATH_LENGTH PATH_MAX // Use Linux define (4096)
     #endif
 #endif
 
@@ -1596,8 +1601,8 @@ const char *GetFileNameWithoutExt(const char *filePath)
 const char *GetDirectoryPath(const char *fileName)
 {
     const char *lastSlash = NULL;
-    static char filePath[256];      // MAX_DIRECTORY_PATH_SIZE = 256
-    memset(filePath, 0, 256);
+    static char filePath[MAX_FILEPATH_LENGTH];
+    memset(filePath, 0, MAX_FILEPATH_LENGTH);
 
     lastSlash = strprbrk(fileName, "\\/");
     if (!lastSlash) return NULL;
@@ -1612,10 +1617,10 @@ const char *GetDirectoryPath(const char *fileName)
 // Get current working directory
 const char *GetWorkingDirectory(void)
 {
-    static char currentDir[256];    // MAX_DIRECTORY_PATH_SIZE = 256
-    memset(currentDir, 0, 256);
+    static char currentDir[MAX_FILEPATH_LENGTH];
+    memset(currentDir, 0, MAX_FILEPATH_LENGTH);
     
-    GETCWD(currentDir, 256 - 1);
+    GETCWD(currentDir, MAX_FILEPATH_LENGTH - 1);
     
     return currentDir;
 }
@@ -1624,7 +1629,6 @@ const char *GetWorkingDirectory(void)
 // NOTE: Files count is returned by parameters pointer
 char **GetDirectoryFiles(const char *dirPath, int *fileCount)
 {
-    #define MAX_FILEPATH_LENGTH     256
     #define MAX_DIRECTORY_FILES     512
     
     ClearDirectoryFiles();
@@ -3289,7 +3293,7 @@ static void WindowDropCallback(GLFWwindow *window, int count, const char **paths
 
     for (int i = 0; i < count; i++)
     {
-        dropFilesPath[i] = (char *)malloc(sizeof(char)*256);     // Max path length set to 256 char
+        dropFilesPath[i] = (char *)malloc(sizeof(char)*MAX_FILEPATH_LENGTH);     // Max path length using MAX_FILEPATH_LENGTH set to 256 char
         strcpy(dropFilesPath[i], paths[i]);
     }
 
@@ -3862,7 +3866,7 @@ static void RestoreKeyboard(void)
 // Mouse initialization (including mouse thread)
 static void InitMouse(void)
 {
-    char Path[256];
+    char Path[MAX_FILEPATH_LENGTH];
     DIR *directory;
     struct dirent *entity;
 
