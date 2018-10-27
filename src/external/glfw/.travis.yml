@@ -65,7 +65,7 @@ script:
           sudo dpkg -i extra-cmake-modules_5.38.0a-0ubuntu1_amd64.deb;
           git clone git://anongit.freedesktop.org/wayland/wayland-protocols;
           pushd wayland-protocols;
-          git checkout 1.12 && ./autogen.sh --prefix=/usr && make && sudo make install;
+          git checkout 1.15 && ./autogen.sh --prefix=/usr && make && sudo make install;
           popd;
       fi
     - cmake -DCMAKE_VERBOSE_MAKEFILE=ON -DBUILD_SHARED_LIBS=${BUILD_SHARED_LIBS} -DGLFW_USE_WAYLAND=${USE_WAYLAND} ..

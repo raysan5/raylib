@@ -32,7 +32,6 @@
 // Needed for _NSGetProgname
 #include <crt_externs.h>
 
-// HACK: The 10.12 SDK adds new symbols and immediately deprecates the old ones
 #if MAC_OS_X_VERSION_MAX_ALLOWED < 101200
  #define NSWindowStyleMaskBorderless NSBorderlessWindowMask
  #define NSWindowStyleMaskClosable NSClosableWindowMask
@@ -47,9 +46,8 @@
  #define NSEventModifierFlagDeviceIndependentFlagsMask NSDeviceIndependentModifierFlagsMask
  #define NSEventMaskAny NSAnyEventMask
  #define NSEventTypeApplicationDefined NSApplicationDefined
- #define NSEventTypeKeyUp NSKeyUp
+ #define NSBitmapFormatAlphaNonpremultiplied NSAlphaNonpremultipliedBitmapFormat
 #endif
-
 
 // Returns the style mask corresponding to the window settings
 //
@@ -237,6 +235,8 @@ static NSUInteger translateKeyToModifierFlag(int key)
         case GLFW_KEY_LEFT_SUPER:
         case GLFW_KEY_RIGHT_SUPER:
             return NSEventModifierFlagCommand;
+        case GLFW_KEY_CAPS_LOCK:
+            return NSEventModifierFlagCapsLock;
     }
 
     return 0;
@@ -365,7 +365,7 @@ static const NSRange kEmptyRange = { NSNotFound, 0 };
 // Delegate for application related notifications
 //------------------------------------------------------------------------
 
-@interface GLFWApplicationDelegate : NSObject
+@interface GLFWApplicationDelegate : NSObject <NSApplicationDelegate>
 @end
 
 @implementation GLFWApplicationDelegate
@@ -438,8 +438,9 @@ static const NSRange kEmptyRange = { NSNotFound, 0 };
         markedText = [[NSMutableAttributedString alloc] init];
 
         [self updateTrackingAreas];
-        [self registerForDraggedTypes:[NSArray arrayWithObjects:
-                                       NSFilenamesPboardType, nil]];
+        // NOTE: kUTTypeURL corresponds to NSPasteboardTypeURL but is available
+        //       on 10.7 without having been deprecated yet
+        [self registerForDraggedTypes:@[(__bridge NSString*) kUTTypeURL]];
     }
 
     return self;
@@ -472,6 +473,14 @@ static const NSRange kEmptyRange = { NSNotFound, 0 };
     return YES;
 }
 
+- (void)updateLayer
+{
+    if (window->context.client != GLFW_NO_API)
+        [window->context.nsgl.object update];
+
+    _glfwInputWindowDamage(window);
+}
+
 - (id)makeBackingLayer
 {
     if (window->ns.layer)
@@ -483,6 +492,11 @@ static const NSRange kEmptyRange = { NSNotFound, 0 };
 - (void)cursorUpdate:(NSEvent *)event
 {
     updateCursorImage(window);
+}
+
+- (BOOL)acceptsFirstMouse:(NSEvent *)event
+{
+    return YES;
 }
 
 - (void)mouseDown:(NSEvent *)event
@@ -650,7 +664,7 @@ static const NSRange kEmptyRange = { NSNotFound, 0 };
 
     _glfwInputKey(window, key, [event keyCode], GLFW_PRESS, mods);
 
-    [self interpretKeyEvents:[NSArray arrayWithObject:event]];
+    [self interpretKeyEvents:@[event]];
 }
 
 - (void)flagsChanged:(NSEvent *)event
@@ -701,55 +715,38 @@ static const NSRange kEmptyRange = { NSNotFound, 0 };
 
 - (NSDragOperation)draggingEntered:(id <NSDraggingInfo>)sender
 {
-    if ((NSDragOperationGeneric & [sender draggingSourceOperationMask])
-        == NSDragOperationGeneric)
-    {
-        [self setNeedsDisplay:YES];
-        return NSDragOperationGeneric;
-    }
-
-    return NSDragOperationNone;
-}
-
-- (BOOL)prepareForDragOperation:(id <NSDraggingInfo>)sender
-{
-    [self setNeedsDisplay:YES];
-    return YES;
+    // HACK: We don't know what to say here because we don't know what the
+    //       application wants to do with the paths
+    return NSDragOperationGeneric;
 }
 
 - (BOOL)performDragOperation:(id <NSDraggingInfo>)sender
 {
-    NSPasteboard* pasteboard = [sender draggingPasteboard];
-    NSArray* files = [pasteboard propertyListForType:NSFilenamesPboardType];
-
     const NSRect contentRect = [window->ns.view frame];
     _glfwInputCursorPos(window,
                         [sender draggingLocation].x,
                         contentRect.size.height - [sender draggingLocation].y);
 
-    const NSUInteger count = [files count];
+    NSPasteboard* pasteboard = [sender draggingPasteboard];
+    NSDictionary* options = @{NSPasteboardURLReadingFileURLsOnlyKey:@YES};
+    NSArray* urls = [pasteboard readObjectsForClasses:@[[NSURL class]]
+                                              options:options];
+    const NSUInteger count = [urls count];
     if (count)
     {
-        NSEnumerator* e = [files objectEnumerator];
         char** paths = calloc(count, sizeof(char*));
-        NSUInteger i;
 
-        for (i = 0;  i < count;  i++)
-            paths[i] = _glfw_strdup([[e nextObject] UTF8String]);
+        for (NSUInteger i = 0;  i < count;  i++)
+            paths[i] = _glfw_strdup([[urls objectAtIndex:i] fileSystemRepresentation]);
 
         _glfwInputDrop(window, (int) count, (const char**) paths);
 
-        for (i = 0;  i < count;  i++)
+        for (NSUInteger i = 0;  i < count;  i++)
             free(paths[i]);
         free(paths);
     }
 
     return YES;
-}
-
-- (void)concludeDragOperation:(id <NSDraggingInfo>)sender
-{
-    [self setNeedsDisplay:YES];
 }
 
 - (BOOL)hasMarkedText
@@ -865,52 +862,6 @@ static const NSRange kEmptyRange = { NSNotFound, 0 };
 @end
 
 
-//------------------------------------------------------------------------
-// GLFW application class
-//------------------------------------------------------------------------
-
-@interface GLFWApplication : NSApplication
-{
-    NSArray* nibObjects;
-}
-
-@end
-
-@implementation GLFWApplication
-
-// From http://cocoadev.com/index.pl?GameKeyboardHandlingAlmost
-// This works around an AppKit bug, where key up events while holding
-// down the command key don't get sent to the key window.
-- (void)sendEvent:(NSEvent *)event
-{
-    if ([event type] == NSEventTypeKeyUp &&
-        ([event modifierFlags] & NSEventModifierFlagCommand))
-    {
-        [[self keyWindow] sendEvent:event];
-    }
-    else
-        [super sendEvent:event];
-}
-
-
-// No-op thread entry point
-//
-- (void)doNothing:(id)object
-{
-}
-
-- (void)loadMainMenu
-{
-#if MAC_OS_X_VERSION_MAX_ALLOWED >= 1080
-    [[NSBundle mainBundle] loadNibNamed:@"MainMenu"
-                                  owner:NSApp
-                        topLevelObjects:&nibObjects];
-#else
-    [[NSBundle mainBundle] loadNibNamed:@"MainMenu" owner:NSApp];
-#endif
-}
-@end
-
 // Set up the menu bar (manually)
 // This is nasty, nasty stuff -- calls to undocumented semi-private APIs that
 // could go away at any moment, lots of stuff that really should be
@@ -1020,31 +971,8 @@ static void createMenuBar(void)
 //
 static GLFWbool initializeAppKit(void)
 {
-    if (NSApp)
+    if (_glfw.ns.delegate)
         return GLFW_TRUE;
-
-    // Implicitly create shared NSApplication instance
-    [GLFWApplication sharedApplication];
-
-    // Make Cocoa enter multi-threaded mode
-    [NSThread detachNewThreadSelector:@selector(doNothing:)
-                             toTarget:NSApp
-                           withObject:nil];
-
-    if (_glfw.hints.init.ns.menubar)
-    {
-        // In case we are unbundled, make us a proper UI application
-        [NSApp setActivationPolicy:NSApplicationActivationPolicyRegular];
-
-        // Menu bar setup must go between sharedApplication above and
-        // finishLaunching below, in order to properly emulate the behavior
-        // of NSApplicationMain
-
-        if ([[NSBundle mainBundle] pathForResource:@"MainMenu" ofType:@"nib"])
-            [NSApp loadMainMenu];
-        else
-            createMenuBar();
-    }
 
     // There can only be one application delegate, but we allocate it the
     // first time a window is created to keep all window code in this file
@@ -1057,13 +985,34 @@ static GLFWbool initializeAppKit(void)
     }
 
     [NSApp setDelegate:_glfw.ns.delegate];
+
+    if (_glfw.hints.init.ns.menubar)
+    {
+        // In case we are unbundled, make us a proper UI application
+        [NSApp setActivationPolicy:NSApplicationActivationPolicyRegular];
+
+        // Menu bar setup must go between sharedApplication above and
+        // finishLaunching below, in order to properly emulate the behavior
+        // of NSApplicationMain
+
+        if ([[NSBundle mainBundle] pathForResource:@"MainMenu" ofType:@"nib"])
+        {
+#if MAC_OS_X_VERSION_MAX_ALLOWED >= 1080
+            [[NSBundle mainBundle] loadNibNamed:@"MainMenu"
+                                          owner:NSApp
+                                topLevelObjects:&_glfw.ns.nibObjects];
+#else
+            [[NSBundle mainBundle] loadNibNamed:@"MainMenu" owner:NSApp];
+#endif
+        }
+        else
+            createMenuBar();
+    }
+
     [NSApp run];
 
     // Press and Hold prevents some keys from emitting repeated characters
-    NSDictionary* defaults =
-        [NSDictionary dictionaryWithObjectsAndKeys:[NSNumber numberWithBool:NO],
-                                                   @"ApplePressAndHoldEnabled",
-                                                   nil];
+    NSDictionary* defaults = @{@"ApplePressAndHoldEnabled":@NO};
     [[NSUserDefaults standardUserDefaults] registerDefaults:defaults];
 
     return GLFW_TRUE;
@@ -1563,9 +1512,6 @@ void _glfwPlatformSetWindowOpacity(_GLFWwindow* window, float opacity)
 
 void _glfwPlatformPollEvents(void)
 {
-    if (!initializeAppKit())
-        return;
-
     for (;;)
     {
         NSEvent* event = [NSApp nextEventMatchingMask:NSEventMaskAny
@@ -1716,9 +1662,6 @@ int _glfwPlatformCreateCursor(_GLFWcursor* cursor,
     NSImage* native;
     NSBitmapImageRep* rep;
 
-    if (!initializeAppKit())
-        return GLFW_FALSE;
-
     rep = [[NSBitmapImageRep alloc]
         initWithBitmapDataPlanes:NULL
                       pixelsWide:image->width
@@ -1728,7 +1671,7 @@ int _glfwPlatformCreateCursor(_GLFWcursor* cursor,
                         hasAlpha:YES
                         isPlanar:NO
                   colorSpaceName:NSCalibratedRGBColorSpace
-                    bitmapFormat:NSAlphaNonpremultipliedBitmapFormat
+                    bitmapFormat:NSBitmapFormatAlphaNonpremultiplied
                      bytesPerRow:image->width * 4
                     bitsPerPixel:32];
 
@@ -1754,9 +1697,6 @@ int _glfwPlatformCreateCursor(_GLFWcursor* cursor,
 
 int _glfwPlatformCreateStandardCursor(_GLFWcursor* cursor, int shape)
 {
-    if (!initializeAppKit())
-        return GLFW_FALSE;
-
     if (shape == GLFW_ARROW_CURSOR)
         cursor->ns.object = [NSCursor arrowCursor];
     else if (shape == GLFW_IBEAM_CURSOR)
@@ -1795,26 +1735,24 @@ void _glfwPlatformSetCursor(_GLFWwindow* window, _GLFWcursor* cursor)
 
 void _glfwPlatformSetClipboardString(const char* string)
 {
-    NSArray* types = [NSArray arrayWithObjects:NSStringPboardType, nil];
-
     NSPasteboard* pasteboard = [NSPasteboard generalPasteboard];
-    [pasteboard declareTypes:types owner:nil];
+    [pasteboard declareTypes:@[NSPasteboardTypeString] owner:nil];
     [pasteboard setString:[NSString stringWithUTF8String:string]
-                  forType:NSStringPboardType];
+                  forType:NSPasteboardTypeString];
 }
 
 const char* _glfwPlatformGetClipboardString(void)
 {
     NSPasteboard* pasteboard = [NSPasteboard generalPasteboard];
 
-    if (![[pasteboard types] containsObject:NSStringPboardType])
+    if (![[pasteboard types] containsObject:NSPasteboardTypeString])
     {
         _glfwInputError(GLFW_FORMAT_UNAVAILABLE,
                         "Cocoa: Failed to retrieve string from pasteboard");
         return NULL;
     }
 
-    NSString* object = [pasteboard stringForType:NSStringPboardType];
+    NSString* object = [pasteboard stringForType:NSPasteboardTypeString];
     if (!object)
     {
         _glfwInputError(GLFW_PLATFORM_ERROR,

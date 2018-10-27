@@ -27,12 +27,10 @@
 #include <stdint.h>
 #include <dlfcn.h>
 
+#include <Carbon/Carbon.h>
 #if defined(__OBJC__)
-#import <Carbon/Carbon.h>
 #import <Cocoa/Cocoa.h>
 #else
-#include <Carbon/Carbon.h>
-#include <ApplicationServices/ApplicationServices.h>
 typedef void* id;
 #endif
 
@@ -111,7 +109,9 @@ typedef struct _GLFWlibraryNS
     TISInputSourceRef   inputSource;
     IOHIDManagerRef     hidManager;
     id                  unicodeData;
-    id                  listener;
+    id                  helper;
+    id                  keyUpMonitor;
+    id                  nibObjects;
 
     char                keyName[64];
     short int           keycodes[256];

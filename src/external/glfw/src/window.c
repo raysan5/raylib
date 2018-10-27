@@ -369,6 +369,9 @@ GLFWAPI void glfwWindowHint(int hint, int value)
         case GLFW_COCOA_GRAPHICS_SWITCHING:
             _glfw.hints.context.nsgl.offline = value ? GLFW_TRUE : GLFW_FALSE;
             return;
+        case GLFW_SCALE_TO_MONITOR:
+            _glfw.hints.window.scaleToMonitor = value ? GLFW_TRUE : GLFW_FALSE;
+            return;
         case GLFW_CENTER_CURSOR:
             _glfw.hints.window.centerCursor = value ? GLFW_TRUE : GLFW_FALSE;
             return;

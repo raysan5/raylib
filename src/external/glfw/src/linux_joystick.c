@@ -228,7 +228,7 @@ static GLFWbool openJoystickDevice(const char* path)
         return GLFW_FALSE;
     }
 
-    strncpy(linjs.path, path, sizeof(linjs.path));
+    strncpy(linjs.path, path, sizeof(linjs.path) - 1);
     memcpy(&js->linjs, &linjs, sizeof(linjs));
 
     pollAbsState(js);

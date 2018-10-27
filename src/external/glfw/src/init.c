@@ -119,6 +119,30 @@ char* _glfw_strdup(const char* source)
     return result;
 }
 
+float _glfw_fminf(float a, float b)
+{
+    if (a != a)
+        return b;
+    else if (b != b)
+        return a;
+    else if (a < b)
+        return a;
+    else
+        return b;
+}
+
+float _glfw_fmaxf(float a, float b)
+{
+    if (a != a)
+        return b;
+    else if (b != b)
+        return a;
+    else if (a > b)
+        return a;
+    else
+        return b;
+}
+
 
 //////////////////////////////////////////////////////////////////////////
 //////                         GLFW event API                       //////
