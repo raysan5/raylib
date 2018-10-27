@@ -260,6 +260,8 @@ static void closeJoystick(_GLFWjoystick* js)
         IDirectInputDevice8_Release(js->win32.device);
     }
 
+    free(js->win32.objects);
+
     _glfwFreeJoystick(js);
     _glfwInputJoystick(js, GLFW_DISCONNECTED);
 }

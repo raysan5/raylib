@@ -780,8 +780,9 @@ static GLFWbool initExtensions(void)
 //
 static void getSystemContentScale(float* xscale, float* yscale)
 {
-    // NOTE: Default to the display-wide DPI as we don't currently have a policy
-    //       for which monitor a window is considered to be on
+    // NOTE: Fall back to the display-wide DPI instead of RandR monitor DPI if
+    //       Xft.dpi retrieval below fails as we don't currently have an exact
+    //       policy for which monitor a window is considered to "be on"
     float xdpi = DisplayWidth(_glfw.x11.display, _glfw.x11.screen) *
         25.4f / DisplayWidthMM(_glfw.x11.display, _glfw.x11.screen);
     float ydpi = DisplayHeight(_glfw.x11.display, _glfw.x11.screen) *

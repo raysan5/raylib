@@ -57,6 +57,7 @@ typedef VkBool32 (APIENTRY *PFN_vkGetPhysicalDeviceWaylandPresentationSupportKHR
 #include "osmesa_context.h"
 
 #include "wayland-xdg-shell-client-protocol.h"
+#include "wayland-xdg-decoration-client-protocol.h"
 #include "wayland-viewporter-client-protocol.h"
 #include "wayland-relative-pointer-unstable-v1-client-protocol.h"
 #include "wayland-pointer-constraints-unstable-v1-client-protocol.h"
@@ -185,6 +186,7 @@ typedef struct _GLFWwindowWayland
     struct {
         struct xdg_surface*     surface;
         struct xdg_toplevel*    toplevel;
+        struct zxdg_toplevel_decoration_v1* decoration;
     } xdg;
 
     _GLFWcursor*                currentCursor;
@@ -210,6 +212,7 @@ typedef struct _GLFWwindowWayland
     GLFWbool                    justCreated;
 
     struct {
+        GLFWbool                           serverSide;
         struct wl_buffer*                  buffer;
         _GLFWdecorationWayland             top, left, right, bottom;
         int                                focus;
@@ -230,7 +233,12 @@ typedef struct _GLFWlibraryWayland
     struct wl_seat*             seat;
     struct wl_pointer*          pointer;
     struct wl_keyboard*         keyboard;
+    struct wl_data_device_manager*          dataDeviceManager;
+    struct wl_data_device*      dataDevice;
+    struct wl_data_offer*       dataOffer;
+    struct wl_data_source*      dataSource;
     struct xdg_wm_base*         wmBase;
+    struct zxdg_decoration_manager_v1*      decorationManager;
     struct wp_viewporter*       viewporter;
     struct zwp_relative_pointer_manager_v1* relativePointerManager;
     struct zwp_pointer_constraints_v1*      pointerConstraints;
@@ -240,13 +248,19 @@ typedef struct _GLFWlibraryWayland
     int                         seatVersion;
 
     struct wl_cursor_theme*     cursorTheme;
+    struct wl_cursor_theme*     cursorThemeHiDPI;
     struct wl_surface*          cursorSurface;
-    uint32_t                    pointerSerial;
+    int                         cursorTimerfd;
+    uint32_t                    serial;
 
     int32_t                     keyboardRepeatRate;
     int32_t                     keyboardRepeatDelay;
     int                         keyboardLastKey;
     int                         keyboardLastScancode;
+    char*                       clipboardString;
+    size_t                      clipboardSize;
+    char*                       clipboardSendString;
+    size_t                      clipboardSendSize;
     int                         timerfd;
     short int                   keycodes[256];
     short int                   scancodes[GLFW_KEY_LAST + 1];
@@ -332,10 +346,12 @@ typedef struct _GLFWmonitorWayland
 //
 typedef struct _GLFWcursorWayland
 {
-    struct wl_cursor_image*     image;
+    struct wl_cursor*           cursor;
+    struct wl_cursor*           cursorHiDPI;
     struct wl_buffer*           buffer;
     int                         width, height;
     int                         xhot, yhot;
+    int                         currentImage;
 } _GLFWcursorWayland;
 
 

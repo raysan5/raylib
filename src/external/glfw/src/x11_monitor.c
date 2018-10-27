@@ -422,7 +422,7 @@ void _glfwPlatformGetVideoMode(_GLFWmonitor* monitor, GLFWvidmode* mode)
     }
 }
 
-void _glfwPlatformGetGammaRamp(_GLFWmonitor* monitor, GLFWgammaramp* ramp)
+GLFWbool _glfwPlatformGetGammaRamp(_GLFWmonitor* monitor, GLFWgammaramp* ramp)
 {
     if (_glfw.x11.randr.available && !_glfw.x11.randr.gammaBroken)
     {
@@ -438,6 +438,7 @@ void _glfwPlatformGetGammaRamp(_GLFWmonitor* monitor, GLFWgammaramp* ramp)
         memcpy(ramp->blue,  gamma->blue,  size * sizeof(unsigned short));
 
         XRRFreeGamma(gamma);
+        return GLFW_TRUE;
     }
     else if (_glfw.x11.vidmode.available)
     {
@@ -449,6 +450,13 @@ void _glfwPlatformGetGammaRamp(_GLFWmonitor* monitor, GLFWgammaramp* ramp)
         XF86VidModeGetGammaRamp(_glfw.x11.display,
                                 _glfw.x11.screen,
                                 ramp->size, ramp->red, ramp->green, ramp->blue);
+        return GLFW_TRUE;
+    }
+    else
+    {
+        _glfwInputError(GLFW_PLATFORM_ERROR,
+                        "X11: Gamma ramp access not supported by server");
+        return GLFW_FALSE;
     }
 }
 
@@ -480,6 +488,11 @@ void _glfwPlatformSetGammaRamp(_GLFWmonitor* monitor, const GLFWgammaramp* ramp)
                                 (unsigned short*) ramp->red,
                                 (unsigned short*) ramp->green,
                                 (unsigned short*) ramp->blue);
+    }
+    else
+    {
+        _glfwInputError(GLFW_PLATFORM_ERROR,
+                        "X11: Gamma ramp access not supported by server");
     }
 }
 
