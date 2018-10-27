@@ -175,11 +175,9 @@
         #include <GLFW/glfw3native.h>   // Required for: glfwGetX11Window()
     #elif defined(__APPLE__)
         #include <unistd.h>             // Required for: usleep()
-        #include <objc/message.h>       // Required for: objc_msgsend(), sel_registerName()
 
         //#define GLFW_EXPOSE_NATIVE_COCOA      // WARNING: Fails due to type redefinition
-        #define GLFW_EXPOSE_NATIVE_NSGL
-        #include <GLFW/glfw3native.h>   // Required for: glfwGetCocoaWindow(), glfwGetNSGLContext()
+        #include <GLFW/glfw3native.h>   // Required for: glfwGetCocoaWindow()
 
     #endif
 #endif
@@ -276,10 +274,6 @@ static GLFWwindow *window;                      // Native window (graphic device
 static bool windowReady = false;                // Check if window has been initialized successfully
 static bool windowMinimized = false;            // Check if window has been minimized
 static const char *windowTitle = NULL;          // Window text title...
-
-#if defined(__APPLE__)
-static int windowNeedsUpdating = 2;             // Times the Cocoa window needs to be updated initially
-#endif
 
 static unsigned int displayWidth, displayHeight;// Display width and height (monitor, device-screen, LCD, ...)
 static int screenWidth, screenHeight;           // Screen width and height (used render area)
@@ -3135,16 +3129,6 @@ static void SwapBuffers(void)
 {
 #if defined(PLATFORM_DESKTOP) || defined(PLATFORM_WEB)
     glfwSwapBuffers(window);
-#if __APPLE__
-    // Workaround for missing/erroneous initial rendering on macOS
-    if (windowNeedsUpdating)
-    {
-        // Desugared version of Objective C: [glfwGetNSGLContext(window) update]
-        ((id (*)(id, SEL))objc_msgSend)(glfwGetNSGLContext(window), sel_registerName("update"));
-
-        windowNeedsUpdating--;
-    }
-#endif
 #endif
 
 #if defined(PLATFORM_ANDROID) || defined(PLATFORM_RPI) || defined(PLATFORM_UWP)
