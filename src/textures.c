@@ -2890,7 +2890,7 @@ static Image LoadPKM(const char *fileName)
         // Get the image header
         fread(&pkmHeader, sizeof(PKMHeader), 1, pkmFile);
 
-        if ((pkmHeader.id[0] != 'P') || (pkmHeader.id[1] != 'K') || (pkmHeader.id[2] != 'M') || (ddsHeaderId[3] != ' '))
+        if ((pkmHeader.id[0] != 'P') || (pkmHeader.id[1] != 'K') || (pkmHeader.id[2] != 'M') || (pkmHeader.id[3] != ' '))
         {
             TraceLog(LOG_WARNING, "[%s] PKM file does not seem to be a valid image", fileName);
         }
