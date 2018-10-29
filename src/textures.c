@@ -60,7 +60,7 @@
 #include "raylib.h"             // Declares module functions
 
 #include <stdlib.h>             // Required for: malloc(), free()
-#include <string.h>             // Required for: strcmp(), strrchr(), strncmp()
+#include <string.h>             // Required for: strlen()
 
 #include "rlgl.h"               // raylib OpenGL abstraction layer to OpenGL 1.1, 3.3 or ES2
                                 // Required for: rlLoadTexture() rlDeleteTextures(),
@@ -147,8 +147,8 @@ static Image LoadDDS(const char *fileName);   // Load DDS file
 static Image LoadPKM(const char *fileName);   // Load PKM file
 #endif
 #if defined(SUPPORT_FILEFORMAT_KTX)
-static Image LoadKTX(const char *fileName);   // Load KTX file
-static void SaveKTX(Image image, const char *fileName); // Save image data as KTX file
+static Image LoadKTX(const char *fileName);             // Load KTX file
+static int SaveKTX(Image image, const char *fileName);  // Save image data as KTX file
 #endif
 #if defined(SUPPORT_FILEFORMAT_PVR)
 static Image LoadPVR(const char *fileName);   // Load PVR file
@@ -728,21 +728,58 @@ void ExportImage(Image image, const char *fileName)
     else if (IsFileExtension(fileName, ".bmp")) success = stbi_write_bmp(fileName, image.width, image.height, 4, imgData);
     else if (IsFileExtension(fileName, ".tga")) success = stbi_write_tga(fileName, image.width, image.height, 4, imgData);
     else if (IsFileExtension(fileName, ".jpg")) success = stbi_write_jpg(fileName, image.width, image.height, 4, imgData, 80);  // JPG quality: between 1 and 100
-    else if (IsFileExtension(fileName, ".ktx")) SaveKTX(image, fileName);
+    else if (IsFileExtension(fileName, ".ktx")) success = SaveKTX(image, fileName);
     else if (IsFileExtension(fileName, ".raw")) 
     {
         // Export raw pixel data (without header)
         // NOTE: It's up to the user to track image parameters
         FILE *rawFile = fopen(fileName, "wb");
-        fwrite(image.data, GetPixelDataSize(image.width, image.height, image.format), 1, rawFile);
+        success = fwrite(image.data, GetPixelDataSize(image.width, image.height, image.format), 1, rawFile);
         fclose(rawFile);
     }
-    else if (IsFileExtension(fileName, ".h")) { }    // TODO: Export pixel data as an array of bytes
-    
+
     if (success != 0) TraceLog(LOG_INFO, "Image exported successfully: %s", fileName);
     else TraceLog(LOG_WARNING, "Image could not be exported.");
     
     free(imgData);
+}
+
+// Export image as code file (.h) defining an array of bytes
+void ExportImageAsCode(Image image, const char *fileName)
+{
+    #define BYTES_TEXT_PER_LINE     20
+    
+    char varFileName[256] = { 0 };
+    int dataSize = GetPixelDataSize(image.width, image.height, image.format);
+    
+    FILE *txtFile = fopen(fileName, "wt");
+
+    fprintf(txtFile, "\n//////////////////////////////////////////////////////////////////////////////////////\n");
+    fprintf(txtFile, "//                                                                                    //\n");
+    fprintf(txtFile, "// ImageAsCode exporter v1.0 - Image pixel data exported as an array of bytes         //\n");
+    fprintf(txtFile, "//                                                                                    //\n");
+    fprintf(txtFile, "// more info and bugs-report:  github.com/raysan5/raylib                              //\n");
+    fprintf(txtFile, "// feedback and support:       ray[at]raylib.com                                      //\n");
+    fprintf(txtFile, "//                                                                                    //\n");
+    fprintf(txtFile, "// Copyright (c) 2018 Ramon Santamaria (@raysan5)                                     //\n");
+    fprintf(txtFile, "//                                                                                    //\n");
+    fprintf(txtFile, "////////////////////////////////////////////////////////////////////////////////////////\n\n");
+    
+    // Get file name from path and convert variable name to uppercase
+    strcpy(varFileName, GetFileNameWithoutExt(fileName));
+    for (int i = 0; varFileName[i] != '\0'; i++) if (varFileName[i] >= 'a' && varFileName[i] <= 'z') { varFileName[i] = varFileName[i] - 32; }
+ 
+    // Add image information
+    fprintf(txtFile, "// Image data information\n");
+    fprintf(txtFile, "#define %s_WIDTH    %i\n", varFileName, image.width);
+    fprintf(txtFile, "#define %s_HEIGHT   %i\n", varFileName, image.height);
+    fprintf(txtFile, "#define %s_FORMAT   %i          // raylib internal pixel format\n\n", varFileName, image.format);
+
+    fprintf(txtFile, "static unsigned char %s_DATA[%i] = { ", varFileName, dataSize);
+    for (int i = 0; i < dataSize - 1; i++) fprintf(txtFile, ((i%BYTES_TEXT_PER_LINE == 0) ? "0x%x,\n" : "0x%x, "), ((unsigned char *)image.data)[i]);
+    fprintf(txtFile, "0x%x };\n", ((unsigned char *)image.data)[dataSize - 1]);
+
+    fclose(txtFile);
 }
 
 // Copy an image to a new image
@@ -2669,11 +2706,11 @@ static Image LoadDDS(const char *fileName)
     else
     {
         // Verify the type of file
-        char filecode[4];
+        char ddsHeaderId[4];
 
-        fread(filecode, 4, 1, ddsFile);
+        fread(ddsHeaderId, 4, 1, ddsFile);
 
-        if (strncmp(filecode, "DDS ", 4) != 0)
+        if ((ddsHeaderId[0] != 'D') || (ddsHeaderId[1] != 'D') || (ddsHeaderId[2] != 'S') || (ddsHeaderId[3] != ' '))
         {
             TraceLog(LOG_WARNING, "[%s] DDS file does not seem to be a valid image", fileName);
         }
@@ -2853,7 +2890,7 @@ static Image LoadPKM(const char *fileName)
         // Get the image header
         fread(&pkmHeader, sizeof(PKMHeader), 1, pkmFile);
 
-        if (strncmp(pkmHeader.id, "PKM ", 4) != 0)
+        if ((pkmHeader.id[0] != 'P') || (pkmHeader.id[1] != 'K') || (pkmHeader.id[2] != 'M') || (ddsHeaderId[3] != ' '))
         {
             TraceLog(LOG_WARNING, "[%s] PKM file does not seem to be a valid image", fileName);
         }
@@ -2988,8 +3025,10 @@ static Image LoadKTX(const char *fileName)
 
 // Save image data as KTX file
 // NOTE: By default KTX 1.1 spec is used, 2.0 is still on draft (01Oct2018)
-static void SaveKTX(Image image, const char *fileName)
+static int SaveKTX(Image image, const char *fileName)
 {
+    int success = 0;
+    
     // KTX file Header (64 bytes)
     // v1.1 - https://www.khronos.org/opengles/sdk/tools/KTX/file_format_spec/
     // v2.0 - http://github.khronos.org/KTX-Specification/ - still on draft, not ready for implementation
@@ -3050,7 +3089,7 @@ static void SaveKTX(Image image, const char *fileName)
         if (ktxHeader.glFormat == -1) TraceLog(LOG_WARNING, "Image format not supported for KTX export.");
         else
         {
-            fwrite(&ktxHeader, 1, sizeof(KTXHeader), ktxFile);
+            success = fwrite(&ktxHeader, sizeof(KTXHeader), 1, ktxFile);
             
             int width = image.width;
             int height = image.height;
@@ -3060,8 +3099,8 @@ static void SaveKTX(Image image, const char *fileName)
             for (int i = 0; i < image.mipmaps; i++)
             {
                 unsigned int dataSize = GetPixelDataSize(width, height, image.format);
-                fwrite(&dataSize, 1, sizeof(unsigned int), ktxFile);
-                fwrite((unsigned char *)image.data + dataOffset, 1, dataSize, ktxFile);
+                success = fwrite(&dataSize, sizeof(unsigned int), 1, ktxFile);
+                success = fwrite((unsigned char *)image.data + dataOffset, dataSize, 1, ktxFile);
                 
                 width /= 2;
                 height /= 2;
@@ -3071,6 +3110,9 @@ static void SaveKTX(Image image, const char *fileName)
 
         fclose(ktxFile);    // Close file pointer
     }
+    
+    // If all data has been written correctly to file, success = 1
+    return success;
 }
 #endif
 

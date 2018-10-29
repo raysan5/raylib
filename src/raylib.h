@@ -1001,6 +1001,7 @@ RLAPI Image LoadImageEx(Color *pixels, int width, int height);                  
 RLAPI Image LoadImagePro(void *data, int width, int height, int format);                                 // Load image from raw data with parameters
 RLAPI Image LoadImageRaw(const char *fileName, int width, int height, int format, int headerSize);       // Load image from RAW file data
 RLAPI void ExportImage(Image image, const char *fileName);                                               // Export image data to file
+RLAPI void ExportImageAsCode(Image image, const char *fileName);                                         // Export image as code file defining an array of bytes
 RLAPI Texture2D LoadTexture(const char *fileName);                                                       // Load texture from file into GPU memory (VRAM)
 RLAPI Texture2D LoadTextureFromImage(Image image);                                                       // Load texture from image data
 RLAPI RenderTexture2D LoadRenderTexture(int width, int height);                                          // Load texture for rendering (framebuffer)
@@ -1091,9 +1092,10 @@ RLAPI Vector2 MeasureTextEx(Font font, const char *text, float fontSize, float s
 RLAPI int GetGlyphIndex(Font font, int character);                                          // Get index position for a unicode character on font
 
 // Text string edition functions
-RLAPI const char *FormatText(const char *text, ...);                    // Formatting of text with variables to 'embed'
-RLAPI const char *SubText(const char *text, int position, int length);  // Get a piece of a text string
-RLAPI char **SplitText(char *text, char delimiter, int *strCount);      // Split text string into multiple strings (memory should be freed manually!)
+RLAPI const char *FormatText(const char *text, ...);                        // Formatting of text with variables to 'embed'
+RLAPI const char *SubText(const char *text, int position, int length);      // Get a piece of a text string
+RLAPI char **SplitText(char *text, char delimiter, int *strCount);          // Split text string into multiple strings (memory should be freed manually!)
+RLAPI bool IsEqualText(const char *text1, const char *text2);               // Check if two text string are equal
 
 //------------------------------------------------------------------------------------
 // Basic 3d Shapes Drawing Functions (Module: models)
@@ -1238,6 +1240,7 @@ RLAPI void UpdateSound(Sound sound, const void *data, int samplesCount);// Updat
 RLAPI void UnloadWave(Wave wave);                                     // Unload wave data
 RLAPI void UnloadSound(Sound sound);                                  // Unload sound
 RLAPI void ExportWave(Wave wave, const char *fileName);               // Export wave data to file
+RLAPI void ExportWaveAsCode(Wave wave, const char *fileName);         // Export wave sample data to code (.h)
 
 // Wave/Sound management functions
 RLAPI void PlaySound(Sound sound);                                    // Play a sound

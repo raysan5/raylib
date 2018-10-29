@@ -185,7 +185,8 @@ typedef enum {
 // Module specific Functions Declaration
 //----------------------------------------------------------------------------------
 #if defined(SUPPORT_FILEFORMAT_WAV)
-static Wave LoadWAV(const char *fileName);          // Load WAV file
+static Wave LoadWAV(const char *fileName);              // Load WAV file
+static int SaveWAV(Wave wave, const char *fileName);    // Save wave data as WAV file
 #endif
 #if defined(SUPPORT_FILEFORMAT_OGG)
 static Wave LoadOGG(const char *fileName);          // Load OGG file
@@ -878,82 +879,57 @@ void ExportWave(Wave wave, const char *fileName)
 {
     bool success = false;
     
-    if (IsFileExtension(fileName, ".wav"))
+    if (IsFileExtension(fileName, ".wav")) success = SaveWAV(wave, fileName);
+    else if (IsFileExtension(fileName, ".raw")) 
     {
-        // Basic WAV headers structs
-        typedef struct {
-            char chunkID[4];
-            int chunkSize;
-            char format[4];
-        } RiffHeader;
-
-        typedef struct {
-            char subChunkID[4];
-            int subChunkSize;
-            short audioFormat;
-            short numChannels;
-            int sampleRate;
-            int byteRate;
-            short blockAlign;
-            short bitsPerSample;
-        } WaveFormat;
-
-        typedef struct {
-            char subChunkID[4];
-            int subChunkSize;
-        } WaveData;
-    
-        RiffHeader riffHeader;
-        WaveFormat waveFormat;
-        WaveData waveData;
-
-        // Fill structs with data
-        riffHeader.chunkID[0] = 'R';
-        riffHeader.chunkID[1] = 'I';
-        riffHeader.chunkID[2] = 'F';
-        riffHeader.chunkID[3] = 'F';
-        riffHeader.chunkSize = 44 - 4 + wave.sampleCount*wave.sampleSize/8;
-        riffHeader.format[0] = 'W';
-        riffHeader.format[1] = 'A';
-        riffHeader.format[2] = 'V';
-        riffHeader.format[3] = 'E';
-
-        waveFormat.subChunkID[0] = 'f';
-        waveFormat.subChunkID[1] = 'm';
-        waveFormat.subChunkID[2] = 't';
-        waveFormat.subChunkID[3] = ' ';
-        waveFormat.subChunkSize = 16;
-        waveFormat.audioFormat = 1;
-        waveFormat.numChannels = wave.channels;
-        waveFormat.sampleRate = wave.sampleRate;
-        waveFormat.byteRate = wave.sampleRate*wave.sampleSize/8;
-        waveFormat.blockAlign = wave.sampleSize/8;
-        waveFormat.bitsPerSample = wave.sampleSize;
-
-        waveData.subChunkID[0] = 'd';
-        waveData.subChunkID[1] = 'a';
-        waveData.subChunkID[2] = 't';
-        waveData.subChunkID[3] = 'a';
-        waveData.subChunkSize = wave.sampleCount*wave.channels*wave.sampleSize/8;
-
-        FILE *wavFile = fopen(fileName, "wb");
-        
-        if (wavFile == NULL) return;
-
-        fwrite(&riffHeader, 1, sizeof(RiffHeader), wavFile);
-        fwrite(&waveFormat, 1, sizeof(WaveFormat), wavFile);
-        fwrite(&waveData, 1, sizeof(WaveData), wavFile);
-
-        fwrite(wave.data, 1, wave.sampleCount*wave.channels*wave.sampleSize/8, wavFile);
-
-        fclose(wavFile);
-        
-        success = true;
+        // Export raw sample data (without header)
+        // NOTE: It's up to the user to track wave parameters
+        FILE *rawFile = fopen(fileName, "wb");
+        success = fwrite(wave.data, wave.sampleCount*wave.channels*wave.sampleSize/8, 1, rawFile);
+        fclose(rawFile);
     }
-    else if (IsFileExtension(fileName, ".raw")) { }   // TODO: Support additional file formats to export wave sample data
-
+    
     if (success) TraceLog(LOG_INFO, "Wave exported successfully: %s", fileName);
     else TraceLog(LOG_WARNING, "Wave could not be exported.");
+}
+
+// Export wave sample data to code (.h)
+void ExportWaveAsCode(Wave wave, const char *fileName)
+{
+    #define BYTES_TEXT_PER_LINE     20
+    
+    char varFileName[256] = { 0 };
+    int dataSize = wave.sampleCount*wave.channels*wave.sampleSize/8;
+    
+    FILE *txtFile = fopen(fileName, "wt");
+    
+    fprintf(txtFile, "\n//////////////////////////////////////////////////////////////////////////////////\n");
+    fprintf(txtFile, "//                                                                              //\n");
+    fprintf(txtFile, "// WaveAsCode exporter v1.0 - Wave data exported as an array of bytes           //\n");
+    fprintf(txtFile, "//                                                                              //\n");
+    fprintf(txtFile, "// more info and bugs-report:  github.com/raysan5/raylib                        //\n");
+    fprintf(txtFile, "// feedback and support:       ray[at]raylib.com                                //\n");
+    fprintf(txtFile, "//                                                                              //\n");
+    fprintf(txtFile, "// Copyright (c) 2018 Ramon Santamaria (@raysan5)                               //\n");
+    fprintf(txtFile, "//                                                                              //\n");
+    fprintf(txtFile, "//////////////////////////////////////////////////////////////////////////////////\n\n");
+
+    // Get file name from path and convert variable name to uppercase
+    strcpy(varFileName, GetFileNameWithoutExt(fileName));
+    for (int i = 0; varFileName[i] != '\0'; i++) if (varFileName[i] >= 'a' && varFileName[i] <= 'z') { varFileName[i] = varFileName[i] - 32; }
+ 
+    fprintf(txtFile, "// Wave data information\n");
+    fprintf(txtFile, "#define %s_SAMPLE_COUNT     %i\n", varFileName, wave.sampleCount);
+    fprintf(txtFile, "#define %s_SAMPLE_RATE      %i\n", varFileName, wave.sampleRate);
+    fprintf(txtFile, "#define %s_SAMPLE_SIZE      %i\n", varFileName, wave.sampleSize);
+    fprintf(txtFile, "#define %s_CHANNELS         %i\n\n", varFileName, wave.channels);
+
+    // Write byte data as hexadecimal text
+    fprintf(txtFile, "static unsigned char %s_DATA[%i] = { ", varFileName, dataSize);
+    for (int i = 0; i < dataSize - 1; i++) fprintf(txtFile, ((i%BYTES_TEXT_PER_LINE == 0) ? "0x%x,\n" : "0x%x, "), ((unsigned char *)wave.data)[i]);
+    fprintf(txtFile, "0x%x };\n", ((unsigned char *)wave.data)[dataSize - 1]);
+
+    fclose(txtFile);
 }
 
 // Play a sound
@@ -1738,6 +1714,86 @@ static Wave LoadWAV(const char *fileName)
     }
 
     return wave;
+}
+
+// Save wave data as WAV file
+static int SaveWAV(Wave wave, const char *fileName)
+{
+    int success = 0;
+    int dataSize = wave.sampleCount*wave.channels*wave.sampleSize/8;
+    
+    // Basic WAV headers structs
+    typedef struct {
+        char chunkID[4];
+        int chunkSize;
+        char format[4];
+    } RiffHeader;
+
+    typedef struct {
+        char subChunkID[4];
+        int subChunkSize;
+        short audioFormat;
+        short numChannels;
+        int sampleRate;
+        int byteRate;
+        short blockAlign;
+        short bitsPerSample;
+    } WaveFormat;
+
+    typedef struct {
+        char subChunkID[4];
+        int subChunkSize;
+    } WaveData;
+
+    FILE *wavFile = fopen(fileName, "wb");
+    
+    if (wavFile == NULL) TraceLog(LOG_WARNING, "[%s] WAV audio file could not be created", fileName);
+    else
+    {
+        RiffHeader riffHeader;
+        WaveFormat waveFormat;
+        WaveData waveData;
+
+        // Fill structs with data
+        riffHeader.chunkID[0] = 'R';
+        riffHeader.chunkID[1] = 'I';
+        riffHeader.chunkID[2] = 'F';
+        riffHeader.chunkID[3] = 'F';
+        riffHeader.chunkSize = 44 - 4 + wave.sampleCount*wave.sampleSize/8;
+        riffHeader.format[0] = 'W';
+        riffHeader.format[1] = 'A';
+        riffHeader.format[2] = 'V';
+        riffHeader.format[3] = 'E';
+
+        waveFormat.subChunkID[0] = 'f';
+        waveFormat.subChunkID[1] = 'm';
+        waveFormat.subChunkID[2] = 't';
+        waveFormat.subChunkID[3] = ' ';
+        waveFormat.subChunkSize = 16;
+        waveFormat.audioFormat = 1;
+        waveFormat.numChannels = wave.channels;
+        waveFormat.sampleRate = wave.sampleRate;
+        waveFormat.byteRate = wave.sampleRate*wave.sampleSize/8;
+        waveFormat.blockAlign = wave.sampleSize/8;
+        waveFormat.bitsPerSample = wave.sampleSize;
+
+        waveData.subChunkID[0] = 'd';
+        waveData.subChunkID[1] = 'a';
+        waveData.subChunkID[2] = 't';
+        waveData.subChunkID[3] = 'a';
+        waveData.subChunkSize = dataSize;
+    
+        success = fwrite(&riffHeader, sizeof(RiffHeader), 1, wavFile);
+        success = fwrite(&waveFormat, sizeof(WaveFormat), 1, wavFile);
+        success = fwrite(&waveData, sizeof(WaveData), 1, wavFile);
+
+        success = fwrite(wave.data, dataSize, 1, wavFile);
+
+        fclose(wavFile);
+    }
+    
+    // If all data has been written correctly to file, success = 1
+    return success;
 }
 #endif
 

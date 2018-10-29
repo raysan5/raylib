@@ -1766,11 +1766,11 @@ void StorageSaveValue(int position, int value)
         int fileSize = ftell(storageFile);  // Size in bytes
         fseek(storageFile, 0, SEEK_SET);
 
-        if (fileSize < (position*4)) TraceLog(LOG_WARNING, "Storage position could not be found");
+        if (fileSize < (position*sizeof(int))) TraceLog(LOG_WARNING, "Storage position could not be found");
         else
         {
-            fseek(storageFile, (position*4), SEEK_SET);
-            fwrite(&value, 1, 4, storageFile);
+            fseek(storageFile, (position*sizeof(int)), SEEK_SET);
+            fwrite(&value, 1, sizeof(int), storageFile);
         }
 
         fclose(storageFile);

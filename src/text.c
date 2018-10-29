@@ -190,10 +190,6 @@ extern void LoadDefaultFont(void)
         if (counter > 512) counter = 0;         // Security check...
     }
 
-    //FILE *myimage = fopen("default_font.raw", "wb");
-    //fwrite(image.pixels, 1, 128*128*4, myimage);
-    //fclose(myimage);
-
     Image image = LoadImageEx(imagePixels, imWidth, imHeight);
     ImageFormat(&image, UNCOMPRESSED_GRAY_ALPHA);
 
@@ -821,6 +817,16 @@ char **SplitText(char *text, char delimiter, int *strCount)
     free(strDup);
     
     return strings;
+}
+
+// Check if two text string are equal
+bool IsEqualText(const char *text1, const char *text2)
+{
+    bool result = false;
+    
+    if (strcmp(text1, text2) == 0) result = true;
+    
+    return result;
 }
 
 //----------------------------------------------------------------------------------
