@@ -24,6 +24,7 @@ set(OFF ${INCLUDE_EVERYTHING} CACHE INTERNAL "Replace any OFF by default with \$
 
 # core.c
 option(SUPPORT_BUSY_WAIT_LOOP "Use busy wait loop for timing sync instead of a high-resolution timer" ON)
+option(SUPPORT_EVENTS_WAITING "Wait for events passively (sleeping while no events) instead of polling them actively every frame" OFF)
 option(SUPPORT_CAMERA_SYSTEM "Provide camera module (camera.h) with multiple predefined cameras: free, 1st/3rd person, orbital" ON)
 option(SUPPORT_DEFAULT_FONT "Default font is loaded on window initialization to be available for the user to render simple text. If enabled, uses external module functions to load default raylib font (module: text)" ON)
 option(SUPPORT_SCREEN_CAPTURE "Allow automatic screen capture of current screen pressing F12, defined in KeyCallback()" ON)

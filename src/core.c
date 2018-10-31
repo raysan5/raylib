@@ -50,6 +50,9 @@
 *   #define SUPPORT_BUSY_WAIT_LOOP
 *       Use busy wait loop for timing sync, if not defined, a high-resolution timer is setup and used
 *
+*   #define SUPPORT_EVENTS_WAITING
+*       Wait for events passively (sleeping while no events) instead of polling them actively every frame
+*
 *   #define SUPPORT_SCREEN_CAPTURE
 *       Allow automatic screen capture of current screen pressing F12, defined in KeyCallback()
 *
@@ -2933,7 +2936,6 @@ static void PollInputEvents(void)
         previousMouseState[i] = currentMouseState[i];
         currentMouseState[i] = currentMouseStateEvdev[i];
     }
-
 #endif
 
 #if defined(PLATFORM_DESKTOP) || defined(PLATFORM_WEB)
@@ -3007,8 +3009,12 @@ static void PollInputEvents(void)
         }
     }
 
+#if defined(SUPPORT_EVENTS_WAITING)
+    glfwWaitEvents();
+#else
     glfwPollEvents();       // Register keyboard/mouse events (callbacks)... and window events!
 #endif
+#endif      //defined(PLATFORM_DESKTOP)
 
 // Gamepad support using emscripten API
 // NOTE: GLFW3 joystick functionality not available in web
