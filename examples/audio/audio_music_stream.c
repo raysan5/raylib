@@ -59,6 +59,8 @@ int main()
         
         // Get timePlayed scaled to bar dimensions (400 pixels)
         timePlayed = GetMusicTimePlayed(music)/GetMusicTimeLength(music)*400;
+        
+        if (timePlayed > 400) StopMusicStream(music);
         //----------------------------------------------------------------------------------
 
         // Draw

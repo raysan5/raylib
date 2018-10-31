@@ -214,7 +214,7 @@ typedef enum { AUDIO_BUFFER_USAGE_STATIC = 0, AUDIO_BUFFER_USAGE_STREAM } AudioB
 
 // Audio buffer structure
 // NOTE: Slightly different logic is used when feeding data to the playback device depending on whether or not data is streamed
-typedef struct AudioBuffer AudioBuffer;
+typedef struct AudioBuffer AudioBuffer; 
 struct AudioBuffer {
     mal_dsp dsp;                    // Required for format conversion
     float volume;
@@ -1130,13 +1130,12 @@ Music LoadMusicStream(const char *fileName)
             TraceLog(LOG_INFO, "[%s] MP3 sample rate: %i", fileName, music->ctxMp3.sampleRate);
             TraceLog(LOG_INFO, "[%s] MP3 bits per sample: %i", fileName, 32);
             TraceLog(LOG_INFO, "[%s] MP3 channels: %i", fileName, music->ctxMp3.channels);
-            TraceLog(LOG_INFO, "[%s] MP3 frames remaining: %i", fileName, (unsigned int)music->ctxMp3.framesRemaining);
             
             music->stream = InitAudioStream(music->ctxMp3.sampleRate, 32, music->ctxMp3.channels);
             
             // TODO: There is not an easy way to compute the total number of samples available
             // in an MP3, frames size could be variable... we tried with a 60 seconds music... but crashes...
-            music->totalSamples = 60*music->ctxMp3.sampleRate*music->ctxMp3.channels;
+            music->totalSamples = drmp3_get_pcm_frame_count(&music->ctxMp3)*music->ctxMp3.channels;
             music->samplesLeft = music->totalSamples;
             music->ctxType = MUSIC_AUDIO_MP3;
             music->loopCount = -1;                       // Infinite loop by default
@@ -1161,8 +1160,8 @@ Music LoadMusicStream(const char *fileName)
             music->ctxType = MUSIC_MODULE_XM;
             music->loopCount = -1;                       // Infinite loop by default
 
-            TraceLog(LOG_DEBUG, "[%s] XM number of samples: %i", fileName, music->totalSamples);
-            TraceLog(LOG_DEBUG, "[%s] XM track length: %11.6f sec", fileName, (float)music->totalSamples/48000.0f);
+            TraceLog(LOG_INFO, "[%s] XM number of samples: %i", fileName, music->totalSamples);
+            TraceLog(LOG_INFO, "[%s] XM track length: %11.6f sec", fileName, (float)music->totalSamples/48000.0f);
         }
         else musicLoaded = false;
     }
@@ -1283,7 +1282,7 @@ void StopMusicStream(Music music)
         case MUSIC_AUDIO_FLAC: /* TODO: Restart FLAC context */ break;
 #endif
 #if defined(SUPPORT_FILEFORMAT_MP3)
-        case MUSIC_AUDIO_MP3: /* TODO: Restart MP3 context */ break;
+        case MUSIC_AUDIO_MP3: drmp3_seek_to_pcm_frame(&music->ctxMp3, 0); break;
 #endif
 #if defined(SUPPORT_FILEFORMAT_XM)
         case MUSIC_MODULE_XM: /* TODO: Restart XM context */ break;
@@ -1306,13 +1305,13 @@ void UpdateMusicStream(Music music)
     unsigned int subBufferSizeInFrames = ((AudioBuffer *)music->stream.audioBuffer)->bufferSizeInFrames/2;
 
     // NOTE: Using dynamic allocation because it could require more than 16KB
-    void *pcm = calloc(subBufferSizeInFrames*music->stream.sampleSize/8*music->stream.channels, 1);
+    void *pcm = calloc(subBufferSizeInFrames*music->stream.channels*music->stream.sampleSize/8, 1);
 
     int samplesCount = 0;    // Total size of data steamed in L+R samples for xm floats, individual L or R for ogg shorts
 
     while (IsAudioBufferProcessed(music->stream))
     {
-        if (music->samplesLeft >= subBufferSizeInFrames) samplesCount = subBufferSizeInFrames;
+        if ((music->samplesLeft/music->stream.channels) >= subBufferSizeInFrames) samplesCount = subBufferSizeInFrames*music->stream.channels;
         else samplesCount = music->samplesLeft;
 
         // TODO: Really don't like ctxType thingy...
@@ -1321,27 +1320,31 @@ void UpdateMusicStream(Music music)
             case MUSIC_AUDIO_OGG:
             {
                 // NOTE: Returns the number of samples to process (be careful! we ask for number of shorts!)
-                stb_vorbis_get_samples_short_interleaved(music->ctxOgg, music->stream.channels, (short *)pcm, samplesCount*music->stream.channels);
+                stb_vorbis_get_samples_short_interleaved(music->ctxOgg, music->stream.channels, (short *)pcm, samplesCount);
 
             } break;
         #if defined(SUPPORT_FILEFORMAT_FLAC)
             case MUSIC_AUDIO_FLAC:
             {
                 // NOTE: Returns the number of samples to process
-                unsigned int numSamplesFlac = (unsigned int)drflac_read_s16(music->ctxFlac, samplesCount*music->stream.channels, (short *)pcm);
+                unsigned int numSamplesFlac = (unsigned int)drflac_read_s16(music->ctxFlac, samplesCount, (short *)pcm);
 
             } break;
         #endif
         #if defined(SUPPORT_FILEFORMAT_MP3)
             case MUSIC_AUDIO_MP3: 
             {
-                // NOTE: Returns the number of samples to process
-                unsigned int numSamplesMp3 = (unsigned int)drmp3_read_f32(&music->ctxMp3, samplesCount*music->stream.channels, (float *)pcm);
+                // NOTE: samplesCount, actually refers to framesCount and returns the number of frames processed
+                unsigned int numFramesMp3 = (unsigned int)drmp3_read_pcm_frames_f32(&music->ctxMp3, samplesCount/music->stream.channels, (float *)pcm);
 
             } break;
         #endif
         #if defined(SUPPORT_FILEFORMAT_XM)
-            case MUSIC_MODULE_XM: jar_xm_generate_samples_16bit(music->ctxXm, pcm, samplesCount); break;
+            case MUSIC_MODULE_XM: 
+            {
+                // NOTE: Internally this function considers 2 channels generation, so samplesCount/2 --> WEIRD
+                jar_xm_generate_samples_16bit(music->ctxXm, (short *)pcm, samplesCount/2); 
+            } break;
         #endif
         #if defined(SUPPORT_FILEFORMAT_MOD)
             case MUSIC_MODULE_MOD: jar_mod_fillbuffer(&music->ctxMod, pcm, samplesCount, 0); break;
@@ -1414,7 +1417,7 @@ void SetMusicLoopCount(Music music, int count)
 // Get music time length (in seconds)
 float GetMusicTimeLength(Music music)
 {
-    float totalSeconds = (float)music->totalSamples/music->stream.sampleRate;
+    float totalSeconds = (float)music->totalSamples/(music->stream.sampleRate*music->stream.channels);
 
     return totalSeconds;
 }
@@ -1425,11 +1428,10 @@ float GetMusicTimePlayed(Music music)
     float secondsPlayed = 0.0f;
 
     unsigned int samplesPlayed = music->totalSamples - music->samplesLeft;
-    secondsPlayed = (float)samplesPlayed/music->stream.sampleRate;
+    secondsPlayed = (float)samplesPlayed/(music->stream.sampleRate*music->stream.channels);
 
     return secondsPlayed;
 }
-
 
 // Init audio stream (to stream audio pcm data)
 AudioStream InitAudioStream(unsigned int sampleRate, unsigned int sampleSize, unsigned int channels)
@@ -1509,11 +1511,11 @@ void UpdateAudioStream(AudioStream stream, const void *data, int samplesCount)
         unsigned char *subBuffer = audioBuffer->buffer + ((subBufferSizeInFrames*stream.channels*(stream.sampleSize/8))*subBufferToUpdate);
 
         // Does this API expect a whole buffer to be updated in one go? Assuming so, but if not will need to change this logic.
-        if (subBufferSizeInFrames >= (mal_uint32)samplesCount)
+        if (subBufferSizeInFrames >= (mal_uint32)samplesCount/stream.channels)
         {
             mal_uint32 framesToWrite = subBufferSizeInFrames;
             
-            if (framesToWrite > (mal_uint32)samplesCount) framesToWrite = (mal_uint32)samplesCount;
+            if (framesToWrite > ((mal_uint32)samplesCount/stream.channels)) framesToWrite = (mal_uint32)samplesCount/stream.channels;
 
             mal_uint32 bytesToWrite = framesToWrite*stream.channels*(stream.sampleSize/8);
             memcpy(subBuffer, data, bytesToWrite);
@@ -1867,13 +1869,13 @@ static Wave LoadMP3(const char *fileName)
     Wave wave = { 0 };
 
     // Decode an entire MP3 file in one go
-    uint64_t totalSampleCount = 0;
+    uint64_t totalFrameCount = 0;
     drmp3_config config = { 0 };
-    wave.data = drmp3_open_and_decode_file_f32(fileName, &config, &totalSampleCount);
+    wave.data = drmp3_open_file_and_read_f32(fileName, &config, &totalFrameCount);
     
     wave.channels = config.outputChannels;
     wave.sampleRate = config.outputSampleRate;
-    wave.sampleCount = (int)totalSampleCount;
+    wave.sampleCount = (int)totalFrameCount*wave.channels;
     wave.sampleSize = 32;
 
     // NOTE: Only support up to 2 channels (mono, stereo)
