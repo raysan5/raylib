@@ -820,10 +820,10 @@ Sound LoadSoundFromWave(Wave wave)
         //   1) Convert the whole sound in one go at load time (here).
         //   2) Convert the audio data in chunks at mixing time.
         //
-        // I have decided on the first option because it offloads work required for the format conversion to the to the loading stage. The
-        // downside to this is that it uses more memory if the original sound is u8 or s16.
+        // I have decided on the first option because it offloads work required for the format conversion to the to the loading stage.
+        // The downside to this is that it uses more memory if the original sound is u8 or s16.
         mal_format formatIn  = ((wave.sampleSize == 8) ? mal_format_u8 : ((wave.sampleSize == 16) ? mal_format_s16 : mal_format_f32));
-        mal_uint32 frameCountIn = wave.sampleCount;  // Is wave->sampleCount actually the frame count? That terminology needs to change, if so.
+        mal_uint32 frameCountIn = wave.sampleCount/wave.channels;
 
         mal_uint32 frameCount = (mal_uint32)mal_convert_frames(NULL, DEVICE_FORMAT, DEVICE_CHANNELS, DEVICE_SAMPLE_RATE, NULL, formatIn, wave.channels, wave.sampleRate, frameCountIn);
         if (frameCount == 0) TraceLog(LOG_WARNING, "LoadSoundFromWave() : Failed to get frame count for format conversion");
