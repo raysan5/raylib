@@ -80,7 +80,7 @@
 #endif
 
 #include "external/mini_al.h"   // mini_al audio library
-                                // NOTE: Cannot be implement here because it conflicts with 
+                                // NOTE: Cannot be implement here because it conflicts with
                                 // Win32 APIs: Rectangle, CloseWindow(), ShowCursor(), PlaySoundA()
 
 #include <stdlib.h>             // Required for: malloc(), free()
@@ -132,12 +132,12 @@
 // Types and Structures Definition
 //----------------------------------------------------------------------------------
 
-typedef enum { 
-    MUSIC_AUDIO_OGG = 0, 
-    MUSIC_AUDIO_FLAC, 
-    MUSIC_AUDIO_MP3, 
-    MUSIC_MODULE_XM, 
-    MUSIC_MODULE_MOD 
+typedef enum {
+    MUSIC_AUDIO_OGG = 0,
+    MUSIC_AUDIO_FLAC,
+    MUSIC_AUDIO_MP3,
+    MUSIC_MODULE_XM,
+    MUSIC_MODULE_MOD
 } MusicContextType;
 
 // Music type (file streaming from memory)
@@ -167,12 +167,12 @@ typedef struct MusicData {
 } MusicData;
 
 #if defined(AUDIO_STANDALONE)
-typedef enum { 
-    LOG_INFO = 0, 
-    LOG_ERROR, 
-    LOG_WARNING, 
-    LOG_DEBUG, 
-    LOG_OTHER 
+typedef enum {
+    LOG_INFO = 0,
+    LOG_ERROR,
+    LOG_WARNING,
+    LOG_DEBUG,
+    LOG_OTHER
 } TraceLogType;
 #endif
 
@@ -214,7 +214,7 @@ typedef enum { AUDIO_BUFFER_USAGE_STATIC = 0, AUDIO_BUFFER_USAGE_STREAM } AudioB
 
 // Audio buffer structure
 // NOTE: Slightly different logic is used when feeding data to the playback device depending on whether or not data is streamed
-typedef struct AudioBuffer AudioBuffer; 
+typedef struct AudioBuffer AudioBuffer;
 struct AudioBuffer {
     mal_dsp dsp;                    // Required for format conversion
     float volume;
@@ -239,7 +239,7 @@ static bool isAudioInitialized = MAL_FALSE;
 static float masterVolume = 1.0f;
 
 // Audio buffers are tracked in a linked list
-static AudioBuffer *firstAudioBuffer = NULL;   
+static AudioBuffer *firstAudioBuffer = NULL;
 static AudioBuffer *lastAudioBuffer = NULL;
 
 // mini_al functions declaration
@@ -268,7 +268,7 @@ static void OnLog(mal_context *pContext, mal_device *pDevice, const char *messag
 {
     (void)pContext;
     (void)pDevice;
-    
+
     TraceLog(LOG_ERROR, message);   // All log messages from mini_al are errors
 }
 
@@ -291,30 +291,30 @@ static mal_uint32 OnSendAudioDataToDevice(mal_device *pDevice, mal_uint32 frameC
             if (!audioBuffer->playing || audioBuffer->paused) continue;
 
             mal_uint32 framesRead = 0;
-            for (;;) 
+            for (;;)
             {
-                if (framesRead > frameCount) 
+                if (framesRead > frameCount)
                 {
                     TraceLog(LOG_DEBUG, "Mixed too many frames from audio buffer");
                     break;
                 }
-                
+
                 if (framesRead == frameCount) break;
 
                 // Just read as much data as we can from the stream.
                 mal_uint32 framesToRead = (frameCount - framesRead);
-                while (framesToRead > 0) 
+                while (framesToRead > 0)
                 {
                     float tempBuffer[1024]; // 512 frames for stereo.
 
                     mal_uint32 framesToReadRightNow = framesToRead;
-                    if (framesToReadRightNow > sizeof(tempBuffer)/sizeof(tempBuffer[0])/DEVICE_CHANNELS) 
+                    if (framesToReadRightNow > sizeof(tempBuffer)/sizeof(tempBuffer[0])/DEVICE_CHANNELS)
                     {
                         framesToReadRightNow = sizeof(tempBuffer)/sizeof(tempBuffer[0])/DEVICE_CHANNELS;
                     }
 
                     mal_uint32 framesJustRead = (mal_uint32)mal_dsp_read(&audioBuffer->dsp, framesToReadRightNow, tempBuffer, audioBuffer->dsp.pUserData);
-                    if (framesJustRead > 0) 
+                    if (framesJustRead > 0)
                     {
                         float *framesOut = (float *)pFramesOut + (framesRead*device.channels);
                         float *framesIn  = tempBuffer;
@@ -325,16 +325,16 @@ static mal_uint32 OnSendAudioDataToDevice(mal_device *pDevice, mal_uint32 frameC
                     }
 
                     // If we weren't able to read all the frames we requested, break.
-                    if (framesJustRead < framesToReadRightNow) 
+                    if (framesJustRead < framesToReadRightNow)
                     {
-                        if (!audioBuffer->looping) 
+                        if (!audioBuffer->looping)
                         {
                             StopAudioBuffer(audioBuffer);
                             break;
-                        } 
-                        else 
+                        }
+                        else
                         {
-                            // Should never get here, but just for safety, 
+                            // Should never get here, but just for safety,
                             // move the cursor position back to the start and continue the loop.
                             audioBuffer->frameCursorPos = 0;
                             continue;
@@ -342,13 +342,13 @@ static mal_uint32 OnSendAudioDataToDevice(mal_device *pDevice, mal_uint32 frameC
                     }
                 }
 
-                // If for some reason we weren't able to read every frame we'll need to break from the loop. 
+                // If for some reason we weren't able to read every frame we'll need to break from the loop.
                 // Not doing this could theoretically put us into an infinite loop.
                 if (framesToRead > 0) break;
             }
         }
     }
-    
+
     mal_mutex_unlock(&audioLock);
 
     return frameCount;  // We always output the same number of frames that were originally requested.
@@ -361,8 +361,8 @@ static mal_uint32 OnAudioBufferDSPRead(mal_dsp *pDSP, mal_uint32 frameCount, voi
 
     mal_uint32 subBufferSizeInFrames = audioBuffer->bufferSizeInFrames/2;
     mal_uint32 currentSubBufferIndex = audioBuffer->frameCursorPos/subBufferSizeInFrames;
-    
-    if (currentSubBufferIndex > 1) 
+
+    if (currentSubBufferIndex > 1)
     {
         TraceLog(LOG_DEBUG, "Frame cursor position moved too far forward in audio stream");
         return 0;
@@ -381,11 +381,11 @@ static mal_uint32 OnAudioBufferDSPRead(mal_dsp *pDSP, mal_uint32 frameCount, voi
     {
         // We break from this loop differently depending on the buffer's usage. For static buffers, we simply fill as much data as we can. For
         // streaming buffers we only fill the halves of the buffer that are processed. Unprocessed halves must keep their audio data in-tact.
-        if (audioBuffer->usage == AUDIO_BUFFER_USAGE_STATIC) 
+        if (audioBuffer->usage == AUDIO_BUFFER_USAGE_STATIC)
         {
             if (framesRead >= frameCount) break;
-        } 
-        else 
+        }
+        else
         {
             if (isSubBufferProcessed[currentSubBufferIndex]) break;
         }
@@ -394,11 +394,11 @@ static mal_uint32 OnAudioBufferDSPRead(mal_dsp *pDSP, mal_uint32 frameCount, voi
         if (totalFramesRemaining == 0) break;
 
         mal_uint32 framesRemainingInOutputBuffer;
-        if (audioBuffer->usage == AUDIO_BUFFER_USAGE_STATIC) 
+        if (audioBuffer->usage == AUDIO_BUFFER_USAGE_STATIC)
         {
             framesRemainingInOutputBuffer = audioBuffer->bufferSizeInFrames - audioBuffer->frameCursorPos;
-        } 
-        else 
+        }
+        else
         {
             mal_uint32 firstFrameIndexOfThisSubBuffer = subBufferSizeInFrames * currentSubBufferIndex;
             framesRemainingInOutputBuffer = subBufferSizeInFrames - (audioBuffer->frameCursorPos - firstFrameIndexOfThisSubBuffer);
@@ -412,7 +412,7 @@ static mal_uint32 OnAudioBufferDSPRead(mal_dsp *pDSP, mal_uint32 frameCount, voi
         framesRead += framesToRead;
 
         // If we've read to the end of the buffer, mark it as processed.
-        if (framesToRead == framesRemainingInOutputBuffer) 
+        if (framesToRead == framesRemainingInOutputBuffer)
         {
             audioBuffer->isSubBufferProcessed[currentSubBufferIndex] = true;
             isSubBufferProcessed[currentSubBufferIndex] = true;
@@ -420,7 +420,7 @@ static mal_uint32 OnAudioBufferDSPRead(mal_dsp *pDSP, mal_uint32 frameCount, voi
             currentSubBufferIndex = (currentSubBufferIndex + 1)%2;
 
             // We need to break from this loop if we're not looping.
-            if (!audioBuffer->looping) 
+            if (!audioBuffer->looping)
             {
                 StopAudioBuffer(audioBuffer);
                 break;
@@ -430,7 +430,7 @@ static mal_uint32 OnAudioBufferDSPRead(mal_dsp *pDSP, mal_uint32 frameCount, voi
 
     // Zero-fill excess.
     mal_uint32 totalFramesRemaining = (frameCount - framesRead);
-    if (totalFramesRemaining > 0) 
+    if (totalFramesRemaining > 0)
     {
         memset((unsigned char *)pFramesOut + (framesRead*frameSizeInBytes), 0, totalFramesRemaining*frameSizeInBytes);
 
@@ -447,9 +447,9 @@ static mal_uint32 OnAudioBufferDSPRead(mal_dsp *pDSP, mal_uint32 frameCount, voi
 // NOTE: framesOut is both an input and an output. It will be initially filled with zeros outside of this function.
 static void MixAudioFrames(float *framesOut, const float *framesIn, mal_uint32 frameCount, float localVolume)
 {
-    for (mal_uint32 iFrame = 0; iFrame < frameCount; ++iFrame) 
+    for (mal_uint32 iFrame = 0; iFrame < frameCount; ++iFrame)
     {
-        for (mal_uint32 iChannel = 0; iChannel < device.channels; ++iChannel) 
+        for (mal_uint32 iChannel = 0; iChannel < device.channels; ++iChannel)
         {
                   float *frameOut = framesOut + (iFrame*device.channels);
             const float *frameIn  = framesIn  + (iFrame*device.channels);
@@ -519,7 +519,7 @@ void InitAudioDevice(void)
 // Close the audio device for all contexts
 void CloseAudioDevice(void)
 {
-    if (!isAudioInitialized) 
+    if (!isAudioInitialized)
     {
         TraceLog(LOG_WARNING, "Could not close audio device because it is not currently initialized");
         return;
@@ -543,7 +543,7 @@ void SetMasterVolume(float volume)
 {
     if (volume < 0.0f) volume = 0.0f;
     else if (volume > 1.0f) volume = 1.0f;
- 
+
     masterVolume = volume;
 }
 
@@ -574,7 +574,7 @@ AudioBuffer *CreateAudioBuffer(mal_format format, mal_uint32 channels, mal_uint3
     dspConfig.pUserData = audioBuffer;
     dspConfig.allowDynamicSampleRate = MAL_TRUE;    // <-- Required for pitch shifting.
     mal_result resultMAL = mal_dsp_init(&dspConfig, &audioBuffer->dsp);
-    if (resultMAL != MAL_SUCCESS) 
+    if (resultMAL != MAL_SUCCESS)
     {
         TraceLog(LOG_ERROR, "CreateAudioBuffer() : Failed to create data conversion pipeline");
         free(audioBuffer);
@@ -716,10 +716,10 @@ void SetAudioBufferPitch(AudioBuffer *audioBuffer, float pitch)
 void TrackAudioBuffer(AudioBuffer *audioBuffer)
 {
     mal_mutex_lock(&audioLock);
-    
+
     {
         if (firstAudioBuffer == NULL) firstAudioBuffer = audioBuffer;
-        else 
+        else
         {
             lastAudioBuffer->next = audioBuffer;
             audioBuffer->prev = lastAudioBuffer;
@@ -727,7 +727,7 @@ void TrackAudioBuffer(AudioBuffer *audioBuffer)
 
         lastAudioBuffer = audioBuffer;
     }
-    
+
     mal_mutex_unlock(&audioLock);
 }
 
@@ -735,7 +735,7 @@ void TrackAudioBuffer(AudioBuffer *audioBuffer)
 void UntrackAudioBuffer(AudioBuffer *audioBuffer)
 {
     mal_mutex_lock(&audioLock);
-    
+
     {
         if (audioBuffer->prev == NULL) firstAudioBuffer = audioBuffer->next;
         else audioBuffer->prev->next = audioBuffer->next;
@@ -746,7 +746,7 @@ void UntrackAudioBuffer(AudioBuffer *audioBuffer)
         audioBuffer->prev = NULL;
         audioBuffer->next = NULL;
     }
-    
+
     mal_mutex_unlock(&audioLock);
 }
 
@@ -816,7 +816,7 @@ Sound LoadSoundFromWave(Wave wave)
     {
         // When using mini_al we need to do our own mixing. To simplify this we need convert the format of each sound to be consistent with
         // the format used to open the playback device. We can do this two ways:
-        // 
+        //
         //   1) Convert the whole sound in one go at load time (here).
         //   2) Convert the audio data in chunks at mixing time.
         //
@@ -861,7 +861,7 @@ void UnloadSound(Sound sound)
 void UpdateSound(Sound sound, const void *data, int samplesCount)
 {
     AudioBuffer *audioBuffer = (AudioBuffer *)sound.audioBuffer;
-    
+
     if (audioBuffer == NULL)
     {
         TraceLog(LOG_ERROR, "UpdateSound() : Invalid sound - no audio buffer");
@@ -878,9 +878,9 @@ void UpdateSound(Sound sound, const void *data, int samplesCount)
 void ExportWave(Wave wave, const char *fileName)
 {
     bool success = false;
-    
+
     if (IsFileExtension(fileName, ".wav")) success = SaveWAV(wave, fileName);
-    else if (IsFileExtension(fileName, ".raw")) 
+    else if (IsFileExtension(fileName, ".raw"))
     {
         // Export raw sample data (without header)
         // NOTE: It's up to the user to track wave parameters
@@ -888,7 +888,7 @@ void ExportWave(Wave wave, const char *fileName)
         success = fwrite(wave.data, wave.sampleCount*wave.channels*wave.sampleSize/8, 1, rawFile);
         fclose(rawFile);
     }
-    
+
     if (success) TraceLog(LOG_INFO, "Wave exported successfully: %s", fileName);
     else TraceLog(LOG_WARNING, "Wave could not be exported.");
 }
@@ -897,12 +897,12 @@ void ExportWave(Wave wave, const char *fileName)
 void ExportWaveAsCode(Wave wave, const char *fileName)
 {
     #define BYTES_TEXT_PER_LINE     20
-    
+
     char varFileName[256] = { 0 };
     int dataSize = wave.sampleCount*wave.channels*wave.sampleSize/8;
-    
+
     FILE *txtFile = fopen(fileName, "wt");
-    
+
     fprintf(txtFile, "\n//////////////////////////////////////////////////////////////////////////////////\n");
     fprintf(txtFile, "//                                                                              //\n");
     fprintf(txtFile, "// WaveAsCode exporter v1.0 - Wave data exported as an array of bytes           //\n");
@@ -917,7 +917,7 @@ void ExportWaveAsCode(Wave wave, const char *fileName)
     // Get file name from path and convert variable name to uppercase
     strcpy(varFileName, GetFileNameWithoutExt(fileName));
     for (int i = 0; varFileName[i] != '\0'; i++) if (varFileName[i] >= 'a' && varFileName[i] <= 'z') { varFileName[i] = varFileName[i] - 32; }
- 
+
     fprintf(txtFile, "// Wave data information\n");
     fprintf(txtFile, "#define %s_SAMPLE_COUNT     %i\n", varFileName, wave.sampleCount);
     fprintf(txtFile, "#define %s_SAMPLE_RATE      %i\n", varFileName, wave.sampleRate);
@@ -983,7 +983,7 @@ void WaveFormat(Wave *wave, int sampleRate, int sampleSize, int channels)
     mal_uint32 frameCountIn = wave->sampleCount;  // Is wave->sampleCount actually the frame count? That terminology needs to change, if so.
 
     mal_uint32 frameCount = (mal_uint32)mal_convert_frames(NULL, formatOut, channels, sampleRate, NULL, formatIn, wave->channels, wave->sampleRate, frameCountIn);
-    if (frameCount == 0) 
+    if (frameCount == 0)
     {
         TraceLog(LOG_ERROR, "WaveFormat() : Failed to get frame count for format conversion.");
         return;
@@ -992,7 +992,7 @@ void WaveFormat(Wave *wave, int sampleRate, int sampleSize, int channels)
     void *data = malloc(frameCount*channels*(sampleSize/8));
 
     frameCount = (mal_uint32)mal_convert_frames(data, formatOut, channels, sampleRate, wave->data, formatIn, wave->channels, wave->sampleRate, frameCountIn);
-    if (frameCount == 0) 
+    if (frameCount == 0)
     {
         TraceLog(LOG_ERROR, "WaveFormat() : Format conversion failed.");
         return;
@@ -1130,16 +1130,16 @@ Music LoadMusicStream(const char *fileName)
             TraceLog(LOG_INFO, "[%s] MP3 sample rate: %i", fileName, music->ctxMp3.sampleRate);
             TraceLog(LOG_INFO, "[%s] MP3 bits per sample: %i", fileName, 32);
             TraceLog(LOG_INFO, "[%s] MP3 channels: %i", fileName, music->ctxMp3.channels);
-            
+
             music->stream = InitAudioStream(music->ctxMp3.sampleRate, 32, music->ctxMp3.channels);
-            
+
             // TODO: There is not an easy way to compute the total number of samples available
             // in an MP3, frames size could be variable... we tried with a 60 seconds music... but crashes...
             music->totalSamples = drmp3_get_pcm_frame_count(&music->ctxMp3)*music->ctxMp3.channels;
             music->samplesLeft = music->totalSamples;
             music->ctxType = MUSIC_AUDIO_MP3;
             music->loopCount = -1;                       // Infinite loop by default
-            
+
             TraceLog(LOG_INFO, "[%s] MP3 total samples: %i", fileName, music->totalSamples);
         }
     }
@@ -1186,7 +1186,7 @@ Music LoadMusicStream(const char *fileName)
     }
 #endif
     else musicLoaded = false;
-    
+
     if (!musicLoaded)
     {
         if (music->ctxType == MUSIC_AUDIO_OGG) stb_vorbis_close(music->ctxOgg);
@@ -1238,7 +1238,7 @@ void UnloadMusicStream(Music music)
 void PlayMusicStream(Music music)
 {
     AudioBuffer *audioBuffer = (AudioBuffer *)music->stream.audioBuffer;
-    
+
     if (audioBuffer == NULL)
     {
         TraceLog(LOG_ERROR, "PlayMusicStream() : No audio buffer");
@@ -1250,7 +1250,7 @@ void PlayMusicStream(Music music)
     //     // just make sure to play again on window restore
     //     if (IsMusicPlaying(music)) PlayMusicStream(music);
     mal_uint32 frameCursorPos = audioBuffer->frameCursorPos;
-    
+
     PlayAudioStream(music->stream); // <-- This resets the cursor position.
 
     audioBuffer->frameCursorPos = frameCursorPos;
@@ -1273,7 +1273,7 @@ void ResumeMusicStream(Music music)
 void StopMusicStream(Music music)
 {
     StopAudioStream(music->stream);
-    
+
     // Restart music context
     switch (music->ctxType)
     {
@@ -1332,18 +1332,18 @@ void UpdateMusicStream(Music music)
             } break;
         #endif
         #if defined(SUPPORT_FILEFORMAT_MP3)
-            case MUSIC_AUDIO_MP3: 
+            case MUSIC_AUDIO_MP3:
             {
                 // NOTE: samplesCount, actually refers to framesCount and returns the number of frames processed
-                unsigned int numFramesMp3 = (unsigned int)drmp3_read_pcm_frames_f32(&music->ctxMp3, samplesCount/music->stream.channels, (float *)pcm);
+                drmp3_read_pcm_frames_f32(&music->ctxMp3, samplesCount/music->stream.channels, (float *)pcm);
 
             } break;
         #endif
         #if defined(SUPPORT_FILEFORMAT_XM)
-            case MUSIC_MODULE_XM: 
+            case MUSIC_MODULE_XM:
             {
                 // NOTE: Internally this function considers 2 channels generation, so samplesCount/2 --> WEIRD
-                jar_xm_generate_samples_16bit(music->ctxXm, (short *)pcm, samplesCount/2); 
+                jar_xm_generate_samples_16bit(music->ctxXm, (short *)pcm, samplesCount/2);
             } break;
         #endif
         #if defined(SUPPORT_FILEFORMAT_MOD)
@@ -1369,7 +1369,7 @@ void UpdateMusicStream(Music music)
     if (streamEnding)
     {
         StopMusicStream(music);        // Stop music (and reset)
-            
+
         // Decrease loopCount to stop when required
         if (music->loopCount > 0)
         {
@@ -1475,7 +1475,7 @@ AudioStream InitAudioStream(unsigned int sampleRate, unsigned int sampleSize, un
 void CloseAudioStream(AudioStream stream)
 {
     DeleteAudioBuffer((AudioBuffer *)stream.audioBuffer);
-    
+
     TraceLog(LOG_INFO, "[AUD ID %i] Unloaded audio stream data", stream.source);
 }
 
@@ -1494,7 +1494,7 @@ void UpdateAudioStream(AudioStream stream, const void *data, int samplesCount)
     if (audioBuffer->isSubBufferProcessed[0] || audioBuffer->isSubBufferProcessed[1])
     {
         mal_uint32 subBufferToUpdate;
-        
+
         if (audioBuffer->isSubBufferProcessed[0] && audioBuffer->isSubBufferProcessed[1])
         {
             // Both buffers are available for updating. Update the first one and make sure the cursor is moved back to the front.
@@ -1514,7 +1514,7 @@ void UpdateAudioStream(AudioStream stream, const void *data, int samplesCount)
         if (subBufferSizeInFrames >= (mal_uint32)samplesCount/stream.channels)
         {
             mal_uint32 framesToWrite = subBufferSizeInFrames;
-            
+
             if (framesToWrite > ((mal_uint32)samplesCount/stream.channels)) framesToWrite = (mal_uint32)samplesCount/stream.channels;
 
             mal_uint32 bytesToWrite = framesToWrite*stream.channels*(stream.sampleSize/8);
@@ -1522,8 +1522,8 @@ void UpdateAudioStream(AudioStream stream, const void *data, int samplesCount)
 
             // Any leftover frames should be filled with zeros.
             mal_uint32 leftoverFrameCount = subBufferSizeInFrames - framesToWrite;
-            
-            if (leftoverFrameCount > 0) 
+
+            if (leftoverFrameCount > 0)
             {
                 memset(subBuffer + bytesToWrite, 0, leftoverFrameCount*stream.channels*(stream.sampleSize/8));
             }
@@ -1723,7 +1723,7 @@ static int SaveWAV(Wave wave, const char *fileName)
 {
     int success = 0;
     int dataSize = wave.sampleCount*wave.channels*wave.sampleSize/8;
-    
+
     // Basic WAV headers structs
     typedef struct {
         char chunkID[4];
@@ -1748,7 +1748,7 @@ static int SaveWAV(Wave wave, const char *fileName)
     } WaveData;
 
     FILE *wavFile = fopen(fileName, "wb");
-    
+
     if (wavFile == NULL) TraceLog(LOG_WARNING, "[%s] WAV audio file could not be created", fileName);
     else
     {
@@ -1784,7 +1784,7 @@ static int SaveWAV(Wave wave, const char *fileName)
         waveData.subChunkID[2] = 't';
         waveData.subChunkID[3] = 'a';
         waveData.subChunkSize = dataSize;
-    
+
         success = fwrite(&riffHeader, sizeof(RiffHeader), 1, wavFile);
         success = fwrite(&waveFormat, sizeof(WaveFormat), 1, wavFile);
         success = fwrite(&waveData, sizeof(WaveData), 1, wavFile);
@@ -1793,7 +1793,7 @@ static int SaveWAV(Wave wave, const char *fileName)
 
         fclose(wavFile);
     }
-    
+
     // If all data has been written correctly to file, success = 1
     return success;
 }
@@ -1812,7 +1812,7 @@ static Wave LoadOGG(const char *fileName)
     else
     {
         stb_vorbis_info info = stb_vorbis_get_info(oggFile);
-        
+
         wave.sampleRate = info.sample_rate;
         wave.sampleSize = 16;                   // 16 bit per sample (short)
         wave.channels = info.channels;
@@ -1872,7 +1872,7 @@ static Wave LoadMP3(const char *fileName)
     uint64_t totalFrameCount = 0;
     drmp3_config config = { 0 };
     wave.data = drmp3_open_file_and_read_f32(fileName, &config, &totalFrameCount);
-    
+
     wave.channels = config.outputChannels;
     wave.sampleRate = config.outputSampleRate;
     wave.sampleCount = (int)totalFrameCount*wave.channels;
@@ -1895,7 +1895,7 @@ bool IsFileExtension(const char *fileName, const char *ext)
 {
     bool result = false;
     const char *fileExt;
-    
+
     if ((fileExt = strrchr(fileName, '.')) != NULL)
     {
         if (strcmp(fileExt, ext) == 0) result = true;

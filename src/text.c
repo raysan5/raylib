@@ -200,10 +200,10 @@ extern void LoadDefaultFont(void)
 
     // Reconstruct charSet using charsWidth[], charsHeight, charsDivisor, charsCount
     //------------------------------------------------------------------------------
-    
+
     // Allocate space for our characters info data
     // NOTE: This memory should be freed at end! --> CloseWindow()
-    defaultFont.chars = (CharInfo *)malloc(defaultFont.charsCount*sizeof(CharInfo));    
+    defaultFont.chars = (CharInfo *)malloc(defaultFont.charsCount*sizeof(CharInfo));
 
     int currentLine = 0;
     int currentPosX = charsDivisor;
@@ -238,7 +238,7 @@ extern void LoadDefaultFont(void)
     }
 
     defaultFont.baseSize = (int)defaultFont.chars[0].rec.height;
-    
+
     TraceLog(LOG_INFO, "[TEX ID %i] Default font loaded successfully", defaultFont.texture.id);
 }
 
@@ -258,7 +258,7 @@ Font GetFontDefault()
 #else
     Font font = { 0 };
     return font;
-#endif   
+#endif
 }
 
 // Load Font from file into GPU memory (VRAM)
@@ -301,11 +301,11 @@ Font LoadFont(const char *fileName)
 Font LoadFontEx(const char *fileName, int fontSize, int charsCount, int *fontChars)
 {
     Font font = { 0 };
-    
+
     font.baseSize = fontSize;
     font.charsCount = (charsCount > 0) ? charsCount : 95;
     font.chars = LoadFontData(fileName, font.baseSize, fontChars, font.charsCount, FONT_DEFAULT);
-    
+
     if (font.chars != NULL)
     {
         Image atlas = GenImageFontAtlas(font.chars, font.charsCount, font.baseSize, 2, 0);
@@ -313,7 +313,7 @@ Font LoadFontEx(const char *fileName, int fontSize, int charsCount, int *fontCha
         UnloadImage(atlas);
     }
     else font = GetFontDefault();
-    
+
     return font;
 }
 
@@ -326,7 +326,7 @@ CharInfo *LoadFontData(const char *fileName, int fontSize, int *fontChars, int c
     #define SDF_CHAR_PADDING            4
     #define SDF_ON_EDGE_VALUE         128
     #define SDF_PIXEL_DIST_SCALE     64.0f
-    
+
     #define BITMAP_ALPHA_THRESHOLD     80
 
     CharInfo *chars = NULL;
@@ -335,15 +335,15 @@ CharInfo *LoadFontData(const char *fileName, int fontSize, int *fontChars, int c
     // NOTE: Loaded information should be enough to generate font image atlas,
     // using any packaging method
     FILE *fontFile = fopen(fileName, "rb");     // Load font file
-    
+
     if (fontFile != NULL)
     {
         fseek(fontFile, 0, SEEK_END);
         long size = ftell(fontFile);    // Get file size
         fseek(fontFile, 0, SEEK_SET);   // Reset file pointer
-        
+
         unsigned char *fontBuffer = (unsigned char *)malloc(size);
-        
+
         fread(fontBuffer, size, 1, fontFile);
         fclose(fontFile);
 
@@ -358,10 +358,10 @@ CharInfo *LoadFontData(const char *fileName, int fontSize, int *fontChars, int c
         // NOTE: ascent is equivalent to font baseline
         int ascent, descent, lineGap;
         stbtt_GetFontVMetrics(&fontInfo, &ascent, &descent, &lineGap);
-        
+
         // In case no chars count provided, default to 95
         charsCount = (charsCount > 0) ? charsCount : 95;
-        
+
         // Fill fontChars in case not provided externally
         // NOTE: By default we fill charsCount consecutevely, starting at 32 (Space)
         int genFontChars = false;
@@ -373,22 +373,22 @@ CharInfo *LoadFontData(const char *fileName, int fontSize, int *fontChars, int c
         }
 
         chars = (CharInfo *)malloc(charsCount*sizeof(CharInfo));
-        
+
         // NOTE: Using simple packaging, one char after another
-        for (int i = 0; i < charsCount; i++) 
+        for (int i = 0; i < charsCount; i++)
         {
             int chw = 0, chh = 0;   // Character width and height (on generation)
             int ch = fontChars[i];  // Character value to get info for
             chars[i].value = ch;
-            
+
             //  Render a unicode codepoint to a bitmap
             //      stbtt_GetCodepointBitmap()           -- allocates and returns a bitmap
             //      stbtt_GetCodepointBitmapBox()        -- how big the bitmap must be
             //      stbtt_MakeCodepointBitmap()          -- renders into bitmap you provide
-            
+
             if (type != FONT_SDF) chars[i].data = stbtt_GetCodepointBitmap(&fontInfo, scaleFactor, scaleFactor, ch, &chw, &chh, &chars[i].offsetX, &chars[i].offsetY);
             else if (ch != 32) chars[i].data = stbtt_GetCodepointSDF(&fontInfo, scaleFactor, ch, SDF_CHAR_PADDING, SDF_ON_EDGE_VALUE, SDF_PIXEL_DIST_SCALE, &chw, &chh, &chars[i].offsetX, &chars[i].offsetY);
-            
+
             if (type == FONT_BITMAP)
             {
                 // Aliased bitmap (black & white) font generation, avoiding anti-aliasing
@@ -399,15 +399,15 @@ CharInfo *LoadFontData(const char *fileName, int fontSize, int *fontChars, int c
                     else chars[i].data[p] = 255;
                 }
             }
-            
+
             chars[i].rec.width = (float)chw;
             chars[i].rec.height = (float)chh;
             chars[i].offsetY += (int)((float)ascent*scaleFactor);
-        
+
             // Get bounding box for character (may be offset to account for chars that dip above or below the line)
             int chX1, chY1, chX2, chY2;
             stbtt_GetCodepointBitmapBox(&fontInfo, ch, scaleFactor, scaleFactor, &chX1, &chY1, &chX2, &chY2);
-            
+
             TraceLog(LOG_DEBUG, "Character box measures: %i, %i, %i, %i", chX1, chY1, chX2 - chX1, chY2 - chY1);
             TraceLog(LOG_DEBUG, "Character offsetY: %i", (int)((float)ascent*scaleFactor) + chY1);
 
@@ -419,7 +419,7 @@ CharInfo *LoadFontData(const char *fileName, int fontSize, int *fontChars, int c
         if (genFontChars) free(fontChars);
     }
     else TraceLog(LOG_WARNING, "[%s] TTF file could not be opened", fileName);
-    
+
     return chars;
 }
 
@@ -428,25 +428,25 @@ CharInfo *LoadFontData(const char *fileName, int fontSize, int *fontChars, int c
 Image GenImageFontAtlas(CharInfo *chars, int charsCount, int fontSize, int padding, int packMethod)
 {
     Image atlas = { 0 };
-    
+
     // In case no chars count provided we suppose default of 95
     charsCount = (charsCount > 0) ? charsCount : 95;
-    
+
     // Calculate image size based on required pixel area
     // NOTE 1: Image is forced to be squared and POT... very conservative!
-    // NOTE 2: SDF font characters already contain an internal padding, 
+    // NOTE 2: SDF font characters already contain an internal padding,
     // so image size would result bigger than default font type
     float requiredArea = 0;
     for (int i = 0; i < charsCount; i++) requiredArea += ((chars[i].rec.width + 2*padding)*(chars[i].rec.height + 2*padding));
     float guessSize = sqrtf(requiredArea)*1.25f;
     int imageSize = (int)powf(2, ceilf(logf((float)guessSize)/logf(2)));  // Calculate next POT
-    
+
     atlas.width = imageSize;   // Atlas bitmap width
     atlas.height = imageSize;  // Atlas bitmap height
     atlas.data = (unsigned char *)calloc(1, atlas.width*atlas.height);      // Create a bitmap to store characters (8 bpp)
     atlas.format = UNCOMPRESSED_GRAYSCALE;
     atlas.mipmaps = 1;
-    
+
     // DEBUG: We can see padding in the generated image setting a gray background...
     //for (int i = 0; i < atlas.width*atlas.height; i++) ((unsigned char *)atlas.data)[i] = 100;
 
@@ -454,9 +454,9 @@ Image GenImageFontAtlas(CharInfo *chars, int charsCount, int fontSize, int paddi
     {
         int offsetX = padding;
         int offsetY = padding;
-        
+
         // NOTE: Using simple packaging, one char after another
-        for (int i = 0; i < charsCount; i++) 
+        for (int i = 0; i < charsCount; i++)
         {
             // Copy pixel data from fc.data to atlas
             for (int y = 0; y < (int)chars[i].rec.height; y++)
@@ -466,22 +466,22 @@ Image GenImageFontAtlas(CharInfo *chars, int charsCount, int fontSize, int paddi
                     ((unsigned char *)atlas.data)[(offsetY + y)*atlas.width + (offsetX + x)] = chars[i].data[y*(int)chars[i].rec.width + x];
                 }
             }
-            
+
             chars[i].rec.x = (float)offsetX;
             chars[i].rec.y = (float)offsetY;
-            
+
             // Move atlas position X for next character drawing
             offsetX += ((int)chars[i].rec.width + 2*padding);
-            
+
             if (offsetX >= (atlas.width - (int)chars[i].rec.width - padding))
             {
                 offsetX = padding;
-                
-                // NOTE: Be careful on offsetY for SDF fonts, by default SDF 
+
+                // NOTE: Be careful on offsetY for SDF fonts, by default SDF
                 // use an internal padding of 4 pixels, it means char rectangle
                 // height is bigger than fontSize, it could be up to (fontSize + 8)
                 offsetY += (fontSize + 2*padding);
-                
+
                 if (offsetY > (atlas.height - fontSize - padding)) break;
             }
         }
@@ -489,13 +489,13 @@ Image GenImageFontAtlas(CharInfo *chars, int charsCount, int fontSize, int paddi
     else if (packMethod == 1)  // Use Skyline rect packing algorythm (stb_pack_rect)
     {
         TraceLog(LOG_DEBUG, "Using Skyline packing algorythm!");
-        
+
         stbrp_context *context = (stbrp_context *)malloc(sizeof(*context));
         stbrp_node *nodes = (stbrp_node *)malloc(charsCount*sizeof(*nodes));
 
         stbrp_init_target(context, atlas.width, atlas.height, nodes, charsCount);
         stbrp_rect *rects = (stbrp_rect *)malloc(charsCount*sizeof(stbrp_rect));
-        
+
         // Fill rectangles for packaging
         for (int i = 0; i < charsCount; i++)
         {
@@ -506,12 +506,12 @@ Image GenImageFontAtlas(CharInfo *chars, int charsCount, int fontSize, int paddi
 
         // Package rectangles into atlas
         stbrp_pack_rects(context, rects, charsCount);
-        
+
         for (int i = 0; i < charsCount; i++)
         {
             chars[i].rec.x = rects[i].x + (float)padding;
             chars[i].rec.y = rects[i].y + (float)padding;
-            
+
             if (rects[i].was_packed)
             {
                 // Copy pixel data from fc.data to atlas
@@ -530,9 +530,9 @@ Image GenImageFontAtlas(CharInfo *chars, int charsCount, int fontSize, int paddi
         free(nodes);
         free(context);
     }
-    
+
     // TODO: Crop image if required for smaller size
-    
+
     // Convert image data from GRAYSCALE to GRAY_ALPHA
     // WARNING: ImageAlphaMask(&atlas, atlas) does not work in this case, requires manual operation
     unsigned char *dataGrayAlpha = (unsigned char *)malloc(imageSize*imageSize*sizeof(unsigned char)*2); // Two channels
@@ -546,7 +546,7 @@ Image GenImageFontAtlas(CharInfo *chars, int charsCount, int fontSize, int paddi
     free(atlas.data);
     atlas.data = dataGrayAlpha;
     atlas.format = UNCOMPRESSED_GRAY_ALPHA;
-    
+
     return atlas;
 }
 
@@ -580,7 +580,7 @@ void DrawFPS(int posX, int posY)
         refreshRate = fps;
         counter = 0;
     }
-    
+
     // NOTE: We have rounding errors every frame, so it oscillates a lot
     DrawText(FormatText("%2i FPS", fps), posX, posY, 20, LIME);
 }
@@ -645,7 +645,7 @@ void DrawTextEx(Font font, const char *text, Vector2 position, float fontSize, f
                 i++;
             }
             else index = GetGlyphIndex(font, (unsigned char)text[i]);
-            
+
             if ((unsigned char)text[i] != ' ')
             {
                 DrawTexturePro(font.texture, font.chars[index].rec,
@@ -795,27 +795,27 @@ char **SplitText(char *text, char delimiter, int *strCount)
     char *strDup = (char *)malloc(len + 1);
     strcpy(strDup, text);
     int counter = 1;
-    
+
     // Count how many substrings we have on string
     for (int i = 0; i < len; i++) if (text[i] == delimiter) counter++;
-    
+
     // Memory allocation for substrings
     strings = (char **)malloc(sizeof(char *)*counter);
     for (int i = 0; i < counter; i++) strings[i] = (char *)malloc(sizeof(char)*MAX_SUBSTRING_LENGTH);
-    
+
     char *substrPtr = NULL;
     char delimiters[1] = { delimiter };         // Only caring for one delimiter
     substrPtr = strtok(strDup, delimiters);
-    
+
     for (int i = 0; (i < counter) && (substrPtr != NULL); i++)
     {
         strcpy(strings[i], substrPtr);
         substrPtr = strtok(NULL, delimiters);
     }
-    
+
     *strCount = counter;
     free(strDup);
-    
+
     return strings;
 }
 
@@ -823,9 +823,9 @@ char **SplitText(char *text, char delimiter, int *strCount)
 bool IsEqualText(const char *text1, const char *text2)
 {
     bool result = false;
-    
+
     if (strcmp(text1, text2) == 0) result = true;
-    
+
     return result;
 }
 
@@ -861,7 +861,7 @@ static Font LoadImageFont(Image image, Color key, int firstChar)
         {
             if (!COLOR_EQUAL(pixels[y*image.width + x], key)) break;
         }
-        
+
         if (!COLOR_EQUAL(pixels[y*image.width + x], key)) break;
     }
 
@@ -1031,10 +1031,10 @@ static Font LoadBMFont(const char *fileName)
         UnloadImage(imCopy);
     }
     else font.texture = LoadTextureFromImage(imFont);
-    
+
     UnloadImage(imFont);
     free(texPath);
-    
+
 
     // Fill font characters info data
     font.baseSize = fontSize;

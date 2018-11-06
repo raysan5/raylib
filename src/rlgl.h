@@ -199,7 +199,7 @@ typedef unsigned char byte;
         float *tangents;        // vertex tangents (XYZW - 4 components per vertex) (shader-location = 4)
         unsigned char *colors;  // vertex colors (RGBA - 4 components per vertex) (shader-location = 3)
         unsigned short *indices;// vertex indices (in case vertex data comes indexed)
-        
+
         // Animation vertex data
         float *baseVertices;    // Vertex base position (required to apply bones transformations)
         float *baseNormals;     // Vertex base normals (required to apply bones transformations)
@@ -729,7 +729,7 @@ typedef struct VrStereoConfig {
 //----------------------------------------------------------------------------------
 #if !defined(GRAPHICS_API_OPENGL_11) && defined(SUPPORT_DISTORTION_SHADER)
     // Distortion shader embedded
-    static char distortionFShaderStr[] = 
+    static char distortionFShaderStr[] =
     #if defined(GRAPHICS_API_OPENGL_21)
     "#version 120                       \n"
     #elif defined(GRAPHICS_API_OPENGL_ES2)
@@ -1217,9 +1217,9 @@ void rlEnd(void)
         // WARNING: If we are between rlPushMatrix() and rlPopMatrix() and we need to force a rlglDraw(),
         // we need to call rlPopMatrix() before to recover *currentMatrix (modelview) for the next forced draw call!
         // Also noted that if we had multiple matrix pushed, it will require "stackCounter" pops before launching the draw
-        
+
         // TODO: Undoubtely, current rlPushMatrix/rlPopMatrix should be redesigned... or removed... it's not working properly
-        
+
         rlPopMatrix();
         rlglDraw();
     }
@@ -1507,7 +1507,7 @@ void rlDeleteRenderTextures(RenderTexture2D target)
 {
 #if defined(GRAPHICS_API_OPENGL_33) || defined(GRAPHICS_API_OPENGL_ES2)
     if (target.texture.id > 0) glDeleteTextures(1, &target.texture.id);
-    if (target.depth.id > 0) 
+    if (target.depth.id > 0)
     {
 #if defined(GRAPHICS_API_OPENGL_21) || defined(GRAPHICS_API_OPENGL_ES2)
         glDeleteRenderbuffers(1, &target.depth.id);
@@ -1640,7 +1640,7 @@ void rlglInit(int width, int height)
     char *extensions = (char *)glGetString(GL_EXTENSIONS);  // One big const string
 
     // NOTE: We have to duplicate string because glGetString() returns a const string
-    int len = strlen(extensions) + 1;   
+    int len = strlen(extensions) + 1;
     char *extensionsDup = (char *)malloc(len);
     strcpy(extensionsDup, extensions);
 
@@ -2260,7 +2260,7 @@ RenderTexture2D rlLoadRenderTexture(int width, int height)
         }
 
         if (target.texture.id > 0) glDeleteTextures(1, &target.texture.id);
-        if (target.depth.id > 0) 
+        if (target.depth.id > 0)
         {
 #if defined(USE_DEPTH_RENDERBUFFER)
             glDeleteRenderbuffers(1, &target.depth.id);
@@ -2268,7 +2268,7 @@ RenderTexture2D rlLoadRenderTexture(int width, int height)
             glDeleteTextures(1, &target.depth.id);
 #endif
         }
-        
+
         glDeleteFramebuffers(1, &target.id);
     }
     else TraceLog(LOG_INFO, "[FBO ID %i] Framebuffer object created successfully", target.id);
@@ -2736,7 +2736,7 @@ void rlUnloadMesh(Mesh *mesh)
     if (mesh->tangents != NULL) free(mesh->tangents);
     if (mesh->texcoords2 != NULL) free(mesh->texcoords2);
     if (mesh->indices != NULL) free(mesh->indices);
-    
+
     if (mesh->baseVertices != NULL) free(mesh->baseVertices);
     if (mesh->baseNormals != NULL) free(mesh->baseNormals);
     if (mesh->weightBias != NULL) free(mesh->weightBias);

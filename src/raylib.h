@@ -511,7 +511,7 @@ typedef struct Mesh {
     float *tangents;        // Vertex tangents (XYZW - 4 components per vertex) (shader-location = 4)
     unsigned char *colors;  // Vertex colors (RGBA - 4 components per vertex) (shader-location = 3)
     unsigned short *indices;// Vertex indices (in case vertex data comes indexed)
-    
+
     // Animation vertex data
     float *baseVertices;    // Vertex base position (required to apply bones transformations)
     float *baseNormals;     // Vertex base normals (required to apply bones transformations)
