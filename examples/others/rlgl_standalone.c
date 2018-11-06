@@ -17,8 +17,7 @@
 *
 *   COMPILATION:
 *       gcc -o rlgl_standalone.exe rlgl_standalone.c -s -Iexternal\include -I..\..\src  \
-*           -L. -Lexternal\lib -lglfw3 -lopengl32 -lgdi32 -Wall -std=c99  \
-*           -DRAYMATH_IMPLEMENTATION -DGRAPHICS_API_OPENGL_33
+*           -L. -Lexternal\lib -lglfw3 -lopengl32 -lgdi32 -Wall -std=c99 -DGRAPHICS_API_OPENGL_33
 *
 *   LICENSE: zlib/libpng
 *
@@ -96,7 +95,7 @@ int main(void)
     glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
     glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
     glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
-    glfwWindowHint(GLFW_OPENGL_DEBUG_CONTEXT, GL_TRUE);
+    //glfwWindowHint(GLFW_OPENGL_DEBUG_CONTEXT, GL_TRUE);
    
     GLFWwindow *window = glfwCreateWindow(screenWidth, screenHeight, "rlgl standalone", NULL, NULL);
     
@@ -112,7 +111,7 @@ int main(void)
     glfwSetKeyCallback(window, KeyCallback);
     
     glfwMakeContextCurrent(window);
-    glfwSwapInterval(1);
+    glfwSwapInterval(0);
     
     // Load OpenGL 3.3 supported extensions
     rlLoadExtensions(glfwGetProcAddress);
@@ -146,7 +145,7 @@ int main(void)
     {
         // Update
         //----------------------------------------------------------------------------------
-        // ...
+        //camera.position.x += 0.01f;
         //----------------------------------------------------------------------------------
 
         // Draw
@@ -279,7 +278,7 @@ static void DrawGrid(int slices, float spacing)
 
 // Draw cube
 // NOTE: Cube position is the center position
-void DrawCube(Vector3 position, float width, float height, float length, Color color)
+static void DrawCube(Vector3 position, float width, float height, float length, Color color)
 {
     float x = 0.0f;
     float y = 0.0f;
@@ -353,7 +352,7 @@ void DrawCube(Vector3 position, float width, float height, float length, Color c
 }
 
 // Draw cube wires
-void DrawCubeWires(Vector3 position, float width, float height, float length, Color color)
+static void DrawCubeWires(Vector3 position, float width, float height, float length, Color color)
 {
     float x = 0.0f;
     float y = 0.0f;
