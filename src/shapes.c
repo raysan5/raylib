@@ -276,7 +276,7 @@ void DrawRectangleRec(Rectangle rec, Color color)
 }
 
 // Draw a color-filled rectangle with pro parameters
-void DrawRectanglePro(Rectangle rec, Vector2 origin, float rotation, Color colors[static 4])
+void DrawRectanglePro(Rectangle rec, Vector2 origin, float rotation, Color colors[4])
 {
     rlEnableTexture(GetShapesTexture().id);
 
