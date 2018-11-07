@@ -134,9 +134,16 @@ void DrawLineEx(Vector2 startPos, Vector2 endPos, float thick, Color color)
             rlColor4ub(color.r, color.g, color.b, color.a);
             rlNormal3f(0.0f, 0.0f, 1.0f);
 
+            rlTexCoord2f(recTexShapes.x/texShapes.width, recTexShapes.y/texShapes.height);
             rlVertex2f(0.0f, 0.0f);
+
+            rlTexCoord2f(recTexShapes.x/texShapes.width, (recTexShapes.y + recTexShapes.height)/texShapes.height);
             rlVertex2f(0.0f, thick);
+            
+            rlTexCoord2f((recTexShapes.x + recTexShapes.width)/texShapes.width, (recTexShapes.y + recTexShapes.height)/texShapes.height);
             rlVertex2f(d, thick);
+
+            rlTexCoord2f((recTexShapes.x + recTexShapes.width)/texShapes.width, recTexShapes.y/texShapes.height);
             rlVertex2f(d, 0.0f);
         rlEnd();
     rlPopMatrix();
