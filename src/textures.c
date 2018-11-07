@@ -1731,15 +1731,20 @@ Image ImageTextEx(Font font, const char *text, float fontSize, float spacing, Co
 }
 
 // Draw rectangle within an image
-void ImageDrawRectangle(Image *dst, Vector2 position, Rectangle rec, Color color)
+void ImageDrawRectangle(Image *dst, Rectangle rec, Color color)
 {
     Image imRec = GenImageColor((int)rec.width, (int)rec.height, color);
-
-    Rectangle dstRec = { position.x, position.y, (float)imRec.width, (float)imRec.height };
-
-    ImageDraw(dst, imRec, rec, dstRec);
-
+    ImageDraw(dst, imRec, (Rectangle){ 0, 0, rec.width, rec.height }, rec);
     UnloadImage(imRec);
+}
+
+// Draw rectangle lines within an image
+void ImageDrawRectangleLines(Image *dst, Rectangle rec, int thick, Color color)
+{
+    ImageDrawRectangle(&dst, (Rectangle){ rec.x, rec.y, rec.width, thick }, color);
+    ImageDrawRectangle(&dst, (Rectangle){ rec.x, rec.y + thick, thick, rec.height - thick*2 }, color);
+    ImageDrawRectangle(&dst, (Rectangle){ rec.x + rec.width - thick, rec.y + thick, thick, rec.height - thick*2 }, color);
+    ImageDrawRectangle(&dst, (Rectangle){ rec.x, rec.height - thick, rec.width, thick }, color);
 }
 
 // Draw text (default font) within an image (destination)
