@@ -128,7 +128,7 @@ void DrawLineEx(Vector2 startPos, Vector2 endPos, float thick, Color color)
     rlPushMatrix();
         rlTranslatef((float)startPos.x, (float)startPos.y, 0);
         rlRotatef(RAD2DEG*angle, 0, 0, 1);
-        rlTranslatef(0, -thick/2.0f, 0);
+        rlTranslatef(0, (thick > 1.0f) ? -thick/2.0f : -1.0f, 0);
 
         rlBegin(RL_QUADS);
             rlColor4ub(color.r, color.g, color.b, color.a);
