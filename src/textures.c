@@ -1741,10 +1741,10 @@ void ImageDrawRectangle(Image *dst, Rectangle rec, Color color)
 // Draw rectangle lines within an image
 void ImageDrawRectangleLines(Image *dst, Rectangle rec, int thick, Color color)
 {
-    ImageDrawRectangle(&dst, (Rectangle){ rec.x, rec.y, rec.width, thick }, color);
-    ImageDrawRectangle(&dst, (Rectangle){ rec.x, rec.y + thick, thick, rec.height - thick*2 }, color);
-    ImageDrawRectangle(&dst, (Rectangle){ rec.x + rec.width - thick, rec.y + thick, thick, rec.height - thick*2 }, color);
-    ImageDrawRectangle(&dst, (Rectangle){ rec.x, rec.height - thick, rec.width, thick }, color);
+    ImageDrawRectangle(dst, (Rectangle){ rec.x, rec.y, rec.width, thick }, color);
+    ImageDrawRectangle(dst, (Rectangle){ rec.x, rec.y + thick, thick, rec.height - thick*2 }, color);
+    ImageDrawRectangle(dst, (Rectangle){ rec.x + rec.width - thick, rec.y + thick, thick, rec.height - thick*2 }, color);
+    ImageDrawRectangle(dst, (Rectangle){ rec.x, rec.height - thick, rec.width, thick }, color);
 }
 
 // Draw text (default font) within an image (destination)

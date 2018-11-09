@@ -887,6 +887,8 @@ RLAPI long GetFileModTime(const char *fileName);                  // Get file mo
 RLAPI void StorageSaveValue(int position, int value);             // Save integer value to storage file (to defined position)
 RLAPI int StorageLoadValue(int position);                         // Load integer value from storage file (from defined position)
 
+RLAPI void OpenURL(const char *url);                              // Open URL with default system browser (if available)
+
 //------------------------------------------------------------------------------------
 // Input Handling Functions (Module: core)
 //------------------------------------------------------------------------------------

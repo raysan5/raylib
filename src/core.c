@@ -1819,6 +1819,27 @@ int StorageLoadValue(int position)
     return value;
 }
 
+// Open URL with default system browser (if available)
+void OpenURL(const char *url)
+{
+    // Max length is "explorer ".length + url.maxlength (which is 2083),
+    // but we are not wasting that much memory here... let's set it up to 512
+    static char cmd[512] = { 0 };
+
+#if defined(_WIN32)
+    strcpy(cmd, "explorer ");
+#elif defined(__linux__)
+    strcpy(cmd, "xdg-open ");   // Alternatives: firefox, x-www-browser
+#elif defined(__APPLE__)
+    strcpy(cmd, "open ");
+#endif
+
+    strcat(cmd, url);
+    system(cmd);
+
+    memset(cmd, 0, 512);
+}
+
 //----------------------------------------------------------------------------------
 // Module Functions Definition - Input (Keyboard, Mouse, Gamepad) Functions
 //----------------------------------------------------------------------------------
