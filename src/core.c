@@ -1823,14 +1823,17 @@ int StorageLoadValue(int position)
 void OpenURL(const char *url)
 {
     char *cmd = calloc(10 + strlen(url), sizeof(char));
+
 #if defined(_WIN32)
     strcpy(cmd, "explorer ");
+    strcat(cmd, url);
 #elif defined(__linux__)
-    strcpy(cmd, "xdg-open ");   // Alternatives: firefox, x-www-browser
+    sprintf(cmd, "xdg-open '%s'", url); // Alternatives: firefox, x-www-browser
 #elif defined(__APPLE__)
     strcpy(cmd, "open ");
-#endif
     strcat(cmd, url);
+#endif
+
     system(cmd);
     free(cmd);
 }
