@@ -1822,22 +1822,20 @@ int StorageLoadValue(int position)
 // Open URL with default system browser (if available)
 void OpenURL(const char *url)
 {
-    // Max length is "explorer ".length + url.maxlength (which is 2083),
-    // but we are not wasting that much memory here... let's set it up to 512
-    static char cmd[512] = { 0 };
+    char *cmd = calloc(10 + strlen(url), sizeof(char));
 
 #if defined(_WIN32)
     strcpy(cmd, "explorer ");
+    strcat(cmd, url);
 #elif defined(__linux__)
-    strcpy(cmd, "xdg-open ");   // Alternatives: firefox, x-www-browser
+    sprintf(cmd, "xdg-open '%s'", url); // Alternatives: firefox, x-www-browser
 #elif defined(__APPLE__)
     strcpy(cmd, "open ");
+    strcat(cmd, url);
 #endif
 
-    strcat(cmd, url);
     system(cmd);
-
-    memset(cmd, 0, 512);
+    free(cmd);
 }
 
 //----------------------------------------------------------------------------------
