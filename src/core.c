@@ -1822,19 +1822,17 @@ int StorageLoadValue(int position)
 // Open URL with default system browser (if available)
 void OpenURL(const char *url)
 {
-    char *cmd = calloc(10 + strlen(url), sizeof(char));
+    char *cmd = calloc(strlen(url) + 10, sizeof(char));
 
 #if defined(_WIN32)
-    strcpy(cmd, "explorer ");
-    strcat(cmd, url);
+    sprintf(cmd, "explorer '%s'", url);
 #elif defined(__linux__)
     sprintf(cmd, "xdg-open '%s'", url); // Alternatives: firefox, x-www-browser
 #elif defined(__APPLE__)
-    strcpy(cmd, "open ");
-    strcat(cmd, url);
+    sprintf(cmd, "open '%s'", url);
 #endif
-
     system(cmd);
+    
     free(cmd);
 }
 
