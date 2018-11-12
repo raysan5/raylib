@@ -1820,26 +1820,46 @@ int StorageLoadValue(int position)
 }
 
 // Open URL with default system browser (if available)
-// Note:
-// This function is onlyl safe to use if you control the URL given.
+// NOTE: This function is onlyl safe to use if you control the URL given.
 // A user could craft a malicious string performing another action.
-// Only call this function yourself not with user input or make sure to check the
-// string yourself.
-// See https://github.com/raysan5/raylib/issues/686
+// Only call this function yourself not with user input or make sure to check the string yourself.
+// CHECK: https://github.com/raysan5/raylib/issues/686
 void OpenURL(const char *url)
 {
-    char *cmd = calloc(strlen(url) + 10, sizeof(char));
+    // Small security check trying to avoid (partially) malicious code... 
+    // sorry for the inconvenience when you hit this point...
+    bool validUrl = true;
+    int len = strlen(url);
+    
+    for (int i = 0; i < len; i++) 
+    {
+        if ((url[i] == ';') || 
+            (url[i] == '?') || 
+            (url[i] == ':') || 
+            (url[i] == '=') || 
+            (url[i] == '&')) 
+        {
+            validUrl = false;
+            break;
+        }
+    }
+    
+    if (validUrl)
+    {
+        char *cmd = calloc(strlen(url) + 10, sizeof(char));
 
 #if defined(_WIN32)
-    sprintf(cmd, "explorer '%s'", url);
+        sprintf(cmd, "explorer '%s'", url);
 #elif defined(__linux__)
-    sprintf(cmd, "xdg-open '%s'", url); // Alternatives: firefox, x-www-browser
+        sprintf(cmd, "xdg-open '%s'", url); // Alternatives: firefox, x-www-browser
 #elif defined(__APPLE__)
-    sprintf(cmd, "open '%s'", url);
+        sprintf(cmd, "open '%s'", url);
 #endif
-    system(cmd);
+        system(cmd);
     
-    free(cmd);
+        free(cmd);
+    }
+    else TraceLog(LOG_WARNING, "Provided URL does not seem to be valid.");
 }
 
 //----------------------------------------------------------------------------------
