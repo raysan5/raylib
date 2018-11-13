@@ -1828,24 +1828,10 @@ void OpenURL(const char *url)
 {
     // Small security check trying to avoid (partially) malicious code... 
     // sorry for the inconvenience when you hit this point...
-    bool validUrl = true;
-    int len = strlen(url);
-    
-    for (int i = 0; i < len; i++) 
+    if (strchr(url, '\'') != NULL)
     {
-        if ((url[i] == ';') || 
-            (url[i] == '?') || 
-            (url[i] == ':') || 
-            (url[i] == '=') || 
-            (url[i] == '&')) 
-        {
-            validUrl = false;
-            break;
-        }
-    }
-    
-    if (validUrl)
-    {
+        TraceLog(LOG_WARNING, "Provided URL does not seem to be valid.");
+    } else {
         char *cmd = calloc(strlen(url) + 10, sizeof(char));
 
 #if defined(_WIN32)
@@ -1856,10 +1842,9 @@ void OpenURL(const char *url)
         sprintf(cmd, "open '%s'", url);
 #endif
         system(cmd);
-    
+
         free(cmd);
     }
-    else TraceLog(LOG_WARNING, "Provided URL does not seem to be valid.");
 }
 
 //----------------------------------------------------------------------------------
