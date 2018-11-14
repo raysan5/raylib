@@ -12,6 +12,6 @@ IDE | Platform | Template type | State
 [Notepad++](https://notepad-plus-plus.org/) | Windows | source/example compiling | DONE
 [VS2015](https://www.visualstudio.com) | Windows | source/example compiling | DONE
 [VS2017](https://www.visualstudio.com) | Windows | source/example compiling | DONE
-[VSCode](https://code.visualstudio.com/) | Windows, macOS | - | INCOMPLETE
+[VSCode](https://code.visualstudio.com/) | Windows, macOS | example compiling | DONE
 
  *New IDEs config files are welcome!*
