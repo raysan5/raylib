@@ -763,18 +763,21 @@ void ToggleFullscreen(void)
 void SetWindowIcon(Image image)
 {
 #if defined(PLATFORM_DESKTOP)
-    ImageFormat(&image, UNCOMPRESSED_R8G8B8A8);
+    Image imicon = ImageCopy(image);
+    ImageFormat(&imicon, UNCOMPRESSED_R8G8B8A8);
 
-    GLFWimage icon[1];
+    GLFWimage imicon[1] = { 0 };
 
-    icon[0].width = image.width;
-    icon[0].height = image.height;
-    icon[0].pixels = (unsigned char *)image.data;
+    icon[0].width = imicon.width;
+    icon[0].height = imicon.height;
+    icon[0].pixels = (unsigned char *)imicon.data;
 
-    // NOTE: We only support one image icon
+    // NOTE 1: We only support one image icon
+    // NOTE 2: The specified image data is copied before this function returns 
     glfwSetWindowIcon(window, 1, icon);
 
     // TODO: Support multi-image icons --> image.mipmaps
+    UnloadImage(imicon);
 #endif
 }
 
