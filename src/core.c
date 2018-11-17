@@ -766,7 +766,7 @@ void SetWindowIcon(Image image)
     Image imicon = ImageCopy(image);
     ImageFormat(&imicon, UNCOMPRESSED_R8G8B8A8);
 
-    GLFWimage imicon[1] = { 0 };
+    GLFWimage icon[1] = { 0 };
 
     icon[0].width = imicon.width;
     icon[0].height = imicon.height;
