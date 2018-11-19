@@ -430,8 +430,8 @@ void DrawGameplayScreen(void)
     else
     {
         // Draw wave using render target
-        ClearBackground(BLANK);
         BeginTextureMode(waveTarget);
+            ClearBackground(BLANK);
             DrawSamplesMap(samples, totalSamples, currentSample, (Rectangle){ 0, 0, waveTarget.texture.width, waveTarget.texture.height }, MAROON);
         EndTextureMode();
 

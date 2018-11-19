@@ -128,17 +128,19 @@ int main()
 
             ClearBackground(RAYWHITE);
 
-            BeginTextureMode(target);   // Enable drawing to texture
+            BeginTextureMode(target);       // Enable drawing to texture
             
-                BeginMode3D(camera);
+                ClearBackground(RAYWHITE);  // Clear texture background
+
+                BeginMode3D(camera);        // Begin 3d mode drawing
 
                     DrawModel(model, position, 0.1f, WHITE);   // Draw 3d model with texture
 
                     DrawGrid(10, 1.0f);     // Draw a grid
 
-                EndMode3D();
+                EndMode3D();                // End 3d mode drawing, returns to orthographic 2d mode
                 
-            EndTextureMode();           // End drawing to texture (now we have a texture available for next passes)
+            EndTextureMode();               // End drawing to texture (now we have a texture available for next passes)
             
             // Render previously generated texture using selected postpro shader
             BeginShaderMode(shaders[currentShader]);
@@ -148,6 +150,7 @@ int main()
                 
             EndShaderMode();
             
+            // Draw 2d shapes and text over drawn texture
             DrawRectangle(0, 9, 580, 30, Fade(LIGHTGRAY, 0.7f));
             
             DrawText("(c) Church 3D model by Alberto Cano", screenWidth - 200, screenHeight - 20, 10, GRAY);
