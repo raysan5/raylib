@@ -1173,7 +1173,9 @@ void BeginTextureMode(RenderTexture2D target)
 
     rlEnableRenderTexture(target.id);   // Enable render target
 
-    rlClearScreenBuffers();             // Clear render texture buffers
+    // Some projects need the buffer to not be empited when drawing to
+    // the render texture.
+    //rlClearScreenBuffers();             // Clear render texture buffers
 
     // Set viewport to framebuffer size
     rlViewport(0, 0, target.texture.width, target.texture.height);
