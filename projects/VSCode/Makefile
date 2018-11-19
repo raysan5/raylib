@@ -179,7 +179,7 @@ ifeq ($(PLATFORM),PLATFORM_DESKTOP)
         # resources file contains windows exe icon
         # -Wl,--subsystem,windows hides the console window
         CFLAGS += -Wl,--subsystem,windows
-        LDFLAGS += $(RAYLIB_PATH)/raylib.rc.o
+        LDFLAGS += $(RAYLIB_PATH)/raylib.rc.data
     endif
     ifeq ($(PLATFORM_OS),LINUX)
         CFLAGS += -D_DEFAULT_SOURCE

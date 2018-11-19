@@ -7,8 +7,9 @@
 *
 *   Use the following line to compile:
 *
-*   gcc -o $(NAME_PART).exe $(FILE_NAME) -s $(RAYLIB_DIR)\raylib\raylib.rc.o -static -lraylib -lpthread 
-*   -lglfw3 -lopengl32 -lgdi32 -lopenal32 -lwinmm -std=c99 -Wl,--subsystem,windows -Wl,-allow-multiple-definition
+*   gcc -o $(NAME_PART).exe $(FILE_NAME) -s -static  /
+*       -lraylib -lpthread -lglfw3 -lopengl32 -lgdi32 -lopenal32 -lwinmm /
+*       -std=c99 -Wl,--subsystem,windows -Wl,-allow-multiple-definition
 *   
 *   Copyright (c) 2016-2018 Victor Fisac
 *

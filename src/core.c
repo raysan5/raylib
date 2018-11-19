@@ -128,7 +128,7 @@
 #include <ctype.h>          // Required for: tolower() [Used in IsFileExtension()]
 #include <sys/stat.h>       // Required for stat() [Used in GetLastWriteTime()]
 
-#if defined(PLATFORM_DESKTOP) && defined(_WIN32) && defined(_MSC_VER)
+#if defined(PLATFORM_DESKTOP) && defined(_WIN32) && (defined(_MSC_VER) || defined(__TINYC__))
     #include "external/dirent.h"    // Required for: DIR, opendir(), closedir() [Used in GetDirectoryFiles()]
 #else
     #include <dirent.h>             // Required for: DIR, opendir(), closedir() [Used in GetDirectoryFiles()]
