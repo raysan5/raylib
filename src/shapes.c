@@ -442,7 +442,7 @@ void DrawPoly(Vector2 center, int sides, float radius, float rotation, Color col
         rlTranslatef(center.x, center.y, 0.0);
         rlRotatef(rotation, 0, 0, 1);
 
-    #if defined(SUPPORT_QUADS_DRAW_MODE)
+#if defined(SUPPORT_QUADS_DRAW_MODE)
         rlEnableTexture(GetShapesTexture().id);
 
         rlBegin(RL_QUADS);
@@ -464,7 +464,7 @@ void DrawPoly(Vector2 center, int sides, float radius, float rotation, Color col
             }
         rlEnd();
         rlDisableTexture();
-    #else
+#else
         rlBegin(RL_TRIANGLES);
             for (int i = 0; i < 360; i += 360/sides)
             {
@@ -475,7 +475,7 @@ void DrawPoly(Vector2 center, int sides, float radius, float rotation, Color col
                 rlVertex2f(sinf(DEG2RAD*(i + 360/sides))*radius, cosf(DEG2RAD*(i + 360/sides))*radius);
             }
         rlEnd();
-    #endif
+#endif
     rlPopMatrix();
 }
 
@@ -486,7 +486,7 @@ void DrawPolyEx(Vector2 *points, int pointsCount, Color color)
     {
         if (rlCheckBufferLimit(RL_QUADS, pointsCount)) rlglDraw();
 
-    #if defined(SUPPORT_QUADS_DRAW_MODE)
+#if defined(SUPPORT_QUADS_DRAW_MODE)
         rlEnableTexture(GetShapesTexture().id);
 
         rlBegin(RL_QUADS);
@@ -501,7 +501,7 @@ void DrawPolyEx(Vector2 *points, int pointsCount, Color color)
             }
         rlEnd();
         rlDisableTexture();
-    #else
+#else
         rlBegin(RL_TRIANGLES);
             rlColor4ub(color.r, color.g, color.b, color.a);
 
@@ -512,7 +512,7 @@ void DrawPolyEx(Vector2 *points, int pointsCount, Color color)
                 rlVertex2f(points[i + 1].x, points[i + 1].y);
             }
         rlEnd();
-    #endif
+#endif
     }
 }
 
@@ -716,7 +716,9 @@ static Texture2D GetShapesTexture(void)
     {
 #if defined(SUPPORT_FONT_TEXTURE)
         texShapes = GetFontDefault().texture;           // Use font texture white character
-        recTexShapes = GetFontDefault().chars[95].rec;
+        Rectangle rec = GetFontDefault().chars[95].rec;
+        // NOTE: We setup a 1px padding on char rectangle to avoid texture bleeding on MSAA filtering
+        recTexShapes = (Rectangle){ rec.x + 1, rec.y + 1, rec.width - 2, rec.height - 2 };
 #else
         texShapes = GetTextureDefault();                // Use default white texture
         recTexShapes = { 0.0f, 0.0f, 1.0f, 1.0f };
