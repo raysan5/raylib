@@ -12,7 +12,7 @@
                 "DEBUGGING=TRUE"
             ],
             "windows": {
-                "command": "C:/raylib/mingw/bin/mingw32-make.exe",
+                "command": "C:/raylib/mingw32/bin/mingw32-make.exe",
                 "args": [
                     "RAYLIB_PATH=C:/raylib/raylib"
                 ],
@@ -35,7 +35,7 @@
                 "PLATFORM=PLATFORM_DESKTOP",
             ],
             "windows": {
-                "command": "C:/raylib/mingw/bin/mingw32-make.exe",
+                "command": "C:/raylib/mingw32/bin/mingw32-make.exe",
                 "args": [
                     "RAYLIB_PATH=C:/raylib/raylib",
                 ],
