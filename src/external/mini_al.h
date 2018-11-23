@@ -1,5 +1,5 @@
 // Audio playback and capture library. Public domain. See "unlicense" statement at the end of this file.
-// mini_al - v0.8.10 - 2018-10-21
+// mini_al - v0.8.11 - 2018-11-21
 //
 // David Reid - davidreidsoftware@gmail.com
 
@@ -131,6 +131,12 @@
 // BACKEND NUANCES
 // ===============
 //
+// PulseAudio
+// ----------
+// - If you experience bad glitching/noise on Arch Linux, consider this fix from the Arch wiki:
+//     https://wiki.archlinux.org/index.php/PulseAudio/Troubleshooting#Glitches,_skips_or_crackling
+//   Alternatively, consider using a different backend such as ALSA.
+//
 // Android
 // -------
 // - To capture audio on Android, remember to add the RECORD_AUDIO permission to your manifest:
@@ -147,6 +153,10 @@
 //               <DeviceCapability Name="microphone" />
 //           </Capabilities>
 //       </Package>
+//
+// OpenAL
+// ------
+// - Capture is not supported on iOS with OpenAL. Use the Core Audio backend instead.
 //
 //
 // OPTIONS
@@ -2811,6 +2821,10 @@ mal_uint64 mal_sine_wave_read_ex(mal_sine_wave* pSineWave, mal_uint64 frameCount
     #endif
 #endif
 
+#if defined(_MSC_VER)
+    #pragma warning(push)
+    #pragma warning(disable:4752)   // found Intel(R) Advanced Vector Extensions; consider using /arch:AVX
+#endif
 
 #if defined(MAL_X64) || defined(MAL_X86)
     #if defined(_MSC_VER) && !defined(__clang__)
@@ -11084,8 +11098,22 @@ mal_result mal_context_init__alsa(mal_context* pContext)
     mal_assert(pContext != NULL);
 
 #ifndef MAL_NO_RUNTIME_LINKING
-    pContext->alsa.asoundSO = mal_dlopen("libasound.so");
+    const char* libasoundNames[] = {
+        "libasound.so.2",
+        "libasound.so"
+    };
+
+    for (size_t i = 0; i < mal_countof(libasoundNames); ++i) {
+        pContext->alsa.asoundSO = mal_dlopen(libasoundNames[i]);
+        if (pContext->alsa.asoundSO != NULL) {
+            break;
+        }
+    }
+
     if (pContext->alsa.asoundSO == NULL) {
+#ifdef MAL_DEBUG_OUTPUT
+        printf("[ALSA] Failed to open shared object.\n");
+#endif
         return MAL_NO_BACKEND;
     }
 
@@ -14947,7 +14975,7 @@ OSStatus mal_on_output__coreaudio(void* pUserData, AudioUnitRenderActionFlags* p
         // assumes each buffer is the same size.
         mal_uint8 tempBuffer[4096];
         for (UInt32 iBuffer = 0; iBuffer < pBufferList->mNumberBuffers; iBuffer += pDevice->internalChannels) {
-            mal_uint32 frameCountPerBuffer = pBufferList->mBuffers[iBuffer].mDataByteSize / mal_get_bytes_per_frame(pDevice->internalFormat, pDevice->internalChannels);
+            mal_uint32 frameCountPerBuffer = pBufferList->mBuffers[iBuffer].mDataByteSize / mal_get_bytes_per_sample(pDevice->internalFormat);
             
             mal_uint32 framesRemaining = frameCountPerBuffer;
             while (framesRemaining > 0) {
@@ -15043,7 +15071,7 @@ OSStatus mal_on_input__coreaudio(void* pUserData, AudioUnitRenderActionFlags* pA
         for (UInt32 iBuffer = 0; iBuffer < pRenderedBufferList->mNumberBuffers; iBuffer += pDevice->internalChannels) {
             mal_uint32 framesRemaining = frameCount;
             while (framesRemaining > 0) {
-                mal_uint32 framesToSend = sizeof(tempBuffer) / mal_get_bytes_per_frame(pDevice->internalFormat, pDevice->internalChannels);
+                mal_uint32 framesToSend = sizeof(tempBuffer) / mal_get_bytes_per_sample(pDevice->internalFormat);
                 if (framesToSend > framesRemaining) {
                     framesToSend = framesRemaining;
                 }
@@ -15672,6 +15700,13 @@ mal_result mal_context_init__coreaudio(mal_context* pContext)
         mal_assert(pAudioSession != NULL);
 
         [pAudioSession setCategory: AVAudioSessionCategoryPlayAndRecord error:nil];
+        
+        // By default we want mini_al to use the speakers instead of the receiver. In the future this may
+        // be customizable.
+        mal_bool32 useSpeakers = MAL_TRUE;
+        if (useSpeakers) {
+            [pAudioSession overrideOutputAudioPort:AVAudioSessionPortOverrideSpeaker error:nil];
+        }
     }
 #endif
     
@@ -19820,7 +19855,11 @@ void mal_audio_callback__sdl(void* pUserData, mal_uint8* pBuffer, int bufferSize
     mal_device* pDevice = (mal_device*)pUserData;
     mal_assert(pDevice != NULL);
 
-    mal_uint32 bufferSizeInFrames = (mal_uint32)bufferSizeInBytes / mal_get_bytes_per_sample(pDevice->internalFormat) / pDevice->internalChannels;
+    mal_uint32 bufferSizeInFrames = (mal_uint32)bufferSizeInBytes / mal_get_bytes_per_frame(pDevice->internalFormat, pDevice->internalChannels);
+
+#ifdef MAL_DEBUG_OUTPUT
+        printf("[SDL] Callback: bufferSizeInBytes=%d, bufferSizeInFrames=%d\n", bufferSizeInBytes, bufferSizeInFrames);
+#endif
 
     if (pDevice->type == mal_device_type_playback) {
         mal_device__read_frames_from_client(pDevice, bufferSizeInFrames, pBuffer);
@@ -19913,7 +19952,7 @@ mal_result mal_device_init__sdl(mal_context* pContext, mal_device_type type, con
 
 #ifdef MAL_DEBUG_OUTPUT
     printf("=== SDL CONFIG ===\n");
-    printf("REQUESTED -> RECEIVED\n");
+    printf("    SDL VERSION:            %s\n", pDevice->pContext->sdl.usingSDL1 ? "1" : "2");
     printf("    FORMAT:                 %s -> %s\n", mal_get_format_name(pConfig->format), mal_get_format_name(pDevice->internalFormat));
     printf("    CHANNELS:               %d -> %d\n", desiredSpec.channels, obtainedSpec.channels);
     printf("    SAMPLE RATE:            %d -> %d\n", desiredSpec.freq, obtainedSpec.freq);
@@ -20899,6 +20938,13 @@ mal_result mal_device_init(mal_context* pContext, mal_device_type type, mal_devi
     printf("  Format:      %s -> %s\n", mal_get_format_name(pDevice->format), mal_get_format_name(pDevice->internalFormat));
     printf("  Channels:    %d -> %d\n", pDevice->channels, pDevice->internalChannels);
     printf("  Sample Rate: %d -> %d\n", pDevice->sampleRate, pDevice->internalSampleRate);
+    printf("  Conversion:\n");
+    printf("    Pre Format Conversion:    %s\n", pDevice->dsp.isPreFormatConversionRequired  ? "YES" : "NO");
+    printf("    Post Format Conversion:   %s\n", pDevice->dsp.isPostFormatConversionRequired ? "YES" : "NO");
+    printf("    Channel Routing:          %s\n", pDevice->dsp.isChannelRoutingRequired       ? "YES" : "NO");
+    printf("    SRC:                      %s\n", pDevice->dsp.isSRCRequired                  ? "YES" : "NO");
+    printf("    Channel Routing at Start: %s\n", pDevice->dsp.isChannelRoutingAtStart        ? "YES" : "NO");
+    printf("    Passthrough:              %s\n", pDevice->dsp.isPassthrough                  ? "YES" : "NO");
 #endif
 
 
@@ -25439,9 +25485,6 @@ mal_uint64 mal_src_read_deinterleaved(mal_src* pSRC, mal_uint64 frameCount, void
     }
 
     mal_src_algorithm algorithm = pSRC->config.algorithm;
-    if (pSRC->config.sampleRateIn == pSRC->config.sampleRateOut) {
-        //algorithm = mal_src_algorithm_none;
-    }
 
     // Can use a function pointer for this.
     switch (algorithm) {
@@ -28503,12 +28546,19 @@ mal_uint64 mal_sine_wave_read_ex(mal_sine_wave* pSineWave, mal_uint64 frameCount
     return frameCount;
 }
 
+#if defined(_MSC_VER)
+    #pragma warning(pop)
+#endif
 
 #endif  // MINI_AL_IMPLEMENTATION
 
 
 // REVISION HISTORY
 // ================
+//
+// v0.8.11 - 2018-11-21
+//   - iOS bug fixes.
+//   - Minor tweaks to PulseAudio.
 //
 // v0.8.10 - 2018-10-21
 //   - Core Audio: Fix a hang when uninitializing a device.
