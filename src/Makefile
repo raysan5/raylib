@@ -148,9 +148,9 @@ endif
 
 ifeq ($(PLATFORM),PLATFORM_WEB)
     # Emscripten required variables
-    EMSDK_PATH          = C:/emsdk
-    EMSCRIPTEN_VERSION  = 1.38.8
-    CLANG_VERSION       = e1.38.8_64bit
+    EMSDK_PATH          = D:/emsdk
+    EMSCRIPTEN_VERSION  = 1.38.20
+    CLANG_VERSION       = e1.38.20_64bit
     PYTHON_VERSION      = 2.7.13.1_64bit\python-2.7.13.amd64
     NODE_VERSION        = 8.9.1_64bit
     export PATH         = $(EMSDK_PATH);$(EMSDK_PATH)\clang\$(CLANG_VERSION);$(EMSDK_PATH)\node\$(NODE_VERSION)\bin;$(EMSDK_PATH)\python\$(PYTHON_VERSION);$(EMSDK_PATH)\emscripten\$(EMSCRIPTEN_VERSION);C:\raylib\MinGW\bin:$$(PATH)
@@ -202,7 +202,7 @@ ifeq ($(PLATFORM),PLATFORM_RPI)
     RAYLIB_RELEASE_PATH = $(RAYLIB_PATH)/release/libs/rpi
 endif
 ifeq ($(PLATFORM),PLATFORM_WEB)
-    RAYLIB_RELEASE_PATH = $(RAYLIB_PATH)/release/libs/html5
+    RAYLIB_RELEASE_PATH = $(RAYLIB_PATH)/src
 endif
 ifeq ($(PLATFORM),PLATFORM_ANDROID)
     RAYLIB_RELEASE_PATH = $(RAYLIB_PATH)/release/libs/android/$(ANDROID_ARCH_NAME)
@@ -440,16 +440,16 @@ endif
 # Compile raylib library
 # NOTE: Release directory is created if not exist
 raylib: $(OBJS)
-ifeq ($(PLATFORM_OS),WINDOWS)
-	if not exist $(RAYLIB_RELEASE_PATH) mkdir $(RAYLIB_RELEASE_PATH)
-else
-	mkdir -p $(RAYLIB_RELEASE_PATH)
-endif
 ifeq ($(PLATFORM),PLATFORM_WEB)
     # Compile raylib for web.
 	emcc -O1 $(OBJS) -o $(RAYLIB_RELEASE_PATH)/libraylib.bc
 	@echo "raylib library generated (libraylib.bc)!"
 else
+    ifeq ($(PLATFORM_OS),WINDOWS)
+		if not exist $(RAYLIB_RELEASE_PATH) mkdir $(RAYLIB_RELEASE_PATH)
+    else
+		mkdir -p $(RAYLIB_RELEASE_PATH)
+    endif
     ifeq ($(RAYLIB_LIBTYPE),SHARED)
         ifeq ($(PLATFORM),PLATFORM_DESKTOP)
             ifeq ($(PLATFORM_OS),WINDOWS)
