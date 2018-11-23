@@ -110,7 +110,7 @@
 
 #if defined(SUPPORT_FILEFORMAT_MP3)
     #define DR_MP3_IMPLEMENTATION
-    #include "external/dr_mp3.h"       // MP3 loading functions
+    #include "external/dr_mp3.h"        // MP3 loading functions
 #endif
 
 #if defined(_MSC_VER)
@@ -142,7 +142,7 @@ typedef enum {
 
 // Music type (file streaming from memory)
 typedef struct MusicData {
-    MusicContextType ctxType;           // Type of music context (OGG, XM, MOD)
+    MusicContextType ctxType;           // Type of music context
 #if defined(SUPPORT_FILEFORMAT_OGG)
     stb_vorbis *ctxOgg;                 // OGG audio context
 #endif
@@ -189,13 +189,13 @@ static Wave LoadWAV(const char *fileName);              // Load WAV file
 static int SaveWAV(Wave wave, const char *fileName);    // Save wave data as WAV file
 #endif
 #if defined(SUPPORT_FILEFORMAT_OGG)
-static Wave LoadOGG(const char *fileName);          // Load OGG file
+static Wave LoadOGG(const char *fileName);              // Load OGG file
 #endif
 #if defined(SUPPORT_FILEFORMAT_FLAC)
-static Wave LoadFLAC(const char *fileName);         // Load FLAC file
+static Wave LoadFLAC(const char *fileName);             // Load FLAC file
 #endif
 #if defined(SUPPORT_FILEFORMAT_MP3)
-static Wave LoadMP3(const char *fileName);          // Load MP3 file
+static Wave LoadMP3(const char *fileName);              // Load MP3 file
 #endif
 
 #if defined(AUDIO_STANDALONE)
@@ -1087,7 +1087,7 @@ Music LoadMusicStream(const char *fileName)
 
             // OGG bit rate defaults to 16 bit, it's enough for compressed format
             music->stream = InitAudioStream(info.sample_rate, 16, info.channels);
-            music->totalSamples = (unsigned int)stb_vorbis_stream_length_in_samples(music->ctxOgg); // Independent by channel
+            music->totalSamples = (unsigned int)stb_vorbis_stream_length_in_samples(music->ctxOgg)*info.channels;
             music->samplesLeft = music->totalSamples;
             music->ctxType = MUSIC_AUDIO_OGG;
             music->loopCount = -1;                       // Infinite loop by default
@@ -1107,7 +1107,7 @@ Music LoadMusicStream(const char *fileName)
         else
         {
             music->stream = InitAudioStream(music->ctxFlac->sampleRate, music->ctxFlac->bitsPerSample, music->ctxFlac->channels);
-            music->totalSamples = (unsigned int)music->ctxFlac->totalSampleCount/music->ctxFlac->channels;
+            music->totalSamples = (unsigned int)music->ctxFlac->totalSampleCount;
             music->samplesLeft = music->totalSamples;
             music->ctxType = MUSIC_AUDIO_FLAC;
             music->loopCount = -1;                       // Infinite loop by default
@@ -1816,7 +1816,7 @@ static Wave LoadOGG(const char *fileName)
         wave.sampleRate = info.sample_rate;
         wave.sampleSize = 16;                   // 16 bit per sample (short)
         wave.channels = info.channels;
-        wave.sampleCount = (int)stb_vorbis_stream_length_in_samples(oggFile);  // Independent by channel
+        wave.sampleCount = (unsigned int)stb_vorbis_stream_length_in_samples(oggFile)*info.channels;  // Independent by channel
 
         float totalSeconds = stb_vorbis_stream_length_in_seconds(oggFile);
         if (totalSeconds > 10) TraceLog(LOG_WARNING, "[%s] Ogg audio length is larger than 10 seconds (%f), that's a big file in memory, consider music streaming", fileName, totalSeconds);
@@ -1848,7 +1848,7 @@ static Wave LoadFLAC(const char *fileName)
     uint64_t totalSampleCount;
     wave.data = drflac_open_and_decode_file_s16(fileName, &wave.channels, &wave.sampleRate, &totalSampleCount);
 
-    wave.sampleCount = (int)totalSampleCount/wave.channels;
+    wave.sampleCount = (unsigned int)totalSampleCount;
     wave.sampleSize = 16;
 
     // NOTE: Only support up to 2 channels (mono, stereo)
