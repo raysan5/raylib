@@ -397,10 +397,9 @@ static double targetTime = 0.0;             // Desired time for one frame, if 0 
 static unsigned char configFlags = 0;       // Configuration flags (bit based)
 static bool showLogo = false;               // Track if showing logo at init is enabled
 
-#if defined(PLATFORM_DESKTOP)
 static char **dropFilesPath;                // Store dropped files paths as strings
 static int dropFilesCount = 0;              // Count dropped files strings
-#endif
+
 static char **dirFilesPath;                 // Store directory files paths as strings
 static int dirFilesCount = 0;               // Count directory files strings
 
@@ -449,8 +448,6 @@ static void ScrollCallback(GLFWwindow *window, double xoffset, double yoffset); 
 static void CursorEnterCallback(GLFWwindow *window, int enter);                            // GLFW3 Cursor Enter Callback, cursor enters client area
 static void WindowSizeCallback(GLFWwindow *window, int width, int height);                 // GLFW3 WindowSize Callback, runs when window is resized
 static void WindowIconifyCallback(GLFWwindow *window, int iconified);                      // GLFW3 WindowIconify Callback, runs when window is minimized/restored
-#endif
-#if defined(PLATFORM_DESKTOP)
 static void WindowDropCallback(GLFWwindow *window, int count, const char **paths);         // GLFW3 Window Drop Callback, runs when drop files into window
 #endif
 
@@ -1692,29 +1689,20 @@ bool ChangeDirectory(const char *dir)
 // Check if a file has been dropped into window
 bool IsFileDropped(void)
 {
-#if defined(PLATFORM_DESKTOP)
     if (dropFilesCount > 0) return true;
     else return false;
-#else
-    return false;
-#endif
 }
 
 // Get dropped files names
 char **GetDroppedFiles(int *count)
 {
-#if defined(PLATFORM_DESKTOP)
     *count = dropFilesCount;
     return dropFilesPath;
-#else
-    return NULL;
-#endif
 }
 
 // Clear dropped files paths buffer
 void ClearDroppedFiles(void)
 {
-#if defined(PLATFORM_DESKTOP)
     if (dropFilesCount > 0)
     {
         for (int i = 0; i < dropFilesCount; i++) free(dropFilesPath[i]);
@@ -1723,11 +1711,10 @@ void ClearDroppedFiles(void)
 
         dropFilesCount = 0;
     }
-#endif
 }
 
 // Get file modification time (last write time)
-RLAPI long GetFileModTime(const char *fileName)
+long GetFileModTime(const char *fileName)
 {
     struct stat result = { 0 };
 
@@ -2381,9 +2368,7 @@ static bool InitGraphicsDevice(int width, int height)
     glfwSetCharCallback(window, CharCallback);
     glfwSetScrollCallback(window, ScrollCallback);
     glfwSetWindowIconifyCallback(window, WindowIconifyCallback);
-#if defined(PLATFORM_DESKTOP)
     glfwSetDropCallback(window, WindowDropCallback);
-#endif
 
     glfwMakeContextCurrent(window);
 
@@ -3319,9 +3304,7 @@ static void WindowIconifyCallback(GLFWwindow *window, int iconified)
     if (iconified) windowMinimized = true;  // The window was iconified
     else windowMinimized = false;           // The window was restored
 }
-#endif
 
-#if defined(PLATFORM_DESKTOP)
 // GLFW3 Window Drop Callback, runs when drop files into window
 // NOTE: Paths are stored in dinamic memory for further retrieval
 // Everytime new files are dropped, old ones are discarded
