@@ -159,6 +159,24 @@
     
     <textarea id="output" rows="8"></textarea>
 
+    <script type='text/javascript' src="https://cdn.jsdelivr.net/gh/eligrey/FileSaver.js/dist/FileSaver.min.js"> </script>
+    <script type='text/javascript'>
+      function SaveFileFromMEMFSToDisk(memoryFSname, localFSname)     // This can be called by C/C++ code
+      {
+        var isSafari = /^((?!chrome|android).)*safari/i.test(navigator.userAgent);
+        var data = FS.readFile(memoryFSname);
+        var blob;
+
+        if (isSafari) blob = new Blob([data.buffer], {type: "application/octet-stream"});
+        else blob = new Blob([data.buffer], {type: "application/octet-binary"});
+
+        // NOTE: SaveAs Dialog is a browser setting. For example, in Google Chrome,
+        // in Settings/Advanced/Downloads section you have a setting:
+        // 'Ask where to save each file before downloading' - which you can set true/false.
+        // If you enable this setting it would always ask you and bring the SaveAs Dialog
+        saveAs(blob, localFSname);
+      }
+    </script>
     <script type='text/javascript'>
       var statusElement = document.getElementById('status');
       var progressElement = document.getElementById('progress');
