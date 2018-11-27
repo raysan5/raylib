@@ -1725,8 +1725,8 @@ void rlglInit(int width, int height)
         if(strcmp(extList[i], (const char *)"GL_EXT_debug_marker") == 0) debugMarkerSupported = true;
     }
 
-#if defined(_MSC_VER)
-    //free(extList);
+#if defined(_WIN32) && defined(_MSC_VER)
+    free(extList);
 #endif
 
 #if defined(GRAPHICS_API_OPENGL_ES2)
