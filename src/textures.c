@@ -1101,46 +1101,33 @@ void ImageAlphaClear(Image *image, Color color, float threshold)
 // Crop image depending on alpha value
 void ImageAlphaCrop(Image *image, float threshold)
 {
-    Rectangle crop = { 0 };
-
     Color *pixels = GetImageData(*image);
 
-    int minx = 0;
-    int miny = 0;
-
-    for (int i = 0; i < image->width*image->height; i++)
+    int xMin = 65536;   // Define a big enough number
+    int xMax = 0;
+    int yMin = 65536;
+    int yMax = 0;
+    
+    for (int y = 0; y < image->height; y++)
     {
-        if (pixels[i].a > (unsigned char)(threshold*255.0f))
+        for (int x = 0; x < image->width; x++)
         {
-            minx = i%image->width;
-            miny = -(-((i/image->width) + 1) + 1);
-
-            if (crop.y == 0.0f) crop.y = (float)miny;
-
-            if (crop.x == 0.0f) crop.x = (float)minx;
-            else if (minx < crop.x) crop.x = (float)minx;
-
-            if (crop.width == 0.0f) crop.width = (float)minx;
-            else if (crop.width < minx) crop.width = (float)minx;
-
-            if (crop.height == 0.0f) crop.height = (float)miny;
-            else if (crop.height < (float)miny) crop.height = (float)miny;
+            if (pixels[y*image->width + x].a > (unsigned char)(threshold*255.0f))
+            {
+                if (x < xMin) xMin = x;
+                if (x > xMax) xMax = x;
+                if (y < yMin) yMin = y;
+                if (y > yMax) yMax = y;
+            }
         }
     }
-
-    crop.width -= (crop.x - 1);
-    crop.height -= (crop.y - 1);
-
-    TraceLog(LOG_INFO, "Crop rectangle: (%i, %i, %i, %i)", crop.x, crop.y, crop.width, crop.height);
+    
+    Rectangle crop = { xMin, yMin, (xMax + 1) - xMin, (yMax + 1) - yMin };
 
     free(pixels);
-
-    // NOTE: Added this weird check to avoid additional 1px crop to
-    // image data that has already been cropped...
-    if ((crop.x != 1) &&
-        (crop.y != 1) &&
-        (crop.width != image->width - 1) &&
-        (crop.height != image->height - 1)) ImageCrop(image, crop);
+    
+    // Check for not empty image brefore cropping
+    if (!((xMax < xMin) || (yMax < yMin))) ImageCrop(image, crop);
 }
 
 // Premultiply alpha channel
