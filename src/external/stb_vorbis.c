@@ -496,11 +496,7 @@ static int error(vorb *f, enum STBVorbisError e)
 #define array_size_required(count,size)  (count*(sizeof(void *)+(size)))
 
 #define temp_alloc(f,size)              (f->alloc.alloc_buffer ? setup_temp_malloc(f,size) : alloca(size))
-#ifdef dealloca
-#define temp_free(f,p)                  (f->alloc.alloc_buffer ? 0 : dealloca(size))
-#else
 #define temp_free(f,p)                  0
-#endif
 #define temp_alloc_save(f)              ((f)->temp_offset)
 #define temp_alloc_restore(f,p)         ((f)->temp_offset = (p))
 
@@ -3671,6 +3667,7 @@ static int start_decoder(vorb *f)
       f->previous_window[i] = (float *) setup_malloc(f, sizeof(float) * f->blocksize_1/2);
       f->finalY[i]          = (int16 *) setup_malloc(f, sizeof(int16) * longest_floorlist);
       if (f->channel_buffers[i] == NULL || f->previous_window[i] == NULL || f->finalY[i] == NULL) return error(f, VORBIS_outofmem);
+      memset(f->channel_buffers[i], 0, sizeof(float) * f->blocksize_1);
       #ifdef STB_VORBIS_NO_DEFER_FLOOR
       f->floor_buffers[i]   = (float *) setup_malloc(f, sizeof(float) * f->blocksize_1/2);
       if (f->floor_buffers[i] == NULL) return error(f, VORBIS_outofmem);
@@ -4977,22 +4974,22 @@ int stb_vorbis_get_samples_float(stb_vorbis *f, int channels, float **buffer, in
 #endif // STB_VORBIS_NO_PULLDATA_API
 
 /* Version history
-    1.12    - 2017/11/21 - limit residue begin/end to blocksize/2 to avoid large temp allocs in bad/corrupt files
-    1.11    - 2017/07/23 - fix MinGW compilation 
-    1.10    - 2017/03/03 - more robust seeking; fix negative ilog(); clear error in open_memory
-    1.09    - 2016/04/04 - back out 'avoid discarding last frame' fix from previous version
-    1.08    - 2016/04/02 - fixed multiple warnings; fix setup memory leaks;
+    1.12    - 2017-11-21 - limit residue begin/end to blocksize/2 to avoid large temp allocs in bad/corrupt files
+    1.11    - 2017-07-23 - fix MinGW compilation 
+    1.10    - 2017-03-03 - more robust seeking; fix negative ilog(); clear error in open_memory
+    1.09    - 2016-04-04 - back out 'avoid discarding last frame' fix from previous version
+    1.08    - 2016-04-02 - fixed multiple warnings; fix setup memory leaks;
                            avoid discarding last frame of audio data
-    1.07    - 2015/01/16 - fixed some warnings, fix mingw, const-correct API
+    1.07    - 2015-01-16 - fixed some warnings, fix mingw, const-correct API
                            some more crash fixes when out of memory or with corrupt files 
-    1.06    - 2015/08/31 - full, correct support for seeking API (Dougall Johnson)
+    1.06    - 2015-08-31 - full, correct support for seeking API (Dougall Johnson)
                            some crash fixes when out of memory or with corrupt files
-    1.05    - 2015/04/19 - don't define __forceinline if it's redundant
-    1.04    - 2014/08/27 - fix missing const-correct case in API
-    1.03    - 2014/08/07 - Warning fixes
-    1.02    - 2014/07/09 - Declare qsort compare function _cdecl on windows
-    1.01    - 2014/06/18 - fix stb_vorbis_get_samples_float
-    1.0     - 2014/05/26 - fix memory leaks; fix warnings; fix bugs in multichannel
+    1.05    - 2015-04-19 - don't define __forceinline if it's redundant
+    1.04    - 2014-08-27 - fix missing const-correct case in API
+    1.03    - 2014-08-07 - Warning fixes
+    1.02    - 2014-07-09 - Declare qsort compare function _cdecl on windows
+    1.01    - 2014-06-18 - fix stb_vorbis_get_samples_float
+    1.0     - 2014-05-26 - fix memory leaks; fix warnings; fix bugs in multichannel
                            (API change) report sample rate for decode-full-file funcs
     0.99996 - bracket #include <malloc.h> for macintosh compilation by Laurent Gomila
     0.99995 - use union instead of pointer-cast for fast-float-to-int to avoid alias-optimization problem

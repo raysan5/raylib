@@ -1,4 +1,4 @@
-// Ogg Vorbis audio decoder - v1.13b - public domain
+// Ogg Vorbis audio decoder - v1.14 - public domain
 // http://nothings.org/stb_vorbis/
 //
 // Original version written by Sean Barrett in 2007.
@@ -30,24 +30,26 @@
 //    Tom Beaumont       Ingo Leitgeb        Nicolas Guillemot
 //    Phillip Bennefall  Rohit               Thiago Goulart
 //    manxorist@github   saga musix          github:infatum
+//    Timur Gagiev
 //
 // Partial history:
-//    1.13    - 2018/01/29 - fix truncation of last frame (hopefully)
-//    1.12    - 2017/11/21 - limit residue begin/end to blocksize/2 to avoid large temp allocs in bad/corrupt files
-//    1.11    - 2017/07/23 - fix MinGW compilation 
-//    1.10    - 2017/03/03 - more robust seeking; fix negative ilog(); clear error in open_memory
-//    1.09    - 2016/04/04 - back out 'truncation of last frame' fix from previous version
-//    1.08    - 2016/04/02 - warnings; setup memory leaks; truncation of last frame
-//    1.07    - 2015/01/16 - fixes for crashes on invalid files; warning fixes; const
-//    1.06    - 2015/08/31 - full, correct support for seeking API (Dougall Johnson)
+//    1.14    - 2018-02-11 - delete bogus dealloca usage
+//    1.13    - 2018-01-29 - fix truncation of last frame (hopefully)
+//    1.12    - 2017-11-21 - limit residue begin/end to blocksize/2 to avoid large temp allocs in bad/corrupt files
+//    1.11    - 2017-07-23 - fix MinGW compilation 
+//    1.10    - 2017-03-03 - more robust seeking; fix negative ilog(); clear error in open_memory
+//    1.09    - 2016-04-04 - back out 'truncation of last frame' fix from previous version
+//    1.08    - 2016-04-02 - warnings; setup memory leaks; truncation of last frame
+//    1.07    - 2015-01-16 - fixes for crashes on invalid files; warning fixes; const
+//    1.06    - 2015-08-31 - full, correct support for seeking API (Dougall Johnson)
 //                           some crash fixes when out of memory or with corrupt files
 //                           fix some inappropriately signed shifts
-//    1.05    - 2015/04/19 - don't define __forceinline if it's redundant
-//    1.04    - 2014/08/27 - fix missing const-correct case in API
-//    1.03    - 2014/08/07 - warning fixes
-//    1.02    - 2014/07/09 - declare qsort comparison as explicitly _cdecl in Windows
-//    1.01    - 2014/06/18 - fix stb_vorbis_get_samples_float (interleaved was correct)
-//    1.0     - 2014/05/26 - fix memory leaks; fix warnings; fix bugs in >2-channel;
+//    1.05    - 2015-04-19 - don't define __forceinline if it's redundant
+//    1.04    - 2014-08-27 - fix missing const-correct case in API
+//    1.03    - 2014-08-07 - warning fixes
+//    1.02    - 2014-07-09 - declare qsort comparison as explicitly _cdecl in Windows
+//    1.01    - 2014-06-18 - fix stb_vorbis_get_samples_float (interleaved was correct)
+//    1.0     - 2014-05-26 - fix memory leaks; fix warnings; fix bugs in >2-channel;
 //                           (API change) report sample rate for decode-full-file funcs
 //
 // See end of file for full version history.

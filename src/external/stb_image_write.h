@@ -1,4 +1,4 @@
-/* stb_image_write - v1.08 - public domain - http://nothings.org/stb/stb_image_write.h
+/* stb_image_write - v1.09 - public domain - http://nothings.org/stb/stb_image_write.h
    writes out PNG/BMP/TGA/JPEG/HDR images to C stdio - Sean Barrett 2010-2015
                                      no warranty implied; use at your own risk
 
@@ -45,8 +45,8 @@ USAGE:
      int stbi_write_png(char const *filename, int w, int h, int comp, const void *data, int stride_in_bytes);
      int stbi_write_bmp(char const *filename, int w, int h, int comp, const void *data);
      int stbi_write_tga(char const *filename, int w, int h, int comp, const void *data);
+     int stbi_write_jpg(char const *filename, int w, int h, int comp, const void *data, int quality);
      int stbi_write_hdr(char const *filename, int w, int h, int comp, const float *data);
-     int stbi_write_jpg(char const *filename, int w, int h, int comp, const float *data, int quality);
 
      void stbi_flip_vertically_on_write(int flag); // flag is non-zero to flip data vertically
 
@@ -95,7 +95,7 @@ USAGE:
    at the end of the line.)
 
    PNG allows you to set the deflate compression level by setting the global
-   variable 'stbi_write_png_level' (it defaults to 8).
+   variable 'stbi_write_png_compression_level' (it defaults to 8).
 
    HDR expects linear float data. Since the format is always 32-bit rgb(e)
    data, alpha (if provided) is discarded, and for monochrome data it is
@@ -133,7 +133,12 @@ CREDITS:
       github:poppolopoppo
       Patrick Boettcher
       github:xeekworx
-      
+      Cap Petschulat
+      Simon Rodriguez
+      Ivan Tikhonov
+      github:ignotion
+      Adam Schackart
+
 LICENSE
 
   See end of file for license information.
@@ -143,19 +148,24 @@ LICENSE
 #ifndef INCLUDE_STB_IMAGE_WRITE_H
 #define INCLUDE_STB_IMAGE_WRITE_H
 
-#ifdef __cplusplus
-extern "C" {
-#endif
-
+// if STB_IMAGE_WRITE_STATIC causes problems, try defining STBIWDEF to 'inline' or 'static inline'
+#ifndef STBIWDEF
 #ifdef STB_IMAGE_WRITE_STATIC
-#define STBIWDEF static
+#define STBIWDEF  static
 #else
-#define STBIWDEF extern
+#ifdef __cplusplus
+#define STBIWDEF  extern "C"
+#else
+#define STBIWDEF  extern
+#endif
+#endif
 #endif
 
-STBIWDEF int stbi_write_tga_with_rle;
-STBIWDEF int stbi_write_png_comperssion_level;
-STBIWDEF int stbi_write_force_png_filter;
+#ifndef STB_IMAGE_WRITE_STATIC  // C++ forbids static forward declarations
+extern int stbi_write_tga_with_rle;
+extern int stbi_write_png_compression_level;
+extern int stbi_write_force_png_filter;
+#endif
 
 #ifndef STBI_WRITE_NO_STDIO
 STBIWDEF int stbi_write_png(char const *filename, int w, int h, int comp, const void  *data, int stride_in_bytes);
@@ -174,10 +184,6 @@ STBIWDEF int stbi_write_hdr_to_func(stbi_write_func *func, void *context, int w,
 STBIWDEF int stbi_write_jpg_to_func(stbi_write_func *func, void *context, int x, int y, int comp, const void  *data, int quality);
 
 STBIWDEF void stbi_flip_vertically_on_write(int flip_boolean);
-
-#ifdef __cplusplus
-}
-#endif
 
 #endif//INCLUDE_STB_IMAGE_WRITE_H
 
@@ -233,8 +239,8 @@ STBIWDEF void stbi_flip_vertically_on_write(int flip_boolean);
 #define STBIW_UCHAR(x) (unsigned char) ((x) & 0xff)
 
 #ifdef STB_IMAGE_WRITE_STATIC
-static stbi__flip_vertically_on_write=0;
-static int stbi_write_png_compression level = 8;
+static int stbi__flip_vertically_on_write=0;
+static int stbi_write_png_compression_level = 8;
 static int stbi_write_tga_with_rle = 1;
 static int stbi_write_force_png_filter = -1;
 #else
@@ -987,13 +993,14 @@ static void stbiw__encode_png_line(unsigned char *pixels, int stride_bytes, int 
    int i;
    int type = mymap[filter_type];
    unsigned char *z = pixels + stride_bytes * (stbi__flip_vertically_on_write ? height-1-y : y);
+   int signed_stride = stbi__flip_vertically_on_write ? -stride_bytes : stride_bytes;
    for (i = 0; i < n; ++i) {
       switch (type) {
          case 0: line_buffer[i] = z[i]; break;
          case 1: line_buffer[i] = z[i]; break;
-         case 2: line_buffer[i] = z[i] - z[i-stride_bytes]; break;
-         case 3: line_buffer[i] = z[i] - (z[i-stride_bytes]>>1); break;
-         case 4: line_buffer[i] = (signed char) (z[i] - stbiw__paeth(0,z[i-stride_bytes],0)); break;
+         case 2: line_buffer[i] = z[i] - z[i-signed_stride]; break;
+         case 3: line_buffer[i] = z[i] - (z[i-signed_stride]>>1); break;
+         case 4: line_buffer[i] = (signed char) (z[i] - stbiw__paeth(0,z[i-signed_stride],0)); break;
          case 5: line_buffer[i] = z[i]; break;
          case 6: line_buffer[i] = z[i]; break;
       }
@@ -1002,9 +1009,9 @@ static void stbiw__encode_png_line(unsigned char *pixels, int stride_bytes, int 
       switch (type) {
          case 0: line_buffer[i] = z[i]; break;
          case 1: line_buffer[i] = z[i] - z[i-n]; break;
-         case 2: line_buffer[i] = z[i] - z[i-stride_bytes]; break;
-         case 3: line_buffer[i] = z[i] - ((z[i-n] + z[i-stride_bytes])>>1); break;
-         case 4: line_buffer[i] = z[i] - stbiw__paeth(z[i-n], z[i-stride_bytes], z[i-stride_bytes-n]); break;
+         case 2: line_buffer[i] = z[i] - z[i-signed_stride]; break;
+         case 3: line_buffer[i] = z[i] - ((z[i-n] + z[i-signed_stride])>>1); break;
+         case 4: line_buffer[i] = z[i] - stbiw__paeth(z[i-n], z[i-signed_stride], z[i-signed_stride-n]); break;
          case 5: line_buffer[i] = z[i] - (z[i-n]>>1); break;
          case 6: line_buffer[i] = z[i] - stbiw__paeth(z[i-n], 0,0); break;
       }
@@ -1476,6 +1483,8 @@ STBIWDEF int stbi_write_jpg(char const *filename, int x, int y, int comp, const 
 #endif // STB_IMAGE_WRITE_IMPLEMENTATION
 
 /* Revision history
+      1.09  (2018-02-11)
+             fix typo in zlib quality API, improve STB_I_W_STATIC in C++
       1.08  (2018-01-29)
              add stbi__flip_vertically_on_write, external zlib, zlib quality, choose PNG filter
       1.07  (2017-07-24)
