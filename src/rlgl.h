@@ -2943,23 +2943,20 @@ char *LoadText(const char *fileName)
     FILE *textFile;
     char *text = NULL;
 
-    int count = 0;
-
     if (fileName != NULL)
     {
-        textFile = fopen(fileName,"rt");
+        textFile = fopen(fileName,"r");
 
         if (textFile != NULL)
         {
             fseek(textFile, 0, SEEK_END);
-            count = ftell(textFile);
-            rewind(textFile);
+            int size = ftell(textFile);
+            fseek(textFile, 0, SEEK_SET);
 
-            if (count > 0)
+            if (size > 0)
             {
-                text = (char *)malloc(sizeof(char)*(count + 1));
-                count = fread(text, sizeof(char), count, textFile);
-                text[count] = '\0';
+                text = (char *)malloc(sizeof(char)*(size + 1));
+                fread(text, sizeof(char), size, textFile);
             }
 
             fclose(textFile);
