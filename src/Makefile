@@ -179,33 +179,32 @@ ifeq ($(PLATFORM),PLATFORM_ANDROID)
     endif
 endif
 
-# RAYLIB_RELEASE_PATH points to provided binaries or your immediate build of raylib.
-# It is further modified below by PLATFORM below.
-RAYLIB_RELEASE_PATH  ?= $(RAYLIB_PATH)/release/libs
+# RAYLIB_RELEASE_PATH points to library build path, right now 
+RAYLIB_RELEASE_PATH  ?= $(RAYLIB_PATH)/src
 
 # Define output directory for compiled library
 ifeq ($(PLATFORM),PLATFORM_DESKTOP)
     ifeq ($(PLATFORM_OS),WINDOWS)
-        RAYLIB_RELEASE_PATH = $(RAYLIB_PATH)\release\libs\win32\mingw32
+        RAYLIB_RELEASE_PATH = $(RAYLIB_PATH)\mingw\i686-w64-mingw32\lib
     endif
     ifeq ($(PLATFORM_OS),LINUX)
-        RAYLIB_RELEASE_PATH = $(RAYLIB_PATH)/release/libs/linux
+        RAYLIB_RELEASE_PATH = $(RAYLIB_PATH)/src
     endif
     ifeq ($(PLATFORM_OS),OSX)
-        RAYLIB_RELEASE_PATH = $(RAYLIB_PATH)/release/libs/osx
+        RAYLIB_RELEASE_PATH = $(RAYLIB_PATH)/src
     endif
     ifeq ($(PLATFORM_OS),BSD)
-        RAYLIB_RELEASE_PATH = $(RAYLIB_PATH)/release/libs/bsd
+        RAYLIB_RELEASE_PATH = $(RAYLIB_PATH)/src
     endif
 endif
 ifeq ($(PLATFORM),PLATFORM_RPI)
-    RAYLIB_RELEASE_PATH = $(RAYLIB_PATH)/release/libs/rpi
+    RAYLIB_RELEASE_PATH = $(RAYLIB_PATH)/src
 endif
 ifeq ($(PLATFORM),PLATFORM_WEB)
     RAYLIB_RELEASE_PATH = $(RAYLIB_PATH)/src
 endif
 ifeq ($(PLATFORM),PLATFORM_ANDROID)
-    RAYLIB_RELEASE_PATH = $(RAYLIB_PATH)/release/libs/android/$(ANDROID_ARCH_NAME)
+    RAYLIB_RELEASE_PATH = $(RAYLIB_PATH)/src/android/$(ANDROID_ARCH_NAME)
 endif
 
 # Define raylib graphics api depending on selected platform
