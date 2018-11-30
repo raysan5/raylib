@@ -1371,7 +1371,7 @@ void ImageDither(Image *image, int rBpp, int gBpp, int bBpp, int aBpp)
         return;
     }
 
-    if ((rBpp+gBpp+bBpp+aBpp) > 16)
+    if ((rBpp + gBpp + bBpp + aBpp) > 16)
     {
         TraceLog(LOG_WARNING, "Unsupported dithering bpps (%ibpp), only 16bpp or lower modes supported", (rBpp+gBpp+bBpp+aBpp));
     }

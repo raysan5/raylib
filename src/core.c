@@ -1436,8 +1436,6 @@ Color GetColor(int hexValue)
     return color;
 }
 
-
-
 // Returns a random value between min and max (both included)
 int GetRandomValue(int min, int max)
 {
@@ -1448,7 +1446,7 @@ int GetRandomValue(int min, int max)
         min = tmp;
     }
 
-    return (rand()%(abs(max-min)+1) + min);
+    return (rand()%(abs(max - min) + 1) + min);
 }
 
 // Color fade-in or fade-out, alpha goes from 0.0f to 1.0f
