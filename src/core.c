@@ -1221,8 +1221,6 @@ Ray GetMouseRay(Vector2 mousePosition, Camera camera)
     // Store values in a vector
     Vector3 deviceCoords = { x, y, z };
 
-    TraceLog(LOG_DEBUG, "Device coordinates: (%f, %f, %f)", deviceCoords.x, deviceCoords.y, deviceCoords.z);
-
     // Calculate view matrix from camera look at
     Matrix matView = MatrixLookAt(camera.position, camera.target, camera.up);
 
