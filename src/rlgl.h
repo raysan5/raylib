@@ -130,7 +130,8 @@
 
 #define RL_WRAP_REPEAT                  0x2901      // GL_REPEAT
 #define RL_WRAP_CLAMP                   0x812F      // GL_CLAMP_TO_EDGE
-#define RL_WRAP_CLAMP_MIRROR            0x8742      // GL_MIRROR_CLAMP_EXT
+#define RL_WRAP_MIRROR_REPEAT           0x8370      // GL_MIRRORED_REPEAT
+#define RL_WRAP_MIRROR_CLAMP            0x8742      // GL_MIRROR_CLAMP_EXT
 
 // Matrix modes (equivalent to OpenGL)
 #define RL_MODELVIEW                    0x1700      // GL_MODELVIEW
@@ -302,13 +303,6 @@ typedef unsigned char byte;
         FILTER_ANISOTROPIC_8X,          // Anisotropic filtering 8x
         FILTER_ANISOTROPIC_16X,         // Anisotropic filtering 16x
     } TextureFilterMode;
-
-    // Texture parameters: wrap mode
-    typedef enum {
-        WRAP_REPEAT = 0,
-        WRAP_CLAMP,
-        WRAP_MIRROR
-    } TextureWrapMode;
 
     // Color blending modes (pre-defined)
     typedef enum {
@@ -863,7 +857,7 @@ static bool texAnisotropicFilterSupported = false;  // Anisotropic texture filte
 static float maxAnisotropicLevel = 0.0f;            // Maximum anisotropy level supported (minimum is 2.0f)
 
 // Extension supported flag: Clamp mirror wrap mode
-static bool texClampMirrorSupported = false;        // Clamp mirror wrap mode supported
+static bool texMirrorClampSupported = false;        // Clamp mirror wrap mode supported
 
 #if defined(GRAPHICS_API_OPENGL_ES2)
 // NOTE: VAO functionality is exposed through extensions (OES)
@@ -1423,7 +1417,7 @@ void rlTextureParameters(unsigned int id, int param, int value)
         case RL_TEXTURE_WRAP_S:
         case RL_TEXTURE_WRAP_T:
         {
-            if ((value == RL_WRAP_CLAMP_MIRROR) && !texClampMirrorSupported) TraceLog(LOG_WARNING, "Clamp mirror wrap mode not supported");
+            if ((value == RL_WRAP_MIRROR_CLAMP) && !texMirrorClampSupported) TraceLog(LOG_WARNING, "Clamp mirror wrap mode not supported");
             else glTexParameteri(GL_TEXTURE_2D, param, value);
         } break;
         case RL_TEXTURE_MAG_FILTER:
@@ -1719,7 +1713,7 @@ void rlglInit(int width, int height)
         }
 
         // Clamp mirror wrap mode supported
-        if (strcmp(extList[i], (const char *)"GL_EXT_texture_mirror_clamp") == 0) texClampMirrorSupported = true;
+        if (strcmp(extList[i], (const char *)"GL_EXT_texture_mirror_clamp") == 0) texMirrorClampSupported = true;
 
         // Debug marker support
         if(strcmp(extList[i], (const char *)"GL_EXT_debug_marker") == 0) debugMarkerSupported = true;
@@ -1744,7 +1738,7 @@ void rlglInit(int width, int height)
     if (texCompASTCSupported) TraceLog(LOG_INFO, "[EXTENSION] ASTC compressed textures supported");
 
     if (texAnisotropicFilterSupported) TraceLog(LOG_INFO, "[EXTENSION] Anisotropic textures filtering supported (max: %.0fX)", maxAnisotropicLevel);
-    if (texClampMirrorSupported) TraceLog(LOG_INFO, "[EXTENSION] Clamp mirror wrap texture mode supported");
+    if (texMirrorClampSupported) TraceLog(LOG_INFO, "[EXTENSION] Mirror clamp wrap texture mode supported");
 
     if (debugMarkerSupported) TraceLog(LOG_INFO, "[EXTENSION] Debug Marker supported");
 
