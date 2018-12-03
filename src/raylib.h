@@ -405,13 +405,13 @@ typedef struct VrDeviceInfo {
 // System config flags
 // NOTE: Used for bit masks
 typedef enum {
-    FLAG_SHOW_LOGO          = 1,       // Set to show raylib logo at startup
-    FLAG_FULLSCREEN_MODE    = 2,       // Set to run program in fullscreen
-    FLAG_WINDOW_RESIZABLE   = 4,       // Set to allow resizable window
-    FLAG_WINDOW_UNDECORATED = 8,       // Set to disable window decoration (frame and buttons)
-    FLAG_WINDOW_TRANSPARENT = 16,      // Set to allow transparent window
-    FLAG_MSAA_4X_HINT       = 32,      // Set to try enabling MSAA 4X
-    FLAG_VSYNC_HINT         = 64       // Set to try enabling V-Sync on GPU
+    FLAG_SHOW_LOGO          = 1,    // Set to show raylib logo at startup
+    FLAG_FULLSCREEN_MODE    = 2,    // Set to run program in fullscreen
+    FLAG_WINDOW_RESIZABLE   = 4,    // Set to allow resizable window
+    FLAG_WINDOW_UNDECORATED = 8,    // Set to disable window decoration (frame and buttons)
+    FLAG_WINDOW_TRANSPARENT = 16,   // Set to allow transparent window
+    FLAG_MSAA_4X_HINT       = 32,   // Set to try enabling MSAA 4X
+    FLAG_VSYNC_HINT         = 64    // Set to try enabling V-Sync on GPU
 } ConfigFlag;
 
 // Trace log type
@@ -729,23 +729,23 @@ typedef enum {
 
 // Texture parameters: wrap mode
 typedef enum {
-    WRAP_REPEAT = 0,
-    WRAP_CLAMP,
-    WRAP_MIRROR
+    WRAP_REPEAT = 0,        // Repeats texture in tiled mode
+    WRAP_CLAMP,             // Clamps texture to edge pixel in tiled mode
+    WRAP_MIRROR             // Mirrors the texture in tiled mode
 } TextureWrapMode;
 
 // Font type, defines generation method
 typedef enum {
-    FONT_DEFAULT = 0,   // Default font generation, anti-aliased
-    FONT_BITMAP,        // Bitmap font generation, no anti-aliasing
-    FONT_SDF            // SDF font generation, requires external shader
+    FONT_DEFAULT = 0,       // Default font generation, anti-aliased
+    FONT_BITMAP,            // Bitmap font generation, no anti-aliasing
+    FONT_SDF                // SDF font generation, requires external shader
 } FontType;
 
 // Color blending modes (pre-defined)
 typedef enum {
-    BLEND_ALPHA = 0,
-    BLEND_ADDITIVE,
-    BLEND_MULTIPLIED
+    BLEND_ALPHA = 0,        // Blend textures considering alpha (default)
+    BLEND_ADDITIVE,         // Blend textures adding colors
+    BLEND_MULTIPLIED        // Blend textures multiplying colors
 } BlendMode;
 
 // Gestures type
@@ -791,9 +791,9 @@ typedef enum {
 
 // Type of n-patch
 typedef enum {
-    NPT_9PATCH = 0,         // 3x3
-    NPT_3PATCH_VERTICAL,    // 1x3
-    NPT_3PATCH_HORIZONTAL   // 3x1
+    NPT_9PATCH = 0,         // Npatch defined by 3x3 tiles
+    NPT_3PATCH_VERTICAL,    // Npatch defined by 1x3 tiles
+    NPT_3PATCH_HORIZONTAL   // Npatch defined by 3x1 tiles
 } NPatchType;
 
 // Callbacks to be implemented by users
