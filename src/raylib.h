@@ -91,223 +91,11 @@
 #define DEG2RAD (PI/180.0f)
 #define RAD2DEG (180.0f/PI)
 
-// raylib Config Flags
-#define FLAG_SHOW_LOGO              1       // Set to show raylib logo at startup
-#define FLAG_FULLSCREEN_MODE        2       // Set to run program in fullscreen
-#define FLAG_WINDOW_RESIZABLE       4       // Set to allow resizable window
-#define FLAG_WINDOW_UNDECORATED     8       // Set to disable window decoration (frame and buttons)
-#define FLAG_WINDOW_TRANSPARENT    16       // Set to allow transparent window
-#define FLAG_MSAA_4X_HINT          32       // Set to try enabling MSAA 4X
-#define FLAG_VSYNC_HINT            64       // Set to try enabling V-Sync on GPU
+#define MAX_TOUCH_POINTS        10      // Maximum number of touch points supported
 
-// Keyboard Function Keys
-#define KEY_SPACE            32
-#define KEY_ESCAPE          256
-#define KEY_ENTER           257
-#define KEY_TAB             258
-#define KEY_BACKSPACE       259
-#define KEY_INSERT          260
-#define KEY_DELETE          261
-#define KEY_RIGHT           262
-#define KEY_LEFT            263
-#define KEY_DOWN            264
-#define KEY_UP              265
-#define KEY_PAGE_UP         266
-#define KEY_PAGE_DOWN       267
-#define KEY_HOME            268
-#define KEY_END             269
-#define KEY_CAPS_LOCK       280
-#define KEY_SCROLL_LOCK     281
-#define KEY_NUM_LOCK        282
-#define KEY_PRINT_SCREEN    283
-#define KEY_PAUSE           284
-#define KEY_F1              290
-#define KEY_F2              291
-#define KEY_F3              292
-#define KEY_F4              293
-#define KEY_F5              294
-#define KEY_F6              295
-#define KEY_F7              296
-#define KEY_F8              297
-#define KEY_F9              298
-#define KEY_F10             299
-#define KEY_F11             300
-#define KEY_F12             301
-#define KEY_LEFT_SHIFT      340
-#define KEY_LEFT_CONTROL    341
-#define KEY_LEFT_ALT        342
-#define KEY_LEFT_SUPER      343
-#define KEY_RIGHT_SHIFT     344
-#define KEY_RIGHT_CONTROL   345
-#define KEY_RIGHT_ALT       346
-#define KEY_RIGHT_SUPER     347
-#define KEY_KB_MENU         348
-#define KEY_LEFT_BRACKET     91
-#define KEY_BACKSLASH        92
-#define KEY_RIGHT_BRACKET    93
-#define KEY_GRAVE            96
-
-// Keyboard Number Pad Keys
-#define KEY_KP_0            320
-#define KEY_KP_1            321
-#define KEY_KP_2            322
-#define KEY_KP_3            323
-#define KEY_KP_4            324
-#define KEY_KP_5            325
-#define KEY_KP_6            326
-#define KEY_KP_7            327
-#define KEY_KP_8            328
-#define KEY_KP_9            329
-#define KEY_KP_DECIMAL      330
-#define KEY_KP_DIVIDE       331
-#define KEY_KP_MULTIPLY     332
-#define KEY_KP_SUBTRACT     333
-#define KEY_KP_ADD          334
-#define KEY_KP_ENTER        335
-#define KEY_KP_EQUAL        336
-
-// Keyboard Alpha Numeric Keys
-#define KEY_APOSTROPHE       39
-#define KEY_COMMA            44
-#define KEY_MINUS            45
-#define KEY_PERIOD           46
-#define KEY_SLASH            47
-#define KEY_ZERO             48
-#define KEY_ONE              49
-#define KEY_TWO              50
-#define KEY_THREE            51
-#define KEY_FOUR             52
-#define KEY_FIVE             53
-#define KEY_SIX              54
-#define KEY_SEVEN            55
-#define KEY_EIGHT            56
-#define KEY_NINE             57
-#define KEY_SEMICOLON        59
-#define KEY_EQUAL            61
-#define KEY_A                65
-#define KEY_B                66
-#define KEY_C                67
-#define KEY_D                68
-#define KEY_E                69
-#define KEY_F                70
-#define KEY_G                71
-#define KEY_H                72
-#define KEY_I                73
-#define KEY_J                74
-#define KEY_K                75
-#define KEY_L                76
-#define KEY_M                77
-#define KEY_N                78
-#define KEY_O                79
-#define KEY_P                80
-#define KEY_Q                81
-#define KEY_R                82
-#define KEY_S                83
-#define KEY_T                84
-#define KEY_U                85
-#define KEY_V                86
-#define KEY_W                87
-#define KEY_X                88
-#define KEY_Y                89
-#define KEY_Z                90
-
-// Android Physical Buttons
-#define KEY_BACK              4
-#define KEY_MENU             82
-#define KEY_VOLUME_UP        24
-#define KEY_VOLUME_DOWN      25
-
-// Mouse Buttons
-#define MOUSE_LEFT_BUTTON     0
-#define MOUSE_RIGHT_BUTTON    1
-#define MOUSE_MIDDLE_BUTTON   2
-
-// Touch points registered
-#define MAX_TOUCH_POINTS      10
-
-// Gamepad Number
-#define GAMEPAD_PLAYER1       0
-#define GAMEPAD_PLAYER2       1
-#define GAMEPAD_PLAYER3       2
-#define GAMEPAD_PLAYER4       3
-
-// Gamepad Buttons/Axis
-
-// PS3 USB Controller Buttons
-#define GAMEPAD_PS3_BUTTON_TRIANGLE 0
-#define GAMEPAD_PS3_BUTTON_CIRCLE   1
-#define GAMEPAD_PS3_BUTTON_CROSS    2
-#define GAMEPAD_PS3_BUTTON_SQUARE   3
-#define GAMEPAD_PS3_BUTTON_L1       6
-#define GAMEPAD_PS3_BUTTON_R1       7
-#define GAMEPAD_PS3_BUTTON_L2       4
-#define GAMEPAD_PS3_BUTTON_R2       5
-#define GAMEPAD_PS3_BUTTON_START    8
-#define GAMEPAD_PS3_BUTTON_SELECT   9
-#define GAMEPAD_PS3_BUTTON_UP      24
-#define GAMEPAD_PS3_BUTTON_RIGHT   25
-#define GAMEPAD_PS3_BUTTON_DOWN    26
-#define GAMEPAD_PS3_BUTTON_LEFT    27
-#define GAMEPAD_PS3_BUTTON_PS      12
-
-// PS3 USB Controller Axis
-#define GAMEPAD_PS3_AXIS_LEFT_X     0
-#define GAMEPAD_PS3_AXIS_LEFT_Y     1
-#define GAMEPAD_PS3_AXIS_RIGHT_X    2
-#define GAMEPAD_PS3_AXIS_RIGHT_Y    5
-#define GAMEPAD_PS3_AXIS_L2         3       // [1..-1] (pressure-level)
-#define GAMEPAD_PS3_AXIS_R2         4       // [1..-1] (pressure-level)
-
-// Xbox360 USB Controller Buttons
-#define GAMEPAD_XBOX_BUTTON_A       0
-#define GAMEPAD_XBOX_BUTTON_B       1
-#define GAMEPAD_XBOX_BUTTON_X       2
-#define GAMEPAD_XBOX_BUTTON_Y       3
-#define GAMEPAD_XBOX_BUTTON_LB      4
-#define GAMEPAD_XBOX_BUTTON_RB      5
-#define GAMEPAD_XBOX_BUTTON_SELECT  6
-#define GAMEPAD_XBOX_BUTTON_START   7
-#define GAMEPAD_XBOX_BUTTON_UP      10
-#define GAMEPAD_XBOX_BUTTON_RIGHT   11
-#define GAMEPAD_XBOX_BUTTON_DOWN    12
-#define GAMEPAD_XBOX_BUTTON_LEFT    13
-#define GAMEPAD_XBOX_BUTTON_HOME    8
-
-// Android Gamepad Controller (SNES CLASSIC)
-#define GAMEPAD_ANDROID_DPAD_UP        19
-#define GAMEPAD_ANDROID_DPAD_DOWN      20
-#define GAMEPAD_ANDROID_DPAD_LEFT      21
-#define GAMEPAD_ANDROID_DPAD_RIGHT     22
-#define GAMEPAD_ANDROID_DPAD_CENTER    23
-
-#define GAMEPAD_ANDROID_BUTTON_A       96
-#define GAMEPAD_ANDROID_BUTTON_B       97
-#define GAMEPAD_ANDROID_BUTTON_C       98
-#define GAMEPAD_ANDROID_BUTTON_X       99
-#define GAMEPAD_ANDROID_BUTTON_Y       100
-#define GAMEPAD_ANDROID_BUTTON_Z       101
-#define GAMEPAD_ANDROID_BUTTON_L1      102
-#define GAMEPAD_ANDROID_BUTTON_R1      103
-#define GAMEPAD_ANDROID_BUTTON_L2      104
-#define GAMEPAD_ANDROID_BUTTON_R2      105
-
-// Xbox360 USB Controller Axis
-// NOTE: For Raspberry Pi, axis must be reconfigured
-#if defined(PLATFORM_RPI)
-    #define GAMEPAD_XBOX_AXIS_LEFT_X    0   // [-1..1] (left->right)
-    #define GAMEPAD_XBOX_AXIS_LEFT_Y    1   // [-1..1] (up->down)
-    #define GAMEPAD_XBOX_AXIS_RIGHT_X   3   // [-1..1] (left->right)
-    #define GAMEPAD_XBOX_AXIS_RIGHT_Y   4   // [-1..1] (up->down)
-    #define GAMEPAD_XBOX_AXIS_LT        2   // [-1..1] (pressure-level)
-    #define GAMEPAD_XBOX_AXIS_RT        5   // [-1..1] (pressure-level)
-#else
-    #define GAMEPAD_XBOX_AXIS_LEFT_X    0   // [-1..1] (left->right)
-    #define GAMEPAD_XBOX_AXIS_LEFT_Y    1   // [1..-1] (up->down)
-    #define GAMEPAD_XBOX_AXIS_RIGHT_X   2   // [-1..1] (left->right)
-    #define GAMEPAD_XBOX_AXIS_RIGHT_Y   3   // [1..-1] (up->down)
-    #define GAMEPAD_XBOX_AXIS_LT        4   // [-1..1] (pressure-level)
-    #define GAMEPAD_XBOX_AXIS_RT        5   // [-1..1] (pressure-level)
-#endif
+// Shader and material limits
+#define MAX_SHADER_LOCATIONS    32      // Maximum number of predefined locations stored in shader struct
+#define MAX_MATERIAL_MAPS       12      // Maximum number of texture maps stored in shader struct
 
 // NOTE: MSC C++ compiler does not support compound literals (C99 feature)
 // Plain structures in C++ (without constructors) can be initialized from { } initializers.
@@ -346,10 +134,6 @@
 #define BLANK      CLITERAL{ 0, 0, 0, 0 }           // Blank (Transparent)
 #define MAGENTA    CLITERAL{ 255, 0, 255, 255 }     // Magenta
 #define RAYWHITE   CLITERAL{ 245, 245, 245, 255 }   // My own White (raylib logo)
-
-// Shader and material limits
-#define MAX_SHADER_LOCATIONS        32      // Maximum number of predefined locations stored in shader struct
-#define MAX_MATERIAL_MAPS           12      // Maximum number of texture maps stored in shader struct
 
 //----------------------------------------------------------------------------------
 // Structures Definition
@@ -617,14 +401,243 @@ typedef struct VrDeviceInfo {
 //----------------------------------------------------------------------------------
 // Enumerators Definition
 //----------------------------------------------------------------------------------
-// Trace log type
+
+// System config flags
+// NOTE: Used for bit masks
 typedef enum {
-    LOG_INFO    = 1,
-    LOG_WARNING = 2,
-    LOG_ERROR   = 4,
-    LOG_DEBUG   = 8,
-    LOG_OTHER   = 16
-} LogType;
+    FLAG_SHOW_LOGO          = 1,       // Set to show raylib logo at startup
+    FLAG_FULLSCREEN_MODE    = 2,       // Set to run program in fullscreen
+    FLAG_WINDOW_RESIZABLE   = 4,       // Set to allow resizable window
+    FLAG_WINDOW_UNDECORATED = 8,       // Set to disable window decoration (frame and buttons)
+    FLAG_WINDOW_TRANSPARENT = 16,      // Set to allow transparent window
+    FLAG_MSAA_4X_HINT       = 32,      // Set to try enabling MSAA 4X
+    FLAG_VSYNC_HINT         = 64       // Set to try enabling V-Sync on GPU
+} ConfigFlag;
+
+// Trace log type
+// NOTE: Used for bit masks
+typedef enum {
+    LOG_INFO            = 1,
+    LOG_WARNING         = 2,
+    LOG_ERROR           = 4,
+    LOG_DEBUG           = 8,
+    LOG_OTHER           = 16
+} TraceLogType;
+
+// Keyboard keys
+typedef enum {
+    // Alphanumeric keys
+    KEY_APOSTROPHE      = 39,
+    KEY_COMMA           = 44,
+    KEY_MINUS           = 45,
+    KEY_PERIOD          = 46,
+    KEY_SLASH           = 47,
+    KEY_ZERO            = 48,
+    KEY_ONE             = 49,
+    KEY_TWO             = 50,
+    KEY_THREE           = 51,
+    KEY_FOUR            = 52,
+    KEY_FIVE            = 53,
+    KEY_SIX             = 54,
+    KEY_SEVEN           = 55,
+    KEY_EIGHT           = 56,
+    KEY_NINE            = 57,
+    KEY_SEMICOLON       = 59,
+    KEY_EQUAL           = 61,
+    KEY_A               = 65,
+    KEY_B               = 66,
+    KEY_C               = 67,
+    KEY_D               = 68,
+    KEY_E               = 69,
+    KEY_F               = 70,
+    KEY_G               = 71,
+    KEY_H               = 72,
+    KEY_I               = 73,
+    KEY_J               = 74,
+    KEY_K               = 75,
+    KEY_L               = 76,
+    KEY_M               = 77,
+    KEY_N               = 78,
+    KEY_O               = 79,
+    KEY_P               = 80,
+    KEY_Q               = 81,
+    KEY_R               = 82,
+    KEY_S               = 83,
+    KEY_T               = 84,
+    KEY_U               = 85,
+    KEY_V               = 86,
+    KEY_W               = 87,
+    KEY_X               = 88,
+    KEY_Y               = 89,
+    KEY_Z               = 90,
+    
+    // Function keys
+    KEY_SPACE           = 32,
+    KEY_ESCAPE          = 256,
+    KEY_ENTER           = 257,
+    KEY_TAB             = 258,
+    KEY_BACKSPACE       = 259,
+    KEY_INSERT          = 260,
+    KEY_DELETE          = 261,
+    KEY_RIGHT           = 262,
+    KEY_LEFT            = 263,
+    KEY_DOWN            = 264,
+    KEY_UP              = 265,
+    KEY_PAGE_UP         = 266,
+    KEY_PAGE_DOWN       = 267,
+    KEY_HOME            = 268,
+    KEY_END             = 269,
+    KEY_CAPS_LOCK       = 280,
+    KEY_SCROLL_LOCK     = 281,
+    KEY_NUM_LOCK        = 282,
+    KEY_PRINT_SCREEN    = 283,
+    KEY_PAUSE           = 284,
+    KEY_F1              = 290,
+    KEY_F2              = 291,
+    KEY_F3              = 292,
+    KEY_F4              = 293,
+    KEY_F5              = 294,
+    KEY_F6              = 295,
+    KEY_F7              = 296,
+    KEY_F8              = 297,
+    KEY_F9              = 298,
+    KEY_F10             = 299,
+    KEY_F11             = 300,
+    KEY_F12             = 301,
+    KEY_LEFT_SHIFT      = 340,
+    KEY_LEFT_CONTROL    = 341,
+    KEY_LEFT_ALT        = 342,
+    KEY_LEFT_SUPER      = 343,
+    KEY_RIGHT_SHIFT     = 344,
+    KEY_RIGHT_CONTROL   = 345,
+    KEY_RIGHT_ALT       = 346,
+    KEY_RIGHT_SUPER     = 347,
+    KEY_KB_MENU         = 348,
+    KEY_LEFT_BRACKET    = 91,
+    KEY_BACKSLASH       = 92,
+    KEY_RIGHT_BRACKET   = 93,
+    KEY_GRAVE           = 96,
+    
+    // Keypad keys
+    KEY_KP_0            = 320,
+    KEY_KP_1            = 321,
+    KEY_KP_2            = 322,
+    KEY_KP_3            = 323,
+    KEY_KP_4            = 324,
+    KEY_KP_5            = 325,
+    KEY_KP_6            = 326,
+    KEY_KP_7            = 327,
+    KEY_KP_8            = 328,
+    KEY_KP_9            = 329,
+    KEY_KP_DECIMAL      = 330,
+    KEY_KP_DIVIDE       = 331,
+    KEY_KP_MULTIPLY     = 332,
+    KEY_KP_SUBTRACT     = 333,
+    KEY_KP_ADD          = 334,
+    KEY_KP_ENTER        = 335,
+    KEY_KP_EQUAL        = 336
+} KeyboardKey;
+
+// Android buttons
+typedef enum {
+    KEY_BACK            = 4,
+    KEY_MENU            = 82,
+    KEY_VOLUME_UP       = 24,
+    KEY_VOLUME_DOWN     = 25
+} AndroidButton;
+
+// Mouse buttons
+typedef enum {
+    MOUSE_LEFT_BUTTON   = 0,
+    MOUSE_RIGHT_BUTTON  = 1,
+    MOUSE_MIDDLE_BUTTON = 2
+} MouseButton;
+
+// Gamepad number
+typedef enum {
+    GAMEPAD_PLAYER1     = 0,
+    GAMEPAD_PLAYER2     = 1,
+    GAMEPAD_PLAYER3     = 2,
+    GAMEPAD_PLAYER4     = 3
+} GamepadNumber;
+
+// PS3 USB Controller Buttons
+// TODO: Provide a generic way to list gamepad controls schemes,
+// defining specific controls schemes is not a good option
+typedef enum {
+    GAMEPAD_PS3_BUTTON_TRIANGLE = 0,
+    GAMEPAD_PS3_BUTTON_CIRCLE   = 1,
+    GAMEPAD_PS3_BUTTON_CROSS    = 2,
+    GAMEPAD_PS3_BUTTON_SQUARE   = 3,
+    GAMEPAD_PS3_BUTTON_L1       = 6,
+    GAMEPAD_PS3_BUTTON_R1       = 7,
+    GAMEPAD_PS3_BUTTON_L2       = 4,
+    GAMEPAD_PS3_BUTTON_R2       = 5,
+    GAMEPAD_PS3_BUTTON_START    = 8,
+    GAMEPAD_PS3_BUTTON_SELECT   = 9,
+    GAMEPAD_PS3_BUTTON_PS       = 12,
+    GAMEPAD_PS3_BUTTON_UP       = 24,
+    GAMEPAD_PS3_BUTTON_RIGHT    = 25,
+    GAMEPAD_PS3_BUTTON_DOWN     = 26,
+    GAMEPAD_PS3_BUTTON_LEFT     = 27
+} GamepadPS3Button;
+
+// PS3 USB Controller Axis
+typedef enum {
+    GAMEPAD_PS3_AXIS_LEFT_X     = 0,
+    GAMEPAD_PS3_AXIS_LEFT_Y     = 1,
+    GAMEPAD_PS3_AXIS_RIGHT_X    = 2,
+    GAMEPAD_PS3_AXIS_RIGHT_Y    = 5,
+    GAMEPAD_PS3_AXIS_L2         = 3,    // [1..-1] (pressure-level)
+    GAMEPAD_PS3_AXIS_R2         = 4     // [1..-1] (pressure-level)
+} GamepadPS3Axis;
+
+// Xbox360 USB Controller Buttons
+typedef enum {
+    GAMEPAD_XBOX_BUTTON_A       = 0,
+    GAMEPAD_XBOX_BUTTON_B       = 1,
+    GAMEPAD_XBOX_BUTTON_X       = 2,
+    GAMEPAD_XBOX_BUTTON_Y       = 3,
+    GAMEPAD_XBOX_BUTTON_LB      = 4,
+    GAMEPAD_XBOX_BUTTON_RB      = 5,
+    GAMEPAD_XBOX_BUTTON_SELECT  = 6,
+    GAMEPAD_XBOX_BUTTON_START   = 7,
+    GAMEPAD_XBOX_BUTTON_HOME    = 8,
+    GAMEPAD_XBOX_BUTTON_UP      = 10,
+    GAMEPAD_XBOX_BUTTON_RIGHT   = 11,
+    GAMEPAD_XBOX_BUTTON_DOWN    = 12,
+    GAMEPAD_XBOX_BUTTON_LEFT    = 13
+} GamepadXbox360Button;
+
+// Xbox360 USB Controller Axis,
+// NOTE: For Raspberry Pi, axis must be reconfigured
+typedef enum {
+    GAMEPAD_XBOX_AXIS_LEFT_X    = 0,    // [-1..1] (left->right)
+    GAMEPAD_XBOX_AXIS_LEFT_Y    = 1,    // [1..-1] (up->down)
+    GAMEPAD_XBOX_AXIS_RIGHT_X   = 2,    // [-1..1] (left->right)
+    GAMEPAD_XBOX_AXIS_RIGHT_Y   = 3,    // [1..-1] (up->down)
+    GAMEPAD_XBOX_AXIS_LT        = 4,    // [-1..1] (pressure-level)
+    GAMEPAD_XBOX_AXIS_RT        = 5     // [-1..1] (pressure-level)
+} GamepadXbox360Axis;
+
+// Android Gamepad Controller (SNES CLASSIC)
+typedef enum {
+    GAMEPAD_ANDROID_DPAD_UP     = 19,
+    GAMEPAD_ANDROID_DPAD_DOWN   = 20,
+    GAMEPAD_ANDROID_DPAD_LEFT   = 21,
+    GAMEPAD_ANDROID_DPAD_RIGHT  = 22,
+    GAMEPAD_ANDROID_DPAD_CENTER = 23,
+    GAMEPAD_ANDROID_BUTTON_A    = 96,
+    GAMEPAD_ANDROID_BUTTON_B    = 97,
+    GAMEPAD_ANDROID_BUTTON_C    = 98,
+    GAMEPAD_ANDROID_BUTTON_X    = 99,
+    GAMEPAD_ANDROID_BUTTON_Y    = 100,
+    GAMEPAD_ANDROID_BUTTON_Z    = 101,
+    GAMEPAD_ANDROID_BUTTON_L1   = 102,
+    GAMEPAD_ANDROID_BUTTON_R1   = 103,
+    GAMEPAD_ANDROID_BUTTON_L2   = 104,
+    GAMEPAD_ANDROID_BUTTON_R2   = 105
+} GamepadAndroid;
 
 // Shader location point type
 typedef enum {
@@ -749,7 +762,7 @@ typedef enum {
     GESTURE_SWIPE_DOWN  = 128,
     GESTURE_PINCH_IN    = 256,
     GESTURE_PINCH_OUT   = 512
-} Gestures;
+} GestureType;
 
 // Camera system modes
 typedef enum {
