@@ -58,8 +58,8 @@
 //----------------------------------------------------------------------------------
 // Defines and Macros
 //----------------------------------------------------------------------------------
-#define MAX_FORMATTEXT_LENGTH  256
-#define MAX_SUBTEXT_LENGTH     256
+#define MAX_FORMATTEXT_LENGTH  512
+#define MAX_SUBTEXT_LENGTH     512
 
 //----------------------------------------------------------------------------------
 // Types and Structures Definition
