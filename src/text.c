@@ -272,7 +272,7 @@ Font LoadFont(const char *fileName)
     Font font = { 0 };
 
 #if defined(SUPPORT_FILEFORMAT_TTF)
-    if (IsFileExtension(fileName, ".ttf")) font = LoadFontEx(fileName, DEFAULT_TTF_FONTSIZE, DEFAULT_TTF_NUMCHARS, NULL);
+    if (IsFileExtension(fileName, ".ttf") || IsFileExtension(fileName, ".otf")) font = LoadFontEx(fileName, DEFAULT_TTF_FONTSIZE, DEFAULT_TTF_NUMCHARS, NULL);
     else
 #endif
 #if defined(SUPPORT_FILEFORMAT_FNT)
