@@ -28,7 +28,6 @@ int main()
     camera.fovy = 45.0f;
     camera.type = CAMERA_PERSPECTIVE;
     
-
     Texture2D bill = LoadTexture("resources/billboard.png");     // Our texture billboard
     Vector3 billPosition = { 0.0f, 2.0f, 0.0f };                 // Position where draw billboard
     
@@ -52,11 +51,11 @@ int main()
             ClearBackground(RAYWHITE);
 
             BeginMode3D(camera);
-            
-                DrawBillboard(camera, bill, billPosition, 2.0f, WHITE);
                 
                 DrawGrid(10, 1.0f);        // Draw a grid
-
+                
+                DrawBillboard(camera, bill, billPosition, 2.0f, WHITE);
+                
             EndMode3D();
 
             DrawFPS(10, 10);
