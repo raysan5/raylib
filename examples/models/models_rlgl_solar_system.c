@@ -2,6 +2,8 @@
 *
 *   raylib [models] example - rlgl module usage with push/pop matrix transformations
 *
+*   This example uses [rlgl] module funtionality (pseudo-OpenGL 1.1 style coding)
+*
 *   This example has been created using raylib 2.2 (www.raylib.com)
 *   raylib is licensed under an unmodified zlib/libpng license (View raylib.h for details)
 *
@@ -12,9 +14,14 @@
 #include "raylib.h"
 #include "rlgl.h"
 
-
+//------------------------------------------------------------------------------------
+// Module Functions Declaration
+//------------------------------------------------------------------------------------
 void DrawSphereBasic(Color color);      // Draw sphere without any matrix transformation
 
+//------------------------------------------------------------------------------------
+// Program main entry point
+//------------------------------------------------------------------------------------
 int main()
 {
     // Initialization
@@ -98,11 +105,12 @@ int main()
                 rlPopMatrix();
                 
                 // Some reference elements (not affected by previous matrix transformations)
-                DrawCircle3D((Vector3){ 0.0f, 0.0f, 0.0f }, earthOrbitRadius, (Vector3){ 1, 0, 0 }, 90.0f, LIME);
+                DrawCircle3D((Vector3){ 0.0f, 0.0f, 0.0f }, earthOrbitRadius, (Vector3){ 1, 0, 0 }, 90.0f, Fade(RED, 0.5f));
                 DrawGrid(20, 1.0f);
 
             EndMode3D();
 
+            DrawText("EARTH ORBITING AROUND THE SUN!", 400, 10, 20, MAROON);
             DrawFPS(10, 10);
 
         EndDrawing();
@@ -116,6 +124,10 @@ int main()
 
     return 0;
 }
+
+//--------------------------------------------------------------------------------------------
+// Module Functions Definitions (local)
+//--------------------------------------------------------------------------------------------
 
 // Draw sphere without any matrix transformation
 // NOTE: Sphere is drawn in world position ( 0, 0, 0 ) with radius 1.0f
