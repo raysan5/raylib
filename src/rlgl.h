@@ -814,7 +814,10 @@ static bool useTransformMatrix = false;
 static DrawCall *draws = NULL;
 static int drawsCounter = 0;
 
-// Shaders
+// Default texture (1px white) useful for plain color polys (required by shader)
+static unsigned int defaultTextureId;
+
+// Default shaders
 static unsigned int defaultVShaderId;       // Default vertex shader id (used by default shader program)
 static unsigned int defaultFShaderId;       // Default fragment shader Id (used by default shader program)
 
@@ -825,10 +828,32 @@ static Shader currentShader;                // Shader to be used on rendering (b
 static bool vaoSupported = false;           // VAO support (OpenGL ES2 could not support VAO extension)
 
 // Extension supported flag: Compressed textures
+static bool texCompDXTSupported = false;    // DDS texture compression support
 static bool texCompETC1Supported = false;   // ETC1 texture compression support
 static bool texCompETC2Supported = false;   // ETC2/EAC texture compression support
 static bool texCompPVRTSupported = false;   // PVR texture compression support
 static bool texCompASTCSupported = false;   // ASTC texture compression support
+
+// Extension supported flag: Textures format
+static bool texNPOTSupported = false;       // NPOT textures full support
+static bool texFloatSupported = false;      // float textures support (32 bit per channel)
+
+// Extension supported flag: Clamp mirror wrap mode
+static bool texMirrorClampSupported = false;        // Clamp mirror wrap mode supported
+
+// Extension supported flag: Anisotropic filtering
+static bool texAnisotropicFilterSupported = false;  // Anisotropic texture filtering support
+static float maxAnisotropicLevel = 0.0f;            // Maximum anisotropy level supported (minimum is 2.0f)
+
+static bool debugMarkerSupported = false;   // Debug marker support
+
+#if defined(GRAPHICS_API_OPENGL_ES2)
+// NOTE: VAO functionality is exposed through extensions (OES)
+static PFNGLGENVERTEXARRAYSOESPROC glGenVertexArrays;
+static PFNGLBINDVERTEXARRAYOESPROC glBindVertexArray;
+static PFNGLDELETEVERTEXARRAYSOESPROC glDeleteVertexArrays;
+//static PFNGLISVERTEXARRAYOESPROC glIsVertexArray;   // NOTE: Fails in WebGL, omitted
+#endif
 
 #if defined(SUPPORT_VR_SIMULATOR)
 // VR global variables
@@ -840,32 +865,7 @@ static bool vrStereoRender = false;         // VR stereo rendering enabled/disab
 
 #endif  // defined(GRAPHICS_API_OPENGL_33) || defined(GRAPHICS_API_OPENGL_ES2)
 
-// Extension supported flag: Anisotropic filtering
-static bool texAnisotropicFilterSupported = false;  // Anisotropic texture filtering support
-static float maxAnisotropicLevel = 0.0f;            // Maximum anisotropy level supported (minimum is 2.0f)
-
-// Extension supported flag: Clamp mirror wrap mode
-static bool texMirrorClampSupported = false;        // Clamp mirror wrap mode supported
-
-#if defined(GRAPHICS_API_OPENGL_ES2)
-// NOTE: VAO functionality is exposed through extensions (OES)
-static PFNGLGENVERTEXARRAYSOESPROC glGenVertexArrays;
-static PFNGLBINDVERTEXARRAYOESPROC glBindVertexArray;
-static PFNGLDELETEVERTEXARRAYSOESPROC glDeleteVertexArrays;
-//static PFNGLISVERTEXARRAYOESPROC glIsVertexArray;   // NOTE: Fails in WebGL, omitted
-#endif
-
-static bool debugMarkerSupported = false;
-
-// Compressed textures support flags
-static bool texCompDXTSupported = false;    // DDS texture compression support
-static bool texNPOTSupported = false;       // NPOT textures full support
-static bool texFloatSupported = false;      // float textures support (32 bit per channel)
-
 static int blendMode = 0;   // Track current blending mode
-
-// White texture useful for plain color polys (required by shader)
-static unsigned int whiteTexture;
 
 // Default framebuffer size
 static int screenWidth;     // Default framebuffer width
@@ -1098,7 +1098,7 @@ void rlBegin(int mode)
 
         draws[drawsCounter - 1].mode = mode;
         draws[drawsCounter - 1].vertexCount = 0;
-        draws[drawsCounter - 1].textureId = whiteTexture;
+        draws[drawsCounter - 1].textureId = defaultTextureId;
     }
 }
 
@@ -1284,13 +1284,19 @@ void rlTextureParameters(unsigned int id, int param, int value)
         case RL_TEXTURE_WRAP_S:
         case RL_TEXTURE_WRAP_T:
         {
-            if ((value == RL_WRAP_MIRROR_CLAMP) && !texMirrorClampSupported) TraceLog(LOG_WARNING, "Clamp mirror wrap mode not supported");
+            if (value == RL_WRAP_MIRROR_CLAMP)
+            {
+#if !defined(GRAPHICS_API_OPENGL_11)
+                if (!texMirrorClampSupported) TraceLog(LOG_WARNING, "Clamp mirror wrap mode not supported");
+#endif
+            }
             else glTexParameteri(GL_TEXTURE_2D, param, value);
         } break;
         case RL_TEXTURE_MAG_FILTER:
         case RL_TEXTURE_MIN_FILTER: glTexParameteri(GL_TEXTURE_2D, param, value); break;
         case RL_TEXTURE_ANISOTROPIC_FILTER:
         {
+#if !defined(GRAPHICS_API_OPENGL_11)
             if (value <= maxAnisotropicLevel) glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAX_ANISOTROPY_EXT, (float)value);
             else if (maxAnisotropicLevel > 0.0f)
             {
@@ -1298,6 +1304,7 @@ void rlTextureParameters(unsigned int id, int param, int value)
                 glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAX_ANISOTROPY_EXT, (float)value);
             }
             else TraceLog(LOG_WARNING, "Anisotropic filtering not supported");
+#endif
         } break;
         default: break;
     }
@@ -1614,9 +1621,9 @@ void rlglInit(int width, int height)
 
     // Init default white texture
     unsigned char pixels[4] = { 255, 255, 255, 255 };   // 1 pixel RGBA (4 bytes)
-    whiteTexture = rlLoadTexture(pixels, 1, 1, UNCOMPRESSED_R8G8B8A8, 1);
+    defaultTextureId = rlLoadTexture(pixels, 1, 1, UNCOMPRESSED_R8G8B8A8, 1);
 
-    if (whiteTexture != 0) TraceLog(LOG_INFO, "[TEX ID %i] Base white texture loaded successfully", whiteTexture);
+    if (defaultTextureId != 0) TraceLog(LOG_INFO, "[TEX ID %i] Base white texture loaded successfully", defaultTextureId);
     else TraceLog(LOG_WARNING, "Base white texture could not be loaded");
 
     // Init default Shader (customized for GL 3.3 and ES2)
@@ -1638,7 +1645,7 @@ void rlglInit(int width, int height)
         draws[i].vertexCount = 0;
         //draws[i].vaoId = 0;
         //draws[i].shaderId = 0;
-        draws[i].textureId = whiteTexture;
+        draws[i].textureId = defaultTextureId;
         //draws[i].projection = MatrixIdentity();
         //draws[i].modelview = MatrixIdentity();
     }
@@ -1695,9 +1702,9 @@ void rlglClose(void)
 #if defined(GRAPHICS_API_OPENGL_33) || defined(GRAPHICS_API_OPENGL_ES2)
     UnloadShaderDefault();              // Unload default shader
     UnloadBuffersDefault();             // Unload default buffers
-    glDeleteTextures(1, &whiteTexture); // Unload default texture
+    glDeleteTextures(1, &defaultTextureId); // Unload default texture
 
-    TraceLog(LOG_INFO, "[TEX ID %i] Unloaded texture data (base white texture) from VRAM", whiteTexture);
+    TraceLog(LOG_INFO, "[TEX ID %i] Unloaded texture data (base white texture) from VRAM", defaultTextureId);
 
     free(draws);
 #endif
@@ -1808,8 +1815,7 @@ unsigned int rlLoadTexture(void *data, int width, int height, int format, int mi
         TraceLog(LOG_WARNING, "OpenGL 1.1 does not support GPU compressed texture formats");
         return id;
     }
-#endif
-
+#else
     if ((!texCompDXTSupported) && ((format == COMPRESSED_DXT1_RGB) || (format == COMPRESSED_DXT1_RGBA) ||
         (format == COMPRESSED_DXT3_RGBA) || (format == COMPRESSED_DXT5_RGBA)))
     {
@@ -1841,6 +1847,7 @@ unsigned int rlLoadTexture(void *data, int width, int height, int format, int mi
         return id;
     }
 #endif
+#endif      // defined(GRAPHICS_API_OPENGL_11)
 
     glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
 
@@ -2136,9 +2143,9 @@ void rlGenerateMipmaps(Texture2D *texture)
     if (((texture->width > 0) && ((texture->width & (texture->width - 1)) == 0)) &&
         ((texture->height > 0) && ((texture->height & (texture->height - 1)) == 0))) texIsPOT = true;
 
-    if ((texIsPOT) || (texNPOTSupported))
-    {
 #if defined(GRAPHICS_API_OPENGL_11)
+    if (texIsPOT)
+    {
         // WARNING: Manual mipmap generation only works for RGBA 32bit textures!
         if (texture->format == UNCOMPRESSED_R8G8B8A8)
         {
@@ -2173,9 +2180,10 @@ void rlGenerateMipmaps(Texture2D *texture)
             TraceLog(LOG_WARNING, "[TEX ID %i] Mipmaps [%i] generated manually on CPU side", texture->id, texture->mipmaps);
         }
         else TraceLog(LOG_WARNING, "[TEX ID %i] Mipmaps could not be generated for texture format", texture->id);
-#endif
-
-#if defined(GRAPHICS_API_OPENGL_33) || defined(GRAPHICS_API_OPENGL_ES2)
+    }
+#elif defined(GRAPHICS_API_OPENGL_33) || defined(GRAPHICS_API_OPENGL_ES2)
+    if ((texIsPOT) || (texNPOTSupported))
+    {
         //glHint(GL_GENERATE_MIPMAP_HINT, GL_DONT_CARE);   // Hint for mipmaps generation algorythm: GL_FASTEST, GL_NICEST, GL_DONT_CARE
         glGenerateMipmap(GL_TEXTURE_2D);    // Generate mipmaps automatically
         TraceLog(LOG_INFO, "[TEX ID %i] Mipmaps generated automatically", texture->id);
@@ -2187,8 +2195,8 @@ void rlGenerateMipmaps(Texture2D *texture)
         #define MAX(a,b) (((a)>(b))?(a):(b))
 
         texture->mipmaps =  1 + (int)floor(log(MAX(texture->width, texture->height))/log(2));
-#endif
     }
+#endif
     else TraceLog(LOG_WARNING, "[TEX ID %i] Mipmaps can not be generated", texture->id);
 
     glBindTexture(GL_TEXTURE_2D, 0);
@@ -2741,14 +2749,14 @@ void *rlReadTexturePixels(Texture2D texture)
 // Get default internal texture (white texture)
 Texture2D GetTextureDefault(void)
 {
-    Texture2D texture;
-
-    texture.id = whiteTexture;
+    Texture2D texture = { 0 };
+#if defined(GRAPHICS_API_OPENGL_33) || defined(GRAPHICS_API_OPENGL_ES2)
+    texture.id = defaultTextureId;
     texture.width = 1;
     texture.height = 1;
     texture.mipmaps = 1;
     texture.format = UNCOMPRESSED_R8G8B8A8;
-
+#endif
     return texture;
 }
 
@@ -4053,7 +4061,7 @@ static void DrawBuffersDefault(void)
     // Reset draws counter
     draws[0].mode = RL_QUADS;
     draws[0].vertexCount = 0;
-    draws[0].textureId = whiteTexture;
+    draws[0].textureId = defaultTextureId;
     drawsCounter = 1;
     
     // Change to next buffer in the list
