@@ -97,9 +97,9 @@ int main()
     Camera camera = {{ 4.0f, 4.0f, 4.0f }, { 0.0f, 1.5f, 0.0f }, { 0.0f, 1.0f, 0.0f }, 45.0f };
     Vector3 position = { 0.0f, 0.0f, 0.0f };   // Set model position
     
-    Model dwarf = LoadModel("resources/model/dwarf.obj");                     // Load OBJ model
+    Model model = LoadModel("../models/resources/pbr/trooper.obj");                     // Load OBJ model
 
-    Material material;// = LoadStandardMaterial();
+    Material material = { 0 };
     
     material.shader = LoadShader("resources/shaders/glsl330/standard.vs", 
                                  "resources/shaders/glsl330/standard.fs");
@@ -107,13 +107,13 @@ int main()
     // Try to get lights location points (if available)
     GetShaderLightsLocations(material.shader);
     
-    material.maps[MAP_DIFFUSE].texture = LoadTexture("resources/model/dwarf_diffuse.png");   // Load model diffuse texture
-    material.maps[MAP_NORMAL].texture = LoadTexture("resources/model/dwarf_normal.png");     // Load model normal texture
-    material.maps[MAP_SPECULAR].texture = LoadTexture("resources/model/dwarf_specular.png"); // Load model specular texture
+    material.maps[MAP_DIFFUSE].texture = LoadTexture("../models/resources/pbr/trooper_albedo.png");   // Load model diffuse texture
+    material.maps[MAP_NORMAL].texture = LoadTexture("../models/resources/pbr/trooper_normals.png");     // Load model normal texture
+    material.maps[MAP_SPECULAR].texture = LoadTexture("../models/resources/pbr/trooper_roughness.png"); // Load model specular texture
     material.maps[MAP_DIFFUSE].color = WHITE;
     material.maps[MAP_SPECULAR].color = WHITE;
     
-    dwarf.material = material;      // Apply material to model
+    model.material = material;      // Apply material to model
 
     Light spotLight = CreateLight(LIGHT_SPOT, (Vector3){3.0f, 5.0f, 2.0f}, (Color){255, 255, 255, 255});
     spotLight->target = (Vector3){0.0f, 0.0f, 0.0f};
@@ -135,8 +135,6 @@ int main()
     // NOTE: If values are not changed in real time, they can be set at initialization!!!
     SetShaderLightsValues(material.shader);
     
-    //SetShaderActive(0);
-
     // Setup orbital camera
     SetCameraMode(camera, CAMERA_ORBITAL);  // Set an orbital camera mode
 
@@ -159,7 +157,7 @@ int main()
 
             BeginMode3D(camera);
                 
-                DrawModel(dwarf, position, 2.0f, WHITE);   // Draw 3d model with texture
+                DrawModel(model, position, 2.0f, WHITE);   // Draw 3d model with texture
                 
                 DrawLight(spotLight);   // Draw spot light
                 DrawLight(dirLight);    // Draw directional light
@@ -168,8 +166,6 @@ int main()
                 DrawGrid(10, 1.0f);     // Draw a grid
 
             EndMode3D();
-            
-            DrawText("(c) Dwarf 3D model by David Moreno", screenWidth - 200, screenHeight - 20, 10, GRAY);
             
             DrawFPS(10, 10);
 
@@ -180,7 +176,7 @@ int main()
     // De-Initialization
     //--------------------------------------------------------------------------------------
     UnloadMaterial(material);   // Unload material and assigned textures
-    UnloadModel(dwarf);         // Unload model
+    UnloadModel(model);         // Unload model
     
     // Destroy all created lights
     DestroyLight(pointLight);
