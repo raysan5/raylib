@@ -715,6 +715,68 @@ void ExportMesh(Mesh mesh, const char *fileName)
 }
 
 #if defined(SUPPORT_MESH_GENERATION)
+// Generate polygonal mesh
+Mesh GenMeshPoly(int sides, float radius)
+{
+    Mesh mesh = { 0 };
+    int vertexCount = sides*3;
+    
+    // Vertices definition
+    Vector3 *vertices = (Vector3 *)malloc(vertexCount*sizeof(Vector3));
+    for (int i = 0, v = 0; i < 360; i += 360/sides, v += 3)
+    {
+        vertices[v] = (Vector3){ 0.0f, 0.0f, 0.0f };
+        vertices[v + 1] = (Vector3){ sinf(DEG2RAD*i)*radius, 0.0f, cosf(DEG2RAD*i)*radius };
+        vertices[v + 2] = (Vector3){ sinf(DEG2RAD*(i + 360/sides))*radius, 0.0f, cosf(DEG2RAD*(i + 360/sides))*radius };
+    }    
+        
+    // Normals definition
+    Vector3 *normals = (Vector3 *)malloc(vertexCount*sizeof(Vector3));
+    for (int n = 0; n < vertexCount; n++) normals[n] = (Vector3){ 0.0f, 1.0f, 0.0f };   // Vector3.up;
+
+    // TexCoords definition        
+    Vector2 *texcoords = (Vector2 *)malloc(vertexCount*sizeof(Vector2));
+    for (int n = 0; n < vertexCount; n++) texcoords[n] = (Vector2){ 0.0f, 0.0f };
+
+    mesh.vertexCount = vertexCount;
+    mesh.triangleCount = sides;
+    mesh.vertices = (float *)malloc(mesh.vertexCount*3*sizeof(float));
+    mesh.texcoords = (float *)malloc(mesh.vertexCount*2*sizeof(float));
+    mesh.normals = (float *)malloc(mesh.vertexCount*3*sizeof(float));
+    
+    // Mesh vertices position array
+    for (int i = 0; i < mesh.vertexCount; i++)
+    {
+        mesh.vertices[3*i] = vertices[i].x;
+        mesh.vertices[3*i + 1] = vertices[i].y;
+        mesh.vertices[3*i + 2] = vertices[i].z;
+    }
+    
+    // Mesh texcoords array
+    for (int i = 0; i < mesh.vertexCount; i++)
+    {
+        mesh.texcoords[2*i] = texcoords[i].x;
+        mesh.texcoords[2*i + 1] = texcoords[i].y;
+    }
+    
+    // Mesh normals array
+    for (int i = 0; i < mesh.vertexCount; i++)
+    {
+        mesh.normals[3*i] = normals[i].x;
+        mesh.normals[3*i + 1] = normals[i].y;
+        mesh.normals[3*i + 2] = normals[i].z;
+    }
+    
+    free(vertices);
+    free(normals);
+    free(texcoords);
+
+    // Upload vertex data to GPU (static mesh)
+    rlLoadMesh(&mesh, false);  
+    
+    return mesh;
+}
+
 // Generate plane mesh (with subdivisions)
 Mesh GenMeshPlane(float width, float length, int resX, int resZ)
 {

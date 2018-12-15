@@ -11,7 +11,7 @@
 
 #include "raylib.h"
 
-#define NUM_MODELS  7      // We generate 7 parametric 3d shapes
+#define NUM_MODELS  8      // We generate 8 parametric 3d shapes
 
 int main()
 {
@@ -36,6 +36,7 @@ int main()
     models[4] = LoadModelFromMesh(GenMeshCylinder(1, 2, 16));
     models[5] = LoadModelFromMesh(GenMeshTorus(0.25f, 4.0f, 16, 32));
     models[6] = LoadModelFromMesh(GenMeshKnot(1.0f, 2.0f, 16, 128));
+    models[7] = LoadModelFromMesh(GenMeshPoly(5, 2.0f));
     
     // Set checked texture as default diffuse component for all models material
     for (int i = 0; i < NUM_MODELS; i++) models[i].material.maps[MAP_DIFFUSE].texture = texture;
@@ -93,6 +94,7 @@ int main()
                 case 4: DrawText("CYLINDER", 680, 10, 20, DARKBLUE); break;
                 case 5: DrawText("TORUS", 680, 10, 20, DARKBLUE); break;
                 case 6: DrawText("KNOT", 680, 10, 20, DARKBLUE); break;
+                case 7: DrawText("POLY", 680, 10, 20, DARKBLUE); break;
                 default: break;
             }
 
