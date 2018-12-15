@@ -1158,6 +1158,7 @@ RLAPI void MeshTangents(Mesh *mesh);                                            
 RLAPI void MeshBinormals(Mesh *mesh);                                                                   // Compute mesh binormals
 
 // Mesh generation functions
+RLAPI Mesh GenMeshPoly(int sides, float radius);                                                        // Generate polygonal mesh
 RLAPI Mesh GenMeshPlane(float width, float length, int resX, int resZ);                                 // Generate plane mesh (with subdivisions)
 RLAPI Mesh GenMeshCube(float width, float height, float length);                                        // Generate cuboid mesh
 RLAPI Mesh GenMeshSphere(float radius, int rings, int slices);                                          // Generate sphere mesh (standard sphere)
@@ -1228,6 +1229,8 @@ RLAPI void BeginShaderMode(Shader shader);                                // Beg
 RLAPI void EndShaderMode(void);                                           // End custom shader drawing (use default shader)
 RLAPI void BeginBlendMode(int mode);                                      // Begin blending mode (alpha, additive, multiplied)
 RLAPI void EndBlendMode(void);                                            // End blending mode (reset to default: alpha blending)
+RLAPI void BeginScissorMode(int x, int y, int width, int height);         // Begin scissor mode (define screen area for following drawing)
+RLAPI void EndScissorMode(void);                                          // End scissor mode
 
 // VR control functions
 RLAPI VrDeviceInfo GetVrDeviceInfo(int vrDeviceType);   // Get VR device information for some standard devices

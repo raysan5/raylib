@@ -3313,6 +3313,25 @@ void EndBlendMode(void)
     BeginBlendMode(BLEND_ALPHA);
 }
 
+// Begin scissor mode (define screen area for following drawing)
+void BeginScissorMode(int x, int y, int width, int height)
+{
+    rlglDraw();             // Force drawing elements
+    
+    glEnable(GL_SCISSOR_TEST);
+    glScissor(x, y, width, height);
+    
+    rlClearScreenBuffers(); // Clear current scissor area
+}
+
+// End scissor mode
+void EndScissorMode(void)
+{
+    rlglDraw();             // Force drawing elements
+    
+    glDisable(GL_SCISSOR_TEST);
+}
+
 #if defined(SUPPORT_VR_SIMULATOR)
 // Get VR device information for some standard devices
 VrDeviceInfo GetVrDeviceInfo(int vrDeviceType)
