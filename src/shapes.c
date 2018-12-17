@@ -33,8 +33,12 @@
 *
 **********************************************************************************************/
 
-#include "config.h"     // Defines module configuration flags
 #include "raylib.h"     // Declares module functions
+
+// Check if config flags have been externally provided on compilation line
+#if !defined(EXTERNAL_CONFIG_FLAGS)
+    #include "config.h"         // Defines module configuration flags
+#endif
 
 #include "rlgl.h"       // raylib OpenGL abstraction layer to OpenGL 1.1, 2.1, 3.3+ or ES2
 
