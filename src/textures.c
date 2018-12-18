@@ -10,13 +10,14 @@
 *   #define SUPPORT_FILEFORMAT_JPG
 *   #define SUPPORT_FILEFORMAT_GIF
 *   #define SUPPORT_FILEFORMAT_PSD
+*   #define SUPPORT_FILEFORMAT_PIC
 *   #define SUPPORT_FILEFORMAT_HDR
 *   #define SUPPORT_FILEFORMAT_DDS
 *   #define SUPPORT_FILEFORMAT_PKM
 *   #define SUPPORT_FILEFORMAT_KTX
 *   #define SUPPORT_FILEFORMAT_PVR
 *   #define SUPPORT_FILEFORMAT_ASTC
-*       Selecte desired fileformats to be supported for image data loading. Some of those formats are
+*       Select desired fileformats to be supported for image data loading. Some of those formats are
 *       supported by default, to remove support, just comment unrequired #define in this module
 *
 *   #define SUPPORT_IMAGE_EXPORT
@@ -65,15 +66,13 @@
 
 #include <stdlib.h>             // Required for: malloc(), free()
 #include <string.h>             // Required for: strlen()
+#include <stdio.h>              // Required for: FILE, fopen(), fclose(), fread()
+
+#include "utils.h"              // Required for: fopen() Android mapping
 
 #include "rlgl.h"               // raylib OpenGL abstraction layer to OpenGL 1.1, 3.3 or ES2
                                 // Required for: rlLoadTexture() rlDeleteTextures(),
                                 //      rlGenerateMipmaps(), some funcs for DrawTexturePro()
-
-#include "utils.h"              // Required for: fopen() Android mapping
-
-#define STB_PERLIN_IMPLEMENTATION
-#include "external/stb_perlin.h"// Required for: stb_perlin_fbm_noise3
 
 // Support only desired texture formats on stb_image
 #if !defined(SUPPORT_FILEFORMAT_BMP)
@@ -94,6 +93,9 @@
 #if !defined(SUPPORT_FILEFORMAT_GIF)
     #define STBI_NO_GIF
 #endif
+#if !defined(SUPPORT_FILEFORMAT_PIC)
+    #define STBI_NO_PIC
+#endif
 #if !defined(SUPPORT_FILEFORMAT_HDR)
     #define STBI_NO_HDR
 #endif
@@ -102,8 +104,13 @@
 #define STBI_NO_PIC
 #define STBI_NO_PNM             // Image format .ppm and .pgm
 
-#if (defined(SUPPORT_FILEFORMAT_BMP) || defined(SUPPORT_FILEFORMAT_PNG) || defined(SUPPORT_FILEFORMAT_TGA) || \
-     defined(SUPPORT_FILEFORMAT_JPG) || defined(SUPPORT_FILEFORMAT_PSD) || defined(SUPPORT_FILEFORMAT_GIF) || \
+#if (defined(SUPPORT_FILEFORMAT_BMP) || \
+     defined(SUPPORT_FILEFORMAT_PNG) || \
+     defined(SUPPORT_FILEFORMAT_TGA) || \
+     defined(SUPPORT_FILEFORMAT_JPG) || \
+     defined(SUPPORT_FILEFORMAT_PSD) || \
+     defined(SUPPORT_FILEFORMAT_GIF) || \
+     defined(SUPPORT_FILEFORMAT_PIC) || \
      defined(SUPPORT_FILEFORMAT_HDR))
     #define STB_IMAGE_IMPLEMENTATION
     #include "external/stb_image.h"     // Required for: stbi_load_from_file()
@@ -119,6 +126,11 @@
     #define STB_IMAGE_RESIZE_IMPLEMENTATION
     #include "external/stb_image_resize.h"  // Required for: stbir_resize_uint8()
                                             // NOTE: Used for image scaling on ImageResize()
+#endif
+
+#if defined(SUPPORT_IMAGE_GENERATION)
+    #define STB_PERLIN_IMPLEMENTATION
+    #include "external/stb_perlin.h"        // Required for: stb_perlin_fbm_noise3
 #endif
 
 //----------------------------------------------------------------------------------
@@ -180,8 +192,11 @@ Image LoadImage(const char *fileName)
 #if defined(SUPPORT_FILEFORMAT_JPG)
         || (IsFileExtension(fileName, ".jpg"))
 #endif
-#if defined(SUPPORT_FILEFORMAT_DDS)
+#if defined(SUPPORT_FILEFORMAT_GIF)
         || (IsFileExtension(fileName, ".gif"))
+#endif
+#if defined(SUPPORT_FILEFORMAT_PIC)
+        || (IsFileExtension(fileName, ".pic"))
 #endif
 #if defined(SUPPORT_FILEFORMAT_PSD)
         || (IsFileExtension(fileName, ".psd"))
@@ -196,7 +211,7 @@ Image LoadImage(const char *fileName)
 
         if (imFile != NULL)
         {
-            // NOTE: Using stb_image to load images (Supports: BMP, TGA, PNG, JPG, ...)
+            // NOTE: Using stb_image to load images (Supports multiple image formats)
             image.data = stbi_load_from_file(imFile, &imgWidth, &imgHeight, &imgBpp, 0);
 
             fclose(imFile);
