@@ -105,8 +105,8 @@ int main()
                 
                 DrawRectangleRec(player, RED);
                 
-                DrawRectangle(camera.target.x, -500, 1, screenHeight*4, GREEN);
-                DrawRectangle(-500, camera.target.y, screenWidth*4, 1, GREEN);
+                DrawLine(camera.target.x, -screenHeight*10, camera.target.x, screenHeight*10, GREEN);
+                DrawLine(-screenWidth*10, camera.target.y, screenWidth*10, camera.target.y, GREEN);
                 
             EndMode2D();
             
