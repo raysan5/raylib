@@ -473,8 +473,8 @@ static void InitKeyboard(void);                         // Init raw keyboard sys
 static void ProcessKeyboard(void);                      // Process keyboard events
 static void RestoreKeyboard(void);                      // Restore keyboard system
 static void InitMouse(void);                            // Mouse initialization (including mouse thread)
-static void EventThreadSpawn(char *device);             // Indetifies a input device and spawns a thread to handle it if needed
-static void *EventThread(void *arg);                    // Input device event reading thread
+static void EventThreadSpawn(char *device);             // Identifies a input device and spawns a thread to handle it if needed
+static void *EventThread(void *arg);                    // Input device events reading thread
 static void InitGamepad(void);                          // Init raw gamepad input
 static void *GamepadThread(void *arg);                  // Mouse reading thread
 #endif
@@ -3782,11 +3782,16 @@ static void ProcessKeyboard(void)
     int bufferByteCount = 0;                // Bytes available on the buffer
     char keysBuffer[MAX_KEYBUFFER_SIZE];    // Max keys to be read at a time
 
-    // Reset pressed keys array
-    for (int i = 0; i < 512; i++) currentKeyState[i] = 0;
-
     // Read availables keycodes from stdin
     bufferByteCount = read(STDIN_FILENO, keysBuffer, MAX_KEYBUFFER_SIZE);     // POSIX system call
+    
+    if (bufferByteCount > 0)
+    {
+        // Reset pressed keys array (it will be filled below)
+        for (int i = 0; i < 512; i++) currentKeyState[i] = 0;
+        
+        // ISSUE: If pressed key is the same as previous one, currentKeyState is never reseted...
+    }
 
     // Fill all read bytes (looking for keys)
     for (int i = 0; i < bufferByteCount; i++)
@@ -3860,6 +3865,8 @@ static void ProcessKeyboard(void)
                 currentKeyState[(int)keysBuffer[i] - 32] = 1;
             }
             else currentKeyState[(int)keysBuffer[i]] = 1;
+            
+            lastKeyPressed = keysBuffer[i];     // Register last key pressed
         }
     }
 
@@ -3889,7 +3896,7 @@ static void RestoreKeyboard(void)
 // Mouse initialization (including mouse thread)
 static void InitMouse(void)
 {
-    char Path[MAX_FILEPATH_LENGTH];
+    char path[MAX_FILEPATH_LENGTH];
     DIR *directory;
     struct dirent *entity;
 
@@ -3908,19 +3915,17 @@ static void InitMouse(void)
         {
             if (strncmp("event", entity->d_name, strlen("event")) == 0)         // Search for devices named "event*"
             {
-                sprintf(Path, "%s%s", DEFAULT_EVDEV_PATH, entity->d_name);
-                EventThreadSpawn(Path);                                         // Identify the device and spawn a thread for it
+                sprintf(path, "%s%s", DEFAULT_EVDEV_PATH, entity->d_name);
+                EventThreadSpawn(path);                                         // Identify the device and spawn a thread for it
             }
         }
 
         closedir(directory);
     }
-    else
-    {
-        TraceLog(LOG_WARNING, "Unable to open linux event directory %s", DEFAULT_EVDEV_PATH);
-    }
+    else TraceLog(LOG_WARNING, "Unable to open linux event directory: %s", DEFAULT_EVDEV_PATH);
 }
 
+// Identifies a input device and spawns a thread to handle it if needed
 static void EventThreadSpawn(char *device)
 {
     #define BITS_PER_LONG   (sizeof(long)*8)
@@ -3943,8 +3948,8 @@ static void EventThreadSpawn(char *device)
 
     InputEventWorker *worker;
 
-    /////////////////////////////////// Open the device and allocate worker  /////////////////////////////////////////////
-
+    // Open the device and allocate worker
+    //-------------------------------------------------------------------------------------------------------
     // Find a free spot in the workers array
     for (int i = 0; i < sizeof(eventWorkers)/sizeof(InputEventWorker); ++i)
     {
@@ -3963,7 +3968,7 @@ static void EventThreadSpawn(char *device)
     }
     else
     {
-        TraceLog(LOG_WARNING, "Error creating input device thread for '%s': Out of worker slots", device);
+        TraceLog(LOG_WARNING, "Error creating input device thread for [%s]: Out of worker slots", device);
         return;
     }
 
@@ -3971,12 +3976,12 @@ static void EventThreadSpawn(char *device)
     fd = open(device, O_RDONLY | O_NONBLOCK);
     if (fd < 0)
     {
-        TraceLog(LOG_WARNING, "Error creating input device thread for '%s': Can't open device (Err: %d)", device, worker->fd);
+        TraceLog(LOG_WARNING, "Error creating input device thread for [%s]: Can't open device (Error: %d)", device, worker->fd);
         return;
     }
     worker->fd = fd;
 
-    //Grab number on the end of the devices name "event<N>"
+    // Grab number on the end of the devices name "event<N>"
     int devNum = 0;
     char *ptrDevName = strrchr(device, 't');
     worker->eventNum = -1;
@@ -3987,13 +3992,13 @@ static void EventThreadSpawn(char *device)
             worker->eventNum = devNum;
     }
 
-    // At this point we have a connection to the device,
-    // but we don't yet know what the device is (Could be
-    // many things, even as simple as a power button)
+    // At this point we have a connection to the device, but we don't yet know what the device is.
+    // It could be many things, even as simple as a power button...
+    //-------------------------------------------------------------------------------------------------------
 
-    /////////////////////////////////// Identify the device /////////////////////////////////////////////
-
-    ioctl(fd, EVIOCGBIT(0, sizeof(evBits)), evBits);              // Read a bitfield of the avalable device properties
+    // Identify the device
+    //-------------------------------------------------------------------------------------------------------
+    ioctl(fd, EVIOCGBIT(0, sizeof(evBits)), evBits);    // Read a bitfield of the avalable device properties
 
     // Check for absolute input devices
     if (TEST_BIT(evBits, EV_ABS))
@@ -4065,13 +4070,14 @@ static void EventThreadSpawn(char *device)
 
         if (TEST_BIT(keyBits, KEY_SPACE)) worker->isKeyboard = true;           // This is a keyboard
     }
+    //-------------------------------------------------------------------------------------------------------
 
-
-    /////////////////////////////////// Decide what to do with the device  /////////////////////////////////////////////
+    // Decide what to do with the device
+    //-------------------------------------------------------------------------------------------------------
     if (worker->isTouch || worker->isMouse)
     {
         // Looks like a interesting device
-        TraceLog(LOG_INFO, "Opening input device '%s' (%s%s%s%s%s)", device,
+        TraceLog(LOG_INFO, "Opening input device [%s] (%s%s%s%s%s)", device,
             worker->isMouse ? "mouse " : "",
             worker->isMultitouch ? "multitouch " : "",
             worker->isTouch ? "touchscreen " : "",
@@ -4082,7 +4088,7 @@ static void EventThreadSpawn(char *device)
         int error = pthread_create(&worker->threadId, NULL, &EventThread, (void *)worker);
         if (error != 0)
         {
-            TraceLog(LOG_WARNING, "Error creating input device thread for '%s': Can't create thread (Err: %d)", device, error);
+            TraceLog(LOG_WARNING, "Error creating input device thread for [%s]: Can't create thread (Error: %d)", device, error);
             worker->threadId = 0;
             close(fd);
         }
@@ -4103,7 +4109,7 @@ static void EventThreadSpawn(char *device)
             {
                 if (eventWorkers[i].threadId != 0)
                 {
-                    TraceLog(LOG_WARNING, "Duplicate touchscreen found, killing toucnscreen on event%d", i);
+                    TraceLog(LOG_WARNING, "Duplicate touchscreen found, killing touchscreen on event: %d", i);
                     pthread_cancel(eventWorkers[i].threadId);
                     close(eventWorkers[i].fd);
                 }
@@ -4112,8 +4118,10 @@ static void EventThreadSpawn(char *device)
 #endif
     }
     else close(fd);  // We are not interested in this device
+    //-------------------------------------------------------------------------------------------------------
 }
 
+// Input device events reading thread
 static void *EventThread(void *arg)
 {
     struct input_event event;
@@ -4125,7 +4133,7 @@ static void *EventThread(void *arg)
     {
         if (read(worker->fd, &event, sizeof(event)) == (int)sizeof(event))
         {
-            /////////////////////////////// Relative movement parsing ////////////////////////////////////
+            // Relative movement parsing
             if (event.type == EV_REL)
             {
                 if (event.code == REL_X)
@@ -4150,7 +4158,7 @@ static void *EventThread(void *arg)
                 }
             }
 
-            /////////////////////////////// Absolute movement parsing ////////////////////////////////////
+            // Absolute movement parsing
             if (event.type == EV_ABS)
             {
                 // Basic movement
@@ -4197,7 +4205,7 @@ static void *EventThread(void *arg)
                 }
             }
 
-            /////////////////////////////// Button parsing ////////////////////////////////////
+            // Button parsing
             if (event.type == EV_KEY)
             {
                 if((event.code == BTN_TOUCH) || (event.code == BTN_LEFT))
@@ -4213,14 +4221,14 @@ static void *EventThread(void *arg)
                 if (event.code == BTN_MIDDLE) currentMouseStateEvdev[MOUSE_MIDDLE_BUTTON] =  event.value;
             }
 
-            /////////////////////////////// Screen confinement ////////////////////////////////////
+            // Screen confinement
             if (mousePosition.x < 0) mousePosition.x = 0;
             if (mousePosition.x > screenWidth/mouseScale) mousePosition.x = screenWidth/mouseScale;
 
             if (mousePosition.y < 0) mousePosition.y = 0;
             if (mousePosition.y > screenHeight/mouseScale) mousePosition.y = screenHeight/mouseScale;
 
-            /////////////////////////////// Gesture update ////////////////////////////////////
+            // Gesture update
             if (GestureNeedsUpdate)
             {
                 gestureEvent.pointCount = 0;
