@@ -18,6 +18,12 @@
 
 #include "raylib.h"
 
+#if defined(PLATFORM_DESKTOP)
+    #define GLSL_VERSION            330
+#else   // PLATFORM_RPI, PLATFORM_ANDROID, PLATFORM_WEB
+    #define GLSL_VERSION            100
+#endif
+
 int main()
 {
     // Initialization
@@ -39,8 +45,10 @@ int main()
 
     Model model = LoadModel("resources/models/watermill.obj");                   // Load OBJ model
     Texture2D texture = LoadTexture("resources/models/watermill_diffuse.png");   // Load model texture
-    Shader shader = LoadShader("resources/shaders/glsl330/base.vs", 
-                               "resources/shaders/glsl330/grayscale.fs");   // Load model shader
+    
+    // Load shader for model
+    // NOTE: Defining 0 (NULL) for vertex shader forces usage of internal default vertex shader
+    Shader shader = LoadShader(0, FormatText("resources/shaders/glsl%i/grayscale.fs", GLSL_VERSION));
 
     model.material.shader = shader;                     // Set shader effect to 3d model
     model.material.maps[MAP_DIFFUSE].texture = texture; // Bind texture to model

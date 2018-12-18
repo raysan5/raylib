@@ -18,6 +18,12 @@
 
 #include "raylib.h"
 
+#if defined(PLATFORM_DESKTOP)
+    #define GLSL_VERSION            330
+#else   // PLATFORM_RPI, PLATFORM_ANDROID, PLATFORM_WEB
+    #define GLSL_VERSION            100
+#endif
+
 int main()
 {
     // Initialization
@@ -29,9 +35,10 @@ int main()
     
     Texture2D fudesumi = LoadTexture("resources/fudesumi.png");
 
-    // NOTE: Using GLSL 330 shader version, on OpenGL ES 2.0 use GLSL 100 shader version 
-    Shader shader = LoadShader("resources/shaders/glsl330/base.vs", 
-                               "resources/shaders/glsl330/grayscale.fs");
+    // Load shader to be used on some parts drawing
+    // NOTE 1: Using GLSL 330 shader version, on OpenGL ES 2.0 use GLSL 100 shader version 
+    // NOTE 2: Defining 0 (NULL) for vertex shader forces usage of internal default vertex shader
+    Shader shader = LoadShader(0, FormatText("resources/shaders/glsl%i/grayscale.fs", GLSL_VERSION));
 
     SetTargetFPS(60);
     //--------------------------------------------------------------------------------------

@@ -25,14 +25,14 @@ int main()
     InitWindow(screenWidth, screenHeight, "raylib [models] example - mesh picking");
 
     // Define the camera to look into our 3d world
-    Camera camera;
+    Camera camera = { 0 };
     camera.position = (Vector3){ 20.0f, 20.0f, 20.0f };  // Camera position
     camera.target = (Vector3){ 0.0f, 8.0f, 0.0f };      // Camera looking at point
     camera.up = (Vector3){ 0.0f, 1.6f, 0.0f };          // Camera up vector (rotation towards target)
     camera.fovy = 45.0f;                                // Camera field-of-view Y
     camera.type = CAMERA_PERSPECTIVE;                   // Camera mode type
 
-    Ray ray;        // Picking ray
+    Ray ray = { 0 };        // Picking ray
     
     Model tower = LoadModel("resources/models/turret.obj");                 // Load OBJ model
     Texture2D texture = LoadTexture("resources/models/turret_diffuse.png"); // Load model texture
@@ -62,7 +62,7 @@ int main()
         UpdateCamera(&camera);          // Update camera
         
         // Display information about closest hit
-        RayHitInfo nearestHit;
+        RayHitInfo nearestHit = { 0 };
         char *hitObjectName = "None";
         nearestHit.distance = FLT_MAX;
         nearestHit.hit = false;
@@ -95,7 +95,7 @@ int main()
         } 
         else hitTriangle = false;
 
-        RayHitInfo meshHitInfo;
+        RayHitInfo meshHitInfo = { 0 };
 
         // Check ray collision against bounding box first, before trying the full ray-mesh test
         if (CheckCollisionRayBox(ray, towerBBox)) 
@@ -113,7 +113,9 @@ int main()
                 hitObjectName = "Mesh";
             }
             
-        } hitMeshBBox = false; 
+        } 
+        
+        hitMeshBBox = false; 
         //----------------------------------------------------------------------------------
         
         // Draw

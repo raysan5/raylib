@@ -18,6 +18,12 @@
 
 #include "raylib.h"
 
+#if defined(PLATFORM_DESKTOP)
+    #define GLSL_VERSION            330
+#else   // PLATFORM_RPI, PLATFORM_ANDROID, PLATFORM_WEB
+    #define GLSL_VERSION            100
+#endif
+
 int main()
 {
     // Initialization
@@ -41,10 +47,11 @@ int main()
     Texture2D texture = LoadTexture("resources/models/barracks_diffuse.png");   // Load model texture (diffuse map)
     model.material.maps[MAP_DIFFUSE].texture = texture;                         // Set model diffuse texture
 
-    Vector3 position = { 0.0f, 0.0f, 0.0f };                                // Set model position
+    Vector3 position = { 0.0f, 0.0f, 0.0f };                                    // Set model position
     
-    Shader shader = LoadShader("resources/shaders/glsl330/base.vs", 
-                               "resources/shaders/glsl330/swirl.fs");       // Load postpro shader
+    // Load postprocessing shader
+    // NOTE: Defining 0 (NULL) for vertex shader forces usage of internal default vertex shader
+    Shader shader = LoadShader(0, FormatText("resources/shaders/glsl%i/swirl.fs", GLSL_VERSION));
     
     // Get variable (uniform) location on the shader to connect with the program
     // NOTE: If uniform variable could not be found in the shader, function returns -1
