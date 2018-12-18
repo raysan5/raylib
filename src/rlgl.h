@@ -2637,8 +2637,6 @@ unsigned char *rlReadScreenPixels(int width, int height)
 }
 
 // Read texture pixel data
-// NOTE: glGetTexImage() is not available on OpenGL ES 2.0
-// Texture2D width and height are required on OpenGL ES 2.0. There is no way to get it from texture id.
 void *rlReadTexturePixels(Texture2D texture)
 {
     void *pixels = NULL;
@@ -2647,11 +2645,11 @@ void *rlReadTexturePixels(Texture2D texture)
     glBindTexture(GL_TEXTURE_2D, texture.id);
 
     // NOTE: Using texture.id, we can retrieve some texture info (but not on OpenGL ES 2.0)
+    // Possible texture info: GL_TEXTURE_RED_SIZE, GL_TEXTURE_GREEN_SIZE, GL_TEXTURE_BLUE_SIZE, GL_TEXTURE_ALPHA_SIZE
     //int width, height, format;
     //glGetTexLevelParameteriv(GL_TEXTURE_2D, 0, GL_TEXTURE_WIDTH, &width);
     //glGetTexLevelParameteriv(GL_TEXTURE_2D, 0, GL_TEXTURE_HEIGHT, &height);
     //glGetTexLevelParameteriv(GL_TEXTURE_2D, 0, GL_TEXTURE_INTERNAL_FORMAT, &format);
-    // Other texture info: GL_TEXTURE_RED_SIZE, GL_TEXTURE_GREEN_SIZE, GL_TEXTURE_BLUE_SIZE, GL_TEXTURE_ALPHA_SIZE
 
     // NOTE: Each row written to or read from by OpenGL pixel operations like glGetTexImage are aligned to a 4 byte boundary by default, which may add some padding.
     // Use glPixelStorei to modify padding with the GL_[UN]PACK_ALIGNMENT setting.
@@ -2674,66 +2672,39 @@ void *rlReadTexturePixels(Texture2D texture)
 #endif
 
 #if defined(GRAPHICS_API_OPENGL_ES2)
-    RenderTexture2D fbo = rlLoadRenderTexture(texture.width, texture.height);
-
-    // NOTE: Two possible Options:
+    // glGetTexImage() is not available on OpenGL ES 2.0
+    // Texture2D width and height are required on OpenGL ES 2.0. There is no way to get it from texture id.
+    // Two possible Options:
     // 1 - Bind texture to color fbo attachment and glReadPixels()
     // 2 - Create an fbo, activate it, render quad with texture, glReadPixels()
-
-#define GET_TEXTURE_FBO_OPTION_1    // It works
-#if defined(GET_TEXTURE_FBO_OPTION_1)
+    // We are using Option 1, just need to care for texture format on retrieval
+    // NOTE: This behaviour could be conditioned by graphic driver...
+    RenderTexture2D fbo = rlLoadRenderTexture(texture.width, texture.height);
+    
     glBindFramebuffer(GL_FRAMEBUFFER, fbo.id);
     glBindTexture(GL_TEXTURE_2D, 0);
 
-    // Attach our texture to FBO -> Texture must be RGBA
+    // Attach our texture to FBO
     // NOTE: Previoust attached texture is automatically detached
     glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, texture.id, 0);
 
-    pixels = (unsigned char *)malloc(texture.width*texture.height*4*sizeof(unsigned char));
+    // Allocate enough memory to read back our texture data
+    pixels = (unsigned char *)malloc(GetPixelDataSize(texture.width, texture.height, texture.format));
 
+    // Get OpenGL internal formats and data type from our texture format
+    unsigned int glInternalFormat, glFormat, glType;
+    rlGetGlTextureFormats(texture.format, &glInternalFormat, &glFormat, &glType);
+    
     // NOTE: We read data as RGBA because FBO texture is configured as RGBA, despite binding a RGB texture...
-    glReadPixels(0, 0, texture.width, texture.height, GL_RGBA, GL_UNSIGNED_BYTE, pixels);
+    glReadPixels(0, 0, texture.width, texture.height, glFormat, glType, pixels);
 
     // Re-attach internal FBO color texture before deleting it
     glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, fbo.texture.id, 0);
 
     glBindFramebuffer(GL_FRAMEBUFFER, 0);
 
-#elif defined(GET_TEXTURE_FBO_OPTION_2)
-    // Render texture to fbo
-    glBindFramebuffer(GL_FRAMEBUFFER, fbo.id);
-
-    glClearColor(0.0f, 0.0f, 0.0f, 0.0f);
-    glClearDepthf(1.0f);
-    //glDisable(GL_TEXTURE_2D);
-    glEnable(GL_DEPTH_TEST);
-    //glDisable(GL_BLEND);
-
-    glViewport(0, 0, texture.width, texture.height);
-    rlOrtho(0.0, texture.width, texture.height, 0.0, 0.0, 1.0);
-
-    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-    glUseProgram(GetShaderDefault().id);
-    glBindTexture(GL_TEXTURE_2D, texture.id);
-    GenDrawQuad();
-    glBindTexture(GL_TEXTURE_2D, 0);
-    glUseProgram(0);
-
-    pixels = (unsigned char *)malloc(texture.width*texture.height*4*sizeof(unsigned char));
-
-    glReadPixels(0, 0, texture.width, texture.height, GL_RGBA, GL_UNSIGNED_BYTE, pixels);
-
-    // Bind framebuffer 0, which means render to back buffer
-    glBindFramebuffer(GL_FRAMEBUFFER, 0);
-
-    // Reset viewport dimensions to default
-    glViewport(0, 0, screenWidth, screenHeight);
-
-#endif // GET_TEXTURE_FBO_OPTION
-
     // Clean up temporal fbo
     rlDeleteRenderTextures(fbo);
-
 #endif
 
     return pixels;
