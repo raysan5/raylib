@@ -3750,8 +3750,8 @@ static void InitKeyboard(void)
     // Set new keyboard settings (change occurs immediately)
     tcsetattr(STDIN_FILENO, TCSANOW, &keyboardNewSettings);
 
-    // NOTE: Reading directly from stdin will give chars already key-mapped by kernel to ASCII or UNICODE, we change that! -> WHY???
-
+    // NOTE: Reading directly from stdin will give chars already key-mapped by kernel to ASCII or UNICODE
+    
     // Save old keyboard mode to restore it at the end
     if (ioctl(STDIN_FILENO, KDGKBMODE, &defaultKeyboardMode) < 0)
     {
@@ -3785,14 +3785,9 @@ static void ProcessKeyboard(void)
     // Read availables keycodes from stdin
     bufferByteCount = read(STDIN_FILENO, keysBuffer, MAX_KEYBUFFER_SIZE);     // POSIX system call
     
-    if (bufferByteCount > 0)
-    {
-        // Reset pressed keys array (it will be filled below)
-        for (int i = 0; i < 512; i++) currentKeyState[i] = 0;
-        
-        // ISSUE: If pressed key is the same as previous one, currentKeyState is never reseted...
-    }
-
+    // Reset pressed keys array (it will be filled below)
+    for (int i = 0; i < 512; i++) currentKeyState[i] = 0;
+    
     // Fill all read bytes (looking for keys)
     for (int i = 0; i < bufferByteCount; i++)
     {
@@ -3853,8 +3848,8 @@ static void ProcessKeyboard(void)
                 }
             }
         }
-        else if (keysBuffer[i] == 0x0a) currentKeyState[257] = 1;     // raylib KEY_ENTER (don't mix with <linux/input.h> KEY_*)
-        else if (keysBuffer[i] == 0x7f) currentKeyState[259] = 1;     // raylib KEY_BACKSPACE
+        else if (keysBuffer[i] == 0x0a) { lastKeyPressed = 257; currentKeyState[257] = 1; }    // raylib KEY_ENTER (don't mix with <linux/input.h> KEY_*)
+        else if (keysBuffer[i] == 0x7f) { lastKeyPressed = 259; currentKeyState[259] = 1; }    // raylib KEY_BACKSPACE
         else
         {
             TraceLog(LOG_DEBUG, "Pressed key (ASCII): 0x%02x", keysBuffer[i]);
