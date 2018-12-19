@@ -520,14 +520,11 @@ void DrawPlane(Vector3 centerPos, Vector2 size, Color color)
         rlTranslatef(centerPos.x, centerPos.y, centerPos.z);
         rlScalef(size.x, 1.0f, size.y);
 
-        rlBegin(RL_TRIANGLES);
+        rlBegin(RL_QUADS);
             rlColor4ub(color.r, color.g, color.b, color.a);
             rlNormal3f(0.0f, 1.0f, 0.0f);
 
-            rlVertex3f(0.5f, 0.0f, -0.5f);
             rlVertex3f(-0.5f, 0.0f, -0.5f);
-            rlVertex3f(-0.5f, 0.0f, 0.5f);
-
             rlVertex3f(-0.5f, 0.0f, 0.5f);
             rlVertex3f(0.5f, 0.0f, 0.5f);
             rlVertex3f(0.5f, 0.0f, -0.5f);
