@@ -3283,12 +3283,13 @@ void EndBlendMode(void)
 }
 
 // Begin scissor mode (define screen area for following drawing)
+// NOTE: Scissor rec refers to bottom-left corner, we change it to upper-left
 void BeginScissorMode(int x, int y, int width, int height)
 {
     rlglDraw();             // Force drawing elements
     
     glEnable(GL_SCISSOR_TEST);
-    glScissor(x, y, width, height);
+    glScissor(x, GetScreenHeight() - (y + height), width, height);
     
     rlClearScreenBuffers(); // Clear current scissor area
 }
