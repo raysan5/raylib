@@ -3289,7 +3289,7 @@ void BeginScissorMode(int x, int y, int width, int height)
     rlglDraw();             // Force drawing elements
     
     glEnable(GL_SCISSOR_TEST);
-    glScissor(x, GetScreenHeight() - (y + height), width, height);
+    glScissor(x, screenHeight - (y + height), width, height);
     
     rlClearScreenBuffers(); // Clear current scissor area
 }
