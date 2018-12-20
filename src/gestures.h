@@ -91,7 +91,7 @@
 typedef enum { TOUCH_UP, TOUCH_DOWN, TOUCH_MOVE } TouchAction;
 
 // Gesture events
-// NOTE: MAX_TOUCH_POINTS fixed to 4
+// NOTE: RL_MAX_TOUCH_POINTS fixed to 4
 typedef struct {
     int touchAction;
     int pointCount;

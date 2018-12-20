@@ -58,7 +58,7 @@ int main()
             ClearBackground(RAYWHITE);
 
             // Multitouch
-            for (int i = 0; i < MAX_TOUCH_POINTS; ++i)
+            for (int i = 0; i < RL_MAX_TOUCH_POINTS; ++i)
             {              
                 TouchPos = GetTouchPosition(i);                                     // Get the touch point
                 

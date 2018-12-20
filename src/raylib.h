@@ -91,7 +91,7 @@
 #define RL_DEG2RAD (RL_PI/180.0f)
 #define RL_RAD2DEG (180.0f/RL_PI)
 
-#define MAX_TOUCH_POINTS        10      // Maximum number of touch points supported
+#define RL_MAX_TOUCH_POINTS        10      // Maximum number of touch points supported
 
 // Shader and material limits
 #define MAX_SHADER_LOCATIONS    32      // Maximum number of predefined locations stored in shader struct

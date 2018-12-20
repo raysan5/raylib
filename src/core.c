@@ -336,7 +336,7 @@ static Vector2 mousePosition;                   // Mouse position on screen
 static float mouseScale = 1.0f;                 // Mouse default scale
 static bool cursorHidden = false;               // Track if cursor is hidden
 static bool cursorOnScreen = false;             // Tracks if cursor is inside client area
-static Vector2 touchPosition[MAX_TOUCH_POINTS]; // Touch position on screen
+static Vector2 touchPosition[RL_MAX_TOUCH_POINTS]; // Touch position on screen
 
 #if defined(PLATFORM_DESKTOP) || defined(PLATFORM_RPI) || defined(PLATFORM_WEB) || defined(PLATFORM_UWP)
 static char previousMouseState[3] = { 0 };      // Registers previous mouse button state
@@ -2157,8 +2157,8 @@ Vector2 GetTouchPosition(int index)
     Vector2 position = { -1.0f, -1.0f };
 
 #if defined(PLATFORM_ANDROID) || defined(PLATFORM_WEB)
-    if (index < MAX_TOUCH_POINTS) position = touchPosition[index];
-    else TraceLog(LOG_WARNING, "Required touch point out of range (Max touch points: %i)", MAX_TOUCH_POINTS);
+    if (index < RL_MAX_TOUCH_POINTS) position = touchPosition[index];
+    else TraceLog(LOG_WARNING, "Required touch point out of range (Max touch points: %i)", RL_MAX_TOUCH_POINTS);
 
     if ((screenWidth > displayWidth) || (screenHeight > displayHeight))
     {
@@ -3896,7 +3896,7 @@ static void InitMouse(void)
     struct dirent *entity;
 
     // Reset variables
-    for (int i = 0; i < MAX_TOUCH_POINTS; ++i)
+    for (int i = 0; i < RL_MAX_TOUCH_POINTS; ++i)
     {
         touchPosition[i].x = -1;
         touchPosition[i].y = -1;
@@ -4179,19 +4179,19 @@ static void *EventThread(void *arg)
 
                 if (event.code == ABS_MT_POSITION_X)
                 {
-                    if (worker->touchSlot < MAX_TOUCH_POINTS)
+                    if (worker->touchSlot < RL_MAX_TOUCH_POINTS)
                         touchPosition[worker->touchSlot].x = (event.value - worker->absRange.x)*screenWidth/worker->absRange.width;    // Scale acording to absRange
                 }
 
                 if (event.code == ABS_MT_POSITION_Y)
                 {
-                    if (worker->touchSlot < MAX_TOUCH_POINTS)
+                    if (worker->touchSlot < RL_MAX_TOUCH_POINTS)
                         touchPosition[worker->touchSlot].y = (event.value - worker->absRange.y)*screenHeight/worker->absRange.height;  // Scale acording to absRange
                 }
 
                 if (event.code == ABS_MT_TRACKING_ID)
                 {
-                    if ( (event.value < 0) && (worker->touchSlot < MAX_TOUCH_POINTS) )
+                    if ( (event.value < 0) && (worker->touchSlot < RL_MAX_TOUCH_POINTS) )
                     {
                         // Touch has ended for this point
                         touchPosition[worker->touchSlot].x = -1;
