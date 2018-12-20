@@ -407,6 +407,7 @@ EXAMPLES = \
     models/models_box_collisions \
     models/models_billboard \
     models/models_obj_loading \
+    models/models_obj_viewing \
     models/models_heightmap \
     models/models_cubicmap \
     models/models_mesh_picking \
@@ -418,6 +419,7 @@ EXAMPLES = \
     shaders/shaders_shapes_textures \
     shaders/shaders_custom_uniform \
     shaders/shaders_postprocessing \
+    shaders/shaders_raymarching \
     audio/audio_sound_loading \
     audio/audio_music_stream \
     audio/audio_module_playing \

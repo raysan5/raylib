@@ -32,9 +32,9 @@ int main()
     camera.target = (Vector3){ 0.0f, 0.0f, 0.7f };      // Camera looking at point
     camera.up = (Vector3){ 0.0f, 1.0f, 0.0f };          // Camera up vector (rotation towards target)
     camera.fovy = 65.0f;                                // Camera field-of-view Y
-    
+
     SetCameraMode(camera, CAMERA_FREE);                 // Set camera mode
-   
+
     // Load raymarching shader
     // NOTE: Defining 0 (NULL) for vertex shader forces usage of internal default vertex shader
     Shader shader = LoadShader(0, "resources/shaders/glsl330/raymarching.fs");
@@ -46,12 +46,12 @@ int main()
     int deltaTimeLoc = GetShaderLocation(shader, "deltaTime");
     int runTimeLoc = GetShaderLocation(shader, "runTime");
     int resolutionLoc = GetShaderLocation(shader, "resolution");
-    
+
     float resolution[2] = { screenWidth, screenHeight };
     SetShaderValue(shader, resolutionLoc, resolution, 2);
-    
+
     float runTime = 0.0f;
-    
+
     SetTargetFPS(60);                       // Set our game to run at 60 frames-per-second
     //--------------------------------------------------------------------------------------
 
@@ -61,14 +61,14 @@ int main()
         // Update
         //----------------------------------------------------------------------------------
         UpdateCamera(&camera);              // Update camera
-        
+
         float cameraPos[3] = { camera.position.x, camera.position.y, camera.position.z };
         float cameraTarget[3] = { camera.target.x, camera.target.y, camera.target.z };
         float cameraUp[3] = { camera.up.x, camera.up.y, camera.up.z };
 
         float deltaTime = GetFrameTime();  
         runTime += deltaTime;
-        
+
         // Set shader required uniform values
         SetShaderValue(shader, viewEyeLoc, cameraPos, 3);
         SetShaderValue(shader, viewCenterLoc, cameraTarget, 3);
@@ -86,9 +86,9 @@ int main()
             // We only draw a white full-screen rectangle,
             // frame is generated in shader using raymarching
             BeginShaderMode(shader);
-                DrawRectangle(0, 0, screenWidth, screenHeight, WHITE);                          
+                DrawRectangle(0, 0, screenWidth, screenHeight, WHITE);
             EndShaderMode();
-            
+
             DrawText("(c) Raymarching shader by Iñigo Quilez. MIT License.", screenWidth - 280, screenHeight - 20, 10, GRAY);
 
         EndDrawing();

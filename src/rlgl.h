@@ -2891,8 +2891,8 @@ int GetShaderLocation(Shader shader, const char *uniformName)
 #if defined(GRAPHICS_API_OPENGL_33) || defined(GRAPHICS_API_OPENGL_ES2)
     location = glGetUniformLocation(shader.id, uniformName);
 
-    if (location == -1) TraceLog(LOG_WARNING, "[SHDR ID %i] Shader uniform [%s] COULD NOT BE FOUND", shader.id, uniformName);
-    else TraceLog(LOG_INFO, "[SHDR ID %i] Shader uniform [%s] set at location: %i", shader.id, uniformName, location);
+    if (location == -1) TraceLog(LOG_WARNING, "[SHDR ID %i][%s] Shader uniform could not be found", shader.id, uniformName);
+    else TraceLog(LOG_INFO, "[SHDR ID %i][%s] Shader uniform set at location: %i", shader.id, uniformName, location);
 #endif
     return location;
 }
