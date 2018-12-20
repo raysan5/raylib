@@ -1,0 +1,98 @@
+# reference material
+mtllib myCube.mtl
+
+# object Pau_Box
+
+# vertex  (XZY)
+v  5.5  0  1.5
+v  8.5  0  1.5
+v  5.5  0  -1.5
+v  8.5  0  -1.5
+v  5.5  3  1.5
+v  8.5  3  1.5
+v  5.5  3  -1.5
+v  8.5  3  -1.5
+
+# normals  (XYZ)
+# red
+vn  0  -1  0
+#blue
+vn  0  1  0
+#top
+vn  0  0  1
+#yellow
+vn  1  0  0
+#bottom
+vn  0  0  -1
+#green
+vn  -1  0  0
+
+
+# UVs (XY)
+# yellow (1234)
+vt 0.5  0    0 
+vt 1    0    0
+vt 1    0.5  0
+vt 0.5  0.5  0
+# red (5678)
+vt 0.5  0.5  0
+vt 1    0.5  0
+vt 0.5  1    0
+vt 1    1    0
+#bottom (9101112)
+vt 0    0.5  0
+vt 1    0.5  0
+vt 1    0    0
+vt 0    0    0
+#top (13141516)
+vt 0    0.5  0
+vt 1    0.5  0
+vt 1    1    0
+vt 0    1    0
+#green (17181920)
+vt 0.5  0    0
+vt 0    0    0
+vt 0    0.5  0
+vt 0.5  0.5  0
+#blue (21222324)
+vt 0    0.5  0
+vt 0.5  0.5  0
+vt 0.5  1    0
+vt 0    1    0
+
+# merger 
+g Pau_Box
+
+# reference material
+usemtl Material_1
+
+# bottom
+f 1/9/1   3/10/1  4/11/1 
+f 4/11/1  2/12/1  1/9/1 
+
+# top
+f 5/13/2 6/14/2 8/15/2 
+f 8/15/2 7/16/2 5/13/2 
+
+# front-yellow
+f 1/17/6 2/18/6 6/19/6 
+f 6/19/6 5/20/6 1/17/6 
+
+# right-blue
+f 2/6/1 4/5/1 8/7/1 
+f 8/7/1 6/8/1 2/6/1
+
+# back-green
+f 4/2/3 3/1/3 7/4/3 
+f 7/4/3 8/3/3 4/2/3 
+
+# left-red
+f 3/22/5 1/21/5 5/24/5 
+f 5/24/5 7/23/5 3/22/5 
+
+
+
+
+
+
+
