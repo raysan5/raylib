@@ -163,7 +163,7 @@ static void InitGame(void)
     gravity = 0.25f;
 
     linePosition = (Vector2){ 0.0f , 0.0f };
-    shipHeight = (PLAYER_BASE_SIZE/2)/tanf(20*DEG2RAD);
+    shipHeight = (PLAYER_BASE_SIZE/2)/tanf(20*RL_DEG2RAD);
 
     // Initialization player
     player.position = (Vector2){ screenWidth/2, screenHeight };
@@ -556,9 +556,9 @@ void DrawGame(void)
         if (!gameOver)
         {
             // Draw player
-            Vector2 v1 = { player.position.x + sinf(player.rotation*DEG2RAD)*(shipHeight), player.position.y - cosf(player.rotation*DEG2RAD)*(shipHeight) };
-            Vector2 v2 = { player.position.x - cosf(player.rotation*DEG2RAD)*(PLAYER_BASE_SIZE/2), player.position.y - sinf(player.rotation*DEG2RAD)*(PLAYER_BASE_SIZE/2) };
-            Vector2 v3 = { player.position.x + cosf(player.rotation*DEG2RAD)*(PLAYER_BASE_SIZE/2), player.position.y + sinf(player.rotation*DEG2RAD)*(PLAYER_BASE_SIZE/2) };
+            Vector2 v1 = { player.position.x + sinf(player.rotation*RL_DEG2RAD)*(shipHeight), player.position.y - cosf(player.rotation*RL_DEG2RAD)*(shipHeight) };
+            Vector2 v2 = { player.position.x - cosf(player.rotation*RL_DEG2RAD)*(PLAYER_BASE_SIZE/2), player.position.y - sinf(player.rotation*RL_DEG2RAD)*(PLAYER_BASE_SIZE/2) };
+            Vector2 v3 = { player.position.x + cosf(player.rotation*RL_DEG2RAD)*(PLAYER_BASE_SIZE/2), player.position.y + sinf(player.rotation*RL_DEG2RAD)*(PLAYER_BASE_SIZE/2) };
             DrawTriangle(v1, v2, v3, MAROON);
 
             // Draw meteors (big)

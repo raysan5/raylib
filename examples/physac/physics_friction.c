@@ -47,23 +47,23 @@ int main()
     // Create left ramp physics body
     PhysicsBody rectLeft = CreatePhysicsBodyRectangle((Vector2){ 25, screenHeight - 5 }, 250, 250, 10);
     rectLeft->enabled = false; // Disable body state to convert it to static (no dynamics, but collisions)
-    SetPhysicsBodyRotation(rectLeft, 30*DEG2RAD);
+    SetPhysicsBodyRotation(rectLeft, 30*RL_DEG2RAD);
 
     // Create right ramp  physics body
     PhysicsBody rectRight = CreatePhysicsBodyRectangle((Vector2){ screenWidth - 25, screenHeight - 5 }, 250, 250, 10);
     rectRight->enabled = false; // Disable body state to convert it to static (no dynamics, but collisions)
-    SetPhysicsBodyRotation(rectRight, 330*DEG2RAD);
+    SetPhysicsBodyRotation(rectRight, 330*RL_DEG2RAD);
 
     // Create dynamic physics bodies
     PhysicsBody bodyA = CreatePhysicsBodyRectangle((Vector2){ 35, screenHeight*0.6f }, 40, 40, 10);
     bodyA->staticFriction = 0.1f;
     bodyA->dynamicFriction = 0.1f;
-    SetPhysicsBodyRotation(bodyA, 30*DEG2RAD);
+    SetPhysicsBodyRotation(bodyA, 30*RL_DEG2RAD);
 
     PhysicsBody bodyB = CreatePhysicsBodyRectangle((Vector2){ screenWidth - 35, screenHeight*0.6f }, 40, 40, 10);
     bodyB->staticFriction = 1;
     bodyB->dynamicFriction = 1;
-    SetPhysicsBodyRotation(bodyB, 330*DEG2RAD);
+    SetPhysicsBodyRotation(bodyB, 330*RL_DEG2RAD);
 
     SetTargetFPS(60);
     //--------------------------------------------------------------------------------------
@@ -81,12 +81,12 @@ int main()
             bodyA->position = (Vector2){ 35, screenHeight*0.6f };
             bodyA->velocity = (Vector2){ 0, 0 };
             bodyA->angularVelocity = 0;
-            SetPhysicsBodyRotation(bodyA, 30*DEG2RAD);
+            SetPhysicsBodyRotation(bodyA, 30*RL_DEG2RAD);
             
             bodyB->position = (Vector2){ screenWidth - 35, screenHeight*0.6f };
             bodyB->velocity = (Vector2){ 0, 0 };
             bodyB->angularVelocity = 0;
-            SetPhysicsBodyRotation(bodyB, 330*DEG2RAD);
+            SetPhysicsBodyRotation(bodyB, 330*RL_DEG2RAD);
         }
         //----------------------------------------------------------------------------------
 

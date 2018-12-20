@@ -1536,7 +1536,7 @@ static void drmp3d_DCT_II(float *grbuf, int n)
             x6 = DRMP3_VMUL_S(DRMP3_VADD(x6, x7), 0.70710677f);
             x7 = DRMP3_VADD(x7, xt);
             x3 = DRMP3_VMUL_S(DRMP3_VADD(x3, x4), 0.70710677f);
-            x5 = DRMP3_VSUB(x5, DRMP3_VMUL_S(x7, 0.198912367f)); /* rotate by PI/8 */
+            x5 = DRMP3_VSUB(x5, DRMP3_VMUL_S(x7, 0.198912367f)); /* rotate by RL_PI/8 */
             x7 = DRMP3_VADD(x7, DRMP3_VMUL_S(x5, 0.382683432f));
             x5 = DRMP3_VSUB(x5, DRMP3_VMUL_S(x7, 0.198912367f));
             x0 = DRMP3_VSUB(xt, x6); xt = DRMP3_VADD(xt, x6);
@@ -1622,7 +1622,7 @@ static void drmp3d_DCT_II(float *grbuf, int n)
             x6 = (x6 + x7)*0.70710677f;
             x7 =  x7 + xt;
             x3 = (x3 + x4)*0.70710677f;
-            x5 -= x7*0.198912367f;  /* rotate by PI/8 */
+            x5 -= x7*0.198912367f;  /* rotate by RL_PI/8 */
             x7 += x5*0.382683432f;
             x5 -= x7*0.198912367f;
             x0 = xt - x6; xt += x6;

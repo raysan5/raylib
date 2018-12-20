@@ -126,16 +126,16 @@ void SetCameraMoveControls(int frontKey, int backKey,
 
 #include <math.h>               // Required for: sqrt(), sin(), cos()
 
-#ifndef PI
-    #define PI 3.14159265358979323846
+#ifndef RL_PI
+    #define RL_PI 3.14159265358979323846
 #endif
 
-#ifndef DEG2RAD
-    #define DEG2RAD (PI/180.0f)
+#ifndef RL_DEG2RAD
+    #define RL_DEG2RAD (RL_PI/180.0f)
 #endif
 
-#ifndef RAD2DEG
-    #define RAD2DEG (180.0f/PI)
+#ifndef RL_RAD2DEG
+    #define RL_RAD2DEG (180.0f/RL_PI)
 #endif
 
 //----------------------------------------------------------------------------------
@@ -248,8 +248,8 @@ void SetCameraMode(Camera camera, int mode)
     cameraAngle.y = -asinf( (float)fabs(dy)/distance.y); // Camera angle in plane XY (0 aligned with X, move positive CW)
     
     // NOTE: Just testing what cameraAngle means
-    //cameraAngle.x = 0.0f*DEG2RAD;       // Camera angle in plane XZ (0 aligned with Z, move positive CCW)
-    //cameraAngle.y = -60.0f*DEG2RAD;     // Camera angle in plane XY (0 aligned with X, move positive CW)
+    //cameraAngle.x = 0.0f*RL_DEG2RAD;       // Camera angle in plane XZ (0 aligned with Z, move positive CCW)
+    //cameraAngle.y = -60.0f*RL_DEG2RAD;     // Camera angle in plane XY (0 aligned with X, move positive CW)
     
     playerEyesPosition = camera.position.y;
     
@@ -373,8 +373,8 @@ void UpdateCamera(Camera *camera)
                         cameraAngle.y += mousePositionDelta.y*-CAMERA_FREE_MOUSE_SENSITIVITY;
 
                         // Angle clamp
-                        if (cameraAngle.y > CAMERA_FREE_MIN_CLAMP*DEG2RAD) cameraAngle.y = CAMERA_FREE_MIN_CLAMP*DEG2RAD;
-                        else if (cameraAngle.y < CAMERA_FREE_MAX_CLAMP*DEG2RAD) cameraAngle.y = CAMERA_FREE_MAX_CLAMP*DEG2RAD;
+                        if (cameraAngle.y > CAMERA_FREE_MIN_CLAMP*RL_DEG2RAD) cameraAngle.y = CAMERA_FREE_MIN_CLAMP*RL_DEG2RAD;
+                        else if (cameraAngle.y < CAMERA_FREE_MAX_CLAMP*RL_DEG2RAD) cameraAngle.y = CAMERA_FREE_MAX_CLAMP*RL_DEG2RAD;
                     }
                 }
                 else
@@ -424,8 +424,8 @@ void UpdateCamera(Camera *camera)
             if (cameraMode == CAMERA_THIRD_PERSON)
             {
                 // Angle clamp
-                if (cameraAngle.y > CAMERA_THIRD_PERSON_MIN_CLAMP*DEG2RAD) cameraAngle.y = CAMERA_THIRD_PERSON_MIN_CLAMP*DEG2RAD;
-                else if (cameraAngle.y < CAMERA_THIRD_PERSON_MAX_CLAMP*DEG2RAD) cameraAngle.y = CAMERA_THIRD_PERSON_MAX_CLAMP*DEG2RAD;
+                if (cameraAngle.y > CAMERA_THIRD_PERSON_MIN_CLAMP*RL_DEG2RAD) cameraAngle.y = CAMERA_THIRD_PERSON_MIN_CLAMP*RL_DEG2RAD;
+                else if (cameraAngle.y < CAMERA_THIRD_PERSON_MAX_CLAMP*RL_DEG2RAD) cameraAngle.y = CAMERA_THIRD_PERSON_MAX_CLAMP*RL_DEG2RAD;
 
                 // Camera zoom
                 cameraTargetDistance -= (mouseWheelMove*CAMERA_MOUSE_SCROLL_SENSITIVITY);
@@ -441,8 +441,8 @@ void UpdateCamera(Camera *camera)
             else    // CAMERA_FIRST_PERSON
             {
                 // Angle clamp
-                if (cameraAngle.y > CAMERA_FIRST_PERSON_MIN_CLAMP*DEG2RAD) cameraAngle.y = CAMERA_FIRST_PERSON_MIN_CLAMP*DEG2RAD;
-                else if (cameraAngle.y < CAMERA_FIRST_PERSON_MAX_CLAMP*DEG2RAD) cameraAngle.y = CAMERA_FIRST_PERSON_MAX_CLAMP*DEG2RAD;
+                if (cameraAngle.y > CAMERA_FIRST_PERSON_MIN_CLAMP*RL_DEG2RAD) cameraAngle.y = CAMERA_FIRST_PERSON_MIN_CLAMP*RL_DEG2RAD;
+                else if (cameraAngle.y < CAMERA_FIRST_PERSON_MAX_CLAMP*RL_DEG2RAD) cameraAngle.y = CAMERA_FIRST_PERSON_MAX_CLAMP*RL_DEG2RAD;
 
                 // Camera is always looking at player
                 camera->target.x = camera->position.x - sinf(cameraAngle.x)*CAMERA_FIRST_PERSON_FOCUS_DISTANCE;

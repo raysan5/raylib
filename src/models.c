@@ -124,8 +124,8 @@ void DrawCircle3D(Vector3 center, float radius, Vector3 rotationAxis, float rota
             {
                 rlColor4ub(color.r, color.g, color.b, color.a);
 
-                rlVertex3f(sinf(DEG2RAD*i)*radius, cosf(DEG2RAD*i)*radius, 0.0f);
-                rlVertex3f(sinf(DEG2RAD*(i + 10))*radius, cosf(DEG2RAD*(i + 10))*radius, 0.0f);
+                rlVertex3f(sinf(RL_DEG2RAD*i)*radius, cosf(RL_DEG2RAD*i)*radius, 0.0f);
+                rlVertex3f(sinf(RL_DEG2RAD*(i + 10))*radius, cosf(RL_DEG2RAD*(i + 10))*radius, 0.0f);
             }
         rlEnd();
     rlPopMatrix();
@@ -360,25 +360,25 @@ void DrawSphereEx(Vector3 centerPos, float radius, int rings, int slices, Color 
             {
                 for (int j = 0; j < slices; j++)
                 {
-                    rlVertex3f(cosf(DEG2RAD*(270+(180/(rings + 1))*i))*sinf(DEG2RAD*(j*360/slices)),
-                               sinf(DEG2RAD*(270+(180/(rings + 1))*i)),
-                               cosf(DEG2RAD*(270+(180/(rings + 1))*i))*cosf(DEG2RAD*(j*360/slices)));
-                    rlVertex3f(cosf(DEG2RAD*(270+(180/(rings + 1))*(i+1)))*sinf(DEG2RAD*((j+1)*360/slices)),
-                               sinf(DEG2RAD*(270+(180/(rings + 1))*(i+1))),
-                               cosf(DEG2RAD*(270+(180/(rings + 1))*(i+1)))*cosf(DEG2RAD*((j+1)*360/slices)));
-                    rlVertex3f(cosf(DEG2RAD*(270+(180/(rings + 1))*(i+1)))*sinf(DEG2RAD*(j*360/slices)),
-                               sinf(DEG2RAD*(270+(180/(rings + 1))*(i+1))),
-                               cosf(DEG2RAD*(270+(180/(rings + 1))*(i+1)))*cosf(DEG2RAD*(j*360/slices)));
+                    rlVertex3f(cosf(RL_DEG2RAD*(270+(180/(rings + 1))*i))*sinf(RL_DEG2RAD*(j*360/slices)),
+                               sinf(RL_DEG2RAD*(270+(180/(rings + 1))*i)),
+                               cosf(RL_DEG2RAD*(270+(180/(rings + 1))*i))*cosf(RL_DEG2RAD*(j*360/slices)));
+                    rlVertex3f(cosf(RL_DEG2RAD*(270+(180/(rings + 1))*(i+1)))*sinf(RL_DEG2RAD*((j+1)*360/slices)),
+                               sinf(RL_DEG2RAD*(270+(180/(rings + 1))*(i+1))),
+                               cosf(RL_DEG2RAD*(270+(180/(rings + 1))*(i+1)))*cosf(RL_DEG2RAD*((j+1)*360/slices)));
+                    rlVertex3f(cosf(RL_DEG2RAD*(270+(180/(rings + 1))*(i+1)))*sinf(RL_DEG2RAD*(j*360/slices)),
+                               sinf(RL_DEG2RAD*(270+(180/(rings + 1))*(i+1))),
+                               cosf(RL_DEG2RAD*(270+(180/(rings + 1))*(i+1)))*cosf(RL_DEG2RAD*(j*360/slices)));
 
-                    rlVertex3f(cosf(DEG2RAD*(270+(180/(rings + 1))*i))*sinf(DEG2RAD*(j*360/slices)),
-                               sinf(DEG2RAD*(270+(180/(rings + 1))*i)),
-                               cosf(DEG2RAD*(270+(180/(rings + 1))*i))*cosf(DEG2RAD*(j*360/slices)));
-                    rlVertex3f(cosf(DEG2RAD*(270+(180/(rings + 1))*(i)))*sinf(DEG2RAD*((j+1)*360/slices)),
-                               sinf(DEG2RAD*(270+(180/(rings + 1))*(i))),
-                               cosf(DEG2RAD*(270+(180/(rings + 1))*(i)))*cosf(DEG2RAD*((j+1)*360/slices)));
-                    rlVertex3f(cosf(DEG2RAD*(270+(180/(rings + 1))*(i+1)))*sinf(DEG2RAD*((j+1)*360/slices)),
-                               sinf(DEG2RAD*(270+(180/(rings + 1))*(i+1))),
-                               cosf(DEG2RAD*(270+(180/(rings + 1))*(i+1)))*cosf(DEG2RAD*((j+1)*360/slices)));
+                    rlVertex3f(cosf(RL_DEG2RAD*(270+(180/(rings + 1))*i))*sinf(RL_DEG2RAD*(j*360/slices)),
+                               sinf(RL_DEG2RAD*(270+(180/(rings + 1))*i)),
+                               cosf(RL_DEG2RAD*(270+(180/(rings + 1))*i))*cosf(RL_DEG2RAD*(j*360/slices)));
+                    rlVertex3f(cosf(RL_DEG2RAD*(270+(180/(rings + 1))*(i)))*sinf(RL_DEG2RAD*((j+1)*360/slices)),
+                               sinf(RL_DEG2RAD*(270+(180/(rings + 1))*(i))),
+                               cosf(RL_DEG2RAD*(270+(180/(rings + 1))*(i)))*cosf(RL_DEG2RAD*((j+1)*360/slices)));
+                    rlVertex3f(cosf(RL_DEG2RAD*(270+(180/(rings + 1))*(i+1)))*sinf(RL_DEG2RAD*((j+1)*360/slices)),
+                               sinf(RL_DEG2RAD*(270+(180/(rings + 1))*(i+1))),
+                               cosf(RL_DEG2RAD*(270+(180/(rings + 1))*(i+1)))*cosf(RL_DEG2RAD*((j+1)*360/slices)));
                 }
             }
         rlEnd();
@@ -400,26 +400,26 @@ void DrawSphereWires(Vector3 centerPos, float radius, int rings, int slices, Col
             {
                 for (int j = 0; j < slices; j++)
                 {
-                    rlVertex3f(cosf(DEG2RAD*(270+(180/(rings + 1))*i))*sinf(DEG2RAD*(j*360/slices)),
-                               sinf(DEG2RAD*(270+(180/(rings + 1))*i)),
-                               cosf(DEG2RAD*(270+(180/(rings + 1))*i))*cosf(DEG2RAD*(j*360/slices)));
-                    rlVertex3f(cosf(DEG2RAD*(270+(180/(rings + 1))*(i+1)))*sinf(DEG2RAD*((j+1)*360/slices)),
-                               sinf(DEG2RAD*(270+(180/(rings + 1))*(i+1))),
-                               cosf(DEG2RAD*(270+(180/(rings + 1))*(i+1)))*cosf(DEG2RAD*((j+1)*360/slices)));
+                    rlVertex3f(cosf(RL_DEG2RAD*(270+(180/(rings + 1))*i))*sinf(RL_DEG2RAD*(j*360/slices)),
+                               sinf(RL_DEG2RAD*(270+(180/(rings + 1))*i)),
+                               cosf(RL_DEG2RAD*(270+(180/(rings + 1))*i))*cosf(RL_DEG2RAD*(j*360/slices)));
+                    rlVertex3f(cosf(RL_DEG2RAD*(270+(180/(rings + 1))*(i+1)))*sinf(RL_DEG2RAD*((j+1)*360/slices)),
+                               sinf(RL_DEG2RAD*(270+(180/(rings + 1))*(i+1))),
+                               cosf(RL_DEG2RAD*(270+(180/(rings + 1))*(i+1)))*cosf(RL_DEG2RAD*((j+1)*360/slices)));
 
-                    rlVertex3f(cosf(DEG2RAD*(270+(180/(rings + 1))*(i+1)))*sinf(DEG2RAD*((j+1)*360/slices)),
-                               sinf(DEG2RAD*(270+(180/(rings + 1))*(i+1))),
-                               cosf(DEG2RAD*(270+(180/(rings + 1))*(i+1)))*cosf(DEG2RAD*((j+1)*360/slices)));
-                    rlVertex3f(cosf(DEG2RAD*(270+(180/(rings + 1))*(i+1)))*sinf(DEG2RAD*(j*360/slices)),
-                               sinf(DEG2RAD*(270+(180/(rings + 1))*(i+1))),
-                               cosf(DEG2RAD*(270+(180/(rings + 1))*(i+1)))*cosf(DEG2RAD*(j*360/slices)));
+                    rlVertex3f(cosf(RL_DEG2RAD*(270+(180/(rings + 1))*(i+1)))*sinf(RL_DEG2RAD*((j+1)*360/slices)),
+                               sinf(RL_DEG2RAD*(270+(180/(rings + 1))*(i+1))),
+                               cosf(RL_DEG2RAD*(270+(180/(rings + 1))*(i+1)))*cosf(RL_DEG2RAD*((j+1)*360/slices)));
+                    rlVertex3f(cosf(RL_DEG2RAD*(270+(180/(rings + 1))*(i+1)))*sinf(RL_DEG2RAD*(j*360/slices)),
+                               sinf(RL_DEG2RAD*(270+(180/(rings + 1))*(i+1))),
+                               cosf(RL_DEG2RAD*(270+(180/(rings + 1))*(i+1)))*cosf(RL_DEG2RAD*(j*360/slices)));
 
-                    rlVertex3f(cosf(DEG2RAD*(270+(180/(rings + 1))*(i+1)))*sinf(DEG2RAD*(j*360/slices)),
-                               sinf(DEG2RAD*(270+(180/(rings + 1))*(i+1))),
-                               cosf(DEG2RAD*(270+(180/(rings + 1))*(i+1)))*cosf(DEG2RAD*(j*360/slices)));
-                    rlVertex3f(cosf(DEG2RAD*(270+(180/(rings + 1))*i))*sinf(DEG2RAD*(j*360/slices)),
-                               sinf(DEG2RAD*(270+(180/(rings + 1))*i)),
-                               cosf(DEG2RAD*(270+(180/(rings + 1))*i))*cosf(DEG2RAD*(j*360/slices)));
+                    rlVertex3f(cosf(RL_DEG2RAD*(270+(180/(rings + 1))*(i+1)))*sinf(RL_DEG2RAD*(j*360/slices)),
+                               sinf(RL_DEG2RAD*(270+(180/(rings + 1))*(i+1))),
+                               cosf(RL_DEG2RAD*(270+(180/(rings + 1))*(i+1)))*cosf(RL_DEG2RAD*(j*360/slices)));
+                    rlVertex3f(cosf(RL_DEG2RAD*(270+(180/(rings + 1))*i))*sinf(RL_DEG2RAD*(j*360/slices)),
+                               sinf(RL_DEG2RAD*(270+(180/(rings + 1))*i)),
+                               cosf(RL_DEG2RAD*(270+(180/(rings + 1))*i))*cosf(RL_DEG2RAD*(j*360/slices)));
                 }
             }
         rlEnd();
@@ -443,21 +443,21 @@ void DrawCylinder(Vector3 position, float radiusTop, float radiusBottom, float h
                 // Draw Body -------------------------------------------------------------------------------------
                 for (int i = 0; i < 360; i += 360/sides)
                 {
-                    rlVertex3f(sinf(DEG2RAD*i)*radiusBottom, 0, cosf(DEG2RAD*i)*radiusBottom); //Bottom Left
-                    rlVertex3f(sinf(DEG2RAD*(i + 360/sides))*radiusBottom, 0, cosf(DEG2RAD*(i + 360/sides))*radiusBottom); //Bottom Right
-                    rlVertex3f(sinf(DEG2RAD*(i + 360/sides))*radiusTop, height, cosf(DEG2RAD*(i + 360/sides))*radiusTop); //Top Right
+                    rlVertex3f(sinf(RL_DEG2RAD*i)*radiusBottom, 0, cosf(RL_DEG2RAD*i)*radiusBottom); //Bottom Left
+                    rlVertex3f(sinf(RL_DEG2RAD*(i + 360/sides))*radiusBottom, 0, cosf(RL_DEG2RAD*(i + 360/sides))*radiusBottom); //Bottom Right
+                    rlVertex3f(sinf(RL_DEG2RAD*(i + 360/sides))*radiusTop, height, cosf(RL_DEG2RAD*(i + 360/sides))*radiusTop); //Top Right
 
-                    rlVertex3f(sinf(DEG2RAD*i)*radiusTop, height, cosf(DEG2RAD*i)*radiusTop); //Top Left
-                    rlVertex3f(sinf(DEG2RAD*i)*radiusBottom, 0, cosf(DEG2RAD*i)*radiusBottom); //Bottom Left
-                    rlVertex3f(sinf(DEG2RAD*(i + 360/sides))*radiusTop, height, cosf(DEG2RAD*(i + 360/sides))*radiusTop); //Top Right
+                    rlVertex3f(sinf(RL_DEG2RAD*i)*radiusTop, height, cosf(RL_DEG2RAD*i)*radiusTop); //Top Left
+                    rlVertex3f(sinf(RL_DEG2RAD*i)*radiusBottom, 0, cosf(RL_DEG2RAD*i)*radiusBottom); //Bottom Left
+                    rlVertex3f(sinf(RL_DEG2RAD*(i + 360/sides))*radiusTop, height, cosf(RL_DEG2RAD*(i + 360/sides))*radiusTop); //Top Right
                 }
 
                 // Draw Cap --------------------------------------------------------------------------------------
                 for (int i = 0; i < 360; i += 360/sides)
                 {
                     rlVertex3f(0, height, 0);
-                    rlVertex3f(sinf(DEG2RAD*i)*radiusTop, height, cosf(DEG2RAD*i)*radiusTop);
-                    rlVertex3f(sinf(DEG2RAD*(i + 360/sides))*radiusTop, height, cosf(DEG2RAD*(i + 360/sides))*radiusTop);
+                    rlVertex3f(sinf(RL_DEG2RAD*i)*radiusTop, height, cosf(RL_DEG2RAD*i)*radiusTop);
+                    rlVertex3f(sinf(RL_DEG2RAD*(i + 360/sides))*radiusTop, height, cosf(RL_DEG2RAD*(i + 360/sides))*radiusTop);
                 }
             }
             else
@@ -466,8 +466,8 @@ void DrawCylinder(Vector3 position, float radiusTop, float radiusBottom, float h
                 for (int i = 0; i < 360; i += 360/sides)
                 {
                     rlVertex3f(0, height, 0);
-                    rlVertex3f(sinf(DEG2RAD*i)*radiusBottom, 0, cosf(DEG2RAD*i)*radiusBottom);
-                    rlVertex3f(sinf(DEG2RAD*(i + 360/sides))*radiusBottom, 0, cosf(DEG2RAD*(i + 360/sides))*radiusBottom);
+                    rlVertex3f(sinf(RL_DEG2RAD*i)*radiusBottom, 0, cosf(RL_DEG2RAD*i)*radiusBottom);
+                    rlVertex3f(sinf(RL_DEG2RAD*(i + 360/sides))*radiusBottom, 0, cosf(RL_DEG2RAD*(i + 360/sides))*radiusBottom);
                 }
             }
 
@@ -475,8 +475,8 @@ void DrawCylinder(Vector3 position, float radiusTop, float radiusBottom, float h
             for (int i = 0; i < 360; i += 360/sides)
             {
                 rlVertex3f(0, 0, 0);
-                rlVertex3f(sinf(DEG2RAD*(i + 360/sides))*radiusBottom, 0, cosf(DEG2RAD*(i + 360/sides))*radiusBottom);
-                rlVertex3f(sinf(DEG2RAD*i)*radiusBottom, 0, cosf(DEG2RAD*i)*radiusBottom);
+                rlVertex3f(sinf(RL_DEG2RAD*(i + 360/sides))*radiusBottom, 0, cosf(RL_DEG2RAD*(i + 360/sides))*radiusBottom);
+                rlVertex3f(sinf(RL_DEG2RAD*i)*radiusBottom, 0, cosf(RL_DEG2RAD*i)*radiusBottom);
             }
         rlEnd();
     rlPopMatrix();
@@ -496,17 +496,17 @@ void DrawCylinderWires(Vector3 position, float radiusTop, float radiusBottom, fl
 
             for (int i = 0; i < 360; i += 360/sides)
             {
-                rlVertex3f(sinf(DEG2RAD*i)*radiusBottom, 0, cosf(DEG2RAD*i)*radiusBottom);
-                rlVertex3f(sinf(DEG2RAD*(i + 360/sides))*radiusBottom, 0, cosf(DEG2RAD*(i + 360/sides))*radiusBottom);
+                rlVertex3f(sinf(RL_DEG2RAD*i)*radiusBottom, 0, cosf(RL_DEG2RAD*i)*radiusBottom);
+                rlVertex3f(sinf(RL_DEG2RAD*(i + 360/sides))*radiusBottom, 0, cosf(RL_DEG2RAD*(i + 360/sides))*radiusBottom);
 
-                rlVertex3f(sinf(DEG2RAD*(i + 360/sides))*radiusBottom, 0, cosf(DEG2RAD*(i + 360/sides))*radiusBottom);
-                rlVertex3f(sinf(DEG2RAD*(i + 360/sides))*radiusTop, height, cosf(DEG2RAD*(i + 360/sides))*radiusTop);
+                rlVertex3f(sinf(RL_DEG2RAD*(i + 360/sides))*radiusBottom, 0, cosf(RL_DEG2RAD*(i + 360/sides))*radiusBottom);
+                rlVertex3f(sinf(RL_DEG2RAD*(i + 360/sides))*radiusTop, height, cosf(RL_DEG2RAD*(i + 360/sides))*radiusTop);
 
-                rlVertex3f(sinf(DEG2RAD*(i + 360/sides))*radiusTop, height, cosf(DEG2RAD*(i + 360/sides))*radiusTop);
-                rlVertex3f(sinf(DEG2RAD*i)*radiusTop, height, cosf(DEG2RAD*i)*radiusTop);
+                rlVertex3f(sinf(RL_DEG2RAD*(i + 360/sides))*radiusTop, height, cosf(RL_DEG2RAD*(i + 360/sides))*radiusTop);
+                rlVertex3f(sinf(RL_DEG2RAD*i)*radiusTop, height, cosf(RL_DEG2RAD*i)*radiusTop);
 
-                rlVertex3f(sinf(DEG2RAD*i)*radiusTop, height, cosf(DEG2RAD*i)*radiusTop);
-                rlVertex3f(sinf(DEG2RAD*i)*radiusBottom, 0, cosf(DEG2RAD*i)*radiusBottom);
+                rlVertex3f(sinf(RL_DEG2RAD*i)*radiusTop, height, cosf(RL_DEG2RAD*i)*radiusTop);
+                rlVertex3f(sinf(RL_DEG2RAD*i)*radiusBottom, 0, cosf(RL_DEG2RAD*i)*radiusBottom);
             }
         rlEnd();
     rlPopMatrix();
@@ -727,8 +727,8 @@ Mesh GenMeshPoly(int sides, float radius)
     for (int i = 0, v = 0; i < 360; i += 360/sides, v += 3)
     {
         vertices[v] = (Vector3){ 0.0f, 0.0f, 0.0f };
-        vertices[v + 1] = (Vector3){ sinf(DEG2RAD*i)*radius, 0.0f, cosf(DEG2RAD*i)*radius };
-        vertices[v + 2] = (Vector3){ sinf(DEG2RAD*(i + 360/sides))*radius, 0.0f, cosf(DEG2RAD*(i + 360/sides))*radius };
+        vertices[v + 1] = (Vector3){ sinf(RL_DEG2RAD*i)*radius, 0.0f, cosf(RL_DEG2RAD*i)*radius };
+        vertices[v + 2] = (Vector3){ sinf(RL_DEG2RAD*(i + 360/sides))*radius, 0.0f, cosf(RL_DEG2RAD*(i + 360/sides))*radius };
     }    
         
     // Normals definition
@@ -878,7 +878,7 @@ Mesh GenMeshPlane(float width, float length, int resX, int resZ)
 
     par_shapes_mesh *plane = par_shapes_create_plane(resX, resZ);   // No normals/texcoords generated!!!
     par_shapes_scale(plane, width, length, 1.0f);
-    par_shapes_rotate(plane, -PI/2.0f, (float[]){ 1, 0, 0 });
+    par_shapes_rotate(plane, -RL_PI/2.0f, (float[]){ 1, 0, 0 });
     par_shapes_translate(plane, -width/2, 0.0f, length/2);
     
     mesh.vertices = (float *)malloc(plane->ntriangles*3*3*sizeof(float));
@@ -1163,20 +1163,20 @@ Mesh GenMeshCylinder(float radius, float height, int slices)
     // Height and radius are both 1.0, but they can easily be changed with par_shapes_scale
     par_shapes_mesh *cylinder = par_shapes_create_cylinder(slices, 8);
     par_shapes_scale(cylinder, radius, radius, height);
-    par_shapes_rotate(cylinder, -PI/2.0f, (float[]){ 1, 0, 0 });
+    par_shapes_rotate(cylinder, -RL_PI/2.0f, (float[]){ 1, 0, 0 });
 
     // Generate an orientable disk shape (top cap)
     par_shapes_mesh *capTop = par_shapes_create_disk(radius, slices, (float[]){ 0, 0, 0 }, (float[]){ 0, 0, 1 });
     capTop->tcoords = PAR_MALLOC(float, 2*capTop->npoints);
     for (int i = 0; i < 2*capTop->npoints; i++) capTop->tcoords[i] = 0.0f;
-    par_shapes_rotate(capTop, -PI/2.0f, (float[]){ 1, 0, 0 });
+    par_shapes_rotate(capTop, -RL_PI/2.0f, (float[]){ 1, 0, 0 });
     par_shapes_translate(capTop, 0, height, 0);
     
     // Generate an orientable disk shape (bottom cap)
     par_shapes_mesh *capBottom = par_shapes_create_disk(radius, slices, (float[]){ 0, 0, 0 }, (float[]){ 0, 0, -1 });
     capBottom->tcoords = PAR_MALLOC(float, 2*capBottom->npoints);
     for (int i = 0; i < 2*capBottom->npoints; i++) capBottom->tcoords[i] = 0.95f;
-    par_shapes_rotate(capBottom, PI/2.0f, (float[]){ 1, 0, 0 });
+    par_shapes_rotate(capBottom, RL_PI/2.0f, (float[]){ 1, 0, 0 });
     
     par_shapes_merge_and_free(cylinder, capTop);
     par_shapes_merge_and_free(cylinder, capBottom);
@@ -1824,7 +1824,7 @@ void DrawModelEx(Model model, Vector3 position, Vector3 rotationAxis, float rota
     // Calculate transformation matrix from function parameters
     // Get transform matrix (rotation -> scale -> translation)
     Matrix matScale = MatrixScale(scale.x, scale.y, scale.z);
-    Matrix matRotation = MatrixRotate(rotationAxis, rotationAngle*DEG2RAD);
+    Matrix matRotation = MatrixRotate(rotationAxis, rotationAngle*RL_DEG2RAD);
     Matrix matTranslation = MatrixTranslate(position.x, position.y, position.z);
     
     Matrix matTransform = MatrixMultiply(MatrixMultiply(matScale, matRotation), matTranslation);

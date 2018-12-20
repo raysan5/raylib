@@ -74,16 +74,16 @@
 //----------------------------------------------------------------------------------
 // Defines and Macros
 //----------------------------------------------------------------------------------
-#ifndef PI
-    #define PI 3.14159265358979323846
+#ifndef RL_PI
+    #define RL_PI 3.14159265358979323846
 #endif
 
-#ifndef DEG2RAD
-    #define DEG2RAD (PI/180.0f)
+#ifndef RL_DEG2RAD
+    #define RL_DEG2RAD (RL_PI/180.0f)
 #endif
 
-#ifndef RAD2DEG
-    #define RAD2DEG (180.0f/PI)
+#ifndef RL_RAD2DEG
+    #define RL_RAD2DEG (180.0f/RL_PI)
 #endif
 
 // Return float vector for Matrix
@@ -210,7 +210,7 @@ RMDEF float Vector2Distance(Vector2 v1, Vector2 v2)
 // Calculate angle from two vectors in X-axis
 RMDEF float Vector2Angle(Vector2 v1, Vector2 v2)
 {
-    float result = atan2f(v2.y - v1.y, v2.x - v1.x)*(180.0f/PI);
+    float result = atan2f(v2.y - v1.y, v2.x - v1.x)*(180.0f/RL_PI);
     if (result < 0) result += 360.0f;
     return result;
 }
@@ -1346,18 +1346,18 @@ RMDEF Vector3 QuaternionToEuler(Quaternion q)
 	// roll (x-axis rotation)
 	float x0 = 2.0f*(q.w*q.x + q.y*q.z);
 	float x1 = 1.0f - 2.0f*(q.x*q.x + q.y*q.y);
-	result.x = atan2f(x0, x1)*RAD2DEG;
+	result.x = atan2f(x0, x1)*RL_RAD2DEG;
 
 	// pitch (y-axis rotation)
 	float y0 = 2.0f*(q.w*q.y - q.z*q.x);
 	y0 = y0 > 1.0f ? 1.0f : y0;
 	y0 = y0 < -1.0f ? -1.0f : y0;
-	result.y = asinf(y0)*RAD2DEG;
+	result.y = asinf(y0)*RL_RAD2DEG;
 
 	// yaw (z-axis rotation)
 	float z0 = 2.0f*(q.w*q.z + q.x*q.y);
 	float z1 = 1.0f - 2.0f*(q.y*q.y + q.z*q.z);
-	result.z = atan2f(z0, z1)*RAD2DEG;
+	result.z = atan2f(z0, z1)*RL_RAD2DEG;
 
     return result;
 }

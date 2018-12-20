@@ -571,7 +571,7 @@ void DrawAnimatedModelEx(AnimatedModel model, Vector3 position, Vector3 rotation
     }
 
     Matrix matScale = MatrixScale(scale.x, scale.y, scale.z);
-    Matrix matRotation = MatrixRotate(rotationAxis, rotationAngle*DEG2RAD);
+    Matrix matRotation = MatrixRotate(rotationAxis, rotationAngle*RL_DEG2RAD);
     Matrix matTranslation = MatrixTranslate(position.x, position.y, position.z);
 
     Matrix matTransform = MatrixMultiply(MatrixMultiply(matScale, matRotation), matTranslation);

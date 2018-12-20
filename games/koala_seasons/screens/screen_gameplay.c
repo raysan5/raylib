@@ -943,7 +943,7 @@ void UpdateGameplayScreen(void)
             if (beeActive == true && !isHitBee)
             {
                 bee.x -= 3*speed;
-                beeMov = sin(2*PI/400*bee.x) * 5;
+                beeMov = sin(2*RL_PI/400*bee.x) * 5;
                 bee.y += beeMov*TIME_FACTOR;
 
                 if (CheckCollisionRecs(bee, player) && (state != FINALFORM) && (state != KICK))
@@ -1870,7 +1870,7 @@ void UpdateGameplayScreen(void)
             {
                 dandelionParticle.particles[i].position.y += 3*speedMod*TIME_FACTOR;
                 dandelionParticle.particles[i].position.x -= 5*speedMod*TIME_FACTOR;
-                dandelionParticle.particles[i].rotation = -(30*sin(2*PI/120*globalFrameCounter + dandelionParticle.particles[i].rotPhy) + 30);
+                dandelionParticle.particles[i].rotation = -(30*sin(2*RL_PI/120*globalFrameCounter + dandelionParticle.particles[i].rotPhy) + 30);
 
                 if (dandelionParticle.particles[i].position.y >= GetScreenHeight()) dandelionParticle.particles[i].active = false;
             }
@@ -1879,7 +1879,7 @@ void UpdateGameplayScreen(void)
             {
                 dandelionBackParticle.particles[i].position.y += (int)1.5f*speedMod*TIME_FACTOR;
                 dandelionBackParticle.particles[i].position.x -= 5*speedMod*TIME_FACTOR;
-                dandelionBackParticle.particles[i].rotation = 30*sin(2*PI/120*globalFrameCounter + dandelionParticle.particles[i].rotPhy) + 30;
+                dandelionBackParticle.particles[i].rotation = 30*sin(2*RL_PI/120*globalFrameCounter + dandelionParticle.particles[i].rotPhy) + 30;
 
                 if (dandelionBackParticle.particles[i].position.y >= GetScreenHeight()) dandelionBackParticle.particles[i].active = false;
             }

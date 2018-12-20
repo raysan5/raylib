@@ -131,7 +131,7 @@ void DrawLineEx(Vector2 startPos, Vector2 endPos, float thick, Color color)
 
     rlPushMatrix();
         rlTranslatef((float)startPos.x, (float)startPos.y, 0);
-        rlRotatef(RAD2DEG*angle, 0, 0, 1);
+        rlRotatef(RL_RAD2DEG*angle, 0, 0, 1);
         rlTranslatef(0, (thick > 1.0f) ? -thick/2.0f : -1.0f, 0);
 
         rlBegin(RL_QUADS);
@@ -194,9 +194,9 @@ void DrawCircleGradient(int centerX, int centerY, float radius, Color color1, Co
             rlColor4ub(color1.r, color1.g, color1.b, color1.a);
             rlVertex2i(centerX, centerY);
             rlColor4ub(color2.r, color2.g, color2.b, color2.a);
-            rlVertex2f(centerX + sinf(DEG2RAD*i)*radius, centerY + cosf(DEG2RAD*i)*radius);
+            rlVertex2f(centerX + sinf(RL_DEG2RAD*i)*radius, centerY + cosf(RL_DEG2RAD*i)*radius);
             rlColor4ub(color2.r, color2.g, color2.b, color2.a);
-            rlVertex2f(centerX + sinf(DEG2RAD*(i + 10))*radius, centerY + cosf(DEG2RAD*(i + 10))*radius);
+            rlVertex2f(centerX + sinf(RL_DEG2RAD*(i + 10))*radius, centerY + cosf(RL_DEG2RAD*(i + 10))*radius);
         }
     rlEnd();
 }
@@ -219,13 +219,13 @@ void DrawCircleV(Vector2 center, float radius, Color color)
             rlVertex2f(center.x, center.y);
 
             rlTexCoord2f(recTexShapes.x/texShapes.width, (recTexShapes.y + recTexShapes.height)/texShapes.height);
-            rlVertex2f(center.x + sinf(DEG2RAD*i)*radius, center.y + cosf(DEG2RAD*i)*radius);
+            rlVertex2f(center.x + sinf(RL_DEG2RAD*i)*radius, center.y + cosf(RL_DEG2RAD*i)*radius);
 
             rlTexCoord2f((recTexShapes.x + recTexShapes.width)/texShapes.width, (recTexShapes.y + recTexShapes.height)/texShapes.height);
-            rlVertex2f(center.x + sinf(DEG2RAD*(i + 10))*radius, center.y + cosf(DEG2RAD*(i + 10))*radius);
+            rlVertex2f(center.x + sinf(RL_DEG2RAD*(i + 10))*radius, center.y + cosf(RL_DEG2RAD*(i + 10))*radius);
 
             rlTexCoord2f((recTexShapes.x + recTexShapes.width)/texShapes.width, recTexShapes.y/texShapes.height);
-            rlVertex2f(center.x + sinf(DEG2RAD*(i + 20))*radius, center.y + cosf(DEG2RAD*(i + 20))*radius);
+            rlVertex2f(center.x + sinf(RL_DEG2RAD*(i + 20))*radius, center.y + cosf(RL_DEG2RAD*(i + 20))*radius);
         }
     rlEnd();
 
@@ -239,8 +239,8 @@ void DrawCircleV(Vector2 center, float radius, Color color)
             rlColor4ub(color.r, color.g, color.b, color.a);
 
             rlVertex2f(center.x, center.y);
-            rlVertex2f(center.x + sinf(DEG2RAD*i)*radius, center.y + cosf(DEG2RAD*i)*radius);
-            rlVertex2f(center.x + sinf(DEG2RAD*(i + 10))*radius, center.y + cosf(DEG2RAD*(i + 10))*radius);
+            rlVertex2f(center.x + sinf(RL_DEG2RAD*i)*radius, center.y + cosf(RL_DEG2RAD*i)*radius);
+            rlVertex2f(center.x + sinf(RL_DEG2RAD*(i + 10))*radius, center.y + cosf(RL_DEG2RAD*(i + 10))*radius);
         }
     rlEnd();
 #endif
@@ -257,8 +257,8 @@ void DrawCircleLines(int centerX, int centerY, float radius, Color color)
         // NOTE: Circle outline is drawn pixel by pixel every degree (0 to 360)
         for (int i = 0; i < 360; i += 10)
         {
-            rlVertex2f(centerX + sinf(DEG2RAD*i)*radius, centerY + cosf(DEG2RAD*i)*radius);
-            rlVertex2f(centerX + sinf(DEG2RAD*(i + 10))*radius, centerY + cosf(DEG2RAD*(i + 10))*radius);
+            rlVertex2f(centerX + sinf(RL_DEG2RAD*i)*radius, centerY + cosf(RL_DEG2RAD*i)*radius);
+            rlVertex2f(centerX + sinf(RL_DEG2RAD*(i + 10))*radius, centerY + cosf(RL_DEG2RAD*(i + 10))*radius);
         }
    rlEnd();
 }
@@ -458,13 +458,13 @@ void DrawPoly(Vector2 center, int sides, float radius, float rotation, Color col
                 rlVertex2f(0, 0);
 
                 rlTexCoord2f(recTexShapes.x/texShapes.width, (recTexShapes.y + recTexShapes.height)/texShapes.height);
-                rlVertex2f(sinf(DEG2RAD*i)*radius, cosf(DEG2RAD*i)*radius);
+                rlVertex2f(sinf(RL_DEG2RAD*i)*radius, cosf(RL_DEG2RAD*i)*radius);
 
                 rlTexCoord2f((recTexShapes.x + recTexShapes.width)/texShapes.width, (recTexShapes.y + recTexShapes.height)/texShapes.height);
-                rlVertex2f(sinf(DEG2RAD*i)*radius, cosf(DEG2RAD*i)*radius);
+                rlVertex2f(sinf(RL_DEG2RAD*i)*radius, cosf(RL_DEG2RAD*i)*radius);
 
                 rlTexCoord2f((recTexShapes.x + recTexShapes.width)/texShapes.width, recTexShapes.y/texShapes.height);
-                rlVertex2f(sinf(DEG2RAD*(i + 360/sides))*radius, cosf(DEG2RAD*(i + 360/sides))*radius);
+                rlVertex2f(sinf(RL_DEG2RAD*(i + 360/sides))*radius, cosf(RL_DEG2RAD*(i + 360/sides))*radius);
             }
         rlEnd();
         rlDisableTexture();
@@ -475,8 +475,8 @@ void DrawPoly(Vector2 center, int sides, float radius, float rotation, Color col
                 rlColor4ub(color.r, color.g, color.b, color.a);
 
                 rlVertex2f(0, 0);
-                rlVertex2f(sinf(DEG2RAD*i)*radius, cosf(DEG2RAD*i)*radius);
-                rlVertex2f(sinf(DEG2RAD*(i + 360/sides))*radius, cosf(DEG2RAD*(i + 360/sides))*radius);
+                rlVertex2f(sinf(RL_DEG2RAD*i)*radius, cosf(RL_DEG2RAD*i)*radius);
+                rlVertex2f(sinf(RL_DEG2RAD*(i + 360/sides))*radius, cosf(RL_DEG2RAD*(i + 360/sides))*radius);
             }
         rlEnd();
 #endif

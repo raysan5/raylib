@@ -90,7 +90,7 @@ int main()
             // Write sine wave.
             for (int i = 0; i < waveLength*2; i++)
             {
-                data[i] = (short)(sinf(((2*PI*(float)i/waveLength)))*32000);
+                data[i] = (short)(sinf(((2*RL_PI*(float)i/waveLength)))*32000);
             }
             
             // Scale read cursor's position to minimize transition artifacts

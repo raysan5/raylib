@@ -145,14 +145,14 @@ void InitGame(void)
     victory = false;
     pause = false;
 
-    shipHeight = (PLAYER_BASE_SIZE/2)/tanf(20*DEG2RAD);
+    shipHeight = (PLAYER_BASE_SIZE/2)/tanf(20*RL_DEG2RAD);
 
     // Initialization player
     player.position = (Vector2){screenWidth/2, screenHeight/2 - shipHeight/2};
     player.speed = (Vector2){0, 0};
     player.acceleration = 0;
     player.rotation = 0;
-    player.collider = (Vector3){player.position.x + sin(player.rotation*DEG2RAD)*(shipHeight/2.5f), player.position.y - cos(player.rotation*DEG2RAD)*(shipHeight/2.5f), 12};
+    player.collider = (Vector3){player.position.x + sin(player.rotation*RL_DEG2RAD)*(shipHeight/2.5f), player.position.y - cos(player.rotation*RL_DEG2RAD)*(shipHeight/2.5f), 12};
     player.color = LIGHTGRAY;
 
     destroyedMeteorsCount = 0;
@@ -246,8 +246,8 @@ void UpdateGame(void)
             if (IsKeyDown(KEY_RIGHT)) player.rotation += 5;
 
             // Player logic: speed
-            player.speed.x = sin(player.rotation*DEG2RAD)*PLAYER_SPEED;
-            player.speed.y = cos(player.rotation*DEG2RAD)*PLAYER_SPEED;
+            player.speed.x = sin(player.rotation*RL_DEG2RAD)*PLAYER_SPEED;
+            player.speed.y = cos(player.rotation*RL_DEG2RAD)*PLAYER_SPEED;
 
             // Player logic: acceleration
             if (IsKeyDown(KEY_UP))
@@ -282,10 +282,10 @@ void UpdateGame(void)
                 {
                     if (!shoot[i].active)
                     {
-                        shoot[i].position = (Vector2){ player.position.x + sin(player.rotation*DEG2RAD)*(shipHeight), player.position.y - cos(player.rotation*DEG2RAD)*(shipHeight) };
+                        shoot[i].position = (Vector2){ player.position.x + sin(player.rotation*RL_DEG2RAD)*(shipHeight), player.position.y - cos(player.rotation*RL_DEG2RAD)*(shipHeight) };
                         shoot[i].active = true;
-                        shoot[i].speed.x = 1.5*sin(player.rotation*DEG2RAD)*PLAYER_SPEED;
-                        shoot[i].speed.y = 1.5*cos(player.rotation*DEG2RAD)*PLAYER_SPEED;
+                        shoot[i].speed.x = 1.5*sin(player.rotation*RL_DEG2RAD)*PLAYER_SPEED;
+                        shoot[i].speed.y = 1.5*cos(player.rotation*RL_DEG2RAD)*PLAYER_SPEED;
                         shoot[i].rotation = player.rotation;
                         break;
                     }
@@ -341,7 +341,7 @@ void UpdateGame(void)
             }
 
             // Collision logic: player vs meteors
-            player.collider = (Vector3){player.position.x + sin(player.rotation*DEG2RAD)*(shipHeight/2.5f), player.position.y - cos(player.rotation*DEG2RAD)*(shipHeight/2.5f), 12};
+            player.collider = (Vector3){player.position.x + sin(player.rotation*RL_DEG2RAD)*(shipHeight/2.5f), player.position.y - cos(player.rotation*RL_DEG2RAD)*(shipHeight/2.5f), 12};
 
             for (int a = 0; a < MAX_BIG_METEORS; a++)
             {
@@ -428,12 +428,12 @@ void UpdateGame(void)
                                 if (midMeteorsCount%2 == 0)
                                 {
                                     mediumMeteor[midMeteorsCount].position = (Vector2){bigMeteor[a].position.x, bigMeteor[a].position.y};
-                                    mediumMeteor[midMeteorsCount].speed = (Vector2){cos(shoot[i].rotation*DEG2RAD)*METEORS_SPEED*-1, sin(shoot[i].rotation*DEG2RAD)*METEORS_SPEED*-1};
+                                    mediumMeteor[midMeteorsCount].speed = (Vector2){cos(shoot[i].rotation*RL_DEG2RAD)*METEORS_SPEED*-1, sin(shoot[i].rotation*RL_DEG2RAD)*METEORS_SPEED*-1};
                                 }
                                 else
                                 {
                                     mediumMeteor[midMeteorsCount].position = (Vector2){bigMeteor[a].position.x, bigMeteor[a].position.y};
-                                    mediumMeteor[midMeteorsCount].speed = (Vector2){cos(shoot[i].rotation*DEG2RAD)*METEORS_SPEED, sin(shoot[i].rotation*DEG2RAD)*METEORS_SPEED};
+                                    mediumMeteor[midMeteorsCount].speed = (Vector2){cos(shoot[i].rotation*RL_DEG2RAD)*METEORS_SPEED, sin(shoot[i].rotation*RL_DEG2RAD)*METEORS_SPEED};
                                 }
 
                                 mediumMeteor[midMeteorsCount].active = true;
@@ -459,12 +459,12 @@ void UpdateGame(void)
                                  if (smallMeteorsCount%2 == 0)
                                 {
                                     smallMeteor[smallMeteorsCount].position = (Vector2){mediumMeteor[b].position.x, mediumMeteor[b].position.y};
-                                    smallMeteor[smallMeteorsCount].speed = (Vector2){cos(shoot[i].rotation*DEG2RAD)*METEORS_SPEED*-1, sin(shoot[i].rotation*DEG2RAD)*METEORS_SPEED*-1};
+                                    smallMeteor[smallMeteorsCount].speed = (Vector2){cos(shoot[i].rotation*RL_DEG2RAD)*METEORS_SPEED*-1, sin(shoot[i].rotation*RL_DEG2RAD)*METEORS_SPEED*-1};
                                 }
                                 else
                                 {
                                     smallMeteor[smallMeteorsCount].position = (Vector2){mediumMeteor[b].position.x, mediumMeteor[b].position.y};
-                                    smallMeteor[smallMeteorsCount].speed = (Vector2){cos(shoot[i].rotation*DEG2RAD)*METEORS_SPEED, sin(shoot[i].rotation*DEG2RAD)*METEORS_SPEED};
+                                    smallMeteor[smallMeteorsCount].speed = (Vector2){cos(shoot[i].rotation*RL_DEG2RAD)*METEORS_SPEED, sin(shoot[i].rotation*RL_DEG2RAD)*METEORS_SPEED};
                                 }
 
                                 smallMeteor[smallMeteorsCount].active = true;
@@ -515,9 +515,9 @@ void DrawGame(void)
         if (!gameOver)
         {
             // Draw spaceship
-            Vector2 v1 = { player.position.x + sinf(player.rotation*DEG2RAD)*(shipHeight), player.position.y - cosf(player.rotation*DEG2RAD)*(shipHeight) };
-            Vector2 v2 = { player.position.x - cosf(player.rotation*DEG2RAD)*(PLAYER_BASE_SIZE/2), player.position.y - sinf(player.rotation*DEG2RAD)*(PLAYER_BASE_SIZE/2) };
-            Vector2 v3 = { player.position.x + cosf(player.rotation*DEG2RAD)*(PLAYER_BASE_SIZE/2), player.position.y + sinf(player.rotation*DEG2RAD)*(PLAYER_BASE_SIZE/2) };
+            Vector2 v1 = { player.position.x + sinf(player.rotation*RL_DEG2RAD)*(shipHeight), player.position.y - cosf(player.rotation*RL_DEG2RAD)*(shipHeight) };
+            Vector2 v2 = { player.position.x - cosf(player.rotation*RL_DEG2RAD)*(PLAYER_BASE_SIZE/2), player.position.y - sinf(player.rotation*RL_DEG2RAD)*(PLAYER_BASE_SIZE/2) };
+            Vector2 v3 = { player.position.x + cosf(player.rotation*RL_DEG2RAD)*(PLAYER_BASE_SIZE/2), player.position.y + sinf(player.rotation*RL_DEG2RAD)*(PLAYER_BASE_SIZE/2) };
             DrawTriangle(v1, v2, v3, MAROON);
             
             // Draw meteors

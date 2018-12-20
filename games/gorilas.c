@@ -430,7 +430,7 @@ static bool UpdatePlayer(int playerTurn)
             // Distance (calculating the fire power)
             player[playerTurn].aimingPower = sqrt(pow(player[playerTurn].position.x - GetMousePosition().x, 2) + pow(player[playerTurn].position.y - GetMousePosition().y, 2));
             // Calculates the angle via arcsin
-            player[playerTurn].aimingAngle = asin((player[playerTurn].position.y - GetMousePosition().y)/player[playerTurn].aimingPower)*RAD2DEG;
+            player[playerTurn].aimingAngle = asin((player[playerTurn].position.y - GetMousePosition().y)/player[playerTurn].aimingPower)*RL_RAD2DEG;
             // Point of the screen we are aiming at
             player[playerTurn].aimingPoint = GetMousePosition();
 
@@ -451,7 +451,7 @@ static bool UpdatePlayer(int playerTurn)
             // Distance (calculating the fire power)
             player[playerTurn].aimingPower = sqrt(pow(player[playerTurn].position.x - GetMousePosition().x, 2) + pow(player[playerTurn].position.y - GetMousePosition().y, 2));
             // Calculates the angle via arcsin
-            player[playerTurn].aimingAngle = asin((player[playerTurn].position.y - GetMousePosition().y)/player[playerTurn].aimingPower)*RAD2DEG;
+            player[playerTurn].aimingAngle = asin((player[playerTurn].position.y - GetMousePosition().y)/player[playerTurn].aimingPower)*RL_RAD2DEG;
             // Point of the screen we are aiming at
             player[playerTurn].aimingPoint = GetMousePosition();
 
@@ -492,14 +492,14 @@ static bool UpdateBall(int playerTurn)
     {
         if (player[playerTurn].isLeftTeam)
         {
-            ball.speed.x = cos(player[playerTurn].previousAngle*DEG2RAD)*player[playerTurn].previousPower*3/DELTA_FPS;
-            ball.speed.y = -sin(player[playerTurn].previousAngle*DEG2RAD)*player[playerTurn].previousPower*3/DELTA_FPS;
+            ball.speed.x = cos(player[playerTurn].previousAngle*RL_DEG2RAD)*player[playerTurn].previousPower*3/DELTA_FPS;
+            ball.speed.y = -sin(player[playerTurn].previousAngle*RL_DEG2RAD)*player[playerTurn].previousPower*3/DELTA_FPS;
             ball.active = true;
         }
         else
         {
-            ball.speed.x = -cos(player[playerTurn].previousAngle*DEG2RAD)*player[playerTurn].previousPower*3/DELTA_FPS;
-            ball.speed.y = -sin(player[playerTurn].previousAngle*DEG2RAD)*player[playerTurn].previousPower*3/DELTA_FPS;
+            ball.speed.x = -cos(player[playerTurn].previousAngle*RL_DEG2RAD)*player[playerTurn].previousPower*3/DELTA_FPS;
+            ball.speed.y = -sin(player[playerTurn].previousAngle*RL_DEG2RAD)*player[playerTurn].previousPower*3/DELTA_FPS;
             ball.active = true;
         }
     }

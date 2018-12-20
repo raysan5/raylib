@@ -1096,7 +1096,7 @@ void BeginMode2D(Camera2D camera)
 
     // Camera rotation and scaling is always relative to target
     Matrix matOrigin = MatrixTranslate(-camera.target.x, -camera.target.y, 0.0f);
-    Matrix matRotation = MatrixRotate((Vector3){ 0.0f, 0.0f, 1.0f }, camera.rotation*DEG2RAD);
+    Matrix matRotation = MatrixRotate((Vector3){ 0.0f, 0.0f, 1.0f }, camera.rotation*RL_DEG2RAD);
     Matrix matScale = MatrixScale(camera.zoom, camera.zoom, 1.0f);
     Matrix matTranslation = MatrixTranslate(camera.offset.x + camera.target.x, camera.offset.y + camera.target.y, 0.0f);
 
@@ -1127,7 +1127,7 @@ void BeginMode3D(Camera3D camera)
     if (camera.type == CAMERA_PERSPECTIVE)
     {
         // Setup perspective projection
-        double top = 0.01*tan(camera.fovy*0.5*DEG2RAD);
+        double top = 0.01*tan(camera.fovy*0.5*RL_DEG2RAD);
         double right = top*aspect;
 
         rlFrustum(-right, right, -top, top, 0.01, 1000.0);
@@ -1233,7 +1233,7 @@ Ray GetMouseRay(Vector2 mousePosition, Camera camera)
     if (camera.type == CAMERA_PERSPECTIVE)
     {
         // Calculate projection matrix from perspective
-        matProj = MatrixPerspective(camera.fovy*DEG2RAD, ((double)GetScreenWidth()/(double)GetScreenHeight()), 0.01, 1000.0);
+        matProj = MatrixPerspective(camera.fovy*RL_DEG2RAD, ((double)GetScreenWidth()/(double)GetScreenHeight()), 0.01, 1000.0);
     }
     else if (camera.type == CAMERA_ORTHOGRAPHIC)
     {
@@ -1275,7 +1275,7 @@ Vector2 GetWorldToScreen(Vector3 position, Camera camera)
     if (camera.type == CAMERA_PERSPECTIVE)
     {
         // Calculate projection matrix from perspective
-        matProj = MatrixPerspective(camera.fovy*DEG2RAD, ((double)GetScreenWidth()/(double)GetScreenHeight()), 0.01, 1000.0);
+        matProj = MatrixPerspective(camera.fovy*RL_DEG2RAD, ((double)GetScreenWidth()/(double)GetScreenHeight()), 0.01, 1000.0);
     }
     else if (camera.type == CAMERA_ORTHOGRAPHIC)
     {

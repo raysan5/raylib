@@ -130,14 +130,14 @@ void InitGame(void)
 
     framesCounter = 0;
 
-    shipHeight = (PLAYER_BASE_SIZE/2)/tanf(20*DEG2RAD);
+    shipHeight = (PLAYER_BASE_SIZE/2)/tanf(20*RL_DEG2RAD);
 
     // Initialization player
     player.position = (Vector2){screenWidth/2, screenHeight/2 - shipHeight/2};
     player.speed = (Vector2){0, 0};
     player.acceleration = 0;
     player.rotation = 0;
-    player.collider = (Vector3){player.position.x + sin(player.rotation*DEG2RAD)*(shipHeight/2.5f), player.position.y - cos(player.rotation*DEG2RAD)*(shipHeight/2.5f), 12};
+    player.collider = (Vector3){player.position.x + sin(player.rotation*RL_DEG2RAD)*(shipHeight/2.5f), player.position.y - cos(player.rotation*RL_DEG2RAD)*(shipHeight/2.5f), 12};
     player.color = LIGHTGRAY;
 
     for (int i = 0; i < MAX_MEDIUM_METEORS; i++)
@@ -239,8 +239,8 @@ void UpdateGame(void)
             if (IsKeyDown(KEY_RIGHT)) player.rotation += 5;
 
             // Speed
-            player.speed.x = sin(player.rotation*DEG2RAD)*PLAYER_SPEED;
-            player.speed.y = cos(player.rotation*DEG2RAD)*PLAYER_SPEED;
+            player.speed.x = sin(player.rotation*RL_DEG2RAD)*PLAYER_SPEED;
+            player.speed.y = cos(player.rotation*RL_DEG2RAD)*PLAYER_SPEED;
 
             // Controller
             if (IsKeyDown(KEY_UP))
@@ -269,7 +269,7 @@ void UpdateGame(void)
             else if (player.position.y < -(shipHeight)) player.position.y = screenHeight + shipHeight;
 
             // Collision Player to meteors
-            player.collider = (Vector3){player.position.x + sin(player.rotation*DEG2RAD)*(shipHeight/2.5f), player.position.y - cos(player.rotation*DEG2RAD)*(shipHeight/2.5f), 12};
+            player.collider = (Vector3){player.position.x + sin(player.rotation*RL_DEG2RAD)*(shipHeight/2.5f), player.position.y - cos(player.rotation*RL_DEG2RAD)*(shipHeight/2.5f), 12};
 
             for (int a = 0; a < MAX_MEDIUM_METEORS; a++)
             {
@@ -336,9 +336,9 @@ void DrawGame(void)
         if (!gameOver)
         {
             // Draw spaceship
-            Vector2 v1 = { player.position.x + sinf(player.rotation*DEG2RAD)*(shipHeight), player.position.y - cosf(player.rotation*DEG2RAD)*(shipHeight) };
-            Vector2 v2 = { player.position.x - cosf(player.rotation*DEG2RAD)*(PLAYER_BASE_SIZE/2), player.position.y - sinf(player.rotation*DEG2RAD)*(PLAYER_BASE_SIZE/2) };
-            Vector2 v3 = { player.position.x + cosf(player.rotation*DEG2RAD)*(PLAYER_BASE_SIZE/2), player.position.y + sinf(player.rotation*DEG2RAD)*(PLAYER_BASE_SIZE/2) };
+            Vector2 v1 = { player.position.x + sinf(player.rotation*RL_DEG2RAD)*(shipHeight), player.position.y - cosf(player.rotation*RL_DEG2RAD)*(shipHeight) };
+            Vector2 v2 = { player.position.x - cosf(player.rotation*RL_DEG2RAD)*(PLAYER_BASE_SIZE/2), player.position.y - sinf(player.rotation*RL_DEG2RAD)*(PLAYER_BASE_SIZE/2) };
+            Vector2 v3 = { player.position.x + cosf(player.rotation*RL_DEG2RAD)*(PLAYER_BASE_SIZE/2), player.position.y + sinf(player.rotation*RL_DEG2RAD)*(PLAYER_BASE_SIZE/2) };
             DrawTriangle(v1, v2, v3, MAROON);
 
             // Draw meteor

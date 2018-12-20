@@ -155,7 +155,7 @@ int main(void)
             // Draw '3D' elements in the scene
             //-----------------------------------------------
             // Calculate projection matrix (from perspective) and view matrix from camera look at
-            Matrix matProj = MatrixPerspective(camera.fovy*DEG2RAD, (double)screenWidth/(double)screenHeight, 0.01, 1000.0);
+            Matrix matProj = MatrixPerspective(camera.fovy*RL_DEG2RAD, (double)screenWidth/(double)screenHeight, 0.01, 1000.0);
             Matrix matView = MatrixLookAt(camera.position, camera.target, camera.up);
 
             SetMatrixModelview(matView);    // Set internal modelview matrix (default shader)

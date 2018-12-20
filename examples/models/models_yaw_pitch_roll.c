@@ -97,9 +97,9 @@ int main()
 
         Matrix transform = MatrixIdentity();
 
-        transform = MatrixMultiply(transform, MatrixRotateZ(DEG2RAD*roll));
-        transform = MatrixMultiply(transform, MatrixRotateX(DEG2RAD*pitch));
-        transform = MatrixMultiply(transform, MatrixRotateY(DEG2RAD*yaw));
+        transform = MatrixMultiply(transform, MatrixRotateZ(RL_DEG2RAD*roll));
+        transform = MatrixMultiply(transform, MatrixRotateX(RL_DEG2RAD*pitch));
+        transform = MatrixMultiply(transform, MatrixRotateY(RL_DEG2RAD*yaw));
 
         model.transform = transform;
         //----------------------------------------------------------------------------------

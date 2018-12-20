@@ -690,7 +690,7 @@ void UpdateTitleScreen(void)
         {
             dandelionParticle.particle[i].position.y += 2.5*TIME_FACTOR;
             dandelionParticle.particle[i].position.x -= 2*TIME_FACTOR;
-            dandelionParticle.particle[i].rotation = -(30*sin(2*PI/120*globalFrameCounter + dandelionParticle.particle[i].rotPhy) + 30);
+            dandelionParticle.particle[i].rotation = -(30*sin(2*RL_PI/120*globalFrameCounter + dandelionParticle.particle[i].rotPhy) + 30);
             if (dandelionParticle.particle[i].position.y >= GetScreenHeight()) dandelionParticle.particle[i].active = false;
         }
 
@@ -698,7 +698,7 @@ void UpdateTitleScreen(void)
         {
             dandelionBackParticle.particle[i].position.y += 2*TIME_FACTOR;
             dandelionBackParticle.particle[i].position.x -= 3*TIME_FACTOR;
-            dandelionBackParticle.particle[i].rotation = -(30*sin(2*PI/120*globalFrameCounter + dandelionParticle.particle[i].rotPhy) + 30);
+            dandelionBackParticle.particle[i].rotation = -(30*sin(2*RL_PI/120*globalFrameCounter + dandelionParticle.particle[i].rotPhy) + 30);
             if (dandelionBackParticle.particle[i].position.y >= GetScreenHeight()) dandelionBackParticle.particle[i].active = false;
         }
 

@@ -46,8 +46,8 @@
 #ifndef GESTURES_H
 #define GESTURES_H
 
-#ifndef PI
-    #define PI 3.14159265358979323846
+#ifndef RL_PI
+    #define RL_PI 3.14159265358979323846
 #endif
 
 //----------------------------------------------------------------------------------
@@ -493,7 +493,7 @@ float GetGesturePinchAngle(void)
 // Returns angle from two-points vector with X-axis
 static float Vector2Angle(Vector2 v1, Vector2 v2)
 {
-    float angle = atan2f(v2.y - v1.y, v2.x - v1.x)*(180.0f/PI);
+    float angle = atan2f(v2.y - v1.y, v2.x - v1.x)*(180.0f/RL_PI);
     
     if (angle < 0) angle += 360.0f;
 

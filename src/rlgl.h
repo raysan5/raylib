@@ -1004,7 +1004,7 @@ void rlRotatef(float angleDeg, float x, float y, float z)
     Matrix matRotation = MatrixIdentity();
 
     Vector3 axis = (Vector3){ x, y, z };
-    matRotation = MatrixRotate(Vector3Normalize(axis), angleDeg*DEG2RAD);
+    matRotation = MatrixRotate(Vector3Normalize(axis), angleDeg*RL_DEG2RAD);
 
     // NOTE: We transpose matrix with multiplication order
     *currentMatrix = MatrixMultiply(matRotation, *currentMatrix);
@@ -3010,7 +3010,7 @@ Texture2D GenTextureCubemap(Shader shader, Texture2D skyHDR, int size)
     glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 
     // Create projection (transposed) and different views for each face
-    Matrix fboProjection = MatrixPerspective(90.0*DEG2RAD, 1.0, 0.01, 1000.0);
+    Matrix fboProjection = MatrixPerspective(90.0*RL_DEG2RAD, 1.0, 0.01, 1000.0);
     //MatrixTranspose(&fboProjection);
     Matrix fboViews[6] = {
         MatrixLookAt((Vector3){ 0.0f, 0.0f, 0.0f }, (Vector3){ 1.0f, 0.0f, 0.0f }, (Vector3){ 0.0f, -1.0f, 0.0f }),
@@ -3083,7 +3083,7 @@ Texture2D GenTextureIrradiance(Shader shader, Texture2D cubemap, int size)
     glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 
     // Create projection (transposed) and different views for each face
-    Matrix fboProjection = MatrixPerspective(90.0*DEG2RAD, 1.0, 0.01, 1000.0);
+    Matrix fboProjection = MatrixPerspective(90.0*RL_DEG2RAD, 1.0, 0.01, 1000.0);
     //MatrixTranspose(&fboProjection);
     Matrix fboViews[6] = {
         MatrixLookAt((Vector3){ 0.0f, 0.0f, 0.0f }, (Vector3){ 1.0f, 0.0f, 0.0f }, (Vector3){ 0.0f, -1.0f, 0.0f }),
@@ -3160,7 +3160,7 @@ Texture2D GenTexturePrefilter(Shader shader, Texture2D cubemap, int size)
     glGenerateMipmap(GL_TEXTURE_CUBE_MAP);
 
     // Create projection (transposed) and different views for each face
-    Matrix fboProjection = MatrixPerspective(90.0*DEG2RAD, 1.0, 0.01, 1000.0);
+    Matrix fboProjection = MatrixPerspective(90.0*RL_DEG2RAD, 1.0, 0.01, 1000.0);
     //MatrixTranspose(&fboProjection);
     Matrix fboViews[6] = {
         MatrixLookAt((Vector3){ 0.0f, 0.0f, 0.0f }, (Vector3){ 1.0f, 0.0f, 0.0f }, (Vector3){ 0.0f, -1.0f, 0.0f }),
