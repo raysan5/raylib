@@ -86,7 +86,6 @@ static Font defaultFont;        // Default font provided by raylib
 //----------------------------------------------------------------------------------
 // Module specific Functions Declaration
 //----------------------------------------------------------------------------------
-static Font LoadImageFont(Image image, Color key, int firstChar); // Load a Image font file (XNA style)
 #if defined(SUPPORT_FILEFORMAT_FNT)
 static Font LoadBMFont(const char *fileName);     // Load a BMFont file (AngelCode font file)
 #endif
@@ -285,7 +284,7 @@ Font LoadFont(const char *fileName)
 #endif
     {
         Image image = LoadImage(fileName);
-        if (image.data != NULL) font = LoadImageFont(image, MAGENTA, DEFAULT_FIRST_CHAR);
+        if (image.data != NULL) font = LoadFontFromImage(image, MAGENTA, DEFAULT_FIRST_CHAR);
         UnloadImage(image);
     }
 
@@ -319,6 +318,121 @@ Font LoadFontEx(const char *fileName, int fontSize, int charsCount, int *fontCha
     else font = GetFontDefault();
 
     return font;
+}
+
+// Load an Image font file (XNA style)
+Font LoadFontFromImage(Image image, Color key, int firstChar)
+{
+    #define COLOR_EQUAL(col1, col2) ((col1.r == col2.r)&&(col1.g == col2.g)&&(col1.b == col2.b)&&(col1.a == col2.a))
+
+    int charSpacing = 0;
+    int lineSpacing = 0;
+
+    int x = 0;
+    int y = 0;
+
+    // Default number of characters supported
+    #define MAX_FONTCHARS          256
+
+    // We allocate a temporal arrays for chars data measures,
+    // once we get the actual number of chars, we copy data to a sized arrays
+    int tempCharValues[MAX_FONTCHARS];
+    Rectangle tempCharRecs[MAX_FONTCHARS];
+
+    Color *pixels = GetImageData(image);
+
+    // Parse image data to get charSpacing and lineSpacing
+    for (y = 0; y < image.height; y++)
+    {
+        for (x = 0; x < image.width; x++)
+        {
+            if (!COLOR_EQUAL(pixels[y*image.width + x], key)) break;
+        }
+
+        if (!COLOR_EQUAL(pixels[y*image.width + x], key)) break;
+    }
+
+    charSpacing = x;
+    lineSpacing = y;
+
+    int charHeight = 0;
+    int j = 0;
+
+    while (!COLOR_EQUAL(pixels[(lineSpacing + j)*image.width + charSpacing], key)) j++;
+
+    charHeight = j;
+
+    // Check array values to get characters: value, x, y, w, h
+    int index = 0;
+    int lineToRead = 0;
+    int xPosToRead = charSpacing;
+
+    // Parse image data to get rectangle sizes
+    while ((lineSpacing + lineToRead*(charHeight + lineSpacing)) < image.height)
+    {
+        while ((xPosToRead < image.width) &&
+              !COLOR_EQUAL((pixels[(lineSpacing + (charHeight+lineSpacing)*lineToRead)*image.width + xPosToRead]), key))
+        {
+            tempCharValues[index] = firstChar + index;
+
+            tempCharRecs[index].x = (float)xPosToRead;
+            tempCharRecs[index].y = (float)(lineSpacing + lineToRead*(charHeight + lineSpacing));
+            tempCharRecs[index].height = (float)charHeight;
+
+            int charWidth = 0;
+
+            while (!COLOR_EQUAL(pixels[(lineSpacing + (charHeight+lineSpacing)*lineToRead)*image.width + xPosToRead + charWidth], key)) charWidth++;
+
+            tempCharRecs[index].width = (float)charWidth;
+
+            index++;
+
+            xPosToRead += (charWidth + charSpacing);
+        }
+
+        lineToRead++;
+        xPosToRead = charSpacing;
+    }
+
+    TraceLog(LOG_DEBUG, "Font data parsed correctly from image");
+
+    // NOTE: We need to remove key color borders from image to avoid weird
+    // artifacts on texture scaling when using FILTER_BILINEAR or FILTER_TRILINEAR
+    for (int i = 0; i < image.height*image.width; i++) if (COLOR_EQUAL(pixels[i], key)) pixels[i] = BLANK;
+
+    // Create a new image with the processed color data (key color replaced by BLANK)
+    Image fontClear = LoadImageEx(pixels, image.width, image.height);
+
+    free(pixels);    // Free pixels array memory
+
+    // Create spritefont with all data parsed from image
+    Font spriteFont = { 0 };
+
+    spriteFont.texture = LoadTextureFromImage(fontClear); // Convert processed image to OpenGL texture
+    spriteFont.charsCount = index;
+
+    UnloadImage(fontClear);     // Unload processed image once converted to texture
+
+    // We got tempCharValues and tempCharsRecs populated with chars data
+    // Now we move temp data to sized charValues and charRecs arrays
+    spriteFont.chars = (CharInfo *)malloc(spriteFont.charsCount*sizeof(CharInfo));
+
+    for (int i = 0; i < spriteFont.charsCount; i++)
+    {
+        spriteFont.chars[i].value = tempCharValues[i];
+        spriteFont.chars[i].rec = tempCharRecs[i];
+
+        // NOTE: On image based fonts (XNA style), character offsets and xAdvance are not required (set to 0)
+        spriteFont.chars[i].offsetX = 0;
+        spriteFont.chars[i].offsetY = 0;
+        spriteFont.chars[i].advanceX = 0;
+    }
+
+    spriteFont.baseSize = (int)spriteFont.chars[0].rec.height;
+
+    TraceLog(LOG_INFO, "Image file loaded correctly as Font");
+
+    return spriteFont;
 }
 
 // Load font data for further use
@@ -836,121 +950,6 @@ bool IsEqualText(const char *text1, const char *text2)
 //----------------------------------------------------------------------------------
 // Module specific Functions Definition
 //----------------------------------------------------------------------------------
-
-// Load an Image font file (XNA style)
-static Font LoadImageFont(Image image, Color key, int firstChar)
-{
-    #define COLOR_EQUAL(col1, col2) ((col1.r == col2.r)&&(col1.g == col2.g)&&(col1.b == col2.b)&&(col1.a == col2.a))
-
-    int charSpacing = 0;
-    int lineSpacing = 0;
-
-    int x = 0;
-    int y = 0;
-
-    // Default number of characters supported
-    #define MAX_FONTCHARS          256
-
-    // We allocate a temporal arrays for chars data measures,
-    // once we get the actual number of chars, we copy data to a sized arrays
-    int tempCharValues[MAX_FONTCHARS];
-    Rectangle tempCharRecs[MAX_FONTCHARS];
-
-    Color *pixels = GetImageData(image);
-
-    // Parse image data to get charSpacing and lineSpacing
-    for (y = 0; y < image.height; y++)
-    {
-        for (x = 0; x < image.width; x++)
-        {
-            if (!COLOR_EQUAL(pixels[y*image.width + x], key)) break;
-        }
-
-        if (!COLOR_EQUAL(pixels[y*image.width + x], key)) break;
-    }
-
-    charSpacing = x;
-    lineSpacing = y;
-
-    int charHeight = 0;
-    int j = 0;
-
-    while (!COLOR_EQUAL(pixels[(lineSpacing + j)*image.width + charSpacing], key)) j++;
-
-    charHeight = j;
-
-    // Check array values to get characters: value, x, y, w, h
-    int index = 0;
-    int lineToRead = 0;
-    int xPosToRead = charSpacing;
-
-    // Parse image data to get rectangle sizes
-    while ((lineSpacing + lineToRead*(charHeight + lineSpacing)) < image.height)
-    {
-        while ((xPosToRead < image.width) &&
-              !COLOR_EQUAL((pixels[(lineSpacing + (charHeight+lineSpacing)*lineToRead)*image.width + xPosToRead]), key))
-        {
-            tempCharValues[index] = firstChar + index;
-
-            tempCharRecs[index].x = (float)xPosToRead;
-            tempCharRecs[index].y = (float)(lineSpacing + lineToRead*(charHeight + lineSpacing));
-            tempCharRecs[index].height = (float)charHeight;
-
-            int charWidth = 0;
-
-            while (!COLOR_EQUAL(pixels[(lineSpacing + (charHeight+lineSpacing)*lineToRead)*image.width + xPosToRead + charWidth], key)) charWidth++;
-
-            tempCharRecs[index].width = (float)charWidth;
-
-            index++;
-
-            xPosToRead += (charWidth + charSpacing);
-        }
-
-        lineToRead++;
-        xPosToRead = charSpacing;
-    }
-
-    TraceLog(LOG_DEBUG, "Font data parsed correctly from image");
-
-    // NOTE: We need to remove key color borders from image to avoid weird
-    // artifacts on texture scaling when using FILTER_BILINEAR or FILTER_TRILINEAR
-    for (int i = 0; i < image.height*image.width; i++) if (COLOR_EQUAL(pixels[i], key)) pixels[i] = BLANK;
-
-    // Create a new image with the processed color data (key color replaced by BLANK)
-    Image fontClear = LoadImageEx(pixels, image.width, image.height);
-
-    free(pixels);    // Free pixels array memory
-
-    // Create spritefont with all data parsed from image
-    Font spriteFont = { 0 };
-
-    spriteFont.texture = LoadTextureFromImage(fontClear); // Convert processed image to OpenGL texture
-    spriteFont.charsCount = index;
-
-    UnloadImage(fontClear);     // Unload processed image once converted to texture
-
-    // We got tempCharValues and tempCharsRecs populated with chars data
-    // Now we move temp data to sized charValues and charRecs arrays
-    spriteFont.chars = (CharInfo *)malloc(spriteFont.charsCount*sizeof(CharInfo));
-
-    for (int i = 0; i < spriteFont.charsCount; i++)
-    {
-        spriteFont.chars[i].value = tempCharValues[i];
-        spriteFont.chars[i].rec = tempCharRecs[i];
-
-        // NOTE: On image based fonts (XNA style), character offsets and xAdvance are not required (set to 0)
-        spriteFont.chars[i].offsetX = 0;
-        spriteFont.chars[i].offsetY = 0;
-        spriteFont.chars[i].advanceX = 0;
-    }
-
-    spriteFont.baseSize = (int)spriteFont.chars[0].rec.height;
-
-    TraceLog(LOG_INFO, "Image file loaded correctly as Font");
-
-    return spriteFont;
-}
 
 #if defined(SUPPORT_FILEFORMAT_FNT)
 // Load a BMFont file (AngelCode font file)
