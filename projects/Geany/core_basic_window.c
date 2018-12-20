@@ -35,9 +35,9 @@ int main()
         //----------------------------------------------------------------------------------
         BeginDrawing();
 
-            ClearBackground(RAYWHITE);
+            ClearBackground(RL_RAYWHITE);
 
-            DrawText("Congrats! You created your first window!", 190, 200, 20, LIGHTGRAY);
+            DrawText("Congrats! You created your first window!", 190, 200, 20, RL_LIGHTGRAY);
 
         EndDrawing();
         //----------------------------------------------------------------------------------

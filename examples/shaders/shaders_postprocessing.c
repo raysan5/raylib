@@ -126,15 +126,15 @@ int main()
         //----------------------------------------------------------------------------------
         BeginDrawing();
 
-            ClearBackground(RAYWHITE);
+            ClearBackground(RL_RAYWHITE);
 
             BeginTextureMode(target);       // Enable drawing to texture
             
-                ClearBackground(RAYWHITE);  // Clear texture background
+                ClearBackground(RL_RAYWHITE);  // Clear texture background
 
                 BeginMode3D(camera);        // Begin 3d mode drawing
 
-                    DrawModel(model, position, 0.1f, WHITE);   // Draw 3d model with texture
+                    DrawModel(model, position, 0.1f, RL_WHITE);   // Draw 3d model with texture
 
                     DrawGrid(10, 1.0f);     // Draw a grid
 
@@ -146,18 +146,18 @@ int main()
             BeginShaderMode(shaders[currentShader]);
             
                 // NOTE: Render texture must be y-flipped due to default OpenGL coordinates (left-bottom)
-                DrawTextureRec(target.texture, (Rectangle){ 0, 0, target.texture.width, -target.texture.height }, (Vector2){ 0, 0 }, WHITE);
+                DrawTextureRec(target.texture, (Rectangle){ 0, 0, target.texture.width, -target.texture.height }, (Vector2){ 0, 0 }, RL_WHITE);
                 
             EndShaderMode();
             
             // Draw 2d shapes and text over drawn texture
-            DrawRectangle(0, 9, 580, 30, Fade(LIGHTGRAY, 0.7f));
+            DrawRectangle(0, 9, 580, 30, Fade(RL_LIGHTGRAY, 0.7f));
             
-            DrawText("(c) Church 3D model by Alberto Cano", screenWidth - 200, screenHeight - 20, 10, GRAY);
+            DrawText("(c) Church 3D model by Alberto Cano", screenWidth - 200, screenHeight - 20, 10, RL_GRAY);
             
-            DrawText("CURRENT POSTPRO SHADER:", 10, 15, 20, BLACK);
-            DrawText(postproShaderText[currentShader], 330, 15, 20, RED);
-            DrawText("< >", 540, 10, 30, DARKBLUE);
+            DrawText("CURRENT POSTPRO SHADER:", 10, 15, 20, RL_BLACK);
+            DrawText(postproShaderText[currentShader], 330, 15, 20, RL_RED);
+            DrawText("< >", 540, 10, 30, RL_DARKBLUE);
             
             DrawFPS(700, 15);
 

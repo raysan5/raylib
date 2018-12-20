@@ -1,6 +1,6 @@
 /***********************************************************************************
 *
-*   KING GAME JAM - GRAY TEAM
+*   KING GAME JAM - RL_GRAY TEAM
 *
 *   <Game title>
 *   <Game description>
@@ -191,10 +191,10 @@ void UpdatePlayer(void)
 //
 void DrawPlayer(void)
 {
-    DrawTextureRec(player.texture, player.frameRec, player.position, WHITE);
+    DrawTextureRec(player.texture, player.frameRec, player.position, RL_WHITE);
     
     // Draw mouse pointer on click
-    if (pointerAnim) DrawCircleV(pointerPosition, 20, Fade(RED, pointerAlpha));
+    if (pointerAnim) DrawCircleV(pointerPosition, 20, Fade(RL_RED, pointerAlpha));
     
     DrawLifes();
 }
@@ -275,7 +275,7 @@ static void DrawLifes(void)
 		
         for(int i = 0; i < player.numLifes; i++)
         {
-        	DrawTexture(texLife, position.x + i*texLife.width, position.y, Fade(RAYWHITE, 0.7f));
+        	DrawTexture(texLife, position.x + i*texLife.width, position.y, Fade(RL_RAYWHITE, 0.7f));
         }
     }
 }

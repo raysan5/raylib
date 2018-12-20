@@ -71,11 +71,11 @@ void UpdateTitleScreen(void)
 // Title Screen Draw logic
 void DrawTitleScreen(void)
 {
-    //DrawText("TITLE SCREEN", 100, 100, 140, Fade(BLACK, titleAlpha));
-    DrawRectangle(0, 0, GetScreenWidth(), GetScreenHeight(), DARKGRAY);
-    DrawTexture(title, GetScreenWidth()/2 - title.width/2, 20, Fade(WHITE, titleAlpha));
+    //DrawText("TITLE SCREEN", 100, 100, 140, Fade(RL_BLACK, titleAlpha));
+    DrawRectangle(0, 0, GetScreenWidth(), GetScreenHeight(), RL_DARKGRAY);
+    DrawTexture(title, GetScreenWidth()/2 - title.width/2, 20, Fade(RL_WHITE, titleAlpha));
     
-    if ((framesCounter > 180) && ((framesCounter/40)%2)) DrawText("PRESS ENTER to START", 380, 545, 40, BLACK);
+    if ((framesCounter > 180) && ((framesCounter/40)%2)) DrawText("PRESS ENTER to START", 380, 545, 40, RL_BLACK);
 }
 
 // Title Screen Unload logic

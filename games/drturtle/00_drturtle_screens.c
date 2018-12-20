@@ -85,29 +85,29 @@ int main()
         //----------------------------------------------------------------------------------
         BeginDrawing();
         
-            ClearBackground(RAYWHITE);
+            ClearBackground(RL_RAYWHITE);
             
             switch (currentScreen)
             {
                 case TITLE:
                 {
                     // Draw title screen
-                    DrawRectangle(0, 0, screenWidth, screenHeight, GREEN);
-                    DrawText("TITLE SCREEN", 20, 20, 40, DARKGREEN);
+                    DrawRectangle(0, 0, screenWidth, screenHeight, RL_GREEN);
+                    DrawText("TITLE SCREEN", 20, 20, 40, RL_DARKGREEN);
                 
                 } break;
                 case GAMEPLAY:
                 {
                     // Draw gameplay screen
-                    DrawRectangle(0, 0, screenWidth, screenHeight, RED);
-                    DrawText("GAMEPLAY SCREEN", 20, 20, 40, MAROON);
+                    DrawRectangle(0, 0, screenWidth, screenHeight, RL_RED);
+                    DrawText("GAMEPLAY SCREEN", 20, 20, 40, RL_MAROON);
                 
                 } break;
                 case ENDING:
                 {
                     // Draw ending screen
-                    DrawRectangle(0, 0, screenWidth, screenHeight, BLUE);
-                    DrawText("ENDING SCREEN", 20, 20, 40, DARKBLUE);
+                    DrawRectangle(0, 0, screenWidth, screenHeight, RL_BLUE);
+                    DrawText("ENDING SCREEN", 20, 20, 40, RL_DARKBLUE);
                     
                 } break;
                 default: break;

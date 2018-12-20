@@ -23,7 +23,7 @@ int main()
     InitWindow(screenWidth, screenHeight, "raylib [models] example - mesh generation");
     
     // We generate a checked image for texturing
-    Image checked = GenImageChecked(2, 2, 1, 1, RED, GREEN);
+    Image checked = GenImageChecked(2, 2, 1, 1, RL_RED, RL_GREEN);
     Texture2D texture = LoadTextureFromImage(checked);
     UnloadImage(checked);
     
@@ -71,30 +71,30 @@ int main()
         //----------------------------------------------------------------------------------
         BeginDrawing();
 
-            ClearBackground(RAYWHITE);
+            ClearBackground(RL_RAYWHITE);
 
             BeginMode3D(camera);
 
-                DrawModel(models[currentModel], position, 1.0f, WHITE);
+                DrawModel(models[currentModel], position, 1.0f, RL_WHITE);
 
                 DrawGrid(10, 1.0);
 
             EndMode3D();
             
-            DrawRectangle(30, 400, 310, 30, Fade(SKYBLUE, 0.5f));
-            DrawRectangleLines(30, 400, 310, 30, Fade(DARKBLUE, 0.5f));
-            DrawText("MOUSE LEFT BUTTON to CYCLE PROCEDURAL MODELS", 40, 410, 10, BLUE);
+            DrawRectangle(30, 400, 310, 30, Fade(RL_SKYBLUE, 0.5f));
+            DrawRectangleLines(30, 400, 310, 30, Fade(RL_DARKBLUE, 0.5f));
+            DrawText("MOUSE LEFT BUTTON to CYCLE PROCEDURAL MODELS", 40, 410, 10, RL_BLUE);
             
             switch(currentModel)
             {
-                case 0: DrawText("PLANE", 680, 10, 20, DARKBLUE); break;
-                case 1: DrawText("CUBE", 680, 10, 20, DARKBLUE); break;
-                case 2: DrawText("SPHERE", 680, 10, 20, DARKBLUE); break;
-                case 3: DrawText("HEMISPHERE", 640, 10, 20, DARKBLUE); break;
-                case 4: DrawText("CYLINDER", 680, 10, 20, DARKBLUE); break;
-                case 5: DrawText("TORUS", 680, 10, 20, DARKBLUE); break;
-                case 6: DrawText("KNOT", 680, 10, 20, DARKBLUE); break;
-                case 7: DrawText("POLY", 680, 10, 20, DARKBLUE); break;
+                case 0: DrawText("PLANE", 680, 10, 20, RL_DARKBLUE); break;
+                case 1: DrawText("CUBE", 680, 10, 20, RL_DARKBLUE); break;
+                case 2: DrawText("SPHERE", 680, 10, 20, RL_DARKBLUE); break;
+                case 3: DrawText("HEMISPHERE", 640, 10, 20, RL_DARKBLUE); break;
+                case 4: DrawText("CYLINDER", 680, 10, 20, RL_DARKBLUE); break;
+                case 5: DrawText("TORUS", 680, 10, 20, RL_DARKBLUE); break;
+                case 6: DrawText("KNOT", 680, 10, 20, RL_DARKBLUE); break;
+                case 7: DrawText("POLY", 680, 10, 20, RL_DARKBLUE); break;
                 default: break;
             }
 

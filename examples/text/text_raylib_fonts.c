@@ -61,7 +61,7 @@ int main()
     positions[4].y += 2;
     positions[7].y -= 8;
     
-    Color colors[MAX_FONTS] = { MAROON, ORANGE, DARKGREEN, DARKBLUE, DARKPURPLE, LIME, GOLD, RED };
+    Color colors[MAX_FONTS] = { RL_MAROON, RL_ORANGE, RL_DARKGREEN, RL_DARKBLUE, RL_DARKPURPLE, RL_LIME, RL_GOLD, RL_RED };
     //--------------------------------------------------------------------------------------
 
     // Main game loop
@@ -76,10 +76,10 @@ int main()
         //----------------------------------------------------------------------------------
         BeginDrawing();
 
-            ClearBackground(RAYWHITE);
+            ClearBackground(RL_RAYWHITE);
             
-            DrawText("free fonts included with raylib", 250, 20, 20, DARKGRAY);
-            DrawLine(220, 50, 590, 50, DARKGRAY);
+            DrawText("free fonts included with raylib", 250, 20, 20, RL_DARKGRAY);
+            DrawLine(220, 50, 590, 50, RL_DARKGRAY);
             
             for (int i = 0; i < MAX_FONTS; i++)
             {

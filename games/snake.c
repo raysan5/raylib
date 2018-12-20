@@ -127,8 +127,8 @@ void InitGame(void)
         snake[i].size = (Vector2){ SQUARE_SIZE, SQUARE_SIZE };
         snake[i].speed = (Vector2){ SQUARE_SIZE, 0 };
 
-        if (i == 0) snake[i].color = DARKBLUE;
-        else snake[i].color = BLUE;
+        if (i == 0) snake[i].color = RL_DARKBLUE;
+        else snake[i].color = RL_BLUE;
     }
 
     for (int i = 0; i < SNAKE_LENGTH; i++)
@@ -137,7 +137,7 @@ void InitGame(void)
     }
 
     fruit.size = (Vector2){ SQUARE_SIZE, SQUARE_SIZE };
-    fruit.color = SKYBLUE;
+    fruit.color = RL_SKYBLUE;
     fruit.active = false;
 }
 
@@ -246,19 +246,19 @@ void DrawGame(void)
 {
     BeginDrawing();
 
-        ClearBackground(RAYWHITE);
+        ClearBackground(RL_RAYWHITE);
         
         if (!gameOver)
         {
             // Draw grid lines
             for (int i = 0; i < screenWidth/SQUARE_SIZE + 1; i++)
             {
-                DrawLineV((Vector2){SQUARE_SIZE*i + offset.x/2, offset.y/2}, (Vector2){SQUARE_SIZE*i + offset.x/2, screenHeight - offset.y/2}, LIGHTGRAY);
+                DrawLineV((Vector2){SQUARE_SIZE*i + offset.x/2, offset.y/2}, (Vector2){SQUARE_SIZE*i + offset.x/2, screenHeight - offset.y/2}, RL_LIGHTGRAY);
             }
 
             for (int i = 0; i < screenHeight/SQUARE_SIZE + 1; i++)
             {
-                DrawLineV((Vector2){offset.x/2, SQUARE_SIZE*i + offset.y/2}, (Vector2){screenWidth - offset.x/2, SQUARE_SIZE*i + offset.y/2}, LIGHTGRAY);
+                DrawLineV((Vector2){offset.x/2, SQUARE_SIZE*i + offset.y/2}, (Vector2){screenWidth - offset.x/2, SQUARE_SIZE*i + offset.y/2}, RL_LIGHTGRAY);
             }
 
             // Draw snake
@@ -267,9 +267,9 @@ void DrawGame(void)
             // Draw fruit to pick
             DrawRectangleV(fruit.position, fruit.size, fruit.color);
 
-            if (pause) DrawText("GAME PAUSED", screenWidth/2 - MeasureText("GAME PAUSED", 40)/2, screenHeight/2 - 40, 40, GRAY);
+            if (pause) DrawText("GAME PAUSED", screenWidth/2 - MeasureText("GAME PAUSED", 40)/2, screenHeight/2 - 40, 40, RL_GRAY);
         }
-        else DrawText("PRESS [ENTER] TO PLAY AGAIN", GetScreenWidth()/2 - MeasureText("PRESS [ENTER] TO PLAY AGAIN", 20)/2, GetScreenHeight()/2 - 50, 20, GRAY);
+        else DrawText("PRESS [ENTER] TO PLAY AGAIN", GetScreenWidth()/2 - MeasureText("PRESS [ENTER] TO PLAY AGAIN", 20)/2, GetScreenHeight()/2 - 50, 20, RL_GRAY);
 
     EndDrawing();
 }

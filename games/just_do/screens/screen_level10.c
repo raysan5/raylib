@@ -123,21 +123,21 @@ void UpdateLevel10Screen(void)
 void DrawLevel10Screen(void)
 {
     // Draw Level10 screen
-    DrawRectangle(1100, GetScreenHeight()/2 - 20, 40, 40, GRAY);
+    DrawRectangle(1100, GetScreenHeight()/2 - 20, 40, 40, RL_GRAY);
 
-    DrawRectangleRec(movingBox, LIGHTGRAY);
+    DrawRectangleRec(movingBox, RL_LIGHTGRAY);
     
-    if (leftColumnActive) DrawRectangleRec(leftColumnRec, GRAY);
-    if (middleColumnActive) DrawRectangleRec(middleColumnRec, GRAY);
-    if (rightColumnActive) DrawRectangleRec(rightColumnRec, GRAY);
+    if (leftColumnActive) DrawRectangleRec(leftColumnRec, RL_GRAY);
+    if (middleColumnActive) DrawRectangleRec(middleColumnRec, RL_GRAY);
+    if (rightColumnActive) DrawRectangleRec(rightColumnRec, RL_GRAY);
 
     if (levelFinished)
     {
-        DrawRectangleBordersRec((Rectangle){0, 0, GetScreenWidth(), GetScreenHeight()}, 0, 0, 60, Fade(LIGHTGRAY, 0.6f));
-        DrawText("LEVEL 08", GetScreenWidth()/2 - MeasureText("LEVEL 08", 30)/2, 20, 30, GRAY);
-        DrawText(FormatText("DONE! (Seconds: %03i)", levelTimeSec), GetScreenWidth()/2 - MeasureText("DONE! (Seconds: 000)", 30)/2, GetScreenHeight() - 40, 30, GRAY);
+        DrawRectangleBordersRec((Rectangle){0, 0, GetScreenWidth(), GetScreenHeight()}, 0, 0, 60, Fade(RL_LIGHTGRAY, 0.6f));
+        DrawText("LEVEL 08", GetScreenWidth()/2 - MeasureText("LEVEL 08", 30)/2, 20, 30, RL_GRAY);
+        DrawText(FormatText("DONE! (Seconds: %03i)", levelTimeSec), GetScreenWidth()/2 - MeasureText("DONE! (Seconds: 000)", 30)/2, GetScreenHeight() - 40, 30, RL_GRAY);
     }
-    else DrawText("LEVEL 08", GetScreenWidth()/2 - MeasureText("LEVEL 08", 30)/2, 20, 30, LIGHTGRAY);
+    else DrawText("LEVEL 08", GetScreenWidth()/2 - MeasureText("LEVEL 08", 30)/2, 20, 30, RL_LIGHTGRAY);
 }
 
 // Level10 Screen Unload logic

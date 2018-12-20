@@ -52,19 +52,19 @@ int main()
         //----------------------------------------------------------------------------------
         BeginDrawing();
 
-            ClearBackground(RAYWHITE);
+            ClearBackground(RL_RAYWHITE);
 
             // NOTE: Using DrawTexturePro() we can easily rotate and scale the part of the texture we draw
             // sourceRec defines the part of the texture we use for drawing
             // destRec defines the rectangle where our texture part will fit (scaling it to fit)
             // origin defines the point of the texture used as reference for rotation and scaling
             // rotation defines the texture rotation (using origin as rotation point)
-            DrawTexturePro(scarfy, sourceRec, destRec, origin, (float)rotation, WHITE);
+            DrawTexturePro(scarfy, sourceRec, destRec, origin, (float)rotation, RL_WHITE);
 
-            DrawLine((int) destRec.x, 0, (int) destRec.x, screenHeight, GRAY);
-            DrawLine(0, (int)destRec.y, screenWidth, (int)destRec.y, GRAY);
+            DrawLine((int) destRec.x, 0, (int) destRec.x, screenHeight, RL_GRAY);
+            DrawLine(0, (int)destRec.y, screenWidth, (int)destRec.y, RL_GRAY);
             
-            DrawText("(c) Scarfy sprite by Eiden Marsal", screenWidth - 200, screenHeight - 20, 10, GRAY);
+            DrawText("(c) Scarfy sprite by Eiden Marsal", screenWidth - 200, screenHeight - 20, 10, RL_GRAY);
 
         EndDrawing();
         //----------------------------------------------------------------------------------

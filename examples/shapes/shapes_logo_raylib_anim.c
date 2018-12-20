@@ -111,40 +111,40 @@ int main()
         //----------------------------------------------------------------------------------
         BeginDrawing();
 
-            ClearBackground(RAYWHITE);
+            ClearBackground(RL_RAYWHITE);
 
             if (state == 0)
             {
-                if ((framesCounter/15)%2) DrawRectangle(logoPositionX, logoPositionY, 16, 16, BLACK);
+                if ((framesCounter/15)%2) DrawRectangle(logoPositionX, logoPositionY, 16, 16, RL_BLACK);
             }
             else if (state == 1)
             {
-                DrawRectangle(logoPositionX, logoPositionY, topSideRecWidth, 16, BLACK);
-                DrawRectangle(logoPositionX, logoPositionY, 16, leftSideRecHeight, BLACK);
+                DrawRectangle(logoPositionX, logoPositionY, topSideRecWidth, 16, RL_BLACK);
+                DrawRectangle(logoPositionX, logoPositionY, 16, leftSideRecHeight, RL_BLACK);
             }
             else if (state == 2)
             {
-                DrawRectangle(logoPositionX, logoPositionY, topSideRecWidth, 16, BLACK);
-                DrawRectangle(logoPositionX, logoPositionY, 16, leftSideRecHeight, BLACK);
+                DrawRectangle(logoPositionX, logoPositionY, topSideRecWidth, 16, RL_BLACK);
+                DrawRectangle(logoPositionX, logoPositionY, 16, leftSideRecHeight, RL_BLACK);
 
-                DrawRectangle(logoPositionX + 240, logoPositionY, 16, rightSideRecHeight, BLACK);
-                DrawRectangle(logoPositionX, logoPositionY + 240, bottomSideRecWidth, 16, BLACK);
+                DrawRectangle(logoPositionX + 240, logoPositionY, 16, rightSideRecHeight, RL_BLACK);
+                DrawRectangle(logoPositionX, logoPositionY + 240, bottomSideRecWidth, 16, RL_BLACK);
             }
             else if (state == 3)
             {
-                DrawRectangle(logoPositionX, logoPositionY, topSideRecWidth, 16, Fade(BLACK, alpha));
-                DrawRectangle(logoPositionX, logoPositionY + 16, 16, leftSideRecHeight - 32, Fade(BLACK, alpha));
+                DrawRectangle(logoPositionX, logoPositionY, topSideRecWidth, 16, Fade(RL_BLACK, alpha));
+                DrawRectangle(logoPositionX, logoPositionY + 16, 16, leftSideRecHeight - 32, Fade(RL_BLACK, alpha));
 
-                DrawRectangle(logoPositionX + 240, logoPositionY + 16, 16, rightSideRecHeight - 32, Fade(BLACK, alpha));
-                DrawRectangle(logoPositionX, logoPositionY + 240, bottomSideRecWidth, 16, Fade(BLACK, alpha));
+                DrawRectangle(logoPositionX + 240, logoPositionY + 16, 16, rightSideRecHeight - 32, Fade(RL_BLACK, alpha));
+                DrawRectangle(logoPositionX, logoPositionY + 240, bottomSideRecWidth, 16, Fade(RL_BLACK, alpha));
 
-                DrawRectangle(screenWidth/2 - 112, screenHeight/2 - 112, 224, 224, Fade(RAYWHITE, alpha));
+                DrawRectangle(screenWidth/2 - 112, screenHeight/2 - 112, 224, 224, Fade(RL_RAYWHITE, alpha));
 
-                DrawText(SubText("raylib", 0, lettersCount), screenWidth/2 - 44, screenHeight/2 + 48, 50, Fade(BLACK, alpha));
+                DrawText(SubText("raylib", 0, lettersCount), screenWidth/2 - 44, screenHeight/2 + 48, 50, Fade(RL_BLACK, alpha));
             }
             else if (state == 4)
             {
-                DrawText("[R] REPLAY", 340, 200, 20, GRAY);
+                DrawText("[R] REPLAY", 340, 200, 20, RL_GRAY);
             }
 
         EndDrawing();

@@ -335,7 +335,7 @@ void UpdateLivingroomScreen(void)
 // Gameplay Screen Draw logic
 void DrawLivingroomScreen(void)
 {
-    DrawTexture(background, 0, 0, WHITE);
+    DrawTexture(background, 0, 0, RL_WHITE);
     
     // Draw monsters
 	DrawMonster(picture, 0);
@@ -343,42 +343,42 @@ void DrawLivingroomScreen(void)
     DrawMonster(phone, 0);
     
     // Draw door
-    if (doorCenter.selected) DrawTextureRec(doors, doorCenter.frameRec, doorCenter.position, GREEN);
-    else DrawTextureRec(doors, doorCenter.frameRec, doorCenter.position, WHITE);
-    if (doorLeft.selected) DrawTextureRec(doors, doorLeft.frameRec, doorLeft.position, GREEN);
-    else DrawTextureRec(doors, doorLeft.frameRec, doorLeft.position, WHITE);
+    if (doorCenter.selected) DrawTextureRec(doors, doorCenter.frameRec, doorCenter.position, RL_GREEN);
+    else DrawTextureRec(doors, doorCenter.frameRec, doorCenter.position, RL_WHITE);
+    if (doorLeft.selected) DrawTextureRec(doors, doorLeft.frameRec, doorLeft.position, RL_GREEN);
+    else DrawTextureRec(doors, doorLeft.frameRec, doorLeft.position, RL_WHITE);
     
     // Draw messsages
-    if (msgState < 2) DrawRectangle(0, 40, GetScreenWidth(), 200, Fade(LIGHTGRAY, 0.5f));
-    else if (msgState == 2) DrawRectangle(0, 80, GetScreenWidth(), 100, Fade(LIGHTGRAY, 0.5f));
+    if (msgState < 2) DrawRectangle(0, 40, GetScreenWidth(), 200, Fade(RL_LIGHTGRAY, 0.5f));
+    else if (msgState == 2) DrawRectangle(0, 80, GetScreenWidth(), 100, Fade(RL_LIGHTGRAY, 0.5f));
 
     if (msgState == 0) 
     {
-        DrawTextEx(font, msgBuffer, (Vector2){ msgPosX, 80 }, font.baseSize, 2, WHITE);
+        DrawTextEx(font, msgBuffer, (Vector2){ msgPosX, 80 }, font.baseSize, 2, RL_WHITE);
     }
     else if (msgState == 1)
     {
-        DrawTextEx(font, message, (Vector2){ msgPosX, 80 }, font.baseSize, 2, WHITE);
+        DrawTextEx(font, message, (Vector2){ msgPosX, 80 }, font.baseSize, 2, RL_WHITE);
         
-        if ((msgCounter/30)%2) DrawText("PRESS ENTER or CLICK", GetScreenWidth() - 280, 200, 20, BLACK);
+        if ((msgCounter/30)%2) DrawText("PRESS ENTER or CLICK", GetScreenWidth() - 280, 200, 20, RL_BLACK);
     }
     else if (msgState == 2)
     {
         if ((msgCounter/30)%2)
         {
-            DrawTextEx(font, "CHOOSE WISELY!", (Vector2){ 300, 95 }, font.baseSize*2, 2, WHITE);
+            DrawTextEx(font, "CHOOSE WISELY!", (Vector2){ 300, 95 }, font.baseSize*2, 2, RL_WHITE);
             
-            DrawRectangleRec(candle.bounds, Fade(RED, 0.6f));
-            DrawRectangleRec(phone.bounds, Fade(RED, 0.6f));
-            DrawRectangleRec(picture.bounds, Fade(RED, 0.6f));
+            DrawRectangleRec(candle.bounds, Fade(RL_RED, 0.6f));
+            DrawRectangleRec(phone.bounds, Fade(RL_RED, 0.6f));
+            DrawRectangleRec(picture.bounds, Fade(RL_RED, 0.6f));
         }
     }
     else
     {
         if ((monsterHover) && ((msgCounter/30)%2))
         {
-            DrawRectangle(0, 0, GetScreenWidth(), 50, Fade(LIGHTGRAY, 0.5f));
-            DrawText("PRESS SPACE or CLICK to INTERACT", 420, 15, 20, BLACK);
+            DrawRectangle(0, 0, GetScreenWidth(), 50, Fade(RL_LIGHTGRAY, 0.5f));
+            DrawText("PRESS SPACE or CLICK to INTERACT", 420, 15, 20, RL_BLACK);
         }
     }
 

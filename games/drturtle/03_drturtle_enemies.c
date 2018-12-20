@@ -268,23 +268,23 @@ int main()
         //----------------------------------------------------------------------------------
         BeginDrawing();
         
-            ClearBackground(RAYWHITE);
+            ClearBackground(RL_RAYWHITE);
             
             // Draw background (common to all screens)
-            DrawTexture(sky, 0, 0, WHITE);
+            DrawTexture(sky, 0, 0, RL_WHITE);
             
-            DrawTexture(mountains, backScrolling, 0, WHITE);
-            DrawTexture(mountains, screenWidth + backScrolling, 0, WHITE);
+            DrawTexture(mountains, backScrolling, 0, RL_WHITE);
+            DrawTexture(mountains, screenWidth + backScrolling, 0, RL_WHITE);
             
             if (!gameraMode)
             {
-                DrawTexture(sea, seaScrolling, 0, BLUE);
-                DrawTexture(sea, screenWidth + seaScrolling, 0, BLUE);
+                DrawTexture(sea, seaScrolling, 0, RL_BLUE);
+                DrawTexture(sea, screenWidth + seaScrolling, 0, RL_BLUE);
             }
             else
             {
-                DrawTexture(sea, seaScrolling, 0, RED);
-                DrawTexture(sea, screenWidth + seaScrolling, 0, RED);
+                DrawTexture(sea, seaScrolling, 0, RL_RED);
+                DrawTexture(sea, screenWidth + seaScrolling, 0, RL_RED);
             }
             
             switch (currentScreen)
@@ -292,24 +292,24 @@ int main()
                 case TITLE:
                 {
                     // Draw title
-                    DrawTexture(title, screenWidth/2 - title.width/2, screenHeight/2 - title.height/2 - 80, WHITE);
+                    DrawTexture(title, screenWidth/2 - title.width/2, screenHeight/2 - title.height/2 - 80, RL_WHITE);
                     
                     // Draw blinking text
-                    if ((framesCounter/30) % 2) DrawText("PRESS ENTER", 480, 480, 40, BLACK);
+                    if ((framesCounter/30) % 2) DrawText("PRESS ENTER", 480, 480, 40, RL_BLACK);
                 
                 } break;
                 case GAMEPLAY:
                 {
                     // Draw water lines
-                    for (int i = 0; i < 5; i++) DrawRectangle(0, i*120 + 120, screenWidth, 110, Fade(SKYBLUE, 0.1f));
+                    for (int i = 0; i < 5; i++) DrawRectangle(0, i*120 + 120, screenWidth, 110, Fade(RL_SKYBLUE, 0.1f));
                     
                     // Draw player
-                    if (!gameraMode) DrawTexture(turtle, playerBounds.x - 14, playerBounds.y - 14, WHITE);
-                    else DrawTexture(gamera, playerBounds.x - 64, playerBounds.y - 64, WHITE);
+                    if (!gameraMode) DrawTexture(turtle, playerBounds.x - 14, playerBounds.y - 14, RL_WHITE);
+                    else DrawTexture(gamera, playerBounds.x - 64, playerBounds.y - 64, RL_WHITE);
                     
                     // Draw player bounding box
-                    //if (!gameraMode) DrawRectangleRec(playerBounds, Fade(GREEN, 0.4f));
-                    //else DrawRectangleRec(playerBounds, Fade(ORANGE, 0.4f));
+                    //if (!gameraMode) DrawRectangleRec(playerBounds, Fade(RL_GREEN, 0.4f));
+                    //else DrawRectangleRec(playerBounds, Fade(RL_ORANGE, 0.4f));
                     
                     // Draw enemies
                     for (int i = 0; i < MAX_ENEMIES; i++)
@@ -320,10 +320,10 @@ int main()
                             /*
                             switch(enemyType[i])
                             {
-                                case 0: DrawTexture(shark, enemyBounds[i].x - 14, enemyBounds[i].y - 14, WHITE); break;
-                                case 1: DrawTexture(orca, enemyBounds[i].x - 14, enemyBounds[i].y - 14, WHITE); break;
-                                case 2: DrawTexture(swhale, enemyBounds[i].x - 14, enemyBounds[i].y - 14, WHITE); break;
-                                case 3: DrawTexture(fish, enemyBounds[i].x - 14, enemyBounds[i].y - 14, WHITE); break;
+                                case 0: DrawTexture(shark, enemyBounds[i].x - 14, enemyBounds[i].y - 14, RL_WHITE); break;
+                                case 1: DrawTexture(orca, enemyBounds[i].x - 14, enemyBounds[i].y - 14, RL_WHITE); break;
+                                case 2: DrawTexture(swhale, enemyBounds[i].x - 14, enemyBounds[i].y - 14, RL_WHITE); break;
+                                case 3: DrawTexture(fish, enemyBounds[i].x - 14, enemyBounds[i].y - 14, RL_WHITE); break;
                                 default: break;
                             }
                             */
@@ -331,10 +331,10 @@ int main()
                             // Draw enemies bounding boxes
                             switch(enemyType[i])
                             {
-                                case 0: DrawRectangleRec(enemyBounds[i], RED); break;
-                                case 1: DrawRectangleRec(enemyBounds[i], RED); break;
-                                case 2: DrawRectangleRec(enemyBounds[i], RED); break;
-                                case 3: DrawRectangleRec(enemyBounds[i], GREEN); break;
+                                case 0: DrawRectangleRec(enemyBounds[i], RL_RED); break;
+                                case 1: DrawRectangleRec(enemyBounds[i], RL_RED); break;
+                                case 2: DrawRectangleRec(enemyBounds[i], RL_RED); break;
+                                case 3: DrawRectangleRec(enemyBounds[i], RL_GREEN); break;
                                 default: break;
                             }
                         }
@@ -343,25 +343,25 @@ int main()
                     // Draw gameplay interface
                     
                     // Draw food bar
-                    DrawRectangle(20, 20, 400, 40, Fade(GRAY, 0.4f));
-                    DrawRectangle(20, 20, foodBar, 40, ORANGE);
-                    DrawRectangleLines(20, 20, 400, 40, BLACK);
+                    DrawRectangle(20, 20, 400, 40, Fade(RL_GRAY, 0.4f));
+                    DrawRectangle(20, 20, foodBar, 40, RL_ORANGE);
+                    DrawRectangleLines(20, 20, 400, 40, RL_BLACK);
                     
                     if (gameraMode)
                     {
-                        DrawText("GAMERA MODE", 60, 22, 40, GRAY);
+                        DrawText("GAMERA MODE", 60, 22, 40, RL_GRAY);
                     }
             
                 } break;
                 case ENDING:
                 {
                     // Draw a transparent black rectangle that covers all screen
-                    DrawRectangle(0, 0, screenWidth, screenHeight, Fade(BLACK, 0.4f));
+                    DrawRectangle(0, 0, screenWidth, screenHeight, Fade(RL_BLACK, 0.4f));
                 
-                    DrawText("GAME OVER", 300, 200, 100, MAROON);
+                    DrawText("GAME OVER", 300, 200, 100, RL_MAROON);
                     
                     // Draw blinking text
-                    if ((framesCounter/30) % 2) DrawText("PRESS ENTER to REPLAY", 400, 420, 30, LIGHTGRAY);
+                    if ((framesCounter/30) % 2) DrawText("PRESS ENTER to REPLAY", 400, 420, 30, RL_LIGHTGRAY);
                     
                 } break;
                 default: break;

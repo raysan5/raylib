@@ -71,11 +71,11 @@ int main()
         //----------------------------------------------------------------------------------
         BeginDrawing();
 
-            ClearBackground(RAYWHITE);
+            ClearBackground(RL_RAYWHITE);
 
             BeginMode3D(camera);
 
-                DrawModel(model, Vector3Zero(), 1.0f, WHITE);
+                DrawModel(model, Vector3Zero(), 1.0f, RL_WHITE);
                 
                 DrawGrid(10, 1.0f);
 

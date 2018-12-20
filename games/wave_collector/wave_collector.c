@@ -235,7 +235,7 @@ static void UpdateTransition(void)
 // Draw transition effect (full-screen rectangle)
 static void DrawTransition(void)
 {
-    DrawRectangle(0, 0, GetScreenWidth(), GetScreenHeight(), Fade(RAYWHITE, transAlpha));
+    DrawRectangle(0, 0, GetScreenWidth(), GetScreenHeight(), Fade(RL_RAYWHITE, transAlpha));
 }
 
 // Update and draw game frame
@@ -289,7 +289,7 @@ static void UpdateDrawFrame(void)
     //----------------------------------------------------------------------------------
     BeginDrawing();
     
-        ClearBackground(RAYWHITE);
+        ClearBackground(RL_RAYWHITE);
         
         switch(currentScreen) 
         {

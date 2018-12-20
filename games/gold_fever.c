@@ -239,30 +239,30 @@ void DrawGame(void)
 {
     BeginDrawing();
     
-        ClearBackground(RAYWHITE);
+        ClearBackground(RL_RAYWHITE);
     
         if (!gameOver)
         {
             if (follow)
             {
-                DrawRectangle(0, 0, screenWidth, screenHeight, RED);
-                DrawRectangle(10, 10, screenWidth - 20, screenHeight - 20, RAYWHITE);
+                DrawRectangle(0, 0, screenWidth, screenHeight, RL_RED);
+                DrawRectangle(10, 10, screenWidth - 20, screenHeight - 20, RL_RAYWHITE);
             }
             
-            DrawRectangleLines(home.rec.x, home.rec.y, home.rec.width, home.rec.height, BLUE);
+            DrawRectangleLines(home.rec.x, home.rec.y, home.rec.width, home.rec.height, RL_BLUE);
 
-            DrawCircleLines(enemy.position.x, enemy.position.y, enemy.radiusBounds, RED);
-            DrawCircleV(enemy.position, enemy.radius, MAROON);
+            DrawCircleLines(enemy.position.x, enemy.position.y, enemy.radiusBounds, RL_RED);
+            DrawCircleV(enemy.position, enemy.radius, RL_MAROON);
             
-            DrawCircleV(player.position, player.radius, GRAY);
-            if (points.active) DrawCircleV(points.position, points.radius, GOLD);
+            DrawCircleV(player.position, player.radius, RL_GRAY);
+            if (points.active) DrawCircleV(points.position, points.radius, RL_GOLD);
 
-            DrawText(FormatText("SCORE: %04i", score), 20, 15, 20, GRAY);
-            DrawText(FormatText("HI-SCORE: %04i", hiScore), 300, 15, 20, GRAY);
+            DrawText(FormatText("SCORE: %04i", score), 20, 15, 20, RL_GRAY);
+            DrawText(FormatText("HI-SCORE: %04i", hiScore), 300, 15, 20, RL_GRAY);
 
-            if (pause) DrawText("GAME PAUSED", screenWidth/2 - MeasureText("GAME PAUSED", 40)/2, screenHeight/2 - 40, 40, GRAY);
+            if (pause) DrawText("GAME PAUSED", screenWidth/2 - MeasureText("GAME PAUSED", 40)/2, screenHeight/2 - 40, 40, RL_GRAY);
         }
-        else DrawText("PRESS [ENTER] TO PLAY AGAIN", GetScreenWidth()/2 - MeasureText("PRESS [ENTER] TO PLAY AGAIN", 20)/2, GetScreenHeight()/2 - 50, 20, GRAY);
+        else DrawText("PRESS [ENTER] TO PLAY AGAIN", GetScreenWidth()/2 - MeasureText("PRESS [ENTER] TO PLAY AGAIN", 20)/2, GetScreenHeight()/2 - 50, 20, RL_GRAY);
 
     EndDrawing();
 }

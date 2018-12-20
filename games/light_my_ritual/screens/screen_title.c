@@ -80,12 +80,12 @@ void DrawTitleScreen(void)
 {
     DrawRectangle(0, 0, GetScreenWidth(), GetScreenHeight(), (Color){ 26, 26, 26, 255 });
     
-    DrawTexture(background, GetScreenWidth()/2 - background.width/2, 0, WHITE);
-    DrawTexture(title, GetScreenWidth()/2 - title.width/2, 30, Fade(WHITE, titleAlpha));
+    DrawTexture(background, GetScreenWidth()/2 - background.width/2, 0, RL_WHITE);
+    DrawTexture(title, GetScreenWidth()/2 - title.width/2, 30, Fade(RL_WHITE, titleAlpha));
     
-    DrawText("(c) Developed by Ramon Santamaria (@raysan5)", 20, GetScreenHeight() - 40, 20, LIGHTGRAY); 
+    DrawText("(c) Developed by Ramon Santamaria (@raysan5)", 20, GetScreenHeight() - 40, 20, RL_LIGHTGRAY); 
     
-    if ((framesCounter > 180) && ((framesCounter/40)%2)) DrawTextEx(font, "PRESS ENTER to START LIGHTING", (Vector2){ 230, 450 }, font.baseSize, -2, WHITE);
+    if ((framesCounter > 180) && ((framesCounter/40)%2)) DrawTextEx(font, "PRESS ENTER to START LIGHTING", (Vector2){ 230, 450 }, font.baseSize, -2, RL_WHITE);
 }
 
 // Title Screen Unload logic

@@ -121,17 +121,17 @@ void UpdateLevel04Screen(void)
 void DrawLevel04Screen(void)
 {
     // Draw Level04 screen here!
-    //DrawRectangle(0, 0, GetScreenWidth(), GetScreenHeight(), GRAY);
-    DrawCircleV(circlesCenter, outerCircleRadius, GRAY);
-    DrawCircleV(circlesCenter, innerCircleRadius, RAYWHITE);
+    //DrawRectangle(0, 0, GetScreenWidth(), GetScreenHeight(), RL_GRAY);
+    DrawCircleV(circlesCenter, outerCircleRadius, RL_GRAY);
+    DrawCircleV(circlesCenter, innerCircleRadius, RL_RAYWHITE);
 
     if (levelFinished)
     {
-        DrawRectangleBordersRec((Rectangle){0, 0, GetScreenWidth(), GetScreenHeight()}, 0, 0, 60, Fade(LIGHTGRAY, 0.6f));
-        DrawText("LEVEL 04", GetScreenWidth()/2 - MeasureText("LEVEL 04", 30)/2, 20, 30, GRAY);
-        DrawText(FormatText("DONE! (Seconds: %03i)", levelTimeSec), GetScreenWidth()/2 - MeasureText("DONE! (Seconds: 000)", 30)/2, GetScreenHeight() - 40, 30, GRAY);
+        DrawRectangleBordersRec((Rectangle){0, 0, GetScreenWidth(), GetScreenHeight()}, 0, 0, 60, Fade(RL_LIGHTGRAY, 0.6f));
+        DrawText("LEVEL 04", GetScreenWidth()/2 - MeasureText("LEVEL 04", 30)/2, 20, 30, RL_GRAY);
+        DrawText(FormatText("DONE! (Seconds: %03i)", levelTimeSec), GetScreenWidth()/2 - MeasureText("DONE! (Seconds: 000)", 30)/2, GetScreenHeight() - 40, 30, RL_GRAY);
     }
-    else DrawText("LEVEL 04", GetScreenWidth()/2 - MeasureText("LEVEL 04", 30)/2, 20, 30, LIGHTGRAY);
+    else DrawText("LEVEL 04", GetScreenWidth()/2 - MeasureText("LEVEL 04", 30)/2, 20, 30, RL_LIGHTGRAY);
 }
 
 // Level04 Screen Unload logic

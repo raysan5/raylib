@@ -80,7 +80,7 @@ int main()
         //----------------------------------------------------------------------------------
         BeginDrawing();
 
-            ClearBackground(BLACK);
+            ClearBackground(RL_BLACK);
 
             DrawFPS(screenWidth - 90, screenHeight - 30);
 
@@ -100,19 +100,19 @@ int main()
                     int jj = (((j + 1) < vertexCount) ? (j + 1) : 0);   // Get next vertex or first to close the shape
                     Vector2 vertexB = GetPhysicsShapeVertex(body, jj);
 
-                    DrawLineV(vertexA, vertexB, GREEN);     // Draw a line between two vertex positions
+                    DrawLineV(vertexA, vertexB, RL_GREEN);     // Draw a line between two vertex positions
                 }
             }
 
-            DrawText("Restitution amount", (screenWidth - MeasureText("Restitution amount", 30))/2, 75, 30, WHITE);
-            DrawText("0", circleA->position.x - MeasureText("0", 20)/2, circleA->position.y - 7, 20, WHITE);
-            DrawText("0.5", circleB->position.x - MeasureText("0.5", 20)/2, circleB->position.y - 7, 20, WHITE);
-            DrawText("1", circleC->position.x - MeasureText("1", 20)/2, circleC->position.y - 7, 20, WHITE);
+            DrawText("Restitution amount", (screenWidth - MeasureText("Restitution amount", 30))/2, 75, 30, RL_WHITE);
+            DrawText("0", circleA->position.x - MeasureText("0", 20)/2, circleA->position.y - 7, 20, RL_WHITE);
+            DrawText("0.5", circleB->position.x - MeasureText("0.5", 20)/2, circleB->position.y - 7, 20, RL_WHITE);
+            DrawText("1", circleC->position.x - MeasureText("1", 20)/2, circleC->position.y - 7, 20, RL_WHITE);
 
-            DrawText("Press 'R' to reset example", 10, 10, 10, WHITE);
+            DrawText("Press 'R' to reset example", 10, 10, 10, RL_WHITE);
 
-            DrawText("Physac", logoX, logoY, 30, WHITE);
-            DrawText("Powered by", logoX + 50, logoY - 7, 10, WHITE);
+            DrawText("Physac", logoX, logoY, 30, RL_WHITE);
+            DrawText("Powered by", logoX + 50, logoY - 7, 10, RL_WHITE);
 
         EndDrawing();
         //----------------------------------------------------------------------------------

@@ -86,7 +86,7 @@ void UpdateLogoScreen(void)
 // Logo Screen Draw logic
 void DrawLogoScreen(void)
 {
-    DrawTexture(logoCW, GetScreenWidth()/2 - logoCW.width/2, GetScreenHeight()/2 - logoCW.height/2, Fade(WHITE, fadeValue));
+    DrawTexture(logoCW, GetScreenWidth()/2 - logoCW.width/2, GetScreenHeight()/2 - logoCW.height/2, Fade(RL_WHITE, fadeValue));
 }
 
 // Logo Screen Unload logic

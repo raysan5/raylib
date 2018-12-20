@@ -192,35 +192,35 @@ void InitTitleScreen(void)
         snowParticle.particle[j].position = (Vector2){ 0, 0 };
         snowParticle.particle[j].size = (float)GetRandomValue(3, 9)/10;
         snowParticle.particle[j].rotation = GetRandomValue(0, 360);
-        snowParticle.particle[j].color = WHITE;
+        snowParticle.particle[j].color = RL_WHITE;
         snowParticle.particle[j].alpha = 1.0f;
 
         backSnowParticle.particle[j].active = false;
         backSnowParticle.particle[j].position = (Vector2){ 0, 0 };
         backSnowParticle.particle[j].size = (float)GetRandomValue(2, 8)/10;
         backSnowParticle.particle[j].rotation = GetRandomValue(0, 360);
-        backSnowParticle.particle[j].color = WHITE;
+        backSnowParticle.particle[j].color = RL_WHITE;
         backSnowParticle.particle[j].alpha = 0.7f;
 
         planetreeParticle.particle[j].active = false;
         planetreeParticle.particle[j].position = (Vector2){ 0, 0 };
         planetreeParticle.particle[j].size = (float)GetRandomValue(3, 9)/10;
         planetreeParticle.particle[j].rotation = GetRandomValue(0, 360);
-        planetreeParticle.particle[j].color = WHITE;
+        planetreeParticle.particle[j].color = RL_WHITE;
         planetreeParticle.particle[j].alpha = 1.0f;
 
         backPlanetreeParticle.particle[j].active = false;
         backPlanetreeParticle.particle[j].position = (Vector2){ 0, 0 };
         backPlanetreeParticle.particle[j].size = (float)GetRandomValue(2, 8)/10;
         backPlanetreeParticle.particle[j].rotation = GetRandomValue(0, 360);
-        backPlanetreeParticle.particle[j].color = WHITE;
+        backPlanetreeParticle.particle[j].color = RL_WHITE;
         backPlanetreeParticle.particle[j].alpha = 0.7f;
 
         dandelionParticle.particle[j].active = false;
         dandelionParticle.particle[j].position = (Vector2){ 0, 0 };
         dandelionParticle.particle[j].size = (float)GetRandomValue(3, 9)/10;
         dandelionParticle.particle[j].rotation = 0;
-        dandelionParticle.particle[j].color = WHITE;
+        dandelionParticle.particle[j].color = RL_WHITE;
         dandelionParticle.particle[j].alpha = 1;
         dandelionParticle.particle[j].rotPhy = GetRandomValue(0 , 180);
 
@@ -228,7 +228,7 @@ void InitTitleScreen(void)
         dandelionBackParticle.particle[j].position = (Vector2){ 0, 0 };
         dandelionBackParticle.particle[j].size = (float)GetRandomValue(2, 8)/10;
         dandelionBackParticle.particle[j].rotation = 0;
-        dandelionBackParticle.particle[j].color = WHITE;
+        dandelionBackParticle.particle[j].color = RL_WHITE;
         dandelionBackParticle.particle[j].alpha = 0.7f;
         dandelionBackParticle.particle[j].rotPhy = GetRandomValue(0 , 180);
 
@@ -236,28 +236,28 @@ void InitTitleScreen(void)
         flowerParticle.particle[j].position = (Vector2){ 0, 0 };
         flowerParticle.particle[j].size = (float)GetRandomValue(3, 9)/10;
         flowerParticle.particle[j].rotation = GetRandomValue(0, 360);
-        flowerParticle.particle[j].color = WHITE;
+        flowerParticle.particle[j].color = RL_WHITE;
         flowerParticle.particle[j].alpha = 1.0f;
 
         backFlowerParticle.particle[j].active = false;
         backFlowerParticle.particle[j].position = (Vector2){ 0, 0 };
         backFlowerParticle.particle[j].size = (float)GetRandomValue(2, 8)/10;
         backFlowerParticle.particle[j].rotation = GetRandomValue(0, 360);
-        backFlowerParticle.particle[j].color = WHITE;
+        backFlowerParticle.particle[j].color = RL_WHITE;
         backFlowerParticle.particle[j].alpha = 0.7f;
 
         rainParticle.particle[j].active = false;
         rainParticle.particle[j].position = (Vector2){ 0, 0 };
         rainParticle.particle[j].size = (float)GetRandomValue(3, 9)/10;
         rainParticle.particle[j].rotation = -20;
-        rainParticle.particle[j].color = WHITE;
+        rainParticle.particle[j].color = RL_WHITE;
         rainParticle.particle[j].alpha = 1.0f;
 
         backRainParticle.particle[j].active = false;
         backRainParticle.particle[j].position = (Vector2){ 0, 0 };
         backRainParticle.particle[j].size = (float)GetRandomValue(2, 8)/10;
         backRainParticle.particle[j].rotation = -20;
-        backRainParticle.particle[j].color = WHITE;
+        backRainParticle.particle[j].color = RL_WHITE;
         backRainParticle.particle[j].alpha = 0.7f;
     }
 
@@ -267,7 +267,7 @@ void InitTitleScreen(void)
         rainStormParticle.particle[j].position = (Vector2){ 0, 0 };
         rainStormParticle.particle[j].size = (float)GetRandomValue(3, 9)/10;
         rainStormParticle.particle[j].rotation = -40;
-        rainStormParticle.particle[j].color = WHITE;
+        rainStormParticle.particle[j].color = RL_WHITE;
         rainStormParticle.particle[j].alpha = 1.0f;
     }
 
@@ -277,7 +277,7 @@ void InitTitleScreen(void)
         snowStormParticle.particle[j].position = (Vector2){ 0, 0 };
         snowStormParticle.particle[j].size = (float)GetRandomValue(4, 8)/10;
         snowStormParticle.particle[j].rotation = 40;
-        snowStormParticle.particle[j].color = WHITE;
+        snowStormParticle.particle[j].color = RL_WHITE;
         snowStormParticle.particle[j].alpha = 1.0f;
     }
 
@@ -894,7 +894,7 @@ void DrawTitleScreen(void)
        if (backRayparticle.particle[i].active) DrawTexturePro(atlas02, gameplay_back_fx_lightraymid,
                                                (Rectangle){ backRayparticle.particle[i].position.x, backRayparticle.particle[i].position.y, gameplay_back_fx_lightraymid.width*backRayparticle.particle[i].size, gameplay_back_fx_lightraymid.height*backRayparticle.particle[i].size },
                                                (Vector2){ gameplay_back_fx_lightraymid.width*backRayparticle.particle[i].size/2, gameplay_back_fx_lightraymid.height*backRayparticle.particle[i].size/2 }, backRayparticle.particle[i].rotation,
-                                               Fade(GOLD, backRayparticle.particle[i].alpha));
+                                               Fade(RL_GOLD, backRayparticle.particle[i].alpha));
     }
 
     DrawParallaxFront();
@@ -902,12 +902,12 @@ void DrawTitleScreen(void)
     for (int i = 0; i < 5; i++)
     {
         DrawTexturePro(atlas02, gameplay_props_tree, (Rectangle){bamboo[i].x, bamboo[i].y, 43, 720}, (Vector2){0, 0}, 0, color03);
-        //DrawRectangleRec(bamboo[i], Fade(LIME, 0.5));
+        //DrawRectangleRec(bamboo[i], Fade(RL_LIME, 0.5));
     }
 
     EndShaderMode();
     
-    DrawTextureRec(atlas01, koalaMenu, (Vector2){player.x - player.width, player.y - 40}, WHITE);
+    DrawTextureRec(atlas01, koalaMenu, (Vector2){player.x - player.width, player.y - 40}, RL_WHITE);
 
     BeginShaderMode(colorBlend);
 
@@ -915,8 +915,8 @@ void DrawTitleScreen(void)
 
     EndShaderMode();
     
-    DrawTexturePro(atlas01, (Rectangle){title_titletext.x, title_titletext.y, title_titletext.width, 230},  (Rectangle){GetScreenWidth()*0.49F - title_titletext.width/2, currentValue1, title_titletext.width, 235}, (Vector2){0, 0}, 0, WHITE);
-    DrawTexturePro(atlas01, (Rectangle){title_titletext.x, title_titletext.y + 232, title_titletext.width, 116}, (Rectangle){GetScreenWidth()*0.49F - title_titletext.width/2, currentValue2, title_titletext.width, 116}, (Vector2){0, 0}, 0, WHITE);
+    DrawTexturePro(atlas01, (Rectangle){title_titletext.x, title_titletext.y, title_titletext.width, 230},  (Rectangle){GetScreenWidth()*0.49F - title_titletext.width/2, currentValue1, title_titletext.width, 235}, (Vector2){0, 0}, 0, RL_WHITE);
+    DrawTexturePro(atlas01, (Rectangle){title_titletext.x, title_titletext.y + 232, title_titletext.width, 116}, (Rectangle){GetScreenWidth()*0.49F - title_titletext.width/2, currentValue2, title_titletext.width, 116}, (Vector2){0, 0}, 0, RL_WHITE);
 
     if ((framesCounter/60)%2 && framesCounter >= duration) DrawTextEx(font, pressToPlay, (Vector2){ GetScreenWidth()/2 - fontSize.x/2, GetScreenHeight()/2 + fontSize.y*2 }, font.baseSize, 2, (Color){247, 239, 209, 255});
 
@@ -974,15 +974,15 @@ void DrawTitleScreen(void)
     }
     
     /*
-    DrawTexturePro(atlas01, title_twitter, (Rectangle){ GetScreenWidth()*0.85, GetScreenHeight()*0.1, title_twitter.width, title_twitter.height}, (Vector2){0,0}, 0, WHITE);
-    DrawTexturePro(atlas01, title_facebook, (Rectangle){ GetScreenWidth()*0.85, GetScreenHeight()*0.3, title_facebook.width, title_facebook.height}, (Vector2){0,0}, 0, WHITE);
-    DrawTexturePro(atlas01, title_googleplay, (Rectangle){ GetScreenWidth()*0.85, GetScreenHeight()*0.5, title_googleplay.width, title_googleplay.height}, (Vector2){0,0}, 0, WHITE);
+    DrawTexturePro(atlas01, title_twitter, (Rectangle){ GetScreenWidth()*0.85, GetScreenHeight()*0.1, title_twitter.width, title_twitter.height}, (Vector2){0,0}, 0, RL_WHITE);
+    DrawTexturePro(atlas01, title_facebook, (Rectangle){ GetScreenWidth()*0.85, GetScreenHeight()*0.3, title_facebook.width, title_facebook.height}, (Vector2){0,0}, 0, RL_WHITE);
+    DrawTexturePro(atlas01, title_googleplay, (Rectangle){ GetScreenWidth()*0.85, GetScreenHeight()*0.5, title_googleplay.width, title_googleplay.height}, (Vector2){0,0}, 0, RL_WHITE);
     
-    if (soundActive)DrawTexturePro(atlas01, title_music_on, (Rectangle){soundButton.x, soundButton.y, title_music_on.width, title_music_on.height}, (Vector2){0,0}, 0, WHITE);
-    else DrawTexturePro(atlas01, title_music_off, (Rectangle){soundButton.x, soundButton.y, title_music_off.width, title_music_off.height}, (Vector2){0,0}, 0, WHITE);
+    if (soundActive)DrawTexturePro(atlas01, title_music_on, (Rectangle){soundButton.x, soundButton.y, title_music_on.width, title_music_on.height}, (Vector2){0,0}, 0, RL_WHITE);
+    else DrawTexturePro(atlas01, title_music_off, (Rectangle){soundButton.x, soundButton.y, title_music_off.width, title_music_off.height}, (Vector2){0,0}, 0, RL_WHITE);
     
-    if (musicActive)DrawTexturePro(atlas01, title_speaker_on, (Rectangle){speakerButton.x, speakerButton.y, title_speaker_on.width, title_speaker_on.height}, (Vector2){0,0}, 0, WHITE);
-    else DrawTexturePro(atlas01, title_speaker_off, (Rectangle){speakerButton.x, speakerButton.y, title_speaker_off.width, title_speaker_off.height}, (Vector2){0,0}, 0, WHITE);
+    if (musicActive)DrawTexturePro(atlas01, title_speaker_on, (Rectangle){speakerButton.x, speakerButton.y, title_speaker_on.width, title_speaker_on.height}, (Vector2){0,0}, 0, RL_WHITE);
+    else DrawTexturePro(atlas01, title_speaker_off, (Rectangle){speakerButton.x, speakerButton.y, title_speaker_off.width, title_speaker_off.height}, (Vector2){0,0}, 0, RL_WHITE);
     */
 }
 

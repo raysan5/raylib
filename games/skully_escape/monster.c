@@ -1,6 +1,6 @@
 /***********************************************************************************
 *
-*   KING GAME JAM - GRAY TEAM
+*   KING GAME JAM - RL_GRAY TEAM
 *
 *   <Game title>
 *   <Game description>
@@ -44,8 +44,8 @@ void DrawMonster(Monster monster, int scroll)
 {
     Vector2 scrollPos = { monster.position.x - scroll, monster.position.y };
     
-    if (monster.selected) DrawTextureRec(monster.texture, monster.frameRec, scrollPos, RED);
-    else DrawTextureRec(monster.texture, monster.frameRec, scrollPos, WHITE);
+    if (monster.selected) DrawTextureRec(monster.texture, monster.frameRec, scrollPos, RL_RED);
+    else DrawTextureRec(monster.texture, monster.frameRec, scrollPos, RL_WHITE);
 }
 
 void UnloadMonster(Monster monster)

@@ -73,25 +73,25 @@ int main()
         //----------------------------------------------------------------------------------
         BeginDrawing();
 
-            ClearBackground(RAYWHITE);
+            ClearBackground(RL_RAYWHITE);
 
             // Draw the n-patches
-            DrawTextureNPatch(nPatchTexture, ninePatchInfo2, dstRec2, origin, 0.0f, WHITE);
-            DrawTextureNPatch(nPatchTexture, ninePatchInfo1, dstRec1, origin, 0.0f, WHITE);
-            DrawTextureNPatch(nPatchTexture, h3PatchInfo, dstRecH, origin, 0.0f, WHITE);
-            DrawTextureNPatch(nPatchTexture, v3PatchInfo, dstRecV, origin, 0.0f, WHITE);
+            DrawTextureNPatch(nPatchTexture, ninePatchInfo2, dstRec2, origin, 0.0f, RL_WHITE);
+            DrawTextureNPatch(nPatchTexture, ninePatchInfo1, dstRec1, origin, 0.0f, RL_WHITE);
+            DrawTextureNPatch(nPatchTexture, h3PatchInfo, dstRecH, origin, 0.0f, RL_WHITE);
+            DrawTextureNPatch(nPatchTexture, v3PatchInfo, dstRecV, origin, 0.0f, RL_WHITE);
             
             // Draw the source texture
-            DrawRectangleLines( 5, 88, 74, 266, BLUE);
-            DrawTexture(nPatchTexture, 10, 93, WHITE);
-            DrawText("TEXTURE", 15, 360, 10, DARKGRAY);
+            DrawRectangleLines( 5, 88, 74, 266, RL_BLUE);
+            DrawTexture(nPatchTexture, 10, 93, RL_WHITE);
+            DrawText("TEXTURE", 15, 360, 10, RL_DARKGRAY);
 
-            DrawRectangle( 10, 10, 250, 73, Fade(SKYBLUE, 0.5));
-            DrawRectangleLines( 10, 10, 250, 73, BLUE);
+            DrawRectangle( 10, 10, 250, 73, Fade(RL_SKYBLUE, 0.5));
+            DrawRectangleLines( 10, 10, 250, 73, RL_BLUE);
 
-            DrawText("9-Patch and 3-Patch example", 20, 20, 10, BLACK);
-            DrawText("  Move the mouse to stretch or", 40, 40, 10, DARKGRAY);
-            DrawText("  shrink the n-patches.", 40, 60, 10, DARKGRAY);
+            DrawText("9-Patch and 3-Patch example", 20, 20, 10, RL_BLACK);
+            DrawText("  Move the mouse to stretch or", 40, 40, 10, RL_DARKGRAY);
+            DrawText("  shrink the n-patches.", 40, 60, 10, RL_DARKGRAY);
 
         EndDrawing();
         //----------------------------------------------------------------------------------

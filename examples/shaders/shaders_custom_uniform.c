@@ -88,33 +88,33 @@ int main()
         //----------------------------------------------------------------------------------
         BeginDrawing();
 
-            ClearBackground(RAYWHITE);
+            ClearBackground(RL_RAYWHITE);
             
             BeginTextureMode(target);       // Enable drawing to texture
             
-                ClearBackground(RAYWHITE);  // Clear texture background
+                ClearBackground(RL_RAYWHITE);  // Clear texture background
 
                 BeginMode3D(camera);        // Begin 3d mode drawing
 
-                    DrawModel(model, position, 0.5f, WHITE);   // Draw 3d model with texture
+                    DrawModel(model, position, 0.5f, RL_WHITE);   // Draw 3d model with texture
 
                     DrawGrid(10, 1.0f);     // Draw a grid
 
                 EndMode3D();                // End 3d mode drawing, returns to orthographic 2d mode
                 
-                DrawText("TEXT DRAWN IN RENDER TEXTURE", 200, 10, 30, RED);
+                DrawText("TEXT DRAWN IN RENDER TEXTURE", 200, 10, 30, RL_RED);
             
             EndTextureMode();               // End drawing to texture (now we have a texture available for next passes)
             
             BeginShaderMode(shader);
             
                 // NOTE: Render texture must be y-flipped due to default OpenGL coordinates (left-bottom)
-                DrawTextureRec(target.texture, (Rectangle){ 0, 0, target.texture.width, -target.texture.height }, (Vector2){ 0, 0 }, WHITE);
+                DrawTextureRec(target.texture, (Rectangle){ 0, 0, target.texture.width, -target.texture.height }, (Vector2){ 0, 0 }, RL_WHITE);
             
             EndShaderMode();
             
             // Draw some 2d text over drawn texture
-            DrawText("(c) Barracks 3D model by Alberto Cano", screenWidth - 220, screenHeight - 20, 10, GRAY);
+            DrawText("(c) Barracks 3D model by Alberto Cano", screenWidth - 220, screenHeight - 20, 10, RL_GRAY);
             
             DrawFPS(10, 10);
 

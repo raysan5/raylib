@@ -62,31 +62,31 @@ int main()
         //----------------------------------------------------------------------------------
         BeginDrawing();
 
-            ClearBackground(RAYWHITE);
+            ClearBackground(RL_RAYWHITE);
 
             BeginMode3D(camera);
 
                 if (collision)
                 {
-                    DrawCube(cubePosition, cubeSize.x, cubeSize.y, cubeSize.z, RED);
-                    DrawCubeWires(cubePosition, cubeSize.x, cubeSize.y, cubeSize.z, MAROON);
+                    DrawCube(cubePosition, cubeSize.x, cubeSize.y, cubeSize.z, RL_RED);
+                    DrawCubeWires(cubePosition, cubeSize.x, cubeSize.y, cubeSize.z, RL_MAROON);
 
-                    DrawCubeWires(cubePosition, cubeSize.x + 0.2f, cubeSize.y + 0.2f, cubeSize.z + 0.2f, GREEN);
+                    DrawCubeWires(cubePosition, cubeSize.x + 0.2f, cubeSize.y + 0.2f, cubeSize.z + 0.2f, RL_GREEN);
                 }
                 else
                 {
-                    DrawCube(cubePosition, cubeSize.x, cubeSize.y, cubeSize.z, GRAY);
-                    DrawCubeWires(cubePosition, cubeSize.x, cubeSize.y, cubeSize.z, DARKGRAY);
+                    DrawCube(cubePosition, cubeSize.x, cubeSize.y, cubeSize.z, RL_GRAY);
+                    DrawCubeWires(cubePosition, cubeSize.x, cubeSize.y, cubeSize.z, RL_DARKGRAY);
                 }
 
-                DrawRay(ray, MAROON);
+                DrawRay(ray, RL_MAROON);
                 DrawGrid(10, 1.0f);
 
             EndMode3D();
 
-            DrawText("Try selecting the box with mouse!", 240, 10, 20, DARKGRAY);
+            DrawText("Try selecting the box with mouse!", 240, 10, 20, RL_DARKGRAY);
 
-            if(collision) DrawText("BOX SELECTED", (screenWidth - MeasureText("BOX SELECTED", 30)) / 2, screenHeight * 0.1f, 30, GREEN);
+            if(collision) DrawText("BOX SELECTED", (screenWidth - MeasureText("BOX SELECTED", 30)) / 2, screenHeight * 0.1f, 30, RL_GREEN);
 
             DrawFPS(10, 10);
 

@@ -83,26 +83,26 @@ int main()
         //----------------------------------------------------------------------------------
         BeginDrawing();
 
-            ClearBackground(RAYWHITE);
+            ClearBackground(RL_RAYWHITE);
             
-            DrawRectangleRec(touchArea, GRAY);
-            DrawRectangle(225, 15, screenWidth - 240, screenHeight - 30, RAYWHITE);
+            DrawRectangleRec(touchArea, RL_GRAY);
+            DrawRectangle(225, 15, screenWidth - 240, screenHeight - 30, RL_RAYWHITE);
             
-            DrawText("GESTURES TEST AREA", screenWidth - 270, screenHeight - 40, 20, Fade(GRAY, 0.5f));
+            DrawText("GESTURES TEST AREA", screenWidth - 270, screenHeight - 40, 20, Fade(RL_GRAY, 0.5f));
             
             for (int i = 0; i < gesturesCount; i++)
             {
-                if (i%2 == 0) DrawRectangle(10, 30 + 20*i, 200, 20, Fade(LIGHTGRAY, 0.5f));
-                else DrawRectangle(10, 30 + 20*i, 200, 20, Fade(LIGHTGRAY, 0.3f));
+                if (i%2 == 0) DrawRectangle(10, 30 + 20*i, 200, 20, Fade(RL_LIGHTGRAY, 0.5f));
+                else DrawRectangle(10, 30 + 20*i, 200, 20, Fade(RL_LIGHTGRAY, 0.3f));
                 
-                if (i < gesturesCount - 1) DrawText(gestureStrings[i], 35, 36 + 20*i, 10, DARKGRAY);
-                else DrawText(gestureStrings[i], 35, 36 + 20*i, 10, MAROON);
+                if (i < gesturesCount - 1) DrawText(gestureStrings[i], 35, 36 + 20*i, 10, RL_DARKGRAY);
+                else DrawText(gestureStrings[i], 35, 36 + 20*i, 10, RL_MAROON);
             }
             
-            DrawRectangleLines(10, 29, 200, screenHeight - 50, GRAY);
-            DrawText("DETECTED GESTURES", 50, 15, 10, GRAY);
+            DrawRectangleLines(10, 29, 200, screenHeight - 50, RL_GRAY);
+            DrawText("DETECTED GESTURES", 50, 15, 10, RL_GRAY);
             
-            if (currentGesture != GESTURE_NONE) DrawCircleV(touchPosition, 30, MAROON);
+            if (currentGesture != GESTURE_NONE) DrawCircleV(touchPosition, 30, RL_MAROON);
             
         EndDrawing();
         //----------------------------------------------------------------------------------

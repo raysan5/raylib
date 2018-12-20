@@ -392,7 +392,7 @@ void DrawGame(void)
 {
     BeginDrawing();
 
-        ClearBackground(RAYWHITE);
+        ClearBackground(RL_RAYWHITE);
 
         if (!gameOver)
         {
@@ -401,9 +401,9 @@ void DrawGame(void)
             {
                 if (missile[i].active)
                 {
-                    DrawLine(missile[i].origin.x, missile[i].origin.y, missile[i].position.x, missile[i].position.y, RED);
+                    DrawLine(missile[i].origin.x, missile[i].origin.y, missile[i].position.x, missile[i].position.y, RL_RED);
 
-                    if (framesCounter % 16 < 8) DrawCircle(missile[i].position.x, missile[i].position.y, 3, YELLOW);
+                    if (framesCounter % 16 < 8) DrawCircle(missile[i].position.x, missile[i].position.y, 3, RL_YELLOW);
                 }
             }
             
@@ -412,9 +412,9 @@ void DrawGame(void)
             {
                 if (interceptor[i].active)
                 {
-                    DrawLine(interceptor[i].origin.x, interceptor[i].origin.y, interceptor[i].position.x, interceptor[i].position.y, GREEN);
+                    DrawLine(interceptor[i].origin.x, interceptor[i].origin.y, interceptor[i].position.x, interceptor[i].position.y, RL_GREEN);
 
-                    if (framesCounter % 16 < 8) DrawCircle(interceptor[i].position.x, interceptor[i].position.y, 3, BLUE);
+                    if (framesCounter % 16 < 8) DrawCircle(interceptor[i].position.x, interceptor[i].position.y, 3, RL_BLUE);
                 }
             }
             
@@ -427,20 +427,20 @@ void DrawGame(void)
             // Draw buildings and launchers
             for (int i = 0; i < LAUNCHERS_AMOUNT; i++)
             {
-                if (launcher[i].active) DrawRectangle(launcher[i].position.x - LAUNCHER_SIZE/2, launcher[i].position.y - LAUNCHER_SIZE/2, LAUNCHER_SIZE, LAUNCHER_SIZE, GRAY);
+                if (launcher[i].active) DrawRectangle(launcher[i].position.x - LAUNCHER_SIZE/2, launcher[i].position.y - LAUNCHER_SIZE/2, LAUNCHER_SIZE, LAUNCHER_SIZE, RL_GRAY);
             }
 
             for (int i = 0; i < BUILDINGS_AMOUNT; i++)
             {
-                if (building[i].active) DrawRectangle(building[i].position.x - BUILDING_SIZE/2, building[i].position.y - BUILDING_SIZE/2, BUILDING_SIZE, BUILDING_SIZE, LIGHTGRAY);
+                if (building[i].active) DrawRectangle(building[i].position.x - BUILDING_SIZE/2, building[i].position.y - BUILDING_SIZE/2, BUILDING_SIZE, BUILDING_SIZE, RL_LIGHTGRAY);
             }
 
             // Draw score
-            DrawText(FormatText("SCORE %4i", score), 20, 20, 40, LIGHTGRAY);
+            DrawText(FormatText("SCORE %4i", score), 20, 20, 40, RL_LIGHTGRAY);
             
-            if (pause) DrawText("GAME PAUSED", screenWidth/2 - MeasureText("GAME PAUSED", 40)/2, screenHeight/2 - 40, 40, GRAY);
+            if (pause) DrawText("GAME PAUSED", screenWidth/2 - MeasureText("GAME PAUSED", 40)/2, screenHeight/2 - 40, 40, RL_GRAY);
         }
-        else DrawText("PRESS [ENTER] TO PLAY AGAIN", GetScreenWidth()/2 - MeasureText("PRESS [ENTER] TO PLAY AGAIN", 20)/2, GetScreenHeight()/2 - 50, 20, GRAY);
+        else DrawText("PRESS [ENTER] TO PLAY AGAIN", GetScreenWidth()/2 - MeasureText("PRESS [ENTER] TO PLAY AGAIN", 20)/2, GetScreenHeight()/2 - 50, 20, RL_GRAY);
 
     EndDrawing();
 }

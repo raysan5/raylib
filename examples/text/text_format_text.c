@@ -39,15 +39,15 @@ int main()
         //----------------------------------------------------------------------------------
         BeginDrawing();
 
-            ClearBackground(RAYWHITE);
+            ClearBackground(RL_RAYWHITE);
 
-            DrawText(FormatText("Score: %08i", score), 200, 80, 20, RED);
+            DrawText(FormatText("Score: %08i", score), 200, 80, 20, RL_RED);
 
-            DrawText(FormatText("HiScore: %08i", hiscore), 200, 120, 20, GREEN);
+            DrawText(FormatText("HiScore: %08i", hiscore), 200, 120, 20, RL_GREEN);
 
-            DrawText(FormatText("Lives: %02i", lives), 200, 160, 40, BLUE);
+            DrawText(FormatText("Lives: %02i", lives), 200, 160, 40, RL_BLUE);
 
-            DrawText(FormatText("Elapsed Time: %02.02f ms", GetFrameTime()*1000), 200, 220, 20, BLACK);
+            DrawText(FormatText("Elapsed Time: %02.02f ms", GetFrameTime()*1000), 200, 220, 20, RL_BLACK);
 
         EndDrawing();
         //----------------------------------------------------------------------------------

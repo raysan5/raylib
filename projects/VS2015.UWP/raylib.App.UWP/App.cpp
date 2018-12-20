@@ -451,17 +451,17 @@ void App::Run()
 			// Draw
 			BeginDrawing();
 
-				ClearBackground(RAYWHITE);
+				ClearBackground(RL_RAYWHITE);
 				
 				posX += gamepadAxisState[GAMEPAD_PLAYER1][GAMEPAD_XBOX_AXIS_LEFT_X] * 5;
 				posY += gamepadAxisState[GAMEPAD_PLAYER1][GAMEPAD_XBOX_AXIS_LEFT_Y] * -5;
-				DrawRectangle(posX, posY, 400, 100, RED);
+				DrawRectangle(posX, posY, 400, 100, RL_RED);
 
-				DrawLine(0, 0, GetScreenWidth(), GetScreenHeight(), BLUE);
+				DrawLine(0, 0, GetScreenWidth(), GetScreenHeight(), RL_BLUE);
 
-				DrawCircle(mousePosition.x, mousePosition.y, 40, BLUE);
+				DrawCircle(mousePosition.x, mousePosition.y, 40, RL_BLUE);
 
-				if (UWPIsKeyDown(KEY_S)) DrawCircle(100, 100, 100, BLUE);
+				if (UWPIsKeyDown(KEY_S)) DrawCircle(100, 100, 100, RL_BLUE);
 
 				if (UWPIsKeyPressed(KEY_A))
 				{
@@ -475,15 +475,15 @@ void App::Run()
 					UWPDisableCursor();
 				}
 
-				if (currentKeyState[KEY_LEFT_ALT]) DrawRectangle(250, 250, 20, 20, BLACK);
-				if (currentKeyState[KEY_BACKSPACE]) DrawRectangle(280, 250, 20, 20, BLACK);
-				if (currentMouseState[MOUSE_LEFT_BUTTON]) DrawRectangle(280, 250, 20, 20, BLACK);
+				if (currentKeyState[KEY_LEFT_ALT]) DrawRectangle(250, 250, 20, 20, RL_BLACK);
+				if (currentKeyState[KEY_BACKSPACE]) DrawRectangle(280, 250, 20, 20, RL_BLACK);
+				if (currentMouseState[MOUSE_LEFT_BUTTON]) DrawRectangle(280, 250, 20, 20, RL_BLACK);
 
 				static int pos = 0;
 				pos -= currentMouseWheelY;
 
-				DrawRectangle(280, pos + 50, 20, 20, BLACK);
-				DrawRectangle(250, 280 + (time++ % 60), 10, 10, PURPLE);
+				DrawRectangle(280, pos + 50, 20, 20, RL_BLACK);
+				DrawRectangle(250, 280 + (time++ % 60), 10, 10, RL_PURPLE);
 
 		    EndDrawing();
 

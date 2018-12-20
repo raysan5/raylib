@@ -79,10 +79,10 @@ int main(void)
     recButton.x = screenWidth - recButton.width;
     recButton.y = screenHeight - recButton.height - 50;
     fadeButton = 0.8f;
-    colorButton = RED;
+    colorButton = RL_RED;
     textPositionButton = (Vector2){recButton.x + recButton.width/2, recButton.y + recButton.height/2};
     fontSizeButton = 30;
-    textColorButton = WHITE;
+    textColorButton = RL_WHITE;
 
     currentMission = 0;
     totalMissions = 4;
@@ -234,7 +234,7 @@ static void UpdateTransition(void)
 // Draw transition effect (full-screen rectangle)
 static void DrawTransition(void)
 {
-    DrawRectangle(0, 0, GetScreenWidth(), GetScreenHeight(), Fade(BLACK, transAlpha));
+    DrawRectangle(0, 0, GetScreenWidth(), GetScreenHeight(), Fade(RL_BLACK, transAlpha));
 }
 
 // Update and draw game frame
@@ -310,7 +310,7 @@ static void UpdateDrawFrame(void)
     //----------------------------------------------------------------------------------
     BeginDrawing();
         
-        ClearBackground(RAYWHITE);
+        ClearBackground(RL_RAYWHITE);
             
         switch(currentScreen) 
         {
@@ -448,7 +448,7 @@ bool IsButtonPressed()
 void DrawButton(const char *text)
 {
     //DrawRectangleRec(recButton, Fade(colorButton, fadeButton));
-    DrawTexturePro(texButton, (Rectangle){0,0,texButton.width, texButton.height}, recButton, (Vector2){0,0},0, Fade(WHITE, fadeButton));
+    DrawTexturePro(texButton, (Rectangle){0,0,texButton.width, texButton.height}, recButton, (Vector2){0,0},0, Fade(RL_WHITE, fadeButton));
     Vector2 measure = MeasureTextEx(fontMission, text, fontSizeButton, 0);
     Vector2 textPos = {textPositionButton.x - measure.x/2 + 10, textPositionButton.y - measure.y/2 - 10};
     DrawTextEx(fontMission, text, textPos , fontSizeButton, 0, textColorButton);

@@ -70,7 +70,7 @@ int main()
         //----------------------------------------------------------------------------------
         BeginDrawing();
 
-            ClearBackground(RAYWHITE);
+            ClearBackground(RL_RAYWHITE);
 
             for (int i = 0; i < bunniesCount; i++)
             {
@@ -78,12 +78,12 @@ int main()
                 // batching buffer starts being filled again; before launching the draw call,
                 // updated vertex data from internal buffer is send to GPU... it seems it generates
                 // a stall and consequently a frame drop, limiting number of bunnies drawn at 60 fps
-                DrawTexture(texBunny, bunnies[i].position.x, bunnies[i].position.y, RAYWHITE);
+                DrawTexture(texBunny, bunnies[i].position.x, bunnies[i].position.y, RL_RAYWHITE);
             }
 
-            DrawRectangle(0, 0, screenWidth, 40, LIGHTGRAY);
-            DrawText("raylib bunnymark", 10, 10, 20, DARKGRAY);
-            DrawText(FormatText("bunnies: %i", bunniesCount), 400, 10, 20, RED);
+            DrawRectangle(0, 0, screenWidth, 40, RL_LIGHTGRAY);
+            DrawText("raylib bunnymark", 10, 10, 20, RL_DARKGRAY);
+            DrawText(FormatText("bunnies: %i", bunniesCount), 400, 10, 20, RL_RED);
             DrawFPS(260, 10);
 
         EndDrawing();

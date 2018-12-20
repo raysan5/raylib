@@ -72,26 +72,26 @@ void UpdateEndingScreen(void)
 // Ending Screen Draw logic
 void DrawEndingScreen(void)
 {
-    DrawTexture(texBackground, 0, 0, WHITE);
+    DrawTexture(texBackground, 0, 0, RL_WHITE);
 
     if (endingStatus == 1)          // Win
     {
-        DrawTexture(texWin, GetScreenWidth()/2 - texWin.width/2, 90, WHITE);
-        DrawTextEx(font, "congrats, you got the wave!", (Vector2){ 200, 335 }, font.baseSize, 0, WHITE);
+        DrawTexture(texWin, GetScreenWidth()/2 - texWin.width/2, 90, RL_WHITE);
+        DrawTextEx(font, "congrats, you got the wave!", (Vector2){ 200, 335 }, font.baseSize, 0, RL_WHITE);
     }
     else if (endingStatus == 2)     // Lose
     {
-        DrawTexture(texLose, GetScreenWidth()/2 - texWin.width/2, 90, WHITE);
-        DrawTextEx(font, "it seems you lose the wave...", (Vector2){ 205, 335 }, font.baseSize, 0, WHITE);
+        DrawTexture(texLose, GetScreenWidth()/2 - texWin.width/2, 90, RL_WHITE);
+        DrawTextEx(font, "it seems you lose the wave...", (Vector2){ 205, 335 }, font.baseSize, 0, RL_WHITE);
     }
     
-    DrawRectangle(0, GetScreenHeight() - 70, 560, 40, Fade(RAYWHITE, 0.8f));
-    DrawText("(c) Developed by Ramon Santamaria (@raysan5)", 36, GetScreenHeight() - 60, 20, DARKBLUE);
+    DrawRectangle(0, GetScreenHeight() - 70, 560, 40, Fade(RL_RAYWHITE, 0.8f));
+    DrawText("(c) Developed by Ramon Santamaria (@raysan5)", 36, GetScreenHeight() - 60, 20, RL_DARKBLUE);
     
-    DrawText("powered by", GetScreenWidth() - 162, GetScreenHeight() - 190, 20, DARKGRAY);
-    DrawTexture(texLogo, GetScreenWidth() - 128 - 34, GetScreenHeight() - 128 - 36, WHITE);
+    DrawText("powered by", GetScreenWidth() - 162, GetScreenHeight() - 190, 20, RL_DARKGRAY);
+    DrawTexture(texLogo, GetScreenWidth() - 128 - 34, GetScreenHeight() - 128 - 36, RL_WHITE);
     
-    if ((framesCounter > 80) && ((framesCounter/40)%2)) DrawTextEx(font, "mouse click to return", (Vector2){ 300, 464 }, font.baseSize, 0, SKYBLUE);
+    if ((framesCounter > 80) && ((framesCounter/40)%2)) DrawTextEx(font, "mouse click to return", (Vector2){ 300, 464 }, font.baseSize, 0, RL_SKYBLUE);
 }
 
 // Ending Screen Unload logic

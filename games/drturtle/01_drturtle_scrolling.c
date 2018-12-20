@@ -106,29 +106,29 @@ int main()
         //----------------------------------------------------------------------------------
         BeginDrawing();
         
-            ClearBackground(RAYWHITE);
+            ClearBackground(RL_RAYWHITE);
             
             // Draw background (common to all screens)
-            DrawTexture(sky, 0, 0, WHITE);
+            DrawTexture(sky, 0, 0, RL_WHITE);
             
-            DrawTexture(mountains, backScrolling, 0, WHITE);
-            DrawTexture(mountains, screenWidth + backScrolling, 0, WHITE);
+            DrawTexture(mountains, backScrolling, 0, RL_WHITE);
+            DrawTexture(mountains, screenWidth + backScrolling, 0, RL_WHITE);
             
-            DrawTexture(sea, seaScrolling, 0, BLUE);
-            DrawTexture(sea, screenWidth + seaScrolling, 0, BLUE);
+            DrawTexture(sea, seaScrolling, 0, RL_BLUE);
+            DrawTexture(sea, screenWidth + seaScrolling, 0, RL_BLUE);
             
             switch (currentScreen)
             {
                 case TITLE:
                 {
                     // Draw title screen
-                    DrawText("PRESS ENTER", 450, 420, 40, BLACK);
+                    DrawText("PRESS ENTER", 450, 420, 40, RL_BLACK);
                 
                 } break;
                 case GAMEPLAY:
                 {
                     // Draw gameplay screen
-                    DrawText("GAMEPLAY SCREEN", 20, 20, 40, MAROON);
+                    DrawText("GAMEPLAY SCREEN", 20, 20, 40, RL_MAROON);
                 
                 } break;
                 case ENDING:
@@ -136,9 +136,9 @@ int main()
                     // Draw ending screen
                     
                     // Draw a transparent black rectangle that covers all screen
-                    DrawRectangle(0, 0, screenWidth, screenHeight, Fade(BLACK, 0.4f));
+                    DrawRectangle(0, 0, screenWidth, screenHeight, Fade(RL_BLACK, 0.4f));
                     
-                    DrawText("ENDING SCREEN", 20, 20, 40, DARKBLUE);
+                    DrawText("ENDING SCREEN", 20, 20, 40, RL_DARKBLUE);
                     
                 } break;
                 default: break;

@@ -22,10 +22,10 @@ int main()
 
     InitWindow(screenWidth, screenHeight, "raylib [textures] example - procedural images generation");
 
-    Image verticalGradient = GenImageGradientV(screenWidth, screenHeight, RED, BLUE);
-    Image horizontalGradient = GenImageGradientH(screenWidth, screenHeight, RED, BLUE);
-    Image radialGradient = GenImageGradientRadial(screenWidth, screenHeight, 0.0f, WHITE, BLACK);
-    Image checked = GenImageChecked(screenWidth, screenHeight, 32, 32, RED, BLUE);
+    Image verticalGradient = GenImageGradientV(screenWidth, screenHeight, RL_RED, RL_BLUE);
+    Image horizontalGradient = GenImageGradientH(screenWidth, screenHeight, RL_RED, RL_BLUE);
+    Image radialGradient = GenImageGradientRadial(screenWidth, screenHeight, 0.0f, RL_WHITE, RL_BLACK);
+    Image checked = GenImageChecked(screenWidth, screenHeight, 32, 32, RL_RED, RL_BLUE);
     Image whiteNoise = GenImageWhiteNoise(screenWidth, screenHeight, 0.5f);
     Image perlinNoise = GenImagePerlinNoise(screenWidth, screenHeight, 50, 50, 4.0f);
     Image cellular = GenImageCellular(screenWidth, screenHeight, 32);
@@ -68,23 +68,23 @@ int main()
         //----------------------------------------------------------------------------------
         BeginDrawing();
         
-            ClearBackground(RAYWHITE);
+            ClearBackground(RL_RAYWHITE);
             
-            DrawTexture(textures[currentTexture], 0, 0, WHITE);
+            DrawTexture(textures[currentTexture], 0, 0, RL_WHITE);
             
-            DrawRectangle(30, 400, 325, 30, Fade(SKYBLUE, 0.5f));
-            DrawRectangleLines(30, 400, 325, 30, Fade(WHITE, 0.5f));
-            DrawText("MOUSE LEFT BUTTON to CYCLE PROCEDURAL TEXTURES", 40, 410, 10, WHITE);
+            DrawRectangle(30, 400, 325, 30, Fade(RL_SKYBLUE, 0.5f));
+            DrawRectangleLines(30, 400, 325, 30, Fade(RL_WHITE, 0.5f));
+            DrawText("MOUSE LEFT BUTTON to CYCLE PROCEDURAL TEXTURES", 40, 410, 10, RL_WHITE);
             
             switch(currentTexture)
             {
-                case 0: DrawText("VERTICAL GRADIENT", 560, 10, 20, RAYWHITE); break;
-                case 1: DrawText("HORIZONTAL GRADIENT", 540, 10, 20, RAYWHITE); break;
-                case 2: DrawText("RADIAL GRADIENT", 580, 10, 20, LIGHTGRAY); break;
-                case 3: DrawText("CHECKED", 680, 10, 20, RAYWHITE); break;
-                case 4: DrawText("WHITE NOISE", 640, 10, 20, RED); break;
-                case 5: DrawText("PERLIN NOISE", 630, 10, 20, RAYWHITE); break;
-                case 6: DrawText("CELLULAR", 670, 10, 20, RAYWHITE); break;
+                case 0: DrawText("VERTICAL GRADIENT", 560, 10, 20, RL_RAYWHITE); break;
+                case 1: DrawText("HORIZONTAL GRADIENT", 540, 10, 20, RL_RAYWHITE); break;
+                case 2: DrawText("RADIAL GRADIENT", 580, 10, 20, RL_LIGHTGRAY); break;
+                case 3: DrawText("CHECKED", 680, 10, 20, RL_RAYWHITE); break;
+                case 4: DrawText("RL_WHITE NOISE", 640, 10, 20, RL_RED); break;
+                case 5: DrawText("PERLIN NOISE", 630, 10, 20, RL_RAYWHITE); break;
+                case 6: DrawText("CELLULAR", 670, 10, 20, RL_RAYWHITE); break;
                 default: break;
             }
             

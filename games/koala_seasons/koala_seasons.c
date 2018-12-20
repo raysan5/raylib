@@ -175,7 +175,7 @@ void UpdateTransition(void)
 
 void DrawTransition(void)
 {
-    DrawRectangle(0, 0, GetScreenWidth(), GetScreenHeight(), Fade(BLACK, transAlpha));
+    DrawRectangle(0, 0, GetScreenWidth(), GetScreenHeight(), Fade(RL_BLACK, transAlpha));
 }
 
 // Update and Draw one frame
@@ -249,7 +249,7 @@ void UpdateDrawFrame(void)
     //----------------------------------------------------------------------------------
     BeginDrawing();
 
-        ClearBackground(WHITE);
+        ClearBackground(RL_WHITE);
         
         switch (currentScreen)
         {
@@ -264,8 +264,8 @@ void UpdateDrawFrame(void)
         
         DrawFPS(20, GetScreenHeight() - 30);
         
-        DrawRectangle(GetScreenWidth() - 200, GetScreenHeight() - 50, 200, 40, Fade(WHITE, 0.6f));
-        DrawText("ALPHA VERSION", GetScreenWidth() - 180, GetScreenHeight() - 40, 20, DARKGRAY);
+        DrawRectangle(GetScreenWidth() - 200, GetScreenHeight() - 50, 200, 40, Fade(RL_WHITE, 0.6f));
+        DrawText("ALPHA VERSION", GetScreenWidth() - 180, GetScreenHeight() - 40, 20, RL_DARKGRAY);
 
     EndDrawing();
     //----------------------------------------------------------------------------------

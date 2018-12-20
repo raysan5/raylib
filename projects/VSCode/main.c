@@ -23,13 +23,13 @@ int main() {
 		cam.position.z = cos(GetTime()) * 10.f;
 
 		BeginDrawing();
-			ClearBackground(RAYWHITE);
+			ClearBackground(RL_RAYWHITE);
 			BeginMode3D(cam);
-				DrawCube(cubePos, 2.f, 2.f, 2.f, RED);
-				DrawCubeWires(cubePos, 2.f, 2.f, 2.f, MAROON);
+				DrawCube(cubePos, 2.f, 2.f, 2.f, RL_RED);
+				DrawCubeWires(cubePos, 2.f, 2.f, 2.f, RL_MAROON);
 				DrawGrid(10, 1.f);
 			EndMode3D();
-			DrawText("This is a raylib example", 10, 40, 20, DARKGRAY);
+			DrawText("This is a raylib example", 10, 40, 20, RL_DARKGRAY);
 			DrawFPS(10, 10);
 		EndDrawing();
 	}

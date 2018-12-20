@@ -74,13 +74,13 @@ int main()
         //----------------------------------------------------------------------------------
         BeginDrawing();
 
-            ClearBackground(RAYWHITE);
+            ClearBackground(RL_RAYWHITE);
 
             BeginMode3D(camera);
             
                 rlPushMatrix();
                     rlScalef(sunRadius, sunRadius, sunRadius);          // Scale Sun
-                    DrawSphereBasic(GOLD);                              // Draw the Sun
+                    DrawSphereBasic(RL_GOLD);                              // Draw the Sun
                 rlPopMatrix();
                 
                 rlPushMatrix();
@@ -92,7 +92,7 @@ int main()
                         rlRotatef(earthRotation, 0.25, 1.0, 0.0);       // Rotation for Earth itself
                         rlScalef(earthRadius, earthRadius, earthRadius);// Scale Earth
                         
-                        DrawSphereBasic(BLUE);                          // Draw the Earth
+                        DrawSphereBasic(RL_BLUE);                          // Draw the Earth
                     rlPopMatrix();
                     
                     rlRotatef(moonOrbitRotation, 0.0f, 1.0f, 0.0f);     // Rotation for Moon orbit around Earth
@@ -101,16 +101,16 @@ int main()
                     rlRotatef(moonRotation, 0.0f, 1.0f, 0.0f);          // Rotation for Moon itself
                     rlScalef(moonRadius, moonRadius, moonRadius);       // Scale Moon
                     
-                    DrawSphereBasic(LIGHTGRAY);                         // Draw the Moon
+                    DrawSphereBasic(RL_LIGHTGRAY);                         // Draw the Moon
                 rlPopMatrix();
                 
                 // Some reference elements (not affected by previous matrix transformations)
-                DrawCircle3D((Vector3){ 0.0f, 0.0f, 0.0f }, earthOrbitRadius, (Vector3){ 1, 0, 0 }, 90.0f, Fade(RED, 0.5f));
+                DrawCircle3D((Vector3){ 0.0f, 0.0f, 0.0f }, earthOrbitRadius, (Vector3){ 1, 0, 0 }, 90.0f, Fade(RL_RED, 0.5f));
                 DrawGrid(20, 1.0f);
 
             EndMode3D();
 
-            DrawText("EARTH ORBITING AROUND THE SUN!", 400, 10, 20, MAROON);
+            DrawText("EARTH ORBITING AROUND THE SUN!", 400, 10, 20, RL_MAROON);
             DrawFPS(10, 10);
 
         EndDrawing();

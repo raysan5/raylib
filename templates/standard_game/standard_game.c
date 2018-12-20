@@ -113,7 +113,7 @@ int main(void)
         //----------------------------------------------------------------------------------
         BeginDrawing();
         
-            ClearBackground(RAYWHITE);
+            ClearBackground(RL_RAYWHITE);
             
             switch(currentScreen) 
             {

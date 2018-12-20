@@ -53,9 +53,9 @@
 
 #include <GLFW/glfw3.h>         // Windows/Context and inputs management
 
-#define RED        (Color){ 230, 41, 55, 255 }     // Red
-#define RAYWHITE   (Color){ 245, 245, 245, 255 }   // My own White (raylib logo)
-#define DARKGRAY   (Color){ 80, 80, 80, 255 }      // Dark Gray
+#define RL_RED        (Color){ 230, 41, 55, 255 }     // Red
+#define RL_RAYWHITE   (Color){ 245, 245, 245, 255 }   // My own White (raylib logo)
+#define RL_DARKGRAY   (Color){ 80, 80, 80, 255 }      // Dark Gray
 
 //----------------------------------------------------------------------------------
 // Module specific Functions Declaration
@@ -161,8 +161,8 @@ int main(void)
             SetMatrixModelview(matView);    // Set internal modelview matrix (default shader)
             SetMatrixProjection(matProj);   // Set internal projection matrix (default shader)
 
-            DrawCube(cubePosition, 2.0f, 2.0f, 2.0f, RED);
-            DrawCubeWires(cubePosition, 2.0f, 2.0f, 2.0f, RAYWHITE);
+            DrawCube(cubePosition, 2.0f, 2.0f, 2.0f, RL_RED);
+            DrawCubeWires(cubePosition, 2.0f, 2.0f, 2.0f, RL_RAYWHITE);
             DrawGrid(10, 1.0f);
 
             // NOTE: Internal buffers drawing (3D data)
@@ -187,7 +187,7 @@ int main(void)
             rlMatrixMode(RL_MODELVIEW);                             // Enable internal modelview matrix
             rlLoadIdentity();                                       // Reset internal modelview matrix
 #endif
-            DrawRectangleV((Vector2){ 10.0f, 10.0f }, (Vector2){ 780.0f, 20.0f }, DARKGRAY);
+            DrawRectangleV((Vector2){ 10.0f, 10.0f }, (Vector2){ 780.0f, 20.0f }, RL_DARKGRAY);
 
             // NOTE: Internal buffers drawing (2D data)
             rlglDraw();

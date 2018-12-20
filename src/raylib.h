@@ -91,49 +91,49 @@
 #define RL_DEG2RAD (RL_PI/180.0f)
 #define RL_RAD2DEG (180.0f/RL_PI)
 
-#define RL_MAX_TOUCH_POINTS        10      // Maximum number of touch points supported
+#define RL_MAX_TOUCH_POINTS     10      // Maximum number of touch points supported
 
 // Shader and material limits
-#define MAX_SHADER_LOCATIONS    32      // Maximum number of predefined locations stored in shader struct
-#define MAX_MATERIAL_MAPS       12      // Maximum number of texture maps stored in shader struct
+#define RL_MAX_SHADER_LOCATIONS 32      // Maximum number of predefined locations stored in shader struct
+#define RL_MAX_MATERIAL_MAPS    12      // Maximum number of texture maps stored in shader struct
 
 // NOTE: MSC C++ compiler does not support compound literals (C99 feature)
 // Plain structures in C++ (without constructors) can be initialized from { } initializers.
 #if defined(__cplusplus)
-    #define CLITERAL
+    #define RL_CLITERAL
 #else
-    #define CLITERAL    (Color)
+    #define RL_CLITERAL (Color)
 #endif
 
 // Some Basic Colors
-// NOTE: Custom raylib color palette for amazing visuals on WHITE background
-#define LIGHTGRAY  CLITERAL{ 200, 200, 200, 255 }   // Light Gray
-#define GRAY       CLITERAL{ 130, 130, 130, 255 }   // Gray
-#define DARKGRAY   CLITERAL{ 80, 80, 80, 255 }      // Dark Gray
-#define YELLOW     CLITERAL{ 253, 249, 0, 255 }     // Yellow
-#define GOLD       CLITERAL{ 255, 203, 0, 255 }     // Gold
-#define ORANGE     CLITERAL{ 255, 161, 0, 255 }     // Orange
-#define PINK       CLITERAL{ 255, 109, 194, 255 }   // Pink
-#define RED        CLITERAL{ 230, 41, 55, 255 }     // Red
-#define MAROON     CLITERAL{ 190, 33, 55, 255 }     // Maroon
-#define GREEN      CLITERAL{ 0, 228, 48, 255 }      // Green
-#define LIME       CLITERAL{ 0, 158, 47, 255 }      // Lime
-#define DARKGREEN  CLITERAL{ 0, 117, 44, 255 }      // Dark Green
-#define SKYBLUE    CLITERAL{ 102, 191, 255, 255 }   // Sky Blue
-#define BLUE       CLITERAL{ 0, 121, 241, 255 }     // Blue
-#define DARKBLUE   CLITERAL{ 0, 82, 172, 255 }      // Dark Blue
-#define PURPLE     CLITERAL{ 200, 122, 255, 255 }   // Purple
-#define VIOLET     CLITERAL{ 135, 60, 190, 255 }    // Violet
-#define DARKPURPLE CLITERAL{ 112, 31, 126, 255 }    // Dark Purple
-#define BEIGE      CLITERAL{ 211, 176, 131, 255 }   // Beige
-#define BROWN      CLITERAL{ 127, 106, 79, 255 }    // Brown
-#define DARKBROWN  CLITERAL{ 76, 63, 47, 255 }      // Dark Brown
+// NOTE: Custom raylib color palette for amazing visuals on RL_WHITE background
+#define RL_LIGHTGRAY    RL_CLITERAL{ 200, 200, 200, 255 }   // Light Gray
+#define RL_GRAY         RL_CLITERAL{ 130, 130, 130, 255 }   // Gray
+#define RL_DARKGRAY     RL_CLITERAL{ 80, 80, 80, 255 }      // Dark Gray
+#define RL_YELLOW       RL_CLITERAL{ 253, 249, 0, 255 }     // Yellow
+#define RL_GOLD         RL_CLITERAL{ 255, 203, 0, 255 }     // Gold
+#define RL_ORANGE       RL_CLITERAL{ 255, 161, 0, 255 }     // Orange
+#define RL_PINK         RL_CLITERAL{ 255, 109, 194, 255 }   // Pink
+#define RL_RED          RL_CLITERAL{ 230, 41, 55, 255 }     // Red
+#define RL_MAROON       RL_CLITERAL{ 190, 33, 55, 255 }     // Maroon
+#define RL_GREEN        RL_CLITERAL{ 0, 228, 48, 255 }      // Green
+#define RL_LIME         RL_CLITERAL{ 0, 158, 47, 255 }      // Lime
+#define RL_DARKGREEN    RL_CLITERAL{ 0, 117, 44, 255 }      // Dark Green
+#define RL_SKYBLUE      RL_CLITERAL{ 102, 191, 255, 255 }   // Sky Blue
+#define RL_BLUE         RL_CLITERAL{ 0, 121, 241, 255 }     // Blue
+#define RL_DARKBLUE     RL_CLITERAL{ 0, 82, 172, 255 }      // Dark Blue
+#define RL_PURPLE       RL_CLITERAL{ 200, 122, 255, 255 }   // Purple
+#define RL_VIOLET       RL_CLITERAL{ 135, 60, 190, 255 }    // Violet
+#define RL_DARKPURPLE   RL_CLITERAL{ 112, 31, 126, 255 }    // Dark Purple
+#define RL_BEIGE        RL_CLITERAL{ 211, 176, 131, 255 }   // Beige
+#define RL_BROWN        RL_CLITERAL{ 127, 106, 79, 255 }    // Brown
+#define RL_DARKBROWN    RL_CLITERAL{ 76, 63, 47, 255 }      // Dark Brown
 
-#define WHITE      CLITERAL{ 255, 255, 255, 255 }   // White
-#define BLACK      CLITERAL{ 0, 0, 0, 255 }         // Black
-#define BLANK      CLITERAL{ 0, 0, 0, 0 }           // Blank (Transparent)
-#define MAGENTA    CLITERAL{ 255, 0, 255, 255 }     // Magenta
-#define RAYWHITE   CLITERAL{ 245, 245, 245, 255 }   // My own White (raylib logo)
+#define RL_WHITE        RL_CLITERAL{ 255, 255, 255, 255 }   // White
+#define RL_BLACK        RL_CLITERAL{ 0, 0, 0, 255 }         // Black
+#define RL_BLANK        RL_CLITERAL{ 0, 0, 0, 0 }           // Blank (Transparent)
+#define RL_MAGENTA      RL_CLITERAL{ 255, 0, 255, 255 }     // Magenta
+#define RL_RAYWHITE     RL_CLITERAL{ 245, 245, 245, 255 }   // My own White (raylib logo)
 
 //----------------------------------------------------------------------------------
 // Structures Definition
@@ -310,7 +310,7 @@ typedef struct Mesh {
 // Shader type (generic)
 typedef struct Shader {
     unsigned int id;                // Shader program id
-    int locs[MAX_SHADER_LOCATIONS]; // Shader locations array
+    int locs[RL_MAX_SHADER_LOCATIONS]; // Shader locations array
 } Shader;
 
 // Material texture map
@@ -323,7 +323,7 @@ typedef struct MaterialMap {
 // Material type (generic)
 typedef struct Material {
     Shader shader;          // Material shader
-    MaterialMap maps[MAX_MATERIAL_MAPS]; // Material maps
+    MaterialMap maps[RL_MAX_MATERIAL_MAPS]; // Material maps
     float *params;          // Material generic parameters (if required)
 } Material;
 

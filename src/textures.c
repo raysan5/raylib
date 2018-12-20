@@ -1418,8 +1418,8 @@ void ImageDither(Image *image, int rBpp, int gBpp, int bBpp, int aBpp)
         // NOTE: We will store the dithered data as unsigned short (16bpp)
         image->data = (unsigned short *)malloc(image->width*image->height*sizeof(unsigned short));
 
-        Color oldPixel = WHITE;
-        Color newPixel = WHITE;
+        Color oldPixel = RL_WHITE;
+        Color newPixel = RL_WHITE;
 
         int rError, gError, bError;
         unsigned short rPixel, gPixel, bPixel, aPixel;   // Used for 16bit pixel composition
@@ -1498,7 +1498,7 @@ Color *ImageExtractPalette(Image image, int maxPaletteSize, int *extractCount)
     Color *palette = (Color *)malloc(maxPaletteSize*sizeof(Color));
 
     int palCount = 0;
-    for (int i = 0; i < maxPaletteSize; i++) palette[i] = BLANK;   // Set all colors to BLANK
+    for (int i = 0; i < maxPaletteSize; i++) palette[i] = RL_BLANK;   // Set all colors to RL_BLANK
 
     for (int i = 0; i < image.width*image.height; i++)
     {
@@ -1681,7 +1681,7 @@ Image ImageTextEx(Font font, const char *text, float fontSize, float spacing, Co
     ImageColorTint(&imFont, tint);                  // Apply color tint to font
 
     // Create image to store text
-    Image imText = GenImageColor((int)imSize.x, (int)imSize.y, BLANK);
+    Image imText = GenImageColor((int)imSize.x, (int)imSize.y, RL_BLANK);
 
     for (int i = 0; i < length; i++)
     {
@@ -2182,8 +2182,8 @@ Image GenImageWhiteNoise(int width, int height, float factor)
 
     for (int i = 0; i < width*height; i++)
     {
-        if (GetRandomValue(0, 99) < (int)(factor*100.0f)) pixels[i] = WHITE;
-        else pixels[i] = BLACK;
+        if (GetRandomValue(0, 99) < (int)(factor*100.0f)) pixels[i] = RL_WHITE;
+        else pixels[i] = RL_BLACK;
     }
 
     Image image = LoadImageEx(pixels, width, height);

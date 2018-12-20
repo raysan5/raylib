@@ -88,7 +88,7 @@ int main()
         //----------------------------------------------------------------------------------
         BeginDrawing();
 
-            ClearBackground(BLACK);
+            ClearBackground(RL_BLACK);
 
             DrawFPS(screenWidth - 90, screenHeight - 30);
 
@@ -108,15 +108,15 @@ int main()
                     int jj = (((j + 1) < vertexCount) ? (j + 1) : 0);   // Get next vertex or first to close the shape
                     Vector2 vertexB = GetPhysicsShapeVertex(body, jj);
 
-                    DrawLineV(vertexA, vertexB, GREEN);     // Draw a line between two vertex positions
+                    DrawLineV(vertexA, vertexB, RL_GREEN);     // Draw a line between two vertex positions
                 }
             }
 
-            DrawText("Use 'ARROWS' to move player", 10, 10, 10, WHITE);
-            DrawText("Press 'R' to reset example", 10, 30, 10, WHITE);
+            DrawText("Use 'ARROWS' to move player", 10, 10, 10, RL_WHITE);
+            DrawText("Press 'R' to reset example", 10, 30, 10, RL_WHITE);
 
-            DrawText("Physac", logoX, logoY, 30, WHITE);
-            DrawText("Powered by", logoX + 50, logoY - 7, 10, WHITE);
+            DrawText("Physac", logoX, logoY, 30, RL_WHITE);
+            DrawText("Powered by", logoX + 50, logoY - 7, 10, RL_WHITE);
 
         EndDrawing();
         //----------------------------------------------------------------------------------

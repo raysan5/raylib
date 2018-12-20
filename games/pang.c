@@ -551,7 +551,7 @@ void DrawGame(void)
 {
     BeginDrawing();
 
-        ClearBackground(RAYWHITE);
+        ClearBackground(RL_RAYWHITE);
         
         if (!gameOver)
         {
@@ -559,33 +559,33 @@ void DrawGame(void)
             Vector2 v1 = { player.position.x + sinf(player.rotation*RL_DEG2RAD)*(shipHeight), player.position.y - cosf(player.rotation*RL_DEG2RAD)*(shipHeight) };
             Vector2 v2 = { player.position.x - cosf(player.rotation*RL_DEG2RAD)*(PLAYER_BASE_SIZE/2), player.position.y - sinf(player.rotation*RL_DEG2RAD)*(PLAYER_BASE_SIZE/2) };
             Vector2 v3 = { player.position.x + cosf(player.rotation*RL_DEG2RAD)*(PLAYER_BASE_SIZE/2), player.position.y + sinf(player.rotation*RL_DEG2RAD)*(PLAYER_BASE_SIZE/2) };
-            DrawTriangle(v1, v2, v3, MAROON);
+            DrawTriangle(v1, v2, v3, RL_MAROON);
 
             // Draw meteors (big)
             for (int i = 0;i < MAX_BIG_BALLS; i++)
             {
-                if (bigBalls[i].active) DrawCircleV(bigBalls[i].position, bigBalls[i].radius, DARKGRAY);
-                else DrawCircleV(bigBalls[i].position, bigBalls[i].radius, Fade(LIGHTGRAY, 0.3f));
+                if (bigBalls[i].active) DrawCircleV(bigBalls[i].position, bigBalls[i].radius, RL_DARKGRAY);
+                else DrawCircleV(bigBalls[i].position, bigBalls[i].radius, Fade(RL_LIGHTGRAY, 0.3f));
             }
 
             // Draw meteors (medium)
             for (int i = 0;i < MAX_BIG_BALLS*2; i++)
             {
-                if (mediumBalls[i].active) DrawCircleV(mediumBalls[i].position, mediumBalls[i].radius, GRAY);
-                else DrawCircleV(mediumBalls[i].position, mediumBalls[i].radius, Fade(LIGHTGRAY, 0.3f));
+                if (mediumBalls[i].active) DrawCircleV(mediumBalls[i].position, mediumBalls[i].radius, RL_GRAY);
+                else DrawCircleV(mediumBalls[i].position, mediumBalls[i].radius, Fade(RL_LIGHTGRAY, 0.3f));
             }
 
             // Draw meteors (small)
             for (int i = 0;i < MAX_BIG_BALLS*4; i++)
             {
-                if (smallBalls[i].active) DrawCircleV(smallBalls[i].position, smallBalls[i].radius, GRAY);
-                else DrawCircleV(smallBalls[i].position, smallBalls[i].radius, Fade(LIGHTGRAY, 0.3f));
+                if (smallBalls[i].active) DrawCircleV(smallBalls[i].position, smallBalls[i].radius, RL_GRAY);
+                else DrawCircleV(smallBalls[i].position, smallBalls[i].radius, Fade(RL_LIGHTGRAY, 0.3f));
             }
 
             // Draw shoot
             for (int i = 0; i < PLAYER_MAX_SHOOTS; i++)
             {
-                if (shoot[i].active) DrawLine(linePosition.x, linePosition.y, shoot[i].position.x, shoot[i].position.y, RED);
+                if (shoot[i].active) DrawLine(linePosition.x, linePosition.y, shoot[i].position.x, shoot[i].position.y, RL_RED);
             }
 
             // Draw score points
@@ -593,22 +593,22 @@ void DrawGame(void)
             {
                 if (points[z].alpha > 0.0f)
                 {
-                    DrawText(FormatText("+%02i", points[z].value), points[z].position.x, points[z].position.y, 20, Fade(BLUE, points[z].alpha));
+                    DrawText(FormatText("+%02i", points[z].value), points[z].position.x, points[z].position.y, 20, Fade(RL_BLUE, points[z].alpha));
                 }
             }
 
             // Draw score (UI)
-            DrawText(FormatText("SCORE: %i", score), 10, 10, 20, LIGHTGRAY);
+            DrawText(FormatText("SCORE: %i", score), 10, 10, 20, RL_LIGHTGRAY);
             
             if (victory) 
             {
-                DrawText("YOU WIN!", screenWidth/2 - MeasureText("YOU WIN!", 60)/2, 100, 60, LIGHTGRAY);
-                DrawText("PRESS [ENTER] TO PLAY AGAIN", GetScreenWidth()/2 - MeasureText("PRESS [ENTER] TO PLAY AGAIN", 20)/2, GetScreenHeight()/2 - 50, 20, LIGHTGRAY);
+                DrawText("YOU WIN!", screenWidth/2 - MeasureText("YOU WIN!", 60)/2, 100, 60, RL_LIGHTGRAY);
+                DrawText("PRESS [ENTER] TO PLAY AGAIN", GetScreenWidth()/2 - MeasureText("PRESS [ENTER] TO PLAY AGAIN", 20)/2, GetScreenHeight()/2 - 50, 20, RL_LIGHTGRAY);
             }
             
-            if (pause) DrawText("GAME PAUSED", screenWidth/2 - MeasureText("GAME PAUSED", 40)/2, screenHeight/2 - 40, 40, LIGHTGRAY);
+            if (pause) DrawText("GAME PAUSED", screenWidth/2 - MeasureText("GAME PAUSED", 40)/2, screenHeight/2 - 40, 40, RL_LIGHTGRAY);
         }
-        else DrawText("PRESS [ENTER] TO PLAY AGAIN", GetScreenWidth()/2 - MeasureText("PRESS [ENTER] TO PLAY AGAIN", 20)/2, GetScreenHeight()/2 - 50, 20, LIGHTGRAY);
+        else DrawText("PRESS [ENTER] TO PLAY AGAIN", GetScreenWidth()/2 - MeasureText("PRESS [ENTER] TO PLAY AGAIN", 20)/2, GetScreenHeight()/2 - 50, 20, RL_LIGHTGRAY);
 
     EndDrawing();
 }

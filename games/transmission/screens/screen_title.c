@@ -77,7 +77,7 @@ void InitTitleScreen(void)
     transmissionPosition = (Vector2){519, 221};
     missionPositon = (Vector2){580, 261};
     
-    titleColor = BLACK;
+    titleColor = RL_BLACK;
     speedText = 15;
     
     missionLenght = 0;
@@ -136,7 +136,7 @@ void UpdateTitleScreen(void)
 // Title Screen Draw logic
 void DrawTitleScreen(void)
 {
-    DrawTexture(texBackground, 0,0, WHITE);
+    DrawTexture(texBackground, 0,0, RL_WHITE);
     DrawTextEx(fontTitle, SubText(textTitle, 0, transmissionLenght), transmissionPosition, titleSize, 0, titleColor);
     DrawTextEx(fontTitle, SubText(textTitle, 12, missionLenght), missionPositon, titleSize, 0, titleColor);      
 

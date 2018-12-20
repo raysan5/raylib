@@ -87,11 +87,11 @@ void UpdateLogoScreen(void)
 // Logo Screen Draw logic
 void DrawLogoScreen(void)
 {
-    DrawRectangle(0, 0, GetScreenWidth(), GetScreenHeight(), RAYWHITE);
+    DrawRectangle(0, 0, GetScreenWidth(), GetScreenHeight(), RL_RAYWHITE);
 
-    DrawTexture(logo, GetScreenWidth()/2 - logo.width/2, 130, Fade(WHITE, logoAlpha));
+    DrawTexture(logo, GetScreenWidth()/2 - logo.width/2, 130, Fade(RL_WHITE, logoAlpha));
     
-    DrawText("GRAY TEAM", 340, 450, 100, Fade(DARKGRAY, logoAlpha));
+    DrawText("RL_GRAY TEAM", 340, 450, 100, Fade(RL_DARKGRAY, logoAlpha));
 }
 
 // Logo Screen Unload logic

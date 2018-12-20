@@ -124,7 +124,7 @@ void InitEndingScreen(void)
     // Generate newspaper with title and subtitle
     Image imNewspaper = LoadImage("resources/textures/ending_newspaper.png");
     fontNews = LoadFontEx("resources/fonts/Lora-Bold.ttf", 32, 250, 0);
-    ImageDrawTextEx(&imNewspaper, (Vector2){ 50, 220 }, fontNews, headline, fontNews.baseSize, 0, DARKGRAY);
+    ImageDrawTextEx(&imNewspaper, (Vector2){ 50, 220 }, fontNews, headline, fontNews.baseSize, 0, RL_DARKGRAY);
     
     texNewspaper = LoadTextureFromImage(imNewspaper);
     //UnloadFont(fontNews);
@@ -162,20 +162,20 @@ void UpdateEndingScreen(void)
 // Ending Screen Draw logic
 void DrawEndingScreen(void)
 {
-    DrawTexture(texBackground, 0, 0, WHITE);
+    DrawTexture(texBackground, 0, 0, RL_WHITE);
     
     DrawTexturePro(texNewspaper, (Rectangle){ 0, 0, texNewspaper.width, texNewspaper.height },
                    (Rectangle){ GetScreenWidth()/2, GetScreenHeight()/2, texNewspaper.width*scale, texNewspaper.height*scale }, 
-                   (Vector2){ (float)texNewspaper.width*scale/2, (float)texNewspaper.height*scale/2 }, rotation, WHITE);
+                   (Vector2){ (float)texNewspaper.width*scale/2, (float)texNewspaper.height*scale/2 }, rotation, RL_WHITE);
 
-    DrawTextureEx(texVignette, (Vector2){ 0, 0 }, 0.0f, 2.0f, WHITE);
+    DrawTextureEx(texVignette, (Vector2){ 0, 0 }, 0.0f, 2.0f, RL_WHITE);
 
     // Draw debug information
-    DrawTextEx(fontNews, headline, (Vector2){ 10, 10 }, fontNews.baseSize, 0, RAYWHITE);
+    DrawTextEx(fontNews, headline, (Vector2){ 10, 10 }, fontNews.baseSize, 0, RL_RAYWHITE);
     
     for (int i = 0; i < missions[currentMission].wordsCount; i++)
     {
-        DrawText(codingWords[messageWords[i].id], 10, 60 + 30*i, 20, (messageWords[i].id == missions[currentMission].sols[i]) ? GREEN : RED);
+        DrawText(codingWords[messageWords[i].id], 10, 60 + 30*i, 20, (messageWords[i].id == missions[currentMission].sols[i]) ? RL_GREEN : RL_RED);
     }
 
     if (state == 1) DrawButton("continuar");

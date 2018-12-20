@@ -69,12 +69,12 @@ void UpdateEndingScreen(void)
 // Ending Screen Draw logic
 void DrawEndingScreen(void)
 {
-    DrawRectangle(0, 0, GetScreenWidth(), GetScreenHeight(), DARKGRAY);
+    DrawRectangle(0, 0, GetScreenWidth(), GetScreenHeight(), RL_DARKGRAY);
 
-    DrawTextEx(font, "CONGRATULATIONS!", (Vector2){ 50, 160 }, font.baseSize*3, 2, Fade(WHITE, alpha));
-    DrawTextEx(font, "SKULLY ESCAPED!", (Vector2){ 100, 300 }, font.baseSize*3, 2, Fade(WHITE, alpha));
+    DrawTextEx(font, "CONGRATULATIONS!", (Vector2){ 50, 160 }, font.baseSize*3, 2, Fade(RL_WHITE, alpha));
+    DrawTextEx(font, "SKULLY ESCAPED!", (Vector2){ 100, 300 }, font.baseSize*3, 2, Fade(RL_WHITE, alpha));
     
-    if ((framesCounter > 180) && ((framesCounter/40)%2)) DrawText("PRESS ENTER or CLICK", 380, 545, 40, BLACK);
+    if ((framesCounter > 180) && ((framesCounter/40)%2)) DrawText("PRESS ENTER or CLICK", 380, 545, 40, RL_BLACK);
 }
 
 // Ending Screen Unload logic

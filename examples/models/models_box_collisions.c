@@ -25,7 +25,7 @@ int main()
     
     Vector3 playerPosition = { 0.0f, 1.0f, 2.0f };
     Vector3 playerSize = { 1.0f, 2.0f, 1.0f };
-    Color playerColor = GREEN;
+    Color playerColor = RL_GREEN;
     
     Vector3 enemyBoxPos = { -4.0f, 1.0f, 0.0f };
     Vector3 enemyBoxSize = { 2.0f, 2.0f, 2.0f };
@@ -77,25 +77,25 @@ int main()
                                      playerPosition.z + playerSize.z/2 }}, 
             enemySpherePos, enemySphereSize)) collision = true;
         
-        if (collision) playerColor = RED;
-        else playerColor = GREEN;
+        if (collision) playerColor = RL_RED;
+        else playerColor = RL_GREEN;
         //----------------------------------------------------------------------------------
 
         // Draw
         //----------------------------------------------------------------------------------
         BeginDrawing();
 
-            ClearBackground(RAYWHITE);
+            ClearBackground(RL_RAYWHITE);
 
             BeginMode3D(camera);
 
                 // Draw enemy-box
-                DrawCube(enemyBoxPos, enemyBoxSize.x, enemyBoxSize.y, enemyBoxSize.z, GRAY);
-                DrawCubeWires(enemyBoxPos, enemyBoxSize.x, enemyBoxSize.y, enemyBoxSize.z, DARKGRAY);
+                DrawCube(enemyBoxPos, enemyBoxSize.x, enemyBoxSize.y, enemyBoxSize.z, RL_GRAY);
+                DrawCubeWires(enemyBoxPos, enemyBoxSize.x, enemyBoxSize.y, enemyBoxSize.z, RL_DARKGRAY);
                 
                 // Draw enemy-sphere
-                DrawSphere(enemySpherePos, enemySphereSize, GRAY);
-                DrawSphereWires(enemySpherePos, enemySphereSize, 16, 16, DARKGRAY);
+                DrawSphere(enemySpherePos, enemySphereSize, RL_GRAY);
+                DrawSphereWires(enemySpherePos, enemySphereSize, 16, 16, RL_DARKGRAY);
                 
                 // Draw player
                 DrawCubeV(playerPosition, playerSize, playerColor);
@@ -104,7 +104,7 @@ int main()
 
             EndMode3D();
             
-            DrawText("Move player with cursors to collide", 220, 40, 20, GRAY);
+            DrawText("Move player with cursors to collide", 220, 40, 20, RL_GRAY);
 
             DrawFPS(10, 10);
 

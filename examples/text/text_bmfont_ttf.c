@@ -47,10 +47,10 @@ int main()
         //----------------------------------------------------------------------------------
         BeginDrawing();
 
-            ClearBackground(RAYWHITE);
+            ClearBackground(RL_RAYWHITE);
 
-            DrawTextEx(fontBm, msgBm, fontPosition, fontBm.baseSize, 0, MAROON);
-            DrawTextEx(fontTtf, msgTtf, (Vector2){ 75.0f, 240.0f }, fontTtf.baseSize*0.8f, 2, LIME);
+            DrawTextEx(fontBm, msgBm, fontPosition, fontBm.baseSize, 0, RL_MAROON);
+            DrawTextEx(fontTtf, msgTtf, (Vector2){ 75.0f, 240.0f }, fontTtf.baseSize*0.8f, 2, RL_LIME);
 
         EndDrawing();
         //----------------------------------------------------------------------------------

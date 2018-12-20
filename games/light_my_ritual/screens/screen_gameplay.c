@@ -188,7 +188,7 @@ void InitGameplayScreen(void)
     player.position = (Vector2){ GetScreenWidth()/2, GetScreenHeight()/2 - 40 };
     player.radius = 20;
     player.speed = (Vector2){5, 5};
-    player.color = WHITE;
+    player.color = RL_WHITE;
     
     // Initialize lights positions based on lights map image data
     int kI = 0, kII = 0, kIII = 0;
@@ -228,7 +228,7 @@ void InitGameplayScreen(void)
         lightsI[i].radius = 12;
         lightsI[i].requiredEnergy = GetRandomValue(3, 9);
         lightsI[i].active = false;
-        lightsI[i].color = GOLD;
+        lightsI[i].color = RL_GOLD;
         
         lightsI[i].framesCounter = 0;
         lightsI[i].currentFrame = 0;
@@ -241,7 +241,7 @@ void InitGameplayScreen(void)
         lightsII[i].radius = 8;
         lightsII[i].requiredEnergy = GetRandomValue(3, 8);
         lightsII[i].active = false;
-        lightsII[i].color = GOLD;
+        lightsII[i].color = RL_GOLD;
         
         lightsII[i].framesCounter = 0;
         lightsII[i].currentFrame = 0;
@@ -254,7 +254,7 @@ void InitGameplayScreen(void)
         lightsIII[i].radius = 8;
         lightsIII[i].requiredEnergy = GetRandomValue(4, 10);
         lightsIII[i].active = false;
-        lightsIII[i].color = GOLD;
+        lightsIII[i].color = RL_GOLD;
         
         lightsIII[i].framesCounter = 0;
         lightsIII[i].currentFrame = 0;
@@ -327,7 +327,7 @@ void UpdateGameplayScreen(void)
             player.lightEnergy += ENERGY_REFILL_RATIO;
             player.color = (Color){ 255, 255, 100, 255 };
         }
-        else player.color = WHITE;
+        else player.color = RL_WHITE;
         
         if (player.lightEnergy > MAX_PLAYER_ENERGY) player.lightEnergy = MAX_PLAYER_ENERGY;
         
@@ -563,38 +563,38 @@ void UpdateGameplayScreen(void)
 // Gameplay Screen Draw logic
 void DrawGameplayScreen(void)
 {
-    DrawTexture(background, 0, 0, WHITE);
+    DrawTexture(background, 0, 0, RL_WHITE);
     
     // DrawText("STARS ARE ALIGNED! NO TIME TO LOOSE! LIGHT MY RITUAL!",
     
     // Draw foreground and circles
-    if ((currentLightedLevel == LEVEL_FINISHED) || (currentLightedLevel == LEVEL_III)) DrawTexture(foregroundIII, 0, 0, WHITE);
-    else if (currentLightedLevel == LEVEL_II) DrawTexture(foregroundII, 0, 0, WHITE);
-    else if (currentLightedLevel == LEVEL_I) DrawTexture(foregroundI, 0, 0, WHITE);
+    if ((currentLightedLevel == LEVEL_FINISHED) || (currentLightedLevel == LEVEL_III)) DrawTexture(foregroundIII, 0, 0, RL_WHITE);
+    else if (currentLightedLevel == LEVEL_II) DrawTexture(foregroundII, 0, 0, RL_WHITE);
+    else if (currentLightedLevel == LEVEL_I) DrawTexture(foregroundI, 0, 0, RL_WHITE);
 
     // Draw lighted circles (depends on current lighted level)
     switch (currentLightedLevel)
     {
         case LEVEL_FINISHED:
         {
-            DrawTexture(circleIIIon, GetScreenWidth()/2 - circleIIIon.width/2, GetScreenHeight()/2 - circleIIIon.height/2, WHITE);
-            DrawTexture(circleIIon, GetScreenWidth()/2 - circleIIon.width/2, GetScreenHeight()/2 - circleIIon.height/2, WHITE);
-            DrawTexture(circleIon, GetScreenWidth()/2 - circleIon.width/2, GetScreenHeight()/2 - circleIon.height/2, WHITE);
+            DrawTexture(circleIIIon, GetScreenWidth()/2 - circleIIIon.width/2, GetScreenHeight()/2 - circleIIIon.height/2, RL_WHITE);
+            DrawTexture(circleIIon, GetScreenWidth()/2 - circleIIon.width/2, GetScreenHeight()/2 - circleIIon.height/2, RL_WHITE);
+            DrawTexture(circleIon, GetScreenWidth()/2 - circleIon.width/2, GetScreenHeight()/2 - circleIon.height/2, RL_WHITE);
         } break;
         case LEVEL_III:
         {
-            DrawTexture(circleIIIoff, GetScreenWidth()/2 - circleIIIoff.width/2, GetScreenHeight()/2 - circleIIIoff.height/2, WHITE);
-            DrawTexture(circleIIon, GetScreenWidth()/2 - circleIIon.width/2, GetScreenHeight()/2 - circleIIon.height/2, WHITE);
-            DrawTexture(circleIon, GetScreenWidth()/2 - circleIon.width/2, GetScreenHeight()/2 - circleIon.height/2, WHITE);
+            DrawTexture(circleIIIoff, GetScreenWidth()/2 - circleIIIoff.width/2, GetScreenHeight()/2 - circleIIIoff.height/2, RL_WHITE);
+            DrawTexture(circleIIon, GetScreenWidth()/2 - circleIIon.width/2, GetScreenHeight()/2 - circleIIon.height/2, RL_WHITE);
+            DrawTexture(circleIon, GetScreenWidth()/2 - circleIon.width/2, GetScreenHeight()/2 - circleIon.height/2, RL_WHITE);
         } break;
         case LEVEL_II:
         {
-            DrawTexture(circleIIoff, GetScreenWidth()/2 - circleIIoff.width/2, GetScreenHeight()/2 - circleIIoff.height/2, WHITE);
-            DrawTexture(circleIon, GetScreenWidth()/2 - circleIon.width/2, GetScreenHeight()/2 - circleIon.height/2, WHITE);
+            DrawTexture(circleIIoff, GetScreenWidth()/2 - circleIIoff.width/2, GetScreenHeight()/2 - circleIIoff.height/2, RL_WHITE);
+            DrawTexture(circleIon, GetScreenWidth()/2 - circleIon.width/2, GetScreenHeight()/2 - circleIon.height/2, RL_WHITE);
         } break;
         case LEVEL_I:
         {
-            DrawTexture(circleIoff, GetScreenWidth()/2 - circleIoff.width/2, GetScreenHeight()/2 - circleIoff.height/2, WHITE);
+            DrawTexture(circleIoff, GetScreenWidth()/2 - circleIoff.width/2, GetScreenHeight()/2 - circleIoff.height/2, RL_WHITE);
         } break;
         default: break;
     }
@@ -607,44 +607,44 @@ void DrawGameplayScreen(void)
         {
             for (int i = 0; i < MAX_LIGHTS_III; i++)
             {
-                //if (lightsIII[i].active) DrawCircleV(lightsIII[i].position, lightsIII[i].radius, GOLD);
-                //else DrawCircleLines(lightsIII[i].position.x, lightsIII[i].position.y, lightsIII[i].radius, GRAY);
-                DrawTextureRec(texLight, lightsIII[i].frameRec, (Vector2){ lightsIII[i].position.x - 32, lightsIII[i].position.y - 32 }, WHITE);
+                //if (lightsIII[i].active) DrawCircleV(lightsIII[i].position, lightsIII[i].radius, RL_GOLD);
+                //else DrawCircleLines(lightsIII[i].position.x, lightsIII[i].position.y, lightsIII[i].radius, RL_GRAY);
+                DrawTextureRec(texLight, lightsIII[i].frameRec, (Vector2){ lightsIII[i].position.x - 32, lightsIII[i].position.y - 32 }, RL_WHITE);
             }
             
-            for (int i = 0; i < MAX_LIGHTS_III; i++) if (lightsIII[i].active) DrawTexture(lightGlow, lightsIII[i].position.x - lightGlow.width/2, lightsIII[i].position.y - lightGlow.height/2, Fade(WHITE, 0.3f));
-            for (int i = 0; i < MAX_LIGHTS_III; i++) DrawText(FormatText("%02i", lightsIII[i].requiredEnergy), lightsIII[i].position.x - 10, lightsIII[i].position.y + 14, 20, lightsIII[i].active ? GRAY : YELLOW);
+            for (int i = 0; i < MAX_LIGHTS_III; i++) if (lightsIII[i].active) DrawTexture(lightGlow, lightsIII[i].position.x - lightGlow.width/2, lightsIII[i].position.y - lightGlow.height/2, Fade(RL_WHITE, 0.3f));
+            for (int i = 0; i < MAX_LIGHTS_III; i++) DrawText(FormatText("%02i", lightsIII[i].requiredEnergy), lightsIII[i].position.x - 10, lightsIII[i].position.y + 14, 20, lightsIII[i].active ? RL_GRAY : RL_YELLOW);
         }
         case LEVEL_II:
         {
             for (int i = 0; i < MAX_LIGHTS_II; i++)
             {
-                //if (lightsII[i].active) DrawCircleV(lightsII[i].position, lightsII[i].radius, GOLD);
-                //else DrawCircleLines(lightsI[i].position.x, lightsI[i].position.y, lightsI[i].radius, GRAY);
-                DrawTextureRec(texLight, lightsII[i].frameRec, (Vector2){ lightsII[i].position.x - 32, lightsII[i].position.y - 32 }, WHITE);
+                //if (lightsII[i].active) DrawCircleV(lightsII[i].position, lightsII[i].radius, RL_GOLD);
+                //else DrawCircleLines(lightsI[i].position.x, lightsI[i].position.y, lightsI[i].radius, RL_GRAY);
+                DrawTextureRec(texLight, lightsII[i].frameRec, (Vector2){ lightsII[i].position.x - 32, lightsII[i].position.y - 32 }, RL_WHITE);
             }
             
-            for (int i = 0; i < MAX_LIGHTS_II; i++) if (lightsII[i].active) DrawTexture(lightGlow, lightsII[i].position.x - lightGlow.width/2, lightsII[i].position.y - lightGlow.height/2, Fade(WHITE, 0.3f));
-            for (int i = 0; i < MAX_LIGHTS_II; i++) DrawText(FormatText("%02i", lightsII[i].requiredEnergy), lightsII[i].position.x - 10, lightsII[i].position.y + 14, 20, lightsII[i].active ? GRAY : YELLOW);
+            for (int i = 0; i < MAX_LIGHTS_II; i++) if (lightsII[i].active) DrawTexture(lightGlow, lightsII[i].position.x - lightGlow.width/2, lightsII[i].position.y - lightGlow.height/2, Fade(RL_WHITE, 0.3f));
+            for (int i = 0; i < MAX_LIGHTS_II; i++) DrawText(FormatText("%02i", lightsII[i].requiredEnergy), lightsII[i].position.x - 10, lightsII[i].position.y + 14, 20, lightsII[i].active ? RL_GRAY : RL_YELLOW);
         }
         case LEVEL_I:
         {
             for (int i = 0; i < MAX_LIGHTS_I; i++)
             {
-                //if (lightsI[i].active) DrawCircleV(lightsI[i].position, lightsI[i].radius, GOLD);
-                //else DrawCircleLines(lightsI[i].position.x, lightsI[i].position.y, lightsI[i].radius, GRAY);
-                DrawTextureRec(texLight, lightsI[i].frameRec, (Vector2){ lightsI[i].position.x - 32, lightsI[i].position.y - 32 }, WHITE);
+                //if (lightsI[i].active) DrawCircleV(lightsI[i].position, lightsI[i].radius, RL_GOLD);
+                //else DrawCircleLines(lightsI[i].position.x, lightsI[i].position.y, lightsI[i].radius, RL_GRAY);
+                DrawTextureRec(texLight, lightsI[i].frameRec, (Vector2){ lightsI[i].position.x - 32, lightsI[i].position.y - 32 }, RL_WHITE);
             }
             
-            for (int i = 0; i < MAX_LIGHTS_I; i++) if (lightsI[i].active) DrawTexture(lightGlow, lightsI[i].position.x - lightGlow.width/2, lightsI[i].position.y - lightGlow.height/2, Fade(WHITE, 0.3f));
-            for (int i = 0; i < MAX_LIGHTS_I; i++) DrawText(FormatText("%02i", lightsI[i].requiredEnergy), lightsI[i].position.x - 10, lightsI[i].position.y + 14, 20, lightsI[i].active ? GRAY : YELLOW);
+            for (int i = 0; i < MAX_LIGHTS_I; i++) if (lightsI[i].active) DrawTexture(lightGlow, lightsI[i].position.x - lightGlow.width/2, lightsI[i].position.y - lightGlow.height/2, Fade(RL_WHITE, 0.3f));
+            for (int i = 0; i < MAX_LIGHTS_I; i++) DrawText(FormatText("%02i", lightsI[i].requiredEnergy), lightsI[i].position.x - 10, lightsI[i].position.y + 14, 20, lightsI[i].active ? RL_GRAY : RL_YELLOW);
         }
         default: break;
     }
     
     // Draw main lighter
-    DrawTexture(book, GetScreenWidth()/2 - book.width/2, GetScreenHeight()/2, WHITE);
-    DrawTexture(lightRay, GetScreenWidth()/2 - lightRay.width/2, 0, Fade(WHITE, 0.5f));
+    DrawTexture(book, GetScreenWidth()/2 - book.width/2, GetScreenHeight()/2, RL_WHITE);
+    DrawTexture(lightRay, GetScreenWidth()/2 - lightRay.width/2, 0, Fade(RL_WHITE, 0.5f));
     
     // Draw player
     //DrawCircleV(player.position, player.radius, player.color);
@@ -658,56 +658,56 @@ void DrawGameplayScreen(void)
             if (enemies[i].active) 
             {
                 //DrawCircleV(enemies[i].position, enemies[i].radius, enemies[i].color);
-                DrawTextureRec(texEnemy, (Rectangle){ 0, 0, 64, 64 }, (Vector2){ enemies[i].position.x - 32, enemies[i].position.y - 32 }, WHITE);
+                DrawTextureRec(texEnemy, (Rectangle){ 0, 0, 64, 64 }, (Vector2){ enemies[i].position.x - 32, enemies[i].position.y - 32 }, RL_WHITE);
             }
         }
         
         // Draw time left for ritual
-        DrawTextEx(font, FormatText("%02.2f", (99.0f - ritualTime)), (Vector2){ 560, 20 }, font.baseSize, 0, WHITE);
+        DrawTextEx(font, FormatText("%02.2f", (99.0f - ritualTime)), (Vector2){ 560, 20 }, font.baseSize, 0, RL_WHITE);
         
         // Draw light energy bar
-        DrawRectangle(20, 30, 400, 20, GRAY);
-        DrawRectangle(20, 30, (400*player.lightEnergy)/MAX_PLAYER_ENERGY, 20, GOLD);
-        DrawRectangleLines(20, 30, 400, 20, LIGHTGRAY);
-        DrawText(FormatText("%03.0f", player.lightEnergy), 430, 30, 20, WHITE);
+        DrawRectangle(20, 30, 400, 20, RL_GRAY);
+        DrawRectangle(20, 30, (400*player.lightEnergy)/MAX_PLAYER_ENERGY, 20, RL_GOLD);
+        DrawRectangleLines(20, 30, 400, 20, RL_LIGHTGRAY);
+        DrawText(FormatText("%03.0f", player.lightEnergy), 430, 30, 20, RL_WHITE);
         
         // Draw level lighted bar (for completion)
-        DrawRectangle(GetScreenWidth() - 40, 30, 20, 660, GRAY);
-        DrawRectangle(GetScreenWidth() - 40, 30 + 660 - 660*currentLightEnergy/maxLightEnergy, 20, 660*currentLightEnergy/maxLightEnergy, YELLOW);
-        DrawRectangleLines(GetScreenWidth() - 40, 30, 20, 660, LIGHTGRAY);
+        DrawRectangle(GetScreenWidth() - 40, 30, 20, 660, RL_GRAY);
+        DrawRectangle(GetScreenWidth() - 40, 30 + 660 - 660*currentLightEnergy/maxLightEnergy, 20, 660*currentLightEnergy/maxLightEnergy, RL_YELLOW);
+        DrawRectangleLines(GetScreenWidth() - 40, 30, 20, 660, RL_LIGHTGRAY);
         
         // Show message: "You run out of light!!!" if player.lightEnergy <= 0
         if (player.lightEnergy < 2)
         {
-            if ((framesCounter/20)%2) DrawTextEx(font, "YOU'RE RUNNING OUT OF LIGHT!", (Vector2){ 20, 60 }, font.baseSize/2, 0, WHITE);
+            if ((framesCounter/20)%2) DrawTextEx(font, "YOU'RE RUNNING OUT OF LIGHT!", (Vector2){ 20, 60 }, font.baseSize/2, 0, RL_WHITE);
         }
     }
     else if (!timeOver)   // LEVEL_FINISHED
     {
-        DrawRectangle(0, 0, GetScreenWidth(), GetScreenHeight(), Fade(BLACK, 0.4f));
+        DrawRectangle(0, 0, GetScreenWidth(), GetScreenHeight(), Fade(RL_BLACK, 0.4f));
         
         // Wait some time before jumping to ending: raylib
-        DrawTexture(texRitual, GetScreenWidth()/2 - texRitual.width/2, 100, WHITE);
-        DrawTextEx(font, FormatText("BEST LIGHTING TIME: %02.2f", ritualTime), (Vector2){ 320, 340 }, 50, 0, WHITE);
-        DrawTextEx(font, "PRESS ENTER to START the RITUAL", (Vector2){ 160, 480 }, 60, 0, WHITE);
+        DrawTexture(texRitual, GetScreenWidth()/2 - texRitual.width/2, 100, RL_WHITE);
+        DrawTextEx(font, FormatText("BEST LIGHTING TIME: %02.2f", ritualTime), (Vector2){ 320, 340 }, 50, 0, RL_WHITE);
+        DrawTextEx(font, "PRESS ENTER to START the RITUAL", (Vector2){ 160, 480 }, 60, 0, RL_WHITE);
         
         if (IsKeyPressed(KEY_ENTER)) startRitual = true;
     }
     
     if (timeOver)
     {
-        DrawRectangle(0, 0, GetScreenWidth(), GetScreenHeight(), Fade(BLACK, 0.4f));
+        DrawRectangle(0, 0, GetScreenWidth(), GetScreenHeight(), Fade(RL_BLACK, 0.4f));
         
-        DrawTexture(texTimeOver, GetScreenWidth()/2 - texTimeOver.width/2, 140, WHITE);
-        DrawTextEx(font, FormatText("NEXT STARS ALIGNMENT IN %i YEARS", nextStarsAlignment), (Vector2){ 200, 360 }, 50, 0, WHITE);
-        DrawTextEx(font, "PRESS ENTER to GO HOME...", (Vector2){ 260, 480 }, 60, 0, WHITE);
+        DrawTexture(texTimeOver, GetScreenWidth()/2 - texTimeOver.width/2, 140, RL_WHITE);
+        DrawTextEx(font, FormatText("NEXT STARS ALIGNMENT IN %i YEARS", nextStarsAlignment), (Vector2){ 200, 360 }, 50, 0, RL_WHITE);
+        DrawTextEx(font, "PRESS ENTER to GO HOME...", (Vector2){ 260, 480 }, 60, 0, RL_WHITE);
         
         if (IsKeyPressed(KEY_ENTER)) finishScreen = 2;
     }
     
-    if (startRitual) DrawRectangle(0, 0, GetScreenWidth(), GetScreenHeight(), Fade(RAYWHITE, alphaRitual));
+    if (startRitual) DrawRectangle(0, 0, GetScreenWidth(), GetScreenHeight(), Fade(RL_RAYWHITE, alphaRitual));
     
-    if (pause) DrawTextEx(font, "RITUAL PAUSED", (Vector2){ GetScreenWidth()/2 - MeasureText("RITUAL PAUSED", 40)/2, 110 }, 50, 0, WHITE);
+    if (pause) DrawTextEx(font, "RITUAL PAUSED", (Vector2){ GetScreenWidth()/2 - MeasureText("RITUAL PAUSED", 40)/2, 110 }, 50, 0, RL_WHITE);
 }
 
 // Gameplay Screen Unload logic
@@ -790,7 +790,7 @@ static void EnemyReset(Enemy *enemy)
 {
     enemy->active = false;
     enemy->framesCounter = 0;
-    enemy->color = RED;
+    enemy->color = RL_RED;
     enemy->radius = 10;
 
     int side = GetRandomValue(0, 1);

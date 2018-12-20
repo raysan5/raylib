@@ -64,8 +64,8 @@ void UpdateLogoScreen(void)
 void DrawLogoScreen(void)
 {
     // TODO: Draw LOGO screen here!
-    DrawText("LOGO SCREEN", 20, 20, 40, LIGHTGRAY);
-    DrawText("WAIT for 2 SECONDS...", 290, 220, 20, GRAY);
+    DrawText("LOGO SCREEN", 20, 20, 40, RL_LIGHTGRAY);
+    DrawText("WAIT for 2 SECONDS...", 290, 220, 20, RL_GRAY);
 }
 
 // Logo Screen Unload logic

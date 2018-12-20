@@ -48,13 +48,13 @@ int main()
         //----------------------------------------------------------------------------------
         BeginDrawing();
 
-            ClearBackground(RAYWHITE);
+            ClearBackground(RL_RAYWHITE);
 
             BeginMode3D(camera);
                 
                 DrawGrid(10, 1.0f);        // Draw a grid
                 
-                DrawBillboard(camera, bill, billPosition, 2.0f, WHITE);
+                DrawBillboard(camera, bill, billPosition, 2.0f, RL_WHITE);
                 
             EndMode3D();
 

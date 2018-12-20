@@ -68,10 +68,10 @@ void UpdateLogoScreen(void)
 void DrawLogoScreen(void)
 {
     // TODO: Draw LOGO screen here!
-    DrawTextEx(font, "LOGO SCREEN", (Vector2){ 20, 10 }, font.baseSize*3, 4, GRAY);
-    DrawText("WAIT for 2 SECONDS...", 290, 400, 20, GRAY);
+    DrawTextEx(font, "LOGO SCREEN", (Vector2){ 20, 10 }, font.baseSize*3, 4, RL_GRAY);
+    DrawText("WAIT for 2 SECONDS...", 290, 400, 20, RL_GRAY);
     
-    DrawTexture(logo, GetScreenWidth()/2 - logo.width/2, 100, WHITE);
+    DrawTexture(logo, GetScreenWidth()/2 - logo.width/2, 100, RL_WHITE);
 }
 
 // Logo Screen Unload logic

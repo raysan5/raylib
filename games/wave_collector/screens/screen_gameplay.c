@@ -142,7 +142,7 @@ void InitGameplayScreen(void)
     player.width = 20;
     player.height = 60;
     player.speed = (Vector2){ 15, 15 };
-    player.color = GOLD;
+    player.color = RL_GOLD;
     player.position = (Vector2){ playerArea.x + playerArea.width/2 - texPlayer.width/2, 
                                  playerArea.y + playerArea.height/2 - texPlayer.height/2 };
                                  
@@ -199,7 +199,7 @@ void InitGameplayScreen(void)
         samples[i].radius = 6;
         samples[i].active = true;
         samples[i].collected = false;
-        samples[i].color = RED;
+        samples[i].color = RL_RED;
         samples[i].renderable = false;
     }
 
@@ -351,12 +351,12 @@ void UpdateGameplayScreen(void)
 void DrawGameplayScreen(void)
 {
     // Draw background
-    DrawTexture(texBackground, 0, 0, WHITE);
+    DrawTexture(texBackground, 0, 0, RL_WHITE);
 
     // Screen elements drawing
-    //DrawRectangleLines(playerArea.x, playerArea.y, playerArea.width, playerArea.height, BLUE);
-    DrawRectangle(0, GetScreenHeight()/2 - 1, GetScreenWidth(), 2, Fade(BLUE, 0.3f));
-    //DrawRectangleLines(0, GetScreenHeight()/2 - MAX_GAME_HEIGHT/2, GetScreenWidth(), MAX_GAME_HEIGHT, GRAY);
+    //DrawRectangleLines(playerArea.x, playerArea.y, playerArea.width, playerArea.height, RL_BLUE);
+    DrawRectangle(0, GetScreenHeight()/2 - 1, GetScreenWidth(), 2, Fade(RL_BLUE, 0.3f));
+    //DrawRectangleLines(0, GetScreenHeight()/2 - MAX_GAME_HEIGHT/2, GetScreenWidth(), MAX_GAME_HEIGHT, RL_GRAY);
 
     // Draw samples
     for (int i = 0; i < totalSamples - 1; i++)
@@ -365,8 +365,8 @@ void DrawGameplayScreen(void)
         {
             Color col = samples[i].color;
             
-            if (i < (currentSample + 1)) col = Fade(DARKGRAY, 0.5f);
-            else col = WHITE;
+            if (i < (currentSample + 1)) col = Fade(RL_DARKGRAY, 0.5f);
+            else col = RL_WHITE;
             
             if (!samples[i].collected) 
             {
@@ -377,8 +377,8 @@ void DrawGameplayScreen(void)
                 else DrawTexture(texSampleBig, samples[i].position.x - texSampleBig.width/2, samples[i].position.y - texSampleBig.height/2, col);
             }
             
-            if (i < (currentSample + 1)) col = Fade(GRAY, 0.3f);
-            else col = Fade(RED, 0.5f);
+            if (i < (currentSample + 1)) col = Fade(RL_GRAY, 0.3f);
+            else col = Fade(RL_RED, 0.5f);
             
             // Draw line between samples
             DrawLineEx(samples[i].position, samples[i + 1].position, 3.0f, col);
@@ -387,58 +387,58 @@ void DrawGameplayScreen(void)
 
     // Draw player
     //DrawRectangle((int)player.position.x, (int)player.position.y, player.width, player.height, player.color);
-    DrawTexture(texPlayer, player.position.x - 32, player.position.y - 24, WHITE);
+    DrawTexture(texPlayer, player.position.x - 32, player.position.y - 24, RL_WHITE);
  
     // Draw pause message
-    if (pause) DrawTextEx(font, "WAVE PAUSED", (Vector2){ 235, 400 }, font.baseSize*2, 0, WHITE);
+    if (pause) DrawTextEx(font, "WAVE PAUSED", (Vector2){ 235, 400 }, font.baseSize*2, 0, RL_WHITE);
 
     // Draw number of samples
-    //DrawText(FormatText("%05i", collectedSamples), 900, 200, 40, GRAY);
-    //DrawText(FormatText("%05i", totalSamples), 900, 250, 40, GRAY);
-    DrawTextEx(font, FormatText("%05i / %05i", collectedSamples, totalSamples), (Vector2){810, 170}, font.baseSize, -2, SKYBLUE);
+    //DrawText(FormatText("%05i", collectedSamples), 900, 200, 40, RL_GRAY);
+    //DrawText(FormatText("%05i", totalSamples), 900, 250, 40, RL_GRAY);
+    DrawTextEx(font, FormatText("%05i / %05i", collectedSamples, totalSamples), (Vector2){810, 170}, font.baseSize, -2, RL_SKYBLUE);
     
     // Draw combo
-    DrawTextEx(font, FormatText("Combo: %02i [max: %02i]", combo, maxCombo), (Vector2){200, 170}, font.baseSize/2, -2, SKYBLUE);
+    DrawTextEx(font, FormatText("Combo: %02i [max: %02i]", combo, maxCombo), (Vector2){200, 170}, font.baseSize/2, -2, RL_SKYBLUE);
 
     // Draw synchonicity level
-    DrawRectangle(99, 622, 395, 32, Fade(RAYWHITE, 0.8f));
+    DrawRectangle(99, 622, 395, 32, Fade(RL_RAYWHITE, 0.8f));
         
-    if (synchro <= 0.3f) DrawRectangle(99, 622, synchro*395, 32, Fade(RED, 0.8f));
-    else if (synchro <= 0.8f) DrawRectangle(99, 622, synchro*395, 32, Fade(ORANGE,0.8f));
-    else if (synchro < 1.0f) DrawRectangle(99, 622, synchro*395, 32, Fade(LIME,0.8f));
-    else DrawRectangle(99, 622, synchro*395, 32, Fade(GREEN, 0.9f));
+    if (synchro <= 0.3f) DrawRectangle(99, 622, synchro*395, 32, Fade(RL_RED, 0.8f));
+    else if (synchro <= 0.8f) DrawRectangle(99, 622, synchro*395, 32, Fade(RL_ORANGE,0.8f));
+    else if (synchro < 1.0f) DrawRectangle(99, 622, synchro*395, 32, Fade(RL_LIME,0.8f));
+    else DrawRectangle(99, 622, synchro*395, 32, Fade(RL_GREEN, 0.9f));
     
-    DrawRectangleLines(99, 622, 395, 32, MAROON);
+    DrawRectangleLines(99, 622, 395, 32, RL_MAROON);
 
-    if (synchro == 1.0f) DrawTextEx(font, FormatText("%02i%%", (int)(synchro*100)), (Vector2){99 + 390, 600}, font.baseSize, -2, GREEN);
-    else DrawTextEx(font, FormatText("%02i%%", (int)(synchro*100)), (Vector2){99 + 390, 600}, font.baseSize, -2, SKYBLUE);
+    if (synchro == 1.0f) DrawTextEx(font, FormatText("%02i%%", (int)(synchro*100)), (Vector2){99 + 390, 600}, font.baseSize, -2, RL_GREEN);
+    else DrawTextEx(font, FormatText("%02i%%", (int)(synchro*100)), (Vector2){99 + 390, 600}, font.baseSize, -2, RL_SKYBLUE);
     
     // Draw time warp coool-down bar
-    DrawRectangle(754, 622, 395, 32, Fade(RAYWHITE, 0.8f));
-    DrawRectangle(754, 622, warpCounter, 32, Fade(SKYBLUE, 0.8f));
-    DrawRectangleLines(754, 622, 395, 32, DARKGRAY);
-    //DrawText(FormatText("%02i%%", (int)(synchro*100)), 754 + 410, 628, 20, DARKGRAY);
-    DrawTextEx(font, FormatText("%02i%%", (int)((float)warpCounter/395.0f*100.0f)), (Vector2){754 + 390, 600}, font.baseSize, -2, SKYBLUE);
+    DrawRectangle(754, 622, 395, 32, Fade(RL_RAYWHITE, 0.8f));
+    DrawRectangle(754, 622, warpCounter, 32, Fade(RL_SKYBLUE, 0.8f));
+    DrawRectangleLines(754, 622, 395, 32, RL_DARKGRAY);
+    //DrawText(FormatText("%02i%%", (int)(synchro*100)), 754 + 410, 628, 20, RL_DARKGRAY);
+    DrawTextEx(font, FormatText("%02i%%", (int)((float)warpCounter/395.0f*100.0f)), (Vector2){754 + 390, 600}, font.baseSize, -2, RL_SKYBLUE);
     
     // Draw wave
     if (waveTarget.texture.id <= 0)     // Render target could not be loaded (OpenGL 1.1)
     {
         // Draw wave directly on screen
-        DrawSamplesMap(samples, totalSamples, currentSample, waveRec, MAROON);
-        DrawRectangle(waveRec.x + (int)currentSample*1215/totalSamples, waveRec.y, 2, 99, DARKGRAY);
+        DrawSamplesMap(samples, totalSamples, currentSample, waveRec, RL_MAROON);
+        DrawRectangle(waveRec.x + (int)currentSample*1215/totalSamples, waveRec.y, 2, 99, RL_DARKGRAY);
     }
     else
     {
         // Draw wave using render target
         BeginTextureMode(waveTarget);
-            ClearBackground(BLANK);
-            DrawSamplesMap(samples, totalSamples, currentSample, (Rectangle){ 0, 0, waveTarget.texture.width, waveTarget.texture.height }, MAROON);
+            ClearBackground(RL_BLANK);
+            DrawSamplesMap(samples, totalSamples, currentSample, (Rectangle){ 0, 0, waveTarget.texture.width, waveTarget.texture.height }, RL_MAROON);
         EndTextureMode();
 
         // TODO: Apply antialiasing shader
         
-        DrawTextureEx(waveTarget.texture, (Vector2){ waveRec.x, waveRec.y }, 0.0f, 1.0f, WHITE);
-        DrawRectangle(waveRec.x + (int)currentSample*1215/totalSamples, waveRec.y, 2, 99, DARKGRAY);
+        DrawTextureEx(waveTarget.texture, (Vector2){ waveRec.x, waveRec.y }, 0.0f, 1.0f, RL_WHITE);
+        DrawRectangle(waveRec.x + (int)currentSample*1215/totalSamples, waveRec.y, 2, 99, RL_DARKGRAY);
     }
 }
 
@@ -487,7 +487,7 @@ static void DrawSamplesMap(Sample *samples, int sampleCount, int playedSamples, 
     
     for (int i = 0; i < sampleCount - 1; i++)
     {
-        if (i < playedSamples) col = GRAY;
+        if (i < playedSamples) col = RL_GRAY;
         else col = color;
 
         DrawLineV((Vector2){ (float)bounds.x + (float)i*sampleIncrementX, (float)(bounds.y + bounds.height/2) + samples[i].value*bounds.height }, 

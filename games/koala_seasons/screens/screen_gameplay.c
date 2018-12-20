@@ -995,7 +995,7 @@ void UpdateGameplayScreen(void)
 
         if (currentLeaves >= LEAVESTOTRANSFORM && !coolDown)
         {
-            flyColor = ORANGE;
+            flyColor = RL_ORANGE;
             
             if (leafGUIglow)
             {
@@ -1198,7 +1198,7 @@ void UpdateGameplayScreen(void)
                         scrollSpeed = 1.6f;
                         speedMod = 1.2f;
                         coolDown = true;
-                        flyColor = GRAY;
+                        flyColor = RL_GRAY;
                         speedFX.active = false;
                     }
                 }
@@ -2404,14 +2404,14 @@ void UpdateGameplayScreen(void)
 
                     if (transBackAnim)
                     {
-                        finalColor = RED;
-                        finalColor2 = WHITE;
+                        finalColor = RL_RED;
+                        finalColor2 = RL_WHITE;
                     }
 
                     if (!transBackAnim)
                     {
-                        finalColor = WHITE;
-                        finalColor2 = RED;
+                        finalColor = RL_WHITE;
+                        finalColor2 = RL_RED;
                     }
 
                     if (transCount >= 120)
@@ -2456,15 +2456,15 @@ void UpdateGameplayScreen(void)
                         
                         if (transBackAnim)
                         {
-                            finalColor = RED;
+                            finalColor = RL_RED;
                         }
 
                         if (!transBackAnim)
                         {
-                            finalColor = WHITE;
+                            finalColor = RL_WHITE;
                         }
                     }
-                    else finalColor = WHITE;
+                    else finalColor = RL_WHITE;
                     
 #if (defined(PLATFORM_ANDROID) || defined(PLATFORM_WEB))
                     if ((IsGestureDetected(GESTURE_HOLD) || (GetGestureDetected() == GESTURE_DRAG)) && CheckCollisionPointRec(GetTouchPosition(0), leftButton)) player.y += FLYINGMOV;
@@ -2637,8 +2637,8 @@ void DrawGameplayScreen(void)
     for (int i = 0; i < MAX_FIRE; i++)
     {
         DrawTexturePro(atlas01, (Rectangle){gameplay_props_burnttree.x, gameplay_props_burnttree.y + fire[i].y + gameplay_props_burnttree.height/14, gameplay_props_burnttree.width, gameplay_props_burnttree.height},
-                    (Rectangle){fire[i].x + 5, fire[i].y + gameplay_props_burnttree.height/14, gameplay_props_burnttree.width, gameplay_props_burnttree.height}, (Vector2){0, 0}, 0, WHITE);
-        DrawTextureRec(atlas01, fireAnimation, (Vector2){fire[i].x, GetScreenHeight() - gameplay_props_burnttree.height/7}, WHITE);
+                    (Rectangle){fire[i].x + 5, fire[i].y + gameplay_props_burnttree.height/14, gameplay_props_burnttree.width, gameplay_props_burnttree.height}, (Vector2){0, 0}, 0, RL_WHITE);
+        DrawTextureRec(atlas01, fireAnimation, (Vector2){fire[i].x, GetScreenHeight() - gameplay_props_burnttree.height/7}, RL_WHITE);
 
         for(int j = MAX_FIRE_FLAMES; j > -2; j--)
         {
@@ -2646,17 +2646,17 @@ void DrawGameplayScreen(void)
             {
                 if (j%2 > 0)
                 {
-                    DrawTextureRec(atlas01, fireAnimation, (Vector2){fire[i].x + fireOffset - 10, 40*j}, WHITE);
+                    DrawTextureRec(atlas01, fireAnimation, (Vector2){fire[i].x + fireOffset - 10, 40*j}, RL_WHITE);
                     fireAnimation.x = gameplay_props_fire_spritesheet.x + fireAnimation.width*curFrame1;
                 }
                 else if (j%2 + 1 == 1)
                 {
-                    DrawTextureRec(atlas01, fireAnimation, (Vector2){fire[i].x - fireOffset , 40*j}, WHITE);
+                    DrawTextureRec(atlas01, fireAnimation, (Vector2){fire[i].x - fireOffset , 40*j}, RL_WHITE);
                     fireAnimation.x = gameplay_props_fire_spritesheet.x + fireAnimation.width*curFrame2;
                 }
                 else
                 {
-                    DrawTextureRec(atlas01, fireAnimation, (Vector2){fire[i].x - fireOffset , 40*j}, WHITE);
+                    DrawTextureRec(atlas01, fireAnimation, (Vector2){fire[i].x - fireOffset , 40*j}, RL_WHITE);
                     fireAnimation.x = gameplay_props_fire_spritesheet.x + fireAnimation.width*curFrame3;
                 }
             }
@@ -2665,7 +2665,7 @@ void DrawGameplayScreen(void)
 
     for (int i = 0; i < MAX_ICE; i++)
     {
-        if (iceActive[i]) for (int k = 0; k < GetScreenHeight(); k += (GetScreenHeight()/6)) DrawTexturePro(atlas01, gameplay_props_ice_sprite, (Rectangle){ice[i].x - 5, ice[i].y+k, gameplay_props_ice_sprite.width, gameplay_props_ice_sprite.height}, (Vector2){0,0}, 0, WHITE);
+        if (iceActive[i]) for (int k = 0; k < GetScreenHeight(); k += (GetScreenHeight()/6)) DrawTexturePro(atlas01, gameplay_props_ice_sprite, (Rectangle){ice[i].x - 5, ice[i].y+k, gameplay_props_ice_sprite.width, gameplay_props_ice_sprite.height}, (Vector2){0,0}, 0, RL_WHITE);
     }
 
     BeginShaderMode(colorBlend);
@@ -2677,27 +2677,27 @@ void DrawGameplayScreen(void)
 
     for (int i = 0; i < MAX_RESIN; i++)
     {
-        if (resinActive[i]) DrawTextureRec(atlas01, gameplay_props_resin_sprite,(Vector2){ resin[i].x - resin[i].width/3, resin[i].y - resin[i].height/5}, WHITE);
+        if (resinActive[i]) DrawTextureRec(atlas01, gameplay_props_resin_sprite,(Vector2){ resin[i].x - resin[i].width/3, resin[i].y - resin[i].height/5}, RL_WHITE);
     }
 
     for (int i = 0; i < MAX_ENEMIES; i++)
     {
         if (snakeActive[i])
         {
-            if (!isHitSnake[i])DrawTextureRec(atlas01, snakeAnimation, (Vector2){snake[i].x - snake[i].width, snake[i].y - snake[i].height/2}, WHITE);
-            else DrawTextureRec(atlas01, (Rectangle){gameplay_enemy_snake.x + snakeAnimation.width*2, gameplay_enemy_snake.y, snakeAnimation.width, snakeAnimation.height}, (Vector2){snake[i].x - snake[i].width/2, snake[i].y - snake[i].height/2}, WHITE);
+            if (!isHitSnake[i])DrawTextureRec(atlas01, snakeAnimation, (Vector2){snake[i].x - snake[i].width, snake[i].y - snake[i].height/2}, RL_WHITE);
+            else DrawTextureRec(atlas01, (Rectangle){gameplay_enemy_snake.x + snakeAnimation.width*2, gameplay_enemy_snake.y, snakeAnimation.width, snakeAnimation.height}, (Vector2){snake[i].x - snake[i].width/2, snake[i].y - snake[i].height/2}, RL_WHITE);
         }
 
         if (dingoActive[i])
         {
-            if (!isHitDingo[i]) DrawTextureRec(atlas01, dingoAnimation, (Vector2){dingo[i].x - dingo[i].width/2, dingo[i].y - dingo[i].height/4}, WHITE);
-            else DrawTextureRec(atlas01, (Rectangle){gameplay_enemy_dingo.x + dingoAnimation.width*2, gameplay_enemy_dingo.y, dingoAnimation.width, dingoAnimation.height}, (Vector2){dingo[i].x - dingo[i].width/2, dingo[i].y - dingo[i].height/4}, WHITE);
+            if (!isHitDingo[i]) DrawTextureRec(atlas01, dingoAnimation, (Vector2){dingo[i].x - dingo[i].width/2, dingo[i].y - dingo[i].height/4}, RL_WHITE);
+            else DrawTextureRec(atlas01, (Rectangle){gameplay_enemy_dingo.x + dingoAnimation.width*2, gameplay_enemy_dingo.y, dingoAnimation.width, dingoAnimation.height}, (Vector2){dingo[i].x - dingo[i].width/2, dingo[i].y - dingo[i].height/4}, RL_WHITE);
         }
 
         if (owlActive[i])
         {
-            if (!isHitOwl[i])DrawTextureRec(atlas01, owlAnimation, (Vector2){owl[i].x - owl[i].width*0.7, owl[i].y - owl[i].height*0.1}, WHITE);
-            else DrawTextureRec(atlas01, (Rectangle){gameplay_enemy_owl.x + owlAnimation.width*2, gameplay_enemy_owl.y, owlAnimation.width, owlAnimation.height}, (Vector2){owl[i].x - owl[i].width/2, owl[i].y - owl[i].height/6}, WHITE);
+            if (!isHitOwl[i])DrawTextureRec(atlas01, owlAnimation, (Vector2){owl[i].x - owl[i].width*0.7, owl[i].y - owl[i].height*0.1}, RL_WHITE);
+            else DrawTextureRec(atlas01, (Rectangle){gameplay_enemy_owl.x + owlAnimation.width*2, gameplay_enemy_owl.y, owlAnimation.width, owlAnimation.height}, (Vector2){owl[i].x - owl[i].width/2, owl[i].y - owl[i].height/6}, RL_WHITE);
         }
 
         if (enemyHit[i].active)
@@ -2717,20 +2717,20 @@ void DrawGameplayScreen(void)
         {
             if (leafSide[i])
             {
-                if (leafType[i] == 0) DrawTextureRec(atlas01, (Rectangle){ gameplay_props_leaf_lil.x, gameplay_props_leaf_lil.y, -gameplay_props_leaf_lil.width, gameplay_props_leaf_lil.height }, (Vector2){ leaf[i].x, leaf[i].y - 15 }, WHITE);
-                else if (leafType[i] == 1) DrawTextureRec(atlas01, (Rectangle){ gameplay_props_leaf_lil.x, gameplay_props_leaf_lil.y, -gameplay_props_leaf_lil.width, gameplay_props_leaf_lil.height }, (Vector2){leaf[i].x, leaf[i].y + 10 }, WHITE);
-                else if (leafType[i] == 2) DrawTextureRec(atlas01, (Rectangle){ gameplay_props_leaf_mid.x, gameplay_props_leaf_mid.y, -gameplay_props_leaf_mid.width, gameplay_props_leaf_mid.height }, (Vector2){leaf[i].x, leaf[i].y - 15 }, WHITE);
-                else if (leafType[i] == 3) DrawTextureRec(atlas01, (Rectangle){ gameplay_props_leaf_big.x, gameplay_props_leaf_big.y, -gameplay_props_leaf_big.width, gameplay_props_leaf_big.height }, (Vector2){leaf[i].x, leaf[i].y - 15 }, WHITE);
+                if (leafType[i] == 0) DrawTextureRec(atlas01, (Rectangle){ gameplay_props_leaf_lil.x, gameplay_props_leaf_lil.y, -gameplay_props_leaf_lil.width, gameplay_props_leaf_lil.height }, (Vector2){ leaf[i].x, leaf[i].y - 15 }, RL_WHITE);
+                else if (leafType[i] == 1) DrawTextureRec(atlas01, (Rectangle){ gameplay_props_leaf_lil.x, gameplay_props_leaf_lil.y, -gameplay_props_leaf_lil.width, gameplay_props_leaf_lil.height }, (Vector2){leaf[i].x, leaf[i].y + 10 }, RL_WHITE);
+                else if (leafType[i] == 2) DrawTextureRec(atlas01, (Rectangle){ gameplay_props_leaf_mid.x, gameplay_props_leaf_mid.y, -gameplay_props_leaf_mid.width, gameplay_props_leaf_mid.height }, (Vector2){leaf[i].x, leaf[i].y - 15 }, RL_WHITE);
+                else if (leafType[i] == 3) DrawTextureRec(atlas01, (Rectangle){ gameplay_props_leaf_big.x, gameplay_props_leaf_big.y, -gameplay_props_leaf_big.width, gameplay_props_leaf_big.height }, (Vector2){leaf[i].x, leaf[i].y - 15 }, RL_WHITE);
             }
             else
             {
-                if (leafType[i] == 0) DrawTextureRec(atlas01, gameplay_props_leaf_lil, (Vector2){ leaf[i].x - 25, leaf[i].y - 15 }, WHITE);
-                else if (leafType[i] == 1) DrawTextureRec(atlas01, gameplay_props_leaf_lil, (Vector2){leaf[i].x - 25, leaf[i].y + 10 }, WHITE);
-                else if (leafType[i] == 2) DrawTextureRec(atlas01, gameplay_props_leaf_mid, (Vector2){leaf[i].x - 25, leaf[i].y - 15 }, WHITE);
-                else if (leafType[i] == 3) DrawTextureRec(atlas01, gameplay_props_leaf_big, (Vector2){leaf[i].x - 25, leaf[i].y - 15 }, WHITE);
+                if (leafType[i] == 0) DrawTextureRec(atlas01, gameplay_props_leaf_lil, (Vector2){ leaf[i].x - 25, leaf[i].y - 15 }, RL_WHITE);
+                else if (leafType[i] == 1) DrawTextureRec(atlas01, gameplay_props_leaf_lil, (Vector2){leaf[i].x - 25, leaf[i].y + 10 }, RL_WHITE);
+                else if (leafType[i] == 2) DrawTextureRec(atlas01, gameplay_props_leaf_mid, (Vector2){leaf[i].x - 25, leaf[i].y - 15 }, RL_WHITE);
+                else if (leafType[i] == 3) DrawTextureRec(atlas01, gameplay_props_leaf_big, (Vector2){leaf[i].x - 25, leaf[i].y - 15 }, RL_WHITE);
             }
 #if defined(DEBUG)
-            DrawRectangle(leaf[i].x, leaf[i].y, 64, 64, Fade(GREEN, 0.5f));
+            DrawRectangle(leaf[i].x, leaf[i].y, 64, 64, Fade(RL_GREEN, 0.5f));
 #endif
         }
 
@@ -2740,20 +2740,20 @@ void DrawGameplayScreen(void)
             {
                 DrawTexturePro(atlas01, particle_ecualyptusleaf,
                               (Rectangle){ leafParticles[i].particles[j].position.x, leafParticles[i].particles[j].position.y, particle_ecualyptusleaf.width*leafParticles[i].particles[j].size, particle_ecualyptusleaf.height*leafParticles[i].particles[j].size },
-                              (Vector2){ particle_ecualyptusleaf.width/2*leafParticles[i].particles[j].size, particle_ecualyptusleaf.height/2*leafParticles[i].particles[j].size }, leafParticles[i].particles[j].rotation, Fade(WHITE,leafParticles[i].particles[j].alpha));
+                              (Vector2){ particle_ecualyptusleaf.width/2*leafParticles[i].particles[j].size, particle_ecualyptusleaf.height/2*leafParticles[i].particles[j].size }, leafParticles[i].particles[j].rotation, Fade(RL_WHITE,leafParticles[i].particles[j].alpha));
             }
         }
     }
     
-    if (beeActive && !isHitBee) DrawTextureRec(atlas01, beeAnimation, (Vector2){bee.x, bee.y - gameplay_enemy_bee.height/2}, WHITE);
+    if (beeActive && !isHitBee) DrawTextureRec(atlas01, beeAnimation, (Vector2){bee.x, bee.y - gameplay_enemy_bee.height/2}, RL_WHITE);
     else if (beeActive && isHitBee) DrawTexturePro(atlas01, (Rectangle){gameplay_enemy_bee.x + beeAnimation.width*4, gameplay_enemy_bee.y, beeAnimation.width, gameplay_enemy_bee.height},
-                                                    (Rectangle){bee.x, bee.y, beeAnimation.width, gameplay_enemy_bee.height}, (Vector2){0, 0}, 0, WHITE);
+                                                    (Rectangle){bee.x, bee.y, beeAnimation.width, gameplay_enemy_bee.height}, (Vector2){0, 0}, 0, RL_WHITE);
                                                     
-    if (eagleActive && !isHitEagle) DrawTextureRec(atlas01, eagleAnimation, (Vector2){eagle.x, eagle.y}, WHITE);
-    else if (eagleActive && isHitEagle) DrawTextureRec(atlas01, gameplay_enemy_eagle_death, (Vector2){eagle.x, eagle.y}, WHITE);
+    if (eagleActive && !isHitEagle) DrawTextureRec(atlas01, eagleAnimation, (Vector2){eagle.x, eagle.y}, RL_WHITE);
+    else if (eagleActive && isHitEagle) DrawTextureRec(atlas01, gameplay_enemy_eagle_death, (Vector2){eagle.x, eagle.y}, RL_WHITE);
     
-    if (alertActive) DrawTexturePro(atlas01, gameplay_fx_eaglealert, alertRectangle, (Vector2){0, 0}, 0, Fade(RED, 0.7f));
-    if (alertBeeActive) DrawTexturePro(atlas01, gameplay_fx_eaglealert, beeAlertRectangle, (Vector2){0, 0}, 0, Fade(ORANGE, 0.7f));                                        
+    if (alertActive) DrawTexturePro(atlas01, gameplay_fx_eaglealert, alertRectangle, (Vector2){0, 0}, 0, Fade(RL_RED, 0.7f));
+    if (alertBeeActive) DrawTexturePro(atlas01, gameplay_fx_eaglealert, beeAlertRectangle, (Vector2){0, 0}, 0, Fade(RL_ORANGE, 0.7f));                                        
 
     if (transforming)
     {
@@ -2776,25 +2776,25 @@ void DrawGameplayScreen(void)
     {
         switch(state)
         {
-            case GRABED: DrawTextureRec(atlas01, koalaAnimationIddle, (Vector2){player.x - player.width, player.y - gameplay_koala_idle.height/4}, WHITE); break;
-            case JUMPING: DrawTexturePro(atlas01, gameplay_koala_jump, (Rectangle){player.x - player.width, player.y - gameplay_koala_jump.height/4, gameplay_koala_jump.width, gameplay_koala_jump.height}, (Vector2){0, 0}, 0, WHITE); break;
-            case KICK:DrawTexturePro(atlas01, gameplay_koala_dash, (Rectangle){player.x - player.width, player.y - gameplay_koala_jump.height/4, gameplay_koala_dash.width, gameplay_koala_dash.height}, (Vector2){0, 0}, 0, WHITE);  break;
+            case GRABED: DrawTextureRec(atlas01, koalaAnimationIddle, (Vector2){player.x - player.width, player.y - gameplay_koala_idle.height/4}, RL_WHITE); break;
+            case JUMPING: DrawTexturePro(atlas01, gameplay_koala_jump, (Rectangle){player.x - player.width, player.y - gameplay_koala_jump.height/4, gameplay_koala_jump.width, gameplay_koala_jump.height}, (Vector2){0, 0}, 0, RL_WHITE); break;
+            case KICK:DrawTexturePro(atlas01, gameplay_koala_dash, (Rectangle){player.x - player.width, player.y - gameplay_koala_jump.height/4, gameplay_koala_dash.width, gameplay_koala_dash.height}, (Vector2){0, 0}, 0, RL_WHITE);  break;
             case FINALFORM:
             {
                 if(transforming)DrawTexturePro(atlas01, koalaAnimationTransform, (Rectangle){player.x - player.width, player.y - gameplay_koala_transform.height/4, gameplay_koala_transform.width/2, gameplay_koala_transform.height}, (Vector2){0, 0}, 0, finalColor);
-                else DrawTexturePro(atlas01, koalaAnimationFly, (Rectangle){player.x - gameplay_koala_fly.width/3, player.y - gameplay_koala_fly.height/4, gameplay_koala_fly.width/2, gameplay_koala_fly.height}, (Vector2){0, 0}, 0, finalColor);//DrawTextureRec((koalaFly), (Rectangle){0, 0, 128, 128}, (Vector2){player.x - 50, player.y - 40}, WHITE);
+                else DrawTexturePro(atlas01, koalaAnimationFly, (Rectangle){player.x - gameplay_koala_fly.width/3, player.y - gameplay_koala_fly.height/4, gameplay_koala_fly.width/2, gameplay_koala_fly.height}, (Vector2){0, 0}, 0, finalColor);//DrawTextureRec((koalaFly), (Rectangle){0, 0, 128, 128}, (Vector2){player.x - 50, player.y - 40}, RL_WHITE);
             
             } break;
-            case ONWIND: DrawTexturePro(atlas01, gameplay_koala_jump, (Rectangle){player.x - player.width, player.y - gameplay_koala_jump.height/4, gameplay_koala_jump.width, gameplay_koala_jump.height}, (Vector2) { 0, 0}, 0, WHITE); break;
+            case ONWIND: DrawTexturePro(atlas01, gameplay_koala_jump, (Rectangle){player.x - player.width, player.y - gameplay_koala_jump.height/4, gameplay_koala_jump.width, gameplay_koala_jump.height}, (Vector2) { 0, 0}, 0, RL_WHITE); break;
             default: break;
         }
     }
-    else if (play == false && playerActive) DrawTextureRec(atlas01, (Rectangle){gameplay_koala_idle.x, gameplay_koala_idle.y, gameplay_koala_idle.width/3, gameplay_koala_idle.height}, (Vector2){player.x - player.width, player.y - gameplay_koala_idle.height/4}, WHITE);
-    else DrawTexturePro(atlas01, gameplay_koala_die, (Rectangle){player.x - player.width, player.y - gameplay_koala_die.height/4, gameplay_koala_die.width, gameplay_koala_die.height}, (Vector2) { 0, 0}, 0, WHITE);
+    else if (play == false && playerActive) DrawTextureRec(atlas01, (Rectangle){gameplay_koala_idle.x, gameplay_koala_idle.y, gameplay_koala_idle.width/3, gameplay_koala_idle.height}, (Vector2){player.x - player.width, player.y - gameplay_koala_idle.height/4}, RL_WHITE);
+    else DrawTexturePro(atlas01, gameplay_koala_die, (Rectangle){player.x - player.width, player.y - gameplay_koala_die.height/4, gameplay_koala_die.width, gameplay_koala_die.height}, (Vector2) { 0, 0}, 0, RL_WHITE);
 
     for (int i = 0; i < MAX_WIND; i++)
     {
-        if (windActive[i]) DrawTextureRec(atlas01, windAnimation, (Vector2){wind[i].x - 14, wind[i].y - 14}, WHITE);
+        if (windActive[i]) DrawTextureRec(atlas01, windAnimation, (Vector2){wind[i].x - 14, wind[i].y - 14}, RL_WHITE);
     }
 
     if (playerActive && !play) 
@@ -2836,7 +2836,7 @@ void DrawGameplayScreen(void)
     // Draw Speed Particles
     for (int i = 0; i < MAX_PARTICLES_SPEED; i++)
     {
-       if (speedFX.particle[i].active) DrawRectangle(speedFX.particle[i].position.x, speedFX.particle[i].position.y, speedFX.particle[i].size.x, speedFX.particle[i].size.y , Fade(WHITE, speedFX.particle[i].alpha));
+       if (speedFX.particle[i].active) DrawRectangle(speedFX.particle[i].position.x, speedFX.particle[i].position.y, speedFX.particle[i].size.x, speedFX.particle[i].size.y , Fade(RL_WHITE, speedFX.particle[i].alpha));
     }
 
     for (int i = 0; i < MAX_PARTICLES_STORM; i++)
@@ -2865,23 +2865,23 @@ void DrawGameplayScreen(void)
 
     if (fogAlpha != 0)
     {
-        DrawTexturePro(atlas02, background_fog02, (Rectangle){ fogPosition, GetScreenHeight()*0.6, GetScreenWidth(), background_fog02.height}, (Vector2){ 0 , 0 }, 0, Fade(WHITE, fogAlpha));
-        DrawTexturePro(atlas02, background_fog02, (Rectangle){ fogPosition+GetScreenWidth(), GetScreenHeight()*0.6, GetScreenWidth(), background_fog02.height}, (Vector2){ 0 , 0 }, 0, Fade(WHITE, fogAlpha));
+        DrawTexturePro(atlas02, background_fog02, (Rectangle){ fogPosition, GetScreenHeight()*0.6, GetScreenWidth(), background_fog02.height}, (Vector2){ 0 , 0 }, 0, Fade(RL_WHITE, fogAlpha));
+        DrawTexturePro(atlas02, background_fog02, (Rectangle){ fogPosition+GetScreenWidth(), GetScreenHeight()*0.6, GetScreenWidth(), background_fog02.height}, (Vector2){ 0 , 0 }, 0, Fade(RL_WHITE, fogAlpha));
     }
     
-    if (filterAlpha != 0 && state != FINALFORM) DrawRectangle(0, 0, GetScreenWidth(), GetScreenHeight(), Fade(SKYBLUE, filterAlpha));
+    if (filterAlpha != 0 && state != FINALFORM) DrawRectangle(0, 0, GetScreenWidth(), GetScreenHeight(), Fade(RL_SKYBLUE, filterAlpha));
 
-    DrawTexturePro(atlas01, gameplay_gui_leafcounter_base, (Rectangle){ 0, 0, gameplay_gui_leafcounter_base.width, gameplay_gui_leafcounter_base.height}, (Vector2){ 0 , 0 }, 0, WHITE);
+    DrawTexturePro(atlas01, gameplay_gui_leafcounter_base, (Rectangle){ 0, 0, gameplay_gui_leafcounter_base.width, gameplay_gui_leafcounter_base.height}, (Vector2){ 0 , 0 }, 0, RL_WHITE);
 
     DrawTexturePro(atlas01, gameplay_gui_seasonsclock_disc, (Rectangle) {GetScreenWidth(), 0, gameplay_gui_seasonsclock_disc.width, gameplay_gui_seasonsclock_disc.height}, (Vector2) {gameplay_gui_seasonsclock_disc.width/2, gameplay_gui_seasonsclock_disc.height/2},     // Draw a part of a texture defined by a rectangle with 'pro' parameters
-                    clockRotation, Fade(WHITE, UIfade));
+                    clockRotation, Fade(RL_WHITE, UIfade));
 
-    DrawTexturePro(atlas01, gameplay_gui_seasonsclock_base, (Rectangle){ (GetScreenWidth() - gameplay_gui_seasonsclock_base.width ), 0, gameplay_gui_seasonsclock_base.width, gameplay_gui_seasonsclock_base.height}, (Vector2){ 0 , 0 }, 0, Fade(WHITE, UIfade));
+    DrawTexturePro(atlas01, gameplay_gui_seasonsclock_base, (Rectangle){ (GetScreenWidth() - gameplay_gui_seasonsclock_base.width ), 0, gameplay_gui_seasonsclock_base.width, gameplay_gui_seasonsclock_base.height}, (Vector2){ 0 , 0 }, 0, Fade(RL_WHITE, UIfade));
     
     for (int i = 0; i < 20; i++)
     {
-        if (((currentLeaves/5) > i) && (state != FINALFORM)) DrawTexturePro(atlas01, gameplay_gui_leafcounter_cell, (Rectangle) {87, 83, gameplay_gui_leafcounter_cell.width, gameplay_gui_leafcounter_cell.height}, (Vector2) {gameplay_gui_leafcounter_cell.width/4, 69}, i*(-18), WHITE);
-        else if ((power/18 >= i) && (state == FINALFORM)) DrawTexturePro(atlas01, gameplay_gui_leafcounter_cell, (Rectangle) {87, 83, gameplay_gui_leafcounter_cell.width, gameplay_gui_leafcounter_cell.height}, (Vector2) {gameplay_gui_leafcounter_cell.width/4, 69}, i*(-18), WHITE);
+        if (((currentLeaves/5) > i) && (state != FINALFORM)) DrawTexturePro(atlas01, gameplay_gui_leafcounter_cell, (Rectangle) {87, 83, gameplay_gui_leafcounter_cell.width, gameplay_gui_leafcounter_cell.height}, (Vector2) {gameplay_gui_leafcounter_cell.width/4, 69}, i*(-18), RL_WHITE);
+        else if ((power/18 >= i) && (state == FINALFORM)) DrawTexturePro(atlas01, gameplay_gui_leafcounter_cell, (Rectangle) {87, 83, gameplay_gui_leafcounter_cell.width, gameplay_gui_leafcounter_cell.height}, (Vector2) {gameplay_gui_leafcounter_cell.width/4, 69}, i*(-18), RL_WHITE);
     }
 
     if ((currentLeaves >= LEAVESTOTRANSFORM) && (state != FINALFORM)) 
@@ -2892,20 +2892,20 @@ void DrawGameplayScreen(void)
                       
         DrawTexturePro(atlas01, gameplay_gui_leafcounter_glow, 
                         (Rectangle){ 84, 83, gameplay_gui_leafcounter_glow.width, gameplay_gui_leafcounter_glow.height}, 
-                        (Vector2){ gameplay_gui_leafcounter_glow.width/2 , gameplay_gui_leafcounter_glow.height/2 }, 0, Fade(WHITE, leafGUIglowFade));
+                        (Vector2){ gameplay_gui_leafcounter_glow.width/2 , gameplay_gui_leafcounter_glow.height/2 }, 0, Fade(RL_WHITE, leafGUIglowFade));
     }
     
     if ((play == false) && playerActive)
     {
         if (startNum == 3) DrawTexturePro(atlas01, gameplay_countdown_3, 
                       (Rectangle){ GetScreenWidth()/2, GetScreenHeight()/2, gameplay_countdown_3.width*numberScale, gameplay_countdown_3.height*numberScale}, 
-                      (Vector2){ gameplay_countdown_3.width*numberScale/2 , gameplay_countdown_3.height*numberScale/2 }, 0, Fade(RED, numberAlpha));
+                      (Vector2){ gameplay_countdown_3.width*numberScale/2 , gameplay_countdown_3.height*numberScale/2 }, 0, Fade(RL_RED, numberAlpha));
         else if (startNum == 2) DrawTexturePro(atlas01, gameplay_countdown_2, 
                       (Rectangle){ GetScreenWidth()/2, GetScreenHeight()/2, gameplay_countdown_2.width*numberScale, gameplay_countdown_2.height*numberScale}, 
-                      (Vector2){ gameplay_countdown_2.width*numberScale/2 , gameplay_countdown_2.height*numberScale/2 }, 0, Fade(RED, leafGUIpulseFade));
+                      (Vector2){ gameplay_countdown_2.width*numberScale/2 , gameplay_countdown_2.height*numberScale/2 }, 0, Fade(RL_RED, leafGUIpulseFade));
         else if (startNum == 1) DrawTexturePro(atlas01, gameplay_countdown_1, 
                       (Rectangle){ GetScreenWidth()/2, GetScreenHeight()/2, gameplay_countdown_1.width*numberScale, gameplay_countdown_1.height*numberScale}, 
-                      (Vector2){ gameplay_countdown_1.width*numberScale/2 , gameplay_countdown_1.height*numberScale/2 }, 0, Fade(RED, leafGUIpulseFade));
+                      (Vector2){ gameplay_countdown_1.width*numberScale/2 , gameplay_countdown_1.height*numberScale/2 }, 0, Fade(RL_RED, leafGUIpulseFade));
     }        
 
     // Draw text elements
@@ -2953,60 +2953,60 @@ void DrawGameplayScreen(void)
     }
     
 #if defined(DEBUG)
-    DrawRectangle(player.x, player.y, player.width, player.height, Fade(WHITE, 0.5));
+    DrawRectangle(player.x, player.y, player.width, player.height, Fade(RL_WHITE, 0.5));
     
     for (int i = 0; i < MAX_WIND; i++)
     {
-        if (windActive[i]) DrawRectangleRec(wind[i], Fade (GRAY, 0.4));
+        if (windActive[i]) DrawRectangleRec(wind[i], Fade (RL_GRAY, 0.4));
     }
     
     for (int i = 0; i < MAX_ENEMIES; i++)
     {
-        if (owlActive[i]) DrawRectangleRec(owl[i], Fade(BLACK, 0.5f));
-        if (dingoActive[i]) DrawRectangleRec(dingo[i], Fade(BLACK, 0.5f));
-        if (snakeActive[i]) DrawRectangleRec(snake[i], BLACK);
+        if (owlActive[i]) DrawRectangleRec(owl[i], Fade(RL_BLACK, 0.5f));
+        if (dingoActive[i]) DrawRectangleRec(dingo[i], Fade(RL_BLACK, 0.5f));
+        if (snakeActive[i]) DrawRectangleRec(snake[i], RL_BLACK);
     }
     
-    if (beeActive) DrawRectangleRec(bee, Fade(BLACK, 0.5f));
-    if (eagleActive) DrawRectangleRec(eagle, Fade(BLACK, 0.5f));
+    if (beeActive) DrawRectangleRec(bee, Fade(RL_BLACK, 0.5f));
+    if (eagleActive) DrawRectangleRec(eagle, Fade(RL_BLACK, 0.5f));
 
     switch (season)
     {
         case WINTER:
         {
-            if (currentMonth == 5) DrawText("June", GetScreenWidth() - 140, GetScreenHeight() - 20, 20, RED);
-            if (currentMonth == 6) DrawText("July", GetScreenWidth() - 140, GetScreenHeight() - 20, 20, RED);
+            if (currentMonth == 5) DrawText("June", GetScreenWidth() - 140, GetScreenHeight() - 20, 20, RL_RED);
+            if (currentMonth == 6) DrawText("July", GetScreenWidth() - 140, GetScreenHeight() - 20, 20, RL_RED);
 
         } break;
         case SPRING:
         {
-            if (currentMonth == 8) DrawText("September", GetScreenWidth() - 140, GetScreenHeight() - 20, 20, RED);
-            if (currentMonth == 9) DrawText("October", GetScreenWidth() - 140, GetScreenHeight() - 20, 20, RED);
+            if (currentMonth == 8) DrawText("September", GetScreenWidth() - 140, GetScreenHeight() - 20, 20, RL_RED);
+            if (currentMonth == 9) DrawText("October", GetScreenWidth() - 140, GetScreenHeight() - 20, 20, RL_RED);
 
         } break;
         case SUMMER:
         {
-            if (currentMonth == 11) DrawText("December", GetScreenWidth() - 140, GetScreenHeight() - 20, 20, RED);
-            if (currentMonth == 0) DrawText("January", GetScreenWidth() - 140, GetScreenHeight() - 20, 20, RED);
+            if (currentMonth == 11) DrawText("December", GetScreenWidth() - 140, GetScreenHeight() - 20, 20, RL_RED);
+            if (currentMonth == 0) DrawText("January", GetScreenWidth() - 140, GetScreenHeight() - 20, 20, RL_RED);
 
         } break;
         case FALL:
         {
-            if (currentMonth == 2) DrawText("March", GetScreenWidth() - 140, GetScreenHeight() - 20, 20, RED);
-            if (currentMonth == 3) DrawText("April", GetScreenWidth() - 140, GetScreenHeight() - 20, 20, RED);
+            if (currentMonth == 2) DrawText("March", GetScreenWidth() - 140, GetScreenHeight() - 20, 20, RL_RED);
+            if (currentMonth == 3) DrawText("April", GetScreenWidth() - 140, GetScreenHeight() - 20, 20, RL_RED);
 
         } break;
         case TRANSITION:
         {
-            if (currentMonth == 4) DrawText("May", GetScreenWidth() - 140, GetScreenHeight() - 20, 20, RED);
+            if (currentMonth == 4) DrawText("May", GetScreenWidth() - 140, GetScreenHeight() - 20, 20, RL_RED);
             
         } break;
         default: break;
     }
     
-    DrawText(FormatText("Score: %02i", score), 140, GetScreenHeight() - 20, 20, RED);
-    DrawText(FormatText("HighScore: %02i", hiscore), 600, GetScreenHeight() - 20, 20, RED);
-    DrawText(FormatText("SeasonChange: %03i", seasonTimer), 300, GetScreenHeight() - 20, 20, RED);
+    DrawText(FormatText("Score: %02i", score), 140, GetScreenHeight() - 20, 20, RL_RED);
+    DrawText(FormatText("HighScore: %02i", hiscore), 600, GetScreenHeight() - 20, 20, RL_RED);
+    DrawText(FormatText("SeasonChange: %03i", seasonTimer), 300, GetScreenHeight() - 20, 20, RL_RED);
 #endif
 }
 
@@ -3449,7 +3449,7 @@ static void Reset(void)
     killCounter = 0;
     currentLeaves = 0;
     clockRotation = 0;
-    flyColor = GRAY;
+    flyColor = RL_GRAY;
     globalFrameCounter = 0;
     startCounter = 0;
     numberAlpha = 1;
@@ -3646,35 +3646,35 @@ static void Reset(void)
         snowParticle.particles[j].position = (Vector2){ 0, 0 };
         snowParticle.particles[j].size = (float)GetRandomValue(3, 9)/10;
         snowParticle.particles[j].rotation = GetRandomValue(0, 360);
-        snowParticle.particles[j].color = WHITE;
+        snowParticle.particles[j].color = RL_WHITE;
         snowParticle.particles[j].alpha = 1.0f;
 
         backSnowParticle.particles[j].active = false;
         backSnowParticle.particles[j].position = (Vector2){ 0, 0 };
         backSnowParticle.particles[j].size = (float)GetRandomValue(2, 8)/10;
         backSnowParticle.particles[j].rotation = GetRandomValue(0, 360);
-        backSnowParticle.particles[j].color = WHITE;
+        backSnowParticle.particles[j].color = RL_WHITE;
         backSnowParticle.particles[j].alpha = 0.7f;
 
         planetreeParticle.particles[j].active = false;
         planetreeParticle.particles[j].position = (Vector2){ 0, 0 };
         planetreeParticle.particles[j].size = (float)GetRandomValue(3, 9)/10;
         planetreeParticle.particles[j].rotation = GetRandomValue(0, 360);
-        planetreeParticle.particles[j].color = WHITE;
+        planetreeParticle.particles[j].color = RL_WHITE;
         planetreeParticle.particles[j].alpha = 1.0f;
 
         backPlanetreeParticle.particles[j].active = false;
         backPlanetreeParticle.particles[j].position = (Vector2){ 0, 0 };
         backPlanetreeParticle.particles[j].size = (float)GetRandomValue(2, 8)/10;
         backPlanetreeParticle.particles[j].rotation = GetRandomValue(0, 360);
-        backPlanetreeParticle.particles[j].color = WHITE;
+        backPlanetreeParticle.particles[j].color = RL_WHITE;
         backPlanetreeParticle.particles[j].alpha = 0.7f;
 
         dandelionParticle.particles[j].active = false;
         dandelionParticle.particles[j].position = (Vector2){ 0, 0 };
         dandelionParticle.particles[j].size = (float)GetRandomValue(3, 9)/10;
         dandelionParticle.particles[j].rotation = 0;
-        dandelionParticle.particles[j].color = WHITE;
+        dandelionParticle.particles[j].color = RL_WHITE;
         dandelionParticle.particles[j].alpha = 1;
         dandelionParticle.particles[j].rotPhy = GetRandomValue(0 , 180);
 
@@ -3682,7 +3682,7 @@ static void Reset(void)
         dandelionBackParticle.particles[j].position = (Vector2){ 0, 0 };
         dandelionBackParticle.particles[j].size = (float)GetRandomValue(2, 8)/10;
         dandelionBackParticle.particles[j].rotation = 0;
-        dandelionBackParticle.particles[j].color = WHITE;
+        dandelionBackParticle.particles[j].color = RL_WHITE;
         dandelionBackParticle.particles[j].alpha = 0.7f;
         dandelionBackParticle.particles[j].rotPhy = GetRandomValue(0 , 180);
 
@@ -3690,28 +3690,28 @@ static void Reset(void)
         flowerParticle.particles[j].position = (Vector2){ 0, 0 };
         flowerParticle.particles[j].size = (float)GetRandomValue(3, 9)/10;
         flowerParticle.particles[j].rotation = GetRandomValue(0, 360);
-        flowerParticle.particles[j].color = WHITE;
+        flowerParticle.particles[j].color = RL_WHITE;
         flowerParticle.particles[j].alpha = 1.0f;
 
         backFlowerParticle.particles[j].active = false;
         backFlowerParticle.particles[j].position = (Vector2){ 0, 0 };
         backFlowerParticle.particles[j].size = (float)GetRandomValue(2, 8)/10;
         backFlowerParticle.particles[j].rotation = GetRandomValue(0, 360);
-        backFlowerParticle.particles[j].color = WHITE;
+        backFlowerParticle.particles[j].color = RL_WHITE;
         backFlowerParticle.particles[j].alpha = 0.7f;
 
         rainParticle.particles[j].active = false;
         rainParticle.particles[j].position = (Vector2){ 0, 0 };
         rainParticle.particles[j].size = (float)GetRandomValue(3, 9)/10;
         rainParticle.particles[j].rotation = -20;
-        rainParticle.particles[j].color = WHITE;
+        rainParticle.particles[j].color = RL_WHITE;
         rainParticle.particles[j].alpha = 1.0f;
 
         backRainParticle.particles[j].active = false;
         backRainParticle.particles[j].position = (Vector2){ 0, 0 };
         backRainParticle.particles[j].size = (float)GetRandomValue(2, 8)/10;
         backRainParticle.particles[j].rotation = -20;
-        backRainParticle.particles[j].color = WHITE;
+        backRainParticle.particles[j].color = RL_WHITE;
         backRainParticle.particles[j].alpha = 0.7f;
 
     }
@@ -3719,7 +3719,7 @@ static void Reset(void)
     for (int j = 0; j < MAX_PARTICLES_SPEED; j++)
     {
         speedFX.particle[j].position = (Vector2){ 0, 0 };
-        speedFX.particle[j].color = WHITE;
+        speedFX.particle[j].color = RL_WHITE;
         speedFX.particle[j].alpha = 1.0f;
         speedFX.particle[j].size = (Vector2){GetScreenWidth(), GetRandomValue(10, 50)/10};
         speedFX.particle[j].rotation = 0.0f;
@@ -3732,7 +3732,7 @@ static void Reset(void)
         rainStormParticle.particles[j].position = (Vector2){ 0, 0 };
         rainStormParticle.particles[j].size = (float)GetRandomValue(3, 9)/10;
         rainStormParticle.particles[j].rotation = -40;
-        rainStormParticle.particles[j].color = WHITE;
+        rainStormParticle.particles[j].color = RL_WHITE;
         rainStormParticle.particles[j].alpha = 1.0f;
     }
 
@@ -3742,7 +3742,7 @@ static void Reset(void)
         snowStormParticle.particles[j].position = (Vector2){ 0, 0 };
         snowStormParticle.particles[j].size = (float)GetRandomValue(2, 8)/10;
         snowStormParticle.particles[j].rotation = 40;
-        snowStormParticle.particles[j].color = WHITE;
+        snowStormParticle.particles[j].color = RL_WHITE;
         snowStormParticle.particles[j].alpha = 1.0f;
     }
 
@@ -3854,7 +3854,7 @@ static void Reset(void)
         enemyHit[i].speed = (Vector2){ (float)GetRandomValue(-500, 500)/100, (float)GetRandomValue(-500, 500)/100 };
         enemyHit[i].size = (float)GetRandomValue(1, 45)/30;
         enemyHit[i].rotation = GetRandomValue(0, 360);
-        enemyHit[i].color = RED;
+        enemyHit[i].color = RL_RED;
         enemyHit[i].alpha = 1.0f;
         enemyHit[i].active = false;
         
@@ -3890,7 +3890,7 @@ static void Reset(void)
             leafParticles[i].particles[j].speed = (Vector2){ (float)GetRandomValue(-500, 500)/100, (float)GetRandomValue(-500, 500)/100 };
             leafParticles[i].particles[j].size = (float)GetRandomValue(3, 10)/5;
             leafParticles[i].particles[j].rotation = GetRandomValue(0, 360);
-            leafParticles[i].particles[j].color = WHITE;
+            leafParticles[i].particles[j].color = RL_WHITE;
             leafParticles[i].particles[j].alpha = 1.0f;
         }
     }

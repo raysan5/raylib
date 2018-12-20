@@ -137,7 +137,7 @@ void UpdateTransition(void)
 
 void DrawTransition(void)
 {
-    DrawRectangle(0, 0, GetScreenWidth(), GetScreenHeight(), Fade(RAYWHITE, transAlpha));
+    DrawRectangle(0, 0, GetScreenWidth(), GetScreenHeight(), Fade(RL_RAYWHITE, transAlpha));
 }
 
 void UpdateDrawFrame(void)
@@ -335,7 +335,7 @@ void UpdateDrawFrame(void)
     //----------------------------------------------------------------------------------
     BeginDrawing();
     
-        ClearBackground(RAYWHITE);
+        ClearBackground(RL_RAYWHITE);
         
         switch(currentScreen) 
         {

@@ -1056,8 +1056,8 @@ void EndDrawing(void)
 
         if (((gifFramesCounter/15)%2) == 1)
         {
-            DrawCircle(30, screenHeight - 20, 10, RED);
-            DrawText("RECORDING", 50, screenHeight - 25, 10, MAROON);
+            DrawCircle(30, screenHeight - 20, 10, RL_RED);
+            DrawText("RECORDING", 50, screenHeight - 25, 10, RL_MAROON);
         }
 
         rlglDraw();                 // Draw RECORDING message
@@ -2423,9 +2423,9 @@ static bool InitGraphicsDevice(int width, int height)
     {
         EGL_RENDERABLE_TYPE, EGL_OPENGL_ES2_BIT,     // Type of context support -> Required on RPI?
         //EGL_SURFACE_TYPE, EGL_WINDOW_BIT,          // Don't use it on Android!
-        EGL_RED_SIZE, 8,            // RED color bit depth (alternative: 5)
-        EGL_GREEN_SIZE, 8,          // GREEN color bit depth (alternative: 6)
-        EGL_BLUE_SIZE, 8,           // BLUE color bit depth (alternative: 5)
+        EGL_RED_SIZE, 8,            // RL_RED color bit depth (alternative: 5)
+        EGL_GREEN_SIZE, 8,          // RL_GREEN color bit depth (alternative: 6)
+        EGL_BLUE_SIZE, 8,           // RL_BLUE color bit depth (alternative: 5)
         //EGL_ALPHA_SIZE, 8,        // ALPHA bit depth (required for transparent framebuffer)
         //EGL_TRANSPARENT_TYPE, EGL_NONE, // Request transparent framebuffer (EGL_TRANSPARENT_RGB does not work on RPI)
         EGL_DEPTH_SIZE, 16,         // Depth buffer size (Required to use Depth testing!)
@@ -2740,7 +2740,7 @@ static bool InitGraphicsDevice(int width, int height)
     rlMatrixMode(RL_MODELVIEW);                 // Switch back to MODELVIEW matrix
     rlLoadIdentity();                           // Reset current matrix (MODELVIEW)
 
-    ClearBackground(RAYWHITE);      // Default background color for raylib games :P
+    ClearBackground(RL_RAYWHITE);      // Default background color for raylib games :P
 
 #if defined(PLATFORM_ANDROID)
     windowReady = true;             // IMPORTANT!
@@ -4418,36 +4418,36 @@ static void LogoAnimation(void)
         //----------------------------------------------------------------------------------
         BeginDrawing();
 
-            ClearBackground(RAYWHITE);
+            ClearBackground(RL_RAYWHITE);
 
             if (state == 0)
             {
-                if ((framesCounter/12)%2) DrawRectangle(logoPositionX, logoPositionY, 16, 16, BLACK);
+                if ((framesCounter/12)%2) DrawRectangle(logoPositionX, logoPositionY, 16, 16, RL_BLACK);
             }
             else if (state == 1)
             {
-                DrawRectangle(logoPositionX, logoPositionY, topSideRecWidth, 16, BLACK);
-                DrawRectangle(logoPositionX, logoPositionY, 16, leftSideRecHeight, BLACK);
+                DrawRectangle(logoPositionX, logoPositionY, topSideRecWidth, 16, RL_BLACK);
+                DrawRectangle(logoPositionX, logoPositionY, 16, leftSideRecHeight, RL_BLACK);
             }
             else if (state == 2)
             {
-                DrawRectangle(logoPositionX, logoPositionY, topSideRecWidth, 16, BLACK);
-                DrawRectangle(logoPositionX, logoPositionY, 16, leftSideRecHeight, BLACK);
+                DrawRectangle(logoPositionX, logoPositionY, topSideRecWidth, 16, RL_BLACK);
+                DrawRectangle(logoPositionX, logoPositionY, 16, leftSideRecHeight, RL_BLACK);
 
-                DrawRectangle(logoPositionX + 240, logoPositionY, 16, rightSideRecHeight, BLACK);
-                DrawRectangle(logoPositionX, logoPositionY + 240, bottomSideRecWidth, 16, BLACK);
+                DrawRectangle(logoPositionX + 240, logoPositionY, 16, rightSideRecHeight, RL_BLACK);
+                DrawRectangle(logoPositionX, logoPositionY + 240, bottomSideRecWidth, 16, RL_BLACK);
             }
             else if (state == 3)
             {
-                DrawRectangle(logoPositionX, logoPositionY, topSideRecWidth, 16, Fade(BLACK, alpha));
-                DrawRectangle(logoPositionX, logoPositionY + 16, 16, leftSideRecHeight - 32, Fade(BLACK, alpha));
+                DrawRectangle(logoPositionX, logoPositionY, topSideRecWidth, 16, Fade(RL_BLACK, alpha));
+                DrawRectangle(logoPositionX, logoPositionY + 16, 16, leftSideRecHeight - 32, Fade(RL_BLACK, alpha));
 
-                DrawRectangle(logoPositionX + 240, logoPositionY + 16, 16, rightSideRecHeight - 32, Fade(BLACK, alpha));
-                DrawRectangle(logoPositionX, logoPositionY + 240, bottomSideRecWidth, 16, Fade(BLACK, alpha));
+                DrawRectangle(logoPositionX + 240, logoPositionY + 16, 16, rightSideRecHeight - 32, Fade(RL_BLACK, alpha));
+                DrawRectangle(logoPositionX, logoPositionY + 240, bottomSideRecWidth, 16, Fade(RL_BLACK, alpha));
 
-                DrawRectangle(screenWidth/2 - 112, screenHeight/2 - 112, 224, 224, Fade(RAYWHITE, alpha));
+                DrawRectangle(screenWidth/2 - 112, screenHeight/2 - 112, 224, 224, Fade(RL_RAYWHITE, alpha));
 
-                DrawText(SubText("raylib", 0, lettersCount), screenWidth/2 - 44, screenHeight/2 + 48, 50, Fade(BLACK, alpha));
+                DrawText(SubText("raylib", 0, lettersCount), screenWidth/2 - 44, screenHeight/2 + 48, 50, Fade(RL_BLACK, alpha));
             }
 
         EndDrawing();

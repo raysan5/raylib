@@ -146,7 +146,7 @@ void InitGameplayScreen(void)
 #else
     // Generate coding words atlas directly from text
     Image imWordsBase = LoadImage("resources/textures/words_base.png");
-    Image imWords = GenImageColor(imWordsBase.width, imWordsBase.height*MAX_CODING_WORDS, WHITE);
+    Image imWords = GenImageColor(imWordsBase.width, imWordsBase.height*MAX_CODING_WORDS, RL_WHITE);
     
     for (int i = 0; i < MAX_CODING_WORDS; i++)
     {
@@ -156,7 +156,7 @@ void InitGameplayScreen(void)
                   
         ImageDrawTextEx(&imWords,(Vector2){ imWordsBase.width/2 - MeasureTextEx(fontMessage, codingWords[i], 
                         fontMessage.baseSize, 0).x/2, imWordsBase.height*i }, fontMessage, codingWords[i], 
-                        fontMessage.baseSize, 0, BLACK); 
+                        fontMessage.baseSize, 0, RL_BLACK); 
     }
     
     texWordsAtlas = LoadTextureFromImage(imWords);
@@ -377,25 +377,25 @@ void UpdateGameplayScreen(void)
 // Gameplay Screen Draw logic
 void DrawGameplayScreen(void)
 {
-    DrawTexture(texBackground, 0, 0, WHITE);
+    DrawTexture(texBackground, 0, 0, RL_WHITE);
     
-    DrawTextEx(fontMessage, missions[currentMission].msg, msgOffset, fontMessage.baseSize, 0, BLACK);
+    DrawTextEx(fontMessage, missions[currentMission].msg, msgOffset, fontMessage.baseSize, 0, RL_BLACK);
     
     for (int i = 0; i < missions[currentMission].wordsCount; i++)
     {
         Rectangle recLines = messageWords[i].rec;
-        DrawRectangleLines(recLines.x, recLines.y, recLines.width, recLines.height, Fade(RED, 0.35f));
-        if(messageWords[i].hover) DrawRectangleRec(messageWords[i].rec, Fade(RED, 0.30f));
-        DrawText(FormatText("%i", messageWords[i].id), i*25, 0, 30, RED);
+        DrawRectangleLines(recLines.x, recLines.y, recLines.width, recLines.height, Fade(RL_RED, 0.35f));
+        if(messageWords[i].hover) DrawRectangleRec(messageWords[i].rec, Fade(RL_RED, 0.30f));
+        DrawText(FormatText("%i", messageWords[i].id), i*25, 0, 30, RL_RED);
     }
     for (int i = 0; i < MAX_CODING_WORDS; i++)
     {
-        if (words[i].picked) DrawTextureRec(texWordsAtlas, (Rectangle){ 0, i*35, 140, 35 }, (Vector2){ words[i].rec.x, words[i].rec.y }, MAROON);
-        else if (words[i].hover) DrawTextureRec(texWordsAtlas, (Rectangle){ 0, i*35, 140, 35 }, (Vector2){ words[i].rec.x, words[i].rec.y }, RED);
-        else DrawTextureRec(texWordsAtlas, (Rectangle){ 0, i*35, 140, 35 }, (Vector2){ words[i].rec.x, words[i].rec.y }, WHITE);
+        if (words[i].picked) DrawTextureRec(texWordsAtlas, (Rectangle){ 0, i*35, 140, 35 }, (Vector2){ words[i].rec.x, words[i].rec.y }, RL_MAROON);
+        else if (words[i].hover) DrawTextureRec(texWordsAtlas, (Rectangle){ 0, i*35, 140, 35 }, (Vector2){ words[i].rec.x, words[i].rec.y }, RL_RED);
+        else DrawTextureRec(texWordsAtlas, (Rectangle){ 0, i*35, 140, 35 }, (Vector2){ words[i].rec.x, words[i].rec.y }, RL_WHITE);
     }
     
-    DrawTexturePro(texVignette, (Rectangle){0,0,texVignette.width, texVignette.height}, (Rectangle){0,0,GetScreenWidth(), GetScreenHeight()}, (Vector2){0,0}, 0, WHITE);
+    DrawTexturePro(texVignette, (Rectangle){0,0,texVignette.width, texVignette.height}, (Rectangle){0,0,GetScreenWidth(), GetScreenHeight()}, (Vector2){0,0}, 0, RL_WHITE);
     
     if (canSend) DrawButton("enviar");
 }

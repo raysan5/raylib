@@ -54,14 +54,14 @@ int main()
         //----------------------------------------------------------------------------------
         BeginDrawing();
 
-            ClearBackground(RAYWHITE);
+            ClearBackground(RL_RAYWHITE);
             
             BeginVrDrawing();
 
                 BeginMode3D(camera);
 
-                    DrawCube(cubePosition, 2.0f, 2.0f, 2.0f, RED);
-                    DrawCubeWires(cubePosition, 2.0f, 2.0f, 2.0f, MAROON);
+                    DrawCube(cubePosition, 2.0f, 2.0f, 2.0f, RL_RED);
+                    DrawCubeWires(cubePosition, 2.0f, 2.0f, 2.0f, RL_MAROON);
 
                     DrawGrid(40, 1.0f);
 

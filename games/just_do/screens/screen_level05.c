@@ -66,16 +66,16 @@ void InitLevel05Screen(void)
     }
     
     // That's a dirty hack to give sonme coherence to this puzzle...
-    circleColor[9] = GRAY;
-    circleColor[8] = RAYWHITE;
-    circleColor[7] = RAYWHITE;
-    circleColor[6] = GRAY;
-    circleColor[5] = RAYWHITE;
-    circleColor[4] = GRAY;
-    circleColor[3] = GRAY;
-    circleColor[2] = GRAY;
-    circleColor[1] = RAYWHITE;
-    circleColor[0] = GRAY;
+    circleColor[9] = RL_GRAY;
+    circleColor[8] = RL_RAYWHITE;
+    circleColor[7] = RL_RAYWHITE;
+    circleColor[6] = RL_GRAY;
+    circleColor[5] = RL_RAYWHITE;
+    circleColor[4] = RL_GRAY;
+    circleColor[3] = RL_GRAY;
+    circleColor[2] = RL_GRAY;
+    circleColor[1] = RL_RAYWHITE;
+    circleColor[0] = RL_GRAY;
 }
 
 // Level05 Screen Update logic
@@ -94,23 +94,23 @@ void UpdateLevel05Screen(void)
                 {
                     if (i == 0)
                     {
-                        if (CheckColor(circleColor[8], GRAY)) circleColor[8] = RAYWHITE;
-                        else circleColor[8] = GRAY;
+                        if (CheckColor(circleColor[8], RL_GRAY)) circleColor[8] = RL_RAYWHITE;
+                        else circleColor[8] = RL_GRAY;
                     }
                     else if (i == 2)
                     {
-                        if (CheckColor(circleColor[5], GRAY)) circleColor[5] = RAYWHITE;
-                        else circleColor[5] = GRAY;
+                        if (CheckColor(circleColor[5], RL_GRAY)) circleColor[5] = RL_RAYWHITE;
+                        else circleColor[5] = RL_GRAY;
                     }
                     else if (i == 3)
                     {
-                        if (CheckColor(circleColor[6], GRAY)) circleColor[6] = RAYWHITE;
-                        else circleColor[6] = GRAY;
+                        if (CheckColor(circleColor[6], RL_GRAY)) circleColor[6] = RL_RAYWHITE;
+                        else circleColor[6] = RL_GRAY;
                     }
                     else
                     {
-                        if (CheckColor(circleColor[i], GRAY)) circleColor[i] = RAYWHITE;
-                        else circleColor[i] = GRAY;
+                        if (CheckColor(circleColor[i], RL_GRAY)) circleColor[i] = RL_RAYWHITE;
+                        else circleColor[i] = RL_GRAY;
                     }
                     return;
                 }
@@ -122,7 +122,7 @@ void UpdateLevel05Screen(void)
         {
             done = true;
             
-            if (CheckColor(circleColor[i], RAYWHITE))
+            if (CheckColor(circleColor[i], RL_RAYWHITE))
             {
                 done = false;
                 return;
@@ -160,11 +160,11 @@ void DrawLevel05Screen(void)
     
     if (levelFinished)
     {
-        DrawRectangleBordersRec((Rectangle){0, 0, GetScreenWidth(), GetScreenHeight()}, 0, 0, 60, Fade(LIGHTGRAY, 0.6f));
-        DrawText("LEVEL 05", GetScreenWidth()/2 - MeasureText("LEVEL 05", 30)/2, 20, 30, GRAY);
-        DrawText(FormatText("DONE! (Seconds: %03i)", levelTimeSec), GetScreenWidth()/2 - MeasureText("DONE! (Seconds: 000)", 30)/2, GetScreenHeight() - 40, 30, GRAY);
+        DrawRectangleBordersRec((Rectangle){0, 0, GetScreenWidth(), GetScreenHeight()}, 0, 0, 60, Fade(RL_LIGHTGRAY, 0.6f));
+        DrawText("LEVEL 05", GetScreenWidth()/2 - MeasureText("LEVEL 05", 30)/2, 20, 30, RL_GRAY);
+        DrawText(FormatText("DONE! (Seconds: %03i)", levelTimeSec), GetScreenWidth()/2 - MeasureText("DONE! (Seconds: 000)", 30)/2, GetScreenHeight() - 40, 30, RL_GRAY);
     }
-    else DrawText("LEVEL 05", GetScreenWidth()/2 - MeasureText("LEVEL 05", 30)/2, 20, 30, LIGHTGRAY);
+    else DrawText("LEVEL 05", GetScreenWidth()/2 - MeasureText("LEVEL 05", 30)/2, 20, 30, RL_LIGHTGRAY);
 }
 
 // Level05 Screen Unload logic

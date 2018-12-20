@@ -138,7 +138,7 @@ void InitGame(void)
     player.acceleration = 0;
     player.rotation = 0;
     player.collider = (Vector3){player.position.x + sin(player.rotation*RL_DEG2RAD)*(shipHeight/2.5f), player.position.y - cos(player.rotation*RL_DEG2RAD)*(shipHeight/2.5f), 12};
-    player.color = LIGHTGRAY;
+    player.color = RL_LIGHTGRAY;
 
     for (int i = 0; i < MAX_MEDIUM_METEORS; i++)
     {
@@ -177,7 +177,7 @@ void InitGame(void)
         mediumMeteor[i].speed = (Vector2){velx, vely};
         mediumMeteor[i].radius = 20;
         mediumMeteor[i].active = true;
-        mediumMeteor[i].color = GREEN;
+        mediumMeteor[i].color = RL_GREEN;
     }
 
     for (int i = 0; i < MAX_SMALL_METEORS; i++)
@@ -217,7 +217,7 @@ void InitGame(void)
         smallMeteor[i].speed = (Vector2){velx, vely};
         smallMeteor[i].radius = 10;
         smallMeteor[i].active = true;
-        smallMeteor[i].color = YELLOW;
+        smallMeteor[i].color = RL_YELLOW;
     }
 }
 
@@ -331,7 +331,7 @@ void DrawGame(void)
 {
     BeginDrawing();
 
-        ClearBackground(RAYWHITE);
+        ClearBackground(RL_RAYWHITE);
         
         if (!gameOver)
         {
@@ -339,26 +339,26 @@ void DrawGame(void)
             Vector2 v1 = { player.position.x + sinf(player.rotation*RL_DEG2RAD)*(shipHeight), player.position.y - cosf(player.rotation*RL_DEG2RAD)*(shipHeight) };
             Vector2 v2 = { player.position.x - cosf(player.rotation*RL_DEG2RAD)*(PLAYER_BASE_SIZE/2), player.position.y - sinf(player.rotation*RL_DEG2RAD)*(PLAYER_BASE_SIZE/2) };
             Vector2 v3 = { player.position.x + cosf(player.rotation*RL_DEG2RAD)*(PLAYER_BASE_SIZE/2), player.position.y + sinf(player.rotation*RL_DEG2RAD)*(PLAYER_BASE_SIZE/2) };
-            DrawTriangle(v1, v2, v3, MAROON);
+            DrawTriangle(v1, v2, v3, RL_MAROON);
 
             // Draw meteor
             for (int i = 0;i < MAX_MEDIUM_METEORS; i++)
             {
-                if (mediumMeteor[i].active) DrawCircleV(mediumMeteor[i].position, mediumMeteor[i].radius, GRAY);
-                else DrawCircleV(mediumMeteor[i].position, mediumMeteor[i].radius, Fade(LIGHTGRAY, 0.3f));
+                if (mediumMeteor[i].active) DrawCircleV(mediumMeteor[i].position, mediumMeteor[i].radius, RL_GRAY);
+                else DrawCircleV(mediumMeteor[i].position, mediumMeteor[i].radius, Fade(RL_LIGHTGRAY, 0.3f));
             }
 
             for (int i = 0;i < MAX_SMALL_METEORS; i++)
             {
-                if (smallMeteor[i].active) DrawCircleV(smallMeteor[i].position, smallMeteor[i].radius, DARKGRAY);
-                else DrawCircleV(smallMeteor[i].position, smallMeteor[i].radius, Fade(LIGHTGRAY, 0.3f));
+                if (smallMeteor[i].active) DrawCircleV(smallMeteor[i].position, smallMeteor[i].radius, RL_DARKGRAY);
+                else DrawCircleV(smallMeteor[i].position, smallMeteor[i].radius, Fade(RL_LIGHTGRAY, 0.3f));
             }
 
-            DrawText(FormatText("TIME: %.02f", (float)framesCounter/60), 10, 10, 20, BLACK);
+            DrawText(FormatText("TIME: %.02f", (float)framesCounter/60), 10, 10, 20, RL_BLACK);
 
-            if (pause) DrawText("GAME PAUSED", screenWidth/2 - MeasureText("GAME PAUSED", 40)/2, screenHeight/2 - 40, 40, GRAY);
+            if (pause) DrawText("GAME PAUSED", screenWidth/2 - MeasureText("GAME PAUSED", 40)/2, screenHeight/2 - 40, 40, RL_GRAY);
         }
-        else DrawText("PRESS [ENTER] TO PLAY AGAIN", GetScreenWidth()/2 - MeasureText("PRESS [ENTER] TO PLAY AGAIN", 20)/2, GetScreenHeight()/2 - 50, 20, GRAY);
+        else DrawText("PRESS [ENTER] TO PLAY AGAIN", GetScreenWidth()/2 - MeasureText("PRESS [ENTER] TO PLAY AGAIN", 20)/2, GetScreenHeight()/2 - 50, 20, RL_GRAY);
 
     EndDrawing();
     //----------------------------------------------------------------------------------

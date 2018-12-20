@@ -124,26 +124,26 @@ void UpdateLevel00Screen(void)
 void DrawLevel00Screen(void)
 {
     // Draw Level00 screen
-    DrawText("U", boundsU.x, boundsU.y + 10, 160, GRAY);
-    DrawText("J", GetScreenWidth()/2 - MeasureText("JUST DO", 160)/2, GetScreenHeight()/2 - 80, 160, GRAY);
-    DrawText("ST D", GetScreenWidth()/2 - MeasureText("JUST DO", 160)/2 + 210, GetScreenHeight()/2 - 80, 160, GRAY);
-    DrawText("O", boundsO.x, boundsO.y + 10, 160, GRAY);
+    DrawText("U", boundsU.x, boundsU.y + 10, 160, RL_GRAY);
+    DrawText("J", GetScreenWidth()/2 - MeasureText("JUST DO", 160)/2, GetScreenHeight()/2 - 80, 160, RL_GRAY);
+    DrawText("ST D", GetScreenWidth()/2 - MeasureText("JUST DO", 160)/2 + 210, GetScreenHeight()/2 - 80, 160, RL_GRAY);
+    DrawText("O", boundsO.x, boundsO.y + 10, 160, RL_GRAY);
     
-    DrawText("by RAMON SANTAMARIA (@raysan5)", 370, GetScreenHeight()/2 + 100, 30, Fade(LIGHTGRAY, 0.4f));
+    DrawText("by RAMON SANTAMARIA (@raysan5)", 370, GetScreenHeight()/2 + 100, 30, Fade(RL_LIGHTGRAY, 0.4f));
     
-    if (mouseOverU && !placedU) DrawRectangleLines(boundsU.x - 20, boundsU.y, boundsU.width, boundsU.height, Fade(LIGHTGRAY, 0.8f));
-    //DrawRectangleBordersRec(boundsU, -20, 0, 20, Fade(RED, 0.3f));
+    if (mouseOverU && !placedU) DrawRectangleLines(boundsU.x - 20, boundsU.y, boundsU.width, boundsU.height, Fade(RL_LIGHTGRAY, 0.8f));
+    //DrawRectangleBordersRec(boundsU, -20, 0, 20, Fade(RL_RED, 0.3f));
     
-    if (mouseOverO && !placedO) DrawRectangleLines(boundsO.x - 20, boundsO.y, boundsO.width, boundsO.height, Fade(LIGHTGRAY, 0.8f));
-    //DrawRectangleBordersRec(boundsO, -20, 0, 20, Fade(RED, 0.3f));
+    if (mouseOverO && !placedO) DrawRectangleLines(boundsO.x - 20, boundsO.y, boundsO.width, boundsO.height, Fade(RL_LIGHTGRAY, 0.8f));
+    //DrawRectangleBordersRec(boundsO, -20, 0, 20, Fade(RL_RED, 0.3f));
         
     if (levelFinished)
     {
-        DrawRectangleBordersRec((Rectangle){0, 0, GetScreenWidth(), GetScreenHeight()}, 0, 0, 60, Fade(LIGHTGRAY, 0.6f));
-        DrawText("LEVEL 00", GetScreenWidth()/2 - MeasureText("LEVEL 00", 30)/2, 20, 30, GRAY);
-        DrawText(FormatText("DONE! (Seconds: %03i)", levelTimeSec), GetScreenWidth()/2 - MeasureText("DONE! (Seconds: 000)", 30)/2, GetScreenHeight() - 40, 30, GRAY);
+        DrawRectangleBordersRec((Rectangle){0, 0, GetScreenWidth(), GetScreenHeight()}, 0, 0, 60, Fade(RL_LIGHTGRAY, 0.6f));
+        DrawText("LEVEL 00", GetScreenWidth()/2 - MeasureText("LEVEL 00", 30)/2, 20, 30, RL_GRAY);
+        DrawText(FormatText("DONE! (Seconds: %03i)", levelTimeSec), GetScreenWidth()/2 - MeasureText("DONE! (Seconds: 000)", 30)/2, GetScreenHeight() - 40, 30, RL_GRAY);
     }
-    else DrawText("LEVEL 00", GetScreenWidth()/2 - MeasureText("LEVEL 00", 30)/2, 20, 30, LIGHTGRAY);
+    else DrawText("LEVEL 00", GetScreenWidth()/2 - MeasureText("LEVEL 00", 30)/2, 20, 30, RL_LIGHTGRAY);
 }
 
 // Level00 Screen Unload logic

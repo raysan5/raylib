@@ -134,23 +134,23 @@ int main()
         //----------------------------------------------------------------------------------
         BeginDrawing();
         
-            ClearBackground(RAYWHITE);
+            ClearBackground(RL_RAYWHITE);
             
             // Draw background (common to all screens)
-            DrawTexture(sky, 0, 0, WHITE);
+            DrawTexture(sky, 0, 0, RL_WHITE);
             
-            DrawTexture(mountains, backScrolling, 0, WHITE);
-            DrawTexture(mountains, screenWidth + backScrolling, 0, WHITE);
+            DrawTexture(mountains, backScrolling, 0, RL_WHITE);
+            DrawTexture(mountains, screenWidth + backScrolling, 0, RL_WHITE);
             
             if (!gameraMode)
             {
-                DrawTexture(sea, seaScrolling, 0, BLUE);
-                DrawTexture(sea, screenWidth + seaScrolling, 0, BLUE);
+                DrawTexture(sea, seaScrolling, 0, RL_BLUE);
+                DrawTexture(sea, screenWidth + seaScrolling, 0, RL_BLUE);
             }
             else
             {
-                DrawTexture(sea, seaScrolling, 0, RED);
-                DrawTexture(sea, screenWidth + seaScrolling, 0, RED);
+                DrawTexture(sea, seaScrolling, 0, RL_RED);
+                DrawTexture(sea, screenWidth + seaScrolling, 0, RL_RED);
             }
             
             switch (currentScreen)
@@ -158,33 +158,33 @@ int main()
                 case TITLE:
                 {
                     // Draw title
-                    //DrawTexture(title, screenWidth/2 - title.width/2, screenHeight/2 - title.height/2 - 80, WHITE);
-                    DrawRectangle(380, 140, 500, 300, GRAY);
+                    //DrawTexture(title, screenWidth/2 - title.width/2, screenHeight/2 - title.height/2 - 80, RL_WHITE);
+                    DrawRectangle(380, 140, 500, 300, RL_GRAY);
                     
                     // Draw blinking text
-                    if ((framesCounter/30) % 2) DrawText("PRESS ENTER", 480, 480, 40, BLACK);
+                    if ((framesCounter/30) % 2) DrawText("PRESS ENTER", 480, 480, 40, RL_BLACK);
                 
                 } break;
                 case GAMEPLAY:
                 {                    
                     // Draw player
-                    //if (!gameraMode) DrawTexture(turtle, playerBounds.x - 14, playerBounds.y - 14, WHITE);
-                    //else DrawTexture(gamera, playerBounds.x - 64, playerBounds.y - 64, WHITE);
+                    //if (!gameraMode) DrawTexture(turtle, playerBounds.x - 14, playerBounds.y - 14, RL_WHITE);
+                    //else DrawTexture(gamera, playerBounds.x - 64, playerBounds.y - 64, RL_WHITE);
                     
                     // Draw player bounding box
-                    if (!gameraMode) DrawRectangleRec(playerBounds, GREEN);
-                    else DrawRectangleRec(playerBounds, ORANGE);
+                    if (!gameraMode) DrawRectangleRec(playerBounds, RL_GREEN);
+                    else DrawRectangleRec(playerBounds, RL_ORANGE);
             
                 } break;
                 case ENDING:
                 {
                     // Draw a transparent black rectangle that covers all screen
-                    DrawRectangle(0, 0, screenWidth, screenHeight, Fade(BLACK, 0.4f));
+                    DrawRectangle(0, 0, screenWidth, screenHeight, Fade(RL_BLACK, 0.4f));
                 
-                    DrawText("GAME OVER", 300, 200, 100, MAROON);
+                    DrawText("GAME OVER", 300, 200, 100, RL_MAROON);
                     
                     // Draw blinking text
-                    if ((framesCounter/30) % 2) DrawText("PRESS ENTER to REPLAY", 400, 420, 30, LIGHTGRAY);
+                    if ((framesCounter/30) % 2) DrawText("PRESS ENTER to REPLAY", 400, 420, 30, RL_LIGHTGRAY);
                     
                 } break;
                 default: break;

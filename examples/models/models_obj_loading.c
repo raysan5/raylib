@@ -48,11 +48,11 @@ int main()
         //----------------------------------------------------------------------------------
         BeginDrawing();
 
-            ClearBackground(RAYWHITE);
+            ClearBackground(RL_RAYWHITE);
 
             BeginMode3D(camera);
 
-                DrawModel(model, position, 0.2f, WHITE);   // Draw 3d model with texture
+                DrawModel(model, position, 0.2f, RL_WHITE);   // Draw 3d model with texture
 
                 DrawGrid(10, 1.0f);         // Draw a grid
 
@@ -60,7 +60,7 @@ int main()
 
             EndMode3D();
             
-            DrawText("(c) Castle 3D model by Alberto Cano", screenWidth - 200, screenHeight - 20, 10, GRAY);
+            DrawText("(c) Castle 3D model by Alberto Cano", screenWidth - 200, screenHeight - 20, 10, RL_GRAY);
 
             DrawFPS(10, 10);
 

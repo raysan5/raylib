@@ -110,8 +110,8 @@ int main()
     material.maps[MAP_DIFFUSE].texture = LoadTexture("../models/resources/pbr/trooper_albedo.png");   // Load model diffuse texture
     material.maps[MAP_NORMAL].texture = LoadTexture("../models/resources/pbr/trooper_normals.png");     // Load model normal texture
     material.maps[MAP_SPECULAR].texture = LoadTexture("../models/resources/pbr/trooper_roughness.png"); // Load model specular texture
-    material.maps[MAP_DIFFUSE].color = WHITE;
-    material.maps[MAP_SPECULAR].color = WHITE;
+    material.maps[MAP_DIFFUSE].color = RL_WHITE;
+    material.maps[MAP_SPECULAR].color = RL_WHITE;
     
     model.material = material;      // Apply material to model
 
@@ -153,11 +153,11 @@ int main()
         //----------------------------------------------------------------------------------
         BeginDrawing();
 
-            ClearBackground(RAYWHITE);
+            ClearBackground(RL_RAYWHITE);
 
             BeginMode3D(camera);
                 
-                DrawModel(model, position, 2.0f, WHITE);   // Draw 3d model with texture
+                DrawModel(model, position, 2.0f, RL_WHITE);   // Draw 3d model with texture
                 
                 DrawLight(spotLight);   // Draw spot light
                 DrawLight(dirLight);    // Draw directional light
@@ -268,30 +268,30 @@ void DrawLight(Light light)
     {
         case LIGHT_POINT:
         {
-            DrawSphereWires(light->position, 0.3f*light->intensity, 8, 8, (light->enabled ? light->diffuse : GRAY));
+            DrawSphereWires(light->position, 0.3f*light->intensity, 8, 8, (light->enabled ? light->diffuse : RL_GRAY));
             
-            DrawCircle3D(light->position, light->radius, (Vector3){ 0, 0, 0 }, 0.0f, (light->enabled ? light->diffuse : GRAY));
-            DrawCircle3D(light->position, light->radius, (Vector3){ 1, 0, 0 }, 90.0f, (light->enabled ? light->diffuse : GRAY));
-            DrawCircle3D(light->position, light->radius, (Vector3){ 0, 1, 0 },90.0f, (light->enabled ? light->diffuse : GRAY));
+            DrawCircle3D(light->position, light->radius, (Vector3){ 0, 0, 0 }, 0.0f, (light->enabled ? light->diffuse : RL_GRAY));
+            DrawCircle3D(light->position, light->radius, (Vector3){ 1, 0, 0 }, 90.0f, (light->enabled ? light->diffuse : RL_GRAY));
+            DrawCircle3D(light->position, light->radius, (Vector3){ 0, 1, 0 },90.0f, (light->enabled ? light->diffuse : RL_GRAY));
         } break;
         case LIGHT_DIRECTIONAL:
         {
-            DrawLine3D(light->position, light->target, (light->enabled ? light->diffuse : GRAY));
+            DrawLine3D(light->position, light->target, (light->enabled ? light->diffuse : RL_GRAY));
             
-            DrawSphereWires(light->position, 0.3f*light->intensity, 8, 8, (light->enabled ? light->diffuse : GRAY));
-            DrawCubeWires(light->target, 0.3f, 0.3f, 0.3f, (light->enabled ? light->diffuse : GRAY));
+            DrawSphereWires(light->position, 0.3f*light->intensity, 8, 8, (light->enabled ? light->diffuse : RL_GRAY));
+            DrawCubeWires(light->target, 0.3f, 0.3f, 0.3f, (light->enabled ? light->diffuse : RL_GRAY));
         } break;
         case LIGHT_SPOT:
         {
-            DrawLine3D(light->position, light->target, (light->enabled ? light->diffuse : GRAY));
+            DrawLine3D(light->position, light->target, (light->enabled ? light->diffuse : RL_GRAY));
             
             Vector3 dir = VectorSubtract(light->target, light->position);
             VectorNormalize(&dir);
             
-            DrawCircle3D(light->position, 0.5f, dir, 0.0f, (light->enabled ? light->diffuse : GRAY));
+            DrawCircle3D(light->position, 0.5f, dir, 0.0f, (light->enabled ? light->diffuse : RL_GRAY));
             
-            //DrawCylinderWires(light->position, 0.0f, 0.3f*light->coneAngle/50, 0.6f, 5, (light->enabled ? light->diffuse : GRAY));
-            DrawCubeWires(light->target, 0.3f, 0.3f, 0.3f, (light->enabled ? light->diffuse : GRAY));
+            //DrawCylinderWires(light->position, 0.0f, 0.3f*light->coneAngle/50, 0.6f, 5, (light->enabled ? light->diffuse : RL_GRAY));
+            DrawCubeWires(light->target, 0.3f, 0.3f, 0.3f, (light->enabled ? light->diffuse : RL_GRAY));
         } break;
         default: break;
     }

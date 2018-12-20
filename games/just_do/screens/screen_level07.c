@@ -70,9 +70,9 @@ void InitLevel07Screen(void)
     middleCircleActive = true;
     rightCircleActive = false;
     
-    leftCircleColor = GRAY;
-    middleCircleColor = GRAY;
-    rightCircleColor = GRAY;
+    leftCircleColor = RL_GRAY;
+    middleCircleColor = RL_GRAY;
+    rightCircleColor = RL_GRAY;
 }
 
 // Level07 Screen Update logic
@@ -91,25 +91,25 @@ void UpdateLevel07Screen(void)
             
             if (rightCircleActive && CheckCollisionPointCircle(GetMousePosition(), leftCirclePos, circleRadius))
             {
-                if (CheckColor(leftCircleColor, GRAY)) leftCircleColor = LIGHTGRAY;
-                else leftCircleColor = GRAY;
+                if (CheckColor(leftCircleColor, RL_GRAY)) leftCircleColor = RL_LIGHTGRAY;
+                else leftCircleColor = RL_GRAY;
             }
             
             if (middleCircleActive && CheckCollisionPointCircle(GetMousePosition(), middleCirclePos, circleRadius))
             {
-                if (CheckColor(middleCircleColor, GRAY)) middleCircleColor = LIGHTGRAY;
-                else middleCircleColor = GRAY;
+                if (CheckColor(middleCircleColor, RL_GRAY)) middleCircleColor = RL_LIGHTGRAY;
+                else middleCircleColor = RL_GRAY;
             }
             
             if (rightCircleActive && leftCircleActive && CheckCollisionPointCircle(GetMousePosition(), rightCirclePos, circleRadius))
             {
-                if (CheckColor(rightCircleColor, GRAY)) rightCircleColor = LIGHTGRAY;
-                else rightCircleColor = GRAY;
+                if (CheckColor(rightCircleColor, RL_GRAY)) rightCircleColor = RL_LIGHTGRAY;
+                else rightCircleColor = RL_GRAY;
             }
         }
     
         // Check all cicles done
-        if (CheckColor(leftCircleColor, LIGHTGRAY) && CheckColor(middleCircleColor, LIGHTGRAY) && CheckColor(rightCircleColor, LIGHTGRAY) &&
+        if (CheckColor(leftCircleColor, RL_LIGHTGRAY) && CheckColor(middleCircleColor, RL_LIGHTGRAY) && CheckColor(rightCircleColor, RL_LIGHTGRAY) &&
             !leftCircleActive && !middleCircleActive && !rightCircleActive)
         {
             done = true;
@@ -140,24 +140,24 @@ void DrawLevel07Screen(void)
     DrawCircleV(middleCirclePos, circleRadius, middleCircleColor);
     DrawCircleV(rightCirclePos, circleRadius, rightCircleColor);
     
-    if (leftCircleActive) DrawCircleV(leftBtnPos, btnRadius, GRAY);
-    else DrawCircleV(leftBtnPos, btnRadius, LIGHTGRAY);
+    if (leftCircleActive) DrawCircleV(leftBtnPos, btnRadius, RL_GRAY);
+    else DrawCircleV(leftBtnPos, btnRadius, RL_LIGHTGRAY);
     
-    if (middleCircleActive) DrawCircleV(middleBtnPos, btnRadius, GRAY);
-    else DrawCircleV(middleBtnPos, btnRadius, LIGHTGRAY);
+    if (middleCircleActive) DrawCircleV(middleBtnPos, btnRadius, RL_GRAY);
+    else DrawCircleV(middleBtnPos, btnRadius, RL_LIGHTGRAY);
     
-    if (rightCircleActive) DrawCircleV(rightBtnPos, btnRadius, GRAY);
-    else DrawCircleV(rightBtnPos, btnRadius, LIGHTGRAY);
+    if (rightCircleActive) DrawCircleV(rightBtnPos, btnRadius, RL_GRAY);
+    else DrawCircleV(rightBtnPos, btnRadius, RL_LIGHTGRAY);
     
     
     
     if (levelFinished)
     {
-        DrawRectangleBordersRec((Rectangle){0, 0, GetScreenWidth(), GetScreenHeight()}, 0, 0, 60, Fade(LIGHTGRAY, 0.6f));
-        DrawText("LEVEL 07", GetScreenWidth()/2 - MeasureText("LEVEL 07", 30)/2, 20, 30, GRAY);
-        DrawText(FormatText("DONE! (Seconds: %03i)", levelTimeSec), GetScreenWidth()/2 - MeasureText("DONE! (Seconds: 000)", 30)/2, GetScreenHeight() - 40, 30, GRAY);
+        DrawRectangleBordersRec((Rectangle){0, 0, GetScreenWidth(), GetScreenHeight()}, 0, 0, 60, Fade(RL_LIGHTGRAY, 0.6f));
+        DrawText("LEVEL 07", GetScreenWidth()/2 - MeasureText("LEVEL 07", 30)/2, 20, 30, RL_GRAY);
+        DrawText(FormatText("DONE! (Seconds: %03i)", levelTimeSec), GetScreenWidth()/2 - MeasureText("DONE! (Seconds: 000)", 30)/2, GetScreenHeight() - 40, 30, RL_GRAY);
     }
-    else DrawText("LEVEL 07", GetScreenWidth()/2 - MeasureText("LEVEL 07", 30)/2, 20, 30, LIGHTGRAY);
+    else DrawText("LEVEL 07", GetScreenWidth()/2 - MeasureText("LEVEL 07", 30)/2, 20, 30, RL_LIGHTGRAY);
 }
 
 // Level07 Screen Unload logic

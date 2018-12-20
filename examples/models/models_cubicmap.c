@@ -54,19 +54,19 @@ int main()
         //----------------------------------------------------------------------------------
         BeginDrawing();
 
-            ClearBackground(RAYWHITE);
+            ClearBackground(RL_RAYWHITE);
 
             BeginMode3D(camera);
 
-                DrawModel(model, mapPosition, 1.0f, WHITE);
+                DrawModel(model, mapPosition, 1.0f, RL_WHITE);
 
             EndMode3D();
             
-            DrawTextureEx(cubicmap, (Vector2){ screenWidth - cubicmap.width*4 - 20, 20 }, 0.0f, 4.0f, WHITE);
-            DrawRectangleLines(screenWidth - cubicmap.width*4 - 20, 20, cubicmap.width*4, cubicmap.height*4, GREEN);
+            DrawTextureEx(cubicmap, (Vector2){ screenWidth - cubicmap.width*4 - 20, 20 }, 0.0f, 4.0f, RL_WHITE);
+            DrawRectangleLines(screenWidth - cubicmap.width*4 - 20, 20, cubicmap.width*4, cubicmap.height*4, RL_GREEN);
             
-            DrawText("cubicmap image used to", 658, 90, 10, GRAY);
-            DrawText("generate map 3d model", 658, 104, 10, GRAY);
+            DrawText("cubicmap image used to", 658, 90, 10, RL_GRAY);
+            DrawText("generate map 3d model", 658, 104, 10, RL_GRAY);
 
             DrawFPS(10, 10);
 

@@ -147,7 +147,7 @@ void InitGame(void)
     player.rec.height = 20;
     player.speed.x = 5;
     player.speed.y = 5;
-    player.color = BLACK;
+    player.color = RL_BLACK;
 
     // Initialize enemies
     for (int i = 0; i < NUM_MAX_ENEMIES; i++)
@@ -159,7 +159,7 @@ void InitGame(void)
         enemy[i].speed.x = 5;
         enemy[i].speed.y = 5;
         enemy[i].active = true;
-        enemy[i].color = GRAY;
+        enemy[i].color = RL_GRAY;
     }
 
     // Initialize shoots
@@ -172,7 +172,7 @@ void InitGame(void)
         shoot[i].speed.x = 7;
         shoot[i].speed.y = 0;
         shoot[i].active = false;
-        shoot[i].color = MAROON;
+        shoot[i].color = RL_MAROON;
     }
 }
 
@@ -355,15 +355,15 @@ void DrawGame(void)
 {
     BeginDrawing();
 
-        ClearBackground(RAYWHITE);
+        ClearBackground(RL_RAYWHITE);
         
         if (!gameOver)
         {
             DrawRectangleRec(player.rec, player.color);
 
-            if (wave == FIRST) DrawText("FIRST WAVE", screenWidth/2 - MeasureText("FIRST WAVE", 40)/2, screenHeight/2 - 40, 40, Fade(BLACK, alpha));
-            else if (wave == SECOND) DrawText("SECOND WAVE", screenWidth/2 - MeasureText("SECOND WAVE", 40)/2, screenHeight/2 - 40, 40, Fade(BLACK, alpha));
-            else if (wave == THIRD) DrawText("THIRD WAVE", screenWidth/2 - MeasureText("THIRD WAVE", 40)/2, screenHeight/2 - 40, 40, Fade(BLACK, alpha));
+            if (wave == FIRST) DrawText("FIRST WAVE", screenWidth/2 - MeasureText("FIRST WAVE", 40)/2, screenHeight/2 - 40, 40, Fade(RL_BLACK, alpha));
+            else if (wave == SECOND) DrawText("SECOND WAVE", screenWidth/2 - MeasureText("SECOND WAVE", 40)/2, screenHeight/2 - 40, 40, Fade(RL_BLACK, alpha));
+            else if (wave == THIRD) DrawText("THIRD WAVE", screenWidth/2 - MeasureText("THIRD WAVE", 40)/2, screenHeight/2 - 40, 40, Fade(RL_BLACK, alpha));
             
             for (int i = 0; i < activeEnemies; i++)
             {
@@ -375,13 +375,13 @@ void DrawGame(void)
                 if (shoot[i].active) DrawRectangleRec(shoot[i].rec, shoot[i].color);
             }
             
-            DrawText(FormatText("%04i", score), 20, 20, 40, GRAY);
+            DrawText(FormatText("%04i", score), 20, 20, 40, RL_GRAY);
         
-            if (victory) DrawText("YOU WIN", screenWidth/2 - MeasureText("YOU WIN", 40)/2, screenHeight/2 - 40, 40, BLACK);
+            if (victory) DrawText("YOU WIN", screenWidth/2 - MeasureText("YOU WIN", 40)/2, screenHeight/2 - 40, 40, RL_BLACK);
         
-            if (pause) DrawText("GAME PAUSED", screenWidth/2 - MeasureText("GAME PAUSED", 40)/2, screenHeight/2 - 40, 40, GRAY);
+            if (pause) DrawText("GAME PAUSED", screenWidth/2 - MeasureText("GAME PAUSED", 40)/2, screenHeight/2 - 40, 40, RL_GRAY);
         }
-        else DrawText("PRESS [ENTER] TO PLAY AGAIN", GetScreenWidth()/2 - MeasureText("PRESS [ENTER] TO PLAY AGAIN", 20)/2, GetScreenHeight()/2 - 50, 20, GRAY);
+        else DrawText("PRESS [ENTER] TO PLAY AGAIN", GetScreenWidth()/2 - MeasureText("PRESS [ENTER] TO PLAY AGAIN", 20)/2, GetScreenHeight()/2 - 50, 20, RL_GRAY);
 
     EndDrawing();
 }

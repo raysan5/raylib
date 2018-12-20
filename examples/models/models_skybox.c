@@ -63,11 +63,11 @@ int main()
         //----------------------------------------------------------------------------------
         BeginDrawing();
 
-            ClearBackground(RAYWHITE);
+            ClearBackground(RL_RAYWHITE);
 
             BeginMode3D(camera);
 
-                DrawModel(skybox, (Vector3){0, 0, 0}, 1.0f, WHITE);
+                DrawModel(skybox, (Vector3){0, 0, 0}, 1.0f, RL_WHITE);
                 
                 DrawGrid(10, 1.0f);
 

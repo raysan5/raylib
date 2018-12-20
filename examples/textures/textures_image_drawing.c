@@ -41,7 +41,7 @@ int main()
     Font font = LoadFont("resources/custom_jupiter_crash.png");
     
     // Draw over image using custom font
-    ImageDrawTextEx(&parrots, (Vector2){ 300, 230 }, font, "PARROTS & CAT", font.baseSize, -2, WHITE);
+    ImageDrawTextEx(&parrots, (Vector2){ 300, 230 }, font, "PARROTS & CAT", font.baseSize, -2, RL_WHITE);
     
     UnloadFont(font); // Unload custom spritefont (already drawn used on image)
 
@@ -63,13 +63,13 @@ int main()
         //----------------------------------------------------------------------------------
         BeginDrawing();
 
-            ClearBackground(RAYWHITE);
+            ClearBackground(RL_RAYWHITE);
 
-            DrawTexture(texture, screenWidth/2 - texture.width/2, screenHeight/2 - texture.height/2 - 40, WHITE);
-            DrawRectangleLines(screenWidth/2 - texture.width/2, screenHeight/2 - texture.height/2 - 40, texture.width, texture.height, DARKGRAY);
+            DrawTexture(texture, screenWidth/2 - texture.width/2, screenHeight/2 - texture.height/2 - 40, RL_WHITE);
+            DrawRectangleLines(screenWidth/2 - texture.width/2, screenHeight/2 - texture.height/2 - 40, texture.width, texture.height, RL_DARKGRAY);
 
-            DrawText("We are drawing only one texture from various images composed!", 240, 350, 10, DARKGRAY);
-            DrawText("Source images have been cropped, scaled, flipped and copied one over the other.", 190, 370, 10, DARKGRAY);
+            DrawText("We are drawing only one texture from various images composed!", 240, 350, 10, RL_DARKGRAY);
+            DrawText("Source images have been cropped, scaled, flipped and copied one over the other.", 190, 370, 10, RL_DARKGRAY);
 
         EndDrawing();
         //----------------------------------------------------------------------------------

@@ -214,13 +214,13 @@ typedef unsigned char byte;
     } Mesh;
 
     // Shader and material limits
-    #define MAX_SHADER_LOCATIONS    32
-    #define MAX_MATERIAL_MAPS       12
+    #define RL_MAX_SHADER_LOCATIONS    32
+    #define RL_MAX_MATERIAL_MAPS       12
 
     // Shader type (generic)
     typedef struct Shader {
         unsigned int id;                // Shader program id
-        int locs[MAX_SHADER_LOCATIONS]; // Shader locations array
+        int locs[RL_MAX_SHADER_LOCATIONS]; // Shader locations array
     } Shader;
 
     // Material texture map
@@ -233,7 +233,7 @@ typedef unsigned char byte;
     // Material type (generic)
     typedef struct Material {
         Shader shader;          // Material shader
-        MaterialMap maps[MAX_MATERIAL_MAPS]; // Material maps
+        MaterialMap maps[RL_MAX_MATERIAL_MAPS]; // Material maps
         float *params;          // Material generic parameters (if required)
     } Material;
 
@@ -2253,7 +2253,7 @@ void rlLoadMesh(Mesh *mesh, bool dynamic)
     }
     else
     {
-        // Default color vertex attribute set to WHITE
+        // Default color vertex attribute set to RL_WHITE
         glVertexAttrib3f(2, 1.0f, 1.0f, 1.0f);
         glDisableVertexAttribArray(2);
     }
@@ -2269,7 +2269,7 @@ void rlLoadMesh(Mesh *mesh, bool dynamic)
     }
     else
     {
-        // Default color vertex attribute set to WHITE
+        // Default color vertex attribute set to RL_WHITE
         glVertexAttrib4f(3, 1.0f, 1.0f, 1.0f, 1.0f);
         glDisableVertexAttribArray(3);
     }
@@ -2458,7 +2458,7 @@ void rlDrawMesh(Mesh mesh, Material material, Matrix transform)
     //-----------------------------------------------------
 
     // Bind active texture maps (if available)
-    for (int i = 0; i < MAX_MATERIAL_MAPS; i++)
+    for (int i = 0; i < RL_MAX_MATERIAL_MAPS; i++)
     {
         if (material.maps[i].texture.id > 0)
         {
@@ -2555,7 +2555,7 @@ void rlDrawMesh(Mesh mesh, Material material, Matrix transform)
     }
 
     // Unbind all binded texture maps
-    for (int i = 0; i < MAX_MATERIAL_MAPS; i++)
+    for (int i = 0; i < RL_MAX_MATERIAL_MAPS; i++)
     {
         glActiveTexture(GL_TEXTURE0 + i);       // Set shader active texture
         if ((i == MAP_IRRADIANCE) || (i == MAP_PREFILTER) || (i == MAP_CUBEMAP)) glBindTexture(GL_TEXTURE_CUBE_MAP, 0);
@@ -2799,7 +2799,7 @@ Shader LoadShaderCode(char *vsCode, char *fsCode)
     Shader shader = { 0 };
 
     // NOTE: All locations must be reseted to -1 (no location)
-    for (int i = 0; i < MAX_SHADER_LOCATIONS; i++) shader.locs[i] = -1;
+    for (int i = 0; i < RL_MAX_SHADER_LOCATIONS; i++) shader.locs[i] = -1;
 
 #if defined(GRAPHICS_API_OPENGL_33) || defined(GRAPHICS_API_OPENGL_ES2)
     unsigned int vertexShaderId = defaultVShaderId;
@@ -3670,7 +3670,7 @@ static Shader LoadShaderDefault(void)
     Shader shader = { 0 };
 
     // NOTE: All locations must be reseted to -1 (no location)
-    for (int i = 0; i < MAX_SHADER_LOCATIONS; i++) shader.locs[i] = -1;
+    for (int i = 0; i < RL_MAX_SHADER_LOCATIONS; i++) shader.locs[i] = -1;
 
     // Vertex shader directly defined, no external file required
     char defaultVShaderStr[] =

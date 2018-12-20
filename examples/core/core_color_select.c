@@ -20,9 +20,9 @@ int main()
 
     InitWindow(screenWidth, screenHeight, "raylib [core] example - color selection (collision detection)");
 
-    Color colors[21] = { DARKGRAY, MAROON, ORANGE, DARKGREEN, DARKBLUE, DARKPURPLE, DARKBROWN,
-                         GRAY, RED, GOLD, LIME, BLUE, VIOLET, BROWN, LIGHTGRAY, PINK, YELLOW,
-                         GREEN, SKYBLUE, PURPLE, BEIGE };
+    Color colors[21] = { RL_DARKGRAY, RL_MAROON, RL_ORANGE, RL_DARKGREEN, RL_DARKBLUE, RL_DARKPURPLE, RL_DARKBROWN,
+                         RL_GRAY, RL_RED, RL_GOLD, RL_LIME, RL_BLUE, RL_VIOLET, RL_BROWN, RL_LIGHTGRAY, RL_PINK, RL_YELLOW,
+                         RL_GREEN, RL_SKYBLUE, RL_PURPLE, RL_BEIGE };
 
     Rectangle colorsRecs[21];             // Rectangles array
 
@@ -65,7 +65,7 @@ int main()
         //----------------------------------------------------------------------------------
         BeginDrawing();
 
-            ClearBackground(RAYWHITE);
+            ClearBackground(RL_RAYWHITE);
 
             for (int i = 0; i < 21; i++)    // Draw all rectangles
             {
@@ -74,10 +74,10 @@ int main()
                 // Draw four rectangles around selected rectangle
                 if (selected[i])
                 {
-                    DrawRectangle(colorsRecs[i].x, colorsRecs[i].y, 100, 10, RAYWHITE);        // Square top rectangle
-                    DrawRectangle(colorsRecs[i].x, colorsRecs[i].y, 10, 100, RAYWHITE);        // Square left rectangle
-                    DrawRectangle(colorsRecs[i].x + 90, colorsRecs[i].y, 10, 100, RAYWHITE);   // Square right rectangle
-                    DrawRectangle(colorsRecs[i].x, colorsRecs[i].y + 90, 100, 10, RAYWHITE);   // Square bottom rectangle
+                    DrawRectangle(colorsRecs[i].x, colorsRecs[i].y, 100, 10, RL_RAYWHITE);        // Square top rectangle
+                    DrawRectangle(colorsRecs[i].x, colorsRecs[i].y, 10, 100, RL_RAYWHITE);        // Square left rectangle
+                    DrawRectangle(colorsRecs[i].x + 90, colorsRecs[i].y, 10, 100, RL_RAYWHITE);   // Square right rectangle
+                    DrawRectangle(colorsRecs[i].x, colorsRecs[i].y + 90, 100, 10, RL_RAYWHITE);   // Square bottom rectangle
                 }
             }
 

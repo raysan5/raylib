@@ -93,7 +93,7 @@ int main()
             switch (currentProcess)
             {
                 case COLOR_GRAYSCALE: ImageColorGrayscale(&image); break;
-                case COLOR_TINT: ImageColorTint(&image, GREEN); break;
+                case COLOR_TINT: ImageColorTint(&image, RL_GREEN); break;
                 case COLOR_INVERT: ImageColorInvert(&image); break;
                 case COLOR_CONTRAST: ImageColorContrast(&image, -40); break;
                 case COLOR_BRIGHTNESS: ImageColorBrightness(&image, -80); break;
@@ -114,20 +114,20 @@ int main()
         //----------------------------------------------------------------------------------
         BeginDrawing();
 
-            ClearBackground(RAYWHITE);
+            ClearBackground(RL_RAYWHITE);
             
-            DrawText("IMAGE PROCESSING:", 40, 30, 10, DARKGRAY);
+            DrawText("IMAGE PROCESSING:", 40, 30, 10, RL_DARKGRAY);
             
             // Draw rectangles
             for (int i = 0; i < NUM_PROCESSES; i++)
             {
-                DrawRectangleRec(selectRecs[i], (i == currentProcess) ? SKYBLUE : LIGHTGRAY);
-                DrawRectangleLines((int)selectRecs[i].x, (int) selectRecs[i].y, (int) selectRecs[i].width, (int) selectRecs[i].height, (i == currentProcess) ? BLUE : GRAY);
-                DrawText( processText[i], (int)( selectRecs[i].x + selectRecs[i].width/2 - MeasureText(processText[i], 10)/2), (int) selectRecs[i].y + 11, 10, (i == currentProcess) ? DARKBLUE : DARKGRAY);
+                DrawRectangleRec(selectRecs[i], (i == currentProcess) ? RL_SKYBLUE : RL_LIGHTGRAY);
+                DrawRectangleLines((int)selectRecs[i].x, (int) selectRecs[i].y, (int) selectRecs[i].width, (int) selectRecs[i].height, (i == currentProcess) ? RL_BLUE : RL_GRAY);
+                DrawText( processText[i], (int)( selectRecs[i].x + selectRecs[i].width/2 - MeasureText(processText[i], 10)/2), (int) selectRecs[i].y + 11, 10, (i == currentProcess) ? RL_DARKBLUE : RL_DARKGRAY);
             }
 
-            DrawTexture(texture, screenWidth - texture.width - 60, screenHeight/2 - texture.height/2, WHITE);
-            DrawRectangleLines(screenWidth - texture.width - 60, screenHeight/2 - texture.height/2, texture.width, texture.height, BLACK);
+            DrawTexture(texture, screenWidth - texture.width - 60, screenHeight/2 - texture.height/2, RL_WHITE);
+            DrawRectangleLines(screenWidth - texture.width - 60, screenHeight/2 - texture.height/2, texture.width, texture.height, RL_BLACK);
             
         EndDrawing();
         //----------------------------------------------------------------------------------

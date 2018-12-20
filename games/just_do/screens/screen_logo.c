@@ -173,42 +173,42 @@ void DrawLogoScreen(void)
     // Draw LOGO screen
     if (logoScreenState == 0)
     {
-        if ((framesCounter/15)%2) DrawRectangle(logoPositionX, logoPositionY - 60, 16, 16, BLACK);
+        if ((framesCounter/15)%2) DrawRectangle(logoPositionX, logoPositionY - 60, 16, 16, RL_BLACK);
     }
     else if (logoScreenState == 1)
     {
-        DrawRectangle(logoPositionX, logoPositionY - 60, topSideRecWidth, 16, BLACK);
-        DrawRectangle(logoPositionX, logoPositionY - 60, 16, leftSideRecHeight, BLACK);
+        DrawRectangle(logoPositionX, logoPositionY - 60, topSideRecWidth, 16, RL_BLACK);
+        DrawRectangle(logoPositionX, logoPositionY - 60, 16, leftSideRecHeight, RL_BLACK);
     }
     else if (logoScreenState == 2)
     {
-        DrawRectangle(logoPositionX, logoPositionY - 60, topSideRecWidth, 16, BLACK);
-        DrawRectangle(logoPositionX, logoPositionY - 60, 16, leftSideRecHeight, BLACK);
+        DrawRectangle(logoPositionX, logoPositionY - 60, topSideRecWidth, 16, RL_BLACK);
+        DrawRectangle(logoPositionX, logoPositionY - 60, 16, leftSideRecHeight, RL_BLACK);
 
-        DrawRectangle(logoPositionX + 240, logoPositionY - 60, 16, rightSideRecHeight, BLACK);
-        DrawRectangle(logoPositionX, logoPositionY + 240 - 60, bottomSideRecWidth, 16, BLACK);
+        DrawRectangle(logoPositionX + 240, logoPositionY - 60, 16, rightSideRecHeight, RL_BLACK);
+        DrawRectangle(logoPositionX, logoPositionY + 240 - 60, bottomSideRecWidth, 16, RL_BLACK);
     }
     else if (logoScreenState == 3)
     {         
-        DrawRectangle(logoPositionX, logoPositionY - 60, topSideRecWidth, 16, BLACK);
-        DrawRectangle(logoPositionX, logoPositionY + 16 - 60, 16, leftSideRecHeight - 32, BLACK);
+        DrawRectangle(logoPositionX, logoPositionY - 60, topSideRecWidth, 16, RL_BLACK);
+        DrawRectangle(logoPositionX, logoPositionY + 16 - 60, 16, leftSideRecHeight - 32, RL_BLACK);
 
-        DrawRectangle(logoPositionX + 240, logoPositionY + 16 - 60, 16, rightSideRecHeight - 32, BLACK);
-        DrawRectangle(logoPositionX, logoPositionY + 240 - 60, bottomSideRecWidth, 16, BLACK);
+        DrawRectangle(logoPositionX + 240, logoPositionY + 16 - 60, 16, rightSideRecHeight - 32, RL_BLACK);
+        DrawRectangle(logoPositionX, logoPositionY + 240 - 60, bottomSideRecWidth, 16, RL_BLACK);
 
-        DrawRectangle(GetScreenWidth()/2 - 112, GetScreenHeight()/2 - 112 - 60, 224, 224, RAYWHITE);
+        DrawRectangle(GetScreenWidth()/2 - 112, GetScreenHeight()/2 - 112 - 60, 224, 224, RL_RAYWHITE);
 
-        DrawText(raylib, GetScreenWidth()/2 - 44, GetScreenHeight()/2 + 48 - 60, 50, BLACK);
+        DrawText(raylib, GetScreenWidth()/2 - 44, GetScreenHeight()/2 + 48 - 60, 50, RL_BLACK);
 
-        if (!msgLogoADone) DrawText(msgBuffer, GetScreenWidth()/2 - MeasureText(msgLogoA, 30)/2, logoPositionY + 230, 30, GRAY);
+        if (!msgLogoADone) DrawText(msgBuffer, GetScreenWidth()/2 - MeasureText(msgLogoA, 30)/2, logoPositionY + 230, 30, RL_GRAY);
         else
         {
-            DrawText(msgLogoA, GetScreenWidth()/2 - MeasureText(msgLogoA, 30)/2, logoPositionY + 230, 30, GRAY);
+            DrawText(msgLogoA, GetScreenWidth()/2 - MeasureText(msgLogoA, 30)/2, logoPositionY + 230, 30, RL_GRAY);
 
-            if (!msgLogoBDone) DrawText(msgBuffer, GetScreenWidth()/2 - MeasureText(msgLogoB, 30)/2, logoPositionY + 280, 30, GRAY);
+            if (!msgLogoBDone) DrawText(msgBuffer, GetScreenWidth()/2 - MeasureText(msgLogoB, 30)/2, logoPositionY + 280, 30, RL_GRAY);
             else
             {
-                DrawText(msgLogoB, GetScreenWidth()/2 - MeasureText(msgLogoA, 30)/2, logoPositionY + 280, 30, GRAY);
+                DrawText(msgLogoB, GetScreenWidth()/2 - MeasureText(msgLogoA, 30)/2, logoPositionY + 280, 30, RL_GRAY);
             }
         }
     }

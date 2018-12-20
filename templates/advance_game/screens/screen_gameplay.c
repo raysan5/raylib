@@ -63,9 +63,9 @@ void UpdateGameplayScreen(void)
 void DrawGameplayScreen(void)
 {
     // TODO: Draw GAMEPLAY screen here!
-    DrawRectangle(0, 0, GetScreenWidth(), GetScreenHeight(), PURPLE);
-    DrawTextEx(font, "GAMEPLAY SCREEN", (Vector2){ 20, 10 }, font.baseSize*3, 4, MAROON);
-    DrawText("PRESS ENTER or TAP to JUMP to ENDING SCREEN", 130, 220, 20, MAROON);
+    DrawRectangle(0, 0, GetScreenWidth(), GetScreenHeight(), RL_PURPLE);
+    DrawTextEx(font, "GAMEPLAY SCREEN", (Vector2){ 20, 10 }, font.baseSize*3, 4, RL_MAROON);
+    DrawText("PRESS ENTER or TAP to JUMP to ENDING SCREEN", 130, 220, 20, RL_MAROON);
 }
 
 // Gameplay Screen Unload logic

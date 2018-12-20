@@ -83,7 +83,7 @@ int main()
         //----------------------------------------------------------------------------------
         BeginDrawing();
 
-            ClearBackground(BLACK);
+            ClearBackground(RL_BLACK);
 
             // Draw created physics bodies
             int bodiesCount = GetPhysicsBodiesCount();
@@ -101,14 +101,14 @@ int main()
                     int jj = (((j + 1) < vertexCount) ? (j + 1) : 0);   // Get next vertex or first to close the shape
                     Vector2 vertexB = GetPhysicsShapeVertex(currentBody, jj);
 
-                    DrawLineV(vertexA, vertexB, GREEN);     // Draw a line between two vertex positions
+                    DrawLineV(vertexA, vertexB, RL_GREEN);     // Draw a line between two vertex positions
                 }
             }
 
-            DrawText("Left mouse button in polygon area to shatter body\nPress 'R' to reset example", 10, 10, 10, WHITE);
+            DrawText("Left mouse button in polygon area to shatter body\nPress 'R' to reset example", 10, 10, 10, RL_WHITE);
 
-            DrawText("Physac", logoX, logoY, 30, WHITE);
-            DrawText("Powered by", logoX + 50, logoY - 7, 10, WHITE);
+            DrawText("Physac", logoX, logoY, 30, RL_WHITE);
+            DrawText("Powered by", logoX + 50, logoY - 7, 10, RL_WHITE);
 
         EndDrawing();
         //----------------------------------------------------------------------------------

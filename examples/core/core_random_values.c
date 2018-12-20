@@ -46,11 +46,11 @@ int main()
         //----------------------------------------------------------------------------------
         BeginDrawing();
 
-            ClearBackground(RAYWHITE);
+            ClearBackground(RL_RAYWHITE);
 
-            DrawText("Every 2 seconds a new random value is generated:", 130, 100, 20, MAROON);
+            DrawText("Every 2 seconds a new random value is generated:", 130, 100, 20, RL_MAROON);
 
-            DrawText(FormatText("%i", randValue), 360, 180, 80, LIGHTGRAY);
+            DrawText(FormatText("%i", randValue), 360, 180, 80, RL_LIGHTGRAY);
 
         EndDrawing();
         //----------------------------------------------------------------------------------

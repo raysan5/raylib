@@ -153,7 +153,7 @@ void InitGame(void)
     player.acceleration = 0;
     player.rotation = 0;
     player.collider = (Vector3){player.position.x + sin(player.rotation*RL_DEG2RAD)*(shipHeight/2.5f), player.position.y - cos(player.rotation*RL_DEG2RAD)*(shipHeight/2.5f), 12};
-    player.color = LIGHTGRAY;
+    player.color = RL_LIGHTGRAY;
 
     destroyedMeteorsCount = 0;
 
@@ -165,7 +165,7 @@ void InitGame(void)
         shoot[i].radius = 2;
         shoot[i].active = false;
         shoot[i].lifeSpawn = 0;
-        shoot[i].color = WHITE;
+        shoot[i].color = RL_WHITE;
     }
 
     for (int i = 0; i < MAX_BIG_METEORS; i++)
@@ -207,7 +207,7 @@ void InitGame(void)
         bigMeteor[i].speed = (Vector2){velx, vely};
         bigMeteor[i].radius = 40;
         bigMeteor[i].active = true;
-        bigMeteor[i].color = BLUE;
+        bigMeteor[i].color = RL_BLUE;
     }
 
     for (int i = 0; i < MAX_MEDIUM_METEORS; i++)
@@ -216,7 +216,7 @@ void InitGame(void)
         mediumMeteor[i].speed = (Vector2){0,0};
         mediumMeteor[i].radius = 20;
         mediumMeteor[i].active = false;
-        mediumMeteor[i].color = BLUE;
+        mediumMeteor[i].color = RL_BLUE;
     }
 
     for (int i = 0; i < MAX_SMALL_METEORS; i++)
@@ -225,7 +225,7 @@ void InitGame(void)
         smallMeteor[i].speed = (Vector2){0,0};
         smallMeteor[i].radius = 10;
         smallMeteor[i].active = false;
-        smallMeteor[i].color = BLUE;
+        smallMeteor[i].color = RL_BLUE;
     }
 
     midMeteorsCount = 0;
@@ -440,7 +440,7 @@ void UpdateGame(void)
                                 midMeteorsCount ++;
                             }
                             //bigMeteor[a].position = (Vector2){-100, -100};
-                            bigMeteor[a].color = RED;
+                            bigMeteor[a].color = RL_RED;
                             a = MAX_BIG_METEORS;
                         }
                     }
@@ -471,7 +471,7 @@ void UpdateGame(void)
                                 smallMeteorsCount ++;
                             }
                             //mediumMeteor[b].position = (Vector2){-100, -100};
-                            mediumMeteor[b].color = GREEN;
+                            mediumMeteor[b].color = RL_GREEN;
                             b = MAX_MEDIUM_METEORS;
                         }
                     }
@@ -484,7 +484,7 @@ void UpdateGame(void)
                             shoot[i].lifeSpawn = 0;
                             smallMeteor[c].active = false;
                             destroyedMeteorsCount++;
-                            smallMeteor[c].color = YELLOW;
+                            smallMeteor[c].color = RL_YELLOW;
                            // smallMeteor[c].position = (Vector2){-100, -100};
                             c = MAX_SMALL_METEORS;
                         }
@@ -510,7 +510,7 @@ void DrawGame(void)
 {
     BeginDrawing();
 
-        ClearBackground(RAYWHITE);
+        ClearBackground(RL_RAYWHITE);
 
         if (!gameOver)
         {
@@ -518,38 +518,38 @@ void DrawGame(void)
             Vector2 v1 = { player.position.x + sinf(player.rotation*RL_DEG2RAD)*(shipHeight), player.position.y - cosf(player.rotation*RL_DEG2RAD)*(shipHeight) };
             Vector2 v2 = { player.position.x - cosf(player.rotation*RL_DEG2RAD)*(PLAYER_BASE_SIZE/2), player.position.y - sinf(player.rotation*RL_DEG2RAD)*(PLAYER_BASE_SIZE/2) };
             Vector2 v3 = { player.position.x + cosf(player.rotation*RL_DEG2RAD)*(PLAYER_BASE_SIZE/2), player.position.y + sinf(player.rotation*RL_DEG2RAD)*(PLAYER_BASE_SIZE/2) };
-            DrawTriangle(v1, v2, v3, MAROON);
+            DrawTriangle(v1, v2, v3, RL_MAROON);
             
             // Draw meteors
             for (int i = 0; i < MAX_BIG_METEORS; i++)
             {
-                if (bigMeteor[i].active) DrawCircleV(bigMeteor[i].position, bigMeteor[i].radius, DARKGRAY);
-                else DrawCircleV(bigMeteor[i].position, bigMeteor[i].radius, Fade(LIGHTGRAY, 0.3f));
+                if (bigMeteor[i].active) DrawCircleV(bigMeteor[i].position, bigMeteor[i].radius, RL_DARKGRAY);
+                else DrawCircleV(bigMeteor[i].position, bigMeteor[i].radius, Fade(RL_LIGHTGRAY, 0.3f));
             }
 
             for (int i = 0; i < MAX_MEDIUM_METEORS; i++)
             {
-                if (mediumMeteor[i].active) DrawCircleV(mediumMeteor[i].position, mediumMeteor[i].radius, GRAY);
-                else DrawCircleV(mediumMeteor[i].position, mediumMeteor[i].radius, Fade(LIGHTGRAY, 0.3f));
+                if (mediumMeteor[i].active) DrawCircleV(mediumMeteor[i].position, mediumMeteor[i].radius, RL_GRAY);
+                else DrawCircleV(mediumMeteor[i].position, mediumMeteor[i].radius, Fade(RL_LIGHTGRAY, 0.3f));
             }
 
             for (int i = 0; i < MAX_SMALL_METEORS; i++)
             {
-                if (smallMeteor[i].active) DrawCircleV(smallMeteor[i].position, smallMeteor[i].radius, GRAY);
-                else DrawCircleV(smallMeteor[i].position, smallMeteor[i].radius, Fade(LIGHTGRAY, 0.3f));
+                if (smallMeteor[i].active) DrawCircleV(smallMeteor[i].position, smallMeteor[i].radius, RL_GRAY);
+                else DrawCircleV(smallMeteor[i].position, smallMeteor[i].radius, Fade(RL_LIGHTGRAY, 0.3f));
             }
 
             // Draw shoot
             for (int i = 0; i < PLAYER_MAX_SHOOTS; i++)
             {
-                if (shoot[i].active) DrawCircleV(shoot[i].position, shoot[i].radius, BLACK);
+                if (shoot[i].active) DrawCircleV(shoot[i].position, shoot[i].radius, RL_BLACK);
             }
 
-            if (victory) DrawText("VICTORY", screenWidth/2 - MeasureText("VICTORY", 20)/2, screenHeight/2, 20, LIGHTGRAY);
+            if (victory) DrawText("VICTORY", screenWidth/2 - MeasureText("VICTORY", 20)/2, screenHeight/2, 20, RL_LIGHTGRAY);
 
-            if (pause) DrawText("GAME PAUSED", screenWidth/2 - MeasureText("GAME PAUSED", 40)/2, screenHeight/2 - 40, 40, GRAY);
+            if (pause) DrawText("GAME PAUSED", screenWidth/2 - MeasureText("GAME PAUSED", 40)/2, screenHeight/2 - 40, 40, RL_GRAY);
         }
-        else DrawText("PRESS [ENTER] TO PLAY AGAIN", GetScreenWidth()/2 - MeasureText("PRESS [ENTER] TO PLAY AGAIN", 20)/2, GetScreenHeight()/2 - 50, 20, GRAY);
+        else DrawText("PRESS [ENTER] TO PLAY AGAIN", GetScreenWidth()/2 - MeasureText("PRESS [ENTER] TO PLAY AGAIN", 20)/2, GetScreenHeight()/2 - 50, 20, RL_GRAY);
         
     EndDrawing();
 }

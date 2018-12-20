@@ -237,7 +237,7 @@ void DrawGame(void)
 {
     BeginDrawing();
 
-        ClearBackground(RAYWHITE);
+        ClearBackground(RL_RAYWHITE);
 
         if (!gameOver)
         {
@@ -247,7 +247,7 @@ void DrawGame(void)
             // Draw explosions
             for (int i = 0; i < MAX_EXPLOSIONS; i++)
             {
-                if (explosion[i].active) DrawCircle(explosion[i].position.x, explosion[i].position.y, explosion[i].radius, RAYWHITE);
+                if (explosion[i].active) DrawCircle(explosion[i].position.x, explosion[i].position.y, explosion[i].radius, RL_RAYWHITE);
             }
             
             // Draw players
@@ -256,14 +256,14 @@ void DrawGame(void)
                 if (player[i].isAlive)
                 {
                     if (player[i].isLeftTeam) DrawRectangle(player[i].position.x - player[i].size.x/2, player[i].position.y - player[i].size.y/2,
-                                                             player[i].size.x, player[i].size.y, BLUE);
+                                                             player[i].size.x, player[i].size.y, RL_BLUE);
                     else DrawRectangle(player[i].position.x - player[i].size.x/2, player[i].position.y - player[i].size.y/2,
-                                                             player[i].size.x, player[i].size.y, RED);
+                                                             player[i].size.x, player[i].size.y, RL_RED);
                 }
             }
 
             // Draw ball
-            if (ball.active) DrawCircle(ball.position.x, ball.position.y, ball.radius, MAROON);
+            if (ball.active) DrawCircle(ball.position.x, ball.position.y, ball.radius, RL_MAROON);
 
             // Draw the angle and the power of the aim, and the previous ones
             if (!ballOnAir)
@@ -272,21 +272,21 @@ void DrawGame(void)
                 /*
                 if (player[playerTurn].isLeftTeam)
                 {
-                    DrawText(FormatText("Previous Point %i, %i", (int)player[playerTurn].previousPoint.x, (int)player[playerTurn].previousPoint.y), 20, 20, 20, DARKBLUE);
-                    DrawText(FormatText("Previous Angle %i", player[playerTurn].previousAngle), 20, 50, 20, DARKBLUE);
-                    DrawText(FormatText("Previous Power %i", player[playerTurn].previousPower), 20, 80, 20, DARKBLUE);
-                    DrawText(FormatText("Aiming Point %i, %i", (int)player[playerTurn].aimingPoint.x, (int)player[playerTurn].aimingPoint.y), 20, 110, 20, DARKBLUE);
-                    DrawText(FormatText("Aiming Angle %i", player[playerTurn].aimingAngle), 20, 140, 20, DARKBLUE);
-                    DrawText(FormatText("Aiming Power %i", player[playerTurn].aimingPower), 20, 170, 20, DARKBLUE);
+                    DrawText(FormatText("Previous Point %i, %i", (int)player[playerTurn].previousPoint.x, (int)player[playerTurn].previousPoint.y), 20, 20, 20, RL_DARKBLUE);
+                    DrawText(FormatText("Previous Angle %i", player[playerTurn].previousAngle), 20, 50, 20, RL_DARKBLUE);
+                    DrawText(FormatText("Previous Power %i", player[playerTurn].previousPower), 20, 80, 20, RL_DARKBLUE);
+                    DrawText(FormatText("Aiming Point %i, %i", (int)player[playerTurn].aimingPoint.x, (int)player[playerTurn].aimingPoint.y), 20, 110, 20, RL_DARKBLUE);
+                    DrawText(FormatText("Aiming Angle %i", player[playerTurn].aimingAngle), 20, 140, 20, RL_DARKBLUE);
+                    DrawText(FormatText("Aiming Power %i", player[playerTurn].aimingPower), 20, 170, 20, RL_DARKBLUE);
                 }
                 else
                 {
-                    DrawText(FormatText("Previous Point %i, %i", (int)player[playerTurn].previousPoint.x, (int)player[playerTurn].previousPoint.y), screenWidth*3/4, 20, 20, DARKBLUE);
-                    DrawText(FormatText("Previous Angle %i", player[playerTurn].previousAngle), screenWidth*3/4, 50, 20, DARKBLUE);
-                    DrawText(FormatText("Previous Power %i", player[playerTurn].previousPower), screenWidth*3/4, 80, 20, DARKBLUE);
-                    DrawText(FormatText("Aiming Point %i, %i", (int)player[playerTurn].aimingPoint.x, (int)player[playerTurn].aimingPoint.y), screenWidth*3/4, 110, 20, DARKBLUE);
-                    DrawText(FormatText("Aiming Angle %i", player[playerTurn].aimingAngle), screenWidth*3/4, 140, 20, DARKBLUE);
-                    DrawText(FormatText("Aiming Power %i", player[playerTurn].aimingPower), screenWidth*3/4, 170, 20, DARKBLUE);
+                    DrawText(FormatText("Previous Point %i, %i", (int)player[playerTurn].previousPoint.x, (int)player[playerTurn].previousPoint.y), screenWidth*3/4, 20, 20, RL_DARKBLUE);
+                    DrawText(FormatText("Previous Angle %i", player[playerTurn].previousAngle), screenWidth*3/4, 50, 20, RL_DARKBLUE);
+                    DrawText(FormatText("Previous Power %i", player[playerTurn].previousPower), screenWidth*3/4, 80, 20, RL_DARKBLUE);
+                    DrawText(FormatText("Aiming Point %i, %i", (int)player[playerTurn].aimingPoint.x, (int)player[playerTurn].aimingPoint.y), screenWidth*3/4, 110, 20, RL_DARKBLUE);
+                    DrawText(FormatText("Aiming Angle %i", player[playerTurn].aimingAngle), screenWidth*3/4, 140, 20, RL_DARKBLUE);
+                    DrawText(FormatText("Aiming Power %i", player[playerTurn].aimingPower), screenWidth*3/4, 170, 20, RL_DARKBLUE);
                 }
                 */
                 
@@ -296,30 +296,30 @@ void DrawGame(void)
                     // Previous aiming
                     DrawTriangle((Vector2){ player[playerTurn].position.x - player[playerTurn].size.x/4, player[playerTurn].position.y - player[playerTurn].size.y/4 },
                                  (Vector2){ player[playerTurn].position.x + player[playerTurn].size.x/4, player[playerTurn].position.y + player[playerTurn].size.y/4 },
-                                 player[playerTurn].previousPoint, GRAY);
+                                 player[playerTurn].previousPoint, RL_GRAY);
 
                     // Actual aiming
                     DrawTriangle((Vector2){ player[playerTurn].position.x - player[playerTurn].size.x/4, player[playerTurn].position.y - player[playerTurn].size.y/4 },
                                  (Vector2){ player[playerTurn].position.x + player[playerTurn].size.x/4, player[playerTurn].position.y + player[playerTurn].size.y/4 },
-                                 player[playerTurn].aimingPoint, DARKBLUE);
+                                 player[playerTurn].aimingPoint, RL_DARKBLUE);
                 }
                 else
                 {
                     // Previous aiming
                     DrawTriangle((Vector2){ player[playerTurn].position.x - player[playerTurn].size.x/4, player[playerTurn].position.y + player[playerTurn].size.y/4 },
                                  (Vector2){ player[playerTurn].position.x + player[playerTurn].size.x/4, player[playerTurn].position.y - player[playerTurn].size.y/4 },
-                                 player[playerTurn].previousPoint, GRAY);
+                                 player[playerTurn].previousPoint, RL_GRAY);
 
                     // Actual aiming
                     DrawTriangle((Vector2){ player[playerTurn].position.x - player[playerTurn].size.x/4, player[playerTurn].position.y + player[playerTurn].size.y/4 },
                                  (Vector2){ player[playerTurn].position.x + player[playerTurn].size.x/4, player[playerTurn].position.y - player[playerTurn].size.y/4 },
-                                 player[playerTurn].aimingPoint, MAROON);
+                                 player[playerTurn].aimingPoint, RL_MAROON);
                 }
             }
 
-            if (pause) DrawText("GAME PAUSED", screenWidth/2 - MeasureText("GAME PAUSED", 40)/2, screenHeight/2 - 40, 40, GRAY);
+            if (pause) DrawText("GAME PAUSED", screenWidth/2 - MeasureText("GAME PAUSED", 40)/2, screenHeight/2 - 40, 40, RL_GRAY);
         }
-        else DrawText("PRESS [ENTER] TO PLAY AGAIN", GetScreenWidth()/2 - MeasureText("PRESS [ENTER] TO PLAY AGAIN", 20)/2, GetScreenHeight()/2 - 50, 20, GRAY);
+        else DrawText("PRESS [ENTER] TO PLAY AGAIN", GetScreenWidth()/2 - MeasureText("PRESS [ENTER] TO PLAY AGAIN", 20)/2, GetScreenHeight()/2 - 50, 20, RL_GRAY);
 
     EndDrawing();
 }

@@ -176,7 +176,7 @@ extern void LoadDefaultFont(void)
 
     Color *imagePixels = (Color *)malloc(imWidth*imHeight*sizeof(Color));
 
-    for (int i = 0; i < imWidth*imHeight; i++) imagePixels[i] = BLANK;        // Initialize array
+    for (int i = 0; i < imWidth*imHeight; i++) imagePixels[i] = RL_BLANK;        // Initialize array
 
     int counter = 0;        // Font data elements counter
 
@@ -185,7 +185,7 @@ extern void LoadDefaultFont(void)
     {
         for (int j = 31; j >= 0; j--)
         {
-            if (BIT_CHECK(defaultFontData[counter], j)) imagePixels[i+j] = WHITE;
+            if (BIT_CHECK(defaultFontData[counter], j)) imagePixels[i+j] = RL_WHITE;
         }
 
         counter++;
@@ -284,7 +284,7 @@ Font LoadFont(const char *fileName)
 #endif
     {
         Image image = LoadImage(fileName);
-        if (image.data != NULL) font = LoadFontFromImage(image, MAGENTA, DEFAULT_FIRST_CHAR);
+        if (image.data != NULL) font = LoadFontFromImage(image, RL_MAGENTA, DEFAULT_FIRST_CHAR);
         UnloadImage(image);
     }
 
@@ -398,9 +398,9 @@ Font LoadFontFromImage(Image image, Color key, int firstChar)
 
     // NOTE: We need to remove key color borders from image to avoid weird
     // artifacts on texture scaling when using FILTER_BILINEAR or FILTER_TRILINEAR
-    for (int i = 0; i < image.height*image.width; i++) if (COLOR_EQUAL(pixels[i], key)) pixels[i] = BLANK;
+    for (int i = 0; i < image.height*image.width; i++) if (COLOR_EQUAL(pixels[i], key)) pixels[i] = RL_BLANK;
 
-    // Create a new image with the processed color data (key color replaced by BLANK)
+    // Create a new image with the processed color data (key color replaced by RL_BLANK)
     Image fontClear = LoadImageEx(pixels, image.width, image.height);
 
     free(pixels);    // Free pixels array memory
@@ -700,7 +700,7 @@ void DrawFPS(int posX, int posY)
     }
 
     // NOTE: We have rounding errors every frame, so it oscillates a lot
-    DrawText(FormatText("%2i FPS", fps), posX, posY, 20, LIME);
+    DrawText(FormatText("%2i FPS", fps), posX, posY, 20, RL_LIME);
 }
 
 // Draw text (using default font)

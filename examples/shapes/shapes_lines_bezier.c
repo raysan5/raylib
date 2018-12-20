@@ -40,11 +40,11 @@ int main()
         //----------------------------------------------------------------------------------
         BeginDrawing();
 
-            ClearBackground(RAYWHITE);
+            ClearBackground(RL_RAYWHITE);
             
-            DrawText("USE MOUSE LEFT-RIGHT CLICK to DEFINE LINE START and END POINTS", 15, 20, 20, GRAY);
+            DrawText("USE MOUSE LEFT-RIGHT CLICK to DEFINE LINE START and END POINTS", 15, 20, 20, RL_GRAY);
 
-            DrawLineBezier(start, end, 2.0f, RED);
+            DrawLineBezier(start, end, 2.0f, RL_RED);
             
         EndDrawing();
         //----------------------------------------------------------------------------------

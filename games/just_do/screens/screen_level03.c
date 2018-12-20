@@ -107,18 +107,18 @@ void UpdateLevel03Screen(void)
 void DrawLevel03Screen(void)
 {
     // Draw Level03 screen
-    DrawRectangleRec(holeRec, GRAY);
-    DrawRectangleRec(pieceRec, RAYWHITE);
+    DrawRectangleRec(holeRec, RL_GRAY);
+    DrawRectangleRec(pieceRec, RL_RAYWHITE);
     
-    if (showPiece) DrawRectangleLines(pieceRec.x, pieceRec.y, pieceRec.width, pieceRec.height, Fade(LIGHTGRAY, 0.8f));
+    if (showPiece) DrawRectangleLines(pieceRec.x, pieceRec.y, pieceRec.width, pieceRec.height, Fade(RL_LIGHTGRAY, 0.8f));
     
     if (levelFinished)
     {
-        DrawRectangleBordersRec((Rectangle){0, 0, GetScreenWidth(), GetScreenHeight()}, 0, 0, 60, Fade(LIGHTGRAY, 0.6f));
-        DrawText("LEVEL 03", GetScreenWidth()/2 - MeasureText("LEVEL 03", 30)/2, 20, 30, GRAY);
-        DrawText(FormatText("DONE! (Seconds: %03i)", levelTimeSec), GetScreenWidth()/2 - MeasureText("DONE! (Seconds: 000)", 30)/2, GetScreenHeight() - 40, 30, GRAY);
+        DrawRectangleBordersRec((Rectangle){0, 0, GetScreenWidth(), GetScreenHeight()}, 0, 0, 60, Fade(RL_LIGHTGRAY, 0.6f));
+        DrawText("LEVEL 03", GetScreenWidth()/2 - MeasureText("LEVEL 03", 30)/2, 20, 30, RL_GRAY);
+        DrawText(FormatText("DONE! (Seconds: %03i)", levelTimeSec), GetScreenWidth()/2 - MeasureText("DONE! (Seconds: 000)", 30)/2, GetScreenHeight() - 40, 30, RL_GRAY);
     }
-    else DrawText("LEVEL 03", GetScreenWidth()/2 - MeasureText("LEVEL 03", 30)/2, 20, 30, LIGHTGRAY);
+    else DrawText("LEVEL 03", GetScreenWidth()/2 - MeasureText("LEVEL 03", 30)/2, 20, 30, RL_LIGHTGRAY);
 }
 
 // Level03 Screen Unload logic

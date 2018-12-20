@@ -67,11 +67,11 @@ void InitLevel09Screen(void)
         
         activated[i] = false;
         
-        if (i%2 == 0) bwColors[i] = LIGHTGRAY;
-        else bwColors[i] = GRAY;
+        if (i%2 == 0) bwColors[i] = RL_LIGHTGRAY;
+        else bwColors[i] = RL_GRAY;
     }
     
-    bwColors[10] = RAYWHITE;
+    bwColors[10] = RL_RAYWHITE;
 }
 
 // Level09 Screen Update logic
@@ -91,16 +91,16 @@ void UpdateLevel09Screen(void)
                 {               
                     if (i == 10)
                     {
-                        if (CheckColor(bwColors[i], RAYWHITE))
+                        if (CheckColor(bwColors[i], RL_RAYWHITE))
                         {
-                            bwColors[i] = LIGHTGRAY;
+                            bwColors[i] = RL_LIGHTGRAY;
                             enableCounter = true;
                             resetCounter = 0;
                             activated[1] = true;
                         }
                         else
                         {
-                            bwColors[i] = RAYWHITE;
+                            bwColors[i] = RL_RAYWHITE;
                             enableCounter = false;
                             resetCounter = 5*60;
                             
@@ -111,7 +111,7 @@ void UpdateLevel09Screen(void)
                     {
                         if (activated[i])
                         {
-                            bwColors[i] = LIGHTGRAY;
+                            bwColors[i] = RL_LIGHTGRAY;
                             if (i != 19) activated[i + 2] = true;
                         }
                     }
@@ -123,13 +123,13 @@ void UpdateLevel09Screen(void)
         {
             for (int i = 0; i < NUM_BOXES; i++)
             {
-                if (i%2 == 0) bwColors[i] = LIGHTGRAY;
-                else bwColors[i] = GRAY;
+                if (i%2 == 0) bwColors[i] = RL_LIGHTGRAY;
+                else bwColors[i] = RL_GRAY;
                 
                 activated[i] = false;
             }
         
-            bwColors[10] = RAYWHITE;
+            bwColors[10] = RL_RAYWHITE;
             enableCounter = false;
             resetCounter = 0;
         }
@@ -138,7 +138,7 @@ void UpdateLevel09Screen(void)
         {
             done = true;
             
-            if (!CheckColor(bwColors[i], LIGHTGRAY))
+            if (!CheckColor(bwColors[i], RL_LIGHTGRAY))
             {
                 done = false;
                 return;
@@ -174,11 +174,11 @@ void DrawLevel09Screen(void)
     
     if (levelFinished)
     {
-        DrawRectangleBordersRec((Rectangle){0, 0, GetScreenWidth(), GetScreenHeight()}, 0, 0, 60, Fade(RAYWHITE, 0.6f));
-        DrawText("LEVEL 09", GetScreenWidth()/2 - MeasureText("LEVEL 09", 30)/2, 20, 30, GRAY);
-        DrawText(FormatText("DONE! (Seconds: %03i)", levelTimeSec), GetScreenWidth()/2 - MeasureText("DONE! (Seconds: 000)", 30)/2, GetScreenHeight() - 40, 30, GRAY);
+        DrawRectangleBordersRec((Rectangle){0, 0, GetScreenWidth(), GetScreenHeight()}, 0, 0, 60, Fade(RL_RAYWHITE, 0.6f));
+        DrawText("LEVEL 09", GetScreenWidth()/2 - MeasureText("LEVEL 09", 30)/2, 20, 30, RL_GRAY);
+        DrawText(FormatText("DONE! (Seconds: %03i)", levelTimeSec), GetScreenWidth()/2 - MeasureText("DONE! (Seconds: 000)", 30)/2, GetScreenHeight() - 40, 30, RL_GRAY);
     }
-    else DrawText("LEVEL 09", GetScreenWidth()/2 - MeasureText("LEVEL 09", 30)/2, 20, 30, LIGHTGRAY);
+    else DrawText("LEVEL 09", GetScreenWidth()/2 - MeasureText("LEVEL 09", 30)/2, 20, 30, RL_LIGHTGRAY);
 }
 
 // Level09 Screen Unload logic

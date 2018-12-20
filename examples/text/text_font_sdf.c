@@ -81,31 +81,31 @@ int main()
         //----------------------------------------------------------------------------------
         BeginDrawing();
         
-            ClearBackground(RAYWHITE);
+            ClearBackground(RL_RAYWHITE);
             
             if (currentFont == 1)
             {
                 // NOTE: SDF fonts require a custom SDf shader to compute fragment color
                 BeginShaderMode(shader);    // Activate SDF font shader
-                    DrawTextEx(fontSDF, msg, fontPosition, fontSize, 0, BLACK);
+                    DrawTextEx(fontSDF, msg, fontPosition, fontSize, 0, RL_BLACK);
                 EndShaderMode();            // Activate our default shader for next drawings
                 
-                DrawTexture(fontSDF.texture, 10, 10, BLACK);
+                DrawTexture(fontSDF.texture, 10, 10, RL_BLACK);
             }
             else 
             {
-                DrawTextEx(fontDefault, msg, fontPosition, fontSize, 0, BLACK);
-                DrawTexture(fontDefault.texture, 10, 10, BLACK);
+                DrawTextEx(fontDefault, msg, fontPosition, fontSize, 0, RL_BLACK);
+                DrawTexture(fontDefault.texture, 10, 10, RL_BLACK);
             }
             
-            if (currentFont == 1) DrawText("SDF!", 320, 20, 80, RED);
-            else DrawText("default font", 315, 40, 30, GRAY);
+            if (currentFont == 1) DrawText("SDF!", 320, 20, 80, RL_RED);
+            else DrawText("default font", 315, 40, 30, RL_GRAY);
 
-            DrawText("FONT SIZE: 16.0", GetScreenWidth() - 240, 20, 20, DARKGRAY);
-            DrawText(FormatText("RENDER SIZE: %02.02f", fontSize), GetScreenWidth() - 240, 50, 20, DARKGRAY);
-            DrawText("Use MOUSE WHEEL to SCALE TEXT!", GetScreenWidth() - 240, 90, 10, DARKGRAY);
+            DrawText("FONT SIZE: 16.0", GetScreenWidth() - 240, 20, 20, RL_DARKGRAY);
+            DrawText(FormatText("RENDER SIZE: %02.02f", fontSize), GetScreenWidth() - 240, 50, 20, RL_DARKGRAY);
+            DrawText("Use MOUSE WHEEL to SCALE TEXT!", GetScreenWidth() - 240, 90, 10, RL_DARKGRAY);
 
-            DrawText("PRESS SPACE to USE SDF FONT VERSION!", 340, GetScreenHeight() - 30, 20, MAROON);
+            DrawText("PRESS SPACE to USE SDF FONT VERSION!", 340, GetScreenHeight() - 30, 20, RL_MAROON);
       
         EndDrawing();
         //----------------------------------------------------------------------------------

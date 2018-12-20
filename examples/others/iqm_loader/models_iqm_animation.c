@@ -68,19 +68,19 @@ int main()
         //----------------------------------------------------------------------------------
         BeginDrawing();
 
-            ClearBackground(RAYWHITE);
+            ClearBackground(RL_RAYWHITE);
 
             BeginMode3D(camera);
 
-                DrawAnimatedModel(model, Vector3Zero(), 1.0f, WHITE);  // Draw animated model
+                DrawAnimatedModel(model, Vector3Zero(), 1.0f, RL_WHITE);  // Draw animated model
 
                 DrawGrid(10, 1.0f);         // Draw a grid
 
             EndMode3D();
             
-            DrawText("PRESS SPACE to PLAY IQM MODEL ANIMATION", 10, 10, 20, MAROON);
+            DrawText("PRESS SPACE to PLAY IQM MODEL ANIMATION", 10, 10, 20, RL_MAROON);
 
-            DrawText("(c) Guy IQM 3D model by @culacant", screenWidth - 200, screenHeight - 20, 10, GRAY);
+            DrawText("(c) Guy IQM 3D model by @culacant", screenWidth - 200, screenHeight - 20, 10, RL_GRAY);
 
         EndDrawing();
         //----------------------------------------------------------------------------------

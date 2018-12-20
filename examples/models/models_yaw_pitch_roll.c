@@ -108,7 +108,7 @@ int main()
         //----------------------------------------------------------------------------------
         BeginDrawing();
 
-            ClearBackground(RAYWHITE);
+            ClearBackground(RL_RAYWHITE);
 
             // Draw framebuffer texture (Ahrs Display)
             int centerX = framebuffer.texture.width/2;
@@ -121,15 +121,15 @@ int main()
 
                 DrawTexturePro(texBackground, (Rectangle){ 0, 0, texBackground.width, texBackground.height },
                                (Rectangle){ centerX, centerY, texBackground.width*scaleFactor, texBackground.height*scaleFactor},
-                               (Vector2){ texBackground.width/2*scaleFactor, texBackground.height/2*scaleFactor + pitchOffset*scaleFactor }, roll, WHITE);
+                               (Vector2){ texBackground.width/2*scaleFactor, texBackground.height/2*scaleFactor + pitchOffset*scaleFactor }, roll, RL_WHITE);
 
                 DrawTexturePro(texPitch, (Rectangle){ 0, 0, texPitch.width, texPitch.height },
                                (Rectangle){ centerX, centerY, texPitch.width*scaleFactor, texPitch.height*scaleFactor },
-                               (Vector2){ texPitch.width/2*scaleFactor, texPitch.height/2*scaleFactor + pitchOffset*scaleFactor }, roll, WHITE);
+                               (Vector2){ texPitch.width/2*scaleFactor, texPitch.height/2*scaleFactor + pitchOffset*scaleFactor }, roll, RL_WHITE);
 
                 DrawTexturePro(texPlane, (Rectangle){ 0, 0, texPlane.width, texPlane.height },
                                (Rectangle){ centerX, centerY, texPlane.width*scaleFactor, texPlane.height*scaleFactor },
-                               (Vector2){ texPlane.width/2*scaleFactor, texPlane.height/2*scaleFactor }, 0, WHITE);
+                               (Vector2){ texPlane.width/2*scaleFactor, texPlane.height/2*scaleFactor }, 0, RL_WHITE);
 
                 EndBlendMode();
 
@@ -138,27 +138,27 @@ int main()
             // Draw 3D model (recomended to draw 3D always before 2D)
             BeginMode3D(camera);
 
-                DrawModel(model, (Vector3){ 0, 6.0f, 0 }, 1.0f, WHITE);   // Draw 3d model with texture
+                DrawModel(model, (Vector3){ 0, 6.0f, 0 }, 1.0f, RL_WHITE);   // Draw 3d model with texture
                 DrawGrid(10, 10.0f);
 
             EndMode3D();
 
             // Draw 2D GUI stuff
-            DrawAngleGauge(texAngleGauge, 80, 70, roll, "roll", RED);
-            DrawAngleGauge(texAngleGauge, 190, 70, pitch, "pitch", GREEN);
-            DrawAngleGauge(texAngleGauge, 300, 70, yaw, "yaw", SKYBLUE);
+            DrawAngleGauge(texAngleGauge, 80, 70, roll, "roll", RL_RED);
+            DrawAngleGauge(texAngleGauge, 190, 70, pitch, "pitch", RL_GREEN);
+            DrawAngleGauge(texAngleGauge, 300, 70, yaw, "yaw", RL_SKYBLUE);
 
-            DrawRectangle(30, 360, 260, 70, Fade(SKYBLUE, 0.5f));
-            DrawRectangleLines(30, 360, 260, 70, Fade(DARKBLUE, 0.5f));
-            DrawText("Pitch controlled with: KEY_UP / KEY_DOWN", 40, 370, 10, DARKGRAY);
-            DrawText("Roll controlled with: KEY_LEFT / KEY_RIGHT", 40, 390, 10, DARKGRAY);
-            DrawText("Yaw controlled with: KEY_A / KEY_S", 40, 410, 10, DARKGRAY);
+            DrawRectangle(30, 360, 260, 70, Fade(RL_SKYBLUE, 0.5f));
+            DrawRectangleLines(30, 360, 260, 70, Fade(RL_DARKBLUE, 0.5f));
+            DrawText("Pitch controlled with: KEY_UP / KEY_DOWN", 40, 370, 10, RL_DARKGRAY);
+            DrawText("Roll controlled with: KEY_LEFT / KEY_RIGHT", 40, 390, 10, RL_DARKGRAY);
+            DrawText("Yaw controlled with: KEY_A / KEY_S", 40, 410, 10, RL_DARKGRAY);
 
             // Draw framebuffer texture
             DrawTextureRec(framebuffer.texture, (Rectangle){ 0, 0, framebuffer.texture.width, -framebuffer.texture.height },
-                           (Vector2){ screenWidth - framebuffer.texture.width - 20, 20 }, Fade(WHITE, 0.8f));
+                           (Vector2){ screenWidth - framebuffer.texture.width - 20, 20 }, Fade(RL_WHITE, 0.8f));
 
-            DrawRectangleLines(screenWidth - framebuffer.texture.width - 20, 20, framebuffer.texture.width, framebuffer.texture.height, DARKGRAY);
+            DrawRectangleLines(screenWidth - framebuffer.texture.width - 20, 20, framebuffer.texture.width, framebuffer.texture.height, RL_DARKGRAY);
 
         EndDrawing();
         //----------------------------------------------------------------------------------
@@ -193,6 +193,6 @@ void DrawAngleGauge(Texture2D angleGauge, int x, int y, float angle, char title[
 
     DrawTexturePro(angleGauge, srcRec, dstRec, origin, angle, color);
 
-    DrawText(FormatText("%5.1f", angle), x - MeasureText(FormatText("%5.1f", angle), textSize) / 2, y + 10, textSize, DARKGRAY);
-    DrawText(title, x - MeasureText(title, textSize) / 2, y + 60, textSize, DARKGRAY);
+    DrawText(FormatText("%5.1f", angle), x - MeasureText(FormatText("%5.1f", angle), textSize) / 2, y + 10, textSize, RL_DARKGRAY);
+    DrawText(title, x - MeasureText(title, textSize) / 2, y + 60, textSize, RL_DARKGRAY);
 }

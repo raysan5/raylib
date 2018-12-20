@@ -125,22 +125,22 @@ void UpdateLevel06Screen(void)
 void DrawLevel06Screen(void)
 {
     // Draw Level06 screen
-    DrawRectangleRec(centerRec, LIGHTGRAY);
+    DrawRectangleRec(centerRec, RL_LIGHTGRAY);
     
     for (int i = 0; i < 4; i++)
     {
-        DrawRectangleRec(movingRecs[i], GRAY);
+        DrawRectangleRec(movingRecs[i], RL_GRAY);
     }
     
-    if (!done && (mouseOverNum >= 0)) DrawRectangleLines(movingRecs[mouseOverNum].x - 5, movingRecs[mouseOverNum].y - 5, movingRecs[mouseOverNum].width + 10, movingRecs[mouseOverNum].height + 10, Fade(LIGHTGRAY, 0.8f));
+    if (!done && (mouseOverNum >= 0)) DrawRectangleLines(movingRecs[mouseOverNum].x - 5, movingRecs[mouseOverNum].y - 5, movingRecs[mouseOverNum].width + 10, movingRecs[mouseOverNum].height + 10, Fade(RL_LIGHTGRAY, 0.8f));
         
     if (levelFinished)
     {
-        DrawRectangleBordersRec((Rectangle){0, 0, GetScreenWidth(), GetScreenHeight()}, 0, 0, 60, Fade(LIGHTGRAY, 0.6f));
-        DrawText("LEVEL 06", GetScreenWidth()/2 - MeasureText("LEVEL 06", 30)/2, 20, 30, GRAY);
-        DrawText(FormatText("DONE! (Seconds: %03i)", levelTimeSec), GetScreenWidth()/2 - MeasureText("DONE! (Seconds: 000)", 30)/2, GetScreenHeight() - 40, 30, GRAY);
+        DrawRectangleBordersRec((Rectangle){0, 0, GetScreenWidth(), GetScreenHeight()}, 0, 0, 60, Fade(RL_LIGHTGRAY, 0.6f));
+        DrawText("LEVEL 06", GetScreenWidth()/2 - MeasureText("LEVEL 06", 30)/2, 20, 30, RL_GRAY);
+        DrawText(FormatText("DONE! (Seconds: %03i)", levelTimeSec), GetScreenWidth()/2 - MeasureText("DONE! (Seconds: 000)", 30)/2, GetScreenHeight() - 40, 30, RL_GRAY);
     }
-    else DrawText("LEVEL 06", GetScreenWidth()/2 - MeasureText("LEVEL 06", 30)/2, 20, 30, LIGHTGRAY);
+    else DrawText("LEVEL 06", GetScreenWidth()/2 - MeasureText("LEVEL 06", 30)/2, 20, 30, RL_LIGHTGRAY);
 }
 
 // Level06 Screen Unload logic

@@ -42,13 +42,13 @@ int main()
         //----------------------------------------------------------------------------------
         BeginDrawing();
 
-            ClearBackground(RAYWHITE);
+            ClearBackground(RL_RAYWHITE);
 
-            DrawText("Font name:       PixAntiqua", 40, 50, 20, GRAY);
-            DrawText(FormatText("Font base size:           %i", font.baseSize), 40, 80, 20, GRAY);
-            DrawText(FormatText("Font chars number:     %i", font.charsCount), 40, 110, 20, GRAY);
+            DrawText("Font name:       PixAntiqua", 40, 50, 20, RL_GRAY);
+            DrawText(FormatText("Font base size:           %i", font.baseSize), 40, 80, 20, RL_GRAY);
+            DrawText(FormatText("Font chars number:     %i", font.charsCount), 40, 110, 20, RL_GRAY);
             
-            DrawTextEx(font, msg, (Vector2){ 40, 180 }, font.baseSize, 0, MAROON);
+            DrawTextEx(font, msg, (Vector2){ 40, 180 }, font.baseSize, 0, RL_MAROON);
 
         EndDrawing();
         //----------------------------------------------------------------------------------

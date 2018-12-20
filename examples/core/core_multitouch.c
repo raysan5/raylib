@@ -38,11 +38,11 @@ int main()
         //----------------------------------------------------------------------------------
         ballPosition = GetMousePosition();
         
-        ballColor = BEIGE;
+        ballColor = RL_BEIGE;
 
-        if (IsMouseButtonDown(MOUSE_LEFT_BUTTON)) ballColor = MAROON;
-        if (IsMouseButtonDown(MOUSE_MIDDLE_BUTTON)) ballColor = LIME;
-        if (IsMouseButtonDown(MOUSE_RIGHT_BUTTON)) ballColor = DARKBLUE;
+        if (IsMouseButtonDown(MOUSE_LEFT_BUTTON)) ballColor = RL_MAROON;
+        if (IsMouseButtonDown(MOUSE_MIDDLE_BUTTON)) ballColor = RL_LIME;
+        if (IsMouseButtonDown(MOUSE_RIGHT_BUTTON)) ballColor = RL_DARKBLUE;
 
         if (IsMouseButtonPressed(MOUSE_LEFT_BUTTON)) PressedCounter = 10;
         if (IsMouseButtonPressed(MOUSE_MIDDLE_BUTTON)) PressedCounter = 10;
@@ -55,7 +55,7 @@ int main()
         //----------------------------------------------------------------------------------
         BeginDrawing();
 
-            ClearBackground(RAYWHITE);
+            ClearBackground(RL_RAYWHITE);
 
             // Multitouch
             for (int i = 0; i < RL_MAX_TOUCH_POINTS; ++i)
@@ -64,18 +64,18 @@ int main()
                 
                 if( (TouchPos.x >= 0) && (TouchPos.y >= 0)  )                       // Make sure point is not (-1,-1) as this means there is no touch for it
                 {
-                    DrawCircleV(TouchPos, 34, ORANGE);                              // Draw a circle there
+                    DrawCircleV(TouchPos, 34, RL_ORANGE);                              // Draw a circle there
                     
                     sprintf(Str,"%d",i);
-                    DrawText(Str, TouchPos.x - 10, TouchPos.y - 70, 40, BLACK);     // Also show its index number
+                    DrawText(Str, TouchPos.x - 10, TouchPos.y - 70, 40, RL_BLACK);     // Also show its index number
                 } 
             }
 
             // Draw the normal mouse location
             DrawCircleV(ballPosition, 30 + (PressedCounter * 3), ballColor);
 
-            DrawText("move ball with mouse and click mouse button to change color", 10, 10, 20, DARKGRAY);
-            DrawText("touch the screen at multiple locations to get multiple balls", 10, 30, 20, DARKGRAY);
+            DrawText("move ball with mouse and click mouse button to change color", 10, 10, 20, RL_DARKGRAY);
+            DrawText("touch the screen at multiple locations to get multiple balls", 10, 30, 20, RL_DARKGRAY);
 
         EndDrawing();
         //----------------------------------------------------------------------------------

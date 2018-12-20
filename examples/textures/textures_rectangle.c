@@ -64,25 +64,25 @@ int main()
         //----------------------------------------------------------------------------------
         BeginDrawing();
 
-            ClearBackground(RAYWHITE);
+            ClearBackground(RL_RAYWHITE);
 
-            DrawTexture(scarfy, 15, 40, WHITE);
-            DrawRectangleLines(15, 40, scarfy.width, scarfy.height, LIME);
-            DrawRectangleLines(15 + frameRec.x, 40 + frameRec.y, frameRec.width, frameRec.height, RED);
+            DrawTexture(scarfy, 15, 40, RL_WHITE);
+            DrawRectangleLines(15, 40, scarfy.width, scarfy.height, RL_LIME);
+            DrawRectangleLines(15 + frameRec.x, 40 + frameRec.y, frameRec.width, frameRec.height, RL_RED);
             
-            DrawText("FRAME SPEED: ", 165, 210, 10, DARKGRAY);
-            DrawText(FormatText("%02i FPS", framesSpeed), 575, 210, 10, DARKGRAY);
-            DrawText("PRESS RIGHT/LEFT KEYS to CHANGE SPEED!", 290, 240, 10, DARKGRAY);
+            DrawText("FRAME SPEED: ", 165, 210, 10, RL_DARKGRAY);
+            DrawText(FormatText("%02i FPS", framesSpeed), 575, 210, 10, RL_DARKGRAY);
+            DrawText("PRESS RIGHT/LEFT KEYS to CHANGE SPEED!", 290, 240, 10, RL_DARKGRAY);
             
             for (int i = 0; i < MAX_FRAME_SPEED; i++)
             {
-                if (i < framesSpeed) DrawRectangle(250 + 21*i, 205, 20, 20, RED);
-                DrawRectangleLines(250 + 21*i, 205, 20, 20, MAROON);
+                if (i < framesSpeed) DrawRectangle(250 + 21*i, 205, 20, 20, RL_RED);
+                DrawRectangleLines(250 + 21*i, 205, 20, 20, RL_MAROON);
             }
             
-            DrawTextureRec(scarfy, frameRec, position, WHITE);  // Draw part of the texture
+            DrawTextureRec(scarfy, frameRec, position, RL_WHITE);  // Draw part of the texture
 
-            DrawText("(c) Scarfy sprite by Eiden Marsal", screenWidth - 200, screenHeight - 20, 10, GRAY);
+            DrawText("(c) Scarfy sprite by Eiden Marsal", screenWidth - 200, screenHeight - 20, 10, RL_GRAY);
 
         EndDrawing();
         //----------------------------------------------------------------------------------

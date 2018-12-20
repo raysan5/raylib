@@ -327,13 +327,13 @@ int main()
         //----------------------------------------------------------------------------------
         BeginDrawing();
         
-            ClearBackground(RAYWHITE);
+            ClearBackground(RL_RAYWHITE);
             
             // Draw background (common to all screens)
-            DrawTexture(sky, 0, 0, WHITE);
+            DrawTexture(sky, 0, 0, RL_WHITE);
             
-            DrawTexture(mountains, backScrolling, 0, WHITE);
-            DrawTexture(mountains, screenWidth + backScrolling, 0, WHITE);
+            DrawTexture(mountains, backScrolling, 0, RL_WHITE);
+            DrawTexture(mountains, screenWidth + backScrolling, 0, RL_WHITE);
             
             if (!gameraMode)
             {
@@ -351,24 +351,24 @@ int main()
                 case TITLE:
                 {
                     // Draw title
-                    DrawTexture(title, screenWidth/2 - title.width/2, screenHeight/2 - title.height/2 - 80, WHITE);
+                    DrawTexture(title, screenWidth/2 - title.width/2, screenHeight/2 - title.height/2 - 80, RL_WHITE);
                     
                     // Draw blinking text
-                    if ((framesCounter/30) % 2) DrawTextEx(font, "PRESS ENTER", (Vector2){ screenWidth/2 - 150, 480 }, font.baseSize, 0, WHITE);
+                    if ((framesCounter/30) % 2) DrawTextEx(font, "PRESS ENTER", (Vector2){ screenWidth/2 - 150, 480 }, font.baseSize, 0, RL_WHITE);
                 
                 } break;
                 case GAMEPLAY:
                 {
                     // Draw water lines
-                    for (int i = 0; i < 5; i++) DrawRectangle(0, i*120 + 120, screenWidth, 110, Fade(SKYBLUE, 0.1f));
+                    for (int i = 0; i < 5; i++) DrawRectangle(0, i*120 + 120, screenWidth, 110, Fade(RL_SKYBLUE, 0.1f));
                     
                     // Draw player
-                    if (!gameraMode) DrawTexture(turtle, playerBounds.x - 14, playerBounds.y - 14, WHITE);
-                    else DrawTexture(gamera, playerBounds.x - 64, playerBounds.y - 64, WHITE);
+                    if (!gameraMode) DrawTexture(turtle, playerBounds.x - 14, playerBounds.y - 14, RL_WHITE);
+                    else DrawTexture(gamera, playerBounds.x - 64, playerBounds.y - 64, RL_WHITE);
                     
                     // Draw player bounding box
-                    //if (!gameraMode) DrawRectangleRec(playerBounds, Fade(GREEN, 0.4f));
-                    //else DrawRectangleRec(playerBounds, Fade(ORANGE, 0.4f));
+                    //if (!gameraMode) DrawRectangleRec(playerBounds, Fade(RL_GREEN, 0.4f));
+                    //else DrawRectangleRec(playerBounds, Fade(RL_ORANGE, 0.4f));
                     
                     // Draw enemies
                     for (int i = 0; i < MAX_ENEMIES; i++)
@@ -378,10 +378,10 @@ int main()
                             // Draw enemies
                             switch(enemyType[i])
                             {
-                                case 0: DrawTexture(shark, enemyBounds[i].x - 14, enemyBounds[i].y - 14, WHITE); break;
-                                case 1: DrawTexture(orca, enemyBounds[i].x - 14, enemyBounds[i].y - 14, WHITE); break;
-                                case 2: DrawTexture(swhale, enemyBounds[i].x - 14, enemyBounds[i].y - 14, WHITE); break;
-                                case 3: DrawTexture(fish, enemyBounds[i].x - 14, enemyBounds[i].y - 14, WHITE); break;
+                                case 0: DrawTexture(shark, enemyBounds[i].x - 14, enemyBounds[i].y - 14, RL_WHITE); break;
+                                case 1: DrawTexture(orca, enemyBounds[i].x - 14, enemyBounds[i].y - 14, RL_WHITE); break;
+                                case 2: DrawTexture(swhale, enemyBounds[i].x - 14, enemyBounds[i].y - 14, RL_WHITE); break;
+                                case 3: DrawTexture(fish, enemyBounds[i].x - 14, enemyBounds[i].y - 14, RL_WHITE); break;
                                 default: break;
                             }
                             
@@ -389,10 +389,10 @@ int main()
                             /*
                             switch(enemyType[i])
                             {
-                                case 0: DrawRectangleRec(enemyBounds[i], Fade(RED, 0.5f)); break;
-                                case 1: DrawRectangleRec(enemyBounds[i], Fade(RED, 0.5f)); break;
-                                case 2: DrawRectangleRec(enemyBounds[i], Fade(RED, 0.5f)); break;
-                                case 3: DrawRectangleRec(enemyBounds[i], Fade(GREEN, 0.5f)); break;
+                                case 0: DrawRectangleRec(enemyBounds[i], Fade(RL_RED, 0.5f)); break;
+                                case 1: DrawRectangleRec(enemyBounds[i], Fade(RL_RED, 0.5f)); break;
+                                case 2: DrawRectangleRec(enemyBounds[i], Fade(RL_RED, 0.5f)); break;
+                                case 3: DrawRectangleRec(enemyBounds[i], Fade(RL_GREEN, 0.5f)); break;
                                 default: break;
                             }
                             */
@@ -400,34 +400,34 @@ int main()
                     }
                     
                     // Draw gameplay interface
-                    DrawRectangle(20, 20, 400, 40, Fade(GRAY, 0.4f));
-                    DrawRectangle(20, 20, foodBar, 40, ORANGE);
-                    DrawRectangleLines(20, 20, 400, 40, BLACK);
+                    DrawRectangle(20, 20, 400, 40, Fade(RL_GRAY, 0.4f));
+                    DrawRectangle(20, 20, foodBar, 40, RL_ORANGE);
+                    DrawRectangleLines(20, 20, 400, 40, RL_BLACK);
                     
-                    DrawTextEx(font, FormatText("SCORE: %04i", score), (Vector2){ screenWidth - 300, 20 }, font.baseSize, -2, ORANGE);
-                    DrawTextEx(font, FormatText("DISTANCE: %04i", (int)distance), (Vector2){ 550, 20 }, font.baseSize, -2, ORANGE);
+                    DrawTextEx(font, FormatText("SCORE: %04i", score), (Vector2){ screenWidth - 300, 20 }, font.baseSize, -2, RL_ORANGE);
+                    DrawTextEx(font, FormatText("DISTANCE: %04i", (int)distance), (Vector2){ 550, 20 }, font.baseSize, -2, RL_ORANGE);
                     
                     if (gameraMode)
                     {
-                        DrawText("GAMERA MODE", 60, 22, 40, GRAY);
-                        DrawTexture(gframe, 0, 0, Fade(WHITE, 0.5f));
+                        DrawText("GAMERA MODE", 60, 22, 40, RL_GRAY);
+                        DrawTexture(gframe, 0, 0, Fade(RL_WHITE, 0.5f));
                     }
             
                 } break;
                 case ENDING:
                 {
                     // Draw a transparent black rectangle that covers all screen
-                    DrawRectangle(0, 0, screenWidth, screenHeight, Fade(BLACK, 0.4f));
+                    DrawRectangle(0, 0, screenWidth, screenHeight, Fade(RL_BLACK, 0.4f));
                 
-                    DrawTextEx(font, "GAME OVER", (Vector2){ 300, 160 }, font.baseSize*3, -2, MAROON);
+                    DrawTextEx(font, "GAME OVER", (Vector2){ 300, 160 }, font.baseSize*3, -2, RL_MAROON);
                     
-                    DrawTextEx(font, FormatText("SCORE: %04i", score), (Vector2){ 680, 350 }, font.baseSize, -2, GOLD);
-                    DrawTextEx(font, FormatText("DISTANCE: %04i", (int)distance), (Vector2){ 290, 350 }, font.baseSize, -2, GOLD);
-                    DrawTextEx(font, FormatText("HISCORE: %04i", hiscore), (Vector2){ 665, 400 }, font.baseSize, -2, ORANGE);
-                    DrawTextEx(font, FormatText("HIDISTANCE: %04i", (int)hidistance), (Vector2){ 270, 400 }, font.baseSize, -2, ORANGE);
+                    DrawTextEx(font, FormatText("SCORE: %04i", score), (Vector2){ 680, 350 }, font.baseSize, -2, RL_GOLD);
+                    DrawTextEx(font, FormatText("DISTANCE: %04i", (int)distance), (Vector2){ 290, 350 }, font.baseSize, -2, RL_GOLD);
+                    DrawTextEx(font, FormatText("HISCORE: %04i", hiscore), (Vector2){ 665, 400 }, font.baseSize, -2, RL_ORANGE);
+                    DrawTextEx(font, FormatText("HIDISTANCE: %04i", (int)hidistance), (Vector2){ 270, 400 }, font.baseSize, -2, RL_ORANGE);
                     
                     // Draw blinking text
-                    if ((framesCounter/30) % 2) DrawTextEx(font, "PRESS ENTER to REPLAY", (Vector2){ screenWidth/2 - 250, 520 }, font.baseSize, -2, LIGHTGRAY);
+                    if ((framesCounter/30) % 2) DrawTextEx(font, "PRESS ENTER to REPLAY", (Vector2){ screenWidth/2 - 250, 520 }, font.baseSize, -2, RL_LIGHTGRAY);
                     
                 } break;
                 default: break;

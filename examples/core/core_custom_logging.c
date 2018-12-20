@@ -65,9 +65,9 @@ int main(int argc, char* argv[])
 		//----------------------------------------------------------------------------------
 		BeginDrawing();
 
-		ClearBackground(RAYWHITE);
+		ClearBackground(RL_RAYWHITE);
 
-		DrawText("Check out the console output to see the custom logger in action!", 60, 200, 20, LIGHTGRAY);
+		DrawText("Check out the console output to see the custom logger in action!", 60, 200, 20, RL_LIGHTGRAY);
 
 		EndDrawing();
 		//----------------------------------------------------------------------------------

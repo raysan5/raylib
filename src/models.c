@@ -1465,7 +1465,7 @@ Mesh GenMeshCubicmap(Image cubicmap, Vector3 cubeSize)
             Vector3 v7 = { w*(x - 0.5f), 0, h*(z + 0.5f) };
             Vector3 v8 = { w*(x + 0.5f), 0, h*(z + 0.5f) };
 
-            // We check pixel color to be WHITE, we will full cubes
+            // We check pixel color to be RL_WHITE, we will full cubes
             if ((cubicmapPixels[z*cubicmap.width + x].r == 255) &&
                 (cubicmapPixels[z*cubicmap.width + x].g == 255) &&
                 (cubicmapPixels[z*cubicmap.width + x].b == 255))
@@ -1651,7 +1651,7 @@ Mesh GenMeshCubicmap(Image cubicmap, Vector3 cubeSize)
                     tcCounter += 6;
                 }
             }
-            // We check pixel color to be BLACK, we will only draw floor and roof
+            // We check pixel color to be RL_BLACK, we will only draw floor and roof
             else if  ((cubicmapPixels[z*cubicmap.width + x].r == 0) &&
                       (cubicmapPixels[z*cubicmap.width + x].g == 0) &&
                       (cubicmapPixels[z*cubicmap.width + x].b == 0))
@@ -1790,8 +1790,8 @@ Material LoadMaterialDefault(void)
     //material.maps[MAP_NORMAL].texture;         // NOTE: By default, not set
     //material.maps[MAP_SPECULAR].texture;       // NOTE: By default, not set
 
-    material.maps[MAP_DIFFUSE].color = WHITE;    // Diffuse color
-    material.maps[MAP_SPECULAR].color = WHITE;   // Specular color
+    material.maps[MAP_DIFFUSE].color = RL_WHITE;    // Diffuse color
+    material.maps[MAP_SPECULAR].color = RL_WHITE;   // Specular color
 
     return material;
 }
@@ -1803,7 +1803,7 @@ void UnloadMaterial(Material material)
     if (material.shader.id != GetShaderDefault().id) UnloadShader(material.shader);
 
     // Unload loaded texture maps (avoid unloading default texture, managed by raylib)
-    for (int i = 0; i < MAX_MATERIAL_MAPS; i++)
+    for (int i = 0; i < RL_MAX_MATERIAL_MAPS; i++)
     {
         if (material.maps[i].texture.id != GetTextureDefault().id) rlDeleteTextures(material.maps[i].texture.id); 
     }

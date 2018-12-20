@@ -135,9 +135,9 @@ void InitMissionScreen(void)
     missionLenght = 0;
     missionSpeed = 1;
     
-    numberColor = RAYWHITE;
-    missionColor = LIGHTGRAY;
-    keywordColor = (Color){198, 49, 60, 255}; //RED
+    numberColor = RL_RAYWHITE;
+    missionColor = RL_LIGHTGRAY;
+    keywordColor = (Color){198, 49, 60, 255}; //RL_RED
     
     numberPosition = (Vector2){150, 185};
     missionPosition = (Vector2){numberPosition.x, numberPosition.y + 60};
@@ -187,8 +187,8 @@ void UpdateMissionScreen(void)
 void DrawMissionScreen(void)
 {
     // TODO: Draw MISSION screen here!
-    DrawTexture(texBackground, 0,0, WHITE);
-    DrawTexturePro(texBackline, sourceRecBackLine, destRecBackLine, (Vector2){0,0},0, Fade(WHITE, fadeBackLine));
+    DrawTexture(texBackground, 0,0, RL_WHITE);
+    DrawTexturePro(texBackline, sourceRecBackLine, destRecBackLine, (Vector2){0,0},0, Fade(RL_WHITE, fadeBackLine));
     
     if (writeNumber) DrawTextEx(fontMission, FormatText("Filtración #%02i ", currentMission + 1), numberPosition, missionSize + 10, 0, numberColor);    
     DrawTextEx(fontMission, SubText(missions[currentMission].brief, 0, missionLenght), missionPosition, missionSize, 0, missionColor);

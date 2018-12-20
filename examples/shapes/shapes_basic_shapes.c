@@ -35,31 +35,31 @@ int main()
         //----------------------------------------------------------------------------------
         BeginDrawing();
 
-            ClearBackground(RAYWHITE);
+            ClearBackground(RL_RAYWHITE);
 
-            DrawText("some basic shapes available on raylib", 20, 20, 20, DARKGRAY);
+            DrawText("some basic shapes available on raylib", 20, 20, 20, RL_DARKGRAY);
 
-            DrawCircle(screenWidth/4, 120, 35, DARKBLUE);
+            DrawCircle(screenWidth/4, 120, 35, RL_DARKBLUE);
 
-            DrawRectangle(screenWidth/4*2 - 60, 100, 120, 60, RED);
-            DrawRectangleLines(screenWidth/4*2 - 40, 320, 80, 60, ORANGE);  // NOTE: Uses QUADS internally, not lines
-            DrawRectangleGradientH(screenWidth/4*2 - 90, 170, 180, 130, MAROON, GOLD);
+            DrawRectangle(screenWidth/4*2 - 60, 100, 120, 60, RL_RED);
+            DrawRectangleLines(screenWidth/4*2 - 40, 320, 80, 60, RL_ORANGE);  // NOTE: Uses QUADS internally, not lines
+            DrawRectangleGradientH(screenWidth/4*2 - 90, 170, 180, 130, RL_MAROON, RL_GOLD);
 
             DrawTriangle((Vector2){screenWidth/4*3, 80},
                          (Vector2){screenWidth/4*3 - 60, 150},
-                         (Vector2){screenWidth/4*3 + 60, 150}, VIOLET);
+                         (Vector2){screenWidth/4*3 + 60, 150}, RL_VIOLET);
 
-            DrawPoly((Vector2){screenWidth/4*3, 320}, 6, 80, 0, BROWN);
+            DrawPoly((Vector2){screenWidth/4*3, 320}, 6, 80, 0, RL_BROWN);
 
-            DrawCircleGradient(screenWidth/4, 220, 60, GREEN, SKYBLUE);
+            DrawCircleGradient(screenWidth/4, 220, 60, RL_GREEN, RL_SKYBLUE);
 
             // NOTE: We draw all LINES based shapes together to optimize internal drawing,
             // this way, all LINES are rendered in a single draw pass
-            DrawLine(18, 42, screenWidth - 18, 42, BLACK);
-            DrawCircleLines(screenWidth/4, 340, 80, DARKBLUE);
+            DrawLine(18, 42, screenWidth - 18, 42, RL_BLACK);
+            DrawCircleLines(screenWidth/4, 340, 80, RL_DARKBLUE);
             DrawTriangleLines((Vector2){screenWidth/4*3, 160},
                               (Vector2){screenWidth/4*3 - 20, 230},
-                              (Vector2){screenWidth/4*3 + 20, 230}, DARKBLUE);
+                              (Vector2){screenWidth/4*3 + 20, 230}, RL_DARKBLUE);
         EndDrawing();
         //----------------------------------------------------------------------------------
     }
