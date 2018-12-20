@@ -153,7 +153,6 @@
   <ItemGroup>
     <ClCompile Include="..\..\..\src\audio.c" />
     <ClCompile Include="..\..\..\src\core.c" />
-    <ClCompile Include="..\..\..\src\external\stb_vorbis.c" />
     <ClCompile Include="..\..\..\src\models.c" />
     <ClCompile Include="..\..\..\src\shapes.c" />
     <ClCompile Include="..\..\..\src\text.c" />

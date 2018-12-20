@@ -91,7 +91,7 @@
 #include <stdio.h>              // Required for: FILE, fopen(), fclose(), fread()
 
 #if defined(SUPPORT_FILEFORMAT_OGG)
-    //#define STB_VORBIS_HEADER_ONLY
+    #define STB_VORBIS_IMPLEMENTATION
     #include "external/stb_vorbis.h"    // OGG loading functions
 #endif
 

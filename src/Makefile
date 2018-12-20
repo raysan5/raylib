@@ -404,7 +404,6 @@ endif
 
 ifeq ($(INCLUDE_AUDIO_MODULE),TRUE)
     OBJS += audio.o
-    OBJS += stb_vorbis.o
     OBJS += mini_al.o
 endif
 
@@ -537,10 +536,6 @@ audio.o : audio.c raylib.h
 mini_al.o : external/mini_al.c external/mini_al.h
 	$(CC) -c $< $(CFLAGS) $(INCLUDE_PATHS) -D$(PLATFORM)
 
-# Compile stb_vorbis library
-stb_vorbis.o: external/stb_vorbis.c external/stb_vorbis.h
-	$(CC) -c $< $(CFLAGS) $(INCLUDE_PATHS) -D$(PLATFORM)
-
 # Compile utils module
 utils.o : utils.c utils.h
 	$(CC) -c $< $(CFLAGS) $(INCLUDE_PATHS) -D$(PLATFORM)
@@ -628,9 +623,9 @@ endif
 # Clean everything
 clean:
 ifeq ($(PLATFORM_OS),WINDOWS)
-	del *.o $(RAYLIB_RELEASE_PATH)/libraylib.a $(RAYLIB_RELEASE_PATH)/libraylib.bc $(RAYLIB_RELEASE_PATH)/libraylib.so external/stb_vorbis.o
+	del *.o $(RAYLIB_RELEASE_PATH)/libraylib.a $(RAYLIB_RELEASE_PATH)/libraylib.bc $(RAYLIB_RELEASE_PATH)/libraylib.so
 else
-	rm -fv *.o $(RAYLIB_RELEASE_PATH)/libraylib.a $(RAYLIB_RELEASE_PATH)/libraylib.bc $(RAYLIB_RELEASE_PATH)/libraylib.so* external/stb_vorbis.o
+	rm -fv *.o $(RAYLIB_RELEASE_PATH)/libraylib.a $(RAYLIB_RELEASE_PATH)/libraylib.bc $(RAYLIB_RELEASE_PATH)/libraylib.so*
 endif
 ifeq ($(PLATFORM),PLATFORM_ANDROID)
 	rm -rf $(ANDROID_TOOLCHAIN)

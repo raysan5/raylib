@@ -6,7 +6,7 @@
 *
 *   DEPENDENCIES:
 *       mini_al.h    - Audio device management lib (http://kcat.strangesoft.net/openal.html)
-*       stb_vorbis.c - Ogg audio files loading (http://www.nothings.org/stb_vorbis/)
+*       stb_vorbis.h - Ogg audio files loading (http://www.nothings.org/stb_vorbis/)
 *       jar_xm.h     - XM module file loading
 *       jar_mod.h    - MOD audio file loading
 *       dr_flac.h    - FLAC audio file loading
