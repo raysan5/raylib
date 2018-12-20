@@ -11,7 +11,7 @@
 
 #include "raylib.h"
 
-#include <strings.h>        // Required for: strcpy()
+#include <string.h>        // Required for: strcpy()
 
 int main()
 {
