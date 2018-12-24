@@ -61,15 +61,15 @@ void InitLogoScreen(void)
 // Logo Screen Update logic
 void UpdateLogoScreen(void)
 {
-    if(!fadeOut)
+    if (!fadeOut)
     {       
         fadeValue += 0.02f;
-        if(fadeValue > 1.01f)
+        if (fadeValue > 1.01f)
         {
             fadeValue = 1.0f;
             framesCounter++;
             
-            if(framesCounter % showLogoFrames == 0)
+            if ((framesCounter%showLogoFrames) == 0)
             {
                 fadeOut = true;
                 finishScreen = true;
@@ -77,10 +77,7 @@ void UpdateLogoScreen(void)
         }        
     }   
     
-    if(IsKeyPressed(KEY_ENTER))
-    {
-        finishScreen = true;
-    }
+    if (IsKeyPressed(KEY_ENTER)) finishScreen = true;
 }
 
 // Logo Screen Draw logic
