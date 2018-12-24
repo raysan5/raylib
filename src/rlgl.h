@@ -165,14 +165,6 @@ typedef unsigned char byte;
         unsigned char a;
     } Color;
 
-    // Rectangle type
-    typedef struct Rectangle {
-        int x;
-        int y;
-        int width;
-        int height;
-    } Rectangle;
-
     // Texture2D type
     // NOTE: Data stored in GPU memory
     typedef struct Texture2D {
@@ -703,9 +695,9 @@ typedef struct DrawCall {
 typedef struct VrStereoConfig {
     RenderTexture2D stereoFbo;  // VR stereo rendering framebuffer
     Shader distortionShader;    // VR stereo rendering distortion shader
-    Rectangle eyesViewport[2];  // VR stereo rendering eyes viewports
     Matrix eyesProjection[2];   // VR stereo rendering eyes projection matrices
     Matrix eyesViewOffset[2];   // VR stereo rendering eyes view offset matrices
+    int eyesViewport[2][4];     // VR stereo rendering eyes viewports [x, y, w, h]
 } VrStereoConfig;
 #endif
 
@@ -4268,8 +4260,8 @@ static void SetStereoConfig(VrDeviceInfo hmd)
     vrConfig.eyesViewOffset[1] = MatrixTranslate(hmd.interpupillaryDistance*0.5f, 0.075f, 0.045f);
 
     // Compute eyes Viewports
-    vrConfig.eyesViewport[0] = (Rectangle){ 0.0f, 0.0f, (float)hmd.hResolution/2, (float)hmd.vResolution };
-    vrConfig.eyesViewport[1] = (Rectangle){ hmd.hResolution/2.0f, 0.0f, (float)hmd.hResolution/2, (float) hmd.vResolution };
+    //vrConfig.eyesViewport[0] = { 0.0f, 0.0f, (float)hmd.hResolution/2, (float)hmd.vResolution };
+    //vrConfig.eyesViewport[1] = { hmd.hResolution/2.0f, 0.0f, (float)hmd.hResolution/2, (float) hmd.vResolution };
 }
 
 // Set internal projection and modelview matrix depending on eyes tracking data
