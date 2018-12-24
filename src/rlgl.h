@@ -1468,10 +1468,10 @@ void rlglInit(int width, int height)
     //for (int i = 0; i < numComp; i++) TraceLog(LOG_INFO, "Supported compressed format: 0x%x", format[i]);
 
     // NOTE: We don't need that much data on screen... right now...
-
-#if defined(GRAPHICS_API_OPENGL_11)
-    //TraceLog(LOG_INFO, "OpenGL 1.1 (or driver default) profile initialized");
-#endif
+    
+    // TODO: Automatize extensions loading using rlLoadExtensions() and GLAD
+    // Actually, when rlglInit() is called in InitWindow() in core.c,
+    // OpenGL required extensions have already been loaded (PLATFORM_DESKTOP)
 
 #if defined(GRAPHICS_API_OPENGL_33) || defined(GRAPHICS_API_OPENGL_ES2)
     // Get supported extensions list
@@ -1552,7 +1552,6 @@ void rlglInit(int width, int height)
         // Check texture float support
         if (strcmp(extList[i], (const char *)"GL_OES_texture_float") == 0) texFloatSupported = true;
 #endif
-
         // DDS texture compression support
         if ((strcmp(extList[i], (const char *)"GL_EXT_texture_compression_s3tc") == 0) ||
             (strcmp(extList[i], (const char *)"GL_WEBGL_compressed_texture_s3tc") == 0) ||
@@ -1608,6 +1607,8 @@ void rlglInit(int width, int height)
 
     if (debugMarkerSupported) TraceLog(LOG_INFO, "[EXTENSION] Debug Marker supported");
 
+    
+    
     // Initialize buffers, default shaders and default textures
     //----------------------------------------------------------
 
