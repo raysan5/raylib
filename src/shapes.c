@@ -186,7 +186,7 @@ void DrawCircle(int centerX, int centerY, float radius, Color color)
 // NOTE: Gradient goes from center (color1) to border (color2)
 void DrawCircleGradient(int centerX, int centerY, float radius, Color color1, Color color2)
 {
-    if (rlCheckBufferLimit(RL_TRIANGLES, 3*36)) rlglDraw();
+    if (rlCheckBufferLimit(3*36)) rlglDraw();
 
     rlBegin(RL_TRIANGLES);
         for (int i = 0; i < 360; i += 10)
@@ -206,7 +206,7 @@ void DrawCircleGradient(int centerX, int centerY, float radius, Color color1, Co
 void DrawCircleV(Vector2 center, float radius, Color color)
 {
 #if defined(SUPPORT_QUADS_DRAW_MODE)
-    if (rlCheckBufferLimit(RL_QUADS, 4*(36/2))) rlglDraw();
+    if (rlCheckBufferLimit(4*(36/2))) rlglDraw();
 
     rlEnableTexture(GetShapesTexture().id);
 
@@ -231,7 +231,7 @@ void DrawCircleV(Vector2 center, float radius, Color color)
 
     rlDisableTexture();
 #else
-    if (rlCheckBufferLimit(RL_TRIANGLES, 3*(36/2))) rlglDraw();
+    if (rlCheckBufferLimit(3*(36/2))) rlglDraw();
 
     rlBegin(RL_TRIANGLES);
         for (int i = 0; i < 360; i += 10)
@@ -249,7 +249,7 @@ void DrawCircleV(Vector2 center, float radius, Color color)
 // Draw circle outline
 void DrawCircleLines(int centerX, int centerY, float radius, Color color)
 {
-    if (rlCheckBufferLimit(RL_LINES, 2*36)) rlglDraw();
+    if (rlCheckBufferLimit(2*36)) rlglDraw();
 
     rlBegin(RL_LINES);
         rlColor4ub(color.r, color.g, color.b, color.a);
@@ -440,7 +440,7 @@ void DrawPoly(Vector2 center, int sides, float radius, float rotation, Color col
 {
     if (sides < 3) sides = 3;
 
-    if (rlCheckBufferLimit(RL_QUADS, 4*(360/sides))) rlglDraw();
+    if (rlCheckBufferLimit(4*(360/sides))) rlglDraw();
 
     rlPushMatrix();
         rlTranslatef(center.x, center.y, 0.0);
@@ -488,24 +488,8 @@ void DrawPolyEx(Vector2 *points, int pointsCount, Color color)
 {
     if (pointsCount >= 3)
     {
-        if (rlCheckBufferLimit(RL_QUADS, pointsCount)) rlglDraw();
+        if (rlCheckBufferLimit(pointsCount)) rlglDraw();
 
-#if defined(SUPPORT_QUADS_DRAW_MODE)
-        rlEnableTexture(GetShapesTexture().id);
-
-        rlBegin(RL_QUADS);
-            rlColor4ub(color.r, color.g, color.b, color.a);
-
-            for (int i = 1; i < pointsCount - 1; i++)
-            {
-                rlVertex2f(points[0].x, points[0].y);
-                rlVertex2f(points[i].x, points[i].y);
-                rlVertex2f(points[i].x, points[i].y);
-                rlVertex2f(points[i + 1].x, points[i + 1].y);
-            }
-        rlEnd();
-        rlDisableTexture();
-#else
         rlBegin(RL_TRIANGLES);
             rlColor4ub(color.r, color.g, color.b, color.a);
 
@@ -516,7 +500,6 @@ void DrawPolyEx(Vector2 *points, int pointsCount, Color color)
                 rlVertex2f(points[i + 1].x, points[i + 1].y);
             }
         rlEnd();
-#endif
     }
 }
 
@@ -525,7 +508,7 @@ void DrawPolyExLines(Vector2 *points, int pointsCount, Color color)
 {
     if (pointsCount >= 2)
     {
-        if (rlCheckBufferLimit(RL_LINES, pointsCount)) rlglDraw();
+        if (rlCheckBufferLimit(pointsCount)) rlglDraw();
 
         rlBegin(RL_LINES);
             rlColor4ub(color.r, color.g, color.b, color.a);

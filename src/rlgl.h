@@ -435,7 +435,7 @@ void rlglClose(void);                           // De-inititialize rlgl (buffers
 void rlglDraw(void);                            // Update and draw default internal buffers
 
 int rlGetVersion(void);                         // Returns current OpenGL version
-bool rlCheckBufferLimit(int type, int vCount);  // Check internal buffer overflow for a given number of vertex
+bool rlCheckBufferLimit(int vCount);            // Check internal buffer overflow for a given number of vertex
 void rlSetDebugMarker(const char *text);        // Set debug marker for analysis
 void rlLoadExtensions(void *loader);            // Load OpenGL extensions
 Vector3 rlUnproject(Vector3 source, Matrix proj, Matrix view);  // Get world coordinates from screen coordinates
@@ -1738,7 +1738,7 @@ int rlGetVersion(void)
 }
 
 // Check internal buffer overflow for a given number of vertex
-bool rlCheckBufferLimit(int type, int vCount)
+bool rlCheckBufferLimit(int vCount)
 {
     bool overflow = false;
 #if defined(GRAPHICS_API_OPENGL_33) || defined(GRAPHICS_API_OPENGL_ES2)

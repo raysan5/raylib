@@ -470,7 +470,7 @@ typedef enum {
     KEY_X               = 88,
     KEY_Y               = 89,
     KEY_Z               = 90,
-    
+
     // Function keys
     KEY_SPACE           = 32,
     KEY_ESCAPE          = 256,
@@ -517,7 +517,7 @@ typedef enum {
     KEY_BACKSLASH       = 92,
     KEY_RIGHT_BRACKET   = 93,
     KEY_GRAVE           = 96,
-    
+
     // Keypad keys
     KEY_KP_0            = 320,
     KEY_KP_1            = 321,
