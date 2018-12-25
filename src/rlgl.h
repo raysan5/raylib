@@ -2968,7 +2968,7 @@ Matrix GetMatrixModelview()
 Texture2D GenTextureCubemap(Shader shader, Texture2D skyHDR, int size)
 {
     Texture2D cubemap = { 0 };
-#if defined(GRAPHICS_API_OPENGL_33) // || defined(GRAPHICS_API_OPENGL_ES2)
+#if defined(GRAPHICS_API_OPENGL_33) || defined(GRAPHICS_API_OPENGL_ES2)
     // NOTE: SetShaderDefaultLocations() already setups locations for projection and view Matrix in shader
     // Other locations should be setup externally in shader before calling the function
 
@@ -2978,22 +2978,31 @@ Texture2D GenTextureCubemap(Shader shader, Texture2D skyHDR, int size)
     glEnable(GL_TEXTURE_CUBE_MAP_SEAMLESS);     // Flag not supported on OpenGL ES 2.0
 #endif
 
-
     // Setup framebuffer
     unsigned int fbo, rbo;
     glGenFramebuffers(1, &fbo);
     glGenRenderbuffers(1, &rbo);
     glBindFramebuffer(GL_FRAMEBUFFER, fbo);
     glBindRenderbuffer(GL_RENDERBUFFER, rbo);
+#if defined(GRAPHICS_API_OPENGL_33)
     glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH_COMPONENT24, size, size);
+#elif defined(GRAPHICS_API_OPENGL_ES2)
+    glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH_COMPONENT16, size, size);
+#endif
     glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_RENDERBUFFER, rbo);
 
     // Set up cubemap to render and attach to framebuffer
     // NOTE: faces are stored with 16 bit floating point values
     glGenTextures(1, &cubemap.id);
     glBindTexture(GL_TEXTURE_CUBE_MAP, cubemap.id);
-    for (unsigned int i = 0; i < 6; i++)
-        glTexImage2D(GL_TEXTURE_CUBE_MAP_POSITIVE_X + i, 0, GL_RGB16F, size, size, 0, GL_RGB, GL_FLOAT, NULL);
+    for (unsigned int i = 0; i < 6; i++) 
+    {
+#if defined(GRAPHICS_API_OPENGL_33)
+        glTexImage2D(GL_TEXTURE_CUBE_MAP_POSITIVE_X + i, 0, GL_RGB32F, size, size, 0, GL_RGB, GL_FLOAT, NULL);
+#elif defined(GRAPHICS_API_OPENGL_ES2)
+        if (texFloatSupported) glTexImage2D(GL_TEXTURE_CUBE_MAP_POSITIVE_X + i, 0, GL_RGB, size, size, 0, GL_RGB, GL_FLOAT, NULL);
+#endif
+    }
     glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
     glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
 #if defined(GRAPHICS_API_OPENGL_33)

@@ -16,12 +16,12 @@ uniform mat4 projection;
 uniform mat4 view;
 
 // Output vertex attributes (to fragment shader)
-out vec3 fragPos;
+out vec3 fragPosition;
 
 void main()
 {
     // Calculate fragment position based on model transformations
-    fragPos = vertexPosition;
+    fragPosition = vertexPosition;
 
     // Remove translation from the view matrix
     mat4 rotView = mat4(mat3(view));
