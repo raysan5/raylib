@@ -1176,14 +1176,15 @@ Music LoadMusicStream(const char *fileName)
 
         if (jar_mod_load_file(&music->ctxMod, fileName))
         {
+            // NOTE: Only stereo is supported for MOD
             music->stream = InitAudioStream(48000, 16, 2);
             music->totalSamples = (unsigned int)jar_mod_max_samples(&music->ctxMod);
             music->samplesLeft = music->totalSamples;
             music->ctxType = MUSIC_MODULE_MOD;
             music->loopCount = -1;                       // Infinite loop by default
 
-            TraceLog(LOG_DEBUG, "[%s] MOD number of samples: %i", fileName, music->samplesLeft);
-            TraceLog(LOG_DEBUG, "[%s] MOD track length: %11.6f sec", fileName, (float)music->totalSamples/48000.0f);
+            TraceLog(LOG_INFO, "[%s] MOD number of samples: %i", fileName, music->samplesLeft);
+            TraceLog(LOG_INFO, "[%s] MOD track length: %11.6f sec", fileName, (float)music->totalSamples/48000.0f);
         }
         else musicLoaded = false;
     }
@@ -1345,18 +1346,27 @@ void UpdateMusicStream(Music music)
         #if defined(SUPPORT_FILEFORMAT_XM)
             case MUSIC_MODULE_XM:
             {
-                // NOTE: Internally this function considers 2 channels generation, so samplesCount/2 --> WEIRD
+                // NOTE: Internally this function considers 2 channels generation, so samplesCount/2
                 jar_xm_generate_samples_16bit(music->ctxXm, (short *)pcm, samplesCount/2);
             } break;
         #endif
         #if defined(SUPPORT_FILEFORMAT_MOD)
-            case MUSIC_MODULE_MOD: jar_mod_fillbuffer(&music->ctxMod, pcm, samplesCount, 0); break;
+            case MUSIC_MODULE_MOD: 
+            {
+                // NOTE: 3rd parameter (nbsample) specify the number of stereo 16bits samples you want, so sampleCount/2
+                jar_mod_fillbuffer(&music->ctxMod, (short *)pcm, samplesCount/2, 0); 
+            } break;
         #endif
             default: break;
         }
 
+        
         UpdateAudioStream(music->stream, pcm, samplesCount);
-        music->samplesLeft -= samplesCount;
+        if ((music->ctxType == MUSIC_MODULE_XM) || (music->ctxType == MUSIC_MODULE_MOD))
+        {
+            music->samplesLeft -= samplesCount/2;
+        }
+        else music->samplesLeft -= samplesCount;
 
         if (music->samplesLeft <= 0)
         {

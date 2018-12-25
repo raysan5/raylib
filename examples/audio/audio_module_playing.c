@@ -30,11 +30,11 @@ int main()
     int screenWidth = 800;
     int screenHeight = 450;
 
-    SetConfigFlags(FLAG_MSAA_4X_HINT);      // NOTE: Try to enable MSAA 4X
+    SetConfigFlags(FLAG_MSAA_4X_HINT);  // NOTE: Try to enable MSAA 4X
     
     InitWindow(screenWidth, screenHeight, "raylib [audio] example - module playing (streaming)");
 
-    InitAudioDevice();              // Initialize audio device
+    InitAudioDevice();                  // Initialize audio device
     
     Color colors[14] = { ORANGE, RED, GOLD, LIME, BLUE, VIOLET, BROWN, LIGHTGRAY, PINK,
                          YELLOW, GREEN, SKYBLUE, PURPLE, BEIGE };
@@ -52,7 +52,7 @@ int main()
         circles[i].color = colors[GetRandomValue(0, 13)];
     }
 
-    Music xm = LoadMusicStream("resources/mini1111.xm");
+    Music xm = LoadMusicStream("resources/chiptun1.mod");
     
     PlayMusicStream(xm);
 
