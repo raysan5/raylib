@@ -275,7 +275,7 @@ Font LoadFont(const char *fileName)
     Font font = { 0 };
 
 #if defined(SUPPORT_FILEFORMAT_TTF)
-    if (IsFileExtension(fileName, ".ttf") || IsFileExtension(fileName, ".otf")) font = LoadFontEx(fileName, DEFAULT_TTF_FONTSIZE, DEFAULT_TTF_NUMCHARS, NULL);
+    if (IsFileExtension(fileName, ".ttf") || IsFileExtension(fileName, ".otf")) font = LoadFontEx(fileName, DEFAULT_TTF_FONTSIZE, NULL, DEFAULT_TTF_NUMCHARS);
     else
 #endif
 #if defined(SUPPORT_FILEFORMAT_FNT)
@@ -301,7 +301,7 @@ Font LoadFont(const char *fileName)
 // Load Font from TTF font file with generation parameters
 // NOTE: You can pass an array with desired characters, those characters should be available in the font
 // if array is NULL, default char set is selected 32..126
-Font LoadFontEx(const char *fileName, int fontSize, int charsCount, int *fontChars)
+Font LoadFontEx(const char *fileName, int fontSize, int *fontChars, int charsCount)
 {
     Font font = { 0 };
 

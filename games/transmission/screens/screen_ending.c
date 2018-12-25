@@ -123,7 +123,7 @@ void InitEndingScreen(void)
 
     // Generate newspaper with title and subtitle
     Image imNewspaper = LoadImage("resources/textures/ending_newspaper.png");
-    fontNews = LoadFontEx("resources/fonts/Lora-Bold.ttf", 32, 250, 0);
+    fontNews = LoadFontEx("resources/fonts/Lora-Bold.ttf", 32, 0, 250);
     ImageDrawTextEx(&imNewspaper, (Vector2){ 50, 220 }, fontNews, headline, fontNews.baseSize, 0, DARKGRAY);
 
     texNewspaper = LoadTextureFromImage(imNewspaper);

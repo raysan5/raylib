@@ -21,7 +21,7 @@ int main()
     InitWindow(screenWidth, screenHeight, "raylib [texture] example - image text drawing");
     
     // TTF Font loading with custom generation parameters
-    Font font = LoadFontEx("resources/KAISG.ttf", 64, 95, 0);
+    Font font = LoadFontEx("resources/KAISG.ttf", 64, 0, 0);
     
     Image parrots = LoadImage("resources/parrots.png"); // Load image in CPU memory (RAM)
 

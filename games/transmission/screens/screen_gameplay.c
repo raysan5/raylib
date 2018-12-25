@@ -126,7 +126,7 @@ void InitGameplayScreen(void)
     framesCounter = 0;
     finishScreen = 0;
 
-    fontMessage = LoadFontEx("resources/fonts/traveling_typewriter.ttf", 30, 250, 0);
+    fontMessage = LoadFontEx("resources/fonts/traveling_typewriter.ttf", 30, 0, 250);
 
     texBackground = LoadTexture("resources/textures/message_background.png");
     texVignette = LoadTexture("resources/textures/message_vignette.png");
