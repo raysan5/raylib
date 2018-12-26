@@ -1102,7 +1102,8 @@ void rlEnd(void)
     // processed but are placed in a single point to not result in a fragment output...
     // TODO: System could be improved (a bit) just storing every draw alignment value
     // and adding it to vertexOffset on drawing... maybe in a future...
-    int vertexToAlign = draws[drawsCounter - 1].vertexCount%4;
+    int vertexCount = draws[drawsCounter - 1].vertexCount;
+    int vertexToAlign = (vertexCount >= 4) ? vertexCount%4 : (4 - vertexCount%4);
     for (int i = 0; i < vertexToAlign; i++) rlVertex3f(-1, -1, -1);
 
     // Make sure vertexCount is the same for vertices, texcoords, colors and normals
@@ -1145,7 +1146,7 @@ void rlEnd(void)
 
     // Verify internal buffers limits
     // NOTE: This check is combined with usage of rlCheckBufferLimit()
-    if ((vertexData[currentBuffer].vCounter/4) >= (MAX_BATCH_ELEMENTS - 4))
+    if ((vertexData[currentBuffer].vCounter) >= (MAX_BATCH_ELEMENTS*4 - 4))
     {
         // WARNING: If we are between rlPushMatrix() and rlPopMatrix() and we need to force a rlglDraw(),
         // we need to call rlPopMatrix() before to recover *currentMatrix (modelview) for the next forced draw call!
@@ -1165,7 +1166,7 @@ void rlVertex3f(float x, float y, float z)
     if (useTransformMatrix) vec = Vector3Transform(vec, transformMatrix);
     
     // Verify that MAX_BATCH_ELEMENTS limit not reached
-    if (vertexData[currentBuffer].vCounter/4 < MAX_BATCH_ELEMENTS)
+    if (vertexData[currentBuffer].vCounter < (MAX_BATCH_ELEMENTS*4))
     {
         vertexData[currentBuffer].vertices[3*vertexData[currentBuffer].vCounter] = vec.x;
         vertexData[currentBuffer].vertices[3*vertexData[currentBuffer].vCounter + 1] = vec.y;
@@ -1262,7 +1263,7 @@ void rlDisableTexture(void)
 #else
     // NOTE: If quads batch limit is reached,
     // we force a draw call and next batch starts
-    if (vertexData[currentBuffer].vCounter/4 >= MAX_BATCH_ELEMENTS) rlglDraw();
+    if (vertexData[currentBuffer].vCounter >= (MAX_BATCH_ELEMENTS*4)) rlglDraw();
 #endif
 }
 
@@ -1735,7 +1736,7 @@ bool rlCheckBufferLimit(int vCount)
 {
     bool overflow = false;
 #if defined(GRAPHICS_API_OPENGL_33) || defined(GRAPHICS_API_OPENGL_ES2)
-    if ((vertexData[currentBuffer].vCounter + vCount)/4 >= MAX_BATCH_ELEMENTS) overflow = true;
+    if ((vertexData[currentBuffer].vCounter + vCount) >= (MAX_BATCH_ELEMENTS*4)) overflow = true;
 #endif
     return overflow;
 }
@@ -3013,7 +3014,6 @@ Texture2D GenTextureCubemap(Shader shader, Texture2D skyHDR, int size)
 
     // Create projection (transposed) and different views for each face
     Matrix fboProjection = MatrixPerspective(90.0*DEG2RAD, 1.0, 0.01, 1000.0);
-    //MatrixTranspose(&fboProjection);
     Matrix fboViews[6] = {
         MatrixLookAt((Vector3){ 0.0f, 0.0f, 0.0f }, (Vector3){ 1.0f, 0.0f, 0.0f }, (Vector3){ 0.0f, -1.0f, 0.0f }),
         MatrixLookAt((Vector3){ 0.0f, 0.0f, 0.0f }, (Vector3){ -1.0f, 0.0f, 0.0f }, (Vector3){ 0.0f, -1.0f, 0.0f }),
@@ -3086,7 +3086,6 @@ Texture2D GenTextureIrradiance(Shader shader, Texture2D cubemap, int size)
 
     // Create projection (transposed) and different views for each face
     Matrix fboProjection = MatrixPerspective(90.0*DEG2RAD, 1.0, 0.01, 1000.0);
-    //MatrixTranspose(&fboProjection);
     Matrix fboViews[6] = {
         MatrixLookAt((Vector3){ 0.0f, 0.0f, 0.0f }, (Vector3){ 1.0f, 0.0f, 0.0f }, (Vector3){ 0.0f, -1.0f, 0.0f }),
         MatrixLookAt((Vector3){ 0.0f, 0.0f, 0.0f }, (Vector3){ -1.0f, 0.0f, 0.0f }, (Vector3){ 0.0f, -1.0f, 0.0f }),
@@ -3163,7 +3162,6 @@ Texture2D GenTexturePrefilter(Shader shader, Texture2D cubemap, int size)
 
     // Create projection (transposed) and different views for each face
     Matrix fboProjection = MatrixPerspective(90.0*DEG2RAD, 1.0, 0.01, 1000.0);
-    //MatrixTranspose(&fboProjection);
     Matrix fboViews[6] = {
         MatrixLookAt((Vector3){ 0.0f, 0.0f, 0.0f }, (Vector3){ 1.0f, 0.0f, 0.0f }, (Vector3){ 0.0f, -1.0f, 0.0f }),
         MatrixLookAt((Vector3){ 0.0f, 0.0f, 0.0f }, (Vector3){ -1.0f, 0.0f, 0.0f }, (Vector3){ 0.0f, -1.0f, 0.0f }),
