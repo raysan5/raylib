@@ -2,7 +2,7 @@
 *
 *   raylib [text] example - Text Writing Animation
 *
-*   This example has been created using raylib 1.4 (www.raylib.com)
+*   This example has been created using raylib 2.3 (www.raylib.com)
 *   raylib is licensed under an unmodified zlib/libpng license (View raylib.h for details)
 *
 *   Copyright (c) 2016 Ramon Santamaria (@raysan5)
@@ -44,7 +44,7 @@ int main()
 
             ClearBackground(RAYWHITE);
 
-            DrawText(SubText(message, 0, framesCounter/10), 210, 160, 20, MAROON);
+            DrawText(TextSubtext(message, 0, framesCounter/10), 210, 160, 20, MAROON);
             
             DrawText("PRESS [ENTER] to RESTART!", 240, 260, 20, LIGHTGRAY);
             DrawText("PRESS [SPACE] to SPEED UP!", 239, 300, 20, LIGHTGRAY);

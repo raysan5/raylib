@@ -205,7 +205,7 @@ void DrawMissionScreen(void)
     DrawTexturePro(texBackline, sourceRecBackLine, destRecBackLine, (Vector2){0,0},0, Fade(WHITE, fadeBackLine));
 
     if (writeNumber) DrawTextEx(fontMission, FormatText("Filtración #%02i ", currentMission + 1), numberPosition, missionSize + 10, 0, numberColor);
-    DrawTextEx(fontMission, SubText(missions[currentMission].brief, 0, missionLenght), missionPosition, missionSize, 0, missionColor);
+    DrawTextEx(fontMission, TextSubtext(missions[currentMission].brief, 0, missionLenght), missionPosition, missionSize, 0, missionColor);
     if (writeKeyword && blinkKeyWord) DrawTextEx(fontMission, FormatText("Keyword: %s", missions[currentMission].key), keywordPosition, missionSize + 10, 0, keywordColor);
 
     if (showButton)

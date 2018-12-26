@@ -25,7 +25,7 @@
 *
 **********************************************************************************************/
 
-#define RAYLIB_VERSION  "2.2-dev"
+#define RAYLIB_VERSION  "2.3-dev"
 
 // Edit to control what features Makefile'd raylib is compiled with
 #if defined(RAYLIB_CMAKE)

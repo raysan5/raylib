@@ -47,6 +47,7 @@
 #include <string.h>         // Required for: strlen()
 #include <stdarg.h>         // Required for: va_list, va_start(), vfprintf(), va_end()
 #include <stdio.h>          // Required for: FILE, fopen(), fclose(), fscanf(), feof(), rewind(), fgets()
+#include <ctype.h>          // Required for: toupper(), tolower()
 
 #include "utils.h"          // Required for: fopen() Android mapping
 
@@ -62,8 +63,7 @@
 //----------------------------------------------------------------------------------
 // Defines and Macros
 //----------------------------------------------------------------------------------
-#define MAX_FORMATTEXT_LENGTH  512
-#define MAX_SUBTEXT_LENGTH     512
+#define MAX_TEXT_BUFFER_LENGTH  1024        // Size of internal static buffers of some Text*() functions
 
 //----------------------------------------------------------------------------------
 // Types and Structures Definition
@@ -700,7 +700,7 @@ void DrawFPS(int posX, int posY)
     }
 
     // NOTE: We have rounding errors every frame, so it oscillates a lot
-    DrawText(FormatText("%2i FPS", fps), posX, posY, 20, LIME);
+    DrawText(TextFormat("%2i FPS", fps), posX, posY, 20, LIME);
 }
 
 // Draw text (using default font)
@@ -863,10 +863,33 @@ int GetGlyphIndex(Font font, int character)
 #endif
 }
 
-// Formatting of text with variables to 'embed'
-const char *FormatText(const char *text, ...)
+// Text strings management functions
+//----------------------------------------------------------------------------------
+// Check if two text string are equal
+// REQUIRES: strcmp()
+bool TextIsEqual(const char *text1, const char *text2)
 {
-    static char buffer[MAX_FORMATTEXT_LENGTH];
+    bool result = false;
+
+    if (strcmp(text1, text2) == 0) result = true;
+
+    return result;
+}
+
+// Get text length in bytes, check for \0 character
+unsigned int TextLength(const char *text)
+{
+    unsigned int length = 0;
+
+    while (*text++) length++;
+
+    return length;
+}
+
+// Formatting of text with variables to 'embed'
+const char *TextFormat(const char *text, ...)
+{
+    static char buffer[MAX_TEXT_BUFFER_LENGTH] = { 0 };
 
     va_list args;
     va_start(args, text);
@@ -877,9 +900,11 @@ const char *FormatText(const char *text, ...)
 }
 
 // Get a piece of a text string
-const char *SubText(const char *text, int position, int length)
+// REQUIRES: strlen()
+const char *TextSubtext(const char *text, int position, int length)
 {
-    static char buffer[MAX_SUBTEXT_LENGTH] = { 0 };
+    static char buffer[MAX_TEXT_BUFFER_LENGTH] = { 0 };
+
     int textLength = strlen(text);
 
     if (position >= textLength)
@@ -901,51 +926,237 @@ const char *SubText(const char *text, int position, int length)
     return buffer;
 }
 
-// Split string into multiple strings
-// NOTE: Files count is returned by parameters pointer
-// NOTE: Allocated memory should be manually freed
-char **SplitText(char *text, char delimiter, int *strCount)
+// Replace text string
+// REQUIRES: strlen(), strstr(), strncpy(), strcpy()
+// WARNING: Internally allocated memory must be freed by the user (if return != NULL)
+const char *TextReplace(char *text, const char *replace, const char *by)
 {
-    #define MAX_SUBSTRING_LENGTH 128
+    char *result;
+    
+    char *insertPoint;      // Next insert point
+    char *temp;             // Temp pointer
+    int replaceLen;         // Replace string length of (the string to remove)
+    int byLen;              // Replacement length (the string to replace replace by)
+    int lastReplacePos;     // Distance between replace and end of last replace
+    int count;              // Number of replacements
 
-    char **strings = NULL;
-    int len = strlen(text);
-    char *strDup = (char *)malloc(len + 1);
-    strcpy(strDup, text);
-    int counter = 1;
+    // Sanity checks and initialization
+    if (!text || !replace) return NULL;
 
-    // Count how many substrings we have on string
-    for (int i = 0; i < len; i++) if (text[i] == delimiter) counter++;
+    replaceLen = strlen(replace);
+    if (replaceLen == 0) return NULL;  // Empty replace causes infinite loop during count
 
-    // Memory allocation for substrings
-    strings = (char **)malloc(sizeof(char *)*counter);
-    for (int i = 0; i < counter; i++) strings[i] = (char *)malloc(sizeof(char)*MAX_SUBSTRING_LENGTH);
+    if (!by) by = "";           // Replace by nothing if not provided
+    byLen = strlen(by);
 
-    char *substrPtr = NULL;
-    char delimiters[1] = { delimiter };         // Only caring for one delimiter
-    substrPtr = strtok(strDup, delimiters);
+    // Count the number of replacements needed
+    insertPoint = text;
+    for (count = 0; (temp = strstr(insertPoint, replace)); count++) insertPoint = temp + replaceLen;
 
-    for (int i = 0; (i < counter) && (substrPtr != NULL); i++)
+    // Allocate returning string and point temp to it
+    temp = result = malloc(strlen(text) + (byLen - replaceLen)*count + 1);
+
+    if (!result) return NULL;   // Memory could not be allocated
+
+    // First time through the loop, all the variable are set correctly from here on,
+    //    temp points to the end of the result string
+    //    insertPoint points to the next occurrence of replace in text
+    //    text points to the remainder of text after "end of replace"
+    while (count--)
     {
-        strcpy(strings[i], substrPtr);
-        substrPtr = strtok(NULL, delimiters);
+        insertPoint = strstr(text, replace);
+        lastReplacePos = insertPoint - text;
+        temp = strncpy(temp, text, lastReplacePos) + lastReplacePos;
+        temp = strcpy(temp, by) + byLen;
+        text += lastReplacePos + replaceLen; // Move to next "end of replace"
     }
 
-    *strCount = counter;
-    free(strDup);
-
-    return strings;
-}
-
-// Check if two text string are equal
-bool IsEqualText(const char *text1, const char *text2)
-{
-    bool result = false;
-
-    if (strcmp(text1, text2) == 0) result = true;
+    // Copy remaind text part after replacement to result (pointed by moving temp)
+    strcpy(temp, text);
 
     return result;
 }
+
+// Insert text in a specific position, moves all text forward
+// REQUIRES: strlen(), strcpy(), strtok()
+// WARNING: Allocated memory should be manually freed
+const char *TextInsert(const char *text, const char *insert, int position)
+{
+    int textLen = strlen(text);
+    int insertLen =  strlen(insert);
+
+    char *result = (char *)malloc(textLen + insertLen + 1);
+
+    for (int i = 0; i < position; i++) result[i] = text[i];
+    for (int i = position; i < insertLen + position; i++) result[i] = insert[i];
+    for (int i = (insertLen + position); i < (textLen + insertLen); i++) result[i] = text[i];
+    
+    result[textLen + insertLen] = '\0';     // Make sure text string is valid!
+
+    return result;
+}
+
+// Join text strings with delimiter
+// REQUIRES: strcat()
+const char *TextJoin(const char **textList, int count, const char *delimiter)
+{
+    static char text[MAX_TEXT_BUFFER_LENGTH] = { 0 };
+    memset(text, 0, MAX_TEXT_BUFFER_LENGTH);
+
+    int delimiterLen = strlen(delimiter);
+
+    for (int i = 0; i < count; i++)
+    {
+        strcat(text, textList[i]);
+        if ((delimiterLen > 0) && (i < (count - 1))) strcat(text, delimiter);
+    }
+
+    return text;
+}
+
+// Split string into multiple strings
+// REQUIRES: strlen(), strcpy(), strtok()
+// WARNING: Allocated memory should be manually freed
+char **TextSplit(const char *text, char delimiter, int *count)
+{
+    #define MAX_SUBSTRING_LENGTH 128
+    
+    // TODO: Allocate memory properly for every substring size
+
+    char **result = NULL;
+    
+    int len = strlen(text);
+    char *textcopy = (char *)malloc(len + 1);
+    strcpy(textcopy, text);
+    int counter = 1;
+
+    // Count how many substrings we have on text and init memory for each of them
+    for (int i = 0; i < len; i++) if (text[i] == delimiter) counter++;
+
+    // Memory allocation for substrings
+    result = (char **)malloc(sizeof(char *)*counter);
+    for (int i = 0; i < counter; i++) result[i] = (char *)malloc(sizeof(char)*MAX_SUBSTRING_LENGTH);
+
+    char *substrPtr = NULL;
+    char delimiters[1] = { delimiter };         // Only caring for one delimiter
+    substrPtr = strtok(textcopy, delimiters);
+
+    for (int i = 0; (i < counter) && (substrPtr != NULL); i++)
+    {
+        strcpy(result[i], substrPtr);
+        substrPtr = strtok(NULL, delimiters);
+    }
+
+    *count = counter;
+    free(textcopy);
+
+    return result;
+}
+
+// Get pointers to substrings separated by delimiter
+void TextSplitEx(const char *text, char delimiter, int *count, const char **ptrs, int *lengths)
+{
+    int elementsCount = 0;
+    int charsCount = 0;
+
+    ptrs[0] = text;
+
+    for (int i = 0; text[i] != '\0'; i++)
+    {
+        charsCount++;
+
+        if (text[i] == delimiter)
+        {
+            lengths[elementsCount] = charsCount - 1;
+            charsCount = 0;
+            elementsCount++;
+
+            ptrs[elementsCount] = &text[i + 1];
+        }
+    }
+
+    lengths[elementsCount] = charsCount;
+    elementsCount++;
+
+    *count = elementsCount;
+}
+
+// Append text at specific position and move cursor!
+// REQUIRES: strcpy()
+void TextAppend(char *text, const char *append, int *position)
+{
+    strcpy(text + *position, append);
+    *position += strlen(append);
+}
+
+// Find first text occurrence within a string
+// REQUIRES: strstr()
+int TextFindIndex(const char *text, const char *find)
+{
+    int position = -1;
+    
+    char *ptr = strstr(text, find);
+    
+    if (ptr != NULL) position = ptr - text;
+    
+    return position;
+}
+
+// Get upper case version of provided string
+// REQUIRES: toupper()
+const char *TextToUpper(const char *text)
+{
+    static char buffer[MAX_TEXT_BUFFER_LENGTH] = { 0 };
+
+    for (int i = 0; i < MAX_TEXT_BUFFER_LENGTH; i++)
+    {
+        if (text[i] != '\0') buffer[i] = (char)toupper(text[i]);
+        else { buffer[i] = '\0'; break; }
+    }
+
+    return buffer;
+}
+
+// Get lower case version of provided string
+// REQUIRES: tolower()
+const char *TextToLower(const char *text)
+{
+    static char buffer[MAX_TEXT_BUFFER_LENGTH] = { 0 };
+
+    for (int i = 0; i < MAX_TEXT_BUFFER_LENGTH; i++)
+    {
+        if (text[i] != '\0') buffer[i] = (char)tolower(text[i]);
+        else { buffer[i] = '\0'; break; }
+    }
+
+    return buffer;
+}
+
+// Get Pascal case notation version of provided string
+// REQUIRES: toupper()
+const char *TextToPascal(const char *text)
+{
+    static char buffer[MAX_TEXT_BUFFER_LENGTH] = { 0 };
+
+    buffer[0] = (char)toupper(text[0]);
+
+    for (int i = 1, j = 1; i < MAX_TEXT_BUFFER_LENGTH; i++, j++)
+    {
+        if (text[j] != '\0')
+        {
+            if (text[j] != '_') buffer[i] = text[j];
+            else
+            {
+                j++;
+                buffer[i] = (char)toupper(text[j]);
+            }
+        }
+        else { buffer[i] = '\0'; break; }
+    }
+
+    return buffer;
+}
+//----------------------------------------------------------------------------------
 
 //----------------------------------------------------------------------------------
 // Module specific Functions Definition

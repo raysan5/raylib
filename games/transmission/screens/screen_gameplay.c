@@ -219,10 +219,10 @@ void InitGameplayScreen(void)
         {
             foundWord = false;
 
-            messageWords[currentWord - 1].rec.width = (int)MeasureTextEx(fontMessage, SubText(missions[currentMission].msg, wordInitPosX, (i - wordInitPosX)), 30, 0).x;
+            messageWords[currentWord - 1].rec.width = (int)MeasureTextEx(fontMessage, TextSubtext(missions[currentMission].msg, wordInitPosX, (i - wordInitPosX)), 30, 0).x;
             messageWords[currentWord - 1].rec.height = fontMessage.baseSize;
 
-            strncpy(messageWords[currentWord - 1].text, SubText(missions[currentMission].msg, wordInitPosX, (i - wordInitPosX)), i - wordInitPosX);
+            strncpy(messageWords[currentWord - 1].text, TextSubtext(missions[currentMission].msg, wordInitPosX, (i - wordInitPosX)), i - wordInitPosX);
         }
 
         if (c == '@') // One word to change
@@ -230,7 +230,7 @@ void InitGameplayScreen(void)
             foundWord = true;
             missions[currentMission].msg[i] = ' ';
 
-            offsetX = (int)MeasureTextEx(fontMessage, SubText(missions[currentMission].msg, wordInitPosY, (i + 1) - wordInitPosY), 30, 0).x;
+            offsetX = (int)MeasureTextEx(fontMessage, TextSubtext(missions[currentMission].msg, wordInitPosY, (i + 1) - wordInitPosY), 30, 0).x;
 
             messageWords[currentWord].rec.x = offsetX;
             messageWords[currentWord].rec.y = offsetY;

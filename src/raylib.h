@@ -135,6 +135,11 @@
 #define MAGENTA    CLITERAL{ 255, 0, 255, 255 }     // Magenta
 #define RAYWHITE   CLITERAL{ 245, 245, 245, 255 }   // My own White (raylib logo)
 
+// Temporal hack to avoid breaking old codebases using
+// deprecated raylib implementation of these functions
+#define FormatText  TextFormat
+#define SubText     TextSubText
+
 //----------------------------------------------------------------------------------
 // Structures Definition
 //----------------------------------------------------------------------------------
@@ -1111,11 +1116,22 @@ RLAPI int MeasureText(const char *text, int fontSize);                          
 RLAPI Vector2 MeasureTextEx(Font font, const char *text, float fontSize, float spacing);    // Measure string size for Font
 RLAPI int GetGlyphIndex(Font font, int character);                                          // Get index position for a unicode character on font
 
-// Text string edition functions
-RLAPI const char *FormatText(const char *text, ...);                        // Formatting of text with variables to 'embed'
-RLAPI const char *SubText(const char *text, int position, int length);      // Get a piece of a text string
-RLAPI char **SplitText(char *text, char delimiter, int *strCount);          // Split text string into multiple strings (memory should be freed manually!)
-RLAPI bool IsEqualText(const char *text1, const char *text2);               // Check if two text string are equal
+// Text strings management functions
+// NOTE: Some strings allocate memory internally for returned strings, just be careful!
+RLAPI bool TextIsEqual(const char *text1, const char *text2);                               // Check if two text string are equal
+RLAPI unsigned int TextLength(const char *text);                                            // Get text length, checks for '\0' ending
+RLAPI const char *TextFormat(const char *text, ...);                                        // Text formatting with variables (sprintf)
+RLAPI const char *TextSubtext(const char *text, int position, int length);                  // Get a piece of a text string
+RLAPI const char *TextReplace(char *text, const char *replace, const char *by);             // Replace text string (memory should be freed!)
+RLAPI const char *TextInsert(const char *text, const char *insert, int position);           // Insert text in a position (memory should be freed!)
+RLAPI const char *TextJoin(const char **textList, int count, const char *delimiter);        // Join text strings with delimiter
+RLAPI char **TextSplit(const char *text, char delimiter, int *count);                       // Split text into multiple strings (memory should be freed!)
+RLAPI void TextSplitEx(const char *text, char delimiter, int *count, const char **ptrs, int *lengths); // Get pointers to substrings separated by delimiter
+RLAPI void TextAppend(char *text, const char *append, int *position);                       // Append text at specific position and move cursor!
+RLAPI int TextFindIndex(const char *text, const char *find);                                // Find first text occurrence within a string
+RLAPI const char *TextToUpper(const char *text);                      // Get upper case version of provided string
+RLAPI const char *TextToLower(const char *text);                      // Get lower case version of provided string
+RLAPI const char *TextToPascal(const char *text);                     // Get Pascal case notation version of provided string
 
 //------------------------------------------------------------------------------------
 // Basic 3d Shapes Drawing Functions (Module: models)
