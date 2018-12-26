@@ -2418,6 +2418,17 @@ void DrawTextureRec(Texture2D texture, Rectangle sourceRec, Vector2 position, Co
     DrawTexturePro(texture, sourceRec, destRec, origin, 0.0f, tint);
 }
 
+// Draw texture quad with tiling and offset parameters
+// NOTE: Tiling and offset should be provided considering normalized texture values [0..1]
+// i.e tiling = { 1.0f, 1.0f } refers to all texture, offset = { 0.5f, 0.5f } moves texture origin to center
+void DrawTextureQuad(Texture2D texture, Vector2 tiling, Vector2 offset, Rectangle quad, Color tint)
+{
+    Rectangle source = { offset.x*texture.width, offset.y*texture.height, tiling.x*texture.width, tiling.y*texture.height };
+    Vector2 origin = { 0.0f, 0.0f };
+    
+    DrawTexturePro(texture, source, quad, origin, 0.0f, tint);
+}
+
 // Draw a part of a texture (defined by a rectangle) with 'pro' parameters
 // NOTE: origin is relative to destination rectangle size
 void DrawTexturePro(Texture2D texture, Rectangle sourceRec, Rectangle destRec, Vector2 origin, float rotation, Color tint)
@@ -2464,6 +2475,7 @@ void DrawTexturePro(Texture2D texture, Rectangle sourceRec, Rectangle destRec, V
     }
 }
 
+// Draws a texture (or part of it) that stretches or shrinks nicely using n-patch info
 void DrawTextureNPatch(Texture2D texture, NPatchInfo nPatchInfo, Rectangle destRec, Vector2 origin, float rotation, Color tint)
 {
     if (texture.id > 0)
