@@ -130,9 +130,9 @@ void DrawLineEx(Vector2 startPos, Vector2 endPos, float thick, Color color)
     rlEnableTexture(GetShapesTexture().id);
 
     rlPushMatrix();
-        rlTranslatef((float)startPos.x, (float)startPos.y, 0);
-        rlRotatef(RAD2DEG*angle, 0, 0, 1);
-        rlTranslatef(0, (thick > 1.0f) ? -thick/2.0f : -1.0f, 0);
+        rlTranslatef((float)startPos.x, (float)startPos.y, 0.0f);
+        rlRotatef(RAD2DEG*angle, 0.0f, 0.0f, 1.0f);
+        rlTranslatef(0, (thick > 1.0f) ? -thick/2.0f : -1.0f, 0.0f);
 
         rlBegin(RL_QUADS);
             rlColor4ub(color.r, color.g, color.b, color.a);
@@ -273,48 +273,40 @@ void DrawRectangle(int posX, int posY, int width, int height, Color color)
 // NOTE: On OpenGL 3.3 and ES2 we use QUADS to avoid drawing order issues (view rlglDraw)
 void DrawRectangleV(Vector2 position, Vector2 size, Color color)
 {
-    Color colors[4] = { color, color, color, color };
-
-    DrawRectanglePro((Rectangle){ position.x, position.y, size.x, size.y }, (Vector2){ 0.0f, 0.0f }, 0.0f, colors);
+    DrawRectanglePro((Rectangle){ position.x, position.y, size.x, size.y }, (Vector2){ 0.0f, 0.0f }, 0.0f, color);
 }
 
 // Draw a color-filled rectangle
 void DrawRectangleRec(Rectangle rec, Color color)
 {
-    Color colors[4] = { color, color, color, color };
-
-    DrawRectanglePro(rec, (Vector2){ 0.0f, 0.0f }, 0.0f, colors);
+    DrawRectanglePro(rec, (Vector2){ 0.0f, 0.0f }, 0.0f, color);
 }
 
 // Draw a color-filled rectangle with pro parameters
-void DrawRectanglePro(Rectangle rec, Vector2 origin, float rotation, Color colors[4])
+void DrawRectanglePro(Rectangle rec, Vector2 origin, float rotation, Color color)
 {
     rlEnableTexture(GetShapesTexture().id);
 
     rlPushMatrix();
-        //rlTranslatef(rec.x, rec.y, 0);    // Already considered on vertex position
-        rlRotatef(rotation, 0, 0, 1);
-        rlTranslatef(-origin.x, -origin.y, 0);
+        rlTranslatef(rec.x, rec.y, 0.0f);
+        rlRotatef(rotation, 0.0f, 0.0f, 1.0f);
+        rlTranslatef(-origin.x, -origin.y, 0.0f);
 
         rlBegin(RL_QUADS);
             rlNormal3f(0.0f, 0.0f, 1.0f);
+            rlColor4ub(color.r, color.g, color.b, color.a);
 
-            // NOTE: Default raylib font character 95 is a white square
-            rlColor4ub(colors[0].r, colors[0].g, colors[0].b, colors[0].a);
             rlTexCoord2f(recTexShapes.x/texShapes.width, recTexShapes.y/texShapes.height);
-            rlVertex2f(rec.x, rec.y);
-
-            rlColor4ub(colors[1].r, colors[1].g, colors[1].b, colors[1].a);
+            rlVertex2f(0.0f, 0.0f);
+            
             rlTexCoord2f(recTexShapes.x/texShapes.width, (recTexShapes.y + recTexShapes.height)/texShapes.height);
-            rlVertex2f(rec.x, rec.y + rec.height);
-
-            rlColor4ub(colors[2].r, colors[2].g, colors[2].b, colors[2].a);
+            rlVertex2f(0.0f, rec.height);
+            
             rlTexCoord2f((recTexShapes.x + recTexShapes.width)/texShapes.width, (recTexShapes.y + recTexShapes.height)/texShapes.height);
-            rlVertex2f(rec.x + rec.width, rec.y + rec.height);
+            rlVertex2f(rec.width, rec.height);
 
-            rlColor4ub(colors[3].r, colors[3].g, colors[3].b, colors[3].a);
             rlTexCoord2f((recTexShapes.x + recTexShapes.width)/texShapes.width, recTexShapes.y/texShapes.height);
-            rlVertex2f(rec.x + rec.width, rec.y);
+            rlVertex2f(rec.width, 0.0f);
         rlEnd();
     rlPopMatrix();
 
@@ -339,9 +331,32 @@ void DrawRectangleGradientH(int posX, int posY, int width, int height, Color col
 // NOTE: Colors refer to corners, starting at top-lef corner and counter-clockwise
 void DrawRectangleGradientEx(Rectangle rec, Color col1, Color col2, Color col3, Color col4)
 {
-    Color colors[4] = { col1, col2, col3, col4 };
+    rlEnableTexture(GetShapesTexture().id);
 
-    DrawRectanglePro(rec, (Vector2){ 0.0f, 0.0f }, 0.0f, colors);
+    rlPushMatrix();
+        rlBegin(RL_QUADS);
+            rlNormal3f(0.0f, 0.0f, 1.0f);
+
+            // NOTE: Default raylib font character 95 is a white square
+            rlColor4ub(col1.r, col1.g, col1.b, col1.a);
+            rlTexCoord2f(recTexShapes.x/texShapes.width, recTexShapes.y/texShapes.height);
+            rlVertex2f(rec.x, rec.y);
+
+            rlColor4ub(col2.r, col2.g, col2.b, col2.a);
+            rlTexCoord2f(recTexShapes.x/texShapes.width, (recTexShapes.y + recTexShapes.height)/texShapes.height);
+            rlVertex2f(rec.x, rec.y + rec.height);
+
+            rlColor4ub(col3.r, col3.g, col3.b, col3.a);
+            rlTexCoord2f((recTexShapes.x + recTexShapes.width)/texShapes.width, (recTexShapes.y + recTexShapes.height)/texShapes.height);
+            rlVertex2f(rec.x + rec.width, rec.y + rec.height);
+
+            rlColor4ub(col4.r, col4.g, col4.b, col4.a);
+            rlTexCoord2f((recTexShapes.x + recTexShapes.width)/texShapes.width, recTexShapes.y/texShapes.height);
+            rlVertex2f(rec.x + rec.width, rec.y);
+        rlEnd();
+    rlPopMatrix();
+
+    rlDisableTexture();
 }
 
 // Draw rectangle outline
@@ -443,8 +458,8 @@ void DrawPoly(Vector2 center, int sides, float radius, float rotation, Color col
     if (rlCheckBufferLimit(4*(360/sides))) rlglDraw();
 
     rlPushMatrix();
-        rlTranslatef(center.x, center.y, 0.0);
-        rlRotatef(rotation, 0, 0, 1);
+        rlTranslatef(center.x, center.y, 0.0f);
+        rlRotatef(rotation, 0.0f, 0.0f, 1.0f);
 
 #if defined(SUPPORT_QUADS_DRAW_MODE)
         rlEnableTexture(GetShapesTexture().id);

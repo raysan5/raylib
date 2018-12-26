@@ -2434,9 +2434,9 @@ void DrawTexturePro(Texture2D texture, Rectangle sourceRec, Rectangle destRec, V
         rlEnableTexture(texture.id);
 
         rlPushMatrix();
-            rlTranslatef(destRec.x, destRec.y, 0);
-            rlRotatef(rotation, 0, 0, 1);
-            rlTranslatef(-origin.x, -origin.y, 0);
+            rlTranslatef(destRec.x, destRec.y, 0.0f);
+            rlRotatef(rotation, 0.0f, 0.0f, 1.0f);
+            rlTranslatef(-origin.x, -origin.y, 0.0f);
 
             rlBegin(RL_QUADS);
                 rlColor4ub(tint.r, tint.g, tint.b, tint.a);
@@ -2524,9 +2524,9 @@ void DrawTextureNPatch(Texture2D texture, NPatchInfo nPatchInfo, Rectangle destR
         rlEnableTexture(texture.id);
 
         rlPushMatrix();
-            rlTranslatef(destRec.x, destRec.y, 0);
-            rlRotatef(rotation, 0, 0, 1);
-            rlTranslatef(-origin.x, -origin.y, 0);
+            rlTranslatef(destRec.x, destRec.y, 0.0f);
+            rlRotatef(rotation, 0.0f, 0.0f, 1.0f);
+            rlTranslatef(-origin.x, -origin.y, 0.0f);
 
             rlBegin(RL_QUADS);
                 rlColor4ub(tint.r, tint.g, tint.b, tint.a);
