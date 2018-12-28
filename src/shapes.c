@@ -503,18 +503,28 @@ void DrawPolyEx(Vector2 *points, int pointsCount, Color color)
 {
     if (pointsCount >= 3)
     {
-        if (rlCheckBufferLimit(pointsCount)) rlglDraw();
+        if (rlCheckBufferLimit((pointsCount - 2)*4)) rlglDraw();
 
-        rlBegin(RL_TRIANGLES);
+        rlEnableTexture(GetShapesTexture().id);
+        rlBegin(RL_QUADS);
             rlColor4ub(color.r, color.g, color.b, color.a);
 
             for (int i = 1; i < pointsCount - 1; i++)
             {
+                rlTexCoord2f(recTexShapes.x/texShapes.width, recTexShapes.y/texShapes.height);
                 rlVertex2f(points[0].x, points[0].y);
+
+                rlTexCoord2f(recTexShapes.x/texShapes.width, (recTexShapes.y + recTexShapes.height)/texShapes.height);
                 rlVertex2f(points[i].x, points[i].y);
+
+                rlTexCoord2f((recTexShapes.x + recTexShapes.width)/texShapes.width, (recTexShapes.y + recTexShapes.height)/texShapes.height);
+                rlVertex2f(points[i + 1].x, points[i + 1].y);
+
+                rlTexCoord2f((recTexShapes.x + recTexShapes.width)/texShapes.width, recTexShapes.y/texShapes.height);
                 rlVertex2f(points[i + 1].x, points[i + 1].y);
             }
         rlEnd();
+        rlDisableTexture();
     }
 }
 
