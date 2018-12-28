@@ -3961,7 +3961,7 @@ static void DrawBuffersDefault(void)
         if (eyesCount == 2) SetStereoView(eye, matProjection, matModelView);
 #endif
 
-        // Draw quads buffers
+        // Draw buffers
         if (vertexData[currentBuffer].vCounter > 0)
         {
             // Set current shader and upload current MVP matrix
@@ -4047,10 +4047,14 @@ static void DrawBuffersDefault(void)
     projection = matProjection;
     modelview = matModelView;
 
-    // Reset draws counter
-    draws[0].mode = RL_QUADS;
-    draws[0].vertexCount = 0;
-    draws[0].textureId = defaultTextureId;
+    // Reset draws array
+    for (int i = 0; i < MAX_DRAWCALL_REGISTERED; i++)
+    {
+        draws[i].mode = RL_QUADS;
+        draws[i].vertexCount = 0;
+        draws[i].textureId = defaultTextureId;
+    }
+
     drawsCounter = 1;
     
     // Change to next buffer in the list
