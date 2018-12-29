@@ -46,11 +46,6 @@
 #include <stdarg.h>                 // Required for: va_list, va_start(), vfprintf(), va_end()
 #include <string.h>                 // Required for: strlen(), strrchr(), strcmp()
 
-/* This should be in <stdio.h>, but Travis doesn't find it... */
-FILE *funopen(const void *cookie, int (*readfn)(void *, char *, int),
-              int (*writefn)(void *, const char *, int),
-              fpos_t (*seekfn)(void *, fpos_t, int), int (*closefn)(void *));
-
 //----------------------------------------------------------------------------------
 // Global Variables Definition
 //----------------------------------------------------------------------------------
@@ -67,6 +62,11 @@ AAssetManager *assetManager;
 // Module specific Functions Declaration
 //----------------------------------------------------------------------------------
 #if defined(PLATFORM_ANDROID)
+/* This should be in <stdio.h>, but Travis doesn't find it... */
+FILE *funopen(const void *cookie, int (*readfn)(void *, char *, int),
+              int (*writefn)(void *, const char *, int),
+              fpos_t (*seekfn)(void *, fpos_t, int), int (*closefn)(void *));
+
 static int android_read(void *cookie, char *buf, int size);
 static int android_write(void *cookie, const char *buf, int size);
 static fpos_t android_seek(void *cookie, fpos_t offset, int whence);
