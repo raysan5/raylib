@@ -118,8 +118,8 @@ endif
 ifeq ($(PLATFORM),PLATFORM_WEB)
     # Emscripten required variables
     EMSDK_PATH          = C:/emsdk
-    EMSCRIPTEN_VERSION  = 1.38.20
-    CLANG_VERSION       = e1.38.20_64bit
+    EMSCRIPTEN_VERSION  = 1.38.21
+    CLANG_VERSION       = e1.38.21_64bit
     PYTHON_VERSION      = 2.7.13.1_64bit\python-2.7.13.amd64
     NODE_VERSION        = 8.9.1_64bit
     export PATH         = $(EMSDK_PATH);$(EMSDK_PATH)\clang\$(CLANG_VERSION);$(EMSDK_PATH)\node\$(NODE_VERSION)\bin;$(EMSDK_PATH)\python\$(PYTHON_VERSION);$(EMSDK_PATH)\emscripten\$(EMSCRIPTEN_VERSION);C:\raylib\MinGW\bin:$$(PATH)
@@ -130,23 +130,23 @@ endif
 # RAYLIB_RELEASE_PATH points to provided binaries or your freshly built version.
 ifeq ($(PLATFORM),PLATFORM_DESKTOP)
     ifeq ($(PLATFORM_OS),WINDOWS)
-        RAYLIB_RELEASE_PATH = $(RAYLIB_PATH)/release/libs/win32/mingw32
+        RAYLIB_RELEASE_PATH = $(RAYLIB_PATH)/src
     endif
     ifeq ($(PLATFORM_OS),LINUX)
-        RAYLIB_RELEASE_PATH = $(RAYLIB_PATH)/release/libs/linux
+        RAYLIB_RELEASE_PATH = $(RAYLIB_PATH)/src
     endif
     ifeq ($(PLATFORM_OS),OSX)
-        RAYLIB_RELEASE_PATH = $(RAYLIB_PATH)/release/libs/osx
+        RAYLIB_RELEASE_PATH = $(RAYLIB_PATH)/src
     endif
     ifeq ($(PLATFORM_OS),BSD)
-        RAYLIB_RELEASE_PATH = $(RAYLIB_PATH)/release/libs/bsd
+        RAYLIB_RELEASE_PATH = $(RAYLIB_PATH)/src
     endif
 endif
 ifeq ($(PLATFORM),PLATFORM_RPI)
-    RAYLIB_RELEASE_PATH = $(RAYLIB_PATH)/release/libs/rpi
+    RAYLIB_RELEASE_PATH = $(RAYLIB_PATH)/src
 endif
 ifeq ($(PLATFORM),PLATFORM_WEB)
-    RAYLIB_RELEASE_PATH = $(RAYLIB_PATH)/release/libs/html5
+    RAYLIB_RELEASE_PATH = $(RAYLIB_PATH)/src
 endif
 
 # EXAMPLE_RUNTIME_PATH embeds a custom runtime location of libraylib.so or other desired libraries
@@ -249,7 +249,7 @@ ifeq ($(PLATFORM),PLATFORM_WEB)
     # -s EMTERPRETIFY_ASYNC=1    # support synchronous loops by emterpreter
     # --profiling                # include information for code profiling
     # --preload-file resources   # specify a resources folder for data compilation
-    CFLAGS += -Os -s USE_GLFW=3 -s USE_SDL=2 -s ASSERTIONS=1 -s WASM=1 -s EMTERPRETIFY=1 -s EMTERPRETIFY_ASYNC=1
+    CFLAGS += -Os -s USE_GLFW=3 -s ASSERTIONS=1 -s WASM=1 -s EMTERPRETIFY=1 -s EMTERPRETIFY_ASYNC=1
     
     # NOTE: Simple raylib examples are compiled to be interpreter by emterpreter, that way,
     # we can compile same code for ALL platforms with no change required, but, working on bigger
