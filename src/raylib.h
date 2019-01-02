@@ -942,6 +942,7 @@ RLAPI int GetMouseY(void);                                    // Returns mouse p
 RLAPI Vector2 GetMousePosition(void);                         // Returns mouse position XY
 RLAPI void SetMousePosition(Vector2 position);                // Set mouse position XY
 RLAPI void SetMouseScale(float scale);                        // Set mouse scaling
+RLAPI void SetMouseOffset(Vector2 scale);                     // Set mouse scaling XY
 RLAPI int GetMouseWheelMove(void);                            // Returns mouse wheel movement Y
 
 // Input-related functions: touch

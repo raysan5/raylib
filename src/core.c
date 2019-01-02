@@ -333,7 +333,7 @@ static int defaultKeyboardMode;                 // Used to store default keyboar
 
 // Mouse states
 static Vector2 mousePosition;                   // Mouse position on screen
-static float mouseScale = 1.0f;                 // Mouse default scale
+static Vector2 mouseScale = { 1.0f };               // Mouse default scale
 static bool cursorHidden = false;               // Track if cursor is hidden
 static bool cursorOnScreen = false;             // Tracks if cursor is inside client area
 static Vector2 touchPosition[MAX_TOUCH_POINTS]; // Touch position on screen
@@ -2075,7 +2075,7 @@ int GetMouseX(void)
 #if defined(PLATFORM_ANDROID)
     return (int)touchPosition[0].x;
 #else
-    return (int)(mousePosition.x*mouseScale);
+    return (int)(mousePosition.x*mouseScale.x);
 #endif
 }
 
@@ -2085,7 +2085,7 @@ int GetMouseY(void)
 #if defined(PLATFORM_ANDROID)
     return (int)touchPosition[0].x;
 #else
-    return (int)(mousePosition.y*mouseScale);
+    return (int)(mousePosition.y*mouseScale.y);
 #endif
 }
 
@@ -2095,7 +2095,7 @@ Vector2 GetMousePosition(void)
 #if defined(PLATFORM_ANDROID)
     return GetTouchPosition(0);
 #else
-    return (Vector2){ mousePosition.x*mouseScale, mousePosition.y*mouseScale };
+    return (Vector2){ mousePosition.x*mouseScale.x, mousePosition.y*mouseScale.y };
 #endif
 }
 
@@ -2114,7 +2114,16 @@ void SetMousePosition(Vector2 position)
 void SetMouseScale(float scale)
 {
 #if !defined(PLATFORM_ANDROID)
-    mouseScale = scale;
+	mouseScale = (Vector2){ scale };
+#endif
+}
+
+// Set mouse scaling
+// NOTE: Useful when rendering to different size targets
+void SetMouseOffset(Vector2 offset)
+{
+#if !defined(PLATFORM_ANDROID)
+    mouseScale = offset;
 #endif
 }
 
@@ -4225,10 +4234,10 @@ static void *EventThread(void *arg)
 
             // Screen confinement
             if (mousePosition.x < 0) mousePosition.x = 0;
-            if (mousePosition.x > screenWidth/mouseScale) mousePosition.x = screenWidth/mouseScale;
+            if (mousePosition.x > screenWidth/mouseScale.x) mousePosition.x = screenWidth/mouseScale.x;
 
             if (mousePosition.y < 0) mousePosition.y = 0;
-            if (mousePosition.y > screenHeight/mouseScale) mousePosition.y = screenHeight/mouseScale;
+            if (mousePosition.y > screenHeight/mouseScale) mousePosition.y = screenHeight/mouseScale.y;
 
             // Gesture update
             if (GestureNeedsUpdate)
