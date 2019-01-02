@@ -17,7 +17,7 @@ matrix:
       env: ARCH=amd64 INSTALL_GLFW=YES USE_EXTERNAL_GLFW=OFF
       sudo: required
     - os: linux
-      env: ARCH=amd64 INSTALL_GLFW=YES OPENAL=ON STATIC=OFF RELEASE=NO
+      env: ARCH=amd64 INSTALL_GLFW=YES STATIC=OFF RELEASE=NO
       sudo: required
     - os: linux
       env: WAYLAND=ON ARCH=amd64 RELEASE=NO
@@ -42,6 +42,9 @@ matrix:
     - os: linux
       env: ARCH=html5 RELEASE=NO
       sudo: required
+    - os: windows
+      compiler: gcc
+      env: ARCH=i386 SHARED=OFF RELEASE=NO
 
 before_script:
 
@@ -49,7 +52,6 @@ before_install:
   - if [ -z "$USE_EXTERNAL_GLFW" ]; then export USE_EXTERNAL_GLFW=IF_POSSIBLE; fi
   - if [ -z "$SHARED"            ]; then export SHARED=ON ; fi
   - if [ -z "$STATIC"            ]; then export STATIC=ON ; fi
-  - if [ -z "$OPENAL"            ]; then export OPENAL=OFF; fi
   - if [[ "$INSTALL_GLFW" == "YES" && "$USE_EXTERNAL_GLFW" != "OFF" ]]; then
       export DONT_TEST=1;
     fi
