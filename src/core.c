@@ -333,7 +333,7 @@ static int defaultKeyboardMode;                 // Used to store default keyboar
 
 // Mouse states
 static Vector2 mousePosition;                   // Mouse position on screen
-static Vector2 mouseScale = { 1.0f };               // Mouse default scale
+static Vector2 mouseScale = { 1.0f, 1.0f };     // Mouse default scale
 static bool cursorHidden = false;               // Track if cursor is hidden
 static bool cursorOnScreen = false;             // Tracks if cursor is inside client area
 static Vector2 touchPosition[MAX_TOUCH_POINTS]; // Touch position on screen
@@ -2114,7 +2114,7 @@ void SetMousePosition(Vector2 position)
 void SetMouseScale(float scale)
 {
 #if !defined(PLATFORM_ANDROID)
-	mouseScale = (Vector2){ scale };
+	mouseScale = (Vector2){ scale, scale };
 #endif
 }
 
