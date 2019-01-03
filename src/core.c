@@ -1461,12 +1461,6 @@ Color Fade(Color color, float alpha)
     return (Color){color.r, color.g, color.b, (unsigned char)(255.0f*alpha)};
 }
 
-// Activate raylib logo at startup (can be done with flags)
-void ShowLogo(void)
-{
-    showLogo = true;
-}
-
 // Setup window configuration flags (view FLAGS)
 void SetConfigFlags(unsigned char flags)
 {
