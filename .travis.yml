@@ -103,6 +103,11 @@ before_install:
       export RAYLIB_PACKAGE_SUFFIX="-macOS";
       if [ "$INSTALL_GLFW" == "YES" ]; then brew update; brew install glfw; fi;
     fi
+  - if [ "$TRAVIS_OS_NAME" == "windows" ]; then
+      export DONT_TEST=1;
+      export RAYLIB_PACKAGE_SUFFIX="-windows";
+      export CMAKE_ARCH_ARGS='-DPLATFORM=Desktop';
+    fi
   - mkdir build
   - $RUNNER $CC --version
 
