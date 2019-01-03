@@ -332,9 +332,9 @@ static int defaultKeyboardMode;                 // Used to store default keyboar
 #endif
 
 // Mouse states
-static Vector2 mousePosition;                   // Mouse position on screen
-static Vector2 mouseScale = { 1.0f, 1.0f };     // Mouse default scale
-static Vector2 mouseOffset = { 0.0f, 0.0f };    // Mouse default scale
+static Vector2 mousePosition = { 0.0f, 0.0f };  // Mouse position on screen
+static Vector2 mouseScale = { 1.0f, 1.0f };     // Mouse scaling
+static Vector2 mouseOffset = { 0.0f, 0.0f };    // Mouse offset
 static bool cursorHidden = false;               // Track if cursor is hidden
 static bool cursorOnScreen = false;             // Tracks if cursor is inside client area
 static Vector2 touchPosition[MAX_TOUCH_POINTS]; // Touch position on screen
@@ -2076,7 +2076,7 @@ int GetMouseX(void)
 #if defined(PLATFORM_ANDROID)
     return (int)touchPosition[0].x;
 #else
-    return (int)((mousePosition.x+mouseOffset.x)*mouseScale.x);
+    return (int)((mousePosition.x + mouseOffset.x)*mouseScale.x);
 #endif
 }
 
@@ -2086,7 +2086,7 @@ int GetMouseY(void)
 #if defined(PLATFORM_ANDROID)
     return (int)touchPosition[0].x;
 #else
-    return (int)((mousePosition.y+mouseOffset.y)*mouseScale.y);
+    return (int)((mousePosition.y + mouseOffset.y)*mouseScale.y);
 #endif
 }
 
@@ -2096,36 +2096,32 @@ Vector2 GetMousePosition(void)
 #if defined(PLATFORM_ANDROID)
     return GetTouchPosition(0);
 #else
-    return (Vector2){ (mousePosition.x+mouseOffset.x)*mouseScale.x, (mousePosition.y+mouseOffset.y)*mouseScale.y };
+    return (Vector2){ (mousePosition.x + mouseOffset.x)*mouseScale.x, (mousePosition.y + mouseOffset.y)*mouseScale.y };
 #endif
 }
 
 // Set mouse position XY
-void SetMousePosition(Vector2 position)
+void SetMousePosition(int x, int y)
 {
-    mousePosition = position;
+    mousePosition = (Vector2){ (float)x, (float)y };
 #if defined(PLATFORM_DESKTOP) || defined(PLATFORM_WEB)
     // NOTE: emscripten not implemented
-    glfwSetCursorPos(window, position.x, position.y);
-#endif
-}
-
-// Set mouse scaling
-// NOTE: Useful when rendering to different size targets
-void SetMouseScale(Vector2 scale)
-{
-#if !defined(PLATFORM_ANDROID)
-	mouseScale = scale;
+    glfwSetCursorPos(window, mousePosition.x, mousePosition.y);
 #endif
 }
 
 // Set mouse offset
 // NOTE: Useful when rendering to different size targets
-void SetMouseOffset(Vector2 offset)
+void SetMouseOffset(int offsetX, int offsetY)
 {
-#if !defined(PLATFORM_ANDROID)
-    mouseScale = offset;
-#endif
+    mouseOffset = (Vector2){ (float)offsetX, (float)offsetY };
+}
+
+// Set mouse scaling
+// NOTE: Useful when rendering to different size targets
+void SetMouseScale(float scaleX, float scaleY)
+{
+	mouseScale = (Vector2){ scaleX, scaleY };
 }
 
 // Returns mouse wheel movement Y

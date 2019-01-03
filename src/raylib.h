@@ -940,9 +940,9 @@ RLAPI bool IsMouseButtonUp(int button);                       // Detect if a mou
 RLAPI int GetMouseX(void);                                    // Returns mouse position X
 RLAPI int GetMouseY(void);                                    // Returns mouse position Y
 RLAPI Vector2 GetMousePosition(void);                         // Returns mouse position XY
-RLAPI void SetMousePosition(Vector2 position);                // Set mouse position XY
-RLAPI void SetMouseScale(Vector2 scale);                      // Set mouse scaling
-RLAPI void SetMouseOffset(Vector2 scale);                     // Set mouse offset
+RLAPI void SetMousePosition(int x, int y);                    // Set mouse position XY
+RLAPI void SetMouseOffset(int offsetX, int offsetY);          // Set mouse offset
+RLAPI void SetMouseScale(float scaleX, float scaleY);         // Set mouse scaling
 RLAPI int GetMouseWheelMove(void);                            // Returns mouse wheel movement Y
 
 // Input-related functions: touch
