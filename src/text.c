@@ -935,13 +935,30 @@ Vector2 MeasureTextEx(Font font, const char *text, float fontSize, float spacing
     float textHeight = (float)font.baseSize;
     float scaleFactor = fontSize/(float)font.baseSize;
 
+    unsigned char letter = 0;       // Current character
+    int index = 0;                  // Index position in sprite font
+    
     for (int i = 0; i < len; i++)
     {
         lenCounter++;
-
+        
         if (text[i] != '\n')
         {
-            int index = GetGlyphIndex(font, (int)text[i]);
+            if ((unsigned char)text[i] == 0xc2)         // UTF-8 encoding identification
+            {
+                // Support UTF-8 encoded values from [0xc2 0x80] -> [0xc2 0xbf](¿)
+                letter = (unsigned char)text[i + 1];
+                index = GetGlyphIndex(font, (int)letter);
+                i++;
+            }
+            else if ((unsigned char)text[i] == 0xc3)    // UTF-8 encoding identification
+            {
+                // Support UTF-8 encoded values from [0xc3 0x80](À) -> [0xc3 0xbf](ÿ)
+                letter = (unsigned char)text[i + 1];
+                index = GetGlyphIndex(font, (int)letter + 64);
+                i++;
+            }
+            else index = GetGlyphIndex(font, (unsigned char)text[i]);
 
             if (font.chars[index].advanceX != 0) textWidth += font.chars[index].advanceX;
             else textWidth += (font.chars[index].rec.width + font.chars[index].offsetX);
