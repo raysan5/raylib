@@ -480,7 +480,7 @@ Matrix GetMatrixModelview();                                        // Get inter
 Texture2D GenTextureCubemap(Shader shader, Texture2D skyHDR, int size);       // Generate cubemap texture from HDR texture
 Texture2D GenTextureIrradiance(Shader shader, Texture2D cubemap, int size);   // Generate irradiance texture using cubemap data
 Texture2D GenTexturePrefilter(Shader shader, Texture2D cubemap, int size);    // Generate prefilter texture using cubemap data
-Texture2D GenTextureBRDF(Shader shader, Texture2D cubemap, int size);         // Generate BRDF texture using cubemap data
+Texture2D GenTextureBRDF(Shader shader, int size);                  // Generate BRDF texture using cubemap data
 
 // Shading begin/end functions
 void BeginShaderMode(Shader shader);              // Begin custom shader drawing
@@ -849,7 +849,7 @@ static PFNGLDELETEVERTEXARRAYSOESPROC glDeleteVertexArrays;
 
 #if defined(SUPPORT_VR_SIMULATOR)
 // VR global variables
-static VrStereoConfig vrConfig;             // VR stereo configuration for simulator
+static VrStereoConfig vrConfig = { 0 };     // VR stereo configuration for simulator
 static bool vrSimulatorReady = false;       // VR simulator ready flag
 static bool vrStereoRender = false;         // VR stereo rendering enabled/disabled flag
                                             // NOTE: This flag is useful to render data over stereo image (i.e. FPS)
@@ -2993,7 +2993,7 @@ Texture2D GenTextureCubemap(Shader shader, Texture2D skyHDR, int size)
     glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_RENDERBUFFER, rbo);
 
     // Set up cubemap to render and attach to framebuffer
-    // NOTE: faces are stored with 16 bit floating point values
+    // NOTE: Faces are stored as 32 bit floating point values
     glGenTextures(1, &cubemap.id);
     glBindTexture(GL_TEXTURE_CUBE_MAP, cubemap.id);
     for (unsigned int i = 0; i < 6; i++) 
@@ -3012,7 +3012,7 @@ Texture2D GenTextureCubemap(Shader shader, Texture2D skyHDR, int size)
     glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
     glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 
-    // Create projection (transposed) and different views for each face
+    // Create projection and different views for each face
     Matrix fboProjection = MatrixPerspective(90.0*DEG2RAD, 1.0, 0.01, 1000.0);
     Matrix fboViews[6] = {
         MatrixLookAt((Vector3){ 0.0f, 0.0f, 0.0f }, (Vector3){ 1.0f, 0.0f, 0.0f }, (Vector3){ 0.0f, -1.0f, 0.0f }),
@@ -3050,6 +3050,10 @@ Texture2D GenTextureCubemap(Shader shader, Texture2D skyHDR, int size)
 
     cubemap.width = size;
     cubemap.height = size;
+    cubemap.mipmaps = 1;
+    cubemap.format = UNCOMPRESSED_R32G32B32;
+    
+    // TODO: Texture2D is a GL_TEXTURE_CUBE_MAP, not a GL_TEXTURE_2D! Only cubemap.id makes some sense...
 #endif
     return cubemap;
 }
@@ -3216,15 +3220,20 @@ Texture2D GenTexturePrefilter(Shader shader, Texture2D cubemap, int size)
 }
 
 // Generate BRDF texture using cubemap data
-// TODO: OpenGL ES 2.0 does not support GL_RGB16F texture format, neither GL_DEPTH_COMPONENT24
-Texture2D GenTextureBRDF(Shader shader, Texture2D cubemap, int size)
+// NOTE: OpenGL ES 2.0 does not support GL_RGB16F texture format, neither GL_DEPTH_COMPONENT24
+Texture2D GenTextureBRDF(Shader shader, int size)
 {
     Texture2D brdf = { 0 };
-#if defined(GRAPHICS_API_OPENGL_33) // || defined(GRAPHICS_API_OPENGL_ES2)
+#if defined(GRAPHICS_API_OPENGL_33) || defined(GRAPHICS_API_OPENGL_ES2)
     // Generate BRDF convolution texture
     glGenTextures(1, &brdf.id);
     glBindTexture(GL_TEXTURE_2D, brdf.id);
-    glTexImage2D(GL_TEXTURE_2D, 0, GL_RG16F, size, size, 0, GL_RG, GL_FLOAT, 0);
+#if defined(GRAPHICS_API_OPENGL_33)
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB32F, size, size, 0, GL_RG, GL_FLOAT, NULL);
+#elif defined(GRAPHICS_API_OPENGL_ES2)
+    if (texFloatSupported) glTexImage2D(GL_TEXTURE_2D, 0, GL_RG, size, size, 0, GL_RG, GL_FLOAT, NULL);
+#endif
+
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
@@ -3236,7 +3245,11 @@ Texture2D GenTextureBRDF(Shader shader, Texture2D cubemap, int size)
     glGenRenderbuffers(1, &rbo);
     glBindFramebuffer(GL_FRAMEBUFFER, fbo);
     glBindRenderbuffer(GL_RENDERBUFFER, rbo);
+#if defined(GRAPHICS_API_OPENGL_33)
     glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH_COMPONENT24, size, size);
+#elif defined(GRAPHICS_API_OPENGL_ES2)
+    glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH_COMPONENT16, size, size);
+#endif
     glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, brdf.id, 0);
 
     glViewport(0, 0, size, size);
@@ -3246,6 +3259,10 @@ Texture2D GenTextureBRDF(Shader shader, Texture2D cubemap, int size)
 
     // Unbind framebuffer and textures
     glBindFramebuffer(GL_FRAMEBUFFER, 0);
+    
+    // Unload framebuffer but keep color texture
+    glDeleteRenderbuffers(1, &rbo);
+    glDeleteFramebuffers(1, &fbo);
 
     // Reset viewport dimensions to default
     glViewport(0, 0, screenWidth, screenHeight);
