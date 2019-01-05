@@ -311,7 +311,7 @@ extern EGLNativeWindowType uwpWindow;           // Native EGL window handler for
 static struct android_app *androidApp;          // Android activity
 static struct android_poll_source *source;      // Android events polling source
 static int ident, events;                       // Android ALooper_pollAll() variables
-static const char *internalDataPath;            // Android internal data path to write data (/data/data/<package>/files)
+static const char *internalDataPath = NULL;     // Android internal data path to write data (/data/data/<package>/files)
 
 static bool appEnabled = true;                  // Used to detec if app is active
 static bool contextRebindRequired = false;      // Used to know context rebind required
@@ -1473,17 +1473,32 @@ void SetConfigFlags(unsigned char flags)
 // NOTE TraceLog() function is located in [utils.h]
 
 // Takes a screenshot of current screen (saved a .png)
+// NOTE: This function could work in any platform but some platforms: PLATFORM_ANDROID and PLATFORM_WEB
+// have their own internal file-systems, to dowload image to user file-system some additional mechanism is required
 void TakeScreenshot(const char *fileName)
 {
-#if defined(PLATFORM_DESKTOP) || defined(PLATFORM_RPI)
     unsigned char *imgData = rlReadScreenPixels(renderWidth, renderHeight);
-
     Image image = { imgData, renderWidth, renderHeight, 1, UNCOMPRESSED_R8G8B8A8 };
-    ExportImage(image, fileName);
-    free(imgData);
-
-    TraceLog(LOG_INFO, "Screenshot taken: %s", fileName);
+    
+    char path[512] = { 0 };
+#if defined(PLATFORM_ANDROID)
+    strcpy(path, internalDataPath);
+    strcat(path, "/");
+    strcat(path, fileName);
+#else
+    strcpy(path, fileName);
 #endif
+    
+    ExportImage(image, path);
+    free(imgData);
+    
+#if defined(PLATFORM_WEB)
+    // Download file from MEMFS (emscripten memory filesystem)
+    // SaveFileFromMEMFSToDisk() function is defined in raylib/templates/web_shel/shell.html
+    emscripten_run_script(TextFormat("SaveFileFromMEMFSToDisk('%s','%s')", GetFileName(path), GetFileName(path)));
+#endif
+
+    TraceLog(LOG_INFO, "Screenshot taken: %s", path);
 }
 
 // Check if the file exists
@@ -1492,11 +1507,10 @@ bool FileExists(const char *fileName)
     bool result = false;
 
 #if defined(_WIN32)
-    if (_access(fileName, 0) != -1)
+    if (_access(fileName, 0) != -1) result = true;
 #else
-    if (access(fileName, F_OK) != -1)
+    if (access(fileName, F_OK) != -1) result = true;
 #endif
-        result = true;
 
     return result;
 }
@@ -1509,7 +1523,7 @@ bool IsFileExtension(const char *fileName, const char *ext)
 
     if ((fileExt = strrchr(fileName, '.')) != NULL)
     {
-    #if defined(_WIN32)
+#if defined(_WIN32)
         result = true;
         int extLen = strlen(ext);
 
@@ -1525,9 +1539,9 @@ bool IsFileExtension(const char *fileName, const char *ext)
             }
         }
         else result = false;
-    #else
+#else
         if (strcmp(fileExt, ext) == 0) result = true;
-    #endif
+#endif
     }
 
     return result;
@@ -1729,7 +1743,7 @@ void StorageSaveValue(int position, int value)
 {
     FILE *storageFile = NULL;
 
-    char path[128];
+    char path[512] = { 0 };
 #if defined(PLATFORM_ANDROID)
     strcpy(path, internalDataPath);
     strcat(path, "/");
@@ -1769,7 +1783,7 @@ int StorageLoadValue(int position)
 {
     int value = 0;
 
-    char path[128];
+    char path[512] = { 0 };
 #if defined(PLATFORM_ANDROID)
     strcpy(path, internalDataPath);
     strcat(path, "/");
@@ -1814,7 +1828,9 @@ void OpenURL(const char *url)
     if (strchr(url, '\'') != NULL)
     {
         TraceLog(LOG_WARNING, "Provided URL does not seem to be valid.");
-    } else {
+    } 
+    else 
+    {
         char *cmd = calloc(strlen(url) + 10, sizeof(char));
 
 #if defined(_WIN32)
@@ -3158,16 +3174,21 @@ static void KeyCallback(GLFWwindow *window, int key, int scancode, int action, i
 
         // NOTE: Before closing window, while loop must be left!
     }
-#if defined(PLATFORM_DESKTOP)
     else if (key == GLFW_KEY_F12 && action == GLFW_PRESS)
     {
-    #if defined(SUPPORT_GIF_RECORDING)
+#if defined(SUPPORT_GIF_RECORDING)
         if (mods == GLFW_MOD_CONTROL)
         {
             if (gifRecording)
             {
                 GifEnd();
                 gifRecording = false;
+                
+            #if defined(PLATFORM_WEB)
+                // Download file from MEMFS (emscripten memory filesystem)
+                // SaveFileFromMEMFSToDisk() function is defined in raylib/templates/web_shel/shell.html
+                emscripten_run_script(TextFormat("SaveFileFromMEMFSToDisk('%s','%s')", TextFormat("screenrec%03i.gif", screenshotCounter - 1), TextFormat("screenrec%03i.gif", screenshotCounter - 1)));
+            #endif
 
                 TraceLog(LOG_INFO, "End animated GIF recording");
             }
@@ -3175,25 +3196,32 @@ static void KeyCallback(GLFWwindow *window, int key, int scancode, int action, i
             {
                 gifRecording = true;
                 gifFramesCounter = 0;
+                
+                char path[512] = { 0 };
+            #if defined(PLATFORM_ANDROID)
+                strcpy(path, internalDataPath);
+                strcat(path, TextFormat("/screenrec%03i.gif", screenshotCounter));
+            #else
+                strcpy(path, TextFormat("/screenrec%03i.gif", screenshotCounter));
+            #endif
 
                 // NOTE: delay represents the time between frames in the gif, if we capture a gif frame every
                 // 10 game frames and each frame trakes 16.6ms (60fps), delay between gif frames should be ~16.6*10.
-                GifBegin(TextFormat("screenrec%03i.gif", screenshotCounter), screenWidth, screenHeight, (int)(GetFrameTime()*10.0f), 8, false);
+                GifBegin(path, screenWidth, screenHeight, (int)(GetFrameTime()*10.0f), 8, false);
                 screenshotCounter++;
 
                 TraceLog(LOG_INFO, "Begin animated GIF recording: %s", TextFormat("screenrec%03i.gif", screenshotCounter));
             }
         }
         else
-    #endif  // SUPPORT_GIF_RECORDING
-    #if defined(SUPPORT_SCREEN_CAPTURE)
+#endif  // SUPPORT_GIF_RECORDING
+#if defined(SUPPORT_SCREEN_CAPTURE)
         {
             TakeScreenshot(TextFormat("screenshot%03i.png", screenshotCounter));
             screenshotCounter++;
         }
-    #endif  // SUPPORT_SCREEN_CAPTURE
+#endif  // SUPPORT_SCREEN_CAPTURE
     }
-#endif  // PLATFORM_DESKTOP
     else
     {
         currentKeyState[key] = action;
@@ -3375,11 +3403,11 @@ static void AndroidCommandCallback(struct android_app *app, int32_t cmd)
                     // Init hi-res timer
                     InitTimer();
 
-                    #if defined(SUPPORT_DEFAULT_FONT)
+                #if defined(SUPPORT_DEFAULT_FONT)
                     // Load default font
                     // NOTE: External function (defined in module: text)
                     LoadDefaultFont();
-                    #endif
+                #endif
 
                     // TODO: GPU assets reload in case of lost focus (lost context)
                     // NOTE: This problem has been solved just unbinding and rebinding context from display
