@@ -132,7 +132,11 @@ script:
       ..
   - $RUNNER cmake --build . --target
   - if [ "$RELEASE" != "NO" ]; then $RUNNER cmake --build . --target package; fi
-  - $(which sudo) $RUNNER "$(which cmake)" --build . --target install
+  - if [ -n "$RUNNER" ]; then
+      sudo $RUNNER cmake --build . --target install;
+    else
+      $(which sudo) $RUNNER "$(which cmake)" --build . --target install;
+    fi
   - if [ ! "$DONT_TEST" ]; then
       pkg-config --static --libs raylib;
       nm -g release/libraylib.a | grep glfwGetProcAddress || (echo "libraylib.a doesn't contain GLFW symbols! Aborting..." && false);
