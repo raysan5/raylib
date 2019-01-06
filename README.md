@@ -10,7 +10,7 @@ NOTE for ADVENTURERS: raylib is a programming library to enjoy videogames progra
 no fancy interface, no visual helpers, no auto-debugging... just coding in the most 
 pure spartan-programmers way. Are you ready to learn? Jump to [code examples!](http://www.raylib.com/examples.html)
 
-[![Build Status](https://travis-ci.org/raysan5/raylib.svg?branch=develop)](https://travis-ci.org/raysan5/raylib)
+[![Build Status](https://travis-ci.org/raysan5/raylib.svg?branch=master)](https://travis-ci.org/raysan5/raylib)
 [![https://ci.appveyor.com/api/projects/status/github/raysan5/raylib?svg=true](https://ci.appveyor.com/api/projects/status/github/raysan5/raylib?svg=true)](https://ci.appveyor.com/project/raysan5/raylib)
 [![Chat on Discord](https://img.shields.io/discord/308323056592486420.svg?logo=discord)](https://discord.gg/VkzNHUE)
 [![License](https://img.shields.io/badge/license-zlib%2Flibpng-blue.svg)](LICENSE.md)
