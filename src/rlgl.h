@@ -3221,6 +3221,7 @@ Texture2D GenTexturePrefilter(Shader shader, Texture2D cubemap, int size)
 
 // Generate BRDF texture using cubemap data
 // NOTE: OpenGL ES 2.0 does not support GL_RGB16F texture format, neither GL_DEPTH_COMPONENT24
+// TODO: Review implementation: https://github.com/HectorMF/BRDFGenerator
 Texture2D GenTextureBRDF(Shader shader, int size)
 {
     Texture2D brdf = { 0 };
@@ -3229,9 +3230,9 @@ Texture2D GenTextureBRDF(Shader shader, int size)
     glGenTextures(1, &brdf.id);
     glBindTexture(GL_TEXTURE_2D, brdf.id);
 #if defined(GRAPHICS_API_OPENGL_33)
-    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB32F, size, size, 0, GL_RG, GL_FLOAT, NULL);
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB32F, size, size, 0, GL_RGB, GL_FLOAT, NULL);
 #elif defined(GRAPHICS_API_OPENGL_ES2)
-    if (texFloatSupported) glTexImage2D(GL_TEXTURE_2D, 0, GL_RG, size, size, 0, GL_RG, GL_FLOAT, NULL);
+    if (texFloatSupported) glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, size, size, 0, GL_RGB, GL_FLOAT, NULL);
 #endif
 
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
@@ -3269,6 +3270,8 @@ Texture2D GenTextureBRDF(Shader shader, int size)
 
     brdf.width = size;
     brdf.height = size;
+    brdf.mipmaps = 1;
+    brdf.format = UNCOMPRESSED_R32G32B32;
 #endif
     return brdf;
 }
