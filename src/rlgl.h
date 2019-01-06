@@ -3004,6 +3004,7 @@ Texture2D GenTextureCubemap(Shader shader, Texture2D skyHDR, int size)
         if (texFloatSupported) glTexImage2D(GL_TEXTURE_CUBE_MAP_POSITIVE_X + i, 0, GL_RGB, size, size, 0, GL_RGB, GL_FLOAT, NULL);
 #endif
     }
+    
     glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
     glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
 #if defined(GRAPHICS_API_OPENGL_33)
@@ -3033,7 +3034,7 @@ Texture2D GenTextureCubemap(Shader shader, Texture2D skyHDR, int size)
     glViewport(0, 0, size, size);
     glBindFramebuffer(GL_FRAMEBUFFER, fbo);
 
-    for (unsigned int i = 0; i < 6; i++)
+    for (int i = 0; i < 6; i++)
     {
         SetShaderValueMatrix(shader, shader.locs[LOC_MATRIX_VIEW], fboViews[i]);
         glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_CUBE_MAP_POSITIVE_X + i, cubemap.id, 0);
@@ -3048,12 +3049,11 @@ Texture2D GenTextureCubemap(Shader shader, Texture2D skyHDR, int size)
     glViewport(0, 0, screenWidth, screenHeight);
     //glEnable(GL_CULL_FACE);
 
+    // NOTE: Texture2D is a GL_TEXTURE_CUBE_MAP, not a GL_TEXTURE_2D!
     cubemap.width = size;
     cubemap.height = size;
     cubemap.mipmaps = 1;
     cubemap.format = UNCOMPRESSED_R32G32B32;
-    
-    // TODO: Texture2D is a GL_TEXTURE_CUBE_MAP, not a GL_TEXTURE_2D! Only cubemap.id makes some sense...
 #endif
     return cubemap;
 }
@@ -3081,7 +3081,10 @@ Texture2D GenTextureIrradiance(Shader shader, Texture2D cubemap, int size)
     glGenTextures(1, &irradiance.id);
     glBindTexture(GL_TEXTURE_CUBE_MAP, irradiance.id);
     for (unsigned int i = 0; i < 6; i++)
+    {
         glTexImage2D(GL_TEXTURE_CUBE_MAP_POSITIVE_X + i, 0, GL_RGB16F, size, size, 0, GL_RGB, GL_FLOAT, NULL);
+    }
+    
     glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
     glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
     glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_R, GL_CLAMP_TO_EDGE);
@@ -3109,7 +3112,7 @@ Texture2D GenTextureIrradiance(Shader shader, Texture2D cubemap, int size)
     glViewport(0, 0, size, size);
     glBindFramebuffer(GL_FRAMEBUFFER, fbo);
 
-    for (unsigned int i = 0; i < 6; i++)
+    for (int i = 0; i < 6; i++)
     {
         SetShaderValueMatrix(shader, shader.locs[LOC_MATRIX_VIEW], fboViews[i]);
         glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_CUBE_MAP_POSITIVE_X + i, irradiance.id, 0);
@@ -3125,6 +3128,8 @@ Texture2D GenTextureIrradiance(Shader shader, Texture2D cubemap, int size)
 
     irradiance.width = size;
     irradiance.height = size;
+    irradiance.mipmaps = 1;
+    //irradiance.format = UNCOMPRESSED_R16G16B16;
 #endif
     return irradiance;
 }
@@ -3154,7 +3159,10 @@ Texture2D GenTexturePrefilter(Shader shader, Texture2D cubemap, int size)
     glGenTextures(1, &prefilter.id);
     glBindTexture(GL_TEXTURE_CUBE_MAP, prefilter.id);
     for (unsigned int i = 0; i < 6; i++)
+    {
         glTexImage2D(GL_TEXTURE_CUBE_MAP_POSITIVE_X + i, 0, GL_RGB16F, size, size, 0, GL_RGB, GL_FLOAT, NULL);
+    }
+    
     glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
     glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
     glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_R, GL_CLAMP_TO_EDGE);
@@ -3185,11 +3193,11 @@ Texture2D GenTexturePrefilter(Shader shader, Texture2D cubemap, int size)
 
     #define MAX_MIPMAP_LEVELS   5   // Max number of prefilter texture mipmaps
 
-    for (unsigned int mip = 0; mip < MAX_MIPMAP_LEVELS; mip++)
+    for (int mip = 0; mip < MAX_MIPMAP_LEVELS; mip++)
     {
         // Resize framebuffer according to mip-level size.
-        unsigned int mipWidth  = size*(int) powf(0.5f, (float) mip);
-        unsigned int mipHeight = size* (int) powf(0.5f, (float) mip);
+        unsigned int mipWidth  = size*(int)powf(0.5f, (float)mip);
+        unsigned int mipHeight = size*(int)powf(0.5f, (float)mip);
 
         glBindRenderbuffer(GL_RENDERBUFFER, rbo);
         glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH_COMPONENT24, mipWidth, mipHeight);
@@ -3198,7 +3206,7 @@ Texture2D GenTexturePrefilter(Shader shader, Texture2D cubemap, int size)
         float roughness = (float)mip/(float)(MAX_MIPMAP_LEVELS - 1);
         glUniform1f(roughnessLoc, roughness);
 
-        for (unsigned int i = 0; i < 6; ++i)
+        for (int i = 0; i < 6; i++)
         {
             SetShaderValueMatrix(shader, shader.locs[LOC_MATRIX_VIEW], fboViews[i]);
             glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_CUBE_MAP_POSITIVE_X + i, prefilter.id, mip);
@@ -3215,6 +3223,8 @@ Texture2D GenTexturePrefilter(Shader shader, Texture2D cubemap, int size)
 
     prefilter.width = size;
     prefilter.height = size;
+    //prefilter.mipmaps = 1 + (int)floor(log(size)/log(2));
+    //prefilter.format = UNCOMPRESSED_R16G16B16;
 #endif
     return prefilter;
 }
