@@ -128,10 +128,11 @@ script:
       -DUSE_EXTERNAL_GLFW=$USE_EXTERNAL_GLFW
       -DUSE_WAYLAND=$WAYLAND
       -DINCLUDE_EVERYTHING=ON
+      -DCMAKE_VERBOSE_MAKEFILE:BOOL=ON
       ..
-  - $RUNNER make VERBOSE=1
-  - if [ "$RELEASE" != "NO" ]; then $RUNNER make package; fi
-  - sudo $RUNNER make install
+  - $RUNNER cmake --build . --target
+  - if [ "$RELEASE" != "NO" ]; then $RUNNER cmake --build . --target package; fi
+  - $RUNNER $(which sudo) "$(which cmake)" --build . --target install
   - if [ ! "$DONT_TEST" ]; then
       pkg-config --static --libs raylib;
       nm -g release/libraylib.a | grep glfwGetProcAddress || (echo "libraylib.a doesn't contain GLFW symbols! Aborting..." && false);
