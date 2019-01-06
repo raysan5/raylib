@@ -56,7 +56,6 @@ before_install:
       export DONT_TEST=1;
     fi
   - if [ "$TRAVIS_OS_NAME" == "linux" ]; then
-      MAKE=make;
       if [[ "$ARCH" == *-android ]]; then
         export DONT_TEST=1;
         export RAYLIB_PACKAGE_SUFFIX="-Android-arm64";
@@ -101,12 +100,10 @@ before_install:
       fi;
     fi
   - if [ "$TRAVIS_OS_NAME" == "osx" ]; then
-      MAKE=make;
       export RAYLIB_PACKAGE_SUFFIX="-macOS";
       if [ "$INSTALL_GLFW" == "YES" ]; then brew update; brew install glfw; fi;
     fi
   - if [ "$TRAVIS_OS_NAME" == "windows" ]; then
-      MAKE=mingw32-make;
       export DONT_TEST=1;
       export RAYLIB_PACKAGE_SUFFIX="-windows";
       export CMAKE_ARCH_ARGS='-DPLATFORM=Desktop';
@@ -132,9 +129,9 @@ script:
       -DUSE_WAYLAND=$WAYLAND
       -DINCLUDE_EVERYTHING=ON
       ..
-  - $RUNNER $MAKE VERBOSE=1
+  - $RUNNER make VERBOSE=1
   - if [ "$RELEASE" != "NO" ]; then $RUNNER make package; fi
-  - sudo $RUNNER $MAKE install
+  - sudo $RUNNER make install
   - if [ ! "$DONT_TEST" ]; then
       pkg-config --static --libs raylib;
       nm -g release/libraylib.a | grep glfwGetProcAddress || (echo "libraylib.a doesn't contain GLFW symbols! Aborting..." && false);
