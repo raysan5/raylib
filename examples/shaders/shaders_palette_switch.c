@@ -88,6 +88,7 @@ int main()
     // Initial index not set, will be automatically bounded below.
     int currentPalette = -1;
 
+    SetTargetFPS(60);                       // Set our game to run at 60 frames-per-second
     //--------------------------------------------------------------------------------------
 
     // Main game loop
