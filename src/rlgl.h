@@ -470,6 +470,8 @@ Texture2D GetTextureDefault(void);                                  // Get defau
 int GetShaderLocation(Shader shader, const char *uniformName);              // Get shader uniform location
 void SetShaderValue(Shader shader, int uniformLoc, const float *value, int size); // Set shader uniform value (float)
 void SetShaderValuei(Shader shader, int uniformLoc, const int *value, int size);  // Set shader uniform value (int)
+void SetShaderValueArray(Shader shader, int uniformLoc, const float *value, int size, int count); // Set shader uniform value (array of float/vec2/vec3/vec4)
+void SetShaderValueArrayi(Shader shader, int uniformLoc, const int *value, int size, int count); // Set shader uniform value (array of int/ivec2/ivec3/ivec4)
 void SetShaderValueMatrix(Shader shader, int uniformLoc, Matrix mat);       // Set shader uniform value (matrix 4x4)
 void SetMatrixProjection(Matrix proj);                              // Set a custom projection matrix (replaces internal projection matrix)
 void SetMatrixModelview(Matrix view);                               // Set a custom modelview matrix (replaces internal modelview matrix)
@@ -2891,35 +2893,47 @@ int GetShaderLocation(Shader shader, const char *uniformName)
     return location;
 }
 
-// Set shader uniform value (float)
+// Set shader uniform value (float/vec2/vec3/vec4)
 void SetShaderValue(Shader shader, int uniformLoc, const float *value, int size)
+{
+    SetShaderValueArray(shader, uniformLoc, value, size, 1);
+}
+
+// Set shader uniform value (int/ivec2/ivec3/ivec4)
+void SetShaderValuei(Shader shader, int uniformLoc, const int *value, int size)
+{
+    SetShaderValueArrayi(shader, uniformLoc, value, size, 1);
+}
+
+// Set shader uniform value (array of float/vec2/vec3/vec4)
+void SetShaderValueArray(Shader shader, int uniformLoc, const float *value, int size, int count)
 {
 #if defined(GRAPHICS_API_OPENGL_33) || defined(GRAPHICS_API_OPENGL_ES2)
     glUseProgram(shader.id);
 
-    if (size == 1) glUniform1fv(uniformLoc, 1, value);          // Shader uniform type: float
-    else if (size == 2) glUniform2fv(uniformLoc, 1, value);     // Shader uniform type: vec2
-    else if (size == 3) glUniform3fv(uniformLoc, 1, value);     // Shader uniform type: vec3
-    else if (size == 4) glUniform4fv(uniformLoc, 1, value);     // Shader uniform type: vec4
-    else TraceLog(LOG_WARNING, "Shader value float array size not supported");
+    if (size == 1) glUniform1fv(uniformLoc, count, value);     // Shader uniform type: float[]
+    else if (size == 2) glUniform2fv(uniformLoc, count, value);     // Shader uniform type: vec2[]
+    else if (size == 3) glUniform3fv(uniformLoc, count, value);     // Shader uniform type: vec3[]
+    else if (size == 4) glUniform4fv(uniformLoc, count, value);     // Shader uniform type: vec4[]
+    else TraceLog(LOG_WARNING, "Wrong size for shader's uniform value (1 to 4 supported)");
 
     //glUseProgram(0);      // Avoid reseting current shader program, in case other uniforms are set
 #endif
 }
 
-// Set shader uniform value (int)
-void SetShaderValuei(Shader shader, int uniformLoc, const int *value, int size)
+// Set shader uniform value (array of int/ivec2/ivec3/ivec4)
+void SetShaderValueArrayi(Shader shader, int uniformLoc, const int *value, int size, int count)
 {
 #if defined(GRAPHICS_API_OPENGL_33) || defined(GRAPHICS_API_OPENGL_ES2)
     glUseProgram(shader.id);
 
-    if (size == 1) glUniform1iv(uniformLoc, 1, value);          // Shader uniform type: int
-    else if (size == 2) glUniform2iv(uniformLoc, 1, value);     // Shader uniform type: ivec2
-    else if (size == 3) glUniform3iv(uniformLoc, 1, value);     // Shader uniform type: ivec3
-    else if (size == 4) glUniform4iv(uniformLoc, 1, value);     // Shader uniform type: ivec4
-    else TraceLog(LOG_WARNING, "Shader value int array size not supported");
+    if (size == 1) glUniform1iv(uniformLoc, count, value);          // Shader uniform type: int[]
+    else if (size == 2) glUniform2iv(uniformLoc, count, value);     // Shader uniform type: ivec2[]
+    else if (size == 3) glUniform3iv(uniformLoc, count, value);     // Shader uniform type: ivec3[]
+    else if (size == 4) glUniform4iv(uniformLoc, count, value);     // Shader uniform type: ivec4[]
+    else TraceLog(LOG_WARNING, "Wrong size for shader's uniform value (1 to 4 supported)");
 
-    //glUseProgram(0);
+    //glUseProgram(0);      // Avoid reseting current shader program, in case other uniforms are set
 #endif
 }
 
