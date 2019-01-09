@@ -376,6 +376,8 @@ RLAPI Texture2D GetTextureDefault(void);                                  // Get
 RLAPI int GetShaderLocation(Shader shader, const char *uniformName);              // Get shader uniform location
 RLAPI void SetShaderValue(Shader shader, int uniformLoc, const float *value, int size); // Set shader uniform value (float)
 RLAPI void SetShaderValuei(Shader shader, int uniformLoc, const int *value, int size);  // Set shader uniform value (int)
+RLAPI void SetShaderValueArray(Shader shader, int uniformLoc, const float *value, int size, int count); // Set shader uniform value (array of float/vec2/vec3/vec4)
+RLAPI void SetShaderValueArrayi(Shader shader, int uniformLoc, const int *value, int size, int count); // Set shader uniform value (array of int/ivec2/ivec3/ivec4)
 RLAPI void SetShaderValueMatrix(Shader shader, int uniformLoc, Matrix mat);       // Set shader uniform value (matrix 4x4)
 RLAPI void SetMatrixProjection(Matrix proj);                              // Set a custom projection matrix (replaces internal projection matrix)
 RLAPI void SetMatrixModelview(Matrix view);                               // Set a custom modelview matrix (replaces internal modelview matrix)
