@@ -407,7 +407,7 @@ EXAMPLES = \
     models/models_box_collisions \
     models/models_billboard \
     models/models_obj_loading \
-    models/models_obj_viewing \
+    models/models_obj_viewer \
     models/models_heightmap \
     models/models_cubicmap \
     models/models_mesh_picking \
