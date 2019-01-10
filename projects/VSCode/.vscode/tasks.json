@@ -19,7 +19,7 @@
             },
             "osx": {
                 "args": [
-                    "RAYLIB_PATH=/Users/murray/work/ray/raylib"
+                    "RAYLIB_PATH=<path_to_raylib>/raylib"
                 ],
             },
             "group": {
@@ -42,7 +42,7 @@
             },
             "osx": {
                 "args": [
-                    "RAYLIB_PATH=/Users/murray/work/ray/raylib",
+                    "RAYLIB_PATH=<path_to_raylib>/raylib",
                 ],
             },
             "group": "build"
