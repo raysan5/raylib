@@ -158,20 +158,20 @@ Light CreateLight(int type, Vector3 pos, Vector3 targ, Color color, Shader shade
 void UpdateLightValues(Shader shader, Light light)
 {
     // Send to shader light enabled state and type
-    SetShaderValuei(shader, light.enabledLoc, (int[1]){ light.enabled }, 1);
-    SetShaderValuei(shader, light.typeLoc, (int[1]){ light.type }, 1);
+    SetShaderValue(shader, light.enabledLoc, &light.enabled, UNIFORM_INT);
+    SetShaderValue(shader, light.typeLoc, &light.type, UNIFORM_INT);
 
     // Send to shader light position values
     float position[3] = { light.position.x, light.position.y, light.position.z };
-    SetShaderValue(shader, light.posLoc, position, 3);
+    SetShaderValue(shader, light.posLoc, position, UNIFORM_VEC3);
 
     // Send to shader light target position values
     float target[3] = { light.target.x, light.target.y, light.target.z };
-    SetShaderValue(shader, light.targetLoc, target, 3);
+    SetShaderValue(shader, light.targetLoc, target, UNIFORM_VEC3);
 
     // Send to shader light color values
     float diff[4] = { (float)light.color.r/(float)255, (float)light.color.g/(float)255, (float)light.color.b/(float)255, (float)light.color.a/(float)255 };
-    SetShaderValue(shader, light.colorLoc, diff, 4);
+    SetShaderValue(shader, light.colorLoc, diff, UNIFORM_VEC4);
 }
 
 #endif // RLIGHTS_IMPLEMENTATION

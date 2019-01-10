@@ -9,7 +9,7 @@
 #version 330
 
 // Input vertex attributes (from vertex shader)
-in vec3 fragPos;
+in vec3 fragPosition;
 
 // Input uniform values
 uniform sampler2D equirectangularMap;
@@ -28,7 +28,7 @@ vec2 SampleSphericalMap(vec3 v)
 void main()
 {
     // Normalize local position 
-    vec2 uv = SampleSphericalMap(normalize(fragPos));
+    vec2 uv = SampleSphericalMap(normalize(fragPosition));
 
     // Fetch color from texture map
     vec3 color = texture(equirectangularMap, uv).rgb;

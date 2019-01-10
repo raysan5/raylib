@@ -79,7 +79,7 @@ int main()
         swirlCenter[1] = screenHeight - mousePosition.y;
 
         // Send new value to the shader to be used on drawing
-        SetShaderValue(shader, swirlCenterLoc, swirlCenter, 2);
+        SetShaderValue(shader, swirlCenterLoc, swirlCenter, UNIFORM_VEC2);
         
         UpdateCamera(&camera);              // Update camera
         //----------------------------------------------------------------------------------

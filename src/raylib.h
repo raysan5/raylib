@@ -135,6 +135,11 @@
 #define MAGENTA    CLITERAL{ 255, 0, 255, 255 }     // Magenta
 #define RAYWHITE   CLITERAL{ 245, 245, 245, 255 }   // My own White (raylib logo)
 
+// Temporal hack to avoid breaking old codebases using
+// deprecated raylib implementation of these functions
+#define FormatText  TextFormat
+#define SubText     TextSubtext
+
 //----------------------------------------------------------------------------------
 // Structures Definition
 //----------------------------------------------------------------------------------
@@ -471,7 +476,7 @@ typedef enum {
     KEY_X               = 88,
     KEY_Y               = 89,
     KEY_Z               = 90,
-    
+
     // Function keys
     KEY_SPACE           = 32,
     KEY_ESCAPE          = 256,
@@ -518,7 +523,7 @@ typedef enum {
     KEY_BACKSLASH       = 92,
     KEY_RIGHT_BRACKET   = 93,
     KEY_GRAVE           = 96,
-    
+
     // Keypad keys
     KEY_KP_0            = 320,
     KEY_KP_1            = 321,
@@ -671,6 +676,19 @@ typedef enum {
 
 #define LOC_MAP_DIFFUSE      LOC_MAP_ALBEDO
 #define LOC_MAP_SPECULAR     LOC_MAP_METALNESS
+
+// Shader uniform data types
+typedef enum {
+    UNIFORM_FLOAT = 0,
+    UNIFORM_VEC2,
+    UNIFORM_VEC3,
+    UNIFORM_VEC4,
+    UNIFORM_INT,
+    UNIFORM_IVEC2,
+    UNIFORM_IVEC3,
+    UNIFORM_IVEC4,
+    UNIFORM_SAMPLER2D
+} ShaderUniformDataType;
 
 // Material map type
 typedef enum {
@@ -877,7 +895,6 @@ RLAPI Color GetColor(int hexValue);                               // Returns a C
 RLAPI Color Fade(Color color, float alpha);                       // Color fade-in or fade-out, alpha goes from 0.0f to 1.0f
 
 // Misc. functions
-RLAPI void ShowLogo(void);                                        // Activate raylib logo at startup (can be done with flags)
 RLAPI void SetConfigFlags(unsigned char flags);                   // Setup window configuration flags (view FLAGS)
 RLAPI void SetTraceLog(unsigned char types);                      // Enable trace log message types (bit flags based)
 RLAPI void SetTraceLogCallback(TraceLogCallback callback);        // Set a trace log callback to enable custom logging bypassing raylib's one
@@ -939,8 +956,9 @@ RLAPI bool IsMouseButtonUp(int button);                       // Detect if a mou
 RLAPI int GetMouseX(void);                                    // Returns mouse position X
 RLAPI int GetMouseY(void);                                    // Returns mouse position Y
 RLAPI Vector2 GetMousePosition(void);                         // Returns mouse position XY
-RLAPI void SetMousePosition(Vector2 position);                // Set mouse position XY
-RLAPI void SetMouseScale(float scale);                        // Set mouse scaling
+RLAPI void SetMousePosition(int x, int y);                    // Set mouse position XY
+RLAPI void SetMouseOffset(int offsetX, int offsetY);          // Set mouse offset
+RLAPI void SetMouseScale(float scaleX, float scaleY);         // Set mouse scaling
 RLAPI int GetMouseWheelMove(void);                            // Returns mouse wheel movement Y
 
 // Input-related functions: touch
@@ -990,7 +1008,7 @@ RLAPI void DrawCircleLines(int centerX, int centerY, float radius, Color color);
 RLAPI void DrawRectangle(int posX, int posY, int width, int height, Color color);                        // Draw a color-filled rectangle
 RLAPI void DrawRectangleV(Vector2 position, Vector2 size, Color color);                                  // Draw a color-filled rectangle (Vector version)
 RLAPI void DrawRectangleRec(Rectangle rec, Color color);                                                 // Draw a color-filled rectangle
-RLAPI void DrawRectanglePro(Rectangle rec, Vector2 origin, float rotation, Color colors[4]);             // Draw a color-filled rectangle with pro parameters
+RLAPI void DrawRectanglePro(Rectangle rec, Vector2 origin, float rotation, Color color);                 // Draw a color-filled rectangle with pro parameters
 RLAPI void DrawRectangleGradientV(int posX, int posY, int width, int height, Color color1, Color color2);// Draw a vertical-gradient-filled rectangle
 RLAPI void DrawRectangleGradientH(int posX, int posY, int width, int height, Color color1, Color color2);// Draw a horizontal-gradient-filled rectangle
 RLAPI void DrawRectangleGradientEx(Rectangle rec, Color col1, Color col2, Color col3, Color col4);       // Draw a gradient-filled rectangle with custom vertex colors
@@ -1089,8 +1107,9 @@ RLAPI void DrawTexture(Texture2D texture, int posX, int posY, Color tint);      
 RLAPI void DrawTextureV(Texture2D texture, Vector2 position, Color tint);                                // Draw a Texture2D with position defined as Vector2
 RLAPI void DrawTextureEx(Texture2D texture, Vector2 position, float rotation, float scale, Color tint);  // Draw a Texture2D with extended parameters
 RLAPI void DrawTextureRec(Texture2D texture, Rectangle sourceRec, Vector2 position, Color tint);         // Draw a part of a texture defined by a rectangle
-RLAPI void DrawTexturePro(Texture2D texture, Rectangle sourceRec, Rectangle destRec, Vector2 origin, float rotation, Color tint); // Draw a part of a texture defined by a rectangle with 'pro' parameters
-RLAPI void DrawTextureNPatch(Texture2D texture, NPatchInfo nPatchInfo, Rectangle destRec, Vector2 origin, float rotation, Color tint); // Draws a texture (or part of it) that stretches or shrinks nicely.
+RLAPI void DrawTextureQuad(Texture2D texture, Vector2 tiling, Vector2 offset, Rectangle quad, Color tint);  // Draw texture quad with tiling and offset parameters
+RLAPI void DrawTexturePro(Texture2D texture, Rectangle sourceRec, Rectangle destRec, Vector2 origin, float rotation, Color tint);       // Draw a part of a texture defined by a rectangle with 'pro' parameters
+RLAPI void DrawTextureNPatch(Texture2D texture, NPatchInfo nPatchInfo, Rectangle destRec, Vector2 origin, float rotation, Color tint);  // Draws a texture (or part of it) that stretches or shrinks nicely
 
 //------------------------------------------------------------------------------------
 // Font Loading and Text Drawing Functions (Module: text)
@@ -1099,7 +1118,7 @@ RLAPI void DrawTextureNPatch(Texture2D texture, NPatchInfo nPatchInfo, Rectangle
 // Font loading/unloading functions
 RLAPI Font GetFontDefault(void);                                                            // Get the default Font
 RLAPI Font LoadFont(const char *fileName);                                                  // Load font from file into GPU memory (VRAM)
-RLAPI Font LoadFontEx(const char *fileName, int fontSize, int charsCount, int *fontChars);  // Load font from file with extended parameters
+RLAPI Font LoadFontEx(const char *fileName, int fontSize, int *fontChars, int charsCount);  // Load font from file with extended parameters
 RLAPI Font LoadFontFromImage(Image image, Color key, int firstChar);                        // Load font from Image (XNA style)
 RLAPI CharInfo *LoadFontData(const char *fileName, int fontSize, int *fontChars, int charsCount, int type); // Load font data for further use
 RLAPI Image GenImageFontAtlas(CharInfo *chars, int charsCount, int fontSize, int padding, int packMethod);  // Generate image font atlas using chars info
@@ -1108,18 +1127,30 @@ RLAPI void UnloadFont(Font font);                                               
 // Text drawing functions
 RLAPI void DrawFPS(int posX, int posY);                                                     // Shows current FPS
 RLAPI void DrawText(const char *text, int posX, int posY, int fontSize, Color color);       // Draw text (using default font)
-RLAPI void DrawTextEx(Font font, const char *text, Vector2 position, float fontSize, float spacing, Color tint); // Draw text using font and additional parameters
+RLAPI void DrawTextEx(Font font, const char *text, Vector2 position, float fontSize, float spacing, Color tint);                // Draw text using font and additional parameters
+RLAPI void DrawTextRec(Font font, const char *text, Rectangle rec, float fontSize, float spacing, bool wordWrap, Color tint);   // Draw text using font inside rectangle limits
 
 // Text misc. functions
 RLAPI int MeasureText(const char *text, int fontSize);                                      // Measure string width for default font
 RLAPI Vector2 MeasureTextEx(Font font, const char *text, float fontSize, float spacing);    // Measure string size for Font
 RLAPI int GetGlyphIndex(Font font, int character);                                          // Get index position for a unicode character on font
 
-// Text string edition functions
-RLAPI const char *FormatText(const char *text, ...);                        // Formatting of text with variables to 'embed'
-RLAPI const char *SubText(const char *text, int position, int length);      // Get a piece of a text string
-RLAPI char **SplitText(char *text, char delimiter, int *strCount);          // Split text string into multiple strings (memory should be freed manually!)
-RLAPI bool IsEqualText(const char *text1, const char *text2);               // Check if two text string are equal
+// Text strings management functions
+// NOTE: Some strings allocate memory internally for returned strings, just be careful!
+RLAPI bool TextIsEqual(const char *text1, const char *text2);                               // Check if two text string are equal
+RLAPI unsigned int TextLength(const char *text);                                            // Get text length, checks for '\0' ending
+RLAPI const char *TextFormat(const char *text, ...);                                        // Text formatting with variables (sprintf style)
+RLAPI const char *TextSubtext(const char *text, int position, int length);                  // Get a piece of a text string
+RLAPI const char *TextReplace(char *text, const char *replace, const char *by);             // Replace text string (memory should be freed!)
+RLAPI const char *TextInsert(const char *text, const char *insert, int position);           // Insert text in a position (memory should be freed!)
+RLAPI const char *TextJoin(const char **textList, int count, const char *delimiter);        // Join text strings with delimiter
+RLAPI char **TextSplit(const char *text, char delimiter, int *count);                       // Split text into multiple strings (memory should be freed!)
+RLAPI void TextSplitEx(const char *text, char delimiter, int *count, const char **ptrs, int *lengths); // Get pointers to substrings separated by delimiter
+RLAPI void TextAppend(char *text, const char *append, int *position);                       // Append text at specific position and move cursor!
+RLAPI int TextFindIndex(const char *text, const char *find);                                // Find first text occurrence within a string
+RLAPI const char *TextToUpper(const char *text);                      // Get upper case version of provided string
+RLAPI const char *TextToLower(const char *text);                      // Get lower case version of provided string
+RLAPI const char *TextToPascal(const char *text);                     // Get Pascal case notation version of provided string
 
 //------------------------------------------------------------------------------------
 // Basic 3d Shapes Drawing Functions (Module: models)
@@ -1215,8 +1246,8 @@ RLAPI Texture2D GetTextureDefault(void);                                  // Get
 
 // Shader configuration functions
 RLAPI int GetShaderLocation(Shader shader, const char *uniformName);              // Get shader uniform location
-RLAPI void SetShaderValue(Shader shader, int uniformLoc, const float *value, int size); // Set shader uniform value (float)
-RLAPI void SetShaderValuei(Shader shader, int uniformLoc, const int *value, int size);  // Set shader uniform value (int)
+RLAPI void SetShaderValue(Shader shader, int uniformLoc, const void *value, int uniformType);               // Set shader uniform value
+RLAPI void SetShaderValueV(Shader shader, int uniformLoc, const void *value, int uniformType, int count);   // Set shader uniform value vector
 RLAPI void SetShaderValueMatrix(Shader shader, int uniformLoc, Matrix mat);       // Set shader uniform value (matrix 4x4)
 RLAPI void SetMatrixProjection(Matrix proj);                              // Set a custom projection matrix (replaces internal projection matrix)
 RLAPI void SetMatrixModelview(Matrix view);                               // Set a custom modelview matrix (replaces internal modelview matrix)
@@ -1227,7 +1258,7 @@ RLAPI Matrix GetMatrixModelview();                                        // Get
 RLAPI Texture2D GenTextureCubemap(Shader shader, Texture2D skyHDR, int size);       // Generate cubemap texture from HDR texture
 RLAPI Texture2D GenTextureIrradiance(Shader shader, Texture2D cubemap, int size);   // Generate irradiance texture using cubemap data
 RLAPI Texture2D GenTexturePrefilter(Shader shader, Texture2D cubemap, int size);    // Generate prefilter texture using cubemap data
-RLAPI Texture2D GenTextureBRDF(Shader shader, Texture2D cubemap, int size);         // Generate BRDF texture using cubemap data
+RLAPI Texture2D GenTextureBRDF(Shader shader, int size);                  // Generate BRDF texture using cubemap data
 
 // Shading begin/end functions
 RLAPI void BeginShaderMode(Shader shader);                                // Begin custom shader drawing

@@ -88,34 +88,33 @@ static Music musMission;
 // Mission Screen Functions Definition
 //----------------------------------------------------------------------------------
 static void WriteMissionText();
-static void EndWritting();
-static void BlinkKeyword();
+
 
 // Mission Screen Initialization logic
 void InitMissionScreen(void)
 {
     framesCounter = 0;
     finishScreen = 0;
-    
-    fadeButton = 0.80f;  
-    
+
+    fadeButton = 0.80f;
+
     texBackground = LoadTexture("resources/textures/mission_background.png");
-    
-    texBackline = LoadTexture("resources/textures/mission_backline.png");    
+
+    texBackline = LoadTexture("resources/textures/mission_backline.png");
     sourceRecBackLine = (Rectangle){0,0,GetScreenWidth(), texBackline.height};
     destRecBackLine = (Rectangle){0,0,sourceRecBackLine.width, sourceRecBackLine.height};
     fadeBackLine = 0;
-    
+
     fxTransmit = LoadSound("resources/audio/fx_message.ogg");
     musMission = LoadMusicStream("resources/audio/music_mission.ogg");
-    
+
     PlayMusicStream(musMission);
-    
+
     // Initialize missions
     missions = LoadMissions("resources/missions.txt");
-    
+
     missionMaxLength = strlen(missions[currentMission].brief);
-    
+
     // Insert line breaks every MAX_LINE_CHAR
     int currentLine = 1;
     int i = currentLine * MAX_LINE_CHAR;
@@ -129,35 +128,35 @@ void InitMissionScreen(void)
             i = currentLine*MAX_LINE_CHAR;
         }
         else i++;
-    }        
-    
-    missionSize = 30;    
+    }
+
+    missionSize = 30;
     missionLenght = 0;
     missionSpeed = 1;
-    
+
     numberColor = RAYWHITE;
     missionColor = LIGHTGRAY;
     keywordColor = (Color){198, 49, 60, 255}; //RED
-    
+
     numberPosition = (Vector2){150, 185};
     missionPosition = (Vector2){numberPosition.x, numberPosition.y + 60};
     keywordPosition = (Vector2){missionPosition.x, missionPosition.y + MeasureTextEx(fontMission, missions[currentMission].brief, missionSize, 0).y + 60};
-    
+
     startWritting = false;
     writeNumber = false;
     writeMission = false;
     writeKeyword = false;
     writeEnd = false;
-    
+
     writtingMission = false;
-    
+
     showNumberWaitFrames = 30;
-    showMissionWaitFrames = 60; 
-    showKeywordWaitFrames = 60;    
-    
+    showMissionWaitFrames = 60;
+    showKeywordWaitFrames = 60;
+
     blinkKeyWord = true;
     blinkFrames = 15;
-    
+
     PlaySound(fxTransmit);
 }
 
@@ -165,37 +164,52 @@ void InitMissionScreen(void)
 void UpdateMissionScreen(void)
 {
     UpdateMusicStream(musMission);
-    
-    if (!writeEnd) WriteMissionText(); 
-    else BlinkKeyword();
-    
+
+    if (!writeEnd) WriteMissionText();
+    else
+    {
+        framesCounter++;
+
+        if ((framesCounter%blinkFrames) == 0)
+        {
+            framesCounter = 0;
+            blinkKeyWord = !blinkKeyWord;
+        }
+    }
+
     if (showButton)
     {
-        if (IsKeyPressed(KEY_ENTER) || IsButtonPressed()) 
+        if (IsKeyPressed(KEY_ENTER) || IsButtonPressed())
         {
-            if (!writeEnd) EndWritting();
+            if (!writeEnd)
+            {
+                writeEnd = true;
+                writeKeyword = true;
+                writeNumber = true;
+                missionLenght = missionMaxLength;
+            }
             else
             {
                 finishScreen = true;
                 showButton = false;
             }
-        } 
+        }
     }
 }
 
 // Mission Screen Draw logic
 void DrawMissionScreen(void)
 {
-    // TODO: Draw MISSION screen here!
+    // Draw MISSION screen here!
     DrawTexture(texBackground, 0,0, WHITE);
     DrawTexturePro(texBackline, sourceRecBackLine, destRecBackLine, (Vector2){0,0},0, Fade(WHITE, fadeBackLine));
-    
-    if (writeNumber) DrawTextEx(fontMission, FormatText("Filtración #%02i ", currentMission + 1), numberPosition, missionSize + 10, 0, numberColor);    
-    DrawTextEx(fontMission, SubText(missions[currentMission].brief, 0, missionLenght), missionPosition, missionSize, 0, missionColor);
-    if (writeKeyword && blinkKeyWord) DrawTextEx(fontMission, FormatText("Keyword: %s", missions[currentMission].key), keywordPosition, missionSize + 10, 0, keywordColor);    
-    
-    if (showButton) 
-    {        
+
+    if (writeNumber) DrawTextEx(fontMission, FormatText("Filtración #%02i ", currentMission + 1), numberPosition, missionSize + 10, 0, numberColor);
+    DrawTextEx(fontMission, TextSubtext(missions[currentMission].brief, 0, missionLenght), missionPosition, missionSize, 0, missionColor);
+    if (writeKeyword && blinkKeyWord) DrawTextEx(fontMission, FormatText("Keyword: %s", missions[currentMission].key), keywordPosition, missionSize + 10, 0, keywordColor);
+
+    if (showButton)
+    {
         if (!writeEnd) DrawButton("saltar");
         else DrawButton("codificar");
     }
@@ -204,8 +218,8 @@ void DrawMissionScreen(void)
 // Mission Screen Unload logic
 void UnloadMissionScreen(void)
 {
-    // TODO: Unload MISSION screen variables here!
-    UnloadTexture(texBackground); 
+    // Unload MISSION screen variables here!
+    UnloadTexture(texBackground);
     UnloadTexture(texBackline);
     UnloadSound(fxTransmit);
     UnloadMusicStream(musMission);
@@ -220,74 +234,58 @@ int FinishMissionScreen(void)
 
 static void WriteMissionText()
 {
-    if(!startWritting)
+    if (!startWritting)
     {
         framesCounter++;
-        if(framesCounter % 60 == 0) 
+        if (framesCounter % 60 == 0)
         {
             framesCounter = 0;
             startWritting = true;
         }
-    }    
-    else if(!writeNumber)
+    }
+    else if (!writeNumber)
     {
         framesCounter++;
         fadeBackLine += 0.020f;
-        if(framesCounter % showNumberWaitFrames == 0)
+        if (framesCounter % showNumberWaitFrames == 0)
         {
             framesCounter = 0;
             writeNumber = true;
             showButton = true;
         }
     }
-    else if(!writeMission)
+    else if (!writeMission)
     {
         framesCounter ++;
-        if(framesCounter % showMissionWaitFrames == 0)
+        if (framesCounter % showMissionWaitFrames == 0)
         {
             framesCounter = 0;
             writeMission = true;
             writtingMission = true;
         }
     }
-    else if(writeMission && writtingMission)
+    else if (writeMission && writtingMission)
     {
         framesCounter++;
-        if(framesCounter % missionSpeed == 0)
+        if (framesCounter % missionSpeed == 0)
         {
             framesCounter = 0;
-            missionLenght++;            
-            
-            if(missionLenght == missionMaxLength)
+            missionLenght++;
+
+            if (missionLenght == missionMaxLength)
             {
                 writtingMission = false;
             }
         }
     }
-    else if(!writeKeyword)
+    else if (!writeKeyword)
     {
         framesCounter++;
-        if(framesCounter % showKeywordWaitFrames == 0)
+        if (framesCounter % showKeywordWaitFrames == 0)
         {
             framesCounter = 0;
             writeKeyword = true;
             writeEnd = true;
         }
-    }    
-}
-static void EndWritting()
-{
-    writeEnd = true;
-    writeKeyword = true;
-    writeNumber = true;
-    missionLenght = missionMaxLength;
-}
-static void BlinkKeyword()
-{
-    framesCounter++;
-    if(framesCounter % blinkFrames == 0)
-    {
-        framesCounter = 0;
-        blinkKeyWord = !blinkKeyWord;
     }
 }

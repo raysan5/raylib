@@ -162,7 +162,6 @@
     <ClCompile Include="..\..\..\src\audio.c" />
     <ClCompile Include="..\..\..\src\core.c" />
     <ClCompile Include="..\..\..\src\external\mini_al.c" />
-    <ClCompile Include="..\..\..\src\external\stb_vorbis.c" />
     <ClCompile Include="..\..\..\src\models.c" />
     <ClCompile Include="..\..\..\src\rglfw.c" />
     <ClCompile Include="..\..\..\src\shapes.c" />

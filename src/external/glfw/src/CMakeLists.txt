@@ -37,6 +37,10 @@ elseif (_GLFW_WAYLAND)
         BASENAME xdg-shell)
     ecm_add_wayland_client_protocol(glfw_SOURCES
         PROTOCOL
+        "${WAYLAND_PROTOCOLS_PKGDATADIR}/unstable/xdg-decoration/xdg-decoration-unstable-v1.xml"
+        BASENAME xdg-decoration)
+    ecm_add_wayland_client_protocol(glfw_SOURCES
+        PROTOCOL
         "${WAYLAND_PROTOCOLS_PKGDATADIR}/stable/viewporter/viewporter.xml"
         BASENAME viewporter)
     ecm_add_wayland_client_protocol(glfw_SOURCES
@@ -51,13 +55,6 @@ elseif (_GLFW_WAYLAND)
         PROTOCOL
         "${WAYLAND_PROTOCOLS_PKGDATADIR}/unstable/idle-inhibit/idle-inhibit-unstable-v1.xml"
         BASENAME idle-inhibit-unstable-v1)
-elseif (_GLFW_MIR)
-    set(glfw_HEADERS ${common_HEADERS} mir_platform.h linux_joystick.h
-                     posix_time.h posix_thread.h xkb_unicode.h egl_context.h
-                     osmesa_context.h)
-    set(glfw_SOURCES ${common_SOURCES} mir_init.c mir_monitor.c mir_window.c
-                     linux_joystick.c posix_time.c posix_thread.c xkb_unicode.c
-                     egl_context.c osmesa_context.c)
 elseif (_GLFW_OSMESA)
     set(glfw_HEADERS ${common_HEADERS} null_platform.h null_joystick.h
                      posix_time.h posix_thread.h osmesa_context.h)
@@ -104,10 +101,10 @@ set_target_properties(glfw PROPERTIES
 target_compile_definitions(glfw_objlib PRIVATE _GLFW_USE_CONFIG_H)
 target_include_directories(glfw_objlib PUBLIC
                            "$<BUILD_INTERFACE:${GLFW_SOURCE_DIR}/include>"
-                           "$<INSTALL_INTERFACE:$<INSTALL_PREFIX>/include>")
+                           "$<INSTALL_INTERFACE:${CMAKE_INSTALL_FULL_INCLUDEDIR}>")
 target_include_directories(glfw PUBLIC
                            "$<BUILD_INTERFACE:${GLFW_SOURCE_DIR}/include>"
-                           "$<INSTALL_INTERFACE:$<INSTALL_PREFIX>/include>")
+                           "$<INSTALL_INTERFACE:${CMAKE_INSTALL_FULL_INCLUDEDIR}>")
 target_include_directories(glfw_objlib PRIVATE
                            "${GLFW_SOURCE_DIR}/src"
                            "${GLFW_BINARY_DIR}/src"
@@ -128,7 +125,7 @@ target_compile_options(glfw_objlib PRIVATE
 if (BUILD_SHARED_LIBS)
     if (WIN32)
         if (MINGW)
-            # Remove the lib prefix on the DLL (but not the import library
+            # Remove the lib prefix on the DLL (but not the import library)
             set_target_properties(glfw PROPERTIES PREFIX "")
 
             # Add a suffix to the import library to avoid naming conflicts
@@ -142,7 +139,7 @@ if (BUILD_SHARED_LIBS)
         target_compile_options(glfw_objlib PRIVATE "-fno-common")
 
         set_target_properties(glfw PROPERTIES
-                              INSTALL_NAME_DIR "lib${LIB_SUFFIX}")
+                              INSTALL_NAME_DIR "${CMAKE_INSTALL_LIBDIR}")
     elseif (UNIX)
         # Hide symbols not explicitly tagged for export from the shared library
         target_compile_options(glfw_objlib PRIVATE "-fvisibility=hidden")
@@ -162,7 +159,7 @@ if (GLFW_INSTALL)
     install(TARGETS glfw
             EXPORT glfwTargets
             RUNTIME DESTINATION "bin"
-            ARCHIVE DESTINATION "lib${LIB_SUFFIX}"
-            LIBRARY DESTINATION "lib${LIB_SUFFIX}")
+            ARCHIVE DESTINATION "${CMAKE_INSTALL_LIBDIR}"
+            LIBRARY DESTINATION "${CMAKE_INSTALL_LIBDIR}")
 endif()
 

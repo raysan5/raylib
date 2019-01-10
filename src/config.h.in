@@ -65,7 +65,7 @@
  * NOTE: Some generated meshes DO NOT include generated texture coordinates */
 #cmakedefine SUPPORT_MESH_GENERATION 1
 
-// audio.c
+// raudio.c
 /* Desired fileformats to be supported for loading. */
 #cmakedefine SUPPORT_FILEFORMAT_WAV 1
 #cmakedefine SUPPORT_FILEFORMAT_OGG 1

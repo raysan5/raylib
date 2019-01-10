@@ -137,8 +137,8 @@ void UpdateTitleScreen(void)
 void DrawTitleScreen(void)
 {
     DrawTexture(texBackground, 0,0, WHITE);
-    DrawTextEx(fontTitle, SubText(textTitle, 0, transmissionLenght), transmissionPosition, titleSize, 0, titleColor);
-    DrawTextEx(fontTitle, SubText(textTitle, 12, missionLenght), missionPositon, titleSize, 0, titleColor);      
+    DrawTextEx(fontTitle, TextSubtext(textTitle, 0, transmissionLenght), transmissionPosition, titleSize, 0, titleColor);
+    DrawTextEx(fontTitle, TextSubtext(textTitle, 12, missionLenght), missionPositon, titleSize, 0, titleColor);      
 
     DrawButton("start");
 }

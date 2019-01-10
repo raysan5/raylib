@@ -64,7 +64,7 @@ int main()
         
         // Send to material PBR shader camera view position
         float cameraPos[3] = { camera.position.x, camera.position.y, camera.position.z };
-        SetShaderValue(model.material.shader, model.material.shader.locs[LOC_VECTOR_VIEW], cameraPos, 3);
+        SetShaderValue(model.material.shader, model.material.shader.locs[LOC_VECTOR_VIEW], cameraPos, UNIFORM_VEC3);
         //----------------------------------------------------------------------------------
 
         // Draw
@@ -148,15 +148,15 @@ static Material LoadMaterialPBR(Color albedo, float metalness, float roughness)
     Shader shdrBRDF = LoadShader(PATH_BRDF_VS, PATH_BRDF_FS);
     
     // Setup required shader locations
-    SetShaderValuei(shdrCubemap, GetShaderLocation(shdrCubemap, "equirectangularMap"), (int[1]){ 0 }, 1);
-    SetShaderValuei(shdrIrradiance, GetShaderLocation(shdrIrradiance, "environmentMap"), (int[1]){ 0 }, 1);
-    SetShaderValuei(shdrPrefilter, GetShaderLocation(shdrPrefilter, "environmentMap"), (int[1]){ 0 }, 1);
+    SetShaderValue(shdrCubemap, GetShaderLocation(shdrCubemap, "equirectangularMap"), (int[1]){ 0 }, UNIFORM_INT);
+    SetShaderValue(shdrIrradiance, GetShaderLocation(shdrIrradiance, "environmentMap"), (int[1]){ 0 }, UNIFORM_INT);
+    SetShaderValue(shdrPrefilter, GetShaderLocation(shdrPrefilter, "environmentMap"), (int[1]){ 0 }, UNIFORM_INT);
 
     Texture2D texHDR = LoadTexture("resources/dresden_square.hdr");
     Texture2D cubemap = GenTextureCubemap(shdrCubemap, texHDR, CUBEMAP_SIZE);
     mat.maps[MAP_IRRADIANCE].texture = GenTextureIrradiance(shdrIrradiance, cubemap, IRRADIANCE_SIZE);
     mat.maps[MAP_PREFILTER].texture = GenTexturePrefilter(shdrPrefilter, cubemap, PREFILTERED_SIZE);
-    mat.maps[MAP_BRDF].texture = GenTextureBRDF(shdrBRDF, cubemap, BRDF_SIZE);
+    mat.maps[MAP_BRDF].texture = GenTextureBRDF(shdrBRDF, BRDF_SIZE);
     UnloadTexture(cubemap);
     UnloadTexture(texHDR);
     
@@ -174,14 +174,14 @@ static Material LoadMaterialPBR(Color albedo, float metalness, float roughness)
     SetTextureFilter(mat.maps[MAP_OCCLUSION].texture, FILTER_BILINEAR);
     
     // Enable sample usage in shader for assigned textures
-    SetShaderValuei(mat.shader, GetShaderLocation(mat.shader, "albedo.useSampler"), (int[1]){ 1 }, 1);
-    SetShaderValuei(mat.shader, GetShaderLocation(mat.shader, "normals.useSampler"), (int[1]){ 1 }, 1);
-    SetShaderValuei(mat.shader, GetShaderLocation(mat.shader, "metalness.useSampler"), (int[1]){ 1 }, 1);
-    SetShaderValuei(mat.shader, GetShaderLocation(mat.shader, "roughness.useSampler"), (int[1]){ 1 }, 1);
-    SetShaderValuei(mat.shader, GetShaderLocation(mat.shader, "occlusion.useSampler"), (int[1]){ 1 }, 1);
+    SetShaderValue(mat.shader, GetShaderLocation(mat.shader, "albedo.useSampler"), (int[1]){ 1 }, UNIFORM_INT);
+    SetShaderValue(mat.shader, GetShaderLocation(mat.shader, "normals.useSampler"), (int[1]){ 1 }, UNIFORM_INT);
+    SetShaderValue(mat.shader, GetShaderLocation(mat.shader, "metalness.useSampler"), (int[1]){ 1 }, UNIFORM_INT);
+    SetShaderValue(mat.shader, GetShaderLocation(mat.shader, "roughness.useSampler"), (int[1]){ 1 }, UNIFORM_INT);
+    SetShaderValue(mat.shader, GetShaderLocation(mat.shader, "occlusion.useSampler"), (int[1]){ 1 }, UNIFORM_INT);
     
     int renderModeLoc = GetShaderLocation(mat.shader, "renderMode");
-    SetShaderValuei(mat.shader, renderModeLoc, (int[1]){ 0 }, 1);
+    SetShaderValue(mat.shader, renderModeLoc, (int[1]){ 0 }, UNIFORM_INT);
 
     // Set up material properties color
     mat.maps[MAP_ALBEDO].color = albedo;

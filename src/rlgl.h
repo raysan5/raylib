@@ -165,14 +165,6 @@ typedef unsigned char byte;
         unsigned char a;
     } Color;
 
-    // Rectangle type
-    typedef struct Rectangle {
-        int x;
-        int y;
-        int width;
-        int height;
-    } Rectangle;
-
     // Texture2D type
     // NOTE: Data stored in GPU memory
     typedef struct Texture2D {
@@ -340,6 +332,19 @@ typedef unsigned char byte;
         LOC_MAP_PREFILTER,
         LOC_MAP_BRDF
     } ShaderLocationIndex;
+    
+    // Shader uniform data types
+    typedef enum {
+        UNIFORM_FLOAT = 0,
+        UNIFORM_VEC2,
+        UNIFORM_VEC3,
+        UNIFORM_VEC4,
+        UNIFORM_INT,
+        UNIFORM_IVEC2,
+        UNIFORM_IVEC3,
+        UNIFORM_IVEC4,
+        UNIFORM_SAMPLER2D
+    } ShaderUniformDataType;
 
     #define LOC_MAP_DIFFUSE      LOC_MAP_ALBEDO
     #define LOC_MAP_SPECULAR     LOC_MAP_METALNESS
@@ -435,7 +440,7 @@ void rlglClose(void);                           // De-inititialize rlgl (buffers
 void rlglDraw(void);                            // Update and draw default internal buffers
 
 int rlGetVersion(void);                         // Returns current OpenGL version
-bool rlCheckBufferLimit(int type, int vCount);  // Check internal buffer overflow for a given number of vertex
+bool rlCheckBufferLimit(int vCount);            // Check internal buffer overflow for a given number of vertex
 void rlSetDebugMarker(const char *text);        // Set debug marker for analysis
 void rlLoadExtensions(void *loader);            // Load OpenGL extensions
 Vector3 rlUnproject(Vector3 source, Matrix proj, Matrix view);  // Get world coordinates from screen coordinates
@@ -476,8 +481,8 @@ Texture2D GetTextureDefault(void);                                  // Get defau
 
 // Shader configuration functions
 int GetShaderLocation(Shader shader, const char *uniformName);              // Get shader uniform location
-void SetShaderValue(Shader shader, int uniformLoc, const float *value, int size); // Set shader uniform value (float)
-void SetShaderValuei(Shader shader, int uniformLoc, const int *value, int size);  // Set shader uniform value (int)
+void SetShaderValue(Shader shader, int uniformLoc, const void *value, int uniformType);               // Set shader uniform value
+void SetShaderValueV(Shader shader, int uniformLoc, const void *value, int uniformType, int count);   // Set shader uniform value vector
 void SetShaderValueMatrix(Shader shader, int uniformLoc, Matrix mat);       // Set shader uniform value (matrix 4x4)
 void SetMatrixProjection(Matrix proj);                              // Set a custom projection matrix (replaces internal projection matrix)
 void SetMatrixModelview(Matrix view);                               // Set a custom modelview matrix (replaces internal modelview matrix)
@@ -488,7 +493,7 @@ Matrix GetMatrixModelview();                                        // Get inter
 Texture2D GenTextureCubemap(Shader shader, Texture2D skyHDR, int size);       // Generate cubemap texture from HDR texture
 Texture2D GenTextureIrradiance(Shader shader, Texture2D cubemap, int size);   // Generate irradiance texture using cubemap data
 Texture2D GenTexturePrefilter(Shader shader, Texture2D cubemap, int size);    // Generate prefilter texture using cubemap data
-Texture2D GenTextureBRDF(Shader shader, Texture2D cubemap, int size);         // Generate BRDF texture using cubemap data
+Texture2D GenTextureBRDF(Shader shader, int size);                  // Generate BRDF texture using cubemap data
 
 // Shading begin/end functions
 void BeginShaderMode(Shader shader);              // Begin custom shader drawing
@@ -703,9 +708,9 @@ typedef struct DrawCall {
 typedef struct VrStereoConfig {
     RenderTexture2D stereoFbo;  // VR stereo rendering framebuffer
     Shader distortionShader;    // VR stereo rendering distortion shader
-    Rectangle eyesViewport[2];  // VR stereo rendering eyes viewports
     Matrix eyesProjection[2];   // VR stereo rendering eyes projection matrices
     Matrix eyesViewOffset[2];   // VR stereo rendering eyes view offset matrices
+    int eyesViewport[2][4];     // VR stereo rendering eyes viewports [x, y, w, h]
 } VrStereoConfig;
 #endif
 
@@ -857,7 +862,7 @@ static PFNGLDELETEVERTEXARRAYSOESPROC glDeleteVertexArrays;
 
 #if defined(SUPPORT_VR_SIMULATOR)
 // VR global variables
-static VrStereoConfig vrConfig;             // VR stereo configuration for simulator
+static VrStereoConfig vrConfig = { 0 };     // VR stereo configuration for simulator
 static bool vrSimulatorReady = false;       // VR simulator ready flag
 static bool vrStereoRender = false;         // VR stereo rendering enabled/disabled flag
                                             // NOTE: This flag is useful to render data over stereo image (i.e. FPS)
@@ -1110,7 +1115,8 @@ void rlEnd(void)
     // processed but are placed in a single point to not result in a fragment output...
     // TODO: System could be improved (a bit) just storing every draw alignment value
     // and adding it to vertexOffset on drawing... maybe in a future...
-    int vertexToAlign = draws[drawsCounter - 1].vertexCount%4;
+    int vertexCount = draws[drawsCounter - 1].vertexCount;
+    int vertexToAlign = (vertexCount >= 4) ? vertexCount%4 : (4 - vertexCount%4);
     for (int i = 0; i < vertexToAlign; i++) rlVertex3f(-1, -1, -1);
 
     // Make sure vertexCount is the same for vertices, texcoords, colors and normals
@@ -1153,7 +1159,7 @@ void rlEnd(void)
 
     // Verify internal buffers limits
     // NOTE: This check is combined with usage of rlCheckBufferLimit()
-    if ((vertexData[currentBuffer].vCounter/4) >= (MAX_BATCH_ELEMENTS - 4))
+    if ((vertexData[currentBuffer].vCounter) >= (MAX_BATCH_ELEMENTS*4 - 4))
     {
         // WARNING: If we are between rlPushMatrix() and rlPopMatrix() and we need to force a rlglDraw(),
         // we need to call rlPopMatrix() before to recover *currentMatrix (modelview) for the next forced draw call!
@@ -1173,7 +1179,7 @@ void rlVertex3f(float x, float y, float z)
     if (useTransformMatrix) vec = Vector3Transform(vec, transformMatrix);
     
     // Verify that MAX_BATCH_ELEMENTS limit not reached
-    if (vertexData[currentBuffer].vCounter/4 < MAX_BATCH_ELEMENTS)
+    if (vertexData[currentBuffer].vCounter < (MAX_BATCH_ELEMENTS*4))
     {
         vertexData[currentBuffer].vertices[3*vertexData[currentBuffer].vCounter] = vec.x;
         vertexData[currentBuffer].vertices[3*vertexData[currentBuffer].vCounter + 1] = vec.y;
@@ -1270,7 +1276,7 @@ void rlDisableTexture(void)
 #else
     // NOTE: If quads batch limit is reached,
     // we force a draw call and next batch starts
-    if (vertexData[currentBuffer].vCounter/4 >= MAX_BATCH_ELEMENTS) rlglDraw();
+    if (vertexData[currentBuffer].vCounter >= (MAX_BATCH_ELEMENTS*4)) rlglDraw();
 #endif
 }
 
@@ -1476,10 +1482,10 @@ void rlglInit(int width, int height)
     //for (int i = 0; i < numComp; i++) TraceLog(LOG_INFO, "Supported compressed format: 0x%x", format[i]);
 
     // NOTE: We don't need that much data on screen... right now...
-
-#if defined(GRAPHICS_API_OPENGL_11)
-    //TraceLog(LOG_INFO, "OpenGL 1.1 (or driver default) profile initialized");
-#endif
+    
+    // TODO: Automatize extensions loading using rlLoadExtensions() and GLAD
+    // Actually, when rlglInit() is called in InitWindow() in core.c,
+    // OpenGL required extensions have already been loaded (PLATFORM_DESKTOP)
 
 #if defined(GRAPHICS_API_OPENGL_33) || defined(GRAPHICS_API_OPENGL_ES2)
     // Get supported extensions list
@@ -1560,7 +1566,6 @@ void rlglInit(int width, int height)
         // Check texture float support
         if (strcmp(extList[i], (const char *)"GL_OES_texture_float") == 0) texFloatSupported = true;
 #endif
-
         // DDS texture compression support
         if ((strcmp(extList[i], (const char *)"GL_EXT_texture_compression_s3tc") == 0) ||
             (strcmp(extList[i], (const char *)"GL_WEBGL_compressed_texture_s3tc") == 0) ||
@@ -1616,6 +1621,8 @@ void rlglInit(int width, int height)
 
     if (debugMarkerSupported) TraceLog(LOG_INFO, "[EXTENSION] Debug Marker supported");
 
+    
+    
     // Initialize buffers, default shaders and default textures
     //----------------------------------------------------------
 
@@ -1738,11 +1745,11 @@ int rlGetVersion(void)
 }
 
 // Check internal buffer overflow for a given number of vertex
-bool rlCheckBufferLimit(int type, int vCount)
+bool rlCheckBufferLimit(int vCount)
 {
     bool overflow = false;
 #if defined(GRAPHICS_API_OPENGL_33) || defined(GRAPHICS_API_OPENGL_ES2)
-    if ((vertexData[currentBuffer].vCounter + vCount)/4 >= MAX_BATCH_ELEMENTS) overflow = true;
+    if ((vertexData[currentBuffer].vCounter + vCount) >= (MAX_BATCH_ELEMENTS*4)) overflow = true;
 #endif
     return overflow;
 }
@@ -2897,37 +2904,36 @@ int GetShaderLocation(Shader shader, const char *uniformName)
     return location;
 }
 
-// Set shader uniform value (float)
-void SetShaderValue(Shader shader, int uniformLoc, const float *value, int size)
+// Set shader uniform value
+void SetShaderValue(Shader shader, int uniformLoc, const void *value, int uniformType)
+{
+    SetShaderValueV(shader, uniformLoc, value, uniformType, 1);
+}
+
+// Set shader uniform value vector
+void SetShaderValueV(Shader shader, int uniformLoc, const void *value, int uniformType, int count)
 {
 #if defined(GRAPHICS_API_OPENGL_33) || defined(GRAPHICS_API_OPENGL_ES2)
     glUseProgram(shader.id);
 
-    if (size == 1) glUniform1fv(uniformLoc, 1, value);          // Shader uniform type: float
-    else if (size == 2) glUniform2fv(uniformLoc, 1, value);     // Shader uniform type: vec2
-    else if (size == 3) glUniform3fv(uniformLoc, 1, value);     // Shader uniform type: vec3
-    else if (size == 4) glUniform4fv(uniformLoc, 1, value);     // Shader uniform type: vec4
-    else TraceLog(LOG_WARNING, "Shader value float array size not supported");
-
+    switch (uniformType)
+    {
+        case UNIFORM_FLOAT: glUniform1fv(uniformLoc, count, (float *)value); break;
+        case UNIFORM_VEC2: glUniform2fv(uniformLoc, count, (float *)value); break;
+        case UNIFORM_VEC3: glUniform3fv(uniformLoc, count, (float *)value); break;
+        case UNIFORM_VEC4: glUniform4fv(uniformLoc, count, (float *)value); break;
+        case UNIFORM_INT: glUniform1iv(uniformLoc, count, (int *)value); break;
+        case UNIFORM_IVEC2: glUniform2iv(uniformLoc, count, (int *)value); break;
+        case UNIFORM_IVEC3: glUniform3iv(uniformLoc, count, (int *)value); break;
+        case UNIFORM_IVEC4: glUniform4iv(uniformLoc, count, (int *)value); break;
+        case UNIFORM_SAMPLER2D: glUniform1iv(uniformLoc, count, (int *)value); break;
+        default: TraceLog(LOG_WARNING, "Shader uniform could not be set data type not recognized");
+    }
+    
     //glUseProgram(0);      // Avoid reseting current shader program, in case other uniforms are set
 #endif
 }
 
-// Set shader uniform value (int)
-void SetShaderValuei(Shader shader, int uniformLoc, const int *value, int size)
-{
-#if defined(GRAPHICS_API_OPENGL_33) || defined(GRAPHICS_API_OPENGL_ES2)
-    glUseProgram(shader.id);
-
-    if (size == 1) glUniform1iv(uniformLoc, 1, value);          // Shader uniform type: int
-    else if (size == 2) glUniform2iv(uniformLoc, 1, value);     // Shader uniform type: ivec2
-    else if (size == 3) glUniform3iv(uniformLoc, 1, value);     // Shader uniform type: ivec3
-    else if (size == 4) glUniform4iv(uniformLoc, 1, value);     // Shader uniform type: ivec4
-    else TraceLog(LOG_WARNING, "Shader value int array size not supported");
-
-    //glUseProgram(0);
-#endif
-}
 
 // Set shader uniform value (matrix 4x4)
 void SetShaderValueMatrix(Shader shader, int uniformLoc, Matrix mat)
@@ -2975,7 +2981,7 @@ Matrix GetMatrixModelview()
 Texture2D GenTextureCubemap(Shader shader, Texture2D skyHDR, int size)
 {
     Texture2D cubemap = { 0 };
-#if defined(GRAPHICS_API_OPENGL_33) // || defined(GRAPHICS_API_OPENGL_ES2)
+#if defined(GRAPHICS_API_OPENGL_33) || defined(GRAPHICS_API_OPENGL_ES2)
     // NOTE: SetShaderDefaultLocations() already setups locations for projection and view Matrix in shader
     // Other locations should be setup externally in shader before calling the function
 
@@ -2985,22 +2991,32 @@ Texture2D GenTextureCubemap(Shader shader, Texture2D skyHDR, int size)
     glEnable(GL_TEXTURE_CUBE_MAP_SEAMLESS);     // Flag not supported on OpenGL ES 2.0
 #endif
 
-
     // Setup framebuffer
     unsigned int fbo, rbo;
     glGenFramebuffers(1, &fbo);
     glGenRenderbuffers(1, &rbo);
     glBindFramebuffer(GL_FRAMEBUFFER, fbo);
     glBindRenderbuffer(GL_RENDERBUFFER, rbo);
+#if defined(GRAPHICS_API_OPENGL_33)
     glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH_COMPONENT24, size, size);
+#elif defined(GRAPHICS_API_OPENGL_ES2)
+    glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH_COMPONENT16, size, size);
+#endif
     glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_RENDERBUFFER, rbo);
 
     // Set up cubemap to render and attach to framebuffer
-    // NOTE: faces are stored with 16 bit floating point values
+    // NOTE: Faces are stored as 32 bit floating point values
     glGenTextures(1, &cubemap.id);
     glBindTexture(GL_TEXTURE_CUBE_MAP, cubemap.id);
-    for (unsigned int i = 0; i < 6; i++)
-        glTexImage2D(GL_TEXTURE_CUBE_MAP_POSITIVE_X + i, 0, GL_RGB16F, size, size, 0, GL_RGB, GL_FLOAT, NULL);
+    for (unsigned int i = 0; i < 6; i++) 
+    {
+#if defined(GRAPHICS_API_OPENGL_33)
+        glTexImage2D(GL_TEXTURE_CUBE_MAP_POSITIVE_X + i, 0, GL_RGB32F, size, size, 0, GL_RGB, GL_FLOAT, NULL);
+#elif defined(GRAPHICS_API_OPENGL_ES2)
+        if (texFloatSupported) glTexImage2D(GL_TEXTURE_CUBE_MAP_POSITIVE_X + i, 0, GL_RGB, size, size, 0, GL_RGB, GL_FLOAT, NULL);
+#endif
+    }
+    
     glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
     glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
 #if defined(GRAPHICS_API_OPENGL_33)
@@ -3009,9 +3025,8 @@ Texture2D GenTextureCubemap(Shader shader, Texture2D skyHDR, int size)
     glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
     glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 
-    // Create projection (transposed) and different views for each face
+    // Create projection and different views for each face
     Matrix fboProjection = MatrixPerspective(90.0*DEG2RAD, 1.0, 0.01, 1000.0);
-    //MatrixTranspose(&fboProjection);
     Matrix fboViews[6] = {
         MatrixLookAt((Vector3){ 0.0f, 0.0f, 0.0f }, (Vector3){ 1.0f, 0.0f, 0.0f }, (Vector3){ 0.0f, -1.0f, 0.0f }),
         MatrixLookAt((Vector3){ 0.0f, 0.0f, 0.0f }, (Vector3){ -1.0f, 0.0f, 0.0f }, (Vector3){ 0.0f, -1.0f, 0.0f }),
@@ -3031,7 +3046,7 @@ Texture2D GenTextureCubemap(Shader shader, Texture2D skyHDR, int size)
     glViewport(0, 0, size, size);
     glBindFramebuffer(GL_FRAMEBUFFER, fbo);
 
-    for (unsigned int i = 0; i < 6; i++)
+    for (int i = 0; i < 6; i++)
     {
         SetShaderValueMatrix(shader, shader.locs[LOC_MATRIX_VIEW], fboViews[i]);
         glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_CUBE_MAP_POSITIVE_X + i, cubemap.id, 0);
@@ -3046,8 +3061,11 @@ Texture2D GenTextureCubemap(Shader shader, Texture2D skyHDR, int size)
     glViewport(0, 0, screenWidth, screenHeight);
     //glEnable(GL_CULL_FACE);
 
+    // NOTE: Texture2D is a GL_TEXTURE_CUBE_MAP, not a GL_TEXTURE_2D!
     cubemap.width = size;
     cubemap.height = size;
+    cubemap.mipmaps = 1;
+    cubemap.format = UNCOMPRESSED_R32G32B32;
 #endif
     return cubemap;
 }
@@ -3075,7 +3093,10 @@ Texture2D GenTextureIrradiance(Shader shader, Texture2D cubemap, int size)
     glGenTextures(1, &irradiance.id);
     glBindTexture(GL_TEXTURE_CUBE_MAP, irradiance.id);
     for (unsigned int i = 0; i < 6; i++)
+    {
         glTexImage2D(GL_TEXTURE_CUBE_MAP_POSITIVE_X + i, 0, GL_RGB16F, size, size, 0, GL_RGB, GL_FLOAT, NULL);
+    }
+    
     glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
     glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
     glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_R, GL_CLAMP_TO_EDGE);
@@ -3084,7 +3105,6 @@ Texture2D GenTextureIrradiance(Shader shader, Texture2D cubemap, int size)
 
     // Create projection (transposed) and different views for each face
     Matrix fboProjection = MatrixPerspective(90.0*DEG2RAD, 1.0, 0.01, 1000.0);
-    //MatrixTranspose(&fboProjection);
     Matrix fboViews[6] = {
         MatrixLookAt((Vector3){ 0.0f, 0.0f, 0.0f }, (Vector3){ 1.0f, 0.0f, 0.0f }, (Vector3){ 0.0f, -1.0f, 0.0f }),
         MatrixLookAt((Vector3){ 0.0f, 0.0f, 0.0f }, (Vector3){ -1.0f, 0.0f, 0.0f }, (Vector3){ 0.0f, -1.0f, 0.0f }),
@@ -3104,7 +3124,7 @@ Texture2D GenTextureIrradiance(Shader shader, Texture2D cubemap, int size)
     glViewport(0, 0, size, size);
     glBindFramebuffer(GL_FRAMEBUFFER, fbo);
 
-    for (unsigned int i = 0; i < 6; i++)
+    for (int i = 0; i < 6; i++)
     {
         SetShaderValueMatrix(shader, shader.locs[LOC_MATRIX_VIEW], fboViews[i]);
         glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_CUBE_MAP_POSITIVE_X + i, irradiance.id, 0);
@@ -3120,6 +3140,8 @@ Texture2D GenTextureIrradiance(Shader shader, Texture2D cubemap, int size)
 
     irradiance.width = size;
     irradiance.height = size;
+    irradiance.mipmaps = 1;
+    //irradiance.format = UNCOMPRESSED_R16G16B16;
 #endif
     return irradiance;
 }
@@ -3149,7 +3171,10 @@ Texture2D GenTexturePrefilter(Shader shader, Texture2D cubemap, int size)
     glGenTextures(1, &prefilter.id);
     glBindTexture(GL_TEXTURE_CUBE_MAP, prefilter.id);
     for (unsigned int i = 0; i < 6; i++)
+    {
         glTexImage2D(GL_TEXTURE_CUBE_MAP_POSITIVE_X + i, 0, GL_RGB16F, size, size, 0, GL_RGB, GL_FLOAT, NULL);
+    }
+    
     glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
     glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
     glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_R, GL_CLAMP_TO_EDGE);
@@ -3161,7 +3186,6 @@ Texture2D GenTexturePrefilter(Shader shader, Texture2D cubemap, int size)
 
     // Create projection (transposed) and different views for each face
     Matrix fboProjection = MatrixPerspective(90.0*DEG2RAD, 1.0, 0.01, 1000.0);
-    //MatrixTranspose(&fboProjection);
     Matrix fboViews[6] = {
         MatrixLookAt((Vector3){ 0.0f, 0.0f, 0.0f }, (Vector3){ 1.0f, 0.0f, 0.0f }, (Vector3){ 0.0f, -1.0f, 0.0f }),
         MatrixLookAt((Vector3){ 0.0f, 0.0f, 0.0f }, (Vector3){ -1.0f, 0.0f, 0.0f }, (Vector3){ 0.0f, -1.0f, 0.0f }),
@@ -3181,11 +3205,11 @@ Texture2D GenTexturePrefilter(Shader shader, Texture2D cubemap, int size)
 
     #define MAX_MIPMAP_LEVELS   5   // Max number of prefilter texture mipmaps
 
-    for (unsigned int mip = 0; mip < MAX_MIPMAP_LEVELS; mip++)
+    for (int mip = 0; mip < MAX_MIPMAP_LEVELS; mip++)
     {
         // Resize framebuffer according to mip-level size.
-        unsigned int mipWidth  = size*(int) powf(0.5f, (float) mip);
-        unsigned int mipHeight = size* (int) powf(0.5f, (float) mip);
+        unsigned int mipWidth  = size*(int)powf(0.5f, (float)mip);
+        unsigned int mipHeight = size*(int)powf(0.5f, (float)mip);
 
         glBindRenderbuffer(GL_RENDERBUFFER, rbo);
         glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH_COMPONENT24, mipWidth, mipHeight);
@@ -3194,7 +3218,7 @@ Texture2D GenTexturePrefilter(Shader shader, Texture2D cubemap, int size)
         float roughness = (float)mip/(float)(MAX_MIPMAP_LEVELS - 1);
         glUniform1f(roughnessLoc, roughness);
 
-        for (unsigned int i = 0; i < 6; ++i)
+        for (int i = 0; i < 6; i++)
         {
             SetShaderValueMatrix(shader, shader.locs[LOC_MATRIX_VIEW], fboViews[i]);
             glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_CUBE_MAP_POSITIVE_X + i, prefilter.id, mip);
@@ -3211,20 +3235,28 @@ Texture2D GenTexturePrefilter(Shader shader, Texture2D cubemap, int size)
 
     prefilter.width = size;
     prefilter.height = size;
+    //prefilter.mipmaps = 1 + (int)floor(log(size)/log(2));
+    //prefilter.format = UNCOMPRESSED_R16G16B16;
 #endif
     return prefilter;
 }
 
 // Generate BRDF texture using cubemap data
-// TODO: OpenGL ES 2.0 does not support GL_RGB16F texture format, neither GL_DEPTH_COMPONENT24
-Texture2D GenTextureBRDF(Shader shader, Texture2D cubemap, int size)
+// NOTE: OpenGL ES 2.0 does not support GL_RGB16F texture format, neither GL_DEPTH_COMPONENT24
+// TODO: Review implementation: https://github.com/HectorMF/BRDFGenerator
+Texture2D GenTextureBRDF(Shader shader, int size)
 {
     Texture2D brdf = { 0 };
-#if defined(GRAPHICS_API_OPENGL_33) // || defined(GRAPHICS_API_OPENGL_ES2)
+#if defined(GRAPHICS_API_OPENGL_33) || defined(GRAPHICS_API_OPENGL_ES2)
     // Generate BRDF convolution texture
     glGenTextures(1, &brdf.id);
     glBindTexture(GL_TEXTURE_2D, brdf.id);
-    glTexImage2D(GL_TEXTURE_2D, 0, GL_RG16F, size, size, 0, GL_RG, GL_FLOAT, 0);
+#if defined(GRAPHICS_API_OPENGL_33)
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB32F, size, size, 0, GL_RGB, GL_FLOAT, NULL);
+#elif defined(GRAPHICS_API_OPENGL_ES2)
+    if (texFloatSupported) glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, size, size, 0, GL_RGB, GL_FLOAT, NULL);
+#endif
+
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
@@ -3236,7 +3268,11 @@ Texture2D GenTextureBRDF(Shader shader, Texture2D cubemap, int size)
     glGenRenderbuffers(1, &rbo);
     glBindFramebuffer(GL_FRAMEBUFFER, fbo);
     glBindRenderbuffer(GL_RENDERBUFFER, rbo);
+#if defined(GRAPHICS_API_OPENGL_33)
     glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH_COMPONENT24, size, size);
+#elif defined(GRAPHICS_API_OPENGL_ES2)
+    glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH_COMPONENT16, size, size);
+#endif
     glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, brdf.id, 0);
 
     glViewport(0, 0, size, size);
@@ -3246,12 +3282,18 @@ Texture2D GenTextureBRDF(Shader shader, Texture2D cubemap, int size)
 
     // Unbind framebuffer and textures
     glBindFramebuffer(GL_FRAMEBUFFER, 0);
+    
+    // Unload framebuffer but keep color texture
+    glDeleteRenderbuffers(1, &rbo);
+    glDeleteFramebuffers(1, &fbo);
 
     // Reset viewport dimensions to default
     glViewport(0, 0, screenWidth, screenHeight);
 
     brdf.width = size;
     brdf.height = size;
+    brdf.mipmaps = 1;
+    brdf.format = UNCOMPRESSED_R32G32B32;
 #endif
     return brdf;
 }
@@ -3961,7 +4003,7 @@ static void DrawBuffersDefault(void)
         if (eyesCount == 2) SetStereoView(eye, matProjection, matModelView);
 #endif
 
-        // Draw quads buffers
+        // Draw buffers
         if (vertexData[currentBuffer].vCounter > 0)
         {
             // Set current shader and upload current MVP matrix
@@ -4047,10 +4089,14 @@ static void DrawBuffersDefault(void)
     projection = matProjection;
     modelview = matModelView;
 
-    // Reset draws counter
-    draws[0].mode = RL_QUADS;
-    draws[0].vertexCount = 0;
-    draws[0].textureId = defaultTextureId;
+    // Reset draws array
+    for (int i = 0; i < MAX_DRAWCALL_REGISTERED; i++)
+    {
+        draws[i].mode = RL_QUADS;
+        draws[i].vertexCount = 0;
+        draws[i].textureId = defaultTextureId;
+    }
+
     drawsCounter = 1;
     
     // Change to next buffer in the list
@@ -4238,15 +4284,15 @@ static void SetStereoConfig(VrDeviceInfo hmd)
 
 #if defined(SUPPORT_DISTORTION_SHADER)
     // Update distortion shader with lens and distortion-scale parameters
-    SetShaderValue(vrConfig.distortionShader, GetShaderLocation(vrConfig.distortionShader, "leftLensCenter"), leftLensCenter, 2);
-    SetShaderValue(vrConfig.distortionShader, GetShaderLocation(vrConfig.distortionShader, "rightLensCenter"), rightLensCenter, 2);
-    SetShaderValue(vrConfig.distortionShader, GetShaderLocation(vrConfig.distortionShader, "leftScreenCenter"), leftScreenCenter, 2);
-    SetShaderValue(vrConfig.distortionShader, GetShaderLocation(vrConfig.distortionShader, "rightScreenCenter"), rightScreenCenter, 2);
+    SetShaderValue(vrConfig.distortionShader, GetShaderLocation(vrConfig.distortionShader, "leftLensCenter"), leftLensCenter, UNIFORM_VEC2);
+    SetShaderValue(vrConfig.distortionShader, GetShaderLocation(vrConfig.distortionShader, "rightLensCenter"), rightLensCenter, UNIFORM_VEC2);
+    SetShaderValue(vrConfig.distortionShader, GetShaderLocation(vrConfig.distortionShader, "leftScreenCenter"), leftScreenCenter, UNIFORM_VEC2);
+    SetShaderValue(vrConfig.distortionShader, GetShaderLocation(vrConfig.distortionShader, "rightScreenCenter"), rightScreenCenter, UNIFORM_VEC2);
 
-    SetShaderValue(vrConfig.distortionShader, GetShaderLocation(vrConfig.distortionShader, "scale"), scale, 2);
-    SetShaderValue(vrConfig.distortionShader, GetShaderLocation(vrConfig.distortionShader, "scaleIn"), scaleIn, 2);
-    SetShaderValue(vrConfig.distortionShader, GetShaderLocation(vrConfig.distortionShader, "hmdWarpParam"), hmd.lensDistortionValues, 4);
-    SetShaderValue(vrConfig.distortionShader, GetShaderLocation(vrConfig.distortionShader, "chromaAbParam"), hmd.chromaAbCorrection, 4);
+    SetShaderValue(vrConfig.distortionShader, GetShaderLocation(vrConfig.distortionShader, "scale"), scale, UNIFORM_VEC2);
+    SetShaderValue(vrConfig.distortionShader, GetShaderLocation(vrConfig.distortionShader, "scaleIn"), scaleIn, UNIFORM_VEC2);
+    SetShaderValue(vrConfig.distortionShader, GetShaderLocation(vrConfig.distortionShader, "hmdWarpParam"), hmd.lensDistortionValues, UNIFORM_VEC4);
+    SetShaderValue(vrConfig.distortionShader, GetShaderLocation(vrConfig.distortionShader, "chromaAbParam"), hmd.chromaAbCorrection, UNIFORM_VEC4);
 #endif
 
     // Fovy is normally computed with: 2*atan2(hmd.vScreenSize, 2*hmd.eyeToScreenDistance)
@@ -4268,8 +4314,8 @@ static void SetStereoConfig(VrDeviceInfo hmd)
     vrConfig.eyesViewOffset[1] = MatrixTranslate(hmd.interpupillaryDistance*0.5f, 0.075f, 0.045f);
 
     // Compute eyes Viewports
-    vrConfig.eyesViewport[0] = (Rectangle){ 0.0f, 0.0f, (float)hmd.hResolution/2, (float)hmd.vResolution };
-    vrConfig.eyesViewport[1] = (Rectangle){ hmd.hResolution/2.0f, 0.0f, (float)hmd.hResolution/2, (float) hmd.vResolution };
+    //vrConfig.eyesViewport[0] = { 0.0f, 0.0f, (float)hmd.hResolution/2, (float)hmd.vResolution };
+    //vrConfig.eyesViewport[1] = { hmd.hResolution/2.0f, 0.0f, (float)hmd.hResolution/2, (float) hmd.vResolution };
 }
 
 // Set internal projection and modelview matrix depending on eyes tracking data

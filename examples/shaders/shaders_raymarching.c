@@ -48,7 +48,7 @@ int main()
     int resolutionLoc = GetShaderLocation(shader, "resolution");
 
     float resolution[2] = { screenWidth, screenHeight };
-    SetShaderValue(shader, resolutionLoc, resolution, 2);
+    SetShaderValue(shader, resolutionLoc, resolution, UNIFORM_VEC2);
 
     float runTime = 0.0f;
 
@@ -70,11 +70,11 @@ int main()
         runTime += deltaTime;
 
         // Set shader required uniform values
-        SetShaderValue(shader, viewEyeLoc, cameraPos, 3);
-        SetShaderValue(shader, viewCenterLoc, cameraTarget, 3);
-        SetShaderValue(shader, viewUpLoc, cameraUp, 3);
-        SetShaderValue(shader, deltaTimeLoc, &deltaTime, 1);
-        SetShaderValue(shader, runTimeLoc, &runTime, 1);
+        SetShaderValue(shader, viewEyeLoc, cameraPos, UNIFORM_VEC3);
+        SetShaderValue(shader, viewCenterLoc, cameraTarget, UNIFORM_VEC3);
+        SetShaderValue(shader, viewUpLoc, cameraUp, UNIFORM_VEC3);
+        SetShaderValue(shader, deltaTimeLoc, &deltaTime, UNIFORM_FLOAT);
+        SetShaderValue(shader, runTimeLoc, &runTime, UNIFORM_FLOAT);
         //----------------------------------------------------------------------------------
 
         // Draw

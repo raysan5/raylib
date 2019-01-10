@@ -50,7 +50,6 @@ int main(void) {
     const int screenHeight = 720;
 	const char windowTitle[30] = "KOALA SEASONS";
     
-    //ShowLogo();
     //SetConfigFlags(FLAG_FULLSCREEN_MODE);
     
     // Note that windowTitle is ignored on Android

@@ -62,17 +62,6 @@ BOOL WINAPI DllMain(HINSTANCE instance, DWORD reason, LPVOID reserved)
 
 #endif // _GLFW_BUILD_DLL
 
-// HACK: Define versionhelpers.h functions manually as MinGW lacks the header
-BOOL IsWindowsVersionOrGreater(WORD major, WORD minor, WORD sp)
-{
-    OSVERSIONINFOEXW osvi = { sizeof(osvi), major, minor, 0, 0, {0}, sp };
-    DWORD mask = VER_MAJORVERSION | VER_MINORVERSION | VER_SERVICEPACKMAJOR;
-    ULONGLONG cond = VerSetConditionMask(0, VER_MAJORVERSION, VER_GREATER_EQUAL);
-    cond = VerSetConditionMask(cond, VER_MINORVERSION, VER_GREATER_EQUAL);
-    cond = VerSetConditionMask(cond, VER_SERVICEPACKMAJOR, VER_GREATER_EQUAL);
-    return VerifyVersionInfoW(&osvi, mask, cond);
-}
-
 // Load necessary libraries (DLLs)
 //
 static GLFWbool loadLibraries(void)
@@ -100,6 +89,14 @@ static GLFWbool loadLibraries(void)
         GetProcAddress(_glfw.win32.user32.instance, "SetProcessDPIAware");
     _glfw.win32.user32.ChangeWindowMessageFilterEx_ = (PFN_ChangeWindowMessageFilterEx)
         GetProcAddress(_glfw.win32.user32.instance, "ChangeWindowMessageFilterEx");
+    _glfw.win32.user32.EnableNonClientDpiScaling_ = (PFN_EnableNonClientDpiScaling)
+        GetProcAddress(_glfw.win32.user32.instance, "EnableNonClientDpiScaling");
+    _glfw.win32.user32.SetProcessDpiAwarenessContext_ = (PFN_SetProcessDpiAwarenessContext)
+        GetProcAddress(_glfw.win32.user32.instance, "SetProcessDpiAwarenessContext");
+    _glfw.win32.user32.GetDpiForWindow_ = (PFN_GetDpiForWindow)
+        GetProcAddress(_glfw.win32.user32.instance, "GetDpiForWindow");
+    _glfw.win32.user32.AdjustWindowRectExForDpi_ = (PFN_AdjustWindowRectExForDpi)
+        GetProcAddress(_glfw.win32.user32.instance, "AdjustWindowRectExForDpi");
 
     _glfw.win32.dinput8.instance = LoadLibraryA("dinput8.dll");
     if (_glfw.win32.dinput8.instance)
@@ -155,6 +152,13 @@ static GLFWbool loadLibraries(void)
             GetProcAddress(_glfw.win32.shcore.instance, "GetDpiForMonitor");
     }
 
+    _glfw.win32.ntdll.instance = LoadLibraryA("ntdll.dll");
+    if (_glfw.win32.ntdll.instance)
+    {
+        _glfw.win32.ntdll.RtlVerifyVersionInfo_ = (PFN_RtlVerifyVersionInfo)
+            GetProcAddress(_glfw.win32.ntdll.instance, "RtlVerifyVersionInfo");
+    }
+
     return GLFW_TRUE;
 }
 
@@ -179,6 +183,9 @@ static void freeLibraries(void)
 
     if (_glfw.win32.shcore.instance)
         FreeLibrary(_glfw.win32.shcore.instance);
+
+    if (_glfw.win32.ntdll.instance)
+        FreeLibrary(_glfw.win32.ntdll.instance);
 }
 
 // Create key code translation tables
@@ -309,6 +316,7 @@ static void createKeyTables(void)
     _glfw.win32.keycodes[0x053] = GLFW_KEY_KP_DECIMAL;
     _glfw.win32.keycodes[0x135] = GLFW_KEY_KP_DIVIDE;
     _glfw.win32.keycodes[0x11C] = GLFW_KEY_KP_ENTER;
+    _glfw.win32.keycodes[0x059] = GLFW_KEY_KP_EQUAL;
     _glfw.win32.keycodes[0x037] = GLFW_KEY_KP_MULTIPLY;
     _glfw.win32.keycodes[0x04A] = GLFW_KEY_KP_SUBTRACT;
 
@@ -339,8 +347,8 @@ static HWND createHelperWindow(void)
         return NULL;
     }
 
-    // HACK: The first call to ShowWindow is ignored if the parent process
-    //       passed along a STARTUPINFO, so clear that flag with a no-op call
+    // HACK: The command to the first ShowWindow call is ignored if the parent
+    //       process passed along a STARTUPINFO, so clear that with a no-op call
     ShowWindow(window, SW_HIDE);
 
     // Register for HID device notifications
@@ -502,6 +510,36 @@ void _glfwUpdateKeyNamesWin32(void)
     }
 }
 
+// Replacement for IsWindowsVersionOrGreater as MinGW lacks versionhelpers.h
+//
+BOOL _glfwIsWindowsVersionOrGreaterWin32(WORD major, WORD minor, WORD sp)
+{
+    OSVERSIONINFOEXW osvi = { sizeof(osvi), major, minor, 0, 0, {0}, sp };
+    DWORD mask = VER_MAJORVERSION | VER_MINORVERSION | VER_SERVICEPACKMAJOR;
+    ULONGLONG cond = VerSetConditionMask(0, VER_MAJORVERSION, VER_GREATER_EQUAL);
+    cond = VerSetConditionMask(cond, VER_MINORVERSION, VER_GREATER_EQUAL);
+    cond = VerSetConditionMask(cond, VER_SERVICEPACKMAJOR, VER_GREATER_EQUAL);
+    // HACK: Use RtlVerifyVersionInfo instead of VerifyVersionInfoW as the
+    //       latter lies unless the user knew to embedd a non-default manifest
+    //       announcing support for Windows 10 via supportedOS GUID
+    return RtlVerifyVersionInfo(&osvi, mask, cond) == 0;
+}
+
+// Checks whether we are on at least the specified build of Windows 10
+//
+BOOL _glfwIsWindows10BuildOrGreaterWin32(WORD build)
+{
+    OSVERSIONINFOEXW osvi = { sizeof(osvi), 10, 0, build };
+    DWORD mask = VER_MAJORVERSION | VER_MINORVERSION | VER_BUILDNUMBER;
+    ULONGLONG cond = VerSetConditionMask(0, VER_MAJORVERSION, VER_GREATER_EQUAL);
+    cond = VerSetConditionMask(cond, VER_MINORVERSION, VER_GREATER_EQUAL);
+    cond = VerSetConditionMask(cond, VER_BUILDNUMBER, VER_GREATER_EQUAL);
+    // HACK: Use RtlVerifyVersionInfo instead of VerifyVersionInfoW as the
+    //       latter lies unless the user knew to embedd a non-default manifest
+    //       announcing support for Windows 10 via supportedOS GUID
+    return RtlVerifyVersionInfo(&osvi, mask, cond) == 0;
+}
+
 
 //////////////////////////////////////////////////////////////////////////
 //////                       GLFW platform API                      //////
@@ -523,7 +561,9 @@ int _glfwPlatformInit(void)
     createKeyTables();
     _glfwUpdateKeyNamesWin32();
 
-    if (IsWindows8Point1OrGreater())
+    if (_glfwIsWindows10CreatorsUpdateOrGreaterWin32())
+        SetProcessDpiAwarenessContext(DPI_AWARENESS_CONTEXT_PER_MONITOR_AWARE_V2);
+    else if (IsWindows8Point1OrGreater())
         SetProcessDpiAwareness(PROCESS_PER_MONITOR_DPI_AWARE);
     else if (IsWindowsVistaOrGreater())
         SetProcessDPIAware();

@@ -175,11 +175,9 @@
         #include <GLFW/glfw3native.h>   // Required for: glfwGetX11Window()
     #elif defined(__APPLE__)
         #include <unistd.h>             // Required for: usleep()
-        #include <objc/message.h>       // Required for: objc_msgsend(), sel_registerName()
 
         //#define GLFW_EXPOSE_NATIVE_COCOA      // WARNING: Fails due to type redefinition
-        #define GLFW_EXPOSE_NATIVE_NSGL
-        #include <GLFW/glfw3native.h>   // Required for: glfwGetCocoaWindow(), glfwGetNSGLContext()
+        #include <GLFW/glfw3native.h>   // Required for: glfwGetCocoaWindow()
 
     #endif
 #endif
@@ -277,10 +275,6 @@ static bool windowReady = false;                // Check if window has been init
 static bool windowMinimized = false;            // Check if window has been minimized
 static const char *windowTitle = NULL;          // Window text title...
 
-#if defined(__APPLE__)
-static int windowNeedsUpdating = 2;             // Times the Cocoa window needs to be updated initially
-#endif
-
 static unsigned int displayWidth, displayHeight;// Display width and height (monitor, device-screen, LCD, ...)
 static int screenWidth, screenHeight;           // Screen width and height (used render area)
 static int renderWidth, renderHeight;           // Framebuffer width and height (render area, including black bars if required)
@@ -311,7 +305,7 @@ extern EGLNativeWindowType uwpWindow;           // Native EGL window handler for
 static struct android_app *androidApp;          // Android activity
 static struct android_poll_source *source;      // Android events polling source
 static int ident, events;                       // Android ALooper_pollAll() variables
-static const char *internalDataPath;            // Android internal data path to write data (/data/data/<package>/files)
+static const char *internalDataPath = NULL;     // Android internal data path to write data (/data/data/<package>/files)
 
 static bool appEnabled = true;                  // Used to detec if app is active
 static bool contextRebindRequired = false;      // Used to know context rebind required
@@ -332,8 +326,9 @@ static int defaultKeyboardMode;                 // Used to store default keyboar
 #endif
 
 // Mouse states
-static Vector2 mousePosition;                   // Mouse position on screen
-static float mouseScale = 1.0f;                 // Mouse default scale
+static Vector2 mousePosition = { 0.0f, 0.0f };  // Mouse position on screen
+static Vector2 mouseScale = { 1.0f, 1.0f };     // Mouse scaling
+static Vector2 mouseOffset = { 0.0f, 0.0f };    // Mouse offset
 static bool cursorHidden = false;               // Track if cursor is hidden
 static bool cursorOnScreen = false;             // Tracks if cursor is inside client area
 static Vector2 touchPosition[MAX_TOUCH_POINTS]; // Touch position on screen
@@ -1485,12 +1480,6 @@ Color Fade(Color color, float alpha)
     return (Color){color.r, color.g, color.b, (unsigned char)(255.0f*alpha)};
 }
 
-// Activate raylib logo at startup (can be done with flags)
-void ShowLogo(void)
-{
-    showLogo = true;
-}
-
 // Setup window configuration flags (view FLAGS)
 void SetConfigFlags(unsigned char flags)
 {
@@ -1503,17 +1492,32 @@ void SetConfigFlags(unsigned char flags)
 // NOTE TraceLog() function is located in [utils.h]
 
 // Takes a screenshot of current screen (saved a .png)
+// NOTE: This function could work in any platform but some platforms: PLATFORM_ANDROID and PLATFORM_WEB
+// have their own internal file-systems, to dowload image to user file-system some additional mechanism is required
 void TakeScreenshot(const char *fileName)
 {
-#if defined(PLATFORM_DESKTOP) || defined(PLATFORM_RPI)
     unsigned char *imgData = rlReadScreenPixels(renderWidth, renderHeight);
-
     Image image = { imgData, renderWidth, renderHeight, 1, UNCOMPRESSED_R8G8B8A8 };
-    ExportImage(image, fileName);
-    free(imgData);
-
-    TraceLog(LOG_INFO, "Screenshot taken: %s", fileName);
+    
+    char path[512] = { 0 };
+#if defined(PLATFORM_ANDROID)
+    strcpy(path, internalDataPath);
+    strcat(path, "/");
+    strcat(path, fileName);
+#else
+    strcpy(path, fileName);
 #endif
+    
+    ExportImage(image, path);
+    free(imgData);
+    
+#if defined(PLATFORM_WEB)
+    // Download file from MEMFS (emscripten memory filesystem)
+    // SaveFileFromMEMFSToDisk() function is defined in raylib/templates/web_shel/shell.html
+    emscripten_run_script(TextFormat("SaveFileFromMEMFSToDisk('%s','%s')", GetFileName(path), GetFileName(path)));
+#endif
+
+    TraceLog(LOG_INFO, "Screenshot taken: %s", path);
 }
 
 // Check if the file exists
@@ -1522,11 +1526,10 @@ bool FileExists(const char *fileName)
     bool result = false;
 
 #if defined(_WIN32)
-    if (_access(fileName, 0) != -1)
+    if (_access(fileName, 0) != -1) result = true;
 #else
-    if (access(fileName, F_OK) != -1)
+    if (access(fileName, F_OK) != -1) result = true;
 #endif
-        result = true;
 
     return result;
 }
@@ -1539,7 +1542,7 @@ bool IsFileExtension(const char *fileName, const char *ext)
 
     if ((fileExt = strrchr(fileName, '.')) != NULL)
     {
-    #if defined(_WIN32)
+#if defined(_WIN32)
         result = true;
         int extLen = strlen(ext);
 
@@ -1555,9 +1558,9 @@ bool IsFileExtension(const char *fileName, const char *ext)
             }
         }
         else result = false;
-    #else
+#else
         if (strcmp(fileExt, ext) == 0) result = true;
-    #endif
+#endif
     }
 
     return result;
@@ -1759,7 +1762,7 @@ void StorageSaveValue(int position, int value)
 {
     FILE *storageFile = NULL;
 
-    char path[128];
+    char path[512] = { 0 };
 #if defined(PLATFORM_ANDROID)
     strcpy(path, internalDataPath);
     strcat(path, "/");
@@ -1799,7 +1802,7 @@ int StorageLoadValue(int position)
 {
     int value = 0;
 
-    char path[128];
+    char path[512] = { 0 };
 #if defined(PLATFORM_ANDROID)
     strcpy(path, internalDataPath);
     strcat(path, "/");
@@ -1844,7 +1847,9 @@ void OpenURL(const char *url)
     if (strchr(url, '\'') != NULL)
     {
         TraceLog(LOG_WARNING, "Provided URL does not seem to be valid.");
-    } else {
+    } 
+    else 
+    {
         char *cmd = calloc(strlen(url) + 10, sizeof(char));
 
 #if defined(_WIN32)
@@ -2100,7 +2105,7 @@ int GetMouseX(void)
 #if defined(PLATFORM_ANDROID)
     return (int)touchPosition[0].x;
 #else
-    return (int)(mousePosition.x*mouseScale);
+    return (int)((mousePosition.x + mouseOffset.x)*mouseScale.x);
 #endif
 }
 
@@ -2110,7 +2115,7 @@ int GetMouseY(void)
 #if defined(PLATFORM_ANDROID)
     return (int)touchPosition[0].x;
 #else
-    return (int)(mousePosition.y*mouseScale);
+    return (int)((mousePosition.y + mouseOffset.y)*mouseScale.y);
 #endif
 }
 
@@ -2120,27 +2125,32 @@ Vector2 GetMousePosition(void)
 #if defined(PLATFORM_ANDROID)
     return GetTouchPosition(0);
 #else
-    return (Vector2){ mousePosition.x*mouseScale, mousePosition.y*mouseScale };
+    return (Vector2){ (mousePosition.x + mouseOffset.x)*mouseScale.x, (mousePosition.y + mouseOffset.y)*mouseScale.y };
 #endif
 }
 
 // Set mouse position XY
-void SetMousePosition(Vector2 position)
+void SetMousePosition(int x, int y)
 {
-    mousePosition = position;
+    mousePosition = (Vector2){ (float)x, (float)y };
 #if defined(PLATFORM_DESKTOP) || defined(PLATFORM_WEB)
     // NOTE: emscripten not implemented
-    glfwSetCursorPos(window, position.x, position.y);
+    glfwSetCursorPos(window, mousePosition.x, mousePosition.y);
 #endif
+}
+
+// Set mouse offset
+// NOTE: Useful when rendering to different size targets
+void SetMouseOffset(int offsetX, int offsetY)
+{
+    mouseOffset = (Vector2){ (float)offsetX, (float)offsetY };
 }
 
 // Set mouse scaling
 // NOTE: Useful when rendering to different size targets
-void SetMouseScale(float scale)
+void SetMouseScale(float scaleX, float scaleY)
 {
-#if !defined(PLATFORM_ANDROID)
-    mouseScale = scale;
-#endif
+	mouseScale = (Vector2){ scaleX, scaleY };
 }
 
 // Returns mouse wheel movement Y
@@ -2278,8 +2288,8 @@ static bool InitGraphicsDevice(int width, int height)
     if (configFlags & FLAG_WINDOW_RESIZABLE) glfwWindowHint(GLFW_RESIZABLE, GL_TRUE);       // Resizable window
     else glfwWindowHint(GLFW_RESIZABLE, GL_FALSE);  // Avoid window being resizable
 
-    if (configFlags & FLAG_WINDOW_UNDECORATED) glfwWindowHint(GLFW_DECORATED, GL_FALSE);    // Border and buttons on Window
-    else glfwWindowHint(GLFW_DECORATED, GL_TRUE);   // Decorated window
+    if (configFlags & FLAG_WINDOW_UNDECORATED) glfwWindowHint(GLFW_DECORATED, GLFW_FALSE);    // Border and buttons on Window
+    else glfwWindowHint(GLFW_DECORATED, GLFW_TRUE);   // Decorated window
     // FLAG_WINDOW_TRANSPARENT not supported on HTML5 and not included in any released GLFW version yet
 #if defined(GLFW_TRANSPARENT_FRAMEBUFFER)
     if (configFlags & FLAG_WINDOW_TRANSPARENT) glfwWindowHint(GLFW_TRANSPARENT_FRAMEBUFFER, GLFW_TRUE);     // Transparent framebuffer
@@ -2295,21 +2305,28 @@ static bool InitGraphicsDevice(int width, int height)
     // Check selection OpenGL version
     if (rlGetVersion() == OPENGL_21)
     {
-        glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 2);        // Choose OpenGL major version (just hint)
-        glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 1);        // Choose OpenGL minor version (just hint)
+        glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 2);          // Choose OpenGL major version (just hint)
+        glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 1);          // Choose OpenGL minor version (just hint)
     }
     else if (rlGetVersion() == OPENGL_33)
     {
-        glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);        // Choose OpenGL major version (just hint)
-        glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);        // Choose OpenGL minor version (just hint)
+        glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);          // Choose OpenGL major version (just hint)
+        glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);          // Choose OpenGL minor version (just hint)
         glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE); // Profiles Hint: Only 3.3 and above!
                                                                        // Values: GLFW_OPENGL_CORE_PROFILE, GLFW_OPENGL_ANY_PROFILE, GLFW_OPENGL_COMPAT_PROFILE
 #if defined(__APPLE__)
-        glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE);  // OSX Requires fordward compatibility
+        glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GLFW_TRUE);  // OSX Requires fordward compatibility
 #else
-        glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_FALSE); // Fordward Compatibility Hint: Only 3.3 and above!
+        glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GLFW_FALSE); // Fordward Compatibility Hint: Only 3.3 and above!
 #endif
-        //glfwWindowHint(GLFW_OPENGL_DEBUG_CONTEXT, GL_TRUE); // Request OpenGL DEBUG context
+        //glfwWindowHint(GLFW_OPENGL_DEBUG_CONTEXT, GLFW_TRUE); // Request OpenGL DEBUG context
+    }
+    else if (rlGetVersion() == OPENGL_ES_20)                    // Request OpenGL ES 2.0 context
+    {
+        glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 2);
+        glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 0);
+        glfwWindowHint(GLFW_CLIENT_API, GLFW_OPENGL_ES_API);
+        glfwWindowHint(GLFW_CONTEXT_CREATION_API, GLFW_NATIVE_CONTEXT_API);     // Alternative: GLFW_EGL_CONTEXT_API (ANGLE)
     }
 
     if (fullscreen)
@@ -2402,7 +2419,9 @@ static bool InitGraphicsDevice(int width, int height)
 
     // Try to disable GPU V-Sync by default, set framerate using SetTargetFPS()
     // NOTE: V-Sync can be enabled by graphic driver configuration
+#if !defined(PLATFORM_WEB)
     glfwSwapInterval(0);
+#endif
 
 #if defined(PLATFORM_DESKTOP)
     // Load OpenGL 3.3 extensions
@@ -3138,16 +3157,6 @@ static void SwapBuffers(void)
 {
 #if defined(PLATFORM_DESKTOP) || defined(PLATFORM_WEB)
     glfwSwapBuffers(window);
-#if __APPLE__
-    // Workaround for missing/erroneous initial rendering on macOS
-    if (windowNeedsUpdating)
-    {
-        // Desugared version of Objective C: [glfwGetNSGLContext(window) update]
-        ((id (*)(id, SEL))objc_msgSend)(glfwGetNSGLContext(window), sel_registerName("update"));
-
-        windowNeedsUpdating--;
-    }
-#endif
 #endif
 
 #if defined(PLATFORM_ANDROID) || defined(PLATFORM_RPI) || defined(PLATFORM_UWP)
@@ -3173,20 +3182,25 @@ static void KeyCallback(GLFWwindow *window, int key, int scancode, int action, i
 {
     if (key == exitKey && action == GLFW_PRESS)
     {
-        glfwSetWindowShouldClose(window, GL_TRUE);
+        glfwSetWindowShouldClose(window, GLFW_TRUE);
 
         // NOTE: Before closing window, while loop must be left!
     }
-#if defined(PLATFORM_DESKTOP)
     else if (key == GLFW_KEY_F12 && action == GLFW_PRESS)
     {
-    #if defined(SUPPORT_GIF_RECORDING)
+#if defined(SUPPORT_GIF_RECORDING)
         if (mods == GLFW_MOD_CONTROL)
         {
             if (gifRecording)
             {
                 GifEnd();
                 gifRecording = false;
+                
+            #if defined(PLATFORM_WEB)
+                // Download file from MEMFS (emscripten memory filesystem)
+                // SaveFileFromMEMFSToDisk() function is defined in raylib/templates/web_shel/shell.html
+                emscripten_run_script(TextFormat("SaveFileFromMEMFSToDisk('%s','%s')", TextFormat("screenrec%03i.gif", screenshotCounter - 1), TextFormat("screenrec%03i.gif", screenshotCounter - 1)));
+            #endif
 
                 TraceLog(LOG_INFO, "End animated GIF recording");
             }
@@ -3194,25 +3208,32 @@ static void KeyCallback(GLFWwindow *window, int key, int scancode, int action, i
             {
                 gifRecording = true;
                 gifFramesCounter = 0;
+                
+                char path[512] = { 0 };
+            #if defined(PLATFORM_ANDROID)
+                strcpy(path, internalDataPath);
+                strcat(path, TextFormat("/screenrec%03i.gif", screenshotCounter));
+            #else
+                strcpy(path, TextFormat("/screenrec%03i.gif", screenshotCounter));
+            #endif
 
                 // NOTE: delay represents the time between frames in the gif, if we capture a gif frame every
                 // 10 game frames and each frame trakes 16.6ms (60fps), delay between gif frames should be ~16.6*10.
-                GifBegin(FormatText("screenrec%03i.gif", screenshotCounter), screenWidth, screenHeight, (int)(GetFrameTime()*10.0f), 8, false);
+                GifBegin(path, screenWidth, screenHeight, (int)(GetFrameTime()*10.0f), 8, false);
                 screenshotCounter++;
 
-                TraceLog(LOG_INFO, "Begin animated GIF recording: %s", FormatText("screenrec%03i.gif", screenshotCounter));
+                TraceLog(LOG_INFO, "Begin animated GIF recording: %s", TextFormat("screenrec%03i.gif", screenshotCounter));
             }
         }
         else
-    #endif  // SUPPORT_GIF_RECORDING
-    #if defined(SUPPORT_SCREEN_CAPTURE)
+#endif  // SUPPORT_GIF_RECORDING
+#if defined(SUPPORT_SCREEN_CAPTURE)
         {
-            TakeScreenshot(FormatText("screenshot%03i.png", screenshotCounter));
+            TakeScreenshot(TextFormat("screenshot%03i.png", screenshotCounter));
             screenshotCounter++;
         }
-    #endif  // SUPPORT_SCREEN_CAPTURE
+#endif  // SUPPORT_SCREEN_CAPTURE
     }
-#endif  // PLATFORM_DESKTOP
     else
     {
         currentKeyState[key] = action;
@@ -3394,11 +3415,11 @@ static void AndroidCommandCallback(struct android_app *app, int32_t cmd)
                     // Init hi-res timer
                     InitTimer();
 
-                    #if defined(SUPPORT_DEFAULT_FONT)
+                #if defined(SUPPORT_DEFAULT_FONT)
                     // Load default font
                     // NOTE: External function (defined in module: text)
                     LoadDefaultFont();
-                    #endif
+                #endif
 
                     // TODO: GPU assets reload in case of lost focus (lost context)
                     // NOTE: This problem has been solved just unbinding and rebinding context from display
@@ -4246,10 +4267,10 @@ static void *EventThread(void *arg)
 
             // Screen confinement
             if (mousePosition.x < 0) mousePosition.x = 0;
-            if (mousePosition.x > screenWidth/mouseScale) mousePosition.x = screenWidth/mouseScale;
+            if (mousePosition.x > screenWidth/mouseScale.x) mousePosition.x = screenWidth/mouseScale.x;
 
             if (mousePosition.y < 0) mousePosition.y = 0;
-            if (mousePosition.y > screenHeight/mouseScale) mousePosition.y = screenHeight/mouseScale;
+            if (mousePosition.y > screenHeight/mouseScale.y) mousePosition.y = screenHeight/mouseScale.y;
 
             // Gesture update
             if (GestureNeedsUpdate)
@@ -4475,7 +4496,7 @@ static void LogoAnimation(void)
 
                 DrawRectangle(screenWidth/2 - 112, screenHeight/2 - 112, 224, 224, Fade(RAYWHITE, alpha));
 
-                DrawText(SubText("raylib", 0, lettersCount), screenWidth/2 - 44, screenHeight/2 + 48, 50, Fade(BLACK, alpha));
+                DrawText(TextSubtext("raylib", 0, lettersCount), screenWidth/2 - 44, screenHeight/2 + 48, 50, Fade(BLACK, alpha));
             }
 
         EndDrawing();

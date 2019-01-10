@@ -1,19 +1,19 @@
 /*******************************************************************************************
 *
-*   raylib [audio] example - Using audio module as standalone module
+*   raylib [audio] example - Using raudio module as standalone module
 *
 *   NOTE: This example does not require any graphic device, it can run directly on console.
 *
 *   DEPENDENCIES:
 *       mini_al.h    - Audio device management lib (http://kcat.strangesoft.net/openal.html)
-*       stb_vorbis.c - Ogg audio files loading (http://www.nothings.org/stb_vorbis/)
+*       stb_vorbis.h - Ogg audio files loading (http://www.nothings.org/stb_vorbis/)
 *       jar_xm.h     - XM module file loading
 *       jar_mod.h    - MOD audio file loading
 *       dr_flac.h    - FLAC audio file loading
 *
 *   COMPILATION:
 *       gcc -c ..\..\src\external\mini_al.c -Wall -I.
-*       gcc -o audio_standalone.exe audio_standalone.c ..\..\src\audio.c ..\..\src\external\stb_vorbis.c mini_al.o  /
+*       gcc -o audio_standalone.exe audio_standalone.c ..\..\src\raudio.c mini_al.o  /
 *           -I..\..\src -I..\..\src\external -L. -Wall -std=c99  / 
 *           -DAUDIO_STANDALONE -DSUPPORT_FILEFORMAT_WAV -DSUPPORT_FILEFORMAT_OGG
 *
@@ -22,7 +22,7 @@
 *   This example is licensed under an unmodified zlib/libpng license, which is an OSI-certified,
 *   BSD-like license that allows static linking with closed source software:
 *
-*   Copyright (c) 2014-2018 Ramon Santamaria (@raysan5)
+*   Copyright (c) 2014-2019 Ramon Santamaria (@raysan5)
 *
 *   This software is provided "as-is", without any express or implied warranty. In no event
 *   will the authors be held liable for any damages arising from the use of this software.
@@ -41,7 +41,7 @@
 *
 ********************************************************************************************/
 
-#include "audio.h"              // Audio library
+#include "raudio.h"             // raylib audio library
 
 #include <stdio.h>              // Required for: printf()
 

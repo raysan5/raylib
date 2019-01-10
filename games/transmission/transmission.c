@@ -70,7 +70,7 @@ int main(void)
     SetMusicVolume(music, 1.0f);
     PlayMusicStream(music);
     
-    fontMission = LoadFontEx("resources/fonts/traveling_typewriter.ttf", 64, 250, 0);
+    fontMission = LoadFontEx("resources/fonts/traveling_typewriter.ttf", 64, 0, 250);
     texButton = LoadTexture("resources/textures/title_ribbon.png");
     
 	// UI BUTTON

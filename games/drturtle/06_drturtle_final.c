@@ -35,7 +35,6 @@ int main()
     const int screenHeight = 720;
     
     // Init window
-    ShowLogo();
     InitWindow(screenWidth, screenHeight, "Dr. Turtle & Mr. GAMERA");
     
     // Initialize audio device

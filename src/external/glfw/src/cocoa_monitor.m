@@ -467,7 +467,7 @@ void _glfwPlatformGetVideoMode(_GLFWmonitor* monitor, GLFWvidmode *mode)
     CVDisplayLinkRelease(link);
 }
 
-void _glfwPlatformGetGammaRamp(_GLFWmonitor* monitor, GLFWgammaramp* ramp)
+GLFWbool _glfwPlatformGetGammaRamp(_GLFWmonitor* monitor, GLFWgammaramp* ramp)
 {
     uint32_t i, size = CGDisplayGammaTableCapacity(monitor->ns.displayID);
     CGGammaValue* values = calloc(size * 3, sizeof(CGGammaValue));
@@ -489,6 +489,7 @@ void _glfwPlatformGetGammaRamp(_GLFWmonitor* monitor, GLFWgammaramp* ramp)
     }
 
     free(values);
+    return GLFW_TRUE;
 }
 
 void _glfwPlatformSetGammaRamp(_GLFWmonitor* monitor, const GLFWgammaramp* ramp)

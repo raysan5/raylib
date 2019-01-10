@@ -10,7 +10,7 @@ NOTE for ADVENTURERS: raylib is a programming library to enjoy videogames progra
 no fancy interface, no visual helpers, no auto-debugging... just coding in the most 
 pure spartan-programmers way. Are you ready to learn? Jump to [code examples!](http://www.raylib.com/examples.html)
 
-[![Build Status](https://travis-ci.org/raysan5/raylib.svg?branch=develop)](https://travis-ci.org/raysan5/raylib)
+[![Build Status](https://travis-ci.org/raysan5/raylib.svg?branch=master)](https://travis-ci.org/raysan5/raylib)
 [![https://ci.appveyor.com/api/projects/status/github/raysan5/raylib?svg=true](https://ci.appveyor.com/api/projects/status/github/raysan5/raylib?svg=true)](https://ci.appveyor.com/project/raysan5/raylib)
 [![Chat on Discord](https://img.shields.io/discord/308323056592486420.svg?logo=discord)](https://discord.gg/VkzNHUE)
 [![License](https://img.shields.io/badge/license-zlib%2Flibpng-blue.svg)](LICENSE.md)
@@ -35,7 +35,7 @@ features
 
 raylib uses on its [core](https://github.com/raysan5/raylib/blob/master/src/core.c) module the outstanding [GLFW3](http://www.glfw.org/) library, embedded inside raylib in the form of [rglfw](https://github.com/raysan5/raylib/blob/master/src/rglfw.c) module, avoiding that way external dependencies.
 
-raylib uses on its [audio](https://github.com/raysan5/raylib/blob/master/src/audio.c) module, the amazing [mini_al](https://github.com/dr-soft/mini_al) audio library, single-file header-only and supporting multiple platforms and multiple audio backends.
+raylib uses on its [audio](https://github.com/raysan5/raylib/blob/master/src/raudio.c) module, the amazing [mini_al](https://github.com/dr-soft/mini_al) audio library, single-file header-only and supporting multiple platforms and multiple audio backends.
 
 raylib uses internally multiple single-file header-only libraries to support multiple fileformats loading and saving, all those libraries are embedded with raylib and available in [src/external](https://github.com/raysan5/raylib/tree/master/src/external) directory.
 

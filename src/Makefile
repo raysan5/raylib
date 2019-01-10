@@ -149,8 +149,8 @@ endif
 ifeq ($(PLATFORM),PLATFORM_WEB)
     # Emscripten required variables
     EMSDK_PATH          = C:/emsdk
-    EMSCRIPTEN_VERSION  = 1.38.20
-    CLANG_VERSION       = e1.38.20_64bit
+    EMSCRIPTEN_VERSION  ?= 1.38.21
+    CLANG_VERSION       = e$(EMSCRIPTEN_VERSION)_64bit
     PYTHON_VERSION      = 2.7.13.1_64bit\python-2.7.13.amd64
     NODE_VERSION        = 8.9.1_64bit
     export PATH         = $(EMSDK_PATH);$(EMSDK_PATH)\clang\$(CLANG_VERSION);$(EMSDK_PATH)\node\$(NODE_VERSION)\bin;$(EMSDK_PATH)\python\$(PYTHON_VERSION);$(EMSDK_PATH)\emscripten\$(EMSCRIPTEN_VERSION);C:\raylib\MinGW\bin:$$(PATH)
@@ -300,7 +300,7 @@ ifeq ($(PLATFORM),PLATFORM_WEB)
     # -s ALLOW_MEMORY_GROWTH=1   # to allow memory resizing
     # -s TOTAL_MEMORY=16777216   # to specify heap memory size (default = 16MB)
     # -s USE_PTHREADS=1          # multithreading support
-    CFLAGS += -s USE_GLFW=3 -s USE_SDL=2 -s ASSERTIONS=1 --profiling
+    CFLAGS += -s USE_GLFW=3 -s ASSERTIONS=1 --profiling
 endif
 ifeq ($(PLATFORM),PLATFORM_ANDROID)
     # Compiler flags for arquitecture
@@ -403,8 +403,7 @@ ifeq ($(PLATFORM),PLATFORM_DESKTOP)
 endif
 
 ifeq ($(INCLUDE_AUDIO_MODULE),TRUE)
-    OBJS += audio.o
-    OBJS += stb_vorbis.o
+    OBJS += raudio.o
     OBJS += mini_al.o
 endif
 
@@ -530,15 +529,11 @@ models.o : models.c raylib.h rlgl.h raymath.h
 	$(CC) -c $< $(CFLAGS) $(INCLUDE_PATHS) -D$(PLATFORM) -D$(GRAPHICS)
 
 # Compile audio module
-audio.o : audio.c raylib.h
+raudio.o : raudio.c raylib.h
 	$(CC) -c $< $(CFLAGS) $(INCLUDE_PATHS) -D$(PLATFORM)
 
 # Compile mini_al audio library
 mini_al.o : external/mini_al.c external/mini_al.h
-	$(CC) -c $< $(CFLAGS) $(INCLUDE_PATHS) -D$(PLATFORM)
-
-# Compile stb_vorbis library
-stb_vorbis.o: external/stb_vorbis.c external/stb_vorbis.h
 	$(CC) -c $< $(CFLAGS) $(INCLUDE_PATHS) -D$(PLATFORM)
 
 # Compile utils module
@@ -628,9 +623,9 @@ endif
 # Clean everything
 clean:
 ifeq ($(PLATFORM_OS),WINDOWS)
-	del *.o $(RAYLIB_RELEASE_PATH)/libraylib.a $(RAYLIB_RELEASE_PATH)/libraylib.bc $(RAYLIB_RELEASE_PATH)/libraylib.so external/stb_vorbis.o
+	del *.o $(RAYLIB_RELEASE_PATH)/libraylib.a $(RAYLIB_RELEASE_PATH)/libraylib.bc $(RAYLIB_RELEASE_PATH)/libraylib.so
 else
-	rm -fv *.o $(RAYLIB_RELEASE_PATH)/libraylib.a $(RAYLIB_RELEASE_PATH)/libraylib.bc $(RAYLIB_RELEASE_PATH)/libraylib.so* external/stb_vorbis.o
+	rm -fv *.o $(RAYLIB_RELEASE_PATH)/libraylib.a $(RAYLIB_RELEASE_PATH)/libraylib.bc $(RAYLIB_RELEASE_PATH)/libraylib.so*
 endif
 ifeq ($(PLATFORM),PLATFORM_ANDROID)
 	rm -rf $(ANDROID_TOOLCHAIN)
