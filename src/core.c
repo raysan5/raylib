@@ -831,6 +831,24 @@ void SetWindowSize(int width, int height)
 #endif
 }
 
+// Set window visibility
+void SetWindowVisible(bool visible)
+{
+#if defined(PLATFORM_DESKTOP)
+    if (visible) glfwShowWindow(window);
+    else glfwHideWindow(window);
+#endif
+}
+
+// Set window visibility
+bool IsWindowVisible()
+{
+#if defined(PLATFORM_DESKTOP)
+    return glfwGetWindowAttrib(window, GLFW_VISIBLE) != GL_FALSE;
+#endif
+    return true;
+}
+
 // Get current screen width
 int GetScreenWidth(void)
 {
