@@ -831,22 +831,29 @@ void SetWindowSize(int width, int height)
 #endif
 }
 
-// Set window visibility
-void SetWindowVisible(bool visible)
+// Show the window
+void ShowWindow()
 {
 #if defined(PLATFORM_DESKTOP)
-    if (visible) glfwShowWindow(window);
-    else glfwHideWindow(window);
+    glfwShowWindow(window);
 #endif
 }
 
-// Set window visibility
-bool IsWindowVisible()
+// Hide the window
+void HideWindow()
 {
 #if defined(PLATFORM_DESKTOP)
-    return glfwGetWindowAttrib(window, GLFW_VISIBLE) != GL_FALSE;
+    glfwHideWindow(window);
 #endif
-    return true;
+}
+
+// Check if window is currently hidden
+bool IsWindowHidden()
+{
+#if defined(PLATFORM_DESKTOP)
+    return glfwGetWindowAttrib(window, GLFW_VISIBLE) == GL_FALSE;
+#endif
+    return false;
 }
 
 // Get current screen width
