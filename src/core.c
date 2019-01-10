@@ -739,6 +739,15 @@ bool IsWindowMinimized(void)
 #endif
 }
 
+// Check if window is currently hidden
+bool IsWindowHidden(void)
+{
+#if defined(PLATFORM_DESKTOP)
+    return (glfwGetWindowAttrib(window, GLFW_VISIBLE) == GL_FALSE);
+#endif
+    return false;
+}
+
 // Toggle fullscreen mode (only PLATFORM_DESKTOP)
 void ToggleFullscreen(void)
 {
@@ -827,7 +836,7 @@ void SetWindowSize(int width, int height)
 }
 
 // Show the window
-void ShowWindow()
+void ShowWindow(void)
 {
 #if defined(PLATFORM_DESKTOP)
     glfwShowWindow(window);
@@ -835,20 +844,11 @@ void ShowWindow()
 }
 
 // Hide the window
-void HideWindow()
+void HideWindow(void)
 {
 #if defined(PLATFORM_DESKTOP)
     glfwHideWindow(window);
 #endif
-}
-
-// Check if window is currently hidden
-bool IsWindowHidden()
-{
-#if defined(PLATFORM_DESKTOP)
-    return glfwGetWindowAttrib(window, GLFW_VISIBLE) == GL_FALSE;
-#endif
-    return false;
 }
 
 // Get current screen width
@@ -2282,13 +2282,13 @@ static bool InitGraphicsDevice(int width, int height)
     //glfwWindowHint(GLFW_AUX_BUFFERS, 0);          // Number of auxiliar buffers
 
     // Check some Window creation flags
-    if (configFlags & FLAG_WINDOW_HIDDEN) glfwWindowHint(GLFW_VISIBLE, GL_FALSE);       // Visible window
+    if (configFlags & FLAG_WINDOW_HIDDEN) glfwWindowHint(GLFW_VISIBLE, GL_FALSE);           // Visible window
     else glfwWindowHint(GLFW_VISIBLE, GL_TRUE);     // Window initially hidden
 
     if (configFlags & FLAG_WINDOW_RESIZABLE) glfwWindowHint(GLFW_RESIZABLE, GL_TRUE);       // Resizable window
     else glfwWindowHint(GLFW_RESIZABLE, GL_FALSE);  // Avoid window being resizable
 
-    if (configFlags & FLAG_WINDOW_UNDECORATED) glfwWindowHint(GLFW_DECORATED, GLFW_FALSE);    // Border and buttons on Window
+    if (configFlags & FLAG_WINDOW_UNDECORATED) glfwWindowHint(GLFW_DECORATED, GLFW_FALSE);  // Border and buttons on Window
     else glfwWindowHint(GLFW_DECORATED, GLFW_TRUE);   // Decorated window
     // FLAG_WINDOW_TRANSPARENT not supported on HTML5 and not included in any released GLFW version yet
 #if defined(GLFW_TRANSPARENT_FRAMEBUFFER)
