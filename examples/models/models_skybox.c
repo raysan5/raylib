@@ -30,11 +30,11 @@ int main()
     // Load skybox shader and set required locations
     // NOTE: Some locations are automatically set at shader loading
     skybox.material.shader = LoadShader("resources/shaders/skybox.vs", "resources/shaders/skybox.fs");
-    SetShaderValuei(skybox.material.shader, GetShaderLocation(skybox.material.shader, "environmentMap"), (int[1]){ MAP_CUBEMAP }, 1);
+    SetShaderValue(skybox.material.shader, GetShaderLocation(skybox.material.shader, "environmentMap"), (int[1]){ MAP_CUBEMAP }, UNIFORM_INT);
 
     // Load cubemap shader and setup required shader locations
     Shader shdrCubemap = LoadShader("resources/shaders/cubemap.vs", "resources/shaders/cubemap.fs");
-    SetShaderValuei(shdrCubemap, GetShaderLocation(shdrCubemap, "equirectangularMap"), (int[1]){ 0 }, 1);
+    SetShaderValue(shdrCubemap, GetShaderLocation(shdrCubemap, "equirectangularMap"), (int[1]){ 0 }, UNIFORM_INT);
     
     // Load HDR panorama (sphere) texture
     Texture2D texHDR = LoadTexture("resources/dresden_square.hdr");

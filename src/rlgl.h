@@ -332,6 +332,23 @@ typedef unsigned char byte;
         LOC_MAP_PREFILTER,
         LOC_MAP_BRDF
     } ShaderLocationIndex;
+    
+    // Shader uniform data types
+    typedef enum {
+        UNIFORM_BOOL = 0,
+        UNIFORM_INT,
+        UNIFORM_UNIT,
+        UNIFORM_FLOAT,
+        UNIFORM_IVEC2,
+        UNIFORM_IVEC3,
+        UNIFORM_IVEC4,
+        UNIFORM_UVEC2,
+        UNIFORM_UVEC3,
+        UNIFORM_UVEC4,
+        UNIFORM_VEC2,
+        UNIFORM_VEC3,
+        UNIFORM_VEC4,
+    } ShaderUniformDataType;
 
     #define LOC_MAP_DIFFUSE      LOC_MAP_ALBEDO
     #define LOC_MAP_SPECULAR     LOC_MAP_METALNESS
@@ -468,10 +485,8 @@ Texture2D GetTextureDefault(void);                                  // Get defau
 
 // Shader configuration functions
 int GetShaderLocation(Shader shader, const char *uniformName);              // Get shader uniform location
-void SetShaderValue(Shader shader, int uniformLoc, const float *value, int size); // Set shader uniform value (float)
-void SetShaderValuei(Shader shader, int uniformLoc, const int *value, int size);  // Set shader uniform value (int)
-void SetShaderValueArray(Shader shader, int uniformLoc, const float *value, int size, int count); // Set shader uniform value (array of float/vec2/vec3/vec4)
-void SetShaderValueArrayi(Shader shader, int uniformLoc, const int *value, int size, int count); // Set shader uniform value (array of int/ivec2/ivec3/ivec4)
+void SetShaderValue(Shader shader, int uniformLoc, const void *value, int uniformType);               // Set shader uniform value
+void SetShaderValueV(Shader shader, int uniformLoc, const void *value, int uniformType, int count);   // Set shader uniform value vector
 void SetShaderValueMatrix(Shader shader, int uniformLoc, Matrix mat);       // Set shader uniform value (matrix 4x4)
 void SetMatrixProjection(Matrix proj);                              // Set a custom projection matrix (replaces internal projection matrix)
 void SetMatrixModelview(Matrix view);                               // Set a custom modelview matrix (replaces internal modelview matrix)
@@ -2893,49 +2908,40 @@ int GetShaderLocation(Shader shader, const char *uniformName)
     return location;
 }
 
-// Set shader uniform value (float/vec2/vec3/vec4)
-void SetShaderValue(Shader shader, int uniformLoc, const float *value, int size)
+// Set shader uniform value
+void SetShaderValue(Shader shader, int uniformLoc, const void *value, int uniformType)
 {
-    SetShaderValueArray(shader, uniformLoc, value, size, 1);
+    SetShaderValueV(shader, uniformLoc, value, uniformType, 1);
 }
 
-// Set shader uniform value (int/ivec2/ivec3/ivec4)
-void SetShaderValuei(Shader shader, int uniformLoc, const int *value, int size)
-{
-    SetShaderValueArrayi(shader, uniformLoc, value, size, 1);
-}
-
-// Set shader uniform value (array of float/vec2/vec3/vec4)
-void SetShaderValueArray(Shader shader, int uniformLoc, const float *value, int size, int count)
+// Set shader uniform value vector
+void SetShaderValueV(Shader shader, int uniformLoc, const void *value, int uniformType, int count)
 {
 #if defined(GRAPHICS_API_OPENGL_33) || defined(GRAPHICS_API_OPENGL_ES2)
     glUseProgram(shader.id);
 
-    if (size == 1) glUniform1fv(uniformLoc, count, value);     // Shader uniform type: float[]
-    else if (size == 2) glUniform2fv(uniformLoc, count, value);     // Shader uniform type: vec2[]
-    else if (size == 3) glUniform3fv(uniformLoc, count, value);     // Shader uniform type: vec3[]
-    else if (size == 4) glUniform4fv(uniformLoc, count, value);     // Shader uniform type: vec4[]
-    else TraceLog(LOG_WARNING, "Wrong size for shader's uniform value (1 to 4 supported)");
-
+    switch (uniformType)
+    {
+        case UNIFORM_BOOL: glUniform1iv(uniformLoc, count, (int *)value); break;
+        case UNIFORM_INT: glUniform1iv(uniformLoc, count, (int *)value); break;
+        case UNIFORM_UNIT: glUniform1uiv(uniformLoc, count, (unsigned int *)value); break;
+        case UNIFORM_FLOAT: glUniform1fv(uniformLoc, count, (float *)value); break;
+        case UNIFORM_IVEC2: glUniform2iv(uniformLoc, count, (int *)value); break;
+        case UNIFORM_IVEC3: glUniform3iv(uniformLoc, count, (int *)value); break;
+        case UNIFORM_IVEC4: glUniform4iv(uniformLoc, count, (int *)value); break;
+        case UNIFORM_UVEC2: glUniform2uiv(uniformLoc, count, (unsigned int *)value); break;
+        case UNIFORM_UVEC3: glUniform3uiv(uniformLoc, count, (unsigned int *)value); break;
+        case UNIFORM_UVEC4: glUniform4uiv(uniformLoc, count, (unsigned int *)value); break;
+        case UNIFORM_VEC2: glUniform2fv(uniformLoc, count, (float *)value); break;
+        case UNIFORM_VEC3: glUniform3fv(uniformLoc, count, (float *)value); break;
+        case UNIFORM_VEC4: glUniform4fv(uniformLoc, count, (float *)value); break;
+        default: TraceLog(LOG_WARNING, "Shader uniform could not be set data type not recognized");
+    }
+    
     //glUseProgram(0);      // Avoid reseting current shader program, in case other uniforms are set
 #endif
 }
 
-// Set shader uniform value (array of int/ivec2/ivec3/ivec4)
-void SetShaderValueArrayi(Shader shader, int uniformLoc, const int *value, int size, int count)
-{
-#if defined(GRAPHICS_API_OPENGL_33) || defined(GRAPHICS_API_OPENGL_ES2)
-    glUseProgram(shader.id);
-
-    if (size == 1) glUniform1iv(uniformLoc, count, value);          // Shader uniform type: int[]
-    else if (size == 2) glUniform2iv(uniformLoc, count, value);     // Shader uniform type: ivec2[]
-    else if (size == 3) glUniform3iv(uniformLoc, count, value);     // Shader uniform type: ivec3[]
-    else if (size == 4) glUniform4iv(uniformLoc, count, value);     // Shader uniform type: ivec4[]
-    else TraceLog(LOG_WARNING, "Wrong size for shader's uniform value (1 to 4 supported)");
-
-    //glUseProgram(0);      // Avoid reseting current shader program, in case other uniforms are set
-#endif
-}
 
 // Set shader uniform value (matrix 4x4)
 void SetShaderValueMatrix(Shader shader, int uniformLoc, Matrix mat)
@@ -4286,15 +4292,15 @@ static void SetStereoConfig(VrDeviceInfo hmd)
 
 #if defined(SUPPORT_DISTORTION_SHADER)
     // Update distortion shader with lens and distortion-scale parameters
-    SetShaderValue(vrConfig.distortionShader, GetShaderLocation(vrConfig.distortionShader, "leftLensCenter"), leftLensCenter, 2);
-    SetShaderValue(vrConfig.distortionShader, GetShaderLocation(vrConfig.distortionShader, "rightLensCenter"), rightLensCenter, 2);
-    SetShaderValue(vrConfig.distortionShader, GetShaderLocation(vrConfig.distortionShader, "leftScreenCenter"), leftScreenCenter, 2);
-    SetShaderValue(vrConfig.distortionShader, GetShaderLocation(vrConfig.distortionShader, "rightScreenCenter"), rightScreenCenter, 2);
+    SetShaderValue(vrConfig.distortionShader, GetShaderLocation(vrConfig.distortionShader, "leftLensCenter"), leftLensCenter, UNIFORM_VEC2);
+    SetShaderValue(vrConfig.distortionShader, GetShaderLocation(vrConfig.distortionShader, "rightLensCenter"), rightLensCenter, UNIFORM_VEC2);
+    SetShaderValue(vrConfig.distortionShader, GetShaderLocation(vrConfig.distortionShader, "leftScreenCenter"), leftScreenCenter, UNIFORM_VEC2);
+    SetShaderValue(vrConfig.distortionShader, GetShaderLocation(vrConfig.distortionShader, "rightScreenCenter"), rightScreenCenter, UNIFORM_VEC2);
 
-    SetShaderValue(vrConfig.distortionShader, GetShaderLocation(vrConfig.distortionShader, "scale"), scale, 2);
-    SetShaderValue(vrConfig.distortionShader, GetShaderLocation(vrConfig.distortionShader, "scaleIn"), scaleIn, 2);
-    SetShaderValue(vrConfig.distortionShader, GetShaderLocation(vrConfig.distortionShader, "hmdWarpParam"), hmd.lensDistortionValues, 4);
-    SetShaderValue(vrConfig.distortionShader, GetShaderLocation(vrConfig.distortionShader, "chromaAbParam"), hmd.chromaAbCorrection, 4);
+    SetShaderValue(vrConfig.distortionShader, GetShaderLocation(vrConfig.distortionShader, "scale"), scale, UNIFORM_VEC2);
+    SetShaderValue(vrConfig.distortionShader, GetShaderLocation(vrConfig.distortionShader, "scaleIn"), scaleIn, UNIFORM_VEC2);
+    SetShaderValue(vrConfig.distortionShader, GetShaderLocation(vrConfig.distortionShader, "hmdWarpParam"), hmd.lensDistortionValues, UNIFORM_VEC4);
+    SetShaderValue(vrConfig.distortionShader, GetShaderLocation(vrConfig.distortionShader, "chromaAbParam"), hmd.chromaAbCorrection, UNIFORM_VEC4);
 #endif
 
     // Fovy is normally computed with: 2*atan2(hmd.vScreenSize, 2*hmd.eyeToScreenDistance)

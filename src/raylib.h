@@ -676,6 +676,23 @@ typedef enum {
 #define LOC_MAP_DIFFUSE      LOC_MAP_ALBEDO
 #define LOC_MAP_SPECULAR     LOC_MAP_METALNESS
 
+// Shader uniform data types
+typedef enum {
+    UNIFORM_BOOL = 0,
+    UNIFORM_INT,
+    UNIFORM_UNIT,
+    UNIFORM_FLOAT,
+    UNIFORM_IVEC2,
+    UNIFORM_IVEC3,
+    UNIFORM_IVEC4,
+    UNIFORM_UVEC2,
+    UNIFORM_UVEC3,
+    UNIFORM_UVEC4,
+    UNIFORM_VEC2,
+    UNIFORM_VEC3,
+    UNIFORM_VEC4,
+} ShaderUniformDataType;
+
 // Material map type
 typedef enum {
     MAP_ALBEDO    = 0,       // MAP_DIFFUSE
@@ -1229,10 +1246,8 @@ RLAPI Texture2D GetTextureDefault(void);                                  // Get
 
 // Shader configuration functions
 RLAPI int GetShaderLocation(Shader shader, const char *uniformName);              // Get shader uniform location
-RLAPI void SetShaderValue(Shader shader, int uniformLoc, const float *value, int size); // Set shader uniform value (float)
-RLAPI void SetShaderValuei(Shader shader, int uniformLoc, const int *value, int size);  // Set shader uniform value (int)
-RLAPI void SetShaderValueArray(Shader shader, int uniformLoc, const float *value, int size, int count); // Set shader uniform value (array of float/vec2/vec3/vec4)
-RLAPI void SetShaderValueArrayi(Shader shader, int uniformLoc, const int *value, int size, int count); // Set shader uniform value (array of int/ivec2/ivec3/ivec4)
+RLAPI void SetShaderValue(Shader shader, int uniformLoc, const void *value, int uniformType);               // Set shader uniform value
+RLAPI void SetShaderValueV(Shader shader, int uniformLoc, const void *value, int uniformType, int count);   // Set shader uniform value vector
 RLAPI void SetShaderValueMatrix(Shader shader, int uniformLoc, Matrix mat);       // Set shader uniform value (matrix 4x4)
 RLAPI void SetMatrixProjection(Matrix proj);                              // Set a custom projection matrix (replaces internal projection matrix)
 RLAPI void SetMatrixModelview(Matrix view);                               // Set a custom modelview matrix (replaces internal modelview matrix)

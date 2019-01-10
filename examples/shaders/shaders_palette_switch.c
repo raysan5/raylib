@@ -1,6 +1,6 @@
 /*******************************************************************************************
 *
-*   raylib [shaders] example - Apply a postprocessing shader to a scene
+*   raylib [shaders] example - Color palette switch
 *
 *   NOTE: This example requires raylib OpenGL 3.3 or ES2 versions for shaders support,
 *         OpenGL 1.1 does not support shaders, recompile raylib to OpenGL 3.3 version.
@@ -9,10 +9,10 @@
 *         on OpenGL ES 2.0 platforms (Android, Raspberry Pi, HTML5), use #version 100 shaders
 *         raylib comes with shaders ready for both versions, check raylib/shaders install folder
 *
-*   This example has been created using raylib 2.x (www.raylib.com)
+*   This example has been created using raylib 2.3 (www.raylib.com)
 *   raylib is licensed under an unmodified zlib/libpng license (View raylib.h for details)
 *
-*   Copyright (c) 2015 Ramon Santamaria (@raysan5)
+*   Copyright (c) 2019 Ramon Santamaria (@raysan5)
 *
 ********************************************************************************************/
 
@@ -28,7 +28,7 @@
 #define COLORS_PER_PALETTE      8
 #define VALUES_PER_COLOR        3
 
-static const int palettes[MAX_PALETTES][COLORS_PER_PALETTE * VALUES_PER_COLOR] = {
+static const int palettes[MAX_PALETTES][COLORS_PER_PALETTE*VALUES_PER_COLOR] = {
     {
         0, 0, 0,
         255, 0, 0,
@@ -74,7 +74,7 @@ int main()
     int screenWidth = 800;
     int screenHeight = 450;
 
-    InitWindow(screenWidth, screenHeight, "raylib [shaders] example - palette-switch shader");
+    InitWindow(screenWidth, screenHeight, "raylib [shaders] example - color palette switch");
 
     // Load shader to be used on some parts drawing
     // NOTE 1: Using GLSL 330 shader version, on OpenGL ES 2.0 use GLSL 100 shader version
@@ -106,9 +106,10 @@ int main()
         // Send new value to the shader to be used on drawing.
         // Note that we are sending RGB triplets w/o the alpha channel *only* if the current
         // palette index has changed (in order to save performances).
-        if (currentPalette != paletteIndex) {
+        if (currentPalette != paletteIndex) 
+        {
             currentPalette = paletteIndex;
-            SetShaderValueArrayi(shader, paletteLoc, palettes[currentPalette], VALUES_PER_COLOR, COLORS_PER_PALETTE);
+            SetShaderValueV(shader, paletteLoc, palettes[currentPalette], UNIFORM_IVEC3, COLORS_PER_PALETTE);
         }
         //----------------------------------------------------------------------------------
 
@@ -126,14 +127,17 @@ int main()
                 int leftover = screenHeight % COLORS_PER_PALETTE;
                 int y = 0;
 
-                for (int i = 0; i < COLORS_PER_PALETTE; ++i) {
+                for (int i = 0; i < COLORS_PER_PALETTE; ++i) 
+                {
                     int height = linesPerRectangle;
-                    if (leftover > 0) {
+                    
+                    if (leftover > 0) 
+                    {
                         height += 1;
                         leftover -= 1;
                     }
 
-                    DrawRectangle(0, y, screenWidth, height, CLITERAL{ i, i, i, 255 });
+                    DrawRectangle(0, y, screenWidth, height, (Color){ i, i, i, 255 });
 
                     y += height;
                 }

@@ -16,7 +16,7 @@ out vec4 finalColor;
 void main()
 {
     // Texel color fetching from texture sampler
-    vec4 texelColor = texture(texture0, fragTexCoord) * fragColor;
+    vec4 texelColor = texture(texture0, fragTexCoord)*fragColor;
 
     // Convert the (normalized) texel color RED component (GB would work, too)
     // to the palette index by scaling up from [0, 1] to [0, 255].

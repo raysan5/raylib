@@ -350,9 +350,6 @@ static void GetShaderLightsLocations(Shader shader)
 
 // Set shader uniform values for lights
 // NOTE: It would be far easier with shader UBOs but are not supported on OpenGL ES 2.0
-// TODO: Replace glUniform1i(), glUniform1f(), glUniform3f(), glUniform4f():
-//SetShaderValue(Shader shader, int uniformLoc, float *value, int size)
-//SetShaderValuei(Shader shader, int uniformLoc, int *value, int size)
 static void SetShaderLightsValues(Shader shader)
 {
     int tempInt[8] = { 0 };
@@ -363,20 +360,20 @@ static void SetShaderLightsValues(Shader shader)
         if (i < lightsCount)
         {
             tempInt[0] = lights[i]->enabled;
-            SetShaderValuei(shader, lightsLocs[i][0], tempInt, 1); //glUniform1i(lightsLocs[i][0], lights[i]->enabled);
+            SetShaderValue(shader, lightsLocs[i][0], tempInt, UNIFORM_INT); //glUniform1i(lightsLocs[i][0], lights[i]->enabled);
             
             tempInt[0] = lights[i]->type;
-            SetShaderValuei(shader, lightsLocs[i][1], tempInt, 1); //glUniform1i(lightsLocs[i][1], lights[i]->type);
+            SetShaderValue(shader, lightsLocs[i][1], tempInt, UNIFORM_INT); //glUniform1i(lightsLocs[i][1], lights[i]->type);
             
             tempFloat[0] = (float)lights[i]->diffuse.r/255.0f;
             tempFloat[1] = (float)lights[i]->diffuse.g/255.0f;
             tempFloat[2] = (float)lights[i]->diffuse.b/255.0f;
             tempFloat[3] = (float)lights[i]->diffuse.a/255.0f;
-            SetShaderValue(shader, lightsLocs[i][5], tempFloat, 4);
+            SetShaderValue(shader, lightsLocs[i][5], tempFloat, UNIFORM_VEC4);
             //glUniform4f(lightsLocs[i][5], (float)lights[i]->diffuse.r/255, (float)lights[i]->diffuse.g/255, (float)lights[i]->diffuse.b/255, (float)lights[i]->diffuse.a/255);
             
             tempFloat[0] = lights[i]->intensity;
-            SetShaderValue(shader, lightsLocs[i][6], tempFloat, 1);
+            SetShaderValue(shader, lightsLocs[i][6], tempFloat, UNIFORM_FLOAT);
             
             switch (lights[i]->type)
             {
@@ -385,10 +382,10 @@ static void SetShaderLightsValues(Shader shader)
                     tempFloat[0] = lights[i]->position.x;
                     tempFloat[1] = lights[i]->position.y;
                     tempFloat[2] = lights[i]->position.z;
-                    SetShaderValue(shader, lightsLocs[i][2], tempFloat, 3);
+                    SetShaderValue(shader, lightsLocs[i][2], tempFloat, UNIFORM_VEC3);
 
                     tempFloat[0] = lights[i]->radius;
-                    SetShaderValue(shader, lightsLocs[i][4], tempFloat, 1);
+                    SetShaderValue(shader, lightsLocs[i][4], tempFloat, UNIFORM_FLOAT);
             
                     //glUniform3f(lightsLocs[i][2], lights[i]->position.x, lights[i]->position.y, lights[i]->position.z);
                     //glUniform1f(lightsLocs[i][4], lights[i]->radius);
@@ -401,7 +398,7 @@ static void SetShaderLightsValues(Shader shader)
                     tempFloat[0] = direction.x;
                     tempFloat[1] = direction.y;
                     tempFloat[2] = direction.z;
-                    SetShaderValue(shader, lightsLocs[i][3], tempFloat, 3);
+                    SetShaderValue(shader, lightsLocs[i][3], tempFloat, UNIFORM_VEC3);
                     
                     //glUniform3f(lightsLocs[i][3], direction.x, direction.y, direction.z);
                 } break;
@@ -410,7 +407,7 @@ static void SetShaderLightsValues(Shader shader)
                     tempFloat[0] = lights[i]->position.x;
                     tempFloat[1] = lights[i]->position.y;
                     tempFloat[2] = lights[i]->position.z;
-                    SetShaderValue(shader, lightsLocs[i][2], tempFloat, 3);
+                    SetShaderValue(shader, lightsLocs[i][2], tempFloat, UNIFORM_VEC3);
                     
                     //glUniform3f(lightsLocs[i][2], lights[i]->position.x, lights[i]->position.y, lights[i]->position.z);
                     
@@ -420,11 +417,11 @@ static void SetShaderLightsValues(Shader shader)
                     tempFloat[0] = direction.x;
                     tempFloat[1] = direction.y;
                     tempFloat[2] = direction.z;
-                    SetShaderValue(shader, lightsLocs[i][3], tempFloat, 3);
+                    SetShaderValue(shader, lightsLocs[i][3], tempFloat, UNIFORM_VEC3);
                     //glUniform3f(lightsLocs[i][3], direction.x, direction.y, direction.z);
                     
                     tempFloat[0] = lights[i]->coneAngle;
-                    SetShaderValue(shader, lightsLocs[i][7], tempFloat, 1);
+                    SetShaderValue(shader, lightsLocs[i][7], tempFloat, UNIFORM_FLOAT);
                     //glUniform1f(lightsLocs[i][7], lights[i]->coneAngle);
                 } break;
                 default: break;
@@ -433,7 +430,7 @@ static void SetShaderLightsValues(Shader shader)
         else
         {
             tempInt[0] = 0;
-            SetShaderValuei(shader, lightsLocs[i][0], tempInt, 1); //glUniform1i(lightsLocs[i][0], 0);   // Light disabled
+            SetShaderValue(shader, lightsLocs[i][0], tempInt, UNIFORM_INT); //glUniform1i(lightsLocs[i][0], 0);   // Light disabled
         }
     }
 }
