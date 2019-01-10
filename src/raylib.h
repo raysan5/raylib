@@ -415,8 +415,9 @@ typedef enum {
     FLAG_WINDOW_RESIZABLE   = 4,    // Set to allow resizable window
     FLAG_WINDOW_UNDECORATED = 8,    // Set to disable window decoration (frame and buttons)
     FLAG_WINDOW_TRANSPARENT = 16,   // Set to allow transparent window
-    FLAG_MSAA_4X_HINT       = 32,   // Set to try enabling MSAA 4X
-    FLAG_VSYNC_HINT         = 64    // Set to try enabling V-Sync on GPU
+    FLAG_WINDOW_HIDDEN      = 32,   // Set to create the window initially hidden
+    FLAG_MSAA_4X_HINT       = 64,   // Set to try enabling MSAA 4X
+    FLAG_VSYNC_HINT         = 128   // Set to try enabling V-Sync on GPU
 } ConfigFlag;
 
 // Trace log type
@@ -844,6 +845,9 @@ RLAPI void SetWindowPosition(int x, int y);                       // Set window 
 RLAPI void SetWindowMonitor(int monitor);                         // Set monitor for the current window (fullscreen mode)
 RLAPI void SetWindowMinSize(int width, int height);               // Set window minimum dimensions (for FLAG_WINDOW_RESIZABLE)
 RLAPI void SetWindowSize(int width, int height);                  // Set window dimensions
+RLAPI void ShowWindow();                                          // Show the window
+RLAPI void HideWindow();                                          // Hide the window
+RLAPI bool IsWindowHidden();                                      // Check if window is currently hidden
 RLAPI int GetScreenWidth(void);                                   // Get current screen width
 RLAPI int GetScreenHeight(void);                                  // Get current screen height
 RLAPI void *GetWindowHandle(void);                                // Get native window handle

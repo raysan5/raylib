@@ -826,6 +826,31 @@ void SetWindowSize(int width, int height)
 #endif
 }
 
+// Show the window
+void ShowWindow()
+{
+#if defined(PLATFORM_DESKTOP)
+    glfwShowWindow(window);
+#endif
+}
+
+// Hide the window
+void HideWindow()
+{
+#if defined(PLATFORM_DESKTOP)
+    glfwHideWindow(window);
+#endif
+}
+
+// Check if window is currently hidden
+bool IsWindowHidden()
+{
+#if defined(PLATFORM_DESKTOP)
+    return glfwGetWindowAttrib(window, GLFW_VISIBLE) == GL_FALSE;
+#endif
+    return false;
+}
+
 // Get current screen width
 int GetScreenWidth(void)
 {
@@ -2257,8 +2282,11 @@ static bool InitGraphicsDevice(int width, int height)
     //glfwWindowHint(GLFW_AUX_BUFFERS, 0);          // Number of auxiliar buffers
 
     // Check some Window creation flags
-    if (configFlags & FLAG_WINDOW_RESIZABLE) glfwWindowHint(GLFW_RESIZABLE, GLFW_TRUE);       // Resizable window
-    else glfwWindowHint(GLFW_RESIZABLE, GLFW_FALSE);  // Avoid window being resizable
+    if (configFlags & FLAG_WINDOW_HIDDEN) glfwWindowHint(GLFW_VISIBLE, GL_FALSE);       // Visible window
+    else glfwWindowHint(GLFW_VISIBLE, GL_TRUE);     // Window initially hidden
+
+    if (configFlags & FLAG_WINDOW_RESIZABLE) glfwWindowHint(GLFW_RESIZABLE, GL_TRUE);       // Resizable window
+    else glfwWindowHint(GLFW_RESIZABLE, GL_FALSE);  // Avoid window being resizable
 
     if (configFlags & FLAG_WINDOW_UNDECORATED) glfwWindowHint(GLFW_DECORATED, GLFW_FALSE);    // Border and buttons on Window
     else glfwWindowHint(GLFW_DECORATED, GLFW_TRUE);   // Decorated window
