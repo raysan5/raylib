@@ -51,7 +51,7 @@ if(USE_AUDIO)
 else()
   MESSAGE(STATUS "Audio Backend: None (-DUSE_AUDIO=OFF)")
   set(INCLUDE_AUDIO_MODULE 0)
-  list(REMOVE_ITEM raylib_sources ${CMAKE_CURRENT_SOURCE_DIR}/audio.c)
+  list(REMOVE_ITEM raylib_sources ${CMAKE_CURRENT_SOURCE_DIR}/raudio.c)
   set(sources ${raylib_sources})
 endif()
 
@@ -250,7 +250,7 @@ file(COPY "raylib.h" DESTINATION ".")
 file(COPY "rlgl.h" DESTINATION ".")
 file(COPY "physac.h" DESTINATION ".")
 file(COPY "raymath.h" DESTINATION ".")
-file(COPY "audio.h" DESTINATION ".")
+file(COPY "raudio.h" DESTINATION ".")
 
 # Print the flags for the user
 message(STATUS "Compiling with the flags:")

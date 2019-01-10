@@ -403,7 +403,7 @@ ifeq ($(PLATFORM),PLATFORM_DESKTOP)
 endif
 
 ifeq ($(INCLUDE_AUDIO_MODULE),TRUE)
-    OBJS += audio.o
+    OBJS += raudio.o
     OBJS += mini_al.o
 endif
 
@@ -529,7 +529,7 @@ models.o : models.c raylib.h rlgl.h raymath.h
 	$(CC) -c $< $(CFLAGS) $(INCLUDE_PATHS) -D$(PLATFORM) -D$(GRAPHICS)
 
 # Compile audio module
-audio.o : audio.c raylib.h
+raudio.o : raudio.c raylib.h
 	$(CC) -c $< $(CFLAGS) $(INCLUDE_PATHS) -D$(PLATFORM)
 
 # Compile mini_al audio library

@@ -12,7 +12,7 @@
 *
 *   CONFIGURATION:
 *
-*   #define AUDIO_STANDALONE
+*   #define RAUDIO_STANDALONE
 *       Define to use the module as standalone library (independently of raylib).
 *       Required types and functions are defined in the same module.
 *
@@ -70,8 +70,8 @@
 *
 **********************************************************************************************/
 
-#if defined(AUDIO_STANDALONE)
-    #include "audio.h"
+#if defined(RAUDIO_STANDALONE)
+    #include "raudio.h"
     #include <stdarg.h>         // Required for: va_list, va_start(), vfprintf(), va_end()
 #else
     #include "raylib.h"         // Declares module functions
@@ -169,7 +169,7 @@ typedef struct MusicData {
     unsigned int samplesLeft;           // Number of samples left to end
 } MusicData;
 
-#if defined(AUDIO_STANDALONE)
+#if defined(RAUDIO_STANDALONE)
 typedef enum {
     LOG_INFO = 0,
     LOG_ERROR,
@@ -201,7 +201,7 @@ static Wave LoadFLAC(const char *fileName);             // Load FLAC file
 static Wave LoadMP3(const char *fileName);              // Load MP3 file
 #endif
 
-#if defined(AUDIO_STANDALONE)
+#if defined(RAUDIO_STANDALONE)
 bool IsFileExtension(const char *fileName, const char *ext);    // Check file extension
 void TraceLog(int msgType, const char *text, ...);              // Show trace log messages (LOG_INFO, LOG_WARNING, LOG_ERROR, LOG_DEBUG)
 #endif
@@ -1918,7 +1918,7 @@ static Wave LoadMP3(const char *fileName)
 #endif
 
 // Some required functions for audio standalone module version
-#if defined(AUDIO_STANDALONE)
+#if defined(RAUDIO_STANDALONE)
 // Check file extension
 bool IsFileExtension(const char *fileName, const char *ext)
 {

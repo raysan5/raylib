@@ -61,7 +61,7 @@ option(SUPPORT_FILEFORMAT_OBJ "Support loading OBJ file format" ON)
 option(SUPPORT_FILEFORMAT_MTL "Support loading MTL file format" ON)
 option(SUPPORT_MESH_GENERATION "Support procedural mesh generation functions, uses external par_shapes.h library. NOTE: Some generated meshes DO NOT include generated texture coordinates" ON)
 
-# audio.c
+# raudio.c
 option(SUPPORT_FILEFORMAT_WAV  "Support loading WAV for sound" ON)
 option(SUPPORT_FILEFORMAT_OGG  "Support loading OGG for sound" ON)
 option(SUPPORT_FILEFORMAT_XM   "Support loading XM for sound" ON)
