@@ -678,19 +678,15 @@ typedef enum {
 
 // Shader uniform data types
 typedef enum {
-    UNIFORM_BOOL = 0,
-    UNIFORM_INT,
-    UNIFORM_UNIT,
-    UNIFORM_FLOAT,
-    UNIFORM_IVEC2,
-    UNIFORM_IVEC3,
-    UNIFORM_IVEC4,
-    UNIFORM_UVEC2,
-    UNIFORM_UVEC3,
-    UNIFORM_UVEC4,
+    UNIFORM_FLOAT = 0,
     UNIFORM_VEC2,
     UNIFORM_VEC3,
     UNIFORM_VEC4,
+    UNIFORM_INT,
+    UNIFORM_IVEC2,
+    UNIFORM_IVEC3,
+    UNIFORM_IVEC4,
+    UNIFORM_SAMPLER2D
 } ShaderUniformDataType;
 
 // Material map type

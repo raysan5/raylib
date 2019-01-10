@@ -335,19 +335,15 @@ typedef unsigned char byte;
     
     // Shader uniform data types
     typedef enum {
-        UNIFORM_BOOL = 0,
-        UNIFORM_INT,
-        UNIFORM_UNIT,
-        UNIFORM_FLOAT,
-        UNIFORM_IVEC2,
-        UNIFORM_IVEC3,
-        UNIFORM_IVEC4,
-        UNIFORM_UVEC2,
-        UNIFORM_UVEC3,
-        UNIFORM_UVEC4,
+        UNIFORM_FLOAT = 0,
         UNIFORM_VEC2,
         UNIFORM_VEC3,
         UNIFORM_VEC4,
+        UNIFORM_INT,
+        UNIFORM_IVEC2,
+        UNIFORM_IVEC3,
+        UNIFORM_IVEC4,
+        UNIFORM_SAMPLER2D
     } ShaderUniformDataType;
 
     #define LOC_MAP_DIFFUSE      LOC_MAP_ALBEDO
@@ -2922,19 +2918,15 @@ void SetShaderValueV(Shader shader, int uniformLoc, const void *value, int unifo
 
     switch (uniformType)
     {
-        case UNIFORM_BOOL: glUniform1iv(uniformLoc, count, (int *)value); break;
-        case UNIFORM_INT: glUniform1iv(uniformLoc, count, (int *)value); break;
-        case UNIFORM_UNIT: glUniform1uiv(uniformLoc, count, (unsigned int *)value); break;
         case UNIFORM_FLOAT: glUniform1fv(uniformLoc, count, (float *)value); break;
-        case UNIFORM_IVEC2: glUniform2iv(uniformLoc, count, (int *)value); break;
-        case UNIFORM_IVEC3: glUniform3iv(uniformLoc, count, (int *)value); break;
-        case UNIFORM_IVEC4: glUniform4iv(uniformLoc, count, (int *)value); break;
-        case UNIFORM_UVEC2: glUniform2uiv(uniformLoc, count, (unsigned int *)value); break;
-        case UNIFORM_UVEC3: glUniform3uiv(uniformLoc, count, (unsigned int *)value); break;
-        case UNIFORM_UVEC4: glUniform4uiv(uniformLoc, count, (unsigned int *)value); break;
         case UNIFORM_VEC2: glUniform2fv(uniformLoc, count, (float *)value); break;
         case UNIFORM_VEC3: glUniform3fv(uniformLoc, count, (float *)value); break;
         case UNIFORM_VEC4: glUniform4fv(uniformLoc, count, (float *)value); break;
+        case UNIFORM_INT: glUniform1iv(uniformLoc, count, (int *)value); break;
+        case UNIFORM_IVEC2: glUniform2iv(uniformLoc, count, (int *)value); break;
+        case UNIFORM_IVEC3: glUniform3iv(uniformLoc, count, (int *)value); break;
+        case UNIFORM_IVEC4: glUniform4iv(uniformLoc, count, (int *)value); break;
+        case UNIFORM_SAMPLER2D: glUniform1iv(uniformLoc, count, (int *)value); break;
         default: TraceLog(LOG_WARNING, "Shader uniform could not be set data type not recognized");
     }
     
