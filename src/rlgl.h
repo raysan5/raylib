@@ -2619,7 +2619,8 @@ unsigned char *rlReadScreenPixels(int width, int height)
 {
     unsigned char *screenData = (unsigned char *)calloc(width*height*4, sizeof(unsigned char));
 
-    // NOTE: glReadPixels returns image flipped vertically -> (0,0) is the bottom left corner of the framebuffer
+    // NOTE 1: glReadPixels returns image flipped vertically -> (0,0) is the bottom left corner of the framebuffer
+    // NOTE 2: We are getting alpha channel! Be careful, it can be transparent if not cleared properly!
     glReadPixels(0, 0, width, height, GL_RGBA, GL_UNSIGNED_BYTE, screenData);
 
     // Flip image vertically!
@@ -2631,10 +2632,6 @@ unsigned char *rlReadScreenPixels(int width, int height)
         {
             // Flip line
             imgData[((height - 1) - y)*width*4 + x] = screenData[(y*width*4) + x];
-
-            // Set alpha component value to 255 (no trasparent image retrieval)
-            // NOTE: Alpha value has already been applied to RGB in framebuffer, we don't need it!
-            if (((x + 1)%4) == 0) imgData[((height - 1) - y)*width*4 + x] = 255;
         }
     }
 
