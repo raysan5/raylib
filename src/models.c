@@ -115,6 +115,8 @@ void DrawLine3D(Vector3 startPos, Vector3 endPos, Color color)
 // Draw a circle in 3D world space
 void DrawCircle3D(Vector3 center, float radius, Vector3 rotationAxis, float rotationAngle, Color color)
 {
+    if (rlCheckBufferLimit(2*36)) rlglDraw();
+    
     rlPushMatrix();
         rlTranslatef(center.x, center.y, center.z);
         rlRotatef(rotationAngle, rotationAxis.x, rotationAxis.y, rotationAxis.z);
@@ -138,6 +140,8 @@ void DrawCube(Vector3 position, float width, float height, float length, Color c
     float x = 0.0f;
     float y = 0.0f;
     float z = 0.0f;
+    
+    if (rlCheckBufferLimit(36)) rlglDraw();
 
     rlPushMatrix();
         // NOTE: Transformation is applied in inverse order (scale -> rotate -> translate)
@@ -217,6 +221,8 @@ void DrawCubeWires(Vector3 position, float width, float height, float length, Co
     float x = 0.0f;
     float y = 0.0f;
     float z = 0.0f;
+    
+    if (rlCheckBufferLimit(36)) rlglDraw();
 
     rlPushMatrix();
         rlTranslatef(position.x, position.y, position.z);
