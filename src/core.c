@@ -1445,6 +1445,41 @@ Vector3 ColorToHSV(Color color)
     return hsv;
 }
 
+// Returns a Color from HSV values
+// NOTE: Color->HSV->Color conversion will not yield exactly the same color due to rounding errors
+Color ColorFromHSV(Vector3 hsv, unsigned char alpha) 
+{
+    // implementation details at https://en.wikipedia.org/wiki/HSL_and_HSV#Alternative_HSV_conversion
+    float h = hsv.x, s=hsv.y, v=hsv.z;
+    Color color = {0,0,0,alpha};
+    
+    //red
+    float k = fmod((5.+h/60.),6);
+    float t = 4.-k;
+    k = t<k?t:k;
+    k = k<1?k:1;
+    k = k>0?k:0;
+    color.r = (v-v*s*k)*255;
+
+    //green
+    k = fmod((3.+h/60.),6);
+    t = 4.-k;
+    k = t<k?t:k;
+    k = k<1?k:1;
+    k = k>0?k:0;
+    color.g =(v-v*s*k)*255;
+    
+    //blue
+    k = fmod((1.+h/60.),6);
+    t = 4.-k;
+    k = t<k?t:k;
+    k = k<1?k:1;
+    k = k>0?k:0;
+    color.b = (v-v*s*k)*255;
+	
+    return color;
+}
+
 // Returns a Color struct from hexadecimal value
 Color GetColor(int hexValue)
 {
