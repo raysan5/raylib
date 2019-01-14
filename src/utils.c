@@ -112,6 +112,7 @@ void TraceLog(int msgType, const char *text, ...)
         case LOG_ERROR: strcpy(buffer, "ERROR: "); break;
         case LOG_WARNING: strcpy(buffer, "WARNING: "); break;
         case LOG_DEBUG: strcpy(buffer, "DEBUG: "); break;
+        case LOG_OTHER: strcpy(buffer, "OTHER: "); break;
         default: break;
     }
 
@@ -125,6 +126,7 @@ void TraceLog(int msgType, const char *text, ...)
         case LOG_WARNING: if (logTypeFlags & LOG_WARNING) __android_log_vprint(ANDROID_LOG_WARN, "raylib", buffer, args); break;
         case LOG_ERROR: if (logTypeFlags & LOG_ERROR) __android_log_vprint(ANDROID_LOG_ERROR, "raylib", buffer, args); break;
         case LOG_DEBUG: if (logTypeFlags & LOG_DEBUG) __android_log_vprint(ANDROID_LOG_DEBUG, "raylib", buffer, args); break;
+        case LOG_OTHER: if (logTypeFlags & LOG_OTHER) __android_log_vprint(ANDROID_LOG_VERBOSE, "raylib", buffer, args); break;
         default: break;
     }
 #else
@@ -134,6 +136,7 @@ void TraceLog(int msgType, const char *text, ...)
         case LOG_WARNING: if (logTypeFlags & LOG_WARNING) vprintf(buffer, args); break;
         case LOG_ERROR: if (logTypeFlags & LOG_ERROR) vprintf(buffer, args); break;
         case LOG_DEBUG: if (logTypeFlags & LOG_DEBUG) vprintf(buffer, args); break;
+        case LOG_OTHER: if (logTypeFlags & LOG_OTHER) vprintf(buffer, args); break;
         default: break;
     }
 #endif
