@@ -982,7 +982,7 @@ const char *GetMonitorName(int monitor)
 }
 
 // Show mouse cursor
-void ShowCursor()
+void ShowCursor(void)
 {
 #if defined(PLATFORM_DESKTOP)
     glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_NORMAL);
@@ -991,7 +991,7 @@ void ShowCursor()
 }
 
 // Hides mouse cursor
-void HideCursor()
+void HideCursor(void)
 {
 #if defined(PLATFORM_DESKTOP)
     glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_HIDDEN);
@@ -1000,13 +1000,13 @@ void HideCursor()
 }
 
 // Check if cursor is not visible
-bool IsCursorHidden()
+bool IsCursorHidden(void)
 {
     return cursorHidden;
 }
 
 // Enables cursor (unlock cursor)
-void EnableCursor()
+void EnableCursor(void)
 {
 #if defined(PLATFORM_DESKTOP)
     glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_NORMAL);
@@ -1018,7 +1018,7 @@ void EnableCursor()
 }
 
 // Disables cursor (lock cursor)
-void DisableCursor()
+void DisableCursor(void)
 {
 #if defined(PLATFORM_DESKTOP)
     glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
