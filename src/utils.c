@@ -46,6 +46,8 @@
 #include <stdarg.h>                 // Required for: va_list, va_start(), vfprintf(), va_end()
 #include <string.h>                 // Required for: strlen(), strrchr(), strcmp()
 
+#define MAX_TRACELOG_BUFFER_SIZE    128 // Max length of a trace-log message.
+
 //----------------------------------------------------------------------------------
 // Global Variables Definition
 //----------------------------------------------------------------------------------
@@ -93,7 +95,7 @@ void SetTraceLogCallback(TraceLogCallback callback)
 void TraceLog(int msgType, const char *text, ...)
 {
 #if defined(SUPPORT_TRACELOG)
-    static char buffer[128];
+    char buffer[MAX_TRACELOG_BUFFER_SIZE];
     va_list args;
     va_start(args, text);
 
