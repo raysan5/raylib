@@ -32,21 +32,21 @@
 
 #include "config.h"
 
-#include "raylib.h"                 // WARNING: Required for: LogType enum
+#include "raylib.h"                     // WARNING: Required for: LogType enum
 #include "utils.h"
 
 #if defined(PLATFORM_ANDROID)
-    #include <errno.h>
-    #include <android/log.h>
-    #include <android/asset_manager.h>
+    #include <errno.h>                  // Required for: Android error types
+    #include <android/log.h>            // Required for: Android log system: __android_log_vprint()
+    #include <android/asset_manager.h>  // Required for: Android assets manager: AAsset, AAssetManager_open(), ...
 #endif
 
-#include <stdlib.h>                 // Required for: malloc(), free()
-#include <stdio.h>                  // Required for: fopen(), fclose(), fputc(), fwrite(), printf(), fprintf(), funopen()
-#include <stdarg.h>                 // Required for: va_list, va_start(), vfprintf(), va_end()
-#include <string.h>                 // Required for: strlen(), strrchr(), strcmp()
+#include <stdlib.h>                     // Required for: malloc(), free()
+#include <stdio.h>                      // Required for: fopen(), fclose(), fputc(), fwrite(), printf(), fprintf(), funopen()
+#include <stdarg.h>                     // Required for: va_list, va_start(), vfprintf(), va_end()
+#include <string.h>                     // Required for: strlen(), strrchr(), strcmp()
 
-#define MAX_TRACELOG_BUFFER_SIZE    128 // Max length of a trace-log message.
+#define MAX_TRACELOG_BUFFER_SIZE   128  // Max length of one trace-log message
 
 //----------------------------------------------------------------------------------
 // Global Variables Definition
@@ -95,7 +95,7 @@ void SetTraceLogCallback(TraceLogCallback callback)
 void TraceLog(int msgType, const char *text, ...)
 {
 #if defined(SUPPORT_TRACELOG)
-    char buffer[MAX_TRACELOG_BUFFER_SIZE];
+    char buffer[MAX_TRACELOG_BUFFER_SIZE] = { 0 };
     va_list args;
     va_start(args, text);
 
@@ -147,16 +147,6 @@ void TraceLog(int msgType, const char *text, ...)
 
 #endif  // SUPPORT_TRACELOG
 }
-
-// Keep track of memory allocated
-// NOTE: mallocType defines the type of data allocated
-/*
-void RecordMalloc(int mallocType, int mallocSize, const char *msg)
-{
-    // TODO: Investigate how to record memory allocation data...
-    // Maybe creating my own malloc function...
-}
-*/
 
 #if defined(PLATFORM_ANDROID)
 // Initialize asset manager from android app
