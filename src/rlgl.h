@@ -3329,8 +3329,6 @@ void BeginScissorMode(int x, int y, int width, int height)
     
     glEnable(GL_SCISSOR_TEST);
     glScissor(x, screenHeight - (y + height), width, height);
-    
-    rlClearScreenBuffers(); // Clear current scissor area
 }
 
 // End scissor mode
