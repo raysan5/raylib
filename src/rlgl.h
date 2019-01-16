@@ -2630,8 +2630,11 @@ unsigned char *rlReadScreenPixels(int width, int height)
     {
         for (int x = 0; x < (width*4); x++)
         {
-            // Flip line
-            imgData[((height - 1) - y)*width*4 + x] = screenData[(y*width*4) + x];
+            imgData[((height - 1) - y)*width*4 + x] = screenData[(y*width*4) + x];  // Flip line
+            
+            // Set alpha component value to 255 (no trasparent image retrieval)
+            // NOTE: Alpha value has already been applied to RGB in framebuffer, we don't need it!
+            if (((x + 1)%4) == 0) imgData[((height - 1) - y)*width*4 + x] = 255;
         }
     }
 
