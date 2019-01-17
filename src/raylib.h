@@ -840,7 +840,7 @@ RLAPI bool IsWindowReady(void);                                   // Check if wi
 RLAPI bool IsWindowMinimized(void);                               // Check if window has been minimized (or lost focus)
 RLAPI bool IsWindowHidden(void);                                  // Check if window is currently hidden
 RLAPI void ToggleFullscreen(void);                                // Toggle fullscreen mode (only PLATFORM_DESKTOP)
-RLAPI __stdcall void ShowWindow(void);                                      // Show the window
+RLAPI void UnhideWindow(void);                                    // Show the window
 RLAPI void HideWindow(void);                                      // Hide the window
 RLAPI void SetWindowIcon(Image image);                            // Set icon for window (only PLATFORM_DESKTOP)
 RLAPI void SetWindowTitle(const char *title);                     // Set title for window (only PLATFORM_DESKTOP)

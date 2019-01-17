@@ -836,7 +836,7 @@ void SetWindowSize(int width, int height)
 }
 
 // Show the window
-__stdcall void ShowWindow(void)
+void UnhideWindow(void)
 {
 #if defined(PLATFORM_DESKTOP)
     glfwShowWindow(window);
