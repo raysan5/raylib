@@ -25,7 +25,7 @@ int main()
     int screenWidth = 800;
     int screenHeight = 450;
     
-    InitWindow(screenWidth, screenHeight, "raymarching");
+    InitWindow(screenWidth, screenHeight, "raylib [shaders] example - raymarching shapes");
 
     Camera camera = { 0 };
     camera.position = (Vector3){ 2.5f, 2.5f, 3.0f };    // Camera position
