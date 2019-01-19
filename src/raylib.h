@@ -139,6 +139,7 @@
 // deprecated raylib implementation of these functions
 #define FormatText  TextFormat
 #define SubText     TextSubtext
+#define ShowWindow  UnhideWindow
 
 //----------------------------------------------------------------------------------
 // Structures Definition
