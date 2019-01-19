@@ -1,6 +1,6 @@
 /**********************************************************************************************
 *
-*   raylib.audio - Basic funtionality to work with audio
+*   raudio - A simple and easy-to-use audio library based on mini_al
 *
 *   FEATURES:
 *       - Manage audio device (init/close)
@@ -25,18 +25,13 @@
 *       Selected desired fileformats to be supported for loading. Some of those formats are
 *       supported by default, to remove support, just comment unrequired #define in this module
 *
-*   LIMITATIONS (only OpenAL Soft):
-*       Only up to two channels supported: MONO and STEREO (for additional channels, use AL_EXT_MCFORMATS)
-*       Only the following sample sizes supported: 8bit PCM, 16bit PCM, 32-bit float PCM (using AL_EXT_FLOAT32)
-*
 *   DEPENDENCIES:
 *       mini_al     - Audio device/context management (https://github.com/dr-soft/mini_al)
 *       stb_vorbis  - OGG audio files loading (http://www.nothings.org/stb_vorbis/)
 *       jar_xm      - XM module file loading
 *       jar_mod     - MOD audio file loading
 *       dr_flac     - FLAC audio file loading
-*
-*      *OpenAL Soft - Audio device management, still used on HTML5 and OSX platforms
+*       dr_mp3      - MP3 audio file loading
 *
 *   CONTRIBUTORS:
 *       David Reid (github: @mackron) (Nov. 2017):
@@ -51,7 +46,7 @@
 *
 *   LICENSE: zlib/libpng
 *
-*   Copyright (c) 2014-2018 Ramon Santamaria (@raysan5)
+*   Copyright (c) 2014-2019 Ramon Santamaria (@raysan5)
 *
 *   This software is provided "as-is", without any express or implied warranty. In no event
 *   will the authors be held liable for any damages arising from the use of this software.
