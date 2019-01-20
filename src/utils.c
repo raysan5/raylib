@@ -54,6 +54,7 @@
 
 // Log types messages
 static TraceLogType logTypeLevel = LOG_INFO;
+static TraceLogType logTypeExit = LOG_ERROR;
 static TraceLogCallback logCallback = NULL;
 
 #if defined(PLATFORM_ANDROID)
@@ -83,6 +84,12 @@ static int android_close(void *cookie);
 void SetTraceLogLevel(TraceLogType logType)
 {
     logTypeLevel = logType;
+}
+
+// Set the exit threshold (minimum) log level.
+void SetTraceLogExit(TraceLogType logType)
+{
+    logTypeExit = logType;
 }
 
 // Set a trace log callback to enable custom logging bypassing raylib's one
@@ -141,7 +148,7 @@ void TraceLog(TraceLogType logType, const char *text, ...)
 
     va_end(args);
 
-    if (msgType == LOG_ERROR) exit(1);  // If LOG_ERROR message, exit program
+    if (logType >= logTypeExit) exit(1);  // If exit message, exit program
 
 #endif  // SUPPORT_TRACELOG
 }

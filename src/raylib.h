@@ -900,6 +900,7 @@ RLAPI Color Fade(Color color, float alpha);                       // Color fade-
 // Misc. functions
 RLAPI void SetConfigFlags(unsigned char flags);                   // Setup window configuration flags (view FLAGS)
 RLAPI void SetTraceLogLevel(TraceLogType logType);                // Set the current threshold (minimum) log level.
+RLAPI void SetTraceLogExit(TraceLogType logType);                 // Set the exit threshold (minimum) log level.
 RLAPI void SetTraceLogCallback(TraceLogCallback callback);        // Set a trace log callback to enable custom logging bypassing raylib's one
 RLAPI void TraceLog(TraceLogType logType, const char *text, ...); // Show trace log messages (LOG_INFO, LOG_WARNING, LOG_ERROR, LOG_DEBUG)
 RLAPI void TakeScreenshot(const char *fileName);                  // Takes a screenshot of current screen (saved a .png)
