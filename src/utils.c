@@ -52,8 +52,8 @@
 // Global Variables Definition
 //----------------------------------------------------------------------------------
 
-// Log types messages supported flags (bit based)
-static unsigned char logTypeFlags = LOG_INFO | LOG_WARNING | LOG_ERROR;
+// Log types messages
+static TraceLogType logTypeLevel = LOG_INFO;
 static TraceLogCallback logCallback = NULL;
 
 #if defined(PLATFORM_ANDROID)
@@ -79,10 +79,10 @@ static int android_close(void *cookie);
 // Module Functions Definition - Utilities
 //----------------------------------------------------------------------------------
 
-// Enable trace log message types (bit flags based)
-void SetTraceLog(unsigned char types)
+// Set the current threshold (minimum) log level.
+void SetTraceLogLevel(TraceLogType logType)
 {
-    logTypeFlags = types;
+    logTypeLevel = logType;
 }
 
 // Set a trace log callback to enable custom logging bypassing raylib's one

@@ -819,7 +819,7 @@ typedef enum {
 } NPatchType;
 
 // Callbacks to be implemented by users
-typedef void (*TraceLogCallback)(int msgType, const char *text, va_list args);
+typedef void (*TraceLogCallback)(TraceLogType logType, const char *text, va_list args);
 
 #if defined(__cplusplus)
 extern "C" {            // Prevents name mangling of functions
@@ -899,9 +899,9 @@ RLAPI Color Fade(Color color, float alpha);                       // Color fade-
 
 // Misc. functions
 RLAPI void SetConfigFlags(unsigned char flags);                   // Setup window configuration flags (view FLAGS)
-RLAPI void SetTraceLog(unsigned char types);                      // Enable trace log message types (bit flags based)
+RLAPI void SetTraceLogLevel(TraceLogType logType);                // Set the current threshold (minimum) log level.
 RLAPI void SetTraceLogCallback(TraceLogCallback callback);        // Set a trace log callback to enable custom logging bypassing raylib's one
-RLAPI void TraceLog(int logType, const char *text, ...);          // Show trace log messages (LOG_INFO, LOG_WARNING, LOG_ERROR, LOG_DEBUG)
+RLAPI void TraceLog(TraceLogType logType, const char *text, ...); // Show trace log messages (LOG_INFO, LOG_WARNING, LOG_ERROR, LOG_DEBUG)
 RLAPI void TakeScreenshot(const char *fileName);                  // Takes a screenshot of current screen (saved a .png)
 RLAPI int GetRandomValue(int min, int max);                       // Returns a random value between min and max (both included)
 
