@@ -80,6 +80,15 @@ foreach(example_source ${example_sources})
   add_executable(${example_name} ${example_source})
 
   target_link_libraries(${example_name} raylib)
+
+  string(REGEX MATCH ".*/.*/" resources_dir ${example_source})
+  string(APPEND resources_dir "resources")
+
+  if(${PLATFORM} MATCHES "Web" AND EXISTS ${resources_dir})
+    # The local resources path needs to be mapped to /resources virtual path
+    string(APPEND resources_dir "@resources")
+    set_target_properties(${example_name} PROPERTIES LINK_FLAGS "--preload-file ${resources_dir}")
+  endif()
 endforeach()
 
 if (${PLATFORM} MATCHES "Desktop")
