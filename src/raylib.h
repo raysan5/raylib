@@ -421,13 +421,15 @@ typedef enum {
 } ConfigFlag;
 
 // Trace log type
-// NOTE: Used for bit masks
 typedef enum {
-    LOG_INFO            = 1,
-    LOG_WARNING         = 2,
-    LOG_ERROR           = 4,
-    LOG_DEBUG           = 8,
-    LOG_OTHER           = 16
+    LOG_ALL, // Display all logs
+    LOG_TRACE,
+    LOG_DEBUG,
+    LOG_INFO,
+    LOG_WARNING,
+    LOG_ERROR,
+    LOG_FATAL,
+    LOG_NONE // Disable logging
 } TraceLogType;
 
 // Keyboard keys
