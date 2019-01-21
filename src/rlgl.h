@@ -257,7 +257,7 @@ typedef unsigned char byte;
         LOG_TRACE,
         LOG_DEBUG,
         LOG_INFO,
-        LOG_WARN,
+        LOG_WARNING,
         LOG_ERROR,
         LOG_FATAL,
         LOG_NONE
