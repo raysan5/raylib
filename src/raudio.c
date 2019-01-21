@@ -166,11 +166,14 @@ typedef struct MusicData {
 
 #if defined(RAUDIO_STANDALONE)
 typedef enum {
-    LOG_INFO = 0,
-    LOG_ERROR,
-    LOG_WARNING,
+    LOG_ALL,
+    LOG_TRACE,
     LOG_DEBUG,
-    LOG_OTHER
+    LOG_INFO,
+    LOG_WARNING,
+    LOG_ERROR,
+    LOG_FATAL,
+    LOG_NONE
 } TraceLogType;
 #endif
 
