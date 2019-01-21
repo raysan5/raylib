@@ -1142,6 +1142,8 @@ const char *TextInsert(const char *text, const char *insert, int position)
 // REQUIRES: strcat()
 const char *TextJoin(const char **textList, int count, const char *delimiter)
 {
+    // TODO: Make sure joined text could fit inside MAX_TEXT_BUFFER_LENGTH
+    
     static char text[MAX_TEXT_BUFFER_LENGTH] = { 0 };
     memset(text, 0, MAX_TEXT_BUFFER_LENGTH);
 
