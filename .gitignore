@@ -62,6 +62,8 @@ examples/*
 # Unignore examples Makefile
 !examples/Makefile
 !examples/Makefile.Android
+!examples/raylib_compile_execute.bat
+!examples/raylib_makefile_example.bat
 
 # Ignore all games files
 games/*
