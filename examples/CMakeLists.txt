@@ -56,7 +56,10 @@ if(${PLATFORM} MATCHES "Android")
 
 elseif(${PLATFORM} MATCHES "Web")
   set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Os -s USE_GLFW=3 -s ASSERTIONS=1 -s WASM=1 -s EMTERPRETIFY=1 -s EMTERPRETIFY_ASYNC=1")
+  # Since WASM is used, ALLOW_MEMORY_GROWTH has no extra overheads
+  set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -s ALLOW_MEMORY_GROWTH=1 --no-heap-copy")
   set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} --shell-file ${CMAKE_SOURCE_DIR}/templates/web_shell/shell.html")
+
   set(OUTPUT_EXT ".html")
 
 endif()
@@ -77,6 +80,15 @@ foreach(example_source ${example_sources})
   add_executable(${example_name} ${example_source})
 
   target_link_libraries(${example_name} raylib)
+
+  string(REGEX MATCH ".*/.*/" resources_dir ${example_source})
+  string(APPEND resources_dir "resources")
+
+  if(${PLATFORM} MATCHES "Web" AND EXISTS ${resources_dir})
+    # The local resources path needs to be mapped to /resources virtual path
+    string(APPEND resources_dir "@resources")
+    set_target_properties(${example_name} PROPERTIES LINK_FLAGS "--preload-file ${resources_dir}")
+  endif()
 endforeach()
 
 if (${PLATFORM} MATCHES "Desktop")
