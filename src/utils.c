@@ -66,8 +66,7 @@ AAssetManager *assetManager;
 //----------------------------------------------------------------------------------
 #if defined(PLATFORM_ANDROID)
 /* This should be in <stdio.h>, but Travis doesn't find it... */
-FILE *funopen(const void *cookie, int (*readfn)(void *, char *, int),
-              int (*writefn)(void *, const char *, int),
+FILE *funopen(const void *cookie, int (*readfn)(void *, char *, int), int (*writefn)(void *, const char *, int),
               fpos_t (*seekfn)(void *, fpos_t, int), int (*closefn)(void *));
 
 static int android_read(void *cookie, char *buf, int size);
@@ -80,19 +79,19 @@ static int android_close(void *cookie);
 // Module Functions Definition - Utilities
 //----------------------------------------------------------------------------------
 
-// Set the current threshold (minimum) log level.
+// Set the current threshold (minimum) log level
 void SetTraceLogLevel(int logType)
 {
     logTypeLevel = logType;
 }
 
-// Set the exit threshold (minimum) log level.
+// Set the exit threshold (minimum) log level
 void SetTraceLogExit(int logType)
 {
     logTypeExit = logType;
 }
 
-// Set a trace log callback to enable custom logging bypassing raylib's one
+// Set a trace log callback to enable custom logging
 void SetTraceLogCallback(TraceLogCallback callback)
 {
     logCallback = callback;
@@ -102,9 +101,8 @@ void SetTraceLogCallback(TraceLogCallback callback)
 void TraceLog(int logType, const char *text, ...)
 {
 #if defined(SUPPORT_TRACELOG)
-    if (logType < logTypeLevel) { // Message has level below current threshold, don't emit.
-        return;
-    }
+    // Message has level below current threshold, don't emit
+    if (logType < logTypeLevel) return;
 
     va_list args;
     va_start(args, text);

@@ -423,14 +423,14 @@ typedef enum {
 
 // Trace log type
 typedef enum {
-    LOG_ALL, // Display all logs
+    LOG_ALL,        // Display all logs
     LOG_TRACE,
     LOG_DEBUG,
     LOG_INFO,
     LOG_WARNING,
     LOG_ERROR,
     LOG_FATAL,
-    LOG_NONE // Disable logging
+    LOG_NONE        // Disable logging
 } TraceLogType;
 
 // Keyboard keys
@@ -900,10 +900,10 @@ RLAPI Color Fade(Color color, float alpha);                       // Color fade-
 
 // Misc. functions
 RLAPI void SetConfigFlags(unsigned char flags);                   // Setup window configuration flags (view FLAGS)
-RLAPI void SetTraceLogLevel(int logType);                // Set the current threshold (minimum) log level.
-RLAPI void SetTraceLogExit(int logType);                 // Set the exit threshold (minimum) log level.
-RLAPI void SetTraceLogCallback(TraceLogCallback callback);        // Set a trace log callback to enable custom logging bypassing raylib's one
-RLAPI void TraceLog(int logType, const char *text, ...); // Show trace log messages (LOG_INFO, LOG_WARNING, LOG_ERROR, LOG_DEBUG)
+RLAPI void SetTraceLogLevel(int logType);                         // Set the current threshold (minimum) log level
+RLAPI void SetTraceLogExit(int logType);                          // Set the exit threshold (minimum) log level
+RLAPI void SetTraceLogCallback(TraceLogCallback callback);        // Set a trace log callback to enable custom logging
+RLAPI void TraceLog(int logType, const char *text, ...);          // Show trace log messages (LOG_DEBUG, LOG_INFO, LOG_WARNING, LOG_ERROR)
 RLAPI void TakeScreenshot(const char *fileName);                  // Takes a screenshot of current screen (saved a .png)
 RLAPI int GetRandomValue(int min, int max);                       // Returns a random value between min and max (both included)
 
