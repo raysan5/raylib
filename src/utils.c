@@ -53,8 +53,8 @@
 //----------------------------------------------------------------------------------
 
 // Log types messages
-static TraceLogType logTypeLevel = LOG_INFO;
-static TraceLogType logTypeExit = LOG_ERROR;
+static int logTypeLevel = LOG_INFO;
+static int logTypeExit = LOG_ERROR;
 static TraceLogCallback logCallback = NULL;
 
 #if defined(PLATFORM_ANDROID)
@@ -81,13 +81,13 @@ static int android_close(void *cookie);
 //----------------------------------------------------------------------------------
 
 // Set the current threshold (minimum) log level.
-void SetTraceLogLevel(TraceLogType logType)
+void SetTraceLogLevel(int logType)
 {
     logTypeLevel = logType;
 }
 
 // Set the exit threshold (minimum) log level.
-void SetTraceLogExit(TraceLogType logType)
+void SetTraceLogExit(int logType)
 {
     logTypeExit = logType;
 }
@@ -99,7 +99,7 @@ void SetTraceLogCallback(TraceLogCallback callback)
 }
 
 // Show trace log messages (LOG_INFO, LOG_WARNING, LOG_ERROR, LOG_DEBUG)
-void TraceLog(TraceLogType logType, const char *text, ...)
+void TraceLog(int logType, const char *text, ...)
 {
 #if defined(SUPPORT_TRACELOG)
     if (logType < logTypeLevel) { // Message has level below current threshold, don't emit.
