@@ -782,6 +782,13 @@ void DrawTextEx(Font font, const char *text, Vector2 position, float fontSize, f
 // Draw text using font inside rectangle limits
 void DrawTextRec(Font font, const char *text, Rectangle rec, float fontSize, float spacing, bool wordWrap, Color tint) 
 {
+    DrawTextRecEx(font, text, rec, fontSize, spacing, wordWrap, tint, 0, 0, WHITE, WHITE);
+}
+
+// Draw text using font inside rectangle limits with support for text selection
+void DrawTextRecEx(Font font, const char *text, Rectangle rec, float fontSize, float spacing, bool wordWrap, Color tint, 
+        int selectStart, int selectLength, Color selectText, Color selectBG) 
+{
     int length = strlen(text);
     int textOffsetX = 0;        // Offset between characters
     int textOffsetY = 0;        // Required for line break!
@@ -792,12 +799,10 @@ void DrawTextRec(Font font, const char *text, Rectangle rec, float fontSize, flo
 
     scaleFactor = fontSize/font.baseSize;
 
-    enum { MEASURE_WORD = 0, DRAW_WORD = 1 };
-    int state = wordWrap ? MEASURE_WORD : DRAW_WORD;
-    int lastTextOffsetX = 0;
-    int wordStart = 0;
-    
-    bool firstWord = true;
+    enum { MEASURE_STATE = 0, DRAW_STATE = 1 };
+    int state = wordWrap?MEASURE_STATE:DRAW_STATE;
+    int startLine = -1;   // Index where to begin drawing (where a line begins)
+    int endLine = -1;     // Index where to stop drawing (where a line ends)
     
     for (int i = 0; i < length; i++)
     {
@@ -827,76 +832,89 @@ void DrawTextRec(Font font, const char *text, Rectangle rec, float fontSize, flo
                             (int)(font.chars[index].advanceX*scaleFactor + spacing);
         }
         
-        // NOTE: When word wrap is active first we measure a `word`(measure until a ' ','\n','\t' is found) 
-        // then set all the variables back to what they were before the measurement, change the state to
-        // draw that word then change the state again and repeat until the end of the string...when the word
-        // doesn't fit inside the rect we simple increase `textOffsetY` to draw it on the next line
-        if (state == MEASURE_WORD) 
+        // NOTE: When wordWrap is ON we first measure how much of the text we can draw
+        // before going outside of the `rec` container. We store this info inside 
+        // `startLine` and `endLine` then we change states, draw the text between those two
+        // variables then change states again and again recursively until the end of the text
+        // (or until we get outside of the container).
+        // When wordWrap is OFF we don't need the measure state so we go to the drawing 
+        // state immediately and begin drawing on the next line before we can get outside 
+        // the container.
+        if (state == MEASURE_STATE) 
         {
-            // Measuring state
-            if ((letter == ' ') || (letter == '\n') || (letter == '\t') || ((i + 1) == length)) 
+            if((letter == ' ') || (letter == '\t') || (letter == '\n')) endLine = i;
+            
+            if(textOffsetX + glyphWidth + 1 >= rec.width) 
             {
-                int t = textOffsetX + glyphWidth;
-
-                if (textOffsetX+1>=rec.width)
-                {
-                    textOffsetY += (int)((font.baseSize + font.baseSize/2)*scaleFactor);
-                    lastTextOffsetX = t - lastTextOffsetX;
-                    textOffsetX = 0;
-                } 
-                else
-                {
-                    textOffsetX = lastTextOffsetX;
-                    lastTextOffsetX = t;
-                }
-                
-                glyphWidth = 0;
-                state = !state;     // Change state
-                t = i;
-                i = firstWord?-1:wordStart;
-                wordStart = t;
+                endLine = (endLine < 1) ? i : endLine;
+                if(i == endLine) endLine -= 1;
+                if(startLine + 1 == endLine ) endLine = i - 1;
+                state = !state;
+            } 
+            else if(i + 1 == length) 
+            {
+                endLine = i;
+                state = !state;
             }
+            else if(letter == '\n') 
+            {
+                state = !state;
+            }
+            
+            if(state == DRAW_STATE) {
+                textOffsetX = 0;
+                i = startLine;
+                glyphWidth = 0;
+            }
+
         } 
         else 
         {
-            // Drawing state
-            int t = textOffsetX + glyphWidth;
-            
-            if (letter == '\n') 
+            if (letter == '\n')
             {
-                textOffsetY += (int)((font.baseSize + font.baseSize/2)*scaleFactor);
-                lastTextOffsetX = t - lastTextOffsetX;
-                if (lastTextOffsetX < 0) lastTextOffsetX = 0;
-                textOffsetX = 0;
+                if(!wordWrap){
+                    textOffsetY += (int)((font.baseSize + font.baseSize/2)*scaleFactor);
+                    textOffsetX = 0;
+                }
             } 
-            else if ((letter != ' ') && (letter != '\t'))
+            else 
             {
-                if ((t + 1) >= rec.width) 
-                {
+                if(!wordWrap && textOffsetX + glyphWidth + 1 >= rec.width) {
                     textOffsetY += (int)((font.baseSize + font.baseSize/2)*scaleFactor);
                     textOffsetX = 0;
                 }
                 
                 if ((textOffsetY + (int)((font.baseSize + font.baseSize/2)*scaleFactor)) > rec.height) break;
                 
-                DrawTexturePro(font.texture, font.chars[index].rec,
-                  (Rectangle){ rec.x + textOffsetX + font.chars[index].offsetX*scaleFactor,
-                               rec.y + textOffsetY + font.chars[index].offsetY*scaleFactor,
-                               font.chars[index].rec.width*scaleFactor,
-                               font.chars[index].rec.height*scaleFactor }, (Vector2){ 0, 0 }, 0.0f, tint);
+                //draw selected
+                bool isGlyphSelected = false;
+                if(selectStart >= 0 && i >= selectStart && i < selectStart + selectLength) {
+                    Rectangle strec = {rec.x + textOffsetX-1, rec.y + textOffsetY, 
+                            glyphWidth,(font.baseSize + font.baseSize/4)*scaleFactor};
+                    DrawRectangleRec(strec, selectBG);
+                    isGlyphSelected = true;
+                }
+                
+                //draw glyph
+                if ((letter != ' ') && (letter != '\t'))
+                {
+                    DrawTexturePro(font.texture, font.chars[index].rec,
+                      (Rectangle){ rec.x + textOffsetX + font.chars[index].offsetX*scaleFactor,
+                                   rec.y + textOffsetY + font.chars[index].offsetY*scaleFactor,
+                                   font.chars[index].rec.width*scaleFactor,
+                                   font.chars[index].rec.height*scaleFactor }, (Vector2){ 0, 0 }, 0.0f, 
+                                   (!isGlyphSelected) ? tint : selectText);
+                }
             }
             
-            if (wordWrap)
-            { 
-                if ((letter == ' ') || (letter == '\n') || (letter == '\t')) 
-                {
-                    // After drawing a word change the state
-                	firstWord = false;
-                    i = wordStart;
-                    textOffsetX = lastTextOffsetX;
-                    glyphWidth = 0;
-                    state = !state;
-                }
+            if (wordWrap && i == endLine) 
+            {
+                textOffsetY += (int)((font.baseSize + font.baseSize/2)*scaleFactor);
+                textOffsetX = 0;
+                startLine = endLine;
+                endLine = -1;
+                glyphWidth = 0;
+                state = !state;
             }
         }
         
