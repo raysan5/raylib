@@ -276,7 +276,7 @@ static bool windowMinimized = false;            // Check if window has been mini
 static const char *windowTitle = NULL;          // Window text title...
 
 static unsigned int displayWidth, displayHeight;// Display width and height (monitor, device-screen, LCD, ...)
-static int screenWidth, screenHeight;           // Screen width and height (used render area)
+//static int screenWidth, screenHeight;           // Screen width and height (used render area)
 static int renderWidth, renderHeight;           // Framebuffer width and height (render area, including black bars if required)
 static int renderOffsetX = 0;                   // Offset X from render area (must be divided by 2)
 static int renderOffsetY = 0;                   // Offset Y from render area (must be divided by 2)
@@ -778,7 +778,7 @@ void SetWindowIcon(Image image)
     icon[0].pixels = (unsigned char *)imicon.data;
 
     // NOTE 1: We only support one image icon
-    // NOTE 2: The specified image data is copied before this function returns 
+    // NOTE 2: The specified image data is copied before this function returns
     glfwSetWindowIcon(window, 1, icon);
 
     // TODO: Support multi-image icons --> image.mipmaps
@@ -1448,11 +1448,11 @@ Vector3 ColorToHSV(Color color)
 // Returns a Color from HSV values
 // Implementation reference: https://en.wikipedia.org/wiki/HSL_and_HSV#Alternative_HSV_conversion
 // NOTE: Color->HSV->Color conversion will not yield exactly the same color due to rounding errors
-Color ColorFromHSV(Vector3 hsv) 
+Color ColorFromHSV(Vector3 hsv)
 {
     Color color = { 0, 0, 0, 255 };
     float h = hsv.x, s = hsv.y, v = hsv.z;
-    
+
     // Red channel
     float k = fmod((5.0f + h/60.0f), 6);
     float t = 4.0f - k;
@@ -1468,7 +1468,7 @@ Color ColorFromHSV(Vector3 hsv)
     k = (k < 1) ? k : 1;
     k = (k > 0) ? k : 0;
     color.g = (v - v*s*k)*255;
-    
+
     // Blue channel
     k = fmod((1.0f + h/60.0f), 6);
     t = 4.0f - k;
@@ -1476,7 +1476,7 @@ Color ColorFromHSV(Vector3 hsv)
     k = (k < 1) ? k : 1;
     k = (k > 0) ? k : 0;
     color.b = (v - v*s*k)*255;
-	
+
     return color;
 }
 
@@ -1533,7 +1533,7 @@ void TakeScreenshot(const char *fileName)
 {
     unsigned char *imgData = rlReadScreenPixels(renderWidth, renderHeight);
     Image image = { imgData, renderWidth, renderHeight, 1, UNCOMPRESSED_R8G8B8A8 };
-    
+
     char path[512] = { 0 };
 #if defined(PLATFORM_ANDROID)
     strcpy(path, internalDataPath);
@@ -1542,10 +1542,10 @@ void TakeScreenshot(const char *fileName)
 #else
     strcpy(path, fileName);
 #endif
-    
+
     ExportImage(image, path);
     free(imgData);
-    
+
 #if defined(PLATFORM_WEB)
     // Download file from MEMFS (emscripten memory filesystem)
     // SaveFileFromMEMFSToDisk() function is defined in raylib/templates/web_shel/shell.html
@@ -1642,7 +1642,7 @@ const char *GetFileNameWithoutExt(const char *filePath)
 
     // Try to allocate new string, same size as original
     // NOTE: By default strlen() does not count the '\0' character
-    if ((result = malloc(strlen(filePath) + 1)) == NULL) return NULL;
+    if ((result = (char *)malloc(strlen(filePath) + 1)) == NULL) return NULL;
 
     strcpy(result, filePath);   // Make a copy of the string
 
@@ -1877,15 +1877,15 @@ int StorageLoadValue(int position)
 // CHECK: https://github.com/raysan5/raylib/issues/686
 void OpenURL(const char *url)
 {
-    // Small security check trying to avoid (partially) malicious code... 
+    // Small security check trying to avoid (partially) malicious code...
     // sorry for the inconvenience when you hit this point...
     if (strchr(url, '\'') != NULL)
     {
         TraceLog(LOG_WARNING, "Provided URL does not seem to be valid.");
-    } 
-    else 
+    }
+    else
     {
-        char *cmd = calloc(strlen(url) + 10, sizeof(char));
+        char *cmd = (char *)calloc(strlen(url) + 10, sizeof(char));
 
 #if defined(_WIN32)
         sprintf(cmd, "explorer '%s'", url);
@@ -3230,7 +3230,7 @@ static void KeyCallback(GLFWwindow *window, int key, int scancode, int action, i
             {
                 GifEnd();
                 gifRecording = false;
-                
+
             #if defined(PLATFORM_WEB)
                 // Download file from MEMFS (emscripten memory filesystem)
                 // SaveFileFromMEMFSToDisk() function is defined in raylib/templates/web_shel/shell.html
@@ -3243,7 +3243,7 @@ static void KeyCallback(GLFWwindow *window, int key, int scancode, int action, i
             {
                 gifRecording = true;
                 gifFramesCounter = 0;
-                
+
                 char path[512] = { 0 };
             #if defined(PLATFORM_ANDROID)
                 strcpy(path, internalDataPath);
@@ -3835,7 +3835,7 @@ static void InitKeyboard(void)
     tcsetattr(STDIN_FILENO, TCSANOW, &keyboardNewSettings);
 
     // NOTE: Reading directly from stdin will give chars already key-mapped by kernel to ASCII or UNICODE
-    
+
     // Save old keyboard mode to restore it at the end
     if (ioctl(STDIN_FILENO, KDGKBMODE, &defaultKeyboardMode) < 0)
     {
@@ -3868,10 +3868,10 @@ static void ProcessKeyboard(void)
 
     // Read availables keycodes from stdin
     bufferByteCount = read(STDIN_FILENO, keysBuffer, MAX_KEYBUFFER_SIZE);     // POSIX system call
-    
+
     // Reset pressed keys array (it will be filled below)
     for (int i = 0; i < 512; i++) currentKeyState[i] = 0;
-    
+
     // Fill all read bytes (looking for keys)
     for (int i = 0; i < bufferByteCount; i++)
     {
@@ -3944,7 +3944,7 @@ static void ProcessKeyboard(void)
                 currentKeyState[(int)keysBuffer[i] - 32] = 1;
             }
             else currentKeyState[(int)keysBuffer[i]] = 1;
-            
+
             lastKeyPressed = keysBuffer[i];     // Register last key pressed
         }
     }
