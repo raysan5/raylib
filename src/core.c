@@ -276,7 +276,7 @@ static bool windowMinimized = false;            // Check if window has been mini
 static const char *windowTitle = NULL;          // Window text title...
 
 static unsigned int displayWidth, displayHeight;// Display width and height (monitor, device-screen, LCD, ...)
-//static int screenWidth, screenHeight;           // Screen width and height (used render area)
+static int screenWidth, screenHeight;           // Screen width and height (used render area)
 static int renderWidth, renderHeight;           // Framebuffer width and height (render area, including black bars if required)
 static int renderOffsetX = 0;                   // Offset X from render area (must be divided by 2)
 static int renderOffsetY = 0;                   // Offset Y from render area (must be divided by 2)
