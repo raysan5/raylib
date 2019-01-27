@@ -1642,7 +1642,7 @@ const char *GetFileNameWithoutExt(const char *filePath)
 
     // Try to allocate new string, same size as original
     // NOTE: By default strlen() does not count the '\0' character
-    if ((result = (char *)malloc(strlen(filePath) + 1)) == NULL) return NULL;
+    if ((result = malloc(strlen(filePath) + 1)) == NULL) return NULL;
 
     strcpy(result, filePath);   // Make a copy of the string
 
@@ -1885,7 +1885,7 @@ void OpenURL(const char *url)
     }
     else
     {
-        char *cmd = (char *)calloc(strlen(url) + 10, sizeof(char));
+        char *cmd = calloc(strlen(url) + 10, sizeof(char));
 
 #if defined(_WIN32)
         sprintf(cmd, "explorer '%s'", url);
