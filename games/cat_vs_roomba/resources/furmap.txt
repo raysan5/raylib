@@ -1,0 +1,34 @@
+.furniture
+.state: 0-Block, 1-Alpha, 2-Breakable
+.f setId cellX cellY state counter
+.puff and sits
+f 3 0 4 0 0
+f 3 13 0 0 0
+f 3 22 0 0 0
+f 3 21 11 0 0
+f 2 19 15 0 0
+f 2 30 5 0 0
+f 4 12 4 0 0
+.wood pieces
+f 26 3 0 0 0
+f 27 4 10 0 0
+f 27 24 7 0 0
+f 17 30 15 0 0
+.kitchen
+f 11 0 15 0 0
+f 13 0 12 0 0
+.sofa and bed (alpha)
+f 14 4 7 1 0
+f 10 24 11 1 0
+.glass and tables (alpha)
+f 9 17 4 1 0
+f 16 6 4 1 0
+f 16 10 15 1 0
+f 15 22 15 1 0
+.plants (breakable)
+f 6 0 6 2 1800
+f 6 12 10 2 1800
+f 7 17 0 2 1200
+f 7 15 15 2 1200
+f 8 13 15 2 2000
+f 8 24 5 2 2000
