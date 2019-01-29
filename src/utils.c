@@ -53,7 +53,7 @@
 //----------------------------------------------------------------------------------
 
 // Log types messages
-static int logTypeLevel = LOG_WARNING;
+static int logTypeLevel = LOG_INFO;
 static int logTypeExit = LOG_ERROR;
 static TraceLogCallback logCallback = NULL;
 
@@ -119,7 +119,7 @@ void TraceLog(int logType, const char *text, ...)
     {
         case LOG_TRACE: __android_log_vprint(ANDROID_LOG_VERBOSE, "raylib", text, args); break;
         case LOG_DEBUG: __android_log_vprint(ANDROID_LOG_DEBUG, "raylib", text, args); break;
-        case LOG_INFO: __android_log_vprint(ANDROID_LOG_INFO, "raylib", text, args); ; break;
+        case LOG_INFO: __android_log_vprint(ANDROID_LOG_INFO, "raylib", text, args); break;
         case LOG_WARNING: __android_log_vprint(ANDROID_LOG_WARN, "raylib", text, args); break;
         case LOG_ERROR: __android_log_vprint(ANDROID_LOG_ERROR, "raylib", text, args); break;
         case LOG_FATAL: __android_log_vprint(ANDROID_LOG_FATAL, "raylib", text, args); break;
@@ -132,7 +132,7 @@ void TraceLog(int logType, const char *text, ...)
     {
         case LOG_TRACE: strcpy(buffer, "TRACE: "); break;
         case LOG_DEBUG: strcpy(buffer, "DEBUG: "); break;
-        case LOG_INFO: strcpy(buffer, "INFO: "); ; break;
+        case LOG_INFO: strcpy(buffer, "INFO: "); break;
         case LOG_WARNING: strcpy(buffer, "WARNING: "); break;
         case LOG_ERROR: strcpy(buffer, "ERROR: "); break;
         case LOG_FATAL: strcpy(buffer, "FATAL: "); break;
