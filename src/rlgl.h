@@ -175,12 +175,21 @@ typedef unsigned char byte;
         int format;             // Data format (PixelFormat)
     } Texture2D;
 
+    // Texture type, same as Texture2D
+    typedef Texture2D Texture;
+
+    // TextureCubemap type, actually, same as Texture2D
+    typedef Texture2D TextureCubemap;
+
     // RenderTexture2D type, for texture rendering
     typedef struct RenderTexture2D {
-        unsigned int id;        // Render texture (fbo) id
+        unsigned int id;        // OpenGL Framebuffer Object (FBO) id
         Texture2D texture;      // Color buffer attachment texture
         Texture2D depth;        // Depth buffer attachment texture
     } RenderTexture2D;
+
+    // RenderTexture type, same as RenderTexture2D
+    typedef RenderTexture2D RenderTexture;
 
     // Vertex data definning a mesh
     typedef struct Mesh {
@@ -450,18 +459,20 @@ Vector3 rlUnproject(Vector3 source, Matrix proj, Matrix view);  // Get world coo
 
 // Textures data management
 unsigned int rlLoadTexture(void *data, int width, int height, int format, int mipmapCount); // Load texture in GPU
+unsigned int rlLoadTextureDepth(int width, int height, int bits, bool useRenderBuffer);     // Load depth texture/renderbuffer (to be attached to fbo)
 unsigned int rlLoadTextureCubemap(void *data, int size, int format);                        // Load texture cubemap
 void rlUpdateTexture(unsigned int id, int width, int height, int format, const void *data); // Update GPU texture with new data
 void rlGetGlTextureFormats(int format, unsigned int *glInternalFormat, unsigned int *glFormat, unsigned int *glType);  // Get OpenGL internal formats
-void rlUnloadTexture(unsigned int id);                                  // Unload texture from GPU memory
+void rlUnloadTexture(unsigned int id);                              // Unload texture from GPU memory
 
 void rlGenerateMipmaps(Texture2D *texture);                         // Generate mipmap data for selected texture
 void *rlReadTexturePixels(Texture2D texture);                       // Read texture pixel data
 unsigned char *rlReadScreenPixels(int width, int height);           // Read screen pixel data (color buffer)
-RenderTexture2D rlLoadRenderTexture(int width, int height);         // Load a texture to be used for rendering (fbo with default color and depth attachments)
-RenderTexture2D rlLoadRenderTextureEx(int width, int height, int colorFormat, int depthBits, bool useDepthTexture);
-void rlAttachRenderTexture(RenderTexture target, unsigned int textureId); // Attach/detach color buffer texture to an FBO (returns previous attachment)
-bool rlCompleteRenderTexture(RenderTexture target);                 // Verify rendertexture is complete
+
+// Render texture management (fbo)
+RenderTexture2D rlLoadRenderTexture(int width, int height, int format, int depthBits, bool useDepthTexture);    // Load a render texture (with color and depth attachments)
+void rlRenderTextureAttach(RenderTexture target, unsigned int id, int attachType);  // Attach texture/renderbuffer to an fbo
+bool rlRenderTextureComplete(RenderTexture target);                 // Verify render texture is complete
 
 // Vertex data management
 void rlLoadMesh(Mesh *mesh, bool dynamic);                          // Upload vertex data into GPU and provided VAO/VBO ids
@@ -850,6 +861,8 @@ static bool texCompASTCSupported = false;   // ASTC texture compression support
 // Extension supported flag: Textures format
 static bool texNPOTSupported = false;       // NPOT textures full support
 static bool texFloatSupported = false;      // float textures support (32 bit per channel)
+static bool texDepthSupported = false;      // Depth textures supported
+static int maxDepthBits = 16;               // Maximum bits for depth component
 
 // Extension supported flag: Clamp mirror wrap mode
 static bool texMirrorClampSupported = false;        // Clamp mirror wrap mode supported
@@ -1503,8 +1516,11 @@ void rlglInit(int width, int height)
 
     // NOTE: On OpenGL 3.3 VAO and NPOT are supported by default
     vaoSupported = true;
+    
+    // Multiple texture extensions supported by default
     texNPOTSupported = true;
     texFloatSupported = true;
+    texDepthSupported = true;
 
     // We get a list of available extensions and we check for some of them (compressed textures)
     // NOTE: We don't need to check again supported extensions but we do (GLAD already dealt with that)
@@ -1573,6 +1589,13 @@ void rlglInit(int width, int height)
 
         // Check texture float support
         if (strcmp(extList[i], (const char *)"GL_OES_texture_float") == 0) texFloatSupported = true;
+        
+        // Check depth texture support
+        if ((strcmp(extList[i], (const char *)"GL_OES_depth_texture") == 0) ||
+            (strcmp(extList[i], (const char *)"GL_WEBGL_depth_texture") == 0)) texDepthSupported = true;
+            
+        if (strcmp(extList[i], (const char *)"GL_OES_depth24") == 0) maxDepthBits = 24;
+        if (strcmp(extList[i], (const char *)"GL_OES_depth32") == 0) maxDepthBits = 32;
 #endif
         // DDS texture compression support
         if ((strcmp(extList[i], (const char *)"GL_EXT_texture_compression_s3tc") == 0) ||
@@ -1970,6 +1993,60 @@ unsigned int rlLoadTexture(void *data, int width, int height, int format, int mi
     return id;
 }
 
+// Load depth texture/renderbuffer (to be attached to fbo)
+// WARNING: OpenGL ES 2.0 requires GL_OES_depth_texture/WEBGL_depth_texture extensions
+unsigned int rlLoadTextureDepth(int width, int height, int bits, bool useRenderBuffer)
+{
+    unsigned int id = 0;
+    unsigned int glInternalFormat = GL_DEPTH_COMPONENT16;
+    
+    if ((bits != 16) && (bits != 24) && (bits != 32)) bits = 16;
+    
+    if (bits == 24)
+    {
+#if defined(GRAPHICS_API_OPENGL_33)
+        glInternalFormat = GL_DEPTH_COMPONENT24;
+#elif defined(GRAPHICS_API_OPENGL_ES2)
+        if (maxDepthBits >= 24) glInternalFormat = GL_DEPTH_COMPONENT24_OES;
+#endif
+    }
+    
+    if (bits == 32)
+    {
+#if defined(GRAPHICS_API_OPENGL_33)
+        glInternalFormat = GL_DEPTH_COMPONENT32;
+#elif defined(GRAPHICS_API_OPENGL_ES2)
+        if (maxDepthBits == 32) glInternalFormat = GL_DEPTH_COMPONENT32_OES;
+#endif
+    }
+
+    if (!useRenderBuffer && texDepthSupported)
+    {
+        glGenTextures(1, &id);
+        glBindTexture(GL_TEXTURE_2D, id);
+        glTexImage2D(GL_TEXTURE_2D, 0, glInternalFormat, width, height, 0, GL_DEPTH_COMPONENT, GL_UNSIGNED_INT, NULL);
+        
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+
+        glBindTexture(GL_TEXTURE_2D, 0);
+    }
+    else
+    {
+        // Create the renderbuffer that will serve as the depth attachment for the framebuffer
+        // NOTE: A renderbuffer is simpler than a texture and could offer better performance on embedded devices
+        glGenRenderbuffers(1, &id);
+        glBindRenderbuffer(GL_RENDERBUFFER, id);
+        glRenderbufferStorage(GL_RENDERBUFFER, glInternalFormat, width, height);
+        
+        glBindRenderbuffer(GL_RENDERBUFFER, 0);
+    }
+    
+    return id;
+}
+
 // Update already loaded texture in GPU with new data
 // TODO: We don't know safely if internal texture format is the expected one...
 void rlUpdateTexture(unsigned int id, int width, int height, int format, const void *data)
@@ -2102,7 +2179,7 @@ unsigned int rlLoadTextureCubemap(void *data, int size, int format)
 
 // Load a texture to be used for rendering (fbo with default color and depth attachments)
 // NOTE: If colorFormat or depthBits are no supported, no attachment is done
-RenderTexture2D rlLoadRenderTexture(int width, int height) //, int colorFormat, int depthBits, bool useDepthTexture);
+RenderTexture2D rlLoadRenderTexture(int width, int height, int format, int depthBits, bool useDepthTexture)
 {
     RenderTexture2D target = { 0 };
 
@@ -2113,98 +2190,39 @@ RenderTexture2D rlLoadRenderTexture(int width, int height) //, int colorFormat, 
     
     // Create fbo color texture attachment
     //-----------------------------------------------------------------------------------------------------
-    target.texture.id = 0;
-    target.texture.width = width;
-    target.texture.height = height;
-    target.texture.format = UNCOMPRESSED_R8G8B8A8;
-    target.texture.mipmaps = 1;
-
-    // Create the texture that will serve as the color attachment for the framebuffer
-    glGenTextures(1, &target.texture.id);
-    glBindTexture(GL_TEXTURE_2D, target.texture.id);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, NULL);
-    glBindTexture(GL_TEXTURE_2D, 0);
+    if ((format != -1) && (format < COMPRESSED_DXT1_RGB))
+    {
+        // WARNING: Some texture formats are not supported for fbo color attachment
+        target.texture.id = rlLoadTexture(NULL, width, height, format, 1);
+        target.texture.width = width;
+        target.texture.height = height;
+        target.texture.format = format;
+        target.texture.mipmaps = 1;
+    }
     //-----------------------------------------------------------------------------------------------------
     
     // Create fbo depth renderbuffer/texture
     //-----------------------------------------------------------------------------------------------------
-    target.depth.id = 0;
-    target.depth.width = width;
-    target.depth.height = height;
-    target.depth.format = 19;       //DEPTH_COMPONENT_24BIT
-    target.depth.mipmaps = 1;
-    
-#if defined(GRAPHICS_API_OPENGL_21) || defined(GRAPHICS_API_OPENGL_ES2)
-    #define USE_DEPTH_RENDERBUFFER
-#else
-    #define USE_DEPTH_TEXTURE
-#endif
-
-#if defined(USE_DEPTH_RENDERBUFFER)
-    // Create the renderbuffer that will serve as the depth attachment for the framebuffer.
-    glGenRenderbuffers(1, &target.depth.id);
-    glBindRenderbuffer(GL_RENDERBUFFER, target.depth.id);
-    glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH_COMPONENT16, width, height);    // GL_DEPTH_COMPONENT24 not supported on Android
-#elif defined(USE_DEPTH_TEXTURE)
-    // NOTE: We can also use a texture for depth buffer (GL_ARB_depth_texture/GL_OES_depth_texture extension required)
-    // A renderbuffer is simpler than a texture and could offer better performance on embedded devices
-    glGenTextures(1, &target.depth.id);
-    glBindTexture(GL_TEXTURE_2D, target.depth.id);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-    glTexImage2D(GL_TEXTURE_2D, 0, GL_DEPTH_COMPONENT24, width, height, 0, GL_DEPTH_COMPONENT, GL_UNSIGNED_INT, NULL);
-    glBindTexture(GL_TEXTURE_2D, 0);
-#endif
+    if (depthBits > 0)
+    {
+        target.depth.id = rlLoadTextureDepth(width, height, depthBits, !useDepthTexture);
+        target.depth.width = width;
+        target.depth.height = height;
+        target.depth.format = 19;       //DEPTH_COMPONENT_24BIT ?
+        target.depth.mipmaps = 1;
+    }
     //-----------------------------------------------------------------------------------------------------
     
     // Attach color texture and depth renderbuffer to FBO
     //-----------------------------------------------------------------------------------------------------
-    glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, target.texture.id, 0);
-#if defined(USE_DEPTH_RENDERBUFFER)
-    glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_RENDERBUFFER, target.depth.id);
-#elif defined(USE_DEPTH_TEXTURE)
-    glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_TEXTURE_2D, target.depth.id, 0);
-#endif
+    rlRenderTextureAttach(target, target.texture.id, 0);
+    if (useDepthTexture && texDepthSupported) rlRenderTextureAttach(target, target.depth.id, 2);
+    else rlRenderTextureAttach(target, target.depth.id, 1);
     //-----------------------------------------------------------------------------------------------------
 
     // Check if fbo is complete with attachments (valid)
     //-----------------------------------------------------------------------------------------------------
-    GLenum status = glCheckFramebufferStatus(GL_FRAMEBUFFER);
-
-    if (status != GL_FRAMEBUFFER_COMPLETE)
-    {
-        TraceLog(LOG_WARNING, "Framebuffer object could not be created...");
-
-        switch (status)
-        {
-            case GL_FRAMEBUFFER_UNSUPPORTED: TraceLog(LOG_WARNING, "Framebuffer is unsupported"); break;
-            case GL_FRAMEBUFFER_INCOMPLETE_ATTACHMENT: TraceLog(LOG_WARNING, "Framebuffer incomplete attachment"); break;
-#if defined(GRAPHICS_API_OPENGL_ES2)
-            case GL_FRAMEBUFFER_INCOMPLETE_DIMENSIONS: TraceLog(LOG_WARNING, "Framebuffer incomplete dimensions"); break;
-#endif
-            case GL_FRAMEBUFFER_INCOMPLETE_MISSING_ATTACHMENT: TraceLog(LOG_WARNING, "Framebuffer incomplete missing attachment"); break;
-            default: break;
-        }
-
-        if (target.texture.id > 0) glDeleteTextures(1, &target.texture.id);
-        if (target.depth.id > 0)
-        {
-#if defined(USE_DEPTH_RENDERBUFFER)
-            glDeleteRenderbuffers(1, &target.depth.id);
-#elif defined(USE_DEPTH_TEXTURE)
-            glDeleteTextures(1, &target.depth.id);
-#endif
-        }
-
-        glDeleteFramebuffers(1, &target.id);
-    }
-    else TraceLog(LOG_INFO, "[FBO ID %i] Framebuffer object created successfully", target.id);
+    if (rlRenderTextureComplete(target)) TraceLog(LOG_INFO, "[FBO ID %i] Framebuffer object created successfully", target.id);
     //-----------------------------------------------------------------------------------------------------
 
     glBindFramebuffer(GL_FRAMEBUFFER, 0);
@@ -2213,15 +2231,44 @@ RenderTexture2D rlLoadRenderTexture(int width, int height) //, int colorFormat, 
     return target;
 }
 
-// Improved FBO generation function to allow selecting the attached color buffer pixel format 
-// and the depth buffer type (Renderbuffer or Texture) and size
-// NOTE: Be careful on supported pixel formats...
-//RenderTexture rlLoadRenderTexture(int width, int height, int colorFormat, int depthBits, bool useDepthTexture);
-// Attach/detach color buffer texture to an FBO (returns previous attachment)
-//Texture2D rlAttachRenderTexture(RenderTexture target, Texture2D texture);
+// Attach color buffer texture to an fbo (unloads previous attachment)
+// NOTE: Attach type: 0-Color, 1-Depth renderbuffer, 2-Depth texture
+void rlRenderTextureAttach(RenderTexture target, unsigned int id, int attachType)
+{
+    glBindFramebuffer(GL_FRAMEBUFFER, target.id);
 
-//void rlRenderTextureColorAttach(RenderTexture target, Texture2D texture);
-//bool rlRenderTextureComplete(RenderTexture target); // Verify valid rendertexture
+    if (attachType == 0) glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, id, 0);
+    else if (attachType == 1) glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_RENDERBUFFER, id);
+    else if (attachType == 2) glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_TEXTURE_2D, id, 0);
+
+    glBindFramebuffer(GL_FRAMEBUFFER, 0);
+}
+
+// Verify render texture is complete
+bool rlRenderTextureComplete(RenderTexture target)
+{
+    glBindFramebuffer(GL_FRAMEBUFFER, target.id);
+    
+    GLenum status = glCheckFramebufferStatus(GL_FRAMEBUFFER);
+
+    if (status != GL_FRAMEBUFFER_COMPLETE)
+    {
+        switch (status)
+        {
+            case GL_FRAMEBUFFER_UNSUPPORTED: TraceLog(LOG_WARNING, "Framebuffer is unsupported"); break;
+            case GL_FRAMEBUFFER_INCOMPLETE_ATTACHMENT: TraceLog(LOG_WARNING, "Framebuffer has incomplete attachment"); break;
+#if defined(GRAPHICS_API_OPENGL_ES2)
+            case GL_FRAMEBUFFER_INCOMPLETE_DIMENSIONS: TraceLog(LOG_WARNING, "Framebuffer has incomplete dimensions"); break;
+#endif
+            case GL_FRAMEBUFFER_INCOMPLETE_MISSING_ATTACHMENT: TraceLog(LOG_WARNING, "Framebuffer has a missing attachment"); break;
+            default: break;
+        }
+    }
+    
+    glBindFramebuffer(GL_FRAMEBUFFER, 0);
+    
+    return (status == GL_FRAMEBUFFER_COMPLETE);
+}
 
 // Generate mipmap data for selected texture
 void rlGenerateMipmaps(Texture2D *texture)
@@ -2770,7 +2817,7 @@ void *rlReadTexturePixels(Texture2D texture)
     // 2 - Create an fbo, activate it, render quad with texture, glReadPixels()
     // We are using Option 1, just need to care for texture format on retrieval
     // NOTE: This behaviour could be conditioned by graphic driver...
-    RenderTexture2D fbo = rlLoadRenderTexture(texture.width, texture.height);
+    RenderTexture2D fbo = rlLoadRenderTexture(texture.width, texture.height, UNCOMPRESSED_R8G8B8A8, 16, false);
     
     glBindFramebuffer(GL_FRAMEBUFFER, fbo.id);
     glBindTexture(GL_TEXTURE_2D, 0);
@@ -3509,7 +3556,7 @@ void InitVrSimulator(VrDeviceInfo info)
 #if defined(GRAPHICS_API_OPENGL_33) || defined(GRAPHICS_API_OPENGL_ES2)
     // Initialize framebuffer and textures for stereo rendering
     // NOTE: Screen size should match HMD aspect ratio
-    vrConfig.stereoFbo = rlLoadRenderTexture(screenWidth, screenHeight);
+    vrConfig.stereoFbo = rlLoadRenderTexture(screenWidth, screenHeight, UNCOMPRESSED_R8G8B8A8, 24, false);
 
 #if defined(SUPPORT_DISTORTION_SHADER)
     // Load distortion shader

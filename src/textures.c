@@ -486,7 +486,7 @@ TextureCubemap LoadTextureCubemap(Image image, int layoutType)
 // NOTE: Render texture is loaded by default with RGBA color attachment and depth RenderBuffer
 RenderTexture2D LoadRenderTexture(int width, int height)
 {
-    RenderTexture2D target = rlLoadRenderTexture(width, height);
+    RenderTexture2D target = rlLoadRenderTexture(width, height, UNCOMPRESSED_R8G8B8A8, 24, false);
 
     return target;
 }
