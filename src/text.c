@@ -787,7 +787,7 @@ void DrawTextRec(Font font, const char *text, Rectangle rec, float fontSize, flo
 
 // Draw text using font inside rectangle limits with support for text selection
 void DrawTextRecEx(Font font, const char *text, Rectangle rec, float fontSize, float spacing, bool wordWrap, Color tint, 
-        int selectStart, int selectLength, Color selectText, Color selectBG) 
+                   int selectStart, int selectLength, Color selectText, Color selectBack) 
 {
     int length = strlen(text);
     int textOffsetX = 0;        // Offset between characters
@@ -800,7 +800,7 @@ void DrawTextRecEx(Font font, const char *text, Rectangle rec, float fontSize, f
     scaleFactor = fontSize/font.baseSize;
 
     enum { MEASURE_STATE = 0, DRAW_STATE = 1 };
-    int state = wordWrap?MEASURE_STATE:DRAW_STATE;
+    int state = wordWrap? MEASURE_STATE : DRAW_STATE;
     int startLine = -1;   // Index where to begin drawing (where a line begins)
     int endLine = -1;     // Index where to stop drawing (where a line ends)
     
@@ -828,8 +828,8 @@ void DrawTextRecEx(Font font, const char *text, Rectangle rec, float fontSize, f
             else index = GetGlyphIndex(font, (unsigned char)text[i]);
             
             glyphWidth = (font.chars[index].advanceX == 0)? 
-                            (int)(font.chars[index].rec.width*scaleFactor + spacing):
-                            (int)(font.chars[index].advanceX*scaleFactor + spacing);
+                         (int)(font.chars[index].rec.width*scaleFactor + spacing):
+                         (int)(font.chars[index].advanceX*scaleFactor + spacing);
         }
         
         // NOTE: When wordWrap is ON we first measure how much of the text we can draw
@@ -842,26 +842,27 @@ void DrawTextRecEx(Font font, const char *text, Rectangle rec, float fontSize, f
         // the container.
         if (state == MEASURE_STATE) 
         {
-            if((letter == ' ') || (letter == '\t') || (letter == '\n')) endLine = i;
+            if ((letter == ' ') || (letter == '\t') || (letter == '\n')) endLine = i;
             
-            if(textOffsetX + glyphWidth + 1 >= rec.width) 
+            if ((textOffsetX + glyphWidth + 1) >= rec.width) 
             {
                 endLine = (endLine < 1) ? i : endLine;
-                if(i == endLine) endLine -= 1;
-                if(startLine + 1 == endLine ) endLine = i - 1;
+                if (i == endLine) endLine -= 1;
+                if ((startLine + 1) == endLine) endLine = i - 1;
                 state = !state;
             } 
-            else if(i + 1 == length) 
+            else if ((i + 1) == length) 
             {
                 endLine = i;
                 state = !state;
             }
-            else if(letter == '\n') 
+            else if (letter == '\n') 
             {
                 state = !state;
             }
             
-            if(state == DRAW_STATE) {
+            if (state == DRAW_STATE)
+            {
                 textOffsetX = 0;
                 i = startLine;
                 glyphWidth = 0;
@@ -872,14 +873,16 @@ void DrawTextRecEx(Font font, const char *text, Rectangle rec, float fontSize, f
         {
             if (letter == '\n')
             {
-                if(!wordWrap){
+                if (!wordWrap)
+                {
                     textOffsetY += (int)((font.baseSize + font.baseSize/2)*scaleFactor);
                     textOffsetX = 0;
                 }
             } 
             else 
             {
-                if(!wordWrap && textOffsetX + glyphWidth + 1 >= rec.width) {
+                if (!wordWrap && ((textOffsetX + glyphWidth + 1) >= rec.width))
+                {
                     textOffsetY += (int)((font.baseSize + font.baseSize/2)*scaleFactor);
                     textOffsetX = 0;
                 }
@@ -888,10 +891,10 @@ void DrawTextRecEx(Font font, const char *text, Rectangle rec, float fontSize, f
                 
                 //draw selected
                 bool isGlyphSelected = false;
-                if(selectStart >= 0 && i >= selectStart && i < selectStart + selectLength) {
-                    Rectangle strec = {rec.x + textOffsetX-1, rec.y + textOffsetY, 
-                            glyphWidth,(font.baseSize + font.baseSize/4)*scaleFactor};
-                    DrawRectangleRec(strec, selectBG);
+                if ((selectStart >= 0) && (i >= selectStart) && (i < (selectStart + selectLength)))
+                {
+                    Rectangle strec = {rec.x + textOffsetX-1, rec.y + textOffsetY, glyphWidth, (font.baseSize + font.baseSize/4)*scaleFactor };
+                    DrawRectangleRec(strec, selectBack);
                     isGlyphSelected = true;
                 }
                 
@@ -907,7 +910,7 @@ void DrawTextRecEx(Font font, const char *text, Rectangle rec, float fontSize, f
                 }
             }
             
-            if (wordWrap && i == endLine) 
+            if (wordWrap && (i == endLine)) 
             {
                 textOffsetY += (int)((font.baseSize + font.baseSize/2)*scaleFactor);
                 textOffsetX = 0;
