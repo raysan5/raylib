@@ -450,14 +450,18 @@ Vector3 rlUnproject(Vector3 source, Matrix proj, Matrix view);  // Get world coo
 
 // Textures data management
 unsigned int rlLoadTexture(void *data, int width, int height, int format, int mipmapCount); // Load texture in GPU
+unsigned int rlLoadTextureCubemap(void *data, int size, int format);                        // Load texture cubemap
 void rlUpdateTexture(unsigned int id, int width, int height, int format, const void *data); // Update GPU texture with new data
 void rlGetGlTextureFormats(int format, unsigned int *glInternalFormat, unsigned int *glFormat, unsigned int *glType);  // Get OpenGL internal formats
-void rlUnloadTexture(unsigned int id);                              // Unload texture from GPU memory
+void rlUnloadTexture(unsigned int id);                                  // Unload texture from GPU memory
 
 void rlGenerateMipmaps(Texture2D *texture);                         // Generate mipmap data for selected texture
 void *rlReadTexturePixels(Texture2D texture);                       // Read texture pixel data
 unsigned char *rlReadScreenPixels(int width, int height);           // Read screen pixel data (color buffer)
-RenderTexture2D rlLoadRenderTexture(int width, int height);         // Load a texture to be used for rendering (fbo with color and depth attachments)
+RenderTexture2D rlLoadRenderTexture(int width, int height);         // Load a texture to be used for rendering (fbo with default color and depth attachments)
+RenderTexture2D rlLoadRenderTextureEx(int width, int height, int colorFormat, int depthBits, bool useDepthTexture);
+void rlAttachRenderTexture(RenderTexture target, unsigned int textureId); // Attach/detach color buffer texture to an FBO (returns previous attachment)
+bool rlCompleteRenderTexture(RenderTexture target);                 // Verify rendertexture is complete
 
 // Vertex data management
 void rlLoadMesh(Mesh *mesh, bool dynamic);                          // Upload vertex data into GPU and provided VAO/VBO ids
@@ -699,9 +703,9 @@ typedef struct DynamicBuffer {
 typedef struct DrawCall {
     int mode;                   // Drawing mode: LINES, TRIANGLES, QUADS
     int vertexCount;            // Number of vertex of the draw
-    //GLuint vaoId;             // Vertex Array id to be used on the draw
-    //GLuint shaderId;          // Shader id to be used on the draw
-    GLuint textureId;           // Texture id to be used on the draw
+    //unsigned int vaoId;         // Vertex Array id to be used on the draw
+    //unsigned int shaderId;      // Shader id to be used on the draw
+    unsigned int textureId;     // Texture id to be used on the draw
     //Matrix projection;        // Projection matrix for this draw
     //Matrix modelview;         // Modelview matrix for this draw
 } DrawCall;
@@ -713,7 +717,8 @@ typedef struct VrStereoConfig {
     Shader distortionShader;    // VR stereo rendering distortion shader
     Matrix eyesProjection[2];   // VR stereo rendering eyes projection matrices
     Matrix eyesViewOffset[2];   // VR stereo rendering eyes view offset matrices
-    int eyesViewport[2][4];     // VR stereo rendering eyes viewports [x, y, w, h]
+    int eyeViewportRight[4];    // VR stereo rendering right eye viewport [x, y, w, h]
+    int eyeViewportLeft[4];     // VR stereo rendering left eye viewport [x, y, w, h]
 } VrStereoConfig;
 #endif
 
@@ -1816,7 +1821,7 @@ unsigned int rlLoadTexture(void *data, int width, int height, int format, int mi
 {
     glBindTexture(GL_TEXTURE_2D, 0);    // Free any old binding
 
-    GLuint id = 0;
+    unsigned int id = 0;
 
     // Check texture format support by OpenGL 1.1 (compressed textures not supported)
 #if defined(GRAPHICS_API_OPENGL_11)
@@ -2039,26 +2044,81 @@ void rlUnloadTexture(unsigned int id)
     if (id > 0) glDeleteTextures(1, &id);
 }
 
-// Load a texture to be used for rendering (fbo with color and depth attachments)
-RenderTexture2D rlLoadRenderTexture(int width, int height)
+// Load texture cubemap
+// NOTE: Cubemap data is expected to be 6 images in a single column,
+// expected the following convention: +X, -X, +Y, -Y, +Z, -Z
+unsigned int rlLoadTextureCubemap(void *data, int size, int format)
+{
+    unsigned int cubemapId = 0;
+    unsigned int dataSize = GetPixelDataSize(size, size, format);
+
+    glGenTextures(1, &cubemapId);
+    glBindTexture(GL_TEXTURE_CUBE_MAP, cubemapId);
+   
+    unsigned int glInternalFormat, glFormat, glType;
+    rlGetGlTextureFormats(format, &glInternalFormat, &glFormat, &glType);
+
+    // Load cubemap faces
+    for (unsigned int i = 0; i < 6; i++)
+    {
+        if (glInternalFormat != -1)
+        {
+            if (format < COMPRESSED_DXT1_RGB) glTexImage2D(GL_TEXTURE_CUBE_MAP_POSITIVE_X + i, 0, glInternalFormat, size, size, 0, glFormat, glType, (unsigned char *)data + i*dataSize);
+#if !defined(GRAPHICS_API_OPENGL_11)
+            else glCompressedTexImage2D(GL_TEXTURE_CUBE_MAP_POSITIVE_X + i, 0, glInternalFormat, size, size, 0, dataSize, (unsigned char *)data + i*dataSize);
+#endif
+#if defined(GRAPHICS_API_OPENGL_33)
+            if (format == UNCOMPRESSED_GRAYSCALE)
+            {
+                GLint swizzleMask[] = { GL_RED, GL_RED, GL_RED, GL_ONE };
+                glTexParameteriv(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_SWIZZLE_RGBA, swizzleMask);
+            }
+            else if (format == UNCOMPRESSED_GRAY_ALPHA)
+            {
+#if defined(GRAPHICS_API_OPENGL_21)
+                GLint swizzleMask[] = { GL_RED, GL_RED, GL_RED, GL_ALPHA };
+#elif defined(GRAPHICS_API_OPENGL_33)
+                GLint swizzleMask[] = { GL_RED, GL_RED, GL_RED, GL_GREEN };
+#endif
+                glTexParameteriv(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_SWIZZLE_RGBA, swizzleMask);
+            }
+#endif
+        }
+    }
+    
+    // Set cubemap texture sampling parameters
+    glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+    glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+#if defined(GRAPHICS_API_OPENGL_33)
+    glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_R, GL_CLAMP_TO_EDGE);  // Flag not supported on OpenGL ES 2.0
+#endif
+
+    glBindTexture(GL_TEXTURE_CUBE_MAP, 0);
+
+    return cubemapId;
+}
+
+// Load a texture to be used for rendering (fbo with default color and depth attachments)
+// NOTE: If colorFormat or depthBits are no supported, no attachment is done
+RenderTexture2D rlLoadRenderTexture(int width, int height) //, int colorFormat, int depthBits, bool useDepthTexture);
 {
     RenderTexture2D target = { 0 };
 
-    target.id = 0;
-
+#if defined(GRAPHICS_API_OPENGL_33) || defined(GRAPHICS_API_OPENGL_ES2)    
+    // Create the framebuffer object
+    glGenFramebuffers(1, &target.id);
+    glBindFramebuffer(GL_FRAMEBUFFER, target.id);
+    
+    // Create fbo color texture attachment
+    //-----------------------------------------------------------------------------------------------------
     target.texture.id = 0;
     target.texture.width = width;
     target.texture.height = height;
     target.texture.format = UNCOMPRESSED_R8G8B8A8;
     target.texture.mipmaps = 1;
 
-    target.depth.id = 0;
-    target.depth.width = width;
-    target.depth.height = height;
-    target.depth.format = 19;       //DEPTH_COMPONENT_24BIT
-    target.depth.mipmaps = 1;
-
-#if defined(GRAPHICS_API_OPENGL_33) || defined(GRAPHICS_API_OPENGL_ES2)
     // Create the texture that will serve as the color attachment for the framebuffer
     glGenTextures(1, &target.texture.id);
     glBindTexture(GL_TEXTURE_2D, target.texture.id);
@@ -2068,7 +2128,16 @@ RenderTexture2D rlLoadRenderTexture(int width, int height)
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
     glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, NULL);
     glBindTexture(GL_TEXTURE_2D, 0);
-
+    //-----------------------------------------------------------------------------------------------------
+    
+    // Create fbo depth renderbuffer/texture
+    //-----------------------------------------------------------------------------------------------------
+    target.depth.id = 0;
+    target.depth.width = width;
+    target.depth.height = height;
+    target.depth.format = 19;       //DEPTH_COMPONENT_24BIT
+    target.depth.mipmaps = 1;
+    
 #if defined(GRAPHICS_API_OPENGL_21) || defined(GRAPHICS_API_OPENGL_ES2)
     #define USE_DEPTH_RENDERBUFFER
 #else
@@ -2092,19 +2161,20 @@ RenderTexture2D rlLoadRenderTexture(int width, int height)
     glTexImage2D(GL_TEXTURE_2D, 0, GL_DEPTH_COMPONENT24, width, height, 0, GL_DEPTH_COMPONENT, GL_UNSIGNED_INT, NULL);
     glBindTexture(GL_TEXTURE_2D, 0);
 #endif
-
-    // Create the framebuffer object
-    glGenFramebuffers(1, &target.id);
-    glBindFramebuffer(GL_FRAMEBUFFER, target.id);
-
+    //-----------------------------------------------------------------------------------------------------
+    
     // Attach color texture and depth renderbuffer to FBO
+    //-----------------------------------------------------------------------------------------------------
     glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, target.texture.id, 0);
 #if defined(USE_DEPTH_RENDERBUFFER)
     glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_RENDERBUFFER, target.depth.id);
 #elif defined(USE_DEPTH_TEXTURE)
     glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_TEXTURE_2D, target.depth.id, 0);
 #endif
+    //-----------------------------------------------------------------------------------------------------
 
+    // Check if fbo is complete with attachments (valid)
+    //-----------------------------------------------------------------------------------------------------
     GLenum status = glCheckFramebufferStatus(GL_FRAMEBUFFER);
 
     if (status != GL_FRAMEBUFFER_COMPLETE)
@@ -2135,12 +2205,23 @@ RenderTexture2D rlLoadRenderTexture(int width, int height)
         glDeleteFramebuffers(1, &target.id);
     }
     else TraceLog(LOG_INFO, "[FBO ID %i] Framebuffer object created successfully", target.id);
+    //-----------------------------------------------------------------------------------------------------
 
     glBindFramebuffer(GL_FRAMEBUFFER, 0);
 #endif
 
     return target;
 }
+
+// Improved FBO generation function to allow selecting the attached color buffer pixel format 
+// and the depth buffer type (Renderbuffer or Texture) and size
+// NOTE: Be careful on supported pixel formats...
+//RenderTexture rlLoadRenderTexture(int width, int height, int colorFormat, int depthBits, bool useDepthTexture);
+// Attach/detach color buffer texture to an FBO (returns previous attachment)
+//Texture2D rlAttachRenderTexture(RenderTexture target, Texture2D texture);
+
+//void rlRenderTextureColorAttach(RenderTexture target, Texture2D texture);
+//bool rlRenderTextureComplete(RenderTexture target); // Verify valid rendertexture
 
 // Generate mipmap data for selected texture
 void rlGenerateMipmaps(Texture2D *texture)
@@ -2855,7 +2936,7 @@ Shader LoadShaderCode(char *vsCode, char *fsCode)
         name[namelen] = 0;
 
         // Get the location of the named uniform
-        GLuint location = glGetUniformLocation(shader.id, name);
+        unsigned int location = glGetUniformLocation(shader.id, name);
 
         TraceLog(LOG_DEBUG, "[SHDR ID %i] Active uniform [%s] set at location: %i", shader.id, name, location);
     }
@@ -4315,8 +4396,8 @@ static void SetStereoConfig(VrDeviceInfo hmd)
     vrConfig.eyesViewOffset[1] = MatrixTranslate(hmd.interpupillaryDistance*0.5f, 0.075f, 0.045f);
 
     // Compute eyes Viewports
-    //vrConfig.eyesViewport[0] = { 0.0f, 0.0f, (float)hmd.hResolution/2, (float)hmd.vResolution };
-    //vrConfig.eyesViewport[1] = { hmd.hResolution/2.0f, 0.0f, (float)hmd.hResolution/2, (float) hmd.vResolution };
+    //vrConfig.eyeViewportRight[0] = (int[4]){ 0, 0, hmd.hResolution/2, hmd.vResolution };
+    //vrConfig.eyeViewportLeft[0] = (int[4]){ hmd.hResolution/2, 0, hmd.hResolution/2, hmd.vResolution };
 }
 
 // Set internal projection and modelview matrix depending on eyes tracking data

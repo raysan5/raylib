@@ -222,6 +222,9 @@ typedef struct Texture2D {
 // Texture type, same as Texture2D
 typedef Texture2D Texture;
 
+// TextureCubemap type, actually, same as Texture2D
+typedef Texture2D TextureCubemap;
+
 // RenderTexture2D type, for texture rendering
 typedef struct RenderTexture2D {
     unsigned int id;        // OpenGL Framebuffer Object (FBO) id
@@ -749,6 +752,16 @@ typedef enum {
     FILTER_ANISOTROPIC_16X,         // Anisotropic filtering 16x
 } TextureFilterMode;
 
+// Cubemap layout type
+typedef enum {
+    CUBEMAP_AUTO_DETECT = 0,        // Automatically detect layout type
+    CUBEMAP_LINE_VERTICAL,          // Layout is defined by a vertical line with faces
+    CUBEMAP_LINE_HORIZONTAL,        // Layout is defined by an horizontal line with faces
+    CUBEMAP_CROSS_THREE_BY_FOUR,    // Layout is defined by a 3x4 cross with cubemap faces
+    CUBEMAP_CROSS_FOUR_BY_THREE,    // Layout is defined by a 4x3 cross with cubemap faces
+    CUBEMAP_PANORAMA                // Layout is defined by a panorama image (equirectangular map)
+} CubemapLayoutType;
+
 // Texture parameters: wrap mode
 typedef enum {
     WRAP_REPEAT = 0,        // Repeats texture in tiled mode
@@ -1049,6 +1062,7 @@ RLAPI void ExportImage(Image image, const char *fileName);                      
 RLAPI void ExportImageAsCode(Image image, const char *fileName);                                         // Export image as code file defining an array of bytes
 RLAPI Texture2D LoadTexture(const char *fileName);                                                       // Load texture from file into GPU memory (VRAM)
 RLAPI Texture2D LoadTextureFromImage(Image image);                                                       // Load texture from image data
+RLAPI TextureCubemap LoadTextureCubemap(Image image, int layoutType);                                    // Load cubemap from image, multiple image cubemap layouts supported
 RLAPI RenderTexture2D LoadRenderTexture(int width, int height);                                          // Load texture for rendering (framebuffer)
 RLAPI void UnloadImage(Image image);                                                                     // Unload image from CPU memory (RAM)
 RLAPI void UnloadTexture(Texture2D texture);                                                             // Unload texture from GPU memory (VRAM)
