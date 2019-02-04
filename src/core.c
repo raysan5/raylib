@@ -278,6 +278,7 @@ static const char *windowTitle = NULL;          // Window text title...
 static unsigned int displayWidth, displayHeight;// Display width and height (monitor, device-screen, LCD, ...)
 static int screenWidth, screenHeight;           // Screen width and height (used render area)
 static int renderWidth, renderHeight;           // Framebuffer width and height (render area, including black bars if required)
+static int currentWidth, currentHeight;         // Current render width and height, it could change on BeginTextureMode()
 static int renderOffsetX = 0;                   // Offset X from render area (must be divided by 2)
 static int renderOffsetY = 0;                   // Offset Y from render area (must be divided by 2)
 static bool fullscreen = false;                 // Fullscreen mode (useful only for PLATFORM_DESKTOP)
@@ -518,6 +519,8 @@ void InitWindow(int width, int height, const char *title)
 #if defined(PLATFORM_ANDROID)
     screenWidth = width;
     screenHeight = height;
+    currentWidth = width;
+    currentHeight = height;
 
     // Input data is android app pointer
     internalDataPath = androidApp->activity->internalDataPath;
@@ -1142,7 +1145,7 @@ void BeginMode3D(Camera3D camera)
     rlPushMatrix();                     // Save previous matrix, which contains the settings for the 2d ortho projection
     rlLoadIdentity();                   // Reset current matrix (PROJECTION)
 
-    float aspect = (float)screenWidth/(float)screenHeight;
+    float aspect = (float)currentWidth/(float)currentHeight;
 
     if (camera.type == CAMERA_PERSPECTIVE)
     {
@@ -1208,6 +1211,11 @@ void BeginTextureMode(RenderTexture2D target)
     rlLoadIdentity();                   // Reset current matrix (MODELVIEW)
 
     //rlScalef(0.0f, -1.0f, 0.0f);      // Flip Y-drawing (?)
+    
+    // Setup current width/height for proper aspect ratio
+    // calculation when using BeginMode3D()
+    currentWidth = target.texture.width;
+    currentHeight = target.texture.height;
 }
 
 // Ends drawing to render texture
@@ -2262,6 +2270,8 @@ static bool InitGraphicsDevice(int width, int height)
 {
     screenWidth = width;        // User desired width
     screenHeight = height;      // User desired height
+    currentWidth = width;
+    currentHeight = height;
 
     // NOTE: Framebuffer (render area - renderWidth, renderHeight) could include black bars...
     // ...in top-down or left-right to match display aspect ratio (no weird scalings)
@@ -3378,6 +3388,8 @@ static void WindowSizeCallback(GLFWwindow *window, int width, int height)
     screenHeight = height;
     renderWidth = width;
     renderHeight = height;
+    currentWidth = width;
+    currentHeight = height;
 
     // NOTE: Postprocessing texture is not scaled to new size
 }
