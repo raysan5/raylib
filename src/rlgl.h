@@ -183,9 +183,10 @@ typedef unsigned char byte;
 
     // RenderTexture2D type, for texture rendering
     typedef struct RenderTexture2D {
-        unsigned int id;        // OpenGL Framebuffer Object (FBO) id
+        unsigned int id;        // OpenGL framebuffer (fbo) id
         Texture2D texture;      // Color buffer attachment texture
         Texture2D depth;        // Depth buffer attachment texture
+        bool depthTexture;      // Track if depth attachment is a texture or renderbuffer
     } RenderTexture2D;
 
     // RenderTexture type, same as RenderTexture2D
@@ -521,11 +522,11 @@ void EndBlendMode(void);                          // End blending mode (reset to
 
 // VR control functions
 VrDeviceInfo GetVrDeviceInfo(int vrDeviceType);   // Get VR device information for some standard devices
+VrStereoConfig SetStereoConfig(VrDeviceInfo hmd, Shader distortion);
 void InitVrSimulator(VrDeviceInfo info);          // Init VR simulator for selected device parameters
+void UpdateVrTracking(Camera *camera);            // Update VR tracking (position and orientation) and camera
 void CloseVrSimulator(void);                      // Close VR simulator for current device
 bool IsVrSimulatorReady(void);                    // Detect if VR simulator is ready
-void SetVrDistortionShader(Shader shader);        // Set VR distortion shader for stereoscopic rendering
-void UpdateVrTracking(Camera *camera);            // Update VR tracking (position and orientation) and camera
 void ToggleVrMode(void);                          // Enable/Disable VR experience
 void BeginVrDrawing(void);                        // Begin VR simulator stereo rendering
 void EndVrDrawing(void);                          // End VR simulator stereo rendering
@@ -721,18 +722,6 @@ typedef struct DrawCall {
     //Matrix modelview;         // Modelview matrix for this draw
 } DrawCall;
 
-#if defined(SUPPORT_VR_SIMULATOR)
-// VR Stereo rendering configuration for simulator
-typedef struct VrStereoConfig {
-    RenderTexture2D stereoFbo;  // VR stereo rendering framebuffer
-    Shader distortionShader;    // VR stereo rendering distortion shader
-    Matrix eyesProjection[2];   // VR stereo rendering eyes projection matrices
-    Matrix eyesViewOffset[2];   // VR stereo rendering eyes view offset matrices
-    int eyeViewportRight[4];    // VR stereo rendering right eye viewport [x, y, w, h]
-    int eyeViewportLeft[4];     // VR stereo rendering left eye viewport [x, y, w, h]
-} VrStereoConfig;
-#endif
-
 //----------------------------------------------------------------------------------
 // Global Variables Definition
 //----------------------------------------------------------------------------------
@@ -917,8 +906,8 @@ static void GenDrawCube(void);              // Generate and draw cube
 static void GenDrawQuad(void);              // Generate and draw quad
 
 #if defined(SUPPORT_VR_SIMULATOR)
-static void SetStereoConfig(VrDeviceInfo info); // Configure stereo rendering (including distortion shader) with HMD device parameters
-static void SetStereoView(int eye, Matrix matProjection, Matrix matModelView); // Set internal projection and modelview matrix depending on eye
+static VrStereoConfig SetStereoConfig(VrDeviceInfo info, Shader distortion);    // Configure stereo rendering (including distortion shader) with HMD device parameters
+static void SetStereoView(int eye, Matrix matProjection, Matrix matModelView);  // Set internal projection and modelview matrix depending on eye
 #endif
 
 #endif  // defined(GRAPHICS_API_OPENGL_33) || defined(GRAPHICS_API_OPENGL_ES2)
@@ -1404,11 +1393,8 @@ void rlDeleteRenderTextures(RenderTexture2D target)
     if (target.texture.id > 0) glDeleteTextures(1, &target.texture.id);
     if (target.depth.id > 0)
     {
-#if defined(GRAPHICS_API_OPENGL_21) || defined(GRAPHICS_API_OPENGL_ES2)
-        glDeleteRenderbuffers(1, &target.depth.id);
-#elif defined(GRAPHICS_API_OPENGL_33)
-        glDeleteTextures(1, &target.depth.id);
-#endif
+        if (target.depthTexture) glDeleteTextures(1, &target.depth.id);
+        else glDeleteRenderbuffers(1, &target.depth.id);
     }
 
     if (target.id > 0) glDeleteFramebuffers(1, &target.id);
@@ -2047,8 +2033,64 @@ unsigned int rlLoadTextureDepth(int width, int height, int bits, bool useRenderB
     return id;
 }
 
+// Load texture cubemap
+// NOTE: Cubemap data is expected to be 6 images in a single column,
+// expected the following convention: +X, -X, +Y, -Y, +Z, -Z
+unsigned int rlLoadTextureCubemap(void *data, int size, int format)
+{
+    unsigned int cubemapId = 0;
+    unsigned int dataSize = GetPixelDataSize(size, size, format);
+
+    glGenTextures(1, &cubemapId);
+    glBindTexture(GL_TEXTURE_CUBE_MAP, cubemapId);
+   
+    unsigned int glInternalFormat, glFormat, glType;
+    rlGetGlTextureFormats(format, &glInternalFormat, &glFormat, &glType);
+
+    // Load cubemap faces
+    for (unsigned int i = 0; i < 6; i++)
+    {
+        if (glInternalFormat != -1)
+        {
+            if (format < COMPRESSED_DXT1_RGB) glTexImage2D(GL_TEXTURE_CUBE_MAP_POSITIVE_X + i, 0, glInternalFormat, size, size, 0, glFormat, glType, (unsigned char *)data + i*dataSize);
+#if !defined(GRAPHICS_API_OPENGL_11)
+            else glCompressedTexImage2D(GL_TEXTURE_CUBE_MAP_POSITIVE_X + i, 0, glInternalFormat, size, size, 0, dataSize, (unsigned char *)data + i*dataSize);
+#endif
+#if defined(GRAPHICS_API_OPENGL_33)
+            if (format == UNCOMPRESSED_GRAYSCALE)
+            {
+                GLint swizzleMask[] = { GL_RED, GL_RED, GL_RED, GL_ONE };
+                glTexParameteriv(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_SWIZZLE_RGBA, swizzleMask);
+            }
+            else if (format == UNCOMPRESSED_GRAY_ALPHA)
+            {
+#if defined(GRAPHICS_API_OPENGL_21)
+                GLint swizzleMask[] = { GL_RED, GL_RED, GL_RED, GL_ALPHA };
+#elif defined(GRAPHICS_API_OPENGL_33)
+                GLint swizzleMask[] = { GL_RED, GL_RED, GL_RED, GL_GREEN };
+#endif
+                glTexParameteriv(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_SWIZZLE_RGBA, swizzleMask);
+            }
+#endif
+        }
+    }
+    
+    // Set cubemap texture sampling parameters
+    glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+    glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+#if defined(GRAPHICS_API_OPENGL_33)
+    glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_R, GL_CLAMP_TO_EDGE);  // Flag not supported on OpenGL ES 2.0
+#endif
+
+    glBindTexture(GL_TEXTURE_CUBE_MAP, 0);
+
+    return cubemapId;
+}
+
 // Update already loaded texture in GPU with new data
-// TODO: We don't know safely if internal texture format is the expected one...
+// NOTE: We don't know safely if internal texture format is the expected one...
 void rlUpdateTexture(unsigned int id, int width, int height, int format, const void *data)
 {
     glBindTexture(GL_TEXTURE_2D, id);
@@ -2121,67 +2163,13 @@ void rlUnloadTexture(unsigned int id)
     if (id > 0) glDeleteTextures(1, &id);
 }
 
-// Load texture cubemap
-// NOTE: Cubemap data is expected to be 6 images in a single column,
-// expected the following convention: +X, -X, +Y, -Y, +Z, -Z
-unsigned int rlLoadTextureCubemap(void *data, int size, int format)
-{
-    unsigned int cubemapId = 0;
-    unsigned int dataSize = GetPixelDataSize(size, size, format);
-
-    glGenTextures(1, &cubemapId);
-    glBindTexture(GL_TEXTURE_CUBE_MAP, cubemapId);
-   
-    unsigned int glInternalFormat, glFormat, glType;
-    rlGetGlTextureFormats(format, &glInternalFormat, &glFormat, &glType);
-
-    // Load cubemap faces
-    for (unsigned int i = 0; i < 6; i++)
-    {
-        if (glInternalFormat != -1)
-        {
-            if (format < COMPRESSED_DXT1_RGB) glTexImage2D(GL_TEXTURE_CUBE_MAP_POSITIVE_X + i, 0, glInternalFormat, size, size, 0, glFormat, glType, (unsigned char *)data + i*dataSize);
-#if !defined(GRAPHICS_API_OPENGL_11)
-            else glCompressedTexImage2D(GL_TEXTURE_CUBE_MAP_POSITIVE_X + i, 0, glInternalFormat, size, size, 0, dataSize, (unsigned char *)data + i*dataSize);
-#endif
-#if defined(GRAPHICS_API_OPENGL_33)
-            if (format == UNCOMPRESSED_GRAYSCALE)
-            {
-                GLint swizzleMask[] = { GL_RED, GL_RED, GL_RED, GL_ONE };
-                glTexParameteriv(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_SWIZZLE_RGBA, swizzleMask);
-            }
-            else if (format == UNCOMPRESSED_GRAY_ALPHA)
-            {
-#if defined(GRAPHICS_API_OPENGL_21)
-                GLint swizzleMask[] = { GL_RED, GL_RED, GL_RED, GL_ALPHA };
-#elif defined(GRAPHICS_API_OPENGL_33)
-                GLint swizzleMask[] = { GL_RED, GL_RED, GL_RED, GL_GREEN };
-#endif
-                glTexParameteriv(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_SWIZZLE_RGBA, swizzleMask);
-            }
-#endif
-        }
-    }
-    
-    // Set cubemap texture sampling parameters
-    glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-    glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-    glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-    glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-#if defined(GRAPHICS_API_OPENGL_33)
-    glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_R, GL_CLAMP_TO_EDGE);  // Flag not supported on OpenGL ES 2.0
-#endif
-
-    glBindTexture(GL_TEXTURE_CUBE_MAP, 0);
-
-    return cubemapId;
-}
-
 // Load a texture to be used for rendering (fbo with default color and depth attachments)
 // NOTE: If colorFormat or depthBits are no supported, no attachment is done
 RenderTexture2D rlLoadRenderTexture(int width, int height, int format, int depthBits, bool useDepthTexture)
 {
     RenderTexture2D target = { 0 };
+    
+    if (useDepthTexture && texDepthSupported) target.depthTexture = true;
 
 #if defined(GRAPHICS_API_OPENGL_33) || defined(GRAPHICS_API_OPENGL_ES2)    
     // Create the framebuffer object
@@ -2215,9 +2203,8 @@ RenderTexture2D rlLoadRenderTexture(int width, int height, int format, int depth
     
     // Attach color texture and depth renderbuffer to FBO
     //-----------------------------------------------------------------------------------------------------
-    rlRenderTextureAttach(target, target.texture.id, 0);
-    if (useDepthTexture && texDepthSupported) rlRenderTextureAttach(target, target.depth.id, 2);
-    else rlRenderTextureAttach(target, target.depth.id, 1);
+    rlRenderTextureAttach(target, target.texture.id, 0);    // COLOR attachment
+    rlRenderTextureAttach(target, target.depth.id, 1);      // DEPTH attachment
     //-----------------------------------------------------------------------------------------------------
 
     // Check if fbo is complete with attachments (valid)
@@ -2233,14 +2220,17 @@ RenderTexture2D rlLoadRenderTexture(int width, int height, int format, int depth
 
 // Attach color buffer texture to an fbo (unloads previous attachment)
 // NOTE: Attach type: 0-Color, 1-Depth renderbuffer, 2-Depth texture
-void rlRenderTextureAttach(RenderTexture target, unsigned int id, int attachType)
+void rlRenderTextureAttach(RenderTexture2D target, unsigned int id, int attachType)
 {
     glBindFramebuffer(GL_FRAMEBUFFER, target.id);
 
     if (attachType == 0) glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, id, 0);
-    else if (attachType == 1) glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_RENDERBUFFER, id);
-    else if (attachType == 2) glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_TEXTURE_2D, id, 0);
-
+    else if (attachType == 1) 
+    {
+        if (target.depthTexture) glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_TEXTURE_2D, id, 0);
+        else glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_RENDERBUFFER, id);
+    }
+    
     glBindFramebuffer(GL_FRAMEBUFFER, 0);
 }
 
@@ -2341,9 +2331,15 @@ void rlGenerateMipmaps(Texture2D *texture)
 }
 
 // Upload vertex data into a VAO (if supported) and VBO
-// TODO: Check if mesh has already been loaded in GPU
 void rlLoadMesh(Mesh *mesh, bool dynamic)
 {
+    if (mesh->vaoId > 0)
+    {
+        // Check if mesh has already been loaded in GPU
+        TraceLog(LOG_WARNING, "Trying to re-load an already loaded mesh");
+        return;
+    }
+    
     mesh->vaoId = 0;        // Vertex Array Object
     mesh->vboId[0] = 0;     // Vertex positions VBO
     mesh->vboId[1] = 0;     // Vertex texcoords VBO
@@ -2612,8 +2608,6 @@ void rlDrawMesh(Mesh mesh, Material material, Matrix transform)
     if (vaoSupported) glBindVertexArray(mesh.vaoId);
     else
     {
-        // TODO: Simplify VBO binding into a for loop
-
         // Bind mesh VBO data: vertex position (shader-location = 0)
         glBindBuffer(GL_ARRAY_BUFFER, mesh.vboId[0]);
         glVertexAttribPointer(material.shader.locs[LOC_VERTEX_POSITION], 3, GL_FLOAT, 0, 0, 0);
@@ -3554,19 +3548,16 @@ VrDeviceInfo GetVrDeviceInfo(int vrDeviceType)
 void InitVrSimulator(VrDeviceInfo info)
 {
 #if defined(GRAPHICS_API_OPENGL_33) || defined(GRAPHICS_API_OPENGL_ES2)
-    // Initialize framebuffer and textures for stereo rendering
-    // NOTE: Screen size should match HMD aspect ratio
-    vrConfig.stereoFbo = rlLoadRenderTexture(screenWidth, screenHeight, UNCOMPRESSED_R8G8B8A8, 24, false);
+    Shader distortion = { 0 };
 
 #if defined(SUPPORT_DISTORTION_SHADER)
     // Load distortion shader
-    vrConfig.distortionShader = LoadShaderCode(NULL, distortionFShaderStr);
-
-    if (vrConfig.distortionShader.id > 0) SetShaderDefaultLocations(&vrConfig.distortionShader);
+    distortion = LoadShaderCode(NULL, distortionFShaderStr);
+    if (distortion.id > 0) SetShaderDefaultLocations(&distortion);
 #endif
 
     // Set VR configutarion parameters, including distortion shader
-    SetStereoConfig(info);
+    vrConfig = SetStereoConfig(info, distortion);
 
     vrSimulatorReady = true;
 #endif
@@ -3574,6 +3565,13 @@ void InitVrSimulator(VrDeviceInfo info)
 #if defined(GRAPHICS_API_OPENGL_11)
     TraceLog(LOG_WARNING, "VR Simulator not supported on OpenGL 1.1");
 #endif
+}
+
+// Update VR tracking (position and orientation) and camera
+// NOTE: Camera (position, target, up) gets update with head tracking information
+void UpdateVrTracking(Camera *camera)
+{
+    // TODO: Simulate 1st person camera system
 }
 
 // Close VR simulator for current device
@@ -3600,17 +3598,6 @@ bool IsVrSimulatorReady(void)
 #endif
 }
 
-// Set VR distortion shader for stereoscopic rendering
-// TODO: Review VR system to be more flexible, move distortion shader to user side
-void SetVrDistortionShader(Shader shader)
-{
-#if defined(GRAPHICS_API_OPENGL_33) || defined(GRAPHICS_API_OPENGL_ES2)
-    vrConfig.distortionShader = shader;
-
-    //SetStereoConfig(info);  // TODO: Must be reviewed to set new distortion shader uniform values...
-#endif
-}
-
 // Enable/Disable VR experience (device or simulator)
 void ToggleVrMode(void)
 {
@@ -3628,13 +3615,6 @@ void ToggleVrMode(void)
     }
     else vrStereoRender = true;
 #endif
-}
-
-// Update VR tracking (position and orientation) and camera
-// NOTE: Camera (position, target, up) gets update with head tracking information
-void UpdateVrTracking(Camera *camera)
-{
-    // TODO: Simulate 1st person camera system
 }
 
 // Begin Oculus drawing configuration
@@ -3688,7 +3668,6 @@ void EndVrDrawing(void)
 #else
         currentShader = GetShaderDefault();
 #endif
-
         rlEnableTexture(vrConfig.stereoFbo.texture.id);
 
         rlPushMatrix();
@@ -4377,9 +4356,17 @@ static void GenDrawCube(void)
 
 #if defined(SUPPORT_VR_SIMULATOR)
 // Configure stereo rendering (including distortion shader) with HMD device parameters
-// NOTE: It modifies the global variable: VrStereoConfig vrConfig
-static void SetStereoConfig(VrDeviceInfo hmd)
+static VrStereoConfig SetStereoConfig(VrDeviceInfo hmd, Shader distortion)
 {
+    VrStereoConfig config = { 0 };
+    
+    // Initialize framebuffer and textures for stereo rendering
+    // NOTE: Screen size should match HMD aspect ratio
+    config.stereoFbo = rlLoadRenderTexture(GetScreenWidth(), GetScreenHeight(), UNCOMPRESSED_R8G8B8A8, 24, false);
+    
+    // Assign distortion shader
+    config.distortionShader = distortion;
+    
     // Compute aspect ratio
     float aspect = ((float)hmd.hResolution*0.5f)/(float)hmd.vResolution;
 
@@ -4411,19 +4398,6 @@ static void SetStereoConfig(VrDeviceInfo hmd)
     TraceLog(LOG_DEBUG, "VR: Distortion Shader: Scale = { %f, %f }", scale[0], scale[1]);
     TraceLog(LOG_DEBUG, "VR: Distortion Shader: ScaleIn = { %f, %f }", scaleIn[0], scaleIn[1]);
 
-#if defined(SUPPORT_DISTORTION_SHADER)
-    // Update distortion shader with lens and distortion-scale parameters
-    SetShaderValue(vrConfig.distortionShader, GetShaderLocation(vrConfig.distortionShader, "leftLensCenter"), leftLensCenter, UNIFORM_VEC2);
-    SetShaderValue(vrConfig.distortionShader, GetShaderLocation(vrConfig.distortionShader, "rightLensCenter"), rightLensCenter, UNIFORM_VEC2);
-    SetShaderValue(vrConfig.distortionShader, GetShaderLocation(vrConfig.distortionShader, "leftScreenCenter"), leftScreenCenter, UNIFORM_VEC2);
-    SetShaderValue(vrConfig.distortionShader, GetShaderLocation(vrConfig.distortionShader, "rightScreenCenter"), rightScreenCenter, UNIFORM_VEC2);
-
-    SetShaderValue(vrConfig.distortionShader, GetShaderLocation(vrConfig.distortionShader, "scale"), scale, UNIFORM_VEC2);
-    SetShaderValue(vrConfig.distortionShader, GetShaderLocation(vrConfig.distortionShader, "scaleIn"), scaleIn, UNIFORM_VEC2);
-    SetShaderValue(vrConfig.distortionShader, GetShaderLocation(vrConfig.distortionShader, "hmdWarpParam"), hmd.lensDistortionValues, UNIFORM_VEC4);
-    SetShaderValue(vrConfig.distortionShader, GetShaderLocation(vrConfig.distortionShader, "chromaAbParam"), hmd.chromaAbCorrection, UNIFORM_VEC4);
-#endif
-
     // Fovy is normally computed with: 2*atan2(hmd.vScreenSize, 2*hmd.eyeToScreenDistance)
     // ...but with lens distortion it is increased (see Oculus SDK Documentation)
     //float fovy = 2.0f*atan2(hmd.vScreenSize*0.5f*distortionScale, hmd.eyeToScreenDistance);     // Really need distortionScale?
@@ -4432,19 +4406,34 @@ static void SetStereoConfig(VrDeviceInfo hmd)
     // Compute camera projection matrices
     float projOffset = 4.0f*lensShift;      // Scaled to projection space coordinates [-1..1]
     Matrix proj = MatrixPerspective(fovy, aspect, 0.01, 1000.0);
-    vrConfig.eyesProjection[0] = MatrixMultiply(proj, MatrixTranslate(projOffset, 0.0f, 0.0f));
-    vrConfig.eyesProjection[1] = MatrixMultiply(proj, MatrixTranslate(-projOffset, 0.0f, 0.0f));
+    config.eyesProjection[0] = MatrixMultiply(proj, MatrixTranslate(projOffset, 0.0f, 0.0f));
+    config.eyesProjection[1] = MatrixMultiply(proj, MatrixTranslate(-projOffset, 0.0f, 0.0f));
 
     // Compute camera transformation matrices
     // NOTE: Camera movement might seem more natural if we model the head.
     // Our axis of rotation is the base of our head, so we might want to add
     // some y (base of head to eye level) and -z (center of head to eye protrusion) to the camera positions.
-    vrConfig.eyesViewOffset[0] = MatrixTranslate(-hmd.interpupillaryDistance*0.5f, 0.075f, 0.045f);
-    vrConfig.eyesViewOffset[1] = MatrixTranslate(hmd.interpupillaryDistance*0.5f, 0.075f, 0.045f);
+    config.eyesViewOffset[0] = MatrixTranslate(-hmd.interpupillaryDistance*0.5f, 0.075f, 0.045f);
+    config.eyesViewOffset[1] = MatrixTranslate(hmd.interpupillaryDistance*0.5f, 0.075f, 0.045f);
 
     // Compute eyes Viewports
-    //vrConfig.eyeViewportRight[0] = (int[4]){ 0, 0, hmd.hResolution/2, hmd.vResolution };
-    //vrConfig.eyeViewportLeft[0] = (int[4]){ hmd.hResolution/2, 0, hmd.hResolution/2, hmd.vResolution };
+    //config.eyeViewportRight[0] = (int[4]){ 0, 0, hmd.hResolution/2, hmd.vResolution };
+    //config.eyeViewportLeft[0] = (int[4]){ hmd.hResolution/2, 0, hmd.hResolution/2, hmd.vResolution };
+
+#if defined(SUPPORT_DISTORTION_SHADER)
+    // Update distortion shader with lens and distortion-scale parameters
+    SetShaderValue(config.distortionShader, GetShaderLocation(config.distortionShader, "leftLensCenter"), leftLensCenter, UNIFORM_VEC2);
+    SetShaderValue(config.distortionShader, GetShaderLocation(config.distortionShader, "rightLensCenter"), rightLensCenter, UNIFORM_VEC2);
+    SetShaderValue(config.distortionShader, GetShaderLocation(config.distortionShader, "leftScreenCenter"), leftScreenCenter, UNIFORM_VEC2);
+    SetShaderValue(config.distortionShader, GetShaderLocation(config.distortionShader, "rightScreenCenter"), rightScreenCenter, UNIFORM_VEC2);
+
+    SetShaderValue(config.distortionShader, GetShaderLocation(config.distortionShader, "scale"), scale, UNIFORM_VEC2);
+    SetShaderValue(config.distortionShader, GetShaderLocation(config.distortionShader, "scaleIn"), scaleIn, UNIFORM_VEC2);
+    SetShaderValue(config.distortionShader, GetShaderLocation(config.distortionShader, "hmdWarpParam"), hmd.lensDistortionValues, UNIFORM_VEC4);
+    SetShaderValue(config.distortionShader, GetShaderLocation(config.distortionShader, "chromaAbParam"), hmd.chromaAbCorrection, UNIFORM_VEC4);
+#endif
+    
+    return config;
 }
 
 // Set internal projection and modelview matrix depending on eyes tracking data

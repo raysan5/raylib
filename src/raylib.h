@@ -230,6 +230,7 @@ typedef struct RenderTexture2D {
     unsigned int id;        // OpenGL Framebuffer Object (FBO) id
     Texture2D texture;      // Color buffer attachment texture
     Texture2D depth;        // Depth buffer attachment texture
+    bool depthTexture;      // Track if depth attachment is a texture or renderbuffer
 } RenderTexture2D;
 
 // RenderTexture type, same as RenderTexture2D
@@ -406,6 +407,16 @@ typedef struct VrDeviceInfo {
     float lensDistortionValues[4];  // HMD lens distortion constant parameters
     float chromaAbCorrection[4];    // HMD chromatic aberration correction parameters
 } VrDeviceInfo;
+
+// VR Stereo rendering configuration for simulator
+typedef struct VrStereoConfig {
+    RenderTexture2D stereoFbo;      // VR stereo rendering framebuffer
+    Shader distortionShader;        // VR stereo rendering distortion shader
+    Matrix eyesProjection[2];       // VR stereo rendering eyes projection matrices
+    Matrix eyesViewOffset[2];       // VR stereo rendering eyes view offset matrices
+    int eyeViewportRight[4];        // VR stereo rendering right eye viewport [x, y, w, h]
+    int eyeViewportLeft[4];         // VR stereo rendering left eye viewport [x, y, w, h]
+} VrStereoConfig;
 
 //----------------------------------------------------------------------------------
 // Enumerators Definition
@@ -1172,6 +1183,7 @@ RLAPI int TextFindIndex(const char *text, const char *find);                    
 RLAPI const char *TextToUpper(const char *text);                      // Get upper case version of provided string
 RLAPI const char *TextToLower(const char *text);                      // Get lower case version of provided string
 RLAPI const char *TextToPascal(const char *text);                     // Get Pascal case notation version of provided string
+RLAPI int TextToInteger(const char *text);                            // Get integer value from text (negative values not supported)
 
 //------------------------------------------------------------------------------------
 // Basic 3d Shapes Drawing Functions (Module: models)
@@ -1292,10 +1304,9 @@ RLAPI void EndScissorMode(void);                                          // End
 // VR control functions
 RLAPI VrDeviceInfo GetVrDeviceInfo(int vrDeviceType);   // Get VR device information for some standard devices
 RLAPI void InitVrSimulator(VrDeviceInfo info);          // Init VR simulator for selected device parameters
+RLAPI void UpdateVrTracking(Camera *camera);            // Update VR tracking (position and orientation) and camera
 RLAPI void CloseVrSimulator(void);                      // Close VR simulator for current device
 RLAPI bool IsVrSimulatorReady(void);                    // Detect if VR simulator is ready
-RLAPI void SetVrDistortionShader(Shader shader);        // Set VR distortion shader for stereoscopic rendering
-RLAPI void UpdateVrTracking(Camera *camera);            // Update VR tracking (position and orientation) and camera
 RLAPI void ToggleVrMode(void);                          // Enable/Disable VR experience
 RLAPI void BeginVrDrawing(void);                        // Begin VR simulator stereo rendering
 RLAPI void EndVrDrawing(void);                          // End VR simulator stereo rendering
