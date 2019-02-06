@@ -680,12 +680,18 @@ void ExportMesh(Mesh mesh, const char *fileName)
     {
         FILE *objFile = fopen(fileName, "wt");
         
-        fprintf(objFile, "# raylib Mesh OBJ exporter v1.0\n\n");
-        fprintf(objFile, "# Mesh exported as triangle faces and not optimized.\n");
-        fprintf(objFile, "#     Vertex Count:     %i\n", mesh.vertexCount);
-        fprintf(objFile, "#     Triangle Count:   %i\n\n", mesh.triangleCount);
-        fprintf(objFile, "# LICENSE: zlib/libpng\n");
-        fprintf(objFile, "# Copyright (c) 2018 Ramon Santamaria (@raysan5)\n\n");
+        fprintf(objFile, "# //////////////////////////////////////////////////////////////////////////////////\n");
+        fprintf(objFile, "# //                                                                              //\n");
+        fprintf(objFile, "# // rMeshOBJ exporter v1.0 - Mesh exported as triangle faces and not optimized   //\n");
+        fprintf(objFile, "# //                                                                              //\n");
+        fprintf(objFile, "# // more info and bugs-report:  github.com/raysan5/raylib                        //\n");
+        fprintf(objFile, "# // feedback and support:       ray[at]raylib.com                                //\n");
+        fprintf(objFile, "# //                                                                              //\n");
+        fprintf(objFile, "# // Copyright (c) 2018 Ramon Santamaria (@raysan5)                               //\n");
+        fprintf(objFile, "# //                                                                              //\n");
+        fprintf(objFile, "# //////////////////////////////////////////////////////////////////////////////////\n\n");
+        fprintf(objFile, "# Vertex Count:     %i\n", mesh.vertexCount);
+        fprintf(objFile, "# Triangle Count:   %i\n\n", mesh.triangleCount);
         
         fprintf(objFile, "g mesh\n");
         
