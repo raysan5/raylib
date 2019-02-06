@@ -261,6 +261,17 @@ typedef unsigned char byte;
         float chromaAbCorrection[4];    // HMD chromatic aberration correction parameters
     } VrDeviceInfo;
 
+    // VR Stereo rendering configuration for simulator
+    typedef struct VrStereoConfig {
+        RenderTexture2D stereoFbo;      // VR stereo rendering framebuffer
+        Shader distortionShader;        // VR stereo rendering distortion shader
+        Matrix eyesProjection[2];       // VR stereo rendering eyes projection matrices
+        Matrix eyesViewOffset[2];       // VR stereo rendering eyes view offset matrices
+        int eyeViewportRight[4];        // VR stereo rendering right eye viewport [x, y, w, h]
+        int eyeViewportLeft[4];         // VR stereo rendering left eye viewport [x, y, w, h]
+    } VrStereoConfig;
+
+
     // TraceLog message types
     typedef enum {
         LOG_ALL,
