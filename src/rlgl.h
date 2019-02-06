@@ -4372,7 +4372,7 @@ static VrStereoConfig SetStereoConfig(VrDeviceInfo hmd, Shader distortion)
     
     // Initialize framebuffer and textures for stereo rendering
     // NOTE: Screen size should match HMD aspect ratio
-    config.stereoFbo = rlLoadRenderTexture(GetScreenWidth(), GetScreenHeight(), UNCOMPRESSED_R8G8B8A8, 24, false);
+    config.stereoFbo = rlLoadRenderTexture(screenWidth, screenHeight, UNCOMPRESSED_R8G8B8A8, 24, false);
     
     // Assign distortion shader
     config.distortionShader = distortion;
