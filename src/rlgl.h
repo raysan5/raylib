@@ -533,7 +533,6 @@ void EndBlendMode(void);                          // End blending mode (reset to
 
 // VR control functions
 VrDeviceInfo GetVrDeviceInfo(int vrDeviceType);   // Get VR device information for some standard devices
-VrStereoConfig SetStereoConfig(VrDeviceInfo hmd, Shader distortion);
 void InitVrSimulator(VrDeviceInfo info);          // Init VR simulator for selected device parameters
 void UpdateVrTracking(Camera *camera);            // Update VR tracking (position and orientation) and camera
 void CloseVrSimulator(void);                      // Close VR simulator for current device
