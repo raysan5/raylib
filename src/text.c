@@ -1321,6 +1321,26 @@ const char *TextToPascal(const char *text)
 
     return buffer;
 }
+
+// Get integer value from text
+// NOTE: Negative values not supported
+int TextToInteger(const char *text)
+{
+    int result = 0;
+    int len = strlen(text);
+    int units = 1;
+
+    for (int i = len - 1; i >= 0; i--)
+    {
+        if ((text[i] > 47) && (text[i] < 58)) result += ((int)text[i] - 48)*units;
+        else { result = -1; break; }
+        
+        units *= 10;
+    }
+    
+    return result;
+}
+
 //----------------------------------------------------------------------------------
 
 //----------------------------------------------------------------------------------
