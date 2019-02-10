@@ -1089,17 +1089,18 @@ const char *TextSubtext(const char *text, int position, int length)
     return buffer;
 }
 
-// removes a specific char from the begining of a string
+// removes a specific char from the beginning of a string
 // REQUIRES: strlen()
 const char *TextLeftTrim(const char *text, char trimChar)
 {
     int textLength = strlen(text);
+
     int leftOffset = 0;
     for(leftOffset; leftOffset < textLength; leftOffset++)
     {
-        if(*(text + leftOffset) != trimChar)
-            break;
+        if(*(text + leftOffset) != trimChar) break;
     }
+
     const char *subText = TextSubtext(text, leftOffset, textLength-leftOffset);
     int subTextLength = strlen(subText);
     char *result = malloc(subTextLength+1);
@@ -1116,12 +1117,13 @@ const char *TextLeftTrim(const char *text, char trimChar)
 const char *TextRightTrim(const char *text, char trimChar)
 {
     int textLength = strlen(text);
+
     int rightOffset = textLength-1;
     for(rightOffset; -1 < rightOffset; rightOffset--)
     {
-        if(*(text + rightOffset) != trimChar)
-            break;
+        if(*(text + rightOffset) != trimChar) break;
     }
+
     const char *subText = TextSubtext(text, 0, rightOffset+1);
     int subTextLength = strlen(subText);
     char *result = malloc(subTextLength+1);
@@ -1133,23 +1135,24 @@ const char *TextRightTrim(const char *text, char trimChar)
     return result;
 }
 
-// removes a specific char from the begining of a string
+// removes a specific char from the beginning and end of a string
 // REQUIRES: strlen()
 const char *TextTrim(const char *text, char trimChar)
 {
     int textLength = strlen(text);
+
     int leftOffset = 0;
     for(leftOffset; leftOffset < textLength; leftOffset++)
     {
-        if(*(text + leftOffset) != trimChar)
-            break;
+        if(*(text + leftOffset) != trimChar) break;
     }
+
     int rightOffset = textLength-1;
     for(rightOffset; leftOffset < rightOffset; rightOffset--)
     {
-        if(*(text + rightOffset) != trimChar)
-            break;
+        if(*(text + rightOffset) != trimChar) break;
     }
+
     const char *subText = TextSubtext(text, leftOffset, rightOffset+1-leftOffset);
     int subTextLength = strlen(subText);
     char *result = malloc(subTextLength+1);
