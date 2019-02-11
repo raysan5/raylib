@@ -1180,70 +1180,40 @@ const char *TextJoin(const char **textList, int count, const char *delimiter)
 }
 
 // Split string into multiple strings
-// REQUIRES: strlen(), strcpy(), strtok()
-// WARNING: Allocated memory should be manually freed
-char **TextSplit(const char *text, char delimiter, int *count)
+const char **TextSplit(const char *text, char delimiter, int *count)
 {
-    #define MAX_SUBSTRING_LENGTH 128
+    // NOTE: Current implementation returns a copy of the provided string with '\0' (string end delimiter)
+    // inserted between strings defined by "delimiter" parameter. No memory is dynamically allocated,
+    // all used memory is static... it has some limitations:
+    //      1. Maximum number of possible split strings is set by MAX_SUBSTRINGS_COUNT
+    //      2. Maximum size of text to split is MAX_TEXT_BUFFER_LENGTH
     
-    // TODO: Allocate memory properly for every substring size
+    #define MAX_SUBSTRINGS_COUNT  64
+    
+    static const char *result[MAX_SUBSTRINGS_COUNT] = { NULL };
+    static char buffer[MAX_TEXT_BUFFER_LENGTH] = { 0 };
+    memset(buffer, 0, MAX_TEXT_BUFFER_LENGTH);
 
-    char **result = NULL;
-    
-    int len = strlen(text);
-    char *textcopy = (char *)malloc(len + 1);
-    strcpy(textcopy, text);
+    result[0] = buffer;
     int counter = 1;
 
-    // Count how many substrings we have on text and init memory for each of them
-    for (int i = 0; i < len; i++) if (text[i] == delimiter) counter++;
-
-    // Memory allocation for substrings
-    result = (char **)malloc(sizeof(char *)*counter);
-    for (int i = 0; i < counter; i++) result[i] = (char *)malloc(sizeof(char)*MAX_SUBSTRING_LENGTH);
-
-    char *substrPtr = NULL;
-    char delimiters[1] = { delimiter };         // Only caring for one delimiter
-    substrPtr = strtok(textcopy, delimiters);
-
-    for (int i = 0; (i < counter) && (substrPtr != NULL); i++)
+    // Count how many substrings we have on text and point to every one
+    for (int i = 0; i < MAX_TEXT_BUFFER_LENGTH; i++) 
     {
-        strcpy(result[i], substrPtr);
-        substrPtr = strtok(NULL, delimiters);
-    }
-
-    *count = counter;
-    free(textcopy);
-
-    return result;
-}
-
-// Get pointers to substrings separated by delimiter
-void TextSplitEx(const char *text, char delimiter, int *count, const char **ptrs, int *lengths)
-{
-    int elementsCount = 0;
-    int charsCount = 0;
-
-    ptrs[0] = text;
-
-    for (int i = 0; text[i] != '\0'; i++)
-    {
-        charsCount++;
-
-        if (text[i] == delimiter)
+        buffer[i] = text[i];
+        if (buffer[i] == '\0') break;
+        else if (buffer[i] == delimiter)
         {
-            lengths[elementsCount] = charsCount - 1;
-            charsCount = 0;
-            elementsCount++;
-
-            ptrs[elementsCount] = &text[i + 1];
+            buffer[i] = '\0';   // Set an end of string at this point
+            result[counter] = buffer + i + 1;
+            counter++;
+            
+            if (counter == MAX_SUBSTRINGS_COUNT) break;
         }
     }
 
-    lengths[elementsCount] = charsCount;
-    elementsCount++;
-
-    *count = elementsCount;
+    *count = counter;
+    return result;
 }
 
 // Append text at specific position and move cursor!
