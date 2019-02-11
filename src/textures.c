@@ -871,7 +871,7 @@ void ExportImageAsCode(Image image, const char *fileName)
 
     // Get file name from path and convert variable name to uppercase
     strcpy(varFileName, GetFileNameWithoutExt(fileName));
-    for (int i = 0; varFileName[i] != '\0'; i++) if (varFileName[i] >= 'a' && varFileName[i] <= 'z') { varFileName[i] = varFileName[i] - 32; }
+    for (int i = 0; varFileName[i] != '\0'; i++) if ((varFileName[i] >= 'a') && (varFileName[i] <= 'z')) { varFileName[i] = varFileName[i] - 32; }
 
     // Add image information
     fprintf(txtFile, "// Image data information\n");

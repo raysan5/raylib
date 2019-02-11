@@ -884,6 +884,8 @@ RLAPI int GetMonitorHeight(int monitor);                          // Get primary
 RLAPI int GetMonitorPhysicalWidth(int monitor);                   // Get primary monitor physical width in millimetres
 RLAPI int GetMonitorPhysicalHeight(int monitor);                  // Get primary monitor physical height in millimetres
 RLAPI const char *GetMonitorName(int monitor);                    // Get the human-readable, UTF-8 encoded name of the primary monitor
+RLAPI const char *GetClipboardText(void);                         // Get clipboard text content
+RLAPI void SetClipboardText(const char *text);                    // Set clipboard text content
 
 // Cursor-related functions
 RLAPI void ShowCursor(void);                                      // Shows cursor
@@ -1176,8 +1178,7 @@ RLAPI const char *TextSubtext(const char *text, int position, int length);      
 RLAPI const char *TextReplace(char *text, const char *replace, const char *by);             // Replace text string (memory should be freed!)
 RLAPI const char *TextInsert(const char *text, const char *insert, int position);           // Insert text in a position (memory should be freed!)
 RLAPI const char *TextJoin(const char **textList, int count, const char *delimiter);        // Join text strings with delimiter
-RLAPI char **TextSplit(const char *text, char delimiter, int *count);                       // Split text into multiple strings (memory should be freed!)
-RLAPI void TextSplitEx(const char *text, char delimiter, int *count, const char **ptrs, int *lengths); // Get pointers to substrings separated by delimiter
+RLAPI const char **TextSplit(const char *text, char delimiter, int *count);                       // Split text into multiple strings
 RLAPI void TextAppend(char *text, const char *append, int *position);                       // Append text at specific position and move cursor!
 RLAPI int TextFindIndex(const char *text, const char *find);                                // Find first text occurrence within a string
 RLAPI const char *TextToUpper(const char *text);                      // Get upper case version of provided string
