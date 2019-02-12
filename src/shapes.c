@@ -182,6 +182,53 @@ void DrawCircle(int centerX, int centerY, float radius, Color color)
     DrawCircleV((Vector2){ (float)centerX, (float)centerY }, radius, color);
 }
 
+// Draw a piece of a circle
+// TODO: Support better angle resolution (now limited to CIRCLE_SECTOR_LENGTH)
+void DrawCircleSector(Vector2 center, float radius, int startAngle, int endAngle, Color color)
+{
+    #define CIRCLE_SECTOR_LENGTH    10
+    
+#if defined(SUPPORT_QUADS_DRAW_MODE)
+    if (rlCheckBufferLimit(4*((360/CIRCLE_SECTOR_LENGTH)/2))) rlglDraw();
+
+    rlEnableTexture(GetShapesTexture().id);
+
+    rlBegin(RL_QUADS);
+        for (int i = startAngle; i < endAngle; i += CIRCLE_SECTOR_LENGTH*2)
+        {
+            rlColor4ub(color.r, color.g, color.b, color.a);
+
+            rlTexCoord2f(recTexShapes.x/texShapes.width, recTexShapes.y/texShapes.height);
+            rlVertex2f(center.x, center.y);
+
+            rlTexCoord2f(recTexShapes.x/texShapes.width, (recTexShapes.y + recTexShapes.height)/texShapes.height);
+            rlVertex2f(center.x + sinf(DEG2RAD*i)*radius, center.y + cosf(DEG2RAD*i)*radius);
+
+            rlTexCoord2f((recTexShapes.x + recTexShapes.width)/texShapes.width, (recTexShapes.y + recTexShapes.height)/texShapes.height);
+            rlVertex2f(center.x + sinf(DEG2RAD*(i + CIRCLE_SECTOR_LENGTH))*radius, center.y + cosf(DEG2RAD*(i + CIRCLE_SECTOR_LENGTH))*radius);
+
+            rlTexCoord2f((recTexShapes.x + recTexShapes.width)/texShapes.width, recTexShapes.y/texShapes.height);
+            rlVertex2f(center.x + sinf(DEG2RAD*(i + CIRCLE_SECTOR_LENGTH*2))*radius, center.y + cosf(DEG2RAD*(i + CIRCLE_SECTOR_LENGTH*2))*radius);
+        }
+    rlEnd();
+
+    rlDisableTexture();
+#else
+    if (rlCheckBufferLimit(3*((360/CIRCLE_SECTOR_LENGTH)/2))) rlglDraw();
+
+    rlBegin(RL_TRIANGLES);
+        for (int i = startAngle; i < endAngle; i += CIRCLE_SECTOR_LENGTH)
+        {
+            rlColor4ub(color.r, color.g, color.b, color.a);
+
+            rlVertex2f(center.x, center.y);
+            rlVertex2f(center.x + sinf(DEG2RAD*i)*radius, center.y + cosf(DEG2RAD*i)*radius);
+            rlVertex2f(center.x + sinf(DEG2RAD*(i + CIRCLE_SECTOR_LENGTH))*radius, center.y + cosf(DEG2RAD*(i + CIRCLE_SECTOR_LENGTH))*radius);
+        }
+    rlEnd();
+#endif
+}
+
 // Draw a gradient-filled circle
 // NOTE: Gradient goes from center (color1) to border (color2)
 void DrawCircleGradient(int centerX, int centerY, float radius, Color color1, Color color2)
@@ -205,45 +252,7 @@ void DrawCircleGradient(int centerX, int centerY, float radius, Color color1, Co
 // NOTE: On OpenGL 3.3 and ES2 we use QUADS to avoid drawing order issues (view rlglDraw)
 void DrawCircleV(Vector2 center, float radius, Color color)
 {
-#if defined(SUPPORT_QUADS_DRAW_MODE)
-    if (rlCheckBufferLimit(4*(36/2))) rlglDraw();
-
-    rlEnableTexture(GetShapesTexture().id);
-
-    rlBegin(RL_QUADS);
-        for (int i = 0; i < 360; i += 20)
-        {
-            rlColor4ub(color.r, color.g, color.b, color.a);
-
-            rlTexCoord2f(recTexShapes.x/texShapes.width, recTexShapes.y/texShapes.height);
-            rlVertex2f(center.x, center.y);
-
-            rlTexCoord2f(recTexShapes.x/texShapes.width, (recTexShapes.y + recTexShapes.height)/texShapes.height);
-            rlVertex2f(center.x + sinf(DEG2RAD*i)*radius, center.y + cosf(DEG2RAD*i)*radius);
-
-            rlTexCoord2f((recTexShapes.x + recTexShapes.width)/texShapes.width, (recTexShapes.y + recTexShapes.height)/texShapes.height);
-            rlVertex2f(center.x + sinf(DEG2RAD*(i + 10))*radius, center.y + cosf(DEG2RAD*(i + 10))*radius);
-
-            rlTexCoord2f((recTexShapes.x + recTexShapes.width)/texShapes.width, recTexShapes.y/texShapes.height);
-            rlVertex2f(center.x + sinf(DEG2RAD*(i + 20))*radius, center.y + cosf(DEG2RAD*(i + 20))*radius);
-        }
-    rlEnd();
-
-    rlDisableTexture();
-#else
-    if (rlCheckBufferLimit(3*(36/2))) rlglDraw();
-
-    rlBegin(RL_TRIANGLES);
-        for (int i = 0; i < 360; i += 10)
-        {
-            rlColor4ub(color.r, color.g, color.b, color.a);
-
-            rlVertex2f(center.x, center.y);
-            rlVertex2f(center.x + sinf(DEG2RAD*i)*radius, center.y + cosf(DEG2RAD*i)*radius);
-            rlVertex2f(center.x + sinf(DEG2RAD*(i + 10))*radius, center.y + cosf(DEG2RAD*(i + 10))*radius);
-        }
-    rlEnd();
-#endif
+    DrawCircleSector(center, radius, 0, 360, color);
 }
 
 // Draw circle outline
