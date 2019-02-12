@@ -218,8 +218,8 @@ typedef enum { AUDIO_BUFFER_USAGE_STATIC = 0, AUDIO_BUFFER_USAGE_STREAM } AudioB
 
 // Audio buffer structure
 // NOTE: Slightly different logic is used when feeding data to the playback device depending on whether or not data is streamed
-typedef struct AudioBuffer AudioBuffer;
-struct AudioBuffer {
+typedef struct rAudioBuffer rAudioBuffer;
+struct rAudioBuffer {
     mal_dsp dsp;                    // Required for format conversion
     float volume;
     float pitch;
@@ -230,10 +230,14 @@ struct AudioBuffer {
     bool isSubBufferProcessed[2];
     unsigned int frameCursorPos;
     unsigned int bufferSizeInFrames;
-    AudioBuffer *next;
-    AudioBuffer *prev;
+    rAudioBuffer *next;
+    rAudioBuffer *prev;
     unsigned char buffer[1];
 };
+
+// HACK: To avoid CoreAudio (macOS) symbol collision
+// NOTE: This system should probably be redesigned
+#define AudioBuffer rAudioBuffer
 
 // mini_al global variables
 static mal_context context;
@@ -1961,3 +1965,5 @@ void TraceLog(int msgType, const char *text, ...)
     if (msgType == LOG_ERROR) exit(1);
 }
 #endif
+
+#undef AudioBuffer
