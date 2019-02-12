@@ -2842,8 +2842,8 @@ typedef struct tagBITMAPINFOHEADER {
   DWORD biClrImportant;
 } BITMAPINFOHEADER, *PBITMAPINFOHEADER;
 
-// @raysan5: Some required types defined for TinyC compiler
-#if defined(__TINYC__)
+// @raysan5: Some required types defined for MSVC/TinyC compiler
+#if defined(_MSC_VER) || defined(__TINYC__)
     #include "propidl.h"
 #endif
 //----------------------------------------------------------------------------------
