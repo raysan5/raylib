@@ -46,6 +46,7 @@ add_definitions("-DRAYLIB_CMAKE=1")
 
 if(USE_AUDIO)
   MESSAGE(STATUS "Audio Backend: mini_al")
+  set(sources ${raylib_sources})
 else()
   MESSAGE(STATUS "Audio Backend: None (-DUSE_AUDIO=OFF)")
   set(INCLUDE_AUDIO_MODULE 0)
