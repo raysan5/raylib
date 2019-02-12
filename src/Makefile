@@ -404,7 +404,6 @@ endif
 
 ifeq ($(INCLUDE_AUDIO_MODULE),TRUE)
     OBJS += raudio.o
-    OBJS += mini_al.o
 endif
 
 ifeq ($(PLATFORM),PLATFORM_ANDROID)
@@ -530,10 +529,6 @@ models.o : models.c raylib.h rlgl.h raymath.h
 
 # Compile audio module
 raudio.o : raudio.c raylib.h
-	$(CC) -c $< $(CFLAGS) $(INCLUDE_PATHS) -D$(PLATFORM)
-
-# Compile mini_al audio library
-mini_al.o : external/mini_al.c external/mini_al.h
 	$(CC) -c $< $(CFLAGS) $(INCLUDE_PATHS) -D$(PLATFORM)
 
 # Compile utils module

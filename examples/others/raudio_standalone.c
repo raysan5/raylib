@@ -5,17 +5,17 @@
 *   NOTE: This example does not require any graphic device, it can run directly on console.
 *
 *   DEPENDENCIES:
-*       mini_al.h    - Audio device management lib (http://kcat.strangesoft.net/openal.html)
+*       mini_al.h    - Audio device management lib (https://github.com/dr-soft/mini_al)
 *       stb_vorbis.h - Ogg audio files loading (http://www.nothings.org/stb_vorbis/)
+*       dr_mp3.h     - MP3 audio file loading (https://github.com/mackron/dr_libs)
+*       dr_flac.h    - FLAC audio file loading (https://github.com/mackron/dr_libs)
 *       jar_xm.h     - XM module file loading
 *       jar_mod.h    - MOD audio file loading
-*       dr_flac.h    - FLAC audio file loading
 *
 *   COMPILATION:
-*       gcc -c ..\..\src\external\mini_al.c -Wall -I.
-*       gcc -o audio_standalone.exe audio_standalone.c ..\..\src\raudio.c mini_al.o  /
-*           -I..\..\src -I..\..\src\external -L. -Wall -std=c99  / 
-*           -DAUDIO_STANDALONE -DSUPPORT_FILEFORMAT_WAV -DSUPPORT_FILEFORMAT_OGG
+*       gcc -o raudio_standalone.exe raudio_standalone.c ..\..\src\raudio.c /
+*           -I..\..\src -I..\..\src\external -L. -Wall -std=c99 -DRAUDIO_STANDALONE / 
+*           -DSUPPORT_FILEFORMAT_WAV -DSUPPORT_FILEFORMAT_OGG -DSUPPORT_FILEFORMAT_MP3
 *
 *   LICENSE: zlib/libpng
 *

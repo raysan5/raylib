@@ -24,13 +24,12 @@ gcc -O2 -c textures.c -std=c99 -Wall -DPLATFORM_DESKTOP
 gcc -O2 -c text.c -std=c99 -Wall -DPLATFORM_DESKTOP
 gcc -O2 -c models.c -std=c99 -Wall -DPLATFORM_DESKTOP
 gcc -O2 -c raudio.c -std=c99 -Wall -DPLATFORM_DESKTOP
-gcc -O2 -c external/mini_al.c -Wall -I.
 gcc -O2 -c utils.c -std=c99 -Wall -DPLATFORM_DESKTOP
 
 :: .
 :: . > Generate raylib library
 :: ------------------------------
-ar rcs libraylib.a core.o rglfw.o shapes.o textures.o text.o models.o raudio.o mini_al.o utils.o
+ar rcs libraylib.a core.o rglfw.o shapes.o textures.o text.o models.o raudio.o utils.o
 :: .
 :: > Installing raylib library
 :: -----------------------------
