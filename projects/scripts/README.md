@@ -58,10 +58,10 @@ all of the flags.
 #### Examples
 | What the command does                                       | Command                   |
 |-------------------------------------------------------------|---------------------------|
-| Build a release build, on Windows                           | `windows-build.bat`       |
-| Build a release build, full recompile, on Linux             | `./linux-build.sh -c`     |
-| Build a debug build and run, on macOS                       | `./osx-build.sh -d -r`    |
-| Build in debug, run, don't print at all, on Linux with `sh` | `sh linux-build.sh -drqq` |
+| Build a release build, on Windows                           | `build-windows.bat`       |
+| Build a release build, full recompile, on Linux             | `./build-linux.sh -c`     |
+| Build a debug build and run, on macOS                       | `./build-osx.sh -d -r`    |
+| Build in debug, run, don't print at all, on Linux with `sh` | `sh build-linux.sh -drqq` |
 
 
 [visual-studio]: https://visualstudio.microsoft.com/downloads/#visual-studio-community-2017
