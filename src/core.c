@@ -1254,6 +1254,10 @@ void EndTextureMode(void)
 
     rlMatrixMode(RL_MODELVIEW);         // Switch back to MODELVIEW matrix
     rlLoadIdentity();                   // Reset current matrix (MODELVIEW)
+    
+    // Reset current screen size
+    currentWidth = GetScreenWidth();
+    currentHeight = GetScreenHeight();
 }
 
 // Returns a ray trace from mouse position
