@@ -232,9 +232,8 @@
     <Text Include="ReadMe.txt" />
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="..\..\..\src\audio.c" />
+    <ClCompile Include="..\..\..\src\raudio.c" />
     <ClCompile Include="..\..\..\src\core.c" />
-    <ClCompile Include="..\..\..\src\external\mini_al.c" />
     <ClCompile Include="..\..\..\src\models.c" />
     <ClCompile Include="..\..\..\src\rglfw.c" />
     <ClCompile Include="..\..\..\src\shapes.c" />
@@ -247,6 +246,7 @@
     <ClInclude Include="..\..\..\src\external\glad.h" />
     <ClInclude Include="..\..\..\src\external\jar_mod.h" />
     <ClInclude Include="..\..\..\src\external\jar_xm.h" />
+    <ClInclude Include="..\..\..\src\external\mini_al.h" />
     <ClInclude Include="..\..\..\src\external\stb_image.h" />
     <ClInclude Include="..\..\..\src\external\stb_image_resize.h" />
     <ClInclude Include="..\..\..\src\external\stb_image_write.h" />

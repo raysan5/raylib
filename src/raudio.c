@@ -26,12 +26,12 @@
 *       supported by default, to remove support, just comment unrequired #define in this module
 *
 *   DEPENDENCIES:
-*       mini_al     - Audio device/context management (https://github.com/dr-soft/mini_al)
-*       stb_vorbis  - OGG audio files loading (http://www.nothings.org/stb_vorbis/)
-*       jar_xm      - XM module file loading
-*       jar_mod     - MOD audio file loading
-*       dr_flac     - FLAC audio file loading
-*       dr_mp3      - MP3 audio file loading
+*       mini_al.h    - Audio device management lib (https://github.com/dr-soft/mini_al)
+*       stb_vorbis.h - Ogg audio files loading (http://www.nothings.org/stb_vorbis/)
+*       dr_mp3.h     - MP3 audio file loading (https://github.com/mackron/dr_libs)
+*       dr_flac.h    - FLAC audio file loading (https://github.com/mackron/dr_libs)
+*       jar_xm.h     - XM module file loading
+*       jar_mod.h    - MOD audio file loading
 *
 *   CONTRIBUTORS:
 *       David Reid (github: @mackron) (Nov. 2017):
@@ -77,9 +77,12 @@
     #include "utils.h"          // Required for: fopen() Android mapping
 #endif
 
+#define MAL_NO_SDL
+#define MAL_NO_JACK
+#define MAL_NO_OPENAL
+#define MINI_AL_IMPLEMENTATION
 #include "external/mini_al.h"   // mini_al audio library
-                                // NOTE: Cannot be implement here because it conflicts with
-                                // Win32 APIs: Rectangle, CloseWindow(), ShowCursor(), PlaySoundA()
+#undef PlaySound                // Win32 API: windows.h > mmsystem.h defines PlaySound macro
 
 #include <stdlib.h>             // Required for: malloc(), free()
 #include <string.h>             // Required for: strcmp(), strncmp()
@@ -215,8 +218,8 @@ typedef enum { AUDIO_BUFFER_USAGE_STATIC = 0, AUDIO_BUFFER_USAGE_STREAM } AudioB
 
 // Audio buffer structure
 // NOTE: Slightly different logic is used when feeding data to the playback device depending on whether or not data is streamed
-typedef struct AudioBuffer AudioBuffer;
-struct AudioBuffer {
+typedef struct rAudioBuffer rAudioBuffer;
+struct rAudioBuffer {
     mal_dsp dsp;                    // Required for format conversion
     float volume;
     float pitch;
@@ -227,10 +230,14 @@ struct AudioBuffer {
     bool isSubBufferProcessed[2];
     unsigned int frameCursorPos;
     unsigned int bufferSizeInFrames;
-    AudioBuffer *next;
-    AudioBuffer *prev;
+    rAudioBuffer *next;
+    rAudioBuffer *prev;
     unsigned char buffer[1];
 };
+
+// HACK: To avoid CoreAudio (macOS) symbol collision
+// NOTE: This system should probably be redesigned
+#define AudioBuffer rAudioBuffer
 
 // mini_al global variables
 static mal_context context;
@@ -915,9 +922,13 @@ void ExportWaveAsCode(Wave wave, const char *fileName)
     fprintf(txtFile, "//                                                                              //\n");
     fprintf(txtFile, "//////////////////////////////////////////////////////////////////////////////////\n\n");
 
+#if !defined(RAUDIO_STANDALONE)
     // Get file name from path and convert variable name to uppercase
     strcpy(varFileName, GetFileNameWithoutExt(fileName));
     for (int i = 0; varFileName[i] != '\0'; i++) if (varFileName[i] >= 'a' && varFileName[i] <= 'z') { varFileName[i] = varFileName[i] - 32; }
+#else
+    strcpy(varFileName, fileName);
+#endif
 
     fprintf(txtFile, "// Wave data information\n");
     fprintf(txtFile, "#define %s_SAMPLE_COUNT     %i\n", varFileName, wave.sampleCount);
@@ -1954,3 +1965,5 @@ void TraceLog(int msgType, const char *text, ...)
     if (msgType == LOG_ERROR) exit(1);
 }
 #endif
+
+#undef AudioBuffer

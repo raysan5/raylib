@@ -871,7 +871,7 @@ void ExportImageAsCode(Image image, const char *fileName)
 
     // Get file name from path and convert variable name to uppercase
     strcpy(varFileName, GetFileNameWithoutExt(fileName));
-    for (int i = 0; varFileName[i] != '\0'; i++) if (varFileName[i] >= 'a' && varFileName[i] <= 'z') { varFileName[i] = varFileName[i] - 32; }
+    for (int i = 0; varFileName[i] != '\0'; i++) if ((varFileName[i] >= 'a') && (varFileName[i] <= 'z')) { varFileName[i] = varFileName[i] - 32; }
 
     // Add image information
     fprintf(txtFile, "// Image data information\n");
@@ -2294,7 +2294,7 @@ Image GenImagePerlinNoise(int width, int height, int offsetX, int offsetY, float
             //   octaves    =  6     -- number of "octaves" of noise3() to sum
 
             // NOTE: We need to translate the data from [-1..1] to [0..1]
-            float p = (stb_perlin_fbm_noise3(nx, ny, 1.0f, 2.0f, 0.5f, 6, 0, 0, 0) + 1.0f)/2.0f;
+            float p = (stb_perlin_fbm_noise3(nx, ny, 1.0f, 2.0f, 0.5f, 6) + 1.0f)/2.0f;
 
             int intensity = (int)(p*255.0f);
             pixels[y*width + x] = (Color){intensity, intensity, intensity, 255};

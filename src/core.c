@@ -984,6 +984,23 @@ const char *GetMonitorName(int monitor)
     return "";
 }
 
+// Get clipboard text content
+// NOTE: returned string is allocated and freed by GLFW
+const char *GetClipboardText(void)
+{
+#if defined(PLATFORM_DESKTOP)
+    return glfwGetClipboardString(window);
+#endif
+}
+
+// Set clipboard text content
+void SetClipboardText(const char *text)
+{
+#if defined(PLATFORM_DESKTOP)
+    glfwSetClipboardString(window, text);
+#endif
+}
+
 // Show mouse cursor
 void ShowCursor(void)
 {

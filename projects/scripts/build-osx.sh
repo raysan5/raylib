@@ -2,7 +2,7 @@
 # Change your executable name here
 GAME_NAME="game"
 
-# Set your sources here (relative to the ./builds/linux directory)
+# Set your sources here (relative to the ./builds/osx directory)
 # Example with two source folders:
 # SOURCES="../../src/*.c ../../src/submodule/*.c"
 SOURCES="../../core_basic_window.c"
@@ -21,7 +21,7 @@ RAYLIB_SRC="../../../../src"
 while getopts ":hdurcq" opt; do
     case $opt in
         h)
-            echo "Usage: ./linux-build.sh [-hdurcqq]"
+            echo "Usage: ./osx-build.sh [-hdurcqq]"
             echo " -h  Show this information"
             echo " -d  Faster builds that have debug symbols, and enable warnings"
             echo " -u  Run upx* on the executable after compilation (before -r)"
@@ -35,10 +35,10 @@ while getopts ":hdurcq" opt; do
             echo "  requires that you have upx installed and on your path, of course."
             echo ""
             echo "Examples:"
-            echo " Build a release build:                    ./linux-build.sh"
-            echo " Build a release build, full recompile:    ./linux-build.sh -c"
-            echo " Build a debug build and run:              ./linux-build.sh -d -r"
-            echo " Build in debug, run, don't print at all:  ./linux-build.sh -drqq"
+            echo " Build a release build:                    ./osx-build.sh"
+            echo " Build a release build, full recompile:    ./osx-build.sh -c"
+            echo " Build a debug build and run:              ./osx-build.sh -d -r"
+            echo " Build in debug, run, don't print at all:  ./osx-build.sh -drqq"
             exit 0
             ;;
         d)
@@ -73,20 +73,14 @@ if [ -z "$CC" ]; then
 fi
 
 # Flags
-OUTPUT_DIR="builds/linux"
-COMPILATION_FLAGS="-std=c99 -Os -flto"
-if [ "$CC" = "clang" ]; then
-    # Clang 7.0.1 fails to compile with -Os, possibly the same bug as this:
-    # https://www.mail-archive.com/llvm-bugs@lists.llvm.org/msg25771.html
-    COMPILATION_FLAGS="-std=c99 -O2 -flto"
-    [ -z "$QUIET" ] && echo "COMPILE-WARNING: \$CC is clang, using -O2 instead of -Os."
-fi
+OUTPUT_DIR="builds/osx"
+COMPILATION_FLAGS="-std=c99 -O2 -flto"
 FINAL_COMPILE_FLAGS="-s"
 WARNING_FLAGS="-Wall -Wextra -Wpedantic"
-LINK_FLAGS="-lm -ldl -lpthread -lX11 -lxcb -lGL -lGLX -lXext -lGLdispatch -lXau -lXdmcp"
+LINK_FLAGS="-framework OpenGL -framework OpenAL -framework IOKit -framework CoreVideo -framework Cocoa"
 # Debug changes to flags
 if [ -n "$BUILD_DEBUG" ]; then
-    OUTPUT_DIR="builds-debug/linux"
+    OUTPUT_DIR="builds-debug/osx"
     COMPILATION_FLAGS="-std=c99 -O0 -g"
     FINAL_COMPILE_FLAGS=""
 fi
@@ -114,12 +108,14 @@ if [ ! -d "$TEMP_DIR" ]; then
     mkdir -p $TEMP_DIR
     cd $TEMP_DIR
     RAYLIB_DEFINES="-D_DEFAULT_SOURCE -DPLATFORM_DESKTOP -DGRAPHICS_API_OPENGL_33"
-    RAYLIB_C_FILES="$RAYLIB_SRC/core.c $RAYLIB_SRC/shapes.c $RAYLIB_SRC/textures.c $RAYLIB_SRC/text.c $RAYLIB_SRC/models.c $RAYLIB_SRC/utils.c $RAYLIB_SRC/raudio.c $RAYLIB_SRC/rglfw.c $RAYLIB_SRC/external/mini_al.c"
+    RAYLIB_C_FILES="$RAYLIB_SRC/core.c $RAYLIB_SRC/shapes.c $RAYLIB_SRC/textures.c $RAYLIB_SRC/text.c $RAYLIB_SRC/models.c $RAYLIB_SRC/utils.c $RAYLIB_SRC/raudio.c"
     RAYLIB_INCLUDE_FLAGS="-I$RAYLIB_SRC -I$RAYLIB_SRC/external/glfw/include"
 
     if [ -n "$REALLY_QUIET" ]; then
+        $CC -c $RAYLIB_DEFINES $RAYLIB_INCLUDE_FLAGS $COMPILATION_FLAGS -x objective-c $RAYLIB_SRC/rglfw.c > /dev/null 2>&1
         $CC -c $RAYLIB_DEFINES $RAYLIB_INCLUDE_FLAGS $COMPILATION_FLAGS $RAYLIB_C_FILES > /dev/null 2>&1
     else
+        $CC -c $RAYLIB_DEFINES $RAYLIB_INCLUDE_FLAGS $COMPILATION_FLAGS -x objective-c $RAYLIB_SRC/rglfw.c
         $CC -c $RAYLIB_DEFINES $RAYLIB_INCLUDE_FLAGS $COMPILATION_FLAGS $RAYLIB_C_FILES
     fi
     [ -z "$QUIET" ] && echo "COMPILE-INFO: Raylib compiled into object files in: $TEMP_DIR/"

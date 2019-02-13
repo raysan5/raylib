@@ -1,4 +1,4 @@
-// stb_rect_pack.h - v0.11 - public domain - rectangle packing
+// stb_rect_pack.h - v0.99 - public domain - rectangle packing
 // Sean Barrett 2014
 //
 // Useful for e.g. packing rectangular textures into an atlas.
@@ -34,6 +34,7 @@
 //
 // Version history:
 //
+//     0.99  (2019-02-07)  warning fixes
 //     0.11  (2017-03-03)  return packing success/fail result
 //     0.10  (2016-10-25)  remove cast-away-const to avoid warnings
 //     0.09  (2016-08-27)  fix compiler warnings
@@ -492,17 +493,14 @@ static stbrp__findresult stbrp__skyline_pack_rectangle(stbrp_context *context, i
    STBRP_ASSERT(cur->next == NULL);
 
    {
-      stbrp_node *L1 = NULL, *L2 = NULL;
       int count=0;
       cur = context->active_head;
       while (cur) {
-         L1 = cur;
          cur = cur->next;
          ++count;
       }
       cur = context->free_head;
       while (cur) {
-         L2 = cur;
          cur = cur->next;
          ++count;
       }
@@ -544,9 +542,6 @@ STBRP_DEF int stbrp_pack_rects(stbrp_context *context, stbrp_rect *rects, int nu
    // we use the 'was_packed' field internally to allow sorting/unsorting
    for (i=0; i < num_rects; ++i) {
       rects[i].was_packed = i;
-      #ifndef STBRP_LARGE_RECTS
-      STBRP_ASSERT(rects[i].w <= 0xffff && rects[i].h <= 0xffff);
-      #endif
    }
 
    // sort according to heuristic
