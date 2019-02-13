@@ -22,7 +22,7 @@
     <ProjectGuid>{E89D61AC-55DE-4482-AFD4-DF7242EBC859}</ProjectGuid>
     <Keyword>Win32Proj</Keyword>
     <RootNamespace>raylib</RootNamespace>
-    <WindowsTargetPlatformVersion>10.0.14393.0</WindowsTargetPlatformVersion>
+    <WindowsTargetPlatformVersion>10.0.17763.0</WindowsTargetPlatformVersion>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">
@@ -163,6 +163,7 @@
     <ClCompile Include="..\..\..\src\core.c" />
     <ClCompile Include="..\..\..\src\models.c" />
     <ClCompile Include="..\..\..\src\rglfw.c" />
+    <ClCompile Include="..\..\..\src\rnet.c" />
     <ClCompile Include="..\..\..\src\shapes.c" />
     <ClCompile Include="..\..\..\src\text.c" />
     <ClCompile Include="..\..\..\src\textures.c" />
@@ -184,6 +185,7 @@
     <ClInclude Include="..\..\..\src\raylib.h" />
     <ClInclude Include="..\..\..\src\raymath.h" />
     <ClInclude Include="..\..\..\src\rlgl.h" />
+    <ClInclude Include="..\..\..\src\rnet.h" />
     <ClInclude Include="..\..\..\src\utils.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
