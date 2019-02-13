@@ -3278,9 +3278,9 @@ static void KeyCallback(GLFWwindow *window, int key, int scancode, int action, i
                 char path[512] = { 0 };
             #if defined(PLATFORM_ANDROID)
                 strcpy(path, internalDataPath);
-                strcat(path, TextFormat("/screenrec%03i.gif", screenshotCounter));
+                strcat(path, TextFormat("./screenrec%03i.gif", screenshotCounter));
             #else
-                strcpy(path, TextFormat("/screenrec%03i.gif", screenshotCounter));
+                strcpy(path, TextFormat("./screenrec%03i.gif", screenshotCounter));
             #endif
 
                 // NOTE: delay represents the time between frames in the gif, if we capture a gif frame every
