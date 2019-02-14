@@ -36,13 +36,17 @@
 
 
 #ifndef NET_H
-#define NET_H
+#define NET_H 
+
 
 #ifdef __cplusplus
 extern "C" {            // Prevents name mangling of functions
 #endif
 
-	void HelloWorld(void);
+void HelloWorld(void);
+bool InitializeSockets(void);
+void ShutdownSockets(void);
+void OpenSocket(int handle, unsigned short port);
 
 #ifdef __cplusplus
 }

@@ -418,6 +418,15 @@ typedef struct VrStereoConfig {
     int eyeViewportLeft[4];         // VR stereo rendering left eye viewport [x, y, w, h]
 } VrStereoConfig;
 
+// Address struct in the form a.b.c.d where [a, b, c, d] are >= 0 && <= 255
+typedef struct Address {
+	unsigned char a;
+	unsigned char b;
+	unsigned char c;
+	unsigned char d;
+	short port;
+} Address;
+
 //----------------------------------------------------------------------------------
 // Enumerators Definition
 //----------------------------------------------------------------------------------
@@ -1374,6 +1383,15 @@ RLAPI bool IsAudioStreamPlaying(AudioStream stream);                  // Check i
 RLAPI void StopAudioStream(AudioStream stream);                       // Stop audio stream
 RLAPI void SetAudioStreamVolume(AudioStream stream, float volume);    // Set volume for audio stream (1.0 is max level)
 RLAPI void SetAudioStreamPitch(AudioStream stream, float pitch);      // Set pitch for audio stream (1.0 is base level)
+
+// Network functions 
+RLAPI bool InitializeSockets(void);
+RLAPI void ShutdownSockets(void);
+RLAPI int  CreateUDPSocket(void);
+RLAPI bool OpenSocket(int handle, unsigned short port);
+RLAPI bool SendData(int handle, const Address* destination, const void* data, int size);
+RLAPI bool ReceiveData(int handle, Address* sender, void* data, int size);
+RLAPI int AddressToInt(Address address);
 
 #if defined(__cplusplus)
 }

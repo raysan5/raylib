@@ -33,22 +33,113 @@
 *     3. This notice may not be removed or altered from any source distribution.
 *
 **********************************************************************************************/
- 
-#if defined(RNET_STANDALONE)
-#include "raudio.h"
-#include <stdarg.h>         // Required for: va_list, va_start(), vfprintf(), va_end()
-#else
-#include "raylib.h"         // Declares module functions
+
+//----------------------------------------------------------------------------------
 // Check if config flags have been externally provided on compilation line
-#if !defined(EXTERNAL_CONFIG_FLAGS)
+//----------------------------------------------------------------------------------
+#if !defined(EXTERNAL_CONFIG_FLAGS)	
 #include "config.h"         // Defines module configuration flags
 #endif
-#include "utils.h"          // Required for: fopen() Android mapping
+
+#include "sysnet.h" 
+#include "raylib.h" 
+ 
+bool InitializeSockets()
+{
+#if PLATFORM == PLATFORM_WINDOWS
+	WSADATA WsaData;
+	return WSAStartup
+	(
+		MAKEWORD(2, 2),
+		&WsaData
+	) == NO_ERROR;
+#else
+	return true;
+#endif
+}
+
+void ShutdownSockets()
+{
+#if PLATFORM == PLATFORM_WINDOWS
+	WSACleanup();
+#endif
+}
+
+int CreateUDPSocket()
+{
+	int handle = socket(AF_INET,
+		SOCK_DGRAM,
+		IPPROTO_UDP);
+
+	if (handle <= 0)
+	{
+		printf("failed to create socket\n");
+		return false;
+	}
+
+	return handle;
+}
+
+bool OpenSocket(int handle, unsigned short port)
+{
+	struct sockaddr_in address;
+	address.sin_family = AF_INET;
+	address.sin_addr.s_addr = INADDR_ANY;
+	address.sin_port = htons((unsigned short)port);
+
+	if (bind(handle, (const struct  sockaddr*)&address, sizeof( struct sockaddr_in)) < 0)
+	{
+		printf("failed to bind socket\n");
+		return false;
+	}
+
+#if PLATFORM == PLATFORM_MAC || PLATFORM == PLATFORM_UNIX
+
+	int nonBlocking = 1;
+	if (fcntl(handle, F_SETFL, O_NONBLOCK, nonBlocking) == -1)
+	{
+		printf("failed to set non-blocking\n");
+		return false;
+	}
+
+#elif PLATFORM == PLATFORM_WINDOWS
+
+	DWORD nonBlocking = 1;
+	if (ioctlsocket(handle, FIONBIO, &nonBlocking) != 0)
+	{
+		printf("failed to set non-blocking\n");
+		return false;
+	}
+
 #endif
 
-void HelloWorld(void);
+	return true;
+}
 
-void HelloWorld()
+bool SendData(int handle, const Address* destination, const void* data, int size)
 {
-	TraceLog(LOG_DEBUG, "Hello, World!");
+	int sent_bytes = sendto(handle, (const char*) data, size, 0, ( struct sockaddr*) &destination, sizeof(struct sockaddr_in));
+	if (sent_bytes != size) {
+		printf("failed to send packet\n");
+		return false;
+	}
+}
+
+int ReceiveData(int handle, Address* sender, void* data, int size)
+{
+#if PLATFORM == PLATFORM_WINDOWS
+	typedef int socklen_t;
+#endif	
+
+	while (true) {
+		socklen_t fromLength = sizeof(AddressToInt(*sender));
+		int       bytes = recvfrom(handle, (char*) data, size, 0, (struct sockaddr*) &sender, &fromLength);
+		if (bytes <= 0) break;
+		return bytes;
+	}
+}
+
+int AddressToInt(Address address)
+{
+	return (address.a << 24) | (address.b << 16) | (address.c << 8) | address.d;
 }
