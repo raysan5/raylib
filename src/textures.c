@@ -182,7 +182,11 @@ Image LoadImage(const char *fileName)
 {
     Image image = { 0 };
 
+#if defined(SUPPORT_FILEFORMAT_PNG)
     if ((IsFileExtension(fileName, ".png"))
+#else
+    if ((false)
+#endif
 #if defined(SUPPORT_FILEFORMAT_BMP)
         || (IsFileExtension(fileName, ".bmp"))
 #endif
@@ -825,14 +829,27 @@ void ExportImage(Image image, const char *fileName)
 {
     int success = 0;
 
+#if defined(SUPPORT_IMAGE_EXPORT)
     // NOTE: Getting Color array as RGBA unsigned char values
     unsigned char *imgData = (unsigned char *)GetImageData(image);
 
+#if defined(SUPPORT_FILEFORMAT_PNG)
     if (IsFileExtension(fileName, ".png")) success = stbi_write_png(fileName, image.width, image.height, 4, imgData, image.width*4);
+#else
+    if (false) {}
+#endif
+#if defined(SUPPORT_FILEFORMAT_BMP)
     else if (IsFileExtension(fileName, ".bmp")) success = stbi_write_bmp(fileName, image.width, image.height, 4, imgData);
+#endif
+#if defined(SUPPORT_FILEFORMAT_TGA)
     else if (IsFileExtension(fileName, ".tga")) success = stbi_write_tga(fileName, image.width, image.height, 4, imgData);
+#endif
+#if defined(SUPPORT_FILEFORMAT_JPG)
     else if (IsFileExtension(fileName, ".jpg")) success = stbi_write_jpg(fileName, image.width, image.height, 4, imgData, 80);  // JPG quality: between 1 and 100
+#endif
+#if defined(SUPPORT_FILEFORMAT_KTX)
     else if (IsFileExtension(fileName, ".ktx")) success = SaveKTX(image, fileName);
+#endif
     else if (IsFileExtension(fileName, ".raw"))
     {
         // Export raw pixel data (without header)
@@ -842,10 +859,11 @@ void ExportImage(Image image, const char *fileName)
         fclose(rawFile);
     }
 
+    free(imgData);
+#endif
+
     if (success != 0) TraceLog(LOG_INFO, "Image exported successfully: %s", fileName);
     else TraceLog(LOG_WARNING, "Image could not be exported.");
-
-    free(imgData);
 }
 
 // Export image as code file (.h) defining an array of bytes
@@ -2146,7 +2164,6 @@ void ImageColorReplace(Image *image, Color color, Color replace)
 }
 #endif      // SUPPORT_IMAGE_MANIPULATION
 
-#if defined(SUPPORT_IMAGE_GENERATION)
 // Generate image: plain color
 Image GenImageColor(int width, int height, Color color)
 {
@@ -2161,6 +2178,7 @@ Image GenImageColor(int width, int height, Color color)
     return image;
 }
 
+#if defined(SUPPORT_IMAGE_GENERATION)
 // Generate image: vertical gradient
 Image GenImageGradientV(int width, int height, Color top, Color bottom)
 {

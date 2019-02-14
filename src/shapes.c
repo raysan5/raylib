@@ -742,7 +742,7 @@ static Texture2D GetShapesTexture(void)
         recTexShapes = (Rectangle){ rec.x + 1, rec.y + 1, rec.width - 2, rec.height - 2 };
 #else
         texShapes = GetTextureDefault();                // Use default white texture
-        recTexShapes = { 0.0f, 0.0f, 1.0f, 1.0f };
+        recTexShapes = (Rectangle){ 0.0f, 0.0f, 1.0f, 1.0f };
 #endif
     }
 

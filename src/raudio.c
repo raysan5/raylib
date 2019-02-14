@@ -767,7 +767,11 @@ Wave LoadWave(const char *fileName)
 {
     Wave wave = { 0 };
 
+#if defined(SUPPORT_FILEFORMAT_WAV)
     if (IsFileExtension(fileName, ".wav")) wave = LoadWAV(fileName);
+#else
+    if (false) {}
+#endif
 #if defined(SUPPORT_FILEFORMAT_OGG)
     else if (IsFileExtension(fileName, ".ogg")) wave = LoadOGG(fileName);
 #endif
@@ -887,7 +891,11 @@ void ExportWave(Wave wave, const char *fileName)
 {
     bool success = false;
 
+#if defined(SUPPORT_FILEFORMAT_WAV)
     if (IsFileExtension(fileName, ".wav")) success = SaveWAV(wave, fileName);
+#else
+    if (false) {}
+#endif
     else if (IsFileExtension(fileName, ".raw"))
     {
         // Export raw sample data (without header)
@@ -1087,6 +1095,7 @@ Music LoadMusicStream(const char *fileName)
     Music music = (MusicData *)malloc(sizeof(MusicData));
     bool musicLoaded = true;
 
+#if defined(SUPPORT_FILEFORMAT_OGG)
     if (IsFileExtension(fileName, ".ogg"))
     {
         // Open ogg audio stream
@@ -1110,6 +1119,9 @@ Music LoadMusicStream(const char *fileName)
             TraceLog(LOG_DEBUG, "[%s] OGG memory required: %i", fileName, info.temp_memory_required);
         }
     }
+#else
+    if (false) {}
+#endif
 #if defined(SUPPORT_FILEFORMAT_FLAC)
     else if (IsFileExtension(fileName, ".flac"))
     {
@@ -1202,7 +1214,11 @@ Music LoadMusicStream(const char *fileName)
 
     if (!musicLoaded)
     {
+    #if defined(SUPPORT_FILEFORMAT_OGG)
         if (music->ctxType == MUSIC_AUDIO_OGG) stb_vorbis_close(music->ctxOgg);
+    #else
+        if (false) {}
+    #endif
     #if defined(SUPPORT_FILEFORMAT_FLAC)
         else if (music->ctxType == MUSIC_AUDIO_FLAC) drflac_free(music->ctxFlac);
     #endif
@@ -1232,7 +1248,11 @@ void UnloadMusicStream(Music music)
     
     CloseAudioStream(music->stream);
 
+#if defined(SUPPORT_FILEFORMAT_OGG)
     if (music->ctxType == MUSIC_AUDIO_OGG) stb_vorbis_close(music->ctxOgg);
+#else
+    if (false) {}
+#endif
 #if defined(SUPPORT_FILEFORMAT_FLAC)
     else if (music->ctxType == MUSIC_AUDIO_FLAC) drflac_free(music->ctxFlac);
 #endif
@@ -1297,7 +1317,9 @@ void StopMusicStream(Music music)
     // Restart music context
     switch (music->ctxType)
     {
+#if defined(SUPPORT_FILEFORMAT_OGG)
         case MUSIC_AUDIO_OGG: stb_vorbis_seek_start(music->ctxOgg); break;
+#endif
 #if defined(SUPPORT_FILEFORMAT_FLAC)
         case MUSIC_AUDIO_FLAC: /* TODO: Restart FLAC context */ break;
 #endif
@@ -1339,12 +1361,14 @@ void UpdateMusicStream(Music music)
         // TODO: Really don't like ctxType thingy...
         switch (music->ctxType)
         {
+        #if defined(SUPPORT_FILEFORMAT_OGG)
             case MUSIC_AUDIO_OGG:
             {
                 // NOTE: Returns the number of samples to process (be careful! we ask for number of shorts!)
                 stb_vorbis_get_samples_short_interleaved(music->ctxOgg, music->stream.channels, (short *)pcm, samplesCount);
 
             } break;
+        #endif
         #if defined(SUPPORT_FILEFORMAT_FLAC)
             case MUSIC_AUDIO_FLAC:
             {
