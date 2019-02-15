@@ -309,6 +309,7 @@ Font LoadFontEx(const char *fileName, int fontSize, int *fontChars, int charsCou
     font.charsCount = (charsCount > 0) ? charsCount : 95;
     font.chars = LoadFontData(fileName, font.baseSize, fontChars, font.charsCount, FONT_DEFAULT);
 
+#if defined(SUPPORT_FILEFORMAT_TTF)
     if (font.chars != NULL)
     {
         Image atlas = GenImageFontAtlas(font.chars, font.charsCount, font.baseSize, 2, 0);
@@ -316,6 +317,9 @@ Font LoadFontEx(const char *fileName, int fontSize, int *fontChars, int charsCou
         UnloadImage(atlas);
     }
     else font = GetFontDefault();
+#else
+    font = GetFontDefault();
+#endif
 
     return font;
 }
@@ -449,6 +453,7 @@ CharInfo *LoadFontData(const char *fileName, int fontSize, int *fontChars, int c
 
     CharInfo *chars = NULL;
 
+#if defined(SUPPORT_FILEFORMAT_TTF)
     // Load font data (including pixel data) from TTF file
     // NOTE: Loaded information should be enough to generate font image atlas,
     // using any packaging method
@@ -537,12 +542,16 @@ CharInfo *LoadFontData(const char *fileName, int fontSize, int *fontChars, int c
         if (genFontChars) free(fontChars);
     }
     else TraceLog(LOG_WARNING, "[%s] TTF file could not be opened", fileName);
+#else
+    TraceLog(LOG_WARNING, "[%s] TTF support is disabled", fileName);
+#endif
 
     return chars;
 }
 
 // Generate image font atlas using chars info
 // NOTE: Packing method: 0-Default, 1-Skyline
+#if defined(SUPPORT_FILEFORMAT_TTF)
 Image GenImageFontAtlas(CharInfo *chars, int charsCount, int fontSize, int padding, int packMethod)
 {
     Image atlas = { 0 };
@@ -667,6 +676,7 @@ Image GenImageFontAtlas(CharInfo *chars, int charsCount, int fontSize, int paddi
 
     return atlas;
 }
+#endif
 
 // Unload Font from GPU memory (VRAM)
 void UnloadFont(Font font)

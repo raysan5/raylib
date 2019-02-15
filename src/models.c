@@ -655,12 +655,16 @@ Mesh LoadMesh(const char *fileName)
     TraceLog(LOG_WARNING, "[%s] Mesh fileformat not supported, it can't be loaded", fileName);
 #endif
 
+#if defined(SUPPORT_MESH_GENERATION)
     if (mesh.vertexCount == 0)
     {
         TraceLog(LOG_WARNING, "Mesh could not be loaded! Let's load a cube to replace it!");
         mesh = GenMeshCube(1.0f, 1.0f, 1.0f);
     }
     else rlLoadMesh(&mesh, false);  // Upload vertex data to GPU (static mesh)
+#else
+    rlLoadMesh(&mesh, false);  // Upload vertex data to GPU (static mesh)
+#endif
 
     return mesh;
 }

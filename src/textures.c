@@ -182,7 +182,11 @@ Image LoadImage(const char *fileName)
 {
     Image image = { 0 };
 
+#if defined(SUPPORT_FILEFORMAT_PNG)
     if ((IsFileExtension(fileName, ".png"))
+#else
+    if ((false)
+#endif
 #if defined(SUPPORT_FILEFORMAT_BMP)
         || (IsFileExtension(fileName, ".bmp"))
 #endif
@@ -396,90 +400,6 @@ Texture2D LoadTextureFromImage(Image image)
     texture.format = image.format;
 
     return texture;
-}
-
-// Load cubemap from image, multiple image cubemap layouts supported
-TextureCubemap LoadTextureCubemap(Image image, int layoutType)
-{
-    TextureCubemap cubemap = { 0 };
-    
-    if (layoutType == CUBEMAP_AUTO_DETECT)      // Try to automatically guess layout type
-    {
-        // Check image width/height to determine the type of cubemap provided
-        if (image.width > image.height)
-        {
-            if ((image.width/6) == image.height) { layoutType = CUBEMAP_LINE_HORIZONTAL; cubemap.width = image.width/6; }
-            else if ((image.width/4) == (image.height/3)) { layoutType = CUBEMAP_CROSS_FOUR_BY_THREE; cubemap.width = image.width/4; }
-            else if (image.width >= (int)((float)image.height*1.85f)) { layoutType = CUBEMAP_PANORAMA; cubemap.width = image.width/4; }
-        }
-        else if (image.height > image.width)
-        {
-            if ((image.height/6) == image.width) { layoutType = CUBEMAP_LINE_VERTICAL; cubemap.width = image.height/6; }
-            else if ((image.width/3) == (image.height/4)) { layoutType = CUBEMAP_CROSS_THREE_BY_FOUR; cubemap.width = image.width/3; }
-        }
-        
-        cubemap.height = cubemap.width;
-    }
-    
-    int size = cubemap.width;
-    
-    if (layoutType != CUBEMAP_AUTO_DETECT) 
-    {
-        //unsigned int dataSize = GetPixelDataSize(size, size, format);
-        //void *facesData = malloc(size*size*dataSize*6);    // Get memory for 6 faces in a column
-        
-        Image faces = { 0 };                // Vertical column image
-        Rectangle faceRecs[6] = { 0 };      // Face source rectangles
-        for (int i = 0; i < 6; i++) faceRecs[i] = (Rectangle){ 0, 0, size, size };
-            
-        if (layoutType == CUBEMAP_LINE_VERTICAL) 
-        {
-            faces = image;
-            for (int i = 0; i < 6; i++) faceRecs[i].y = size*i;
-        }
-        else if (layoutType == CUBEMAP_PANORAMA)
-        {
-            // TODO: Convert panorama image to square faces...
-        }
-        else
-        {
-            if (layoutType == CUBEMAP_LINE_HORIZONTAL) for (int i = 0; i < 6; i++) faceRecs[i].x = size*i;
-            else if (layoutType == CUBEMAP_CROSS_THREE_BY_FOUR)
-            {
-                faceRecs[0].x = size; faceRecs[0].y = size;
-                faceRecs[1].x = size; faceRecs[1].y = 3*size;
-                faceRecs[2].x = size; faceRecs[2].y = 0;
-                faceRecs[3].x = size; faceRecs[3].y = 2*size;
-                faceRecs[4].x = 0; faceRecs[4].y = size;
-                faceRecs[5].x = 2*size; faceRecs[5].y = size;
-            }
-            else if (layoutType == CUBEMAP_CROSS_FOUR_BY_THREE)
-            {
-                faceRecs[0].x = 2*size; faceRecs[0].y = size;
-                faceRecs[1].x = 0; faceRecs[1].y = size;
-                faceRecs[2].x = size; faceRecs[2].y = 0;
-                faceRecs[3].x = size; faceRecs[3].y = 2*size;
-                faceRecs[4].x = size; faceRecs[4].y = size;
-                faceRecs[5].x = 3*size; faceRecs[5].y = size;
-            }
-            
-            // Convert image data to 6 faces in a vertical column, that's the optimum layout for loading
-            faces = GenImageColor(size, size*6, MAGENTA);
-            ImageFormat(&faces, image.format);
-            
-            // TODO: Image formating does not work with compressed textures!
-        }
-
-        for (int i = 0; i < 6; i++) ImageDraw(&faces, image, faceRecs[i], (Rectangle){ 0, size*i, size, size });
-
-        cubemap.id = rlLoadTextureCubemap(faces.data, size, faces.format);
-        if (cubemap.id == 0) TraceLog(LOG_WARNING, "Cubemap image could not be loaded.");
-
-        UnloadImage(faces);
-    }
-    else TraceLog(LOG_WARNING, "Cubemap image layout can not be detected.");
-
-    return cubemap;
 }
 
 // Load texture for rendering (framebuffer)
@@ -825,14 +745,27 @@ void ExportImage(Image image, const char *fileName)
 {
     int success = 0;
 
+#if defined(SUPPORT_IMAGE_EXPORT)
     // NOTE: Getting Color array as RGBA unsigned char values
     unsigned char *imgData = (unsigned char *)GetImageData(image);
 
+#if defined(SUPPORT_FILEFORMAT_PNG)
     if (IsFileExtension(fileName, ".png")) success = stbi_write_png(fileName, image.width, image.height, 4, imgData, image.width*4);
+#else
+    if (false) {}
+#endif
+#if defined(SUPPORT_FILEFORMAT_BMP)
     else if (IsFileExtension(fileName, ".bmp")) success = stbi_write_bmp(fileName, image.width, image.height, 4, imgData);
+#endif
+#if defined(SUPPORT_FILEFORMAT_TGA)
     else if (IsFileExtension(fileName, ".tga")) success = stbi_write_tga(fileName, image.width, image.height, 4, imgData);
+#endif
+#if defined(SUPPORT_FILEFORMAT_JPG)
     else if (IsFileExtension(fileName, ".jpg")) success = stbi_write_jpg(fileName, image.width, image.height, 4, imgData, 80);  // JPG quality: between 1 and 100
+#endif
+#if defined(SUPPORT_FILEFORMAT_KTX)
     else if (IsFileExtension(fileName, ".ktx")) success = SaveKTX(image, fileName);
+#endif
     else if (IsFileExtension(fileName, ".raw"))
     {
         // Export raw pixel data (without header)
@@ -842,10 +775,11 @@ void ExportImage(Image image, const char *fileName)
         fclose(rawFile);
     }
 
+    free(imgData);
+#endif
+
     if (success != 0) TraceLog(LOG_INFO, "Image exported successfully: %s", fileName);
     else TraceLog(LOG_WARNING, "Image could not be exported.");
-
-    free(imgData);
 }
 
 // Export image as code file (.h) defining an array of bytes
@@ -1133,7 +1067,9 @@ void ImageFormat(Image *image, int newFormat)
             if (image->mipmaps > 1)
             {
                 image->mipmaps = 1;
+            #if defined(SUPPORT_IMAGE_MANIPULATION)
                 if (image->data != NULL) ImageMipmaps(image);
+            #endif
             }
         }
         else TraceLog(LOG_WARNING, "Image data format is compressed, can not be converted");
@@ -1202,38 +1138,6 @@ void ImageAlphaClear(Image *image, Color color, float threshold)
     ImageFormat(image, prevFormat);
 }
 
-// Crop image depending on alpha value
-void ImageAlphaCrop(Image *image, float threshold)
-{
-    Color *pixels = GetImageData(*image);
-
-    int xMin = 65536;   // Define a big enough number
-    int xMax = 0;
-    int yMin = 65536;
-    int yMax = 0;
-    
-    for (int y = 0; y < image->height; y++)
-    {
-        for (int x = 0; x < image->width; x++)
-        {
-            if (pixels[y*image->width + x].a > (unsigned char)(threshold*255.0f))
-            {
-                if (x < xMin) xMin = x;
-                if (x > xMax) xMax = x;
-                if (y < yMin) yMin = y;
-                if (y > yMax) yMax = y;
-            }
-        }
-    }
-    
-    Rectangle crop = { xMin, yMin, (xMax + 1) - xMin, (yMax + 1) - yMin };
-
-    free(pixels);
-    
-    // Check for not empty image brefore cropping
-    if (!((xMax < xMin) || (yMax < yMin))) ImageCrop(image, crop);
-}
-
 // Premultiply alpha channel
 void ImageAlphaPremultiply(Image *image)
 {
@@ -1259,6 +1163,90 @@ void ImageAlphaPremultiply(Image *image)
 
 
 #if defined(SUPPORT_IMAGE_MANIPULATION)
+// Load cubemap from image, multiple image cubemap layouts supported
+TextureCubemap LoadTextureCubemap(Image image, int layoutType)
+{
+    TextureCubemap cubemap = { 0 };
+
+    if (layoutType == CUBEMAP_AUTO_DETECT)      // Try to automatically guess layout type
+    {
+        // Check image width/height to determine the type of cubemap provided
+        if (image.width > image.height)
+        {
+            if ((image.width/6) == image.height) { layoutType = CUBEMAP_LINE_HORIZONTAL; cubemap.width = image.width/6; }
+            else if ((image.width/4) == (image.height/3)) { layoutType = CUBEMAP_CROSS_FOUR_BY_THREE; cubemap.width = image.width/4; }
+            else if (image.width >= (int)((float)image.height*1.85f)) { layoutType = CUBEMAP_PANORAMA; cubemap.width = image.width/4; }
+        }
+        else if (image.height > image.width)
+        {
+            if ((image.height/6) == image.width) { layoutType = CUBEMAP_LINE_VERTICAL; cubemap.width = image.height/6; }
+            else if ((image.width/3) == (image.height/4)) { layoutType = CUBEMAP_CROSS_THREE_BY_FOUR; cubemap.width = image.width/3; }
+        }
+
+        cubemap.height = cubemap.width;
+    }
+
+    int size = cubemap.width;
+
+    if (layoutType != CUBEMAP_AUTO_DETECT)
+    {
+        //unsigned int dataSize = GetPixelDataSize(size, size, format);
+        //void *facesData = malloc(size*size*dataSize*6);    // Get memory for 6 faces in a column
+
+        Image faces = { 0 };                // Vertical column image
+        Rectangle faceRecs[6] = { 0 };      // Face source rectangles
+        for (int i = 0; i < 6; i++) faceRecs[i] = (Rectangle){ 0, 0, size, size };
+
+        if (layoutType == CUBEMAP_LINE_VERTICAL)
+        {
+            faces = image;
+            for (int i = 0; i < 6; i++) faceRecs[i].y = size*i;
+        }
+        else if (layoutType == CUBEMAP_PANORAMA)
+        {
+            // TODO: Convert panorama image to square faces...
+        }
+        else
+        {
+            if (layoutType == CUBEMAP_LINE_HORIZONTAL) for (int i = 0; i < 6; i++) faceRecs[i].x = size*i;
+            else if (layoutType == CUBEMAP_CROSS_THREE_BY_FOUR)
+            {
+                faceRecs[0].x = size; faceRecs[0].y = size;
+                faceRecs[1].x = size; faceRecs[1].y = 3*size;
+                faceRecs[2].x = size; faceRecs[2].y = 0;
+                faceRecs[3].x = size; faceRecs[3].y = 2*size;
+                faceRecs[4].x = 0; faceRecs[4].y = size;
+                faceRecs[5].x = 2*size; faceRecs[5].y = size;
+            }
+            else if (layoutType == CUBEMAP_CROSS_FOUR_BY_THREE)
+            {
+                faceRecs[0].x = 2*size; faceRecs[0].y = size;
+                faceRecs[1].x = 0; faceRecs[1].y = size;
+                faceRecs[2].x = size; faceRecs[2].y = 0;
+                faceRecs[3].x = size; faceRecs[3].y = 2*size;
+                faceRecs[4].x = size; faceRecs[4].y = size;
+                faceRecs[5].x = 3*size; faceRecs[5].y = size;
+            }
+
+            // Convert image data to 6 faces in a vertical column, that's the optimum layout for loading
+            faces = GenImageColor(size, size*6, MAGENTA);
+            ImageFormat(&faces, image.format);
+
+            // TODO: Image formating does not work with compressed textures!
+        }
+
+        for (int i = 0; i < 6; i++) ImageDraw(&faces, image, faceRecs[i], (Rectangle){ 0, size*i, size, size });
+
+        cubemap.id = rlLoadTextureCubemap(faces.data, size, faces.format);
+        if (cubemap.id == 0) TraceLog(LOG_WARNING, "Cubemap image could not be loaded.");
+
+        UnloadImage(faces);
+    }
+    else TraceLog(LOG_WARNING, "Cubemap image layout can not be detected.");
+
+    return cubemap;
+}
+
 // Crop an image to area defined by a rectangle
 // NOTE: Security checks are performed in case rectangle goes out of bounds
 void ImageCrop(Image *image, Rectangle crop)
@@ -1307,6 +1295,38 @@ void ImageCrop(Image *image, Rectangle crop)
     {
         TraceLog(LOG_WARNING, "Image can not be cropped, crop rectangle out of bounds");
     }
+}
+
+// Crop image depending on alpha value
+void ImageAlphaCrop(Image *image, float threshold)
+{
+    Color *pixels = GetImageData(*image);
+
+    int xMin = 65536;   // Define a big enough number
+    int xMax = 0;
+    int yMin = 65536;
+    int yMax = 0;
+
+    for (int y = 0; y < image->height; y++)
+    {
+        for (int x = 0; x < image->width; x++)
+        {
+            if (pixels[y*image->width + x].a > (unsigned char)(threshold*255.0f))
+            {
+                if (x < xMin) xMin = x;
+                if (x > xMax) xMax = x;
+                if (y < yMin) yMin = y;
+                if (y > yMax) yMax = y;
+            }
+        }
+    }
+
+    Rectangle crop = { xMin, yMin, (xMax + 1) - xMin, (yMax + 1) - yMin };
+
+    free(pixels);
+
+    // Check for not empty image brefore cropping
+    if (!((xMax < xMin) || (yMax < yMin))) ImageCrop(image, crop);
 }
 
 // Resize and image to new size
@@ -2146,7 +2166,6 @@ void ImageColorReplace(Image *image, Color color, Color replace)
 }
 #endif      // SUPPORT_IMAGE_MANIPULATION
 
-#if defined(SUPPORT_IMAGE_GENERATION)
 // Generate image: plain color
 Image GenImageColor(int width, int height, Color color)
 {
@@ -2161,6 +2180,7 @@ Image GenImageColor(int width, int height, Color color)
     return image;
 }
 
+#if defined(SUPPORT_IMAGE_GENERATION)
 // Generate image: vertical gradient
 Image GenImageGradientV(int width, int height, Color top, Color bottom)
 {
