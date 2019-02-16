@@ -417,15 +417,13 @@ typedef struct VrStereoConfig {
     int eyeViewportRight[4];        // VR stereo rendering right eye viewport [x, y, w, h]
     int eyeViewportLeft[4];         // VR stereo rendering left eye viewport [x, y, w, h]
 } VrStereoConfig;
-
-// Address struct in the form a.b.c.d where [a, b, c, d] are >= 0 && <= 255
-typedef struct Address {
-	unsigned char a;
-	unsigned char b;
-	unsigned char c;
-	unsigned char d;
-	short port;
-} Address;
+ 
+// TCP Stream socket
+typedef struct TCPSocket {
+	int sockfd;
+	int server;
+	bool ready;
+} TCPSocket;
 
 //----------------------------------------------------------------------------------
 // Enumerators Definition
@@ -1385,13 +1383,15 @@ RLAPI void SetAudioStreamVolume(AudioStream stream, float volume);    // Set vol
 RLAPI void SetAudioStreamPitch(AudioStream stream, float pitch);      // Set pitch for audio stream (1.0 is base level)
 
 // Network functions 
-RLAPI bool InitializeSockets(void);
-RLAPI void ShutdownSockets(void);
-RLAPI int  CreateUDPSocket(void);
-RLAPI bool OpenSocket(int handle, unsigned short port);
-RLAPI bool SendData(int handle, const Address* destination, const void* data, int size);
-RLAPI bool ReceiveData(int handle, Address* sender, void* data, int size);
-RLAPI int AddressToInt(Address address);
+RLAPI bool InitNetwork(void);
+RLAPI void CloseNetwork(void);
+RLAPI void CreateTCPListenServer(TCPSocket* socket, const char* address, const int port);
+RLAPI void CreateTCPClient(TCPSocket* socket, const char* address, const char* port);
+RLAPI void AcceptIncomingConnections(TCPSocket* sock, int sockfd);
+RLAPI int SendTCP(int sockfd, const char* data, int len);
+RLAPI int ReceiveTCP(int sockfd, const char* data, int len);
+RLAPI void ResetSocket(TCPSocket* socket);
+RLAPI void ResolveHost(const char* hostname);
 
 #if defined(__cplusplus)
 }

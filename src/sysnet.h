@@ -45,36 +45,58 @@
 
 #define MMNOSOUND
 
-//----------------------------------------------------------------------------------
-// Platform specific network includes
-//----------------------------------------------------------------------------------
 
-#define PLATFORM_WINDOWS 1
-#define PLATFORM_MAC 2
-#define PLATFORM_UNIX 3
+//----------------------------------------------------------------------------------
+// Platform defines
+//----------------------------------------------------------------------------------
+ 
+#define PLATFORM_WINDOWS 1 
+#define PLATFORM_UNIX 2
 
-#if defined(_WIN32)
-#define PLATFORM PLATFORM_WINDOWS
-#elif defined(__APPLE__)
-#define PLATFORM PLATFORM_MAC
+#if defined(__WIN32__) || defined(WIN32)
+#define PLATFORM PLATFORM_WINDOWS 
 #else
 #define PLATFORM PLATFORM_UNIX
 #endif
 
-#if PLATFORM == PLATFORM_WINDOWS
-	// #define	_INC_WINDOWS
-	// #define	WIN32_LEAN_AND_MEAN
-	// #include <minwindef.h>
-#endif
-
-#if PLATFORM == PLATFORM_WINDOWS
-#include <winsock2.h> 
-#elif PLATFORM == PLATFORM_MAC || PLATFORM == PLATFORM_UNIX
+//----------------------------------------------------------------------------------
+// Platform specific network includes
+//----------------------------------------------------------------------------------
+ 
+#if PLATFORM_WINDOWS
+#define __USE_W32_SOCKETS 
+#pragma comment(lib, "ws2_32.lib")
+#include <winsock2.h>
+#include <ws2tcpip.h> 
+#include <iphlpapi.h> 
+#else /* UNIX */ 
+#include <sys/types.h> 
+#include <sys/ioctl.h>
+#include <sys/time.h>
+#include <unistd.h>
 #include <fcntl.h>
-#include <netinet/in.h>
+#include <netinet/in.h> 
+#include <netinet/tcp.h>
 #include <sys/socket.h>
-#endif
+#include <net/if.h>
+#include <netdb.h>
+#endif /* WIN32 */
 
-#if PLATFORM == PLATFORM_WINDOWS
-#pragma comment(lib, "wsock32.lib")
+/* System-dependent definitions */
+#ifndef __USE_W32_SOCKETS 
+#define closesocket close 
+#define SOCKET  int
+#define INVALID_SOCKET  -1
+#define SOCKET_ERROR    -1
+#endif /* __USE_W32_SOCKETS */
+
+#ifdef __USE_W32_SOCKETS
+#define RNet_GetLastError WSAGetLastError
+#define RNet_SetLastError WSASetLastError
+#ifndef EINTR
+#define EINTR WSAEINTR
 #endif
+#else
+int  RNet_GetLastError(void);
+void RNet_SetLastError(int err);
+#endif 
