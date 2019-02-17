@@ -97,6 +97,10 @@
 #define MAX_SHADER_LOCATIONS    32      // Maximum number of predefined locations stored in shader struct
 #define MAX_MATERIAL_MAPS       12      // Maximum number of texture maps stored in shader struct
 
+// Network limits
+#define MAX_SOCKET_SET_SIZE		32
+#define MAX_SOCKET_QUEUE_SIZE	16
+
 // NOTE: MSC C++ compiler does not support compound literals (C99 feature)
 // Plain structures in C++ (without constructors) can be initialized from { } initializers.
 #if defined(__cplusplus)
@@ -150,6 +154,9 @@
 #elif !defined(__cplusplus) && !defined(bool)
     typedef enum { false, true } bool;
 #endif
+
+// Network typedefs
+typedef int SocketHandle;
 
 // Vector2 type
 typedef struct Vector2 {
@@ -417,17 +424,56 @@ typedef struct VrStereoConfig {
     int eyeViewportRight[4];        // VR stereo rendering right eye viewport [x, y, w, h]
     int eyeViewportLeft[4];         // VR stereo rendering left eye viewport [x, y, w, h]
 } VrStereoConfig;
- 
-// TCP Stream socket
-typedef struct TCPSocket {
-	int sockfd;
-	int server;
-	bool ready;
-} TCPSocket;
+
+typedef struct AddressInformation
+{
+	int                   flags; // AI_PASSIVE, AI_CANONNAME, AI_NUMERICHOST
+	int                   family; // PF_xxx
+	int                   socktype; // SOCK_xxx
+	int                   protocol; // 0 or IPPROTO_xxx for IPv4 and IPv6
+	size_t                addrlen; // Length of ai_addr
+	char *                canonname; // Canonical name for nodename
+	struct SocketAddress *sockaddr; // Binary address
+	struct AddressInformation *next; // Next structure in linked list
+} AddressInformation;
+
+typedef struct SocketAddress
+{
+	unsigned short family; // Address family.
+	char           data[14]; // Up to 14 bytes of direct address.
+} SocketAddress;
+
+// Socket
+typedef struct Socket
+{
+	SocketHandle handle;
+	bool blocking;
+} Socket; 
+
+typedef struct SocketSet
+{
+	Socket sockets[MAX_SOCKET_SET_SIZE];
+} SocketSet;
+
+
 
 //----------------------------------------------------------------------------------
 // Enumerators Definition
 //----------------------------------------------------------------------------------
+
+typedef enum
+{
+	SOCKET_ANY = 0, // ACCEPT_ALL
+	SOCKET_TCP = 1,	// SOCK_STREAM
+	SOCKET_UDP = 2 	// SOCK_DGRAM
+} SocketType;
+
+typedef enum
+{
+	PROTOCOL_ANY = 0, // ACCEPT_ALL
+	PROTOCOL_TCP = 6, // IPPROTO_TCP
+	PROTOCOL_UDP = 17 // IPPROTO_UDP
+} ProtocolType;
 
 // System config flags
 // NOTE: Used for bit masks
@@ -1385,13 +1431,27 @@ RLAPI void SetAudioStreamPitch(AudioStream stream, float pitch);      // Set pit
 // Network functions 
 RLAPI bool InitNetwork(void);
 RLAPI void CloseNetwork(void);
-RLAPI void CreateTCPListenServer(TCPSocket* socket, const char* address, const int port);
-RLAPI void CreateTCPClient(TCPSocket* socket, const char* address, const char* port);
-RLAPI void AcceptIncomingConnections(TCPSocket* sock, int sockfd);
-RLAPI int SendTCP(int sockfd, const char* data, int len);
-RLAPI int ReceiveTCP(int sockfd, const char* data, int len);
-RLAPI void ResetSocket(TCPSocket* socket);
+
+RLAPI void GetAddressInformation(AddressInformation* outaddr, const char* address, const char* port, int socketType, int protocolType);
+
+RLAPI bool CreateSocket(Socket *socket, AddressInformation outaddr);
+RLAPI bool BindSocket(Socket socket, const AddressInformation addr);
+RLAPI bool ConnectSocket(Socket socket, const AddressInformation addr); 
+RLAPI bool ListenSocket(Socket socket);
+RLAPI void CloseSocket(Socket* socket);
+RLAPI void AcceptSocket(Socket listenSock, Socket *newSock);
+
+RLAPI char* SocketAddressToString(SocketAddress* sockaddr, char buffer[]);
+RLAPI void PrintSocket(SocketAddress* addr, const int family, const int socktype, const int protocol);
 RLAPI void ResolveHost(const char* hostname);
+RLAPI void ResolveIP(const char* ip);
+
+RLAPI void CreateListenServer(Socket* socket, const char* address, const int port, SocketType socketType);
+RLAPI void CreateClient(Socket* socket, const char* address, const char* port, SocketType socketType);
+RLAPI int Send(SocketHandle sockfd, const char* data, int len);
+RLAPI int Receive(SocketHandle sockfd, const char* data, int len);
+RLAPI void ResetSocket(Socket* socket);
+
 
 #if defined(__cplusplus)
 }

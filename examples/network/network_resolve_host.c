@@ -33,11 +33,13 @@ int main()
 
 	// Networking
 	InitNetwork();
-	ResolveHost("www.raylib.com");
+	ResolveHost("www.google.com"); 
+	ResolveIP("2001:4860:4860::8888");
+	ResolveIP("8.8.8.8");
 
 	// Main game loop
-	while (!WindowShouldClose()) {
-
+	while (!WindowShouldClose())
+	{
 		// Draw
 		BeginDrawing();
 

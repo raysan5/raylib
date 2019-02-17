@@ -20,7 +20,7 @@
  *
  ********************************************************************************************/
 
-#include "raylib.h" 
+#include "raylib.h"
 
 int main()
 {
@@ -31,27 +31,38 @@ int main()
 		screenWidth, screenHeight, "raylib [network] example - ping pong");
 	SetTargetFPS(60);
 
+	SetTraceLogLevel(LOG_INFO);
+
 	// Networking
-	TCPSocket server;
-	TCPSocket client;
-	TCPSocket connection;
-	ResetSocket(&server);
-	ResetSocket(&client);
-	ResetSocket(&connection);
-
 	InitNetwork();
-	CreateTCPListenServer(&server, "127.0.0.1", "3490");
-	CreateTCPClient(&client, "127.0.0.1", "3490");
 
-	// Timer
-	float elapsed = 0.0f, delay = 1.0f; // ms
-	bool  ping = false, pong = false;
-	char  recvBuffer[512];
+	// Server socket and address
+	AddressInformation serveraddr;
+	Socket             server;
+	server.blocking = false;
+	GetAddressInformation(&serveraddr, "localhost", "3490", SOCKET_TCP, PROTOCOL_TCP);
+	CreateSocket(&server, serveraddr);
+	BindSocket(server, serveraddr);
+	ListenSocket(server);
+
+	// Client socket and address
+	AddressInformation clientaddr;
+	Socket             client;
+	client.blocking = false;
+	GetAddressInformation(&clientaddr, "localhost", "3490", SOCKET_TCP, PROTOCOL_TCP);
+	CreateSocket(&client, clientaddr);
+	ConnectSocket(client, clientaddr);
+
+	Socket connection; // The socket connection between server->client
+	float  elapsed = 0.0f, delay = 1.0f; // ms
+	bool   ping = false, pong = false;
+	char   recvBuffer[512];
+	bool   connected = false;
 	memset(&recvBuffer, 0, 8);
 
 	// Main game loop
-	while (!WindowShouldClose()) {
-
+	while (!WindowShouldClose())
+	{
 		// Draw
 		BeginDrawing();
 
@@ -59,34 +70,43 @@ int main()
 		ClearBackground(RAYWHITE);
 
 		// A valid connection will != -1
-		if (!connection.ready) {
-			AcceptIncomingConnections(&connection, server.sockfd);
-			ping = true;
+		if (!connected)
+		{
+			AcceptSocket(server, &connection);
+			ping      = true;
+			connected = true;
 		}
 
 		// Connected
-		if (connection.ready) {
-
-			int bytesRecv = ReceiveTCP(connection.sockfd, recvBuffer, 5);
-			if (bytesRecv > 0) {
-				if (strcmp(recvBuffer, "Ping!") == 0) {
+		if (connected)
+		{
+			int bytesRecv = ReceiveTCP(connection.handle, recvBuffer, 5);
+			if (bytesRecv > 0)
+			{
+				if (strcmp(recvBuffer, "Ping!") == 0)
+				{
 					pong = true;
 					printf("Ping!\n");
 				}
-				if (strcmp(recvBuffer, "Pong!") == 0) {
+				if (strcmp(recvBuffer, "Pong!") == 0)
+				{
 					ping = true;
 					printf("Pong!\n");
 				}
 			}
 
 			elapsed += GetFrameTime();
-			if (elapsed > delay) {
-				if (ping) {
+			if (elapsed > delay)
+			{
+				if (ping)
+				{
 					ping = false;
-					SendTCP(client.sockfd, "Ping!", 5);
-				} else if (pong) {
+					SendTCP(client.handle, "Ping!", 5);
+				}
+				else if (pong)
+				{
 					pong = false;
-					SendTCP(client.sockfd, "Pong!", 5);
+					SendTCP(client.handle, "Pong!", 5);
 				}
 				elapsed = 0.0f;
 			}
