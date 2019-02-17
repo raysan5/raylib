@@ -6,7 +6,8 @@
 *       - Manage network stuff
 *
 *   DEPENDENCIES:
-*       core.h    - core stuff
+*       raylib.h    - TraceLog
+*       sysnet.h    - platform-specific network includes
 *
 *   CONTRIBUTORS:
 *       Jak Barnes (github: @syphonx) (Feb. 2019):
@@ -41,13 +42,27 @@
 #	include "config.h" // Defines module configuration flags
 #endif
 
+//----------------------------------------------------------------------------------
+// Module dependencies
+//----------------------------------------------------------------------------------
+
 #include "raylib.h"
 #include "sysnet.h"
 
 #include <errno.h>
 #include <stdlib.h>
 
-#define errno WSAGetLastError()
+//----------------------------------------------------------------------------------
+// Module defines
+//----------------------------------------------------------------------------------
+
+#if PLATFORM_WINDOWS
+#	define errno WSAGetLastError() // Support UNIX socket error codes
+#endif
+
+//----------------------------------------------------------------------------------
+// Module implementation
+//----------------------------------------------------------------------------------
 
 // Initialise the network (requires for windows platforms only)
 bool InitNetwork()
@@ -192,7 +207,7 @@ bool ConnectSocket(Socket socket, AddressInformation addr)
 	return true;
 }
 
-//
+// Listen on a socket
 bool ListenSocket(Socket socket)
 {
 	int status = listen(socket.handle, MAX_SOCKET_QUEUE_SIZE);
@@ -235,7 +250,7 @@ void CloseSocket(Socket* socket)
 #endif
 }
 
-//
+// Create a listen server, this combines Create/Bind/Listen into 1 function
 void CreateListenServer(Socket* tcpsock, const char* address, const char* port, SocketType socketType)
 {
 	// Variables
@@ -313,7 +328,7 @@ void CreateListenServer(Socket* tcpsock, const char* address, const char* port, 
 	return;
 }
 
-//
+// Create a simple client, this combines Create/Bind/Connect into 1 function
 void CreateClient(Socket* tcpsock, char* address, char* port, SocketType socketType)
 {
 	int              status;
@@ -369,7 +384,7 @@ void CreateClient(Socket* tcpsock, char* address, char* port, SocketType socketT
 	tcpsock->handle = handle;
 }
 
-//
+// Try to accept connections on ListenSock and store them in NewSock
 void AcceptSocket(Socket listenSock, Socket* newSock)
 {
 	struct sockaddr_storage their_addr;
@@ -389,7 +404,7 @@ void AcceptSocket(Socket listenSock, Socket* newSock)
 	}
 }
 
-//
+// Send data over TCP
 int SendTCP(SocketHandle handle, const char* data, int len)
 {
 	int sentBytes = send(handle, data, len, 0);
@@ -403,7 +418,7 @@ int SendTCP(SocketHandle handle, const char* data, int len)
 	}
 }
 
-//
+// Receiive data over TCP
 int ReceiveTCP(SocketHandle handle, const char* data, int len)
 {
 	int status = recv(handle, data, len, 0);
@@ -453,8 +468,7 @@ void ResolveHost(const char* hostname)
 		void* addr;
 		char* ipver;
 
-		// get the pointer to the address itself,
-		// different fields in IPv4 and IPv6:
+		// get the pointer to the address itself, different fields in IPv4 and IPv6:
 		if (p->ai_family == AF_INET)
 		{ // IPv4
 			struct sockaddr_in* ipv4 = (struct sockaddr_in*) p->ai_addr;

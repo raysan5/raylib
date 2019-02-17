@@ -1,6 +1,6 @@
 /*******************************************************************************************
  *
- *   raylib [network] example - Resolve host
+ *   raylib [network] example - Chat client
  *
  *   Welcome to raylib!
  *
@@ -32,10 +32,7 @@ int main()
 	SetTargetFPS(60);
 
 	// Networking
-	InitNetwork();
-	ResolveHost("www.google.com"); 
-	ResolveIP("2001:4860:4860::8888");
-	ResolveIP("8.8.8.8");
+	InitNetwork(); 
 
 	// Main game loop
 	while (!WindowShouldClose())

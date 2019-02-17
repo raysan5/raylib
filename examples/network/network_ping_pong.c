@@ -1,6 +1,6 @@
 /*******************************************************************************************
  *
- *   raylib [core] example - Basic window
+ *   raylib [network] example - Client/Server ping-pong
  *
  *   Welcome to raylib!
  *
@@ -12,7 +12,7 @@
  *
  *   Enjoy using raylib. :)
  *
- *   This example has been created using raylib 1.0 (www.raylib.com)
+ *   This example has been created using raylib 2.0 (www.raylib.com)
  *   raylib is licensed under an unmodified zlib/libpng license (View raylib.h
  *for details)
  *
