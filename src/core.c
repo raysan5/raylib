@@ -25,6 +25,8 @@
 *   #define PLATFORM_RPI
 *       Windowing and input system configured for Raspberry Pi i native mode (no X.org required, tested on Raspbian),
 *       graphic device is managed by EGL and inputs are processed is raw mode, reading from /dev/input/
+*   #define USERAWKEYBOARD
+*       Use with PLATFORM_RPI to use reading from /dev/input for Keyboard
 *
 *   #define PLATFORM_WEB
 *       Windowing and input system configured for HTML5 (run on browser), code converted from C to asm.js
@@ -88,6 +90,7 @@
 **********************************************************************************************/
 
 #include "raylib.h"             // Declares module functions
+#define USERAWKEYBOARD
 
 // Check if config flags have been externally provided on compilation line
 #if !defined(EXTERNAL_CONFIG_FLAGS)
@@ -3847,7 +3850,7 @@ static EM_BOOL EmscriptenGamepadCallback(int eventType, const EmscriptenGamepadE
 }
 #endif
 
-#if defined(PLATFORM_RPI
+#if defined(PLATFORM_RPI)
 #if !defined(USERAWKEYBOARD)
 // Initialize Keyboard system (using standard input)
 static void InitKeyboard(void)
