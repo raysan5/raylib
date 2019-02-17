@@ -215,6 +215,9 @@
     #include "EGL/egl.h"        // Khronos EGL library - Native platform display device control functions
     #include "EGL/eglext.h"     // Khronos EGL library - Extensions
     #include "GLES2/gl2.h"      // Khronos OpenGL ES 2.0 library
+#if defined(USERAWKEYBOARD)
+    #include "keycodes.h"       // This is the key codes mapped from ray to match raylib
+#endif
 #endif
 
 #if defined(PLATFORM_UWP)
@@ -3212,8 +3215,10 @@ static void PollInputEvents(void)
 
     // NOTE: Keyboard reading could be done using input_event(s) reading or just read from stdin,
     // we use method 2 (stdin) but maybe in a future we should change to method 1...
+#if !defined(USERAWKEYBOARD)
+    // NOTE: When using the raw keyboard we do not want to run this function.
     ProcessKeyboard();
-
+#endif
     // NOTE: Gamepad (Joystick) input events polling is done asynchonously in another pthread - GamepadThread()
 #endif
 }
@@ -3842,7 +3847,8 @@ static EM_BOOL EmscriptenGamepadCallback(int eventType, const EmscriptenGamepadE
 }
 #endif
 
-#if defined(PLATFORM_RPI)
+#if defined(PLATFORM_RPI
+#if !defined(USERAWKEYBOARD)
 // Initialize Keyboard system (using standard input)
 static void InitKeyboard(void)
 {
@@ -4004,7 +4010,274 @@ static void RestoreKeyboard(void)
     // Reconfigure keyboard to default mode
     ioctl(STDIN_FILENO, KDSKBMODE, defaultKeyboardMode);
 }
+#endif
+#if defined(USERAWKEYBOARD)
+// Keyboard input thread
+static void *EventKeyBoardThread(void *arg)
+{
+    struct input_event event;
+    InputEventWorker *worker = (InputEventWorker *)arg;
+    int code;
 
+    for (int i = 0; i <= 512; i++)
+    {
+        currentKeyState[i] = 0;
+        previousKeyState[i] = 0;
+    }
+
+    while (!windowShouldClose)
+    {
+        if (read(worker->fd, &event, sizeof(event)) == (int)sizeof(event))
+        {
+            if (event.type == 1 && event.value <= 1)
+            {
+                TraceLog(LOG_DEBUG, "KEY%s RawCode: %4i ScanCode: %4i KeyName: %s",event.value == 0 ? "UP":"DOWN", event.code, keynames[event.code].scancode,  keynames[event.code].name );
+                // previousKeyState[event.code] = currentKeyState[event.code]; // Looked after each time drawing is finished
+                currentKeyState[keynames[event.code].scancode] = event.value;
+                lastKeyPressed = keynames[event.code].scancode;
+            }
+        }
+        usleep(5000);
+
+
+#if defined(SUPPORT_SCREEN_CAPTURE)
+    // Check screen capture key (raylib key: KEY_F12)
+    if (currentKeyState[301] == 1)
+    {
+        TakeScreenshot(FormatText("screenshot%03i.png", screenshotCounter));
+        screenshotCounter++;
+    }
+#endif
+
+
+        if (currentKeyState[exitKey] == 1) windowShouldClose = true;
+    }
+
+}
+// Identifies a input device and spawns a thread to handle it if needed
+// Input device events reading thread
+static void EventKeyBoardThreadSpawn(char *device)
+{
+    #define BITS_PER_LONG   (sizeof(long)*8)
+    #define NBITS(x)        ((((x) - 1)/BITS_PER_LONG) + 1)
+    #define OFF(x)          ((x)%BITS_PER_LONG)
+    #define BIT(x)          (1UL<<OFF(x))
+    #define LONG(x)         ((x)/BITS_PER_LONG)
+    #define TEST_BIT(array, bit) ((array[LONG(bit)] >> OFF(bit)) & 1)
+
+    struct input_absinfo absinfo;
+    unsigned long evBits[NBITS(EV_MAX)];
+    unsigned long absBits[NBITS(ABS_MAX)];
+    unsigned long relBits[NBITS(REL_MAX)];
+    unsigned long keyBits[NBITS(KEY_MAX)];
+    bool hasAbs = false;
+    bool hasRel = false;
+    bool hasAbsMulti = false;
+    int freeWorkerId = -1;
+    int fd = -1;
+
+    InputEventWorker *worker;
+
+    // Open the device and allocate worker
+    //-------------------------------------------------------------------------------------------------------
+    // Find a free spot in the workers array
+    for (int i = 0; i < sizeof(eventWorkers)/sizeof(InputEventWorker); ++i)
+    {
+        if (eventWorkers[i].threadId == 0)
+        {
+            freeWorkerId = i;
+            break;
+        }
+    }
+
+    // Select the free worker from array
+    if (freeWorkerId >= 0)
+    {
+        worker = &(eventWorkers[freeWorkerId]);       // Grab a pointer to the worker
+        memset(worker, 0, sizeof(InputEventWorker));  // Clear the worker
+    }
+    else
+    {
+        TraceLog(LOG_WARNING, "Error creating input device thread for [%s]: Out of worker slots", device);
+        return;
+    }
+
+    // Open the device
+    fd = open(device, O_RDONLY | O_NONBLOCK);
+    if (fd < 0)
+    {
+        TraceLog(LOG_WARNING, "Error creating input device thread for [%s]: Can't open device (Error: %d)", device, worker->fd);
+        return;
+    }
+    worker->fd = fd;
+
+    // Grab number on the end of the devices name "event<N>"
+    int devNum = 0;
+    char *ptrDevName = strrchr(device, 't');
+    worker->eventNum = -1;
+
+    if (ptrDevName != NULL)
+    {
+        if (sscanf(ptrDevName, "t%d", &devNum) == 1)
+            worker->eventNum = devNum;
+    }
+
+    // At this point we have a connection to the device, but we don't yet know what the device is.
+    // It could be many things, even as simple as a power button...
+    //-------------------------------------------------------------------------------------------------------
+
+    // Identify the device
+    //-------------------------------------------------------------------------------------------------------
+    ioctl(fd, EVIOCGBIT(0, sizeof(evBits)), evBits);    // Read a bitfield of the avalable device properties
+
+    // Check for absolute input devices
+    if (TEST_BIT(evBits, EV_ABS))
+    {
+        ioctl(fd, EVIOCGBIT(EV_ABS, sizeof(absBits)), absBits);
+
+        // Check for absolute movement support (usualy touchscreens, but also joysticks)
+        if (TEST_BIT(absBits, ABS_X) && TEST_BIT(absBits, ABS_Y))
+        {
+            hasAbs = true;
+
+            // Get the scaling values
+            ioctl(fd, EVIOCGABS(ABS_X), &absinfo);
+            worker->absRange.x = absinfo.minimum;
+            worker->absRange.width = absinfo.maximum - absinfo.minimum;
+            ioctl(fd, EVIOCGABS(ABS_Y), &absinfo);
+            worker->absRange.y = absinfo.minimum;
+            worker->absRange.height = absinfo.maximum - absinfo.minimum;
+        }
+
+        // Check for multiple absolute movement support (usualy multitouch touchscreens)
+        if (TEST_BIT(absBits, ABS_MT_POSITION_X) && TEST_BIT(absBits, ABS_MT_POSITION_Y))
+        {
+            hasAbsMulti = true;
+
+            // Get the scaling values
+            ioctl(fd, EVIOCGABS(ABS_X), &absinfo);
+            worker->absRange.x = absinfo.minimum;
+            worker->absRange.width = absinfo.maximum - absinfo.minimum;
+            ioctl(fd, EVIOCGABS(ABS_Y), &absinfo);
+            worker->absRange.y = absinfo.minimum;
+            worker->absRange.height = absinfo.maximum - absinfo.minimum;
+        }
+    }
+
+    // Check for relative movement support (usualy mouse)
+    if (TEST_BIT(evBits, EV_REL))
+    {
+        ioctl(fd, EVIOCGBIT(EV_REL, sizeof(relBits)), relBits);
+
+        if (TEST_BIT(relBits, REL_X) && TEST_BIT(relBits, REL_Y)) hasRel = true;
+    }
+
+    // Check for button support to determine the device type(usualy on all input devices)
+    if (TEST_BIT(evBits, EV_KEY))
+    {
+        ioctl(fd, EVIOCGBIT(EV_KEY, sizeof(keyBits)), keyBits);
+
+        if (hasAbs || hasAbsMulti)
+        {
+            if (TEST_BIT(keyBits, BTN_TOUCH)) worker->isTouch = true;          // This is a touchscreen
+            if (TEST_BIT(keyBits, BTN_TOOL_FINGER)) worker->isTouch = true;    // This is a drawing tablet
+            if (TEST_BIT(keyBits, BTN_TOOL_PEN)) worker->isTouch = true;       // This is a drawing tablet
+            if (TEST_BIT(keyBits, BTN_STYLUS)) worker->isTouch = true;         // This is a drawing tablet
+            if (worker->isTouch || hasAbsMulti) worker->isMultitouch = true;   // This is a multitouch capable device
+        }
+
+        if (hasRel)
+        {
+            if (TEST_BIT(keyBits, BTN_LEFT)) worker->isMouse = true;           // This is a mouse
+            if (TEST_BIT(keyBits, BTN_RIGHT)) worker->isMouse = true;          // This is a mouse
+        }
+
+        if (TEST_BIT(keyBits, BTN_A)) worker->isGamepad = true;                // This is a gamepad
+        if (TEST_BIT(keyBits, BTN_TRIGGER)) worker->isGamepad = true;          // This is a gamepad
+        if (TEST_BIT(keyBits, BTN_START)) worker->isGamepad = true;            // This is a gamepad
+        if (TEST_BIT(keyBits, BTN_TL)) worker->isGamepad = true;               // This is a gamepad
+        if (TEST_BIT(keyBits, BTN_TL)) worker->isGamepad = true;               // This is a gamepad
+
+        if (TEST_BIT(keyBits, KEY_SPACE)) worker->isKeyboard = true;           // This is a keyboard
+    }
+    //-------------------------------------------------------------------------------------------------------
+    // Decide what to do with the device
+    //-------------------------------------------------------------------------------------------------------
+    if (worker->isKeyboard)
+    {
+        // Looks like a interesting device
+        TraceLog(LOG_INFO, "Opening input device [%s] (%s%s%s%s%s)", device,
+            worker->isMouse ? "mouse " : "",
+            worker->isMultitouch ? "multitouch " : "",
+            worker->isTouch ? "touchscreen " : "",
+            worker->isGamepad ? "gamepad " : "",
+            worker->isKeyboard ? "keyboard " : "");
+
+        // Create a thread for this device
+        int error = pthread_create(&worker->threadId, NULL, &EventKeyBoardThread, (void *)worker);
+        if (error != 0)
+        {
+            TraceLog(LOG_WARNING, "Error creating input device thread for [%s]: Can't create thread (Error: %d)", device, error);
+            worker->threadId = 0;
+            close(fd);
+        }
+    }
+    else close(fd);  // We are not interested in this device
+    //-------------------------------------------------------------------------------------------------------
+}
+
+// Initialize Keyboard system (using input events)
+static void InitKeyboard(void)
+{
+    // Keyboard to be read Directly from /input/eventX
+    TraceLog(LOG_INFO, "Initialize Keyboard system (using /input/eventX)");
+    char path[MAX_FILEPATH_LENGTH];
+    DIR *directory;
+    struct dirent *entity;
+    struct termios keyboardNewSettings;
+    // Setup Terminal to not echo to the screen and block ^C ^Z from sending Signals
+    if ( tcgetattr(STDIN_FILENO, &defaultKeyboardSettings) == -1 )
+    {
+        TraceLog(LOG_ERROR, "Unable to read Terminal Settings");
+    }
+    keyboardNewSettings = defaultKeyboardSettings;
+    keyboardNewSettings.c_lflag &= ~(ECHO | ISIG);
+    if ( tcsetattr(STDIN_FILENO, TCSAFLUSH, &keyboardNewSettings) == -1 )
+    {
+        TraceLog(LOG_ERROR, "Unable to write Terminal Settings");
+    }
+    // Open the linux directory of "/dev/input"
+    directory = opendir(DEFAULT_EVDEV_PATH);
+    if (directory)
+    {
+        while ((entity = readdir(directory)) != NULL)
+        {
+            if (strncmp("event", entity->d_name, strlen("event")) == 0)         // Search for devices named "event*"
+            {
+                sprintf(path, "%s%s", DEFAULT_EVDEV_PATH, entity->d_name);
+                EventKeyBoardThreadSpawn(path);                                         // Identify the device and spawn a thread for it
+            }
+        }
+
+        closedir(directory);
+    }
+    else TraceLog(LOG_WARNING, "Unable to open linux event directory: %s", DEFAULT_EVDEV_PATH);
+    // Register keyboard restore when program finishes
+    atexit(RestoreKeyboard);
+}
+// Restore default keyboard input
+static void RestoreKeyboard(void)
+{
+    TraceLog(LOG_DEBUG,"Restoring Keyboard");
+    if (tcsetattr(STDIN_FILENO, TCSAFLUSH, &defaultKeyboardSettings) == -1)
+	{
+        TraceLog(LOG_INFO,"Failed to restore Keyboard");
+    } else {
+        TraceLog(LOG_INFO,"Keyboard successfully restored");
+    }
+}
+
+#endif
 // Mouse initialization (including mouse thread)
 static void InitMouse(void)
 {
