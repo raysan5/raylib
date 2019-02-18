@@ -2748,17 +2748,17 @@ static Mesh LoadIQM(const char *fileName)
 #endif
 
 #if defined(SUPPORT_FILEFORMAT_GLTF)
-// Load GLTF mesh data
+// Load glTF mesh data
 static Mesh LoadGLTF(const char *fileName)
 {
     Mesh mesh = { 0 };
     
-    // GLTF file loading
+    // glTF file loading
     FILE *gltfFile = fopen(fileName, "rb");
     
     if (gltfFile == NULL)
     {
-        TraceLog(LOG_WARNING, "[%s] GLTF file could not be opened", fileName);
+        TraceLog(LOG_WARNING, "[%s] glTF file could not be opened", fileName);
         return mesh;
     }
 
@@ -2771,22 +2771,28 @@ static Mesh LoadGLTF(const char *fileName)
     
     fclose(gltfFile);
 
-    // GLTF data loading
+    // glTF data loading
     cgltf_options options = {0};
     cgltf_data data;
     cgltf_result result = cgltf_parse(&options, buffer, size, &data);
-
+    
+    free(buffer);
+    
     if (result == cgltf_result_success)
     {
         printf("Type: %u\n", data.file_type);
         printf("Version: %d\n", data.version);
         printf("Meshes: %lu\n", data.meshes_count);
+        
+        // TODO: Process glTF data and map to mesh
+        
+        // NOTE: data.buffers[] and data.images[] should be loaded
+        // using buffers[n].uri and images[n].uri... or use cgltf_load_buffers(&options, data, fileName);
+        
+        cgltf_free(&data);
     }
-    else TraceLog(LOG_WARNING, "[%s] GLTF data could not be loaded", fileName);
+    else TraceLog(LOG_WARNING, "[%s] glTF data could not be loaded", fileName);
 
-    free(buffer);
-    cgltf_free(&data);
-    
     return mesh; 
 }
 #endif

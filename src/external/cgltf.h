@@ -1,6 +1,49 @@
 /**
  * cgltf - a single-file glTF 2.0 parser written in C99.
+ *
+ * Version: 1.0
+ *
+ * Website: https://github.com/jkuhlmann/cgltf
+ *
  * Distributed under the MIT License, see notice at the end of this file.
+ *
+ * Building:
+ * Include this file where you need the struct and function
+ * declarations. Have exactly one source file where you define
+ * `CGLTF_IMPLEMENTATION` before including this file to get the
+ * function definitions.
+ *
+ * Reference:
+ * `cgltf_result cgltf_parse(const cgltf_options*, const void*,
+ * cgltf_size, cgltf_data**)` parses both glTF and GLB data. If
+ * this function returns `cgltf_result_success`, you have to call
+ * `cgltf_free()` on the created `cgltf_data*` variable.
+ * Note that contents of external files for buffers and images are not
+ * automatically loaded. You'll need to read these files yourself using
+ * URIs in the `cgltf_data` structure.
+ *
+ * `cgltf_options` is the struct passed to `cgltf_parse()` to control
+ * parts of the parsing process. You can use it to force the file type
+ * and provide memory allocation callbacks. Should be zero-initialized
+ * to trigger default behavior.
+ *
+ * `cgltf_data` is the struct allocated and filled by `cgltf_parse()`.
+ * It generally mirrors the glTF format as described by the spec (see
+ * https://github.com/KhronosGroup/glTF/tree/master/specification/2.0).
+ *
+ * `void cgltf_free(cgltf_data*)` frees the allocated `cgltf_data`
+ * variable.
+ *
+ * `cgltf_result cgltf_load_buffers(const cgltf_options*, cgltf_data*,
+ * const char*)` can be optionally called to open and read buffer
+ * files using the `FILE*` APIs.
+ *
+ * `cgltf_result cgltf_parse_file(const cgltf_options* options, const
+ * char* path, cgltf_data** out_data)` can be used to open the given
+ * file using `FILE*` APIs and parse the data using `cgltf_parse()`.
+ *
+ * `cgltf_result cgltf_validate(cgltf_data*)` can be used to do additional
+ * checks to make sure the parsed glTF data is valid.
  */
 #ifndef CGLTF_H_INCLUDED__
 #define CGLTF_H_INCLUDED__
@@ -461,6 +504,10 @@ void cgltf_free(cgltf_data* data);
 
 void cgltf_node_transform_local(const cgltf_node* node, cgltf_float* out_matrix);
 void cgltf_node_transform_world(const cgltf_node* node, cgltf_float* out_matrix);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* #ifndef CGLTF_H_INCLUDED__ */
 
@@ -4265,10 +4312,6 @@ static void jsmn_init(jsmn_parser *parser) {
  */
 
 #endif /* #ifdef CGLTF_IMPLEMENTATION */
-
-#ifdef __cplusplus
-}
-#endif
 
 /* cgltf is distributed under MIT license:
  *
