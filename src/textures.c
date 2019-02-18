@@ -3193,25 +3193,27 @@ static int SaveKTX(Image image, const char *fileName)
     {
         KTXHeader ktxHeader;
 
-        // KTX identifier (v2.2)
+        // KTX identifier (v1.1)
         //unsigned char id[12] = { '«', 'K', 'T', 'X', ' ', '1', '1', '»', '\r', '\n', '\x1A', '\n' };
         //unsigned char id[12] = { 0xAB, 0x4B, 0x54, 0x58, 0x20, 0x31, 0x31, 0xBB, 0x0D, 0x0A, 0x1A, 0x0A };
 
+        const char ktxIdentifier[12] = { 0xAB, 'K', 'T', 'X', ' ', '1', '1', 0xBB, '\r', '\n', 0x1A, '\n' };
+        
         // Get the image header
-        strcpy(ktxHeader.id, "«KTX 11»\r\n\x1A\n");     // KTX 1.1 signature
+        strncpy(ktxHeader.id, ktxIdentifier, 12); // KTX 1.1 signature
         ktxHeader.endianness = 0;
-        ktxHeader.glType = 0;                   // Obtained from image.format
+        ktxHeader.glType = 0;                     // Obtained from image.format
         ktxHeader.glTypeSize = 1;
-        ktxHeader.glFormat = 0;                 // Obtained from image.format
-        ktxHeader.glInternalFormat = 0;         // Obtained from image.format
+        ktxHeader.glFormat = 0;                   // Obtained from image.format
+        ktxHeader.glInternalFormat = 0;           // Obtained from image.format
         ktxHeader.glBaseInternalFormat = 0;
         ktxHeader.width = image.width;
         ktxHeader.height = image.height;
         ktxHeader.depth = 0;
         ktxHeader.elements = 0;
         ktxHeader.faces = 1;
-        ktxHeader.mipmapLevels = image.mipmaps; // If it was 0, it means mipmaps should be generated on loading (not for compressed formats)
-        ktxHeader.keyValueDataSize = 0;         // No extra data after the header
+        ktxHeader.mipmapLevels = image.mipmaps;   // If it was 0, it means mipmaps should be generated on loading (not for compressed formats)
+        ktxHeader.keyValueDataSize = 0;           // No extra data after the header
 
         rlGetGlTextureFormats(image.format, &ktxHeader.glInternalFormat, &ktxHeader.glFormat, &ktxHeader.glType);   // rlgl module function
         ktxHeader.glBaseInternalFormat = ktxHeader.glFormat;    // KTX 1.1 only
