@@ -47,10 +47,8 @@
 //----------------------------------------------------------------------------------
 
 #include "raylib.h"
-#include "sysnet.h"
-
-#include <errno.h>
-#include <stdlib.h>
+#include "sysnet.h" 
+#include "rpack.h"
 
 //----------------------------------------------------------------------------------
 // Module defines
@@ -58,7 +56,7 @@
 
 #if PLATFORM_WINDOWS
 #	define errno WSAGetLastError() // Support UNIX socket error codes
-#endif
+#endif 
 
 //----------------------------------------------------------------------------------
 // Module implementation
@@ -92,8 +90,87 @@ void CloseNetwork()
 #endif
 }
 
+// Resolve the hostname
+char* ResolveIP(const char* ip, const char* port)
+{
+	// Variables
+	char             host[MAX_HOST_NAME_SIZE];
+	char             service[NI_MAXSERV];
+	int              status; // Status value to return (0) is success
+	struct addrinfo  hints; // Address flags (IPV4, IPV6, UDP?)
+	struct addrinfo* results; // A pointer to the resulting address list
+
+	// Zero out the host buffer
+	memset(&host, '\0', sizeof(host));
+	memset(&service, '\0', sizeof(service));
+
+	// Set the hints
+	memset(&hints, 0, sizeof hints);
+	hints.ai_family   = AF_UNSPEC; // Either IPv4 or IPv6 (AF_INET, AF_INET6)
+	hints.ai_socktype = SOCKET_TCP; // TCP (SOCK_STREAM), UDP (SOCK_DGRAM)
+	hints.ai_protocol = 0; // Automatically select correct protocol (IPPROTO_TCP), (IPPROTO_UDP)
+
+	// Populate address information
+	status = getaddrinfo(ip, // e.g. "www.example.com" or IP
+						 port, // e.g. "http" or port number
+						 &hints, // e.g. SOCK_STREAM/SOCK_DGRAM
+						 &results // The struct to populate
+	);
+
+	// Did we succeed?
+	if (status != 0)
+	{
+		TraceLog(LOG_WARNING, "Failed to get resolve host %s:%s: %ls", ip, port, gai_strerror(errno));
+	}
+	else
+	{
+		TraceLog(LOG_DEBUG, "Resolving... %s::%s", ip, port);
+	}
+
+	// Attempt to resolve network byte order ip to hostname
+	switch (results->ai_family)
+	{
+		case AF_INET:
+			status = getnameinfo(&*((struct sockaddr_in*) results->ai_addr),
+								 sizeof(*((struct sockaddr_in*) results->ai_addr)),
+								 host,
+								 sizeof(host),
+								 NULL,
+								 NULL,
+								 0);
+			break;
+		case AF_INET6:
+			status = getnameinfo(&*((struct sockaddr_in6*) results->ai_addr),
+								 sizeof(*((struct sockaddr_in6*) results->ai_addr)),
+								 host,
+								 sizeof(host),
+								 NULL,
+								 NULL,
+								 0);
+			break;
+		default:
+			break;
+	}
+
+	// Did we succeed?
+	if (status != 0)
+	{
+		TraceLog(LOG_WARNING, "Failed to resolve ip %s: %ls", ip, gai_strerror(errno));
+	}
+	else
+	{
+		TraceLog(LOG_INFO, "Successfully resolved %s::%s to %s", ip, port, host);
+	}
+
+	// Free the pointer to the data returned by addrinfo
+	freeaddrinfo(results);
+
+	// Return the resulting hostname
+	return host;
+}
+
 // Get address information
-void GetAddressInformation(AddressInformation* outaddr, const char* address, const char* port, int socketType, int protocolType)
+void ResolveHost(AddressInformation* outaddr, const char* address, const char* port, SocketType socketType)
 {
 	// Variables
 	int              status; // Status value to return (0) is success
@@ -103,8 +180,14 @@ void GetAddressInformation(AddressInformation* outaddr, const char* address, con
 	// Set the hints
 	memset(&hints, 0, sizeof hints);
 	hints.ai_family   = AF_UNSPEC; // Either IPv4 or IPv6 (AF_INET, AF_INET6)
-	hints.ai_socktype = socketType; // TCP (SOCK_STREAM), UDP (SOCK_DGRAM)
-	hints.ai_protocol = protocolType; // TCP (IPPROTO_TCP), UDP (IPPROTO_UDP)
+	hints.ai_socktype = socketType == SOCKET_TCP ? SOCK_STREAM : SOCK_DGRAM; // TCP (SOCK_STREAM), UDP (SOCK_DGRAM)
+	hints.ai_protocol = 0; // Automatically select correct protocol (IPPROTO_TCP), (IPPROTO_UDP)
+
+	// When the address is NULL, populate the IP for me
+	if (address == NULL)
+	{
+		hints.ai_flags = AI_PASSIVE;
+	}
 
 	// Populate address information
 	status = getaddrinfo(address, // e.g. "www.example.com" or IP
@@ -118,7 +201,7 @@ void GetAddressInformation(AddressInformation* outaddr, const char* address, con
 	// Did we succeed?
 	if (status != 0)
 	{
-		TraceLog(LOG_WARNING, "Failed to get resolve host %s:%s: %ls", address, port, gai_strerror(status));
+		TraceLog(LOG_WARNING, "Failed to get resolve host %s:%s: %ls", address, port, gai_strerror(errno));
 	}
 	else
 	{
@@ -141,6 +224,20 @@ void GetAddressInformation(AddressInformation* outaddr, const char* address, con
 	freeaddrinfo(results);
 }
 
+// IP helper method, checks if an address is a valid IPv4 address
+bool IsIPv4Address(const char* address)
+{
+	struct sockaddr_in sa;
+	return inet_pton(AF_INET, address, &(sa.sin_addr)) != 0;
+}
+
+// IP helper method, checks if an address is a valid IPv6 address
+bool IsIPv6Address(const char* address)
+{
+	struct sockaddr_in6 sa;
+	return inet_pton(AF_INET6, address, &(sa.sin6_addr)) != 0;
+}
+
 // Create a socket from information provided by the filled Address information struct
 bool CreateSocket(Socket* sock, const AddressInformation addr)
 {
@@ -150,7 +247,7 @@ bool CreateSocket(Socket* sock, const AddressInformation addr)
 	// Did we succeed?
 	if (sock->handle == INVALID_SOCKET)
 	{
-		TraceLog(LOG_WARNING, "Failed to get create socket: %ls", gai_strerror(sock->handle));
+		TraceLog(LOG_WARNING, "Failed to get create socket: %ls", gai_strerror(errno));
 		CloseSocket(sock->handle);
 		return false;
 	}
@@ -173,7 +270,7 @@ bool BindSocket(Socket sock, const AddressInformation addr)
 	// Did we succeed?
 	if (status == SOCKET_ERROR)
 	{
-		TraceLog(LOG_WARNING, "Failed to get bind socket: %ls", gai_strerror(status));
+		TraceLog(LOG_WARNING, "Failed to get bind socket: %ls", gai_strerror(errno));
 		return false;
 	}
 	else
@@ -194,7 +291,7 @@ bool ConnectSocket(Socket socket, AddressInformation addr)
 	// Did we succeed?
 	if (status == SOCKET_ERROR)
 	{
-		TraceLog(LOG_WARNING, "Failed to connect socket: %ls", gai_strerror(status));
+		TraceLog(LOG_WARNING, "Failed to connect socket: %ls", gai_strerror(errno));
 		return false;
 	}
 	else
@@ -273,7 +370,7 @@ void CreateListenServer(Socket* tcpsock, const char* address, const char* port, 
 	// Did we succeed?
 	if (status == -1)
 	{
-		TraceLog(LOG_WARNING, "Failed to get resolve host %s:%s: %ls", address, port, gai_strerror(status));
+		TraceLog(LOG_WARNING, "Failed to get resolve host %s:%s: %ls", address, port, gai_strerror(errno));
 	}
 	else
 	{
@@ -444,80 +541,11 @@ void ResetSocket(Socket* socket)
 	socket->blocking = false;
 };
 
-// Resolve the hostname
-void ResolveHost(const char* hostname)
-{
-	struct addrinfo hints, *res, *p;
-	int             status;
-	char            ipstr[INET6_ADDRSTRLEN];
-
-	memset(&hints, 0, sizeof hints);
-	hints.ai_family   = AF_UNSPEC; // AF_INET or AF_INET6 to force version
-	hints.ai_socktype = SOCK_STREAM;
-
-	if ((status = getaddrinfo(hostname, NULL, &hints, &res)) != 0)
-	{
-		TraceLog(LOG_WARNING, "getaddrinfo: %ls", gai_strerror(status));
-		return 2;
-	}
-
-	TraceLog(LOG_INFO, "IP addresses for %s:", hostname);
-
-	for (p = res; p != NULL; p = p->ai_next)
-	{
-		void* addr;
-		char* ipver;
-
-		// get the pointer to the address itself, different fields in IPv4 and IPv6:
-		if (p->ai_family == AF_INET)
-		{ // IPv4
-			struct sockaddr_in* ipv4 = (struct sockaddr_in*) p->ai_addr;
-			addr                     = &(ipv4->sin_addr);
-			ipver                    = "IPv4";
-		}
-		else
-		{ // IPv6
-			struct sockaddr_in6* ipv6 = (struct sockaddr_in6*) p->ai_addr;
-			addr                      = &(ipv6->sin6_addr);
-			ipver                     = "IPv6";
-		}
-
-		// convert the IP to a string and print it:
-		inet_ntop(p->ai_family, addr, ipstr, sizeof ipstr);
-		TraceLog(LOG_INFO, "%s: %s", ipver, ipstr);
-	}
-
-	freeaddrinfo(res); // free the linked list
-}
-
-// Resolve the hostname
-void ResolveIP(const char* ip)
-{
-	struct hostent* he;
-	struct in_addr  ipv4addr;
-	struct in6_addr ipv6addr;
-	inet_pton(AF_INET, ip, &ipv4addr);
-	he = gethostbyaddr(&ipv4addr, sizeof ipv4addr, AF_INET);
-	if (he != NULL)
-	{
-		printf("Host name: %s\n", he->h_name);
-	}
-	inet_pton(AF_INET6, ip, &ipv6addr);
-	he = gethostbyaddr(&ipv6addr, sizeof ipv6addr, AF_INET6);
-	if (he != NULL)
-	{
-		printf("Host name: %s\n", he->h_name);
-	}
-}
-
 // Print socket information
 void PrintSocket(struct SocketAddress* addr, const int family, const int socktype, const int protocol)
 {
-	struct sockaddr_in*  sockaddr_ipv4;
-	struct sockaddr_in6* sockaddr_ipv6;
-	struct sockaddr*     sockaddr_ip;
-	char                 ip4[INET_ADDRSTRLEN]; // space to hold the IPv4 string
-	char                 ip6[INET6_ADDRSTRLEN]; // space to hold the IPv6 string
+	struct sockaddr* sockaddr_ip;
+	char             ip[INET6_ADDRSTRLEN]; // Enough pace to hold a IPv6 string
 	switch (family)
 	{
 		case AF_UNSPEC:
@@ -528,13 +556,13 @@ void PrintSocket(struct SocketAddress* addr, const int family, const int socktyp
 		case AF_INET:
 		{
 			TraceLog(LOG_DEBUG, "Family: AF_INET (IPv4)");
-			TraceLog(LOG_INFO, "- IPv4 address %s", SocketAddressToString(addr, ip4));
+			TraceLog(LOG_INFO, "- IPv4 address %s", SocketAddressToString(addr, ip));
 		}
 		break;
 		case AF_INET6:
 		{
 			TraceLog(LOG_DEBUG, "Family: AF_INET6 (IPv6)");
-			TraceLog(LOG_INFO, "- IPv6 address %s", SocketAddressToString(addr, ip6));
+			TraceLog(LOG_INFO, "- IPv6 address %s", SocketAddressToString(addr, ip));
 		}
 		break;
 		case AF_NETBIOS:
@@ -612,4 +640,345 @@ char* SocketAddressToString(struct SocketAddress* sockaddr, char buffer[])
 		}
 		break;
 	}
+}
+
+unsigned short HostToNetworkShort(unsigned short value)
+{
+	return htons(value);
+}
+
+unsigned long HostToNetworkLong(unsigned long value)
+{
+	return htonl(value);
+}
+
+unsigned int HostToNetworkFloat(float value)
+{
+	return htonf(value);
+}
+
+unsigned long long HostToNetworkDouble(double value)
+{
+	return htond(value);
+}
+
+unsigned long long HostToNetworkLongLong(unsigned long long value)
+{
+	return htonll(value);
+}
+
+unsigned short NetworkToHostShort(unsigned short value)
+{
+	return ntohs(value);
+}
+
+unsigned long NetworkToHostLong(unsigned long value)
+{
+	return ntohl(value);
+}
+
+float NetworkToHostFloat(unsigned int value)
+{
+	return ntohf(value);
+}
+
+double NetworkToHostDouble(unsigned long long value)
+{
+	return ntohd(value);
+}
+
+double NetworkToHostLongDouble(unsigned long long value)
+{
+	return ntohd(value);
+}
+
+unsigned long long NetworkToHostLongLong(unsigned long long value)
+{
+	return ntohll(value);
+}
+
+/*
+** PackData() -- store data dictated by the format string in the buffer
+**
+**   bits |signed   unsigned   float   string
+**   -----+----------------------------------
+**      8 |   c        C         
+**     16 |   h        H         f
+**     32 |   l        L         d
+**     64 |   q        Q         g
+**      - |                               s
+**
+**  (16-bit unsigned length is automatically prepended to strings)
+*/ 
+unsigned int PackData(unsigned char* buf, char* format, ...)
+{
+	va_list ap;
+
+	signed char   c; // 8-bit
+	unsigned char C;
+
+	int          h; // 16-bit
+	unsigned int H;
+
+	long int          l; // 32-bit
+	unsigned long int L;
+
+	long long int          q; // 64-bit
+	unsigned long long int Q;
+
+	float                  f; // floats
+	double                 d;
+	long double            g;
+	unsigned long long int fhold;
+
+	char*        s; // strings
+	unsigned int len;
+
+	unsigned int size = 0;
+
+	va_start(ap, format);
+
+	for (; *format != '\0'; format++)
+	{
+		switch (*format)
+		{
+			case 'c': // 8-bit
+				size += 1;
+				c      = (signed char) va_arg(ap, int); // promoted
+				*buf++ = c;
+				break;
+
+			case 'C': // 8-bit unsigned
+				size += 1;
+				C      = (unsigned char) va_arg(ap, unsigned int); // promoted
+				*buf++ = C;
+				break;
+
+			case 'h': // 16-bit
+				size += 2;
+				h = va_arg(ap, int);
+				packi16(buf, h);
+				buf += 2;
+				break;
+
+			case 'H': // 16-bit unsigned
+				size += 2;
+				H = va_arg(ap, unsigned int);
+				packi16(buf, H);
+				buf += 2;
+				break;
+
+			case 'l': // 32-bit
+				size += 4;
+				l = va_arg(ap, long int);
+				packi32(buf, l);
+				buf += 4;
+				break;
+
+			case 'L': // 32-bit unsigned
+				size += 4;
+				L = va_arg(ap, unsigned long int);
+				packi32(buf, L);
+				buf += 4;
+				break;
+
+			case 'q': // 64-bit
+				size += 8;
+				q = va_arg(ap, long long int);
+				packi64(buf, q);
+				buf += 8;
+				break;
+
+			case 'Q': // 64-bit unsigned
+				size += 8;
+				Q = va_arg(ap, unsigned long long int);
+				packi64(buf, Q);
+				buf += 8;
+				break;
+
+			case 'f': // float-16
+				size += 2;
+				f     = (float) va_arg(ap, double); // promoted
+				fhold = pack754_16(f); // convert to IEEE 754
+				packi16(buf, fhold);
+				buf += 2;
+				break;
+
+			case 'd': // float-32
+				size += 4;
+				d     = va_arg(ap, double);
+				fhold = pack754_32(d); // convert to IEEE 754
+				packi32(buf, fhold);
+				buf += 4;
+				break;
+
+			case 'g': // float-64
+				size += 8;
+				g     = va_arg(ap, long double);
+				fhold = pack754_64(g); // convert to IEEE 754
+				packi64(buf, fhold);
+				buf += 8;
+				break;
+
+			case 's': // string
+				s   = va_arg(ap, char*);
+				len = strlen(s);
+				size += len + 2;
+				packi16(buf, len);
+				buf += 2;
+				memcpy(buf, s, len);
+				buf += len;
+				break;
+		}
+	}
+
+	va_end(ap);
+
+	return size;
+}
+
+/*
+** UnpackData() -- unpack data dictated by the format string into the buffer
+**
+**   bits |signed   unsigned   float   string
+**   -----+----------------------------------
+**      8 |   c        C         
+**     16 |   h        H         f
+**     32 |   l        L         d
+**     64 |   q        Q         g
+**      - |                               s
+**
+**  (string is extracted based on its stored length, but 's' can be
+**  prepended with a max length)
+*/
+void UnpackData(unsigned char* buf, char* format, ...)
+{
+	va_list ap;
+
+	signed char*   c; // 8-bit
+	unsigned char* C;
+
+	int*          h; // 16-bit
+	unsigned int* H;
+
+	long int*          l; // 32-bit
+	unsigned long int* L;
+
+	long long int*          q; // 64-bit
+	unsigned long long int* Q;
+
+	float*                 f; // floats
+	double*                d;
+	long double*           g;
+	unsigned long long int fhold;
+
+	char*        s;
+	unsigned int len, maxstrlen = 0, count;
+
+	va_start(ap, format);
+
+	for (; *format != '\0'; format++)
+	{
+		switch (*format)
+		{
+			case 'c': // 8-bit
+				c = va_arg(ap, signed char*);
+				if (*buf <= 0x7f)
+				{
+					*c = *buf;
+				} // re-sign
+				else
+				{
+					*c = -1 - (unsigned char) (0xffu - *buf);
+				}
+				buf++;
+				break;
+
+			case 'C': // 8-bit unsigned
+				C  = va_arg(ap, unsigned char*);
+				*C = *buf++;
+				break;
+
+			case 'h': // 16-bit
+				h  = va_arg(ap, int*);
+				*h = unpacki16(buf);
+				buf += 2;
+				break;
+
+			case 'H': // 16-bit unsigned
+				H  = va_arg(ap, unsigned int*);
+				*H = unpacku16(buf);
+				buf += 2;
+				break;
+
+			case 'l': // 32-bit
+				l  = va_arg(ap, long int*);
+				*l = unpacki32(buf);
+				buf += 4;
+				break;
+
+			case 'L': // 32-bit unsigned
+				L  = va_arg(ap, unsigned long int*);
+				*L = unpacku32(buf);
+				buf += 4;
+				break;
+
+			case 'q': // 64-bit
+				q  = va_arg(ap, long long int*);
+				*q = unpacki64(buf);
+				buf += 8;
+				break;
+
+			case 'Q': // 64-bit unsigned
+				Q  = va_arg(ap, unsigned long long int*);
+				*Q = unpacku64(buf);
+				buf += 8;
+				break;
+
+			case 'f': // float
+				f     = va_arg(ap, float*);
+				fhold = unpacku16(buf);
+				*f    = unpack754_16(fhold);
+				buf += 2;
+				break;
+
+			case 'd': // float-32
+				d     = va_arg(ap, double*);
+				fhold = unpacku32(buf);
+				*d    = unpack754_32(fhold);
+				buf += 4;
+				break;
+
+			case 'g': // float-64
+				g     = va_arg(ap, long double*);
+				fhold = unpacku64(buf);
+				*g    = unpack754_64(fhold);
+				buf += 8;
+				break;
+
+			case 's': // string
+				s   = va_arg(ap, char*);
+				len = unpacku16(buf);
+				buf += 2;
+				if (maxstrlen > 0 && len > maxstrlen)
+					count = maxstrlen - 1;
+				else
+					count = len;
+				memcpy(s, buf, count);
+				s[count] = '\0';
+				buf += len;
+				break;
+
+			default:
+				if (isdigit(*format))
+				{ // track max str len
+					maxstrlen = maxstrlen * 10 + (*format - '0');
+				}
+		}
+
+		if (!isdigit(*format))
+			maxstrlen = 0;
+	}
+
+	va_end(ap);
 }

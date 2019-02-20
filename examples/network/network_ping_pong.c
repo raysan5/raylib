@@ -23,7 +23,8 @@
 #include "raylib.h"
 
 int main()
-{
+{ 
+
 	// Setup
 	int screenWidth  = 800;
 	int screenHeight = 450;
@@ -40,7 +41,8 @@ int main()
 	AddressInformation serveraddr;
 	Socket             server;
 	server.blocking = false;
-	GetAddressInformation(&serveraddr, "localhost", "3490", SOCKET_TCP, PROTOCOL_TCP);
+	ResolveHost(&serveraddr, "localhost", "3490", SOCKET_TCP); 
+
 	CreateSocket(&server, serveraddr);
 	BindSocket(server, serveraddr);
 	ListenSocket(server);
@@ -49,7 +51,7 @@ int main()
 	AddressInformation clientaddr;
 	Socket             client;
 	client.blocking = false;
-	GetAddressInformation(&clientaddr, "localhost", "3490", SOCKET_TCP, PROTOCOL_TCP);
+	ResolveHost(&clientaddr, "localhost", "3490", SOCKET_TCP);
 	CreateSocket(&client, clientaddr);
 	ConnectSocket(client, clientaddr);
 

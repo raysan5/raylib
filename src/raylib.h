@@ -100,6 +100,10 @@
 // Network limits
 #define MAX_SOCKET_SET_SIZE		32
 #define MAX_SOCKET_QUEUE_SIZE	16
+#define MAX_HOST_NAME_SIZE		NI_MAXHOST
+#define MAX_SERV_NAME_SIZE		NI_MAXSERV
+#define MAX_IPV4_NAME_SIZE		INET6_ADDRSTRLEN
+#define MAX_IPV6_NAME_SIZE		INET_ADDRSTRLEN
 
 // NOTE: MSC C++ compiler does not support compound literals (C99 feature)
 // Plain structures in C++ (without constructors) can be initialized from { } initializers.
@@ -155,8 +159,8 @@
     typedef enum { false, true } bool;
 #endif
 
-// Network typedefs
-typedef int SocketHandle;
+// Network typedefs 
+typedef int SocketHandle; 
 
 // Vector2 type
 typedef struct Vector2 {
@@ -424,6 +428,33 @@ typedef struct VrStereoConfig {
     int eyeViewportRight[4];        // VR stereo rendering right eye viewport [x, y, w, h]
     int eyeViewportLeft[4];         // VR stereo rendering left eye viewport [x, y, w, h]
 } VrStereoConfig;
+ 
+typedef struct IPAddress
+{
+	int family;
+	union {
+		struct
+		{
+			unsigned int   host; /* 32-bit IPv4 host address */
+			unsigned short port; /* 16-bit protocol port */
+		} ip4;
+		struct
+		{
+			unsigned char host[16]; /* 128-bit IPv6 host address */
+		} ip6;
+	} data;
+} IPAddress;
+
+typedef struct IPv4address
+{
+	unsigned int   host; /* 32-bit IPv4 host address */
+	unsigned short port; /* 16-bit protocol port */
+} IPv4address;
+
+typedef struct IPv6address
+{
+	unsigned char bytes[16]; /* 128-bit IPv6 host address */
+} IPv6address;
 
 typedef struct AddressInformation
 {
@@ -431,7 +462,7 @@ typedef struct AddressInformation
 	int                   family; // PF_xxx
 	int                   socktype; // SOCK_xxx
 	int                   protocol; // 0 or IPPROTO_xxx for IPv4 and IPv6
-	size_t                addrlen; // Length of ai_addr
+	unsigned int               addrlen; // Length of ai_addr
 	char *                canonname; // Canonical name for nodename
 	struct SocketAddress *sockaddr; // Binary address
 	struct AddressInformation *next; // Next structure in linked list
@@ -446,15 +477,56 @@ typedef struct SocketAddress
 // Socket
 typedef struct Socket
 {
+	int          ready;
 	SocketHandle handle;
-	bool blocking;
-} Socket; 
+	IPv4address  address;
+	bool         blocking;
+	//	int          ready;
+	//	SocketHandle handle;
+	//	IPAddress    address;
+	//	bool         blocking;
+} Socket;
+
+
+//typedef struct UDPSocket
+//{
+//	int          ready;
+//	SocketHandle handle;
+//	IPAddress    address;
+//	bool         blocking;
+//} UDPSocket;
+//
+//typedef struct UDPPacket
+//{
+//	int       channel; /* The src/dst channel of the packet */
+//	char *    data; /* The packet data */
+//	int       len; /* The length of the packet data */
+//	int       maxlen; /* The size of the data buffer */
+//	int       status; /* packet status after sending */
+//	IPAddress address; /* The source/dest address of an incoming/outgoing packet */
+//} UDPPacket;
+//
+//typedef struct TCPSocket
+//{
+//	int          ready;
+//	SocketHandle channel;
+//	IPAddress    remoteAddress;
+//	IPAddress    localAddress;
+//	bool         isServer;
+//	bool         blocking;
+//} TCPSocket;
+//
+//typedef struct TCPPacket
+//{
+//	const void *data; /* The packet data */
+//	int         len; /* The length of the packet data */
+//	int         maxlen; /* The size of the data buffer */
+//} TCPPacket;
 
 typedef struct SocketSet
 {
-	Socket sockets[MAX_SOCKET_SET_SIZE];
-} SocketSet;
-
+	Socket *sockets[MAX_SOCKET_SET_SIZE];
+} SocketSet; 
 
 
 //----------------------------------------------------------------------------------
@@ -462,18 +534,16 @@ typedef struct SocketSet
 //----------------------------------------------------------------------------------
 
 typedef enum
-{
-	SOCKET_ANY = 0, // ACCEPT_ALL
+{ 
 	SOCKET_TCP = 1,	// SOCK_STREAM
 	SOCKET_UDP = 2 	// SOCK_DGRAM
-} SocketType;
+} SocketType; 
 
-typedef enum
+typedef enum 
 {
-	PROTOCOL_ANY = 0, // ACCEPT_ALL
-	PROTOCOL_TCP = 6, // IPPROTO_TCP
-	PROTOCOL_UDP = 17 // IPPROTO_UDP
-} ProtocolType;
+	FAMILY_IPv4 = 1,
+	FAMILY_IPv6 = 2
+} AddressFamily;
 
 // System config flags
 // NOTE: Used for bit masks
@@ -1428,30 +1498,41 @@ RLAPI void StopAudioStream(AudioStream stream);                       // Stop au
 RLAPI void SetAudioStreamVolume(AudioStream stream, float volume);    // Set volume for audio stream (1.0 is max level)
 RLAPI void SetAudioStreamPitch(AudioStream stream, float pitch);      // Set pitch for audio stream (1.0 is base level)
 
-// Network functions 
-RLAPI bool InitNetwork(void);
-RLAPI void CloseNetwork(void);
+// Network functions
+RLAPI bool  InitNetwork(void);
+RLAPI void  CloseNetwork(void);
+RLAPI void  ResolveHost(AddressInformation *outaddr, const char *address, const char *port, SocketType socketType);
+RLAPI char *ResolveIP(const char *host, const char *port);
+RLAPI bool  IsIPv4Address(const char *host);
+RLAPI bool  IsIPv6Address(const char *host);
+RLAPI int   GetIPFamily(const char *host);
+RLAPI void  GetLocalAddresses();
+RLAPI bool  CreateSocket(Socket *socket, AddressInformation outaddr);
+RLAPI bool  BindSocket(Socket socket, const AddressInformation addr);
+RLAPI bool  ConnectSocket(Socket socket, const AddressInformation addr);
+RLAPI bool  ListenSocket(Socket socket);
+RLAPI void  CloseSocket(Socket *socket);
+RLAPI void  AcceptSocket(Socket listenSock, Socket *newSock);
+RLAPI char *SocketAddressToString(SocketAddress *sockaddr, char buffer[]);
+RLAPI void  PrintSocket(SocketAddress *addr, const int family, const int socktype, const int protocol);
 
-RLAPI void GetAddressInformation(AddressInformation* outaddr, const char* address, const char* port, int socketType, int protocolType);
-
-RLAPI bool CreateSocket(Socket *socket, AddressInformation outaddr);
-RLAPI bool BindSocket(Socket socket, const AddressInformation addr);
-RLAPI bool ConnectSocket(Socket socket, const AddressInformation addr); 
-RLAPI bool ListenSocket(Socket socket);
-RLAPI void CloseSocket(Socket* socket);
-RLAPI void AcceptSocket(Socket listenSock, Socket *newSock);
-
-RLAPI char* SocketAddressToString(SocketAddress* sockaddr, char buffer[]);
-RLAPI void PrintSocket(SocketAddress* addr, const int family, const int socktype, const int protocol);
-RLAPI void ResolveHost(const char* hostname);
-RLAPI void ResolveIP(const char* ip);
-
-RLAPI void CreateListenServer(Socket* socket, const char* address, const int port, SocketType socketType);
-RLAPI void CreateClient(Socket* socket, const char* address, const char* port, SocketType socketType);
-RLAPI int Send(SocketHandle sockfd, const char* data, int len);
-RLAPI int Receive(SocketHandle sockfd, const char* data, int len);
-RLAPI void ResetSocket(Socket* socket);
-
+RLAPI unsigned int PackData(unsigned char *buf, char *format, ...);
+RLAPI void UnpackData(unsigned char *buf, char *format, ...);
+RLAPI unsigned short HostToNetworkShort(unsigned short value); // 2 bytes - 0 to 65,535
+RLAPI unsigned long HostToNetworkLong(unsigned long value); // 4 bytes - 0 to 4,294,967,295
+RLAPI unsigned int HostToNetworkFloat(float value); // 4 bytes - 1.2E-38 to 3.4E+38
+RLAPI unsigned long long HostToNetworkDouble(double value); // 8 bytes - 2.3E-308 to 1.7E+308
+RLAPI unsigned long long HostToNetworkLongLong(unsigned long long value); // 8 bytes - 0 to 1.8446744073709551615 × 10^19
+RLAPI unsigned short NetworkToHostShort(unsigned short value); // 2 byte - 0 to 65,535
+RLAPI unsigned long NetworkToHostLong(unsigned long value); // 4 byte - 0 to 4,294,967,295
+RLAPI float NetworkToHostFloat(unsigned int value); // 4 byte - 1.2E-38 to 3.4E+38
+RLAPI double NetworkToHostDouble(unsigned long long value); // 8 byte - 2.3E-308 to 1.7E+308
+RLAPI unsigned long long NetworkToHostLongLong(unsigned long long value); // 8 byte - 0 to 1.8446744073709551615 × 10^19
+RLAPI void               CreateListenServer(Socket *socket, const char *address, const int port, SocketType socketType);
+RLAPI void               CreateClient(Socket *socket, const char *address, const char *port, SocketType socketType);
+RLAPI int                Send(SocketHandle sockfd, const char *data, int len);
+RLAPI int  Receive(SocketHandle sockfd, const char *data, int len);
+RLAPI void ResetSocket(Socket *socket);
 
 #if defined(__cplusplus)
 }

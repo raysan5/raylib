@@ -19,7 +19,7 @@
     </ProjectConfiguration>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="..\..\..\examples\network\network_resolve_host.c" />
+    <ClCompile Include="..\..\..\examples\network\network_serialisation.c" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\raylib\raylib.vcxproj">
@@ -28,11 +28,11 @@
   </ItemGroup>
   <PropertyGroup Label="Globals">
     <VCProjectVersion>15.0</VCProjectVersion>
-    <ProjectGuid>{A16D19CB-6AF4-4D17-8318-EABD8805247C}</ProjectGuid>
+    <ProjectGuid>{46B18968-56BC-4FB1-A7C0-FA418E095AFD}</ProjectGuid>
     <Keyword>Win32Proj</Keyword>
-    <RootNamespace>networkpingpong</RootNamespace>
+    <RootNamespace>network_serialisation</RootNamespace>
     <WindowsTargetPlatformVersion>10.0.17763.0</WindowsTargetPlatformVersion>
-    <ProjectName>network_resolve_host</ProjectName>
+    <ProjectName>network_serialisation</ProjectName>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">
