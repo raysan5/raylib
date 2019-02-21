@@ -2529,7 +2529,7 @@ void DrawTextureQuad(Texture2D texture, Vector2 tiling, Vector2 offset, Rectangl
 {
     Rectangle source = { offset.x*texture.width, offset.y*texture.height, tiling.x*texture.width, tiling.y*texture.height };
     Vector2 origin = { 0.0f, 0.0f };
-    
+
     DrawTexturePro(texture, source, quad, origin, 0.0f, tint);
 }
 
@@ -3198,7 +3198,7 @@ static int SaveKTX(Image image, const char *fileName)
         //unsigned char id[12] = { 0xAB, 0x4B, 0x54, 0x58, 0x20, 0x31, 0x31, 0xBB, 0x0D, 0x0A, 0x1A, 0x0A };
 
         const char ktxIdentifier[12] = { 0xAB, 'K', 'T', 'X', ' ', '1', '1', 0xBB, '\r', '\n', 0x1A, '\n' };
-        
+
         // Get the image header
         strncpy(ktxHeader.id, ktxIdentifier, 12); // KTX 1.1 signature
         ktxHeader.endianness = 0;

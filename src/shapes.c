@@ -143,7 +143,7 @@ void DrawLineEx(Vector2 startPos, Vector2 endPos, float thick, Color color)
 
             rlTexCoord2f(recTexShapes.x/texShapes.width, (recTexShapes.y + recTexShapes.height)/texShapes.height);
             rlVertex2f(0.0f, thick);
-            
+
             rlTexCoord2f((recTexShapes.x + recTexShapes.width)/texShapes.width, (recTexShapes.y + recTexShapes.height)/texShapes.height);
             rlVertex2f(d, thick);
 
@@ -187,7 +187,7 @@ void DrawCircle(int centerX, int centerY, float radius, Color color)
 void DrawCircleSector(Vector2 center, float radius, int startAngle, int endAngle, Color color)
 {
     #define CIRCLE_SECTOR_LENGTH    10
-    
+
 #if defined(SUPPORT_QUADS_DRAW_MODE)
     if (rlCheckBufferLimit(4*((360/CIRCLE_SECTOR_LENGTH)/2))) rlglDraw();
 
@@ -307,10 +307,10 @@ void DrawRectanglePro(Rectangle rec, Vector2 origin, float rotation, Color color
 
             rlTexCoord2f(recTexShapes.x/texShapes.width, recTexShapes.y/texShapes.height);
             rlVertex2f(0.0f, 0.0f);
-            
+
             rlTexCoord2f(recTexShapes.x/texShapes.width, (recTexShapes.y + recTexShapes.height)/texShapes.height);
             rlVertex2f(0.0f, rec.height);
-            
+
             rlTexCoord2f((recTexShapes.x + recTexShapes.width)/texShapes.width, (recTexShapes.y + recTexShapes.height)/texShapes.height);
             rlVertex2f(rec.width, rec.height);
 

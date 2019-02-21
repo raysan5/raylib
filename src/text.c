@@ -790,14 +790,14 @@ void DrawTextEx(Font font, const char *text, Vector2 position, float fontSize, f
 }
 
 // Draw text using font inside rectangle limits
-void DrawTextRec(Font font, const char *text, Rectangle rec, float fontSize, float spacing, bool wordWrap, Color tint) 
+void DrawTextRec(Font font, const char *text, Rectangle rec, float fontSize, float spacing, bool wordWrap, Color tint)
 {
     DrawTextRecEx(font, text, rec, fontSize, spacing, wordWrap, tint, 0, 0, WHITE, WHITE);
 }
 
 // Draw text using font inside rectangle limits with support for text selection
-void DrawTextRecEx(Font font, const char *text, Rectangle rec, float fontSize, float spacing, bool wordWrap, Color tint, 
-                   int selectStart, int selectLength, Color selectText, Color selectBack) 
+void DrawTextRecEx(Font font, const char *text, Rectangle rec, float fontSize, float spacing, bool wordWrap, Color tint,
+                   int selectStart, int selectLength, Color selectText, Color selectBack)
 {
     int length = strlen(text);
     int textOffsetX = 0;        // Offset between characters
@@ -813,12 +813,12 @@ void DrawTextRecEx(Font font, const char *text, Rectangle rec, float fontSize, f
     int state = wordWrap? MEASURE_STATE : DRAW_STATE;
     int startLine = -1;   // Index where to begin drawing (where a line begins)
     int endLine = -1;     // Index where to stop drawing (where a line ends)
-    
+
     for (int i = 0; i < length; i++)
     {
         int glyphWidth = 0;
         letter = (unsigned char)text[i];
-        
+
         if (letter != '\n')
         {
             if ((unsigned char)text[i] == 0xc2)         // UTF-8 encoding identification HACK!
@@ -836,41 +836,41 @@ void DrawTextRecEx(Font font, const char *text, Rectangle rec, float fontSize, f
                 i++;
             }
             else index = GetGlyphIndex(font, (unsigned char)text[i]);
-            
-            glyphWidth = (font.chars[index].advanceX == 0)? 
+
+            glyphWidth = (font.chars[index].advanceX == 0)?
                          (int)(font.chars[index].rec.width*scaleFactor + spacing):
                          (int)(font.chars[index].advanceX*scaleFactor + spacing);
         }
-        
+
         // NOTE: When wordWrap is ON we first measure how much of the text we can draw
-        // before going outside of the `rec` container. We store this info inside 
+        // before going outside of the `rec` container. We store this info inside
         // `startLine` and `endLine` then we change states, draw the text between those two
         // variables then change states again and again recursively until the end of the text
         // (or until we get outside of the container).
-        // When wordWrap is OFF we don't need the measure state so we go to the drawing 
-        // state immediately and begin drawing on the next line before we can get outside 
+        // When wordWrap is OFF we don't need the measure state so we go to the drawing
+        // state immediately and begin drawing on the next line before we can get outside
         // the container.
-        if (state == MEASURE_STATE) 
+        if (state == MEASURE_STATE)
         {
             if ((letter == ' ') || (letter == '\t') || (letter == '\n')) endLine = i;
-            
-            if ((textOffsetX + glyphWidth + 1) >= rec.width) 
+
+            if ((textOffsetX + glyphWidth + 1) >= rec.width)
             {
                 endLine = (endLine < 1) ? i : endLine;
                 if (i == endLine) endLine -= 1;
                 if ((startLine + 1) == endLine) endLine = i - 1;
                 state = !state;
-            } 
-            else if ((i + 1) == length) 
+            }
+            else if ((i + 1) == length)
             {
                 endLine = i;
                 state = !state;
             }
-            else if (letter == '\n') 
+            else if (letter == '\n')
             {
                 state = !state;
             }
-            
+
             if (state == DRAW_STATE)
             {
                 textOffsetX = 0;
@@ -878,8 +878,8 @@ void DrawTextRecEx(Font font, const char *text, Rectangle rec, float fontSize, f
                 glyphWidth = 0;
             }
 
-        } 
-        else 
+        }
+        else
         {
             if (letter == '\n')
             {
@@ -888,17 +888,17 @@ void DrawTextRecEx(Font font, const char *text, Rectangle rec, float fontSize, f
                     textOffsetY += (int)((font.baseSize + font.baseSize/2)*scaleFactor);
                     textOffsetX = 0;
                 }
-            } 
-            else 
+            }
+            else
             {
                 if (!wordWrap && ((textOffsetX + glyphWidth + 1) >= rec.width))
                 {
                     textOffsetY += (int)((font.baseSize + font.baseSize/2)*scaleFactor);
                     textOffsetX = 0;
                 }
-                
+
                 if ((textOffsetY + (int)((font.baseSize + font.baseSize/2)*scaleFactor)) > rec.height) break;
-                
+
                 //draw selected
                 bool isGlyphSelected = false;
                 if ((selectStart >= 0) && (i >= selectStart) && (i < (selectStart + selectLength)))
@@ -907,7 +907,7 @@ void DrawTextRecEx(Font font, const char *text, Rectangle rec, float fontSize, f
                     DrawRectangleRec(strec, selectBack);
                     isGlyphSelected = true;
                 }
-                
+
                 //draw glyph
                 if ((letter != ' ') && (letter != '\t'))
                 {
@@ -915,12 +915,12 @@ void DrawTextRecEx(Font font, const char *text, Rectangle rec, float fontSize, f
                       (Rectangle){ rec.x + textOffsetX + font.chars[index].offsetX*scaleFactor,
                                    rec.y + textOffsetY + font.chars[index].offsetY*scaleFactor,
                                    font.chars[index].rec.width*scaleFactor,
-                                   font.chars[index].rec.height*scaleFactor }, (Vector2){ 0, 0 }, 0.0f, 
+                                   font.chars[index].rec.height*scaleFactor }, (Vector2){ 0, 0 }, 0.0f,
                                    (!isGlyphSelected) ? tint : selectText);
                 }
             }
-            
-            if (wordWrap && (i == endLine)) 
+
+            if (wordWrap && (i == endLine))
             {
                 textOffsetY += (int)((font.baseSize + font.baseSize/2)*scaleFactor);
                 textOffsetX = 0;
@@ -930,7 +930,7 @@ void DrawTextRecEx(Font font, const char *text, Rectangle rec, float fontSize, f
                 state = !state;
             }
         }
-        
+
         textOffsetX += glyphWidth;
     }
 }
@@ -968,11 +968,11 @@ Vector2 MeasureTextEx(Font font, const char *text, float fontSize, float spacing
 
     unsigned char letter = 0;       // Current character
     int index = 0;                  // Index position in sprite font
-    
+
     for (int i = 0; i < len; i++)
     {
         lenCounter++;
-        
+
         if (text[i] != '\n')
         {
             if ((unsigned char)text[i] == 0xc2)         // UTF-8 encoding identification
@@ -1105,7 +1105,7 @@ const char *TextSubtext(const char *text, int position, int length)
 const char *TextReplace(char *text, const char *replace, const char *by)
 {
     char *result;
-    
+
     char *insertPoint;      // Next insert point
     char *temp;             // Temp pointer
     int replaceLen;         // Replace string length of (the string to remove)
@@ -1163,7 +1163,7 @@ const char *TextInsert(const char *text, const char *insert, int position)
     for (int i = 0; i < position; i++) result[i] = text[i];
     for (int i = position; i < insertLen + position; i++) result[i] = insert[i];
     for (int i = (insertLen + position); i < (textLen + insertLen); i++) result[i] = text[i];
-    
+
     result[textLen + insertLen] = '\0';     // Make sure text string is valid!
 
     return result;
@@ -1174,7 +1174,7 @@ const char *TextInsert(const char *text, const char *insert, int position)
 const char *TextJoin(const char **textList, int count, const char *delimiter)
 {
     // TODO: Make sure joined text could fit inside MAX_TEXT_BUFFER_LENGTH
-    
+
     static char text[MAX_TEXT_BUFFER_LENGTH] = { 0 };
     memset(text, 0, MAX_TEXT_BUFFER_LENGTH);
 
@@ -1197,9 +1197,9 @@ const char **TextSplit(const char *text, char delimiter, int *count)
     // all used memory is static... it has some limitations:
     //      1. Maximum number of possible split strings is set by MAX_SUBSTRINGS_COUNT
     //      2. Maximum size of text to split is MAX_TEXT_BUFFER_LENGTH
-    
+
     #define MAX_SUBSTRINGS_COUNT  64
-    
+
     static const char *result[MAX_SUBSTRINGS_COUNT] = { NULL };
     static char buffer[MAX_TEXT_BUFFER_LENGTH] = { 0 };
     memset(buffer, 0, MAX_TEXT_BUFFER_LENGTH);
@@ -1208,7 +1208,7 @@ const char **TextSplit(const char *text, char delimiter, int *count)
     int counter = 1;
 
     // Count how many substrings we have on text and point to every one
-    for (int i = 0; i < MAX_TEXT_BUFFER_LENGTH; i++) 
+    for (int i = 0; i < MAX_TEXT_BUFFER_LENGTH; i++)
     {
         buffer[i] = text[i];
         if (buffer[i] == '\0') break;
@@ -1217,7 +1217,7 @@ const char **TextSplit(const char *text, char delimiter, int *count)
             buffer[i] = '\0';   // Set an end of string at this point
             result[counter] = buffer + i + 1;
             counter++;
-            
+
             if (counter == MAX_SUBSTRINGS_COUNT) break;
         }
     }
@@ -1239,11 +1239,11 @@ void TextAppend(char *text, const char *append, int *position)
 int TextFindIndex(const char *text, const char *find)
 {
     int position = -1;
-    
+
     char *ptr = strstr(text, find);
-    
+
     if (ptr != NULL) position = ptr - text;
-    
+
     return position;
 }
 
@@ -1314,10 +1314,10 @@ int TextToInteger(const char *text)
     {
         if ((text[i] > 47) && (text[i] < 58)) result += ((int)text[i] - 48)*units;
         else { result = -1; break; }
-        
+
         units *= 10;
     }
-    
+
     return result;
 }
 

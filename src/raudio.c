@@ -1245,7 +1245,7 @@ Music LoadMusicStream(const char *fileName)
 void UnloadMusicStream(Music music)
 {
     if (music == NULL) return;
-    
+
     CloseAudioStream(music->stream);
 
 #if defined(SUPPORT_FILEFORMAT_OGG)
@@ -1311,7 +1311,7 @@ void ResumeMusicStream(Music music)
 void StopMusicStream(Music music)
 {
     if (music == NULL) return;
-    
+
     StopAudioStream(music->stream);
 
     // Restart music context
@@ -1343,7 +1343,7 @@ void StopMusicStream(Music music)
 void UpdateMusicStream(Music music)
 {
     if (music == NULL) return;
-    
+
     bool streamEnding = false;
 
     unsigned int subBufferSizeInFrames = ((AudioBuffer *)music->stream.audioBuffer)->bufferSizeInFrames/2;
@@ -1393,16 +1393,16 @@ void UpdateMusicStream(Music music)
             } break;
         #endif
         #if defined(SUPPORT_FILEFORMAT_MOD)
-            case MUSIC_MODULE_MOD: 
+            case MUSIC_MODULE_MOD:
             {
                 // NOTE: 3rd parameter (nbsample) specify the number of stereo 16bits samples you want, so sampleCount/2
-                jar_mod_fillbuffer(&music->ctxMod, (short *)pcm, samplesCount/2, 0); 
+                jar_mod_fillbuffer(&music->ctxMod, (short *)pcm, samplesCount/2, 0);
             } break;
         #endif
             default: break;
         }
 
-        
+
         UpdateAudioStream(music->stream, pcm, samplesCount);
         if ((music->ctxType == MUSIC_MODULE_XM) || (music->ctxType == MUSIC_MODULE_MOD))
         {
@@ -1475,7 +1475,7 @@ void SetMusicLoopCount(Music music, int count)
 float GetMusicTimeLength(Music music)
 {
     float totalSeconds = 0.0f;
-    
+
     if (music != NULL) totalSeconds = (float)music->totalSamples/(music->stream.sampleRate*music->stream.channels);
 
     return totalSeconds;

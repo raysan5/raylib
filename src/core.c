@@ -707,7 +707,7 @@ bool WindowShouldClose(void)
 {
 #if defined(PLATFORM_WEB)
     // Emterpreter-Async required to run sync code
-    // https://github.com/kripken/emscripten/wiki/Emterpreter#emterpreter-async-run-synchronous-code
+    // https://github.com/emscripten-core/emscripten/wiki/Emterpreter#emterpreter-async-run-synchronous-code
     // By default, this function is never called on a web-ready raylib example because we encapsulate
     // frame code in a UpdateDrawFrame() function, to allow browser manage execution asynchronously
     // but now emscripten allows sync code to be executed in an interpreted way, using emterpreter!
@@ -1228,7 +1228,7 @@ void BeginTextureMode(RenderTexture2D target)
     rlLoadIdentity();                   // Reset current matrix (MODELVIEW)
 
     //rlScalef(0.0f, -1.0f, 0.0f);      // Flip Y-drawing (?)
-    
+
     // Setup current width/height for proper aspect ratio
     // calculation when using BeginMode3D()
     currentWidth = target.texture.width;
@@ -1254,7 +1254,7 @@ void EndTextureMode(void)
 
     rlMatrixMode(RL_MODELVIEW);         // Switch back to MODELVIEW matrix
     rlLoadIdentity();                   // Reset current matrix (MODELVIEW)
-    
+
     // Reset current screen size
     currentWidth = GetScreenWidth();
     currentHeight = GetScreenHeight();
