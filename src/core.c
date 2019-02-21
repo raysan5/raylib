@@ -1917,14 +1917,13 @@ void OpenURL(const char *url)
         char *cmd = (char *)calloc(strlen(url) + 10, sizeof(char));
 
 #if defined(_WIN32)
-        sprintf(cmd, "explorer '%s'", url);
+        sprintf(cmd, "explorer %s", url);
 #elif defined(__linux__)
         sprintf(cmd, "xdg-open '%s'", url); // Alternatives: firefox, x-www-browser
 #elif defined(__APPLE__)
         sprintf(cmd, "open '%s'", url);
 #endif
         system(cmd);
-
         free(cmd);
     }
 }
