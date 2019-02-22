@@ -1631,7 +1631,7 @@ Color *ImageExtractPalette(Image image, int maxPaletteSize, int *extractCount)
                 if (palCount >= maxPaletteSize)
                 {
                     i = image.width*image.height;   // Finish palette get
-                    printf("WARNING: Image palette is greater than %i colors!\n", maxPaletteSize);
+                    TraceLog(LOG_WARNING, "Image palette is greater than %i colors!", maxPaletteSize);
                 }
             }
         }

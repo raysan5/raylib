@@ -871,7 +871,7 @@ void *GetWindowHandle(void)
 {
 #if defined(_WIN32)
     // NOTE: Returned handle is: void *HWND (windows.h)
-	return glfwGetWin32Window(window);
+    return glfwGetWin32Window(window);
 #elif defined(__linux__)
     // NOTE: Returned handle is: unsigned long Window (X.h)
     // typedef unsigned long XID;
@@ -2213,7 +2213,7 @@ void SetMouseOffset(int offsetX, int offsetY)
 // NOTE: Useful when rendering to different size targets
 void SetMouseScale(float scaleX, float scaleY)
 {
-	mouseScale = (Vector2){ scaleX, scaleY };
+    mouseScale = (Vector2){ scaleX, scaleY };
 }
 
 // Returns mouse wheel movement Y

@@ -644,7 +644,7 @@ bool CheckCollisionCircleRec(Vector2 center, float radius, Rectangle rec)
     if (dy <= (rec.height/2.0f)) { return true; }
 
     float cornerDistanceSq = (dx - rec.width/2.0f)*(dx - rec.width/2.0f) +
-						     (dy - rec.height/2.0f)*(dy - rec.height/2.0f);
+                             (dy - rec.height/2.0f)*(dy - rec.height/2.0f);
 
     return (cornerDistanceSq <= (radius*radius));
 }

@@ -1406,8 +1406,8 @@ void UpdateMusicStream(Music music)
         UpdateAudioStream(music->stream, pcm, samplesCount);
         if ((music->ctxType == MUSIC_MODULE_XM) || (music->ctxType == MUSIC_MODULE_MOD))
         {
-			if (samplesCount > 1) music->samplesLeft -= samplesCount/2;
-			else music->samplesLeft -= samplesCount;
+            if (samplesCount > 1) music->samplesLeft -= samplesCount/2;
+            else music->samplesLeft -= samplesCount;
         }
         else music->samplesLeft -= samplesCount;
 

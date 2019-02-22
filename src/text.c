@@ -1386,10 +1386,10 @@ static Font LoadBMFont(const char *fileName)
     char *lastSlash = NULL;
 
     lastSlash = strrchr(fileName, '/');
-	if (lastSlash == NULL)
-	{
-		lastSlash = strrchr(fileName, '\\');
-	}
+    if (lastSlash == NULL)
+    {
+        lastSlash = strrchr(fileName, '\\');
+    }
 
     // NOTE: We need some extra space to avoid memory corruption on next allocations!
     texPath = malloc(strlen(fileName) - strlen(lastSlash) + strlen(texFileName) + 4);
