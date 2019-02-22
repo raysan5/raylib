@@ -306,7 +306,7 @@ Font LoadFontEx(const char *fileName, int fontSize, int *fontChars, int charsCou
     Font font = { 0 };
 
     font.baseSize = fontSize;
-    font.charsCount = (charsCount > 0) ? charsCount : 95;
+    font.charsCount = (charsCount > 0)? charsCount : 95;
     font.chars = LoadFontData(fileName, font.baseSize, fontChars, font.charsCount, FONT_DEFAULT);
 
 #if defined(SUPPORT_FILEFORMAT_TTF)
@@ -483,7 +483,7 @@ CharInfo *LoadFontData(const char *fileName, int fontSize, int *fontChars, int c
         stbtt_GetFontVMetrics(&fontInfo, &ascent, &descent, &lineGap);
 
         // In case no chars count provided, default to 95
-        charsCount = (charsCount > 0) ? charsCount : 95;
+        charsCount = (charsCount > 0)? charsCount : 95;
 
         // Fill fontChars in case not provided externally
         // NOTE: By default we fill charsCount consecutevely, starting at 32 (Space)
@@ -557,7 +557,7 @@ Image GenImageFontAtlas(CharInfo *chars, int charsCount, int fontSize, int paddi
     Image atlas = { 0 };
 
     // In case no chars count provided we suppose default of 95
-    charsCount = (charsCount > 0) ? charsCount : 95;
+    charsCount = (charsCount > 0)? charsCount : 95;
 
     // Calculate image size based on required pixel area
     // NOTE 1: Image is forced to be squared and POT... very conservative!
@@ -856,7 +856,7 @@ void DrawTextRecEx(Font font, const char *text, Rectangle rec, float fontSize, f
 
             if ((textOffsetX + glyphWidth + 1) >= rec.width)
             {
-                endLine = (endLine < 1) ? i : endLine;
+                endLine = (endLine < 1)? i : endLine;
                 if (i == endLine) endLine -= 1;
                 if ((startLine + 1) == endLine) endLine = i - 1;
                 state = !state;
@@ -916,7 +916,7 @@ void DrawTextRecEx(Font font, const char *text, Rectangle rec, float fontSize, f
                                    rec.y + textOffsetY + font.chars[index].offsetY*scaleFactor,
                                    font.chars[index].rec.width*scaleFactor,
                                    font.chars[index].rec.height*scaleFactor }, (Vector2){ 0, 0 }, 0.0f,
-                                   (!isGlyphSelected) ? tint : selectText);
+                                   (!isGlyphSelected)? tint : selectText);
                 }
             }
 

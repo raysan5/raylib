@@ -2260,7 +2260,7 @@ void MeshTangents(Mesh *mesh)
         float t2 = uv3.y - uv1.y;
 
         float div = s1*t2 - s2*t1;
-        float r = (div == 0.0f) ? 0.0f : 1.0f/div;
+        float r = (div == 0.0f)? 0.0f : 1.0f/div;
 
         Vector3 sdir = { (t2*x1 - t1*x2)*r, (t2*y1 - t1*y2)*r, (t2*z1 - t1*z2)*r };
         Vector3 tdir = { (s1*x2 - s2*x1)*r, (s1*y2 - s2*y1)*r, (s1*z2 - s2*z1)*r };
@@ -2293,7 +2293,7 @@ void MeshTangents(Mesh *mesh)
         mesh->tangents[i*4 + 0] = tangent.x;
         mesh->tangents[i*4 + 1] = tangent.y;
         mesh->tangents[i*4 + 2] = tangent.z;
-        mesh->tangents[i*4 + 3] = (Vector3DotProduct(Vector3CrossProduct(normal, tangent), tan2[i]) < 0.0f) ? -1.0f : 1.0f;
+        mesh->tangents[i*4 + 3] = (Vector3DotProduct(Vector3CrossProduct(normal, tangent), tan2[i]) < 0.0f)? -1.0f : 1.0f;
     #endif
     }
 
@@ -2312,7 +2312,7 @@ void MeshBinormals(Mesh *mesh)
         Vector3 tangent = { mesh->tangents[i*4 + 0], mesh->tangents[i*4 + 1], mesh->tangents[i*4 + 2] };
         float tangentW = mesh->tangents[i*4 + 3];
 
-        // TODO: Register computed binormal in mesh->binormal ?
+        // TODO: Register computed binormal in mesh->binormal?
         // Vector3 binormal = Vector3Multiply(Vector3CrossProduct(normal, tangent), tangentW);
     }
 }
@@ -2639,7 +2639,7 @@ static Material LoadMTL(const char *fileName)
                     } break;
                     case 'e':   // Ke float float float     Emmisive color (RGB)
                     {
-                        // TODO: Support Ke ?
+                        // TODO: Support Ke?
                     } break;
                     default: break;
                 }

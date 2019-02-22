@@ -834,7 +834,7 @@ Sound LoadSoundFromWave(Wave wave)
         //
         // I have decided on the first option because it offloads work required for the format conversion to the to the loading stage.
         // The downside to this is that it uses more memory if the original sound is u8 or s16.
-        mal_format formatIn  = ((wave.sampleSize == 8) ? mal_format_u8 : ((wave.sampleSize == 16) ? mal_format_s16 : mal_format_f32));
+        mal_format formatIn  = ((wave.sampleSize == 8)? mal_format_u8 : ((wave.sampleSize == 16)? mal_format_s16 : mal_format_f32));
         mal_uint32 frameCountIn = wave.sampleCount/wave.channels;
 
         mal_uint32 frameCount = (mal_uint32)mal_convert_frames(NULL, DEVICE_FORMAT, DEVICE_CHANNELS, DEVICE_SAMPLE_RATE, NULL, formatIn, wave.channels, wave.sampleRate, frameCountIn);
@@ -946,7 +946,7 @@ void ExportWaveAsCode(Wave wave, const char *fileName)
 
     // Write byte data as hexadecimal text
     fprintf(txtFile, "static unsigned char %s_DATA[%i] = { ", varFileName, dataSize);
-    for (int i = 0; i < dataSize - 1; i++) fprintf(txtFile, ((i%BYTES_TEXT_PER_LINE == 0) ? "0x%x,\n" : "0x%x, "), ((unsigned char *)wave.data)[i]);
+    for (int i = 0; i < dataSize - 1; i++) fprintf(txtFile, ((i%BYTES_TEXT_PER_LINE == 0)? "0x%x,\n" : "0x%x, "), ((unsigned char *)wave.data)[i]);
     fprintf(txtFile, "0x%x };\n", ((unsigned char *)wave.data)[dataSize - 1]);
 
     fclose(txtFile);
@@ -997,8 +997,8 @@ void SetSoundPitch(Sound sound, float pitch)
 // Convert wave data to desired format
 void WaveFormat(Wave *wave, int sampleRate, int sampleSize, int channels)
 {
-    mal_format formatIn  = ((wave->sampleSize == 8) ? mal_format_u8 : ((wave->sampleSize == 16) ? mal_format_s16 : mal_format_f32));
-    mal_format formatOut = ((      sampleSize == 8) ? mal_format_u8 : ((      sampleSize == 16) ? mal_format_s16 : mal_format_f32));
+    mal_format formatIn  = ((wave->sampleSize == 8)? mal_format_u8 : ((wave->sampleSize == 16)? mal_format_s16 : mal_format_f32));
+    mal_format formatOut = ((      sampleSize == 8)? mal_format_u8 : ((      sampleSize == 16)? mal_format_s16 : mal_format_f32));
 
     mal_uint32 frameCountIn = wave->sampleCount;  // Is wave->sampleCount actually the frame count? That terminology needs to change, if so.
 
@@ -1511,7 +1511,7 @@ AudioStream InitAudioStream(unsigned int sampleRate, unsigned int sampleSize, un
         stream.channels = 1;  // Fallback to mono channel
     }
 
-    mal_format formatIn = ((stream.sampleSize == 8) ? mal_format_u8 : ((stream.sampleSize == 16) ? mal_format_s16 : mal_format_f32));
+    mal_format formatIn = ((stream.sampleSize == 8)? mal_format_u8 : ((stream.sampleSize == 16)? mal_format_s16 : mal_format_f32));
 
     // The size of a streaming buffer must be at least double the size of a period.
     unsigned int periodSize = device.bufferSizeInFrames/device.periods;
@@ -1528,7 +1528,7 @@ AudioStream InitAudioStream(unsigned int sampleRate, unsigned int sampleSize, un
     audioBuffer->looping = true;        // Always loop for streaming buffers.
     stream.audioBuffer = audioBuffer;
 
-    TraceLog(LOG_INFO, "[AUD ID %i] Audio stream loaded successfully (%i Hz, %i bit, %s)", stream.source, stream.sampleRate, stream.sampleSize, (stream.channels == 1) ? "Mono" : "Stereo");
+    TraceLog(LOG_INFO, "[AUD ID %i] Audio stream loaded successfully (%i Hz, %i bit, %s)", stream.source, stream.sampleRate, stream.sampleSize, (stream.channels == 1)? "Mono" : "Stereo");
 
     return stream;
 }
@@ -1566,7 +1566,7 @@ void UpdateAudioStream(AudioStream stream, const void *data, int samplesCount)
         else
         {
             // Just update whichever sub-buffer is processed.
-            subBufferToUpdate = (audioBuffer->isSubBufferProcessed[0]) ? 0 : 1;
+            subBufferToUpdate = (audioBuffer->isSubBufferProcessed[0])? 0 : 1;
         }
 
         mal_uint32 subBufferSizeInFrames = audioBuffer->bufferSizeInFrames/2;
@@ -1769,7 +1769,7 @@ static Wave LoadWAV(const char *fileName)
                     // NOTE: subChunkSize comes in bytes, we need to translate it to number of samples
                     wave.sampleCount = (wavData.subChunkSize/(wave.sampleSize/8))/wave.channels;
 
-                    TraceLog(LOG_INFO, "[%s] WAV file loaded successfully (%i Hz, %i bit, %s)", fileName, wave.sampleRate, wave.sampleSize, (wave.channels == 1) ? "Mono" : "Stereo");
+                    TraceLog(LOG_INFO, "[%s] WAV file loaded successfully (%i Hz, %i bit, %s)", fileName, wave.sampleRate, wave.sampleSize, (wave.channels == 1)? "Mono" : "Stereo");
                 }
             }
         }
@@ -1890,7 +1890,7 @@ static Wave LoadOGG(const char *fileName)
 
         TraceLog(LOG_DEBUG, "[%s] Samples obtained: %i", fileName, numSamplesOgg);
 
-        TraceLog(LOG_INFO, "[%s] OGG file loaded successfully (%i Hz, %i bit, %s)", fileName, wave.sampleRate, wave.sampleSize, (wave.channels == 1) ? "Mono" : "Stereo");
+        TraceLog(LOG_INFO, "[%s] OGG file loaded successfully (%i Hz, %i bit, %s)", fileName, wave.sampleRate, wave.sampleSize, (wave.channels == 1)? "Mono" : "Stereo");
 
         stb_vorbis_close(oggFile);
     }
@@ -1917,7 +1917,7 @@ static Wave LoadFLAC(const char *fileName)
     if (wave.channels > 2) TraceLog(LOG_WARNING, "[%s] FLAC channels number (%i) not supported", fileName, wave.channels);
 
     if (wave.data == NULL) TraceLog(LOG_WARNING, "[%s] FLAC data could not be loaded", fileName);
-    else TraceLog(LOG_INFO, "[%s] FLAC file loaded successfully (%i Hz, %i bit, %s)", fileName, wave.sampleRate, wave.sampleSize, (wave.channels == 1) ? "Mono" : "Stereo");
+    else TraceLog(LOG_INFO, "[%s] FLAC file loaded successfully (%i Hz, %i bit, %s)", fileName, wave.sampleRate, wave.sampleSize, (wave.channels == 1)? "Mono" : "Stereo");
 
     return wave;
 }
@@ -1944,7 +1944,7 @@ static Wave LoadMP3(const char *fileName)
     if (wave.channels > 2) TraceLog(LOG_WARNING, "[%s] MP3 channels number (%i) not supported", fileName, wave.channels);
 
     if (wave.data == NULL) TraceLog(LOG_WARNING, "[%s] MP3 data could not be loaded", fileName);
-    else TraceLog(LOG_INFO, "[%s] MP3 file loaded successfully (%i Hz, %i bit, %s)", fileName, wave.sampleRate, wave.sampleSize, (wave.channels == 1) ? "Mono" : "Stereo");
+    else TraceLog(LOG_INFO, "[%s] MP3 file loaded successfully (%i Hz, %i bit, %s)", fileName, wave.sampleRate, wave.sampleSize, (wave.channels == 1)? "Mono" : "Stereo");
 
     return wave;
 }

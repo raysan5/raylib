@@ -775,8 +775,8 @@ typedef struct DrawCall {
     #endif
     "void main() \n"
     "{ \n"
-    "   vec2 lensCenter = fragTexCoord.x < 0.5 ? leftLensCenter : rightLensCenter; \n"
-    "   vec2 screenCenter = fragTexCoord.x < 0.5 ? leftScreenCenter : rightScreenCenter; \n"
+    "   vec2 lensCenter = fragTexCoord.x < 0.5? leftLensCenter : rightLensCenter; \n"
+    "   vec2 screenCenter = fragTexCoord.x < 0.5? leftScreenCenter : rightScreenCenter; \n"
     "   vec2 theta = (fragTexCoord - lensCenter)*scaleIn; \n"
     "   float rSq = theta.x*theta.x + theta.y*theta.y; \n"
     "   vec2 theta1 = theta*(hmdWarpParam.x + hmdWarpParam.y*rSq + hmdWarpParam.z*rSq*rSq + hmdWarpParam.w*rSq*rSq*rSq); \n"
@@ -1136,7 +1136,7 @@ void rlEnd(void)
     // TODO: System could be improved (a bit) just storing every draw alignment value
     // and adding it to vertexOffset on drawing... maybe in a future...
     int vertexCount = draws[drawsCounter - 1].vertexCount;
-    int vertexToAlign = (vertexCount >= 4) ? vertexCount%4 : (4 - vertexCount%4);
+    int vertexToAlign = (vertexCount >= 4)? vertexCount%4 : (4 - vertexCount%4);
     for (int i = 0; i < vertexToAlign; i++) rlVertex3f(-1, -1, -1);
 
     // Make sure vertexCount is the same for vertices, texcoords, colors and normals
@@ -1233,7 +1233,7 @@ void rlTexCoord2f(float x, float y)
 }
 
 // Define one vertex (normal)
-// NOTE: Normals limited to TRIANGLES only ?
+// NOTE: Normals limited to TRIANGLES only?
 void rlNormal3f(float x, float y, float z)
 {
     // TODO: Normals usage...
@@ -2206,7 +2206,7 @@ RenderTexture2D rlLoadRenderTexture(int width, int height, int format, int depth
         target.depth.id = rlLoadTextureDepth(width, height, depthBits, !useDepthTexture);
         target.depth.width = width;
         target.depth.height = height;
-        target.depth.format = 19;       //DEPTH_COMPONENT_24BIT ?
+        target.depth.format = 19;       //DEPTH_COMPONENT_24BIT?
         target.depth.mipmaps = 1;
     }
     //-----------------------------------------------------------------------------------------------------

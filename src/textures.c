@@ -588,7 +588,7 @@ Vector4 *GetImageDataNormalized(Image image)
                     pixels[i].x = (float)((pixel & 0b1111100000000000) >> 11)*(1.0f/31);
                     pixels[i].y = (float)((pixel & 0b0000011111000000) >> 6)*(1.0f/31);
                     pixels[i].z = (float)((pixel & 0b0000000000111110) >> 1)*(1.0f/31);
-                    pixels[i].w = ((pixel & 0b0000000000000001) == 0) ? 0.0f : 1.0f;
+                    pixels[i].w = ((pixel & 0b0000000000000001) == 0)? 0.0f : 1.0f;
 
                 } break;
                 case UNCOMPRESSED_R5G6B5:
@@ -814,7 +814,7 @@ void ExportImageAsCode(Image image, const char *fileName)
     fprintf(txtFile, "#define %s_FORMAT   %i          // raylib internal pixel format\n\n", varFileName, image.format);
 
     fprintf(txtFile, "static unsigned char %s_DATA[%i] = { ", varFileName, dataSize);
-    for (int i = 0; i < dataSize - 1; i++) fprintf(txtFile, ((i%BYTES_TEXT_PER_LINE == 0) ? "0x%x,\n" : "0x%x, "), ((unsigned char *)image.data)[i]);
+    for (int i = 0; i < dataSize - 1; i++) fprintf(txtFile, ((i%BYTES_TEXT_PER_LINE == 0)? "0x%x,\n" : "0x%x, "), ((unsigned char *)image.data)[i]);
     fprintf(txtFile, "0x%x };\n", ((unsigned char *)image.data)[dataSize - 1]);
 
     fclose(txtFile);
@@ -984,7 +984,7 @@ void ImageFormat(Image *image, int newFormat)
                         r = (unsigned char)(round(pixels[i].x*31.0f));
                         g = (unsigned char)(round(pixels[i].y*31.0f));
                         b = (unsigned char)(round(pixels[i].z*31.0f));
-                        a = (pixels[i].w > ((float)ALPHA_THRESHOLD/255.0f)) ? 1 : 0;
+                        a = (pixels[i].w > ((float)ALPHA_THRESHOLD/255.0f))? 1 : 0;
 
                         ((unsigned short *)image->data)[i] = (unsigned short)r << 11 | (unsigned short)g << 6 | (unsigned short)b << 1 | (unsigned short)a;
                     }
@@ -2231,7 +2231,7 @@ Image GenImageGradientH(int width, int height, Color left, Color right)
 Image GenImageGradientRadial(int width, int height, float density, Color inner, Color outer)
 {
     Color *pixels = (Color *)malloc(width*height*sizeof(Color));
-    float radius = (width < height) ? (float)width/2.0f : (float)height/2.0f;
+    float radius = (width < height)? (float)width/2.0f : (float)height/2.0f;
 
     float centerX = (float)width/2.0f;
     float centerY = (float)height/2.0f;

@@ -1430,11 +1430,11 @@ Vector3 ColorToHSV(Color color)
     Vector3 hsv = { 0.0f, 0.0f, 0.0f };
     float min, max, delta;
 
-    min = rgb.x < rgb.y ? rgb.x : rgb.y;
-    min = min  < rgb.z ? min  : rgb.z;
+    min = rgb.x < rgb.y? rgb.x : rgb.y;
+    min = min  < rgb.z? min  : rgb.z;
 
-    max = rgb.x > rgb.y ? rgb.x : rgb.y;
-    max = max  > rgb.z ? max  : rgb.z;
+    max = rgb.x > rgb.y? rgb.x : rgb.y;
+    max = max  > rgb.z? max  : rgb.z;
 
     hsv.z = max;            // Value
     delta = max - min;
@@ -1485,25 +1485,25 @@ Color ColorFromHSV(Vector3 hsv)
     // Red channel
     float k = fmod((5.0f + h/60.0f), 6);
     float t = 4.0f - k;
-    k = (t < k) ? t : k;
-    k = (k < 1) ? k : 1;
-    k = (k > 0) ? k : 0;
+    k = (t < k)? t : k;
+    k = (k < 1)? k : 1;
+    k = (k > 0)? k : 0;
     color.r = (v - v*s*k)*255;
 
     // Green channel
     k = fmod((3.0f + h/60.0f), 6);
     t = 4.0f - k;
-    k = (t < k) ? t : k;
-    k = (k < 1) ? k : 1;
-    k = (k > 0) ? k : 0;
+    k = (t < k)? t : k;
+    k = (k < 1)? k : 1;
+    k = (k > 0)? k : 0;
     color.g = (v - v*s*k)*255;
 
     // Blue channel
     k = fmod((1.0f + h/60.0f), 6);
     t = 4.0f - k;
-    k = (t < k) ? t : k;
-    k = (k < 1) ? k : 1;
-    k = (k > 0) ? k : 0;
+    k = (t < k)? t : k;
+    k = (k < 1)? k : 1;
+    k = (k > 0)? k : 0;
     color.b = (v - v*s*k)*255;
 
     return color;
@@ -1677,7 +1677,7 @@ const char *GetFileNameWithoutExt(const char *filePath)
 
     // NOTE: strrchr() returns a pointer to the last occurrence of character
     lastDot = strrchr(result, nameDot);
-    lastSep = (pathSep == 0) ? NULL : strrchr(result, pathSep);
+    lastSep = (pathSep == 0)? NULL : strrchr(result, pathSep);
 
     if (lastDot != NULL)            // Check if it has an extension separator...
     {
@@ -3191,7 +3191,7 @@ static void PollInputEvents(void)
 
     // Poll Events (registered events)
     // NOTE: Activity is paused if not enabled (appEnabled)
-    while ((ident = ALooper_pollAll(appEnabled ? 0 : -1, NULL, &events,(void**)&source)) >= 0)
+    while ((ident = ALooper_pollAll(appEnabled? 0 : -1, NULL, &events,(void**)&source)) >= 0)
     {
         // Process this event
         if (source != NULL) source->process(androidApp, source);
@@ -3771,7 +3771,7 @@ static EM_BOOL EmscriptenTouchCallback(int eventType, const EmscriptenTouchEvent
     }
 
     printf("%s, numTouches: %d %s%s%s%s\n", emscripten_event_type_to_string(eventType), event->numTouches,
-           event->ctrlKey ? " CTRL" : "", event->shiftKey ? " SHIFT" : "", event->altKey ? " ALT" : "", event->metaKey ? " META" : "");
+           event->ctrlKey? " CTRL" : "", event->shiftKey? " SHIFT" : "", event->altKey? " ALT" : "", event->metaKey? " META" : "");
 
     for (int i = 0; i < event->numTouches; ++i)
     {
@@ -3825,7 +3825,7 @@ static EM_BOOL EmscriptenGamepadCallback(int eventType, const EmscriptenGamepadE
 {
     /*
     printf("%s: timeStamp: %g, connected: %d, index: %ld, numAxes: %d, numButtons: %d, id: \"%s\", mapping: \"%s\"\n",
-           eventType != 0 ? emscripten_event_type_to_string(eventType) : "Gamepad state",
+           eventType != 0? emscripten_event_type_to_string(eventType) : "Gamepad state",
            gamepadEvent->timestamp, gamepadEvent->connected, gamepadEvent->index, gamepadEvent->numAxes, gamepadEvent->numButtons, gamepadEvent->id, gamepadEvent->mapping);
 
     for(int i = 0; i < gamepadEvent->numAxes; ++i) printf("Axis %d: %g\n", i, gamepadEvent->axis[i]);
@@ -4189,11 +4189,11 @@ static void EventThreadSpawn(char *device)
     {
         // Looks like a interesting device
         TraceLog(LOG_INFO, "Opening input device [%s] (%s%s%s%s%s)", device,
-            worker->isMouse ? "mouse " : "",
-            worker->isMultitouch ? "multitouch " : "",
-            worker->isTouch ? "touchscreen " : "",
-            worker->isGamepad ? "gamepad " : "",
-            worker->isKeyboard ? "keyboard " : "");
+            worker->isMouse? "mouse " : "",
+            worker->isMultitouch? "multitouch " : "",
+            worker->isTouch? "touchscreen " : "",
+            worker->isGamepad? "gamepad " : "",
+            worker->isKeyboard? "keyboard " : "");
 
         // Create a thread for this device
         int error = pthread_create(&worker->threadId, NULL, &EventThread, (void *)worker);
