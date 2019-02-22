@@ -897,7 +897,7 @@ void DrawTextRecEx(Font font, const char *text, Rectangle rec, float fontSize, f
                     textOffsetX = 0;
                 }
 
-                if ((textOffsetY + (int)((font.baseSize + font.baseSize/2)*scaleFactor)) > rec.height) break;
+                if ((textOffsetY + (int)(font.baseSize*scaleFactor)) > rec.height) break;
 
                 //draw selected
                 bool isGlyphSelected = false;
