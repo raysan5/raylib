@@ -267,6 +267,7 @@ void PauseAudioBuffer(AudioBuffer *audioBuffer);
 void ResumeAudioBuffer(AudioBuffer *audioBuffer);
 void SetAudioBufferVolume(AudioBuffer *audioBuffer, float volume);
 void SetAudioBufferPitch(AudioBuffer *audioBuffer, float pitch);
+void SetAudioBufferLoop(AudioBuffer *audioBuffer, bool toggle);
 void TrackAudioBuffer(AudioBuffer *audioBuffer);
 void UntrackAudioBuffer(AudioBuffer *audioBuffer);
 
@@ -342,7 +343,6 @@ static mal_uint32 OnSendAudioDataToDevice(mal_device *pDevice, mal_uint32 frameC
                         }
                         else
                         {
-                            // Should never get here, but just for safety,
                             // move the cursor position back to the start and continue the loop.
                             audioBuffer->frameCursorPos = 0;
                             continue;
@@ -720,6 +720,17 @@ void SetAudioBufferPitch(AudioBuffer *audioBuffer, float pitch)
     mal_dsp_set_output_sample_rate(&audioBuffer->dsp, newOutputSampleRate);
 }
 
+// Toggle looping for a sound buffer
+void SetAudioBufferLoop(AudioBuffer *audioBuffer, bool toggle)
+{
+    if (audioBuffer == NULL)
+    {
+        TraceLog(LOG_ERROR, "SetAudioBufferLoop() : No audio buffer");
+        return;
+    }
+    audioBuffer->looping = toggle;
+}
+
 // Track audio buffer to linked list next position
 void TrackAudioBuffer(AudioBuffer *audioBuffer)
 {
@@ -992,6 +1003,12 @@ void SetSoundVolume(Sound sound, float volume)
 void SetSoundPitch(Sound sound, float pitch)
 {
     SetAudioBufferPitch((AudioBuffer *)sound.audioBuffer, pitch);
+}
+
+// Toggle looping for a sound
+void SetSoundLoop(Sound sound, bool toggle)
+{
+    SetAudioBufferLoop((AudioBuffer *)sound.audioBuffer, toggle);
 }
 
 // Convert wave data to desired format
