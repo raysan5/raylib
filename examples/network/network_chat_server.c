@@ -22,6 +22,9 @@
 
 #include "raylib.h"
 
+#define MYPORT "4950"
+#define MAXBUFLEN 100
+
 int main()
 {
 	// Setup
@@ -32,7 +35,7 @@ int main()
 	SetTargetFPS(60);
 
 	// Networking
-	InitNetwork(); 
+	InitNetwork();  
 
 	// Main game loop
 	while (!WindowShouldClose())
@@ -47,7 +50,7 @@ int main()
 		EndDrawing();
 	}
 
-	// Cleanup
+	// Cleanup 
 	CloseWindow();
 	return 0;
 }

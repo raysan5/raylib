@@ -38,6 +38,7 @@
 //----------------------------------------------------------------------------------
 // Check if config flags have been externally provided on compilation line
 //----------------------------------------------------------------------------------
+
 #if !defined(EXTERNAL_CONFIG_FLAGS)
 #	include "config.h" // Defines module configuration flags
 #endif
@@ -47,8 +48,8 @@
 //----------------------------------------------------------------------------------
 
 #include "raylib.h"
-#include "sysnet.h" 
 #include "rpack.h"
+#include "sysnet.h"
 
 //----------------------------------------------------------------------------------
 // Module defines
@@ -56,7 +57,235 @@
 
 #if PLATFORM_WINDOWS
 #	define errno WSAGetLastError() // Support UNIX socket error codes
-#endif 
+#endif
+
+#define DEF_BACKLOG_SIZE SOMAXCONN  
+#define PORT_STR_BUFSZ 6
+
+static bool SocketSetDefaults(SocketConfig *cfg);
+static bool CreateSocket(SocketConfig *cfg, SocketResult *out);
+static bool SocketSetNonBlocking(SocketResult *out);
+static bool SocketSetOptions(SocketConfig *cfg,
+	SocketResult *out, int fd);
+static const char *SocketStatusToString(enum SocketStatus s);
+
+/* Static network API methods */
+
+static void SocketSetError(int err)
+{
+#if PLATFORM == PLATFORM_WINDOWS
+	WSASetLastError(err);
+#else
+	errno = err;
+#endif
+}
+
+static int SocketGetLastError()
+{
+#if PLATFORM == PLATFORM_WINDOWS
+	return WSAGetLastError();
+#else
+	return errno;
+#endif
+}
+
+static bool SocketSetDefaults(SocketConfig *cfg)
+{
+	if (cfg->backlog_size == 0) { cfg->backlog_size = DEF_BACKLOG_SIZE; }
+
+	/* Screen out contradictory settings */
+	if (cfg->IPv6 && cfg->IPv4) { return false; }
+	return true;
+}
+
+static bool SocketStatusToError(SocketResult *out, enum SocketStatus status)
+{
+	out->status = status;
+	out->saved_errno = SocketGetLastError();
+	SocketSetError(0);
+	return false;
+}
+
+static bool CreateSocket(SocketConfig *cfg, SocketResult *out)
+{
+	struct addrinfo hints;
+	struct addrinfo *res = NULL;
+
+	int fd = -1;
+	char port_str[PORT_STR_BUFSZ];
+	memset(port_str, 0, PORT_STR_BUFSZ);
+
+	SocketSetHints(cfg, &hints);
+
+	if (PORT_STR_BUFSZ < snprintf(port_str, PORT_STR_BUFSZ,
+		"%u", cfg->port))
+	{
+		return SocketStatusToError(out, SOCKET_ERROR_SNPRINTF);
+	}
+
+	struct addrinfo *ai = NULL;
+	int addr_res = getaddrinfo(cfg->host, port_str, &hints, &res);
+	if (addr_res != 0)
+	{
+		out->getaddrinfo_error = addr_res;
+		freeaddrinfo(res);
+		return SocketStatusToError(out, SOCKET_ERROR_GETADDRINFO);
+	}
+	memcpy(&out->addrinfo, res, sizeof(struct addrinfo));
+
+	for (ai = res; ai != NULL; ai = ai->ai_next)
+	{
+		fd = socket(ai->ai_family, ai->ai_socktype, ai->ai_protocol);
+		if (fd == -1)
+		{
+			/* Save errno, but will be clobbered if others succeed. */
+			out->status = SOCKET_ERROR_SOCKET;
+			out->saved_errno = SocketGetLastError();
+			SocketSetError(0);
+			continue;
+		}
+
+		if (!SocketSetOptions(cfg, out, fd))
+		{
+			freeaddrinfo(res);
+			return false;
+		}
+
+		if (cfg->server)
+		{
+			int bind_res = bind(fd, res->ai_addr, res->ai_addrlen);
+			if (bind_res == -1)
+			{
+				freeaddrinfo(res);
+				return SocketStatusToError(out, SOCKET_ERROR_BIND);
+			}
+
+			if (!cfg->datagram)
+			{
+				int listen_res = listen(fd, cfg->backlog_size);
+				if (listen_res == -1)
+				{
+					freeaddrinfo(res);
+					return SocketStatusToError(out, SOCKET_ERROR_LISTEN);
+				}
+			}
+			break;
+		}
+		else /* client */
+		{
+			if (cfg->datagram) { break; }
+
+			int connect_res = connect(fd, ai->ai_addr, ai->ai_addrlen);
+			if (connect_res == 0)
+			{
+				break;
+			}
+			else
+			{
+				close(fd);
+				fd = -1;
+				out->status = SOCKET_ERROR_CONNECT;
+				continue;
+			}
+		}
+	}
+
+	if (fd == -1)
+	{
+		if (out->status == SOCKET_OK)
+		{
+			freeaddrinfo(res);
+			return SocketStatusToError(out, SOCKET_ERROR_UNKNOWN);
+		}
+		else
+		{
+			out->saved_errno = SocketGetLastError();
+			SocketSetError(0);
+			freeaddrinfo(res);
+			return false;
+		}
+	}
+
+	out->status = SOCKET_OK;
+	freeaddrinfo(res);
+	out->saved_errno = 0;
+	out->socket.handle = fd;
+	out->socket.ready = 0;
+	out->socket.remoteAddress.host = ((struct sockaddr_in*)res->ai_addr)->sin_addr.s_addr;
+	out->socket.remoteAddress.port = ((struct sockaddr_in*)res->ai_addr)->sin_port;
+	out->socket.sflag = cfg->server;
+	return true;
+}
+
+static bool SocketSetNonBlocking(SocketResult *out)
+{
+#if PLATFORM == PLATFORM_WINDOWS
+	unsigned long mode = 1;
+	if (ioctlsocket(out->socket.handle, FIONBIO, &mode) != 0)
+	{
+		return SocketStatusToError(out, SOCKET_ERROR_FCNTL);
+	}
+#else
+	int flags = fcntl(out->socket.handle, F_GETFL, 0);
+	if (flags == -1)
+	{
+		return SocketStatusToError(out, SOCKET_ERROR_FCNTL);
+	}
+	if (fcntl(out->socket, F_SETFL, flags | O_NONBLOCK) < 0)
+	{
+		return SocketStatusToError(out, SOCKET_ERROR_FCNTL);
+	}
+#endif
+	return true;
+}
+
+static bool SocketSetOptions(SocketConfig *cfg,
+		SocketResult *out, int fd)
+{
+	for (int i = 0; i < MAX_SOCK_OPTS; i++)
+	{
+		SocketOpt *opt = &cfg->sockopts[i];
+		if (opt->option_id == 0) { break; }
+
+		if (setsockopt(fd, SOL_SOCKET, opt->option_id,
+			opt->value, opt->value_len) < 0)
+		{
+			return SocketStatusToError(out, SOCKET_ERROR_SETSOCKOPT);
+		}
+	}
+
+	return true;
+}
+
+static const char *SocketStatusToString(enum SocketStatus s)
+{
+	switch (s)
+	{
+		case SOCKET_OK:
+			return "ok";
+		case SOCKET_ERROR_GETADDRINFO:
+			return "getaddrinfo";
+		case SOCKET_ERROR_SOCKET:
+			return "socket";
+		case SOCKET_ERROR_BIND:
+			return "bind";
+		case SOCKET_ERROR_LISTEN:
+			return "listen";
+		case SOCKET_ERROR_CONNECT:
+			return "connect";
+		case SOCKET_ERROR_FCNTL:
+			return "fcntl";
+		case SOCKET_ERROR_SNPRINTF:
+			return "snprintf";
+		case SOCKET_ERROR_CONFIGURATION:
+			return "configuration";
+		case SOCKET_ERROR_SETSOCKOPT:
+			return "setsockopt";
+		case SOCKET_ERROR_UNKNOWN:
+		default:
+			return "unknown";
+	}
+}
 
 //----------------------------------------------------------------------------------
 // Module implementation
@@ -65,7 +294,6 @@
 // Initialise the network (requires for windows platforms only)
 bool InitNetwork()
 {
-#if PLATFORM == PLATFORM_WINDOWS
 	WSADATA wsaData;
 	if (WSAStartup(MAKEWORD(2, 2), &wsaData) == NO_ERROR)
 	{
@@ -77,17 +305,19 @@ bool InitNetwork()
 		TraceLog(LOG_WARNING, "WinSock failed to initialise.");
 		return false;
 	}
-#else
-	return true;
-#endif
 }
 
 // Cleanup, and close the network
 void CloseNetwork()
 {
-#if PLATFORM == PLATFORM_WINDOWS
-	WSACleanup();
-#endif
+	if (WSACleanup() == SOCKET_ERROR)
+	{
+		if (WSAGetLastError() == WSAEINPROGRESS)
+		{
+			WSACancelBlockingCall();
+			WSACleanup();
+		}
+	}
 }
 
 // Resolve the hostname
@@ -106,7 +336,7 @@ char* ResolveIP(const char* ip, const char* port)
 
 	// Set the hints
 	memset(&hints, 0, sizeof hints);
-	hints.ai_family   = AF_UNSPEC; // Either IPv4 or IPv6 (AF_INET, AF_INET6)
+	hints.ai_family = AF_UNSPEC; // Either IPv4 or IPv6 (AF_INET, AF_INET6)
 	hints.ai_socktype = SOCKET_TCP; // TCP (SOCK_STREAM), UDP (SOCK_DGRAM)
 	hints.ai_protocol = 0; // Automatically select correct protocol (IPPROTO_TCP), (IPPROTO_UDP)
 
@@ -179,7 +409,7 @@ void ResolveHost(AddressInformation* outaddr, const char* address, const char* p
 
 	// Set the hints
 	memset(&hints, 0, sizeof hints);
-	hints.ai_family   = AF_UNSPEC; // Either IPv4 or IPv6 (AF_INET, AF_INET6)
+	hints.ai_family = AF_UNSPEC; // Either IPv4 or IPv6 (AF_INET, AF_INET6)
 	hints.ai_socktype = socketType == SOCKET_TCP ? SOCK_STREAM : SOCK_DGRAM; // TCP (SOCK_STREAM), UDP (SOCK_DGRAM)
 	hints.ai_protocol = 0; // Automatically select correct protocol (IPPROTO_TCP), (IPPROTO_UDP)
 
@@ -224,322 +454,200 @@ void ResolveHost(AddressInformation* outaddr, const char* address, const char* p
 	freeaddrinfo(results);
 }
 
-// IP helper method, checks if an address is a valid IPv4 address
-bool IsIPv4Address(const char* address)
+/* Attempt to open a socket, according to the configuration stored in
+ * CFG. Returns whether the the socket opened; further details will be
+ * stored in RES. */
+bool SocketOpen(SocketConfig *cfg, SocketResult *res)
 {
-	struct sockaddr_in sa;
-	return inet_pton(AF_INET, address, &(sa.sin_addr)) != 0;
-}
+	if (cfg == NULL || res == NULL) { return false; }
+	memset(res, 0, sizeof(*res));
 
-// IP helper method, checks if an address is a valid IPv6 address
-bool IsIPv6Address(const char* address)
-{
-	struct sockaddr_in6 sa;
-	return inet_pton(AF_INET6, address, &(sa.sin6_addr)) != 0;
-}
-
-// Create a socket from information provided by the filled Address information struct
-bool CreateSocket(Socket* sock, const AddressInformation addr)
-{
-	// Create a socket from provided address data
-	sock->handle = socket(addr.family, addr.socktype, addr.protocol);
-
-	// Did we succeed?
-	if (sock->handle == INVALID_SOCKET)
+	if (!SocketSetDefaults(cfg))
 	{
-		TraceLog(LOG_WARNING, "Failed to get create socket: %ls", gai_strerror(errno));
-		CloseSocket(sock->handle);
+		res->status = SOCKET_ERROR_CONFIGURATION;
 		return false;
 	}
-	else
+
+	if (!CreateSocket(cfg, res)) { return false; }
+
+	if (cfg->nonblocking)
 	{
-		TraceLog(LOG_INFO, "Successfully created socket");
-		PrintSocket(addr.sockaddr, addr.family, addr.socktype, addr.protocol);
+		if (!SocketSetNonBlocking(res)) { return false; }
 	}
 
-	// Return true if we've successfully created the socket
 	return true;
 }
 
-// Bind the socket to a specific port, this is usually used if you're going to listen for incoming connections on a specific port
-bool BindSocket(Socket sock, const AddressInformation addr)
+/* Close a network socket */
+void SocketClose(SocketHandle socket)
 {
-	// Bind the socket handle to the socket address defined in sockaddr
-	int status = bind(sock.handle, addr.sockaddr, addr.addrlen);
-
-	// Did we succeed?
-	if (status == SOCKET_ERROR)
+	if (socket)
 	{
-		TraceLog(LOG_WARNING, "Failed to get bind socket: %ls", gai_strerror(errno));
+		closesocket(socket);
+	}
+}
+
+/* Accept an incoming connection on the given server socket.
+   The newly created socket is returned, or NULL if there was an error.
+*/
+bool SocketAccept(SocketHandle listener, SocketResult* out)
+{
+	struct sockaddr_in sock_addr;
+	socklen_t sock_alen;
+	sock_alen = sizeof(sock_addr);
+	out->socket.handle = accept(listener, (struct sockaddr *)&sock_addr,
+								&sock_alen);
+	if (out->socket.handle == INVALID_SOCKET)
+	{
+		/* Save errno, but will be clobbered if others succeed. */
+		out->status = SOCKET_ERROR_ACCEPT;
+		out->saved_errno = SocketGetLastError();
+		SocketSetError(0);
 		return false;
 	}
-	else
-	{
-		char buff[INET6_ADDRSTRLEN];
-		TraceLog(LOG_INFO, "Successfully bound socket to address: %s", SocketAddressToString(addr.sockaddr, buff));
-	}
+	memcpy(&out->addrinfo, &sock_addr, sizeof(struct sockaddr));
+	out->socket.remoteAddress.host = sock_addr.sin_addr.s_addr;
+	out->socket.remoteAddress.port = sock_addr.sin_port;
 
-	// Return true if we've successfully bound the socket
 	return true;
 }
 
-// Connect the socket to an address
-bool ConnectSocket(Socket socket, AddressInformation addr)
+/* Send 'len' bytes of 'data' over the non-server socket 'sock'
+   This function returns the actual amount of data sent.  If the return value
+   is less than the amount of data sent, then either the remote connection was
+   closed, or an unknown socket error occurred.
+*/
+int SocketSend(Socket* socket, const void *datap, int len)
 {
-	int status = connect(socket.handle, addr.sockaddr, addr.addrlen);
+	const unsigned char *data = (const unsigned char *)datap;   /* For pointer arithmetic */
+	int sent, left;
 
-	// Did we succeed?
-	if (status == SOCKET_ERROR)
+	// /* Server sockets are for accepting connections only */
+	if (socket->sflag)
 	{
-		TraceLog(LOG_WARNING, "Failed to connect socket: %ls", gai_strerror(errno));
-		return false;
-	}
-	else
-	{
-		char buff[INET6_ADDRSTRLEN];
-		TraceLog(LOG_INFO, "Successfully connected socket to address: %s", SocketAddressToString(addr.sockaddr, buff));
+		// out->status = SOCKET_ERROR_SEND;
+		// out->saved_errno = SocketGetLastError();
+		// SocketSetError(0);
+		return(-1);
 	}
 
-	// Return true if we've successfully connected the socket
-	return true;
+	/* Keep sending data until it's sent or an error occurs */
+	left = len;
+	sent = 0;
+	SocketSetError(0);
+	do
+	{
+		len = send(socket->handle, (const char *)data, left, 0);
+		if (len > 0)
+		{
+			sent += len;
+			left -= len;
+			data += len;
+		}
+	}
+	while ((left > 0) && ((len > 0) || (SocketGetLastError() == EINTR)));
+
+	return(sent);
 }
 
-// Listen on a socket
-bool ListenSocket(Socket socket)
+/* Receive up to 'maxlen' bytes of data over the non-server socket 'sock',
+   and store them in the buffer pointed to by 'data'.
+   This function returns the actual amount of data received.  If the return
+   value is less than or equal to zero, then either the remote connection was
+   closed, or an unknown socket error occurred.
+*/
+int SocketReceive(Socket* socket, void *data, int maxlen)
 {
-	int status = listen(socket.handle, MAX_SOCKET_QUEUE_SIZE);
+	int len;
 
-	// Did we succeed?
-	if (status == SOCKET_ERROR)
+	/* Server sockets are for accepting connections only */
+	if (socket->sflag)
 	{
-		TraceLog(LOG_WARNING, "Failed to listen to socket: %ls", gai_strerror(errno));
-		return false;
-	}
-	else
-	{
-		TraceLog(LOG_INFO, "Success, socket now listening");
+		// out->status = SOCKET_ERROR_RECEIVE;
+		// out->saved_errno = SocketGetLastError();
+		// SocketSetError(0); 
+		return(-1);
 	}
 
-	// Set the socket i/o mode to blocking, or non-blocking
-	unsigned long blocking = socket.blocking ? 0 : 1;
-	status                 = ioctlsocket(socket.handle, FIONBIO, &blocking);
-
-	if (status != NO_ERROR)
+	SocketSetError(0); 
+	do
 	{
-		TraceLog(LOG_WARNING, "Failed to set socket io mode to: %s", (blocking ? "non-blocking" : "blocking"));
+		len = recv(socket->handle, (char *)data, maxlen, 0);
 	}
-	else
-	{
-		TraceLog(LOG_INFO, "Successfully set socket io mode to: %s", (blocking ? "non-blocking" : "blocking"));
-	}
+	while (SocketGetLastError() == EINTR);
 
-	// Return true if we've successfully connected the socket
-	return true;
+	// sock->ready = 0;
+	return(len);
 }
 
-// Close a socket
-void CloseSocket(Socket* socket)
+/* Construct an error message in BUF, based on the status codes
+ * in *RES. This has the same return value and general behavior
+ * as snprintf -- if the return value is >= buf_size, the string
+ * has been truncated. Returns -1 if either BUF or RES are NULL. */
+int SocketGetError(char *buf, size_t buf_size, SocketResult *res)
 {
-#if PLATFORM_WINDOWS
-	closesocket(socket);
-#elif PLATFORM == PLATFORM_UNIX
-	close(socket);
-#endif
+	if (buf == NULL || res == NULL) { return 0; }
+	return snprintf(buf, buf_size, "%s: %ls",
+		SocketStatusToString(res->status),
+		(res->status == SOCKET_ERROR_GETADDRINFO
+					? gai_strerror(res->getaddrinfo_error)
+					: strerror(res->saved_errno)));
 }
 
-// Create a listen server, this combines Create/Bind/Listen into 1 function
-void CreateListenServer(Socket* tcpsock, const char* address, const char* port, SocketType socketType)
+/* Print an error message based on the status contained in *RES. */
+void SocketPrintError(SocketResult *res)
 {
-	// Variables
-	int              status; // Status value to return (0) is success
-	struct addrinfo  hints; // Address flags (IPV4, IPV6, UDP?)
-	struct addrinfo* results; // A pointer to the resulting address list
-
-	// Set the hints
-	memset(&hints, 0, sizeof hints);
-	hints.ai_family   = AF_UNSPEC; // Either IPv4 or IPv6 (AF_INET, AF_INET6)
-	hints.ai_socktype = socketType; // TCP (SOCK_STREAM), UDP (SOCK_DGRAM)
-
-	// Populate address information
-	status = getaddrinfo(address, // e.g. "www.example.com" or IP
-						 port, // e.g. "http" or port number
-						 &hints, // e.g. SOCK_STREAM/SOCK_DGRAM
-						 &results // The struct to populate
-	);
-
-	// Did we succeed?
-	if (status == -1)
-	{
-		TraceLog(LOG_WARNING, "Failed to get resolve host %s:%s: %ls", address, port, gai_strerror(errno));
-	}
-	else
-	{
-		TraceLog(LOG_INFO, "Successfully resolved host %s:%s", address, port);
-	}
-
-	// Create our server socket
-	int handle = socket(results->ai_family, results->ai_socktype, results->ai_protocol);
-
-	// Bind it to the port we passed in to getaddrinfo():
-	status = bind(handle, results->ai_addr, results->ai_addrlen);
-
-	// Did we succeed?
-	if (status == -1)
-	{
-		TraceLog(LOG_WARNING, "Failed to get bind socket to port (%s): %ls", port, gai_strerror(errno));
-	}
-	else
-	{
-		TraceLog(LOG_INFO, "Successfully bound %s to port (%s)", address, port);
-	}
-
-	// Listen on the bound port
-	status = listen(handle, 5);
-
-	// Did we succeed?
-	if (status == -1)
-	{
-		TraceLog(LOG_WARNING, "Failed to listen to socket: %ls", gai_strerror(errno));
-	}
-	else
-	{
-		TraceLog(LOG_INFO, "Successfully started listen server.");
-	}
-
-	DWORD nonBlocking = 1;
-	if (ioctlsocket(handle, FIONBIO, &nonBlocking) == -1)
-	{
-		TraceLog(LOG_WARNING, "Failed to set socket to non-blocking.");
-	}
-	else
-	{
-		TraceLog(LOG_INFO, "Successfully set socket to non-blocking.");
-	}
-
-	// Free the linked-list, we're not using it anymore
-	freeaddrinfo(results);
-
-	// Finally, return our socket descriptor
-	tcpsock->handle = handle;
-
-	return;
+	if (res == NULL) { return; }
+	printf("%s: %ls\n", SocketStatusToString(res->status),
+		(res->status == SOCKET_ERROR_GETADDRINFO
+		   ? gai_strerror(res->getaddrinfo_error)
+		   : strerror(res->saved_errno)));
 }
 
-// Create a simple client, this combines Create/Bind/Connect into 1 function
-void CreateClient(Socket* tcpsock, char* address, char* port, SocketType socketType)
+/* Set "hints" in an addrinfo struct, to be passed to getaddrinfo. */
+void SocketSetHints(SocketConfig *cfg, struct addrinfo *hints)
 {
-	int              status;
-	int              handle;
-	struct addrinfo  hints;
-	struct addrinfo* results; // Will point to the results
+	if (cfg == NULL || hints == NULL) { return; }
+	memset(hints, 0, sizeof(*hints));
 
-	memset(&hints, 0, sizeof hints); // Make sure the struct is empty
-	hints.ai_family   = AF_UNSPEC; // Don't care IPv4 or IPv6
-	hints.ai_socktype = socketType; // TCP stream sockets
-
-	// Get ready to connect
-	status = getaddrinfo(address, port, &hints, &results);
-
-	// Did we succeed?
-	if (status != 0)
+	/* if .IPv4 or .IPv6 are used, set and use that instead of *host */
+	if (cfg->path)
 	{
-		TraceLog(LOG_WARNING, "Failed to get address information: %ls", gai_strerror(errno));
+		hints->ai_family = AF_UNIX;
+	}
+	else if (cfg->IPv6)
+	{
+		hints->ai_family = AF_INET6;
+	}
+	else if (cfg->IPv4)
+	{
+		hints->ai_family = AF_INET;
 	}
 	else
 	{
-		TraceLog(LOG_INFO, "Successfully created TCP client on port (%s)", port);
+		hints->ai_family = AF_UNSPEC;
 	}
 
-	// Create our socket
-	handle = socket(results->ai_family, results->ai_socktype, results->ai_protocol);
-
-	// Did it succeed?
-	if (handle == -1)
+	if (cfg->datagram)
 	{
-		TraceLog(LOG_WARNING, "Failed to create socket: %ls", gai_strerror(errno));
+		hints->ai_socktype = SOCK_DGRAM;
 	}
 	else
 	{
-		TraceLog(LOG_INFO, "Successfully created socket");
+		hints->ai_socktype = SOCK_STREAM;
 	}
 
-	// Connect to the server
-	status = connect(handle, results->ai_addr, results->ai_addrlen);
-
-	if (status == -1)
+	/* Set passive unless UDP client */
+	if (!cfg->datagram || cfg->server)
 	{
-		TraceLog(LOG_WARNING, "Failed to connect to server %s:%s", address, port);
-	}
-	else
-	{
-		TraceLog(LOG_INFO, "Successfully connected to %s:%s", address, port);
+		hints->ai_flags = AI_PASSIVE;
 	}
 
-	freeaddrinfo(results);
-
-	// Finally, return our socket descriptor
-	tcpsock->handle = handle;
-}
-
-// Try to accept connections on ListenSock and store them in NewSock
-void AcceptSocket(Socket listenSock, Socket* newSock)
-{
-	struct sockaddr_storage their_addr;
-	socklen_t               addrSize;
-	int                     newHandle;
-	addrSize = sizeof their_addr;
-	newHandle = accept(listenSock.handle, (struct sockaddr*) &their_addr, &addrSize);
-
-	if (newHandle == INVALID_SOCKET)
+	if (cfg->IPv6 || cfg->IPv4)
 	{
-		TraceLog(LOG_DEBUG, "Failed to accept incoming connection: %ls", gai_strerror(errno));
-	}
-	else
-	{
-		newSock->handle = newHandle;
-		TraceLog(LOG_INFO, "Successfully accepted a new connection.");
+		hints->ai_flags |= AI_NUMERICHOST;
 	}
 }
-
-// Send data over TCP
-int SendTCP(SocketHandle handle, const char* data, int len)
-{
-	int sentBytes = send(handle, data, len, 0);
-	if (sentBytes == SOCKET_ERROR)
-	{
-		TraceLog(LOG_WARNING, "Failed to send data: %ls", gai_strerror(errno));
-	}
-	else
-	{
-		TraceLog(LOG_DEBUG, "Successfully sent %d bytes.", sentBytes);
-	}
-}
-
-// Receiive data over TCP
-int ReceiveTCP(SocketHandle handle, const char* data, int len)
-{
-	int status = recv(handle, data, len, 0);
-	if (status == SOCKET_ERROR && errno == EWOULDBLOCK)
-	{
-		TraceLog(LOG_DEBUG, "Failed to receive data: %ls", gai_strerror(errno));
-	}
-	else if (status > 0)
-	{
-		TraceLog(LOG_DEBUG, "Successfully received %d bytes.", status);
-	}
-	else if (status == 0)
-	{
-		TraceLog(LOG_INFO, "Connection closed.");
-	}
-	return status;
-}
-
-// Reset a socket
-void ResetSocket(Socket* socket)
-{
-	socket->handle   = -1;
-	socket->blocking = false;
-};
 
 // Print socket information
 void PrintSocket(struct SocketAddress* addr, const int family, const int socktype, const int protocol)
@@ -549,32 +657,32 @@ void PrintSocket(struct SocketAddress* addr, const int family, const int socktyp
 	switch (family)
 	{
 		case AF_UNSPEC:
-		{
-			TraceLog(LOG_DEBUG, "Family: Unspecified");
-		}
-		break;
+			{
+				TraceLog(LOG_DEBUG, "Family: Unspecified");
+			}
+			break;
 		case AF_INET:
-		{
-			TraceLog(LOG_DEBUG, "Family: AF_INET (IPv4)");
-			TraceLog(LOG_INFO, "- IPv4 address %s", SocketAddressToString(addr, ip));
-		}
-		break;
+			{
+				TraceLog(LOG_DEBUG, "Family: AF_INET (IPv4)");
+				TraceLog(LOG_INFO, "- IPv4 address %s", SocketAddressToString(addr, ip));
+			}
+			break;
 		case AF_INET6:
-		{
-			TraceLog(LOG_DEBUG, "Family: AF_INET6 (IPv6)");
-			TraceLog(LOG_INFO, "- IPv6 address %s", SocketAddressToString(addr, ip));
-		}
-		break;
+			{
+				TraceLog(LOG_DEBUG, "Family: AF_INET6 (IPv6)");
+				TraceLog(LOG_INFO, "- IPv6 address %s", SocketAddressToString(addr, ip));
+			}
+			break;
 		case AF_NETBIOS:
-		{
-			TraceLog(LOG_DEBUG, "Family: AF_NETBIOS (NetBIOS)");
-		}
-		break;
+			{
+				TraceLog(LOG_DEBUG, "Family: AF_NETBIOS (NetBIOS)");
+			}
+			break;
 		default:
-		{
-			TraceLog(LOG_DEBUG, "Family: Other %ld", family);
-		}
-		break;
+			{
+				TraceLog(LOG_DEBUG, "Family: Other %ld", family);
+			}
+			break;
 	}
 	TraceLog(LOG_DEBUG, "Socket type:");
 	switch (socktype)
@@ -625,76 +733,21 @@ char* SocketAddressToString(struct SocketAddress* sockaddr, char buffer[])
 	switch (sockaddr->family)
 	{
 		case AF_INET:
-		{
-			return inet_ntop(AF_INET, &((struct sockaddr_in*) sockaddr)->sin_addr, buffer, INET_ADDRSTRLEN);
-		}
-		break;
+			{
+				return inet_ntop(AF_INET, &((struct sockaddr_in*) sockaddr)->sin_addr, buffer, INET_ADDRSTRLEN);
+			}
+			break;
 		case AF_INET6:
-		{
-			return inet_ntop(AF_INET6, &((struct sockaddr_in6*) sockaddr)->sin6_addr, buffer, INET6_ADDRSTRLEN);
-		}
-		break;
+			{
+				return inet_ntop(AF_INET6, &((struct sockaddr_in6*) sockaddr)->sin6_addr, buffer, INET6_ADDRSTRLEN);
+			}
+			break;
 		default:
-		{
-			return NULL;
-		}
-		break;
+			{
+				return NULL;
+			}
+			break;
 	}
-}
-
-unsigned short HostToNetworkShort(unsigned short value)
-{
-	return htons(value);
-}
-
-unsigned long HostToNetworkLong(unsigned long value)
-{
-	return htonl(value);
-}
-
-unsigned int HostToNetworkFloat(float value)
-{
-	return htonf(value);
-}
-
-unsigned long long HostToNetworkDouble(double value)
-{
-	return htond(value);
-}
-
-unsigned long long HostToNetworkLongLong(unsigned long long value)
-{
-	return htonll(value);
-}
-
-unsigned short NetworkToHostShort(unsigned short value)
-{
-	return ntohs(value);
-}
-
-unsigned long NetworkToHostLong(unsigned long value)
-{
-	return ntohl(value);
-}
-
-float NetworkToHostFloat(unsigned int value)
-{
-	return ntohf(value);
-}
-
-double NetworkToHostDouble(unsigned long long value)
-{
-	return ntohd(value);
-}
-
-double NetworkToHostLongDouble(unsigned long long value)
-{
-	return ntohd(value);
-}
-
-unsigned long long NetworkToHostLongLong(unsigned long long value)
-{
-	return ntohll(value);
 }
 
 /*
@@ -702,14 +755,14 @@ unsigned long long NetworkToHostLongLong(unsigned long long value)
 **
 **   bits |signed   unsigned   float   string
 **   -----+----------------------------------
-**      8 |   c        C         
+**      8 |   c        C
 **     16 |   h        H         f
 **     32 |   l        L         d
 **     64 |   q        Q         g
 **      - |                               s
 **
 **  (16-bit unsigned length is automatically prepended to strings)
-*/ 
+*/
 unsigned int PackData(unsigned char* buf, char* format, ...)
 {
 	va_list ap;
@@ -744,13 +797,13 @@ unsigned int PackData(unsigned char* buf, char* format, ...)
 		{
 			case 'c': // 8-bit
 				size += 1;
-				c      = (signed char) va_arg(ap, int); // promoted
+				c = (signed char)va_arg(ap, int); // promoted
 				*buf++ = c;
 				break;
 
 			case 'C': // 8-bit unsigned
 				size += 1;
-				C      = (unsigned char) va_arg(ap, unsigned int); // promoted
+				C = (unsigned char)va_arg(ap, unsigned int); // promoted
 				*buf++ = C;
 				break;
 
@@ -798,7 +851,7 @@ unsigned int PackData(unsigned char* buf, char* format, ...)
 
 			case 'f': // float-16
 				size += 2;
-				f     = (float) va_arg(ap, double); // promoted
+				f = (float)va_arg(ap, double); // promoted
 				fhold = pack754_16(f); // convert to IEEE 754
 				packi16(buf, fhold);
 				buf += 2;
@@ -806,7 +859,7 @@ unsigned int PackData(unsigned char* buf, char* format, ...)
 
 			case 'd': // float-32
 				size += 4;
-				d     = va_arg(ap, double);
+				d = va_arg(ap, double);
 				fhold = pack754_32(d); // convert to IEEE 754
 				packi32(buf, fhold);
 				buf += 4;
@@ -814,14 +867,14 @@ unsigned int PackData(unsigned char* buf, char* format, ...)
 
 			case 'g': // float-64
 				size += 8;
-				g     = va_arg(ap, long double);
+				g = va_arg(ap, long double);
 				fhold = pack754_64(g); // convert to IEEE 754
 				packi64(buf, fhold);
 				buf += 8;
 				break;
 
 			case 's': // string
-				s   = va_arg(ap, char*);
+				s = va_arg(ap, char*);
 				len = strlen(s);
 				size += len + 2;
 				packi16(buf, len);
@@ -842,7 +895,7 @@ unsigned int PackData(unsigned char* buf, char* format, ...)
 **
 **   bits |signed   unsigned   float   string
 **   -----+----------------------------------
-**      8 |   c        C         
+**      8 |   c        C
 **     16 |   h        H         f
 **     32 |   l        L         d
 **     64 |   q        Q         g
@@ -889,75 +942,75 @@ void UnpackData(unsigned char* buf, char* format, ...)
 				} // re-sign
 				else
 				{
-					*c = -1 - (unsigned char) (0xffu - *buf);
+					*c = -1 - (unsigned char)(0xffu - *buf);
 				}
 				buf++;
 				break;
 
 			case 'C': // 8-bit unsigned
-				C  = va_arg(ap, unsigned char*);
+				C = va_arg(ap, unsigned char*);
 				*C = *buf++;
 				break;
 
 			case 'h': // 16-bit
-				h  = va_arg(ap, int*);
+				h = va_arg(ap, int*);
 				*h = unpacki16(buf);
 				buf += 2;
 				break;
 
 			case 'H': // 16-bit unsigned
-				H  = va_arg(ap, unsigned int*);
+				H = va_arg(ap, unsigned int*);
 				*H = unpacku16(buf);
 				buf += 2;
 				break;
 
 			case 'l': // 32-bit
-				l  = va_arg(ap, long int*);
+				l = va_arg(ap, long int*);
 				*l = unpacki32(buf);
 				buf += 4;
 				break;
 
 			case 'L': // 32-bit unsigned
-				L  = va_arg(ap, unsigned long int*);
+				L = va_arg(ap, unsigned long int*);
 				*L = unpacku32(buf);
 				buf += 4;
 				break;
 
 			case 'q': // 64-bit
-				q  = va_arg(ap, long long int*);
+				q = va_arg(ap, long long int*);
 				*q = unpacki64(buf);
 				buf += 8;
 				break;
 
 			case 'Q': // 64-bit unsigned
-				Q  = va_arg(ap, unsigned long long int*);
+				Q = va_arg(ap, unsigned long long int*);
 				*Q = unpacku64(buf);
 				buf += 8;
 				break;
 
 			case 'f': // float
-				f     = va_arg(ap, float*);
+				f = va_arg(ap, float*);
 				fhold = unpacku16(buf);
-				*f    = unpack754_16(fhold);
+				*f = unpack754_16(fhold);
 				buf += 2;
 				break;
 
 			case 'd': // float-32
-				d     = va_arg(ap, double*);
+				d = va_arg(ap, double*);
 				fhold = unpacku32(buf);
-				*d    = unpack754_32(fhold);
+				*d = unpack754_32(fhold);
 				buf += 4;
 				break;
 
 			case 'g': // float-64
-				g     = va_arg(ap, long double*);
+				g = va_arg(ap, long double*);
 				fhold = unpacku64(buf);
-				*g    = unpack754_64(fhold);
+				*g = unpack754_64(fhold);
 				buf += 8;
 				break;
 
 			case 's': // string
-				s   = va_arg(ap, char*);
+				s = va_arg(ap, char*);
 				len = unpacku16(buf);
 				buf += 2;
 				if (maxstrlen > 0 && len > maxstrlen)
@@ -981,4 +1034,70 @@ void UnpackData(unsigned char* buf, char* format, ...)
 	}
 
 	va_end(ap);
+}
+
+//
+unsigned short HostToNetworkShort(unsigned short value)
+{
+	return htons(value);
+}
+
+//
+unsigned long HostToNetworkLong(unsigned long value)
+{
+	return htonl(value);
+}
+
+//
+unsigned int HostToNetworkFloat(float value)
+{
+	return htonf(value);
+}
+
+//
+unsigned long long HostToNetworkDouble(double value)
+{
+	return htond(value);
+}
+
+//
+unsigned long long HostToNetworkLongLong(unsigned long long value)
+{
+	return htonll(value);
+}
+
+//
+unsigned short NetworkToHostShort(unsigned short value)
+{
+	return ntohs(value);
+}
+
+//
+unsigned long NetworkToHostLong(unsigned long value)
+{
+	return ntohl(value);
+}
+
+//
+float NetworkToHostFloat(unsigned int value)
+{
+	return ntohf(value);
+}
+
+//
+double NetworkToHostDouble(unsigned long long value)
+{
+	return ntohd(value);
+}
+
+//
+double NetworkToHostLongDouble(unsigned long long value)
+{
+	return ntohd(value);
+}
+
+//
+unsigned long long NetworkToHostLongLong(unsigned long long value)
+{
+	return ntohll(value);
 }

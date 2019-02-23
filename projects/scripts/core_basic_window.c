@@ -1,62 +1,67 @@
-/*******************************************************************************************
-*
-*   raylib [core] example - Basic window
-*
-*   Welcome to raylib!
-*
-*   To test examples, just press F6 and execute raylib_compile_execute script
-*   Note that compiled executable is placed in the same folder as .c file
-*
-*   You can find all basic examples on C:\raylib\raylib\examples folder or
-*   raylib official webpage: www.raylib.com
-*
-*   Enjoy using raylib. :)
-*
-*   This example has been created using raylib 1.0 (www.raylib.com)
-*   raylib is licensed under an unmodified zlib/libpng license (View raylib.h for details)
-*
-*   Copyright (c) 2013-2016 Ramon Santamaria (@raysan5)
-*
-********************************************************************************************/
-
 #include "raylib.h"
+#include <iostream>
+#include <vector>
+#include <time.h>
+
+using namespace std;
+
+typedef struct room {
+    int x = 0;
+    int y = 0;
+    int width = 10;
+    int height = 10;
+};
+
+
+room Temp_Rect_Creat() {
+    room in_creation;
+
+    in_creation.x = int (rand() % 700);
+    in_creation.y = int (rand() % 400);
+
+    in_creation.width = int(rand() % 50);
+    if (in_creation.width < 10) in_creation.width = 10;
+    in_creation.height = int(rand() % 70);
+    if (in_creation.height < 10) in_creation.height = 10;
+
+    return in_creation;
+}
 
 int main()
 {
-    // Initialization
-    //--------------------------------------------------------------------------------------
+    srand(time(NULL));
+
     int screenWidth = 800;
     int screenHeight = 450;
 
-    InitWindow(screenWidth, screenHeight, "raylib [core] example - basic window");
-    
+    vector<room> rooms;
+    InitWindow(screenWidth, screenHeight, "raylib [core] example - keyboard input");
+
+    Vector2 ballPosition = { (float)screenWidth / 2, (float)screenHeight / 2 };
+
     SetTargetFPS(60);
-    //--------------------------------------------------------------------------------------
 
-    // Main game loop
-    while (!WindowShouldClose())    // Detect window close button or ESC key
-    {
-        // Update
-        //----------------------------------------------------------------------------------
-        // TODO: Update your variables here
-        //----------------------------------------------------------------------------------
-
-        // Draw
-        //----------------------------------------------------------------------------------
-        BeginDrawing();
-
-            ClearBackground(RAYWHITE);
-
-            DrawText("Congrats! You created your first window!", 190, 200, 20, LIGHTGRAY);
-
-        EndDrawing();
-        //----------------------------------------------------------------------------------
+    int i = 0;
+    while (i < 20) {
+        room temp = Temp_Rect_Creat();
+        rooms.push_back(temp);
+        i++;
     }
 
-    // De-Initialization
-    //--------------------------------------------------------------------------------------   
-    CloseWindow();        // Close window and OpenGL context
-    //--------------------------------------------------------------------------------------
+    while (!WindowShouldClose())
+    {
+        BeginDrawing();
+
+        ClearBackground(RAYWHITE);
+
+        for (int i = 0; i < rooms.size(); i++) {
+            DrawRectangle(rooms[i].x, rooms[i].y, rooms[i].width, rooms[i].height, BLACK);
+        } 
+
+        EndDrawing();
+    }
+
+    CloseWindow();
 
     return 0;
 }

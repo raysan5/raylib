@@ -32,7 +32,7 @@ int main()
 	SetTargetFPS(60);
 
 	// Networking
-	InitNetwork(); 
+	InitNetwork();  
 
 	// Main game loop
 	while (!WindowShouldClose())

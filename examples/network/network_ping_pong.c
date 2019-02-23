@@ -23,10 +23,9 @@
 #include "raylib.h"
 
 int main()
-{ 
-
+{
 	// Setup
-	int screenWidth  = 800;
+	int screenWidth = 800;
 	int screenHeight = 450;
 	InitWindow(
 		screenWidth, screenHeight, "raylib [network] example - ping pong");
@@ -37,29 +36,45 @@ int main()
 	// Networking
 	InitNetwork();
 
-	// Server socket and address
-	AddressInformation serveraddr;
-	Socket             server;
-	server.blocking = false;
-	ResolveHost(&serveraddr, "localhost", "3490", SOCKET_TCP); 
+	// Create the server
+	SocketConfig server_cfg = {
+		.host = "127.0.0.1",
+		.port = 8080,
+		.server = true,
+		.nonblocking = true,
+	};
 
-	CreateSocket(&server, serveraddr);
-	BindSocket(server, serveraddr);
-	ListenSocket(server);
+	SocketResult server_res;
+	memset(&server_res, 0, sizeof(SocketResult));
+	{
+		bool ok = SocketOpen(&server_cfg, &server_res);
+		if (!ok) { return false; }
+	}
 
-	// Client socket and address
-	AddressInformation clientaddr;
-	Socket             client;
-	client.blocking = false;
-	ResolveHost(&clientaddr, "localhost", "3490", SOCKET_TCP);
-	CreateSocket(&client, clientaddr);
-	ConnectSocket(client, clientaddr);
+	// Create the client
+	SocketConfig client_cfg = {
+		.host = "127.0.0.1",
+		.port = 8080,
+	};
 
-	Socket connection; // The socket connection between server->client
-	float  elapsed = 0.0f, delay = 1.0f; // ms
-	bool   ping = false, pong = false;
-	char   recvBuffer[512];
-	bool   connected = false;
+	SocketResult client_res;
+	memset(&client_res, 0, sizeof(SocketResult));
+	{
+		bool ok = SocketOpen(&client_cfg, &client_res);
+		if (!ok)
+		{
+			printf("failed to open: status %d, errno %d\n",
+				client_res.status, client_res.saved_errno);
+			return false;
+		}
+	}
+
+	SocketResult connection;
+	memset(&connection, 0, sizeof(SocketResult));
+	float elapsed = 0.0f, delay = 1.0f; // ms
+	bool  ping = false, pong = false;
+	char  recvBuffer[512];
+	bool  connected = false;
 	memset(&recvBuffer, 0, 8);
 
 	// Main game loop
@@ -74,15 +89,17 @@ int main()
 		// A valid connection will != -1
 		if (!connected)
 		{
-			AcceptSocket(server, &connection);
-			ping      = true;
-			connected = true;
+			if (SocketAccept(server_res.socket.handle, &connection))
+			{
+				ping = true;
+				connected = true;
+			}
 		}
 
 		// Connected
 		if (connected)
 		{
-			int bytesRecv = ReceiveTCP(connection.handle, recvBuffer, 5);
+			int bytesRecv = SocketReceive(&connection.socket, recvBuffer, 5);
 			if (bytesRecv > 0)
 			{
 				if (strcmp(recvBuffer, "Ping!") == 0)
@@ -103,12 +120,12 @@ int main()
 				if (ping)
 				{
 					ping = false;
-					SendTCP(client.handle, "Ping!", 5);
+					SocketSend(&client_res.socket, "Ping!", 5);
 				}
 				else if (pong)
 				{
 					pong = false;
-					SendTCP(client.handle, "Pong!", 5);
+					SocketSend(&client_res.socket, "Pong!", 5);
 				}
 				elapsed = 0.0f;
 			}
