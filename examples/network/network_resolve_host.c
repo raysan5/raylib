@@ -37,9 +37,9 @@ int main()
 	InitNetwork(); 
 
 	AddressInformation addr;
-	ResolveHost(&addr, "www.google.com", NULL, SOCKET_TCP);
-	ResolveIP("8.8.8.8", NULL);
-	ResolveIP("2001:4860:4860::8888", "80");
+	ResolveHost("www.google.com", "80", &addr);
+	// ResolveIP("8.8.8.8", NULL, NAME_INFO_DEFAULT);
+	// ResolveIP("2001:4860:4860::8888", "80", NAME_INFO_NUMERICSERV);
 
 	// Main game loop
 	while (!WindowShouldClose())

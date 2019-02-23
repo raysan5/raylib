@@ -100,12 +100,18 @@
 // Network limits
 #define MAX_SOCKET_SET_SIZE		32
 #define MAX_SOCKET_QUEUE_SIZE	16
-#define MAX_HOST_NAME_SIZE		1025
-#define MAX_SERV_NAME_SIZE		32
-#define MAX_IPV4_NAME_SIZE		22
-#define MAX_IPV6_NAME_SIZE		65
-
 #define MAX_SOCK_OPTS 4
+
+// getnameinfo() defines
+#define NAME_INFO_DEFAULT		0x00	/* No flags set */
+#define NAME_INFO_NOFQDN		0x01	/* Only return nodename portion for local hosts */
+#define NAME_INFO_NUMERICHOST	0x02	/* Return numeric form of the host's address */
+#define NAME_INFO_NAMEREQD		0x04	/* Error if the host's name not in DNS */
+#define NAME_INFO_NUMERICSERV	0x08	/* Return numeric form of the service (port #) */
+#define NAME_INFO_DGRAM			0x10	/* Service is a datagram service */
+
+
+
 
 // NOTE: MSC C++ compiler does not support compound literals (C99 feature)
 // Plain structures in C++ (without constructors) can be initialized from { } initializers.
@@ -437,6 +443,7 @@ typedef struct IPAddress
 	unsigned char* port; /* 16-bit protocol port */ 
 } IPAddress; 
 
+// Used by the getaddrinfo function to hold host address information. 
 typedef struct AddressInformation
 {
 	int							flags; // AI_PASSIVE, AI_CANONNAME, AI_NUMERICHOST
@@ -449,31 +456,35 @@ typedef struct AddressInformation
 	struct AddressInformation	*next; // Next structure in linked list
 } AddressInformation;
 
+// Used 
+//
+// The sockaddr structure varies depending on the protocol selected. 
+// Except for the sin*_family parameter, sockaddr contents are expressed 
+// in network byte order.
 typedef struct SocketAddress
 {
 	unsigned short family;	// Address family.
 	char           data[14]; // Up to 14 bytes of direct address.
 } SocketAddress; 
  
-/* An option ID, value, sizeof(value) tuple for setsockopt(2). */
+// An option ID, value, sizeof(value) tuple for setsockopt(2).
 typedef struct SocketOpt {
-    int option_id;
+    int id;
     void *value;
-    int value_len;
+    int valueLen;
 } SocketOpt;
 
 typedef struct Socket
 {
-	int ready;
-	SocketHandle handle;
-	IPAddress remoteAddress;
-	IPAddress localAddress;
-	int sflag;
+	int          ready;  // Is the socket ready? i.e. has information
+	SocketHandle handle; // The socket handle id
+	IPAddress    host;   // The host/target ip for this socket
+	int sflag; // Is this socket a server socket (i.e. TCP/UDP Listen Server)
 } Socket;
 
-/* Configuration for a socket. Not all of these fields need to
- * be set, and ones omitted from a C99-style "designated initializer"
- * struct literal will be zeroed out and replaced with defaults. */
+// Configuration for a socket. Not all of these fields need to
+// be set, and ones omitted from a C99-style "designated initializer"
+// struct literal will be zeroed out and replaced with defaults. 
 typedef struct SocketConfig {
     /* Hostname and port, for TCP or UDP sockets. */
     char *host;
@@ -488,7 +499,7 @@ typedef struct SocketConfig {
     char *IPv6;
 
     bool server;                /* Listen for incoming clients? */
-    bool datagram;              /* UDP or datagram Unix domain? */
+    bool datagram;              /* UDP or datagram? */
     bool nonblocking;           /* non-blocking operation? */
 
     int backlog_size;           /* set a custom backlog size */
@@ -1510,12 +1521,15 @@ RLAPI void SetAudioStreamPitch(AudioStream stream, float pitch);      // Set pit
 // Network (Module: network)
 //------------------------------------------------------------------------------------
 
+// Initialisation and cleanup
 RLAPI bool InitNetwork(void);
 RLAPI void CloseNetwork(void);
 
-// Resolution
-RLAPI void ResolveHost(AddressInformation *outaddr, const char *address, const char *port, SocketType socketType);
-RLAPI char *ResolveIP(const char *host, const char *port);
+// Protocol-independent name resolution from an address to an ANSI host name and from a port number to the ANSI service name.
+RLAPI char* ResolveIP(const char *host, const char *port, int flags);
+
+// Protocol-independent translation from an ANSI host name to an address.
+RLAPI char*	ResolveHost(const char *address, const char *port, AddressInformation *outaddr);
 
 // IP 
 RLAPI void GetLocalAddresses();
@@ -1530,7 +1544,7 @@ RLAPI int SocketGetError(char *buf, int buf_size, SocketResult *res);
 RLAPI void SocketPrintError(SocketResult *res);
 RLAPI void SocketSetHints(SocketConfig *cfg, AddressInformation *hints);
 
-// Print methods
+// Utility print methods
 RLAPI char *SocketAddressToString(SocketAddress *sockaddr, char buffer[]);
 RLAPI void PrintSocket(SocketAddress *addr, const int family, const int socktype, const int protocol);
  
