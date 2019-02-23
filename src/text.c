@@ -684,9 +684,9 @@ void UnloadFont(Font font)
     // NOTE: Make sure spriteFont is not default font (fallback)
     if (font.texture.id != GetFontDefault().texture.id)
     {
-		for (int i = 0; i < font.charsCount; i++)
+        for (int i = 0; i < font.charsCount; i++)
         {
-		    free(font.chars[i].data);
+            free(font.chars[i].data);
         }
         UnloadTexture(font.texture);
         free(font.chars);
