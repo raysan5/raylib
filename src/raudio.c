@@ -712,11 +712,13 @@ void SetAudioBufferPitch(AudioBuffer *audioBuffer, float pitch)
         return;
     }
 
-    audioBuffer->pitch = pitch;
+    float pitchMul = pitch / audioBuffer->pitch;
 
     // Pitching is just an adjustment of the sample rate. Note that this changes the duration of the sound - higher pitches
     // will make the sound faster; lower pitches make it slower.
-    mal_uint32 newOutputSampleRate = (mal_uint32)((((float)audioBuffer->dsp.src.config.sampleRateOut / (float)audioBuffer->dsp.src.config.sampleRateIn) / pitch) * audioBuffer->dsp.src.config.sampleRateIn);
+    mal_uint32 newOutputSampleRate = (mal_uint32)((float)audioBuffer->dsp.src.config.sampleRateOut / pitchMul);
+    audioBuffer->pitch *= (float)audioBuffer->dsp.src.config.sampleRateOut / newOutputSampleRate;
+
     mal_dsp_set_output_sample_rate(&audioBuffer->dsp, newOutputSampleRate);
 }
 
