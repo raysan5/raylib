@@ -20,7 +20,12 @@
  *
  ********************************************************************************************/
 
-#include "raylib.h" 
+#include "raylib.h"
+
+#include <string.h>
+
+#define PORT "3490"     // the port client will be connecting to
+#define MAXDATASIZE 100 // max number of bytes we can get at once
 
 int main()
 {
@@ -34,12 +39,27 @@ int main()
 	SetTraceLogLevel(LOG_DEBUG);
 
 	// Networking
-	InitNetwork(); 
+	InitNetwork();
 
-	AddressInformation addr;
-	ResolveHost("www.google.com", "80", &addr);
-	ResolveIP("8.8.8.8", NULL, NAME_INFO_DEFAULT);
-	ResolveIP("2001:4860:4860::8888", "80", NAME_INFO_NUMERICSERV);
+	int             numbytes;
+	char            buf[MAXDATASIZE];   
+
+	// Create the client
+	SocketConfig client_cfg = {
+		.host = "127.0.0.1", 
+		.port = "8080"
+	};
+	SocketResult client_res;
+	memset(&client_res, 0, sizeof(SocketResult));
+	{
+		bool ok = SocketOpen(&client_cfg, &client_res);
+		if (!ok)
+		{
+			printf("Failed to open: status %d, errno %d\n", client_res.status,
+				   client_res.socket.error);
+			return false;
+		}
+	}
 
 	// Main game loop
 	while (!WindowShouldClose())
@@ -50,11 +70,24 @@ int main()
 		// Clear
 		ClearBackground(RAYWHITE);
 
+		// Receive bytes from the server
+		numbytes = SocketReceive(client_res.socket.handle, buf, MAXDATASIZE - 1);
+		if (numbytes == -1)
+		{
+			printf("Client: error recv '%s'\n", buf);
+			break;
+		}
+		buf[numbytes] = '\0';
+		printf("Client: received '%s'\n", buf);
+		break;
+
 		// End draw
 		EndDrawing();
 	}
 
 	// Cleanup
+	SocketClose(client_res.socket.handle);
+	CloseNetwork();
 	CloseWindow();
 	return 0;
 }

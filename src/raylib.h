@@ -168,7 +168,7 @@
 #endif
 
 // Network typedefs 
-typedef int SocketHandle; 
+typedef unsigned int SocketHandle; 
 
 // Vector2 type
 typedef struct Vector2 {
@@ -440,7 +440,7 @@ typedef struct VrStereoConfig {
 typedef struct IPAddress
 {  
 	unsigned char* host; /* 32-bit IPv4 host address */
-	unsigned char* port; /* 16-bit protocol port */ 
+	unsigned int port; /* 16-bit protocol port */ 
 } IPAddress; 
 
 // Used by the getaddrinfo function to hold host address information. 
@@ -456,8 +456,6 @@ typedef struct AddressInformation
 	struct AddressInformation	*next; // Next structure in linked list
 } AddressInformation;
 
-// Used 
-//
 // The sockaddr structure varies depending on the protocol selected. 
 // Except for the sin*_family parameter, sockaddr contents are expressed 
 // in network byte order.
@@ -474,95 +472,55 @@ typedef struct SocketOpt {
     int valueLen;
 } SocketOpt;
 
+typedef enum
+{
+	SOCKET_TCP = 1, // SOCK_STREAM
+	SOCKET_UDP = 2  // SOCK_DGRAM
+} SocketType;     
+
 typedef struct Socket
 {
-	int          ready;  // Is the socket ready? i.e. has information
-	SocketHandle handle; // The socket handle id
-	IPAddress    host;   // The host/target ip for this socket
-	int sflag; // Is this socket a server socket (i.e. TCP/UDP Listen Server)
+	int ready; // Is the socket ready? i.e. has information
+	int error;	// The last error code to have occured using this socket
+ 	bool isServer; // Is this socket a server socket (i.e. TCP/UDP Listen Server)
+	IPAddress    address; // The host/target ip for this socket
+	SocketType   type;    // Is this socket a TCP or UDP socket?
+	SocketHandle handle;  // The socket handle id
 } Socket;
 
 // Configuration for a socket. Not all of these fields need to
 // be set, and ones omitted from a C99-style "designated initializer"
-// struct literal will be zeroed out and replaced with defaults. 
-typedef struct SocketConfig {
-    /* Hostname and port, for TCP or UDP sockets. */
-    char *host;
-    int port;
+// struct literal will be zeroed out and replaced with defaults.
+typedef struct SocketConfig
+{
+	// Hostname and port, for TCP or UDP sockets. */
+	char *host;
+	char *port;
 
-    /* Path, for Unix domain socket. */
-    char *path;
+	// IPv4 or IPv6 address; if neither is specified, let OS decide.
+	// These fields should be used in place of 'host' above.
+	char *IPv4;
+	char *IPv6;
+	bool  server;       // Listen for incoming clients?
+	bool  datagram;     // TCP or UDP?
+	bool  nonblocking;  // non-blocking operation?
+	int   backlog_size; // set a custom backlog size
 
-    /* IPv4 or IPv6 address; if neither is specified, let OS decide.
-     * These fields should be used in place of 'host' above. */
-    char *IPv4;
-    char *IPv6;
+	SocketOpt sockopts[MAX_SOCK_OPTS];
 
-    bool server;                /* Listen for incoming clients? */
-    bool datagram;              /* UDP or datagram? */
-    bool nonblocking;           /* non-blocking operation? */
-
-    int backlog_size;           /* set a custom backlog size */
-
-    SocketOpt sockopts[MAX_SOCK_OPTS];
 } SocketConfig;
-
-enum SocketStatus {
-
-    /* Socket created. */
-    SOCKET_OK = 0,
-
-    /* Failures from socket API functions; most also save errno. */
-    SOCKET_ERROR_GETADDRINFO = -1,
-    SOCKET_ERROR_SOCKET = -2,
-    SOCKET_ERROR_BIND = -3,
-    SOCKET_ERROR_LISTEN = -4,
-    SOCKET_ERROR_CONNECT = -5,
-    SOCKET_ERROR_FCNTL = -6,
-	SOCKET_ERROR_ACCEPT = -7,
-	SOCKET_ERROR_SEND = -8,
-
-    /* Failure from snprintf: name too long. */
-    SOCKET_ERROR_SNPRINTF = -100,
-
-    /* Invalid combination of options in configuration. */
-    SOCKET_ERROR_CONFIGURATION = -200,
-
-    /* Error in setsockopt(2). */
-    SOCKET_ERROR_SETSOCKOPT = -300,
-
-    /* Other unknown error. */
-    SOCKET_ERROR_UNKNOWN = -400,
-};
-
-/* Result from calling open with a given config. */
-typedef struct SocketResult {
-    /* Result code and errno value from failure (if any). */
-    enum SocketStatus status;
-
-    /* File descriptor, set if status is SOCKET99_OK (success). */
-    Socket socket;
-
-	/* Address information populated from getaddrinfo() */
+ 
+// Result from calling open with a given config.
+typedef struct SocketResult
+{
+	int                status;
+	Socket             socket;
 	AddressInformation addrinfo;
-
-    /* Error code from socket(2), bind(2), etc. */
-    int saved_errno;
-
-    /* Error code from getaddrinfo, only set if status is
-     * SOCKET99_ERROR_GETADDRINFO. See: gai_strerror(3). */
-    int getaddrinfo_error;
 } SocketResult; 
 
 //----------------------------------------------------------------------------------
 // Enumerators Definition
 //----------------------------------------------------------------------------------
-
-typedef enum
-{ 
-	SOCKET_TCP = 1,	// SOCK_STREAM
-	SOCKET_UDP = 2 	// SOCK_DGRAM
-} SocketType;  
 
 // System config flags
 // NOTE: Used for bit masks
@@ -1530,22 +1488,17 @@ RLAPI char* ResolveIP(const char *host, const char *port, int flags);
 
 // Protocol-independent translation from an ANSI host name to an address.
 RLAPI char*	ResolveHost(const char *address, const char *port, AddressInformation *outaddr);
-
-// IP 
-RLAPI void GetLocalAddresses();
-
+ 
 // Socket API
 RLAPI bool SocketOpen(SocketConfig *cfg, SocketResult *res);
 RLAPI void SocketClose(SocketHandle socket);
 RLAPI bool SocketAccept(SocketHandle listener, SocketResult* res);
 RLAPI int SocketSend(Socket* socket, const void *datap, int len);
-RLAPI int SocketReceive(Socket* socket, void *data, int maxlen);
-RLAPI int SocketGetError(char *buf, int buf_size, SocketResult *res);
-RLAPI void SocketPrintError(SocketResult *res);
+RLAPI int SocketReceive(Socket* socket, void *data, int maxlen);  
 RLAPI void SocketSetHints(SocketConfig *cfg, AddressInformation *hints);
 
 // Utility print methods
-RLAPI char *SocketAddressToString(SocketAddress *sockaddr, char buffer[]);
+RLAPI char *SocketAddressToString(SocketAddress *sockaddr, char buffer[], int* port); 
 RLAPI void PrintSocket(SocketAddress *addr, const int family, const int socktype, const int protocol);
  
 // Network conversion methods

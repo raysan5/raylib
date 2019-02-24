@@ -44,6 +44,12 @@
 #endif
 
 //----------------------------------------------------------------------------------
+// Module defines
+//----------------------------------------------------------------------------------
+
+#define SOCKET_BACKLOG_SIZE 20
+
+//----------------------------------------------------------------------------------
 // Module dependencies
 //----------------------------------------------------------------------------------
 
@@ -52,26 +58,58 @@
 #include "sysnet.h"
 
 //----------------------------------------------------------------------------------
-// Module defines
+// Module variables
 //----------------------------------------------------------------------------------
 
-#if PLATFORM_WINDOWS
-#	define errno WSAGetLastError() // Support UNIX socket error codes
-#endif
+//----------------------------------------------------------------------------------
+// Module methods
+//----------------------------------------------------------------------------------
 
-#define DEF_BACKLOG_SIZE SOMAXCONN
-#define PORT_STR_BUFSZ 6
+static bool  IsSocketValid(SocketHandle handle);
+static void  SocketSetLastError(int err);
+static int   SocketGetLastError();
+static char* SocketGetLastErrorString();
+static char* SocketErrorCodeToString(int err);
+static bool  SocketSetDefaults(SocketConfig* config);
+static bool  InitSocket(Socket* outsock);
+static bool  CreateSocket(SocketConfig* config, SocketResult* outresult);
+static int   BindSocket(SocketHandle handle, SocketConfig* config, struct addrinfo* iterator);
+static int   ConnectSocket(SocketHandle handle, SocketConfig* config, struct addrinfo* iterator);
+static bool  SocketSetNonBlocking(SocketResult* out);
+static bool  SocketSetOptions(SocketConfig* config, SocketHandle handle);
+static void* GetSocketAddressPtr(struct sockaddr* sa);
+static void* GetSocketPortPtr(struct sockaddr* sa);
 
-static bool SocketSetDefaults(SocketConfig* cfg);
-static bool CreateSocket(SocketConfig* cfg, SocketResult* out);
-static bool SocketSetNonBlocking(SocketResult* out);
-static bool SocketSetOptions(SocketConfig* cfg, SocketResult* out, int fd);
-static const char* SocketStatusToString(enum SocketStatus s);
+//
+void* GetSocketPortPtr(struct sockaddr* sa)
+{
+	if (sa->sa_family == AF_INET)
+	{
+		return &(((struct sockaddr_in*) sa)->sin_port);
+	}
 
-/* Static network API methods */
+	return &(((struct sockaddr_in6*) sa)->sin6_port);
+}
+
+//
+void* GetSocketAddressPtr(struct sockaddr* sa)
+{
+	if (sa->sa_family == AF_INET)
+	{
+		return &(((struct sockaddr_in*) sa)->sin_addr);
+	}
+
+	return &(((struct sockaddr_in6*) sa)->sin6_addr);
+}
+
+//
+static bool IsSocketValid(SocketHandle handle)
+{
+	return (handle != INVALID_SOCKET);
+}
 
 // Sets the error code that can be retrieved through the WSAGetLastError function.
-static void SocketSetError(int err)
+static void SocketSetLastError(int err)
 {
 #if PLATFORM == PLATFORM_WINDOWS
 	WSASetLastError(err);
@@ -93,214 +131,292 @@ static int SocketGetLastError()
 // Returns a human-readable string representing the last error message
 static char* SocketGetLastErrorString()
 {
-	return gai_strerror(SocketGetLastError());
+	return SocketErrorCodeToString(SocketGetLastError());
 }
 
-static bool SocketSetDefaults(SocketConfig* cfg)
+// Returns a human-readable string representing the error message (err)
+static char* SocketErrorCodeToString(int err)
 {
-	if (cfg->backlog_size == 0)
+#if PLATFORM == PLATFORM_WINDOWS
+	static char gaiStrErrorBuffer[GAI_STRERROR_BUFFER_SIZE];
+	sprintf(gaiStrErrorBuffer, "%ws", gai_strerror(err));
+	return gaiStrErrorBuffer;
+#else
+	return gai_strerror(err);
+#endif
+}
+
+//
+static bool SocketSetDefaults(SocketConfig* config)
+{
+	if (config->backlog_size == 0)
 	{
-		cfg->backlog_size = DEF_BACKLOG_SIZE;
+		config->backlog_size = SOCKET_BACKLOG_SIZE;
 	}
 
-	/* Screen out contradictory settings */
-	if (cfg->IPv6 && cfg->IPv4)
+	if (config->IPv6 && config->IPv4)
 	{
 		return false;
 	}
+
 	return true;
 }
 
-static bool SocketSaveError(SocketResult* out, enum SocketStatus status)
+// Create the socket handle
+static bool InitSocket(Socket* outsock)
 {
-	out->status      = status;
-	out->saved_errno = SocketGetLastError();
-	SocketSetError(0);
-	return false;
+	switch (outsock->type)
+	{
+		case SOCKET_TCP:
+			outsock->handle = socket(AF_INET, SOCK_STREAM, 0);
+			break;
+		case SOCKET_UDP:
+			outsock->handle = socket(AF_INET, SOCK_DGRAM, 0);
+			break;
+		default:
+			break;
+	}
+	return IsSocketValid(outsock->handle);
 }
 
-static bool CreateSocket(SocketConfig* cfg, SocketResult* out)
+//	CreateSocket() - Interally called by OpenSocket()
+//
+//	This here is the bread and butter of the socket API, This function will
+//	attempt to open a socket, bind and listen to it based on the config passed in
+//
+//	SocketConfig* config - Configuration for which socket to open
+//	SocketResult* result - The results of this function (if any, including errors)
+//
+//	e.g.
+//	SocketConfig server_cfg = {				SocketConfig client_cfg = {
+//		.host        = "127.0.0.1",				.host = "127.0.0.1",
+//		.port        = 8080,					.port = 8080,
+//		.server      = true,				};
+//		.nonblocking = true,
+//	};
+//	SocketResult server_res;				SocketResult client_res;
+static bool CreateSocket(SocketConfig* config, SocketResult* outresult)
 {
-	struct addrinfo  hints;
-	struct addrinfo* res = NULL;
+	int              status; // Status value to return (0) is success
+	struct addrinfo  hints;  // Address flags (IPV4, IPV6, UDP?)
+	struct addrinfo* res;    // A pointer to the resulting address list
+	Socket*          outsocket;
+	outsocket         = &outresult->socket;
+	outsocket->handle = INVALID_SOCKET;
+	outresult->status = RESULT_FAILURE;
 
-	int  fd = -1;
-	char port_str[PORT_STR_BUFSZ];
-	memset(port_str, 0, PORT_STR_BUFSZ);
+	// Set the socket type
+	outresult->socket.type = (config->datagram) ? SOCKET_UDP : SOCKET_TCP;
 
-	SocketSetHints(cfg, &hints);
+	//	Set the hints based on information in the config
+	//
+	//	AI_CANONNAME	Causes the ai_canonname of the result to the filled  out with the host's canonical (real) name.
+	//	AI_PASSIVE:		Causes the result's IP address to be filled out with INADDR_ANY (IPv4)or in6addr_any (IPv6);
+	//	Note:	This causes a subsequent call to bind() to auto-fill the IP address
+	//			of the struct sockaddr with the address of the current host.
+	//
+	SocketSetHints(config, &hints);
 
-	if (PORT_STR_BUFSZ < snprintf(port_str, PORT_STR_BUFSZ, "%u", cfg->port))
+	// Populate address information
+	status = getaddrinfo(config->host, // e.g. "www.example.com" or IP (Can be null if AI_PASSIVE flag is set
+						 config->port, // e.g. "http" or port number
+						 &hints,       // e.g. SOCK_STREAM/SOCK_DGRAM
+						 &res          // The struct to populate
+	);
+
+	// Did we succeed?
+	if (status != 0)
 	{
-		return SocketSaveError(out, SOCKET_ERROR_SNPRINTF);
-	}
-
-	struct addrinfo* ai       = NULL;
-	int              addr_res = getaddrinfo(cfg->host, port_str, &hints, &res);
-	if (addr_res != 0)
-	{
-		out->getaddrinfo_error = addr_res;
+		outsocket->error = SocketGetLastError();
+		TraceLog(
+			LOG_DEBUG, "Socket Error: %s", SocketErrorCodeToString(outsocket->error));
+		SocketSetLastError(0);
+		TraceLog(LOG_WARNING,
+				 "Failed to get resolve host %s:%s: %s",
+				 config->host,
+				 config->port,
+				 SocketGetLastErrorString());
 		freeaddrinfo(res);
-		return SocketSaveError(out, SOCKET_ERROR_GETADDRINFO);
+		return false;
 	}
-	memcpy(&out->addrinfo, res, sizeof(struct addrinfo));
-
-	for (ai = res; ai != NULL; ai = ai->ai_next)
+	else
 	{
-		fd = socket(ai->ai_family, ai->ai_socktype, ai->ai_protocol);
-		if (fd == -1)
+		TraceLog(
+			LOG_INFO, "Successfully resolved host %s:%s", config->host, config->port);
+	}
+	memcpy(&outresult->addrinfo, res, sizeof(struct addrinfo));
+
+	// Walk the addrinfo struct
+	struct addrinfo* it;
+	for (it = res; it != NULL; it = it->ai_next)
+	{
+		// Initialise the socket
+		if (!InitSocket(outsocket))
 		{
-			/* Save errno, but will be clobbered if others succeed. */
-			out->status      = SOCKET_ERROR_SOCKET;
-			out->saved_errno = SocketGetLastError();
-			SocketSetError(0);
+			outsocket->error = SocketGetLastError();
+			TraceLog(
+				LOG_DEBUG, "Socket Error: %s", SocketErrorCodeToString(outsocket->error));
+			SocketSetLastError(0);
 			continue;
 		}
 
-		if (!SocketSetOptions(cfg, out, fd))
+		// Set socket options
+		if (!SocketSetOptions(config, outsocket->handle))
 		{
+			outsocket->error = SocketGetLastError();
+			TraceLog(
+				LOG_DEBUG, "Socket Error: %s", SocketErrorCodeToString(outsocket->error));
+			SocketSetLastError(0);
 			freeaddrinfo(res);
 			return false;
 		}
 
-		if (cfg->server)
+		// Only bind to sockets marked as server
+		if (config->server)
 		{
-			int bind_res = bind(fd, res->ai_addr, res->ai_addrlen);
-			if (bind_res == -1)
+			if (BindSocket(outsocket->handle, config, it))
 			{
+				TraceLog(LOG_INFO, "Successfully bound socket.");
+			}
+			else
+			{
+				outsocket->error = SocketGetLastError();
+				TraceLog(LOG_DEBUG,
+						 "Socket Error: %s",
+						 SocketErrorCodeToString(outsocket->error));
+				SocketSetLastError(0);
 				freeaddrinfo(res);
-				return SocketSaveError(out, SOCKET_ERROR_BIND);
+				return false;
 			}
-
-			if (!cfg->datagram)
-			{
-				int listen_res = listen(fd, cfg->backlog_size);
-				if (listen_res == -1)
-				{
-					freeaddrinfo(res);
-					return SocketSaveError(out, SOCKET_ERROR_LISTEN);
-				}
-			}
-			break;
 		}
-		else /* client */
+		else
 		{
-			if (cfg->datagram)
+			if (ConnectSocket(outsocket->handle, config, it))
 			{
-				break;
-			}
-
-			int connect_res = connect(fd, ai->ai_addr, ai->ai_addrlen);
-			if (connect_res == 0)
-			{
+				TraceLog(LOG_INFO, "Successfully connected to socket.");
 				break;
 			}
 			else
 			{
-				close(fd);
-				fd          = -1;
-				out->status = SOCKET_ERROR_CONNECT;
+				outsocket->error = SocketGetLastError();
+				TraceLog(LOG_DEBUG,
+						 "Socket Error: %s",
+						 SocketErrorCodeToString(outsocket->error));
+				SocketSetLastError(0);
+				SocketClose(outsocket->handle);
 				continue;
 			}
 		}
 	}
 
-	if (fd == -1)
+	if (!IsSocketValid(outsocket->handle))
 	{
-		if (out->status == SOCKET_OK)
-		{
-			freeaddrinfo(res);
-			return SocketSaveError(out, SOCKET_ERROR_UNKNOWN);
-		}
-		else
-		{
-			out->saved_errno = SocketGetLastError();
-			SocketSetError(0);
-			freeaddrinfo(res);
-			return false;
-		}
+		outsocket->error = SocketGetLastError();
+		TraceLog(
+			LOG_DEBUG, "Socket Error: %s", SocketErrorCodeToString(outresult->status));
+		SocketSetLastError(0);
+		freeaddrinfo(res);
+		return false;
 	}
 
-	out->status = SOCKET_OK;
+	outresult->status          = RESULT_SUCCESS;
+	outresult->socket.ready    = 0;
+	outresult->socket.error    = 0;
+	outresult->socket.isServer = config->server;
+	outresult->socket.address.host = (char*) malloc(INET6_ADDRSTRLEN);
+	SocketAddressToString(res->ai_addr, outresult->socket.address.host, &outresult->socket.address.port);
 	freeaddrinfo(res);
-	out->saved_errno      = 0;
-	out->socket.handle    = fd;
-	out->socket.ready     = 0;
-	out->socket.host.host = ((struct sockaddr_in*) res->ai_addr)->sin_addr.s_addr;
-	out->socket.host.port = ((struct sockaddr_in*) res->ai_addr)->sin_port;
-	out->socket.sflag     = cfg->server;
 	return true;
 }
 
+//
+static bool BindSocket(SocketHandle handle, SocketConfig* config, struct addrinfo* iterator)
+{
+	// Attempt to bind the socket
+	if (bind(handle, iterator->ai_addr, iterator->ai_addrlen) == SOCKET_ERROR)
+	{
+		SocketClose(handle);
+		return false;
+	}
+
+	// Don't listen on UDP sockets
+	if (!config->datagram)
+	{
+		if (listen(handle, config->backlog_size) != 0)
+		{
+			return false;
+		}
+		else
+		{
+			TraceLog(LOG_INFO, "Started listening on socket...");
+		}
+	}
+
+	return true;
+}
+
+//
+static bool ConnectSocket(SocketHandle handle, SocketConfig* config, struct addrinfo* iterator)
+{
+	// Don't connect datagram sockets
+	if (config->datagram)
+	{
+		return true;
+	}
+
+	// Did we connect successfully?
+	if (connect(handle, iterator->ai_addr, iterator->ai_addrlen) != SOCKET_ERROR)
+	{
+		return true;
+	}
+	else
+	{
+		return false;
+	}
+}
+
+//
+static bool SocketSetBlocking(SocketResult* out)
+{
+#if PLATFORM == PLATFORM_WINDOWS
+	unsigned long mode = 0;
+	ioctlsocket(out->socket.handle, FIONBIO, &mode);
+#else
+	int flags = fcntl(out->socket.handle, F_GETFL, 0);
+	fcntl(out->socket.handle, F_SETFL, flags & ~O_NONBLOCK);
+#endif
+}
+
+//
 static bool SocketSetNonBlocking(SocketResult* out)
 {
 #if PLATFORM == PLATFORM_WINDOWS
 	unsigned long mode = 1;
-	if (ioctlsocket(out->socket.handle, FIONBIO, &mode) != 0)
-	{
-		return SocketSaveError(out, SOCKET_ERROR_FCNTL);
-	}
+	ioctlsocket(out->socket.handle, FIONBIO, &mode);
 #else
-	int flags = fcntl(out->socket.handle, F_GETFL, 0);
-	if (flags == -1)
-	{
-		return SocketSaveError(out, SOCKET_ERROR_FCNTL);
-	}
-	if (fcntl(out->socket, F_SETFL, flags | O_NONBLOCK) < 0)
-	{
-		return SocketSaveError(out, SOCKET_ERROR_FCNTL);
-	}
+	fcntl(out->socket.handle, F_SETFL, O_NONBLOCK);
 #endif
 	return true;
 }
 
-static bool SocketSetOptions(SocketConfig* cfg, SocketResult* out, int fd)
+//
+static bool SocketSetOptions(SocketConfig* config, SocketHandle handle)
 {
 	for (int i = 0; i < MAX_SOCK_OPTS; i++)
 	{
-		SocketOpt* opt = &cfg->sockopts[i];
+		SocketOpt* opt = &config->sockopts[i];
 		if (opt->id == 0)
 		{
 			break;
 		}
 
-		if (setsockopt(fd, SOL_SOCKET, opt->id, opt->value, opt->valueLen) < 0)
+		if (setsockopt(handle, SOL_SOCKET, opt->id, opt->value, opt->valueLen) < 0)
 		{
-			return SocketSaveError(out, SOCKET_ERROR_SETSOCKOPT);
+			return false;
 		}
 	}
 
 	return true;
-}
-
-static const char* SocketStatusToString(enum SocketStatus s)
-{
-	switch (s)
-	{
-		case SOCKET_OK:
-			return "ok";
-		case SOCKET_ERROR_GETADDRINFO:
-			return "getaddrinfo";
-		case SOCKET_ERROR_SOCKET:
-			return "socket";
-		case SOCKET_ERROR_BIND:
-			return "bind";
-		case SOCKET_ERROR_LISTEN:
-			return "listen";
-		case SOCKET_ERROR_CONNECT:
-			return "connect";
-		case SOCKET_ERROR_FCNTL:
-			return "fcntl";
-		case SOCKET_ERROR_SNPRINTF:
-			return "snprintf";
-		case SOCKET_ERROR_CONFIGURATION:
-			return "configuration";
-		case SOCKET_ERROR_SETSOCKOPT:
-			return "setsockopt";
-		case SOCKET_ERROR_UNKNOWN:
-		default:
-			return "unknown";
-	}
 }
 
 //----------------------------------------------------------------------------------
@@ -396,7 +512,7 @@ char* ResolveIP(const char* ip, const char* port, int flags)
 	// Did we succeed?
 	if (status != 0)
 	{
-		TraceLog(LOG_WARNING, "Failed to get resolve host %s:%s: %ls", ip, port, gai_strerror(errno));
+		TraceLog(LOG_WARNING, "Failed to get resolve host %s:%s: %s", ip, port, gai_strerror(errno));
 	}
 	else
 	{
@@ -431,7 +547,7 @@ char* ResolveIP(const char* ip, const char* port, int flags)
 	// Did we succeed?
 	if (status != 0)
 	{
-		TraceLog(LOG_WARNING, "Failed to resolve ip %s: %ls", ip, SocketGetLastErrorString());
+		TraceLog(LOG_WARNING, "Failed to resolve ip %s: %s", ip, SocketGetLastErrorString());
 	}
 	else
 	{
@@ -457,6 +573,8 @@ char* ResolveHost(const char* address, const char* port, AddressInformation* out
 	int              status;  // Status value to return (0) is success
 	struct addrinfo  hints;   // Address flags (IPV4, IPV6, UDP?)
 	struct addrinfo* results; // A pointer to the resulting address list
+	char             ip[INET6_ADDRSTRLEN]; // Enough pace to hold a IPv6 string
+	int              portptr;
 
 	// Set the hints
 	memset(&hints, 0, sizeof hints);
@@ -481,7 +599,7 @@ char* ResolveHost(const char* address, const char* port, AddressInformation* out
 	// Did we succeed?
 	if (status != 0)
 	{
-		TraceLog(LOG_WARNING, "Failed to get resolve host %s:%s: %ls", address, port, gai_strerror(errno));
+		TraceLog(LOG_WARNING, "Failed to get resolve host %s:%s: %s", address, port, gai_strerror(errno));
 	}
 	else
 	{
@@ -489,7 +607,7 @@ char* ResolveHost(const char* address, const char* port, AddressInformation* out
 	}
 
 	struct addrinfo* iterator;
-	for (iterator = outaddr; iterator != NULL; iterator = iterator->ai_next)
+	for (iterator = results; iterator != NULL; iterator = iterator->ai_next)
 	{
 		TraceLog(LOG_DEBUG, "GetAddressInformation");
 		TraceLog(LOG_DEBUG, "\tFlags: 0x%x", iterator->ai_flags);
@@ -505,7 +623,7 @@ char* ResolveHost(const char* address, const char* port, AddressInformation* out
 	freeaddrinfo(results);
 
 	// Return the resulting hostname
-	return SocketAddressToString(outaddr->ai_addr);
+	return SocketAddressToString(outaddr->sockaddr, ip, &portptr);
 }
 
 //	This here is the bread and butter of the socket API, This function will
@@ -524,23 +642,27 @@ char* ResolveHost(const char* address, const char* port, AddressInformation* out
 //	SocketResult server_res;				SocketResult client_res;
 bool SocketOpen(SocketConfig* config, SocketResult* result)
 {
+	// Make sure we've not received a null config or result pointer
 	if (config == NULL || result == NULL)
 	{
 		return false;
 	}
 	memset(result, 0, sizeof(*result));
 
+	// Set the defaults based on the config
 	if (!SocketSetDefaults(config))
 	{
-		result->status = SOCKET_ERROR_CONFIGURATION;
+		TraceLog(LOG_DEBUG, "Configuration Error.");
 		return false;
 	}
 
+	// Create the socket
 	if (!CreateSocket(config, result))
 	{
 		return false;
 	}
 
+	// If the config states non-blocking, set the socket to non-blocking
 	if (config->nonblocking)
 	{
 		if (!SocketSetNonBlocking(result))
@@ -563,86 +685,134 @@ void SocketClose(SocketHandle socket)
 	}
 }
 
-// The accept function permits an incoming connection attempt on a socket.
+//	The accept function permits an incoming connection attempt on a socket.
 //
+//	SocketHandle	listener	- The socket to listen for incoming connections on (i.e. server)
+//	SocketResult*	out			- The result of this function (if any, including errors)
+//
+//	e.g.
+//
+//	SocketResult connection;
+//	bool         connected = false;
+//	if (!connected)
+//	{
+//		if (SocketAccept(server_res.socket.handle, &connection))
+//		{
+//			connected = true;
+//		}
+//	}
 bool SocketAccept(SocketHandle listener, SocketResult* out)
 {
-	struct sockaddr_in sock_addr;
-	socklen_t          sock_alen;
-	sock_alen          = sizeof(sock_addr);
-	out->socket.handle = accept(listener, (struct sockaddr*) &sock_addr, &sock_alen);
+	char                    ip[INET6_ADDRSTRLEN];
+	struct sockaddr_storage sockAddr;
+	socklen_t               sockAddrLen;
+	sockAddrLen        = sizeof(sockAddr);
+	out->socket.handle = accept(listener, (struct sockaddr*) &sockAddr, &sockAddrLen);
 	if (out->socket.handle == INVALID_SOCKET)
 	{
-		/* Save errno, but will be clobbered if others succeed. */
-		out->status      = SOCKET_ERROR_ACCEPT;
-		out->saved_errno = SocketGetLastError();
-		SocketSetError(0);
+		out->socket.error = SocketGetLastError();
+		TraceLog(
+			LOG_DEBUG, "Socket Error: %s", SocketErrorCodeToString(out->socket.error));
+		SocketSetLastError(0);
 		return false;
 	}
-	memcpy(&out->addrinfo, &sock_addr, sizeof(struct sockaddr));
-	out->socket.host.host = sock_addr.sin_addr.s_addr;
-	out->socket.host.port = sock_addr.sin_port;
-
+	memcpy(&out->addrinfo, &sockAddr, sizeof(struct sockaddr));
+	out->socket.address.host = inet_ntop(sockAddr.ss_family, GetSocketAddressPtr((struct sockaddr*) &sockAddr), ip, sizeof ip);
+	out->socket.address.port = ntohs(GetSocketPortPtr((struct sockaddr*) &sockAddr));
+	TraceLog(LOG_DEBUG, "Server: Got connection from %s\n", out->socket.address.host);
 	return true;
 }
 
-/* Send 'len' bytes of 'data' over the non-server socket 'sock'
-   This function returns the actual amount of data sent.  If the return value
-   is less than the amount of data sent, then either the remote connection was
-   closed, or an unknown socket error occurred.
-*/
-int SocketSend(Socket* socket, const void* datap, int len)
+//	Send 'len' bytes of 'data' over the non-server socket 'sock'
+//
+//	Example
+int SocketSend(Socket* socket, const char* buffer, int length)
 {
-	const unsigned char* data = (const unsigned char*) datap; /* For pointer arithmetic */
-	int                  sent, left;
+	int                sentTotal = 0;      // How many bytes we've sent
+	int                bytesleft = length; // How many do we have left to send
+	int                actuallySent; // How many bytes did we send this tick?
+	struct sockaddr_in dest;         // The datagram (UDP) destination
+	dest.sin_addr.s_addr = socket->address.host;
+	dest.sin_port        = socket->address.port;
 
-	// /* Server sockets are for accepting connections only */
-	if (socket->sflag)
+	// Which socket are we trying to send data on
+	switch (socket->type)
 	{
-		// out->status = SOCKET_ERROR_SEND;
-		// out->saved_errno = SocketGetLastError();
-		// SocketSetError(0);
-		return (-1);
+		case SOCKET_TCP:
+			if (IsSocketValid(socket->handle))
+			{
+				if ((length > 0) && (buffer != NULL))
+				{
+					SocketSetLastError(0);
+					do
+					{
+						actuallySent = send(socket->handle, buffer + sentTotal, bytesleft, 0);
+						if (actuallySent > 0)
+						{
+							sentTotal += actuallySent;
+							bytesleft -= actuallySent;
+						}
+					} while ((bytesleft > 0) && // While we still have bytes left to send
+							 ((actuallySent > 0) || // The amount of bytes we actually sent is > 0
+							  (SocketGetLastError() == EINTR)) // The socket was interupted
+					);
+				}
+			}
+			break;
+		case SOCKET_UDP:
+			if (IsSocketValid(socket->handle))
+			{
+				if ((length > 0) && (buffer != NULL))
+				{
+					SocketSetLastError(0);
+					do
+					{
+						actuallySent = sendto(socket->handle, buffer + sentTotal, bytesleft, 0, (struct sockaddr*) &dest, sizeof dest);
+						if (actuallySent > 0)
+						{
+							sentTotal += actuallySent;
+							bytesleft -= actuallySent;
+						}
+					} while ((bytesleft > 0) && // While we still have bytes left to send
+							 ((actuallySent > 0) || // The amount of bytes we actually sent is > 0
+							  (SocketGetLastError() == EINTR)) // The socket was interupted
+					);
+				}
+			}
+			break;
+		default:
+			break;
 	}
 
-	/* Keep sending data until it's sent or an error occurs */
-	left = len;
-	sent = 0;
-	SocketSetError(0);
-	do
+	// Server sockets are for accepting connections only
+	if (socket->isServer)
 	{
-		len = send(socket->handle, (const char*) data, left, 0);
-		if (len > 0)
-		{
-			sent += len;
-			left -= len;
-			data += len;
-		}
-	} while ((left > 0) && ((len > 0) || (SocketGetLastError() == EINTR)));
+		TraceLog(LOG_WARNING, "Cannot send information on a server socket");
+		return -1;
+	}
 
-	return (sent);
+	return sentTotal;
 }
 
-/* Receive up to 'maxlen' bytes of data over the non-server socket 'sock',
-   and store them in the buffer pointed to by 'data'.
-   This function returns the actual amount of data received.  If the return
-   value is less than or equal to zero, then either the remote connection was
-   closed, or an unknown socket error occurred.
-*/
+//	Receive up to 'maxlen' bytes of data over the non-server socket 'sock',
+//	and store them in the buffer pointed to by 'data'.
+//	This function returns the actual amount of data received.  If the return
+//	value is less than or equal to zero, then either the remote connection was
+//	closed, or an unknown socket error occurred.
 int SocketReceive(Socket* socket, void* data, int maxlen)
 {
 	int len;
 
 	/* Server sockets are for accepting connections only */
-	if (socket->sflag)
+	if (socket->isServer)
 	{
 		// out->status = SOCKET_ERROR_RECEIVE;
 		// out->saved_errno = SocketGetLastError();
-		// SocketSetError(0);
+		// SocketSetLastError(0);
 		return (-1);
 	}
 
-	SocketSetError(0);
+	SocketSetLastError(0);
 	do
 	{
 		len = recv(socket->handle, (char*) data, maxlen, 0);
@@ -652,30 +822,7 @@ int SocketReceive(Socket* socket, void* data, int maxlen)
 	return (len);
 }
 
-/* Construct an error message in BUF, based on the status codes
- * in *RES. This has the same return value and general behavior
- * as snprintf -- if the return value is >= buf_size, the string
- * has been truncated. Returns -1 if either BUF or RES are NULL. */
-int SocketGetError(char* buf, size_t buf_size, SocketResult* res)
-{
-	if (buf == NULL || res == NULL)
-	{
-		return 0;
-	}
-	return snprintf(buf, buf_size, "%s: %ls", SocketStatusToString(res->status), (res->status == SOCKET_ERROR_GETADDRINFO ? gai_strerror(res->getaddrinfo_error) : strerror(res->saved_errno)));
-}
-
-/* Print an error message based on the status contained in *RES. */
-void SocketPrintError(SocketResult* res)
-{
-	if (res == NULL)
-	{
-		return;
-	}
-	printf("%s: %ls\n", SocketStatusToString(res->status), (res->status == SOCKET_ERROR_GETADDRINFO ? gai_strerror(res->getaddrinfo_error) : strerror(res->saved_errno)));
-}
-
-/* Set "hints" in an addrinfo struct, to be passed to getaddrinfo. */
+// Set "hints" in an addrinfo struct, to be passed to getaddrinfo.
 void SocketSetHints(SocketConfig* cfg, struct addrinfo* hints)
 {
 	if (cfg == NULL || hints == NULL)
@@ -685,11 +832,7 @@ void SocketSetHints(SocketConfig* cfg, struct addrinfo* hints)
 	memset(hints, 0, sizeof(*hints));
 
 	/* if .IPv4 or .IPv6 are used, set and use that instead of *host */
-	if (cfg->path)
-	{
-		hints->ai_family = AF_UNIX;
-	}
-	else if (cfg->IPv6)
+	if (cfg->IPv6)
 	{
 		hints->ai_family = AF_INET6;
 	}
@@ -728,6 +871,7 @@ void PrintSocket(struct SocketAddress* addr, const int family, const int socktyp
 {
 	struct sockaddr* sockaddr_ip;
 	char             ip[INET6_ADDRSTRLEN]; // Enough pace to hold a IPv6 string
+	int              port;
 	switch (family)
 	{
 		case AF_UNSPEC:
@@ -738,13 +882,13 @@ void PrintSocket(struct SocketAddress* addr, const int family, const int socktyp
 		case AF_INET:
 		{
 			TraceLog(LOG_DEBUG, "\tFamily: AF_INET (IPv4)");
-			TraceLog(LOG_INFO, "\t- IPv4 address %s", SocketAddressToString(addr, ip));
+			TraceLog(LOG_INFO, "\t- IPv4 address %s", SocketAddressToString(addr, ip, &port));
 		}
 		break;
 		case AF_INET6:
 		{
 			TraceLog(LOG_DEBUG, "\tFamily: AF_INET6 (IPv6)");
-			TraceLog(LOG_INFO, "\t- IPv6 address %s", SocketAddressToString(addr, ip));
+			TraceLog(LOG_INFO, "\t- IPv6 address %s", SocketAddressToString(addr, ip, &port));
 		}
 		break;
 		case AF_NETBIOS:
@@ -802,18 +946,22 @@ void PrintSocket(struct SocketAddress* addr, const int family, const int socktyp
 }
 
 // Convert network ordered socket address to human readable string (127.0.0.1)
-char* SocketAddressToString(struct SocketAddress* sockaddr, char buffer[])
+char* SocketAddressToString(struct SocketAddress* sockaddr, char buffer[], int* port)
 {
 	switch (sockaddr->family)
 	{
 		case AF_INET:
 		{
-			return inet_ntop(AF_INET, &((struct sockaddr_in*) sockaddr)->sin_addr, buffer, INET_ADDRSTRLEN);
+			struct sockaddr_in* s = ((struct sockaddr_in*) sockaddr);
+			*port                 = ntohs(s->sin_port);
+			return inet_ntop(AF_INET, &s->sin_addr, buffer, INET_ADDRSTRLEN);
 		}
 		break;
 		case AF_INET6:
 		{
-			return inet_ntop(AF_INET6, &((struct sockaddr_in6*) sockaddr)->sin6_addr, buffer, INET6_ADDRSTRLEN);
+			struct sockaddr_in6* s = ((struct sockaddr_in6*) sockaddr);
+			*port                  = ntohs(s->sin6_port);
+			return inet_ntop(AF_INET6, &s->sin6_addr, buffer, INET6_ADDRSTRLEN);
 		}
 		break;
 		default:
@@ -824,19 +972,17 @@ char* SocketAddressToString(struct SocketAddress* sockaddr, char buffer[])
 	}
 }
 
-/*
-** PackData() -- store data dictated by the format string in the buffer
-**
-**   bits |signed   unsigned   float   string
-**   -----+----------------------------------
-**      8 |   c        C
-**     16 |   h        H         f
-**     32 |   l        L         d
-**     64 |   q        Q         g
-**      - |                               s
-**
-**  (16-bit unsigned length is automatically prepended to strings)
-*/
+//	PackData() -- store data dictated by the format string in the buffer
+//
+//	  bits |signed   unsigned   float   string
+//	  -----+----------------------------------
+//	     8 |   c        C
+//	    16 |   h        H         f
+//	    32 |   l        L         d
+//	    64 |   q        Q         g
+//	     - |                               s
+//
+//	(16-bit unsigned length is automatically prepended to strings)
 unsigned int PackData(unsigned char* buf, char* format, ...)
 {
 	va_list ap;
@@ -964,20 +1110,18 @@ unsigned int PackData(unsigned char* buf, char* format, ...)
 	return size;
 }
 
-/*
-** UnpackData() -- unpack data dictated by the format string into the buffer
-**
-**   bits |signed   unsigned   float   string
-**   -----+----------------------------------
-**      8 |   c        C
-**     16 |   h        H         f
-**     32 |   l        L         d
-**     64 |   q        Q         g
-**      - |                               s
-**
-**  (string is extracted based on its stored length, but 's' can be
-**  prepended with a max length)
-*/
+//	UnpackData() -- unpack data dictated by the format string into the buffer
+//
+//	  bits |signed   unsigned   float   string
+//	  -----+----------------------------------
+//	     8 |   c        C
+//	    16 |   h        H         f
+//	    32 |   l        L         d
+//	    64 |   q        Q         g
+//	     - |                               s
+//
+//	(string is extracted based on its stored length, but 's' can be
+//	prepended with a max length)
 void UnpackData(unsigned char* buf, char* format, ...)
 {
 	va_list ap;

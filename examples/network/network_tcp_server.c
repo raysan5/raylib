@@ -1,6 +1,6 @@
 /*******************************************************************************************
  *
- *   raylib [network] example - Client/Server ping-pong
+ *   raylib [network] example - Resolve host
  *
  *   Welcome to raylib!
  *
@@ -20,7 +20,9 @@
  *
  ********************************************************************************************/
 
-#include "raylib.h"
+
+#include "raylib.h" 
+#include <string.h> 
 
 int main()
 {
@@ -31,11 +33,12 @@ int main()
 		screenWidth, screenHeight, "raylib [network] example - ping pong");
 	SetTargetFPS(60);
 
-	SetTraceLogLevel(LOG_INFO);
+	SetTraceLogLevel(LOG_DEBUG);
 
 	// Networking
 	InitNetwork();
 
+	
 	// Create the server
 	SocketConfig server_cfg = {
 		.host = "127.0.0.1", 
@@ -52,35 +55,17 @@ int main()
 		{
 			return false;
 		}
-	}
+	}   
 
-	// Create the client
-	SocketConfig client_cfg = {
-		.host = "127.0.0.1", 
-		.port = "8080"
-	};
-
-	SocketResult client_res;
-	memset(&client_res, 0, sizeof(SocketResult));
-	{
-		bool ok = SocketOpen(&client_cfg, &client_res);
-		if (!ok)
-		{
-			printf("failed to open: status %d, errno %d\n", client_res.status,
-				   client_res.socket.error);
-			return false;
-		}
-	}
-
+	
 	SocketResult connection;
-	memset(&connection, 0, sizeof(SocketResult));
-	float elapsed = 0.0f, delay = 1.0f; // ms
-	bool  ping = false, pong = false;
+	memset(&connection, 0, sizeof(SocketResult));  
+
 	char  recvBuffer[512];
+	memset(&recvBuffer, 0, 8); 
+	
 	bool  connected = false;
-	memset(&recvBuffer, 0, 8);
-	char pingmsg[6] = "Ping!";
-	char pongmsg[6] = "Pong!";
+
 
 	// Main game loop
 	while (!WindowShouldClose())
@@ -91,50 +76,19 @@ int main()
 		// Clear
 		ClearBackground(RAYWHITE);
 
-		// A valid connection will != -1
+		// Wait for a valid connection
 		if (!connected)
 		{
 			if (SocketAccept(server_res.socket.handle, &connection))
-			{
-				ping      = true;
+			{ 
 				connected = true;
 			}
 		}
 
-		// Connected
 		if (connected)
 		{
-			int bytesRecv = SocketReceive(&connection.socket, recvBuffer, sizeof(pingmsg));
-			if (bytesRecv > 0)
-			{
-				if (strcmp(recvBuffer, pingmsg) == 0)
-				{
-					pong = true;
-					printf("%s\n", pingmsg);
-				}
-				if (strcmp(recvBuffer, pongmsg) == 0)
-				{
-					ping = true;
-					printf("%s\n", pongmsg);
-				}
-			}
-
-			elapsed += GetFrameTime();
-			if (elapsed > delay)
-			{
-				if (ping)
-				{
-					ping = false;
-					SocketSend(&client_res.socket, pingmsg, sizeof(pingmsg));
-				}
-				else if (pong)
-				{
-					pong = false;
-					SocketSend(&client_res.socket, pongmsg, sizeof(pongmsg));
-				}
-				elapsed = 0.0f;
-			}
-		}
+			SocketSend(&connection, "Hello, world!", 13);
+		} 
 
 		// End draw
 		EndDrawing();

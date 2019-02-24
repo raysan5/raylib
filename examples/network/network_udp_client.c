@@ -20,7 +20,9 @@
  *
  ********************************************************************************************/
 
+
 #include "raylib.h" 
+#include <string.h> 
 
 int main()
 {
@@ -34,12 +36,24 @@ int main()
 	SetTraceLogLevel(LOG_DEBUG);
 
 	// Networking
-	InitNetwork(); 
+	InitNetwork();
 
-	AddressInformation addr;
-	ResolveHost("www.google.com", "80", &addr);
-	ResolveIP("8.8.8.8", NULL, NAME_INFO_DEFAULT);
-	ResolveIP("2001:4860:4860::8888", "80", NAME_INFO_NUMERICSERV);
+	unsigned char buf[1024];
+	unsigned char magic;
+	int           monkeycount;
+	long          altitude;
+	double        absurdityfactor;
+	char*         s = "Great unmitigated Zot!  You've found the Runestaff!";
+	char          s2[96];
+	unsigned int  packetsize, ps2;
+
+	packetsize = PackData(buf, "CHhlsd", 'B', 0, 37, -5, s, -3490.5);
+	packi16(buf + 1, packetsize); // store packet size in packet for kicks
+
+	printf("packet is %u bytes\n", packetsize);
+	UnpackData(buf, "CHhl96sd", &magic, &ps2, &monkeycount, &altitude, s2, &absurdityfactor);
+	printf("'%c' %hhu %u %ld \"%s\" %f\n", magic, ps2, monkeycount, altitude, s2, absurdityfactor);
+
 
 	// Main game loop
 	while (!WindowShouldClose())
