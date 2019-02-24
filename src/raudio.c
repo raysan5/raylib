@@ -712,11 +712,13 @@ void SetAudioBufferPitch(AudioBuffer *audioBuffer, float pitch)
         return;
     }
 
-    audioBuffer->pitch = pitch;
+    float pitchMul = pitch / audioBuffer->pitch;
 
     // Pitching is just an adjustment of the sample rate. Note that this changes the duration of the sound - higher pitches
     // will make the sound faster; lower pitches make it slower.
-    mal_uint32 newOutputSampleRate = (mal_uint32)((((float)audioBuffer->dsp.src.config.sampleRateOut / (float)audioBuffer->dsp.src.config.sampleRateIn) / pitch) * audioBuffer->dsp.src.config.sampleRateIn);
+    mal_uint32 newOutputSampleRate = (mal_uint32)((float)audioBuffer->dsp.src.config.sampleRateOut / pitchMul);
+    audioBuffer->pitch *= (float)audioBuffer->dsp.src.config.sampleRateOut / newOutputSampleRate;
+
     mal_dsp_set_output_sample_rate(&audioBuffer->dsp, newOutputSampleRate);
 }
 
@@ -767,7 +769,11 @@ Wave LoadWave(const char *fileName)
 {
     Wave wave = { 0 };
 
+#if defined(SUPPORT_FILEFORMAT_WAV)
     if (IsFileExtension(fileName, ".wav")) wave = LoadWAV(fileName);
+#else
+    if (false) {}
+#endif
 #if defined(SUPPORT_FILEFORMAT_OGG)
     else if (IsFileExtension(fileName, ".ogg")) wave = LoadOGG(fileName);
 #endif
@@ -830,7 +836,7 @@ Sound LoadSoundFromWave(Wave wave)
         //
         // I have decided on the first option because it offloads work required for the format conversion to the to the loading stage.
         // The downside to this is that it uses more memory if the original sound is u8 or s16.
-        mal_format formatIn  = ((wave.sampleSize == 8) ? mal_format_u8 : ((wave.sampleSize == 16) ? mal_format_s16 : mal_format_f32));
+        mal_format formatIn  = ((wave.sampleSize == 8)? mal_format_u8 : ((wave.sampleSize == 16)? mal_format_s16 : mal_format_f32));
         mal_uint32 frameCountIn = wave.sampleCount/wave.channels;
 
         mal_uint32 frameCount = (mal_uint32)mal_convert_frames(NULL, DEVICE_FORMAT, DEVICE_CHANNELS, DEVICE_SAMPLE_RATE, NULL, formatIn, wave.channels, wave.sampleRate, frameCountIn);
@@ -887,7 +893,11 @@ void ExportWave(Wave wave, const char *fileName)
 {
     bool success = false;
 
+#if defined(SUPPORT_FILEFORMAT_WAV)
     if (IsFileExtension(fileName, ".wav")) success = SaveWAV(wave, fileName);
+#else
+    if (false) {}
+#endif
     else if (IsFileExtension(fileName, ".raw"))
     {
         // Export raw sample data (without header)
@@ -938,7 +948,7 @@ void ExportWaveAsCode(Wave wave, const char *fileName)
 
     // Write byte data as hexadecimal text
     fprintf(txtFile, "static unsigned char %s_DATA[%i] = { ", varFileName, dataSize);
-    for (int i = 0; i < dataSize - 1; i++) fprintf(txtFile, ((i%BYTES_TEXT_PER_LINE == 0) ? "0x%x,\n" : "0x%x, "), ((unsigned char *)wave.data)[i]);
+    for (int i = 0; i < dataSize - 1; i++) fprintf(txtFile, ((i%BYTES_TEXT_PER_LINE == 0)? "0x%x,\n" : "0x%x, "), ((unsigned char *)wave.data)[i]);
     fprintf(txtFile, "0x%x };\n", ((unsigned char *)wave.data)[dataSize - 1]);
 
     fclose(txtFile);
@@ -989,8 +999,8 @@ void SetSoundPitch(Sound sound, float pitch)
 // Convert wave data to desired format
 void WaveFormat(Wave *wave, int sampleRate, int sampleSize, int channels)
 {
-    mal_format formatIn  = ((wave->sampleSize == 8) ? mal_format_u8 : ((wave->sampleSize == 16) ? mal_format_s16 : mal_format_f32));
-    mal_format formatOut = ((      sampleSize == 8) ? mal_format_u8 : ((      sampleSize == 16) ? mal_format_s16 : mal_format_f32));
+    mal_format formatIn  = ((wave->sampleSize == 8)? mal_format_u8 : ((wave->sampleSize == 16)? mal_format_s16 : mal_format_f32));
+    mal_format formatOut = ((      sampleSize == 8)? mal_format_u8 : ((      sampleSize == 16)? mal_format_s16 : mal_format_f32));
 
     mal_uint32 frameCountIn = wave->sampleCount;  // Is wave->sampleCount actually the frame count? That terminology needs to change, if so.
 
@@ -1087,6 +1097,7 @@ Music LoadMusicStream(const char *fileName)
     Music music = (MusicData *)malloc(sizeof(MusicData));
     bool musicLoaded = true;
 
+#if defined(SUPPORT_FILEFORMAT_OGG)
     if (IsFileExtension(fileName, ".ogg"))
     {
         // Open ogg audio stream
@@ -1110,6 +1121,9 @@ Music LoadMusicStream(const char *fileName)
             TraceLog(LOG_DEBUG, "[%s] OGG memory required: %i", fileName, info.temp_memory_required);
         }
     }
+#else
+    if (false) {}
+#endif
 #if defined(SUPPORT_FILEFORMAT_FLAC)
     else if (IsFileExtension(fileName, ".flac"))
     {
@@ -1202,7 +1216,11 @@ Music LoadMusicStream(const char *fileName)
 
     if (!musicLoaded)
     {
+    #if defined(SUPPORT_FILEFORMAT_OGG)
         if (music->ctxType == MUSIC_AUDIO_OGG) stb_vorbis_close(music->ctxOgg);
+    #else
+        if (false) {}
+    #endif
     #if defined(SUPPORT_FILEFORMAT_FLAC)
         else if (music->ctxType == MUSIC_AUDIO_FLAC) drflac_free(music->ctxFlac);
     #endif
@@ -1229,10 +1247,14 @@ Music LoadMusicStream(const char *fileName)
 void UnloadMusicStream(Music music)
 {
     if (music == NULL) return;
-    
+
     CloseAudioStream(music->stream);
 
+#if defined(SUPPORT_FILEFORMAT_OGG)
     if (music->ctxType == MUSIC_AUDIO_OGG) stb_vorbis_close(music->ctxOgg);
+#else
+    if (false) {}
+#endif
 #if defined(SUPPORT_FILEFORMAT_FLAC)
     else if (music->ctxType == MUSIC_AUDIO_FLAC) drflac_free(music->ctxFlac);
 #endif
@@ -1291,13 +1313,15 @@ void ResumeMusicStream(Music music)
 void StopMusicStream(Music music)
 {
     if (music == NULL) return;
-    
+
     StopAudioStream(music->stream);
 
     // Restart music context
     switch (music->ctxType)
     {
+#if defined(SUPPORT_FILEFORMAT_OGG)
         case MUSIC_AUDIO_OGG: stb_vorbis_seek_start(music->ctxOgg); break;
+#endif
 #if defined(SUPPORT_FILEFORMAT_FLAC)
         case MUSIC_AUDIO_FLAC: /* TODO: Restart FLAC context */ break;
 #endif
@@ -1321,7 +1345,7 @@ void StopMusicStream(Music music)
 void UpdateMusicStream(Music music)
 {
     if (music == NULL) return;
-    
+
     bool streamEnding = false;
 
     unsigned int subBufferSizeInFrames = ((AudioBuffer *)music->stream.audioBuffer)->bufferSizeInFrames/2;
@@ -1339,12 +1363,14 @@ void UpdateMusicStream(Music music)
         // TODO: Really don't like ctxType thingy...
         switch (music->ctxType)
         {
+        #if defined(SUPPORT_FILEFORMAT_OGG)
             case MUSIC_AUDIO_OGG:
             {
                 // NOTE: Returns the number of samples to process (be careful! we ask for number of shorts!)
                 stb_vorbis_get_samples_short_interleaved(music->ctxOgg, music->stream.channels, (short *)pcm, samplesCount);
 
             } break;
+        #endif
         #if defined(SUPPORT_FILEFORMAT_FLAC)
             case MUSIC_AUDIO_FLAC:
             {
@@ -1369,21 +1395,21 @@ void UpdateMusicStream(Music music)
             } break;
         #endif
         #if defined(SUPPORT_FILEFORMAT_MOD)
-            case MUSIC_MODULE_MOD: 
+            case MUSIC_MODULE_MOD:
             {
                 // NOTE: 3rd parameter (nbsample) specify the number of stereo 16bits samples you want, so sampleCount/2
-                jar_mod_fillbuffer(&music->ctxMod, (short *)pcm, samplesCount/2, 0); 
+                jar_mod_fillbuffer(&music->ctxMod, (short *)pcm, samplesCount/2, 0);
             } break;
         #endif
             default: break;
         }
 
-        
+
         UpdateAudioStream(music->stream, pcm, samplesCount);
         if ((music->ctxType == MUSIC_MODULE_XM) || (music->ctxType == MUSIC_MODULE_MOD))
         {
-			if (samplesCount > 1) music->samplesLeft -= samplesCount/2;
-			else music->samplesLeft -= samplesCount;
+            if (samplesCount > 1) music->samplesLeft -= samplesCount/2;
+            else music->samplesLeft -= samplesCount;
         }
         else music->samplesLeft -= samplesCount;
 
@@ -1451,7 +1477,7 @@ void SetMusicLoopCount(Music music, int count)
 float GetMusicTimeLength(Music music)
 {
     float totalSeconds = 0.0f;
-    
+
     if (music != NULL) totalSeconds = (float)music->totalSamples/(music->stream.sampleRate*music->stream.channels);
 
     return totalSeconds;
@@ -1487,7 +1513,7 @@ AudioStream InitAudioStream(unsigned int sampleRate, unsigned int sampleSize, un
         stream.channels = 1;  // Fallback to mono channel
     }
 
-    mal_format formatIn = ((stream.sampleSize == 8) ? mal_format_u8 : ((stream.sampleSize == 16) ? mal_format_s16 : mal_format_f32));
+    mal_format formatIn = ((stream.sampleSize == 8)? mal_format_u8 : ((stream.sampleSize == 16)? mal_format_s16 : mal_format_f32));
 
     // The size of a streaming buffer must be at least double the size of a period.
     unsigned int periodSize = device.bufferSizeInFrames/device.periods;
@@ -1504,7 +1530,7 @@ AudioStream InitAudioStream(unsigned int sampleRate, unsigned int sampleSize, un
     audioBuffer->looping = true;        // Always loop for streaming buffers.
     stream.audioBuffer = audioBuffer;
 
-    TraceLog(LOG_INFO, "[AUD ID %i] Audio stream loaded successfully (%i Hz, %i bit, %s)", stream.source, stream.sampleRate, stream.sampleSize, (stream.channels == 1) ? "Mono" : "Stereo");
+    TraceLog(LOG_INFO, "[AUD ID %i] Audio stream loaded successfully (%i Hz, %i bit, %s)", stream.source, stream.sampleRate, stream.sampleSize, (stream.channels == 1)? "Mono" : "Stereo");
 
     return stream;
 }
@@ -1542,7 +1568,7 @@ void UpdateAudioStream(AudioStream stream, const void *data, int samplesCount)
         else
         {
             // Just update whichever sub-buffer is processed.
-            subBufferToUpdate = (audioBuffer->isSubBufferProcessed[0]) ? 0 : 1;
+            subBufferToUpdate = (audioBuffer->isSubBufferProcessed[0])? 0 : 1;
         }
 
         mal_uint32 subBufferSizeInFrames = audioBuffer->bufferSizeInFrames/2;
@@ -1745,7 +1771,7 @@ static Wave LoadWAV(const char *fileName)
                     // NOTE: subChunkSize comes in bytes, we need to translate it to number of samples
                     wave.sampleCount = (wavData.subChunkSize/(wave.sampleSize/8))/wave.channels;
 
-                    TraceLog(LOG_INFO, "[%s] WAV file loaded successfully (%i Hz, %i bit, %s)", fileName, wave.sampleRate, wave.sampleSize, (wave.channels == 1) ? "Mono" : "Stereo");
+                    TraceLog(LOG_INFO, "[%s] WAV file loaded successfully (%i Hz, %i bit, %s)", fileName, wave.sampleRate, wave.sampleSize, (wave.channels == 1)? "Mono" : "Stereo");
                 }
             }
         }
@@ -1866,7 +1892,7 @@ static Wave LoadOGG(const char *fileName)
 
         TraceLog(LOG_DEBUG, "[%s] Samples obtained: %i", fileName, numSamplesOgg);
 
-        TraceLog(LOG_INFO, "[%s] OGG file loaded successfully (%i Hz, %i bit, %s)", fileName, wave.sampleRate, wave.sampleSize, (wave.channels == 1) ? "Mono" : "Stereo");
+        TraceLog(LOG_INFO, "[%s] OGG file loaded successfully (%i Hz, %i bit, %s)", fileName, wave.sampleRate, wave.sampleSize, (wave.channels == 1)? "Mono" : "Stereo");
 
         stb_vorbis_close(oggFile);
     }
@@ -1893,7 +1919,7 @@ static Wave LoadFLAC(const char *fileName)
     if (wave.channels > 2) TraceLog(LOG_WARNING, "[%s] FLAC channels number (%i) not supported", fileName, wave.channels);
 
     if (wave.data == NULL) TraceLog(LOG_WARNING, "[%s] FLAC data could not be loaded", fileName);
-    else TraceLog(LOG_INFO, "[%s] FLAC file loaded successfully (%i Hz, %i bit, %s)", fileName, wave.sampleRate, wave.sampleSize, (wave.channels == 1) ? "Mono" : "Stereo");
+    else TraceLog(LOG_INFO, "[%s] FLAC file loaded successfully (%i Hz, %i bit, %s)", fileName, wave.sampleRate, wave.sampleSize, (wave.channels == 1)? "Mono" : "Stereo");
 
     return wave;
 }
@@ -1920,7 +1946,7 @@ static Wave LoadMP3(const char *fileName)
     if (wave.channels > 2) TraceLog(LOG_WARNING, "[%s] MP3 channels number (%i) not supported", fileName, wave.channels);
 
     if (wave.data == NULL) TraceLog(LOG_WARNING, "[%s] MP3 data could not be loaded", fileName);
-    else TraceLog(LOG_INFO, "[%s] MP3 file loaded successfully (%i Hz, %i bit, %s)", fileName, wave.sampleRate, wave.sampleSize, (wave.channels == 1) ? "Mono" : "Stereo");
+    else TraceLog(LOG_INFO, "[%s] MP3 file loaded successfully (%i Hz, %i bit, %s)", fileName, wave.sampleRate, wave.sampleSize, (wave.channels == 1)? "Mono" : "Stereo");
 
     return wave;
 }

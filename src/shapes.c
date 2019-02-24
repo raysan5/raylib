@@ -132,7 +132,7 @@ void DrawLineEx(Vector2 startPos, Vector2 endPos, float thick, Color color)
     rlPushMatrix();
         rlTranslatef((float)startPos.x, (float)startPos.y, 0.0f);
         rlRotatef(RAD2DEG*angle, 0.0f, 0.0f, 1.0f);
-        rlTranslatef(0, (thick > 1.0f) ? -thick/2.0f : -1.0f, 0.0f);
+        rlTranslatef(0, (thick > 1.0f)? -thick/2.0f : -1.0f, 0.0f);
 
         rlBegin(RL_QUADS);
             rlColor4ub(color.r, color.g, color.b, color.a);
@@ -143,7 +143,7 @@ void DrawLineEx(Vector2 startPos, Vector2 endPos, float thick, Color color)
 
             rlTexCoord2f(recTexShapes.x/texShapes.width, (recTexShapes.y + recTexShapes.height)/texShapes.height);
             rlVertex2f(0.0f, thick);
-            
+
             rlTexCoord2f((recTexShapes.x + recTexShapes.width)/texShapes.width, (recTexShapes.y + recTexShapes.height)/texShapes.height);
             rlVertex2f(d, thick);
 
@@ -187,7 +187,7 @@ void DrawCircle(int centerX, int centerY, float radius, Color color)
 void DrawCircleSector(Vector2 center, float radius, int startAngle, int endAngle, Color color)
 {
     #define CIRCLE_SECTOR_LENGTH    10
-    
+
 #if defined(SUPPORT_QUADS_DRAW_MODE)
     if (rlCheckBufferLimit(4*((360/CIRCLE_SECTOR_LENGTH)/2))) rlglDraw();
 
@@ -307,10 +307,10 @@ void DrawRectanglePro(Rectangle rec, Vector2 origin, float rotation, Color color
 
             rlTexCoord2f(recTexShapes.x/texShapes.width, recTexShapes.y/texShapes.height);
             rlVertex2f(0.0f, 0.0f);
-            
+
             rlTexCoord2f(recTexShapes.x/texShapes.width, (recTexShapes.y + recTexShapes.height)/texShapes.height);
             rlVertex2f(0.0f, rec.height);
-            
+
             rlTexCoord2f((recTexShapes.x + recTexShapes.width)/texShapes.width, (recTexShapes.y + recTexShapes.height)/texShapes.height);
             rlVertex2f(rec.width, rec.height);
 
@@ -644,7 +644,7 @@ bool CheckCollisionCircleRec(Vector2 center, float radius, Rectangle rec)
     if (dy <= (rec.height/2.0f)) { return true; }
 
     float cornerDistanceSq = (dx - rec.width/2.0f)*(dx - rec.width/2.0f) +
-						     (dy - rec.height/2.0f)*(dy - rec.height/2.0f);
+                             (dy - rec.height/2.0f)*(dy - rec.height/2.0f);
 
     return (cornerDistanceSq <= (radius*radius));
 }
@@ -742,7 +742,7 @@ static Texture2D GetShapesTexture(void)
         recTexShapes = (Rectangle){ rec.x + 1, rec.y + 1, rec.width - 2, rec.height - 2 };
 #else
         texShapes = GetTextureDefault();                // Use default white texture
-        recTexShapes = { 0.0f, 0.0f, 1.0f, 1.0f };
+        recTexShapes = (Rectangle){ 0.0f, 0.0f, 1.0f, 1.0f };
 #endif
     }
 
