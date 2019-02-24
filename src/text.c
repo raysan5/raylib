@@ -512,7 +512,7 @@ CharInfo *LoadFontData(const char *fileName, int fontSize, int *fontChars, int c
 
             if (type != FONT_SDF) chars[i].data = stbtt_GetCodepointBitmap(&fontInfo, scaleFactor, scaleFactor, ch, &chw, &chh, &chars[i].offsetX, &chars[i].offsetY);
             else if (ch != 32) chars[i].data = stbtt_GetCodepointSDF(&fontInfo, scaleFactor, ch, SDF_CHAR_PADDING, SDF_ON_EDGE_VALUE, SDF_PIXEL_DIST_SCALE, &chw, &chh, &chars[i].offsetX, &chars[i].offsetY);
-			else chars[i].data = NULL;
+            else chars[i].data = NULL;
 
             if (type == FONT_BITMAP)
             {
