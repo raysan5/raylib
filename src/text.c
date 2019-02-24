@@ -430,6 +430,7 @@ Font LoadFontFromImage(Image image, Color key, int firstChar)
         spriteFont.chars[i].offsetX = 0;
         spriteFont.chars[i].offsetY = 0;
         spriteFont.chars[i].advanceX = 0;
+        spriteFont.chars[i].data = NULL;
     }
 
     spriteFont.baseSize = (int)spriteFont.chars[0].rec.height;
@@ -686,7 +687,8 @@ void UnloadFont(Font font)
     {
         for (int i = 0; i < font.charsCount; i++)
         {
-            free(font.chars[i].data);
+            if(font.chars[i].data != NULL)
+                free(font.chars[i].data);
         }
         UnloadTexture(font.texture);
         free(font.chars);
@@ -1442,6 +1444,7 @@ static Font LoadBMFont(const char *fileName)
         font.chars[i].offsetX = charOffsetX;
         font.chars[i].offsetY = charOffsetY;
         font.chars[i].advanceX = charAdvanceX;
+        font.chars[i].data = NULL;
     }
 
     fclose(fntFile);
