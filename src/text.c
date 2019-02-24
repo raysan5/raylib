@@ -430,6 +430,7 @@ Font LoadFontFromImage(Image image, Color key, int firstChar)
         spriteFont.chars[i].offsetX = 0;
         spriteFont.chars[i].offsetY = 0;
         spriteFont.chars[i].advanceX = 0;
+        spriteFont.chars[i].data = NULL;
     }
 
     spriteFont.baseSize = (int)spriteFont.chars[0].rec.height;
@@ -511,6 +512,7 @@ CharInfo *LoadFontData(const char *fileName, int fontSize, int *fontChars, int c
 
             if (type != FONT_SDF) chars[i].data = stbtt_GetCodepointBitmap(&fontInfo, scaleFactor, scaleFactor, ch, &chw, &chh, &chars[i].offsetX, &chars[i].offsetY);
             else if (ch != 32) chars[i].data = stbtt_GetCodepointSDF(&fontInfo, scaleFactor, ch, SDF_CHAR_PADDING, SDF_ON_EDGE_VALUE, SDF_PIXEL_DIST_SCALE, &chw, &chh, &chars[i].offsetX, &chars[i].offsetY);
+            else chars[i].data = NULL;
 
             if (type == FONT_BITMAP)
             {
@@ -686,7 +688,8 @@ void UnloadFont(Font font)
     {
         for (int i = 0; i < font.charsCount; i++)
         {
-            free(font.chars[i].data);
+            if(font.chars[i].data != NULL)
+                free(font.chars[i].data);
         }
         UnloadTexture(font.texture);
         free(font.chars);
@@ -1442,6 +1445,7 @@ static Font LoadBMFont(const char *fileName)
         font.chars[i].offsetX = charOffsetX;
         font.chars[i].offsetY = charOffsetY;
         font.chars[i].advanceX = charAdvanceX;
+        font.chars[i].data = NULL;
     }
 
     fclose(fntFile);
