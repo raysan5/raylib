@@ -186,6 +186,19 @@ typedef long int          int64;
 #	define RESULT_FAILURE 1
 #endif // RESULT_FAILURE
 
+#ifndef INADDR_ANY
+#	define INADDR_ANY 0x00000000
+#endif // INADDR_ANY
+#ifndef INADDR_NONE
+#	define INADDR_NONE 0xFFFFFFFF
+#endif // INADDR_NONE
+#ifndef INADDR_LOOPBACK
+#	define INADDR_LOOPBACK 0x7f000001
+#endif // INADDR_LOOPBACK
+#ifndef INADDR_BROADCAST
+#	define INADDR_BROADCAST 0xFFFFFFFF
+#endif // INADDR_BROADCAST
+
 #ifndef htonll
 #	ifdef _BIG_ENDIAN
 #		define htonll(x) (x)
@@ -206,9 +219,9 @@ typedef long int          int64;
 #ifdef _WIN32
 #	pragma comment(lib, "ws2_32.lib")
 #	define __USE_W32_SOCKETS
+#	include <winsock2.h>
 #	include <Ws2tcpip.h>
 #	include <io.h>
-#	include <winsock2.h>
 #	define IPTOS_LOWDELAY 0x10
 #else /* UNIX */
 #	include <sys/types.h>

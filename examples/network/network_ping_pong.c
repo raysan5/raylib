@@ -22,6 +22,9 @@
 
 #include "raylib.h"
 
+#include <stdio.h>
+#include <string.h>
+
 int main()
 {
 	// Setup
@@ -31,56 +34,46 @@ int main()
 		screenWidth, screenHeight, "raylib [network] example - ping pong");
 	SetTargetFPS(60);
 
-	SetTraceLogLevel(LOG_INFO);
+	SetTraceLogLevel(LOG_DEBUG);
 
 	// Networking
 	InitNetwork();
 
 	// Create the server
-	SocketConfig server_cfg = {
-		.host = "127.0.0.1", 
-		.port = "8080", 
-		.server = true, 
-		.nonblocking = true
-	};
-
-	SocketResult server_res;
-	memset(&server_res, 0, sizeof(SocketResult));
+	SocketConfig  server_cfg = {.host = "127.0.0.1", .port = "8080", .server = true, .datagram = true, .nonblocking = true};
+	SocketResult* server_res = AllocSocketResult();
+	if (!SocketOpen(&server_cfg, server_res))
 	{
-		bool ok = SocketOpen(&server_cfg, &server_res);
-		if (!ok)
-		{
-			return false;
-		}
+		TraceLog(LOG_WARNING, "Failed to open server: status %d, errno %d\n",
+				 server_res->status, server_res->socket->status);
 	}
 
 	// Create the client
-	SocketConfig client_cfg = {
-		.host = "127.0.0.1", 
-		.port = "8080"
-	};
-
-	SocketResult client_res;
-	memset(&client_res, 0, sizeof(SocketResult));
+	SocketConfig  client_cfg = {.host = "127.0.0.1", .port = "8080", .datagram = true, .nonblocking = true};
+	SocketResult* client_res = AllocSocketResult();
 	{
-		bool ok = SocketOpen(&client_cfg, &client_res);
-		if (!ok)
+		if (!SocketOpen(&client_cfg, client_res))
 		{
-			printf("failed to open: status %d, errno %d\n", client_res.status,
-				   client_res.socket.error);
-			return false;
+			TraceLog(LOG_WARNING, "Failed to open client: status %d, errno %d\n",
+					 client_res->status, client_res->socket->status);
 		}
 	}
 
-	SocketResult connection;
-	memset(&connection, 0, sizeof(SocketResult));
-	float elapsed = 0.0f, delay = 1.0f; // ms
-	bool  ping = false, pong = false;
-	char  recvBuffer[512];
-	bool  connected = false;
-	memset(&recvBuffer, 0, 8);
-	char pingmsg[6] = "Ping!";
-	char pongmsg[6] = "Pong!";
+	char recvBuffer[512];
+	memset(recvBuffer, '\0', sizeof(recvBuffer));
+	Socket*      connection = NULL;
+	SocketConfig connection_cfg = { .nonblocking = true,.datagram = true };
+	float        elapsed    = 0.0f;
+	float        delay      = 1.0f;
+	bool         ping       = false;
+	bool         pong       = false;
+	bool         connected  = false;
+	const char*  pingmsg    = "Ping!";
+	const char*  pongmsg    = "Pong!";
+	const int    msglen     = strlen(pingmsg) + 1;
+	SocketSet*   socket_set     = CreateSocketSet(3);
+	AddSocket(socket_set, server_res->socket);
+	AddSocket(socket_set, client_res->socket);
 
 	// Main game loop
 	while (!WindowShouldClose())
@@ -91,20 +84,51 @@ int main()
 		// Clear
 		ClearBackground(RAYWHITE);
 
+		int active = CheckSockets(socket_set, 0);
+		if (active != 0)
+		{
+			TraceLog(LOG_DEBUG,
+					 "There are currently %d socket(s) with data to be processed.", active);
+		}
+
 		// A valid connection will != -1
 		if (!connected)
 		{
-			if (SocketAccept(server_res.socket.handle, &connection))
+			if (server_cfg.datagram)
 			{
 				ping      = true;
 				connected = true;
+			}
+			else
+			{
+				if ((connection = SocketAccept(server_res->socket, &connection_cfg)) != NULL)
+				{
+					AddSocket(socket_set, connection);
+					ping      = true;
+					connected = true;
+				}
 			}
 		}
 
 		// Connected
 		if (connected)
 		{
-			int bytesRecv = SocketReceive(&connection.socket, recvBuffer, sizeof(pingmsg));
+			int bytesRecv = 0;
+
+			if (server_cfg.datagram)
+			{
+				if (IsSocketReady(server_res->socket))
+				{
+					bytesRecv = SocketReceive(server_res->socket, recvBuffer, msglen, 0);
+				}
+			}
+			else
+			{
+				if (IsSocketReady(connection))
+				{
+					bytesRecv = SocketReceive(connection, recvBuffer, msglen, 0);
+				}
+			}
 			if (bytesRecv > 0)
 			{
 				if (strcmp(recvBuffer, pingmsg) == 0)
@@ -125,12 +149,12 @@ int main()
 				if (ping)
 				{
 					ping = false;
-					SocketSend(&client_res.socket, pingmsg, sizeof(pingmsg));
+					SocketSend(client_res->socket, pingmsg, msglen);
 				}
 				else if (pong)
 				{
 					pong = false;
-					SocketSend(&client_res.socket, pongmsg, sizeof(pongmsg));
+					SocketSend(client_res->socket, pongmsg, msglen);
 				}
 				elapsed = 0.0f;
 			}

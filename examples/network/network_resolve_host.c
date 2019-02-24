@@ -35,9 +35,8 @@ int main()
 
 	// Networking
 	InitNetwork(); 
-
-	AddressInformation addr;
-	ResolveHost("www.google.com", "80", &addr);
+	 
+	ResolveHost("www.google.com", "80");
 	ResolveIP("8.8.8.8", NULL, NAME_INFO_DEFAULT);
 	ResolveIP("2001:4860:4860::8888", "80", NAME_INFO_NUMERICSERV);
 
