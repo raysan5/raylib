@@ -688,8 +688,7 @@ void UnloadFont(Font font)
     {
         for (int i = 0; i < font.charsCount; i++)
         {
-            if(font.chars[i].data != NULL)
-                free(font.chars[i].data);
+            free(font.chars[i].data);
         }
         UnloadTexture(font.texture);
         free(font.chars);
