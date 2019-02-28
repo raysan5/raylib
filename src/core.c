@@ -990,6 +990,8 @@ const char *GetClipboardText(void)
 {
 #if defined(PLATFORM_DESKTOP)
     return glfwGetClipboardString(window);
+#else
+    return NULL;
 #endif
 }
 
