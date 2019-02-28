@@ -1326,13 +1326,11 @@ int TextToInteger(const char *text)
 
     return result;
 }
-
 //----------------------------------------------------------------------------------
 
 //----------------------------------------------------------------------------------
 // Module specific Functions Definition
 //----------------------------------------------------------------------------------
-
 #if defined(SUPPORT_FILEFORMAT_FNT)
 // Load a BMFont file (AngelCode font file)
 static Font LoadBMFont(const char *fileName)

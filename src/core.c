@@ -4321,7 +4321,7 @@ static void *EventThread(void *arg)
             // Button parsing
             if (event.type == EV_KEY)
             {
-                if((event.code == BTN_TOUCH) || (event.code == BTN_LEFT))
+                if ((event.code == BTN_TOUCH) || (event.code == BTN_LEFT))
                 {
                     currentMouseStateEvdev[MOUSE_LEFT_BUTTON] = event.value;
                     if (event.value > 0) gestureEvent.touchAction = TOUCH_DOWN;
