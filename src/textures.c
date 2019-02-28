@@ -353,7 +353,7 @@ Image LoadImageRaw(const char *fileName, int width, int height, int format, int 
         {
             TraceLog(LOG_WARNING, "[%s] RAW image data can not be read, wrong requested format or size", fileName);
 
-            if (image.data != NULL) free(image.data);
+            free(image.data);
         }
         else
         {
@@ -414,10 +414,7 @@ RenderTexture2D LoadRenderTexture(int width, int height)
 // Unload image from CPU memory (RAM)
 void UnloadImage(Image image)
 {
-    if (image.data != NULL) free(image.data);
-
-    // NOTE: It becomes anoying every time a texture is loaded
-    //TraceLog(LOG_INFO, "Unloaded image data");
+    free(image.data);
 }
 
 // Unload texture from GPU memory (VRAM)

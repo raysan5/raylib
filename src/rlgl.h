@@ -2727,18 +2727,18 @@ void rlDrawMesh(Mesh mesh, Material material, Matrix transform)
 // Unload mesh data from CPU and GPU
 void rlUnloadMesh(Mesh *mesh)
 {
-    if (mesh->vertices != NULL) free(mesh->vertices);
-    if (mesh->texcoords != NULL) free(mesh->texcoords);
-    if (mesh->normals != NULL) free(mesh->normals);
-    if (mesh->colors != NULL) free(mesh->colors);
-    if (mesh->tangents != NULL) free(mesh->tangents);
-    if (mesh->texcoords2 != NULL) free(mesh->texcoords2);
-    if (mesh->indices != NULL) free(mesh->indices);
+    free(mesh->vertices);
+    free(mesh->texcoords);
+    free(mesh->normals);
+    free(mesh->colors);
+    free(mesh->tangents);
+    free(mesh->texcoords2);
+    free(mesh->indices);
 
-    if (mesh->baseVertices != NULL) free(mesh->baseVertices);
-    if (mesh->baseNormals != NULL) free(mesh->baseNormals);
-    if (mesh->weightBias != NULL) free(mesh->weightBias);
-    if (mesh->weightId != NULL) free(mesh->weightId);
+    free(mesh->baseVertices);
+    free(mesh->baseNormals);
+    free(mesh->weightBias);
+    free(mesh->weightId);
 
     rlDeleteBuffers(mesh->vboId[0]);   // vertex
     rlDeleteBuffers(mesh->vboId[1]);   // texcoords
