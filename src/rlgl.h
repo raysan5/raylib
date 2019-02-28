@@ -728,6 +728,8 @@ typedef struct DrawCall {
     //unsigned int vaoId;         // Vertex Array id to be used on the draw
     //unsigned int shaderId;      // Shader id to be used on the draw
     unsigned int textureId;     // Texture id to be used on the draw
+                                // TODO: Support additional texture units?
+
     //Matrix projection;        // Projection matrix for this draw
     //Matrix modelview;         // Modelview matrix for this draw
 } DrawCall;
@@ -4132,9 +4134,13 @@ static void DrawBuffersDefault(void)
 
             glUniformMatrix4fv(currentShader.locs[LOC_MATRIX_MVP], 1, false, MatrixToFloat(matMVP));
             glUniform4f(currentShader.locs[LOC_COLOR_DIFFUSE], 1.0f, 1.0f, 1.0f, 1.0f);
-            glUniform1i(currentShader.locs[LOC_MAP_DIFFUSE], 0);
+            glUniform1i(currentShader.locs[LOC_MAP_DIFFUSE], 0);    // Provided value refers to the texture unit (active)
+            
+            // TODO: Support additional texture units on custom shader
+            //if (currentShader->locs[LOC_MAP_SPECULAR] > 0) glUniform1i(currentShader.locs[LOC_MAP_SPECULAR], 1);
+            //if (currentShader->locs[LOC_MAP_NORMAL] > 0) glUniform1i(currentShader.locs[LOC_MAP_NORMAL], 2);
 
-            // NOTE: Additional map textures not considered for default buffers drawing
+            // NOTE: Right now additional map textures not considered for default buffers drawing
 
             int vertexOffset = 0;
 
@@ -4164,6 +4170,10 @@ static void DrawBuffersDefault(void)
             for (int i = 0; i < drawsCounter; i++)
             {
                 glBindTexture(GL_TEXTURE_2D, draws[i].textureId);
+                
+                // TODO: Find some way to bind additional textures --> Use global texture IDs? Register them on draw[i]?
+                //if (currentShader->locs[LOC_MAP_SPECULAR] > 0) { glActiveTexture(GL_TEXTURE1); glBindTexture(GL_TEXTURE_2D, textureUnit1_id); }
+                //if (currentShader->locs[LOC_MAP_SPECULAR] > 0) { glActiveTexture(GL_TEXTURE2); glBindTexture(GL_TEXTURE_2D, textureUnit2_id); }
 
                 if ((draws[i].mode == RL_LINES) || (draws[i].mode == RL_TRIANGLES)) glDrawArrays(draws[i].mode, vertexOffset, draws[i].vertexCount);
                 else
