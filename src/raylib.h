@@ -109,6 +109,12 @@
 #define SOCKET_MAX_UDPCHANNELS (32)
 #define SOCKET_MAX_UDPADDRESSES (4)
 
+//
+#define ADDRESS_IPV4_ADDRSTRLEN 22
+#define ADDRESS_IPV6_ADDRSTRLEN 65
+#define ADDRESS_TYPE_IPV4 2
+#define ADDRESS_TYPE_IPV6 23
+
 // getnameinfo() defines
 #define NAME_INFO_DEFAULT 0x00 /* No flags set */
 #define NAME_INFO_NOFQDN 0x01 /* Only return nodename portion for local hosts */
@@ -586,6 +592,13 @@ typedef struct Packet
 	uint8_t* data; // Data stored in network byte order
 } Packet;
 
+//
+typedef struct _AddressInformation *  AddressInformation;
+typedef struct _SocketAddress *       SocketAddress;
+typedef struct _SocketAddressIPv4 *   SocketAddressIPv4;
+typedef struct _SocketAddressIPv6 *   SocketAddressIPv6;
+typedef struct _SocketAddressStorage *SocketAddressStorage; 
+ 
 //----------------------------------------------------------------------------------
 // Enumerators Definition
 //----------------------------------------------------------------------------------
@@ -1576,39 +1589,41 @@ extern "C"
 	RLAPI bool InitNetwork(void);
 	RLAPI void CloseNetwork(void);
 
-	// Protocol-independent name resolution from an address to an ANSI host name and from a port number to the ANSI service name.
-	RLAPI char *ResolveIP(const char *host, const char *port, int flags);
-
-	// Protocol-independent translation from an ANSI host name to an address.
-	RLAPI char *ResolveHost(const char *address, const char *port);
+	// Address API
+ 	RLAPI void ResolveIP(const char *host, const char *port, int flags, char* outhost);
+ 	RLAPI int ResolveHost(const char *address, const char *port, struct _AddressInformation* addr);
+	RLAPI int GetAddressFamily();
+	RLAPI int GetAddressSocketType(AddressInformation address);
+	RLAPI int GetAddressProtocol(AddressInformation address);
+	RLAPI void PrintAddressInfo(AddressInformation address);
+	RLAPI AddressInformation           AllocAddress();
+	RLAPI struct _AddressInformation **AllocAddressList(int size); 
 
 	// Socket API
 	RLAPI bool SocketCreate(SocketConfig *cfg, SocketResult *res);
+	RLAPI void SocketClose(SocketChannel socket);
 	RLAPI bool SocketListen(SocketConfig *cfg, SocketResult *res);
 	RLAPI bool SocketConnect(SocketConfig *cfg, SocketResult *res);
-	RLAPI void SocketClose(SocketChannel socket);
 	RLAPI Socket *SocketAccept(Socket *server, SocketConfig *cfg);
-	RLAPI int     SocketSend(Socket *socket, const void *datap, int len); 
-	RLAPI int SocketReceive(Socket *socket, void *data, int maxlen, int timeout); 
+	RLAPI int     SocketSend(Socket *socket, const void *datap, int len);
+	RLAPI int SocketReceive(Socket *socket, void *data, int maxlen, int timeout);
 
-	// Socket set methods for async i/o
+	RLAPI Socket *AllocSocket();
+	RLAPI SocketResult *AllocSocketResult();
+	RLAPI void          FreeSocket(Socket **sock);
+	RLAPI void          FreeSocketResult(SocketResult **result);
+
+	// Socket I/O API
 	RLAPI bool IsSocketReady(Socket* sock);
 	RLAPI SocketSet* AllocSocketSet(int max);
 	RLAPI void FreeSocketSet(SocketSet* sockset);
 	RLAPI int AddSocket(SocketSet* set, Socket* sock);
 	RLAPI int RemoveSocket(SocketSet* set, Socket* sock);
 	RLAPI int CheckSockets(SocketSet* set, unsigned int timeout);
-
-	// Creation and allocation
-	RLAPI SocketResult *AllocSocketResult();
-	RLAPI void          FreeSocketResult(SocketResult *result);
-	RLAPI Socket *AllocSocket();
-	RLAPI void    FreeSocket(Socket *sock);
-
-
-	// Data packets and helpers
-	Packet* AllocPacket(int size);
-	void FreePacket(Packet* packet);
+	 
+	// Packet API
+	Packet * AllocPacket(int size);
+	void     FreePacket(Packet *packet);
 	void PacketSend(Packet* packet);
 	void PacketReceive(Packet* packet);
 	void PacketWrite8(Packet* packet, uint16_t value);

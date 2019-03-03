@@ -39,56 +39,94 @@
 // Check if config flags have been externally provided on compilation line
 //----------------------------------------------------------------------------------
 
-#if !defined(EXTERNAL_CONFIG_FLAGS)
-#	include "config.h" // Defines module configuration flags
+#if defined(RNET_STANDALONE)
+#	include "rnet.h"
+#	include <stdarg.h>
+#else
+#	include "raylib.h"
+#	include "sysnet.h"
+#	if !defined(EXTERNAL_CONFIG_FLAGS)
+#		include "config.h" // Defines module configuration flags
+#	endif
 #endif
+
+#include <stdio.h>  // Required for: FILE, fopen(), fclose(), fread()
+#include <stdlib.h> // Required for: malloc(), free()
+#include <string.h> // Required for: strcmp(), strncmp()
 
 //----------------------------------------------------------------------------------
 // Module defines
 //----------------------------------------------------------------------------------
-#define SOCKET_BACKLOG_SIZE (20)
+#define NET_SOCKET_BACKLOG_SIZE (20)
+#define NET_MAXHOST (1025) // Max size of a fully-qualified domain name
+#define NET_MAXSERV (32)   // Max size of a service name
+#define NET_DEBUG_ENABLED (0)
 
 //----------------------------------------------------------------------------------
-// Module dependencies
+// Types and Structures Definition
 //----------------------------------------------------------------------------------
 
-#include "raylib.h"
-#include "sysnet.h"
+#if PLATFORM == PLATFORM_WINDOWS
+typedef socklen_t        _SocketLength;
+typedef SOCKADDR         _SocketAddress;
+typedef SOCKADDR_IN      _SocketAddressIPv4;
+typedef SOCKADDR_IN6     _SocketAddressIPv6;
+typedef SOCKADDR_STORAGE _SocketAddressStorage;
+typedef struct _AddressInformation {
+	int    ai_flags;                 // AI_PASSIVE, AI_CANONNAME, AI_NUMERICHOST
+	int    ai_family;                // PF_xxx
+	int    ai_socktype;              // SOCK_xxx
+	int    ai_protocol;              // 0 or IPPROTO_xxx for IPv4 and IPv6
+	size_t ai_addrlen;               // Length of ai_addr
+	struct sockaddr_storage ai_addr; // Binary address
+} _AddressInformation;
+#else
+#endif
 
-//----------------------------------------------------------------------------------
-// Module variables
-//----------------------------------------------------------------------------------
+#if defined(RNET_STANDALONE)
+typedef enum {
+	LOG_ALL,
+	LOG_TRACE,
+	LOG_DEBUG,
+	LOG_INFO,
+	LOG_WARNING,
+	LOG_ERROR,
+	LOG_FATAL,
+	LOG_NONE
+} TraceLogType;
+#endif
 
 //----------------------------------------------------------------------------------
 // Global module forward declarations
 //----------------------------------------------------------------------------------
 
-static bool  IsSocketValid(Socket* sock);
+static bool  IsSocketValid(Socket *sock);
 static void  SocketSetLastError(int err);
 static int   SocketGetLastError();
-static char* SocketGetLastErrorString();
-static char* SocketErrorCodeToString(int err);
-static bool  SocketSetDefaults(SocketConfig* config);
-static bool  InitSocket(Socket* outsock, struct addrinfo* addr);
-static bool  CreateSocket(SocketConfig* config, SocketResult* outresult);
-static bool  SocketSetBlocking(Socket* out);
-static bool  SocketSetNonBlocking(Socket* out);
-static bool  SocketSetOptions(SocketConfig* config, Socket* channel);
-static void* GetSocketAddressPtr(struct sockaddr* sa);
-static void* GetSocketPortPtr(struct sockaddr* sa);
-static void  SocketSetHints(SocketConfig* cfg, struct addrinfo* hints);
-static bool  IsIPv4Address(const char* ip);
-static bool  IsIPv6Address(const char* ip);
-static char* SocketAddressToString(struct sockaddr* sockaddr, char buffer[], int* port);
-static void PrintSocket(struct sockaddr* addr, const int family, const int socktype, const int protocol);
-static bool FillIPv4SockAddress(struct sockaddr_in* sa, const char* host, unsigned short port);
-static bool FillIPv6SockAddress(struct sockaddr_in6* sa, const char* host, unsigned short port);
+static char *SocketGetLastErrorString();
+static char *SocketErrorCodeToString(int err);
+static bool  SocketSetDefaults(SocketConfig *config);
+static bool  InitSocket(Socket *outsock, struct addrinfo *addr);
+static bool  CreateSocket(SocketConfig *config, SocketResult *outresult);
+static bool  SocketSetBlocking(Socket *out);
+static bool  SocketSetNonBlocking(Socket *out);
+static bool  SocketSetOptions(SocketConfig *config, Socket *channel);
+static void *GetSocketAddressPtr(struct sockaddr *sa);
+static void *GetSocketPortPtr(struct sockaddr *sa);
+static void  SocketSetHints(SocketConfig *cfg, struct addrinfo *hints);
+static bool  IsIPv4Address(const char *ip);
+static bool  IsIPv6Address(const char *ip);
+static char *SocketAddressToString(struct sockaddr_storage *sockaddr, char buffer[], int *port);
+static void  PrintSocket(struct sockaddr_storage *addr, const int family, const int socktype, const int protocol);
+static bool  FillIPv4SockAddress(struct sockaddr_in *sa, const char *host, unsigned short port);
+static bool  FillIPv6SockAddress(struct sockaddr_in6 *sa, const char *host, unsigned short port);
 
 //----------------------------------------------------------------------------------
 // Global module implementationd
 //----------------------------------------------------------------------------------
 
-static bool FillIPv4SockAddress(struct sockaddr_in* sa, const char* host, unsigned short port)
+//
+static bool FillIPv4SockAddress(struct sockaddr_in *sa, const char *host, unsigned short port)
 {
 	sa->sin_family = AF_INET;
 	sa->sin_port   = htons(port);
@@ -102,7 +140,8 @@ static bool FillIPv4SockAddress(struct sockaddr_in* sa, const char* host, unsign
 	return true;
 }
 
-static bool FillIPv6SockAddress(struct sockaddr_in6* sa, const char* host, unsigned short port)
+//
+static bool FillIPv6SockAddress(struct sockaddr_in6 *sa, const char *host, unsigned short port)
 {
 	sa->sin6_family = AF_INET6;
 	sa->sin6_port   = htons(port);
@@ -117,9 +156,9 @@ static bool FillIPv6SockAddress(struct sockaddr_in6* sa, const char* host, unsig
 }
 
 // Print socket information
-static void PrintSocket(struct sockaddr* addr, const int family, const int socktype, const int protocol)
+static void PrintSocket(struct sockaddr_storage *addr, const int family, const int socktype, const int protocol)
 {
-	struct sockaddr* sockaddr_ip;
+	struct sockaddr *sockaddr_ip;
 	char             ip[INET6_ADDRSTRLEN]; // Enough pace to hold a IPv6 string
 	int              port;
 	switch (family) {
@@ -169,16 +208,16 @@ static void PrintSocket(struct sockaddr* addr, const int family, const int sockt
 }
 
 // Convert network ordered socket address to human readable string (127.0.0.1)
-static char* SocketAddressToString(struct sockaddr* sockaddr)
+static char *SocketAddressToString(struct sockaddr_storage *sockaddr)
 {
 	static ipv6[INET6_ADDRSTRLEN];
-	switch (sockaddr->sa_family) {
+	switch (sockaddr->ss_family) {
 		case AF_INET: {
-			struct sockaddr_in* s = ((struct sockaddr_in*) sockaddr);
+			struct sockaddr_in *s = ((struct sockaddr_in *) sockaddr);
 			return inet_ntop(AF_INET, &s->sin_addr, ipv6, INET_ADDRSTRLEN);
 		} break;
 		case AF_INET6: {
-			struct sockaddr_in6* s = ((struct sockaddr_in6*) sockaddr);
+			struct sockaddr_in6 *s = ((struct sockaddr_in6 *) sockaddr);
 			return inet_ntop(AF_INET6, &s->sin6_addr, ipv6, INET6_ADDRSTRLEN);
 		} break;
 		default: {
@@ -188,7 +227,7 @@ static char* SocketAddressToString(struct sockaddr* sockaddr)
 }
 
 //
-static bool IsIPv4Address(const char* ip)
+static bool IsIPv4Address(const char *ip)
 {
 	struct sockaddr_in sa;
 	int                result = inet_pton(AF_INET, ip, &(sa.sin_addr));
@@ -196,7 +235,7 @@ static bool IsIPv4Address(const char* ip)
 }
 
 //
-static bool IsIPv6Address(const char* ip)
+static bool IsIPv6Address(const char *ip)
 {
 	struct sockaddr_in6 sa;
 	int                 result = inet_pton(AF_INET6, ip, &(sa.sin6_addr));
@@ -204,27 +243,27 @@ static bool IsIPv6Address(const char* ip)
 }
 
 //
-void* GetSocketPortPtr(struct sockaddr* sa)
+void *GetSocketPortPtr(struct sockaddr *sa)
 {
 	if (sa->sa_family == AF_INET) {
-		return &(((struct sockaddr_in*) sa)->sin_port);
+		return &(((struct sockaddr_in *) sa)->sin_port);
 	}
 
-	return &(((struct sockaddr_in6*) sa)->sin6_port);
+	return &(((struct sockaddr_in6 *) sa)->sin6_port);
 }
 
 //
-void* GetSocketAddressPtr(struct sockaddr* sa)
+void *GetSocketAddressPtr(struct sockaddr *sa)
 {
 	if (sa->sa_family == AF_INET) {
-		return &(((struct sockaddr_in*) sa)->sin_addr);
+		return &(((struct sockaddr_in *) sa)->sin_addr);
 	}
 
-	return &(((struct sockaddr_in6*) sa)->sin6_addr);
+	return &(((struct sockaddr_in6 *) sa)->sin6_addr);
 }
 
 //
-static bool IsSocketValid(Socket* sock)
+static bool IsSocketValid(Socket *sock)
 {
 	if (sock != NULL) { return (sock->channel != INVALID_SOCKET); }
 	return false;
@@ -251,13 +290,13 @@ static int SocketGetLastError()
 }
 
 // Returns a human-readable string representing the last error message
-static char* SocketGetLastErrorString()
+static char *SocketGetLastErrorString()
 {
 	return SocketErrorCodeToString(SocketGetLastError());
 }
 
 // Returns a human-readable string representing the error message (err)
-static char* SocketErrorCodeToString(int err)
+static char *SocketErrorCodeToString(int err)
 {
 #if PLATFORM == PLATFORM_WINDOWS
 	static char gaiStrErrorBuffer[GAI_STRERROR_BUFFER_SIZE];
@@ -269,17 +308,17 @@ static char* SocketErrorCodeToString(int err)
 }
 
 //
-static bool SocketSetDefaults(SocketConfig* config)
+static bool SocketSetDefaults(SocketConfig *config)
 {
 	if (config->backlog_size == 0) {
-		config->backlog_size = SOCKET_BACKLOG_SIZE;
+		config->backlog_size = NET_SOCKET_BACKLOG_SIZE;
 	}
 
 	return true;
 }
 
 // Create the socket channel
-static bool InitSocket(Socket* sock, struct addrinfo* addr)
+static bool InitSocket(Socket *sock, struct addrinfo *addr)
 {
 	switch (sock->type) {
 		case SOCKET_TCP: sock->channel = socket(AF_INET, SOCK_STREAM, 0); break;
@@ -305,12 +344,12 @@ static bool InitSocket(Socket* sock, struct addrinfo* addr)
 //		.nonblocking = true,
 //	};
 //	SocketResult server_res;				SocketResult client_res;
-static bool CreateSocket(SocketConfig* config, SocketResult* outresult)
+static bool CreateSocket(SocketConfig *config, SocketResult *outresult)
 {
 	bool             success = true;
 	int              addrstatus;
 	struct addrinfo  hints; // Address flags (IPV4, IPV6, UDP?)
-	struct addrinfo* res;   // A pointer to the resulting address list
+	struct addrinfo *res;   // A pointer to the resulting address list
 	outresult->socket->channel = INVALID_SOCKET;
 	outresult->status          = RESULT_FAILURE;
 
@@ -352,7 +391,7 @@ static bool CreateSocket(SocketConfig* config, SocketResult* outresult)
 	}
 
 	// Walk the address information linked-list
-	struct addrinfo* it;
+	struct addrinfo *it;
 	for (it = res; it != NULL; it = it->ai_next) {
 		// Initialise the socket
 		if (!InitSocket(outresult->socket, it)) {
@@ -392,12 +431,12 @@ static bool CreateSocket(SocketConfig* config, SocketResult* outresult)
 		outresult->socket->isServer = config->server;
 		switch (res->ai_addr->sa_family) {
 			case AF_INET: {
-				struct sockaddr_in* s = ((struct sockaddr_in*) res->ai_addr);
+				struct sockaddr_in *s = ((struct sockaddr_in *) res->ai_addr);
 				outresult->socket->address.host = s->sin_addr.s_addr;
 				outresult->socket->address.port = s->sin_port;
 			} break;
 			case AF_INET6: {
-				struct sockaddr_in6* s = ((struct sockaddr_in6*) res->ai_addr);
+				struct sockaddr_in6 *s = ((struct sockaddr_in6 *) res->ai_addr);
 				outresult->socket->address.host = s->sin6_addr.s6_addr;
 				outresult->socket->address.port = s->sin6_port;
 			} break;
@@ -408,7 +447,7 @@ static bool CreateSocket(SocketConfig* config, SocketResult* outresult)
 }
 
 //
-static bool SocketSetBlocking(Socket* sock)
+static bool SocketSetBlocking(Socket *sock)
 {
 	bool ret = true;
 #if PLATFORM == PLATFORM_WINDOWS
@@ -427,7 +466,7 @@ static bool SocketSetBlocking(Socket* sock)
 }
 
 //
-static bool SocketSetNonBlocking(Socket* sock)
+static bool SocketSetNonBlocking(Socket *sock)
 {
 	bool ret = true;
 #if PLATFORM == PLATFORM_WINDOWS
@@ -445,10 +484,10 @@ static bool SocketSetNonBlocking(Socket* sock)
 }
 
 //
-static bool SocketSetOptions(SocketConfig* config, Socket* sock)
+static bool SocketSetOptions(SocketConfig *config, Socket *sock)
 {
 	for (int i = 0; i < SOCKET_MAX_SOCK_OPTS; i++) {
-		SocketOpt* opt = &config->sockopts[i];
+		SocketOpt *opt = &config->sockopts[i];
 		if (opt->id == 0) { break; }
 
 		if (setsockopt(sock->channel, SOL_SOCKET, opt->id, opt->value, opt->valueLen) < 0) {
@@ -460,7 +499,7 @@ static bool SocketSetOptions(SocketConfig* config, Socket* sock)
 }
 
 // Set "hints" in an addrinfo struct, to be passed to getaddrinfo.
-static void SocketSetHints(SocketConfig* cfg, struct addrinfo* hints)
+static void SocketSetHints(SocketConfig *cfg, struct addrinfo *hints)
 {
 	if (cfg == NULL || hints == NULL) { return; }
 	memset(hints, 0, sizeof(*hints));
@@ -547,18 +586,12 @@ void CloseNetwork()
 //	NAME_INFO_NAMEREQD		0x04	// Error if the host's name not in DNS
 //	NAME_INFO_NUMERICSERV	0x08	// Return numeric form of the service (port #)
 //	NAME_INFO_DGRAM			0x10	// Service is a datagram service
-char* ResolveIP(const char* ip, const char* port, int flags)
+void ResolveIP(const char *ip, const char *port, int flags, char *host, char *serv)
 {
 	// Variables
-	char             host[NI_MAXHOST];
-	char             service[NI_MAXSERV];
-	int              status;  // Status value to return (0) is success
-	struct addrinfo  hints;   // Address flags (IPV4, IPV6, UDP?)
-	struct addrinfo* results; // A pointer to the resulting address list
-
-	// Zero out the host buffer
-	memset(&host, '\0', sizeof(host));
-	memset(&service, '\0', sizeof(service));
+	int              status; // Status value to return (0) is success
+	struct addrinfo  hints;  // Address flags (IPV4, IPV6, UDP?)
+	struct addrinfo *res;    // A pointer to the resulting address list
 
 	// Set the hints
 	memset(&hints, 0, sizeof hints);
@@ -566,10 +599,10 @@ char* ResolveIP(const char* ip, const char* port, int flags)
 	hints.ai_protocol = 0; // Automatically select correct protocol (IPPROTO_TCP), (IPPROTO_UDP)
 
 	// Populate address information
-	status = getaddrinfo(ip,      // e.g. "www.example.com" or IP
-						 port,    // e.g. "http" or port number
-						 &hints,  // e.g. SOCK_STREAM/SOCK_DGRAM
-						 &results // The struct to populate
+	status = getaddrinfo(ip,     // e.g. "www.example.com" or IP
+						 port,   // e.g. "http" or port number
+						 &hints, // e.g. SOCK_STREAM/SOCK_DGRAM
+						 &res    // The struct to populate
 	);
 
 	// Did we succeed?
@@ -580,40 +613,36 @@ char* ResolveIP(const char* ip, const char* port, int flags)
 	}
 
 	// Attempt to resolve network byte order ip to hostname
-	switch (results->ai_family) {
+	switch (res->ai_family) {
 		case AF_INET:
-			status = getnameinfo(&*((struct sockaddr*) results->ai_addr),
-								 sizeof(*((struct sockaddr_in*) results->ai_addr)),
+			status = getnameinfo(&*((struct sockaddr *) res->ai_addr),
+								 sizeof(*((struct sockaddr_in *) res->ai_addr)),
 								 host,
-								 sizeof(host),
-								 service,
-								 NI_MAXSERV,
+								 NET_MAXHOST,
+								 serv,
+								 NET_MAXSERV,
 								 flags);
 			break;
 		case AF_INET6:
-			status = getnameinfo(&*((struct sockaddr_in6*) results->ai_addr),
-								 sizeof(*((struct sockaddr_in6*) results->ai_addr)),
+			status = getnameinfo(&*((struct sockaddr_in6 *) res->ai_addr),
+								 sizeof(*((struct sockaddr_in6 *) res->ai_addr)),
 								 host,
-								 sizeof(host),
-								 service,
-								 NI_MAXSERV,
+								 NET_MAXHOST,
+								 serv,
+								 NET_MAXSERV,
 								 flags);
 			break;
 		default: break;
 	}
 
-	// Did we succeed?
 	if (status != 0) {
 		TraceLog(LOG_WARNING, "Failed to resolve ip %s: %s", ip, SocketGetLastErrorString());
 	} else {
-		TraceLog(LOG_INFO, "Successfully resolved %s::%s to %s", ip, port, host);
+		TraceLog(LOG_DEBUG, "Successfully resolved %s::%s to %s", ip, port, host);
 	}
 
 	// Free the pointer to the data returned by addrinfo
-	freeaddrinfo(results);
-
-	// Return the resulting hostname
-	return host;
+	freeaddrinfo(res);
 }
 
 //	Protocol-independent translation from an ANSI host name to an address
@@ -621,13 +650,17 @@ char* ResolveIP(const char* ip, const char* port, int flags)
 //	e.g.
 //	const char* address	= "127.0.0.1" (local address)
 //	const char* port		= "80"
-char* ResolveHost(const char* address, const char* port)
+//
+//	returns:
+//		the total amount of addresses found
+//
+int ResolveHost(const char *address, const char *port, AddressInformation *outAddrList)
 {
 	// Variables
-	int              status;  // Status value to return (0) is success
-	struct addrinfo  hints;   // Address flags (IPV4, IPV6, UDP?)
-	struct addrinfo* results; // A pointer to the resulting address list
-	char             ip[INET6_ADDRSTRLEN]; // Enough pace to hold a IPv6 string
+	int              status; // Status value to return (0) is success
+	struct addrinfo  hints;  // Address flags (IPV4, IPV6, UDP?)
+	struct addrinfo *res;    // will point to the results
+	struct addrinfo *iterator;
 	int              portptr;
 
 	// Set the hints
@@ -642,7 +675,7 @@ char* ResolveHost(const char* address, const char* port)
 	status = getaddrinfo(address, // e.g. "www.example.com" or IP
 						 port,    // e.g. "http" or port number
 						 &hints,  // e.g. SOCK_STREAM/SOCK_DGRAM
-						 &results // The struct to populate
+						 &res     // The struct to populate
 	);
 
 	// Did we succeed?
@@ -652,23 +685,61 @@ char* ResolveHost(const char* address, const char* port)
 		TraceLog(LOG_INFO, "Successfully resolved host %s:%s", address, port);
 	}
 
-	struct addrinfo* iterator;
-	for (iterator = results; iterator != NULL; iterator = iterator->ai_next) {
-		TraceLog(LOG_DEBUG, "GetAddressInformation");
-		TraceLog(LOG_DEBUG, "\tFlags: 0x%x", iterator->ai_flags);
-		PrintSocket(iterator->ai_addr,
-					iterator->ai_family,
-					iterator->ai_socktype,
-					iterator->ai_protocol);
-		TraceLog(LOG_DEBUG, "Length of this sockaddr: %d", iterator->ai_addrlen);
-		TraceLog(LOG_DEBUG, "Canonical name: %s", iterator->ai_canonname);
+	// Calculate the size of the address information list
+	int size = 0;
+	for (iterator = res; iterator != NULL; iterator = iterator->ai_next) {
+		size++;
+	}
+
+	// Validate the size is > 0, otherwise return
+	if (size <= 0) {
+		TraceLog(LOG_WARNING, "Error, no addresses found.");
+		return;
+	}
+
+	// Dynamically allocate an array of address information structs
+	if (outAddrList != NULL) {
+		int i;
+		for (i = 0; i < size; ++i) {
+			outAddrList[i] = AllocAddress();
+			if (outAddrList[i] == NULL) { break; }
+		}
+		outAddrList[i] = NULL;
+		if (i != size) { outAddrList = NULL; }
+	} else {
+		TraceLog(LOG_WARNING,
+				 "Error, failed to dynamically allocate memory for the address list");
+	}
+
+	// Copy all the address information from res into outAddrList
+	int i = 0;
+	for (iterator = res; iterator != NULL; iterator = iterator->ai_next) {
+		if (i < size) {
+			outAddrList[i]->ai_flags    = iterator->ai_flags;
+			outAddrList[i]->ai_family   = iterator->ai_family;
+			outAddrList[i]->ai_socktype = iterator->ai_socktype;
+			outAddrList[i]->ai_protocol = iterator->ai_protocol;
+			outAddrList[i]->ai_addrlen  = iterator->ai_addrlen;
+			memcpy(&outAddrList[i]->ai_addr, iterator->ai_addr, iterator->ai_addrlen);
+#if NET_DEBUG_ENABLED
+			TraceLog(LOG_DEBUG, "GetAddressInformation");
+			TraceLog(LOG_DEBUG, "\tFlags: 0x%x", iterator->ai_flags);
+			PrintSocket(&outAddrList[i]->ai_addr,
+						outAddrList[i]->ai_family,
+						outAddrList[i]->ai_socktype,
+						outAddrList[i]->ai_protocol);
+			TraceLog(LOG_DEBUG, "Length of this sockaddr: %d", outAddrList[i]->ai_addrlen);
+			TraceLog(LOG_DEBUG, "Canonical name: %s", iterator->ai_canonname);
+#endif
+			i++;
+		}
 	}
 
 	// Free the pointer to the data returned by addrinfo
-	freeaddrinfo(results);
+	freeaddrinfo(res);
 
-	// Return the resulting hostname
-	return SocketAddressToString(results->ai_addr, ip, &portptr);
+	// Return the total count of addresses found
+	return size;
 }
 
 //	This here is the bread and butter of the socket API, This function will
@@ -685,7 +756,7 @@ char* ResolveHost(const char* address, const char* port)
 //		.nonblocking = true,
 //	};
 //	SocketResult server_res;				SocketResult client_res;
-bool SocketCreate(SocketConfig* config, SocketResult* result)
+bool SocketCreate(SocketConfig *config, SocketResult *result)
 {
 	// Socket creation result
 	bool success = true;
@@ -713,7 +784,7 @@ bool SocketCreate(SocketConfig* config, SocketResult* result)
 }
 
 //
-bool SocketListen(SocketConfig* config, SocketResult* result)
+bool SocketListen(SocketConfig *config, SocketResult *result)
 {
 	bool success   = true;
 	result->status = RESULT_FAILURE;
@@ -728,7 +799,7 @@ bool SocketListen(SocketConfig* config, SocketResult* result)
 		clientService.sin_port        = htons(8080);
 
 		// Attempt to bind the socket
-		if (bind(result->socket->channel, (SOCKADDR*) &clientService, sizeof(clientService)) != SOCKET_ERROR) {
+		if (bind(result->socket->channel, (SOCKADDR *) &clientService, sizeof(clientService)) != SOCKET_ERROR) {
 			TraceLog(LOG_INFO, "Successfully bound socket.");
 		} else {
 			result->socket->status = SocketGetLastError();
@@ -764,7 +835,7 @@ bool SocketListen(SocketConfig* config, SocketResult* result)
 }
 
 //
-bool SocketConnect(SocketConfig* config, SocketResult* result)
+bool SocketConnect(SocketConfig *config, SocketResult *result)
 {
 	bool success   = true;
 	result->status = RESULT_FAILURE;
@@ -783,7 +854,7 @@ bool SocketConnect(SocketConfig* config, SocketResult* result)
 		clientService.sin_port        = htons(8080);
 
 		// Did we connect successfully?
-		if (connect(result->socket->channel, (SOCKADDR*) &clientService, sizeof(clientService)) != SOCKET_ERROR) {
+		if (connect(result->socket->channel, (SOCKADDR *) &clientService, sizeof(clientService)) != SOCKET_ERROR) {
 			TraceLog(LOG_INFO, "Successfully connected to socket.");
 		} else {
 			result->socket->status = SocketGetLastError();
@@ -807,7 +878,7 @@ bool SocketConnect(SocketConfig* config, SocketResult* result)
 //	Closes an existing socket
 //
 //	SocketChannel socket - The id of the socket to close
-void SocketClose(Socket* sock)
+void SocketClose(Socket *sock)
 {
 	if (sock != NULL) {
 		if (sock->channel != INVALID_SOCKET) { closesocket(sock->channel); }
@@ -830,17 +901,17 @@ void SocketClose(Socket* sock)
 //			connected = true;
 //		}
 //	}
-Socket* SocketAccept(Socket* server, SocketConfig* config)
+Socket *SocketAccept(Socket *server, SocketConfig *config)
 {
 	if (!server->isServer || server->type == SOCKET_UDP) { return NULL; }
 	struct sockaddr_storage sock_addr;
 	socklen_t               sock_alen;
-	Socket*                 sock;
+	Socket *                sock;
 	int                     sock_port;
 	sock          = AllocSocket();
 	server->ready = 0;
 	sock_alen     = sizeof(sock_addr);
-	sock->channel = accept(server->channel, (struct sockaddr*) &sock_addr, &sock_alen);
+	sock->channel = accept(server->channel, (struct sockaddr *) &sock_addr, &sock_alen);
 	if (sock->channel == INVALID_SOCKET) {
 		sock->status = SocketGetLastError();
 		TraceLog(LOG_WARNING, "Socket Error: %s", SocketErrorCodeToString(sock->status));
@@ -854,14 +925,14 @@ Socket* SocketAccept(Socket* server, SocketConfig* config)
 	sock->type     = server->type;
 	switch (sock_addr.ss_family) {
 		case AF_INET: {
-			struct sockaddr_in* s = ((struct sockaddr_in*) &sock_addr);
+			struct sockaddr_in *s = ((struct sockaddr_in *) &sock_addr);
 			sock->address.host    = s->sin_addr.s_addr;
 			sock->address.port    = s->sin_port;
 			TraceLog(LOG_INFO, "Server: Got connection from %s::%hu", SocketAddressToString(s),
 					 ntohs(sock->address.port));
 		} break;
 		case AF_INET6: {
-			struct sockaddr_in6* s = ((struct sockaddr_in6*) &sock_addr);
+			struct sockaddr_in6 *s = ((struct sockaddr_in6 *) &sock_addr);
 			sock->address.host     = s->sin6_addr.s6_addr;
 			sock->address.port     = s->sin6_port;
 			TraceLog(LOG_INFO, "Server: Got connection from %s::%hu", SocketAddressToString(s),
@@ -874,13 +945,13 @@ Socket* SocketAccept(Socket* server, SocketConfig* config)
 //	Send 'len' bytes of 'data' over the non-server socket 'sock'
 //
 //	Example
-int SocketSend(Socket* sock, const void* datap, int length)
+int SocketSend(Socket *sock, const void *datap, int length)
 {
 	int                  sent    = 0;
 	int                  left    = length;
 	int                  status  = -1;
 	int                  numsent = 0;
-	const unsigned char* data    = (const unsigned char*) datap;
+	const unsigned char *data    = (const unsigned char *) datap;
 
 	// Server sockets are for accepting connections only
 	if (sock->isServer) {
@@ -893,7 +964,7 @@ int SocketSend(Socket* sock, const void* datap, int length)
 		case SOCKET_TCP: {
 			SocketSetLastError(0);
 			do {
-				length = send(sock->channel, (const char*) data, left, 0);
+				length = send(sock->channel, (const char *) data, left, 0);
 				if (length > 0) {
 					sent += length;
 					left -= length;
@@ -920,7 +991,7 @@ int SocketSend(Socket* sock, const void* datap, int length)
 			dest.sin_port        = sock->address.port;
 			dest.sin_addr.s_addr = sock->address.host;
 			SocketSetLastError(0);
-			status = sendto(sock->channel, (const char*) data, left, 0, (struct sockaddr*) &dest, sizeof(dest));
+			status = sendto(sock->channel, (const char *) data, left, 0, (struct sockaddr *) &dest, sizeof(dest));
 			if (sent >= 0) {
 				sock->status = status;
 				++numsent;
@@ -942,7 +1013,7 @@ int SocketSend(Socket* sock, const void* datap, int length)
 //	This function returns the actual amount of data received.  If the return
 //	value is less than or equal to zero, then either the remote connection was
 //	closed, or an unknown socket error occurred.
-int SocketReceive(Socket* sock, void* data, int maxlen, int timeout)
+int SocketReceive(Socket *sock, void *data, int maxlen, int timeout)
 {
 	int                     len     = 0;
 	int                     numrecv = 0;
@@ -965,16 +1036,16 @@ int SocketReceive(Socket* sock, void* data, int maxlen, int timeout)
 		case SOCKET_TCP: {
 			SocketSetLastError(0);
 			do {
-				len = recv(sock->channel, (char*) data, maxlen, 0);
+				len = recv(sock->channel, (char *) data, maxlen, 0);
 			} while (SocketGetLastError() == WSAEINTR);
 
 			if (len > 0) {
 				// Who sent the packet?
 				if (sock->type == SOCKET_UDP) {
 					TraceLog(
-						LOG_DEBUG, "Received data from: %s", inet_ntop(sock_addr.ss_family, GetSocketAddressPtr((struct sockaddr*) &sock_addr), ip, sizeof(ip)));
+						LOG_DEBUG, "Received data from: %s", inet_ntop(sock_addr.ss_family, GetSocketAddressPtr((struct sockaddr *) &sock_addr), ip, sizeof(ip)));
 				}
-				((unsigned char*) data)[len] = '\0'; // Add null terminating character to the end of the stream
+				((unsigned char *) data)[len] = '\0'; // Add null terminating character to the end of the stream
 				TraceLog(LOG_DEBUG, "Received \"%s\" (%d bytes)", data, len);
 			}
 			sock->ready = 0;
@@ -987,7 +1058,7 @@ int SocketReceive(Socket* sock, void* data, int maxlen, int timeout)
                               data,   // A pointer to the data buffer to fill
                               maxlen, // The max length of the data to fill
                               0,      // Flags
-                              (struct sockaddr*) &sock_addr, // The address of the recevied data
+                              (struct sockaddr *) &sock_addr, // The address of the recevied data
                               &sock_len // The length of the received data address
             );
 			if (status >= 0) {
@@ -1006,16 +1077,16 @@ int SocketReceive(Socket* sock, void* data, int maxlen, int timeout)
 }
 
 //
-bool IsSocketReady(Socket* sock)
+bool IsSocketReady(Socket *sock)
 {
 	return (sock != NULL) && (sock->ready);
 }
 
 //
-SocketResult* AllocSocketResult()
+SocketResult *AllocSocketResult()
 {
-	struct SocketResult* res;
-	res = (struct SocketResult*) malloc(sizeof(*res));
+	struct SocketResult *res;
+	res = (struct SocketResult *) malloc(sizeof(*res));
 	if (res != NULL) {
 		memset(res, 0, sizeof(*res));
 		if ((res->socket = AllocSocket()) == NULL) {
@@ -1027,17 +1098,21 @@ SocketResult* AllocSocketResult()
 }
 
 //
-void FreeSocketResult(SocketResult* result)
+void FreeSocketResult(SocketResult **result)
 {
-	if (result != NULL) { free(result); }
+	if (*result != NULL) {
+		if ((*result)->socket != NULL) { FreeSocket(&((*result)->socket)); }
+		free(*result);
+		*result = NULL;
+	}
 }
 
 //
-Socket* AllocSocket()
+Socket *AllocSocket()
 {
 	// Allocate a socket if one already hasn't been
-	struct Socket* sock;
-	sock = (Socket*) malloc(sizeof(*sock));
+	struct Socket *sock;
+	sock = (Socket *) malloc(sizeof(*sock));
 	if (socket != NULL) {
 		memset(sock, 0, sizeof(*sock));
 	} else {
@@ -1051,23 +1126,25 @@ Socket* AllocSocket()
 }
 
 //
-void FreeSocket(Socket* sock)
+void FreeSocket(Socket **sock)
 {
-	SocketClose(sock);
-	free(sock);
+	if (*sock != NULL) {
+		free(*sock);
+		*sock = NULL;
+	}
 }
 
 //
-SocketSet* AllocSocketSet(int max)
+SocketSet *AllocSocketSet(int max)
 {
-	struct SocketSet* set;
+	struct SocketSet *set;
 	int               i;
 
-	set = (struct SocketSet*) malloc(sizeof(*set));
+	set = (struct SocketSet *) malloc(sizeof(*set));
 	if (set != NULL) {
 		set->numsockets = 0;
 		set->maxsockets = max;
-		set->sockets    = (struct Socket**) malloc(max * sizeof(*set->sockets));
+		set->sockets = (struct Socket **) malloc(max * sizeof(*set->sockets));
 		if (set->sockets != NULL) {
 			for (i = 0; i < max; ++i) { set->sockets[i] = NULL; }
 		} else {
@@ -1079,7 +1156,7 @@ SocketSet* AllocSocketSet(int max)
 }
 
 //
-void FreeSocketSet(SocketSet* set)
+void FreeSocketSet(SocketSet *set)
 {
 	if (set) {
 		free(set->sockets);
@@ -1088,7 +1165,7 @@ void FreeSocketSet(SocketSet* set)
 }
 
 //
-int AddSocket(SocketSet* set, Socket* sock)
+int AddSocket(SocketSet *set, Socket *sock)
 {
 	if (sock != NULL) {
 		if (set->numsockets == set->maxsockets) {
@@ -1096,7 +1173,7 @@ int AddSocket(SocketSet* set, Socket* sock)
 			SocketSetLastError(0);
 			return (-1);
 		}
-		set->sockets[set->numsockets++] = (struct Socket*) sock;
+		set->sockets[set->numsockets++] = (struct Socket *) sock;
 	} else {
 		TraceLog(LOG_DEBUG, "Socket Error: %s", "Socket was null");
 		SocketSetLastError(0);
@@ -1106,13 +1183,13 @@ int AddSocket(SocketSet* set, Socket* sock)
 }
 
 //
-int RemoveSocket(SocketSet* set, Socket* sock)
+int RemoveSocket(SocketSet *set, Socket *sock)
 {
 	int i;
 
 	if (sock != NULL) {
 		for (i = 0; i < set->numsockets; ++i) {
-			if (set->sockets[i] == (struct Socket*) sock) { break; }
+			if (set->sockets[i] == (struct Socket *) sock) { break; }
 		}
 		if (i == set->numsockets) {
 			TraceLog(LOG_DEBUG, "Socket Error: %s", "Socket not found");
@@ -1128,7 +1205,7 @@ int RemoveSocket(SocketSet* set, Socket* sock)
 }
 
 //
-int CheckSockets(SocketSet* set, unsigned int timeout)
+int CheckSockets(SocketSet *set, unsigned int timeout)
 {
 	int            i;
 	SOCKET         maxfd;
@@ -1172,16 +1249,16 @@ int CheckSockets(SocketSet* set, unsigned int timeout)
 }
 
 //
-Packet* AllocPacket(int size)
+Packet *AllocPacket(int size)
 {
-	struct Packet* packet;
-	packet = (struct Packet*) malloc(sizeof(*packet));
+	struct Packet *packet;
+	packet = (struct Packet *) malloc(sizeof(*packet));
 	if (packet != NULL) {
 		memset(packet, 0, sizeof(*packet));
 		packet->size = 0;
 		packet->offs = 0;
 		packet->maxs = size;
-		packet->data = (uint8_t*) malloc(size * sizeof(uint8_t));
+		packet->data = (uint8_t *) malloc(size * sizeof(uint8_t));
 		memset(packet->data, '\0', size);
 		if (packet->data == NULL) {
 			free(packet);
@@ -1195,7 +1272,7 @@ Packet* AllocPacket(int size)
 }
 
 //
-void FreePacket(Packet* packet)
+void FreePacket(Packet *packet)
 {
 	if (packet != NULL) {
 		if (packet->data != NULL) {
@@ -1208,22 +1285,59 @@ void FreePacket(Packet* packet)
 }
 
 //
-void PacketSend(Packet* packet)
+AddressInformation AllocAddress()
+{
+	AddressInformation addr;
+	addr = (AddressInformation) calloc(1, sizeof(*addr));
+	return addr;
+}
+
+//
+AddressInformation *AllocAddressList(int size)
+{
+	AddressInformation *addr;
+	addr = (AddressInformation *) malloc(size * sizeof(AddressInformation));
+	return addr;
+}
+
+int GetAddressSocketType(AddressInformation address)
+{
+	return address->ai_socktype;
+}
+
+int GetAddressProtocol(AddressInformation address)
+{
+	return address->ai_protocol;
+}
+
+int GetAddressFamily(AddressInformation address)
+{
+	return address->ai_family;
+}
+
+//
+void PrintAddressInfo(AddressInformation addr)
+{
+	PrintSocket(&addr->ai_addr, addr->ai_family, addr->ai_socktype, addr->ai_protocol);
+}
+
+//
+void PacketSend(Packet *packet)
 {
 	printf("Sending packet (%s) with size %d\n", packet->data, packet->size);
 }
 
 //
-void PacketReceive(Packet* packet)
+void PacketReceive(Packet *packet)
 {
 	printf("Receiving packet (%s) with size %d\n", packet->data, packet->size);
 }
 
 //
-void PacketWrite16(Packet* packet, uint16_t value)
+void PacketWrite16(Packet *packet, uint16_t value)
 {
 	printf("Original: 0x%04" PRIX16 " - %" PRIu16 "\n", value, value);
-	uint8_t* data = packet->data + packet->offs;
+	uint8_t *data = packet->data + packet->offs;
 	*data++       = (uint8_t)(value >> 8);
 	*data++       = (uint8_t)(value);
 	packet->size += sizeof(uint16_t);
@@ -1232,10 +1346,10 @@ void PacketWrite16(Packet* packet, uint16_t value)
 }
 
 //
-void PacketWrite32(Packet* packet, uint32_t value)
+void PacketWrite32(Packet *packet, uint32_t value)
 {
 	printf("Original: 0x%08" PRIX32 " - %" PRIu32 "\n", value, value);
-	uint8_t* data = packet->data + packet->offs;
+	uint8_t *data = packet->data + packet->offs;
 	*data++       = (uint8_t)(value >> 24);
 	*data++       = (uint8_t)(value >> 16);
 	*data++       = (uint8_t)(value >> 8);
@@ -1248,10 +1362,10 @@ void PacketWrite32(Packet* packet, uint32_t value)
 }
 
 //
-void PacketWrite64(Packet* packet, uint64_t value)
+void PacketWrite64(Packet *packet, uint64_t value)
 {
 	printf("Original: 0x%016" PRIX64 " - %" PRIu64 "\n", value, value);
-	uint8_t* data = packet->data + packet->offs;
+	uint8_t *data = packet->data + packet->offs;
 	*data++       = (uint8_t)(value >> 56);
 	*data++       = (uint8_t)(value >> 48);
 	*data++       = (uint8_t)(value >> 40);
@@ -1268,9 +1382,9 @@ void PacketWrite64(Packet* packet, uint64_t value)
 }
 
 //
-uint16_t PacketRead16(Packet* packet)
+uint16_t PacketRead16(Packet *packet)
 {
-	uint8_t* data = packet->data + packet->offs;
+	uint8_t *data = packet->data + packet->offs;
 	packet->size += sizeof(uint16_t);
 	packet->offs += sizeof(uint16_t);
 	uint16_t value = ((uint16_t) data[0] << 8) | data[1];
@@ -1279,9 +1393,9 @@ uint16_t PacketRead16(Packet* packet)
 }
 
 //
-uint32_t PacketRead32(Packet* packet)
+uint32_t PacketRead32(Packet *packet)
 {
-	uint8_t* data = packet->data + packet->offs;
+	uint8_t *data = packet->data + packet->offs;
 	packet->size += sizeof(uint32_t);
 	packet->offs += sizeof(uint32_t);
 	uint32_t value = ((uint32_t) data[0] << 24) | ((uint32_t) data[1] << 16) | ((uint32_t) data[2] << 8) | data[3];
@@ -1290,9 +1404,9 @@ uint32_t PacketRead32(Packet* packet)
 }
 
 //
-uint64_t PacketRead64(Packet* packet)
+uint64_t PacketRead64(Packet *packet)
 {
-	uint8_t* data = packet->data + packet->offs;
+	uint8_t *data = packet->data + packet->offs;
 	packet->size += sizeof(uint64_t);
 	packet->offs += sizeof(uint64_t);
 	uint64_t value = ((uint64_t) data[0] << 56) | ((uint64_t) data[1] << 48) | ((uint64_t) data[2] << 40) | ((uint64_t) data[3] << 32) | ((uint64_t) data[4] << 24) | ((uint64_t) data[5] << 16) | ((uint64_t) data[6] << 8) | data[7];

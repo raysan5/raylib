@@ -23,13 +23,13 @@
 
 #define MAX_BUFFER_SIZE 512
 
-char         buffer[MAX_BUFFER_SIZE];
-float        elapsed   = 0.0f;
-float        delay     = 1.0f;
-bool         connected = false;
-SocketConfig client_cfg = {.host = "127.0.0.1", .port = "8080", .nonblocking = true};
+char          buffer[MAX_BUFFER_SIZE];
+float         elapsed    = 0.0f;
+float         delay      = 1.0f;
+bool          connected  = false;
 SocketResult* client_res = NULL;
 SocketSet*    socket_set = NULL;
+SocketConfig  client_cfg = {.host = "127.0.0.1", .port = "8080", .nonblocking = true};
 
 void NetworkConnect()
 {
@@ -80,13 +80,13 @@ int main()
 		TraceLog(LOG_WARNING, "Failed to create socket: status %d, errno %d",
 				 client_res->status, client_res->socket->status);
 	} else {
-		AddSocket(socket_set, client_res->socket); 
+		AddSocket(socket_set, client_res->socket);
 	}
 
 	// Main game loop
 	while (!WindowShouldClose()) {
 		BeginDrawing();
-		ClearBackground(RAYWHITE); 
+		ClearBackground(RAYWHITE);
 		if (connected) {
 			NetworkUpdate();
 		} else {
