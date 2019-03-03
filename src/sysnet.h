@@ -219,6 +219,7 @@ typedef long int          int64;
 #ifdef _WIN32
 #	pragma comment(lib, "ws2_32.lib")
 #	define __USE_W32_SOCKETS
+#	define WIN32_LEAN_AND_MEAN
 #	include <winsock2.h>
 #	include <Ws2tcpip.h>
 #	include <io.h>

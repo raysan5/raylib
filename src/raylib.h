@@ -72,6 +72,7 @@
 #define RAYLIB_H
 
 #include <stdarg.h> // Required for: va_list - Only used by TraceLogCallback
+#include <inttypes.h> // Required for rnet
 
 #if defined(_WIN32) && defined(BUILD_LIBTYPE_SHARED)
 #	define RLAPI \
@@ -203,7 +204,7 @@ typedef enum
 #endif
 
 // Network typedefs
-typedef unsigned int SocketChannel;
+typedef int32_t SocketChannel;
 
 // Vector2 type
 typedef struct Vector2
@@ -567,14 +568,23 @@ typedef struct SocketConfig
 	bool      nonblocking;  // non-blocking operation?
 	int       backlog_size; // set a custom backlog size
 	SocketOpt sockopts[SOCKET_MAX_SOCK_OPTS];
-} SocketConfig;
+} SocketConfig; 
 
 // Result from calling open with a given config.
 typedef struct SocketResult
 {
 	int     status;
-	Socket *socket;
+	Socket *socket; 
 } SocketResult;
+
+//
+typedef struct Packet
+{
+	uint32_t size; // The total size of bytes in data
+	uint32_t offs; // The offset to data access
+	uint32_t maxs; // The max size of data
+	uint8_t* data; // Data stored in network byte order
+} Packet;
 
 //----------------------------------------------------------------------------------
 // Enumerators Definition
@@ -1573,7 +1583,9 @@ extern "C"
 	RLAPI char *ResolveHost(const char *address, const char *port);
 
 	// Socket API
-	RLAPI bool SocketOpen(SocketConfig *cfg, SocketResult *res);
+	RLAPI bool SocketCreate(SocketConfig *cfg, SocketResult *res);
+	RLAPI bool SocketListen(SocketConfig *cfg, SocketResult *res);
+	RLAPI bool SocketConnect(SocketConfig *cfg, SocketResult *res);
 	RLAPI void SocketClose(SocketChannel socket);
 	RLAPI Socket *SocketAccept(Socket *server, SocketConfig *cfg);
 	RLAPI int     SocketSend(Socket *socket, const void *datap, int len); 
@@ -1581,15 +1593,33 @@ extern "C"
 
 	// Socket set methods for async i/o
 	RLAPI bool IsSocketReady(Socket* sock);
-	RLAPI SocketSet* CreateSocketSet(int max);
-	RLAPI void CleanupSocketSet(SocketSet* sockset);
+	RLAPI SocketSet* AllocSocketSet(int max);
+	RLAPI void FreeSocketSet(SocketSet* sockset);
 	RLAPI int AddSocket(SocketSet* set, Socket* sock);
 	RLAPI int RemoveSocket(SocketSet* set, Socket* sock);
 	RLAPI int CheckSockets(SocketSet* set, unsigned int timeout);
 
 	// Creation and allocation
 	RLAPI SocketResult *AllocSocketResult();
-	RLAPI Socket *AllocSocket(); 
+	RLAPI void          FreeSocketResult(SocketResult *result);
+	RLAPI Socket *AllocSocket();
+	RLAPI void    FreeSocket(Socket *sock);
+
+
+	// Data packets and helpers
+	Packet* AllocPacket(int size);
+	void FreePacket(Packet* packet);
+	void PacketSend(Packet* packet);
+	void PacketReceive(Packet* packet);
+	void PacketWrite8(Packet* packet, uint16_t value);
+	void PacketWrite16(Packet* packet, uint16_t value);
+	void PacketWrite32(Packet* packet, uint32_t value);
+	void PacketWrite64(Packet* packet, uint64_t value);
+	uint16_t PacketRead8(Packet* packet);
+	uint16_t PacketRead16(Packet* packet);
+	uint32_t PacketRead32(Packet* packet);
+	uint64_t PacketRead64(Packet* packet);
+
 
 #if defined(__cplusplus)
 }

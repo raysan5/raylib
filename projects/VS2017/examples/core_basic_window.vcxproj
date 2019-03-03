@@ -73,7 +73,7 @@
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <LinkIncremental>true</LinkIncremental>
     <OutDir>$(ProjectDir)$(ProjectName)\$(Configuration)\</OutDir>
-    <IntDir>$(ProjectDir)$(ProjectName)\$(Configuration)\temp</IntDir>
+    <IntDir>$(ProjectDir)$(ProjectName)\$(Configuration)\temp\</IntDir>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug.DLL|Win32'">
     <LinkIncremental>true</LinkIncremental>
