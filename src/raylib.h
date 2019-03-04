@@ -865,6 +865,7 @@ RLAPI bool WindowShouldClose(void);                               // Check if KE
 RLAPI void CloseWindow(void);                                     // Close window and unload OpenGL context
 RLAPI bool IsWindowReady(void);                                   // Check if window has been initialized successfully
 RLAPI bool IsWindowMinimized(void);                               // Check if window has been minimized (or lost focus)
+RLAPI bool IsWindowResized(void);                                 // Check if window has been resized
 RLAPI bool IsWindowHidden(void);                                  // Check if window is currently hidden
 RLAPI void ToggleFullscreen(void);                                // Toggle fullscreen mode (only PLATFORM_DESKTOP)
 RLAPI void UnhideWindow(void);                                    // Show the window

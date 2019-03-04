@@ -273,6 +273,7 @@ static GLFWwindow *window;                      // Native window (graphic device
 #endif
 static bool windowReady = false;                // Check if window has been initialized successfully
 static bool windowMinimized = false;            // Check if window has been minimized
+static bool windowResized = false;              // Check if window has been resized
 static const char *windowTitle = NULL;          // Window text title...
 
 static unsigned int displayWidth, displayHeight;// Display width and height (monitor, device-screen, LCD, ...)
@@ -740,6 +741,16 @@ bool IsWindowMinimized(void)
 #else
     return false;
 #endif
+}
+
+// Check if window has been resized
+bool IsWindowResized(void)
+{
+#if defined(PLATFORM_DESKTOP) || defined(PLATFORM_WEB) || defined(PLATFORM_UWP)
+    return windowResized;
+#else
+    return false;
+#endif 
 }
 
 // Check if window is currently hidden
@@ -3137,6 +3148,8 @@ static void PollInputEvents(void)
             gamepadAxisCount = axisCount;
         }
     }
+    
+    windowResized = false;
 
 #if defined(SUPPORT_EVENTS_WAITING)
     glfwWaitEvents();
@@ -3414,6 +3427,8 @@ static void WindowSizeCallback(GLFWwindow *window, int width, int height)
     currentHeight = height;
 
     // NOTE: Postprocessing texture is not scaled to new size
+    
+    windowResized = true;
 }
 
 // GLFW3 WindowIconify Callback, runs when window is minimized/restored
