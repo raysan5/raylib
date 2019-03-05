@@ -342,6 +342,15 @@ typedef struct Model {
     Mesh mesh;              // Vertex data buffers (RAM and VRAM)
     Matrix transform;       // Local transform matrix
     Material material;      // Shader and textures data
+    /*
+    Mesh *meshes;           // Vertex data buffers (RAM and VRAM)
+    int meshCount;
+
+    Material *materials;    // Shader and textures data
+    int materialCount;
+
+    int *meshMaterial;      // Material assigned to every mesh
+    */
 } Model;
 
 // Ray type (useful for raycast)
@@ -1180,7 +1189,7 @@ RLAPI const char *TextSubtext(const char *text, int position, int length);      
 RLAPI const char *TextReplace(char *text, const char *replace, const char *by);             // Replace text string (memory should be freed!)
 RLAPI const char *TextInsert(const char *text, const char *insert, int position);           // Insert text in a position (memory should be freed!)
 RLAPI const char *TextJoin(const char **textList, int count, const char *delimiter);        // Join text strings with delimiter
-RLAPI const char **TextSplit(const char *text, char delimiter, int *count);                       // Split text into multiple strings
+RLAPI const char **TextSplit(const char *text, char delimiter, int *count);                 // Split text into multiple strings
 RLAPI void TextAppend(char *text, const char *append, int *position);                       // Append text at specific position and move cursor!
 RLAPI int TextFindIndex(const char *text, const char *find);                                // Find first text occurrence within a string
 RLAPI const char *TextToUpper(const char *text);                      // Get upper case version of provided string
