@@ -285,6 +285,12 @@ void DrawCubeWires(Vector3 position, float width, float height, float length, Co
     rlPopMatrix();
 }
 
+// Draw cube wires (vector version)
+void DrawCubeWiresV(Vector3 position, Vector3 size, Color color)
+{
+    DrawCubeWires(position, size.x, size.y, size.z, color);
+}
+
 // Draw cube
 // NOTE: Cube position is the center position
 void DrawCubeTexture(Texture2D texture, Vector3 position, float width, float height, float length, Color color)
