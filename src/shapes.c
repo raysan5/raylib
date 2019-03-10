@@ -400,7 +400,7 @@ void DrawRectangleLinesEx(Rectangle rec, int lineThick, Color color)
 {
     if (lineThick > rec.width || lineThick > rec.height)
     {
-        if(rec.width > rec.height) lineThick = (int)rec.height/2;
+        if (rec.width > rec.height) lineThick = (int)rec.height/2;
         else if (rec.width < rec.height) lineThick = (int)rec.width/2;
     }
 

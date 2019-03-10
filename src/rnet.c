@@ -7,7 +7,7 @@
 *
 *   DEPENDENCIES:
 *       raylib.h    - TraceLog
-*       sysnet.h    - platform-specific network includes
+*       rnet.h      - platform-specific network includes
 *
 *   CONTRIBUTORS:
 *       Jak Barnes (github: @syphonx) (Feb. 2019):
@@ -44,7 +44,7 @@
 #	include <stdarg.h>
 #else
 #	include "raylib.h"
-#	include "sysnet.h"
+#	include "rnet.h"
 #	if !defined(EXTERNAL_CONFIG_FLAGS)
 #		include "config.h" // Defines module configuration flags
 #	endif
