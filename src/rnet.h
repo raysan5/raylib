@@ -1,6 +1,6 @@
 /**********************************************************************************************
 *
-*   sysnet - Provides cross-platform network defines, macros etc
+*   rnet - Provides cross-platform network defines, macros etc
 *
 *   DEPENDENCIES:
 *       <limits.h>    - Used for cross-platform type specifiers

@@ -688,8 +688,7 @@ void UnloadFont(Font font)
     {
         for (int i = 0; i < font.charsCount; i++)
         {
-            if(font.chars[i].data != NULL)
-                free(font.chars[i].data);
+            free(font.chars[i].data);
         }
         UnloadTexture(font.texture);
         free(font.chars);
@@ -1327,13 +1326,11 @@ int TextToInteger(const char *text)
 
     return result;
 }
-
 //----------------------------------------------------------------------------------
 
 //----------------------------------------------------------------------------------
 // Module specific Functions Definition
 //----------------------------------------------------------------------------------
-
 #if defined(SUPPORT_FILEFORMAT_FNT)
 // Load a BMFont file (AngelCode font file)
 static Font LoadBMFont(const char *fileName)

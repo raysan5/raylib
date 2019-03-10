@@ -367,7 +367,7 @@ static mal_uint32 OnAudioBufferDSPRead(mal_dsp *pDSP, mal_uint32 frameCount, voi
 {
     AudioBuffer *audioBuffer = (AudioBuffer *)pUserData;
 
-    mal_uint32 subBufferSizeInFrames = audioBuffer->bufferSizeInFrames/2;
+    mal_uint32 subBufferSizeInFrames = (audioBuffer->bufferSizeInFrames > 1)? audioBuffer->bufferSizeInFrames/2 : audioBuffer->bufferSizeInFrames;
     mal_uint32 currentSubBufferIndex = audioBuffer->frameCursorPos/subBufferSizeInFrames;
 
     if (currentSubBufferIndex > 1)

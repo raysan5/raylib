@@ -728,6 +728,8 @@ typedef struct DrawCall {
     //unsigned int vaoId;         // Vertex Array id to be used on the draw
     //unsigned int shaderId;      // Shader id to be used on the draw
     unsigned int textureId;     // Texture id to be used on the draw
+                                // TODO: Support additional texture units?
+
     //Matrix projection;        // Projection matrix for this draw
     //Matrix modelview;         // Modelview matrix for this draw
 } DrawCall;
@@ -1622,7 +1624,7 @@ void rlglInit(int width, int height)
         if (strcmp(extList[i], (const char *)"GL_EXT_texture_mirror_clamp") == 0) texMirrorClampSupported = true;
 
         // Debug marker support
-        if(strcmp(extList[i], (const char *)"GL_EXT_debug_marker") == 0) debugMarkerSupported = true;
+        if (strcmp(extList[i], (const char *)"GL_EXT_debug_marker") == 0) debugMarkerSupported = true;
     }
 
 #if defined(_WIN32) && defined(_MSC_VER)
@@ -1802,7 +1804,7 @@ void rlLoadExtensions(void *loader)
         #if defined(GRAPHICS_API_OPENGL_21)
         if (GLAD_GL_VERSION_2_1) TraceLog(LOG_INFO, "OpenGL 2.1 profile supported");
         #elif defined(GRAPHICS_API_OPENGL_33)
-        if(GLAD_GL_VERSION_3_3) TraceLog(LOG_INFO, "OpenGL 3.3 Core profile supported");
+        if (GLAD_GL_VERSION_3_3) TraceLog(LOG_INFO, "OpenGL 3.3 Core profile supported");
         else TraceLog(LOG_ERROR, "OpenGL 3.3 Core profile not supported");
         #endif
     #endif
@@ -2725,18 +2727,18 @@ void rlDrawMesh(Mesh mesh, Material material, Matrix transform)
 // Unload mesh data from CPU and GPU
 void rlUnloadMesh(Mesh *mesh)
 {
-    if (mesh->vertices != NULL) free(mesh->vertices);
-    if (mesh->texcoords != NULL) free(mesh->texcoords);
-    if (mesh->normals != NULL) free(mesh->normals);
-    if (mesh->colors != NULL) free(mesh->colors);
-    if (mesh->tangents != NULL) free(mesh->tangents);
-    if (mesh->texcoords2 != NULL) free(mesh->texcoords2);
-    if (mesh->indices != NULL) free(mesh->indices);
+    free(mesh->vertices);
+    free(mesh->texcoords);
+    free(mesh->normals);
+    free(mesh->colors);
+    free(mesh->tangents);
+    free(mesh->texcoords2);
+    free(mesh->indices);
 
-    if (mesh->baseVertices != NULL) free(mesh->baseVertices);
-    if (mesh->baseNormals != NULL) free(mesh->baseNormals);
-    if (mesh->weightBias != NULL) free(mesh->weightBias);
-    if (mesh->weightId != NULL) free(mesh->weightId);
+    free(mesh->baseVertices);
+    free(mesh->baseNormals);
+    free(mesh->weightBias);
+    free(mesh->weightId);
 
     rlDeleteBuffers(mesh->vboId[0]);   // vertex
     rlDeleteBuffers(mesh->vboId[1]);   // texcoords
@@ -4093,7 +4095,7 @@ static void UpdateBuffersDefault(void)
         // Another option: map the buffer object into client's memory
         // Probably this code could be moved somewhere else...
         // vertexData[currentBuffer].vertices = (float *)glMapBuffer(GL_ARRAY_BUFFER, GL_READ_WRITE);
-        // if(vertexData[currentBuffer].vertices)
+        // if (vertexData[currentBuffer].vertices)
         // {
             // Update vertex data
         // }
@@ -4132,9 +4134,13 @@ static void DrawBuffersDefault(void)
 
             glUniformMatrix4fv(currentShader.locs[LOC_MATRIX_MVP], 1, false, MatrixToFloat(matMVP));
             glUniform4f(currentShader.locs[LOC_COLOR_DIFFUSE], 1.0f, 1.0f, 1.0f, 1.0f);
-            glUniform1i(currentShader.locs[LOC_MAP_DIFFUSE], 0);
+            glUniform1i(currentShader.locs[LOC_MAP_DIFFUSE], 0);    // Provided value refers to the texture unit (active)
+            
+            // TODO: Support additional texture units on custom shader
+            //if (currentShader->locs[LOC_MAP_SPECULAR] > 0) glUniform1i(currentShader.locs[LOC_MAP_SPECULAR], 1);
+            //if (currentShader->locs[LOC_MAP_NORMAL] > 0) glUniform1i(currentShader.locs[LOC_MAP_NORMAL], 2);
 
-            // NOTE: Additional map textures not considered for default buffers drawing
+            // NOTE: Right now additional map textures not considered for default buffers drawing
 
             int vertexOffset = 0;
 
@@ -4164,6 +4170,10 @@ static void DrawBuffersDefault(void)
             for (int i = 0; i < drawsCounter; i++)
             {
                 glBindTexture(GL_TEXTURE_2D, draws[i].textureId);
+                
+                // TODO: Find some way to bind additional textures --> Use global texture IDs? Register them on draw[i]?
+                //if (currentShader->locs[LOC_MAP_SPECULAR] > 0) { glActiveTexture(GL_TEXTURE1); glBindTexture(GL_TEXTURE_2D, textureUnit1_id); }
+                //if (currentShader->locs[LOC_MAP_SPECULAR] > 0) { glActiveTexture(GL_TEXTURE2); glBindTexture(GL_TEXTURE_2D, textureUnit2_id); }
 
                 if ((draws[i].mode == RL_LINES) || (draws[i].mode == RL_TRIANGLES)) glDrawArrays(draws[i].mode, vertexOffset, draws[i].vertexCount);
                 else
