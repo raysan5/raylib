@@ -509,7 +509,7 @@ core.o : core.c raylib.h rlgl.h utils.h raymath.h camera.h gestures.h
 
 # Compile rglfw module
 rglfw.o : rglfw.c
-	$(CC) $(GLFW_CFLAGS) -c $< $(CFLAGS) $(INCLUDE_PATHS) -D$(PLATFORM) -D$(GRAPHICS)
+	$(CC) -c $< $(CFLAGS) $(GLFW_CFLAGS) $(INCLUDE_PATHS) -D$(PLATFORM) -D$(GRAPHICS)
 
 # Compile shapes module
 shapes.o : shapes.c raylib.h rlgl.h
