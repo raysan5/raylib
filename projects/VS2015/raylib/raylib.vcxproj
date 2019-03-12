@@ -246,7 +246,7 @@
     <ClInclude Include="..\..\..\src\external\glad.h" />
     <ClInclude Include="..\..\..\src\external\jar_mod.h" />
     <ClInclude Include="..\..\..\src\external\jar_xm.h" />
-    <ClInclude Include="..\..\..\src\external\mini_al.h" />
+    <ClInclude Include="..\..\..\src\external\miniaudio.h" />
     <ClInclude Include="..\..\..\src\external\stb_image.h" />
     <ClInclude Include="..\..\..\src\external\stb_image_resize.h" />
     <ClInclude Include="..\..\..\src\external\stb_image_write.h" />
