@@ -181,6 +181,15 @@ static Image LoadASTC(const char *fileName);  // Load ASTC file
 Image LoadImage(const char *fileName)
 {
     Image image = { 0 };
+    
+#if defined(SUPPORT_FILEFORMAT_PNG) || \
+    defined(SUPPORT_FILEFORMAT_BMP) || \
+    defined(SUPPORT_FILEFORMAT_TGA) || \
+    defined(SUPPORT_FILEFORMAT_GIF) || \
+    defined(SUPPORT_FILEFORMAT_PIC) || \
+    defined(SUPPORT_FILEFORMAT_PSD)
+#define STBI_REQUIRED
+#endif
 
 #if defined(SUPPORT_FILEFORMAT_PNG)
     if ((IsFileExtension(fileName, ".png"))
@@ -207,6 +216,7 @@ Image LoadImage(const char *fileName)
 #endif
        )
     {
+#if defined(STBI_REQUIRED)
         int imgWidth = 0;
         int imgHeight = 0;
         int imgBpp = 0;
@@ -229,6 +239,7 @@ Image LoadImage(const char *fileName)
             else if (imgBpp == 3) image.format = UNCOMPRESSED_R8G8B8;
             else if (imgBpp == 4) image.format = UNCOMPRESSED_R8G8B8A8;
         }
+#endif
     }
 #if defined(SUPPORT_FILEFORMAT_HDR)
     else if (IsFileExtension(fileName, ".hdr"))
@@ -1403,6 +1414,8 @@ void ImageResizeCanvas(Image *image, int newWidth,int newHeight, int offsetX, in
     else
     {
         // TODO: ImageCrop(), define proper cropping rectangle
+        
+        UnloadImage(imTemp);
     }
 }
 

@@ -563,7 +563,10 @@ int GetPixelDataSize(int width, int height, int format);// Get pixel data size i
     #define SUPPORT_VR_SIMULATOR
     #define SUPPORT_DISTORTION_SHADER
 #else
-    #include "config.h"             // rlgl module configuration
+    // Check if config flags have been externally provided on compilation line
+    #if !defined(EXTERNAL_CONFIG_FLAGS)
+        #include "config.h"         // Defines module configuration flags
+    #endif
 #endif
 
 #include <stdio.h>                  // Required for: fopen(), fclose(), fread()... [Used only on LoadText()]
