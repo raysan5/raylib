@@ -3439,7 +3439,7 @@ static void WindowDropCallback(GLFWwindow *window, int count, const char **paths
 
     for (int i = 0; i < count; i++)
     {
-        dropFilesPath[i] = (char *)malloc(sizeof(char)*MAX_FILEPATH_LENGTH);     // Max path length using MAX_FILEPATH_LENGTH set to 256 char
+        dropFilesPath[i] = (char *)malloc(sizeof(char)*MAX_FILEPATH_LENGTH);
         strcpy(dropFilesPath[i], paths[i]);
     }
 
