@@ -1398,24 +1398,23 @@ void ImageResizeNN(Image *image,int newWidth,int newHeight)
 // NOTE: Resize offset is relative to the top-left corner of the original image
 void ImageResizeCanvas(Image *image, int newWidth,int newHeight, int offsetX, int offsetY, Color color)
 {
-    Image imTemp = GenImageColor(newWidth, newHeight, color);
-    Rectangle srcRec = { 0.0f, 0.0f, (float)image->width, (float)image->height };
-    Rectangle dstRec = { (float)offsetX, (float)offsetY, (float)srcRec.width, (float)srcRec.height };
-
     // TODO: Review different scaling situations
 
     if ((newWidth > image->width) && (newHeight > image->height))
     {
+        Image imTemp = GenImageColor(newWidth, newHeight, color);
+        Rectangle srcRec = { 0.0f, 0.0f, (float)image->width, (float)image->height };
+        Rectangle dstRec = { (float)offsetX, (float)offsetY, (float)srcRec.width, (float)srcRec.height };
+
         ImageDraw(&imTemp, *image, srcRec, dstRec);
         ImageFormat(&imTemp, image->format);
         UnloadImage(*image);
         *image = imTemp;
     }
-    else
+    else if ((newWidth < image->width) && (newHeight < image->height))
     {
-        // TODO: ImageCrop(), define proper cropping rectangle
-        
-        UnloadImage(imTemp);
+        Rectangle crop = { (float)offsetX, (float)offsetY, newWidth, newHeight };
+        ImageCrop(image, crop);
     }
 }
 
