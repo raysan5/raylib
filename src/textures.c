@@ -1399,22 +1399,55 @@ void ImageResizeNN(Image *image,int newWidth,int newHeight)
 void ImageResizeCanvas(Image *image, int newWidth,int newHeight, int offsetX, int offsetY, Color color)
 {
     // TODO: Review different scaling situations
-
-    if ((newWidth > image->width) && (newHeight > image->height))
+    
+    if ((newWidth != image->width) || (newHeight != image->height))
     {
-        Image imTemp = GenImageColor(newWidth, newHeight, color);
-        Rectangle srcRec = { 0.0f, 0.0f, (float)image->width, (float)image->height };
-        Rectangle dstRec = { (float)offsetX, (float)offsetY, (float)srcRec.width, (float)srcRec.height };
+        if ((newWidth > image->width) && (newHeight > image->height))
+        {
+            Image imTemp = GenImageColor(newWidth, newHeight, color);
+            
+            Rectangle srcRec = { 0.0f, 0.0f, (float)image->width, (float)image->height };
+            Rectangle dstRec = { (float)offsetX, (float)offsetY, (float)srcRec.width, (float)srcRec.height };
 
-        ImageDraw(&imTemp, *image, srcRec, dstRec);
-        ImageFormat(&imTemp, image->format);
-        UnloadImage(*image);
-        *image = imTemp;
-    }
-    else if ((newWidth < image->width) && (newHeight < image->height))
-    {
-        Rectangle crop = { (float)offsetX, (float)offsetY, newWidth, newHeight };
-        ImageCrop(image, crop);
+            ImageDraw(&imTemp, *image, srcRec, dstRec);
+            ImageFormat(&imTemp, image->format);
+            UnloadImage(*image);
+            *image = imTemp;
+        }
+        else if ((newWidth < image->width) && (newHeight < image->height))
+        {
+            Rectangle crop = { (float)offsetX, (float)offsetY, newWidth, newHeight };
+            ImageCrop(image, crop);
+        }
+        else    // One side is bigger and the other is smaller
+        {
+            Image imTemp = GenImageColor(newWidth, newHeight, color);
+            
+            Rectangle srcRec = { 0.0f, 0.0f, (float)image->width, (float)image->height };
+            Rectangle dstRec = { (float)offsetX, (float)offsetY, (float)newWidth, (float)newHeight };
+            
+            if (newWidth < image->width)
+            {
+                srcRec.x = offsetX;
+                srcRec.width = newWidth;
+                
+                dstRec.x = 0.0f;
+            }
+            
+            if (newHeight < image->height)
+            {
+                srcRec.y = offsetY;
+                srcRec.height = newHeight;
+                
+                dstRec.y = 0.0f;
+            }
+
+            // TODO: ImageDraw() could be buggy?
+            ImageDraw(&imTemp, *image, srcRec, dstRec);
+            ImageFormat(&imTemp, image->format);
+            UnloadImage(*image);
+            *image = imTemp;
+        }
     }
 }
 
