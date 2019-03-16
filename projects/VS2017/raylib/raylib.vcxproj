@@ -185,7 +185,7 @@
     <ClInclude Include="..\..\..\src\raylib.h" />
     <ClInclude Include="..\..\..\src\raymath.h" />
     <ClInclude Include="..\..\..\src\rlgl.h" />
-    <ClInclude Include="..\..\..\src\sysnet.h" />
+    <ClInclude Include="..\..\..\src\rnet.h" />
     <ClInclude Include="..\..\..\src\utils.h" />
   </ItemGroup>
   <ItemGroup>

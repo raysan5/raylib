@@ -455,10 +455,17 @@ typedef struct VrStereoConfig {
 
 
 // IPAddress definition (in network byte order)
-typedef struct IPAddress {
+typedef struct IPv4Address {
 	unsigned long  host; /* 32-bit IPv4 host address */
 	unsigned short port; /* 16-bit protocol port */
-} IPAddress; 
+} IPv4Address;
+
+typedef struct IPv6Address {
+	union {
+		uint8_t  byte[16];
+		uint16_t word[8];
+	} u;
+};
 
 // An option ID, value, sizeof(value) tuple for setsockopt(2).
 typedef struct SocketOpt {
@@ -474,7 +481,7 @@ typedef enum {
 
 typedef struct UDPChannel {
 	int numbound; // The total number of addresses this channel is bound to
-	IPAddress address[SOCKET_MAX_UDPADDRESSES]; // The list of remote addresses this channel is bound to
+	IPv4Address address[SOCKET_MAX_UDPADDRESSES]; // The list of remote addresses this channel is bound to
 } UDPChannel;
 
 typedef struct Socket {
@@ -483,7 +490,7 @@ typedef struct Socket {
 	bool isServer; // Is this socket a server socket (i.e. TCP/UDP Listen Server)
 	SocketChannel channel; // The socket handle id
 	SocketType    type;    // Is this socket a TCP or UDP socket?
-	IPAddress address; // The host/target ip for this socket (in network byte order)
+	IPv4Address address; // The host/target ip for this socket (in network byte order)
 	struct UDPChannel bindings[SOCKET_MAX_UDPCHANNELS]; // The amount of channels (if UDP) this socket is bound to
 } Socket;
 
@@ -499,19 +506,18 @@ typedef struct SocketDataPacket {
 	int            len;     /* The length of the packet data */
 	int            maxlen;  /* The size of the data buffer */
 	int            status;  /* packet status after sending */
-	IPAddress address; /* The source/dest address of an incoming/outgoing packet */
+	IPv4Address address; /* The source/dest address of an incoming/outgoing packet */
 } SocketDataPacket;
 
 // Configuration for a socket. Not all of these fields need to
 // be set, and ones omitted from a C99-style "designated initializer"
 // struct literal will be zeroed out and replaced with defaults.
-typedef struct SocketConfig {
-	// Hostname and port, for TCP or UDP sockets. */
+typedef struct SocketConfig { 
 	char *    host;     // The host address in xxx.xxx.xxx.xxx form
 	char *    port;     // The target port/server in the form "http" or "25565"
 	bool      server;   // Listen for incoming clients?
 	bool      datagram; // TCP or UDP?
-	bool      nonblocking;  // non-blocking operation?
+	bool      nonblocking;  // non-blocking operation? 
 	int       backlog_size; // set a custom backlog size
 	SocketOpt sockopts[SOCKET_MAX_SOCK_OPTS];
 } SocketConfig; 
@@ -1510,30 +1516,31 @@ RLAPI int  GetAddressFamily();
 RLAPI int  GetAddressSocketType(AddressInformation address);
 RLAPI int  GetAddressProtocol(AddressInformation address);
 RLAPI void PrintAddressInfo(AddressInformation address);
-RLAPI AddressInformation           AllocAddress();
-RLAPI struct _AddressInformation **AllocAddressList(int size);
+RLAPI AddressInformation AllocAddress();
+RLAPI AddressInformation* AllocAddressList(int size);
 
-// Socket API
+// Socket API 
 RLAPI bool SocketCreate(SocketConfig *cfg, SocketResult *res);
-RLAPI void SocketClose(SocketChannel socket);
+RLAPI bool SocketBind(SocketConfig *cfg, SocketResult *res);
 RLAPI bool SocketListen(SocketConfig *cfg, SocketResult *res);
 RLAPI bool SocketConnect(SocketConfig *cfg, SocketResult *res);
 RLAPI Socket *SocketAccept(Socket *server, SocketConfig *cfg);
-RLAPI int     SocketSend(Socket *socket, const void *datap, int len);
+RLAPI int SocketSend(Socket *socket, const void *datap, int len);
 RLAPI int SocketReceive(Socket *socket, void *data, int maxlen, int timeout);
-
+RLAPI void SocketClose(SocketChannel socket);
 RLAPI Socket *AllocSocket();
+RLAPI void FreeSocket(Socket **sock);
 RLAPI SocketResult *AllocSocketResult();
-RLAPI void          FreeSocket(Socket **sock);
-RLAPI void          FreeSocketResult(SocketResult **result);
+RLAPI void FreeSocketResult(SocketResult **result);
+RLAPI SocketSet *AllocSocketSet(int max);
+RLAPI void FreeSocketSet(SocketSet *sockset);
 
 // Socket I/O API
 RLAPI bool IsSocketReady(Socket *sock);
-RLAPI SocketSet *AllocSocketSet(int max);
-RLAPI void       FreeSocketSet(SocketSet *sockset);
-RLAPI int        AddSocket(SocketSet *set, Socket *sock);
-RLAPI int        RemoveSocket(SocketSet *set, Socket *sock);
-RLAPI int        CheckSockets(SocketSet *set, unsigned int timeout);
+RLAPI bool IsSocketConnected(Socket *sock);
+RLAPI int  AddSocket(SocketSet *set, Socket *sock);
+RLAPI int  RemoveSocket(SocketSet *set, Socket *sock);
+RLAPI int  CheckSockets(SocketSet *set, unsigned int timeout);
 
 // Packet API
 Packet * AllocPacket(int size);

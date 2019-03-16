@@ -88,7 +88,6 @@
 #define NOPROFILER   // Profiler interface.
 #define NODEFERWINDOWPOS // DeferWindowPos routines
 #define NOMCX            // Modem Configuration Extensions
-
 #define MMNOSOUND
 
 //----------------------------------------------------------------------------------
@@ -170,14 +169,6 @@ typedef long int          int64;
 #	define ssize_t size_t
 #endif // WIN32
 
-#ifndef TRUE
-#	define TRUE 1
-#endif // TRUE
-
-#ifndef FALSE
-#	define FALSE 0
-#endif // FALSE 
-
 #ifndef RESULT_SUCCESS
 #	define RESULT_SUCCESS 0
 #endif // RESULT_SUCCESS
@@ -185,19 +176,6 @@ typedef long int          int64;
 #ifndef RESULT_FAILURE
 #	define RESULT_FAILURE 1
 #endif // RESULT_FAILURE
-
-#ifndef INADDR_ANY
-#	define INADDR_ANY 0x00000000
-#endif // INADDR_ANY
-#ifndef INADDR_NONE
-#	define INADDR_NONE 0xFFFFFFFF
-#endif // INADDR_NONE
-#ifndef INADDR_LOOPBACK
-#	define INADDR_LOOPBACK 0x7f000001
-#endif // INADDR_LOOPBACK
-#ifndef INADDR_BROADCAST
-#	define INADDR_BROADCAST 0xFFFFFFFF
-#endif // INADDR_BROADCAST
 
 #ifndef htonll
 #	ifdef _BIG_ENDIAN

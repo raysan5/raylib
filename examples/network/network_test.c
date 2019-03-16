@@ -67,24 +67,35 @@ void test_resolve_ip()
 
 void test_resolve_host()
 {
-	const char *                 address = "localhost";
-	const char *                 port    = "80";
-	struct _AddressInformation **addr    = AllocAddressList(3);
-	int                          count   = ResolveHost(address, port, addr); 
+	const char *        address = "localhost";
+	const char *        port    = "80";
+	AddressInformation *addr    = AllocAddressList(3);
+	int                 count   = ResolveHost(address, port, addr);
 	assert(GetAddressFamily(addr[0]) == ADDRESS_TYPE_IPV6);
 	assert(GetAddressFamily(addr[1]) == ADDRESS_TYPE_IPV4);
+	assert(GetAddressSocketType(addr[0]) == 0);
+	assert(GetAddressProtocol(addr[0]) == 0);
 	for (size_t i = 0; i < count; i++) { PrintAddressInfo(addr[i]); }
 }
 
 void test_address()
 {
-
 }
 
 void test_address_list()
 {
+}
 
-} 
+void test_socket_create()
+{
+	SocketConfig  server_cfg = {.host = "127.0.0.1", .port = "8080", .server = true, .nonblocking = true};
+	Socket *      socket     = AllocSocket();
+	SocketResult *server_res = AllocSocketResult();
+	SocketSet *   socket_set = AllocSocketSet(1);
+	assert(SocketCreate(&server_cfg, server_res));
+	assert(AddSocket(socket_set, server_res->socket));
+	assert(SocketListen(&server_cfg, server_res));
+}
 
 int main()
 {
@@ -96,10 +107,8 @@ int main()
 
 	// Run the tests
 	test_network_initialise();
-	// test_socket_result();
-	// test_socket();
-	// test_resolve_ip();
-	test_resolve_host();
+	// test_resolve_host();
+    test_socket_create();
 
 	// Main game loop
 	while (!WindowShouldClose()) {

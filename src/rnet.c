@@ -39,16 +39,9 @@
 // Check if config flags have been externally provided on compilation line
 //----------------------------------------------------------------------------------
 
-#if defined(RNET_STANDALONE)
-#	include "rnet.h"
-#	include <stdarg.h>
-#else
-#	include "raylib.h"
-#	include "rnet.h"
-#	if !defined(EXTERNAL_CONFIG_FLAGS)
-#		include "config.h" // Defines module configuration flags
-#	endif
-#endif
+#include "rnet.h"
+
+#include "raylib.h"
 
 #include <stdio.h>  // Required for: FILE, fopen(), fclose(), fread()
 #include <stdlib.h> // Required for: malloc(), free()
@@ -57,6 +50,7 @@
 //----------------------------------------------------------------------------------
 // Module defines
 //----------------------------------------------------------------------------------
+
 #define NET_SOCKET_BACKLOG_SIZE (20)
 #define NET_MAXHOST (1025) // Max size of a fully-qualified domain name
 #define NET_MAXSERV (32)   // Max size of a service name
@@ -66,35 +60,21 @@
 // Types and Structures Definition
 //----------------------------------------------------------------------------------
 
-#if PLATFORM == PLATFORM_WINDOWS
-typedef socklen_t        _SocketLength;
-typedef SOCKADDR         _SocketAddress;
-typedef SOCKADDR_IN      _SocketAddressIPv4;
-typedef SOCKADDR_IN6     _SocketAddressIPv6;
-typedef SOCKADDR_STORAGE _SocketAddressStorage;
+typedef struct _SocketAddress {
+	struct sockaddr address;
+} _SocketAddress;
+typedef struct _SocketAddressIPv4 {
+	struct sockaddr_in address;
+} _SocketAddressIPv4;
+typedef struct _SocketAddressIPv6 {
+	struct sockaddr_in6 address;
+} _SocketAddressIPv6;
+typedef struct _SocketAddressStorage {
+	struct sockaddr_storage address;
+} _SocketAddressStorage;
 typedef struct _AddressInformation {
-	int    ai_flags;                 // AI_PASSIVE, AI_CANONNAME, AI_NUMERICHOST
-	int    ai_family;                // PF_xxx
-	int    ai_socktype;              // SOCK_xxx
-	int    ai_protocol;              // 0 or IPPROTO_xxx for IPv4 and IPv6
-	size_t ai_addrlen;               // Length of ai_addr
-	struct sockaddr_storage ai_addr; // Binary address
+	struct addrinfo addr;
 } _AddressInformation;
-#else
-#endif
-
-#if defined(RNET_STANDALONE)
-typedef enum {
-	LOG_ALL,
-	LOG_TRACE,
-	LOG_DEBUG,
-	LOG_INFO,
-	LOG_WARNING,
-	LOG_ERROR,
-	LOG_FATAL,
-	LOG_NONE
-} TraceLogType;
-#endif
 
 //----------------------------------------------------------------------------------
 // Global module forward declarations
@@ -120,10 +100,17 @@ static char *SocketAddressToString(struct sockaddr_storage *sockaddr, char buffe
 static void  PrintSocket(struct sockaddr_storage *addr, const int family, const int socktype, const int protocol);
 static bool  FillIPv4SockAddress(struct sockaddr_in *sa, const char *host, unsigned short port);
 static bool  FillIPv6SockAddress(struct sockaddr_in6 *sa, const char *host, unsigned short port);
+static void  PrintSocket(AddressInformation addr);
 
 //----------------------------------------------------------------------------------
 // Global module implementationd
 //----------------------------------------------------------------------------------
+
+static void PrintAddressInfo(AddressInformation addr)
+{
+	PrintSocket(&addr->addr.ai_addr, addr->addr.ai_family, addr->addr.ai_socktype,
+				addr->addr.ai_protocol);
+}
 
 //
 static bool FillIPv4SockAddress(struct sockaddr_in *sa, const char *host, unsigned short port)
@@ -226,7 +213,7 @@ static char *SocketAddressToString(struct sockaddr_storage *sockaddr)
 	}
 }
 
-//
+// Check if the null terminated string ip is a valid IPv4 address
 static bool IsIPv4Address(const char *ip)
 {
 	struct sockaddr_in sa;
@@ -234,7 +221,7 @@ static bool IsIPv4Address(const char *ip)
 	return result != 0;
 }
 
-//
+// Check if the null terminated string ip is a valid IPv6 address
 static bool IsIPv6Address(const char *ip)
 {
 	struct sockaddr_in6 sa;
@@ -328,7 +315,7 @@ static bool InitSocket(Socket *sock, struct addrinfo *addr)
 	return IsSocketValid(sock);
 }
 
-//	CreateSocket() - Interally called by OpenSocket()
+//	CreateSocket() - Interally called by CreateSocket()
 //
 //	This here is the bread and butter of the socket API, This function will
 //	attempt to open a socket, bind and listen to it based on the config passed in
@@ -446,7 +433,7 @@ static bool CreateSocket(SocketConfig *config, SocketResult *outresult)
 	return success;
 }
 
-//
+// Set the state of the Socket sock to blocking
 static bool SocketSetBlocking(Socket *sock)
 {
 	bool ret = true;
@@ -465,7 +452,7 @@ static bool SocketSetBlocking(Socket *sock)
 	return ret;
 }
 
-//
+// Set the state of the Socket sock to non-blocking
 static bool SocketSetNonBlocking(Socket *sock)
 {
 	bool ret = true;
@@ -483,7 +470,7 @@ static bool SocketSetNonBlocking(Socket *sock)
 	return ret;
 }
 
-//
+// Set options specified in SocketConfig to Socket sock
 static bool SocketSetOptions(SocketConfig *config, Socket *sock)
 {
 	for (int i = 0; i < SOCKET_MAX_SOCK_OPTS; i++) {
@@ -654,7 +641,7 @@ void ResolveIP(const char *ip, const char *port, int flags, char *host, char *se
 //	returns:
 //		the total amount of addresses found
 //
-int ResolveHost(const char *address, const char *port, AddressInformation *outAddrList)
+int ResolveHost(const char *address, const char *port, AddressInformation *addrlist)
 {
 	// Variables
 	int              status; // Status value to return (0) is success
@@ -698,14 +685,14 @@ int ResolveHost(const char *address, const char *port, AddressInformation *outAd
 	}
 
 	// Dynamically allocate an array of address information structs
-	if (outAddrList != NULL) {
+	if (addrlist != NULL) {
 		int i;
 		for (i = 0; i < size; ++i) {
-			outAddrList[i] = AllocAddress();
-			if (outAddrList[i] == NULL) { break; }
+			addrlist[i] = AllocAddress();
+			if (addrlist[i] == NULL) { break; }
 		}
-		outAddrList[i] = NULL;
-		if (i != size) { outAddrList = NULL; }
+		addrlist[i] = NULL;
+		if (i != size) { addrlist = NULL; }
 	} else {
 		TraceLog(LOG_WARNING,
 				 "Error, failed to dynamically allocate memory for the address list");
@@ -715,20 +702,20 @@ int ResolveHost(const char *address, const char *port, AddressInformation *outAd
 	int i = 0;
 	for (iterator = res; iterator != NULL; iterator = iterator->ai_next) {
 		if (i < size) {
-			outAddrList[i]->ai_flags    = iterator->ai_flags;
-			outAddrList[i]->ai_family   = iterator->ai_family;
-			outAddrList[i]->ai_socktype = iterator->ai_socktype;
-			outAddrList[i]->ai_protocol = iterator->ai_protocol;
-			outAddrList[i]->ai_addrlen  = iterator->ai_addrlen;
-			memcpy(&outAddrList[i]->ai_addr, iterator->ai_addr, iterator->ai_addrlen);
+			addrlist[i]->addr.ai_flags    = iterator->ai_flags;
+			addrlist[i]->addr.ai_family   = iterator->ai_family;
+			addrlist[i]->addr.ai_socktype = iterator->ai_socktype;
+			addrlist[i]->addr.ai_protocol = iterator->ai_protocol;
+			addrlist[i]->addr.ai_addrlen  = iterator->ai_addrlen;
+			memcpy(&addrlist[i]->addr.ai_addr, iterator->ai_addr, iterator->ai_addrlen);
 #if NET_DEBUG_ENABLED
 			TraceLog(LOG_DEBUG, "GetAddressInformation");
 			TraceLog(LOG_DEBUG, "\tFlags: 0x%x", iterator->ai_flags);
-			PrintSocket(&outAddrList[i]->ai_addr,
-						outAddrList[i]->ai_family,
-						outAddrList[i]->ai_socktype,
-						outAddrList[i]->ai_protocol);
-			TraceLog(LOG_DEBUG, "Length of this sockaddr: %d", outAddrList[i]->ai_addrlen);
+			PrintSocket(&addrlist[i]->addr.ai_addr,
+						addrlist[i]->addr.ai_family,
+						addrlist[i]->addr.ai_socktype,
+						addrlist[i]->addr.ai_protocol);
+			TraceLog(LOG_DEBUG, "Length of this sockaddr: %d", addrlist[i]->addr.ai_addrlen);
 			TraceLog(LOG_DEBUG, "Canonical name: %s", iterator->ai_canonname);
 #endif
 			i++;
@@ -783,54 +770,91 @@ bool SocketCreate(SocketConfig *config, SocketResult *result)
 	return success;
 }
 
-//
-bool SocketListen(SocketConfig *config, SocketResult *result)
+// Bind a socket to a local address
+// Note: The bind function is required on an unconnected socket before subsequent calls to the listen function.
+bool SocketBind(SocketConfig *config, SocketResult *result)
 {
-	bool success   = true;
+	bool success   = false;
 	result->status = RESULT_FAILURE;
 
-	// Only bind to sockets marked as server
-	if (config->server) {
-		// The sockaddr_in structure specifies the address family,
-		// IP address, and port of the server to be connected to.
-		struct sockaddr_in clientService;
-		clientService.sin_family      = AF_INET;
-		clientService.sin_addr.s_addr = inet_addr("127.0.0.1");
-		clientService.sin_port        = htons(8080);
-
-		// Attempt to bind the socket
-		if (bind(result->socket->channel, (SOCKADDR *) &clientService, sizeof(clientService)) != SOCKET_ERROR) {
-			TraceLog(LOG_INFO, "Successfully bound socket.");
-		} else {
-			result->socket->status = SocketGetLastError();
-			TraceLog(LOG_WARNING, "Socket Error: %s",
-					 SocketErrorCodeToString(result->socket->status));
-			SocketSetLastError(0);
-			success = false;
-		}
-
-		// Don't listen on UDP sockets
-		if (!config->datagram) {
-			if (listen(result->socket->channel, config->backlog_size) != 0) {
-				success = false;
-			} else {
-				TraceLog(LOG_INFO, "Started listening on socket...");
+	// Don't bind to a socket that isn't configured as a server
+	if (!IsSocketValid(result->socket) || !config->server) {
+		TraceLog(LOG_WARNING,
+				 "Cannot bind to socket marked as \"Client\" in SocketConfig.");
+		success = false;
+	} else {
+		if (IsIPv4Address(config->host)) {
+			struct sockaddr_in ip4addr;
+			ip4addr.sin_family = AF_INET;
+			ip4addr.sin_port   = config->port;
+			inet_pton(AF_INET, config->host, &ip4addr.sin_addr);
+			if (bind(result->socket->channel, (struct sockaddr *) &ip4addr, sizeof(ip4addr)) != SOCKET_ERROR) {
+				TraceLog(LOG_INFO, "Successfully bound socket.");
 				success = true;
+			} else {
+				result->socket->status = SocketGetLastError();
+				TraceLog(LOG_WARNING, "Socket Error: %s",
+						 SocketErrorCodeToString(result->socket->status));
+				SocketSetLastError(0);
+				success = false;
+			}
+		} else {
+			if (IsIPv6Address(config->host)) {
+				struct sockaddr_in6 ip6addr;
+				ip6addr.sin6_family = AF_INET6;
+				ip6addr.sin6_port   = config->port;
+				inet_pton(AF_INET6, config->host, &ip6addr.sin6_addr);
+				if (bind(result->socket->channel, (struct sockaddr *) &ip6addr, sizeof(ip6addr)) != SOCKET_ERROR) {
+					TraceLog(LOG_INFO, "Successfully bound socket.");
+					success = true;
+				} else {
+					result->socket->status = SocketGetLastError();
+					TraceLog(LOG_WARNING, "Socket Error: %s",
+							 SocketErrorCodeToString(result->socket->status));
+					SocketSetLastError(0);
+					success = false;
+				}
 			}
 		}
-
-	} else {
-		TraceLog(LOG_WARNING,
-				 "Cannot listen on socket marked as \"Client\" in SocketConfig.");
-		success = false;
 	}
-
+	// Was the bind a success?
 	if (success) {
 		result->status         = RESULT_SUCCESS;
 		result->socket->ready  = 0;
 		result->socket->status = 0;
 	}
+	return success;
+}
 
+// Listens (and queues) incoming connections requests for a bound port.
+bool SocketListen(SocketConfig *config, SocketResult *result)
+{
+	bool success   = false;
+	result->status = RESULT_FAILURE;
+
+	// Don't bind to a socket that isn't configured as a server
+	if (!IsSocketValid(result->socket) || !config->server) {
+		TraceLog(LOG_WARNING,
+				 "Cannot listen on socket marked as \"Client\" in SocketConfig.");
+		success = false;
+	} else {
+		// Don't listen on UDP sockets
+		if (!config->datagram) {
+			if (listen(result->socket->channel, config->backlog_size) != SOCKET_ERROR) {
+				TraceLog(LOG_INFO, "Started listening on socket...");
+				success = true;
+			} else {
+				success = false;
+			}
+		}
+	}
+
+	// Was the listen a success?
+	if (success) {
+		result->status         = RESULT_SUCCESS;
+		result->socket->ready  = 0;
+		result->socket->status = 0;
+	}
 	return success;
 }
 
@@ -846,23 +870,58 @@ bool SocketConnect(SocketConfig *config, SocketResult *result)
 				 "Cannot connect to socket marked as \"Server\" in SocketConfig.");
 		success = false;
 	} else {
-		// The sockaddr_in structure specifies the address family,
-		// IP address, and port of the server to be connected to.
-		struct sockaddr_in clientService;
-		clientService.sin_family      = AF_INET;
-		clientService.sin_addr.s_addr = inet_addr("127.0.0.1");
-		clientService.sin_port        = htons(8080);
-
-		// Did we connect successfully?
-		if (connect(result->socket->channel, (SOCKADDR *) &clientService, sizeof(clientService)) != SOCKET_ERROR) {
-			TraceLog(LOG_INFO, "Successfully connected to socket.");
+		if (IsIPv4Address(config->host)) {
+			struct sockaddr_in ip4addr;
+			ip4addr.sin_family = AF_INET;
+			ip4addr.sin_port   = config->port;
+			inet_pton(AF_INET, config->host, &ip4addr.sin_addr);
+			int connect_result = connect(result->socket->channel, (struct sockaddr *) &ip4addr, sizeof(ip4addr));
+			if (connect_result == SOCKET_ERROR) {
+				result->socket->status = SocketGetLastError();
+				SocketSetLastError(0);
+				switch (result->socket->status) {
+					case WSAEWOULDBLOCK: {
+						success = true;
+						break;
+					}
+					default: {
+						TraceLog(LOG_WARNING, "Socket Error: %s",
+								 SocketErrorCodeToString(result->socket->status));
+						success = false;
+						break;
+					}
+				}
+			} else {
+				TraceLog(LOG_INFO, "Successfully connected to socket.");
+				success = true;
+			}
 		} else {
-			result->socket->status = SocketGetLastError();
-			TraceLog(LOG_WARNING,
-					 "Socket Error: %s",
-					 SocketErrorCodeToString(result->socket->status));
-			SocketSetLastError(0);
-			success = false;
+			if (IsIPv6Address(config->host)) {
+				struct sockaddr_in6 ip6addr;
+				ip6addr.sin6_family = AF_INET6;
+				ip6addr.sin6_port   = config->port;
+				inet_pton(AF_INET6, config->host, &ip6addr.sin6_addr);
+				int connect_result = connect(result->socket->channel, (struct sockaddr *) &ip6addr, sizeof(ip6addr));
+				if (connect_result == SOCKET_ERROR) {
+					result->socket->status = SocketGetLastError();
+					SocketSetLastError(0);
+					switch (result->socket->status) {
+						case WSAEWOULDBLOCK: {
+							success = true;
+							break;
+						}
+						default: {
+							TraceLog(LOG_WARNING, "Socket Error: %s",
+									 SocketErrorCodeToString(result->socket->status));
+							success = false;
+							break;
+						}
+					}
+				} else {
+					TraceLog(LOG_INFO, "Successfully connected to socket.");
+					success = true;
+				}
+			}
 		}
 	}
 
@@ -1082,7 +1141,32 @@ bool IsSocketReady(Socket *sock)
 	return (sock != NULL) && (sock->ready);
 }
 
-//
+bool IsSocketConnected(Socket *sock)
+{
+#if PLATFORM_WINDOWS
+	FD_SET writefds;
+	FD_ZERO(&writefds);
+	FD_SET(sock->channel, &writefds);
+	struct timeval timeout;
+	timeout.tv_sec  = 1;
+	timeout.tv_usec = 1000000000UL;
+	int total       = select(0, NULL, &writefds, NULL, &timeout);
+	if (total == -1) { // Error
+		sock->status = SocketGetLastError();
+		TraceLog(LOG_WARNING, "Socket Error: %s", SocketErrorCodeToString(sock->status));
+		SocketSetLastError(0);
+	} else if (total == 0) { // Timeout
+		return false;
+	} else {
+		if (FD_ISSET(sock->channel, &writefds)) { return true; }
+	}
+	return false;
+#else
+	return true;
+#endif
+}
+
+// Allocate and return a SocketResult struct
 SocketResult *AllocSocketResult()
 {
 	struct SocketResult *res;
@@ -1097,7 +1181,7 @@ SocketResult *AllocSocketResult()
 	return res;
 }
 
-//
+// Free an allocated SocketResult
 void FreeSocketResult(SocketResult **result)
 {
 	if (*result != NULL) {
@@ -1107,13 +1191,13 @@ void FreeSocketResult(SocketResult **result)
 	}
 }
 
-//
+// Allocate a Socket
 Socket *AllocSocket()
 {
 	// Allocate a socket if one already hasn't been
 	struct Socket *sock;
 	sock = (Socket *) malloc(sizeof(*sock));
-	if (socket != NULL) {
+	if (sock != NULL) {
 		memset(sock, 0, sizeof(*sock));
 	} else {
 		TraceLog(
@@ -1125,7 +1209,7 @@ Socket *AllocSocket()
 	return sock;
 }
 
-//
+// Free an allocated Socket
 void FreeSocket(Socket **sock)
 {
 	if (*sock != NULL) {
@@ -1134,7 +1218,7 @@ void FreeSocket(Socket **sock)
 	}
 }
 
-//
+// Allocate a SocketSet
 SocketSet *AllocSocketSet(int max)
 {
 	struct SocketSet *set;
@@ -1155,7 +1239,7 @@ SocketSet *AllocSocketSet(int max)
 	return (set);
 }
 
-//
+// Free an allocated SocketSet
 void FreeSocketSet(SocketSet *set)
 {
 	if (set) {
@@ -1164,7 +1248,7 @@ void FreeSocketSet(SocketSet *set)
 	}
 }
 
-//
+// Add a Socket "sock" to the SocketSet "set"
 int AddSocket(SocketSet *set, Socket *sock)
 {
 	if (sock != NULL) {
@@ -1182,7 +1266,7 @@ int AddSocket(SocketSet *set, Socket *sock)
 	return (set->numsockets);
 }
 
-//
+// Remove a Socket "sock" to the SocketSet "set"
 int RemoveSocket(SocketSet *set, Socket *sock)
 {
 	int i;
@@ -1204,7 +1288,7 @@ int RemoveSocket(SocketSet *set, Socket *sock)
 	return (set->numsockets);
 }
 
-//
+// Check the sockets in the socket set for pending information
 int CheckSockets(SocketSet *set, unsigned int timeout)
 {
 	int            i;
@@ -1248,7 +1332,7 @@ int CheckSockets(SocketSet *set, unsigned int timeout)
 	return (retval);
 }
 
-//
+// Allocate a Packet
 Packet *AllocPacket(int size)
 {
 	struct Packet *packet;
@@ -1271,7 +1355,7 @@ Packet *AllocPacket(int size)
 	return packet;
 }
 
-//
+// Free an allocated Packet
 void FreePacket(Packet *packet)
 {
 	if (packet != NULL) {
@@ -1284,7 +1368,7 @@ void FreePacket(Packet *packet)
 	}
 }
 
-//
+// Allocate an AddressInformation
 AddressInformation AllocAddress()
 {
 	AddressInformation addr;
@@ -1292,7 +1376,7 @@ AddressInformation AllocAddress()
 	return addr;
 }
 
-//
+// Allocate a list of AddressInformation
 AddressInformation *AllocAddressList(int size)
 {
 	AddressInformation *addr;
@@ -1300,25 +1384,22 @@ AddressInformation *AllocAddressList(int size)
 	return addr;
 }
 
+// Opaque datatype accessor addrinfo->ai_socktype
 int GetAddressSocketType(AddressInformation address)
 {
-	return address->ai_socktype;
+	return address->addr.ai_socktype;
 }
 
+// Opaque datatype accessor addrinfo->ai_protocol
 int GetAddressProtocol(AddressInformation address)
 {
-	return address->ai_protocol;
+	return address->addr.ai_protocol;
 }
 
+// Opaque datatype accessor addrinfo->ai_family
 int GetAddressFamily(AddressInformation address)
 {
-	return address->ai_family;
-}
-
-//
-void PrintAddressInfo(AddressInformation addr)
-{
-	PrintSocket(&addr->ai_addr, addr->ai_family, addr->ai_socktype, addr->ai_protocol);
+	return address->addr.ai_family;
 }
 
 //
