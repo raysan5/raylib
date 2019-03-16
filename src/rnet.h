@@ -107,67 +107,10 @@
 // Platform type definitions
 // From: https://github.com/DFHack/clsocket/blob/master/src/Host.h
 //----------------------------------------------------------------------------------
-
-#ifndef __WORDSIZE
-#	define __WORDSIZE 32
-#endif
-
-#if defined(_LINUX) || defined(_DARWIN)
-typedef unsigned char  uint8;
-typedef char           int8;
-typedef unsigned short uint16;
-typedef short          int16;
-typedef unsigned int   uint32;
-typedef int            int32;
-typedef int            SOCKET;
-#endif
-
-#ifdef WIN32
-typedef unsigned char  uint8;
-typedef char           int8;
-typedef unsigned short uint16;
-typedef short          int16;
-typedef unsigned int   uint32;
-typedef int            int32;
-#endif
-
+ 
 #ifdef WIN32
 typedef int socklen_t;
-#endif
-
-#if defined(WIN32)
-typedef unsigned long long int uint64;
-typedef long long int          int64;
-#elif (__WORDSIZE == 32)
-__extension__ typedef long long int          int64;
-__extension__ typedef unsigned long long int uint64;
-#elif (__WORDSIZE == 64)
-typedef unsigned long int uint64;
-typedef long int          int64;
-#endif
-
-#ifdef WIN32
-#	ifndef UINT8_MAX
-#		define UINT8_MAX (UCHAR_MAX)
-#	endif // UINT8_MAX
-#	ifndef UINT16_MAX
-#		define UINT16_MAX (USHRT_MAX)
-#	endif // UINT16_MAX
-#	ifndef UINT32_MAX
-#		define UINT32_MAX (ULONG_MAX)
-#	endif // UINT32_MAX
-#	if __WORDSIZE == 64
-#		define SIZE_MAX (18446744073709551615UL)
-#	else
-#		ifndef SIZE_MAX
-#			define SIZE_MAX (4294967295U)
-#		endif // SIZE_MAX
-#	endif     // __WORDSIZE == 64
-#endif         // WIN32
-
-#if defined(WIN32)
-#	define ssize_t size_t
-#endif // WIN32
+#endif  
 
 #ifndef RESULT_SUCCESS
 #	define RESULT_SUCCESS 0

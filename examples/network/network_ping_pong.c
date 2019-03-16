@@ -27,29 +27,29 @@
 #include <stdio.h>
 #include <string.h>
 
-float        elapsed          = 0.0f;
-float        delay            = 1.0f;
-bool         ping             = false;
-bool         pong             = false;
-bool         connected        = false;
-bool         client_connected = false;
-const char * pingmsg          = "Ping!";
-const char * pongmsg          = "Pong!";
-int          msglen           = 0;
-SocketConfig server_cfg = {.host = "127.0.0.1", .port = "8080", .datagram = true, .server = true, .nonblocking = true};
-SocketConfig client_cfg = {.host = "127.0.0.1", .port = "8080", .datagram = true, .nonblocking = true};
-SocketConfig  connection_cfg = {.nonblocking = true};
-SocketResult *server_res     = NULL;
-SocketResult *client_res     = NULL;
-SocketSet *   socket_set     = NULL;
-Socket *      connection     = NULL;
+float         elapsed          = 0.0f;
+float         delay            = 1.0f;
+bool          ping             = false;
+bool          pong             = false;
+bool          connected        = false;
+bool          client_connected = false;
+const char *  pingmsg          = "Ping!";
+const char *  pongmsg          = "Pong!";
+int           msglen           = 0;
+SocketConfig  server_cfg       = {.host = "127.0.0.1", .port = "8080", .type = SOCKET_TCP, .server = true, .nonblocking = true};
+SocketConfig  client_cfg       = {.host = "127.0.0.1", .port = "8080", .type = SOCKET_TCP, .nonblocking = true};
+SocketConfig  connection_cfg   = {.nonblocking = true};
+SocketResult *server_res       = NULL;
+SocketResult *client_res       = NULL;
+SocketSet *   socket_set       = NULL;
+Socket *      connection       = NULL;
 char          recvBuffer[512];
 
 // Attempt to connect to the network (Either TCP, or UDP)
 void NetworkConnect()
 {
 	// If the server is configured as UDP, ignore connection requests
-	if (server_cfg.datagram == true && client_cfg.datagram == true) {
+	if (server_cfg.type == SOCKET_UDP && client_cfg.type == SOCKET_UDP) {
 		ping      = true;
 		connected = true;
 	} else {
@@ -84,15 +84,25 @@ void NetworkConnect()
 // and when information is ready, send either a Ping or a Pong.
 void NetworkUpdate()
 {
+	// CheckSockets
+	//
+	// If any of the sockets in the socket_set are pending (received data, or requests)
+	// then mark the socket as being ready. You can check this with IsSocketReady(client_res->socket)
 	int active = CheckSockets(socket_set, 0);
 	if (active != 0) {
 		TraceLog(LOG_DEBUG,
 				 "There are currently %d socket(s) with data to be processed.", active);
 	}
 
+	// IsSocketReady
+	//
+	// If the socket is ready, attempt to receive data from the socket
 	int bytesRecv = 0;
-	if (server_cfg.datagram) {
+	if (server_cfg.type == SOCKET_UDP && client_cfg.type == SOCKET_UDP) {
 		if (IsSocketReady(client_res->socket)) {
+			bytesRecv = SocketReceive(client_res->socket, recvBuffer, msglen, 0);
+		}
+		if (IsSocketReady(server_res->socket)) {
 			bytesRecv = SocketReceive(server_res->socket, recvBuffer, msglen, 0);
 		}
 	} else {
@@ -100,19 +110,30 @@ void NetworkUpdate()
 			bytesRecv = SocketReceive(connection, recvBuffer, msglen, 0);
 		}
 	}
+
+	// If we received data, was that data a "Ping!" or a "Pong!"
 	if (bytesRecv > 0) {
 		if (strcmp(recvBuffer, pingmsg) == 0) { pong = true; }
 		if (strcmp(recvBuffer, pongmsg) == 0) { ping = true; }
 	}
 
+	// After each delay has expired, send a response "Ping!" for a "Pong!" and vice versa
 	elapsed += GetFrameTime();
 	if (elapsed > delay) {
 		if (ping) {
 			ping = false;
-			SocketSend(client_res->socket, pingmsg, msglen);
+			if (server_cfg.type == SOCKET_UDP && client_cfg.type == SOCKET_UDP) {
+				SocketSend(client_res->socket, pingmsg, msglen);
+			} else {
+				SocketSend(client_res->socket, pingmsg, msglen);
+			}
 		} else if (pong) {
 			pong = false;
-			SocketSend(client_res->socket, pongmsg, msglen);
+			if (server_cfg.type == SOCKET_UDP && client_cfg.type == SOCKET_UDP) {
+				SocketSend(client_res->socket, pongmsg, msglen);
+			} else {
+				SocketSend(client_res->socket, pongmsg, msglen);
+			}
 		}
 		elapsed = 0.0f;
 	}
@@ -148,10 +169,12 @@ int main()
 			TraceLog(LOG_WARNING, "Failed to bind server: status %d, errno %d",
 					 server_res->status, server_res->socket->status);
 		} else {
-			if (!SocketListen(&server_cfg, server_res)) {
-				TraceLog(LOG_WARNING,
-						 "Failed to start listen server: status %d, errno %d",
-						 server_res->status, server_res->socket->status);
+			if (!(server_cfg.type == SOCKET_UDP)) {
+				if (!SocketListen(&server_cfg, server_res)) {
+					TraceLog(LOG_WARNING,
+							 "Failed to start listen server: status %d, errno %d",
+							 server_res->status, server_res->socket->status);
+				}
 			}
 		}
 	}
@@ -162,20 +185,22 @@ int main()
 	//      getaddrinfo
 	//      socket
 	//      setsockopt
-	//      connect
+	//      connect (TCP only)
 	client_res = AllocSocketResult();
 	if (!SocketCreate(&client_cfg, client_res)) {
 		TraceLog(LOG_WARNING, "Failed to open client: status %d, errno %d",
 				 client_res->status, client_res->socket->status);
 	} else {
-		if (!SocketConnect(&client_cfg, client_res)) {
-			TraceLog(LOG_WARNING,
-					 "Failed to connect to server: status %d, errno %d",
-					 client_res->status, client_res->socket->status);
+		if (!(client_cfg.type == SOCKET_UDP)) {
+			if (!SocketConnect(&client_cfg, client_res)) {
+				TraceLog(LOG_WARNING,
+						 "Failed to connect to server: status %d, errno %d",
+						 client_res->status, client_res->socket->status);
+			}
 		}
 	}
 
-    //  Create & Add sockets to the socket set
+	//  Create & Add sockets to the socket set
 	socket_set = AllocSocketSet(3);
 	msglen     = strlen(pingmsg) + 1;
 	memset(recvBuffer, '\0', sizeof(recvBuffer));

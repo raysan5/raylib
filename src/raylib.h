@@ -173,9 +173,6 @@
     typedef enum { false, true } bool;
 #endif
 
-// Network typedefs
-typedef int32_t SocketChannel;
-
 // Vector2 type
 typedef struct Vector2 {
     float x;
@@ -452,20 +449,19 @@ typedef struct VrStereoConfig {
     int eyeViewportLeft[4];         // VR stereo rendering left eye viewport [x, y, w, h]
 } VrStereoConfig;
 
-
+// Network typedefs
+typedef uint32_t SocketChannel;
+typedef struct _AddressInformation *  AddressInformation;
+typedef struct _SocketAddress *       SocketAddress;
+typedef struct _SocketAddressIPv4 *   SocketAddressIPv4;
+typedef struct _SocketAddressIPv6 *   SocketAddressIPv6;
+typedef struct _SocketAddressStorage *SocketAddressStorage;
 
 // IPAddress definition (in network byte order)
-typedef struct IPv4Address {
+typedef struct IPAddress {
 	unsigned long  host; /* 32-bit IPv4 host address */
 	unsigned short port; /* 16-bit protocol port */
-} IPv4Address;
-
-typedef struct IPv6Address {
-	union {
-		uint8_t  byte[16];
-		uint16_t word[8];
-	} u;
-};
+} IPAddress; 
 
 // An option ID, value, sizeof(value) tuple for setsockopt(2).
 typedef struct SocketOpt {
@@ -477,21 +473,24 @@ typedef struct SocketOpt {
 typedef enum {
 	SOCKET_TCP = 1, // SOCK_STREAM
 	SOCKET_UDP = 2  // SOCK_DGRAM
-} SocketType; 
+} SocketType;
 
 typedef struct UDPChannel {
 	int numbound; // The total number of addresses this channel is bound to
-	IPv4Address address[SOCKET_MAX_UDPADDRESSES]; // The list of remote addresses this channel is bound to
+	IPAddress address[SOCKET_MAX_UDPADDRESSES]; // The list of remote addresses this channel is bound to
 } UDPChannel;
 
 typedef struct Socket {
 	int  ready;    // Is the socket ready? i.e. has information
-	int  status;    // The last status code to have occured using this socket
+	int  status;   // The last status code to have occured using this socket
 	bool isServer; // Is this socket a server socket (i.e. TCP/UDP Listen Server)
+	bool          isIPv6;
 	SocketChannel channel; // The socket handle id
 	SocketType    type;    // Is this socket a TCP or UDP socket?
-	IPv4Address address; // The host/target ip for this socket (in network byte order)
-	struct UDPChannel bindings[SOCKET_MAX_UDPCHANNELS]; // The amount of channels (if UDP) this socket is bound to
+	IPAddress address; // The host/target IPv4 for this socket (in network byte order)
+	SocketAddressIPv4 addripv4; // The host/target IPv4 for this socket (in network byte order)
+	SocketAddressIPv6 addripv6; // The host/target IPv6 for this socket (in network byte order)
+	struct UDPChannel binding[SOCKET_MAX_UDPCHANNELS]; // The amount of channels (if UDP) this socket is bound to
 } Socket;
 
 typedef struct SocketSet {
@@ -506,7 +505,7 @@ typedef struct SocketDataPacket {
 	int            len;     /* The length of the packet data */
 	int            maxlen;  /* The size of the data buffer */
 	int            status;  /* packet status after sending */
-	IPv4Address address; /* The source/dest address of an incoming/outgoing packet */
+	IPAddress address; /* The source/dest address of an incoming/outgoing packet */
 } SocketDataPacket;
 
 // Configuration for a socket. Not all of these fields need to
@@ -514,9 +513,9 @@ typedef struct SocketDataPacket {
 // struct literal will be zeroed out and replaced with defaults.
 typedef struct SocketConfig { 
 	char *    host;     // The host address in xxx.xxx.xxx.xxx form
-	char *    port;     // The target port/server in the form "http" or "25565"
-	bool      server;   // Listen for incoming clients?
-	bool      datagram; // TCP or UDP?
+	char *    port;     // The target port/service in the form "http" or "25565"
+	bool      server;   // Listen for incoming clients? 
+    SocketType type; 
 	bool      nonblocking;  // non-blocking operation? 
 	int       backlog_size; // set a custom backlog size
 	SocketOpt sockopts[SOCKET_MAX_SOCK_OPTS];
@@ -535,13 +534,6 @@ typedef struct Packet {
 	uint32_t maxs; // The max size of data
 	uint8_t* data; // Data stored in network byte order
 } Packet;
-
-//
-typedef struct _AddressInformation *  AddressInformation;
-typedef struct _SocketAddress *       SocketAddress;
-typedef struct _SocketAddressIPv4 *   SocketAddressIPv4;
-typedef struct _SocketAddressIPv6 *   SocketAddressIPv6;
-typedef struct _SocketAddressStorage *SocketAddressStorage; 
 
 //----------------------------------------------------------------------------------
 // Enumerators Definition
@@ -1520,14 +1512,23 @@ RLAPI AddressInformation AllocAddress();
 RLAPI AddressInformation* AllocAddressList(int size);
 
 // Socket API 
-RLAPI bool SocketCreate(SocketConfig *cfg, SocketResult *res);
-RLAPI bool SocketBind(SocketConfig *cfg, SocketResult *res);
-RLAPI bool SocketListen(SocketConfig *cfg, SocketResult *res);
-RLAPI bool SocketConnect(SocketConfig *cfg, SocketResult *res);
-RLAPI Socket *SocketAccept(Socket *server, SocketConfig *cfg);
-RLAPI int SocketSend(Socket *socket, const void *datap, int len);
-RLAPI int SocketReceive(Socket *socket, void *data, int maxlen, int timeout);
-RLAPI void SocketClose(SocketChannel socket);
+RLAPI bool SocketCreate(SocketConfig *config, SocketResult* result);
+RLAPI bool SocketBind(SocketConfig *config, SocketResult* result);
+RLAPI bool SocketListen(SocketConfig *config, SocketResult* result);
+RLAPI bool SocketConnect(SocketConfig *config, SocketResult* result);
+RLAPI Socket *SocketAccept(Socket *server, SocketConfig *config);
+
+// UDP Socket API
+RLAPI int  SocketSetChannel(Socket *socket, int channel, const IPAddress *address);
+RLAPI int  SocketUnsetChannel(Socket *socket, int channel);
+RLAPI IPAddress* SocketGetPeerAddress(Socket *socket, int channel);
+
+// General Socket API
+RLAPI int SocketSend(Socket *sock, const void *datap, int len);
+RLAPI int SocketReceive(Socket *sock, void *data, int maxlen, int timeout);
+RLAPI void SocketClose(Socket* sock);
+RLAPI int SocketReady(Socket* sock);
+
 RLAPI Socket *AllocSocket();
 RLAPI void FreeSocket(Socket **sock);
 RLAPI SocketResult *AllocSocketResult();
