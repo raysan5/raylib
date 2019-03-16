@@ -59,9 +59,10 @@ RAYLIB_LIBTYPE       ?= STATIC
 # Build mode for library: DEBUG or RELEASE
 RAYLIB_BUILD_MODE    ?= RELEASE
 
-# Included raylib audio module on compilation
-# NOTE: Some programs like tools could not require audio support
-INCLUDE_AUDIO_MODULE ?= TRUE
+# Include raylib modules on compilation
+# NOTE: Some programs like tools could not require those modules
+RAYLIB_MODULE_AUDIO  ?= TRUE
+RAYLIB_MODULE_MODELS ?= TRUE
 
 # Use external GLFW library instead of rglfw module
 # TODO: Review usage of examples on Linux.
@@ -393,7 +394,6 @@ OBJS = core.o \
        shapes.o \
        textures.o \
        text.o \
-       models.o \
        utils.o
 
 ifeq ($(PLATFORM),PLATFORM_DESKTOP)
@@ -401,8 +401,10 @@ ifeq ($(PLATFORM),PLATFORM_DESKTOP)
         OBJS += rglfw.o
     endif
 endif
-
-ifeq ($(INCLUDE_AUDIO_MODULE),TRUE)
+ifeq ($(RAYLIB_MODULE_MODELS),TRUE)
+    OBJS += models.o
+endif
+ifeq ($(RAYLIB_MODULE_AUDIO),TRUE)
     OBJS += raudio.o
 endif
 
