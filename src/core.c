@@ -780,24 +780,23 @@ void ToggleFullscreen(void)
 }
 
 // Set icon for window (only PLATFORM_DESKTOP)
+// NOTE: Image must be in RGBA format, 8bit per channel
 void SetWindowIcon(Image image)
 {
 #if defined(PLATFORM_DESKTOP)
-    Image imicon = ImageCopy(image);
-    ImageFormat(&imicon, UNCOMPRESSED_R8G8B8A8);
+    if (image.format == UNCOMPRESSED_R8G8B8A8)
+    {
+        GLFWimage icon[1] = { 0 };
 
-    GLFWimage icon[1] = { 0 };
+        icon[0].width = image.width;
+        icon[0].height = image.height;
+        icon[0].pixels = (unsigned char *)image.data;
 
-    icon[0].width = imicon.width;
-    icon[0].height = imicon.height;
-    icon[0].pixels = (unsigned char *)imicon.data;
-
-    // NOTE 1: We only support one image icon
-    // NOTE 2: The specified image data is copied before this function returns
-    glfwSetWindowIcon(window, 1, icon);
-
-    // TODO: Support multi-image icons --> image.mipmaps
-    UnloadImage(imicon);
+        // NOTE 1: We only support one image icon
+        // NOTE 2: The specified image data is copied before this function returns
+        glfwSetWindowIcon(window, 1, icon);
+    }
+    else TraceLog(LOG_WARNING, "Window icon image must be in R8G8B8A8 pixel format");
 #endif
 }
 
