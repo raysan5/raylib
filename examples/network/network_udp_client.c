@@ -64,7 +64,7 @@ int main()
 	int screenWidth  = 800;
 	int screenHeight = 450;
 	InitWindow(
-		screenWidth, screenHeight, "raylib [network] example - ping pong");
+		screenWidth, screenHeight, "raylib [network] example - udp client");
 	SetTargetFPS(60);
 	SetTraceLogLevel(LOG_DEBUG);
 
@@ -82,12 +82,6 @@ int main()
 	if (!SocketCreate(&client_cfg, client_res)) {
 		TraceLog(LOG_WARNING, "Failed to open client: status %d, errno %d",
 				 client_res->status, client_res->socket->status);
-	} else {
-		if (!SocketConnect(&client_cfg, client_res)) {
-			TraceLog(LOG_WARNING,
-					 "Failed to connect to server: status %d, errno %d",
-					 client_res->status, client_res->socket->status);
-		}
 	}
 
 	//  Create & Add sockets to the socket set

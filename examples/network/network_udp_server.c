@@ -33,10 +33,11 @@ void NetworkUpdate()
 	// IsSocketReady
 	//
 	// If the socket is ready, attempt to receive data from the socket
-	int bytesRecv = 0;
-	if (IsSocketReady(server_res->socket)) {
-		bytesRecv = SocketReceive(server_res->socket, recvBuffer, msglen, 0);
-	}
+	//  int bytesRecv = 0;
+	//  if (IsSocketReady(server_res->socket)) {
+	//      bytesRecv = SocketReceive(server_res->socket, recvBuffer, msglen, 0);
+	//  }
+	int bytesRecv = SocketReceive(server_res->socket, recvBuffer, msglen, 0);
 
 	// If we received data, was that data a "Ping!" or a "Pong!"
 	if (bytesRecv > 0) {
@@ -64,7 +65,7 @@ int main()
 	int screenWidth  = 800;
 	int screenHeight = 450;
 	InitWindow(
-		screenWidth, screenHeight, "raylib [network] example - ping pong");
+		screenWidth, screenHeight, "raylib [network] example - udp server");
 	SetTargetFPS(60);
 	SetTraceLogLevel(LOG_DEBUG);
 
@@ -92,7 +93,7 @@ int main()
 
 	//  Create & Add sockets to the socket set
 	socket_set = AllocSocketSet(1);
-	msglen     = strlen(pingmsg) + 1; 
+	msglen     = strlen(pingmsg) + 1;
 	memset(recvBuffer, '\0', sizeof(recvBuffer));
 	AddSocket(socket_set, server_res->socket);
 
