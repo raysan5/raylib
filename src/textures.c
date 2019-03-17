@@ -740,6 +740,20 @@ Image GetTextureData(Texture2D texture)
     return image;
 }
 
+// Get pixel data from GPU frontbuffer and return an Image (screenshot)
+RLAPI Image GetScreenData(void)
+{
+    Image image = { 0 };
+    
+    image.width = GetScreenWidth();
+    image.height = GetScreenHeight();
+    image.mipmaps = 1;
+    image.format = UNCOMPRESSED_R8G8B8A8;
+    image.data = rlReadScreenPixels(image.width, image.height);
+
+    return image;
+}
+
 // Update GPU texture with new data
 // NOTE: pixels data must match texture.format
 void UpdateTexture(Texture2D texture, const void *pixels)
@@ -1167,8 +1181,6 @@ void ImageAlphaPremultiply(Image *image)
 
     ImageFormat(image, prevFormat);
 }
-
-
 
 #if defined(SUPPORT_IMAGE_MANIPULATION)
 // Load cubemap from image, multiple image cubemap layouts supported
