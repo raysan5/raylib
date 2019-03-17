@@ -42,7 +42,7 @@
 .PHONY: all clean install uninstall
 
 # Define required raylib variables
-RAYLIB_VERSION     = 2.0.0
+RAYLIB_VERSION     = 2.4.0
 RAYLIB_API_VERSION = 2
 
 # See below for alternatives.
@@ -180,33 +180,9 @@ ifeq ($(PLATFORM),PLATFORM_ANDROID)
     endif
 endif
 
-# RAYLIB_RELEASE_PATH points to library build path, right now 
+# Define output directory for compiled library, defaults to src directory
+# NOTE: If externally provided, make sure directory exists
 RAYLIB_RELEASE_PATH  ?= $(RAYLIB_PATH)/src
-
-# Define output directory for compiled library
-ifeq ($(PLATFORM),PLATFORM_DESKTOP)
-    ifeq ($(PLATFORM_OS),WINDOWS)
-        RAYLIB_RELEASE_PATH = $(RAYLIB_PATH)\mingw\i686-w64-mingw32\lib
-    endif
-    ifeq ($(PLATFORM_OS),LINUX)
-        RAYLIB_RELEASE_PATH = $(RAYLIB_PATH)/src
-    endif
-    ifeq ($(PLATFORM_OS),OSX)
-        RAYLIB_RELEASE_PATH = $(RAYLIB_PATH)/src
-    endif
-    ifeq ($(PLATFORM_OS),BSD)
-        RAYLIB_RELEASE_PATH = $(RAYLIB_PATH)/src
-    endif
-endif
-ifeq ($(PLATFORM),PLATFORM_RPI)
-    RAYLIB_RELEASE_PATH = $(RAYLIB_PATH)/src
-endif
-ifeq ($(PLATFORM),PLATFORM_WEB)
-    RAYLIB_RELEASE_PATH = $(RAYLIB_PATH)/src
-endif
-ifeq ($(PLATFORM),PLATFORM_ANDROID)
-    RAYLIB_RELEASE_PATH = $(RAYLIB_PATH)/src/android/$(ANDROID_ARCH_NAME)
-endif
 
 # Define raylib graphics api depending on selected platform
 ifeq ($(PLATFORM),PLATFORM_DESKTOP)
@@ -444,11 +420,6 @@ ifeq ($(PLATFORM),PLATFORM_WEB)
 	emcc -O1 $(OBJS) -o $(RAYLIB_RELEASE_PATH)/libraylib.bc
 	@echo "raylib library generated (libraylib.bc)!"
 else
-    ifeq ($(PLATFORM_OS),WINDOWS)
-		if not exist $(RAYLIB_RELEASE_PATH) mkdir $(RAYLIB_RELEASE_PATH)
-    else
-		mkdir -p $(RAYLIB_RELEASE_PATH)
-    endif
     ifeq ($(RAYLIB_LIBTYPE),SHARED)
         ifeq ($(PLATFORM),PLATFORM_DESKTOP)
             ifeq ($(PLATFORM_OS),WINDOWS)
