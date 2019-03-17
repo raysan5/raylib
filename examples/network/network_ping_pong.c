@@ -36,8 +36,8 @@ bool          client_connected = false;
 const char *  pingmsg          = "Ping!";
 const char *  pongmsg          = "Pong!";
 int           msglen           = 0;
-SocketConfig  server_cfg       = {.host = "127.0.0.1", .port = "8080", .type = SOCKET_TCP, .server = true, .nonblocking = true};
-SocketConfig  client_cfg       = {.host = "127.0.0.1", .port = "8080", .type = SOCKET_TCP, .nonblocking = true};
+SocketConfig  server_cfg       = {.host = "127.0.0.1", .port = "4950", .type = SOCKET_TCP, .server = true, .nonblocking = true};
+SocketConfig  client_cfg       = {.host = "127.0.0.1", .port = "4950", .type = SOCKET_TCP, .nonblocking = true};
 SocketConfig  connection_cfg   = {.nonblocking = true};
 SocketResult *server_res       = NULL;
 SocketResult *client_res       = NULL;
@@ -100,14 +100,14 @@ void NetworkUpdate()
 	int bytesRecv = 0;
 	if (server_cfg.type == SOCKET_UDP && client_cfg.type == SOCKET_UDP) {
 		if (IsSocketReady(client_res->socket)) {
-			bytesRecv = SocketReceive(client_res->socket, recvBuffer, msglen, 0);
+			bytesRecv = SocketReceive(client_res->socket, recvBuffer, msglen);
 		}
 		if (IsSocketReady(server_res->socket)) {
-			bytesRecv = SocketReceive(server_res->socket, recvBuffer, msglen, 0);
+			bytesRecv = SocketReceive(server_res->socket, recvBuffer, msglen);
 		}
 	} else {
 		if (IsSocketReady(connection)) {
-			bytesRecv = SocketReceive(connection, recvBuffer, msglen, 0);
+			bytesRecv = SocketReceive(connection, recvBuffer, msglen);
 		}
 	}
 

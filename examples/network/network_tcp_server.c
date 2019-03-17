@@ -13,7 +13,7 @@ bool          connected      = false;
 const char *  pingmsg        = "Ping!";
 const char *  pongmsg        = "Pong!";
 int           msglen         = 0;
-SocketConfig  server_cfg     = {.host = "127.0.0.1", .port = "8080", .type = SOCKET_TCP, .server = true, .nonblocking = true};
+SocketConfig  server_cfg     = {.host = "127.0.0.1", .port = "4950", .type = SOCKET_TCP, .server = true, .nonblocking = true};
 SocketConfig  connection_cfg = {.nonblocking = true};
 SocketResult *server_res     = NULL;
 SocketSet *   socket_set     = NULL;
@@ -56,7 +56,7 @@ void NetworkUpdate()
 	// If the socket is ready, attempt to receive data from the socket
 	int bytesRecv = 0;
 	if (IsSocketReady(connection)) {
-		bytesRecv = SocketReceive(connection, recvBuffer, msglen, 0);
+		bytesRecv = SocketReceive(connection, recvBuffer, msglen);
 	}
 
 	// If we received data, was that data a "Ping!" or a "Pong!"
@@ -85,7 +85,7 @@ int main()
 	int screenWidth  = 800;
 	int screenHeight = 450;
 	InitWindow(
-		screenWidth, screenHeight, "raylib [network] example - ping pong");
+		screenWidth, screenHeight, "raylib [network] example - tcp server");
 	SetTargetFPS(60);
 	SetTraceLogLevel(LOG_DEBUG);
 

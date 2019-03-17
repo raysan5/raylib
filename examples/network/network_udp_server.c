@@ -35,9 +35,9 @@ void NetworkUpdate()
 	// If the socket is ready, attempt to receive data from the socket
 	//  int bytesRecv = 0;
 	//  if (IsSocketReady(server_res->socket)) {
-	//      bytesRecv = SocketReceive(server_res->socket, recvBuffer, msglen, 0);
+	//      bytesRecv = SocketReceive(server_res->socket, recvBuffer, msglen);
 	//  }
-	int bytesRecv = SocketReceive(server_res->socket, recvBuffer, msglen, 0);
+	int bytesRecv = SocketReceive(server_res->socket, recvBuffer, msglen);
 
 	// If we received data, was that data a "Ping!" or a "Pong!"
 	if (bytesRecv > 0) {

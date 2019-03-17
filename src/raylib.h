@@ -98,26 +98,55 @@
 #define MAX_SHADER_LOCATIONS    32      // Maximum number of predefined locations stored in shader struct
 #define MAX_MATERIAL_MAPS       12      // Maximum number of texture maps stored in shader struct
 
-// Network defines
-#define SOCKET_MAX_SET_SIZE 32
-#define SOCKET_MAX_QUEUE_SIZE 16
-#define SOCKET_MAX_SOCK_OPTS 4
-#define SOCKET_MAX_UDPCHANNELS (32)
-#define SOCKET_MAX_UDPADDRESSES (4)
+// Network connection related defines
+#define SOCKET_MAX_SET_SIZE                     (32)   // Maximum sockets in a set
+#define SOCKET_MAX_QUEUE_SIZE                   (16)   // Maximum socket queue size
+#define SOCKET_MAX_SOCK_OPTS                    (4)    // Maximum socket options
+#define SOCKET_MAX_UDPCHANNELS                  (32)   // Maximum UDP channels
+#define SOCKET_MAX_UDPADDRESSES                 (4)    // Maximum bound UDP addresses
 
-//
-#define ADDRESS_IPV4_ADDRSTRLEN 22
-#define ADDRESS_IPV6_ADDRSTRLEN 65
-#define ADDRESS_TYPE_IPV4 2
-#define ADDRESS_TYPE_IPV6 23
+// Network address related defines
+#define ADDRESS_IPV4_ADDRSTRLEN                 (22)   // IPv4 string length
+#define ADDRESS_IPV6_ADDRSTRLEN                 (65)   // IPv6 string length
+#define ADDRESS_TYPE_ANY                        (0)    // AF_UNSPEC
+#define ADDRESS_TYPE_IPV4                       (2)    // AF_INET
+#define ADDRESS_TYPE_IPV6                       (23)   // AF_INET6
+#define ADDRESS_MAXHOST                         (1025) // Max size of a fully-qualified domain name
+#define ADDRESS_MAXSERV                         (32)   // Max size of a service name
 
-// getnameinfo() defines
-#define NAME_INFO_DEFAULT 0x00 /* No flags set */
-#define NAME_INFO_NOFQDN 0x01 /* Only return nodename portion for local hosts */
-#define NAME_INFO_NUMERICHOST 0x02 /* Return numeric form of the host's address */
-#define NAME_INFO_NAMEREQD 0x04 /* Error if the host's name not in DNS */
-#define NAME_INFO_NUMERICSERV 0x08 /* Return numeric form of the service (port #) */
-#define NAME_INFO_DGRAM 0x10 /* Service is a datagram service */
+// Network address related defines
+#define ADDRESS_ANY                             ((unsigned long) 0x00000000)
+#define ADDRESS_LOOPBACK                        (0x7f000001)
+#define ADDRESS_BROADCAST                       ((unsigned long) 0xffffffff)
+#define ADDRESS_NONE                            (0xffffffff)
+
+// Address resolution related defines
+#if defined(_WIN32)
+    #define ADDRESS_INFO_PASSIVE                (0x00000001)  // Socket address will be used in bind() call
+    #define ADDRESS_INFO_CANONNAME              (0x00000002)  // Return canonical name in first ai_canonname
+    #define ADDRESS_INFO_NUMERICHOST            (0x00000004)  // Nodename must be a numeric address string
+    #define ADDRESS_INFO_NUMERICSERV            (0x00000008)  // Servicename must be a numeric port number
+    #define ADDRESS_INFO_DNS_ONLY               (0x00000010)  // Restrict queries to unicast DNS only (no LLMNR, netbios, etc.)
+    #define ADDRESS_INFO_ALL                    (0x00000100)  // Query both IP6 and IP4 with AI_V4MAPPED
+    #define ADDRESS_INFO_ADDRCONFIG             (0x00000400)  // Resolution only if global address configured
+    #define ADDRESS_INFO_V4MAPPED               (0x00000800)  // On v6 failure, query v4 and convert to V4MAPPED format
+    #define ADDRESS_INFO_NON_AUTHORITATIVE      (0x00004000)  // LUP_NON_AUTHORITATIVE
+    #define ADDRESS_INFO_SECURE                 (0x00008000)  // LUP_SECURE
+    #define ADDRESS_INFO_RETURN_PREFERRED_NAMES (0x00010000)  // LUP_RETURN_PREFERRED_NAMES
+    #define ADDRESS_INFO_FQDN                   (0x00020000)  // Return the FQDN in ai_canonname
+    #define ADDRESS_INFO_FILESERVER             (0x00040000)  // Resolving fileserver name resolution
+    #define ADDRESS_INFO_DISABLE_IDN_ENCODING   (0x00080000)  // Disable Internationalized Domain Names handling
+    #define ADDRESS_INFO_EXTENDED               (0x80000000)  // Indicates this is extended ADDRINFOEX(2/..) struct
+    #define ADDRESS_INFO_RESOLUTION_HANDLE      (0x40000000)  // Request resolution handle
+#endif
+
+// Network resolution related defines
+#define NAME_INFO_DEFAULT                       (0x00) // No flags set
+#define NAME_INFO_NOFQDN                        (0x01) // Only return nodename portion for local hosts
+#define NAME_INFO_NUMERICHOST                   (0x02) // Return numeric form of the host's address
+#define NAME_INFO_NAMEREQD                      (0x04) // Error if the host's name not in DNS
+#define NAME_INFO_NUMERICSERV                   (0x08) // Return numeric form of the service (port #)
+#define NAME_INFO_DGRAM                         (0x10) // Service is a datagram service
 
 // NOTE: MSC C++ compiler does not support compound literals (C99 feature)
 // Plain structures in C++ (without constructors) can be initialized from { } initializers.
@@ -1502,14 +1531,15 @@ RLAPI bool InitNetwork(void);
 RLAPI void CloseNetwork(void);
 
 // Address API
-RLAPI void ResolveIP(const char *host, const char *port, int flags, char *outhost);
-RLAPI int  ResolveHost(const char *address, const char *port, struct _AddressInformation *addr);
-RLAPI int  GetAddressFamily();
+RLAPI void ResolveIP(const char *ip, const char *service, int flags, char *outhost, char *outserv);
+RLAPI int  ResolveHost(const char *address, const char *service, int addressType, int flags, AddressInformation* outAddr);
+RLAPI int  GetAddressFamily(); 
 RLAPI int  GetAddressSocketType(AddressInformation address);
 RLAPI int  GetAddressProtocol(AddressInformation address);
 RLAPI void PrintAddressInfo(AddressInformation address);
 RLAPI AddressInformation AllocAddress();
-RLAPI AddressInformation* AllocAddressList(int size);
+RLAPI void FreeAddress(AddressInformation* addressInfo);
+RLAPI AddressInformation *AllocAddressList(int size); 
 
 // Socket API 
 RLAPI bool SocketCreate(SocketConfig *config, SocketResult* result);
@@ -1520,12 +1550,12 @@ RLAPI Socket *SocketAccept(Socket *server, SocketConfig *config);
 
 // UDP Socket API
 RLAPI int  SocketSetChannel(Socket *socket, int channel, const IPAddress *address);
-RLAPI int  SocketUnsetChannel(Socket *socket, int channel);
+RLAPI void SocketUnsetChannel(Socket *socket, int channel);
 RLAPI IPAddress* SocketGetPeerAddress(Socket *socket, int channel);
 
 // General Socket API
 RLAPI int SocketSend(Socket *sock, const void *datap, int len);
-RLAPI int SocketReceive(Socket *sock, void *data, int maxlen, int timeout);
+RLAPI int SocketReceive(Socket *sock, void *data, int maxlen);
 RLAPI void SocketClose(Socket* sock);
 RLAPI int SocketReady(Socket* sock);
 

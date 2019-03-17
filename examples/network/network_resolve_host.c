@@ -36,9 +36,22 @@ int main()
 	// Networking
 	InitNetwork(); 
 	 
-	ResolveHost("www.google.com", "80");
-	ResolveIP("8.8.8.8", NULL, NAME_INFO_DEFAULT);
-	ResolveIP("2001:4860:4860::8888", "80", NAME_INFO_NUMERICSERV);
+    AddressInformation* addr = NULL;
+	int count = ResolveHost(
+        NULL, 
+        "5210", 
+        ADDRESS_TYPE_IPV4, 
+        0                               // Uncomment any of these flags
+        //  ADDRESS_INFO_NUMERICHOST    // or try them in conjunction to
+        //  ADDRESS_INFO_NUMERICSERV    // specify custom behaviour from 
+        //  ADDRESS_INFO_DNS_ONLY       // the function getaddrinfo()
+        //  ADDRESS_INFO_ALL            //
+        //  ADDRESS_INFO_FQDN           // e.g. ADDRESS_INFO_CANONNAME | ADDRESS_INFO_NUMERICSERV
+        , 
+        addr
+    );   
+	ResolveIP("8.8.8.8", NULL, NAME_INFO_DEFAULT, NULL, NULL);
+	ResolveIP("2001:4860:4860::8888", "80", NAME_INFO_NUMERICSERV, NULL, NULL);
 
 	// Main game loop
 	while (!WindowShouldClose())

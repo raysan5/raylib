@@ -28,39 +28,40 @@ void test_resolve_ip()
 	const char *host = "8.8.8.8";
 	const char *port = "8080";
 	char        ip[ADDRESS_IPV6_ADDRSTRLEN];
+    char        service[ADDRESS_MAXSERV];
 
 	memset(ip, '\0', ADDRESS_IPV6_ADDRSTRLEN);
-	ResolveIP(host, port, NAME_INFO_NUMERICHOST, ip);
+	ResolveIP(host, port, NAME_INFO_NUMERICHOST, ip, service);
 	TraceLog(LOG_INFO, "Resolved %s to %s", host, ip);
 	assert(strcmp(ip, "8.8.8.8") == 0);
 
 	memset(ip, '\0', ADDRESS_IPV6_ADDRSTRLEN);
-	ResolveIP(host, port, NAME_INFO_DEFAULT, ip);
+	ResolveIP(host, port, NAME_INFO_DEFAULT, ip, service);
 	TraceLog(LOG_INFO, "Resolved %s to %s", host, ip);
 	assert(strcmp(ip, "google-public-dns-a.google.com") == 0);
 
 	memset(ip, '\0', ADDRESS_IPV6_ADDRSTRLEN);
-	ResolveIP(host, port, NAME_INFO_NOFQDN, ip);
+	ResolveIP(host, port, NAME_INFO_NOFQDN, ip, service);
 	TraceLog(LOG_INFO, "Resolved %s to %s", host, ip);
 	assert(strcmp(ip, "google-public-dns-a") == 0);
 
 	memset(ip, '\0', ADDRESS_IPV6_ADDRSTRLEN);
-	ResolveIP(host, port, NAME_INFO_NUMERICHOST, ip);
+	ResolveIP(host, port, NAME_INFO_NUMERICHOST, ip, service);
 	TraceLog(LOG_INFO, "Resolved %s to %s", host, ip);
 	assert(strcmp(ip, "8.8.8.8") == 0);
 
 	memset(ip, '\0', ADDRESS_IPV6_ADDRSTRLEN);
-	ResolveIP(host, port, NAME_INFO_NAMEREQD, ip);
+	ResolveIP(host, port, NAME_INFO_NAMEREQD, ip, service);
 	TraceLog(LOG_INFO, "Resolved %s to %s", host, ip);
 	assert(strcmp(ip, "google-public-dns-a.google.com") == 0);
 
 	memset(ip, '\0', ADDRESS_IPV6_ADDRSTRLEN);
-	ResolveIP(host, port, NAME_INFO_NUMERICSERV, ip);
+	ResolveIP(host, port, NAME_INFO_NUMERICSERV, ip, service);
 	TraceLog(LOG_INFO, "Resolved %s to %s", host, ip);
 	assert(strcmp(ip, "google-public-dns-a.google.com") == 0);
 
 	memset(ip, '\0', ADDRESS_IPV6_ADDRSTRLEN);
-	ResolveIP(host, port, NAME_INFO_DGRAM, ip);
+	ResolveIP(host, port, NAME_INFO_DGRAM, ip, service);
 	TraceLog(LOG_INFO, "Resolved %s to %s", host, ip);
 	assert(strcmp(ip, "google-public-dns-a.google.com") == 0);
 }
@@ -75,7 +76,7 @@ void test_resolve_host()
 	assert(GetAddressFamily(addr[1]) == ADDRESS_TYPE_IPV4);
 	assert(GetAddressSocketType(addr[0]) == 0);
 	assert(GetAddressProtocol(addr[0]) == 0);
-	for (size_t i = 0; i < count; i++) { PrintAddressInfo(addr[i]); }
+	// for (size_t i = 0; i < count; i++) { PrintAddressInfo(addr[i]); }
 }
 
 void test_address()
