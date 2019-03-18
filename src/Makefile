@@ -63,6 +63,11 @@ RAYLIB_BUILD_MODE    ?= RELEASE
 # NOTE: Some programs like tools could not require those modules
 RAYLIB_MODULE_AUDIO  ?= TRUE
 RAYLIB_MODULE_MODELS ?= TRUE
+RAYLIB_MODULE_RAYGUI ?= FALSE
+RAYLIB_MODULE_PHYSAC ?= FALSE
+
+RAYLIB_MODULE_RAYGUI_PATH ?= .
+RAYLIB_MODULE_PHYSAC_PATH ?= .
 
 # Use external GLFW library instead of rglfw module
 # TODO: Review usage of examples on Linux.
@@ -179,6 +184,9 @@ ifeq ($(PLATFORM),PLATFORM_ANDROID)
         ANDROID_ARCH_NAME = arm64-v8a
     endif
 endif
+
+# Define raylib source code path
+RAYLIB_SRC_PATH ?= $(RAYLIB_PATH)/src
 
 # Define output directory for compiled library, defaults to src directory
 # NOTE: If externally provided, make sure directory exists
@@ -383,6 +391,12 @@ endif
 ifeq ($(RAYLIB_MODULE_AUDIO),TRUE)
     OBJS += raudio.o
 endif
+ifeq ($(RAYLIB_MODULE_RAYGUI),TRUE)
+    OBJS += raygui.o
+endif
+ifeq ($(RAYLIB_MODULE_PHYSAC),TRUE)
+    OBJS += physac.o
+endif
 
 ifeq ($(PLATFORM),PLATFORM_ANDROID)
     OBJS += external/android/native_app_glue/android_native_app_glue.o
@@ -496,6 +510,10 @@ textures.o : textures.c raylib.h rlgl.h utils.h
 text.o : text.c raylib.h utils.h
 	$(CC) -c $< $(CFLAGS) $(INCLUDE_PATHS) -D$(PLATFORM) -D$(GRAPHICS)
 
+# Compile utils module
+utils.o : utils.c utils.h
+	$(CC) -c $< $(CFLAGS) $(INCLUDE_PATHS) -D$(PLATFORM)
+
 # Compile models module
 models.o : models.c raylib.h rlgl.h raymath.h
 	$(CC) -c $< $(CFLAGS) $(INCLUDE_PATHS) -D$(PLATFORM) -D$(GRAPHICS)
@@ -503,10 +521,20 @@ models.o : models.c raylib.h rlgl.h raymath.h
 # Compile audio module
 raudio.o : raudio.c raylib.h
 	$(CC) -c $< $(CFLAGS) $(INCLUDE_PATHS) -D$(PLATFORM)
-
-# Compile utils module
-utils.o : utils.c utils.h
-	$(CC) -c $< $(CFLAGS) $(INCLUDE_PATHS) -D$(PLATFORM)
+    
+# Compile raygui module
+# NOTE: raygui header should be distributed with raylib.h
+raygui.o : raygui.c raygui.h
+	@echo #define RAYGUI_IMPLEMENTATION > raygui.c
+	@echo #include "$(RAYLIB_MODULE_RAYGUI_PATH)/raygui.h" > raygui.c
+	$(CC) -c $< $(CFLAGS) $(INCLUDE_PATHS) -D$(PLATFORM) -DRAYGUI_IMPLEMENTATION
+    
+# Compile physac module
+# NOTE: physac header should be distributed with raylib.h
+physac.o : physac.c physac.h
+	@echo #define PHYSAC_IMPLEMENTATION > physac.c
+	@echo #include "$(RAYLIB_MODULE_PHYSAC_PATH)/physac.h" > physac.c
+	$(CC) -c $< $(CFLAGS) $(INCLUDE_PATHS) -D$(PLATFORM) -DRAYGUI_IMPLEMENTATION
 
 
 # Install generated and needed files to desired directories.
