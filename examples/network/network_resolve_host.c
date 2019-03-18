@@ -22,6 +22,9 @@
 
 #include "raylib.h" 
 
+char     buffer[ADDRESS_IPV6_ADDRSTRLEN];
+uint16_t port = 0;
+
 int main()
 {
 	// Setup
@@ -36,7 +39,7 @@ int main()
 	// Networking
 	InitNetwork(); 
 	 
-    AddressInformation* addr = NULL;
+    AddressInformation* addr = AllocAddressList(1);
 	int count = ResolveHost(
         NULL, 
         "5210", 
@@ -49,9 +52,13 @@ int main()
         //  ADDRESS_INFO_FQDN           // e.g. ADDRESS_INFO_CANONNAME | ADDRESS_INFO_NUMERICSERV
         , 
         addr
-    );   
-	ResolveIP("8.8.8.8", NULL, NAME_INFO_DEFAULT, NULL, NULL);
-	ResolveIP("2001:4860:4860::8888", "80", NAME_INFO_NUMERICSERV, NULL, NULL);
+    );
+
+    if (count > 0)
+    {
+        GetAddressHostAndPort(addr[0], buffer, &port);
+        TraceLog(LOG_INFO, "Resolved to ip %s::%d\n", buffer, port);
+    }
 
 	// Main game loop
 	while (!WindowShouldClose())

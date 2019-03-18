@@ -708,7 +708,7 @@ int ResolveHost(const char *address, const char *service, int addressType, int f
 
 	// If not address list was allocated, allocate it dynamically with the known address size
 	if (outAddr == NULL) {
-		outAddr = AllocAddressList(size);
+		outAddr = (AddressInformation *) malloc(size * sizeof(AddressInformation));
 	}
 
 	// Dynamically allocate an array of address information structs
@@ -1562,6 +1562,12 @@ AddressInformation *AllocAddressList(int size)
 	return addr;
 }
 
+// Opaque datatype accessor addrinfo->ai_family
+int GetAddressFamily(AddressInformation address)
+{
+	return address->addr.ai_family;
+}
+
 // Opaque datatype accessor addrinfo->ai_socktype
 int GetAddressSocketType(AddressInformation address)
 {
@@ -1574,10 +1580,37 @@ int GetAddressProtocol(AddressInformation address)
 	return address->addr.ai_protocol;
 }
 
-// Opaque datatype accessor addrinfo->ai_family
-int GetAddressFamily(AddressInformation address)
+// Opaque datatype accessor addrinfo->ai_canonname
+char *GetAddressCanonName(AddressInformation address)
 {
-	return address->addr.ai_family;
+	return address->addr.ai_canonname;
+}
+
+// Opaque datatype accessor addrinfo->ai_addr
+char *GetAddressHostAndPort(AddressInformation address, char *outhost, int *outport)
+{
+	char *                   ip[INET6_ADDRSTRLEN];
+	char *                   result = NULL;
+	struct sockaddr_storage *storage = (struct sockaddr_storage *) address->addr.ai_addr;
+	switch (storage->ss_family) {
+		case AF_INET: {
+			struct sockaddr_in *s = ((struct sockaddr_in *) address->addr.ai_addr);
+			result   = inet_ntop(AF_INET, &s->sin_addr, ip, INET_ADDRSTRLEN);
+			*outport = ntohs(s->sin_port);
+		} break;
+		case AF_INET6: {
+			struct sockaddr_in6 *s = ((struct sockaddr_in6 *) address->addr.ai_addr);
+			result   = inet_ntop(AF_INET6, &s->sin6_addr, ip, INET6_ADDRSTRLEN);
+			*outport = ntohs(s->sin6_port);
+		} break;
+	}
+	if (result == NULL) {
+		TraceLog(LOG_WARNING, "Socket Error: %s", SocketErrorCodeToString(SocketGetLastError()));
+		SocketSetLastError(0);
+	} else {
+		strcpy(outhost, result);
+	}
+	return result;
 }
 
 //

@@ -1533,9 +1533,11 @@ RLAPI void CloseNetwork(void);
 // Address API
 RLAPI void ResolveIP(const char *ip, const char *service, int flags, char *outhost, char *outserv);
 RLAPI int  ResolveHost(const char *address, const char *service, int addressType, int flags, AddressInformation* outAddr);
-RLAPI int  GetAddressFamily(); 
+RLAPI int  GetAddressFamily(AddressInformation address); 
 RLAPI int  GetAddressSocketType(AddressInformation address);
 RLAPI int  GetAddressProtocol(AddressInformation address);
+RLAPI char* GetAddressCanonName(AddressInformation address);
+RLAPI char *GetAddressHostAndPort(AddressInformation address, char *outhost, int *outport);
 RLAPI void PrintAddressInfo(AddressInformation address);
 RLAPI AddressInformation AllocAddress();
 RLAPI void FreeAddress(AddressInformation* addressInfo);
