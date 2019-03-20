@@ -457,7 +457,7 @@ static void MixAudioFrames(float *framesOut, const float *framesIn, ma_uint32 fr
                   float *frameOut = framesOut + (iFrame*device.playback.channels);
             const float *frameIn  = framesIn  + (iFrame*device.playback.channels);
 
-            frameOut[iChannel] += frameIn[iChannel]*masterVolume*localVolume;
+            frameOut[iChannel] += (frameIn[iChannel]*masterVolume*localVolume);
         }
     }
 }
@@ -595,11 +595,11 @@ AudioBuffer *CreateAudioBuffer(ma_format format, ma_uint32 channels, ma_uint32 s
         return NULL;
     }
 
-    audioBuffer->volume = 1;
-    audioBuffer->pitch = 1;
-    audioBuffer->playing = 0;
-    audioBuffer->paused = 0;
-    audioBuffer->looping = 0;
+    audioBuffer->volume = 1.0f;
+    audioBuffer->pitch = 1.0f;
+    audioBuffer->playing = false;
+    audioBuffer->paused = false;
+    audioBuffer->looping = false;
     audioBuffer->usage = usage;
     audioBuffer->bufferSizeInFrames = bufferSizeInFrames;
     audioBuffer->frameCursorPos = 0;
@@ -702,7 +702,7 @@ void SetAudioBufferVolume(AudioBuffer *audioBuffer, float volume)
 {
     if (audioBuffer == NULL)
     {
-        TraceLog(LOG_ERROR, "SetAudioBufferVolume() : No audio buffer");
+        TraceLog(LOG_WARNING, "SetAudioBufferVolume() : No audio buffer");
         return;
     }
 
@@ -714,7 +714,7 @@ void SetAudioBufferPitch(AudioBuffer *audioBuffer, float pitch)
 {
     if (audioBuffer == NULL)
     {
-        TraceLog(LOG_ERROR, "SetAudioBufferPitch() : No audio buffer");
+        TraceLog(LOG_WARNING, "SetAudioBufferPitch() : No audio buffer");
         return;
     }
 
