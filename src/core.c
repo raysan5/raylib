@@ -3684,7 +3684,6 @@ static int32_t AndroidInputCallback(struct android_app *app, AInputEvent *event)
         ProcessGestureEvent(gestureEvent);
     }
 #else
-
     // Support only simple touch position
     if (flags == AMOTION_EVENT_ACTION_DOWN)
     {
@@ -3788,6 +3787,7 @@ static EM_BOOL EmscriptenTouchCallback(int eventType, const EmscriptenTouchEvent
     }
     */
 
+#if defined(SUPPORT_GESTURES_SYSTEM)
     GestureEvent gestureEvent;
 
     // Register touch actions
@@ -3822,6 +3822,17 @@ static EM_BOOL EmscriptenTouchCallback(int eventType, const EmscriptenTouchEvent
 
     // Gesture data is sent to gestures system for processing
     ProcessGestureEvent(gestureEvent);
+#else
+    // Support only simple touch position
+    if (eventType == EMSCRIPTEN_EVENT_TOUCHSTART)
+    {
+        // Get first touch position
+        touchPosition[0] = (Vector2){ touchEvent->touches[0].targetX, touchEvent->touches[0].targetY };
+
+        touchPosition[0].x /= (float)GetScreenWidth();
+        touchPosition[0].y /= (float)GetScreenHeight();
+    }
+#endif
 
     return 1;
 }
@@ -4242,9 +4253,10 @@ static void EventThreadSpawn(char *device)
 static void *EventThread(void *arg)
 {
     struct input_event event;
-    GestureEvent gestureEvent;
     InputEventWorker *worker = (InputEventWorker *)arg;
-    bool GestureNeedsUpdate = false;
+    
+    int touchAction = -1;
+    bool gestureUpdate = false;
 
     while (!windowShouldClose)
     {
@@ -4257,16 +4269,18 @@ static void *EventThread(void *arg)
                 {
                     mousePosition.x += event.value;
                     touchPosition[0].x = mousePosition.x;
-                    gestureEvent.touchAction = TOUCH_MOVE;
-                    GestureNeedsUpdate = true;
+                    
+                    touchAction = TOUCH_MOVE;
+                    gestureUpdate = true;
                 }
 
                 if (event.code == REL_Y)
                 {
                     mousePosition.y += event.value;
                     touchPosition[0].y = mousePosition.y;
-                    gestureEvent.touchAction = TOUCH_MOVE;
-                    GestureNeedsUpdate = true;
+                    
+                    touchAction = TOUCH_MOVE;
+                    gestureUpdate = true;
                 }
 
                 if (event.code == REL_WHEEL)
@@ -4282,15 +4296,17 @@ static void *EventThread(void *arg)
                 if (event.code == ABS_X)
                 {
                     mousePosition.x = (event.value - worker->absRange.x)*screenWidth/worker->absRange.width;   // Scale acording to absRange
-                    gestureEvent.touchAction = TOUCH_MOVE;
-                    GestureNeedsUpdate = true;
+                    
+                    touchAction = TOUCH_MOVE;
+                    gestureUpdate = true;
                 }
 
                 if (event.code == ABS_Y)
                 {
                     mousePosition.y = (event.value - worker->absRange.y)*screenHeight/worker->absRange.height; // Scale acording to absRange
-                    gestureEvent.touchAction = TOUCH_MOVE;
-                    GestureNeedsUpdate = true;
+                    
+                    touchAction = TOUCH_MOVE;
+                    gestureUpdate = true;
                 }
 
                 // Multitouch movement
@@ -4328,9 +4344,10 @@ static void *EventThread(void *arg)
                 if ((event.code == BTN_TOUCH) || (event.code == BTN_LEFT))
                 {
                     currentMouseStateEvdev[MOUSE_LEFT_BUTTON] = event.value;
-                    if (event.value > 0) gestureEvent.touchAction = TOUCH_DOWN;
-                    else gestureEvent.touchAction = TOUCH_UP;
-                    GestureNeedsUpdate = true;
+                    
+                    if (event.value > 0) touchAction = TOUCH_DOWN;
+                    else touchAction = TOUCH_UP;
+                    gestureUpdate = true;
                 }
 
                 if (event.code == BTN_RIGHT) currentMouseStateEvdev[MOUSE_RIGHT_BUTTON] =  event.value;
@@ -4346,22 +4363,31 @@ static void *EventThread(void *arg)
             if (mousePosition.y > screenHeight/mouseScale.y) mousePosition.y = screenHeight/mouseScale.y;
 
             // Gesture update
-            if (GestureNeedsUpdate)
+            if (gestureUpdate)
             {
+#if defined(SUPPORT_GESTURES_SYSTEM)
+                GestureEvent gestureEvent = { 0 };
+
                 gestureEvent.pointCount = 0;
+                gestureEvent.touchAction = touchAction;
+                
                 if (touchPosition[0].x >= 0) gestureEvent.pointCount++;
                 if (touchPosition[1].x >= 0) gestureEvent.pointCount++;
                 if (touchPosition[2].x >= 0) gestureEvent.pointCount++;
                 if (touchPosition[3].x >= 0) gestureEvent.pointCount++;
+                
                 gestureEvent.pointerId[0] = 0;
                 gestureEvent.pointerId[1] = 1;
                 gestureEvent.pointerId[2] = 2;
                 gestureEvent.pointerId[3] = 3;
+                
                 gestureEvent.position[0] = touchPosition[0];
                 gestureEvent.position[1] = touchPosition[1];
                 gestureEvent.position[2] = touchPosition[2];
                 gestureEvent.position[3] = touchPosition[3];
+                
                 ProcessGestureEvent(gestureEvent);
+#endif
             }
         }
         else
