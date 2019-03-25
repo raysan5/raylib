@@ -19,7 +19,7 @@ Some people ported raylib to other languages in form of bindings or wrappers to 
  - [raylib-java](https://github.com/XoanaIO/raylib-java) : raylib **Java** binding
  - [raylib-chaiscript](https://github.com/RobLoach/raylib-chaiscript) : raylib **ChaiScript** binding
  - [node-raylib](https://github.com/RobLoach/node-raylib) : **Node.js** raylib binding
- - [odin-raylib](https://github.com/kevinw/odin-raylib): **Odin** raylib binding
+ - [raylib-odin](https://github.com/kevinw/raylib-odin): **Odin** raylib binding
  - *[raylib flat-assembler Usage example]()*
  - *[raylib COBOL Usage example](https://github.com/Martinfx/Cobol/tree/master/OpenCobol/Games/raylib)*
  
