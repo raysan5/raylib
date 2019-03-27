@@ -23,6 +23,8 @@ Some people ported raylib to other languages in form of bindings or wrappers to 
  - *[raylib flat-assembler Usage example]()*
  - *[raylib COBOL Usage example](https://github.com/Martinfx/Cobol/tree/master/OpenCobol/Games/raylib)*
  
+Missing some language? Check the [bindings not yet in this list](https://gist.github.com/raysan5/5764cc5b885183f523fce47f098f3d9b#bindings-not-yet-in-the-official-list) or create a new binding! :)
+ 
 Usually, raylib bindings follow the convention: `raylib-{language}`
 
 Let me know if you're writing a new binding for raylib, I will list it here and I usually 
