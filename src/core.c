@@ -361,6 +361,15 @@ typedef struct {
 
 static InputEventWorker eventWorkers[10];       // List of worker threads for every monitored "/dev/input/event<N>"
 
+typedef struct{
+    int Contents[8];
+    char Head;
+    char Tail;
+} KeyEventFifo;
+
+static KeyEventFifo lastKeyPressedEvdev;        // Buffer for holding keydown events as they arrive (Needed due to multitreading of event workers)
+static char currentKeyStateEvdev[512] = { 0 };  // Registers current frame key state from event based driver (Needs to be seperate because the legacy console based method clears keys on every frame)
+
 #endif
 #if defined(PLATFORM_WEB)
 static bool toggleCursorLock = false;           // Ask for cursor pointer lock on next click
@@ -470,7 +479,7 @@ static EM_BOOL EmscriptenGamepadCallback(int eventType, const EmscriptenGamepadE
 static void InitKeyboard(void);                         // Init raw keyboard system (standard input reading)
 static void ProcessKeyboard(void);                      // Process keyboard events
 static void RestoreKeyboard(void);                      // Restore keyboard system
-static void InitMouse(void);                            // Mouse initialization (including mouse thread)
+static void InitEvdevInput(void);                            // Mouse initialization (including mouse thread)
 static void EventThreadSpawn(char *device);             // Identifies a input device and spawns a thread to handle it if needed
 static void *EventThread(void *arg);                    // Input device events reading thread
 static void InitGamepad(void);                          // Init raw gamepad input
@@ -590,7 +599,7 @@ void InitWindow(int width, int height, const char *title)
 
 #if defined(PLATFORM_RPI)
     // Init raw input system
-    InitMouse();        // Mouse init
+    InitEvdevInput();        // Mouse init
     InitKeyboard();     // Keyboard init
     InitGamepad();      // Gamepad init
 #endif
@@ -3054,8 +3063,16 @@ static void PollInputEvents(void)
 #endif
 
 #if defined(PLATFORM_RPI)
+
     // Register previous keys states
-    for (int i = 0; i < 512; i++) previousKeyState[i] = currentKeyState[i];
+    for (int i = 0; i < 512; i++)previousKeyState[i] = currentKeyState[i];
+
+    // Grab a keypress from the evdev fifo if avalable
+    if(lastKeyPressedEvdev.Head != lastKeyPressedEvdev.Tail)
+    {
+        lastKeyPressed = lastKeyPressedEvdev.Contents[lastKeyPressedEvdev.Tail];    // Read the key from the buffer
+        lastKeyPressedEvdev.Tail = (lastKeyPressedEvdev.Tail + 1) & 0x07;           // Increment the tail pointer forwards and binary wraparound after 7 (fifo is 8 elements long)
+    }
 
     // Register previous mouse states
     previousMouseWheelY = currentMouseWheelY;
@@ -3211,10 +3228,10 @@ static void PollInputEvents(void)
 #endif
 
 #if defined(PLATFORM_RPI)
-    // NOTE: Mouse input events polling is done asynchonously in another pthread - MouseThread()
+    // NOTE: Mouse input events polling is done asynchonously in another pthread - EventThread()
 
     // NOTE: Keyboard reading could be done using input_event(s) reading or just read from stdin,
-    // we use method 2 (stdin) but maybe in a future we should change to method 1...
+    // we now use both methods inside here. 2nd method is still used for legacy purposes (Allows for input trough SSH console)
     ProcessKeyboard();
 
     // NOTE: Gamepad (Joystick) input events polling is done asynchonously in another pthread - GamepadThread()
@@ -3921,6 +3938,9 @@ static void ProcessKeyboard(void)
     // Reset pressed keys array (it will be filled below)
     for (int i = 0; i < 512; i++) currentKeyState[i] = 0;
 
+    // Check keys from event input workers (This is the new keyboard reading method)
+    for (int i = 0; i < 512; i++)currentKeyState[i] = currentKeyStateEvdev[i];
+
     // Fill all read bytes (looking for keys)
     for (int i = 0; i < bufferByteCount; i++)
     {
@@ -4021,8 +4041,8 @@ static void RestoreKeyboard(void)
     ioctl(STDIN_FILENO, KDSKBMODE, defaultKeyboardMode);
 }
 
-// Mouse initialization (including mouse thread)
-static void InitMouse(void)
+// Initialise user input from evdev(/dev/input/event<N>) this means mouse, keyboard or gamepad devices
+static void InitEvdevInput(void)
 {
     char path[MAX_FILEPATH_LENGTH];
     DIR *directory;
@@ -4034,6 +4054,11 @@ static void InitMouse(void)
         touchPosition[i].x = -1;
         touchPosition[i].y = -1;
     }
+    // Reset keypress buffer
+    lastKeyPressedEvdev.Head = 0;
+    lastKeyPressedEvdev.Tail = 0;
+    // Reset keyboard key state
+    for (int i = 0; i < 512; i++) currentKeyStateEvdev[i] = 0;
 
     // Open the linux directory of "/dev/input"
     directory = opendir(DEFAULT_EVDEV_PATH);
@@ -4202,7 +4227,7 @@ static void EventThreadSpawn(char *device)
 
     // Decide what to do with the device
     //-------------------------------------------------------------------------------------------------------
-    if (worker->isTouch || worker->isMouse)
+    if (worker->isTouch || worker->isMouse || worker->isKeyboard)
     {
         // Looks like a interesting device
         TraceLog(LOG_INFO, "Opening input device [%s] (%s%s%s%s%s)", device,
@@ -4252,14 +4277,35 @@ static void EventThreadSpawn(char *device)
 // Input device events reading thread
 static void *EventThread(void *arg)
 {
+    // Scancode to keycode mapping for US keyboards
+    // TODO: Proabobly replace this with a keymap from the X11 to get the correct regional map for the keyboard (Currently non US keyboards will have the wrong mapping for some keys)
+    static const int keymap_US[] = 
+        {0,256,49,50,51,52,53,54,55,56,57,48,45,61,259,258,81,87,69,82,84,
+        89,85,73,79,80,91,93,257,341,65,83,68,70,71,72,74,75,76,59,39,96,
+        340,92,90,88,67,86,66,78,77,44,46,47,344,332,342,32,280,290,291,
+        292,293,294,295,296,297,298,299,282,281,327,328,329,333,324,325,
+        326,334,321,322,323,320,330,0,85,86,300,301,89,90,91,92,93,94,95,
+        335,345,331,283,346,101,268,265,266,263,262,269,264,267,260,261,
+        112,113,114,115,116,117,118,119,120,121,122,123,124,125,347,127,
+        128,129,130,131,132,133,134,135,136,137,138,139,140,141,142,143,
+        144,145,146,147,148,149,150,151,152,153,154,155,156,157,158,159,
+        160,161,162,163,164,165,166,167,168,169,170,171,172,173,174,175,
+        176,177,178,179,180,181,182,183,184,185,186,187,188,189,190,191,
+        192,193,194,0,0,0,0,0,200,201,202,203,204,205,206,207,208,209,210,
+        211,212,213,214,215,216,217,218,219,220,221,222,223,224,225,226,
+        227,228,229,230,231,232,233,234,235,236,237,238,239,240,241,242,
+        243,244,245,246,247,248,0,0,0,0,0,0,0,};
+
     struct input_event event;
     InputEventWorker *worker = (InputEventWorker *)arg;
     
     int touchAction = -1;
     bool gestureUpdate = false;
+    int keycode;
 
     while (!windowShouldClose)
     {
+        // Try to read data from the device and only continue if successful
         if (read(worker->fd, &event, sizeof(event)) == (int)sizeof(event))
         {
             // Relative movement parsing
@@ -4269,18 +4315,22 @@ static void *EventThread(void *arg)
                 {
                     mousePosition.x += event.value;
                     touchPosition[0].x = mousePosition.x;
-                    
-                    touchAction = TOUCH_MOVE;
-                    gestureUpdate = true;
+
+                    #if defined(SUPPORT_GESTURES_SYSTEM)
+                        touchAction = TOUCH_MOVE;
+                        gestureUpdate = true;
+                    #endif
                 }
 
                 if (event.code == REL_Y)
                 {
                     mousePosition.y += event.value;
                     touchPosition[0].y = mousePosition.y;
-                    
-                    touchAction = TOUCH_MOVE;
-                    gestureUpdate = true;
+
+                    #if defined(SUPPORT_GESTURES_SYSTEM)
+                        touchAction = TOUCH_MOVE;
+                        gestureUpdate = true;
+                    #endif
                 }
 
                 if (event.code == REL_WHEEL)
@@ -4296,17 +4346,21 @@ static void *EventThread(void *arg)
                 if (event.code == ABS_X)
                 {
                     mousePosition.x = (event.value - worker->absRange.x)*screenWidth/worker->absRange.width;   // Scale acording to absRange
-                    
-                    touchAction = TOUCH_MOVE;
-                    gestureUpdate = true;
+
+                    #if defined(SUPPORT_GESTURES_SYSTEM)
+                        touchAction = TOUCH_MOVE;
+                        gestureUpdate = true;
+                    #endif
                 }
 
                 if (event.code == ABS_Y)
                 {
                     mousePosition.y = (event.value - worker->absRange.y)*screenHeight/worker->absRange.height; // Scale acording to absRange
-                    
-                    touchAction = TOUCH_MOVE;
-                    gestureUpdate = true;
+
+                    #if defined(SUPPORT_GESTURES_SYSTEM)
+                        touchAction = TOUCH_MOVE;
+                        gestureUpdate = true;
+                    #endif
                 }
 
                 // Multitouch movement
@@ -4341,18 +4395,43 @@ static void *EventThread(void *arg)
             // Button parsing
             if (event.type == EV_KEY)
             {
+
+                // Mouse button parsing
                 if ((event.code == BTN_TOUCH) || (event.code == BTN_LEFT))
                 {
                     currentMouseStateEvdev[MOUSE_LEFT_BUTTON] = event.value;
                     
-                    if (event.value > 0) touchAction = TOUCH_DOWN;
-                    else touchAction = TOUCH_UP;
-                    gestureUpdate = true;
+                    #if defined(SUPPORT_GESTURES_SYSTEM)
+                        if (event.value > 0) touchAction = TOUCH_DOWN;
+                        else touchAction = TOUCH_UP;
+                        gestureUpdate = true;
+                    #endif
                 }
 
                 if (event.code == BTN_RIGHT) currentMouseStateEvdev[MOUSE_RIGHT_BUTTON] =  event.value;
 
                 if (event.code == BTN_MIDDLE) currentMouseStateEvdev[MOUSE_MIDDLE_BUTTON] =  event.value;
+
+                // Keyboard button parsing
+                if((event.code >= 1) && (event.code <= 255))     //Keyboard keys appear for codes 1 to 255
+                {
+                    keycode = keymap_US[event.code & 0xFF];     // The code we get is a scancode so we look up the apropriate keycode             
+                    // Make sure we got a valid keycode
+                    if((keycode > 0) && (keycode < sizeof(currentKeyState)))         
+                    {
+                        // Store the key information for raylib to later use
+                        currentKeyStateEvdev[keycode] = event.value;
+                        if(event.value > 0)
+                        {
+                            // Add the key int the fifo
+                            lastKeyPressedEvdev.Contents[lastKeyPressedEvdev.Head] = keycode;   // Put the data at the front of the fifo snake
+                            lastKeyPressedEvdev.Head = (lastKeyPressedEvdev.Head + 1) & 0x07;   // Increment the head pointer forwards and binary wraparound after 7 (fifo is 8 elements long)
+                            // TODO: This fifo is not fully threadsafe with multiple writers, so multiple keyboards hitting a key at the exact same time could miss a key (double write to head before it was incremented)
+                        }
+                        TraceLog(LOG_DEBUG, "KEY%s ScanCode: %4i KeyCode: %4i",event.value == 0 ? "UP":"DOWN", event.code, keycode);
+                    }
+                }
+
             }
 
             // Screen confinement
