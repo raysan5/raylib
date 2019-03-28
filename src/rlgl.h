@@ -728,6 +728,7 @@ typedef struct DynamicBuffer {
 typedef struct DrawCall {
     int mode;                   // Drawing mode: LINES, TRIANGLES, QUADS
     int vertexCount;            // Number of vertex of the draw
+    int vertexAlignment;        // Number of vertex required for index alignment (LINES, TRIANGLES)
     //unsigned int vaoId;         // Vertex Array id to be used on the draw
     //unsigned int shaderId;      // Shader id to be used on the draw
     unsigned int textureId;     // Texture id to be used on the draw
@@ -1123,7 +1124,27 @@ void rlBegin(int mode)
     // NOTE: In all three cases, vertex are accumulated over default internal vertex buffer
     if (draws[drawsCounter - 1].mode != mode)
     {
-        if (draws[drawsCounter - 1].vertexCount > 0) drawsCounter++;
+        if (draws[drawsCounter - 1].vertexCount > 0)
+        {
+            // Make sure current draws[i].vertexCount is aligned a multiple of 4,
+            // that way, following QUADS drawing will keep aligned with index processing
+            // It implies adding some extra alignment vertex at the end of the draw,
+            // those vertex are not processed but they are considered as an additional offset 
+            // for the next set of vertex to be drawn
+            if (draws[drawsCounter - 1].mode == RL_LINES) draws[drawsCounter - 1].vertexAlignment = ((draws[drawsCounter - 1].vertexCount < 4)? draws[drawsCounter - 1].vertexCount : draws[drawsCounter - 1].vertexCount%4);
+            else if (draws[drawsCounter - 1].mode == RL_TRIANGLES) draws[drawsCounter - 1].vertexAlignment = ((draws[drawsCounter - 1].vertexCount < 4)? 1 : (4 - (draws[drawsCounter - 1].vertexCount%4)));
+            
+            if (rlCheckBufferLimit(draws[drawsCounter - 1].vertexAlignment)) rlglDraw();
+            else
+            {
+                vertexData[currentBuffer].vCounter += draws[drawsCounter - 1].vertexAlignment;
+                vertexData[currentBuffer].cCounter += draws[drawsCounter - 1].vertexAlignment;
+                vertexData[currentBuffer].tcCounter += draws[drawsCounter - 1].vertexAlignment;
+            
+                drawsCounter++;
+            }
+        }
+        
         if (drawsCounter >= MAX_DRAWCALL_REGISTERED) rlglDraw();
 
         draws[drawsCounter - 1].mode = mode;
@@ -1135,15 +1156,6 @@ void rlBegin(int mode)
 // Finish vertex providing
 void rlEnd(void)
 {
-    // Make sure current draws[i].vertexCount is multiple of 4, to align with index processing
-    // NOTE: It implies adding some extra vertex at the end of the draw, those vertex will be
-    // processed but are placed in a single point to not result in a fragment output...
-    // TODO: System could be improved (a bit) just storing every draw alignment value
-    // and adding it to vertexOffset on drawing... maybe in a future...
-    int vertexCount = draws[drawsCounter - 1].vertexCount;
-    int vertexToAlign = (vertexCount >= 4)? vertexCount%4 : (4 - vertexCount%4);
-    for (int i = 0; i < vertexToAlign; i++) rlVertex3f(-1, -1, -1);
-
     // Make sure vertexCount is the same for vertices, texcoords, colors and normals
     // NOTE: In OpenGL 1.1, one glColor call can be made for all the subsequent glVertex calls
 
@@ -1283,7 +1295,27 @@ void rlEnableTexture(unsigned int id)
 #if defined(GRAPHICS_API_OPENGL_33) || defined(GRAPHICS_API_OPENGL_ES2)
     if (draws[drawsCounter - 1].textureId != id)
     {
-        if (draws[drawsCounter - 1].vertexCount > 0) drawsCounter++;
+        if (draws[drawsCounter - 1].vertexCount > 0)
+        {
+            // Make sure current draws[i].vertexCount is aligned a multiple of 4,
+            // that way, following QUADS drawing will keep aligned with index processing
+            // It implies adding some extra alignment vertex at the end of the draw,
+            // those vertex are not processed but they are considered as an additional offset 
+            // for the next set of vertex to be drawn
+            if (draws[drawsCounter - 1].mode == RL_LINES) draws[drawsCounter - 1].vertexAlignment = ((draws[drawsCounter - 1].vertexCount < 4)? draws[drawsCounter - 1].vertexCount : draws[drawsCounter - 1].vertexCount%4);
+            else if (draws[drawsCounter - 1].mode == RL_TRIANGLES) draws[drawsCounter - 1].vertexAlignment = ((draws[drawsCounter - 1].vertexCount < 4)? 1 : (4 - (draws[drawsCounter - 1].vertexCount%4)));
+            
+            if (rlCheckBufferLimit(draws[drawsCounter - 1].vertexAlignment)) rlglDraw();
+            else
+            {
+                vertexData[currentBuffer].vCounter += draws[drawsCounter - 1].vertexAlignment;
+                vertexData[currentBuffer].cCounter += draws[drawsCounter - 1].vertexAlignment;
+                vertexData[currentBuffer].tcCounter += draws[drawsCounter - 1].vertexAlignment;
+            
+                drawsCounter++;
+            }
+        }
+        
         if (drawsCounter >= MAX_DRAWCALL_REGISTERED) rlglDraw();
 
         draws[drawsCounter - 1].textureId = id;
@@ -1682,6 +1714,7 @@ void rlglInit(int width, int height)
     {
         draws[i].mode = RL_QUADS;
         draws[i].vertexCount = 0;
+        draws[i].vertexAlignment = 0;
         //draws[i].vaoId = 0;
         //draws[i].shaderId = 0;
         draws[i].textureId = defaultTextureId;
@@ -4190,8 +4223,8 @@ static void DrawBuffersDefault(void)
                     glDrawElements(GL_TRIANGLES, draws[i].vertexCount/4*6, GL_UNSIGNED_SHORT, (GLvoid *)(sizeof(GLushort)*vertexOffset/4*6));
 #endif
                 }
-
-                vertexOffset += draws[i].vertexCount;
+                
+                vertexOffset += (draws[i].vertexCount + draws[i].vertexAlignment);
             }
 
             if (!vaoSupported)
