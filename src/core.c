@@ -4315,18 +4315,22 @@ static void *EventThread(void *arg)
                 {
                     mousePosition.x += event.value;
                     touchPosition[0].x = mousePosition.x;
-                    
-                    touchAction = TOUCH_MOVE;
-                    gestureUpdate = true;
+
+                    #if defined(SUPPORT_GESTURES_SYSTEM)
+                        touchAction = TOUCH_MOVE;
+                        gestureUpdate = true;
+                    #endif
                 }
 
                 if (event.code == REL_Y)
                 {
                     mousePosition.y += event.value;
                     touchPosition[0].y = mousePosition.y;
-                    
-                    touchAction = TOUCH_MOVE;
-                    gestureUpdate = true;
+
+                    #if defined(SUPPORT_GESTURES_SYSTEM)
+                        touchAction = TOUCH_MOVE;
+                        gestureUpdate = true;
+                    #endif
                 }
 
                 if (event.code == REL_WHEEL)
@@ -4342,17 +4346,21 @@ static void *EventThread(void *arg)
                 if (event.code == ABS_X)
                 {
                     mousePosition.x = (event.value - worker->absRange.x)*screenWidth/worker->absRange.width;   // Scale acording to absRange
-                    
-                    touchAction = TOUCH_MOVE;
-                    gestureUpdate = true;
+
+                    #if defined(SUPPORT_GESTURES_SYSTEM)
+                        touchAction = TOUCH_MOVE;
+                        gestureUpdate = true;
+                    #endif
                 }
 
                 if (event.code == ABS_Y)
                 {
                     mousePosition.y = (event.value - worker->absRange.y)*screenHeight/worker->absRange.height; // Scale acording to absRange
-                    
-                    touchAction = TOUCH_MOVE;
-                    gestureUpdate = true;
+
+                    #if defined(SUPPORT_GESTURES_SYSTEM)
+                        touchAction = TOUCH_MOVE;
+                        gestureUpdate = true;
+                    #endif
                 }
 
                 // Multitouch movement
@@ -4393,9 +4401,11 @@ static void *EventThread(void *arg)
                 {
                     currentMouseStateEvdev[MOUSE_LEFT_BUTTON] = event.value;
                     
-                    if (event.value > 0) touchAction = TOUCH_DOWN;
-                    else touchAction = TOUCH_UP;
-                    gestureUpdate = true;
+                    #if defined(SUPPORT_GESTURES_SYSTEM)
+                        if (event.value > 0) touchAction = TOUCH_DOWN;
+                        else touchAction = TOUCH_UP;
+                        gestureUpdate = true;
+                    #endif
                 }
 
                 if (event.code == BTN_RIGHT) currentMouseStateEvdev[MOUSE_RIGHT_BUTTON] =  event.value;
