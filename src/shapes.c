@@ -214,7 +214,7 @@ void DrawCircleSector(Vector2 center, float radius, int startAngle, int endAngle
 
     rlDisableTexture();
 #else
-    if (rlCheckBufferLimit(3*((360/CIRCLE_SECTOR_LENGTH)/2))) rlglDraw();
+    if (rlCheckBufferLimit(3*360/CIRCLE_SECTOR_LENGTH)) rlglDraw();
 
     rlBegin(RL_TRIANGLES);
         for (int i = startAngle; i < endAngle; i += CIRCLE_SECTOR_LENGTH)
@@ -239,7 +239,7 @@ void DrawCircleGradient(int centerX, int centerY, float radius, Color color1, Co
         for (int i = 0; i < 360; i += 10)
         {
             rlColor4ub(color1.r, color1.g, color1.b, color1.a);
-            rlVertex2i(centerX, centerY);
+            rlVertex2f(centerX, centerY);
             rlColor4ub(color2.r, color2.g, color2.b, color2.a);
             rlVertex2f(centerX + sinf(DEG2RAD*i)*radius, centerY + cosf(DEG2RAD*i)*radius);
             rlColor4ub(color2.r, color2.g, color2.b, color2.a);
