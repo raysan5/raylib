@@ -183,18 +183,40 @@ void DrawCircle(int centerX, int centerY, float radius, Color color)
 }
 
 // Draw a piece of a circle
-// TODO: Support better angle resolution (now limited to CIRCLE_SECTOR_LENGTH)
-void DrawCircleSector(Vector2 center, float radius, int startAngle, int endAngle, Color color)
+void DrawCircleSector(Vector2 center, float radius, int startAngle, int endAngle, int segments, Color color)
 {
-    #define CIRCLE_SECTOR_LENGTH    10
-
+    // Function expects (endAngle > startAngle)
+    if (endAngle < startAngle) 
+    {
+        // Swap values
+        int tmp = startAngle;
+        startAngle = endAngle;
+        endAngle = tmp;
+    }
+    
+    if (segments < 4)
+    {
+        // Calculate how many segments we need to draw a smooth circle, taken from https://stackoverflow.com/a/2244088
+        #define CIRCLE_ERROR_RATE  0.5f
+        
+        // Calculate the maximum angle between segments based on the error rate.
+        float th = acosf(2*powf(1 - CIRCLE_ERROR_RATE/radius, 2) - 1);
+        segments = (endAngle - startAngle)*ceilf(2*PI/th)/360;
+        
+        if (segments <= 0) segments = 4;
+    }
+    
+    float stepLength = (float)(endAngle - startAngle)/(float)segments;
+    float angle = startAngle;
+    
 #if defined(SUPPORT_QUADS_DRAW_MODE)
-    if (rlCheckBufferLimit(4*((360/CIRCLE_SECTOR_LENGTH)/2))) rlglDraw();
+    if (rlCheckBufferLimit(4*segments/2)) rlglDraw();
 
     rlEnableTexture(GetShapesTexture().id);
 
     rlBegin(RL_QUADS);
-        for (int i = startAngle; i < endAngle; i += CIRCLE_SECTOR_LENGTH*2)
+        // NOTE: Every QUAD actually represents two segments
+        for (int i = 0; i < segments/2; i++)
         {
             rlColor4ub(color.r, color.g, color.b, color.a);
 
@@ -202,28 +224,50 @@ void DrawCircleSector(Vector2 center, float radius, int startAngle, int endAngle
             rlVertex2f(center.x, center.y);
 
             rlTexCoord2f(recTexShapes.x/texShapes.width, (recTexShapes.y + recTexShapes.height)/texShapes.height);
-            rlVertex2f(center.x + sinf(DEG2RAD*i)*radius, center.y + cosf(DEG2RAD*i)*radius);
-
+            rlVertex2f(center.x + sinf(DEG2RAD*angle)*radius, center.y + cosf(DEG2RAD*angle)*radius);
+            
             rlTexCoord2f((recTexShapes.x + recTexShapes.width)/texShapes.width, (recTexShapes.y + recTexShapes.height)/texShapes.height);
-            rlVertex2f(center.x + sinf(DEG2RAD*(i + CIRCLE_SECTOR_LENGTH))*radius, center.y + cosf(DEG2RAD*(i + CIRCLE_SECTOR_LENGTH))*radius);
+            rlVertex2f(center.x + sinf(DEG2RAD*(angle + stepLength))*radius, center.y + cosf(DEG2RAD*(angle + stepLength))*radius);
 
             rlTexCoord2f((recTexShapes.x + recTexShapes.width)/texShapes.width, recTexShapes.y/texShapes.height);
-            rlVertex2f(center.x + sinf(DEG2RAD*(i + CIRCLE_SECTOR_LENGTH*2))*radius, center.y + cosf(DEG2RAD*(i + CIRCLE_SECTOR_LENGTH*2))*radius);
+            rlVertex2f(center.x + sinf(DEG2RAD*(angle + stepLength*2))*radius, center.y + cosf(DEG2RAD*(angle + stepLength*2))*radius);
+            
+            angle += (stepLength*2);
+        }
+        
+        // NOTE: In case number of segments is odd, we add one last piece to the cake
+        if (segments%2)
+        {
+            rlColor4ub(color.r, color.g, color.b, color.a);
+
+            rlTexCoord2f(recTexShapes.x/texShapes.width, recTexShapes.y/texShapes.height);
+            rlVertex2f(center.x, center.y);
+
+            rlTexCoord2f(recTexShapes.x/texShapes.width, (recTexShapes.y + recTexShapes.height)/texShapes.height);
+            rlVertex2f(center.x + sinf(DEG2RAD*angle)*radius, center.y + cosf(DEG2RAD*angle)*radius);
+            
+            rlTexCoord2f((recTexShapes.x + recTexShapes.width)/texShapes.width, (recTexShapes.y + recTexShapes.height)/texShapes.height);
+            rlVertex2f(center.x + sinf(DEG2RAD*(angle + stepLength))*radius, center.y + cosf(DEG2RAD*(angle + stepLength))*radius);
+
+            rlTexCoord2f((recTexShapes.x + recTexShapes.width)/texShapes.width, recTexShapes.y/texShapes.height);
+            rlVertex2f(center.x, center.y);
         }
     rlEnd();
 
     rlDisableTexture();
 #else
-    if (rlCheckBufferLimit(3*360/CIRCLE_SECTOR_LENGTH)) rlglDraw();
+    if (rlCheckBufferLimit(3*segments)) rlglDraw();
 
     rlBegin(RL_TRIANGLES);
-        for (int i = startAngle; i < endAngle; i += CIRCLE_SECTOR_LENGTH)
+        for (int i = 0; i < segments; i++)
         {
             rlColor4ub(color.r, color.g, color.b, color.a);
 
             rlVertex2f(center.x, center.y);
-            rlVertex2f(center.x + sinf(DEG2RAD*i)*radius, center.y + cosf(DEG2RAD*i)*radius);
-            rlVertex2f(center.x + sinf(DEG2RAD*(i + CIRCLE_SECTOR_LENGTH))*radius, center.y + cosf(DEG2RAD*(i + CIRCLE_SECTOR_LENGTH))*radius);
+            rlVertex2f(center.x + sinf(DEG2RAD*angle)*radius, center.y + cosf(DEG2RAD*angle)*radius);
+            rlVertex2f(center.x + sinf(DEG2RAD*(angle + stepLength))*radius, center.y + cosf(DEG2RAD*(angle + stepLength))*radius);
+            
+            angle += stepLength;
         }
     rlEnd();
 #endif
@@ -252,7 +296,7 @@ void DrawCircleGradient(int centerX, int centerY, float radius, Color color1, Co
 // NOTE: On OpenGL 3.3 and ES2 we use QUADS to avoid drawing order issues (view rlglDraw)
 void DrawCircleV(Vector2 center, float radius, Color color)
 {
-    DrawCircleSector(center, radius, 0, 360, color);
+    DrawCircleSector(center, radius, 0, 360, 36, color);
 }
 
 // Draw circle outline
