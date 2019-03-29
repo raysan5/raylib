@@ -185,8 +185,8 @@ void DrawCircle(int centerX, int centerY, float radius, Color color)
 // Draw a piece of a circle
 void DrawCircleSector(Vector2 center, float radius, int startAngle, int endAngle, int segments, Color color)
 {
-     if(radius == 0) return; // Check this or we'll get a div by zero error otherwise
-     
+    if (radius <= 0.0f) radius = 0.1f;  // Avoid div by zero
+    
     // Function expects (endAngle > startAngle)
     if (endAngle < startAngle) 
     {
@@ -277,7 +277,7 @@ void DrawCircleSector(Vector2 center, float radius, int startAngle, int endAngle
 
 void DrawCircleSectorLines(Vector2 center, float radius, int startAngle, int endAngle, int segments, Color color)
 {
-    if(radius == 0) return; // Check this or we'll get a div by zero error otherwise
+    if (radius <= 0.0f) radius = 0.1f;  // Avoid div by zero issue
     
     // Function expects (endAngle > startAngle)
     if (endAngle < startAngle) 
@@ -308,12 +308,12 @@ void DrawCircleSectorLines(Vector2 center, float radius, int startAngle, int end
     // Hide the cap lines when the circle is full
     bool showCapLines = true;
     int limit = 2*(segments + 2);
-    if((endAngle - startAngle) % 360 == 0) { limit = 2*segments; showCapLines = false; }
+    if ((endAngle - startAngle)%360 == 0) { limit = 2*segments; showCapLines = false; }
     
     if (rlCheckBufferLimit(limit)) rlglDraw();
     
     rlBegin(RL_LINES);
-        if(showCapLines)
+        if (showCapLines)
         {
             rlColor4ub(color.r, color.g, color.b, color.a);
             rlVertex2f(center.x, center.y);
@@ -330,7 +330,7 @@ void DrawCircleSectorLines(Vector2 center, float radius, int startAngle, int end
             angle += stepLength;
         }
         
-        if(showCapLines)
+        if (showCapLines)
         {
             rlColor4ub(color.r, color.g, color.b, color.a);
             rlVertex2f(center.x, center.y);
@@ -384,15 +384,16 @@ void DrawCircleLines(int centerX, int centerY, float radius, Color color)
 
 void DrawRing(Vector2 center, float innerRadius, float outerRadius, int startAngle, int endAngle, int segments, Color color)
 {
-    if(startAngle == endAngle) return;
+    if (startAngle == endAngle) return;
     
     // Function expects (outerRadius > innerRadius)
-    if(outerRadius < innerRadius)
+    if (outerRadius < innerRadius)
     {
         float tmp = outerRadius;
         outerRadius = innerRadius;
         innerRadius = tmp;
-        if(outerRadius == 0) return; // Check this or we'll get a div by zero error otherwise
+        
+        if (outerRadius <= 0.0f) outerRadius = 0.1f;
     }
     
     // Function expects (endAngle > startAngle)
@@ -408,8 +409,9 @@ void DrawRing(Vector2 center, float innerRadius, float outerRadius, int startAng
     {
         // Calculate how many segments we need to draw a smooth circle, taken from https://stackoverflow.com/a/2244088
         #ifndef CIRCLE_ERROR_RATE
-        #define CIRCLE_ERROR_RATE  0.5f
+            #define CIRCLE_ERROR_RATE  0.5f
         #endif
+        
         // Calculate the maximum angle between segments based on the error rate.
         float th = acosf(2*powf(1 - CIRCLE_ERROR_RATE/outerRadius, 2) - 1);
         segments = (endAngle - startAngle)*ceilf(2*PI/th)/360;
@@ -418,7 +420,7 @@ void DrawRing(Vector2 center, float innerRadius, float outerRadius, int startAng
     }
     
     // Not a ring
-    if(innerRadius == 0) 
+    if (innerRadius <= 0.0f) 
     {
         DrawCircleSector(center, outerRadius, startAngle, endAngle, segments, color);
         return;
@@ -478,15 +480,16 @@ void DrawRing(Vector2 center, float innerRadius, float outerRadius, int startAng
 
 void DrawRingLines(Vector2 center, float innerRadius, float outerRadius, int startAngle, int endAngle, int segments, Color color)
 {
-    if(startAngle == endAngle) return;
+    if (startAngle == endAngle) return;
     
     // Function expects (outerRadius > innerRadius)
-    if(outerRadius < innerRadius)
+    if (outerRadius < innerRadius)
     {
         float tmp = outerRadius;
         outerRadius = innerRadius;
         innerRadius = tmp;
-        if(outerRadius == 0) return; // Check this or we'll get a div by zero error otherwise
+        
+        if (outerRadius <= 0.0f) outerRadius = 0.1f;
     }
     
     // Function expects (endAngle > startAngle)
@@ -502,8 +505,9 @@ void DrawRingLines(Vector2 center, float innerRadius, float outerRadius, int sta
     {
         // Calculate how many segments we need to draw a smooth circle, taken from https://stackoverflow.com/a/2244088
         #ifndef CIRCLE_ERROR_RATE
-        #define CIRCLE_ERROR_RATE  0.5f
+            #define CIRCLE_ERROR_RATE  0.5f
         #endif
+        
         // Calculate the maximum angle between segments based on the error rate.
         float th = acosf(2*powf(1 - CIRCLE_ERROR_RATE/outerRadius, 2) - 1);
         segments = (endAngle - startAngle)*ceilf(2*PI/th)/360;
@@ -511,7 +515,7 @@ void DrawRingLines(Vector2 center, float innerRadius, float outerRadius, int sta
         if (segments <= 0) segments = 4;
     }
     
-    if(innerRadius == 0) 
+    if (innerRadius <= 0.0f) 
     {
         DrawCircleSectorLines(center, outerRadius, startAngle, endAngle, segments, color);
         return;
@@ -522,12 +526,12 @@ void DrawRingLines(Vector2 center, float innerRadius, float outerRadius, int sta
     
     bool showCapLines = true;
     int limit = 4*(segments + 1);
-    if((endAngle - startAngle) % 360 == 0) { limit = 4*segments; showCapLines = false; }
+    if ((endAngle - startAngle)%360 == 0) { limit = 4*segments; showCapLines = false; }
     
     if (rlCheckBufferLimit(limit)) rlglDraw();
     
     rlBegin(RL_LINES);
-        if(showCapLines)
+        if (showCapLines)
         {
             rlColor4ub(color.r, color.g, color.b, color.a);
             rlVertex2f(center.x + sinf(DEG2RAD*angle)*outerRadius, center.y + cosf(DEG2RAD*angle)*outerRadius);
@@ -547,7 +551,7 @@ void DrawRingLines(Vector2 center, float innerRadius, float outerRadius, int sta
             angle += stepLength;
         }
         
-        if(showCapLines)
+        if (showCapLines)
         {
             rlColor4ub(color.r, color.g, color.b, color.a);
             rlVertex2f(center.x + sinf(DEG2RAD*angle)*outerRadius, center.y + cosf(DEG2RAD*angle)*outerRadius);
