@@ -1164,7 +1164,7 @@ void BeginMode2D(Camera2D camera)
 
     Matrix matTransform = MatrixMultiply(MatrixMultiply(matOrigin, MatrixMultiply(matScale, matRotation)), matTranslation);
 
-    rlMultMatrixf(MatrixToFloat(matTransform));
+    rlMultMatrixf(MatrixToFloat(matTransform));  // Apply transformation to modelview
 }
 
 // Ends 2D mode with custom camera
