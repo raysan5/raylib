@@ -52,6 +52,11 @@
 
 #include "rlgl.h"           // raylib OpenGL abstraction layer to OpenGL 1.1, 2.1, 3.3+ or ES2
 
+#if defined(SUPPORT_FILEFORMAT_OBJ)
+    #define TINYOBJ_LOADER_C_IMPLEMENTATION
+    #include "external/tinyobj_loader_c.h"  // OBJ file format loading
+#endif
+
 #if defined(SUPPORT_FILEFORMAT_IQM)
     #define RIQM_IMPLEMENTATION
     #include "external/riqm.h"          // IQM file format loading
@@ -86,16 +91,16 @@
 // Module specific Functions Declaration
 //----------------------------------------------------------------------------------
 #if defined(SUPPORT_FILEFORMAT_OBJ)
-static Mesh LoadOBJ(const char *fileName);      // Load OBJ mesh data
+static Model LoadOBJ(const char *fileName);     // Load OBJ mesh data
 #endif
 #if defined(SUPPORT_FILEFORMAT_MTL)
 static Material LoadMTL(const char *fileName);  // Load MTL material data
 #endif
 #if defined(SUPPORT_FILEFORMAT_GLTF)
-static Mesh LoadIQM(const char *fileName);      // Load IQM mesh data
+static Model LoadIQM(const char *fileName);     // Load IQM mesh data
 #endif
 #if defined(SUPPORT_FILEFORMAT_GLTF)
-static Mesh LoadGLTF(const char *fileName);     // Load GLTF mesh data
+static Model LoadGLTF(const char *fileName);    // Load GLTF mesh data
 #endif
 
 //----------------------------------------------------------------------------------
@@ -618,9 +623,18 @@ Model LoadModel(const char *fileName)
 {
     Model model = { 0 };
 
-    model.mesh = LoadMesh(fileName);
-    model.transform = MatrixIdentity();
-    model.material = LoadMaterialDefault();
+#if defined(SUPPORT_FILEFORMAT_OBJ)
+    if (IsFileExtension(fileName, ".obj")) model = LoadOBJ(fileName);
+#endif
+#if defined(SUPPORT_FILEFORMAT_GLTF)
+    if (IsFileExtension(fileName, ".gltf")) model = LoadGLTF(fileName);
+#endif
+#if defined(SUPPORT_FILEFORMAT_IQM)
+    if (IsFileExtension(fileName, ".iqm")) model = LoadIQM(fileName);
+#endif
+
+    if (model.meshCount == 0) TraceLog(LOG_WARNING, "[%s] No meshes can be loaded", fileName);
+    if (model.materialCount == 0) TraceLog(LOG_WARNING, "[%s] No materials can be loaded", fileName);
 
     return model;
 }
@@ -633,9 +647,18 @@ Model LoadModelFromMesh(Mesh mesh)
 {
     Model model = { 0 };
 
-    model.mesh = mesh;
     model.transform = MatrixIdentity();
-    model.material = LoadMaterialDefault();
+    
+    model.meshCount = 1;
+    model.meshes = (Mesh *)malloc(model.meshCount*sizeof(Mesh));
+    model.meshes[0] = mesh;
+    
+    model.materialCount = 1;
+    model.materials = (Material *)malloc(model.materialCount*sizeof(Material));
+    model.materials[0] = LoadMaterialDefault();
+    
+    model.meshMaterial = (int *)malloc(model.meshCount*sizeof(int));
+    model.meshMaterial[0] = 0;  // First material index
 
     return model;
 }
@@ -643,10 +666,11 @@ Model LoadModelFromMesh(Mesh mesh)
 // Unload model from memory (RAM and/or VRAM)
 void UnloadModel(Model model)
 {
-    UnloadMesh(&model.mesh);
-    UnloadMaterial(model.material);
+    for (int i = 0; i < model.meshCount; i++) UnloadMesh(&model.meshes[i]);
+    for (int i = 0; i < model.materialCount; i++) UnloadMaterial(model.materials[i]);
+    free(model.meshMaterial);
 
-    TraceLog(LOG_INFO, "Unloaded model data (mesh and material) from RAM and VRAM");
+    TraceLog(LOG_INFO, "Unloaded model data from RAM and VRAM");
 }
 
 // Load mesh from file
@@ -655,12 +679,8 @@ Mesh LoadMesh(const char *fileName)
 {
     Mesh mesh = { 0 };
 
-#if defined(SUPPORT_FILEFORMAT_OBJ)
-    if (IsFileExtension(fileName, ".obj")) mesh = LoadOBJ(fileName);
-#else
-    TraceLog(LOG_WARNING, "[%s] Mesh fileformat not supported, it can't be loaded", fileName);
-#endif
-
+    // TODO: Review this function, should still exist?
+    
 #if defined(SUPPORT_MESH_GENERATION)
     if (mesh.vertexCount == 0)
     {
@@ -1855,9 +1875,12 @@ void DrawModelEx(Model model, Vector3 position, Vector3 rotationAxis, float rota
     //Matrix matModel = MatrixMultiply(model.transform, matTransform);    // Transform to world-space coordinates
 
     model.transform = MatrixMultiply(model.transform, matTransform);
-    model.material.maps[MAP_DIFFUSE].color = tint;       // TODO: Multiply tint color by diffuse color?
 
-    rlDrawMesh(model.mesh, model.material, model.transform);
+    for (int i = 0; i < model.meshCount; i++) 
+    {
+        model.materials[model.meshMaterial[i]].maps[MAP_DIFFUSE].color = tint;
+        rlDrawMesh(model.meshes[i], model.materials[model.meshMaterial[i]], model.transform);
+    }
 }
 
 // Draw a model wires (with texture if set)
@@ -2079,41 +2102,45 @@ RayHitInfo GetCollisionRayModel(Ray ray, Model *model)
 {
     RayHitInfo result = { 0 };
 
-    // If mesh doesn't have vertex data on CPU, can't test it.
-    if (!model->mesh.vertices) return result;
-
-    // model->mesh.triangleCount may not be set, vertexCount is more reliable
-    int triangleCount = model->mesh.vertexCount/3;
-
-    // Test against all triangles in mesh
-    for (int i = 0; i < triangleCount; i++)
+    for (int i = 0; i < model->meshCount; i++)
     {
-        Vector3 a, b, c;
-        Vector3 *vertdata = (Vector3 *)model->mesh.vertices;
-
-        if (model->mesh.indices)
+        // Check if meshhas vertex data on CPU for testing
+        if (model->meshes[i].vertices != NULL)
         {
-            a = vertdata[model->mesh.indices[i*3 + 0]];
-            b = vertdata[model->mesh.indices[i*3 + 1]];
-            c = vertdata[model->mesh.indices[i*3 + 2]];
-        }
-        else
-        {
-            a = vertdata[i*3 + 0];
-            b = vertdata[i*3 + 1];
-            c = vertdata[i*3 + 2];
-        }
+            // model->mesh.triangleCount may not be set, vertexCount is more reliable
+            int triangleCount = model->meshes[i].vertexCount/3;
 
-        a = Vector3Transform(a, model->transform);
-        b = Vector3Transform(b, model->transform);
-        c = Vector3Transform(c, model->transform);
+            // Test against all triangles in mesh
+            for (int i = 0; i < triangleCount; i++)
+            {
+                Vector3 a, b, c;
+                Vector3 *vertdata = (Vector3 *)model->meshes[i].vertices;
 
-        RayHitInfo triHitInfo = GetCollisionRayTriangle(ray, a, b, c);
+                if (model->meshes[i].indices)
+                {
+                    a = vertdata[model->meshes[i].indices[i*3 + 0]];
+                    b = vertdata[model->meshes[i].indices[i*3 + 1]];
+                    c = vertdata[model->meshes[i].indices[i*3 + 2]];
+                }
+                else
+                {
+                    a = vertdata[i*3 + 0];
+                    b = vertdata[i*3 + 1];
+                    c = vertdata[i*3 + 2];
+                }
 
-        if (triHitInfo.hit)
-        {
-            // Save the closest hit triangle
-            if ((!result.hit) || (result.distance > triHitInfo.distance)) result = triHitInfo;
+                a = Vector3Transform(a, model->transform);
+                b = Vector3Transform(b, model->transform);
+                c = Vector3Transform(c, model->transform);
+
+                RayHitInfo triHitInfo = GetCollisionRayTriangle(ray, a, b, c);
+
+                if (triHitInfo.hit)
+                {
+                    // Save the closest hit triangle
+                    if ((!result.hit) || (result.distance > triHitInfo.distance)) result = triHitInfo;
+                }
+            }
         }
     }
 
@@ -2329,10 +2356,13 @@ void MeshBinormals(Mesh *mesh)
 
 #if defined(SUPPORT_FILEFORMAT_OBJ)
 // Load OBJ mesh data
-static Mesh LoadOBJ(const char *fileName)
+static Model LoadOBJ(const char *fileName)
 {
-    Mesh mesh = { 0 };
+    Model model = { 0 };
 
+    // TODO: Use tinyobj_loader_c library
+    
+/*
     char dataType = 0;
     char comments[200];
 
@@ -2568,11 +2598,12 @@ static Mesh LoadOBJ(const char *fileName)
     free(midVertices);
     free(midNormals);
     free(midTexCoords);
+*/
 
     // NOTE: At this point we have all vertex, texcoord, normal data for the model in mesh struct
     TraceLog(LOG_INFO, "[%s] Model loaded successfully in RAM (CPU)", fileName);
 
-    return mesh;
+    return model;
 }
 #endif
 
@@ -2743,21 +2774,21 @@ static Material LoadMTL(const char *fileName)
 
 #if defined(SUPPORT_FILEFORMAT_GLTF)
 // Load IQM mesh data
-static Mesh LoadIQM(const char *fileName)
+static Model LoadIQM(const char *fileName)
 {
-    Mesh mesh = { 0 };
+    Model model = { 0 };
 
     // TODO: Load IQM file
 
-    return mesh;
+    return model;
 }
 #endif
 
 #if defined(SUPPORT_FILEFORMAT_GLTF)
 // Load glTF mesh data
-static Mesh LoadGLTF(const char *fileName)
+static Model LoadGLTF(const char *fileName)
 {
-    Mesh mesh = { 0 };
+    Model model = { 0 };
 
     // glTF file loading
     FILE *gltfFile = fopen(fileName, "rb");
@@ -2765,7 +2796,7 @@ static Mesh LoadGLTF(const char *fileName)
     if (gltfFile == NULL)
     {
         TraceLog(LOG_WARNING, "[%s] glTF file could not be opened", fileName);
-        return mesh;
+        return model;
     }
 
     fseek(gltfFile, 0, SEEK_END);
@@ -2790,15 +2821,15 @@ static Mesh LoadGLTF(const char *fileName)
         printf("Version: %d\n", data.version);
         printf("Meshes: %lu\n", data.meshes_count);
 
-        // TODO: Process glTF data and map to mesh
+        // TODO: Process glTF data and map to model
 
-        // NOTE: data.buffers[] and data.images[] should be loaded
-        // using buffers[n].uri and images[n].uri... or use cgltf_load_buffers(&options, data, fileName);
+        // NOTE: data.buffers[] should be loaded to model.meshes and data.images[] should be loaded to model.materials
+        // Use buffers[n].uri and images[n].uri... or use cgltf_load_buffers(&options, data, fileName);
 
         cgltf_free(&data);
     }
     else TraceLog(LOG_WARNING, "[%s] glTF data could not be loaded", fileName);
 
-    return mesh;
+    return model;
 }
 #endif

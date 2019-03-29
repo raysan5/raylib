@@ -339,18 +339,15 @@ typedef struct Material {
 
 // Model type
 typedef struct Model {
-    Mesh mesh;              // Vertex data buffers (RAM and VRAM)
     Matrix transform;       // Local transform matrix
-    Material material;      // Shader and textures data
-    /*
-    Mesh *meshes;           // Vertex data buffers (RAM and VRAM)
-    int meshCount;
+    
+    int meshCount;          // Number of meshes
+    Mesh *meshes;           // Meshes array
 
-    Material *materials;    // Shader and textures data
-    int materialCount;
-
-    int *meshMaterial;      // Material assigned to every mesh
-    */
+    int materialCount;      // Number of materials
+    Material *materials;    // Materials array
+    
+    int *meshMaterial;      // Mesh material number
 } Model;
 
 // Ray type (useful for raycast)
@@ -1226,7 +1223,7 @@ RLAPI void DrawGizmo(Vector3 position);                                         
 //------------------------------------------------------------------------------------
 
 // Model loading/unloading functions
-RLAPI Model LoadModel(const char *fileName);                                                            // Load model from files (mesh and material)
+RLAPI Model LoadModel(const char *fileName);                                                            // Load model from files (meshes and materials)
 RLAPI Model LoadModelFromMesh(Mesh mesh);                                                               // Load model from generated mesh
 RLAPI void UnloadModel(Model model);                                                                    // Unload model from memory (RAM and/or VRAM)
 
