@@ -1786,8 +1786,12 @@ void rlglClose(void)
 void rlglDraw(void)
 {
 #if defined(GRAPHICS_API_OPENGL_33) || defined(GRAPHICS_API_OPENGL_ES2)
-    UpdateBuffersDefault();
-    DrawBuffersDefault();       // NOTE: Stereo rendering is checked inside
+    // Only process data if we have data to process
+    if (vertexData[currentBuffer].vCounter > 0)
+    {
+        UpdateBuffersDefault();
+        DrawBuffersDefault();       // NOTE: Stereo rendering is checked inside
+    }
 #endif
 }
 
