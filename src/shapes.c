@@ -185,6 +185,8 @@ void DrawCircle(int centerX, int centerY, float radius, Color color)
 // Draw a piece of a circle
 void DrawCircleSector(Vector2 center, float radius, int startAngle, int endAngle, int segments, Color color)
 {
+     if(radius == 0) return; // Check this or we'll get a div by zero error otherwise
+     
     // Function expects (endAngle > startAngle)
     if (endAngle < startAngle) 
     {
@@ -273,6 +275,70 @@ void DrawCircleSector(Vector2 center, float radius, int startAngle, int endAngle
 #endif
 }
 
+void DrawCircleSectorLines(Vector2 center, float radius, int startAngle, int endAngle, int segments, Color color)
+{
+    if(radius == 0) return; // Check this or we'll get a div by zero error otherwise
+    
+    // Function expects (endAngle > startAngle)
+    if (endAngle < startAngle) 
+    {
+        // Swap values
+        int tmp = startAngle;
+        startAngle = endAngle;
+        endAngle = tmp;
+    }
+    
+    if (segments < 4)
+    {
+        // Calculate how many segments we need to draw a smooth circle, taken from https://stackoverflow.com/a/2244088
+        #ifndef CIRCLE_ERROR_RATE
+        #define CIRCLE_ERROR_RATE  0.5f
+        #endif
+        
+        // Calculate the maximum angle between segments based on the error rate.
+        float th = acosf(2*powf(1 - CIRCLE_ERROR_RATE/radius, 2) - 1);
+        segments = (endAngle - startAngle)*ceilf(2*PI/th)/360;
+        
+        if (segments <= 0) segments = 4;
+    }
+    
+    float stepLength = (float)(endAngle - startAngle)/(float)segments;
+    float angle = startAngle;
+    
+    // Hide the cap lines when the circle is full
+    bool showCapLines = true;
+    int limit = 2*(segments + 2);
+    if((endAngle - startAngle) % 360 == 0) { limit = 2*segments; showCapLines = false; }
+    
+    if (rlCheckBufferLimit(limit)) rlglDraw();
+    
+    rlBegin(RL_LINES);
+        if(showCapLines)
+        {
+            rlColor4ub(color.r, color.g, color.b, color.a);
+            rlVertex2f(center.x, center.y);
+            rlVertex2f(center.x + sinf(DEG2RAD*angle)*radius, center.y + cosf(DEG2RAD*angle)*radius);
+        }
+        
+        for (int i = 0; i < segments; i++)
+        {
+            rlColor4ub(color.r, color.g, color.b, color.a);
+            
+            rlVertex2f(center.x + sinf(DEG2RAD*angle)*radius, center.y + cosf(DEG2RAD*angle)*radius);
+            rlVertex2f(center.x + sinf(DEG2RAD*(angle + stepLength))*radius, center.y + cosf(DEG2RAD*(angle + stepLength))*radius);
+            
+            angle += stepLength;
+        }
+        
+        if(showCapLines)
+        {
+            rlColor4ub(color.r, color.g, color.b, color.a);
+            rlVertex2f(center.x, center.y);
+            rlVertex2f(center.x + sinf(DEG2RAD*angle)*radius, center.y + cosf(DEG2RAD*angle)*radius);
+        }
+    rlEnd();
+}
+
 // Draw a gradient-filled circle
 // NOTE: Gradient goes from center (color1) to border (color2)
 void DrawCircleGradient(int centerX, int centerY, float radius, Color color1, Color color2)
@@ -314,6 +380,180 @@ void DrawCircleLines(int centerX, int centerY, float radius, Color color)
             rlVertex2f(centerX + sinf(DEG2RAD*(i + 10))*radius, centerY + cosf(DEG2RAD*(i + 10))*radius);
         }
    rlEnd();
+}
+
+void DrawRing(Vector2 center, float innerRadius, float outerRadius, int startAngle, int endAngle, int segments, Color color)
+{
+    if(startAngle == endAngle) return;
+    
+    // Function expects (outerRadius > innerRadius)
+    if(outerRadius < innerRadius)
+    {
+        float tmp = outerRadius;
+        outerRadius = innerRadius;
+        innerRadius = tmp;
+        if(outerRadius == 0) return; // Check this or we'll get a div by zero error otherwise
+    }
+    
+    // Function expects (endAngle > startAngle)
+    if (endAngle < startAngle) 
+    {
+        // Swap values
+        int tmp = startAngle;
+        startAngle = endAngle;
+        endAngle = tmp;
+    }
+    
+    if (segments < 4)
+    {
+        // Calculate how many segments we need to draw a smooth circle, taken from https://stackoverflow.com/a/2244088
+        #ifndef CIRCLE_ERROR_RATE
+        #define CIRCLE_ERROR_RATE  0.5f
+        #endif
+        // Calculate the maximum angle between segments based on the error rate.
+        float th = acosf(2*powf(1 - CIRCLE_ERROR_RATE/outerRadius, 2) - 1);
+        segments = (endAngle - startAngle)*ceilf(2*PI/th)/360;
+        
+        if (segments <= 0) segments = 4;
+    }
+    
+    // Not a ring
+    if(innerRadius == 0) 
+    {
+        DrawCircleSector(center, outerRadius, startAngle, endAngle, segments, color);
+        return;
+    }
+    
+    float stepLength = (float)(endAngle - startAngle)/(float)segments;
+    float angle = startAngle;
+    
+#if defined(SUPPORT_QUADS_DRAW_MODE)
+    if (rlCheckBufferLimit(4*segments)) rlglDraw();
+
+    rlEnableTexture(GetShapesTexture().id);
+    
+    rlBegin(RL_QUADS);
+        for (int i = 0; i < segments; i++)
+        {
+            rlColor4ub(color.r, color.g, color.b, color.a);
+
+            rlTexCoord2f(recTexShapes.x/texShapes.width, recTexShapes.y/texShapes.height);
+            rlVertex2f(center.x + sinf(DEG2RAD*angle)*innerRadius, center.y + cosf(DEG2RAD*angle)*innerRadius);
+
+            rlTexCoord2f(recTexShapes.x/texShapes.width, (recTexShapes.y + recTexShapes.height)/texShapes.height);
+            rlVertex2f(center.x + sinf(DEG2RAD*angle)*outerRadius, center.y + cosf(DEG2RAD*angle)*outerRadius);
+            
+            rlTexCoord2f((recTexShapes.x + recTexShapes.width)/texShapes.width, (recTexShapes.y + recTexShapes.height)/texShapes.height);
+            rlVertex2f(center.x + sinf(DEG2RAD*(angle + stepLength))*outerRadius, center.y + cosf(DEG2RAD*(angle + stepLength))*outerRadius);
+
+            rlTexCoord2f((recTexShapes.x + recTexShapes.width)/texShapes.width, recTexShapes.y/texShapes.height);
+            rlVertex2f(center.x + sinf(DEG2RAD*(angle + stepLength))*innerRadius, center.y + cosf(DEG2RAD*(angle + stepLength))*innerRadius);
+            
+            angle += stepLength;
+        }
+    rlEnd();
+
+    rlDisableTexture();
+#else
+    if (rlCheckBufferLimit(6*segments)) rlglDraw();
+
+    rlBegin(RL_TRIANGLES);
+        for (int i = 0; i < segments; i++)
+        {
+            rlColor4ub(color.r, color.g, color.b, color.a);
+            
+            rlVertex2f(center.x + sinf(DEG2RAD*angle)*innerRadius, center.y + cosf(DEG2RAD*angle)*innerRadius);
+            rlVertex2f(center.x + sinf(DEG2RAD*angle)*outerRadius, center.y + cosf(DEG2RAD*angle)*outerRadius);
+            rlVertex2f(center.x + sinf(DEG2RAD*(angle + stepLength))*innerRadius, center.y + cosf(DEG2RAD*(angle + stepLength))*innerRadius);
+            
+            rlVertex2f(center.x + sinf(DEG2RAD*(angle + stepLength))*innerRadius, center.y + cosf(DEG2RAD*(angle + stepLength))*innerRadius);
+            rlVertex2f(center.x + sinf(DEG2RAD*angle)*outerRadius, center.y + cosf(DEG2RAD*angle)*outerRadius);
+            rlVertex2f(center.x + sinf(DEG2RAD*(angle + stepLength))*outerRadius, center.y + cosf(DEG2RAD*(angle + stepLength))*outerRadius);
+            
+            angle += stepLength;
+        }
+    rlEnd();
+#endif
+}
+
+void DrawRingLines(Vector2 center, float innerRadius, float outerRadius, int startAngle, int endAngle, int segments, Color color)
+{
+    if(startAngle == endAngle) return;
+    
+    // Function expects (outerRadius > innerRadius)
+    if(outerRadius < innerRadius)
+    {
+        float tmp = outerRadius;
+        outerRadius = innerRadius;
+        innerRadius = tmp;
+        if(outerRadius == 0) return; // Check this or we'll get a div by zero error otherwise
+    }
+    
+    // Function expects (endAngle > startAngle)
+    if (endAngle < startAngle) 
+    {
+        // Swap values
+        int tmp = startAngle;
+        startAngle = endAngle;
+        endAngle = tmp;
+    }
+    
+    if (segments < 4)
+    {
+        // Calculate how many segments we need to draw a smooth circle, taken from https://stackoverflow.com/a/2244088
+        #ifndef CIRCLE_ERROR_RATE
+        #define CIRCLE_ERROR_RATE  0.5f
+        #endif
+        // Calculate the maximum angle between segments based on the error rate.
+        float th = acosf(2*powf(1 - CIRCLE_ERROR_RATE/outerRadius, 2) - 1);
+        segments = (endAngle - startAngle)*ceilf(2*PI/th)/360;
+        
+        if (segments <= 0) segments = 4;
+    }
+    
+    if(innerRadius == 0) 
+    {
+        DrawCircleSectorLines(center, outerRadius, startAngle, endAngle, segments, color);
+        return;
+    }
+    
+    float stepLength = (float)(endAngle - startAngle)/(float)segments;
+    float angle = startAngle; 
+    
+    bool showCapLines = true;
+    int limit = 4*(segments + 1);
+    if((endAngle - startAngle) % 360 == 0) { limit = 4*segments; showCapLines = false; }
+    
+    if (rlCheckBufferLimit(limit)) rlglDraw();
+    
+    rlBegin(RL_LINES);
+        if(showCapLines)
+        {
+            rlColor4ub(color.r, color.g, color.b, color.a);
+            rlVertex2f(center.x + sinf(DEG2RAD*angle)*outerRadius, center.y + cosf(DEG2RAD*angle)*outerRadius);
+            rlVertex2f(center.x + sinf(DEG2RAD*angle)*innerRadius, center.y + cosf(DEG2RAD*angle)*innerRadius);
+        }
+        
+        for (int i = 0; i < segments; i++)
+        {
+            rlColor4ub(color.r, color.g, color.b, color.a);
+            
+            rlVertex2f(center.x + sinf(DEG2RAD*angle)*outerRadius, center.y + cosf(DEG2RAD*angle)*outerRadius);
+            rlVertex2f(center.x + sinf(DEG2RAD*(angle + stepLength))*outerRadius, center.y + cosf(DEG2RAD*(angle + stepLength))*outerRadius);
+            
+            rlVertex2f(center.x + sinf(DEG2RAD*angle)*innerRadius, center.y + cosf(DEG2RAD*angle)*innerRadius);
+            rlVertex2f(center.x + sinf(DEG2RAD*(angle + stepLength))*innerRadius, center.y + cosf(DEG2RAD*(angle + stepLength))*innerRadius);
+            
+            angle += stepLength;
+        }
+        
+        if(showCapLines)
+        {
+            rlColor4ub(color.r, color.g, color.b, color.a);
+            rlVertex2f(center.x + sinf(DEG2RAD*angle)*outerRadius, center.y + cosf(DEG2RAD*angle)*outerRadius);
+            rlVertex2f(center.x + sinf(DEG2RAD*angle)*innerRadius, center.y + cosf(DEG2RAD*angle)*innerRadius);
+        }
+    rlEnd();
 }
 
 // Draw a color-filled rectangle
