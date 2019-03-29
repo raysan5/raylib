@@ -1811,7 +1811,7 @@ Material LoadMaterial(const char *fileName)
     if (IsFileExtension(fileName, ".mtl"))
     {
         tinyobj_material_t *materials;
-        int materialCount = 0;
+        unsigned int materialCount = 0;
         
         int result = tinyobj_parse_mtl_file(&materials, &materialCount, fileName);
         
@@ -2369,14 +2369,29 @@ static Model LoadOBJ(const char *fileName)
     
     tinyobj_attrib_t attrib;
     tinyobj_shape_t *meshes = NULL;
-    int meshCount = 0;
+    unsigned int meshCount = 0;
     
     tinyobj_material_t *materials = NULL;
-    int materialCount = 0;
+    unsigned int materialCount = 0;
 
     int dataLength = 0;
-    const char *data = get_file_data(&dataLength, fileName);
+    char *data = NULL;
     
+    // Load model data
+    FILE *objFile = fopen(fileName, "rb");
+
+    if (objFile != NULL)
+    {
+        fseek(objFile, 0, SEEK_END);
+        long dataLength = ftell(objFile);    // Get file size
+        fseek(objFile, 0, SEEK_SET);   // Reset file pointer
+
+        data = (char *)malloc(dataLength);
+
+        fread(data, dataLength, 1, objFile);
+        fclose(objFile);
+    }
+
     if (data != NULL) 
     {
         unsigned int flags = TINYOBJ_FLAG_TRIANGULATE;
