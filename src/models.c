@@ -630,8 +630,25 @@ Model LoadModel(const char *fileName)
     if (IsFileExtension(fileName, ".iqm")) model = LoadIQM(fileName);
 #endif
 
-    if (model.meshCount == 0) TraceLog(LOG_WARNING, "[%s] No meshes can be loaded", fileName);
-    if (model.materialCount == 0) TraceLog(LOG_WARNING, "[%s] No materials can be loaded", fileName);
+    if (model.meshCount == 0) 
+    {
+        TraceLog(LOG_WARNING, "[%s] No meshes can be loaded, default to cube mesh", fileName);
+        
+        model.meshCount = 1;
+        model.meshes = (Mesh *)malloc(model.meshCount*sizeof(Mesh));
+        model.meshes[0] = GenMeshCube(1.0f, 1.0f, 1.0f);
+    }
+    
+    if (model.materialCount == 0)
+    {
+        TraceLog(LOG_WARNING, "[%s] No materials can be loaded, default to white material", fileName);
+        
+        model.materialCount = 1;
+        model.materials = (Material *)malloc(model.materialCount*sizeof(Material));
+        model.materials[0] = LoadMaterialDefault();
+        
+        model.meshMaterial = (int *)calloc(model.meshCount, sizeof(int));
+    }
 
     return model;
 }
