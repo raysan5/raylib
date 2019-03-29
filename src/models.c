@@ -52,9 +52,9 @@
 
 #include "rlgl.h"           // raylib OpenGL abstraction layer to OpenGL 1.1, 2.1, 3.3+ or ES2
 
-#if defined(SUPPORT_FILEFORMAT_OBJ)
+#if defined(SUPPORT_FILEFORMAT_OBJ) || defined(SUPPORT_FILEFORMAT_MTL)
     #define TINYOBJ_LOADER_C_IMPLEMENTATION
-    #include "external/tinyobj_loader_c.h"  // OBJ file format loading
+    #include "external/tinyobj_loader_c.h"      // OBJ/MTL file formats loading
 #endif
 
 #if defined(SUPPORT_FILEFORMAT_IQM)
@@ -92,9 +92,6 @@
 //----------------------------------------------------------------------------------
 #if defined(SUPPORT_FILEFORMAT_OBJ)
 static Model LoadOBJ(const char *fileName);     // Load OBJ mesh data
-#endif
-#if defined(SUPPORT_FILEFORMAT_MTL)
-static Material LoadMTL(const char *fileName);  // Load MTL material data
 #endif
 #if defined(SUPPORT_FILEFORMAT_GLTF)
 static Model LoadIQM(const char *fileName);     // Load IQM mesh data
@@ -1811,7 +1808,17 @@ Material LoadMaterial(const char *fileName)
     Material material = { 0 };
 
 #if defined(SUPPORT_FILEFORMAT_MTL)
-    if (IsFileExtension(fileName, ".mtl")) material = LoadMTL(fileName);
+    if (IsFileExtension(fileName, ".mtl"))
+    {
+        tinyobj_material_t *materials;
+        int materialCount = 0;
+        
+        int result = tinyobj_parse_mtl_file(&materials, &materialCount, fileName);
+        
+        // TODO: Process materials to return
+        
+        tinyobj_materials_free(materials, materialCount);
+    }
 #else
     TraceLog(LOG_WARNING, "[%s] Material fileformat not supported, it can't be loaded", fileName);
 #endif
@@ -2359,416 +2366,92 @@ void MeshBinormals(Mesh *mesh)
 static Model LoadOBJ(const char *fileName)
 {
     Model model = { 0 };
-
-    // TODO: Use tinyobj_loader_c library
     
-/*
-    char dataType = 0;
-    char comments[200];
+    tinyobj_attrib_t attrib;
+    tinyobj_shape_t *meshes = NULL;
+    int meshCount = 0;
+    
+    tinyobj_material_t *materials = NULL;
+    int materialCount = 0;
 
-    int vertexCount = 0;
-    int normalCount = 0;
-    int texcoordCount = 0;
-    int triangleCount = 0;
-
-    FILE *objFile;
-
-    objFile = fopen(fileName, "rt");
-
-    if (objFile == NULL)
+    int dataLength = 0;
+    const char *data = get_file_data(&dataLength, fileName);
+    
+    if (data != NULL) 
     {
-        TraceLog(LOG_WARNING, "[%s] OBJ file could not be opened", fileName);
-        return mesh;
-    }
-
-    // First reading pass: Get vertexCount, normalCount, texcoordCount, triangleCount
-    // NOTE: vertex, texcoords and normals could be optimized (to be used indexed on faces definition)
-    // NOTE: faces MUST be defined as TRIANGLES (3 vertex per face)
-    while (!feof(objFile))
-    {
-        dataType = 0;
-        fscanf(objFile, "%c", &dataType);
-
-        switch (dataType)
+        unsigned int flags = TINYOBJ_FLAG_TRIANGULATE;
+        int ret = tinyobj_parse_obj(&attrib, &meshes, &meshCount, &materials, &materialCount, data, dataLength, flags);
+        
+        if (ret != TINYOBJ_SUCCESS) TraceLog(LOG_WARNING, "[%s] Model data could not be loaded", fileName);
+        else TraceLog(LOG_INFO, "[%s] Model data loaded successfully: %i meshes / %i materials", fileName, meshCount, materialCount);
+               
+        for (int i = 0; i < meshCount; i++)
         {
-            case '#':   // Comments
-            case 'o':   // Object name (One OBJ file can contain multible named meshes)
-            case 'g':   // Group name
-            case 's':   // Smoothing level
-            case 'm':   // mtllib [external .mtl file name]
-            case 'u':   // usemtl [material name]
-            {
-                fgets(comments, 200, objFile);
-            } break;
-            case 'v':
-            {
-                fscanf(objFile, "%c", &dataType);
-
-                if (dataType == 't')    // Read texCoord
-                {
-                    texcoordCount++;
-                    fgets(comments, 200, objFile);
-                }
-                else if (dataType == 'n')    // Read normals
-                {
-                    normalCount++;
-                    fgets(comments, 200, objFile);
-                }
-                else    // Read vertex
-                {
-                    vertexCount++;
-                    fgets(comments, 200, objFile);
-                }
-            } break;
-            case 'f':
-            {
-                triangleCount++;
-                fgets(comments, 200, objFile);
-            } break;
-            default: break;
+            printf("shape[%d] name = %s\n", i, meshes[i].name);
         }
+        
+        /* 
+        // Data reference to process
+        typedef struct {
+            char *name;
+
+            float ambient[3];
+            float diffuse[3];
+            float specular[3];
+            float transmittance[3];
+            float emission[3];
+            float shininess;
+            float ior;          // index of refraction
+            float dissolve;     // 1 == opaque; 0 == fully transparent
+            // illumination model (see http://www.fileformat.info/format/material/)
+            int illum;
+
+            int pad0;
+
+            char *ambient_texname;            // map_Ka
+            char *diffuse_texname;            // map_Kd
+            char *specular_texname;           // map_Ks
+            char *specular_highlight_texname; // map_Ns
+            char *bump_texname;               // map_bump, bump
+            char *displacement_texname;       // disp
+            char *alpha_texname;              // map_d
+        } tinyobj_material_t;
+
+        typedef struct {
+            char *name;         // group name or object name
+            unsigned int face_offset;
+            unsigned int length;
+        } tinyobj_shape_t;
+
+        typedef struct { int v_idx, vt_idx, vn_idx; } tinyobj_vertex_index_t;
+
+        typedef struct {
+            unsigned int num_vertices;
+            unsigned int num_normals;
+            unsigned int num_texcoords;
+            unsigned int num_faces;
+            unsigned int num_face_num_verts;
+
+            int pad0;
+
+            float *vertices;
+            float *normals;
+            float *texcoords;
+            tinyobj_vertex_index_t *faces;
+            int *face_num_verts;
+            int *material_ids;
+        } tinyobj_attrib_t;
+        */
+
+        tinyobj_attrib_free(&attrib);
+        tinyobj_shapes_free(meshes, meshCount);
+        tinyobj_materials_free(materials, materialCount);
     }
 
-    TraceLog(LOG_DEBUG, "[%s] Model vertices: %i", fileName, vertexCount);
-    TraceLog(LOG_DEBUG, "[%s] Model texcoords: %i", fileName, texcoordCount);
-    TraceLog(LOG_DEBUG, "[%s] Model normals: %i", fileName, normalCount);
-    TraceLog(LOG_DEBUG, "[%s] Model triangles: %i", fileName, triangleCount);
-
-    // Once we know the number of vertices to store, we create required arrays
-    Vector3 *midVertices = (Vector3 *)malloc(vertexCount*sizeof(Vector3));
-    Vector3 *midNormals = NULL;
-    if (normalCount > 0) midNormals = (Vector3 *)malloc(normalCount*sizeof(Vector3));
-    Vector2 *midTexCoords = NULL;
-    if (texcoordCount > 0) midTexCoords = (Vector2 *)malloc(texcoordCount*sizeof(Vector2));
-
-    int countVertex = 0;
-    int countNormals = 0;
-    int countTexCoords = 0;
-
-    rewind(objFile);        // Return to the beginning of the file, to read again
-
-    // Second reading pass: Get vertex data to fill intermediate arrays
-    // NOTE: This second pass is required in case of multiple meshes defined in same OBJ
-    // TODO: Consider that different meshes can have different vertex data available (position, texcoords, normals)
-    while (!feof(objFile))
-    {
-        fscanf(objFile, "%c", &dataType);
-
-        switch (dataType)
-        {
-            case '#': case 'o': case 'g': case 's': case 'm': case 'u': case 'f': fgets(comments, 200, objFile); break;
-            case 'v':
-            {
-                fscanf(objFile, "%c", &dataType);
-
-                if (dataType == 't')    // Read texCoord
-                {
-                    fscanf(objFile, "%f %f%*[^\n]s\n", &midTexCoords[countTexCoords].x, &midTexCoords[countTexCoords].y);
-                    countTexCoords++;
-
-                    fscanf(objFile, "%c", &dataType);
-                }
-                else if (dataType == 'n')    // Read normals
-                {
-                    fscanf(objFile, "%f %f %f", &midNormals[countNormals].x, &midNormals[countNormals].y, &midNormals[countNormals].z);
-                    countNormals++;
-
-                    fscanf(objFile, "%c", &dataType);
-                }
-                else    // Read vertex
-                {
-                    fscanf(objFile, "%f %f %f", &midVertices[countVertex].x, &midVertices[countVertex].y, &midVertices[countVertex].z);
-                    countVertex++;
-
-                    fscanf(objFile, "%c", &dataType);
-                }
-            } break;
-            default: break;
-        }
-    }
-
-    // At this point all vertex data (v, vt, vn) has been gathered on midVertices, midTexCoords, midNormals
-    // Now we can organize that data into our Mesh struct
-
-    mesh.vertexCount = triangleCount*3;
-
-    // Additional arrays to store vertex data as floats
-    mesh.vertices = (float *)malloc(mesh.vertexCount*3*sizeof(float));
-    mesh.texcoords = (float *)malloc(mesh.vertexCount*2*sizeof(float));
-    mesh.normals = (float *)malloc(mesh.vertexCount*3*sizeof(float));
-    mesh.colors = NULL;
-
-    int vCounter = 0;       // Used to count vertices float by float
-    int tcCounter = 0;      // Used to count texcoords float by float
-    int nCounter = 0;       // Used to count normals float by float
-
-    int vCount[3], vtCount[3], vnCount[3];    // Used to store triangle indices for v, vt, vn
-
-    rewind(objFile);        // Return to the beginning of the file, to read again
-
-    if (normalCount == 0) TraceLog(LOG_INFO, "[%s] No normals data on OBJ, normals will be generated from faces data", fileName);
-
-    // Third reading pass: Get faces (triangles) data and fill VertexArray
-    while (!feof(objFile))
-    {
-        fscanf(objFile, "%c", &dataType);
-
-        switch (dataType)
-        {
-            case '#': case 'o': case 'g': case 's': case 'm': case 'u': case 'v': fgets(comments, 200, objFile); break;
-            case 'f':
-            {
-                // NOTE: It could be that OBJ does not have normals or texcoords defined!
-
-                if ((normalCount == 0) && (texcoordCount == 0)) fscanf(objFile, "%i %i %i", &vCount[0], &vCount[1], &vCount[2]);
-                else if (normalCount == 0) fscanf(objFile, "%i/%i %i/%i %i/%i", &vCount[0], &vtCount[0], &vCount[1], &vtCount[1], &vCount[2], &vtCount[2]);
-                else if (texcoordCount == 0) fscanf(objFile, "%i//%i %i//%i %i//%i", &vCount[0], &vnCount[0], &vCount[1], &vnCount[1], &vCount[2], &vnCount[2]);
-                else fscanf(objFile, "%i/%i/%i %i/%i/%i %i/%i/%i", &vCount[0], &vtCount[0], &vnCount[0], &vCount[1], &vtCount[1], &vnCount[1], &vCount[2], &vtCount[2], &vnCount[2]);
-
-                mesh.vertices[vCounter] = midVertices[vCount[0]-1].x;
-                mesh.vertices[vCounter + 1] = midVertices[vCount[0]-1].y;
-                mesh.vertices[vCounter + 2] = midVertices[vCount[0]-1].z;
-                vCounter += 3;
-                mesh.vertices[vCounter] = midVertices[vCount[1]-1].x;
-                mesh.vertices[vCounter + 1] = midVertices[vCount[1]-1].y;
-                mesh.vertices[vCounter + 2] = midVertices[vCount[1]-1].z;
-                vCounter += 3;
-                mesh.vertices[vCounter] = midVertices[vCount[2]-1].x;
-                mesh.vertices[vCounter + 1] = midVertices[vCount[2]-1].y;
-                mesh.vertices[vCounter + 2] = midVertices[vCount[2]-1].z;
-                vCounter += 3;
-
-                if (normalCount > 0)
-                {
-                    mesh.normals[nCounter] = midNormals[vnCount[0]-1].x;
-                    mesh.normals[nCounter + 1] = midNormals[vnCount[0]-1].y;
-                    mesh.normals[nCounter + 2] = midNormals[vnCount[0]-1].z;
-                    nCounter += 3;
-                    mesh.normals[nCounter] = midNormals[vnCount[1]-1].x;
-                    mesh.normals[nCounter + 1] = midNormals[vnCount[1]-1].y;
-                    mesh.normals[nCounter + 2] = midNormals[vnCount[1]-1].z;
-                    nCounter += 3;
-                    mesh.normals[nCounter] = midNormals[vnCount[2]-1].x;
-                    mesh.normals[nCounter + 1] = midNormals[vnCount[2]-1].y;
-                    mesh.normals[nCounter + 2] = midNormals[vnCount[2]-1].z;
-                    nCounter += 3;
-                }
-                else
-                {
-                    // If normals not defined, they are calculated from the 3 vertices [N = (V2 - V1) x (V3 - V1)]
-                    Vector3 norm = Vector3CrossProduct(Vector3Subtract(midVertices[vCount[1]-1], midVertices[vCount[0]-1]), Vector3Subtract(midVertices[vCount[2]-1], midVertices[vCount[0]-1]));
-                    norm = Vector3Normalize(norm);
-
-                    mesh.normals[nCounter] = norm.x;
-                    mesh.normals[nCounter + 1] = norm.y;
-                    mesh.normals[nCounter + 2] = norm.z;
-                    nCounter += 3;
-                    mesh.normals[nCounter] = norm.x;
-                    mesh.normals[nCounter + 1] = norm.y;
-                    mesh.normals[nCounter + 2] = norm.z;
-                    nCounter += 3;
-                    mesh.normals[nCounter] = norm.x;
-                    mesh.normals[nCounter + 1] = norm.y;
-                    mesh.normals[nCounter + 2] = norm.z;
-                    nCounter += 3;
-                }
-
-                if (texcoordCount > 0)
-                {
-                    // NOTE: If using negative texture coordinates with a texture filter of GL_CLAMP_TO_EDGE doesn't work!
-                    // NOTE: Texture coordinates are Y flipped upside-down
-                    mesh.texcoords[tcCounter] = midTexCoords[vtCount[0]-1].x;
-                    mesh.texcoords[tcCounter + 1] = 1.0f - midTexCoords[vtCount[0]-1].y;
-                    tcCounter += 2;
-                    mesh.texcoords[tcCounter] = midTexCoords[vtCount[1]-1].x;
-                    mesh.texcoords[tcCounter + 1] = 1.0f - midTexCoords[vtCount[1]-1].y;
-                    tcCounter += 2;
-                    mesh.texcoords[tcCounter] = midTexCoords[vtCount[2]-1].x;
-                    mesh.texcoords[tcCounter + 1] = 1.0f - midTexCoords[vtCount[2]-1].y;
-                    tcCounter += 2;
-                }
-            } break;
-            default: break;
-        }
-    }
-
-    fclose(objFile);
-
-    // Now we can free temp mid* arrays
-    free(midVertices);
-    free(midNormals);
-    free(midTexCoords);
-*/
-
-    // NOTE: At this point we have all vertex, texcoord, normal data for the model in mesh struct
+    // NOTE: At this point we have all model data loaded
     TraceLog(LOG_INFO, "[%s] Model loaded successfully in RAM (CPU)", fileName);
 
     return model;
-}
-#endif
-
-#if defined(SUPPORT_FILEFORMAT_MTL)
-// Load MTL material data (specs: http://paulbourke.net/dataformats/mtl/)
-// NOTE: Texture map parameters are not supported
-static Material LoadMTL(const char *fileName)
-{
-    #define MAX_BUFFER_SIZE 128
-
-    Material material = { 0 };
-
-    char buffer[MAX_BUFFER_SIZE];
-    Vector3 color = { 1.0f, 1.0f, 1.0f };
-    char mapFileName[128];
-    int result = 0;
-
-    FILE *mtlFile;
-
-    mtlFile = fopen(fileName, "rt");
-
-    if (mtlFile == NULL)
-    {
-        TraceLog(LOG_WARNING, "[%s] MTL file could not be opened", fileName);
-        return material;
-    }
-
-    while (!feof(mtlFile))
-    {
-        fgets(buffer, MAX_BUFFER_SIZE, mtlFile);
-
-        switch (buffer[0])
-        {
-            case 'n':   // newmtl string    Material name. Begins a new material description.
-            {
-                // TODO: Support multiple materials in a single .mtl
-                sscanf(buffer, "newmtl %127s", mapFileName);
-            }
-            case 'i':   // illum int        Illumination model
-            {
-                // illum = 1 if specular disabled
-                // illum = 2 if specular enabled (lambertian model)
-                // ...
-            }
-            case 'K':   // Ka, Kd, Ks, Ke
-            {
-                switch (buffer[1])
-                {
-                    case 'a':   // Ka float float float    Ambient color (RGB)
-                    {
-                        sscanf(buffer, "Ka %f %f %f", &color.x, &color.y, &color.z);
-                        // TODO: Support ambient color
-                        //material.colAmbient.r = (unsigned char)(color.x*255);
-                        //material.colAmbient.g = (unsigned char)(color.y*255);
-                        //material.colAmbient.b = (unsigned char)(color.z*255);
-                    } break;
-                    case 'd':   // Kd float float float     Diffuse color (RGB)
-                    {
-                        sscanf(buffer, "Kd %f %f %f", &color.x, &color.y, &color.z);
-                        material.maps[MAP_DIFFUSE].color.r = (unsigned char)(color.x*255);
-                        material.maps[MAP_DIFFUSE].color.g = (unsigned char)(color.y*255);
-                        material.maps[MAP_DIFFUSE].color.b = (unsigned char)(color.z*255);
-                    } break;
-                    case 's':   // Ks float float float     Specular color (RGB)
-                    {
-                        sscanf(buffer, "Ks %f %f %f", &color.x, &color.y, &color.z);
-                        material.maps[MAP_SPECULAR].color.r = (unsigned char)(color.x*255);
-                        material.maps[MAP_SPECULAR].color.g = (unsigned char)(color.y*255);
-                        material.maps[MAP_SPECULAR].color.b = (unsigned char)(color.z*255);
-                    } break;
-                    case 'e':   // Ke float float float     Emmisive color (RGB)
-                    {
-                        // TODO: Support Ke?
-                    } break;
-                    default: break;
-                }
-            } break;
-            case 'N':   // Ns, Ni
-            {
-                if (buffer[1] == 's')       // Ns int   Shininess (specular exponent). Ranges from 0 to 1000.
-                {
-                    int shininess = 0;
-                    sscanf(buffer, "Ns %i", &shininess);
-
-                    //material.params[PARAM_GLOSSINES] = (float)shininess;
-                }
-                else if (buffer[1] == 'i')  // Ni int   Refraction index.
-                {
-                    // Not supported...
-                }
-            } break;
-            case 'm':   // map_Kd, map_Ks, map_Ka, map_Bump, map_d
-            {
-                switch (buffer[4])
-                {
-                    case 'K':   // Color texture maps
-                    {
-                        if (buffer[5] == 'd')       // map_Kd string    Diffuse color texture map.
-                        {
-                            result = sscanf(buffer, "map_Kd %127s", mapFileName);
-                            if (result != EOF) material.maps[MAP_DIFFUSE].texture = LoadTexture(mapFileName);
-                        }
-                        else if (buffer[5] == 's')  // map_Ks string    Specular color texture map.
-                        {
-                            result = sscanf(buffer, "map_Ks %127s", mapFileName);
-                            if (result != EOF) material.maps[MAP_SPECULAR].texture = LoadTexture(mapFileName);
-                        }
-                        else if (buffer[5] == 'a')  // map_Ka string    Ambient color texture map.
-                        {
-                            // Not supported...
-                        }
-                    } break;
-                    case 'B':       // map_Bump string      Bump texture map.
-                    {
-                        result = sscanf(buffer, "map_Bump %127s", mapFileName);
-                        if (result != EOF) material.maps[MAP_NORMAL].texture = LoadTexture(mapFileName);
-                    } break;
-                    case 'b':       // map_bump string      Bump texture map.
-                    {
-                        result = sscanf(buffer, "map_bump %127s", mapFileName);
-                        if (result != EOF) material.maps[MAP_NORMAL].texture = LoadTexture(mapFileName);
-                    } break;
-                    case 'd':       // map_d string         Opacity texture map.
-                    {
-                        // Not supported...
-                    } break;
-                    default: break;
-                }
-            } break;
-            case 'd':   // d, disp
-            {
-                if (buffer[1] == ' ')       // d float      Dissolve factor. d is inverse of Tr
-                {
-                    float alpha = 1.0f;
-                    sscanf(buffer, "d %f", &alpha);
-                    material.maps[MAP_DIFFUSE].color.a = (unsigned char)(alpha*255);
-                }
-                else if (buffer[1] == 'i')  // disp string  Displacement map
-                {
-                    // Not supported...
-                }
-            } break;
-            case 'b':   // bump string      Bump texture map
-            {
-                result = sscanf(buffer, "bump %127s", mapFileName);
-                if (result != EOF) material.maps[MAP_NORMAL].texture = LoadTexture(mapFileName);
-            } break;
-            case 'T':   // Tr float         Transparency Tr (alpha). Tr is inverse of d
-            {
-                float ialpha = 0.0f;
-                sscanf(buffer, "Tr %f", &ialpha);
-                material.maps[MAP_DIFFUSE].color.a = (unsigned char)((1.0f - ialpha)*255);
-
-            } break;
-            case 'r':   // refl string      Reflection texture map
-            default: break;
-        }
-    }
-
-    fclose(mtlFile);
-
-    // NOTE: At this point we have all material data
-    TraceLog(LOG_INFO, "[%s] Material loaded successfully", fileName);
-
-    return material;
 }
 #endif
 
