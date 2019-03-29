@@ -27,13 +27,13 @@ int main()
 
     Model model = LoadModel("resources/models/turret.obj");                     // Load default model obj
     Texture2D texture = LoadTexture("resources/models/turret_diffuse.png");     // Load default model texture
-    model.material.maps[MAP_DIFFUSE].texture = texture; // Bind texture to model
+    model.materials[0].maps[MAP_DIFFUSE].texture = texture; // Bind texture to model
     
-    Vector3 position = { 0.0, 0.0, 0.0 };               // Set model position
-    BoundingBox bounds = MeshBoundingBox(model.mesh);   // Set model bounds     
-    bool selected = false;                              // Selected object flag
+    Vector3 position = { 0.0, 0.0, 0.0 };                   // Set model position
+    BoundingBox bounds = MeshBoundingBox(model.meshes[0]);  // Set model bounds     
+    bool selected = false;                                  // Selected object flag
     
-    SetCameraMode(camera, CAMERA_FREE);                 // Set a free camera mode
+    SetCameraMode(camera, CAMERA_FREE);     // Set a free camera mode
 
     char objFilename[64] = "turret.obj";
 
@@ -54,15 +54,15 @@ int main()
             {
                 if (IsFileExtension(droppedFiles[0], ".obj"))
                 {
-                    UnloadMesh(&model.mesh);
-                    model.mesh = LoadMesh(droppedFiles[0]);
-                    bounds = MeshBoundingBox(model.mesh);
+                    UnloadMesh(&model.meshes[0]);
+                    model.meshes[0] = LoadMesh(droppedFiles[0]);
+                    bounds = MeshBoundingBox(model.meshes[0]);
                 }
                 else if (IsFileExtension(droppedFiles[0], ".png"))
                 {
                     UnloadTexture(texture);
                     texture = LoadTexture(droppedFiles[0]);
-                    model.material.maps[MAP_DIFFUSE].texture = texture;
+                    model.materials[0].maps[MAP_DIFFUSE].texture = texture;
                 }
 
                 strcpy(objFilename, GetFileName(droppedFiles[0]));
