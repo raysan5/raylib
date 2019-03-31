@@ -1342,12 +1342,13 @@ int tinyobj_parse_obj(tinyobj_attrib_t *attrib, tinyobj_shape_t **shapes,
     attrib->num_normals = (unsigned int)num_vn;
     attrib->texcoords = (float *)TINYOBJ_MALLOC(sizeof(float) * num_vt * 2);
     attrib->num_texcoords = (unsigned int)num_vt;
-    attrib->faces = (tinyobj_vertex_index_t *)TINYOBJ_MALLOC(
-                                                     sizeof(tinyobj_vertex_index_t) * num_f);
-    attrib->num_faces = (unsigned int)num_f;
+    attrib->faces = (tinyobj_vertex_index_t *)TINYOBJ_MALLOC(sizeof(tinyobj_vertex_index_t) * num_f);
     attrib->face_num_verts = (int *)TINYOBJ_MALLOC(sizeof(int) * num_faces);
+    
+    attrib->num_faces = (unsigned int)num_faces;
+    attrib->num_face_num_verts = (unsigned int)num_f;
+    
     attrib->material_ids = (int *)TINYOBJ_MALLOC(sizeof(int) * num_faces);
-    attrib->num_face_num_verts = (unsigned int)num_faces;
 
     for (i = 0; i < num_lines; i++) {
       if (commands[i].type == COMMAND_EMPTY) {
