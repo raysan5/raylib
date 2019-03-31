@@ -2400,55 +2400,113 @@ static Model LoadOBJ(const char *fileName)
     if (objFile != NULL)
     {
         fseek(objFile, 0, SEEK_END);
-        long dataLength = ftell(objFile);    // Get file size
-        fseek(objFile, 0, SEEK_SET);   // Reset file pointer
+        long length = ftell(objFile);   // Get file size
+        fseek(objFile, 0, SEEK_SET);    // Reset file pointer
 
-        data = (char *)malloc(dataLength);
+        data = (char *)malloc(length);
 
-        fread(data, dataLength, 1, objFile);
+        fread(data, length, 1, objFile);
+        dataLength = length;
         fclose(objFile);
     }
 
-    if (data != NULL) 
+    if (data != NULL)
     {
         unsigned int flags = TINYOBJ_FLAG_TRIANGULATE;
         int ret = tinyobj_parse_obj(&attrib, &meshes, &meshCount, &materials, &materialCount, data, dataLength, flags);
         
         if (ret != TINYOBJ_SUCCESS) TraceLog(LOG_WARNING, "[%s] Model data could not be loaded", fileName);
         else TraceLog(LOG_INFO, "[%s] Model data loaded successfully: %i meshes / %i materials", fileName, meshCount, materialCount);
-               
-        for (int i = 0; i < meshCount; i++)
+        
+        // Init model meshes array
+        model.meshCount = meshCount;
+        model.meshes = (Mesh *)malloc(model.meshCount*sizeof(Mesh));
+        
+        // Init model materials array
+        model.materialCount = materialCount;
+        model.materials = (Material *)malloc(model.materialCount*sizeof(Material));
+        
+        // Init model meshes
+        for (int m = 0; m < 1; m++)
         {
-            printf("shape[%d] name = %s\n", i, meshes[i].name);
+            printf("num_vertices:  %i\n", attrib.num_vertices);
+            printf("num_normals:   %i\n", attrib.num_normals);
+            printf("num_texcoords: %i\n", attrib.num_texcoords);
+            printf("num_faces:     %i\n", attrib.num_faces);
+            printf("num_face_num_verts: %i\n", attrib.num_face_num_verts);
+            
+            Mesh mesh = { 0 };
+            memset(&mesh, 0, sizeof(Mesh));
+            mesh.vertexCount = attrib.num_faces*3;
+            mesh.triangleCount = attrib.num_faces;
+            mesh.vertices = (float *)malloc(mesh.vertexCount*3*sizeof(float));
+            mesh.texcoords = (float *)malloc(mesh.vertexCount*2*sizeof(float));
+            mesh.normals = (float *)malloc(mesh.vertexCount*3*sizeof(float));
+            
+            int faceOffset = 0;
+            
+            int vCount = 0;
+            int vtCount = 0;
+            int vnCount = 0;
+            
+            /*
+            for (int i = 0; i < attrib.num_vertices*3; i++) printf("%2.2f, ", attrib.vertices[i]);
+            printf("\n");
+            for (int i = 0; i < attrib.num_texcoords*2; i++) printf("%2.2f, ", attrib.texcoords[i]);
+            printf("\n");
+            for (int i = 0; i < attrib.num_normals*3; i++) printf("%2.2f, ", attrib.normals[i]);
+            printf("\n");
+            
+            tinyobj_vertex_index_t idx0 = attrib.faces[0];
+            tinyobj_vertex_index_t idx1 = attrib.faces[1];
+            tinyobj_vertex_index_t idx2 = attrib.faces[2];
+            
+            for (int v = 0; v < 3; v++) { printf("%2.2f, ", attrib.vertices[idx0.v_idx*3 + v]); } printf("\n");
+            for (int v = 0; v < 3; v++) { printf("%2.2f, ", attrib.vertices[idx1.v_idx*3 + v]); } printf("\n");
+            for (int v = 0; v < 3; v++) { printf("%2.2f, ", attrib.vertices[idx2.v_idx*3 + v]); } printf("\n\n");
+            
+            idx0 = attrib.faces[3 + 0];
+            idx1 = attrib.faces[3 + 1];
+            idx2 = attrib.faces[3 + 2];
+            
+            for (int v = 0; v < 3; v++) { printf("%2.2f, ", attrib.vertices[idx0.v_idx*3 + v]); } printf("\n");
+            for (int v = 0; v < 3; v++) { printf("%2.2f, ", attrib.vertices[idx1.v_idx*3 + v]); } printf("\n");
+            for (int v = 0; v < 3; v++) { printf("%2.2f, ", attrib.vertices[idx2.v_idx*3 + v]); } printf("\n\n");
+*/
+            for (int f = 0; f < attrib.num_faces; f++)
+            {
+                tinyobj_vertex_index_t idx0 = attrib.faces[3*f + 0];
+                tinyobj_vertex_index_t idx1 = attrib.faces[3*f + 1];
+                tinyobj_vertex_index_t idx2 = attrib.faces[3*f + 2];
+                
+                // printf("Face index: v %i/%i/%i . vt %i/%i/%i . vn %i/%i/%i\n",
+                        // idx0.v_idx, idx1.v_idx, idx2.v_idx,
+                        // idx0.vt_idx, idx1.vt_idx, idx2.vt_idx,
+                        // idx0.vn_idx, idx1.vn_idx, idx2.vn_idx);
+                
+                for (int v = 0; v < 3; v++) { mesh.vertices[vCount + v] = attrib.vertices[idx0.v_idx*3 + v]; } vCount +=3;
+                for (int v = 0; v < 3; v++) { mesh.vertices[vCount + v] = attrib.vertices[idx1.v_idx*3 + v]; } vCount +=3;
+                for (int v = 0; v < 3; v++) { mesh.vertices[vCount + v] = attrib.vertices[idx2.v_idx*3 + v]; } vCount +=3;
+                
+                for (int v = 0; v < 2; v++) { mesh.texcoords[vtCount + v] = attrib.texcoords[idx0.vt_idx*2 + v]; } vtCount += 2;
+                for (int v = 0; v < 2; v++) { mesh.texcoords[vtCount + v] = attrib.texcoords[idx1.vt_idx*2 + v]; } vtCount += 2;
+                for (int v = 0; v < 2; v++) { mesh.texcoords[vtCount + v] = attrib.texcoords[idx2.vt_idx*2 + v]; } vtCount += 2;
+                
+                for (int v = 0; v < 3; v++) { mesh.normals[vnCount + v] = attrib.normals[idx0.vn_idx*3 + v]; } vnCount +=3;
+                for (int v = 0; v < 3; v++) { mesh.normals[vnCount + v] = attrib.normals[idx1.vn_idx*3 + v]; } vnCount +=3;
+                for (int v = 0; v < 3; v++) { mesh.normals[vnCount + v] = attrib.normals[idx2.vn_idx*3 + v]; } vnCount +=3;
+            }
+            
+            printf("vCount: %i\n", vCount);
+            printf("vtCount: %i\n", vtCount);
+            printf("vnCount: %i\n", vnCount);
+
+            model.meshes[m] = mesh;                 // Assign mesh data to model
+            rlLoadMesh(&model.meshes[m], false);    // Upload vertex data to GPU (static mesh)
         }
         
         /* 
         // Data reference to process
-        typedef struct {
-            char *name;
-
-            float ambient[3];
-            float diffuse[3];
-            float specular[3];
-            float transmittance[3];
-            float emission[3];
-            float shininess;
-            float ior;          // index of refraction
-            float dissolve;     // 1 == opaque; 0 == fully transparent
-            // illumination model (see http://www.fileformat.info/format/material/)
-            int illum;
-
-            int pad0;
-
-            char *ambient_texname;            // map_Ka
-            char *diffuse_texname;            // map_Kd
-            char *specular_texname;           // map_Ks
-            char *specular_highlight_texname; // map_Ns
-            char *bump_texname;               // map_bump, bump
-            char *displacement_texname;       // disp
-            char *alpha_texname;              // map_d
-        } tinyobj_material_t;
-
         typedef struct {
             char *name;         // group name or object name
             unsigned int face_offset;
@@ -2469,11 +2527,60 @@ static Model LoadOBJ(const char *fileName)
             float *vertices;
             float *normals;
             float *texcoords;
+            
             tinyobj_vertex_index_t *faces;
             int *face_num_verts;
+            
             int *material_ids;
         } tinyobj_attrib_t;
         */
+        
+        // Init model materials
+        for (int m = 0; m < materialCount; m++)
+        {
+            /*
+            typedef struct {
+                char *name;
+
+                float ambient[3];
+                float diffuse[3];
+                float specular[3];
+                float transmittance[3];
+                float emission[3];
+                float shininess;
+                float ior;          // index of refraction
+                float dissolve;     // 1 == opaque; 0 == fully transparent
+                // illumination model (see http://www.fileformat.info/format/material/)
+                int illum;
+
+                int pad0;
+
+                char *ambient_texname;            // map_Ka
+                char *diffuse_texname;            // map_Kd
+                char *specular_texname;           // map_Ks
+                char *specular_highlight_texname; // map_Ns
+                char *bump_texname;               // map_bump, bump
+                char *displacement_texname;       // disp
+                char *alpha_texname;              // map_d
+            } tinyobj_material_t;
+            */
+            
+            /*
+            // Material texture map
+            typedef struct MaterialMap {
+                Texture2D texture;      // Material map texture
+                Color color;            // Material map color
+                float value;            // Material map value
+            } MaterialMap;
+
+            // Material type (generic)
+            typedef struct Material {
+                Shader shader;          // Material shader
+                MaterialMap maps[MAX_MATERIAL_MAPS]; // Material maps
+                float *params;          // Material generic parameters (if required)
+            } Material;
+            */
+        }
 
         tinyobj_attrib_free(&attrib);
         tinyobj_shapes_free(meshes, meshCount);
