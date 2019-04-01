@@ -2036,6 +2036,8 @@ unsigned int rlLoadTexture(void *data, int width, int height, int format, int mi
 unsigned int rlLoadTextureDepth(int width, int height, int bits, bool useRenderBuffer)
 {
     unsigned int id = 0;
+    
+#if defined(GRAPHICS_API_OPENGL_33) || defined(GRAPHICS_API_OPENGL_ES2)
     unsigned int glInternalFormat = GL_DEPTH_COMPONENT16;
 
     if ((bits != 16) && (bits != 24) && (bits != 32)) bits = 16;
@@ -2081,6 +2083,7 @@ unsigned int rlLoadTextureDepth(int width, int height, int bits, bool useRenderB
 
         glBindRenderbuffer(GL_RENDERBUFFER, 0);
     }
+#endif
 
     return id;
 }
@@ -2092,7 +2095,8 @@ unsigned int rlLoadTextureCubemap(void *data, int size, int format)
 {
     unsigned int cubemapId = 0;
     unsigned int dataSize = GetPixelDataSize(size, size, format);
-
+    
+#if defined(GRAPHICS_API_OPENGL_33) || defined(GRAPHICS_API_OPENGL_ES2)
     glGenTextures(1, &cubemapId);
     glBindTexture(GL_TEXTURE_CUBE_MAP, cubemapId);
 
@@ -2137,6 +2141,7 @@ unsigned int rlLoadTextureCubemap(void *data, int size, int format)
 #endif
 
     glBindTexture(GL_TEXTURE_CUBE_MAP, 0);
+#endif
 
     return cubemapId;
 }
@@ -2221,9 +2226,9 @@ RenderTexture2D rlLoadRenderTexture(int width, int height, int format, int depth
 {
     RenderTexture2D target = { 0 };
 
+#if defined(GRAPHICS_API_OPENGL_33) || defined(GRAPHICS_API_OPENGL_ES2)
     if (useDepthTexture && texDepthSupported) target.depthTexture = true;
 
-#if defined(GRAPHICS_API_OPENGL_33) || defined(GRAPHICS_API_OPENGL_ES2)
     // Create the framebuffer object
     glGenFramebuffers(1, &target.id);
     glBindFramebuffer(GL_FRAMEBUFFER, target.id);
@@ -2274,6 +2279,7 @@ RenderTexture2D rlLoadRenderTexture(int width, int height, int format, int depth
 // NOTE: Attach type: 0-Color, 1-Depth renderbuffer, 2-Depth texture
 void rlRenderTextureAttach(RenderTexture2D target, unsigned int id, int attachType)
 {
+#if defined(GRAPHICS_API_OPENGL_33) || defined(GRAPHICS_API_OPENGL_ES2)
     glBindFramebuffer(GL_FRAMEBUFFER, target.id);
 
     if (attachType == 0) glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, id, 0);
@@ -2284,11 +2290,15 @@ void rlRenderTextureAttach(RenderTexture2D target, unsigned int id, int attachTy
     }
 
     glBindFramebuffer(GL_FRAMEBUFFER, 0);
+#endif
 }
 
 // Verify render texture is complete
 bool rlRenderTextureComplete(RenderTexture target)
 {
+    bool result = false;
+    
+#if defined(GRAPHICS_API_OPENGL_33) || defined(GRAPHICS_API_OPENGL_ES2)
     glBindFramebuffer(GL_FRAMEBUFFER, target.id);
 
     GLenum status = glCheckFramebufferStatus(GL_FRAMEBUFFER);
@@ -2309,7 +2319,10 @@ bool rlRenderTextureComplete(RenderTexture target)
 
     glBindFramebuffer(GL_FRAMEBUFFER, 0);
 
-    return (status == GL_FRAMEBUFFER_COMPLETE);
+    result = (status == GL_FRAMEBUFFER_COMPLETE);
+#endif
+
+    return result;
 }
 
 // Generate mipmap data for selected texture

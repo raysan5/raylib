@@ -682,6 +682,9 @@ void UnloadModel(Model model)
 {
     for (int i = 0; i < model.meshCount; i++) UnloadMesh(&model.meshes[i]);
     for (int i = 0; i < model.materialCount; i++) UnloadMaterial(model.materials[i]);
+    
+    free(model.meshes);
+    free(model.materials);
     free(model.meshMaterial);
 
     TraceLog(LOG_INFO, "Unloaded model data from RAM and VRAM");
