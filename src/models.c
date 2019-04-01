@@ -2484,11 +2484,18 @@ static Model LoadOBJ(const char *fileName)
 
             model.meshes[m] = mesh;                 // Assign mesh data to model
             rlLoadMesh(&model.meshes[m], false);    // Upload vertex data to GPU (static mesh)
+            
+            // Assign mesh material for current mesh
+            model.meshMaterial[m] = attrib.material_ids[m];
         }
 
         // Init model materials
         for (int m = 0; m < materialCount; m++)
         {
+            // Init material to default
+            // NOTE: Uses default shader, only MAP_DIFFUSE supported
+            model.materials[m] = LoadMaterialDefault();
+            
             /*
             typedef struct {
                 char *name;
@@ -2516,21 +2523,21 @@ static Model LoadOBJ(const char *fileName)
             } tinyobj_material_t;
             */
             
-            /*
-            // Material texture map
-            typedef struct MaterialMap {
-                Texture2D texture;      // Material map texture
-                Color color;            // Material map color
-                float value;            // Material map value
-            } MaterialMap;
+            model.materials[m].maps[MAP_DIFFUSE].texture = LoadTexture(materials[m].diffuse_texname);  //char *diffuse_texname; // map_Kd
+            model.materials[m].maps[MAP_DIFFUSE].color = (Color){ (float)(materials[m].diffuse[0]*255.0f), (float)(materials[m].diffuse[1]*255.0f), (float)(materials[m].diffuse[2]*255.0f), 255 }; //float diffuse[3];
+            model.materials[m].maps[MAP_DIFFUSE].value = 0.0f;
+            
+            model.materials[m].maps[MAP_SPECULAR].texture = LoadTexture(materials[m].specular_texname);  //char *specular_texname; // map_Ks
+            model.materials[m].maps[MAP_SPECULAR].color = (Color){ (float)(materials[m].specular[0]*255.0f), (float)(materials[m].specular[1]*255.0f), (float)(materials[m].specular[2]*255.0f), 255 }; //float specular[3];
+            model.materials[m].maps[MAP_SPECULAR].value = 0.0f;
+            
+            model.materials[m].maps[MAP_NORMAL].texture = LoadTexture(materials[m].bump_texname);  //char *bump_texname; // map_bump, bump
+            model.materials[m].maps[MAP_NORMAL].color = WHITE;
+            model.materials[m].maps[MAP_NORMAL].value = materials[m].shininess;
+            
+            model.materials[m].maps[MAP_EMISSION].color = (Color){ (float)(materials[m].emission[0]*255.0f), (float)(materials[m].emission[1]*255.0f), (float)(materials[m].emission[2]*255.0f), 255 }; //float emission[3];
 
-            // Material type (generic)
-            typedef struct Material {
-                Shader shader;          // Material shader
-                MaterialMap maps[MAX_MATERIAL_MAPS]; // Material maps
-                float *params;          // Material generic parameters (if required)
-            } Material;
-            */
+            model.materials[m].maps[MAP_HEIGHT].texture = LoadTexture(materials[m].displacement_texname);  //char *displacement_texname; // disp
         }
 
         tinyobj_attrib_free(&attrib);
