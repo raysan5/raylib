@@ -760,7 +760,7 @@ bool IsWindowResized(void)
     return windowResized;
 #else
     return false;
-#endif 
+#endif
 }
 
 // Check if window is currently hidden
@@ -1684,14 +1684,14 @@ const char *GetFileName(const char *filePath)
 const char *GetFileNameWithoutExt(const char *filePath)
 {
     #define MAX_FILENAMEWITHOUTEXT_LENGTH   64
-    
+
     static char fileName[MAX_FILENAMEWITHOUTEXT_LENGTH];
     memset(fileName, 0, MAX_FILENAMEWITHOUTEXT_LENGTH);
-    
+
     strcpy(fileName, GetFileName(filePath));   // Get filename with extension
-    
+
     int len = strlen(fileName);
-    
+
     for (int i = 0; (i < len) && (i < MAX_FILENAMEWITHOUTEXT_LENGTH); i++)
     {
         if (fileName[i] == '.')
@@ -3154,7 +3154,7 @@ static void PollInputEvents(void)
             gamepadAxisCount = axisCount;
         }
     }
-    
+
     windowResized = false;
 
 #if defined(SUPPORT_EVENTS_WAITING)
@@ -3433,7 +3433,7 @@ static void WindowSizeCallback(GLFWwindow *window, int width, int height)
     currentHeight = height;
 
     // NOTE: Postprocessing texture is not scaled to new size
-    
+
     windowResized = true;
 }
 
@@ -4279,7 +4279,7 @@ static void *EventThread(void *arg)
 {
     // Scancode to keycode mapping for US keyboards
     // TODO: Proabobly replace this with a keymap from the X11 to get the correct regional map for the keyboard (Currently non US keyboards will have the wrong mapping for some keys)
-    static const int keymap_US[] = 
+    static const int keymap_US[] =
         {0,256,49,50,51,52,53,54,55,56,57,48,45,61,259,258,81,87,69,82,84,
         89,85,73,79,80,91,93,257,341,65,83,68,70,71,72,74,75,76,59,39,96,
         340,92,90,88,67,86,66,78,77,44,46,47,344,332,342,32,280,290,291,
@@ -4298,7 +4298,7 @@ static void *EventThread(void *arg)
 
     struct input_event event;
     InputEventWorker *worker = (InputEventWorker *)arg;
-    
+
     int touchAction = -1;
     bool gestureUpdate = false;
     int keycode;
@@ -4400,7 +4400,7 @@ static void *EventThread(void *arg)
                 if ((event.code == BTN_TOUCH) || (event.code == BTN_LEFT))
                 {
                     currentMouseStateEvdev[MOUSE_LEFT_BUTTON] = event.value;
-                    
+
                     #if defined(SUPPORT_GESTURES_SYSTEM)
                         if (event.value > 0) touchAction = TOUCH_DOWN;
                         else touchAction = TOUCH_UP;
@@ -4415,9 +4415,9 @@ static void *EventThread(void *arg)
                 // Keyboard button parsing
                 if((event.code >= 1) && (event.code <= 255))     //Keyboard keys appear for codes 1 to 255
                 {
-                    keycode = keymap_US[event.code & 0xFF];     // The code we get is a scancode so we look up the apropriate keycode             
+                    keycode = keymap_US[event.code & 0xFF];     // The code we get is a scancode so we look up the apropriate keycode
                     // Make sure we got a valid keycode
-                    if((keycode > 0) && (keycode < sizeof(currentKeyState)))         
+                    if((keycode > 0) && (keycode < sizeof(currentKeyState)))
                     {
                         // Store the key information for raylib to later use
                         currentKeyStateEvdev[keycode] = event.value;
@@ -4449,22 +4449,22 @@ static void *EventThread(void *arg)
 
                 gestureEvent.pointCount = 0;
                 gestureEvent.touchAction = touchAction;
-                
+
                 if (touchPosition[0].x >= 0) gestureEvent.pointCount++;
                 if (touchPosition[1].x >= 0) gestureEvent.pointCount++;
                 if (touchPosition[2].x >= 0) gestureEvent.pointCount++;
                 if (touchPosition[3].x >= 0) gestureEvent.pointCount++;
-                
+
                 gestureEvent.pointerId[0] = 0;
                 gestureEvent.pointerId[1] = 1;
                 gestureEvent.pointerId[2] = 2;
                 gestureEvent.pointerId[3] = 3;
-                
+
                 gestureEvent.position[0] = touchPosition[0];
                 gestureEvent.position[1] = touchPosition[1];
                 gestureEvent.position[2] = touchPosition[2];
                 gestureEvent.position[3] = touchPosition[3];
-                
+
                 ProcessGestureEvent(gestureEvent);
 #endif
             }

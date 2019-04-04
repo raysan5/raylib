@@ -1130,22 +1130,22 @@ void rlBegin(int mode)
             // Make sure current draws[i].vertexCount is aligned a multiple of 4,
             // that way, following QUADS drawing will keep aligned with index processing
             // It implies adding some extra alignment vertex at the end of the draw,
-            // those vertex are not processed but they are considered as an additional offset 
+            // those vertex are not processed but they are considered as an additional offset
             // for the next set of vertex to be drawn
             if (draws[drawsCounter - 1].mode == RL_LINES) draws[drawsCounter - 1].vertexAlignment = ((draws[drawsCounter - 1].vertexCount < 4)? draws[drawsCounter - 1].vertexCount : draws[drawsCounter - 1].vertexCount%4);
             else if (draws[drawsCounter - 1].mode == RL_TRIANGLES) draws[drawsCounter - 1].vertexAlignment = ((draws[drawsCounter - 1].vertexCount < 4)? 1 : (4 - (draws[drawsCounter - 1].vertexCount%4)));
-            
+
             if (rlCheckBufferLimit(draws[drawsCounter - 1].vertexAlignment)) rlglDraw();
             else
             {
                 vertexData[currentBuffer].vCounter += draws[drawsCounter - 1].vertexAlignment;
                 vertexData[currentBuffer].cCounter += draws[drawsCounter - 1].vertexAlignment;
                 vertexData[currentBuffer].tcCounter += draws[drawsCounter - 1].vertexAlignment;
-            
+
                 drawsCounter++;
             }
         }
-        
+
         if (drawsCounter >= MAX_DRAWCALL_REGISTERED) rlglDraw();
 
         draws[drawsCounter - 1].mode = mode;
@@ -1301,22 +1301,22 @@ void rlEnableTexture(unsigned int id)
             // Make sure current draws[i].vertexCount is aligned a multiple of 4,
             // that way, following QUADS drawing will keep aligned with index processing
             // It implies adding some extra alignment vertex at the end of the draw,
-            // those vertex are not processed but they are considered as an additional offset 
+            // those vertex are not processed but they are considered as an additional offset
             // for the next set of vertex to be drawn
             if (draws[drawsCounter - 1].mode == RL_LINES) draws[drawsCounter - 1].vertexAlignment = ((draws[drawsCounter - 1].vertexCount < 4)? draws[drawsCounter - 1].vertexCount : draws[drawsCounter - 1].vertexCount%4);
             else if (draws[drawsCounter - 1].mode == RL_TRIANGLES) draws[drawsCounter - 1].vertexAlignment = ((draws[drawsCounter - 1].vertexCount < 4)? 1 : (4 - (draws[drawsCounter - 1].vertexCount%4)));
-            
+
             if (rlCheckBufferLimit(draws[drawsCounter - 1].vertexAlignment)) rlglDraw();
             else
             {
                 vertexData[currentBuffer].vCounter += draws[drawsCounter - 1].vertexAlignment;
                 vertexData[currentBuffer].cCounter += draws[drawsCounter - 1].vertexAlignment;
                 vertexData[currentBuffer].tcCounter += draws[drawsCounter - 1].vertexAlignment;
-            
+
                 drawsCounter++;
             }
         }
-        
+
         if (drawsCounter >= MAX_DRAWCALL_REGISTERED) rlglDraw();
 
         draws[drawsCounter - 1].textureId = id;
@@ -2044,7 +2044,7 @@ unsigned int rlLoadTexture(void *data, int width, int height, int format, int mi
 unsigned int rlLoadTextureDepth(int width, int height, int bits, bool useRenderBuffer)
 {
     unsigned int id = 0;
-    
+
 #if defined(GRAPHICS_API_OPENGL_33) || defined(GRAPHICS_API_OPENGL_ES2)
     unsigned int glInternalFormat = GL_DEPTH_COMPONENT16;
 
@@ -2103,7 +2103,7 @@ unsigned int rlLoadTextureCubemap(void *data, int size, int format)
 {
     unsigned int cubemapId = 0;
     unsigned int dataSize = GetPixelDataSize(size, size, format);
-    
+
 #if defined(GRAPHICS_API_OPENGL_33) || defined(GRAPHICS_API_OPENGL_ES2)
     glGenTextures(1, &cubemapId);
     glBindTexture(GL_TEXTURE_CUBE_MAP, cubemapId);
@@ -2305,7 +2305,7 @@ void rlRenderTextureAttach(RenderTexture2D target, unsigned int id, int attachTy
 bool rlRenderTextureComplete(RenderTexture target)
 {
     bool result = false;
-    
+
 #if defined(GRAPHICS_API_OPENGL_33) || defined(GRAPHICS_API_OPENGL_ES2)
     glBindFramebuffer(GL_FRAMEBUFFER, target.id);
 
@@ -4196,7 +4196,7 @@ static void DrawBuffersDefault(void)
             glUniformMatrix4fv(currentShader.locs[LOC_MATRIX_MVP], 1, false, MatrixToFloat(matMVP));
             glUniform4f(currentShader.locs[LOC_COLOR_DIFFUSE], 1.0f, 1.0f, 1.0f, 1.0f);
             glUniform1i(currentShader.locs[LOC_MAP_DIFFUSE], 0);    // Provided value refers to the texture unit (active)
-            
+
             // TODO: Support additional texture units on custom shader
             //if (currentShader->locs[LOC_MAP_SPECULAR] > 0) glUniform1i(currentShader.locs[LOC_MAP_SPECULAR], 1);
             //if (currentShader->locs[LOC_MAP_NORMAL] > 0) glUniform1i(currentShader.locs[LOC_MAP_NORMAL], 2);
@@ -4231,7 +4231,7 @@ static void DrawBuffersDefault(void)
             for (int i = 0; i < drawsCounter; i++)
             {
                 glBindTexture(GL_TEXTURE_2D, draws[i].textureId);
-                
+
                 // TODO: Find some way to bind additional textures --> Use global texture IDs? Register them on draw[i]?
                 //if (currentShader->locs[LOC_MAP_SPECULAR] > 0) { glActiveTexture(GL_TEXTURE1); glBindTexture(GL_TEXTURE_2D, textureUnit1_id); }
                 //if (currentShader->locs[LOC_MAP_SPECULAR] > 0) { glActiveTexture(GL_TEXTURE2); glBindTexture(GL_TEXTURE_2D, textureUnit2_id); }
@@ -4248,7 +4248,7 @@ static void DrawBuffersDefault(void)
                     glDrawElements(GL_TRIANGLES, draws[i].vertexCount/4*6, GL_UNSIGNED_SHORT, (GLvoid *)(sizeof(GLushort)*vertexOffset/4*6));
 #endif
                 }
-                
+
                 vertexOffset += (draws[i].vertexCount + draws[i].vertexAlignment);
             }
 

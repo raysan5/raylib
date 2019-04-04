@@ -339,7 +339,7 @@ typedef struct Material {
 
 // Transformation properties
 typedef struct Transform {
-    Vector3 translation;    // Translation 
+    Vector3 translation;    // Translation
     Quaternion rotation;    // Rotation
     Vector3 scale;          // Scale
 } Transform;
@@ -353,14 +353,14 @@ typedef struct BoneInfo {
 // Model type
 typedef struct Model {
     Matrix transform;       // Local transform matrix
-    
+
     int meshCount;          // Number of meshes
     Mesh *meshes;           // Meshes array
 
     int materialCount;      // Number of materials
     Material *materials;    // Materials array
     int *meshMaterial;      // Mesh material number
-    
+
     // Animation data
     int boneCount;          // Number of bones
     BoneInfo *bones;        // Bones information (skeleton)
@@ -371,7 +371,7 @@ typedef struct Model {
 typedef struct ModelAnimation {
     int boneCount;          // Number of bones
     BoneInfo *bones;        // Bones information (skeleton)
-    
+
     int frameCount;         // Number of animation frames
     Transform **framePoses; // Poses array by frame
 } ModelAnimation;
@@ -1082,8 +1082,8 @@ RLAPI void DrawRectangleGradientH(int posX, int posY, int width, int height, Col
 RLAPI void DrawRectangleGradientEx(Rectangle rec, Color col1, Color col2, Color col3, Color col4);       // Draw a gradient-filled rectangle with custom vertex colors
 RLAPI void DrawRectangleLines(int posX, int posY, int width, int height, Color color);                   // Draw rectangle outline
 RLAPI void DrawRectangleLinesEx(Rectangle rec, int lineThick, Color color);                              // Draw rectangle outline with extended parameters
-RLAPI void DrawRoundedRect(Rectangle rec, float roundness, int segments, Color color);                   // Draw rectangle with rounded edges
-RLAPI void DrawRoundedRectLines(Rectangle rec, float roundness, int segments, int lineThick, Color color); // Draw rounded rectangle outline     
+RLAPI void DrawRectangleRounded(Rectangle rec, float roundness, int segments, Color color);              // Draw rectangle with rounded edges
+RLAPI void DrawRectangleRoundedLines(Rectangle rec, float roundness, int segments, int lineThick, Color color); // Draw rectangle with rounded edges outline
 RLAPI void DrawTriangle(Vector2 v1, Vector2 v2, Vector2 v3, Color color);                                // Draw a color-filled triangle
 RLAPI void DrawTriangleLines(Vector2 v1, Vector2 v2, Vector2 v3, Color color);                           // Draw triangle outline
 RLAPI void DrawPoly(Vector2 center, int sides, float radius, float rotation, Color color);               // Draw a regular polygon (Vector version)
@@ -1201,7 +1201,7 @@ RLAPI void DrawFPS(int posX, int posY);                                         
 RLAPI void DrawText(const char *text, int posX, int posY, int fontSize, Color color);       // Draw text (using default font)
 RLAPI void DrawTextEx(Font font, const char *text, Vector2 position, float fontSize, float spacing, Color tint);                // Draw text using font and additional parameters
 RLAPI void DrawTextRec(Font font, const char *text, Rectangle rec, float fontSize, float spacing, bool wordWrap, Color tint);   // Draw text using font inside rectangle limits
-RLAPI void DrawTextRecEx(Font font, const char *text, Rectangle rec, float fontSize, float spacing, bool wordWrap, Color tint, 
+RLAPI void DrawTextRecEx(Font font, const char *text, Rectangle rec, float fontSize, float spacing, bool wordWrap, Color tint,
                          int selectStart, int selectLength, Color selectText, Color selectBack);    // Draw text using font inside rectangle limits with support for text selection
 
 // Text misc. functions

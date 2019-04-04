@@ -181,7 +181,7 @@ static Image LoadASTC(const char *fileName);  // Load ASTC file
 Image LoadImage(const char *fileName)
 {
     Image image = { 0 };
-    
+
 #if defined(SUPPORT_FILEFORMAT_PNG) || \
     defined(SUPPORT_FILEFORMAT_BMP) || \
     defined(SUPPORT_FILEFORMAT_TGA) || \
@@ -744,7 +744,7 @@ Image GetTextureData(Texture2D texture)
 RLAPI Image GetScreenData(void)
 {
     Image image = { 0 };
-    
+
     image.width = GetScreenWidth();
     image.height = GetScreenHeight();
     image.mipmaps = 1;
@@ -1411,13 +1411,13 @@ void ImageResizeNN(Image *image,int newWidth,int newHeight)
 void ImageResizeCanvas(Image *image, int newWidth,int newHeight, int offsetX, int offsetY, Color color)
 {
     // TODO: Review different scaling situations
-    
+
     if ((newWidth != image->width) || (newHeight != image->height))
     {
         if ((newWidth > image->width) && (newHeight > image->height))
         {
             Image imTemp = GenImageColor(newWidth, newHeight, color);
-            
+
             Rectangle srcRec = { 0.0f, 0.0f, (float)image->width, (float)image->height };
             Rectangle dstRec = { (float)offsetX, (float)offsetY, (float)srcRec.width, (float)srcRec.height };
 
@@ -1434,23 +1434,23 @@ void ImageResizeCanvas(Image *image, int newWidth,int newHeight, int offsetX, in
         else    // One side is bigger and the other is smaller
         {
             Image imTemp = GenImageColor(newWidth, newHeight, color);
-            
+
             Rectangle srcRec = { 0.0f, 0.0f, (float)image->width, (float)image->height };
             Rectangle dstRec = { (float)offsetX, (float)offsetY, (float)newWidth, (float)newHeight };
-            
+
             if (newWidth < image->width)
             {
                 srcRec.x = offsetX;
                 srcRec.width = newWidth;
-                
+
                 dstRec.x = 0.0f;
             }
-            
+
             if (newHeight < image->height)
             {
                 srcRec.y = offsetY;
                 srcRec.height = newHeight;
-                
+
                 dstRec.y = 0.0f;
             }
 

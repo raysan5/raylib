@@ -525,7 +525,7 @@ void InitAudioDevice(void)
     TraceLog(LOG_INFO, "Audio channels: %d -> %d", device.playback.channels, device.playback.internalChannels);
     TraceLog(LOG_INFO, "Audio sample rate: %d -> %d", device.sampleRate, device.playback.internalSampleRate);
     TraceLog(LOG_INFO, "Audio buffer size: %d", device.playback.internalBufferSizeInFrames);
-    
+
     isAudioInitialized = MA_TRUE;
 }
 
@@ -587,7 +587,7 @@ AudioBuffer *CreateAudioBuffer(ma_format format, ma_uint32 channels, ma_uint32 s
     dspConfig.pUserData = audioBuffer;
     dspConfig.allowDynamicSampleRate = MA_TRUE;    // <-- Required for pitch shifting.
     ma_result result = ma_pcm_converter_init(&dspConfig, &audioBuffer->dsp);
-    
+
     if (result != MA_SUCCESS)
     {
         TraceLog(LOG_ERROR, "CreateAudioBuffer() : Failed to create data conversion pipeline");
