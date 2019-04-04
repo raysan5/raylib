@@ -307,10 +307,10 @@ typedef struct Mesh {
     unsigned short *indices;// Vertex indices (in case vertex data comes indexed)
 
     // Animation vertex data
-    float *baseVertices;    // Vertex base position (required to apply bones transformations)
-    float *baseNormals;     // Vertex base normals (required to apply bones transformations)
-    float *weightBias;      // Vertex weight bias
-    int *weightId;          // Vertex weight id
+    float *animVertices;    // Animated vertex positions (after bones transformations)
+    float *animNormals;     // Animated normals (after bones transformations)
+    int *boneIds;           // Vertex bone ids, up to 4 bones influence by vertex (skinning)
+    float *boneWeights;     // Vertex bone weight, up to 4 bones influence by vertex (skinning)
 
     // OpenGL identifiers
     unsigned int vaoId;     // OpenGL Vertex Array Object id
@@ -337,6 +337,19 @@ typedef struct Material {
     float *params;          // Material generic parameters (if required)
 } Material;
 
+// Transformation properties
+typedef struct Transform {
+    Vector3 translation;    // Translation 
+    Quaternion rotation;    // Rotation
+    Vector3 scale;          // Scale
+} Transform;
+
+// Bone information
+typedef struct BoneInfo {
+    char name[32];          // Bone name
+    int parent;             // Bone parent
+} BoneInfo;
+
 // Model type
 typedef struct Model {
     Matrix transform;       // Local transform matrix
@@ -346,9 +359,22 @@ typedef struct Model {
 
     int materialCount;      // Number of materials
     Material *materials;    // Materials array
-    
     int *meshMaterial;      // Mesh material number
+    
+    // Animation data
+    int boneCount;          // Number of bones
+    BoneInfo *bones;        // Bones information (skeleton)
+    Transform *bindPose;    // Bones base transformation (pose)
 } Model;
+
+// Model animation
+typedef struct ModelAnimation {
+    int boneCount;          // Number of bones
+    BoneInfo *bones;        // Bones information (skeleton)
+    
+    int frameCount;         // Number of animation frames
+    Transform **framePoses; // Poses array by frame
+} ModelAnimation;
 
 // Ray type (useful for raycast)
 typedef struct Ray {
@@ -1228,17 +1254,16 @@ RLAPI void DrawGizmo(Vector3 position);                                         
 // Model loading/unloading functions
 RLAPI Model LoadModel(const char *fileName);                                                            // Load model from files (meshes and materials)
 RLAPI Model LoadModelFromMesh(Mesh mesh);                                                               // Load model from generated mesh
+//RLAPI void LoadModelAnimations(const char fileName, ModelAnimation *anims, int *animsCount);            // Load model animations from file
+//RLAPI void UpdateModelAnimation(Model model, ModelAnimation anim, int frame);                           // Update model animation pose
 RLAPI void UnloadModel(Model model);                                                                    // Unload model from memory (RAM and/or VRAM)
-
-// Mesh loading/unloading functions
-RLAPI Mesh LoadMesh(const char *fileName);                                                              // Load mesh from file
-RLAPI void UnloadMesh(Mesh *mesh);                                                                      // Unload mesh from memory (RAM and/or VRAM)
-RLAPI void ExportMesh(Mesh mesh, const char *fileName);                                                 // Export mesh data to file
 
 // Mesh manipulation functions
 RLAPI BoundingBox MeshBoundingBox(Mesh mesh);                                                           // Compute mesh bounding box limits
 RLAPI void MeshTangents(Mesh *mesh);                                                                    // Compute mesh tangents
 RLAPI void MeshBinormals(Mesh *mesh);                                                                   // Compute mesh binormals
+RLAPI void UnloadMesh(Mesh *mesh);                                                                      // Unload mesh from memory (RAM and/or VRAM)
+RLAPI void ExportMesh(Mesh mesh, const char *fileName);                                                 // Export mesh data to file
 
 // Mesh generation functions
 RLAPI Mesh GenMeshPoly(int sides, float radius);                                                        // Generate polygonal mesh

@@ -66,10 +66,10 @@
 //------------------------------------------------------------------------------------
 // Draw rectangle shapes using font texture white character instead of default white texture
 // Allows drawing rectangles and text with a single draw call, very useful for GUI systems!
-#define SUPPORT_FONT_TEXTURE
+#define SUPPORT_FONT_TEXTURE        1
 // Use QUADS instead of TRIANGLES for drawing when possible
 // Some lines-based shapes could still use lines
-#define SUPPORT_QUADS_DRAW_MODE
+#define SUPPORT_QUADS_DRAW_MODE     1
 
 //------------------------------------------------------------------------------------
 // Module: textures - Configuration Flags
@@ -114,6 +114,8 @@
 // Selected desired model fileformats to be supported for loading
 #define SUPPORT_FILEFORMAT_OBJ      1
 #define SUPPORT_FILEFORMAT_MTL      1
+#define SUPPORT_FILEFORMAT_IQM      1
+#define SUPPORT_FILEFORMAT_GLTF     1
 // Support procedural mesh generation functions, uses external par_shapes.h library
 // NOTE: Some generated meshes DO NOT include generated texture coordinates
 #define SUPPORT_MESH_GENERATION     1
