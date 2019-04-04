@@ -205,8 +205,8 @@ typedef unsigned char byte;
         unsigned short *indices;// vertex indices (in case vertex data comes indexed)
 
         // Animation vertex data
-        float *baseVertices;    // Vertex base position (required to apply bones transformations)
-        float *baseNormals;     // Vertex base normals (required to apply bones transformations)
+        float *animVertices;    // Animated vertex positions (after bones transformations)
+        float *animNormals;     // Animated normals (after bones transformations)
         float *weightBias;      // Vertex weight bias
         int *weightId;          // Vertex weight id
 
@@ -455,6 +455,7 @@ void rlDeleteVertexArrays(unsigned int id);             // Unload vertex data (V
 void rlDeleteBuffers(unsigned int id);                  // Unload vertex data (VBO) from GPU memory
 void rlClearColor(byte r, byte g, byte b, byte a);      // Clear color buffer with color
 void rlClearScreenBuffers(void);                        // Clear used screen buffers (color and depth)
+void rlUpdateBuffer(int bufferId, void *data, int dataSize); // Update GPU buffer with new data
 
 //------------------------------------------------------------------------------------
 // Functions Declaration - rlgl functionality
@@ -1499,6 +1500,13 @@ void rlClearScreenBuffers(void)
 {
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);     // Clear used buffers: Color and Depth (Depth is used for 3D)
     //glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);     // Stencil buffer not used...
+}
+
+// Update GPU buffer with new data
+void rlUpdateBuffer(int bufferId, void *data, int dataSize)
+{
+    glBindBuffer(GL_ARRAY_BUFFER, bufferId);
+    glBufferSubData(GL_ARRAY_BUFFER, 0, dataSize, data);
 }
 
 //----------------------------------------------------------------------------------
@@ -2788,10 +2796,10 @@ void rlUnloadMesh(Mesh *mesh)
     free(mesh->texcoords2);
     free(mesh->indices);
 
-    free(mesh->baseVertices);
-    free(mesh->baseNormals);
-    free(mesh->weightBias);
-    free(mesh->weightId);
+    free(mesh->animVertices);
+    free(mesh->animNormals);
+    free(mesh->boneWeights);
+    free(mesh->boneIds);
 
     rlDeleteBuffers(mesh->vboId[0]);   // vertex
     rlDeleteBuffers(mesh->vboId[1]);   // texcoords
