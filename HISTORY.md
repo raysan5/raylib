@@ -225,3 +225,8 @@ Refactored all raylib configuration #defines into a **centralized `config.h` hea
 A part of that, lots of new features, like a brand **new font rendering and packaging system** for TTF fonts with **SDF support** (thanks to the amazing STB headers), new functions for **CPU image data manipulation**, new orthographic 3d camera mode, a complete review of `raymath.h` single-file header-only library for better consistency and performance, new examples and way, [way more](https://github.com/raysan5/raylib/blob/master/CHANGELOG).
 
 Probably by now, **raylib 2.0 is the simplest and easiest-to-use library to learn (and understand) videogames programming**... but, undoubtly its development has exceeded any initial objective; raylib has become a simple and easy-to-use trully multiplatform portable standalone media library with thousands of possibilities... and that's just the beginning!
+
+notes on raylib 2.5
+-------------------
+
+SOON.

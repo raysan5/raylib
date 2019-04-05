@@ -7,10 +7,10 @@ Here it is a wish-list with features and ideas to improve the library.
 Note that [raylib source code](https://github.com/raysan5/raylib/tree/master/src) has some *TODO* marks around code with pending things to review and improve. Check [GitHub Issues](https://github.com/raysan5/raylib/issues) for further details!
 
 **raylib 2.x**
- - [ ] raynet: Network module
+ - [ ] rnet: Network module
  - [ ] Support Vulkan API (GRAPHICS_API_VULKAN)
  - [ ] Basic CPU/GPU stats sytem (memory, draws, time...)
- - [ ] Support Animated models
+ - [x] Support Animated models (2.5)
  
 **raylib 1.8**
  - [x] Improved Materials system with PBR support
