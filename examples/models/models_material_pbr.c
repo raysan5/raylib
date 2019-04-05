@@ -12,6 +12,8 @@
 #include "raylib.h"
 #include "raymath.h"
 
+#include <stdio.h>
+
 #define RLIGHTS_IMPLEMENTATION
 #include "rlights.h"
 
