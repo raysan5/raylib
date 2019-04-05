@@ -34,7 +34,12 @@ int main()
     InitWindow(screenWidth, screenHeight, "raylib [models] example - pbr material");
 
     // Define the camera to look into our 3d world
-    Camera camera = {{ 4.0f, 4.0f, 4.0f }, { 0.0f, 0.5f, 0.0f }, { 0.0f, 1.0f, 0.0f }, 45.0f, 0 };
+    Camera camera = { 0 };
+    camera.position = (Vector3){ 4.0f, 4.0f, 4.0f };    // Camera position
+    camera.target = (Vector3){ 0.0f, 0.5f, 0.0f };      // Camera looking at point
+    camera.up = (Vector3){ 0.0f, 1.0f, 0.0f };          // Camera up vector (rotation towards target)
+    camera.fovy = 45.0f;                                // Camera field-of-view Y
+    camera.type = CAMERA_PERSPECTIVE;                   // Camera mode type
 
     // Load model and PBR material
     Model model = LoadModel("resources/pbr/trooper.obj");

@@ -207,8 +207,8 @@ typedef unsigned char byte;
         // Animation vertex data
         float *animVertices;    // Animated vertex positions (after bones transformations)
         float *animNormals;     // Animated normals (after bones transformations)
-        float *weightBias;      // Vertex weight bias
-        int *weightId;          // Vertex weight id
+        int *boneIds;           // Vertex bone ids, up to 4 bones influence by vertex (skinning)
+        float *boneWeights;     // Vertex bone weight, up to 4 bones influence by vertex (skinning)
 
         // OpenGL identifiers
         unsigned int vaoId;     // OpenGL Vertex Array Object id
@@ -3164,6 +3164,18 @@ void SetShaderValueMatrix(Shader shader, int uniformLoc, Matrix mat)
     glUseProgram(shader.id);
 
     glUniformMatrix4fv(uniformLoc, 1, false, MatrixToFloat(mat));
+
+    //glUseProgram(0);
+#endif
+}
+
+// Set shader uniform value for texture
+void SetShaderValueTexture(Shader shader, int uniformLoc, Texture2D texture)
+{
+#if defined(GRAPHICS_API_OPENGL_33) || defined(GRAPHICS_API_OPENGL_ES2)
+    glUseProgram(shader.id);
+
+    glUniform1i(uniformLoc, texture.id);
 
     //glUseProgram(0);
 #endif
