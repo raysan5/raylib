@@ -59,7 +59,7 @@ int main()
                 DrawGizmo(position);        // Draw gizmo
 
             EndMode3D();
-            
+
             DrawText("(c) Castle 3D model by Alberto Cano", screenWidth - 200, screenHeight - 20, 10, GRAY);
 
             DrawFPS(10, 10);
