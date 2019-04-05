@@ -2302,6 +2302,9 @@ void MeshTangents(Mesh *mesh)
 
     free(tan1);
     free(tan2);
+    
+    // Load a new tangent attributes buffer
+    mesh->vboId[LOC_VERTEX_TANGENT] = rlLoadAttribBuffer(mesh->vaoId, LOC_VERTEX_TANGENT, mesh->tangents, mesh->vertexCount*4*sizeof(float), false);
 
     TraceLog(LOG_INFO, "Tangents computed for mesh");
 }

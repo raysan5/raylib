@@ -9,7 +9,7 @@
 #version 330
 
 // Input vertex attributes (from vertex shader)
-in vec3 fragPos;
+in vec3 fragPosition;
 
 // Input uniform values
 uniform samplerCube environmentMap;
@@ -23,7 +23,7 @@ out vec4 finalColor;
 void main()
 {
     // The sample direction equals the hemisphere's orientation
-    vec3 normal = normalize(fragPos);
+    vec3 normal = normalize(fragPosition);
 
     vec3 irradiance = vec3(0.0);  
 

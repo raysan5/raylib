@@ -11,7 +11,7 @@
 #define     CUBEMAP_RESOLUTION      1024.0
 
 // Input vertex attributes (from vertex shader)
-in vec3 fragPos;
+in vec3 fragPosition;
 
 // Input uniform values
 uniform samplerCube environmentMap;
@@ -79,7 +79,7 @@ vec3 ImportanceSampleGGX(vec2 Xi, vec3 N, float roughness)
 void main()
 {
     // Make the simplyfying assumption that V equals R equals the normal 
-    vec3 N = normalize(fragPos);
+    vec3 N = normalize(fragPosition);
     vec3 R = N;
     vec3 V = R;
 

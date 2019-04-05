@@ -38,7 +38,11 @@ int main()
 
     // Load model and PBR material
     Model model = LoadModel("resources/pbr/trooper.obj");
+    
+    // Mesh tangents are generated... and uploaded to GPU
+    // NOTE: New VBO for tangents is generated at default location and also binded to mesh VAO
     MeshTangents(&model.meshes[0]);
+
     model.materials[0] = LoadMaterialPBR((Color){ 255, 255, 255, 255 }, 1.0f, 1.0f);
 
     // Define lights attributes
@@ -143,9 +147,13 @@ static Material LoadMaterialPBR(Color albedo, float metalness, float roughness)
     #define     PATH_BRDF_FS            "resources/shaders/brdf.fs"     // Path to bidirectional reflectance distribution function fragment shader
     
     Shader shdrCubemap = LoadShader(PATH_CUBEMAP_VS, PATH_CUBEMAP_FS);
+    printf("Loaded shader: cubemap\n");
     Shader shdrIrradiance = LoadShader(PATH_SKYBOX_VS, PATH_IRRADIANCE_FS);
+    printf("Loaded shader: irradiance\n");
     Shader shdrPrefilter = LoadShader(PATH_SKYBOX_VS, PATH_PREFILTER_FS);
+    printf("Loaded shader: prefilter\n");
     Shader shdrBRDF = LoadShader(PATH_BRDF_VS, PATH_BRDF_FS);
+    printf("Loaded shader: brdf\n");
     
     // Setup required shader locations
     SetShaderValue(shdrCubemap, GetShaderLocation(shdrCubemap, "equirectangularMap"), (int[1]){ 0 }, UNIFORM_INT);

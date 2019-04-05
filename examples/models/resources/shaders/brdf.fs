@@ -10,13 +10,13 @@
 
 #version 330
 
-#define         MAX_SAMPLES        1024u
 
 // Input vertex attributes (from vertex shader)
 in vec2 fragTexCoord;
 
 // Constant values
 const float PI = 3.14159265359;
+const uint MAX_SAMPLES = 1024u;
 
 // Output fragment color
 out vec4 finalColor;
@@ -93,7 +93,7 @@ vec2 IntegrateBRDF(float NdotV, float roughness)
     vec3 V = vec3(sqrt(1.0 - NdotV*NdotV), 0.0, NdotV);
     vec3 N = vec3(0.0, 0.0, 1.0);
 
-    for (int i = 0; i < MAX_SAMPLES; i++)
+    for (uint i = 0u; i < MAX_SAMPLES; i++)
     {
         // Generate a sample vector that's biased towards the preferred alignment direction (importance sampling)
         
