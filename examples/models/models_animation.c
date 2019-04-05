@@ -1,18 +1,15 @@
 /*******************************************************************************************
 *
-*   raylib [models] example - Load IQM 3d model with animations and play them
+*   raylib [models] example - Load 3d model with animations and play them
 *
-*   This example has been created using raylib 2.0 (www.raylib.com)
+*   This example has been created using raylib 2.5 (www.raylib.com)
 *   raylib is licensed under an unmodified zlib/libpng license (View raylib.h for details)
 *
-*   Copyright (c) 2018 @culacant and @raysan5
+*   Copyright (c) 2019 Ramon Santamaria (@raysan5) and @culacant
 *
 ********************************************************************************************/
 
 #include "raylib.h"
-
-#define RIQM_IMPLEMENTATION
-#include "riqm.h"
 
 int main()
 {
@@ -21,7 +18,7 @@ int main()
     int screenWidth = 800;
     int screenHeight = 450;
 
-    InitWindow(screenWidth, screenHeight, "raylib [models] example - iqm animation");
+    InitWindow(screenWidth, screenHeight, "raylib [models] example - model animation");
 
     // Define the camera to look into our 3d world
     Camera camera = { 0 };
@@ -31,26 +28,25 @@ int main()
     camera.fovy = 45.0f;                                // Camera field-of-view Y
     camera.type = CAMERA_PERSPECTIVE;                   // Camera mode type
 
-    // Load the animated model mesh and basic data
-    AnimatedModel model = LoadAnimatedModel("resources/guy.iqm");
 
-    // Load model texture and set material
-    // NOTE: There is only 1 mesh and 1 material (both at index 0), thats what the 2 0's are
-    model = AnimatedModelAddTexture(model, "resources/guytex.png");   // REPLACE!
-    model = SetMeshMaterial(model, 0, 0);                             // REPLACE!
+    Model model = LoadModel("resources/guy/guy.iqm");               // Load the animated model mesh and basic data
+    Texture2D texture = LoadTexture("resources/guy/guytex.png");    // Load model texture and set material
+    SetMaterialTexture(&model.materials[0], MAP_DIFFUSE, texture);  // Set model material map texture
+    
+    Vector3 position = { 0.0f, 0.0f, 0.0f };            // Set model position
 
     // Load animation data
-    Animation anim = LoadAnimationFromIQM("resources/guyanim.iqm");
-
+    int animsCount = 0;
+    ModelAnimation *anims = LoadModelAnimations("resources/guy/guyanim.iqm", &animsCount);
     int animFrameCounter = 0;
 
-    SetCameraMode(camera, CAMERA_FREE);  // Set free camera mode
+    SetCameraMode(camera, CAMERA_FREE); // Set free camera mode
 
-    SetTargetFPS(60);   // Set our game to run at 60 frames-per-second
+    SetTargetFPS(60);                   // Set our game to run at 60 frames-per-second
     //--------------------------------------------------------------------------------------
 
     // Main game loop
-    while (!WindowShouldClose())    // Detect window close button or ESC key
+    while (!WindowShouldClose())        // Detect window close button or ESC key
     {
         // Update
         //----------------------------------------------------------------------------------
@@ -60,7 +56,8 @@ int main()
         if (IsKeyDown(KEY_SPACE))
         {
             animFrameCounter++;
-            AnimateModel(model, anim, animFrameCounter); // Animate the model with animation data and frame
+            UpdateModelAnimation(model, anims[0], animFrameCounter);
+            if (animFrameCounter >= anims[0].frameCount) animFrameCounter = 0;
         }
         //----------------------------------------------------------------------------------
 
@@ -72,14 +69,18 @@ int main()
 
             BeginMode3D(camera);
 
-                DrawAnimatedModel(model, Vector3Zero(), 1.0f, WHITE);  // Draw animated model
+                DrawModelEx(model, position, (Vector3){ 1.0f, 0.0f, 0.0f }, -90.0f, (Vector3){ 1.0f, 1.0f, 1.0f }, WHITE);
+
+                for (int i = 0; i < model.boneCount; i++)
+                {
+                    DrawCube(anims[0].framePoses[animFrameCounter][i].translation, 0.2f, 0.2f, 0.2f, RED);
+                }
 
                 DrawGrid(10, 1.0f);         // Draw a grid
 
             EndMode3D();
-            
-            DrawText("PRESS SPACE to PLAY IQM MODEL ANIMATION", 10, 10, 20, MAROON);
 
+            DrawText("PRESS SPACE to PLAY MODEL ANIMATION", 10, 10, 20, MAROON);
             DrawText("(c) Guy IQM 3D model by @culacant", screenWidth - 200, screenHeight - 20, 10, GRAY);
 
         EndDrawing();
@@ -88,8 +89,10 @@ int main()
 
     // De-Initialization
     //--------------------------------------------------------------------------------------
-    UnloadAnimation(anim);      // Unload animation data
-    UnloadAnimatedModel(model); // Unload animated model
+    // Unload model animations data
+    for (int i = 0; i < animsCount; i++) UnloadModelAnimation(anims[i]);
+    
+    UnloadModel(model);         // Unload model
 
     CloseWindow();              // Close window and OpenGL context
     //--------------------------------------------------------------------------------------

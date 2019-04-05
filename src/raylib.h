@@ -752,7 +752,7 @@ typedef enum {
     MAP_IRRADIANCE,          // NOTE: Uses GL_TEXTURE_CUBE_MAP
     MAP_PREFILTER,           // NOTE: Uses GL_TEXTURE_CUBE_MAP
     MAP_BRDF
-} TexmapIndex;
+} MaterialMapType;
 
 #define MAP_DIFFUSE      MAP_ALBEDO
 #define MAP_SPECULAR     MAP_METALNESS
@@ -1256,16 +1256,25 @@ RLAPI void DrawGizmo(Vector3 position);                                         
 // Model loading/unloading functions
 RLAPI Model LoadModel(const char *fileName);                                                            // Load model from files (meshes and materials)
 RLAPI Model LoadModelFromMesh(Mesh mesh);                                                               // Load model from generated mesh
-//RLAPI void LoadModelAnimations(const char fileName, ModelAnimation *anims, int *animsCount);            // Load model animations from file
-//RLAPI void UpdateModelAnimation(Model model, ModelAnimation anim, int frame);                           // Update model animation pose
 RLAPI void UnloadModel(Model model);                                                                    // Unload model from memory (RAM and/or VRAM)
 
-// Mesh manipulation functions
-RLAPI BoundingBox MeshBoundingBox(Mesh mesh);                                                           // Compute mesh bounding box limits
-RLAPI void MeshTangents(Mesh *mesh);                                                                    // Compute mesh tangents
-RLAPI void MeshBinormals(Mesh *mesh);                                                                   // Compute mesh binormals
-RLAPI void UnloadMesh(Mesh *mesh);                                                                      // Unload mesh from memory (RAM and/or VRAM)
+// Mesh loading/unloading functions
+RLAPI Mesh *LoadMeshes(const char *fileName, int *meshCount);                                           // Load meshes from model file
 RLAPI void ExportMesh(Mesh mesh, const char *fileName);                                                 // Export mesh data to file
+RLAPI void UnloadMesh(Mesh *mesh);                                                                      // Unload mesh from memory (RAM and/or VRAM)
+
+// Material loading/unloading functions
+RLAPI Material *LoadMaterials(const char *fileName, int *materialCount);                                // Load materials from model file
+RLAPI Material LoadMaterialDefault(void);                                                               // Load default material (Supports: DIFFUSE, SPECULAR, NORMAL maps)
+RLAPI void UnloadMaterial(Material material);                                                           // Unload material from GPU memory (VRAM)
+RLAPI void SetMaterialTexture(Material *material, int mapType, Texture2D texture);                      // Set texture for a material map type (MAP_DIFFUSE, MAP_SPECULAR...)
+RLAPI void SetModelMeshMaterial(Model *model, int meshId, int materialId);                              // Set material for a mesh
+
+// Model animations loading/unloading functions
+RLAPI ModelAnimation *LoadModelAnimations(const char *fileName, int *animsCount);                       // Load model animations from file
+RLAPI void UpdateModelAnimation(Model model, ModelAnimation anim, int frame);                           // Update model animation pose
+RLAPI void UnloadModelAnimation(ModelAnimation anim);                                                   // Unload animation data
+RLAPI bool IsModelAnimationValid(Model model, ModelAnimation anim);                                     // Check model animation skeleton match
 
 // Mesh generation functions
 RLAPI Mesh GenMeshPoly(int sides, float radius);                                                        // Generate polygonal mesh
@@ -1279,10 +1288,10 @@ RLAPI Mesh GenMeshKnot(float radius, float size, int radSeg, int sides);        
 RLAPI Mesh GenMeshHeightmap(Image heightmap, Vector3 size);                                             // Generate heightmap mesh from image data
 RLAPI Mesh GenMeshCubicmap(Image cubicmap, Vector3 cubeSize);                                           // Generate cubes-based map mesh from image data
 
-// Material loading/unloading functions
-RLAPI Material LoadMaterial(const char *fileName);                                                      // Load material from file
-RLAPI Material LoadMaterialDefault(void);                                                               // Load default material (Supports: DIFFUSE, SPECULAR, NORMAL maps)
-RLAPI void UnloadMaterial(Material material);                                                           // Unload material from GPU memory (VRAM)
+// Mesh manipulation functions
+RLAPI BoundingBox MeshBoundingBox(Mesh mesh);                                                           // Compute mesh bounding box limits
+RLAPI void MeshTangents(Mesh *mesh);                                                                    // Compute mesh tangents
+RLAPI void MeshBinormals(Mesh *mesh);                                                                   // Compute mesh binormals
 
 // Model drawing functions
 RLAPI void DrawModel(Model model, Vector3 position, float scale, Color tint);                           // Draw a model (with texture if set)

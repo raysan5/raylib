@@ -697,6 +697,18 @@ void UnloadModel(Model model)
     TraceLog(LOG_INFO, "Unloaded model data from RAM and VRAM");
 }
 
+// Load meshes from model file
+Mesh *LoadMeshes(const char *fileName, int *meshCount)
+{
+    Mesh *meshes = NULL;
+    int count = 0;
+    
+    // TODO: Load meshes from file (OBJ, IQM, GLTF)
+    
+    *meshCount = count;
+    return meshes;
+}
+
 // Unload mesh from memory (RAM and/or VRAM)
 void UnloadMesh(Mesh *mesh)
 {
@@ -757,6 +769,386 @@ void ExportMesh(Mesh mesh, const char *fileName)
 
     if (success) TraceLog(LOG_INFO, "Mesh exported successfully: %s", fileName);
     else TraceLog(LOG_WARNING, "Mesh could not be exported.");
+}
+
+// Load materials from model file
+Material *LoadMaterials(const char *fileName, int *materialCount)
+{
+    Material *materials = NULL;
+    unsigned int count = 0;
+    
+    // TODO: Support IQM and GLTF for materials parsing
+
+#if defined(SUPPORT_FILEFORMAT_MTL)
+    if (IsFileExtension(fileName, ".mtl"))
+    {
+        tinyobj_material_t *mats;
+
+        int result = tinyobj_parse_mtl_file(&mats, &count, fileName);
+
+        // TODO: Process materials to return
+
+        tinyobj_materials_free(mats, count);
+    }
+#else
+    TraceLog(LOG_WARNING, "[%s] Materials file not supported", fileName);
+#endif
+
+    // Set materials shader to default (DIFFUSE, SPECULAR, NORMAL)
+    for (int i = 0; i < count; i++) materials[i].shader = GetShaderDefault();
+
+    *materialCount = count;
+    return materials;
+}
+
+// Load default material (Supports: DIFFUSE, SPECULAR, NORMAL maps)
+Material LoadMaterialDefault(void)
+{
+    Material material = { 0 };
+
+    material.shader = GetShaderDefault();
+    material.maps[MAP_DIFFUSE].texture = GetTextureDefault();   // White texture (1x1 pixel)
+    //material.maps[MAP_NORMAL].texture;         // NOTE: By default, not set
+    //material.maps[MAP_SPECULAR].texture;       // NOTE: By default, not set
+
+    material.maps[MAP_DIFFUSE].color = WHITE;    // Diffuse color
+    material.maps[MAP_SPECULAR].color = WHITE;   // Specular color
+
+    return material;
+}
+
+// Unload material from memory
+void UnloadMaterial(Material material)
+{
+    // Unload material shader (avoid unloading default shader, managed by raylib)
+    if (material.shader.id != GetShaderDefault().id) UnloadShader(material.shader);
+
+    // Unload loaded texture maps (avoid unloading default texture, managed by raylib)
+    for (int i = 0; i < MAX_MATERIAL_MAPS; i++)
+    {
+        if (material.maps[i].texture.id != GetTextureDefault().id) rlDeleteTextures(material.maps[i].texture.id);
+    }
+}
+
+// Set texture for a material map type (MAP_DIFFUSE, MAP_SPECULAR...)
+// NOTE: Previous texture should be manually unloaded
+void SetMaterialTexture(Material *material, int mapType, Texture2D texture)
+{
+    material->maps[mapType].texture = texture;
+}
+
+// Set the material for a mesh
+void SetModelMeshMaterial(Model *model, int meshId, int materialId)
+{
+    if (meshId >= model->meshCount) TraceLog(LOG_WARNING, "Mesh id greater than mesh count");
+    else if (materialId >= model->materialCount) TraceLog(LOG_WARNING,"Material id greater than material count");
+    else  model->meshMaterial[meshId] = materialId;
+}
+
+// Load model animations from file
+ModelAnimation *LoadModelAnimations(const char *filename, int *animCount)
+{
+    ModelAnimation *animations = (ModelAnimation *)malloc(1*sizeof(ModelAnimation));
+    int count = 1;
+    
+    #define IQM_MAGIC       "INTERQUAKEMODEL"   // IQM file magic number
+    #define IQM_VERSION     2                   // only IQM version 2 supported
+
+    typedef struct IQMHeader {
+        char magic[16];
+        unsigned int version;
+        unsigned int filesize;
+        unsigned int flags;
+        unsigned int num_text, ofs_text;
+        unsigned int num_meshes, ofs_meshes;
+        unsigned int num_vertexarrays, num_vertexes, ofs_vertexarrays;
+        unsigned int num_triangles, ofs_triangles, ofs_adjacency;
+        unsigned int num_joints, ofs_joints;
+        unsigned int num_poses, ofs_poses;
+        unsigned int num_anims, ofs_anims;
+        unsigned int num_frames, num_framechannels, ofs_frames, ofs_bounds;
+        unsigned int num_comment, ofs_comment;
+        unsigned int num_extensions, ofs_extensions;
+    } IQMHeader;
+
+    typedef struct IQMPose {
+        int parent;
+        unsigned int mask;
+        float channeloffset[10];
+        float channelscale[10];
+    } IQMPose;
+
+    typedef struct IQMAnim {
+        unsigned int name;
+        unsigned int first_frame, num_frames;
+        float framerate;
+        unsigned int flags;
+    } IQMAnim;
+    
+    ModelAnimation animation = { 0 };
+
+    FILE *iqmFile;
+    IQMHeader iqm;
+
+    iqmFile = fopen(filename,"rb");
+
+    if (!iqmFile)
+    {
+        TraceLog(LOG_ERROR, "[%s] Unable to open file", filename);
+    }
+
+    // header
+    fread(&iqm, sizeof(IQMHeader), 1, iqmFile);
+
+    if (strncmp(iqm.magic, IQM_MAGIC, sizeof(IQM_MAGIC)))
+    {
+        TraceLog(LOG_ERROR, "Magic Number \"%s\"does not match.", iqm.magic);
+        fclose(iqmFile);
+    }
+
+    if (iqm.version != IQM_VERSION)
+    {
+        TraceLog(LOG_ERROR, "IQM version %i is incorrect.", iqm.version);
+        fclose(iqmFile);
+    }
+
+    // header
+    if (iqm.num_anims > 1) TraceLog(LOG_WARNING, "More than 1 animation in file, only the first one will be loaded");
+
+    // bones
+    IQMPose *poses;
+    poses = malloc(sizeof(IQMPose)*iqm.num_poses);
+    fseek(iqmFile, iqm.ofs_poses, SEEK_SET);
+    fread(poses, sizeof(IQMPose)*iqm.num_poses, 1, iqmFile);
+
+    animation.boneCount = iqm.num_poses;
+    animation.bones = malloc(sizeof(BoneInfo)*iqm.num_poses);
+
+    for (int j = 0; j < iqm.num_poses; j++)
+    {
+        strcpy(animation.bones[j].name, "ANIMJOINTNAME");
+        animation.bones[j].parent = poses[j].parent;
+    }
+
+    // animations
+    IQMAnim anim = {0};
+    fseek(iqmFile, iqm.ofs_anims, SEEK_SET);
+    fread(&anim, sizeof(IQMAnim), 1, iqmFile);
+
+    animation.frameCount = anim.num_frames;
+    //animation.framerate = anim.framerate;
+
+    // frameposes
+    unsigned short *framedata = malloc(sizeof(unsigned short)*iqm.num_frames*iqm.num_framechannels);
+    fseek(iqmFile, iqm.ofs_frames, SEEK_SET);
+    fread(framedata, sizeof(unsigned short)*iqm.num_frames*iqm.num_framechannels, 1, iqmFile);
+
+    animation.framePoses = malloc(sizeof(Transform*)*anim.num_frames);
+    for (int j = 0; j < anim.num_frames; j++) animation.framePoses[j] = malloc(sizeof(Transform)*iqm.num_poses);
+
+    int dcounter = anim.first_frame*iqm.num_framechannels;
+
+    for (int frame = 0; frame < anim.num_frames; frame++)
+    {
+        for (int i = 0; i < iqm.num_poses; i++)
+        {
+            animation.framePoses[frame][i].translation.x = poses[i].channeloffset[0];
+
+            if (poses[i].mask & 0x01)
+            {
+                animation.framePoses[frame][i].translation.x += framedata[dcounter]*poses[i].channelscale[0];
+                dcounter++;
+            }
+
+            animation.framePoses[frame][i].translation.y = poses[i].channeloffset[1];
+
+            if (poses[i].mask & 0x02)
+            {
+                animation.framePoses[frame][i].translation.y += framedata[dcounter]*poses[i].channelscale[1];
+                dcounter++;
+            }
+
+            animation.framePoses[frame][i].translation.z = poses[i].channeloffset[2];
+
+            if (poses[i].mask & 0x04)
+            {
+                animation.framePoses[frame][i].translation.z += framedata[dcounter]*poses[i].channelscale[2];
+                dcounter++;
+            }
+
+            animation.framePoses[frame][i].rotation.x = poses[i].channeloffset[3];
+
+            if (poses[i].mask & 0x08)
+            {
+                animation.framePoses[frame][i].rotation.x += framedata[dcounter]*poses[i].channelscale[3];
+                dcounter++;
+            }
+
+            animation.framePoses[frame][i].rotation.y = poses[i].channeloffset[4];
+
+            if (poses[i].mask & 0x10)
+            {
+                animation.framePoses[frame][i].rotation.y += framedata[dcounter]*poses[i].channelscale[4];
+                dcounter++;
+            }
+
+            animation.framePoses[frame][i].rotation.z = poses[i].channeloffset[5];
+
+            if (poses[i].mask & 0x20)
+            {
+                animation.framePoses[frame][i].rotation.z += framedata[dcounter]*poses[i].channelscale[5];
+                dcounter++;
+            }
+
+            animation.framePoses[frame][i].rotation.w = poses[i].channeloffset[6];
+
+            if (poses[i].mask & 0x40)
+            {
+                animation.framePoses[frame][i].rotation.w += framedata[dcounter]*poses[i].channelscale[6];
+                dcounter++;
+            }
+
+            animation.framePoses[frame][i].scale.x = poses[i].channeloffset[7];
+
+            if (poses[i].mask & 0x80)
+            {
+                animation.framePoses[frame][i].scale.x += framedata[dcounter]*poses[i].channelscale[7];
+                dcounter++;
+            }
+
+            animation.framePoses[frame][i].scale.y = poses[i].channeloffset[8];
+
+            if (poses[i].mask & 0x100)
+            {
+                animation.framePoses[frame][i].scale.y += framedata[dcounter]*poses[i].channelscale[8];
+                dcounter++;
+            }
+
+            animation.framePoses[frame][i].scale.z = poses[i].channeloffset[9];
+
+            if (poses[i].mask & 0x200)
+            {
+                animation.framePoses[frame][i].scale.z += framedata[dcounter]*poses[i].channelscale[9];
+                dcounter++;
+            }
+
+            animation.framePoses[frame][i].rotation = QuaternionNormalize(animation.framePoses[frame][i].rotation);
+        }
+    }
+
+    // Build frameposes
+    for (int frame = 0; frame < anim.num_frames; frame++)
+    {
+        for (int i = 0; i < animation.boneCount; i++)
+        {
+            if (animation.bones[i].parent >= 0)
+            {
+                animation.framePoses[frame][i].rotation = QuaternionMultiply(animation.framePoses[frame][animation.bones[i].parent].rotation, animation.framePoses[frame][i].rotation);
+                animation.framePoses[frame][i].translation = Vector3RotateByQuaternion(animation.framePoses[frame][i].translation, animation.framePoses[frame][animation.bones[i].parent].rotation);
+                animation.framePoses[frame][i].translation = Vector3Add(animation.framePoses[frame][i].translation, animation.framePoses[frame][animation.bones[i].parent].translation);
+                animation.framePoses[frame][i].scale = Vector3MultiplyV(animation.framePoses[frame][i].scale, animation.framePoses[frame][animation.bones[i].parent].scale);
+            }
+        }
+    }
+
+    free(framedata);
+    free(poses);
+    
+    fclose(iqmFile);
+
+    animations[0] = animation;
+    
+    *animCount = count;
+    return animations;
+}
+
+// Update model animated vertex data (positions and normals) for a given frame
+// NOTE: Updated data is uploaded to GPU
+void UpdateModelAnimation(Model model, ModelAnimation anim, int frame)
+{
+    if (frame >= anim.frameCount) frame = frame%anim.frameCount;
+
+    for (int m = 0; m < model.meshCount; m++)
+    {
+        Vector3 animVertex = { 0 };
+        Vector3 animNormal = { 0 };
+
+        Vector3 inTranslation = { 0 };
+        Quaternion inRotation = { 0 };
+        Vector3 inScale = { 0 };
+
+        Vector3 outTranslation = { 0 };
+        Quaternion outRotation = { 0 };
+        Vector3 outScale = { 0 };
+
+        int vCounter = 0;
+        int boneCounter = 0;
+        int boneId = 0;
+
+        for (int i = 0; i < model.meshes[m].vertexCount; i++)
+        {
+            boneId = model.meshes[m].boneIds[boneCounter];
+            inTranslation = model.bindPose[boneId].translation;
+            inRotation = model.bindPose[boneId].rotation;
+            inScale = model.bindPose[boneId].scale;
+            outTranslation = anim.framePoses[frame][boneId].translation;
+            outRotation = anim.framePoses[frame][boneId].rotation;
+            outScale = anim.framePoses[frame][boneId].scale;
+
+            // Vertices processing
+            // NOTE: We use meshes.vertices (default vertex position) to calculate meshes.animVertices (animated vertex position)
+            animVertex = (Vector3){ model.meshes[m].vertices[vCounter], model.meshes[m].vertices[vCounter + 1], model.meshes[m].vertices[vCounter + 2] };
+            animVertex = Vector3MultiplyV(animVertex, outScale);
+            animVertex = Vector3Subtract(animVertex, inTranslation);
+            animVertex = Vector3RotateByQuaternion(animVertex, QuaternionMultiply(outRotation, QuaternionInvert(inRotation)));
+            animVertex = Vector3Add(animVertex, outTranslation);
+            model.meshes[m].animVertices[vCounter] = animVertex.x;
+            model.meshes[m].animVertices[vCounter + 1] = animVertex.y;
+            model.meshes[m].animVertices[vCounter + 2] = animVertex.z;
+
+            // Normals processing
+            // NOTE: We use meshes.baseNormals (default normal) to calculate meshes.normals (animated normals)
+            animNormal = (Vector3){ model.meshes[m].normals[vCounter], model.meshes[m].normals[vCounter + 1], model.meshes[m].normals[vCounter + 2] };
+            animNormal = Vector3RotateByQuaternion(animNormal, QuaternionMultiply(outRotation, QuaternionInvert(inRotation)));
+            model.meshes[m].animNormals[vCounter] = animNormal.x;
+            model.meshes[m].animNormals[vCounter + 1] = animNormal.y;
+            model.meshes[m].animNormals[vCounter + 2] = animNormal.z;
+            vCounter += 3;
+
+            boneCounter += 4;
+        }
+
+        // Upload new vertex data to GPU for model drawing
+        rlUpdateBuffer(model.meshes[m].vboId[0], model.meshes[m].animVertices, model.meshes[m].vertexCount*3*sizeof(float));    // Update vertex position
+        rlUpdateBuffer(model.meshes[m].vboId[2], model.meshes[m].animVertices, model.meshes[m].vertexCount*3*sizeof(float));    // Update vertex normals
+    }
+}
+
+// Unload animation data
+void UnloadModelAnimation(ModelAnimation anim)
+{
+    for (int i = 0; i < anim.frameCount; i++) free(anim.framePoses[i]);
+    
+    free(anim.bones);
+    free(anim.framePoses);
+}
+
+// Check model animation skeleton match
+// NOTE: Only number of bones and parent connections are checked
+bool IsModelAnimationValid(Model model, ModelAnimation anim)
+{
+    int result = true;
+    
+    if (model.boneCount != anim.boneCount) result = false;
+    else
+    {
+        for (int i = 0; i < model.boneCount; i++)
+        {
+            if (model.bones[i].parent != anim.bones[i].parent) { result = false; break; }
+        }
+    }
+
+    return result;
 }
 
 #if defined(SUPPORT_MESH_GENERATION)
@@ -1807,59 +2199,124 @@ Mesh GenMeshCubicmap(Image cubicmap, Vector3 cubeSize)
 }
 #endif      // SUPPORT_MESH_GENERATION
 
-// Load material data (from file)
-Material LoadMaterial(const char *fileName)
+// Compute mesh bounding box limits
+// NOTE: minVertex and maxVertex should be transformed by model transform matrix
+BoundingBox MeshBoundingBox(Mesh mesh)
 {
-    Material material = { 0 };
+    // Get min and max vertex to construct bounds (AABB)
+    Vector3 minVertex = { 0 };
+    Vector3 maxVertex = { 0 };
 
-#if defined(SUPPORT_FILEFORMAT_MTL)
-    if (IsFileExtension(fileName, ".mtl"))
+    if (mesh.vertices != NULL)
     {
-        tinyobj_material_t *materials;
-        unsigned int materialCount = 0;
+        minVertex = (Vector3){ mesh.vertices[0], mesh.vertices[1], mesh.vertices[2] };
+        maxVertex = (Vector3){ mesh.vertices[0], mesh.vertices[1], mesh.vertices[2] };
 
-        int result = tinyobj_parse_mtl_file(&materials, &materialCount, fileName);
-
-        // TODO: Process materials to return
-
-        tinyobj_materials_free(materials, materialCount);
+        for (int i = 1; i < mesh.vertexCount; i++)
+        {
+            minVertex = Vector3Min(minVertex, (Vector3){ mesh.vertices[i*3], mesh.vertices[i*3 + 1], mesh.vertices[i*3 + 2] });
+            maxVertex = Vector3Max(maxVertex, (Vector3){ mesh.vertices[i*3], mesh.vertices[i*3 + 1], mesh.vertices[i*3 + 2] });
+        }
     }
-#else
-    TraceLog(LOG_WARNING, "[%s] Material fileformat not supported, it can't be loaded", fileName);
-#endif
 
-    // Our material uses the default shader (DIFFUSE, SPECULAR, NORMAL)
-    material.shader = GetShaderDefault();
+    // Create the bounding box
+    BoundingBox box = { 0 };
+    box.min = minVertex;
+    box.max = maxVertex;
 
-    return material;
+    return box;
 }
 
-// Load default material (Supports: DIFFUSE, SPECULAR, NORMAL maps)
-Material LoadMaterialDefault(void)
+// Compute mesh tangents
+// NOTE: To calculate mesh tangents and binormals we need mesh vertex positions and texture coordinates
+// Implementation base don: https://answers.unity.com/questions/7789/calculating-tangents-vector4.html
+void MeshTangents(Mesh *mesh)
 {
-    Material material = { 0 };
+    if (mesh->tangents == NULL) mesh->tangents = (float *)malloc(mesh->vertexCount*4*sizeof(float));
+    else TraceLog(LOG_WARNING, "Mesh tangents already exist");
 
-    material.shader = GetShaderDefault();
-    material.maps[MAP_DIFFUSE].texture = GetTextureDefault();   // White texture (1x1 pixel)
-    //material.maps[MAP_NORMAL].texture;         // NOTE: By default, not set
-    //material.maps[MAP_SPECULAR].texture;       // NOTE: By default, not set
+    Vector3 *tan1 = (Vector3 *)malloc(mesh->vertexCount*sizeof(Vector3));
+    Vector3 *tan2 = (Vector3 *)malloc(mesh->vertexCount*sizeof(Vector3));
 
-    material.maps[MAP_DIFFUSE].color = WHITE;    // Diffuse color
-    material.maps[MAP_SPECULAR].color = WHITE;   // Specular color
-
-    return material;
-}
-
-// Unload material from memory
-void UnloadMaterial(Material material)
-{
-    // Unload material shader (avoid unloading default shader, managed by raylib)
-    if (material.shader.id != GetShaderDefault().id) UnloadShader(material.shader);
-
-    // Unload loaded texture maps (avoid unloading default texture, managed by raylib)
-    for (int i = 0; i < MAX_MATERIAL_MAPS; i++)
+    for (int i = 0; i < mesh->vertexCount; i += 3)
     {
-        if (material.maps[i].texture.id != GetTextureDefault().id) rlDeleteTextures(material.maps[i].texture.id);
+        // Get triangle vertices
+        Vector3 v1 = { mesh->vertices[(i + 0)*3 + 0], mesh->vertices[(i + 0)*3 + 1], mesh->vertices[(i + 0)*3 + 2] };
+        Vector3 v2 = { mesh->vertices[(i + 1)*3 + 0], mesh->vertices[(i + 1)*3 + 1], mesh->vertices[(i + 1)*3 + 2] };
+        Vector3 v3 = { mesh->vertices[(i + 2)*3 + 0], mesh->vertices[(i + 2)*3 + 1], mesh->vertices[(i + 2)*3 + 2] };
+
+        // Get triangle texcoords
+        Vector2 uv1 = { mesh->texcoords[(i + 0)*2 + 0], mesh->texcoords[(i + 0)*2 + 1] };
+        Vector2 uv2 = { mesh->texcoords[(i + 1)*2 + 0], mesh->texcoords[(i + 1)*2 + 1] };
+        Vector2 uv3 = { mesh->texcoords[(i + 2)*2 + 0], mesh->texcoords[(i + 2)*2 + 1] };
+
+        float x1 = v2.x - v1.x;
+        float y1 = v2.y - v1.y;
+        float z1 = v2.z - v1.z;
+        float x2 = v3.x - v1.x;
+        float y2 = v3.y - v1.y;
+        float z2 = v3.z - v1.z;
+
+        float s1 = uv2.x - uv1.x;
+        float t1 = uv2.y - uv1.y;
+        float s2 = uv3.x - uv1.x;
+        float t2 = uv3.y - uv1.y;
+
+        float div = s1*t2 - s2*t1;
+        float r = (div == 0.0f)? 0.0f : 1.0f/div;
+
+        Vector3 sdir = { (t2*x1 - t1*x2)*r, (t2*y1 - t1*y2)*r, (t2*z1 - t1*z2)*r };
+        Vector3 tdir = { (s1*x2 - s2*x1)*r, (s1*y2 - s2*y1)*r, (s1*z2 - s2*z1)*r };
+
+        tan1[i + 0] = sdir;
+        tan1[i + 1] = sdir;
+        tan1[i + 2] = sdir;
+
+        tan2[i + 0] = tdir;
+        tan2[i + 1] = tdir;
+        tan2[i + 2] = tdir;
+    }
+
+    // Compute tangents considering normals
+    for (int i = 0; i < mesh->vertexCount; ++i)
+    {
+        Vector3 normal = { mesh->normals[i*3 + 0], mesh->normals[i*3 + 1], mesh->normals[i*3 + 2] };
+        Vector3 tangent = tan1[i];
+
+        // TODO: Review, not sure if tangent computation is right, just used reference proposed maths...
+    #if defined(COMPUTE_TANGENTS_METHOD_01)
+        Vector3 tmp = Vector3Subtract(tangent, Vector3Multiply(normal, Vector3DotProduct(normal, tangent)));
+        tmp = Vector3Normalize(tmp);
+        mesh->tangents[i*4 + 0] = tmp.x;
+        mesh->tangents[i*4 + 1] = tmp.y;
+        mesh->tangents[i*4 + 2] = tmp.z;
+        mesh->tangents[i*4 + 3] = 1.0f;
+    #else
+        Vector3OrthoNormalize(&normal, &tangent);
+        mesh->tangents[i*4 + 0] = tangent.x;
+        mesh->tangents[i*4 + 1] = tangent.y;
+        mesh->tangents[i*4 + 2] = tangent.z;
+        mesh->tangents[i*4 + 3] = (Vector3DotProduct(Vector3CrossProduct(normal, tangent), tan2[i]) < 0.0f)? -1.0f : 1.0f;
+    #endif
+    }
+
+    free(tan1);
+    free(tan2);
+
+    TraceLog(LOG_INFO, "Tangents computed for mesh");
+}
+
+// Compute mesh binormals (aka bitangent)
+void MeshBinormals(Mesh *mesh)
+{
+    for (int i = 0; i < mesh->vertexCount; i++)
+    {
+        Vector3 normal = { mesh->normals[i*3 + 0], mesh->normals[i*3 + 1], mesh->normals[i*3 + 2] };
+        Vector3 tangent = { mesh->tangents[i*4 + 0], mesh->tangents[i*4 + 1], mesh->tangents[i*4 + 2] };
+        float tangentW = mesh->tangents[i*4 + 3];
+
+        // TODO: Register computed binormal in mesh->binormal?
+        // Vector3 binormal = Vector3Multiply(Vector3CrossProduct(normal, tangent), tangentW);
     }
 }
 
@@ -2237,129 +2694,6 @@ RayHitInfo GetCollisionRayGround(Ray ray, float groundHeight)
     }
 
     return result;
-}
-
-// Compute mesh bounding box limits
-// NOTE: minVertex and maxVertex should be transformed by model transform matrix
-BoundingBox MeshBoundingBox(Mesh mesh)
-{
-    // Get min and max vertex to construct bounds (AABB)
-    Vector3 minVertex = { 0 };
-    Vector3 maxVertex = { 0 };
-
-    printf("Mesh vertex count: %i\n", mesh.vertexCount);
-
-    if (mesh.vertices != NULL)
-    {
-        minVertex = (Vector3){ mesh.vertices[0], mesh.vertices[1], mesh.vertices[2] };
-        maxVertex = (Vector3){ mesh.vertices[0], mesh.vertices[1], mesh.vertices[2] };
-
-        for (int i = 1; i < mesh.vertexCount; i++)
-        {
-            minVertex = Vector3Min(minVertex, (Vector3){ mesh.vertices[i*3], mesh.vertices[i*3 + 1], mesh.vertices[i*3 + 2] });
-            maxVertex = Vector3Max(maxVertex, (Vector3){ mesh.vertices[i*3], mesh.vertices[i*3 + 1], mesh.vertices[i*3 + 2] });
-        }
-    }
-
-    // Create the bounding box
-    BoundingBox box = { 0 };
-    box.min = minVertex;
-    box.max = maxVertex;
-
-    return box;
-}
-
-// Compute mesh tangents
-// NOTE: To calculate mesh tangents and binormals we need mesh vertex positions and texture coordinates
-// Implementation base don: https://answers.unity.com/questions/7789/calculating-tangents-vector4.html
-void MeshTangents(Mesh *mesh)
-{
-    if (mesh->tangents == NULL) mesh->tangents = (float *)malloc(mesh->vertexCount*4*sizeof(float));
-    else TraceLog(LOG_WARNING, "Mesh tangents already exist");
-
-    Vector3 *tan1 = (Vector3 *)malloc(mesh->vertexCount*sizeof(Vector3));
-    Vector3 *tan2 = (Vector3 *)malloc(mesh->vertexCount*sizeof(Vector3));
-
-    for (int i = 0; i < mesh->vertexCount; i += 3)
-    {
-        // Get triangle vertices
-        Vector3 v1 = { mesh->vertices[(i + 0)*3 + 0], mesh->vertices[(i + 0)*3 + 1], mesh->vertices[(i + 0)*3 + 2] };
-        Vector3 v2 = { mesh->vertices[(i + 1)*3 + 0], mesh->vertices[(i + 1)*3 + 1], mesh->vertices[(i + 1)*3 + 2] };
-        Vector3 v3 = { mesh->vertices[(i + 2)*3 + 0], mesh->vertices[(i + 2)*3 + 1], mesh->vertices[(i + 2)*3 + 2] };
-
-        // Get triangle texcoords
-        Vector2 uv1 = { mesh->texcoords[(i + 0)*2 + 0], mesh->texcoords[(i + 0)*2 + 1] };
-        Vector2 uv2 = { mesh->texcoords[(i + 1)*2 + 0], mesh->texcoords[(i + 1)*2 + 1] };
-        Vector2 uv3 = { mesh->texcoords[(i + 2)*2 + 0], mesh->texcoords[(i + 2)*2 + 1] };
-
-        float x1 = v2.x - v1.x;
-        float y1 = v2.y - v1.y;
-        float z1 = v2.z - v1.z;
-        float x2 = v3.x - v1.x;
-        float y2 = v3.y - v1.y;
-        float z2 = v3.z - v1.z;
-
-        float s1 = uv2.x - uv1.x;
-        float t1 = uv2.y - uv1.y;
-        float s2 = uv3.x - uv1.x;
-        float t2 = uv3.y - uv1.y;
-
-        float div = s1*t2 - s2*t1;
-        float r = (div == 0.0f)? 0.0f : 1.0f/div;
-
-        Vector3 sdir = { (t2*x1 - t1*x2)*r, (t2*y1 - t1*y2)*r, (t2*z1 - t1*z2)*r };
-        Vector3 tdir = { (s1*x2 - s2*x1)*r, (s1*y2 - s2*y1)*r, (s1*z2 - s2*z1)*r };
-
-        tan1[i + 0] = sdir;
-        tan1[i + 1] = sdir;
-        tan1[i + 2] = sdir;
-
-        tan2[i + 0] = tdir;
-        tan2[i + 1] = tdir;
-        tan2[i + 2] = tdir;
-    }
-
-    // Compute tangents considering normals
-    for (int i = 0; i < mesh->vertexCount; ++i)
-    {
-        Vector3 normal = { mesh->normals[i*3 + 0], mesh->normals[i*3 + 1], mesh->normals[i*3 + 2] };
-        Vector3 tangent = tan1[i];
-
-        // TODO: Review, not sure if tangent computation is right, just used reference proposed maths...
-    #if defined(COMPUTE_TANGENTS_METHOD_01)
-        Vector3 tmp = Vector3Subtract(tangent, Vector3Multiply(normal, Vector3DotProduct(normal, tangent)));
-        tmp = Vector3Normalize(tmp);
-        mesh->tangents[i*4 + 0] = tmp.x;
-        mesh->tangents[i*4 + 1] = tmp.y;
-        mesh->tangents[i*4 + 2] = tmp.z;
-        mesh->tangents[i*4 + 3] = 1.0f;
-    #else
-        Vector3OrthoNormalize(&normal, &tangent);
-        mesh->tangents[i*4 + 0] = tangent.x;
-        mesh->tangents[i*4 + 1] = tangent.y;
-        mesh->tangents[i*4 + 2] = tangent.z;
-        mesh->tangents[i*4 + 3] = (Vector3DotProduct(Vector3CrossProduct(normal, tangent), tan2[i]) < 0.0f)? -1.0f : 1.0f;
-    #endif
-    }
-
-    free(tan1);
-    free(tan2);
-
-    TraceLog(LOG_INFO, "Tangents computed for mesh");
-}
-
-// Compute mesh binormals (aka bitangent)
-void MeshBinormals(Mesh *mesh)
-{
-    for (int i = 0; i < mesh->vertexCount; i++)
-    {
-        Vector3 normal = { mesh->normals[i*3 + 0], mesh->normals[i*3 + 1], mesh->normals[i*3 + 2] };
-        Vector3 tangent = { mesh->tangents[i*4 + 0], mesh->tangents[i*4 + 1], mesh->tangents[i*4 + 2] };
-        float tangentW = mesh->tangents[i*4 + 3];
-
-        // TODO: Register computed binormal in mesh->binormal?
-        // Vector3 binormal = Vector3Multiply(Vector3CrossProduct(normal, tangent), tangentW);
-    }
 }
 
 //----------------------------------------------------------------------------------
