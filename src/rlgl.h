@@ -386,7 +386,7 @@ typedef unsigned char byte;
         MAP_IRRADIANCE,          // NOTE: Uses GL_TEXTURE_CUBE_MAP
         MAP_PREFILTER,           // NOTE: Uses GL_TEXTURE_CUBE_MAP
         MAP_BRDF
-    } TexmapIndex;
+    } MaterialMapType;
 
     #define MAP_DIFFUSE      MAP_ALBEDO
     #define MAP_SPECULAR     MAP_METALNESS
