@@ -25,10 +25,17 @@ find_path(raylib_INCLUDE_DIR
     HINTS ${${XPREFIX}_INCLUDE_DIRS}
 )
 
-find_library(raylib_LIBRARY
-    NAMES raylib raylib_static
-    HINTS ${${XPREFIX}_LIBRARY_DIRS}
-)
+if (raylib_USE_STATIC_LIBS)
+    find_library(raylib_LIBRARY
+        NAMES raylib_static
+        HINTS ${${XPREFIX}_LIBRARY_DIRS}
+    )
+else ()
+    find_library(raylib_LIBRARY
+        NAMES raylib
+        HINTS ${${XPREFIX}_LIBRARY_DIRS}
+    )
+endif ()
 
 set(raylib_LIBRARIES    ${raylib_LIBRARY})
 set(raylib_LIBRARY_DIRS ${${XPREFIX}_LIBRARY_DIRS})
