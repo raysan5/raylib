@@ -775,7 +775,7 @@ void ExportMesh(Mesh mesh, const char *fileName)
 Material *LoadMaterials(const char *fileName, int *materialCount)
 {
     Material *materials = NULL;
-    unsigned int count = 0;
+    size_t count = 0;
     
     // TODO: Support IQM and GLTF for materials parsing
 
@@ -2711,10 +2711,10 @@ static Model LoadOBJ(const char *fileName)
 
     tinyobj_attrib_t attrib;
     tinyobj_shape_t *meshes = NULL;
-    unsigned int meshCount = 0;
+    size_t meshCount = 0;
 
     tinyobj_material_t *materials = NULL;
-    unsigned int materialCount = 0;
+    size_t materialCount = 0;
 
     int dataLength = 0;
     char *data = NULL;
