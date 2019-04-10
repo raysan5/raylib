@@ -26,7 +26,7 @@
 *
 *   DEPENDENCIES (included):
 *       [core] rglfw (github.com/glfw/glfw) for window/context management and input (only PLATFORM_DESKTOP)
-*       [rlgl] glad (github.com/Dav1dde/glad) for OpenGL extensions loading (3.3 Core profile, only PLATFORM_DESKTOP)
+*       [rlgl] glad (github.com/Dav1dde/glad) for OpenGL 3.3 extensions loading (only PLATFORM_DESKTOP)
 *       [raudio] miniaudio (github.com/dr-soft/miniaudio) for audio device/context management
 *
 *   OPTIONAL DEPENDENCIES (included):
@@ -147,6 +147,13 @@
 //----------------------------------------------------------------------------------
 // Structures Definition
 //----------------------------------------------------------------------------------
+// Boolean type
+#if defined(__STDC__) && __STDC_VERSION__ >= 199901L
+    #include <stdbool.h>
+#elif !defined(__cplusplus) && !defined(bool)
+    typedef enum { false, true } bool;
+#endif
+
 // Vector2 type
 typedef struct Vector2 {
     float x;
@@ -449,13 +456,6 @@ typedef struct VrStereoConfig {
 //----------------------------------------------------------------------------------
 // Enumerators Definition
 //----------------------------------------------------------------------------------
-// Boolean type
-#if defined(__STDC__) && __STDC_VERSION__ >= 199901L
-    #include <stdbool.h>
-#elif !defined(__cplusplus) && !defined(bool)
-    typedef enum { false, true } bool;
-#endif
-
 // System config flags
 // NOTE: Used for bit masks
 typedef enum {
@@ -471,14 +471,14 @@ typedef enum {
 
 // Trace log type
 typedef enum {
-    LOG_ALL,        // Display all logs
+    LOG_ALL = 0,        // Display all logs
     LOG_TRACE,
     LOG_DEBUG,
     LOG_INFO,
     LOG_WARNING,
     LOG_ERROR,
     LOG_FATAL,
-    LOG_NONE        // Disable logging
+    LOG_NONE            // Disable logging
 } TraceLogType;
 
 // Keyboard keys
