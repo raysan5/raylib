@@ -4,19 +4,20 @@
 *
 *   FEATURES:
 *       - NO external dependencies, all required libraries included with raylib
-*       - Multiple platforms support: Windows, Linux, FreeBSD, OpenBSD, NetBSD, DragonFly, MacOS, UWP, Android, Raspberry Pi, HTML5.
+*       - Multiplatform: Windows, Linux, FreeBSD, OpenBSD, NetBSD, DragonFly, MacOS, UWP, Android, Raspberry Pi, HTML5.
 *       - Written in plain C code (C99) in PascalCase/camelCase notation
 *       - Hardware accelerated with OpenGL (1.1, 2.1, 3.3 or ES2 - choose at compile)
 *       - Unique OpenGL abstraction layer (usable as standalone module): [rlgl]
-*       - Powerful fonts module with Fonts support (XNA fonts, AngelCode fonts, TTF)
+*       - Powerful fonts module (XNA SpriteFonts, BMFonts, TTF)
 *       - Outstanding texture formats support, including compressed formats (DXT, ETC, ASTC)
 *       - Full 3d support for 3d Shapes, Models, Billboards, Heightmaps and more!
 *       - Flexible Materials system, supporting classic maps and PBR maps
+*       - Skeletal Animation support (CPU bones-based animation)
 *       - Shaders support, including Model shaders and Postprocessing shaders
 *       - Powerful math module for Vector, Matrix and Quaternion operations: [raymath]
 *       - Audio loading and playing with streaming support (WAV, OGG, MP3, FLAC, XM, MOD)
 *       - VR stereo rendering with configurable HMD device parameters
-*       - Complete bindings to LUA (raylib-lua) and Go (raylib-go)
+*       - Bindings to multiple programming languages available!
 *
 *   NOTES:
 *       One custom font is loaded by default when InitWindow() [core]
@@ -24,24 +25,26 @@
 *       If using OpenGL 3.3 or ES2, several vertex buffers (VAO/VBO) are created to manage lines-triangles-quads
 *
 *   DEPENDENCIES (included):
-*       rglfw (github.com/glfw/glfw) for window/context management and input (only PLATFORM_DESKTOP) [core]
-*       glad (github.com/Dav1dde/glad) for OpenGL extensions loading (3.3 Core profile, only PLATFORM_DESKTOP) [rlgl]
-*       mini_al (github.com/dr-soft/mini_al) for audio device/context management [audio]
+*       [core] rglfw (github.com/glfw/glfw) for window/context management and input (only PLATFORM_DESKTOP)
+*       [rlgl] glad (github.com/Dav1dde/glad) for OpenGL extensions loading (3.3 Core profile, only PLATFORM_DESKTOP)
+*       [raudio] miniaudio (github.com/dr-soft/miniaudio) for audio device/context management
 *
 *   OPTIONAL DEPENDENCIES (included):
-*       stb_image (Sean Barret) for images loading (BMP, TGA, PNG, JPEG, HDR...) [textures]
-*       stb_image_resize (Sean Barret) for image resizing algorythms [textures]
-*       stb_image_write (Sean Barret) for image writting (PNG) [utils]
-*       stb_truetype (Sean Barret) for ttf fonts loading [text]
-*       stb_rect_pack (Sean Barret) for rectangles packing [text]
-*       stb_vorbis (Sean Barret) for OGG audio loading [audio]
-*       stb_perlin (Sean Barret) for Perlin noise image generation [textures]
-*       par_shapes (Philip Rideout) for parametric 3d shapes generation [models]
-*       jar_xm (Joshua Reisenauer) for XM audio module loading [audio]
-*       jar_mod (Joshua Reisenauer) for MOD audio module loading [audio]
-*       dr_flac (David Reid) for FLAC audio file loading [audio]
-*       dr_mp3 (David Reid) for MP3 audio file loading [audio]
-*       rgif (Charlie Tangora, Ramon Santamaria) for GIF recording [core]
+*       [core] rgif (Charlie Tangora, Ramon Santamaria) for GIF recording
+*       [textures] stb_image (Sean Barret) for images loading (BMP, TGA, PNG, JPEG, HDR...)
+*       [textures] stb_image_write (Sean Barret) for image writting (BMP, TGA, PNG, JPG)
+*       [textures] stb_image_resize (Sean Barret) for image resizing algorythms
+*       [textures] stb_perlin (Sean Barret) for Perlin noise image generation
+*       [text] stb_truetype (Sean Barret) for ttf fonts loading
+*       [text] stb_rect_pack (Sean Barret) for rectangles packing
+*       [models] par_shapes (Philip Rideout) for parametric 3d shapes generation
+*       [models] tinyobj_loader_c (Syoyo Fujita) for models loading (OBJ, MTL)
+*       [models] cgltf (Johannes Kuhlmann) for models loading (glTF)
+*       [raudio] stb_vorbis (Sean Barret) for OGG audio loading
+*       [raudio] dr_flac (David Reid) for FLAC audio file loading
+*       [raudio] dr_mp3 (David Reid) for MP3 audio file loading
+*       [raudio] jar_xm (Joshua Reisenauer) for XM audio module loading
+*       [raudio] jar_mod (Joshua Reisenauer) for MOD audio module loading
 *
 *
 *   LICENSE: zlib/libpng
@@ -144,13 +147,6 @@
 //----------------------------------------------------------------------------------
 // Structures Definition
 //----------------------------------------------------------------------------------
-// Boolean type
-#if defined(__STDC__) && __STDC_VERSION__ >= 199901L
-    #include <stdbool.h>
-#elif !defined(__cplusplus) && !defined(bool)
-    typedef enum { false, true } bool;
-#endif
-
 // Vector2 type
 typedef struct Vector2 {
     float x;
@@ -453,6 +449,12 @@ typedef struct VrStereoConfig {
 //----------------------------------------------------------------------------------
 // Enumerators Definition
 //----------------------------------------------------------------------------------
+// Boolean type
+#if defined(__STDC__) && __STDC_VERSION__ >= 199901L
+    #include <stdbool.h>
+#elif !defined(__cplusplus) && !defined(bool)
+    typedef enum { false, true } bool;
+#endif
 
 // System config flags
 // NOTE: Used for bit masks
