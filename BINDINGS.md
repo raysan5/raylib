@@ -7,6 +7,7 @@ Some people ported raylib to other languages in form of bindings or wrappers to 
  - [raylib-lua-ffi](https://github.com/raysan5/raylib/issues/693) : raylib **Lua** ffi binding
  - [raylib-go](https://github.com/gen2brain/raylib-go) : raylib **Go** binding
  - [raylib-Nim](https://gitlab.com/define-private-public/raylib-Nim) : raylib **Nim** binding
+ - [raylib-cr](https://github.com/AregevDev/raylib-cr) : raylib **Crystal** binding
  - [cray](https://gitlab.com/Zatherz/cray) - raylib **Crystal** binding
  - [Graphics::Raylib](https://metacpan.org/pod/Graphics::Raylib) : raylib **Perl** wrapper
  - [raylib-pascal](https://github.com/drezgames/raylib-pascal) - raylib **Pascal** binding
