@@ -21,8 +21,8 @@ Some people ported raylib to other languages in form of bindings or wrappers to 
  - [node-raylib](https://github.com/RobLoach/node-raylib) : **Node.js** raylib binding
  - [raylib-odin](https://github.com/kevinw/raylib-odin): **Odin** raylib binding
  - [raylib-factor](https://github.com/Silverbeard00/raylib-factor): **Factor** raylib binding
- - *[raylib flat-assembler Usage example]()*
  - *[raylib COBOL Usage example](https://github.com/Martinfx/Cobol/tree/master/OpenCobol/Games/raylib)*
+ - *raylib flat-assembler Usage example*: not uploaded yet...
  
 Missing some language? Check the [bindings not yet in this list](https://gist.github.com/raysan5/5764cc5b885183f523fce47f098f3d9b#bindings-not-yet-in-the-official-list) or create a new binding! :)
  
