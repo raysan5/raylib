@@ -520,14 +520,14 @@ void BeginBlendMode(int mode);                    // Begin blending mode (alpha,
 void EndBlendMode(void);                          // End blending mode (reset to default: alpha blending)
 
 // VR control functions
-RLAPI void InitVrSimulator(void);                       // Init VR simulator for selected device parameters
-RLAPI void CloseVrSimulator(void);                      // Close VR simulator for current device
-RLAPI void UpdateVrTracking(Camera *camera);            // Update VR tracking (position and orientation) and camera
-RLAPI void SetVrConfiguration(VrDeviceInfo info, Shader distortion);      // Set stereo rendering configuration parameters 
-RLAPI bool IsVrSimulatorReady(void);                    // Detect if VR simulator is ready
-RLAPI void ToggleVrMode(void);                          // Enable/Disable VR experience
-RLAPI void BeginVrDrawing(void);                        // Begin VR simulator stereo rendering
-RLAPI void EndVrDrawing(void);                          // End VR simulator stereo rendering
+void InitVrSimulator(void);                       // Init VR simulator for selected device parameters
+void CloseVrSimulator(void);                      // Close VR simulator for current device
+void UpdateVrTracking(Camera *camera);            // Update VR tracking (position and orientation) and camera
+void SetVrConfiguration(VrDeviceInfo info, Shader distortion);      // Set stereo rendering configuration parameters 
+bool IsVrSimulatorReady(void);                    // Detect if VR simulator is ready
+void ToggleVrMode(void);                          // Enable/Disable VR experience
+void BeginVrDrawing(void);                        // Begin VR simulator stereo rendering
+void EndVrDrawing(void);                          // End VR simulator stereo rendering
 
 void TraceLog(int msgType, const char *text, ...);      // Show trace log messages (LOG_INFO, LOG_WARNING, LOG_ERROR, LOG_DEBUG)
 int GetPixelDataSize(int width, int height, int format);// Get pixel data size in bytes (image or texture)
