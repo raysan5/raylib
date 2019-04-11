@@ -57,8 +57,6 @@
 //------------------------------------------------------------------------------------
 // Support VR simulation functionality (stereo rendering)
 #define SUPPORT_VR_SIMULATOR        1
-// Include stereo rendering distortion shader (shader_distortion.h)
-#define SUPPORT_DISTORTION_SHADER   1
 
 
 //------------------------------------------------------------------------------------

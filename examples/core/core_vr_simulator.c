@@ -23,7 +23,35 @@ int main()
     InitWindow(screenWidth, screenHeight, "raylib [core] example - vr simulator");
 
     // Init VR simulator (Oculus Rift CV1 parameters)
-    InitVrSimulator(GetVrDeviceInfo(HMD_OCULUS_RIFT_CV1));
+    InitVrSimulator();
+
+    VrDeviceInfo hmd = { 0 };               // VR device parameters (head-mounted-device)
+    
+    // Oculus Rift CV1 parameters for simulator
+    hmd.hResolution = 2160;                 // HMD horizontal resolution in pixels
+    hmd.vResolution = 1200;                 // HMD vertical resolution in pixels
+    hmd.hScreenSize = 0.133793f;            // HMD horizontal size in meters
+    hmd.vScreenSize = 0.0669f;              // HMD vertical size in meters
+    hmd.vScreenCenter = 0.04678f;           // HMD screen center in meters
+    hmd.eyeToScreenDistance = 0.041f;       // HMD distance between eye and display in meters
+    hmd.lensSeparationDistance = 0.07f;     // HMD lens separation distance in meters
+    hmd.interpupillaryDistance = 0.07f;     // HMD IPD (distance between pupils) in meters
+    
+    // NOTE: CV1 uses a Fresnel-hybrid-asymmetric lenses with specific distortion compute shaders.
+    // Following parameters are an approximation to distortion stereo rendering but results differ from actual device.
+    hmd.lensDistortionValues[0] = 1.0f;     // HMD lens distortion constant parameter 0
+    hmd.lensDistortionValues[1] = 0.22f;    // HMD lens distortion constant parameter 1
+    hmd.lensDistortionValues[2] = 0.24f;    // HMD lens distortion constant parameter 2
+    hmd.lensDistortionValues[3] = 0.0f;     // HMD lens distortion constant parameter 3
+    hmd.chromaAbCorrection[0] = 0.996f;     // HMD chromatic aberration correction parameter 0
+    hmd.chromaAbCorrection[1] = -0.004f;    // HMD chromatic aberration correction parameter 1
+    hmd.chromaAbCorrection[2] = 1.014f;     // HMD chromatic aberration correction parameter 2
+    hmd.chromaAbCorrection[3] = 0.0f;       // HMD chromatic aberration correction parameter 3
+    
+    // Distortion shader (uses device lens distortion and chroma)
+    Shader distortion = LoadShader(0, "resources/distortion.fs");
+    
+    SetVrConfiguration(hmd, distortion);    // Set Vr device parameters for stereo rendering
     
     // Define the camera to look into our 3d world
     Camera camera;
@@ -77,9 +105,11 @@ int main()
 
     // De-Initialization
     //--------------------------------------------------------------------------------------
-    CloseVrSimulator();     // Close VR simulator
-    
-    CloseWindow();          // Close window and OpenGL context
+    UnloadShader(distortion);   // Unload distortion shader
+
+    CloseVrSimulator();         // Close VR simulator
+
+    CloseWindow();              // Close window and OpenGL context
     //--------------------------------------------------------------------------------------
 
     return 0;

@@ -32,9 +32,6 @@
 *   #define SUPPORT_VR_SIMULATOR
 *       Support VR simulation functionality (stereo rendering)
 *
-*   #define SUPPORT_DISTORTION_SHADER
-*       Include stereo rendering distortion shader (embedded)
-*
 *   DEPENDENCIES:
 *       raymath     - 3D math functionality (Vector3, Matrix, Quaternion)
 *       GLAD        - OpenGL extensions loading (OpenGL 3.3 Core only)
@@ -263,7 +260,6 @@ typedef unsigned char byte;
 
     // VR Stereo rendering configuration for simulator
     typedef struct VrStereoConfig {
-        RenderTexture2D stereoFbo;      // VR stereo rendering framebuffer
         Shader distortionShader;        // VR stereo rendering distortion shader
         Matrix eyesProjection[2];       // VR stereo rendering eyes projection matrices
         Matrix eyesViewOffset[2];       // VR stereo rendering eyes view offset matrices
@@ -390,16 +386,6 @@ typedef unsigned char byte;
 
     #define MAP_DIFFUSE      MAP_ALBEDO
     #define MAP_SPECULAR     MAP_METALNESS
-
-    // VR Head Mounted Display devices
-    typedef enum {
-        HMD_DEFAULT_DEVICE = 0,
-        HMD_OCULUS_RIFT_DK2,
-        HMD_OCULUS_RIFT_CV1,
-        HMD_OCULUS_GO,
-        HMD_VALVE_HTC_VIVE,
-        HMD_SONY_PSVR
-    } VrDevice;
 #endif
 
 #if defined(__cplusplus)
@@ -534,14 +520,14 @@ void BeginBlendMode(int mode);                    // Begin blending mode (alpha,
 void EndBlendMode(void);                          // End blending mode (reset to default: alpha blending)
 
 // VR control functions
-VrDeviceInfo GetVrDeviceInfo(int vrDeviceType);   // Get VR device information for some standard devices
-void InitVrSimulator(VrDeviceInfo info);          // Init VR simulator for selected device parameters
-void UpdateVrTracking(Camera *camera);            // Update VR tracking (position and orientation) and camera
-void CloseVrSimulator(void);                      // Close VR simulator for current device
-bool IsVrSimulatorReady(void);                    // Detect if VR simulator is ready
-void ToggleVrMode(void);                          // Enable/Disable VR experience
-void BeginVrDrawing(void);                        // Begin VR simulator stereo rendering
-void EndVrDrawing(void);                          // End VR simulator stereo rendering
+RLAPI void InitVrSimulator(void);                       // Init VR simulator for selected device parameters
+RLAPI void CloseVrSimulator(void);                      // Close VR simulator for current device
+RLAPI void UpdateVrTracking(Camera *camera);            // Update VR tracking (position and orientation) and camera
+RLAPI void SetVrConfiguration(VrDeviceInfo info, Shader distortion);      // Set stereo rendering configuration parameters 
+RLAPI bool IsVrSimulatorReady(void);                    // Detect if VR simulator is ready
+RLAPI void ToggleVrMode(void);                          // Enable/Disable VR experience
+RLAPI void BeginVrDrawing(void);                        // Begin VR simulator stereo rendering
+RLAPI void EndVrDrawing(void);                          // End VR simulator stereo rendering
 
 void TraceLog(int msgType, const char *text, ...);      // Show trace log messages (LOG_INFO, LOG_WARNING, LOG_ERROR, LOG_DEBUG)
 int GetPixelDataSize(int width, int height, int format);// Get pixel data size in bytes (image or texture)
@@ -561,10 +547,7 @@ int GetPixelDataSize(int width, int height, int format);// Get pixel data size i
 
 #if defined(RLGL_IMPLEMENTATION)
 
-#if defined(RLGL_STANDALONE)
-    #define SUPPORT_VR_SIMULATOR
-    #define SUPPORT_DISTORTION_SHADER
-#else
+#if !defined(RLGL_STANDALONE)
     // Check if config flags have been externally provided on compilation line
     #if !defined(EXTERNAL_CONFIG_FLAGS)
         #include "config.h"         // Defines module configuration flags
@@ -740,88 +723,20 @@ typedef struct DrawCall {
     //Matrix modelview;         // Modelview matrix for this draw
 } DrawCall;
 
+#if defined(SUPPORT_VR_SIMULATOR)
+// VR Stereo rendering configuration for simulator
+typedef struct VrStereoConfig {
+    Shader distortionShader;        // VR stereo rendering distortion shader
+    Matrix eyesProjection[2];       // VR stereo rendering eyes projection matrices
+    Matrix eyesViewOffset[2];       // VR stereo rendering eyes view offset matrices
+    int eyeViewportRight[4];        // VR stereo rendering right eye viewport [x, y, w, h]
+    int eyeViewportLeft[4];         // VR stereo rendering left eye viewport [x, y, w, h]
+} VrStereoConfig;
+#endif
+
 //----------------------------------------------------------------------------------
 // Global Variables Definition
 //----------------------------------------------------------------------------------
-#if !defined(GRAPHICS_API_OPENGL_11) && defined(SUPPORT_DISTORTION_SHADER)
-    // Distortion shader embedded
-    static char distortionFShaderStr[] =
-    #if defined(GRAPHICS_API_OPENGL_21)
-    "#version 120                       \n"
-    #elif defined(GRAPHICS_API_OPENGL_ES2)
-    "#version 100                       \n"
-    "precision mediump float;           \n"     // precision required for OpenGL ES2 (WebGL)
-    #endif
-    #if defined(GRAPHICS_API_OPENGL_ES2) || defined(GRAPHICS_API_OPENGL_21)
-    "varying vec2 fragTexCoord;         \n"
-    "varying vec4 fragColor;            \n"
-    #elif defined(GRAPHICS_API_OPENGL_33)
-    "#version 330                       \n"
-    "in vec2 fragTexCoord;              \n"
-    "in vec4 fragColor;                 \n"
-    "out vec4 finalColor;               \n"
-    #endif
-    "uniform sampler2D texture0;                                     \n"
-    #if defined(GRAPHICS_API_OPENGL_ES2) || defined(GRAPHICS_API_OPENGL_21)
-    "uniform vec2 leftLensCenter;       \n"
-    "uniform vec2 rightLensCenter;      \n"
-    "uniform vec2 leftScreenCenter;     \n"
-    "uniform vec2 rightScreenCenter;    \n"
-    "uniform vec2 scale;                \n"
-    "uniform vec2 scaleIn;              \n"
-    "uniform vec4 hmdWarpParam;         \n"
-    "uniform vec4 chromaAbParam;        \n"
-    #elif defined(GRAPHICS_API_OPENGL_33)
-    "uniform vec2 leftLensCenter = vec2(0.288, 0.5);                 \n"
-    "uniform vec2 rightLensCenter = vec2(0.712, 0.5);                \n"
-    "uniform vec2 leftScreenCenter = vec2(0.25, 0.5);                \n"
-    "uniform vec2 rightScreenCenter = vec2(0.75, 0.5);               \n"
-    "uniform vec2 scale = vec2(0.25, 0.45);                          \n"
-    "uniform vec2 scaleIn = vec2(4, 2.2222);                         \n"
-    "uniform vec4 hmdWarpParam = vec4(1, 0.22, 0.24, 0);             \n"
-    "uniform vec4 chromaAbParam = vec4(0.996, -0.004, 1.014, 0.0);   \n"
-    #endif
-    "void main() \n"
-    "{ \n"
-    "   vec2 lensCenter = fragTexCoord.x < 0.5? leftLensCenter : rightLensCenter; \n"
-    "   vec2 screenCenter = fragTexCoord.x < 0.5? leftScreenCenter : rightScreenCenter; \n"
-    "   vec2 theta = (fragTexCoord - lensCenter)*scaleIn; \n"
-    "   float rSq = theta.x*theta.x + theta.y*theta.y; \n"
-    "   vec2 theta1 = theta*(hmdWarpParam.x + hmdWarpParam.y*rSq + hmdWarpParam.z*rSq*rSq + hmdWarpParam.w*rSq*rSq*rSq); \n"
-    "   vec2 thetaBlue = theta1*(chromaAbParam.z + chromaAbParam.w*rSq); \n"
-    "   vec2 tcBlue = lensCenter + scale*thetaBlue; \n"
-    "   if (any(bvec2(clamp(tcBlue, screenCenter - vec2(0.25, 0.5), screenCenter + vec2(0.25, 0.5)) - tcBlue))) \n"
-    "   { \n"
-    #if defined(GRAPHICS_API_OPENGL_ES2) || defined(GRAPHICS_API_OPENGL_21)
-    "       gl_FragColor = vec4(0.0, 0.0, 0.0, 1.0); \n"
-    #elif defined(GRAPHICS_API_OPENGL_33)
-    "       finalColor = vec4(0.0, 0.0, 0.0, 1.0); \n"
-    #endif
-    "   } \n"
-    "   else \n"
-    "   { \n"
-    #if defined(GRAPHICS_API_OPENGL_ES2) || defined(GRAPHICS_API_OPENGL_21)
-    "       float blue = texture2D(texture0, tcBlue).b; \n"
-    "       vec2 tcGreen = lensCenter + scale*theta1; \n"
-    "       float green = texture2D(texture0, tcGreen).g; \n"
-    #elif defined(GRAPHICS_API_OPENGL_33)
-    "       float blue = texture(texture0, tcBlue).b; \n"
-    "       vec2 tcGreen = lensCenter + scale*theta1; \n"
-    "       float green = texture(texture0, tcGreen).g; \n"
-    #endif
-    "       vec2 thetaRed = theta1*(chromaAbParam.x + chromaAbParam.y*rSq); \n"
-    "       vec2 tcRed = lensCenter + scale*thetaRed; \n"
-    #if defined(GRAPHICS_API_OPENGL_ES2) || defined(GRAPHICS_API_OPENGL_21)
-    "       float red = texture2D(texture0, tcRed).r; \n"
-    "       gl_FragColor = vec4(red, green, blue, 1.0); \n"
-    #elif defined(GRAPHICS_API_OPENGL_33)
-    "       float red = texture(texture0, tcRed).r; \n"
-    "       finalColor = vec4(red, green, blue, 1.0); \n"
-    #endif
-    "    } \n"
-    "} \n";
-#endif
-
 #if defined(GRAPHICS_API_OPENGL_33) || defined(GRAPHICS_API_OPENGL_ES2)
 static Matrix stack[MAX_MATRIX_STACK_SIZE] = { 0 };
 static int stackCounter = 0;
@@ -891,6 +806,7 @@ static PFNGLDELETEVERTEXARRAYSOESPROC glDeleteVertexArrays;
 #if defined(SUPPORT_VR_SIMULATOR)
 // VR global variables
 static VrStereoConfig vrConfig = { 0 };     // VR stereo configuration for simulator
+static RenderTexture2D stereoFbo;           // VR stereo rendering framebuffer
 static bool vrSimulatorReady = false;       // VR simulator ready flag
 static bool vrStereoRender = false;         // VR stereo rendering enabled/disabled flag
                                             // NOTE: This flag is useful to render data over stereo image (i.e. FPS)
@@ -924,7 +840,6 @@ static void GenDrawCube(void);              // Generate and draw cube
 static void GenDrawQuad(void);              // Generate and draw quad
 
 #if defined(SUPPORT_VR_SIMULATOR)
-static VrStereoConfig SetStereoConfig(VrDeviceInfo info, Shader distortion);    // Configure stereo rendering (including distortion shader) with HMD device parameters
 static void SetStereoView(int eye, Matrix matProjection, Matrix matModelView);  // Set internal projection and modelview matrix depending on eye
 #endif
 
@@ -3577,101 +3492,17 @@ void EndScissorMode(void)
 }
 
 #if defined(SUPPORT_VR_SIMULATOR)
-// Get VR device information for some standard devices
-VrDeviceInfo GetVrDeviceInfo(int vrDeviceType)
-{
-    VrDeviceInfo hmd = { 0 };                // Current VR device info
-
-    switch (vrDeviceType)
-    {
-        case HMD_DEFAULT_DEVICE:
-        case HMD_OCULUS_RIFT_CV1:
-        {
-            // Oculus Rift CV1 parameters
-            // NOTE: CV1 represents a complete HMD redesign compared to previous versions,
-            // new Fresnel-hybrid-asymmetric lenses have been added and, consequently,
-            // previous parameters (DK2) and distortion shader (DK2) doesn't work any more.
-            // I just defined a set of parameters for simulator that approximate to CV1 stereo rendering
-            // but result is not the same obtained with Oculus PC SDK.
-            hmd.hResolution = 2160;                 // HMD horizontal resolution in pixels
-            hmd.vResolution = 1200;                 // HMD vertical resolution in pixels
-            hmd.hScreenSize = 0.133793f;            // HMD horizontal size in meters
-            hmd.vScreenSize = 0.0669f;              // HMD vertical size in meters
-            hmd.vScreenCenter = 0.04678f;           // HMD screen center in meters
-            hmd.eyeToScreenDistance = 0.041f;       // HMD distance between eye and display in meters
-            hmd.lensSeparationDistance = 0.07f;     // HMD lens separation distance in meters
-            hmd.interpupillaryDistance = 0.07f;     // HMD IPD (distance between pupils) in meters
-            hmd.lensDistortionValues[0] = 1.0f;     // HMD lens distortion constant parameter 0
-            hmd.lensDistortionValues[1] = 0.22f;    // HMD lens distortion constant parameter 1
-            hmd.lensDistortionValues[2] = 0.24f;    // HMD lens distortion constant parameter 2
-            hmd.lensDistortionValues[3] = 0.0f;     // HMD lens distortion constant parameter 3
-            hmd.chromaAbCorrection[0] = 0.996f;     // HMD chromatic aberration correction parameter 0
-            hmd.chromaAbCorrection[1] = -0.004f;    // HMD chromatic aberration correction parameter 1
-            hmd.chromaAbCorrection[2] = 1.014f;     // HMD chromatic aberration correction parameter 2
-            hmd.chromaAbCorrection[3] = 0.0f;       // HMD chromatic aberration correction parameter 3
-
-            TraceLog(LOG_INFO, "Initializing VR Simulator (Oculus Rift CV1)");
-        } break;
-        case HMD_OCULUS_RIFT_DK2:
-        {
-            // Oculus Rift DK2 parameters
-            hmd.hResolution = 1280;                 // HMD horizontal resolution in pixels
-            hmd.vResolution = 800;                  // HMD vertical resolution in pixels
-            hmd.hScreenSize = 0.14976f;             // HMD horizontal size in meters
-            hmd.vScreenSize = 0.09356f;             // HMD vertical size in meters
-            hmd.vScreenCenter = 0.04678f;           // HMD screen center in meters
-            hmd.eyeToScreenDistance = 0.041f;       // HMD distance between eye and display in meters
-            hmd.lensSeparationDistance = 0.0635f;   // HMD lens separation distance in meters
-            hmd.interpupillaryDistance = 0.064f;    // HMD IPD (distance between pupils) in meters
-            hmd.lensDistortionValues[0] = 1.0f;     // HMD lens distortion constant parameter 0
-            hmd.lensDistortionValues[1] = 0.22f;    // HMD lens distortion constant parameter 1
-            hmd.lensDistortionValues[2] = 0.24f;    // HMD lens distortion constant parameter 2
-            hmd.lensDistortionValues[3] = 0.0f;     // HMD lens distortion constant parameter 3
-            hmd.chromaAbCorrection[0] = 0.996f;     // HMD chromatic aberration correction parameter 0
-            hmd.chromaAbCorrection[1] = -0.004f;    // HMD chromatic aberration correction parameter 1
-            hmd.chromaAbCorrection[2] = 1.014f;     // HMD chromatic aberration correction parameter 2
-            hmd.chromaAbCorrection[3] = 0.0f;       // HMD chromatic aberration correction parameter 3
-
-            TraceLog(LOG_INFO, "Initializing VR Simulator (Oculus Rift DK2)");
-        } break;
-        case HMD_OCULUS_GO:
-        {
-            // TODO: Provide device display and lens parameters
-        }
-        case HMD_VALVE_HTC_VIVE:
-        {
-            // TODO: Provide device display and lens parameters
-        }
-        case HMD_SONY_PSVR:
-        {
-            // TODO: Provide device display and lens parameters
-        }
-        default: break;
-    }
-
-    return hmd;
-}
-
 // Init VR simulator for selected device parameters
-// NOTE: It modifies the global variable: VrStereoConfig vrConfig
-void InitVrSimulator(VrDeviceInfo info)
+// NOTE: It modifies the global variable: stereoFbo
+void InitVrSimulator(void)
 {
 #if defined(GRAPHICS_API_OPENGL_33) || defined(GRAPHICS_API_OPENGL_ES2)
-    Shader distortion = { 0 };
-
-#if defined(SUPPORT_DISTORTION_SHADER)
-    // Load distortion shader
-    distortion = LoadShaderCode(NULL, distortionFShaderStr);
-    if (distortion.id > 0) SetShaderDefaultLocations(&distortion);
-#endif
-
-    // Set VR configutarion parameters, including distortion shader
-    vrConfig = SetStereoConfig(info, distortion);
-
+    // Initialize framebuffer and textures for stereo rendering
+    // NOTE: Screen size should match HMD aspect ratio
+    stereoFbo = rlLoadRenderTexture(screenWidth, screenHeight, UNCOMPRESSED_R8G8B8A8, 24, false);
+    
     vrSimulatorReady = true;
-#endif
-
-#if defined(GRAPHICS_API_OPENGL_11)
+#else
     TraceLog(LOG_WARNING, "VR Simulator not supported on OpenGL 1.1");
 #endif
 }
@@ -3687,14 +3518,90 @@ void UpdateVrTracking(Camera *camera)
 void CloseVrSimulator(void)
 {
 #if defined(GRAPHICS_API_OPENGL_33) || defined(GRAPHICS_API_OPENGL_ES2)
-    if (vrSimulatorReady)
-    {
-        rlDeleteRenderTextures(vrConfig.stereoFbo); // Unload stereo framebuffer and texture
-        #if defined(SUPPORT_DISTORTION_SHADER)
-        UnloadShader(vrConfig.distortionShader);    // Unload distortion shader
-        #endif
-    }
+    if (vrSimulatorReady) rlDeleteRenderTextures(stereoFbo);        // Unload stereo framebuffer and texture
 #endif
+}
+
+// Set stereo rendering configuration parameters 
+void SetVrConfiguration(VrDeviceInfo hmd, Shader distortion)
+{
+    // Reset vrConfig for a new values assignment
+    memset(&vrConfig, 0, sizeof(vrConfig));
+    
+    // Assign distortion shader
+    vrConfig.distortionShader = distortion;
+
+    // Compute aspect ratio
+    float aspect = ((float)hmd.hResolution*0.5f)/(float)hmd.vResolution;
+
+    // Compute lens parameters
+    float lensShift = (hmd.hScreenSize*0.25f - hmd.lensSeparationDistance*0.5f)/hmd.hScreenSize;
+    float leftLensCenter[2] = { 0.25f + lensShift, 0.5f };
+    float rightLensCenter[2] = { 0.75f - lensShift, 0.5f };
+    float leftScreenCenter[2] = { 0.25f, 0.5f };
+    float rightScreenCenter[2] = { 0.75f, 0.5f };
+
+    // Compute distortion scale parameters
+    // NOTE: To get lens max radius, lensShift must be normalized to [-1..1]
+    float lensRadius = (float)fabs(-1.0f - 4.0f*lensShift);
+    float lensRadiusSq = lensRadius*lensRadius;
+    float distortionScale = hmd.lensDistortionValues[0] +
+                            hmd.lensDistortionValues[1]*lensRadiusSq +
+                            hmd.lensDistortionValues[2]*lensRadiusSq*lensRadiusSq +
+                            hmd.lensDistortionValues[3]*lensRadiusSq*lensRadiusSq*lensRadiusSq;
+
+    TraceLog(LOG_DEBUG, "VR: Distortion Scale: %f", distortionScale);
+
+    float normScreenWidth = 0.5f;
+    float normScreenHeight = 1.0f;
+    float scaleIn[2] = { 2.0f/normScreenWidth, 2.0f/normScreenHeight/aspect };
+    float scale[2] = { normScreenWidth*0.5f/distortionScale, normScreenHeight*0.5f*aspect/distortionScale };
+
+    TraceLog(LOG_DEBUG, "VR: Distortion Shader: LeftLensCenter = { %f, %f }", leftLensCenter[0], leftLensCenter[1]);
+    TraceLog(LOG_DEBUG, "VR: Distortion Shader: RightLensCenter = { %f, %f }", rightLensCenter[0], rightLensCenter[1]);
+    TraceLog(LOG_DEBUG, "VR: Distortion Shader: Scale = { %f, %f }", scale[0], scale[1]);
+    TraceLog(LOG_DEBUG, "VR: Distortion Shader: ScaleIn = { %f, %f }", scaleIn[0], scaleIn[1]);
+
+    // Fovy is normally computed with: 2*atan2(hmd.vScreenSize, 2*hmd.eyeToScreenDistance)
+    // ...but with lens distortion it is increased (see Oculus SDK Documentation)
+    //float fovy = 2.0f*atan2(hmd.vScreenSize*0.5f*distortionScale, hmd.eyeToScreenDistance);     // Really need distortionScale?
+    float fovy = 2.0f*(float)atan2(hmd.vScreenSize*0.5f, hmd.eyeToScreenDistance);
+
+    // Compute camera projection matrices
+    float projOffset = 4.0f*lensShift;      // Scaled to projection space coordinates [-1..1]
+    Matrix proj = MatrixPerspective(fovy, aspect, 0.01, 1000.0);
+    vrConfig.eyesProjection[0] = MatrixMultiply(proj, MatrixTranslate(projOffset, 0.0f, 0.0f));
+    vrConfig.eyesProjection[1] = MatrixMultiply(proj, MatrixTranslate(-projOffset, 0.0f, 0.0f));
+
+    // Compute camera transformation matrices
+    // NOTE: Camera movement might seem more natural if we model the head.
+    // Our axis of rotation is the base of our head, so we might want to add
+    // some y (base of head to eye level) and -z (center of head to eye protrusion) to the camera positions.
+    vrConfig.eyesViewOffset[0] = MatrixTranslate(-hmd.interpupillaryDistance*0.5f, 0.075f, 0.045f);
+    vrConfig.eyesViewOffset[1] = MatrixTranslate(hmd.interpupillaryDistance*0.5f, 0.075f, 0.045f);
+
+    // Compute eyes Viewports
+    vrConfig.eyeViewportRight[2] = hmd.hResolution/2;
+    vrConfig.eyeViewportRight[3] = hmd.vResolution;
+    
+    vrConfig.eyeViewportLeft[0] = hmd.hResolution/2;
+    vrConfig.eyeViewportLeft[1] = 0;
+    vrConfig.eyeViewportLeft[2] = hmd.hResolution/2;
+    vrConfig.eyeViewportLeft[3] = hmd.vResolution;
+
+    if (vrConfig.distortionShader.id > 0)
+    {
+        // Update distortion shader with lens and distortion-scale parameters
+        SetShaderValue(vrConfig.distortionShader, GetShaderLocation(vrConfig.distortionShader, "leftLensCenter"), leftLensCenter, UNIFORM_VEC2);
+        SetShaderValue(vrConfig.distortionShader, GetShaderLocation(vrConfig.distortionShader, "rightLensCenter"), rightLensCenter, UNIFORM_VEC2);
+        SetShaderValue(vrConfig.distortionShader, GetShaderLocation(vrConfig.distortionShader, "leftScreenCenter"), leftScreenCenter, UNIFORM_VEC2);
+        SetShaderValue(vrConfig.distortionShader, GetShaderLocation(vrConfig.distortionShader, "rightScreenCenter"), rightScreenCenter, UNIFORM_VEC2);
+
+        SetShaderValue(vrConfig.distortionShader, GetShaderLocation(vrConfig.distortionShader, "scale"), scale, UNIFORM_VEC2);
+        SetShaderValue(vrConfig.distortionShader, GetShaderLocation(vrConfig.distortionShader, "scaleIn"), scaleIn, UNIFORM_VEC2);
+        SetShaderValue(vrConfig.distortionShader, GetShaderLocation(vrConfig.distortionShader, "hmdWarpParam"), hmd.lensDistortionValues, UNIFORM_VEC4);
+        SetShaderValue(vrConfig.distortionShader, GetShaderLocation(vrConfig.distortionShader, "chromaAbParam"), hmd.chromaAbCorrection, UNIFORM_VEC4);
+    }
 }
 
 // Detect if VR simulator is running
@@ -3733,7 +3640,7 @@ void BeginVrDrawing(void)
     if (vrSimulatorReady)
     {
         // Setup framebuffer for stereo rendering
-        rlEnableRenderTexture(vrConfig.stereoFbo.id);
+        rlEnableRenderTexture(stereoFbo.id);
 
         // NOTE: If your application is configured to treat the texture as a linear format (e.g. GL_RGBA)
         // and performs linear-to-gamma conversion in GLSL or does not care about gamma-correction, then:
@@ -3771,13 +3678,11 @@ void EndVrDrawing(void)
         rlMatrixMode(RL_MODELVIEW);                             // Enable internal modelview matrix
         rlLoadIdentity();                                       // Reset internal modelview matrix
 
-#if defined(SUPPORT_DISTORTION_SHADER)
-        // Draw RenderTexture (stereoFbo) using distortion shader
-        currentShader = vrConfig.distortionShader;
-#else
-        currentShader = GetShaderDefault();
-#endif
-        rlEnableTexture(vrConfig.stereoFbo.texture.id);
+        // Draw RenderTexture (stereoFbo) using distortion shader if available
+        if (vrConfig.distortionShader.id > 0) currentShader = vrConfig.distortionShader;
+        else currentShader = GetShaderDefault();
+
+        rlEnableTexture(stereoFbo.texture.id);
 
         rlPushMatrix();
             rlBegin(RL_QUADS);
@@ -3790,15 +3695,15 @@ void EndVrDrawing(void)
 
                 // Bottom-right corner for texture and quad
                 rlTexCoord2f(0.0f, 0.0f);
-                rlVertex2f(0.0f, (float)vrConfig.stereoFbo.texture.height);
+                rlVertex2f(0.0f, (float)stereoFbo.texture.height);
 
                 // Top-right corner for texture and quad
                 rlTexCoord2f(1.0f, 0.0f);
-                rlVertex2f( (float)vrConfig.stereoFbo.texture.width, (float)vrConfig.stereoFbo.texture.height);
+                rlVertex2f( (float)stereoFbo.texture.width, (float)stereoFbo.texture.height);
 
                 // Top-left corner for texture and quad
                 rlTexCoord2f(1.0f, 1.0f);
-                rlVertex2f( (float)vrConfig.stereoFbo.texture.width, 0.0f);
+                rlVertex2f( (float)stereoFbo.texture.width, 0.0f);
             rlEnd();
         rlPopMatrix();
 
@@ -4472,87 +4377,6 @@ static void GenDrawCube(void)
 }
 
 #if defined(SUPPORT_VR_SIMULATOR)
-// Configure stereo rendering (including distortion shader) with HMD device parameters
-static VrStereoConfig SetStereoConfig(VrDeviceInfo hmd, Shader distortion)
-{
-    VrStereoConfig config = { 0 };
-
-    // Initialize framebuffer and textures for stereo rendering
-    // NOTE: Screen size should match HMD aspect ratio
-    config.stereoFbo = rlLoadRenderTexture(screenWidth, screenHeight, UNCOMPRESSED_R8G8B8A8, 24, false);
-
-    // Assign distortion shader
-    config.distortionShader = distortion;
-
-    // Compute aspect ratio
-    float aspect = ((float)hmd.hResolution*0.5f)/(float)hmd.vResolution;
-
-    // Compute lens parameters
-    float lensShift = (hmd.hScreenSize*0.25f - hmd.lensSeparationDistance*0.5f)/hmd.hScreenSize;
-    float leftLensCenter[2] = { 0.25f + lensShift, 0.5f };
-    float rightLensCenter[2] = { 0.75f - lensShift, 0.5f };
-    float leftScreenCenter[2] = { 0.25f, 0.5f };
-    float rightScreenCenter[2] = { 0.75f, 0.5f };
-
-    // Compute distortion scale parameters
-    // NOTE: To get lens max radius, lensShift must be normalized to [-1..1]
-    float lensRadius = (float)fabs(-1.0f - 4.0f*lensShift);
-    float lensRadiusSq = lensRadius*lensRadius;
-    float distortionScale = hmd.lensDistortionValues[0] +
-                            hmd.lensDistortionValues[1]*lensRadiusSq +
-                            hmd.lensDistortionValues[2]*lensRadiusSq*lensRadiusSq +
-                            hmd.lensDistortionValues[3]*lensRadiusSq*lensRadiusSq*lensRadiusSq;
-
-    TraceLog(LOG_DEBUG, "VR: Distortion Scale: %f", distortionScale);
-
-    float normScreenWidth = 0.5f;
-    float normScreenHeight = 1.0f;
-    float scaleIn[2] = { 2.0f/normScreenWidth, 2.0f/normScreenHeight/aspect };
-    float scale[2] = { normScreenWidth*0.5f/distortionScale, normScreenHeight*0.5f*aspect/distortionScale };
-
-    TraceLog(LOG_DEBUG, "VR: Distortion Shader: LeftLensCenter = { %f, %f }", leftLensCenter[0], leftLensCenter[1]);
-    TraceLog(LOG_DEBUG, "VR: Distortion Shader: RightLensCenter = { %f, %f }", rightLensCenter[0], rightLensCenter[1]);
-    TraceLog(LOG_DEBUG, "VR: Distortion Shader: Scale = { %f, %f }", scale[0], scale[1]);
-    TraceLog(LOG_DEBUG, "VR: Distortion Shader: ScaleIn = { %f, %f }", scaleIn[0], scaleIn[1]);
-
-    // Fovy is normally computed with: 2*atan2(hmd.vScreenSize, 2*hmd.eyeToScreenDistance)
-    // ...but with lens distortion it is increased (see Oculus SDK Documentation)
-    //float fovy = 2.0f*atan2(hmd.vScreenSize*0.5f*distortionScale, hmd.eyeToScreenDistance);     // Really need distortionScale?
-    float fovy = 2.0f*(float)atan2(hmd.vScreenSize*0.5f, hmd.eyeToScreenDistance);
-
-    // Compute camera projection matrices
-    float projOffset = 4.0f*lensShift;      // Scaled to projection space coordinates [-1..1]
-    Matrix proj = MatrixPerspective(fovy, aspect, 0.01, 1000.0);
-    config.eyesProjection[0] = MatrixMultiply(proj, MatrixTranslate(projOffset, 0.0f, 0.0f));
-    config.eyesProjection[1] = MatrixMultiply(proj, MatrixTranslate(-projOffset, 0.0f, 0.0f));
-
-    // Compute camera transformation matrices
-    // NOTE: Camera movement might seem more natural if we model the head.
-    // Our axis of rotation is the base of our head, so we might want to add
-    // some y (base of head to eye level) and -z (center of head to eye protrusion) to the camera positions.
-    config.eyesViewOffset[0] = MatrixTranslate(-hmd.interpupillaryDistance*0.5f, 0.075f, 0.045f);
-    config.eyesViewOffset[1] = MatrixTranslate(hmd.interpupillaryDistance*0.5f, 0.075f, 0.045f);
-
-    // Compute eyes Viewports
-    //config.eyeViewportRight[0] = (int[4]){ 0, 0, hmd.hResolution/2, hmd.vResolution };
-    //config.eyeViewportLeft[0] = (int[4]){ hmd.hResolution/2, 0, hmd.hResolution/2, hmd.vResolution };
-
-#if defined(SUPPORT_DISTORTION_SHADER)
-    // Update distortion shader with lens and distortion-scale parameters
-    SetShaderValue(config.distortionShader, GetShaderLocation(config.distortionShader, "leftLensCenter"), leftLensCenter, UNIFORM_VEC2);
-    SetShaderValue(config.distortionShader, GetShaderLocation(config.distortionShader, "rightLensCenter"), rightLensCenter, UNIFORM_VEC2);
-    SetShaderValue(config.distortionShader, GetShaderLocation(config.distortionShader, "leftScreenCenter"), leftScreenCenter, UNIFORM_VEC2);
-    SetShaderValue(config.distortionShader, GetShaderLocation(config.distortionShader, "rightScreenCenter"), rightScreenCenter, UNIFORM_VEC2);
-
-    SetShaderValue(config.distortionShader, GetShaderLocation(config.distortionShader, "scale"), scale, UNIFORM_VEC2);
-    SetShaderValue(config.distortionShader, GetShaderLocation(config.distortionShader, "scaleIn"), scaleIn, UNIFORM_VEC2);
-    SetShaderValue(config.distortionShader, GetShaderLocation(config.distortionShader, "hmdWarpParam"), hmd.lensDistortionValues, UNIFORM_VEC4);
-    SetShaderValue(config.distortionShader, GetShaderLocation(config.distortionShader, "chromaAbParam"), hmd.chromaAbCorrection, UNIFORM_VEC4);
-#endif
-
-    return config;
-}
-
 // Set internal projection and modelview matrix depending on eyes tracking data
 static void SetStereoView(int eye, Matrix matProjection, Matrix matModelView)
 {

@@ -443,16 +443,6 @@ typedef struct VrDeviceInfo {
     float chromaAbCorrection[4];    // HMD chromatic aberration correction parameters
 } VrDeviceInfo;
 
-// VR Stereo rendering configuration for simulator
-typedef struct VrStereoConfig {
-    RenderTexture2D stereoFbo;      // VR stereo rendering framebuffer
-    Shader distortionShader;        // VR stereo rendering distortion shader
-    Matrix eyesProjection[2];       // VR stereo rendering eyes projection matrices
-    Matrix eyesViewOffset[2];       // VR stereo rendering eyes view offset matrices
-    int eyeViewportRight[4];        // VR stereo rendering right eye viewport [x, y, w, h]
-    int eyeViewportLeft[4];         // VR stereo rendering left eye viewport [x, y, w, h]
-} VrStereoConfig;
-
 //----------------------------------------------------------------------------------
 // Enumerators Definition
 //----------------------------------------------------------------------------------
@@ -859,16 +849,6 @@ typedef enum {
     CAMERA_PERSPECTIVE = 0,
     CAMERA_ORTHOGRAPHIC
 } CameraType;
-
-// Head Mounted Display devices
-typedef enum {
-    HMD_DEFAULT_DEVICE = 0,
-    HMD_OCULUS_RIFT_DK2,
-    HMD_OCULUS_RIFT_CV1,
-    HMD_OCULUS_GO,
-    HMD_VALVE_HTC_VIVE,
-    HMD_SONY_PSVR
-} VrDeviceType;
 
 // Type of n-patch
 typedef enum {
@@ -1330,7 +1310,7 @@ RLAPI Shader GetShaderDefault(void);                                      // Get
 RLAPI Texture2D GetTextureDefault(void);                                  // Get default texture
 
 // Shader configuration functions
-RLAPI int GetShaderLocation(Shader shader, const char *uniformName);              // Get shader uniform location
+RLAPI int GetShaderLocation(Shader shader, const char *uniformName);      // Get shader uniform location
 RLAPI void SetShaderValue(Shader shader, int uniformLoc, const void *value, int uniformType);               // Set shader uniform value
 RLAPI void SetShaderValueV(Shader shader, int uniformLoc, const void *value, int uniformType, int count);   // Set shader uniform value vector
 RLAPI void SetShaderValueMatrix(Shader shader, int uniformLoc, Matrix mat);         // Set shader uniform value (matrix 4x4)
@@ -1344,7 +1324,7 @@ RLAPI Matrix GetMatrixModelview();                                        // Get
 RLAPI Texture2D GenTextureCubemap(Shader shader, Texture2D skyHDR, int size);       // Generate cubemap texture from HDR texture
 RLAPI Texture2D GenTextureIrradiance(Shader shader, Texture2D cubemap, int size);   // Generate irradiance texture using cubemap data
 RLAPI Texture2D GenTexturePrefilter(Shader shader, Texture2D cubemap, int size);    // Generate prefilter texture using cubemap data
-RLAPI Texture2D GenTextureBRDF(Shader shader, int size);                  // Generate BRDF texture using cubemap data
+RLAPI Texture2D GenTextureBRDF(Shader shader, int size);                  // Generate BRDF texture
 
 // Shading begin/end functions
 RLAPI void BeginShaderMode(Shader shader);                                // Begin custom shader drawing
@@ -1355,10 +1335,10 @@ RLAPI void BeginScissorMode(int x, int y, int width, int height);         // Beg
 RLAPI void EndScissorMode(void);                                          // End scissor mode
 
 // VR control functions
-RLAPI VrDeviceInfo GetVrDeviceInfo(int vrDeviceType);   // Get VR device information for some standard devices
-RLAPI void InitVrSimulator(VrDeviceInfo info);          // Init VR simulator for selected device parameters
-RLAPI void UpdateVrTracking(Camera *camera);            // Update VR tracking (position and orientation) and camera
+RLAPI void InitVrSimulator(void);                       // Init VR simulator for selected device parameters
 RLAPI void CloseVrSimulator(void);                      // Close VR simulator for current device
+RLAPI void UpdateVrTracking(Camera *camera);            // Update VR tracking (position and orientation) and camera
+RLAPI void SetVrConfiguration(VrDeviceInfo info, Shader distortion);      // Set stereo rendering configuration parameters 
 RLAPI bool IsVrSimulatorReady(void);                    // Detect if VR simulator is ready
 RLAPI void ToggleVrMode(void);                          // Enable/Disable VR experience
 RLAPI void BeginVrDrawing(void);                        // Begin VR simulator stereo rendering
