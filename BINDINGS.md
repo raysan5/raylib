@@ -20,6 +20,7 @@ Some people ported raylib to other languages in form of bindings or wrappers to 
  - [raylib-chaiscript](https://github.com/RobLoach/raylib-chaiscript) : raylib **ChaiScript** binding
  - [node-raylib](https://github.com/RobLoach/node-raylib) : **Node.js** raylib binding
  - [raylib-odin](https://github.com/kevinw/raylib-odin): **Odin** raylib binding
+ - [raylib-factor](https://github.com/Silverbeard00/raylib-factor): **Factor** raylib binding
  - *[raylib flat-assembler Usage example]()*
  - *[raylib COBOL Usage example](https://github.com/Martinfx/Cobol/tree/master/OpenCobol/Games/raylib)*
  
