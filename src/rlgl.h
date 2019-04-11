@@ -2027,10 +2027,10 @@ unsigned int rlLoadTextureCubemap(void *data, int size, int format)
     unsigned int glInternalFormat, glFormat, glType;
     rlGetGlTextureFormats(format, &glInternalFormat, &glFormat, &glType);
 
-    // Load cubemap faces
-    for (unsigned int i = 0; i < 6; i++)
+    if (glInternalFormat != -1)
     {
-        if (glInternalFormat != -1)
+        // Load cubemap faces
+        for (unsigned int i = 0; i < 6; i++)
         {
             if (format < COMPRESSED_DXT1_RGB) glTexImage2D(GL_TEXTURE_CUBE_MAP_POSITIVE_X + i, 0, glInternalFormat, size, size, 0, glFormat, glType, (unsigned char *)data + i*dataSize);
 #if !defined(GRAPHICS_API_OPENGL_11)

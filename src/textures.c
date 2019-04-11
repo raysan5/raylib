@@ -1206,12 +1206,9 @@ TextureCubemap LoadTextureCubemap(Image image, int layoutType)
         cubemap.height = cubemap.width;
     }
 
-    int size = cubemap.width;
-
     if (layoutType != CUBEMAP_AUTO_DETECT)
     {
-        //unsigned int dataSize = GetPixelDataSize(size, size, format);
-        //void *facesData = malloc(size*size*dataSize*6);    // Get memory for 6 faces in a column
+        int size = cubemap.width;
 
         Image faces = { 0 };                // Vertical column image
         Rectangle faceRecs[6] = { 0 };      // Face source rectangles
@@ -1225,6 +1222,7 @@ TextureCubemap LoadTextureCubemap(Image image, int layoutType)
         else if (layoutType == CUBEMAP_PANORAMA)
         {
             // TODO: Convert panorama image to square faces...
+            // Ref: https://github.com/denivip/panorama/blob/master/panorama.cpp
         }
         else
         {
