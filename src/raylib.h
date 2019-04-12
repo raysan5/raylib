@@ -288,12 +288,6 @@ typedef struct Camera2D {
     float zoom;             // Camera zoom (scaling), should be 1.0f by default
 } Camera2D;
 
-// Bounding box type
-typedef struct BoundingBox {
-    Vector3 min;            // Minimum vertex box-corner
-    Vector3 max;            // Maximum vertex box-corner
-} BoundingBox;
-
 // Vertex data definning a mesh
 // NOTE: Data stored in CPU memory (and GPU)
 typedef struct Mesh {
@@ -392,6 +386,12 @@ typedef struct RayHitInfo {
     Vector3 position;       // Position of nearest hit
     Vector3 normal;         // Surface normal of hit
 } RayHitInfo;
+
+// Bounding box type
+typedef struct BoundingBox {
+    Vector3 min;            // Minimum vertex box-corner
+    Vector3 max;            // Maximum vertex box-corner
+} BoundingBox;
 
 // Wave type, defines audio wave data
 typedef struct Wave {
@@ -1237,7 +1237,7 @@ RLAPI void DrawGizmo(Vector3 position);                                         
 
 // Model loading/unloading functions
 RLAPI Model LoadModel(const char *fileName);                                                            // Load model from files (meshes and materials)
-RLAPI Model LoadModelFromMesh(Mesh mesh);                                                               // Load model from generated mesh
+RLAPI Model LoadModelFromMesh(Mesh mesh);                                                               // Load model from generated mesh (default material)
 RLAPI void UnloadModel(Model model);                                                                    // Unload model from memory (RAM and/or VRAM)
 
 // Mesh loading/unloading functions
