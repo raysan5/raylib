@@ -278,7 +278,7 @@ typedef struct Camera3D {
     int type;               // Camera type, defines projection type: CAMERA_PERSPECTIVE or CAMERA_ORTHOGRAPHIC
 } Camera3D;
 
-#define Camera Camera3D     // Camera type fallback, defaults to Camera3D
+typedef Camera3D Camera;    // Camera type fallback, defaults to Camera3D
 
 // Camera2D type, defines a 2d camera
 typedef struct Camera2D {
