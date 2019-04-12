@@ -2347,7 +2347,7 @@ static bool InitGraphicsDevice(int width, int height)
     displayHeight = screenHeight;
 #endif  // defined(PLATFORM_WEB)
 
-    glfwDefaultWindowHints();                   // Set default windows hints:
+    glfwDefaultWindowHints();                       // Set default windows hints:
     //glfwWindowHint(GLFW_RED_BITS, 8);             // Framebuffer red color component bits
     //glfwWindowHint(GLFW_GREEN_BITS, 8);           // Framebuffer green color component bits
     //glfwWindowHint(GLFW_BLUE_BITS, 8);            // Framebuffer blue color component bits
@@ -2356,6 +2356,7 @@ static bool InitGraphicsDevice(int width, int height)
     //glfwWindowHint(GLFW_REFRESH_RATE, 0);         // Refresh rate for fullscreen window
     //glfwWindowHint(GLFW_CLIENT_API, GLFW_OPENGL_API); // OpenGL API to use. Alternative: GLFW_OPENGL_ES_API
     //glfwWindowHint(GLFW_AUX_BUFFERS, 0);          // Number of auxiliar buffers
+    glfwWindowHint(GLFW_SCALE_TO_MONITOR, GLFW_TRUE);   // Scale content area based on the monitor content scale where window is placed on
 
     // Check some Window creation flags
     if (configFlags & FLAG_WINDOW_HIDDEN) glfwWindowHint(GLFW_VISIBLE, GL_FALSE);           // Visible window
