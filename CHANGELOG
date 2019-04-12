@@ -20,6 +20,8 @@ Detailed changes:
 [build] REVIEWED: VS2015 and VS2017 projects
 [build] REVIEWED: Android APK build pipeline
 
+[core] Converted most #defined values as enum values
+[core] Complete redesign of RPI input system
 [core] ADDED: IsWindowResized() - Check if window has been resized
 [core] ADDED: IsWindowHidden() - Check if window is currently hidden
 [core] ADDED: UnhideWindow() - Show the window
