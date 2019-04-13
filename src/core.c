@@ -2877,7 +2877,7 @@ static bool InitGraphicsDevice(int width, int height)
 // Set viewport parameters
 static void SetupViewport(void)
 {
-#if defined(__APPLE__)
+#if defined(PLATFORM_DESKTOP)
     // Get framebuffer size of current window
     // NOTE: Required to handle HighDPI display correctly on OSX because framebuffer
     // is automatically reasized to adapt to new DPI.
