@@ -295,6 +295,8 @@ void DrawCubeTexture(Texture2D texture, Vector3 position, float width, float hei
     float x = position.x;
     float y = position.y;
     float z = position.z;
+    
+    if (rlCheckBufferLimit(36)) rlglDraw();
 
     rlEnableTexture(texture.id);
 
@@ -357,6 +359,9 @@ void DrawSphere(Vector3 centerPos, float radius, Color color)
 // Draw sphere with extended parameters
 void DrawSphereEx(Vector3 centerPos, float radius, int rings, int slices, Color color)
 {
+    int numVertex = (rings + 2)*slices*6;
+    if (rlCheckBufferLimit(numVertex)) rlglDraw();
+    
     rlPushMatrix();
         // NOTE: Transformation is applied in inverse order (scale -> translate)
         rlTranslatef(centerPos.x, centerPos.y, centerPos.z);
@@ -397,6 +402,9 @@ void DrawSphereEx(Vector3 centerPos, float radius, int rings, int slices, Color 
 // Draw sphere wires
 void DrawSphereWires(Vector3 centerPos, float radius, int rings, int slices, Color color)
 {
+    int numVertex = (rings + 2)*slices*6;
+    if (rlCheckBufferLimit(numVertex)) rlglDraw();
+    
     rlPushMatrix();
         // NOTE: Transformation is applied in inverse order (scale -> translate)
         rlTranslatef(centerPos.x, centerPos.y, centerPos.z);
@@ -440,6 +448,9 @@ void DrawSphereWires(Vector3 centerPos, float radius, int rings, int slices, Col
 void DrawCylinder(Vector3 position, float radiusTop, float radiusBottom, float height, int sides, Color color)
 {
     if (sides < 3) sides = 3;
+    
+    int numVertex = sides*6;
+    if (rlCheckBufferLimit(numVertex)) rlglDraw();
 
     rlPushMatrix();
         rlTranslatef(position.x, position.y, position.z);
@@ -496,6 +507,9 @@ void DrawCylinder(Vector3 position, float radiusTop, float radiusBottom, float h
 void DrawCylinderWires(Vector3 position, float radiusTop, float radiusBottom, float height, int sides, Color color)
 {
     if (sides < 3) sides = 3;
+    
+    int numVertex = sides*8;
+    if (rlCheckBufferLimit(numVertex)) rlglDraw();
 
     rlPushMatrix();
         rlTranslatef(position.x, position.y, position.z);
@@ -524,6 +538,8 @@ void DrawCylinderWires(Vector3 position, float radiusTop, float radiusBottom, fl
 // Draw a plane
 void DrawPlane(Vector3 centerPos, Vector2 size, Color color)
 {
+    if (rlCheckBufferLimit(4)) rlglDraw();
+    
     // NOTE: Plane is always created on XZ ground
     rlPushMatrix();
         rlTranslatef(centerPos.x, centerPos.y, centerPos.z);
@@ -559,6 +575,8 @@ void DrawRay(Ray ray, Color color)
 void DrawGrid(int slices, float spacing)
 {
     int halfSlices = slices/2;
+
+    if (rlCheckBufferLimit(slices*4)) rlglDraw();
 
     rlBegin(RL_LINES);
         for (int i = -halfSlices; i <= halfSlices; i++)
