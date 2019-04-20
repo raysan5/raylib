@@ -1,3 +1,25 @@
+/*******************************************************************************************
+ *
+ *   raylib [network] example - Network Test
+ *
+ *   Welcome to raylib!
+ *
+ *   To test examples, just press F6 and execute raylib_compile_execute script
+ *   Note that compiled executable is placed in the same folder as .c file
+ *
+ *   You can find all basic examples on C:\raylib\raylib\examples folder or
+ *   raylib official webpage: www.raylib.com
+ *
+ *   Enjoy using raylib. :)
+ *
+ *   This example has been created using raylib 2.0 (www.raylib.com)
+ *   raylib is licensed under an unmodified zlib/libpng license (View raylib.h
+ *for details)
+ *
+ *   Copyright (c) 2013-2016 Ramon Santamaria (@raysan5)
+ *
+ ********************************************************************************************/
+
 #include "raylib.h"
 
 #include <assert.h>
@@ -71,7 +93,7 @@ void test_resolve_host()
 	const char *        address = "localhost";
 	const char *        port    = "80";
 	AddressInformation *addr    = AllocAddressList(3);
-	int count = ResolveHost(address, port, ADDRESS_TYPE_IPV4, 0, addr); 
+	int count = ResolveHost(address, port, ADDRESS_TYPE_ANY, 0, addr); 
 
 	assert(GetAddressFamily(addr[0]) == ADDRESS_TYPE_IPV6);
 	assert(GetAddressFamily(addr[1]) == ADDRESS_TYPE_IPV4);
@@ -109,8 +131,8 @@ int main()
 
 	// Run the tests
 	test_network_initialise();
-	// test_resolve_host();
-    test_socket_create();
+	test_resolve_host();
+    // test_socket_create();
 
 	// Main game loop
 	while (!WindowShouldClose()) {

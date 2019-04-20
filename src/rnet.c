@@ -62,18 +62,22 @@ typedef struct _SocketAddress
 {
 	struct sockaddr address;
 } _SocketAddress;
+
 typedef struct _SocketAddressIPv4
 {
 	struct sockaddr_in address;
 } _SocketAddressIPv4;
+
 typedef struct _SocketAddressIPv6
 {
 	struct sockaddr_in6 address;
 } _SocketAddressIPv6;
+
 typedef struct _SocketAddressStorage
 {
 	struct sockaddr_storage address;
 } _SocketAddressStorage;
+
 typedef struct _AddressInformation
 {
 	struct addrinfo addr;
@@ -310,7 +314,9 @@ static bool InitSocket(Socket *sock, struct addrinfo *addr)
 				sock->channel = socket(AF_INET6, SOCK_DGRAM, 0);
 			}
 			break;
-		default: break;
+		default: 
+			TraceLog(LOG_WARNING, "Invalid socket type specified.");
+			break;
 	}
 	return IsSocketValid(sock);
 }
@@ -1005,6 +1011,10 @@ bool SocketListen(SocketConfig *config, SocketResult *result)
 			else
 			{
 				success = false;
+				result->socket->status = SocketGetLastError();
+				TraceLog(LOG_WARNING, "Socket Error: %s",
+						 SocketErrorCodeToString(result->socket->status));
+				SocketSetLastError(0);
 			}
 		}
 		else
@@ -1811,49 +1821,7 @@ int CheckSockets(SocketSet *set, unsigned int timeout)
 		}
 	}
 	return (retval);
-}
-
-//  Allocate a Packet
-//  Packet *AllocPacket(int size)
-//  {
-//  	struct Packet *packet;
-//  	packet = (struct Packet *) malloc(sizeof(*packet));
-//  	if (packet != NULL)
-//  	{
-//  		memset(packet, 0, sizeof(*packet));
-//  		packet->size = 0;
-//  		packet->offs = 0;
-//  		packet->maxs = size;
-//  		packet->data = (uint8_t *) malloc(size * sizeof(uint8_t));
-//  		memset(packet->data, '\0', size);
-//  		if (packet->data == NULL)
-//  		{
-//  			free(packet);
-//  			packet = NULL;
-//  		}
-//  	}
-//  	else
-//  	{
-//  		free(packet);
-//  		packet = NULL;
-//  	}
-//  	return packet;
-//  }
-
-// Free an allocated Packet
-//  void FreePacket(Packet *packet)
-//  {
-//  	if (packet != NULL)
-//  	{
-//  		if (packet->data != NULL)
-//  		{
-//  			free(packet->data);
-//  			packet->data = NULL;
-//  		}
-//  		free(packet);
-//  		packet = NULL;
-//  	}
-//  }
+} 
 
 // Allocate an AddressInformation
 AddressInformation AllocAddress()

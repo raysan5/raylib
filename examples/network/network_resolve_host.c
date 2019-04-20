@@ -1,6 +1,6 @@
 /*******************************************************************************************
  *
- *   raylib [network] example - Resolve host
+ *   raylib [network] example - Resolve Host
  *
  *   Welcome to raylib!
  *

@@ -519,8 +519,8 @@ typedef struct SocketOpt
 
 typedef enum
 {
-	SOCKET_TCP = 1, // SOCK_STREAM
-	SOCKET_UDP = 2  // SOCK_DGRAM
+	SOCKET_TCP = 0, // SOCK_STREAM
+	SOCKET_UDP = 1  // SOCK_DGRAM
 } SocketType;
 
 typedef struct UDPChannel
