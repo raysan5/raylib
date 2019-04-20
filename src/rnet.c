@@ -58,19 +58,24 @@
 // Types and Structures Definition
 //----------------------------------------------------------------------------------
 
-typedef struct _SocketAddress {
+typedef struct _SocketAddress
+{
 	struct sockaddr address;
 } _SocketAddress;
-typedef struct _SocketAddressIPv4 {
+typedef struct _SocketAddressIPv4
+{
 	struct sockaddr_in address;
 } _SocketAddressIPv4;
-typedef struct _SocketAddressIPv6 {
+typedef struct _SocketAddressIPv6
+{
 	struct sockaddr_in6 address;
 } _SocketAddressIPv6;
-typedef struct _SocketAddressStorage {
+typedef struct _SocketAddressStorage
+{
 	struct sockaddr_storage address;
 } _SocketAddressStorage;
-typedef struct _AddressInformation {
+typedef struct _AddressInformation
+{
 	struct addrinfo addr;
 } _AddressInformation;
 
@@ -78,24 +83,24 @@ typedef struct _AddressInformation {
 // Global module forward declarations
 //----------------------------------------------------------------------------------
 
+static void        PrintSocket(struct sockaddr_storage *addr, const int family, const int socktype, const int protocol);
+static const char *SocketAddressToString(struct sockaddr_storage *sockaddr);
+static bool        IsIPv4Address(const char *ip);
+static bool        IsIPv6Address(const char *ip);
+static void *      GetSocketPortPtr(struct sockaddr_storage *sa);
+static void *      GetSocketAddressPtr(struct sockaddr_storage *sa);
 static bool        IsSocketValid(Socket *sock);
 static void        SocketSetLastError(int err);
 static int         SocketGetLastError();
 static char *      SocketGetLastErrorString();
 static char *      SocketErrorCodeToString(int err);
 static bool        SocketSetDefaults(SocketConfig *config);
-static bool        InitSocket(Socket *outsock, struct addrinfo *addr);
+static bool        InitSocket(Socket *sock, struct addrinfo *addr);
 static bool        CreateSocket(SocketConfig *config, SocketResult *outresult);
-static bool        SocketSetBlocking(Socket *out);
-static bool        SocketSetNonBlocking(Socket *out);
-static bool        SocketSetOptions(SocketConfig *config, Socket *channel);
-static void *      GetSocketAddressPtr(struct sockaddr *sa);
-static void *      GetSocketPortPtr(struct sockaddr *sa);
+static bool        SocketSetBlocking(Socket *sock);
+static bool        SocketSetNonBlocking(Socket *sock);
+static bool        SocketSetOptions(SocketConfig *config, Socket *sock);
 static void        SocketSetHints(SocketConfig *config, struct addrinfo *hints);
-static bool        IsIPv4Address(const char *ip);
-static bool        IsIPv6Address(const char *ip);
-static const char *SocketAddressToString(struct sockaddr_storage *sockaddr);
-static void        PrintSocket(struct sockaddr_storage *addr, const int family, const int socktype, const int protocol);
 
 //----------------------------------------------------------------------------------
 // Global module implementation
@@ -104,27 +109,35 @@ static void        PrintSocket(struct sockaddr_storage *addr, const int family, 
 // Print socket information
 static void PrintSocket(struct sockaddr_storage *addr, const int family, const int socktype, const int protocol)
 {
-	switch (family) {
-		case AF_UNSPEC: {
-			TraceLog(LOG_DEBUG, "\tFamily: Unspecified");
-		} break;
-		case AF_INET: {
+	switch (family)
+	{
+		case AF_UNSPEC: { TraceLog(LOG_DEBUG, "\tFamily: Unspecified");
+		}
+		break;
+		case AF_INET:
+		{
 			TraceLog(LOG_DEBUG, "\tFamily: AF_INET (IPv4)");
 			TraceLog(LOG_INFO, "\t- IPv4 address %s", SocketAddressToString(addr));
-		} break;
-		case AF_INET6: {
+		}
+		break;
+		case AF_INET6:
+		{
 			TraceLog(LOG_DEBUG, "\tFamily: AF_INET6 (IPv6)");
 			TraceLog(LOG_INFO, "\t- IPv6 address %s", SocketAddressToString(addr));
-		} break;
-		case AF_NETBIOS: {
+		}
+		break;
+		case AF_NETBIOS:
+		{
 			TraceLog(LOG_DEBUG, "\tFamily: AF_NETBIOS (NetBIOS)");
-		} break;
-		default: {
-			TraceLog(LOG_DEBUG, "\tFamily: Other %ld", family);
-		} break;
+		}
+		break;
+		default: { TraceLog(LOG_DEBUG, "\tFamily: Other %ld", family);
+		}
+		break;
 	}
 	TraceLog(LOG_DEBUG, "\tSocket type:");
-	switch (socktype) {
+	switch (socktype)
+	{
 		case 0: TraceLog(LOG_DEBUG, "\t- Unspecified"); break;
 		case SOCK_STREAM:
 			TraceLog(LOG_DEBUG, "\t- SOCK_STREAM (stream)");
@@ -142,7 +155,8 @@ static void PrintSocket(struct sockaddr_storage *addr, const int family, const i
 		default: TraceLog(LOG_DEBUG, "\t- Other %ld", socktype); break;
 	}
 	TraceLog(LOG_DEBUG, "\tProtocol:");
-	switch (protocol) {
+	switch (protocol)
+	{
 		case 0: TraceLog(LOG_DEBUG, "\t- Unspecified"); break;
 		case IPPROTO_TCP: TraceLog(LOG_DEBUG, "\t- IPPROTO_TCP (TCP)"); break;
 		case IPPROTO_UDP: TraceLog(LOG_DEBUG, "\t- IPPROTO_UDP (UDP)"); break;
@@ -156,15 +170,20 @@ static const char *SocketAddressToString(struct sockaddr_storage *sockaddr)
 	static ipv6[INET6_ADDRSTRLEN];
 	assert(sockaddr != NULL);
 	assert(sockaddr->ss_family == AF_INET || sockaddr->ss_family == AF_INET6);
-	switch (sockaddr->ss_family) {
-		case AF_INET: {
+	switch (sockaddr->ss_family)
+	{
+		case AF_INET:
+		{
 			struct sockaddr_in *s = ((struct sockaddr_in *) sockaddr);
 			return inet_ntop(AF_INET, &s->sin_addr, ipv6, INET_ADDRSTRLEN);
-		} break;
-		case AF_INET6: {
+		}
+		break;
+		case AF_INET6:
+		{
 			struct sockaddr_in6 *s = ((struct sockaddr_in6 *) sockaddr);
 			return inet_ntop(AF_INET6, &s->sin6_addr, ipv6, INET6_ADDRSTRLEN);
-		} break;
+		}
+		break;
 	}
 	return NULL;
 }
@@ -186,9 +205,10 @@ static bool IsIPv6Address(const char *ip)
 }
 
 // Return a pointer to the port from the correct address family (IPv4, or IPv6)
-void *GetSocketPortPtr(struct sockaddr *sa)
+static void *GetSocketPortPtr(struct sockaddr_storage *sa)
 {
-	if (sa->sa_family == AF_INET) {
+	if (sa->ss_family == AF_INET)
+	{
 		return &(((struct sockaddr_in *) sa)->sin_port);
 	}
 
@@ -196,9 +216,10 @@ void *GetSocketPortPtr(struct sockaddr *sa)
 }
 
 // Return a pointer to the address from the correct address family (IPv4, or IPv6)
-void *GetSocketAddressPtr(struct sockaddr *sa)
+static void *GetSocketAddressPtr(struct sockaddr_storage *sa)
 {
-	if (sa->sa_family == AF_INET) {
+	if (sa->ss_family == AF_INET)
+	{
 		return &(((struct sockaddr_in *) sa)->sin_addr);
 	}
 
@@ -208,7 +229,8 @@ void *GetSocketAddressPtr(struct sockaddr *sa)
 // Is the socket in a valid state?
 static bool IsSocketValid(Socket *sock)
 {
-	if (sock != NULL) {
+	if (sock != NULL)
+	{
 		return (sock->channel != INVALID_SOCKET);
 	}
 	return false;
@@ -255,7 +277,8 @@ static char *SocketErrorCodeToString(int err)
 // Set the defaults in the supplied SocketConfig if they're not already set
 static bool SocketSetDefaults(SocketConfig *config)
 {
-	if (config->backlog_size == 0) {
+	if (config->backlog_size == 0)
+	{
 		config->backlog_size = SOCKET_MAX_QUEUE_SIZE;
 	}
 
@@ -265,18 +288,25 @@ static bool SocketSetDefaults(SocketConfig *config)
 // Create the socket channel
 static bool InitSocket(Socket *sock, struct addrinfo *addr)
 {
-	switch (sock->type) {
+	switch (sock->type)
+	{
 		case SOCKET_TCP:
-			if (addr->ai_family == AF_INET) {
+			if (addr->ai_family == AF_INET)
+			{
 				sock->channel = socket(AF_INET, SOCK_STREAM, 0);
-			} else {
+			}
+			else
+			{
 				sock->channel = socket(AF_INET6, SOCK_STREAM, 0);
 			}
 			break;
 		case SOCKET_UDP:
-			if (addr->ai_family == AF_INET) {
+			if (addr->ai_family == AF_INET)
+			{
 				sock->channel = socket(AF_INET, SOCK_DGRAM, 0);
-			} else {
+			}
+			else
+			{
 				sock->channel = socket(AF_INET6, SOCK_DGRAM, 0);
 			}
 			break;
@@ -330,7 +360,8 @@ static bool CreateSocket(SocketConfig *config, SocketResult *outresult)
 	);
 
 	// Did we succeed?
-	if (addrstatus != 0) {
+	if (addrstatus != 0)
+	{
 		outresult->socket->status = SocketGetLastError();
 		TraceLog(LOG_WARNING,
 				 "Socket Error: %s",
@@ -342,7 +373,9 @@ static bool CreateSocket(SocketConfig *config, SocketResult *outresult)
 				 config->port,
 				 SocketGetLastErrorString());
 		return (success = false);
-	} else {
+	}
+	else
+	{
 		char      hoststr[NI_MAXHOST];
 		char      portstr[NI_MAXSERV];
 		socklen_t client_len = sizeof(struct sockaddr_storage);
@@ -352,9 +385,11 @@ static bool CreateSocket(SocketConfig *config, SocketResult *outresult)
 
 	// Walk the address information linked-list
 	struct addrinfo *it;
-	for (it = res; it != NULL; it = it->ai_next) {
+	for (it = res; it != NULL; it = it->ai_next)
+	{
 		// Initialise the socket
-		if (!InitSocket(outresult->socket, it)) {
+		if (!InitSocket(outresult->socket, it))
+		{
 			outresult->socket->status = SocketGetLastError();
 			TraceLog(LOG_WARNING,
 					 "Socket Error: %s",
@@ -364,7 +399,8 @@ static bool CreateSocket(SocketConfig *config, SocketResult *outresult)
 		}
 
 		// Set socket options
-		if (!SocketSetOptions(config, outresult->socket)) {
+		if (!SocketSetOptions(config, outresult->socket))
+		{
 			outresult->socket->status = SocketGetLastError();
 			TraceLog(LOG_WARNING,
 					 "Socket Error: %s",
@@ -375,7 +411,8 @@ static bool CreateSocket(SocketConfig *config, SocketResult *outresult)
 		}
 	}
 
-	if (!IsSocketValid(outresult->socket)) {
+	if (!IsSocketValid(outresult->socket))
+	{
 		outresult->socket->status = SocketGetLastError();
 		TraceLog(
 			LOG_WARNING, "Socket Error: %s", SocketErrorCodeToString(outresult->status));
@@ -384,21 +421,27 @@ static bool CreateSocket(SocketConfig *config, SocketResult *outresult)
 		return (success = false);
 	}
 
-	if (success) {
+	if (success)
+	{
 		outresult->status         = RESULT_SUCCESS;
 		outresult->socket->ready  = 0;
 		outresult->socket->status = 0;
-		if (!(config->type == SOCKET_UDP)) {
+		if (!(config->type == SOCKET_UDP))
+		{
 			outresult->socket->isServer = config->server;
 		}
-		switch (res->ai_addr->sa_family) {
-			case AF_INET: {
+		switch (res->ai_addr->sa_family)
+		{
+			case AF_INET:
+			{
 				outresult->socket->addripv4 = (struct _SocketAddressIPv4 *) malloc(
 					sizeof(*outresult->socket->addripv4));
-				if (outresult->socket->addripv4 != NULL) {
+				if (outresult->socket->addripv4 != NULL)
+				{
 					memset(outresult->socket->addripv4, 0,
 						   sizeof(*outresult->socket->addripv4));
-					if (outresult->socket->addripv4 != NULL) {
+					if (outresult->socket->addripv4 != NULL)
+					{
 						memcpy(&outresult->socket->addripv4->address,
 							   (struct sockaddr_in *) res->ai_addr, sizeof(struct sockaddr_in));
 						outresult->socket->isIPv6 = false;
@@ -410,14 +453,18 @@ static bool CreateSocket(SocketConfig *config, SocketResult *outresult)
 						TraceLog(LOG_INFO, "Socket address set to %s:%s", hoststr, portstr);
 					}
 				}
-			} break;
-			case AF_INET6: {
+			}
+			break;
+			case AF_INET6:
+			{
 				outresult->socket->addripv6 = (struct _SocketAddressIPv6 *) malloc(
 					sizeof(*outresult->socket->addripv6));
-				if (outresult->socket->addripv6 != NULL) {
+				if (outresult->socket->addripv6 != NULL)
+				{
 					memset(outresult->socket->addripv6, 0,
 						   sizeof(*outresult->socket->addripv6));
-					if (outresult->socket->addripv6 != NULL) {
+					if (outresult->socket->addripv6 != NULL)
+					{
 						memcpy(&outresult->socket->addripv6->address,
 							   (struct sockaddr_in6 *) res->ai_addr, sizeof(struct sockaddr_in6));
 						outresult->socket->isIPv6 = true;
@@ -429,7 +476,8 @@ static bool CreateSocket(SocketConfig *config, SocketResult *outresult)
 						TraceLog(LOG_INFO, "Socket address set to %s:%s", hoststr, portstr);
 					}
 				}
-			} break;
+			}
+			break;
 		}
 	}
 	freeaddrinfo(res);
@@ -445,7 +493,8 @@ static bool SocketSetBlocking(Socket *sock)
 	ret                = ioctlsocket(sock->channel, FIONBIO, &mode);
 #else
 	const int flags = fcntl(sock->channel, F_GETFL, 0);
-	if (!(flags & O_NONBLOCK)) {
+	if (!(flags & O_NONBLOCK))
+	{
 		TraceLog(LOG_DEBUG, "Socket was already in blocking mode");
 		return ret;
 	}
@@ -464,7 +513,8 @@ static bool SocketSetNonBlocking(Socket *sock)
 	ret                = ioctlsocket(sock->channel, FIONBIO, &mode);
 #else
 	const int flags = fcntl(sock->channel, F_GETFL, 0);
-	if ((flags & O_NONBLOCK)) {
+	if ((flags & O_NONBLOCK))
+	{
 		TraceLog(LOG_DEBUG, "Socket was already in non-blocking mode");
 		return ret;
 	}
@@ -476,13 +526,16 @@ static bool SocketSetNonBlocking(Socket *sock)
 // Set options specified in SocketConfig to Socket sock
 static bool SocketSetOptions(SocketConfig *config, Socket *sock)
 {
-	for (int i = 0; i < SOCKET_MAX_SOCK_OPTS; i++) {
+	for (int i = 0; i < SOCKET_MAX_SOCK_OPTS; i++)
+	{
 		SocketOpt *opt = &config->sockopts[i];
-		if (opt->id == 0) {
+		if (opt->id == 0)
+		{
 			break;
 		}
 
-		if (setsockopt(sock->channel, SOL_SOCKET, opt->id, opt->value, opt->valueLen) < 0) {
+		if (setsockopt(sock->channel, SOL_SOCKET, opt->id, opt->value, opt->valueLen) < 0)
+		{
 			return false;
 		}
 	}
@@ -493,32 +546,43 @@ static bool SocketSetOptions(SocketConfig *config, Socket *sock)
 // Set "hints" in an addrinfo struct, to be passed to getaddrinfo.
 static void SocketSetHints(SocketConfig *config, struct addrinfo *hints)
 {
-	if (config == NULL || hints == NULL) {
+	if (config == NULL || hints == NULL)
+	{
 		return;
 	}
 	memset(hints, 0, sizeof(*hints));
 
 	// Check if the ip supplied in the config is a valid ipv4 ip ipv6 address
-	if (IsIPv4Address(config->host)) {
+	if (IsIPv4Address(config->host))
+	{
 		hints->ai_family = AF_INET;
 		hints->ai_flags |= AI_NUMERICHOST;
-	} else {
-		if (IsIPv6Address(config->host)) {
+	}
+	else
+	{
+		if (IsIPv6Address(config->host))
+		{
 			hints->ai_family = AF_INET6;
 			hints->ai_flags |= AI_NUMERICHOST;
-		} else {
+		}
+		else
+		{
 			hints->ai_family = AF_UNSPEC;
 		}
 	}
 
-	if (config->type == SOCKET_UDP) {
+	if (config->type == SOCKET_UDP)
+	{
 		hints->ai_socktype = SOCK_DGRAM;
-	} else {
+	}
+	else
+	{
 		hints->ai_socktype = SOCK_STREAM;
 	}
 
 	// Set passive unless UDP client
-	if (!(config->type == SOCKET_UDP) || config->server) {
+	if (!(config->type == SOCKET_UDP) || config->server)
+	{
 		hints->ai_flags = AI_PASSIVE;
 	}
 }
@@ -537,14 +601,18 @@ bool InitNetwork()
 
 	wVersionRequested = MAKEWORD(2, 2);
 	err               = WSAStartup(wVersionRequested, &wsaData);
-	if (err != 0) {
+	if (err != 0)
+	{
 		TraceLog(LOG_WARNING, "WinSock failed to initialise.");
 		return false;
-	} else {
+	}
+	else
+	{
 		TraceLog(LOG_INFO, "WinSock initialised.");
 	}
 
-	if (LOBYTE(wsaData.wVersion) != 2 || HIBYTE(wsaData.wVersion) != 2) {
+	if (LOBYTE(wsaData.wVersion) != 2 || HIBYTE(wsaData.wVersion) != 2)
+	{
 		TraceLog(LOG_WARNING, "WinSock failed to initialise.");
 		WSACleanup();
 		return false;
@@ -597,14 +665,18 @@ void ResolveIP(const char *ip, const char *port, int flags, char *host, char *se
 	);
 
 	// Did we succeed?
-	if (status != 0) {
+	if (status != 0)
+	{
 		TraceLog(LOG_WARNING, "Failed to get resolve host %s:%s: %s", ip, port, gai_strerror(errno));
-	} else {
+	}
+	else
+	{
 		TraceLog(LOG_DEBUG, "Resolving... %s::%s", ip, port);
 	}
 
 	// Attempt to resolve network byte order ip to hostname
-	switch (res->ai_family) {
+	switch (res->ai_family)
+	{
 		case AF_INET:
 			status = getnameinfo(&*((struct sockaddr *) res->ai_addr),
 								 sizeof(*((struct sockaddr_in *) res->ai_addr)),
@@ -626,9 +698,12 @@ void ResolveIP(const char *ip, const char *port, int flags, char *host, char *se
 		default: break;
 	}
 
-	if (status != 0) {
+	if (status != 0)
+	{
 		TraceLog(LOG_WARNING, "Failed to resolve ip %s: %s", ip, SocketGetLastErrorString());
-	} else {
+	}
+	else
+	{
 		TraceLog(LOG_DEBUG, "Successfully resolved %s::%s to %s", ip, port, host);
 	}
 
@@ -656,7 +731,6 @@ int ResolveHost(const char *address, const char *service, int addressType, int f
 	struct addrinfo  hints;  // Address flags (IPV4, IPV6, UDP?)
 	struct addrinfo *res;    // will point to the results
 	struct addrinfo *iterator;
-	int              portptr;
 	assert(((address != NULL || address != 0) || (service != NULL || service != 0)));
 	assert(((addressType == AF_INET) || (addressType == AF_INET6) || (addressType == AF_UNSPEC)));
 
@@ -671,8 +745,12 @@ int ResolveHost(const char *address, const char *service, int addressType, int f
 	assert(hints.ai_next == NULL || hints.ai_next == 0);
 
 	// When the address is NULL, populate the IP for me
-	if (address == NULL) {
-		hints.ai_flags |= AI_PASSIVE;
+	if (address == NULL)
+	{
+		if ((hints.ai_flags & AI_PASSIVE) == 0)
+		{
+			hints.ai_flags |= AI_PASSIVE;
+		}
 	}
 
 	TraceLog(LOG_INFO, "Resolving host...");
@@ -685,46 +763,58 @@ int ResolveHost(const char *address, const char *service, int addressType, int f
 	);
 
 	// Did we succeed?
-	if (status != 0) {
+	if (status != 0)
+	{
 		int error = SocketGetLastError();
 		SocketSetLastError(0);
 		TraceLog(LOG_WARNING, "Failed to get resolve host: %s", SocketErrorCodeToString(error));
 		return -1;
-	} else {
+	}
+	else
+	{
 		TraceLog(LOG_INFO, "Successfully resolved host %s:%s", address, service);
 	}
 
 	// Calculate the size of the address information list
 	int size = 0;
-	for (iterator = res; iterator != NULL; iterator = iterator->ai_next) {
+	for (iterator = res; iterator != NULL; iterator = iterator->ai_next)
+	{
 		size++;
 	}
 
 	// Validate the size is > 0, otherwise return
-	if (size <= 0) {
+	if (size <= 0)
+	{
 		TraceLog(LOG_WARNING, "Error, no addresses found.");
 		return -1;
 	}
 
 	// If not address list was allocated, allocate it dynamically with the known address size
-	if (outAddr == NULL) {
+	if (outAddr == NULL)
+	{
 		outAddr = (AddressInformation *) malloc(size * sizeof(AddressInformation));
 	}
 
 	// Dynamically allocate an array of address information structs
-	if (outAddr != NULL) {
+	if (outAddr != NULL)
+	{
 		int i;
-		for (i = 0; i < size; ++i) {
+		for (i = 0; i < size; ++i)
+		{
 			outAddr[i] = AllocAddress();
-			if (outAddr[i] == NULL) {
+			if (outAddr[i] == NULL)
+			{
 				break;
 			}
 		}
 		outAddr[i] = NULL;
-		if (i != size) {
+		if (i != size)
+		{
 			outAddr = NULL;
 		}
-	} else {
+	}
+	else
+	{
 		TraceLog(LOG_WARNING,
 				 "Error, failed to dynamically allocate memory for the address list");
 		return -1;
@@ -732,8 +822,10 @@ int ResolveHost(const char *address, const char *service, int addressType, int f
 
 	// Copy all the address information from res into outAddrList
 	int i = 0;
-	for (iterator = res; iterator != NULL; iterator = iterator->ai_next) {
-		if (i < size) {
+	for (iterator = res; iterator != NULL; iterator = iterator->ai_next)
+	{
+		if (i < size)
+		{
 			outAddr[i]->addr.ai_flags    = iterator->ai_flags;
 			outAddr[i]->addr.ai_family   = iterator->ai_family;
 			outAddr[i]->addr.ai_socktype = iterator->ai_socktype;
@@ -781,23 +873,33 @@ bool SocketCreate(SocketConfig *config, SocketResult *result)
 	bool success = true;
 
 	// Make sure we've not received a null config or result pointer
-	if (config == NULL || result == NULL) {
+	if (config == NULL || result == NULL)
+	{
 		return (success = false);
 	}
 
 	// Set the defaults based on the config
-	if (!SocketSetDefaults(config)) {
+	if (!SocketSetDefaults(config))
+	{
 		TraceLog(LOG_WARNING, "Configuration Error.");
 		success = false;
-	} else {
+	}
+	else
+	{
 		// Create the socket
-		if (CreateSocket(config, result)) {
-			if (config->nonblocking) {
+		if (CreateSocket(config, result))
+		{
+			if (config->nonblocking)
+			{
 				SocketSetNonBlocking(result->socket);
-			} else {
+			}
+			else
+			{
 				SocketSetBlocking(result->socket);
 			}
-		} else {
+		}
+		else
+		{
 			success = false;
 		}
 	}
@@ -808,26 +910,36 @@ bool SocketCreate(SocketConfig *config, SocketResult *result)
 // Note: The bind function is required on an unconnected socket before subsequent calls to the listen function.
 bool SocketBind(SocketConfig *config, SocketResult *result)
 {
-	bool success               = false;
-	result->status             = RESULT_FAILURE;
-	struct sockaddr *sock_addr = NULL;
+	bool success                       = false;
+	result->status                     = RESULT_FAILURE;
+	struct sockaddr_storage *sock_addr = NULL;
 
 	// Don't bind to a socket that isn't configured as a server
-	if (!IsSocketValid(result->socket) || !config->server) {
+	if (!IsSocketValid(result->socket) || !config->server)
+	{
 		TraceLog(LOG_WARNING,
 				 "Cannot bind to socket marked as \"Client\" in SocketConfig.");
 		success = false;
-	} else {
-		if (result->socket->isIPv6) {
-			sock_addr = (struct sockaddr *) &result->socket->addripv6->address;
-		} else {
-			sock_addr = (struct sockaddr *) &result->socket->addripv4->address;
+	}
+	else
+	{
+		if (result->socket->isIPv6)
+		{
+			sock_addr = (struct sockaddr_storage *) &result->socket->addripv6->address;
 		}
-		if (sock_addr != NULL) {
-			if (bind(result->socket->channel, (struct sockaddr *) sock_addr, sizeof(*sock_addr)) != SOCKET_ERROR) {
+		else
+		{
+			sock_addr = (struct sockaddr_storage *) &result->socket->addripv4->address;
+		}
+		if (sock_addr != NULL)
+		{
+			if (bind(result->socket->channel, (struct sockaddr *) sock_addr, sizeof(*sock_addr)) != SOCKET_ERROR)
+			{
 				TraceLog(LOG_INFO, "Successfully bound socket.");
 				success = true;
-			} else {
+			}
+			else
+			{
 				result->socket->status = SocketGetLastError();
 				TraceLog(LOG_WARNING, "Socket Error: %s",
 						 SocketErrorCodeToString(result->socket->status));
@@ -837,17 +949,31 @@ bool SocketBind(SocketConfig *config, SocketResult *result)
 		}
 	}
 	// Was the bind a success?
-	if (success) {
+	if (success)
+	{
 		result->status         = RESULT_SUCCESS;
 		result->socket->ready  = 0;
 		result->socket->status = 0;
 		socklen_t sock_len     = sizeof(*sock_addr);
-		if (getsockname(result->socket->channel, (struct sockaddr *) sock_addr, &sock_len) < 0) {
+		if (getsockname(result->socket->channel, (struct sockaddr *) sock_addr, &sock_len) < 0)
+		{
 			TraceLog(LOG_WARNING, "Couldn't get socket address");
-		} else {
-			struct sockaddr_in *s        = (struct sockaddr_in *) sock_addr;
-			result->socket->address.host = s->sin_addr.s_addr;
-			result->socket->address.port = s->sin_port;
+		}
+		else
+		{
+			struct sockaddr_in *s = (struct sockaddr_in *) sock_addr;
+			// result->socket->address.host = s->sin_addr.s_addr;
+			// result->socket->address.port = s->sin_port;
+
+			//
+			result->socket->addripv4
+				= (struct _SocketAddressIPv4 *) malloc(sizeof(*result->socket->addripv4));
+			if (result->socket->addripv4 != NULL)
+			{
+				memset(result->socket->addripv4, 0, sizeof(*result->socket->addripv4));
+			}
+			memcpy(&result->socket->addripv4->address, (struct sockaddr_in *) &s->sin_addr, sizeof(struct sockaddr_in));
+			//
 		}
 	}
 	return success;
@@ -860,20 +986,29 @@ bool SocketListen(SocketConfig *config, SocketResult *result)
 	result->status = RESULT_FAILURE;
 
 	// Don't bind to a socket that isn't configured as a server
-	if (!IsSocketValid(result->socket) || !config->server) {
+	if (!IsSocketValid(result->socket) || !config->server)
+	{
 		TraceLog(LOG_WARNING,
 				 "Cannot listen on socket marked as \"Client\" in SocketConfig.");
 		success = false;
-	} else {
+	}
+	else
+	{
 		// Don't listen on UDP sockets
-		if (!(config->type == SOCKET_UDP)) {
-			if (listen(result->socket->channel, config->backlog_size) != SOCKET_ERROR) {
+		if (!(config->type == SOCKET_UDP))
+		{
+			if (listen(result->socket->channel, config->backlog_size) != SOCKET_ERROR)
+			{
 				TraceLog(LOG_INFO, "Started listening on socket...");
 				success = true;
-			} else {
+			}
+			else
+			{
 				success = false;
 			}
-		} else {
+		}
+		else
+		{
 			TraceLog(LOG_WARNING,
 					 "Cannot listen on socket marked as \"UDP\" (datagram) in SocketConfig.");
 			success = false;
@@ -881,7 +1016,8 @@ bool SocketListen(SocketConfig *config, SocketResult *result)
 	}
 
 	// Was the listen a success?
-	if (success) {
+	if (success)
+	{
 		result->status         = RESULT_SUCCESS;
 		result->socket->ready  = 0;
 		result->socket->status = 0;
@@ -896,12 +1032,16 @@ bool SocketConnect(SocketConfig *config, SocketResult *result)
 	result->status = RESULT_FAILURE;
 
 	// Only bind to sockets marked as server
-	if (config->server) {
+	if (config->server)
+	{
 		TraceLog(LOG_WARNING,
 				 "Cannot connect to socket marked as \"Server\" in SocketConfig.");
 		success = false;
-	} else {
-		if (IsIPv4Address(config->host)) {
+	}
+	else
+	{
+		if (IsIPv4Address(config->host))
+		{
 			struct sockaddr_in ip4addr;
 			ip4addr.sin_family = AF_INET;
 			unsigned long hport;
@@ -909,27 +1049,36 @@ bool SocketConnect(SocketConfig *config, SocketResult *result)
 			ip4addr.sin_port = htons(hport);
 			inet_pton(AF_INET, config->host, &ip4addr.sin_addr);
 			int connect_result = connect(result->socket->channel, (struct sockaddr *) &ip4addr, sizeof(ip4addr));
-			if (connect_result == SOCKET_ERROR) {
+			if (connect_result == SOCKET_ERROR)
+			{
 				result->socket->status = SocketGetLastError();
 				SocketSetLastError(0);
-				switch (result->socket->status) {
-					case WSAEWOULDBLOCK: {
+				switch (result->socket->status)
+				{
+					case WSAEWOULDBLOCK:
+					{
 						success = true;
 						break;
 					}
-					default: {
+					default:
+					{
 						TraceLog(LOG_WARNING, "Socket Error: %s",
 								 SocketErrorCodeToString(result->socket->status));
 						success = false;
 						break;
 					}
 				}
-			} else {
+			}
+			else
+			{
 				TraceLog(LOG_INFO, "Successfully connected to socket.");
 				success = true;
 			}
-		} else {
-			if (IsIPv6Address(config->host)) {
+		}
+		else
+		{
+			if (IsIPv6Address(config->host))
+			{
 				struct sockaddr_in6 ip6addr;
 				ip6addr.sin6_family = AF_INET6;
 				unsigned long hport;
@@ -937,22 +1086,28 @@ bool SocketConnect(SocketConfig *config, SocketResult *result)
 				ip6addr.sin6_port = htons(hport);
 				inet_pton(AF_INET6, config->host, &ip6addr.sin6_addr);
 				int connect_result = connect(result->socket->channel, (struct sockaddr *) &ip6addr, sizeof(ip6addr));
-				if (connect_result == SOCKET_ERROR) {
+				if (connect_result == SOCKET_ERROR)
+				{
 					result->socket->status = SocketGetLastError();
 					SocketSetLastError(0);
-					switch (result->socket->status) {
-						case WSAEWOULDBLOCK: {
+					switch (result->socket->status)
+					{
+						case WSAEWOULDBLOCK:
+						{
 							success = true;
 							break;
 						}
-						default: {
+						default:
+						{
 							TraceLog(LOG_WARNING, "Socket Error: %s",
 									 SocketErrorCodeToString(result->socket->status));
 							success = false;
 							break;
 						}
 					}
-				} else {
+				}
+				else
+				{
 					TraceLog(LOG_INFO, "Successfully connected to socket.");
 					success = true;
 				}
@@ -960,7 +1115,8 @@ bool SocketConnect(SocketConfig *config, SocketResult *result)
 		}
 	}
 
-	if (success) {
+	if (success)
+	{
 		result->status         = RESULT_SUCCESS;
 		result->socket->ready  = 0;
 		result->socket->status = 0;
@@ -974,11 +1130,43 @@ bool SocketConnect(SocketConfig *config, SocketResult *result)
 //	SocketChannel socket - The id of the socket to close
 void SocketClose(Socket *sock)
 {
-	if (sock != NULL) {
-		if (sock->channel != INVALID_SOCKET) {
+	if (sock != NULL)
+	{
+		if (sock->channel != INVALID_SOCKET)
+		{
 			closesocket(sock->channel);
 		}
 	}
+}
+
+// Returns the sockaddress for a specific socket in a generic storage struct
+SocketAddressStorage SocketGetPeerAddress(Socket *sock)
+{
+	if (sock->isServer)
+	{
+		return NULL;
+	}
+	if (sock->isIPv6)
+	{
+		return sock->addripv6;
+	}
+	else
+	{
+		return sock->addripv4;
+	}
+}
+
+// Return the address-type appropriate host portion of a socket address
+char *GetSocketAddressHost(SocketAddressStorage storage)
+{
+	assert(storage->address.ss_family == AF_INET || storage->address.ss_family == AF_INET6);
+	return SocketAddressToString((struct sockaddr_storage *) storage);
+}
+
+// Return the address-type appropriate port(service) portion of a socket address
+short GetSocketAddressPort(SocketAddressStorage storage)
+{
+	return ntohs(GetSocketPortPtr(storage));
 }
 
 //	The accept function permits an incoming connection attempt on a socket.
@@ -999,7 +1187,8 @@ void SocketClose(Socket *sock)
 //	}
 Socket *SocketAccept(Socket *server, SocketConfig *config)
 {
-	if (!server->isServer || server->type == SOCKET_UDP) {
+	if (!server->isServer || server->type == SOCKET_UDP)
+	{
 		return NULL;
 	}
 	struct sockaddr_storage sock_addr;
@@ -1009,7 +1198,8 @@ Socket *SocketAccept(Socket *server, SocketConfig *config)
 	server->ready = 0;
 	sock_alen     = sizeof(sock_addr);
 	sock->channel = accept(server->channel, (struct sockaddr *) &sock_addr, &sock_alen);
-	if (sock->channel == INVALID_SOCKET) {
+	if (sock->channel == INVALID_SOCKET)
+	{
 		sock->status = SocketGetLastError();
 		TraceLog(LOG_WARNING, "Socket Error: %s", SocketErrorCodeToString(sock->status));
 		SocketSetLastError(0);
@@ -1020,27 +1210,34 @@ Socket *SocketAccept(Socket *server, SocketConfig *config)
 	sock->isServer = false;
 	sock->ready    = 0;
 	sock->type     = server->type;
-	switch (sock_addr.ss_family) {
-		case AF_INET: {
+	switch (sock_addr.ss_family)
+	{
+		case AF_INET:
+		{
 			struct sockaddr_in *s = ((struct sockaddr_in *) &sock_addr);
 			sock->addripv4 = (struct _SocketAddressIPv4 *) malloc(sizeof(*sock->addripv4));
-			if (sock->addripv4 != NULL) {
+			if (sock->addripv4 != NULL)
+			{
 				memset(sock->addripv4, 0, sizeof(*sock->addripv4));
+				memcpy(&sock->addripv4->address, (struct sockaddr_in *) &s->sin_addr, sizeof(struct sockaddr_in));
+				TraceLog(LOG_INFO, "Server: Got connection from %s::%hu", SocketAddressToString((struct sockaddr_storage *) s),
+						 ntohs(sock->addripv4->address.sin_port));
 			}
-			memcpy(&sock->addripv4->address, (struct sockaddr_in *) &s->sin_addr, sizeof(struct sockaddr_in));
-			TraceLog(LOG_INFO, "Server: Got connection from %s::%hu", SocketAddressToString((struct sockaddr_storage *) s),
-					 ntohs(sock->addripv4->address.sin_port));
-		} break;
-		case AF_INET6: {
+		}
+		break;
+		case AF_INET6:
+		{
 			struct sockaddr_in6 *s = ((struct sockaddr_in6 *) &sock_addr);
 			sock->addripv6 = (struct _SocketAddressIPv6 *) malloc(sizeof(*sock->addripv6));
-			if (sock->addripv6 != NULL) {
+			if (sock->addripv6 != NULL)
+			{
 				memset(sock->addripv6, 0, sizeof(*sock->addripv6));
+				memcpy(&sock->addripv6->address, (struct sockaddr_in6 *) &s->sin6_addr, sizeof(struct sockaddr_in6));
+				TraceLog(LOG_INFO, "Server: Got connection from %s::%hu", SocketAddressToString((struct sockaddr_storage *) s),
+						 ntohs(sock->addripv6->address.sin6_port));
 			}
-			memcpy(&sock->addripv6->address, (struct sockaddr_in6 *) &s->sin6_addr, sizeof(struct sockaddr_in6));
-			TraceLog(LOG_INFO, "Server: Got connection from %s::%hu", SocketAddressToString((struct sockaddr_storage *) s),
-					 ntohs(sock->addripv4->address.sin_port));
-		} break;
+		}
+		break;
 	}
 	return sock;
 }
@@ -1048,7 +1245,8 @@ Socket *SocketAccept(Socket *server, SocketConfig *config)
 // Verify that the channel is in the valid range
 static int ValidChannel(int channel)
 {
-	if ((channel < 0) || (channel >= SOCKET_MAX_UDPCHANNELS)) {
+	if ((channel < 0) || (channel >= SOCKET_MAX_UDPCHANNELS))
+	{
 		TraceLog(LOG_WARNING, "Invalid channel");
 		return 0;
 	}
@@ -1059,24 +1257,32 @@ static int ValidChannel(int channel)
 int SocketSetChannel(Socket *socket, int channel, const IPAddress *address)
 {
 	struct UDPChannel *binding;
-	if (socket == NULL) {
+	if (socket == NULL)
+	{
 		TraceLog(LOG_WARNING, "Passed a NULL socket");
 		return (-1);
 	}
-	if (channel == -1) {
-		for (channel = 0; channel < SOCKET_MAX_UDPCHANNELS; ++channel) {
+	if (channel == -1)
+	{
+		for (channel = 0; channel < SOCKET_MAX_UDPCHANNELS; ++channel)
+		{
 			binding = &socket->binding[channel];
-			if (binding->numbound < SOCKET_MAX_UDPADDRESSES) {
+			if (binding->numbound < SOCKET_MAX_UDPADDRESSES)
+			{
 				break;
 			}
 		}
-	} else {
-		if (!ValidChannel(channel)) {
+	}
+	else
+	{
+		if (!ValidChannel(channel))
+		{
 			return (-1);
 		}
 		binding = &socket->binding[channel];
 	}
-	if (binding->numbound == SOCKET_MAX_UDPADDRESSES) {
+	if (binding->numbound == SOCKET_MAX_UDPADDRESSES)
+	{
 		TraceLog(LOG_WARNING, "No room for new addresses");
 		return (-1);
 	}
@@ -1087,30 +1293,105 @@ int SocketSetChannel(Socket *socket, int channel, const IPAddress *address)
 // Remove the socket channel
 void SocketUnsetChannel(Socket *socket, int channel)
 {
-	if ((channel >= 0) && (channel < SOCKET_MAX_UDPCHANNELS)) {
+	if ((channel >= 0) && (channel < SOCKET_MAX_UDPCHANNELS))
+	{
 		socket->binding[channel].numbound = 0;
 	}
 }
 
-// Get the primary IP address of the remote system associated with the socket and channel.
-// If the channel is not bound, this function returns NULL.
-IPAddress *SocketGetPeerAddress(Socket *socket, int channel)
+/* Allocate/free a single UDP packet 'size' bytes long.
+   The new packet is returned, or NULL if the function ran out of memory.
+ */
+SocketDataPacket *AllocPacket(int size)
 {
-	IPAddress *address;
-	address = NULL;
-	switch (channel) {
-		case -1:
-			/* Return the actual address of the socket */
-			address = &socket->address;
-			break;
-		default:
-			/* Return the address of the bound channel */
-			if (ValidChannel(channel) && (socket->binding[channel].numbound > 0)) {
-				address = &socket->binding[channel].address[0];
-			}
-			break;
+	SocketDataPacket *packet;
+	int               error;
+
+	error  = 1;
+	packet = (SocketDataPacket *) malloc(sizeof(*packet));
+	if (packet != NULL)
+	{
+		packet->maxlen = size;
+		packet->data   = (uint8_t *) malloc(size);
+		if (packet->data != NULL)
+		{
+			error = 0;
+		}
 	}
-	return (address);
+	if (error)
+	{
+		FreePacket(packet);
+		packet = NULL;
+	}
+	return (packet);
+}
+
+int ResizePacket(SocketDataPacket *packet, int newsize)
+{
+	uint8_t *newdata;
+
+	newdata = (uint8_t *) malloc(newsize);
+	if (newdata != NULL)
+	{
+		free(packet->data);
+		packet->data   = newdata;
+		packet->maxlen = newsize;
+	}
+	return (packet->maxlen);
+}
+
+void FreePacket(SocketDataPacket *packet)
+{
+	if (packet)
+	{
+		free(packet->data);
+		free(packet);
+	}
+}
+
+/* Allocate/Free a UDP packet vector (array of packets) of 'howmany' packets,
+   each 'size' bytes long.
+   A pointer to the packet array is returned, or NULL if the function ran out
+   of memory.
+ */
+SocketDataPacket **AllocPacketList(int howmany, int size)
+{
+	SocketDataPacket **packetV;
+
+	packetV = (SocketDataPacket **) malloc((howmany + 1) * sizeof(*packetV));
+	if (packetV != NULL)
+	{
+		int i;
+		for (i = 0; i < howmany; ++i)
+		{
+			packetV[i] = AllocPacket(size);
+			if (packetV[i] == NULL)
+			{
+				break;
+			}
+		}
+		packetV[i] = NULL;
+
+		if (i != howmany)
+		{ 
+			FreePacketList(packetV);
+			packetV = NULL;
+		}
+	}
+	return (packetV);
+}
+
+void FreePacketList(SocketDataPacket **packetV)
+{
+	if (packetV)
+	{
+		int i;
+		for (i = 0; packetV[i]; ++i)
+		{
+			FreePacket(packetV[i]);
+		}
+		free(packetV);
+	}
 }
 
 //	Send 'len' bytes of 'data' over the non-server socket 'sock'
@@ -1125,18 +1406,23 @@ int SocketSend(Socket *sock, const void *datap, int length)
 	const unsigned char *data    = (const unsigned char *) datap;
 
 	// Server sockets are for accepting connections only
-	if (sock->isServer) {
+	if (sock->isServer)
+	{
 		TraceLog(LOG_WARNING, "Cannot send information on a server socket");
 		return -1;
 	}
 
 	// Which socket are we trying to send data on
-	switch (sock->type) {
-		case SOCKET_TCP: {
+	switch (sock->type)
+	{
+		case SOCKET_TCP:
+		{
 			SocketSetLastError(0);
-			do {
+			do
+			{
 				length = send(sock->channel, (const char *) data, left, 0);
-				if (length > 0) {
+				if (length > 0)
+				{
 					sent += length;
 					left -= length;
 					data += length;
@@ -1146,39 +1432,51 @@ int SocketSend(Socket *sock, const void *datap, int length)
 					  (SocketGetLastError() == WSAEINTR)) // The socket was interupted
 			);
 
-			if (length == SOCKET_ERROR) {
+			if (length == SOCKET_ERROR)
+			{
 				sock->status = SocketGetLastError();
 				TraceLog(LOG_DEBUG, "Socket Error: %s", SocketErrorCodeToString(sock->status));
 				SocketSetLastError(0);
-			} else {
+			}
+			else
+			{
 				TraceLog(LOG_DEBUG, "Successfully sent \"%s\" (%d bytes)", datap, sent);
 			}
 
 			return sent;
-		} break;
-		case SOCKET_UDP: {
+		}
+		break;
+		case SOCKET_UDP:
+		{
 			SocketSetLastError(0);
-			if (sock->isIPv6) {
+			if (sock->isIPv6)
+			{
 				status = sendto(sock->channel, (const char *) data, left, 0,
 								(struct sockaddr *) &sock->addripv6->address,
 								sizeof(sock->addripv6->address));
-			} else {
+			}
+			else
+			{
 				status = sendto(sock->channel, (const char *) data, left, 0,
 								(struct sockaddr *) &sock->addripv4->address,
 								sizeof(sock->addripv4->address));
 			}
-			if (sent >= 0) {
+			if (sent >= 0)
+			{
 				sock->status = 0;
 				++numsent;
 				TraceLog(LOG_DEBUG, "Successfully sent \"%s\" (%d bytes)", datap, status);
-			} else {
+			}
+			else
+			{
 				sock->status = SocketGetLastError();
 				TraceLog(LOG_DEBUG, "Socket Error: %s", SocketGetLastErrorString(sock->status));
 				SocketSetLastError(0);
 				return 0;
 			}
 			return numsent;
-		} break;
+		}
+		break;
 		default: break;
 	}
 	return -1;
@@ -1199,7 +1497,8 @@ int SocketReceive(Socket *sock, void *data, int maxlen)
 	char                    ip[INET6_ADDRSTRLEN];
 
 	// Server sockets are for accepting connections only
-	if (sock->isServer && sock->type == SOCKET_TCP) {
+	if (sock->isServer && sock->type == SOCKET_TCP)
+	{
 		sock->status = SocketGetLastError();
 		TraceLog(LOG_DEBUG, "Socket Error: %s",
 				 "Server sockets cannot be used to receive data");
@@ -1208,16 +1507,21 @@ int SocketReceive(Socket *sock, void *data, int maxlen)
 	}
 
 	// Which socket are we trying to send data on
-	switch (sock->type) {
-		case SOCKET_TCP: {
+	switch (sock->type)
+	{
+		case SOCKET_TCP:
+		{
 			SocketSetLastError(0);
-			do {
+			do
+			{
 				len = recv(sock->channel, (char *) data, maxlen, 0);
 			} while (SocketGetLastError() == WSAEINTR);
 
-			if (len > 0) {
+			if (len > 0)
+			{
 				// Who sent the packet?
-				if (sock->type == SOCKET_UDP) {
+				if (sock->type == SOCKET_UDP)
+				{
 					TraceLog(
 						LOG_DEBUG, "Received data from: %s", inet_ntop(sock_addr.ss_family, GetSocketAddressPtr((struct sockaddr *) &sock_addr), ip, sizeof(ip)));
 				}
@@ -1226,8 +1530,10 @@ int SocketReceive(Socket *sock, void *data, int maxlen)
 			}
 			sock->ready = 0;
 			return len;
-		} break;
-		case SOCKET_UDP: {
+		}
+		break;
+		case SOCKET_UDP:
+		{
 			SocketSetLastError(0);
 			sock_len = sizeof(sock_addr);
 			status   = recvfrom(sock->channel, // The receving channel
@@ -1237,15 +1543,19 @@ int SocketReceive(Socket *sock, void *data, int maxlen)
                               (struct sockaddr *) &sock_addr, // The address of the recevied data
                               &sock_len // The length of the received data address
             );
-			if (status >= 0) {
+			if (status >= 0)
+			{
 				++numrecv;
-			} else {
+			}
+			else
+			{
 				sock->status = SocketGetLastError();
-				switch (sock->status) {
-					case WSAEWOULDBLOCK: {
-						break;
+				switch (sock->status)
+				{
+					case WSAEWOULDBLOCK: { break;
 					}
-					default: {
+					default:
+					{
 						TraceLog(LOG_WARNING, "Socket Error: %s", SocketErrorCodeToString(sock->status));
 						break;
 					}
@@ -1255,8 +1565,8 @@ int SocketReceive(Socket *sock, void *data, int maxlen)
 			}
 			sock->ready = 0;
 			return numrecv;
-
-		} break;
+		}
+		break;
 	}
 	return -1;
 }
@@ -1265,26 +1575,6 @@ int SocketReceive(Socket *sock, void *data, int maxlen)
 bool IsSocketReady(Socket *sock)
 {
 	return (sock != NULL) && (sock->ready);
-}
-
-// Returns true if a socket is has data available for reading right now
-bool SocketReady(Socket *sock)
-{
-	int            retval = 0;
-	struct timeval tv;
-	fd_set         mask;
-
-	// Check the file descriptors for available data
-	do {
-		SocketSetLastError(0);
-		FD_ZERO(&mask);
-		FD_SET(sock->channel, &mask);
-		tv.tv_sec  = 0;
-		tv.tv_usec = 0;
-		retval     = select(sock->channel + 1, &mask, NULL, NULL, &tv);
-	} while (SocketGetLastError() == WSAEINTR);
-
-	return (retval == 1);
 }
 
 // Check if the socket is considered connected
@@ -1298,14 +1588,20 @@ bool IsSocketConnected(Socket *sock)
 	timeout.tv_sec  = 1;
 	timeout.tv_usec = 1000000000UL;
 	int total       = select(0, NULL, &writefds, NULL, &timeout);
-	if (total == -1) { // Error
+	if (total == -1)
+	{ // Error
 		sock->status = SocketGetLastError();
 		TraceLog(LOG_WARNING, "Socket Error: %s", SocketErrorCodeToString(sock->status));
 		SocketSetLastError(0);
-	} else if (total == 0) { // Timeout
+	}
+	else if (total == 0)
+	{ // Timeout
 		return false;
-	} else {
-		if (FD_ISSET(sock->channel, &writefds)) {
+	}
+	else
+	{
+		if (FD_ISSET(sock->channel, &writefds))
+		{
 			return true;
 		}
 	}
@@ -1320,9 +1616,11 @@ SocketResult *AllocSocketResult()
 {
 	struct SocketResult *res;
 	res = (struct SocketResult *) malloc(sizeof(*res));
-	if (res != NULL) {
+	if (res != NULL)
+	{
 		memset(res, 0, sizeof(*res));
-		if ((res->socket = AllocSocket()) == NULL) {
+		if ((res->socket = AllocSocket()) == NULL)
+		{
 			free(res);
 			res = NULL;
 		}
@@ -1333,8 +1631,10 @@ SocketResult *AllocSocketResult()
 // Free an allocated SocketResult
 void FreeSocketResult(SocketResult **result)
 {
-	if (*result != NULL) {
-		if ((*result)->socket != NULL) {
+	if (*result != NULL)
+	{
+		if ((*result)->socket != NULL)
+		{
 			FreeSocket(&((*result)->socket));
 		}
 		free(*result);
@@ -1348,9 +1648,12 @@ Socket *AllocSocket()
 	// Allocate a socket if one already hasn't been
 	struct Socket *sock;
 	sock = (Socket *) malloc(sizeof(*sock));
-	if (sock != NULL) {
+	if (sock != NULL)
+	{
 		memset(sock, 0, sizeof(*sock));
-	} else {
+	}
+	else
+	{
 		TraceLog(
 			LOG_WARNING, "Ran out of memory attempting to allocate a socket");
 		SocketClose(sock);
@@ -1363,7 +1666,8 @@ Socket *AllocSocket()
 // Free an allocated Socket
 void FreeSocket(Socket **sock)
 {
-	if (*sock != NULL) {
+	if (*sock != NULL)
+	{
 		free(*sock);
 		*sock = NULL;
 	}
@@ -1376,15 +1680,20 @@ SocketSet *AllocSocketSet(int max)
 	int               i;
 
 	set = (struct SocketSet *) malloc(sizeof(*set));
-	if (set != NULL) {
+	if (set != NULL)
+	{
 		set->numsockets = 0;
 		set->maxsockets = max;
 		set->sockets = (struct Socket **) malloc(max * sizeof(*set->sockets));
-		if (set->sockets != NULL) {
-			for (i = 0; i < max; ++i) {
+		if (set->sockets != NULL)
+		{
+			for (i = 0; i < max; ++i)
+			{
 				set->sockets[i] = NULL;
 			}
-		} else {
+		}
+		else
+		{
 			free(set);
 			set = NULL;
 		}
@@ -1395,7 +1704,8 @@ SocketSet *AllocSocketSet(int max)
 // Free an allocated SocketSet
 void FreeSocketSet(SocketSet *set)
 {
-	if (set) {
+	if (set)
+	{
 		free(set->sockets);
 		free(set);
 	}
@@ -1404,14 +1714,18 @@ void FreeSocketSet(SocketSet *set)
 // Add a Socket "sock" to the SocketSet "set"
 int AddSocket(SocketSet *set, Socket *sock)
 {
-	if (sock != NULL) {
-		if (set->numsockets == set->maxsockets) {
+	if (sock != NULL)
+	{
+		if (set->numsockets == set->maxsockets)
+		{
 			TraceLog(LOG_DEBUG, "Socket Error: %s", "SocketSet is full");
 			SocketSetLastError(0);
 			return (-1);
 		}
 		set->sockets[set->numsockets++] = (struct Socket *) sock;
-	} else {
+	}
+	else
+	{
 		TraceLog(LOG_DEBUG, "Socket Error: %s", "Socket was null");
 		SocketSetLastError(0);
 		return (-1);
@@ -1424,19 +1738,24 @@ int RemoveSocket(SocketSet *set, Socket *sock)
 {
 	int i;
 
-	if (sock != NULL) {
-		for (i = 0; i < set->numsockets; ++i) {
-			if (set->sockets[i] == (struct Socket *) sock) {
+	if (sock != NULL)
+	{
+		for (i = 0; i < set->numsockets; ++i)
+		{
+			if (set->sockets[i] == (struct Socket *) sock)
+			{
 				break;
 			}
 		}
-		if (i == set->numsockets) {
+		if (i == set->numsockets)
+		{
 			TraceLog(LOG_DEBUG, "Socket Error: %s", "Socket not found");
 			SocketSetLastError(0);
 			return (-1);
 		}
 		--set->numsockets;
-		for (; i < set->numsockets; ++i) {
+		for (; i < set->numsockets; ++i)
+		{
 			set->sockets[i] = set->sockets[i + 1];
 		}
 	}
@@ -1454,19 +1773,23 @@ int CheckSockets(SocketSet *set, unsigned int timeout)
 
 	/* Find the largest file descriptor */
 	maxfd = 0;
-	for (i = set->numsockets - 1; i >= 0; --i) {
-		if (set->sockets[i]->channel > maxfd) {
+	for (i = set->numsockets - 1; i >= 0; --i)
+	{
+		if (set->sockets[i]->channel > maxfd)
+		{
 			maxfd = set->sockets[i]->channel;
 		}
 	}
 
 	// Check the file descriptors for available data
-	do {
+	do
+	{
 		SocketSetLastError(0);
 
 		// Set up the mask of file descriptors
 		FD_ZERO(&mask);
-		for (i = set->numsockets - 1; i >= 0; --i) {
+		for (i = set->numsockets - 1; i >= 0; --i)
+		{
 			FD_SET(set->sockets[i]->channel, &mask);
 		} // Set up the timeout
 		tv.tv_sec  = timeout / 1000;
@@ -1477,9 +1800,12 @@ int CheckSockets(SocketSet *set, unsigned int timeout)
 	} while (SocketGetLastError() == WSAEINTR);
 
 	// Mark all file descriptors ready that have data available
-	if (retval > 0) {
-		for (i = set->numsockets - 1; i >= 0; --i) {
-			if (FD_ISSET(set->sockets[i]->channel, &mask)) {
+	if (retval > 0)
+	{
+		for (i = set->numsockets - 1; i >= 0; --i)
+		{
+			if (FD_ISSET(set->sockets[i]->channel, &mask))
+			{
 				set->sockets[i]->ready = 1;
 			}
 		}
@@ -1487,54 +1813,64 @@ int CheckSockets(SocketSet *set, unsigned int timeout)
 	return (retval);
 }
 
-// Allocate a Packet
-Packet *AllocPacket(int size)
-{
-	struct Packet *packet;
-	packet = (struct Packet *) malloc(sizeof(*packet));
-	if (packet != NULL) {
-		memset(packet, 0, sizeof(*packet));
-		packet->size = 0;
-		packet->offs = 0;
-		packet->maxs = size;
-		packet->data = (uint8_t *) malloc(size * sizeof(uint8_t));
-		memset(packet->data, '\0', size);
-		if (packet->data == NULL) {
-			free(packet);
-			packet = NULL;
-		}
-	} else {
-		free(packet);
-		packet = NULL;
-	}
-	return packet;
-}
+//  Allocate a Packet
+//  Packet *AllocPacket(int size)
+//  {
+//  	struct Packet *packet;
+//  	packet = (struct Packet *) malloc(sizeof(*packet));
+//  	if (packet != NULL)
+//  	{
+//  		memset(packet, 0, sizeof(*packet));
+//  		packet->size = 0;
+//  		packet->offs = 0;
+//  		packet->maxs = size;
+//  		packet->data = (uint8_t *) malloc(size * sizeof(uint8_t));
+//  		memset(packet->data, '\0', size);
+//  		if (packet->data == NULL)
+//  		{
+//  			free(packet);
+//  			packet = NULL;
+//  		}
+//  	}
+//  	else
+//  	{
+//  		free(packet);
+//  		packet = NULL;
+//  	}
+//  	return packet;
+//  }
 
 // Free an allocated Packet
-void FreePacket(Packet *packet)
-{
-	if (packet != NULL) {
-		if (packet->data != NULL) {
-			free(packet->data);
-			packet->data = NULL;
-		}
-		free(packet);
-		packet = NULL;
-	}
-}
+//  void FreePacket(Packet *packet)
+//  {
+//  	if (packet != NULL)
+//  	{
+//  		if (packet->data != NULL)
+//  		{
+//  			free(packet->data);
+//  			packet->data = NULL;
+//  		}
+//  		free(packet);
+//  		packet = NULL;
+//  	}
+//  }
 
 // Allocate an AddressInformation
 AddressInformation AllocAddress()
 {
 	AddressInformation addressInfo = NULL;
 	addressInfo = (AddressInformation) calloc(1, sizeof(*addressInfo));
-	if (addressInfo != NULL) {
+	if (addressInfo != NULL)
+	{
 		addressInfo->addr.ai_addr = (struct sockaddr *) calloc(1, sizeof(struct sockaddr));
-		if (addressInfo->addr.ai_addr == NULL) {
+		if (addressInfo->addr.ai_addr == NULL)
+		{
 			TraceLog(LOG_WARNING,
 					 "Failed to allocate memory for \"struct sockaddr\"");
 		}
-	} else {
+	}
+	else
+	{
 		TraceLog(LOG_WARNING,
 				 "Failed to allocate memory for \"struct AddressInformation\"");
 	}
@@ -1544,8 +1880,10 @@ AddressInformation AllocAddress()
 // Free an AddressInformation struct
 void FreeAddress(AddressInformation *addressInfo)
 {
-	if (*addressInfo != NULL) {
-		if ((*addressInfo)->addr.ai_addr != NULL) {
+	if (*addressInfo != NULL)
+	{
+		if ((*addressInfo)->addr.ai_addr != NULL)
+		{
 			free((*addressInfo)->addr.ai_addr);
 			(*addressInfo)->addr.ai_addr = NULL;
 		}
@@ -1592,22 +1930,30 @@ char *GetAddressHostAndPort(AddressInformation address, char *outhost, int *outp
 	char *                   ip[INET6_ADDRSTRLEN];
 	char *                   result = NULL;
 	struct sockaddr_storage *storage = (struct sockaddr_storage *) address->addr.ai_addr;
-	switch (storage->ss_family) {
-		case AF_INET: {
+	switch (storage->ss_family)
+	{
+		case AF_INET:
+		{
 			struct sockaddr_in *s = ((struct sockaddr_in *) address->addr.ai_addr);
 			result   = inet_ntop(AF_INET, &s->sin_addr, ip, INET_ADDRSTRLEN);
 			*outport = ntohs(s->sin_port);
-		} break;
-		case AF_INET6: {
+		}
+		break;
+		case AF_INET6:
+		{
 			struct sockaddr_in6 *s = ((struct sockaddr_in6 *) address->addr.ai_addr);
 			result   = inet_ntop(AF_INET6, &s->sin6_addr, ip, INET6_ADDRSTRLEN);
 			*outport = ntohs(s->sin6_port);
-		} break;
+		}
+		break;
 	}
-	if (result == NULL) {
+	if (result == NULL)
+	{
 		TraceLog(LOG_WARNING, "Socket Error: %s", SocketErrorCodeToString(SocketGetLastError()));
 		SocketSetLastError(0);
-	} else {
+	}
+	else
+	{
 		strcpy(outhost, result);
 	}
 	return result;

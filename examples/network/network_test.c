@@ -71,7 +71,8 @@ void test_resolve_host()
 	const char *        address = "localhost";
 	const char *        port    = "80";
 	AddressInformation *addr    = AllocAddressList(3);
-	int                 count   = ResolveHost(address, port, addr);
+	int count = ResolveHost(address, port, ADDRESS_TYPE_IPV4, 0, addr); 
+
 	assert(GetAddressFamily(addr[0]) == ADDRESS_TYPE_IPV6);
 	assert(GetAddressFamily(addr[1]) == ADDRESS_TYPE_IPV4);
 	assert(GetAddressSocketType(addr[0]) == 0);
