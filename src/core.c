@@ -92,6 +92,8 @@
 // Check if config flags have been externally provided on compilation line
 #if !defined(EXTERNAL_CONFIG_FLAGS)
     #include "config.h"         // Defines module configuration flags
+#else
+    #define RAYLIB_VERSION  "2.5"
 #endif
 
 #if (defined(__linux__) || defined(PLATFORM_WEB)) && _POSIX_C_SOURCE < 199309L
@@ -178,15 +180,14 @@
 
         //#define GLFW_EXPOSE_NATIVE_COCOA      // WARNING: Fails due to type redefinition
         #include <GLFW/glfw3native.h>   // Required for: glfwGetCocoaWindow()
-
     #endif
 #endif
 
 #if defined(__linux__)
-        #include <linux/limits.h> // for NAME_MAX and PATH_MAX defines
-        #define MAX_FILEPATH_LENGTH PATH_MAX // Use Linux define (4096)
+    #include <linux/limits.h>               // for NAME_MAX and PATH_MAX defines
+    #define MAX_FILEPATH_LENGTH PATH_MAX    // Use Linux define (4096)
 #else
-        #define MAX_FILEPATH_LENGTH 256 // Use common value
+    #define MAX_FILEPATH_LENGTH     512     // Use common value
 #endif
 
 #if defined(PLATFORM_ANDROID)
@@ -779,24 +780,23 @@ void ToggleFullscreen(void)
 }
 
 // Set icon for window (only PLATFORM_DESKTOP)
+// NOTE: Image must be in RGBA format, 8bit per channel
 void SetWindowIcon(Image image)
 {
 #if defined(PLATFORM_DESKTOP)
-    Image imicon = ImageCopy(image);
-    ImageFormat(&imicon, UNCOMPRESSED_R8G8B8A8);
+    if (image.format == UNCOMPRESSED_R8G8B8A8)
+    {
+        GLFWimage icon[1] = { 0 };
 
-    GLFWimage icon[1] = { 0 };
+        icon[0].width = image.width;
+        icon[0].height = image.height;
+        icon[0].pixels = (unsigned char *)image.data;
 
-    icon[0].width = imicon.width;
-    icon[0].height = imicon.height;
-    icon[0].pixels = (unsigned char *)imicon.data;
-
-    // NOTE 1: We only support one image icon
-    // NOTE 2: The specified image data is copied before this function returns
-    glfwSetWindowIcon(window, 1, icon);
-
-    // TODO: Support multi-image icons --> image.mipmaps
-    UnloadImage(imicon);
+        // NOTE 1: We only support one image icon
+        // NOTE 2: The specified image data is copied before this function returns
+        glfwSetWindowIcon(window, 1, icon);
+    }
+    else TraceLog(LOG_WARNING, "Window icon image must be in R8G8B8A8 pixel format");
 #endif
 }
 
@@ -1674,37 +1674,26 @@ const char *GetFileName(const char *filePath)
 // Get filename string without extension (memory should be freed)
 const char *GetFileNameWithoutExt(const char *filePath)
 {
-    char *result, *lastDot, *lastSep;
-
-    char nameDot = '.';     // Default filename to extension separator character
-    char pathSep = '/';     // Default filepath separator character
-
-    // Error checks and allocate string
-    if (filePath == NULL) return NULL;
-
-    // Try to allocate new string, same size as original
-    // NOTE: By default strlen() does not count the '\0' character
-    if ((result = (char *)malloc(strlen(filePath) + 1)) == NULL) return NULL;
-
-    strcpy(result, filePath);   // Make a copy of the string
-
-    // NOTE: strrchr() returns a pointer to the last occurrence of character
-    lastDot = strrchr(result, nameDot);
-    lastSep = (pathSep == 0)? NULL : strrchr(result, pathSep);
-
-    if (lastDot != NULL)            // Check if it has an extension separator...
+    #define MAX_FILENAMEWITHOUTEXT_LENGTH   64
+    
+    static char fileName[MAX_FILENAMEWITHOUTEXT_LENGTH];
+    memset(fileName, 0, MAX_FILENAMEWITHOUTEXT_LENGTH);
+    
+    strcpy(fileName, GetFileName(filePath));   // Get filename with extension
+    
+    int len = strlen(fileName);
+    
+    for (int i = 0; (i < len) && (i < MAX_FILENAMEWITHOUTEXT_LENGTH); i++)
     {
-        if (lastSep != NULL)        // ...and it's before the extenstion separator...
+        if (fileName[i] == '.')
         {
-            if (lastSep < lastDot)
-            {
-                *lastDot = '\0';    // ...then remove it
-            }
+            // NOTE: We break on first '.' found
+            fileName[i] = '\0';
+            break;
         }
-        else *lastDot = '\0';       // Has extension separator with no path separator
     }
 
-    return result;                  // Return the modified string
+    return fileName;
 }
 
 // Get directory for a given fileName (with path)
@@ -3449,7 +3438,7 @@ static void WindowDropCallback(GLFWwindow *window, int count, const char **paths
 
     for (int i = 0; i < count; i++)
     {
-        dropFilesPath[i] = (char *)malloc(sizeof(char)*MAX_FILEPATH_LENGTH);     // Max path length using MAX_FILEPATH_LENGTH set to 256 char
+        dropFilesPath[i] = (char *)malloc(sizeof(char)*MAX_FILEPATH_LENGTH);
         strcpy(dropFilesPath[i], paths[i]);
     }
 

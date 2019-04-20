@@ -181,6 +181,15 @@ static Image LoadASTC(const char *fileName);  // Load ASTC file
 Image LoadImage(const char *fileName)
 {
     Image image = { 0 };
+    
+#if defined(SUPPORT_FILEFORMAT_PNG) || \
+    defined(SUPPORT_FILEFORMAT_BMP) || \
+    defined(SUPPORT_FILEFORMAT_TGA) || \
+    defined(SUPPORT_FILEFORMAT_GIF) || \
+    defined(SUPPORT_FILEFORMAT_PIC) || \
+    defined(SUPPORT_FILEFORMAT_PSD)
+#define STBI_REQUIRED
+#endif
 
 #if defined(SUPPORT_FILEFORMAT_PNG)
     if ((IsFileExtension(fileName, ".png"))
@@ -207,6 +216,7 @@ Image LoadImage(const char *fileName)
 #endif
        )
     {
+#if defined(STBI_REQUIRED)
         int imgWidth = 0;
         int imgHeight = 0;
         int imgBpp = 0;
@@ -229,6 +239,7 @@ Image LoadImage(const char *fileName)
             else if (imgBpp == 3) image.format = UNCOMPRESSED_R8G8B8;
             else if (imgBpp == 4) image.format = UNCOMPRESSED_R8G8B8A8;
         }
+#endif
     }
 #if defined(SUPPORT_FILEFORMAT_HDR)
     else if (IsFileExtension(fileName, ".hdr"))
@@ -729,6 +740,20 @@ Image GetTextureData(Texture2D texture)
     return image;
 }
 
+// Get pixel data from GPU frontbuffer and return an Image (screenshot)
+RLAPI Image GetScreenData(void)
+{
+    Image image = { 0 };
+    
+    image.width = GetScreenWidth();
+    image.height = GetScreenHeight();
+    image.mipmaps = 1;
+    image.format = UNCOMPRESSED_R8G8B8A8;
+    image.data = rlReadScreenPixels(image.width, image.height);
+
+    return image;
+}
+
 // Update GPU texture with new data
 // NOTE: pixels data must match texture.format
 void UpdateTexture(Texture2D texture, const void *pixels)
@@ -1157,8 +1182,6 @@ void ImageAlphaPremultiply(Image *image)
     ImageFormat(image, prevFormat);
 }
 
-
-
 #if defined(SUPPORT_IMAGE_MANIPULATION)
 // Load cubemap from image, multiple image cubemap layouts supported
 TextureCubemap LoadTextureCubemap(Image image, int layoutType)
@@ -1387,22 +1410,56 @@ void ImageResizeNN(Image *image,int newWidth,int newHeight)
 // NOTE: Resize offset is relative to the top-left corner of the original image
 void ImageResizeCanvas(Image *image, int newWidth,int newHeight, int offsetX, int offsetY, Color color)
 {
-    Image imTemp = GenImageColor(newWidth, newHeight, color);
-    Rectangle srcRec = { 0.0f, 0.0f, (float)image->width, (float)image->height };
-    Rectangle dstRec = { (float)offsetX, (float)offsetY, (float)srcRec.width, (float)srcRec.height };
-
     // TODO: Review different scaling situations
+    
+    if ((newWidth != image->width) || (newHeight != image->height))
+    {
+        if ((newWidth > image->width) && (newHeight > image->height))
+        {
+            Image imTemp = GenImageColor(newWidth, newHeight, color);
+            
+            Rectangle srcRec = { 0.0f, 0.0f, (float)image->width, (float)image->height };
+            Rectangle dstRec = { (float)offsetX, (float)offsetY, (float)srcRec.width, (float)srcRec.height };
 
-    if ((newWidth > image->width) && (newHeight > image->height))
-    {
-        ImageDraw(&imTemp, *image, srcRec, dstRec);
-        ImageFormat(&imTemp, image->format);
-        UnloadImage(*image);
-        *image = imTemp;
-    }
-    else
-    {
-        // TODO: ImageCrop(), define proper cropping rectangle
+            ImageDraw(&imTemp, *image, srcRec, dstRec);
+            ImageFormat(&imTemp, image->format);
+            UnloadImage(*image);
+            *image = imTemp;
+        }
+        else if ((newWidth < image->width) && (newHeight < image->height))
+        {
+            Rectangle crop = { (float)offsetX, (float)offsetY, newWidth, newHeight };
+            ImageCrop(image, crop);
+        }
+        else    // One side is bigger and the other is smaller
+        {
+            Image imTemp = GenImageColor(newWidth, newHeight, color);
+            
+            Rectangle srcRec = { 0.0f, 0.0f, (float)image->width, (float)image->height };
+            Rectangle dstRec = { (float)offsetX, (float)offsetY, (float)newWidth, (float)newHeight };
+            
+            if (newWidth < image->width)
+            {
+                srcRec.x = offsetX;
+                srcRec.width = newWidth;
+                
+                dstRec.x = 0.0f;
+            }
+            
+            if (newHeight < image->height)
+            {
+                srcRec.y = offsetY;
+                srcRec.height = newHeight;
+                
+                dstRec.y = 0.0f;
+            }
+
+            // TODO: ImageDraw() could be buggy?
+            ImageDraw(&imTemp, *image, srcRec, dstRec);
+            ImageFormat(&imTemp, image->format);
+            UnloadImage(*image);
+            *image = imTemp;
+        }
     }
 }
 

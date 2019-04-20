@@ -42,7 +42,7 @@
 .PHONY: all clean install uninstall
 
 # Define required raylib variables
-RAYLIB_VERSION     = 2.0.0
+RAYLIB_VERSION     = 2.4.0
 RAYLIB_API_VERSION = 2
 
 # See below for alternatives.
@@ -59,9 +59,15 @@ RAYLIB_LIBTYPE       ?= STATIC
 # Build mode for library: DEBUG or RELEASE
 RAYLIB_BUILD_MODE    ?= RELEASE
 
-# Included raylib audio module on compilation
-# NOTE: Some programs like tools could not require audio support
-INCLUDE_AUDIO_MODULE ?= TRUE
+# Include raylib modules on compilation
+# NOTE: Some programs like tools could not require those modules
+RAYLIB_MODULE_AUDIO  ?= TRUE
+RAYLIB_MODULE_MODELS ?= TRUE
+RAYLIB_MODULE_RAYGUI ?= FALSE
+RAYLIB_MODULE_PHYSAC ?= FALSE
+
+RAYLIB_MODULE_RAYGUI_PATH ?= .
+RAYLIB_MODULE_PHYSAC_PATH ?= .
 
 # Use external GLFW library instead of rglfw module
 # TODO: Review usage of examples on Linux.
@@ -179,33 +185,12 @@ ifeq ($(PLATFORM),PLATFORM_ANDROID)
     endif
 endif
 
-# RAYLIB_RELEASE_PATH points to library build path, right now 
-RAYLIB_RELEASE_PATH  ?= $(RAYLIB_PATH)/src
+# Define raylib source code path
+RAYLIB_SRC_PATH ?= $(RAYLIB_PATH)/src
 
-# Define output directory for compiled library
-ifeq ($(PLATFORM),PLATFORM_DESKTOP)
-    ifeq ($(PLATFORM_OS),WINDOWS)
-        RAYLIB_RELEASE_PATH = $(RAYLIB_PATH)\mingw\i686-w64-mingw32\lib
-    endif
-    ifeq ($(PLATFORM_OS),LINUX)
-        RAYLIB_RELEASE_PATH = $(RAYLIB_PATH)/src
-    endif
-    ifeq ($(PLATFORM_OS),OSX)
-        RAYLIB_RELEASE_PATH = $(RAYLIB_PATH)/src
-    endif
-    ifeq ($(PLATFORM_OS),BSD)
-        RAYLIB_RELEASE_PATH = $(RAYLIB_PATH)/src
-    endif
-endif
-ifeq ($(PLATFORM),PLATFORM_RPI)
-    RAYLIB_RELEASE_PATH = $(RAYLIB_PATH)/src
-endif
-ifeq ($(PLATFORM),PLATFORM_WEB)
-    RAYLIB_RELEASE_PATH = $(RAYLIB_PATH)/src
-endif
-ifeq ($(PLATFORM),PLATFORM_ANDROID)
-    RAYLIB_RELEASE_PATH = $(RAYLIB_PATH)/src/android/$(ANDROID_ARCH_NAME)
-endif
+# Define output directory for compiled library, defaults to src directory
+# NOTE: If externally provided, make sure directory exists
+RAYLIB_RELEASE_PATH  ?= $(RAYLIB_PATH)/src
 
 # Define raylib graphics api depending on selected platform
 ifeq ($(PLATFORM),PLATFORM_DESKTOP)
@@ -393,7 +378,6 @@ OBJS = core.o \
        shapes.o \
        textures.o \
        text.o \
-       models.o \
        utils.o
 
 ifeq ($(PLATFORM),PLATFORM_DESKTOP)
@@ -401,9 +385,17 @@ ifeq ($(PLATFORM),PLATFORM_DESKTOP)
         OBJS += rglfw.o
     endif
 endif
-
-ifeq ($(INCLUDE_AUDIO_MODULE),TRUE)
+ifeq ($(RAYLIB_MODULE_MODELS),TRUE)
+    OBJS += models.o
+endif
+ifeq ($(RAYLIB_MODULE_AUDIO),TRUE)
     OBJS += raudio.o
+endif
+ifeq ($(RAYLIB_MODULE_RAYGUI),TRUE)
+    OBJS += raygui.o
+endif
+ifeq ($(RAYLIB_MODULE_PHYSAC),TRUE)
+    OBJS += physac.o
 endif
 
 ifeq ($(PLATFORM),PLATFORM_ANDROID)
@@ -442,11 +434,6 @@ ifeq ($(PLATFORM),PLATFORM_WEB)
 	emcc -O1 $(OBJS) -o $(RAYLIB_RELEASE_PATH)/libraylib.bc
 	@echo "raylib library generated (libraylib.bc)!"
 else
-    ifeq ($(PLATFORM_OS),WINDOWS)
-		if not exist $(RAYLIB_RELEASE_PATH) mkdir $(RAYLIB_RELEASE_PATH)
-    else
-		mkdir -p $(RAYLIB_RELEASE_PATH)
-    endif
     ifeq ($(RAYLIB_LIBTYPE),SHARED)
         ifeq ($(PLATFORM),PLATFORM_DESKTOP)
             ifeq ($(PLATFORM_OS),WINDOWS)
@@ -509,7 +496,7 @@ core.o : core.c raylib.h rlgl.h utils.h raymath.h camera.h gestures.h
 
 # Compile rglfw module
 rglfw.o : rglfw.c
-	$(CC) $(GLFW_CFLAGS) -c $< $(CFLAGS) $(INCLUDE_PATHS) -D$(PLATFORM) -D$(GRAPHICS)
+	$(CC) -c $< $(CFLAGS) $(GLFW_CFLAGS) $(INCLUDE_PATHS) -D$(PLATFORM) -D$(GRAPHICS)
 
 # Compile shapes module
 shapes.o : shapes.c raylib.h rlgl.h
@@ -523,6 +510,10 @@ textures.o : textures.c raylib.h rlgl.h utils.h
 text.o : text.c raylib.h utils.h
 	$(CC) -c $< $(CFLAGS) $(INCLUDE_PATHS) -D$(PLATFORM) -D$(GRAPHICS)
 
+# Compile utils module
+utils.o : utils.c utils.h
+	$(CC) -c $< $(CFLAGS) $(INCLUDE_PATHS) -D$(PLATFORM)
+
 # Compile models module
 models.o : models.c raylib.h rlgl.h raymath.h
 	$(CC) -c $< $(CFLAGS) $(INCLUDE_PATHS) -D$(PLATFORM) -D$(GRAPHICS)
@@ -530,10 +521,20 @@ models.o : models.c raylib.h rlgl.h raymath.h
 # Compile audio module
 raudio.o : raudio.c raylib.h
 	$(CC) -c $< $(CFLAGS) $(INCLUDE_PATHS) -D$(PLATFORM)
-
-# Compile utils module
-utils.o : utils.c utils.h
-	$(CC) -c $< $(CFLAGS) $(INCLUDE_PATHS) -D$(PLATFORM)
+    
+# Compile raygui module
+# NOTE: raygui header should be distributed with raylib.h
+raygui.o : raygui.c raygui.h
+	@echo #define RAYGUI_IMPLEMENTATION > raygui.c
+	@echo #include "$(RAYLIB_MODULE_RAYGUI_PATH)/raygui.h" > raygui.c
+	$(CC) -c $< $(CFLAGS) $(INCLUDE_PATHS) -D$(PLATFORM) -DRAYGUI_IMPLEMENTATION
+    
+# Compile physac module
+# NOTE: physac header should be distributed with raylib.h
+physac.o : physac.c physac.h
+	@echo #define PHYSAC_IMPLEMENTATION > physac.c
+	@echo #include "$(RAYLIB_MODULE_PHYSAC_PATH)/physac.h" > physac.c
+	$(CC) -c $< $(CFLAGS) $(INCLUDE_PATHS) -D$(PLATFORM) -DRAYGUI_IMPLEMENTATION
 
 
 # Install generated and needed files to desired directories.

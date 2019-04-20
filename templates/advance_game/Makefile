@@ -26,7 +26,7 @@
 # Define required raylib variables
 # WARNING: To compile to HTML5, code must be redesigned to use emscripten.h and emscripten_set_main_loop()
 PLATFORM            ?= PLATFORM_DESKTOP
-RAYLIB_PATH         = ../..
+RAYLIB_PATH         ?= ../..
 PROJECT_NAME        ?= advance_game
 
 # Default path for raylib on Raspberry Pi, if installed in different path, update it!
@@ -58,7 +58,7 @@ ifeq ($(PLATFORM),PLATFORM_DESKTOP)
         ifeq ($(UNAMEOS),Linux)
             PLATFORM_OS=LINUX
         endif
-       ifeq ($(UNAMEOS),FreeBSD)
+        ifeq ($(UNAMEOS),FreeBSD)
             PLATFORM_OS=BSD
         endif
         ifeq ($(UNAMEOS),OpenBSD)
@@ -209,7 +209,7 @@ endif
 LDFLAGS = -L. -L$(RAYLIB_RELEASE_PATH) -L$(RAYLIB_PATH)/src 
 
 ifeq ($(PLATFORM),PLATFORM_DESKTOP)
-    ifeq ($(PLATFORM_OS),FREEBSD)
+    ifeq ($(PLATFORM_OS),BSD)
         INCLUDE_PATHS += -I/usr/local/include
         LDFLAGS += -L. -Lsrc -L/usr/local/lib
     endif
@@ -249,8 +249,8 @@ ifeq ($(PLATFORM),PLATFORM_DESKTOP)
         # NOTE: Required packages: libopenal-dev libegl1-mesa-dev
         LDLIBS = -lraylib -framework OpenGL -framework OpenAL -framework Cocoa
     endif
-    ifeq ($(PLATFORM_OS),FREEBSD)
-        # Libraries for FreeBSD desktop compiling
+    ifeq ($(PLATFORM_OS),BSD)
+        # Libraries for FreeBSD, OpenBSD, NetBSD, DragonFly desktop compiling
         # NOTE: Required packages: mesa-libs
         LDLIBS = -lraylib -lGL -lpthread -lm
 

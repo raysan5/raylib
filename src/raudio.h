@@ -11,7 +11,7 @@
 *       - Manage raw audio context
 *
 *   DEPENDENCIES:
-*       mini_al.h    - Audio device management lib (https://github.com/dr-soft/mini_al)
+*       miniaudio.h  - Audio device management lib (https://github.com/dr-soft/miniaudio)
 *       stb_vorbis.h - Ogg audio files loading (http://www.nothings.org/stb_vorbis/)
 *       dr_mp3.h     - MP3 audio file loading (https://github.com/mackron/dr_libs)
 *       dr_flac.h    - FLAC audio file loading (https://github.com/mackron/dr_libs)
