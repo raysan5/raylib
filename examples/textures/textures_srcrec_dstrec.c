@@ -27,13 +27,13 @@ int main()
     int frameHeight = scarfy.height;
     
     // NOTE: Source rectangle (part of the texture to use for drawing)
-    Rectangle sourceRec = { 0.0f, 0.0f, (float)frameWidth, (float)frameHeight };
+    Rectangle sourceRec = { 0.0f, 0.0f, frameWidth, frameHeight };
 
     // NOTE: Destination rectangle (screen rectangle where drawing part of texture)
-    Rectangle destRec = { (float)screenWidth/2, (float)screenHeight/2, (float)frameWidth*2, (float)frameHeight*2 };
+    Rectangle destRec = { screenWidth/2, screenHeight/2, frameWidth*2, frameHeight*2 };
 
     // NOTE: Origin of the texture (rotation/scale point), it's relative to destination rectangle size
-    Vector2 origin = { (float)frameWidth, (float)frameHeight };
+    Vector2 origin = { frameWidth, frameHeight };
     
     int rotation = 0;
     
@@ -61,7 +61,7 @@ int main()
             // rotation defines the texture rotation (using origin as rotation point)
             DrawTexturePro(scarfy, sourceRec, destRec, origin, (float)rotation, WHITE);
 
-            DrawLine((int) destRec.x, 0, (int) destRec.x, screenHeight, GRAY);
+            DrawLine((int)destRec.x, 0, (int)destRec.x, screenHeight, GRAY);
             DrawLine(0, (int)destRec.y, screenWidth, (int)destRec.y, GRAY);
             
             DrawText("(c) Scarfy sprite by Eiden Marsal", screenWidth - 200, screenHeight - 20, 10, GRAY);

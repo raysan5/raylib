@@ -7,6 +7,7 @@ Some people ported raylib to other languages in form of bindings or wrappers to 
  - [raylib-lua-ffi](https://github.com/raysan5/raylib/issues/693) : raylib **Lua** ffi binding
  - [raylib-go](https://github.com/gen2brain/raylib-go) : raylib **Go** binding
  - [raylib-Nim](https://gitlab.com/define-private-public/raylib-Nim) : raylib **Nim** binding
+ - [raylib-cr](https://github.com/AregevDev/raylib-cr) : raylib **Crystal** binding
  - [cray](https://gitlab.com/Zatherz/cray) - raylib **Crystal** binding
  - [Graphics::Raylib](https://metacpan.org/pod/Graphics::Raylib) : raylib **Perl** wrapper
  - [raylib-pascal](https://github.com/drezgames/raylib-pascal) - raylib **Pascal** binding
@@ -19,8 +20,12 @@ Some people ported raylib to other languages in form of bindings or wrappers to 
  - [raylib-java](https://github.com/XoanaIO/raylib-java) : raylib **Java** binding
  - [raylib-chaiscript](https://github.com/RobLoach/raylib-chaiscript) : raylib **ChaiScript** binding
  - [node-raylib](https://github.com/RobLoach/node-raylib) : **Node.js** raylib binding
- - *[raylib flat-assembler Usage example]()*
+ - [raylib-odin](https://github.com/kevinw/raylib-odin): **Odin** raylib binding
+ - [raylib-factor](https://github.com/Silverbeard00/raylib-factor): **Factor** raylib binding
  - *[raylib COBOL Usage example](https://github.com/Martinfx/Cobol/tree/master/OpenCobol/Games/raylib)*
+ - *raylib flat-assembler Usage example*: not uploaded yet...
+ 
+Missing some language? Check the [bindings not yet in this list](https://gist.github.com/raysan5/5764cc5b885183f523fce47f098f3d9b#bindings-not-yet-in-the-official-list) or create a new binding! :)
  
 Usually, raylib bindings follow the convention: `raylib-{language}`
 

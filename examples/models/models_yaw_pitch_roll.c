@@ -37,10 +37,10 @@ int main()
     RenderTexture2D framebuffer = LoadRenderTexture(192, 192);
 
     // Model loading
-    Model model = LoadModel("resources/plane.obj");      // Load OBJ model
-    model.material.maps[MAP_DIFFUSE].texture = LoadTexture("resources/plane_diffuse.png"); // Set map diffuse texture
+    Model model = LoadModel("resources/plane.obj");     // Load OBJ model
+    model.materials[0].maps[MAP_DIFFUSE].texture = LoadTexture("resources/plane_diffuse.png"); // Set map diffuse texture
 
-    GenTextureMipmaps(&model.material.maps[MAP_DIFFUSE].texture);
+    GenTextureMipmaps(&model.materials[0].maps[MAP_DIFFUSE].texture);
 
     Camera camera = { 0 };
     camera.position = (Vector3){ 0.0f, 60.0f, -120.0f };// Camera position perspective

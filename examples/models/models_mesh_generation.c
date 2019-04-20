@@ -39,7 +39,7 @@ int main()
     models[7] = LoadModelFromMesh(GenMeshPoly(5, 2.0f));
     
     // Set checked texture as default diffuse component for all models material
-    for (int i = 0; i < NUM_MODELS; i++) models[i].material.maps[MAP_DIFFUSE].texture = texture;
+    for (int i = 0; i < NUM_MODELS; i++) models[i].materials[0].maps[MAP_DIFFUSE].texture = texture;
 
     // Define the camera to look into our 3d world
     Camera camera = {{ 5.0f, 5.0f, 5.0f }, { 0.0f, 0.0f, 0.0f }, { 0.0f, 1.0f, 0.0f }, 45.0f, 0 };
@@ -64,6 +64,17 @@ int main()
         if (IsMouseButtonPressed(MOUSE_LEFT_BUTTON))
         {
             currentModel = (currentModel + 1)%NUM_MODELS; // Cycle between the textures
+        }
+        
+        if (IsKeyPressed(KEY_RIGHT))
+        { 
+            currentModel++;
+            if (currentModel >= NUM_MODELS) currentModel = 0;
+        }
+        else if (IsKeyPressed(KEY_LEFT))
+        {
+            currentModel--;
+            if (currentModel < 0) currentModel = NUM_MODELS - 1;
         }
         //----------------------------------------------------------------------------------
 

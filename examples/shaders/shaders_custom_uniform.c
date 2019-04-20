@@ -45,7 +45,7 @@ int main()
 
     Model model = LoadModel("resources/models/barracks.obj");                   // Load OBJ model
     Texture2D texture = LoadTexture("resources/models/barracks_diffuse.png");   // Load model texture (diffuse map)
-    model.material.maps[MAP_DIFFUSE].texture = texture;                         // Set model diffuse texture
+    model.materials[0].maps[MAP_DIFFUSE].texture = texture;                     // Set model diffuse texture
 
     Vector3 position = { 0.0f, 0.0f, 0.0f };                                    // Set model position
     

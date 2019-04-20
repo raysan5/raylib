@@ -2,7 +2,7 @@
 #
 #   raylib makefile for Desktop platforms, Raspberry Pi, Android and HTML5
 #
-#   Copyright (c) 2013-2018 Ramon Santamaria (@raysan5)
+#   Copyright (c) 2013-2019 Ramon Santamaria (@raysan5)
 #
 #   This software is provided "as-is", without any express or implied warranty. In no event
 #   will the authors be held liable for any damages arising from the use of this software.
@@ -377,7 +377,7 @@ EXAMPLES = \
     core/core_2d_camera \
     core/core_world_screen \
     core/core_vr_simulator \
-    core/core_multitouch \
+    core/core_input_multitouch \
     shapes/shapes_logo_raylib \
     shapes/shapes_basic_shapes \
     shapes/shapes_colors_palette \

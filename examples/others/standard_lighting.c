@@ -113,7 +113,7 @@ int main()
     material.maps[MAP_DIFFUSE].color = WHITE;
     material.maps[MAP_SPECULAR].color = WHITE;
     
-    model.material = material;      // Apply material to model
+    model.materials[0] = material;      // Apply material to model
 
     Light spotLight = CreateLight(LIGHT_SPOT, (Vector3){3.0f, 5.0f, 2.0f}, (Color){255, 255, 255, 255});
     spotLight->target = (Vector3){0.0f, 0.0f, 0.0f};

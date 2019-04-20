@@ -38,7 +38,7 @@
 *
 *   LICENSE: zlib/libpng
 *
-*   Copyright (c) 2014-2018 Ramon Santamaria (@raysan5)
+*   Copyright (c) 2013-2019 Ramon Santamaria (@raysan5)
 *
 *   This software is provided "as-is", without any express or implied warranty. In no event
 *   will the authors be held liable for any damages arising from the use of this software.
@@ -181,7 +181,7 @@ static Image LoadASTC(const char *fileName);  // Load ASTC file
 Image LoadImage(const char *fileName)
 {
     Image image = { 0 };
-    
+
 #if defined(SUPPORT_FILEFORMAT_PNG) || \
     defined(SUPPORT_FILEFORMAT_BMP) || \
     defined(SUPPORT_FILEFORMAT_TGA) || \
@@ -744,7 +744,7 @@ Image GetTextureData(Texture2D texture)
 RLAPI Image GetScreenData(void)
 {
     Image image = { 0 };
-    
+
     image.width = GetScreenWidth();
     image.height = GetScreenHeight();
     image.mipmaps = 1;
@@ -1206,12 +1206,9 @@ TextureCubemap LoadTextureCubemap(Image image, int layoutType)
         cubemap.height = cubemap.width;
     }
 
-    int size = cubemap.width;
-
     if (layoutType != CUBEMAP_AUTO_DETECT)
     {
-        //unsigned int dataSize = GetPixelDataSize(size, size, format);
-        //void *facesData = malloc(size*size*dataSize*6);    // Get memory for 6 faces in a column
+        int size = cubemap.width;
 
         Image faces = { 0 };                // Vertical column image
         Rectangle faceRecs[6] = { 0 };      // Face source rectangles
@@ -1225,6 +1222,7 @@ TextureCubemap LoadTextureCubemap(Image image, int layoutType)
         else if (layoutType == CUBEMAP_PANORAMA)
         {
             // TODO: Convert panorama image to square faces...
+            // Ref: https://github.com/denivip/panorama/blob/master/panorama.cpp
         }
         else
         {
@@ -1411,13 +1409,13 @@ void ImageResizeNN(Image *image,int newWidth,int newHeight)
 void ImageResizeCanvas(Image *image, int newWidth,int newHeight, int offsetX, int offsetY, Color color)
 {
     // TODO: Review different scaling situations
-    
+
     if ((newWidth != image->width) || (newHeight != image->height))
     {
         if ((newWidth > image->width) && (newHeight > image->height))
         {
             Image imTemp = GenImageColor(newWidth, newHeight, color);
-            
+
             Rectangle srcRec = { 0.0f, 0.0f, (float)image->width, (float)image->height };
             Rectangle dstRec = { (float)offsetX, (float)offsetY, (float)srcRec.width, (float)srcRec.height };
 
@@ -1434,23 +1432,23 @@ void ImageResizeCanvas(Image *image, int newWidth,int newHeight, int offsetX, in
         else    // One side is bigger and the other is smaller
         {
             Image imTemp = GenImageColor(newWidth, newHeight, color);
-            
+
             Rectangle srcRec = { 0.0f, 0.0f, (float)image->width, (float)image->height };
             Rectangle dstRec = { (float)offsetX, (float)offsetY, (float)newWidth, (float)newHeight };
-            
+
             if (newWidth < image->width)
             {
                 srcRec.x = offsetX;
                 srcRec.width = newWidth;
-                
+
                 dstRec.x = 0.0f;
             }
-            
+
             if (newHeight < image->height)
             {
                 srcRec.y = offsetY;
                 srcRec.height = newHeight;
-                
+
                 dstRec.y = 0.0f;
             }
 

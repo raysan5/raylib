@@ -26,7 +26,7 @@ int main()
 
     // Define the camera to look into our 3d world
     Camera camera = { 0 };
-    camera.position = (Vector3){ 20.0f, 20.0f, 20.0f };  // Camera position
+    camera.position = (Vector3){ 20.0f, 20.0f, 20.0f }; // Camera position
     camera.target = (Vector3){ 0.0f, 8.0f, 0.0f };      // Camera looking at point
     camera.up = (Vector3){ 0.0f, 1.6f, 0.0f };          // Camera up vector (rotation towards target)
     camera.fovy = 45.0f;                                // Camera field-of-view Y
@@ -36,10 +36,10 @@ int main()
     
     Model tower = LoadModel("resources/models/turret.obj");                 // Load OBJ model
     Texture2D texture = LoadTexture("resources/models/turret_diffuse.png"); // Load model texture
-    tower.material.maps[MAP_DIFFUSE].texture = texture;                     // Set model diffuse texture
+    tower.materials[0].maps[MAP_DIFFUSE].texture = texture;                 // Set model diffuse texture
     
     Vector3 towerPos = { 0.0f, 0.0f, 0.0f };                    // Set model position
-    BoundingBox towerBBox = MeshBoundingBox(tower.mesh);        // Get mesh bounding box
+    BoundingBox towerBBox = MeshBoundingBox(tower.meshes[0]);   // Get mesh bounding box
     bool hitMeshBBox = false;
     bool hitTriangle = false;
 
