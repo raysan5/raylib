@@ -189,7 +189,7 @@ int main(int argc, char **argv)
         
         // Draw
         //----------------------------------------------------------------------------------
-		BeginDrawing();
+        BeginDrawing();
             ClearBackground(RAYWHITE);
             
             // Draw emoji and the text bubbles
@@ -271,12 +271,12 @@ void Draw()
         // Calculate size for the message box (approximate the height and width)
         Vector2 sz = MeasureTextEx(*font, messages[message].text, font->baseSize, 1.0f);
         if(sz.x > 300) 
-		{
+        {
             sz.y *= sz.x/300;
             sz.x = 300;
         } 
-		else if(sz.x < 160) 
-			sz.x = 160;
+        else if(sz.x < 160) 
+            sz.x = 160;
 		
         Rectangle msgRect = { selectedPos.x - 38.8f, selectedPos.y, 2 * horizontalPadding + sz.x, 2 * verticalPadding + sz.y};
         msgRect.y -= msgRect.height;
