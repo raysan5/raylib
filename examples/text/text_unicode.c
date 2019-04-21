@@ -270,10 +270,14 @@ void Draw()
             
         // Calculate size for the message box (approximate the height and width)
         Vector2 sz = MeasureTextEx(*font, messages[message].text, font->baseSize, 1.0f);
-        if(sz.x > 300) {
+        if(sz.x > 300) 
+		{
             sz.y *= sz.x/300;
             sz.x = 300;
-        } else if(sz.x < 160) sz.x = 160;
+        } 
+		else if(sz.x < 160) 
+			sz.x = 160;
+		
         Rectangle msgRect = { selectedPos.x - 38.8f, selectedPos.y, 2 * horizontalPadding + sz.x, 2 * verticalPadding + sz.y};
         msgRect.y -= msgRect.height;
         Vector2 a = {selectedPos.x, msgRect.y + msgRect.height}, b = {a.x + 8, a.y + 10}, c= {a.x+10, a.y}; // coordinates for the chat bubble triangle
