@@ -64,6 +64,14 @@
 #if defined(RLGL_STANDALONE)
     #define RAYMATH_STANDALONE
     #define RAYMATH_HEADER_ONLY
+    
+    #if defined(_WIN32) && defined(BUILD_LIBTYPE_SHARED)
+        #define RLAPI __declspec(dllexport)         // We are building raylib as a Win32 shared library (.dll)
+    #elif defined(_WIN32) && defined(USE_LIBTYPE_SHARED)
+        #define RLAPI __declspec(dllimport)         // We are using raylib as a Win32 shared library (.dll)
+    #else
+        #define RLAPI   // We are building or using raylib as a static library (or Linux shared library)
+    #endif
 #else
     #include "raylib.h"         // Required for: Model, Shader, Texture2D, TraceLog()
 #endif
@@ -395,90 +403,90 @@ extern "C" {            // Prevents name mangling of functions
 //------------------------------------------------------------------------------------
 // Functions Declaration - Matrix operations
 //------------------------------------------------------------------------------------
-void rlMatrixMode(int mode);                    // Choose the current matrix to be transformed
-void rlPushMatrix(void);                        // Push the current matrix to stack
-void rlPopMatrix(void);                         // Pop lattest inserted matrix from stack
-void rlLoadIdentity(void);                      // Reset current matrix to identity matrix
-void rlTranslatef(float x, float y, float z);   // Multiply the current matrix by a translation matrix
-void rlRotatef(float angleDeg, float x, float y, float z);  // Multiply the current matrix by a rotation matrix
-void rlScalef(float x, float y, float z);       // Multiply the current matrix by a scaling matrix
-void rlMultMatrixf(float *matf);                // Multiply the current matrix by another matrix
-void rlFrustum(double left, double right, double bottom, double top, double near, double far);
-void rlOrtho(double left, double right, double bottom, double top, double near, double far);
-void rlViewport(int x, int y, int width, int height); // Set the viewport area
+RLAPI void rlMatrixMode(int mode);                    // Choose the current matrix to be transformed
+RLAPI void rlPushMatrix(void);                        // Push the current matrix to stack
+RLAPI void rlPopMatrix(void);                         // Pop lattest inserted matrix from stack
+RLAPI void rlLoadIdentity(void);                      // Reset current matrix to identity matrix
+RLAPI void rlTranslatef(float x, float y, float z);   // Multiply the current matrix by a translation matrix
+RLAPI void rlRotatef(float angleDeg, float x, float y, float z);  // Multiply the current matrix by a rotation matrix
+RLAPI void rlScalef(float x, float y, float z);       // Multiply the current matrix by a scaling matrix
+RLAPI void rlMultMatrixf(float *matf);                // Multiply the current matrix by another matrix
+RLAPI void rlFrustum(double left, double right, double bottom, double top, double near, double far);
+RLAPI void rlOrtho(double left, double right, double bottom, double top, double near, double far);
+RLAPI void rlViewport(int x, int y, int width, int height); // Set the viewport area
 
 //------------------------------------------------------------------------------------
 // Functions Declaration - Vertex level operations
 //------------------------------------------------------------------------------------
-void rlBegin(int mode);                         // Initialize drawing mode (how to organize vertex)
-void rlEnd(void);                               // Finish vertex providing
-void rlVertex2i(int x, int y);                  // Define one vertex (position) - 2 int
-void rlVertex2f(float x, float y);              // Define one vertex (position) - 2 float
-void rlVertex3f(float x, float y, float z);     // Define one vertex (position) - 3 float
-void rlTexCoord2f(float x, float y);            // Define one vertex (texture coordinate) - 2 float
-void rlNormal3f(float x, float y, float z);     // Define one vertex (normal) - 3 float
-void rlColor4ub(byte r, byte g, byte b, byte a);    // Define one vertex (color) - 4 byte
-void rlColor3f(float x, float y, float z);          // Define one vertex (color) - 3 float
-void rlColor4f(float x, float y, float z, float w); // Define one vertex (color) - 4 float
+RLAPI void rlBegin(int mode);                         // Initialize drawing mode (how to organize vertex)
+RLAPI void rlEnd(void);                               // Finish vertex providing
+RLAPI void rlVertex2i(int x, int y);                  // Define one vertex (position) - 2 int
+RLAPI void rlVertex2f(float x, float y);              // Define one vertex (position) - 2 float
+RLAPI void rlVertex3f(float x, float y, float z);     // Define one vertex (position) - 3 float
+RLAPI void rlTexCoord2f(float x, float y);            // Define one vertex (texture coordinate) - 2 float
+RLAPI void rlNormal3f(float x, float y, float z);     // Define one vertex (normal) - 3 float
+RLAPI void rlColor4ub(byte r, byte g, byte b, byte a);    // Define one vertex (color) - 4 byte
+RLAPI void rlColor3f(float x, float y, float z);          // Define one vertex (color) - 3 float
+RLAPI void rlColor4f(float x, float y, float z, float w); // Define one vertex (color) - 4 float
 
 //------------------------------------------------------------------------------------
 // Functions Declaration - OpenGL equivalent functions (common to 1.1, 3.3+, ES2)
 // NOTE: This functions are used to completely abstract raylib code from OpenGL layer
 //------------------------------------------------------------------------------------
-void rlEnableTexture(unsigned int id);                  // Enable texture usage
-void rlDisableTexture(void);                            // Disable texture usage
-void rlTextureParameters(unsigned int id, int param, int value); // Set texture parameters (filter, wrap)
-void rlEnableRenderTexture(unsigned int id);            // Enable render texture (fbo)
-void rlDisableRenderTexture(void);                      // Disable render texture (fbo), return to default framebuffer
-void rlEnableDepthTest(void);                           // Enable depth test
-void rlDisableDepthTest(void);                          // Disable depth test
-void rlEnableWireMode(void);                            // Enable wire mode
-void rlDisableWireMode(void);                           // Disable wire mode
-void rlDeleteTextures(unsigned int id);                 // Delete OpenGL texture from GPU
-void rlDeleteRenderTextures(RenderTexture2D target);    // Delete render textures (fbo) from GPU
-void rlDeleteShader(unsigned int id);                   // Delete OpenGL shader program from GPU
-void rlDeleteVertexArrays(unsigned int id);             // Unload vertex data (VAO) from GPU memory
-void rlDeleteBuffers(unsigned int id);                  // Unload vertex data (VBO) from GPU memory
-void rlClearColor(byte r, byte g, byte b, byte a);      // Clear color buffer with color
-void rlClearScreenBuffers(void);                        // Clear used screen buffers (color and depth)
-void rlUpdateBuffer(int bufferId, void *data, int dataSize); // Update GPU buffer with new data
-unsigned int rlLoadAttribBuffer(unsigned int vaoId, int shaderLoc, void *buffer, int size, bool dynamic);   // Load a new attributes buffer
+RLAPI void rlEnableTexture(unsigned int id);                  // Enable texture usage
+RLAPI void rlDisableTexture(void);                            // Disable texture usage
+RLAPI void rlTextureParameters(unsigned int id, int param, int value); // Set texture parameters (filter, wrap)
+RLAPI void rlEnableRenderTexture(unsigned int id);            // Enable render texture (fbo)
+RLAPI void rlDisableRenderTexture(void);                      // Disable render texture (fbo), return to default framebuffer
+RLAPI void rlEnableDepthTest(void);                           // Enable depth test
+RLAPI void rlDisableDepthTest(void);                          // Disable depth test
+RLAPI void rlEnableWireMode(void);                            // Enable wire mode
+RLAPI void rlDisableWireMode(void);                           // Disable wire mode
+RLAPI void rlDeleteTextures(unsigned int id);                 // Delete OpenGL texture from GPU
+RLAPI void rlDeleteRenderTextures(RenderTexture2D target);    // Delete render textures (fbo) from GPU
+RLAPI void rlDeleteShader(unsigned int id);                   // Delete OpenGL shader program from GPU
+RLAPI void rlDeleteVertexArrays(unsigned int id);             // Unload vertex data (VAO) from GPU memory
+RLAPI void rlDeleteBuffers(unsigned int id);                  // Unload vertex data (VBO) from GPU memory
+RLAPI void rlClearColor(byte r, byte g, byte b, byte a);      // Clear color buffer with color
+RLAPI void rlClearScreenBuffers(void);                        // Clear used screen buffers (color and depth)
+RLAPI void rlUpdateBuffer(int bufferId, void *data, int dataSize); // Update GPU buffer with new data
+RLAPI unsigned int rlLoadAttribBuffer(unsigned int vaoId, int shaderLoc, void *buffer, int size, bool dynamic);   // Load a new attributes buffer
 
 //------------------------------------------------------------------------------------
 // Functions Declaration - rlgl functionality
 //------------------------------------------------------------------------------------
-void rlglInit(int width, int height);           // Initialize rlgl (buffers, shaders, textures, states)
-void rlglClose(void);                           // De-inititialize rlgl (buffers, shaders, textures)
-void rlglDraw(void);                            // Update and draw default internal buffers
+RLAPI void rlglInit(int width, int height);           // Initialize rlgl (buffers, shaders, textures, states)
+RLAPI void rlglClose(void);                           // De-inititialize rlgl (buffers, shaders, textures)
+RLAPI void rlglDraw(void);                            // Update and draw default internal buffers
 
-int rlGetVersion(void);                         // Returns current OpenGL version
-bool rlCheckBufferLimit(int vCount);            // Check internal buffer overflow for a given number of vertex
-void rlSetDebugMarker(const char *text);        // Set debug marker for analysis
-void rlLoadExtensions(void *loader);            // Load OpenGL extensions
-Vector3 rlUnproject(Vector3 source, Matrix proj, Matrix view);  // Get world coordinates from screen coordinates
+RLAPI int rlGetVersion(void);                         // Returns current OpenGL version
+RLAPI bool rlCheckBufferLimit(int vCount);            // Check internal buffer overflow for a given number of vertex
+RLAPI void rlSetDebugMarker(const char *text);        // Set debug marker for analysis
+RLAPI void rlLoadExtensions(void *loader);            // Load OpenGL extensions
+RLAPI Vector3 rlUnproject(Vector3 source, Matrix proj, Matrix view);  // Get world coordinates from screen coordinates
 
 // Textures data management
-unsigned int rlLoadTexture(void *data, int width, int height, int format, int mipmapCount); // Load texture in GPU
-unsigned int rlLoadTextureDepth(int width, int height, int bits, bool useRenderBuffer);     // Load depth texture/renderbuffer (to be attached to fbo)
-unsigned int rlLoadTextureCubemap(void *data, int size, int format);                        // Load texture cubemap
-void rlUpdateTexture(unsigned int id, int width, int height, int format, const void *data); // Update GPU texture with new data
-void rlGetGlTextureFormats(int format, unsigned int *glInternalFormat, unsigned int *glFormat, unsigned int *glType);  // Get OpenGL internal formats
-void rlUnloadTexture(unsigned int id);                              // Unload texture from GPU memory
+RLAPI unsigned int rlLoadTexture(void *data, int width, int height, int format, int mipmapCount); // Load texture in GPU
+RLAPI unsigned int rlLoadTextureDepth(int width, int height, int bits, bool useRenderBuffer);     // Load depth texture/renderbuffer (to be attached to fbo)
+RLAPI unsigned int rlLoadTextureCubemap(void *data, int size, int format);                        // Load texture cubemap
+RLAPI void rlUpdateTexture(unsigned int id, int width, int height, int format, const void *data); // Update GPU texture with new data
+RLAPI void rlGetGlTextureFormats(int format, unsigned int *glInternalFormat, unsigned int *glFormat, unsigned int *glType);  // Get OpenGL internal formats
+RLAPI void rlUnloadTexture(unsigned int id);                              // Unload texture from GPU memory
 
-void rlGenerateMipmaps(Texture2D *texture);                         // Generate mipmap data for selected texture
-void *rlReadTexturePixels(Texture2D texture);                       // Read texture pixel data
-unsigned char *rlReadScreenPixels(int width, int height);           // Read screen pixel data (color buffer)
+RLAPI void rlGenerateMipmaps(Texture2D *texture);                         // Generate mipmap data for selected texture
+RLAPI void *rlReadTexturePixels(Texture2D texture);                       // Read texture pixel data
+RLAPI unsigned char *rlReadScreenPixels(int width, int height);           // Read screen pixel data (color buffer)
 
 // Render texture management (fbo)
-RenderTexture2D rlLoadRenderTexture(int width, int height, int format, int depthBits, bool useDepthTexture);    // Load a render texture (with color and depth attachments)
-void rlRenderTextureAttach(RenderTexture target, unsigned int id, int attachType);  // Attach texture/renderbuffer to an fbo
-bool rlRenderTextureComplete(RenderTexture target);                 // Verify render texture is complete
+RLAPI RenderTexture2D rlLoadRenderTexture(int width, int height, int format, int depthBits, bool useDepthTexture);    // Load a render texture (with color and depth attachments)
+RLAPI void rlRenderTextureAttach(RenderTexture target, unsigned int id, int attachType);  // Attach texture/renderbuffer to an fbo
+RLAPI bool rlRenderTextureComplete(RenderTexture target);                 // Verify render texture is complete
 
 // Vertex data management
-void rlLoadMesh(Mesh *mesh, bool dynamic);                          // Upload vertex data into GPU and provided VAO/VBO ids
-void rlUpdateMesh(Mesh mesh, int buffer, int numVertex);            // Update vertex data on GPU (upload new data to one buffer)
-void rlDrawMesh(Mesh mesh, Material material, Matrix transform);    // Draw a 3d mesh with material and transform
-void rlUnloadMesh(Mesh *mesh);                                      // Unload mesh data from CPU and GPU
+RLAPI void rlLoadMesh(Mesh *mesh, bool dynamic);                          // Upload vertex data into GPU and provided VAO/VBO ids
+RLAPI void rlUpdateMesh(Mesh mesh, int buffer, int numVertex);            // Update vertex data on GPU (upload new data to one buffer)
+RLAPI void rlDrawMesh(Mesh mesh, Material material, Matrix transform);    // Draw a 3d mesh with material and transform
+RLAPI void rlUnloadMesh(Mesh *mesh);                                      // Unload mesh data from CPU and GPU
 
 // NOTE: There is a set of shader related functions that are available to end user,
 // to avoid creating function wrappers through core module, they have been directly declared in raylib.h
@@ -489,48 +497,48 @@ void rlUnloadMesh(Mesh *mesh);                                      // Unload me
 // NOTE: This functions are useless when using OpenGL 1.1
 //------------------------------------------------------------------------------------
 // Shader loading/unloading functions
-char *LoadText(const char *fileName);                               // Load chars array from text file
-Shader LoadShader(const char *vsFileName, const char *fsFileName);  // Load shader from files and bind default locations
-Shader LoadShaderCode(char *vsCode, char *fsCode);                  // Load shader from code strings and bind default locations
-void UnloadShader(Shader shader);                                   // Unload shader from GPU memory (VRAM)
+RLAPI char *LoadText(const char *fileName);                               // Load chars array from text file
+RLAPI Shader LoadShader(const char *vsFileName, const char *fsFileName);  // Load shader from files and bind default locations
+RLAPI Shader LoadShaderCode(char *vsCode, char *fsCode);                  // Load shader from code strings and bind default locations
+RLAPI void UnloadShader(Shader shader);                                   // Unload shader from GPU memory (VRAM)
 
-Shader GetShaderDefault(void);                                      // Get default shader
-Texture2D GetTextureDefault(void);                                  // Get default texture
+RLAPI Shader GetShaderDefault(void);                                      // Get default shader
+RLAPI Texture2D GetTextureDefault(void);                                  // Get default texture
 
 // Shader configuration functions
-int GetShaderLocation(Shader shader, const char *uniformName);              // Get shader uniform location
-void SetShaderValue(Shader shader, int uniformLoc, const void *value, int uniformType);               // Set shader uniform value
-void SetShaderValueV(Shader shader, int uniformLoc, const void *value, int uniformType, int count);   // Set shader uniform value vector
-void SetShaderValueMatrix(Shader shader, int uniformLoc, Matrix mat);       // Set shader uniform value (matrix 4x4)
-void SetMatrixProjection(Matrix proj);                              // Set a custom projection matrix (replaces internal projection matrix)
-void SetMatrixModelview(Matrix view);                               // Set a custom modelview matrix (replaces internal modelview matrix)
-Matrix GetMatrixModelview();                                        // Get internal modelview matrix
+RLAPI int GetShaderLocation(Shader shader, const char *uniformName);              // Get shader uniform location
+RLAPI void SetShaderValue(Shader shader, int uniformLoc, const void *value, int uniformType);               // Set shader uniform value
+RLAPI void SetShaderValueV(Shader shader, int uniformLoc, const void *value, int uniformType, int count);   // Set shader uniform value vector
+RLAPI void SetShaderValueMatrix(Shader shader, int uniformLoc, Matrix mat);       // Set shader uniform value (matrix 4x4)
+RLAPI void SetMatrixProjection(Matrix proj);                              // Set a custom projection matrix (replaces internal projection matrix)
+RLAPI void SetMatrixModelview(Matrix view);                               // Set a custom modelview matrix (replaces internal modelview matrix)
+RLAPI Matrix GetMatrixModelview();                                        // Get internal modelview matrix
 
 // Texture maps generation (PBR)
 // NOTE: Required shaders should be provided
-Texture2D GenTextureCubemap(Shader shader, Texture2D skyHDR, int size);       // Generate cubemap texture from HDR texture
-Texture2D GenTextureIrradiance(Shader shader, Texture2D cubemap, int size);   // Generate irradiance texture using cubemap data
-Texture2D GenTexturePrefilter(Shader shader, Texture2D cubemap, int size);    // Generate prefilter texture using cubemap data
-Texture2D GenTextureBRDF(Shader shader, int size);                  // Generate BRDF texture using cubemap data
+RLAPI Texture2D GenTextureCubemap(Shader shader, Texture2D skyHDR, int size);       // Generate cubemap texture from HDR texture
+RLAPI Texture2D GenTextureIrradiance(Shader shader, Texture2D cubemap, int size);   // Generate irradiance texture using cubemap data
+RLAPI Texture2D GenTexturePrefilter(Shader shader, Texture2D cubemap, int size);    // Generate prefilter texture using cubemap data
+RLAPI Texture2D GenTextureBRDF(Shader shader, int size);                  // Generate BRDF texture using cubemap data
 
 // Shading begin/end functions
-void BeginShaderMode(Shader shader);              // Begin custom shader drawing
-void EndShaderMode(void);                         // End custom shader drawing (use default shader)
-void BeginBlendMode(int mode);                    // Begin blending mode (alpha, additive, multiplied)
-void EndBlendMode(void);                          // End blending mode (reset to default: alpha blending)
+RLAPI void BeginShaderMode(Shader shader);              // Begin custom shader drawing
+RLAPI void EndShaderMode(void);                         // End custom shader drawing (use default shader)
+RLAPI void BeginBlendMode(int mode);                    // Begin blending mode (alpha, additive, multiplied)
+RLAPI void EndBlendMode(void);                          // End blending mode (reset to default: alpha blending)
 
 // VR control functions
-void InitVrSimulator(void);                       // Init VR simulator for selected device parameters
-void CloseVrSimulator(void);                      // Close VR simulator for current device
-void UpdateVrTracking(Camera *camera);            // Update VR tracking (position and orientation) and camera
-void SetVrConfiguration(VrDeviceInfo info, Shader distortion);      // Set stereo rendering configuration parameters 
-bool IsVrSimulatorReady(void);                    // Detect if VR simulator is ready
-void ToggleVrMode(void);                          // Enable/Disable VR experience
-void BeginVrDrawing(void);                        // Begin VR simulator stereo rendering
-void EndVrDrawing(void);                          // End VR simulator stereo rendering
+RLAPI void InitVrSimulator(void);                       // Init VR simulator for selected device parameters
+RLAPI void CloseVrSimulator(void);                      // Close VR simulator for current device
+RLAPI void UpdateVrTracking(Camera *camera);            // Update VR tracking (position and orientation) and camera
+RLAPI void SetVrConfiguration(VrDeviceInfo info, Shader distortion);      // Set stereo rendering configuration parameters 
+RLAPI bool IsVrSimulatorReady(void);                    // Detect if VR simulator is ready
+RLAPI void ToggleVrMode(void);                          // Enable/Disable VR experience
+RLAPI void BeginVrDrawing(void);                        // Begin VR simulator stereo rendering
+RLAPI void EndVrDrawing(void);                          // End VR simulator stereo rendering
 
-void TraceLog(int msgType, const char *text, ...);      // Show trace log messages (LOG_INFO, LOG_WARNING, LOG_ERROR, LOG_DEBUG)
-int GetPixelDataSize(int width, int height, int format);// Get pixel data size in bytes (image or texture)
+RLAPI void TraceLog(int msgType, const char *text, ...);      // Show trace log messages (LOG_INFO, LOG_WARNING, LOG_ERROR, LOG_DEBUG)
+RLAPI int GetPixelDataSize(int width, int height, int format);// Get pixel data size in bytes (image or texture)
 #endif
 
 #if defined(__cplusplus)
