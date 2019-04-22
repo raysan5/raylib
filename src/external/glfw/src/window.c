@@ -2,7 +2,7 @@
 // GLFW 3.3 - www.glfw.org
 //------------------------------------------------------------------------
 // Copyright (c) 2002-2006 Marcus Geelnard
-// Copyright (c) 2006-2016 Camilla Löwy <elmindreda@glfw.org>
+// Copyright (c) 2006-2019 Camilla Löwy <elmindreda@glfw.org>
 // Copyright (c) 2012 Torsten Walluhn <tw@mad-cad.net>
 //
 // This software is provided 'as-is', without any express or implied
@@ -67,7 +67,7 @@ void _glfwInputWindowFocus(_GLFWwindow* window, GLFWbool focused)
 }
 
 // Notifies shared code that a window has moved
-// The position is specified in client-area relative screen coordinates
+// The position is specified in content area relative screen coordinates
 //
 void _glfwInputWindowPos(_GLFWwindow* window, int x, int y)
 {
@@ -142,7 +142,6 @@ void _glfwInputWindowMonitor(_GLFWwindow* window, _GLFWmonitor* monitor)
 {
     window->monitor = monitor;
 }
-
 
 //////////////////////////////////////////////////////////////////////////
 //////                        GLFW public API                       //////
@@ -230,11 +229,7 @@ GLFWAPI GLFWwindow* glfwCreateWindow(int width, int height,
     if (window->monitor)
     {
         if (wndconfig.centerCursor)
-        {
-            int width, height;
-            _glfwPlatformGetWindowSize(window, &width, &height);
-            _glfwPlatformSetCursorPos(window, width / 2.0, height / 2.0);
-        }
+            _glfwCenterCursorInContentArea(window);
     }
     else
     {
@@ -1078,10 +1073,6 @@ GLFWAPI void glfwPollEvents(void)
 GLFWAPI void glfwWaitEvents(void)
 {
     _GLFW_REQUIRE_INIT();
-
-    if (!_glfw.windowListHead)
-        return;
-
     _glfwPlatformWaitEvents();
 }
 
@@ -1104,10 +1095,5 @@ GLFWAPI void glfwWaitEventsTimeout(double timeout)
 GLFWAPI void glfwPostEmptyEvent(void)
 {
     _GLFW_REQUIRE_INIT();
-
-    if (!_glfw.windowListHead)
-        return;
-
     _glfwPlatformPostEmptyEvent();
 }
-

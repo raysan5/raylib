@@ -589,8 +589,10 @@ static void keyboardHandleKey(void* data,
         {
             _glfw.wl.keyboardLastKey = keyCode;
             _glfw.wl.keyboardLastScancode = key;
-            timer.it_interval.tv_sec = _glfw.wl.keyboardRepeatRate / 1000;
-            timer.it_interval.tv_nsec = (_glfw.wl.keyboardRepeatRate % 1000) * 1000000;
+            if (_glfw.wl.keyboardRepeatRate > 1)
+                timer.it_interval.tv_nsec = 1000000000 / _glfw.wl.keyboardRepeatRate;
+            else
+                timer.it_interval.tv_sec = 1;
             timer.it_value.tv_sec = _glfw.wl.keyboardRepeatDelay / 1000;
             timer.it_value.tv_nsec = (_glfw.wl.keyboardRepeatDelay % 1000) * 1000000;
         }
@@ -1304,7 +1306,7 @@ void _glfwPlatformTerminate(void)
 
 const char* _glfwPlatformGetVersionString(void)
 {
-    return _GLFW_VERSION_NUMBER " Wayland EGL"
+    return _GLFW_VERSION_NUMBER " Wayland EGL OSMesa"
 #if defined(_POSIX_TIMERS) && defined(_POSIX_MONOTONIC_CLOCK)
         " clock_gettime"
 #else

@@ -2,7 +2,7 @@
 // GLFW 3.3 - www.glfw.org
 //------------------------------------------------------------------------
 // Copyright (c) 2002-2006 Marcus Geelnard
-// Copyright (c) 2006-2016 Camilla Löwy <elmindreda@glfw.org>
+// Copyright (c) 2006-2019 Camilla Löwy <elmindreda@glfw.org>
 //
 // This software is provided 'as-is', without any express or implied
 // warranty. In no event will the authors be held liable for any damages
@@ -100,7 +100,7 @@ void _glfwInputMonitor(_GLFWmonitor* monitor, int action, int placement)
         {
             memmove(_glfw.monitors + 1,
                     _glfw.monitors,
-                    (_glfw.monitorCount - 1) * sizeof(_GLFWmonitor*));
+                    ((size_t) _glfw.monitorCount - 1) * sizeof(_GLFWmonitor*));
             _glfw.monitors[0] = monitor;
         }
         else
@@ -130,7 +130,7 @@ void _glfwInputMonitor(_GLFWmonitor* monitor, int action, int placement)
                 _glfw.monitorCount--;
                 memmove(_glfw.monitors + i,
                         _glfw.monitors + i + 1,
-                        (_glfw.monitorCount - i) * sizeof(_GLFWmonitor*));
+                        ((size_t) _glfw.monitorCount - i) * sizeof(_GLFWmonitor*));
                 break;
             }
         }
@@ -328,6 +328,27 @@ GLFWAPI void glfwGetMonitorPos(GLFWmonitor* handle, int* xpos, int* ypos)
     _GLFW_REQUIRE_INIT();
 
     _glfwPlatformGetMonitorPos(monitor, xpos, ypos);
+}
+
+GLFWAPI void glfwGetMonitorWorkarea(GLFWmonitor* handle,
+                                    int* xpos, int* ypos,
+                                    int* width, int* height)
+{
+    _GLFWmonitor* monitor = (_GLFWmonitor*) handle;
+    assert(monitor != NULL);
+
+    if (xpos)
+        *xpos = 0;
+    if (ypos)
+        *ypos = 0;
+    if (width)
+        *width = 0;
+    if (height)
+        *height = 0;
+
+    _GLFW_REQUIRE_INIT();
+
+    _glfwPlatformGetMonitorWorkarea(monitor, xpos, ypos, width, height);
 }
 
 GLFWAPI void glfwGetMonitorPhysicalSize(GLFWmonitor* handle, int* widthMM, int* heightMM)

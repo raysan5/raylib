@@ -79,7 +79,10 @@ endif()
 
 # Make GCC and Clang warn about declarations that VS 2010 and 2012 won't accept
 # for all source files that VS will build
-if (${CMAKE_C_COMPILER_ID} STREQUAL GNU OR ${CMAKE_C_COMPILER_ID} STREQUAL Clang)
+if ("${CMAKE_C_COMPILER_ID}" STREQUAL "GNU" OR
+    "${CMAKE_C_COMPILER_ID}" STREQUAL "Clang" OR
+    "${CMAKE_C_COMPILER_ID}" STREQUAL "AppleClang")
+
     if (WIN32)
         set(windows_SOURCES ${glfw_SOURCES})
     else()
@@ -119,6 +122,7 @@ target_compile_definitions(glfw_objlib PRIVATE
 
 # Enable a reasonable set of warnings (no, -Wextra is not reasonable)
 target_compile_options(glfw_objlib PRIVATE
+                       "$<$<C_COMPILER_ID:AppleClang>:-Wall>"
                        "$<$<C_COMPILER_ID:Clang>:-Wall>"
                        "$<$<C_COMPILER_ID:GNU>:-Wall>")
 

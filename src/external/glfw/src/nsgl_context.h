@@ -1,7 +1,7 @@
 //========================================================================
 // GLFW 3.3 macOS - www.glfw.org
 //------------------------------------------------------------------------
-// Copyright (c) 2009-2016 Camilla Löwy <elmindreda@glfw.org>
+// Copyright (c) 2009-2019 Camilla Löwy <elmindreda@glfw.org>
 //
 // This software is provided 'as-is', without any express or implied
 // warranty. In no event will the authors be held liable for any damages
@@ -24,16 +24,27 @@
 //
 //========================================================================
 
+#if MAC_OS_X_VERSION_MAX_ALLOWED < 101400
+ #define NSOpenGLContextParameterSwapInterval NSOpenGLCPSwapInterval
+ #define NSOpenGLContextParameterSurfaceOpacity NSOpenGLCPSurfaceOpacity
+#endif
+
 #define _GLFW_PLATFORM_CONTEXT_STATE            _GLFWcontextNSGL nsgl
 #define _GLFW_PLATFORM_LIBRARY_CONTEXT_STATE    _GLFWlibraryNSGL nsgl
+
+#include <stdatomic.h>
 
 
 // NSGL-specific per-context data
 //
 typedef struct _GLFWcontextNSGL
 {
-    id           pixelFormat;
-    id	         object;
+    id                pixelFormat;
+    id                object;
+    CVDisplayLinkRef  displayLink;
+    atomic_int        swapInterval;
+    int               swapIntervalsPassed;
+    id                swapIntervalCond;
 
 } _GLFWcontextNSGL;
 
@@ -53,4 +64,5 @@ GLFWbool _glfwCreateContextNSGL(_GLFWwindow* window,
                                 const _GLFWctxconfig* ctxconfig,
                                 const _GLFWfbconfig* fbconfig);
 void _glfwDestroyContextNSGL(_GLFWwindow* window);
+void _glfwUpdateDisplayLinkDisplayNSGL(_GLFWwindow* window);
 

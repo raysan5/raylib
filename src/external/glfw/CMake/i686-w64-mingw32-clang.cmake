@@ -1,8 +1,8 @@
-# Define the environment for cross-compiling with 32-bit MinGW-w64 GCC
+# Define the environment for cross-compiling with 32-bit MinGW-w64 Clang
 SET(CMAKE_SYSTEM_NAME    Windows) # Target system name
 SET(CMAKE_SYSTEM_VERSION 1)
-SET(CMAKE_C_COMPILER     "i686-w64-mingw32-gcc")
-SET(CMAKE_CXX_COMPILER   "i686-w64-mingw32-g++")
+SET(CMAKE_C_COMPILER     "i686-w64-mingw32-clang")
+SET(CMAKE_CXX_COMPILER   "i686-w64-mingw32-clang++")
 SET(CMAKE_RC_COMPILER    "i686-w64-mingw32-windres")
 SET(CMAKE_RANLIB         "i686-w64-mingw32-ranlib")
 
