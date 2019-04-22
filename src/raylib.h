@@ -75,6 +75,7 @@
 #define RAYLIB_H
 
 #include <stdarg.h>                             // Required for: va_list - Only used by TraceLogCallback
+#include <inttypes.h>							// Required for rnet
 
 #if defined(_WIN32) && defined(BUILD_LIBTYPE_SHARED)
     #define RLAPI __declspec(dllexport)         // We are building raylib as a Win32 shared library (.dll)
@@ -99,6 +100,11 @@
 // Shader and material limits
 #define MAX_SHADER_LOCATIONS    32      // Maximum number of predefined locations stored in shader struct
 #define MAX_MATERIAL_MAPS       12      // Maximum number of texture maps stored in shader struct
+
+// Network connection related defines
+#define SOCKET_MAX_SOCK_OPTS (4)		// Maximum socket options
+#define SOCKET_MAX_UDPCHANNELS (32)		// Maximum UDP channels
+#define SOCKET_MAX_UDPADDRESSES (4)		// Maximum bound UDP addresses 
 
 // NOTE: MSC C++ compiler does not support compound literals (C99 feature)
 // Plain structures in C++ (without constructors) can be initialized from { } initializers.
@@ -442,6 +448,100 @@ typedef struct VrDeviceInfo {
     float lensDistortionValues[4];  // HMD lens distortion constant parameters
     float chromaAbCorrection[4];    // HMD chromatic aberration correction parameters
 } VrDeviceInfo;
+
+// Network typedefs
+typedef uint32_t                      SocketChannel;
+typedef struct _AddressInformation *  AddressInformation;
+typedef struct _SocketAddress *       SocketAddress;
+typedef struct _SocketAddressIPv4 *   SocketAddressIPv4;
+typedef struct _SocketAddressIPv6 *   SocketAddressIPv6;
+typedef struct _SocketAddressStorage *SocketAddressStorage;
+
+// IPAddress definition (in network byte order)
+typedef struct IPAddress
+{
+	unsigned long  host; /* 32-bit IPv4 host address */
+	unsigned short port; /* 16-bit protocol port */
+} IPAddress;
+
+// An option ID, value, sizeof(value) tuple for setsockopt(2).
+typedef struct SocketOpt
+{
+	int   id;
+	void *value;
+	int   valueLen;
+} SocketOpt;
+
+typedef enum
+{
+	SOCKET_TCP = 0, // SOCK_STREAM
+	SOCKET_UDP = 1  // SOCK_DGRAM
+} SocketType;
+
+typedef struct UDPChannel
+{
+	int numbound; // The total number of addresses this channel is bound to
+	IPAddress address[SOCKET_MAX_UDPADDRESSES]; // The list of remote addresses this channel is bound to
+} UDPChannel;
+
+typedef struct Socket
+{
+	int  ready;    // Is the socket ready? i.e. has information
+	int  status;   // The last status code to have occured using this socket
+	bool isServer; // Is this socket a server socket (i.e. TCP/UDP Listen Server)
+	SocketChannel channel; // The socket handle id
+	SocketType    type;    // Is this socket a TCP or UDP socket?
+	bool          isIPv6;  // Is this socket address an ipv6 address?
+	SocketAddressIPv4 addripv4; // The host/target IPv4 for this socket (in network byte order)
+	SocketAddressIPv6 addripv6; // The host/target IPv6 for this socket (in network byte order)
+
+	struct UDPChannel binding[SOCKET_MAX_UDPCHANNELS]; // The amount of channels (if UDP) this socket is bound to
+} Socket;
+
+typedef struct SocketSet
+{
+	int             numsockets;
+	int             maxsockets;
+	struct Socket **sockets;
+} SocketSet;
+
+typedef struct SocketDataPacket
+{
+	int            channel; // The src/dst channel of the packet
+	unsigned char *data;    // The packet data
+	int            len;     // The length of the packet data
+	int            maxlen;  // The size of the data buffer
+	int            status;  // packet status after sending
+	IPAddress address; // The source/dest address of an incoming/outgoing packet
+} SocketDataPacket;
+
+// Configuration for a socket.
+typedef struct SocketConfig
+{
+	char *     host;   // The host address in xxx.xxx.xxx.xxx form
+	char *     port;   // The target port/service in the form "http" or "25565"
+	bool       server; // Listen for incoming clients?
+	SocketType type;   // The type of socket, TCP/UDP
+	bool       nonblocking;  // non-blocking operation?
+	int        backlog_size; // set a custom backlog size
+	SocketOpt  sockopts[SOCKET_MAX_SOCK_OPTS];
+} SocketConfig;
+
+// Result from calling open with a given config.
+typedef struct SocketResult
+{
+	int     status;
+	Socket *socket;
+} SocketResult;
+
+//
+typedef struct Packet
+{
+	uint32_t size; // The total size of bytes in data
+	uint32_t offs; // The offset to data access
+	uint32_t maxs; // The max size of data
+	uint8_t *data; // Data stored in network byte order
+} Packet;
 
 //----------------------------------------------------------------------------------
 // Enumerators Definition
@@ -1407,6 +1507,82 @@ RLAPI bool IsAudioStreamPlaying(AudioStream stream);                  // Check i
 RLAPI void StopAudioStream(AudioStream stream);                       // Stop audio stream
 RLAPI void SetAudioStreamVolume(AudioStream stream, float volume);    // Set volume for audio stream (1.0 is max level)
 RLAPI void SetAudioStreamPitch(AudioStream stream, float pitch);      // Set pitch for audio stream (1.0 is base level)
+
+//------------------------------------------------------------------------------------
+// Network (Module: network)
+//------------------------------------------------------------------------------------
+
+// Initialisation and cleanup
+RLAPI bool InitNetwork(void);
+RLAPI void CloseNetwork(void);
+
+// Address API
+RLAPI void ResolveIP(const char *ip, const char *service, int flags, char *outhost, char *outserv);
+RLAPI int ResolveHost(const char *address, const char *service, int addressType, int flags, AddressInformation *outAddr);
+RLAPI int GetAddressFamily(AddressInformation address);
+RLAPI int GetAddressSocketType(AddressInformation address);
+RLAPI int GetAddressProtocol(AddressInformation address);
+RLAPI char* GetAddressCanonName(AddressInformation address);
+RLAPI char* GetAddressHostAndPort(AddressInformation address, char *outhost, int *outport);
+RLAPI void PrintAddressInfo(AddressInformation address);
+
+// Address Memory API
+RLAPI AddressInformation AllocAddress();
+RLAPI void FreeAddress(AddressInformation *addressInfo);
+RLAPI AddressInformation *AllocAddressList(int size);
+
+// Socket API
+RLAPI bool SocketCreate(SocketConfig *config, SocketResult *result);
+RLAPI bool SocketBind(SocketConfig *config, SocketResult *result);
+RLAPI bool SocketListen(SocketConfig *config, SocketResult *result);
+RLAPI bool SocketConnect(SocketConfig *config, SocketResult *result);
+RLAPI Socket *SocketAccept(Socket *server, SocketConfig *config);
+
+// UDP Socket API
+RLAPI int SocketSetChannel(Socket *socket, int channel, const IPAddress *address);
+RLAPI void SocketUnsetChannel(Socket *socket, int channel);
+
+// UDP DataPacket API
+RLAPI SocketDataPacket *AllocPacket(int size);
+RLAPI int ResizePacket(SocketDataPacket *packet, int newsize);
+RLAPI void FreePacket(SocketDataPacket *packet);
+RLAPI SocketDataPacket **AllocPacketList(int count, int size);
+RLAPI void FreePacketList(SocketDataPacket **packets);
+
+// General Socket API
+RLAPI int SocketSend(Socket *sock, const void *datap, int len);
+RLAPI int SocketReceive(Socket *sock, void *data, int maxlen);
+RLAPI void SocketClose(Socket *sock);
+RLAPI SocketAddressStorage SocketGetPeerAddress(Socket *sock);
+RLAPI char* GetSocketAddressHost(SocketAddressStorage storage);
+RLAPI short GetSocketAddressPort(SocketAddressStorage storage);
+
+// Socket Memory API
+RLAPI Socket *AllocSocket();
+RLAPI void FreeSocket(Socket **sock);
+RLAPI SocketResult *AllocSocketResult();
+RLAPI void FreeSocketResult(SocketResult **result);
+RLAPI SocketSet *AllocSocketSet(int max);
+RLAPI void FreeSocketSet(SocketSet *sockset);
+
+// Socket I/O API
+RLAPI bool IsSocketReady(Socket *sock);
+RLAPI bool IsSocketConnected(Socket *sock);
+RLAPI int AddSocket(SocketSet *set, Socket *sock);
+RLAPI int RemoveSocket(SocketSet *set, Socket *sock);
+RLAPI int CheckSockets(SocketSet *set, unsigned int timeout);
+
+// Packet API 
+void PacketSend(Packet *packet);
+void PacketReceive(Packet *packet);
+void PacketWrite8(Packet *packet, uint16_t value);
+void PacketWrite16(Packet *packet, uint16_t value);
+void PacketWrite32(Packet *packet, uint32_t value);
+void PacketWrite64(Packet *packet, uint64_t value);
+uint16_t PacketRead8(Packet *packet);
+uint16_t PacketRead16(Packet *packet);
+uint32_t PacketRead32(Packet *packet);
+uint64_t PacketRead64(Packet *packet);
 
 #if defined(__cplusplus)
 }
