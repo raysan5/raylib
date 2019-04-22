@@ -21,6 +21,7 @@
  ********************************************************************************************/
 
 #include "raylib.h" 
+#include "rnet.h"
 
 char     buffer[ADDRESS_IPV6_ADDRSTRLEN];
 uint16_t port = 0;

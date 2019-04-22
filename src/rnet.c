@@ -83,6 +83,8 @@ typedef struct _AddressInformation
 	struct addrinfo addr;
 } _AddressInformation;
 
+
+
 //----------------------------------------------------------------------------------
 // Global module forward declarations
 //----------------------------------------------------------------------------------
@@ -171,7 +173,7 @@ static void PrintSocket(struct sockaddr_storage *addr, const int family, const i
 // Convert network ordered socket address to human readable string (127.0.0.1)
 static const char *SocketAddressToString(struct sockaddr_storage *sockaddr)
 {
-	static ipv6[INET6_ADDRSTRLEN];
+	static const char* ipv6[INET6_ADDRSTRLEN];
 	assert(sockaddr != NULL);
 	assert(sockaddr->ss_family == AF_INET || sockaddr->ss_family == AF_INET6);
 	switch (sockaddr->ss_family)

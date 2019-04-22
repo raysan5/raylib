@@ -21,7 +21,7 @@
  ********************************************************************************************/
 
 #include "raylib.h"
-#include "rnet.c"
+#include "rnet.h"
 
 #include <assert.h>
 #include <stdio.h>
