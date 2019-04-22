@@ -14,12 +14,12 @@
 *
 *
 *   CONTRIBUTORS:
-*       Jak Barnes (github: @syphonx) (Feb. 2019):
-*           - Initial version
+*       Jak Barnes (github: @syphonx) (Feb. 2019) - Initial version
+*
 *
 *   LICENSE: zlib/libpng
 *
-*   Copyright (c) 2014-2019 Ramon Santamaria (@raysan5)
+*   Copyright (c) 2019 Jak Barnes (github: @syphonx) and Ramon Santamaria (@raysan5)
 *
 *   This software is provided "as-is", without any express or implied warranty. In no event
 *   will the authors be held liable for any damages arising from the use of this software.
@@ -38,16 +38,14 @@
 *
 **********************************************************************************************/
 
-//----------------------------------------------------------------------------------
-// Platform type sizes
-//----------------------------------------------------------------------------------
-
-#include <limits.h>
+#include <limits.h>         // Required for limits
+#include <inttypes.h>       // Required for platform type sizes
 
 //----------------------------------------------------------------------------------
+// Defines and Macros
+//----------------------------------------------------------------------------------
+
 // Undefine any conflicting windows.h symbols
-//----------------------------------------------------------------------------------
-
 // If defined, the following flags inhibit definition of the indicated items.
 #define NOGDICAPMASKS     // CC_*, LC_*, PC_*, CP_*, TC_*, RC_
 #define NOVIRTUALKEYCODES // VK_*
@@ -91,19 +89,6 @@
 #define MMNOSOUND
 
 //----------------------------------------------------------------------------------
-// Platform defines
-//----------------------------------------------------------------------------------
-
-#define PLATFORM_WINDOWS 1
-#define PLATFORM_LINUX 2
-
-#if defined(__WIN32__) || defined(WIN32)
-#	define PLATFORM PLATFORM_WINDOWS
-#elif defined(_LINUX)
-#	define PLATFORM PLATFORM_LINUX
-#endif
-
-//----------------------------------------------------------------------------------
 // Platform type definitions
 // From: https://github.com/DFHack/clsocket/blob/master/src/Host.h
 //----------------------------------------------------------------------------------
@@ -137,7 +122,7 @@ typedef int socklen_t;
 
 // Include system network headers
 
-#ifdef _WIN32
+#if defined(_WIN32)
 #	pragma comment(lib, "ws2_32.lib")
 #	define __USE_W32_SOCKETS
 #	define WIN32_LEAN_AND_MEAN
@@ -226,3 +211,193 @@ typedef int socklen_t;
 #define NAME_INFO_NAMEREQD                      (0x04) // Error if the host's name not in DNS
 #define NAME_INFO_NUMERICSERV                   (0x08) // Return numeric form of the service (port #)
 #define NAME_INFO_DGRAM                         (0x10) // Service is a datagram service
+
+//----------------------------------------------------------------------------------
+// Types and Structures Definition
+//----------------------------------------------------------------------------------
+
+// Network typedefs
+typedef uint32_t                      SocketChannel;
+typedef struct _AddressInformation *  AddressInformation;
+typedef struct _SocketAddress *       SocketAddress;
+typedef struct _SocketAddressIPv4 *   SocketAddressIPv4;
+typedef struct _SocketAddressIPv6 *   SocketAddressIPv6;
+typedef struct _SocketAddressStorage *SocketAddressStorage;
+
+// IPAddress definition (in network byte order)
+typedef struct IPAddress
+{
+	unsigned long  host; /* 32-bit IPv4 host address */
+	unsigned short port; /* 16-bit protocol port */
+} IPAddress;
+
+// An option ID, value, sizeof(value) tuple for setsockopt(2).
+typedef struct SocketOpt
+{
+	int   id;
+	void *value;
+	int   valueLen;
+} SocketOpt;
+
+typedef enum
+{
+	SOCKET_TCP = 0, // SOCK_STREAM
+	SOCKET_UDP = 1  // SOCK_DGRAM
+} SocketType;
+
+typedef struct UDPChannel
+{
+	int numbound; // The total number of addresses this channel is bound to
+	IPAddress address[SOCKET_MAX_UDPADDRESSES]; // The list of remote addresses this channel is bound to
+} UDPChannel;
+
+typedef struct Socket
+{
+	int  ready;    // Is the socket ready? i.e. has information
+	int  status;   // The last status code to have occured using this socket
+	bool isServer; // Is this socket a server socket (i.e. TCP/UDP Listen Server)
+	SocketChannel channel; // The socket handle id
+	SocketType    type;    // Is this socket a TCP or UDP socket?
+	bool          isIPv6;  // Is this socket address an ipv6 address?
+	SocketAddressIPv4 addripv4; // The host/target IPv4 for this socket (in network byte order)
+	SocketAddressIPv6 addripv6; // The host/target IPv6 for this socket (in network byte order)
+
+	struct UDPChannel binding[SOCKET_MAX_UDPCHANNELS]; // The amount of channels (if UDP) this socket is bound to
+} Socket;
+
+typedef struct SocketSet
+{
+	int             numsockets;
+	int             maxsockets;
+	struct Socket **sockets;
+} SocketSet;
+
+typedef struct SocketDataPacket
+{
+	int            channel; // The src/dst channel of the packet
+	unsigned char *data;    // The packet data
+	int            len;     // The length of the packet data
+	int            maxlen;  // The size of the data buffer
+	int            status;  // packet status after sending
+	IPAddress address; // The source/dest address of an incoming/outgoing packet
+} SocketDataPacket;
+
+// Configuration for a socket.
+typedef struct SocketConfig
+{
+	char *     host;   // The host address in xxx.xxx.xxx.xxx form
+	char *     port;   // The target port/service in the form "http" or "25565"
+	bool       server; // Listen for incoming clients?
+	SocketType type;   // The type of socket, TCP/UDP
+	bool       nonblocking;  // non-blocking operation?
+	int        backlog_size; // set a custom backlog size
+	SocketOpt  sockopts[SOCKET_MAX_SOCK_OPTS];
+} SocketConfig;
+
+// Result from calling open with a given config.
+typedef struct SocketResult
+{
+	int     status;
+	Socket *socket;
+} SocketResult;
+
+//
+typedef struct Packet
+{
+	uint32_t size; // The total size of bytes in data
+	uint32_t offs; // The offset to data access
+	uint32_t maxs; // The max size of data
+	uint8_t *data; // Data stored in network byte order
+} Packet;
+
+
+#ifdef __cplusplus
+extern "C" {            // Prevents name mangling of functions
+#endif
+
+//----------------------------------------------------------------------------------
+// Global Variables Definition
+//----------------------------------------------------------------------------------
+//...
+
+//----------------------------------------------------------------------------------
+// Module Functions Declaration
+//----------------------------------------------------------------------------------
+
+// Initialisation and cleanup
+RLAPI bool InitNetwork(void);
+RLAPI void CloseNetwork(void);
+
+// Address API
+RLAPI void ResolveIP(const char *ip, const char *service, int flags, char *outhost, char *outserv);
+RLAPI int ResolveHost(const char *address, const char *service, int addressType, int flags, AddressInformation *outAddr);
+RLAPI int GetAddressFamily(AddressInformation address);
+RLAPI int GetAddressSocketType(AddressInformation address);
+RLAPI int GetAddressProtocol(AddressInformation address);
+RLAPI char* GetAddressCanonName(AddressInformation address);
+RLAPI char* GetAddressHostAndPort(AddressInformation address, char *outhost, int *outport);
+RLAPI void PrintAddressInfo(AddressInformation address);
+
+// Address Memory API
+RLAPI AddressInformation AllocAddress();
+RLAPI void FreeAddress(AddressInformation *addressInfo);
+RLAPI AddressInformation *AllocAddressList(int size);
+
+// Socket API
+RLAPI bool SocketCreate(SocketConfig *config, SocketResult *result);
+RLAPI bool SocketBind(SocketConfig *config, SocketResult *result);
+RLAPI bool SocketListen(SocketConfig *config, SocketResult *result);
+RLAPI bool SocketConnect(SocketConfig *config, SocketResult *result);
+RLAPI Socket *SocketAccept(Socket *server, SocketConfig *config);
+
+// UDP Socket API
+RLAPI int SocketSetChannel(Socket *socket, int channel, const IPAddress *address);
+RLAPI void SocketUnsetChannel(Socket *socket, int channel);
+
+// UDP DataPacket API
+RLAPI SocketDataPacket *AllocPacket(int size);
+RLAPI int ResizePacket(SocketDataPacket *packet, int newsize);
+RLAPI void FreePacket(SocketDataPacket *packet);
+RLAPI SocketDataPacket **AllocPacketList(int count, int size);
+RLAPI void FreePacketList(SocketDataPacket **packets);
+
+// General Socket API
+RLAPI int SocketSend(Socket *sock, const void *datap, int len);
+RLAPI int SocketReceive(Socket *sock, void *data, int maxlen);
+RLAPI void SocketClose(Socket *sock);
+RLAPI SocketAddressStorage SocketGetPeerAddress(Socket *sock);
+RLAPI char* GetSocketAddressHost(SocketAddressStorage storage);
+RLAPI short GetSocketAddressPort(SocketAddressStorage storage);
+
+// Socket Memory API
+RLAPI Socket *AllocSocket();
+RLAPI void FreeSocket(Socket **sock);
+RLAPI SocketResult *AllocSocketResult();
+RLAPI void FreeSocketResult(SocketResult **result);
+RLAPI SocketSet *AllocSocketSet(int max);
+RLAPI void FreeSocketSet(SocketSet *sockset);
+
+// Socket I/O API
+RLAPI bool IsSocketReady(Socket *sock);
+RLAPI bool IsSocketConnected(Socket *sock);
+RLAPI int AddSocket(SocketSet *set, Socket *sock);
+RLAPI int RemoveSocket(SocketSet *set, Socket *sock);
+RLAPI int CheckSockets(SocketSet *set, unsigned int timeout);
+
+// Packet API 
+void PacketSend(Packet *packet);
+void PacketReceive(Packet *packet);
+void PacketWrite8(Packet *packet, uint16_t value);
+void PacketWrite16(Packet *packet, uint16_t value);
+void PacketWrite32(Packet *packet, uint32_t value);
+void PacketWrite64(Packet *packet, uint64_t value);
+uint16_t PacketRead8(Packet *packet);
+uint16_t PacketRead16(Packet *packet);
+uint32_t PacketRead32(Packet *packet);
+uint64_t PacketRead64(Packet *packet);
+
+#ifdef __cplusplus
+}
+#endif
+
+#endif // RNET_H

@@ -10,13 +10,12 @@
 *       rnet.h      - platform-specific network includes
 *
 *   CONTRIBUTORS:
-*       Jak Barnes (github: @syphonx) (Feb. 2019):
-*           - Initial version
+*       Jak Barnes (github: @syphonx) (Feb. 2019) - Initial version
 *
 *
 *   LICENSE: zlib/libpng
 *
-*   Copyright (c) 2014-2019 Ramon Santamaria (@raysan5)
+*   Copyright (c) 2019 Jak Barnes (github: @syphonx) and Ramon Santamaria (@raysan5)
 *
 *   This software is provided "as-is", without any express or implied warranty. In no event
 *   will the authors be held liable for any damages arising from the use of this software.
@@ -245,7 +244,7 @@ static bool IsSocketValid(Socket *sock)
 // Sets the error code that can be retrieved through the WSAGetLastError function.
 static void SocketSetLastError(int err)
 {
-#if PLATFORM == PLATFORM_WINDOWS
+#if defined(_WIN32)
 	WSASetLastError(err);
 #else
 	errno = err;
@@ -255,7 +254,7 @@ static void SocketSetLastError(int err)
 // Returns the error status for the last Sockets operation that failed
 static int SocketGetLastError()
 {
-#if PLATFORM == PLATFORM_WINDOWS
+#if defined(_WIN32)
 	return WSAGetLastError();
 #else
 	return errno;
@@ -271,7 +270,7 @@ static char *SocketGetLastErrorString()
 // Returns a human-readable string representing the error message (err)
 static char *SocketErrorCodeToString(int err)
 {
-#if PLATFORM == PLATFORM_WINDOWS
+#if defined(_WIN32)
 	static char gaiStrErrorBuffer[GAI_STRERROR_BUFFER_SIZE];
 	sprintf(gaiStrErrorBuffer, "%ws", gai_strerror(err));
 	return gaiStrErrorBuffer;
@@ -496,7 +495,7 @@ static bool CreateSocket(SocketConfig *config, SocketResult *outresult)
 static bool SocketSetBlocking(Socket *sock)
 {
 	bool ret = true;
-#if PLATFORM == PLATFORM_WINDOWS
+#if defined(_WIN32)
 	unsigned long mode = 0;
 	ret                = ioctlsocket(sock->channel, FIONBIO, &mode);
 #else
@@ -516,7 +515,7 @@ static bool SocketSetBlocking(Socket *sock)
 static bool SocketSetNonBlocking(Socket *sock)
 {
 	bool ret = true;
-#if PLATFORM == PLATFORM_WINDOWS
+#if defined(_WIN32)
 	unsigned long mode = 1;
 	ret                = ioctlsocket(sock->channel, FIONBIO, &mode);
 #else
@@ -602,7 +601,7 @@ static void SocketSetHints(SocketConfig *config, struct addrinfo *hints)
 //	Initialise the network (requires for windows platforms only)
 bool InitNetwork()
 {
-#if PLATFORM == PLATFORM_WINDOWS
+#if defined(_WIN32)
 	WORD    wVersionRequested;
 	WSADATA wsaData;
 	int     err;
@@ -635,7 +634,7 @@ bool InitNetwork()
 //	Cleanup, and close the network
 void CloseNetwork()
 {
-#if PLATFORM == PLATFORM_WINDOWS
+#if defined(_WIN32)
 	WSACleanup();
 #endif
 }
@@ -1592,7 +1591,7 @@ bool IsSocketReady(Socket *sock)
 // Check if the socket is considered connected
 bool IsSocketConnected(Socket *sock)
 {
-#if PLATFORM_WINDOWS
+#if defined(_WIN32)
 	FD_SET writefds;
 	FD_ZERO(&writefds);
 	FD_SET(sock->channel, &writefds);
