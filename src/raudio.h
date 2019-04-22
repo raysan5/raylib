@@ -50,8 +50,8 @@
 *
 **********************************************************************************************/
 
-#ifndef AUDIO_H
-#define AUDIO_H
+#ifndef RAUDIO_H
+#define RAUDIO_H
 
 //----------------------------------------------------------------------------------
 // Defines and Macros
@@ -60,7 +60,6 @@
 
 //----------------------------------------------------------------------------------
 // Types and Structures Definition
-// NOTE: Below types are required for CAMERA_STANDALONE usage
 //----------------------------------------------------------------------------------
 #ifndef __cplusplus
 // Boolean type
@@ -174,4 +173,4 @@ void SetAudioStreamPitch(AudioStream stream, float pitch);      // Set pitch for
 }
 #endif
 
-#endif // AUDIO_H
+#endif // RAUDIO_H
