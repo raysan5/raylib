@@ -38,6 +38,9 @@
 *
 **********************************************************************************************/
 
+#ifndef RNET_H
+#define RNET_H
+
 #include <limits.h>         // Required for limits
 #include <inttypes.h>       // Required for platform type sizes
 
@@ -168,6 +171,10 @@ typedef int socklen_t;
 // Network connection related defines
 #define SOCKET_MAX_SET_SIZE                     (32)   // Maximum sockets in a set
 #define SOCKET_MAX_QUEUE_SIZE                   (16)   // Maximum socket queue size
+#define SOCKET_MAX_SOCK_OPTS (4)		// Maximum socket options
+#define SOCKET_MAX_UDPCHANNELS (32)		// Maximum UDP channels
+#define SOCKET_MAX_UDPADDRESSES (4)		// Maximum bound UDP addresses 
+
 
 // Network address related defines
 #define ADDRESS_IPV4_ADDRSTRLEN                 (22)   // IPv4 string length
@@ -215,6 +222,13 @@ typedef int socklen_t;
 //----------------------------------------------------------------------------------
 // Types and Structures Definition
 //----------------------------------------------------------------------------------
+
+// Boolean type
+#if defined(__STDC__) && __STDC_VERSION__ >= 199901L
+    #include <stdbool.h>
+#elif !defined(__cplusplus) && !defined(bool)
+    typedef enum { false, true } bool;
+#endif
 
 // Network typedefs
 typedef uint32_t                      SocketChannel;
@@ -301,7 +315,7 @@ typedef struct SocketResult
 	Socket *socket;
 } SocketResult;
 
-//
+// Packet type
 typedef struct Packet
 {
 	uint32_t size; // The total size of bytes in data
@@ -325,64 +339,64 @@ extern "C" {            // Prevents name mangling of functions
 //----------------------------------------------------------------------------------
 
 // Initialisation and cleanup
-RLAPI bool InitNetwork(void);
-RLAPI void CloseNetwork(void);
+bool InitNetwork(void);
+void CloseNetwork(void);
 
 // Address API
-RLAPI void ResolveIP(const char *ip, const char *service, int flags, char *outhost, char *outserv);
-RLAPI int ResolveHost(const char *address, const char *service, int addressType, int flags, AddressInformation *outAddr);
-RLAPI int GetAddressFamily(AddressInformation address);
-RLAPI int GetAddressSocketType(AddressInformation address);
-RLAPI int GetAddressProtocol(AddressInformation address);
-RLAPI char* GetAddressCanonName(AddressInformation address);
-RLAPI char* GetAddressHostAndPort(AddressInformation address, char *outhost, int *outport);
-RLAPI void PrintAddressInfo(AddressInformation address);
+void ResolveIP(const char *ip, const char *service, int flags, char *outhost, char *outserv);
+int ResolveHost(const char *address, const char *service, int addressType, int flags, AddressInformation *outAddr);
+int GetAddressFamily(AddressInformation address);
+int GetAddressSocketType(AddressInformation address);
+int GetAddressProtocol(AddressInformation address);
+char* GetAddressCanonName(AddressInformation address);
+char* GetAddressHostAndPort(AddressInformation address, char *outhost, int *outport);
+void PrintAddressInfo(AddressInformation address);
 
 // Address Memory API
-RLAPI AddressInformation AllocAddress();
-RLAPI void FreeAddress(AddressInformation *addressInfo);
-RLAPI AddressInformation *AllocAddressList(int size);
+AddressInformation AllocAddress();
+void FreeAddress(AddressInformation *addressInfo);
+AddressInformation *AllocAddressList(int size);
 
 // Socket API
-RLAPI bool SocketCreate(SocketConfig *config, SocketResult *result);
-RLAPI bool SocketBind(SocketConfig *config, SocketResult *result);
-RLAPI bool SocketListen(SocketConfig *config, SocketResult *result);
-RLAPI bool SocketConnect(SocketConfig *config, SocketResult *result);
-RLAPI Socket *SocketAccept(Socket *server, SocketConfig *config);
+bool SocketCreate(SocketConfig *config, SocketResult *result);
+bool SocketBind(SocketConfig *config, SocketResult *result);
+bool SocketListen(SocketConfig *config, SocketResult *result);
+bool SocketConnect(SocketConfig *config, SocketResult *result);
+Socket *SocketAccept(Socket *server, SocketConfig *config);
 
 // UDP Socket API
-RLAPI int SocketSetChannel(Socket *socket, int channel, const IPAddress *address);
-RLAPI void SocketUnsetChannel(Socket *socket, int channel);
+int SocketSetChannel(Socket *socket, int channel, const IPAddress *address);
+void SocketUnsetChannel(Socket *socket, int channel);
 
 // UDP DataPacket API
-RLAPI SocketDataPacket *AllocPacket(int size);
-RLAPI int ResizePacket(SocketDataPacket *packet, int newsize);
-RLAPI void FreePacket(SocketDataPacket *packet);
-RLAPI SocketDataPacket **AllocPacketList(int count, int size);
-RLAPI void FreePacketList(SocketDataPacket **packets);
+SocketDataPacket *AllocPacket(int size);
+int ResizePacket(SocketDataPacket *packet, int newsize);
+void FreePacket(SocketDataPacket *packet);
+SocketDataPacket **AllocPacketList(int count, int size);
+void FreePacketList(SocketDataPacket **packets);
 
 // General Socket API
-RLAPI int SocketSend(Socket *sock, const void *datap, int len);
-RLAPI int SocketReceive(Socket *sock, void *data, int maxlen);
-RLAPI void SocketClose(Socket *sock);
-RLAPI SocketAddressStorage SocketGetPeerAddress(Socket *sock);
-RLAPI char* GetSocketAddressHost(SocketAddressStorage storage);
-RLAPI short GetSocketAddressPort(SocketAddressStorage storage);
+int SocketSend(Socket *sock, const void *datap, int len);
+int SocketReceive(Socket *sock, void *data, int maxlen);
+void SocketClose(Socket *sock);
+SocketAddressStorage SocketGetPeerAddress(Socket *sock);
+char* GetSocketAddressHost(SocketAddressStorage storage);
+short GetSocketAddressPort(SocketAddressStorage storage);
 
 // Socket Memory API
-RLAPI Socket *AllocSocket();
-RLAPI void FreeSocket(Socket **sock);
-RLAPI SocketResult *AllocSocketResult();
-RLAPI void FreeSocketResult(SocketResult **result);
-RLAPI SocketSet *AllocSocketSet(int max);
-RLAPI void FreeSocketSet(SocketSet *sockset);
+Socket *AllocSocket();
+void FreeSocket(Socket **sock);
+SocketResult *AllocSocketResult();
+void FreeSocketResult(SocketResult **result);
+SocketSet *AllocSocketSet(int max);
+void FreeSocketSet(SocketSet *sockset);
 
 // Socket I/O API
-RLAPI bool IsSocketReady(Socket *sock);
-RLAPI bool IsSocketConnected(Socket *sock);
-RLAPI int AddSocket(SocketSet *set, Socket *sock);
-RLAPI int RemoveSocket(SocketSet *set, Socket *sock);
-RLAPI int CheckSockets(SocketSet *set, unsigned int timeout);
+bool IsSocketReady(Socket *sock);
+bool IsSocketConnected(Socket *sock);
+int AddSocket(SocketSet *set, Socket *sock);
+int RemoveSocket(SocketSet *set, Socket *sock);
+int CheckSockets(SocketSet *set, unsigned int timeout);
 
 // Packet API 
 void PacketSend(Packet *packet);
@@ -400,4 +414,4 @@ uint64_t PacketRead64(Packet *packet);
 }
 #endif
 
-#endif // RNET_H
+#endif  // RNET_H

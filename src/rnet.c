@@ -42,10 +42,10 @@
 
 #include "raylib.h"
 
-#include <assert.h> // Required for: assert()
-#include <stdio.h>  // Required for: FILE, fopen(), fclose(), fread()
-#include <stdlib.h> // Required for: malloc(), free()
-#include <string.h> // Required for: strcmp(), strncmp()
+#include <assert.h>         // Required for: assert()
+#include <stdio.h>          // Required for: FILE, fopen(), fclose(), fread()
+#include <stdlib.h>         // Required for: malloc(), free()
+#include <string.h>         // Required for: strcmp(), strncmp()
 
 //----------------------------------------------------------------------------------
 // Module defines
@@ -272,7 +272,7 @@ static char *SocketErrorCodeToString(int err)
 {
 #if defined(_WIN32)
 	static char gaiStrErrorBuffer[GAI_STRERROR_BUFFER_SIZE];
-	sprintf(gaiStrErrorBuffer, "%ws", gai_strerror(err));
+	sprintf(gaiStrErrorBuffer, "%s", gai_strerror(err));
 	return gaiStrErrorBuffer;
 #else
 	return gai_strerror(err);
@@ -386,7 +386,7 @@ static bool CreateSocket(SocketConfig *config, SocketResult *outresult)
 		char      hoststr[NI_MAXHOST];
 		char      portstr[NI_MAXSERV];
 		socklen_t client_len = sizeof(struct sockaddr_storage);
-		int       rc         = getnameinfo((struct sockaddr *) res->ai_addr, client_len, hoststr, sizeof(hoststr), portstr, sizeof(portstr), NI_NUMERICHOST | NI_NUMERICSERV);
+		int       rc = getnameinfo((struct sockaddr *) res->ai_addr, client_len, hoststr, sizeof(hoststr), portstr, sizeof(portstr), NI_NUMERICHOST | NI_NUMERICSERV);
 		TraceLog(LOG_INFO, "Successfully resolved host %s:%s", hoststr, portstr);
 	}
 
@@ -746,10 +746,10 @@ int ResolveHost(const char *address, const char *service, int addressType, int f
 	hints.ai_family = addressType; // Either IPv4 or IPv6 (ADDRESS_TYPE_IPV4, ADDRESS_TYPE_IPV6)
 	hints.ai_protocol = 0; // Automatically select correct protocol (IPPROTO_TCP), (IPPROTO_UDP)
 	hints.ai_flags = flags;
-	assert(hints.ai_addrlen == NULL || hints.ai_addrlen == 0);
-	assert(hints.ai_canonname == NULL || hints.ai_canonname == 0);
-	assert(hints.ai_addr == NULL || hints.ai_addr == 0);
-	assert(hints.ai_next == NULL || hints.ai_next == 0);
+	assert((hints.ai_addrlen == NULL) || (hints.ai_addrlen == 0));
+	assert((hints.ai_canonname == NULL) || (hints.ai_canonname == 0));
+	assert((hints.ai_addr == NULL) || (hints.ai_addr == 0));
+	assert((hints.ai_next == NULL) || (hints.ai_next == 0));
 
 	// When the address is NULL, populate the IP for me
 	if (address == NULL)

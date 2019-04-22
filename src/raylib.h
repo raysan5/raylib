@@ -100,11 +100,6 @@
 #define MAX_SHADER_LOCATIONS    32      // Maximum number of predefined locations stored in shader struct
 #define MAX_MATERIAL_MAPS       12      // Maximum number of texture maps stored in shader struct
 
-// Network connection related defines
-#define SOCKET_MAX_SOCK_OPTS (4)		// Maximum socket options
-#define SOCKET_MAX_UDPCHANNELS (32)		// Maximum UDP channels
-#define SOCKET_MAX_UDPADDRESSES (4)		// Maximum bound UDP addresses 
-
 // NOTE: MSC C++ compiler does not support compound literals (C99 feature)
 // Plain structures in C++ (without constructors) can be initialized from { } initializers.
 #if defined(__cplusplus)
