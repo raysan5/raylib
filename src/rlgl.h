@@ -1625,7 +1625,7 @@ void rlglInit(int width, int height)
         if (strcmp(extList[i], (const char *)"GL_EXT_debug_marker") == 0) debugMarkerSupported = true;
     }
 
-#if defined(_WIN32) && defined(_MSC_VER)
+#if defined(_WIN32) && defined(_MSC_VER) && !defined(PLATFORM_UWP) //is this a hotfix? I may need to find out why this is broken
     RL_FREE(extList);
 #endif
 
