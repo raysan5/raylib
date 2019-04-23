@@ -1228,7 +1228,7 @@ Music LoadMusicStream(const char *fileName)
         if (false) {}
     #endif
     #if defined(SUPPORT_FILEFORMAT_FLAC)
-        else if (music->ctxType == MUSIC_AUDIO_FLAC) drflac_RL_FREE(music->ctxFlac);
+        else if (music->ctxType == MUSIC_AUDIO_FLAC) drflac_free(music->ctxFlac);
     #endif
     #if defined(SUPPORT_FILEFORMAT_MP3)
         else if (music->ctxType == MUSIC_AUDIO_MP3) drmp3_uninit(&music->ctxMp3);
@@ -1262,7 +1262,7 @@ void UnloadMusicStream(Music music)
     if (false) {}
 #endif
 #if defined(SUPPORT_FILEFORMAT_FLAC)
-    else if (music->ctxType == MUSIC_AUDIO_FLAC) drflac_RL_FREE(music->ctxFlac);
+    else if (music->ctxType == MUSIC_AUDIO_FLAC) drflac_free(music->ctxFlac);
 #endif
 #if defined(SUPPORT_FILEFORMAT_MP3)
     else if (music->ctxType == MUSIC_AUDIO_MP3) drmp3_uninit(&music->ctxMp3);
