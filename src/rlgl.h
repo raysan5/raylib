@@ -72,6 +72,17 @@
     #else
         #define RLAPI   // We are building or using raylib as a static library (or Linux shared library)
     #endif
+    
+    // Allow custom memory allocators
+    #ifndef RL_MALLOC
+        #define RL_MALLOC(sz)       malloc(sz)
+    #endif
+    #ifndef RL_CALLOC
+        #define RL_CALLOC(n,sz)     calloc(n,sz)
+    #endif
+    #ifndef RL_FREE
+        #define RL_FREE(p)          free(p)
+    #endif
 #else
     #include "raylib.h"         // Required for: Model, Shader, Texture2D, TraceLog()
 #endif
