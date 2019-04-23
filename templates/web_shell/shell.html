@@ -178,14 +178,14 @@
       }
     </script>
     <script type='text/javascript'>
-      var statusElement = document.getElementById('status');
-      var progressElement = document.getElementById('progress');
-      var spinnerElement = document.getElementById('spinner');
+      var statusElement = document.querySelector('#status');
+      var progressElement = document.querySelector('#progress');
+      var spinnerElement = document.querySelector('#spinner');
       var Module = {
         preRun: [],
         postRun: [],
         print: (function() {
-          var element = document.getElementById('output');
+          var element = document.querySelector('#output');
           if (element) element.value = ''; // clear browser cache
           return function(text) {
             if (arguments.length > 1) text = Array.prototype.slice.call(arguments).join(' ');
@@ -210,7 +210,7 @@
           }
         },
         canvas: (function() {
-          var canvas = document.getElementById('canvas');
+          var canvas = document.querySelector('#canvas');
           // As a default initial behavior, pop up an alert when webgl context is lost. To make your
           // application robust, you may want to override this behavior before shipping!
           // See http://www.khronos.org/registry/webgl/specs/latest/1.0/#5.15.2

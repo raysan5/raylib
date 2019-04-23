@@ -21915,8 +21915,6 @@ extern "C" {
 #endif
 EMSCRIPTEN_KEEPALIVE void ma_device_process_pcm_frames_capture__webaudio(ma_device* pDevice, int frameCount, float* pFrames)
 {
-    ma_result result;
-
     if (pDevice->type == ma_device_type_duplex) {
         ma_device__handle_duplex_callback_capture(pDevice, (ma_uint32)frameCount, pFrames, &pDevice->webaudio.duplexRB);
     } else {

@@ -1559,7 +1559,19 @@ void rlglInit(int width, int height)
             glBindVertexArray = (PFNGLBINDVERTEXARRAYOESPROC)eglGetProcAddress("glBindVertexArrayOES");
             glDeleteVertexArrays = (PFNGLDELETEVERTEXARRAYSOESPROC)eglGetProcAddress("glDeleteVertexArraysOES");
             //glIsVertexArray = (PFNGLISVERTEXARRAYOESPROC)eglGetProcAddress("glIsVertexArrayOES");     // NOTE: Fails in WebGL, omitted
+            
+            if (glGenVertexArrays == NULL) printf("glGenVertexArrays is NULL.\n");  // WEB: ISSUE FOUND! ...but why?
+            if (glBindVertexArray == NULL) printf("glBindVertexArray is NULL.\n");  // WEB: ISSUE FOUND! ...but why?
         }
+        
+        // TODO: HACK REVIEW!
+        // For some reason on raylib 2.5, VAO usage breaks the build
+        // error seems related to function pointers but I can not get detailed info...
+        // Avoiding VAO usage is the only solution for now... :(
+        // Ref: https://emscripten.org/docs/porting/guidelines/function_pointer_issues.html
+    #if defined(PLATFORM_WEB)
+        vaoSupported = false;
+    #endif
 
         // Check NPOT textures support
         // NOTE: Only check on OpenGL ES, OpenGL 3.3 has NPOT textures full support as core feature

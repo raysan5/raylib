@@ -3172,7 +3172,8 @@ static void PollInputEvents(void)
 // NOTE: GLFW3 joystick functionality not available in web
 #if defined(PLATFORM_WEB)
     // Get number of gamepads connected
-    int numGamepads = emscripten_get_num_gamepads();
+    int numGamepads = 0;
+    if (emscripten_sample_gamepad_data() == EMSCRIPTEN_RESULT_SUCCESS) numGamepads = emscripten_get_num_gamepads();
 
     for (int i = 0; (i < numGamepads) && (i < MAX_GAMEPADS); i++)
     {

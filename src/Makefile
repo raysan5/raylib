@@ -42,7 +42,7 @@
 .PHONY: all clean install uninstall
 
 # Define required raylib variables
-RAYLIB_VERSION     = 2.4.0
+RAYLIB_VERSION     = 2.5.0
 RAYLIB_API_VERSION = 2
 
 # See below for alternatives.

@@ -25,7 +25,7 @@
 
 # Define required raylib variables
 PROJECT_NAME       ?= raylib_examples
-RAYLIB_VERSION     ?= 2.0.0
+RAYLIB_VERSION     ?= 2.5.0
 RAYLIB_API_VERSION ?= 1
 RAYLIB_PATH        ?= ..
 
@@ -118,8 +118,8 @@ endif
 ifeq ($(PLATFORM),PLATFORM_WEB)
     # Emscripten required variables
     EMSDK_PATH          = C:/emsdk
-    EMSCRIPTEN_VERSION  = 1.38.21
-    CLANG_VERSION       = e1.38.21_64bit
+    EMSCRIPTEN_VERSION  = 1.38.30
+    CLANG_VERSION       = e1.38.30_64bit
     PYTHON_VERSION      = 2.7.13.1_64bit\python-2.7.13.amd64
     NODE_VERSION        = 8.9.1_64bit
     export PATH         = $(EMSDK_PATH);$(EMSDK_PATH)\clang\$(CLANG_VERSION);$(EMSDK_PATH)\node\$(NODE_VERSION)\bin;$(EMSDK_PATH)\python\$(PYTHON_VERSION);$(EMSDK_PATH)\emscripten\$(EMSCRIPTEN_VERSION);C:\raylib\MinGW\bin:$$(PATH)
@@ -249,7 +249,8 @@ ifeq ($(PLATFORM),PLATFORM_WEB)
     # -s EMTERPRETIFY_ASYNC=1    # support synchronous loops by emterpreter
     # --profiling                # include information for code profiling
     # --preload-file resources   # specify a resources folder for data compilation
-    CFLAGS += -Os -s USE_GLFW=3 -s ASSERTIONS=1 -s WASM=1 -s EMTERPRETIFY=1 -s EMTERPRETIFY_ASYNC=1
+    CFLAGS += -Os -s USE_GLFW=3 -s ASSERTIONS=2 -s WASM=1
+    #  -Os -s WASM=1 -s EMTERPRETIFY=1 -s EMTERPRETIFY_ASYNC=1
     
     # NOTE: Simple raylib examples are compiled to be interpreter by emterpreter, that way,
     # we can compile same code for ALL platforms with no change required, but, working on bigger
