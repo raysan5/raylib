@@ -134,7 +134,7 @@
 #include <ctype.h>          // Required for: tolower() [Used in IsFileExtension()]
 #include <sys/stat.h>       // Required for stat() [Used in GetLastWriteTime()]
 
-#if defined(PLATFORM_DESKTOP) && defined(_WIN32) && (defined(_MSC_VER) || defined(__TINYC__))
+#if (defined(PLATFORM_DESKTOP) || defined(PLATFORM_UWP)) && defined(_WIN32) && (defined(_MSC_VER) || defined(__TINYC__))
     #include "external/dirent.h"    // Required for: DIR, opendir(), closedir() [Used in GetDirectoryFiles()]
 #else
     #include <dirent.h>             // Required for: DIR, opendir(), closedir() [Used in GetDirectoryFiles()]
@@ -887,7 +887,8 @@ int GetScreenHeight(void)
 // Get native window handle
 void *GetWindowHandle(void)
 {
-#if defined(_WIN32)
+	//TODO: See if we can do UWP?
+#ifdef PLATFORM_DESKTOP
     // NOTE: Returned handle is: void *HWND (windows.h)
     return glfwGetWin32Window(window);
 #elif defined(__linux__)
