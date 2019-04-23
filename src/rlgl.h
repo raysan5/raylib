@@ -1429,8 +1429,10 @@ void rlClearScreenBuffers(void)
 // Update GPU buffer with new data
 void rlUpdateBuffer(int bufferId, void *data, int dataSize)
 {
+#if defined(GRAPHICS_API_OPENGL_33) || defined(GRAPHICS_API_OPENGL_ES2)
     glBindBuffer(GL_ARRAY_BUFFER, bufferId);
     glBufferSubData(GL_ARRAY_BUFFER, 0, dataSize, data);
+#endif
 }
 
 //----------------------------------------------------------------------------------
@@ -3533,6 +3535,7 @@ void CloseVrSimulator(void)
 // Set stereo rendering configuration parameters 
 void SetVrConfiguration(VrDeviceInfo hmd, Shader distortion)
 {
+#if defined(GRAPHICS_API_OPENGL_33) || defined(GRAPHICS_API_OPENGL_ES2)
     // Reset vrConfig for a new values assignment
     memset(&vrConfig, 0, sizeof(vrConfig));
     
@@ -3610,6 +3613,7 @@ void SetVrConfiguration(VrDeviceInfo hmd, Shader distortion)
         SetShaderValue(vrConfig.distortionShader, GetShaderLocation(vrConfig.distortionShader, "hmdWarpParam"), hmd.lensDistortionValues, UNIFORM_VEC4);
         SetShaderValue(vrConfig.distortionShader, GetShaderLocation(vrConfig.distortionShader, "chromaAbParam"), hmd.chromaAbCorrection, UNIFORM_VEC4);
     }
+#endif
 }
 
 // Detect if VR simulator is running
