@@ -1,6 +1,8 @@
 /**********************************************************************************************
 *
-*   rgif.h original implementation (gif.h) by Charlie Tangora [ctangora -at- gmail -dot- com]
+*   rgif.h v0.5
+*
+*   Original implementation (gif.h) by Charlie Tangora [ctangora -at- gmail -dot- com]
 *   adapted to C99, reformatted and renamed by Ramon Santamaria (@raysan5)
 *
 *   This file offers a simple, very limited way to create animated GIFs directly in code.
