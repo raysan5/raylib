@@ -56,7 +56,16 @@
 //----------------------------------------------------------------------------------
 // Defines and Macros
 //----------------------------------------------------------------------------------
-//...
+// Allow custom memory allocators
+#ifndef RL_MALLOC
+    #define RL_MALLOC(sz)       malloc(sz)
+#endif
+#ifndef RL_CALLOC
+    #define RL_CALLOC(n,sz)     calloc(n,sz)
+#endif
+#ifndef RL_FREE
+    #define RL_FREE(p)          free(p)
+#endif
 
 //----------------------------------------------------------------------------------
 // Types and Structures Definition

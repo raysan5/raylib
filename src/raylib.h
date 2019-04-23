@@ -100,6 +100,17 @@
 #define MAX_SHADER_LOCATIONS    32      // Maximum number of predefined locations stored in shader struct
 #define MAX_MATERIAL_MAPS       12      // Maximum number of texture maps stored in shader struct
 
+// Allow custom memory allocators
+#ifndef RL_MALLOC
+    #define RL_MALLOC(sz)       malloc(sz)
+#endif
+#ifndef RL_CALLOC
+    #define RL_CALLOC(n,sz)     calloc(n,sz)
+#endif
+#ifndef RL_FREE
+    #define RL_FREE(p)          free(p)
+#endif
+
 // NOTE: MSC C++ compiler does not support compound literals (C99 feature)
 // Plain structures in C++ (without constructors) can be initialized from { } initializers.
 #if defined(__cplusplus)

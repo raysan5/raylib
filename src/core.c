@@ -1113,7 +1113,7 @@ void EndDrawing(void)
             unsigned char *screenData = rlReadScreenPixels(screenWidth, screenHeight);
             GifWriteFrame(screenData, screenWidth, screenHeight, 10, 8, false);
 
-            free(screenData);   // Free image data
+            RL_FREE(screenData);   // Free image data
         }
 
         if (((gifFramesCounter/15)%2) == 1)
@@ -1595,7 +1595,7 @@ void TakeScreenshot(const char *fileName)
 #endif
 
     ExportImage(image, path);
-    free(imgData);
+    RL_FREE(imgData);
 
 #if defined(PLATFORM_WEB)
     // Download file from MEMFS (emscripten memory filesystem)
@@ -1742,8 +1742,8 @@ char **GetDirectoryFiles(const char *dirPath, int *fileCount)
     ClearDirectoryFiles();
 
     // Memory allocation for MAX_DIRECTORY_FILES
-    dirFilesPath = (char **)malloc(sizeof(char *)*MAX_DIRECTORY_FILES);
-    for (int i = 0; i < MAX_DIRECTORY_FILES; i++) dirFilesPath[i] = (char *)malloc(sizeof(char)*MAX_FILEPATH_LENGTH);
+    dirFilesPath = (char **)RL_MALLOC(sizeof(char *)*MAX_DIRECTORY_FILES);
+    for (int i = 0; i < MAX_DIRECTORY_FILES; i++) dirFilesPath[i] = (char *)RL_MALLOC(sizeof(char)*MAX_FILEPATH_LENGTH);
 
     int counter = 0;
     struct dirent *ent;
@@ -1776,9 +1776,9 @@ void ClearDirectoryFiles(void)
 {
     if (dirFilesCount > 0)
     {
-        for (int i = 0; i < dirFilesCount; i++) free(dirFilesPath[i]);
+        for (int i = 0; i < dirFilesCount; i++) RL_FREE(dirFilesPath[i]);
 
-        free(dirFilesPath);
+        RL_FREE(dirFilesPath);
         dirFilesCount = 0;
     }
 }
@@ -1808,9 +1808,9 @@ void ClearDroppedFiles(void)
 {
     if (dropFilesCount > 0)
     {
-        for (int i = 0; i < dropFilesCount; i++) free(dropFilesPath[i]);
+        for (int i = 0; i < dropFilesCount; i++) RL_FREE(dropFilesPath[i]);
 
-        free(dropFilesPath);
+        RL_FREE(dropFilesPath);
 
         dropFilesCount = 0;
     }
@@ -1925,7 +1925,7 @@ void OpenURL(const char *url)
     }
     else
     {
-        char *cmd = (char *)calloc(strlen(url) + 10, sizeof(char));
+        char *cmd = (char *)RL_CALLOC(strlen(url) + 10, sizeof(char));
 
 #if defined(_WIN32)
         sprintf(cmd, "explorer %s", url);
@@ -1935,7 +1935,7 @@ void OpenURL(const char *url)
         sprintf(cmd, "open '%s'", url);
 #endif
         system(cmd);
-        free(cmd);
+        RL_FREE(cmd);
     }
 }
 
@@ -3455,11 +3455,11 @@ static void WindowDropCallback(GLFWwindow *window, int count, const char **paths
 {
     ClearDroppedFiles();
 
-    dropFilesPath = (char **)malloc(sizeof(char *)*count);
+    dropFilesPath = (char **)RL_MALLOC(sizeof(char *)*count);
 
     for (int i = 0; i < count; i++)
     {
-        dropFilesPath[i] = (char *)malloc(sizeof(char)*MAX_FILEPATH_LENGTH);
+        dropFilesPath[i] = (char *)RL_MALLOC(sizeof(char)*MAX_FILEPATH_LENGTH);
         strcpy(dropFilesPath[i], paths[i]);
     }
 

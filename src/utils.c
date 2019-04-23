@@ -45,10 +45,10 @@
     #include <android/asset_manager.h>  // Required for: Android assets manager: AAsset, AAssetManager_open(), ...
 #endif
 
-#include <stdlib.h>                     // Required for: malloc(), free()
-#include <stdio.h>                      // Required for: fopen(), fclose(), fputc(), fwrite(), printf(), fprintf(), funopen()
+#include <stdlib.h>                     // Required for: exit()
+#include <stdio.h>                      // Required for: printf(), sprintf()
 #include <stdarg.h>                     // Required for: va_list, va_start(), vfprintf(), va_end()
-#include <string.h>                     // Required for: strlen(), strrchr(), strcmp()
+#include <string.h>                     // Required for: strcpy(), strcat()
 
 #define MAX_TRACELOG_BUFFER_SIZE   128  // Max length of one trace-log message
 

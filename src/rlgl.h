@@ -1492,7 +1492,7 @@ void rlglInit(int width, int height)
     glGetIntegerv(GL_NUM_EXTENSIONS, &numExt);
 
 #if defined(_MSC_VER)
-    const char **extList = malloc(sizeof(const char *)*numExt);
+    const char **extList = RL_MALLOC(sizeof(const char *)*numExt);
 #else
     const char *extList[numExt];
 #endif
@@ -1504,7 +1504,7 @@ void rlglInit(int width, int height)
 
     // NOTE: We have to duplicate string because glGetString() returns a const string
     int len = strlen(extensions) + 1;
-    char *extensionsDup = (char *)malloc(len);
+    char *extensionsDup = (char *)RL_MALLOC(len);
     strcpy(extensionsDup, extensions);
 
     // NOTE: String could be splitted using strtok() function (string.h)
@@ -1520,7 +1520,7 @@ void rlglInit(int width, int height)
         extList[numExt] = strtok(NULL, " ");
     }
 
-    free(extensionsDup);    // Duplicated string must be deallocated
+    RL_FREE(extensionsDup);    // Duplicated string must be deallocated
 
     numExt -= 1;
 #endif
@@ -1595,7 +1595,7 @@ void rlglInit(int width, int height)
     }
 
 #if defined(_WIN32) && defined(_MSC_VER)
-    free(extList);
+    RL_FREE(extList);
 #endif
 
 #if defined(GRAPHICS_API_OPENGL_ES2)
@@ -1640,7 +1640,7 @@ void rlglInit(int width, int height)
     transformMatrix = MatrixIdentity();
 
     // Init draw calls tracking system
-    draws = (DrawCall *)malloc(sizeof(DrawCall)*MAX_DRAWCALL_REGISTERED);
+    draws = (DrawCall *)RL_MALLOC(sizeof(DrawCall)*MAX_DRAWCALL_REGISTERED);
 
     for (int i = 0; i < MAX_DRAWCALL_REGISTERED; i++)
     {
@@ -1710,7 +1710,7 @@ void rlglClose(void)
 
     TraceLog(LOG_INFO, "[TEX ID %i] Unloaded texture data (base white texture) from VRAM", defaultTextureId);
 
-    free(draws);
+    RL_FREE(draws);
 #endif
 }
 
@@ -2300,7 +2300,7 @@ void rlGenerateMipmaps(Texture2D *texture)
             }
 
             texture->mipmaps = mipmapCount + 1;
-            free(data); // Once mipmaps have been generated and data has been uploaded to GPU VRAM, we can discard RAM data
+            RL_FREE(data); // Once mipmaps have been generated and data has been uploaded to GPU VRAM, we can discard RAM data
 
             TraceLog(LOG_WARNING, "[TEX ID %i] Mipmaps [%i] generated manually on CPU side", texture->id, texture->mipmaps);
         }
@@ -2735,18 +2735,18 @@ void rlDrawMesh(Mesh mesh, Material material, Matrix transform)
 // Unload mesh data from CPU and GPU
 void rlUnloadMesh(Mesh *mesh)
 {
-    free(mesh->vertices);
-    free(mesh->texcoords);
-    free(mesh->normals);
-    free(mesh->colors);
-    free(mesh->tangents);
-    free(mesh->texcoords2);
-    free(mesh->indices);
+    RL_FREE(mesh->vertices);
+    RL_FREE(mesh->texcoords);
+    RL_FREE(mesh->normals);
+    RL_FREE(mesh->colors);
+    RL_FREE(mesh->tangents);
+    RL_FREE(mesh->texcoords2);
+    RL_FREE(mesh->indices);
 
-    free(mesh->animVertices);
-    free(mesh->animNormals);
-    free(mesh->boneWeights);
-    free(mesh->boneIds);
+    RL_FREE(mesh->animVertices);
+    RL_FREE(mesh->animNormals);
+    RL_FREE(mesh->boneWeights);
+    RL_FREE(mesh->boneIds);
 
     rlDeleteBuffers(mesh->vboId[0]);   // vertex
     rlDeleteBuffers(mesh->vboId[1]);   // texcoords
@@ -2762,14 +2762,14 @@ void rlUnloadMesh(Mesh *mesh)
 // Read screen pixel data (color buffer)
 unsigned char *rlReadScreenPixels(int width, int height)
 {
-    unsigned char *screenData = (unsigned char *)calloc(width*height*4, sizeof(unsigned char));
+    unsigned char *screenData = (unsigned char *)RL_CALLOC(width*height*4, sizeof(unsigned char));
 
     // NOTE 1: glReadPixels returns image flipped vertically -> (0,0) is the bottom left corner of the framebuffer
     // NOTE 2: We are getting alpha channel! Be careful, it can be transparent if not cleared properly!
     glReadPixels(0, 0, width, height, GL_RGBA, GL_UNSIGNED_BYTE, screenData);
 
     // Flip image vertically!
-    unsigned char *imgData = (unsigned char *)malloc(width*height*sizeof(unsigned char)*4);
+    unsigned char *imgData = (unsigned char *)RL_MALLOC(width*height*sizeof(unsigned char)*4);
 
     for (int y = height - 1; y >= 0; y--)
     {
@@ -2783,7 +2783,7 @@ unsigned char *rlReadScreenPixels(int width, int height)
         }
     }
 
-    free(screenData);
+    RL_FREE(screenData);
 
     return imgData;     // NOTE: image data should be freed
 }
@@ -2815,7 +2815,7 @@ void *rlReadTexturePixels(Texture2D texture)
 
     if ((glInternalFormat != -1) && (texture.format < COMPRESSED_DXT1_RGB))
     {
-        pixels = (unsigned char *)malloc(size);
+        pixels = (unsigned char *)RL_MALLOC(size);
         glGetTexImage(GL_TEXTURE_2D, 0, glFormat, glType, pixels);
     }
     else TraceLog(LOG_WARNING, "Texture data retrieval not suported for pixel format");
@@ -2841,7 +2841,7 @@ void *rlReadTexturePixels(Texture2D texture)
     glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, texture.id, 0);
 
     // Allocate enough memory to read back our texture data
-    pixels = (unsigned char *)malloc(GetPixelDataSize(texture.width, texture.height, texture.format));
+    pixels = (unsigned char *)RL_MALLOC(GetPixelDataSize(texture.width, texture.height, texture.format));
 
     // Get OpenGL internal formats and data type from our texture format
     unsigned int glInternalFormat, glFormat, glType;
@@ -2911,7 +2911,7 @@ char *LoadText(const char *fileName)
 
             if (size > 0)
             {
-                text = (char *)malloc(sizeof(char)*(size + 1));
+                text = (char *)RL_MALLOC(sizeof(char)*(size + 1));
                 int count = fread(text, sizeof(char), size, textFile);
                 text[count] = '\0';
             }
@@ -2938,8 +2938,8 @@ Shader LoadShader(const char *vsFileName, const char *fsFileName)
 
     shader = LoadShaderCode(vShaderStr, fShaderStr);
 
-    if (vShaderStr != NULL) free(vShaderStr);
-    if (fShaderStr != NULL) free(fShaderStr);
+    if (vShaderStr != NULL) RL_FREE(vShaderStr);
+    if (fShaderStr != NULL) RL_FREE(fShaderStr);
 
     return shader;
 }
@@ -3758,7 +3758,7 @@ static unsigned int CompileShader(const char *shaderStr, int type)
         glGetShaderiv(shader, GL_INFO_LOG_LENGTH, &maxLength);
 
 #if defined(_MSC_VER)
-        char *log = malloc(maxLength);
+        char *log = RL_MALLOC(maxLength);
 #else
         char log[maxLength];
 #endif
@@ -3767,7 +3767,7 @@ static unsigned int CompileShader(const char *shaderStr, int type)
         TraceLog(LOG_INFO, "%s", log);
 
 #if defined(_MSC_VER)
-        free(log);
+        RL_FREE(log);
 #endif
     }
     else TraceLog(LOG_INFO, "[SHDR ID %i] Shader compiled successfully", shader);
@@ -3814,7 +3814,7 @@ static unsigned int LoadShaderProgram(unsigned int vShaderId, unsigned int fShad
         glGetProgramiv(program, GL_INFO_LOG_LENGTH, &maxLength);
 
 #if defined(_MSC_VER)
-        char *log = malloc(maxLength);
+        char *log = RL_MALLOC(maxLength);
 #else
         char log[maxLength];
 #endif
@@ -3823,7 +3823,7 @@ static unsigned int LoadShaderProgram(unsigned int vShaderId, unsigned int fShad
         TraceLog(LOG_INFO, "%s", log);
 
 #if defined(_MSC_VER)
-        free(log);
+        RL_FREE(log);
 #endif
         glDeleteProgram(program);
 
@@ -3984,13 +3984,13 @@ static void LoadBuffersDefault(void)
     //--------------------------------------------------------------------------------------------
     for (int i = 0; i < MAX_BATCH_BUFFERING; i++)
     {
-        vertexData[i].vertices = (float *)malloc(sizeof(float)*3*4*MAX_BATCH_ELEMENTS);        // 3 float by vertex, 4 vertex by quad
-        vertexData[i].texcoords = (float *)malloc(sizeof(float)*2*4*MAX_BATCH_ELEMENTS);       // 2 float by texcoord, 4 texcoord by quad
-        vertexData[i].colors = (unsigned char *)malloc(sizeof(unsigned char)*4*4*MAX_BATCH_ELEMENTS);  // 4 float by color, 4 colors by quad
+        vertexData[i].vertices = (float *)RL_MALLOC(sizeof(float)*3*4*MAX_BATCH_ELEMENTS);        // 3 float by vertex, 4 vertex by quad
+        vertexData[i].texcoords = (float *)RL_MALLOC(sizeof(float)*2*4*MAX_BATCH_ELEMENTS);       // 2 float by texcoord, 4 texcoord by quad
+        vertexData[i].colors = (unsigned char *)RL_MALLOC(sizeof(unsigned char)*4*4*MAX_BATCH_ELEMENTS);  // 4 float by color, 4 colors by quad
 #if defined(GRAPHICS_API_OPENGL_33)
-        vertexData[i].indices = (unsigned int *)malloc(sizeof(unsigned int)*6*MAX_BATCH_ELEMENTS);      // 6 int by quad (indices)
+        vertexData[i].indices = (unsigned int *)RL_MALLOC(sizeof(unsigned int)*6*MAX_BATCH_ELEMENTS);      // 6 int by quad (indices)
 #elif defined(GRAPHICS_API_OPENGL_ES2)
-        vertexData[i].indices = (unsigned short *)malloc(sizeof(unsigned short)*6*MAX_BATCH_ELEMENTS);  // 6 int by quad (indices)
+        vertexData[i].indices = (unsigned short *)RL_MALLOC(sizeof(unsigned short)*6*MAX_BATCH_ELEMENTS);  // 6 int by quad (indices)
 #endif
 
         for (int j = 0; j < (3*4*MAX_BATCH_ELEMENTS); j++) vertexData[i].vertices[j] = 0.0f;
@@ -4266,10 +4266,10 @@ static void UnloadBuffersDefault(void)
         if (vaoSupported) glDeleteVertexArrays(1, &vertexData[i].vaoId);
 
         // Free vertex arrays memory from CPU (RAM)
-        free(vertexData[i].vertices);
-        free(vertexData[i].texcoords);
-        free(vertexData[i].colors);
-        free(vertexData[i].indices);
+        RL_FREE(vertexData[i].vertices);
+        RL_FREE(vertexData[i].texcoords);
+        RL_FREE(vertexData[i].colors);
+        RL_FREE(vertexData[i].indices);
     }
 }
 
@@ -4444,7 +4444,7 @@ static int GenerateMipmaps(unsigned char *data, int baseWidth, int baseHeight)
 
     // Generate mipmaps
     // NOTE: Every mipmap data is stored after data
-    Color *image = (Color *)malloc(width*height*sizeof(Color));
+    Color *image = (Color *)RL_MALLOC(width*height*sizeof(Color));
     Color *mipmap = NULL;
     int offset = 0;
     int j = 0;
@@ -4481,13 +4481,13 @@ static int GenerateMipmaps(unsigned char *data, int baseWidth, int baseHeight)
             j++;
         }
 
-        free(image);
+        RL_FREE(image);
 
         image = mipmap;
         mipmap = NULL;
     }
 
-    free(mipmap);       // free mipmap data
+    RL_FREE(mipmap);       // free mipmap data
 
     return mipmapCount;
 }
@@ -4501,7 +4501,7 @@ static Color *GenNextMipmap(Color *srcData, int srcWidth, int srcHeight)
     int width = srcWidth/2;
     int height = srcHeight/2;
 
-    Color *mipmap = (Color *)malloc(width*height*sizeof(Color));
+    Color *mipmap = (Color *)RL_MALLOC(width*height*sizeof(Color));
 
     // Scaling algorithm works perfectly (box-filter)
     for (int y = 0; y < height; y++)

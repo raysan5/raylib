@@ -174,7 +174,7 @@ extern void LoadDefaultFont(void)
     int imWidth = 128;
     int imHeight = 128;
 
-    Color *imagePixels = (Color *)malloc(imWidth*imHeight*sizeof(Color));
+    Color *imagePixels = (Color *)RL_MALLOC(imWidth*imHeight*sizeof(Color));
 
     for (int i = 0; i < imWidth*imHeight; i++) imagePixels[i] = BLANK;        // Initialize array
 
@@ -196,7 +196,7 @@ extern void LoadDefaultFont(void)
     Image image = LoadImageEx(imagePixels, imWidth, imHeight);
     ImageFormat(&image, UNCOMPRESSED_GRAY_ALPHA);
 
-    free(imagePixels);
+    RL_FREE(imagePixels);
 
     defaultFont.texture = LoadTextureFromImage(image);
     UnloadImage(image);
@@ -206,7 +206,7 @@ extern void LoadDefaultFont(void)
 
     // Allocate space for our characters info data
     // NOTE: This memory should be freed at end! --> CloseWindow()
-    defaultFont.chars = (CharInfo *)malloc(defaultFont.charsCount*sizeof(CharInfo));
+    defaultFont.chars = (CharInfo *)RL_MALLOC(defaultFont.charsCount*sizeof(CharInfo));
 
     int currentLine = 0;
     int currentPosX = charsDivisor;
@@ -249,7 +249,7 @@ extern void LoadDefaultFont(void)
 extern void UnloadDefaultFont(void)
 {
     UnloadTexture(defaultFont.texture);
-    free(defaultFont.chars);
+    RL_FREE(defaultFont.chars);
 }
 #endif      // SUPPORT_DEFAULT_FONT
 
@@ -407,7 +407,7 @@ Font LoadFontFromImage(Image image, Color key, int firstChar)
     // Create a new image with the processed color data (key color replaced by BLANK)
     Image fontClear = LoadImageEx(pixels, image.width, image.height);
 
-    free(pixels);    // Free pixels array memory
+    RL_FREE(pixels);    // Free pixels array memory
 
     // Create spritefont with all data parsed from image
     Font spriteFont = { 0 };
@@ -419,7 +419,7 @@ Font LoadFontFromImage(Image image, Color key, int firstChar)
 
     // We got tempCharValues and tempCharsRecs populated with chars data
     // Now we move temp data to sized charValues and charRecs arrays
-    spriteFont.chars = (CharInfo *)malloc(spriteFont.charsCount*sizeof(CharInfo));
+    spriteFont.chars = (CharInfo *)RL_MALLOC(spriteFont.charsCount*sizeof(CharInfo));
 
     for (int i = 0; i < spriteFont.charsCount; i++)
     {
@@ -466,7 +466,7 @@ CharInfo *LoadFontData(const char *fileName, int fontSize, int *fontChars, int c
         long size = ftell(fontFile);    // Get file size
         fseek(fontFile, 0, SEEK_SET);   // Reset file pointer
 
-        unsigned char *fontBuffer = (unsigned char *)malloc(size);
+        unsigned char *fontBuffer = (unsigned char *)RL_MALLOC(size);
 
         fread(fontBuffer, size, 1, fontFile);
         fclose(fontFile);
@@ -491,12 +491,12 @@ CharInfo *LoadFontData(const char *fileName, int fontSize, int *fontChars, int c
         int genFontChars = false;
         if (fontChars == NULL)
         {
-            fontChars = (int *)malloc(charsCount*sizeof(int));
+            fontChars = (int *)RL_MALLOC(charsCount*sizeof(int));
             for (int i = 0; i < charsCount; i++) fontChars[i] = i + 32;
             genFontChars = true;
         }
 
-        chars = (CharInfo *)malloc(charsCount*sizeof(CharInfo));
+        chars = (CharInfo *)RL_MALLOC(charsCount*sizeof(CharInfo));
 
         // NOTE: Using simple packaging, one char after another
         for (int i = 0; i < charsCount; i++)
@@ -540,8 +540,8 @@ CharInfo *LoadFontData(const char *fileName, int fontSize, int *fontChars, int c
             chars[i].advanceX *= scaleFactor;
         }
 
-        free(fontBuffer);
-        if (genFontChars) free(fontChars);
+        RL_FREE(fontBuffer);
+        if (genFontChars) RL_FREE(fontChars);
     }
     else TraceLog(LOG_WARNING, "[%s] TTF file could not be opened", fileName);
 #else
@@ -572,7 +572,7 @@ Image GenImageFontAtlas(CharInfo *chars, int charsCount, int fontSize, int paddi
 
     atlas.width = imageSize;   // Atlas bitmap width
     atlas.height = imageSize;  // Atlas bitmap height
-    atlas.data = (unsigned char *)calloc(1, atlas.width*atlas.height);      // Create a bitmap to store characters (8 bpp)
+    atlas.data = (unsigned char *)RL_CALLOC(1, atlas.width*atlas.height);      // Create a bitmap to store characters (8 bpp)
     atlas.format = UNCOMPRESSED_GRAYSCALE;
     atlas.mipmaps = 1;
 
@@ -619,11 +619,11 @@ Image GenImageFontAtlas(CharInfo *chars, int charsCount, int fontSize, int paddi
     {
         TraceLog(LOG_DEBUG, "Using Skyline packing algorythm!");
 
-        stbrp_context *context = (stbrp_context *)malloc(sizeof(*context));
-        stbrp_node *nodes = (stbrp_node *)malloc(charsCount*sizeof(*nodes));
+        stbrp_context *context = (stbrp_context *)RL_MALLOC(sizeof(*context));
+        stbrp_node *nodes = (stbrp_node *)RL_MALLOC(charsCount*sizeof(*nodes));
 
         stbrp_init_target(context, atlas.width, atlas.height, nodes, charsCount);
-        stbrp_rect *rects = (stbrp_rect *)malloc(charsCount*sizeof(stbrp_rect));
+        stbrp_rect *rects = (stbrp_rect *)RL_MALLOC(charsCount*sizeof(stbrp_rect));
 
         // Fill rectangles for packaging
         for (int i = 0; i < charsCount; i++)
@@ -655,16 +655,16 @@ Image GenImageFontAtlas(CharInfo *chars, int charsCount, int fontSize, int paddi
             else TraceLog(LOG_WARNING, "Character could not be packed: %i", i);
         }
 
-        free(rects);
-        free(nodes);
-        free(context);
+        RL_FREE(rects);
+        RL_FREE(nodes);
+        RL_FREE(context);
     }
 
     // TODO: Crop image if required for smaller size
 
     // Convert image data from GRAYSCALE to GRAY_ALPHA
     // WARNING: ImageAlphaMask(&atlas, atlas) does not work in this case, requires manual operation
-    unsigned char *dataGrayAlpha = (unsigned char *)malloc(imageSize*imageSize*sizeof(unsigned char)*2); // Two channels
+    unsigned char *dataGrayAlpha = (unsigned char *)RL_MALLOC(imageSize*imageSize*sizeof(unsigned char)*2); // Two channels
 
     for (int i = 0, k = 0; i < atlas.width*atlas.height; i++, k += 2)
     {
@@ -672,7 +672,7 @@ Image GenImageFontAtlas(CharInfo *chars, int charsCount, int fontSize, int paddi
         dataGrayAlpha[k + 1] = ((unsigned char *)atlas.data)[i];
     }
 
-    free(atlas.data);
+    RL_FREE(atlas.data);
     atlas.data = dataGrayAlpha;
     atlas.format = UNCOMPRESSED_GRAY_ALPHA;
 
@@ -688,10 +688,10 @@ void UnloadFont(Font font)
     {
         for (int i = 0; i < font.charsCount; i++)
         {
-            free(font.chars[i].data);
+            RL_FREE(font.chars[i].data);
         }
         UnloadTexture(font.texture);
-        free(font.chars);
+        RL_FREE(font.chars);
 
         TraceLog(LOG_DEBUG, "Unloaded sprite font data");
     }
@@ -1214,7 +1214,7 @@ const char *TextReplace(char *text, const char *replace, const char *by)
     for (count = 0; (temp = strstr(insertPoint, replace)); count++) insertPoint = temp + replaceLen;
 
     // Allocate returning string and point temp to it
-    temp = result = malloc(strlen(text) + (byLen - replaceLen)*count + 1);
+    temp = result = RL_MALLOC(strlen(text) + (byLen - replaceLen)*count + 1);
 
     if (!result) return NULL;   // Memory could not be allocated
 
@@ -1245,7 +1245,7 @@ const char *TextInsert(const char *text, const char *insert, int position)
     int textLen = strlen(text);
     int insertLen =  strlen(insert);
 
-    char *result = (char *)malloc(textLen + insertLen + 1);
+    char *result = (char *)RL_MALLOC(textLen + insertLen + 1);
 
     for (int i = 0; i < position; i++) result[i] = text[i];
     for (int i = position; i < insertLen + position; i++) result[i] = insert[i];
@@ -1477,7 +1477,7 @@ static Font LoadBMFont(const char *fileName)
     }
 
     // NOTE: We need some extra space to avoid memory corruption on next allocations!
-    texPath = malloc(strlen(fileName) - strlen(lastSlash) + strlen(texFileName) + 4);
+    texPath = RL_MALLOC(strlen(fileName) - strlen(lastSlash) + strlen(texFileName) + 4);
 
     // NOTE: strcat() and strncat() required a '\0' terminated string to work!
     *texPath = '\0';
@@ -1501,13 +1501,13 @@ static Font LoadBMFont(const char *fileName)
     else font.texture = LoadTextureFromImage(imFont);
 
     UnloadImage(imFont);
-    free(texPath);
+    RL_FREE(texPath);
 
 
     // Fill font characters info data
     font.baseSize = fontSize;
     font.charsCount = charsCount;
-    font.chars = (CharInfo *)malloc(charsCount*sizeof(CharInfo));
+    font.chars = (CharInfo *)RL_MALLOC(charsCount*sizeof(CharInfo));
 
     int charId, charX, charY, charWidth, charHeight, charOffsetX, charOffsetY, charAdvanceX;
 
