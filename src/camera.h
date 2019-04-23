@@ -16,13 +16,13 @@
 *       functions must be redefined to manage inputs accordingly.
 *
 *   CONTRIBUTORS:
-*       Marc Palau:         Initial implementation (2014)
 *       Ramon Santamaria:   Supervision, review, update and maintenance
+*       Marc Palau:         Initial implementation (2014)
 *
 *
 *   LICENSE: zlib/libpng
 *
-*   Copyright (c) 2015-2017 Ramon Santamaria (@raysan5)
+*   Copyright (c) 2015-2019 Ramon Santamaria (@raysan5)
 *
 *   This software is provided "as-is", without any express or implied warranty. In no event
 *   will the authors be held liable for any damages arising from the use of this software.
@@ -54,15 +54,6 @@
 // NOTE: Below types are required for CAMERA_STANDALONE usage
 //----------------------------------------------------------------------------------
 #if defined(CAMERA_STANDALONE)
-    // Camera modes
-    typedef enum { 
-        CAMERA_CUSTOM = 0, 
-        CAMERA_FREE, 
-        CAMERA_ORBITAL, 
-        CAMERA_FIRST_PERSON, 
-        CAMERA_THIRD_PERSON 
-    } CameraMode;
-
     // Vector2 type
     typedef struct Vector2 {
         float x;
@@ -77,12 +68,30 @@
     } Vector3;
 
     // Camera type, defines a camera position/orientation in 3d space
-    typedef struct Camera {
-        Vector3 position;
-        Vector3 target;
-        Vector3 up;
-        float fovy;
-    } Camera;
+    typedef struct Camera3D {
+        Vector3 position;       // Camera position
+        Vector3 target;         // Camera target it looks-at
+        Vector3 up;             // Camera up vector (rotation over its axis)
+        float fovy;             // Camera field-of-view apperture in Y (degrees) in perspective, used as near plane width in orthographic
+        int type;               // Camera type, defines projection type: CAMERA_PERSPECTIVE or CAMERA_ORTHOGRAPHIC
+    } Camera3D;
+
+    typedef Camera3D Camera;    // Camera type fallback, defaults to Camera3D
+    
+    // Camera system modes
+    typedef enum {
+        CAMERA_CUSTOM = 0,
+        CAMERA_FREE,
+        CAMERA_ORBITAL,
+        CAMERA_FIRST_PERSON,
+        CAMERA_THIRD_PERSON
+    } CameraMode;
+
+    // Camera projection modes
+    typedef enum {
+        CAMERA_PERSPECTIVE = 0,
+        CAMERA_ORTHOGRAPHIC
+    } CameraType;
 #endif
 
 #ifdef __cplusplus
@@ -103,7 +112,7 @@ void UpdateCamera(Camera *camera);                          // Update camera pos
 
 void SetCameraPanControl(int panKey);                       // Set camera pan key to combine with mouse movement (free camera)
 void SetCameraAltControl(int altKey);                       // Set camera alt key to combine with mouse movement (free camera)
-void SetCameraSmoothZoomControl(int szKey);                 // Set camera smooth zoom key to combine with mouse (free camera)
+void SetCameraSmoothZoomControl(int szoomKey);              // Set camera smooth zoom key to combine with mouse (free camera)
 void SetCameraMoveControls(int frontKey, int backKey, 
                            int rightKey, int leftKey, 
                            int upKey, int downKey);         // Set camera move controls (1st person and 3rd person cameras)
@@ -124,16 +133,14 @@ void SetCameraMoveControls(int frontKey, int backKey,
 
 #if defined(CAMERA_IMPLEMENTATION)
 
-#include <math.h>               // Required for: sqrt(), sin(), cos()
+#include <math.h>               // Required for: sqrt(), sinf(), cosf()
 
 #ifndef PI
     #define PI 3.14159265358979323846
 #endif
-
 #ifndef DEG2RAD
     #define DEG2RAD (PI/180.0f)
 #endif
-
 #ifndef RAD2DEG
     #define RAD2DEG (180.0f/PI)
 #endif
@@ -193,8 +200,8 @@ typedef enum {
 //----------------------------------------------------------------------------------
 // Global Variables Definition
 //----------------------------------------------------------------------------------
-static Vector2 cameraAngle = { 0.0f, 0.0f };          // TODO: Remove! Compute it in UpdateCamera()
-static float cameraTargetDistance = 0.0f;             // TODO: Remove! Compute it in UpdateCamera()
+static Vector2 cameraAngle = { 0.0f, 0.0f };          // Camera angle in plane XZ
+static float cameraTargetDistance = 0.0f;             // Camera distance from position to target 
 static float playerEyesPosition = 1.85f;              // Default player eyes position from ground (in meters) 
 
 static int cameraMoveControl[6]  = { 'W', 'S', 'D', 'A', 'E', 'Q' };
@@ -227,9 +234,6 @@ static Vector2 GetMousePosition() { return (Vector2){ 0.0f, 0.0f }; }
 // Select camera mode (multiple camera modes available)
 void SetCameraMode(Camera camera, int mode)
 {
-    // TODO: cameraTargetDistance and cameraAngle should be 
-    // calculated using camera parameters on UpdateCamera()
-
     Vector3 v1 = camera.position;
     Vector3 v2 = camera.target;
     
@@ -254,9 +258,8 @@ void SetCameraMode(Camera camera, int mode)
     playerEyesPosition = camera.position.y;
     
     // Lock cursor for first person and third person cameras
-    if ((mode == CAMERA_FIRST_PERSON) || 
-        (mode == CAMERA_THIRD_PERSON)) DisableCursor();
-    else EnableCursor(); 
+    if ((mode == CAMERA_FIRST_PERSON) || (mode == CAMERA_THIRD_PERSON)) DisableCursor();
+    else EnableCursor();
 
     cameraMode = mode;
 }
@@ -385,6 +388,11 @@ void UpdateCamera(Camera *camera)
                     camera->target.z += ((mousePositionDelta.x*CAMERA_FREE_MOUSE_SENSITIVITY)*sinf(cameraAngle.x) + (mousePositionDelta.y*CAMERA_FREE_MOUSE_SENSITIVITY)*cosf(cameraAngle.x)*sinf(cameraAngle.y))*(cameraTargetDistance/CAMERA_FREE_PANNING_DIVIDER);
                 }
             }
+            
+            // Update camera position with changes
+            camera->position.x = sinf(cameraAngle.x)*cameraTargetDistance*cosf(cameraAngle.y) + camera->target.x;
+            camera->position.y = ((cameraAngle.y <= 0.0f)? 1 : -1)*sinf(cameraAngle.y)*cameraTargetDistance*sinf(cameraAngle.y) + camera->target.y;
+            camera->position.z = cosf(cameraAngle.x)*cameraTargetDistance*cosf(cameraAngle.y) + camera->target.z;
 
         } break;
         case CAMERA_ORBITAL:
@@ -395,6 +403,11 @@ void UpdateCamera(Camera *camera)
             // Camera distance clamp
             if (cameraTargetDistance < CAMERA_THIRD_PERSON_DISTANCE_CLAMP) cameraTargetDistance = CAMERA_THIRD_PERSON_DISTANCE_CLAMP;
             
+            // Update camera position with changes
+            camera->position.x = sinf(cameraAngle.x)*cameraTargetDistance*cosf(cameraAngle.y) + camera->target.x;
+            camera->position.y = ((cameraAngle.y <= 0.0f)? 1 : -1)*sinf(cameraAngle.y)*cameraTargetDistance*sinf(cameraAngle.y) + camera->target.y;
+            camera->position.z = cosf(cameraAngle.x)*cameraTargetDistance*cosf(cameraAngle.y) + camera->target.z;
+   
         } break;
         case CAMERA_FIRST_PERSON:
         case CAMERA_THIRD_PERSON:
@@ -421,34 +434,17 @@ void UpdateCamera(Camera *camera)
             cameraAngle.x += (mousePositionDelta.x*-CAMERA_MOUSE_MOVE_SENSITIVITY);
             cameraAngle.y += (mousePositionDelta.y*-CAMERA_MOUSE_MOVE_SENSITIVITY);
             
-            if (cameraMode == CAMERA_THIRD_PERSON)
+            // Angle clamp
+            if (cameraAngle.y > CAMERA_FIRST_PERSON_MIN_CLAMP*DEG2RAD) cameraAngle.y = CAMERA_FIRST_PERSON_MIN_CLAMP*DEG2RAD;
+            else if (cameraAngle.y < CAMERA_FIRST_PERSON_MAX_CLAMP*DEG2RAD) cameraAngle.y = CAMERA_FIRST_PERSON_MAX_CLAMP*DEG2RAD;
+
+            // Camera is always looking at player
+            camera->target.x = camera->position.x - sinf(cameraAngle.x)*CAMERA_FIRST_PERSON_FOCUS_DISTANCE;
+            camera->target.y = camera->position.y + sinf(cameraAngle.y)*CAMERA_FIRST_PERSON_FOCUS_DISTANCE;
+            camera->target.z = camera->position.z - cosf(cameraAngle.x)*CAMERA_FIRST_PERSON_FOCUS_DISTANCE;
+            
+            if (cameraMode == CAMERA_FIRST_PERSON)
             {
-                // Angle clamp
-                if (cameraAngle.y > CAMERA_THIRD_PERSON_MIN_CLAMP*DEG2RAD) cameraAngle.y = CAMERA_THIRD_PERSON_MIN_CLAMP*DEG2RAD;
-                else if (cameraAngle.y < CAMERA_THIRD_PERSON_MAX_CLAMP*DEG2RAD) cameraAngle.y = CAMERA_THIRD_PERSON_MAX_CLAMP*DEG2RAD;
-
-                // Camera zoom
-                cameraTargetDistance -= (mouseWheelMove*CAMERA_MOUSE_SCROLL_SENSITIVITY);
-
-                // Camera distance clamp
-                if (cameraTargetDistance < CAMERA_THIRD_PERSON_DISTANCE_CLAMP) cameraTargetDistance = CAMERA_THIRD_PERSON_DISTANCE_CLAMP;
-
-                // Camera is always looking at player
-                camera->target.x = camera->position.x + CAMERA_THIRD_PERSON_OFFSET.x*cosf(cameraAngle.x) + CAMERA_THIRD_PERSON_OFFSET.z*sinf(cameraAngle.x);
-                camera->target.y = camera->position.y + CAMERA_THIRD_PERSON_OFFSET.y;
-                camera->target.z = camera->position.z + CAMERA_THIRD_PERSON_OFFSET.z*sinf(cameraAngle.x) - CAMERA_THIRD_PERSON_OFFSET.x*sinf(cameraAngle.x);
-            }
-            else    // CAMERA_FIRST_PERSON
-            {
-                // Angle clamp
-                if (cameraAngle.y > CAMERA_FIRST_PERSON_MIN_CLAMP*DEG2RAD) cameraAngle.y = CAMERA_FIRST_PERSON_MIN_CLAMP*DEG2RAD;
-                else if (cameraAngle.y < CAMERA_FIRST_PERSON_MAX_CLAMP*DEG2RAD) cameraAngle.y = CAMERA_FIRST_PERSON_MAX_CLAMP*DEG2RAD;
-
-                // Camera is always looking at player
-                camera->target.x = camera->position.x - sinf(cameraAngle.x)*CAMERA_FIRST_PERSON_FOCUS_DISTANCE;
-                camera->target.y = camera->position.y + sinf(cameraAngle.y)*CAMERA_FIRST_PERSON_FOCUS_DISTANCE;
-                camera->target.z = camera->position.z - cosf(cameraAngle.x)*CAMERA_FIRST_PERSON_FOCUS_DISTANCE;
-                
                 if (isMoving) swingCounter++;
 
                 // Camera position update
@@ -458,20 +454,15 @@ void UpdateCamera(Camera *camera)
                 camera->up.x = sinf(swingCounter/(CAMERA_FIRST_PERSON_STEP_TRIGONOMETRIC_DIVIDER*2))/CAMERA_FIRST_PERSON_WAVING_DIVIDER;
                 camera->up.z = -sinf(swingCounter/(CAMERA_FIRST_PERSON_STEP_TRIGONOMETRIC_DIVIDER*2))/CAMERA_FIRST_PERSON_WAVING_DIVIDER;
             }
+            else if (cameraMode == CAMERA_THIRD_PERSON)
+            {
+                // Camera zoom
+                cameraTargetDistance -= (mouseWheelMove*CAMERA_MOUSE_SCROLL_SENSITIVITY);
+                if (cameraTargetDistance < CAMERA_THIRD_PERSON_DISTANCE_CLAMP) cameraTargetDistance = CAMERA_THIRD_PERSON_DISTANCE_CLAMP;
+            }
+            
         } break;
         default: break;
-    }
-    
-    // Update camera position with changes
-    if ((cameraMode == CAMERA_FREE) ||
-        (cameraMode == CAMERA_ORBITAL) ||
-        (cameraMode == CAMERA_THIRD_PERSON))
-    {
-        // TODO: It seems camera->position is not correctly updated or some rounding issue makes the camera move straight to camera->target...
-        camera->position.x = sinf(cameraAngle.x)*cameraTargetDistance*cosf(cameraAngle.y) + camera->target.x;
-        if (cameraAngle.y <= 0.0f) camera->position.y = sinf(cameraAngle.y)*cameraTargetDistance*sinf(cameraAngle.y) + camera->target.y;
-        else camera->position.y = -sinf(cameraAngle.y)*cameraTargetDistance*sinf(cameraAngle.y) + camera->target.y;
-        camera->position.z = cosf(cameraAngle.x)*cameraTargetDistance*cosf(cameraAngle.y) + camera->target.z;
     }
 }
 
@@ -482,7 +473,7 @@ void SetCameraPanControl(int panKey) { cameraPanControlKey = panKey; }
 void SetCameraAltControl(int altKey) { cameraAltControlKey = altKey; }
 
 // Set camera smooth zoom key to combine with mouse (free camera)
-void SetCameraSmoothZoomControl(int szKey) { cameraSmoothZoomControlKey = szKey; }
+void SetCameraSmoothZoomControl(int szoomKey) { cameraSmoothZoomControlKey = szoomKey; }
 
 // Set camera move controls (1st person and 3rd person cameras)
 void SetCameraMoveControls(int frontKey, int backKey, int rightKey, int leftKey, int upKey, int downKey)
