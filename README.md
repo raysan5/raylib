@@ -2,13 +2,11 @@
 
 **raylib is a simple and easy-to-use library to enjoy videogames programming.**
 
-raylib is highly inspired by Borland BGI graphics lib and by XNA framework.
+raylib is highly inspired by Borland BGI graphics lib and by XNA framework and it's specially well suited for prototyping, tooling, graphical applications, embedded systems and education.
 
-raylib is especially well suited for prototyping, tooling, graphical applications, embedded systems and education.
-
-NOTE for ADVENTURERS: raylib is a programming library to enjoy videogames programming; 
+*NOTE for ADVENTURERS: raylib is a programming library to enjoy videogames programming; 
 no fancy interface, no visual helpers, no auto-debugging... just coding in the most 
-pure spartan-programmers way.
+pure spartan-programmers way.*
 
 Ready to learn? Jump to [code examples!](http://www.raylib.com/examples.html)
 
@@ -35,50 +33,45 @@ features
   - **VR stereo rendering** support with configurable HMD device parameters
   - Bindings to [multiple code languages](https://github.com/raysan5/raylib/blob/master/BINDINGS.md)!
 
-raylib uses on its [core](https://github.com/raysan5/raylib/blob/master/src/core.c) module the outstanding [GLFW3](http://www.glfw.org/) library, embedded inside raylib in the form of [rglfw](https://github.com/raysan5/raylib/blob/master/src/rglfw.c) module, avoiding that way external dependencies.
+raylib uses on its [core](https://github.com/raysan5/raylib/blob/master/src/core.c) module the outstanding [GLFW3](http://www.glfw.org/) library, embedded inside raylib in the form of [rglfw](https://github.com/raysan5/raylib/blob/master/src/rglfw.c) module, to avoid external dependencies.
 
-raylib uses on its [audio](https://github.com/raysan5/raylib/blob/master/src/raudio.c) module, the amazing [mini_al](https://github.com/dr-soft/mini_al) audio library, single-file header-only and supporting multiple platforms and multiple audio backends.
+raylib uses on its [raudio](https://github.com/raysan5/raylib/blob/master/src/raudio.c) module, the amazing [miniaudio](https://github.com/dr-soft/miniaudio) audio library to support multiple platforms and multiple audio backends.
 
-raylib uses internally multiple single-file header-only libraries to support multiple fileformats loading and saving, all those libraries are embedded with raylib and available in [src/external](https://github.com/raysan5/raylib/tree/master/src/external) directory.
+raylib uses internally multiple single-file header-only libraries to support multiple fileformats loading and saving, all those libraries are embedded with raylib and available in [src/external](https://github.com/raysan5/raylib/tree/master/src/external) directory. Check [raylib Wiki](https://github.com/raysan5/raylib/wiki/raylib-dependencies) for a detailed list.
 
-*On Android, `native_app_glue module` (provided by Android NDK) and native Android libraries are used to manage window/context, inputs and activity life cycle.*
+*On Android platform, `native_app_glue module` module (provided by Android NDK) and native Android libraries are used to manage window/context, inputs and activity life cycle.*
 
-*On Raspberry Pi, `Videocore API` and `EGL` libraries are used for window/context management and raw inputs reading.*
+*On Raspberry Pi platform (native mode), `Videocore API` and `EGL` libraries are used for window/context management. Inputs are processed using `evdev` Linux libraries*
 
 build and installation
 ----------------------
 
-Binary releases for Windows, Linux and macOS are available at the [Github Releases page](https://github.com/raysan5/raylib/releases). raylib is also available via multiple package managers on multiple OS distributions. For more info check [raylib Wiki](https://github.com/raysan5/raylib/wiki).
+Binary releases for Windows, Linux and macOS are available at the [Github Releases page](https://github.com/raysan5/raylib/releases). raylib is also available via multiple package managers on multiple OS distributions. Check [raylib Wiki](https://github.com/raysan5/raylib/wiki) for more info.
 
 If you wish to build raylib yourself, [the raylib Wiki](https://github.com/raysan5/raylib/wiki) also contains detailed instructions on how to approach that.
 
-raylib has been developed exclusively using two tools:
+raylib has been developed using two tools:
 
    * Notepad++ (text editor) - [http://notepad-plus-plus.org](http://notepad-plus-plus.org/)
    * MinGW (GCC compiler) - [http://www.mingw.org](http://www.mingw.org/)
 
-Those tools are recommended for raylib development.
+Those are the tools recommended to enjoy raylib development.
 
 contact
 -------
 
    * Webpage: [http://www.raylib.com](http://www.raylib.com)
+   * Discord: [https://discord.gg/raylib](https://discord.gg/VkzNHUE)
    * Twitter: [http://www.twitter.com/raysan5](http://www.twitter.com/raysan5)
    * Facebook: [http://www.facebook.com/raylibgames](http://www.facebook.com/raylibgames)
    * Reddit: [https://www.reddit.com/r/raylib](https://www.reddit.com/r/raylib)
    * Twitch: [http://www.twitch.tv/raysan5](http://www.twitch.tv/raysan5)
    * Patreon: [https://www.patreon.com/raylib](https://www.patreon.com/raylib)
-   * Discord: [https://discord.gg/raylib](https://discord.gg/VkzNHUE)
    * YouTube: [https://www.youtube.com/channel/raylib](https://www.youtube.com/channel/UC8WIBkhYb5sBNqXO1mZ7WSQ)
 
-If you are using raylib and you enjoy it, please, [let me know][raysan5].
-
-If you are able to contribute, then please [helpme](http://www.raylib.com/helpme.html)!
+If you are using raylib and you enjoy it, please, join our [Discord server](https://discord.gg/VkzNHUE).
 
 license
 -------
 
 raylib is licensed under an unmodified zlib/libpng license, which is an OSI-certified, BSD-like license that allows static linking with closed source software. Check [LICENSE](LICENSE.md) for further details.
-
-[raysan5]: mailto:ray@raylib.com "Ramon Santamaria - Ray San"
-
