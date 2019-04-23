@@ -10,7 +10,7 @@
 // In addition to the comment block above each function declaration, the API
 // has informal documentation here:
 //
-//     http://github.prideout.net/shapes/
+//     https://prideout.net/shapes
 //
 // For our purposes, a "mesh" is a list of points and a list of triangles; the
 // former is a flattened list of three-tuples (32-bit floats) and the latter is
