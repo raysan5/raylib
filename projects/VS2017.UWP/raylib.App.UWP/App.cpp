@@ -131,15 +131,15 @@ void App::PointerPressed(CoreWindow^ window, PointerEventArgs^ args)
 {
 	if (args->CurrentPoint->Properties->IsLeftButtonPressed)
 	{
-		currentMouseState[MOUSE_LEFT_BUTTON] = 1;
+		UWPRegisterClick(MOUSE_LEFT_BUTTON, 1);
 	}
 	if (args->CurrentPoint->Properties->IsRightButtonPressed)
 	{
-		currentMouseState[MOUSE_RIGHT_BUTTON] = 1;
+		UWPRegisterClick(MOUSE_RIGHT_BUTTON, 1);
 	}
 	if (args->CurrentPoint->Properties->IsMiddleButtonPressed)
 	{
-		currentMouseState[MOUSE_MIDDLE_BUTTON] = 1;
+		UWPRegisterClick(MOUSE_MIDDLE_BUTTON, 1);
 	}
 }
 
@@ -147,15 +147,15 @@ void App::PointerReleased(CoreWindow ^window, PointerEventArgs^ args)
 {
 	if (!(args->CurrentPoint->Properties->IsLeftButtonPressed))
 	{
-		currentMouseState[MOUSE_LEFT_BUTTON] = 0;
+		UWPRegisterClick(MOUSE_LEFT_BUTTON, 0);
 	}
 	if (!(args->CurrentPoint->Properties->IsRightButtonPressed))
 	{
-		currentMouseState[MOUSE_RIGHT_BUTTON] = 0;
+		UWPRegisterClick(MOUSE_RIGHT_BUTTON, 0);
 	}
 	if (!(args->CurrentPoint->Properties->IsMiddleButtonPressed))
 	{
-		currentMouseState[MOUSE_MIDDLE_BUTTON] = 0;
+		UWPRegisterClick(MOUSE_MIDDLE_BUTTON, 0);
 	}
 }
 
@@ -173,19 +173,16 @@ void App::MouseMoved(Windows::Devices::Input::MouseDevice^ mouseDevice, Windows:
 
 void App::OnKeyDown(CoreWindow ^ sender, KeyEventArgs ^ args)
 {
-	ProcessKeyEvent(args->VirtualKey, 1);
+	//ProcessKeyEvent(args->VirtualKey, 1);
+
+	UWPRegisterKey((int)args->VirtualKey, 1);
 }
 
 void App::OnKeyUp(CoreWindow ^ sender, KeyEventArgs ^ args)
 {
-	ProcessKeyEvent(args->VirtualKey, 0);
-}
+	//ProcessKeyEvent(args->VirtualKey, 0);
 
-/* REIMPLEMENTED FROM CORE.C */
-// Get one key state
-static bool GetKeyStatus(int key)
-{
-	return currentKeyState[key];
+	UWPRegisterKey((int)args->VirtualKey, 0);
 }
 
 // Show mouse cursor
@@ -226,18 +223,9 @@ void UWPDisableCursor()
 	toggleCursorLock = true;
 }
 
-// Get one mouse button state
-static bool UWPGetMouseButtonStatus(int button)
-{
-	return currentMouseState[button];
-}
-
 // Poll (store) all input events
 void UWP_PollInput()
 {
-	// Register previous keyboard state
-	for (int k = 0; k < 512; k++) previousKeyState[k] = currentKeyState[k];
-
 	// Process Mouse
 	{
 		// Register previous mouse states
@@ -318,43 +306,6 @@ void UWP_PollInput()
 		}
 	}
 
-}
-
-// The following functions were ripped from core.c and have *no additional work done on them*
-// Detect if a key has been pressed once
-bool UWPIsKeyPressed(int key)
-{
-	bool pressed = false;
-	
-	if ((currentKeyState[key] != previousKeyState[key]) && (currentKeyState[key] == 1)) pressed = true;
-	else pressed = false;
-
-	return pressed;
-}
-
-// Detect if a key is being pressed (key held down)
-bool UWPIsKeyDown(int key)
-{
-	if (GetKeyStatus(key) == 1) return true;
-	else return false;
-}
-
-// Detect if a key has been released once
-bool UWPIsKeyReleased(int key)
-{
-	bool released = false;
-
-	if ((currentKeyState[key] != previousKeyState[key]) && (currentKeyState[key] == 0)) released = true;
-	else released = false;
-
-	return released;
-}
-
-// Detect if a key is NOT being pressed (key not held down)
-bool UWPIsKeyUp(int key)
-{
-	if (GetKeyStatus(key) == 0) return true;
-	else return false;
 }
 
 /* OTHER CODE */
@@ -461,23 +412,26 @@ void App::Run()
 
 				DrawCircle(mousePosition.x, mousePosition.y, 40, BLUE);
 
-				if (UWPIsKeyDown(KEY_S)) DrawCircle(100, 100, 100, BLUE);
+				if (IsKeyDown(KEY_S)) DrawCircle(100, 100, 100, BLUE);
 
-				if (UWPIsKeyPressed(KEY_A))
+				if (IsKeyPressed(KEY_A))
 				{
 					posX -= 50;
 					UWPEnableCursor();
 				}
 
-				if (UWPIsKeyPressed(KEY_D))
+				if (IsKeyPressed(KEY_D))
 				{
 					posX += 50;
 					UWPDisableCursor();
 				}
 
-				if (currentKeyState[KEY_LEFT_ALT]) DrawRectangle(250, 250, 20, 20, BLACK);
-				if (currentKeyState[KEY_BACKSPACE]) DrawRectangle(280, 250, 20, 20, BLACK);
-				if (currentMouseState[MOUSE_LEFT_BUTTON]) DrawRectangle(280, 250, 20, 20, BLACK);
+				if (IsKeyDown(KEY_LEFT_ALT)) //Unable to get working on my PC
+					DrawRectangle(250, 250, 20, 20, BLACK);
+				if (IsKeyDown(KEY_BACKSPACE))
+					DrawRectangle(280, 250, 20, 20, BLACK);
+				if (IsMouseButtonDown(MOUSE_LEFT_BUTTON))
+					DrawRectangle(280, 250, 20, 20, BLACK);
 
 				static int pos = 0;
 				pos -= currentMouseWheelY;

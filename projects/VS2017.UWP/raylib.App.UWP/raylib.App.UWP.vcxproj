@@ -87,7 +87,7 @@
       <AdditionalIncludeDirectories>$(SolutionDir)..\..\src;$(ProjectDir);$(IntermediateOutputPath);%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <AdditionalOptions>/bigobj %(AdditionalOptions)</AdditionalOptions>
       <DisableSpecificWarnings>4453;28204</DisableSpecificWarnings>
-      <PreprocessorDefinitions>_DEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>PLATFORM_UWP;_DEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
     </ClCompile>
     <ProjectReference>
       <LinkLibraryDependencies Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</LinkLibraryDependencies>
@@ -100,7 +100,7 @@
       <AdditionalIncludeDirectories>$(SolutionDir)..\..\src;$(ProjectDir);$(IntermediateOutputPath);%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <AdditionalOptions>/bigobj %(AdditionalOptions)</AdditionalOptions>
       <DisableSpecificWarnings>4453;28204</DisableSpecificWarnings>
-      <PreprocessorDefinitions>NDEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>PLATFORM_UWP;NDEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <CompileAs Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Default</CompileAs>
       <OmitDefaultLibName Condition="'$(Configuration)|$(Platform)'=='Release|x64'">false</OmitDefaultLibName>
     </ClCompile>
