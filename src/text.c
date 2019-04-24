@@ -900,7 +900,7 @@ void DrawTextRecEx(Font font, const char *text, Rectangle rec, float fontSize, f
     int startLine = -1;   // Index where to begin drawing (where a line begins)
     int endLine = -1;     // Index where to stop drawing (where a line ends)
 
-    for (int i = 0; i < length; i++)
+    for (int i = 0, k = 0; i < length; i++, k++)
     {
         int glyphWidth = 0;
         int next = 1;
@@ -979,7 +979,7 @@ void DrawTextRecEx(Font font, const char *text, Rectangle rec, float fontSize, f
 
                 //draw selected
                 bool isGlyphSelected = false;
-                if ((selectStart >= 0) && (i >= selectStart) && (i < (selectStart + selectLength)))
+                if ((selectStart >= 0) && (k >= selectStart) && (k < (selectStart + selectLength)))
                 {
                     Rectangle strec = {rec.x + textOffsetX-1, rec.y + textOffsetY, glyphWidth, (font.baseSize + font.baseSize/4)*scaleFactor };
                     DrawRectangleRec(strec, selectBack);
