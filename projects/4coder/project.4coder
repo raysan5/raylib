@@ -1,0 +1,54 @@
+version(1);
+
+project_name = "raylib-example";
+
+patterns = {
+"*.cpp",
+"*.c",
+"*.h",
+"*.bat",
+"*.sh",
+"*.4coder",
+"Makefile",
+};
+
+blacklist_patterns = {
+".*",
+};
+
+load_paths = {
+ { { {".", .relative = true, .recursive = true, } }, .os = "win" },
+ { { {".", .relative = true, .recursive = true, } }, .os = "linux" },
+ { { {".", .relative = true, .recursive = true, } }, .os = "mac" },
+};
+
+command_list = {
+ { .name = "clean",
+   .out = "*clean*", .footer_panel = true, .save_dirty_files = false, .cursor_at_end = true,
+   .cmd = {
+          {"mingw32-make clean", .os = "win"},
+          {"make clean", .os = "linux"},
+          {"make clean", .os = "mac"},          
+   },
+ },
+ { .name = "build",
+   .out = "*compile*", .footer_panel = true, .save_dirty_files = true, .cursor_at_end = false,
+   .cmd = {
+          {"mingw32-make", .os = "win"},
+          {"make", .os = "linux"},
+          {"make", .os = "mac"},
+   },
+ },
+ { .name = "run",
+   .out = "*run*", .footer_panel = true, .save_dirty_files = false, .cursor_at_end = true,
+   .cmd = {
+          {"./game.exe", .os = "win"},
+          {"./game", .os = "linux"},
+          {"./game", .os = "mac"},          
+   },
+ },
+};
+
+fkey_command[3] = "clean";
+fkey_command[4] = "build";
+fkey_command[5] = "run";
