@@ -913,6 +913,16 @@ RLAPI const char *GetMonitorName(int monitor);                    // Get the hum
 RLAPI const char *GetClipboardText(void);                         // Get clipboard text content
 RLAPI void SetClipboardText(const char *text);                    // Set clipboard text content
 
+// UWP-related functions
+#if defined(PLATFORM_UWP)
+RLAPI void UWPRegisterKey(int key, int action);
+RLAPI void UWPRegisterClick(int btn, char action);
+RLAPI void UWPScrollWheel(int delta);
+RLAPI void UWPMouseMovement(float x, float y);
+RLAPI void UWPMarkCursor(bool hidden);
+//Gamepad functionality?
+#endif
+
 // Cursor-related functions
 RLAPI void ShowCursor(void);                                      // Shows cursor
 RLAPI void HideCursor(void);                                      // Hides cursor
