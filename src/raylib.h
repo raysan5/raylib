@@ -915,20 +915,24 @@ RLAPI void SetClipboardText(const char *text);                    // Set clipboa
 
 // UWP-related functions
 #if defined(PLATFORM_UWP)
-RLAPI void UWPRegisterKey(int key, int action);
+
+RLAPI void UWPRegisterKey(int key, char action);
 RLAPI void UWPRegisterClick(int btn, char action);
 RLAPI void UWPScrollWheel(int delta);
-RLAPI void UWPMouseMovement(float x, float y);
+RLAPI void UWPMousePosition(float x, float y);
 RLAPI void UWPMarkCursor(bool hidden);
 //Gamepad functionality?
+
 #endif
 
 // Cursor-related functions
+#if !defined(PLATFORM_UWP) //These are implemented by BaseApp.h
 RLAPI void ShowCursor(void);                                      // Shows cursor
 RLAPI void HideCursor(void);                                      // Hides cursor
 RLAPI bool IsCursorHidden(void);                                  // Check if cursor is not visible
 RLAPI void EnableCursor(void);                                    // Enables cursor (unlock cursor)
 RLAPI void DisableCursor(void);                                   // Disables cursor (lock cursor)
+#endif
 
 // Drawing-related functions
 RLAPI void ClearBackground(Color color);                          // Set background color (framebuffer clear color)

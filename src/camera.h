@@ -256,6 +256,7 @@ void SetCameraMode(Camera camera, int mode)
     //cameraAngle.y = -60.0f*DEG2RAD;     // Camera angle in plane XY (0 aligned with X, move positive CW)
     
     playerEyesPosition = camera.position.y;
+
     
     // Lock cursor for first person and third person cameras
     if ((mode == CAMERA_FIRST_PERSON) || (mode == CAMERA_THIRD_PERSON)) DisableCursor();
