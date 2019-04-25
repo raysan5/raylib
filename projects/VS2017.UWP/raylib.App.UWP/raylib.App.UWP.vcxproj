@@ -117,6 +117,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="App.h" />
+    <ClInclude Include="BaseApp.h" />
     <ClInclude Include="pch.h" />
   </ItemGroup>
   <ItemGroup>

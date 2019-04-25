@@ -1020,6 +1020,8 @@ void SetClipboardText(const char *text)
 #endif
 }
 
+#if !defined(PLATFORM_UWP)
+
 // Show mouse cursor
 void ShowCursor(void)
 {
@@ -1067,6 +1069,8 @@ void DisableCursor(void)
 #endif
     cursorHidden = true;
 }
+
+#endif
 
 // Set background color (framebuffer clear color)
 void ClearBackground(Color color)
@@ -3088,7 +3092,7 @@ static void PollInputEvents(void)
 #if defined(PLATFORM_UWP)
 
 	// Register previous keys states
-	for (int i = 0; i < 512; i++)previousKeyState[i] = currentKeyState[i];
+	for (int i = 0; i < 512; i++) previousKeyState[i] = currentKeyState[i];
 
 	// Register previous mouse states
 	previousMouseWheelY = currentMouseWheelY;
@@ -4587,7 +4591,7 @@ static void *GamepadThread(void *arg)
 
 #if defined(PLATFORM_UWP)
 
-void UWPRegisterKey(int key, int action) {
+void UWPRegisterKey(int key, char action) {
 	//Convert from virtualKey
 
 	int actualKey = -1;
@@ -4670,9 +4674,9 @@ void UWPScrollWheel(int delta) {
 	currentMouseWheelY += delta;
 }
 
-void UWPMouseMovement(float x, float y) {
-	mousePosition.x += x;
-	mousePosition.y += y;
+void UWPMousePosition(float x, float y) {
+	mousePosition.x = x;
+	mousePosition.y = y;
 }
 
 void UWPMarkCursor(bool hidden) {
