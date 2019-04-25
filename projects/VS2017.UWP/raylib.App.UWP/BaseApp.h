@@ -194,7 +194,7 @@ protected:
 				case SetMouseLocation:
 				{
 					CoreWindow ^window = CoreWindow::GetForCurrentThread();
-					Point mousePosScreen = Point(msg->Float0 + window->Bounds.X, msg->Float1 + window->Bounds.Y);
+					Point mousePosScreen = Point(msg->Vector0.x + window->Bounds.X, msg->Vector0.y + window->Bounds.Y);
 					window->PointerPosition = mousePosScreen;
 					break;
 				}
