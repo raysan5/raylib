@@ -3096,6 +3096,14 @@ static void PollInputEvents(void)
 	// Register previous keys states
 	for (int i = 0; i < 512; i++) previousKeyState[i] = currentKeyState[i];
 
+	for (int i = 0; i < MAX_GAMEPADS; i++)
+	{
+		if (gamepadReady[i])
+		{
+			for (int k = 0; k < MAX_GAMEPAD_BUTTONS; k++) previousGamepadState[i][k] = currentGamepadState[i][k];
+		}
+	}
+
 	// Register previous mouse states
 	previousMouseWheelY = currentMouseWheelY;
 	currentMouseWheelY = 0;
@@ -4593,12 +4601,14 @@ static void *GamepadThread(void *arg)
 
 #if defined(PLATFORM_UWP)
 
-void UWPRegisterKey(int key, char action) {
+void UWPRegisterKey(int key, char action)
+{
 	//Convert from virtualKey
 
 	int actualKey = -1;
 
-	switch (key) {
+	switch (key)
+	{
 	case 0x08: actualKey = KEY_BACKSPACE; break;
 	case 0x20: actualKey = KEY_SPACE; break;
 	case 0x1B: actualKey = KEY_ESCAPE; break;
@@ -4668,21 +4678,43 @@ void UWPRegisterKey(int key, char action) {
 		currentKeyState[actualKey] = action;
 }
 
-void UWPRegisterClick(int btn, char action) {
+void UWPRegisterClick(int btn, char action)
+{
 	currentMouseState[btn] = action;
 }
 
-void UWPScrollWheel(int delta) {
+void UWPScrollWheel(int delta)
+{
 	currentMouseWheelY += delta;
 }
 
-void UWPMousePosition(float x, float y) {
+void UWPMousePosition(float x, float y)
+{
 	mousePosition.x = x;
 	mousePosition.y = y;
 }
 
-void UWPMarkCursor(bool hidden) {
+void UWPMarkCursor(bool hidden)
+{
 	cursorHidden = hidden;
+}
+
+void UWPGamepadActive(int gamepad, bool active)
+{
+	if (gamepad < MAX_GAMEPADS)
+		gamepadReady[gamepad] = active;
+}
+
+void UWPGamepadButton(int gamepad, int button, char action)
+{
+	if (gamepad < MAX_GAMEPADS && button < MAX_GAMEPAD_BUTTONS)
+		currentGamepadState[gamepad][button] = action;
+}
+
+void UWPGamepadAxis(int gamepad, int axis, float value)
+{
+	if (gamepad < MAX_GAMEPADS && axis < MAX_GAMEPAD_AXIS)
+		gamepadAxisState[gamepad][axis] = value;
 }
 
 #endif

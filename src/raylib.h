@@ -921,9 +921,11 @@ RLAPI void UWPRegisterClick(int btn, char action);
 RLAPI void UWPScrollWheel(int delta);
 RLAPI void UWPMousePosition(float x, float y);
 RLAPI void UWPMarkCursor(bool hidden);
+RLAPI void UWPGamepadActive(int gamepad, bool active);
+RLAPI void UWPGamepadButton(int gamepad, int button, char action);
+RLAPI void UWPGamepadAxis(int gamepad, int axis, float value);
 
 //Get task/input for allowing C to call UWP/cursor functions
-//Gamepad functionality?
 
 #endif
 

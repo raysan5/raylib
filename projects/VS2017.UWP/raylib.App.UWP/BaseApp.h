@@ -63,9 +63,9 @@ TODO list:
 */
 
 // Stand-ins for "core.c" variables
-//#define MAX_GAMEPADS              4         // Max number of gamepads supported
-//#define MAX_GAMEPAD_BUTTONS       32        // Max bumber of buttons supported (per gamepad)
-//#define MAX_GAMEPAD_AXIS          8         // Max number of axis supported (per gamepad)
+#define MAX_GAMEPADS              4         // Max number of gamepads supported
+#define MAX_GAMEPAD_BUTTONS       32        // Max bumber of buttons supported (per gamepad)
+#define MAX_GAMEPAD_AXIS          8         // Max number of axis supported (per gamepad)
 //static bool gamepadReady[MAX_GAMEPADS] = { false };             // Flag to know if gamepad is ready
 //static float gamepadAxisState[MAX_GAMEPADS][MAX_GAMEPAD_AXIS];  // Gamepad axis state
 //static char previousGamepadState[MAX_GAMEPADS][MAX_GAMEPAD_BUTTONS];    // Previous gamepad buttons state
@@ -231,7 +231,7 @@ namespace raylibUWP
 			}
 
 			// Process Gamepads
-			/*{
+			{
 				// Check if gamepads are ready
 				for (int i = 0; i < MAX_GAMEPADS; i++)
 				{
@@ -239,46 +239,43 @@ namespace raylibUWP
 					// connected gamepads with their spot in the list, but this has serious robustness problems
 					// e.g. player 1, 2, and 3 are playing a game - if player2 disconnects, p3's controller would now be mapped to p2's character since p3 is now second in the list.
 
-					gamepadReady[i] = (i < Gamepad::Gamepads->Size);
+					UWPGamepadActive(i, i < Gamepad::Gamepads->Size);
 				}
 
 				// Get current gamepad state
 				for (int i = 0; i < MAX_GAMEPADS; i++)
 				{
-					if (gamepadReady[i])
+					if (IsGamepadAvailable(i))
 					{
-						// Register previous gamepad states
-						for (int k = 0; k < MAX_GAMEPAD_BUTTONS; k++) previousGamepadState[i][k] = currentGamepadState[i][k];
-
 						// Get current gamepad state
 						auto gamepad = Gamepad::Gamepads->GetAt(i);
 						GamepadReading reading = gamepad->GetCurrentReading();
 
 						// NOTE: Maybe it would be wiser to redefine the gamepad button mappings in "raylib.h" for the UWP platform instead of remapping them manually
-						currentGamepadState[i][GAMEPAD_XBOX_BUTTON_A] = ((reading.Buttons & GamepadButtons::A) == GamepadButtons::A);
-						currentGamepadState[i][GAMEPAD_XBOX_BUTTON_B] = ((reading.Buttons & GamepadButtons::B) == GamepadButtons::B);
-						currentGamepadState[i][GAMEPAD_XBOX_BUTTON_X] = ((reading.Buttons & GamepadButtons::X) == GamepadButtons::X);
-						currentGamepadState[i][GAMEPAD_XBOX_BUTTON_Y] = ((reading.Buttons & GamepadButtons::Y) == GamepadButtons::Y);
-						currentGamepadState[i][GAMEPAD_XBOX_BUTTON_LB] = ((reading.Buttons & GamepadButtons::LeftShoulder) == GamepadButtons::LeftShoulder);
-						currentGamepadState[i][GAMEPAD_XBOX_BUTTON_RB] = ((reading.Buttons & GamepadButtons::RightShoulder) == GamepadButtons::RightShoulder);
-						currentGamepadState[i][GAMEPAD_XBOX_BUTTON_SELECT] = ((reading.Buttons & GamepadButtons::View) == GamepadButtons::View); // Changed for XB1 Controller
-						currentGamepadState[i][GAMEPAD_XBOX_BUTTON_START] = ((reading.Buttons & GamepadButtons::Menu) == GamepadButtons::Menu); // Changed for XB1 Controller
-						currentGamepadState[i][GAMEPAD_XBOX_BUTTON_UP] = ((reading.Buttons & GamepadButtons::DPadUp) == GamepadButtons::DPadUp);
-						currentGamepadState[i][GAMEPAD_XBOX_BUTTON_RIGHT] = ((reading.Buttons & GamepadButtons::DPadRight) == GamepadButtons::DPadRight);
-						currentGamepadState[i][GAMEPAD_XBOX_BUTTON_DOWN] = ((reading.Buttons & GamepadButtons::DPadLeft) == GamepadButtons::DPadDown);
-						currentGamepadState[i][GAMEPAD_XBOX_BUTTON_LEFT] = ((reading.Buttons & GamepadButtons::DPadDown) == GamepadButtons::DPadLeft);
-						currentGamepadState[i][GAMEPAD_XBOX_BUTTON_HOME] = false; // Home button not supported by UWP
+						UWPGamepadButton(i, GAMEPAD_XBOX_BUTTON_A, ((reading.Buttons & GamepadButtons::A) == GamepadButtons::A));
+						UWPGamepadButton(i, GAMEPAD_XBOX_BUTTON_B, ((reading.Buttons & GamepadButtons::B) == GamepadButtons::B));
+						UWPGamepadButton(i, GAMEPAD_XBOX_BUTTON_X, ((reading.Buttons & GamepadButtons::X) == GamepadButtons::X));
+						UWPGamepadButton(i, GAMEPAD_XBOX_BUTTON_Y, ((reading.Buttons & GamepadButtons::Y) == GamepadButtons::Y));
+						UWPGamepadButton(i, GAMEPAD_XBOX_BUTTON_LB, ((reading.Buttons & GamepadButtons::LeftShoulder) == GamepadButtons::LeftShoulder));
+						UWPGamepadButton(i, GAMEPAD_XBOX_BUTTON_RB, ((reading.Buttons & GamepadButtons::RightShoulder) == GamepadButtons::RightShoulder));
+						UWPGamepadButton(i, GAMEPAD_XBOX_BUTTON_SELECT, ((reading.Buttons & GamepadButtons::View) == GamepadButtons::View)); // Changed for XB1 Controller
+						UWPGamepadButton(i, GAMEPAD_XBOX_BUTTON_START, ((reading.Buttons & GamepadButtons::Menu) == GamepadButtons::Menu)); // Changed for XB1 Controller
+						UWPGamepadButton(i, GAMEPAD_XBOX_BUTTON_UP, ((reading.Buttons & GamepadButtons::DPadUp) == GamepadButtons::DPadUp));
+						UWPGamepadButton(i, GAMEPAD_XBOX_BUTTON_RIGHT, ((reading.Buttons & GamepadButtons::DPadRight) == GamepadButtons::DPadRight));
+						UWPGamepadButton(i, GAMEPAD_XBOX_BUTTON_DOWN, ((reading.Buttons & GamepadButtons::DPadDown) == GamepadButtons::DPadDown));
+						UWPGamepadButton(i, GAMEPAD_XBOX_BUTTON_LEFT, ((reading.Buttons & GamepadButtons::DPadLeft) == GamepadButtons::DPadLeft));
+						UWPGamepadButton(i, GAMEPAD_XBOX_BUTTON_HOME, false); // Home button not supported by UWP
 
 						// Get current axis state
-						gamepadAxisState[i][GAMEPAD_XBOX_AXIS_LEFT_X] = reading.LeftThumbstickX;
-						gamepadAxisState[i][GAMEPAD_XBOX_AXIS_LEFT_Y] = reading.LeftThumbstickY;
-						gamepadAxisState[i][GAMEPAD_XBOX_AXIS_RIGHT_X] = reading.RightThumbstickX;
-						gamepadAxisState[i][GAMEPAD_XBOX_AXIS_RIGHT_Y] = reading.RightThumbstickY;
-						gamepadAxisState[i][GAMEPAD_XBOX_AXIS_LT] = reading.LeftTrigger;
-						gamepadAxisState[i][GAMEPAD_XBOX_AXIS_RT] = reading.RightTrigger;
+						UWPGamepadAxis(i, GAMEPAD_XBOX_AXIS_LEFT_X, (float)reading.LeftThumbstickX);
+						UWPGamepadAxis(i, GAMEPAD_XBOX_AXIS_LEFT_Y, (float)reading.LeftThumbstickY);
+						UWPGamepadAxis(i, GAMEPAD_XBOX_AXIS_RIGHT_X, (float)reading.RightThumbstickX);
+						UWPGamepadAxis(i, GAMEPAD_XBOX_AXIS_RIGHT_Y, (float)reading.RightThumbstickY);
+						UWPGamepadAxis(i, GAMEPAD_XBOX_AXIS_LT, (float)reading.LeftTrigger);
+						UWPGamepadAxis(i, GAMEPAD_XBOX_AXIS_RT, (float)reading.RightTrigger);
 					}
 				}
-			}*/
+			}
 		}
 
 		// Application lifecycle event handlers.
