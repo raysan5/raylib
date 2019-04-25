@@ -38,8 +38,9 @@ void App::Update()
 	
 		ClearBackground(RAYWHITE);
 		
-		//posX += gamepadAxisState[GAMEPAD_PLAYER1][GAMEPAD_XBOX_AXIS_LEFT_X] * 5;
-		//posY += gamepadAxisState[GAMEPAD_PLAYER1][GAMEPAD_XBOX_AXIS_LEFT_Y] * -5;
+		posX += GetGamepadAxisMovement(GAMEPAD_PLAYER1, GAMEPAD_XBOX_AXIS_LEFT_X) * 5;
+		posY += GetGamepadAxisMovement(GAMEPAD_PLAYER1, GAMEPAD_XBOX_AXIS_LEFT_Y) * -5;
+
 		DrawRectangle(posX, posY, 400, 100, RED);
 
 		DrawLine(0, 0, GetScreenWidth(), GetScreenHeight(), BLUE);
@@ -50,13 +51,13 @@ void App::Update()
 
 		if (IsKeyDown(KEY_S)) DrawCircle(100, 100, 100, BLUE);
 
-		if (IsKeyPressed(KEY_A) || IsGamepadButtonPressed(0, GAMEPAD_XBOX_BUTTON_LEFT))
+		if (IsKeyPressed(KEY_A))
 		{
 			posX -= 50;
 			EnableCursor();
 		}
 		
-		if (IsKeyPressed(KEY_D) || IsGamepadButtonPressed(0, GAMEPAD_XBOX_BUTTON_RIGHT))
+		if (IsKeyPressed(KEY_D))
 		{
 			posX += 50;
 			DisableCursor();
