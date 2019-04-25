@@ -284,7 +284,7 @@ static int currentWidth, currentHeight;         // Current render width and heig
 static int renderOffsetX = 0;                   // Offset X from render area (must be divided by 2)
 static int renderOffsetY = 0;                   // Offset Y from render area (must be divided by 2)
 static bool fullscreen = false;                 // Fullscreen mode (useful only for PLATFORM_DESKTOP)
-static Matrix downscaleView;                    // Matrix to downscale view (in case screen size bigger than display size)
+static Matrix screenScaling;                    // Matrix to scale screen
 
 #if defined(PLATFORM_RPI)
 static EGL_DISPMANX_WINDOW_T nativeWindow;      // Native window (graphic device)
@@ -1086,7 +1086,7 @@ void BeginDrawing(void)
     previousTime = currentTime;
 
     rlLoadIdentity();                   // Reset current matrix (MODELVIEW)
-    rlMultMatrixf(MatrixToFloat(downscaleView));       // If downscale required, apply it here
+    rlMultMatrixf(MatrixToFloat(screenScaling));       // If downscale required, apply it here
 
     //rlTranslatef(0.375, 0.375, 0);    // HACK to have 2D pixel-perfect drawing on OpenGL 1.1
                                         // NOTE: Not required with OpenGL 3.3+
@@ -2307,8 +2307,8 @@ static bool InitGraphicsDevice(int width, int height)
     // NOTE: Framebuffer (render area - renderWidth, renderHeight) could include black bars...
     // ...in top-down or left-right to match display aspect ratio (no weird scalings)
 
-    // Downscale matrix is required in case desired screen area is bigger than display area
-    downscaleView = MatrixIdentity();
+    // Screen scaling matrix is required in case desired screen area is different than display area
+    screenScaling = MatrixIdentity();
 
 #if defined(PLATFORM_DESKTOP) || defined(PLATFORM_WEB)
     glfwSetErrorCallback(ErrorCallback);
@@ -2438,7 +2438,7 @@ static bool InitGraphicsDevice(int width, int height)
 
         // At this point we need to manage render size vs screen size
         // NOTE: This function uses and modifies global module variables:
-        //       screenWidth/screenHeight - renderWidth/renderHeight - downscaleView
+        //       screenWidth/screenHeight - renderWidth/renderHeight - screenScaling
         SetupFramebuffer(displayWidth, displayHeight);
 
         window = glfwCreateWindow(displayWidth, displayHeight, windowTitle, glfwGetPrimaryMonitor(), NULL);
@@ -2779,7 +2779,7 @@ static bool InitGraphicsDevice(int width, int height)
     eglGetConfigAttrib(display, config, EGL_NATIVE_VISUAL_ID, &displayFormat);
 
     // At this point we need to manage render size vs screen size
-    // NOTE: This function use and modify global module variables: screenWidth/screenHeight and renderWidth/renderHeight and downscaleView
+    // NOTE: This function use and modify global module variables: screenWidth/screenHeight and renderWidth/renderHeight and screenScaling
     SetupFramebuffer(displayWidth, displayHeight);
 
     ANativeWindow_setBuffersGeometry(androidApp->window, renderWidth, renderHeight, displayFormat);
@@ -2792,7 +2792,7 @@ static bool InitGraphicsDevice(int width, int height)
     graphics_get_display_size(0, &displayWidth, &displayHeight);
 
     // At this point we need to manage render size vs screen size
-    // NOTE: This function use and modify global module variables: screenWidth/screenHeight and renderWidth/renderHeight and downscaleView
+    // NOTE: This function use and modify global module variables: screenWidth/screenHeight and renderWidth/renderHeight and screenScaling
     SetupFramebuffer(displayWidth, displayHeight);
 
     dstRect.x = 0;
@@ -2921,10 +2921,9 @@ static void SetupFramebuffer(int width, int height)
             renderOffsetY = 0;
         }
 
-        // NOTE: downscale matrix required!
+        // Screen scaling required
         float scaleRatio = (float)renderWidth/(float)screenWidth;
-
-        downscaleView = MatrixScale(scaleRatio, scaleRatio, scaleRatio);
+        screenScaling = MatrixScale(scaleRatio, scaleRatio, scaleRatio);
 
         // NOTE: We render to full display resolution!
         // We just need to calculate above parameters for downscale matrix and offsets
