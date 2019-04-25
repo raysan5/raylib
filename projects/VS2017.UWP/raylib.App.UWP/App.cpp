@@ -62,13 +62,13 @@ void App::Update()
 
 		if (IsKeyDown(KEY_S)) DrawCircle(100, 100, 100, BLUE);
 
-		if (IsKeyPressed(KEY_A))
+		if (IsKeyPressed(KEY_A) || IsGamepadButtonPressed(0, GAMEPAD_XBOX_BUTTON_LEFT))
 		{
 			posX -= 50;
 			EnableCursor();
 		}
 		
-		if (IsKeyPressed(KEY_D))
+		if (IsKeyPressed(KEY_D) || IsGamepadButtonPressed(0, GAMEPAD_XBOX_BUTTON_RIGHT))
 		{
 			posX += 50;
 			DisableCursor();
