@@ -157,7 +157,7 @@ namespace raylibUWP
 
 			uwpWindow = (EGLNativeWindowType)window;
 
-			InitWindow(800, 450, NULL);
+			InitWindow(width, height, NULL);
 		}
 
 		virtual void Load(Platform::String^ entryPoint) {}
@@ -357,6 +357,9 @@ namespace raylibUWP
 
 		bool mWindowClosed = false;
 		bool mWindowVisible = true;
+
+		int width = 800;
+		int height = 450;
 	};
 
 
