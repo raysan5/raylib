@@ -896,7 +896,7 @@ typedef struct UWPMessage {
 	Vector2 Vector0;
 
 	//Int parameters
-	int Int0;
+	/*int Int0;
 	int Int1;
 
 	//Char parameters
@@ -907,7 +907,7 @@ typedef struct UWPMessage {
 	float Float1;
 
 	//Bool parameters
-	bool Bool0;
+	bool Bool0;*/
 
 	//More parameters can be added and fed to functions
 } UWPMessage;
@@ -918,12 +918,12 @@ inline UWPMessage* CreateUWPMessage(void)
 	msg->Type = None;
 	Vector2 v0 = { 0, 0 };
 	msg->Vector0 = v0;
-	msg->Int0 = 0;
+	/*msg->Int0 = 0;
 	msg->Int1 = 0;
 	msg->Char0 = 0;
 	msg->Float0 = 0;
 	msg->Float1 = 0;
-	msg->Bool0 = false;
+	msg->Bool0 = false;*/
 	return msg;
 }
 

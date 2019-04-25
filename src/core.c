@@ -2248,8 +2248,8 @@ void SetMousePosition(int x, int y)
 #if defined(PLATFORM_UWP)
 	UWPMessage* msg = CreateUWPMessage();
 	msg->Type = SetMouseLocation;
-	msg->Float0 = mousePosition.x;
-	msg->Float1 = mousePosition.y;
+	msg->Vector0.x = mousePosition.x;
+	msg->Vector0.y = mousePosition.y;
 	SendToUWP(msg);
 #endif
 }
