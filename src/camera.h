@@ -257,7 +257,6 @@ void SetCameraMode(Camera camera, int mode)
     
     playerEyesPosition = camera.position.y;
 
-    
     // Lock cursor for first person and third person cameras
     if ((mode == CAMERA_FIRST_PERSON) || (mode == CAMERA_THIRD_PERSON)) DisableCursor();
     else EnableCursor();

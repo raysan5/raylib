@@ -15,7 +15,10 @@ int main(Platform::Array<Platform::String^>^)
     return 0;
 }
 
-App::App() {}
+App::App()
+{
+	SetConfigFlags(FLAG_SHOW_LOGO);
+}
 
 static int posX = 100;
 static int posY = 100;

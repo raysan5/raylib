@@ -391,6 +391,23 @@ static int gamepadStream[MAX_GAMEPADS] = { -1 };// Gamepad device file descripto
 static pthread_t gamepadThreadId;               // Gamepad reading thread id
 static char gamepadName[64];                    // Gamepad name holder
 #endif
+
+#if defined(PLATFORM_UWP)
+// UWP Messages
+
+#define MAX_MESSAGES 128 //If there are over 128 messages, I will cry... either way, this may be too much
+
+static int UWPOutMessageId = -1; //Stores the last index for the message
+static UWPMessage* UWPOutMessages[MAX_MESSAGES]; //Messages out to UWP
+
+static void SendToUWP(UWPMessage* msg)
+{
+	UWPOutMessageId++;
+	UWPOutMessages[UWPOutMessageId] = msg;
+}
+
+#endif
+
 //-----------------------------------------------------------------------------------
 
 // Timming system variables
@@ -624,11 +641,13 @@ void InitWindow(int width, int height, const char *title)
     mousePosition.y = (float)screenHeight/2.0f;
 
     // raylib logo appearing animation (if enabled)
+#if !defined(PLATFORM_UWP)
     if (showLogo)
     {
         SetTargetFPS(60);
         LogoAnimation();
     }
+#endif //defined(PLATFORM_UWP)
 #endif        // defined(PLATFORM_ANDROID)
 }
 
@@ -1018,13 +1037,16 @@ void SetClipboardText(const char *text)
 #endif
 }
 
-#if !defined(PLATFORM_UWP)
-
 // Show mouse cursor
 void ShowCursor(void)
 {
 #if defined(PLATFORM_DESKTOP)
     glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_NORMAL);
+#endif
+#if defined(PLATFORM_UWP)
+	UWPMessage* msg = CreateUWPMessage();
+	msg->Type = ShowMouse;
+	SendToUWP(msg);
 #endif
     cursorHidden = false;
 }
@@ -1034,6 +1056,11 @@ void HideCursor(void)
 {
 #if defined(PLATFORM_DESKTOP)
     glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_HIDDEN);
+#endif
+#if defined(PLATFORM_UWP)
+	UWPMessage* msg = CreateUWPMessage();
+	msg->Type = HideMouse;
+	SendToUWP(msg);
 #endif
     cursorHidden = true;
 }
@@ -1053,6 +1080,11 @@ void EnableCursor(void)
 #if defined(PLATFORM_WEB)
     toggleCursorLock = true;
 #endif
+#if defined(PLATFORM_UWP)
+	UWPMessage* msg = CreateUWPMessage();
+	msg->Type = LockMouse;
+	SendToUWP(msg);
+#endif
     cursorHidden = false;
 }
 
@@ -1065,10 +1097,13 @@ void DisableCursor(void)
 #if defined(PLATFORM_WEB)
     toggleCursorLock = true;
 #endif
+#if defined(PLATFORM_UWP)
+	UWPMessage* msg = CreateUWPMessage();
+	msg->Type = UnlockMouse;
+	SendToUWP(msg);
+#endif
     cursorHidden = true;
 }
-
-#endif
 
 // Set background color (framebuffer clear color)
 void ClearBackground(Color color)
@@ -2209,6 +2244,13 @@ void SetMousePosition(int x, int y)
 #if defined(PLATFORM_DESKTOP) || defined(PLATFORM_WEB)
     // NOTE: emscripten not implemented
     glfwSetCursorPos(window, mousePosition.x, mousePosition.y);
+#endif
+#if defined(PLATFORM_UWP)
+	UWPMessage* msg = CreateUWPMessage();
+	msg->Type = SetMouseLocation;
+	msg->Float0 = mousePosition.x;
+	msg->Float1 = mousePosition.y;
+	SendToUWP(msg);
 #endif
 }
 
@@ -4716,6 +4758,30 @@ void UWPGamepadAxis(int gamepad, int axis, float value)
 	if (gamepad < MAX_GAMEPADS && axis < MAX_GAMEPAD_AXIS)
 		gamepadAxisState[gamepad][axis] = value;
 }
+
+bool UWPHasMessages()
+{
+	if (UWPOutMessageId > -1)
+		return true;
+	return false;
+}
+
+UWPMessage* UWPGetMessage()
+{
+	if (UWPHasMessages())
+	{
+		return UWPOutMessages[UWPOutMessageId--];
+	}
+
+	return CreateUWPMessage();
+}
+
+/*void UWPSendMessage(UWPMessage* msg)
+{
+	switch(msg->Type)
+	{
+	}
+}*/
 
 #endif
 
