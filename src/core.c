@@ -1084,7 +1084,7 @@ void BeginDrawing(void)
     previousTime = currentTime;
 
     rlLoadIdentity();                   // Reset current matrix (MODELVIEW)
-    rlMultMatrixf(MatrixToFloat(screenScaling));       // If downscale required, apply it here
+    rlMultMatrixf(MatrixToFloat(screenScaling));       // Apply screen scaling
 
     //rlTranslatef(0.375, 0.375, 0);    // HACK to have 2D pixel-perfect drawing on OpenGL 1.1
                                         // NOTE: Not required with OpenGL 3.3+
@@ -2465,7 +2465,7 @@ static bool InitGraphicsDevice(int width, int height)
             float scaleRatio = 0.0f;
             glfwGetWindowContentScale(window, &scaleRatio, NULL);
             scaleRatio = roundf(scaleRatio);
-            screenScaling = MatrixScale(scaleRatio, scaleRatio, scaleRatio);
+            //screenScaling = MatrixScale(scaleRatio, scaleRatio, scaleRatio);
 #endif
             renderWidth = screenWidth;
             renderHeight = screenHeight;
@@ -2882,10 +2882,9 @@ static bool InitGraphicsDevice(int width, int height)
 // Set viewport parameters
 static void SetupViewport(void)
 {
-#if defined(PLATFORM_DESKTOP)
+#if defined(__APPLE__)
     // Get framebuffer size of current window
-    // NOTE: Required to handle HighDPI display correctly on OSX because framebuffer
-    // is automatically reasized to adapt to new DPI.
+    // NOTE: Required to handle HighDPI display correctly on OSX because framebuffer is automatically reasized to adapt to new DPI.
     // When OS does that, it can be detected using GLFW3 callback: glfwSetFramebufferSizeCallback()
     int fbWidth, fbHeight;
     glfwGetFramebufferSize(window, &fbWidth, &fbHeight);
