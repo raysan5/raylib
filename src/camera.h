@@ -253,16 +253,10 @@ void SetCameraMode(Camera camera, int mode)
     
     playerEyesPosition = camera.position.y;
 
-	//TODO: Tell UWP that cursor should be enabled/disabled
-
-#if !defined(PLATFORM_UWP)
-    
     // Lock cursor for first person and third person cameras
     if ((mode == CAMERA_FIRST_PERSON) || 
         (mode == CAMERA_THIRD_PERSON)) DisableCursor();
     else EnableCursor();
-
-#endif
 
     cameraMode = mode;
 }

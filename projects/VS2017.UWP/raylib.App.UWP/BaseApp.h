@@ -73,47 +73,6 @@ Vector2 mouseDelta = {0, 0};
 
 //Our mouse cursor
 CoreCursor ^regularCursor = ref new CoreCursor(CoreCursorType::Arrow, 0); // The "visible arrow" cursor type
-bool cursorHidden = false;
-
-void ShowCursor()
-{
-	CoreWindow::GetForCurrentThread()->PointerCursor = regularCursor;
-	cursorHidden = false;
-}
-
-void HideCursor()
-{
-	CoreWindow::GetForCurrentThread()->PointerCursor = nullptr;
-	cursorHidden = true;
-}
-
-bool IsCursorHidden()
-{
-	return cursorHidden;
-}
-
-void SetMousePosition(Vector2 position)
-{
-	CoreWindow ^window = CoreWindow::GetForCurrentThread();
-	Point mousePosScreen = Point(position.x + window->Bounds.X, position.y + window->Bounds.Y);
-	window->PointerPosition = mousePosScreen;
-	UWPMousePosition(position.x, position.y);
-}
-
-// Enables cursor (unlock cursor)
-void EnableCursor()
-{
-	ShowCursor();
-	SetMousePosition(GetMousePosition()); // The mouse is hidden in the center of the screen - move it to where it should appear
-	cursorLocked = false;
-}
-
-// Disables cursor (lock cursor)
-void DisableCursor()
-{
-	HideCursor();
-	cursorLocked = true;
-}
 
 //Base app implementation
 ref class BaseApp : public Windows::ApplicationModel::Core::IFrameworkView
@@ -193,6 +152,59 @@ protected:
 	// Input polling
 	void PollInput()
 	{
+		// Process Messages
+		{
+			//Loop over pending messages
+			while (UWPHasMessages())
+			{
+				//Get the message
+				auto msg = UWPGetMessage();
+
+				//Carry out the command
+				switch(msg->Type)
+				{
+				case ShowMouse:
+				{
+					CoreWindow::GetForCurrentThread()->PointerCursor = regularCursor;
+					//Unlock due to below
+					cursorLocked = false;
+					break;
+				}
+				case HideMouse:
+				{
+					//Bug: movement stops, for now we will lock...
+					CoreWindow::GetForCurrentThread()->PointerCursor = nullptr;
+					cursorLocked = true;
+					break;
+				}
+				case LockMouse:
+				{
+					CoreWindow::GetForCurrentThread()->PointerCursor = regularCursor;
+					//Unlock due to below
+					cursorLocked = false;
+					break;
+				}
+				case UnlockMouse:
+				{
+					//Bug: movement stops, for now we will lock...
+					CoreWindow::GetForCurrentThread()->PointerCursor = nullptr;
+					cursorLocked = true;
+					break;
+				}
+				case SetMouseLocation:
+				{
+					CoreWindow ^window = CoreWindow::GetForCurrentThread();
+					Point mousePosScreen = Point(msg->Float0 + window->Bounds.X, msg->Float1 + window->Bounds.Y);
+					window->PointerPosition = mousePosScreen;
+					break;
+				}
+				}
+
+				//Delete the message
+				DeleteUWPMessage(msg);
+			}
+		}
+
 		// Process Mouse
 		{
 			CoreWindow ^window = CoreWindow::GetForCurrentThread();

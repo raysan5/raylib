@@ -75,6 +75,7 @@
 #define RAYLIB_H
 
 #include <stdarg.h>                             // Required for: va_list - Only used by TraceLogCallback
+#include <stdlib.h>								// Required for: malloc
 
 #if defined(_WIN32) && defined(BUILD_LIBTYPE_SHARED)
     #define RLAPI __declspec(dllexport)         // We are building raylib as a Win32 shared library (.dll)
@@ -871,6 +872,68 @@ typedef enum {
 // Callbacks to be implemented by users
 typedef void (*TraceLogCallback)(int logType, const char *text, va_list args);
 
+#if defined(PLATFORM_UWP)
+
+// UWP Messages
+
+typedef enum
+{
+	None = 0,
+
+	//Send
+	ShowMouse,
+	HideMouse,
+	LockMouse,
+	UnlockMouse,
+	SetMouseLocation, //Flaot0, Float1
+} UWPMessageType;
+
+typedef struct UWPMessage {
+	//The message type
+	UWPMessageType Type;
+
+	//Vector parameters
+	Vector2 Vector0;
+
+	//Int parameters
+	int Int0;
+	int Int1;
+
+	//Char parameters
+	char Char0;
+
+	//Float parameters
+	float Float0;
+	float Float1;
+
+	//Bool parameters
+	bool Bool0;
+
+	//More parameters can be added and fed to functions
+} UWPMessage;
+
+inline UWPMessage* CreateUWPMessage(void)
+{
+	UWPMessage* msg = (UWPMessage*) RL_MALLOC(sizeof(UWPMessage));
+	msg->Type = None;
+	Vector2 v0 = { 0, 0 };
+	msg->Vector0 = v0;
+	msg->Int0 = 0;
+	msg->Int1 = 0;
+	msg->Char0 = 0;
+	msg->Float0 = 0;
+	msg->Float1 = 0;
+	msg->Bool0 = false;
+	return msg;
+}
+
+inline void DeleteUWPMessage(UWPMessage* msg)
+{
+	RL_FREE(msg);
+}
+
+#endif
+
 #if defined(__cplusplus)
 extern "C" {            // Prevents name mangling of functions
 #endif
@@ -925,18 +988,18 @@ RLAPI void UWPGamepadActive(int gamepad, bool active);
 RLAPI void UWPGamepadButton(int gamepad, int button, char action);
 RLAPI void UWPGamepadAxis(int gamepad, int axis, float value);
 
-//Get task/input for allowing C to call UWP/cursor functions
+RLAPI bool UWPHasMessages();
+RLAPI UWPMessage* UWPGetMessage();
+//RLAPI void UWPSendMessage(UWPMessage* msg); //Do we need to send messages?
 
 #endif
 
 // Cursor-related functions
-#if !defined(PLATFORM_UWP) //These are implemented by BaseApp.h
 RLAPI void ShowCursor(void);                                      // Shows cursor
 RLAPI void HideCursor(void);                                      // Hides cursor
 RLAPI bool IsCursorHidden(void);                                  // Check if cursor is not visible
 RLAPI void EnableCursor(void);                                    // Enables cursor (unlock cursor)
 RLAPI void DisableCursor(void);                                   // Disables cursor (lock cursor)
-#endif
 
 // Drawing-related functions
 RLAPI void ClearBackground(Color color);                          // Set background color (framebuffer clear color)
