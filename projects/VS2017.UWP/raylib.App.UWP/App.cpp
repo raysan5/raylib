@@ -3,18 +3,6 @@
 
 #include "raylib.h"
 
-using namespace Windows::ApplicationModel::Core;
-using namespace Windows::ApplicationModel::Activation;
-using namespace Windows::UI::Core;
-using namespace Windows::UI::Input;
-using namespace Windows::Devices::Input;
-using namespace Windows::Foundation;
-using namespace Windows::Foundation::Collections;
-using namespace Windows::Gaming::Input;
-using namespace Windows::Graphics::Display;
-using namespace Microsoft::WRL;
-using namespace Platform;
-
 using namespace raylibUWP;
 
 /* OTHER CODE */
