@@ -54,6 +54,8 @@ using namespace Windows::Graphics::Display;
 using namespace Microsoft::WRL;
 using namespace Platform;
 
+extern "C" { EGLNativeWindowType uwpWindow; };
+
 /*
 TODO list:
 	- Cache reference to our CoreWindow?
@@ -69,27 +71,29 @@ TODO list:
 //static char previousGamepadState[MAX_GAMEPADS][MAX_GAMEPAD_BUTTONS];    // Previous gamepad buttons state
 //static char currentGamepadState[MAX_GAMEPADS][MAX_GAMEPAD_BUTTONS];     // Current gamepad buttons state
 
+//Mouse cursor locking
+bool cursorLocked = false;
+Vector2 mouseDelta = {0, 0};
+
+//Our mouse cursor
 CoreCursor ^regularCursor = ref new CoreCursor(CoreCursorType::Arrow, 0); // The "visible arrow" cursor type
-
-extern "C" { EGLNativeWindowType uwpWindow; };
-
-bool isCursorHidden = false;
+bool cursorHidden = false;
 
 void ShowCursor()
 {
 	CoreWindow::GetForCurrentThread()->PointerCursor = regularCursor;
-	isCursorHidden = false;
+	cursorHidden = false;
 }
 
 void HideCursor()
 {
 	CoreWindow::GetForCurrentThread()->PointerCursor = nullptr;
-	isCursorHidden = true;
+	cursorHidden = true;
 }
 
 bool IsCursorHidden()
 {
-	return isCursorHidden;
+	return cursorHidden;
 }
 
 void SetMousePosition(Vector2 position)
@@ -101,19 +105,19 @@ void SetMousePosition(Vector2 position)
 }
 
 // Enables cursor (unlock cursor)
-/*void UWPEnableCursor()
+void EnableCursor()
 {
-	UWPShowCursor();
-	UWPSetMousePosition(GetMousePosition()); // The mouse is hidden in the center of the screen - move it to where it should appear
-	toggleCursorLock = false;
-}*/
+	ShowCursor();
+	SetMousePosition(GetMousePosition()); // The mouse is hidden in the center of the screen - move it to where it should appear
+	cursorLocked = false;
+}
 
 // Disables cursor (lock cursor)
-/*void UWPDisableCursor()
+void DisableCursor()
 {
-	UWPHideCursor();
-	toggleCursorLock = true;
-}*/
+	HideCursor();
+	cursorLocked = true;
+}
 
 namespace raylibUWP
 {
@@ -198,13 +202,15 @@ namespace raylibUWP
 			{
 				CoreWindow ^window = CoreWindow::GetForCurrentThread();
 
-				//TODO: Mouse locking logic (Library wide??)
-
-				/*if (toggleCursorLock)
+				if (cursorLocked)
 				{
 					// Track cursor movement delta, recenter it on the client
-					mousePosition.x += mouseDelta.x;
-					mousePosition.y += mouseDelta.y;
+					auto curMousePos = GetMousePosition();
+
+					auto x = curMousePos.x + mouseDelta.x;
+					auto y = curMousePos.y + mouseDelta.y;
+
+					UWPMousePosition(x, y);
 
 					// Why we're not using UWPSetMousePosition here...
 					//		 UWPSetMousePosition changes the "mousePosition" variable to match where the cursor actually is.
@@ -212,7 +218,7 @@ namespace raylibUWP
 					Vector2 centerClient = { (float)(GetScreenWidth() / 2), (float)(GetScreenHeight() / 2) };
 					window->PointerPosition = Point(centerClient.x + window->Bounds.X, centerClient.y + window->Bounds.Y);
 				}
-				else*/
+				else
 				{
 					// Record the cursor's position relative to the client
 					auto x = window->PointerPosition.X - window->Bounds.X;

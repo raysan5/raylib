@@ -65,13 +65,13 @@ void App::Update()
 		if (IsKeyPressed(KEY_A))
 		{
 			posX -= 50;
-			//UWPEnableCursor();
+			EnableCursor();
 		}
 		
 		if (IsKeyPressed(KEY_D))
 		{
 			posX += 50;
-			//UWPDisableCursor();
+			DisableCursor();
 		}
 
 		if (IsKeyDown(KEY_LEFT_ALT)) //Unable to get working on my PC
