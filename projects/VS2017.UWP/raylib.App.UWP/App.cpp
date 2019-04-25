@@ -5,16 +5,6 @@
 
 using namespace raylibUWP;
 
-/* OTHER CODE */
-
-//TODO: Remove or not...
-// Helper to convert a length in device-independent pixels (DIPs) to a length in physical pixels.
-inline float ConvertDipsToPixels(float dips, float dpi)
-{
-    static const float dipsPerInch = 96.0f;
-    return floor(dips * dpi / dipsPerInch + 0.5f); // Round to nearest integer.
-}
-
 // The main function creates an IFrameworkViewSource for our app, and runs the app.
 [Platform::MTAThread]
 int main(Platform::Array<Platform::String^>^)
@@ -30,7 +20,8 @@ App::App() {}
 static int posX = 100;
 static int posY = 100;
 static int time = 0;
-// This method is called after the window becomes active.
+
+// This method is called every frame
 void App::Update()
 {
 	// Draw
