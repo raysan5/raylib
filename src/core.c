@@ -284,7 +284,7 @@ static int currentWidth, currentHeight;         // Current render width and heig
 static int renderOffsetX = 0;                   // Offset X from render area (must be divided by 2)
 static int renderOffsetY = 0;                   // Offset Y from render area (must be divided by 2)
 static bool fullscreen = false;                 // Fullscreen mode (useful only for PLATFORM_DESKTOP)
-static Matrix screenScaling;                    // Matrix to scale screen
+static Matrix screenScaling;                    // Matrix to scale screen (framebuffer rendering)
 
 #if defined(PLATFORM_RPI)
 static EGL_DISPMANX_WINDOW_T nativeWindow;      // Native window (graphic device)
@@ -618,8 +618,6 @@ void InitWindow(int width, int height, const char *title)
     emscripten_set_touchend_callback("#canvas", NULL, 1, EmscriptenTouchCallback);
     emscripten_set_touchmove_callback("#canvas", NULL, 1, EmscriptenTouchCallback);
     emscripten_set_touchcancel_callback("#canvas", NULL, 1, EmscriptenTouchCallback);
-    //emscripten_set_touchstart_callback(0, NULL, 1, Emscripten_HandleTouch);
-    //emscripten_set_touchend_callback("#canvas", data, 0, Emscripten_HandleTouch);
 
     // Support gamepad events (not provided by GLFW3 on emscripten)
     emscripten_set_gamepadconnected_callback(NULL, 1, EmscriptenGamepadCallback);
@@ -2357,8 +2355,8 @@ static bool InitGraphicsDevice(int width, int height)
     //glfwWindowHint(GLFW_CLIENT_API, GLFW_OPENGL_API); // OpenGL API to use. Alternative: GLFW_OPENGL_ES_API
     //glfwWindowHint(GLFW_AUX_BUFFERS, 0);          // Number of auxiliar buffers
 #if defined(PLATFORM_DESKTOP)
-    // TODO: If using external GLFW, it requires latest GLFW 3.3 for this functionality
-    //glfwWindowHint(GLFW_SCALE_TO_MONITOR, GLFW_TRUE);   // Scale content area based on the monitor content scale where window is placed on
+    // NOTE: If using external GLFW, it requires latest GLFW 3.3 for this functionality
+    glfwWindowHint(GLFW_SCALE_TO_MONITOR, GLFW_TRUE);   // Scale content area based on the monitor content scale where window is placed on
 #endif
 
     // Check some Window creation flags
@@ -2462,6 +2460,12 @@ static bool InitGraphicsDevice(int width, int height)
             if (windowPosY < 0) windowPosY = 0;
 
             glfwSetWindowPos(window, windowPosX, windowPosY);
+
+            // Get window HiDPI scaling factor
+            float scaleRatio = 0.0f;
+            glfwGetWindowContentScale(window, &scaleRatio, NULL);
+            scaleRatio = roundf(scaleRatio);
+            screenScaling = MatrixScale(scaleRatio, scaleRatio, scaleRatio);
 #endif
             renderWidth = screenWidth;
             renderHeight = screenHeight;
@@ -2878,14 +2882,14 @@ static bool InitGraphicsDevice(int width, int height)
 // Set viewport parameters
 static void SetupViewport(void)
 {
-#if defined(__APPLE__)
+#if defined(PLATFORM_DESKTOP)
     // Get framebuffer size of current window
     // NOTE: Required to handle HighDPI display correctly on OSX because framebuffer
     // is automatically reasized to adapt to new DPI.
     // When OS does that, it can be detected using GLFW3 callback: glfwSetFramebufferSizeCallback()
     int fbWidth, fbHeight;
     glfwGetFramebufferSize(window, &fbWidth, &fbHeight);
-    rlViewport(renderOffsetX/2, renderOffsetY/2,  fbWidth - renderOffsetX, fbHeight - renderOffsetY);
+    rlViewport(renderOffsetX/2, renderOffsetY/2, fbWidth - renderOffsetX, fbHeight - renderOffsetY);
 #else
     // Initialize screen viewport (area of the screen that you will actually draw to)
     // NOTE: Viewport must be recalculated if screen is resized
