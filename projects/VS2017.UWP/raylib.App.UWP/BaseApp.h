@@ -151,7 +151,7 @@ namespace raylibUWP
 			window->KeyDown += ref new TypedEventHandler<CoreWindow ^, KeyEventArgs ^>(this, &BaseApp::OnKeyDown);
 			window->KeyUp += ref new TypedEventHandler<CoreWindow ^, KeyEventArgs ^>(this, &BaseApp::OnKeyUp);
 
-			//Windows::Devices::Input::MouseDevice::GetForCurrentView()->MouseMoved += ref new TypedEventHandler<MouseDevice^, MouseEventArgs^>(this, &BaseApp::MouseMoved);
+			Windows::Devices::Input::MouseDevice::GetForCurrentView()->MouseMoved += ref new TypedEventHandler<MouseDevice^, MouseEventArgs^>(this, &BaseApp::MouseMoved);
 
 			DisplayInformation^ currentDisplayInformation = DisplayInformation::GetForCurrentView();
 			currentDisplayInformation->DpiChanged += ref new TypedEventHandler<DisplayInformation^, Object^>(this, &BaseApp::OnDpiChanged);
@@ -227,7 +227,7 @@ namespace raylibUWP
 					UWPMousePosition(x, y);
 				}
 
-				//mouseDelta = { 0 ,0 };
+				mouseDelta = { 0 ,0 };
 			}
 
 			// Process Gamepads
@@ -345,8 +345,11 @@ namespace raylibUWP
 			UWPScrollWheel(args->CurrentPoint->Properties->MouseWheelDelta);
 		}
 
-		//For mouse delta?
-		//void MouseMoved(Windows::Devices::Input::MouseDevice^ mouseDevice, Windows::Devices::Input::MouseEventArgs^ args);
+		void MouseMoved(Windows::Devices::Input::MouseDevice^ mouseDevice, Windows::Devices::Input::MouseEventArgs^ args)
+		{
+			mouseDelta.x += args->MouseDelta.X;
+			mouseDelta.y += args->MouseDelta.Y;
+		}
 
 		void OnKeyDown(Windows::UI::Core::CoreWindow ^ sender, Windows::UI::Core::KeyEventArgs ^ args)
 		{
