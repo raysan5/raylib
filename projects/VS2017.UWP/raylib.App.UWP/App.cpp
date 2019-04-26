@@ -18,7 +18,7 @@ int main(Platform::Array<Platform::String^>^)
 App::App()
 {
 	//This does not work... need to fix this.
-	SetConfigFlags(FLAG_SHOW_LOGO);
+	SetConfigFlags(0);
 }
 
 static int posX = 100;

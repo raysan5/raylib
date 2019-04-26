@@ -626,13 +626,11 @@ void InitWindow(int width, int height, const char *title)
     mousePosition.y = (float)screenHeight/2.0f;
 
     // raylib logo appearing animation (if enabled)
-#if !defined(PLATFORM_UWP)
     if (showLogo)
     {
         SetTargetFPS(60);
         LogoAnimation();
     }
-#endif //defined(PLATFORM_UWP)
 #endif        // defined(PLATFORM_ANDROID)
 }
 
@@ -887,7 +885,6 @@ int GetScreenHeight(void)
 // Get native window handle
 void *GetWindowHandle(void)
 {
-	//TODO: See if we can do UWP?
 #ifdef PLATFORM_DESKTOP
     // NOTE: Returned handle is: void *HWND (windows.h)
     return glfwGetWin32Window(window);
@@ -2764,6 +2761,8 @@ static bool InitGraphicsDevice(int width, int height)
     eglQuerySurface(display, surface, EGL_WIDTH, &screenWidth);
     eglQuerySurface(display, surface, EGL_HEIGHT, &screenHeight);
 
+	//SetupFramebuffer(displayWidth, displayHeight); //Borked
+
 #else   // PLATFORM_ANDROID, PLATFORM_RPI
     EGLint numConfigs;
 
@@ -2928,72 +2927,72 @@ static void SetupViewport(void)
 // NOTE: Global variables renderWidth/renderHeight and renderOffsetX/renderOffsetY can be modified
 static void SetupFramebuffer(int width, int height)
 {
-    // Calculate renderWidth and renderHeight, we have the display size (input params) and the desired screen size (global var)
-    if ((screenWidth > displayWidth) || (screenHeight > displayHeight))
-    {
-        TraceLog(LOG_WARNING, "DOWNSCALING: Required screen size (%ix%i) is bigger than display size (%ix%i)", screenWidth, screenHeight, displayWidth, displayHeight);
+	// Calculate renderWidth and renderHeight, we have the display size (input params) and the desired screen size (global var)
+	if ((screenWidth > displayWidth) || (screenHeight > displayHeight))
+	{
+		TraceLog(LOG_WARNING, "DOWNSCALING: Required screen size (%ix%i) is bigger than display size (%ix%i)", screenWidth, screenHeight, displayWidth, displayHeight);
 
-        // Downscaling to fit display with border-bars
-        float widthRatio = (float)displayWidth/(float)screenWidth;
-        float heightRatio = (float)displayHeight/(float)screenHeight;
+		// Downscaling to fit display with border-bars
+		float widthRatio = (float)displayWidth / (float)screenWidth;
+		float heightRatio = (float)displayHeight / (float)screenHeight;
 
-        if (widthRatio <= heightRatio)
-        {
-            renderWidth = displayWidth;
-            renderHeight = (int)round((float)screenHeight*widthRatio);
-            renderOffsetX = 0;
-            renderOffsetY = (displayHeight - renderHeight);
-        }
-        else
-        {
-            renderWidth = (int)round((float)screenWidth*heightRatio);
-            renderHeight = displayHeight;
-            renderOffsetX = (displayWidth - renderWidth);
-            renderOffsetY = 0;
-        }
+		if (widthRatio <= heightRatio)
+		{
+			renderWidth = displayWidth;
+			renderHeight = (int)round((float)screenHeight*widthRatio);
+			renderOffsetX = 0;
+			renderOffsetY = (displayHeight - renderHeight);
+		}
+		else
+		{
+			renderWidth = (int)round((float)screenWidth*heightRatio);
+			renderHeight = displayHeight;
+			renderOffsetX = (displayWidth - renderWidth);
+			renderOffsetY = 0;
+		}
 
-        // Screen scaling required
-        float scaleRatio = (float)renderWidth/(float)screenWidth;
-        screenScaling = MatrixScale(scaleRatio, scaleRatio, scaleRatio);
+		// Screen scaling required
+		float scaleRatio = (float)renderWidth / (float)screenWidth;
+		screenScaling = MatrixScale(scaleRatio, scaleRatio, scaleRatio);
 
-        // NOTE: We render to full display resolution!
-        // We just need to calculate above parameters for downscale matrix and offsets
-        renderWidth = displayWidth;
-        renderHeight = displayHeight;
+		// NOTE: We render to full display resolution!
+		// We just need to calculate above parameters for downscale matrix and offsets
+		renderWidth = displayWidth;
+		renderHeight = displayHeight;
 
-        TraceLog(LOG_WARNING, "Downscale matrix generated, content will be rendered at: %i x %i", renderWidth, renderHeight);
-    }
-    else if ((screenWidth < displayWidth) || (screenHeight < displayHeight))
-    {
-        // Required screen size is smaller than display size
-        TraceLog(LOG_INFO, "UPSCALING: Required screen size: %i x %i -> Display size: %i x %i", screenWidth, screenHeight, displayWidth, displayHeight);
+		TraceLog(LOG_WARNING, "Downscale matrix generated, content will be rendered at: %i x %i", renderWidth, renderHeight);
+	}
+	else if ((screenWidth < displayWidth) || (screenHeight < displayHeight))
+	{
+		// Required screen size is smaller than display size
+		TraceLog(LOG_INFO, "UPSCALING: Required screen size: %i x %i -> Display size: %i x %i", screenWidth, screenHeight, displayWidth, displayHeight);
 
-        // Upscaling to fit display with border-bars
-        float displayRatio = (float)displayWidth/(float)displayHeight;
-        float screenRatio = (float)screenWidth/(float)screenHeight;
+		// Upscaling to fit display with border-bars
+		float displayRatio = (float)displayWidth / (float)displayHeight;
+		float screenRatio = (float)screenWidth / (float)screenHeight;
 
-        if (displayRatio <= screenRatio)
-        {
-            renderWidth = screenWidth;
-            renderHeight = (int)round((float)screenWidth/displayRatio);
-            renderOffsetX = 0;
-            renderOffsetY = (renderHeight - screenHeight);
-        }
-        else
-        {
-            renderWidth = (int)round((float)screenHeight*displayRatio);
-            renderHeight = screenHeight;
-            renderOffsetX = (renderWidth - screenWidth);
-            renderOffsetY = 0;
-        }
-    }
-    else    // screen == display
-    {
-        renderWidth = screenWidth;
-        renderHeight = screenHeight;
-        renderOffsetX = 0;
-        renderOffsetY = 0;
-    }
+		if (displayRatio <= screenRatio)
+		{
+			renderWidth = screenWidth;
+			renderHeight = (int)round((float)screenWidth / displayRatio);
+			renderOffsetX = 0;
+			renderOffsetY = (renderHeight - screenHeight);
+		}
+		else
+		{
+			renderWidth = (int)round((float)screenHeight*displayRatio);
+			renderHeight = screenHeight;
+			renderOffsetX = (renderWidth - screenWidth);
+			renderOffsetY = 0;
+		}
+	}
+	else    // screen == display
+	{
+		renderWidth = screenWidth;
+		renderHeight = screenHeight;
+		renderOffsetX = 0;
+		renderOffsetY = 0;
+	}
 }
 
 // Initialize hi-resolution timer
@@ -3260,6 +3259,39 @@ static void PollInputEvents(void)
 		{
 			if (msg->Int0 < MAX_GAMEPADS && msg->Int1 < MAX_GAMEPAD_AXIS)
 				gamepadAxisState[msg->Int0][msg->Int1] = msg->Float0;
+			break;
+		}
+
+		case SetDisplayDims:
+		{
+			displayWidth = msg->Vector0.x;
+			displayHeight = msg->Vector0.y;
+			break;
+		}
+
+		case HandleResize:
+		{
+			eglQuerySurface(display, surface, EGL_WIDTH, &screenWidth);
+			eglQuerySurface(display, surface, EGL_HEIGHT, &screenHeight);
+
+			// If window is resized, viewport and projection matrix needs to be re-calculated
+			rlViewport(0, 0, screenWidth, screenHeight);            // Set viewport width and height
+			rlMatrixMode(RL_PROJECTION);                // Switch to PROJECTION matrix
+			rlLoadIdentity();                           // Reset current matrix (PROJECTION)
+			rlOrtho(0, screenWidth, screenHeight, 0, 0.0f, 1.0f);   // Orthographic projection mode with top-left corner at (0,0)
+			rlMatrixMode(RL_MODELVIEW);                 // Switch back to MODELVIEW matrix
+			rlLoadIdentity();                           // Reset current matrix (MODELVIEW)
+			rlClearScreenBuffers();                     // Clear screen buffers (color and depth)
+
+			// Window size must be updated to be used on 3D mode to get new aspect ratio (BeginMode3D())
+			// NOTE: Be careful! GLFW3 will choose the closest fullscreen resolution supported by current monitor,
+			// for example, if reescaling back to 800x450 (desired), it could set 720x480 (closest fullscreen supported)
+			currentWidth = screenWidth;
+			currentHeight = screenHeight;
+
+			// NOTE: Postprocessing texture is not scaled to new size
+
+			windowResized = true;
 			break;
 		}
 

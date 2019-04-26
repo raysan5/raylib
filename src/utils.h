@@ -82,6 +82,8 @@ typedef enum
 	MarkGamepadActive, //Int0 (gamepad), Bool0 (active or not)
 	MarkGamepadButton, //Int0 (gamepad), Int1 (button), Char0 (status)
 	MarkGamepadAxis, //Int0 (gamepad), int1 (axis), Float0 (value)
+	SetDisplayDims, //Vector0 (display dimensions)
+	HandleResize, //Vector0 (new dimensions) - Onresized event
 } UWPMessageType;
 
 typedef struct UWPMessage {

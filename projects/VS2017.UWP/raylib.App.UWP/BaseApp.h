@@ -123,6 +123,16 @@ public:
 
 	virtual void Run()
 	{
+		//Get display dimensions
+		DisplayInformation^ dInfo = DisplayInformation::GetForCurrentView();
+		Vector2 screenSize = { dInfo->ScreenWidthInRawPixels, dInfo->ScreenHeightInRawPixels };
+
+		//Send display dimensions
+		UWPMessage* msg = CreateUWPMessage();
+		msg->Type = SetDisplayDims;
+		msg->Vector0 = screenSize;
+		UWPSendMessage(msg);
+
 		while (!mWindowClosed)
 		{
 			if (mWindowVisible)
@@ -285,7 +295,12 @@ protected:
 	void OnResuming(Platform::Object^ sender, Platform::Object^ args) {}
 
 	// Window event handlers.
-	void OnWindowSizeChanged(Windows::UI::Core::CoreWindow^ sender, Windows::UI::Core::WindowSizeChangedEventArgs^ args) {}
+	void OnWindowSizeChanged(Windows::UI::Core::CoreWindow^ sender, Windows::UI::Core::WindowSizeChangedEventArgs^ args)
+	{
+		UWPMessage* msg = CreateUWPMessage();
+		msg->Type = HandleResize;
+		UWPSendMessage(msg);
+	}
 
 	void OnVisibilityChanged(Windows::UI::Core::CoreWindow^ sender, Windows::UI::Core::VisibilityChangedEventArgs^ args)
 	{
@@ -416,8 +431,8 @@ private:
 	bool mWindowClosed = false;
 	bool mWindowVisible = true;
 
-	int width = 800;
-	int height = 450;
+	int width = 640;
+	int height = 480;
 };
 
 //Application source for creating the program

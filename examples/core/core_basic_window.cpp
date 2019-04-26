@@ -28,6 +28,8 @@ int main(int argc, char* argv[])
 	int screenWidth = 800;
 	int screenHeight = 450;
 
+	SetConfigFlags(FLAG_WINDOW_RESIZABLE);
+
 	InitWindow(screenWidth, screenHeight, "raylib [core] example - basic window");
 
 	SetTargetFPS(60);
