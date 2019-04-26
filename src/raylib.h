@@ -75,7 +75,6 @@
 #define RAYLIB_H
 
 #include <stdarg.h>                             // Required for: va_list - Only used by TraceLogCallback
-#include <stdlib.h>								// Required for: malloc
 
 #if defined(_WIN32) && defined(BUILD_LIBTYPE_SHARED)
     #define RLAPI __declspec(dllexport)         // We are building raylib as a Win32 shared library (.dll)
