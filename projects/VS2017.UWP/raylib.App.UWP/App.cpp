@@ -58,7 +58,7 @@ void App::Update()
 			DisableCursor();
 		}
 
-		if (IsKeyDown(KEY_LEFT_ALT)) //Unable to get working on my PC
+		if (IsKeyDown(KEY_LEFT_ALT))
 			DrawRectangle(250, 250, 20, 20, BLACK);
 		if (IsKeyDown(KEY_BACKSPACE))
 			DrawRectangle(280, 250, 20, 20, BLACK);

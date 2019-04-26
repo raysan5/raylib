@@ -205,7 +205,7 @@ static int android_close(void *cookie)
 
 #if defined(PLATFORM_UWP) 
 
-#define MAX_MESSAGES 128 //If there are over 128 messages, I will cry... either way, this may be too much
+#define MAX_MESSAGES 512 //If there are over 128 messages, I will cry... either way, this may be too much EDIT: Welp, 512
 
 static int UWPOutMessageId = -1; //Stores the last index for the message
 static UWPMessage* UWPOutMessages[MAX_MESSAGES]; //Messages out to UWP

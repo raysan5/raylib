@@ -3220,6 +3220,9 @@ static void PollInputEvents(void)
 
 			if (actualKey > -1)
 				currentKeyState[actualKey] = msg->Char0;
+
+			if (msg->Char0)
+				msg->Char0 = 2;
 			break;
 		}
 

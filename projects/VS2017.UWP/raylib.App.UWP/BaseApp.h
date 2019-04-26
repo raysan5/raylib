@@ -8,6 +8,9 @@
 *   
 *	#define PCH
 *		This defines what header is the PCH and needs to be included
+*		
+*	#define HOLDHACK
+*		This enables a hack to fix flickering key presses (Temporary)
 *
 *   Copyright (c) 2013-2019 Ramon Santamaria (@raysan5)
 *
@@ -200,6 +203,59 @@ protected:
 			}
 		}
 
+		// Process Keyboard
+		{
+			for (int k = 0x08; k < 0xA6; k++) {
+				auto state = CoreWindow::GetForCurrentThread()->GetKeyState((Windows::System::VirtualKey) k);
+
+#ifdef HOLDHACK
+				//Super hacky way of waiting three frames to see if we are ready to register the key as deregistered
+				//This will wait an entire 4 frames before deregistering the key, this makes sure that the key is not flickering
+				if (KeyboardStateHack[k] == 2)
+				{
+					if ((state & CoreVirtualKeyStates::None) == CoreVirtualKeyStates::None)
+					{
+						KeyboardStateHack[k] = 3;
+					}
+				}
+				else if (KeyboardStateHack[k] == 3)
+				{
+					if ((state & CoreVirtualKeyStates::None) == CoreVirtualKeyStates::None)
+					{
+						KeyboardStateHack[k] = 4;
+					}
+				}
+				else if (KeyboardStateHack[k] == 4)
+				{
+					if ((state & CoreVirtualKeyStates::None) == CoreVirtualKeyStates::None)
+					{
+						//Reset key...
+						KeyboardStateHack[k] = 0;
+
+						//Tell core
+						RegisterKey(k, 0);
+					}
+				}
+#endif
+				//Left and right alt, KeyUp and KeyDown are not called for it
+				//No need to hack because this is not a character
+
+				//TODO: Maybe do all other key registrations like this, no more key events?
+
+				if (k == 0xA4 || k == 0xA5)
+				{
+					if ((state & CoreVirtualKeyStates::Down) == CoreVirtualKeyStates::Down)
+					{
+						RegisterKey(k, 1);
+					}
+					else
+					{
+						RegisterKey(k, 0);
+					}
+				}
+			}
+		}
+
 		// Process Mouse
 		{
 			
@@ -372,24 +428,51 @@ protected:
 
 	void OnKeyDown(Windows::UI::Core::CoreWindow ^ sender, Windows::UI::Core::KeyEventArgs ^ args)
 	{
-		UWPMessage* msg = CreateUWPMessage();
-		msg->Type = RegisterKey;
-		msg->Int0 = (int)args->VirtualKey;
-		msg->Char0 = 1;
-		UWPSendMessage(msg);
+#ifdef HOLDHACK
+		//Start the hack
+		KeyboardStateHack[(int)args->VirtualKey] = 1;
+#endif
+
+		RegisterKey((int)args->VirtualKey, 1);
 	}
 
 	void OnKeyUp(Windows::UI::Core::CoreWindow ^ sender, Windows::UI::Core::KeyEventArgs ^ args)
 	{
-		//TODO: Fix hold errors
-		UWPMessage* msg = CreateUWPMessage();
-		msg->Type = RegisterKey;
-		msg->Int0 = (int)args->VirtualKey;
-		msg->Char0 = 0;
-		UWPSendMessage(msg);
+#ifdef HOLDHACK
+		//The same hack
+		if (KeyboardStateHack[(int)args->VirtualKey] == 1)
+		{
+			KeyboardStateHack[(int)args->VirtualKey] = 2;
+		}
+		else if (KeyboardStateHack[(int)args->VirtualKey] == 2)
+		{
+			KeyboardStateHack[(int)args->VirtualKey] = 3;
+		}
+		else if (KeyboardStateHack[(int)args->VirtualKey] == 3)
+		{
+			KeyboardStateHack[(int)args->VirtualKey] = 4;
+		}
+		else if (KeyboardStateHack[(int)args->VirtualKey] == 4)
+		{
+			RegisterKey((int)args->VirtualKey, 0);
+			KeyboardStateHack[(int)args->VirtualKey] = 0;
+		}
+#else
+		//No hack, allow flickers
+		RegisterKey((int)args->VirtualKey, 0);
+#endif
 	}
 
 private:
+
+	void RegisterKey(int key, char status)
+	{
+		UWPMessage* msg = CreateUWPMessage();
+		msg->Type = UWPMessageType::RegisterKey;
+		msg->Int0 = key;
+		msg->Char0 = status;
+		UWPSendMessage(msg);
+	}
 
 	void MoveMouse(Vector2 pos)
 	{
@@ -442,6 +525,10 @@ private:
 	int height = 480;
 
 	int CurrentPointerID = -1;
+
+#ifdef HOLDHACK
+	char KeyboardStateHack[0xA6]; //0xA6 because the highest key we compare against is 0xA5
+#endif
 };
 
 //Application source for creating the program
