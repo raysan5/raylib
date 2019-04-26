@@ -872,68 +872,6 @@ typedef enum {
 // Callbacks to be implemented by users
 typedef void (*TraceLogCallback)(int logType, const char *text, va_list args);
 
-#if defined(PLATFORM_UWP)
-
-// UWP Messages
-
-typedef enum
-{
-	None = 0,
-
-	//Send
-	ShowMouse,
-	HideMouse,
-	LockMouse,
-	UnlockMouse,
-	SetMouseLocation, //Flaot0, Float1
-} UWPMessageType;
-
-typedef struct UWPMessage {
-	//The message type
-	UWPMessageType Type;
-
-	//Vector parameters
-	Vector2 Vector0;
-
-	//Int parameters
-	/*int Int0;
-	int Int1;
-
-	//Char parameters
-	char Char0;
-
-	//Float parameters
-	float Float0;
-	float Float1;
-
-	//Bool parameters
-	bool Bool0;*/
-
-	//More parameters can be added and fed to functions
-} UWPMessage;
-
-inline UWPMessage* CreateUWPMessage(void)
-{
-	UWPMessage* msg = (UWPMessage*) RL_MALLOC(sizeof(UWPMessage));
-	msg->Type = None;
-	Vector2 v0 = { 0, 0 };
-	msg->Vector0 = v0;
-	/*msg->Int0 = 0;
-	msg->Int1 = 0;
-	msg->Char0 = 0;
-	msg->Float0 = 0;
-	msg->Float1 = 0;
-	msg->Bool0 = false;*/
-	return msg;
-}
-
-inline void DeleteUWPMessage(UWPMessage* msg)
-{
-	RL_FREE(msg);
-}
-
-#endif
-
 #if defined(__cplusplus)
 extern "C" {            // Prevents name mangling of functions
 #endif
@@ -975,24 +913,6 @@ RLAPI int GetMonitorPhysicalHeight(int monitor);                  // Get primary
 RLAPI const char *GetMonitorName(int monitor);                    // Get the human-readable, UTF-8 encoded name of the primary monitor
 RLAPI const char *GetClipboardText(void);                         // Get clipboard text content
 RLAPI void SetClipboardText(const char *text);                    // Set clipboard text content
-
-// UWP-related functions
-#if defined(PLATFORM_UWP)
-
-RLAPI void UWPRegisterKey(int key, char action);
-RLAPI void UWPRegisterClick(int btn, char action);
-RLAPI void UWPScrollWheel(int delta);
-RLAPI void UWPMousePosition(float x, float y);
-RLAPI void UWPMarkCursor(bool hidden);
-RLAPI void UWPGamepadActive(int gamepad, bool active);
-RLAPI void UWPGamepadButton(int gamepad, int button, char action);
-RLAPI void UWPGamepadAxis(int gamepad, int axis, float value);
-
-RLAPI bool UWPHasMessages();
-RLAPI UWPMessage* UWPGetMessage();
-//RLAPI void UWPSendMessage(UWPMessage* msg); //Do we need to send messages?
-
-#endif
 
 // Cursor-related functions
 RLAPI void ShowCursor(void);                                      // Shows cursor

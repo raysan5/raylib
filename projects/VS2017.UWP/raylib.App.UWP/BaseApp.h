@@ -41,6 +41,7 @@
 #include <EGL/eglplatform.h>
 
 #include "raylib.h"
+#include "utils.h"
 
 using namespace Windows::ApplicationModel::Core;
 using namespace Windows::ApplicationModel::Activation;
@@ -163,39 +164,24 @@ protected:
 				//Carry out the command
 				switch(msg->Type)
 				{
-				case ShowMouse:
-				{
-					CoreWindow::GetForCurrentThread()->PointerCursor = regularCursor;
-					//Unlock due to below
-					cursorLocked = false;
-					break;
-				}
-				case HideMouse:
-				{
-					//Bug: movement stops, for now we will lock...
-					CoreWindow::GetForCurrentThread()->PointerCursor = nullptr;
-					cursorLocked = true;
-					break;
-				}
-				case LockMouse:
-				{
-					CoreWindow::GetForCurrentThread()->PointerCursor = regularCursor;
-					//Unlock due to below
-					cursorLocked = false;
-					break;
-				}
+				case ShowMouse: //Do the same thing because of how UWP works...
 				case UnlockMouse:
 				{
-					//Bug: movement stops, for now we will lock...
+					CoreWindow::GetForCurrentThread()->PointerCursor = regularCursor;
+					cursorLocked = false;
+					MoveMouse(GetMousePosition());
+					break;
+				}
+				case HideMouse: //Do the same thing because of how UWP works...
+				case LockMouse:
+				{
 					CoreWindow::GetForCurrentThread()->PointerCursor = nullptr;
 					cursorLocked = true;
 					break;
 				}
 				case SetMouseLocation:
 				{
-					CoreWindow ^window = CoreWindow::GetForCurrentThread();
-					Point mousePosScreen = Point(msg->Vector0.x + window->Bounds.X, msg->Vector0.y + window->Bounds.Y);
-					window->PointerPosition = mousePosScreen;
+					MoveMouse(msg->Vector0);
 					break;
 				}
 				}
@@ -217,7 +203,7 @@ protected:
 				auto x = curMousePos.x + mouseDelta.x;
 				auto y = curMousePos.y + mouseDelta.y;
 
-				UWPMousePosition(x, y);
+				UpdateMousePosition({ x, y });
 
 				// Why we're not using UWPSetMousePosition here...
 				//		 UWPSetMousePosition changes the "mousePosition" variable to match where the cursor actually is.
@@ -231,7 +217,7 @@ protected:
 				auto x = window->PointerPosition.X - window->Bounds.X;
 				auto y = window->PointerPosition.Y - window->Bounds.Y;
 
-				UWPMousePosition(x, y);
+				UpdateMousePosition({ x, y });
 			}
 
 			mouseDelta = { 0 ,0 };
@@ -246,7 +232,11 @@ protected:
 				// connected gamepads with their spot in the list, but this has serious robustness problems
 				// e.g. player 1, 2, and 3 are playing a game - if player2 disconnects, p3's controller would now be mapped to p2's character since p3 is now second in the list.
 
-				UWPGamepadActive(i, i < Gamepad::Gamepads->Size);
+				UWPMessage* msg = CreateUWPMessage();
+				msg->Type = MarkGamepadActive;
+				msg->Int0 = i;
+				msg->Bool0 = i < Gamepad::Gamepads->Size;
+				UWPSendMessage(msg);
 			}
 
 			// Get current gamepad state
@@ -259,27 +249,27 @@ protected:
 					GamepadReading reading = gamepad->GetCurrentReading();
 
 					// NOTE: Maybe it would be wiser to redefine the gamepad button mappings in "raylib.h" for the UWP platform instead of remapping them manually
-					UWPGamepadButton(i, GAMEPAD_XBOX_BUTTON_A, ((reading.Buttons & GamepadButtons::A) == GamepadButtons::A));
-					UWPGamepadButton(i, GAMEPAD_XBOX_BUTTON_B, ((reading.Buttons & GamepadButtons::B) == GamepadButtons::B));
-					UWPGamepadButton(i, GAMEPAD_XBOX_BUTTON_X, ((reading.Buttons & GamepadButtons::X) == GamepadButtons::X));
-					UWPGamepadButton(i, GAMEPAD_XBOX_BUTTON_Y, ((reading.Buttons & GamepadButtons::Y) == GamepadButtons::Y));
-					UWPGamepadButton(i, GAMEPAD_XBOX_BUTTON_LB, ((reading.Buttons & GamepadButtons::LeftShoulder) == GamepadButtons::LeftShoulder));
-					UWPGamepadButton(i, GAMEPAD_XBOX_BUTTON_RB, ((reading.Buttons & GamepadButtons::RightShoulder) == GamepadButtons::RightShoulder));
-					UWPGamepadButton(i, GAMEPAD_XBOX_BUTTON_SELECT, ((reading.Buttons & GamepadButtons::View) == GamepadButtons::View)); // Changed for XB1 Controller
-					UWPGamepadButton(i, GAMEPAD_XBOX_BUTTON_START, ((reading.Buttons & GamepadButtons::Menu) == GamepadButtons::Menu)); // Changed for XB1 Controller
-					UWPGamepadButton(i, GAMEPAD_XBOX_BUTTON_UP, ((reading.Buttons & GamepadButtons::DPadUp) == GamepadButtons::DPadUp));
-					UWPGamepadButton(i, GAMEPAD_XBOX_BUTTON_RIGHT, ((reading.Buttons & GamepadButtons::DPadRight) == GamepadButtons::DPadRight));
-					UWPGamepadButton(i, GAMEPAD_XBOX_BUTTON_DOWN, ((reading.Buttons & GamepadButtons::DPadDown) == GamepadButtons::DPadDown));
-					UWPGamepadButton(i, GAMEPAD_XBOX_BUTTON_LEFT, ((reading.Buttons & GamepadButtons::DPadLeft) == GamepadButtons::DPadLeft));
-					UWPGamepadButton(i, GAMEPAD_XBOX_BUTTON_HOME, false); // Home button not supported by UWP
+					RegisterGamepadButton(i, GAMEPAD_XBOX_BUTTON_A, ((reading.Buttons & GamepadButtons::A) == GamepadButtons::A));
+					RegisterGamepadButton(i, GAMEPAD_XBOX_BUTTON_B, ((reading.Buttons & GamepadButtons::B) == GamepadButtons::B));
+					RegisterGamepadButton(i, GAMEPAD_XBOX_BUTTON_X, ((reading.Buttons & GamepadButtons::X) == GamepadButtons::X));
+					RegisterGamepadButton(i, GAMEPAD_XBOX_BUTTON_Y, ((reading.Buttons & GamepadButtons::Y) == GamepadButtons::Y));
+					RegisterGamepadButton(i, GAMEPAD_XBOX_BUTTON_LB, ((reading.Buttons & GamepadButtons::LeftShoulder) == GamepadButtons::LeftShoulder));
+					RegisterGamepadButton(i, GAMEPAD_XBOX_BUTTON_RB, ((reading.Buttons & GamepadButtons::RightShoulder) == GamepadButtons::RightShoulder));
+					RegisterGamepadButton(i, GAMEPAD_XBOX_BUTTON_SELECT, ((reading.Buttons & GamepadButtons::View) == GamepadButtons::View)); // Changed for XB1 Controller
+					RegisterGamepadButton(i, GAMEPAD_XBOX_BUTTON_START, ((reading.Buttons & GamepadButtons::Menu) == GamepadButtons::Menu)); // Changed for XB1 Controller
+					RegisterGamepadButton(i, GAMEPAD_XBOX_BUTTON_UP, ((reading.Buttons & GamepadButtons::DPadUp) == GamepadButtons::DPadUp));
+					RegisterGamepadButton(i, GAMEPAD_XBOX_BUTTON_RIGHT, ((reading.Buttons & GamepadButtons::DPadRight) == GamepadButtons::DPadRight));
+					RegisterGamepadButton(i, GAMEPAD_XBOX_BUTTON_DOWN, ((reading.Buttons & GamepadButtons::DPadDown) == GamepadButtons::DPadDown));
+					RegisterGamepadButton(i, GAMEPAD_XBOX_BUTTON_LEFT, ((reading.Buttons & GamepadButtons::DPadLeft) == GamepadButtons::DPadLeft));
+					RegisterGamepadButton(i, GAMEPAD_XBOX_BUTTON_HOME, false); // Home button not supported by UWP
 
 					// Get current axis state
-					UWPGamepadAxis(i, GAMEPAD_XBOX_AXIS_LEFT_X, (float)reading.LeftThumbstickX);
-					UWPGamepadAxis(i, GAMEPAD_XBOX_AXIS_LEFT_Y, (float)reading.LeftThumbstickY);
-					UWPGamepadAxis(i, GAMEPAD_XBOX_AXIS_RIGHT_X, (float)reading.RightThumbstickX);
-					UWPGamepadAxis(i, GAMEPAD_XBOX_AXIS_RIGHT_Y, (float)reading.RightThumbstickY);
-					UWPGamepadAxis(i, GAMEPAD_XBOX_AXIS_LT, (float)reading.LeftTrigger);
-					UWPGamepadAxis(i, GAMEPAD_XBOX_AXIS_RT, (float)reading.RightTrigger);
+					RegisterGamepadAxis(i, GAMEPAD_XBOX_AXIS_LEFT_X, (float)reading.LeftThumbstickX);
+					RegisterGamepadAxis(i, GAMEPAD_XBOX_AXIS_LEFT_Y, (float)reading.LeftThumbstickY);
+					RegisterGamepadAxis(i, GAMEPAD_XBOX_AXIS_RIGHT_X, (float)reading.RightThumbstickX);
+					RegisterGamepadAxis(i, GAMEPAD_XBOX_AXIS_RIGHT_Y, (float)reading.RightThumbstickY);
+					RegisterGamepadAxis(i, GAMEPAD_XBOX_AXIS_LT, (float)reading.LeftTrigger);
+					RegisterGamepadAxis(i, GAMEPAD_XBOX_AXIS_RT, (float)reading.RightTrigger);
 				}
 			}
 		}
@@ -316,15 +306,15 @@ protected:
 	{
 		if (args->CurrentPoint->Properties->IsLeftButtonPressed)
 		{
-			UWPRegisterClick(MOUSE_LEFT_BUTTON, 1);
+			RegisterClick(MOUSE_LEFT_BUTTON, 1);
 		}
 		if (args->CurrentPoint->Properties->IsRightButtonPressed)
 		{
-			UWPRegisterClick(MOUSE_RIGHT_BUTTON, 1);
+			RegisterClick(MOUSE_RIGHT_BUTTON, 1);
 		}
 		if (args->CurrentPoint->Properties->IsMiddleButtonPressed)
 		{
-			UWPRegisterClick(MOUSE_MIDDLE_BUTTON, 1);
+			RegisterClick(MOUSE_MIDDLE_BUTTON, 1);
 		}
 	}
 
@@ -332,21 +322,24 @@ protected:
 	{
 		if (!(args->CurrentPoint->Properties->IsLeftButtonPressed))
 		{
-			UWPRegisterClick(MOUSE_LEFT_BUTTON, 0);
+			RegisterClick(MOUSE_LEFT_BUTTON, 0);
 		}
 		if (!(args->CurrentPoint->Properties->IsRightButtonPressed))
 		{
-			UWPRegisterClick(MOUSE_RIGHT_BUTTON, 0);
+			RegisterClick(MOUSE_RIGHT_BUTTON, 0);
 		}
 		if (!(args->CurrentPoint->Properties->IsMiddleButtonPressed))
 		{
-			UWPRegisterClick(MOUSE_MIDDLE_BUTTON, 0);
+			RegisterClick(MOUSE_MIDDLE_BUTTON, 0);
 		}
 	}
 
 	void PointerWheelChanged(Windows::UI::Core::CoreWindow ^sender, Windows::UI::Core::PointerEventArgs^ args)
 	{
-		UWPScrollWheel(args->CurrentPoint->Properties->MouseWheelDelta);
+		UWPMessage* msg = CreateUWPMessage();
+		msg->Type = ScrollWheelUpdate;
+		msg->Float0 = args->CurrentPoint->Properties->MouseWheelDelta;
+		UWPSendMessage(msg);
 	}
 
 	void MouseMoved(Windows::Devices::Input::MouseDevice^ mouseDevice, Windows::Devices::Input::MouseEventArgs^ args)
@@ -357,16 +350,68 @@ protected:
 
 	void OnKeyDown(Windows::UI::Core::CoreWindow ^ sender, Windows::UI::Core::KeyEventArgs ^ args)
 	{
-		UWPRegisterKey((int)args->VirtualKey, 1);
+		UWPMessage* msg = CreateUWPMessage();
+		msg->Type = RegisterKey;
+		msg->Int0 = (int)args->VirtualKey;
+		msg->Char0 = 1;
+		UWPSendMessage(msg);
 	}
 
 	void OnKeyUp(Windows::UI::Core::CoreWindow ^ sender, Windows::UI::Core::KeyEventArgs ^ args)
 	{
 		//TODO: Fix hold errors
-		UWPRegisterKey((int)args->VirtualKey, 0);
+		UWPMessage* msg = CreateUWPMessage();
+		msg->Type = RegisterKey;
+		msg->Int0 = (int)args->VirtualKey;
+		msg->Char0 = 0;
+		UWPSendMessage(msg);
 	}
 
 private:
+
+	void MoveMouse(Vector2 pos)
+	{
+		CoreWindow ^window = CoreWindow::GetForCurrentThread();
+		Point mousePosScreen = Point(pos.x + window->Bounds.X, pos.y + window->Bounds.Y);
+		window->PointerPosition = mousePosScreen;
+	}
+
+	void RegisterGamepadButton(int gamepad, int button, char status)
+	{
+		UWPMessage* msg = CreateUWPMessage();
+		msg->Type = MarkGamepadButton;
+		msg->Int0 = gamepad;
+		msg->Int1 = button;
+		msg->Char0 = status;
+		UWPSendMessage(msg);
+	}
+
+	void RegisterGamepadAxis(int gamepad, int axis, float value)
+	{
+		UWPMessage* msg = CreateUWPMessage();
+		msg->Type = MarkGamepadAxis;
+		msg->Int0 = gamepad;
+		msg->Int1 = axis;
+		msg->Float0 = value;
+		UWPSendMessage(msg);
+	}
+
+	void UpdateMousePosition(Vector2 pos)
+	{
+		UWPMessage* msg = CreateUWPMessage();
+		msg->Type = UpdateMouseLocation;
+		msg->Vector0 = pos;
+		UWPSendMessage(msg);
+	}
+
+	void RegisterClick(int button, char status)
+	{
+		UWPMessage* msg = CreateUWPMessage();
+		msg->Type = UWPMessageType::RegisterClick;
+		msg->Int0 = button;
+		msg->Char0 = status;
+		UWPSendMessage(msg);
+	}
 
 	bool mWindowClosed = false;
 	bool mWindowVisible = true;
