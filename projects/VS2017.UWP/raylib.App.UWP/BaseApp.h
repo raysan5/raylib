@@ -101,7 +101,6 @@ public:
 		window->Closed += ref new TypedEventHandler<CoreWindow^, CoreWindowEventArgs^>(this, &BaseApp::OnWindowClosed);
 
 		window->PointerPressed += ref new TypedEventHandler<CoreWindow^, PointerEventArgs^>(this, &BaseApp::PointerPressed);
-		window->PointerReleased += ref new TypedEventHandler<CoreWindow^, PointerEventArgs^>(this, &BaseApp::PointerReleased);
 		window->PointerWheelChanged += ref new TypedEventHandler<CoreWindow^, PointerEventArgs^>(this, &BaseApp::PointerWheelChanged);
 		window->KeyDown += ref new TypedEventHandler<CoreWindow ^, KeyEventArgs ^>(this, &BaseApp::OnKeyDown);
 		window->KeyUp += ref new TypedEventHandler<CoreWindow ^, KeyEventArgs ^>(this, &BaseApp::OnKeyUp);
@@ -203,6 +202,39 @@ protected:
 
 		// Process Mouse
 		{
+			
+			if (CurrentPointerID > -1) {
+				auto point = PointerPoint::GetCurrentPoint(CurrentPointerID);
+				auto props = point->Properties;
+
+				if (props->IsLeftButtonPressed)
+				{
+					RegisterClick(MOUSE_LEFT_BUTTON, 1);
+				}
+				else
+				{
+					RegisterClick(MOUSE_LEFT_BUTTON, 0);
+				}
+
+				if (props->IsRightButtonPressed)
+				{
+					RegisterClick(MOUSE_RIGHT_BUTTON, 1);
+				}
+				else
+				{
+					RegisterClick(MOUSE_RIGHT_BUTTON, 0);
+				}
+
+				if (props->IsMiddleButtonPressed)
+				{
+					RegisterClick(MOUSE_MIDDLE_BUTTON, 1);
+				}
+				else
+				{
+					RegisterClick(MOUSE_MIDDLE_BUTTON, 0);
+				}
+			}
+
 			CoreWindow ^window = CoreWindow::GetForCurrentThread();
 
 			if (cursorLocked)
@@ -319,34 +351,9 @@ protected:
 	// Input event handlers
 	void PointerPressed(Windows::UI::Core::CoreWindow^ sender, Windows::UI::Core::PointerEventArgs^ args)
 	{
-		if (args->CurrentPoint->Properties->IsLeftButtonPressed)
-		{
-			RegisterClick(MOUSE_LEFT_BUTTON, 1);
-		}
-		if (args->CurrentPoint->Properties->IsRightButtonPressed)
-		{
-			RegisterClick(MOUSE_RIGHT_BUTTON, 1);
-		}
-		if (args->CurrentPoint->Properties->IsMiddleButtonPressed)
-		{
-			RegisterClick(MOUSE_MIDDLE_BUTTON, 1);
-		}
-	}
-
-	void PointerReleased(Windows::UI::Core::CoreWindow ^sender, Windows::UI::Core::PointerEventArgs^ args)
-	{
-		if (!(args->CurrentPoint->Properties->IsLeftButtonPressed))
-		{
-			RegisterClick(MOUSE_LEFT_BUTTON, 0);
-		}
-		if (!(args->CurrentPoint->Properties->IsRightButtonPressed))
-		{
-			RegisterClick(MOUSE_RIGHT_BUTTON, 0);
-		}
-		if (!(args->CurrentPoint->Properties->IsMiddleButtonPressed))
-		{
-			RegisterClick(MOUSE_MIDDLE_BUTTON, 0);
-		}
+		//Get the current active pointer ID for our loop
+		CurrentPointerID = args->CurrentPoint->PointerId;
+		args->Handled = true;
 	}
 
 	void PointerWheelChanged(Windows::UI::Core::CoreWindow ^sender, Windows::UI::Core::PointerEventArgs^ args)
@@ -433,6 +440,8 @@ private:
 
 	int width = 640;
 	int height = 480;
+
+	int CurrentPointerID = -1;
 };
 
 //Application source for creating the program
