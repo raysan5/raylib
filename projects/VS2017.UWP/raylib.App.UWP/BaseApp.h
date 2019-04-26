@@ -123,6 +123,13 @@ public:
 
 	virtual void Load(Platform::String^ entryPoint) {}
 
+	void Setup(int width, int height)
+	{
+		//Set dimensions
+		this->width = width;
+		this->height = height;
+	}
+
 	virtual void Run()
 	{
 		//Get display dimensions

@@ -19,6 +19,8 @@ App::App()
 {
 	//This does not work... need to fix this.
 	SetConfigFlags(0);
+
+	Setup(640, 480, "Hi");
 }
 
 static int posX = 100;
