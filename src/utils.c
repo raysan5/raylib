@@ -202,3 +202,88 @@ static int android_close(void *cookie)
     return 0;
 }
 #endif
+
+#if defined(PLATFORM_UWP) 
+
+#define MAX_MESSAGES 128 //If there are over 128 messages, I will cry... either way, this may be too much
+
+static int UWPOutMessageId = -1; //Stores the last index for the message
+static UWPMessage* UWPOutMessages[MAX_MESSAGES]; //Messages out to UWP
+
+static int UWPInMessageId = -1; //Stores the last index for the message
+static UWPMessage* UWPInMessages[MAX_MESSAGES]; //Messages in from UWP
+
+UWPMessage* CreateUWPMessage(void)
+{
+	UWPMessage* msg = (UWPMessage*)RL_MALLOC(sizeof(UWPMessage));
+	msg->Type = None;
+	Vector2 v0 = { 0, 0 };
+	msg->Vector0 = v0;
+	msg->Int0 = 0;
+	msg->Int1 = 0;
+	msg->Char0 = 0;
+	msg->Float0 = 0;
+	msg->Bool0 = false;
+	return msg;
+}
+
+void DeleteUWPMessage(UWPMessage* msg)
+{
+	RL_FREE(msg);
+}
+
+bool UWPHasMessages(void)
+{
+	return UWPOutMessageId > -1;
+}
+
+UWPMessage* UWPGetMessage(void)
+{
+	if (UWPHasMessages())
+	{
+		return UWPOutMessages[UWPOutMessageId--];
+	}
+
+	return NULL;
+}
+
+void UWPSendMessage(UWPMessage* msg)
+{
+	if (UWPInMessageId + 1 < MAX_MESSAGES) {
+		UWPInMessageId++;
+		UWPInMessages[UWPInMessageId] = msg;
+	}
+	else
+	{
+		TraceLog(LOG_WARNING, "[UWP Messaging] Not enough array space to register new UWP inbound Message.");
+	}
+}
+
+void SendMessageToUWP(UWPMessage* msg)
+{
+	if (UWPOutMessageId + 1 < MAX_MESSAGES) {
+		UWPOutMessageId++;
+		UWPOutMessages[UWPOutMessageId] = msg;
+	}
+	else
+	{
+		TraceLog(LOG_WARNING, "[UWP Messaging] Not enough array space to register new UWP outward Message.");
+	}
+}
+
+bool HasMessageFromUWP(void)
+{
+	return UWPInMessageId > -1;
+}
+
+UWPMessage* GetMessageFromUWP(void)
+{
+	if (HasMessageFromUWP())
+	{
+		return UWPInMessages[UWPInMessageId--];
+	}
+
+	return NULL;
+}
+
+#endif
