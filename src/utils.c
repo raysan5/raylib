@@ -34,7 +34,7 @@
 
 // Check if config flags have been externally provided on compilation line
 #if !defined(EXTERNAL_CONFIG_FLAGS)
-    #include "config.h"         // Defines module configuration flags
+#include "config.h"         // Defines module configuration flags
 #endif
 
 #include "utils.h"
@@ -102,7 +102,7 @@ void SetTraceLogCallback(TraceLogCallback callback)
 }
 
 // Show trace log messages (LOG_INFO, LOG_WARNING, LOG_ERROR, LOG_DEBUG)
-void TraceLog(int logType, const char *text, ...)
+void TraceLog(int logType, const char* text, ...)
 {
 #if defined(SUPPORT_TRACELOG)
     // Message has level below current threshold, don't emit
@@ -130,17 +130,23 @@ void TraceLog(int logType, const char *text, ...)
         default: break;
     }
 #else
-    char buffer[MAX_TRACELOG_BUFFER_SIZE] = { 0 };
+    char buffer[MAX_TRACELOG_BUFFER_SIZE] = {0};
 
-    switch(logType)
+    switch (logType)
     {
-        case LOG_TRACE: strcpy(buffer, "TRACE: "); break;
-        case LOG_DEBUG: strcpy(buffer, "DEBUG: "); break;
-        case LOG_INFO: strcpy(buffer, "INFO: "); break;
-        case LOG_WARNING: strcpy(buffer, "WARNING: "); break;
-        case LOG_ERROR: strcpy(buffer, "ERROR: "); break;
-        case LOG_FATAL: strcpy(buffer, "FATAL: "); break;
-        default: break;
+    case LOG_TRACE: strcpy(buffer, "TRACE: ");
+        break;
+    case LOG_DEBUG: strcpy(buffer, "DEBUG: ");
+        break;
+    case LOG_INFO: strcpy(buffer, "INFO: ");
+        break;
+    case LOG_WARNING: strcpy(buffer, "WARNING: ");
+        break;
+    case LOG_ERROR: strcpy(buffer, "ERROR: ");
+        break;
+    case LOG_FATAL: strcpy(buffer, "FATAL: ");
+        break;
+    default: break;
     }
 
     strcat(buffer, text);
@@ -150,7 +156,7 @@ void TraceLog(int logType, const char *text, ...)
 
     va_end(args);
 
-    if (logType >= logTypeExit) exit(1);  // If exit message, exit program
+    if (logType >= logTypeExit) exit(1); // If exit message, exit program
 
 #endif  // SUPPORT_TRACELOG
 }
@@ -203,7 +209,7 @@ static int android_close(void *cookie)
 }
 #endif
 
-#if defined(PLATFORM_UWP) 
+#if defined(PLATFORM_UWP)
 
 #define MAX_MESSAGES 512 //If there are over 128 messages, I will cry... either way, this may be too much EDIT: Welp, 512
 
@@ -215,75 +221,77 @@ static UWPMessage* UWPInMessages[MAX_MESSAGES]; //Messages in from UWP
 
 UWPMessage* CreateUWPMessage(void)
 {
-	UWPMessage* msg = (UWPMessage*)RL_MALLOC(sizeof(UWPMessage));
-	msg->Type = None;
-	Vector2 v0 = { 0, 0 };
-	msg->Vector0 = v0;
-	msg->Int0 = 0;
-	msg->Int1 = 0;
-	msg->Char0 = 0;
-	msg->Float0 = 0;
-	msg->Bool0 = false;
-	return msg;
+    UWPMessage* msg = (UWPMessage*)RL_MALLOC(sizeof(UWPMessage));
+    msg->Type = None;
+    Vector2 v0 = {0, 0};
+    msg->Vector0 = v0;
+    msg->Int0 = 0;
+    msg->Int1 = 0;
+    msg->Char0 = 0;
+    msg->Float0 = 0;
+    msg->Bool0 = false;
+    return msg;
 }
 
 void DeleteUWPMessage(UWPMessage* msg)
 {
-	RL_FREE(msg);
+    RL_FREE(msg);
 }
 
 bool UWPHasMessages(void)
 {
-	return UWPOutMessageId > -1;
+    return UWPOutMessageId > -1;
 }
 
 UWPMessage* UWPGetMessage(void)
 {
-	if (UWPHasMessages())
-	{
-		return UWPOutMessages[UWPOutMessageId--];
-	}
+    if (UWPHasMessages())
+    {
+        return UWPOutMessages[UWPOutMessageId--];
+    }
 
-	return NULL;
+    return NULL;
 }
 
 void UWPSendMessage(UWPMessage* msg)
 {
-	if (UWPInMessageId + 1 < MAX_MESSAGES) {
-		UWPInMessageId++;
-		UWPInMessages[UWPInMessageId] = msg;
-	}
-	else
-	{
-		TraceLog(LOG_WARNING, "[UWP Messaging] Not enough array space to register new UWP inbound Message.");
-	}
+    if (UWPInMessageId + 1 < MAX_MESSAGES)
+    {
+        UWPInMessageId++;
+        UWPInMessages[UWPInMessageId] = msg;
+    }
+    else
+    {
+        TraceLog(LOG_WARNING, "[UWP Messaging] Not enough array space to register new UWP inbound Message.");
+    }
 }
 
 void SendMessageToUWP(UWPMessage* msg)
 {
-	if (UWPOutMessageId + 1 < MAX_MESSAGES) {
-		UWPOutMessageId++;
-		UWPOutMessages[UWPOutMessageId] = msg;
-	}
-	else
-	{
-		TraceLog(LOG_WARNING, "[UWP Messaging] Not enough array space to register new UWP outward Message.");
-	}
+    if (UWPOutMessageId + 1 < MAX_MESSAGES)
+    {
+        UWPOutMessageId++;
+        UWPOutMessages[UWPOutMessageId] = msg;
+    }
+    else
+    {
+        TraceLog(LOG_WARNING, "[UWP Messaging] Not enough array space to register new UWP outward Message.");
+    }
 }
 
 bool HasMessageFromUWP(void)
 {
-	return UWPInMessageId > -1;
+    return UWPInMessageId > -1;
 }
 
 UWPMessage* GetMessageFromUWP(void)
 {
-	if (HasMessageFromUWP())
-	{
-		return UWPInMessages[UWPInMessageId--];
-	}
+    if (HasMessageFromUWP())
+    {
+        return UWPInMessages[UWPInMessageId--];
+    }
 
-	return NULL;
+    return NULL;
 }
 
 #endif

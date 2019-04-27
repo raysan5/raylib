@@ -1,0 +1,46 @@
+ANGLE Privacy Statement
+Last Updated: May 2015
+
+ANGLE is an open-source project that allows Windows users to seamlessly run 
+OpenGL ES 2.0 content by translating OpenGL ES 2.0 API calls to DirectX 11 API 
+calls. Microsoft does not collect any data about the use or performance of the 
+application nor does Microsoft collect any information that can identify you as 
+an individual when you use this product.
+
+The most recent version of this privacy statement can be found at 
+(http://www.microsoft.com/privacystatement/en-us/ANGLE/default.aspx)
+
+On this page:
+- Changes to Our Privacy Statements
+- How to Contact Us
+
+
+Changes to Our Privacy Statements
+
+We will occasionally update our privacy statements to reflect customer feedback 
+and changes in our services. When we post changes to a statement, we will 
+revise the "last updated" date at the top of the statement. If there are 
+material changes to the statement or in how Microsoft will use your personal 
+information, we will notify you either by prominently posting a notice of such 
+changes before they take effect or by directly sending you a notification. We 
+encourage you to periodically review the privacy statements for the products 
+and services you use to learn how Microsoft is protecting your information.
+
+
+How to Contact Us
+
+- If you have a technical or general support question, please visit 
+  (http://support.microsoft.com/) to learn more about Microsoft Support offerings.
+
+- If you have a Microsoft account password question, please visit Microsoft 
+  account support. (http://go.microsoft.com/FWLink/p/?LinkID=320207)
+
+- If you have a general privacy question or a question for the Chief Privacy Officer of 
+  Microsoft or want to request access to your personal information, please contact us by 
+  using our Web form (http://go.microsoft.com/fwlink/?LinkId=321116).
+
+- By mail: Microsoft Privacy, Microsoft Corporation, One Microsoft Way, Redmond, Washington 98052 USA
+
+- By Phone: 425-882-8080
+
+- To find the Microsoft subsidiary in your country or region, see (http://www.microsoft.com/worldwide/).

@@ -65,48 +65,59 @@ FILE *android_fopen(const char *fileName, const char *mode);    // Replacement f
 
 typedef enum
 {
-	None = 0,
+    None = 0,
 
-	//Send
-	ShowMouse,
-	HideMouse,
-	LockMouse,
-	UnlockMouse,
-	SetMouseLocation, //Vector0 (pos)
+    //Send
+    ShowMouse,
+    HideMouse,
+    LockMouse,
+    UnlockMouse,
+    SetMouseLocation,
+    //Vector0 (pos)
 
-	//Recieve (Into C)
-	RegisterKey, //Int0 (key), Char0 (status)
-	RegisterClick, //Int0 (button), Char0 (status)
-	ScrollWheelUpdate, //Int0 (delta)
-	UpdateMouseLocation, //Vector0 (pos)
-	MarkGamepadActive, //Int0 (gamepad), Bool0 (active or not)
-	MarkGamepadButton, //Int0 (gamepad), Int1 (button), Char0 (status)
-	MarkGamepadAxis, //Int0 (gamepad), int1 (axis), Float0 (value)
-	SetDisplayDims, //Vector0 (display dimensions)
-	HandleResize, //Vector0 (new dimensions) - Onresized event
+    //Recieve (Into C)
+    RegisterKey,
+    //Int0 (key), Char0 (status)
+    RegisterClick,
+    //Int0 (button), Char0 (status)
+    ScrollWheelUpdate,
+    //Int0 (delta)
+    UpdateMouseLocation,
+    //Vector0 (pos)
+    MarkGamepadActive,
+    //Int0 (gamepad), Bool0 (active or not)
+    MarkGamepadButton,
+    //Int0 (gamepad), Int1 (button), Char0 (status)
+    MarkGamepadAxis,
+    //Int0 (gamepad), int1 (axis), Float0 (value)
+    SetDisplayDims,
+    //Vector0 (display dimensions)
+    HandleResize,
+    //Vector0 (new dimensions) - Onresized event
 } UWPMessageType;
 
-typedef struct UWPMessage {
-	//The message type
-	UWPMessageType Type;
+typedef struct UWPMessage
+{
+    //The message type
+    UWPMessageType Type;
 
-	//Vector parameters
-	Vector2 Vector0;
+    //Vector parameters
+    Vector2 Vector0;
 
-	//Int parameters
-	int Int0;
-	int Int1;
+    //Int parameters
+    int Int0;
+    int Int1;
 
-	//Char parameters
-	char Char0;
+    //Char parameters
+    char Char0;
 
-	//Float parameters
-	float Float0;
+    //Float parameters
+    float Float0;
 
-	//Bool parameters
-	bool Bool0;
+    //Bool parameters
+    bool Bool0;
 
-	//More parameters can be added and fed to functions
+    //More parameters can be added and fed to functions
 } UWPMessage;
 
 //Allocate UWP Message
