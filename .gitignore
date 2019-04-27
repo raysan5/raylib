@@ -45,6 +45,7 @@ ipch/
 *.opensdf
 *.db
 *.opendb
+packages/
 
 # Ignore compiled binaries
 *.o
