@@ -422,8 +422,8 @@ RLAPI void rlTranslatef(float x, float y, float z);   // Multiply the current ma
 RLAPI void rlRotatef(float angleDeg, float x, float y, float z);  // Multiply the current matrix by a rotation matrix
 RLAPI void rlScalef(float x, float y, float z);       // Multiply the current matrix by a scaling matrix
 RLAPI void rlMultMatrixf(float *matf);                // Multiply the current matrix by another matrix
-RLAPI void rlFrustum(double left, double right, double bottom, double top, double near, double far);
-RLAPI void rlOrtho(double left, double right, double bottom, double top, double near, double far);
+RLAPI void rlFrustum(double left, double right, double bottom, double top, double znear, double zfar);
+RLAPI void rlOrtho(double left, double right, double bottom, double top, double znear, double zfar);
 RLAPI void rlViewport(int x, int y, int width, int height); // Set the viewport area
 
 //------------------------------------------------------------------------------------
@@ -888,14 +888,14 @@ void rlMatrixMode(int mode)
     }
 }
 
-void rlFrustum(double left, double right, double bottom, double top, double zNear, double zFar)
+void rlFrustum(double left, double right, double bottom, double top, double znear, double zfar)
 {
-    glFrustum(left, right, bottom, top, zNear, zFar);
+    glFrustum(left, right, bottom, top, znear, zfar);
 }
 
-void rlOrtho(double left, double right, double bottom, double top, double zNear, double zFar)
+void rlOrtho(double left, double right, double bottom, double top, double znear, double zfar)
 {
-    glOrtho(left, right, bottom, top, zNear, zFar);
+    glOrtho(left, right, bottom, top, znear, zfar);
 }
 
 void rlPushMatrix(void) { glPushMatrix(); }
@@ -1491,7 +1491,6 @@ void rlglInit(int width, int height)
     GLint numExt = 0;
 
 #if defined(GRAPHICS_API_OPENGL_33)
-
     // NOTE: On OpenGL 3.3 VAO and NPOT are supported by default
     vaoSupported = true;
 
@@ -1504,12 +1503,7 @@ void rlglInit(int width, int height)
     // NOTE: We don't need to check again supported extensions but we do (GLAD already dealt with that)
     glGetIntegerv(GL_NUM_EXTENSIONS, &numExt);
 
-#if defined(_MSC_VER)
     const char **extList = RL_MALLOC(sizeof(const char *)*numExt);
-#else
-    const char *extList[numExt];
-#endif
-
     for (int i = 0; i < numExt; i++) extList[i] = (char *)glGetStringi(GL_EXTENSIONS, i);
 
 #elif defined(GRAPHICS_API_OPENGL_ES2)
@@ -1523,10 +1517,10 @@ void rlglInit(int width, int height)
     // NOTE: String could be splitted using strtok() function (string.h)
     // NOTE: strtok() modifies the passed string, it can not be const
 
-    char *extList[512];     // Allocate 512 strings pointers (2 KB)
+    // Allocate 512 strings pointers (2 KB)
+    const char **extList = RL_MALLOC(sizeof(const char *)*512);
 
     extList[numExt] = strtok(extensionsDup, " ");
-
     while (extList[numExt] != NULL)
     {
         numExt++;
@@ -1619,9 +1613,7 @@ void rlglInit(int width, int height)
         if (strcmp(extList[i], (const char *)"GL_EXT_debug_marker") == 0) debugMarkerSupported = true;
     }
 
-#if defined(_WIN32) && defined(_MSC_VER) && !defined(PLATFORM_UWP) //is this a hotfix? I may need to find out why this is broken
     RL_FREE(extList);
-#endif
 
 #if defined(GRAPHICS_API_OPENGL_ES2)
     if (vaoSupported) TraceLog(LOG_INFO, "[EXTENSION] VAO extension detected, VAO functions initialized successfully");
@@ -1642,11 +1634,8 @@ void rlglInit(int width, int height)
 
     if (debugMarkerSupported) TraceLog(LOG_INFO, "[EXTENSION] Debug Marker supported");
 
-
-
     // Initialize buffers, default shaders and default textures
     //----------------------------------------------------------
-
     // Init default white texture
     unsigned char pixels[4] = { 255, 255, 255, 255 };   // 1 pixel RGBA (4 bytes)
     defaultTextureId = rlLoadTexture(pixels, 1, 1, UNCOMPRESSED_R8G8B8A8, 1);
@@ -4623,6 +4612,6 @@ int GetPixelDataSize(int width, int height, int format)
 
     return dataSize;
 }
-#endif
+#endif  // RLGL_STANDALONE
 
-#endif // RLGL_IMPLEMENTATION
+#endif  // RLGL_IMPLEMENTATION

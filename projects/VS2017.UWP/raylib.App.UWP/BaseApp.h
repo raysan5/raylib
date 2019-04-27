@@ -126,44 +126,43 @@ public:
 
     void Setup(int width, int height)
     {
-        //Set dimensions
+        // Set dimensions
         this->width = width;
         this->height = height;
     }
 
     virtual void Run()
     {
-        //Get display dimensions
+        // Get display dimensions
         DisplayInformation^ dInfo = DisplayInformation::GetForCurrentView();
         Vector2 screenSize = { dInfo->ScreenWidthInRawPixels, dInfo->ScreenHeightInRawPixels };
 
-        //Send display dimensions
-        UWPMessage* msg = CreateUWPMessage();
-        msg->Type = SetDisplayDims;
-        msg->Vector0 = screenSize;
+        // Send display dimensions
+        UWPMessage *msg = CreateUWPMessage();
+        msg->type = UWP_MSG_SET_DISPLAY_DIMS;
+        msg->paramVector0 = screenSize;
         UWPSendMessage(msg);
 
-        //Send the time to the core
+        // Send the time to the core
         using clock = std::chrono::high_resolution_clock;
         auto timeStart = clock::now();
 
-        //Set fps if 0
-        if (GetFPS() <= 0)
-            SetTargetFPS(60);
+        // Set fps if 0
+        if (GetFPS() <= 0) SetTargetFPS(60);
 
         while (!mWindowClosed)
         {
             if (mWindowVisible)
             {
-                //Send time
+                // Send time
                 auto delta = clock::now() - timeStart;
 
-                UWPMessage* timeMsg = CreateUWPMessage();
-                timeMsg->Type = SetGameTime;
-                timeMsg->Double0 = std::chrono::duration_cast<std::chrono::seconds>(delta).count();
+                UWPMessage *timeMsg = CreateUWPMessage();
+                timeMsg->type = UWP_MSG_SET_GAME_TIME;
+                timeMsg->paramDouble0 = std::chrono::duration_cast<std::chrono::seconds>(delta).count();
                 UWPSendMessage(timeMsg);
 
-                //Call update function
+                // Call update function
                 Update();
 
                 PollInput();
@@ -191,38 +190,38 @@ protected:
     {
         // Process Messages
         {
-            //Loop over pending messages
+            // Loop over pending messages
             while (UWPHasMessages())
             {
-                //Get the message
+                // Get the message
                 auto msg = UWPGetMessage();
 
-                //Carry out the command
-                switch(msg->Type)
+                // Carry out the command
+                switch(msg->type)
                 {
-                case ShowMouse: //Do the same thing because of how UWP works...
-                case UnlockMouse:
+                case UWP_MSG_SHOW_MOUSE: // Do the same thing because of how UWP works...
+                case UWP_MSG_UNLOCK_MOUSE:
                 {
                     CoreWindow::GetForCurrentThread()->PointerCursor = regularCursor;
                     cursorLocked = false;
                     MoveMouse(GetMousePosition());
                     break;
                 }
-                case HideMouse: //Do the same thing because of how UWP works...
-                case LockMouse:
+                case UWP_MSG_HIDE_MOUSE: // Do the same thing because of how UWP works...
+                case UWP_MSG_LOCK_MOUSE:
                 {
                     CoreWindow::GetForCurrentThread()->PointerCursor = nullptr;
                     cursorLocked = true;
                     break;
                 }
-                case SetMouseLocation:
+                case UWP_MSG_SET_MOUSE_LOCATION:
                 {
-                    MoveMouse(msg->Vector0);
+                    MoveMouse(msg->paramVector0);
                     break;
                 }
                 }
 
-                //Delete the message
+                // Delete the message
                 DeleteUWPMessage(msg);
             }
         }
@@ -233,8 +232,8 @@ protected:
                 auto state = CoreWindow::GetForCurrentThread()->GetKeyState((Windows::System::VirtualKey) k);
 
 #ifdef HOLDHACK
-                //Super hacky way of waiting three frames to see if we are ready to register the key as deregistered
-                //This will wait an entire 4 frames before deregistering the key, this makes sure that the key is not flickering
+                // Super hacky way of waiting three frames to see if we are ready to register the key as deregistered
+                // This will wait an entire 4 frames before deregistering the key, this makes sure that the key is not flickering
                 if (KeyboardStateHack[k] == 2)
                 {
                     if ((state & CoreVirtualKeyStates::None) == CoreVirtualKeyStates::None)
@@ -261,10 +260,10 @@ protected:
                     }
                 }
 #endif
-                //Left and right alt, KeyUp and KeyDown are not called for it
-                //No need to hack because this is not a character
+                // Left and right alt, KeyUp and KeyDown are not called for it
+                // No need to hack because this is not a character
 
-                //TODO: Maybe do all other key registrations like this, no more key events?
+                // TODO: Maybe do all other key registrations like this, no more key events?
 
                 if (k == 0xA4 || k == 0xA5)
                 {
@@ -283,7 +282,8 @@ protected:
         // Process Mouse
         {
             
-            if (CurrentPointerID > -1) {
+            if (CurrentPointerID > -1)
+            {
                 auto point = PointerPoint::GetCurrentPoint(CurrentPointerID);
                 auto props = point->Properties;
 
@@ -355,9 +355,9 @@ protected:
                 // e.g. player 1, 2, and 3 are playing a game - if player2 disconnects, p3's controller would now be mapped to p2's character since p3 is now second in the list.
 
                 UWPMessage* msg = CreateUWPMessage();
-                msg->Type = MarkGamepadActive;
-                msg->Int0 = i;
-                msg->Bool0 = i < Gamepad::Gamepads->Size;
+                msg->type = UWP_MSG_SET_GAMEPAD_ACTIVE;
+                msg->paramInt0 = i;
+                msg->paramBool0 = i < Gamepad::Gamepads->Size;
                 UWPSendMessage(msg);
             }
 
@@ -410,7 +410,7 @@ protected:
     void OnWindowSizeChanged(Windows::UI::Core::CoreWindow^ sender, Windows::UI::Core::WindowSizeChangedEventArgs^ args)
     {
         UWPMessage* msg = CreateUWPMessage();
-        msg->Type = HandleResize;
+        msg->type = UWP_MSG_HANDLE_RESIZE;
         UWPSendMessage(msg);
     }
 
@@ -439,8 +439,8 @@ protected:
     void PointerWheelChanged(Windows::UI::Core::CoreWindow ^sender, Windows::UI::Core::PointerEventArgs^ args)
     {
         UWPMessage* msg = CreateUWPMessage();
-        msg->Type = ScrollWheelUpdate;
-        msg->Float0 = args->CurrentPoint->Properties->MouseWheelDelta;
+        msg->type = UWP_MSG_SCROLL_WHEEL_UPDATE;
+        msg->paramFloat0 = args->CurrentPoint->Properties->MouseWheelDelta;
         UWPSendMessage(msg);
     }
 
@@ -453,7 +453,7 @@ protected:
     void OnKeyDown(Windows::UI::Core::CoreWindow ^ sender, Windows::UI::Core::KeyEventArgs ^ args)
     {
 #ifdef HOLDHACK
-        //Start the hack
+        // Start the hack
         KeyboardStateHack[(int)args->VirtualKey] = 1;
 #endif
 
@@ -463,7 +463,7 @@ protected:
     void OnKeyUp(Windows::UI::Core::CoreWindow ^ sender, Windows::UI::Core::KeyEventArgs ^ args)
     {
 #ifdef HOLDHACK
-        //The same hack
+        // The same hack
         if (KeyboardStateHack[(int)args->VirtualKey] == 1)
         {
             KeyboardStateHack[(int)args->VirtualKey] = 2;
@@ -482,7 +482,7 @@ protected:
             KeyboardStateHack[(int)args->VirtualKey] = 0;
         }
 #else
-        //No hack, allow flickers
+        // No hack, allow flickers
         RegisterKey((int)args->VirtualKey, 0);
 #endif
     }
@@ -492,9 +492,9 @@ private:
     void RegisterKey(int key, char status)
     {
         UWPMessage* msg = CreateUWPMessage();
-        msg->Type = UWPMessageType::RegisterKey;
-        msg->Int0 = key;
-        msg->Char0 = status;
+        msg->type = UWPMessageType::UWP_MSG_REGISTER_KEY;
+        msg->paramInt0 = key;
+        msg->paramChar0 = status;
         UWPSendMessage(msg);
     }
 
@@ -508,37 +508,37 @@ private:
     void RegisterGamepadButton(int gamepad, int button, char status)
     {
         UWPMessage* msg = CreateUWPMessage();
-        msg->Type = MarkGamepadButton;
-        msg->Int0 = gamepad;
-        msg->Int1 = button;
-        msg->Char0 = status;
+        msg->type = UWP_MSG_SET_GAMEPAD_BUTTON;
+        msg->paramInt0 = gamepad;
+        msg->paramInt1 = button;
+        msg->paramChar0 = status;
         UWPSendMessage(msg);
     }
 
     void RegisterGamepadAxis(int gamepad, int axis, float value)
     {
         UWPMessage* msg = CreateUWPMessage();
-        msg->Type = MarkGamepadAxis;
-        msg->Int0 = gamepad;
-        msg->Int1 = axis;
-        msg->Float0 = value;
+        msg->type = UWP_MSG_SET_GAMEPAD_AXIS;
+        msg->paramInt0 = gamepad;
+        msg->paramInt1 = axis;
+        msg->paramFloat0 = value;
         UWPSendMessage(msg);
     }
 
     void UpdateMousePosition(Vector2 pos)
     {
         UWPMessage* msg = CreateUWPMessage();
-        msg->Type = UpdateMouseLocation;
-        msg->Vector0 = pos;
+        msg->type = UWP_MSG_UPDATE_MOUSE_LOCATION;
+        msg->paramVector0 = pos;
         UWPSendMessage(msg);
     }
 
     void RegisterClick(int button, char status)
     {
         UWPMessage* msg = CreateUWPMessage();
-        msg->Type = UWPMessageType::RegisterClick;
-        msg->Int0 = button;
-        msg->Char0 = status;
+        msg->type = UWPMessageType::UWP_MSG_REGISTER_CLICK;
+        msg->paramInt0 = button;
+        msg->paramChar0 = status;
         UWPSendMessage(msg);
     }
 
@@ -551,11 +551,11 @@ private:
     int CurrentPointerID = -1;
 
 #ifdef HOLDHACK
-    char KeyboardStateHack[0xA6]; //0xA6 because the highest key we compare against is 0xA5
+    char KeyboardStateHack[0xA6]; // 0xA6 because the highest key we compare against is 0xA5
 #endif
 };
 
-//Application source for creating the program
+// Application source for creating the program
 template<typename AppType>
 ref class ApplicationSource sealed : Windows::ApplicationModel::Core::IFrameworkViewSource
 {
