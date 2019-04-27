@@ -134,7 +134,7 @@
 #include <ctype.h>          // Required for: tolower() [Used in IsFileExtension()]
 #include <sys/stat.h>       // Required for stat() [Used in GetLastWriteTime()]
 
-#if defined(PLATFORM_DESKTOP) && defined(_WIN32) && (defined(_MSC_VER) || defined(__TINYC__))
+#if (defined(PLATFORM_DESKTOP) || defined(PLATFORM_UWP)) && defined(_WIN32) && (defined(_MSC_VER) || defined(__TINYC__))
     #include "external/dirent.h"    // Required for: DIR, opendir(), closedir() [Used in GetDirectoryFiles()]
 #else
     #include <dirent.h>             // Required for: DIR, opendir(), closedir() [Used in GetDirectoryFiles()]
@@ -391,6 +391,7 @@ static int gamepadStream[MAX_GAMEPADS] = { -1 };// Gamepad device file descripto
 static pthread_t gamepadThreadId;               // Gamepad reading thread id
 static char gamepadName[64];                    // Gamepad name holder
 #endif
+
 //-----------------------------------------------------------------------------------
 
 // Timming system variables
@@ -401,6 +402,7 @@ static double updateTime = 0.0;             // Time measure for frame update
 static double drawTime = 0.0;               // Time measure for frame draw
 static double frameTime = 0.0;              // Time measure for one frame
 static double targetTime = 0.0;             // Desired time for one frame, if 0 not applied
+
 //-----------------------------------------------------------------------------------
 
 // Config internal variables
@@ -484,10 +486,6 @@ static void EventThreadSpawn(char *device);             // Identifies a input de
 static void *EventThread(void *arg);                    // Input device events reading thread
 static void InitGamepad(void);                          // Init raw gamepad input
 static void *GamepadThread(void *arg);                  // Mouse reading thread
-#endif
-
-#if defined(PLATFORM_UWP)
-// TODO: Define functions required to manage inputs
 #endif
 
 #if defined(_WIN32)
@@ -810,6 +808,7 @@ void SetWindowIcon(Image image)
 // Set title for window (only PLATFORM_DESKTOP)
 void SetWindowTitle(const char *title)
 {
+    windowTitle = title;
 #if defined(PLATFORM_DESKTOP)
     glfwSetWindowTitle(window, title);
 #endif
@@ -887,7 +886,7 @@ int GetScreenHeight(void)
 // Get native window handle
 void *GetWindowHandle(void)
 {
-#if defined(_WIN32)
+#if defined(PLATFORM_DESKTOP) && defined(_WIN32)
     // NOTE: Returned handle is: void *HWND (windows.h)
     return glfwGetWin32Window(window);
 #elif defined(__linux__)
@@ -1027,6 +1026,11 @@ void ShowCursor(void)
 #if defined(PLATFORM_DESKTOP)
     glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_NORMAL);
 #endif
+#if defined(PLATFORM_UWP)
+    UWPMessage* msg = CreateUWPMessage();
+    msg->Type = ShowMouse;
+    SendMessageToUWP(msg);
+#endif
     cursorHidden = false;
 }
 
@@ -1035,6 +1039,11 @@ void HideCursor(void)
 {
 #if defined(PLATFORM_DESKTOP)
     glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_HIDDEN);
+#endif
+#if defined(PLATFORM_UWP)
+    UWPMessage* msg = CreateUWPMessage();
+    msg->Type = HideMouse;
+    SendMessageToUWP(msg);
 #endif
     cursorHidden = true;
 }
@@ -1054,6 +1063,11 @@ void EnableCursor(void)
 #if defined(PLATFORM_WEB)
     toggleCursorLock = true;
 #endif
+#if defined(PLATFORM_UWP)
+    UWPMessage* msg = CreateUWPMessage();
+    msg->Type = LockMouse;
+    SendMessageToUWP(msg);
+#endif
     cursorHidden = false;
 }
 
@@ -1065,6 +1079,11 @@ void DisableCursor(void)
 #endif
 #if defined(PLATFORM_WEB)
     toggleCursorLock = true;
+#endif
+#if defined(PLATFORM_UWP)
+    UWPMessage* msg = CreateUWPMessage();
+    msg->Type = UnlockMouse;
+    SendMessageToUWP(msg);
 #endif
     cursorHidden = true;
 }
@@ -1145,6 +1164,8 @@ void EndDrawing(void)
 
         frameTime += extraTime;
     }
+
+	return;
 }
 
 // Initialize 2D mode with custom camera (2D)
@@ -1420,6 +1441,11 @@ double GetTime(void)
     uint64_t time = (uint64_t)ts.tv_sec*1000000000LLU + (uint64_t)ts.tv_nsec;
 
     return (double)(time - baseTime)*1e-9;  // Elapsed time since InitTimer()
+#endif
+
+#if defined(PLATFORM_UWP)
+    //Updated through messages
+	return currentTime;
 #endif
 }
 
@@ -2209,6 +2235,13 @@ void SetMousePosition(int x, int y)
     // NOTE: emscripten not implemented
     glfwSetCursorPos(window, mousePosition.x, mousePosition.y);
 #endif
+#if defined(PLATFORM_UWP)
+    UWPMessage* msg = CreateUWPMessage();
+    msg->Type = SetMouseLocation;
+    msg->Vector0.x = mousePosition.x;
+    msg->Vector0.y = mousePosition.y;
+    SendMessageToUWP(msg);
+#endif
 }
 
 // Set mouse offset
@@ -2736,6 +2769,8 @@ static bool InitGraphicsDevice(int width, int height)
     eglQuerySurface(display, surface, EGL_WIDTH, &screenWidth);
     eglQuerySurface(display, surface, EGL_HEIGHT, &screenHeight);
 
+    //SetupFramebuffer(displayWidth, displayHeight); //Borked
+
 #else   // PLATFORM_ANDROID, PLATFORM_RPI
     EGLint numConfigs;
 
@@ -2906,8 +2941,8 @@ static void SetupFramebuffer(int width, int height)
         TraceLog(LOG_WARNING, "DOWNSCALING: Required screen size (%ix%i) is bigger than display size (%ix%i)", screenWidth, screenHeight, displayWidth, displayHeight);
 
         // Downscaling to fit display with border-bars
-        float widthRatio = (float)displayWidth/(float)screenWidth;
-        float heightRatio = (float)displayHeight/(float)screenHeight;
+        float widthRatio = (float)displayWidth / (float)screenWidth;
+        float heightRatio = (float)displayHeight / (float)screenHeight;
 
         if (widthRatio <= heightRatio)
         {
@@ -2925,7 +2960,7 @@ static void SetupFramebuffer(int width, int height)
         }
 
         // Screen scaling required
-        float scaleRatio = (float)renderWidth/(float)screenWidth;
+        float scaleRatio = (float)renderWidth / (float)screenWidth;
         screenScaling = MatrixScale(scaleRatio, scaleRatio, scaleRatio);
 
         // NOTE: We render to full display resolution!
@@ -2941,13 +2976,13 @@ static void SetupFramebuffer(int width, int height)
         TraceLog(LOG_INFO, "UPSCALING: Required screen size: %i x %i -> Display size: %i x %i", screenWidth, screenHeight, displayWidth, displayHeight);
 
         // Upscaling to fit display with border-bars
-        float displayRatio = (float)displayWidth/(float)displayHeight;
-        float screenRatio = (float)screenWidth/(float)screenHeight;
+        float displayRatio = (float)displayWidth / (float)displayHeight;
+        float screenRatio = (float)screenWidth / (float)screenHeight;
 
         if (displayRatio <= screenRatio)
         {
             renderWidth = screenWidth;
-            renderHeight = (int)round((float)screenWidth/displayRatio);
+            renderHeight = (int)round((float)screenWidth / displayRatio);
             renderOffsetX = 0;
             renderOffsetY = (renderHeight - screenHeight);
         }
@@ -2996,7 +3031,7 @@ static void InitTimer(void)
 // http://stackoverflow.com/questions/43057578/c-programming-win32-games-sleep-taking-longer-than-expected
 static void Wait(float ms)
 {
-#if defined(SUPPORT_BUSY_WAIT_LOOP)
+#if defined(SUPPORT_BUSY_WAIT_LOOP) && !defined(PLATFORM_UWP)
     double prevTime = GetTime();
     double nextTime = 0.0;
 
@@ -3029,7 +3064,7 @@ static bool GetKeyStatus(int key)
     // NOTE: Android supports up to 260 keys
     if (key < 0 || key > 260) return false;
     else return currentKeyState[key];
-#elif defined(PLATFORM_RPI)
+#elif defined(PLATFORM_RPI) || defined(PLATFORM_UWP)
     // NOTE: Keys states are filled in PollInputEvents()
     if (key < 0 || key > 511) return false;
     else return currentKeyState[key];
@@ -3044,7 +3079,7 @@ static bool GetMouseButtonStatus(int button)
 #elif defined(PLATFORM_ANDROID)
     // TODO: Check for virtual mouse?
     return false;
-#elif defined(PLATFORM_RPI)
+#elif defined(PLATFORM_RPI) || defined(PLATFORM_UWP)
     // NOTE: Mouse buttons states are filled in PollInputEvents()
     return currentMouseState[button];
 #endif
@@ -3088,6 +3123,197 @@ static void PollInputEvents(void)
         previousMouseState[i] = currentMouseState[i];
         currentMouseState[i] = currentMouseStateEvdev[i];
     }
+#endif
+
+#if defined(PLATFORM_UWP)
+
+    // Register previous keys states
+    for (int i = 0; i < 512; i++) previousKeyState[i] = currentKeyState[i];
+
+    for (int i = 0; i < MAX_GAMEPADS; i++)
+    {
+        if (gamepadReady[i])
+        {
+            for (int k = 0; k < MAX_GAMEPAD_BUTTONS; k++) previousGamepadState[i][k] = currentGamepadState[i][k];
+        }
+    }
+
+    // Register previous mouse states
+    previousMouseWheelY = currentMouseWheelY;
+    currentMouseWheelY = 0;
+    for (int i = 0; i < 3; i++)
+    {
+        previousMouseState[i] = currentMouseState[i];
+
+    }
+
+    // Loop over pending messages
+    while (HasMessageFromUWP())
+    {
+        UWPMessage* msg = GetMessageFromUWP();
+
+        switch (msg->Type)
+        {
+        case RegisterKey:
+        {
+            //Convert from virtualKey
+            int actualKey = -1;
+
+            switch (msg->Int0)
+            {
+            case 0x08: actualKey = KEY_BACKSPACE; break;
+            case 0x20: actualKey = KEY_SPACE; break;
+            case 0x1B: actualKey = KEY_ESCAPE; break;
+            case 0x0D: actualKey = KEY_ENTER; break;
+            case 0x2E: actualKey = KEY_DELETE; break;
+            case 0x27: actualKey = KEY_RIGHT; break;
+            case 0x25: actualKey = KEY_LEFT; break;
+            case 0x28: actualKey = KEY_DOWN; break;
+            case 0x26: actualKey = KEY_UP; break;
+            case 0x70: actualKey = KEY_F1; break;
+            case 0x71: actualKey = KEY_F2; break;
+            case 0x72: actualKey = KEY_F3; break;
+            case 0x73: actualKey = KEY_F4; break;
+            case 0x74: actualKey = KEY_F5; break;
+            case 0x75: actualKey = KEY_F6; break;
+            case 0x76: actualKey = KEY_F7; break;
+            case 0x77: actualKey = KEY_F8; break;
+            case 0x78: actualKey = KEY_F9; break;
+            case 0x79: actualKey = KEY_F10; break;
+            case 0x7A: actualKey = KEY_F11; break;
+            case 0x7B: actualKey = KEY_F12; break;
+            case 0xA0: actualKey = KEY_LEFT_SHIFT; break;
+            case 0xA2: actualKey = KEY_LEFT_CONTROL; break;
+            case 0xA4: actualKey = KEY_LEFT_ALT; break;
+            case 0xA1: actualKey = KEY_RIGHT_SHIFT; break;
+            case 0xA3: actualKey = KEY_RIGHT_CONTROL; break;
+            case 0xA5: actualKey = KEY_RIGHT_ALT; break;
+            case 0x30: actualKey = KEY_ZERO; break;
+            case 0x31: actualKey = KEY_ONE; break;
+            case 0x32: actualKey = KEY_TWO; break;
+            case 0x33: actualKey = KEY_THREE; break;
+            case 0x34: actualKey = KEY_FOUR; break;
+            case 0x35: actualKey = KEY_FIVE; break;
+            case 0x36: actualKey = KEY_SIX; break;
+            case 0x37: actualKey = KEY_SEVEN; break;
+            case 0x38: actualKey = KEY_EIGHT; break;
+            case 0x39: actualKey = KEY_NINE; break;
+            case 0x41: actualKey = KEY_A; break;
+            case 0x42: actualKey = KEY_B; break;
+            case 0x43: actualKey = KEY_C; break;
+            case 0x44: actualKey = KEY_D; break;
+            case 0x45: actualKey = KEY_E; break;
+            case 0x46: actualKey = KEY_F; break;
+            case 0x47: actualKey = KEY_G; break;
+            case 0x48: actualKey = KEY_H; break;
+            case 0x49: actualKey = KEY_I; break;
+            case 0x4A: actualKey = KEY_J; break;
+            case 0x4B: actualKey = KEY_K; break;
+            case 0x4C: actualKey = KEY_L; break;
+            case 0x4D: actualKey = KEY_M; break;
+            case 0x4E: actualKey = KEY_N; break;
+            case 0x4F: actualKey = KEY_O; break;
+            case 0x50: actualKey = KEY_P; break;
+            case 0x51: actualKey = KEY_Q; break;
+            case 0x52: actualKey = KEY_R; break;
+            case 0x53: actualKey = KEY_S; break;
+            case 0x54: actualKey = KEY_T; break;
+            case 0x55: actualKey = KEY_U; break;
+            case 0x56: actualKey = KEY_V; break;
+            case 0x57: actualKey = KEY_W; break;
+            case 0x58: actualKey = KEY_X; break;
+            case 0x59: actualKey = KEY_Y; break;
+            case 0x5A: actualKey = KEY_Z; break;
+            }
+
+            if (actualKey > -1)
+                currentKeyState[actualKey] = msg->Char0;
+            break;
+        }
+
+        case RegisterClick:
+        {
+            currentMouseState[msg->Int0] = msg->Char0;
+            break;
+        }
+
+        case ScrollWheelUpdate:
+        {
+            currentMouseWheelY += msg->Int0;
+            break;
+        }
+
+        case UpdateMouseLocation:
+        {
+            mousePosition = msg->Vector0;
+            break;
+        }
+
+        case MarkGamepadActive:
+        {
+            if (msg->Int0 < MAX_GAMEPADS)
+                gamepadReady[msg->Int0] = msg->Bool0;
+            break;
+        }
+
+        case MarkGamepadButton:
+        {
+            if (msg->Int0 < MAX_GAMEPADS && msg->Int1 < MAX_GAMEPAD_BUTTONS)
+                currentGamepadState[msg->Int0][msg->Int1] = msg->Char0;
+            break;
+        }
+
+        case MarkGamepadAxis:
+        {
+            if (msg->Int0 < MAX_GAMEPADS && msg->Int1 < MAX_GAMEPAD_AXIS)
+                gamepadAxisState[msg->Int0][msg->Int1] = msg->Float0;
+            break;
+        }
+
+        case SetDisplayDims:
+        {
+            displayWidth = msg->Vector0.x;
+            displayHeight = msg->Vector0.y;
+            break;
+        }
+
+        case HandleResize:
+        {
+            eglQuerySurface(display, surface, EGL_WIDTH, &screenWidth);
+            eglQuerySurface(display, surface, EGL_HEIGHT, &screenHeight);
+
+            // If window is resized, viewport and projection matrix needs to be re-calculated
+            rlViewport(0, 0, screenWidth, screenHeight);            // Set viewport width and height
+            rlMatrixMode(RL_PROJECTION);                // Switch to PROJECTION matrix
+            rlLoadIdentity();                           // Reset current matrix (PROJECTION)
+            rlOrtho(0, screenWidth, screenHeight, 0, 0.0f, 1.0f);   // Orthographic projection mode with top-left corner at (0,0)
+            rlMatrixMode(RL_MODELVIEW);                 // Switch back to MODELVIEW matrix
+            rlLoadIdentity();                           // Reset current matrix (MODELVIEW)
+            rlClearScreenBuffers();                     // Clear screen buffers (color and depth)
+
+            // Window size must be updated to be used on 3D mode to get new aspect ratio (BeginMode3D())
+            // NOTE: Be careful! GLFW3 will choose the closest fullscreen resolution supported by current monitor,
+            // for example, if reescaling back to 800x450 (desired), it could set 720x480 (closest fullscreen supported)
+            currentWidth = screenWidth;
+            currentHeight = screenHeight;
+
+            // NOTE: Postprocessing texture is not scaled to new size
+
+            windowResized = true;
+            break;
+        }
+
+		case SetGameTime:
+        {
+			currentTime = msg->Double0;
+			break;
+        }
+
+        }
+
+        DeleteUWPMessage(msg); //Delete, we are done
+    }
+
 #endif
 
 #if defined(PLATFORM_DESKTOP) || defined(PLATFORM_WEB)
@@ -4577,7 +4803,7 @@ static void *GamepadThread(void *arg)
 // Plays raylib logo appearing animation
 static void LogoAnimation(void)
 {
-#if !defined(PLATFORM_WEB)
+#if !defined(PLATFORM_WEB) && !defined(PLATFORM_UWP)
     int logoPositionX = screenWidth/2 - 128;
     int logoPositionY = screenHeight/2 - 128;
 
