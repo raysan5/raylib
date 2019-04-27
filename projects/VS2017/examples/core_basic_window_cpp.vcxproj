@@ -167,12 +167,13 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ProjectReference Include="..\raylib\raylib.vcxproj">
-      <Project>{e89d61ac-55de-4482-afd4-df7242ebc859}</Project>
-    </ProjectReference>
+    <ClCompile Include="..\..\..\examples\core\core_basic_window.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="..\..\..\examples\core\core_basic_window.cpp" />
+    <ProjectReference Include="..\raylib\raylib.vcxproj">
+      <Project>{e89d61ac-55de-4482-afd4-df7242ebc859}</Project>
+      <UseLibraryDependencyInputs>true</UseLibraryDependencyInputs>
+    </ProjectReference>
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

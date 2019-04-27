@@ -619,6 +619,57 @@ typedef enum {
     GAMEPAD_PLAYER4     = 3
 } GamepadNumber;
 
+// Gamepad Buttons
+typedef enum
+{
+    //This is here just for error checking
+    GAMEPAD_BUTTON_UNKNOWN = 0,
+
+    //This is normally ABXY/Circle, Triangle, Square, Cross.   No support for 6 button controllers though..
+    GAMEPAD_BUTTON_LEFT_FACE_UP,
+	GAMEPAD_BUTTON_LEFT_FACE_RIGHT,
+	GAMEPAD_BUTTON_LEFT_FACE_DOWN,
+    GAMEPAD_BUTTON_LEFT_FACE_LEFT,
+  
+
+    //This is normally a DPAD
+	GAMEPAD_BUTTON_RIGHT_FACE_UP,
+	GAMEPAD_BUTTON_RIGHT_FACE_RIGHT,
+	GAMEPAD_BUTTON_RIGHT_FACE_DOWN,
+	GAMEPAD_BUTTON_RIGHT_FACE_LEFT,
+
+    //Triggers
+    GAMEPAD_BUTTON_LEFT_TRIGGER_1,
+    GAMEPAD_BUTTON_LEFT_TRIGGER_2,
+	GAMEPAD_BUTTON_RIGHT_TRIGGER_1,
+	GAMEPAD_BUTTON_RIGHT_TRIGGER_2,
+
+    //These are buttons in the center of the gamepad
+    GAMEPAD_BUTTON_MIDDLE_LEFT, //PS3 Select
+    GAMEPAD_BUTTON_MIDDLE, //PS Button/XBOX Button
+    GAMEPAD_BUTTON_MIDDLE_RIGHT, //PS3 Start
+
+    //These are the joystick press in buttons
+    GAMEPAD_BUTTON_LEFT_THUMB,
+	GAMEPAD_BUTTON_RIGHT_THUMB
+} GamepadButton;
+
+typedef enum
+{
+    GAMEPAD_AXIS_UNKNOWN = 0,
+    //Left stick
+	GAMEPAD_AXIS_LEFT_X,
+	GAMEPAD_AXIS_LEFT_Y,
+
+    //Right stick
+	GAMEPAD_AXIS_RIGHT_X,
+	GAMEPAD_AXIS_RIGHT_Y,
+
+    //Pressure levels
+	GAMEPAD_AXIS_LEFT_TRIGGER,    // [1..-1] (pressure-level)
+	GAMEPAD_AXIS_RIGHT_TRIGGER     // [1..-1] (pressure-level)
+} GamepadAxis;
+
 // PS3 USB Controller Buttons
 // TODO: Provide a generic way to list gamepad controls schemes,
 // defining specific controls schemes is not a good option
