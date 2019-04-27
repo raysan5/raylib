@@ -37,6 +37,7 @@
 #include PCH
 #endif
 
+#include <chrono>
 #include <memory>
 #include <wrl.h>
 
@@ -142,10 +143,26 @@ public:
 		msg->Vector0 = screenSize;
 		UWPSendMessage(msg);
 
+		//Send the time to the core
+		using clock = std::chrono::high_resolution_clock;
+		auto timeStart = clock::now();
+
+        //Set fps if 0
+		if (GetFPS() <= 0)
+			SetTargetFPS(60);
+
 		while (!mWindowClosed)
 		{
 			if (mWindowVisible)
 			{
+                //Send time
+				auto delta = clock::now() - timeStart;
+
+				UWPMessage* timeMsg = CreateUWPMessage();
+				timeMsg->Type = SetGameTime;
+				timeMsg->Double0 = std::chrono::duration_cast<std::chrono::seconds>(delta).count();
+				UWPSendMessage(timeMsg);
+
 				//Call update function
 				Update();
 

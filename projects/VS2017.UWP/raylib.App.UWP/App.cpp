@@ -25,11 +25,12 @@ App::App()
 
 static int posX = 100;
 static int posY = 100;
-static int time = 0;
+static int gTime = 0;
 
 // This method is called every frame
 void App::Update()
 {
+	//return;
 	// Draw
 	BeginDrawing();
 	
@@ -71,7 +72,7 @@ void App::Update()
 		pos -= GetMouseWheelMove();
 		
 		DrawRectangle(280, pos + 50, 20, 20, BLACK);
-		DrawRectangle(250, 280 + (time++ % 60), 10, 10, PURPLE);
+		DrawRectangle(250, 280 + (gTime++ % 60), 10, 10, PURPLE);
 
 	EndDrawing();
 }

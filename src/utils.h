@@ -84,6 +84,7 @@ typedef enum
     MarkGamepadAxis,//Int0 (gamepad), int1 (axis), Float0 (value)
     SetDisplayDims, //Vector0 (display dimensions)
     HandleResize, //Vector0 (new dimensions) - Onresized event
+    SetGameTime, //Int0
 } UWPMessageType;
 
 typedef struct UWPMessage
@@ -103,6 +104,9 @@ typedef struct UWPMessage
 
     //Float parameters
     float Float0;
+
+    //Double parameters
+	double Double0;
 
     //Bool parameters
     bool Bool0;

@@ -402,6 +402,7 @@ static double updateTime = 0.0;             // Time measure for frame update
 static double drawTime = 0.0;               // Time measure for frame draw
 static double frameTime = 0.0;              // Time measure for one frame
 static double targetTime = 0.0;             // Desired time for one frame, if 0 not applied
+
 //-----------------------------------------------------------------------------------
 
 // Config internal variables
@@ -1163,6 +1164,8 @@ void EndDrawing(void)
 
         frameTime += extraTime;
     }
+
+	return;
 }
 
 // Initialize 2D mode with custom camera (2D)
@@ -1438,6 +1441,11 @@ double GetTime(void)
     uint64_t time = (uint64_t)ts.tv_sec*1000000000LLU + (uint64_t)ts.tv_nsec;
 
     return (double)(time - baseTime)*1e-9;  // Elapsed time since InitTimer()
+#endif
+
+#if defined(PLATFORM_UWP)
+    //Updated through messages
+	return currentTime;
 #endif
 }
 
@@ -3023,7 +3031,7 @@ static void InitTimer(void)
 // http://stackoverflow.com/questions/43057578/c-programming-win32-games-sleep-taking-longer-than-expected
 static void Wait(float ms)
 {
-#if defined(SUPPORT_BUSY_WAIT_LOOP)
+#if defined(SUPPORT_BUSY_WAIT_LOOP) && !defined(PLATFORM_UWP)
     double prevTime = GetTime();
     double nextTime = 0.0;
 
@@ -3293,6 +3301,12 @@ static void PollInputEvents(void)
 
             windowResized = true;
             break;
+        }
+
+		case SetGameTime:
+        {
+			currentTime = msg->Double0;
+			break;
         }
 
         }
@@ -4789,7 +4803,7 @@ static void *GamepadThread(void *arg)
 // Plays raylib logo appearing animation
 static void LogoAnimation(void)
 {
-#if !defined(PLATFORM_WEB)
+#if !defined(PLATFORM_WEB) && !defined(PLATFORM_UWP)
     int logoPositionX = screenWidth/2 - 128;
     int logoPositionY = screenHeight/2 - 128;
 

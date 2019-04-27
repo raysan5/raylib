@@ -223,6 +223,7 @@ UWPMessage* CreateUWPMessage(void)
     msg->Int1 = 0;
     msg->Char0 = 0;
     msg->Float0 = 0;
+	msg->Double0 = 0;
     msg->Bool0 = false;
     return msg;
 }
