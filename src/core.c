@@ -391,7 +391,6 @@ static int gamepadStream[MAX_GAMEPADS] = { -1 };// Gamepad device file descripto
 static pthread_t gamepadThreadId;               // Gamepad reading thread id
 static char gamepadName[64];                    // Gamepad name holder
 #endif
-
 //-----------------------------------------------------------------------------------
 
 // Timming system variables
@@ -402,7 +401,6 @@ static double updateTime = 0.0;             // Time measure for frame update
 static double drawTime = 0.0;               // Time measure for frame draw
 static double frameTime = 0.0;              // Time measure for one frame
 static double targetTime = 0.0;             // Desired time for one frame, if 0 not applied
-
 //-----------------------------------------------------------------------------------
 
 // Config internal variables
@@ -1027,8 +1025,8 @@ void ShowCursor(void)
     glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_NORMAL);
 #endif
 #if defined(PLATFORM_UWP)
-    UWPMessage* msg = CreateUWPMessage();
-    msg->Type = ShowMouse;
+    UWPMessage *msg = CreateUWPMessage();
+    msg->type = UWP_MSG_SHOW_MOUSE;
     SendMessageToUWP(msg);
 #endif
     cursorHidden = false;
@@ -1041,8 +1039,8 @@ void HideCursor(void)
     glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_HIDDEN);
 #endif
 #if defined(PLATFORM_UWP)
-    UWPMessage* msg = CreateUWPMessage();
-    msg->Type = HideMouse;
+    UWPMessage *msg = CreateUWPMessage();
+    msg->type = UWP_MSG_HIDE_MOUSE;
     SendMessageToUWP(msg);
 #endif
     cursorHidden = true;
@@ -1064,8 +1062,8 @@ void EnableCursor(void)
     toggleCursorLock = true;
 #endif
 #if defined(PLATFORM_UWP)
-    UWPMessage* msg = CreateUWPMessage();
-    msg->Type = LockMouse;
+    UWPMessage *msg = CreateUWPMessage();
+    msg->type = UWP_MSG_LOCK_MOUSE;
     SendMessageToUWP(msg);
 #endif
     cursorHidden = false;
@@ -1081,8 +1079,8 @@ void DisableCursor(void)
     toggleCursorLock = true;
 #endif
 #if defined(PLATFORM_UWP)
-    UWPMessage* msg = CreateUWPMessage();
-    msg->Type = UnlockMouse;
+    UWPMessage *msg = CreateUWPMessage();
+    msg->type = UWP_MSG_UNLOCK_MOUSE;
     SendMessageToUWP(msg);
 #endif
     cursorHidden = true;
@@ -1165,7 +1163,7 @@ void EndDrawing(void)
         frameTime += extraTime;
     }
 
-	return;
+    return;
 }
 
 // Initialize 2D mode with custom camera (2D)
@@ -1444,8 +1442,8 @@ double GetTime(void)
 #endif
 
 #if defined(PLATFORM_UWP)
-    //Updated through messages
-	return currentTime;
+    // Updated through messages
+    return currentTime;
 #endif
 }
 
@@ -2236,10 +2234,10 @@ void SetMousePosition(int x, int y)
     glfwSetCursorPos(window, mousePosition.x, mousePosition.y);
 #endif
 #if defined(PLATFORM_UWP)
-    UWPMessage* msg = CreateUWPMessage();
-    msg->Type = SetMouseLocation;
-    msg->Vector0.x = mousePosition.x;
-    msg->Vector0.y = mousePosition.y;
+    UWPMessage *msg = CreateUWPMessage();
+    msg->type = UWP_MSG_SET_MOUSE_LOCATION;
+    msg->paramVector0.x = mousePosition.x;
+    msg->paramVector0.y = mousePosition.y;
     SendMessageToUWP(msg);
 #endif
 }
@@ -2711,8 +2709,6 @@ static bool InitGraphicsDevice(int width, int height)
         }
     }
 
-    //SetupFramebuffer(displayWidth, displayHeight);
-
     EGLint numConfigs = 0;
     if ((eglChooseConfig(display, framebufferAttribs, &config, 1, &numConfigs) == EGL_FALSE) || (numConfigs == 0))
     {
@@ -2768,8 +2764,6 @@ static bool InitGraphicsDevice(int width, int height)
     // Get EGL display window size
     eglQuerySurface(display, surface, EGL_WIDTH, &screenWidth);
     eglQuerySurface(display, surface, EGL_HEIGHT, &screenHeight);
-
-    //SetupFramebuffer(displayWidth, displayHeight); //Borked
 
 #else   // PLATFORM_ANDROID, PLATFORM_RPI
     EGLint numConfigs;
@@ -2941,8 +2935,8 @@ static void SetupFramebuffer(int width, int height)
         TraceLog(LOG_WARNING, "DOWNSCALING: Required screen size (%ix%i) is bigger than display size (%ix%i)", screenWidth, screenHeight, displayWidth, displayHeight);
 
         // Downscaling to fit display with border-bars
-        float widthRatio = (float)displayWidth / (float)screenWidth;
-        float heightRatio = (float)displayHeight / (float)screenHeight;
+        float widthRatio = (float)displayWidth/(float)screenWidth;
+        float heightRatio = (float)displayHeight/(float)screenHeight;
 
         if (widthRatio <= heightRatio)
         {
@@ -2960,7 +2954,7 @@ static void SetupFramebuffer(int width, int height)
         }
 
         // Screen scaling required
-        float scaleRatio = (float)renderWidth / (float)screenWidth;
+        float scaleRatio = (float)renderWidth/(float)screenWidth;
         screenScaling = MatrixScale(scaleRatio, scaleRatio, scaleRatio);
 
         // NOTE: We render to full display resolution!
@@ -2976,13 +2970,13 @@ static void SetupFramebuffer(int width, int height)
         TraceLog(LOG_INFO, "UPSCALING: Required screen size: %i x %i -> Display size: %i x %i", screenWidth, screenHeight, displayWidth, displayHeight);
 
         // Upscaling to fit display with border-bars
-        float displayRatio = (float)displayWidth / (float)displayHeight;
-        float screenRatio = (float)screenWidth / (float)screenHeight;
+        float displayRatio = (float)displayWidth/(float)displayHeight;
+        float screenRatio = (float)screenWidth/(float)screenHeight;
 
         if (displayRatio <= screenRatio)
         {
             renderWidth = screenWidth;
-            renderHeight = (int)round((float)screenWidth / displayRatio);
+            renderHeight = (int)round((float)screenWidth/displayRatio);
             renderOffsetX = 0;
             renderOffsetY = (renderHeight - screenHeight);
         }
@@ -3240,7 +3234,6 @@ static void PollInputEvents(void)
 #endif
 
 #if defined(PLATFORM_UWP)
-
     // Register previous keys states
     for (int i = 0; i < 512; i++) previousKeyState[i] = currentKeyState[i];
 
@@ -3255,184 +3248,144 @@ static void PollInputEvents(void)
     // Register previous mouse states
     previousMouseWheelY = currentMouseWheelY;
     currentMouseWheelY = 0;
-    for (int i = 0; i < 3; i++)
-    {
-        previousMouseState[i] = currentMouseState[i];
-
-    }
+    for (int i = 0; i < 3; i++) previousMouseState[i] = currentMouseState[i];
 
     // Loop over pending messages
     while (HasMessageFromUWP())
     {
-        UWPMessage* msg = GetMessageFromUWP();
+        UWPMessage *msg = GetMessageFromUWP();
 
-        switch (msg->Type)
+        switch (msg->type)
         {
-        case RegisterKey:
-        {
-            //Convert from virtualKey
-            int actualKey = -1;
-
-            switch (msg->Int0)
+            case UWP_MSG_REGISTER_KEY:
             {
-            case 0x08: actualKey = KEY_BACKSPACE; break;
-            case 0x20: actualKey = KEY_SPACE; break;
-            case 0x1B: actualKey = KEY_ESCAPE; break;
-            case 0x0D: actualKey = KEY_ENTER; break;
-            case 0x2E: actualKey = KEY_DELETE; break;
-            case 0x27: actualKey = KEY_RIGHT; break;
-            case 0x25: actualKey = KEY_LEFT; break;
-            case 0x28: actualKey = KEY_DOWN; break;
-            case 0x26: actualKey = KEY_UP; break;
-            case 0x70: actualKey = KEY_F1; break;
-            case 0x71: actualKey = KEY_F2; break;
-            case 0x72: actualKey = KEY_F3; break;
-            case 0x73: actualKey = KEY_F4; break;
-            case 0x74: actualKey = KEY_F5; break;
-            case 0x75: actualKey = KEY_F6; break;
-            case 0x76: actualKey = KEY_F7; break;
-            case 0x77: actualKey = KEY_F8; break;
-            case 0x78: actualKey = KEY_F9; break;
-            case 0x79: actualKey = KEY_F10; break;
-            case 0x7A: actualKey = KEY_F11; break;
-            case 0x7B: actualKey = KEY_F12; break;
-            case 0xA0: actualKey = KEY_LEFT_SHIFT; break;
-            case 0xA2: actualKey = KEY_LEFT_CONTROL; break;
-            case 0xA4: actualKey = KEY_LEFT_ALT; break;
-            case 0xA1: actualKey = KEY_RIGHT_SHIFT; break;
-            case 0xA3: actualKey = KEY_RIGHT_CONTROL; break;
-            case 0xA5: actualKey = KEY_RIGHT_ALT; break;
-            case 0x30: actualKey = KEY_ZERO; break;
-            case 0x31: actualKey = KEY_ONE; break;
-            case 0x32: actualKey = KEY_TWO; break;
-            case 0x33: actualKey = KEY_THREE; break;
-            case 0x34: actualKey = KEY_FOUR; break;
-            case 0x35: actualKey = KEY_FIVE; break;
-            case 0x36: actualKey = KEY_SIX; break;
-            case 0x37: actualKey = KEY_SEVEN; break;
-            case 0x38: actualKey = KEY_EIGHT; break;
-            case 0x39: actualKey = KEY_NINE; break;
-            case 0x41: actualKey = KEY_A; break;
-            case 0x42: actualKey = KEY_B; break;
-            case 0x43: actualKey = KEY_C; break;
-            case 0x44: actualKey = KEY_D; break;
-            case 0x45: actualKey = KEY_E; break;
-            case 0x46: actualKey = KEY_F; break;
-            case 0x47: actualKey = KEY_G; break;
-            case 0x48: actualKey = KEY_H; break;
-            case 0x49: actualKey = KEY_I; break;
-            case 0x4A: actualKey = KEY_J; break;
-            case 0x4B: actualKey = KEY_K; break;
-            case 0x4C: actualKey = KEY_L; break;
-            case 0x4D: actualKey = KEY_M; break;
-            case 0x4E: actualKey = KEY_N; break;
-            case 0x4F: actualKey = KEY_O; break;
-            case 0x50: actualKey = KEY_P; break;
-            case 0x51: actualKey = KEY_Q; break;
-            case 0x52: actualKey = KEY_R; break;
-            case 0x53: actualKey = KEY_S; break;
-            case 0x54: actualKey = KEY_T; break;
-            case 0x55: actualKey = KEY_U; break;
-            case 0x56: actualKey = KEY_V; break;
-            case 0x57: actualKey = KEY_W; break;
-            case 0x58: actualKey = KEY_X; break;
-            case 0x59: actualKey = KEY_Y; break;
-            case 0x5A: actualKey = KEY_Z; break;
-            }
+                // Convert from virtualKey
+                int actualKey = -1;
 
-            if (actualKey > -1)
-                currentKeyState[actualKey] = msg->Char0;
-            break;
-        }
+                switch (msg->paramInt0)
+                {
+                    case 0x08: actualKey = KEY_BACKSPACE; break;
+                    case 0x20: actualKey = KEY_SPACE; break;
+                    case 0x1B: actualKey = KEY_ESCAPE; break;
+                    case 0x0D: actualKey = KEY_ENTER; break;
+                    case 0x2E: actualKey = KEY_DELETE; break;
+                    case 0x27: actualKey = KEY_RIGHT; break;
+                    case 0x25: actualKey = KEY_LEFT; break;
+                    case 0x28: actualKey = KEY_DOWN; break;
+                    case 0x26: actualKey = KEY_UP; break;
+                    case 0x70: actualKey = KEY_F1; break;
+                    case 0x71: actualKey = KEY_F2; break;
+                    case 0x72: actualKey = KEY_F3; break;
+                    case 0x73: actualKey = KEY_F4; break;
+                    case 0x74: actualKey = KEY_F5; break;
+                    case 0x75: actualKey = KEY_F6; break;
+                    case 0x76: actualKey = KEY_F7; break;
+                    case 0x77: actualKey = KEY_F8; break;
+                    case 0x78: actualKey = KEY_F9; break;
+                    case 0x79: actualKey = KEY_F10; break;
+                    case 0x7A: actualKey = KEY_F11; break;
+                    case 0x7B: actualKey = KEY_F12; break;
+                    case 0xA0: actualKey = KEY_LEFT_SHIFT; break;
+                    case 0xA2: actualKey = KEY_LEFT_CONTROL; break;
+                    case 0xA4: actualKey = KEY_LEFT_ALT; break;
+                    case 0xA1: actualKey = KEY_RIGHT_SHIFT; break;
+                    case 0xA3: actualKey = KEY_RIGHT_CONTROL; break;
+                    case 0xA5: actualKey = KEY_RIGHT_ALT; break;
+                    case 0x30: actualKey = KEY_ZERO; break;
+                    case 0x31: actualKey = KEY_ONE; break;
+                    case 0x32: actualKey = KEY_TWO; break;
+                    case 0x33: actualKey = KEY_THREE; break;
+                    case 0x34: actualKey = KEY_FOUR; break;
+                    case 0x35: actualKey = KEY_FIVE; break;
+                    case 0x36: actualKey = KEY_SIX; break;
+                    case 0x37: actualKey = KEY_SEVEN; break;
+                    case 0x38: actualKey = KEY_EIGHT; break;
+                    case 0x39: actualKey = KEY_NINE; break;
+                    case 0x41: actualKey = KEY_A; break;
+                    case 0x42: actualKey = KEY_B; break;
+                    case 0x43: actualKey = KEY_C; break;
+                    case 0x44: actualKey = KEY_D; break;
+                    case 0x45: actualKey = KEY_E; break;
+                    case 0x46: actualKey = KEY_F; break;
+                    case 0x47: actualKey = KEY_G; break;
+                    case 0x48: actualKey = KEY_H; break;
+                    case 0x49: actualKey = KEY_I; break;
+                    case 0x4A: actualKey = KEY_J; break;
+                    case 0x4B: actualKey = KEY_K; break;
+                    case 0x4C: actualKey = KEY_L; break;
+                    case 0x4D: actualKey = KEY_M; break;
+                    case 0x4E: actualKey = KEY_N; break;
+                    case 0x4F: actualKey = KEY_O; break;
+                    case 0x50: actualKey = KEY_P; break;
+                    case 0x51: actualKey = KEY_Q; break;
+                    case 0x52: actualKey = KEY_R; break;
+                    case 0x53: actualKey = KEY_S; break;
+                    case 0x54: actualKey = KEY_T; break;
+                    case 0x55: actualKey = KEY_U; break;
+                    case 0x56: actualKey = KEY_V; break;
+                    case 0x57: actualKey = KEY_W; break;
+                    case 0x58: actualKey = KEY_X; break;
+                    case 0x59: actualKey = KEY_Y; break;
+                    case 0x5A: actualKey = KEY_Z; break;
+                    default: break;
+                }
 
-        case RegisterClick:
-        {
-            currentMouseState[msg->Int0] = msg->Char0;
-            break;
-        }
+                if (actualKey > -1) currentKeyState[actualKey] = msg->paramChar0;
 
-        case ScrollWheelUpdate:
-        {
-            currentMouseWheelY += msg->Int0;
-            break;
-        }
+            } break;
+            case UWP_MSG_REGISTER_CLICK: currentMouseState[msg->paramInt0] = msg->paramChar0; break;
+            case UWP_MSG_SCROLL_WHEEL_UPDATE: currentMouseWheelY += msg->paramInt0; break;
+            case UWP_MSG_UPDATE_MOUSE_LOCATION: mousePosition = msg->paramVector0; break;
+            case UWP_MSG_SET_GAMEPAD_ACTIVE: if (msg->paramInt0 < MAX_GAMEPADS) gamepadReady[msg->paramInt0] = msg->paramBool0; break;
+            case UWP_MSG_SET_GAMEPAD_BUTTON:
+            {
+                if ((msg->paramInt0 < MAX_GAMEPADS) && (msg->paramInt1 < MAX_GAMEPAD_BUTTONS)) currentGamepadState[msg->paramInt0][msg->paramInt1] = msg->paramChar0;
+            } break;
+            case UWP_MSG_SET_GAMEPAD_AXIS:
+            {
+                if ((msg->paramInt0 < MAX_GAMEPADS) && (msg->paramInt1 < MAX_GAMEPAD_AXIS)) gamepadAxisState[msg->paramInt0][msg->paramInt1] = msg->paramFloat0;
 
-        case UpdateMouseLocation:
-        {
-            mousePosition = msg->Vector0;
-            break;
-        }
+				// Register buttons for 2nd triggers
+				currentGamepadState[msg->paramInt0][GAMEPAD_BUTTON_LEFT_TRIGGER_2] = (char)(gamepadAxisState[msg->paramInt0][GAMEPAD_AXIS_LEFT_TRIGGER] > 0.1);
+				currentGamepadState[msg->paramInt0][GAMEPAD_BUTTON_RIGHT_TRIGGER_2] = (char)(gamepadAxisState[msg->paramInt0][GAMEPAD_AXIS_RIGHT_TRIGGER] > 0.1);
+            } break;
+            case UWP_MSG_SET_DISPLAY_DIMS:
+            {
+                displayWidth = msg->paramVector0.x;
+                displayHeight = msg->paramVector0.y;
+            } break;
+            case UWP_MSG_HANDLE_RESIZE:
+            {
+                eglQuerySurface(display, surface, EGL_WIDTH, &screenWidth);
+                eglQuerySurface(display, surface, EGL_HEIGHT, &screenHeight);
 
-        case MarkGamepadActive:
-        {
-            if (msg->Int0 < MAX_GAMEPADS)
-                gamepadReady[msg->Int0] = msg->Bool0;
-            break;
-        }
+                // If window is resized, viewport and projection matrix needs to be re-calculated
+                rlViewport(0, 0, screenWidth, screenHeight);            // Set viewport width and height
+                rlMatrixMode(RL_PROJECTION);                // Switch to PROJECTION matrix
+                rlLoadIdentity();                           // Reset current matrix (PROJECTION)
+                rlOrtho(0, screenWidth, screenHeight, 0, 0.0f, 1.0f);   // Orthographic projection mode with top-left corner at (0,0)
+                rlMatrixMode(RL_MODELVIEW);                 // Switch back to MODELVIEW matrix
+                rlLoadIdentity();                           // Reset current matrix (MODELVIEW)
+                rlClearScreenBuffers();                     // Clear screen buffers (color and depth)
 
-        case MarkGamepadButton:
-        {
-            if (msg->Int0 < MAX_GAMEPADS && msg->Int1 < MAX_GAMEPAD_BUTTONS)
-                currentGamepadState[msg->Int0][msg->Int1] = msg->Char0;
-            break;
-        }
+                // Window size must be updated to be used on 3D mode to get new aspect ratio (BeginMode3D())
+                // NOTE: Be careful! GLFW3 will choose the closest fullscreen resolution supported by current monitor,
+                // for example, if reescaling back to 800x450 (desired), it could set 720x480 (closest fullscreen supported)
+                currentWidth = screenWidth;
+                currentHeight = screenHeight;
 
-        case MarkGamepadAxis:
-        {
-            if (msg->Int0 < MAX_GAMEPADS && msg->Int1 < MAX_GAMEPAD_AXIS)
-                gamepadAxisState[msg->Int0][msg->Int1] = msg->Float0;
+                // NOTE: Postprocessing texture is not scaled to new size
 
-			//Register buttons for 2nd triggers
-			currentGamepadState[msg->Int0][GAMEPAD_BUTTON_LEFT_TRIGGER_2] = (char)(gamepadAxisState[msg->Int0][GAMEPAD_AXIS_LEFT_TRIGGER] > 0.1);
-			currentGamepadState[msg->Int0][GAMEPAD_BUTTON_RIGHT_TRIGGER_2] = (char)(gamepadAxisState[msg->Int0][GAMEPAD_AXIS_RIGHT_TRIGGER] > 0.1);
-            break;
-        }
-
-        case SetDisplayDims:
-        {
-            displayWidth = msg->Vector0.x;
-            displayHeight = msg->Vector0.y;
-            break;
-        }
-
-        case HandleResize:
-        {
-            eglQuerySurface(display, surface, EGL_WIDTH, &screenWidth);
-            eglQuerySurface(display, surface, EGL_HEIGHT, &screenHeight);
-
-            // If window is resized, viewport and projection matrix needs to be re-calculated
-            rlViewport(0, 0, screenWidth, screenHeight);            // Set viewport width and height
-            rlMatrixMode(RL_PROJECTION);                // Switch to PROJECTION matrix
-            rlLoadIdentity();                           // Reset current matrix (PROJECTION)
-            rlOrtho(0, screenWidth, screenHeight, 0, 0.0f, 1.0f);   // Orthographic projection mode with top-left corner at (0,0)
-            rlMatrixMode(RL_MODELVIEW);                 // Switch back to MODELVIEW matrix
-            rlLoadIdentity();                           // Reset current matrix (MODELVIEW)
-            rlClearScreenBuffers();                     // Clear screen buffers (color and depth)
-
-            // Window size must be updated to be used on 3D mode to get new aspect ratio (BeginMode3D())
-            // NOTE: Be careful! GLFW3 will choose the closest fullscreen resolution supported by current monitor,
-            // for example, if reescaling back to 800x450 (desired), it could set 720x480 (closest fullscreen supported)
-            currentWidth = screenWidth;
-            currentHeight = screenHeight;
-
-            // NOTE: Postprocessing texture is not scaled to new size
-
-            windowResized = true;
-            break;
-        }
-
-		case SetGameTime:
-        {
-			currentTime = msg->Double0;
-			break;
-        }
-
+                windowResized = true;
+                
+            } break;
+            case UWP_MSG_SET_GAME_TIME: currentTime = msg->paramDouble0; break;
+            default: break;
         }
 
         DeleteUWPMessage(msg); //Delete, we are done
     }
-
-#endif
+#endif  // defined(PLATFORM_UWP)
 
 #if defined(PLATFORM_DESKTOP) || defined(PLATFORM_WEB)
     // Mouse input polling

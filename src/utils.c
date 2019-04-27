@@ -205,73 +205,64 @@ static int android_close(void *cookie)
 
 #if defined(PLATFORM_UWP)
 
-#define MAX_MESSAGES 512 //If there are over 128 messages, I will cry... either way, this may be too much EDIT: Welp, 512
+#define MAX_MESSAGES 512 // If there are over 128 messages, I will cry... either way, this may be too much EDIT: Welp, 512
 
-static int UWPOutMessageId = -1; //Stores the last index for the message
-static UWPMessage* UWPOutMessages[MAX_MESSAGES]; //Messages out to UWP
+static int UWPOutMessageId = -1; // Stores the last index for the message
+static UWPMessage* UWPOutMessages[MAX_MESSAGES]; // Messages out to UWP
 
-static int UWPInMessageId = -1; //Stores the last index for the message
-static UWPMessage* UWPInMessages[MAX_MESSAGES]; //Messages in from UWP
+static int UWPInMessageId = -1; // Stores the last index for the message
+static UWPMessage* UWPInMessages[MAX_MESSAGES]; // Messages in from UWP
 
 UWPMessage* CreateUWPMessage(void)
 {
-    UWPMessage* msg = (UWPMessage*)RL_MALLOC(sizeof(UWPMessage));
-    msg->Type = None;
-    Vector2 v0 = {0, 0};
-    msg->Vector0 = v0;
-    msg->Int0 = 0;
-    msg->Int1 = 0;
-    msg->Char0 = 0;
-    msg->Float0 = 0;
-	msg->Double0 = 0;
-    msg->Bool0 = false;
+    UWPMessage *msg = (UWPMessage *)RL_MALLOC(sizeof(UWPMessage));
+    msg->type = UWP_MSG_NONE;
+    Vector2 v0 = { 0, 0 };
+    msg->paramVector0 = v0;
+    msg->paramInt0 = 0;
+    msg->paramInt1 = 0;
+    msg->paramChar0 = 0;
+    msg->paramFloat0 = 0;
+    msg->paramDouble0 = 0;
+    msg->paramBool0 = false;
     return msg;
 }
 
-void DeleteUWPMessage(UWPMessage* msg)
+void DeleteUWPMessage(UWPMessage *msg)
 {
     RL_FREE(msg);
 }
 
 bool UWPHasMessages(void)
 {
-    return UWPOutMessageId > -1;
+    return (UWPOutMessageId > -1);
 }
 
-UWPMessage* UWPGetMessage(void)
+UWPMessage *UWPGetMessage(void)
 {
-    if (UWPHasMessages())
-    {
-        return UWPOutMessages[UWPOutMessageId--];
-    }
+    if (UWPHasMessages()) return UWPOutMessages[UWPOutMessageId--];
 
     return NULL;
 }
 
-void UWPSendMessage(UWPMessage* msg)
+void UWPSendMessage(UWPMessage *msg)
 {
     if (UWPInMessageId + 1 < MAX_MESSAGES)
     {
         UWPInMessageId++;
         UWPInMessages[UWPInMessageId] = msg;
     }
-    else
-    {
-        TraceLog(LOG_WARNING, "[UWP Messaging] Not enough array space to register new UWP inbound Message.");
-    }
+    else TraceLog(LOG_WARNING, "[UWP Messaging] Not enough array space to register new UWP inbound Message.");
 }
 
-void SendMessageToUWP(UWPMessage* msg)
+void SendMessageToUWP(UWPMessage *msg)
 {
     if (UWPOutMessageId + 1 < MAX_MESSAGES)
     {
         UWPOutMessageId++;
         UWPOutMessages[UWPOutMessageId] = msg;
     }
-    else
-    {
-        TraceLog(LOG_WARNING, "[UWP Messaging] Not enough array space to register new UWP outward Message.");
-    }
+    else TraceLog(LOG_WARNING, "[UWP Messaging] Not enough array space to register new UWP outward Message.");
 }
 
 bool HasMessageFromUWP(void)
@@ -281,12 +272,8 @@ bool HasMessageFromUWP(void)
 
 UWPMessage* GetMessageFromUWP(void)
 {
-    if (HasMessageFromUWP())
-    {
-        return UWPInMessages[UWPInMessageId--];
-    }
+    if (HasMessageFromUWP()) return UWPInMessages[UWPInMessageId--];
 
     return NULL;
 }
-
-#endif
+#endif  // defined(PLATFORM_UWP)
