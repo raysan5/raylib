@@ -371,27 +371,30 @@ protected:
                     GamepadReading reading = gamepad->GetCurrentReading();
 
                     // NOTE: Maybe it would be wiser to redefine the gamepad button mappings in "raylib.h" for the UWP platform instead of remapping them manually
-                    RegisterGamepadButton(i, GAMEPAD_XBOX_BUTTON_A, ((reading.Buttons & GamepadButtons::A) == GamepadButtons::A));
-                    RegisterGamepadButton(i, GAMEPAD_XBOX_BUTTON_B, ((reading.Buttons & GamepadButtons::B) == GamepadButtons::B));
-                    RegisterGamepadButton(i, GAMEPAD_XBOX_BUTTON_X, ((reading.Buttons & GamepadButtons::X) == GamepadButtons::X));
-                    RegisterGamepadButton(i, GAMEPAD_XBOX_BUTTON_Y, ((reading.Buttons & GamepadButtons::Y) == GamepadButtons::Y));
-                    RegisterGamepadButton(i, GAMEPAD_XBOX_BUTTON_LB, ((reading.Buttons & GamepadButtons::LeftShoulder) == GamepadButtons::LeftShoulder));
-                    RegisterGamepadButton(i, GAMEPAD_XBOX_BUTTON_RB, ((reading.Buttons & GamepadButtons::RightShoulder) == GamepadButtons::RightShoulder));
-                    RegisterGamepadButton(i, GAMEPAD_XBOX_BUTTON_SELECT, ((reading.Buttons & GamepadButtons::View) == GamepadButtons::View)); // Changed for XB1 Controller
-                    RegisterGamepadButton(i, GAMEPAD_XBOX_BUTTON_START, ((reading.Buttons & GamepadButtons::Menu) == GamepadButtons::Menu)); // Changed for XB1 Controller
-                    RegisterGamepadButton(i, GAMEPAD_XBOX_BUTTON_UP, ((reading.Buttons & GamepadButtons::DPadUp) == GamepadButtons::DPadUp));
-                    RegisterGamepadButton(i, GAMEPAD_XBOX_BUTTON_RIGHT, ((reading.Buttons & GamepadButtons::DPadRight) == GamepadButtons::DPadRight));
-                    RegisterGamepadButton(i, GAMEPAD_XBOX_BUTTON_DOWN, ((reading.Buttons & GamepadButtons::DPadDown) == GamepadButtons::DPadDown));
-                    RegisterGamepadButton(i, GAMEPAD_XBOX_BUTTON_LEFT, ((reading.Buttons & GamepadButtons::DPadLeft) == GamepadButtons::DPadLeft));
-                    RegisterGamepadButton(i, GAMEPAD_XBOX_BUTTON_HOME, false); // Home button not supported by UWP
+                    RegisterGamepadButton(i, GAMEPAD_BUTTON_RIGHT_FACE_DOWN, ((reading.Buttons & GamepadButtons::A) == GamepadButtons::A));
+                    RegisterGamepadButton(i, GAMEPAD_BUTTON_RIGHT_FACE_RIGHT, ((reading.Buttons & GamepadButtons::B) == GamepadButtons::B));
+                    RegisterGamepadButton(i, GAMEPAD_BUTTON_RIGHT_FACE_LEFT, ((reading.Buttons & GamepadButtons::X) == GamepadButtons::X));
+                    RegisterGamepadButton(i, GAMEPAD_BUTTON_RIGHT_FACE_UP, ((reading.Buttons & GamepadButtons::Y) == GamepadButtons::Y));
+
+                    RegisterGamepadButton(i, GAMEPAD_BUTTON_LEFT_TRIGGER_1, ((reading.Buttons & GamepadButtons::LeftShoulder) == GamepadButtons::LeftShoulder));
+                    RegisterGamepadButton(i, GAMEPAD_BUTTON_RIGHT_TRIGGER_1, ((reading.Buttons & GamepadButtons::RightShoulder) == GamepadButtons::RightShoulder));
+
+                    RegisterGamepadButton(i, GAMEPAD_BUTTON_MIDDLE_LEFT, ((reading.Buttons & GamepadButtons::View) == GamepadButtons::View)); // Changed for XB1 Controller
+                    RegisterGamepadButton(i, GAMEPAD_BUTTON_MIDDLE_RIGHT, ((reading.Buttons & GamepadButtons::Menu) == GamepadButtons::Menu)); // Changed for XB1 Controller
+
+                    RegisterGamepadButton(i, GAMEPAD_BUTTON_LEFT_FACE_UP, ((reading.Buttons & GamepadButtons::DPadUp) == GamepadButtons::DPadUp));
+                    RegisterGamepadButton(i, GAMEPAD_BUTTON_LEFT_FACE_RIGHT, ((reading.Buttons & GamepadButtons::DPadRight) == GamepadButtons::DPadRight));
+                    RegisterGamepadButton(i, GAMEPAD_BUTTON_LEFT_FACE_DOWN, ((reading.Buttons & GamepadButtons::DPadDown) == GamepadButtons::DPadDown));
+                    RegisterGamepadButton(i, GAMEPAD_BUTTON_LEFT_FACE_LEFT, ((reading.Buttons & GamepadButtons::DPadLeft) == GamepadButtons::DPadLeft));
+                    RegisterGamepadButton(i, GAMEPAD_BUTTON_MIDDLE, false); // Home button not supported by UWP
 
                     // Get current axis state
-                    RegisterGamepadAxis(i, GAMEPAD_XBOX_AXIS_LEFT_X, (float)reading.LeftThumbstickX);
-                    RegisterGamepadAxis(i, GAMEPAD_XBOX_AXIS_LEFT_Y, (float)reading.LeftThumbstickY);
-                    RegisterGamepadAxis(i, GAMEPAD_XBOX_AXIS_RIGHT_X, (float)reading.RightThumbstickX);
-                    RegisterGamepadAxis(i, GAMEPAD_XBOX_AXIS_RIGHT_Y, (float)reading.RightThumbstickY);
-                    RegisterGamepadAxis(i, GAMEPAD_XBOX_AXIS_LT, (float)reading.LeftTrigger);
-                    RegisterGamepadAxis(i, GAMEPAD_XBOX_AXIS_RT, (float)reading.RightTrigger);
+                    RegisterGamepadAxis(i, GAMEPAD_AXIS_LEFT_X, (float)reading.LeftThumbstickX);
+                    RegisterGamepadAxis(i, GAMEPAD_AXIS_LEFT_Y, (float)reading.LeftThumbstickY);
+                    RegisterGamepadAxis(i, GAMEPAD_AXIS_RIGHT_X, (float)reading.RightThumbstickX);
+                    RegisterGamepadAxis(i, GAMEPAD_AXIS_RIGHT_Y, (float)reading.RightThumbstickY);
+                    RegisterGamepadAxis(i, GAMEPAD_AXIS_LEFT_TRIGGER, (float)reading.LeftTrigger);
+                    RegisterGamepadAxis(i, GAMEPAD_AXIS_RIGHT_TRIGGER, (float)reading.RightTrigger);
                 }
             }
         }

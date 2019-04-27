@@ -36,8 +36,8 @@ void App::Update()
 	
 		ClearBackground(RAYWHITE);
 		
-		posX += GetGamepadAxisMovement(GAMEPAD_PLAYER1, GAMEPAD_XBOX_AXIS_LEFT_X) * 5;
-		posY += GetGamepadAxisMovement(GAMEPAD_PLAYER1, GAMEPAD_XBOX_AXIS_LEFT_Y) * -5;
+		posX += GetGamepadAxisMovement(GAMEPAD_PLAYER1, GAMEPAD_AXIS_LEFT_X) * 5;
+		posY += GetGamepadAxisMovement(GAMEPAD_PLAYER1, GAMEPAD_AXIS_LEFT_Y) * -5;
 
 		DrawRectangle(posX, posY, 400, 100, RED);
 
@@ -63,7 +63,7 @@ void App::Update()
 
 		if (IsKeyDown(KEY_LEFT_ALT))
 			DrawRectangle(250, 250, 20, 20, BLACK);
-		if (IsKeyDown(KEY_BACKSPACE))
+		if (IsKeyDown(KEY_BACKSPACE) || IsGamepadButtonDown(GAMEPAD_PLAYER1, GAMEPAD_BUTTON_RIGHT_FACE_DOWN))
 			DrawRectangle(280, 250, 20, 20, BLACK);
 		if (IsMouseButtonDown(MOUSE_LEFT_BUTTON))
 			DrawRectangle(280, 250, 20, 20, BLACK);
