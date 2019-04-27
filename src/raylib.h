@@ -631,7 +631,6 @@ typedef enum
 	GAMEPAD_BUTTON_LEFT_FACE_DOWN,
     GAMEPAD_BUTTON_LEFT_FACE_LEFT,
   
-
     //This is normally a DPAD
 	GAMEPAD_BUTTON_RIGHT_FACE_UP,
 	GAMEPAD_BUTTON_RIGHT_FACE_RIGHT,
@@ -657,6 +656,7 @@ typedef enum
 typedef enum
 {
     GAMEPAD_AXIS_UNKNOWN = 0,
+
     //Left stick
 	GAMEPAD_AXIS_LEFT_X,
 	GAMEPAD_AXIS_LEFT_Y,
