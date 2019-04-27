@@ -34,7 +34,7 @@
 
 // Check if config flags have been externally provided on compilation line
 #if !defined(EXTERNAL_CONFIG_FLAGS)
-#include "config.h"         // Defines module configuration flags
+    #include "config.h"         // Defines module configuration flags
 #endif
 
 #include "utils.h"
@@ -102,7 +102,7 @@ void SetTraceLogCallback(TraceLogCallback callback)
 }
 
 // Show trace log messages (LOG_INFO, LOG_WARNING, LOG_ERROR, LOG_DEBUG)
-void TraceLog(int logType, const char* text, ...)
+void TraceLog(int logType, const char *text, ...)
 {
 #if defined(SUPPORT_TRACELOG)
     // Message has level below current threshold, don't emit
@@ -130,23 +130,17 @@ void TraceLog(int logType, const char* text, ...)
         default: break;
     }
 #else
-    char buffer[MAX_TRACELOG_BUFFER_SIZE] = {0};
+    char buffer[MAX_TRACELOG_BUFFER_SIZE] = { 0 };
 
     switch (logType)
     {
-    case LOG_TRACE: strcpy(buffer, "TRACE: ");
-        break;
-    case LOG_DEBUG: strcpy(buffer, "DEBUG: ");
-        break;
-    case LOG_INFO: strcpy(buffer, "INFO: ");
-        break;
-    case LOG_WARNING: strcpy(buffer, "WARNING: ");
-        break;
-    case LOG_ERROR: strcpy(buffer, "ERROR: ");
-        break;
-    case LOG_FATAL: strcpy(buffer, "FATAL: ");
-        break;
-    default: break;
+	case LOG_TRACE: strcpy(buffer, "TRACE: "); break;
+	case LOG_DEBUG: strcpy(buffer, "DEBUG: "); break;
+	case LOG_INFO: strcpy(buffer, "INFO: "); break;
+	case LOG_WARNING: strcpy(buffer, "WARNING: "); break;
+	case LOG_ERROR: strcpy(buffer, "ERROR: "); break;
+	case LOG_FATAL: strcpy(buffer, "FATAL: "); break;
+	default: break;
     }
 
     strcat(buffer, text);

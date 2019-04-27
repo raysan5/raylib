@@ -72,28 +72,18 @@ typedef enum
     HideMouse,
     LockMouse,
     UnlockMouse,
-    SetMouseLocation,
-    //Vector0 (pos)
+    SetMouseLocation, //Vector0 (pos)
 
     //Recieve (Into C)
-    RegisterKey,
-    //Int0 (key), Char0 (status)
-    RegisterClick,
-    //Int0 (button), Char0 (status)
-    ScrollWheelUpdate,
-    //Int0 (delta)
-    UpdateMouseLocation,
-    //Vector0 (pos)
-    MarkGamepadActive,
-    //Int0 (gamepad), Bool0 (active or not)
-    MarkGamepadButton,
-    //Int0 (gamepad), Int1 (button), Char0 (status)
-    MarkGamepadAxis,
-    //Int0 (gamepad), int1 (axis), Float0 (value)
-    SetDisplayDims,
-    //Vector0 (display dimensions)
-    HandleResize,
-    //Vector0 (new dimensions) - Onresized event
+    RegisterKey, //Int0 (key), Char0 (status)
+    RegisterClick, //Int0 (button), Char0 (status)
+    ScrollWheelUpdate, //Int0 (delta)
+    UpdateMouseLocation, //Vector0 (pos)
+    MarkGamepadActive, //Int0 (gamepad), Bool0 (active or not)
+    MarkGamepadButton, //Int0 (gamepad), Int1 (button), Char0 (status)
+    MarkGamepadAxis,//Int0 (gamepad), int1 (axis), Float0 (value)
+    SetDisplayDims, //Vector0 (display dimensions)
+    HandleResize, //Vector0 (new dimensions) - Onresized event
 } UWPMessageType;
 
 typedef struct UWPMessage
