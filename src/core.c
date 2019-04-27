@@ -885,7 +885,7 @@ int GetScreenHeight(void)
 // Get native window handle
 void *GetWindowHandle(void)
 {
-#ifdef PLATFORM_DESKTOP
+#if defined(PLATFORM_DESKTOP) && defined(_WIN32)
     // NOTE: Returned handle is: void *HWND (windows.h)
     return glfwGetWin32Window(window);
 #elif defined(__linux__)
