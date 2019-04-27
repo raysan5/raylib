@@ -59,6 +59,81 @@ void InitAssetManager(AAssetManager *manager);  // Initialize asset manager from
 FILE *android_fopen(const char *fileName, const char *mode);    // Replacement for fopen()
 #endif
 
+#if defined(PLATFORM_UWP)
+
+// UWP Messages System
+
+typedef enum
+{
+    None = 0,
+
+    //Send
+    ShowMouse,
+    HideMouse,
+    LockMouse,
+    UnlockMouse,
+    SetMouseLocation, //Vector0 (pos)
+
+    //Recieve (Into C)
+    RegisterKey, //Int0 (key), Char0 (status)
+    RegisterClick, //Int0 (button), Char0 (status)
+    ScrollWheelUpdate, //Int0 (delta)
+    UpdateMouseLocation, //Vector0 (pos)
+    MarkGamepadActive, //Int0 (gamepad), Bool0 (active or not)
+    MarkGamepadButton, //Int0 (gamepad), Int1 (button), Char0 (status)
+    MarkGamepadAxis,//Int0 (gamepad), int1 (axis), Float0 (value)
+    SetDisplayDims, //Vector0 (display dimensions)
+    HandleResize, //Vector0 (new dimensions) - Onresized event
+    SetGameTime, //Int0
+} UWPMessageType;
+
+typedef struct UWPMessage
+{
+    //The message type
+    UWPMessageType Type;
+
+    //Vector parameters
+    Vector2 Vector0;
+
+    //Int parameters
+    int Int0;
+    int Int1;
+
+    //Char parameters
+    char Char0;
+
+    //Float parameters
+    float Float0;
+
+    //Double parameters
+	double Double0;
+
+    //Bool parameters
+    bool Bool0;
+
+    //More parameters can be added and fed to functions
+} UWPMessage;
+
+//Allocate UWP Message
+RLAPI UWPMessage* CreateUWPMessage(void);
+
+//Free UWP Message
+RLAPI void DeleteUWPMessage(UWPMessage* msg);
+
+//Get messages into C++
+RLAPI bool UWPHasMessages(void);
+RLAPI UWPMessage* UWPGetMessage(void);
+RLAPI void UWPSendMessage(UWPMessage* msg);
+
+//For C to call
+#ifndef _cplusplus //Hide from C++ code
+void SendMessageToUWP(UWPMessage* msg);
+bool HasMessageFromUWP(void);
+UWPMessage* GetMessageFromUWP(void);
+#endif
+
+#endif
+
 #ifdef __cplusplus
 }
 #endif

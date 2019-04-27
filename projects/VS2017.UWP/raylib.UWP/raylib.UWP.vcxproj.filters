@@ -1,0 +1,29 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="15.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <ClInclude Include="..\..\..\src\camera.h" />
+    <ClInclude Include="..\..\..\src\gestures.h" />
+    <ClInclude Include="..\..\..\src\raylib.h" />
+    <ClInclude Include="..\..\..\src\raymath.h" />
+    <ClInclude Include="..\..\..\src\rlgl.h" />
+    <ClInclude Include="..\..\..\src\utils.h" />
+    <ClInclude Include="..\..\..\src\external\glad.h" />
+    <ClInclude Include="..\..\..\src\external\jar_mod.h" />
+    <ClInclude Include="..\..\..\src\external\jar_xm.h" />
+    <ClInclude Include="..\..\..\src\external\stb_image.h" />
+    <ClInclude Include="..\..\..\src\external\stb_image_resize.h" />
+    <ClInclude Include="..\..\..\src\external\stb_image_write.h" />
+    <ClInclude Include="..\..\..\src\external\stb_rect_pack.h" />
+    <ClInclude Include="..\..\..\src\external\stb_truetype.h" />
+    <ClInclude Include="..\..\..\src\external\stb_vorbis.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="..\..\..\src\core.c" />
+    <ClCompile Include="..\..\..\src\models.c" />
+    <ClCompile Include="..\..\..\src\raudio.c" />
+    <ClCompile Include="..\..\..\src\shapes.c" />
+    <ClCompile Include="..\..\..\src\text.c" />
+    <ClCompile Include="..\..\..\src\textures.c" />
+    <ClCompile Include="..\..\..\src\utils.c" />
+  </ItemGroup>
+</Project>
