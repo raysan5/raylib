@@ -151,8 +151,8 @@ int main()
                     // Draw axis: left-right triggers
                     DrawRectangle(169, 48, 15, 70, GRAY);
                     DrawRectangle(611, 48, 15, 70, GRAY);              
-                    DrawRectangle(169, 48, 15, (((1.0f - GetGamepadAxisMovement(GAMEPAD_PLAYER1, GLFW_GAMEPAD_AXIS_LEFT_TRIGGER))/2.0f)*70), RED);
-                    DrawRectangle(611, 48, 15, (((1.0f - GetGamepadAxisMovement(GAMEPAD_PLAYER1, GLFW_GAMEPAD_AXIS_RIGHT_TRIGGER))/2.0f)*70), RED);
+                    DrawRectangle(169, 48, 15, (((1.0f - GetGamepadAxisMovement(GAMEPAD_PLAYER1, GAMEPAD_AXIS_LEFT_TRIGGER))/2.0f)*70), RED);
+                    DrawRectangle(611, 48, 15, (((1.0f - GetGamepadAxisMovement(GAMEPAD_PLAYER1, GAMEPAD_AXIS_RIGHT_TRIGGER))/2.0f)*70), RED);
                 }
                 else
                 {
