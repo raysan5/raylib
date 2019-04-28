@@ -3485,7 +3485,7 @@ static void PollInputEvents(void)
             // Register axis data for every connected gamepad
             for (int j = 0; (j < gamepadState.numAxes) && (j < MAX_GAMEPAD_AXIS); j++)
             {
-                const GamepadAxis axis = GetGamepadAxis(k);
+                const GamepadAxis axis = GetGamepadAxis(j);
                 gamepadAxisState[i][axis] = gamepadState.axis[j];
             }
 
