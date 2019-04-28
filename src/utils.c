@@ -34,7 +34,7 @@
 
 // Check if config flags have been externally provided on compilation line
 #if !defined(EXTERNAL_CONFIG_FLAGS)
-    #include "config.h"         // Defines module configuration flags
+    #include "config.h"                 // Defines module configuration flags
 #endif
 
 #include "utils.h"
@@ -69,7 +69,7 @@ AAssetManager *assetManager;
 // Module specific Functions Declaration
 //----------------------------------------------------------------------------------
 #if defined(PLATFORM_ANDROID)
-/* This should be in <stdio.h>, but Travis doesn't find it... */
+// This should be in <stdio.h>, but Travis does not find it...
 FILE *funopen(const void *cookie, int (*readfn)(void *, char *, int), int (*writefn)(void *, const char *, int),
               fpos_t (*seekfn)(void *, fpos_t, int), int (*closefn)(void *));
 
@@ -173,7 +173,7 @@ FILE *android_fopen(const char *fileName, const char *mode)
 
     return funopen(asset, android_read, android_write, android_seek, android_close);
 }
-#endif
+#endif  // PLATFORM_ANDROID
 
 //----------------------------------------------------------------------------------
 // Module specific Functions Definition
@@ -201,7 +201,7 @@ static int android_close(void *cookie)
     AAsset_close((AAsset *)cookie);
     return 0;
 }
-#endif
+#endif  // PLATFORM_ANDROID
 
 #if defined(PLATFORM_UWP)
 
@@ -276,4 +276,4 @@ UWPMessage* GetMessageFromUWP(void)
 
     return NULL;
 }
-#endif  // defined(PLATFORM_UWP)
+#endif  // PLATFORM_UWP

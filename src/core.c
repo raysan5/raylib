@@ -476,12 +476,13 @@ static EM_BOOL EmscriptenGamepadCallback(int eventType, const EmscriptenGamepadE
 #endif
 
 #if defined(PLATFORM_RPI)
+static void InitEvdevInput(void);                       // Evdev inputs initialization
+static void EventThreadSpawn(char *device);             // Identifies a input device and spawns a thread to handle it if needed
+static void *EventThread(void *arg);                    // Input device events reading thread
+
 static void InitKeyboard(void);                         // Init raw keyboard system (standard input reading)
 static void ProcessKeyboard(void);                      // Process keyboard events
 static void RestoreKeyboard(void);                      // Restore keyboard system
-static void InitEvdevInput(void);                            // Mouse initialization (including mouse thread)
-static void EventThreadSpawn(char *device);             // Identifies a input device and spawns a thread to handle it if needed
-static void *EventThread(void *arg);                    // Input device events reading thread
 static void InitGamepad(void);                          // Init raw gamepad input
 static void *GamepadThread(void *arg);                  // Mouse reading thread
 #endif
@@ -595,7 +596,7 @@ void InitWindow(int width, int height, const char *title)
 
 #if defined(PLATFORM_RPI)
     // Init raw input system
-    InitEvdevInput();        // Mouse init
+    InitEvdevInput();   // Evdev inputs initialization
     InitKeyboard();     // Keyboard init
     InitGamepad();      // Gamepad init
 #endif
@@ -629,7 +630,7 @@ void InitWindow(int width, int height, const char *title)
         SetTargetFPS(60);
         LogoAnimation();
     }
-#endif        // defined(PLATFORM_ANDROID)
+#endif        // PLATFORM_ANDROID
 }
 
 // Close window and unload OpenGL context
@@ -2369,12 +2370,12 @@ static bool InitGraphicsDevice(int width, int height)
     // Screen size security check
     if (screenWidth <= 0) screenWidth = displayWidth;
     if (screenHeight <= 0) screenHeight = displayHeight;
-#endif  // defined(PLATFORM_DESKTOP)
+#endif  // PLATFORM_DESKTOP
 
 #if defined(PLATFORM_WEB)
     displayWidth = screenWidth;
     displayHeight = screenHeight;
-#endif  // defined(PLATFORM_WEB)
+#endif  // PLATFORM_WEB
 
     glfwDefaultWindowHints();                       // Set default windows hints:
     //glfwWindowHint(GLFW_RED_BITS, 8);             // Framebuffer red color component bits
@@ -2552,7 +2553,7 @@ static bool InitGraphicsDevice(int width, int height)
         glfwSwapInterval(1);
         TraceLog(LOG_INFO, "Trying to enable VSYNC");
     }
-#endif // defined(PLATFORM_DESKTOP) || defined(PLATFORM_WEB)
+#endif // PLATFORM_DESKTOP || PLATFORM_WEB
 
 #if defined(PLATFORM_ANDROID) || defined(PLATFORM_RPI) || defined(PLATFORM_UWP)
     fullscreen = true;
@@ -2819,7 +2820,7 @@ static bool InitGraphicsDevice(int width, int height)
     //ANativeWindow_setBuffersGeometry(androidApp->window, 0, 0, displayFormat);       // Force use of native display size
 
     surface = eglCreateWindowSurface(display, config, androidApp->window, NULL);
-#endif  // defined(PLATFORM_ANDROID)
+#endif  // PLATFORM_ANDROID
 
 #if defined(PLATFORM_RPI)
     graphics_get_display_size(0, &displayWidth, &displayHeight);
@@ -2859,7 +2860,8 @@ static bool InitGraphicsDevice(int width, int height)
 
     surface = eglCreateWindowSurface(display, config, &nativeWindow, NULL);
     //---------------------------------------------------------------------------------
-#endif  // defined(PLATFORM_RPI)
+#endif  // PLATFORM_RPI
+
     // There must be at least one frame displayed before the buffers are swapped
     //eglSwapInterval(display, 1);
 
@@ -2880,7 +2882,7 @@ static bool InitGraphicsDevice(int width, int height)
         TraceLog(LOG_INFO, "Screen size: %i x %i", screenWidth, screenHeight);
         TraceLog(LOG_INFO, "Viewport offsets: %i, %i", renderOffsetX, renderOffsetY);
     }
-#endif // defined(PLATFORM_ANDROID) || defined(PLATFORM_RPI)
+#endif // PLATFORM_ANDROID || PLATFORM_RPI
 
     renderWidth = screenWidth;
     renderHeight = screenHeight;
@@ -3103,7 +3105,7 @@ static void PollInputEvents(void)
     for (int i = 0; i < 512; i++)previousKeyState[i] = currentKeyState[i];
 
     // Grab a keypress from the evdev fifo if avalable
-    if(lastKeyPressedEvdev.Head != lastKeyPressedEvdev.Tail)
+    if (lastKeyPressedEvdev.Head != lastKeyPressedEvdev.Tail)
     {
         lastKeyPressed = lastKeyPressedEvdev.Contents[lastKeyPressedEvdev.Tail];    // Read the key from the buffer
         lastKeyPressedEvdev.Tail = (lastKeyPressedEvdev.Tail + 1) & 0x07;           // Increment the tail pointer forwards and binary wraparound after 7 (fifo is 8 elements long)
@@ -3267,7 +3269,7 @@ static void PollInputEvents(void)
 
         DeleteUWPMessage(msg); //Delete, we are done
     }
-#endif  // defined(PLATFORM_UWP)
+#endif  // PLATFORM_UWP
 
 #if defined(PLATFORM_DESKTOP) || defined(PLATFORM_WEB)
     // Mouse input polling
@@ -3414,12 +3416,11 @@ static void PollInputEvents(void)
 #endif
 
 #if defined(PLATFORM_RPI)
-    // NOTE: Mouse input events polling is done asynchonously in another pthread - EventThread()
-
     // NOTE: Keyboard reading could be done using input_event(s) reading or just read from stdin,
     // we now use both methods inside here. 2nd method is still used for legacy purposes (Allows for input trough SSH console)
     ProcessKeyboard();
 
+    // NOTE: Mouse input events polling is done asynchronously in another pthread - EventThread()
     // NOTE: Gamepad (Joystick) input events polling is done asynchonously in another pthread - GamepadThread()
 #endif
 }
@@ -4244,6 +4245,7 @@ static void InitEvdevInput(void)
 
     // Open the linux directory of "/dev/input"
     directory = opendir(DEFAULT_EVDEV_PATH);
+    
     if (directory)
     {
         while ((entity = readdir(directory)) != NULL)
@@ -4460,9 +4462,10 @@ static void EventThreadSpawn(char *device)
 static void *EventThread(void *arg)
 {
     // Scancode to keycode mapping for US keyboards
-    // TODO: Proabobly replace this with a keymap from the X11 to get the correct regional map for the keyboard (Currently non US keyboards will have the wrong mapping for some keys)
+    // TODO: Probably replace this with a keymap from the X11 to get the correct regional map for the keyboard:
+    // Currently non US keyboards will have the wrong mapping for some keys
     static const int keymap_US[] =
-        {0,256,49,50,51,52,53,54,55,56,57,48,45,61,259,258,81,87,69,82,84,
+        { 0,256,49,50,51,52,53,54,55,56,57,48,45,61,259,258,81,87,69,82,84,
         89,85,73,79,80,91,93,257,341,65,83,68,70,71,72,74,75,76,59,39,96,
         340,92,90,88,67,86,66,78,77,44,46,47,344,332,342,32,280,290,291,
         292,293,294,295,296,297,298,299,282,281,327,328,329,333,324,325,
@@ -4476,7 +4479,7 @@ static void *EventThread(void *arg)
         192,193,194,0,0,0,0,0,200,201,202,203,204,205,206,207,208,209,210,
         211,212,213,214,215,216,217,218,219,220,221,222,223,224,225,226,
         227,228,229,230,231,232,233,234,235,236,237,238,239,240,241,242,
-        243,244,245,246,247,248,0,0,0,0,0,0,0,};
+        243,244,245,246,247,248,0,0,0,0,0,0,0, };
 
     struct input_event event;
     InputEventWorker *worker = (InputEventWorker *)arg;
@@ -4515,10 +4518,7 @@ static void *EventThread(void *arg)
                     #endif
                 }
 
-                if (event.code == REL_WHEEL)
-                {
-                    currentMouseWheelY += event.value;
-                }
+                if (event.code == REL_WHEEL) currentMouseWheelY += event.value;
             }
 
             // Absolute movement parsing
@@ -4546,26 +4546,21 @@ static void *EventThread(void *arg)
                 }
 
                 // Multitouch movement
-                if (event.code == ABS_MT_SLOT)
-                {
-                    worker->touchSlot = event.value;   // Remeber the slot number for the folowing events
-                }
+                if (event.code == ABS_MT_SLOT) worker->touchSlot = event.value;   // Remeber the slot number for the folowing events
 
                 if (event.code == ABS_MT_POSITION_X)
                 {
-                    if (worker->touchSlot < MAX_TOUCH_POINTS)
-                        touchPosition[worker->touchSlot].x = (event.value - worker->absRange.x)*screenWidth/worker->absRange.width;    // Scale acording to absRange
+                    if (worker->touchSlot < MAX_TOUCH_POINTS) touchPosition[worker->touchSlot].x = (event.value - worker->absRange.x)*screenWidth/worker->absRange.width;    // Scale acording to absRange
                 }
 
                 if (event.code == ABS_MT_POSITION_Y)
                 {
-                    if (worker->touchSlot < MAX_TOUCH_POINTS)
-                        touchPosition[worker->touchSlot].y = (event.value - worker->absRange.y)*screenHeight/worker->absRange.height;  // Scale acording to absRange
+                    if (worker->touchSlot < MAX_TOUCH_POINTS) touchPosition[worker->touchSlot].y = (event.value - worker->absRange.y)*screenHeight/worker->absRange.height;  // Scale acording to absRange
                 }
 
                 if (event.code == ABS_MT_TRACKING_ID)
                 {
-                    if ( (event.value < 0) && (worker->touchSlot < MAX_TOUCH_POINTS) )
+                    if ((event.value < 0) && (worker->touchSlot < MAX_TOUCH_POINTS))
                     {
                         // Touch has ended for this point
                         touchPosition[worker->touchSlot].x = -1;
@@ -4577,7 +4572,6 @@ static void *EventThread(void *arg)
             // Button parsing
             if (event.type == EV_KEY)
             {
-
                 // Mouse button parsing
                 if ((event.code == BTN_TOUCH) || (event.code == BTN_LEFT))
                 {
@@ -4595,25 +4589,26 @@ static void *EventThread(void *arg)
                 if (event.code == BTN_MIDDLE) currentMouseStateEvdev[MOUSE_MIDDLE_BUTTON] =  event.value;
 
                 // Keyboard button parsing
-                if((event.code >= 1) && (event.code <= 255))     //Keyboard keys appear for codes 1 to 255
+                if ((event.code >= 1) && (event.code <= 255))     //Keyboard keys appear for codes 1 to 255
                 {
                     keycode = keymap_US[event.code & 0xFF];     // The code we get is a scancode so we look up the apropriate keycode
+                    
                     // Make sure we got a valid keycode
-                    if((keycode > 0) && (keycode < sizeof(currentKeyState)))
+                    if ((keycode > 0) && (keycode < sizeof(currentKeyState)))
                     {
                         // Store the key information for raylib to later use
                         currentKeyStateEvdev[keycode] = event.value;
-                        if(event.value > 0)
+                        if (event.value > 0)
                         {
                             // Add the key int the fifo
                             lastKeyPressedEvdev.Contents[lastKeyPressedEvdev.Head] = keycode;   // Put the data at the front of the fifo snake
                             lastKeyPressedEvdev.Head = (lastKeyPressedEvdev.Head + 1) & 0x07;   // Increment the head pointer forwards and binary wraparound after 7 (fifo is 8 elements long)
                             // TODO: This fifo is not fully threadsafe with multiple writers, so multiple keyboards hitting a key at the exact same time could miss a key (double write to head before it was incremented)
                         }
+                        
                         TraceLog(LOG_DEBUG, "KEY%s ScanCode: %4i KeyCode: %4i",event.value == 0 ? "UP":"DOWN", event.code, keycode);
                     }
                 }
-
             }
 
             // Screen confinement
