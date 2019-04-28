@@ -240,7 +240,6 @@ ifeq ($(PLATFORM),PLATFORM_WEB)
     # -O2                        # optimization level 2, if used, also set --memory-init-file 0
     # --memory-init-file 0       # to avoid an external memory initialization code file (.mem)
     # -s USE_GLFW=3              # Use glfw3 library (context/input management)
-    # -s USE_SDL=2               # Use SDL2 library, required for audio backend
     # -s ALLOW_MEMORY_GROWTH=1   # to allow memory resizing
     # -s TOTAL_MEMORY=16777216   # to specify heap memory size (default = 16MB)
     # -s USE_PTHREADS=1          # multithreading support
@@ -250,7 +249,7 @@ ifeq ($(PLATFORM),PLATFORM_WEB)
     # --profiling                # include information for code profiling
     # --preload-file resources   # specify a resources folder for data compilation
     CFLAGS += -Os -s USE_GLFW=3 -s ASSERTIONS=2 -s WASM=1
-    #  -Os -s WASM=1 -s EMTERPRETIFY=1 -s EMTERPRETIFY_ASYNC=1
+    # -s EMTERPRETIFY=1 -s EMTERPRETIFY_ASYNC=1 --preload-file audio/resources@resources
     
     # NOTE: Simple raylib examples are compiled to be interpreter by emterpreter, that way,
     # we can compile same code for ALL platforms with no change required, but, working on bigger
