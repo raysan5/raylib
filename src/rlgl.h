@@ -451,6 +451,8 @@ RLAPI void rlEnableRenderTexture(unsigned int id);            // Enable render t
 RLAPI void rlDisableRenderTexture(void);                      // Disable render texture (fbo), return to default framebuffer
 RLAPI void rlEnableDepthTest(void);                           // Enable depth test
 RLAPI void rlDisableDepthTest(void);                          // Disable depth test
+RLAPI void rlEnableBackfaceCulling(void);                     // Enable backface culling
+RLAPI void rlDisableBackfaceCulling(void);                    // Disable backface culling
 RLAPI void rlEnableWireMode(void);                            // Enable wire mode
 RLAPI void rlDisableWireMode(void);                           // Disable wire mode
 RLAPI void rlDeleteTextures(unsigned int id);                 // Delete OpenGL texture from GPU
@@ -829,9 +831,9 @@ static RenderTexture2D stereoFbo;           // VR stereo rendering framebuffer
 static bool vrSimulatorReady = false;       // VR simulator ready flag
 static bool vrStereoRender = false;         // VR stereo rendering enabled/disabled flag
                                             // NOTE: This flag is useful to render data over stereo image (i.e. FPS)
-#endif  // defined(SUPPORT_VR_SIMULATOR)
+#endif  // SUPPORT_VR_SIMULATOR
 
-#endif  // defined(GRAPHICS_API_OPENGL_33) || defined(GRAPHICS_API_OPENGL_ES2)
+#endif  // GRAPHICS_API_OPENGL_33 || GRAPHICS_API_OPENGL_ES2
 
 static int blendMode = 0;   // Track current blending mode
 
@@ -862,7 +864,7 @@ static void GenDrawQuad(void);              // Generate and draw quad
 static void SetStereoView(int eye, Matrix matProjection, Matrix matModelView);  // Set internal projection and modelview matrix depending on eye
 #endif
 
-#endif  // defined(GRAPHICS_API_OPENGL_33) || defined(GRAPHICS_API_OPENGL_ES2)
+#endif  // GRAPHICS_API_OPENGL_33 || GRAPHICS_API_OPENGL_ES2
 
 #if defined(GRAPHICS_API_OPENGL_11)
 static int GenerateMipmaps(unsigned char *data, int baseWidth, int baseHeight);
@@ -1345,6 +1347,18 @@ void rlDisableDepthTest(void)
     glDisable(GL_DEPTH_TEST);
 }
 
+// Enable backface culling
+void rlEnableBackfaceCulling(void)
+{
+    glEnable(GL_CULL_FACE);
+}
+
+// Disable backface culling
+void rlDisableBackfaceCulling(void)
+{
+    glDisable(GL_CULL_FACE);
+}
+
 // Enable wire mode
 void rlEnableWireMode(void)
 {
@@ -1677,7 +1691,7 @@ void rlglInit(int width, int height)
     projection = MatrixIdentity();
     modelview = MatrixIdentity();
     currentMatrix = &modelview;
-#endif      // defined(GRAPHICS_API_OPENGL_33) || defined(GRAPHICS_API_OPENGL_ES2)
+#endif      // GRAPHICS_API_OPENGL_33 || GRAPHICS_API_OPENGL_ES2
 
     // Initialize OpenGL default states
     //----------------------------------------------------------
@@ -1869,11 +1883,11 @@ unsigned int rlLoadTexture(void *data, int width, int height, int format, int mi
         return id;
     }
 #endif
-#endif      // defined(GRAPHICS_API_OPENGL_11)
+#endif      // GRAPHICS_API_OPENGL_11
 
     glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
 
-    glGenTextures(1, &id);              // Generate Pointer to the texture
+    glGenTextures(1, &id);              // Generate texture id
 
 #if defined(GRAPHICS_API_OPENGL_33) || defined(GRAPHICS_API_OPENGL_ES2)
     //glActiveTexture(GL_TEXTURE0);     // If not defined, using GL_TEXTURE0 by default (shader texture)
@@ -3657,30 +3671,25 @@ void ToggleVrMode(void)
 #endif
 }
 
-// Begin Oculus drawing configuration
+// Begin VR drawing configuration
 void BeginVrDrawing(void)
 {
 #if defined(GRAPHICS_API_OPENGL_33) || defined(GRAPHICS_API_OPENGL_ES2)
     if (vrSimulatorReady)
     {
-        // Setup framebuffer for stereo rendering
-        rlEnableRenderTexture(stereoFbo.id);
+        
+        rlEnableRenderTexture(stereoFbo.id);    // Setup framebuffer for stereo rendering
+        //glEnable(GL_FRAMEBUFFER_SRGB);        // Enable SRGB framebuffer (only if required)
 
-        // NOTE: If your application is configured to treat the texture as a linear format (e.g. GL_RGBA)
-        // and performs linear-to-gamma conversion in GLSL or does not care about gamma-correction, then:
-        //     - Require OculusBuffer format to be OVR_FORMAT_R8G8B8A8_UNORM_SRGB
-        //     - Do NOT enable GL_FRAMEBUFFER_SRGB
-        //glEnable(GL_FRAMEBUFFER_SRGB);
-
-        //glViewport(0, 0, buffer.width, buffer.height);        // Useful if rendering to separate framebuffers (every eye)
-        rlClearScreenBuffers();             // Clear current framebuffer(s)
+        //glViewport(0, 0, buffer.width, buffer.height);    // Useful if rendering to separate framebuffers (every eye)
+        rlClearScreenBuffers();                 // Clear current framebuffer
 
         vrStereoRender = true;
     }
 #endif
 }
 
-// End Oculus drawing process (and desktop mirror)
+// End VR drawing process (and desktop mirror)
 void EndVrDrawing(void)
 {
 #if defined(GRAPHICS_API_OPENGL_33) || defined(GRAPHICS_API_OPENGL_ES2)
@@ -4419,9 +4428,9 @@ static void SetStereoView(int eye, Matrix matProjection, Matrix matModelView)
     SetMatrixModelview(eyeModelView);
     SetMatrixProjection(eyeProjection);
 }
-#endif      // defined(SUPPORT_VR_SIMULATOR)
+#endif  // SUPPORT_VR_SIMULATOR
 
-#endif //defined(GRAPHICS_API_OPENGL_33) || defined(GRAPHICS_API_OPENGL_ES2)
+#endif  // GRAPHICS_API_OPENGL_33 || GRAPHICS_API_OPENGL_ES2
 
 #if defined(GRAPHICS_API_OPENGL_11)
 // Mipmaps data is generated after image data

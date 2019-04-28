@@ -176,6 +176,25 @@ void DrawLineBezier(Vector2 startPos, Vector2 endPos, float thick, Color color)
     }
 }
 
+// Draw lines sequence
+void DrawLineStrip(Vector2 *points, int pointsCount, Color color)
+{
+    if (pointsCount >= 2)
+    {
+        if (rlCheckBufferLimit(pointsCount)) rlglDraw();
+
+        rlBegin(RL_LINES);
+            rlColor4ub(color.r, color.g, color.b, color.a);
+
+            for (int i = 0; i < pointsCount - 1; i++)
+            {
+                rlVertex2f(points[i].x, points[i].y);
+                rlVertex2f(points[i + 1].x, points[i + 1].y);
+            }
+        rlEnd();
+    }
+}
+
 // Draw a color-filled circle
 void DrawCircle(int centerX, int centerY, float radius, Color color)
 {
@@ -1208,6 +1227,37 @@ void DrawTriangleLines(Vector2 v1, Vector2 v2, Vector2 v3, Color color)
     rlEnd();
 }
 
+// Draw a triangle fan defined by points
+// NOTE: First point provided is shared by all triangles
+void DrawTriangleFan(Vector2 *points, int pointsCount, Color color)
+{
+    if (pointsCount >= 3)
+    {
+        if (rlCheckBufferLimit((pointsCount - 2)*4)) rlglDraw();
+
+        rlEnableTexture(GetShapesTexture().id);
+        rlBegin(RL_QUADS);
+            rlColor4ub(color.r, color.g, color.b, color.a);
+
+            for (int i = 1; i < pointsCount - 1; i++)
+            {
+                rlTexCoord2f(recTexShapes.x/texShapes.width, recTexShapes.y/texShapes.height);
+                rlVertex2f(points[0].x, points[0].y);
+
+                rlTexCoord2f(recTexShapes.x/texShapes.width, (recTexShapes.y + recTexShapes.height)/texShapes.height);
+                rlVertex2f(points[i].x, points[i].y);
+
+                rlTexCoord2f((recTexShapes.x + recTexShapes.width)/texShapes.width, (recTexShapes.y + recTexShapes.height)/texShapes.height);
+                rlVertex2f(points[i + 1].x, points[i + 1].y);
+
+                rlTexCoord2f((recTexShapes.x + recTexShapes.width)/texShapes.width, recTexShapes.y/texShapes.height);
+                rlVertex2f(points[i + 1].x, points[i + 1].y);
+            }
+        rlEnd();
+        rlDisableTexture();
+    }
+}
+
 // Draw a regular polygon of n sides (Vector version)
 void DrawPoly(Vector2 center, int sides, float radius, float rotation, Color color)
 {
@@ -1254,55 +1304,6 @@ void DrawPoly(Vector2 center, int sides, float radius, float rotation, Color col
         rlEnd();
 #endif
     rlPopMatrix();
-}
-
-// Draw a closed polygon defined by points
-void DrawPolyEx(Vector2 *points, int pointsCount, Color color)
-{
-    if (pointsCount >= 3)
-    {
-        if (rlCheckBufferLimit((pointsCount - 2)*4)) rlglDraw();
-
-        rlEnableTexture(GetShapesTexture().id);
-        rlBegin(RL_QUADS);
-            rlColor4ub(color.r, color.g, color.b, color.a);
-
-            for (int i = 1; i < pointsCount - 1; i++)
-            {
-                rlTexCoord2f(recTexShapes.x/texShapes.width, recTexShapes.y/texShapes.height);
-                rlVertex2f(points[0].x, points[0].y);
-
-                rlTexCoord2f(recTexShapes.x/texShapes.width, (recTexShapes.y + recTexShapes.height)/texShapes.height);
-                rlVertex2f(points[i].x, points[i].y);
-
-                rlTexCoord2f((recTexShapes.x + recTexShapes.width)/texShapes.width, (recTexShapes.y + recTexShapes.height)/texShapes.height);
-                rlVertex2f(points[i + 1].x, points[i + 1].y);
-
-                rlTexCoord2f((recTexShapes.x + recTexShapes.width)/texShapes.width, recTexShapes.y/texShapes.height);
-                rlVertex2f(points[i + 1].x, points[i + 1].y);
-            }
-        rlEnd();
-        rlDisableTexture();
-    }
-}
-
-// Draw polygon using lines
-void DrawPolyExLines(Vector2 *points, int pointsCount, Color color)
-{
-    if (pointsCount >= 2)
-    {
-        if (rlCheckBufferLimit(pointsCount)) rlglDraw();
-
-        rlBegin(RL_LINES);
-            rlColor4ub(color.r, color.g, color.b, color.a);
-
-            for (int i = 0; i < pointsCount - 1; i++)
-            {
-                rlVertex2f(points[i].x, points[i].y);
-                rlVertex2f(points[i + 1].x, points[i + 1].y);
-            }
-        rlEnd();
-    }
 }
 
 // Define default texture used to draw shapes
