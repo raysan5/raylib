@@ -627,21 +627,21 @@ typedef enum
 
     // This is normally ABXY/Circle, Triangle, Square, Cross.   No support for 6 button controllers though..
     GAMEPAD_BUTTON_LEFT_FACE_UP,
-	GAMEPAD_BUTTON_LEFT_FACE_RIGHT,
-	GAMEPAD_BUTTON_LEFT_FACE_DOWN,
+    GAMEPAD_BUTTON_LEFT_FACE_RIGHT,
+    GAMEPAD_BUTTON_LEFT_FACE_DOWN,
     GAMEPAD_BUTTON_LEFT_FACE_LEFT,
   
     // This is normally a DPAD
-	GAMEPAD_BUTTON_RIGHT_FACE_UP,
-	GAMEPAD_BUTTON_RIGHT_FACE_RIGHT,
-	GAMEPAD_BUTTON_RIGHT_FACE_DOWN,
-	GAMEPAD_BUTTON_RIGHT_FACE_LEFT,
+    GAMEPAD_BUTTON_RIGHT_FACE_UP,
+    GAMEPAD_BUTTON_RIGHT_FACE_RIGHT,
+    GAMEPAD_BUTTON_RIGHT_FACE_DOWN,
+    GAMEPAD_BUTTON_RIGHT_FACE_LEFT,
 
     // Triggers
     GAMEPAD_BUTTON_LEFT_TRIGGER_1,
     GAMEPAD_BUTTON_LEFT_TRIGGER_2,
-	GAMEPAD_BUTTON_RIGHT_TRIGGER_1,
-	GAMEPAD_BUTTON_RIGHT_TRIGGER_2,
+    GAMEPAD_BUTTON_RIGHT_TRIGGER_1,
+    GAMEPAD_BUTTON_RIGHT_TRIGGER_2,
 
     // These are buttons in the center of the gamepad
     GAMEPAD_BUTTON_MIDDLE_LEFT, //PS3 Select
@@ -650,25 +650,25 @@ typedef enum
 
     // These are the joystick press in buttons
     GAMEPAD_BUTTON_LEFT_THUMB,
-	GAMEPAD_BUTTON_RIGHT_THUMB
+    GAMEPAD_BUTTON_RIGHT_THUMB
 } GamepadButton;
 
 typedef enum
 {
-	// This is here just for error checking
+    // This is here just for error checking
     GAMEPAD_AXIS_UNKNOWN = 0,
 
     // Left stick
-	GAMEPAD_AXIS_LEFT_X,
-	GAMEPAD_AXIS_LEFT_Y,
+    GAMEPAD_AXIS_LEFT_X,
+    GAMEPAD_AXIS_LEFT_Y,
 
     // Right stick
-	GAMEPAD_AXIS_RIGHT_X,
-	GAMEPAD_AXIS_RIGHT_Y,
+    GAMEPAD_AXIS_RIGHT_X,
+    GAMEPAD_AXIS_RIGHT_Y,
 
     // Pressure levels for the back triggers
-	GAMEPAD_AXIS_LEFT_TRIGGER,    // [1..-1] (pressure-level)
-	GAMEPAD_AXIS_RIGHT_TRIGGER     // [1..-1] (pressure-level)
+    GAMEPAD_AXIS_LEFT_TRIGGER,    // [1..-1] (pressure-level)
+    GAMEPAD_AXIS_RIGHT_TRIGGER     // [1..-1] (pressure-level)
 } GamepadAxis;
 
 // Shader location point type
