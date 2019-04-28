@@ -3110,7 +3110,7 @@ static GamepadButton GetGamepadButton(int button)
 #endif
 
 #if defined(PLATFORM_UWP)
-	b = button;
+	b = button; // UWP will provide the correct button
 #endif
 
 #if defined(PLATFORM_WEB)
