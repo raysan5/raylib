@@ -451,6 +451,8 @@ RLAPI void rlEnableRenderTexture(unsigned int id);            // Enable render t
 RLAPI void rlDisableRenderTexture(void);                      // Disable render texture (fbo), return to default framebuffer
 RLAPI void rlEnableDepthTest(void);                           // Enable depth test
 RLAPI void rlDisableDepthTest(void);                          // Disable depth test
+RLAPI void rlEnableBackfaceCulling(void);                     // Enable backface culling
+RLAPI void rlDisableBackfaceCulling(void);                    // Disable backface culling
 RLAPI void rlEnableWireMode(void);                            // Enable wire mode
 RLAPI void rlDisableWireMode(void);                           // Disable wire mode
 RLAPI void rlDeleteTextures(unsigned int id);                 // Delete OpenGL texture from GPU
@@ -1343,6 +1345,18 @@ void rlEnableDepthTest(void)
 void rlDisableDepthTest(void)
 {
     glDisable(GL_DEPTH_TEST);
+}
+
+// Enable backface culling
+void rlEnableBackfaceCulling(void)
+{
+    glEnable(GL_CULL_FACE);
+}
+
+// Disable backface culling
+void rlDisableBackfaceCulling(void)
+{
+    glDisable(GL_CULL_FACE);
 }
 
 // Enable wire mode
@@ -3657,30 +3671,25 @@ void ToggleVrMode(void)
 #endif
 }
 
-// Begin Oculus drawing configuration
+// Begin VR drawing configuration
 void BeginVrDrawing(void)
 {
 #if defined(GRAPHICS_API_OPENGL_33) || defined(GRAPHICS_API_OPENGL_ES2)
     if (vrSimulatorReady)
     {
-        // Setup framebuffer for stereo rendering
-        rlEnableRenderTexture(stereoFbo.id);
+        
+        rlEnableRenderTexture(stereoFbo.id);    // Setup framebuffer for stereo rendering
+        //glEnable(GL_FRAMEBUFFER_SRGB);        // Enable SRGB framebuffer (only if required)
 
-        // NOTE: If your application is configured to treat the texture as a linear format (e.g. GL_RGBA)
-        // and performs linear-to-gamma conversion in GLSL or does not care about gamma-correction, then:
-        //     - Require OculusBuffer format to be OVR_FORMAT_R8G8B8A8_UNORM_SRGB
-        //     - Do NOT enable GL_FRAMEBUFFER_SRGB
-        //glEnable(GL_FRAMEBUFFER_SRGB);
-
-        //glViewport(0, 0, buffer.width, buffer.height);        // Useful if rendering to separate framebuffers (every eye)
-        rlClearScreenBuffers();             // Clear current framebuffer(s)
+        //glViewport(0, 0, buffer.width, buffer.height);    // Useful if rendering to separate framebuffers (every eye)
+        rlClearScreenBuffers();                 // Clear current framebuffer
 
         vrStereoRender = true;
     }
 #endif
 }
 
-// End Oculus drawing process (and desktop mirror)
+// End VR drawing process (and desktop mirror)
 void EndVrDrawing(void)
 {
 #if defined(GRAPHICS_API_OPENGL_33) || defined(GRAPHICS_API_OPENGL_ES2)
