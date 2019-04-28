@@ -622,50 +622,51 @@ typedef enum {
 // Gamepad Buttons
 typedef enum
 {
-    //This is here just for error checking
+    // This is here just for error checking
     GAMEPAD_BUTTON_UNKNOWN = 0,
 
-    //This is normally ABXY/Circle, Triangle, Square, Cross.   No support for 6 button controllers though..
+    // This is normally ABXY/Circle, Triangle, Square, Cross.   No support for 6 button controllers though..
     GAMEPAD_BUTTON_LEFT_FACE_UP,
 	GAMEPAD_BUTTON_LEFT_FACE_RIGHT,
 	GAMEPAD_BUTTON_LEFT_FACE_DOWN,
     GAMEPAD_BUTTON_LEFT_FACE_LEFT,
   
-    //This is normally a DPAD
+    // This is normally a DPAD
 	GAMEPAD_BUTTON_RIGHT_FACE_UP,
 	GAMEPAD_BUTTON_RIGHT_FACE_RIGHT,
 	GAMEPAD_BUTTON_RIGHT_FACE_DOWN,
 	GAMEPAD_BUTTON_RIGHT_FACE_LEFT,
 
-    //Triggers
+    // Triggers
     GAMEPAD_BUTTON_LEFT_TRIGGER_1,
     GAMEPAD_BUTTON_LEFT_TRIGGER_2,
 	GAMEPAD_BUTTON_RIGHT_TRIGGER_1,
 	GAMEPAD_BUTTON_RIGHT_TRIGGER_2,
 
-    //These are buttons in the center of the gamepad
+    // These are buttons in the center of the gamepad
     GAMEPAD_BUTTON_MIDDLE_LEFT, //PS3 Select
     GAMEPAD_BUTTON_MIDDLE, //PS Button/XBOX Button
     GAMEPAD_BUTTON_MIDDLE_RIGHT, //PS3 Start
 
-    //These are the joystick press in buttons
+    // These are the joystick press in buttons
     GAMEPAD_BUTTON_LEFT_THUMB,
 	GAMEPAD_BUTTON_RIGHT_THUMB
 } GamepadButton;
 
 typedef enum
 {
+	// This is here just for error checking
     GAMEPAD_AXIS_UNKNOWN = 0,
 
-    //Left stick
+    // Left stick
 	GAMEPAD_AXIS_LEFT_X,
 	GAMEPAD_AXIS_LEFT_Y,
 
-    //Right stick
+    // Right stick
 	GAMEPAD_AXIS_RIGHT_X,
 	GAMEPAD_AXIS_RIGHT_Y,
 
-    //Pressure levels
+    // Pressure levels for the back triggers
 	GAMEPAD_AXIS_LEFT_TRIGGER,    // [1..-1] (pressure-level)
 	GAMEPAD_AXIS_RIGHT_TRIGGER     // [1..-1] (pressure-level)
 } GamepadAxis;

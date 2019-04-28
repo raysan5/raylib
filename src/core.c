@@ -3110,34 +3110,11 @@ static GamepadButton GetGamepadButton(int button)
 #endif
 
 #if defined(PLATFORM_UWP)
-    /*switch(button)
-    {
-	case 4: b = GAMEPAD_BUTTON_RIGHT_FACE_DOWN; break;
-	case 8: b = GAMEPAD_BUTTON_RIGHT_FACE_RIGHT; break;
-	case 16: b = GAMEPAD_BUTTON_RIGHT_FACE_LEFT; break;
-	case 32: b = GAMEPAD_BUTTON_RIGHT_FACE_RIGHT; break;
-
-	case 128: b = GAMEPAD_BUTTON_LEFT_FACE_DOWN; break;
-	case 256: b = GAMEPAD_BUTTON_LEFT_FACE_LEFT; break;
-	case 512: b = GAMEPAD_BUTTON_LEFT_FACE_RIGHT; break;
-	case 64: b = GAMEPAD_BUTTON_LEFT_FACE_UP; break;
-
-	case 1024: b = GAMEPAD_BUTTON_LEFT_TRIGGER_1; break;
-	case 2048: b = GAMEPAD_BUTTON_RIGHT_TRIGGER_1; break;
-
-	case 4096: b = GAMEPAD_BUTTON_LEFT_THUMB; break;
-	case 8192: b = GAMEPAD_BUTTON_RIGHT_THUMB; break;
-
-	case 2: b = GAMEPAD_BUTTON_MIDDLE_LEFT;
-	case 1: b = GAMEPAD_BUTTON_MIDDLE_RIGHT;
-    }*/
-    //Above might not be most efficient, so not doing it for now
 	b = button;
 #endif
 
 #if defined(PLATFORM_WEB)
-    //TODO: TEST
-    //https://www.w3.org/TR/gamepad/#gamepad-interface
+    // https://www.w3.org/TR/gamepad/#gamepad-interface
     switch (button)
     {
 	case 0: b = GAMEPAD_BUTTON_RIGHT_FACE_DOWN; break;
@@ -3178,11 +3155,11 @@ static GamepadAxis GetGamepadAxis(int axis)
 #endif
 
 #if defined(PLATFORM_UWP)
-	a = axis; //UWP will provide the correct axis
+	a = axis; // UWP will provide the correct axis
 #endif
 
 #if defined(PLATFORM_WEB)
-    //TODO: TEST
+	// https://www.w3.org/TR/gamepad/#gamepad-interface
     switch(axis)
     {
 	case 0: a = GAMEPAD_AXIS_LEFT_X;
@@ -3430,9 +3407,9 @@ static void PollInputEvents(void)
 
             // Get current gamepad state
             // NOTE: There is no callback available, so we get it manually
-            //Get remapped buttons
+            // Get remapped buttons
 			GLFWgamepadstate state;
-			glfwGetGamepadState(i, &state); //This remapps all gamepads so they work the same
+			glfwGetGamepadState(i, &state); // This remapps all gamepads so they have their buttons mapped like an xbox controller
 			const unsigned char *buttons = state.buttons;
 
             for (int k = 0; (buttons != NULL) && (k < GLFW_GAMEPAD_BUTTON_DPAD_LEFT + 1) && (k < MAX_GAMEPAD_BUTTONS); k++)
@@ -3456,7 +3433,7 @@ static void PollInputEvents(void)
                 gamepadAxisState[i][axis] = axes[k];
             }
 
-            //Register buttons for 2nd triggers
+            // Register buttons for 2nd triggers (because GLFW doesn't count these as buttons but rather axis)
 			currentGamepadState[i][GAMEPAD_BUTTON_LEFT_TRIGGER_2] = (char)(gamepadAxisState[i][GAMEPAD_AXIS_LEFT_TRIGGER] > 0.1);
 			currentGamepadState[i][GAMEPAD_BUTTON_RIGHT_TRIGGER_2] = (char)(gamepadAxisState[i][GAMEPAD_AXIS_RIGHT_TRIGGER] > 0.1);
 
