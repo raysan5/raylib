@@ -619,83 +619,57 @@ typedef enum {
     GAMEPAD_PLAYER4     = 3
 } GamepadNumber;
 
-// PS3 USB Controller Buttons
-// TODO: Provide a generic way to list gamepad controls schemes,
-// defining specific controls schemes is not a good option
-typedef enum {
-    GAMEPAD_PS3_BUTTON_TRIANGLE = 0,
-    GAMEPAD_PS3_BUTTON_CIRCLE   = 1,
-    GAMEPAD_PS3_BUTTON_CROSS    = 2,
-    GAMEPAD_PS3_BUTTON_SQUARE   = 3,
-    GAMEPAD_PS3_BUTTON_L1       = 6,
-    GAMEPAD_PS3_BUTTON_R1       = 7,
-    GAMEPAD_PS3_BUTTON_L2       = 4,
-    GAMEPAD_PS3_BUTTON_R2       = 5,
-    GAMEPAD_PS3_BUTTON_START    = 8,
-    GAMEPAD_PS3_BUTTON_SELECT   = 9,
-    GAMEPAD_PS3_BUTTON_PS       = 12,
-    GAMEPAD_PS3_BUTTON_UP       = 24,
-    GAMEPAD_PS3_BUTTON_RIGHT    = 25,
-    GAMEPAD_PS3_BUTTON_DOWN     = 26,
-    GAMEPAD_PS3_BUTTON_LEFT     = 27
-} GamepadPS3Button;
+// Gamepad Buttons
+typedef enum
+{
+    // This is here just for error checking
+    GAMEPAD_BUTTON_UNKNOWN = 0,
 
-// PS3 USB Controller Axis
-typedef enum {
-    GAMEPAD_PS3_AXIS_LEFT_X     = 0,
-    GAMEPAD_PS3_AXIS_LEFT_Y     = 1,
-    GAMEPAD_PS3_AXIS_RIGHT_X    = 2,
-    GAMEPAD_PS3_AXIS_RIGHT_Y    = 5,
-    GAMEPAD_PS3_AXIS_L2         = 3,    // [1..-1] (pressure-level)
-    GAMEPAD_PS3_AXIS_R2         = 4     // [1..-1] (pressure-level)
-} GamepadPS3Axis;
+    // This is normally ABXY/Circle, Triangle, Square, Cross.   No support for 6 button controllers though..
+    GAMEPAD_BUTTON_LEFT_FACE_UP,
+    GAMEPAD_BUTTON_LEFT_FACE_RIGHT,
+    GAMEPAD_BUTTON_LEFT_FACE_DOWN,
+    GAMEPAD_BUTTON_LEFT_FACE_LEFT,
+  
+    // This is normally a DPAD
+    GAMEPAD_BUTTON_RIGHT_FACE_UP,
+    GAMEPAD_BUTTON_RIGHT_FACE_RIGHT,
+    GAMEPAD_BUTTON_RIGHT_FACE_DOWN,
+    GAMEPAD_BUTTON_RIGHT_FACE_LEFT,
 
-// Xbox360 USB Controller Buttons
-typedef enum {
-    GAMEPAD_XBOX_BUTTON_A       = 0,
-    GAMEPAD_XBOX_BUTTON_B       = 1,
-    GAMEPAD_XBOX_BUTTON_X       = 2,
-    GAMEPAD_XBOX_BUTTON_Y       = 3,
-    GAMEPAD_XBOX_BUTTON_LB      = 4,
-    GAMEPAD_XBOX_BUTTON_RB      = 5,
-    GAMEPAD_XBOX_BUTTON_SELECT  = 6,
-    GAMEPAD_XBOX_BUTTON_START   = 7,
-    GAMEPAD_XBOX_BUTTON_HOME    = 8,
-    GAMEPAD_XBOX_BUTTON_UP      = 10,
-    GAMEPAD_XBOX_BUTTON_RIGHT   = 11,
-    GAMEPAD_XBOX_BUTTON_DOWN    = 12,
-    GAMEPAD_XBOX_BUTTON_LEFT    = 13
-} GamepadXbox360Button;
+    // Triggers
+    GAMEPAD_BUTTON_LEFT_TRIGGER_1,
+    GAMEPAD_BUTTON_LEFT_TRIGGER_2,
+    GAMEPAD_BUTTON_RIGHT_TRIGGER_1,
+    GAMEPAD_BUTTON_RIGHT_TRIGGER_2,
 
-// Xbox360 USB Controller Axis,
-// NOTE: For Raspberry Pi, axis must be reconfigured
-typedef enum {
-    GAMEPAD_XBOX_AXIS_LEFT_X    = 0,    // [-1..1] (left->right)
-    GAMEPAD_XBOX_AXIS_LEFT_Y    = 1,    // [1..-1] (up->down)
-    GAMEPAD_XBOX_AXIS_RIGHT_X   = 2,    // [-1..1] (left->right)
-    GAMEPAD_XBOX_AXIS_RIGHT_Y   = 3,    // [1..-1] (up->down)
-    GAMEPAD_XBOX_AXIS_LT        = 4,    // [-1..1] (pressure-level)
-    GAMEPAD_XBOX_AXIS_RT        = 5     // [-1..1] (pressure-level)
-} GamepadXbox360Axis;
+    // These are buttons in the center of the gamepad
+    GAMEPAD_BUTTON_MIDDLE_LEFT, //PS3 Select
+    GAMEPAD_BUTTON_MIDDLE, //PS Button/XBOX Button
+    GAMEPAD_BUTTON_MIDDLE_RIGHT, //PS3 Start
 
-// Android Gamepad Controller (SNES CLASSIC)
-typedef enum {
-    GAMEPAD_ANDROID_DPAD_UP     = 19,
-    GAMEPAD_ANDROID_DPAD_DOWN   = 20,
-    GAMEPAD_ANDROID_DPAD_LEFT   = 21,
-    GAMEPAD_ANDROID_DPAD_RIGHT  = 22,
-    GAMEPAD_ANDROID_DPAD_CENTER = 23,
-    GAMEPAD_ANDROID_BUTTON_A    = 96,
-    GAMEPAD_ANDROID_BUTTON_B    = 97,
-    GAMEPAD_ANDROID_BUTTON_C    = 98,
-    GAMEPAD_ANDROID_BUTTON_X    = 99,
-    GAMEPAD_ANDROID_BUTTON_Y    = 100,
-    GAMEPAD_ANDROID_BUTTON_Z    = 101,
-    GAMEPAD_ANDROID_BUTTON_L1   = 102,
-    GAMEPAD_ANDROID_BUTTON_R1   = 103,
-    GAMEPAD_ANDROID_BUTTON_L2   = 104,
-    GAMEPAD_ANDROID_BUTTON_R2   = 105
-} GamepadAndroid;
+    // These are the joystick press in buttons
+    GAMEPAD_BUTTON_LEFT_THUMB,
+    GAMEPAD_BUTTON_RIGHT_THUMB
+} GamepadButton;
+
+typedef enum
+{
+    // This is here just for error checking
+    GAMEPAD_AXIS_UNKNOWN = 0,
+
+    // Left stick
+    GAMEPAD_AXIS_LEFT_X,
+    GAMEPAD_AXIS_LEFT_Y,
+
+    // Right stick
+    GAMEPAD_AXIS_RIGHT_X,
+    GAMEPAD_AXIS_RIGHT_Y,
+
+    // Pressure levels for the back triggers
+    GAMEPAD_AXIS_LEFT_TRIGGER,    // [1..-1] (pressure-level)
+    GAMEPAD_AXIS_RIGHT_TRIGGER     // [1..-1] (pressure-level)
+} GamepadAxis;
 
 // Shader location point type
 typedef enum {
