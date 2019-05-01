@@ -92,6 +92,10 @@
 
 #include <math.h>       // Required for: sin(), cos(), sqrt(), pow()
 
+#ifndef PI
+    #define PI 3.14159265358979323846f //Required as PI is not always defined in math.h
+#endif
+
 #ifdef __cplusplus
 extern "C" {            // Prevents name mangling of functions
 #endif
