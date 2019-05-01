@@ -1293,6 +1293,10 @@ void EndTextureMode(void)
 
     // Set viewport to default framebuffer size
     SetupViewport(renderWidth, renderHeight);
+    
+    // Reset current screen size
+    currentWidth = GetScreenWidth();
+    currentHeight = GetScreenHeight();
 }
 
 // Returns a ray trace from mouse position
@@ -2920,12 +2924,6 @@ static void SetupViewport(int width, int height)
 
     rlMatrixMode(RL_MODELVIEW);         // Switch back to MODELVIEW matrix
     rlLoadIdentity();                   // Reset current matrix (MODELVIEW)
-
-    // Window size must be updated to be used on 3D mode to get new aspect ratio (BeginMode3D())
-    // NOTE: Be careful! GLFW3 will choose the closest fullscreen resolution supported by current monitor,
-    // for example, if reescaling back to 800x450 (desired), it could set 720x480 (closest fullscreen supported)
-    currentWidth = screenWidth;
-    currentHeight = screenHeight;
 }
 
 // Compute framebuffer size relative to screen size and display size
@@ -3706,6 +3704,12 @@ static void WindowSizeCallback(GLFWwindow *window, int width, int height)
 {
     SetupViewport(width, height);    // Reset viewport and projection matrix for new size
 
+    // Set current screen size
+    screenWidth = width;
+    screenHeight = height;
+    currentWidth = width;
+    currentHeight = height;
+    
     // NOTE: Postprocessing texture is not scaled to new size
 
     windowResized = true;
