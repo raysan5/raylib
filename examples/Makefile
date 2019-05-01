@@ -246,9 +246,10 @@ ifeq ($(PLATFORM),PLATFORM_WEB)
     # -s WASM=1                  # support Web Assembly (https://github.com/kripken/emscripten/wiki/WebAssembly)
     # -s EMTERPRETIFY=1          # enable emscripten code interpreter (very slow)
     # -s EMTERPRETIFY_ASYNC=1    # support synchronous loops by emterpreter
+    # -s FORCE_FILESYSTEM=1      # force filesystem to load/save files data
     # --profiling                # include information for code profiling
     # --preload-file resources   # specify a resources folder for data compilation
-    CFLAGS += -Os -s USE_GLFW=3 -s ASSERTIONS=2 -s WASM=1
+    CFLAGS += -Os -s USE_GLFW=3 -s ASSERTIONS=2 -s WASM=1 -s FORCE_FILESYSTEM=1
     # -s EMTERPRETIFY=1 -s EMTERPRETIFY_ASYNC=1 --preload-file audio/resources@resources
     
     # NOTE: Simple raylib examples are compiled to be interpreter by emterpreter, that way,
