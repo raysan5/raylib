@@ -47,6 +47,9 @@
 *   #define SUPPORT_MOUSE_GESTURES
 *       Mouse gestures are directly mapped like touches and processed by gestures system.
 *
+*   #define SUPPORT_TOUCH_AS_MOUSE
+*       Touch input and mouse input are shared. Mouse functions also return touch information.
+*
 *   #define SUPPORT_BUSY_WAIT_LOOP
 *       Use busy wait loop for timing sync, if not defined, a high-resolution timer is setup and used
 *
@@ -2154,6 +2157,11 @@ bool IsMouseButtonPressed(int button)
     if ((currentMouseState[button] != previousMouseState[button]) && (currentMouseState[button] == 1)) pressed = true;
 #endif
 
+#if defined(PLATFORM_WEB)
+    Vector2 pos = GetTouchPosition(0);
+    if ((pos.x > 0) && (pos.y > 0)) pressed = true;    // There was a touch!
+#endif
+
     return pressed;
 }
 
@@ -2218,11 +2226,21 @@ int GetMouseY(void)
 // Returns mouse position XY
 Vector2 GetMousePosition(void)
 {
+    Vector2 position = { 0.0f, 0.0f };
+
 #if defined(PLATFORM_ANDROID)
-    return GetTouchPosition(0);
+    position = GetTouchPosition(0);
 #else
-    return (Vector2){ (mousePosition.x + mouseOffset.x)*mouseScale.x, (mousePosition.y + mouseOffset.y)*mouseScale.y };
+    position = (Vector2){ (mousePosition.x + mouseOffset.x)*mouseScale.x, (mousePosition.y + mouseOffset.y)*mouseScale.y };
 #endif
+#if defined(PLATFORM_WEB)
+    Vector2 pos = GetTouchPosition(0);
+    
+    // Touch position has priority over mouse position
+    if ((pos.x > 0) && (pos.y > 0)) position = pos; // There was a touch!
+#endif
+
+    return position;
 }
 
 // Set mouse position XY
