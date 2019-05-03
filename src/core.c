@@ -64,6 +64,7 @@
 *
 *   #define SUPPORT_HIGH_DPI
 *       Allow scale all the drawn content to match the high-DPI equivalent size (only PLATFORM_DESKTOP)
+*       NOTE: This flag is forced on macOS, since most displays are high-DPI
 *
 *   DEPENDENCIES:
 *       rglfw    - Manage graphic device, OpenGL context and inputs on PLATFORM_DESKTOP (Windows, Linux, OSX. FreeBSD, OpenBSD, NetBSD, DragonFly)
@@ -3046,6 +3047,7 @@ static void InitTimer(void)
 // NOTE: Sleep() granularity could be around 10 ms, it means, Sleep() could
 // take longer than expected... for that reason we use the busy wait loop
 // http://stackoverflow.com/questions/43057578/c-programming-win32-games-sleep-taking-longer-than-expected
+// http://www.geisswerks.com/ryan/FAQS/timing.html --> All about timming on Win32!
 static void Wait(float ms)
 {
 #if defined(SUPPORT_BUSY_WAIT_LOOP) && !defined(PLATFORM_UWP)
