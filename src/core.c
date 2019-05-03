@@ -130,6 +130,10 @@
     #include "external/rgif.h"  // Support GIF recording
 #endif
 
+#if defined(__APPLE__)
+    #define SUPPORT_HIGH_DPI    // Force HighDPI support on macOS
+#endif
+
 #include <stdio.h>          // Standard input / output lib
 #include <stdlib.h>         // Required for: malloc(), free(), rand(), atexit()
 #include <stdint.h>         // Required for: typedef unsigned long long int uint64_t, used by hi-res timer
