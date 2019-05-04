@@ -19,7 +19,6 @@ endif()
 include(AddIfFlagCompiles)
 add_if_flag_compiles(-Werror=pointer-arith CMAKE_C_FLAGS)
 add_if_flag_compiles(-Werror=implicit-function-declaration CMAKE_C_FLAGS)
-add_if_flag_compiles(-Werror=unsequenced CMAKE_C_FLAGS)
 # src/external/jar_xm.h does shady stuff
 add_if_flag_compiles(-fno-strict-aliasing CMAKE_C_FLAGS)
 
