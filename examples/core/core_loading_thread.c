@@ -15,10 +15,11 @@
 #include "raylib.h"
 
 #include "pthread.h"                        // POSIX style threads management
+#include <stdatomic.h>
 
 #include <time.h>                           // Required for clock() function
 
-static bool dataLoaded = false;             // Loading data semaphore
+static atomic_bool dataLoaded = ATOMIC_VAR_INIT(false); // Data Loaded completion indicator
 static void *LoadDataThread(void *arg);     // Loading data thread function declaration
 
 static int dataProgress = 0;                // Data progress accumulator
@@ -59,7 +60,7 @@ int main()
             break;
         case STATE_LOADING:
             framesCounter++;
-            if (dataLoaded)
+            if (atomic_load(&dataLoaded))
             {
                 framesCounter = 0;
                 state = STATE_FINISHED;
@@ -69,7 +70,7 @@ int main()
             if (IsKeyPressed(KEY_ENTER))
             {
                 // Reset everything to launch again
-                dataLoaded = false;
+                atomic_store(&dataLoaded, false);
                 dataProgress = 0;
                 state = STATE_WAITING;
             }
@@ -130,7 +131,7 @@ static void *LoadDataThread(void *arg)
     }
 
     // When data has finished loading, we set global variable
-    dataLoaded = true;
+    atomic_store(&dataLoaded, true);
 
     return NULL;
 }
