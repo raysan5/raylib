@@ -37,6 +37,7 @@ if(NOT glfw3_FOUND AND NOT USE_EXTERNAL_GLFW STREQUAL "ON" AND "${PLATFORM}" MAT
   add_subdirectory(external/glfw)
 
   list(APPEND raylib_sources $<TARGET_OBJECTS:glfw_objlib>)
+  include_directories(BEFORE SYSTEM external/glfw/include)
 else()
   MESSAGE(STATUS "Using external GLFW")
   set(GLFW_PKG_DEPS glfw3)
