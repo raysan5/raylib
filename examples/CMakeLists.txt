@@ -24,7 +24,10 @@ foreach(example_dir ${example_dirs})
   list(APPEND example_resources ${resources})
 endforeach()
 
-include(CheckIncludeFiles)
+if (NOT CMAKE_SYSTEM STRLESS "Darwin-18.0.0")
+  add_definitions(-DGL_SILENCE_DEPRECATION)
+  MESSAGE(AUTHOR_WARNING "OpenGL is deprecated starting with macOS 10.14 (Mojave)!")
+endif()
 set(OUTPUT_EXT)
 list(REMOVE_ITEM example_sources ${CMAKE_CURRENT_SOURCE_DIR}/others/rlgl_standalone.c)
 
