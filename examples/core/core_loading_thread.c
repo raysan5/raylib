@@ -34,7 +34,7 @@ int main()
     
     pthread_t threadId;             // Loading data thread id
 
-    int state = 0;                  // 0-Waiting, 1-Loading, 2-Finished
+    enum { STATE_WAITING, STATE_LOADING, STATE_FINISHED } state = STATE_WAITING;
     int framesCounter = 0;
 
     SetTargetFPS(60);
@@ -45,35 +45,35 @@ int main()
     {
         // Update
         //----------------------------------------------------------------------------------
-        if (state == 0)
+        switch (state)
         {
+        case STATE_WAITING:
             if (IsKeyPressed(KEY_ENTER))
             {
                 int error = pthread_create(&threadId, NULL, &LoadDataThread, NULL);
                 if (error != 0) TraceLog(LOG_ERROR, "Error creating loading thread");
                 else TraceLog(LOG_INFO, "Loading thread initialized successfully");
-                
-                state = 1;
+
+                state = STATE_LOADING;
             }
-        }
-        else if (state == 1)
-        {
+            break;
+        case STATE_LOADING:
             framesCounter++;
-            if (dataLoaded) 
+            if (dataLoaded)
             {
                 framesCounter = 0;
-                state = 2;
+                state = STATE_FINISHED;
             }
-        }
-        else if (state == 2)
-        {
-            if (IsKeyPressed(KEY_ENTER)) 
+            break;
+        case STATE_FINISHED:
+            if (IsKeyPressed(KEY_ENTER))
             {
                 // Reset everything to launch again
                 dataLoaded = false;
                 dataProgress = 0;
-                state = 0;
+                state = STATE_WAITING;
             }
+            break;
         }
         //----------------------------------------------------------------------------------
 
@@ -83,16 +83,19 @@ int main()
 
             ClearBackground(RAYWHITE);
             
-            if (state == 0) DrawText("PRESS ENTER to START LOADING DATA", 150, 170, 20, DARKGRAY);
-            else if (state == 1) 
-            { 
+            switch(state) {
+            case STATE_WAITING:
+                DrawText("PRESS ENTER to START LOADING DATA", 150, 170, 20, DARKGRAY);
+                break;
+            case STATE_LOADING:
                 DrawRectangle(150, 200, dataProgress, 60, SKYBLUE);
-                if ((framesCounter/15)%2) DrawText("LOADING DATA...", 240, 210, 40, DARKBLUE);
-            }
-            else if (state == 2) 
-            {
+                if ((framesCounter/15)%2)
+                    DrawText("LOADING DATA...", 240, 210, 40, DARKBLUE);
+                break;
+            case STATE_FINISHED:
                 DrawRectangle(150, 200, 500, 60, LIME);
                 DrawText("DATA LOADED!", 250, 210, 40, GREEN);
+                break;
             }
             
             DrawRectangleLines(150, 200, 500, 60, DARKGRAY);
