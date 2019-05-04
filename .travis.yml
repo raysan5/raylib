@@ -93,9 +93,16 @@ before_install:
 
         export RAYLIB_PACKAGE_SUFFIX="-Linux-$ARCH";
         if [ "$INSTALL_GLFW" == "YES" ]; then
-          wget 'http://ftp.de.debian.org/debian/pool/main/g/glfw3/libglfw3_3.2.1-1_amd64.deb';
-          wget 'http://ftp.de.debian.org/debian/pool/main/g/glfw3/libglfw3-dev_3.2.1-1_amd64.deb';
-          sudo dpkg -i libglfw3_3.2.1-1_amd64.deb libglfw3-dev_3.2.1-1_amd64.deb;
+          pushd src/external/glfw;
+          cmake . -DGLFW_BUILD_DOCS=OFF
+                  -DGLFW_BUILD_TESTS=OFF
+                  -DGLFW_BUILD_EXAMPLES=OFF
+                  -DGLFW_INSTALL=ON
+                  -DBUILD_SHARED_LIBS=ON
+                  -DGLFW_USE_WAYLAND=$WAYLAND;
+          make;
+          sudo make install;
+          popd;
         fi;
       fi;
     fi
