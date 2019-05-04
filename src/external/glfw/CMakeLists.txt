@@ -304,10 +304,12 @@ endif()
 # Export GLFW library dependencies
 #--------------------------------------------------------------------
 foreach(arg ${glfw_PKG_DEPS})
-    set(GLFW_PKG_DEPS "${GLFW_PKG_DEPS} ${arg}")
+    set(GLFW_PKG_DEPS "${GLFW_PKG_DEPS} ${arg}" CACHE INTERNAL
+        "GLFW pkg-config Requires.private")
 endforeach()
 foreach(arg ${glfw_PKG_LIBS})
-    set(GLFW_PKG_LIBS "${GLFW_PKG_LIBS} ${arg}")
+    set(GLFW_PKG_LIBS "${GLFW_PKG_LIBS} ${arg}" CACHE INTERNAL
+        "GLFW pkg-config Libs.private")
 endforeach()
 
 #--------------------------------------------------------------------

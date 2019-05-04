@@ -146,6 +146,10 @@ information on what to include when reporting a bug.
  - [X11] Bugfix: Content scale fallback value could be inconsistent (#1578)
  - [Wayland] Bugfix: The `GLFW_HAND_CURSOR` shape used the wrong image (#1432)
  - [NSGL] Removed enforcement of forward-compatible flag for core contexts
+ - Export CMake `GLFW_PKG_DEPS` and `GLFW_PKG_LIBS` to parent scope for use
+  in client pkg-configs (#1307)
+- Added a `glfw_objlib` CMake OBJECT library target for embedding into static
+  libraries (#1307)
 
 
 ## Contact
