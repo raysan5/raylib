@@ -165,7 +165,7 @@ int main(int argc, char **argv)
     
     Vector2 hoveredPos = { 0.0f, 0.0f };
     Vector2 selectedPos = { 0.0f, 0.0f };
-    
+
     // Set a random set of emojis when starting up
     RandomizeEmoji();
     
@@ -187,6 +187,10 @@ int main(int argc, char **argv)
             selectedPos = hoveredPos;
             SetClipboardText(messages[emoji[selected].message].text);
         }
+        
+        Vector2 mouse = GetMousePosition();
+        Vector2 pos = { 28.8f, 10.0f };
+        hovered = -1;
         //----------------------------------------------------------------------------------
         
         // Draw
@@ -195,12 +199,8 @@ int main(int argc, char **argv)
         
             ClearBackground(RAYWHITE);
             
-            // Draw emoji and the text bubbles
+            // Draw random emojis in the background
             //------------------------------------------------------------------------------
-            // Draw random emoji in the background
-            Vector2 pos = {28.8f, 10.0f};
-            Vector2 mouse = GetMousePosition();
-            hovered = -1;
             for (int i = 0; i < SIZEOF(emoji); ++i)
             {
                 const char *txt = &emojiCodepoints[emoji[i].index];
@@ -217,16 +217,18 @@ int main(int argc, char **argv)
                     hoveredPos = pos;
                 }
                 
-                if ((i != 0) && (i%EMOJI_PER_WIDTH == 0)) { pos.y += fontEmoji.baseSize + 24.25f; pos.x = 28.8f; } // this line is full go to next line
+                if ((i != 0) && (i%EMOJI_PER_WIDTH == 0)) { pos.y += fontEmoji.baseSize + 24.25f; pos.x = 28.8f; }
                 else pos.x += fontEmoji.baseSize + 28.8f;
             }
+            //------------------------------------------------------------------------------
             
             // Draw the message when a emoji is selected
+            //------------------------------------------------------------------------------
             if (selected != -1) 
             {
                 const int message = emoji[selected].message;
                 const int horizontalPadding = 20, verticalPadding = 30;
-                Font* font = &fontDefault;
+                Font *font = &fontDefault;
                 
                 // Set correct font for asian languages
                 if (TextIsEqual(messages[message].language, "Chinese") || 
@@ -240,7 +242,9 @@ int main(int argc, char **argv)
                 
                 Rectangle msgRect = { selectedPos.x - 38.8f, selectedPos.y, 2 * horizontalPadding + sz.x, 2 * verticalPadding + sz.y };
                 msgRect.y -= msgRect.height;
-                Vector2 a = { selectedPos.x, msgRect.y + msgRect.height }, b = {a.x + 8, a.y + 10}, c= {a.x+10, a.y}; // coordinates for the chat bubble triangle
+                
+                // Coordinates for the chat bubble triangle
+                Vector2 a = { selectedPos.x, msgRect.y + msgRect.height }, b = {a.x + 8, a.y + 10}, c= { a.x + 10, a.y };
                 
                 // Don't go outside the screen
                 if (msgRect.x < 10) msgRect.x += 28;
@@ -250,6 +254,7 @@ int main(int argc, char **argv)
                     a.y = msgRect.y;
                     c.y = a.y;
                     b.y = a.y - 10;
+                    
                     // Swap values so we can actually render the triangle :(
                     Vector2 tmp = a;
                     a = b;
@@ -285,11 +290,11 @@ int main(int argc, char **argv)
     
     // De-Initialization
     //-------------------------------------------------------------------------------------- 
-    UnloadFont(fontDefault);      // Unload font resource
+    UnloadFont(fontDefault);    // Unload font resource
     UnloadFont(fontAsian);      // Unload font resource
     UnloadFont(fontEmoji);      // Unload font resource
     
-	CloseWindow();          // Close window and OpenGL context
+	CloseWindow();              // Close window and OpenGL context
     //-------------------------------------------------------------------------------------- 
 
 	return 0;
@@ -303,7 +308,8 @@ static void RandomizeEmoji(void)
     
     for (int i = 0; i < SIZEOF(emoji); ++i)
     {
-        emoji[i].index = GetRandomValue(0, 179)*5; // 0-179 emoji codepoints (from emoji char array) each 4bytes + null char
+        // 0-179 emoji codepoints (from emoji char array) each 4bytes + null char
+        emoji[i].index = GetRandomValue(0, 179)*5;
         
         // Generate a random color for this emoji
         Vector3 hsv = {(start*(i + 1))%360, 0.6f, 0.85f};
