@@ -112,30 +112,30 @@ EASEDEF float EaseSineOut(float t, float b, float c, float d) { return (c*sin(t/
 EASEDEF float EaseSineInOut(float t, float b, float c, float d) { return (-c/2*(cos(PI*t/d) - 1) + b); }
 
 // Circular Easing functions
-EASEDEF float EaseCircIn(float t, float b, float c, float d) { return (-c*(sqrt(1 - (t/=d)*t) - 1) + b); }
-EASEDEF float EaseCircOut(float t, float b, float c, float d) { return (c*sqrt(1 - (t=t/d-1)*t) + b); }
+EASEDEF float EaseCircIn(float t, float b, float c, float d) { t /= d; return (-c*(sqrt(1 - t*t) - 1) + b); }
+EASEDEF float EaseCircOut(float t, float b, float c, float d) { t = t/d - 1; return (c*sqrt(1 - t*t) + b); }
 EASEDEF float EaseCircInOut(float t, float b, float c, float d) 
 {
     if ((t/=d/2) < 1) return (-c/2*(sqrt(1 - t*t) - 1) + b);
-    return (c/2*(sqrt(1 - t*(t-=2)) + 1) + b);
+    t -= 2; return (c/2*(sqrt(1 - t*t) + 1) + b);
 }
 
 // Cubic Easing functions
-EASEDEF float EaseCubicIn(float t, float b, float c, float d) { return (c*(t/=d)*t*t + b); }
-EASEDEF float EaseCubicOut(float t, float b, float c, float d) { return (c*((t=t/d-1)*t*t + 1) + b); }
+EASEDEF float EaseCubicIn(float t, float b, float c, float d) { t /= d; return (c*t*t*t + b); }
+EASEDEF float EaseCubicOut(float t, float b, float c, float d) { t = t/d-1; return (c*(t*t*t + 1) + b); }
 EASEDEF float EaseCubicInOut(float t, float b, float c, float d) 
 { 
     if ((t/=d/2) < 1) return (c/2*t*t*t + b);
-    return (c/2*((t-=2)*t*t + 2) + b);
+    t -= 2; return (c/2*(t*t*t + 2) + b);
 }
 
 // Quadratic Easing functions
-EASEDEF float EaseQuadIn(float t, float b, float c, float d) { return (c*(t/=d)*t + b); }
-EASEDEF float EaseQuadOut(float t, float b, float c, float d) { return (-c*(t/=d)*(t-2) + b); }
+EASEDEF float EaseQuadIn(float t, float b, float c, float d) { t /= d; return (c*t*t + b); }
+EASEDEF float EaseQuadOut(float t, float b, float c, float d) { t /= d; return (-c*t*(t - 2) + b); }
 EASEDEF float EaseQuadInOut(float t, float b, float c, float d) 
 {
     if ((t/=d/2) < 1) return (((c/2)*(t*t)) + b);
-    return (-c/2*(((t-2)*(--t)) - 1) + b);
+    t--; return (-c/2*(((t - 2)*t) - 1) + b);
 }
 
 // Exponential Easing functions
@@ -161,16 +161,22 @@ EASEDEF float EaseBackIn(float t, float b, float c, float d)
 EASEDEF float EaseBackOut(float t, float b, float c, float d)
 {    
     float s = 1.70158f;
-    return (c*((t=t/d-1)*t*((s + 1)*t + s) + 1) + b);
+    t = t/d - 1;
+    return (c*(t*t*((s + 1)*t + s) + 1) + b);
 }
 
 EASEDEF float EaseBackInOut(float t, float b, float c, float d)
 {
     float s = 1.70158f;
-    if ((t/=d/2) < 1) return (c/2*(t*t*(((s*=(1.525f)) + 1)*t - s)) + b);
+    if ((t/=d/2) < 1) 
+    {
+        s *= 1.525f;
+        return (c/2*(t*t*((s + 1)*t - s)) + b);
+    }
     
     float postFix = t-=2;
-    return (c/2*((postFix)*t*(((s*=(1.525f)) + 1)*t + s) + 2) + b);
+    s *= 1.525f;
+    return (c/2*((postFix)*t*((s + 1)*t + s) + 2) + b);
 }
 
 // Bounce Easing functions
