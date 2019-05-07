@@ -43,7 +43,7 @@
 // Mouse gestures are directly mapped like touches and processed by gestures system
 #define SUPPORT_MOUSE_GESTURES      1
 // Use busy wait loop for timing sync, if not defined, a high-resolution timer is setup and used
-#define SUPPORT_BUSY_WAIT_LOOP      1
+//#define SUPPORT_BUSY_WAIT_LOOP      1
 // Wait for events passively (sleeping while no events) instead of polling them actively every frame
 //#define SUPPORT_EVENTS_WAITING      1
 // Allow automatic screen capture of current screen pressing F12, defined in KeyCallback()

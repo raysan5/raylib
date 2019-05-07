@@ -437,7 +437,7 @@ else
     ifeq ($(RAYLIB_LIBTYPE),SHARED)
         ifeq ($(PLATFORM),PLATFORM_DESKTOP)
             ifeq ($(PLATFORM_OS),WINDOWS)
-				$(CC) -shared -o $(RAYLIB_RELEASE_PATH)/raylib.dll $(OBJS) -L$(RAYLIB_RELEASE_PATH) -static-libgcc -lopengl32 -lgdi32 -Wl,--out-implib,$(RAYLIB_RELEASE_PATH)/libraylibdll.a
+				$(CC) -shared -o $(RAYLIB_RELEASE_PATH)/raylib.dll $(OBJS) -L$(RAYLIB_RELEASE_PATH) -static-libgcc -lopengl32 -lgdi32 -lwinmm -Wl,--out-implib,$(RAYLIB_RELEASE_PATH)/libraylibdll.a
 				@echo "raylib dynamic library (raylib.dll) and import library (libraylibdll.a) generated!"
             endif
             ifeq ($(PLATFORM_OS),LINUX)
@@ -534,7 +534,7 @@ raygui.o : raygui.c raygui.h
 physac.o : physac.c physac.h
 	@echo #define PHYSAC_IMPLEMENTATION > physac.c
 	@echo #include "$(RAYLIB_MODULE_PHYSAC_PATH)/physac.h" > physac.c
-	$(CC) -c $< $(CFLAGS) $(INCLUDE_PATHS) -D$(PLATFORM) -DRAYGUI_IMPLEMENTATION
+	$(CC) -c $< $(CFLAGS) $(INCLUDE_PATHS) -D$(PLATFORM) -DPHYSAC_IMPLEMENTATION
 
 
 # Install generated and needed files to desired directories.
