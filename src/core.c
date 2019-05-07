@@ -860,6 +860,7 @@ void SetWindowMinSize(int width, int height)
 }
 
 // Set window dimensions
+// TODO: Issues on HighDPI scaling
 void SetWindowSize(int width, int height)
 {
 #if defined(PLATFORM_DESKTOP)
