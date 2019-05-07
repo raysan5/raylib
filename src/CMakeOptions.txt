@@ -72,7 +72,7 @@ option(SUPPORT_FILEFORMAT_WAV  "Support loading WAV for sound" ON)
 option(SUPPORT_FILEFORMAT_OGG  "Support loading OGG for sound" ON)
 option(SUPPORT_FILEFORMAT_XM   "Support loading XM for sound" ON)
 option(SUPPORT_FILEFORMAT_MOD  "Support loading MOD for sound" ON)
-option(SUPPORT_FILEFORMAT_MP3  "Support loading MP3 for sound" ${ON})
+option(SUPPORT_FILEFORMAT_MP3  "Support loading MP3 for sound" ON)
 option(SUPPORT_FILEFORMAT_FLAC "Support loading FLAC for sound" ${OFF})
 
 # utils.c
