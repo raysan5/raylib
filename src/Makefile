@@ -437,6 +437,7 @@ else
     ifeq ($(RAYLIB_LIBTYPE),SHARED)
         ifeq ($(PLATFORM),PLATFORM_DESKTOP)
             ifeq ($(PLATFORM_OS),WINDOWS)
+                # TODO: Compile resource file raylib.dll.rc for linkage on raylib.dll generation
 				$(CC) -shared -o $(RAYLIB_RELEASE_PATH)/raylib.dll $(OBJS) -L$(RAYLIB_RELEASE_PATH) -static-libgcc -lopengl32 -lgdi32 -lwinmm -Wl,--out-implib,$(RAYLIB_RELEASE_PATH)/libraylibdll.a
 				@echo "raylib dynamic library (raylib.dll) and import library (libraylibdll.a) generated!"
             endif

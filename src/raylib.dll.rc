@@ -10,12 +10,12 @@ BEGIN
     BLOCK "040904E4"	// English US
     BEGIN
 	  //VALUE "CompanyName", "raylib technologies"
-      VALUE "FileDescription", "raylib application (www.raylib.com)"
+      VALUE "FileDescription", "raylib dynamic library (www.raylib.com)"
       VALUE "FileVersion", "2.5.0"
-      VALUE "InternalName", "raylib app"
+      VALUE "InternalName", "raylib_dll"
       VALUE "LegalCopyright", "(c) 2019 Ramon Santamaria (@raysan5)"
-      //VALUE "OriginalFilename", "raylib_app.exe"
-      VALUE "ProductName", "raylib game"
+      //VALUE "OriginalFilename", "raylib.dll"
+      VALUE "ProductName", "raylib"
       VALUE "ProductVersion", "2.5.0"
     END
   END
