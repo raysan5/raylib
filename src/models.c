@@ -2472,17 +2472,7 @@ void DrawBoundingBox(BoundingBox box, Color color)
 // Detect collision between two spheres
 bool CheckCollisionSpheres(Vector3 centerA, float radiusA, Vector3 centerB, float radiusB)
 {
-    bool collision = false;
-
-    float dx = centerA.x - centerB.x;      // X distance between centers
-    float dy = centerA.y - centerB.y;      // Y distance between centers
-    float dz = centerA.z - centerB.z;      // Y distance between centers
-
-    float distance = sqrtf(dx*dx + dy*dy + dz*dz);  // Distance between centers
-
-    if (distance <= (radiusA + radiusB)) collision = true;
-
-    return collision;
+    return Vector3DotProduct(Vector3Subtract(B,A),Vector3Subtract(B,A))<=(RadA+RadB)*(RadA+RadB);
 }
 
 // Detect collision between two boxes
