@@ -64,7 +64,7 @@
 #if defined(RLGL_STANDALONE)
     #define RAYMATH_STANDALONE
     #define RAYMATH_HEADER_ONLY
-    
+
     #if defined(_WIN32) && defined(BUILD_LIBTYPE_SHARED)
         #define RLAPI __declspec(dllexport)         // We are building raylib as a Win32 shared library (.dll)
     #elif defined(_WIN32) && defined(USE_LIBTYPE_SHARED)
@@ -72,7 +72,7 @@
     #else
         #define RLAPI   // We are building or using raylib as a static library (or Linux shared library)
     #endif
-    
+
     // Allow custom memory allocators
     #ifndef RL_MALLOC
         #define RL_MALLOC(sz)       malloc(sz)
@@ -544,7 +544,7 @@ RLAPI void EndBlendMode(void);                          // End blending mode (re
 RLAPI void InitVrSimulator(void);                       // Init VR simulator for selected device parameters
 RLAPI void CloseVrSimulator(void);                      // Close VR simulator for current device
 RLAPI void UpdateVrTracking(Camera *camera);            // Update VR tracking (position and orientation) and camera
-RLAPI void SetVrConfiguration(VrDeviceInfo info, Shader distortion);      // Set stereo rendering configuration parameters 
+RLAPI void SetVrConfiguration(VrDeviceInfo info, Shader distortion);      // Set stereo rendering configuration parameters
 RLAPI bool IsVrSimulatorReady(void);                    // Detect if VR simulator is ready
 RLAPI void ToggleVrMode(void);                          // Enable/Disable VR experience
 RLAPI void BeginVrDrawing(void);                        // Begin VR simulator stereo rendering
@@ -1567,11 +1567,11 @@ void rlglInit(int width, int height)
             glBindVertexArray = (PFNGLBINDVERTEXARRAYOESPROC)eglGetProcAddress("glBindVertexArrayOES");
             glDeleteVertexArrays = (PFNGLDELETEVERTEXARRAYSOESPROC)eglGetProcAddress("glDeleteVertexArraysOES");
             //glIsVertexArray = (PFNGLISVERTEXARRAYOESPROC)eglGetProcAddress("glIsVertexArrayOES");     // NOTE: Fails in WebGL, omitted
-            
+
             if (glGenVertexArrays == NULL) printf("glGenVertexArrays is NULL.\n");  // WEB: ISSUE FOUND! ...but why?
             if (glBindVertexArray == NULL) printf("glBindVertexArray is NULL.\n");  // WEB: ISSUE FOUND! ...but why?
         }
-        
+
         // TODO: HACK REVIEW!
         // For some reason on raylib 2.5, VAO usage breaks the build
         // error seems related to function pointers but I can not get detailed info...
@@ -2488,19 +2488,19 @@ void rlLoadMesh(Mesh *mesh, bool dynamic)
 unsigned int rlLoadAttribBuffer(unsigned int vaoId, int shaderLoc, void *buffer, int size, bool dynamic)
 {
     unsigned int id = 0;
-    
+
 #if defined(GRAPHICS_API_OPENGL_33) || defined(GRAPHICS_API_OPENGL_ES2)
     int drawHint = GL_STATIC_DRAW;
     if (dynamic) drawHint = GL_DYNAMIC_DRAW;
-    
+
     if (vaoSupported) glBindVertexArray(vaoId);
-    
+
     glGenBuffers(1, &id);
     glBindBuffer(GL_ARRAY_BUFFER, id);
     glBufferData(GL_ARRAY_BUFFER, size, buffer, drawHint);
     glVertexAttribPointer(shaderLoc, 2, GL_FLOAT, 0, 0, 0);
     glEnableVertexAttribArray(shaderLoc);
-    
+
     if (vaoSupported) glBindVertexArray(0);
 #endif
 
@@ -3536,7 +3536,7 @@ void InitVrSimulator(void)
     // Initialize framebuffer and textures for stereo rendering
     // NOTE: Screen size should match HMD aspect ratio
     stereoFbo = rlLoadRenderTexture(screenWidth, screenHeight, UNCOMPRESSED_R8G8B8A8, 24, false);
-    
+
     vrSimulatorReady = true;
 #else
     TraceLog(LOG_WARNING, "VR Simulator not supported on OpenGL 1.1");
@@ -3558,13 +3558,13 @@ void CloseVrSimulator(void)
 #endif
 }
 
-// Set stereo rendering configuration parameters 
+// Set stereo rendering configuration parameters
 void SetVrConfiguration(VrDeviceInfo hmd, Shader distortion)
 {
 #if defined(GRAPHICS_API_OPENGL_33) || defined(GRAPHICS_API_OPENGL_ES2)
     // Reset vrConfig for a new values assignment
     memset(&vrConfig, 0, sizeof(vrConfig));
-    
+
     // Assign distortion shader
     vrConfig.distortionShader = distortion;
 
@@ -3620,7 +3620,7 @@ void SetVrConfiguration(VrDeviceInfo hmd, Shader distortion)
     // Compute eyes Viewports
     vrConfig.eyeViewportRight[2] = hmd.hResolution/2;
     vrConfig.eyeViewportRight[3] = hmd.vResolution;
-    
+
     vrConfig.eyeViewportLeft[0] = hmd.hResolution/2;
     vrConfig.eyeViewportLeft[1] = 0;
     vrConfig.eyeViewportLeft[2] = hmd.hResolution/2;
@@ -3677,7 +3677,7 @@ void BeginVrDrawing(void)
 #if defined(GRAPHICS_API_OPENGL_33) || defined(GRAPHICS_API_OPENGL_ES2)
     if (vrSimulatorReady)
     {
-        
+
         rlEnableRenderTexture(stereoFbo.id);    // Setup framebuffer for stereo rendering
         //glEnable(GL_FRAMEBUFFER_SRGB);        // Enable SRGB framebuffer (only if required)
 

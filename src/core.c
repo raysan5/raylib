@@ -1302,7 +1302,7 @@ void EndTextureMode(void)
 
     // Set viewport to default framebuffer size
     SetupViewport(renderWidth, renderHeight);
-    
+
     // Reset current screen size
     currentWidth = GetScreenWidth();
     currentHeight = GetScreenHeight();
@@ -2241,7 +2241,7 @@ Vector2 GetMousePosition(void)
 #endif
 #if defined(PLATFORM_WEB)
     Vector2 pos = GetTouchPosition(0);
-    
+
     // Touch position has priority over mouse position
     if ((pos.x > 0) && (pos.y > 0)) position = pos; // There was a touch!
 #endif
@@ -2933,7 +2933,7 @@ static void SetupViewport(int width, int height)
 {
     renderWidth = width;
     renderHeight = height;
-    
+
     // Set viewport width and height
     // NOTE: We consider render size and offset in case black bars are required and
     // render area does not match full display area (this situation is only applicable on fullscreen mode)
@@ -2944,7 +2944,7 @@ static void SetupViewport(int width, int height)
 
     // Set orthographic projection to current framebuffer size
     // NOTE: Configured top-left corner as (0, 0)
-    rlOrtho(0, renderWidth, renderHeight, 0, 0.0f, 1.0f); 
+    rlOrtho(0, renderWidth, renderHeight, 0, 0.0f, 1.0f);
 
     rlMatrixMode(RL_MODELVIEW);         // Switch back to MODELVIEW matrix
     rlLoadIdentity();                   // Reset current matrix (MODELVIEW)
@@ -3382,7 +3382,7 @@ static void PollInputEvents(void)
                 // NOTE: Postprocessing texture is not scaled to new size
 
                 windowResized = true;
-                
+
             } break;
             case UWP_MSG_SET_GAME_TIME: currentTime = msg->paramDouble0; break;
             default: break;
@@ -3734,7 +3734,7 @@ static void WindowSizeCallback(GLFWwindow *window, int width, int height)
     screenHeight = height;
     currentWidth = width;
     currentHeight = height;
-    
+
     // NOTE: Postprocessing texture is not scaled to new size
 
     windowResized = true;
@@ -4361,7 +4361,7 @@ static void InitEvdevInput(void)
 
     // Open the linux directory of "/dev/input"
     directory = opendir(DEFAULT_EVDEV_PATH);
-    
+
     if (directory)
     {
         while ((entity = readdir(directory)) != NULL)
@@ -4708,7 +4708,7 @@ static void *EventThread(void *arg)
                 if ((event.code >= 1) && (event.code <= 255))     //Keyboard keys appear for codes 1 to 255
                 {
                     keycode = keymap_US[event.code & 0xFF];     // The code we get is a scancode so we look up the apropriate keycode
-                    
+
                     // Make sure we got a valid keycode
                     if ((keycode > 0) && (keycode < sizeof(currentKeyState)))
                     {
@@ -4721,7 +4721,7 @@ static void *EventThread(void *arg)
                             lastKeyPressedEvdev.Head = (lastKeyPressedEvdev.Head + 1) & 0x07;   // Increment the head pointer forwards and binary wraparound after 7 (fifo is 8 elements long)
                             // TODO: This fifo is not fully threadsafe with multiple writers, so multiple keyboards hitting a key at the exact same time could miss a key (double write to head before it was incremented)
                         }
-                        
+
                         TraceLog(LOG_DEBUG, "KEY%s ScanCode: %4i KeyCode: %4i",event.value == 0 ? "UP":"DOWN", event.code, keycode);
                     }
                 }
