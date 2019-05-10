@@ -899,7 +899,7 @@ void DrawTextRecEx(Font font, const char *text, Rectangle rec, float fontSize, f
     int state = wordWrap? MEASURE_STATE : DRAW_STATE;
     int startLine = -1;   // Index where to begin drawing (where a line begins)
     int endLine = -1;     // Index where to stop drawing (where a line ends)
-
+    int lastk = -1;       // Holds last value of the character position
     for (int i = 0, k = 0; i < length; i++, k++)
     {
         int glyphWidth = 0;
@@ -954,6 +954,11 @@ void DrawTextRecEx(Font font, const char *text, Rectangle rec, float fontSize, f
                 textOffsetX = 0;
                 i = startLine;
                 glyphWidth = 0;
+                
+                // Save character position when we switch states
+                int tmp = lastk;
+                lastk = k - 1;
+                k = tmp;
             }
 
         }
@@ -981,7 +986,7 @@ void DrawTextRecEx(Font font, const char *text, Rectangle rec, float fontSize, f
                 bool isGlyphSelected = false;
                 if ((selectStart >= 0) && (k >= selectStart) && (k < (selectStart + selectLength)))
                 {
-                    Rectangle strec = {rec.x + textOffsetX-1, rec.y + textOffsetY, glyphWidth, (font.baseSize + font.baseSize/4)*scaleFactor };
+                    Rectangle strec = {rec.x + textOffsetX-1, rec.y + textOffsetY, glyphWidth, font.baseSize*scaleFactor };
                     DrawRectangleRec(strec, selectBack);
                     isGlyphSelected = true;
                 }
@@ -1005,6 +1010,7 @@ void DrawTextRecEx(Font font, const char *text, Rectangle rec, float fontSize, f
                 startLine = endLine;
                 endLine = -1;
                 glyphWidth = 0;
+                k = lastk;
                 state = !state;
             }
         }
