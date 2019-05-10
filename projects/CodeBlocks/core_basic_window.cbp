@@ -31,7 +31,7 @@
 				</Compiler>
 				<Linker>
 					<Add option="-s" />
-					<Add option="-lraylib -lopengl32 -lgdi32" />
+					<Add option="-lraylib -lopengl32 -lgdi32 -lwinmm" />
 					<Add library="../../../../raylib/raylib/release/libs/win32/mingw32/libraylib.a" />
 				</Linker>
 			</Target>

@@ -43,7 +43,7 @@
 *   NOTE 2: Physac requires static C library linkage to avoid dependency on MinGW DLL (-static -lpthread)
 *
 *   Use the following code to compile:
-*   gcc -o $(NAME_PART).exe $(FILE_NAME) -s -static -lraylib -lpthread -lopengl32 -lgdi32 -std=c99
+*   gcc -o $(NAME_PART).exe $(FILE_NAME) -s -static -lraylib -lpthread -lopengl32 -lgdi32 -lwinmm -std=c99
 *
 *   VERY THANKS TO:
 *       Ramon Santamaria (github: @raysan5)
