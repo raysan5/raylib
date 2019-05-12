@@ -423,6 +423,7 @@ EXAMPLES = \
     shaders/shaders_postprocessing \
     shaders/shaders_raymarching \
     shaders/shaders_palette_switch \
+    shaders/shaders_julia_set \
     audio/audio_sound_loading \
     audio/audio_music_stream \
     audio/audio_module_playing \
