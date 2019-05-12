@@ -89,7 +89,7 @@ int main()
         // Get input
         //----------------------------------------------------------------------------------
 
-        // Press 0 - 4 to reset c to a point of interest.
+        // Press 1 - 6 to reset c to a point of interest.
         if (IsKeyPressed(KEY_ONE) || IsKeyPressed(KEY_TWO) || IsKeyPressed(KEY_THREE) || IsKeyPressed(KEY_FOUR) || IsKeyPressed(KEY_FIVE) || IsKeyPressed(KEY_SIX))
         {
             if (IsKeyPressed(KEY_ONE))
