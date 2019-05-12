@@ -48,7 +48,7 @@ int main()
     // Multiplier of speed to change c value. Set to 3 to start off with.
     int incrementSpeed = 3;
 
-    // Offset and zoom to draw the julia set at. (centered on screen and 2 times smaller)
+    // Offset and zoom to draw the julia set at. (centered on screen and 1.6 times smaller)
     float offset[2] = { -(float)screenWidth/2, -(float)screenHeight/2 }; 
     float zoom = 1.6;
 
