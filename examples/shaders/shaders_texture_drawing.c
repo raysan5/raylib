@@ -1,6 +1,6 @@
 /*******************************************************************************************
 *
-*   raylib [textures] example - Shader texture drawing
+*   raylib [textures] example - Texture drawing
 *
 *   This example illustrates how to draw on a blank texture using a shader
 *
@@ -13,6 +13,12 @@
 
 #include "raylib.h"
 
+#if defined(PLATFORM_DESKTOP)
+    #define GLSL_VERSION            330
+#else   // PLATFORM_RPI, PLATFORM_ANDROID, PLATFORM_WEB
+    #define GLSL_VERSION            100
+#endif
+
 int main()
 {
     // Initialization
@@ -20,14 +26,14 @@ int main()
     int screenWidth = 800;
     int screenHeight = 450;
 
-    InitWindow(screenWidth, screenHeight, "raylib [shaders] example - shader texture drawing");
+    InitWindow(screenWidth, screenHeight, "raylib [shaders] example - texture drawing");
 
     Image imBlank = GenImageColor(1024, 1024, BLANK);
     Texture2D texture = LoadTextureFromImage(imBlank);  // Load blank texture to fill on shader
     UnloadImage(imBlank);
 
     // NOTE: Using GLSL 330 shader version, on OpenGL ES 2.0 use GLSL 100 shader version
-    Shader shader = LoadShader(0, "resources/shaders/glsl330/cubes_panning.fs");
+    Shader shader = LoadShader(0, FormatText("resources/shaders/glsl%i/cubes_panning.fs", GLSL_VERSION));
 
     float time = 0.0f;
     int timeLoc = GetShaderLocation(shader, "uTime");
