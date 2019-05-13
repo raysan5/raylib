@@ -235,7 +235,7 @@ endif
 ifeq ($(PLATFORM),PLATFORM_DESKTOP)
     ifeq ($(PLATFORM_OS),WINDOWS)
         # Libraries for Windows desktop compilation
-        LDLIBS = -lraylib -lopengl32 -lgdi32
+        LDLIBS = -lraylib -lopengl32 -lgdi32 -lwinmm
         
         # Required for physac examples
         #LDLIBS += -static -lpthread

@@ -13,7 +13,7 @@ cmd /c if exist %NAME_PART%.exe del /F %NAME_PART%.exe
 :: .
 :: > Compiling program
 :: --------------------------
-gcc -o %NAME_PART%.exe %FILE_NAME% %RAYLIB_DIR%\raylib.rc.data -s -O2 -I../../src -Iexternal -lraylib -lopengl32 -lgdi32 -std=c99 -Wall -mwindows
+gcc -o %NAME_PART%.exe %FILE_NAME% %RAYLIB_DIR%\raylib.rc.data -s -O2 -I../../src -Iexternal -lraylib -lopengl32 -lgdi32 -lwinmm -std=c99 -Wall -mwindows
 :: .
 :: . > Executing program
 :: -------------------------
