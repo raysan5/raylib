@@ -1,6 +1,6 @@
 /*******************************************************************************************
 *
-*   raylib [core] example - Gestures Detection
+*   raylib [core] example - Input Gestures Detection
 *
 *   This example has been created using raylib 1.4 (www.raylib.com)
 *   raylib is licensed under an unmodified zlib/libpng license (View raylib.h for details)
@@ -21,7 +21,7 @@ int main()
     int screenWidth = 800;
     int screenHeight = 450;
     
-    InitWindow(screenWidth, screenHeight, "raylib [core] example - gestures detection");
+    InitWindow(screenWidth, screenHeight, "raylib [core] example - input gestures");
     
     Vector2 touchPosition = { 0, 0 };
     Rectangle touchArea = { 220, 10, screenWidth - 230, screenHeight - 20 };

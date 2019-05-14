@@ -4,10 +4,12 @@
 *
 *   This program is heavily based on the geometric objects example
 *
-*   This example has been created using raylib 1.9.7 (www.raylib.com)
+*   This example has been created using raylib 2.0 (www.raylib.com)
 *   raylib is licensed under an unmodified zlib/libpng license (View raylib.h for details)
 *
-*   Copyright (c) 2018 Max Danielsson & Ramon Santamaria (@raysan5)
+*   Example contributed by Max Danielsson (@autious) and reviewed by Ramon Santamaria (@raysan5)
+*
+*   Copyright (c) 2018 Max Danielsson (@autious) and Ramon Santamaria (@raysan5)
 *
 ********************************************************************************************/
 

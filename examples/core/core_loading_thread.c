@@ -15,10 +15,13 @@
 #include "raylib.h"
 
 #include "pthread.h"                        // POSIX style threads management
-#include <stdatomic.h>
 
-#include <time.h>                           // Required for clock() function
+#include <stdatomic.h>                      // C11 atomic data types
 
+#include <time.h>                           // Required for: clock()
+
+// Using C11 atomics for synchronization
+// NOTE: A plain bool (or any plain data type for that matter) can't be used for inter-thread synchronization
 static atomic_bool dataLoaded = ATOMIC_VAR_INIT(false); // Data Loaded completion indicator
 static void *LoadDataThread(void *arg);     // Loading data thread function declaration
 
@@ -48,33 +51,37 @@ int main()
         //----------------------------------------------------------------------------------
         switch (state)
         {
-        case STATE_WAITING:
-            if (IsKeyPressed(KEY_ENTER))
+            case STATE_WAITING:
             {
-                int error = pthread_create(&threadId, NULL, &LoadDataThread, NULL);
-                if (error != 0) TraceLog(LOG_ERROR, "Error creating loading thread");
-                else TraceLog(LOG_INFO, "Loading thread initialized successfully");
+                if (IsKeyPressed(KEY_ENTER))
+                {
+                    int error = pthread_create(&threadId, NULL, &LoadDataThread, NULL);
+                    if (error != 0) TraceLog(LOG_ERROR, "Error creating loading thread");
+                    else TraceLog(LOG_INFO, "Loading thread initialized successfully");
 
-                state = STATE_LOADING;
-            }
-            break;
-        case STATE_LOADING:
-            framesCounter++;
-            if (atomic_load(&dataLoaded))
+                    state = STATE_LOADING;
+                }
+            } break;
+            case STATE_LOADING:
             {
-                framesCounter = 0;
-                state = STATE_FINISHED;
-            }
-            break;
-        case STATE_FINISHED:
-            if (IsKeyPressed(KEY_ENTER))
+                framesCounter++;
+                if (atomic_load(&dataLoaded))
+                {
+                    framesCounter = 0;
+                    state = STATE_FINISHED;
+                }
+            } break;
+            case STATE_FINISHED:
             {
-                // Reset everything to launch again
-                atomic_store(&dataLoaded, false);
-                dataProgress = 0;
-                state = STATE_WAITING;
-            }
-            break;
+                if (IsKeyPressed(KEY_ENTER))
+                {
+                    // Reset everything to launch again
+                    atomic_store(&dataLoaded, false);
+                    dataProgress = 0;
+                    state = STATE_WAITING;
+                }
+            } break;
+            default: break;
         }
         //----------------------------------------------------------------------------------
 
@@ -84,19 +91,22 @@ int main()
 
             ClearBackground(RAYWHITE);
             
-            switch(state) {
-            case STATE_WAITING:
-                DrawText("PRESS ENTER to START LOADING DATA", 150, 170, 20, DARKGRAY);
-                break;
-            case STATE_LOADING:
-                DrawRectangle(150, 200, dataProgress, 60, SKYBLUE);
-                if ((framesCounter/15)%2)
-                    DrawText("LOADING DATA...", 240, 210, 40, DARKBLUE);
-                break;
-            case STATE_FINISHED:
-                DrawRectangle(150, 200, 500, 60, LIME);
-                DrawText("DATA LOADED!", 250, 210, 40, GREEN);
-                break;
+            switch (state) 
+            {
+                case STATE_WAITING: DrawText("PRESS ENTER to START LOADING DATA", 150, 170, 20, DARKGRAY); break;
+                case STATE_LOADING:
+                {
+                    DrawRectangle(150, 200, dataProgress, 60, SKYBLUE);
+                    if ((framesCounter/15)%2) DrawText("LOADING DATA...", 240, 210, 40, DARKBLUE);
+                    
+                } break;
+                case STATE_FINISHED:
+                {
+                    DrawRectangle(150, 200, 500, 60, LIME);
+                    DrawText("DATA LOADED!", 250, 210, 40, GREEN);
+                    
+                } break;
+                default: break;
             }
             
             DrawRectangleLines(150, 200, 500, 60, DARKGRAY);

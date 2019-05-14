@@ -1,8 +1,8 @@
 /*******************************************************************************************
 *
-*   raylib [core] example - Initialize 3d mode
+*   raylib [core] examples - Mouse wheel input
 *
-*   This example has been created using raylib 1.0 (www.raylib.com)
+*   This test has been created using raylib 1.1 (www.raylib.com)
 *   raylib is licensed under an unmodified zlib/libpng license (View raylib.h for details)
 *
 *   Copyright (c) 2014 Ramon Santamaria (@raysan5)
@@ -18,19 +18,12 @@ int main()
     int screenWidth = 800;
     int screenHeight = 450;
 
-    InitWindow(screenWidth, screenHeight, "raylib [core] example - 3d mode");
+    InitWindow(screenWidth, screenHeight, "raylib [core] example - input mouse wheel");
 
-    // Define the camera to look into our 3d world
-    Camera3D camera;
-    camera.position = (Vector3){ 0.0f, 10.0f, 10.0f };  // Camera position
-    camera.target = (Vector3){ 0.0f, 0.0f, 0.0f };      // Camera looking at point
-    camera.up = (Vector3){ 0.0f, 1.0f, 0.0f };          // Camera up vector (rotation towards target)
-    camera.fovy = 45.0f;                                // Camera field-of-view Y
-    camera.type = CAMERA_PERSPECTIVE;                   // Camera mode type
+    int boxPositionY = screenHeight/2 - 40;
+    int scrollSpeed = 4;            // Scrolling speed in pixels
 
-    Vector3 cubePosition = { 0.0f, 0.0f, 0.0f };
-
-    SetTargetFPS(60);   // Set our game to run at 60 frames-per-second
+    SetTargetFPS(60);
     //--------------------------------------------------------------------------------------
 
     // Main game loop
@@ -38,7 +31,7 @@ int main()
     {
         // Update
         //----------------------------------------------------------------------------------
-        // TODO: Update your variables here
+        boxPositionY -= (GetMouseWheelMove()*scrollSpeed);
         //----------------------------------------------------------------------------------
 
         // Draw
@@ -47,18 +40,10 @@ int main()
 
             ClearBackground(RAYWHITE);
 
-            BeginMode3D(camera);
+            DrawRectangle(screenWidth/2 - 40, boxPositionY, 80, 80, MAROON);
 
-                DrawCube(cubePosition, 2.0f, 2.0f, 2.0f, RED);
-                DrawCubeWires(cubePosition, 2.0f, 2.0f, 2.0f, MAROON);
-
-                DrawGrid(10, 1.0f);
-
-            EndMode3D();
-
-            DrawText("Welcome to the third dimension!", 10, 40, 20, DARKGRAY);
-
-            DrawFPS(10, 10);
+            DrawText("Use mouse wheel to move the cube up and down!", 10, 10, 20, GRAY);
+            DrawText(FormatText("Box position Y: %03i", boxPositionY), 10, 40, 20, LIGHTGRAY);
 
         EndDrawing();
         //----------------------------------------------------------------------------------

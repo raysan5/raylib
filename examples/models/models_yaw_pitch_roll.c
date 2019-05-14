@@ -5,9 +5,9 @@
 *   This example has been created using raylib 1.8 (www.raylib.com)
 *   raylib is licensed under an unmodified zlib/libpng license (View raylib.h for details)
 *
-*   Example based on Berni work on Raspberry Pi.
+*   Example contributed by Berni (@Berni8k) and reviewed by Ramon Santamaria (@raysan5)
 *
-*   Copyright (c) 2017 Ramon Santamaria (@raysan5)
+*   Copyright (c) 2017 Berni (@Berni8k) and Ramon Santamaria (@raysan5)
 *
 ********************************************************************************************/
 

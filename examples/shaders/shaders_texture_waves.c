@@ -12,7 +12,9 @@
 *   This example has been created using raylib 2.5 (www.raylib.com)
 *   raylib is licensed under an unmodified zlib/libpng license (View raylib.h for details)
 *
-*   Copyright (c) 2019 Anata (creator) and Ramon Santamaria (review) (@raysan5)
+*   Example contributed by Anata (@anatagawa) and reviewed by Ramon Santamaria (@raysan5)
+*
+*   Copyright (c) 2019 Anata (@anatagawa) and Ramon Santamaria (@raysan5)
 *
 ********************************************************************************************/
 

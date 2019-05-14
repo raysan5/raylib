@@ -5,7 +5,9 @@
 *   This example has been created using raylib 2.3 (www.raylib.com)
 *   raylib is licensed under an unmodified zlib/libpng license (View raylib.h for details)
 *
-*   Copyright (c) 2018 Vlad Adrian (@demizdor)
+*   Example contributed by Vlad Adrian (@demizdor) and reviewed by Ramon Santamaria (@raysan5)
+*
+*   Copyright (c) 2018 Vlad Adrian (@demizdor) and Ramon Santamaria (@raysan5)
 *
 ********************************************************************************************/
 
@@ -37,9 +39,7 @@ int main()
     const int maxHeight = screenHeight - 160;
     
     Vector2 lastMouse = { 0, 0 };   // Stores last mouse coordinates
-
     Color borderColor = MAROON;     // Container border color
-
     Font font = GetFontDefault();   // Get default system font
     
     SetTargetFPS(60);

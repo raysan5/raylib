@@ -7,6 +7,8 @@
 *   This example has been created using raylib 2.0 (www.raylib.com)
 *   raylib is licensed under an unmodified zlib/libpng license (View raylib.h for details)
 *
+*   Example contributed by Michał Ciesielski and reviewed by Ramon Santamaria (@raysan5)
+*
 *   Copyright (c) 2019 Michał Ciesielski and Ramon Santamaria (@raysan5)
 *
 ********************************************************************************************/
