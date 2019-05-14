@@ -117,9 +117,9 @@ endif
 
 ifeq ($(PLATFORM),PLATFORM_WEB)
     # Emscripten required variables
-    EMSDK_PATH          = C:/emsdk
-    EMSCRIPTEN_VERSION  = 1.38.30
-    CLANG_VERSION       = e1.38.30_64bit
+    EMSDK_PATH          ?= D:/emsdk
+    EMSCRIPTEN_VERSION  ?= 1.38.31
+    CLANG_VERSION       = e$(EMSCRIPTEN_VERSION)_64bit
     PYTHON_VERSION      = 2.7.13.1_64bit\python-2.7.13.amd64
     NODE_VERSION        = 8.9.1_64bit
     export PATH         = $(EMSDK_PATH);$(EMSDK_PATH)\clang\$(CLANG_VERSION);$(EMSDK_PATH)\node\$(NODE_VERSION)\bin;$(EMSDK_PATH)\python\$(PYTHON_VERSION);$(EMSDK_PATH)\emscripten\$(EMSCRIPTEN_VERSION);C:\raylib\MinGW\bin:$$(PATH)
@@ -249,8 +249,7 @@ ifeq ($(PLATFORM),PLATFORM_WEB)
     # -s FORCE_FILESYSTEM=1      # force filesystem to load/save files data
     # --profiling                # include information for code profiling
     # --preload-file resources   # specify a resources folder for data compilation
-    CFLAGS += -Os -s USE_GLFW=3 -s ASSERTIONS=2 -s WASM=1 -s FORCE_FILESYSTEM=1
-    # -s EMTERPRETIFY=1 -s EMTERPRETIFY_ASYNC=1 --preload-file audio/resources@resources
+    CFLAGS += -Os -s USE_GLFW=3 -s ASSERTIONS=2 -s WASM=1 -s FORCE_FILESYSTEM=1 -s EMTERPRETIFY=1 -s EMTERPRETIFY_ASYNC=1 --preload-file $(dir $<)resources@resources
     
     # NOTE: Simple raylib examples are compiled to be interpreter by emterpreter, that way,
     # we can compile same code for ALL platforms with no change required, but, working on bigger
