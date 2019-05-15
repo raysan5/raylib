@@ -364,74 +364,98 @@ EXAMPLES = \
     core/core_basic_window \
     core/core_input_keys \
     core/core_input_mouse \
-    core/core_mouse_wheel \
+    core/core_input_mouse_wheel \
     core/core_input_gamepad \
-    core/core_random_values \
-    core/core_color_select \
-    core/core_drop_files \
-    core/core_storage_values \
-    core/core_gestures_detection \
-    core/core_3d_mode \
-    core/core_3d_picking \
+    core/core_input_multitouch \
+    core/core_input_gestures \
+    core/core_2d_camera \
+    core/core_3d_camera_mode \
     core/core_3d_camera_free \
     core/core_3d_camera_first_person \
-    core/core_2d_camera \
+    core/core_3d_picking \
     core/core_world_screen \
+    core/core_custom_logging \
+    core/core_window_letterbox \
+    core/core_drop_files \
+    core/core_random_values \
+    core/core_storage_values \
     core/core_vr_simulator \
-    core/core_input_multitouch \
-    shapes/shapes_logo_raylib \
+    core/core_loading_thread \
     shapes/shapes_basic_shapes \
+    shapes/shapes_bouncing_ball \
     shapes/shapes_colors_palette \
+    shapes/shapes_logo_raylib \
     shapes/shapes_logo_raylib_anim \
+    shapes/shapes_rectangle_scaling \
     shapes/shapes_lines_bezier \
+    shapes/shapes_collision_area \
+    shapes/shapes_following_eyes \
+    shapes/shapes_easings_ball_anim \
+    shapes/shapes_easings_box_anim \
+    shapes/shapes_easings_rectangle_array \
+    shapes/shapes_draw_ring \
+    shapes/shapes_draw_circle_sector \
+    shapes/shapes_draw_rectangle_rounded \
+    text/text_raylib_fonts \
+    text/text_sprite_fonts \
+    text/text_ttf_loading \
+    text/text_bmfont_ttf \
+    text/text_font_sdf \
+    text/text_format_text \
+    text/text_input_box \
+    text/text_writing_anim \
+    text/text_rectangle_bounds \
+    text/text_unicode \
     textures/textures_logo_raylib \
-    textures/textures_image_loading \
     textures/textures_rectangle \
     textures/textures_srcrec_dstrec \
+    textures/textures_image_drawing \
+    textures/textures_image_generation \
+    textures/textures_image_loading \
+    textures/textures_image_processing \
+    textures/textures_image_text \
     textures/textures_to_image \
     textures/textures_raw_data \
     textures/textures_particles_blending \
-    textures/textures_image_processing \
-    textures/textures_image_drawing \
-    textures/textures_image_generation \
-    textures/textures_image_text \
-    text/text_sprite_fonts \
-    text/text_bmfont_ttf \
-    text/text_raylib_fonts \
-    text/text_format_text \
-    text/text_writing_anim \
-    text/text_ttf_loading \
-    text/text_bmfont_unordered \
-    text/text_input_box \
-    text/text_font_sdf \
-    models/models_geometric_shapes \
-    models/models_box_collisions \
+    textures/textures_npatch_drawing \
+    textures/textures_background_scrolling \
+    textures/textures_sprite_button \
+    textures/textures_sprite_explosion \
+    textures/textures_bunnymark \
+    models/models_animation \
     models/models_billboard \
+    models/models_box_collisions \
+    models/models_cubicmap \
+    models/models_first_person_maze \
+    models/models_geometric_shapes \
+    models/models_material_pbr \
+    models/models_mesh_generation \
+    models/models_mesh_picking \
     models/models_obj_loading \
     models/models_obj_viewer \
-    models/models_heightmap \
-    models/models_cubicmap \
-    models/models_mesh_picking \
-    models/models_mesh_generation \
-    models/models_material_pbr \
+    models/models_orthographic_projection \
+    models/models_rlgl_solar_system \
     models/models_skybox \
     models/models_yaw_pitch_roll \
+    models/models_heightmap \
     shaders/shaders_model_shader \
     shaders/shaders_shapes_textures \
     shaders/shaders_custom_uniform \
     shaders/shaders_postprocessing \
-    shaders/shaders_raymarching \
     shaders/shaders_palette_switch \
+    shaders/shaders_raymarching \
+    shaders/shaders_texture_drawing \
+    shaders/shaders_texture_waves \
     shaders/shaders_julia_set \
-    audio/audio_sound_loading \
-    audio/audio_music_stream \
     audio/audio_module_playing \
+    audio/audio_music_stream \
     audio/audio_raw_stream \
+    audio/audio_sound_loading \
     physac/physics_demo \
     physac/physics_friction \
     physac/physics_movement \
     physac/physics_restitution \
-    physac/physics_shatter \
+    physac/physics_shatter
 
 
 CURRENT_MAKEFILE = $(lastword $(MAKEFILE_LIST))
