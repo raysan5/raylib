@@ -40,12 +40,12 @@ int main()
 
     // Load julia set shader
     // NOTE: Defining 0 (NULL) for vertex shader forces usage of internal default vertex shader
-    Shader shader = LoadShader(0, "julia_shader.fs");
+    Shader shader = LoadShader(0, "resources/shaders/glsl330/julia_shader.fs");
     
     // c constant to use in z^2 + c
     float c[2] = { POINTS_OF_INTEREST[0][0], POINTS_OF_INTEREST[0][1] };
     
-    // Offset and zoom to draw the julia set at. (centered on screen and 1.6 times smaller)
+    // Offset and zoom to draw the julia set at. (centered on screen and default size)
     float offset[2] = { -(float)screenWidth/2, -(float)screenHeight/2 };
     float zoom = 1.0f;
     
