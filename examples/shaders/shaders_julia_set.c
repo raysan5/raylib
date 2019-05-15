@@ -47,8 +47,9 @@ int main()
     
     // Offset and zoom to draw the julia set at. (centered on screen and 1.6 times smaller)
     float offset[2] = { -(float)screenWidth/2, -(float)screenHeight/2 };
-    float targetOffset[2] = { offset[0], offset[1] };
     float zoom = 1.6f;
+    
+    Vector2 offsetSpeed = { 0.0f, 0.0f };
     
     // Get variable (uniform) locations on the shader to connect with the program
     // NOTE: If uniform variable could not be found in the shader, function returns -1
@@ -106,23 +107,24 @@ int main()
             if (IsKeyDown(KEY_RIGHT)) incrementSpeed++;
             else if (IsKeyDown(KEY_LEFT)) incrementSpeed--;
 
-            // Use mouse button to change offset
-            if (IsMouseButtonDown(MOUSE_LEFT_BUTTON))
+            // TODO: The idea is to zoom and move around with mouse
+            // Probably offset movement should be proportional to zoom level
+            if (IsMouseButtonDown(MOUSE_LEFT_BUTTON) || IsMouseButtonDown(MOUSE_RIGHT_BUTTON))
             {
-                if (IsKeyDown(KEY_LEFT_SHIFT)) zoom -= 0.002f;
-                else zoom += 0.002f;
-                
-                // TODO: Logic is not correct, the idea is getting zoom focus to pointed area
+                if (IsMouseButtonDown(MOUSE_LEFT_BUTTON)) zoom += 0.003f;
+                if (IsMouseButtonDown(MOUSE_RIGHT_BUTTON)) zoom -= 0.003f;
+
                 Vector2 mousePos = GetMousePosition();
                 
-                targetOffset[0] = mousePos.x -(float)screenWidth;
-                targetOffset[1] = mousePos.y -(float)screenHeight;
+                offsetSpeed.x = mousePos.x -(float)screenWidth/2;
+                offsetSpeed.y = mousePos.y -(float)screenHeight/2;
+                
+                // Slowly move camera to targetOffset
+                offset[0] += GetFrameTime()*offsetSpeed.x*0.8f;
+                offset[1] += GetFrameTime()*offsetSpeed.y*0.8f;
             }
-            
-            // Slowly move camera to targetOffset
-            offset[0] += GetFrameTime()*2.0f*(targetOffset[0] - offset[0]);
-            offset[1] += GetFrameTime()*2.0f*(targetOffset[1] - offset[1]);
-            
+            else offsetSpeed = (Vector2){ 0.0f, 0.0f };
+
             SetShaderValue(shader, zoomLoc, &zoom, UNIFORM_FLOAT);
             SetShaderValue(shader, offsetLoc, offset, UNIFORM_VEC2);
 
