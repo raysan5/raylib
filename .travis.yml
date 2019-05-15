@@ -120,9 +120,12 @@ before_install:
 
 script:
   - cd build
-  - if test -n "$WAYLAND";
-      then wget https://mirrors.kernel.org/ubuntu/pool/universe/e/extra-cmake-modules/extra-cmake-modules_5.38.0a-0ubuntu1_amd64.deb;
-      sudo dpkg -i extra-cmake-modules_5.38.0a-0ubuntu1_amd64.deb;
+  - if test -n "$WAYLAND"; then
+      wget https://mirrors.edge.kernel.org/ubuntu/pool/universe/e/extra-cmake-modules/extra-cmake-modules_5.44.0-0ubuntu1_amd64.deb;
+      sudo apt-get clean;
+      sudo apt-get update;
+      sudo apt-get install dpkg;
+      sudo dpkg -i extra-cmake-modules_5.44.0-0ubuntu1_amd64.deb;
       git clone git://anongit.freedesktop.org/wayland/wayland-protocols;
       pushd wayland-protocols;
       git checkout 1.15 && ./autogen.sh --prefix=/usr && make && sudo make install;
