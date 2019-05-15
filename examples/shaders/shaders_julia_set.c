@@ -68,7 +68,7 @@ int main()
     // Create a RenderTexture2D to be used for render to texture
     RenderTexture2D target = LoadRenderTexture(screenWidth, screenHeight);
     
-    int incrementSpeed = 3;     // Multiplier of speed to change c value
+    int incrementSpeed = 0;     // Multiplier of speed to change c value
     bool showControls = true;   // Show controls
     bool pause = false;         // Pause animation
 
@@ -99,20 +99,20 @@ int main()
             SetShaderValue(shader, cLoc, c, UNIFORM_VEC2);
         }
 
-        if (IsKeyPressed(KEY_P)) pause = !pause;                 // Pause animation (c change)
+        if (IsKeyPressed(KEY_SPACE)) pause = !pause;                 // Pause animation (c change)
         if (IsKeyPressed(KEY_F1)) showControls = !showControls;  // Toggle whether or not to show controls
         
         if (!pause)
         {
-            if (IsKeyDown(KEY_RIGHT)) incrementSpeed++;
-            else if (IsKeyDown(KEY_LEFT)) incrementSpeed--;
+            if (IsKeyPressed(KEY_RIGHT)) incrementSpeed++;
+            else if (IsKeyPressed(KEY_LEFT)) incrementSpeed--;
 
             // TODO: The idea is to zoom and move around with mouse
             // Probably offset movement should be proportional to zoom level
             if (IsMouseButtonDown(MOUSE_LEFT_BUTTON) || IsMouseButtonDown(MOUSE_RIGHT_BUTTON))
             {
-                if (IsMouseButtonDown(MOUSE_LEFT_BUTTON)) zoom += 0.003f;
-                if (IsMouseButtonDown(MOUSE_RIGHT_BUTTON)) zoom -= 0.003f;
+                if (IsMouseButtonDown(MOUSE_LEFT_BUTTON)) zoom -= 0.003f;
+                if (IsMouseButtonDown(MOUSE_RIGHT_BUTTON)) zoom += 0.003f;
 
                 Vector2 mousePos = GetMousePosition();
                 
@@ -157,15 +157,13 @@ int main()
             // Draw the saved texture (rendered julia set)
             DrawTextureRec(target.texture, (Rectangle){ 0, 0, target.texture.width, -target.texture.height }, (Vector2){ 0.0f, 0.0f }, WHITE);
             
-            // Draw information
-            //DrawText( FormatText("cx: %f\ncy: %f\nspeed: %d", c[0], c[1], incrementSpeed), 10, 10, 10, RAYWHITE);
-
             if (showControls)
             {
-                DrawText("Press keys [1 - 6] to change point of interest", 10, GetScreenHeight() - 60, 10, RAYWHITE);
-                DrawText("Press KEY_LEFT | KEY_RIGHT to change speed", 10, GetScreenHeight() - 45, 10, RAYWHITE);
-                DrawText("Press KEY_P to pause movement animation", 10, GetScreenHeight() - 30, 10, RAYWHITE);
-                DrawText("Press KEY_F1 to toggle these controls", 10, GetScreenHeight() - 15, 10, RAYWHITE);
+                DrawText("Press Mouse buttons right/left to zoom in/out and move", 10, 15, 10, RAYWHITE);
+                DrawText("Press KEY_F1 to toggle these controls", 10, 30, 10, RAYWHITE);
+                DrawText("Press KEYS [1 - 6] to change point of interest", 10, 45, 10, RAYWHITE);
+                DrawText("Press KEY_LEFT | KEY_RIGHT to change speed", 10, 60, 10, RAYWHITE);
+                DrawText("Press KEY_SPACE to pause movement animation", 10, 75, 10, RAYWHITE);
             }
 
         EndDrawing();
