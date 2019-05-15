@@ -18,8 +18,6 @@
 
 #include "raylib.h"
 
-#include "raymath.h"
-
 // A few good julia sets
 const float POINTS_OF_INTEREST[6][2] =
 { 
@@ -48,7 +46,8 @@ int main()
     float c[2] = { POINTS_OF_INTEREST[0][0], POINTS_OF_INTEREST[0][1] };
     
     // Offset and zoom to draw the julia set at. (centered on screen and 1.6 times smaller)
-    float offset[2] = { -(float)screenWidth/2, -(float)screenHeight/2 }; 
+    float offset[2] = { -(float)screenWidth/2, -(float)screenHeight/2 };
+    float targetOffset[2] = { offset[0], offset[1] };
     float zoom = 1.6f;
     
     // Get variable (uniform) locations on the shader to connect with the program
@@ -107,21 +106,25 @@ int main()
             if (IsKeyDown(KEY_RIGHT)) incrementSpeed++;
             else if (IsKeyDown(KEY_LEFT)) incrementSpeed--;
 
-            // Use mouse wheel to change zoom
-            zoom -= (float)GetMouseWheelMove()/10.f;
-            SetShaderValue(shader, zoomLoc, &zoom, UNIFORM_FLOAT);
-            
             // Use mouse button to change offset
             if (IsMouseButtonDown(MOUSE_LEFT_BUTTON))
             {
+                if (IsKeyDown(KEY_LEFT_SHIFT)) zoom -= 0.002f;
+                else zoom += 0.002f;
+                
                 // TODO: Logic is not correct, the idea is getting zoom focus to pointed area
                 Vector2 mousePos = GetMousePosition();
-
-                offset[0] = mousePos.x -(float)screenWidth;
-                offset[1] = mousePos.y -(float)screenHeight;
                 
-                SetShaderValue(shader, offsetLoc, offset, UNIFORM_VEC2);
+                targetOffset[0] = mousePos.x -(float)screenWidth;
+                targetOffset[1] = mousePos.y -(float)screenHeight;
             }
+            
+            // Slowly move camera to targetOffset
+            offset[0] += GetFrameTime()*2.0f*(targetOffset[0] - offset[0]);
+            offset[1] += GetFrameTime()*2.0f*(targetOffset[1] - offset[1]);
+            
+            SetShaderValue(shader, zoomLoc, &zoom, UNIFORM_FLOAT);
+            SetShaderValue(shader, offsetLoc, offset, UNIFORM_VEC2);
 
             // Increment c value with time
             float amount = GetFrameTime()*incrementSpeed*0.0005f;
@@ -150,7 +153,7 @@ int main()
             EndTextureMode();
 
             // Draw the saved texture (rendered julia set)
-            DrawTextureRec(target.texture, (Rectangle){ 0, 0, target.texture.width, -target.texture.height }, Vector2Zero(), WHITE);
+            DrawTextureRec(target.texture, (Rectangle){ 0, 0, target.texture.width, -target.texture.height }, (Vector2){ 0.0f, 0.0f }, WHITE);
             
             // Draw information
             //DrawText( FormatText("cx: %f\ncy: %f\nspeed: %d", c[0], c[1], incrementSpeed), 10, 10, 10, RAYWHITE);
