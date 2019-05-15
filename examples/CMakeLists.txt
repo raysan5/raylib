@@ -24,7 +24,7 @@ foreach(example_dir ${example_dirs})
   list(APPEND example_resources ${resources})
 endforeach()
 
-if (NOT CMAKE_SYSTEM STRLESS "Darwin-18.0.0")
+if (APPLE AND NOT CMAKE_SYSTEM STRLESS "Darwin-18.0.0")
   add_definitions(-DGL_SILENCE_DEPRECATION)
   MESSAGE(AUTHOR_WARNING "OpenGL is deprecated starting with macOS 10.14 (Mojave)!")
 endif()
