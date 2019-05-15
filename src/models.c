@@ -2769,7 +2769,9 @@ static Model LoadOBJ(const char *fileName)
         else TraceLog(LOG_INFO, "[%s] Model data loaded successfully: %i meshes / %i materials", fileName, meshCount, materialCount);
 
         // Init model meshes array
-        model.meshCount = meshCount;
+        // TODO: Support multiple meshes... in the meantime, only one mesh is returned
+        //model.meshCount = meshCount;
+        model.meshCount = 1;
         model.meshes = (Mesh *)RL_MALLOC(model.meshCount*sizeof(Mesh));
 
         // Init model materials array
