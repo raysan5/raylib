@@ -45,9 +45,9 @@ int main()
     // c constant to use in z^2 + c
     float c[2] = { POINTS_OF_INTEREST[0][0], POINTS_OF_INTEREST[0][1] };
     
-    // Offset and zoom to draw the julia set at. (centered on screen and 1.6 times smaller)
+    // Offset and zoom to draw the julia set at. (centered on screen and default size)
     float offset[2] = { -(float)screenWidth/2, -(float)screenHeight/2 };
-    float zoom = 1.6f;
+    float zoom = 1.0f;
     
     Vector2 offsetSpeed = { 0.0f, 0.0f };
     
@@ -111,8 +111,8 @@ int main()
             // Probably offset movement should be proportional to zoom level
             if (IsMouseButtonDown(MOUSE_LEFT_BUTTON) || IsMouseButtonDown(MOUSE_RIGHT_BUTTON))
             {
-                if (IsMouseButtonDown(MOUSE_LEFT_BUTTON)) zoom -= 0.003f;
-                if (IsMouseButtonDown(MOUSE_RIGHT_BUTTON)) zoom += 0.003f;
+                if (IsMouseButtonDown(MOUSE_LEFT_BUTTON)) zoom += zoom * 0.003f;
+                if (IsMouseButtonDown(MOUSE_RIGHT_BUTTON)) zoom -= zoom * 0.003f;
 
                 Vector2 mousePos = GetMousePosition();
                 
