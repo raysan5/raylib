@@ -15,10 +15,10 @@ const int MAX_ITERATIONS = 255; // Max iterations to do.
 // Square a complex number
 vec2 complexSquare(vec2 z)
 {
-   return vec2(
-      z.x * z.x - z.y * z.y,
-      z.x * z.y * 2.0
-   );
+    return vec2(
+        z.x * z.x - z.y * z.y,
+        z.x * z.y * 2.0
+    );
 }
 
 // Convert Hue Saturation Value color into RGB
@@ -33,8 +33,8 @@ vec3 hsv2rgb(vec3 c)
 void main()
 {
     // The pixel coordinates scaled so they are on the mandelbrot scale. 
-    vec2 z = vec2(((gl_FragCoord.x + offset.x)/screenDims.x) * 2.5 * zoom,
-                  ((screenDims.y - gl_FragCoord.y + offset.y)/screenDims.y) * 1.5 * zoom); // y also flipped due to opengl
+    vec2 z = vec2((((gl_FragCoord.x + offset.x)/screenDims.x) * 2.5)/zoom,
+                  (((screenDims.y - gl_FragCoord.y + offset.y)/screenDims.y) * 1.5)/zoom); // y also flipped due to opengl
     int iterations = 0;
 
     /*
