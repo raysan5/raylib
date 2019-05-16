@@ -156,7 +156,7 @@ int main(int argc, char **argv)
     const int screenHeight = 450;
 
     SetConfigFlags(FLAG_MSAA_4X_HINT | FLAG_VSYNC_HINT);
-    InitWindow(screenWidth, screenHeight, "raylib - unicode test");
+    InitWindow(screenWidth, screenHeight, "raylib [text] example - unicode");
 
     // Load the font resources
     // NOTE: fontAsian is for asian languages, 

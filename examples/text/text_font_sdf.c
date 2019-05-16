@@ -11,6 +11,12 @@
 
 #include "raylib.h"
 
+#if defined(PLATFORM_DESKTOP)
+    #define GLSL_VERSION            330
+#else   // PLATFORM_RPI, PLATFORM_ANDROID, PLATFORM_WEB
+    #define GLSL_VERSION            100
+#endif
+
 int main()
 {
     // Initialization
@@ -47,7 +53,7 @@ int main()
     UnloadImage(atlas);
     
     // Load SDF required shader (we use default vertex shader)
-    Shader shader = LoadShader(0, "resources/shaders/sdf.fs");
+    Shader shader = LoadShader(0, FormatText("resources/shaders/glsl%i/sdf.fs", GLSL_VERSION));
     SetTextureFilter(fontSDF.texture, FILTER_BILINEAR);    // Required for SDF font
 
     Vector2 fontPosition = { 40, screenHeight/2 - 50 };
