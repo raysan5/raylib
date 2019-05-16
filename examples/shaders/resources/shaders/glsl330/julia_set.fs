@@ -33,31 +33,30 @@ vec3 Hsv2rgb(vec3 c)
 
 void main()
 {
-    // The pixel coordinates scaled so they are on the mandelbrot scale
-    // y also flipped due to opengl
-    vec2 z = vec2((((gl_FragCoord.x + offset.x)/screenDims.x)*2.5)/zoom,
-                  (((screenDims.y - gl_FragCoord.y + offset.y)/screenDims.y)*1.5)/zoom);
-                  
-    int iterations = 0;
-
     /**********************************************************************************************
-    Julia sets use a function z^2 + c, where c is a constant.
-    This function is iterated until the nature of the point is determined.
+      Julia sets use a function z^2 + c, where c is a constant.
+      This function is iterated until the nature of the point is determined.
 
-    If the magnitude of the number becomes greater than 2, then from that point onward
-    the number will get bigger and bigger, and will never get smaller (tends towards infinity).
-    2^2 = 4, 4^2 = 8 and so on.
-    So at 2 we stop iterating.
+      If the magnitude of the number becomes greater than 2, then from that point onward
+      the number will get bigger and bigger, and will never get smaller (tends towards infinity).
+      2^2 = 4, 4^2 = 8 and so on.
+      So at 2 we stop iterating.
 
-    If the number is below 2, we keep iterating.
-    But when do we stop iterating if the number is always below 2 (it converges)?
-    That is what MAX_ITERATIONS is for.
-    Then we can divide the iterations by the MAX_ITERATIONS value to get a normalized value that we can
-    then map to a color.
+      If the number is below 2, we keep iterating.
+      But when do we stop iterating if the number is always below 2 (it converges)?
+      That is what MAX_ITERATIONS is for.
+      Then we can divide the iterations by the MAX_ITERATIONS value to get a normalized value that we can
+      then map to a color.
 
-    We use dot product (z.x * z.x + z.y * z.y) to determine the magnitude (length) squared.
-    And once the magnitude squared is > 4, then magnitude > 2 is also true (saves computational power).
+      We use dot product (z.x * z.x + z.y * z.y) to determine the magnitude (length) squared.
+      And once the magnitude squared is > 4, then magnitude > 2 is also true (saves computational power).
     *************************************************************************************************/
+    
+    // The pixel coordinates are scaled so they are on the mandelbrot scale
+    // NOTE: fragTexCoord already comes as normalized screen coordinates but offset must be normalized before scaling and zoom
+    vec2 z = vec2((fragTexCoord.x + offset.x/screenDims.x)*2.5/zoom, (fragTexCoord.y + offset.y/screenDims.y)*1.5/zoom);
+
+    int iterations = 0;
     for (iterations = 0; iterations < MAX_ITERATIONS; iterations++)
     {
         z = ComplexSquare(z) + c;  // Iterate function

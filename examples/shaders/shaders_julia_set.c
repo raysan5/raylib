@@ -117,8 +117,8 @@ int main()
             // Probably offset movement should be proportional to zoom level
             if (IsMouseButtonDown(MOUSE_LEFT_BUTTON) || IsMouseButtonDown(MOUSE_RIGHT_BUTTON))
             {
-                if (IsMouseButtonDown(MOUSE_LEFT_BUTTON)) zoom += zoom * 0.003f;
-                if (IsMouseButtonDown(MOUSE_RIGHT_BUTTON)) zoom -= zoom * 0.003f;
+                if (IsMouseButtonDown(MOUSE_LEFT_BUTTON)) zoom += zoom*0.003f;
+                if (IsMouseButtonDown(MOUSE_RIGHT_BUTTON)) zoom -= zoom*0.003f;
 
                 Vector2 mousePos = GetMousePosition();
                 
@@ -153,16 +153,19 @@ int main()
             BeginTextureMode(target);       // Enable drawing to texture
                 ClearBackground(BLACK);     // Clear the render texture
 
-                // Draw a rectangle in shader mode
-                // NOTE: This acts as a canvas for the shader to draw on
-                BeginShaderMode(shader);
-                    DrawRectangle(0, 0, GetScreenWidth(), GetScreenHeight(), BLACK);
-                EndShaderMode();
+                // Draw a rectangle in shader mode to be used as shader canvas
+                // NOTE: Rectangle uses font white character texture coordinates,
+                // so shader can not be applied here directly because input vertexTexCoord
+                // do not represent full screen coordinates (space where want to apply shader)
+                DrawRectangle(0, 0, GetScreenWidth(), GetScreenHeight(), BLACK);
             EndTextureMode();
 
-            // Draw the saved texture (rendered julia set)
-            DrawTextureRec(target.texture, (Rectangle){ 0, 0, target.texture.width, -target.texture.height }, (Vector2){ 0.0f, 0.0f }, WHITE);
-            
+            // Draw the saved texture and rendered julia set with shader
+            // NOTE: We do not invert texture on Y, already considered inside shader
+            BeginShaderMode(shader);
+                DrawTexture(target.texture, 0, 0, WHITE);
+            EndShaderMode();
+                
             if (showControls)
             {
                 DrawText("Press Mouse buttons right/left to zoom in/out and move", 10, 15, 10, RAYWHITE);
