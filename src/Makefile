@@ -154,8 +154,8 @@ endif
 
 ifeq ($(PLATFORM),PLATFORM_WEB)
     # Emscripten required variables
-    EMSDK_PATH          = C:/emsdk
-    EMSCRIPTEN_VERSION  ?= 1.38.30
+    EMSDK_PATH          ?= D:/emsdk
+    EMSCRIPTEN_VERSION  ?= 1.38.31
     CLANG_VERSION       = e$(EMSCRIPTEN_VERSION)_64bit
     PYTHON_VERSION      = 2.7.13.1_64bit\python-2.7.13.amd64
     NODE_VERSION        = 8.9.1_64bit
@@ -254,21 +254,20 @@ endif
 
 
 # Define compiler flags:
-#  -O1                   defines optimization level
-#  -g                    enable debugging
-#  -s                    strip unnecessary data from build
-#  -Wall                 turns on most, but not all, compiler warnings
-#  -std=c99              defines C language mode (standard C from 1999 revision)
-#  -std=gnu99            defines C language mode (GNU C from 1999 revision)
-#  -Wno-missing-braces   ignore invalid warning (GCC bug 53119)
-#  -D_DEFAULT_SOURCE     use with -std=c99 on Linux and PLATFORM_WEB, required for timespec
-#  -Werror=pointer-arith catch unportable code that does direct arithmetic on void pointers
-#  -fno-strict-aliasing  jar_xm.h does shady stuff (breaks strict aliasing)
+#  -O1                      defines optimization level
+#  -g                       include debug information on compilation
+#  -s                       strip unnecessary data from build
+#  -Wall                    turns on most, but not all, compiler warnings
+#  -std=c99                 defines C language mode (standard C from 1999 revision)
+#  -std=gnu99               defines C language mode (GNU C from 1999 revision)
+#  -Wno-missing-braces      ignore invalid warning (GCC bug 53119)
+#  -D_DEFAULT_SOURCE        use with -std=c99 on Linux and PLATFORM_WEB, required for timespec
+#  -Werror=pointer-arith    catch unportable code that does direct arithmetic on void pointers
+#  -fno-strict-aliasing     jar_xm.h does shady stuff (breaks strict aliasing)
 CFLAGS += -O1 -Wall -std=c99 -D_DEFAULT_SOURCE -Wno-missing-braces -Werror=pointer-arith -fno-strict-aliasing
 
-ifeq ($(RAYLIB_BUILD_MODE), DEBUG)
+ifeq ($(RAYLIB_BUILD_MODE),DEBUG)
     CFLAGS += -g
-    #CC      = clang
 endif
 
 # Additional flags for compiler (if desired)
@@ -280,12 +279,24 @@ ifeq ($(PLATFORM),PLATFORM_DESKTOP)
     CFLAGS += -Werror=implicit-function-declaration
 endif
 ifeq ($(PLATFORM),PLATFORM_WEB)
-    # -O2                        # if used, also set --memory-init-file 0
-    # --memory-init-file 0       # to avoid an external memory initialization code file (.mem)
-    # -s ALLOW_MEMORY_GROWTH=1   # to allow memory resizing
+    # -Os                        # size optimization
+    # -O2                        # optimization level 2, if used, also set --memory-init-file 0
+    # -s USE_GLFW=3              # Use glfw3 library (context/input management)
+    # -s ALLOW_MEMORY_GROWTH=1   # to allow memory resizing -> WARNING: Audio buffers could FAIL!
     # -s TOTAL_MEMORY=16777216   # to specify heap memory size (default = 16MB)
     # -s USE_PTHREADS=1          # multithreading support
-    CFLAGS += -s USE_GLFW=3 -s ASSERTIONS=1 --profiling
+    # -s WASM=0                  # disable Web Assembly, emitted by default
+    # -s EMTERPRETIFY=1          # enable emscripten code interpreter (very slow)
+    # -s EMTERPRETIFY_ASYNC=1    # support synchronous loops by emterpreter
+    # -s FORCE_FILESYSTEM=1      # force filesystem to load/save files data
+    # -s ASSERTIONS=1            # enable runtime checks for common memory allocation errors (-O1 and above turn it off)
+    # --profiling                # include information for code profiling
+    # --memory-init-file 0       # to avoid an external memory initialization code file (.mem)
+    # --preload-file resources   # specify a resources folder for data compilation
+    CFLAGS += -s USE_GLFW=3
+    ifeq ($(RAYLIB_BUILD_MODE),DEBUG)
+        CFLAGS += -s ASSERTIONS=1 --profiling
+    endif
 endif
 ifeq ($(PLATFORM),PLATFORM_ANDROID)
     # Compiler flags for arquitecture

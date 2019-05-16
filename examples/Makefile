@@ -52,7 +52,7 @@ RAYLIB_H_INSTALL_PATH ?= $(DESTDIR)/include
 RAYLIB_LIBTYPE        ?= STATIC
 
 # Build mode for project: DEBUG or RELEASE
-RAYLIB_BUILD_MODE     ?= RELEASE
+BUILD_MODE            ?= RELEASE
 
 # Use external GLFW library instead of rglfw module
 # TODO: Review usage on Linux. Target version of choice. Switch on -lglfw or -lglfw3
@@ -201,7 +201,7 @@ endif
 
 # Define compiler flags:
 #  -O1                  defines optimization level
-#  -g                   enable debugging
+#  -g                   include debug information on compilation
 #  -s                   strip unnecessary data from build
 #  -Wall                turns on most, but not all, compiler warnings
 #  -std=c99             defines C language mode (standard C from 1999 revision)
@@ -209,6 +209,10 @@ endif
 #  -Wno-missing-braces  ignore invalid warning (GCC bug 53119)
 #  -D_DEFAULT_SOURCE    use with -std=c99 on Linux and PLATFORM_WEB, required for timespec
 CFLAGS += -O1 -s -Wall -std=c99 -D_DEFAULT_SOURCE -Wno-missing-braces
+
+ifeq ($(BUILD_MODE),DEBUG)
+    CFLAGS += -g
+endif
 
 # Additional flags for compiler (if desired)
 #CFLAGS += -Wextra -Wmissing-prototypes -Wstrict-prototypes
@@ -219,10 +223,6 @@ ifeq ($(PLATFORM),PLATFORM_DESKTOP)
         CFLAGS += $(RAYLIB_PATH)/raylib.rc.data -Wl,--subsystem,windows
     endif
     ifeq ($(PLATFORM_OS),LINUX)
-        ifeq ($(RAYLIB_BUILD_MODE),DEBUG)
-            CFLAGS += -g
-            #CC = clang
-        endif
         ifeq ($(RAYLIB_LIBTYPE),STATIC)
         CFLAGS += -D_DEFAULT_SOURCE
         endif
@@ -238,19 +238,22 @@ endif
 ifeq ($(PLATFORM),PLATFORM_WEB)
     # -Os                        # size optimization
     # -O2                        # optimization level 2, if used, also set --memory-init-file 0
-    # --memory-init-file 0       # to avoid an external memory initialization code file (.mem)
     # -s USE_GLFW=3              # Use glfw3 library (context/input management)
-    # -s ALLOW_MEMORY_GROWTH=1   # to allow memory resizing
+    # -s ALLOW_MEMORY_GROWTH=1   # to allow memory resizing -> WARNING: Audio buffers could FAIL!
     # -s TOTAL_MEMORY=16777216   # to specify heap memory size (default = 16MB)
     # -s USE_PTHREADS=1          # multithreading support
-    # -s WASM=1                  # support Web Assembly (https://github.com/kripken/emscripten/wiki/WebAssembly)
+    # -s WASM=0                  # disable Web Assembly, emitted by default
     # -s EMTERPRETIFY=1          # enable emscripten code interpreter (very slow)
     # -s EMTERPRETIFY_ASYNC=1    # support synchronous loops by emterpreter
     # -s FORCE_FILESYSTEM=1      # force filesystem to load/save files data
+    # -s ASSERTIONS=1            # enable runtime checks for common memory allocation errors (-O1 and above turn it off)
     # --profiling                # include information for code profiling
+    # --memory-init-file 0       # to avoid an external memory initialization code file (.mem)
     # --preload-file resources   # specify a resources folder for data compilation
-    CFLAGS += -Os -s USE_GLFW=3 -s ASSERTIONS=2 -s WASM=1 -s FORCE_FILESYSTEM=1 -s EMTERPRETIFY=1 -s EMTERPRETIFY_ASYNC=1 --preload-file $(dir $<)resources@resources
-    
+    CFLAGS += -Os -s USE_GLFW=3 -s FORCE_FILESYSTEM=1 -s EMTERPRETIFY=1 -s EMTERPRETIFY_ASYNC=1 --preload-file $(dir $<)resources@resources
+    ifeq ($(BUILD_MODE), DEBUG)
+        CFLAGS += -s ASSERTIONS=1 --profiling
+    endif
     # NOTE: Simple raylib examples are compiled to be interpreter by emterpreter, that way,
     # we can compile same code for ALL platforms with no change required, but, working on bigger
     # projects, code needs to be refactored to avoid a blocking while() loop, moving Update and Draw
@@ -261,10 +264,9 @@ ifeq ($(PLATFORM),PLATFORM_WEB)
     EXT = .html
 endif
 
-# Define include paths for required headers.
-# Precedence: immediately local, raysan5 provided sources
+# Define include paths for required headers
 # NOTE: Several external required libraries (stb and others)
-INCLUDE_PATHS = -I. -I$(RAYLIB_PATH)/release/include -I$(RAYLIB_PATH)/src -I$(RAYLIB_PATH)/src/external
+INCLUDE_PATHS = -I. -I$(RAYLIB_PATH)/src -I$(RAYLIB_PATH)/src/external
 
 # Define additional directories containing required header files
 ifeq ($(PLATFORM),PLATFORM_RPI)
@@ -286,7 +288,6 @@ ifeq ($(PLATFORM),PLATFORM_DESKTOP)
 endif
 
 # Define library paths containing required libs.
-# Precedence: immediately local, then raysan5 provided libs
 LDFLAGS = -L. -L$(RAYLIB_RELEASE_PATH) -L$(RAYLIB_PATH)/src
 
 ifeq ($(PLATFORM),PLATFORM_DESKTOP)
@@ -319,10 +320,12 @@ ifeq ($(PLATFORM),PLATFORM_DESKTOP)
         # Libraries for Debian GNU/Linux desktop compiling
         # NOTE: Required packages: libegl1-mesa-dev
         LDLIBS = -lraylib -lGL -lm -lpthread -ldl -lrt
+        
         # On X11 requires also below libraries
         LDLIBS += -lX11
         # NOTE: It seems additional libraries are not required any more, latest GLFW just dlopen them
         #LDLIBS += -lXrandr -lXinerama -lXi -lXxf86vm -lXcursor
+        
         # On Wayland windowing system, additional libraries requires
         ifeq ($(USE_WAYLAND_DISPLAY),TRUE)
             LDLIBS += -lwayland-client -lwayland-cursor -lwayland-egl -lxkbcommon
@@ -341,6 +344,7 @@ ifeq ($(PLATFORM),PLATFORM_DESKTOP)
         # Libraries for FreeBSD, OpenBSD, NetBSD, DragonFly desktop compiling
         # NOTE: Required packages: mesa-libs
         LDLIBS = -lraylib -lGL -lpthread -lm
+
         # On XWindow requires also below libraries
         LDLIBS += -lX11 -lXrandr -lXinerama -lXi -lXxf86vm -lXcursor
     endif
