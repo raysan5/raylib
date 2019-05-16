@@ -451,6 +451,7 @@ EXAMPLES = \
     shaders/shaders_texture_drawing \
     shaders/shaders_texture_waves \
     shaders/shaders_julia_set \
+    shaders/shaders_eratosthenes \
     audio/audio_module_playing \
     audio/audio_music_stream \
     audio/audio_raw_stream \
