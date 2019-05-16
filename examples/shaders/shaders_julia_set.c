@@ -18,6 +18,12 @@
 
 #include "raylib.h"
 
+#if defined(PLATFORM_DESKTOP)
+    #define GLSL_VERSION            330
+#else   // PLATFORM_RPI, PLATFORM_ANDROID, PLATFORM_WEB
+    #define GLSL_VERSION            100
+#endif
+
 // A few good julia sets
 const float POINTS_OF_INTEREST[6][2] =
 { 
@@ -40,7 +46,7 @@ int main()
 
     // Load julia set shader
     // NOTE: Defining 0 (NULL) for vertex shader forces usage of internal default vertex shader
-    Shader shader = LoadShader(0, "resources/shaders/glsl330/julia_shader.fs");
+    Shader shader = LoadShader(0, FormatText("resources/shaders/glsl%i/julia_set.fs", GLSL_VERSION));
     
     // c constant to use in z^2 + c
     float c[2] = { POINTS_OF_INTEREST[0][0], POINTS_OF_INTEREST[0][1] };

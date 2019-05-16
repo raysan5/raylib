@@ -1,11 +1,10 @@
-#version 330
+#version 100
+
+precision mediump float;
 
 // Input vertex attributes (from vertex shader)
-in vec2 fragTexCoord;
-in vec4 fragColor;
-
-// Output fragment color
-out vec4 finalColor;
+varying vec2 fragTexCoord;
+varying vec4 fragColor;
 
 uniform vec3 viewEye;
 uniform vec3 viewCenter; 
@@ -428,5 +427,5 @@ void main()
     tot /= float(AA*AA);
 #endif
 
-    finalColor = vec4( tot, 1.0 );
+    gl_FragColor = vec4( tot, 1.0 );
 }
