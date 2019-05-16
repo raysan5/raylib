@@ -11,6 +11,12 @@
 
 #include "raylib.h"
 
+#if defined(PLATFORM_DESKTOP)
+    #define GLSL_VERSION            330
+#else   // PLATFORM_RPI, PLATFORM_ANDROID, PLATFORM_WEB
+    #define GLSL_VERSION            100
+#endif
+
 int main()
 {
     // Initialization
@@ -49,7 +55,7 @@ int main()
     hmd.chromaAbCorrection[3] = 0.0f;       // HMD chromatic aberration correction parameter 3
     
     // Distortion shader (uses device lens distortion and chroma)
-    Shader distortion = LoadShader(0, "resources/distortion.fs");
+    Shader distortion = LoadShader(0, FormatText("resources/distortion%i.fs", GLSL_VERSION));
     
     SetVrConfiguration(hmd, distortion);    // Set Vr device parameters for stereo rendering
     
