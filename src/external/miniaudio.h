@@ -29347,8 +29347,8 @@ static MA_INLINE float32x4_t ma_src_sinc__interpolation_factor__neon(const ma_sr
 {
     float32x4_t xabs;
     int32x4_t   ixabs;
-    float32x4_t a
-    float32x4_t r
+    float32x4_t a;
+    float32x4_t r;
     int* ixabsv;
     float lo[4];
     float hi[4];
