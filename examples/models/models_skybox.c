@@ -11,12 +11,6 @@
 
 #include "raylib.h"
 
-#if defined(PLATFORM_DESKTOP)
-    #define GLSL_VERSION            330
-#else   // PLATFORM_RPI, PLATFORM_ANDROID, PLATFORM_WEB
-    #define GLSL_VERSION            100
-#endif
-
 int main()
 {
     // Initialization
@@ -35,13 +29,19 @@ int main()
     
     // Load skybox shader and set required locations
     // NOTE: Some locations are automatically set at shader loading
-    skybox.materials[0].shader = LoadShader(FormatText("resources/shaders/glsl%i/skybox.vs", GLSL_VERSION),
-                                            FormatText("resources/shaders/glsl%i/skybox.fs", GLSL_VERSION));
-                                            
+#if defined(PLATFORM_DESKTOP)
+    skybox.materials[0].shader = LoadShader("resources/shaders/glsl330/skybox.vs", "resources/shaders/glsl330/skybox.fs");
+#else   // PLATFORM_RPI, PLATFORM_ANDROID, PLATFORM_WEB
+    skybox.materials[0].shader = LoadShader("resources/shaders/glsl100/skybox.vs", "resources/shaders/glsl100/skybox.fs");
+#endif
     SetShaderValue(skybox.materials[0].shader, GetShaderLocation(skybox.materials[0].shader, "environmentMap"), (int[1]){ MAP_CUBEMAP }, UNIFORM_INT);
 
     // Load cubemap shader and setup required shader locations
-    Shader shdrCubemap = LoadShader("resources/shaders/cubemap.vs", "resources/shaders/cubemap.fs");
+#if defined(PLATFORM_DESKTOP)
+    Shader shdrCubemap = LoadShader("resources/shaders/glsl330/cubemap.vs", "resources/shaders/glsl330/cubemap.fs");
+#else   // PLATFORM_RPI, PLATFORM_ANDROID, PLATFORM_WEB
+    Shader shdrCubemap = LoadShader("resources/shaders/glsl100/cubemap.vs", "resources/shaders/glsl100/cubemap.fs");
+#endif
     SetShaderValue(shdrCubemap, GetShaderLocation(shdrCubemap, "equirectangularMap"), (int[1]){ 0 }, UNIFORM_INT);
     
     // Load HDR panorama (sphere) texture

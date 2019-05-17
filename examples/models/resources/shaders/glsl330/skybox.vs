@@ -28,5 +28,5 @@ void main()
     vec4 clipPos = projection*rotView*vec4(vertexPosition, 1.0);
 
     // Calculate final vertex position
-    gl_Position = clipPos.xyww;
+    gl_Position = clipPos.xyzw;
 }

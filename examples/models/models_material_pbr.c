@@ -17,12 +17,6 @@
 #define RLIGHTS_IMPLEMENTATION
 #include "rlights.h"
 
-#if defined(PLATFORM_DESKTOP)
-    #define GLSL_VERSION            330
-#else   // PLATFORM_RPI, PLATFORM_ANDROID, PLATFORM_WEB
-    #define GLSL_VERSION            100
-#endif
-
 #define CUBEMAP_SIZE         512        // Cubemap texture size
 #define IRRADIANCE_SIZE       32        // Irradiance texture size
 #define PREFILTERED_SIZE     256        // Prefiltered HDR environment texture size
@@ -120,9 +114,12 @@ static Material LoadMaterialPBR(Color albedo, float metalness, float roughness)
 {
     Material mat = { 0 };       // NOTE: All maps textures are set to { 0 }
     
-    mat.shader = LoadShader(FormatText("resources/shaders/glsl%i/pbr.vs", GLSL_VERSION), 
-                            FormatText("resources/shaders/glsl%i/pbr.fs", GLSL_VERSION));
-    
+#if defined(PLATFORM_DESKTOP)
+    mat.shader = LoadShader("resources/shaders/glsl330/pbr.vs", "resources/shaders/glsl330/pbr.fs");
+#else   // PLATFORM_RPI, PLATFORM_ANDROID, PLATFORM_WEB
+    mat.shader = LoadShader("resources/shaders/glsl100/pbr.vs", "resources/shaders/glsl100/pbr.fs");
+#endif
+
     // Get required locations points for PBR material
     // NOTE: Those location names must be available and used in the shader code
     mat.shader.locs[LOC_MAP_ALBEDO] = GetShaderLocation(mat.shader, "albedo.sampler");
@@ -149,20 +146,32 @@ static Material LoadMaterialPBR(Color albedo, float metalness, float roughness)
     mat.maps[MAP_OCCLUSION].texture = LoadTexture("resources/pbr/trooper_ao.png");
     
     // Load equirectangular to cubemap shader
-    Shader shdrCubemap = LoadShader(FormatText("resources/shaders/glsl%i/cubemap.vs", GLSL_VERSION), 
-                                    FormatText("resources/shaders/glsl%i/cubemap.fs", GLSL_VERSION));
+#if defined(PLATFORM_DESKTOP)
+    Shader shdrCubemap = LoadShader("resources/shaders/glsl330/cubemap.vs", "resources/shaders/glsl330/cubemap.fs");
+#else   // PLATFORM_RPI, PLATFORM_ANDROID, PLATFORM_WEB
+    Shader shdrCubemap = LoadShader("resources/shaders/glsl100/cubemap.vs", "resources/shaders/glsl100/cubemap.fs");
+#endif
 
     // Load irradiance (GI) calculation shader
-    Shader shdrIrradiance = LoadShader(FormatText("resources/shaders/glsl%i/skybox.vs", GLSL_VERSION), 
-                                       FormatText("resources/shaders/glsl%i/irradiance.fs", GLSL_VERSION));
+#if defined(PLATFORM_DESKTOP)
+    Shader shdrIrradiance = LoadShader("resources/shaders/glsl330/skybox.vs", "resources/shaders/glsl330/irradiance.fs");
+#else   // PLATFORM_RPI, PLATFORM_ANDROID, PLATFORM_WEB
+    Shader shdrIrradiance = LoadShader("resources/shaders/glsl100/skybox.vs", "resources/shaders/glsl100/irradiance.fs");
+#endif
 
     // Load reflection prefilter calculation shader
-    Shader shdrPrefilter = LoadShader(FormatText("resources/shaders/glsl%i/skybox.vs", GLSL_VERSION), 
-                                      FormatText("resources/shaders/glsl%i/prefilter.fs", GLSL_VERSION));
+#if defined(PLATFORM_DESKTOP)
+    Shader shdrPrefilter = LoadShader("resources/shaders/glsl330/skybox.vs", "resources/shaders/glsl330/prefilter.fs");
+#else
+    Shader shdrPrefilter = LoadShader("resources/shaders/glsl100/skybox.vs", "resources/shaders/glsl100/prefilter.fs");
+#endif
 
-    // Load bidirectional reflectance distribution function shader 
-    Shader shdrBRDF = LoadShader(FormatText("resources/shaders/glsl%i/brdf.vs", GLSL_VERSION), 
-                                 FormatText("resources/shaders/glsl%i/brdf.fs", GLSL_VERSION));
+    // Load bidirectional reflectance distribution function shader
+#if defined(PLATFORM_DESKTOP)
+    Shader shdrBRDF = LoadShader("resources/shaders/glsl330/brdf.vs", "resources/shaders/glsl330/brdf.fs");
+#else
+    Shader shdrBRDF = LoadShader("resources/shaders/glsl100/brdf.vs", "resources/shaders/glsl100/brdf.fs");
+#endif
     
     // Setup required shader locations
     SetShaderValue(shdrCubemap, GetShaderLocation(shdrCubemap, "equirectangularMap"), (int[1]){ 0 }, UNIFORM_INT);
