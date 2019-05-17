@@ -64,7 +64,7 @@ int main()
     int offsetLoc = GetShaderLocation(shader, "offset");
 
     // Tell the shader what the screen dimensions, zoom, offset and c are
-    float screenDims[2] = { (float)screenWidth, (float)screenHeight };
+    float screenDims[2] = { (float)GetScreenWidth(), (float)GetScreenHeight() };
     SetShaderValue(shader, GetShaderLocation(shader, "screenDims"), screenDims, UNIFORM_VEC2);
     
     SetShaderValue(shader, cLoc, c, UNIFORM_VEC2);
