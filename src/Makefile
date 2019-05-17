@@ -221,7 +221,7 @@ ifeq ($(PLATFORM),PLATFORM_DESKTOP)
     ifeq ($(PLATFORM_OS),OSX)
         # OSX default compiler
         CC = clang
-        GLFW_CFLAGS = -ObjC
+        GLFW_CFLAGS = -x objective-c
     endif
     ifeq ($(PLATFORM_OS),BSD)
         # FreeBSD, OpenBSD, NetBSD, DragonFly default compiler
