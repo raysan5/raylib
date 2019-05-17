@@ -11,6 +11,12 @@
 
 #include "raylib.h"
 
+#if defined(PLATFORM_DESKTOP)
+    #define GLSL_VERSION            330
+#else   // PLATFORM_RPI, PLATFORM_ANDROID, PLATFORM_WEB
+    #define GLSL_VERSION            100
+#endif
+
 int main()
 {
     // Initialization
@@ -29,7 +35,9 @@ int main()
     
     // Load skybox shader and set required locations
     // NOTE: Some locations are automatically set at shader loading
-    skybox.materials[0].shader = LoadShader("resources/shaders/skybox.vs", "resources/shaders/skybox.fs");
+    skybox.materials[0].shader = LoadShader(FormatText("resources/shaders/glsl%i/skybox.vs", GLSL_VERSION),
+                                            FormatText("resources/shaders/glsl%i/skybox.fs", GLSL_VERSION));
+                                            
     SetShaderValue(skybox.materials[0].shader, GetShaderLocation(skybox.materials[0].shader, "environmentMap"), (int[1]){ MAP_CUBEMAP }, UNIFORM_INT);
 
     // Load cubemap shader and setup required shader locations

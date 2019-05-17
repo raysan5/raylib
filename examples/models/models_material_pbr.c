@@ -17,6 +17,12 @@
 #define RLIGHTS_IMPLEMENTATION
 #include "rlights.h"
 
+#if defined(PLATFORM_DESKTOP)
+    #define GLSL_VERSION            330
+#else   // PLATFORM_RPI, PLATFORM_ANDROID, PLATFORM_WEB
+    #define GLSL_VERSION            100
+#endif
+
 #define CUBEMAP_SIZE         512        // Cubemap texture size
 #define IRRADIANCE_SIZE       32        // Irradiance texture size
 #define PREFILTERED_SIZE     256        // Prefiltered HDR environment texture size
@@ -114,10 +120,8 @@ static Material LoadMaterialPBR(Color albedo, float metalness, float roughness)
 {
     Material mat = { 0 };       // NOTE: All maps textures are set to { 0 }
     
-    #define     PATH_PBR_VS     "resources/shaders/pbr.vs"      // Path to physically based rendering vertex shader
-    #define     PATH_PBR_FS     "resources/shaders/pbr.fs"      // Path to physically based rendering fragment shader
-   
-    mat.shader = LoadShader(PATH_PBR_VS, PATH_PBR_FS);
+    mat.shader = LoadShader(FormatText("resources/shaders/glsl%i/pbr.vs", GLSL_VERSION), 
+                            FormatText("resources/shaders/glsl%i/pbr.fs", GLSL_VERSION));
     
     // Get required locations points for PBR material
     // NOTE: Those location names must be available and used in the shader code
@@ -144,23 +148,21 @@ static Material LoadMaterialPBR(Color albedo, float metalness, float roughness)
     mat.maps[MAP_ROUGHNESS].texture = LoadTexture("resources/pbr/trooper_roughness.png");
     mat.maps[MAP_OCCLUSION].texture = LoadTexture("resources/pbr/trooper_ao.png");
     
-    // Set environment maps
-    #define     PATH_CUBEMAP_VS         "resources/shaders/cubemap.vs"          // Path to equirectangular to cubemap vertex shader
-    #define     PATH_CUBEMAP_FS         "resources/shaders/cubemap.fs"          // Path to equirectangular to cubemap fragment shader
-    #define     PATH_SKYBOX_VS          "resources/shaders/skybox.vs"           // Path to skybox vertex shader
-    #define     PATH_IRRADIANCE_FS      "resources/shaders/irradiance.fs"       // Path to irradiance (GI) calculation fragment shader
-    #define     PATH_PREFILTER_FS       "resources/shaders/prefilter.fs"        // Path to reflection prefilter calculation fragment shader
-    #define     PATH_BRDF_VS            "resources/shaders/brdf.vs"     // Path to bidirectional reflectance distribution function vertex shader 
-    #define     PATH_BRDF_FS            "resources/shaders/brdf.fs"     // Path to bidirectional reflectance distribution function fragment shader
-    
-    Shader shdrCubemap = LoadShader(PATH_CUBEMAP_VS, PATH_CUBEMAP_FS);
-    printf("Loaded shader: cubemap\n");
-    Shader shdrIrradiance = LoadShader(PATH_SKYBOX_VS, PATH_IRRADIANCE_FS);
-    printf("Loaded shader: irradiance\n");
-    Shader shdrPrefilter = LoadShader(PATH_SKYBOX_VS, PATH_PREFILTER_FS);
-    printf("Loaded shader: prefilter\n");
-    Shader shdrBRDF = LoadShader(PATH_BRDF_VS, PATH_BRDF_FS);
-    printf("Loaded shader: brdf\n");
+    // Load equirectangular to cubemap shader
+    Shader shdrCubemap = LoadShader(FormatText("resources/shaders/glsl%i/cubemap.vs", GLSL_VERSION), 
+                                    FormatText("resources/shaders/glsl%i/cubemap.fs", GLSL_VERSION));
+
+    // Load irradiance (GI) calculation shader
+    Shader shdrIrradiance = LoadShader(FormatText("resources/shaders/glsl%i/skybox.vs", GLSL_VERSION), 
+                                       FormatText("resources/shaders/glsl%i/irradiance.fs", GLSL_VERSION));
+
+    // Load reflection prefilter calculation shader
+    Shader shdrPrefilter = LoadShader(FormatText("resources/shaders/glsl%i/skybox.vs", GLSL_VERSION), 
+                                      FormatText("resources/shaders/glsl%i/prefilter.fs", GLSL_VERSION));
+
+    // Load bidirectional reflectance distribution function shader 
+    Shader shdrBRDF = LoadShader(FormatText("resources/shaders/glsl%i/brdf.vs", GLSL_VERSION), 
+                                 FormatText("resources/shaders/glsl%i/brdf.fs", GLSL_VERSION));
     
     // Setup required shader locations
     SetShaderValue(shdrCubemap, GetShaderLocation(shdrCubemap, "equirectangularMap"), (int[1]){ 0 }, UNIFORM_INT);
