@@ -2163,11 +2163,12 @@ bool IsMouseButtonPressed(int button)
     if ((currentMouseState[button] != previousMouseState[button]) && (currentMouseState[button] == 1)) pressed = true;
 #endif
 
+/*
 #if defined(PLATFORM_WEB)
     Vector2 pos = GetTouchPosition(0);
     if ((pos.x > 0) && (pos.y > 0)) pressed = true;    // There was a touch!
 #endif
-
+*/
     return pressed;
 }
 
@@ -2239,13 +2240,14 @@ Vector2 GetMousePosition(void)
 #else
     position = (Vector2){ (mousePosition.x + mouseOffset.x)*mouseScale.x, (mousePosition.y + mouseOffset.y)*mouseScale.y };
 #endif
+/*
 #if defined(PLATFORM_WEB)
     Vector2 pos = GetTouchPosition(0);
 
     // Touch position has priority over mouse position
     if ((pos.x > 0) && (pos.y > 0)) position = pos; // There was a touch!
 #endif
-
+*/
     return position;
 }
 
