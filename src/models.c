@@ -60,7 +60,7 @@
 #if defined(SUPPORT_FILEFORMAT_GLTF)
     #define CGLTF_IMPLEMENTATION
     #include "external/cgltf.h"         // glTF file format loading
-    #include "external/stb_image.h"
+    #include "external/stb_image.h"     // glTF texture images loading
 #endif
 
 #if defined(SUPPORT_MESH_GENERATION)
@@ -3243,7 +3243,7 @@ static Model LoadIQM(const char *fileName)
 
 #if defined(SUPPORT_FILEFORMAT_GLTF)
 
-const unsigned char base64_table[] = {
+static const unsigned char base64Table[] = {
     0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
     0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
     0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
@@ -3259,94 +3259,102 @@ const unsigned char base64_table[] = {
     49, 50, 51
 };
 
-int GetSizeBase64(char* input)
+static int GetSizeBase64(char *input)
 {
     int size = 0;
+    
     for (int i = 0; input[4*i] != 0; i++)
     {
-        if (input[4*i+3] == '=')
+        if (input[4*i + 3] == '=')
         {
-            if (input[4*i+2] == '=')
-            {
-                size += 1;
-            }
-            else
-            {
-                size += 2;
-            }
+            if (input[4*i + 2] == '=') size += 1;
+            else size += 2;
         }
         else size += 3;
     }
+    
     return size;
 }
 
-unsigned char* DecodeBase64(char* input, int* size)
+static unsigned char *DecodeBase64(char *input, int *size)
 {
     *size = 0;
     for (int i = 0; input[4*i] != 0; i++)
     {
-        if (input[4*i+3] == '=')
+        if (input[4*i + 3] == '=')
         {
-            if (input[4*i+2] == '=')
-            {
-                *size += 1;
-            }
-            else
-            {
-                *size += 2;
-            }
+            if (input[4*i + 2] == '=') *size += 1;
+            else *size += 2;
         }
         else *size += 3;
     }
 
-    unsigned char* buf = (unsigned char*)RL_MALLOC(*size);
+    unsigned char *buf = (unsigned char *)RL_MALLOC(*size);
     for (int i = 0; i < *size/3; i++)
     {
-        unsigned char a = base64_table[(int)input[4*i]];
-        unsigned char b = base64_table[(int)input[4*i+1]];
-        unsigned char c = base64_table[(int)input[4*i+2]];
-        unsigned char d = base64_table[(int)input[4*i+3]];
+        unsigned char a = base64Table[(int)input[4*i]];
+        unsigned char b = base64Table[(int)input[4*i + 1]];
+        unsigned char c = base64Table[(int)input[4*i + 2]];
+        unsigned char d = base64Table[(int)input[4*i + 3]];
 
         buf[3*i] = (a << 2) | (b >> 4);
-        buf[3*i+1] = (b << 4) | (c >> 2);
-        buf[3*i+2] = (c << 6) | d;
+        buf[3*i + 1] = (b << 4) | (c >> 2);
+        buf[3*i + 2] = (c << 6) | d;
     }
 
-    if (*size % 3 == 1)
+    if (*size%3 == 1)
     {
         int n = *size/3;
-        unsigned char a = base64_table[(int)input[4*n]];
-        unsigned char b = base64_table[(int)input[4*n+1]];
-        buf[*size-1] = (a << 2) | (b >> 4);
+        unsigned char a = base64Table[(int)input[4*n]];
+        unsigned char b = base64Table[(int)input[4*n + 1]];
+        buf[*size - 1] = (a << 2) | (b >> 4);
     }
-    else if (*size % 3 == 2)
+    else if (*size%3 == 2)
     {
-        int n = *size/3 ;
-        unsigned char a = base64_table[(int)input[4*n]];
-        unsigned char b = base64_table[(int)input[4*n+1]];
-        unsigned char c = base64_table[(int)input[4*n+2]];
-        buf[*size-2] = (a << 2) | (b >> 4);
-        buf[*size-1] = (b << 4) | (c >> 2);
+        int n = *size/3;
+        unsigned char a = base64Table[(int)input[4*n]];
+        unsigned char b = base64Table[(int)input[4*n + 1]];
+        unsigned char c = base64Table[(int)input[4*n + 2]];
+        buf[*size - 2] = (a << 2) | (b >> 4);
+        buf[*size - 1] = (b << 4) | (c >> 2);
     }
     return buf;
 }
 
-#define LOAD_ACCESSOR(type, nbcomp, acc, dst) \
-{ \
-    int n = 0; \
-    type* buf = (type*)acc->buffer_view->buffer->data+acc->buffer_view->offset/sizeof(type)+acc->offset/sizeof(type); \
-    for (int k = 0; k < acc->count; k++) {\
-        for (int l = 0; l < nbcomp; l++) {\
-            dst[nbcomp*k+l] = buf[n+l];\
-        }\
-        n += acc->stride/sizeof(type);\
-    }\
-}
-
-
 // Load glTF mesh data
 static Model LoadGLTF(const char *fileName)
 {
+    /***********************************************************************************
+    
+        Function implemented by Wilhem Barbier (@wbrbr)
+    
+        Features:
+          - Supports .gltf and .glb files
+          - Supports embedded (base64) or external textures
+          - Loads the albedo/diffuse texture (other maps could be added)
+          - Supports multiple mesh per model and multiple primitives per model
+          
+        Some restrictions (not exhaustive):
+          - Triangle-only meshes
+          - Not supported node hierarchies or transforms
+          - Only loads the diffuse texture... but not too hard to support other maps (normal, roughness/metalness...)
+          - Only supports unsigned short indices (no byte/unsigned int) 
+          - Only supports float for texture coordinates (no byte/unsigned short)
+          
+    *************************************************************************************/
+    
+    #define LOAD_ACCESSOR(type, nbcomp, acc, dst) \
+    { \
+        int n = 0; \
+        type* buf = (type*)acc->buffer_view->buffer->data+acc->buffer_view->offset/sizeof(type)+acc->offset/sizeof(type); \
+        for (int k = 0; k < acc->count; k++) {\
+            for (int l = 0; l < nbcomp; l++) {\
+                dst[nbcomp*k+l] = buf[n+l];\
+            }\
+            n += acc->stride/sizeof(type);\
+        }\
+    }
+    
     Model model = { 0 };
 
     // glTF file loading
@@ -3374,20 +3382,17 @@ static Model LoadGLTF(const char *fileName)
 
     if (result == cgltf_result_success)
     {
-
         TraceLog(LOG_INFO, "[%s][%s] Model meshes/materials: %i/%i", fileName, (data->file_type == 2)? "glb" : "gltf", data->meshes_count, data->materials_count);
 
         // Read data buffers
         result = cgltf_load_buffers(&options, data, fileName);
 
-        int nb_primitives = 0;
-        for (int i = 0; i < data->meshes_count; i++)
-        {
-            nb_primitives += (int)data->meshes[i].primitives_count;
-        }
+        int primitivesCount = 0;
+        
+        for (int i = 0; i < data->meshes_count; i++) primitivesCount += (int)data->meshes[i].primitives_count;
 
         // Process glTF data and map to model
-        model.meshCount = nb_primitives;
+        model.meshCount = primitivesCount;
         model.meshes = RL_CALLOC(model.meshCount, sizeof(Mesh));
         model.materialCount = data->materials_count + 1;
         model.materials = RL_MALLOC(model.materialCount * sizeof(Material));
@@ -3395,10 +3400,10 @@ static Model LoadGLTF(const char *fileName)
 
         for (int i = 0; i < model.materialCount - 1; i++)
         {
-
-            Texture2D texture;
-            const char* dir_path = GetDirectoryPath(fileName);
-            Color tint;
+            Color tint = WHITE;
+            Texture2D texture = { 0 };
+            const char *texPath = GetDirectoryPath(fileName);
+            
             if (data->materials[i].pbr_metallic_roughness.base_color_factor)
             {
                 tint.r = (unsigned char)(data->materials[i].pbr_metallic_roughness.base_color_factor[0] * 255.99f);
@@ -3413,35 +3418,34 @@ static Model LoadGLTF(const char *fileName)
                 tint.b = 1.f;
                 tint.a = 1.f;
             }
+            
             if (data->materials[i].pbr_metallic_roughness.base_color_texture.texture)
             {
-
                 cgltf_image* img = data->materials[i].pbr_metallic_roughness.base_color_texture.texture->image;
-                if (img->uri) {
-                    if (strlen(img->uri) > 5 && img->uri[0] == 'd' 
-                            && img->uri[1] == 'a'
-                            && img->uri[2] == 't'
-                            && img->uri[3] == 'a'
-                            && img->uri[4] == ':')
+                
+                if (img->uri) 
+                {
+                    if ((strlen(img->uri) > 5) && 
+                        (img->uri[0] == 'd') &&
+                        (img->uri[1] == 'a') &&
+                        (img->uri[2] == 't') &&
+                        (img->uri[3] == 'a') &&
+                        (img->uri[4] == ':'))
                     {
-                        // data URI
-                        // format: data:<mediatype>;base64,<data>
+                        // Data URI
+                        // Format: data:<mediatype>;base64,<data>
 
-                        // find the comma
+                        // Find the comma
                         int i = 0;
-                        while (img->uri[i] != ',' && img->uri[i] != 0)
-                        {
-                            i++;
-                        }
-                        if (img->uri[i] == 0) {
-                            TraceLog(LOG_WARNING, "[%s] Invalid data URI", fileName);
-                        }
+                        while ((img->uri[i] != ',') && (img->uri[i] != 0)) i++;
+
+                        if (img->uri[i] == 0) TraceLog(LOG_WARNING, "[%s] Invalid data URI", fileName);
                         else
                         {
                             int size;
-                            unsigned char* data = DecodeBase64(img->uri+i+1, &size);
+                            unsigned char *data = DecodeBase64(img->uri+i+1, &size);
                             int w, h;
-                            unsigned char* raw = stbi_load_from_memory(data, size, &w, &h, NULL, 4);
+                            unsigned char *raw = stbi_load_from_memory(data, size, &w, &h, NULL, 4);
                             Image image = LoadImagePro(raw, w, h, UNCOMPRESSED_R8G8B8A8);
                             ImageColorTint(&image, tint);
                             texture = LoadTextureFromImage(image);
@@ -3450,13 +3454,13 @@ static Model LoadGLTF(const char *fileName)
                     }
                     else
                     {
-                        char* texture_name = img->uri;
-                        char* texture_path = RL_MALLOC(strlen(dir_path) + strlen(texture_name) + 2);
-                        strcpy(texture_path, dir_path);
-                        strcat(texture_path, "/");
-                        strcat(texture_path, texture_name);
+                        char *textureName = img->uri;
+                        char *texturePath = RL_MALLOC(strlen(texPath) + strlen(textureName) + 2);
+                        strcpy(texturePath, texPath);
+                        strcat(texturePath, "/");
+                        strcat(texturePath, textureName);
 
-                        Image image = LoadImage(texture_path);
+                        Image image = LoadImage(texturePath);
                         ImageColorTint(&image, tint);
                         texture = LoadTextureFromImage(image);
                         UnloadImage(image);
@@ -3464,9 +3468,10 @@ static Model LoadGLTF(const char *fileName)
                 }
                 else if (img->buffer_view)
                 {
-                    unsigned char* data = RL_MALLOC(img->buffer_view->size);
+                    unsigned char *data = RL_MALLOC(img->buffer_view->size);
                     int n = img->buffer_view->offset;
                     int stride = img->buffer_view->stride ? img->buffer_view->stride : 1;
+                    
                     for (int i = 0; i < img->buffer_view->size; i++)
                     {
                         data[i] = ((unsigned char*)img->buffer_view->buffer->data)[n];
@@ -3474,7 +3479,7 @@ static Model LoadGLTF(const char *fileName)
                     }
 
                     int w, h;
-                    unsigned char* raw = stbi_load_from_memory(data, img->buffer_view->size, &w, &h, NULL, 4);
+                    unsigned char *raw = stbi_load_from_memory(data, img->buffer_view->size, &w, &h, NULL, 4);
                     Image image = LoadImagePro(raw, w, h, UNCOMPRESSED_R8G8B8A8);
                     ImageColorTint(&image, tint);
                     texture = LoadTextureFromImage(image);
@@ -3486,45 +3491,45 @@ static Model LoadGLTF(const char *fileName)
                     texture = LoadTextureFromImage(image);
                     UnloadImage(image);
                 }
+                
                 model.materials[i] = LoadMaterialDefault();
                 model.materials[i].maps[MAP_DIFFUSE].texture = texture;
             }
         }
-        model.materials[model.materialCount-1] = LoadMaterialDefault();
+        
+        model.materials[model.materialCount - 1] = LoadMaterialDefault();
 
-        int prim_index = 0;
+        int primitiveIndex = 0;
         
         for (int i = 0; i < data->meshes_count; i++)
         {
-
             for (int p = 0; p < data->meshes[i].primitives_count; p++)
             {
-
                 for (int j = 0; j < data->meshes[i].primitives[p].attributes_count; j++)
                 {
                     if (data->meshes[i].primitives[p].attributes[j].type == cgltf_attribute_type_position)
                     {
-                        cgltf_accessor* acc = data->meshes[i].primitives[p].attributes[j].data;
-                        model.meshes[prim_index].vertexCount = acc->count;
-                        model.meshes[prim_index].vertices = RL_MALLOC(sizeof(float)*model.meshes[prim_index].vertexCount*3);
+                        cgltf_accessor *acc = data->meshes[i].primitives[p].attributes[j].data;
+                        model.meshes[primitiveIndex].vertexCount = acc->count;
+                        model.meshes[primitiveIndex].vertices = RL_MALLOC(sizeof(float)*model.meshes[primitiveIndex].vertexCount*3);
 
-                        LOAD_ACCESSOR(float, 3, acc, model.meshes[prim_index].vertices)
+                        LOAD_ACCESSOR(float, 3, acc, model.meshes[primitiveIndex].vertices)
                     }
                     else if (data->meshes[i].primitives[p].attributes[j].type == cgltf_attribute_type_normal)
                     {
-                        cgltf_accessor* acc = data->meshes[i].primitives[p].attributes[j].data;
-                        model.meshes[prim_index].normals = RL_MALLOC(sizeof(float)*acc->count*3);
+                        cgltf_accessor *acc = data->meshes[i].primitives[p].attributes[j].data;
+                        model.meshes[primitiveIndex].normals = RL_MALLOC(sizeof(float)*acc->count*3);
 
-                        LOAD_ACCESSOR(float, 3, acc, model.meshes[prim_index].normals)
-
+                        LOAD_ACCESSOR(float, 3, acc, model.meshes[primitiveIndex].normals)
                     }
                     else if (data->meshes[i].primitives[p].attributes[j].type == cgltf_attribute_type_texcoord)
                     {
-                        cgltf_accessor* acc = data->meshes[i].primitives[p].attributes[j].data;
+                        cgltf_accessor *acc = data->meshes[i].primitives[p].attributes[j].data;
+                        
                         if (acc->component_type == cgltf_component_type_r_32f)
                         {
-                            model.meshes[prim_index].texcoords = RL_MALLOC(sizeof(float)*acc->count*2);
-                            LOAD_ACCESSOR(float, 2, acc, model.meshes[prim_index].texcoords)
+                            model.meshes[primitiveIndex].texcoords = RL_MALLOC(sizeof(float)*acc->count*2);
+                            LOAD_ACCESSOR(float, 2, acc, model.meshes[primitiveIndex].texcoords)
                         }
                         else
                         {
@@ -3534,14 +3539,15 @@ static Model LoadGLTF(const char *fileName)
                     }
                 }
 
-                cgltf_accessor* acc = data->meshes[i].primitives[p].indices;
+                cgltf_accessor *acc = data->meshes[i].primitives[p].indices;
+                
                 if (acc)
                 {
                     if (acc->component_type == cgltf_component_type_r_16u)
                     {
-                        model.meshes[prim_index].triangleCount = acc->count / 3;
-                        model.meshes[prim_index].indices = RL_MALLOC(sizeof(unsigned short)*model.meshes[prim_index].triangleCount*3);
-                        LOAD_ACCESSOR(unsigned short, 1, acc, model.meshes[prim_index].indices)
+                        model.meshes[primitiveIndex].triangleCount = acc->count/3;
+                        model.meshes[primitiveIndex].indices = RL_MALLOC(sizeof(unsigned short)*model.meshes[primitiveIndex].triangleCount*3);
+                        LOAD_ACCESSOR(unsigned short, 1, acc, model.meshes[primitiveIndex].indices)
                     }
                     else
                     {
@@ -3551,20 +3557,21 @@ static Model LoadGLTF(const char *fileName)
                 }
                 else
                 {
-                    // unindexed mesh
-                    model.meshes[prim_index].triangleCount = model.meshes[prim_index].vertexCount / 3;
+                    // Unindexed mesh
+                    model.meshes[primitiveIndex].triangleCount = model.meshes[primitiveIndex].vertexCount/3;
                 }
 
                 if (data->meshes[i].primitives[p].material)
                 {
-                    // compute the offset
-                    model.meshMaterial[prim_index] = data->meshes[i].primitives[p].material - data->materials;
+                    // Compute the offset
+                    model.meshMaterial[primitiveIndex] = data->meshes[i].primitives[p].material - data->materials;
                 }
                 else
                 {
-                    model.meshMaterial[prim_index] = model.materialCount - 1;;
+                    model.meshMaterial[primitiveIndex] = model.materialCount - 1;;
                 }
-                prim_index++;
+                
+                primitiveIndex++;
             }
         }
 
