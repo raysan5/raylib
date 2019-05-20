@@ -11,12 +11,12 @@
 
 #include "raylib.h"
 
-int main()
+int main(void)
 {
     // Initialization
     //--------------------------------------------------------------------------------------
-    int screenWidth = 800;
-    int screenHeight = 450;
+    const int screenWidth = 800;
+    const int screenHeight = 450;
 
     InitWindow(screenWidth, screenHeight, "raylib [text] example - sprite fonts usage");
 
@@ -40,6 +40,7 @@ int main()
     fontPosition3.x = screenWidth/2 - MeasureTextEx(font3, msg3, font3.baseSize, 2).x/2;
     fontPosition3.y = screenHeight/2 - font3.baseSize/2 + 50;
 
+    SetTargetFPS(60);               // Set our game to run at 60 frames-per-second
     //--------------------------------------------------------------------------------------
 
     // Main game loop

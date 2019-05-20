@@ -15,18 +15,18 @@
 
 #include "raylib.h"
 
-int main()
+int main(void)
 {
     // Initialization
     //--------------------------------------------------------------------------------------
-    int screenWidth = 800;
-    int screenHeight = 450;
+    const int screenWidth = 800;
+    const int screenHeight = 450;
 
     InitWindow(screenWidth, screenHeight, "raylib [textures] example - N-patch drawing");
 
     // NOTE: Textures MUST be loaded after Window initialization (OpenGL context is required)
     Texture2D nPatchTexture = LoadTexture("resources/ninepatch_button.png");
-    
+
     Vector2 mousePosition = { 0 };
     Vector2 origin = { 0.0f, 0.0f };
 
@@ -39,13 +39,13 @@ int main()
     // A 9-patch (NPT_9PATCH) changes its sizes in both axis
     NPatchInfo ninePatchInfo1 = { (Rectangle){ 0.0f, 0.0f, 64.0f, 64.0f }, 12, 40, 12, 12, NPT_9PATCH };
     NPatchInfo ninePatchInfo2 = { (Rectangle){ 0.0f, 128.0f, 64.0f, 64.0f }, 16, 16, 16, 16, NPT_9PATCH };
-    
+
     // A horizontal 3-patch (NPT_3PATCH_HORIZONTAL) changes its sizes along the x axis only
     NPatchInfo h3PatchInfo = { (Rectangle){ 0.0f,  64.0f, 64.0f, 64.0f }, 8, 8, 8, 8, NPT_3PATCH_HORIZONTAL };
-    
+
     // A vertical 3-patch (NPT_3PATCH_VERTICAL) changes its sizes along the y axis only
     NPatchInfo v3PatchInfo = { (Rectangle){ 0.0f, 192.0f, 64.0f, 64.0f }, 6, 6, 6, 6, NPT_3PATCH_VERTICAL };
-    
+
     SetTargetFPS(60);
     //---------------------------------------------------------------------------------------
 
@@ -55,7 +55,7 @@ int main()
         // Update
         //----------------------------------------------------------------------------------
         mousePosition = GetMousePosition();
-        
+
         // Resize the n-patches based on mouse position
         dstRec1.width = mousePosition.x - dstRec1.x;
         dstRec1.height = mousePosition.y - dstRec1.y;
@@ -86,7 +86,7 @@ int main()
             DrawTextureNPatch(nPatchTexture, ninePatchInfo1, dstRec1, origin, 0.0f, WHITE);
             DrawTextureNPatch(nPatchTexture, h3PatchInfo, dstRecH, origin, 0.0f, WHITE);
             DrawTextureNPatch(nPatchTexture, v3PatchInfo, dstRecV, origin, 0.0f, WHITE);
-            
+
             // Draw the source texture
             DrawRectangleLines(5, 88, 74, 266, BLUE);
             DrawTexture(nPatchTexture, 10, 93, WHITE);

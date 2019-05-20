@@ -11,24 +11,24 @@
 
 #include "raylib.h"
 
-#define NUM_MODELS  8      // We generate 8 parametric 3d shapes
+#define NUM_MODELS  8      // Parametric 3d shapes to generate
 
-int main()
+int main(void)
 {
     // Initialization
     //--------------------------------------------------------------------------------------
-    int screenWidth = 800;
-    int screenHeight = 450;
+    const int screenWidth = 800;
+    const int screenHeight = 450;
 
     InitWindow(screenWidth, screenHeight, "raylib [models] example - mesh generation");
-    
+
     // We generate a checked image for texturing
     Image checked = GenImageChecked(2, 2, 1, 1, RED, GREEN);
     Texture2D texture = LoadTextureFromImage(checked);
     UnloadImage(checked);
-    
+
     Model models[NUM_MODELS];
-    
+
     models[0] = LoadModelFromMesh(GenMeshPlane(2, 2, 5, 5));
     models[1] = LoadModelFromMesh(GenMeshCube(2.0f, 1.0f, 2.0f));
     models[2] = LoadModelFromMesh(GenMeshSphere(2, 32, 32));
@@ -37,7 +37,7 @@ int main()
     models[5] = LoadModelFromMesh(GenMeshTorus(0.25f, 4.0f, 16, 32));
     models[6] = LoadModelFromMesh(GenMeshKnot(1.0f, 2.0f, 16, 128));
     models[7] = LoadModelFromMesh(GenMeshPoly(5, 2.0f));
-    
+
     // Set checked texture as default diffuse component for all models material
     for (int i = 0; i < NUM_MODELS; i++) models[i].materials[0].maps[MAP_DIFFUSE].texture = texture;
 
@@ -46,12 +46,12 @@ int main()
 
     // Model drawing position
     Vector3 position = { 0.0f, 0.0f, 0.0f };
-    
+
     int currentModel = 0;
-    
+
     SetCameraMode(camera, CAMERA_ORBITAL);  // Set a orbital camera mode
 
-    SetTargetFPS(60);                       // Set our game to run at 60 frames-per-second
+    SetTargetFPS(60);               // Set our game to run at 60 frames-per-second
     //--------------------------------------------------------------------------------------
 
     // Main game loop
@@ -60,14 +60,14 @@ int main()
         // Update
         //----------------------------------------------------------------------------------
         UpdateCamera(&camera);      // Update internal camera and our camera
-        
+
         if (IsMouseButtonPressed(MOUSE_LEFT_BUTTON))
         {
             currentModel = (currentModel + 1)%NUM_MODELS; // Cycle between the textures
         }
-        
+
         if (IsKeyPressed(KEY_RIGHT))
-        { 
+        {
             currentModel++;
             if (currentModel >= NUM_MODELS) currentModel = 0;
         }
@@ -91,11 +91,11 @@ int main()
                 DrawGrid(10, 1.0);
 
             EndMode3D();
-            
+
             DrawRectangle(30, 400, 310, 30, Fade(SKYBLUE, 0.5f));
             DrawRectangleLines(30, 400, 310, 30, Fade(DARKBLUE, 0.5f));
             DrawText("MOUSE LEFT BUTTON to CYCLE PROCEDURAL MODELS", 40, 410, 10, BLUE);
-            
+
             switch(currentModel)
             {
                 case 0: DrawText("PLANE", 680, 10, 20, DARKBLUE); break;
@@ -115,10 +115,10 @@ int main()
 
     // De-Initialization
     //--------------------------------------------------------------------------------------
-    
+
     // Unload models data (GPU VRAM)
     for (int i = 0; i < NUM_MODELS; i++) UnloadModel(models[i]);
-    
+
     CloseWindow();        // Close window and OpenGL context
     //--------------------------------------------------------------------------------------
 

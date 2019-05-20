@@ -13,31 +13,31 @@
 
 #include "raylib.h"
 
-int main()
+int main(void)
 {
     // Initialization
     //--------------------------------------------------------------------------------------
-    int screenWidth = 800;
-    int screenHeight = 450;
+    const int screenWidth = 800;
+    const int screenHeight = 450;
 
     InitWindow(screenWidth, screenHeight, "raylib [core] example - input multitouch");
 
     Vector2 ballPosition = { -100.0f, -100.0f };
     Color ballColor = BEIGE;
-    
-    int touchCounter = 0;
-    Vector2 touchPosition;
 
-    SetTargetFPS(60);
+    int touchCounter = 0;
+    Vector2 touchPosition = { 0.0f };
+
+    SetTargetFPS(60);               // Set our game to run at 60 frames-per-second
     //---------------------------------------------------------------------------------------
-  
+
     // Main game loop
     while (!WindowShouldClose())    // Detect window close button or ESC key
     {
         // Update
         //----------------------------------------------------------------------------------
         ballPosition = GetMousePosition();
-        
+
         ballColor = BEIGE;
 
         if (IsMouseButtonDown(MOUSE_LEFT_BUTTON)) ballColor = MAROON;
@@ -47,7 +47,7 @@ int main()
         if (IsMouseButtonPressed(MOUSE_LEFT_BUTTON)) touchCounter = 10;
         if (IsMouseButtonPressed(MOUSE_MIDDLE_BUTTON)) touchCounter = 10;
         if (IsMouseButtonPressed(MOUSE_RIGHT_BUTTON)) touchCounter = 10;
-        
+
         if (touchCounter > 0) touchCounter--;
         //----------------------------------------------------------------------------------
 
@@ -59,15 +59,15 @@ int main()
 
             // Multitouch
             for (int i = 0; i < MAX_TOUCH_POINTS; ++i)
-            {              
+            {
                 touchPosition = GetTouchPosition(i);                    // Get the touch point
-                
+
                 if ((touchPosition.x >= 0) && (touchPosition.y >= 0))   // Make sure point is not (-1,-1) as this means there is no touch for it
                 {
                     // Draw circle and touch index number
                     DrawCircleV(touchPosition, 34, ORANGE);
                     DrawText(FormatText("%d", i), touchPosition.x - 10, touchPosition.y - 70, 40, BLACK);
-                } 
+                }
             }
 
             // Draw the normal mouse location

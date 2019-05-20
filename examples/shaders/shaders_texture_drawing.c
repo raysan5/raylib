@@ -21,12 +21,12 @@
     #define GLSL_VERSION            100
 #endif
 
-int main()
+int main(void)
 {
     // Initialization
     //--------------------------------------------------------------------------------------
-    int screenWidth = 800;
-    int screenHeight = 450;
+    const int screenWidth = 800;
+    const int screenHeight = 450;
 
     InitWindow(screenWidth, screenHeight, "raylib [shaders] example - texture drawing");
 
@@ -41,17 +41,18 @@ int main()
     int timeLoc = GetShaderLocation(shader, "uTime");
     SetShaderValue(shader, timeLoc, &time, UNIFORM_FLOAT);
 
-    SetTargetFPS(60);
-    //--------------------------------------------------------------------------------------
+    SetTargetFPS(60);               // Set our game to run at 60 frames-per-second
+    // -------------------------------------------------------------------------------------------------------------
 
-    while (!WindowShouldClose())
+    // Main game loop
+    while (!WindowShouldClose())    // Detect window close button or ESC key
     {
         // Update
         //----------------------------------------------------------------------------------
         time = GetTime();
         SetShaderValue(shader, timeLoc, &time, UNIFORM_FLOAT);
         //----------------------------------------------------------------------------------
-        
+
         // Draw
         //----------------------------------------------------------------------------------
         BeginDrawing();
@@ -61,13 +62,13 @@ int main()
             BeginShaderMode(shader);    // Enable our custom shader for next shapes/textures drawings
                 DrawTexture(texture, 0, 0, WHITE);  // Drawing BLANK texture, all magic happens on shader
             EndShaderMode();            // Disable our custom shader, return to default shader
-            
+
             DrawText("BACKGROUND is PAINTED and ANIMATED on SHADER!", 10, 10, 20, MAROON);
 
         EndDrawing();
         //----------------------------------------------------------------------------------
     }
-    
+
     // De-Initialization
     //--------------------------------------------------------------------------------------
     UnloadShader(shader);

@@ -16,7 +16,7 @@
 #define max(a, b) ((a)>(b)? (a) : (b))
 #define min(a, b) ((a)<(b)? (a) : (b))
 
-int main()
+int main(void)
 {
     const int windowWidth = 800;
     const int windowHeight = 450;
@@ -28,63 +28,63 @@ int main()
 
     int gameScreenWidth = 640;
     int gameScreenHeight = 480;
-    
+
     // Render texture initialization
     RenderTexture2D target = LoadRenderTexture(gameScreenWidth, gameScreenHeight);
     SetTextureFilter(target.texture, FILTER_BILINEAR);  // Texture scale filter to use
-    
+
     Color colors[10] = { 0 };
     for (int i = 0; i < 10; i++) colors[i] = (Color){ GetRandomValue(100, 250), GetRandomValue(50, 150), GetRandomValue(10, 100), 255 };
-    
-    SetTargetFPS(60);
+
+    SetTargetFPS(60);               // Set our game to run at 60 frames-per-second
     //--------------------------------------------------------------------------------------
-    
+
     // Main game loop
-    while( !WindowShouldClose() )       // Detect window close button or ESC key
+    while (!WindowShouldClose())    // Detect window close button or ESC key
     {
         // Update
         //----------------------------------------------------------------------------------
         // Compute required framebuffer scaling
         float scale = min((float)GetScreenWidth()/gameScreenWidth, (float)GetScreenHeight()/gameScreenHeight);
-        
-        if (IsKeyPressed(KEY_SPACE)) 
+
+        if (IsKeyPressed(KEY_SPACE))
         {
             // Recalculate random colors for the bars
             for (int i = 0; i < 10; i++) colors[i] = (Color){ GetRandomValue(100, 250), GetRandomValue(50, 150), GetRandomValue(10, 100), 255 };
         }
         //----------------------------------------------------------------------------------
-        
+
         // Draw
         //----------------------------------------------------------------------------------
         BeginDrawing();
             ClearBackground(BLACK);
-            
+
             // Draw everything in the render texture
             BeginTextureMode(target);
-            
+
                 ClearBackground(RAYWHITE);         // Clear render texture background color
-                
+
                 for (int i = 0; i < 10; i++) DrawRectangle(0, (gameScreenHeight/10)*i, gameScreenWidth, gameScreenHeight/10, colors[i]);
-                
+
                 DrawText("You can resize the window,\nand see the screen scaling!", 10, 25, 20, WHITE);
-            
+
             EndTextureMode();
 
             // Draw RenderTexture2D to window, properly scaled
             DrawTexturePro(target.texture, (Rectangle){ 0.0f, 0.0f, (float)target.texture.width, (float)-target.texture.height },
-                           (Rectangle){ (GetScreenWidth() - ((float)gameScreenWidth*scale))*0.5, (GetScreenHeight() - ((float)gameScreenHeight*scale))*0.5, 
+                           (Rectangle){ (GetScreenWidth() - ((float)gameScreenWidth*scale))*0.5, (GetScreenHeight() - ((float)gameScreenHeight*scale))*0.5,
                            (float)gameScreenWidth*scale, (float)gameScreenHeight*scale }, (Vector2){ 0, 0 }, 0.0f, WHITE);
-                           
+
         EndDrawing();
         //--------------------------------------------------------------------------------------
     }
-    
+
     // De-Initialization
     //--------------------------------------------------------------------------------------
     UnloadRenderTexture(target);    // Unload render texture
-    
+
     CloseWindow();                  // Close window and OpenGL context
     //--------------------------------------------------------------------------------------
-    
+
     return 0;
 }

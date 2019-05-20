@@ -26,10 +26,7 @@
     #define GLSL_VERSION            100
 #endif
 
-// -------------------------------------------------------------------------------------------------------------
-// Main Entry point
-// -------------------------------------------------------------------------------------------------------------
-int main() 
+int main(void)
 {
     // Initialization
     //--------------------------------------------------------------------------------------
@@ -69,13 +66,13 @@ int main()
 	SetShaderValue(shader, speedXLoc, &speedX, UNIFORM_FLOAT);
 	SetShaderValue(shader, speedYLoc, &speedY, UNIFORM_FLOAT);
 
-	float seconds = 0.0f;
-    
-    SetTargetFPS(60);
-	// -------------------------------------------------------------------------------------------------------------
-    
+    float seconds = 0.0f;
+
+    SetTargetFPS(60);               // Set our game to run at 60 frames-per-second
+    // -------------------------------------------------------------------------------------------------------------
+
     // Main game loop
-	while (!WindowShouldClose())    // Detect window close button or ESC key
+    while (!WindowShouldClose())    // Detect window close button or ESC key
     {
         // Update
         //----------------------------------------------------------------------------------
@@ -86,9 +83,9 @@ int main()
 
         // Draw
         //----------------------------------------------------------------------------------
-		BeginDrawing();
+        BeginDrawing();
 
-			ClearBackground(RAYWHITE);
+            ClearBackground(RAYWHITE);
 
 			BeginShaderMode(shader);
             
@@ -97,7 +94,7 @@ int main()
                 
 			EndShaderMode();
 
-		EndDrawing();
+        EndDrawing();
         //----------------------------------------------------------------------------------
     }
 
@@ -109,5 +106,5 @@ int main()
     CloseWindow();              // Close window and OpenGL context
     //--------------------------------------------------------------------------------------
 
-	return 0;
+    return 0;
 }

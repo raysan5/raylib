@@ -69,12 +69,12 @@ static const char *paletteText[] = {
     "RKBV (2-strip film)"
 };
 
-int main()
+int main(void)
 {
     // Initialization
     //--------------------------------------------------------------------------------------
-    int screenWidth = 800;
-    int screenHeight = 450;
+    const int screenWidth = 800;
+    const int screenHeight = 450;
 
     InitWindow(screenWidth, screenHeight, "raylib [shaders] example - color palette switch");
 
@@ -117,7 +117,7 @@ int main()
 
             BeginShaderMode(shader);
 
-                for (int i = 0; i < COLORS_PER_PALETTE; i++) 
+                for (int i = 0; i < COLORS_PER_PALETTE; i++)
                 {
                     // Draw horizontal screen-wide rectangles with increasing "palette index"
                     // The used palette index is encoded in the RGB components of the pixel
@@ -129,7 +129,7 @@ int main()
             DrawText("< >", 10, 10, 30, DARKBLUE);
             DrawText("CURRENT PALETTE:", 60, 15, 20, RAYWHITE);
             DrawText(paletteText[currentPalette], 300, 15, 20, RED);
-            
+
             DrawFPS(700, 15);
 
         EndDrawing();

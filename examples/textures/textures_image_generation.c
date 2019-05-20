@@ -13,12 +13,12 @@
 
 #define NUM_TEXTURES  7      // Currently we have 7 generation algorithms
 
-int main()
+int main(void)
 {
     // Initialization
     //--------------------------------------------------------------------------------------
-    int screenWidth = 800;
-    int screenHeight = 450;
+    const int screenWidth = 800;
+    const int screenHeight = 450;
 
     InitWindow(screenWidth, screenHeight, "raylib [textures] example - procedural images generation");
 
@@ -38,7 +38,7 @@ int main()
     textures[4] = LoadTextureFromImage(whiteNoise);
     textures[5] = LoadTextureFromImage(perlinNoise);
     textures[6] = LoadTextureFromImage(cellular);
-    
+
     // Unload image data (CPU RAM)
     UnloadImage(verticalGradient);
     UnloadImage(horizontalGradient);
@@ -49,10 +49,10 @@ int main()
     UnloadImage(cellular);
 
     int currentTexture = 0;
-    
+
     SetTargetFPS(60);
     //---------------------------------------------------------------------------------------
-    
+
     // Main game loop
     while (!WindowShouldClose())
     {
@@ -67,15 +67,15 @@ int main()
         // Draw
         //----------------------------------------------------------------------------------
         BeginDrawing();
-        
+
             ClearBackground(RAYWHITE);
-            
+
             DrawTexture(textures[currentTexture], 0, 0, WHITE);
-            
+
             DrawRectangle(30, 400, 325, 30, Fade(SKYBLUE, 0.5f));
             DrawRectangleLines(30, 400, 325, 30, Fade(WHITE, 0.5f));
             DrawText("MOUSE LEFT BUTTON to CYCLE PROCEDURAL TEXTURES", 40, 410, 10, WHITE);
-            
+
             switch(currentTexture)
             {
                 case 0: DrawText("VERTICAL GRADIENT", 560, 10, 20, RAYWHITE); break;
@@ -87,19 +87,19 @@ int main()
                 case 6: DrawText("CELLULAR", 670, 10, 20, RAYWHITE); break;
                 default: break;
             }
-            
+
         EndDrawing();
         //----------------------------------------------------------------------------------
     }
 
     // De-Initialization
     //--------------------------------------------------------------------------------------
-       
+
     // Unload textures data (GPU VRAM)
     for (int i = 0; i < NUM_TEXTURES; i++) UnloadTexture(textures[i]);
-    
+
     CloseWindow();                // Close window and OpenGL context
     //--------------------------------------------------------------------------------------
-    
+
     return 0;
 }

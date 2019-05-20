@@ -26,7 +26,7 @@
 
 // A few good julia sets
 const float POINTS_OF_INTEREST[6][2] =
-{ 
+{
     { -0.348827, 0.607167 },
     { -0.786268, 0.169728 },
     { -0.8, 0.156 },
@@ -35,7 +35,7 @@ const float POINTS_OF_INTEREST[6][2] =
     { -0.70176, -0.3842 },
 };
 
-int main()
+int main(void)
 {
     // Initialization
     //--------------------------------------------------------------------------------------
@@ -47,16 +47,16 @@ int main()
     // Load julia set shader
     // NOTE: Defining 0 (NULL) for vertex shader forces usage of internal default vertex shader
     Shader shader = LoadShader(0, FormatText("resources/shaders/glsl%i/julia_set.fs", GLSL_VERSION));
-    
+
     // c constant to use in z^2 + c
     float c[2] = { POINTS_OF_INTEREST[0][0], POINTS_OF_INTEREST[0][1] };
-    
+
     // Offset and zoom to draw the julia set at. (centered on screen and default size)
     float offset[2] = { -(float)screenWidth/2, -(float)screenHeight/2 };
     float zoom = 1.0f;
-    
+
     Vector2 offsetSpeed = { 0.0f, 0.0f };
-    
+
     // Get variable (uniform) locations on the shader to connect with the program
     // NOTE: If uniform variable could not be found in the shader, function returns -1
     int cLoc = GetShaderLocation(shader, "c");
@@ -64,35 +64,34 @@ int main()
     int offsetLoc = GetShaderLocation(shader, "offset");
 
     // Tell the shader what the screen dimensions, zoom, offset and c are
-    float screenDims[2] = { (float)GetScreenWidth(), (float)GetScreenHeight() };
+    float screenDims[2] = { (float)screenWidth, (float)screenHeight };
     SetShaderValue(shader, GetShaderLocation(shader, "screenDims"), screenDims, UNIFORM_VEC2);
-    
+
     SetShaderValue(shader, cLoc, c, UNIFORM_VEC2);
     SetShaderValue(shader, zoomLoc, &zoom, UNIFORM_FLOAT);
     SetShaderValue(shader, offsetLoc, offset, UNIFORM_VEC2);
 
     // Create a RenderTexture2D to be used for render to texture
     RenderTexture2D target = LoadRenderTexture(screenWidth, screenHeight);
-    
-    int incrementSpeed = 0;     // Multiplier of speed to change c value
-    bool showControls = true;   // Show controls
-    bool pause = false;         // Pause animation
 
-    SetTargetFPS(60);                       // Set the window to run at 60 frames-per-second
+    int incrementSpeed = 0;         // Multiplier of speed to change c value
+    bool showControls = true;       // Show controls
+    bool pause = false;             // Pause animation
+
+    SetTargetFPS(60);               // Set our game to run at 60 frames-per-second
     //--------------------------------------------------------------------------------------
 
     // Main game loop
-    while (!WindowShouldClose())            // Detect window close button or ESC key
+    while (!WindowShouldClose())    // Detect window close button or ESC key
     {
         // Update
         //----------------------------------------------------------------------------------
-
         // Press [1 - 6] to reset c to a point of interest
-        if (IsKeyPressed(KEY_ONE) || 
-            IsKeyPressed(KEY_TWO) || 
-            IsKeyPressed(KEY_THREE) || 
-            IsKeyPressed(KEY_FOUR) || 
-            IsKeyPressed(KEY_FIVE) || 
+        if (IsKeyPressed(KEY_ONE) ||
+            IsKeyPressed(KEY_TWO) ||
+            IsKeyPressed(KEY_THREE) ||
+            IsKeyPressed(KEY_FOUR) ||
+            IsKeyPressed(KEY_FIVE) ||
             IsKeyPressed(KEY_SIX))
         {
             if (IsKeyPressed(KEY_ONE)) c[0] = POINTS_OF_INTEREST[0][0], c[1] = POINTS_OF_INTEREST[0][1];
@@ -107,7 +106,7 @@ int main()
 
         if (IsKeyPressed(KEY_SPACE)) pause = !pause;                 // Pause animation (c change)
         if (IsKeyPressed(KEY_F1)) showControls = !showControls;  // Toggle whether or not to show controls
-        
+
         if (!pause)
         {
             if (IsKeyPressed(KEY_RIGHT)) incrementSpeed++;
@@ -121,10 +120,10 @@ int main()
                 if (IsMouseButtonDown(MOUSE_RIGHT_BUTTON)) zoom -= zoom*0.003f;
 
                 Vector2 mousePos = GetMousePosition();
-                
+
                 offsetSpeed.x = mousePos.x -(float)screenWidth/2;
                 offsetSpeed.y = mousePos.y -(float)screenHeight/2;
-                
+
                 // Slowly move camera to targetOffset
                 offset[0] += GetFrameTime()*offsetSpeed.x*0.8f;
                 offset[1] += GetFrameTime()*offsetSpeed.y*0.8f;
@@ -148,7 +147,7 @@ int main()
         BeginDrawing();
 
             ClearBackground(BLACK);         // Clear the screen of the previous frame.
-            
+
             // Using a render texture to draw Julia set
             BeginTextureMode(target);       // Enable drawing to texture
                 ClearBackground(BLACK);     // Clear the render texture
@@ -165,7 +164,7 @@ int main()
             BeginShaderMode(shader);
                 DrawTexture(target.texture, 0, 0, WHITE);
             EndShaderMode();
-                
+
             if (showControls)
             {
                 DrawText("Press Mouse buttons right/left to zoom in/out and move", 10, 15, 10, RAYWHITE);

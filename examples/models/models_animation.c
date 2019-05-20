@@ -11,12 +11,12 @@
 
 #include "raylib.h"
 
-int main()
+int main(void)
 {
     // Initialization
     //--------------------------------------------------------------------------------------
-    int screenWidth = 800;
-    int screenHeight = 450;
+    const int screenWidth = 800;
+    const int screenHeight = 450;
 
     InitWindow(screenWidth, screenHeight, "raylib [models] example - model animation");
 
@@ -32,7 +32,7 @@ int main()
     Model model = LoadModel("resources/guy/guy.iqm");               // Load the animated model mesh and basic data
     Texture2D texture = LoadTexture("resources/guy/guytex.png");    // Load model texture and set material
     SetMaterialTexture(&model.materials[0], MAP_DIFFUSE, texture);  // Set model material map texture
-    
+
     Vector3 position = { 0.0f, 0.0f, 0.0f };            // Set model position
 
     // Load animation data
@@ -91,7 +91,7 @@ int main()
     //--------------------------------------------------------------------------------------
     // Unload model animations data
     for (int i = 0; i < animsCount; i++) UnloadModelAnimation(anims[i]);
-    
+
     UnloadModel(model);         // Unload model
 
     CloseWindow();              // Close window and OpenGL context

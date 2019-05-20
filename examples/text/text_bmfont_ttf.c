@@ -11,12 +11,12 @@
 
 #include "raylib.h"
 
-int main()
+int main(void)
 {
     // Initialization
     //--------------------------------------------------------------------------------------
-    int screenWidth = 800;
-    int screenHeight = 450;
+    const int screenWidth = 800;
+    const int screenHeight = 450;
 
     InitWindow(screenWidth, screenHeight, "raylib [text] example - bmfont and ttf sprite fonts loading");
 
@@ -25,17 +25,17 @@ int main()
     const char msg[256] = "!\"#$%&'()*+,-./0123456789:;<=>?@ABCDEFGHI\nJKLMNOPQRSTUVWXYZ[]^_`abcdefghijklmn\nopqrstuvwxyz{|}~¿ÀÁÂÃÄÅÆÇÈÉÊËÌÍÎÏÐÑÒÓ\nÔÕÖ×ØÙÚÛÜÝÞßàáâãäåæçèéêëìíîïðñòóôõö÷\nøùúûüýþÿ";
 
     // NOTE: Textures/Fonts MUST be loaded after Window initialization (OpenGL context is required)
-    
+
     // BMFont (AngelCode) : Font data and image atlas have been generated using external program
     Font fontBm = LoadFont("resources/pixantiqua.fnt");
-    
+
     // TTF font : Font data and atlas are generated directly from TTF
     // NOTE: We define a font base size of 32 pixels tall and up-to 250 characters
     Font fontTtf = LoadFontEx("resources/pixantiqua.ttf", 32, 0, 250);
-    
+
     bool useTtf = false;
 
-    SetTargetFPS(60);
+    SetTargetFPS(60);               // Set our game to run at 60 frames-per-second
     //--------------------------------------------------------------------------------------
 
     // Main game loop
@@ -52,7 +52,7 @@ int main()
         BeginDrawing();
 
             ClearBackground(RAYWHITE);
-            
+
             DrawText("Press SPACE to use TTF generated font", 20, 20, 20, LIGHTGRAY);
 
             if (!useTtf)

@@ -17,10 +17,7 @@
 // Draw angle gauge controls
 void DrawAngleGauge(Texture2D angleGauge, int x, int y, float angle, char title[], Color color);
 
-//----------------------------------------------------------------------------------
-// Main entry point
-//----------------------------------------------------------------------------------
-int main()
+int main(void)
 {
     // Initialization
     //--------------------------------------------------------------------------------------
@@ -53,10 +50,10 @@ int main()
     float roll = 0.0f;
     float yaw = 0.0f;
 
-    SetTargetFPS(60);
+    SetTargetFPS(60);               // Set our game to run at 60 frames-per-second
     //--------------------------------------------------------------------------------------
 
-
+    // Main game loop
     while (!WindowShouldClose())    // Detect window close button or ESC key
     {
         // Update

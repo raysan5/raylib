@@ -25,7 +25,7 @@ typedef struct Bunny {
     Color color;
 } Bunny;
 
-int main()
+int main(void)
 {
     // Initialization
     //--------------------------------------------------------------------------------------
@@ -34,13 +34,14 @@ int main()
 
     InitWindow(screenWidth, screenHeight, "raylib [textures] example - bunnymark");
 
+    // Load bunny texture
     Texture2D texBunny = LoadTexture("resources/wabbit_alpha.png");
 
-    Bunny *bunnies = (Bunny *)malloc(MAX_BUNNIES*sizeof(Bunny));          // Bunnies array
+    Bunny *bunnies = (Bunny *)malloc(MAX_BUNNIES*sizeof(Bunny));    // Bunnies array
 
-    int bunniesCount = 0;    // Bunnies counter
+    int bunniesCount = 0;           // Bunnies counter
 
-    SetTargetFPS(60);
+    SetTargetFPS(60);               // Set our game to run at 60 frames-per-second
     //--------------------------------------------------------------------------------------
 
     // Main game loop
@@ -56,8 +57,8 @@ int main()
                 bunnies[bunniesCount].position = GetMousePosition();
                 bunnies[bunniesCount].speed.x = (float)GetRandomValue(-250, 250)/60.0f;
                 bunnies[bunniesCount].speed.y = (float)GetRandomValue(-250, 250)/60.0f;
-                bunnies[bunniesCount].color = (Color){ GetRandomValue(50, 240), 
-                                                       GetRandomValue(80, 240), 
+                bunnies[bunniesCount].color = (Color){ GetRandomValue(50, 240),
+                                                       GetRandomValue(80, 240),
                                                        GetRandomValue(100, 240), 255 };
                 bunniesCount++;
             }
@@ -69,9 +70,9 @@ int main()
             bunnies[i].position.x += bunnies[i].speed.x;
             bunnies[i].position.y += bunnies[i].speed.y;
 
-            if (((bunnies[i].position.x + texBunny.width/2) > GetScreenWidth()) || 
+            if (((bunnies[i].position.x + texBunny.width/2) > GetScreenWidth()) ||
                 ((bunnies[i].position.x + texBunny.width/2) < 0)) bunnies[i].speed.x *= -1;
-            if (((bunnies[i].position.y + texBunny.height/2) > GetScreenHeight()) || 
+            if (((bunnies[i].position.y + texBunny.height/2) > GetScreenHeight()) ||
                 ((bunnies[i].position.y + texBunny.height/2 - 40) < 0)) bunnies[i].speed.y *= -1;
         }
         //----------------------------------------------------------------------------------
@@ -84,9 +85,9 @@ int main()
 
             for (int i = 0; i < bunniesCount; i++)
             {
-                // NOTE: When internal batch buffer limit is reached (MAX_BATCH_ELEMENTS), 
+                // NOTE: When internal batch buffer limit is reached (MAX_BATCH_ELEMENTS),
                 // a draw call is launched and buffer starts being filled again;
-                // before issuing a draw call, updated vertex data from internal CPU buffer is send to GPU... 
+                // before issuing a draw call, updated vertex data from internal CPU buffer is send to GPU...
                 // Process of sending data is costly and it could happen that GPU data has not been completely
                 // processed for drawing while new data is tried to be sent (updating current in-use buffers)
                 // it could generates a stall and consequently a frame drop, limiting the number of drawn bunnies
@@ -96,7 +97,7 @@ int main()
             DrawRectangle(0, 0, screenWidth, 40, BLACK);
             DrawText(FormatText("bunnies: %i", bunniesCount), 120, 10, 20, GREEN);
             DrawText(FormatText("batched draw calls: %i", 1 + bunniesCount/MAX_BATCH_ELEMENTS), 320, 10, 20, MAROON);
-            
+
             DrawFPS(10, 10);
 
         EndDrawing();
@@ -106,7 +107,7 @@ int main()
     // De-Initialization
     //--------------------------------------------------------------------------------------
     free(bunnies);              // Unload bunnies data array
-    
+
     UnloadTexture(texBunny);    // Unload bunny texture
 
     CloseWindow();              // Close window and OpenGL context

@@ -25,12 +25,12 @@
 // PBR material loading
 static Material LoadMaterialPBR(Color albedo, float metalness, float roughness);
 
-int main()
+int main(void)
 {
     // Initialization
     //--------------------------------------------------------------------------------------
-    int screenWidth = 800;
-    int screenHeight = 450;
+    const int screenWidth = 800;
+    const int screenHeight = 450;
 
     SetConfigFlags(FLAG_MSAA_4X_HINT);  // Enable Multi Sampling Anti Aliasing 4x (if available)
     InitWindow(screenWidth, screenHeight, "raylib [models] example - pbr material");
@@ -45,7 +45,7 @@ int main()
 
     // Load model and PBR material
     Model model = LoadModel("resources/pbr/trooper.obj");
-    
+
     // Mesh tangents are generated... and uploaded to GPU
     // NOTE: New VBO for tangents is generated at default location and also binded to mesh VAO
     MeshTangents(&model.meshes[0]);
@@ -54,13 +54,13 @@ int main()
 
     // Define lights attributes
     // NOTE: Shader is passed to every light on creation to define shader bindings internally
-    Light lights[MAX_LIGHTS] = { 
+    Light lights[MAX_LIGHTS] = {
         CreateLight(LIGHT_POINT, (Vector3){ LIGHT_DISTANCE, LIGHT_HEIGHT, 0.0f }, (Vector3){ 0.0f, 0.0f, 0.0f }, (Color){ 255, 0, 0, 255 }, model.materials[0].shader),
         CreateLight(LIGHT_POINT, (Vector3){ 0.0f, LIGHT_HEIGHT, LIGHT_DISTANCE }, (Vector3){ 0.0f, 0.0f, 0.0f }, (Color){ 0, 255, 0, 255 }, model.materials[0].shader),
         CreateLight(LIGHT_POINT, (Vector3){ -LIGHT_DISTANCE, LIGHT_HEIGHT, 0.0f }, (Vector3){ 0.0f, 0.0f, 0.0f }, (Color){ 0, 0, 255, 255 }, model.materials[0].shader),
-        CreateLight(LIGHT_DIRECTIONAL, (Vector3){ 0.0f, LIGHT_HEIGHT*2.0f, -LIGHT_DISTANCE }, (Vector3){ 0.0f, 0.0f, 0.0f }, (Color){ 255, 0, 255, 255 }, model.materials[0].shader) 
+        CreateLight(LIGHT_DIRECTIONAL, (Vector3){ 0.0f, LIGHT_HEIGHT*2.0f, -LIGHT_DISTANCE }, (Vector3){ 0.0f, 0.0f, 0.0f }, (Color){ 255, 0, 255, 255 }, model.materials[0].shader)
     };
-    
+
     SetCameraMode(camera, CAMERA_ORBITAL);  // Set an orbital camera mode
 
     SetTargetFPS(60);                       // Set our game to run at 60 frames-per-second
@@ -72,7 +72,7 @@ int main()
         // Update
         //----------------------------------------------------------------------------------
         UpdateCamera(&camera);              // Update camera
-        
+
         // Send to material PBR shader camera view position
         float cameraPos[3] = { camera.position.x, camera.position.y, camera.position.z };
         SetShaderValue(model.materials[0].shader, model.materials[0].shader.locs[LOC_VECTOR_VIEW], cameraPos, UNIFORM_VEC3);
@@ -87,7 +87,7 @@ int main()
             BeginMode3D(camera);
 
                 DrawModel(model, Vector3Zero(), 1.0f, WHITE);
-                
+
                 DrawGrid(10, 1.0f);
 
             EndMode3D();
@@ -137,7 +137,7 @@ static Material LoadMaterialPBR(Color albedo, float metalness, float roughness)
     mat.shader.locs[LOC_MATRIX_MODEL] = GetShaderLocation(mat.shader, "matModel");
     mat.shader.locs[LOC_MATRIX_VIEW] = GetShaderLocation(mat.shader, "view");
     mat.shader.locs[LOC_VECTOR_VIEW] = GetShaderLocation(mat.shader, "viewPos");
-    
+
     // Set PBR standard maps
     mat.maps[MAP_ALBEDO].texture = LoadTexture("resources/pbr/trooper_albedo.png");
     mat.maps[MAP_NORMAL].texture = LoadTexture("resources/pbr/trooper_normals.png");
@@ -185,27 +185,27 @@ static Material LoadMaterialPBR(Color albedo, float metalness, float roughness)
     mat.maps[MAP_BRDF].texture = GenTextureBRDF(shdrBRDF, BRDF_SIZE);
     UnloadTexture(cubemap);
     UnloadTexture(texHDR);
-    
+
     // Unload already used shaders (to create specific textures)
     UnloadShader(shdrCubemap);
     UnloadShader(shdrIrradiance);
     UnloadShader(shdrPrefilter);
     UnloadShader(shdrBRDF);
-    
+
     // Set textures filtering for better quality
     SetTextureFilter(mat.maps[MAP_ALBEDO].texture, FILTER_BILINEAR);
     SetTextureFilter(mat.maps[MAP_NORMAL].texture, FILTER_BILINEAR);
     SetTextureFilter(mat.maps[MAP_METALNESS].texture, FILTER_BILINEAR);
     SetTextureFilter(mat.maps[MAP_ROUGHNESS].texture, FILTER_BILINEAR);
     SetTextureFilter(mat.maps[MAP_OCCLUSION].texture, FILTER_BILINEAR);
-    
+
     // Enable sample usage in shader for assigned textures
     SetShaderValue(mat.shader, GetShaderLocation(mat.shader, "albedo.useSampler"), (int[1]){ 1 }, UNIFORM_INT);
     SetShaderValue(mat.shader, GetShaderLocation(mat.shader, "normals.useSampler"), (int[1]){ 1 }, UNIFORM_INT);
     SetShaderValue(mat.shader, GetShaderLocation(mat.shader, "metalness.useSampler"), (int[1]){ 1 }, UNIFORM_INT);
     SetShaderValue(mat.shader, GetShaderLocation(mat.shader, "roughness.useSampler"), (int[1]){ 1 }, UNIFORM_INT);
     SetShaderValue(mat.shader, GetShaderLocation(mat.shader, "occlusion.useSampler"), (int[1]){ 1 }, UNIFORM_INT);
-    
+
     int renderModeLoc = GetShaderLocation(mat.shader, "renderMode");
     SetShaderValue(mat.shader, renderModeLoc, (int[1]){ 0 }, UNIFORM_INT);
 

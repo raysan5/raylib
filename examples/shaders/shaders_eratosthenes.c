@@ -31,7 +31,7 @@
     #define GLSL_VERSION            100
 #endif
 
-int main()
+int main(void)
 {
     // Initialization
     //--------------------------------------------------------------------------------------
@@ -46,11 +46,11 @@ int main()
     // NOTE: Defining 0 (NULL) for vertex shader forces usage of internal default vertex shader
     Shader shader = LoadShader(0, FormatText("resources/shaders/glsl%i/eratosthenes.fs", GLSL_VERSION));
 
-    SetTargetFPS(60);
+    SetTargetFPS(60);               // Set our game to run at 60 frames-per-second
     //--------------------------------------------------------------------------------------
 
     // Main game loop
-    while (!WindowShouldClose())                // Detect window close button or ESC key
+    while (!WindowShouldClose())    // Detect window close button or ESC key
     {
         // Update
         //----------------------------------------------------------------------------------
@@ -64,7 +64,7 @@ int main()
             ClearBackground(RAYWHITE);
 
             BeginTextureMode(target);   // Enable drawing to texture
-                ClearBackground(BLACK);     // Clear the render texture
+                ClearBackground(BLACK); // Clear the render texture
 
                 // Draw a rectangle in shader mode to be used as shader canvas
                 // NOTE: Rectangle uses font white character texture coordinates,

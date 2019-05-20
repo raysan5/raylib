@@ -13,12 +13,12 @@
 
 #define MAX_INPUT_CHARS     9
 
-int main()
+int main(void)
 {
     // Initialization
     //--------------------------------------------------------------------------------------
-    int screenWidth = 800;
-    int screenHeight = 450;
+    const int screenWidth = 800;
+    const int screenHeight = 450;
 
     InitWindow(screenWidth, screenHeight, "raylib [text] example - input box");
 
@@ -30,7 +30,7 @@ int main()
 
     int framesCounter = 0;
 
-    SetTargetFPS(60);
+    SetTargetFPS(60);               // Set our game to run at 60 frames-per-second
     //--------------------------------------------------------------------------------------
 
     // Main game loop
@@ -40,27 +40,27 @@ int main()
         //----------------------------------------------------------------------------------
         if (CheckCollisionPointRec(GetMousePosition(), textBox)) mouseOnText = true;
         else mouseOnText = false;
-        
+
         if (mouseOnText)
         {
             int key = GetKeyPressed();
-            
+
             // NOTE: Only allow keys in range [32..125]
             if ((key >= 32) && (key <= 125) && (letterCount < MAX_INPUT_CHARS))
             {
                 name[letterCount] = (char)key;
                 letterCount++;
             }
-            
+
             if (IsKeyPressed(KEY_BACKSPACE))
             {
                 letterCount--;
                 name[letterCount] = '\0';
-                
+
                 if (letterCount < 0) letterCount = 0;
             }
         }
-        
+
         if (mouseOnText) framesCounter++;
         else framesCounter = 0;
         //----------------------------------------------------------------------------------
@@ -70,15 +70,15 @@ int main()
         BeginDrawing();
 
             ClearBackground(RAYWHITE);
-            
+
             DrawText("PLACE MOUSE OVER INPUT BOX!", 240, 140, 20, GRAY);
 
             DrawRectangleRec(textBox, LIGHTGRAY);
             if (mouseOnText) DrawRectangleLines(textBox.x, textBox.y, textBox.width, textBox.height, RED);
             else DrawRectangleLines(textBox.x, textBox.y, textBox.width, textBox.height, DARKGRAY);
-            
+
             DrawText(name, textBox.x + 5, textBox.y + 8, 40, MAROON);
-            
+
             DrawText(FormatText("INPUT CHARS: %i/%i", letterCount, MAX_INPUT_CHARS), 315, 250, 20, DARKGRAY);
 
             if (mouseOnText)
@@ -90,13 +90,13 @@ int main()
                 }
                 else DrawText("Press BACKSPACE to delete chars...", 230, 300, 20, GRAY);
             }
-            
+
         EndDrawing();
         //----------------------------------------------------------------------------------
     }
 
     // De-Initialization
-    //--------------------------------------------------------------------------------------   
+    //--------------------------------------------------------------------------------------
     CloseWindow();        // Close window and OpenGL context
     //--------------------------------------------------------------------------------------
 
