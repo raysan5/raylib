@@ -1,13 +1,14 @@
 /*******************************************************************************************
 *
-*   raylib - transmission mission
+*   TRANSMISSION MISSION [GLOBAL GAME JAM 2018]
 *
-*   Code and transmit the right message
+*   Code the different filtration messages to be send to newspaper 
+*   to avoid being understood in case of interception. 
 *
-*   This game has been created using raylib (www.raylib.com)
+*   This game has been created using raylib 1.8 (www.raylib.com)
 *   raylib is licensed under an unmodified zlib/libpng license (View raylib.h for details)
 *
-*   Copyright (c) 2014-2019 Ramon Santamaria (@raysan5)
+*   Copyright (c) 2018 Ramon Santamaria (@raysan5)
 *
 ********************************************************************************************/
 
@@ -53,13 +54,9 @@ static void UpdateDrawFrame(void);          // Update and Draw one frame
 //----------------------------------------------------------------------------------
 int main(void)
 {
-    // Initialization
+    // Initialization (Note windowTitle is unused on Android)
     //---------------------------------------------------------
-#ifndef PLATFORM_ANDROID
-    SetConfigFlags(FLAG_SHOW_LOGO); // | FLAG_FULLSCREEN_MODE);
-#endif
-    // Note windowTitle is unused on Android
-    InitWindow(screenWidth, screenHeight, "raylib game - transmission mission");
+    InitWindow(screenWidth, screenHeight, "transmission mission [GGJ18]");
 
     // Global data loading (assets that must be available in all screens, i.e. fonts)
     InitAudioDevice();
