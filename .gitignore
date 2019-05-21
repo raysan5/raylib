@@ -51,6 +51,7 @@ packages/
 *.o
 *.exe
 *.a
+*.bc
 !raylib.rc.o
 
 # Ignore all examples files
