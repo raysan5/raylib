@@ -92,11 +92,11 @@ static bool gameOver = false;
 static bool pause = false;
 static int score = 0;
 
-static Missile missile[MAX_MISSILES];
-static Interceptor interceptor[MAX_INTERCEPTORS];
-static Explosion explosion[MAX_EXPLOSIONS];
-static Launcher launcher[LAUNCHERS_AMOUNT];
-static Building building[BUILDINGS_AMOUNT];
+static Missile missile[MAX_MISSILES] = { 0 };
+static Interceptor interceptor[MAX_INTERCEPTORS] = { 0 };
+static Explosion explosion[MAX_EXPLOSIONS] = { 0 };
+static Launcher launcher[LAUNCHERS_AMOUNT] = { 0 };
+static Building building[BUILDINGS_AMOUNT] = { 0 };
 static int explosionIndex = 0;
 
 //------------------------------------------------------------------------------------
@@ -126,7 +126,6 @@ int main(void)
 #if defined(PLATFORM_WEB)
     emscripten_set_main_loop(UpdateDrawFrame, 0, 1);
 #else
-
     SetTargetFPS(60);
     //--------------------------------------------------------------------------------------
     
@@ -139,7 +138,6 @@ int main(void)
         //----------------------------------------------------------------------------------
     }
 #endif
-
     // De-Initialization
     //--------------------------------------------------------------------------------------
     UnloadGame();         // Unload loaded data (textures, sounds, models...)
@@ -436,7 +434,7 @@ void DrawGame(void)
             }
 
             // Draw score
-            DrawText(FormatText("SCORE %4i", score), 20, 20, 40, LIGHTGRAY);
+            DrawText(TextFormat("SCORE %4i", score), 20, 20, 40, LIGHTGRAY);
             
             if (pause) DrawText("GAME PAUSED", screenWidth/2 - MeasureText("GAME PAUSED", 40)/2, screenHeight/2 - 40, 40, GRAY);
         }
@@ -504,7 +502,7 @@ static void UpdateIncomingFire()
     static int missileIndex = 0;
 
     // Launch missile
-    if (framesCounter % MISSILE_LAUNCH_FRAMES == 0)
+    if (framesCounter%MISSILE_LAUNCH_FRAMES == 0)
     {
         float module;
         float sideX;
