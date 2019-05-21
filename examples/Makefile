@@ -26,7 +26,7 @@
 # Define required raylib variables
 PROJECT_NAME       ?= raylib_examples
 RAYLIB_VERSION     ?= 2.5.0
-RAYLIB_API_VERSION ?= 1
+RAYLIB_API_VERSION ?= 2
 RAYLIB_PATH        ?= ..
 
 # Define default options
@@ -61,8 +61,6 @@ USE_EXTERNAL_GLFW     ?= FALSE
 # Use Wayland display server protocol on Linux desktop
 # by default it uses X11 windowing system
 USE_WAYLAND_DISPLAY   ?= FALSE
-
-# NOTE: On PLATFORM_WEB OpenAL Soft backend is used by default (check raylib/src/Makefile)
 
 # Determine PLATFORM_OS in case PLATFORM_DESKTOP selected
 ifeq ($(PLATFORM),PLATFORM_DESKTOP)
@@ -127,27 +125,8 @@ ifeq ($(PLATFORM),PLATFORM_WEB)
 endif
 
 # Define raylib release directory for compiled library.
-# RAYLIB_RELEASE_PATH points to provided binaries or your freshly built version.
-ifeq ($(PLATFORM),PLATFORM_DESKTOP)
-    ifeq ($(PLATFORM_OS),WINDOWS)
-        RAYLIB_RELEASE_PATH = $(RAYLIB_PATH)/src
-    endif
-    ifeq ($(PLATFORM_OS),LINUX)
-        RAYLIB_RELEASE_PATH = $(RAYLIB_PATH)/src
-    endif
-    ifeq ($(PLATFORM_OS),OSX)
-        RAYLIB_RELEASE_PATH = $(RAYLIB_PATH)/src
-    endif
-    ifeq ($(PLATFORM_OS),BSD)
-        RAYLIB_RELEASE_PATH = $(RAYLIB_PATH)/src
-    endif
-endif
-ifeq ($(PLATFORM),PLATFORM_RPI)
-    RAYLIB_RELEASE_PATH = $(RAYLIB_PATH)/src
-endif
-ifeq ($(PLATFORM),PLATFORM_WEB)
-    RAYLIB_RELEASE_PATH = $(RAYLIB_PATH)/src
-endif
+# RAYLIB_RELEASE_PATH points to provided binaries or your freshly built version
+RAYLIB_RELEASE_PATH 	?= $(RAYLIB_PATH)/src
 
 # EXAMPLE_RUNTIME_PATH embeds a custom runtime location of libraylib.so or other desired libraries
 # into each example binary compiled with RAYLIB_LIBTYPE=SHARED. It defaults to RAYLIB_RELEASE_PATH
@@ -155,7 +134,7 @@ endif
 # without formal installation from ../src/Makefile. It aids portability and is useful if you have
 # multiple versions of raylib, have raylib installed to a non-standard location, or want to
 # bundle libraylib.so with your game. Change it to your liking.
-# Note: If, at runtime, there is a libraylib.so at both EXAMPLE_RUNTIME_PATH and RAYLIB_INSTALL_PATH,
+# NOTE: If, at runtime, there is a libraylib.so at both EXAMPLE_RUNTIME_PATH and RAYLIB_INSTALL_PATH,
 # The library at EXAMPLE_RUNTIME_PATH, if present, will take precedence over RAYLIB_INSTALL_PATH,
 # Implemented for LINUX below with CFLAGS += -Wl,-rpath,$(EXAMPLE_RUNTIME_PATH)
 # To see the result, run readelf -d core/core_basic_window; looking at the RPATH or RUNPATH attribute.
@@ -185,8 +164,9 @@ ifeq ($(PLATFORM),PLATFORM_RPI)
     endif
 endif
 ifeq ($(PLATFORM),PLATFORM_WEB)
-    # WARNING: To compile to HTML5, code must be redesigned to use emscripten.h and emscripten_set_main_loop()
     # HTML5 emscripten compiler
+    # WARNING: To compile to HTML5, code must be redesigned 
+    # to use emscripten.h and emscripten_set_main_loop()
     CC = emcc
 endif
 
@@ -224,11 +204,11 @@ ifeq ($(PLATFORM),PLATFORM_DESKTOP)
     endif
     ifeq ($(PLATFORM_OS),LINUX)
         ifeq ($(RAYLIB_LIBTYPE),STATIC)
-        CFLAGS += -D_DEFAULT_SOURCE
+            CFLAGS += -D_DEFAULT_SOURCE
         endif
         ifeq ($(RAYLIB_LIBTYPE),SHARED)
-        # Explicitly enable runtime link to libraylib.so
-        CFLAGS += -Wl,-rpath,$(EXAMPLE_RUNTIME_PATH)
+            # Explicitly enable runtime link to libraylib.so
+            CFLAGS += -Wl,-rpath,$(EXAMPLE_RUNTIME_PATH)
         endif
     endif
 endif
@@ -363,7 +343,7 @@ ifeq ($(PLATFORM),PLATFORM_WEB)
     LDLIBS = $(RAYLIB_RELEASE_PATH)/libraylib.bc
 endif
 
-# Define all object files required
+# Define all source files required
 EXAMPLES = \
     core/core_basic_window \
     core/core_input_keys \
@@ -477,12 +457,6 @@ else
 	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM)
 endif
 
-# fix dylib install path name for each executable (MAC)
-fix_dylib:
-ifeq ($(PLATFORM_OS),OSX)
-	find . -type f -perm +ugo+x -print0 | xargs -t -0 -R 1 -I file install_name_tool -change libglfw.3.0.dylib ../external/glfw3/lib/osx/libglfw.3.0.dylib file
-endif
-
 # Clean everything
 clean:
 ifeq ($(PLATFORM),PLATFORM_DESKTOP)
@@ -490,7 +464,7 @@ ifeq ($(PLATFORM),PLATFORM_DESKTOP)
 		del *.o *.exe /s
     endif
     ifeq ($(PLATFORM_OS),LINUX)
-		find -type f -executable | xargs file -i | grep -E 'x-object|x-archive|x-sharedlib|x-executable' | rev | cut -d ':' -f 2- | rev | xargs rm -fv
+	find -type f -executable | xargs file -i | grep -E 'x-object|x-archive|x-sharedlib|x-executable' | rev | cut -d ':' -f 2- | rev | xargs rm -fv
     endif
     ifeq ($(PLATFORM_OS),OSX)
 		find . -type f -perm +ugo+x -delete

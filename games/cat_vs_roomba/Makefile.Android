@@ -22,33 +22,33 @@
 #**************************************************************************************************
 
 # Define required raylib variables
-PLATFORM ?= PLATFORM_ANDROID
-RAYLIB_PATH ?= ..\..
+PLATFORM               ?= PLATFORM_ANDROID
+RAYLIB_PATH            ?= ..\..
 
 # Define Android architecture (armeabi-v7a, arm64-v8a, x86, x86-64) and API version
-ANDROID_ARCH ?= ARM
-ANDROID_API_VERSION = 21
+ANDROID_ARCH           ?= ARM
+ANDROID_API_VERSION     = 21
 ifeq ($(ANDROID_ARCH),ARM)
-    ANDROID_ARCH_NAME = armeabi-v7a
+    ANDROID_ARCH_NAME   = armeabi-v7a
 endif
 ifeq ($(ANDROID_ARCH),ARM64)
-    ANDROID_ARCH_NAME = arm64-v8a
+    ANDROID_ARCH_NAME   = arm64-v8a
 endif
 
 # Required path variables
 # NOTE: JAVA_HOME must be set to JDK
-JAVA_HOME ?= C:/JavaJDK
-ANDROID_HOME = C:/android-sdk
-ANDROID_TOOLCHAIN = C:/android_toolchain_$(ANDROID_ARCH)_API$(ANDROID_API_VERSION)
-ANDROID_BUILD_TOOLS = $(ANDROID_HOME)/build-tools/28.0.1
-ANDROID_PLATFORM_TOOLS = $(ANDROID_HOME)/platform-tools
+JAVA_HOME              ?= C:/JavaJDK
+ANDROID_HOME            = C:/android-sdk
+ANDROID_TOOLCHAIN       = C:/android_toolchain_$(ANDROID_ARCH)_API$(ANDROID_API_VERSION)
+ANDROID_BUILD_TOOLS     = $(ANDROID_HOME)/build-tools/28.0.1
+ANDROID_PLATFORM_TOOLS  = $(ANDROID_HOME)/platform-tools
 
 # Android project configuration variables
-PROJECT_NAME ?= raylib_game
-PROJECT_LIBRARY_NAME ?= main
-PROJECT_BUILD_PATH ?= android.$(PROJECT_NAME)
+PROJECT_NAME           ?= raylib_game
+PROJECT_LIBRARY_NAME   ?= main
+PROJECT_BUILD_PATH     ?= android.$(PROJECT_NAME)
 PROJECT_RESOURCES_PATH ?= resources
-PROJECT_SOURCE_FILES ?= raylib_game.c
+PROJECT_SOURCE_FILES   ?= raylib_game.c
 
 # Some source files are placed in directories, when compiling to some 
 # output directory other than source, that directory must pre-exist.
@@ -70,7 +70,9 @@ APP_KEYSTORE_PASS ?= raylib
 
 # Library type used for raylib: STATIC (.a) or SHARED (.so/.dll)
 RAYLIB_LIBTYPE ?= STATIC
-RAYLIB_LIB_PATH = $(RAYLIB_PATH)\release\libs\android\$(ANDROID_ARCH_NAME)
+
+# Library path for libraylib.a/libraylib.so
+RAYLIB_LIB_PATH = $(RAYLIB_PATH)\src
 
 # Shared libs must be added to APK if required
 # NOTE: Generated NativeLoader.java automatically load those libraries
@@ -104,7 +106,7 @@ CFLAGS += -Wall -Wa,--noexecstack -Wformat -Werror=format-security -no-canonical
 CFLAGS += -DANDROID -DPLATFORM_ANDROID -D__ANDROID_API__=$(ANDROID_API_VERSION)
 
 # Paths containing required header files
-INCLUDE_PATHS = -I. -I$(RAYLIB_PATH)/release/include -I$(RAYLIB_PATH)/src/external/android/native_app_glue
+INCLUDE_PATHS = -I. -I$(RAYLIB_PATH)/src -I$(RAYLIB_PATH)/src/external/android/native_app_glue
 
 # Linker options
 LDFLAGS = -Wl,-soname,lib$(PROJECT_LIBRARY_NAME).so -Wl,--exclude-libs,libatomic.a 

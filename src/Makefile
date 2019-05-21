@@ -144,13 +144,6 @@ ifeq ($(PLATFORM),PLATFORM_DESKTOP)
         RAYLIB_PATH    = $(realpath $(RAYLIB_PREFIX))
     endif
 endif
-# Default path for raylib on Raspberry Pi, if installed in different path, update it!
-# TODO: update install: target in src/Makefile for RPI, consider relation to LINUX.
-# WARNING: The following is copied from examples/Makefile and is here only for reference.
-# Consequences of enabling this are UNKNOWN. Please test and report.
-#ifeq ($(PLATFORM),PLATFORM_RPI)
-#    RAYLIB_PATH       ?= /home/pi/raylib
-#endif
 
 ifeq ($(PLATFORM),PLATFORM_WEB)
     # Emscripten required variables
