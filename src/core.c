@@ -50,6 +50,11 @@
 *   #define SUPPORT_TOUCH_AS_MOUSE
 *       Touch input and mouse input are shared. Mouse functions also return touch information.
 *
+*   #define SUPPORT_SSH_KEYBOARD_RPI (Raspberry Pi only)
+*       Reconfigure standard input to receive key inputs, works with SSH connection.
+*       WARNING: Reconfiguring standard input could lead to undesired effects, like breaking other running processes or
+*       blocking the device is not restored properly. Use with care.
+*
 *   #define SUPPORT_BUSY_WAIT_LOOP
 *       Use busy wait loop for timing sync, if not defined, a high-resolution timer is setup and used
 *
@@ -489,16 +494,19 @@ static EM_BOOL EmscriptenGamepadCallback(int eventType, const EmscriptenGamepadE
 #endif
 
 #if defined(PLATFORM_RPI)
+#if defined(SUPPORT_SSH_KEYBOARD_RPI)
+static void InitKeyboard(void);                         // Init raw keyboard system (standard input reading)
+static void ProcessKeyboard(void);                      // Process keyboard events
+static void RestoreKeyboard(void);                      // Restore keyboard system
+#endif
+
 static void InitEvdevInput(void);                       // Evdev inputs initialization
 static void EventThreadSpawn(char *device);             // Identifies a input device and spawns a thread to handle it if needed
 static void *EventThread(void *arg);                    // Input device events reading thread
 
-static void InitKeyboard(void);                         // Init raw keyboard system (standard input reading)
-static void ProcessKeyboard(void);                      // Process keyboard events
-static void RestoreKeyboard(void);                      // Restore keyboard system
 static void InitGamepad(void);                          // Init raw gamepad input
 static void *GamepadThread(void *arg);                  // Mouse reading thread
-#endif
+#endif  // PLATFORM_RPI
 
 #if defined(_WIN32)
     // NOTE: We include Sleep() function signature here to avoid windows.h inclusion
@@ -610,8 +618,10 @@ void InitWindow(int width, int height, const char *title)
 #if defined(PLATFORM_RPI)
     // Init raw input system
     InitEvdevInput();   // Evdev inputs initialization
-    InitKeyboard();     // Keyboard init
     InitGamepad();      // Gamepad init
+#if defined(SUPPORT_SSH_KEYBOARD_RPI)
+    InitKeyboard();     // Keyboard init
+#endif
 #endif
 
 #if defined(PLATFORM_WEB)
@@ -3544,7 +3554,7 @@ static void PollInputEvents(void)
     }
 #endif
 
-#if defined(PLATFORM_RPI)
+#if defined(PLATFORM_RPI) && defined(SUPPORT_SSH_KEYBOARD_RPI)
     // NOTE: Keyboard reading could be done using input_event(s) reading or just read from stdin,
     // we now use both methods inside here. 2nd method is still used for legacy purposes (Allows for input trough SSH console)
     ProcessKeyboard();
@@ -4181,6 +4191,8 @@ static EM_BOOL EmscriptenGamepadCallback(int eventType, const EmscriptenGamepadE
 #endif
 
 #if defined(PLATFORM_RPI)
+
+#if defined(SUPPORT_SSH_KEYBOARD_RPI)
 // Initialize Keyboard system (using standard input)
 static void InitKeyboard(void)
 {
@@ -4341,6 +4353,7 @@ static void RestoreKeyboard(void)
     // Reconfigure keyboard to default mode
     ioctl(STDIN_FILENO, KDSKBMODE, defaultKeyboardMode);
 }
+#endif      //SUPPORT_SSH_KEYBOARD_RPI
 
 // Initialise user input from evdev(/dev/input/event<N>) this means mouse, keyboard or gamepad devices
 static void InitEvdevInput(void)
@@ -4739,7 +4752,7 @@ static void *EventThread(void *arg)
             // Gesture update
             if (gestureUpdate)
             {
-#if defined(SUPPORT_GESTURES_SYSTEM)
+            #if defined(SUPPORT_GESTURES_SYSTEM)
                 GestureEvent gestureEvent = { 0 };
 
                 gestureEvent.pointCount = 0;
@@ -4761,7 +4774,7 @@ static void *EventThread(void *arg)
                 gestureEvent.position[3] = touchPosition[3];
 
                 ProcessGestureEvent(gestureEvent);
-#endif
+            #endif
             }
         }
         else
