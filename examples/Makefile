@@ -117,7 +117,7 @@ endif
 
 ifeq ($(PLATFORM),PLATFORM_WEB)
     # Emscripten required variables
-    EMSDK_PATH          ?= D:/emsdk
+    EMSDK_PATH          ?= C:/emsdk
     EMSCRIPTEN_VERSION  ?= 1.38.31
     CLANG_VERSION       = e$(EMSCRIPTEN_VERSION)_64bit
     PYTHON_VERSION      = 2.7.13.1_64bit\python-2.7.13.amd64
