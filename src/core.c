@@ -1640,8 +1640,8 @@ void TakeScreenshot(const char *fileName)
 
 #if defined(PLATFORM_WEB)
     // Download file from MEMFS (emscripten memory filesystem)
-    // SaveFileFromMEMFSToDisk() function is defined in raylib/src/shell.html
-    emscripten_run_script(TextFormat("SaveFileFromMEMFSToDisk('%s','%s')", GetFileName(path), GetFileName(path)));
+    // saveFileFromMEMFSToDisk() function is defined in raylib/src/shell.html
+    emscripten_run_script(TextFormat("saveFileFromMEMFSToDisk('%s','%s')", GetFileName(path), GetFileName(path)));
 #endif
 
     TraceLog(LOG_INFO, "Screenshot taken: %s", path);
@@ -3610,8 +3610,8 @@ static void KeyCallback(GLFWwindow *window, int key, int scancode, int action, i
 
             #if defined(PLATFORM_WEB)
                 // Download file from MEMFS (emscripten memory filesystem)
-                // SaveFileFromMEMFSToDisk() function is defined in raylib/templates/web_shel/shell.html
-                emscripten_run_script(TextFormat("SaveFileFromMEMFSToDisk('%s','%s')", TextFormat("screenrec%03i.gif", screenshotCounter - 1), TextFormat("screenrec%03i.gif", screenshotCounter - 1)));
+                // saveFileFromMEMFSToDisk() function is defined in raylib/templates/web_shel/shell.html
+                emscripten_run_script(TextFormat("saveFileFromMEMFSToDisk('%s','%s')", TextFormat("screenrec%03i.gif", screenshotCounter - 1), TextFormat("screenrec%03i.gif", screenshotCounter - 1)));
             #endif
 
                 TraceLog(LOG_INFO, "End animated GIF recording");
