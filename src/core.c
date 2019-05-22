@@ -1640,7 +1640,7 @@ void TakeScreenshot(const char *fileName)
 
 #if defined(PLATFORM_WEB)
     // Download file from MEMFS (emscripten memory filesystem)
-    // SaveFileFromMEMFSToDisk() function is defined in raylib/templates/web_shel/shell.html
+    // SaveFileFromMEMFSToDisk() function is defined in raylib/src/shell.html
     emscripten_run_script(TextFormat("SaveFileFromMEMFSToDisk('%s','%s')", GetFileName(path), GetFileName(path)));
 #endif
 

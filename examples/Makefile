@@ -240,7 +240,7 @@ ifeq ($(PLATFORM),PLATFORM_WEB)
     # logic to a self contained function: UpdateDrawFrame(), check core_basic_window_web.c for reference.
 
     # Define a custom shell .html and output extension
-    CFLAGS += --shell-file $(RAYLIB_PATH)\templates\web_shell\shell.html
+    CFLAGS += --shell-file $(RAYLIB_PATH)\src\shell.html
     EXT = .html
 endif
 

@@ -236,7 +236,7 @@ ifeq ($(PLATFORM),PLATFORM_WEB)
     endif
 
     # Define a custom shell .html and output extension
-    CFLAGS += --shell-file $(RAYLIB_PATH)\templates\web_shell\shell.html
+    CFLAGS += --shell-file $(RAYLIB_PATH)\src\shell.html
     EXT = .html
 endif
 
