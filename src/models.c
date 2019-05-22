@@ -3044,7 +3044,7 @@ static Model LoadIQM(const char *fileName)
     fread(imesh, sizeof(IQMMesh)*iqm.num_meshes, 1, iqmFile);
 
     model.meshCount = iqm.num_meshes;
-    model.meshes = RL_MALLOC(model.meshCount*sizeof(Mesh));
+    model.meshes = RL_CALLOC(model.meshCount, sizeof(Mesh));
 
     char name[MESH_NAME_LENGTH];
 
