@@ -133,7 +133,7 @@ jwE50AGjLCVuS8Yt4H7OgZLKK5EKOsLviEWJSL/+0uMi7gLUSBseYwqEbXvSHCec1CJvZPyHCmYQffaB
         display: inline-block;
         float: right;
         vertical-align: top;
-        margin-top: 30px;
+        margin-top: 15px;
         margin-right: 20px;
       }
       
@@ -148,6 +148,21 @@ jwE50AGjLCVuS8Yt4H7OgZLKK5EKOsLviEWJSL/+0uMi7gLUSBseYwqEbXvSHCec1CJvZPyHCmYQffaB
         font-family: 'Lucida Console', Monaco, monospace;
         outline: none;
       }
+      
+      input[type=button] {
+        background-color: lightgray;
+        border: 4px solid darkgray;
+        color: black;
+        text-decoration: none;
+        cursor: pointer;
+        width: 140px;
+        height: 50px;
+      }
+      
+      input[type=button]:hover {
+        background-color: #f5f5f5ff;
+        border-color: black;
+      }
     </style>
   </head>
   <body>
@@ -158,7 +173,8 @@ jwE50AGjLCVuS8Yt4H7OgZLKK5EKOsLviEWJSL/+0uMi7gLUSBseYwqEbXvSHCec1CJvZPyHCmYQffaB
         <div class="emscripten" id="status">Downloading...</div>
 
         <span id='controls'>
-          <span><input type="button" value="Fullscreen" onclick="Module.requestFullscreen(false, false)"></span>
+          <span><input type="button" value="🖵 FULLSCREEN" onclick="Module.requestFullscreen(false, false)"></span>
+          <span><input type="button" id="btn-audio" value="🔇 SUSPEND" onclick="toggleAudio()"></span>
         </span>
 
         <div class="emscripten">
@@ -174,7 +190,7 @@ jwE50AGjLCVuS8Yt4H7OgZLKK5EKOsLviEWJSL/+0uMi7gLUSBseYwqEbXvSHCec1CJvZPyHCmYQffaB
 
     <script type='text/javascript' src="https://cdn.jsdelivr.net/gh/eligrey/FileSaver.js/dist/FileSaver.min.js"> </script>
     <script type='text/javascript'>
-        function SaveFileFromMEMFSToDisk(memoryFSname, localFSname)     // This can be called by C/C++ code
+        function saveFileFromMEMFSToDisk(memoryFSname, localFSname)     // This can be called by C/C++ code
         {
             var isSafari = /^((?!chrome|android).)*safari/i.test(navigator.userAgent);
             var data = FS.readFile(memoryFSname);
@@ -183,10 +199,10 @@ jwE50AGjLCVuS8Yt4H7OgZLKK5EKOsLviEWJSL/+0uMi7gLUSBseYwqEbXvSHCec1CJvZPyHCmYQffaB
             if (isSafari) blob = new Blob([data.buffer], { type: "application/octet-stream" });
             else blob = new Blob([data.buffer], { type: "application/octet-binary" });
 
-            // NOTE: SaveAs Dialog is a browser setting. For example, in Google Chrome,
+            // NOTE: SaveAsDialog is a browser setting. For example, in Google Chrome,
             // in Settings/Advanced/Downloads section you have a setting:
             // 'Ask where to save each file before downloading' - which you can set true/false.
-            // If you enable this setting it would always ask you and bring the SaveAs Dialog
+            // If you enable this setting it would always ask you and bring the SaveAsDialog
             saveAs(blob, localFSname);
         }
     </script>
@@ -276,46 +292,35 @@ jwE50AGjLCVuS8Yt4H7OgZLKK5EKOsLviEWJSL/+0uMi7gLUSBseYwqEbXvSHCec1CJvZPyHCmYQffaB
         };
     </script>
     
-    <!-- NOTE: This code snippet displays a button that resumes blocked AudioContexts by 
-         the autoplay policy. For more detail on the autoplay change in Chrome, check:
-         https://developers.google.com/web/updates/2017/09/autoplay-policy-changes#webaudio. -->
+    <!-- REF: https://developers.google.com/web/updates/2018/11/web-audio-autoplay -->
     <script type='text/javascript'>
-        /*
-        * Copyright 2018 Google Inc. All Rights Reserved.
-        * Licensed under the Apache License, Version 2.0 (the "License");
-        * you may not use this file except in compliance with the License.
-        * You may obtain a copy of the License at http://www.apache.org/licenses/LICENSE-2.0
-        * Unless required by applicable law or agreed to in writing, software
-        * distributed under the License is distributed on an "AS IS" BASIS,
-        * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-        * See the License for the specific language governing permissions and
-        * limitations under the License.
-        */
+        var audioBtn = document.querySelector('#btn-audio');
+        
+        // An array of all contexts to resume on the page
+        const audioContexList = [];
         (function() {
-            const list = []; 
+            // A proxy object to intercept AudioContexts and 
+            // add them to the array for tracking and resuming later
             self.AudioContext = new Proxy(self.AudioContext, {
                 construct(target, args) {
                     const result = new target(...args);
-                    list.push(result);
+                    audioContexList.push(result);
+                    if (result.state == "suspended") audioBtn.value = "🔈 RESUME";
                     return result;
-                }   
-            }); 
-
-            const btn = document.createElement('button');
-            
-            btn.classList.add('unmute');
-            btn.style.position = 'fixed';
-            btn.style.bottom = '0';
-            btn.style.right = '0';
-            btn.textContent = '🔇 Unmute';
-            btn.style.fontSize = '5em';
-            btn.onclick = e => {
-                list.forEach(ctx => ctx.resume());
-                btn.remove();
-            };
-            
-            document.addEventListener('DOMContentLoaded', _ => { document.body.appendChild(btn); }); 
+                }
+            });
         })();
+
+        function toggleAudio() {
+            var resumed = false;
+            audioContexList.forEach(ctx => {
+                if (ctx.state == "suspended") { ctx.resume(); resumed = true; }
+                else if (ctx.state == "running") ctx.suspend();
+            });
+            
+            if (resumed) audioBtn.value = "🔇 SUSPEND";
+            else audioBtn.value = "🔈 RESUME";
+        }
     </script>
     {{{ SCRIPT }}}
   </body>
