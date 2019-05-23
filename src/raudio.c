@@ -1335,7 +1335,7 @@ void StopMusicStream(Music music)
         case MUSIC_AUDIO_MP3: drmp3_seek_to_pcm_frame(&music->ctxMp3, 0); break;
 #endif
 #if defined(SUPPORT_FILEFORMAT_XM)
-        case MUSIC_MODULE_XM: /* TODO: Restart XM context */ break;
+        case MUSIC_MODULE_XM: jar_xm_reset(music->ctxXm); break;
 #endif
 #if defined(SUPPORT_FILEFORMAT_MOD)
         case MUSIC_MODULE_MOD: jar_mod_seek_start(&music->ctxMod); break;
