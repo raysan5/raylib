@@ -1314,20 +1314,6 @@ void ResumeMusicStream(Music music)
     if (music != NULL) ResumeAudioStream(music->stream);
 }
 
-void jar_xm_reset(jar_xm_context_t* ctx)
-{
-    // I don't know what I am doing
-    // this is probably very broken
-    // but it kinda works
-    for (uint16_t i = 0; i < jar_xm_get_number_of_channels(ctx); i++)
-    {
-        jar_xm_cut_note(&ctx->channels[i]);
-    }
-    ctx->current_row = 0;
-    ctx->current_table_index = 1;
-    ctx->current_tick = 0;
-}
-
 // Stop music playing (close stream)
 // TODO: To clear a buffer, make sure they have been already processed!
 void StopMusicStream(Music music)
