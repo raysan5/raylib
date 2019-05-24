@@ -1,57 +1,30 @@
 /*******************************************************************************************
 *
-*   raylib [easings] example
+*   raylib [easings] example - Easings Testbed
 *
 *   This example has been created using raylib 2.5 (www.raylib.com)
 *   raylib is licensed under an unmodified zlib/libpng license (View raylib.h for details)
 *
-*   Copyright (c) 2019 Juan Miguel López
+*   Example contributed by Juan Miguel López (@flashback-fx) and reviewed by Ramon Santamaria (@raysan5)
+*
+*   Copyright (c) 2019 Juan Miguel López (@flashback-fx ) and Ramon Santamaria (@raysan5)
 *
 ********************************************************************************************/
 
-
 #include <raylib.h>
+
 #include "easings.h"
 
+#define FONT_SIZE         20
 
-// Application constants
-#define SCR_WIDTH 800
-#define SCR_HEIGHT 450
-#define BALL_RADIUS 16.0f
-#define BALL_COLOR MAROON
-#define PAD 80.0f
-#define START_X (0.0f + (BALL_RADIUS) + (PAD))
-#define END_X ((SCR_WIDTH) - ((BALL_RADIUS) + (PAD)))
-#define START_Y (0.0f + (BALL_RADIUS) + (PAD))
-#define END_Y ((SCR_HEIGHT) - ((BALL_RADIUS) + (PAD)))
-#define T_ADVANCE 1.0f
-#define D_DFT 300.0f
-#define TARGET_FPS 60
-#define BG_COLOR RAYWHITE
-#define TEXT_COLOR LIGHTGRAY
-#define FONT_SIZE 20
-#define D_STEP 20.0f
-#define D_STEP_FINE 2.0f
-#define D_MIN 1.0f
-#define D_MAX 10000.0f
-
-// Application control keys
-#define KEY_NEXT_EASE_X KEY_RIGHT
-#define KEY_PREV_EASE_X KEY_LEFT
-#define KEY_NEXT_EASE_Y KEY_DOWN
-#define KEY_PREV_EASE_Y KEY_UP
-#define KEY_INCR_D_STEP KEY_W
-#define KEY_DECR_D_STEP KEY_Q
-#define KEY_INCR_D_FINE KEY_S
-#define KEY_DECR_D_FINE KEY_A
-#define KEY_PLAY_PAUSE KEY_ENTER
-#define KEY_RESTART KEY_SPACE
-#define KEY_TOGGLE_UNBOUNDED_T KEY_T
-
+#define D_STEP         20.0f
+#define D_STEP_FINE     2.0f
+#define D_MIN           1.0f
+#define D_MAX       10000.0f
 
 // Easing types
 enum EasingTypes {
-    EASE_LINEAR_NONE,
+    EASE_LINEAR_NONE = 0,
     EASE_LINEAR_IN,
     EASE_LINEAR_OUT,
     EASE_LINEAR_IN_OUT,
@@ -92,122 +65,35 @@ static const struct {
     const char *name;
     float (*func)(float, float, float, float);
 } Easings[] = {
-    [EASE_LINEAR_NONE] = {
-        .name = "EaseLinearNone",
-        .func = EaseLinearNone,
-    },
-    [EASE_LINEAR_IN] = {
-        .name = "EaseLinearIn",
-        .func = EaseLinearIn,
-    },
-    [EASE_LINEAR_OUT] = {
-        .name = "EaseLinearOut",
-        .func = EaseLinearOut,
-    },
-    [EASE_LINEAR_IN_OUT] = {
-        .name = "EaseLinearInOut",
-        .func = EaseLinearInOut,
-    },
-    [EASE_SINE_IN] = {
-        .name = "EaseSineIn",
-        .func = EaseSineIn,
-    },
-    [EASE_SINE_OUT] = {
-        .name = "EaseSineOut",
-        .func = EaseSineOut,
-    },
-    [EASE_SINE_IN_OUT] = {
-        .name = "EaseSineInOut",
-        .func = EaseSineInOut,
-    },
-    [EASE_CIRC_IN] = {
-        .name = "EaseCircIn",
-        .func = EaseCircIn,
-    },
-    [EASE_CIRC_OUT] = {
-        .name = "EaseCircOut",
-        .func = EaseCircOut,
-    },
-    [EASE_CIRC_IN_OUT] = {
-        .name = "EaseCircInOut",
-        .func = EaseCircInOut,
-    },
-    [EASE_CUBIC_IN] = {
-        .name = "EaseCubicIn",
-        .func = EaseCubicIn,
-    },
-    [EASE_CUBIC_OUT] = {
-        .name = "EaseCubicOut",
-        .func = EaseCubicOut,
-    },
-    [EASE_CUBIC_IN_OUT] = {
-        .name = "EaseCubicInOut",
-        .func = EaseCubicInOut,
-    },
-    [EASE_QUAD_IN] = {
-        .name = "EaseQuadIn",
-        .func = EaseQuadIn,
-    },
-    [EASE_QUAD_OUT] = {
-        .name = "EaseQuadOut",
-        .func = EaseQuadOut,
-    },
-    [EASE_QUAD_IN_OUT] = {
-        .name = "EaseQuadInOut",
-        .func = EaseQuadInOut,
-    },
-    [EASE_EXPO_IN] = {
-        .name = "EaseExpoIn",
-        .func = EaseExpoIn,
-    },
-    [EASE_EXPO_OUT] = {
-        .name = "EaseExpoOut",
-        .func = EaseExpoOut,
-    },
-    [EASE_EXPO_IN_OUT] = {
-        .name = "EaseExpoInOut",
-        .func = EaseExpoInOut,
-    },
-    [EASE_BACK_IN] = {
-        .name = "EaseBackIn",
-        .func = EaseBackIn,
-    },
-    [EASE_BACK_OUT] = {
-        .name = "EaseBackOut",
-        .func = EaseBackOut,
-    },
-    [EASE_BACK_IN_OUT] = {
-        .name = "EaseBackInOut",
-        .func = EaseBackInOut,
-    },
-    [EASE_BOUNCE_OUT] = {
-        .name = "EaseBounceOut",
-        .func = EaseBounceOut,
-    },
-    [EASE_BOUNCE_IN] = {
-        .name = "EaseBounceIn",
-        .func = EaseBounceIn,
-    },
-    [EASE_BOUNCE_IN_OUT] = {
-        .name = "EaseBounceInOut",
-        .func = EaseBounceInOut,
-    },
-    [EASE_ELASTIC_IN] = {
-        .name = "EaseElasticIn",
-        .func = EaseElasticIn,
-    },
-    [EASE_ELASTIC_OUT] = {
-        .name = "EaseElasticOut",
-        .func = EaseElasticOut,
-    },
-    [EASE_ELASTIC_IN_OUT] = {
-        .name = "EaseElasticInOut",
-        .func = EaseElasticInOut,
-    },
-    [EASING_NONE] = {
-        .name = "None",
-        .func = NoEase,
-    },
+    [EASE_LINEAR_NONE] = { .name = "EaseLinearNone", .func = EaseLinearNone },
+    [EASE_LINEAR_IN] = { .name = "EaseLinearIn", .func = EaseLinearIn },
+    [EASE_LINEAR_OUT] = { .name = "EaseLinearOut", .func = EaseLinearOut },
+    [EASE_LINEAR_IN_OUT] = { .name = "EaseLinearInOut", .func = EaseLinearInOut },
+    [EASE_SINE_IN] = { .name = "EaseSineIn", .func = EaseSineIn },
+    [EASE_SINE_OUT] = { .name = "EaseSineOut", .func = EaseSineOut },
+    [EASE_SINE_IN_OUT] = { .name = "EaseSineInOut", .func = EaseSineInOut },
+    [EASE_CIRC_IN] = { .name = "EaseCircIn", .func = EaseCircIn },
+    [EASE_CIRC_OUT] = { .name = "EaseCircOut", .func = EaseCircOut },
+    [EASE_CIRC_IN_OUT] = { .name = "EaseCircInOut", .func = EaseCircInOut },
+    [EASE_CUBIC_IN] = { .name = "EaseCubicIn", .func = EaseCubicIn },
+    [EASE_CUBIC_OUT] = { .name = "EaseCubicOut", .func = EaseCubicOut },
+    [EASE_CUBIC_IN_OUT] = { .name = "EaseCubicInOut", .func = EaseCubicInOut },
+    [EASE_QUAD_IN] = { .name = "EaseQuadIn", .func = EaseQuadIn },
+    [EASE_QUAD_OUT] = { .name = "EaseQuadOut", .func = EaseQuadOut },
+    [EASE_QUAD_IN_OUT] = { .name = "EaseQuadInOut", .func = EaseQuadInOut },
+    [EASE_EXPO_IN] = { .name = "EaseExpoIn", .func = EaseExpoIn },
+    [EASE_EXPO_OUT] = { .name = "EaseExpoOut", .func = EaseExpoOut },
+    [EASE_EXPO_IN_OUT] = { .name = "EaseExpoInOut", .func = EaseExpoInOut },
+    [EASE_BACK_IN] = { .name = "EaseBackIn", .func = EaseBackIn },
+    [EASE_BACK_OUT] = { .name = "EaseBackOut", .func = EaseBackOut },
+    [EASE_BACK_IN_OUT] = { .name = "EaseBackInOut", .func = EaseBackInOut },
+    [EASE_BOUNCE_OUT] = { .name = "EaseBounceOut", .func = EaseBounceOut },
+    [EASE_BOUNCE_IN] = { .name = "EaseBounceIn", .func = EaseBounceIn },
+    [EASE_BOUNCE_IN_OUT] = { .name = "EaseBounceInOut", .func = EaseBounceInOut },
+    [EASE_ELASTIC_IN] = { .name = "EaseElasticIn", .func = EaseElasticIn },
+    [EASE_ELASTIC_OUT] = { .name = "EaseElasticOut", .func = EaseElasticOut },
+    [EASE_ELASTIC_IN_OUT] = { .name = "EaseElasticInOut", .func = EaseElasticInOut },
+    [EASING_NONE] = { .name = "None", .func = NoEase },
 };
 
 
@@ -215,17 +101,22 @@ int main(void)
 {
     // Initialization
     //--------------------------------------------------------------------------------------
-    Vector2 ballPos = { .x = START_X, .y = START_Y };
-    float t = 0.0f;        // Current time (in any unit measure, but same unit as duration)
-    float d = D_DFT;       // Total time it should take to complete (duration)
+    const int screenWidth = 800;
+    const int screenHeight = 450;
+
+    InitWindow(screenWidth, screenHeight, "raylib [easings] example - easings testbed");
+
+    Vector2 ballPosition = { 100.0f, 200.0f };
+    
+    float t = 0.0f;             // Current time (in any unit measure, but same unit as duration)
+    float d = 300.0f;           // Total time it should take to complete (duration)
     bool paused = true;
-    bool boundedT = true;  // If true, t will stop when d >= td, otherwise t will keep adding td to its value every loop
+    bool boundedT = true;       // If true, t will stop when d >= td, otherwise t will keep adding td to its value every loop
 
-    enum EasingTypes easingX = EASING_NONE;  // Easing selected for x axis
-    enum EasingTypes easingY = EASING_NONE;  // Easing selected for y axis
+    int easingX = EASING_NONE;  // Easing selected for x axis
+    int easingY = EASING_NONE;  // Easing selected for y axis
 
-    InitWindow(SCR_WIDTH, SCR_HEIGHT, "raylib [easings] example");
-    SetTargetFPS(TARGET_FPS);
+    SetTargetFPS(60);
     //--------------------------------------------------------------------------------------
 
     // Main game loop
@@ -233,77 +124,63 @@ int main(void)
     {
         // Update
         //----------------------------------------------------------------------------------
-        if (IsKeyPressed(KEY_TOGGLE_UNBOUNDED_T))
-            boundedT = 1 - boundedT;
+        if (IsKeyPressed(KEY_T)) boundedT = !boundedT;
 
         // Choose easing for the X axis
-        if (IsKeyPressed(KEY_NEXT_EASE_X))
+        if (IsKeyPressed(KEY_RIGHT))
         {
-            ++easingX;
+            easingX++;
 
-            if (easingX > EASING_NONE)
-                easingX = 0;
+            if (easingX > EASING_NONE) easingX = 0;
         }
-        else if (IsKeyPressed(KEY_PREV_EASE_X))
+        else if (IsKeyPressed(KEY_LEFT))
         {
-            if (easingX == 0)
-                easingX = EASING_NONE;
-            else
-                --easingX;
+            if (easingX == 0) easingX = EASING_NONE;
+            else easingX--;
         }
 
         // Choose easing for the Y axis
-        if (IsKeyPressed(KEY_NEXT_EASE_Y))
+        if (IsKeyPressed(KEY_DOWN))
         {
-            ++easingY;
+            easingY++;
 
-            if (easingY > EASING_NONE)
-                easingY = 0;
+            if (easingY > EASING_NONE) easingY = 0;
         }
-        else if (IsKeyPressed(KEY_PREV_EASE_Y))
+        else if (IsKeyPressed(KEY_UP))
         {
-            if (easingY == 0)
-                easingY = EASING_NONE;
-            else
-                --easingY;
+            if (easingY == 0) easingY = EASING_NONE;
+            else easingY--;
         }
 
         // Change d (duration) value
-        if (IsKeyPressed(KEY_INCR_D_STEP) && d < D_MAX - D_STEP)
-            d += D_STEP;
-        else if (IsKeyPressed(KEY_DECR_D_STEP) && d > D_MIN + D_STEP)
-            d -= D_STEP;
+        if (IsKeyPressed(KEY_W) && d < D_MAX - D_STEP) d += D_STEP;
+        else if (IsKeyPressed(KEY_Q) && d > D_MIN + D_STEP) d -= D_STEP;
 
-        if (IsKeyDown(KEY_INCR_D_FINE) && d < D_MAX - D_STEP_FINE)
-            d += D_STEP_FINE;
-        else if (IsKeyDown(KEY_DECR_D_FINE) && d > D_MIN + D_STEP_FINE)
-            d -= D_STEP_FINE;
+        if (IsKeyDown(KEY_S) && d < D_MAX - D_STEP_FINE) d += D_STEP_FINE;
+        else if (IsKeyDown(KEY_A) && d > D_MIN + D_STEP_FINE) d -= D_STEP_FINE;
 
         // Play, pause and restart controls
-        if (IsKeyPressed(KEY_RESTART) ||
-            IsKeyPressed(KEY_NEXT_EASE_X) || IsKeyPressed(KEY_PREV_EASE_X) ||
-            IsKeyPressed(KEY_NEXT_EASE_Y) || IsKeyPressed(KEY_PREV_EASE_Y) ||
-            IsKeyPressed(KEY_INCR_D_STEP) || IsKeyPressed(KEY_DECR_D_STEP) ||
-            IsKeyPressed(KEY_TOGGLE_UNBOUNDED_T) ||
-            IsKeyDown(KEY_INCR_D_FINE)  || IsKeyDown(KEY_DECR_D_FINE) ||
-            (IsKeyPressed(KEY_PLAY_PAUSE) && boundedT == true && t >= d))
+        if (IsKeyPressed(KEY_SPACE) || IsKeyPressed(KEY_T) ||
+            IsKeyPressed(KEY_RIGHT) || IsKeyPressed(KEY_LEFT) ||
+            IsKeyPressed(KEY_DOWN) || IsKeyPressed(KEY_UP) ||
+            IsKeyPressed(KEY_W) || IsKeyPressed(KEY_Q) ||
+            IsKeyDown(KEY_S)  || IsKeyDown(KEY_A) ||
+            (IsKeyPressed(KEY_ENTER) && (boundedT == true) && (t >= d)))
         {
             t = 0.0f;
-            ballPos.x = START_X;
-            ballPos.y = START_Y;
+            ballPosition.x = 100.0f;
+            ballPosition.y = 100.0f;
             paused = true;
         }
 
-        if (IsKeyPressed(KEY_PLAY_PAUSE))
-            paused = 1 - paused;
+        if (IsKeyPressed(KEY_ENTER)) paused = !paused;
 
         // Movement computation
-        if ((paused == false) &&
-            ((boundedT == true && t < d) || boundedT == false))
+        if (!paused && ((boundedT && t < d) || !boundedT))
         {
-            ballPos.x = Easings[easingX].func(t, START_X, END_X - START_X, d);
-            ballPos.y = Easings[easingY].func(t, START_Y, END_Y - START_Y, d);
-            t += T_ADVANCE;
+            ballPosition.x = Easings[easingX].func(t, 100.0f, 700.0f - 100.0f, d);
+            ballPosition.y = Easings[easingY].func(t, 100.0f, 400.0f - 100.0f, d);
+            t += 1.0f;
         }
         //----------------------------------------------------------------------------------
 
@@ -311,25 +188,21 @@ int main(void)
         //----------------------------------------------------------------------------------
         BeginDrawing();
 
-            ClearBackground(BG_COLOR);
+            ClearBackground(RAYWHITE);
 
             // Draw information text
-            int line = 0;
-
-            DrawText(TextFormat("Easing x: %s", Easings[easingX].name), 0, FONT_SIZE * (line++), FONT_SIZE, TEXT_COLOR);
-            DrawText(TextFormat("Easing y: %s", Easings[easingY].name), 0, FONT_SIZE * (line++), FONT_SIZE, TEXT_COLOR);
-            DrawText(TextFormat("t (%c) = %.2f d = %.2f", (boundedT == true)? 'b' : 'u', t, d),
-                     0, FONT_SIZE * (line++), FONT_SIZE, TEXT_COLOR);
+            DrawText(TextFormat("Easing x: %s", Easings[easingX].name), 0, FONT_SIZE*2, FONT_SIZE, LIGHTGRAY);
+            DrawText(TextFormat("Easing y: %s", Easings[easingY].name), 0, FONT_SIZE*3, FONT_SIZE, LIGHTGRAY);
+            DrawText(TextFormat("t (%c) = %.2f d = %.2f", (boundedT == true)? 'b' : 'u', t, d), 0, FONT_SIZE*4, FONT_SIZE, LIGHTGRAY);
 
             // Draw instructions text
-            line = 1;
-            DrawText("Use ENTER to play or pause movement, use SPACE to restart", 0, SCR_HEIGHT - FONT_SIZE * (line++), FONT_SIZE, TEXT_COLOR);
-            DrawText("Use D and W or A and S keys to change duration", 0, SCR_HEIGHT - FONT_SIZE * (line++), FONT_SIZE, TEXT_COLOR);
-            DrawText("Use LEFT or RIGHT keys to choose easing for the x axis", 0, SCR_HEIGHT - FONT_SIZE * (line++), FONT_SIZE, TEXT_COLOR);
-            DrawText("Use UP or DOWN keys to choose easing for the y axis", 0, SCR_HEIGHT - FONT_SIZE * (line++), FONT_SIZE, TEXT_COLOR);
+            DrawText("Use ENTER to play or pause movement, use SPACE to restart", 0, GetScreenHeight() - FONT_SIZE*2, FONT_SIZE, LIGHTGRAY);
+            DrawText("Use D and W or A and S keys to change duration", 0, GetScreenHeight() - FONT_SIZE*3, FONT_SIZE, LIGHTGRAY);
+            DrawText("Use LEFT or RIGHT keys to choose easing for the x axis", 0, GetScreenHeight() - FONT_SIZE*4, FONT_SIZE, LIGHTGRAY);
+            DrawText("Use UP or DOWN keys to choose easing for the y axis", 0, GetScreenHeight() - FONT_SIZE*5, FONT_SIZE, LIGHTGRAY);
 
             // Draw ball
-            DrawCircleV(ballPos, BALL_RADIUS, BALL_COLOR);
+            DrawCircleV(ballPosition, 16.0f, MAROON);
 
         EndDrawing();
         //----------------------------------------------------------------------------------

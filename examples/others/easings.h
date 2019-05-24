@@ -90,7 +90,7 @@
     #define EASEDEF extern
 #endif
 
-#include <tgmath.h>       // Required for: sin(), cos(), sqrt(), pow()
+#include <math.h>       // Required for: sinf(), cosf(), sqrt(), pow()
 
 #ifndef PI
     #define PI 3.14159265358979323846f //Required as PI is not always defined in math.h
@@ -107,9 +107,9 @@ EASEDEF float EaseLinearOut(float t, float b, float c, float d) { return (c*t/d 
 EASEDEF float EaseLinearInOut(float t,float b, float c, float d) { return (c*t/d + b); }
 
 // Sine Easing functions
-EASEDEF float EaseSineIn(float t, float b, float c, float d) { return (-c*cos(t/d*(PI/2.0f)) + c + b); }
-EASEDEF float EaseSineOut(float t, float b, float c, float d) { return (c*sin(t/d*(PI/2.0f)) + b); }
-EASEDEF float EaseSineInOut(float t, float b, float c, float d) { return (-c/2.0f*(cos(PI*t/d) - 1.0f) + b); }
+EASEDEF float EaseSineIn(float t, float b, float c, float d) { return (-c*cosf(t/d*(PI/2.0f)) + c + b); }
+EASEDEF float EaseSineOut(float t, float b, float c, float d) { return (c*sinf(t/d*(PI/2.0f)) + b); }
+EASEDEF float EaseSineInOut(float t, float b, float c, float d) { return (-c/2.0f*(cosf(PI*t/d) - 1.0f) + b); }
 
 // Circular Easing functions
 EASEDEF float EaseCircIn(float t, float b, float c, float d) { t /= d; return (-c*(sqrt(1.0f - t*t) - 1.0f) + b); }
@@ -221,7 +221,7 @@ EASEDEF float EaseElasticIn(float t, float b, float c, float d)
     float s = p/4.0f;
     float postFix = a*pow(2.0f, 10.0f*(t-=1.0f));
 
-    return (-(postFix*sin((t*d-s)*(2.0f*PI)/p )) + b);
+    return (-(postFix*sinf((t*d-s)*(2.0f*PI)/p )) + b);
 }
 
 EASEDEF float EaseElasticOut(float t, float b, float c, float d)
@@ -233,7 +233,7 @@ EASEDEF float EaseElasticOut(float t, float b, float c, float d)
     float a = c;
     float s = p/4.0f;
 
-    return (a*pow(2.0f,-10.0f*t)*sin((t*d-s)*(2.0f*PI)/p) + c + b);
+    return (a*pow(2.0f,-10.0f*t)*sinf((t*d-s)*(2.0f*PI)/p) + c + b);
 }
 
 EASEDEF float EaseElasticInOut(float t, float b, float c, float d)
@@ -248,12 +248,12 @@ EASEDEF float EaseElasticInOut(float t, float b, float c, float d)
     if (t < 1.0f)
     {
         float postFix = a*pow(2.0f, 10.0f*(t-=1.0f));
-        return -0.5f*(postFix*sin((t*d-s)*(2.0f*PI)/p)) + b;
+        return -0.5f*(postFix*sinf((t*d-s)*(2.0f*PI)/p)) + b;
     }
 
     float postFix = a*pow(2.0f, -10.0f*(t-=1.0f));
 
-    return (postFix*sin((t*d-s)*(2.0f*PI)/p)*0.5f + c + b);
+    return (postFix*sinf((t*d-s)*(2.0f*PI)/p)*0.5f + c + b);
 }
 
 #ifdef __cplusplus
