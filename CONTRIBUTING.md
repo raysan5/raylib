@@ -2,6 +2,14 @@
 
 Hello contributors! Welcome to raylib! 
 
+Do you enjoy raylib and want to contribute? Nice! You can help with the following points:
+
+- C programming - Can you write/review/test/improve the code? 
+- Documentation/Tutorials/Example - Can you write some tutorial/example?
+- Web Development - Can you help [with the web](https://github.com/raysan5/raylib.com)?
+- Porting to other platforms - Can you port and compile raylib on another systems?
+- Testing - Can you find some bugs on raylib?
+
 This document contains a set of guidelines to contribute to the project. These are mostly guidelines, not rules. 
 Use your best judgement, and feel free to propose changes to this document in a pull-request.
 
