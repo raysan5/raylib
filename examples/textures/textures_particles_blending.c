@@ -33,7 +33,7 @@ int main(void)
     InitWindow(screenWidth, screenHeight, "raylib [textures] example - particles blending");
 
     // Particles pool, reuse them!
-    Particle mouseTail[MAX_PARTICLES];
+    Particle mouseTail[MAX_PARTICLES] = { 0 };
 
     // Initialize particles
     for (int i = 0; i < MAX_PARTICLES; i++)

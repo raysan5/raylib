@@ -31,9 +31,9 @@ int main(void)
     camera.type = CAMERA_PERSPECTIVE;
 
     // Generates some random columns
-    float heights[MAX_COLUMNS];
-    Vector3 positions[MAX_COLUMNS];
-    Color colors[MAX_COLUMNS];
+    float heights[MAX_COLUMNS] = { 0.0f };
+    Vector3 positions[MAX_COLUMNS] = { 0 };
+    Color colors[MAX_COLUMNS] = { 0 };
 
     for (int i = 0; i < MAX_COLUMNS; i++)
     {

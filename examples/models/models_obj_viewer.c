@@ -23,7 +23,7 @@ int main(void)
     InitWindow(screenWidth, screenHeight, "raylib example - obj viewer");
 
     // Define the camera to look into our 3d world
-    Camera camera = {{ 30.0f, 30.0f, 30.0f }, { 0.0f, 10.0f, 0.0f }, { 0.0f, 1.0f, 0.0f }, 45.0f, 0 };
+    Camera camera = { { 30.0f, 30.0f, 30.0f }, { 0.0f, 10.0f, 0.0f }, { 0.0f, 1.0f, 0.0f }, 45.0f, 0 };
 
     Model model = LoadModel("resources/models/turret.obj");                     // Load default model obj
     Texture2D texture = LoadTexture("resources/models/turret_diffuse.png");     // Load default model texture

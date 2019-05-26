@@ -61,8 +61,8 @@ int main(void)
     SetPhysicsBodyRotation(bodyA, 30*DEG2RAD);
 
     PhysicsBody bodyB = CreatePhysicsBodyRectangle((Vector2){ screenWidth - 35, screenHeight*0.6f }, 40, 40, 10);
-    bodyB->staticFriction = 1;
-    bodyB->dynamicFriction = 1;
+    bodyB->staticFriction = 1.0f;
+    bodyB->dynamicFriction = 1.0f;
     SetPhysicsBodyRotation(bodyB, 330*DEG2RAD);
 
     SetTargetFPS(60);               // Set our game to run at 60 frames-per-second

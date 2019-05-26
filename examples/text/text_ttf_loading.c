@@ -33,7 +33,7 @@ int main(void)
 
     float fontSize = font.baseSize;
     Vector2 fontPosition = { 40, screenHeight/2 - 80 };
-    Vector2 textSize;
+    Vector2 textSize = { 0.0f, 0.0f };
 
     // Setup texture scaling filter
     SetTextureFilter(font.texture, FILTER_POINT);

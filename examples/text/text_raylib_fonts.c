@@ -26,7 +26,7 @@ int main(void)
     InitWindow(screenWidth, screenHeight, "raylib [text] example - raylib fonts");
 
     // NOTE: Textures MUST be loaded after Window initialization (OpenGL context is required)
-    Font fonts[MAX_FONTS];
+    Font fonts[MAX_FONTS] = { 0 };
 
     fonts[0] = LoadFont("resources/fonts/alagard.png");
     fonts[1] = LoadFont("resources/fonts/pixelplay.png");
@@ -48,7 +48,7 @@ int main(void)
 
     const int spacings[MAX_FONTS] = { 2, 4, 8, 4, 3, 4, 4, 1 };
 
-    Vector2 positions[MAX_FONTS];
+    Vector2 positions[MAX_FONTS] = { 0 };
 
     for (int i = 0; i < MAX_FONTS; i++)
     {

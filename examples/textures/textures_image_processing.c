@@ -57,7 +57,7 @@ int main(void)
     int currentProcess = NONE;
     bool textureReload = false;
 
-    Rectangle selectRecs[NUM_PROCESSES];
+    Rectangle selectRecs[NUM_PROCESSES] = { 0 };
 
     for (int i = 0; i < NUM_PROCESSES; i++) selectRecs[i] = (Rectangle){ 40.0f, (float)(50 + 32*i), 150.0f, 30.0f };
 

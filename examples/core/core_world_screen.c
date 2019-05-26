@@ -29,8 +29,7 @@ int main(void)
     camera.type = CAMERA_PERSPECTIVE;
 
     Vector3 cubePosition = { 0.0f, 0.0f, 0.0f };
-
-    Vector2 cubeScreenPosition;
+    Vector2 cubeScreenPosition = { 0.0f, 0.0f };
 
     SetCameraMode(camera, CAMERA_FREE); // Set a free camera mode
 

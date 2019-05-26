@@ -23,8 +23,8 @@ int main(void)
     InitWindow(screenWidth, screenHeight, "raylib [core] example - 2d camera");
 
     Rectangle player = { 400, 280, 40, 40 };
-    Rectangle buildings[MAX_BUILDINGS];
-    Color buildColors[MAX_BUILDINGS];
+    Rectangle buildings[MAX_BUILDINGS] = { 0 };
+    Color buildColors[MAX_BUILDINGS] = { 0 };
 
     int spacing = 0;
 
@@ -41,7 +41,6 @@ int main(void)
     }
 
     Camera2D camera = { 0 };
-
     camera.target = (Vector2){ player.x + 20, player.y + 20 };
     camera.offset = (Vector2){ 0, 0 };
     camera.rotation = 0.0f;

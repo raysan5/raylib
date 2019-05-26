@@ -22,7 +22,7 @@ int main(void)
 
     InitWindow(screenWidth, screenHeight, "raylib [text] example - draw text inside a rectangle");
 
-    char text[] = "Text cannot escape\tthis container\t...word wrap also works when active so here's\
+    const char text[] = "Text cannot escape\tthis container\t...word wrap also works when active so here's\
     a long text for testing.\n\nLorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod\
     tempor incididunt ut labore et dolore magna aliqua. Nec ullamcorper sit amet risus nullam eget felis eget.";
 
@@ -38,15 +38,15 @@ int main(void)
     const int maxWidth = screenWidth - 50;
     const int maxHeight = screenHeight - 160;
 
-    Vector2 lastMouse = { 0, 0 };   // Stores last mouse coordinates
-    Color borderColor = MAROON;     // Container border color
-    Font font = GetFontDefault();   // Get default system font
+    Vector2 lastMouse = { 0.0f, 0.0f }; // Stores last mouse coordinates
+    Color borderColor = MAROON;         // Container border color
+    Font font = GetFontDefault();       // Get default system font
 
-    SetTargetFPS(60);               // Set our game to run at 60 frames-per-second
+    SetTargetFPS(60);                   // Set our game to run at 60 frames-per-second
     //--------------------------------------------------------------------------------------
 
     // Main game loop
-    while (!WindowShouldClose())    // Detect window close button or ESC key
+    while (!WindowShouldClose())        // Detect window close button or ESC key
     {
         // Update
         //----------------------------------------------------------------------------------

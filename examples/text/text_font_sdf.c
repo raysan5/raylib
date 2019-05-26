@@ -57,7 +57,7 @@ int main(void)
     SetTextureFilter(fontSDF.texture, FILTER_BILINEAR);    // Required for SDF font
 
     Vector2 fontPosition = { 40, screenHeight/2 - 50 };
-    Vector2 textSize = { 0.0f };
+    Vector2 textSize = { 0.0f, 0.0f };
     float fontSize = 16.0f;
     int currentFont = 0;            // 0 - fontDefault, 1 - fontSDF
     

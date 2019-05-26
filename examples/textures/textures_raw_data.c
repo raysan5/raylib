@@ -31,7 +31,7 @@ int main(void)
     Texture2D fudesumi = LoadTextureFromImage(fudesumiRaw);  // Upload CPU (RAM) image to GPU (VRAM)
     UnloadImage(fudesumiRaw);                                // Unload CPU (RAM) image data
 
-    // Generate a checked texture by code (1024x1024 pixels)
+    // Generate a checked texture by code
     int width = 960;
     int height = 480;
 
