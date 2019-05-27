@@ -13,7 +13,8 @@ Also, check [GitHub Issues](https://github.com/raysan5/raylib/issues) for furthe
  - [ ] Basic CPU/GPU stats sytem (memory, draws, time...)
  
 **raylib 2.5**
- - [x] Support Animated models (2.5)
+ - [x] Support Animated models
+ - [x] Support glTF models file format
  - [x] Unicode support on text drawing
  
 **raylib 2.0**
