@@ -1,9 +1,10 @@
 roadmap
 -------
 
-Here it is a wish-list with features and ideas to improve the library. Note that features listed here are usually high-level and long term additions for the library. Current version of raylib is complete and functional but there is a lot of room for improvement.
+Here it is a wish-list with features and ideas to improve the library. Note that features listed here are quite high-level and could be long term additions for the library. Current version of raylib is complete and functional but there is a lot of room for improvement.
 
-[raylib source code](https://github.com/raysan5/raylib/tree/master/src) has some *TODO* marks around code with pending things to review and improve. Also, check [GitHub Issues](https://github.com/raysan5/raylib/issues) for further details!
+[raylib source code](https://github.com/raysan5/raylib/tree/master/src) has some *TODO* marks around code with pending things to review and improve. 
+Also, check [GitHub Issues](https://github.com/raysan5/raylib/issues) for further details!
 
 **raylib 2.x**
  - [ ] rnet: raylib network module
