@@ -15,7 +15,7 @@ KEY CHANGES:
  - [text] New text management API (multiple functions)
  - [text] Full Unicode support (utf8 text)
  - [textures] Cubemap textures support
- - [textures]New textures drawing: Quad and N-Patch based rectangles
+ - [textures] Quad and N-Patch drawing
  - [models] Skeletal model animation support
  - [models] Support multiple meshes per model
  - [models] Support glTF model loading
@@ -158,7 +158,7 @@ Release:     raylib 2.0 (July 2018)
 -----------------------------------------------
 KEY CHANGES:
   - Removed external dependencies (GLFW3 and OpenAL)
-  - Complete redesign of audio module to use mini_al audio library
+  - Complete redesign of audio module to use miniaudio library
   - Support AppVeyor and Travis CI (continuous integration) building
   - Reviewed raymath.h for better consistency and performance (inlining)
   - Refactor all #define SUPPORT_* into a single config.h
