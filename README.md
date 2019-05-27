@@ -4,11 +4,10 @@
 
 raylib is highly inspired by Borland BGI graphics lib and by XNA framework and it's specially well suited for prototyping, tooling, graphical applications, embedded systems and education.
 
-*NOTE for ADVENTURERS: raylib is a programming library to enjoy videogames programming; 
-no fancy interface, no visual helpers, no auto-debugging... just coding in the most 
-pure spartan-programmers way.*
+*NOTE for ADVENTURERS: raylib is a programming library to enjoy videogames programming; no fancy interface, no visual helpers, no auto-debugging... just coding in the most pure spartan-programmers way.*
 
 Ready to learn? Jump to [code examples!](http://www.raylib.com/examples.html)
+
 
 [![Build Status](https://travis-ci.org/raysan5/raylib.svg?branch=master)](https://travis-ci.org/raysan5/raylib)
 [![https://ci.appveyor.com/api/projects/status/github/raysan5/raylib?svg=true](https://ci.appveyor.com/api/projects/status/github/raysan5/raylib?svg=true)](https://ci.appveyor.com/project/raysan5/raylib)
@@ -36,7 +35,7 @@ features
   - Bindings to [+25 programming languages](https://github.com/raysan5/raylib/blob/master/BINDINGS.md)!
 
 
-raylib uses on its [core](https://github.com/raysan5/raylib/blob/master/src/core.c) module the outstanding [GLFW3](http://www.glfw.org/) library, embedded inside raylib in the form of [rglfw](https://github.com/raysan5/raylib/blob/master/src/rglfw.c) module, to avoid external dependencies.
+raylib uses on its [core](https://github.com/raysan5/raylib/blob/master/src/core.c) module the outstanding [GLFW3](http://www.glfw.org/) library, embedded in the form of [rglfw](https://github.com/raysan5/raylib/blob/master/src/rglfw.c) module, to avoid external dependencies.
 
 raylib uses on its [raudio](https://github.com/raysan5/raylib/blob/master/src/raudio.c) module, the amazing [miniaudio](https://github.com/dr-soft/miniaudio) library to support multiple platforms and multiple audio backends.
 
