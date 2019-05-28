@@ -130,5 +130,6 @@ contributing (in some way or another) to make the raylib project better. Huge th
  - [Wilhem Barbier](https://github.com/wbrbr) for implementing glTF loading support and solving several issues
  - [Marco Lizza](https://github.com/MarcoLizza) for improving logging system and multiple issues
  - [Anata](https://github.com/anatagawa) for creating amazing examples and contributing with them
+ - [Narice](https://github.com/narice) made easings.h includable as standalone header
  
 Please, if I forget someone in this list, excuse me and send a PR!
