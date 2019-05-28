@@ -125,8 +125,8 @@ jwE50AGjLCVuS8Yt4H7OgZLKK5EKOsLviEWJSL/+0uMi7gLUSBseYwqEbXvSHCec1CJvZPyHCmYQffaB
       }
       
       #progress {
-        height: 20px;
-        width: 30px;
+        height: 0px;
+        width: 0px;
       }
       
       #controls {
@@ -264,7 +264,7 @@ jwE50AGjLCVuS8Yt4H7OgZLKK5EKOsLviEWJSL/+0uMi7gLUSBseYwqEbXvSHCec1CJvZPyHCmYQffaB
                     text = m[1];
                     progressElement.value = parseInt(m[2])*100;
                     progressElement.max = parseInt(m[4])*100;
-                    progressElement.hidden = false;
+                    progressElement.hidden = true;
                     spinnerElement.hidden = false;
                 } else {
                     progressElement.value = null;
