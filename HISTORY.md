@@ -201,4 +201,29 @@ Probably by now, **raylib 2.0 is the simplest and easiest-to-use library to enjo
 notes on raylib 2.5
 -------------------
 
-SOON.
+After almost one years since latest raylib installment, here it is **raylib 2.5**. A lot of work has been put on this new version and consequently I decided to bump versioning several digits. The complete list of changes and additions is humungous, details can be found in the [CHANGELOG](CHANGELOG), and here it is a short recap with the highlight improvements.
+
+New **window management and filesystem functions** added to query monitor information, deal with clipboard, check directory files info and even launch a URL with default system web browser. Experimental **High-DPI monitor support** has also been added through a compile flag.
+
+**Redesigned Gamepad mechanism**, now generic for all platforms and gamepads, no more specific gamepad configurations.
+**Redesigned UWP input system**, now raylib supports UWP seamlessly, previous implementation required a custom input system implemented in user code, avoiding raylib provided one.
+
+`rlgl` module has been redesigned to **support a unique buffer for shapes drawing batching**, including LINES, TRIANGLES, QUADS in the same indexed buffer, also added support for multi-buffering if required. Additionally, `rlPushMatrix()`/`rlPopMatrix()` functionality has been reviewed to behave exactly like OpenGL 1.1, `models_rlgl_solar_system` example has been added to illustrate this behaviour.
+
+**VR simulator** has been reviewed to **allow custom configuration of Head-Mounted-Device parameters and distortion shader** customization, `core_vr_simulator` has been properly adapted to showcase this new functionality, now the VR simulator is a generic configurable stereo rendering system that allows any VR device simulation with just a few lines of code or even dynamic tweaking of HMD parameters.
+
+**Unicode text drawing** support; now raylib processes UTF8 strings on drawing, supporting Unicode codepoints, allowing rendering mostly any existent language (as long as the font with the glyphs is provided). An amazing example showing this feature is also provided: `text_unicode`.
+
+Brand **new text management API**, with the addition of multiple functions to deal with text data, including functionality like replace, insert, join, split, append, to uppercase, to lower... Note that most of those functions are intended for text management on rendering, using pre-loaded internal buffers, not allocating new memory that user should free manually. 
+
+Multiple **new shapes and textures drawing functions** have been added to support rings (`DrawRing()`, `DrawRingLines()`), circle sectors (`DrawCircleSector()`, `DrawCircleSectorLines()`), rounded rectangles (`DrawRectangleRounded()`, `DrawRectangleRoundedLines()`) and also n-patch textures drawing (`DrawTextureNPatch()`), detailed examples has been added to illustrate all this new functionality. 
+
+A new function `SetShapesTexture()` has been added to allow the user define the texture used on shapes drawing, it could be extremely useful if setting a text-atlas-white-rectangle, allowing the draw of text and shapes in a single draw call.
+
+Experimental **cubemap support** functionality, to automatically load multiple cubemap layouts (`LoadTextureCubemap()`). It also required some internal `rlgl` redesign to allow cubemap textures.
+
+**Skeletal animation support for 3d models**, this addition implied a redesign of `Model` data structure to accomodate multiple mesh/multiple materials support and bones information. Multiple models functions have reviewed and added on this process, also **glTF models loading support** has been added.
+
+This is a just a brief list with some of the changes of the new **raylib 2.5** but there is way more, about **70 new functions** has been added and several subsystems have been redesigned. More than **30 new examples** has been created to show the new functionalities and better illustrate already available ones. 
+
+It has been a long year of hard work to make raylib a solid technology to develop new products over it.
