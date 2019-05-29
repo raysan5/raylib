@@ -21,11 +21,12 @@ int main(void)
 {
     // Initialization
     //--------------------------------------------------------------------------------------
-    const int screenWidth = 1080;
-    const int screenHeight = 600;
+    const int screenWidth = 800;
+    const int screenHeight = 450;
 
     // NOTE: screenWidth/screenHeight should match VR device aspect ratio
 
+    SetConfigFlags(FLAG_MSAA_4X_HINT);
     InitWindow(screenWidth, screenHeight, "raylib [core] example - vr simulator");
 
     // Init VR simulator (Oculus Rift CV1 parameters)

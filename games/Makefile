@@ -27,7 +27,7 @@
 PROJECT_NAME       ?= raylib_examples
 RAYLIB_VERSION     ?= 2.5.0
 RAYLIB_API_VERSION ?= 2
-RAYLIB_PATH        ?= C:\GitHub\raylib
+RAYLIB_PATH        ?= D:\GitHub\raylib
 
 # Define default options
 
@@ -115,7 +115,7 @@ endif
 
 ifeq ($(PLATFORM),PLATFORM_WEB)
     # Emscripten required variables
-    EMSDK_PATH          ?= C:/emsdk
+    EMSDK_PATH          ?= D:/emsdk
     EMSCRIPTEN_VERSION  ?= 1.38.31
     CLANG_VERSION       = e$(EMSCRIPTEN_VERSION)_64bit
     PYTHON_VERSION      = 2.7.13.1_64bit\python-2.7.13.amd64
