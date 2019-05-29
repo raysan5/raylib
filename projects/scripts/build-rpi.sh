@@ -24,7 +24,7 @@ set -e
 while getopts ":hdusrcq" opt; do
     case $opt in
         h)
-            echo "Usage: ./osx-build.sh [-hdusrcqq]"
+            echo "Usage: ./linux-build.sh [-hdusrcqq]"
             echo " -h  Show this information"
             echo " -d  Faster builds that have debug symbols, and enable warnings"
             echo " -u  Run upx* on the executable after compilation (before -r)"
@@ -39,10 +39,10 @@ while getopts ":hdusrcq" opt; do
             echo "  requires that you have upx installed and on your path, of course."
             echo ""
             echo "Examples:"
-            echo " Build a release build:                    ./osx-build.sh"
-            echo " Build a release build, full recompile:    ./osx-build.sh -c"
-            echo " Build a debug build and run:              ./osx-build.sh -d -r"
-            echo " Build in debug, run, don't print at all:  ./osx-build.sh -drqq"
+            echo " Build a release build:                    ./linux-build.sh"
+            echo " Build a release build, full recompile:    ./linux-build.sh -c"
+            echo " Build a debug build and run:              ./linux-build.sh -d -r"
+            echo " Build in debug, run, don't print at all:  ./linux-build.sh -drqq"
             exit 0
             ;;
         d)
@@ -85,17 +85,17 @@ SOURCES="$ROOT_DIR/$SOURCES"
 RAYLIB_SRC="$ROOT_DIR/$RAYLIB_SRC"
 
 # Flags
-OUTPUT_DIR="builds/osx"
-COMPILATION_FLAGS="-std=c99 -O2 -flto"
+OUTPUT_DIR="builds/linux"
+COMPILATION_FLAGS="-std=c99 -Os -flto"
 FINAL_COMPILE_FLAGS="-s"
 WARNING_FLAGS="-Wall -Wextra -Wpedantic"
-LINK_FLAGS="-flto -framework OpenGL -framework OpenAL -framework IOKit -framework CoreVideo -framework Cocoa"
+LINK_FLAGS="-flto -lm -ldl -lrt -lpthread -lv4l2 -lbrcmGLESv2 -lbrcmEGL -lbcm_host -L/opt/vc/lib"
 # Debug changes to flags
 if [ -n "$BUILD_DEBUG" ]; then
-    OUTPUT_DIR="builds-debug/osx"
+    OUTPUT_DIR="builds-debug/linux"
     COMPILATION_FLAGS="-std=c99 -O0 -g"
     FINAL_COMPILE_FLAGS=""
-    LINK_FLAGS="-framework OpenGL -framework OpenAL -framework IOKit -framework CoreVideo -framework Cocoa"
+    LINK_FLAGS="-lm -ldl -lrt -lpthread -lv4l2 -lbrcmGLESv2 -lbrcmEGL -lbcm_host -L/opt/vc/lib"
 fi
 
 # Display what we're doing
@@ -119,15 +119,13 @@ fi
 if [ ! -d "$TEMP_DIR" ]; then
     mkdir -p $TEMP_DIR
     cd $TEMP_DIR
-    RAYLIB_DEFINES="-D_DEFAULT_SOURCE -DPLATFORM_DESKTOP -DGRAPHICS_API_OPENGL_33"
+    RAYLIB_DEFINES="-D_DEFAULT_SOURCE -DPLATFORM_RPI -DGRAPHICS_API_OPENGL_ES2"
     RAYLIB_C_FILES="$RAYLIB_SRC/core.c $RAYLIB_SRC/shapes.c $RAYLIB_SRC/textures.c $RAYLIB_SRC/text.c $RAYLIB_SRC/models.c $RAYLIB_SRC/utils.c $RAYLIB_SRC/raudio.c"
-    RAYLIB_INCLUDE_FLAGS="-I$RAYLIB_SRC -I$RAYLIB_SRC/external/glfw/include"
+    RAYLIB_INCLUDE_FLAGS="-I$RAYLIB_SRC -I/opt/vc/include"
 
     if [ -n "$REALLY_QUIET" ]; then
-        $CC -c $RAYLIB_DEFINES $RAYLIB_INCLUDE_FLAGS $COMPILATION_FLAGS -x objective-c $RAYLIB_SRC/rglfw.c > /dev/null 2>&1
         $CC -c $RAYLIB_DEFINES $RAYLIB_INCLUDE_FLAGS $COMPILATION_FLAGS $RAYLIB_C_FILES > /dev/null 2>&1
     else
-        $CC -c $RAYLIB_DEFINES $RAYLIB_INCLUDE_FLAGS $COMPILATION_FLAGS -x objective-c $RAYLIB_SRC/rglfw.c
         $CC -c $RAYLIB_DEFINES $RAYLIB_INCLUDE_FLAGS $COMPILATION_FLAGS $RAYLIB_C_FILES
     fi
     [ -z "$QUIET" ] && echo "COMPILE-INFO: Raylib compiled into object files in: $TEMP_DIR/"
@@ -139,10 +137,10 @@ mkdir -p $OUTPUT_DIR
 cd $OUTPUT_DIR
 [ -z "$QUIET" ] && echo "COMPILE-INFO: Compiling game code."
 if [ -n "$REALLY_QUIET" ]; then
-    $CC -c -I$RAYLIB_SRC $SOURCES $COMPILATION_FLAGS $WARNING_FLAGS > /dev/null 2>&1
+    $CC -c -I$RAYLIB_SRC $COMPILATION_FLAGS $WARNING_FLAGS $SOURCES > /dev/null 2>&1
     $CC -o $GAME_NAME $ROOT_DIR/$TEMP_DIR/*.o *.o $LINK_FLAGS > /dev/null 2>&1
 else
-    $CC -c -I$RAYLIB_SRC $SOURCES $COMPILATION_FLAGS $WARNING_FLAGS
+    $CC -c -I$RAYLIB_SRC $COMPILATION_FLAGS $WARNING_FLAGS $SOURCES
     $CC -o $GAME_NAME $ROOT_DIR/$TEMP_DIR/*.o *.o $LINK_FLAGS
 fi
 rm *.o
