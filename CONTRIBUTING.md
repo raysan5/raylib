@@ -125,11 +125,12 @@ contributing (in some way or another) to make the raylib project better. Huge th
  - [Vlad Adrian](https://github.com/Demizdor) for an amazing work on Unicode support, new shapes functions and raygui.
  - [Reece Mackie](https://github.com/Rover656) for a great work on improving UWP support
  - [flashback-fx](flashback-fx) for improving easings library and example
- - [Jorge A. Gomes](https://github.com/overdev) for adding nine-patch textures support
+ - [Jorge A. Gomes](https://github.com/overdev) for adding nine-patch textures support and example
  - [Berni8k](https://github.com/Berni8k) for improving Raspberry Pi input system, using evdev
  - [Wilhem Barbier](https://github.com/wbrbr) for implementing glTF loading support and solving several issues
  - [Marco Lizza](https://github.com/MarcoLizza) for improving logging system and multiple issues
  - [Anata](https://github.com/anatagawa) for creating amazing examples and contributing with them
  - [Narice](https://github.com/narice) made easings.h includable as standalone header
+ - [Eric J.](https://github.com/ProfJski) for shaders_eratosthenes example contribution
  
 Please, if I forget someone in this list, excuse me and send a PR!
