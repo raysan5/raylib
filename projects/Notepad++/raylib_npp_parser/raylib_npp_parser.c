@@ -17,6 +17,8 @@
     </KeyWord>
     
     NOTE: Generated XML text should be copied inside raylib\Notepad++\plugins\APIs\c.xml
+    
+    WARNING: Be careful with functions that split parameters into several lines, it breaks the process!
 
     LICENSE: zlib/libpng
 
