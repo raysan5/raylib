@@ -53,7 +53,7 @@ int main(void)
 
             ClearBackground(RAYWHITE);
 
-            DrawText("Press SPACE to use TTF generated font", 20, 20, 20, LIGHTGRAY);
+            DrawText("Hold SPACE to use TTF generated font", 20, 20, 20, LIGHTGRAY);
 
             if (!useTtf)
             {

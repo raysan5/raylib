@@ -66,7 +66,7 @@ int main(void)
 
                 for (int i = 0; i < 10; i++) DrawRectangle(0, (gameScreenHeight/10)*i, gameScreenWidth, gameScreenHeight/10, colors[i]);
 
-                DrawText("You can resize the window,\nand see the screen scaling!", 10, 25, 20, WHITE);
+                DrawText("If executed inside a window,\nyou can resize the window,\nand see the screen scaling!", 10, 25, 20, WHITE);
 
             EndTextureMode();
 
