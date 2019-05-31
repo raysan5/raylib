@@ -42,6 +42,7 @@ The following fonts [provided with raylib](https://github.com/raysan5/raylib/tre
 ------
 
 [scarfy spritesheet](https://github.com/raysan5/raylib/blob/master/examples/textures/resources/scarfy.png) and [fudesumi image](https://github.com/raysan5/raylib/blob/master/examples/textures/resources/fudesumi.png) have been created by [Eiden Marsal](https://www.artstation.com/artist/marshall_z) and are licensed as [Creative Commons Attribution-NonCommercial 3.0](https://creativecommons.org/licenses/by-nc/3.0/legalcode)
+[cyberpunk street environments](https://github.com/raysan5/raylib/blob/master/examples/textures/resources) have been created by Luis Zuno ([@ansimuz](https://twitter.com/ansimuz)) and are licensed as [CC-BY-3.0](http://creativecommons.org/licenses/by/3.0/)
 
 3d models
 ---------
