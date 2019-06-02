@@ -74,6 +74,7 @@
 #cmakedefine SUPPORT_FILEFORMAT_XM 1
 #cmakedefine SUPPORT_FILEFORMAT_MOD 1
 #cmakedefine SUPPORT_FILEFORMAT_FLAC 1
+#cmakedefine SUPPORT_FILEFORMAT_MP3 1
 
 // utils.c
 /* Show TraceLog() output messages. NOTE: By default LOG_DEBUG traces not shown */
