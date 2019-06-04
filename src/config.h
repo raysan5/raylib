@@ -43,7 +43,7 @@
 // Mouse gestures are directly mapped like touches and processed by gestures system
 #define SUPPORT_MOUSE_GESTURES      1
 // Reconfigure standard input to receive key inputs, works with SSH connection.
-//#define SUPPORT_SSH_KEYBOARD_RPI    1
+#define SUPPORT_SSH_KEYBOARD_RPI    1
 // Use busy wait loop for timing sync, if not defined, a high-resolution timer is setup and used
 //#define SUPPORT_BUSY_WAIT_LOOP      1
 // Wait for events passively (sleeping while no events) instead of polling them actively every frame
