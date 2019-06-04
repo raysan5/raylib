@@ -469,9 +469,6 @@ void UpdateCamera(Camera *camera)
                                    sinf(cameraAngle.x)*direction[MOVE_LEFT] -
                                    sinf(cameraAngle.x)*direction[MOVE_RIGHT])/PLAYER_MOVEMENT_SENSITIVITY;
 
-            bool isMoving = false;  // Required for swinging
-									 
-            for (int i = 0; i < 6; i++) if (direction[i]) { isMoving = true; break; }
             
             // Camera orientation calculation
             cameraAngle.x += (mousePositionDelta.x*-CAMERA_MOUSE_MOVE_SENSITIVITY);
