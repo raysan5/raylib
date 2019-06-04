@@ -2,7 +2,7 @@
 :: > Setup required Environment
 :: -------------------------------------
 set RAYLIB_DIR=C:\raylib
-set PATH=%PATH%;%RAYLIB_DIR%\mingw32\bin
+set PATH=%PATH%;%RAYLIB_DIR%\mingw\bin
 set FILE_NAME=%1
 set NAME_PART=%FILE_NAME:~0,-2%
 cd %~dp0
@@ -13,7 +13,7 @@ cmd /c if exist %NAME_PART%.exe del /F %NAME_PART%.exe
 :: .
 :: > Compiling program
 :: --------------------------
-gcc -o %NAME_PART%.exe %FILE_NAME% %RAYLIB_DIR%\raylib.rc.data -s -O2 -I../../src -Iexternal -lraylib -lopengl32 -lgdi32 -lwinmm -std=c99 -Wall -mwindows
+gcc -o %NAME_PART%.exe %FILE_NAME% %RAYLIB_DIR%\src\raylib.rc.data -s -O2 -I../../src -Iexternal -lraylib -lopengl32 -lgdi32 -lwinmm -std=c99 -Wall -mwindows
 :: .
 :: . > Executing program
 :: -------------------------

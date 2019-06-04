@@ -13,11 +13,11 @@
 				<Option compiler="gcc" />
 				<Compiler>
 					<Add option="-g" />
-					<Add directory="../../raylib/raylib/release/include" />
+					<Add directory="../../src" />
 				</Compiler>
 				<Linker>
 					<Add option="-lraylib -lopengl32 -lgdi32 -lwinmm" />
-					<Add library="../../../../raylib/raylib/release/libs/win32/mingw32/libraylib.a" />
+					<Add library="../../src/libraylib.a" />
 				</Linker>
 			</Target>
 			<Target title="Release">
@@ -27,12 +27,12 @@
 				<Option compiler="gcc" />
 				<Compiler>
 					<Add option="-O2" />
-					<Add directory="../../../../raylib/raylib/release/include" />
+					<Add directory="../../src" />
 				</Compiler>
 				<Linker>
 					<Add option="-s" />
 					<Add option="-lraylib -lopengl32 -lgdi32 -lwinmm" />
-					<Add library="../../../../raylib/raylib/release/libs/win32/mingw32/libraylib.a" />
+					<Add library="../../src/libraylib.a" />
 				</Linker>
 			</Target>
 		</Build>
