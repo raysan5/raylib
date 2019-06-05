@@ -938,6 +938,47 @@ int GetMonitorCount(void)
 #endif
 }
 
+int GetCurrentMonitor(void)
+{
+
+    int bestmonitor = 0;
+
+#if defined(PLATFORM_DESKTOP)
+
+    int nmonitors, i;
+    int wx, wy, ww, wh;
+    int mx, my, mw, mh;
+    int overlap, bestoverlap;
+    GLFWmonitor **monitors;
+    const GLFWvidmode *mode;
+
+    bestoverlap = 0;
+
+    glfwGetWindowPos(window, &wx, &wy);
+    glfwGetWindowSize(window, &ww, &wh);
+    monitors = glfwGetMonitors(&nmonitors);
+
+    for (i = 0; i < nmonitors; i++) {
+        mode = glfwGetVideoMode(monitors[i]);
+        glfwGetMonitorPos(monitors[i], &mx, &my);
+        mw = mode->width;
+        mh = mode->height;
+
+        overlap =
+                maxi(0, mini(wx + ww, mx + mw) - maxi(wx, mx)) *
+                maxi(0, mini(wy + wh, my + mh) - maxi(wy, my));
+
+        if (bestoverlap < overlap) {
+            bestoverlap = overlap;
+            bestmonitor = i;
+        }
+    }
+#endif
+    return bestmonitor;
+
+}
+
+
 // Get primary monitor width
 int GetMonitorWidth(int monitor)
 {
