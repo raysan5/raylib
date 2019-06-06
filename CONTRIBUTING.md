@@ -132,5 +132,7 @@ contributing (in some way or another) to make the raylib project better. Huge th
  - [Anata](https://github.com/anatagawa) for creating amazing examples and contributing with them
  - [Narice](https://github.com/narice) made easings.h includable as standalone header
  - [Eric J.](https://github.com/ProfJski) for shaders_eratosthenes example contribution
+ - [PompPenguin](https://github.com/PompPenguin) for reviewing 3rd person camera
+ - [Mohamed Shazan](https://github.com/msmshazan) for adding support for ANGLE graphics backend
  
 Please, if I forget someone in this list, excuse me and send a PR!

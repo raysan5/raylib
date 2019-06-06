@@ -43,7 +43,7 @@
 
 # Define required raylib variables
 RAYLIB_VERSION     = 2.5.0
-RAYLIB_API_VERSION = 2
+RAYLIB_API_VERSION = 251
 
 # See below for alternatives.
 RAYLIB_PATH        = ..
