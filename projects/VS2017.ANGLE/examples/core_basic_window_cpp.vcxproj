@@ -107,7 +107,7 @@
       <AdditionalLibraryDirectories>$(SolutionDir)..\..\release\libs\win32\msvc;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
     </Link>
     <PostBuildEvent>
-      <Command>xcopy $(SolutionDir)..\..\src\external\ANGLE\lib\$(PlatformTarget)\*.dll $(OutDir) /Y /E /Q</Command>
+      <Command>xcopy $(SolutionDir)lib\$(PlatformTarget)\*.dll $(OutDir) /Y /E /Q</Command>
     </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug.DLL|Win32'">
@@ -151,7 +151,7 @@
       <AdditionalDependencies>kernel32.lib;user32.lib;gdi32.lib;winmm.lib;winspool.lib;comdlg32.lib;advapi32.lib;shell32.lib;ole32.lib;oleaut32.lib;uuid.lib;odbc32.lib;odbccp32.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
     <PostBuildEvent>
-      <Command>xcopy $(SolutionDir)..\..\src\external\ANGLE\lib\$(PlatformTarget)\*.dll $(OutDir) /Y /E /Q</Command>
+      <Command>xcopy $(SolutionDir)lib\$(PlatformTarget)\*.dll $(OutDir) /Y /E /Q</Command>
     </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release.DLL|Win32'">
