@@ -97,7 +97,7 @@
       <SubSystem>Windows</SubSystem>
     </Link>
     <Lib>
-      <AdditionalLibraryDirectories>$(SolutionDir)..\..\src\external\ANGLE\lib\$(PlatformTarget);%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalLibraryDirectories>$(SolutionDir)lib\$(PlatformTarget);%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <AdditionalDependencies>libEGL.lib;libGLESv2.lib</AdditionalDependencies>
     </Lib>
   </ItemDefinitionGroup>
@@ -137,7 +137,7 @@
       <OptimizeReferences>true</OptimizeReferences>
     </Link>
     <Lib>
-      <AdditionalLibraryDirectories>$(SolutionDir)..\..\src\external\ANGLE\lib\$(PlatformTarget);%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalLibraryDirectories>$(SolutionDir)lib\$(PlatformTarget);%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <AdditionalDependencies>libEGL.lib;libGLESv2.lib</AdditionalDependencies>
     </Lib>
   </ItemDefinitionGroup>
