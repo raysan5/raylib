@@ -1304,7 +1304,7 @@ RLAPI void SetShaderValueMatrix(Shader shader, int uniformLoc, Matrix mat);     
 RLAPI void SetShaderValueTexture(Shader shader, int uniformLoc, Texture2D texture); // Set shader uniform value for texture
 RLAPI void SetMatrixProjection(Matrix proj);                              // Set a custom projection matrix (replaces internal projection matrix)
 RLAPI void SetMatrixModelview(Matrix view);                               // Set a custom modelview matrix (replaces internal modelview matrix)
-RLAPI Matrix GetMatrixModelview();                                        // Get internal modelview matrix
+RLAPI Matrix GetMatrixModelview(void);                                    // Get internal modelview matrix
 
 // Texture maps generation (PBR)
 // NOTE: Required shaders should be provided
