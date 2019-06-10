@@ -498,6 +498,9 @@ static EM_BOOL EmscriptenGamepadCallback(int eventType, const EmscriptenGamepadE
 static void InitKeyboard(void);                         // Init raw keyboard system (standard input reading)
 static void ProcessKeyboard(void);                      // Process keyboard events
 static void RestoreKeyboard(void);                      // Restore keyboard system
+#else
+static void InitTerminal(void);                         // Init terminal (block echo and signal short cuts)
+static void RestoreTerminal(void);                      // Restore terminal
 #endif
 
 static void InitEvdevInput(void);                       // Evdev inputs initialization
@@ -537,7 +540,52 @@ struct android_app *GetAndroidApp(void)
     return androidApp;
 }
 #endif
+#if defined(PLATFORM_RPI) && !defined(SUPPORT_SSH_KEYBOARD_RPI)
+// Init terminal (block echo and signal short cuts)
+static void InitTerminal(void)
+{
+    TraceLog(LOG_INFO, "Reconfigure Terminal ...");
+    // Save terminal keyboard settings and reconfigure terminal with new settings
+    struct termios keyboardNewSettings;
+    tcgetattr(STDIN_FILENO, &defaultKeyboardSettings);    // Get current keyboard settings
+    keyboardNewSettings = defaultKeyboardSettings;
 
+    // New terminal settings for keyboard: turn off buffering (non-canonical mode), echo
+    // NOTE: ISIG controls if ^C and ^Z generate break signals or not
+    keyboardNewSettings.c_lflag &= ~(ICANON | ECHO | ISIG);
+    keyboardNewSettings.c_cc[VMIN] = 1;
+    keyboardNewSettings.c_cc[VTIME] = 0;
+
+    // Set new keyboard settings (change occurs immediately)
+    tcsetattr(STDIN_FILENO, TCSANOW, &keyboardNewSettings);
+
+    // Save old keyboard mode to restore it at the end
+    if (ioctl(STDIN_FILENO, KDGKBMODE, &defaultKeyboardMode) < 0)
+    {
+        // NOTE: It could mean we are using a remote keyboard through ssh or from the desktop
+        TraceLog(LOG_WARNING, "Could not change keyboard mode (Not a local Terminal)");
+    }
+    else
+    {
+        
+        ioctl(STDIN_FILENO, KDSKBMODE, K_XLATE);
+    }
+
+    // Register terminal restore when program finishes
+    atexit(RestoreTerminal);
+}
+// Restore terminal
+static void RestoreTerminal(void)
+{
+    TraceLog(LOG_INFO, "Restore Terminal ...");
+    
+    // Reset to default keyboard settings
+    tcsetattr(STDIN_FILENO, TCSANOW, &defaultKeyboardSettings);
+
+    // Reconfigure keyboard to default mode
+    ioctl(STDIN_FILENO, KDSKBMODE, defaultKeyboardMode);
+}
+#endif
 // Initialize window and OpenGL context
 // NOTE: data parameter could be used to pass any kind of required data to the initialization
 void InitWindow(int width, int height, const char *title)
@@ -621,6 +669,8 @@ void InitWindow(int width, int height, const char *title)
     InitGamepad();      // Gamepad init
 #if defined(SUPPORT_SSH_KEYBOARD_RPI)
     InitKeyboard();     // Keyboard init
+#else
+    InitTerminal();     // Terminal init
 #endif
 #endif
 
@@ -4731,6 +4781,7 @@ static void *EventThread(void *arg)
                     // Make sure we got a valid keycode
                     if ((keycode > 0) && (keycode < sizeof(currentKeyState)))
                     {
+                        /* Disabled buffer !!
                         // Store the key information for raylib to later use
                         currentKeyStateEvdev[keycode] = event.value;
                         if (event.value > 0)
@@ -4740,7 +4791,22 @@ static void *EventThread(void *arg)
                             lastKeyPressedEvdev.Head = (lastKeyPressedEvdev.Head + 1) & 0x07;   // Increment the head pointer forwards and binary wraparound after 7 (fifo is 8 elements long)
                             // TODO: This fifo is not fully threadsafe with multiple writers, so multiple keyboards hitting a key at the exact same time could miss a key (double write to head before it was incremented)
                         }
+                        */
+                        
+                        currentKeyState[keycode] = event.value;
+                        if (event.value == 1) lastKeyPressed = keycode;     // Register last key pressed
 
+                        #if defined(SUPPORT_SCREEN_CAPTURE)
+                            // Check screen capture key (raylib key: KEY_F12)
+                            if (currentKeyState[301] == 1)
+                            {
+                                TakeScreenshot(FormatText("screenshot%03i.png", screenshotCounter));
+                                screenshotCounter++;
+                            }
+                        #endif
+
+                        if (currentKeyState[exitKey] == 1) windowShouldClose = true;
+    
                         TraceLog(LOG_DEBUG, "KEY%s ScanCode: %4i KeyCode: %4i",event.value == 0 ? "UP":"DOWN", event.code, keycode);
                     }
                 }
