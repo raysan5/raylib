@@ -1,4 +1,4 @@
-// stb_truetype.h - v1.20 - public domain
+// stb_truetype.h - v1.21 - public domain
 // authored from 2009-2016 by Sean Barrett / RAD Game Tools
 //
 //   This library processes TrueType files:
@@ -49,6 +49,7 @@
 //       
 // VERSION HISTORY
 //
+//   1.21 (2019-02-25) fix warning
 //   1.20 (2019-02-07) PackFontRange skips missing codepoints; GetScaleFontVMetrics()
 //   1.19 (2018-02-11) GPOS kerning, STBTT_fmod
 //   1.18 (2018-01-29) add missing function
@@ -241,19 +242,6 @@
 //   It appears to be very hard to programmatically determine what font a
 //   given file is in a general way. I provide an API for this, but I don't
 //   recommend it.
-//
-//
-// SOURCE STATISTICS (based on v0.6c, 2050 LOC)
-//
-//   Documentation & header file        520 LOC  \___ 660 LOC documentation
-//   Sample code                        140 LOC  /
-//   Truetype parsing                   620 LOC  ---- 620 LOC TrueType
-//   Software rasterization             240 LOC  \                           
-//   Curve tessellation                 120 LOC   \__ 550 LOC Bitmap creation
-//   Bitmap management                  100 LOC   /
-//   Baked bitmap interface              70 LOC  /
-//   Font name matching & access        150 LOC  ---- 150 
-//   C runtime library abstraction       60 LOC  ----  60
 //
 //
 // PERFORMANCE MEASUREMENTS FOR 1.06:

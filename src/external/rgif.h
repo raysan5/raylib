@@ -1,6 +1,8 @@
 /**********************************************************************************************
 *
-*   rgif.h original implementation (gif.h) by Charlie Tangora [ctangora -at- gmail -dot- com]
+*   rgif.h v0.5
+*
+*   Original implementation (gif.h) by Charlie Tangora [ctangora -at- gmail -dot- com]
 *   adapted to C99, reformatted and renamed by Ramon Santamaria (@raysan5)
 *
 *   This file offers a simple, very limited way to create animated GIFs directly in code.
@@ -32,7 +34,7 @@
 *
 *   ALTERNATIVE A - MIT License
 *
-*   Copyright (c) 2017 Ramon Santamaria
+*   Copyright (c) 2017-2019 Ramon Santamaria (@raysan5)
 *
 *   Permission is hereby granted, free of charge, to any person obtaining a copy of 
 *   this software and associated documentation files (the "Software"), to deal in 
@@ -76,8 +78,8 @@
 *
 **********************************************************************************************/
 
-#ifndef GIF_H
-#define GIF_H
+#ifndef RGIF_H
+#define RGIF_H
 
 #include <stdio.h>          // Required for: FILE
 
@@ -101,7 +103,7 @@ RGIFDEF bool GifBegin(const char *filename, unsigned int width, unsigned int hei
 RGIFDEF bool GifWriteFrame(const unsigned char *image, unsigned int width, unsigned int height, unsigned int delay, int bitDepth, bool dither);
 RGIFDEF bool GifEnd();
 
-#endif // GIF_H
+#endif // RGIF_H
 
 
 /***********************************************************************************
@@ -116,23 +118,23 @@ RGIFDEF bool GifEnd();
 #include <string.h>         // Required for: memcpy()
 
 // Define these macros to hook into a custom memory allocator.
-// GIF_TEMP_MALLOC and GIF_TEMP_FREE will only be called in stack fashion - frees in the reverse order of mallocs
+// RGIF_TEMP_MALLOC and RGIF_TEMP_FREE will only be called in stack fashion - frees in the reverse order of mallocs
 // and any temp memory allocated by a function will be freed before it exits.
-#if !defined(GIF_TEMP_MALLOC)
+#if !defined(RGIF_TEMP_MALLOC)
     #include <stdlib.h>
     
-    #define GIF_TEMP_MALLOC malloc
-    #define GIF_TEMP_FREE free
+    #define RGIF_TEMP_MALLOC malloc
+    #define RGIF_TEMP_FREE free
 #endif
 
 // Check if custom malloc/free functions defined, if not, using standard ones
-// GIF_MALLOC and GIF_FREE are used only by GifBegin and GifEnd respectively, 
+// RGIF_MALLOC and RGIF_FREE are used only by GifBegin and GifEnd respectively, 
 // to allocate a buffer the size of the image, which is used to find changed pixels for delta-encoding.
-#if !defined(GIF_MALLOC)
+#if !defined(RGIF_MALLOC)
     #include <stdlib.h>     // Required for: malloc(), free()
 
-    #define GIF_MALLOC(size)  malloc(size)
-    #define GIF_FREE(ptr)     free(ptr)
+    #define RGIF_MALLOC(size)  malloc(size)
+    #define RGIF_FREE(ptr)     free(ptr)
 #endif
 
 //----------------------------------------------------------------------------------
@@ -223,7 +225,7 @@ RGIFDEF bool GifBegin(const char *filename, unsigned int width, unsigned int hei
     if (!gifFile) return false;
     
     // Allocate space for one gif frame
-    gifFrame = (unsigned char *)GIF_MALLOC(width*height*4);
+    gifFrame = (unsigned char *)RGIF_MALLOC(width*height*4);
     
     // GIF Header
     fputs("GIF89a",gifFile);
@@ -300,7 +302,7 @@ RGIFDEF bool GifEnd()
     fputc(0x3b, gifFile);     // Trailer (end of file)
     fclose(gifFile);
     
-    GIF_FREE(gifFrame);
+    RGIF_FREE(gifFrame);
     
     gifFile = NULL;
     gifFrame = NULL;
@@ -589,7 +591,7 @@ static void GifMakePalette(const unsigned char *lastFrame, const unsigned char *
     // SplitPalette is destructive (it sorts the pixels by color) so
     // we must create a copy of the image for it to destroy
     int imageSize = width*height*4*sizeof(unsigned char);
-    unsigned char *destroyableImage = (unsigned char*)GIF_TEMP_MALLOC(imageSize);
+    unsigned char *destroyableImage = (unsigned char*)RGIF_TEMP_MALLOC(imageSize);
     memcpy(destroyableImage, nextFrame, imageSize);
     
     int numPixels = width*height;
@@ -602,7 +604,7 @@ static void GifMakePalette(const unsigned char *lastFrame, const unsigned char *
     
     GifSplitPalette(destroyableImage, numPixels, 1, lastElt, splitElt, splitDist, 1, buildForDither, pPal);
     
-    GIF_TEMP_FREE(destroyableImage);
+    RGIF_TEMP_FREE(destroyableImage);
     
     // add the bottom node for the transparency index
     pPal->treeSplit[1 << (bitDepth-1)] = 0;
@@ -619,7 +621,7 @@ static void GifDitherImage(const unsigned char *lastFrame, const unsigned char *
     // quantPixels initially holds color*256 for all pixels
     // The extra 8 bits of precision allow for sub-single-color error values
     // to be propagated
-    int *quantPixels = (int*)GIF_TEMP_MALLOC(sizeof(int)*numPixels*4);
+    int *quantPixels = (int*)RGIF_TEMP_MALLOC(sizeof(int)*numPixels*4);
     
     for (int ii=0; ii<numPixels*4; ++ii)
     {
@@ -717,7 +719,7 @@ static void GifDitherImage(const unsigned char *lastFrame, const unsigned char *
         outFrame[ii] = quantPixels[ii];
     }
     
-    GIF_TEMP_FREE(quantPixels);
+    RGIF_TEMP_FREE(quantPixels);
 }
 
 // Picks palette colors for the image using simple thresholding, no dithering
@@ -857,7 +859,7 @@ static void GifWriteLzwImage(FILE *f, unsigned char *image, unsigned int left, u
     
     fputc(minCodeSize, f); // min code size 8 bits
     
-    GifLzwNode *codetree = (GifLzwNode *)GIF_TEMP_MALLOC(sizeof(GifLzwNode)*4096);
+    GifLzwNode *codetree = (GifLzwNode *)RGIF_TEMP_MALLOC(sizeof(GifLzwNode)*4096);
     
     memset(codetree, 0, sizeof(GifLzwNode)*4096);
     int curCode = -1;
@@ -931,7 +933,7 @@ static void GifWriteLzwImage(FILE *f, unsigned char *image, unsigned int left, u
     
     fputc(0, f); // image block terminator
     
-    GIF_TEMP_FREE(codetree);
+    RGIF_TEMP_FREE(codetree);
 }
 
 #endif // RGIF_IMPLEMENTATION

@@ -1,4 +1,4 @@
-/* stb_image_resize - v0.95 - public domain image resizing
+/* stb_image_resize - v0.96 - public domain image resizing
    by Jorge L Rodriguez (@VinoBS) - 2014
    http://github.com/nothings/stb
 
@@ -159,6 +159,7 @@
       Nathan Reed: warning fixes
 
    REVISIONS
+      0.96 (2019-03-04) fixed warnings
       0.95 (2017-07-23) fixed warnings
       0.94 (2017-03-18) fixed warnings
       0.93 (2017-03-03) fixed bug with certain combinations of heights
@@ -193,6 +194,7 @@ typedef uint16_t stbir_uint16;
 typedef uint32_t stbir_uint32;
 #endif
 
+#ifndef STBIRDEF
 #ifdef STB_IMAGE_RESIZE_STATIC
 #define STBIRDEF static
 #else
@@ -202,7 +204,7 @@ typedef uint32_t stbir_uint32;
 #define STBIRDEF extern
 #endif
 #endif
-
+#endif
 
 //////////////////////////////////////////////////////////////////////////////
 //
@@ -2324,8 +2326,9 @@ static int stbir__resize_allocated(stbir__info *info,
     if (alpha_channel < 0)
         flags |= STBIR_FLAG_ALPHA_USES_COLORSPACE | STBIR_FLAG_ALPHA_PREMULTIPLIED;
 
-    if (!(flags&STBIR_FLAG_ALPHA_USES_COLORSPACE) || !(flags&STBIR_FLAG_ALPHA_PREMULTIPLIED))
+    if (!(flags&STBIR_FLAG_ALPHA_USES_COLORSPACE) || !(flags&STBIR_FLAG_ALPHA_PREMULTIPLIED)) {
         STBIR_ASSERT(alpha_channel >= 0 && alpha_channel < info->channels);
+    }
 
     if (alpha_channel >= info->channels)
         return 0;

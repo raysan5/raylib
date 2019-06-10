@@ -1,16 +1,16 @@
 /*******************************************************************************************
 *
-*   GLOBAL GAME JAM 2016 - LIGHT MY RITUAL!
+*   LIGHT MY RITUAL [GLOBAL GAME JAM 2016]
 *
 *   Preparing a ritual session is not that easy. 
 *   You must light all the candles before the astral alignment finishes... 
 *   but dark creatures move in the shadows to put out all your lights! 
 *   Be fast! Be smart! Light my ritual!
 *
-*   This game has been created using raylib (www.raylib.com)
+*   This game has been created using raylib 1.6 (www.raylib.com)
 *   raylib is licensed under an unmodified zlib/libpng license (View raylib.h for details)
 *
-*   Copyright (c) 2015 Ramon Santamaria (@raysan5)
+*   Copyright (c) 2016 Ramon Santamaria (@raysan5)
 *
 ********************************************************************************************/
 
@@ -55,7 +55,7 @@ int main(void)
 {
 	// Initialization (Note windowTitle is unused on Android)
 	//---------------------------------------------------------
-    InitWindow(screenWidth, screenHeight, "GGJ16 - LIGHT MY RITUAL!");
+    InitWindow(screenWidth, screenHeight, "LIGHT MY RITUAL! [GGJ16]");
 
     // Global data loading (assets that must be available in all screens, i.e. fonts)
     InitAudioDevice();

@@ -1925,7 +1925,6 @@ static void jar_xm_handle_note_and_instrument(jar_xm_context_t* ctx, jar_xm_chan
 
     case 33: /* Xxy: Extra stuff */
         switch(s->effect_param >> 4) {
-
         case 1: /* X1y: Extra fine portamento up */
             if(s->effect_param & 0x0F) {
                 ch->extra_fine_portamento_up_param = s->effect_param & 0x0F;
@@ -2659,6 +2658,22 @@ int jar_xm_create_context_from_file(jar_xm_context_t** ctx, uint32_t rate, const
 
     return 0;
 }
+
+// not part of the original library
+void jar_xm_reset(jar_xm_context_t* ctx)
+{
+    // I don't know what I am doing
+    // this is probably very broken
+    // but it kinda works
+    for (uint16_t i = 0; i < jar_xm_get_number_of_channels(ctx); i++)
+    {
+        jar_xm_cut_note(&ctx->channels[i]);
+    }
+    ctx->current_row = 0;
+    ctx->current_table_index = ctx->module.restart_position;
+    ctx->current_tick = 0;
+}
+
 
 #endif//end of JAR_XM_IMPLEMENTATION
 //-------------------------------------------------------------------------------

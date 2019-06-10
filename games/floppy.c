@@ -42,19 +42,19 @@ typedef struct Tubes {
 //------------------------------------------------------------------------------------
 // Global Variables Declaration
 //------------------------------------------------------------------------------------
-static int screenWidth = 800;
-static int screenHeight = 450;
+static const int screenWidth = 800;
+static const int screenHeight = 450;
 
-static bool gameOver;
-static bool pause;
-static int score;
+static bool gameOver = false;
+static bool pause = false;
+static int score = 0;
 static int hiScore = 0;
 
-static Floppy floppy;
-static Tubes tubes[MAX_TUBES*2];
-static Vector2 tubesPos[MAX_TUBES];
-static int tubesSpeedX;
-static bool superfx;
+static Floppy floppy = { 0 };
+static Tubes tubes[MAX_TUBES*2] = { 0 };
+static Vector2 tubesPos[MAX_TUBES] = { 0 };
+static int tubesSpeedX = 0;
+static bool superfx = false;
 
 //------------------------------------------------------------------------------------
 // Module Functions Declaration (local)
@@ -79,7 +79,6 @@ int main(void)
 #if defined(PLATFORM_WEB)
     emscripten_set_main_loop(UpdateDrawFrame, 0, 1);
 #else
-
     SetTargetFPS(60);
     //--------------------------------------------------------------------------------------
     
@@ -92,7 +91,6 @@ int main(void)
         //----------------------------------------------------------------------------------
     }
 #endif
-
     // De-Initialization
     //--------------------------------------------------------------------------------------
     UnloadGame();         // Unload loaded data (textures, sounds, models...)
@@ -216,8 +214,8 @@ void DrawGame(void)
                 superfx = false;
             }
 
-            DrawText(FormatText("%04i", score), 20, 20, 40, GRAY);
-            DrawText(FormatText("HI-SCORE: %04i", hiScore), 20, 70, 20, LIGHTGRAY);
+            DrawText(TextFormat("%04i", score), 20, 20, 40, GRAY);
+            DrawText(TextFormat("HI-SCORE: %04i", hiScore), 20, 70, 20, LIGHTGRAY);
 
             if (pause) DrawText("GAME PAUSED", screenWidth/2 - MeasureText("GAME PAUSED", 40)/2, screenHeight/2 - 40, 40, GRAY);
         }

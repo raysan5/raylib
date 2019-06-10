@@ -1,6 +1,6 @@
 /*******************************************************************************************
 *
-*   raylib - Koala Seasons game
+*   Koala Seasons [emegeme 2015]
 *
 *   Koala Seasons is a runner, you must survive as long as possible jumping from tree to tree
 *   Ready to start the adventure? How long can you survive?
@@ -13,7 +13,7 @@
 ********************************************************************************************/
 
 #include "raylib.h"
-#include "screens/screens.h"    // NOTE: Defines currentScreen
+#include "screens/screens.h"    // NOTE: Defines global variable: currentScreen
 
 #if defined(PLATFORM_WEB)
     #include <emscripten/emscripten.h>
@@ -22,6 +22,9 @@
 //----------------------------------------------------------------------------------
 // Global Variables Definition (local to this module)
 //----------------------------------------------------------------------------------
+static const int screenWidth = 1280;
+static const int screenHeight = 720;
+
 static float transAlpha = 0;
 static bool onTransition = false;
 static bool transFadeOut = false;
@@ -43,17 +46,11 @@ void UpdateDrawFrame(void);     // Update and Draw one frame
 //----------------------------------------------------------------------------------
 // Main entry point
 //----------------------------------------------------------------------------------
-int main(void) {
-	// Initialization
+int main(void) 
+{
+	// Initialization (Note windowTitle is unused on Android)
 	//---------------------------------------------------------
-    const int screenWidth = 1280;
-    const int screenHeight = 720;
-	const char windowTitle[30] = "KOALA SEASONS";
-    
-    //SetConfigFlags(FLAG_FULLSCREEN_MODE);
-    
-    // Note that windowTitle is ignored on Android
-    InitWindow(screenWidth, screenHeight, windowTitle);
+    InitWindow(screenWidth, screenHeight, "KOALA SEASONS");
 
     // Load global data here (assets that must be available in all screens, i.e. fonts)
     font = LoadFont("resources/graphics/mainfont.png");

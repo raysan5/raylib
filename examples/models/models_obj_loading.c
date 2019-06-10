@@ -11,12 +11,12 @@
 
 #include "raylib.h"
 
-int main()
+int main(void)
 {
     // Initialization
     //--------------------------------------------------------------------------------------
-    int screenWidth = 800;
-    int screenHeight = 450;
+    const int screenWidth = 800;
+    const int screenHeight = 450;
 
     InitWindow(screenWidth, screenHeight, "raylib [models] example - obj model loading");
 
@@ -30,10 +30,10 @@ int main()
 
     Model model = LoadModel("resources/models/castle.obj");                 // Load OBJ model
     Texture2D texture = LoadTexture("resources/models/castle_diffuse.png"); // Load model texture
-    model.material.maps[MAP_DIFFUSE].texture = texture;                     // Set map diffuse texture
+    model.materials[0].maps[MAP_DIFFUSE].texture = texture;                 // Set map diffuse texture
     Vector3 position = { 0.0f, 0.0f, 0.0f };                                // Set model position
 
-    SetTargetFPS(60);   // Set our game to run at 60 frames-per-second
+    SetTargetFPS(60);               // Set our game to run at 60 frames-per-second
     //--------------------------------------------------------------------------------------
 
     // Main game loop
@@ -59,7 +59,7 @@ int main()
                 DrawGizmo(position);        // Draw gizmo
 
             EndMode3D();
-            
+
             DrawText("(c) Castle 3D model by Alberto Cano", screenWidth - 200, screenHeight - 20, 10, GRAY);
 
             DrawFPS(10, 10);

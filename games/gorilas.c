@@ -84,16 +84,16 @@ typedef struct Ball {
 //------------------------------------------------------------------------------------
 // Global Variables Declaration
 //------------------------------------------------------------------------------------
-static int screenWidth = 800;
-static int screenHeight = 450;
+static const int screenWidth = 800;
+static const int screenHeight = 450;
 
 static bool gameOver = false;
 static bool pause = false;
 
-static Player player[MAX_PLAYERS];
-static Building building[MAX_BUILDINGS];
-static Explosion explosion[MAX_EXPLOSIONS];
-static Ball ball;
+static Player player[MAX_PLAYERS] = { 0 };
+static Building building[MAX_BUILDINGS] = { 0 };
+static Explosion explosion[MAX_EXPLOSIONS] = { 0 };
+static Ball ball = { 0 };
 
 static int playerTurn = 0;
 static bool ballOnAir = false;
@@ -272,21 +272,21 @@ void DrawGame(void)
                 /*
                 if (player[playerTurn].isLeftTeam)
                 {
-                    DrawText(FormatText("Previous Point %i, %i", (int)player[playerTurn].previousPoint.x, (int)player[playerTurn].previousPoint.y), 20, 20, 20, DARKBLUE);
-                    DrawText(FormatText("Previous Angle %i", player[playerTurn].previousAngle), 20, 50, 20, DARKBLUE);
-                    DrawText(FormatText("Previous Power %i", player[playerTurn].previousPower), 20, 80, 20, DARKBLUE);
-                    DrawText(FormatText("Aiming Point %i, %i", (int)player[playerTurn].aimingPoint.x, (int)player[playerTurn].aimingPoint.y), 20, 110, 20, DARKBLUE);
-                    DrawText(FormatText("Aiming Angle %i", player[playerTurn].aimingAngle), 20, 140, 20, DARKBLUE);
-                    DrawText(FormatText("Aiming Power %i", player[playerTurn].aimingPower), 20, 170, 20, DARKBLUE);
+                    DrawText(TextFormat("Previous Point %i, %i", (int)player[playerTurn].previousPoint.x, (int)player[playerTurn].previousPoint.y), 20, 20, 20, DARKBLUE);
+                    DrawText(TextFormat("Previous Angle %i", player[playerTurn].previousAngle), 20, 50, 20, DARKBLUE);
+                    DrawText(TextFormat("Previous Power %i", player[playerTurn].previousPower), 20, 80, 20, DARKBLUE);
+                    DrawText(TextFormat("Aiming Point %i, %i", (int)player[playerTurn].aimingPoint.x, (int)player[playerTurn].aimingPoint.y), 20, 110, 20, DARKBLUE);
+                    DrawText(TextFormat("Aiming Angle %i", player[playerTurn].aimingAngle), 20, 140, 20, DARKBLUE);
+                    DrawText(TextFormat("Aiming Power %i", player[playerTurn].aimingPower), 20, 170, 20, DARKBLUE);
                 }
                 else
                 {
-                    DrawText(FormatText("Previous Point %i, %i", (int)player[playerTurn].previousPoint.x, (int)player[playerTurn].previousPoint.y), screenWidth*3/4, 20, 20, DARKBLUE);
-                    DrawText(FormatText("Previous Angle %i", player[playerTurn].previousAngle), screenWidth*3/4, 50, 20, DARKBLUE);
-                    DrawText(FormatText("Previous Power %i", player[playerTurn].previousPower), screenWidth*3/4, 80, 20, DARKBLUE);
-                    DrawText(FormatText("Aiming Point %i, %i", (int)player[playerTurn].aimingPoint.x, (int)player[playerTurn].aimingPoint.y), screenWidth*3/4, 110, 20, DARKBLUE);
-                    DrawText(FormatText("Aiming Angle %i", player[playerTurn].aimingAngle), screenWidth*3/4, 140, 20, DARKBLUE);
-                    DrawText(FormatText("Aiming Power %i", player[playerTurn].aimingPower), screenWidth*3/4, 170, 20, DARKBLUE);
+                    DrawText(TextFormat("Previous Point %i, %i", (int)player[playerTurn].previousPoint.x, (int)player[playerTurn].previousPoint.y), screenWidth*3/4, 20, 20, DARKBLUE);
+                    DrawText(TextFormat("Previous Angle %i", player[playerTurn].previousAngle), screenWidth*3/4, 50, 20, DARKBLUE);
+                    DrawText(TextFormat("Previous Power %i", player[playerTurn].previousPower), screenWidth*3/4, 80, 20, DARKBLUE);
+                    DrawText(TextFormat("Aiming Point %i, %i", (int)player[playerTurn].aimingPoint.x, (int)player[playerTurn].aimingPoint.y), screenWidth*3/4, 110, 20, DARKBLUE);
+                    DrawText(TextFormat("Aiming Angle %i", player[playerTurn].aimingAngle), screenWidth*3/4, 140, 20, DARKBLUE);
+                    DrawText(TextFormat("Aiming Power %i", player[playerTurn].aimingPower), screenWidth*3/4, 170, 20, DARKBLUE);
                 }
                 */
                 

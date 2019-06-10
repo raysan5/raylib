@@ -14,7 +14,7 @@
 #  Many thanks to Milan Nikolic (@gen2brain) for implementing Android platform pipeline.
 #  Many thanks to Emanuele Petriglia for his contribution on GNU/Linux pipeline.
 #
-#  Copyright (c) 2014-2018 Ramon Santamaria (@raysan5)
+#  Copyright (c) 2014-2019 Ramon Santamaria (@raysan5)
 #
 #  This software is provided "as-is", without any express or implied warranty.
 #  In no event will the authors be held liable for any damages arising from
@@ -42,8 +42,8 @@
 .PHONY: all clean install uninstall
 
 # Define required raylib variables
-RAYLIB_VERSION     = 2.0.0
-RAYLIB_API_VERSION = 2
+RAYLIB_VERSION     = 2.5.0
+RAYLIB_API_VERSION = 251
 
 # See below for alternatives.
 RAYLIB_PATH        = ..
@@ -59,9 +59,15 @@ RAYLIB_LIBTYPE       ?= STATIC
 # Build mode for library: DEBUG or RELEASE
 RAYLIB_BUILD_MODE    ?= RELEASE
 
-# Included raylib audio module on compilation
-# NOTE: Some programs like tools could not require audio support
-INCLUDE_AUDIO_MODULE ?= TRUE
+# Include raylib modules on compilation
+# NOTE: Some programs like tools could not require those modules
+RAYLIB_MODULE_AUDIO  ?= TRUE
+RAYLIB_MODULE_MODELS ?= TRUE
+RAYLIB_MODULE_RAYGUI ?= FALSE
+RAYLIB_MODULE_PHYSAC ?= FALSE
+
+RAYLIB_MODULE_RAYGUI_PATH ?= .
+RAYLIB_MODULE_PHYSAC_PATH ?= .
 
 # Use external GLFW library instead of rglfw module
 # TODO: Review usage of examples on Linux.
@@ -138,18 +144,11 @@ ifeq ($(PLATFORM),PLATFORM_DESKTOP)
         RAYLIB_PATH    = $(realpath $(RAYLIB_PREFIX))
     endif
 endif
-# Default path for raylib on Raspberry Pi, if installed in different path, update it!
-# TODO: update install: target in src/Makefile for RPI, consider relation to LINUX.
-# WARNING: The following is copied from examples/Makefile and is here only for reference.
-# Consequences of enabling this are UNKNOWN. Please test and report.
-#ifeq ($(PLATFORM),PLATFORM_RPI)
-#    RAYLIB_PATH       ?= /home/pi/raylib
-#endif
 
 ifeq ($(PLATFORM),PLATFORM_WEB)
     # Emscripten required variables
-    EMSDK_PATH          = C:/emsdk
-    EMSCRIPTEN_VERSION  ?= 1.38.21
+    EMSDK_PATH          ?= C:/emsdk
+    EMSCRIPTEN_VERSION  ?= 1.38.32
     CLANG_VERSION       = e$(EMSCRIPTEN_VERSION)_64bit
     PYTHON_VERSION      = 2.7.13.1_64bit\python-2.7.13.amd64
     NODE_VERSION        = 8.9.1_64bit
@@ -179,33 +178,12 @@ ifeq ($(PLATFORM),PLATFORM_ANDROID)
     endif
 endif
 
-# RAYLIB_RELEASE_PATH points to library build path, right now 
-RAYLIB_RELEASE_PATH  ?= $(RAYLIB_PATH)/src
+# Define raylib source code path
+RAYLIB_SRC_PATH ?= $(RAYLIB_PATH)/src
 
-# Define output directory for compiled library
-ifeq ($(PLATFORM),PLATFORM_DESKTOP)
-    ifeq ($(PLATFORM_OS),WINDOWS)
-        RAYLIB_RELEASE_PATH = $(RAYLIB_PATH)\mingw\i686-w64-mingw32\lib
-    endif
-    ifeq ($(PLATFORM_OS),LINUX)
-        RAYLIB_RELEASE_PATH = $(RAYLIB_PATH)/src
-    endif
-    ifeq ($(PLATFORM_OS),OSX)
-        RAYLIB_RELEASE_PATH = $(RAYLIB_PATH)/src
-    endif
-    ifeq ($(PLATFORM_OS),BSD)
-        RAYLIB_RELEASE_PATH = $(RAYLIB_PATH)/src
-    endif
-endif
-ifeq ($(PLATFORM),PLATFORM_RPI)
-    RAYLIB_RELEASE_PATH = $(RAYLIB_PATH)/src
-endif
-ifeq ($(PLATFORM),PLATFORM_WEB)
-    RAYLIB_RELEASE_PATH = $(RAYLIB_PATH)/src
-endif
-ifeq ($(PLATFORM),PLATFORM_ANDROID)
-    RAYLIB_RELEASE_PATH = $(RAYLIB_PATH)/src/android/$(ANDROID_ARCH_NAME)
-endif
+# Define output directory for compiled library, defaults to src directory
+# NOTE: If externally provided, make sure directory exists
+RAYLIB_RELEASE_PATH  ?= $(RAYLIB_PATH)/src
 
 # Define raylib graphics api depending on selected platform
 ifeq ($(PLATFORM),PLATFORM_DESKTOP)
@@ -269,21 +247,20 @@ endif
 
 
 # Define compiler flags:
-#  -O1                   defines optimization level
-#  -g                    enable debugging
-#  -s                    strip unnecessary data from build
-#  -Wall                 turns on most, but not all, compiler warnings
-#  -std=c99              defines C language mode (standard C from 1999 revision)
-#  -std=gnu99            defines C language mode (GNU C from 1999 revision)
-#  -Wno-missing-braces   ignore invalid warning (GCC bug 53119)
-#  -D_DEFAULT_SOURCE     use with -std=c99 on Linux and PLATFORM_WEB, required for timespec
-#  -Werror=pointer-arith catch unportable code that does direct arithmetic on void pointers
-#  -fno-strict-aliasing  jar_xm.h does shady stuff (breaks strict aliasing)
+#  -O1                      defines optimization level
+#  -g                       include debug information on compilation
+#  -s                       strip unnecessary data from build
+#  -Wall                    turns on most, but not all, compiler warnings
+#  -std=c99                 defines C language mode (standard C from 1999 revision)
+#  -std=gnu99               defines C language mode (GNU C from 1999 revision)
+#  -Wno-missing-braces      ignore invalid warning (GCC bug 53119)
+#  -D_DEFAULT_SOURCE        use with -std=c99 on Linux and PLATFORM_WEB, required for timespec
+#  -Werror=pointer-arith    catch unportable code that does direct arithmetic on void pointers
+#  -fno-strict-aliasing     jar_xm.h does shady stuff (breaks strict aliasing)
 CFLAGS += -O1 -Wall -std=c99 -D_DEFAULT_SOURCE -Wno-missing-braces -Werror=pointer-arith -fno-strict-aliasing
 
-ifeq ($(RAYLIB_BUILD_MODE), DEBUG)
+ifeq ($(RAYLIB_BUILD_MODE),DEBUG)
     CFLAGS += -g
-    #CC      = clang
 endif
 
 # Additional flags for compiler (if desired)
@@ -295,12 +272,24 @@ ifeq ($(PLATFORM),PLATFORM_DESKTOP)
     CFLAGS += -Werror=implicit-function-declaration
 endif
 ifeq ($(PLATFORM),PLATFORM_WEB)
-    # -O2                        # if used, also set --memory-init-file 0
-    # --memory-init-file 0       # to avoid an external memory initialization code file (.mem)
-    # -s ALLOW_MEMORY_GROWTH=1   # to allow memory resizing
+    # -Os                        # size optimization
+    # -O2                        # optimization level 2, if used, also set --memory-init-file 0
+    # -s USE_GLFW=3              # Use glfw3 library (context/input management)
+    # -s ALLOW_MEMORY_GROWTH=1   # to allow memory resizing -> WARNING: Audio buffers could FAIL!
     # -s TOTAL_MEMORY=16777216   # to specify heap memory size (default = 16MB)
     # -s USE_PTHREADS=1          # multithreading support
-    CFLAGS += -s USE_GLFW=3 -s ASSERTIONS=1 --profiling
+    # -s WASM=0                  # disable Web Assembly, emitted by default
+    # -s EMTERPRETIFY=1          # enable emscripten code interpreter (very slow)
+    # -s EMTERPRETIFY_ASYNC=1    # support synchronous loops by emterpreter
+    # -s FORCE_FILESYSTEM=1      # force filesystem to load/save files data
+    # -s ASSERTIONS=1            # enable runtime checks for common memory allocation errors (-O1 and above turn it off)
+    # --profiling                # include information for code profiling
+    # --memory-init-file 0       # to avoid an external memory initialization code file (.mem)
+    # --preload-file resources   # specify a resources folder for data compilation
+    CFLAGS += -s USE_GLFW=3
+    ifeq ($(RAYLIB_BUILD_MODE),DEBUG)
+        CFLAGS += -s ASSERTIONS=1 --profiling
+    endif
 endif
 ifeq ($(PLATFORM),PLATFORM_ANDROID)
     # Compiler flags for arquitecture
@@ -393,7 +382,6 @@ OBJS = core.o \
        shapes.o \
        textures.o \
        text.o \
-       models.o \
        utils.o
 
 ifeq ($(PLATFORM),PLATFORM_DESKTOP)
@@ -401,9 +389,17 @@ ifeq ($(PLATFORM),PLATFORM_DESKTOP)
         OBJS += rglfw.o
     endif
 endif
-
-ifeq ($(INCLUDE_AUDIO_MODULE),TRUE)
+ifeq ($(RAYLIB_MODULE_MODELS),TRUE)
+    OBJS += models.o
+endif
+ifeq ($(RAYLIB_MODULE_AUDIO),TRUE)
     OBJS += raudio.o
+endif
+ifeq ($(RAYLIB_MODULE_RAYGUI),TRUE)
+    OBJS += raygui.o
+endif
+ifeq ($(RAYLIB_MODULE_PHYSAC),TRUE)
+    OBJS += physac.o
 endif
 
 ifeq ($(PLATFORM),PLATFORM_ANDROID)
@@ -442,15 +438,11 @@ ifeq ($(PLATFORM),PLATFORM_WEB)
 	emcc -O1 $(OBJS) -o $(RAYLIB_RELEASE_PATH)/libraylib.bc
 	@echo "raylib library generated (libraylib.bc)!"
 else
-    ifeq ($(PLATFORM_OS),WINDOWS)
-		if not exist $(RAYLIB_RELEASE_PATH) mkdir $(RAYLIB_RELEASE_PATH)
-    else
-		mkdir -p $(RAYLIB_RELEASE_PATH)
-    endif
     ifeq ($(RAYLIB_LIBTYPE),SHARED)
         ifeq ($(PLATFORM),PLATFORM_DESKTOP)
             ifeq ($(PLATFORM_OS),WINDOWS)
-				$(CC) -shared -o $(RAYLIB_RELEASE_PATH)/raylib.dll $(OBJS) -L$(RAYLIB_RELEASE_PATH) -static-libgcc -lopengl32 -lgdi32 -Wl,--out-implib,$(RAYLIB_RELEASE_PATH)/libraylibdll.a
+                # TODO: Compile resource file raylib.dll.rc for linkage on raylib.dll generation
+				$(CC) -shared -o $(RAYLIB_RELEASE_PATH)/raylib.dll $(OBJS) -L$(RAYLIB_RELEASE_PATH) -static-libgcc -lopengl32 -lgdi32 -lwinmm -Wl,--out-implib,$(RAYLIB_RELEASE_PATH)/libraylibdll.a
 				@echo "raylib dynamic library (raylib.dll) and import library (libraylibdll.a) generated!"
             endif
             ifeq ($(PLATFORM_OS),LINUX)
@@ -509,7 +501,7 @@ core.o : core.c raylib.h rlgl.h utils.h raymath.h camera.h gestures.h
 
 # Compile rglfw module
 rglfw.o : rglfw.c
-	$(CC) $(GLFW_CFLAGS) -c $< $(CFLAGS) $(INCLUDE_PATHS) -D$(PLATFORM) -D$(GRAPHICS)
+	$(CC) $(CFLAGS) $(GLFW_CFLAGS) -c $<  $(INCLUDE_PATHS) -D$(PLATFORM) -D$(GRAPHICS)
 
 # Compile shapes module
 shapes.o : shapes.c raylib.h rlgl.h
@@ -523,6 +515,10 @@ textures.o : textures.c raylib.h rlgl.h utils.h
 text.o : text.c raylib.h utils.h
 	$(CC) -c $< $(CFLAGS) $(INCLUDE_PATHS) -D$(PLATFORM) -D$(GRAPHICS)
 
+# Compile utils module
+utils.o : utils.c utils.h
+	$(CC) -c $< $(CFLAGS) $(INCLUDE_PATHS) -D$(PLATFORM)
+
 # Compile models module
 models.o : models.c raylib.h rlgl.h raymath.h
 	$(CC) -c $< $(CFLAGS) $(INCLUDE_PATHS) -D$(PLATFORM) -D$(GRAPHICS)
@@ -530,10 +526,20 @@ models.o : models.c raylib.h rlgl.h raymath.h
 # Compile audio module
 raudio.o : raudio.c raylib.h
 	$(CC) -c $< $(CFLAGS) $(INCLUDE_PATHS) -D$(PLATFORM)
-
-# Compile utils module
-utils.o : utils.c utils.h
-	$(CC) -c $< $(CFLAGS) $(INCLUDE_PATHS) -D$(PLATFORM)
+    
+# Compile raygui module
+# NOTE: raygui header should be distributed with raylib.h
+raygui.o : raygui.c raygui.h
+	@echo #define RAYGUI_IMPLEMENTATION > raygui.c
+	@echo #include "$(RAYLIB_MODULE_RAYGUI_PATH)/raygui.h" > raygui.c
+	$(CC) -c $< $(CFLAGS) $(INCLUDE_PATHS) -D$(PLATFORM) -DRAYGUI_IMPLEMENTATION
+    
+# Compile physac module
+# NOTE: physac header should be distributed with raylib.h
+physac.o : physac.c physac.h
+	@echo #define PHYSAC_IMPLEMENTATION > physac.c
+	@echo #include "$(RAYLIB_MODULE_PHYSAC_PATH)/physac.h" > physac.c
+	$(CC) -c $< $(CFLAGS) $(INCLUDE_PATHS) -D$(PLATFORM) -DPHYSAC_IMPLEMENTATION
 
 
 # Install generated and needed files to desired directories.

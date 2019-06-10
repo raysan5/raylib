@@ -31,7 +31,7 @@ typedef struct Enemy {
     Vector2 speed;
     int radius;
     int radiusBounds;
-    bool moveRight;         // RAY: o__O
+    bool moveRight;
 } Enemy;
 
 typedef struct Points {
@@ -51,19 +51,19 @@ typedef struct Home {
 //------------------------------------------------------------------------------------
 // Global Variables Declaration
 //------------------------------------------------------------------------------------
-static int screenWidth = 800;
-static int screenHeight = 450;
+static const int screenWidth = 800;
+static const int screenHeight = 450;
 
-static bool gameOver;
-static bool pause;
-static int score;
+static bool gameOver = false;
+static bool pause = false;
+static int score = 0;
 static int hiScore = 0;
 
-static Player player;
-static Enemy enemy;
-static Points points;
-static Home home;
-static bool follow;
+static Player player = { 0 };
+static Enemy enemy = { 0 };
+static Points points = { 0 };
+static Home home = { 0 };
+static bool follow = false;
 
 //------------------------------------------------------------------------------------
 // Module Functions Declaration (local)
@@ -88,7 +88,6 @@ int main(void)
 #if defined(PLATFORM_WEB)
     emscripten_set_main_loop(UpdateDrawFrame, 0, 1);
 #else
-
     SetTargetFPS(60);
     //--------------------------------------------------------------------------------------
 
@@ -101,7 +100,6 @@ int main(void)
         //----------------------------------------------------------------------------------
     }
 #endif
-
     // De-Initialization
     //--------------------------------------------------------------------------------------
     UnloadGame();         // Unload loaded data (textures, sounds, models...)
@@ -155,19 +153,19 @@ void UpdateGame(void)
 
         if (!pause)
         {
-            //Control player
+            // Control player
             if (IsKeyDown(KEY_RIGHT)) player.position.x += player.speed.x;
             if (IsKeyDown(KEY_LEFT)) player.position.x -= player.speed.x;
             if (IsKeyDown(KEY_UP)) player.position.y -= player.speed.y;
             if (IsKeyDown(KEY_DOWN)) player.position.y += player.speed.y;
 
-            //wall behaviour player
+            // Wall behaviour player
             if (player.position.x - player.radius <= 0) player.position.x = player.radius;
             if (player.position.x + player.radius >= screenWidth) player.position.x = screenWidth - player.radius;
             if (player.position.y - player.radius <= 0) player.position.y = player.radius;
             if (player.position.y + player.radius >= screenHeight) player.position.y = screenHeight - player.radius;
 
-            //IA Enemy
+            // IA Enemy
             if ( (follow || CheckCollisionCircles(player.position, player.radius, enemy.position, enemy.radiusBounds)) && !home.save)
             {
                 if (player.position.x > enemy.position.x) enemy.position.x += enemy.speed.x;
@@ -182,7 +180,7 @@ void UpdateGame(void)
                 else enemy.position.x -= enemy.speed.x;
             }
 
-            //wall behaviour enemy
+            // Wall behaviour enemy
             if (enemy.position.x - enemy.radius <= 0) enemy.moveRight = true;
             if (enemy.position.x + enemy.radius >= screenWidth) enemy.moveRight = false;
 
@@ -191,7 +189,7 @@ void UpdateGame(void)
             if (enemy.position.y - enemy.radius <= 0) enemy.position.y = enemy.radius;
             if (enemy.position.y + enemy.radius >= screenHeight) enemy.position.y = screenHeight - enemy.radius;
 
-            //Collisions
+            // Collisions
             if (CheckCollisionCircles(player.position, player.radius, points.position, points.radius) && points.active)
             {
                 follow = true;
@@ -257,8 +255,8 @@ void DrawGame(void)
             DrawCircleV(player.position, player.radius, GRAY);
             if (points.active) DrawCircleV(points.position, points.radius, GOLD);
 
-            DrawText(FormatText("SCORE: %04i", score), 20, 15, 20, GRAY);
-            DrawText(FormatText("HI-SCORE: %04i", hiScore), 300, 15, 20, GRAY);
+            DrawText(TextFormat("SCORE: %04i", score), 20, 15, 20, GRAY);
+            DrawText(TextFormat("HI-SCORE: %04i", hiScore), 300, 15, 20, GRAY);
 
             if (pause) DrawText("GAME PAUSED", screenWidth/2 - MeasureText("GAME PAUSED", 40)/2, screenHeight/2 - 40, 40, GRAY);
         }

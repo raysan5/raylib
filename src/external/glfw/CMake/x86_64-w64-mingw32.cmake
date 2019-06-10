@@ -1,4 +1,4 @@
-# Define the environment for cross compiling from Linux to Win32
+# Define the environment for cross-compiling with 64-bit MinGW-w64 GCC
 SET(CMAKE_SYSTEM_NAME    Windows) # Target system name
 SET(CMAKE_SYSTEM_VERSION 1)
 SET(CMAKE_C_COMPILER     "x86_64-w64-mingw32-gcc")

@@ -11,12 +11,12 @@
 
 #include "raylib.h"
 
-int main()
+int main(void)
 {
     // Initialization
     //--------------------------------------------------------------------------------------
-    int screenWidth = 800;
-    int screenHeight = 450;
+    const int screenWidth = 800;
+    const int screenHeight = 450;
 
     InitWindow(screenWidth, screenHeight, "raylib [text] example - sprite fonts usage");
 
@@ -29,17 +29,16 @@ int main()
     Font font2 = LoadFont("resources/custom_alagard.png");        // Font loading
     Font font3 = LoadFont("resources/custom_jupiter_crash.png");  // Font loading
 
-    Vector2 fontPosition1, fontPosition2, fontPosition3;
+    Vector2 fontPosition1 = { screenWidth/2 - MeasureTextEx(font1, msg1, font1.baseSize, -3).x/2,
+                              screenHeight/2 - font1.baseSize/2 - 80 };
 
-    fontPosition1.x = screenWidth/2 - MeasureTextEx(font1, msg1, font1.baseSize, -3).x/2;
-    fontPosition1.y = screenHeight/2 - font1.baseSize/2 - 80;
+    Vector2 fontPosition2 = { screenWidth/2 - MeasureTextEx(font2, msg2, font2.baseSize, -2).x/2,
+                              screenHeight/2 - font2.baseSize/2 - 10 };
 
-    fontPosition2.x = screenWidth/2 - MeasureTextEx(font2, msg2, font2.baseSize, -2).x/2;
-    fontPosition2.y = screenHeight/2 - font2.baseSize/2 - 10;
+    Vector2 fontPosition3 = { screenWidth/2 - MeasureTextEx(font3, msg3, font3.baseSize, 2).x/2,
+                              screenHeight/2 - font3.baseSize/2 + 50 };
 
-    fontPosition3.x = screenWidth/2 - MeasureTextEx(font3, msg3, font3.baseSize, 2).x/2;
-    fontPosition3.y = screenHeight/2 - font3.baseSize/2 + 50;
-
+    SetTargetFPS(60);               // Set our game to run at 60 frames-per-second
     //--------------------------------------------------------------------------------------
 
     // Main game loop

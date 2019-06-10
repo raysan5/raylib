@@ -94,7 +94,7 @@ int main()
 {
     // Initialization
     //--------------------------------------------------------------------------------------
-    static unsigned char key;
+    static unsigned char key = 0;
 
     InitAudioDevice();
 

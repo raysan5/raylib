@@ -15,6 +15,8 @@
 #cmakedefine SUPPORT_SCREEN_CAPTURE 1
 /* Allow automatic gif recording of current screen pressing CTRL+F12, defined in KeyCallback() */
 #cmakedefine SUPPORT_GIF_RECORDING 1
+/* Support high DPI displays */
+#cmakedefine SUPPORT_HIGH_DPI 1
 
 // rlgl.h
 /* Support VR simulation functionality (stereo rendering) */
@@ -72,6 +74,7 @@
 #cmakedefine SUPPORT_FILEFORMAT_XM 1
 #cmakedefine SUPPORT_FILEFORMAT_MOD 1
 #cmakedefine SUPPORT_FILEFORMAT_FLAC 1
+#cmakedefine SUPPORT_FILEFORMAT_MP3 1
 
 // utils.c
 /* Show TraceLog() output messages. NOTE: By default LOG_DEBUG traces not shown */

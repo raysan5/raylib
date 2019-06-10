@@ -1,6 +1,6 @@
 info face="PixAntiqua" size=32 bold=0 italic=0 charset="" unicode=1 stretchH=100 smooth=1 aa=1 padding=2,2,2,2 spacing=2,2 outline=0
 common lineHeight=32 base=27 scaleW=512 scaleH=512 pages=1 packed=0 alphaChnl=0 redChnl=4 greenChnl=4 blueChnl=4
-page id=0 file="pixantiqua_0.png"
+page id=0 file="pixantiqua.png"
 chars count=184
 char id=32   x=9     y=304   width=7     height=36    xoffset=-3    yoffset=-2    xadvance=8     page=0  chnl=15
 char id=33   x=391   y=266   width=11    height=36    xoffset=-3    yoffset=-2    xadvance=8     page=0  chnl=15

@@ -10,7 +10,7 @@
 *   gcc -o $(NAME_PART).exe $(FILE_NAME) -s -static  /
 *       -lraylib -lpthread -lglfw3 -lopengl32 -lgdi32 -lopenal32 -lwinmm /
 *       -std=c99 -Wl,--subsystem,windows -Wl,-allow-multiple-definition
-*   
+*
 *   Copyright (c) 2016-2018 Victor Fisac
 *
 ********************************************************************************************/
@@ -21,12 +21,12 @@
 #define PHYSAC_NO_THREADS
 #include "physac.h"
 
-int main()
+int main(void)
 {
     // Initialization
     //--------------------------------------------------------------------------------------
-    int screenWidth = 800;
-    int screenHeight = 450;
+    const int screenWidth = 800;
+    const int screenHeight = 450;
 
     SetConfigFlags(FLAG_MSAA_4X_HINT);
     InitWindow(screenWidth, screenHeight, "Physac [raylib] - Physics friction");
@@ -61,11 +61,11 @@ int main()
     SetPhysicsBodyRotation(bodyA, 30*DEG2RAD);
 
     PhysicsBody bodyB = CreatePhysicsBodyRectangle((Vector2){ screenWidth - 35, screenHeight*0.6f }, 40, 40, 10);
-    bodyB->staticFriction = 1;
-    bodyB->dynamicFriction = 1;
+    bodyB->staticFriction = 1.0f;
+    bodyB->dynamicFriction = 1.0f;
     SetPhysicsBodyRotation(bodyB, 330*DEG2RAD);
 
-    SetTargetFPS(60);
+    SetTargetFPS(60);               // Set our game to run at 60 frames-per-second
     //--------------------------------------------------------------------------------------
 
     // Main game loop
@@ -82,7 +82,7 @@ int main()
             bodyA->velocity = (Vector2){ 0, 0 };
             bodyA->angularVelocity = 0;
             SetPhysicsBodyRotation(bodyA, 30*DEG2RAD);
-            
+
             bodyB->position = (Vector2){ screenWidth - 35, screenHeight*0.6f };
             bodyB->velocity = (Vector2){ 0, 0 };
             bodyB->angularVelocity = 0;
@@ -137,9 +137,9 @@ int main()
     }
 
     // De-Initialization
-    //--------------------------------------------------------------------------------------   
+    //--------------------------------------------------------------------------------------
     ClosePhysics();       // Unitialize physics
-    
+
     CloseWindow();        // Close window and OpenGL context
     //--------------------------------------------------------------------------------------
 

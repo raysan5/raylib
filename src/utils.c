@@ -11,7 +11,7 @@
 *
 *   LICENSE: zlib/libpng
 *
-*   Copyright (c) 2014-2018 Ramon Santamaria (@raysan5)
+*   Copyright (c) 2014-2019 Ramon Santamaria (@raysan5)
 *
 *   This software is provided "as-is", without any express or implied warranty. In no event
 *   will the authors be held liable for any damages arising from the use of this software.
@@ -30,9 +30,13 @@
 *
 **********************************************************************************************/
 
-#include "config.h"
-
 #include "raylib.h"                     // WARNING: Required for: LogType enum
+
+// Check if config flags have been externally provided on compilation line
+#if !defined(EXTERNAL_CONFIG_FLAGS)
+    #include "config.h"                 // Defines module configuration flags
+#endif
+
 #include "utils.h"
 
 #if defined(PLATFORM_ANDROID)
@@ -41,10 +45,10 @@
     #include <android/asset_manager.h>  // Required for: Android assets manager: AAsset, AAssetManager_open(), ...
 #endif
 
-#include <stdlib.h>                     // Required for: malloc(), free()
-#include <stdio.h>                      // Required for: fopen(), fclose(), fputc(), fwrite(), printf(), fprintf(), funopen()
+#include <stdlib.h>                     // Required for: exit()
+#include <stdio.h>                      // Required for: printf(), sprintf()
 #include <stdarg.h>                     // Required for: va_list, va_start(), vfprintf(), va_end()
-#include <string.h>                     // Required for: strlen(), strrchr(), strcmp()
+#include <string.h>                     // Required for: strcpy(), strcat()
 
 #define MAX_TRACELOG_BUFFER_SIZE   128  // Max length of one trace-log message
 
@@ -65,7 +69,7 @@ AAssetManager *assetManager;
 // Module specific Functions Declaration
 //----------------------------------------------------------------------------------
 #if defined(PLATFORM_ANDROID)
-/* This should be in <stdio.h>, but Travis doesn't find it... */
+// This should be in <stdio.h>, but Travis does not find it...
 FILE *funopen(const void *cookie, int (*readfn)(void *, char *, int), int (*writefn)(void *, const char *, int),
               fpos_t (*seekfn)(void *, fpos_t, int), int (*closefn)(void *));
 
@@ -128,7 +132,7 @@ void TraceLog(int logType, const char *text, ...)
 #else
     char buffer[MAX_TRACELOG_BUFFER_SIZE] = { 0 };
 
-    switch(logType)
+    switch (logType)
     {
         case LOG_TRACE: strcpy(buffer, "TRACE: "); break;
         case LOG_DEBUG: strcpy(buffer, "DEBUG: "); break;
@@ -146,7 +150,7 @@ void TraceLog(int logType, const char *text, ...)
 
     va_end(args);
 
-    if (logType >= logTypeExit) exit(1);  // If exit message, exit program
+    if (logType >= logTypeExit) exit(1); // If exit message, exit program
 
 #endif  // SUPPORT_TRACELOG
 }
@@ -169,7 +173,7 @@ FILE *android_fopen(const char *fileName, const char *mode)
 
     return funopen(asset, android_read, android_write, android_seek, android_close);
 }
-#endif
+#endif  // PLATFORM_ANDROID
 
 //----------------------------------------------------------------------------------
 // Module specific Functions Definition
@@ -197,4 +201,79 @@ static int android_close(void *cookie)
     AAsset_close((AAsset *)cookie);
     return 0;
 }
-#endif
+#endif  // PLATFORM_ANDROID
+
+#if defined(PLATFORM_UWP)
+
+#define MAX_MESSAGES 512 // If there are over 128 messages, I will cry... either way, this may be too much EDIT: Welp, 512
+
+static int UWPOutMessageId = -1; // Stores the last index for the message
+static UWPMessage* UWPOutMessages[MAX_MESSAGES]; // Messages out to UWP
+
+static int UWPInMessageId = -1; // Stores the last index for the message
+static UWPMessage* UWPInMessages[MAX_MESSAGES]; // Messages in from UWP
+
+UWPMessage* CreateUWPMessage(void)
+{
+    UWPMessage *msg = (UWPMessage *)RL_MALLOC(sizeof(UWPMessage));
+    msg->type = UWP_MSG_NONE;
+    Vector2 v0 = { 0, 0 };
+    msg->paramVector0 = v0;
+    msg->paramInt0 = 0;
+    msg->paramInt1 = 0;
+    msg->paramChar0 = 0;
+    msg->paramFloat0 = 0;
+    msg->paramDouble0 = 0;
+    msg->paramBool0 = false;
+    return msg;
+}
+
+void DeleteUWPMessage(UWPMessage *msg)
+{
+    RL_FREE(msg);
+}
+
+bool UWPHasMessages(void)
+{
+    return (UWPOutMessageId > -1);
+}
+
+UWPMessage *UWPGetMessage(void)
+{
+    if (UWPHasMessages()) return UWPOutMessages[UWPOutMessageId--];
+
+    return NULL;
+}
+
+void UWPSendMessage(UWPMessage *msg)
+{
+    if (UWPInMessageId + 1 < MAX_MESSAGES)
+    {
+        UWPInMessageId++;
+        UWPInMessages[UWPInMessageId] = msg;
+    }
+    else TraceLog(LOG_WARNING, "[UWP Messaging] Not enough array space to register new UWP inbound Message.");
+}
+
+void SendMessageToUWP(UWPMessage *msg)
+{
+    if (UWPOutMessageId + 1 < MAX_MESSAGES)
+    {
+        UWPOutMessageId++;
+        UWPOutMessages[UWPOutMessageId] = msg;
+    }
+    else TraceLog(LOG_WARNING, "[UWP Messaging] Not enough array space to register new UWP outward Message.");
+}
+
+bool HasMessageFromUWP(void)
+{
+    return UWPInMessageId > -1;
+}
+
+UWPMessage* GetMessageFromUWP(void)
+{
+    if (HasMessageFromUWP()) return UWPInMessages[UWPInMessageId--];
+
+    return NULL;
+}
+#endif  // PLATFORM_UWP

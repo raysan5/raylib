@@ -4,7 +4,7 @@
 *
 *   Logo Screen Functions Definitions (Init, Update, Draw, Unload)
 *
-*   Copyright (c) 2014-2018 Ramon Santamaria (@raysan5)
+*   Copyright (c) 2014-2019 Ramon Santamaria (@raysan5)
 *
 *   This software is provided "as-is", without any express or implied warranty. In no event
 *   will the authors be held liable for any damages arising from the use of this software.
@@ -33,22 +33,22 @@
 //----------------------------------------------------------------------------------
 
 // Logo screen global variables
-static int framesCounter;
-static int finishScreen;
+static int framesCounter = 0;
+static int finishScreen = 0;
 
-static int logoPositionX;
-static int logoPositionY;
+static int logoPositionX = 0;
+static int logoPositionY = 0;
 
-static int lettersCount;
+static int lettersCount = 0;
 
-static int topSideRecWidth;
-static int leftSideRecHeight;
+static int topSideRecWidth = 0;
+static int leftSideRecHeight = 0;
 
-static int bottomSideRecWidth;
-static int rightSideRecHeight;
+static int bottomSideRecWidth = 0;
+static int rightSideRecHeight = 0;
 
-static char raylib[8];          // raylib text array, max 8 letters
-static int state;               // Tracking animation states (State Machine)
+static char raylib[8] = { 0 };  // raylib text array, max 8 letters
+static int state = 0;           // Tracking animation states (State Machine)
 static float alpha = 1.0f;      // Useful for fading
 
 //----------------------------------------------------------------------------------

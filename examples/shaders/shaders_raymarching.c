@@ -18,13 +18,19 @@
 
 #include "raylib.h"
 
-int main()
+#if defined(PLATFORM_DESKTOP)
+    #define GLSL_VERSION            330
+#else   // PLATFORM_RPI, PLATFORM_ANDROID, PLATFORM_WEB
+    #define GLSL_VERSION            100
+#endif
+
+int main(void)
 {
     // Initialization
     //--------------------------------------------------------------------------------------
-    int screenWidth = 800;
-    int screenHeight = 450;
-    
+    const int screenWidth = 800;
+    const int screenHeight = 450;
+
     InitWindow(screenWidth, screenHeight, "raylib [shaders] example - raymarching shapes");
 
     Camera camera = { 0 };
@@ -37,8 +43,8 @@ int main()
 
     // Load raymarching shader
     // NOTE: Defining 0 (NULL) for vertex shader forces usage of internal default vertex shader
-    Shader shader = LoadShader(0, "resources/shaders/glsl330/raymarching.fs");
-    
+    Shader shader = LoadShader(0, FormatText("resources/shaders/glsl%i/raymarching.fs", GLSL_VERSION));
+
     // Get shader locations for required uniforms
     int viewEyeLoc = GetShaderLocation(shader, "viewEye");
     int viewCenterLoc = GetShaderLocation(shader, "viewCenter");
@@ -66,7 +72,7 @@ int main()
         float cameraTarget[3] = { camera.target.x, camera.target.y, camera.target.z };
         float cameraUp[3] = { camera.up.x, camera.up.y, camera.up.z };
 
-        float deltaTime = GetFrameTime();  
+        float deltaTime = GetFrameTime();
         runTime += deltaTime;
 
         // Set shader required uniform values

@@ -11,12 +11,12 @@
 
 #include "raylib.h"
 
-int main()
+int main(void)
 {
     // Initialization
     //--------------------------------------------------------------------------------------
-    int screenWidth = 800;
-    int screenHeight = 450;
+    const int screenWidth = 800;
+    const int screenHeight = 450;
 
     InitWindow(screenWidth, screenHeight, "raylib [core] example - 3d camera free");
 
@@ -29,9 +29,8 @@ int main()
     camera.type = CAMERA_PERSPECTIVE;
 
     Vector3 cubePosition = { 0.0f, 0.0f, 0.0f };
-    
-    Vector2 cubeScreenPosition;
-    
+    Vector2 cubeScreenPosition = { 0.0f, 0.0f };
+
     SetCameraMode(camera, CAMERA_FREE); // Set a free camera mode
 
     SetTargetFPS(60);                   // Set our game to run at 60 frames-per-second
@@ -43,7 +42,7 @@ int main()
         // Update
         //----------------------------------------------------------------------------------
         UpdateCamera(&camera);          // Update camera
-        
+
         // Calculate cube screen space position (with a little offset to be in top)
         cubeScreenPosition = GetWorldToScreen((Vector3){cubePosition.x, cubePosition.y + 2.5f, cubePosition.z}, camera);
         //----------------------------------------------------------------------------------
@@ -62,7 +61,7 @@ int main()
                 DrawGrid(10, 1.0f);
 
             EndMode3D();
-            
+
             DrawText("Enemy: 100 / 100", cubeScreenPosition.x - MeasureText("Enemy: 100 / 100", 20) / 2, cubeScreenPosition.y, 20, BLACK);
             DrawText("Text is always on top of the cube", (screenWidth - MeasureText("Text is always on top of the cube", 20)) / 2, 25, 20, GRAY);
 

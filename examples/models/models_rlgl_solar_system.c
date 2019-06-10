@@ -22,13 +22,13 @@ void DrawSphereBasic(Color color);      // Draw sphere without any matrix transf
 //------------------------------------------------------------------------------------
 // Program main entry point
 //------------------------------------------------------------------------------------
-int main()
+int main(void)
 {
     // Initialization
     //--------------------------------------------------------------------------------------
     const int screenWidth = 800;
     const int screenHeight = 450;
-    
+
     const float sunRadius = 4.0f;
     const float earthRadius = 0.6f;
     const float earthOrbitRadius = 8.0f;
@@ -44,26 +44,26 @@ int main()
     camera.up = (Vector3){ 0.0f, 1.0f, 0.0f };
     camera.fovy = 45.0f;
     camera.type = CAMERA_PERSPECTIVE;
-    
+
     SetCameraMode(camera, CAMERA_FREE);
-       
+
     float rotationSpeed = 0.2f;         // General system rotation speed
-    
+
     float earthRotation = 0.0f;         // Rotation of earth around itself (days) in degrees
     float earthOrbitRotation = 0.0f;    // Rotation of earth around the Sun (years) in degrees
     float moonRotation = 0.0f;          // Rotation of moon around itself
     float moonOrbitRotation = 0.0f;     // Rotation of moon around earth in degrees
 
-    SetTargetFPS(60);   // Set our game to run at 60 frames-per-second
+    SetTargetFPS(60);                   // Set our game to run at 60 frames-per-second
     //--------------------------------------------------------------------------------------
 
     // Main game loop
-    while (!WindowShouldClose())    // Detect window close button or ESC key
+    while (!WindowShouldClose())        // Detect window close button or ESC key
     {
         // Update
         //----------------------------------------------------------------------------------
         UpdateCamera(&camera);
-        
+
         earthRotation += (5.0f*rotationSpeed);
         earthOrbitRotation += (365/360.0f*(5.0f*rotationSpeed)*rotationSpeed);
         moonRotation += (2.0f*rotationSpeed);
@@ -77,12 +77,12 @@ int main()
             ClearBackground(RAYWHITE);
 
             BeginMode3D(camera);
-            
+
                 rlPushMatrix();
                     rlScalef(sunRadius, sunRadius, sunRadius);          // Scale Sun
                     DrawSphereBasic(GOLD);                              // Draw the Sun
                 rlPopMatrix();
-                
+
                 rlPushMatrix();
                     rlRotatef(earthOrbitRotation, 0.0f, 1.0f, 0.0f);    // Rotation for Earth orbit around Sun
                     rlTranslatef(earthOrbitRadius, 0.0f, 0.0f);         // Translation for Earth orbit
@@ -91,19 +91,19 @@ int main()
                     rlPushMatrix();
                         rlRotatef(earthRotation, 0.25, 1.0, 0.0);       // Rotation for Earth itself
                         rlScalef(earthRadius, earthRadius, earthRadius);// Scale Earth
-                        
+
                         DrawSphereBasic(BLUE);                          // Draw the Earth
                     rlPopMatrix();
-                    
+
                     rlRotatef(moonOrbitRotation, 0.0f, 1.0f, 0.0f);     // Rotation for Moon orbit around Earth
                     rlTranslatef(moonOrbitRadius, 0.0f, 0.0f);          // Translation for Moon orbit
                     rlRotatef(-moonOrbitRotation, 0.0f, 1.0f, 0.0f);    // Rotation for Moon orbit around Earth inverted
                     rlRotatef(moonRotation, 0.0f, 1.0f, 0.0f);          // Rotation for Moon itself
                     rlScalef(moonRadius, moonRadius, moonRadius);       // Scale Moon
-                    
+
                     DrawSphereBasic(LIGHTGRAY);                         // Draw the Moon
                 rlPopMatrix();
-                
+
                 // Some reference elements (not affected by previous matrix transformations)
                 DrawCircle3D((Vector3){ 0.0f, 0.0f, 0.0f }, earthOrbitRadius, (Vector3){ 1, 0, 0 }, 90.0f, Fade(RED, 0.5f));
                 DrawGrid(20, 1.0f);
@@ -135,7 +135,7 @@ void DrawSphereBasic(Color color)
 {
     int rings = 16;
     int slices = 16;
-    
+
     rlBegin(RL_TRIANGLES);
         rlColor4ub(color.r, color.g, color.b, color.a);
 

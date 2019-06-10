@@ -32,7 +32,6 @@
 //----------------------------------------------------------------------------------
 // Types and Structures Definition
 //----------------------------------------------------------------------------------
-
 typedef struct Player {
     Vector2 position;
     Vector2 speed;
@@ -66,33 +65,33 @@ typedef struct Points {
 //------------------------------------------------------------------------------------
 // Global Variables Declaration
 //------------------------------------------------------------------------------------
-static int screenWidth = 800;
-static int screenHeight = 450;
+static const int screenWidth = 800;
+static const int screenHeight = 450;
 
-static int framesCounter;
-static bool gameOver;
-static bool pause;
-static int score;
+static int framesCounter = 0;
+static bool gameOver = false;
+static bool pause = false;
+static int score = 0;
 
-static Player player;
-static Shoot shoot[PLAYER_MAX_SHOOTS];
-static Ball bigBalls[MAX_BIG_BALLS];
-static Ball mediumBalls[MAX_BIG_BALLS*2];
-static Ball smallBalls[MAX_BIG_BALLS*4];
-static Points points[5];
+static Player player = { 0 };
+static Shoot shoot[PLAYER_MAX_SHOOTS] = { 0 };
+static Ball bigBalls[MAX_BIG_BALLS] = { 0 };
+static Ball mediumBalls[MAX_BIG_BALLS*2] = { 0 };
+static Ball smallBalls[MAX_BIG_BALLS*4] = { 0 };
+static Points points[5] = { 0 };
 
 // NOTE: Defined triangle is isosceles with common angles of 70 degrees.
-static float shipHeight;
-static float gravity;
+static float shipHeight = 0.0f;
+static float gravity = 0.0f;
 
-static int countmediumBallss;
-static int countsmallBallss;
-static int meteorsDestroyed;
-static Vector2 linePosition;
+static int countmediumBallss = 0;
+static int countsmallBallss = 0;
+static int meteorsDestroyed = 0;
+static Vector2 linePosition = { 0 };
 
-static bool victory;
-static bool lose;
-static bool awake;
+static bool victory = false;
+static bool lose = false;
+static bool awake = false;
 
 //------------------------------------------------------------------------------------
 // Module Functions Declaration (local)
@@ -117,7 +116,6 @@ int main(void)
 #if defined(PLATFORM_WEB)
     emscripten_set_main_loop(UpdateDrawFrame, 0, 1);
 #else
-
     SetTargetFPS(60);
     //--------------------------------------------------------------------------------------
     
@@ -130,7 +128,6 @@ int main(void)
         //----------------------------------------------------------------------------------
     }
 #endif
-
     // De-Initialization
     //--------------------------------------------------------------------------------------
     UnloadGame();         // Unload loaded data (textures, sounds, models...)
@@ -593,12 +590,12 @@ void DrawGame(void)
             {
                 if (points[z].alpha > 0.0f)
                 {
-                    DrawText(FormatText("+%02i", points[z].value), points[z].position.x, points[z].position.y, 20, Fade(BLUE, points[z].alpha));
+                    DrawText(TextFormat("+%02i", points[z].value), points[z].position.x, points[z].position.y, 20, Fade(BLUE, points[z].alpha));
                 }
             }
 
             // Draw score (UI)
-            DrawText(FormatText("SCORE: %i", score), 10, 10, 20, LIGHTGRAY);
+            DrawText(TextFormat("SCORE: %i", score), 10, 10, 20, LIGHTGRAY);
             
             if (victory) 
             {

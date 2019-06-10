@@ -74,11 +74,16 @@
 //#include <windows.h>
 
 // raylib edit!!!
+#ifndef PLATFORM_UWP
 typedef void *PVOID;    // PVOID is a pointer to any type. This type is declared in WinNT.h
 typedef PVOID HANDLE;   // HANDLE is handle to an object. This type is declared in WinNT.h
 typedef HANDLE HWND;    // HWND is a handle to a window. This type is declared in WinDef.h
 typedef HANDLE HDC;     // HDC is a handle to a device context (DC). This type is declared in WinDef.h
 typedef HANDLE HBITMAP; // HBITMAP is a handle to a bitmap. This type is declared in WinDef.h
+#else
+//UWP Fix
+#include "Windows.h"
+#endif
 
 // HDC, HBITMAP and HWND are actually pointers to void. You can cast a long to a HWND like this: HWND h = (HWND)my_long_var;
 // but very careful of what information is stored in my_long_var. You have to make sure that you have a pointer in there.

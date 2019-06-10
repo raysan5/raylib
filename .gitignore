@@ -45,10 +45,13 @@ ipch/
 *.opensdf
 *.db
 *.opendb
+packages/
 
 # Ignore compiled binaries
 *.o
 *.exe
+*.a
+*.bc
 !raylib.rc.o
 
 # Ignore all examples files
@@ -132,3 +135,4 @@ templates/android_project/output
 GPATH
 GRTAGS
 GTAGS
+.vs

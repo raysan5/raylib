@@ -2,10 +2,12 @@
 *
 *   SKULLY ESCAPE [KING GAME JAM 2015]
 *
+*   A scary graphic adventure in an old mansion
+*
 *   This game has been created using raylib 1.6 (www.raylib.com)
 *   raylib is licensed under an unmodified zlib/libpng license (View raylib.h for details)
 *
-*   Copyright (c) 2014 Ramon Santamaria (@raysan5)
+*   Copyright (c) 2015 Ramon Santamaria (@raysan5)
 *
 ********************************************************************************************/
 
@@ -52,7 +54,7 @@ int main(void)
 {
 	// Initialization (Note windowTitle is unused on Android)
 	//---------------------------------------------------------
-    InitWindow(screenWidth, screenHeight, "SKULLY ESCAPE [KING GAMEJAM]");
+    InitWindow(screenWidth, screenHeight, "SKULLY ESCAPE [KING GAMEJAM 2015]");
 
     // Global data loading (assets that must be available in all screens, i.e. fonts)
     InitAudioDevice();

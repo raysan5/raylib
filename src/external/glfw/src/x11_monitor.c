@@ -2,7 +2,7 @@
 // GLFW 3.3 X11 - www.glfw.org
 //------------------------------------------------------------------------
 // Copyright (c) 2002-2006 Marcus Geelnard
-// Copyright (c) 2006-2016 Camilla Löwy <elmindreda@glfw.org>
+// Copyright (c) 2006-2019 Camilla Löwy <elmindreda@glfw.org>
 //
 // This software is provided 'as-is', without any express or implied
 // warranty. In no event will the authors be held liable for any damages
@@ -30,6 +30,7 @@
 #include <limits.h>
 #include <stdlib.h>
 #include <string.h>
+#include <math.h>
 
 
 // Check whether the display mode should be included in enumeration
@@ -44,7 +45,7 @@ static GLFWbool modeIsGood(const XRRModeInfo* mi)
 static int calculateRefreshRate(const XRRModeInfo* mi)
 {
     if (mi->hTotal && mi->vTotal)
-        return (int) ((double) mi->dotClock / ((double) mi->hTotal * (double) mi->vTotal));
+        return (int) round((double) mi->dotClock / ((double) mi->hTotal * (double) mi->vTotal));
     else
         return 0;
 }
@@ -339,6 +340,100 @@ void _glfwPlatformGetMonitorContentScale(_GLFWmonitor* monitor,
         *xscale = _glfw.x11.contentScaleX;
     if (yscale)
         *yscale = _glfw.x11.contentScaleY;
+}
+
+void _glfwPlatformGetMonitorWorkarea(_GLFWmonitor* monitor, int* xpos, int* ypos, int* width, int* height)
+{
+    int areaX = 0, areaY = 0, areaWidth = 0, areaHeight = 0;
+
+    if (_glfw.x11.randr.available && !_glfw.x11.randr.monitorBroken)
+    {
+        XRRScreenResources* sr;
+        XRRCrtcInfo* ci;
+
+        sr = XRRGetScreenResourcesCurrent(_glfw.x11.display, _glfw.x11.root);
+        ci = XRRGetCrtcInfo(_glfw.x11.display, sr, monitor->x11.crtc);
+
+        areaX = ci->x;
+        areaY = ci->y;
+
+        const XRRModeInfo* mi = getModeInfo(sr, ci->mode);
+
+        if (ci->rotation == RR_Rotate_90 || ci->rotation == RR_Rotate_270)
+        {
+            areaWidth  = mi->height;
+            areaHeight = mi->width;
+        }
+        else
+        {
+            areaWidth  = mi->width;
+            areaHeight = mi->height;
+        }
+
+        XRRFreeCrtcInfo(ci);
+        XRRFreeScreenResources(sr);
+    }
+    else
+    {
+        areaWidth  = DisplayWidth(_glfw.x11.display, _glfw.x11.screen);
+        areaHeight = DisplayHeight(_glfw.x11.display, _glfw.x11.screen);
+    }
+
+    if (_glfw.x11.NET_WORKAREA && _glfw.x11.NET_CURRENT_DESKTOP)
+    {
+        Atom* extents = NULL;
+        Atom* desktop = NULL;
+        const unsigned long extentCount =
+            _glfwGetWindowPropertyX11(_glfw.x11.root,
+                                      _glfw.x11.NET_WORKAREA,
+                                      XA_CARDINAL,
+                                      (unsigned char**) &extents);
+
+        if (_glfwGetWindowPropertyX11(_glfw.x11.root,
+                                      _glfw.x11.NET_CURRENT_DESKTOP,
+                                      XA_CARDINAL,
+                                      (unsigned char**) &desktop) > 0)
+        {
+            if (extentCount >= 4 && *desktop < extentCount / 4)
+            {
+                const int globalX = extents[*desktop * 4 + 0];
+                const int globalY = extents[*desktop * 4 + 1];
+                const int globalWidth  = extents[*desktop * 4 + 2];
+                const int globalHeight = extents[*desktop * 4 + 3];
+
+                if (areaX < globalX)
+                {
+                    areaWidth -= globalX - areaX;
+                    areaX = globalX;
+                }
+
+                if (areaY < globalY)
+                {
+                    areaHeight -= globalY - areaY;
+                    areaY = globalY;
+                }
+
+                if (areaX + areaWidth > globalX + globalWidth)
+                    areaWidth = globalX - areaX + globalWidth;
+                if (areaY + areaHeight > globalY + globalHeight)
+                    areaHeight = globalY - areaY + globalHeight;
+            }
+        }
+
+        if (extents)
+            XFree(extents);
+        if (desktop)
+            XFree(desktop);
+    }
+
+    if (xpos)
+        *xpos = areaX;
+    if (ypos)
+        *ypos = areaY;
+    if (width)
+        *width = areaWidth;
+    if (height)
+        *height = areaHeight;
 }
 
 GLFWvidmode* _glfwPlatformGetVideoModes(_GLFWmonitor* monitor, int* count)

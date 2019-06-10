@@ -440,7 +440,7 @@ RMDEF Vector3 Vector3Transform(Vector3 v, Matrix mat)
     result.z = mat.m2*x + mat.m6*y + mat.m10*z + mat.m14;
 
     return result;
-};
+}
 
 // Transform a vector by quaternion rotation
 RMDEF Vector3 Vector3RotateByQuaternion(Vector3 v, Quaternion q)

@@ -93,9 +93,16 @@ before_install:
 
         export RAYLIB_PACKAGE_SUFFIX="-Linux-$ARCH";
         if [ "$INSTALL_GLFW" == "YES" ]; then
-          wget 'http://ftp.de.debian.org/debian/pool/main/g/glfw3/libglfw3_3.2.1-1_amd64.deb';
-          wget 'http://ftp.de.debian.org/debian/pool/main/g/glfw3/libglfw3-dev_3.2.1-1_amd64.deb';
-          sudo dpkg -i libglfw3_3.2.1-1_amd64.deb libglfw3-dev_3.2.1-1_amd64.deb;
+          pushd src/external/glfw;
+          cmake . -DGLFW_BUILD_DOCS=OFF
+                  -DGLFW_BUILD_TESTS=OFF
+                  -DGLFW_BUILD_EXAMPLES=OFF
+                  -DGLFW_INSTALL=ON
+                  -DBUILD_SHARED_LIBS=ON
+                  -DGLFW_USE_WAYLAND=$WAYLAND;
+          make;
+          sudo make install;
+          popd;
         fi;
       fi;
     fi
@@ -113,9 +120,12 @@ before_install:
 
 script:
   - cd build
-  - if test -n "$WAYLAND";
-      then wget https://mirrors.kernel.org/ubuntu/pool/universe/e/extra-cmake-modules/extra-cmake-modules_5.38.0a-0ubuntu1_amd64.deb;
-      sudo dpkg -i extra-cmake-modules_5.38.0a-0ubuntu1_amd64.deb;
+  - if test -n "$WAYLAND"; then
+      wget https://mirrors.edge.kernel.org/ubuntu/pool/universe/e/extra-cmake-modules/extra-cmake-modules_5.44.0-0ubuntu1_amd64.deb;
+      sudo apt-get clean;
+      sudo apt-get update;
+      sudo apt-get install dpkg;
+      sudo dpkg -i extra-cmake-modules_5.44.0-0ubuntu1_amd64.deb;
       git clone git://anongit.freedesktop.org/wayland/wayland-protocols;
       pushd wayland-protocols;
       git checkout 1.15 && ./autogen.sh --prefix=/usr && make && sudo make install;
