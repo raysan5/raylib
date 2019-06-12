@@ -107,15 +107,13 @@ contributing (in some way or another) to make the raylib project better. Huge th
  - [Richard Goodwin](https://github.com/AudioMorphology) for adding RPI touchscreen support.
  - [Milan Nikolic](https://github.com/gen2brain) for adding Android build support with custom standalone toolchain.
  - [Michael Vetter](https://github.com/jubalh) for improvements on build system and his work on Suse Linux package... and multiple fixes!
- - [Wilhem Barbier](https://github.com/nounoursheureux) for adding Image generation functions and some fixes.
+ - [Wilhem Barbier](https://github.com/nounoursheureux) for adding Image generation functions, shaders work and some fixes.
  - [Benjamin Summerton](https://github.com/define-private-public) for improving OSX building and his amazing work on CMake build sytem.
  - [MartinFX](https://github.com/Martinfx) for adding compilation support for FreeBSD OS and derivatives.
- - [Wilhem Barbier](https://github.com/nounoursheureux) for supporting default shaders on shader loading, if shader not provided.
  - [Ahmad Fatoum](https://github.com/a3f) for implementing CI support for raylib (Travis and AppVeyor) and great improvements on build system.
  - [SamNChiet](https://github.com/SamNChiet) for a greatly improved UWP input implementation.
  - [David Reid](https://github.com/mackron) for a complete review of audio module to support his amazing miniaudio library.
  - [Kai](https://github.com/questor) for multiple code reviews and improvements.
- - [RDR8](https://github.com/RDR8) for improvements on Makefiles for Linux.
  - [Max Danielsson](https://github.com/autious) for adding support for orthographic 3d camera projection
  - [Lumaio](https://github.com/TheLumaio) for his great work on GBuffers and GetCollisionRayModel().
  - [Jonas Daeyaert](https://github.com/culacant) for an amazing work on IQM animated models support.
