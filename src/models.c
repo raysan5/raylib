@@ -89,7 +89,7 @@
 #if defined(SUPPORT_FILEFORMAT_OBJ)
 static Model LoadOBJ(const char *fileName);     // Load OBJ mesh data
 #endif
-#if defined(SUPPORT_FILEFORMAT_GLTF)
+#if defined(SUPPORT_FILEFORMAT_IQM)
 static Model LoadIQM(const char *fileName);     // Load IQM mesh data
 #endif
 #if defined(SUPPORT_FILEFORMAT_GLTF)
