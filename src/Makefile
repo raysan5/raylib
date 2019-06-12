@@ -206,8 +206,7 @@ ifeq ($(PLATFORM),PLATFORM_ANDROID)
 endif
 
 # Define default C compiler and archiver to pack library
-# NOTE: define g++ compiler if using C++
-CC = gcc
+CC ?= gcc
 AR = ar
 
 ifeq ($(PLATFORM),PLATFORM_DESKTOP)
