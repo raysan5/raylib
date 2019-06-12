@@ -188,10 +188,13 @@ endif
 #  -std=gnu99           defines C language mode (GNU C from 1999 revision)
 #  -Wno-missing-braces  ignore invalid warning (GCC bug 53119)
 #  -D_DEFAULT_SOURCE    use with -std=c99 on Linux and PLATFORM_WEB, required for timespec
-CFLAGS += -O1 -s -Wall -std=c99 -D_DEFAULT_SOURCE -Wno-missing-braces
+CFLAGS += -Wall -std=c99 -D_DEFAULT_SOURCE -Wno-missing-braces
 
 ifeq ($(BUILD_MODE),DEBUG)
     CFLAGS += -g
+endif
+ifeq ($(RAYLIB_BUILD_MODE),RELEASE)
+    CFLAGS += -O1 -s
 endif
 
 # Additional flags for compiler (if desired)

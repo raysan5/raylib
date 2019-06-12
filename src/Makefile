@@ -256,10 +256,13 @@ endif
 #  -D_DEFAULT_SOURCE        use with -std=c99 on Linux and PLATFORM_WEB, required for timespec
 #  -Werror=pointer-arith    catch unportable code that does direct arithmetic on void pointers
 #  -fno-strict-aliasing     jar_xm.h does shady stuff (breaks strict aliasing)
-CFLAGS += -O1 -Wall -std=c99 -D_DEFAULT_SOURCE -Wno-missing-braces -Werror=pointer-arith -fno-strict-aliasing
+CFLAGS += -Wall -std=c99 -D_DEFAULT_SOURCE -Wno-missing-braces -Werror=pointer-arith -fno-strict-aliasing
 
 ifeq ($(RAYLIB_BUILD_MODE),DEBUG)
     CFLAGS += -g
+endif
+ifeq ($(RAYLIB_BUILD_MODE),RELEASE)
+    CFLAGS += -O1
 endif
 
 # Additional flags for compiler (if desired)
