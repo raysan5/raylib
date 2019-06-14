@@ -765,12 +765,13 @@ void CloseWindow(void)
 
     for (int i = 0; i < sizeof(eventWorkers)/sizeof(InputEventWorker); ++i)
     {
-        if (eventWorkers[i].threadId == 0)
+        if (eventWorkers[i].threadId)
         {
             pthread_join(eventWorkers[i].threadId, NULL);
         }
     }
-    pthread_join(gamepadThreadId, NULL);
+    
+    if (gamepadThreadId) pthread_join(gamepadThreadId, NULL);
 #endif
 
     TraceLog(LOG_INFO, "Window closed successfully");
