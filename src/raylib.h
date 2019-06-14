@@ -466,6 +466,7 @@ typedef enum {
     FLAG_WINDOW_UNDECORATED = 8,    // Set to disable window decoration (frame and buttons)
     FLAG_WINDOW_TRANSPARENT = 16,   // Set to allow transparent window
     FLAG_WINDOW_HIDDEN      = 128,  // Set to create the window initially hidden
+    FLAG_WINDOW_ALWAYS_RUN  = 256,  // Set to allow windows running while minimized
     FLAG_MSAA_4X_HINT       = 32,   // Set to try enabling MSAA 4X
     FLAG_VSYNC_HINT         = 64    // Set to try enabling V-Sync on GPU
 } ConfigFlag;
@@ -924,7 +925,7 @@ RLAPI Color GetColor(int hexValue);                               // Returns a C
 RLAPI Color Fade(Color color, float alpha);                       // Color fade-in or fade-out, alpha goes from 0.0f to 1.0f
 
 // Misc. functions
-RLAPI void SetConfigFlags(unsigned char flags);                   // Setup window configuration flags (view FLAGS)
+RLAPI void SetConfigFlags(unsigned int flags);                    // Setup window configuration flags (view FLAGS)
 RLAPI void SetTraceLogLevel(int logType);                         // Set the current threshold (minimum) log level
 RLAPI void SetTraceLogExit(int logType);                          // Set the exit threshold (minimum) log level
 RLAPI void SetTraceLogCallback(TraceLogCallback callback);        // Set a trace log callback to enable custom logging

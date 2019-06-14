@@ -300,6 +300,7 @@ static int currentWidth, currentHeight;         // Current render width and heig
 static int renderOffsetX = 0;                   // Offset X from render area (must be divided by 2)
 static int renderOffsetY = 0;                   // Offset Y from render area (must be divided by 2)
 static bool fullscreen = false;                 // Fullscreen mode (useful only for PLATFORM_DESKTOP)
+static bool alwaysRun = false;                  // Keep window update/draw running on minimized
 static Matrix screenScaling;                    // Matrix to scale screen (framebuffer rendering)
 
 #if defined(PLATFORM_RPI)
@@ -421,7 +422,7 @@ static double targetTime = 0.0;             // Desired time for one frame, if 0 
 
 // Config internal variables
 //-----------------------------------------------------------------------------------
-static unsigned char configFlags = 0;       // Configuration flags (bit based)
+static unsigned int configFlags = 0;        // Configuration flags (bit based)
 static bool showLogo = false;               // Track if showing logo at init is enabled
 
 static char **dropFilesPath;                // Store dropped files paths as strings
@@ -798,7 +799,7 @@ bool WindowShouldClose(void)
     if (windowReady)
     {
         // While window minimized, stop loop execution
-        while (windowMinimized) glfwWaitEvents();
+        while (!alwaysRun && windowMinimized) glfwWaitEvents();
 
         return (glfwWindowShouldClose(window));
     }
@@ -1658,12 +1659,13 @@ Color Fade(Color color, float alpha)
 }
 
 // Setup window configuration flags (view FLAGS)
-void SetConfigFlags(unsigned char flags)
+void SetConfigFlags(unsigned int flags)
 {
     configFlags = flags;
 
     if (configFlags & FLAG_SHOW_LOGO) showLogo = true;
     if (configFlags & FLAG_FULLSCREEN_MODE) fullscreen = true;
+    if (configFlags & FLAG_WINDOW_ALWAYS_RUN) alwaysRun = true;
 }
 
 // NOTE TraceLog() function is located in [utils.h]
