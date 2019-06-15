@@ -1072,6 +1072,8 @@ void rlBegin(int mode)
             if (draws[drawsCounter - 1].mode == RL_LINES) draws[drawsCounter - 1].vertexAlignment = ((draws[drawsCounter - 1].vertexCount < 4)? draws[drawsCounter - 1].vertexCount : draws[drawsCounter - 1].vertexCount%4);
             else if (draws[drawsCounter - 1].mode == RL_TRIANGLES) draws[drawsCounter - 1].vertexAlignment = ((draws[drawsCounter - 1].vertexCount < 4)? 1 : (4 - (draws[drawsCounter - 1].vertexCount%4)));
 
+            else draws[drawsCounter - 1].vertexAlignment = 0;
+
             if (rlCheckBufferLimit(draws[drawsCounter - 1].vertexAlignment)) rlglDraw();
             else
             {
@@ -1242,6 +1244,8 @@ void rlEnableTexture(unsigned int id)
             // for the next set of vertex to be drawn
             if (draws[drawsCounter - 1].mode == RL_LINES) draws[drawsCounter - 1].vertexAlignment = ((draws[drawsCounter - 1].vertexCount < 4)? draws[drawsCounter - 1].vertexCount : draws[drawsCounter - 1].vertexCount%4);
             else if (draws[drawsCounter - 1].mode == RL_TRIANGLES) draws[drawsCounter - 1].vertexAlignment = ((draws[drawsCounter - 1].vertexCount < 4)? 1 : (4 - (draws[drawsCounter - 1].vertexCount%4)));
+
+            else draws[drawsCounter - 1].vertexAlignment = 0;
 
             if (rlCheckBufferLimit(draws[drawsCounter - 1].vertexAlignment)) rlglDraw();
             else
