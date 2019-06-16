@@ -91,8 +91,8 @@ static Font LoadBMFont(const char *fileName);     // Load a BMFont file (AngelCo
 #endif
 
 #if defined(SUPPORT_DEFAULT_FONT)
-extern void LoadDefaultFont(void);
-extern void UnloadDefaultFont(void);
+extern void LoadFontDefault(void);
+extern void UnloadFontDefault(void);
 #endif
 
 //----------------------------------------------------------------------------------
@@ -101,7 +101,7 @@ extern void UnloadDefaultFont(void);
 #if defined(SUPPORT_DEFAULT_FONT)
 
 // Load raylib default font
-extern void LoadDefaultFont(void)
+extern void LoadFontDefault(void)
 {
     #define BIT_CHECK(a,b) ((a) & (1u << (b)))
 
@@ -246,7 +246,7 @@ extern void LoadDefaultFont(void)
 }
 
 // Unload raylib default font
-extern void UnloadDefaultFont(void)
+extern void UnloadFontDefault(void)
 {
     UnloadTexture(defaultFont.texture);
     RL_FREE(defaultFont.chars);

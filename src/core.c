@@ -445,8 +445,8 @@ static bool gifRecording = false;           // GIF recording state
 // Other Modules Functions Declaration (required by core)
 //----------------------------------------------------------------------------------
 #if defined(SUPPORT_DEFAULT_FONT)
-extern void LoadDefaultFont(void);          // [Module: text] Loads default font on InitWindow()
-extern void UnloadDefaultFont(void);        // [Module: text] Unloads default font from GPU memory
+extern void LoadFontDefault(void);          // [Module: text] Loads default font on InitWindow()
+extern void UnloadFontDefault(void);        // [Module: text] Unloads default font from GPU memory
 #endif
 
 //----------------------------------------------------------------------------------
@@ -661,7 +661,7 @@ void InitWindow(int width, int height, const char *title)
 #if defined(SUPPORT_DEFAULT_FONT)
     // Load default font
     // NOTE: External function (defined in module: text)
-    LoadDefaultFont();
+    LoadFontDefault();
 #endif
 
 #if defined(PLATFORM_RPI)
@@ -719,7 +719,7 @@ void CloseWindow(void)
 #endif
 
 #if defined(SUPPORT_DEFAULT_FONT)
-    UnloadDefaultFont();
+    UnloadFontDefault();
 #endif
 
     rlglClose();                // De-init rlgl
@@ -3880,7 +3880,7 @@ static void AndroidCommandCallback(struct android_app *app, int32_t cmd)
                 #if defined(SUPPORT_DEFAULT_FONT)
                     // Load default font
                     // NOTE: External function (defined in module: text)
-                    LoadDefaultFont();
+                    LoadFontDefault();
                 #endif
 
                     // TODO: GPU assets reload in case of lost focus (lost context)
