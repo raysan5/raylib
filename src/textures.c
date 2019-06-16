@@ -746,7 +746,7 @@ Image GetTextureData(Texture2D texture)
 }
 
 // Get pixel data from GPU frontbuffer and return an Image (screenshot)
-RLAPI Image GetScreenData(void)
+Image GetScreenData(void)
 {
     Image image = { 0 };
 

@@ -686,10 +686,8 @@ void UnloadFont(Font font)
     // NOTE: Make sure spriteFont is not default font (fallback)
     if (font.texture.id != GetFontDefault().texture.id)
     {
-        for (int i = 0; i < font.charsCount; i++)
-        {
-            RL_FREE(font.chars[i].data);
-        }
+        for (int i = 0; i < font.charsCount; i++) RL_FREE(font.chars[i].data);
+
         UnloadTexture(font.texture);
         RL_FREE(font.chars);
 
@@ -723,18 +721,18 @@ void DrawFPS(int posX, int posY)
 // as possible and a `?`(0x3f) codepoint is returned. `count` will hold the total number of bytes processed.
 // NOTE: the standard says U+FFFD should be returned in case of errors but that character is not supported by the default font in raylib
 // TODO: optimize this code for speed!!
-int GetNextCodepoint(const char* text, int* count)
+int GetNextCodepoint(const char *text, int *count)
 {
 /* 
-   UTF8 specs from https://www.ietf.org/rfc/rfc3629.txt
+    UTF8 specs from https://www.ietf.org/rfc/rfc3629.txt
 
-   Char. number range  |        UTF-8 octet sequence
+    Char. number range  |        UTF-8 octet sequence
       (hexadecimal)    |              (binary)
-   --------------------+---------------------------------------------
-   0000 0000-0000 007F | 0xxxxxxx
-   0000 0080-0000 07FF | 110xxxxx 10xxxxxx
-   0000 0800-0000 FFFF | 1110xxxx 10xxxxxx 10xxxxxx
-   0001 0000-0010 FFFF | 11110xxx 10xxxxxx 10xxxxxx 10xxxxxx
+    --------------------+---------------------------------------------
+    0000 0000-0000 007F | 0xxxxxxx
+    0000 0080-0000 07FF | 110xxxxx 10xxxxxx
+    0000 0800-0000 FFFF | 1110xxxx 10xxxxxx 10xxxxxx
+    0001 0000-0010 FFFF | 11110xxx 10xxxxxx 10xxxxxx 10xxxxxx
 */
     
     // NOTE: on decode errors we return as soon as possible
@@ -743,69 +741,90 @@ int GetNextCodepoint(const char* text, int* count)
     int o = (unsigned char)(text[0]); // The first UTF8 octet
     *count = 1;
     
-    if( o <= 0x7f )
+    if (o <= 0x7f)
     { 
         // Only one octet (ASCII range x00-7F)
         c = text[0];
     }
-    else if((o & 0xe0) == 0xc0)
+    else if ((o & 0xe0) == 0xc0)
     {
         // Two octets 
         // [0]xC2-DF    [1]UTF8-tail(x80-BF)
         unsigned char o1 = text[1];
-        if(o1 == '\0' || (o1 >> 6) != 2 ) {*count = 2; return c; } // Unexpected sequence
-        if(o >= 0xc2 && o <= 0xdf) 
+        
+        if ((o1 == '\0') || ((o1 >> 6) != 2)) { *count = 2; return c; } // Unexpected sequence
+        
+        if ((o >= 0xc2) && (o <= 0xdf))
         {
             c = ((o & 0x1f) << 6) | (o1 & 0x3f);
             *count = 2;
         }
     }
-    else if( (o & 0xf0) == 0xe0 )
+    else if ((o & 0xf0) == 0xe0)
     {
         // Three octets
-        unsigned char o1 = text[1], o2 = '\0';
-        if(o1 == '\0' || (o1 >> 6) != 2) { *count = 2; return c; } // Unexpected sequence
-        o2 = text[2];
-        if(o2 == '\0' || (o2 >> 6) != 2) {*count = 3; return c; } // Unexpected sequence
+        unsigned char o1 = text[1];
+        unsigned char o2 = '\0';
         
-        /* [0]xE0    [1]xA0-BF       [2]UTF8-tail(x80-BF)
-           [0]xE1-EC [1]UTF8-tail    [2]UTF8-tail(x80-BF)
-           [0]xED    [1]x80-9F       [2]UTF8-tail(x80-BF)
-           [0]xEE-EF [1]UTF8-tail    [2]UTF8-tail(x80-BF)
+        if ((o1 == '\0') || ((o1 >> 6) != 2)) { *count = 2; return c; } // Unexpected sequence
+        
+        o2 = text[2];
+        
+        if ((o2 == '\0') || ((o2 >> 6) != 2)) { *count = 3; return c; } // Unexpected sequence
+        
+        /* 
+            [0]xE0    [1]xA0-BF       [2]UTF8-tail(x80-BF)
+            [0]xE1-EC [1]UTF8-tail    [2]UTF8-tail(x80-BF)
+            [0]xED    [1]x80-9F       [2]UTF8-tail(x80-BF)
+            [0]xEE-EF [1]UTF8-tail    [2]UTF8-tail(x80-BF)
         */
         
-        if((o == 0xe0 && !(o1 >= 0xa0 && o1 <= 0xbf)) || (o == 0xed && !(o1 >= 0x80 && o1 <= 0x9f)) ) {*count = 2; return c;}
-        if(o >= 0xe0 && 0 <= 0xef)
+        if (((o == 0xe0) && !((o1 >= 0xa0) && (o1 <= 0xbf))) || 
+            ((o == 0xed) && !((o1 >= 0x80) && (o1 <= 0x9f)))) { *count = 2; return c; }
+        
+        if ((o >= 0xe0) && (0 <= 0xef))
         {
             c = ((o & 0xf) << 12) | ((o1 & 0x3f) << 6) | (o2 & 0x3f);
             *count = 3;
         }
     }
-    else if( (o & 0xf8) == 0xf0 ) 
+    else if ((o & 0xf8) == 0xf0) 
     {
         // Four octets
-        if(o > 0xf4) return c;
+        if (o > 0xf4) return c;
         
-        unsigned char o1 = text[1], o2 = '\0', o3 = '\0';
-        if(o1 == '\0' || (o1 >> 6) != 2) { *count = 2; return c; }  // Unexpected sequence
+        unsigned char o1 = text[1];
+        unsigned char o2 = '\0';
+        unsigned char o3 = '\0';
+        
+        if ((o1 == '\0') || ((o1 >> 6) != 2)) { *count = 2; return c; }  // Unexpected sequence
+        
         o2 = text[2];
-        if(o2 == '\0' || (o2 >> 6) != 2) { *count = 3; return c; }  // Unexpected sequence
-        o3 = text[3];
-        if(o3 == '\0' || (o3 >> 6) != 2) { *count = 4; return c; }  // Unexpected sequence
         
-        /* [0]xF0       [1]x90-BF       [2]UTF8-tail  [3]UTF8-tail
-           [0]xF1-F3    [1]UTF8-tail    [2]UTF8-tail  [3]UTF8-tail
-           [0]xF4       [1]x80-8F       [2]UTF8-tail  [3]UTF8-tail
+        if ((o2 == '\0') || ((o2 >> 6) != 2)) { *count = 3; return c; }  // Unexpected sequence
+        
+        o3 = text[3];
+        
+        if ((o3 == '\0') || ((o3 >> 6) != 2)) { *count = 4; return c; }  // Unexpected sequence
+        
+        /* 
+            [0]xF0       [1]x90-BF       [2]UTF8-tail  [3]UTF8-tail
+            [0]xF1-F3    [1]UTF8-tail    [2]UTF8-tail  [3]UTF8-tail
+            [0]xF4       [1]x80-8F       [2]UTF8-tail  [3]UTF8-tail
         */
-        if((o == 0xf0 && !(o1 >= 0x90 && o1 <= 0xbf)) || (o == 0xf4 && !( o1 >= 0x80 && o1 <= 0x8f)) ) { *count = 2; return c; } // Unexpected sequence
-        if( o >= 0xf0)
+        
+        if (((o == 0xf0) && !((o1 >= 0x90) && (o1 <= 0xbf))) || 
+            ((o == 0xf4) && !((o1 >= 0x80) && (o1 <= 0x8f)))) { *count = 2; return c; } // Unexpected sequence
+        
+        if (o >= 0xf0)
         {
             c = ((o & 0x7) << 18) | ((o1 & 0x3f) << 12) | ((o2 & 0x3f) << 6) | (o3 & 0x3f);
             *count = 4;
         }
     }
     
-    if(c > 0x10ffff) c = 0x3f; // Codepoints after U+10ffff are invalid
+    if (c > 0x10ffff) c = 0x3f;     // Codepoints after U+10ffff are invalid
+    
     return c;
 }
 
