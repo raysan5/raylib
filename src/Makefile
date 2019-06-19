@@ -161,7 +161,7 @@ ifeq ($(PLATFORM),PLATFORM_ANDROID)
     # Starting at 2019 using ARM64 is mandatory for published apps
     ANDROID_ARCH ?= ARM
     ANDROID_API_VERSION = 21
-    
+
     # Android required path variables
     # NOTE: Android NDK is just required to generate the standalone toolchain,
     # in case is not already provided
@@ -169,7 +169,7 @@ ifeq ($(PLATFORM),PLATFORM_ANDROID)
 
     # Android standalone toolchain path
     ANDROID_TOOLCHAIN = C:/android_toolchain_$(ANDROID_ARCH)_API$(ANDROID_API_VERSION)
-    
+
     ifeq ($(ANDROID_ARCH),ARM)
         ANDROID_ARCH_NAME = armeabi-v7a
     endif
@@ -257,6 +257,10 @@ endif
 #  -Werror=pointer-arith    catch unportable code that does direct arithmetic on void pointers
 #  -fno-strict-aliasing     jar_xm.h does shady stuff (breaks strict aliasing)
 CFLAGS += -Wall -std=c99 -D_DEFAULT_SOURCE -Wno-missing-braces -Werror=pointer-arith -fno-strict-aliasing
+
+ifeq ($(PLATFORM_OS),LINUX)
+	CFLAGS += -fPIC
+endif
 
 ifeq ($(RAYLIB_BUILD_MODE),DEBUG)
     CFLAGS += -g
@@ -528,14 +532,14 @@ models.o : models.c raylib.h rlgl.h raymath.h
 # Compile audio module
 raudio.o : raudio.c raylib.h
 	$(CC) -c $< $(CFLAGS) $(INCLUDE_PATHS) -D$(PLATFORM)
-    
+
 # Compile raygui module
 # NOTE: raygui header should be distributed with raylib.h
 raygui.o : raygui.c raygui.h
 	@echo #define RAYGUI_IMPLEMENTATION > raygui.c
 	@echo #include "$(RAYLIB_MODULE_RAYGUI_PATH)/raygui.h" > raygui.c
 	$(CC) -c $< $(CFLAGS) $(INCLUDE_PATHS) -D$(PLATFORM) -DRAYGUI_IMPLEMENTATION
-    
+
 # Compile physac module
 # NOTE: physac header should be distributed with raylib.h
 physac.o : physac.c physac.h

@@ -631,7 +631,7 @@ typedef enum {
     GAMEPAD_BUTTON_LEFT_FACE_RIGHT,
     GAMEPAD_BUTTON_LEFT_FACE_DOWN,
     GAMEPAD_BUTTON_LEFT_FACE_LEFT,
-  
+
     // This is normally a DPAD
     GAMEPAD_BUTTON_RIGHT_FACE_UP,
     GAMEPAD_BUTTON_RIGHT_FACE_RIGHT,
@@ -1327,7 +1327,7 @@ RLAPI void EndScissorMode(void);                                          // End
 RLAPI void InitVrSimulator(void);                       // Init VR simulator for selected device parameters
 RLAPI void CloseVrSimulator(void);                      // Close VR simulator for current device
 RLAPI void UpdateVrTracking(Camera *camera);            // Update VR tracking (position and orientation) and camera
-RLAPI void SetVrConfiguration(VrDeviceInfo info, Shader distortion);      // Set stereo rendering configuration parameters 
+RLAPI void SetVrConfiguration(VrDeviceInfo info, Shader distortion);      // Set stereo rendering configuration parameters
 RLAPI bool IsVrSimulatorReady(void);                    // Detect if VR simulator is ready
 RLAPI void ToggleVrMode(void);                          // Enable/Disable VR experience
 RLAPI void BeginVrDrawing(void);                        // Begin VR simulator stereo rendering
@@ -1356,6 +1356,9 @@ RLAPI void ExportWaveAsCode(Wave wave, const char *fileName);         // Export 
 
 // Wave/Sound management functions
 RLAPI void PlaySound(Sound sound);                                    // Play a sound
+RLAPI void PlaySoundEx(Sound s);                                      // Play a sound using the multi channel buffer pool
+RLAPI void StopPlayBufferPool();                                      // MUST be called before UnLoadSound is used on any sound played with PlaySoundEx
+RLAPI int ConcurrentPlayChannels();                                   // Number of sounds playing in the multichannel buffer pool
 RLAPI void PauseSound(Sound sound);                                   // Pause a sound
 RLAPI void ResumeSound(Sound sound);                                  // Resume a paused sound
 RLAPI void StopSound(Sound sound);                                    // Stop playing a sound
