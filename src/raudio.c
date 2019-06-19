@@ -555,7 +555,7 @@ void InitAudioDevice(void)
     TraceLog(LOG_INFO, "Audio buffer size: %d", device.playback.internalBufferSizeInFrames);
 
     InitPlayBufferPool();
-    TraceLog(LOG_INFO, "Audio multichannel pool size: %i", device.playback.internalBufferSizeInFrames);
+    TraceLog(LOG_INFO, "Audio multichannel pool size: %i", PLAY_POOL_SIZE);
 
     isAudioInitialized = MA_TRUE;
 }
