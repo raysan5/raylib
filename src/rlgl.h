@@ -782,14 +782,14 @@ static DrawCall *draws = NULL;
 static int drawsCounter = 0;
 
 // Default texture (1px white) useful for plain color polys (required by shader)
-static unsigned int defaultTextureId;
+static unsigned int defaultTextureId = 0;
 
 // Default shaders
-static unsigned int defaultVShaderId;       // Default vertex shader id (used by default shader program)
-static unsigned int defaultFShaderId;       // Default fragment shader Id (used by default shader program)
+static unsigned int defaultVShaderId = 0;   // Default vertex shader id (used by default shader program)
+static unsigned int defaultFShaderId = 0;   // Default fragment shader Id (used by default shader program)
 
-static Shader defaultShader;                // Basic shader, support vertex color and diffuse texture
-static Shader currentShader;                // Shader to be used on rendering (by default, defaultShader)
+static Shader defaultShader = { 0 };        // Basic shader, support vertex color and diffuse texture
+static Shader currentShader = { 0 };        // Shader to be used on rendering (by default, defaultShader)
 
 // Extension supported flag: VAO
 static bool vaoSupported = false;           // VAO support (OpenGL ES2 could not support VAO extension)
@@ -827,7 +827,7 @@ static PFNGLDELETEVERTEXARRAYSOESPROC glDeleteVertexArrays;
 #if defined(SUPPORT_VR_SIMULATOR)
 // VR global variables
 static VrStereoConfig vrConfig = { 0 };     // VR stereo configuration for simulator
-static RenderTexture2D stereoFbo;           // VR stereo rendering framebuffer
+static RenderTexture2D stereoFbo = { 0 };   // VR stereo rendering framebuffer
 static bool vrSimulatorReady = false;       // VR simulator ready flag
 static bool vrStereoRender = false;         // VR stereo rendering enabled/disabled flag
                                             // NOTE: This flag is useful to render data over stereo image (i.e. FPS)
@@ -835,11 +835,11 @@ static bool vrStereoRender = false;         // VR stereo rendering enabled/disab
 
 #endif  // GRAPHICS_API_OPENGL_33 || GRAPHICS_API_OPENGL_ES2
 
-static int blendMode = 0;   // Track current blending mode
+static int blendMode = 0;       // Track current blending mode
 
 // Default framebuffer size
-static int screenWidth;     // Default framebuffer width
-static int screenHeight;    // Default framebuffer height
+static int screenWidth = 0;     // Default framebuffer width
+static int screenHeight= 0;     // Default framebuffer height
 
 //----------------------------------------------------------------------------------
 // Module specific Functions Declaration
