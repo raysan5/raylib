@@ -62,7 +62,7 @@ static int logTypeExit = LOG_ERROR;
 static TraceLogCallback logCallback = NULL;
 
 #if defined(PLATFORM_ANDROID)
-AAssetManager *assetManager;
+AAssetManager *assetManager = NULL;
 #endif
 
 //----------------------------------------------------------------------------------

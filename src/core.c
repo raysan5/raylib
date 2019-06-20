@@ -301,7 +301,7 @@ static int renderOffsetX = 0;                   // Offset X from render area (mu
 static int renderOffsetY = 0;                   // Offset Y from render area (must be divided by 2)
 static bool fullscreen = false;                 // Fullscreen mode (useful only for PLATFORM_DESKTOP)
 static bool alwaysRun = false;                  // Keep window update/draw running on minimized
-static Matrix screenScaling;                    // Matrix to scale screen (framebuffer rendering)
+static Matrix screenScaling = { 0 };            // Matrix to scale screen (framebuffer rendering)
 
 #if defined(PLATFORM_RPI)
 static EGL_DISPMANX_WINDOW_T nativeWindow;      // Native window (graphic device)
@@ -312,7 +312,7 @@ static EGLDisplay display;                      // Native display device (physic
 static EGLSurface surface;                      // Surface to draw on, framebuffers (connected to context)
 static EGLContext context;                      // Graphic context, mode in which drawing can be done
 static EGLConfig config;                        // Graphic config
-static uint64_t baseTime;                       // Base time measure for hi-res timer
+static uint64_t baseTime = 0;                   // Base time measure for hi-res timer
 static bool windowShouldClose = false;          // Flag to set window for closing
 #endif
 
@@ -342,7 +342,7 @@ static int exitKey = KEY_ESCAPE;                // Default exit key (ESC)
 #if defined(PLATFORM_RPI)
 // NOTE: For keyboard we will use the standard input (but reconfigured...)
 static struct termios defaultKeyboardSettings;  // Used to store default keyboard settings
-static int defaultKeyboardMode;                 // Used to store default keyboard mode
+static int defaultKeyboardMode = 0;             // Used to store default keyboard mode
 #endif
 
 // Mouse states
@@ -384,8 +384,8 @@ typedef struct{
     char Tail;
 } KeyEventFifo;
 
-static KeyEventFifo lastKeyPressedEvdev;        // Buffer for holding keydown events as they arrive (Needed due to multitreading of event workers)
-static char currentKeyStateEvdev[512] = { 0 };  // Registers current frame key state from event based driver (Needs to be seperate because the legacy console based method clears keys on every frame)
+static KeyEventFifo lastKeyPressedEvdev = { 0 }; // Buffer for holding keydown events as they arrive (Needed due to multitreading of event workers)
+static char currentKeyStateEvdev[512] = { 0 };   // Registers current frame key state from event based driver (Needs to be seperate because the legacy console based method clears keys on every frame)
 
 #endif
 #if defined(PLATFORM_WEB)

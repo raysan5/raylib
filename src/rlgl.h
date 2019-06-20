@@ -782,14 +782,14 @@ static DrawCall *draws = NULL;
 static int drawsCounter = 0;
 
 // Default texture (1px white) useful for plain color polys (required by shader)
-static unsigned int defaultTextureId;
+static unsigned int defaultTextureId = 0;
 
 // Default shaders
-static unsigned int defaultVShaderId;       // Default vertex shader id (used by default shader program)
-static unsigned int defaultFShaderId;       // Default fragment shader Id (used by default shader program)
+static unsigned int defaultVShaderId = 0;   // Default vertex shader id (used by default shader program)
+static unsigned int defaultFShaderId = 0;   // Default fragment shader Id (used by default shader program)
 
-static Shader defaultShader;                // Basic shader, support vertex color and diffuse texture
-static Shader currentShader;                // Shader to be used on rendering (by default, defaultShader)
+static Shader defaultShader = { 0 };        // Basic shader, support vertex color and diffuse texture
+static Shader currentShader = { 0 };        // Shader to be used on rendering (by default, defaultShader)
 
 // Extension supported flag: VAO
 static bool vaoSupported = false;           // VAO support (OpenGL ES2 could not support VAO extension)
@@ -827,7 +827,7 @@ static PFNGLDELETEVERTEXARRAYSOESPROC glDeleteVertexArrays;
 #if defined(SUPPORT_VR_SIMULATOR)
 // VR global variables
 static VrStereoConfig vrConfig = { 0 };     // VR stereo configuration for simulator
-static RenderTexture2D stereoFbo;           // VR stereo rendering framebuffer
+static RenderTexture2D stereoFbo = { 0 };   // VR stereo rendering framebuffer
 static bool vrSimulatorReady = false;       // VR simulator ready flag
 static bool vrStereoRender = false;         // VR stereo rendering enabled/disabled flag
                                             // NOTE: This flag is useful to render data over stereo image (i.e. FPS)
@@ -835,11 +835,11 @@ static bool vrStereoRender = false;         // VR stereo rendering enabled/disab
 
 #endif  // GRAPHICS_API_OPENGL_33 || GRAPHICS_API_OPENGL_ES2
 
-static int blendMode = 0;   // Track current blending mode
+static int blendMode = 0;                   // Track current blending mode
 
 // Default framebuffer size
-static int screenWidth;     // Default framebuffer width
-static int screenHeight;    // Default framebuffer height
+static int framebufferWidth = 0;            // Default framebuffer width
+static int framebufferHeight = 0;           // Default framebuffer height
 
 //----------------------------------------------------------------------------------
 // Module specific Functions Declaration
@@ -1019,7 +1019,7 @@ void rlOrtho(double left, double right, double bottom, double top, double znear,
 #endif
 
 // Set the viewport area (transformation from normalized device coordinates to window coordinates)
-// NOTE: Updates global variables: screenWidth, screenHeight
+// NOTE: Updates global variables: framebufferWidth, framebufferHeight
 void rlViewport(int x, int y, int width, int height)
 {
     glViewport(x, y, width, height);
@@ -1714,8 +1714,8 @@ void rlglInit(int width, int height)
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);     // Clear color and depth buffers (depth buffer required for 3D)
 
     // Store screen size into global variables
-    screenWidth = width;
-    screenHeight = height;
+    framebufferWidth = width;
+    framebufferHeight = height;
 
     TraceLog(LOG_INFO, "OpenGL default states initialized successfully");
 }
@@ -3235,7 +3235,7 @@ Texture2D GenTextureCubemap(Shader shader, Texture2D skyHDR, int size)
     glBindFramebuffer(GL_FRAMEBUFFER, 0);
 
     // Reset viewport dimensions to default
-    glViewport(0, 0, screenWidth, screenHeight);
+    glViewport(0, 0, framebufferWidth, framebufferHeight);
     //glEnable(GL_CULL_FACE);
 
     // NOTE: Texture2D is a GL_TEXTURE_CUBE_MAP, not a GL_TEXTURE_2D!
@@ -3313,7 +3313,7 @@ Texture2D GenTextureIrradiance(Shader shader, Texture2D cubemap, int size)
     glBindFramebuffer(GL_FRAMEBUFFER, 0);
 
     // Reset viewport dimensions to default
-    glViewport(0, 0, screenWidth, screenHeight);
+    glViewport(0, 0, framebufferWidth, framebufferHeight);
 
     irradiance.width = size;
     irradiance.height = size;
@@ -3408,7 +3408,7 @@ Texture2D GenTexturePrefilter(Shader shader, Texture2D cubemap, int size)
     glBindFramebuffer(GL_FRAMEBUFFER, 0);
 
     // Reset viewport dimensions to default
-    glViewport(0, 0, screenWidth, screenHeight);
+    glViewport(0, 0, framebufferWidth, framebufferHeight);
 
     prefilter.width = size;
     prefilter.height = size;
@@ -3465,7 +3465,7 @@ Texture2D GenTextureBRDF(Shader shader, int size)
     glDeleteFramebuffers(1, &fbo);
 
     // Reset viewport dimensions to default
-    glViewport(0, 0, screenWidth, screenHeight);
+    glViewport(0, 0, framebufferWidth, framebufferHeight);
 
     brdf.width = size;
     brdf.height = size;
@@ -3508,7 +3508,7 @@ void BeginScissorMode(int x, int y, int width, int height)
     rlglDraw();             // Force drawing elements
 
     glEnable(GL_SCISSOR_TEST);
-    glScissor(x, screenHeight - (y + height), width, height);
+    glScissor(x, framebufferHeight - (y + height), width, height);
 }
 
 // End scissor mode
@@ -3527,7 +3527,7 @@ void InitVrSimulator(void)
 #if defined(GRAPHICS_API_OPENGL_33) || defined(GRAPHICS_API_OPENGL_ES2)
     // Initialize framebuffer and textures for stereo rendering
     // NOTE: Screen size should match HMD aspect ratio
-    stereoFbo = rlLoadRenderTexture(screenWidth, screenHeight, UNCOMPRESSED_R8G8B8A8, 24, false);
+    stereoFbo = rlLoadRenderTexture(framebufferWidth, framebufferHeight, UNCOMPRESSED_R8G8B8A8, 24, false);
 
     vrSimulatorReady = true;
 #else
@@ -3655,8 +3655,8 @@ void ToggleVrMode(void)
         vrStereoRender = false;
 
         // Reset viewport and default projection-modelview matrices
-        rlViewport(0, 0, screenWidth, screenHeight);
-        projection = MatrixOrtho(0.0, screenWidth, screenHeight, 0.0, 0.0, 1.0);
+        rlViewport(0, 0, framebufferWidth, framebufferHeight);
+        projection = MatrixOrtho(0.0, framebufferWidth, framebufferHeight, 0.0, 0.0, 1.0);
         modelview = MatrixIdentity();
     }
     else vrStereoRender = true;
@@ -3694,12 +3694,12 @@ void EndVrDrawing(void)
         rlClearScreenBuffers();         // Clear current framebuffer
 
         // Set viewport to default framebuffer size (screen size)
-        rlViewport(0, 0, screenWidth, screenHeight);
+        rlViewport(0, 0, framebufferWidth, framebufferHeight);
 
         // Let rlgl reconfigure internal matrices
         rlMatrixMode(RL_PROJECTION);                            // Enable internal projection matrix
         rlLoadIdentity();                                       // Reset internal projection matrix
-        rlOrtho(0.0, screenWidth, screenHeight, 0.0, 0.0, 1.0); // Recalculate internal projection matrix
+        rlOrtho(0.0, framebufferWidth, framebufferHeight, 0.0, 0.0, 1.0); // Recalculate internal projection matrix
         rlMatrixMode(RL_MODELVIEW);                             // Enable internal modelview matrix
         rlLoadIdentity();                                       // Reset internal modelview matrix
 
@@ -3742,8 +3742,8 @@ void EndVrDrawing(void)
         currentShader = defaultShader;
 
         // Reset viewport and default projection-modelview matrices
-        rlViewport(0, 0, screenWidth, screenHeight);
-        projection = MatrixOrtho(0.0, screenWidth, screenHeight, 0.0, 0.0, 1.0);
+        rlViewport(0, 0, framebufferWidth, framebufferHeight);
+        projection = MatrixOrtho(0.0, framebufferWidth, framebufferHeight, 0.0, 0.0, 1.0);
         modelview = MatrixIdentity();
 
         rlDisableDepthTest();
@@ -4409,7 +4409,7 @@ static void SetStereoView(int eye, Matrix matProjection, Matrix matModelView)
     Matrix eyeModelView = matModelView;
 
     // Setup viewport and projection/modelview matrices using tracking data
-    rlViewport(eye*screenWidth/2, 0, screenWidth/2, screenHeight);
+    rlViewport(eye*framebufferWidth/2, 0, framebufferWidth/2, framebufferHeight);
 
     // Apply view offset to modelview matrix
     eyeModelView = MatrixMultiply(matModelView, vrConfig.eyesViewOffset[eye]);

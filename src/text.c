@@ -74,7 +74,7 @@
 // Global variables
 //----------------------------------------------------------------------------------
 #if defined(SUPPORT_DEFAULT_FONT)
-static Font defaultFont;        // Default font provided by raylib
+static Font defaultFont = { 0 };    // Default font provided by raylib
 // NOTE: defaultFont is loaded on InitWindow and disposed on CloseWindow [module: core]
 #endif
 
