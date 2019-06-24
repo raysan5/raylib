@@ -121,7 +121,7 @@ void *MemPool_Alloc(struct MemPool *const mempool, const size_t size)
     }
 }
 
-void *MemPool_Realloc(struct MemPool *mempool, void *ptr, size_t size)
+void *MemPool_Realloc(struct MemPool *const __restrict mempool, void *ptr, const size_t size)
 {
     if( mempool==NULL || size > mempool->stack.size )
         return NULL;
@@ -145,7 +145,7 @@ void *MemPool_Realloc(struct MemPool *mempool, void *ptr, size_t size)
     }
 }
 
-void MemPool_Free(struct MemPool *const mempool, void *ptr)
+void MemPool_Free(struct MemPool *const __restrict mempool, void *ptr)
 {
     if( mempool==NULL || ptr==NULL || (ptrcmp)ptr <= (ptrcmp)mempool->stack.mem )
         return;
@@ -208,12 +208,12 @@ void MemPool_Free(struct MemPool *const mempool, void *ptr)
     }
 }
 
-void MemPool_CleanUp(struct MemPool *const mempool, void *ptrref)
+void MemPool_CleanUp(struct MemPool *const __restrict mempool, void *ptrref)
 {
     if( mempool==NULL || ptrref==NULL )
         return;
     else {
-        void **p = ptrref;
+        void *__restrict *p = ptrref;
         if( *p==NULL ) {
             return;
         } else {
@@ -437,7 +437,7 @@ void *ObjPool_Alloc(struct ObjPool *const objpool)
     }
 }
 
-void ObjPool_Free(struct ObjPool *const restrict objpool, void *ptr)
+void ObjPool_Free(struct ObjPool *const __restrict objpool, void *ptr)
 {
     union ObjInfo p = { .byte = ptr };
     if( objpool==NULL || ptr==NULL || p.byte <= objpool->stack.mem || p.byte > objpool->stack.mem + objpool->stack.size*objpool->objSize )
@@ -454,12 +454,12 @@ void ObjPool_Free(struct ObjPool *const restrict objpool, void *ptr)
     }
 }
 
-void ObjPool_CleanUp(struct ObjPool *const restrict objpool, void *ptrref)
+void ObjPool_CleanUp(struct ObjPool *const __restrict objpool, void *ptrref)
 {
     if( objpool==NULL || ptrref==NULL )
         return;
     else {
-        void *restrict *p = ptrref;
+        void *__restrict *p = ptrref;
         if( *p==NULL ) {
             return;
         } else {
