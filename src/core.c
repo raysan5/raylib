@@ -2005,7 +2005,7 @@ int StorageLoadValue(int position)
 }
 
 // Open URL with default system browser (if available)
-// NOTE: This function is onlyl safe to use if you control the URL given.
+// NOTE: This function is only safe to use if you control the URL given.
 // A user could craft a malicious string performing another action.
 // Only call this function yourself not with user input or make sure to check the string yourself.
 // CHECK: https://github.com/raysan5/raylib/issues/686
