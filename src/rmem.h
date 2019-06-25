@@ -51,7 +51,7 @@ void MemPool_Destroy(struct MemPool *mempool);
 void *MemPool_Alloc(struct MemPool *mempool, size_t bytes);
 void *MemPool_Realloc(struct MemPool *mempool, void *ptr, size_t bytes);
 void MemPool_Free(struct MemPool *mempool, void *ptr);
-void MemPool_CleanUp(struct MemPool *mempool, void *ptrref);
+void MemPool_CleanUp(struct MemPool *mempool, void **ptrref);
 
 size_t MemPool_MemoryRemaining(const struct MemPool mempool);
 bool MemPool_DeFrag(struct MemPool *mempool);
@@ -65,7 +65,7 @@ void ObjPool_Destroy(struct ObjPool *objpool);
 
 void *ObjPool_Alloc(struct ObjPool *objpool);
 void ObjPool_Free(struct ObjPool *objpool, void *ptr);
-void ObjPool_CleanUp(struct ObjPool *objpool, void *ptrref);
+void ObjPool_CleanUp(struct ObjPool *objpool, void **ptrref);
 /***************************************************/
 
 #ifdef __cplusplus
