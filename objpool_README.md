@@ -59,13 +59,20 @@ Explanation & Usage:
 	```
 	
 	Deallocation itself is also very simple.
+	There's two deallocation functions available:
+	```c
+	void ObjPool_Free(struct ObjPool *objpool, void *ptr);
+	void ObjPool_CleanUp(struct ObjPool *objpool, void **ptrref);
+	```
+	
+	`ObjPool_Free` will deallocate the object pointer data back to the memory pool.
 	```c
 	ObjPool_Free(&vector_pool, origin);
 	```
 	
 	Like Raylib memory pool, the Raylib object pool also comes with a convenient clean up function that takes a pointer to an allocated pointer, frees it, and sets the pointer to NULL for you!
 	```c
-	ObjPool_CleanUp(&vector_pool, &origin);
+	ObjPool_CleanUp(&vector_pool, (void **)&origin);
 	```
 	
 	Which of course is equivalent to:
