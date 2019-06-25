@@ -1,4 +1,4 @@
-Raylib Memory Pool
+lRaylib Memory Pool
 By Kevin 'Assyrianic' Yonan @ https://github.com/assyrianic
 
 About:
@@ -66,7 +66,7 @@ Explanation & Usage:
 	Alternatively, if you're not in a position to use any kind of dynamic allocation from the operating system, you have the option to utilize an existing buffer as memory for the mempool:
 	```c
 	char mem[64000];
-	struct MemPool pool = MemPool_FromBuffer(sizeof mem, &mem[0]);
+	struct MemPool pool = MemPool_FromBuffer(sizeof mem, mem);
 	```
 	
 	To allocate from the pool, we have two functions:
@@ -160,3 +160,4 @@ Explanation & Usage:
 	```c
 	size_t MemPool_MemoryRemaining(const struct MemPool mempool);
 	```
+	
