@@ -1,4 +1,4 @@
-l#include "rmem.h"
+#include "rmem.h"
 
 // excessive but just in case.
 #if defined(_WIN32) || defined(_WIN64) || defined(__CYGWIN__) || defined(_MSC_VER)
