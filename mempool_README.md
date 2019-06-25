@@ -160,4 +160,3 @@ Explanation & Usage:
 	```c
 	size_t MemPool_MemoryRemaining(const struct MemPool mempool);
 	```
-	
