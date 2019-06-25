@@ -1,4 +1,4 @@
-lRaylib Memory Pool
+Raylib Memory Pool
 By Kevin 'Assyrianic' Yonan @ https://github.com/assyrianic
 
 About:
