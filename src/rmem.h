@@ -45,7 +45,7 @@ extern "C" {
 
 /************* Memory Pool *************/
 struct MemPool MemPool_Create(size_t bytes);
-struct MemPool MemPool_FromBuffer(size_t bytes, void *buf);
+struct MemPool MemPool_FromBuffer(void *buf, size_t bytes);
 void MemPool_Destroy(struct MemPool *mempool);
 
 void *MemPool_Alloc(struct MemPool *mempool, size_t bytes);
@@ -60,7 +60,7 @@ void MemPool_ToggleAutoDefrag(struct MemPool *mempool);
 
 /************* Object Pool (objpool.c) *************/
 struct ObjPool ObjPool_Create(size_t objsize, size_t len);
-struct ObjPool ObjPool_FromBuffer(size_t objsize, size_t len, void *buf);
+struct ObjPool ObjPool_FromBuffer(void *buf, size_t objsize, size_t len);
 void ObjPool_Destroy(struct ObjPool *objpool);
 
 void *ObjPool_Alloc(struct ObjPool *objpool);
