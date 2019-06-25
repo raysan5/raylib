@@ -212,18 +212,13 @@ void MemPool_Free(struct MemPool *const restrict mempool, void *ptr)
     }
 }
 
-void MemPool_CleanUp(struct MemPool *const restrict mempool, void *ptrref)
+void MemPool_CleanUp(struct MemPool *const restrict mempool, void **ptrref)
 {
-    if (mempool==NULL || ptrref==NULL)
+    if (mempool==NULL || ptrref==NULL || *ptrref==NULL)
         return;
     else {
-        void *restrict *p = ptrref;
-        if (*p==NULL) {
-            return;
-        } else {
-            MemPool_Free(mempool, *p);
-            *p = NULL;
-        }
+        MemPool_Free(mempool, *ptrref);
+        *ptrref = NULL;
     }
 }
 
@@ -426,18 +421,13 @@ void ObjPool_Free(struct ObjPool *const restrict objpool, void *ptr)
     }
 }
 
-void ObjPool_CleanUp(struct ObjPool *const restrict objpool, void *ptrref)
+void ObjPool_CleanUp(struct ObjPool *const restrict objpool, void **ptrref)
 {
-    if (objpool==NULL || ptrref==NULL)
+    if (objpool==NULL || ptrref==NULL || *ptrref==NULL)
         return;
     else {
-        void *restrict *p = ptrref;
-        if (*p==NULL) {
-            return;
-        } else {
-            ObjPool_Free(objpool, *p);
-            *p = NULL;
-        }
+        ObjPool_Free(objpool, *ptrref);
+        *ptrref = NULL;
     }
 }
 /***************************************************/
