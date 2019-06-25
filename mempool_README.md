@@ -46,7 +46,7 @@ Explanation & Usage:
 	We have two constructor functions:
 	```c
 	struct MemPool MemPool_Create(size_t bytes);
-	struct MemPool MemPool_FromBuffer(size_t bytes, void *buf);
+	struct MemPool MemPool_FromBuffer(void *buf, size_t bytes);
 	```
 	
 	To which you create a `struct MemPool` instance and give the function a max amount of memory you wish or require for your data.
@@ -66,7 +66,7 @@ Explanation & Usage:
 	Alternatively, if you're not in a position to use any kind of dynamic allocation from the operating system, you have the option to utilize an existing buffer as memory for the mempool:
 	```c
 	char mem[64000];
-	struct MemPool pool = MemPool_FromBuffer(sizeof mem, mem);
+	struct MemPool pool = MemPool_FromBuffer(mem, sizeof mem);
 	```
 	
 	To allocate from the pool, we have two functions:
