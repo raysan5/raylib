@@ -94,7 +94,7 @@ Explanation & Usage:
 	To deallocate memory back to the pool, there's also two functions:
 	```c
 	void MemPool_Free(struct MemPool *mempool, void *ptr);
-	void MemPool_CleanUp(struct MemPool *mempool, void *ptrref);
+	void MemPool_CleanUp(struct MemPool *mempool, void **ptrref);
 	```
 	
 	`MemPool_Free` will deallocate the pointer data back to the memory pool.
@@ -106,9 +106,8 @@ Explanation & Usage:
 	`MemPool_CleanUp` instead takes a pointer to an allocated pointer and then calls `MemPool_Free` for that pointer and then sets it to NULL.
 	```c
 	// deallocates i and sets the pointer to NULL.
-	MemPool_CleanUp(&pool, &i);
+	MemPool_CleanUp(&pool, (void **)&i);
 	// i is now NULL.
-	
 	```
 	
 	Using `MemPool_CleanUp` is basically a shorthand way of doing this code:
