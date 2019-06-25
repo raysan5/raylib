@@ -1,4 +1,4 @@
-#include "rmem.h"
+l#include "rmem.h"
 
 // excessive but just in case.
 #if defined(_WIN32) || defined(_WIN64) || defined(__CYGWIN__) || defined(_MSC_VER)
@@ -15,7 +15,7 @@ static inline size_t __AlignSize(const size_t size, const size_t align)
 
 /************* Memory Pool *************/
 
-static void _RemoveNode(struct MemNode **const node)
+static void __RemoveNode(struct MemNode **const node)
 {
     ((*node)->prev != NULL)? ((*node)->prev->next = (*node)->next) : (*node = (*node)->next);
     ((*node)->next != NULL)? ((*node)->next->prev = (*node)->prev) : (*node = (*node)->prev);
@@ -79,7 +79,7 @@ void *MemPool_Alloc(struct MemPool *const mempool, const size_t size)
                 else if ((*inode)->size <= ALLOC_SIZE + MEM_SPLIT_THRESHOLD) {
                     // close in size - reduce fragmentation by not splitting.
                     new_mem = *inode;
-                    _RemoveNode(inode);
+                    __RemoveNode(inode);
                     mempool->freeList.len--;
                     new_mem->next = new_mem->prev = NULL;
                     break;
@@ -254,7 +254,7 @@ bool MemPool_DeFrag(struct MemPool *const mempool)
                     // if node is right at the stack, merge it back into the stack.
                     mempool->stack.base += (*node)->size;
                     (*node)->size = 0UL;
-                    _RemoveNode(node);
+                    __RemoveNode(node);
                     mempool->freeList.len--;
                     node = &mempool->freeList.head;
                 } else if ((uintptr_t)*node + (*node)->size == (uintptr_t)(*node)->next) {
