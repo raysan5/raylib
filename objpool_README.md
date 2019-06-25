@@ -23,7 +23,7 @@ Explanation & Usage:
 	We have two constructor functions:
 	```c
 	struct ObjPool ObjPool_Create(size_t objsize, size_t len);
-	struct ObjPool ObjPool_FromBuffer(size_t objsize, size_t len, void *buf);
+	struct ObjPool ObjPool_FromBuffer(void *buf, size_t objsize, size_t len);
 	```
 	
 	To which you create a `struct ObjPool` instance and give the size of your object and how many objects for the pool to hold.
@@ -43,7 +43,7 @@ Explanation & Usage:
 	Alternatively, if for any reason that you cannot use dynamic memory allocation, you have the option of using an existing buffer for the object pool:
 	```c
 	struct vec3D vectors[100];
-	struct ObjPool vector_pool = ObjPool_FromBuffer(sizeof(struct vec3D), 1[&vector] - 0[&vector], vectors);
+	struct ObjPool vector_pool = ObjPool_FromBuffer(vectors, sizeof(struct vec3D), 1[&vector] - 0[&vector]);
 	```
 	The buffer MUST be aligned to the size of `size_t` AND the object size must not be smaller than a `size_t` either.
 	
@@ -72,5 +72,3 @@ Explanation & Usage:
 	```c
 	ObjPool_Free(&vector_pool, origin), origin = NULL;
 	```
-	
-	You may also optionally back your 
