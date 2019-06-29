@@ -2,8 +2,6 @@
 *
 *   raylib [audio] example - Sound loading and playing
 *
-*   NOTE: This example requires OpenAL Soft library installed
-*
 *   This example has been created using raylib 1.0 (www.raylib.com)
 *   raylib is licensed under an unmodified zlib/libpng license (View raylib.h for details)
 *

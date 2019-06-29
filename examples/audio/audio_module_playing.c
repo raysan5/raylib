@@ -2,8 +2,6 @@
 *
 *   raylib [audio] example - Module playing (streaming)
 *
-*   NOTE: This example requires OpenAL Soft library installed
-*
 *   This example has been created using raylib 1.5 (www.raylib.com)
 *   raylib is licensed under an unmodified zlib/libpng license (View raylib.h for details)
 *
