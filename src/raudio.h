@@ -139,12 +139,12 @@ void UpdateSound(Sound sound, const void *data, int samplesCount);// Update soun
 void UnloadWave(Wave wave);                                     // Unload wave data
 void UnloadSound(Sound sound);                                  // Unload sound
 void PlaySound(Sound sound);                                    // Play a sound
-void PlaySoundEx(Sound s);                                      // Play a sound using the multi channel buffer pool
-void StopPlayBufferPool();                                      // MUST be called before UnLoadSound is used on any sound played with PlaySoundEx
-int ConcurrentPlayChannels();                                   // Number of sounds playing in the multichannel buffer pool
+void PlaySoundMulti(Sound sound);                               // Play a sound using the multi channel buffer pool
+int GetSoundsPlaying(void);                                     // Get number of sounds playing in the multichannel buffer pool
 void PauseSound(Sound sound);                                   // Pause a sound
 void ResumeSound(Sound sound);                                  // Resume a paused sound
 void StopSound(Sound sound);                                    // Stop playing a sound
+void StopSoundMulti(void);                                      // Stop any sound played with PlaySoundMulti()
 bool IsSoundPlaying(Sound sound);                               // Check if a sound is currently playing
 void SetSoundVolume(Sound sound, float volume);                 // Set volume for a sound (1.0 is max level)
 void SetSoundPitch(Sound sound, float pitch);                   // Set pitch for a sound (1.0 is base level)

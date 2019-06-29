@@ -1,25 +1,17 @@
-
-/*
-* This example was coded to demonstrate multi channel audio changes added to raylib
+/*******************************************************************************************
 *
-*   This example has been created using raylib (www.raylib.com)
+*   raylib [audio] example - Multichannel sound playing
+*
+*   This example has been created using raylib 2.6 (www.raylib.com)
 *   raylib is licensed under an unmodified zlib/libpng license (View raylib.h for details)
 *
-*   This example Copyright (c) 2018 Chris Camacho (codifies) http://bedroomcoders.co.uk/captcha/
+*   Example contributed by Chris Camacho (@codifies) and reviewed by Ramon Santamaria (@raysan5)
 *
-* THIS EXAMPLE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
-* EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
-* MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.
-* IN NO EVENT SHALL THE AUTHORS BE LIABLE FOR ANY CLAIM, DAMAGES OR
-* OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE,
-* ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
-* OTHER DEALINGS IN THE SOFTWARE.
+*   Copyright (c) 2019 Chris Camacho (@codifies) and Ramon Santamaria (@raysan5)
 *
-* This example may be freely redistributed.
-*/
+********************************************************************************************/
 
 #include "raylib.h"
-#include <stdio.h> // sprintf
 
 int main(void)
 {
@@ -28,69 +20,65 @@ int main(void)
     const int screenWidth = 800;
     const int screenHeight = 450;
 
-    InitWindow(screenWidth, screenHeight, "raylib [audio] abuse!");
+    InitWindow(screenWidth, screenHeight, "raylib [audio] example - Multichannel sound playing");
 
     InitAudioDevice();      // Initialize audio device
 
     Sound fxWav = LoadSound("resources/sound.wav");         // Load WAV audio file
     Sound fxOgg = LoadSound("resources/tanatana.ogg");      // Load OGG audio file
-
-
-    //InitPlayBufferPool();
-
-
-
-    SetTargetFPS(60);               // Set our game to run at 60 frames-per-second
-    //--------------------------------------------------------------------------------------
+    
     int frame = 0;
-    // Main game loop
 
-    // old system still works alongside
-    SetSoundVolume(fxWav, 0.2); // effects all mutltiplay replay (really annoying sound!!!)
+    SetSoundVolume(fxWav, 0.2);
     PlaySound(fxOgg);
 
     bool inhibitWav = false;
     bool inhibitOgg = false;
     int maxFrame = 60;
-    int numberPlaying = 0;
+    
+    int soundsCounter = 0;
 
+    SetTargetFPS(60);       // Set our game to run at 60 frames-per-second
+    //--------------------------------------------------------------------------------------
+
+    // Main game loop
     while (!WindowShouldClose())    // Detect window close button or ESC key
     {
         // Update
         //----------------------------------------------------------------------------------
         frame++;
 
-        if (IsKeyDown(KEY_ENTER)) { inhibitWav=true; } else { inhibitWav=false; }
-        if (IsKeyDown(KEY_SPACE)) { inhibitOgg=true; } else { inhibitOgg=false; }
+        if (IsKeyDown(KEY_ENTER)) inhibitWav = !inhibitWav;
+        if (IsKeyDown(KEY_SPACE)) inhibitOgg = !inhibitOgg;
 
-        // deliberatly hammer the play pool to see what dropping old
-        // pool entries sounds like....
-        if (frame % 5==0) {
-           if (!inhibitWav) PlaySoundEx(fxWav);
+        // Deliberatly hammer the play pool to see what dropping old pool entries sounds like....
+        if ((frame%5) == 0) 
+        {
+           if (!inhibitWav) PlaySoundMulti(fxWav);
         }
-        if (frame==maxFrame) {
-            if (!inhibitOgg) PlaySoundEx(fxOgg);
-            frame=0;
+        
+        if (frame == maxFrame) 
+        {
+            if (!inhibitOgg) PlaySoundMulti(fxOgg);
+            
+            frame = 0;
             maxFrame = GetRandomValue(6,12);
         }
 
-        numberPlaying = ConcurrentPlayChannels();
-
+        soundsCounter = GetSoundsPlaying();
         //----------------------------------------------------------------------------------
-
 
         // Draw
         //----------------------------------------------------------------------------------
         BeginDrawing();
 
             ClearBackground(RAYWHITE);
-            char msg[1024];
-            DrawText("multichannel sound abuse!", 200, 180, 20, LIGHTGRAY);
+            
+            DrawText("Multichannel sound abuse!", 200, 180, 20, LIGHTGRAY);
             DrawText("Space to inhibit new ogg triggering", 200, 200, 20, LIGHTGRAY);
             DrawText("Enter to inhibit new wav triggering", 200, 220, 20, LIGHTGRAY);
 
-            sprintf(msg,"concurrently playing %i", numberPlaying);
-            DrawText(msg, 200, 280, 20, LIGHTGRAY);
+            DrawText(FormatText("Number of concurrentsounds: %i", soundsCounter), 200, 280, 20, LIGHTGRAY);
 
         EndDrawing();
         //----------------------------------------------------------------------------------
@@ -98,11 +86,7 @@ int main(void)
 
     // De-Initialization
     //--------------------------------------------------------------------------------------
-
-
-    // you MUST stop the buffer pool before unloading
-    // any Sounds it might have used...
-    StopPlayBufferPool();
+    StopSoundMulti();       // We must stop the buffer pool before unloading
 
     UnloadSound(fxWav);     // Unload sound data
     UnloadSound(fxOgg);     // Unload sound data

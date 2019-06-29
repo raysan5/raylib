@@ -207,7 +207,7 @@ void TraceLog(int msgType, const char *text, ...);              // Show trace lo
 #endif
 
 //----------------------------------------------------------------------------------
-// miniaudio AudioBuffer Functionality
+// AudioBuffer Functionality
 //----------------------------------------------------------------------------------
 #define DEVICE_FORMAT       ma_format_f32
 #define DEVICE_CHANNELS     2
@@ -269,23 +269,20 @@ void SetAudioBufferPitch(AudioBuffer *audioBuffer, float pitch);
 void TrackAudioBuffer(AudioBuffer *audioBuffer);
 void UntrackAudioBuffer(AudioBuffer *audioBuffer);
 
-
 //----------------------------------------------------------------------------------
-// multi channel playback globals
-//----------------------------------------------------------------------------------
-
-// number of channels in the pool
-#define PLAY_POOL_SIZE 16
-
-// the buffer pool
-AudioBuffer* PlayBufferPool[PLAY_POOL_SIZE];
-
-// these are used to determine the oldest playing channel
-unsigned long PlayPoolAge = 0;
-unsigned long PlayPoolAges[PLAY_POOL_SIZE] = {0};
-
+// Multi channel playback globals
 //----------------------------------------------------------------------------------
 
+// Number of channels in the audio pool
+#define MAX_AUDIO_BUFFER_POOL_CHANNELS 16
+
+// Audio buffer pool
+AudioBuffer *audioBufferPool[MAX_AUDIO_BUFFER_POOL_CHANNELS] = { 0 };
+
+// These are used to determine the oldest playing channel
+unsigned long audioBufferPoolCounter = 0;
+unsigned long audioBufferPoolChannels[MAX_AUDIO_BUFFER_POOL_CHANNELS] = { 0 };
+//----------------------------------------------------------------------------------
 
 // Log callback function
 static void OnLog(ma_context *pContext, ma_device *pDevice, ma_uint32 logLevel, const char *message)
@@ -481,12 +478,13 @@ static void MixAudioFrames(float *framesOut, const float *framesIn, ma_uint32 fr
     }
 }
 
-// initialise the multichannel buffer pool
-static void InitPlayBufferPool()
+// Initialise the multichannel buffer pool
+static void InitAudioBufferPool()
 {
-    // dummy buffers
-    for (int i=0; i<PLAY_POOL_SIZE; i++) {
-        PlayBufferPool[i] = CreateAudioBuffer(DEVICE_FORMAT, DEVICE_CHANNELS, DEVICE_SAMPLE_RATE, 0, AUDIO_BUFFER_USAGE_STATIC);
+    // Dummy buffers
+    for (int i = 0; i < MAX_AUDIO_BUFFER_POOL_CHANNELS; i++) 
+    {
+        audioBufferPool[i] = CreateAudioBuffer(DEVICE_FORMAT, DEVICE_CHANNELS, DEVICE_SAMPLE_RATE, 0, AUDIO_BUFFER_USAGE_STATIC);
     }
 }
 
@@ -554,17 +552,17 @@ void InitAudioDevice(void)
     TraceLog(LOG_INFO, "Audio sample rate: %d -> %d", device.sampleRate, device.playback.internalSampleRate);
     TraceLog(LOG_INFO, "Audio buffer size: %d", device.playback.internalBufferSizeInFrames);
 
-    InitPlayBufferPool();
-    TraceLog(LOG_INFO, "Audio multichannel pool size: %i", PLAY_POOL_SIZE);
+    InitAudioBufferPool();
+    TraceLog(LOG_INFO, "Audio multichannel pool size: %i", MAX_AUDIO_BUFFER_POOL_CHANNELS);
 
     isAudioInitialized = MA_TRUE;
 }
 
 // internal
-static void FreePlayBufferPool() {
-    for (int i = 0; i < PLAY_POOL_SIZE; i++) {
+static void FreeaudioBufferPool() {
+    for (int i = 0; i < MAX_AUDIO_BUFFER_POOL_CHANNELS; i++) {
         // NB important free only the buffer struct not the attached data...!
-        RL_FREE(PlayBufferPool[i]);
+        RL_FREE(audioBufferPool[i]);
     }
 }
 
@@ -582,7 +580,7 @@ void CloseAudioDevice(void)
     ma_device_uninit(&device);
     ma_context_uninit(&context);
 
-    FreePlayBufferPool();
+    FreeaudioBufferPool();
 
     TraceLog(LOG_INFO, "Audio device closed successfully");
 }
@@ -1010,78 +1008,86 @@ void PlaySound(Sound sound)
     PlayAudioBuffer((AudioBuffer *)sound.audioBuffer);
 }
 
-// play a sound in the multichannel buffer pool
-void PlaySoundEx(Sound s)
+// Play a sound in the multichannel buffer pool
+void PlaySoundMulti(Sound sound)
 {
-    int found = -1;
+    int index = -1;
     unsigned long oldAge = 0;
     int oldIndex = -1;
 
     // find the first non playing pool entry
-    for (int i=0; i<PLAY_POOL_SIZE; i++) {
-        if (PlayPoolAges[i] > oldAge) {
-            oldAge = PlayPoolAges[i];
+    for (int i = 0; i < MAX_AUDIO_BUFFER_POOL_CHANNELS; i++)
+    {
+        if (audioBufferPoolChannels[i] > oldAge)
+        {
+            oldAge = audioBufferPoolChannels[i];
             oldIndex = i;
         }
-        if (!IsAudioBufferPlaying(PlayBufferPool[i])) {
-            found = i;
+        
+        if (!IsAudioBufferPlaying(audioBufferPool[i]))
+        {
+            index = i;
             break;
         }
     }
 
-    // if no none playing pool members can be found choose the oldest
-    if (found == -1) {
-        TraceLog(LOG_WARNING,"pool age %i ended a sound early no room in buffer pool",PlayPoolAge);
-        if (oldIndex == -1) {
-            // shouldn't be able to get here... but just in case something odd happens!
+    // If no none playing pool members can be index choose the oldest
+    if (index == -1)
+    {
+        TraceLog(LOG_WARNING,"pool age %i ended a sound early no room in buffer pool", audioBufferPoolCounter);
+        
+        if (oldIndex == -1)
+        {
+            // Shouldn't be able to get here... but just in case something odd happens!
             TraceLog(LOG_ERROR,"sound buffer pool couldn't determine oldest buffer not playing sound");
+            
             return;
         }
-        found = oldIndex;
-        // just in case...
-        StopAudioBuffer(PlayBufferPool[found]);
+        
+        index = oldIndex;
+        
+        // Just in case...
+        StopAudioBuffer(audioBufferPool[index]);
     }
 
-    // experimentally mutex lock doesn't seem to be needed this makes sense
-    // as PlayBufferPool[found] isn't playing and the only stuff we're copying
+    // Experimentally mutex lock doesn't seem to be needed this makes sense
+    // as audioBufferPool[index] isn't playing and the only stuff we're copying
     // shouldn't be changing...
 
-    PlayPoolAges[found] = PlayPoolAge;
-    PlayPoolAge++;
-    PlayBufferPool[found]->volume = ((AudioBuffer*)s.audioBuffer)->volume;
-    PlayBufferPool[found]->pitch = ((AudioBuffer*)s.audioBuffer)->pitch;
-    PlayBufferPool[found]->looping = ((AudioBuffer*)s.audioBuffer)->looping;
-    PlayBufferPool[found]->usage = ((AudioBuffer*)s.audioBuffer)->usage;
-    PlayBufferPool[found]->isSubBufferProcessed[0] = false;
-    PlayBufferPool[found]->isSubBufferProcessed[1] = false;
-    PlayBufferPool[found]->bufferSizeInFrames = ((AudioBuffer*)s.audioBuffer)->bufferSizeInFrames;
-    PlayBufferPool[found]->buffer = ((AudioBuffer*)s.audioBuffer)->buffer;
+    audioBufferPoolChannels[index] = audioBufferPoolCounter;
+    audioBufferPoolCounter++;
+    
+    audioBufferPool[index]->volume = ((AudioBuffer*)sound.audioBuffer)->volume;
+    audioBufferPool[index]->pitch = ((AudioBuffer*)sound.audioBuffer)->pitch;
+    audioBufferPool[index]->looping = ((AudioBuffer*)sound.audioBuffer)->looping;
+    audioBufferPool[index]->usage = ((AudioBuffer*)sound.audioBuffer)->usage;
+    audioBufferPool[index]->isSubBufferProcessed[0] = false;
+    audioBufferPool[index]->isSubBufferProcessed[1] = false;
+    audioBufferPool[index]->bufferSizeInFrames = ((AudioBuffer*)sound.audioBuffer)->bufferSizeInFrames;
+    audioBufferPool[index]->buffer = ((AudioBuffer*)sound.audioBuffer)->buffer;
 
-    PlayAudioBuffer(PlayBufferPool[found]);
+    PlayAudioBuffer(audioBufferPool[index]);
 
 }
 
-// MUST be called before UnLoadSound is used on any sound played with PlaySoundEx
-void StopPlayBufferPool()
+// Stop any sound played with PlaySoundMulti()
+void StopSoundMulti(void)
 {
-    for (int i = 0; i < PLAY_POOL_SIZE; i++) {
-        StopAudioBuffer(PlayBufferPool[i]);
-    }
+    for (int i = 0; i < MAX_AUDIO_BUFFER_POOL_CHANNELS; i++) StopAudioBuffer(audioBufferPool[i]);
 }
 
-// number of sounds playing in the multichannel buffer pool
-int ConcurrentPlayChannels()
+// Get number of sounds playing in the multichannel buffer pool
+int GetSoundsPlaying(void)
 {
-    int n = 0;
-    for (int i=0; i<PLAY_POOL_SIZE; i++) {
-        if (IsAudioBufferPlaying(PlayBufferPool[i])) {
-            n++;
-        }
+    int counter = 0;
+    
+    for (int i = 0; i < MAX_AUDIO_BUFFER_POOL_CHANNELS; i++)
+    {
+        if (IsAudioBufferPlaying(audioBufferPool[i])) counter++;
     }
-    return n;
+    
+    return counter;
 }
-
-
 
 // Pause a sound
 void PauseSound(Sound sound)
