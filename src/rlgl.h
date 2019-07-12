@@ -1521,33 +1521,28 @@ void rlglInit(int width, int height)
     // NOTE: We don't need to check again supported extensions but we do (GLAD already dealt with that)
     glGetIntegerv(GL_NUM_EXTENSIONS, &numExt);
 
+    // Allocate numExt strings pointers
     const char **extList = RL_MALLOC(sizeof(const char *)*numExt);
+    
+    // Get extensions strings
     for (int i = 0; i < numExt; i++) extList[i] = (char *)glGetStringi(GL_EXTENSIONS, i);
 
 #elif defined(GRAPHICS_API_OPENGL_ES2)
-    char *extensions = (char *)glGetString(GL_EXTENSIONS);  // One big const string
-
-    // NOTE: We have to duplicate string because glGetString() returns a const string
-    int len = strlen(extensions) + 1;
-    char *extensionsDup = (char *)RL_MALLOC(len);
-    strcpy(extensionsDup, extensions);
-
-    // NOTE: String could be splitted using strtok() function (string.h)
-    // NOTE: strtok() modifies the passed string, it can not be const
-
     // Allocate 512 strings pointers (2 KB)
     const char **extList = RL_MALLOC(sizeof(const char *)*512);
+    
+    // Get extensions strings
+    char *extensions = (char *)glGetString(GL_EXTENSIONS);  // One big static const string returned
+    int len = strlen(extensions);
 
-    extList[numExt] = strtok(extensionsDup, " ");
-    while (extList[numExt] != NULL)
+    for (int i = 0; i < len; i++)
     {
-        numExt++;
-        extList[numExt] = strtok(NULL, " ");
+        if (i == ' ') 
+        {
+            extList[numExt] = &extensions[i + 1];
+            numExt++;
+        }
     }
-
-    RL_FREE(extensionsDup);    // Duplicated string must be deallocated
-
-    numExt -= 1;
 #endif
 
     TraceLog(LOG_INFO, "Number of supported extensions: %i", numExt);
@@ -1619,6 +1614,7 @@ void rlglInit(int width, int height)
         if (strcmp(extList[i], (const char *)"GL_EXT_debug_marker") == 0) debugMarkerSupported = true;
     }
 
+    // Free extensions pointers
     RL_FREE(extList);
 
 #if defined(GRAPHICS_API_OPENGL_ES2)
