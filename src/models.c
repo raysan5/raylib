@@ -3278,16 +3278,7 @@ static int GetSizeBase64(char *input)
 
 static unsigned char *DecodeBase64(char *input, int *size)
 {
-    *size = 0;
-    for (int i = 0; input[4*i] != 0; i++)
-    {
-        if (input[4*i + 3] == '=')
-        {
-            if (input[4*i + 2] == '=') *size += 1;
-            else *size += 2;
-        }
-        else *size += 3;
-    }
+    *size = GetSizeBase64(input);
 
     unsigned char *buf = (unsigned char *)RL_MALLOC(*size);
     for (int i = 0; i < *size/3; i++)
@@ -3421,7 +3412,7 @@ static Model LoadGLTF(const char *fileName)
             
             if (data->materials[i].pbr_metallic_roughness.base_color_texture.texture)
             {
-                cgltf_image* img = data->materials[i].pbr_metallic_roughness.base_color_texture.texture->image;
+                cgltf_image *img = data->materials[i].pbr_metallic_roughness.base_color_texture.texture->image;
                 
                 if (img->uri) 
                 {
@@ -3443,9 +3434,11 @@ static Model LoadGLTF(const char *fileName)
                         else
                         {
                             int size;
-                            unsigned char *data = DecodeBase64(img->uri+i+1, &size);
+                            unsigned char *data = DecodeBase64(img->uri + i + 1, &size);
+                            
                             int w, h;
                             unsigned char *raw = stbi_load_from_memory(data, size, &w, &h, NULL, 4);
+                            
                             Image image = LoadImagePro(raw, w, h, UNCOMPRESSED_R8G8B8A8);
                             ImageColorTint(&image, tint);
                             texture = LoadTextureFromImage(image);
@@ -3474,12 +3467,13 @@ static Model LoadGLTF(const char *fileName)
                     
                     for (int i = 0; i < img->buffer_view->size; i++)
                     {
-                        data[i] = ((unsigned char*)img->buffer_view->buffer->data)[n];
+                        data[i] = ((unsigned char *)img->buffer_view->buffer->data)[n];
                         n += stride;
                     }
 
                     int w, h;
                     unsigned char *raw = stbi_load_from_memory(data, img->buffer_view->size, &w, &h, NULL, 4);
+                    
                     Image image = LoadImagePro(raw, w, h, UNCOMPRESSED_R8G8B8A8);
                     ImageColorTint(&image, tint);
                     texture = LoadTextureFromImage(image);
