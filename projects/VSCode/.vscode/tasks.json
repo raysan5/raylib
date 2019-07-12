@@ -14,7 +14,8 @@
             "windows": {
                 "command": "C:/raylib/mingw/bin/mingw32-make.exe",
                 "args": [
-                    "RAYLIB_PATH=C:/raylib/raylib"
+                    "RAYLIB_PATH=C:/raylib/raylib",
+                    "PROJECT_NAME=${fileBasenameNoExtension}",
                 ],
             },
             "osx": {
@@ -38,6 +39,7 @@
                 "command": "C:/raylib/mingw/bin/mingw32-make.exe",
                 "args": [
                     "RAYLIB_PATH=C:/raylib/raylib",
+                    "PROJECT_NAME=${fileBasenameNoExtension}",
                 ],
             },
             "osx": {
