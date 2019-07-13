@@ -28,7 +28,7 @@ struct MemPool MemPool_Create(const size_t size)
         return mempool;
     else {
         // align the mempool size to at least the size of an alloc node.
-        mempool.stack.size = __AlignSize(size, sizeof(struct MemNode));
+        mempool.stack.size = size;
         mempool.stack.mem = malloc(1 + mempool.stack.size*sizeof *mempool.stack.mem);
         if (mempool.stack.mem==NULL) {
             mempool.stack.size = 0UL;
@@ -69,7 +69,7 @@ void *MemPool_Alloc(struct MemPool *const mempool, const size_t size)
         return NULL;
     else {
         struct MemNode *new_mem = NULL;
-        const size_t ALLOC_SIZE = size + sizeof *new_mem;
+        const size_t ALLOC_SIZE = __AlignSize(size + sizeof *new_mem, sizeof(intptr_t));
         if (mempool->freeList.head != NULL) {
             const size_t MEM_SPLIT_THRESHOLD = sizeof(intptr_t);
             // if the freelist is valid, let's allocate FROM the freelist then!
@@ -407,7 +407,7 @@ void *ObjPool_Alloc(struct ObjPool *const objpool)
 void ObjPool_Free(struct ObjPool *const restrict objpool, void *ptr)
 {
     union ObjInfo p = { .byte = ptr };
-    if (objpool==NULL || ptr==NULL || p.byte <= objpool->stack.mem || p.byte > objpool->stack.mem + objpool->stack.size*objpool->objSize)
+    if (objpool==NULL || ptr==NULL || p.byte < objpool->stack.mem || p.byte > objpool->stack.mem + objpool->stack.size*objpool->objSize)
         return;
     else {
         // when we free our Bointer, we recycle the pointer space to store the previous index
