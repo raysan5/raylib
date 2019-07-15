@@ -22,8 +22,8 @@ Explanation & Usage:
 	The object pool is designed to be used as a direct object.
 	We have two constructor functions:
 	```c
-	struct ObjPool ObjPool_Create(size_t objsize, size_t len);
-	struct ObjPool ObjPool_FromBuffer(void *buf, size_t objsize, size_t len);
+	struct ObjPool CreateObjPool(size_t objsize, size_t len);
+	struct ObjPool CreateObjPoolFromBuffer(void *buf, size_t objsize, size_t len);
 	```
 	
 	To which you create a `struct ObjPool` instance and give the size of your object and how many objects for the pool to hold.
@@ -37,13 +37,13 @@ Explanation & Usage:
 	
 	Now let's create a pool of 3D vectors that holds about 100 3D vectors.
 	```c
-	struct ObjPool vector_pool = ObjPool_Create(sizeof(struct vec3D), 100);
+	struct ObjPool vector_pool = CreateObjPool(sizeof(struct vec3D), 100);
 	```
 	
 	Alternatively, if for any reason that you cannot use dynamic memory allocation, you have the option of using an existing buffer for the object pool:
 	```c
 	struct vec3D vectors[100];
-	struct ObjPool vector_pool = ObjPool_FromBuffer(vectors, sizeof(struct vec3D), 1[&vector] - 0[&vector]);
+	struct ObjPool vector_pool = CreateObjPoolFromBuffer(vectors, sizeof(struct vec3D), 1[&vector] - 0[&vector]);
 	```
 	The buffer MUST be aligned to the size of `size_t` AND the object size must not be smaller than a `size_t` either.
 	
@@ -52,7 +52,7 @@ Explanation & Usage:
 	If you need to allocate something like an array of these objects, then you'll have to make an object pool for the array of objects or use Raylib Memory Pool.
 	Allocation is very simple nonetheless!
 	```c
-	struct vec3D *origin = ObjPool_Alloc(&vector_pool);
+	struct vec3D *origin = ObjPoolAlloc(&vector_pool);
 	origin->x = -0.5f;
 	origin->y = +0.5f;
 	origin->z = 0.f;
@@ -61,21 +61,21 @@ Explanation & Usage:
 	Deallocation itself is also very simple.
 	There's two deallocation functions available:
 	```c
-	void ObjPool_Free(struct ObjPool *objpool, void *ptr);
-	void ObjPool_CleanUp(struct ObjPool *objpool, void **ptrref);
+	void ObjPoolFree(struct ObjPool *objpool, void *ptr);
+	void ObjPoolCleanUp(struct ObjPool *objpool, void **ptrref);
 	```
 	
-	`ObjPool_Free` will deallocate the object pointer data back to the memory pool.
+	`ObjPoolFree` will deallocate the object pointer data back to the memory pool.
 	```c
-	ObjPool_Free(&vector_pool, origin);
+	ObjPoolFree(&vector_pool, origin);
 	```
 	
 	Like Raylib memory pool, the Raylib object pool also comes with a convenient clean up function that takes a pointer to an allocated pointer, frees it, and sets the pointer to NULL for you!
 	```c
-	ObjPool_CleanUp(&vector_pool, (void **)&origin);
+	ObjPoolCleanUp(&vector_pool, (void **)&origin);
 	```
 	
 	Which of course is equivalent to:
 	```c
-	ObjPool_Free(&vector_pool, origin), origin = NULL;
+	ObjPoolFree(&vector_pool, origin), origin = NULL;
 	```

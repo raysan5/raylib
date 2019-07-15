@@ -45,8 +45,8 @@ Explanation & Usage:
 	The memory pool is designed to be used as a direct object.
 	We have two constructor functions:
 	```c
-	struct MemPool MemPool_Create(size_t bytes);
-	struct MemPool MemPool_FromBuffer(void *buf, size_t bytes);
+	struct MemPool CreateMemPool(size_t bytes);
+	struct MemPool CreateMemPoolFromBuffer(void *buf, size_t bytes);
 	```
 	
 	To which you create a `struct MemPool` instance and give the function a max amount of memory you wish or require for your data.
@@ -55,65 +55,65 @@ Explanation & Usage:
 	
 	So we create a pool that will malloc 10K bytes.
 	```c
-	struct MemPool pool = MemPool_Create(10000);
+	struct MemPool pool = CreateMemPool(10000);
 	```
 	
-	When we finish using the pool's memory, we clean it up by using `MemPool_Destroy`.
+	When we finish using the pool's memory, we clean it up by using `DestroyMemPool`.
 	```c
-	MemPool_Destroy(&pool);
+	DestroyMemPool(&pool);
 	```
 	
 	Alternatively, if you're not in a position to use any kind of dynamic allocation from the operating system, you have the option to utilize an existing buffer as memory for the mempool:
 	```c
 	char mem[64000];
-	struct MemPool pool = MemPool_FromBuffer(mem, sizeof mem);
+	struct MemPool pool = CreateMemPoolFromBuffer(mem, sizeof mem);
 	```
 	
 	To allocate from the pool, we have two functions:
 	```c
-	void *MemPool_Alloc(struct MemPool *mempool, size_t bytes);
-	void *MemPool_Realloc(struct MemPool *mempool, void *ptr, size_t bytes);
+	void *MemPoolAlloc(struct MemPool *mempool, size_t bytes);
+	void *MemPoolRealloc(struct MemPool *mempool, void *ptr, size_t bytes);
 	```
 	
-	`MemPool_Alloc` returns a (zeroed) pointer to a memory block.
+	`MemPoolAlloc` returns a (zeroed) pointer to a memory block.
 	```c
 	// allocate an int pointer.
-	int *i = MemPool_Alloc(&pool, sizeof *i);
+	int *i = MemPoolAlloc(&pool, sizeof *i);
 	```
 	
-	`MemPool_Realloc` works similar but it takes an existing pointers and resizes its data, it does NOT zero the memory as it exists for resizing existing data. Please note that if you resize a smaller size, the data WILL BE TRUNCATED/CUT OFF.
-	If the `ptr` argument for `MemPool_Realloc`, it will work just like a call to `MemPool_Alloc`.
+	`MemPoolRealloc` works similar but it takes an existing pointers and resizes its data, it does NOT zero the memory as it exists for resizing existing data. Please note that if you resize a smaller size, the data WILL BE TRUNCATED/CUT OFF.
+	If the `ptr` argument for `MemPoolRealloc`, it will work just like a call to `MemPoolAlloc`.
 	```c
 	// allocate an int pointer.
-	int *i = MemPool_Realloc(&pool, NULL, sizeof *i);
+	int *i = MemPoolRealloc(&pool, NULL, sizeof *i);
 	
 	// resize the pointer into an int array of 10 cells!
-	i = MemPool_Realloc(&pool, i, sizeof *i * 10);
+	i = MemPoolRealloc(&pool, i, sizeof *i * 10);
 	```
 	
 	To deallocate memory back to the pool, there's also two functions:
 	```c
-	void MemPool_Free(struct MemPool *mempool, void *ptr);
-	void MemPool_CleanUp(struct MemPool *mempool, void **ptrref);
+	void MemPoolFree(struct MemPool *mempool, void *ptr);
+	void MemPoolCleanUp(struct MemPool *mempool, void **ptrref);
 	```
 	
-	`MemPool_Free` will deallocate the pointer data back to the memory pool.
+	`MemPoolFree` will deallocate the pointer data back to the memory pool.
 	```c
 	// i is now deallocated! Remember that i is NOT NULL!
-	MemPool_Free(&pool, i);
+	MemPoolFree(&pool, i);
 	```
 	
-	`MemPool_CleanUp` instead takes a pointer to an allocated pointer and then calls `MemPool_Free` for that pointer and then sets it to NULL.
+	`MemPoolCleanUp` instead takes a pointer to an allocated pointer and then calls `MemPoolFree` for that pointer and then sets it to NULL.
 	```c
 	// deallocates i and sets the pointer to NULL.
-	MemPool_CleanUp(&pool, (void **)&i);
+	MemPoolCleanUp(&pool, (void **)&i);
 	// i is now NULL.
 	```
 	
-	Using `MemPool_CleanUp` is basically a shorthand way of doing this code:
+	Using `MemPoolCleanUp` is basically a shorthand way of doing this code:
 	```c
 	// i is now deallocated! Remember that i is NOT NULL!
-	MemPool_Free(&pool, i);
+	MemPoolFree(&pool, i);
 	
 	// i is now NULL obviously.
 	i = NULL;
@@ -131,14 +131,14 @@ Explanation & Usage:
 	you have two options in terms of defragging:
 	You can manually call the defrag function:
 	```c
-	bool MemPool_DeFrag(struct MemPool *mempool);
+	bool MemPoolDefrag(struct MemPool *mempool);
 	```
 	which will return true or false depending if it was able to merge any nodes.
 	
 	or you can set a node limit and enable auto defragging.
 	Auto defragging is disabled by default, you can turn it on or off either by calling:
 	```c
-	void MemPool_ToggleAutoDefrag(struct MemPool *mempool);
+	void ToggleMemPoolAutoDefrag(struct MemPool *mempool);
 	```
 	or set it directly from the `freeList` struct member:
 	```c
@@ -157,6 +157,6 @@ Explanation & Usage:
 	
 	Finally, to get the total amount of memory remaining (to make sure you don't accidentally over-allocate), you utilize this function:
 	```c
-	size_t MemPool_MemoryRemaining(const struct MemPool mempool);
+	size_t GetMemPoolFreeMemory(const struct MemPool mempool);
 	```
 	
