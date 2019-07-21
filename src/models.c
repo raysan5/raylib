@@ -2431,6 +2431,8 @@ void DrawBillboardRec(Camera camera, Texture2D texture, Rectangle sourceRec, Vec
     Vector3 c = Vector3Add(center, p2);
     Vector3 d = Vector3Subtract(center, p1);
 
+    if (rlCheckBufferLimit(4)) rlglDraw();
+
     rlEnableTexture(texture.id);
 
     rlBegin(RL_QUADS);
