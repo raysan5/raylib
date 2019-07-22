@@ -1215,7 +1215,7 @@ const char *TextSubtext(const char *text, int position, int length)
 // Replace text string
 // REQUIRES: strlen(), strstr(), strncpy(), strcpy()
 // WARNING: Internally allocated memory must be freed by the user (if return != NULL)
-const char *TextReplace(char *text, const char *replace, const char *by)
+char *TextReplace(char *text, const char *replace, const char *by)
 {
     char *result;
 
@@ -1266,7 +1266,7 @@ const char *TextReplace(char *text, const char *replace, const char *by)
 // Insert text in a specific position, moves all text forward
 // REQUIRES: strlen(), strcpy(), strtok()
 // WARNING: Allocated memory should be manually freed
-const char *TextInsert(const char *text, const char *insert, int position)
+char *TextInsert(const char *text, const char *insert, int position)
 {
     int textLen = strlen(text);
     int insertLen =  strlen(insert);
