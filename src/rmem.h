@@ -232,7 +232,7 @@ void *MemPoolAlloc(MemPool *const mempool, const size_t size)
         
         if (mempool->freeList.head != NULL)
         {
-            const size_t MEM_SPLIT_THRESHOLD = sizeof(intptr_t);
+            const size_t MEM_SPLIT_THRESHOLD = 16;
             
             // If the freelist is valid, let's allocate FROM the freelist then!
             for (MemNode **inode = &mempool->freeList.head; *inode != NULL; inode = &(*inode)->next)
