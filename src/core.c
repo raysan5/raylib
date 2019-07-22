@@ -2419,8 +2419,6 @@ static bool InitGraphicsDevice(int width, int height)
 {
     screenWidth = width;        // User desired width
     screenHeight = height;      // User desired height
-    currentWidth = width;
-    currentHeight = height;
 
     screenScaling = MatrixIdentity();   // No draw scaling required by default
 
@@ -2458,6 +2456,9 @@ static bool InitGraphicsDevice(int width, int height)
     if (screenWidth <= 0) screenWidth = displayWidth;
     if (screenHeight <= 0) screenHeight = displayHeight;
 #endif  // PLATFORM_DESKTOP
+
+    currentWidth = screenWidth;
+    currentHeight = screenHeight;
 
 #if defined(PLATFORM_WEB)
     displayWidth = screenWidth;
@@ -2533,10 +2534,10 @@ static bool InitGraphicsDevice(int width, int height)
     if (fullscreen)
     {
         // Obtain recommended displayWidth/displayHeight from a valid videomode for the monitor
-        int count;
+        int count = 0;
         const GLFWvidmode *modes = glfwGetVideoModes(glfwGetPrimaryMonitor(), &count);
 
-        // Get closest videomode to desired screenWidth/screenHeight
+        // Get closest video mode to desired screenWidth/screenHeight
         for (int i = 0; i < count; i++)
         {
             if (modes[i].width >= screenWidth)
