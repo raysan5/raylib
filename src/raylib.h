@@ -406,39 +406,44 @@ typedef struct BoundingBox {
 
 // Wave type, defines audio wave data
 typedef struct Wave {
-    unsigned int sampleCount;   // Number of samples
-    unsigned int sampleRate;    // Frequency (samples per second)
-    unsigned int sampleSize;    // Bit depth (bits per sample): 8, 16, 32 (24 not supported)
-    unsigned int channels;      // Number of channels (1-mono, 2-stereo)
-    void *data;                 // Buffer data pointer
+    unsigned int sampleCount;       // Total number of samples
+    unsigned int sampleRate;        // Frequency (samples per second)
+    unsigned int sampleSize;        // Bit depth (bits per sample): 8, 16, 32 (24 not supported)
+    unsigned int channels;          // Number of channels (1-mono, 2-stereo)
+    void *data;                     // Buffer data pointer
 } Wave;
 
-// Sound source type
-typedef struct Sound {
-    void *audioBuffer;      // Pointer to internal data used by the audio system
-
-    unsigned int source;    // Audio source id
-    unsigned int buffer;    // Audio buffer id
-    int format;             // Audio format specifier
-} Sound;
-
-// Music type (file streaming from memory)
-// NOTE: Anything longer than ~10 seconds should be streamed
-typedef struct MusicData *Music;
+typedef struct rAudioBuffer rAudioBuffer;
+#define AudioBuffer rAudioBuffer    // HACK: To avoid CoreAudio (macOS) symbol collision
 
 // Audio stream type
 // NOTE: Useful to create custom audio streams not bound to a specific file
 typedef struct AudioStream {
-    unsigned int sampleRate;    // Frequency (samples per second)
-    unsigned int sampleSize;    // Bit depth (bits per sample): 8, 16, 32 (24 not supported)
-    unsigned int channels;      // Number of channels (1-mono, 2-stereo)
+    unsigned int sampleRate;        // Frequency (samples per second)
+    unsigned int sampleSize;        // Bit depth (bits per sample): 8, 16, 32 (24 not supported)
+    unsigned int channels;          // Number of channels (1-mono, 2-stereo)
 
-    void *audioBuffer;          // Pointer to internal data used by the audio system.
-
-    int format;                 // Audio format specifier
-    unsigned int source;        // Audio source id
-    unsigned int buffers[2];    // Audio buffers (double buffering)
+    AudioBuffer *buffer;            // Pointer to internal data used by the audio system
 } AudioStream;
+
+// Sound source type
+typedef struct Sound {
+    unsigned int sampleCount;       // Total number of samples
+    AudioStream stream;             // Audio stream
+} Sound;
+
+// Music stream type (audio file streaming from memory)
+// NOTE: Anything longer than ~10 seconds should be streamed
+typedef struct MusicStream {
+    int ctxType;                    // Type of music context (audio filetype)
+    void *ctxData;                  // Audio context data, depends on type
+    
+    unsigned int sampleCount;       // Total number of samples
+    unsigned int sampleLeft;        // Number of samples left to end
+    unsigned int loopCount;         // Loops count (times music will play), 0 means infinite loop
+
+    AudioStream stream;             // Audio stream
+} MusicStream, *Music;
 
 // Head-Mounted-Display device parameters
 typedef struct VrDeviceInfo {
