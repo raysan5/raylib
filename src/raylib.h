@@ -414,7 +414,6 @@ typedef struct Wave {
 } Wave;
 
 typedef struct rAudioBuffer rAudioBuffer;
-#define AudioBuffer rAudioBuffer    // HACK: To avoid CoreAudio (macOS) symbol collision
 
 // Audio stream type
 // NOTE: Useful to create custom audio streams not bound to a specific file
