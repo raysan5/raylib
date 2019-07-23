@@ -12,12 +12,14 @@
 #   raylib_DEFINITIONS - Compiler switches required for using raylib
 
 set(XPREFIX PC_RAYLIB)
+
+find_package(PkgConfig QUIET)
+pkg_check_modules(${XPREFIX} QUIET raylib)
+
 if (raylib_USE_STATIC_LIBS)
     set(XPREFIX ${XPREFIX}_STATIC)
 endif()
 
-find_package(PkgConfig QUIET)
-pkg_check_modules(${XPREFIX} QUIET raylib)
 set(raylib_DEFINITIONS ${${XPREFIX}_CFLAGS})
 
 find_path(raylib_INCLUDE_DIR
@@ -25,17 +27,16 @@ find_path(raylib_INCLUDE_DIR
     HINTS ${${XPREFIX}_INCLUDE_DIRS}
 )
 
+set(RAYLIB_NAMES raylib)
+
 if (raylib_USE_STATIC_LIBS)
-    find_library(raylib_LIBRARY
-        NAMES raylib_static
-        HINTS ${${XPREFIX}_LIBRARY_DIRS}
-    )
-else ()
-    find_library(raylib_LIBRARY
-        NAMES raylib
-        HINTS ${${XPREFIX}_LIBRARY_DIRS}
-    )
-endif ()
+    set(RAYLIB_NAMES libraylib.a raylib.lib ${RAYLIB_NAMES})
+endif()
+
+find_library(raylib_LIBRARY
+    NAMES ${RAYLIB_NAMES}
+    HINTS ${${XPREFIX}_LIBRARY_DIRS}
+)
 
 set(raylib_LIBRARIES    ${raylib_LIBRARY})
 set(raylib_LIBRARY_DIRS ${${XPREFIX}_LIBRARY_DIRS})
