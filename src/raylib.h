@@ -423,7 +423,7 @@ typedef struct AudioStream {
     unsigned int sampleSize;        // Bit depth (bits per sample): 8, 16, 32 (24 not supported)
     unsigned int channels;          // Number of channels (1-mono, 2-stereo)
 
-    AudioBuffer *buffer;            // Pointer to internal data used by the audio system
+    rAudioBuffer *buffer;           // Pointer to internal data used by the audio system
 } AudioStream;
 
 // Sound source type

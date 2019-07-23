@@ -214,6 +214,8 @@ struct rAudioBuffer {
     unsigned char *buffer;
 };
 
+#define AudioBuffer rAudioBuffer    // HACK: To avoid CoreAudio (macOS) symbol collision
+
 // miniaudio global variables
 static ma_context context;
 static ma_device device;
