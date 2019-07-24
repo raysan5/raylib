@@ -735,7 +735,7 @@ typedef struct DrawCall {
     int mode;                   // Drawing mode: LINES, TRIANGLES, QUADS
     int vertexCount;            // Number of vertex of the draw
     int vertexAlignment;        // Number of vertex required for index alignment (LINES, TRIANGLES)
-    //unsigned int vaoId;         // Vertex Array id to be used on the draw
+    //unsigned int vaoId;         // Vertex array id to be used on the draw
     //unsigned int shaderId;      // Shader id to be used on the draw
     unsigned int textureId;     // Texture id to be used on the draw
                                 // TODO: Support additional texture units?
@@ -1140,8 +1140,8 @@ void rlEnd(void)
     {
         // WARNING: If we are between rlPushMatrix() and rlPopMatrix() and we need to force a rlglDraw(),
         // we need to call rlPopMatrix() before to recover *currentMatrix (modelview) for the next forced draw call!
-        // Also noted that if we had multiple matrix pushed, it will require "stackCounter" pops before launching the draw
-        rlPopMatrix();
+        // If we have multiple matrix pushed, it will require "stackCounter" pops before launching the draw
+        for (int i = stackCounter; i >= 0; i--) rlPopMatrix();
         rlglDraw();
     }
 }
@@ -2622,9 +2622,17 @@ void rlDrawMesh(Mesh mesh, Material material, Matrix transform)
     // That's because BeginMode3D() sets it an no model-drawing function modifies it, all use rlPushMatrix() and rlPopMatrix()
     Matrix matView = modelview;         // View matrix (camera)
     Matrix matProjection = projection;  // Projection matrix (perspective)
+    
+    // TODO: Matrix nightmare! Trying to combine stack matrices with view matrix and local model transform matrix..
+    // There is some problem in the order matrices are multiplied... it requires some time to figure out...
+    Matrix matStackTransform = MatrixIdentity();
+    
+    // TODO: Consider possible transform matrices in the stack
+    // Is this the right order? or should we start with the first stored matrix instead of the last one?
+    //for (int i = stackCounter; i > 0; i--) matStackTransform = MatrixMultiply(stack[i], matStackTransform);
 
-    // Calculate model-view matrix combining matModel and matView
-    Matrix matModelView = MatrixMultiply(transform, matView);           // Transform to camera-space coordinates
+    Matrix matModel = MatrixMultiply(transform, matStackTransform); // Apply local model transformation
+    Matrix matModelView = MatrixMultiply(matModel, matView);        // Transform to camera-space coordinates
     //-----------------------------------------------------
 
     // Bind active texture maps (if available)
