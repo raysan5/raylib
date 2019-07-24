@@ -46,7 +46,7 @@
     #define _GLFW_USE_RETINA        // To have windows use the full resolution of Retina displays
 #endif
 #if defined(__TINYC__)
-    #define _WIN32_WINNT_WINXP		0x0501
+    #define _WIN32_WINNT_WINXP      0x0501
 #endif
 
 // NOTE: _GLFW_MIR experimental platform not supported at this moment
