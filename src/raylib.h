@@ -148,6 +148,7 @@
 #define BLANK      CLITERAL{ 0, 0, 0, 0 }           // Blank (Transparent)
 #define MAGENTA    CLITERAL{ 255, 0, 255, 255 }     // Magenta
 #define RAYWHITE   CLITERAL{ 245, 245, 245, 255 }   // My own White (raylib logo)
+#define RAYWHITE   CLITERAL(Color){ 245, 245, 245, 255 }   // My own White (raylib logo)
 
 // Temporal hack to avoid breaking old codebases using
 // deprecated raylib implementation of these functions
@@ -1361,12 +1362,12 @@ RLAPI void ExportWaveAsCode(Wave wave, const char *fileName);         // Export 
 
 // Wave/Sound management functions
 RLAPI void PlaySound(Sound sound);                                    // Play a sound
-RLAPI void PlaySoundMulti(Sound sound);                               // Play a sound using the multi channel buffer pool
-RLAPI int GetSoundsPlaying(void);                                     // Get number of sounds playing in the multichannel buffer pool
+RLAPI void StopSound(Sound sound);                                    // Stop playing a sound
 RLAPI void PauseSound(Sound sound);                                   // Pause a sound
 RLAPI void ResumeSound(Sound sound);                                  // Resume a paused sound
-RLAPI void StopSound(Sound sound);                                    // Stop playing a sound
-RLAPI void StopSoundMulti(void);                                      // Stop any sound played with PlaySoundMulti()
+RLAPI void PlaySoundMulti(Sound sound);                               // Play a sound (using multichannel buffer pool)
+RLAPI void StopSoundMulti(void);                                      // Stop any sound playing (using multichannel buffer pool)
+RLAPI int GetSoundsPlaying(void);                                     // Get number of sounds playing in the multichannel
 RLAPI bool IsSoundPlaying(Sound sound);                               // Check if a sound is currently playing
 RLAPI void SetSoundVolume(Sound sound, float volume);                 // Set volume for a sound (1.0 is max level)
 RLAPI void SetSoundPitch(Sound sound, float pitch);                   // Set pitch for a sound (1.0 is base level)
