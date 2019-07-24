@@ -830,7 +830,7 @@ void ExportImageAsCode(Image image, const char *fileName)
     fprintf(txtFile, "// more info and bugs-report:  github.com/raysan5/raylib                              //\n");
     fprintf(txtFile, "// feedback and support:       ray[at]raylib.com                                      //\n");
     fprintf(txtFile, "//                                                                                    //\n");
-    fprintf(txtFile, "// Copyright (c) 2018 Ramon Santamaria (@raysan5)                                     //\n");
+    fprintf(txtFile, "// Copyright (c) 2019 Ramon Santamaria (@raysan5)                                     //\n");
     fprintf(txtFile, "//                                                                                    //\n");
     fprintf(txtFile, "////////////////////////////////////////////////////////////////////////////////////////\n\n");
 
