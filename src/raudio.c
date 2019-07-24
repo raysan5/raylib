@@ -471,6 +471,12 @@ static void InitAudioBufferPool()
     }
 }
 
+// Close the audio buffers pool
+static void CloseAudioBufferPool()
+{
+    for (int i = 0; i < MAX_AUDIO_BUFFER_POOL_CHANNELS; i++) RL_FREE(audioBufferPool[i]);
+}
+
 //----------------------------------------------------------------------------------
 // Module Functions Definition - Audio Device initialization and Closing
 //----------------------------------------------------------------------------------
@@ -542,12 +548,6 @@ void InitAudioDevice(void)
     TraceLog(LOG_INFO, "Audio multichannel pool size: %i", MAX_AUDIO_BUFFER_POOL_CHANNELS);
 
     isAudioInitialized = true;
-}
-
-// Close the audio buffers pool
-static void CloseAudioBufferPool()
-{
-    for (int i = 0; i < MAX_AUDIO_BUFFER_POOL_CHANNELS; i++) RL_FREE(audioBufferPool[i]);
 }
 
 // Close the audio device for all contexts
@@ -882,6 +882,10 @@ Sound LoadSoundFromWave(Wave wave)
         frameCount = (ma_uint32)ma_convert_frames(audioBuffer->buffer, audioBuffer->dsp.formatConverterIn.config.formatIn, audioBuffer->dsp.formatConverterIn.config.channels, audioBuffer->dsp.src.config.sampleRateIn, wave.data, formatIn, wave.channels, wave.sampleRate, frameCountIn);
         if (frameCount == 0) TraceLog(LOG_WARNING, "LoadSoundFromWave() : Format conversion failed");
 
+        sound.sampleCount = frameCount*DEVICE_CHANNELS;
+        sound.stream.sampleRate = DEVICE_SAMPLE_RATE;
+        sound.stream.sampleSize = 32;
+        sound.stream.channels = DEVICE_CHANNELS;
         sound.stream.buffer = audioBuffer;
     }
 
@@ -1277,9 +1281,6 @@ Music LoadMusicStream(const char *fileName)
             TraceLog(LOG_INFO, "[%s] MP3 channels: %i", fileName, ctxMp3->channels);
 
             music->stream = InitAudioStream(ctxMp3->sampleRate, 32, ctxMp3->channels);
-
-            // TODO: There is not an easy way to compute the total number of samples available
-            // in an MP3, frames size could be variable... we tried with a 60 seconds music... but crashes...
             music->sampleCount = drmp3_get_pcm_frame_count(ctxMp3)*ctxMp3->channels;
             music->sampleLeft = music->sampleCount;
             music->ctxType = MUSIC_AUDIO_MP3;
@@ -1435,7 +1436,6 @@ void ResumeMusicStream(Music music)
 }
 
 // Stop music playing (close stream)
-// TODO: To clear a buffer, make sure they have been already processed!
 void StopMusicStream(Music music)
 {
     if (music == NULL) return;
@@ -1467,7 +1467,6 @@ void StopMusicStream(Music music)
 }
 
 // Update (re-fill) music buffers if data already processed
-// TODO: Make sure buffers are ready for update... check music state
 void UpdateMusicStream(Music music)
 {
     if (music == NULL) return;
@@ -1486,7 +1485,6 @@ void UpdateMusicStream(Music music)
         if ((music->sampleLeft/music->stream.channels) >= subBufferSizeInFrames) samplesCount = subBufferSizeInFrames*music->stream.channels;
         else samplesCount = music->sampleLeft;
 
-        // TODO: Really don't like ctxType thingy...
         switch (music->ctxType)
         {
         #if defined(SUPPORT_FILEFORMAT_OGG)
@@ -1531,6 +1529,7 @@ void UpdateMusicStream(Music music)
         }
 
         UpdateAudioStream(music->stream, pcm, samplesCount);
+        
         if ((music->ctxType == MUSIC_MODULE_XM) || (music->ctxType == MUSIC_MODULE_MOD))
         {
             if (samplesCount > 1) music->sampleLeft -= samplesCount/2;
