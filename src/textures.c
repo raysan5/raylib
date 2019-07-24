@@ -823,7 +823,8 @@ void ExportImageAsCode(Image image, const char *fileName)
 
     FILE *txtFile = fopen(fileName, "wt");
 
-    fprintf(txtFile, "\n//////////////////////////////////////////////////////////////////////////////////////\n");
+    fprintf(txtFile, "\n");
+    fprintf(txtFile, "////////////////////////////////////////////////////////////////////////////////////////\n");
     fprintf(txtFile, "//                                                                                    //\n");
     fprintf(txtFile, "// ImageAsCode exporter v1.0 - Image pixel data exported as an array of bytes         //\n");
     fprintf(txtFile, "//                                                                                    //\n");
