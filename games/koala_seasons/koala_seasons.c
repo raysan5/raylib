@@ -59,9 +59,9 @@ int main(void)
     atlas02 = LoadTexture("resources/graphics/atlas02.png");
     
 #if defined(PLATFORM_WEB) || defined(PLATFORM_RPI) || defined(PLATFORM_ANDROID)
-    colorBlend = LoadShader("resources/shaders/glsl100/base.vs", "resources/shaders/glsl100/blend_color.fs");
+    colorBlend = LoadShader(0, "resources/shaders/glsl100/blend_color.fs");
 #else
-    colorBlend = LoadShader("resources/shaders/glsl330/base.vs", "resources/shaders/glsl330/blend_color.fs");
+    colorBlend = LoadShader(0, "resources/shaders/glsl330/blend_color.fs");
 #endif
 
     InitAudioDevice();
@@ -76,20 +76,14 @@ int main(void)
     fxDieDingo = LoadSound("resources/audio/dingo_die.ogg");
     fxDieOwl = LoadSound("resources/audio/owl_die.ogg");
     
-    
     music = LoadMusicStream("resources/audio/jngl.xm");
     PlayMusicStream(music);
-    SetMusicVolume(music, 1.0f);
+    SetMusicVolume(music, 2.0f);
 
     // Define and init first screen
     // NOTE: currentScreen is defined in screens.h as a global variable
     currentScreen = TITLE;
-
-    InitLogoScreen();
-    //InitOptionsScreen();
     InitTitleScreen();
-    InitGameplayScreen();
-    InitEndingScreen();
 
 #if defined(PLATFORM_WEB)
     emscripten_set_main_loop(UpdateDrawFrame, 0, 1);
@@ -257,9 +251,7 @@ void UpdateDrawFrame(void)
         }
 
         if (onTransition) DrawTransition();
-        
-        DrawFPS(20, GetScreenHeight() - 30);
-        
+
         DrawRectangle(GetScreenWidth() - 200, GetScreenHeight() - 50, 200, 40, Fade(WHITE, 0.6f));
         DrawText("ALPHA VERSION", GetScreenWidth() - 180, GetScreenHeight() - 40, 20, DARKGRAY);
 
