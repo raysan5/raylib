@@ -126,7 +126,7 @@
     #include "gestures.h"       // Gestures detection functionality
 #endif
 
-#if defined(SUPPORT_CAMERA_SYSTEM) && !defined(PLATFORM_ANDROID)
+#if defined(SUPPORT_CAMERA_SYSTEM)
     #define CAMERA_IMPLEMENTATION
     #include "camera.h"         // Camera system functionality
 #endif
