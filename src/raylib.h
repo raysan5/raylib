@@ -1351,7 +1351,6 @@ RLAPI void SetMasterVolume(float volume);                             // Set mas
 
 // Wave/Sound loading/unloading functions
 RLAPI Wave LoadWave(const char *fileName);                            // Load wave data from file
-RLAPI Wave LoadWaveEx(void *data, int sampleCount, int sampleRate, int sampleSize, int channels); // Load wave data from raw array data
 RLAPI Sound LoadSound(const char *fileName);                          // Load sound from file
 RLAPI Sound LoadSoundFromWave(Wave wave);                             // Load sound from wave data
 RLAPI void UpdateSound(Sound sound, const void *data, int samplesCount);// Update sound buffer with new data
