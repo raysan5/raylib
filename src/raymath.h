@@ -148,7 +148,7 @@ RMDEF float Clamp(float value, float min, float max)
     return res > max ? max : res;
 }
 
-// Calculate linear interpolation between two vectors
+// Calculate linear interpolation between two floats
 RMDEF float Lerp(float start, float end, float amount)
 {
     return start + amount*(end - start);
