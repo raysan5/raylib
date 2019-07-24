@@ -236,16 +236,16 @@ static void MixAudioFrames(float *framesOut, const float *framesIn, ma_uint32 fr
 // AudioBuffer management functions declaration
 // NOTE: Those functions are not exposed by raylib... for the moment
 AudioBuffer *InitAudioBuffer(ma_format format, ma_uint32 channels, ma_uint32 sampleRate, ma_uint32 bufferSizeInFrames, int usage);
-void CloseAudioBuffer(AudioBuffer *audioBuffer);
-bool IsAudioBufferPlaying(AudioBuffer *audioBuffer);
-void PlayAudioBuffer(AudioBuffer *audioBuffer);
-void StopAudioBuffer(AudioBuffer *audioBuffer);
-void PauseAudioBuffer(AudioBuffer *audioBuffer);
-void ResumeAudioBuffer(AudioBuffer *audioBuffer);
-void SetAudioBufferVolume(AudioBuffer *audioBuffer, float volume);
-void SetAudioBufferPitch(AudioBuffer *audioBuffer, float pitch);
-void TrackAudioBuffer(AudioBuffer *audioBuffer);
-void UntrackAudioBuffer(AudioBuffer *audioBuffer);
+void CloseAudioBuffer(AudioBuffer *buffer);
+bool IsAudioBufferPlaying(AudioBuffer *buffer);
+void PlayAudioBuffer(AudioBuffer *buffer);
+void StopAudioBuffer(AudioBuffer *buffer);
+void PauseAudioBuffer(AudioBuffer *buffer);
+void ResumeAudioBuffer(AudioBuffer *buffer);
+void SetAudioBufferVolume(AudioBuffer *buffer, float volume);
+void SetAudioBufferPitch(AudioBuffer *buffer, float pitch);
+void TrackAudioBuffer(AudioBuffer *buffer);
+void UntrackAudioBuffer(AudioBuffer *buffer);
 
 //----------------------------------------------------------------------------------
 // Multi channel playback globals
@@ -644,151 +644,127 @@ AudioBuffer *InitAudioBuffer(ma_format format, ma_uint32 channels, ma_uint32 sam
 }
 
 // Delete an audio buffer
-void CloseAudioBuffer(AudioBuffer *audioBuffer)
+void CloseAudioBuffer(AudioBuffer *buffer)
 {
-    if (audioBuffer == NULL)
+    if (buffer != NULL)
     {
-        TraceLog(LOG_ERROR, "CloseAudioBuffer() : No audio buffer");
-        return;
+        UntrackAudioBuffer(buffer);
+        RL_FREE(buffer->buffer);
+        RL_FREE(buffer);
     }
-
-    UntrackAudioBuffer(audioBuffer);
-    RL_FREE(audioBuffer->buffer);
-    RL_FREE(audioBuffer);
+    else TraceLog(LOG_ERROR, "CloseAudioBuffer() : No audio buffer");
 }
 
 // Check if an audio buffer is playing
-bool IsAudioBufferPlaying(AudioBuffer *audioBuffer)
+bool IsAudioBufferPlaying(AudioBuffer *buffer)
 {
-    if (audioBuffer == NULL)
-    {
-        TraceLog(LOG_ERROR, "IsAudioBufferPlaying() : No audio buffer");
-        return false;
-    }
+    bool result = false;
+    
+    if (buffer != NULL) result = (buffer->playing && !buffer->paused);
+    else TraceLog(LOG_ERROR, "IsAudioBufferPlaying() : No audio buffer");
 
-    return audioBuffer->playing && !audioBuffer->paused;
+    return result;
 }
 
 // Play an audio buffer
 // NOTE: Buffer is restarted to the start.
 // Use PauseAudioBuffer() and ResumeAudioBuffer() if the playback position should be maintained.
-void PlayAudioBuffer(AudioBuffer *audioBuffer)
+void PlayAudioBuffer(AudioBuffer *buffer)
 {
-    if (audioBuffer == NULL)
+    if (buffer != NULL)
     {
-        TraceLog(LOG_ERROR, "PlayAudioBuffer() : No audio buffer");
-        return;
+        buffer->playing = true;
+        buffer->paused = false;
+        buffer->frameCursorPos = 0;
     }
-
-    audioBuffer->playing = true;
-    audioBuffer->paused = false;
-    audioBuffer->frameCursorPos = 0;
+    else TraceLog(LOG_ERROR, "PlayAudioBuffer() : No audio buffer");
 }
 
 // Stop an audio buffer
-void StopAudioBuffer(AudioBuffer *audioBuffer)
+void StopAudioBuffer(AudioBuffer *buffer)
 {
-    if (audioBuffer == NULL)
+    if (buffer != NULL)
     {
-        TraceLog(LOG_ERROR, "StopAudioBuffer() : No audio buffer");
-        return;
+        if (IsAudioBufferPlaying(buffer))
+        {
+            buffer->playing = false;
+            buffer->paused = false;
+            buffer->frameCursorPos = 0;
+            buffer->isSubBufferProcessed[0] = true;
+            buffer->isSubBufferProcessed[1] = true;
+        }
     }
-
-    // Don't do anything if the audio buffer is already stopped.
-    if (!IsAudioBufferPlaying(audioBuffer)) return;
-
-    audioBuffer->playing = false;
-    audioBuffer->paused = false;
-    audioBuffer->frameCursorPos = 0;
-    audioBuffer->isSubBufferProcessed[0] = true;
-    audioBuffer->isSubBufferProcessed[1] = true;
+    else TraceLog(LOG_ERROR, "StopAudioBuffer() : No audio buffer");
 }
 
 // Pause an audio buffer
-void PauseAudioBuffer(AudioBuffer *audioBuffer)
+void PauseAudioBuffer(AudioBuffer *buffer)
 {
-    if (audioBuffer == NULL)
-    {
-        TraceLog(LOG_ERROR, "PauseAudioBuffer() : No audio buffer");
-        return;
-    }
-
-    audioBuffer->paused = true;
+    if (buffer != NULL) buffer->paused = true;
+    else TraceLog(LOG_ERROR, "PauseAudioBuffer() : No audio buffer");    
 }
 
 // Resume an audio buffer
-void ResumeAudioBuffer(AudioBuffer *audioBuffer)
+void ResumeAudioBuffer(AudioBuffer *buffer)
 {
-    if (audioBuffer == NULL)
-    {
-        TraceLog(LOG_ERROR, "ResumeAudioBuffer() : No audio buffer");
-        return;
-    }
-
-    audioBuffer->paused = false;
+    if (buffer != NULL) buffer->paused = false;
+    else TraceLog(LOG_ERROR, "ResumeAudioBuffer() : No audio buffer");
 }
 
 // Set volume for an audio buffer
-void SetAudioBufferVolume(AudioBuffer *audioBuffer, float volume)
+void SetAudioBufferVolume(AudioBuffer *buffer, float volume)
 {
-    if (audioBuffer == NULL)
-    {
-        TraceLog(LOG_WARNING, "SetAudioBufferVolume() : No audio buffer");
-        return;
-    }
-
-    audioBuffer->volume = volume;
+    if (buffer != NULL) buffer->volume = volume;
+    else TraceLog(LOG_WARNING, "SetAudioBufferVolume() : No audio buffer");
 }
 
 // Set pitch for an audio buffer
-void SetAudioBufferPitch(AudioBuffer *audioBuffer, float pitch)
+void SetAudioBufferPitch(AudioBuffer *buffer, float pitch)
 {
-    if (audioBuffer == NULL)
+    if (buffer != NULL)
     {
-        TraceLog(LOG_WARNING, "SetAudioBufferPitch() : No audio buffer");
-        return;
+        float pitchMul = pitch/buffer->pitch;
+
+        // Pitching is just an adjustment of the sample rate. Note that this changes the duration of the sound - higher pitches
+        // will make the sound faster; lower pitches make it slower.
+        ma_uint32 newOutputSampleRate = (ma_uint32)((float)buffer->dsp.src.config.sampleRateOut/pitchMul);
+        buffer->pitch *= (float)buffer->dsp.src.config.sampleRateOut/newOutputSampleRate;
+
+        ma_pcm_converter_set_output_sample_rate(&buffer->dsp, newOutputSampleRate);
     }
-
-    float pitchMul = pitch/audioBuffer->pitch;
-
-    // Pitching is just an adjustment of the sample rate. Note that this changes the duration of the sound - higher pitches
-    // will make the sound faster; lower pitches make it slower.
-    ma_uint32 newOutputSampleRate = (ma_uint32)((float)audioBuffer->dsp.src.config.sampleRateOut / pitchMul);
-    audioBuffer->pitch *= (float)audioBuffer->dsp.src.config.sampleRateOut / newOutputSampleRate;
-
-    ma_pcm_converter_set_output_sample_rate(&audioBuffer->dsp, newOutputSampleRate);
+    else TraceLog(LOG_WARNING, "SetAudioBufferPitch() : No audio buffer");
 }
 
 // Track audio buffer to linked list next position
-void TrackAudioBuffer(AudioBuffer *audioBuffer)
+void TrackAudioBuffer(AudioBuffer *buffer)
 {
     ma_mutex_lock(&audioLock);
     {
-        if (firstAudioBuffer == NULL) firstAudioBuffer = audioBuffer;
+        if (firstAudioBuffer == NULL) firstAudioBuffer = buffer;
         else
         {
-            lastAudioBuffer->next = audioBuffer;
-            audioBuffer->prev = lastAudioBuffer;
+            lastAudioBuffer->next = buffer;
+            buffer->prev = lastAudioBuffer;
         }
 
-        lastAudioBuffer = audioBuffer;
+        lastAudioBuffer = buffer;
     }
     ma_mutex_unlock(&audioLock);
 }
 
 // Untrack audio buffer from linked list
-void UntrackAudioBuffer(AudioBuffer *audioBuffer)
+void UntrackAudioBuffer(AudioBuffer *buffer)
 {
     ma_mutex_lock(&audioLock);
     {
-        if (audioBuffer->prev == NULL) firstAudioBuffer = audioBuffer->next;
-        else audioBuffer->prev->next = audioBuffer->next;
+        if (buffer->prev == NULL) firstAudioBuffer = buffer->next;
+        else buffer->prev->next = buffer->next;
 
-        if (audioBuffer->next == NULL) lastAudioBuffer = audioBuffer->prev;
-        else audioBuffer->next->prev = audioBuffer->prev;
+        if (buffer->next == NULL) lastAudioBuffer = buffer->prev;
+        else buffer->next->prev = buffer->prev;
 
-        audioBuffer->prev = NULL;
-        audioBuffer->next = NULL;
+        buffer->prev = NULL;
+        buffer->next = NULL;
     }
     ma_mutex_unlock(&audioLock);
 }
@@ -802,10 +778,9 @@ Wave LoadWave(const char *fileName)
 {
     Wave wave = { 0 };
 
+    if (false) { }
 #if defined(SUPPORT_FILEFORMAT_WAV)
-    if (IsFileExtension(fileName, ".wav")) wave = LoadWAV(fileName);
-#else
-    if (false) {}
+    else if (IsFileExtension(fileName, ".wav")) wave = LoadWAV(fileName);
 #endif
 #if defined(SUPPORT_FILEFORMAT_OGG)
     else if (IsFileExtension(fileName, ".ogg")) wave = LoadOGG(fileName);
@@ -819,25 +794,6 @@ Wave LoadWave(const char *fileName)
     else TraceLog(LOG_WARNING, "[%s] Audio fileformat not supported, it can't be loaded", fileName);
 
     return wave;
-}
-
-// Load wave data from raw array data
-Wave LoadWaveEx(void *data, int sampleCount, int sampleRate, int sampleSize, int channels)
-{
-    Wave wave;
-
-    wave.data = data;
-    wave.sampleCount = sampleCount;
-    wave.sampleRate = sampleRate;
-    wave.sampleSize = sampleSize;
-    wave.channels = channels;
-
-    // NOTE: Copy wave data to work with, user is responsible of input data to free
-    Wave cwave = WaveCopy(wave);
-
-    WaveFormat(&cwave, sampleRate, sampleSize, channels);
-
-    return cwave;
 }
 
 // Load sound from file
@@ -903,7 +859,7 @@ void UnloadWave(Wave wave)
 // Unload sound
 void UnloadSound(Sound sound)
 {
-    CloseAudioBuffer((AudioBuffer *)sound.stream.buffer);
+    CloseAudioBuffer(sound.stream.buffer);
 
     TraceLog(LOG_INFO, "Unloaded sound data from RAM");
 }
@@ -911,7 +867,7 @@ void UnloadSound(Sound sound)
 // Update sound buffer with new data
 void UpdateSound(Sound sound, const void *data, int samplesCount)
 {
-    AudioBuffer *audioBuffer = (AudioBuffer *)sound.stream.buffer;
+    AudioBuffer *audioBuffer = sound.stream.buffer;
 
     if (audioBuffer == NULL)
     {
@@ -930,10 +886,9 @@ void ExportWave(Wave wave, const char *fileName)
 {
     bool success = false;
 
+    if (false) { }
 #if defined(SUPPORT_FILEFORMAT_WAV)
-    if (IsFileExtension(fileName, ".wav")) success = SaveWAV(wave, fileName);
-#else
-    if (false) {}
+    else if (IsFileExtension(fileName, ".wav")) success = SaveWAV(wave, fileName);
 #endif
     else if (IsFileExtension(fileName, ".raw"))
     {
@@ -994,7 +949,7 @@ void ExportWaveAsCode(Wave wave, const char *fileName)
 // Play a sound
 void PlaySound(Sound sound)
 {
-    PlayAudioBuffer((AudioBuffer *)sound.stream.buffer);
+    PlayAudioBuffer(sound.stream.buffer);
 }
 
 // Play a sound in the multichannel buffer pool
@@ -1046,17 +1001,16 @@ void PlaySoundMulti(Sound sound)
     audioBufferPoolChannels[index] = audioBufferPoolCounter;
     audioBufferPoolCounter++;
     
-    audioBufferPool[index]->volume = ((AudioBuffer*)sound.stream.buffer)->volume;
-    audioBufferPool[index]->pitch = ((AudioBuffer*)sound.stream.buffer)->pitch;
-    audioBufferPool[index]->looping = ((AudioBuffer*)sound.stream.buffer)->looping;
-    audioBufferPool[index]->usage = ((AudioBuffer*)sound.stream.buffer)->usage;
+    audioBufferPool[index]->volume = sound.stream.buffer->volume;
+    audioBufferPool[index]->pitch = sound.stream.buffer->pitch;
+    audioBufferPool[index]->looping = sound.stream.buffer->looping;
+    audioBufferPool[index]->usage = sound.stream.buffer->usage;
     audioBufferPool[index]->isSubBufferProcessed[0] = false;
     audioBufferPool[index]->isSubBufferProcessed[1] = false;
-    audioBufferPool[index]->bufferSizeInFrames = ((AudioBuffer*)sound.stream.buffer)->bufferSizeInFrames;
-    audioBufferPool[index]->buffer = ((AudioBuffer*)sound.stream.buffer)->buffer;
+    audioBufferPool[index]->bufferSizeInFrames = sound.stream.buffer->bufferSizeInFrames;
+    audioBufferPool[index]->buffer = sound.stream.buffer->buffer;
 
     PlayAudioBuffer(audioBufferPool[index]);
-
 }
 
 // Stop any sound played with PlaySoundMulti()
@@ -1081,37 +1035,37 @@ int GetSoundsPlaying(void)
 // Pause a sound
 void PauseSound(Sound sound)
 {
-    PauseAudioBuffer((AudioBuffer *)sound.stream.buffer);
+    PauseAudioBuffer(sound.stream.buffer);
 }
 
 // Resume a paused sound
 void ResumeSound(Sound sound)
 {
-    ResumeAudioBuffer((AudioBuffer *)sound.stream.buffer);
+    ResumeAudioBuffer(sound.stream.buffer);
 }
 
 // Stop reproducing a sound
 void StopSound(Sound sound)
 {
-    StopAudioBuffer((AudioBuffer *)sound.stream.buffer);
+    StopAudioBuffer(sound.stream.buffer);
 }
 
 // Check if a sound is playing
 bool IsSoundPlaying(Sound sound)
 {
-    return IsAudioBufferPlaying((AudioBuffer *)sound.stream.buffer);
+    return IsAudioBufferPlaying(sound.stream.buffer);
 }
 
 // Set volume for a sound
 void SetSoundVolume(Sound sound, float volume)
 {
-    SetAudioBufferVolume((AudioBuffer *)sound.stream.buffer, volume);
+    SetAudioBufferVolume(sound.stream.buffer, volume);
 }
 
 // Set pitch for a sound
 void SetSoundPitch(Sound sound, float pitch)
 {
-    SetAudioBufferPitch((AudioBuffer *)sound.stream.buffer, pitch);
+    SetAudioBufferPitch(sound.stream.buffer, pitch);
 }
 
 // Convert wave data to desired format
@@ -1213,25 +1167,26 @@ float *GetWaveData(Wave wave)
 Music LoadMusicStream(const char *fileName)
 {
     Music music = (MusicStream *)RL_MALLOC(sizeof(MusicStream));
-    bool musicLoaded = true;
+    bool musicLoaded = false;
 
+    if (false) { }
 #if defined(SUPPORT_FILEFORMAT_OGG)
-    if (IsFileExtension(fileName, ".ogg"))
+    else if (IsFileExtension(fileName, ".ogg"))
     {
         // Open ogg audio stream
         music->ctxData = stb_vorbis_open_filename(fileName, NULL, NULL);
 
-        if (music->ctxData == NULL) musicLoaded = false;
-        else
+        if (music->ctxData != NULL)
         {
+            music->ctxType = MUSIC_AUDIO_OGG;
             stb_vorbis_info info = stb_vorbis_get_info((stb_vorbis *)music->ctxData);  // Get Ogg file info
 
             // OGG bit rate defaults to 16 bit, it's enough for compressed format
             music->stream = InitAudioStream(info.sample_rate, 16, info.channels);
             music->sampleCount = (unsigned int)stb_vorbis_stream_length_in_samples((stb_vorbis *)music->ctxData)*info.channels;
             music->sampleLeft = music->sampleCount;
-            music->ctxType = MUSIC_AUDIO_OGG;
-            music->loopCount = 0;                       // Infinite loop by default
+            music->loopCount = 0;   // Infinite loop by default
+            musicLoaded = true;
 
             TraceLog(LOG_DEBUG, "[%s] OGG total samples: %i", fileName, music->sampleCount);
             TraceLog(LOG_DEBUG, "[%s] OGG sample rate: %i", fileName, info.sample_rate);
@@ -1239,24 +1194,22 @@ Music LoadMusicStream(const char *fileName)
             TraceLog(LOG_DEBUG, "[%s] OGG memory required: %i", fileName, info.temp_memory_required);
         }
     }
-#else
-    if (false) {}
 #endif
 #if defined(SUPPORT_FILEFORMAT_FLAC)
     else if (IsFileExtension(fileName, ".flac"))
     {
         music->ctxData = drflac_open_file(fileName);
 
-        if (music->ctxData == NULL) musicLoaded = false;
-        else
+        if (music->ctxData != NULL)
         {
+            music->ctxType = MUSIC_AUDIO_FLAC;
             drflac *ctxFlac = (drflac *)music->ctxData;
-            
+
             music->stream = InitAudioStream(ctxFlac->sampleRate, ctxFlac->bitsPerSample, ctxFlac->channels);
             music->sampleCount = (unsigned int)ctxFlac->totalSampleCount;
             music->sampleLeft = music->sampleCount;
-            music->ctxType = MUSIC_AUDIO_FLAC;
-            music->loopCount = 0;                       // Infinite loop by default
+            music->loopCount = 0;   // Infinite loop by default
+            musicLoaded = true;
 
             TraceLog(LOG_DEBUG, "[%s] FLAC total samples: %i", fileName, music->sampleCount);
             TraceLog(LOG_DEBUG, "[%s] FLAC sample rate: %i", fileName, ctxFlac->sampleRate);
@@ -1273,19 +1226,19 @@ Music LoadMusicStream(const char *fileName)
         
         int result = drmp3_init_file(ctxMp3, fileName, NULL);
 
-        if (!result) musicLoaded = false;
-        else
+        if (result > 0)
         {
-            TraceLog(LOG_INFO, "[%s] MP3 sample rate: %i", fileName, ctxMp3->sampleRate);
-            TraceLog(LOG_INFO, "[%s] MP3 bits per sample: %i", fileName, 32);
-            TraceLog(LOG_INFO, "[%s] MP3 channels: %i", fileName, ctxMp3->channels);
+            music->ctxType = MUSIC_AUDIO_MP3;
 
             music->stream = InitAudioStream(ctxMp3->sampleRate, 32, ctxMp3->channels);
             music->sampleCount = drmp3_get_pcm_frame_count(ctxMp3)*ctxMp3->channels;
             music->sampleLeft = music->sampleCount;
-            music->ctxType = MUSIC_AUDIO_MP3;
-            music->loopCount = 0;                       // Infinite loop by default
+            music->loopCount = 0;   // Infinite loop by default
+            musicLoaded = true;
 
+            TraceLog(LOG_INFO, "[%s] MP3 sample rate: %i", fileName, ctxMp3->sampleRate);
+            TraceLog(LOG_INFO, "[%s] MP3 bits per sample: %i", fileName, 32);
+            TraceLog(LOG_INFO, "[%s] MP3 channels: %i", fileName, ctxMp3->channels);
             TraceLog(LOG_INFO, "[%s] MP3 total samples: %i", fileName, music->sampleCount);
         }
     }
@@ -1297,23 +1250,23 @@ Music LoadMusicStream(const char *fileName)
 
         int result = jar_xm_create_context_from_file(&ctxXm, 48000, fileName);
 
-        if (!result)    // XM context created successfully
+        if (result > 0)    // XM context created successfully
         {
-            jar_xm_set_max_loop_count(ctxXm, 0); // Set infinite number of loops
+            music->ctxType = MUSIC_MODULE_XM;
+            jar_xm_set_max_loop_count(ctxXm, 0);    // Set infinite number of loops
 
             // NOTE: Only stereo is supported for XM
             music->stream = InitAudioStream(48000, 16, 2);
             music->sampleCount = (unsigned int)jar_xm_get_remaining_samples(ctxXm);
             music->sampleLeft = music->sampleCount;
-            music->ctxType = MUSIC_MODULE_XM;
-            music->loopCount = 0;                       // Infinite loop by default
+            music->loopCount = 0;   // Infinite loop by default
+            musicLoaded = true;
+            
+            music->ctxData = ctxXm;
 
             TraceLog(LOG_INFO, "[%s] XM number of samples: %i", fileName, music->sampleCount);
             TraceLog(LOG_INFO, "[%s] XM track length: %11.6f sec", fileName, (float)music->sampleCount/48000.0f);
-            
-            music->ctxData = ctxXm;
         }
-        else musicLoaded = false;
     }
 #endif
 #if defined(SUPPORT_FILEFORMAT_MOD)
@@ -1323,30 +1276,30 @@ Music LoadMusicStream(const char *fileName)
         music->ctxData = ctxMod;
         
         jar_mod_init(ctxMod);
+        int result = jar_mod_load_file(ctxMod, fileName);
 
-        if (jar_mod_load_file(ctxMod, fileName))
+        if (result > 0)
         {
+            music->ctxType = MUSIC_MODULE_MOD;
+
             // NOTE: Only stereo is supported for MOD
             music->stream = InitAudioStream(48000, 16, 2);
             music->sampleCount = (unsigned int)jar_mod_max_samples(ctxMod);
             music->sampleLeft = music->sampleCount;
-            music->ctxType = MUSIC_MODULE_MOD;
-            music->loopCount = 0;                       // Infinite loop by default
-
+            music->loopCount = 0;   // Infinite loop by default
+            musicLoaded = true;
+            
             TraceLog(LOG_INFO, "[%s] MOD number of samples: %i", fileName, music->sampleLeft);
             TraceLog(LOG_INFO, "[%s] MOD track length: %11.6f sec", fileName, (float)music->sampleCount/48000.0f);
         }
-        else musicLoaded = false;
     }
 #endif
-    else musicLoaded = false;
 
     if (!musicLoaded)
     {
+        if (false) { }
     #if defined(SUPPORT_FILEFORMAT_OGG)
-        if (music->ctxType == MUSIC_AUDIO_OGG) stb_vorbis_close((stb_vorbis *)music->ctxData);
-    #else
-        if (false) {}
+        else if (music->ctxType == MUSIC_AUDIO_OGG) stb_vorbis_close((stb_vorbis *)music->ctxData);
     #endif
     #if defined(SUPPORT_FILEFORMAT_FLAC)
         else if (music->ctxType == MUSIC_AUDIO_FLAC) drflac_free((drflac *)music->ctxData);
@@ -1377,10 +1330,9 @@ void UnloadMusicStream(Music music)
 
     CloseAudioStream(music->stream);
 
+    if (false) { }
 #if defined(SUPPORT_FILEFORMAT_OGG)
-    if (music->ctxType == MUSIC_AUDIO_OGG) stb_vorbis_close((stb_vorbis *)music->ctxData);
-#else
-    if (false) {}
+    else if (music->ctxType == MUSIC_AUDIO_OGG) stb_vorbis_close((stb_vorbis *)music->ctxData);
 #endif
 #if defined(SUPPORT_FILEFORMAT_FLAC)
     else if (music->ctxType == MUSIC_AUDIO_FLAC) drflac_free((drflac *)music->ctxData);
@@ -1403,7 +1355,7 @@ void PlayMusicStream(Music music)
 {
     if (music != NULL)
     {
-        AudioBuffer *audioBuffer = (AudioBuffer *)music->stream.buffer;
+        AudioBuffer *audioBuffer = music->stream.buffer;
 
         if (audioBuffer == NULL)
         {
@@ -1473,7 +1425,7 @@ void UpdateMusicStream(Music music)
 
     bool streamEnding = false;
 
-    unsigned int subBufferSizeInFrames = ((AudioBuffer *)music->stream.buffer)->bufferSizeInFrames/2;
+    unsigned int subBufferSizeInFrames = music->stream.buffer->bufferSizeInFrames/2;
 
     // NOTE: Using dynamic allocation because it could require more than 16KB
     void *pcm = RL_CALLOC(subBufferSizeInFrames*music->stream.channels*music->stream.sampleSize/8, 1);
