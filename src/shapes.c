@@ -1522,7 +1522,7 @@ static Texture2D GetShapesTexture(void)
     {
 #if defined(SUPPORT_FONT_TEXTURE)
         texShapes = GetFontDefault().texture;           // Use font texture white character
-        Rectangle rec = GetFontDefault().chars[95].rec;
+        Rectangle rec = GetFontDefault().recs[95];
         // NOTE: We setup a 1px padding on char rectangle to avoid texture bleeding on MSAA filtering
         recTexShapes = (Rectangle){ rec.x + 1, rec.y + 1, rec.width - 2, rec.height - 2 };
 #else

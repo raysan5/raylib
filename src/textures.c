@@ -888,6 +888,16 @@ Image ImageCopy(Image image)
     return newImage;
 }
 
+// Create an image from another image piece
+Image ImageFromImage(Image image, Rectangle rec)
+{
+    Image result = ImageCopy(image);
+    
+    ImageCrop(&result, rec);
+    
+    return result;
+}
+
 // Convert image to POT (power-of-two)
 // NOTE: It could be useful on OpenGL ES 2.0 (RPI, HTML5)
 void ImageToPOT(Image *image, Color fillColor)
@@ -1274,7 +1284,7 @@ TextureCubemap LoadTextureCubemap(Image image, int layoutType)
             // TODO: Image formating does not work with compressed textures!
         }
 
-        for (int i = 0; i < 6; i++) ImageDraw(&faces, image, faceRecs[i], (Rectangle){ 0, size*i, size, size });
+        for (int i = 0; i < 6; i++) ImageDraw(&faces, image, faceRecs[i], (Rectangle){ 0, size*i, size, size }, WHITE);
 
         cubemap.id = rlLoadTextureCubemap(faces.data, size, faces.format);
         if (cubemap.id == 0) TraceLog(LOG_WARNING, "Cubemap image could not be loaded.");
@@ -1476,7 +1486,7 @@ void ImageResizeCanvas(Image *image, int newWidth, int newHeight, int offsetX, i
             Rectangle srcRec = { 0.0f, 0.0f, (float)image->width, (float)image->height };
             Rectangle dstRec = { (float)offsetX, (float)offsetY, srcRec.width, srcRec.height };
 
-            ImageDraw(&imTemp, *image, srcRec, dstRec);
+            ImageDraw(&imTemp, *image, srcRec, dstRec, WHITE);
             ImageFormat(&imTemp, image->format);
             UnloadImage(*image);
             *image = imTemp;
@@ -1507,7 +1517,7 @@ void ImageResizeCanvas(Image *image, int newWidth, int newHeight, int offsetX, i
                 dstRec.y = 0.0f;
             }
 
-            ImageDraw(&imTemp, *image, srcRec, dstRec);
+            ImageDraw(&imTemp, *image, srcRec, dstRec, WHITE);
             ImageFormat(&imTemp, image->format);
             UnloadImage(*image);
             *image = imTemp;
@@ -1757,7 +1767,8 @@ Color *ImageExtractPalette(Image image, int maxPaletteSize, int *extractCount)
 }
 
 // Draw an image (source) within an image (destination)
-void ImageDraw(Image *dst, Image src, Rectangle srcRec, Rectangle dstRec)
+// NOTE: Color tint is applied to source image
+void ImageDraw(Image *dst, Image src, Rectangle srcRec, Rectangle dstRec, Color tint)
 {
     // Security check to avoid program crash
     if ((dst->data == NULL) || (dst->width == 0) || (dst->height == 0) ||
@@ -1823,7 +1834,8 @@ void ImageDraw(Image *dst, Image src, Rectangle srcRec, Rectangle dstRec)
 
     UnloadImage(srcCopy);       // Source copy not required any more
 
-    Vector4 fsrc, fdst, fout;   // float based versions of pixel data
+    Vector4 fsrc, fdst, fout;   // Normalized pixel data (ready for operation)
+    Vector4 ftint = ColorNormalize(tint);   // Normalized color tint
 
     // Blit pixels, copy source image into destination
     // TODO: Maybe out-of-bounds blitting could be considered here instead of so much cropping
@@ -1835,6 +1847,9 @@ void ImageDraw(Image *dst, Image src, Rectangle srcRec, Rectangle dstRec)
 
             fdst = ColorNormalize(dstPixels[j*(int)dst->width + i]);
             fsrc = ColorNormalize(srcPixels[(j - (int)dstRec.y)*(int)dstRec.width + (i - (int)dstRec.x)]);
+            
+            // Apply color tint to source image
+            fsrc.x *= ftint.x; fsrc.y *= ftint.y; fsrc.z *= ftint.z; fsrc.w *= ftint.w;
 
             fout.w = fsrc.w + fdst.w*(1.0f - fsrc.w);
 
@@ -1885,64 +1900,43 @@ Image ImageText(const char *text, int fontSize, Color color)
 Image ImageTextEx(Font font, const char *text, float fontSize, float spacing, Color tint)
 {
     int length = strlen(text);
-    int posX = 0;
+
     int index;                  // Index position in sprite font
-    unsigned char character;    // Current character
+    int letter = 0;             // Current character
+    int positionX = 0;          // Image drawing position
 
+    // NOTE: Text image is generated at font base size, later scaled to desired font size
     Vector2 imSize = MeasureTextEx(font, text, (float)font.baseSize, spacing);
-
-    TraceLog(LOG_DEBUG, "Text Image size: %f, %f", imSize.x, imSize.y);
-
-    // NOTE: glGetTexImage() not available in OpenGL ES
-    // TODO: This is horrible, retrieving font texture from GPU!!!
-    // Define ImageFont struct? or include Image spritefont in Font struct?
-    Image imFont = GetTextureData(font.texture);
-
-    ImageFormat(&imFont, UNCOMPRESSED_R8G8B8A8);    // Make sure image format could be properly colored!
-
-    ImageColorTint(&imFont, tint);                  // Apply color tint to font
 
     // Create image to store text
     Image imText = GenImageColor((int)imSize.x, (int)imSize.y, BLANK);
-
+    
     for (int i = 0; i < length; i++)
     {
-        if ((unsigned char)text[i] == '\n')
+        int next = 0;
+        letter = GetNextCodepoint(&text[i], &next);
+        index = GetGlyphIndex(font, letter);
+        
+        if (letter == 0x3f) next = 1; 
+        i += (next - 1);
+        
+        if (letter == '\n')
         {
             // TODO: Support line break
         }
         else
         {
-            if ((unsigned char)text[i] == 0xc2)         // UTF-8 encoding identification HACK!
+            if (letter != ' ')
             {
-                // Support UTF-8 encoded values from [0xc2 0x80] -> [0xc2 0xbf](¿)
-                character = (unsigned char)text[i + 1];
-                index = GetGlyphIndex(font, (int)character);
-                i++;
-            }
-            else if ((unsigned char)text[i] == 0xc3)    // UTF-8 encoding identification HACK!
-            {
-                // Support UTF-8 encoded values from [0xc3 0x80](À) -> [0xc3 0xbf](ÿ)
-                character = (unsigned char)text[i + 1];
-                index = GetGlyphIndex(font, (int)character + 64);
-                i++;
-            }
-            else index = GetGlyphIndex(font, (unsigned char)text[i]);
-
-            CharInfo letter = font.chars[index];
-
-            if ((unsigned char)text[i] != ' ')
-            {
-                ImageDraw(&imText, imFont, letter.rec, (Rectangle){ (float)(posX + letter.offsetX),
-                    (float)letter.offsetY, (float)letter.rec.width, (float)letter.rec.height });
+                ImageDraw(&imText, font.chars[index].image, (Rectangle){ 0, 0, font.chars[index].image.width, font.chars[index].image.height },
+                         (Rectangle){ (float)(positionX + font.chars[index].offsetX),(float)font.chars[index].offsetY, 
+                                      font.chars[index].image.width, font.chars[index].image.height }, tint);
             }
 
-            if (letter.advanceX == 0) posX += (int)(letter.rec.width + spacing);
-            else posX += letter.advanceX + (int)spacing;
+            if (font.chars[index].advanceX == 0) positionX += (int)(font.recs[index].width + spacing);
+            else positionX += font.chars[index].advanceX + (int)spacing;
         }
     }
-
-    UnloadImage(imFont);
 
     // Scale image depending on text size
     if (fontSize > imSize.y)
@@ -1965,7 +1959,7 @@ void ImageDrawRectangle(Image *dst, Rectangle rec, Color color)
     if ((dst->data == NULL) || (dst->width == 0) || (dst->height == 0)) return;
 
     Image imRec = GenImageColor((int)rec.width, (int)rec.height, color);
-    ImageDraw(dst, imRec, (Rectangle){ 0, 0, rec.width, rec.height }, rec);
+    ImageDraw(dst, imRec, (Rectangle){ 0, 0, rec.width, rec.height }, rec, WHITE);
     UnloadImage(imRec);
 }
 
@@ -1993,7 +1987,7 @@ void ImageDrawTextEx(Image *dst, Vector2 position, Font font, const char *text, 
     Rectangle srcRec = { 0.0f, 0.0f, (float)imText.width, (float)imText.height };
     Rectangle dstRec = { position.x, position.y, (float)imText.width, (float)imText.height };
 
-    ImageDraw(dst, imText, srcRec, dstRec);
+    ImageDraw(dst, imText, srcRec, dstRec, WHITE);
 
     UnloadImage(imText);
 }

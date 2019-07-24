@@ -152,7 +152,7 @@ void InitGameplayScreen(void)
     {
         ImageDraw(&imWords, imWordsBase,
                   (Rectangle){ 0, 0, imWordsBase.width, imWordsBase.height },
-                  (Rectangle){ 0, imWordsBase.height*i, imWordsBase.width, imWordsBase.height });
+                  (Rectangle){ 0, imWordsBase.height*i, imWordsBase.width, imWordsBase.height }, WHITE);
 
         ImageDrawTextEx(&imWords,(Vector2){ imWordsBase.width/2 - MeasureTextEx(fontMessage, codingWords[i],
                         fontMessage.baseSize, 0).x/2, imWordsBase.height*i }, fontMessage, codingWords[i],

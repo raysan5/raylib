@@ -193,13 +193,12 @@ extern void LoadFontDefault(void)
         if (counter > 512) counter = 0;         // Security check...
     }
 
-    Image image = LoadImageEx(imagePixels, imWidth, imHeight);
-    ImageFormat(&image, UNCOMPRESSED_GRAY_ALPHA);
+    Image imFont = LoadImageEx(imagePixels, imWidth, imHeight);
+    ImageFormat(&imFont, UNCOMPRESSED_GRAY_ALPHA);
 
     RL_FREE(imagePixels);
 
-    defaultFont.texture = LoadTextureFromImage(image);
-    UnloadImage(image);
+    defaultFont.texture = LoadTextureFromImage(imFont);
 
     // Reconstruct charSet using charsWidth[], charsHeight, charsDivisor, charsCount
     //------------------------------------------------------------------------------
@@ -207,6 +206,7 @@ extern void LoadFontDefault(void)
     // Allocate space for our characters info data
     // NOTE: This memory should be freed at end! --> CloseWindow()
     defaultFont.chars = (CharInfo *)RL_MALLOC(defaultFont.charsCount*sizeof(CharInfo));
+    defaultFont.recs = (Rectangle *)RL_MALLOC(defaultFont.charsCount*sizeof(Rectangle));
 
     int currentLine = 0;
     int currentPosX = charsDivisor;
@@ -216,12 +216,12 @@ extern void LoadFontDefault(void)
     {
         defaultFont.chars[i].value = 32 + i;  // First char is 32
 
-        defaultFont.chars[i].rec.x = (float)currentPosX;
-        defaultFont.chars[i].rec.y = (float)(charsDivisor + currentLine*(charsHeight + charsDivisor));
-        defaultFont.chars[i].rec.width = (float)charsWidth[i];
-        defaultFont.chars[i].rec.height = (float)charsHeight;
+        defaultFont.recs[i].x = (float)currentPosX;
+        defaultFont.recs[i].y = (float)(charsDivisor + currentLine*(charsHeight + charsDivisor));
+        defaultFont.recs[i].width = (float)charsWidth[i];
+        defaultFont.recs[i].height = (float)charsHeight;
 
-        testPosX += (int)(defaultFont.chars[i].rec.width + (float)charsDivisor);
+        testPosX += (int)(defaultFont.recs[i].width + (float)charsDivisor);
 
         if (testPosX >= defaultFont.texture.width)
         {
@@ -229,8 +229,8 @@ extern void LoadFontDefault(void)
             currentPosX = 2*charsDivisor + charsWidth[i];
             testPosX = currentPosX;
 
-            defaultFont.chars[i].rec.x = (float)charsDivisor;
-            defaultFont.chars[i].rec.y = (float)(charsDivisor + currentLine*(charsHeight + charsDivisor));
+            defaultFont.recs[i].x = (float)charsDivisor;
+            defaultFont.recs[i].y = (float)(charsDivisor + currentLine*(charsHeight + charsDivisor));
         }
         else currentPosX = testPosX;
 
@@ -238,9 +238,14 @@ extern void LoadFontDefault(void)
         defaultFont.chars[i].offsetX = 0;
         defaultFont.chars[i].offsetY = 0;
         defaultFont.chars[i].advanceX = 0;
+
+        // Fill character image data from fontClear data
+        defaultFont.chars[i].image = ImageFromImage(imFont, defaultFont.recs[i]);
     }
 
-    defaultFont.baseSize = (int)defaultFont.chars[0].rec.height;
+    UnloadImage(imFont);
+
+    defaultFont.baseSize = (int)defaultFont.recs[0].height;
 
     TraceLog(LOG_INFO, "[TEX ID %i] Default font loaded successfully", defaultFont.texture.id);
 }
@@ -248,8 +253,10 @@ extern void LoadFontDefault(void)
 // Unload raylib default font
 extern void UnloadFontDefault(void)
 {
+    for (int i = 0; i < defaultFont.charsCount; i++) UnloadImage(defaultFont.chars[i].image);
     UnloadTexture(defaultFont.texture);
     RL_FREE(defaultFont.chars);
+    RL_FREE(defaultFont.recs);
 }
 #endif      // SUPPORT_DEFAULT_FONT
 
@@ -312,12 +319,21 @@ Font LoadFontEx(const char *fileName, int fontSize, int *fontChars, int charsCou
 #if defined(SUPPORT_FILEFORMAT_TTF)
     if (font.chars != NULL)
     {
-        Image atlas = GenImageFontAtlas(font.chars, font.charsCount, font.baseSize, 2, 0);
+        Image atlas = GenImageFontAtlas(font.chars, &font.recs, font.charsCount, font.baseSize, 2, 0);
         font.texture = LoadTextureFromImage(atlas);
+        
+        // Update chars[i].image to use alpha, required to be used on ImageDrawText()
+        for (int i = 0; i < font.charsCount; i++)
+        {
+            UnloadImage(font.chars[i].image);
+            font.chars[i].image = ImageFromImage(atlas, font.recs[i]);
+        }
+
         UnloadImage(atlas);
     }
     else font = GetFontDefault();
 #else
+    UnloadFont(font);
     font = GetFontDefault();
 #endif
 
@@ -415,25 +431,30 @@ Font LoadFontFromImage(Image image, Color key, int firstChar)
     spriteFont.texture = LoadTextureFromImage(fontClear); // Convert processed image to OpenGL texture
     spriteFont.charsCount = index;
 
-    UnloadImage(fontClear);     // Unload processed image once converted to texture
-
     // We got tempCharValues and tempCharsRecs populated with chars data
     // Now we move temp data to sized charValues and charRecs arrays
     spriteFont.chars = (CharInfo *)RL_MALLOC(spriteFont.charsCount*sizeof(CharInfo));
+    spriteFont.recs = (Rectangle *)RL_MALLOC(spriteFont.charsCount*sizeof(Rectangle));
 
     for (int i = 0; i < spriteFont.charsCount; i++)
     {
         spriteFont.chars[i].value = tempCharValues[i];
-        spriteFont.chars[i].rec = tempCharRecs[i];
+        
+        // Get character rectangle in the font atlas texture
+        spriteFont.recs[i] = tempCharRecs[i];
 
         // NOTE: On image based fonts (XNA style), character offsets and xAdvance are not required (set to 0)
         spriteFont.chars[i].offsetX = 0;
         spriteFont.chars[i].offsetY = 0;
         spriteFont.chars[i].advanceX = 0;
-        spriteFont.chars[i].data = NULL;
+        
+        // Fill character image data from fontClear data
+        spriteFont.chars[i].image = ImageFromImage(fontClear, tempCharRecs[i]);
     }
 
-    spriteFont.baseSize = (int)spriteFont.chars[0].rec.height;
+    UnloadImage(fontClear);     // Unload processed image once converted to texture
+
+    spriteFont.baseSize = (int)spriteFont.recs[0].height;
 
     TraceLog(LOG_INFO, "Image file loaded correctly as Font");
 
@@ -510,9 +531,9 @@ CharInfo *LoadFontData(const char *fileName, int fontSize, int *fontChars, int c
             //      stbtt_GetCodepointBitmapBox()        -- how big the bitmap must be
             //      stbtt_MakeCodepointBitmap()          -- renders into bitmap you provide
 
-            if (type != FONT_SDF) chars[i].data = stbtt_GetCodepointBitmap(&fontInfo, scaleFactor, scaleFactor, ch, &chw, &chh, &chars[i].offsetX, &chars[i].offsetY);
-            else if (ch != 32) chars[i].data = stbtt_GetCodepointSDF(&fontInfo, scaleFactor, ch, SDF_CHAR_PADDING, SDF_ON_EDGE_VALUE, SDF_PIXEL_DIST_SCALE, &chw, &chh, &chars[i].offsetX, &chars[i].offsetY);
-            else chars[i].data = NULL;
+            if (type != FONT_SDF) chars[i].image.data = stbtt_GetCodepointBitmap(&fontInfo, scaleFactor, scaleFactor, ch, &chw, &chh, &chars[i].offsetX, &chars[i].offsetY);
+            else if (ch != 32) chars[i].image.data = stbtt_GetCodepointSDF(&fontInfo, scaleFactor, ch, SDF_CHAR_PADDING, SDF_ON_EDGE_VALUE, SDF_PIXEL_DIST_SCALE, &chw, &chh, &chars[i].offsetX, &chars[i].offsetY);
+            else chars[i].image.data = NULL;
 
             if (type == FONT_BITMAP)
             {
@@ -520,13 +541,17 @@ CharInfo *LoadFontData(const char *fileName, int fontSize, int *fontChars, int c
                 // NOTE: For optimum results, bitmap font should be generated at base pixel size
                 for (int p = 0; p < chw*chh; p++)
                 {
-                    if (chars[i].data[p] < BITMAP_ALPHA_THRESHOLD) chars[i].data[p] = 0;
-                    else chars[i].data[p] = 255;
+                    if (((unsigned char *)chars[i].image.data)[p] < BITMAP_ALPHA_THRESHOLD) ((unsigned char *)chars[i].image.data)[p] = 0;
+                    else ((unsigned char *)chars[i].image.data)[p] = 255;
                 }
             }
 
-            chars[i].rec.width = (float)chw;
-            chars[i].rec.height = (float)chh;
+            // Load characters images
+            chars[i].image.width = chw;
+            chars[i].image.height = chh;
+            chars[i].image.mipmaps = 1;
+            chars[i].image.format = UNCOMPRESSED_GRAYSCALE;
+
             chars[i].offsetY += (int)((float)ascent*scaleFactor);
 
             // Get bounding box for character (may be offset to account for chars that dip above or below the line)
@@ -554,19 +579,24 @@ CharInfo *LoadFontData(const char *fileName, int fontSize, int *fontChars, int c
 // Generate image font atlas using chars info
 // NOTE: Packing method: 0-Default, 1-Skyline
 #if defined(SUPPORT_FILEFORMAT_TTF)
-Image GenImageFontAtlas(CharInfo *chars, int charsCount, int fontSize, int padding, int packMethod)
+Image GenImageFontAtlas(const CharInfo *chars, Rectangle **charRecs, int charsCount, int fontSize, int padding, int packMethod)
 {
     Image atlas = { 0 };
 
+    *charRecs = NULL;
+
     // In case no chars count provided we suppose default of 95
-    charsCount = (charsCount > 0)? charsCount : 95;
+    charsCount = (charsCount > 0) ? charsCount : 95;
+    
+    // NOTE: Rectangles memory is loaded here!
+    Rectangle *recs = (Rectangle *)RL_MALLOC(charsCount*sizeof(Rectangle));
 
     // Calculate image size based on required pixel area
     // NOTE 1: Image is forced to be squared and POT... very conservative!
     // NOTE 2: SDF font characters already contain an internal padding,
     // so image size would result bigger than default font type
     float requiredArea = 0;
-    for (int i = 0; i < charsCount; i++) requiredArea += ((chars[i].rec.width + 2*padding)*(chars[i].rec.height + 2*padding));
+    for (int i = 0; i < charsCount; i++) requiredArea += ((chars[i].image.width + 2*padding)*(chars[i].image.height + 2*padding));
     float guessSize = sqrtf(requiredArea)*1.25f;
     int imageSize = (int)powf(2, ceilf(logf((float)guessSize)/logf(2)));  // Calculate next POT
 
@@ -588,21 +618,24 @@ Image GenImageFontAtlas(CharInfo *chars, int charsCount, int fontSize, int paddi
         for (int i = 0; i < charsCount; i++)
         {
             // Copy pixel data from fc.data to atlas
-            for (int y = 0; y < (int)chars[i].rec.height; y++)
+            for (int y = 0; y < chars[i].image.height; y++)
             {
-                for (int x = 0; x < (int)chars[i].rec.width; x++)
+                for (int x = 0; x < chars[i].image.width; x++)
                 {
-                    ((unsigned char *)atlas.data)[(offsetY + y)*atlas.width + (offsetX + x)] = chars[i].data[y*(int)chars[i].rec.width + x];
+                    ((unsigned char *)atlas.data)[(offsetY + y)*atlas.width + (offsetX + x)] = ((unsigned char *)chars[i].image.data)[y*chars[i].image.width + x];
                 }
             }
 
-            chars[i].rec.x = (float)offsetX;
-            chars[i].rec.y = (float)offsetY;
+            // Fill chars rectangles in atlas info
+            recs[i].x = (float)offsetX;
+            recs[i].y = (float)offsetY;
+            recs[i].width = (float)chars[i].image.width;
+            recs[i].height = (float)chars[i].image.height;
 
             // Move atlas position X for next character drawing
-            offsetX += ((int)chars[i].rec.width + 2*padding);
+            offsetX += (chars[i].image.width + 2*padding);
 
-            if (offsetX >= (atlas.width - (int)chars[i].rec.width - padding))
+            if (offsetX >= (atlas.width - chars[i].image.width - padding))
             {
                 offsetX = padding;
 
@@ -629,8 +662,8 @@ Image GenImageFontAtlas(CharInfo *chars, int charsCount, int fontSize, int paddi
         for (int i = 0; i < charsCount; i++)
         {
             rects[i].id = i;
-            rects[i].w = (int)chars[i].rec.width + 2*padding;
-            rects[i].h = (int)chars[i].rec.height + 2*padding;
+            rects[i].w = chars[i].image.width + 2*padding;
+            rects[i].h = chars[i].image.height + 2*padding;
         }
 
         // Package rectangles into atlas
@@ -638,17 +671,20 @@ Image GenImageFontAtlas(CharInfo *chars, int charsCount, int fontSize, int paddi
 
         for (int i = 0; i < charsCount; i++)
         {
-            chars[i].rec.x = rects[i].x + (float)padding;
-            chars[i].rec.y = rects[i].y + (float)padding;
+            // It return char rectangles in atlas
+            recs[i].x = rects[i].x + (float)padding;
+            recs[i].y = rects[i].y + (float)padding;
+            recs[i].width = (float)chars[i].image.width;
+            recs[i].height = (float)chars[i].image.height;
 
             if (rects[i].was_packed)
             {
                 // Copy pixel data from fc.data to atlas
-                for (int y = 0; y < (int)chars[i].rec.height; y++)
+                for (int y = 0; y < chars[i].image.height; y++)
                 {
-                    for (int x = 0; x < (int)chars[i].rec.width; x++)
+                    for (int x = 0; x < chars[i].image.width; x++)
                     {
-                        ((unsigned char *)atlas.data)[(rects[i].y + padding + y)*atlas.width + (rects[i].x + padding + x)] = chars[i].data[y*(int)chars[i].rec.width + x];
+                        ((unsigned char *)atlas.data)[(rects[i].y + padding + y)*atlas.width + (rects[i].x + padding + x)] = ((unsigned char *)chars[i].image.data)[y*chars[i].image.width + x];
                     }
                 }
             }
@@ -664,7 +700,7 @@ Image GenImageFontAtlas(CharInfo *chars, int charsCount, int fontSize, int paddi
 
     // Convert image data from GRAYSCALE to GRAY_ALPHA
     // WARNING: ImageAlphaMask(&atlas, atlas) does not work in this case, requires manual operation
-    unsigned char *dataGrayAlpha = (unsigned char *)RL_MALLOC(imageSize*imageSize*sizeof(unsigned char)*2); // Two channels
+    unsigned char *dataGrayAlpha = (unsigned char *)RL_MALLOC(atlas.width*atlas.height*sizeof(unsigned char)*2); // Two channels
 
     for (int i = 0, k = 0; i < atlas.width*atlas.height; i++, k += 2)
     {
@@ -675,6 +711,8 @@ Image GenImageFontAtlas(CharInfo *chars, int charsCount, int fontSize, int paddi
     RL_FREE(atlas.data);
     atlas.data = dataGrayAlpha;
     atlas.format = UNCOMPRESSED_GRAY_ALPHA;
+    
+    *charRecs = recs;
 
     return atlas;
 }
@@ -686,10 +724,11 @@ void UnloadFont(Font font)
     // NOTE: Make sure spriteFont is not default font (fallback)
     if (font.texture.id != GetFontDefault().texture.id)
     {
-        for (int i = 0; i < font.charsCount; i++) RL_FREE(font.chars[i].data);
+        for (int i = 0; i < font.charsCount; i++) UnloadImage(font.chars[i].image);
 
         UnloadTexture(font.texture);
         RL_FREE(font.chars);
+        RL_FREE(font.recs);
 
         TraceLog(LOG_DEBUG, "Unloaded sprite font data");
     }
@@ -717,11 +756,13 @@ void DrawFPS(int posX, int posY)
     DrawText(TextFormat("%2i FPS", fps), posX, posY, 20, LIME);
 }
 
-// Returns next codepoint in a UTF8 encoded `text` scanning until '\0' is found. When a invalid UTF8 byte is encountered we exit as soon
-// as possible and a `?`(0x3f) codepoint is returned. `count` will hold the total number of bytes processed.
-// NOTE: the standard says U+FFFD should be returned in case of errors but that character is not supported by the default font in raylib
+// Returns next codepoint in a UTF8 encoded text, scanning until '\0' is found
+// When a invalid UTF8 byte is encountered we exit as soon as possible and a '?'(0x3f) codepoint is returned
+// Total number of bytes processed are returned as a parameter
+// NOTE: the standard says U+FFFD should be returned in case of errors 
+// but that character is not supported by the default font in raylib
 // TODO: optimize this code for speed!!
-int GetNextCodepoint(const char *text, int *count)
+int GetNextCodepoint(const char *text, int *bytesProcessed)
 {
 /* 
     UTF8 specs from https://www.ietf.org/rfc/rfc3629.txt
@@ -737,40 +778,40 @@ int GetNextCodepoint(const char *text, int *count)
     
     // NOTE: on decode errors we return as soon as possible
     
-    int c = 0x3f;   // Codepoint (defaults to `?`)
-    int o = (unsigned char)(text[0]); // The first UTF8 octet
-    *count = 1;
+    int code = 0x3f;   // Codepoint (defaults to '?')
+    int octet = (unsigned char)(text[0]); // The first UTF8 octet
+    *bytesProcessed = 1;
     
-    if (o <= 0x7f)
+    if (octet <= 0x7f)
     { 
         // Only one octet (ASCII range x00-7F)
-        c = text[0];
+        code = text[0];
     }
-    else if ((o & 0xe0) == 0xc0)
+    else if ((octet & 0xe0) == 0xc0)
     {
         // Two octets 
         // [0]xC2-DF    [1]UTF8-tail(x80-BF)
-        unsigned char o1 = text[1];
+        unsigned char octet1 = text[1];
         
-        if ((o1 == '\0') || ((o1 >> 6) != 2)) { *count = 2; return c; } // Unexpected sequence
+        if ((octet1 == '\0') || ((octet1 >> 6) != 2)) { *bytesProcessed = 2; return code; } // Unexpected sequence
         
-        if ((o >= 0xc2) && (o <= 0xdf))
+        if ((octet >= 0xc2) && (octet <= 0xdf))
         {
-            c = ((o & 0x1f) << 6) | (o1 & 0x3f);
-            *count = 2;
+            code = ((octet & 0x1f) << 6) | (octet1 & 0x3f);
+            *bytesProcessed = 2;
         }
     }
-    else if ((o & 0xf0) == 0xe0)
+    else if ((octet & 0xf0) == 0xe0)
     {
         // Three octets
-        unsigned char o1 = text[1];
-        unsigned char o2 = '\0';
+        unsigned char octet1 = text[1];
+        unsigned char octet2 = '\0';
         
-        if ((o1 == '\0') || ((o1 >> 6) != 2)) { *count = 2; return c; } // Unexpected sequence
+        if ((octet1 == '\0') || ((octet1 >> 6) != 2)) { *bytesProcessed = 2; return code; } // Unexpected sequence
         
-        o2 = text[2];
+        octet2 = text[2];
         
-        if ((o2 == '\0') || ((o2 >> 6) != 2)) { *count = 3; return c; } // Unexpected sequence
+        if ((octet2 == '\0') || ((octet2 >> 6) != 2)) { *bytesProcessed = 3; return code; } // Unexpected sequence
         
         /* 
             [0]xE0    [1]xA0-BF       [2]UTF8-tail(x80-BF)
@@ -779,33 +820,33 @@ int GetNextCodepoint(const char *text, int *count)
             [0]xEE-EF [1]UTF8-tail    [2]UTF8-tail(x80-BF)
         */
         
-        if (((o == 0xe0) && !((o1 >= 0xa0) && (o1 <= 0xbf))) || 
-            ((o == 0xed) && !((o1 >= 0x80) && (o1 <= 0x9f)))) { *count = 2; return c; }
+        if (((octet == 0xe0) && !((octet1 >= 0xa0) && (octet1 <= 0xbf))) || 
+            ((octet == 0xed) && !((octet1 >= 0x80) && (octet1 <= 0x9f)))) { *bytesProcessed = 2; return code; }
         
-        if ((o >= 0xe0) && (0 <= 0xef))
+        if ((octet >= 0xe0) && (0 <= 0xef))
         {
-            c = ((o & 0xf) << 12) | ((o1 & 0x3f) << 6) | (o2 & 0x3f);
-            *count = 3;
+            code = ((octet & 0xf) << 12) | ((octet1 & 0x3f) << 6) | (octet2 & 0x3f);
+            *bytesProcessed = 3;
         }
     }
-    else if ((o & 0xf8) == 0xf0) 
+    else if ((octet & 0xf8) == 0xf0) 
     {
         // Four octets
-        if (o > 0xf4) return c;
+        if (octet > 0xf4) return code;
         
-        unsigned char o1 = text[1];
-        unsigned char o2 = '\0';
-        unsigned char o3 = '\0';
+        unsigned char octet1 = text[1];
+        unsigned char octet2 = '\0';
+        unsigned char octet3 = '\0';
         
-        if ((o1 == '\0') || ((o1 >> 6) != 2)) { *count = 2; return c; }  // Unexpected sequence
+        if ((octet1 == '\0') || ((octet1 >> 6) != 2)) { *bytesProcessed = 2; return code; }  // Unexpected sequence
         
-        o2 = text[2];
+        octet2 = text[2];
         
-        if ((o2 == '\0') || ((o2 >> 6) != 2)) { *count = 3; return c; }  // Unexpected sequence
+        if ((octet2 == '\0') || ((octet2 >> 6) != 2)) { *bytesProcessed = 3; return code; }  // Unexpected sequence
         
-        o3 = text[3];
+        octet3 = text[3];
         
-        if ((o3 == '\0') || ((o3 >> 6) != 2)) { *count = 4; return c; }  // Unexpected sequence
+        if ((octet3 == '\0') || ((octet3 >> 6) != 2)) { *bytesProcessed = 4; return code; }  // Unexpected sequence
         
         /* 
             [0]xF0       [1]x90-BF       [2]UTF8-tail  [3]UTF8-tail
@@ -813,19 +854,19 @@ int GetNextCodepoint(const char *text, int *count)
             [0]xF4       [1]x80-8F       [2]UTF8-tail  [3]UTF8-tail
         */
         
-        if (((o == 0xf0) && !((o1 >= 0x90) && (o1 <= 0xbf))) || 
-            ((o == 0xf4) && !((o1 >= 0x80) && (o1 <= 0x8f)))) { *count = 2; return c; } // Unexpected sequence
+        if (((octet == 0xf0) && !((octet1 >= 0x90) && (octet1 <= 0xbf))) || 
+            ((octet == 0xf4) && !((octet1 >= 0x80) && (octet1 <= 0x8f)))) { *bytesProcessed = 2; return code; } // Unexpected sequence
         
-        if (o >= 0xf0)
+        if (octet >= 0xf0)
         {
-            c = ((o & 0x7) << 18) | ((o1 & 0x3f) << 12) | ((o2 & 0x3f) << 6) | (o3 & 0x3f);
-            *count = 4;
+            code = ((octet & 0x7) << 18) | ((octet1 & 0x3f) << 12) | ((octet2 & 0x3f) << 6) | (octet3 & 0x3f);
+            *bytesProcessed = 4;
         }
     }
     
-    if (c > 0x10ffff) c = 0x3f;     // Codepoints after U+10ffff are invalid
+    if (code > 0x10ffff) code = 0x3f;     // Codepoints after U+10ffff are invalid
     
-    return c;
+    return code;
 }
 
 
@@ -863,13 +904,14 @@ void DrawTextEx(Font font, const char *text, Vector2 position, float fontSize, f
 
     for (int i = 0; i < length; i++)
     {
-        int next = 1;
+        int next = 0;
         letter = GetNextCodepoint(&text[i], &next);
-        // NOTE: normally we exit the decoding sequence as soon as a bad byte is found (and return 0x3f)
-        // but we need to draw all of the bad bytes using the '?' symbol so to not skip any we set `next = 1`
-        if(letter == 0x3f) next = 1; 
         index = GetGlyphIndex(font, letter);
-        i += next - 1;
+        
+        // NOTE: Normally we exit the decoding sequence as soon as a bad byte is found (and return 0x3f)
+        // but we need to draw all of the bad bytes using the '?' symbol so to not skip any we set 'next = 1'
+        if (letter == 0x3f) next = 1; 
+        i += (next - 1);
         
         if (letter == '\n')
         {
@@ -881,14 +923,14 @@ void DrawTextEx(Font font, const char *text, Vector2 position, float fontSize, f
         {
             if (letter != ' ')
             {
-                DrawTexturePro(font.texture, font.chars[index].rec,
+                DrawTexturePro(font.texture, font.recs[index],
                            (Rectangle){ position.x + textOffsetX + font.chars[index].offsetX*scaleFactor,
                                         position.y + textOffsetY + font.chars[index].offsetY*scaleFactor,
-                                        font.chars[index].rec.width*scaleFactor,
-                                        font.chars[index].rec.height*scaleFactor }, (Vector2){ 0, 0 }, 0.0f, tint);
+                                        font.recs[index].width*scaleFactor,
+                                        font.recs[index].height*scaleFactor }, (Vector2){ 0, 0 }, 0.0f, tint);
             }
 
-            if (font.chars[index].advanceX == 0) textOffsetX += ((float)font.chars[index].rec.width*scaleFactor + spacing);
+            if (font.chars[index].advanceX == 0) textOffsetX += ((float)font.recs[index].width*scaleFactor + spacing);
             else textOffsetX += ((float)font.chars[index].advanceX*scaleFactor + spacing);
         }
     }
@@ -901,8 +943,7 @@ void DrawTextRec(Font font, const char *text, Rectangle rec, float fontSize, flo
 }
 
 // Draw text using font inside rectangle limits with support for text selection
-void DrawTextRecEx(Font font, const char *text, Rectangle rec, float fontSize, float spacing, bool wordWrap, Color tint,
-                   int selectStart, int selectLength, Color selectText, Color selectBack)
+void DrawTextRecEx(Font font, const char *text, Rectangle rec, float fontSize, float spacing, bool wordWrap, Color tint, int selectStart, int selectLength, Color selectText, Color selectBack)
 {
     int length = strlen(text);
     int textOffsetX = 0;        // Offset between characters
@@ -916,39 +957,38 @@ void DrawTextRecEx(Font font, const char *text, Rectangle rec, float fontSize, f
 
     enum { MEASURE_STATE = 0, DRAW_STATE = 1 };
     int state = wordWrap? MEASURE_STATE : DRAW_STATE;
-    int startLine = -1;   // Index where to begin drawing (where a line begins)
-    int endLine = -1;     // Index where to stop drawing (where a line ends)
-    int lastk = -1;       // Holds last value of the character position
+    int startLine = -1;         // Index where to begin drawing (where a line begins)
+    int endLine = -1;           // Index where to stop drawing (where a line ends)
+    int lastk = -1;             // Holds last value of the character position
+    
     for (int i = 0, k = 0; i < length; i++, k++)
     {
         int glyphWidth = 0;
-        int next = 1;
+        int next = 0;
         letter = GetNextCodepoint(&text[i], &next);
-        // NOTE: normally we exit the decoding sequence as soon as a bad byte is found (and return 0x3f)
-        // but we need to draw all of the bad bytes using the '?' symbol so to not skip any we set `next = 1`
-        if(letter == 0x3f) next = 1; 
         index = GetGlyphIndex(font, letter);
+        
+        // NOTE: normally we exit the decoding sequence as soon as a bad byte is found (and return 0x3f)
+        // but we need to draw all of the bad bytes using the '?' symbol so to not skip any we set next = 1
+        if (letter == 0x3f) next = 1; 
         i += next - 1;
 
         if (letter != '\n')
-        {   
+        {
             glyphWidth = (font.chars[index].advanceX == 0)?
-                         (int)(font.chars[index].rec.width*scaleFactor + spacing):
+                         (int)(font.recs[index].width*scaleFactor + spacing):
                          (int)(font.chars[index].advanceX*scaleFactor + spacing);
         }
 
-        // NOTE: When wordWrap is ON we first measure how much of the text we can draw
-        // before going outside of the `rec` container. We store this info inside
-        // `startLine` and `endLine` then we change states, draw the text between those two
-        // variables then change states again and again recursively until the end of the text
-        // (or until we get outside of the container).
-        // When wordWrap is OFF we don't need the measure state so we go to the drawing
-        // state immediately and begin drawing on the next line before we can get outside
-        // the container.
+        // NOTE: When wordWrap is ON we first measure how much of the text we can draw before going outside of the rec container
+        // We store this info in startLine and endLine, then we change states, draw the text between those two variables
+        // and change states again and again recursively until the end of the text (or until we get outside of the container).
+        // When wordWrap is OFF we don't need the measure state so we go to the drawing state immediately
+        // and begin drawing on the next line before we can get outside the container.
         if (state == MEASURE_STATE)
         {
-            // TODO: there are multiple types of `spaces` in UNICODE, maybe it's a good idea to add support for more
-            // see: http://jkorpela.fi/chars/spaces.html 
+            // TODO: there are multiple types of spaces in UNICODE, maybe it's a good idea to add support for more
+            // See: http://jkorpela.fi/chars/spaces.html 
             if ((letter == ' ') || (letter == '\t') || (letter == '\n')) endLine = i;
 
             if ((textOffsetX + glyphWidth + 1) >= rec.width)
@@ -979,7 +1019,6 @@ void DrawTextRecEx(Font font, const char *text, Rectangle rec, float fontSize, f
                 lastk = k - 1;
                 k = tmp;
             }
-
         }
         else
         {
@@ -1001,7 +1040,7 @@ void DrawTextRecEx(Font font, const char *text, Rectangle rec, float fontSize, f
 
                 if ((textOffsetY + (int)(font.baseSize*scaleFactor)) > rec.height) break;
 
-                //draw selected
+                // Draw selected
                 bool isGlyphSelected = false;
                 if ((selectStart >= 0) && (k >= selectStart) && (k < (selectStart + selectLength)))
                 {
@@ -1010,14 +1049,14 @@ void DrawTextRecEx(Font font, const char *text, Rectangle rec, float fontSize, f
                     isGlyphSelected = true;
                 }
 
-                //draw glyph
+                // Draw glyph
                 if ((letter != ' ') && (letter != '\t'))
                 {
-                    DrawTexturePro(font.texture, font.chars[index].rec,
+                    DrawTexturePro(font.texture, font.recs[index],
                       (Rectangle){ rec.x + textOffsetX + font.chars[index].offsetX*scaleFactor,
                                    rec.y + textOffsetY + font.chars[index].offsetY*scaleFactor,
-                                   font.chars[index].rec.width*scaleFactor,
-                                   font.chars[index].rec.height*scaleFactor }, (Vector2){ 0, 0 }, 0.0f,
+                                   font.recs[index].width*scaleFactor,
+                                   font.recs[index].height*scaleFactor }, (Vector2){ 0, 0 }, 0.0f,
                                    (!isGlyphSelected)? tint : selectText);
                 }
             }
@@ -1076,19 +1115,19 @@ Vector2 MeasureTextEx(Font font, const char *text, float fontSize, float spacing
     {
         lenCounter++;
         
-        int next = 1;
+        int next = 0;
         letter = GetNextCodepoint(&text[i], &next);
+        index = GetGlyphIndex(font, letter);
 
         // NOTE: normally we exit the decoding sequence as soon as a bad byte is found (and return 0x3f)
-        // but we need to draw all of the bad bytes using the '?' symbol so to not skip any we set `next = 1`
-        if(letter == 0x3f) next = 1; 
+        // but we need to draw all of the bad bytes using the '?' symbol so to not skip any we set next = 1
+        if (letter == 0x3f) next = 1; 
         i += next - 1;  
         
         if (letter != '\n')
         {
-            index = GetGlyphIndex(font, letter);
             if (font.chars[index].advanceX != 0) textWidth += font.chars[index].advanceX;
-            else textWidth += (font.chars[index].rec.width + font.chars[index].offsetX);
+            else textWidth += (font.recs[index].width + font.chars[index].offsetX);
         }
         else
         {
@@ -1103,7 +1142,7 @@ Vector2 MeasureTextEx(Font font, const char *text, float fontSize, float spacing
 
     if (tempTextWidth < textWidth) tempTextWidth = textWidth;
 
-    Vector2 vec;
+    Vector2 vec = { 0 };
     vec.x = tempTextWidth*scaleFactor + (float)((tempLen - 1)*spacing); // Adds chars spacing to measure
     vec.y = textHeight*scaleFactor;
 
@@ -1155,20 +1194,24 @@ unsigned int TextLength(const char *text)
     return length;
 }
 
-// Returns total number of characters(codepoints) in a UTF8 encoded `text` until `\0` is found.
-// NOTE: If a invalid UTF8 sequence is encountered a `?`(0x3f) codepoint is counted instead. 
+// Returns total number of characters(codepoints) in a UTF8 encoded text, until '\0' is found
+// NOTE: If an invalid UTF8 sequence is encountered a '?'(0x3f) codepoint is counted instead
 unsigned int TextCountCodepoints(const char *text) 
 {
     unsigned int len = 0;
-    char* ptr = (char*)&text[0];
-    while(*ptr != '\0')
+    char *ptr = (char *)&text[0];
+    
+    while (*ptr != '\0')
     {
         int next = 0;
         int letter = GetNextCodepoint(ptr, &next);
-        if(letter == 0x3f) ptr += 1;
+        
+        if (letter == 0x3f) ptr += 1;
         else ptr += next;
-        ++len;
+        
+        len++;
     }
+    
     return len;
 }
 
@@ -1286,17 +1329,28 @@ char *TextInsert(const char *text, const char *insert, int position)
 // REQUIRES: strcat()
 const char *TextJoin(const char **textList, int count, const char *delimiter)
 {
-    // TODO: Make sure joined text could fit inside MAX_TEXT_BUFFER_LENGTH
-
     static char text[MAX_TEXT_BUFFER_LENGTH] = { 0 };
     memset(text, 0, MAX_TEXT_BUFFER_LENGTH);
 
+    int totalLength = 0;
     int delimiterLen = strlen(delimiter);
 
     for (int i = 0; i < count; i++)
     {
-        strcat(text, textList[i]);
-        if ((delimiterLen > 0) && (i < (count - 1))) strcat(text, delimiter);
+        int textListLength = strlen(textList[i]);
+        
+        // Make sure joined text could fit inside MAX_TEXT_BUFFER_LENGTH
+        if ((totalLength + textListLength) < MAX_TEXT_BUFFER_LENGTH)
+        {
+            strcat(text, textList[i]);
+            totalLength += textListLength;
+            
+            if ((delimiterLen > 0) && (i < (count - 1))) 
+            {
+                strcat(text, delimiter);
+                totalLength += delimiterLen;
+            }
+        }
     }
 
     return text;
@@ -1513,27 +1567,26 @@ static Font LoadBMFont(const char *fileName)
     TraceLog(LOG_DEBUG, "[%s] Font texture loading path: %s", fileName, texPath);
 
     Image imFont = LoadImage(texPath);
+    Image imFontAlpha = ImageCopy(imFont);
 
     if (imFont.format == UNCOMPRESSED_GRAYSCALE)
     {
-        Image imCopy = ImageCopy(imFont);
+        for (int i = 0; i < imFontAlpha.width*imFontAlpha.height; i++) ((unsigned char *)imFontAlpha.data)[i] = 0xff;
 
-        for (int i = 0; i < imCopy.width*imCopy.height; i++) ((unsigned char *)imCopy.data)[i] = 0xff;
-
-        ImageAlphaMask(&imCopy, imFont);
-        font.texture = LoadTextureFromImage(imCopy);
-        UnloadImage(imCopy);
+        ImageAlphaMask(&imFontAlpha, imFont);
+        font.texture = LoadTextureFromImage(imFontAlpha);
     }
     else font.texture = LoadTextureFromImage(imFont);
-
+    
     UnloadImage(imFont);
-    RL_FREE(texPath);
 
+    RL_FREE(texPath);
 
     // Fill font characters info data
     font.baseSize = fontSize;
     font.charsCount = charsCount;
     font.chars = (CharInfo *)RL_MALLOC(charsCount*sizeof(CharInfo));
+    font.recs = (Rectangle *)RL_MALLOC(charsCount*sizeof(Rectangle));
 
     int charId, charX, charY, charWidth, charHeight, charOffsetX, charOffsetY, charAdvanceX;
 
@@ -1542,15 +1595,21 @@ static Font LoadBMFont(const char *fileName)
         fgets(buffer, MAX_BUFFER_SIZE, fntFile);
         sscanf(buffer, "char id=%i x=%i y=%i width=%i height=%i xoffset=%i yoffset=%i xadvance=%i",
                        &charId, &charX, &charY, &charWidth, &charHeight, &charOffsetX, &charOffsetY, &charAdvanceX);
+        
+        // Get character rectangle in the font atlas texture
+        font.recs[i] = (Rectangle){ (float)charX, (float)charY, (float)charWidth, (float)charHeight };
 
         // Save data properly in sprite font
         font.chars[i].value = charId;
-        font.chars[i].rec = (Rectangle){ (float)charX, (float)charY, (float)charWidth, (float)charHeight };
         font.chars[i].offsetX = charOffsetX;
         font.chars[i].offsetY = charOffsetY;
         font.chars[i].advanceX = charAdvanceX;
-        font.chars[i].data = NULL;
+        
+        // Fill character image data from imFont data
+        font.chars[i].image = ImageFromImage(imFontAlpha, font.recs[i]);
     }
+
+    UnloadImage(imFontAlpha);
 
     fclose(fntFile);
 
