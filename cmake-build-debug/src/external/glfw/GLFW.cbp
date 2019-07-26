@@ -1,0 +1,329 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CodeBlocks_project_file>
+	<FileVersion major="1" minor="6"/>
+	<Project>
+		<Option title="GLFW"/>
+		<Option makefile_is_custom="1"/>
+		<Option compiler="msvc8"/>
+		<Option virtualFolders="CMake Files\;CMake Files\src\;CMake Files\src\external\;CMake Files\src\external\glfw\;CMake Files\src\external\glfw\src\;CMake Files\cmake\;CMake Files\examples\;CMake Files\games\;CMake Files\games\drturtle\;CMake Files\games\just_do\;CMake Files\games\koala_seasons\;CMake Files\games\light_my_ritual\;CMake Files\games\skully_escape\;CMake Files\games\wave_collector\;"/>
+		<Build>
+			<Target title="all">
+				<Option working_dir="A:/Documents/Work/NerdThings/Source Code/raylib/cmake-build-debug/src/external/glfw"/>
+				<Option type="4"/>
+				<MakeCommands>
+					<Build command="nmake /NOLOGO /f &quot;A:\Documents\Work\NerdThings\Source Code\raylib\cmake-build-debug\src\external\glfw\Makefile&quot; VERBOSE=1 all"/>
+					<CompileFile command="nmake /NOLOGO /f &quot;A:\Documents\Work\NerdThings\Source Code\raylib\cmake-build-debug\src\external\glfw\Makefile&quot; VERBOSE=1 &quot;$file&quot;"/>
+					<Clean command="nmake /NOLOGO /f &quot;A:\Documents\Work\NerdThings\Source Code\raylib\cmake-build-debug\src\external\glfw\Makefile&quot; VERBOSE=1 clean"/>
+					<DistClean command="nmake /NOLOGO /f &quot;A:\Documents\Work\NerdThings\Source Code\raylib\cmake-build-debug\src\external\glfw\Makefile&quot; VERBOSE=1 clean"/>
+				</MakeCommands>
+			</Target>
+			<Target title="glfw_objlib">
+				<Option output="A:/Documents/Work/NerdThings/Source Code/raylib/cmake-build-debug/src/external/glfw/src/CMakeFiles/glfw_objlib.dir/glfw_objlib.objlib" prefix_auto="0" extension_auto="0"/>
+				<Option working_dir="A:/Documents/Work/NerdThings/Source Code/raylib/cmake-build-debug/src/external/glfw/src"/>
+				<Option object_output="./"/>
+				<Option type="2"/>
+				<Option compiler="msvc8"/>
+				<Compiler>
+					<Add option="-D_GLFW_USE_CONFIG_H"/>
+					<Add option="-D_CRT_SECURE_NO_WARNINGS"/>
+					<Add directory="A:/Documents/Work/NerdThings/Source Code/raylib/cmake-build-debug"/>
+					<Add directory="A:/Documents/Work/NerdThings/Source Code/raylib/src/."/>
+					<Add directory="A:/Documents/Work/NerdThings/Source Code/raylib/src/external/glfw/include"/>
+					<Add directory="A:/Documents/Work/NerdThings/Source Code/raylib/src/external/glfw/src"/>
+					<Add directory="A:/Documents/Work/NerdThings/Source Code/raylib/cmake-build-debug/src/external/glfw/src"/>
+					<Add directory="C:\Program Files (x86)\Microsoft Visual Studio\2019\Community\VC\Tools\MSVC\14.20.27508\ATLMFC\include"/>
+					<Add directory="C:\Program Files (x86)\Microsoft Visual Studio\2019\Community\VC\Tools\MSVC\14.20.27508\include"/>
+					<Add directory="C:\Program Files (x86)\Windows Kits\NETFXSDK\4.6.1\include\um"/>
+					<Add directory="C:\Program Files (x86)\Windows Kits\10\include\10.0.18362.0\ucrt"/>
+					<Add directory="C:\Program Files (x86)\Windows Kits\10\include\10.0.18362.0\shared"/>
+					<Add directory="C:\Program Files (x86)\Windows Kits\10\include\10.0.18362.0\um"/>
+					<Add directory="C:\Program Files (x86)\Windows Kits\10\include\10.0.18362.0\winrt"/>
+					<Add directory="C:\Program Files (x86)\Windows Kits\10\include\10.0.18362.0\cppwinrt"/>
+				</Compiler>
+				<MakeCommands>
+					<Build command="nmake /NOLOGO /f &quot;A:\Documents\Work\NerdThings\Source Code\raylib\cmake-build-debug\src\external\glfw\src\Makefile&quot; VERBOSE=1 glfw_objlib"/>
+					<CompileFile command="nmake /NOLOGO /f &quot;A:\Documents\Work\NerdThings\Source Code\raylib\cmake-build-debug\src\external\glfw\src\Makefile&quot; VERBOSE=1 &quot;$file&quot;"/>
+					<Clean command="nmake /NOLOGO /f &quot;A:\Documents\Work\NerdThings\Source Code\raylib\cmake-build-debug\src\external\glfw\src\Makefile&quot; VERBOSE=1 clean"/>
+					<DistClean command="nmake /NOLOGO /f &quot;A:\Documents\Work\NerdThings\Source Code\raylib\cmake-build-debug\src\external\glfw\src\Makefile&quot; VERBOSE=1 clean"/>
+				</MakeCommands>
+			</Target>
+			<Target title="glfw_objlib/fast">
+				<Option output="A:/Documents/Work/NerdThings/Source Code/raylib/cmake-build-debug/src/external/glfw/src/CMakeFiles/glfw_objlib.dir/glfw_objlib.objlib" prefix_auto="0" extension_auto="0"/>
+				<Option working_dir="A:/Documents/Work/NerdThings/Source Code/raylib/cmake-build-debug/src/external/glfw/src"/>
+				<Option object_output="./"/>
+				<Option type="2"/>
+				<Option compiler="msvc8"/>
+				<Compiler>
+					<Add option="-D_GLFW_USE_CONFIG_H"/>
+					<Add option="-D_CRT_SECURE_NO_WARNINGS"/>
+					<Add directory="A:/Documents/Work/NerdThings/Source Code/raylib/cmake-build-debug"/>
+					<Add directory="A:/Documents/Work/NerdThings/Source Code/raylib/src/."/>
+					<Add directory="A:/Documents/Work/NerdThings/Source Code/raylib/src/external/glfw/include"/>
+					<Add directory="A:/Documents/Work/NerdThings/Source Code/raylib/src/external/glfw/src"/>
+					<Add directory="A:/Documents/Work/NerdThings/Source Code/raylib/cmake-build-debug/src/external/glfw/src"/>
+					<Add directory="C:\Program Files (x86)\Microsoft Visual Studio\2019\Community\VC\Tools\MSVC\14.20.27508\ATLMFC\include"/>
+					<Add directory="C:\Program Files (x86)\Microsoft Visual Studio\2019\Community\VC\Tools\MSVC\14.20.27508\include"/>
+					<Add directory="C:\Program Files (x86)\Windows Kits\NETFXSDK\4.6.1\include\um"/>
+					<Add directory="C:\Program Files (x86)\Windows Kits\10\include\10.0.18362.0\ucrt"/>
+					<Add directory="C:\Program Files (x86)\Windows Kits\10\include\10.0.18362.0\shared"/>
+					<Add directory="C:\Program Files (x86)\Windows Kits\10\include\10.0.18362.0\um"/>
+					<Add directory="C:\Program Files (x86)\Windows Kits\10\include\10.0.18362.0\winrt"/>
+					<Add directory="C:\Program Files (x86)\Windows Kits\10\include\10.0.18362.0\cppwinrt"/>
+				</Compiler>
+				<MakeCommands>
+					<Build command="nmake /NOLOGO /f &quot;A:\Documents\Work\NerdThings\Source Code\raylib\cmake-build-debug\src\external\glfw\src\Makefile&quot; VERBOSE=1 glfw_objlib/fast"/>
+					<CompileFile command="nmake /NOLOGO /f &quot;A:\Documents\Work\NerdThings\Source Code\raylib\cmake-build-debug\src\external\glfw\src\Makefile&quot; VERBOSE=1 &quot;$file&quot;"/>
+					<Clean command="nmake /NOLOGO /f &quot;A:\Documents\Work\NerdThings\Source Code\raylib\cmake-build-debug\src\external\glfw\src\Makefile&quot; VERBOSE=1 clean"/>
+					<DistClean command="nmake /NOLOGO /f &quot;A:\Documents\Work\NerdThings\Source Code\raylib\cmake-build-debug\src\external\glfw\src\Makefile&quot; VERBOSE=1 clean"/>
+				</MakeCommands>
+			</Target>
+			<Target title="glfw">
+				<Option output="A:/Documents/Work/NerdThings/Source Code/raylib/cmake-build-debug/src/external/glfw/src/glfw3.lib" prefix_auto="0" extension_auto="0"/>
+				<Option working_dir="A:/Documents/Work/NerdThings/Source Code/raylib/cmake-build-debug/src/external/glfw/src"/>
+				<Option object_output="./"/>
+				<Option type="2"/>
+				<Option compiler="msvc8"/>
+				<Compiler>
+					<Add directory="A:/Documents/Work/NerdThings/Source Code/raylib/cmake-build-debug"/>
+					<Add directory="A:/Documents/Work/NerdThings/Source Code/raylib/src/."/>
+					<Add directory="A:/Documents/Work/NerdThings/Source Code/raylib/src/external/glfw/include"/>
+					<Add directory="C:\Program Files (x86)\Microsoft Visual Studio\2019\Community\VC\Tools\MSVC\14.20.27508\ATLMFC\include"/>
+					<Add directory="C:\Program Files (x86)\Microsoft Visual Studio\2019\Community\VC\Tools\MSVC\14.20.27508\include"/>
+					<Add directory="C:\Program Files (x86)\Windows Kits\NETFXSDK\4.6.1\include\um"/>
+					<Add directory="C:\Program Files (x86)\Windows Kits\10\include\10.0.18362.0\ucrt"/>
+					<Add directory="C:\Program Files (x86)\Windows Kits\10\include\10.0.18362.0\shared"/>
+					<Add directory="C:\Program Files (x86)\Windows Kits\10\include\10.0.18362.0\um"/>
+					<Add directory="C:\Program Files (x86)\Windows Kits\10\include\10.0.18362.0\winrt"/>
+					<Add directory="C:\Program Files (x86)\Windows Kits\10\include\10.0.18362.0\cppwinrt"/>
+				</Compiler>
+				<MakeCommands>
+					<Build command="nmake /NOLOGO /f &quot;A:\Documents\Work\NerdThings\Source Code\raylib\cmake-build-debug\src\external\glfw\src\Makefile&quot; VERBOSE=1 glfw"/>
+					<CompileFile command="nmake /NOLOGO /f &quot;A:\Documents\Work\NerdThings\Source Code\raylib\cmake-build-debug\src\external\glfw\src\Makefile&quot; VERBOSE=1 &quot;$file&quot;"/>
+					<Clean command="nmake /NOLOGO /f &quot;A:\Documents\Work\NerdThings\Source Code\raylib\cmake-build-debug\src\external\glfw\src\Makefile&quot; VERBOSE=1 clean"/>
+					<DistClean command="nmake /NOLOGO /f &quot;A:\Documents\Work\NerdThings\Source Code\raylib\cmake-build-debug\src\external\glfw\src\Makefile&quot; VERBOSE=1 clean"/>
+				</MakeCommands>
+			</Target>
+			<Target title="glfw/fast">
+				<Option output="A:/Documents/Work/NerdThings/Source Code/raylib/cmake-build-debug/src/external/glfw/src/glfw3.lib" prefix_auto="0" extension_auto="0"/>
+				<Option working_dir="A:/Documents/Work/NerdThings/Source Code/raylib/cmake-build-debug/src/external/glfw/src"/>
+				<Option object_output="./"/>
+				<Option type="2"/>
+				<Option compiler="msvc8"/>
+				<Compiler>
+					<Add directory="A:/Documents/Work/NerdThings/Source Code/raylib/cmake-build-debug"/>
+					<Add directory="A:/Documents/Work/NerdThings/Source Code/raylib/src/."/>
+					<Add directory="A:/Documents/Work/NerdThings/Source Code/raylib/src/external/glfw/include"/>
+					<Add directory="C:\Program Files (x86)\Microsoft Visual Studio\2019\Community\VC\Tools\MSVC\14.20.27508\ATLMFC\include"/>
+					<Add directory="C:\Program Files (x86)\Microsoft Visual Studio\2019\Community\VC\Tools\MSVC\14.20.27508\include"/>
+					<Add directory="C:\Program Files (x86)\Windows Kits\NETFXSDK\4.6.1\include\um"/>
+					<Add directory="C:\Program Files (x86)\Windows Kits\10\include\10.0.18362.0\ucrt"/>
+					<Add directory="C:\Program Files (x86)\Windows Kits\10\include\10.0.18362.0\shared"/>
+					<Add directory="C:\Program Files (x86)\Windows Kits\10\include\10.0.18362.0\um"/>
+					<Add directory="C:\Program Files (x86)\Windows Kits\10\include\10.0.18362.0\winrt"/>
+					<Add directory="C:\Program Files (x86)\Windows Kits\10\include\10.0.18362.0\cppwinrt"/>
+				</Compiler>
+				<MakeCommands>
+					<Build command="nmake /NOLOGO /f &quot;A:\Documents\Work\NerdThings\Source Code\raylib\cmake-build-debug\src\external\glfw\src\Makefile&quot; VERBOSE=1 glfw/fast"/>
+					<CompileFile command="nmake /NOLOGO /f &quot;A:\Documents\Work\NerdThings\Source Code\raylib\cmake-build-debug\src\external\glfw\src\Makefile&quot; VERBOSE=1 &quot;$file&quot;"/>
+					<Clean command="nmake /NOLOGO /f &quot;A:\Documents\Work\NerdThings\Source Code\raylib\cmake-build-debug\src\external\glfw\src\Makefile&quot; VERBOSE=1 clean"/>
+					<DistClean command="nmake /NOLOGO /f &quot;A:\Documents\Work\NerdThings\Source Code\raylib\cmake-build-debug\src\external\glfw\src\Makefile&quot; VERBOSE=1 clean"/>
+				</MakeCommands>
+			</Target>
+		</Build>
+		<Unit filename="A:/Documents/Work/NerdThings/Source Code/raylib/cmake-build-debug/src/external/glfw/src/CMakeFiles/glfw_objlib.dir/context.c.obj">
+			<Option target="glfw"/>
+		</Unit>
+		<Unit filename="A:/Documents/Work/NerdThings/Source Code/raylib/cmake-build-debug/src/external/glfw/src/CMakeFiles/glfw_objlib.dir/egl_context.c.obj">
+			<Option target="glfw"/>
+		</Unit>
+		<Unit filename="A:/Documents/Work/NerdThings/Source Code/raylib/cmake-build-debug/src/external/glfw/src/CMakeFiles/glfw_objlib.dir/init.c.obj">
+			<Option target="glfw"/>
+		</Unit>
+		<Unit filename="A:/Documents/Work/NerdThings/Source Code/raylib/cmake-build-debug/src/external/glfw/src/CMakeFiles/glfw_objlib.dir/input.c.obj">
+			<Option target="glfw"/>
+		</Unit>
+		<Unit filename="A:/Documents/Work/NerdThings/Source Code/raylib/cmake-build-debug/src/external/glfw/src/CMakeFiles/glfw_objlib.dir/monitor.c.obj">
+			<Option target="glfw"/>
+		</Unit>
+		<Unit filename="A:/Documents/Work/NerdThings/Source Code/raylib/cmake-build-debug/src/external/glfw/src/CMakeFiles/glfw_objlib.dir/osmesa_context.c.obj">
+			<Option target="glfw"/>
+		</Unit>
+		<Unit filename="A:/Documents/Work/NerdThings/Source Code/raylib/cmake-build-debug/src/external/glfw/src/CMakeFiles/glfw_objlib.dir/vulkan.c.obj">
+			<Option target="glfw"/>
+		</Unit>
+		<Unit filename="A:/Documents/Work/NerdThings/Source Code/raylib/cmake-build-debug/src/external/glfw/src/CMakeFiles/glfw_objlib.dir/wgl_context.c.obj">
+			<Option target="glfw"/>
+		</Unit>
+		<Unit filename="A:/Documents/Work/NerdThings/Source Code/raylib/cmake-build-debug/src/external/glfw/src/CMakeFiles/glfw_objlib.dir/win32_init.c.obj">
+			<Option target="glfw"/>
+		</Unit>
+		<Unit filename="A:/Documents/Work/NerdThings/Source Code/raylib/cmake-build-debug/src/external/glfw/src/CMakeFiles/glfw_objlib.dir/win32_joystick.c.obj">
+			<Option target="glfw"/>
+		</Unit>
+		<Unit filename="A:/Documents/Work/NerdThings/Source Code/raylib/cmake-build-debug/src/external/glfw/src/CMakeFiles/glfw_objlib.dir/win32_monitor.c.obj">
+			<Option target="glfw"/>
+		</Unit>
+		<Unit filename="A:/Documents/Work/NerdThings/Source Code/raylib/cmake-build-debug/src/external/glfw/src/CMakeFiles/glfw_objlib.dir/win32_thread.c.obj">
+			<Option target="glfw"/>
+		</Unit>
+		<Unit filename="A:/Documents/Work/NerdThings/Source Code/raylib/cmake-build-debug/src/external/glfw/src/CMakeFiles/glfw_objlib.dir/win32_time.c.obj">
+			<Option target="glfw"/>
+		</Unit>
+		<Unit filename="A:/Documents/Work/NerdThings/Source Code/raylib/cmake-build-debug/src/external/glfw/src/CMakeFiles/glfw_objlib.dir/win32_window.c.obj">
+			<Option target="glfw"/>
+		</Unit>
+		<Unit filename="A:/Documents/Work/NerdThings/Source Code/raylib/cmake-build-debug/src/external/glfw/src/CMakeFiles/glfw_objlib.dir/window.c.obj">
+			<Option target="glfw"/>
+		</Unit>
+		<Unit filename="A:/Documents/Work/NerdThings/Source Code/raylib/cmake-build-debug/src/external/glfw/src/glfw_config.h">
+			<Option target="glfw_objlib"/>
+		</Unit>
+		<Unit filename="A:/Documents/Work/NerdThings/Source Code/raylib/src/external/glfw/include/GLFW/glfw3.h">
+			<Option target="glfw_objlib"/>
+		</Unit>
+		<Unit filename="A:/Documents/Work/NerdThings/Source Code/raylib/src/external/glfw/include/GLFW/glfw3native.h">
+			<Option target="glfw_objlib"/>
+		</Unit>
+		<Unit filename="A:/Documents/Work/NerdThings/Source Code/raylib/src/external/glfw/src/context.c">
+			<Option target="glfw_objlib"/>
+		</Unit>
+		<Unit filename="A:/Documents/Work/NerdThings/Source Code/raylib/src/external/glfw/src/egl_context.c">
+			<Option target="glfw_objlib"/>
+		</Unit>
+		<Unit filename="A:/Documents/Work/NerdThings/Source Code/raylib/src/external/glfw/src/egl_context.h">
+			<Option target="glfw_objlib"/>
+		</Unit>
+		<Unit filename="A:/Documents/Work/NerdThings/Source Code/raylib/src/external/glfw/src/init.c">
+			<Option target="glfw_objlib"/>
+		</Unit>
+		<Unit filename="A:/Documents/Work/NerdThings/Source Code/raylib/src/external/glfw/src/input.c">
+			<Option target="glfw_objlib"/>
+		</Unit>
+		<Unit filename="A:/Documents/Work/NerdThings/Source Code/raylib/src/external/glfw/src/internal.h">
+			<Option target="glfw_objlib"/>
+		</Unit>
+		<Unit filename="A:/Documents/Work/NerdThings/Source Code/raylib/src/external/glfw/src/mappings.h">
+			<Option target="glfw_objlib"/>
+		</Unit>
+		<Unit filename="A:/Documents/Work/NerdThings/Source Code/raylib/src/external/glfw/src/monitor.c">
+			<Option target="glfw_objlib"/>
+		</Unit>
+		<Unit filename="A:/Documents/Work/NerdThings/Source Code/raylib/src/external/glfw/src/osmesa_context.c">
+			<Option target="glfw_objlib"/>
+		</Unit>
+		<Unit filename="A:/Documents/Work/NerdThings/Source Code/raylib/src/external/glfw/src/osmesa_context.h">
+			<Option target="glfw_objlib"/>
+		</Unit>
+		<Unit filename="A:/Documents/Work/NerdThings/Source Code/raylib/src/external/glfw/src/vulkan.c">
+			<Option target="glfw_objlib"/>
+		</Unit>
+		<Unit filename="A:/Documents/Work/NerdThings/Source Code/raylib/src/external/glfw/src/wgl_context.c">
+			<Option target="glfw_objlib"/>
+		</Unit>
+		<Unit filename="A:/Documents/Work/NerdThings/Source Code/raylib/src/external/glfw/src/wgl_context.h">
+			<Option target="glfw_objlib"/>
+		</Unit>
+		<Unit filename="A:/Documents/Work/NerdThings/Source Code/raylib/src/external/glfw/src/win32_init.c">
+			<Option target="glfw_objlib"/>
+		</Unit>
+		<Unit filename="A:/Documents/Work/NerdThings/Source Code/raylib/src/external/glfw/src/win32_joystick.c">
+			<Option target="glfw_objlib"/>
+		</Unit>
+		<Unit filename="A:/Documents/Work/NerdThings/Source Code/raylib/src/external/glfw/src/win32_joystick.h">
+			<Option target="glfw_objlib"/>
+		</Unit>
+		<Unit filename="A:/Documents/Work/NerdThings/Source Code/raylib/src/external/glfw/src/win32_monitor.c">
+			<Option target="glfw_objlib"/>
+		</Unit>
+		<Unit filename="A:/Documents/Work/NerdThings/Source Code/raylib/src/external/glfw/src/win32_platform.h">
+			<Option target="glfw_objlib"/>
+		</Unit>
+		<Unit filename="A:/Documents/Work/NerdThings/Source Code/raylib/src/external/glfw/src/win32_thread.c">
+			<Option target="glfw_objlib"/>
+		</Unit>
+		<Unit filename="A:/Documents/Work/NerdThings/Source Code/raylib/src/external/glfw/src/win32_time.c">
+			<Option target="glfw_objlib"/>
+		</Unit>
+		<Unit filename="A:/Documents/Work/NerdThings/Source Code/raylib/src/external/glfw/src/win32_window.c">
+			<Option target="glfw_objlib"/>
+		</Unit>
+		<Unit filename="A:/Documents/Work/NerdThings/Source Code/raylib/src/external/glfw/src/window.c">
+			<Option target="glfw_objlib"/>
+		</Unit>
+		<Unit filename="A:/Documents/Work/NerdThings/Source Code/raylib/CMakeLists.txt">
+			<Option virtualFolder="CMake Files\"/>
+		</Unit>
+		<Unit filename="A:/Documents/Work/NerdThings/Source Code/raylib/raylib.pc.in">
+			<Option virtualFolder="CMake Files\"/>
+		</Unit>
+		<Unit filename="A:/Documents/Work/NerdThings/Source Code/raylib/src/CMakeLists.txt">
+			<Option virtualFolder="CMake Files\src\"/>
+		</Unit>
+		<Unit filename="A:/Documents/Work/NerdThings/Source Code/raylib/src/CMakeOptions.txt">
+			<Option virtualFolder="CMake Files\src\"/>
+		</Unit>
+		<Unit filename="A:/Documents/Work/NerdThings/Source Code/raylib/src/config.h.in">
+			<Option virtualFolder="CMake Files\src\"/>
+		</Unit>
+		<Unit filename="A:/Documents/Work/NerdThings/Source Code/raylib/src/external/glfw/CMakeLists.txt">
+			<Option virtualFolder="CMake Files\src\external\glfw\"/>
+		</Unit>
+		<Unit filename="A:/Documents/Work/NerdThings/Source Code/raylib/src/external/glfw/src/CMakeLists.txt">
+			<Option virtualFolder="CMake Files\src\external\glfw\src\"/>
+		</Unit>
+		<Unit filename="A:/Documents/Work/NerdThings/Source Code/raylib/src/external/glfw/src/glfw3.pc.in">
+			<Option virtualFolder="CMake Files\src\external\glfw\src\"/>
+		</Unit>
+		<Unit filename="A:/Documents/Work/NerdThings/Source Code/raylib/src/external/glfw/src/glfw3Config.cmake.in">
+			<Option virtualFolder="CMake Files\src\external\glfw\src\"/>
+		</Unit>
+		<Unit filename="A:/Documents/Work/NerdThings/Source Code/raylib/src/external/glfw/src/glfw_config.h.in">
+			<Option virtualFolder="CMake Files\src\external\glfw\src\"/>
+		</Unit>
+		<Unit filename="A:/Documents/Work/NerdThings/Source Code/raylib/cmake/AddIfFlagCompiles.cmake">
+			<Option virtualFolder="CMake Files\cmake\"/>
+		</Unit>
+		<Unit filename="A:/Documents/Work/NerdThings/Source Code/raylib/cmake/BuildType.cmake">
+			<Option virtualFolder="CMake Files\cmake\"/>
+		</Unit>
+		<Unit filename="A:/Documents/Work/NerdThings/Source Code/raylib/cmake/CheckFileSystemSymlinkSupport.cmake">
+			<Option virtualFolder="CMake Files\cmake\"/>
+		</Unit>
+		<Unit filename="A:/Documents/Work/NerdThings/Source Code/raylib/cmake/EnumOption.cmake">
+			<Option virtualFolder="CMake Files\cmake\"/>
+		</Unit>
+		<Unit filename="A:/Documents/Work/NerdThings/Source Code/raylib/cmake/LibraryPathToLinkerFlags.cmake">
+			<Option virtualFolder="CMake Files\cmake\"/>
+		</Unit>
+		<Unit filename="A:/Documents/Work/NerdThings/Source Code/raylib/cmake/PopulateConfigVariablesLocally.cmake">
+			<Option virtualFolder="CMake Files\cmake\"/>
+		</Unit>
+		<Unit filename="A:/Documents/Work/NerdThings/Source Code/raylib/cmake/raylib-config-version.cmake">
+			<Option virtualFolder="CMake Files\cmake\"/>
+		</Unit>
+		<Unit filename="A:/Documents/Work/NerdThings/Source Code/raylib/examples/CMakeLists.txt">
+			<Option virtualFolder="CMake Files\examples\"/>
+		</Unit>
+		<Unit filename="A:/Documents/Work/NerdThings/Source Code/raylib/games/CMakeLists.txt">
+			<Option virtualFolder="CMake Files\games\"/>
+		</Unit>
+		<Unit filename="A:/Documents/Work/NerdThings/Source Code/raylib/games/drturtle/CMakeLists.txt">
+			<Option virtualFolder="CMake Files\games\drturtle\"/>
+		</Unit>
+		<Unit filename="A:/Documents/Work/NerdThings/Source Code/raylib/games/just_do/CMakeLists.txt">
+			<Option virtualFolder="CMake Files\games\just_do\"/>
+		</Unit>
+		<Unit filename="A:/Documents/Work/NerdThings/Source Code/raylib/games/koala_seasons/CMakeLists.txt">
+			<Option virtualFolder="CMake Files\games\koala_seasons\"/>
+		</Unit>
+		<Unit filename="A:/Documents/Work/NerdThings/Source Code/raylib/games/light_my_ritual/CMakeLists.txt">
+			<Option virtualFolder="CMake Files\games\light_my_ritual\"/>
+		</Unit>
+		<Unit filename="A:/Documents/Work/NerdThings/Source Code/raylib/games/skully_escape/CMakeLists.txt">
+			<Option virtualFolder="CMake Files\games\skully_escape\"/>
+		</Unit>
+		<Unit filename="A:/Documents/Work/NerdThings/Source Code/raylib/games/wave_collector/CMakeLists.txt">
+			<Option virtualFolder="CMake Files\games\wave_collector\"/>
+		</Unit>
+	</Project>
+</CodeBlocks_project_file>

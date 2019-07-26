@@ -1,0 +1,1180 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CodeBlocks_project_file>
+	<FileVersion major="1" minor="6"/>
+	<Project>
+		<Option title="games"/>
+		<Option makefile_is_custom="1"/>
+		<Option compiler="msvc8"/>
+		<Option virtualFolders="CMake Files\;CMake Files\src\;CMake Files\src\external\;CMake Files\src\external\glfw\;CMake Files\src\external\glfw\src\;CMake Files\cmake\;CMake Files\examples\;CMake Files\games\;CMake Files\games\drturtle\;CMake Files\games\just_do\;CMake Files\games\koala_seasons\;CMake Files\games\light_my_ritual\;CMake Files\games\skully_escape\;CMake Files\games\wave_collector\;"/>
+		<Build>
+			<Target title="all">
+				<Option working_dir="A:/Documents/Work/NerdThings/Source Code/raylib/cmake-build-debug/games"/>
+				<Option type="4"/>
+				<MakeCommands>
+					<Build command="nmake /NOLOGO /f &quot;A:\Documents\Work\NerdThings\Source Code\raylib\cmake-build-debug\games\Makefile&quot; VERBOSE=1 all"/>
+					<CompileFile command="nmake /NOLOGO /f &quot;A:\Documents\Work\NerdThings\Source Code\raylib\cmake-build-debug\games\Makefile&quot; VERBOSE=1 &quot;$file&quot;"/>
+					<Clean command="nmake /NOLOGO /f &quot;A:\Documents\Work\NerdThings\Source Code\raylib\cmake-build-debug\games\Makefile&quot; VERBOSE=1 clean"/>
+					<DistClean command="nmake /NOLOGO /f &quot;A:\Documents\Work\NerdThings\Source Code\raylib\cmake-build-debug\games\Makefile&quot; VERBOSE=1 clean"/>
+				</MakeCommands>
+			</Target>
+			<Target title="asteroids_survival">
+				<Option output="A:/Documents/Work/NerdThings/Source Code/raylib/cmake-build-debug/games/asteroids_survival.exe" prefix_auto="0" extension_auto="0"/>
+				<Option working_dir="A:/Documents/Work/NerdThings/Source Code/raylib/cmake-build-debug/games"/>
+				<Option object_output="./"/>
+				<Option type="1"/>
+				<Option compiler="msvc8"/>
+				<Compiler>
+					<Add option="-DPLATFORM_DESKTOP"/>
+					<Add option="-DGRAPHICS_API_OPENGL_33"/>
+					<Add directory="A:/Documents/Work/NerdThings/Source Code/raylib/cmake-build-debug/src"/>
+					<Add directory="A:/Documents/Work/NerdThings/Source Code/raylib/src/external/glfw/include"/>
+					<Add directory="C:\Program Files (x86)\Microsoft Visual Studio\2019\Community\VC\Tools\MSVC\14.20.27508\ATLMFC\include"/>
+					<Add directory="C:\Program Files (x86)\Microsoft Visual Studio\2019\Community\VC\Tools\MSVC\14.20.27508\include"/>
+					<Add directory="C:\Program Files (x86)\Windows Kits\NETFXSDK\4.6.1\include\um"/>
+					<Add directory="C:\Program Files (x86)\Windows Kits\10\include\10.0.18362.0\ucrt"/>
+					<Add directory="C:\Program Files (x86)\Windows Kits\10\include\10.0.18362.0\shared"/>
+					<Add directory="C:\Program Files (x86)\Windows Kits\10\include\10.0.18362.0\um"/>
+					<Add directory="C:\Program Files (x86)\Windows Kits\10\include\10.0.18362.0\winrt"/>
+					<Add directory="C:\Program Files (x86)\Windows Kits\10\include\10.0.18362.0\cppwinrt"/>
+				</Compiler>
+				<MakeCommands>
+					<Build command="nmake /NOLOGO /f &quot;A:\Documents\Work\NerdThings\Source Code\raylib\cmake-build-debug\games\Makefile&quot; VERBOSE=1 asteroids_survival"/>
+					<CompileFile command="nmake /NOLOGO /f &quot;A:\Documents\Work\NerdThings\Source Code\raylib\cmake-build-debug\games\Makefile&quot; VERBOSE=1 &quot;$file&quot;"/>
+					<Clean command="nmake /NOLOGO /f &quot;A:\Documents\Work\NerdThings\Source Code\raylib\cmake-build-debug\games\Makefile&quot; VERBOSE=1 clean"/>
+					<DistClean command="nmake /NOLOGO /f &quot;A:\Documents\Work\NerdThings\Source Code\raylib\cmake-build-debug\games\Makefile&quot; VERBOSE=1 clean"/>
+				</MakeCommands>
+			</Target>
+			<Target title="asteroids_survival/fast">
+				<Option output="A:/Documents/Work/NerdThings/Source Code/raylib/cmake-build-debug/games/asteroids_survival.exe" prefix_auto="0" extension_auto="0"/>
+				<Option working_dir="A:/Documents/Work/NerdThings/Source Code/raylib/cmake-build-debug/games"/>
+				<Option object_output="./"/>
+				<Option type="1"/>
+				<Option compiler="msvc8"/>
+				<Compiler>
+					<Add option="-DPLATFORM_DESKTOP"/>
+					<Add option="-DGRAPHICS_API_OPENGL_33"/>
+					<Add directory="A:/Documents/Work/NerdThings/Source Code/raylib/cmake-build-debug/src"/>
+					<Add directory="A:/Documents/Work/NerdThings/Source Code/raylib/src/external/glfw/include"/>
+					<Add directory="C:\Program Files (x86)\Microsoft Visual Studio\2019\Community\VC\Tools\MSVC\14.20.27508\ATLMFC\include"/>
+					<Add directory="C:\Program Files (x86)\Microsoft Visual Studio\2019\Community\VC\Tools\MSVC\14.20.27508\include"/>
+					<Add directory="C:\Program Files (x86)\Windows Kits\NETFXSDK\4.6.1\include\um"/>
+					<Add directory="C:\Program Files (x86)\Windows Kits\10\include\10.0.18362.0\ucrt"/>
+					<Add directory="C:\Program Files (x86)\Windows Kits\10\include\10.0.18362.0\shared"/>
+					<Add directory="C:\Program Files (x86)\Windows Kits\10\include\10.0.18362.0\um"/>
+					<Add directory="C:\Program Files (x86)\Windows Kits\10\include\10.0.18362.0\winrt"/>
+					<Add directory="C:\Program Files (x86)\Windows Kits\10\include\10.0.18362.0\cppwinrt"/>
+				</Compiler>
+				<MakeCommands>
+					<Build command="nmake /NOLOGO /f &quot;A:\Documents\Work\NerdThings\Source Code\raylib\cmake-build-debug\games\Makefile&quot; VERBOSE=1 asteroids_survival/fast"/>
+					<CompileFile command="nmake /NOLOGO /f &quot;A:\Documents\Work\NerdThings\Source Code\raylib\cmake-build-debug\games\Makefile&quot; VERBOSE=1 &quot;$file&quot;"/>
+					<Clean command="nmake /NOLOGO /f &quot;A:\Documents\Work\NerdThings\Source Code\raylib\cmake-build-debug\games\Makefile&quot; VERBOSE=1 clean"/>
+					<DistClean command="nmake /NOLOGO /f &quot;A:\Documents\Work\NerdThings\Source Code\raylib\cmake-build-debug\games\Makefile&quot; VERBOSE=1 clean"/>
+				</MakeCommands>
+			</Target>
+			<Target title="arkanoid">
+				<Option output="A:/Documents/Work/NerdThings/Source Code/raylib/cmake-build-debug/games/arkanoid.exe" prefix_auto="0" extension_auto="0"/>
+				<Option working_dir="A:/Documents/Work/NerdThings/Source Code/raylib/cmake-build-debug/games"/>
+				<Option object_output="./"/>
+				<Option type="1"/>
+				<Option compiler="msvc8"/>
+				<Compiler>
+					<Add option="-DPLATFORM_DESKTOP"/>
+					<Add option="-DGRAPHICS_API_OPENGL_33"/>
+					<Add directory="A:/Documents/Work/NerdThings/Source Code/raylib/cmake-build-debug/src"/>
+					<Add directory="A:/Documents/Work/NerdThings/Source Code/raylib/src/external/glfw/include"/>
+					<Add directory="C:\Program Files (x86)\Microsoft Visual Studio\2019\Community\VC\Tools\MSVC\14.20.27508\ATLMFC\include"/>
+					<Add directory="C:\Program Files (x86)\Microsoft Visual Studio\2019\Community\VC\Tools\MSVC\14.20.27508\include"/>
+					<Add directory="C:\Program Files (x86)\Windows Kits\NETFXSDK\4.6.1\include\um"/>
+					<Add directory="C:\Program Files (x86)\Windows Kits\10\include\10.0.18362.0\ucrt"/>
+					<Add directory="C:\Program Files (x86)\Windows Kits\10\include\10.0.18362.0\shared"/>
+					<Add directory="C:\Program Files (x86)\Windows Kits\10\include\10.0.18362.0\um"/>
+					<Add directory="C:\Program Files (x86)\Windows Kits\10\include\10.0.18362.0\winrt"/>
+					<Add directory="C:\Program Files (x86)\Windows Kits\10\include\10.0.18362.0\cppwinrt"/>
+				</Compiler>
+				<MakeCommands>
+					<Build command="nmake /NOLOGO /f &quot;A:\Documents\Work\NerdThings\Source Code\raylib\cmake-build-debug\games\Makefile&quot; VERBOSE=1 arkanoid"/>
+					<CompileFile command="nmake /NOLOGO /f &quot;A:\Documents\Work\NerdThings\Source Code\raylib\cmake-build-debug\games\Makefile&quot; VERBOSE=1 &quot;$file&quot;"/>
+					<Clean command="nmake /NOLOGO /f &quot;A:\Documents\Work\NerdThings\Source Code\raylib\cmake-build-debug\games\Makefile&quot; VERBOSE=1 clean"/>
+					<DistClean command="nmake /NOLOGO /f &quot;A:\Documents\Work\NerdThings\Source Code\raylib\cmake-build-debug\games\Makefile&quot; VERBOSE=1 clean"/>
+				</MakeCommands>
+			</Target>
+			<Target title="arkanoid/fast">
+				<Option output="A:/Documents/Work/NerdThings/Source Code/raylib/cmake-build-debug/games/arkanoid.exe" prefix_auto="0" extension_auto="0"/>
+				<Option working_dir="A:/Documents/Work/NerdThings/Source Code/raylib/cmake-build-debug/games"/>
+				<Option object_output="./"/>
+				<Option type="1"/>
+				<Option compiler="msvc8"/>
+				<Compiler>
+					<Add option="-DPLATFORM_DESKTOP"/>
+					<Add option="-DGRAPHICS_API_OPENGL_33"/>
+					<Add directory="A:/Documents/Work/NerdThings/Source Code/raylib/cmake-build-debug/src"/>
+					<Add directory="A:/Documents/Work/NerdThings/Source Code/raylib/src/external/glfw/include"/>
+					<Add directory="C:\Program Files (x86)\Microsoft Visual Studio\2019\Community\VC\Tools\MSVC\14.20.27508\ATLMFC\include"/>
+					<Add directory="C:\Program Files (x86)\Microsoft Visual Studio\2019\Community\VC\Tools\MSVC\14.20.27508\include"/>
+					<Add directory="C:\Program Files (x86)\Windows Kits\NETFXSDK\4.6.1\include\um"/>
+					<Add directory="C:\Program Files (x86)\Windows Kits\10\include\10.0.18362.0\ucrt"/>
+					<Add directory="C:\Program Files (x86)\Windows Kits\10\include\10.0.18362.0\shared"/>
+					<Add directory="C:\Program Files (x86)\Windows Kits\10\include\10.0.18362.0\um"/>
+					<Add directory="C:\Program Files (x86)\Windows Kits\10\include\10.0.18362.0\winrt"/>
+					<Add directory="C:\Program Files (x86)\Windows Kits\10\include\10.0.18362.0\cppwinrt"/>
+				</Compiler>
+				<MakeCommands>
+					<Build command="nmake /NOLOGO /f &quot;A:\Documents\Work\NerdThings\Source Code\raylib\cmake-build-debug\games\Makefile&quot; VERBOSE=1 arkanoid/fast"/>
+					<CompileFile command="nmake /NOLOGO /f &quot;A:\Documents\Work\NerdThings\Source Code\raylib\cmake-build-debug\games\Makefile&quot; VERBOSE=1 &quot;$file&quot;"/>
+					<Clean command="nmake /NOLOGO /f &quot;A:\Documents\Work\NerdThings\Source Code\raylib\cmake-build-debug\games\Makefile&quot; VERBOSE=1 clean"/>
+					<DistClean command="nmake /NOLOGO /f &quot;A:\Documents\Work\NerdThings\Source Code\raylib\cmake-build-debug\games\Makefile&quot; VERBOSE=1 clean"/>
+				</MakeCommands>
+			</Target>
+			<Target title="pang">
+				<Option output="A:/Documents/Work/NerdThings/Source Code/raylib/cmake-build-debug/games/pang.exe" prefix_auto="0" extension_auto="0"/>
+				<Option working_dir="A:/Documents/Work/NerdThings/Source Code/raylib/cmake-build-debug/games"/>
+				<Option object_output="./"/>
+				<Option type="1"/>
+				<Option compiler="msvc8"/>
+				<Compiler>
+					<Add option="-DPLATFORM_DESKTOP"/>
+					<Add option="-DGRAPHICS_API_OPENGL_33"/>
+					<Add directory="A:/Documents/Work/NerdThings/Source Code/raylib/cmake-build-debug/src"/>
+					<Add directory="A:/Documents/Work/NerdThings/Source Code/raylib/src/external/glfw/include"/>
+					<Add directory="C:\Program Files (x86)\Microsoft Visual Studio\2019\Community\VC\Tools\MSVC\14.20.27508\ATLMFC\include"/>
+					<Add directory="C:\Program Files (x86)\Microsoft Visual Studio\2019\Community\VC\Tools\MSVC\14.20.27508\include"/>
+					<Add directory="C:\Program Files (x86)\Windows Kits\NETFXSDK\4.6.1\include\um"/>
+					<Add directory="C:\Program Files (x86)\Windows Kits\10\include\10.0.18362.0\ucrt"/>
+					<Add directory="C:\Program Files (x86)\Windows Kits\10\include\10.0.18362.0\shared"/>
+					<Add directory="C:\Program Files (x86)\Windows Kits\10\include\10.0.18362.0\um"/>
+					<Add directory="C:\Program Files (x86)\Windows Kits\10\include\10.0.18362.0\winrt"/>
+					<Add directory="C:\Program Files (x86)\Windows Kits\10\include\10.0.18362.0\cppwinrt"/>
+				</Compiler>
+				<MakeCommands>
+					<Build command="nmake /NOLOGO /f &quot;A:\Documents\Work\NerdThings\Source Code\raylib\cmake-build-debug\games\Makefile&quot; VERBOSE=1 pang"/>
+					<CompileFile command="nmake /NOLOGO /f &quot;A:\Documents\Work\NerdThings\Source Code\raylib\cmake-build-debug\games\Makefile&quot; VERBOSE=1 &quot;$file&quot;"/>
+					<Clean command="nmake /NOLOGO /f &quot;A:\Documents\Work\NerdThings\Source Code\raylib\cmake-build-debug\games\Makefile&quot; VERBOSE=1 clean"/>
+					<DistClean command="nmake /NOLOGO /f &quot;A:\Documents\Work\NerdThings\Source Code\raylib\cmake-build-debug\games\Makefile&quot; VERBOSE=1 clean"/>
+				</MakeCommands>
+			</Target>
+			<Target title="pang/fast">
+				<Option output="A:/Documents/Work/NerdThings/Source Code/raylib/cmake-build-debug/games/pang.exe" prefix_auto="0" extension_auto="0"/>
+				<Option working_dir="A:/Documents/Work/NerdThings/Source Code/raylib/cmake-build-debug/games"/>
+				<Option object_output="./"/>
+				<Option type="1"/>
+				<Option compiler="msvc8"/>
+				<Compiler>
+					<Add option="-DPLATFORM_DESKTOP"/>
+					<Add option="-DGRAPHICS_API_OPENGL_33"/>
+					<Add directory="A:/Documents/Work/NerdThings/Source Code/raylib/cmake-build-debug/src"/>
+					<Add directory="A:/Documents/Work/NerdThings/Source Code/raylib/src/external/glfw/include"/>
+					<Add directory="C:\Program Files (x86)\Microsoft Visual Studio\2019\Community\VC\Tools\MSVC\14.20.27508\ATLMFC\include"/>
+					<Add directory="C:\Program Files (x86)\Microsoft Visual Studio\2019\Community\VC\Tools\MSVC\14.20.27508\include"/>
+					<Add directory="C:\Program Files (x86)\Windows Kits\NETFXSDK\4.6.1\include\um"/>
+					<Add directory="C:\Program Files (x86)\Windows Kits\10\include\10.0.18362.0\ucrt"/>
+					<Add directory="C:\Program Files (x86)\Windows Kits\10\include\10.0.18362.0\shared"/>
+					<Add directory="C:\Program Files (x86)\Windows Kits\10\include\10.0.18362.0\um"/>
+					<Add directory="C:\Program Files (x86)\Windows Kits\10\include\10.0.18362.0\winrt"/>
+					<Add directory="C:\Program Files (x86)\Windows Kits\10\include\10.0.18362.0\cppwinrt"/>
+				</Compiler>
+				<MakeCommands>
+					<Build command="nmake /NOLOGO /f &quot;A:\Documents\Work\NerdThings\Source Code\raylib\cmake-build-debug\games\Makefile&quot; VERBOSE=1 pang/fast"/>
+					<CompileFile command="nmake /NOLOGO /f &quot;A:\Documents\Work\NerdThings\Source Code\raylib\cmake-build-debug\games\Makefile&quot; VERBOSE=1 &quot;$file&quot;"/>
+					<Clean command="nmake /NOLOGO /f &quot;A:\Documents\Work\NerdThings\Source Code\raylib\cmake-build-debug\games\Makefile&quot; VERBOSE=1 clean"/>
+					<DistClean command="nmake /NOLOGO /f &quot;A:\Documents\Work\NerdThings\Source Code\raylib\cmake-build-debug\games\Makefile&quot; VERBOSE=1 clean"/>
+				</MakeCommands>
+			</Target>
+			<Target title="asteroids">
+				<Option output="A:/Documents/Work/NerdThings/Source Code/raylib/cmake-build-debug/games/asteroids.exe" prefix_auto="0" extension_auto="0"/>
+				<Option working_dir="A:/Documents/Work/NerdThings/Source Code/raylib/cmake-build-debug/games"/>
+				<Option object_output="./"/>
+				<Option type="1"/>
+				<Option compiler="msvc8"/>
+				<Compiler>
+					<Add option="-DPLATFORM_DESKTOP"/>
+					<Add option="-DGRAPHICS_API_OPENGL_33"/>
+					<Add directory="A:/Documents/Work/NerdThings/Source Code/raylib/cmake-build-debug/src"/>
+					<Add directory="A:/Documents/Work/NerdThings/Source Code/raylib/src/external/glfw/include"/>
+					<Add directory="C:\Program Files (x86)\Microsoft Visual Studio\2019\Community\VC\Tools\MSVC\14.20.27508\ATLMFC\include"/>
+					<Add directory="C:\Program Files (x86)\Microsoft Visual Studio\2019\Community\VC\Tools\MSVC\14.20.27508\include"/>
+					<Add directory="C:\Program Files (x86)\Windows Kits\NETFXSDK\4.6.1\include\um"/>
+					<Add directory="C:\Program Files (x86)\Windows Kits\10\include\10.0.18362.0\ucrt"/>
+					<Add directory="C:\Program Files (x86)\Windows Kits\10\include\10.0.18362.0\shared"/>
+					<Add directory="C:\Program Files (x86)\Windows Kits\10\include\10.0.18362.0\um"/>
+					<Add directory="C:\Program Files (x86)\Windows Kits\10\include\10.0.18362.0\winrt"/>
+					<Add directory="C:\Program Files (x86)\Windows Kits\10\include\10.0.18362.0\cppwinrt"/>
+				</Compiler>
+				<MakeCommands>
+					<Build command="nmake /NOLOGO /f &quot;A:\Documents\Work\NerdThings\Source Code\raylib\cmake-build-debug\games\Makefile&quot; VERBOSE=1 asteroids"/>
+					<CompileFile command="nmake /NOLOGO /f &quot;A:\Documents\Work\NerdThings\Source Code\raylib\cmake-build-debug\games\Makefile&quot; VERBOSE=1 &quot;$file&quot;"/>
+					<Clean command="nmake /NOLOGO /f &quot;A:\Documents\Work\NerdThings\Source Code\raylib\cmake-build-debug\games\Makefile&quot; VERBOSE=1 clean"/>
+					<DistClean command="nmake /NOLOGO /f &quot;A:\Documents\Work\NerdThings\Source Code\raylib\cmake-build-debug\games\Makefile&quot; VERBOSE=1 clean"/>
+				</MakeCommands>
+			</Target>
+			<Target title="asteroids/fast">
+				<Option output="A:/Documents/Work/NerdThings/Source Code/raylib/cmake-build-debug/games/asteroids.exe" prefix_auto="0" extension_auto="0"/>
+				<Option working_dir="A:/Documents/Work/NerdThings/Source Code/raylib/cmake-build-debug/games"/>
+				<Option object_output="./"/>
+				<Option type="1"/>
+				<Option compiler="msvc8"/>
+				<Compiler>
+					<Add option="-DPLATFORM_DESKTOP"/>
+					<Add option="-DGRAPHICS_API_OPENGL_33"/>
+					<Add directory="A:/Documents/Work/NerdThings/Source Code/raylib/cmake-build-debug/src"/>
+					<Add directory="A:/Documents/Work/NerdThings/Source Code/raylib/src/external/glfw/include"/>
+					<Add directory="C:\Program Files (x86)\Microsoft Visual Studio\2019\Community\VC\Tools\MSVC\14.20.27508\ATLMFC\include"/>
+					<Add directory="C:\Program Files (x86)\Microsoft Visual Studio\2019\Community\VC\Tools\MSVC\14.20.27508\include"/>
+					<Add directory="C:\Program Files (x86)\Windows Kits\NETFXSDK\4.6.1\include\um"/>
+					<Add directory="C:\Program Files (x86)\Windows Kits\10\include\10.0.18362.0\ucrt"/>
+					<Add directory="C:\Program Files (x86)\Windows Kits\10\include\10.0.18362.0\shared"/>
+					<Add directory="C:\Program Files (x86)\Windows Kits\10\include\10.0.18362.0\um"/>
+					<Add directory="C:\Program Files (x86)\Windows Kits\10\include\10.0.18362.0\winrt"/>
+					<Add directory="C:\Program Files (x86)\Windows Kits\10\include\10.0.18362.0\cppwinrt"/>
+				</Compiler>
+				<MakeCommands>
+					<Build command="nmake /NOLOGO /f &quot;A:\Documents\Work\NerdThings\Source Code\raylib\cmake-build-debug\games\Makefile&quot; VERBOSE=1 asteroids/fast"/>
+					<CompileFile command="nmake /NOLOGO /f &quot;A:\Documents\Work\NerdThings\Source Code\raylib\cmake-build-debug\games\Makefile&quot; VERBOSE=1 &quot;$file&quot;"/>
+					<Clean command="nmake /NOLOGO /f &quot;A:\Documents\Work\NerdThings\Source Code\raylib\cmake-build-debug\games\Makefile&quot; VERBOSE=1 clean"/>
+					<DistClean command="nmake /NOLOGO /f &quot;A:\Documents\Work\NerdThings\Source Code\raylib\cmake-build-debug\games\Makefile&quot; VERBOSE=1 clean"/>
+				</MakeCommands>
+			</Target>
+			<Target title="snake">
+				<Option output="A:/Documents/Work/NerdThings/Source Code/raylib/cmake-build-debug/games/snake.exe" prefix_auto="0" extension_auto="0"/>
+				<Option working_dir="A:/Documents/Work/NerdThings/Source Code/raylib/cmake-build-debug/games"/>
+				<Option object_output="./"/>
+				<Option type="1"/>
+				<Option compiler="msvc8"/>
+				<Compiler>
+					<Add option="-DPLATFORM_DESKTOP"/>
+					<Add option="-DGRAPHICS_API_OPENGL_33"/>
+					<Add directory="A:/Documents/Work/NerdThings/Source Code/raylib/cmake-build-debug/src"/>
+					<Add directory="A:/Documents/Work/NerdThings/Source Code/raylib/src/external/glfw/include"/>
+					<Add directory="C:\Program Files (x86)\Microsoft Visual Studio\2019\Community\VC\Tools\MSVC\14.20.27508\ATLMFC\include"/>
+					<Add directory="C:\Program Files (x86)\Microsoft Visual Studio\2019\Community\VC\Tools\MSVC\14.20.27508\include"/>
+					<Add directory="C:\Program Files (x86)\Windows Kits\NETFXSDK\4.6.1\include\um"/>
+					<Add directory="C:\Program Files (x86)\Windows Kits\10\include\10.0.18362.0\ucrt"/>
+					<Add directory="C:\Program Files (x86)\Windows Kits\10\include\10.0.18362.0\shared"/>
+					<Add directory="C:\Program Files (x86)\Windows Kits\10\include\10.0.18362.0\um"/>
+					<Add directory="C:\Program Files (x86)\Windows Kits\10\include\10.0.18362.0\winrt"/>
+					<Add directory="C:\Program Files (x86)\Windows Kits\10\include\10.0.18362.0\cppwinrt"/>
+				</Compiler>
+				<MakeCommands>
+					<Build command="nmake /NOLOGO /f &quot;A:\Documents\Work\NerdThings\Source Code\raylib\cmake-build-debug\games\Makefile&quot; VERBOSE=1 snake"/>
+					<CompileFile command="nmake /NOLOGO /f &quot;A:\Documents\Work\NerdThings\Source Code\raylib\cmake-build-debug\games\Makefile&quot; VERBOSE=1 &quot;$file&quot;"/>
+					<Clean command="nmake /NOLOGO /f &quot;A:\Documents\Work\NerdThings\Source Code\raylib\cmake-build-debug\games\Makefile&quot; VERBOSE=1 clean"/>
+					<DistClean command="nmake /NOLOGO /f &quot;A:\Documents\Work\NerdThings\Source Code\raylib\cmake-build-debug\games\Makefile&quot; VERBOSE=1 clean"/>
+				</MakeCommands>
+			</Target>
+			<Target title="snake/fast">
+				<Option output="A:/Documents/Work/NerdThings/Source Code/raylib/cmake-build-debug/games/snake.exe" prefix_auto="0" extension_auto="0"/>
+				<Option working_dir="A:/Documents/Work/NerdThings/Source Code/raylib/cmake-build-debug/games"/>
+				<Option object_output="./"/>
+				<Option type="1"/>
+				<Option compiler="msvc8"/>
+				<Compiler>
+					<Add option="-DPLATFORM_DESKTOP"/>
+					<Add option="-DGRAPHICS_API_OPENGL_33"/>
+					<Add directory="A:/Documents/Work/NerdThings/Source Code/raylib/cmake-build-debug/src"/>
+					<Add directory="A:/Documents/Work/NerdThings/Source Code/raylib/src/external/glfw/include"/>
+					<Add directory="C:\Program Files (x86)\Microsoft Visual Studio\2019\Community\VC\Tools\MSVC\14.20.27508\ATLMFC\include"/>
+					<Add directory="C:\Program Files (x86)\Microsoft Visual Studio\2019\Community\VC\Tools\MSVC\14.20.27508\include"/>
+					<Add directory="C:\Program Files (x86)\Windows Kits\NETFXSDK\4.6.1\include\um"/>
+					<Add directory="C:\Program Files (x86)\Windows Kits\10\include\10.0.18362.0\ucrt"/>
+					<Add directory="C:\Program Files (x86)\Windows Kits\10\include\10.0.18362.0\shared"/>
+					<Add directory="C:\Program Files (x86)\Windows Kits\10\include\10.0.18362.0\um"/>
+					<Add directory="C:\Program Files (x86)\Windows Kits\10\include\10.0.18362.0\winrt"/>
+					<Add directory="C:\Program Files (x86)\Windows Kits\10\include\10.0.18362.0\cppwinrt"/>
+				</Compiler>
+				<MakeCommands>
+					<Build command="nmake /NOLOGO /f &quot;A:\Documents\Work\NerdThings\Source Code\raylib\cmake-build-debug\games\Makefile&quot; VERBOSE=1 snake/fast"/>
+					<CompileFile command="nmake /NOLOGO /f &quot;A:\Documents\Work\NerdThings\Source Code\raylib\cmake-build-debug\games\Makefile&quot; VERBOSE=1 &quot;$file&quot;"/>
+					<Clean command="nmake /NOLOGO /f &quot;A:\Documents\Work\NerdThings\Source Code\raylib\cmake-build-debug\games\Makefile&quot; VERBOSE=1 clean"/>
+					<DistClean command="nmake /NOLOGO /f &quot;A:\Documents\Work\NerdThings\Source Code\raylib\cmake-build-debug\games\Makefile&quot; VERBOSE=1 clean"/>
+				</MakeCommands>
+			</Target>
+			<Target title="floppy">
+				<Option output="A:/Documents/Work/NerdThings/Source Code/raylib/cmake-build-debug/games/floppy.exe" prefix_auto="0" extension_auto="0"/>
+				<Option working_dir="A:/Documents/Work/NerdThings/Source Code/raylib/cmake-build-debug/games"/>
+				<Option object_output="./"/>
+				<Option type="1"/>
+				<Option compiler="msvc8"/>
+				<Compiler>
+					<Add option="-DPLATFORM_DESKTOP"/>
+					<Add option="-DGRAPHICS_API_OPENGL_33"/>
+					<Add directory="A:/Documents/Work/NerdThings/Source Code/raylib/cmake-build-debug/src"/>
+					<Add directory="A:/Documents/Work/NerdThings/Source Code/raylib/src/external/glfw/include"/>
+					<Add directory="C:\Program Files (x86)\Microsoft Visual Studio\2019\Community\VC\Tools\MSVC\14.20.27508\ATLMFC\include"/>
+					<Add directory="C:\Program Files (x86)\Microsoft Visual Studio\2019\Community\VC\Tools\MSVC\14.20.27508\include"/>
+					<Add directory="C:\Program Files (x86)\Windows Kits\NETFXSDK\4.6.1\include\um"/>
+					<Add directory="C:\Program Files (x86)\Windows Kits\10\include\10.0.18362.0\ucrt"/>
+					<Add directory="C:\Program Files (x86)\Windows Kits\10\include\10.0.18362.0\shared"/>
+					<Add directory="C:\Program Files (x86)\Windows Kits\10\include\10.0.18362.0\um"/>
+					<Add directory="C:\Program Files (x86)\Windows Kits\10\include\10.0.18362.0\winrt"/>
+					<Add directory="C:\Program Files (x86)\Windows Kits\10\include\10.0.18362.0\cppwinrt"/>
+				</Compiler>
+				<MakeCommands>
+					<Build command="nmake /NOLOGO /f &quot;A:\Documents\Work\NerdThings\Source Code\raylib\cmake-build-debug\games\Makefile&quot; VERBOSE=1 floppy"/>
+					<CompileFile command="nmake /NOLOGO /f &quot;A:\Documents\Work\NerdThings\Source Code\raylib\cmake-build-debug\games\Makefile&quot; VERBOSE=1 &quot;$file&quot;"/>
+					<Clean command="nmake /NOLOGO /f &quot;A:\Documents\Work\NerdThings\Source Code\raylib\cmake-build-debug\games\Makefile&quot; VERBOSE=1 clean"/>
+					<DistClean command="nmake /NOLOGO /f &quot;A:\Documents\Work\NerdThings\Source Code\raylib\cmake-build-debug\games\Makefile&quot; VERBOSE=1 clean"/>
+				</MakeCommands>
+			</Target>
+			<Target title="floppy/fast">
+				<Option output="A:/Documents/Work/NerdThings/Source Code/raylib/cmake-build-debug/games/floppy.exe" prefix_auto="0" extension_auto="0"/>
+				<Option working_dir="A:/Documents/Work/NerdThings/Source Code/raylib/cmake-build-debug/games"/>
+				<Option object_output="./"/>
+				<Option type="1"/>
+				<Option compiler="msvc8"/>
+				<Compiler>
+					<Add option="-DPLATFORM_DESKTOP"/>
+					<Add option="-DGRAPHICS_API_OPENGL_33"/>
+					<Add directory="A:/Documents/Work/NerdThings/Source Code/raylib/cmake-build-debug/src"/>
+					<Add directory="A:/Documents/Work/NerdThings/Source Code/raylib/src/external/glfw/include"/>
+					<Add directory="C:\Program Files (x86)\Microsoft Visual Studio\2019\Community\VC\Tools\MSVC\14.20.27508\ATLMFC\include"/>
+					<Add directory="C:\Program Files (x86)\Microsoft Visual Studio\2019\Community\VC\Tools\MSVC\14.20.27508\include"/>
+					<Add directory="C:\Program Files (x86)\Windows Kits\NETFXSDK\4.6.1\include\um"/>
+					<Add directory="C:\Program Files (x86)\Windows Kits\10\include\10.0.18362.0\ucrt"/>
+					<Add directory="C:\Program Files (x86)\Windows Kits\10\include\10.0.18362.0\shared"/>
+					<Add directory="C:\Program Files (x86)\Windows Kits\10\include\10.0.18362.0\um"/>
+					<Add directory="C:\Program Files (x86)\Windows Kits\10\include\10.0.18362.0\winrt"/>
+					<Add directory="C:\Program Files (x86)\Windows Kits\10\include\10.0.18362.0\cppwinrt"/>
+				</Compiler>
+				<MakeCommands>
+					<Build command="nmake /NOLOGO /f &quot;A:\Documents\Work\NerdThings\Source Code\raylib\cmake-build-debug\games\Makefile&quot; VERBOSE=1 floppy/fast"/>
+					<CompileFile command="nmake /NOLOGO /f &quot;A:\Documents\Work\NerdThings\Source Code\raylib\cmake-build-debug\games\Makefile&quot; VERBOSE=1 &quot;$file&quot;"/>
+					<Clean command="nmake /NOLOGO /f &quot;A:\Documents\Work\NerdThings\Source Code\raylib\cmake-build-debug\games\Makefile&quot; VERBOSE=1 clean"/>
+					<DistClean command="nmake /NOLOGO /f &quot;A:\Documents\Work\NerdThings\Source Code\raylib\cmake-build-debug\games\Makefile&quot; VERBOSE=1 clean"/>
+				</MakeCommands>
+			</Target>
+			<Target title="gold_fever">
+				<Option output="A:/Documents/Work/NerdThings/Source Code/raylib/cmake-build-debug/games/gold_fever.exe" prefix_auto="0" extension_auto="0"/>
+				<Option working_dir="A:/Documents/Work/NerdThings/Source Code/raylib/cmake-build-debug/games"/>
+				<Option object_output="./"/>
+				<Option type="1"/>
+				<Option compiler="msvc8"/>
+				<Compiler>
+					<Add option="-DPLATFORM_DESKTOP"/>
+					<Add option="-DGRAPHICS_API_OPENGL_33"/>
+					<Add directory="A:/Documents/Work/NerdThings/Source Code/raylib/cmake-build-debug/src"/>
+					<Add directory="A:/Documents/Work/NerdThings/Source Code/raylib/src/external/glfw/include"/>
+					<Add directory="C:\Program Files (x86)\Microsoft Visual Studio\2019\Community\VC\Tools\MSVC\14.20.27508\ATLMFC\include"/>
+					<Add directory="C:\Program Files (x86)\Microsoft Visual Studio\2019\Community\VC\Tools\MSVC\14.20.27508\include"/>
+					<Add directory="C:\Program Files (x86)\Windows Kits\NETFXSDK\4.6.1\include\um"/>
+					<Add directory="C:\Program Files (x86)\Windows Kits\10\include\10.0.18362.0\ucrt"/>
+					<Add directory="C:\Program Files (x86)\Windows Kits\10\include\10.0.18362.0\shared"/>
+					<Add directory="C:\Program Files (x86)\Windows Kits\10\include\10.0.18362.0\um"/>
+					<Add directory="C:\Program Files (x86)\Windows Kits\10\include\10.0.18362.0\winrt"/>
+					<Add directory="C:\Program Files (x86)\Windows Kits\10\include\10.0.18362.0\cppwinrt"/>
+				</Compiler>
+				<MakeCommands>
+					<Build command="nmake /NOLOGO /f &quot;A:\Documents\Work\NerdThings\Source Code\raylib\cmake-build-debug\games\Makefile&quot; VERBOSE=1 gold_fever"/>
+					<CompileFile command="nmake /NOLOGO /f &quot;A:\Documents\Work\NerdThings\Source Code\raylib\cmake-build-debug\games\Makefile&quot; VERBOSE=1 &quot;$file&quot;"/>
+					<Clean command="nmake /NOLOGO /f &quot;A:\Documents\Work\NerdThings\Source Code\raylib\cmake-build-debug\games\Makefile&quot; VERBOSE=1 clean"/>
+					<DistClean command="nmake /NOLOGO /f &quot;A:\Documents\Work\NerdThings\Source Code\raylib\cmake-build-debug\games\Makefile&quot; VERBOSE=1 clean"/>
+				</MakeCommands>
+			</Target>
+			<Target title="gold_fever/fast">
+				<Option output="A:/Documents/Work/NerdThings/Source Code/raylib/cmake-build-debug/games/gold_fever.exe" prefix_auto="0" extension_auto="0"/>
+				<Option working_dir="A:/Documents/Work/NerdThings/Source Code/raylib/cmake-build-debug/games"/>
+				<Option object_output="./"/>
+				<Option type="1"/>
+				<Option compiler="msvc8"/>
+				<Compiler>
+					<Add option="-DPLATFORM_DESKTOP"/>
+					<Add option="-DGRAPHICS_API_OPENGL_33"/>
+					<Add directory="A:/Documents/Work/NerdThings/Source Code/raylib/cmake-build-debug/src"/>
+					<Add directory="A:/Documents/Work/NerdThings/Source Code/raylib/src/external/glfw/include"/>
+					<Add directory="C:\Program Files (x86)\Microsoft Visual Studio\2019\Community\VC\Tools\MSVC\14.20.27508\ATLMFC\include"/>
+					<Add directory="C:\Program Files (x86)\Microsoft Visual Studio\2019\Community\VC\Tools\MSVC\14.20.27508\include"/>
+					<Add directory="C:\Program Files (x86)\Windows Kits\NETFXSDK\4.6.1\include\um"/>
+					<Add directory="C:\Program Files (x86)\Windows Kits\10\include\10.0.18362.0\ucrt"/>
+					<Add directory="C:\Program Files (x86)\Windows Kits\10\include\10.0.18362.0\shared"/>
+					<Add directory="C:\Program Files (x86)\Windows Kits\10\include\10.0.18362.0\um"/>
+					<Add directory="C:\Program Files (x86)\Windows Kits\10\include\10.0.18362.0\winrt"/>
+					<Add directory="C:\Program Files (x86)\Windows Kits\10\include\10.0.18362.0\cppwinrt"/>
+				</Compiler>
+				<MakeCommands>
+					<Build command="nmake /NOLOGO /f &quot;A:\Documents\Work\NerdThings\Source Code\raylib\cmake-build-debug\games\Makefile&quot; VERBOSE=1 gold_fever/fast"/>
+					<CompileFile command="nmake /NOLOGO /f &quot;A:\Documents\Work\NerdThings\Source Code\raylib\cmake-build-debug\games\Makefile&quot; VERBOSE=1 &quot;$file&quot;"/>
+					<Clean command="nmake /NOLOGO /f &quot;A:\Documents\Work\NerdThings\Source Code\raylib\cmake-build-debug\games\Makefile&quot; VERBOSE=1 clean"/>
+					<DistClean command="nmake /NOLOGO /f &quot;A:\Documents\Work\NerdThings\Source Code\raylib\cmake-build-debug\games\Makefile&quot; VERBOSE=1 clean"/>
+				</MakeCommands>
+			</Target>
+			<Target title="missile_commander">
+				<Option output="A:/Documents/Work/NerdThings/Source Code/raylib/cmake-build-debug/games/missile_commander.exe" prefix_auto="0" extension_auto="0"/>
+				<Option working_dir="A:/Documents/Work/NerdThings/Source Code/raylib/cmake-build-debug/games"/>
+				<Option object_output="./"/>
+				<Option type="1"/>
+				<Option compiler="msvc8"/>
+				<Compiler>
+					<Add option="-DPLATFORM_DESKTOP"/>
+					<Add option="-DGRAPHICS_API_OPENGL_33"/>
+					<Add directory="A:/Documents/Work/NerdThings/Source Code/raylib/cmake-build-debug/src"/>
+					<Add directory="A:/Documents/Work/NerdThings/Source Code/raylib/src/external/glfw/include"/>
+					<Add directory="C:\Program Files (x86)\Microsoft Visual Studio\2019\Community\VC\Tools\MSVC\14.20.27508\ATLMFC\include"/>
+					<Add directory="C:\Program Files (x86)\Microsoft Visual Studio\2019\Community\VC\Tools\MSVC\14.20.27508\include"/>
+					<Add directory="C:\Program Files (x86)\Windows Kits\NETFXSDK\4.6.1\include\um"/>
+					<Add directory="C:\Program Files (x86)\Windows Kits\10\include\10.0.18362.0\ucrt"/>
+					<Add directory="C:\Program Files (x86)\Windows Kits\10\include\10.0.18362.0\shared"/>
+					<Add directory="C:\Program Files (x86)\Windows Kits\10\include\10.0.18362.0\um"/>
+					<Add directory="C:\Program Files (x86)\Windows Kits\10\include\10.0.18362.0\winrt"/>
+					<Add directory="C:\Program Files (x86)\Windows Kits\10\include\10.0.18362.0\cppwinrt"/>
+				</Compiler>
+				<MakeCommands>
+					<Build command="nmake /NOLOGO /f &quot;A:\Documents\Work\NerdThings\Source Code\raylib\cmake-build-debug\games\Makefile&quot; VERBOSE=1 missile_commander"/>
+					<CompileFile command="nmake /NOLOGO /f &quot;A:\Documents\Work\NerdThings\Source Code\raylib\cmake-build-debug\games\Makefile&quot; VERBOSE=1 &quot;$file&quot;"/>
+					<Clean command="nmake /NOLOGO /f &quot;A:\Documents\Work\NerdThings\Source Code\raylib\cmake-build-debug\games\Makefile&quot; VERBOSE=1 clean"/>
+					<DistClean command="nmake /NOLOGO /f &quot;A:\Documents\Work\NerdThings\Source Code\raylib\cmake-build-debug\games\Makefile&quot; VERBOSE=1 clean"/>
+				</MakeCommands>
+			</Target>
+			<Target title="missile_commander/fast">
+				<Option output="A:/Documents/Work/NerdThings/Source Code/raylib/cmake-build-debug/games/missile_commander.exe" prefix_auto="0" extension_auto="0"/>
+				<Option working_dir="A:/Documents/Work/NerdThings/Source Code/raylib/cmake-build-debug/games"/>
+				<Option object_output="./"/>
+				<Option type="1"/>
+				<Option compiler="msvc8"/>
+				<Compiler>
+					<Add option="-DPLATFORM_DESKTOP"/>
+					<Add option="-DGRAPHICS_API_OPENGL_33"/>
+					<Add directory="A:/Documents/Work/NerdThings/Source Code/raylib/cmake-build-debug/src"/>
+					<Add directory="A:/Documents/Work/NerdThings/Source Code/raylib/src/external/glfw/include"/>
+					<Add directory="C:\Program Files (x86)\Microsoft Visual Studio\2019\Community\VC\Tools\MSVC\14.20.27508\ATLMFC\include"/>
+					<Add directory="C:\Program Files (x86)\Microsoft Visual Studio\2019\Community\VC\Tools\MSVC\14.20.27508\include"/>
+					<Add directory="C:\Program Files (x86)\Windows Kits\NETFXSDK\4.6.1\include\um"/>
+					<Add directory="C:\Program Files (x86)\Windows Kits\10\include\10.0.18362.0\ucrt"/>
+					<Add directory="C:\Program Files (x86)\Windows Kits\10\include\10.0.18362.0\shared"/>
+					<Add directory="C:\Program Files (x86)\Windows Kits\10\include\10.0.18362.0\um"/>
+					<Add directory="C:\Program Files (x86)\Windows Kits\10\include\10.0.18362.0\winrt"/>
+					<Add directory="C:\Program Files (x86)\Windows Kits\10\include\10.0.18362.0\cppwinrt"/>
+				</Compiler>
+				<MakeCommands>
+					<Build command="nmake /NOLOGO /f &quot;A:\Documents\Work\NerdThings\Source Code\raylib\cmake-build-debug\games\Makefile&quot; VERBOSE=1 missile_commander/fast"/>
+					<CompileFile command="nmake /NOLOGO /f &quot;A:\Documents\Work\NerdThings\Source Code\raylib\cmake-build-debug\games\Makefile&quot; VERBOSE=1 &quot;$file&quot;"/>
+					<Clean command="nmake /NOLOGO /f &quot;A:\Documents\Work\NerdThings\Source Code\raylib\cmake-build-debug\games\Makefile&quot; VERBOSE=1 clean"/>
+					<DistClean command="nmake /NOLOGO /f &quot;A:\Documents\Work\NerdThings\Source Code\raylib\cmake-build-debug\games\Makefile&quot; VERBOSE=1 clean"/>
+				</MakeCommands>
+			</Target>
+			<Target title="gorilas">
+				<Option output="A:/Documents/Work/NerdThings/Source Code/raylib/cmake-build-debug/games/gorilas.exe" prefix_auto="0" extension_auto="0"/>
+				<Option working_dir="A:/Documents/Work/NerdThings/Source Code/raylib/cmake-build-debug/games"/>
+				<Option object_output="./"/>
+				<Option type="1"/>
+				<Option compiler="msvc8"/>
+				<Compiler>
+					<Add option="-DPLATFORM_DESKTOP"/>
+					<Add option="-DGRAPHICS_API_OPENGL_33"/>
+					<Add directory="A:/Documents/Work/NerdThings/Source Code/raylib/cmake-build-debug/src"/>
+					<Add directory="A:/Documents/Work/NerdThings/Source Code/raylib/src/external/glfw/include"/>
+					<Add directory="C:\Program Files (x86)\Microsoft Visual Studio\2019\Community\VC\Tools\MSVC\14.20.27508\ATLMFC\include"/>
+					<Add directory="C:\Program Files (x86)\Microsoft Visual Studio\2019\Community\VC\Tools\MSVC\14.20.27508\include"/>
+					<Add directory="C:\Program Files (x86)\Windows Kits\NETFXSDK\4.6.1\include\um"/>
+					<Add directory="C:\Program Files (x86)\Windows Kits\10\include\10.0.18362.0\ucrt"/>
+					<Add directory="C:\Program Files (x86)\Windows Kits\10\include\10.0.18362.0\shared"/>
+					<Add directory="C:\Program Files (x86)\Windows Kits\10\include\10.0.18362.0\um"/>
+					<Add directory="C:\Program Files (x86)\Windows Kits\10\include\10.0.18362.0\winrt"/>
+					<Add directory="C:\Program Files (x86)\Windows Kits\10\include\10.0.18362.0\cppwinrt"/>
+				</Compiler>
+				<MakeCommands>
+					<Build command="nmake /NOLOGO /f &quot;A:\Documents\Work\NerdThings\Source Code\raylib\cmake-build-debug\games\Makefile&quot; VERBOSE=1 gorilas"/>
+					<CompileFile command="nmake /NOLOGO /f &quot;A:\Documents\Work\NerdThings\Source Code\raylib\cmake-build-debug\games\Makefile&quot; VERBOSE=1 &quot;$file&quot;"/>
+					<Clean command="nmake /NOLOGO /f &quot;A:\Documents\Work\NerdThings\Source Code\raylib\cmake-build-debug\games\Makefile&quot; VERBOSE=1 clean"/>
+					<DistClean command="nmake /NOLOGO /f &quot;A:\Documents\Work\NerdThings\Source Code\raylib\cmake-build-debug\games\Makefile&quot; VERBOSE=1 clean"/>
+				</MakeCommands>
+			</Target>
+			<Target title="gorilas/fast">
+				<Option output="A:/Documents/Work/NerdThings/Source Code/raylib/cmake-build-debug/games/gorilas.exe" prefix_auto="0" extension_auto="0"/>
+				<Option working_dir="A:/Documents/Work/NerdThings/Source Code/raylib/cmake-build-debug/games"/>
+				<Option object_output="./"/>
+				<Option type="1"/>
+				<Option compiler="msvc8"/>
+				<Compiler>
+					<Add option="-DPLATFORM_DESKTOP"/>
+					<Add option="-DGRAPHICS_API_OPENGL_33"/>
+					<Add directory="A:/Documents/Work/NerdThings/Source Code/raylib/cmake-build-debug/src"/>
+					<Add directory="A:/Documents/Work/NerdThings/Source Code/raylib/src/external/glfw/include"/>
+					<Add directory="C:\Program Files (x86)\Microsoft Visual Studio\2019\Community\VC\Tools\MSVC\14.20.27508\ATLMFC\include"/>
+					<Add directory="C:\Program Files (x86)\Microsoft Visual Studio\2019\Community\VC\Tools\MSVC\14.20.27508\include"/>
+					<Add directory="C:\Program Files (x86)\Windows Kits\NETFXSDK\4.6.1\include\um"/>
+					<Add directory="C:\Program Files (x86)\Windows Kits\10\include\10.0.18362.0\ucrt"/>
+					<Add directory="C:\Program Files (x86)\Windows Kits\10\include\10.0.18362.0\shared"/>
+					<Add directory="C:\Program Files (x86)\Windows Kits\10\include\10.0.18362.0\um"/>
+					<Add directory="C:\Program Files (x86)\Windows Kits\10\include\10.0.18362.0\winrt"/>
+					<Add directory="C:\Program Files (x86)\Windows Kits\10\include\10.0.18362.0\cppwinrt"/>
+				</Compiler>
+				<MakeCommands>
+					<Build command="nmake /NOLOGO /f &quot;A:\Documents\Work\NerdThings\Source Code\raylib\cmake-build-debug\games\Makefile&quot; VERBOSE=1 gorilas/fast"/>
+					<CompileFile command="nmake /NOLOGO /f &quot;A:\Documents\Work\NerdThings\Source Code\raylib\cmake-build-debug\games\Makefile&quot; VERBOSE=1 &quot;$file&quot;"/>
+					<Clean command="nmake /NOLOGO /f &quot;A:\Documents\Work\NerdThings\Source Code\raylib\cmake-build-debug\games\Makefile&quot; VERBOSE=1 clean"/>
+					<DistClean command="nmake /NOLOGO /f &quot;A:\Documents\Work\NerdThings\Source Code\raylib\cmake-build-debug\games\Makefile&quot; VERBOSE=1 clean"/>
+				</MakeCommands>
+			</Target>
+			<Target title="space_invaders">
+				<Option output="A:/Documents/Work/NerdThings/Source Code/raylib/cmake-build-debug/games/space_invaders.exe" prefix_auto="0" extension_auto="0"/>
+				<Option working_dir="A:/Documents/Work/NerdThings/Source Code/raylib/cmake-build-debug/games"/>
+				<Option object_output="./"/>
+				<Option type="1"/>
+				<Option compiler="msvc8"/>
+				<Compiler>
+					<Add option="-DPLATFORM_DESKTOP"/>
+					<Add option="-DGRAPHICS_API_OPENGL_33"/>
+					<Add directory="A:/Documents/Work/NerdThings/Source Code/raylib/cmake-build-debug/src"/>
+					<Add directory="A:/Documents/Work/NerdThings/Source Code/raylib/src/external/glfw/include"/>
+					<Add directory="C:\Program Files (x86)\Microsoft Visual Studio\2019\Community\VC\Tools\MSVC\14.20.27508\ATLMFC\include"/>
+					<Add directory="C:\Program Files (x86)\Microsoft Visual Studio\2019\Community\VC\Tools\MSVC\14.20.27508\include"/>
+					<Add directory="C:\Program Files (x86)\Windows Kits\NETFXSDK\4.6.1\include\um"/>
+					<Add directory="C:\Program Files (x86)\Windows Kits\10\include\10.0.18362.0\ucrt"/>
+					<Add directory="C:\Program Files (x86)\Windows Kits\10\include\10.0.18362.0\shared"/>
+					<Add directory="C:\Program Files (x86)\Windows Kits\10\include\10.0.18362.0\um"/>
+					<Add directory="C:\Program Files (x86)\Windows Kits\10\include\10.0.18362.0\winrt"/>
+					<Add directory="C:\Program Files (x86)\Windows Kits\10\include\10.0.18362.0\cppwinrt"/>
+				</Compiler>
+				<MakeCommands>
+					<Build command="nmake /NOLOGO /f &quot;A:\Documents\Work\NerdThings\Source Code\raylib\cmake-build-debug\games\Makefile&quot; VERBOSE=1 space_invaders"/>
+					<CompileFile command="nmake /NOLOGO /f &quot;A:\Documents\Work\NerdThings\Source Code\raylib\cmake-build-debug\games\Makefile&quot; VERBOSE=1 &quot;$file&quot;"/>
+					<Clean command="nmake /NOLOGO /f &quot;A:\Documents\Work\NerdThings\Source Code\raylib\cmake-build-debug\games\Makefile&quot; VERBOSE=1 clean"/>
+					<DistClean command="nmake /NOLOGO /f &quot;A:\Documents\Work\NerdThings\Source Code\raylib\cmake-build-debug\games\Makefile&quot; VERBOSE=1 clean"/>
+				</MakeCommands>
+			</Target>
+			<Target title="space_invaders/fast">
+				<Option output="A:/Documents/Work/NerdThings/Source Code/raylib/cmake-build-debug/games/space_invaders.exe" prefix_auto="0" extension_auto="0"/>
+				<Option working_dir="A:/Documents/Work/NerdThings/Source Code/raylib/cmake-build-debug/games"/>
+				<Option object_output="./"/>
+				<Option type="1"/>
+				<Option compiler="msvc8"/>
+				<Compiler>
+					<Add option="-DPLATFORM_DESKTOP"/>
+					<Add option="-DGRAPHICS_API_OPENGL_33"/>
+					<Add directory="A:/Documents/Work/NerdThings/Source Code/raylib/cmake-build-debug/src"/>
+					<Add directory="A:/Documents/Work/NerdThings/Source Code/raylib/src/external/glfw/include"/>
+					<Add directory="C:\Program Files (x86)\Microsoft Visual Studio\2019\Community\VC\Tools\MSVC\14.20.27508\ATLMFC\include"/>
+					<Add directory="C:\Program Files (x86)\Microsoft Visual Studio\2019\Community\VC\Tools\MSVC\14.20.27508\include"/>
+					<Add directory="C:\Program Files (x86)\Windows Kits\NETFXSDK\4.6.1\include\um"/>
+					<Add directory="C:\Program Files (x86)\Windows Kits\10\include\10.0.18362.0\ucrt"/>
+					<Add directory="C:\Program Files (x86)\Windows Kits\10\include\10.0.18362.0\shared"/>
+					<Add directory="C:\Program Files (x86)\Windows Kits\10\include\10.0.18362.0\um"/>
+					<Add directory="C:\Program Files (x86)\Windows Kits\10\include\10.0.18362.0\winrt"/>
+					<Add directory="C:\Program Files (x86)\Windows Kits\10\include\10.0.18362.0\cppwinrt"/>
+				</Compiler>
+				<MakeCommands>
+					<Build command="nmake /NOLOGO /f &quot;A:\Documents\Work\NerdThings\Source Code\raylib\cmake-build-debug\games\Makefile&quot; VERBOSE=1 space_invaders/fast"/>
+					<CompileFile command="nmake /NOLOGO /f &quot;A:\Documents\Work\NerdThings\Source Code\raylib\cmake-build-debug\games\Makefile&quot; VERBOSE=1 &quot;$file&quot;"/>
+					<Clean command="nmake /NOLOGO /f &quot;A:\Documents\Work\NerdThings\Source Code\raylib\cmake-build-debug\games\Makefile&quot; VERBOSE=1 clean"/>
+					<DistClean command="nmake /NOLOGO /f &quot;A:\Documents\Work\NerdThings\Source Code\raylib\cmake-build-debug\games\Makefile&quot; VERBOSE=1 clean"/>
+				</MakeCommands>
+			</Target>
+			<Target title="tetris">
+				<Option output="A:/Documents/Work/NerdThings/Source Code/raylib/cmake-build-debug/games/tetris.exe" prefix_auto="0" extension_auto="0"/>
+				<Option working_dir="A:/Documents/Work/NerdThings/Source Code/raylib/cmake-build-debug/games"/>
+				<Option object_output="./"/>
+				<Option type="1"/>
+				<Option compiler="msvc8"/>
+				<Compiler>
+					<Add option="-DPLATFORM_DESKTOP"/>
+					<Add option="-DGRAPHICS_API_OPENGL_33"/>
+					<Add directory="A:/Documents/Work/NerdThings/Source Code/raylib/cmake-build-debug/src"/>
+					<Add directory="A:/Documents/Work/NerdThings/Source Code/raylib/src/external/glfw/include"/>
+					<Add directory="C:\Program Files (x86)\Microsoft Visual Studio\2019\Community\VC\Tools\MSVC\14.20.27508\ATLMFC\include"/>
+					<Add directory="C:\Program Files (x86)\Microsoft Visual Studio\2019\Community\VC\Tools\MSVC\14.20.27508\include"/>
+					<Add directory="C:\Program Files (x86)\Windows Kits\NETFXSDK\4.6.1\include\um"/>
+					<Add directory="C:\Program Files (x86)\Windows Kits\10\include\10.0.18362.0\ucrt"/>
+					<Add directory="C:\Program Files (x86)\Windows Kits\10\include\10.0.18362.0\shared"/>
+					<Add directory="C:\Program Files (x86)\Windows Kits\10\include\10.0.18362.0\um"/>
+					<Add directory="C:\Program Files (x86)\Windows Kits\10\include\10.0.18362.0\winrt"/>
+					<Add directory="C:\Program Files (x86)\Windows Kits\10\include\10.0.18362.0\cppwinrt"/>
+				</Compiler>
+				<MakeCommands>
+					<Build command="nmake /NOLOGO /f &quot;A:\Documents\Work\NerdThings\Source Code\raylib\cmake-build-debug\games\Makefile&quot; VERBOSE=1 tetris"/>
+					<CompileFile command="nmake /NOLOGO /f &quot;A:\Documents\Work\NerdThings\Source Code\raylib\cmake-build-debug\games\Makefile&quot; VERBOSE=1 &quot;$file&quot;"/>
+					<Clean command="nmake /NOLOGO /f &quot;A:\Documents\Work\NerdThings\Source Code\raylib\cmake-build-debug\games\Makefile&quot; VERBOSE=1 clean"/>
+					<DistClean command="nmake /NOLOGO /f &quot;A:\Documents\Work\NerdThings\Source Code\raylib\cmake-build-debug\games\Makefile&quot; VERBOSE=1 clean"/>
+				</MakeCommands>
+			</Target>
+			<Target title="tetris/fast">
+				<Option output="A:/Documents/Work/NerdThings/Source Code/raylib/cmake-build-debug/games/tetris.exe" prefix_auto="0" extension_auto="0"/>
+				<Option working_dir="A:/Documents/Work/NerdThings/Source Code/raylib/cmake-build-debug/games"/>
+				<Option object_output="./"/>
+				<Option type="1"/>
+				<Option compiler="msvc8"/>
+				<Compiler>
+					<Add option="-DPLATFORM_DESKTOP"/>
+					<Add option="-DGRAPHICS_API_OPENGL_33"/>
+					<Add directory="A:/Documents/Work/NerdThings/Source Code/raylib/cmake-build-debug/src"/>
+					<Add directory="A:/Documents/Work/NerdThings/Source Code/raylib/src/external/glfw/include"/>
+					<Add directory="C:\Program Files (x86)\Microsoft Visual Studio\2019\Community\VC\Tools\MSVC\14.20.27508\ATLMFC\include"/>
+					<Add directory="C:\Program Files (x86)\Microsoft Visual Studio\2019\Community\VC\Tools\MSVC\14.20.27508\include"/>
+					<Add directory="C:\Program Files (x86)\Windows Kits\NETFXSDK\4.6.1\include\um"/>
+					<Add directory="C:\Program Files (x86)\Windows Kits\10\include\10.0.18362.0\ucrt"/>
+					<Add directory="C:\Program Files (x86)\Windows Kits\10\include\10.0.18362.0\shared"/>
+					<Add directory="C:\Program Files (x86)\Windows Kits\10\include\10.0.18362.0\um"/>
+					<Add directory="C:\Program Files (x86)\Windows Kits\10\include\10.0.18362.0\winrt"/>
+					<Add directory="C:\Program Files (x86)\Windows Kits\10\include\10.0.18362.0\cppwinrt"/>
+				</Compiler>
+				<MakeCommands>
+					<Build command="nmake /NOLOGO /f &quot;A:\Documents\Work\NerdThings\Source Code\raylib\cmake-build-debug\games\Makefile&quot; VERBOSE=1 tetris/fast"/>
+					<CompileFile command="nmake /NOLOGO /f &quot;A:\Documents\Work\NerdThings\Source Code\raylib\cmake-build-debug\games\Makefile&quot; VERBOSE=1 &quot;$file&quot;"/>
+					<Clean command="nmake /NOLOGO /f &quot;A:\Documents\Work\NerdThings\Source Code\raylib\cmake-build-debug\games\Makefile&quot; VERBOSE=1 clean"/>
+					<DistClean command="nmake /NOLOGO /f &quot;A:\Documents\Work\NerdThings\Source Code\raylib\cmake-build-debug\games\Makefile&quot; VERBOSE=1 clean"/>
+				</MakeCommands>
+			</Target>
+			<Target title="drturtle">
+				<Option output="A:/Documents/Work/NerdThings/Source Code/raylib/cmake-build-debug/games/drturtle/drturtle.exe" prefix_auto="0" extension_auto="0"/>
+				<Option working_dir="A:/Documents/Work/NerdThings/Source Code/raylib/cmake-build-debug/games/drturtle"/>
+				<Option object_output="./"/>
+				<Option type="1"/>
+				<Option compiler="msvc8"/>
+				<Compiler>
+					<Add option="-DPLATFORM_DESKTOP"/>
+					<Add option="-DGRAPHICS_API_OPENGL_33"/>
+					<Add directory="A:/Documents/Work/NerdThings/Source Code/raylib/cmake-build-debug/src"/>
+					<Add directory="A:/Documents/Work/NerdThings/Source Code/raylib/src/external/glfw/include"/>
+					<Add directory="C:\Program Files (x86)\Microsoft Visual Studio\2019\Community\VC\Tools\MSVC\14.20.27508\ATLMFC\include"/>
+					<Add directory="C:\Program Files (x86)\Microsoft Visual Studio\2019\Community\VC\Tools\MSVC\14.20.27508\include"/>
+					<Add directory="C:\Program Files (x86)\Windows Kits\NETFXSDK\4.6.1\include\um"/>
+					<Add directory="C:\Program Files (x86)\Windows Kits\10\include\10.0.18362.0\ucrt"/>
+					<Add directory="C:\Program Files (x86)\Windows Kits\10\include\10.0.18362.0\shared"/>
+					<Add directory="C:\Program Files (x86)\Windows Kits\10\include\10.0.18362.0\um"/>
+					<Add directory="C:\Program Files (x86)\Windows Kits\10\include\10.0.18362.0\winrt"/>
+					<Add directory="C:\Program Files (x86)\Windows Kits\10\include\10.0.18362.0\cppwinrt"/>
+				</Compiler>
+				<MakeCommands>
+					<Build command="nmake /NOLOGO /f &quot;A:\Documents\Work\NerdThings\Source Code\raylib\cmake-build-debug\games\drturtle\Makefile&quot; VERBOSE=1 drturtle"/>
+					<CompileFile command="nmake /NOLOGO /f &quot;A:\Documents\Work\NerdThings\Source Code\raylib\cmake-build-debug\games\drturtle\Makefile&quot; VERBOSE=1 &quot;$file&quot;"/>
+					<Clean command="nmake /NOLOGO /f &quot;A:\Documents\Work\NerdThings\Source Code\raylib\cmake-build-debug\games\drturtle\Makefile&quot; VERBOSE=1 clean"/>
+					<DistClean command="nmake /NOLOGO /f &quot;A:\Documents\Work\NerdThings\Source Code\raylib\cmake-build-debug\games\drturtle\Makefile&quot; VERBOSE=1 clean"/>
+				</MakeCommands>
+			</Target>
+			<Target title="drturtle/fast">
+				<Option output="A:/Documents/Work/NerdThings/Source Code/raylib/cmake-build-debug/games/drturtle/drturtle.exe" prefix_auto="0" extension_auto="0"/>
+				<Option working_dir="A:/Documents/Work/NerdThings/Source Code/raylib/cmake-build-debug/games/drturtle"/>
+				<Option object_output="./"/>
+				<Option type="1"/>
+				<Option compiler="msvc8"/>
+				<Compiler>
+					<Add option="-DPLATFORM_DESKTOP"/>
+					<Add option="-DGRAPHICS_API_OPENGL_33"/>
+					<Add directory="A:/Documents/Work/NerdThings/Source Code/raylib/cmake-build-debug/src"/>
+					<Add directory="A:/Documents/Work/NerdThings/Source Code/raylib/src/external/glfw/include"/>
+					<Add directory="C:\Program Files (x86)\Microsoft Visual Studio\2019\Community\VC\Tools\MSVC\14.20.27508\ATLMFC\include"/>
+					<Add directory="C:\Program Files (x86)\Microsoft Visual Studio\2019\Community\VC\Tools\MSVC\14.20.27508\include"/>
+					<Add directory="C:\Program Files (x86)\Windows Kits\NETFXSDK\4.6.1\include\um"/>
+					<Add directory="C:\Program Files (x86)\Windows Kits\10\include\10.0.18362.0\ucrt"/>
+					<Add directory="C:\Program Files (x86)\Windows Kits\10\include\10.0.18362.0\shared"/>
+					<Add directory="C:\Program Files (x86)\Windows Kits\10\include\10.0.18362.0\um"/>
+					<Add directory="C:\Program Files (x86)\Windows Kits\10\include\10.0.18362.0\winrt"/>
+					<Add directory="C:\Program Files (x86)\Windows Kits\10\include\10.0.18362.0\cppwinrt"/>
+				</Compiler>
+				<MakeCommands>
+					<Build command="nmake /NOLOGO /f &quot;A:\Documents\Work\NerdThings\Source Code\raylib\cmake-build-debug\games\drturtle\Makefile&quot; VERBOSE=1 drturtle/fast"/>
+					<CompileFile command="nmake /NOLOGO /f &quot;A:\Documents\Work\NerdThings\Source Code\raylib\cmake-build-debug\games\drturtle\Makefile&quot; VERBOSE=1 &quot;$file&quot;"/>
+					<Clean command="nmake /NOLOGO /f &quot;A:\Documents\Work\NerdThings\Source Code\raylib\cmake-build-debug\games\drturtle\Makefile&quot; VERBOSE=1 clean"/>
+					<DistClean command="nmake /NOLOGO /f &quot;A:\Documents\Work\NerdThings\Source Code\raylib\cmake-build-debug\games\drturtle\Makefile&quot; VERBOSE=1 clean"/>
+				</MakeCommands>
+			</Target>
+			<Target title="just_do">
+				<Option output="A:/Documents/Work/NerdThings/Source Code/raylib/cmake-build-debug/games/just_do/just_do.exe" prefix_auto="0" extension_auto="0"/>
+				<Option working_dir="A:/Documents/Work/NerdThings/Source Code/raylib/cmake-build-debug/games/just_do"/>
+				<Option object_output="./"/>
+				<Option type="1"/>
+				<Option compiler="msvc8"/>
+				<Compiler>
+					<Add option="-DPLATFORM_DESKTOP"/>
+					<Add option="-DGRAPHICS_API_OPENGL_33"/>
+					<Add directory="A:/Documents/Work/NerdThings/Source Code/raylib/cmake-build-debug/src"/>
+					<Add directory="A:/Documents/Work/NerdThings/Source Code/raylib/src/external/glfw/include"/>
+					<Add directory="C:\Program Files (x86)\Microsoft Visual Studio\2019\Community\VC\Tools\MSVC\14.20.27508\ATLMFC\include"/>
+					<Add directory="C:\Program Files (x86)\Microsoft Visual Studio\2019\Community\VC\Tools\MSVC\14.20.27508\include"/>
+					<Add directory="C:\Program Files (x86)\Windows Kits\NETFXSDK\4.6.1\include\um"/>
+					<Add directory="C:\Program Files (x86)\Windows Kits\10\include\10.0.18362.0\ucrt"/>
+					<Add directory="C:\Program Files (x86)\Windows Kits\10\include\10.0.18362.0\shared"/>
+					<Add directory="C:\Program Files (x86)\Windows Kits\10\include\10.0.18362.0\um"/>
+					<Add directory="C:\Program Files (x86)\Windows Kits\10\include\10.0.18362.0\winrt"/>
+					<Add directory="C:\Program Files (x86)\Windows Kits\10\include\10.0.18362.0\cppwinrt"/>
+				</Compiler>
+				<MakeCommands>
+					<Build command="nmake /NOLOGO /f &quot;A:\Documents\Work\NerdThings\Source Code\raylib\cmake-build-debug\games\just_do\Makefile&quot; VERBOSE=1 just_do"/>
+					<CompileFile command="nmake /NOLOGO /f &quot;A:\Documents\Work\NerdThings\Source Code\raylib\cmake-build-debug\games\just_do\Makefile&quot; VERBOSE=1 &quot;$file&quot;"/>
+					<Clean command="nmake /NOLOGO /f &quot;A:\Documents\Work\NerdThings\Source Code\raylib\cmake-build-debug\games\just_do\Makefile&quot; VERBOSE=1 clean"/>
+					<DistClean command="nmake /NOLOGO /f &quot;A:\Documents\Work\NerdThings\Source Code\raylib\cmake-build-debug\games\just_do\Makefile&quot; VERBOSE=1 clean"/>
+				</MakeCommands>
+			</Target>
+			<Target title="just_do/fast">
+				<Option output="A:/Documents/Work/NerdThings/Source Code/raylib/cmake-build-debug/games/just_do/just_do.exe" prefix_auto="0" extension_auto="0"/>
+				<Option working_dir="A:/Documents/Work/NerdThings/Source Code/raylib/cmake-build-debug/games/just_do"/>
+				<Option object_output="./"/>
+				<Option type="1"/>
+				<Option compiler="msvc8"/>
+				<Compiler>
+					<Add option="-DPLATFORM_DESKTOP"/>
+					<Add option="-DGRAPHICS_API_OPENGL_33"/>
+					<Add directory="A:/Documents/Work/NerdThings/Source Code/raylib/cmake-build-debug/src"/>
+					<Add directory="A:/Documents/Work/NerdThings/Source Code/raylib/src/external/glfw/include"/>
+					<Add directory="C:\Program Files (x86)\Microsoft Visual Studio\2019\Community\VC\Tools\MSVC\14.20.27508\ATLMFC\include"/>
+					<Add directory="C:\Program Files (x86)\Microsoft Visual Studio\2019\Community\VC\Tools\MSVC\14.20.27508\include"/>
+					<Add directory="C:\Program Files (x86)\Windows Kits\NETFXSDK\4.6.1\include\um"/>
+					<Add directory="C:\Program Files (x86)\Windows Kits\10\include\10.0.18362.0\ucrt"/>
+					<Add directory="C:\Program Files (x86)\Windows Kits\10\include\10.0.18362.0\shared"/>
+					<Add directory="C:\Program Files (x86)\Windows Kits\10\include\10.0.18362.0\um"/>
+					<Add directory="C:\Program Files (x86)\Windows Kits\10\include\10.0.18362.0\winrt"/>
+					<Add directory="C:\Program Files (x86)\Windows Kits\10\include\10.0.18362.0\cppwinrt"/>
+				</Compiler>
+				<MakeCommands>
+					<Build command="nmake /NOLOGO /f &quot;A:\Documents\Work\NerdThings\Source Code\raylib\cmake-build-debug\games\just_do\Makefile&quot; VERBOSE=1 just_do/fast"/>
+					<CompileFile command="nmake /NOLOGO /f &quot;A:\Documents\Work\NerdThings\Source Code\raylib\cmake-build-debug\games\just_do\Makefile&quot; VERBOSE=1 &quot;$file&quot;"/>
+					<Clean command="nmake /NOLOGO /f &quot;A:\Documents\Work\NerdThings\Source Code\raylib\cmake-build-debug\games\just_do\Makefile&quot; VERBOSE=1 clean"/>
+					<DistClean command="nmake /NOLOGO /f &quot;A:\Documents\Work\NerdThings\Source Code\raylib\cmake-build-debug\games\just_do\Makefile&quot; VERBOSE=1 clean"/>
+				</MakeCommands>
+			</Target>
+			<Target title="koala_seasons">
+				<Option output="A:/Documents/Work/NerdThings/Source Code/raylib/cmake-build-debug/games/koala_seasons/koala_seasons.exe" prefix_auto="0" extension_auto="0"/>
+				<Option working_dir="A:/Documents/Work/NerdThings/Source Code/raylib/cmake-build-debug/games/koala_seasons"/>
+				<Option object_output="./"/>
+				<Option type="1"/>
+				<Option compiler="msvc8"/>
+				<Compiler>
+					<Add option="-DPLATFORM_DESKTOP"/>
+					<Add option="-DGRAPHICS_API_OPENGL_33"/>
+					<Add directory="A:/Documents/Work/NerdThings/Source Code/raylib/cmake-build-debug/src"/>
+					<Add directory="A:/Documents/Work/NerdThings/Source Code/raylib/src/external/glfw/include"/>
+					<Add directory="C:\Program Files (x86)\Microsoft Visual Studio\2019\Community\VC\Tools\MSVC\14.20.27508\ATLMFC\include"/>
+					<Add directory="C:\Program Files (x86)\Microsoft Visual Studio\2019\Community\VC\Tools\MSVC\14.20.27508\include"/>
+					<Add directory="C:\Program Files (x86)\Windows Kits\NETFXSDK\4.6.1\include\um"/>
+					<Add directory="C:\Program Files (x86)\Windows Kits\10\include\10.0.18362.0\ucrt"/>
+					<Add directory="C:\Program Files (x86)\Windows Kits\10\include\10.0.18362.0\shared"/>
+					<Add directory="C:\Program Files (x86)\Windows Kits\10\include\10.0.18362.0\um"/>
+					<Add directory="C:\Program Files (x86)\Windows Kits\10\include\10.0.18362.0\winrt"/>
+					<Add directory="C:\Program Files (x86)\Windows Kits\10\include\10.0.18362.0\cppwinrt"/>
+				</Compiler>
+				<MakeCommands>
+					<Build command="nmake /NOLOGO /f &quot;A:\Documents\Work\NerdThings\Source Code\raylib\cmake-build-debug\games\koala_seasons\Makefile&quot; VERBOSE=1 koala_seasons"/>
+					<CompileFile command="nmake /NOLOGO /f &quot;A:\Documents\Work\NerdThings\Source Code\raylib\cmake-build-debug\games\koala_seasons\Makefile&quot; VERBOSE=1 &quot;$file&quot;"/>
+					<Clean command="nmake /NOLOGO /f &quot;A:\Documents\Work\NerdThings\Source Code\raylib\cmake-build-debug\games\koala_seasons\Makefile&quot; VERBOSE=1 clean"/>
+					<DistClean command="nmake /NOLOGO /f &quot;A:\Documents\Work\NerdThings\Source Code\raylib\cmake-build-debug\games\koala_seasons\Makefile&quot; VERBOSE=1 clean"/>
+				</MakeCommands>
+			</Target>
+			<Target title="koala_seasons/fast">
+				<Option output="A:/Documents/Work/NerdThings/Source Code/raylib/cmake-build-debug/games/koala_seasons/koala_seasons.exe" prefix_auto="0" extension_auto="0"/>
+				<Option working_dir="A:/Documents/Work/NerdThings/Source Code/raylib/cmake-build-debug/games/koala_seasons"/>
+				<Option object_output="./"/>
+				<Option type="1"/>
+				<Option compiler="msvc8"/>
+				<Compiler>
+					<Add option="-DPLATFORM_DESKTOP"/>
+					<Add option="-DGRAPHICS_API_OPENGL_33"/>
+					<Add directory="A:/Documents/Work/NerdThings/Source Code/raylib/cmake-build-debug/src"/>
+					<Add directory="A:/Documents/Work/NerdThings/Source Code/raylib/src/external/glfw/include"/>
+					<Add directory="C:\Program Files (x86)\Microsoft Visual Studio\2019\Community\VC\Tools\MSVC\14.20.27508\ATLMFC\include"/>
+					<Add directory="C:\Program Files (x86)\Microsoft Visual Studio\2019\Community\VC\Tools\MSVC\14.20.27508\include"/>
+					<Add directory="C:\Program Files (x86)\Windows Kits\NETFXSDK\4.6.1\include\um"/>
+					<Add directory="C:\Program Files (x86)\Windows Kits\10\include\10.0.18362.0\ucrt"/>
+					<Add directory="C:\Program Files (x86)\Windows Kits\10\include\10.0.18362.0\shared"/>
+					<Add directory="C:\Program Files (x86)\Windows Kits\10\include\10.0.18362.0\um"/>
+					<Add directory="C:\Program Files (x86)\Windows Kits\10\include\10.0.18362.0\winrt"/>
+					<Add directory="C:\Program Files (x86)\Windows Kits\10\include\10.0.18362.0\cppwinrt"/>
+				</Compiler>
+				<MakeCommands>
+					<Build command="nmake /NOLOGO /f &quot;A:\Documents\Work\NerdThings\Source Code\raylib\cmake-build-debug\games\koala_seasons\Makefile&quot; VERBOSE=1 koala_seasons/fast"/>
+					<CompileFile command="nmake /NOLOGO /f &quot;A:\Documents\Work\NerdThings\Source Code\raylib\cmake-build-debug\games\koala_seasons\Makefile&quot; VERBOSE=1 &quot;$file&quot;"/>
+					<Clean command="nmake /NOLOGO /f &quot;A:\Documents\Work\NerdThings\Source Code\raylib\cmake-build-debug\games\koala_seasons\Makefile&quot; VERBOSE=1 clean"/>
+					<DistClean command="nmake /NOLOGO /f &quot;A:\Documents\Work\NerdThings\Source Code\raylib\cmake-build-debug\games\koala_seasons\Makefile&quot; VERBOSE=1 clean"/>
+				</MakeCommands>
+			</Target>
+			<Target title="light_my_ritual">
+				<Option output="A:/Documents/Work/NerdThings/Source Code/raylib/cmake-build-debug/games/light_my_ritual/light_my_ritual.exe" prefix_auto="0" extension_auto="0"/>
+				<Option working_dir="A:/Documents/Work/NerdThings/Source Code/raylib/cmake-build-debug/games/light_my_ritual"/>
+				<Option object_output="./"/>
+				<Option type="1"/>
+				<Option compiler="msvc8"/>
+				<Compiler>
+					<Add option="-DPLATFORM_DESKTOP"/>
+					<Add option="-DGRAPHICS_API_OPENGL_33"/>
+					<Add directory="A:/Documents/Work/NerdThings/Source Code/raylib/cmake-build-debug/src"/>
+					<Add directory="A:/Documents/Work/NerdThings/Source Code/raylib/src/external/glfw/include"/>
+					<Add directory="C:\Program Files (x86)\Microsoft Visual Studio\2019\Community\VC\Tools\MSVC\14.20.27508\ATLMFC\include"/>
+					<Add directory="C:\Program Files (x86)\Microsoft Visual Studio\2019\Community\VC\Tools\MSVC\14.20.27508\include"/>
+					<Add directory="C:\Program Files (x86)\Windows Kits\NETFXSDK\4.6.1\include\um"/>
+					<Add directory="C:\Program Files (x86)\Windows Kits\10\include\10.0.18362.0\ucrt"/>
+					<Add directory="C:\Program Files (x86)\Windows Kits\10\include\10.0.18362.0\shared"/>
+					<Add directory="C:\Program Files (x86)\Windows Kits\10\include\10.0.18362.0\um"/>
+					<Add directory="C:\Program Files (x86)\Windows Kits\10\include\10.0.18362.0\winrt"/>
+					<Add directory="C:\Program Files (x86)\Windows Kits\10\include\10.0.18362.0\cppwinrt"/>
+				</Compiler>
+				<MakeCommands>
+					<Build command="nmake /NOLOGO /f &quot;A:\Documents\Work\NerdThings\Source Code\raylib\cmake-build-debug\games\light_my_ritual\Makefile&quot; VERBOSE=1 light_my_ritual"/>
+					<CompileFile command="nmake /NOLOGO /f &quot;A:\Documents\Work\NerdThings\Source Code\raylib\cmake-build-debug\games\light_my_ritual\Makefile&quot; VERBOSE=1 &quot;$file&quot;"/>
+					<Clean command="nmake /NOLOGO /f &quot;A:\Documents\Work\NerdThings\Source Code\raylib\cmake-build-debug\games\light_my_ritual\Makefile&quot; VERBOSE=1 clean"/>
+					<DistClean command="nmake /NOLOGO /f &quot;A:\Documents\Work\NerdThings\Source Code\raylib\cmake-build-debug\games\light_my_ritual\Makefile&quot; VERBOSE=1 clean"/>
+				</MakeCommands>
+			</Target>
+			<Target title="light_my_ritual/fast">
+				<Option output="A:/Documents/Work/NerdThings/Source Code/raylib/cmake-build-debug/games/light_my_ritual/light_my_ritual.exe" prefix_auto="0" extension_auto="0"/>
+				<Option working_dir="A:/Documents/Work/NerdThings/Source Code/raylib/cmake-build-debug/games/light_my_ritual"/>
+				<Option object_output="./"/>
+				<Option type="1"/>
+				<Option compiler="msvc8"/>
+				<Compiler>
+					<Add option="-DPLATFORM_DESKTOP"/>
+					<Add option="-DGRAPHICS_API_OPENGL_33"/>
+					<Add directory="A:/Documents/Work/NerdThings/Source Code/raylib/cmake-build-debug/src"/>
+					<Add directory="A:/Documents/Work/NerdThings/Source Code/raylib/src/external/glfw/include"/>
+					<Add directory="C:\Program Files (x86)\Microsoft Visual Studio\2019\Community\VC\Tools\MSVC\14.20.27508\ATLMFC\include"/>
+					<Add directory="C:\Program Files (x86)\Microsoft Visual Studio\2019\Community\VC\Tools\MSVC\14.20.27508\include"/>
+					<Add directory="C:\Program Files (x86)\Windows Kits\NETFXSDK\4.6.1\include\um"/>
+					<Add directory="C:\Program Files (x86)\Windows Kits\10\include\10.0.18362.0\ucrt"/>
+					<Add directory="C:\Program Files (x86)\Windows Kits\10\include\10.0.18362.0\shared"/>
+					<Add directory="C:\Program Files (x86)\Windows Kits\10\include\10.0.18362.0\um"/>
+					<Add directory="C:\Program Files (x86)\Windows Kits\10\include\10.0.18362.0\winrt"/>
+					<Add directory="C:\Program Files (x86)\Windows Kits\10\include\10.0.18362.0\cppwinrt"/>
+				</Compiler>
+				<MakeCommands>
+					<Build command="nmake /NOLOGO /f &quot;A:\Documents\Work\NerdThings\Source Code\raylib\cmake-build-debug\games\light_my_ritual\Makefile&quot; VERBOSE=1 light_my_ritual/fast"/>
+					<CompileFile command="nmake /NOLOGO /f &quot;A:\Documents\Work\NerdThings\Source Code\raylib\cmake-build-debug\games\light_my_ritual\Makefile&quot; VERBOSE=1 &quot;$file&quot;"/>
+					<Clean command="nmake /NOLOGO /f &quot;A:\Documents\Work\NerdThings\Source Code\raylib\cmake-build-debug\games\light_my_ritual\Makefile&quot; VERBOSE=1 clean"/>
+					<DistClean command="nmake /NOLOGO /f &quot;A:\Documents\Work\NerdThings\Source Code\raylib\cmake-build-debug\games\light_my_ritual\Makefile&quot; VERBOSE=1 clean"/>
+				</MakeCommands>
+			</Target>
+			<Target title="skully_escape">
+				<Option output="A:/Documents/Work/NerdThings/Source Code/raylib/cmake-build-debug/games/skully_escape/skully_escape.exe" prefix_auto="0" extension_auto="0"/>
+				<Option working_dir="A:/Documents/Work/NerdThings/Source Code/raylib/cmake-build-debug/games/skully_escape"/>
+				<Option object_output="./"/>
+				<Option type="1"/>
+				<Option compiler="msvc8"/>
+				<Compiler>
+					<Add option="-DPLATFORM_DESKTOP"/>
+					<Add option="-DGRAPHICS_API_OPENGL_33"/>
+					<Add directory="A:/Documents/Work/NerdThings/Source Code/raylib/cmake-build-debug/src"/>
+					<Add directory="A:/Documents/Work/NerdThings/Source Code/raylib/src/external/glfw/include"/>
+					<Add directory="C:\Program Files (x86)\Microsoft Visual Studio\2019\Community\VC\Tools\MSVC\14.20.27508\ATLMFC\include"/>
+					<Add directory="C:\Program Files (x86)\Microsoft Visual Studio\2019\Community\VC\Tools\MSVC\14.20.27508\include"/>
+					<Add directory="C:\Program Files (x86)\Windows Kits\NETFXSDK\4.6.1\include\um"/>
+					<Add directory="C:\Program Files (x86)\Windows Kits\10\include\10.0.18362.0\ucrt"/>
+					<Add directory="C:\Program Files (x86)\Windows Kits\10\include\10.0.18362.0\shared"/>
+					<Add directory="C:\Program Files (x86)\Windows Kits\10\include\10.0.18362.0\um"/>
+					<Add directory="C:\Program Files (x86)\Windows Kits\10\include\10.0.18362.0\winrt"/>
+					<Add directory="C:\Program Files (x86)\Windows Kits\10\include\10.0.18362.0\cppwinrt"/>
+				</Compiler>
+				<MakeCommands>
+					<Build command="nmake /NOLOGO /f &quot;A:\Documents\Work\NerdThings\Source Code\raylib\cmake-build-debug\games\skully_escape\Makefile&quot; VERBOSE=1 skully_escape"/>
+					<CompileFile command="nmake /NOLOGO /f &quot;A:\Documents\Work\NerdThings\Source Code\raylib\cmake-build-debug\games\skully_escape\Makefile&quot; VERBOSE=1 &quot;$file&quot;"/>
+					<Clean command="nmake /NOLOGO /f &quot;A:\Documents\Work\NerdThings\Source Code\raylib\cmake-build-debug\games\skully_escape\Makefile&quot; VERBOSE=1 clean"/>
+					<DistClean command="nmake /NOLOGO /f &quot;A:\Documents\Work\NerdThings\Source Code\raylib\cmake-build-debug\games\skully_escape\Makefile&quot; VERBOSE=1 clean"/>
+				</MakeCommands>
+			</Target>
+			<Target title="skully_escape/fast">
+				<Option output="A:/Documents/Work/NerdThings/Source Code/raylib/cmake-build-debug/games/skully_escape/skully_escape.exe" prefix_auto="0" extension_auto="0"/>
+				<Option working_dir="A:/Documents/Work/NerdThings/Source Code/raylib/cmake-build-debug/games/skully_escape"/>
+				<Option object_output="./"/>
+				<Option type="1"/>
+				<Option compiler="msvc8"/>
+				<Compiler>
+					<Add option="-DPLATFORM_DESKTOP"/>
+					<Add option="-DGRAPHICS_API_OPENGL_33"/>
+					<Add directory="A:/Documents/Work/NerdThings/Source Code/raylib/cmake-build-debug/src"/>
+					<Add directory="A:/Documents/Work/NerdThings/Source Code/raylib/src/external/glfw/include"/>
+					<Add directory="C:\Program Files (x86)\Microsoft Visual Studio\2019\Community\VC\Tools\MSVC\14.20.27508\ATLMFC\include"/>
+					<Add directory="C:\Program Files (x86)\Microsoft Visual Studio\2019\Community\VC\Tools\MSVC\14.20.27508\include"/>
+					<Add directory="C:\Program Files (x86)\Windows Kits\NETFXSDK\4.6.1\include\um"/>
+					<Add directory="C:\Program Files (x86)\Windows Kits\10\include\10.0.18362.0\ucrt"/>
+					<Add directory="C:\Program Files (x86)\Windows Kits\10\include\10.0.18362.0\shared"/>
+					<Add directory="C:\Program Files (x86)\Windows Kits\10\include\10.0.18362.0\um"/>
+					<Add directory="C:\Program Files (x86)\Windows Kits\10\include\10.0.18362.0\winrt"/>
+					<Add directory="C:\Program Files (x86)\Windows Kits\10\include\10.0.18362.0\cppwinrt"/>
+				</Compiler>
+				<MakeCommands>
+					<Build command="nmake /NOLOGO /f &quot;A:\Documents\Work\NerdThings\Source Code\raylib\cmake-build-debug\games\skully_escape\Makefile&quot; VERBOSE=1 skully_escape/fast"/>
+					<CompileFile command="nmake /NOLOGO /f &quot;A:\Documents\Work\NerdThings\Source Code\raylib\cmake-build-debug\games\skully_escape\Makefile&quot; VERBOSE=1 &quot;$file&quot;"/>
+					<Clean command="nmake /NOLOGO /f &quot;A:\Documents\Work\NerdThings\Source Code\raylib\cmake-build-debug\games\skully_escape\Makefile&quot; VERBOSE=1 clean"/>
+					<DistClean command="nmake /NOLOGO /f &quot;A:\Documents\Work\NerdThings\Source Code\raylib\cmake-build-debug\games\skully_escape\Makefile&quot; VERBOSE=1 clean"/>
+				</MakeCommands>
+			</Target>
+			<Target title="wave_collector">
+				<Option output="A:/Documents/Work/NerdThings/Source Code/raylib/cmake-build-debug/games/wave_collector/wave_collector.exe" prefix_auto="0" extension_auto="0"/>
+				<Option working_dir="A:/Documents/Work/NerdThings/Source Code/raylib/cmake-build-debug/games/wave_collector"/>
+				<Option object_output="./"/>
+				<Option type="1"/>
+				<Option compiler="msvc8"/>
+				<Compiler>
+					<Add option="-DPLATFORM_DESKTOP"/>
+					<Add option="-DGRAPHICS_API_OPENGL_33"/>
+					<Add directory="A:/Documents/Work/NerdThings/Source Code/raylib/cmake-build-debug/src"/>
+					<Add directory="A:/Documents/Work/NerdThings/Source Code/raylib/src/external/glfw/include"/>
+					<Add directory="C:\Program Files (x86)\Microsoft Visual Studio\2019\Community\VC\Tools\MSVC\14.20.27508\ATLMFC\include"/>
+					<Add directory="C:\Program Files (x86)\Microsoft Visual Studio\2019\Community\VC\Tools\MSVC\14.20.27508\include"/>
+					<Add directory="C:\Program Files (x86)\Windows Kits\NETFXSDK\4.6.1\include\um"/>
+					<Add directory="C:\Program Files (x86)\Windows Kits\10\include\10.0.18362.0\ucrt"/>
+					<Add directory="C:\Program Files (x86)\Windows Kits\10\include\10.0.18362.0\shared"/>
+					<Add directory="C:\Program Files (x86)\Windows Kits\10\include\10.0.18362.0\um"/>
+					<Add directory="C:\Program Files (x86)\Windows Kits\10\include\10.0.18362.0\winrt"/>
+					<Add directory="C:\Program Files (x86)\Windows Kits\10\include\10.0.18362.0\cppwinrt"/>
+				</Compiler>
+				<MakeCommands>
+					<Build command="nmake /NOLOGO /f &quot;A:\Documents\Work\NerdThings\Source Code\raylib\cmake-build-debug\games\wave_collector\Makefile&quot; VERBOSE=1 wave_collector"/>
+					<CompileFile command="nmake /NOLOGO /f &quot;A:\Documents\Work\NerdThings\Source Code\raylib\cmake-build-debug\games\wave_collector\Makefile&quot; VERBOSE=1 &quot;$file&quot;"/>
+					<Clean command="nmake /NOLOGO /f &quot;A:\Documents\Work\NerdThings\Source Code\raylib\cmake-build-debug\games\wave_collector\Makefile&quot; VERBOSE=1 clean"/>
+					<DistClean command="nmake /NOLOGO /f &quot;A:\Documents\Work\NerdThings\Source Code\raylib\cmake-build-debug\games\wave_collector\Makefile&quot; VERBOSE=1 clean"/>
+				</MakeCommands>
+			</Target>
+			<Target title="wave_collector/fast">
+				<Option output="A:/Documents/Work/NerdThings/Source Code/raylib/cmake-build-debug/games/wave_collector/wave_collector.exe" prefix_auto="0" extension_auto="0"/>
+				<Option working_dir="A:/Documents/Work/NerdThings/Source Code/raylib/cmake-build-debug/games/wave_collector"/>
+				<Option object_output="./"/>
+				<Option type="1"/>
+				<Option compiler="msvc8"/>
+				<Compiler>
+					<Add option="-DPLATFORM_DESKTOP"/>
+					<Add option="-DGRAPHICS_API_OPENGL_33"/>
+					<Add directory="A:/Documents/Work/NerdThings/Source Code/raylib/cmake-build-debug/src"/>
+					<Add directory="A:/Documents/Work/NerdThings/Source Code/raylib/src/external/glfw/include"/>
+					<Add directory="C:\Program Files (x86)\Microsoft Visual Studio\2019\Community\VC\Tools\MSVC\14.20.27508\ATLMFC\include"/>
+					<Add directory="C:\Program Files (x86)\Microsoft Visual Studio\2019\Community\VC\Tools\MSVC\14.20.27508\include"/>
+					<Add directory="C:\Program Files (x86)\Windows Kits\NETFXSDK\4.6.1\include\um"/>
+					<Add directory="C:\Program Files (x86)\Windows Kits\10\include\10.0.18362.0\ucrt"/>
+					<Add directory="C:\Program Files (x86)\Windows Kits\10\include\10.0.18362.0\shared"/>
+					<Add directory="C:\Program Files (x86)\Windows Kits\10\include\10.0.18362.0\um"/>
+					<Add directory="C:\Program Files (x86)\Windows Kits\10\include\10.0.18362.0\winrt"/>
+					<Add directory="C:\Program Files (x86)\Windows Kits\10\include\10.0.18362.0\cppwinrt"/>
+				</Compiler>
+				<MakeCommands>
+					<Build command="nmake /NOLOGO /f &quot;A:\Documents\Work\NerdThings\Source Code\raylib\cmake-build-debug\games\wave_collector\Makefile&quot; VERBOSE=1 wave_collector/fast"/>
+					<CompileFile command="nmake /NOLOGO /f &quot;A:\Documents\Work\NerdThings\Source Code\raylib\cmake-build-debug\games\wave_collector\Makefile&quot; VERBOSE=1 &quot;$file&quot;"/>
+					<Clean command="nmake /NOLOGO /f &quot;A:\Documents\Work\NerdThings\Source Code\raylib\cmake-build-debug\games\wave_collector\Makefile&quot; VERBOSE=1 clean"/>
+					<DistClean command="nmake /NOLOGO /f &quot;A:\Documents\Work\NerdThings\Source Code\raylib\cmake-build-debug\games\wave_collector\Makefile&quot; VERBOSE=1 clean"/>
+				</MakeCommands>
+			</Target>
+		</Build>
+		<Unit filename="A:/Documents/Work/NerdThings/Source Code/raylib/games/arkanoid.c">
+			<Option target="arkanoid"/>
+		</Unit>
+		<Unit filename="A:/Documents/Work/NerdThings/Source Code/raylib/games/asteroids.c">
+			<Option target="asteroids"/>
+		</Unit>
+		<Unit filename="A:/Documents/Work/NerdThings/Source Code/raylib/games/asteroids_survival.c">
+			<Option target="asteroids_survival"/>
+		</Unit>
+		<Unit filename="A:/Documents/Work/NerdThings/Source Code/raylib/games/drturtle/06_drturtle_final.c">
+			<Option target="drturtle"/>
+		</Unit>
+		<Unit filename="A:/Documents/Work/NerdThings/Source Code/raylib/games/floppy.c">
+			<Option target="floppy"/>
+		</Unit>
+		<Unit filename="A:/Documents/Work/NerdThings/Source Code/raylib/games/gold_fever.c">
+			<Option target="gold_fever"/>
+		</Unit>
+		<Unit filename="A:/Documents/Work/NerdThings/Source Code/raylib/games/gorilas.c">
+			<Option target="gorilas"/>
+		</Unit>
+		<Unit filename="A:/Documents/Work/NerdThings/Source Code/raylib/games/just_do/just_do.c">
+			<Option target="just_do"/>
+		</Unit>
+		<Unit filename="A:/Documents/Work/NerdThings/Source Code/raylib/games/just_do/screens/screen_level00.c">
+			<Option target="just_do"/>
+		</Unit>
+		<Unit filename="A:/Documents/Work/NerdThings/Source Code/raylib/games/just_do/screens/screen_level01.c">
+			<Option target="just_do"/>
+		</Unit>
+		<Unit filename="A:/Documents/Work/NerdThings/Source Code/raylib/games/just_do/screens/screen_level02.c">
+			<Option target="just_do"/>
+		</Unit>
+		<Unit filename="A:/Documents/Work/NerdThings/Source Code/raylib/games/just_do/screens/screen_level03.c">
+			<Option target="just_do"/>
+		</Unit>
+		<Unit filename="A:/Documents/Work/NerdThings/Source Code/raylib/games/just_do/screens/screen_level04.c">
+			<Option target="just_do"/>
+		</Unit>
+		<Unit filename="A:/Documents/Work/NerdThings/Source Code/raylib/games/just_do/screens/screen_level05.c">
+			<Option target="just_do"/>
+		</Unit>
+		<Unit filename="A:/Documents/Work/NerdThings/Source Code/raylib/games/just_do/screens/screen_level06.c">
+			<Option target="just_do"/>
+		</Unit>
+		<Unit filename="A:/Documents/Work/NerdThings/Source Code/raylib/games/just_do/screens/screen_level07.c">
+			<Option target="just_do"/>
+		</Unit>
+		<Unit filename="A:/Documents/Work/NerdThings/Source Code/raylib/games/just_do/screens/screen_level08.c">
+			<Option target="just_do"/>
+		</Unit>
+		<Unit filename="A:/Documents/Work/NerdThings/Source Code/raylib/games/just_do/screens/screen_level09.c">
+			<Option target="just_do"/>
+		</Unit>
+		<Unit filename="A:/Documents/Work/NerdThings/Source Code/raylib/games/just_do/screens/screen_level10.c">
+			<Option target="just_do"/>
+		</Unit>
+		<Unit filename="A:/Documents/Work/NerdThings/Source Code/raylib/games/just_do/screens/screen_logo.c">
+			<Option target="just_do"/>
+		</Unit>
+		<Unit filename="A:/Documents/Work/NerdThings/Source Code/raylib/games/koala_seasons/koala_seasons.c">
+			<Option target="koala_seasons"/>
+		</Unit>
+		<Unit filename="A:/Documents/Work/NerdThings/Source Code/raylib/games/koala_seasons/screens/screen_ending.c">
+			<Option target="koala_seasons"/>
+		</Unit>
+		<Unit filename="A:/Documents/Work/NerdThings/Source Code/raylib/games/koala_seasons/screens/screen_gameplay.c">
+			<Option target="koala_seasons"/>
+		</Unit>
+		<Unit filename="A:/Documents/Work/NerdThings/Source Code/raylib/games/koala_seasons/screens/screen_logo.c">
+			<Option target="koala_seasons"/>
+		</Unit>
+		<Unit filename="A:/Documents/Work/NerdThings/Source Code/raylib/games/koala_seasons/screens/screen_title.c">
+			<Option target="koala_seasons"/>
+		</Unit>
+		<Unit filename="A:/Documents/Work/NerdThings/Source Code/raylib/games/light_my_ritual/light_my_ritual.c">
+			<Option target="light_my_ritual"/>
+		</Unit>
+		<Unit filename="A:/Documents/Work/NerdThings/Source Code/raylib/games/light_my_ritual/screens/screen_gameplay.c">
+			<Option target="light_my_ritual"/>
+		</Unit>
+		<Unit filename="A:/Documents/Work/NerdThings/Source Code/raylib/games/light_my_ritual/screens/screen_logo_raylib.c">
+			<Option target="light_my_ritual"/>
+		</Unit>
+		<Unit filename="A:/Documents/Work/NerdThings/Source Code/raylib/games/light_my_ritual/screens/screen_title.c">
+			<Option target="light_my_ritual"/>
+		</Unit>
+		<Unit filename="A:/Documents/Work/NerdThings/Source Code/raylib/games/missile_commander.c">
+			<Option target="missile_commander"/>
+		</Unit>
+		<Unit filename="A:/Documents/Work/NerdThings/Source Code/raylib/games/pang.c">
+			<Option target="pang"/>
+		</Unit>
+		<Unit filename="A:/Documents/Work/NerdThings/Source Code/raylib/games/skully_escape/monster.c">
+			<Option target="skully_escape"/>
+		</Unit>
+		<Unit filename="A:/Documents/Work/NerdThings/Source Code/raylib/games/skully_escape/monster.h">
+			<Option target="skully_escape"/>
+		</Unit>
+		<Unit filename="A:/Documents/Work/NerdThings/Source Code/raylib/games/skully_escape/player.c">
+			<Option target="skully_escape"/>
+		</Unit>
+		<Unit filename="A:/Documents/Work/NerdThings/Source Code/raylib/games/skully_escape/player.h">
+			<Option target="skully_escape"/>
+		</Unit>
+		<Unit filename="A:/Documents/Work/NerdThings/Source Code/raylib/games/skully_escape/screens/screen_aisle01.c">
+			<Option target="skully_escape"/>
+		</Unit>
+		<Unit filename="A:/Documents/Work/NerdThings/Source Code/raylib/games/skully_escape/screens/screen_aisle02.c">
+			<Option target="skully_escape"/>
+		</Unit>
+		<Unit filename="A:/Documents/Work/NerdThings/Source Code/raylib/games/skully_escape/screens/screen_armory.c">
+			<Option target="skully_escape"/>
+		</Unit>
+		<Unit filename="A:/Documents/Work/NerdThings/Source Code/raylib/games/skully_escape/screens/screen_attic.c">
+			<Option target="skully_escape"/>
+		</Unit>
+		<Unit filename="A:/Documents/Work/NerdThings/Source Code/raylib/games/skully_escape/screens/screen_bathroom.c">
+			<Option target="skully_escape"/>
+		</Unit>
+		<Unit filename="A:/Documents/Work/NerdThings/Source Code/raylib/games/skully_escape/screens/screen_ending.c">
+			<Option target="skully_escape"/>
+		</Unit>
+		<Unit filename="A:/Documents/Work/NerdThings/Source Code/raylib/games/skully_escape/screens/screen_kitchen.c">
+			<Option target="skully_escape"/>
+		</Unit>
+		<Unit filename="A:/Documents/Work/NerdThings/Source Code/raylib/games/skully_escape/screens/screen_livingroom.c">
+			<Option target="skully_escape"/>
+		</Unit>
+		<Unit filename="A:/Documents/Work/NerdThings/Source Code/raylib/games/skully_escape/screens/screen_logo.c">
+			<Option target="skully_escape"/>
+		</Unit>
+		<Unit filename="A:/Documents/Work/NerdThings/Source Code/raylib/games/skully_escape/screens/screen_logo_raylib.c">
+			<Option target="skully_escape"/>
+		</Unit>
+		<Unit filename="A:/Documents/Work/NerdThings/Source Code/raylib/games/skully_escape/screens/screen_title.c">
+			<Option target="skully_escape"/>
+		</Unit>
+		<Unit filename="A:/Documents/Work/NerdThings/Source Code/raylib/games/skully_escape/skully_escape.c">
+			<Option target="skully_escape"/>
+		</Unit>
+		<Unit filename="A:/Documents/Work/NerdThings/Source Code/raylib/games/snake.c">
+			<Option target="snake"/>
+		</Unit>
+		<Unit filename="A:/Documents/Work/NerdThings/Source Code/raylib/games/space_invaders.c">
+			<Option target="space_invaders"/>
+		</Unit>
+		<Unit filename="A:/Documents/Work/NerdThings/Source Code/raylib/games/tetris.c">
+			<Option target="tetris"/>
+		</Unit>
+		<Unit filename="A:/Documents/Work/NerdThings/Source Code/raylib/games/wave_collector/screens/screen_ending.c">
+			<Option target="wave_collector"/>
+		</Unit>
+		<Unit filename="A:/Documents/Work/NerdThings/Source Code/raylib/games/wave_collector/screens/screen_gameplay.c">
+			<Option target="wave_collector"/>
+		</Unit>
+		<Unit filename="A:/Documents/Work/NerdThings/Source Code/raylib/games/wave_collector/screens/screen_logo.c">
+			<Option target="wave_collector"/>
+		</Unit>
+		<Unit filename="A:/Documents/Work/NerdThings/Source Code/raylib/games/wave_collector/screens/screen_title.c">
+			<Option target="wave_collector"/>
+		</Unit>
+		<Unit filename="A:/Documents/Work/NerdThings/Source Code/raylib/games/wave_collector/wave_collector.c">
+			<Option target="wave_collector"/>
+		</Unit>
+		<Unit filename="A:/Documents/Work/NerdThings/Source Code/raylib/CMakeLists.txt">
+			<Option virtualFolder="CMake Files\"/>
+		</Unit>
+		<Unit filename="A:/Documents/Work/NerdThings/Source Code/raylib/raylib.pc.in">
+			<Option virtualFolder="CMake Files\"/>
+		</Unit>
+		<Unit filename="A:/Documents/Work/NerdThings/Source Code/raylib/src/CMakeLists.txt">
+			<Option virtualFolder="CMake Files\src\"/>
+		</Unit>
+		<Unit filename="A:/Documents/Work/NerdThings/Source Code/raylib/src/CMakeOptions.txt">
+			<Option virtualFolder="CMake Files\src\"/>
+		</Unit>
+		<Unit filename="A:/Documents/Work/NerdThings/Source Code/raylib/src/config.h.in">
+			<Option virtualFolder="CMake Files\src\"/>
+		</Unit>
+		<Unit filename="A:/Documents/Work/NerdThings/Source Code/raylib/src/external/glfw/CMakeLists.txt">
+			<Option virtualFolder="CMake Files\src\external\glfw\"/>
+		</Unit>
+		<Unit filename="A:/Documents/Work/NerdThings/Source Code/raylib/src/external/glfw/src/CMakeLists.txt">
+			<Option virtualFolder="CMake Files\src\external\glfw\src\"/>
+		</Unit>
+		<Unit filename="A:/Documents/Work/NerdThings/Source Code/raylib/src/external/glfw/src/glfw3.pc.in">
+			<Option virtualFolder="CMake Files\src\external\glfw\src\"/>
+		</Unit>
+		<Unit filename="A:/Documents/Work/NerdThings/Source Code/raylib/src/external/glfw/src/glfw3Config.cmake.in">
+			<Option virtualFolder="CMake Files\src\external\glfw\src\"/>
+		</Unit>
+		<Unit filename="A:/Documents/Work/NerdThings/Source Code/raylib/src/external/glfw/src/glfw_config.h.in">
+			<Option virtualFolder="CMake Files\src\external\glfw\src\"/>
+		</Unit>
+		<Unit filename="A:/Documents/Work/NerdThings/Source Code/raylib/cmake/AddIfFlagCompiles.cmake">
+			<Option virtualFolder="CMake Files\cmake\"/>
+		</Unit>
+		<Unit filename="A:/Documents/Work/NerdThings/Source Code/raylib/cmake/BuildType.cmake">
+			<Option virtualFolder="CMake Files\cmake\"/>
+		</Unit>
+		<Unit filename="A:/Documents/Work/NerdThings/Source Code/raylib/cmake/CheckFileSystemSymlinkSupport.cmake">
+			<Option virtualFolder="CMake Files\cmake\"/>
+		</Unit>
+		<Unit filename="A:/Documents/Work/NerdThings/Source Code/raylib/cmake/EnumOption.cmake">
+			<Option virtualFolder="CMake Files\cmake\"/>
+		</Unit>
+		<Unit filename="A:/Documents/Work/NerdThings/Source Code/raylib/cmake/LibraryPathToLinkerFlags.cmake">
+			<Option virtualFolder="CMake Files\cmake\"/>
+		</Unit>
+		<Unit filename="A:/Documents/Work/NerdThings/Source Code/raylib/cmake/PopulateConfigVariablesLocally.cmake">
+			<Option virtualFolder="CMake Files\cmake\"/>
+		</Unit>
+		<Unit filename="A:/Documents/Work/NerdThings/Source Code/raylib/cmake/raylib-config-version.cmake">
+			<Option virtualFolder="CMake Files\cmake\"/>
+		</Unit>
+		<Unit filename="A:/Documents/Work/NerdThings/Source Code/raylib/examples/CMakeLists.txt">
+			<Option virtualFolder="CMake Files\examples\"/>
+		</Unit>
+		<Unit filename="A:/Documents/Work/NerdThings/Source Code/raylib/games/CMakeLists.txt">
+			<Option virtualFolder="CMake Files\games\"/>
+		</Unit>
+		<Unit filename="A:/Documents/Work/NerdThings/Source Code/raylib/games/drturtle/CMakeLists.txt">
+			<Option virtualFolder="CMake Files\games\drturtle\"/>
+		</Unit>
+		<Unit filename="A:/Documents/Work/NerdThings/Source Code/raylib/games/just_do/CMakeLists.txt">
+			<Option virtualFolder="CMake Files\games\just_do\"/>
+		</Unit>
+		<Unit filename="A:/Documents/Work/NerdThings/Source Code/raylib/games/koala_seasons/CMakeLists.txt">
+			<Option virtualFolder="CMake Files\games\koala_seasons\"/>
+		</Unit>
+		<Unit filename="A:/Documents/Work/NerdThings/Source Code/raylib/games/light_my_ritual/CMakeLists.txt">
+			<Option virtualFolder="CMake Files\games\light_my_ritual\"/>
+		</Unit>
+		<Unit filename="A:/Documents/Work/NerdThings/Source Code/raylib/games/skully_escape/CMakeLists.txt">
+			<Option virtualFolder="CMake Files\games\skully_escape\"/>
+		</Unit>
+		<Unit filename="A:/Documents/Work/NerdThings/Source Code/raylib/games/wave_collector/CMakeLists.txt">
+			<Option virtualFolder="CMake Files\games\wave_collector\"/>
+		</Unit>
+	</Project>
+</CodeBlocks_project_file>

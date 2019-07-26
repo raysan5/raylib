@@ -1,0 +1,190 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CodeBlocks_project_file>
+	<FileVersion major="1" minor="6"/>
+	<Project>
+		<Option title="just_do"/>
+		<Option makefile_is_custom="1"/>
+		<Option compiler="msvc8"/>
+		<Option virtualFolders="CMake Files\;CMake Files\src\;CMake Files\src\external\;CMake Files\src\external\glfw\;CMake Files\src\external\glfw\src\;CMake Files\cmake\;CMake Files\examples\;CMake Files\games\;CMake Files\games\drturtle\;CMake Files\games\just_do\;CMake Files\games\koala_seasons\;CMake Files\games\light_my_ritual\;CMake Files\games\skully_escape\;CMake Files\games\wave_collector\;"/>
+		<Build>
+			<Target title="all">
+				<Option working_dir="A:/Documents/Work/NerdThings/Source Code/raylib/cmake-build-debug/games/just_do"/>
+				<Option type="4"/>
+				<MakeCommands>
+					<Build command="nmake /NOLOGO /f &quot;A:\Documents\Work\NerdThings\Source Code\raylib\cmake-build-debug\games\just_do\Makefile&quot; VERBOSE=1 all"/>
+					<CompileFile command="nmake /NOLOGO /f &quot;A:\Documents\Work\NerdThings\Source Code\raylib\cmake-build-debug\games\just_do\Makefile&quot; VERBOSE=1 &quot;$file&quot;"/>
+					<Clean command="nmake /NOLOGO /f &quot;A:\Documents\Work\NerdThings\Source Code\raylib\cmake-build-debug\games\just_do\Makefile&quot; VERBOSE=1 clean"/>
+					<DistClean command="nmake /NOLOGO /f &quot;A:\Documents\Work\NerdThings\Source Code\raylib\cmake-build-debug\games\just_do\Makefile&quot; VERBOSE=1 clean"/>
+				</MakeCommands>
+			</Target>
+			<Target title="just_do">
+				<Option output="A:/Documents/Work/NerdThings/Source Code/raylib/cmake-build-debug/games/just_do/just_do.exe" prefix_auto="0" extension_auto="0"/>
+				<Option working_dir="A:/Documents/Work/NerdThings/Source Code/raylib/cmake-build-debug/games/just_do"/>
+				<Option object_output="./"/>
+				<Option type="1"/>
+				<Option compiler="msvc8"/>
+				<Compiler>
+					<Add option="-DPLATFORM_DESKTOP"/>
+					<Add option="-DGRAPHICS_API_OPENGL_33"/>
+					<Add directory="A:/Documents/Work/NerdThings/Source Code/raylib/cmake-build-debug/src"/>
+					<Add directory="A:/Documents/Work/NerdThings/Source Code/raylib/src/external/glfw/include"/>
+					<Add directory="C:\Program Files (x86)\Microsoft Visual Studio\2019\Community\VC\Tools\MSVC\14.20.27508\ATLMFC\include"/>
+					<Add directory="C:\Program Files (x86)\Microsoft Visual Studio\2019\Community\VC\Tools\MSVC\14.20.27508\include"/>
+					<Add directory="C:\Program Files (x86)\Windows Kits\NETFXSDK\4.6.1\include\um"/>
+					<Add directory="C:\Program Files (x86)\Windows Kits\10\include\10.0.18362.0\ucrt"/>
+					<Add directory="C:\Program Files (x86)\Windows Kits\10\include\10.0.18362.0\shared"/>
+					<Add directory="C:\Program Files (x86)\Windows Kits\10\include\10.0.18362.0\um"/>
+					<Add directory="C:\Program Files (x86)\Windows Kits\10\include\10.0.18362.0\winrt"/>
+					<Add directory="C:\Program Files (x86)\Windows Kits\10\include\10.0.18362.0\cppwinrt"/>
+				</Compiler>
+				<MakeCommands>
+					<Build command="nmake /NOLOGO /f &quot;A:\Documents\Work\NerdThings\Source Code\raylib\cmake-build-debug\games\just_do\Makefile&quot; VERBOSE=1 just_do"/>
+					<CompileFile command="nmake /NOLOGO /f &quot;A:\Documents\Work\NerdThings\Source Code\raylib\cmake-build-debug\games\just_do\Makefile&quot; VERBOSE=1 &quot;$file&quot;"/>
+					<Clean command="nmake /NOLOGO /f &quot;A:\Documents\Work\NerdThings\Source Code\raylib\cmake-build-debug\games\just_do\Makefile&quot; VERBOSE=1 clean"/>
+					<DistClean command="nmake /NOLOGO /f &quot;A:\Documents\Work\NerdThings\Source Code\raylib\cmake-build-debug\games\just_do\Makefile&quot; VERBOSE=1 clean"/>
+				</MakeCommands>
+			</Target>
+			<Target title="just_do/fast">
+				<Option output="A:/Documents/Work/NerdThings/Source Code/raylib/cmake-build-debug/games/just_do/just_do.exe" prefix_auto="0" extension_auto="0"/>
+				<Option working_dir="A:/Documents/Work/NerdThings/Source Code/raylib/cmake-build-debug/games/just_do"/>
+				<Option object_output="./"/>
+				<Option type="1"/>
+				<Option compiler="msvc8"/>
+				<Compiler>
+					<Add option="-DPLATFORM_DESKTOP"/>
+					<Add option="-DGRAPHICS_API_OPENGL_33"/>
+					<Add directory="A:/Documents/Work/NerdThings/Source Code/raylib/cmake-build-debug/src"/>
+					<Add directory="A:/Documents/Work/NerdThings/Source Code/raylib/src/external/glfw/include"/>
+					<Add directory="C:\Program Files (x86)\Microsoft Visual Studio\2019\Community\VC\Tools\MSVC\14.20.27508\ATLMFC\include"/>
+					<Add directory="C:\Program Files (x86)\Microsoft Visual Studio\2019\Community\VC\Tools\MSVC\14.20.27508\include"/>
+					<Add directory="C:\Program Files (x86)\Windows Kits\NETFXSDK\4.6.1\include\um"/>
+					<Add directory="C:\Program Files (x86)\Windows Kits\10\include\10.0.18362.0\ucrt"/>
+					<Add directory="C:\Program Files (x86)\Windows Kits\10\include\10.0.18362.0\shared"/>
+					<Add directory="C:\Program Files (x86)\Windows Kits\10\include\10.0.18362.0\um"/>
+					<Add directory="C:\Program Files (x86)\Windows Kits\10\include\10.0.18362.0\winrt"/>
+					<Add directory="C:\Program Files (x86)\Windows Kits\10\include\10.0.18362.0\cppwinrt"/>
+				</Compiler>
+				<MakeCommands>
+					<Build command="nmake /NOLOGO /f &quot;A:\Documents\Work\NerdThings\Source Code\raylib\cmake-build-debug\games\just_do\Makefile&quot; VERBOSE=1 just_do/fast"/>
+					<CompileFile command="nmake /NOLOGO /f &quot;A:\Documents\Work\NerdThings\Source Code\raylib\cmake-build-debug\games\just_do\Makefile&quot; VERBOSE=1 &quot;$file&quot;"/>
+					<Clean command="nmake /NOLOGO /f &quot;A:\Documents\Work\NerdThings\Source Code\raylib\cmake-build-debug\games\just_do\Makefile&quot; VERBOSE=1 clean"/>
+					<DistClean command="nmake /NOLOGO /f &quot;A:\Documents\Work\NerdThings\Source Code\raylib\cmake-build-debug\games\just_do\Makefile&quot; VERBOSE=1 clean"/>
+				</MakeCommands>
+			</Target>
+		</Build>
+		<Unit filename="A:/Documents/Work/NerdThings/Source Code/raylib/games/just_do/just_do.c">
+			<Option target="just_do"/>
+		</Unit>
+		<Unit filename="A:/Documents/Work/NerdThings/Source Code/raylib/games/just_do/screens/screen_level00.c">
+			<Option target="just_do"/>
+		</Unit>
+		<Unit filename="A:/Documents/Work/NerdThings/Source Code/raylib/games/just_do/screens/screen_level01.c">
+			<Option target="just_do"/>
+		</Unit>
+		<Unit filename="A:/Documents/Work/NerdThings/Source Code/raylib/games/just_do/screens/screen_level02.c">
+			<Option target="just_do"/>
+		</Unit>
+		<Unit filename="A:/Documents/Work/NerdThings/Source Code/raylib/games/just_do/screens/screen_level03.c">
+			<Option target="just_do"/>
+		</Unit>
+		<Unit filename="A:/Documents/Work/NerdThings/Source Code/raylib/games/just_do/screens/screen_level04.c">
+			<Option target="just_do"/>
+		</Unit>
+		<Unit filename="A:/Documents/Work/NerdThings/Source Code/raylib/games/just_do/screens/screen_level05.c">
+			<Option target="just_do"/>
+		</Unit>
+		<Unit filename="A:/Documents/Work/NerdThings/Source Code/raylib/games/just_do/screens/screen_level06.c">
+			<Option target="just_do"/>
+		</Unit>
+		<Unit filename="A:/Documents/Work/NerdThings/Source Code/raylib/games/just_do/screens/screen_level07.c">
+			<Option target="just_do"/>
+		</Unit>
+		<Unit filename="A:/Documents/Work/NerdThings/Source Code/raylib/games/just_do/screens/screen_level08.c">
+			<Option target="just_do"/>
+		</Unit>
+		<Unit filename="A:/Documents/Work/NerdThings/Source Code/raylib/games/just_do/screens/screen_level09.c">
+			<Option target="just_do"/>
+		</Unit>
+		<Unit filename="A:/Documents/Work/NerdThings/Source Code/raylib/games/just_do/screens/screen_level10.c">
+			<Option target="just_do"/>
+		</Unit>
+		<Unit filename="A:/Documents/Work/NerdThings/Source Code/raylib/games/just_do/screens/screen_logo.c">
+			<Option target="just_do"/>
+		</Unit>
+		<Unit filename="A:/Documents/Work/NerdThings/Source Code/raylib/CMakeLists.txt">
+			<Option virtualFolder="CMake Files\"/>
+		</Unit>
+		<Unit filename="A:/Documents/Work/NerdThings/Source Code/raylib/raylib.pc.in">
+			<Option virtualFolder="CMake Files\"/>
+		</Unit>
+		<Unit filename="A:/Documents/Work/NerdThings/Source Code/raylib/src/CMakeLists.txt">
+			<Option virtualFolder="CMake Files\src\"/>
+		</Unit>
+		<Unit filename="A:/Documents/Work/NerdThings/Source Code/raylib/src/CMakeOptions.txt">
+			<Option virtualFolder="CMake Files\src\"/>
+		</Unit>
+		<Unit filename="A:/Documents/Work/NerdThings/Source Code/raylib/src/config.h.in">
+			<Option virtualFolder="CMake Files\src\"/>
+		</Unit>
+		<Unit filename="A:/Documents/Work/NerdThings/Source Code/raylib/src/external/glfw/CMakeLists.txt">
+			<Option virtualFolder="CMake Files\src\external\glfw\"/>
+		</Unit>
+		<Unit filename="A:/Documents/Work/NerdThings/Source Code/raylib/src/external/glfw/src/CMakeLists.txt">
+			<Option virtualFolder="CMake Files\src\external\glfw\src\"/>
+		</Unit>
+		<Unit filename="A:/Documents/Work/NerdThings/Source Code/raylib/src/external/glfw/src/glfw3.pc.in">
+			<Option virtualFolder="CMake Files\src\external\glfw\src\"/>
+		</Unit>
+		<Unit filename="A:/Documents/Work/NerdThings/Source Code/raylib/src/external/glfw/src/glfw3Config.cmake.in">
+			<Option virtualFolder="CMake Files\src\external\glfw\src\"/>
+		</Unit>
+		<Unit filename="A:/Documents/Work/NerdThings/Source Code/raylib/src/external/glfw/src/glfw_config.h.in">
+			<Option virtualFolder="CMake Files\src\external\glfw\src\"/>
+		</Unit>
+		<Unit filename="A:/Documents/Work/NerdThings/Source Code/raylib/cmake/AddIfFlagCompiles.cmake">
+			<Option virtualFolder="CMake Files\cmake\"/>
+		</Unit>
+		<Unit filename="A:/Documents/Work/NerdThings/Source Code/raylib/cmake/BuildType.cmake">
+			<Option virtualFolder="CMake Files\cmake\"/>
+		</Unit>
+		<Unit filename="A:/Documents/Work/NerdThings/Source Code/raylib/cmake/CheckFileSystemSymlinkSupport.cmake">
+			<Option virtualFolder="CMake Files\cmake\"/>
+		</Unit>
+		<Unit filename="A:/Documents/Work/NerdThings/Source Code/raylib/cmake/EnumOption.cmake">
+			<Option virtualFolder="CMake Files\cmake\"/>
+		</Unit>
+		<Unit filename="A:/Documents/Work/NerdThings/Source Code/raylib/cmake/LibraryPathToLinkerFlags.cmake">
+			<Option virtualFolder="CMake Files\cmake\"/>
+		</Unit>
+		<Unit filename="A:/Documents/Work/NerdThings/Source Code/raylib/cmake/PopulateConfigVariablesLocally.cmake">
+			<Option virtualFolder="CMake Files\cmake\"/>
+		</Unit>
+		<Unit filename="A:/Documents/Work/NerdThings/Source Code/raylib/cmake/raylib-config-version.cmake">
+			<Option virtualFolder="CMake Files\cmake\"/>
+		</Unit>
+		<Unit filename="A:/Documents/Work/NerdThings/Source Code/raylib/examples/CMakeLists.txt">
+			<Option virtualFolder="CMake Files\examples\"/>
+		</Unit>
+		<Unit filename="A:/Documents/Work/NerdThings/Source Code/raylib/games/CMakeLists.txt">
+			<Option virtualFolder="CMake Files\games\"/>
+		</Unit>
+		<Unit filename="A:/Documents/Work/NerdThings/Source Code/raylib/games/drturtle/CMakeLists.txt">
+			<Option virtualFolder="CMake Files\games\drturtle\"/>
+		</Unit>
+		<Unit filename="A:/Documents/Work/NerdThings/Source Code/raylib/games/just_do/CMakeLists.txt">
+			<Option virtualFolder="CMake Files\games\just_do\"/>
+		</Unit>
+		<Unit filename="A:/Documents/Work/NerdThings/Source Code/raylib/games/koala_seasons/CMakeLists.txt">
+			<Option virtualFolder="CMake Files\games\koala_seasons\"/>
+		</Unit>
+		<Unit filename="A:/Documents/Work/NerdThings/Source Code/raylib/games/light_my_ritual/CMakeLists.txt">
+			<Option virtualFolder="CMake Files\games\light_my_ritual\"/>
+		</Unit>
+		<Unit filename="A:/Documents/Work/NerdThings/Source Code/raylib/games/skully_escape/CMakeLists.txt">
+			<Option virtualFolder="CMake Files\games\skully_escape\"/>
+		</Unit>
+		<Unit filename="A:/Documents/Work/NerdThings/Source Code/raylib/games/wave_collector/CMakeLists.txt">
+			<Option virtualFolder="CMake Files\games\wave_collector\"/>
+		</Unit>
+	</Project>
+</CodeBlocks_project_file>

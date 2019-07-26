@@ -1,0 +1,13 @@
+prefix=C:/Program Files (x86)/Project
+exec_prefix=${prefix}
+libdir=${exec_prefix}/lib
+includedir=${prefix}/include
+
+Name: raylib
+Description: Simple and easy-to-use library to enjoy videogames programming
+URL: http://github.com/raysan5/raylib
+Version: 2.5.0
+Libs: -L${libdir} -lraylib -lwinmm  -lgdi32
+Libs.private: -lwinmm  -lgdi32
+Requires.private: 
+Cflags: -I${includedir}

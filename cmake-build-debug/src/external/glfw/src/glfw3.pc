@@ -1,0 +1,13 @@
+prefix=C:/Program Files (x86)/Project
+exec_prefix=${prefix}
+includedir=C:/Program Files (x86)/Project/include
+libdir=C:/Program Files (x86)/Project/lib
+
+Name: GLFW
+Description: A multi-platform library for OpenGL, window and input
+Version: 3.3.1
+URL: https://www.glfw.org/
+Requires.private: 
+Libs: -L${libdir} -lglfw3
+Libs.private:  -lgdi32
+Cflags: -I${includedir}
