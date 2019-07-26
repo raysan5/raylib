@@ -107,7 +107,7 @@ typedef struct Sound {
 
 // Music stream type (audio file streaming from memory)
 // NOTE: Anything longer than ~10 seconds should be streamed
-typedef struct MusicStream {
+typedef struct Music {
     int ctxType;                    // Type of music context (audio filetype)
     void *ctxData;                  // Audio context data, depends on type
     
@@ -116,7 +116,7 @@ typedef struct MusicStream {
     unsigned int loopCount;         // Loops count (times music will play), 0 means infinite loop
 
     AudioStream stream;             // Audio stream
-} MusicStream, *Music;
+} Music;
 
 #ifdef __cplusplus
 extern "C" {            // Prevents name mangling of functions
