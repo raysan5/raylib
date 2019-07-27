@@ -4135,7 +4135,7 @@ RAYGUIDEF void GuiLoadStyle(const char *fileName)
                 font.chars = (CharInfo *)calloc(font.charsCount, sizeof(CharInfo));
                 for (int i = 0; i < font.charsCount; i++)
                 {
-                    fread(&font.chars[i].rec, 1, sizeof(Rectangle), rgsFile);
+                    fread(&font.recs[i], 1, sizeof(Rectangle), rgsFile);
                     fread(&font.chars[i].value, 1, sizeof(int), rgsFile);
                     fread(&font.chars[i].offsetX, 1, sizeof(int), rgsFile);
                     fread(&font.chars[i].offsetY, 1, sizeof(int), rgsFile);
