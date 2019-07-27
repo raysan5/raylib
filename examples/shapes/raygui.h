@@ -126,7 +126,6 @@
 #define RAYGUI_H
 
 #define RAYGUI_VERSION  "2.5-dev"
-#define RAYGUI_RICONS_SUPPORT
 
 #if !defined(RAYGUI_STANDALONE)
     #include "raylib.h"
