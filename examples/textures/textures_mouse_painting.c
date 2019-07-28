@@ -69,12 +69,14 @@ int main(void)
         //----------------------------------------------------------------------------------
         Vector2 mousePos = GetMousePosition();
         
-        // Switch between colors
+        // Move between colors with keys
         if (IsKeyPressed(KEY_RIGHT)) colorSelected++;
         else if (IsKeyPressed(KEY_LEFT)) colorSelected--;
-        else if (IsKeyPressed(KEY_UP)) colorSelected -= 3;
-        else if (IsKeyPressed(KEY_DOWN)) colorSelected += 3;
         
+        if (colorSelected >= MAX_COLORS_COUNT) colorSelected = MAX_COLORS_COUNT - 1;
+        else if (colorSelected < 0) colorSelected = 0;
+
+        // Choose color with mouse
         for (int i = 0; i < MAX_COLORS_COUNT; i++)
         {
             if (CheckCollisionPointRec(mousePos, colorsRecs[i]))
@@ -90,9 +92,6 @@ int main(void)
             colorSelected = colorMouseHover;
             colorSelectedPrev = colorSelected;
         }
-
-        if (colorSelected >= MAX_COLORS_COUNT) colorSelected = MAX_COLORS_COUNT - 1;
-        else if (colorSelected < 0) colorSelected = 0;
 
         // Change brush size
         brushSize += GetMouseWheelMove()*5;
@@ -145,6 +144,7 @@ int main(void)
         
         if (showSaveMessage)
         {
+            // On saving, show a full screen message for 2 seconds
             saveMessageCounter++;
             if (saveMessageCounter > 240)
             {
@@ -187,6 +187,7 @@ int main(void)
             DrawRectangleLinesEx(btnSaveRec, 2, btnSaveMouseHover? RED : BLACK);
             DrawText("SAVE!", 755, 20, 10, btnSaveMouseHover? RED : BLACK);
             
+            // Draw save image message
             if (showSaveMessage)
             {
                 DrawRectangle(0, 0, GetScreenWidth(), GetScreenHeight(), Fade(RAYWHITE, 0.8f));
