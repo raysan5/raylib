@@ -65,13 +65,13 @@ int main(void)
     // Main game loop
     while (!WindowShouldClose())    // Detect window close button or ESC key
     {
-	    // Update
-	    //----------------------------------------------------------------------------------
-	    Vector2 mousePos = GetMousePosition();
+        // Update
+        //----------------------------------------------------------------------------------
+        Vector2 mousePos = GetMousePosition();
         
-	    // Switch between colors
-	    if (IsKeyPressed(KEY_RIGHT)) colorSelected++;
-	    else if (IsKeyPressed(KEY_LEFT)) colorSelected--;
+        // Switch between colors
+        if (IsKeyPressed(KEY_RIGHT)) colorSelected++;
+        else if (IsKeyPressed(KEY_LEFT)) colorSelected--;
         else if (IsKeyPressed(KEY_UP)) colorSelected -= 3;
         else if (IsKeyPressed(KEY_DOWN)) colorSelected += 3;
         
@@ -91,41 +91,41 @@ int main(void)
             colorSelectedPrev = colorSelected;
         }
 
-	    if (colorSelected >= MAX_COLORS_COUNT) colorSelected = MAX_COLORS_COUNT - 1;
-	    else if (colorSelected < 0) colorSelected = 0;
+        if (colorSelected >= MAX_COLORS_COUNT) colorSelected = MAX_COLORS_COUNT - 1;
+        else if (colorSelected < 0) colorSelected = 0;
 
         // Change brush size
-	    brushSize += GetMouseWheelMove()*5;
-	    if (brushSize < 2) brushSize = 2;
-	    if (brushSize > 50) brushSize = 50;
+        brushSize += GetMouseWheelMove()*5;
+        if (brushSize < 2) brushSize = 2;
+        if (brushSize > 50) brushSize = 50;
 
-	    if (IsKeyPressed(KEY_C)) 
+        if (IsKeyPressed(KEY_C)) 
         {
             // Clear render texture to clear color
-	        BeginTextureMode(target);
-	        ClearBackground(colors[0]);
-	        EndTextureMode();
-	    }
+            BeginTextureMode(target);
+            ClearBackground(colors[0]);
+            EndTextureMode();
+        }
 
-	    if (IsMouseButtonDown(MOUSE_LEFT_BUTTON))
+        if (IsMouseButtonDown(MOUSE_LEFT_BUTTON))
         {
             // Paint circle into render texture
             // NOTE: To avoid discontinuous circles, we could store
             // previous-next mouse points and just draw a line using brush size
-	        BeginTextureMode(target);
-	        if (mousePos.y > 50) DrawCircle(mousePos.x, mousePos.y, brushSize, colors[colorSelected]);
-	        EndTextureMode();
-	    }
+            BeginTextureMode(target);
+            if (mousePos.y > 50) DrawCircle(mousePos.x, mousePos.y, brushSize, colors[colorSelected]);
+            EndTextureMode();
+        }
 
-	    if (IsMouseButtonDown(MOUSE_RIGHT_BUTTON))
+        if (IsMouseButtonDown(MOUSE_RIGHT_BUTTON))
         {
             colorSelected = 0;
             
             // Erase circle from render texture
-	        BeginTextureMode(target);
-	        if (mousePos.y > 50) DrawCircle(mousePos.x, mousePos.y, brushSize, colors[0]);
-	        EndTextureMode();
-	    }
+            BeginTextureMode(target);
+            if (mousePos.y > 50) DrawCircle(mousePos.x, mousePos.y, brushSize, colors[0]);
+            EndTextureMode();
+        }
         else colorSelected = colorSelectedPrev;
         
         // Check mouse hover save button
@@ -152,16 +152,16 @@ int main(void)
                 saveMessageCounter = 0;
             }
         }
-	    //----------------------------------------------------------------------------------
+        //----------------------------------------------------------------------------------
 
-	    // Draw
-	    //----------------------------------------------------------------------------------
-	    BeginDrawing();
+        // Draw
+        //----------------------------------------------------------------------------------
+        BeginDrawing();
 
             ClearBackground(RAYWHITE);
 
-	        // NOTE: Render texture must be y-flipped due to default OpenGL coordinates (left-bottom)
-	        DrawTextureRec(target.texture, (Rectangle){ 0, 0, target.texture.width, -target.texture.height }, (Vector2){ 0, 0 }, WHITE);
+            // NOTE: Render texture must be y-flipped due to default OpenGL coordinates (left-bottom)
+            DrawTextureRec(target.texture, (Rectangle){ 0, 0, target.texture.width, -target.texture.height }, (Vector2){ 0, 0 }, WHITE);
 
             // Draw drawing circle for reference
             if (mousePos.y > 50) 
@@ -194,8 +194,8 @@ int main(void)
                 DrawText("IMAGE SAVED:  my_amazing_texture_painting.png", 150, 180, 20, RAYWHITE);
             }
             
-	    EndDrawing();
-	    //----------------------------------------------------------------------------------
+        EndDrawing();
+        //----------------------------------------------------------------------------------
     }
 
     // De-Initialization
