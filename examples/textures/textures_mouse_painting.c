@@ -48,6 +48,8 @@ int main(void)
     
     Rectangle btnSaveRec = { 750, 10, 40, 30 };
     bool btnSaveMouseHover = false;
+    bool showSaveMessage = false;
+    int saveMessageCounter = 0;
 
     // Create a RenderTexture2D to use as a canvas
     RenderTexture2D target = LoadRenderTexture(screenWidth, screenHeight);
@@ -138,6 +140,17 @@ int main(void)
             ImageFlipVertical(&image);
             ExportImage(image, "my_amazing_texture_painting.png");
             UnloadImage(image);
+            showSaveMessage = true;
+        }
+        
+        if (showSaveMessage)
+        {
+            saveMessageCounter++;
+            if (saveMessageCounter > 240)
+            {
+                showSaveMessage = false;
+                saveMessageCounter = 0;
+            }
         }
 	    //----------------------------------------------------------------------------------
 
@@ -173,6 +186,13 @@ int main(void)
             // Draw save image button
             DrawRectangleLinesEx(btnSaveRec, 2, btnSaveMouseHover? RED : BLACK);
             DrawText("SAVE!", 755, 20, 10, btnSaveMouseHover? RED : BLACK);
+            
+            if (showSaveMessage)
+            {
+                DrawRectangle(0, 0, GetScreenWidth(), GetScreenHeight(), Fade(RAYWHITE, 0.8f));
+                DrawRectangle(0, 150, GetScreenWidth(), 80, BLACK);
+                DrawText("IMAGE SAVED:  my_amazing_texture_painting.png", 150, 180, 20, RAYWHITE);
+            }
             
 	    EndDrawing();
 	    //----------------------------------------------------------------------------------
