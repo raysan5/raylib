@@ -484,6 +484,7 @@ bool MemPoolDefrag(MemPool *const mempool)
                     (*node)->size = 0UL;
                     (*node)->next->prev = (*node)->prev;
                     (*node)->prev->next = (*node)->next;
+                    *node = (*node)->next;
                     
                     mempool->freeList.len--;
                     node = &mempool->freeList.head;
@@ -496,6 +497,7 @@ bool MemPoolDefrag(MemPool *const mempool)
                     (*node)->size = 0UL;
                     (*node)->next->prev = (*node)->prev;
                     (*node)->prev->next = (*node)->next;
+                    *node = (*node)->prev;
                     
                     mempool->freeList.len--;
                     node = &mempool->freeList.head;
