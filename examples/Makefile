@@ -365,6 +365,7 @@ EXAMPLES = \
     core/core_window_letterbox \
     core/core_drop_files \
     core/core_random_values \
+    core/core_scissor_test \
     core/core_storage_values \
     core/core_vr_simulator \
     core/core_loading_thread \
@@ -394,6 +395,7 @@ EXAMPLES = \
     text/text_rectangle_bounds \
     text/text_unicode \
     textures/textures_logo_raylib \
+    textures/textures_mouse_painting \
     textures/textures_rectangle \
     textures/textures_srcrec_dstrec \
     textures/textures_image_drawing \
