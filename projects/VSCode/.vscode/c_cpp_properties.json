@@ -14,9 +14,9 @@
                 "PLATFORM_DESKTOP"
             ],
             "compilerPath": "C:/raylib/mingw/bin/gcc.exe",
-            "cStandard": "c11",
+            "cStandard": "c99",
             "cppStandard": "c++14",
-            "intelliSenseMode": "clang-x64"
+            "intelliSenseMode": "gcc-x64"
         },
         {
             "name": "Mac",

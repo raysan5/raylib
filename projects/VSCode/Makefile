@@ -29,8 +29,10 @@ RAYLIB_VERSION     ?= 2.5.0
 RAYLIB_API_VERSION ?= 251
 RAYLIB_PATH        ?= ..\..
 
-# Define default options
+# Define compiler path on Windows
+COMPILER_PATH      ?= C:/raylib/mingw/bin
 
+# Define default options
 # One of PLATFORM_DESKTOP, PLATFORM_RPI, PLATFORM_ANDROID, PLATFORM_WEB
 PLATFORM           ?= PLATFORM_DESKTOP
 
@@ -68,6 +70,7 @@ ifeq ($(PLATFORM),PLATFORM_DESKTOP)
     # ifeq ($(UNAME),Msys) -> Windows
     ifeq ($(OS),Windows_NT)
         PLATFORM_OS=WINDOWS
+        export PATH := $(COMPILER_PATH):$(PATH)
     else
         UNAMEOS=$(shell uname)
         ifeq ($(UNAMEOS),Linux)
