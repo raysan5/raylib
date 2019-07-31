@@ -77,9 +77,13 @@ typedef struct Stack {
     size_t size;
 } Stack;
 
+#define MEMPOOL_BUCKET_SIZE    8
+#define MEMPOOL_BUCKET_BITS    3
+
 typedef struct MemPool {
     AllocList freeList;
     Stack stack;
+    MemNode *buckets[MEMPOOL_BUCKET_SIZE];
 } MemPool;
 
 // Object Pool
@@ -166,16 +170,16 @@ static inline size_t __AlignSize(const size_t size, const size_t align)
 
 static void __RemoveNode(MemPool *const mempool, MemNode **const node)
 {
+    if ((*node)->next != NULL) (*node)->next->prev = (*node)->prev;
+    else {
+        mempool->freeList.tail = (*node)->prev;
+        if (mempool->freeList.tail != NULL) mempool->freeList.tail->next = NULL;
+    }
+    
     if ((*node)->prev != NULL) (*node)->prev->next = (*node)->next;
     else {
         mempool->freeList.head = (*node)->next;
-        mempool->freeList.head->prev = NULL;
-    }
-    
-    if ((*node)->next != NULL) (*node)->next->prev = (*node)->prev;
-	else {
-        mempool->freeList.tail = (*node)->prev;
-        mempool->freeList.tail->next = NULL;
+        if (mempool->freeList.head != NULL) mempool->freeList.head->prev = NULL;
     }
 }
 
@@ -192,7 +196,7 @@ MemPool CreateMemPool(const size_t size)
     {
         // Align the mempool size to at least the size of an alloc node.
         mempool.stack.size = size;
-        mempool.stack.mem = malloc(1 + mempool.stack.size*sizeof *mempool.stack.mem);
+        mempool.stack.mem = malloc(mempool.stack.size*sizeof *mempool.stack.mem);
 
         if (mempool.stack.mem==NULL)
         {
@@ -238,8 +242,16 @@ void *MemPoolAlloc(MemPool *const mempool, const size_t size)
     {
         MemNode *new_mem = NULL;
         const size_t ALLOC_SIZE = __AlignSize(size + sizeof *new_mem, sizeof(intptr_t));
+        const size_t BUCKET_INDEX = (ALLOC_SIZE >> MEMPOOL_BUCKET_BITS) - 1;
         
-        if (mempool->freeList.head != NULL)
+        if (BUCKET_INDEX < MEMPOOL_BUCKET_SIZE && mempool->buckets[BUCKET_INDEX] != NULL && mempool->buckets[BUCKET_INDEX]->size >= ALLOC_SIZE)
+        {
+            new_mem = mempool->buckets[BUCKET_INDEX];
+            mempool->buckets[BUCKET_INDEX] = mempool->buckets[BUCKET_INDEX]->next;
+            if( mempool->buckets[BUCKET_INDEX] != NULL )
+                mempool->buckets[BUCKET_INDEX]->prev = NULL;
+        }
+        else if (mempool->freeList.head != NULL)
         {
             const size_t MEM_SPLIT_THRESHOLD = 16;
             
@@ -253,7 +265,6 @@ void *MemPoolAlloc(MemPool *const mempool, const size_t size)
                     new_mem = *inode;
                     __RemoveNode(mempool, inode);
                     mempool->freeList.len--;
-                    new_mem->next = new_mem->prev = NULL;
                     break;
                 }
                 else
@@ -262,7 +273,6 @@ void *MemPoolAlloc(MemPool *const mempool, const size_t size)
                     new_mem = (MemNode *)((uint8_t *)*inode + ((*inode)->size - ALLOC_SIZE));
                     (*inode)->size -= ALLOC_SIZE;
                     new_mem->size = ALLOC_SIZE;
-                    new_mem->next = new_mem->prev = NULL;
                     break;
                 }
             }
@@ -281,19 +291,20 @@ void *MemPoolAlloc(MemPool *const mempool, const size_t size)
                 // Use the available mempool space as the new node.
                 new_mem = (MemNode *)mempool->stack.base;
                 new_mem->size = ALLOC_SIZE;
-                new_mem->next = new_mem->prev = NULL;
             }
         }
         
         // Visual of the allocation block.
         // --------------
         // | mem size   | lowest addr of block
-        // | next node  |
+        // | next node  | 12 byte (32-bit) header
+        // | prev node  | 24 byte (64-bit) header
         // --------------
         // |   alloc'd  |
         // |   memory   |
         // |   space    | highest addr of block
         // --------------
+        new_mem->next = new_mem->prev = NULL;
         uint8_t *const final_mem = (uint8_t *)new_mem + sizeof *new_mem;
         memset(final_mem, 0, new_mem->size - sizeof *new_mem);
         return final_mem;
@@ -305,17 +316,17 @@ void *MemPoolRealloc(MemPool *const restrict mempool, void *ptr, const size_t si
     if ((mempool == NULL) || (size > mempool->stack.size)) return NULL;
     // NULL ptr should make this work like regular Allocation.
     else if (ptr == NULL) return MemPoolAlloc(mempool, size);
-    else if ((uintptr_t)ptr <= (uintptr_t)mempool->stack.mem) return NULL;
+    else if ((uintptr_t)ptr - sizeof(MemNode) < (uintptr_t)mempool->stack.mem) return NULL;
     else
     {
-        MemNode *node = (MemNode *)((uint8_t *)ptr - sizeof *node);
+        MemNode *const node = (MemNode *)((uint8_t *)ptr - sizeof *node);
         const size_t NODE_SIZE = sizeof *node;
-        uint8_t *resized_block = MemPoolAlloc(mempool, size);
+        uint8_t *const resized_block = MemPoolAlloc(mempool, size);
         
         if (resized_block == NULL) return NULL;
         else
         {
-            MemNode *resized = (MemNode *)(resized_block - sizeof *resized);
+            MemNode *const resized = (MemNode *)(resized_block - sizeof *resized);
             memmove(resized_block, ptr, (node->size > resized->size)? (resized->size - NODE_SIZE) : (node->size - NODE_SIZE));
             MemPoolFree(mempool, ptr);
             return resized_block;
@@ -325,11 +336,12 @@ void *MemPoolRealloc(MemPool *const restrict mempool, void *ptr, const size_t si
 
 void MemPoolFree(MemPool *const restrict mempool, void *ptr)
 {
-    if ((mempool == NULL) || (ptr == NULL) || ((uintptr_t)ptr <= (uintptr_t)mempool->stack.mem)) return;
+    if ((mempool == NULL) || (ptr == NULL) || ((uintptr_t)ptr - sizeof(MemNode) < (uintptr_t)mempool->stack.mem)) return;
     else 
     {
         // Behind the actual pointer data is the allocation info.
-        MemNode *mem_node = (MemNode *)((uint8_t *)ptr - sizeof *mem_node);
+        MemNode *const mem_node = (MemNode *)((uint8_t *)ptr - sizeof *mem_node);
+        const size_t BUCKET_INDEX = (mem_node->size >> MEMPOOL_BUCKET_BITS) - 1;
         
         // Make sure the pointer data is valid.
         if (((uintptr_t)mem_node < (uintptr_t)mempool->stack.base) || 
@@ -341,50 +353,42 @@ void MemPoolFree(MemPool *const restrict mempool, void *ptr)
         {
             mempool->stack.base += mem_node->size;
         }
+        // attempted stack merge failed, try to place it into the memnode buckets
+        else if (BUCKET_INDEX < MEMPOOL_BUCKET_SIZE)
+        {
+            if (mempool->buckets[index] == NULL) mempool->buckets[index] = node;
+            else
+            {
+                for (MemNode *n = mempool->buckets[index]; n != NULL; n = n->next) if( n==node ) return;
+                mempool->buckets[index]->prev = node;
+                node->next = mempool->buckets[index];
+                mempool->buckets[index] = node;
+            }
+        }
         // Otherwise, we add it to the free list.
         // We also check if the freelist already has the pointer so we can prevent double frees.
-        else if ((mempool->freeList.len == 0UL) || ((uintptr_t)mempool->freeList.head >= (uintptr_t)mempool->stack.mem && (uintptr_t)mempool->freeList.head - (uintptr_t)mempool->stack.mem < mempool->stack.size))
+        else /*if ((mempool->freeList.len == 0UL) || ((uintptr_t)mempool->freeList.head >= (uintptr_t)mempool->stack.mem && (uintptr_t)mempool->freeList.head - (uintptr_t)mempool->stack.mem < mempool->stack.size))*/
         {
             for (MemNode *n = mempool->freeList.head; n != NULL; n = n->next) if (n == mem_node) return;
             
-            // This code inserts at head.
-            /*
-            ( mempool->freeList.head==NULL)? (mempool->freeList.tail = mem_node) : (mempool->freeList.head->prev = mem_node);
-            mem_node->next = mempool->freeList.head;
-            mempool->freeList.head = mem_node;
-            mempool->freeList.len++;
-            */
-            
-            // This code insertion sorts where largest size is first.
+            // This code insertion sorts where largest size is last.
             if (mempool->freeList.head == NULL)
             {
                 mempool->freeList.head = mempool->freeList.tail = mem_node;
                 mempool->freeList.len++;
             } 
-            else if (mempool->freeList.head->size <= mem_node->size)
+            else if (mempool->freeList.head->size >= mem_node->size)
             {
                 mem_node->next = mempool->freeList.head;
                 mem_node->next->prev = mem_node;
                 mempool->freeList.head = mem_node;
                 mempool->freeList.len++;
             }
-            else if (mempool->freeList.tail->size > mem_node->size)
+            else //if (mempool->freeList.tail->size <= mem_node->size)
             {
                 mem_node->prev = mempool->freeList.tail;
                 mempool->freeList.tail->next = mem_node;
                 mempool->freeList.tail = mem_node;
-                mempool->freeList.len++;
-            } 
-            else
-            {
-                MemNode *n = mempool->freeList.head;
-                while ((n->next != NULL) && (n->next->size > mem_node->size)) n = n->next;
-                
-                mem_node->next = n->next;
-                if (n->next != NULL) mem_node->next->prev = mem_node;
-                
-                n->next = mem_node;
-                mem_node->prev = n;
                 mempool->freeList.len++;
             }
             
@@ -409,6 +413,8 @@ size_t GetMemPoolFreeMemory(const MemPool mempool)
     
     for (MemNode *n=mempool.freeList.head; n != NULL; n = n->next) total_remaining += n->size;
     
+    for (size_t i=0; i<MEMPOOL_BUCKET_SIZE; i++) for (MemNode *n = mempool.buckets[i]; n != NULL; n = n->next) total_remaining += n->size;
+    
     return total_remaining;
 }
 
@@ -420,12 +426,29 @@ bool MemPoolDefrag(MemPool *const mempool)
         // If the memory pool has been entirely released, fully defrag it.
         if (mempool->stack.size == GetMemPoolFreeMemory(*mempool))
         {
-            memset(&mempool->freeList, 0, sizeof mempool->freeList);
+            mempool->freeList.head = mempool->freeList.tail = NULL;
+            mempool->freeList.len = 0;
+            for (size_t i = 0; i < MEMPOOL_BUCKET_SIZE; i++) mempool->buckets[i] = NULL;
             mempool->stack.base = mempool->stack.mem + mempool->stack.size;
             return true;
         } 
         else
         {
+            for (size_t i=0; i<MEMPOOL_BUCKET_SIZE; i++)
+            {
+                while (mempool->buckets[i] != NULL) 
+                {
+                    if ((uintptr_t)mempool->buckets[i] == (uintptr_t)mempool->stack.base)
+                    {
+                        mempool->stack.base += mempool->buckets[i]->size;
+                        mempool->buckets[i]->size = 0;
+                        mempool->buckets[i] = mempool->buckets[i]->next;
+                        if (mempool->buckets[i] != NULL) mempool->buckets[i]->prev = NULL;
+                    }
+                    else break;
+                }
+            }
+            
             const size_t PRE_DEFRAG_LEN = mempool->freeList.len;
             MemNode **node = &mempool->freeList.head;
             
@@ -524,7 +547,7 @@ void ToggleMemPoolAutoDefrag(MemPool *const mempool)
 //----------------------------------------------------------------------------------
 union ObjInfo {
     uint8_t *const byte;
-    size_t *const size;
+    size_t *const index;
 };
 
 ObjPool CreateObjPool(const size_t objsize, const size_t len)
@@ -548,7 +571,7 @@ ObjPool CreateObjPool(const size_t objsize, const size_t len)
             for (size_t i=0; i<objpool.freeBlocks; i++)
             {
                 union ObjInfo block = { .byte = &objpool.stack.mem[i*objpool.objSize] };
-                *block.size = i + 1;
+                *block.index = i + 1;
             }
             
             objpool.stack.base = objpool.stack.mem;
@@ -572,7 +595,7 @@ ObjPool CreateObjPoolFromBuffer(void *const buf, const size_t objsize, const siz
         for (size_t i=0; i<objpool.freeBlocks; i++)
         {
             union ObjInfo block = { .byte = &objpool.stack.mem[i*objpool.objSize] };
-            *block.size = i + 1;
+            *block.index = i + 1;
         }
         
         objpool.stack.base = objpool.stack.mem;
@@ -605,7 +628,7 @@ void *ObjPoolAlloc(ObjPool *const objpool)
             
             // after allocating, we set head to the address of the index that *Head holds.
             // Head = &pool[*Head * pool.objsize];
-            objpool->stack.base = (objpool->freeBlocks != 0UL)? objpool->stack.mem + (*ret.size*objpool->objSize) : NULL;
+            objpool->stack.base = (objpool->freeBlocks != 0UL)? objpool->stack.mem + (*ret.index*objpool->objSize) : NULL;
             memset(ret.byte, 0, objpool->objSize);
             return ret.byte;
         }
@@ -622,7 +645,7 @@ void ObjPoolFree(ObjPool *const restrict objpool, void *ptr)
         // When we free our pointer, we recycle the pointer space to store the previous index and then we push it as our new head.
         // *p = index of Head in relation to the buffer;
         // Head = p;
-        *p.size = (objpool->stack.base != NULL)? (objpool->stack.base - objpool->stack.mem)/objpool->objSize : objpool->stack.size;
+        *p.index = (objpool->stack.base != NULL)? (objpool->stack.base - objpool->stack.mem)/objpool->objSize : objpool->stack.size;
         objpool->stack.base = p.byte;
         objpool->freeBlocks++;
     }
