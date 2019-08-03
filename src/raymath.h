@@ -20,7 +20,7 @@
 *
 *   LICENSE: zlib/libpng
 *
-*   Copyright (c) 2015-2017 Ramon Santamaria (@raysan5)
+*   Copyright (c) 2015-2019 Ramon Santamaria (@raysan5)
 *
 *   This software is provided "as-is", without any express or implied warranty. In no event
 *   will the authors be held liable for any damages arising from the use of this software.
@@ -148,7 +148,7 @@ RMDEF float Clamp(float value, float min, float max)
     return res > max ? max : res;
 }
 
-// Calculate linear interpolation between two vectors
+// Calculate linear interpolation between two floats
 RMDEF float Lerp(float start, float end, float amount)
 {
     return start + amount*(end - start);
@@ -225,8 +225,8 @@ RMDEF Vector2 Vector2Scale(Vector2 v, float scale)
 // Multiply vector by vector
 RMDEF Vector2 Vector2MultiplyV(Vector2 v1, Vector2 v2)
 {
-	Vector2 result = { v1.x*v2.x, v1.y*v2.y };
-	return result;
+    Vector2 result = { v1.x*v2.x, v1.y*v2.y };
+    return result;
 }
 
 // Negate vector
@@ -246,8 +246,8 @@ RMDEF Vector2 Vector2Divide(Vector2 v, float div)
 // Divide vector by vector
 RMDEF Vector2 Vector2DivideV(Vector2 v1, Vector2 v2)
 {
-	Vector2 result = { v1.x/v2.x, v1.y/v2.y };
-	return result;
+    Vector2 result = { v1.x/v2.x, v1.y/v2.y };
+    return result;
 }
 
 // Normalize provided vector
@@ -388,15 +388,15 @@ RMDEF Vector3 Vector3Negate(Vector3 v)
 // Divide vector by a float value
 RMDEF Vector3 Vector3Divide(Vector3 v, float div)
 {
-	Vector3 result = { v.x / div, v.y / div, v.z / div };
-	return result;
+    Vector3 result = { v.x / div, v.y / div, v.z / div };
+    return result;
 }
 
 // Divide vector by vector
 RMDEF Vector3 Vector3DivideV(Vector3 v1, Vector3 v2)
 {
-	Vector3 result = { v1.x/v2.x, v1.y/v2.y, v1.z/v2.z };
-	return result;
+    Vector3 result = { v1.x/v2.x, v1.y/v2.y, v1.z/v2.z };
+    return result;
 }
 
 // Normalize provided vector
@@ -1159,7 +1159,7 @@ RMDEF Quaternion QuaternionFromVector3ToVector3(Vector3 from, Vector3 to)
     // Above lines are equivalent to:
     //Quaternion result = QuaternionNlerp(q, QuaternionIdentity(), 0.5f);
 
-	return result;
+    return result;
 }
 
 // Returns a quaternion for a given rotation matrix
@@ -1320,21 +1320,21 @@ RMDEF void QuaternionToAxisAngle(Quaternion q, Vector3 *outAxis, float *outAngle
 // Returns he quaternion equivalent to Euler angles
 RMDEF Quaternion QuaternionFromEuler(float roll, float pitch, float yaw)
 {
-	Quaternion q = { 0 };
+    Quaternion q = { 0 };
 
-	float x0 = cosf(roll*0.5f);
-	float x1 = sinf(roll*0.5f);
-	float y0 = cosf(pitch*0.5f);
-	float y1 = sinf(pitch*0.5f);
-	float z0 = cosf(yaw*0.5f);
-	float z1 = sinf(yaw*0.5f);
+    float x0 = cosf(roll*0.5f);
+    float x1 = sinf(roll*0.5f);
+    float y0 = cosf(pitch*0.5f);
+    float y1 = sinf(pitch*0.5f);
+    float z0 = cosf(yaw*0.5f);
+    float z1 = sinf(yaw*0.5f);
 
-	q.x = x1*y0*z0 - x0*y1*z1;
-	q.y = x0*y1*z0 + x1*y0*z1;
-	q.z = x0*y0*z1 - x1*y1*z0;
-	q.w = x0*y0*z0 + x1*y1*z1;
+    q.x = x1*y0*z0 - x0*y1*z1;
+    q.y = x0*y1*z0 + x1*y0*z1;
+    q.z = x0*y0*z1 - x1*y1*z0;
+    q.w = x0*y0*z0 + x1*y1*z1;
 
-	return q;
+    return q;
 }
 
 // Return the Euler angles equivalent to quaternion (roll, pitch, yaw)
@@ -1343,21 +1343,21 @@ RMDEF Vector3 QuaternionToEuler(Quaternion q)
 {
     Vector3 result = { 0 };
 
-	// roll (x-axis rotation)
-	float x0 = 2.0f*(q.w*q.x + q.y*q.z);
-	float x1 = 1.0f - 2.0f*(q.x*q.x + q.y*q.y);
-	result.x = atan2f(x0, x1)*RAD2DEG;
+    // roll (x-axis rotation)
+    float x0 = 2.0f*(q.w*q.x + q.y*q.z);
+    float x1 = 1.0f - 2.0f*(q.x*q.x + q.y*q.y);
+    result.x = atan2f(x0, x1)*RAD2DEG;
 
-	// pitch (y-axis rotation)
-	float y0 = 2.0f*(q.w*q.y - q.z*q.x);
-	y0 = y0 > 1.0f ? 1.0f : y0;
-	y0 = y0 < -1.0f ? -1.0f : y0;
-	result.y = asinf(y0)*RAD2DEG;
+    // pitch (y-axis rotation)
+    float y0 = 2.0f*(q.w*q.y - q.z*q.x);
+    y0 = y0 > 1.0f ? 1.0f : y0;
+    y0 = y0 < -1.0f ? -1.0f : y0;
+    result.y = asinf(y0)*RAD2DEG;
 
-	// yaw (z-axis rotation)
-	float z0 = 2.0f*(q.w*q.z + q.x*q.y);
-	float z1 = 1.0f - 2.0f*(q.y*q.y + q.z*q.z);
-	result.z = atan2f(z0, z1)*RAD2DEG;
+    // yaw (z-axis rotation)
+    float z0 = 2.0f*(q.w*q.z + q.x*q.y);
+    float z1 = 1.0f - 2.0f*(q.y*q.y + q.z*q.z);
+    result.z = atan2f(z0, z1)*RAD2DEG;
 
     return result;
 }

@@ -53,8 +53,8 @@ void UpdateDrawFrame(void);         // Update and Draw one frame
 //----------------------------------------------------------------------------------
 int main(void)
 {
-	// Initialization (Note windowTitle is unused on Android)
-	//---------------------------------------------------------
+    // Initialization (Note windowTitle is unused on Android)
+    //---------------------------------------------------------
     InitWindow(screenWidth, screenHeight, "LIGHT MY RITUAL! [GGJ16]");
 
     // Global data loading (assets that must be available in all screens, i.e. fonts)
@@ -69,7 +69,7 @@ int main(void)
     UnloadImage(image);                         // Unload image from CPU memory (RAM)
     
     font = LoadFont("resources/font_arcadian.png");
-	//doors = LoadTexture("resources/textures/doors.png");
+    //doors = LoadTexture("resources/textures/doors.png");
     //sndDoor = LoadSound("resources/audio/door.ogg");
     
     music = LoadMusicStream("resources/audio/ambient.ogg");
@@ -270,7 +270,7 @@ void UpdateDrawFrame(void)
             case GAMEPLAY: DrawGameplayScreen(); break;
             default: break;
         }
-	
+    
         if (onTransition) DrawTransition();
     
         //DrawFPS(10, 10);

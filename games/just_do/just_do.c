@@ -50,8 +50,8 @@ void UpdateDrawFrame(void);     // Update and Draw one frame
 //----------------------------------------------------------------------------------
 int main(void)
 {
-	// Initialization (Note windowTitle is unused on Android)
-	//---------------------------------------------------------
+    // Initialization (Note windowTitle is unused on Android)
+    //---------------------------------------------------------
     InitWindow(screenWidth, screenHeight, "JUST DO [GGJ15]");
 
     // Load global data here (assets that must be available in all screens, i.e. fonts)

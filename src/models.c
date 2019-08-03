@@ -2480,11 +2480,11 @@ bool CheckCollisionSpheres(Vector3 centerA, float radiusA, Vector3 centerB, floa
     // Simple way to check for collision, just checking distance between two points
     // Unfortunately, sqrtf() is a costly operation, so we avoid it with following solution
     /*
-    float dx = centerA.x - centerB.x;      // X distance between centers    
-    float dy = centerA.y - centerB.y;      // Y distance between centers    
-    float dz = centerA.z - centerB.z;      // Y distance between centers    
+    float dx = centerA.x - centerB.x;      // X distance between centers
+    float dy = centerA.y - centerB.y;      // Y distance between centers
+    float dz = centerA.z - centerB.z;      // Z distance between centers
 
-    float distance = sqrtf(dx*dx + dy*dy + dz*dz);  // Distance between centers    
+    float distance = sqrtf(dx*dx + dy*dy + dz*dz);  // Distance between centers
 
     if (distance <= (radiusA + radiusB)) collision = true;
     */

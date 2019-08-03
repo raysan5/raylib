@@ -52,8 +52,8 @@ void UpdateDrawFrame(void);         // Update and Draw one frame
 //----------------------------------------------------------------------------------
 int main(void)
 {
-	// Initialization (Note windowTitle is unused on Android)
-	//---------------------------------------------------------
+    // Initialization (Note windowTitle is unused on Android)
+    //---------------------------------------------------------
     InitWindow(screenWidth, screenHeight, "SKULLY ESCAPE [KING GAMEJAM 2015]");
 
     // Global data loading (assets that must be available in all screens, i.e. fonts)
@@ -63,10 +63,10 @@ int main(void)
     PlayMusicStream(music);
     
     font = LoadFont("resources/textures/alagard.png");
-	doors = LoadTexture("resources/textures/doors.png");
+    doors = LoadTexture("resources/textures/doors.png");
     sndDoor = LoadSound("resources/audio/door.ogg");
     sndScream = LoadSound("resources/audio/scream.ogg");
-	
+    
     InitPlayer();
     
     // Setup and Init first screen
@@ -90,7 +90,7 @@ int main(void)
     //--------------------------------------------------------------------------------------
     
     // Unload all global loaded data (i.e. fonts) here!
-	UnloadPlayer();
+    UnloadPlayer();
     UnloadFont(font);
     UnloadTexture(doors);
     UnloadSound(sndDoor);
@@ -397,7 +397,7 @@ void UpdateDrawFrame(void)
             case ENDING: DrawEndingScreen(); break;
             default: break;
         }
-	
+    
         if (onTransition) DrawTransition();
     
         //DrawFPS(10, 10);

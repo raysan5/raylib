@@ -823,14 +823,15 @@ void ExportImageAsCode(Image image, const char *fileName)
 
     FILE *txtFile = fopen(fileName, "wt");
 
-    fprintf(txtFile, "\n//////////////////////////////////////////////////////////////////////////////////////\n");
+    fprintf(txtFile, "\n");
+    fprintf(txtFile, "////////////////////////////////////////////////////////////////////////////////////////\n");
     fprintf(txtFile, "//                                                                                    //\n");
     fprintf(txtFile, "// ImageAsCode exporter v1.0 - Image pixel data exported as an array of bytes         //\n");
     fprintf(txtFile, "//                                                                                    //\n");
     fprintf(txtFile, "// more info and bugs-report:  github.com/raysan5/raylib                              //\n");
     fprintf(txtFile, "// feedback and support:       ray[at]raylib.com                                      //\n");
     fprintf(txtFile, "//                                                                                    //\n");
-    fprintf(txtFile, "// Copyright (c) 2018 Ramon Santamaria (@raysan5)                                     //\n");
+    fprintf(txtFile, "// Copyright (c) 2019 Ramon Santamaria (@raysan5)                                     //\n");
     fprintf(txtFile, "//                                                                                    //\n");
     fprintf(txtFile, "////////////////////////////////////////////////////////////////////////////////////////\n\n");
 
