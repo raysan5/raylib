@@ -271,11 +271,11 @@ static void DrawLifes(void)
 {
     if (player.numLifes != 0)
     {
-    	Vector2 position = { 20, GetScreenHeight() - texLife.height - 20 };
-		
+        Vector2 position = { 20, GetScreenHeight() - texLife.height - 20 };
+        
         for(int i = 0; i < player.numLifes; i++)
         {
-        	DrawTexture(texLife, position.x + i*texLife.width, position.y, Fade(RAYWHITE, 0.7f));
+            DrawTexture(texLife, position.x + i*texLife.width, position.y, Fade(RAYWHITE, 0.7f));
         }
     }
 }
