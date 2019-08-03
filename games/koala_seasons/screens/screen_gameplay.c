@@ -38,7 +38,6 @@
 
 //#define DEBUG
 
-// DONE: Review MAX_* limits, don't waste memory!!!
 #define MAX_ENEMIES            16
 #define MAX_BAMBOO             16
 #define MAX_LEAVES             14
@@ -96,7 +95,7 @@
 //----------------------------------------------------------------------------------
 // Types and Structures Definition
 //----------------------------------------------------------------------------------
-typedef enum { WINTER, SPRING, SUMMER, FALL, TRANSITION} SeasonState;
+typedef enum { WINTER, SPRING, SUMMER, FALL, TRANSITION } SeasonState;
 typedef enum { JUMPING, KICK, FINALFORM, GRABED, ONWIND } KoalaState;
 
 typedef struct {
@@ -343,7 +342,6 @@ static Rectangle leftButton = {0, 0, 0, 0};
 static Rectangle rightButton = {0, 0, 0, 0};
 static Rectangle powerButton = {0, 0, 0, 0};
 static Rectangle fire[MAX_FIRE];
-//static Rectangle flames[MAX_FLAMES];
 static Rectangle ice[MAX_ICE];
 static Rectangle resin[MAX_RESIN];
 static Rectangle wind[MAX_WIND];
@@ -351,7 +349,7 @@ static Rectangle bamboo[MAX_BAMBOO];
 static Rectangle snake[MAX_ENEMIES];
 static Rectangle dingo[MAX_ENEMIES];
 static Rectangle owl[MAX_ENEMIES];
-static Rectangle leaf[MAX_LEAVES];          // DONE: Review name!
+static Rectangle leaf[MAX_LEAVES];
 static Rectangle powerBar;
 static Rectangle backBar;
 static Rectangle fireAnimation;
@@ -387,7 +385,7 @@ static Vector2 textSize;
 static Vector2 clockPosition;
 
 static Particle enemyHit[MAX_ENEMIES];
-static ParticleSystem leafParticles[MAX_LEAVES];  // DONE: Review!!! Creating 40 ParticleSystem!!! -> 40*128 = 5120 Particles! Maybe better create a struct Leaf?
+static ParticleSystem leafParticles[MAX_LEAVES];
 static ParticleSystem snowParticle;
 static ParticleSystem backSnowParticle;
 static ParticleSystem dandelionParticle;
@@ -670,7 +668,7 @@ void UpdateGameplayScreen(void)
 
             transitionFramesCounter += speedMod*TIME_FACTOR;
 
-            if(transitionFramesCounter <= SEASONTRANSITION)
+            if (transitionFramesCounter <= SEASONTRANSITION)
             {
                 color00 = ColorTransition(initcolor00, finalcolor00, transitionFramesCounter);
                 color01 = ColorTransition(initcolor01, finalcolor01, transitionFramesCounter);
@@ -1043,12 +1041,8 @@ void UpdateGameplayScreen(void)
 #endif
         }
 #if defined(DEBUG)
-        if (currentLeaves < LEAVESTOTRANSFORM && (IsKeyPressed(KEY_ENTER)))
-        {
-            currentLeaves += LEAVESTOTRANSFORM;
-        }
+        if ((currentLeaves < LEAVESTOTRANSFORM) && (IsKeyPressed(KEY_ENTER))) currentLeaves += LEAVESTOTRANSFORM;
 #endif
-        
         if (coolDown)
         {
             power += 20;
@@ -1427,10 +1421,6 @@ void UpdateGameplayScreen(void)
 
             if (CheckCollisionRecs(player, leaf[j]) && leafActive[j])
             {
-                //power += 20;
-                //printf("coin %c", coinType[j]);
-
-                // DONE: Review
                 popupLeaves[j].position = (Vector2){ leaf[j].x, leaf[j].y };
                 popupLeaves[j].scale = 1.0f;
                 popupLeaves[j].alpha = 1.0f;
@@ -1438,25 +1428,25 @@ void UpdateGameplayScreen(void)
                 
                 PlaySound(fxEatLeaves);
 
-                if(leafType[j] == 0)
+                if (leafType[j] == 0)
                 {
                     currentLeaves++;
                     popupLeaves[j].score = 1;
                 }
 
-                else if(leafType[j] == 1)
+                else if (leafType[j] == 1)
                 {
                     currentLeaves += 2;
                     popupLeaves[j].score = 2;
                 }
 
-                else if(leafType[j] == 2)
+                else if (leafType[j] == 2)
                 {
                     currentLeaves += 3;
                     popupLeaves[j].score = 3;
                 }
 
-                else if(leafType[j] == 3)
+                else if (leafType[j] == 3)
                 {
                     currentLeaves += 4;
                     popupLeaves[j].score = 4;
@@ -2232,7 +2222,6 @@ void UpdateGameplayScreen(void)
                 player.x -= speed;
                 grabCounter += 1*TIME_FACTOR;
 
-                // DONE: Review, before checking collision with ALL enemies, check if they are active!
                 for (int i = 0; i < MAX_ENEMIES; i++)
                 {
                     if (CheckCollisionRecs(player, snake[i]) && !isHitSnake[i] && snakeActive[i])
@@ -2286,7 +2275,6 @@ void UpdateGameplayScreen(void)
                         enemyHit[i].speed = (Vector2){ dingo[i].x, dingo[i].y };
                         enemyHit[i].size = (float)GetRandomValue(5, 10)/30;
                         enemyHit[i].rotation = 0.0f;
-                        //enemyHit[i].color = (Color){ GetRandomValue(0, 255), GetRandomValue(0, 255), GetRandomValue(0, 255), 255 };
                         enemyHit[i].alpha = 1.0f;
                         enemyHit[i].active = true;
                         
@@ -2317,7 +2305,6 @@ void UpdateGameplayScreen(void)
                         enemyHit[i].speed = (Vector2){ owl[i].x, owl[i].y };
                         enemyHit[i].size = (float)GetRandomValue(5, 10)/30;
                         enemyHit[i].rotation = 0.0f;
-                        //enemyHit[i].color = (Color){ GetRandomValue(0, 255), GetRandomValue(0, 255), GetRandomValue(0, 255), 255 };
                         enemyHit[i].alpha = 1.0f;
                         enemyHit[i].active = true;
                         
@@ -2392,9 +2379,7 @@ void UpdateGameplayScreen(void)
                         thisFrameKoala = 0;
                     }
                     
-                    //if (curFrameKoala > 1) curFrameKoala = ;
-                    
-                    if(curFrameKoala <= 1 )koalaAnimationTransform.x = gameplay_koala_transform.x + koalaAnimationTransform.width*curFrameKoala;
+                    if (curFrameKoala <= 1) koalaAnimationTransform.x = gameplay_koala_transform.x + koalaAnimationTransform.width*curFrameKoala;
 
                     if (transAniCounter >= 5)
                     {
@@ -2407,8 +2392,7 @@ void UpdateGameplayScreen(void)
                         finalColor = RED;
                         finalColor2 = WHITE;
                     }
-
-                    if (!transBackAnim)
+                    else
                     {
                         finalColor = WHITE;
                         finalColor2 = RED;
@@ -2420,9 +2404,7 @@ void UpdateGameplayScreen(void)
                         thisFrameKoala = 0;
                         curFrameKoala = 0;
                         speedFX.active = true;
-                        //speedMod = 2;
                         transCount = 0;
-                        //printf ("THIS ISN'T EVEN MY FINAL FORM");
                         bambooTimer += 15*TIME_FACTOR;
                     }
                 }
@@ -2558,7 +2540,7 @@ void UpdateGameplayScreen(void)
         velocity -= 1*TIME_FACTOR;
         player.y -= velocity;
 
-        if(player.y >= GetScreenHeight())
+        if (player.y >= GetScreenHeight())
         {
             deathsCounter++;
             finishScreen = 1;
@@ -2781,7 +2763,7 @@ void DrawGameplayScreen(void)
             case KICK:DrawTexturePro(atlas01, gameplay_koala_dash, (Rectangle){player.x - player.width, player.y - gameplay_koala_jump.height/4, gameplay_koala_dash.width, gameplay_koala_dash.height}, (Vector2){0, 0}, 0, WHITE);  break;
             case FINALFORM:
             {
-                if(transforming)DrawTexturePro(atlas01, koalaAnimationTransform, (Rectangle){player.x - player.width, player.y - gameplay_koala_transform.height/4, gameplay_koala_transform.width/2, gameplay_koala_transform.height}, (Vector2){0, 0}, 0, finalColor);
+                if (transforming)DrawTexturePro(atlas01, koalaAnimationTransform, (Rectangle){player.x - player.width, player.y - gameplay_koala_transform.height/4, gameplay_koala_transform.width/2, gameplay_koala_transform.height}, (Vector2){0, 0}, 0, finalColor);
                 else DrawTexturePro(atlas01, koalaAnimationFly, (Rectangle){player.x - gameplay_koala_fly.width/3, player.y - gameplay_koala_fly.height/4, gameplay_koala_fly.width/2, gameplay_koala_fly.height}, (Vector2){0, 0}, 0, finalColor);//DrawTextureRec((koalaFly), (Rectangle){0, 0, 128, 128}, (Vector2){player.x - 50, player.y - 40}, WHITE);
             
             } break;
@@ -3781,7 +3763,7 @@ static void Reset(void)
         bamboo[i].y = 0;
         bamboo[i].width = 50;
         bamboo[i].height = GetScreenHeight();
-        if(i > 5) bambooActive[i] = false;
+        if (i > 5) bambooActive[i] = false;
         else bambooActive[i] = true;
     }
 

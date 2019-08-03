@@ -243,7 +243,7 @@ ifeq ($(PLATFORM),PLATFORM_WEB)
     # logic to a self contained function: UpdateDrawFrame(), check core_basic_window_web.c for reference.
 
     # Define a custom shell .html and output extension
-    CFLAGS += --shell-file $(RAYLIB_PATH)\src\shell.html
+    CFLAGS += --shell-file $(RAYLIB_PATH)/src/shell.html
     EXT = .html
 endif
 
@@ -365,6 +365,7 @@ EXAMPLES = \
     core/core_window_letterbox \
     core/core_drop_files \
     core/core_random_values \
+    core/core_scissor_test \
     core/core_storage_values \
     core/core_vr_simulator \
     core/core_loading_thread \
@@ -394,6 +395,7 @@ EXAMPLES = \
     text/text_rectangle_bounds \
     text/text_unicode \
     textures/textures_logo_raylib \
+    textures/textures_mouse_painting \
     textures/textures_rectangle \
     textures/textures_srcrec_dstrec \
     textures/textures_image_drawing \

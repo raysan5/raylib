@@ -26,7 +26,10 @@
             "group": {
                 "kind": "build",
                 "isDefault": true
-            }
+            },
+            "problemMatcher": [
+                "$gcc"
+            ]
         },
         {
             "label": "build release",
@@ -47,7 +50,10 @@
                     "RAYLIB_PATH=<path_to_raylib>/raylib",
                 ],
             },
-            "group": "build"
+            "group": "build",
+            "problemMatcher": [
+                "$gcc"
+            ]
         }
     ]
 }

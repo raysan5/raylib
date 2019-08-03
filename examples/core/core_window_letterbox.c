@@ -29,7 +29,7 @@ int main(void)
     int gameScreenWidth = 640;
     int gameScreenHeight = 480;
 
-    // Render texture initialization
+    // Render texture initialization, used to hold the rendering result so we can easily resize it
     RenderTexture2D target = LoadRenderTexture(gameScreenWidth, gameScreenHeight);
     SetTextureFilter(target.texture, FILTER_BILINEAR);  // Texture scale filter to use
 
@@ -59,7 +59,7 @@ int main(void)
         BeginDrawing();
             ClearBackground(BLACK);
 
-            // Draw everything in the render texture
+            // Draw everything in the render texture, note this will not be rendered on screen, yet
             BeginTextureMode(target);
 
                 ClearBackground(RAYWHITE);         // Clear render texture background color
