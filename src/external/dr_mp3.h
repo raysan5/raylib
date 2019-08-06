@@ -1,6 +1,6 @@
 /*
 MP3 audio decoder. Choice of public domain or MIT-0. See license statements at the end of this file.
-dr_mp3 - v0.4.4 - 2019-05-06
+dr_mp3 - v0.4.7 - 2019-07-28
 
 David Reid - mackron@gmail.com
 
@@ -1143,41 +1143,72 @@ static void drmp3_L3_huffman(float *dst, drmp3_bs *bs, const drmp3_L3_gr_info *g
         int sfb_cnt = gr_info->region_count[ireg++];
         const drmp3_int16 *codebook = tabs + tabindex[tab_num];
         int linbits = g_linbits[tab_num];
-        do
+        if (linbits)
         {
-            np = *sfb++ / 2;
-            pairs_to_decode = DRMP3_MIN(big_val_cnt, np);
-            one = *scf++;
             do
             {
-                int j, w = 5;
-                int leaf = codebook[DRMP3_PEEK_BITS(w)];
-                while (leaf < 0)
+                np = *sfb++ / 2;
+                pairs_to_decode = DRMP3_MIN(big_val_cnt, np);
+                one = *scf++;
+                do
                 {
-                    DRMP3_FLUSH_BITS(w);
-                    w = leaf & 7;
-                    leaf = codebook[DRMP3_PEEK_BITS(w) - (leaf >> 3)];
-                }
-                DRMP3_FLUSH_BITS(leaf >> 8);
-
-                for (j = 0; j < 2; j++, dst++, leaf >>= 4)
-                {
-                    int lsb = leaf & 0x0F;
-                    if (lsb == 15 && linbits)
+                    int j, w = 5;
+                    int leaf = codebook[DRMP3_PEEK_BITS(w)];
+                    while (leaf < 0)
                     {
-                        lsb += DRMP3_PEEK_BITS(linbits);
-                        DRMP3_FLUSH_BITS(linbits);
-                        DRMP3_CHECK_BITS;
-                        *dst = one*drmp3_L3_pow_43(lsb)*((drmp3_int32)bs_cache < 0 ? -1: 1);
-                    } else
-                    {
-                        *dst = g_drmp3_pow43[16 + lsb - 16*(bs_cache >> 31)]*one;
+                        DRMP3_FLUSH_BITS(w);
+                        w = leaf & 7;
+                        leaf = codebook[DRMP3_PEEK_BITS(w) - (leaf >> 3)];
                     }
-                    DRMP3_FLUSH_BITS(lsb ? 1 : 0);
-                }
-                DRMP3_CHECK_BITS;
-            } while (--pairs_to_decode);
-        } while ((big_val_cnt -= np) > 0 && --sfb_cnt >= 0);
+                    DRMP3_FLUSH_BITS(leaf >> 8);
+
+                    for (j = 0; j < 2; j++, dst++, leaf >>= 4)
+                    {
+                        int lsb = leaf & 0x0F;
+                        if (lsb == 15)
+                        {
+                            lsb += DRMP3_PEEK_BITS(linbits);
+                            DRMP3_FLUSH_BITS(linbits);
+                            DRMP3_CHECK_BITS;
+                            *dst = one*drmp3_L3_pow_43(lsb)*((drmp3_int32)bs_cache < 0 ? -1: 1);
+                        } else
+                        {
+                            *dst = g_drmp3_pow43[16 + lsb - 16*(bs_cache >> 31)]*one;
+                        }
+                        DRMP3_FLUSH_BITS(lsb ? 1 : 0);
+                    }
+                    DRMP3_CHECK_BITS;
+                } while (--pairs_to_decode);
+            } while ((big_val_cnt -= np) > 0 && --sfb_cnt >= 0);
+        } else
+        {
+            do
+            {
+                np = *sfb++ / 2;
+                pairs_to_decode = DRMP3_MIN(big_val_cnt, np);
+                one = *scf++;
+                do
+                {
+                    int j, w = 5;
+                    int leaf = codebook[DRMP3_PEEK_BITS(w)];
+                    while (leaf < 0)
+                    {
+                        DRMP3_FLUSH_BITS(w);
+                        w = leaf & 7;
+                        leaf = codebook[DRMP3_PEEK_BITS(w) - (leaf >> 3)];
+                    }
+                    DRMP3_FLUSH_BITS(leaf >> 8);
+
+                    for (j = 0; j < 2; j++, dst++, leaf >>= 4)
+                    {
+                        int lsb = leaf & 0x0F;
+                        *dst = g_drmp3_pow43[16 + lsb - 16*(bs_cache >> 31)]*one;
+                        DRMP3_FLUSH_BITS(lsb ? 1 : 0);
+                    }
+                    DRMP3_CHECK_BITS;
+                } while (--pairs_to_decode);
+            } while ((big_val_cnt -= np) > 0 && --sfb_cnt >= 0);
+        }
     }
 
     for (np = 1 - big_val_cnt;; dst += 4)
@@ -2133,14 +2164,14 @@ void drmp3dec_f32_to_s16(const float *in, drmp3_int16 *out, int num_samples)
         int aligned_count = num_samples & ~7;
         for(; i < aligned_count; i+=8)
         {
-            static const drmp3_f4 g_scale = { 32768.0f, 32768.0f, 32768.0f, 32768.0f };
-            drmp3_f4 a = DRMP3_VMUL(DRMP3_VLD(&in[i  ]), g_scale);
-            drmp3_f4 b = DRMP3_VMUL(DRMP3_VLD(&in[i+4]), g_scale);
+            drmp3_f4 scale = DRMP3_VSET(32768.0f);
+            drmp3_f4 a = DRMP3_VMUL(DRMP3_VLD(&in[i  ]), scale);
+            drmp3_f4 b = DRMP3_VMUL(DRMP3_VLD(&in[i+4]), scale);
 #if DRMP3_HAVE_SSE
-            static const drmp3_f4 g_max = { 32767.0f, 32767.0f, 32767.0f, 32767.0f };
-            static const drmp3_f4 g_min = { -32768.0f, -32768.0f, -32768.0f, -32768.0f };
-            __m128i pcm8 = _mm_packs_epi32(_mm_cvtps_epi32(_mm_max_ps(_mm_min_ps(a, g_max), g_min)),
-                                           _mm_cvtps_epi32(_mm_max_ps(_mm_min_ps(b, g_max), g_min)));
+            drmp3_f4 s16max = DRMP3_VSET( 32767.0f);
+            drmp3_f4 s16min = DRMP3_VSET(-32768.0f);
+            __m128i pcm8 = _mm_packs_epi32(_mm_cvtps_epi32(_mm_max_ps(_mm_min_ps(a, s16max), s16min)),
+                                           _mm_cvtps_epi32(_mm_max_ps(_mm_min_ps(b, s16max), s16min)));
             out[i  ] = (drmp3_int16)_mm_extract_epi16(pcm8, 0);
             out[i+1] = (drmp3_int16)_mm_extract_epi16(pcm8, 1);
             out[i+2] = (drmp3_int16)_mm_extract_epi16(pcm8, 2);
@@ -3779,6 +3810,15 @@ DIFFERENCES BETWEEN minimp3 AND dr_mp3
 /*
 REVISION HISTORY
 ================
+v0.4.7 - 2019-07-28
+  - Fix a compiler error.
+
+v0.4.6 - 2019-06-14
+  - Fix a compiler error.
+
+v0.4.5 - 2019-06-06
+  - Bring up to date with minimp3.
+
 v0.4.4 - 2019-05-06
   - Fixes to the VC6 build.
 
