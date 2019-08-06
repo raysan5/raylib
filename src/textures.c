@@ -680,6 +680,37 @@ Vector4 *GetImageDataNormalized(Image image)
     return pixels;
 }
 
+// Get image alpha border rectangle
+Rectangle GetImageAlphaBorder(Image image)
+{
+    Color *pixels = GetImageData(image);
+
+    int xMin = 65536;   // Define a big enough number
+    int xMax = 0;
+    int yMin = 65536;
+    int yMax = 0;
+
+    for (int y = 0; y < image->height; y++)
+    {
+        for (int x = 0; x < image->width; x++)
+        {
+            if (pixels[y*image->width + x].a > (unsigned char)(threshold*255.0f))
+            {
+                if (x < xMin) xMin = x;
+                if (x > xMax) xMax = x;
+                if (y < yMin) yMin = y;
+                if (y > yMax) yMax = y;
+            }
+        }
+    }
+
+    Rectangle crop = { xMin, yMin, (xMax + 1) - xMin, (yMax + 1) - yMin };
+
+    RL_FREE(pixels);
+
+    return crop;
+}
+
 // Get pixel data size in bytes (image or texture)
 // NOTE: Size depends on pixel format
 int GetPixelDataSize(int width, int height, int format)
@@ -894,7 +925,9 @@ Image ImageFromImage(Image image, Rectangle rec)
 {
     Image result = ImageCopy(image);
     
+#if defined(SUPPORT_IMAGE_MANIPULATION)
     ImageCrop(&result, rec);
+#endif
     
     return result;
 }
