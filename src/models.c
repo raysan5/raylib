@@ -3457,6 +3457,7 @@ static Model LoadGLTF(const char *fileName)
                         ImageColorTint(&image, tint);
                         texture = LoadTextureFromImage(image);
                         UnloadImage(image);
+                        RL_FREE(texturePath);
                     }
                 }
                 else if (img->buffer_view)
