@@ -100,7 +100,7 @@ int main(void)
     //--------------------------------------------------------------------------------------
     // Unload model animations data
     for (int i = 0; i < animsCount; i++) UnloadModelAnimation(anims[i]);
-	RL_FREE(anims);
+    RL_FREE(anims);
 
     UnloadModel(model);         // Unload model
 

@@ -945,129 +945,129 @@ ModelAnimation *LoadModelAnimations(const char *filename, int *animCount)
     fseek(iqmFile, iqm.ofs_frames, SEEK_SET);
     fread(framedata, sizeof(unsigned short)*iqm.num_frames*iqm.num_framechannels, 1, iqmFile);
 
-	for(int a=0;a<iqm.num_anims;a++)
-	{
+    for(int a=0;a<iqm.num_anims;a++)
+    {
 
-		animations[a].frameCount = anim[a].num_frames;
-		animations[a].boneCount = iqm.num_poses;
-		animations[a].bones = RL_MALLOC(sizeof(BoneInfo)*iqm.num_poses);
-		animations[a].framePoses = RL_MALLOC(sizeof(Transform*)*anim[a].num_frames);
-		// unused for now
-		//animations[a].framerate = anim.framerate;
+        animations[a].frameCount = anim[a].num_frames;
+        animations[a].boneCount = iqm.num_poses;
+        animations[a].bones = RL_MALLOC(sizeof(BoneInfo)*iqm.num_poses);
+        animations[a].framePoses = RL_MALLOC(sizeof(Transform*)*anim[a].num_frames);
+        // unused for now
+        //animations[a].framerate = anim.framerate;
 
-		for (int j = 0; j < iqm.num_poses; j++)
-		{
-			strcpy(animations[a].bones[j].name, "ANIMJOINTNAME");
-			animations[a].bones[j].parent = poses[j].parent;
-		}
+        for (int j = 0; j < iqm.num_poses; j++)
+        {
+            strcpy(animations[a].bones[j].name, "ANIMJOINTNAME");
+            animations[a].bones[j].parent = poses[j].parent;
+        }
 
-		for (int j = 0; j < anim[a].num_frames; j++) animations[a].framePoses[j] = RL_MALLOC(sizeof(Transform)*iqm.num_poses);
+        for (int j = 0; j < anim[a].num_frames; j++) animations[a].framePoses[j] = RL_MALLOC(sizeof(Transform)*iqm.num_poses);
 
-		int dcounter = anim[a].first_frame*iqm.num_framechannels;
+        int dcounter = anim[a].first_frame*iqm.num_framechannels;
 
-		for (int frame = 0; frame < anim[a].num_frames; frame++)
-		{
-			for (int i = 0; i < iqm.num_poses; i++)
-			{
-				animations[a].framePoses[frame][i].translation.x = poses[i].channeloffset[0];
+        for (int frame = 0; frame < anim[a].num_frames; frame++)
+        {
+            for (int i = 0; i < iqm.num_poses; i++)
+            {
+                animations[a].framePoses[frame][i].translation.x = poses[i].channeloffset[0];
 
-				if (poses[i].mask & 0x01)
-				{
-					animations[a].framePoses[frame][i].translation.x += framedata[dcounter]*poses[i].channelscale[0];
-					dcounter++;
-				}
+                if (poses[i].mask & 0x01)
+                {
+                    animations[a].framePoses[frame][i].translation.x += framedata[dcounter]*poses[i].channelscale[0];
+                    dcounter++;
+                }
 
-				animations[a].framePoses[frame][i].translation.y = poses[i].channeloffset[1];
+                animations[a].framePoses[frame][i].translation.y = poses[i].channeloffset[1];
 
-				if (poses[i].mask & 0x02)
-				{
-					animations[a].framePoses[frame][i].translation.y += framedata[dcounter]*poses[i].channelscale[1];
-					dcounter++;
-				}
+                if (poses[i].mask & 0x02)
+                {
+                    animations[a].framePoses[frame][i].translation.y += framedata[dcounter]*poses[i].channelscale[1];
+                    dcounter++;
+                }
 
-				animations[a].framePoses[frame][i].translation.z = poses[i].channeloffset[2];
+                animations[a].framePoses[frame][i].translation.z = poses[i].channeloffset[2];
 
-				if (poses[i].mask & 0x04)
-				{
-					animations[a].framePoses[frame][i].translation.z += framedata[dcounter]*poses[i].channelscale[2];
-					dcounter++;
-				}
+                if (poses[i].mask & 0x04)
+                {
+                    animations[a].framePoses[frame][i].translation.z += framedata[dcounter]*poses[i].channelscale[2];
+                    dcounter++;
+                }
 
-				animations[a].framePoses[frame][i].rotation.x = poses[i].channeloffset[3];
+                animations[a].framePoses[frame][i].rotation.x = poses[i].channeloffset[3];
 
-				if (poses[i].mask & 0x08)
-				{
-					animations[a].framePoses[frame][i].rotation.x += framedata[dcounter]*poses[i].channelscale[3];
-					dcounter++;
-				}
+                if (poses[i].mask & 0x08)
+                {
+                    animations[a].framePoses[frame][i].rotation.x += framedata[dcounter]*poses[i].channelscale[3];
+                    dcounter++;
+                }
 
-				animations[a].framePoses[frame][i].rotation.y = poses[i].channeloffset[4];
+                animations[a].framePoses[frame][i].rotation.y = poses[i].channeloffset[4];
 
-				if (poses[i].mask & 0x10)
-				{
-					animations[a].framePoses[frame][i].rotation.y += framedata[dcounter]*poses[i].channelscale[4];
-					dcounter++;
-				}
+                if (poses[i].mask & 0x10)
+                {
+                    animations[a].framePoses[frame][i].rotation.y += framedata[dcounter]*poses[i].channelscale[4];
+                    dcounter++;
+                }
 
-				animations[a].framePoses[frame][i].rotation.z = poses[i].channeloffset[5];
+                animations[a].framePoses[frame][i].rotation.z = poses[i].channeloffset[5];
 
-				if (poses[i].mask & 0x20)
-				{
-					animations[a].framePoses[frame][i].rotation.z += framedata[dcounter]*poses[i].channelscale[5];
-					dcounter++;
-				}
+                if (poses[i].mask & 0x20)
+                {
+                    animations[a].framePoses[frame][i].rotation.z += framedata[dcounter]*poses[i].channelscale[5];
+                    dcounter++;
+                }
 
-				animations[a].framePoses[frame][i].rotation.w = poses[i].channeloffset[6];
+                animations[a].framePoses[frame][i].rotation.w = poses[i].channeloffset[6];
 
-				if (poses[i].mask & 0x40)
-				{
-					animations[a].framePoses[frame][i].rotation.w += framedata[dcounter]*poses[i].channelscale[6];
-					dcounter++;
-				}
+                if (poses[i].mask & 0x40)
+                {
+                    animations[a].framePoses[frame][i].rotation.w += framedata[dcounter]*poses[i].channelscale[6];
+                    dcounter++;
+                }
 
-				animations[a].framePoses[frame][i].scale.x = poses[i].channeloffset[7];
+                animations[a].framePoses[frame][i].scale.x = poses[i].channeloffset[7];
 
-				if (poses[i].mask & 0x80)
-				{
-					animations[a].framePoses[frame][i].scale.x += framedata[dcounter]*poses[i].channelscale[7];
-					dcounter++;
-				}
+                if (poses[i].mask & 0x80)
+                {
+                    animations[a].framePoses[frame][i].scale.x += framedata[dcounter]*poses[i].channelscale[7];
+                    dcounter++;
+                }
 
-				animations[a].framePoses[frame][i].scale.y = poses[i].channeloffset[8];
+                animations[a].framePoses[frame][i].scale.y = poses[i].channeloffset[8];
 
-				if (poses[i].mask & 0x100)
-				{
-					animations[a].framePoses[frame][i].scale.y += framedata[dcounter]*poses[i].channelscale[8];
-					dcounter++;
-				}
+                if (poses[i].mask & 0x100)
+                {
+                    animations[a].framePoses[frame][i].scale.y += framedata[dcounter]*poses[i].channelscale[8];
+                    dcounter++;
+                }
 
-				animations[a].framePoses[frame][i].scale.z = poses[i].channeloffset[9];
+                animations[a].framePoses[frame][i].scale.z = poses[i].channeloffset[9];
 
-				if (poses[i].mask & 0x200)
-				{
-					animations[a].framePoses[frame][i].scale.z += framedata[dcounter]*poses[i].channelscale[9];
-					dcounter++;
-				}
+                if (poses[i].mask & 0x200)
+                {
+                    animations[a].framePoses[frame][i].scale.z += framedata[dcounter]*poses[i].channelscale[9];
+                    dcounter++;
+                }
 
-				animations[a].framePoses[frame][i].rotation = QuaternionNormalize(animations[a].framePoses[frame][i].rotation);
-			}
-		}
+                animations[a].framePoses[frame][i].rotation = QuaternionNormalize(animations[a].framePoses[frame][i].rotation);
+            }
+        }
 
-		// Build frameposes
-		for (int frame = 0; frame < anim[a].num_frames; frame++)
-		{
-			for (int i = 0; i < animations[a].boneCount; i++)
-			{
-				if (animations[a].bones[i].parent >= 0)
-				{
-					animations[a].framePoses[frame][i].rotation = QuaternionMultiply(animations[a].framePoses[frame][animations[a].bones[i].parent].rotation, animations[a].framePoses[frame][i].rotation);
-					animations[a].framePoses[frame][i].translation = Vector3RotateByQuaternion(animations[a].framePoses[frame][i].translation, animations[a].framePoses[frame][animations[a].bones[i].parent].rotation);
-					animations[a].framePoses[frame][i].translation = Vector3Add(animations[a].framePoses[frame][i].translation, animations[a].framePoses[frame][animations[a].bones[i].parent].translation);
-					animations[a].framePoses[frame][i].scale = Vector3MultiplyV(animations[a].framePoses[frame][i].scale, animations[a].framePoses[frame][animations[a].bones[i].parent].scale);
-				}
-			}
-		}
-	}
+        // Build frameposes
+        for (int frame = 0; frame < anim[a].num_frames; frame++)
+        {
+            for (int i = 0; i < animations[a].boneCount; i++)
+            {
+                if (animations[a].bones[i].parent >= 0)
+                {
+                    animations[a].framePoses[frame][i].rotation = QuaternionMultiply(animations[a].framePoses[frame][animations[a].bones[i].parent].rotation, animations[a].framePoses[frame][i].rotation);
+                    animations[a].framePoses[frame][i].translation = Vector3RotateByQuaternion(animations[a].framePoses[frame][i].translation, animations[a].framePoses[frame][animations[a].bones[i].parent].rotation);
+                    animations[a].framePoses[frame][i].translation = Vector3Add(animations[a].framePoses[frame][i].translation, animations[a].framePoses[frame][animations[a].bones[i].parent].translation);
+                    animations[a].framePoses[frame][i].scale = Vector3MultiplyV(animations[a].framePoses[frame][i].scale, animations[a].framePoses[frame][animations[a].bones[i].parent].scale);
+                }
+            }
+        }
+    }
 
     RL_FREE(framedata);
     RL_FREE(poses);
