@@ -105,7 +105,7 @@ int main(void)
 
             // Check ray collision against model
             // NOTE: It considers model.transform matrix!
-            meshHitInfo = GetCollisionRayModel(ray, &tower);
+            meshHitInfo = GetCollisionRayModel(ray, tower);
 
             if ((meshHitInfo.hit) && (meshHitInfo.distance < nearestHit.distance))
             {

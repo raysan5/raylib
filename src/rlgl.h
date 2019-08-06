@@ -131,6 +131,10 @@
 #define MAX_MATRIX_STACK_SIZE               32      // Max size of Matrix stack
 #define MAX_DRAWCALL_REGISTERED            256      // Max draws by state changes (mode, texture)
 
+// Shader and material limits
+#define MAX_SHADER_LOCATIONS                32      // Maximum number of predefined locations stored in shader struct
+#define MAX_MATERIAL_MAPS                   12      // Maximum number of texture maps stored in shader struct
+
 // Texture parameters (equivalent to OpenGL defines)
 #define RL_TEXTURE_WRAP_S               0x2802      // GL_TEXTURE_WRAP_S
 #define RL_TEXTURE_WRAP_T               0x2803      // GL_TEXTURE_WRAP_T
@@ -228,7 +232,7 @@ typedef unsigned char byte;
 
         // OpenGL identifiers
         unsigned int vaoId;     // OpenGL Vertex Array Object id
-        unsigned int vboId[7];  // OpenGL Vertex Buffer Objects id (7 types of vertex data)
+        unsigned int *vboId;    // OpenGL Vertex Buffer Objects id (7 types of vertex data)
     } Mesh;
 
     // Shader and material limits
@@ -237,8 +241,8 @@ typedef unsigned char byte;
 
     // Shader type (generic)
     typedef struct Shader {
-        unsigned int id;                // Shader program id
-        int locs[MAX_SHADER_LOCATIONS]; // Shader locations array
+        unsigned int id;        // Shader program id
+        int *locs;              // Shader locations array (MAX_SHADER_LOCATIONS)
     } Shader;
 
     // Material texture map
@@ -251,7 +255,7 @@ typedef unsigned char byte;
     // Material type (generic)
     typedef struct Material {
         Shader shader;          // Material shader
-        MaterialMap maps[MAX_MATERIAL_MAPS]; // Material maps
+        MaterialMap *maps;      // Material maps (MAX_MATERIAL_MAPS)
         float *params;          // Material generic parameters (if required)
     } Material;
 
@@ -499,7 +503,7 @@ RLAPI bool rlRenderTextureComplete(RenderTexture target);                 // Ver
 RLAPI void rlLoadMesh(Mesh *mesh, bool dynamic);                          // Upload vertex data into GPU and provided VAO/VBO ids
 RLAPI void rlUpdateMesh(Mesh mesh, int buffer, int numVertex);            // Update vertex data on GPU (upload new data to one buffer)
 RLAPI void rlDrawMesh(Mesh mesh, Material material, Matrix transform);    // Draw a 3d mesh with material and transform
-RLAPI void rlUnloadMesh(Mesh *mesh);                                      // Unload mesh data from CPU and GPU
+RLAPI void rlUnloadMesh(Mesh mesh);                                       // Unload mesh data from CPU and GPU
 
 // NOTE: There is a set of shader related functions that are available to end user,
 // to avoid creating function wrappers through core module, they have been directly declared in raylib.h
@@ -2757,30 +2761,30 @@ void rlDrawMesh(Mesh mesh, Material material, Matrix transform)
 }
 
 // Unload mesh data from CPU and GPU
-void rlUnloadMesh(Mesh *mesh)
+void rlUnloadMesh(Mesh mesh)
 {
-    RL_FREE(mesh->vertices);
-    RL_FREE(mesh->texcoords);
-    RL_FREE(mesh->normals);
-    RL_FREE(mesh->colors);
-    RL_FREE(mesh->tangents);
-    RL_FREE(mesh->texcoords2);
-    RL_FREE(mesh->indices);
+    RL_FREE(mesh.vertices);
+    RL_FREE(mesh.texcoords);
+    RL_FREE(mesh.normals);
+    RL_FREE(mesh.colors);
+    RL_FREE(mesh.tangents);
+    RL_FREE(mesh.texcoords2);
+    RL_FREE(mesh.indices);
 
-    RL_FREE(mesh->animVertices);
-    RL_FREE(mesh->animNormals);
-    RL_FREE(mesh->boneWeights);
-    RL_FREE(mesh->boneIds);
+    RL_FREE(mesh.animVertices);
+    RL_FREE(mesh.animNormals);
+    RL_FREE(mesh.boneWeights);
+    RL_FREE(mesh.boneIds);
 
-    rlDeleteBuffers(mesh->vboId[0]);   // vertex
-    rlDeleteBuffers(mesh->vboId[1]);   // texcoords
-    rlDeleteBuffers(mesh->vboId[2]);   // normals
-    rlDeleteBuffers(mesh->vboId[3]);   // colors
-    rlDeleteBuffers(mesh->vboId[4]);   // tangents
-    rlDeleteBuffers(mesh->vboId[5]);   // texcoords2
-    rlDeleteBuffers(mesh->vboId[6]);   // indices
+    rlDeleteBuffers(mesh.vboId[0]);   // vertex
+    rlDeleteBuffers(mesh.vboId[1]);   // texcoords
+    rlDeleteBuffers(mesh.vboId[2]);   // normals
+    rlDeleteBuffers(mesh.vboId[3]);   // colors
+    rlDeleteBuffers(mesh.vboId[4]);   // tangents
+    rlDeleteBuffers(mesh.vboId[5]);   // texcoords2
+    rlDeleteBuffers(mesh.vboId[6]);   // indices
 
-    rlDeleteVertexArrays(mesh->vaoId);
+    rlDeleteVertexArrays(mesh.vaoId);
 }
 
 // Read screen pixel data (color buffer)
@@ -2953,6 +2957,7 @@ char *LoadText(const char *fileName)
 Shader LoadShader(const char *vsFileName, const char *fsFileName)
 {
     Shader shader = { 0 };
+    shader.locs = (int *)RL_CALLOC(MAX_SHADER_LOCATIONS*sizeof(int), 1);
 
     char *vShaderStr = NULL;
     char *fShaderStr = NULL;
@@ -2973,6 +2978,7 @@ Shader LoadShader(const char *vsFileName, const char *fsFileName)
 Shader LoadShaderCode(char *vsCode, char *fsCode)
 {
     Shader shader = { 0 };
+    shader.locs = (int *)RL_CALLOC(MAX_SHADER_LOCATIONS*sizeof(int), 1);
 
     // NOTE: All locations must be reseted to -1 (no location)
     for (int i = 0; i < MAX_SHADER_LOCATIONS; i++) shader.locs[i] = -1;
@@ -3038,6 +3044,8 @@ void UnloadShader(Shader shader)
         rlDeleteShader(shader.id);
         TraceLog(LOG_INFO, "[SHDR ID %i] Unloaded shader program data", shader.id);
     }
+    
+    RL_FREE(shader.locs);
 }
 
 // Begin custom shader mode
@@ -3861,6 +3869,7 @@ static unsigned int LoadShaderProgram(unsigned int vShaderId, unsigned int fShad
 static Shader LoadShaderDefault(void)
 {
     Shader shader = { 0 };
+    shader.locs = (int *)RL_CALLOC(MAX_SHADER_LOCATIONS*sizeof(int), 1);
 
     // NOTE: All locations must be reseted to -1 (no location)
     for (int i = 0; i < MAX_SHADER_LOCATIONS; i++) shader.locs[i] = -1;

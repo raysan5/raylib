@@ -71,7 +71,7 @@
 //----------------------------------------------------------------------------------
 // Defines and Macros
 //----------------------------------------------------------------------------------
-// ...
+#define MAX_MESH_VBO    7               // Maximum number of vbo per mesh 
 
 //----------------------------------------------------------------------------------
 // Types and Structures Definition
@@ -702,7 +702,7 @@ Model LoadModelFromMesh(Mesh mesh)
 // Unload model from memory (RAM and/or VRAM)
 void UnloadModel(Model model)
 {
-    for (int i = 0; i < model.meshCount; i++) UnloadMesh(&model.meshes[i]);
+    for (int i = 0; i < model.meshCount; i++) UnloadMesh(model.meshes[i]);
     for (int i = 0; i < model.materialCount; i++) UnloadMaterial(model.materials[i]);
 
     RL_FREE(model.meshes);
@@ -729,9 +729,10 @@ Mesh *LoadMeshes(const char *fileName, int *meshCount)
 }
 
 // Unload mesh from memory (RAM and/or VRAM)
-void UnloadMesh(Mesh *mesh)
+void UnloadMesh(Mesh mesh)
 {
     rlUnloadMesh(mesh);
+    RL_FREE(mesh.vboId);
 }
 
 // Export mesh data to file
@@ -824,6 +825,7 @@ Material *LoadMaterials(const char *fileName, int *materialCount)
 Material LoadMaterialDefault(void)
 {
     Material material = { 0 };
+    material.maps = (MaterialMap *)RL_CALLOC(MAX_MATERIAL_MAPS*sizeof(MaterialMap), 1);
 
     material.shader = GetShaderDefault();
     material.maps[MAP_DIFFUSE].texture = GetTextureDefault();   // White texture (1x1 pixel)
@@ -847,6 +849,8 @@ void UnloadMaterial(Material material)
     {
         if (material.maps[i].texture.id != GetTextureDefault().id) rlDeleteTextures(material.maps[i].texture.id);
     }
+    
+    RL_FREE(material.maps);
 }
 
 // Set texture for a material map type (MAP_DIFFUSE, MAP_SPECULAR...)
@@ -1173,6 +1177,7 @@ bool IsModelAnimationValid(Model model, ModelAnimation anim)
 Mesh GenMeshPoly(int sides, float radius)
 {
     Mesh mesh = { 0 };
+    mesh.vboId = (unsigned int *)RL_CALLOC(MAX_MESH_VBO*sizeof(unsigned int), 1);
     int vertexCount = sides*3;
 
     // Vertices definition
@@ -1235,6 +1240,7 @@ Mesh GenMeshPoly(int sides, float radius)
 Mesh GenMeshPlane(float width, float length, int resX, int resZ)
 {
     Mesh mesh = { 0 };
+    mesh.vboId = (unsigned int *)RL_CALLOC(MAX_MESH_VBO*sizeof(unsigned int), 1);
 
 #define CUSTOM_MESH_GEN_PLANE
 #if defined(CUSTOM_MESH_GEN_PLANE)
@@ -1337,6 +1343,7 @@ Mesh GenMeshPlane(float width, float length, int resX, int resZ)
     mesh.vertices = (float *)RL_MALLOC(plane->ntriangles*3*3*sizeof(float));
     mesh.texcoords = (float *)RL_MALLOC(plane->ntriangles*3*2*sizeof(float));
     mesh.normals = (float *)RL_MALLOC(plane->ntriangles*3*3*sizeof(float));
+    mesh.vboId = (unsigned int *)RL_CALLOC(MAX_MESH_VBO*sizeof(unsigned int));
 
     mesh.vertexCount = plane->ntriangles*3;
     mesh.triangleCount = plane->ntriangles;
@@ -1368,6 +1375,7 @@ Mesh GenMeshPlane(float width, float length, int resX, int resZ)
 Mesh GenMeshCube(float width, float height, float length)
 {
     Mesh mesh = { 0 };
+    mesh.vboId = (unsigned int *)RL_CALLOC(MAX_MESH_VBO*sizeof(unsigned int), 1);
 
 #define CUSTOM_MESH_GEN_CUBE
 #if defined(CUSTOM_MESH_GEN_CUBE)
@@ -1533,6 +1541,7 @@ par_shapes_mesh* par_shapes_create_icosahedron();       // 20 sides polyhedron
 RLAPI Mesh GenMeshSphere(float radius, int rings, int slices)
 {
     Mesh mesh = { 0 };
+    mesh.vboId = (unsigned int *)RL_CALLOC(MAX_MESH_VBO*sizeof(unsigned int), 1);
 
     par_shapes_mesh *sphere = par_shapes_create_parametric_sphere(slices, rings);
     par_shapes_scale(sphere, radius, radius, radius);
@@ -1571,6 +1580,7 @@ RLAPI Mesh GenMeshSphere(float radius, int rings, int slices)
 RLAPI Mesh GenMeshHemiSphere(float radius, int rings, int slices)
 {
     Mesh mesh = { 0 };
+    mesh.vboId = (unsigned int *)RL_CALLOC(MAX_MESH_VBO*sizeof(unsigned int), 1);
 
     par_shapes_mesh *sphere = par_shapes_create_hemisphere(slices, rings);
     par_shapes_scale(sphere, radius, radius, radius);
@@ -1609,6 +1619,7 @@ RLAPI Mesh GenMeshHemiSphere(float radius, int rings, int slices)
 Mesh GenMeshCylinder(float radius, float height, int slices)
 {
     Mesh mesh = { 0 };
+    mesh.vboId = (unsigned int *)RL_CALLOC(MAX_MESH_VBO*sizeof(unsigned int), 1);
 
     // Instance a cylinder that sits on the Z=0 plane using the given tessellation
     // levels across the UV domain.  Think of "slices" like a number of pizza
@@ -1667,6 +1678,7 @@ Mesh GenMeshCylinder(float radius, float height, int slices)
 Mesh GenMeshTorus(float radius, float size, int radSeg, int sides)
 {
     Mesh mesh = { 0 };
+    mesh.vboId = (unsigned int *)RL_CALLOC(MAX_MESH_VBO*sizeof(unsigned int), 1);
 
     if (radius > 1.0f) radius = 1.0f;
     else if (radius < 0.1f) radius = 0.1f;
@@ -1709,6 +1721,7 @@ Mesh GenMeshTorus(float radius, float size, int radSeg, int sides)
 Mesh GenMeshKnot(float radius, float size, int radSeg, int sides)
 {
     Mesh mesh = { 0 };
+    mesh.vboId = (unsigned int *)RL_CALLOC(MAX_MESH_VBO*sizeof(unsigned int), 1);
 
     if (radius > 3.0f) radius = 3.0f;
     else if (radius < 0.5f) radius = 0.5f;
@@ -1860,13 +1873,14 @@ Mesh GenMeshHeightmap(Image heightmap, Vector3 size)
 Mesh GenMeshCubicmap(Image cubicmap, Vector3 cubeSize)
 {
     Mesh mesh = { 0 };
+    mesh.vboId = (unsigned int *)RL_CALLOC(MAX_MESH_VBO*sizeof(unsigned int), 1);
 
     Color *cubicmapPixels = GetImageData(cubicmap);
 
     int mapWidth = cubicmap.width;
     int mapHeight = cubicmap.height;
 
-    // NOTE: Max possible number of triangles numCubes * (12 triangles by cube)
+    // NOTE: Max possible number of triangles numCubes*(12 triangles by cube)
     int maxTriangles = cubicmap.width*cubicmap.height*12;
 
     int vCounter = 0;       // Used to count vertices
@@ -2478,11 +2492,11 @@ bool CheckCollisionSpheres(Vector3 centerA, float radiusA, Vector3 centerB, floa
     // Simple way to check for collision, just checking distance between two points
     // Unfortunately, sqrtf() is a costly operation, so we avoid it with following solution
     /*
-    float dx = centerA.x - centerB.x;      // X distance between centers
-    float dy = centerA.y - centerB.y;      // Y distance between centers
-    float dz = centerA.z - centerB.z;      // Z distance between centers
+    float dx = centerA.x - centerB.x;      // X distance between centers    
+    float dy = centerA.y - centerB.y;      // Y distance between centers    
+    float dz = centerA.z - centerB.z;      // Z distance between centers    
 
-    float distance = sqrtf(dx*dx + dy*dy + dz*dz);  // Distance between centers
+    float distance = sqrtf(dx*dx + dy*dy + dz*dz);  // Distance between centers    
 
     if (distance <= (radiusA + radiusB)) collision = true;
     */
@@ -2510,35 +2524,35 @@ bool CheckCollisionBoxes(BoundingBox box1, BoundingBox box2)
 }
 
 // Detect collision between box and sphere
-bool CheckCollisionBoxSphere(BoundingBox box, Vector3 centerSphere, float radiusSphere)
+bool CheckCollisionBoxSphere(BoundingBox box, Vector3 center, float radius)
 {
     bool collision = false;
 
     float dmin = 0;
 
-    if (centerSphere.x < box.min.x) dmin += powf(centerSphere.x - box.min.x, 2);
-    else if (centerSphere.x > box.max.x) dmin += powf(centerSphere.x - box.max.x, 2);
+    if (center.x < box.min.x) dmin += powf(center.x - box.min.x, 2);
+    else if (center.x > box.max.x) dmin += powf(center.x - box.max.x, 2);
 
-    if (centerSphere.y < box.min.y) dmin += powf(centerSphere.y - box.min.y, 2);
-    else if (centerSphere.y > box.max.y) dmin += powf(centerSphere.y - box.max.y, 2);
+    if (center.y < box.min.y) dmin += powf(center.y - box.min.y, 2);
+    else if (center.y > box.max.y) dmin += powf(center.y - box.max.y, 2);
 
-    if (centerSphere.z < box.min.z) dmin += powf(centerSphere.z - box.min.z, 2);
-    else if (centerSphere.z > box.max.z) dmin += powf(centerSphere.z - box.max.z, 2);
+    if (center.z < box.min.z) dmin += powf(center.z - box.min.z, 2);
+    else if (center.z > box.max.z) dmin += powf(center.z - box.max.z, 2);
 
-    if (dmin <= (radiusSphere*radiusSphere)) collision = true;
+    if (dmin <= (radius*radius)) collision = true;
 
     return collision;
 }
 
 // Detect collision between ray and sphere
-bool CheckCollisionRaySphere(Ray ray, Vector3 spherePosition, float sphereRadius)
+bool CheckCollisionRaySphere(Ray ray, Vector3 center, float radius)
 {
     bool collision = false;
 
-    Vector3 raySpherePos = Vector3Subtract(spherePosition, ray.position);
+    Vector3 raySpherePos = Vector3Subtract(center, ray.position);
     float distance = Vector3Length(raySpherePos);
     float vector = Vector3DotProduct(raySpherePos, ray.direction);
-    float d = sphereRadius*sphereRadius - (distance*distance - vector*vector);
+    float d = radius*radius - (distance*distance - vector*vector);
 
     if (d >= 0.0f) collision = true;
 
@@ -2546,21 +2560,21 @@ bool CheckCollisionRaySphere(Ray ray, Vector3 spherePosition, float sphereRadius
 }
 
 // Detect collision between ray and sphere with extended parameters and collision point detection
-bool CheckCollisionRaySphereEx(Ray ray, Vector3 spherePosition, float sphereRadius, Vector3 *collisionPoint)
+bool CheckCollisionRaySphereEx(Ray ray, Vector3 center, float radius, Vector3 *collisionPoint)
 {
     bool collision = false;
 
-    Vector3 raySpherePos = Vector3Subtract(spherePosition, ray.position);
+    Vector3 raySpherePos = Vector3Subtract(center, ray.position);
     float distance = Vector3Length(raySpherePos);
     float vector = Vector3DotProduct(raySpherePos, ray.direction);
-    float d = sphereRadius*sphereRadius - (distance*distance - vector*vector);
+    float d = radius*radius - (distance*distance - vector*vector);
 
     if (d >= 0.0f) collision = true;
 
     // Check if ray origin is inside the sphere to calculate the correct collision point
     float collisionDistance = 0;
 
-    if (distance < sphereRadius) collisionDistance = vector + sqrtf(d);
+    if (distance < radius) collisionDistance = vector + sqrtf(d);
     else collisionDistance = vector - sqrtf(d);
 
     // Calculate collision point
@@ -2594,29 +2608,29 @@ bool CheckCollisionRayBox(Ray ray, BoundingBox box)
 }
 
 // Get collision info between ray and model
-RayHitInfo GetCollisionRayModel(Ray ray, Model *model)
+RayHitInfo GetCollisionRayModel(Ray ray, Model model)
 {
     RayHitInfo result = { 0 };
 
-    for (int m = 0; m < model->meshCount; m++)
+    for (int m = 0; m < model.meshCount; m++)
     {
         // Check if meshhas vertex data on CPU for testing
-        if (model->meshes[m].vertices != NULL)
+        if (model.meshes[m].vertices != NULL)
         {
             // model->mesh.triangleCount may not be set, vertexCount is more reliable
-            int triangleCount = model->meshes[m].vertexCount/3;
+            int triangleCount = model.meshes[m].vertexCount/3;
 
             // Test against all triangles in mesh
             for (int i = 0; i < triangleCount; i++)
             {
                 Vector3 a, b, c;
-                Vector3 *vertdata = (Vector3 *)model->meshes[m].vertices;
+                Vector3 *vertdata = (Vector3 *)model.meshes[m].vertices;
 
-                if (model->meshes[m].indices)
+                if (model.meshes[m].indices)
                 {
-                    a = vertdata[model->meshes[m].indices[i*3 + 0]];
-                    b = vertdata[model->meshes[m].indices[i*3 + 1]];
-                    c = vertdata[model->meshes[m].indices[i*3 + 2]];
+                    a = vertdata[model.meshes[m].indices[i*3 + 0]];
+                    b = vertdata[model.meshes[m].indices[i*3 + 1]];
+                    c = vertdata[model.meshes[m].indices[i*3 + 2]];
                 }
                 else
                 {
@@ -2625,9 +2639,9 @@ RayHitInfo GetCollisionRayModel(Ray ray, Model *model)
                     c = vertdata[i*3 + 2];
                 }
 
-                a = Vector3Transform(a, model->transform);
-                b = Vector3Transform(b, model->transform);
-                c = Vector3Transform(c, model->transform);
+                a = Vector3Transform(a, model.transform);
+                b = Vector3Transform(b, model.transform);
+                c = Vector3Transform(c, model.transform);
 
                 RayHitInfo triHitInfo = GetCollisionRayTriangle(ray, a, b, c);
 
@@ -2800,6 +2814,7 @@ static Model LoadOBJ(const char *fileName)
             mesh.vertices = (float *)RL_MALLOC(mesh.vertexCount*3*sizeof(float));
             mesh.texcoords = (float *)RL_MALLOC(mesh.vertexCount*2*sizeof(float));
             mesh.normals = (float *)RL_MALLOC(mesh.vertexCount*3*sizeof(float));
+            mesh.vboId = (unsigned int *)RL_CALLOC(MAX_MESH_VBO*sizeof(unsigned int), 1);
 
             int vCount = 0;
             int vtCount = 0;
@@ -3068,6 +3083,8 @@ static Model LoadIQM(const char *fileName)
         // NOTE: Animated vertex should be re-uploaded to GPU (if not using GPU skinning)
         model.meshes[i].animVertices = RL_MALLOC(sizeof(float)*model.meshes[i].vertexCount*3);
         model.meshes[i].animNormals = RL_MALLOC(sizeof(float)*model.meshes[i].vertexCount*3);
+        
+        model.meshes[i].vboId = (unsigned int *)RL_CALLOC(MAX_MESH_VBO*sizeof(unsigned int), 1);
     }
 
     // Triangles data processing
@@ -3386,8 +3403,10 @@ static Model LoadGLTF(const char *fileName)
         model.meshCount = primitivesCount;
         model.meshes = RL_CALLOC(model.meshCount, sizeof(Mesh));
         model.materialCount = data->materials_count + 1;
-        model.materials = RL_MALLOC(model.materialCount * sizeof(Material));
-        model.meshMaterial = RL_MALLOC(model.meshCount * sizeof(int)); 
+        model.materials = RL_MALLOC(model.materialCount*sizeof(Material));
+        model.meshMaterial = RL_MALLOC(model.meshCount*sizeof(int));
+        
+        for (int i = 0; i < model.meshCount; i++) model.meshes[i].vboId = (unsigned int *)RL_CALLOC(MAX_MESH_VBO*sizeof(unsigned int), 1);
 
         for (int i = 0; i < model.materialCount - 1; i++)
         {
@@ -3397,10 +3416,10 @@ static Model LoadGLTF(const char *fileName)
             
             if (data->materials[i].pbr_metallic_roughness.base_color_factor)
             {
-                tint.r = (unsigned char)(data->materials[i].pbr_metallic_roughness.base_color_factor[0] * 255.99f);
-                tint.g = (unsigned char)(data->materials[i].pbr_metallic_roughness.base_color_factor[1] * 255.99f);
-                tint.b = (unsigned char)(data->materials[i].pbr_metallic_roughness.base_color_factor[2] * 255.99f);
-                tint.a = (unsigned char)(data->materials[i].pbr_metallic_roughness.base_color_factor[3] * 255.99f);
+                tint.r = (unsigned char)(data->materials[i].pbr_metallic_roughness.base_color_factor[0]*255.99f);
+                tint.g = (unsigned char)(data->materials[i].pbr_metallic_roughness.base_color_factor[1]*255.99f);
+                tint.b = (unsigned char)(data->materials[i].pbr_metallic_roughness.base_color_factor[2]*255.99f);
+                tint.a = (unsigned char)(data->materials[i].pbr_metallic_roughness.base_color_factor[3]*255.99f);
             }
             else
             {

@@ -96,10 +96,6 @@
 
 #define MAX_TOUCH_POINTS        10      // Maximum number of touch points supported
 
-// Shader and material limits
-#define MAX_SHADER_LOCATIONS    32      // Maximum number of predefined locations stored in shader struct
-#define MAX_MATERIAL_MAPS       12      // Maximum number of texture maps stored in shader struct
-
 // Allow custom memory allocators
 #ifndef RL_MALLOC
     #define RL_MALLOC(sz)       malloc(sz)
@@ -322,13 +318,13 @@ typedef struct Mesh {
 
     // OpenGL identifiers
     unsigned int vaoId;     // OpenGL Vertex Array Object id
-    unsigned int vboId[7];  // OpenGL Vertex Buffer Objects id (default vertex data)
+    unsigned int *vboId;    // OpenGL Vertex Buffer Objects id (default vertex data)
 } Mesh;
 
 // Shader type (generic)
 typedef struct Shader {
-    unsigned int id;                // Shader program id
-    int locs[MAX_SHADER_LOCATIONS]; // Shader locations array
+    unsigned int id;        // Shader program id
+    int *locs;              // Shader locations array (MAX_SHADER_LOCATIONS)
 } Shader;
 
 // Material texture map
@@ -341,7 +337,7 @@ typedef struct MaterialMap {
 // Material type (generic)
 typedef struct Material {
     Shader shader;          // Material shader
-    MaterialMap maps[MAX_MATERIAL_MAPS]; // Material maps
+    MaterialMap *maps;      // Material maps array (MAX_MATERIAL_MAPS)
     float *params;          // Material generic parameters (if required)
 } Material;
 
@@ -1240,7 +1236,7 @@ RLAPI void UnloadModel(Model model);                                            
 // Mesh loading/unloading functions
 RLAPI Mesh *LoadMeshes(const char *fileName, int *meshCount);                                           // Load meshes from model file
 RLAPI void ExportMesh(Mesh mesh, const char *fileName);                                                 // Export mesh data to file
-RLAPI void UnloadMesh(Mesh *mesh);                                                                      // Unload mesh from memory (RAM and/or VRAM)
+RLAPI void UnloadMesh(Mesh mesh);                                                                       // Unload mesh from memory (RAM and/or VRAM)
 
 // Material loading/unloading functions
 RLAPI Material *LoadMaterials(const char *fileName, int *materialCount);                                // Load materials from model file
@@ -1284,11 +1280,11 @@ RLAPI void DrawBillboardRec(Camera camera, Texture2D texture, Rectangle sourceRe
 // Collision detection functions
 RLAPI bool CheckCollisionSpheres(Vector3 centerA, float radiusA, Vector3 centerB, float radiusB);       // Detect collision between two spheres
 RLAPI bool CheckCollisionBoxes(BoundingBox box1, BoundingBox box2);                                     // Detect collision between two bounding boxes
-RLAPI bool CheckCollisionBoxSphere(BoundingBox box, Vector3 centerSphere, float radiusSphere);          // Detect collision between box and sphere
-RLAPI bool CheckCollisionRaySphere(Ray ray, Vector3 spherePosition, float sphereRadius);                // Detect collision between ray and sphere
-RLAPI bool CheckCollisionRaySphereEx(Ray ray, Vector3 spherePosition, float sphereRadius, Vector3 *collisionPoint); // Detect collision between ray and sphere, returns collision point
+RLAPI bool CheckCollisionBoxSphere(BoundingBox box, Vector3 center, float radius);                      // Detect collision between box and sphere
+RLAPI bool CheckCollisionRaySphere(Ray ray, Vector3 center, float radius);                              // Detect collision between ray and sphere
+RLAPI bool CheckCollisionRaySphereEx(Ray ray, Vector3 center, float radius, Vector3 *collisionPoint);   // Detect collision between ray and sphere, returns collision point
 RLAPI bool CheckCollisionRayBox(Ray ray, BoundingBox box);                                              // Detect collision between ray and box
-RLAPI RayHitInfo GetCollisionRayModel(Ray ray, Model *model);                                           // Get collision info between ray and model
+RLAPI RayHitInfo GetCollisionRayModel(Ray ray, Model model);                                            // Get collision info between ray and model
 RLAPI RayHitInfo GetCollisionRayTriangle(Ray ray, Vector3 p1, Vector3 p2, Vector3 p3);                  // Get collision info between ray and triangle
 RLAPI RayHitInfo GetCollisionRayGround(Ray ray, float groundHeight);                                    // Get collision info between ray and ground plane (Y-normal plane)
 
