@@ -8,7 +8,7 @@
 *       - PLATFORM_DESKTOP: FreeBSD, OpenBSD, NetBSD, DragonFly (X11 desktop)
 *       - PLATFORM_DESKTOP: OSX/macOS
 *       - PLATFORM_ANDROID: Android 4.0 (ARM, ARM64)
-*       - PLATFORM_RPI:     Raspberry Pi 0,1,2,3 (Raspbian)
+*       - PLATFORM_RPI:     Raspberry Pi 0,1,2,3,4 (Raspbian)
 *       - PLATFORM_WEB:     HTML5 with asm.js (Chrome, Firefox)
 *       - PLATFORM_UWP:     Windows 10 App, Windows Phone, Xbox One
 *
@@ -1746,6 +1746,21 @@ bool IsFileExtension(const char *fileName, const char *ext)
     return result;
 }
 
+// Check if a directory path exists
+bool DirectoryExists(const char *dirPath)
+{
+    bool result = false;
+    DIR *dir = opendir(dirPath);
+
+    if (dir != NULL)
+    {
+        result = true;
+        closedir(dir);
+    }
+
+    return result;
+}
+
 // Get pointer to extension for a filename string
 const char *GetExtension(const char *fileName)
 {
@@ -1814,6 +1829,28 @@ const char *GetDirectoryPath(const char *fileName)
     filePath[strlen(fileName) - strlen(lastSlash)] = '\0';  // Add '\0' manually
 
     return filePath;
+}
+
+// Get previous directory path for a given path
+const char *GetPrevDirectoryPath(const char *path)
+{
+    static char prevDir[MAX_FILEPATH_LENGTH];
+    memset(prevDir, 0, MAX_FILEPATH_LENGTH);
+    int pathLen = strlen(path);
+
+    for (int i = (pathLen - 1); i >= 0; i--)
+    {
+        if ((path[i] == '\\') || (path[i] == '/'))
+        {
+            if ((i != (pathLen - 1)) && (path[pathLen - 2] != ':'))
+            {
+                strncpy(prevDir, path, i);
+                break;
+            }
+        }
+    }
+    
+    return prevDir;
 }
 
 // Get current working directory
