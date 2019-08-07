@@ -681,7 +681,7 @@ Vector4 *GetImageDataNormalized(Image image)
 }
 
 // Get image alpha border rectangle
-Rectangle GetImageAlphaBorder(Image image)
+Rectangle GetImageAlphaBorder(Image image, float threshold)
 {
     Color *pixels = GetImageData(image);
 
@@ -690,11 +690,11 @@ Rectangle GetImageAlphaBorder(Image image)
     int yMin = 65536;
     int yMax = 0;
 
-    for (int y = 0; y < image->height; y++)
+    for (int y = 0; y < image.height; y++)
     {
-        for (int x = 0; x < image->width; x++)
+        for (int x = 0; x < image.width; x++)
         {
-            if (pixels[y*image->width + x].a > (unsigned char)(threshold*255.0f))
+            if (pixels[y*image.width + x].a > (unsigned char)(threshold*255.0f))
             {
                 if (x < xMin) xMin = x;
                 if (x > xMax) xMax = x;
