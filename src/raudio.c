@@ -204,9 +204,9 @@ struct rAudioBuffer {
     bool paused;            // Audio buffer state: AUDIO_PAUSED
     bool looping;           // Audio buffer looping, always true for AudioStreams
     int usage;              // Audio buffer usage mode: STATIC or STREAM
-    
+
     bool isSubBufferProcessed[2];
-    unsigned int frameCursorPos;
+    unsigned int frameCursorPos;        // Samples processed?
     unsigned int bufferSizeInFrames;
     
     rAudioBuffer *next;
@@ -402,7 +402,7 @@ static ma_uint32 OnAudioBufferDSPRead(ma_pcm_converter *pDSP, void *pFramesOut, 
         }
         else
         {
-            ma_uint32 firstFrameIndexOfThisSubBuffer = subBufferSizeInFrames * currentSubBufferIndex;
+            ma_uint32 firstFrameIndexOfThisSubBuffer = subBufferSizeInFrames*currentSubBufferIndex;
             framesRemainingInOutputBuffer = subBufferSizeInFrames - (audioBuffer->frameCursorPos - firstFrameIndexOfThisSubBuffer);
         }
 
@@ -410,7 +410,7 @@ static ma_uint32 OnAudioBufferDSPRead(ma_pcm_converter *pDSP, void *pFramesOut, 
         if (framesToRead > framesRemainingInOutputBuffer) framesToRead = framesRemainingInOutputBuffer;
 
         memcpy((unsigned char *)pFramesOut + (framesRead*frameSizeInBytes), audioBuffer->buffer + (audioBuffer->frameCursorPos*frameSizeInBytes), framesToRead*frameSizeInBytes);
-        audioBuffer->frameCursorPos = (audioBuffer->frameCursorPos + framesToRead) % audioBuffer->bufferSizeInFrames;
+        audioBuffer->frameCursorPos = (audioBuffer->frameCursorPos + framesToRead)%audioBuffer->bufferSizeInFrames;
         framesRead += framesToRead;
 
         // If we've read to the end of the buffer, mark it as processed
@@ -877,7 +877,7 @@ void UpdateSound(Sound sound, const void *data, int samplesCount)
 
     StopAudioBuffer(audioBuffer);
 
-    // TODO: May want to lock/unlock this since this data buffer is read at mixing time.
+    // TODO: May want to lock/unlock this since this data buffer is read at mixing time
     memcpy(audioBuffer->buffer, data, samplesCount*audioBuffer->dsp.formatConverterIn.config.channels*ma_get_bytes_per_sample(audioBuffer->dsp.formatConverterIn.config.formatIn));
 }
 
@@ -1188,10 +1188,10 @@ Music LoadMusicStream(const char *fileName)
             music.loopCount = 0;   // Infinite loop by default
             musicLoaded = true;
 
-            TraceLog(LOG_DEBUG, "[%s] OGG total samples: %i", fileName, music.sampleCount);
-            TraceLog(LOG_DEBUG, "[%s] OGG sample rate: %i", fileName, info.sample_rate);
-            TraceLog(LOG_DEBUG, "[%s] OGG channels: %i", fileName, info.channels);
-            TraceLog(LOG_DEBUG, "[%s] OGG memory required: %i", fileName, info.temp_memory_required);
+            TraceLog(LOG_INFO, "[%s] OGG total samples: %i", fileName, music.sampleCount);
+            TraceLog(LOG_INFO, "[%s] OGG sample rate: %i", fileName, info.sample_rate);
+            TraceLog(LOG_INFO, "[%s] OGG channels: %i", fileName, info.channels);
+            TraceLog(LOG_INFO, "[%s] OGG memory required: %i", fileName, info.temp_memory_required);
         }
     }
 #endif
@@ -1289,7 +1289,7 @@ Music LoadMusicStream(const char *fileName)
             music.loopCount = 0;   // Infinite loop by default
             musicLoaded = true;
             
-            TraceLog(LOG_INFO, "[%s] MOD number of samples: %i", fileName, music.sampleLeft);
+            TraceLog(LOG_INFO, "[%s] MOD number of samples: %i", fileName, music.sampleCount);
             TraceLog(LOG_INFO, "[%s] MOD track length: %11.6f sec", fileName, (float)music.sampleCount/48000.0f);
         }
     }
@@ -1354,10 +1354,10 @@ void PlayMusicStream(Music music)
         return;
     }
 
-    // For music streams, we need to make sure we maintain the frame cursor position. This is hack for this section of code in UpdateMusicStream()
-    //     // NOTE: In case window is minimized, music stream is stopped,
-    //     // just make sure to play again on window restore
-    //     if (IsMusicPlaying(music)) PlayMusicStream(music);
+    // For music streams, we need to make sure we maintain the frame cursor position
+    // This is a hack for this section of code in UpdateMusicStream()
+    // NOTE: In case window is minimized, music stream is stopped, just make sure to 
+    // play again on window restore: if (IsMusicPlaying(music)) PlayMusicStream(music);
     ma_uint32 frameCursorPos = audioBuffer->frameCursorPos;
 
     PlayAudioStream(music.stream); // <-- This resets the cursor position.
@@ -1528,7 +1528,7 @@ void SetMusicPitch(Music music, float pitch)
 }
 
 // Set music loop count (loop repeats)
-// NOTE: If set to -1, means infinite loop
+// NOTE: If set to 0, means infinite loop
 void SetMusicLoopCount(Music music, int count)
 {
     music.loopCount = count;
@@ -1622,7 +1622,8 @@ void UpdateAudioStream(AudioStream stream, const void *data, int samplesCount)
 
         if (audioBuffer->isSubBufferProcessed[0] && audioBuffer->isSubBufferProcessed[1])
         {
-            // Both buffers are available for updating. Update the first one and make sure the cursor is moved back to the front.
+            // Both buffers are available for updating. 
+            // Update the first one and make sure the cursor is moved back to the front.
             subBufferToUpdate = 0;
             audioBuffer->frameCursorPos = 0;
         }
@@ -1635,7 +1636,8 @@ void UpdateAudioStream(AudioStream stream, const void *data, int samplesCount)
         ma_uint32 subBufferSizeInFrames = audioBuffer->bufferSizeInFrames/2;
         unsigned char *subBuffer = audioBuffer->buffer + ((subBufferSizeInFrames*stream.channels*(stream.sampleSize/8))*subBufferToUpdate);
 
-        // Does this API expect a whole buffer to be updated in one go? Assuming so, but if not will need to change this logic.
+        // Does this API expect a whole buffer to be updated in one go? 
+        // Assuming so, but if not will need to change this logic.
         if (subBufferSizeInFrames >= (ma_uint32)samplesCount/stream.channels)
         {
             ma_uint32 framesToWrite = subBufferSizeInFrames;
