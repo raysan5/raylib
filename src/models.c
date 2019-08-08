@@ -71,7 +71,7 @@
 //----------------------------------------------------------------------------------
 // Defines and Macros
 //----------------------------------------------------------------------------------
-#define MAX_MESH_VBO    7               // Maximum number of vbo per mesh 
+#define MAX_MESH_VBO    7               // Maximum number of vbo per mesh
 
 //----------------------------------------------------------------------------------
 // Types and Structures Definition
@@ -703,7 +703,12 @@ Model LoadModelFromMesh(Mesh mesh)
 void UnloadModel(Model model)
 {
     for (int i = 0; i < model.meshCount; i++) UnloadMesh(model.meshes[i]);
-    for (int i = 0; i < model.materialCount; i++) UnloadMaterial(model.materials[i]);
+
+    // as the user could be sharing shaders and textures between
+    // models, don't unload the material but free it's maps instead
+    // the user is responsible for freeing models shaders and textures
+    //for (int i = 0; i < model.materialCount; i++) UnloadMaterial(model.materials[i]);
+    for (int i = 0; i < model.materialCount; i++) RL_FREE(model.materials[i].maps);
 
     RL_FREE(model.meshes);
     RL_FREE(model.materials);
@@ -2492,11 +2497,11 @@ bool CheckCollisionSpheres(Vector3 centerA, float radiusA, Vector3 centerB, floa
     // Simple way to check for collision, just checking distance between two points
     // Unfortunately, sqrtf() is a costly operation, so we avoid it with following solution
     /*
-    float dx = centerA.x - centerB.x;      // X distance between centers    
-    float dy = centerA.y - centerB.y;      // Y distance between centers    
-    float dz = centerA.z - centerB.z;      // Z distance between centers    
+    float dx = centerA.x - centerB.x;      // X distance between centers
+    float dy = centerA.y - centerB.y;      // Y distance between centers
+    float dz = centerA.z - centerB.z;      // Z distance between centers
 
-    float distance = sqrtf(dx*dx + dy*dy + dz*dz);  // Distance between centers    
+    float distance = sqrtf(dx*dx + dy*dy + dz*dz);  // Distance between centers
 
     if (distance <= (radiusA + radiusB)) collision = true;
     */
@@ -3346,7 +3351,7 @@ static Model LoadGLTF(const char *fileName)
           - Triangle-only meshes
           - Not supported node hierarchies or transforms
           - Only loads the diffuse texture... but not too hard to support other maps (normal, roughness/metalness...)
-          - Only supports unsigned short indices (no byte/unsigned int) 
+          - Only supports unsigned short indices (no byte/unsigned int)
           - Only supports float for texture coordinates (no byte/unsigned short)
           
     *************************************************************************************/
@@ -3435,7 +3440,7 @@ static Model LoadGLTF(const char *fileName)
                 
                 if (img->uri) 
                 {
-                    if ((strlen(img->uri) > 5) && 
+                    if ((strlen(img->uri) > 5) &&
                         (img->uri[0] == 'd') &&
                         (img->uri[1] == 'a') &&
                         (img->uri[2] == 't') &&

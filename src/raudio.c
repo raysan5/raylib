@@ -1250,7 +1250,7 @@ Music LoadMusicStream(const char *fileName)
 
         int result = jar_xm_create_context_from_file(&ctxXm, 48000, fileName);
 
-        if (result > 0)    // XM context created successfully
+        if (result == 0)    // XM context created successfully
         {
             music.ctxType = MUSIC_MODULE_XM;
             jar_xm_set_max_loop_count(ctxXm, 0);    // Set infinite number of loops
