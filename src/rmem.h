@@ -5,7 +5,7 @@
 *   A quick, efficient, and minimal free list and stack-based allocator
 *
 *   PURPOSE:
-*     - Aquicker, efficient memory allocator alternative to 'malloc' and friends.
+*     - A quicker, efficient memory allocator alternative to 'malloc' and friends.
 *     - Reduce the possibilities of memory leaks for beginner developers using Raylib.
 *     - Being able to flexibly range check memory if necessary.
 *
@@ -168,21 +168,6 @@ static inline size_t __AlignSize(const size_t size, const size_t align)
     return (size + (align - 1)) & -align;
 }
 
-static void __RemoveNode(MemPool *const mempool, MemNode **const node)
-{
-    if ((*node)->next != NULL) (*node)->next->prev = (*node)->prev;
-    else {
-        mempool->freeList.tail = (*node)->prev;
-        if (mempool->freeList.tail != NULL) mempool->freeList.tail->next = NULL;
-    }
-    
-    if ((*node)->prev != NULL) (*node)->prev->next = (*node)->next;
-    else {
-        mempool->freeList.head = (*node)->next;
-        if (mempool->freeList.head != NULL) mempool->freeList.head->prev = NULL;
-    }
-}
-
 //----------------------------------------------------------------------------------
 // Module Functions Definition - Memory Pool
 //----------------------------------------------------------------------------------
@@ -244,6 +229,7 @@ void *MemPoolAlloc(MemPool *const mempool, const size_t size)
         const size_t ALLOC_SIZE = __AlignSize(size + sizeof *new_mem, sizeof(intptr_t));
         const size_t BUCKET_INDEX = (ALLOC_SIZE >> MEMPOOL_BUCKET_BITS) - 1;
         
+        // If the size is small enough, let's check if our buckets has a fitting memory block.
         if (BUCKET_INDEX < MEMPOOL_BUCKET_SIZE && mempool->buckets[BUCKET_INDEX] != NULL && mempool->buckets[BUCKET_INDEX]->size >= ALLOC_SIZE)
         {
             new_mem = mempool->buckets[BUCKET_INDEX];
@@ -256,22 +242,28 @@ void *MemPoolAlloc(MemPool *const mempool, const size_t size)
             const size_t MEM_SPLIT_THRESHOLD = 16;
             
             // If the freelist is valid, let's allocate FROM the freelist then!
-            for (MemNode **inode = &mempool->freeList.head; *inode != NULL; inode = &(*inode)->next)
+            for (MemNode *inode = mempool->freeList.head; inode != NULL; inode = inode->next)
             {
-                if ((*inode)->size < ALLOC_SIZE) continue;
-                else if ((*inode)->size <= (ALLOC_SIZE + MEM_SPLIT_THRESHOLD))
+                if (inode->size < ALLOC_SIZE) continue;
+                else if (inode->size <= (ALLOC_SIZE + MEM_SPLIT_THRESHOLD))
                 {
                     // Close in size - reduce fragmentation by not splitting.
-                    new_mem = *inode;
-                    __RemoveNode(mempool, inode);
+                    new_mem = inode;
+                    (inode->prev != NULL)? (inode->prev->next = inode->next) : (mempool->freeList.head = inode->next);
+                    (inode->next != NULL)? (inode->next->prev = inode->prev) : (mempool->freeList.tail = inode->prev);
+                    
+                    if (mempool->freeList.head != NULL) mempool->freeList.head->prev = NULL;
+                    else mempool->freeList.tail = NULL;
+                    
+                    if (mempool->freeList.tail != NULL) mempool->freeList.tail->next = NULL;
                     mempool->freeList.len--;
                     break;
                 }
                 else
                 {
                     // Split the memory chunk.
-                    new_mem = (MemNode *)((uint8_t *)*inode + ((*inode)->size - ALLOC_SIZE));
-                    (*inode)->size -= ALLOC_SIZE;
+                    new_mem = (MemNode *)((uint8_t *)inode + (inode->size - ALLOC_SIZE));
+                    inode->size -= ALLOC_SIZE;
                     new_mem->size = ALLOC_SIZE;
                     break;
                 }
@@ -356,13 +348,13 @@ void MemPoolFree(MemPool *const restrict mempool, void *ptr)
         // attempted stack merge failed, try to place it into the memnode buckets
         else if (BUCKET_INDEX < MEMPOOL_BUCKET_SIZE)
         {
-            if (mempool->buckets[index] == NULL) mempool->buckets[index] = node;
+            if (mempool->buckets[BUCKET_INDEX] == NULL) mempool->buckets[BUCKET_INDEX] = mem_node;
             else
             {
-                for (MemNode *n = mempool->buckets[index]; n != NULL; n = n->next) if( n==node ) return;
-                mempool->buckets[index]->prev = node;
-                node->next = mempool->buckets[index];
-                mempool->buckets[index] = node;
+                for (MemNode *n = mempool->buckets[BUCKET_INDEX]; n != NULL; n = n->next) if( n==mem_node ) return;
+                mempool->buckets[BUCKET_INDEX]->prev = mem_node;
+                mem_node->next = mempool->buckets[BUCKET_INDEX];
+                mempool->buckets[BUCKET_INDEX] = mem_node;
             }
         }
         // Otherwise, we add it to the free list.
@@ -459,7 +451,13 @@ bool MemPoolDefrag(MemPool *const mempool)
                     // If node is right at the stack, merge it back into the stack.
                     mempool->stack.base += (*node)->size;
                     (*node)->size = 0UL;
-                    __RemoveNode(mempool, node);
+                    ((*node)->prev != NULL)? ((*node)->prev->next = (*node)->next) : (mempool->freeList.head = (*node)->next);
+                    ((*node)->next != NULL)? ((*node)->next->prev = (*node)->prev) : (mempool->freeList.tail = (*node)->prev);
+                    
+                    if (mempool->freeList.head != NULL) mempool->freeList.head->prev = NULL;
+                    else mempool->freeList.tail = NULL;
+                    
+                    if (mempool->freeList.tail != NULL) mempool->freeList.tail->next = NULL;
                     mempool->freeList.len--;
                     node = &mempool->freeList.head;
                 } 
