@@ -54,7 +54,7 @@ int main(void)
             {
                 if (IsFileExtension(droppedFiles[0], ".obj"))
                 {
-                    for (int i = 0; i < model.meshCount; i++) UnloadMesh(model.meshes[i]);
+                    for (int i = 0; i < model.meshCount; i++) UnloadMesh(&model.meshes[i]);
                     model.meshes = LoadMeshes(droppedFiles[0], &model.meshCount);
                     bounds = MeshBoundingBox(model.meshes[0]);
                 }
