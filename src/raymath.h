@@ -56,7 +56,7 @@
 #if defined(RAYMATH_IMPLEMENTATION)
     #if defined(_WIN32) && defined(BUILD_LIBTYPE_SHARED)
         #define RMDEF __declspec(dllexport) extern inline // We are building raylib as a Win32 shared library (.dll).
-    #elif defined(_WIN32) && defined(USE_LIBTYPE_SHARED) 
+    #elif defined(_WIN32) && defined(USE_LIBTYPE_SHARED)
         #define RMDEF __declspec(dllimport)         // We are using raylib as a Win32 shared library (.dll)
     #else
         #define RMDEF extern inline // Provide external definition
@@ -113,7 +113,7 @@
         float y;
         float z;
     } Vector3;
-    
+
     // Quaternion type
     typedef struct Quaternion {
         float x;
@@ -790,6 +790,33 @@ RMDEF Matrix MatrixRotate(Vector3 axis, float angle)
     result.m13 = 0.0f;
     result.m14 = 0.0f;
     result.m15 = 1.0f;
+
+    return result;
+}
+
+// Returns xyz-rotation matrix (angles in radians)
+RMDEF Matrix MatrixRotateXYZ(Vector3 ang)
+{
+    Matrix result = MatrixIdentity();
+
+    float cosz = cosf(-ang.z);
+    float sinz = sinf(-ang.z);
+    float cosy = cosf(-ang.y);
+    float siny = sinf(-ang.y);
+    float cosx = cosf(-ang.x);
+    float sinx = sinf(-ang.x);
+
+    result.m0 = cosz * cosy;
+    result.m4 = (cosz * siny * sinx) - (sinz * cosx);
+    result.m8 = (cosz * siny * cosx) + (sinz * sinx);
+
+    result.m1 = sinz * cosy;
+    result.m5 = (sinz * siny * sinx) + (cosz * cosx);
+    result.m9 = (sinz * siny * cosx) - (cosz * sinx);
+
+    result.m2 = -siny;
+    result.m6 = cosy * sinx;
+    result.m10= cosy * cosx;
 
     return result;
 }
