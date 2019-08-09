@@ -3092,7 +3092,9 @@ void SetShaderValueV(Shader shader, int uniformLoc, const void *value, int unifo
 {
 #if defined(GRAPHICS_API_OPENGL_33) || defined(GRAPHICS_API_OPENGL_ES2)
     glUseProgram(shader.id);
-
+    
+    rlglDraw(); // Force draw
+    
     switch (uniformType)
     {
         case UNIFORM_FLOAT: glUniform1fv(uniformLoc, count, (float *)value); break;
