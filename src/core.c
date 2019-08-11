@@ -2324,7 +2324,7 @@ int GetMouseX(void)
 int GetMouseY(void)
 {
 #if defined(PLATFORM_ANDROID)
-    return (int)touchPosition[0].x;
+    return (int)touchPosition[0].y;
 #else
     return (int)((mousePosition.y + mouseOffset.y)*mouseScale.y);
 #endif
