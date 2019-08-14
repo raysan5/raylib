@@ -1392,7 +1392,7 @@ RLAPI float GetMusicTimePlayed(Music music);                          // Get cur
 RLAPI AudioStream InitAudioStream(unsigned int sampleRate, unsigned int sampleSize, unsigned int channels); // Init audio stream (to stream raw audio pcm data)
 RLAPI void UpdateAudioStream(AudioStream stream, const void *data, int samplesCount); // Update audio stream buffers with data
 RLAPI void CloseAudioStream(AudioStream stream);                      // Close audio stream and free memory
-RLAPI bool IsAudioBufferProcessed(AudioStream stream);                // Check if any audio stream buffers requires refill
+RLAPI bool IsAudioStreamProcessed(AudioStream stream);                // Check if any audio stream buffers requires refill
 RLAPI void PlayAudioStream(AudioStream stream);                       // Play audio stream
 RLAPI void PauseAudioStream(AudioStream stream);                      // Pause audio stream
 RLAPI void ResumeAudioStream(AudioStream stream);                     // Resume audio stream

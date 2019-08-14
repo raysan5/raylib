@@ -1418,7 +1418,7 @@ void UpdateMusicStream(Music music)
 
     int samplesCount = 0;    // Total size of data steamed in L+R samples for xm floats, individual L or R for ogg shorts
 
-    while (IsAudioBufferProcessed(music.stream))
+    while (IsAudioStreamProcessed(music.stream))
     {
         if ((music.sampleLeft/music.stream.channels) >= subBufferSizeInFrames) samplesCount = subBufferSizeInFrames*music.stream.channels;
         else samplesCount = music.sampleLeft;
@@ -1605,7 +1605,7 @@ void CloseAudioStream(AudioStream stream)
 
 // Update audio stream buffers with data
 // NOTE 1: Only updates one buffer of the stream source: unqueue -> update -> queue
-// NOTE 2: To unqueue a buffer it needs to be processed: IsAudioBufferProcessed()
+// NOTE 2: To unqueue a buffer it needs to be processed: IsAudioStreamProcessed()
 void UpdateAudioStream(AudioStream stream, const void *data, int samplesCount)
 {
     AudioBuffer *audioBuffer = stream.buffer;
@@ -1663,11 +1663,11 @@ void UpdateAudioStream(AudioStream stream, const void *data, int samplesCount)
 }
 
 // Check if any audio stream buffers requires refill
-bool IsAudioBufferProcessed(AudioStream stream)
+bool IsAudioStreamProcessed(AudioStream stream)
 {
     if (stream.buffer == NULL)
     {
-        TraceLog(LOG_ERROR, "IsAudioBufferProcessed() : No audio buffer");
+        TraceLog(LOG_ERROR, "IsAudioStreamProcessed() : No audio buffer");
         return false;
     }
 

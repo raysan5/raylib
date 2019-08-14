@@ -99,7 +99,7 @@ int main(void)
         }
 
         // Refill audio stream if required
-        if (IsAudioBufferProcessed(stream))
+        if (IsAudioStreamProcessed(stream))
         {
             // Synthesize a buffer that is exactly the requested size
             int writeCursor = 0;
