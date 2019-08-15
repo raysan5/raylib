@@ -4623,6 +4623,14 @@ int GetPixelDataSize(int width, int height, int format)
     }
 
     dataSize = width*height*bpp/8;  // Total data size in bytes
+    
+    // Most compressed formats works on 4x4 blocks, 
+    // if texture is smaller, minimum dataSize is 8 or 16
+    if ((width < 4) && (height < 4))
+    {
+        if ((format >= COMPRESSED_DXT1_RGB) && (format < COMPRESSED_DXT3_RGBA)) dataSize = 8;
+        else if ((format >= COMPRESSED_DXT3_RGBA) && (format < COMPRESSED_ASTC_8x8_RGBA)) dataSize = 16;
+    }
 
     return dataSize;
 }

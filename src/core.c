@@ -1814,43 +1814,43 @@ const char *GetFileNameWithoutExt(const char *filePath)
     return fileName;
 }
 
-// Get directory for a given fileName (with path)
-const char *GetDirectoryPath(const char *fileName)
+// Get directory for a given filePath
+const char *GetDirectoryPath(const char *filePath)
 {
     const char *lastSlash = NULL;
-    static char filePath[MAX_FILEPATH_LENGTH];
-    memset(filePath, 0, MAX_FILEPATH_LENGTH);
+    static char dirPath[MAX_FILEPATH_LENGTH];
+    memset(dirPath, 0, MAX_FILEPATH_LENGTH);
 
-    lastSlash = strprbrk(fileName, "\\/");
+    lastSlash = strprbrk(filePath, "\\/");
     if (!lastSlash) return NULL;
 
     // NOTE: Be careful, strncpy() is not safe, it does not care about '\0'
-    strncpy(filePath, fileName, strlen(fileName) - (strlen(lastSlash) - 1));
-    filePath[strlen(fileName) - strlen(lastSlash)] = '\0';  // Add '\0' manually
+    strncpy(dirPath, filePath, strlen(filePath) - (strlen(lastSlash) - 1));
+    dirPath[strlen(filePath) - strlen(lastSlash)] = '\0';  // Add '\0' manually
 
-    return filePath;
+    return dirPath;
 }
 
 // Get previous directory path for a given path
-const char *GetPrevDirectoryPath(const char *path)
+const char *GetPrevDirectoryPath(const char *dirPath)
 {
-    static char prevDir[MAX_FILEPATH_LENGTH];
-    memset(prevDir, 0, MAX_FILEPATH_LENGTH);
-    int pathLen = strlen(path);
-
-    for (int i = (pathLen - 1); i >= 0; i--)
+    static char prevDirPath[MAX_FILEPATH_LENGTH];
+    memset(prevDirPath, 0, MAX_FILEPATH_LENGTH);
+    int pathLen = strlen(dirPath);
+    
+    if (pathLen <= 3) strcpy(prevDirPath, dirPath);
+    
+    for (int i = (pathLen - 1); (i > 0) && (pathLen > 3); i--)
     {
-        if ((path[i] == '\\') || (path[i] == '/'))
+        if ((dirPath[i] == '\\') || (dirPath[i] == '/'))
         {
-            if ((i != (pathLen - 1)) && (path[pathLen - 2] != ':'))
-            {
-                strncpy(prevDir, path, i);
-                break;
-            }
+            if (i == 2) i++;    // Check for root: "C:\"
+            strncpy(prevDirPath, dirPath, i);
+            break;
         }
     }
     
-    return prevDir;
+    return prevDirPath;
 }
 
 // Get current working directory
@@ -2324,7 +2324,7 @@ int GetMouseX(void)
 int GetMouseY(void)
 {
 #if defined(PLATFORM_ANDROID)
-    return (int)touchPosition[0].x;
+    return (int)touchPosition[0].y;
 #else
     return (int)((mousePosition.y + mouseOffset.y)*mouseScale.y);
 #endif
