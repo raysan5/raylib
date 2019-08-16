@@ -42,7 +42,7 @@ int main(void)
 
     Camera2D camera = { 0 };
     camera.target = (Vector2){ player.x + 20, player.y + 20 };
-    camera.offset = (Vector2){ 0, 0 };
+    camera.offset = (Vector2){ screenWidth / 2, screenHeight / 2 };
     camera.rotation = 0.0f;
     camera.zoom = 1.0f;
 
@@ -57,12 +57,10 @@ int main(void)
         if (IsKeyDown(KEY_RIGHT))
         {
             player.x += 2;              // Player movement
-            camera.offset.x -= 2;       // Camera displacement with player movement
         }
         else if (IsKeyDown(KEY_LEFT))
         {
             player.x -= 2;              // Player movement
-            camera.offset.x += 2;       // Camera displacement with player movement
         }
 
         // Camera target follows player
