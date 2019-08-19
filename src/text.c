@@ -1372,20 +1372,25 @@ const char **TextSplit(const char *text, char delimiter, int *count)
     memset(buffer, 0, MAX_TEXT_BUFFER_LENGTH);
 
     result[0] = buffer;
-    int counter = 1;
-
-    // Count how many substrings we have on text and point to every one
-    for (int i = 0; i < MAX_TEXT_BUFFER_LENGTH; i++)
+    int counter = 0;
+    
+    if (text != NULL)
     {
-        buffer[i] = text[i];
-        if (buffer[i] == '\0') break;
-        else if (buffer[i] == delimiter)
+        counter = 1;
+        
+        // Count how many substrings we have on text and point to every one
+        for (int i = 0; i < MAX_TEXT_BUFFER_LENGTH; i++)
         {
-            buffer[i] = '\0';   // Set an end of string at this point
-            result[counter] = buffer + i + 1;
-            counter++;
+            buffer[i] = text[i];
+            if (buffer[i] == '\0') break;
+            else if (buffer[i] == delimiter)
+            {
+                buffer[i] = '\0';   // Set an end of string at this point
+                result[counter] = buffer + i + 1;
+                counter++;
 
-            if (counter == MAX_SUBSTRINGS_COUNT) break;
+                if (counter == MAX_SUBSTRINGS_COUNT) break;
+            }
         }
     }
 
