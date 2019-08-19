@@ -3419,7 +3419,7 @@ static Model LoadGLTF(const char *fileName)
             Texture2D texture = { 0 };
             const char *texPath = GetDirectoryPath(fileName);
             
-            if (data->materials[i].pbr_metallic_roughness.base_color_factor)
+            if (data->materials[i].has_pbr_metallic_roughness)
             {
                 tint.r = (unsigned char)(data->materials[i].pbr_metallic_roughness.base_color_factor[0]*255.99f);
                 tint.g = (unsigned char)(data->materials[i].pbr_metallic_roughness.base_color_factor[1]*255.99f);
@@ -3428,13 +3428,13 @@ static Model LoadGLTF(const char *fileName)
             }
             else
             {
-                tint.r = 1.f;
-                tint.g = 1.f;
-                tint.b = 1.f;
-                tint.a = 1.f;
+                tint.r = 1.0f;
+                tint.g = 1.0f;
+                tint.b = 1.0f;
+                tint.a = 1.0f;
             }
             
-            if (data->materials[i].pbr_metallic_roughness.base_color_texture.texture)
+            if (data->materials[i].has_pbr_metallic_roughness)
             {
                 cgltf_image *img = data->materials[i].pbr_metallic_roughness.base_color_texture.texture->image;
                 
