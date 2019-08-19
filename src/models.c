@@ -1769,6 +1769,7 @@ Mesh GenMeshHeightmap(Image heightmap, Vector3 size)
     #define GRAY_VALUE(c) ((c.r+c.g+c.b)/3)
 
     Mesh mesh = { 0 };
+    mesh.vboId = (unsigned int *)RL_CALLOC(MAX_MESH_VBO*sizeof(unsigned int), 1);
 
     int mapX = heightmap.width;
     int mapZ = heightmap.height;
