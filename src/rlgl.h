@@ -1529,24 +1529,33 @@ void rlglInit(int width, int height)
     const char **extList = RL_MALLOC(sizeof(const char *)*numExt);
     
     // Get extensions strings
-    for (int i = 0; i < numExt; i++) extList[i] = (char *)glGetStringi(GL_EXTENSIONS, i);
+    for (int i = 0; i < numExt; i++) extList[i] = (const char *)glGetStringi(GL_EXTENSIONS, i);
 
 #elif defined(GRAPHICS_API_OPENGL_ES2)
     // Allocate 512 strings pointers (2 KB)
     const char **extList = RL_MALLOC(sizeof(const char *)*512);
+
+    const char *extensions = (const char *)glGetString(GL_EXTENSIONS);  // One big const string
+
+    // NOTE: We have to duplicate string because glGetString() returns a const string
+    int len = strlen(extensions) + 1;
+    char *extensionsDup = (char *)RL_CALLOC(len, 1);
+    strcpy(extensionsDup, extensions);
     
-    // Get extensions strings
-    char *extensions = (char *)glGetString(GL_EXTENSIONS);  // One big static const string returned
-    int len = strlen(extensions);
+    extList[numExt] = extensionsDup;
 
     for (int i = 0; i < len; i++)
     {
-        if (i == ' ') 
+        if (extensionsDup[i] == ' ')
         {
-            extList[numExt] = &extensions[i + 1];
+            extensionsDup[i] = '\0';
+            
             numExt++;
+            extList[numExt] = &extensionsDup[i + 1];
         }
     }
+    
+    // NOTE: Duplicated string (extensionsDup) must be deallocated	
 #endif
 
     TraceLog(LOG_INFO, "Number of supported extensions: %i", numExt);
@@ -1622,6 +1631,8 @@ void rlglInit(int width, int height)
     RL_FREE(extList);
 
 #if defined(GRAPHICS_API_OPENGL_ES2)
+    RL_FREE(extensionsDup);    // Duplicated string must be deallocated
+
     if (vaoSupported) TraceLog(LOG_INFO, "[EXTENSION] VAO extension detected, VAO functions initialized successfully");
     else TraceLog(LOG_WARNING, "[EXTENSION] VAO extension not found, VAO usage not supported");
 
