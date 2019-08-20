@@ -11,7 +11,7 @@ IDE | Platform | Template type | State
 [Geany](https://www.geany.org/) | Linux, Windows | - | DONE
 [KDevelop](https://www.kdevelop.org/) | Linux, Windows, macOS | - | INCOMPLETE
 [Notepad++](https://notepad-plus-plus.org/) | Windows | source/example compiling | DONE
-[Sublime Text](https://www.sublimetext.com/) | source and example | DONE
+[Sublime Text](https://www.sublimetext.com/) | Windows, Linux, macOS | source and example | DONE
 [VS2015](https://www.visualstudio.com) | Windows | source/example compiling | DONE
 [VS2017](https://www.visualstudio.com) | Windows | source/example compiling | DONE
 [VSCode](https://code.visualstudio.com/) | Windows, macOS | example compiling | DONE
