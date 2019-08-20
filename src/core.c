@@ -2507,9 +2507,6 @@ static bool InitGraphicsDevice(int width, int height)
     if (screenHeight <= 0) screenHeight = displayHeight;
 #endif  // PLATFORM_DESKTOP
 
-    currentWidth = screenWidth;
-    currentHeight = screenHeight;
-
 #if defined(PLATFORM_WEB)
     displayWidth = screenWidth;
     displayHeight = screenHeight;
@@ -3039,6 +3036,9 @@ static bool InitGraphicsDevice(int width, int height)
 
     // Setup default viewport
     SetupViewport(fbWidth, fbHeight);
+
+    currentWidth = screenWidth;
+    currentHeight = screenHeight;
 
     ClearBackground(RAYWHITE);      // Default background color for raylib games :P
 
