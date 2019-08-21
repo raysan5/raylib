@@ -1811,10 +1811,10 @@ const char *GetFileName(const char *filePath)
     return fileName + 1;
 }
 
-// Get filename string without extension (memory should be freed)
+// Get filename string without extension (uses static string)
 const char *GetFileNameWithoutExt(const char *filePath)
 {
-    #define MAX_FILENAMEWITHOUTEXT_LENGTH   64
+    #define MAX_FILENAMEWITHOUTEXT_LENGTH   128
 
     static char fileName[MAX_FILENAMEWITHOUTEXT_LENGTH];
     memset(fileName, 0, MAX_FILENAMEWITHOUTEXT_LENGTH);
