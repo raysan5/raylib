@@ -1,6 +1,6 @@
 /*
 Audio playback and capture library. Choice of public domain or MIT-0. See license statements at the end of this file.
-miniaudio (formerly mini_al) - v0.9.6 - 2019-xx-xx
+miniaudio (formerly mini_al) - v0.9.6 - 2019-08-04
 
 David Reid - davidreidsoftware@gmail.com
 
@@ -33361,7 +33361,7 @@ Device
 /*
 REVISION HISTORY
 ================
-v0.9.6 - 2019-xx-xx
+v0.9.6 - 2019-08-04
   - Add support for loading decoders using a wchar_t string for file paths.
   - Don't trigger an assert when ma_device_start() is called on a device that is already started. This will now log a warning
     and return MA_INVALID_OPERATION. The same applies for ma_device_stop().
