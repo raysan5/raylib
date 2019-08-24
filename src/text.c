@@ -586,7 +586,7 @@ Image GenImageFontAtlas(const CharInfo *chars, Rectangle **charRecs, int charsCo
     *charRecs = NULL;
 
     // In case no chars count provided we suppose default of 95
-    charsCount = (charsCount > 0) ? charsCount : 95;
+    charsCount = (charsCount > 0)? charsCount : 95;
     
     // NOTE: Rectangles memory is loaded here!
     Rectangle *recs = (Rectangle *)RL_MALLOC(charsCount*sizeof(Rectangle));
@@ -597,7 +597,7 @@ Image GenImageFontAtlas(const CharInfo *chars, Rectangle **charRecs, int charsCo
     // so image size would result bigger than default font type
     float requiredArea = 0;
     for (int i = 0; i < charsCount; i++) requiredArea += ((chars[i].image.width + 2*padding)*(chars[i].image.height + 2*padding));
-    float guessSize = sqrtf(requiredArea)*1.25f;
+    float guessSize = sqrtf(requiredArea)*1.3f;
     int imageSize = (int)powf(2, ceilf(logf((float)guessSize)/logf(2)));  // Calculate next POT
 
     atlas.width = imageSize;   // Atlas bitmap width
