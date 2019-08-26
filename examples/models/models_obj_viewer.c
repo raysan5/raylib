@@ -116,6 +116,7 @@ int main(void)
 
     // De-Initialization
     //--------------------------------------------------------------------------------------
+    UnloadTexture(texture);     // Unload texture
     UnloadModel(model);         // Unload model
 
     ClearDroppedFiles();        // Clear internal buffers

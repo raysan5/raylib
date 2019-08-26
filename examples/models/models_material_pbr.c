@@ -100,7 +100,9 @@ int main(void)
 
     // De-Initialization
     //--------------------------------------------------------------------------------------
-    UnloadModel(model);         // Unload skybox model
+    // TODO: Unload materials and shaders
+    
+    UnloadModel(model);         // Unload model
 
     CloseWindow();              // Close window and OpenGL context
     //--------------------------------------------------------------------------------------
