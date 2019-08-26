@@ -1378,7 +1378,7 @@ RLAPI Music LoadMusicStream(const char *fileName);                    // Load mu
 RLAPI void UnloadMusicStream(Music music);                            // Unload music stream
 RLAPI void PlayMusicStream(Music music);                              // Start music playing
 RLAPI void UpdateMusicStream(Music* music);                            // Updates buffers for music streaming
-RLAPI void StopMusicStream(Music music);                              // Stop music playing
+RLAPI void StopMusicStream(Music* music);                              // Stop music playing
 RLAPI void PauseMusicStream(Music music);                             // Pause music playing
 RLAPI void ResumeMusicStream(Music music);                            // Resume playing paused music
 RLAPI bool IsMusicPlaying(Music music);                               // Check if music is playing

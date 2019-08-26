@@ -168,7 +168,7 @@ Music LoadMusicStream(const char *fileName);                    // Load music st
 void UnloadMusicStream(Music music);                            // Unload music stream
 void PlayMusicStream(Music music);                              // Start music playing
 void UpdateMusicStream(Music* music);                            // Updates buffers for music streaming
-void StopMusicStream(Music music);                              // Stop music playing
+void StopMusicStream(Music* music);                              // Stop music playing
 void PauseMusicStream(Music music);                             // Pause music playing
 void ResumeMusicStream(Music music);                            // Resume playing paused music
 bool IsMusicPlaying(Music music);                               // Check if music is playing

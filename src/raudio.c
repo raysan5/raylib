@@ -1378,32 +1378,32 @@ void ResumeMusicStream(Music music)
 }
 
 // Stop music playing (close stream)
-void StopMusicStream(Music music)
+void StopMusicStream(Music* music)
 {
-    StopAudioStream(music.stream);
+    StopAudioStream(music->stream);
 
     // Restart music context
-    switch (music.ctxType)
+    switch (music->ctxType)
     {
 #if defined(SUPPORT_FILEFORMAT_OGG)
-        case MUSIC_AUDIO_OGG: stb_vorbis_seek_start((stb_vorbis *)music.ctxData); break;
+        case MUSIC_AUDIO_OGG: stb_vorbis_seek_start((stb_vorbis *)music->ctxData); break;
 #endif
 #if defined(SUPPORT_FILEFORMAT_FLAC)
         case MUSIC_AUDIO_FLAC: /* TODO: Restart FLAC context */ break;
 #endif
 #if defined(SUPPORT_FILEFORMAT_MP3)
-        case MUSIC_AUDIO_MP3: drmp3_seek_to_pcm_frame((drmp3 *)music.ctxData, 0); break;
+        case MUSIC_AUDIO_MP3: drmp3_seek_to_pcm_frame((drmp3 *)music->ctxData, 0); break;
 #endif
 #if defined(SUPPORT_FILEFORMAT_XM)
-        case MUSIC_MODULE_XM: jar_xm_reset((jar_xm_context_t *)music.ctxData); break;
+        case MUSIC_MODULE_XM: jar_xm_reset((jar_xm_context_t *)music->ctxData); break;
 #endif
 #if defined(SUPPORT_FILEFORMAT_MOD)
-        case MUSIC_MODULE_MOD: jar_mod_seek_start((jar_mod_context_t *)music.ctxData); break;
+        case MUSIC_MODULE_MOD: jar_mod_seek_start((jar_mod_context_t *)music->ctxData); break;
 #endif
         default: break;
     }
 
-    music.sampleLeft = music.sampleCount;
+    music->sampleLeft = music->sampleCount;
 }
 
 // Update (re-fill) music buffers if data already processed
@@ -1488,17 +1488,13 @@ void UpdateMusicStream(Music* music)
     // Reset audio stream for looping
     if (streamEnding)
     {
-        StopMusicStream(*music);        // Stop music (and reset)
+        StopMusicStream(music);        // Stop music (and reset)
 
         // Decrease loopCount to stop when required
         if (music->loopCount > 1)
         {
             music->loopCount--;        // Decrease loop count
             PlayMusicStream(*music);    // Play again
-        }
-        else
-        {
-            if (music->loopCount == 0) PlayMusicStream(*music);
         }
     }
     else

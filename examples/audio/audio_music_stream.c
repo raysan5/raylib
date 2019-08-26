@@ -42,7 +42,7 @@ int main(void)
         // Restart music playing (stop and play)
         if (IsKeyPressed(KEY_SPACE))
         {
-            StopMusicStream(music);
+            StopMusicStream(&music);
             PlayMusicStream(music);
         }
 
