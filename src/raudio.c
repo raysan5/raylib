@@ -1407,29 +1407,29 @@ void StopMusicStream(Music music)
 }
 
 // Update (re-fill) music buffers if data already processed
-void UpdateMusicStream(Music music)
+void UpdateMusicStream(Music* music)
 {
     bool streamEnding = false;
 
-    unsigned int subBufferSizeInFrames = music.stream.buffer->bufferSizeInFrames/2;
+    unsigned int subBufferSizeInFrames = music->stream.buffer->bufferSizeInFrames/2;
 
     // NOTE: Using dynamic allocation because it could require more than 16KB
-    void *pcm = RL_CALLOC(subBufferSizeInFrames*music.stream.channels*music.stream.sampleSize/8, 1);
+    void *pcm = RL_CALLOC(subBufferSizeInFrames*music->stream.channels*music->stream.sampleSize/8, 1);
 
     int samplesCount = 0;    // Total size of data steamed in L+R samples for xm floats, individual L or R for ogg shorts
 
-    while (IsAudioStreamProcessed(music.stream))
+    while (IsAudioStreamProcessed(music->stream))
     {
-        if ((music.sampleLeft/music.stream.channels) >= subBufferSizeInFrames) samplesCount = subBufferSizeInFrames*music.stream.channels;
-        else samplesCount = music.sampleLeft;
+        if ((music->sampleLeft/music->stream.channels) >= subBufferSizeInFrames) samplesCount = subBufferSizeInFrames*music->stream.channels;
+        else samplesCount = music->sampleLeft;
 
-        switch (music.ctxType)
+        switch (music->ctxType)
         {
         #if defined(SUPPORT_FILEFORMAT_OGG)
             case MUSIC_AUDIO_OGG:
             {
                 // NOTE: Returns the number of samples to process (be careful! we ask for number of shorts!)
-                stb_vorbis_get_samples_short_interleaved((stb_vorbis *)music.ctxData, music.stream.channels, (short *)pcm, samplesCount);
+                stb_vorbis_get_samples_short_interleaved((stb_vorbis *)music->ctxData, music->stream.channels, (short *)pcm, samplesCount);
 
             } break;
         #endif
@@ -1437,7 +1437,7 @@ void UpdateMusicStream(Music music)
             case MUSIC_AUDIO_FLAC:
             {
                 // NOTE: Returns the number of samples to process (not required)
-                drflac_read_s16((drflac *)music.ctxData, samplesCount, (short *)pcm);
+                drflac_read_s16((drflac *)music->ctxData, samplesCount, (short *)pcm);
 
             } break;
         #endif
@@ -1445,7 +1445,7 @@ void UpdateMusicStream(Music music)
             case MUSIC_AUDIO_MP3:
             {
                 // NOTE: samplesCount, actually refers to framesCount and returns the number of frames processed
-                drmp3_read_pcm_frames_f32((drmp3 *)music.ctxData, samplesCount/music.stream.channels, (float *)pcm);
+                drmp3_read_pcm_frames_f32((drmp3 *)music->ctxData, samplesCount/music->stream.channels, (float *)pcm);
 
             } break;
         #endif
@@ -1453,29 +1453,29 @@ void UpdateMusicStream(Music music)
             case MUSIC_MODULE_XM:
             {
                 // NOTE: Internally this function considers 2 channels generation, so samplesCount/2
-                jar_xm_generate_samples_16bit((jar_xm_context_t *)music.ctxData, (short *)pcm, samplesCount/2);
+                jar_xm_generate_samples_16bit((jar_xm_context_t *)music->ctxData, (short *)pcm, samplesCount/2);
             } break;
         #endif
         #if defined(SUPPORT_FILEFORMAT_MOD)
             case MUSIC_MODULE_MOD:
             {
                 // NOTE: 3rd parameter (nbsample) specify the number of stereo 16bits samples you want, so sampleCount/2
-                jar_mod_fillbuffer((jar_mod_context_t *)music.ctxData, (short *)pcm, samplesCount/2, 0);
+                jar_mod_fillbuffer((jar_mod_context_t *)music->ctxData, (short *)pcm, samplesCount/2, 0);
             } break;
         #endif
             default: break;
         }
 
-        UpdateAudioStream(music.stream, pcm, samplesCount);
+        UpdateAudioStream(music->stream, pcm, samplesCount);
         
-        if ((music.ctxType == MUSIC_MODULE_XM) || (music.ctxType == MUSIC_MODULE_MOD))
+        if ((music->ctxType == MUSIC_MODULE_XM) || (music->ctxType == MUSIC_MODULE_MOD))
         {
-            if (samplesCount > 1) music.sampleLeft -= samplesCount/2;
-            else music.sampleLeft -= samplesCount;
+            if (samplesCount > 1) music->sampleLeft -= samplesCount/2;
+            else music->sampleLeft -= samplesCount;
         }
-        else music.sampleLeft -= samplesCount;
+        else music->sampleLeft -= samplesCount;
 
-        if (music.sampleLeft <= 0)
+        if (music->sampleLeft <= 0)
         {
             streamEnding = true;
             break;
@@ -1488,24 +1488,24 @@ void UpdateMusicStream(Music music)
     // Reset audio stream for looping
     if (streamEnding)
     {
-        StopMusicStream(music);        // Stop music (and reset)
+        StopMusicStream(*music);        // Stop music (and reset)
 
         // Decrease loopCount to stop when required
-        if (music.loopCount > 1)
+        if (music->loopCount > 1)
         {
-            music.loopCount--;        // Decrease loop count
-            PlayMusicStream(music);    // Play again
+            music->loopCount--;        // Decrease loop count
+            PlayMusicStream(*music);    // Play again
         }
         else
         {
-            if (music.loopCount == 0) PlayMusicStream(music);
+            if (music->loopCount == 0) PlayMusicStream(*music);
         }
     }
     else
     {
         // NOTE: In case window is minimized, music stream is stopped,
         // just make sure to play again on window restore
-        if (IsMusicPlaying(music)) PlayMusicStream(music);
+        if (IsMusicPlaying(*music)) PlayMusicStream(*music);
     }
 }
 

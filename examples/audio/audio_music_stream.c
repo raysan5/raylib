@@ -37,7 +37,7 @@ int main(void)
     {
         // Update
         //----------------------------------------------------------------------------------
-        UpdateMusicStream(music);   // Update music buffer with new stream data
+        UpdateMusicStream(&music);   // Update music buffer with new stream data
 
         // Restart music playing (stop and play)
         if (IsKeyPressed(KEY_SPACE))

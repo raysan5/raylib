@@ -124,7 +124,7 @@ int main()
             key = 0;
         }
 
-        UpdateMusicStream(music);
+        UpdateMusicStream(&music);
     }
 
     // De-Initialization

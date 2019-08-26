@@ -167,7 +167,7 @@ float *GetWaveData(Wave wave);                                  // Get samples d
 Music LoadMusicStream(const char *fileName);                    // Load music stream from file
 void UnloadMusicStream(Music music);                            // Unload music stream
 void PlayMusicStream(Music music);                              // Start music playing
-void UpdateMusicStream(Music music);                            // Updates buffers for music streaming
+void UpdateMusicStream(Music* music);                            // Updates buffers for music streaming
 void StopMusicStream(Music music);                              // Stop music playing
 void PauseMusicStream(Music music);                             // Pause music playing
 void ResumeMusicStream(Music music);                            // Resume playing paused music
