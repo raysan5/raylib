@@ -904,6 +904,8 @@ RLAPI void BeginMode3D(Camera3D camera);                          // Initializes
 RLAPI void EndMode3D(void);                                       // Ends 3D mode and returns to default 2D orthographic mode
 RLAPI void BeginTextureMode(RenderTexture2D target);              // Initializes render texture for drawing
 RLAPI void EndTextureMode(void);                                  // Ends drawing to render texture
+RLAPI void BeginScissorMode(int x, int y, int width, int height); // Begin scissor mode (define screen area for following drawing)
+RLAPI void EndScissorMode(void);                                  // End scissor mode
 
 // Screen-space-related functions
 RLAPI Ray GetMouseRay(Vector2 mousePosition, Camera camera);      // Returns a ray trace from mouse position
@@ -1324,8 +1326,6 @@ RLAPI void BeginShaderMode(Shader shader);                                // Beg
 RLAPI void EndShaderMode(void);                                           // End custom shader drawing (use default shader)
 RLAPI void BeginBlendMode(int mode);                                      // Begin blending mode (alpha, additive, multiplied)
 RLAPI void EndBlendMode(void);                                            // End blending mode (reset to default: alpha blending)
-RLAPI void BeginScissorMode(int x, int y, int width, int height);         // Begin scissor mode (define screen area for following drawing)
-RLAPI void EndScissorMode(void);                                          // End scissor mode
 
 // VR control functions
 RLAPI void InitVrSimulator(void);                       // Init VR simulator for selected device parameters

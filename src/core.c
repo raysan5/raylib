@@ -1392,6 +1392,23 @@ void EndTextureMode(void)
     currentHeight = GetScreenHeight();
 }
 
+// Begin scissor mode (define screen area for following drawing)
+// NOTE: Scissor rec refers to bottom-left corner, we change it to upper-left
+void BeginScissorMode(int x, int y, int width, int height)
+{
+    rlglDraw(); // Force drawing elements
+
+    rlEnableScissorTest();
+    rlScissor(x, GetScreenHeight() - (y + height), width, height);
+}
+
+// End scissor mode
+void EndScissorMode(void)
+{
+    rlglDraw(); // Force drawing elements
+    rlDisableScissorTest();
+}
+
 // Returns a ray trace from mouse position
 Ray GetMouseRay(Vector2 mousePosition, Camera camera)
 {

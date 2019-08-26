@@ -457,6 +457,9 @@ RLAPI void rlEnableDepthTest(void);                           // Enable depth te
 RLAPI void rlDisableDepthTest(void);                          // Disable depth test
 RLAPI void rlEnableBackfaceCulling(void);                     // Enable backface culling
 RLAPI void rlDisableBackfaceCulling(void);                    // Disable backface culling
+RLAPI void rlEnableScissorTest(void);                         // Enable scissor test
+RLAPI void rlDisableScissorTest(void);                        // Disable scissor test
+RLAPI void rlScissor(int x, int y, int width, int height);    // Scissor test
 RLAPI void rlEnableWireMode(void);                            // Enable wire mode
 RLAPI void rlDisableWireMode(void);                           // Disable wire mode
 RLAPI void rlDeleteTextures(unsigned int id);                 // Delete OpenGL texture from GPU
@@ -1344,28 +1347,25 @@ void rlDisableRenderTexture(void)
 }
 
 // Enable depth test
-void rlEnableDepthTest(void)
-{
-    glEnable(GL_DEPTH_TEST);
-}
+void rlEnableDepthTest(void) { glEnable(GL_DEPTH_TEST); }
 
 // Disable depth test
-void rlDisableDepthTest(void)
-{
-    glDisable(GL_DEPTH_TEST);
-}
+void rlDisableDepthTest(void) { glDisable(GL_DEPTH_TEST); }
 
 // Enable backface culling
-void rlEnableBackfaceCulling(void)
-{
-    glEnable(GL_CULL_FACE);
-}
+void rlEnableBackfaceCulling(void) { glEnable(GL_CULL_FACE); }
 
 // Disable backface culling
-void rlDisableBackfaceCulling(void)
-{
-    glDisable(GL_CULL_FACE);
-}
+void rlDisableBackfaceCulling(void) { glDisable(GL_CULL_FACE); }
+
+// Enable scissor test
+RLAPI void rlEnableScissorTest(void) { glEnable(GL_SCISSOR_TEST); }
+
+// Disable scissor test
+RLAPI void rlDisableScissorTest(void) { glDisable(GL_SCISSOR_TEST); }
+
+// Scissor test
+RLAPI void rlScissor(int x, int y, int width, int height) { glScissor(x, y, width, height); }
 
 // Enable wire mode
 void rlEnableWireMode(void)
@@ -1698,7 +1698,6 @@ void rlglInit(int width, int height)
 
     // Initialize OpenGL default states
     //----------------------------------------------------------
-
     // Init state: Depth test
     glDepthFunc(GL_LEQUAL);                                 // Type of depth testing to apply
     glDisable(GL_DEPTH_TEST);                               // Disable depth testing for 2D (only used for 3D)
@@ -3522,24 +3521,6 @@ void BeginBlendMode(int mode)
 void EndBlendMode(void)
 {
     BeginBlendMode(BLEND_ALPHA);
-}
-
-// Begin scissor mode (define screen area for following drawing)
-// NOTE: Scissor rec refers to bottom-left corner, we change it to upper-left
-void BeginScissorMode(int x, int y, int width, int height)
-{
-    rlglDraw();             // Force drawing elements
-
-    glEnable(GL_SCISSOR_TEST);
-    glScissor(x, framebufferHeight - (y + height), width, height);
-}
-
-// End scissor mode
-void EndScissorMode(void)
-{
-    rlglDraw();             // Force drawing elements
-
-    glDisable(GL_SCISSOR_TEST);
 }
 
 #if defined(SUPPORT_VR_SIMULATOR)
