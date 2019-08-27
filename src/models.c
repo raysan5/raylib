@@ -919,7 +919,7 @@ ModelAnimation *LoadModelAnimations(const char *filename, int *animCount)
         TraceLog(LOG_ERROR, "[%s] Unable to open file", filename);
     }
 
-    // header
+    // Read IQM header
     fread(&iqm, sizeof(IQMHeader), 1, iqmFile);
 
     if (strncmp(iqm.magic, IQM_MAGIC, sizeof(IQM_MAGIC)))
@@ -934,34 +934,30 @@ ModelAnimation *LoadModelAnimations(const char *filename, int *animCount)
         fclose(iqmFile);
     }
 
-    // bones
-    IQMPose *poses;
-    poses = RL_MALLOC(sizeof(IQMPose)*iqm.num_poses);
+    // Get bones data
+    IQMPose *poses = RL_MALLOC(iqm.num_poses*sizeof(IQMPose));
     fseek(iqmFile, iqm.ofs_poses, SEEK_SET);
-    fread(poses, sizeof(IQMPose)*iqm.num_poses, 1, iqmFile);
+    fread(poses, iqm.num_poses*sizeof(IQMPose), 1, iqmFile);
 
-    // animations
+    // Get animations data
     *animCount = iqm.num_anims;
     IQMAnim *anim = RL_MALLOC(iqm.num_anims*sizeof(IQMAnim));
     fseek(iqmFile, iqm.ofs_anims, SEEK_SET);
     fread(anim, iqm.num_anims*sizeof(IQMAnim), 1, iqmFile);
     ModelAnimation *animations = RL_MALLOC(iqm.num_anims*sizeof(ModelAnimation));
 
-
     // frameposes
-    unsigned short *framedata = RL_MALLOC(sizeof(unsigned short)*iqm.num_frames*iqm.num_framechannels);
+    unsigned short *framedata = RL_MALLOC(iqm.num_frames*iqm.num_framechannels*sizeof(unsigned short));
     fseek(iqmFile, iqm.ofs_frames, SEEK_SET);
-    fread(framedata, sizeof(unsigned short)*iqm.num_frames*iqm.num_framechannels, 1, iqmFile);
+    fread(framedata, iqm.num_frames*iqm.num_framechannels*sizeof(unsigned short), 1, iqmFile);
 
-    for(int a=0;a<iqm.num_anims;a++)
+    for (int a = 0; a < iqm.num_anims; a++)
     {
-
         animations[a].frameCount = anim[a].num_frames;
         animations[a].boneCount = iqm.num_poses;
-        animations[a].bones = RL_MALLOC(sizeof(BoneInfo)*iqm.num_poses);
-        animations[a].framePoses = RL_MALLOC(sizeof(Transform*)*anim[a].num_frames);
-        // unused for now
-        //animations[a].framerate = anim.framerate;
+        animations[a].bones = RL_MALLOC(iqm.num_poses*sizeof(BoneInfo));
+        animations[a].framePoses = RL_MALLOC(anim[a].num_frames*sizeof(Transform *));
+        //animations[a].framerate = anim.framerate;     // TODO: Use framerate?
 
         for (int j = 0; j < iqm.num_poses; j++)
         {
@@ -969,7 +965,7 @@ ModelAnimation *LoadModelAnimations(const char *filename, int *animCount)
             animations[a].bones[j].parent = poses[j].parent;
         }
 
-        for (int j = 0; j < anim[a].num_frames; j++) animations[a].framePoses[j] = RL_MALLOC(sizeof(Transform)*iqm.num_poses);
+        for (int j = 0; j < anim[a].num_frames; j++) animations[a].framePoses[j] = RL_MALLOC(iqm.num_poses*sizeof(Transform));
 
         int dcounter = anim[a].first_frame*iqm.num_framechannels;
 
@@ -1083,7 +1079,6 @@ ModelAnimation *LoadModelAnimations(const char *filename, int *animCount)
     
     fclose(iqmFile);
 
-    
     return animations;
 }
 
@@ -1091,61 +1086,64 @@ ModelAnimation *LoadModelAnimations(const char *filename, int *animCount)
 // NOTE: Updated data is uploaded to GPU
 void UpdateModelAnimation(Model model, ModelAnimation anim, int frame)
 {
-    if (frame >= anim.frameCount) frame = frame%anim.frameCount;
-
-    for (int m = 0; m < model.meshCount; m++)
+    if ((anim.frameCount > 0) && (anim.bones != NULL) && (anim.framePoses != NULL))
     {
-        Vector3 animVertex = { 0 };
-        Vector3 animNormal = { 0 };
+        if (frame >= anim.frameCount) frame = frame%anim.frameCount;
 
-        Vector3 inTranslation = { 0 };
-        Quaternion inRotation = { 0 };
-        Vector3 inScale = { 0 };
-
-        Vector3 outTranslation = { 0 };
-        Quaternion outRotation = { 0 };
-        Vector3 outScale = { 0 };
-
-        int vCounter = 0;
-        int boneCounter = 0;
-        int boneId = 0;
-
-        for (int i = 0; i < model.meshes[m].vertexCount; i++)
+        for (int m = 0; m < model.meshCount; m++)
         {
-            boneId = model.meshes[m].boneIds[boneCounter];
-            inTranslation = model.bindPose[boneId].translation;
-            inRotation = model.bindPose[boneId].rotation;
-            inScale = model.bindPose[boneId].scale;
-            outTranslation = anim.framePoses[frame][boneId].translation;
-            outRotation = anim.framePoses[frame][boneId].rotation;
-            outScale = anim.framePoses[frame][boneId].scale;
+            Vector3 animVertex = { 0 };
+            Vector3 animNormal = { 0 };
 
-            // Vertices processing
-            // NOTE: We use meshes.vertices (default vertex position) to calculate meshes.animVertices (animated vertex position)
-            animVertex = (Vector3){ model.meshes[m].vertices[vCounter], model.meshes[m].vertices[vCounter + 1], model.meshes[m].vertices[vCounter + 2] };
-            animVertex = Vector3MultiplyV(animVertex, outScale);
-            animVertex = Vector3Subtract(animVertex, inTranslation);
-            animVertex = Vector3RotateByQuaternion(animVertex, QuaternionMultiply(outRotation, QuaternionInvert(inRotation)));
-            animVertex = Vector3Add(animVertex, outTranslation);
-            model.meshes[m].animVertices[vCounter] = animVertex.x;
-            model.meshes[m].animVertices[vCounter + 1] = animVertex.y;
-            model.meshes[m].animVertices[vCounter + 2] = animVertex.z;
+            Vector3 inTranslation = { 0 };
+            Quaternion inRotation = { 0 };
+            Vector3 inScale = { 0 };
 
-            // Normals processing
-            // NOTE: We use meshes.baseNormals (default normal) to calculate meshes.normals (animated normals)
-            animNormal = (Vector3){ model.meshes[m].normals[vCounter], model.meshes[m].normals[vCounter + 1], model.meshes[m].normals[vCounter + 2] };
-            animNormal = Vector3RotateByQuaternion(animNormal, QuaternionMultiply(outRotation, QuaternionInvert(inRotation)));
-            model.meshes[m].animNormals[vCounter] = animNormal.x;
-            model.meshes[m].animNormals[vCounter + 1] = animNormal.y;
-            model.meshes[m].animNormals[vCounter + 2] = animNormal.z;
-            vCounter += 3;
+            Vector3 outTranslation = { 0 };
+            Quaternion outRotation = { 0 };
+            Vector3 outScale = { 0 };
 
-            boneCounter += 4;
+            int vCounter = 0;
+            int boneCounter = 0;
+            int boneId = 0;
+
+            for (int i = 0; i < model.meshes[m].vertexCount; i++)
+            {
+                boneId = model.meshes[m].boneIds[boneCounter];
+                inTranslation = model.bindPose[boneId].translation;
+                inRotation = model.bindPose[boneId].rotation;
+                inScale = model.bindPose[boneId].scale;
+                outTranslation = anim.framePoses[frame][boneId].translation;
+                outRotation = anim.framePoses[frame][boneId].rotation;
+                outScale = anim.framePoses[frame][boneId].scale;
+
+                // Vertices processing
+                // NOTE: We use meshes.vertices (default vertex position) to calculate meshes.animVertices (animated vertex position)
+                animVertex = (Vector3){ model.meshes[m].vertices[vCounter], model.meshes[m].vertices[vCounter + 1], model.meshes[m].vertices[vCounter + 2] };
+                animVertex = Vector3MultiplyV(animVertex, outScale);
+                animVertex = Vector3Subtract(animVertex, inTranslation);
+                animVertex = Vector3RotateByQuaternion(animVertex, QuaternionMultiply(outRotation, QuaternionInvert(inRotation)));
+                animVertex = Vector3Add(animVertex, outTranslation);
+                model.meshes[m].animVertices[vCounter] = animVertex.x;
+                model.meshes[m].animVertices[vCounter + 1] = animVertex.y;
+                model.meshes[m].animVertices[vCounter + 2] = animVertex.z;
+
+                // Normals processing
+                // NOTE: We use meshes.baseNormals (default normal) to calculate meshes.normals (animated normals)
+                animNormal = (Vector3){ model.meshes[m].normals[vCounter], model.meshes[m].normals[vCounter + 1], model.meshes[m].normals[vCounter + 2] };
+                animNormal = Vector3RotateByQuaternion(animNormal, QuaternionMultiply(outRotation, QuaternionInvert(inRotation)));
+                model.meshes[m].animNormals[vCounter] = animNormal.x;
+                model.meshes[m].animNormals[vCounter + 1] = animNormal.y;
+                model.meshes[m].animNormals[vCounter + 2] = animNormal.z;
+                vCounter += 3;
+
+                boneCounter += 4;
+            }
+
+            // Upload new vertex data to GPU for model drawing
+            rlUpdateBuffer(model.meshes[m].vboId[0], model.meshes[m].animVertices, model.meshes[m].vertexCount*3*sizeof(float));    // Update vertex position
+            rlUpdateBuffer(model.meshes[m].vboId[2], model.meshes[m].animVertices, model.meshes[m].vertexCount*3*sizeof(float));    // Update vertex normals
         }
-
-        // Upload new vertex data to GPU for model drawing
-        rlUpdateBuffer(model.meshes[m].vboId[0], model.meshes[m].animVertices, model.meshes[m].vertexCount*3*sizeof(float));    // Update vertex position
-        rlUpdateBuffer(model.meshes[m].vboId[2], model.meshes[m].animVertices, model.meshes[m].vertexCount*3*sizeof(float));    // Update vertex normals
     }
 }
 
