@@ -911,6 +911,9 @@ RLAPI void EndScissorMode(void);                                  // End scissor
 RLAPI Ray GetMouseRay(Vector2 mousePosition, Camera camera);      // Returns a ray trace from mouse position
 RLAPI Vector2 GetWorldToScreen(Vector3 position, Camera camera);  // Returns the screen space position for a 3d world space position
 RLAPI Matrix GetCameraMatrix(Camera camera);                      // Returns camera transform matrix (view matrix)
+RLAPI Vector2 GetScreenToWorld2D(Vector2 position, Camera2D camera);
+RLAPI Vector2 GetWorldToScreen2D(Vector2 position, Camera2D camera);
+RLAPI Matrix GetCamera2DMatrix(Camera2D camera);
 
 // Timing-related functions
 RLAPI void SetTargetFPS(int fps);                                 // Set target FPS (maximum)
