@@ -3024,7 +3024,7 @@ Shader LoadShaderCode(char *vsCode, char *fsCode)
 
     glGetProgramiv(shader.id, GL_ACTIVE_UNIFORMS, &uniformCount);
 
-    for(int i = 0; i < uniformCount; i++)
+    for (int i = 0; i < uniformCount; i++)
     {
         int namelen = -1;
         int num = -1;

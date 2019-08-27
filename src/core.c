@@ -4293,8 +4293,8 @@ static EM_BOOL EmscriptenGamepadCallback(int eventType, const EmscriptenGamepadE
            eventType != 0? emscripten_event_type_to_string(eventType) : "Gamepad state",
            gamepadEvent->timestamp, gamepadEvent->connected, gamepadEvent->index, gamepadEvent->numAxes, gamepadEvent->numButtons, gamepadEvent->id, gamepadEvent->mapping);
 
-    for(int i = 0; i < gamepadEvent->numAxes; ++i) TraceLog(LOG_DEBUG, "Axis %d: %g", i, gamepadEvent->axis[i]);
-    for(int i = 0; i < gamepadEvent->numButtons; ++i) TraceLog(LOG_DEBUG, "Button %d: Digital: %d, Analog: %g", i, gamepadEvent->digitalButton[i], gamepadEvent->analogButton[i]);
+    for (int i = 0; i < gamepadEvent->numAxes; ++i) TraceLog(LOG_DEBUG, "Axis %d: %g", i, gamepadEvent->axis[i]);
+    for (int i = 0; i < gamepadEvent->numButtons; ++i) TraceLog(LOG_DEBUG, "Button %d: Digital: %d, Analog: %g", i, gamepadEvent->digitalButton[i], gamepadEvent->analogButton[i]);
     */
 
     if ((gamepadEvent->connected) && (gamepadEvent->index < MAX_GAMEPADS)) gamepadReady[gamepadEvent->index] = true;
