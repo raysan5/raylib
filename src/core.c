@@ -1248,9 +1248,12 @@ void BeginMode2D(Camera2D camera)
     rlglDraw();                         // Draw Buffers (Only OpenGL 3+ and ES2)
 
     rlLoadIdentity();                   // Reset current matrix (MODELVIEW)
-    rlMultMatrixf(MatrixToFloat(screenScaling)); // Apply screen scaling if required
-
-    rlMultMatrixf(MatrixToFloat(GetCamera2DMatrix(camera)));  // Apply transformation to modelview
+    
+    // Apply screen scaling if required
+    rlMultMatrixf(MatrixToFloat(screenScaling));
+    
+    // Apply 2d camera transformation to modelview
+    rlMultMatrixf(MatrixToFloat(GetCameraMatrix2D(camera)));
 }
 
 // Ends 2D mode with custom camera
@@ -1433,6 +1436,40 @@ Ray GetMouseRay(Vector2 mousePosition, Camera camera)
     return ray;
 }
 
+// Get transform matrix for camera
+Matrix GetCameraMatrix(Camera camera)
+{
+    return MatrixLookAt(camera.position, camera.target, camera.up);
+}
+
+// Returns camera 2d transform matrix
+Matrix GetCameraMatrix2D(Camera2D camera) 
+{
+    Matrix matTransform = { 0 };
+    // The camera in world-space is set by
+    //   1. Move it to target
+    //   2. Rotate by -rotation and scale by (1/zoom)
+    //      When setting higher scale, it's more intuitive for the world to become bigger (= camera become smaller),
+    //      not for the camera getting bigger, hence the invert. Same deal with rotation.
+    //   3. Move it by (-offset);
+    //      Offset defines target transform relative to screen, but since we're effectively "moving" screen (camera)
+    //      we need to do it into opposite direction (inverse transform)
+
+    // Having camera transform in world-space, inverse of it gives the modelview transform.
+    // Since (A*B*C)' = C'*B'*A', the modelview is
+    //   1. Move to offset
+    //   2. Rotate and Scale
+    //   3. Move by -target
+    Matrix matOrigin = MatrixTranslate(-camera.target.x, -camera.target.y, 0.0f);
+    Matrix matRotation = MatrixRotate((Vector3){ 0.0f, 0.0f, 1.0f }, camera.rotation*DEG2RAD);
+    Matrix matScale = MatrixScale(camera.zoom, camera.zoom, 1.0f);
+    Matrix matTranslation = MatrixTranslate(camera.offset.x, camera.offset.y, 0.0f);
+    
+    matTransform = MatrixMultiply(MatrixMultiply(matOrigin, MatrixMultiply(matScale, matRotation)), matTranslation);
+    
+    return matTransform;
+}
+
 // Returns the screen space position from a 3d world space position
 Vector2 GetWorldToScreen(Vector3 position, Camera camera)
 {
@@ -1475,46 +1512,22 @@ Vector2 GetWorldToScreen(Vector3 position, Camera camera)
     return screenPosition;
 }
 
-// Get transform matrix for camera
-Matrix GetCameraMatrix(Camera camera)
+// Returns the screen space position for a 2d camera world space position
+Vector2 GetWorldToScreen2D(Vector2 position, Camera2D camera) 
 {
-    return MatrixLookAt(camera.position, camera.target, camera.up);
+    Matrix matCamera = GetCameraMatrix2D(camera);
+    Vector3 transform = Vector3Transform((Vector3){ position.x, position.y, 0 }, matCamera);
+    
+    return (Vector2){ transform.x, transform.y };
 }
 
-
-Vector2 GetScreenToWorld2D(Vector2 position, Camera2D camera) {
-    Matrix m = MatrixInvert(GetCamera2DMatrix(camera));
-    Vector3 transform = Vector3Transform((Vector3){position.x, position.y, 0}, m);
-    return (Vector2){transform.x, transform.y};
-}
-
-Vector2 GetWorldToScreen2D(Vector2 position, Camera2D camera) {
-    Matrix m = GetCamera2DMatrix(camera);
-    Vector3 transform = Vector3Transform((Vector3){position.x, position.y, 0}, m);
-    return (Vector2){transform.x, transform.y};
-}
-
-Matrix GetCamera2DMatrix(Camera2D camera) {
-    // The camera in world-space is set by
-    //   1. Move it to target
-    //   2. Rotate by -rotation and scale by (1/zoom)
-    //      When setting higher scale, it's more intuitive for the world to become bigger (= camera become smaller),
-    //      not for the camera getting bigger, hence the invert. Same deal with rotation.
-    //   3. Move it by (-offset);
-    //      Offset defines target transform relative to screen, but since we're effectively "moving" screen (camera)
-    //      we need to do it into opposite direction (inverse transform)
-
-    // Having camera transform in world-space, inverse of it gives the modelview transform.
-    // Since (A*B*C)' = C'*B'*A', the modelview is
-    //   1. Move to offset
-    //   2. Rotate and Scale
-    //   3. Move by -target
-    Matrix matOrigin = MatrixTranslate(-camera.target.x, -camera.target.y, 0.0f);
-    Matrix matRotation = MatrixRotate((Vector3){ 0.0f, 0.0f, 1.0f }, camera.rotation*DEG2RAD);
-    Matrix matScale = MatrixScale(camera.zoom, camera.zoom, 1.0f);
-    Matrix matTranslation = MatrixTranslate(camera.offset.x, camera.offset.y, 0.0f);
-    Matrix matTransform = MatrixMultiply(MatrixMultiply(matOrigin, MatrixMultiply(matScale, matRotation)), matTranslation);
-    return matTransform;
+// Returns the world space position for a 2d camera screen space position
+Vector2 GetScreenToWorld2D(Vector2 position, Camera2D camera) 
+{
+    Matrix invMatCamera = MatrixInvert(GetCameraMatrix2D(camera));
+    Vector3 transform = Vector3Transform((Vector3){ position.x, position.y, 0 }, invMatCamera);
+    
+    return (Vector2){ transform.x, transform.y };
 }
 
 // Set target FPS (maximum)
