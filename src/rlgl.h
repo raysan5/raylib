@@ -1539,7 +1539,7 @@ void rlglInit(int width, int height)
 
     // NOTE: We have to duplicate string because glGetString() returns a const string
     int len = strlen(extensions) + 1;
-    char *extensionsDup = (char *)RL_CALLOC(len, 1);
+    char *extensionsDup = (char *)RL_CALLOC(len, sizeof(char));
     strcpy(extensionsDup, extensions);
     
     extList[numExt] = extensionsDup;
@@ -2967,7 +2967,7 @@ char *LoadText(const char *fileName)
 Shader LoadShader(const char *vsFileName, const char *fsFileName)
 {
     Shader shader = { 0 };
-    shader.locs = (int *)RL_CALLOC(MAX_SHADER_LOCATIONS*sizeof(int), 1);
+    shader.locs = (int *)RL_CALLOC(MAX_SHADER_LOCATIONS, sizeof(int));
 
     char *vShaderStr = NULL;
     char *fShaderStr = NULL;
@@ -2988,7 +2988,7 @@ Shader LoadShader(const char *vsFileName, const char *fsFileName)
 Shader LoadShaderCode(char *vsCode, char *fsCode)
 {
     Shader shader = { 0 };
-    shader.locs = (int *)RL_CALLOC(MAX_SHADER_LOCATIONS*sizeof(int), 1);
+    shader.locs = (int *)RL_CALLOC(MAX_SHADER_LOCATIONS, sizeof(int));
 
     // NOTE: All locations must be reseted to -1 (no location)
     for (int i = 0; i < MAX_SHADER_LOCATIONS; i++) shader.locs[i] = -1;
@@ -3861,7 +3861,7 @@ static unsigned int LoadShaderProgram(unsigned int vShaderId, unsigned int fShad
 static Shader LoadShaderDefault(void)
 {
     Shader shader = { 0 };
-    shader.locs = (int *)RL_CALLOC(MAX_SHADER_LOCATIONS*sizeof(int), 1);
+    shader.locs = (int *)RL_CALLOC(MAX_SHADER_LOCATIONS, sizeof(int));
 
     // NOTE: All locations must be reseted to -1 (no location)
     for (int i = 0; i < MAX_SHADER_LOCATIONS; i++) shader.locs[i] = -1;

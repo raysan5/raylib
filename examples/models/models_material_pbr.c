@@ -100,8 +100,7 @@ int main(void)
 
     // De-Initialization
     //--------------------------------------------------------------------------------------
-    // TODO: Unload materials and shaders
-    
+    UnloadMaterial(model.materials[0]); // Unload material: shader and textures
     UnloadModel(model);         // Unload model
 
     CloseWindow();              // Close window and OpenGL context
