@@ -686,14 +686,14 @@ Model LoadModelFromMesh(Mesh mesh)
     model.transform = MatrixIdentity();
 
     model.meshCount = 1;
-    model.meshes = (Mesh *)RL_MALLOC(model.meshCount*sizeof(Mesh));
+    model.meshes = (Mesh *)RL_CALLOC(model.meshCount, sizeof(Mesh));
     model.meshes[0] = mesh;
 
     model.materialCount = 1;
-    model.materials = (Material *)RL_MALLOC(model.materialCount*sizeof(Material));
+    model.materials = (Material *)RL_CALLOC(model.materialCount, sizeof(Material));
     model.materials[0] = LoadMaterialDefault();
 
-    model.meshMaterial = (int *)RL_MALLOC(model.meshCount*sizeof(int));
+    model.meshMaterial = (int *)RL_CALLOC(model.meshCount, sizeof(int));
     model.meshMaterial[0] = 0;  // First material index
 
     return model;
@@ -2792,11 +2792,15 @@ static Model LoadOBJ(const char *fileName)
         // TODO: Support multiple meshes... in the meantime, only one mesh is returned
         //model.meshCount = meshCount;
         model.meshCount = 1;
-        model.meshes = (Mesh *)RL_MALLOC(model.meshCount*sizeof(Mesh));
+        model.meshes = (Mesh *)RL_CALLOC(model.meshCount, sizeof(Mesh));
 
         // Init model materials array
-        model.materialCount = materialCount;
-        model.materials = (Material *)RL_MALLOC(model.materialCount*sizeof(Material));
+        if (materialCount > 0)
+        {
+            model.materialCount = materialCount;
+            model.materials = (Material *)RL_CALLOC(model.materialCount, sizeof(Material));
+        }
+        
         model.meshMaterial = (int *)RL_CALLOC(model.meshCount, sizeof(int));
 
         /*
@@ -2816,9 +2820,9 @@ static Model LoadOBJ(const char *fileName)
             memset(&mesh, 0, sizeof(Mesh));
             mesh.vertexCount = attrib.num_faces*3;
             mesh.triangleCount = attrib.num_faces;
-            mesh.vertices = (float *)RL_MALLOC(mesh.vertexCount*3*sizeof(float));
-            mesh.texcoords = (float *)RL_MALLOC(mesh.vertexCount*2*sizeof(float));
-            mesh.normals = (float *)RL_MALLOC(mesh.vertexCount*3*sizeof(float));
+            mesh.vertices = (float *)RL_CALLOC(mesh.vertexCount*3, sizeof(float));
+            mesh.texcoords = (float *)RL_CALLOC(mesh.vertexCount*2, sizeof(float));
+            mesh.normals = (float *)RL_CALLOC(mesh.vertexCount*3, sizeof(float));
             mesh.vboId = (unsigned int *)RL_CALLOC(MAX_MESH_VBO, sizeof(unsigned int));
 
             int vCount = 0;
@@ -3066,36 +3070,36 @@ static Model LoadIQM(const char *fileName)
     model.meshCount = iqm.num_meshes;
     model.meshes = RL_CALLOC(model.meshCount, sizeof(Mesh));
 
-    char name[MESH_NAME_LENGTH];
+    char name[MESH_NAME_LENGTH] = { 0 };
 
     for (int i = 0; i < model.meshCount; i++)
     {
-        fseek(iqmFile,iqm.ofs_text+imesh[i].name,SEEK_SET);
+        fseek(iqmFile, iqm.ofs_text + imesh[i].name, SEEK_SET);
         fread(name, sizeof(char)*MESH_NAME_LENGTH, 1, iqmFile);     // Mesh name not used...
         model.meshes[i].vertexCount = imesh[i].num_vertexes;
 
-        model.meshes[i].vertices = RL_MALLOC(sizeof(float)*model.meshes[i].vertexCount*3);       // Default vertex positions
-        model.meshes[i].normals = RL_MALLOC(sizeof(float)*model.meshes[i].vertexCount*3);        // Default vertex normals
-        model.meshes[i].texcoords = RL_MALLOC(sizeof(float)*model.meshes[i].vertexCount*2);      // Default vertex texcoords
+        model.meshes[i].vertices = RL_CALLOC(model.meshes[i].vertexCount*3, sizeof(float));       // Default vertex positions
+        model.meshes[i].normals = RL_CALLOC(model.meshes[i].vertexCount*3, sizeof(float));        // Default vertex normals
+        model.meshes[i].texcoords = RL_CALLOC(model.meshes[i].vertexCount*2, sizeof(float));      // Default vertex texcoords
 
-        model.meshes[i].boneIds = RL_MALLOC(sizeof(int)*model.meshes[i].vertexCount*4);          // Up-to 4 bones supported!
-        model.meshes[i].boneWeights = RL_MALLOC(sizeof(float)*model.meshes[i].vertexCount*4);    // Up-to 4 bones supported!
+        model.meshes[i].boneIds = RL_CALLOC(model.meshes[i].vertexCount*4, sizeof(float));        // Up-to 4 bones supported!
+        model.meshes[i].boneWeights = RL_CALLOC(model.meshes[i].vertexCount*4, sizeof(float));    // Up-to 4 bones supported!
 
         model.meshes[i].triangleCount = imesh[i].num_triangles;
-        model.meshes[i].indices = RL_MALLOC(sizeof(unsigned short)*model.meshes[i].triangleCount*3);
+        model.meshes[i].indices = RL_CALLOC(model.meshes[i].triangleCount*3, sizeof(unsigned short));
 
         // Animated verted data, what we actually process for rendering
         // NOTE: Animated vertex should be re-uploaded to GPU (if not using GPU skinning)
-        model.meshes[i].animVertices = RL_MALLOC(sizeof(float)*model.meshes[i].vertexCount*3);
-        model.meshes[i].animNormals = RL_MALLOC(sizeof(float)*model.meshes[i].vertexCount*3);
+        model.meshes[i].animVertices = RL_CALLOC(model.meshes[i].vertexCount*3, sizeof(float));
+        model.meshes[i].animNormals = RL_CALLOC(model.meshes[i].vertexCount*3, sizeof(float));
         
         model.meshes[i].vboId = (unsigned int *)RL_CALLOC(MAX_MESH_VBO, sizeof(unsigned int));
     }
 
     // Triangles data processing
-    tri = RL_MALLOC(sizeof(IQMTriangle)*iqm.num_triangles);
+    tri = RL_MALLOC(iqm.num_triangles*sizeof(IQMTriangle));
     fseek(iqmFile, iqm.ofs_triangles, SEEK_SET);
-    fread(tri, sizeof(IQMTriangle)*iqm.num_triangles, 1, iqmFile);
+    fread(tri, iqm.num_triangles*sizeof(IQMTriangle), 1, iqmFile);
 
     for (int m = 0; m < model.meshCount; m++)
     {
@@ -3112,9 +3116,9 @@ static Model LoadIQM(const char *fileName)
     }
 
     // Vertex arrays data processing
-    va = RL_MALLOC(sizeof(IQMVertexArray)*iqm.num_vertexarrays);
+    va = RL_MALLOC(iqm.num_vertexarrays*sizeof(IQMVertexArray));
     fseek(iqmFile, iqm.ofs_vertexarrays, SEEK_SET);
-    fread(va, sizeof(IQMVertexArray)*iqm.num_vertexarrays, 1, iqmFile);
+    fread(va, iqm.num_vertexarrays*sizeof(IQMVertexArray), 1, iqmFile);
 
     for (int i = 0; i < iqm.num_vertexarrays; i++)
     {
@@ -3122,9 +3126,9 @@ static Model LoadIQM(const char *fileName)
         {
             case IQM_POSITION:
             {
-                vertex = RL_MALLOC(sizeof(float)*iqm.num_vertexes*3);
+                vertex = RL_MALLOC(iqm.num_vertexes*3*sizeof(float));
                 fseek(iqmFile, va[i].offset, SEEK_SET);
-                fread(vertex, sizeof(float)*iqm.num_vertexes*3, 1, iqmFile);
+                fread(vertex, iqm.num_vertexes*3*sizeof(float), 1, iqmFile);
 
                 for (int m = 0; m < iqm.num_meshes; m++)
                 {
@@ -3139,9 +3143,9 @@ static Model LoadIQM(const char *fileName)
             } break;
             case IQM_NORMAL:
             {
-                normal = RL_MALLOC(sizeof(float)*iqm.num_vertexes*3);
+                normal = RL_MALLOC(iqm.num_vertexes*3*sizeof(float));
                 fseek(iqmFile, va[i].offset, SEEK_SET);
-                fread(normal, sizeof(float)*iqm.num_vertexes*3, 1, iqmFile);
+                fread(normal, iqm.num_vertexes*3*sizeof(float), 1, iqmFile);
 
                 for (int m = 0; m < iqm.num_meshes; m++)
                 {
@@ -3156,9 +3160,9 @@ static Model LoadIQM(const char *fileName)
             } break;
             case IQM_TEXCOORD:
             {
-                text = RL_MALLOC(sizeof(float)*iqm.num_vertexes*2);
+                text = RL_MALLOC(iqm.num_vertexes*2*sizeof(float));
                 fseek(iqmFile, va[i].offset, SEEK_SET);
-                fread(text, sizeof(float)*iqm.num_vertexes*2, 1, iqmFile);
+                fread(text, iqm.num_vertexes*2*sizeof(float), 1, iqmFile);
 
                 for (int m = 0; m < iqm.num_meshes; m++)
                 {
@@ -3172,9 +3176,9 @@ static Model LoadIQM(const char *fileName)
             } break;
             case IQM_BLENDINDEXES:
             {
-                blendi = RL_MALLOC(sizeof(char)*iqm.num_vertexes*4);
+                blendi = RL_MALLOC(iqm.num_vertexes*4*sizeof(char));
                 fseek(iqmFile, va[i].offset, SEEK_SET);
-                fread(blendi, sizeof(char)*iqm.num_vertexes*4, 1, iqmFile);
+                fread(blendi, iqm.num_vertexes*4*sizeof(char), 1, iqmFile);
 
                 for (int m = 0; m < iqm.num_meshes; m++)
                 {
@@ -3188,9 +3192,9 @@ static Model LoadIQM(const char *fileName)
             } break;
             case IQM_BLENDWEIGHTS:
             {
-                blendw = RL_MALLOC(sizeof(unsigned char)*iqm.num_vertexes*4);
-                fseek(iqmFile,va[i].offset,SEEK_SET);
-                fread(blendw,sizeof(unsigned char)*iqm.num_vertexes*4,1,iqmFile);
+                blendw = RL_MALLOC(iqm.num_vertexes*4*sizeof(unsigned char));
+                fseek(iqmFile, va[i].offset, SEEK_SET);
+                fread(blendw, iqm.num_vertexes*4*sizeof(unsigned char), 1, iqmFile);
 
                 for (int m = 0; m < iqm.num_meshes; m++)
                 {
@@ -3206,20 +3210,20 @@ static Model LoadIQM(const char *fileName)
     }
 
     // Bones (joints) data processing
-    ijoint = RL_MALLOC(sizeof(IQMJoint)*iqm.num_joints);
+    ijoint = RL_MALLOC(iqm.num_joints*sizeof(IQMJoint));
     fseek(iqmFile, iqm.ofs_joints, SEEK_SET);
-    fread(ijoint, sizeof(IQMJoint)*iqm.num_joints, 1, iqmFile);
+    fread(ijoint, iqm.num_joints*sizeof(IQMJoint), 1, iqmFile);
 
     model.boneCount = iqm.num_joints;
-    model.bones = RL_MALLOC(sizeof(BoneInfo)*iqm.num_joints);
-    model.bindPose = RL_MALLOC(sizeof(Transform)*iqm.num_joints);
+    model.bones = RL_MALLOC(iqm.num_joints*sizeof(BoneInfo));
+    model.bindPose = RL_MALLOC(iqm.num_joints*sizeof(Transform));
 
     for (int i = 0; i < iqm.num_joints; i++)
     {
         // Bones
         model.bones[i].parent = ijoint[i].parent;
         fseek(iqmFile, iqm.ofs_text + ijoint[i].name, SEEK_SET);
-        fread(model.bones[i].name,sizeof(char)*BONE_NAME_LENGTH, 1, iqmFile);
+        fread(model.bones[i].name, BONE_NAME_LENGTH*sizeof(char), 1, iqmFile);
 
         // Bind pose (base pose)
         model.bindPose[i].translation.x = ijoint[i].translate[0];
