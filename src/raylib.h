@@ -460,7 +460,7 @@ typedef struct VrDeviceInfo {
 // System config flags
 // NOTE: Used for bit masks
 typedef enum {
-    FLAG_SHOW_LOGO          = 1,    // Set to show raylib logo at startup
+    FLAG_RESERVED           = 1,    // Reserved
     FLAG_FULLSCREEN_MODE    = 2,    // Set to run program in fullscreen
     FLAG_WINDOW_RESIZABLE   = 4,    // Set to allow resizable window
     FLAG_WINDOW_UNDECORATED = 8,    // Set to disable window decoration (frame and buttons)

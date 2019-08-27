@@ -426,7 +426,6 @@ static double targetTime = 0.0;             // Desired time for one frame, if 0 
 // Config internal variables
 //-----------------------------------------------------------------------------------
 static unsigned int configFlags = 0;        // Configuration flags (bit based)
-static bool showLogo = false;               // Track if showing logo at init is enabled
 
 static char **dropFilesPath;                // Store dropped files paths as strings
 static int dropFilesCount = 0;              // Count dropped files strings
@@ -468,8 +467,6 @@ static bool GetMouseButtonStatus(int button);           // Returns if a mouse bu
 static int GetGamepadButton(int button);                // Get gamepad button generic to all platforms
 static int GetGamepadAxis(int axis);                    // Get gamepad axis generic to all platforms
 static void PollInputEvents(void);                      // Register user events
-
-static void LogoAnimation(void);                        // Plays raylib logo appearing animation
 
 #if defined(PLATFORM_DESKTOP) || defined(PLATFORM_WEB)
 static void ErrorCallback(int error, const char *description);                             // GLFW3 Error Callback, runs on GLFW3 error
@@ -700,13 +697,6 @@ void InitWindow(int width, int height, const char *title)
 
     mousePosition.x = (float)screenWidth/2.0f;
     mousePosition.y = (float)screenHeight/2.0f;
-
-    // raylib logo appearing animation (if enabled)
-    if (showLogo)
-    {
-        SetTargetFPS(60);
-        LogoAnimation();
-    }
 #endif        // PLATFORM_ANDROID
 }
 
@@ -1703,7 +1693,6 @@ void SetConfigFlags(unsigned int flags)
 {
     configFlags = flags;
 
-    if (configFlags & FLAG_SHOW_LOGO) showLogo = true;
     if (configFlags & FLAG_FULLSCREEN_MODE) fullscreen = true;
     if (configFlags & FLAG_WINDOW_ALWAYS_RUN) alwaysRun = true;
 }
@@ -3974,13 +3963,6 @@ static void AndroidCommandCallback(struct android_app *app, int32_t cmd)
                         }
                     }
                     */
-
-                    // raylib logo appearing animation (if enabled)
-                    if (showLogo)
-                    {
-                        SetTargetFPS(60);   // Not required on Android
-                        LogoAnimation();
-                    }
                 }
             }
         } break;
@@ -5028,117 +5010,3 @@ static void *GamepadThread(void *arg)
     return NULL;
 }
 #endif      // PLATFORM_RPI
-
-// Plays raylib logo appearing animation
-static void LogoAnimation(void)
-{
-#if !defined(PLATFORM_WEB) && !defined(PLATFORM_UWP)
-    int logoPositionX = screenWidth/2 - 128;
-    int logoPositionY = screenHeight/2 - 128;
-
-    int framesCounter = 0;
-    int lettersCount = 0;
-
-    int topSideRecWidth = 16;
-    int leftSideRecHeight = 16;
-
-    int bottomSideRecWidth = 16;
-    int rightSideRecHeight = 16;
-
-    int state = 0;                  // Tracking animation states (State Machine)
-    float alpha = 1.0f;             // Useful for fading
-
-    while (!WindowShouldClose() && (state != 4))    // Detect window close button or ESC key
-    {
-        // Update
-        //----------------------------------------------------------------------------------
-        if (state == 0)                 // State 0: Small box blinking
-        {
-            framesCounter++;
-
-            if (framesCounter == 84)
-            {
-                state = 1;
-                framesCounter = 0;      // Reset counter... will be used later...
-            }
-        }
-        else if (state == 1)            // State 1: Top and left bars growing
-        {
-            topSideRecWidth += 4;
-            leftSideRecHeight += 4;
-
-            if (topSideRecWidth == 256) state = 2;
-        }
-        else if (state == 2)            // State 2: Bottom and right bars growing
-        {
-            bottomSideRecWidth += 4;
-            rightSideRecHeight += 4;
-
-            if (bottomSideRecWidth == 256) state = 3;
-        }
-        else if (state == 3)            // State 3: Letters appearing (one by one)
-        {
-            framesCounter++;
-
-            if (framesCounter/12)       // Every 12 frames, one more letter!
-            {
-                lettersCount++;
-                framesCounter = 0;
-            }
-
-            if (lettersCount >= 10)     // When all letters have appeared, just fade out everything
-            {
-                alpha -= 0.02f;
-
-                if (alpha <= 0.0f)
-                {
-                    alpha = 0.0f;
-                    state = 4;
-                }
-            }
-        }
-        //----------------------------------------------------------------------------------
-
-        // Draw
-        //----------------------------------------------------------------------------------
-        BeginDrawing();
-
-            ClearBackground(RAYWHITE);
-
-            if (state == 0)
-            {
-                if ((framesCounter/12)%2) DrawRectangle(logoPositionX, logoPositionY, 16, 16, BLACK);
-            }
-            else if (state == 1)
-            {
-                DrawRectangle(logoPositionX, logoPositionY, topSideRecWidth, 16, BLACK);
-                DrawRectangle(logoPositionX, logoPositionY, 16, leftSideRecHeight, BLACK);
-            }
-            else if (state == 2)
-            {
-                DrawRectangle(logoPositionX, logoPositionY, topSideRecWidth, 16, BLACK);
-                DrawRectangle(logoPositionX, logoPositionY, 16, leftSideRecHeight, BLACK);
-
-                DrawRectangle(logoPositionX + 240, logoPositionY, 16, rightSideRecHeight, BLACK);
-                DrawRectangle(logoPositionX, logoPositionY + 240, bottomSideRecWidth, 16, BLACK);
-            }
-            else if (state == 3)
-            {
-                DrawRectangle(logoPositionX, logoPositionY, topSideRecWidth, 16, Fade(BLACK, alpha));
-                DrawRectangle(logoPositionX, logoPositionY + 16, 16, leftSideRecHeight - 32, Fade(BLACK, alpha));
-
-                DrawRectangle(logoPositionX + 240, logoPositionY + 16, 16, rightSideRecHeight - 32, Fade(BLACK, alpha));
-                DrawRectangle(logoPositionX, logoPositionY + 240, bottomSideRecWidth, 16, Fade(BLACK, alpha));
-
-                DrawRectangle(screenWidth/2 - 112, screenHeight/2 - 112, 224, 224, Fade(RAYWHITE, alpha));
-
-                DrawText(TextSubtext("raylib", 0, lettersCount), screenWidth/2 - 44, screenHeight/2 + 48, 50, Fade(BLACK, alpha));
-            }
-
-        EndDrawing();
-        //----------------------------------------------------------------------------------
-    }
-#endif
-
-    showLogo = false;  // Prevent for repeating when reloading window (Android)
-}
