@@ -182,7 +182,7 @@ float GetMusicTimePlayed(Music music);                          // Get current m
 AudioStream InitAudioStream(unsigned int sampleRate, unsigned int sampleSize, unsigned int channels); // Init audio stream (to stream raw audio pcm data)
 void UpdateAudioStream(AudioStream stream, const void *data, int samplesCount); // Update audio stream buffers with data
 void CloseAudioStream(AudioStream stream);                      // Close audio stream and free memory
-bool IsAudioBufferProcessed(AudioStream stream);                // Check if any audio stream buffers requires refill
+bool IsAudioStreamProcessed(AudioStream stream);                // Check if any audio stream buffers requires refill
 void PlayAudioStream(AudioStream stream);                       // Play audio stream
 void PauseAudioStream(AudioStream stream);                      // Pause audio stream
 void ResumeAudioStream(AudioStream stream);                     // Resume audio stream

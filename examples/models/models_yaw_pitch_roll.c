@@ -169,6 +169,7 @@ int main(void)
     //--------------------------------------------------------------------------------------
 
     // Unload all loaded data
+    UnloadTexture(model.materials[0].maps[MAP_DIFFUSE].texture);
     UnloadModel(model);
 
     UnloadRenderTexture(framebuffer);

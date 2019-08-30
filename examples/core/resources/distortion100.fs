@@ -11,14 +11,14 @@ uniform sampler2D texture0;
 uniform vec4 colDiffuse;
 
 // NOTE: Add here your custom variables
-uniform vec2 leftLensCenter = vec2(0.288, 0.5);
-uniform vec2 rightLensCenter = vec2(0.712, 0.5);
-uniform vec2 leftScreenCenter = vec2(0.25, 0.5);
-uniform vec2 rightScreenCenter = vec2(0.75, 0.5);
-uniform vec2 scale = vec2(0.25, 0.45);
-uniform vec2 scaleIn = vec2(4, 2.2222);
-uniform vec4 hmdWarpParam = vec4(1, 0.22, 0.24, 0);
-uniform vec4 chromaAbParam = vec4(0.996, -0.004, 1.014, 0.0);
+uniform vec2 leftLensCenter;
+uniform vec2 rightLensCenter;
+uniform vec2 leftScreenCenter;
+uniform vec2 rightScreenCenter;
+uniform vec2 scale;
+uniform vec2 scaleIn;
+uniform vec4 hmdWarpParam;
+uniform vec4 chromaAbParam;
 
 void main()
 {

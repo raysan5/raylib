@@ -460,7 +460,7 @@ typedef struct VrDeviceInfo {
 // System config flags
 // NOTE: Used for bit masks
 typedef enum {
-    FLAG_SHOW_LOGO          = 1,    // Set to show raylib logo at startup
+    FLAG_RESERVED           = 1,    // Reserved
     FLAG_FULLSCREEN_MODE    = 2,    // Set to run program in fullscreen
     FLAG_WINDOW_RESIZABLE   = 4,    // Set to allow resizable window
     FLAG_WINDOW_UNDECORATED = 8,    // Set to disable window decoration (frame and buttons)
@@ -904,11 +904,16 @@ RLAPI void BeginMode3D(Camera3D camera);                          // Initializes
 RLAPI void EndMode3D(void);                                       // Ends 3D mode and returns to default 2D orthographic mode
 RLAPI void BeginTextureMode(RenderTexture2D target);              // Initializes render texture for drawing
 RLAPI void EndTextureMode(void);                                  // Ends drawing to render texture
+RLAPI void BeginScissorMode(int x, int y, int width, int height); // Begin scissor mode (define screen area for following drawing)
+RLAPI void EndScissorMode(void);                                  // End scissor mode
 
 // Screen-space-related functions
 RLAPI Ray GetMouseRay(Vector2 mousePosition, Camera camera);      // Returns a ray trace from mouse position
-RLAPI Vector2 GetWorldToScreen(Vector3 position, Camera camera);  // Returns the screen space position for a 3d world space position
 RLAPI Matrix GetCameraMatrix(Camera camera);                      // Returns camera transform matrix (view matrix)
+RLAPI Matrix GetCameraMatrix2D(Camera2D camera);                  // Returns camera 2d transform matrix
+RLAPI Vector2 GetWorldToScreen(Vector3 position, Camera camera);  // Returns the screen space position for a 3d world space position
+RLAPI Vector2 GetWorldToScreen2D(Vector2 position, Camera2D camera); // Returns the screen space position for a 2d camera world space position
+RLAPI Vector2 GetScreenToWorld2D(Vector2 position, Camera2D camera); // Returns the world space position for a 2d camera screen space position
 
 // Timing-related functions
 RLAPI void SetTargetFPS(int fps);                                 // Set target FPS (maximum)
@@ -939,7 +944,7 @@ RLAPI bool IsFileExtension(const char *fileName, const char *ext);// Check file 
 RLAPI bool DirectoryExists(const char *dirPath);                  // Check if a directory path exists
 RLAPI const char *GetExtension(const char *fileName);             // Get pointer to extension for a filename string
 RLAPI const char *GetFileName(const char *filePath);              // Get pointer to filename for a path string
-RLAPI const char *GetFileNameWithoutExt(const char *filePath);    // Get filename string without extension (memory should be freed)
+RLAPI const char *GetFileNameWithoutExt(const char *filePath);    // Get filename string without extension (uses static string)
 RLAPI const char *GetDirectoryPath(const char *filePath);         // Get full path for a given fileName with path (uses static string)
 RLAPI const char *GetPrevDirectoryPath(const char *dirPath);      // Get previous directory path for a given path (uses static string)
 RLAPI const char *GetWorkingDirectory(void);                      // Get current working directory (uses static string)
@@ -1324,8 +1329,6 @@ RLAPI void BeginShaderMode(Shader shader);                                // Beg
 RLAPI void EndShaderMode(void);                                           // End custom shader drawing (use default shader)
 RLAPI void BeginBlendMode(int mode);                                      // Begin blending mode (alpha, additive, multiplied)
 RLAPI void EndBlendMode(void);                                            // End blending mode (reset to default: alpha blending)
-RLAPI void BeginScissorMode(int x, int y, int width, int height);         // Begin scissor mode (define screen area for following drawing)
-RLAPI void EndScissorMode(void);                                          // End scissor mode
 
 // VR control functions
 RLAPI void InitVrSimulator(void);                       // Init VR simulator for selected device parameters

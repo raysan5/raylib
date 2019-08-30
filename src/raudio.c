@@ -591,7 +591,7 @@ void SetMasterVolume(float volume)
 // Create a new audio buffer. Initially filled with silence
 AudioBuffer *InitAudioBuffer(ma_format format, ma_uint32 channels, ma_uint32 sampleRate, ma_uint32 bufferSizeInFrames, int usage)
 {
-    AudioBuffer *audioBuffer = (AudioBuffer *)RL_CALLOC(sizeof(*audioBuffer), 1);
+    AudioBuffer *audioBuffer = (AudioBuffer *)RL_CALLOC(1, sizeof(AudioBuffer));
     audioBuffer->buffer = RL_CALLOC((bufferSizeInFrames*channels*ma_get_bytes_per_sample(format)), 1);
     
     if (audioBuffer == NULL)

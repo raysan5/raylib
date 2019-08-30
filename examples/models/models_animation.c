@@ -98,6 +98,8 @@ int main(void)
 
     // De-Initialization
     //--------------------------------------------------------------------------------------
+    UnloadTexture(texture);     // Unload texture
+    
     // Unload model animations data
     for (int i = 0; i < animsCount; i++) UnloadModelAnimation(anims[i]);
     RL_FREE(anims);

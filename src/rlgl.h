@@ -457,6 +457,9 @@ RLAPI void rlEnableDepthTest(void);                           // Enable depth te
 RLAPI void rlDisableDepthTest(void);                          // Disable depth test
 RLAPI void rlEnableBackfaceCulling(void);                     // Enable backface culling
 RLAPI void rlDisableBackfaceCulling(void);                    // Disable backface culling
+RLAPI void rlEnableScissorTest(void);                         // Enable scissor test
+RLAPI void rlDisableScissorTest(void);                        // Disable scissor test
+RLAPI void rlScissor(int x, int y, int width, int height);    // Scissor test
 RLAPI void rlEnableWireMode(void);                            // Enable wire mode
 RLAPI void rlDisableWireMode(void);                           // Disable wire mode
 RLAPI void rlDeleteTextures(unsigned int id);                 // Delete OpenGL texture from GPU
@@ -1344,28 +1347,25 @@ void rlDisableRenderTexture(void)
 }
 
 // Enable depth test
-void rlEnableDepthTest(void)
-{
-    glEnable(GL_DEPTH_TEST);
-}
+void rlEnableDepthTest(void) { glEnable(GL_DEPTH_TEST); }
 
 // Disable depth test
-void rlDisableDepthTest(void)
-{
-    glDisable(GL_DEPTH_TEST);
-}
+void rlDisableDepthTest(void) { glDisable(GL_DEPTH_TEST); }
 
 // Enable backface culling
-void rlEnableBackfaceCulling(void)
-{
-    glEnable(GL_CULL_FACE);
-}
+void rlEnableBackfaceCulling(void) { glEnable(GL_CULL_FACE); }
 
 // Disable backface culling
-void rlDisableBackfaceCulling(void)
-{
-    glDisable(GL_CULL_FACE);
-}
+void rlDisableBackfaceCulling(void) { glDisable(GL_CULL_FACE); }
+
+// Enable scissor test
+RLAPI void rlEnableScissorTest(void) { glEnable(GL_SCISSOR_TEST); }
+
+// Disable scissor test
+RLAPI void rlDisableScissorTest(void) { glDisable(GL_SCISSOR_TEST); }
+
+// Scissor test
+RLAPI void rlScissor(int x, int y, int width, int height) { glScissor(x, y, width, height); }
 
 // Enable wire mode
 void rlEnableWireMode(void)
@@ -1529,24 +1529,33 @@ void rlglInit(int width, int height)
     const char **extList = RL_MALLOC(sizeof(const char *)*numExt);
     
     // Get extensions strings
-    for (int i = 0; i < numExt; i++) extList[i] = (char *)glGetStringi(GL_EXTENSIONS, i);
+    for (int i = 0; i < numExt; i++) extList[i] = (const char *)glGetStringi(GL_EXTENSIONS, i);
 
 #elif defined(GRAPHICS_API_OPENGL_ES2)
     // Allocate 512 strings pointers (2 KB)
     const char **extList = RL_MALLOC(sizeof(const char *)*512);
+
+    const char *extensions = (const char *)glGetString(GL_EXTENSIONS);  // One big const string
+
+    // NOTE: We have to duplicate string because glGetString() returns a const string
+    int len = strlen(extensions) + 1;
+    char *extensionsDup = (char *)RL_CALLOC(len, sizeof(char));
+    strcpy(extensionsDup, extensions);
     
-    // Get extensions strings
-    char *extensions = (char *)glGetString(GL_EXTENSIONS);  // One big static const string returned
-    int len = strlen(extensions);
+    extList[numExt] = extensionsDup;
 
     for (int i = 0; i < len; i++)
     {
-        if (i == ' ') 
+        if (extensionsDup[i] == ' ')
         {
-            extList[numExt] = &extensions[i + 1];
+            extensionsDup[i] = '\0';
+            
             numExt++;
+            extList[numExt] = &extensionsDup[i + 1];
         }
     }
+    
+    // NOTE: Duplicated string (extensionsDup) must be deallocated	
 #endif
 
     TraceLog(LOG_INFO, "Number of supported extensions: %i", numExt);
@@ -1622,6 +1631,8 @@ void rlglInit(int width, int height)
     RL_FREE(extList);
 
 #if defined(GRAPHICS_API_OPENGL_ES2)
+    RL_FREE(extensionsDup);    // Duplicated string must be deallocated
+
     if (vaoSupported) TraceLog(LOG_INFO, "[EXTENSION] VAO extension detected, VAO functions initialized successfully");
     else TraceLog(LOG_WARNING, "[EXTENSION] VAO extension not found, VAO usage not supported");
 
@@ -1687,7 +1698,6 @@ void rlglInit(int width, int height)
 
     // Initialize OpenGL default states
     //----------------------------------------------------------
-
     // Init state: Depth test
     glDepthFunc(GL_LEQUAL);                                 // Type of depth testing to apply
     glDisable(GL_DEPTH_TEST);                               // Disable depth testing for 2D (only used for 3D)
@@ -2957,7 +2967,7 @@ char *LoadText(const char *fileName)
 Shader LoadShader(const char *vsFileName, const char *fsFileName)
 {
     Shader shader = { 0 };
-    shader.locs = (int *)RL_CALLOC(MAX_SHADER_LOCATIONS*sizeof(int), 1);
+    shader.locs = (int *)RL_CALLOC(MAX_SHADER_LOCATIONS, sizeof(int));
 
     char *vShaderStr = NULL;
     char *fShaderStr = NULL;
@@ -2978,7 +2988,7 @@ Shader LoadShader(const char *vsFileName, const char *fsFileName)
 Shader LoadShaderCode(char *vsCode, char *fsCode)
 {
     Shader shader = { 0 };
-    shader.locs = (int *)RL_CALLOC(MAX_SHADER_LOCATIONS*sizeof(int), 1);
+    shader.locs = (int *)RL_CALLOC(MAX_SHADER_LOCATIONS, sizeof(int));
 
     // NOTE: All locations must be reseted to -1 (no location)
     for (int i = 0; i < MAX_SHADER_LOCATIONS; i++) shader.locs[i] = -1;
@@ -3014,7 +3024,7 @@ Shader LoadShaderCode(char *vsCode, char *fsCode)
 
     glGetProgramiv(shader.id, GL_ACTIVE_UNIFORMS, &uniformCount);
 
-    for(int i = 0; i < uniformCount; i++)
+    for (int i = 0; i < uniformCount; i++)
     {
         int namelen = -1;
         int num = -1;
@@ -3513,24 +3523,6 @@ void EndBlendMode(void)
     BeginBlendMode(BLEND_ALPHA);
 }
 
-// Begin scissor mode (define screen area for following drawing)
-// NOTE: Scissor rec refers to bottom-left corner, we change it to upper-left
-void BeginScissorMode(int x, int y, int width, int height)
-{
-    rlglDraw();             // Force drawing elements
-
-    glEnable(GL_SCISSOR_TEST);
-    glScissor(x, framebufferHeight - (y + height), width, height);
-}
-
-// End scissor mode
-void EndScissorMode(void)
-{
-    rlglDraw();             // Force drawing elements
-
-    glDisable(GL_SCISSOR_TEST);
-}
-
 #if defined(SUPPORT_VR_SIMULATOR)
 // Init VR simulator for selected device parameters
 // NOTE: It modifies the global variable: stereoFbo
@@ -3869,7 +3861,7 @@ static unsigned int LoadShaderProgram(unsigned int vShaderId, unsigned int fShad
 static Shader LoadShaderDefault(void)
 {
     Shader shader = { 0 };
-    shader.locs = (int *)RL_CALLOC(MAX_SHADER_LOCATIONS*sizeof(int), 1);
+    shader.locs = (int *)RL_CALLOC(MAX_SHADER_LOCATIONS, sizeof(int));
 
     // NOTE: All locations must be reseted to -1 (no location)
     for (int i = 0; i < MAX_SHADER_LOCATIONS; i++) shader.locs[i] = -1;

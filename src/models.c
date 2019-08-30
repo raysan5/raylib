@@ -686,14 +686,14 @@ Model LoadModelFromMesh(Mesh mesh)
     model.transform = MatrixIdentity();
 
     model.meshCount = 1;
-    model.meshes = (Mesh *)RL_MALLOC(model.meshCount*sizeof(Mesh));
+    model.meshes = (Mesh *)RL_CALLOC(model.meshCount, sizeof(Mesh));
     model.meshes[0] = mesh;
 
     model.materialCount = 1;
-    model.materials = (Material *)RL_MALLOC(model.materialCount*sizeof(Material));
+    model.materials = (Material *)RL_CALLOC(model.materialCount, sizeof(Material));
     model.materials[0] = LoadMaterialDefault();
 
-    model.meshMaterial = (int *)RL_MALLOC(model.meshCount*sizeof(int));
+    model.meshMaterial = (int *)RL_CALLOC(model.meshCount, sizeof(int));
     model.meshMaterial[0] = 0;  // First material index
 
     return model;
@@ -829,7 +829,7 @@ Material *LoadMaterials(const char *fileName, int *materialCount)
 Material LoadMaterialDefault(void)
 {
     Material material = { 0 };
-    material.maps = (MaterialMap *)RL_CALLOC(MAX_MATERIAL_MAPS*sizeof(MaterialMap), 1);
+    material.maps = (MaterialMap *)RL_CALLOC(MAX_MATERIAL_MAPS, sizeof(MaterialMap));
 
     material.shader = GetShaderDefault();
     material.maps[MAP_DIFFUSE].texture = GetTextureDefault();   // White texture (1x1 pixel)
@@ -919,7 +919,7 @@ ModelAnimation *LoadModelAnimations(const char *filename, int *animCount)
         TraceLog(LOG_ERROR, "[%s] Unable to open file", filename);
     }
 
-    // header
+    // Read IQM header
     fread(&iqm, sizeof(IQMHeader), 1, iqmFile);
 
     if (strncmp(iqm.magic, IQM_MAGIC, sizeof(IQM_MAGIC)))
@@ -934,34 +934,30 @@ ModelAnimation *LoadModelAnimations(const char *filename, int *animCount)
         fclose(iqmFile);
     }
 
-    // bones
-    IQMPose *poses;
-    poses = RL_MALLOC(sizeof(IQMPose)*iqm.num_poses);
+    // Get bones data
+    IQMPose *poses = RL_MALLOC(iqm.num_poses*sizeof(IQMPose));
     fseek(iqmFile, iqm.ofs_poses, SEEK_SET);
-    fread(poses, sizeof(IQMPose)*iqm.num_poses, 1, iqmFile);
+    fread(poses, iqm.num_poses*sizeof(IQMPose), 1, iqmFile);
 
-    // animations
+    // Get animations data
     *animCount = iqm.num_anims;
     IQMAnim *anim = RL_MALLOC(iqm.num_anims*sizeof(IQMAnim));
     fseek(iqmFile, iqm.ofs_anims, SEEK_SET);
     fread(anim, iqm.num_anims*sizeof(IQMAnim), 1, iqmFile);
     ModelAnimation *animations = RL_MALLOC(iqm.num_anims*sizeof(ModelAnimation));
 
-
     // frameposes
-    unsigned short *framedata = RL_MALLOC(sizeof(unsigned short)*iqm.num_frames*iqm.num_framechannels);
+    unsigned short *framedata = RL_MALLOC(iqm.num_frames*iqm.num_framechannels*sizeof(unsigned short));
     fseek(iqmFile, iqm.ofs_frames, SEEK_SET);
-    fread(framedata, sizeof(unsigned short)*iqm.num_frames*iqm.num_framechannels, 1, iqmFile);
+    fread(framedata, iqm.num_frames*iqm.num_framechannels*sizeof(unsigned short), 1, iqmFile);
 
-    for(int a=0;a<iqm.num_anims;a++)
+    for (int a = 0; a < iqm.num_anims; a++)
     {
-
         animations[a].frameCount = anim[a].num_frames;
         animations[a].boneCount = iqm.num_poses;
-        animations[a].bones = RL_MALLOC(sizeof(BoneInfo)*iqm.num_poses);
-        animations[a].framePoses = RL_MALLOC(sizeof(Transform*)*anim[a].num_frames);
-        // unused for now
-        //animations[a].framerate = anim.framerate;
+        animations[a].bones = RL_MALLOC(iqm.num_poses*sizeof(BoneInfo));
+        animations[a].framePoses = RL_MALLOC(anim[a].num_frames*sizeof(Transform *));
+        //animations[a].framerate = anim.framerate;     // TODO: Use framerate?
 
         for (int j = 0; j < iqm.num_poses; j++)
         {
@@ -969,7 +965,7 @@ ModelAnimation *LoadModelAnimations(const char *filename, int *animCount)
             animations[a].bones[j].parent = poses[j].parent;
         }
 
-        for (int j = 0; j < anim[a].num_frames; j++) animations[a].framePoses[j] = RL_MALLOC(sizeof(Transform)*iqm.num_poses);
+        for (int j = 0; j < anim[a].num_frames; j++) animations[a].framePoses[j] = RL_MALLOC(iqm.num_poses*sizeof(Transform));
 
         int dcounter = anim[a].first_frame*iqm.num_framechannels;
 
@@ -1083,7 +1079,6 @@ ModelAnimation *LoadModelAnimations(const char *filename, int *animCount)
     
     fclose(iqmFile);
 
-    
     return animations;
 }
 
@@ -1091,61 +1086,64 @@ ModelAnimation *LoadModelAnimations(const char *filename, int *animCount)
 // NOTE: Updated data is uploaded to GPU
 void UpdateModelAnimation(Model model, ModelAnimation anim, int frame)
 {
-    if (frame >= anim.frameCount) frame = frame%anim.frameCount;
-
-    for (int m = 0; m < model.meshCount; m++)
+    if ((anim.frameCount > 0) && (anim.bones != NULL) && (anim.framePoses != NULL))
     {
-        Vector3 animVertex = { 0 };
-        Vector3 animNormal = { 0 };
+        if (frame >= anim.frameCount) frame = frame%anim.frameCount;
 
-        Vector3 inTranslation = { 0 };
-        Quaternion inRotation = { 0 };
-        Vector3 inScale = { 0 };
-
-        Vector3 outTranslation = { 0 };
-        Quaternion outRotation = { 0 };
-        Vector3 outScale = { 0 };
-
-        int vCounter = 0;
-        int boneCounter = 0;
-        int boneId = 0;
-
-        for (int i = 0; i < model.meshes[m].vertexCount; i++)
+        for (int m = 0; m < model.meshCount; m++)
         {
-            boneId = model.meshes[m].boneIds[boneCounter];
-            inTranslation = model.bindPose[boneId].translation;
-            inRotation = model.bindPose[boneId].rotation;
-            inScale = model.bindPose[boneId].scale;
-            outTranslation = anim.framePoses[frame][boneId].translation;
-            outRotation = anim.framePoses[frame][boneId].rotation;
-            outScale = anim.framePoses[frame][boneId].scale;
+            Vector3 animVertex = { 0 };
+            Vector3 animNormal = { 0 };
 
-            // Vertices processing
-            // NOTE: We use meshes.vertices (default vertex position) to calculate meshes.animVertices (animated vertex position)
-            animVertex = (Vector3){ model.meshes[m].vertices[vCounter], model.meshes[m].vertices[vCounter + 1], model.meshes[m].vertices[vCounter + 2] };
-            animVertex = Vector3MultiplyV(animVertex, outScale);
-            animVertex = Vector3Subtract(animVertex, inTranslation);
-            animVertex = Vector3RotateByQuaternion(animVertex, QuaternionMultiply(outRotation, QuaternionInvert(inRotation)));
-            animVertex = Vector3Add(animVertex, outTranslation);
-            model.meshes[m].animVertices[vCounter] = animVertex.x;
-            model.meshes[m].animVertices[vCounter + 1] = animVertex.y;
-            model.meshes[m].animVertices[vCounter + 2] = animVertex.z;
+            Vector3 inTranslation = { 0 };
+            Quaternion inRotation = { 0 };
+            Vector3 inScale = { 0 };
 
-            // Normals processing
-            // NOTE: We use meshes.baseNormals (default normal) to calculate meshes.normals (animated normals)
-            animNormal = (Vector3){ model.meshes[m].normals[vCounter], model.meshes[m].normals[vCounter + 1], model.meshes[m].normals[vCounter + 2] };
-            animNormal = Vector3RotateByQuaternion(animNormal, QuaternionMultiply(outRotation, QuaternionInvert(inRotation)));
-            model.meshes[m].animNormals[vCounter] = animNormal.x;
-            model.meshes[m].animNormals[vCounter + 1] = animNormal.y;
-            model.meshes[m].animNormals[vCounter + 2] = animNormal.z;
-            vCounter += 3;
+            Vector3 outTranslation = { 0 };
+            Quaternion outRotation = { 0 };
+            Vector3 outScale = { 0 };
 
-            boneCounter += 4;
+            int vCounter = 0;
+            int boneCounter = 0;
+            int boneId = 0;
+
+            for (int i = 0; i < model.meshes[m].vertexCount; i++)
+            {
+                boneId = model.meshes[m].boneIds[boneCounter];
+                inTranslation = model.bindPose[boneId].translation;
+                inRotation = model.bindPose[boneId].rotation;
+                inScale = model.bindPose[boneId].scale;
+                outTranslation = anim.framePoses[frame][boneId].translation;
+                outRotation = anim.framePoses[frame][boneId].rotation;
+                outScale = anim.framePoses[frame][boneId].scale;
+
+                // Vertices processing
+                // NOTE: We use meshes.vertices (default vertex position) to calculate meshes.animVertices (animated vertex position)
+                animVertex = (Vector3){ model.meshes[m].vertices[vCounter], model.meshes[m].vertices[vCounter + 1], model.meshes[m].vertices[vCounter + 2] };
+                animVertex = Vector3MultiplyV(animVertex, outScale);
+                animVertex = Vector3Subtract(animVertex, inTranslation);
+                animVertex = Vector3RotateByQuaternion(animVertex, QuaternionMultiply(outRotation, QuaternionInvert(inRotation)));
+                animVertex = Vector3Add(animVertex, outTranslation);
+                model.meshes[m].animVertices[vCounter] = animVertex.x;
+                model.meshes[m].animVertices[vCounter + 1] = animVertex.y;
+                model.meshes[m].animVertices[vCounter + 2] = animVertex.z;
+
+                // Normals processing
+                // NOTE: We use meshes.baseNormals (default normal) to calculate meshes.normals (animated normals)
+                animNormal = (Vector3){ model.meshes[m].normals[vCounter], model.meshes[m].normals[vCounter + 1], model.meshes[m].normals[vCounter + 2] };
+                animNormal = Vector3RotateByQuaternion(animNormal, QuaternionMultiply(outRotation, QuaternionInvert(inRotation)));
+                model.meshes[m].animNormals[vCounter] = animNormal.x;
+                model.meshes[m].animNormals[vCounter + 1] = animNormal.y;
+                model.meshes[m].animNormals[vCounter + 2] = animNormal.z;
+                vCounter += 3;
+
+                boneCounter += 4;
+            }
+
+            // Upload new vertex data to GPU for model drawing
+            rlUpdateBuffer(model.meshes[m].vboId[0], model.meshes[m].animVertices, model.meshes[m].vertexCount*3*sizeof(float));    // Update vertex position
+            rlUpdateBuffer(model.meshes[m].vboId[2], model.meshes[m].animVertices, model.meshes[m].vertexCount*3*sizeof(float));    // Update vertex normals
         }
-
-        // Upload new vertex data to GPU for model drawing
-        rlUpdateBuffer(model.meshes[m].vboId[0], model.meshes[m].animVertices, model.meshes[m].vertexCount*3*sizeof(float));    // Update vertex position
-        rlUpdateBuffer(model.meshes[m].vboId[2], model.meshes[m].animVertices, model.meshes[m].vertexCount*3*sizeof(float));    // Update vertex normals
     }
 }
 
@@ -1181,7 +1179,7 @@ bool IsModelAnimationValid(Model model, ModelAnimation anim)
 Mesh GenMeshPoly(int sides, float radius)
 {
     Mesh mesh = { 0 };
-    mesh.vboId = (unsigned int *)RL_CALLOC(MAX_MESH_VBO*sizeof(unsigned int), 1);
+    mesh.vboId = (unsigned int *)RL_CALLOC(MAX_MESH_VBO, sizeof(unsigned int));
     int vertexCount = sides*3;
 
     // Vertices definition
@@ -1244,7 +1242,7 @@ Mesh GenMeshPoly(int sides, float radius)
 Mesh GenMeshPlane(float width, float length, int resX, int resZ)
 {
     Mesh mesh = { 0 };
-    mesh.vboId = (unsigned int *)RL_CALLOC(MAX_MESH_VBO*sizeof(unsigned int), 1);
+    mesh.vboId = (unsigned int *)RL_CALLOC(MAX_MESH_VBO, sizeof(unsigned int));
 
 #define CUSTOM_MESH_GEN_PLANE
 #if defined(CUSTOM_MESH_GEN_PLANE)
@@ -1347,7 +1345,7 @@ Mesh GenMeshPlane(float width, float length, int resX, int resZ)
     mesh.vertices = (float *)RL_MALLOC(plane->ntriangles*3*3*sizeof(float));
     mesh.texcoords = (float *)RL_MALLOC(plane->ntriangles*3*2*sizeof(float));
     mesh.normals = (float *)RL_MALLOC(plane->ntriangles*3*3*sizeof(float));
-    mesh.vboId = (unsigned int *)RL_CALLOC(MAX_MESH_VBO*sizeof(unsigned int));
+    mesh.vboId = (unsigned int *)RL_CALLOC(MAX_MESH_VBO, sizeof(unsigned int));
 
     mesh.vertexCount = plane->ntriangles*3;
     mesh.triangleCount = plane->ntriangles;
@@ -1379,7 +1377,7 @@ Mesh GenMeshPlane(float width, float length, int resX, int resZ)
 Mesh GenMeshCube(float width, float height, float length)
 {
     Mesh mesh = { 0 };
-    mesh.vboId = (unsigned int *)RL_CALLOC(MAX_MESH_VBO*sizeof(unsigned int), 1);
+    mesh.vboId = (unsigned int *)RL_CALLOC(MAX_MESH_VBO, sizeof(unsigned int));
 
 #define CUSTOM_MESH_GEN_CUBE
 #if defined(CUSTOM_MESH_GEN_CUBE)
@@ -1545,7 +1543,7 @@ par_shapes_mesh* par_shapes_create_icosahedron();       // 20 sides polyhedron
 RLAPI Mesh GenMeshSphere(float radius, int rings, int slices)
 {
     Mesh mesh = { 0 };
-    mesh.vboId = (unsigned int *)RL_CALLOC(MAX_MESH_VBO*sizeof(unsigned int), 1);
+    mesh.vboId = (unsigned int *)RL_CALLOC(MAX_MESH_VBO, sizeof(unsigned int));
 
     par_shapes_mesh *sphere = par_shapes_create_parametric_sphere(slices, rings);
     par_shapes_scale(sphere, radius, radius, radius);
@@ -1584,7 +1582,7 @@ RLAPI Mesh GenMeshSphere(float radius, int rings, int slices)
 RLAPI Mesh GenMeshHemiSphere(float radius, int rings, int slices)
 {
     Mesh mesh = { 0 };
-    mesh.vboId = (unsigned int *)RL_CALLOC(MAX_MESH_VBO*sizeof(unsigned int), 1);
+    mesh.vboId = (unsigned int *)RL_CALLOC(MAX_MESH_VBO, sizeof(unsigned int));
 
     par_shapes_mesh *sphere = par_shapes_create_hemisphere(slices, rings);
     par_shapes_scale(sphere, radius, radius, radius);
@@ -1623,7 +1621,7 @@ RLAPI Mesh GenMeshHemiSphere(float radius, int rings, int slices)
 Mesh GenMeshCylinder(float radius, float height, int slices)
 {
     Mesh mesh = { 0 };
-    mesh.vboId = (unsigned int *)RL_CALLOC(MAX_MESH_VBO*sizeof(unsigned int), 1);
+    mesh.vboId = (unsigned int *)RL_CALLOC(MAX_MESH_VBO, sizeof(unsigned int));
 
     // Instance a cylinder that sits on the Z=0 plane using the given tessellation
     // levels across the UV domain.  Think of "slices" like a number of pizza
@@ -1682,7 +1680,7 @@ Mesh GenMeshCylinder(float radius, float height, int slices)
 Mesh GenMeshTorus(float radius, float size, int radSeg, int sides)
 {
     Mesh mesh = { 0 };
-    mesh.vboId = (unsigned int *)RL_CALLOC(MAX_MESH_VBO*sizeof(unsigned int), 1);
+    mesh.vboId = (unsigned int *)RL_CALLOC(MAX_MESH_VBO, sizeof(unsigned int));
 
     if (radius > 1.0f) radius = 1.0f;
     else if (radius < 0.1f) radius = 0.1f;
@@ -1725,7 +1723,7 @@ Mesh GenMeshTorus(float radius, float size, int radSeg, int sides)
 Mesh GenMeshKnot(float radius, float size, int radSeg, int sides)
 {
     Mesh mesh = { 0 };
-    mesh.vboId = (unsigned int *)RL_CALLOC(MAX_MESH_VBO*sizeof(unsigned int), 1);
+    mesh.vboId = (unsigned int *)RL_CALLOC(MAX_MESH_VBO, sizeof(unsigned int));
 
     if (radius > 3.0f) radius = 3.0f;
     else if (radius < 0.5f) radius = 0.5f;
@@ -1769,6 +1767,7 @@ Mesh GenMeshHeightmap(Image heightmap, Vector3 size)
     #define GRAY_VALUE(c) ((c.r+c.g+c.b)/3)
 
     Mesh mesh = { 0 };
+    mesh.vboId = (unsigned int *)RL_CALLOC(MAX_MESH_VBO, sizeof(unsigned int));
 
     int mapX = heightmap.width;
     int mapZ = heightmap.height;
@@ -1877,7 +1876,7 @@ Mesh GenMeshHeightmap(Image heightmap, Vector3 size)
 Mesh GenMeshCubicmap(Image cubicmap, Vector3 cubeSize)
 {
     Mesh mesh = { 0 };
-    mesh.vboId = (unsigned int *)RL_CALLOC(MAX_MESH_VBO*sizeof(unsigned int), 1);
+    mesh.vboId = (unsigned int *)RL_CALLOC(MAX_MESH_VBO, sizeof(unsigned int));
 
     Color *cubicmapPixels = GetImageData(cubicmap);
 
@@ -2791,11 +2790,15 @@ static Model LoadOBJ(const char *fileName)
         // TODO: Support multiple meshes... in the meantime, only one mesh is returned
         //model.meshCount = meshCount;
         model.meshCount = 1;
-        model.meshes = (Mesh *)RL_MALLOC(model.meshCount*sizeof(Mesh));
+        model.meshes = (Mesh *)RL_CALLOC(model.meshCount, sizeof(Mesh));
 
         // Init model materials array
-        model.materialCount = materialCount;
-        model.materials = (Material *)RL_MALLOC(model.materialCount*sizeof(Material));
+        if (materialCount > 0)
+        {
+            model.materialCount = materialCount;
+            model.materials = (Material *)RL_CALLOC(model.materialCount, sizeof(Material));
+        }
+        
         model.meshMaterial = (int *)RL_CALLOC(model.meshCount, sizeof(int));
 
         /*
@@ -2815,10 +2818,10 @@ static Model LoadOBJ(const char *fileName)
             memset(&mesh, 0, sizeof(Mesh));
             mesh.vertexCount = attrib.num_faces*3;
             mesh.triangleCount = attrib.num_faces;
-            mesh.vertices = (float *)RL_MALLOC(mesh.vertexCount*3*sizeof(float));
-            mesh.texcoords = (float *)RL_MALLOC(mesh.vertexCount*2*sizeof(float));
-            mesh.normals = (float *)RL_MALLOC(mesh.vertexCount*3*sizeof(float));
-            mesh.vboId = (unsigned int *)RL_CALLOC(MAX_MESH_VBO*sizeof(unsigned int), 1);
+            mesh.vertices = (float *)RL_CALLOC(mesh.vertexCount*3, sizeof(float));
+            mesh.texcoords = (float *)RL_CALLOC(mesh.vertexCount*2, sizeof(float));
+            mesh.normals = (float *)RL_CALLOC(mesh.vertexCount*3, sizeof(float));
+            mesh.vboId = (unsigned int *)RL_CALLOC(MAX_MESH_VBO, sizeof(unsigned int));
 
             int vCount = 0;
             int vtCount = 0;
@@ -3065,36 +3068,36 @@ static Model LoadIQM(const char *fileName)
     model.meshCount = iqm.num_meshes;
     model.meshes = RL_CALLOC(model.meshCount, sizeof(Mesh));
 
-    char name[MESH_NAME_LENGTH];
+    char name[MESH_NAME_LENGTH] = { 0 };
 
     for (int i = 0; i < model.meshCount; i++)
     {
-        fseek(iqmFile,iqm.ofs_text+imesh[i].name,SEEK_SET);
+        fseek(iqmFile, iqm.ofs_text + imesh[i].name, SEEK_SET);
         fread(name, sizeof(char)*MESH_NAME_LENGTH, 1, iqmFile);     // Mesh name not used...
         model.meshes[i].vertexCount = imesh[i].num_vertexes;
 
-        model.meshes[i].vertices = RL_MALLOC(sizeof(float)*model.meshes[i].vertexCount*3);       // Default vertex positions
-        model.meshes[i].normals = RL_MALLOC(sizeof(float)*model.meshes[i].vertexCount*3);        // Default vertex normals
-        model.meshes[i].texcoords = RL_MALLOC(sizeof(float)*model.meshes[i].vertexCount*2);      // Default vertex texcoords
+        model.meshes[i].vertices = RL_CALLOC(model.meshes[i].vertexCount*3, sizeof(float));       // Default vertex positions
+        model.meshes[i].normals = RL_CALLOC(model.meshes[i].vertexCount*3, sizeof(float));        // Default vertex normals
+        model.meshes[i].texcoords = RL_CALLOC(model.meshes[i].vertexCount*2, sizeof(float));      // Default vertex texcoords
 
-        model.meshes[i].boneIds = RL_MALLOC(sizeof(int)*model.meshes[i].vertexCount*4);          // Up-to 4 bones supported!
-        model.meshes[i].boneWeights = RL_MALLOC(sizeof(float)*model.meshes[i].vertexCount*4);    // Up-to 4 bones supported!
+        model.meshes[i].boneIds = RL_CALLOC(model.meshes[i].vertexCount*4, sizeof(float));        // Up-to 4 bones supported!
+        model.meshes[i].boneWeights = RL_CALLOC(model.meshes[i].vertexCount*4, sizeof(float));    // Up-to 4 bones supported!
 
         model.meshes[i].triangleCount = imesh[i].num_triangles;
-        model.meshes[i].indices = RL_MALLOC(sizeof(unsigned short)*model.meshes[i].triangleCount*3);
+        model.meshes[i].indices = RL_CALLOC(model.meshes[i].triangleCount*3, sizeof(unsigned short));
 
         // Animated verted data, what we actually process for rendering
         // NOTE: Animated vertex should be re-uploaded to GPU (if not using GPU skinning)
-        model.meshes[i].animVertices = RL_MALLOC(sizeof(float)*model.meshes[i].vertexCount*3);
-        model.meshes[i].animNormals = RL_MALLOC(sizeof(float)*model.meshes[i].vertexCount*3);
+        model.meshes[i].animVertices = RL_CALLOC(model.meshes[i].vertexCount*3, sizeof(float));
+        model.meshes[i].animNormals = RL_CALLOC(model.meshes[i].vertexCount*3, sizeof(float));
         
-        model.meshes[i].vboId = (unsigned int *)RL_CALLOC(MAX_MESH_VBO*sizeof(unsigned int), 1);
+        model.meshes[i].vboId = (unsigned int *)RL_CALLOC(MAX_MESH_VBO, sizeof(unsigned int));
     }
 
     // Triangles data processing
-    tri = RL_MALLOC(sizeof(IQMTriangle)*iqm.num_triangles);
+    tri = RL_MALLOC(iqm.num_triangles*sizeof(IQMTriangle));
     fseek(iqmFile, iqm.ofs_triangles, SEEK_SET);
-    fread(tri, sizeof(IQMTriangle)*iqm.num_triangles, 1, iqmFile);
+    fread(tri, iqm.num_triangles*sizeof(IQMTriangle), 1, iqmFile);
 
     for (int m = 0; m < model.meshCount; m++)
     {
@@ -3111,9 +3114,9 @@ static Model LoadIQM(const char *fileName)
     }
 
     // Vertex arrays data processing
-    va = RL_MALLOC(sizeof(IQMVertexArray)*iqm.num_vertexarrays);
+    va = RL_MALLOC(iqm.num_vertexarrays*sizeof(IQMVertexArray));
     fseek(iqmFile, iqm.ofs_vertexarrays, SEEK_SET);
-    fread(va, sizeof(IQMVertexArray)*iqm.num_vertexarrays, 1, iqmFile);
+    fread(va, iqm.num_vertexarrays*sizeof(IQMVertexArray), 1, iqmFile);
 
     for (int i = 0; i < iqm.num_vertexarrays; i++)
     {
@@ -3121,9 +3124,9 @@ static Model LoadIQM(const char *fileName)
         {
             case IQM_POSITION:
             {
-                vertex = RL_MALLOC(sizeof(float)*iqm.num_vertexes*3);
+                vertex = RL_MALLOC(iqm.num_vertexes*3*sizeof(float));
                 fseek(iqmFile, va[i].offset, SEEK_SET);
-                fread(vertex, sizeof(float)*iqm.num_vertexes*3, 1, iqmFile);
+                fread(vertex, iqm.num_vertexes*3*sizeof(float), 1, iqmFile);
 
                 for (int m = 0; m < iqm.num_meshes; m++)
                 {
@@ -3138,9 +3141,9 @@ static Model LoadIQM(const char *fileName)
             } break;
             case IQM_NORMAL:
             {
-                normal = RL_MALLOC(sizeof(float)*iqm.num_vertexes*3);
+                normal = RL_MALLOC(iqm.num_vertexes*3*sizeof(float));
                 fseek(iqmFile, va[i].offset, SEEK_SET);
-                fread(normal, sizeof(float)*iqm.num_vertexes*3, 1, iqmFile);
+                fread(normal, iqm.num_vertexes*3*sizeof(float), 1, iqmFile);
 
                 for (int m = 0; m < iqm.num_meshes; m++)
                 {
@@ -3155,9 +3158,9 @@ static Model LoadIQM(const char *fileName)
             } break;
             case IQM_TEXCOORD:
             {
-                text = RL_MALLOC(sizeof(float)*iqm.num_vertexes*2);
+                text = RL_MALLOC(iqm.num_vertexes*2*sizeof(float));
                 fseek(iqmFile, va[i].offset, SEEK_SET);
-                fread(text, sizeof(float)*iqm.num_vertexes*2, 1, iqmFile);
+                fread(text, iqm.num_vertexes*2*sizeof(float), 1, iqmFile);
 
                 for (int m = 0; m < iqm.num_meshes; m++)
                 {
@@ -3171,9 +3174,9 @@ static Model LoadIQM(const char *fileName)
             } break;
             case IQM_BLENDINDEXES:
             {
-                blendi = RL_MALLOC(sizeof(char)*iqm.num_vertexes*4);
+                blendi = RL_MALLOC(iqm.num_vertexes*4*sizeof(char));
                 fseek(iqmFile, va[i].offset, SEEK_SET);
-                fread(blendi, sizeof(char)*iqm.num_vertexes*4, 1, iqmFile);
+                fread(blendi, iqm.num_vertexes*4*sizeof(char), 1, iqmFile);
 
                 for (int m = 0; m < iqm.num_meshes; m++)
                 {
@@ -3187,9 +3190,9 @@ static Model LoadIQM(const char *fileName)
             } break;
             case IQM_BLENDWEIGHTS:
             {
-                blendw = RL_MALLOC(sizeof(unsigned char)*iqm.num_vertexes*4);
-                fseek(iqmFile,va[i].offset,SEEK_SET);
-                fread(blendw,sizeof(unsigned char)*iqm.num_vertexes*4,1,iqmFile);
+                blendw = RL_MALLOC(iqm.num_vertexes*4*sizeof(unsigned char));
+                fseek(iqmFile, va[i].offset, SEEK_SET);
+                fread(blendw, iqm.num_vertexes*4*sizeof(unsigned char), 1, iqmFile);
 
                 for (int m = 0; m < iqm.num_meshes; m++)
                 {
@@ -3205,20 +3208,20 @@ static Model LoadIQM(const char *fileName)
     }
 
     // Bones (joints) data processing
-    ijoint = RL_MALLOC(sizeof(IQMJoint)*iqm.num_joints);
+    ijoint = RL_MALLOC(iqm.num_joints*sizeof(IQMJoint));
     fseek(iqmFile, iqm.ofs_joints, SEEK_SET);
-    fread(ijoint, sizeof(IQMJoint)*iqm.num_joints, 1, iqmFile);
+    fread(ijoint, iqm.num_joints*sizeof(IQMJoint), 1, iqmFile);
 
     model.boneCount = iqm.num_joints;
-    model.bones = RL_MALLOC(sizeof(BoneInfo)*iqm.num_joints);
-    model.bindPose = RL_MALLOC(sizeof(Transform)*iqm.num_joints);
+    model.bones = RL_MALLOC(iqm.num_joints*sizeof(BoneInfo));
+    model.bindPose = RL_MALLOC(iqm.num_joints*sizeof(Transform));
 
     for (int i = 0; i < iqm.num_joints; i++)
     {
         // Bones
         model.bones[i].parent = ijoint[i].parent;
         fseek(iqmFile, iqm.ofs_text + ijoint[i].name, SEEK_SET);
-        fread(model.bones[i].name,sizeof(char)*BONE_NAME_LENGTH, 1, iqmFile);
+        fread(model.bones[i].name, BONE_NAME_LENGTH*sizeof(char), 1, iqmFile);
 
         // Bind pose (base pose)
         model.bindPose[i].translation.x = ijoint[i].translate[0];
@@ -3410,7 +3413,7 @@ static Model LoadGLTF(const char *fileName)
         model.materials = RL_MALLOC(model.materialCount*sizeof(Material));
         model.meshMaterial = RL_MALLOC(model.meshCount*sizeof(int));
         
-        for (int i = 0; i < model.meshCount; i++) model.meshes[i].vboId = (unsigned int *)RL_CALLOC(MAX_MESH_VBO*sizeof(unsigned int), 1);
+        for (int i = 0; i < model.meshCount; i++) model.meshes[i].vboId = (unsigned int *)RL_CALLOC(MAX_MESH_VBO, sizeof(unsigned int));
 
         for (int i = 0; i < model.materialCount - 1; i++)
         {
@@ -3418,7 +3421,7 @@ static Model LoadGLTF(const char *fileName)
             Texture2D texture = { 0 };
             const char *texPath = GetDirectoryPath(fileName);
             
-            if (data->materials[i].pbr_metallic_roughness.base_color_factor)
+            if (data->materials[i].has_pbr_metallic_roughness)
             {
                 tint.r = (unsigned char)(data->materials[i].pbr_metallic_roughness.base_color_factor[0]*255.99f);
                 tint.g = (unsigned char)(data->materials[i].pbr_metallic_roughness.base_color_factor[1]*255.99f);
@@ -3427,13 +3430,13 @@ static Model LoadGLTF(const char *fileName)
             }
             else
             {
-                tint.r = 1.f;
-                tint.g = 1.f;
-                tint.b = 1.f;
-                tint.a = 1.f;
+                tint.r = 1.0f;
+                tint.g = 1.0f;
+                tint.b = 1.0f;
+                tint.a = 1.0f;
             }
             
-            if (data->materials[i].pbr_metallic_roughness.base_color_texture.texture)
+            if (data->materials[i].has_pbr_metallic_roughness)
             {
                 cgltf_image *img = data->materials[i].pbr_metallic_roughness.base_color_texture.texture->image;
                 

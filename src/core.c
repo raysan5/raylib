@@ -55,6 +55,9 @@
 *       WARNING: Reconfiguring standard input could lead to undesired effects, like breaking other running processes or
 *       blocking the device is not restored properly. Use with care.
 *
+*   #define SUPPORT_MOUSE_CURSOR_RPI (Raspberry Pi only)
+*       Draw a mouse reference on screen (square cursor box)
+*
 *   #define SUPPORT_BUSY_WAIT_LOOP
 *       Use busy wait loop for timing sync, if not defined, a high-resolution timer is setup and used
 *
@@ -105,7 +108,7 @@
 #if !defined(EXTERNAL_CONFIG_FLAGS)
     #include "config.h"         // Defines module configuration flags
 #else
-    #define RAYLIB_VERSION  "2.5"
+    #define RAYLIB_VERSION  "2.6-dev"
 #endif
 
 #if (defined(__linux__) || defined(PLATFORM_WEB)) && _POSIX_C_SOURCE < 199309L
@@ -423,7 +426,6 @@ static double targetTime = 0.0;             // Desired time for one frame, if 0 
 // Config internal variables
 //-----------------------------------------------------------------------------------
 static unsigned int configFlags = 0;        // Configuration flags (bit based)
-static bool showLogo = false;               // Track if showing logo at init is enabled
 
 static char **dropFilesPath;                // Store dropped files paths as strings
 static int dropFilesCount = 0;              // Count dropped files strings
@@ -465,8 +467,6 @@ static bool GetMouseButtonStatus(int button);           // Returns if a mouse bu
 static int GetGamepadButton(int button);                // Get gamepad button generic to all platforms
 static int GetGamepadAxis(int axis);                    // Get gamepad axis generic to all platforms
 static void PollInputEvents(void);                      // Register user events
-
-static void LogoAnimation(void);                        // Plays raylib logo appearing animation
 
 #if defined(PLATFORM_DESKTOP) || defined(PLATFORM_WEB)
 static void ErrorCallback(int error, const char *description);                             // GLFW3 Error Callback, runs on GLFW3 error
@@ -697,13 +697,6 @@ void InitWindow(int width, int height, const char *title)
 
     mousePosition.x = (float)screenWidth/2.0f;
     mousePosition.y = (float)screenHeight/2.0f;
-
-    // raylib logo appearing animation (if enabled)
-    if (showLogo)
-    {
-        SetTargetFPS(60);
-        LogoAnimation();
-    }
 #endif        // PLATFORM_ANDROID
 }
 
@@ -1187,6 +1180,12 @@ void BeginDrawing(void)
 // End canvas drawing and swap buffers (double buffering)
 void EndDrawing(void)
 {
+#if defined(PLATFORM_RPI) && defined(SUPPORT_MOUSE_CURSOR_RPI)
+    // On RPI native mode we have no system mouse cursor, so,
+    // we draw a small rectangle for user reference
+    DrawRectangle(mousePosition.x, mousePosition.y, 3, 3, MAROON);
+#endif
+    
     rlglDraw();                     // Draw Buffers (Only OpenGL 3+ and ES2)
 
 #if defined(SUPPORT_GIF_RECORDING)
@@ -1249,17 +1248,12 @@ void BeginMode2D(Camera2D camera)
     rlglDraw();                         // Draw Buffers (Only OpenGL 3+ and ES2)
 
     rlLoadIdentity();                   // Reset current matrix (MODELVIEW)
-    rlMultMatrixf(MatrixToFloat(screenScaling)); // Apply screen scaling if required
-
-    // Camera rotation and scaling is always relative to target
-    Matrix matOrigin = MatrixTranslate(-camera.target.x, -camera.target.y, 0.0f);
-    Matrix matRotation = MatrixRotate((Vector3){ 0.0f, 0.0f, 1.0f }, camera.rotation*DEG2RAD);
-    Matrix matScale = MatrixScale(camera.zoom, camera.zoom, 1.0f);
-    Matrix matTranslation = MatrixTranslate(camera.offset.x + camera.target.x, camera.offset.y + camera.target.y, 0.0f);
-
-    Matrix matTransform = MatrixMultiply(MatrixMultiply(matOrigin, MatrixMultiply(matScale, matRotation)), matTranslation);
-
-    rlMultMatrixf(MatrixToFloat(matTransform));  // Apply transformation to modelview
+    
+    // Apply screen scaling if required
+    rlMultMatrixf(MatrixToFloat(screenScaling));
+    
+    // Apply 2d camera transformation to modelview
+    rlMultMatrixf(MatrixToFloat(GetCameraMatrix2D(camera)));
 }
 
 // Ends 2D mode with custom camera
@@ -1370,6 +1364,23 @@ void EndTextureMode(void)
     currentHeight = GetScreenHeight();
 }
 
+// Begin scissor mode (define screen area for following drawing)
+// NOTE: Scissor rec refers to bottom-left corner, we change it to upper-left
+void BeginScissorMode(int x, int y, int width, int height)
+{
+    rlglDraw(); // Force drawing elements
+
+    rlEnableScissorTest();
+    rlScissor(x, GetScreenHeight() - (y + height), width, height);
+}
+
+// End scissor mode
+void EndScissorMode(void)
+{
+    rlglDraw(); // Force drawing elements
+    rlDisableScissorTest();
+}
+
 // Returns a ray trace from mouse position
 Ray GetMouseRay(Vector2 mousePosition, Camera camera)
 {
@@ -1425,6 +1436,40 @@ Ray GetMouseRay(Vector2 mousePosition, Camera camera)
     return ray;
 }
 
+// Get transform matrix for camera
+Matrix GetCameraMatrix(Camera camera)
+{
+    return MatrixLookAt(camera.position, camera.target, camera.up);
+}
+
+// Returns camera 2d transform matrix
+Matrix GetCameraMatrix2D(Camera2D camera) 
+{
+    Matrix matTransform = { 0 };
+    // The camera in world-space is set by
+    //   1. Move it to target
+    //   2. Rotate by -rotation and scale by (1/zoom)
+    //      When setting higher scale, it's more intuitive for the world to become bigger (= camera become smaller),
+    //      not for the camera getting bigger, hence the invert. Same deal with rotation.
+    //   3. Move it by (-offset);
+    //      Offset defines target transform relative to screen, but since we're effectively "moving" screen (camera)
+    //      we need to do it into opposite direction (inverse transform)
+
+    // Having camera transform in world-space, inverse of it gives the modelview transform.
+    // Since (A*B*C)' = C'*B'*A', the modelview is
+    //   1. Move to offset
+    //   2. Rotate and Scale
+    //   3. Move by -target
+    Matrix matOrigin = MatrixTranslate(-camera.target.x, -camera.target.y, 0.0f);
+    Matrix matRotation = MatrixRotate((Vector3){ 0.0f, 0.0f, 1.0f }, camera.rotation*DEG2RAD);
+    Matrix matScale = MatrixScale(camera.zoom, camera.zoom, 1.0f);
+    Matrix matTranslation = MatrixTranslate(camera.offset.x, camera.offset.y, 0.0f);
+    
+    matTransform = MatrixMultiply(MatrixMultiply(matOrigin, MatrixMultiply(matScale, matRotation)), matTranslation);
+    
+    return matTransform;
+}
+
 // Returns the screen space position from a 3d world space position
 Vector2 GetWorldToScreen(Vector3 position, Camera camera)
 {
@@ -1467,10 +1512,22 @@ Vector2 GetWorldToScreen(Vector3 position, Camera camera)
     return screenPosition;
 }
 
-// Get transform matrix for camera
-Matrix GetCameraMatrix(Camera camera)
+// Returns the screen space position for a 2d camera world space position
+Vector2 GetWorldToScreen2D(Vector2 position, Camera2D camera) 
 {
-    return MatrixLookAt(camera.position, camera.target, camera.up);
+    Matrix matCamera = GetCameraMatrix2D(camera);
+    Vector3 transform = Vector3Transform((Vector3){ position.x, position.y, 0 }, matCamera);
+    
+    return (Vector2){ transform.x, transform.y };
+}
+
+// Returns the world space position for a 2d camera screen space position
+Vector2 GetScreenToWorld2D(Vector2 position, Camera2D camera) 
+{
+    Matrix invMatCamera = MatrixInvert(GetCameraMatrix2D(camera));
+    Vector3 transform = Vector3Transform((Vector3){ position.x, position.y, 0 }, invMatCamera);
+    
+    return (Vector2){ transform.x, transform.y };
 }
 
 // Set target FPS (maximum)
@@ -1664,7 +1721,6 @@ void SetConfigFlags(unsigned int flags)
 {
     configFlags = flags;
 
-    if (configFlags & FLAG_SHOW_LOGO) showLogo = true;
     if (configFlags & FLAG_FULLSCREEN_MODE) fullscreen = true;
     if (configFlags & FLAG_WINDOW_ALWAYS_RUN) alwaysRun = true;
 }
@@ -1789,10 +1845,10 @@ const char *GetFileName(const char *filePath)
     return fileName + 1;
 }
 
-// Get filename string without extension (memory should be freed)
+// Get filename string without extension (uses static string)
 const char *GetFileNameWithoutExt(const char *filePath)
 {
-    #define MAX_FILENAMEWITHOUTEXT_LENGTH   64
+    #define MAX_FILENAMEWITHOUTEXT_LENGTH   128
 
     static char fileName[MAX_FILENAMEWITHOUTEXT_LENGTH];
     memset(fileName, 0, MAX_FILENAMEWITHOUTEXT_LENGTH);
@@ -2494,9 +2550,6 @@ static bool InitGraphicsDevice(int width, int height)
     if (screenHeight <= 0) screenHeight = displayHeight;
 #endif  // PLATFORM_DESKTOP
 
-    currentWidth = screenWidth;
-    currentHeight = screenHeight;
-
 #if defined(PLATFORM_WEB)
     displayWidth = screenWidth;
     displayHeight = screenHeight;
@@ -3026,6 +3079,9 @@ static bool InitGraphicsDevice(int width, int height)
 
     // Setup default viewport
     SetupViewport(fbWidth, fbHeight);
+
+    currentWidth = screenWidth;
+    currentHeight = screenHeight;
 
     ClearBackground(RAYWHITE);      // Default background color for raylib games :P
 
@@ -3935,13 +3991,6 @@ static void AndroidCommandCallback(struct android_app *app, int32_t cmd)
                         }
                     }
                     */
-
-                    // raylib logo appearing animation (if enabled)
-                    if (showLogo)
-                    {
-                        SetTargetFPS(60);   // Not required on Android
-                        LogoAnimation();
-                    }
                 }
             }
         } break;
@@ -4272,8 +4321,8 @@ static EM_BOOL EmscriptenGamepadCallback(int eventType, const EmscriptenGamepadE
            eventType != 0? emscripten_event_type_to_string(eventType) : "Gamepad state",
            gamepadEvent->timestamp, gamepadEvent->connected, gamepadEvent->index, gamepadEvent->numAxes, gamepadEvent->numButtons, gamepadEvent->id, gamepadEvent->mapping);
 
-    for(int i = 0; i < gamepadEvent->numAxes; ++i) TraceLog(LOG_DEBUG, "Axis %d: %g", i, gamepadEvent->axis[i]);
-    for(int i = 0; i < gamepadEvent->numButtons; ++i) TraceLog(LOG_DEBUG, "Button %d: Digital: %d, Analog: %g", i, gamepadEvent->digitalButton[i], gamepadEvent->analogButton[i]);
+    for (int i = 0; i < gamepadEvent->numAxes; ++i) TraceLog(LOG_DEBUG, "Axis %d: %g", i, gamepadEvent->axis[i]);
+    for (int i = 0; i < gamepadEvent->numButtons; ++i) TraceLog(LOG_DEBUG, "Button %d: Digital: %d, Analog: %g", i, gamepadEvent->digitalButton[i], gamepadEvent->analogButton[i]);
     */
 
     if ((gamepadEvent->connected) && (gamepadEvent->index < MAX_GAMEPADS)) gamepadReady[gamepadEvent->index] = true;
@@ -4989,117 +5038,3 @@ static void *GamepadThread(void *arg)
     return NULL;
 }
 #endif      // PLATFORM_RPI
-
-// Plays raylib logo appearing animation
-static void LogoAnimation(void)
-{
-#if !defined(PLATFORM_WEB) && !defined(PLATFORM_UWP)
-    int logoPositionX = screenWidth/2 - 128;
-    int logoPositionY = screenHeight/2 - 128;
-
-    int framesCounter = 0;
-    int lettersCount = 0;
-
-    int topSideRecWidth = 16;
-    int leftSideRecHeight = 16;
-
-    int bottomSideRecWidth = 16;
-    int rightSideRecHeight = 16;
-
-    int state = 0;                  // Tracking animation states (State Machine)
-    float alpha = 1.0f;             // Useful for fading
-
-    while (!WindowShouldClose() && (state != 4))    // Detect window close button or ESC key
-    {
-        // Update
-        //----------------------------------------------------------------------------------
-        if (state == 0)                 // State 0: Small box blinking
-        {
-            framesCounter++;
-
-            if (framesCounter == 84)
-            {
-                state = 1;
-                framesCounter = 0;      // Reset counter... will be used later...
-            }
-        }
-        else if (state == 1)            // State 1: Top and left bars growing
-        {
-            topSideRecWidth += 4;
-            leftSideRecHeight += 4;
-
-            if (topSideRecWidth == 256) state = 2;
-        }
-        else if (state == 2)            // State 2: Bottom and right bars growing
-        {
-            bottomSideRecWidth += 4;
-            rightSideRecHeight += 4;
-
-            if (bottomSideRecWidth == 256) state = 3;
-        }
-        else if (state == 3)            // State 3: Letters appearing (one by one)
-        {
-            framesCounter++;
-
-            if (framesCounter/12)       // Every 12 frames, one more letter!
-            {
-                lettersCount++;
-                framesCounter = 0;
-            }
-
-            if (lettersCount >= 10)     // When all letters have appeared, just fade out everything
-            {
-                alpha -= 0.02f;
-
-                if (alpha <= 0.0f)
-                {
-                    alpha = 0.0f;
-                    state = 4;
-                }
-            }
-        }
-        //----------------------------------------------------------------------------------
-
-        // Draw
-        //----------------------------------------------------------------------------------
-        BeginDrawing();
-
-            ClearBackground(RAYWHITE);
-
-            if (state == 0)
-            {
-                if ((framesCounter/12)%2) DrawRectangle(logoPositionX, logoPositionY, 16, 16, BLACK);
-            }
-            else if (state == 1)
-            {
-                DrawRectangle(logoPositionX, logoPositionY, topSideRecWidth, 16, BLACK);
-                DrawRectangle(logoPositionX, logoPositionY, 16, leftSideRecHeight, BLACK);
-            }
-            else if (state == 2)
-            {
-                DrawRectangle(logoPositionX, logoPositionY, topSideRecWidth, 16, BLACK);
-                DrawRectangle(logoPositionX, logoPositionY, 16, leftSideRecHeight, BLACK);
-
-                DrawRectangle(logoPositionX + 240, logoPositionY, 16, rightSideRecHeight, BLACK);
-                DrawRectangle(logoPositionX, logoPositionY + 240, bottomSideRecWidth, 16, BLACK);
-            }
-            else if (state == 3)
-            {
-                DrawRectangle(logoPositionX, logoPositionY, topSideRecWidth, 16, Fade(BLACK, alpha));
-                DrawRectangle(logoPositionX, logoPositionY + 16, 16, leftSideRecHeight - 32, Fade(BLACK, alpha));
-
-                DrawRectangle(logoPositionX + 240, logoPositionY + 16, 16, rightSideRecHeight - 32, Fade(BLACK, alpha));
-                DrawRectangle(logoPositionX, logoPositionY + 240, bottomSideRecWidth, 16, Fade(BLACK, alpha));
-
-                DrawRectangle(screenWidth/2 - 112, screenHeight/2 - 112, 224, 224, Fade(RAYWHITE, alpha));
-
-                DrawText(TextSubtext("raylib", 0, lettersCount), screenWidth/2 - 44, screenHeight/2 + 48, 50, Fade(BLACK, alpha));
-            }
-
-        EndDrawing();
-        //----------------------------------------------------------------------------------
-    }
-#endif
-
-    showLogo = false;  // Prevent for repeating when reloading window (Android)
-}
