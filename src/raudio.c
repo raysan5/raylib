@@ -1366,7 +1366,7 @@ void StopMusicStream(Music music)
         case MUSIC_AUDIO_OGG: stb_vorbis_seek_start((stb_vorbis *)music.ctxData); break;
 #endif
 #if defined(SUPPORT_FILEFORMAT_FLAC)
-        case MUSIC_AUDIO_FLAC: drflac_seek_to_sample((drflac *)music.ctxData, 0) break;
+        case MUSIC_AUDIO_FLAC: drflac_seek_to_pcm_frame((drflac *)music.ctxData, 0); break;
 #endif
 #if defined(SUPPORT_FILEFORMAT_MP3)
         case MUSIC_AUDIO_MP3: drmp3_seek_to_pcm_frame((drmp3 *)music.ctxData, 0); break;
@@ -1416,7 +1416,7 @@ void UpdateMusicStream(Music music)
             case MUSIC_AUDIO_FLAC:
             {
                 // NOTE: Returns the number of samples to process (not required)
-                drflac_read_s16((drflac *)music.ctxData, samplesCount, (short *)pcm);
+                drflac_read_pcm_frames_s16((drflac *)music.ctxData, samplesCount, (short *)pcm);
 
             } break;
         #endif
@@ -1928,7 +1928,7 @@ static Wave LoadFLAC(const char *fileName)
 
     // Decode an entire FLAC file in one go
     uint64_t totalSampleCount;
-    wave.data = drflac_open_and_decode_file_s16(fileName, &wave.channels, &wave.sampleRate, &totalSampleCount);
+    wave.data = drflac_open_file_and_read_pcm_frames_s16(fileName, &wave.channels, &wave.sampleRate, &totalSampleCount);
 
     wave.sampleCount = (unsigned int)totalSampleCount;
     wave.sampleSize = 16;
