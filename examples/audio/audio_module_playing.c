@@ -46,13 +46,13 @@ int main(void)
         circles[i].radius = GetRandomValue(10, 40);
         circles[i].position.x = GetRandomValue(circles[i].radius, screenWidth - circles[i].radius);
         circles[i].position.y = GetRandomValue(circles[i].radius, screenHeight - circles[i].radius);
-        circles[i].speed = (float)GetRandomValue(1, 100)/20000.0f;
+        circles[i].speed = (float)GetRandomValue(1, 100)/2000.0f;
         circles[i].color = colors[GetRandomValue(0, 13)];
     }
 
-    Music xm = LoadMusicStream("resources/chiptun1.mod");
+    Music music = LoadMusicStream("resources/mini1111.xm");
 
-    PlayMusicStream(xm);
+    PlayMusicStream(music);
 
     float timePlayed = 0.0f;
     bool pause = false;
@@ -65,13 +65,13 @@ int main(void)
     {
         // Update
         //----------------------------------------------------------------------------------
-        UpdateMusicStream(xm);        // Update music buffer with new stream data
+        UpdateMusicStream(music);      // Update music buffer with new stream data
 
         // Restart music playing (stop and play)
         if (IsKeyPressed(KEY_SPACE))
         {
-            StopMusicStream(xm);
-            PlayMusicStream(xm);
+            StopMusicStream(music);
+            PlayMusicStream(music);
         }
 
         // Pause/Resume music playing
@@ -79,12 +79,12 @@ int main(void)
         {
             pause = !pause;
 
-            if (pause) PauseMusicStream(xm);
-            else ResumeMusicStream(xm);
+            if (pause) PauseMusicStream(music);
+            else ResumeMusicStream(music);
         }
 
         // Get timePlayed scaled to bar dimensions
-        timePlayed = GetMusicTimePlayed(xm)/GetMusicTimeLength(xm)*(screenWidth - 40);
+        timePlayed = GetMusicTimePlayed(music)/GetMusicTimeLength(music)*(screenWidth - 40);
 
         // Color circles animation
         for (int i = MAX_CIRCLES - 1; (i >= 0) && !pause; i--)
@@ -101,7 +101,7 @@ int main(void)
                 circles[i].position.x = GetRandomValue(circles[i].radius, screenWidth - circles[i].radius);
                 circles[i].position.y = GetRandomValue(circles[i].radius, screenHeight - circles[i].radius);
                 circles[i].color = colors[GetRandomValue(0, 13)];
-                circles[i].speed = (float)GetRandomValue(1, 100)/20000.0f;
+                circles[i].speed = (float)GetRandomValue(1, 100)/2000.0f;
             }
         }
         //----------------------------------------------------------------------------------
@@ -128,7 +128,7 @@ int main(void)
 
     // De-Initialization
     //--------------------------------------------------------------------------------------
-    UnloadMusicStream(xm);          // Unload music stream buffers from RAM
+    UnloadMusicStream(music);          // Unload music stream buffers from RAM
 
     CloseAudioDevice();     // Close audio device (music streaming is automatically stopped)
 

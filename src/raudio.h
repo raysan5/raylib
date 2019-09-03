@@ -1,6 +1,6 @@
 /**********************************************************************************************
 *
-*   raudio - A simple and easy-to-use audio library based on mini_al
+*   raudio - A simple and easy-to-use audio library based on miniaudio
 *
 *   FEATURES:
 *       - Manage audio device (init/close)
@@ -20,7 +20,7 @@
 *
 *   CONTRIBUTORS:
 *       David Reid (github: @mackron) (Nov. 2017):
-*           - Complete port to mini_al library
+*           - Complete port to miniaudio library
 *
 *       Joshua Reisenauer (github: @kd7tck) (2015)
 *           - XM audio module support (jar_xm)
