@@ -3554,7 +3554,7 @@ static Model LoadGLTF(const char *fileName)
                         }
                         else
                         {
-                            // TODO: support normalized unsigned byte/unsigned short texture coordinates
+                            // TODO: Support normalized unsigned byte/unsigned short texture coordinates
                             TraceLog(LOG_WARNING, "[%s] Texture coordinates must be float", fileName);
                         }
                     }
@@ -3572,7 +3572,7 @@ static Model LoadGLTF(const char *fileName)
                     }
                     else
                     {
-                        // TODO: support unsigned byte/unsigned int
+                        // TODO: Support unsigned byte/unsigned int
                         TraceLog(LOG_WARNING, "[%s] Indices must be unsigned short", fileName);
                     }
                 }
