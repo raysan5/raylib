@@ -420,8 +420,7 @@ EXAMPLES = \
     models/models_material_pbr \
     models/models_mesh_generation \
     models/models_mesh_picking \
-    models/models_obj_loading \
-    models/models_obj_viewer \
+    models/models_loading \
     models/models_orthographic_projection \
     models/models_rlgl_solar_system \
     models/models_skybox \
