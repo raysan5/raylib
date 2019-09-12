@@ -73,6 +73,8 @@ vec3 fresnelSchlick(float cosTheta, vec3 F0);
 vec3 fresnelSchlickRoughness(float cosTheta, vec3 F0, float roughness);
 vec2 ParallaxMapping(vec2 texCoords, vec3 viewDir);
 
+// WARNING: There is some weird behaviour with this function, always returns black!
+// Yes, I even tried: return texture(property.sampler, texCoord).rgb;
 vec3 ComputeMaterialProperty(MaterialProperty property)
 {
     vec3 result = vec3(0.0, 0.0, 0.0);
@@ -187,17 +189,17 @@ void main()
     else texCoord = fragTexCoord;   // Use default texture coordinates
 
     // Fetch material values from texture sampler or color attributes
-    vec3 color = ComputeMaterialProperty(albedo);
-    vec3 metal = ComputeMaterialProperty(metalness);
-    vec3 rough = ComputeMaterialProperty(roughness);
-    vec3 emiss = ComputeMaterialProperty(emission);
-    vec3 ao = ComputeMaterialProperty(occlusion);
+    vec3 color = texture(albedo.sampler, texCoord).rgb; //ComputeMaterialProperty(albedo);
+    vec3 metal = texture(metalness.sampler, texCoord).rgb; //ComputeMaterialProperty(metalness);
+    vec3 rough = texture(roughness.sampler, texCoord).rgb; //ComputeMaterialProperty(roughness);
+    vec3 emiss = texture(emission.sampler, texCoord).rgb; //ComputeMaterialProperty(emission);
+    vec3 ao = texture(occlusion.sampler, texCoord).rgb; //ComputeMaterialProperty(occlusion);
 
     // Check if normal mapping is enabled
     if (normals.useSampler == 1)
     {
         // Fetch normal map color and transform lighting values to tangent space
-        normal = ComputeMaterialProperty(normals);
+        normal = texture(normals.sampler, texCoord).rgb; //ComputeMaterialProperty(normals);
         normal = normalize(normal*2.0 - 1.0);
         normal = normalize(normal*TBN);
 
