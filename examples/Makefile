@@ -385,9 +385,9 @@ EXAMPLES = \
     shapes/shapes_draw_circle_sector \
     shapes/shapes_draw_rectangle_rounded \
     text/text_raylib_fonts \
-    text/text_sprite_fonts \
-    text/text_ttf_loading \
-    text/text_bmfont_ttf \
+    text/text_font_spritefont \
+    text/text_font_loading \
+    text/text_font_filters \
     text/text_font_sdf \
     text/text_format_text \
     text/text_input_box \
