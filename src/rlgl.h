@@ -1527,7 +1527,7 @@ void rlglInit(int width, int height)
 
     // Allocate numExt strings pointers
     const char **extList = RL_MALLOC(sizeof(const char *)*numExt);
-    
+
     // Get extensions strings
     for (int i = 0; i < numExt; i++) extList[i] = (const char *)glGetStringi(GL_EXTENSIONS, i);
 
@@ -1541,7 +1541,7 @@ void rlglInit(int width, int height)
     int len = strlen(extensions) + 1;
     char *extensionsDup = (char *)RL_CALLOC(len, sizeof(char));
     strcpy(extensionsDup, extensions);
-    
+
     extList[numExt] = extensionsDup;
 
     for (int i = 0; i < len; i++)
@@ -1549,13 +1549,13 @@ void rlglInit(int width, int height)
         if (extensionsDup[i] == ' ')
         {
             extensionsDup[i] = '\0';
-            
+
             numExt++;
             extList[numExt] = &extensionsDup[i + 1];
         }
     }
-    
-    // NOTE: Duplicated string (extensionsDup) must be deallocated	
+
+    // NOTE: Duplicated string (extensionsDup) must be deallocated
 #endif
 
     TraceLog(LOG_INFO, "Number of supported extensions: %i", numExt);
@@ -2636,11 +2636,11 @@ void rlDrawMesh(Mesh mesh, Material material, Matrix transform)
     // That's because BeginMode3D() sets it an no model-drawing function modifies it, all use rlPushMatrix() and rlPopMatrix()
     Matrix matView = modelview;         // View matrix (camera)
     Matrix matProjection = projection;  // Projection matrix (perspective)
-    
+
     // TODO: Matrix nightmare! Trying to combine stack matrices with view matrix and local model transform matrix..
     // There is some problem in the order matrices are multiplied... it requires some time to figure out...
     Matrix matStackTransform = MatrixIdentity();
-    
+
     // TODO: Consider possible transform matrices in the stack
     // Is this the right order? or should we start with the first stored matrix instead of the last one?
     //for (int i = stackCounter; i > 0; i--) matStackTransform = MatrixMultiply(stack[i], matStackTransform);
@@ -2967,7 +2967,8 @@ char *LoadText(const char *fileName)
 Shader LoadShader(const char *vsFileName, const char *fsFileName)
 {
     Shader shader = { 0 };
-    shader.locs = (int *)RL_CALLOC(MAX_SHADER_LOCATIONS, sizeof(int));
+    // double allocation causing leak (allocation done in LoadShaderCode)
+    //shader.locs = (int *)RL_CALLOC(MAX_SHADER_LOCATIONS, sizeof(int));
 
     char *vShaderStr = NULL;
     char *fShaderStr = NULL;
@@ -3054,7 +3055,7 @@ void UnloadShader(Shader shader)
         rlDeleteShader(shader.id);
         TraceLog(LOG_INFO, "[SHDR ID %i] Unloaded shader program data", shader.id);
     }
-    
+
     RL_FREE(shader.locs);
 }
 
@@ -4615,8 +4616,8 @@ int GetPixelDataSize(int width, int height, int format)
     }
 
     dataSize = width*height*bpp/8;  // Total data size in bytes
-    
-    // Most compressed formats works on 4x4 blocks, 
+
+    // Most compressed formats works on 4x4 blocks,
     // if texture is smaller, minimum dataSize is 8 or 16
     if ((width < 4) && (height < 4))
     {
