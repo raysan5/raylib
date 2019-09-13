@@ -453,6 +453,11 @@ static void parseFloat3(float *x, float *y, float *z, const char **token) {
   (*z) = parseFloat(token);
 }
 
+static unsigned int my_strnlen(const char *s, unsigned int n) {
+    const char *p = memchr(s, 0, n);
+    return p ? (unsigned int)(p - s) : n;
+}
+
 static char *my_strdup(const char *s, unsigned int max_length) {
   char *d;
   unsigned int len;
@@ -478,15 +483,13 @@ static char *my_strndup(const char *s, unsigned int len) {
   if (s == NULL) return NULL;
   if (len == 0) return NULL;
 
-  d = (char *)TINYOBJ_MALLOC(len + 1); /* + '\0' */
-  slen = strlen(s);
-  if (slen < len) {
-    memcpy(d, s, slen);
-    d[slen] = '\0';
-  } else {
-    memcpy(d, s, len);
-    d[len] = '\0';
+  slen = my_strnlen(s, len);
+  d = (char *)TINYOBJ_MALLOC(slen + 1); /* + '\0' */
+  if (!d) {
+    return NULL;
   }
+  memcpy(d, s, slen);
+  d[slen] = '\0';
 
   return d;
 }
