@@ -253,12 +253,9 @@ Image LoadImage(const char *fileName)
 
         FILE *imFile = fopen(fileName, "rb");
 
-        stbi_set_flip_vertically_on_load(true);
-
         // Load 32 bit per channel floats data
+        //stbi_set_flip_vertically_on_load(true);
         image.data = stbi_loadf_from_file(imFile, &image.width, &image.height, &imgBpp, 0);
-
-        stbi_set_flip_vertically_on_load(false);
 
         fclose(imFile);
 
@@ -551,7 +548,7 @@ Color *GetImageData(Image image)
                     pixels[i].a = 255;
 
                     k += 3;
-                }
+                } break;
                 case UNCOMPRESSED_R32G32B32A32:
                 {
                     pixels[i].r = (unsigned char)(((float *)image.data)[k]*255.0f);
@@ -560,7 +557,7 @@ Color *GetImageData(Image image)
                     pixels[i].a = (unsigned char)(((float *)image.data)[k]*255.0f);
 
                     k += 4;
-                }
+                } break;
                 default: break;
             }
         }
