@@ -1826,7 +1826,9 @@ void ImageDraw(Image *dst, Image src, Rectangle srcRec, Rectangle dstRec, Color 
     }
 
     Image srcCopy = ImageCopy(src);     // Make a copy of source image to work with it
-    ImageCrop(&srcCopy, srcRec);        // Crop source image to desired source rectangle
+    
+    // Crop source image to desired source rectangle (if required)
+    if ((src.width != (int)srcRec.width) && (src.height != (int)srcRec.height)) ImageCrop(&srcCopy, srcRec);
 
     // Scale source image in case destination rec size is different than source rec size
     if (((int)dstRec.width != (int)srcRec.width) || ((int)dstRec.height != (int)srcRec.height))
@@ -1856,7 +1858,7 @@ void ImageDraw(Image *dst, Image src, Rectangle srcRec, Rectangle dstRec, Color 
         dstRec.y = 0;
     }
     
-    if (dstRec.y > (dst->height - dstRec.height))
+    if ((dstRec.y + dstRec.height) > dst->height)
     {
         ImageCrop(&srcCopy, (Rectangle) { 0, 0, dstRec.width, dst->height - dstRec.y });
         dstRec.height = dst->height - dstRec.y;
