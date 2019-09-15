@@ -98,7 +98,17 @@ int main(void)
 
     // De-Initialization
     //--------------------------------------------------------------------------------------
-    UnloadMaterial(model.materials[0]); // Unload material: shader and textures
+    //
+
+    // REQUIRES REVIEW
+    // as unload model removes *just* the maps now (user may be using shaders
+    // and textures elsewhere) when using a custom material you need to unload
+    // it then give the model a default model (to avoid double free)
+    // how ever this still results in a small leak....
+
+    UnloadMaterial(model.materials[0]);
+    model.materials[0] = LoadMaterialDefault();
+
     UnloadModel(model);         // Unload model
 
     CloseWindow();              // Close window and OpenGL context
@@ -143,7 +153,7 @@ static Material LoadMaterialPBR(Color albedo, float metalness, float roughness)
     mat.maps[MAP_METALNESS].texture = LoadTexture("resources/pbr/trooper_metalness.png");
     mat.maps[MAP_ROUGHNESS].texture = LoadTexture("resources/pbr/trooper_roughness.png");
     mat.maps[MAP_OCCLUSION].texture = LoadTexture("resources/pbr/trooper_ao.png");
-    
+
     // Load equirectangular to cubemap shader
 #if defined(PLATFORM_DESKTOP)
     Shader shdrCubemap = LoadShader("resources/shaders/glsl330/cubemap.vs", "resources/shaders/glsl330/cubemap.fs");
@@ -171,7 +181,7 @@ static Material LoadMaterialPBR(Color albedo, float metalness, float roughness)
 #else
     Shader shdrBRDF = LoadShader("resources/shaders/glsl100/brdf.vs", "resources/shaders/glsl100/brdf.fs");
 #endif
-    
+
     // Setup required shader locations
     SetShaderValue(shdrCubemap, GetShaderLocation(shdrCubemap, "equirectangularMap"), (int[1]){ 0 }, UNIFORM_INT);
     SetShaderValue(shdrIrradiance, GetShaderLocation(shdrIrradiance, "environmentMap"), (int[1]){ 0 }, UNIFORM_INT);

@@ -669,7 +669,8 @@ Model LoadModel(const char *fileName)
         model.materials = (Material *)RL_CALLOC(model.materialCount, sizeof(Material));
         model.materials[0] = LoadMaterialDefault();
 
-        model.meshMaterial = (int *)RL_CALLOC(model.meshCount, sizeof(int));
+        // this is a double allocation, as LoadXXX should do it....
+        //model.meshMaterial = (int *)RL_CALLOC(model.meshCount, sizeof(int));
     }
 
     return model;
@@ -2797,9 +2798,10 @@ static Model LoadOBJ(const char *fileName)
         {
             model.materialCount = materialCount;
             model.materials = (Material *)RL_CALLOC(model.materialCount, sizeof(Material));
-        }
 
+        }
         model.meshMaterial = (int *)RL_CALLOC(model.meshCount, sizeof(int));
+
 
         /*
         // Multiple meshes data reference
@@ -2915,11 +2917,16 @@ static Model LoadOBJ(const char *fileName)
             if (materials[m].displacement_texname != NULL) model.materials[m].maps[MAP_HEIGHT].texture = LoadTexture(materials[m].displacement_texname);  //char *displacement_texname; // disp
         }
 
+        if (model.meshMaterial[0]==-1) {
+            model.meshMaterial[0] = 0; // will be given default material by LoadModel
+        }
+
         tinyobj_attrib_free(&attrib);
         tinyobj_shapes_free(meshes, meshCount);
         tinyobj_materials_free(materials, materialCount);
         RL_FREE(data); // oh ray how did you miss this...! :-p
     }
+
 
     // NOTE: At this point we have all model data loaded
     TraceLog(LOG_INFO, "[%s] Model loaded successfully in RAM (CPU)", fileName);
@@ -3250,6 +3257,8 @@ static Model LoadIQM(const char *fileName)
             model.bindPose[i].scale = Vector3MultiplyV(model.bindPose[i].scale, model.bindPose[model.bones[i].parent].scale);
         }
     }
+
+    model.meshMaterial = (int *)RL_CALLOC(model.meshCount, sizeof(int));
 
     fclose(iqmFile);
     RL_FREE(imesh);
