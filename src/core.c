@@ -2056,15 +2056,15 @@ unsigned char *CompressData(unsigned char *data, int dataLength, int *compDataLe
 }
 
 // Decompress data (DEFLATE algorythm)
-char *DecompressData(char *compData, int compDataLength, int *dataLength)
+unsigned char *DecompressData(unsigned char *compData, int compDataLength, int *dataLength)
 {
     char *data = NULL;
     
 #if defined(SUPPORT_COMPRESSION_API)
-    data = stbi_zlib_decode_malloc(compData, compDataLength, dataLength);
+    data = stbi_zlib_decode_malloc((char *)compData, compDataLength, dataLength);
 #endif
 
-    return data;
+    return (unsigned char *)data;
 }
 
 // Save integer value to storage file (to defined position)
