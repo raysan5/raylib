@@ -312,6 +312,7 @@ static int screenWidth, screenHeight;           // Screen width and height (used
 static int renderWidth, renderHeight;           // Framebuffer width and height (render area, including black bars if required)
 static int currentWidth, currentHeight;         // Current render width and height, it could change on BeginTextureMode()
 static int windowLeftPos, windowTopPos;
+static int requireVsync = 0;
 static int renderOffsetX = 0;                   // Offset X from render area (must be divided by 2)
 static int renderOffsetY = 0;                   // Offset Y from render area (must be divided by 2)
 static bool fullscreen = false;                 // Fullscreen mode (useful only for PLATFORM_DESKTOP)
@@ -852,6 +853,7 @@ void ToggleFullscreen(void)
 {
 #if defined(PLATFORM_DESKTOP)
     fullscreen = !fullscreen;          // Toggle fullscreen flag
+    requireVsync = true;
 
     // NOTE: glfwSetWindowMonitor() doesn't work properly (bugs)
     if (fullscreen) {
@@ -1756,6 +1758,7 @@ Color Fade(Color color, float alpha)
 void SetConfigFlags(unsigned int flags)
 {
     configFlags = flags;
+    requireVsync = true;
 
     if (configFlags & FLAG_FULLSCREEN_MODE) fullscreen = true;
     if (configFlags & FLAG_WINDOW_ALWAYS_RUN) alwaysRun = true;
@@ -3789,7 +3792,11 @@ static void PollInputEvents(void)
 static void SwapBuffers(void)
 {
 #if defined(PLATFORM_DESKTOP) || defined(PLATFORM_WEB)
-    glfwSwapInterval((configFlags & FLAG_VSYNC_HINT) != 0 ? 1 : 0);
+    if (requireVsync) {
+        glfwMakeContextCurrent(window);
+        glfwSwapInterval((configFlags & FLAG_VSYNC_HINT) != 0);
+        requireVsync = false;
+    }
     glfwSwapBuffers(window);
 #endif
 
