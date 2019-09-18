@@ -2800,8 +2800,8 @@ static Model LoadOBJ(const char *fileName)
             model.materials = (Material *)RL_CALLOC(model.materialCount, sizeof(Material));
 
         }
-        model.meshMaterial = (int *)RL_CALLOC(model.meshCount, sizeof(int));
 
+        model.meshMaterial = (int *)RL_CALLOC(model.meshCount, sizeof(int));
 
         /*
         // Multiple meshes data reference

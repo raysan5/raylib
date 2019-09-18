@@ -2056,15 +2056,15 @@ unsigned char *CompressData(unsigned char *data, int dataLength, int *compDataLe
 }
 
 // Decompress data (DEFLATE algorythm)
-char *DecompressData(char *compData, int compDataLength, int *dataLength)
+unsigned char *DecompressData(unsigned char *compData, int compDataLength, int *dataLength)
 {
     char *data = NULL;
     
 #if defined(SUPPORT_COMPRESSION_API)
-    data = stbi_zlib_decode_malloc(compData, compDataLength, dataLength);
+    data = stbi_zlib_decode_malloc((char *)compData, compDataLength, dataLength);
 #endif
 
-    return data;
+    return (unsigned char *)data;
 }
 
 // Save integer value to storage file (to defined position)
@@ -3960,7 +3960,7 @@ static void WindowIconifyCallback(GLFWwindow *window, int iconified)
 }
 
 // GLFW3 Window Drop Callback, runs when drop files into window
-// NOTE: Paths are stored in dinamic memory for further retrieval
+// NOTE: Paths are stored in dynamic memory for further retrieval
 // Everytime new files are dropped, old ones are discarded
 static void WindowDropCallback(GLFWwindow *window, int count, const char **paths)
 {

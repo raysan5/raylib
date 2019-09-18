@@ -253,12 +253,9 @@ Image LoadImage(const char *fileName)
 
         FILE *imFile = fopen(fileName, "rb");
 
-        stbi_set_flip_vertically_on_load(true);
-
         // Load 32 bit per channel floats data
+        //stbi_set_flip_vertically_on_load(true);
         image.data = stbi_loadf_from_file(imFile, &image.width, &image.height, &imgBpp, 0);
-
-        stbi_set_flip_vertically_on_load(false);
 
         fclose(imFile);
 
@@ -551,7 +548,7 @@ Color *GetImageData(Image image)
                     pixels[i].a = 255;
 
                     k += 3;
-                }
+                } break;
                 case UNCOMPRESSED_R32G32B32A32:
                 {
                     pixels[i].r = (unsigned char)(((float *)image.data)[k]*255.0f);
@@ -560,7 +557,7 @@ Color *GetImageData(Image image)
                     pixels[i].a = (unsigned char)(((float *)image.data)[k]*255.0f);
 
                     k += 4;
-                }
+                } break;
                 default: break;
             }
         }
@@ -1826,7 +1823,9 @@ void ImageDraw(Image *dst, Image src, Rectangle srcRec, Rectangle dstRec, Color 
     }
 
     Image srcCopy = ImageCopy(src);     // Make a copy of source image to work with it
-    ImageCrop(&srcCopy, srcRec);        // Crop source image to desired source rectangle
+    
+    // Crop source image to desired source rectangle (if required)
+    if ((src.width != (int)srcRec.width) && (src.height != (int)srcRec.height)) ImageCrop(&srcCopy, srcRec);
 
     // Scale source image in case destination rec size is different than source rec size
     if (((int)dstRec.width != (int)srcRec.width) || ((int)dstRec.height != (int)srcRec.height))
@@ -1856,7 +1855,7 @@ void ImageDraw(Image *dst, Image src, Rectangle srcRec, Rectangle dstRec, Color 
         dstRec.y = 0;
     }
     
-    if (dstRec.y > (dst->height - dstRec.height))
+    if ((dstRec.y + dstRec.height) > dst->height)
     {
         ImageCrop(&srcCopy, (Rectangle) { 0, 0, dstRec.width, dst->height - dstRec.y });
         dstRec.height = dst->height - dstRec.y;
