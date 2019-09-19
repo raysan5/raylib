@@ -50,6 +50,7 @@ int main(void)
     // NOTE: New VBO for tangents is generated at default location and also binded to mesh VAO
     MeshTangents(&model.meshes[0]);
 
+    UnloadMaterial(model.materials[0]); // get rid of default material
     model.materials[0] = LoadMaterialPBR((Color){ 255, 255, 255, 255 }, 1.0f, 1.0f);
 
     // Create lights
@@ -98,8 +99,21 @@ int main(void)
 
     // De-Initialization
     //--------------------------------------------------------------------------------------
-    UnloadMaterial(model.materials[0]); // Unload material: shader and textures
+
+    // user must unload shaders and textures as they could be in use
+    // by other models....
+    UnloadShader(model.materials[0].shader);
+    UnloadTexture(model.materials[0].maps[MAP_ALBEDO].texture);
+    UnloadTexture(model.materials[0].maps[MAP_NORMAL].texture);
+    UnloadTexture(model.materials[0].maps[MAP_METALNESS].texture);
+    UnloadTexture(model.materials[0].maps[MAP_ROUGHNESS].texture);
+    UnloadTexture(model.materials[0].maps[MAP_OCCLUSION].texture);
+    UnloadTexture(model.materials[0].maps[MAP_IRRADIANCE].texture);
+    UnloadTexture(model.materials[0].maps[MAP_PREFILTER].texture);
+    UnloadTexture(model.materials[0].maps[MAP_BRDF].texture);
+
     UnloadModel(model);         // Unload model
+
 
     CloseWindow();              // Close window and OpenGL context
     //--------------------------------------------------------------------------------------
@@ -143,7 +157,7 @@ static Material LoadMaterialPBR(Color albedo, float metalness, float roughness)
     mat.maps[MAP_METALNESS].texture = LoadTexture("resources/pbr/trooper_metalness.png");
     mat.maps[MAP_ROUGHNESS].texture = LoadTexture("resources/pbr/trooper_roughness.png");
     mat.maps[MAP_OCCLUSION].texture = LoadTexture("resources/pbr/trooper_ao.png");
-    
+
     // Load equirectangular to cubemap shader
 #if defined(PLATFORM_DESKTOP)
     Shader shdrCubemap = LoadShader("resources/shaders/glsl330/cubemap.vs", "resources/shaders/glsl330/cubemap.fs");
@@ -171,7 +185,7 @@ static Material LoadMaterialPBR(Color albedo, float metalness, float roughness)
 #else
     Shader shdrBRDF = LoadShader("resources/shaders/glsl100/brdf.vs", "resources/shaders/glsl100/brdf.fs");
 #endif
-    
+
     // Setup required shader locations
     SetShaderValue(shdrCubemap, GetShaderLocation(shdrCubemap, "equirectangularMap"), (int[1]){ 0 }, UNIFORM_INT);
     SetShaderValue(shdrIrradiance, GetShaderLocation(shdrIrradiance, "environmentMap"), (int[1]){ 0 }, UNIFORM_INT);
