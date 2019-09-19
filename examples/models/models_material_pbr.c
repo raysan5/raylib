@@ -50,6 +50,7 @@ int main(void)
     // NOTE: New VBO for tangents is generated at default location and also binded to mesh VAO
     MeshTangents(&model.meshes[0]);
 
+    UnloadMaterial(model.materials[0]); // get rid of default material
     model.materials[0] = LoadMaterialPBR((Color){ 255, 255, 255, 255 }, 1.0f, 1.0f);
 
     // Create lights
@@ -98,7 +99,19 @@ int main(void)
 
     // De-Initialization
     //--------------------------------------------------------------------------------------
-    UnloadMaterial(model.materials[0]); // Unload material: shader and textures
+
+    // user must unload shaders and textures as they could be in use
+    // by other models....
+    UnloadShader(model.materials[0].shader);
+    UnloadTexture(model.materials[0].maps[MAP_ALBEDO].texture);
+    UnloadTexture(model.materials[0].maps[MAP_NORMAL].texture);
+    UnloadTexture(model.materials[0].maps[MAP_METALNESS].texture);
+    UnloadTexture(model.materials[0].maps[MAP_ROUGHNESS].texture);
+    UnloadTexture(model.materials[0].maps[MAP_OCCLUSION].texture);
+    UnloadTexture(model.materials[0].maps[MAP_IRRADIANCE].texture);
+    UnloadTexture(model.materials[0].maps[MAP_PREFILTER].texture);
+    UnloadTexture(model.materials[0].maps[MAP_BRDF].texture);
+
     UnloadModel(model);         // Unload model
 
     CloseWindow();              // Close window and OpenGL context
