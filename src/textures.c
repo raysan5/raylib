@@ -161,6 +161,9 @@
 //----------------------------------------------------------------------------------
 // Module specific Functions Declaration
 //----------------------------------------------------------------------------------
+
+static Image LoadAnimatedGIF(const char *fileName, int *frames, int **delays);    // Load animated GIF file
+
 #if defined(SUPPORT_FILEFORMAT_DDS)
 static Image LoadDDS(const char *fileName);   // Load DDS file
 #endif
@@ -2960,6 +2963,44 @@ void DrawTextureNPatch(Texture2D texture, NPatchInfo nPatchInfo, Rectangle destR
 //----------------------------------------------------------------------------------
 // Module specific Functions Definition
 //----------------------------------------------------------------------------------
+
+// Load animated GIF data
+//  - Image.data buffer includes all frames: [image#0][image#1][image#2][...]
+//  - Number of frames is returned through 'frames' parameter
+//  - Frames delay is returned through 'delays' parameter (int array)
+//  - All frames are returned in RGBA format
+static Image LoadAnimatedGIF(const char *fileName, int *frames, int **delays)
+{
+    Image image = { 0 };
+
+    FILE *gifFile = fopen(fileName, "rb");
+
+    if (gifFile == NULL)
+    {
+        TraceLog(LOG_WARNING, "[%s] Animated GIF file could not be opened", fileName);
+    }
+    else
+    {
+        fseek(gifFile, 0L, SEEK_END);
+        int size = ftell(gifFile);
+        fseek(gifFile, 0L, SEEK_SET);	
+ 
+        char *buffer = (char *)RL_CALLOC(size, sizeof(char));	
+        fread(buffer, sizeof(char), size, gifFile);
+        
+        fclose(gifFile);    // Close file pointer
+ 
+        int comp = 0;
+        image.data = stbi_load_gif_from_memory(buffer, size, delays, &image.width, &image.height, frames, &comp, 4);
+
+        image.mipmaps = 1;
+        image.format = UNCOMPRESSED_R8G8B8A8;
+
+        free(buffer);
+    }
+
+    return image;
+}
 
 #if defined(SUPPORT_FILEFORMAT_DDS)
 // Loading DDS image data (compressed or uncompressed)
