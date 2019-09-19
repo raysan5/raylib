@@ -669,7 +669,9 @@ Model LoadModel(const char *fileName)
         model.materials = (Material *)RL_CALLOC(model.materialCount, sizeof(Material));
         model.materials[0] = LoadMaterialDefault();
 
-        model.meshMaterial = (int *)RL_CALLOC(model.meshCount, sizeof(int));
+        if (model.meshMaterial==NULL) {
+            model.meshMaterial = (int *)RL_CALLOC(model.meshCount, sizeof(int));
+        }
     }
 
     return model;
@@ -2860,6 +2862,11 @@ static Model LoadOBJ(const char *fileName)
 
             // Assign mesh material for current mesh
             model.meshMaterial[m] = attrib.material_ids[m];
+
+            // set unfound materials to default
+            if (model.meshMaterial[m] == -1) {
+                model.meshMaterial[m] = 0;
+            }
         }
 
         // Init model materials
