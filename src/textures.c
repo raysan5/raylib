@@ -161,9 +161,9 @@
 //----------------------------------------------------------------------------------
 // Module specific Functions Declaration
 //----------------------------------------------------------------------------------
-
+#if defined(SUPPORT_FILEFORMAT_GIF)
 static Image LoadAnimatedGIF(const char *fileName, int *frames, int **delays);    // Load animated GIF file
-
+#endif
 #if defined(SUPPORT_FILEFORMAT_DDS)
 static Image LoadDDS(const char *fileName);   // Load DDS file
 #endif
@@ -2963,7 +2963,7 @@ void DrawTextureNPatch(Texture2D texture, NPatchInfo nPatchInfo, Rectangle destR
 //----------------------------------------------------------------------------------
 // Module specific Functions Definition
 //----------------------------------------------------------------------------------
-
+#if defined(SUPPORT_FILEFORMAT_GIF)
 // Load animated GIF data
 //  - Image.data buffer includes all frames: [image#0][image#1][image#2][...]
 //  - Number of frames is returned through 'frames' parameter
@@ -3001,6 +3001,7 @@ static Image LoadAnimatedGIF(const char *fileName, int *frames, int **delays)
 
     return image;
 }
+#endif
 
 #if defined(SUPPORT_FILEFORMAT_DDS)
 // Loading DDS image data (compressed or uncompressed)
