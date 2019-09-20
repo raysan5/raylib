@@ -1336,20 +1336,13 @@ void ImageCrop(Image *image, Rectangle crop)
 {
     // Security check to avoid program crash
     if ((image->data == NULL) || (image->width == 0) || (image->height == 0)) return;
-
-    // Security checks to make sure cropping rectangle is inside margins
-    if ((crop.x + crop.width) > image->width)
-    {
-        crop.width = image->width - crop.x;
-        TraceLog(LOG_WARNING, "Crop rectangle width out of bounds, rescaled crop width: %i", crop.width);
-    }
-
-    if ((crop.y + crop.height) > image->height)
-    {
-        crop.height = image->height - crop.y;
-        TraceLog(LOG_WARNING, "Crop rectangle height out of bounds, rescaled crop height: %i", crop.height);
-    }
-
+    
+    // Security checks to validate crop rectangle
+    if (crop.x < 0) { crop.width += crop.x; crop.x = 0; }
+    if (crop.y < 0) { crop.height += crop.y; crop.y = 0; }
+    if ((crop.x + crop.width) > image->width) crop.width = image->width - crop.x;
+    if ((crop.y + crop.height) > image->height) crop.height = image->height - crop.y;
+    
     if ((crop.x < image->width) && (crop.y < image->height))
     {
         // Start the cropping process
@@ -1377,10 +1370,7 @@ void ImageCrop(Image *image, Rectangle crop)
         // Reformat 32bit RGBA image to original format
         ImageFormat(image, format);
     }
-    else
-    {
-        TraceLog(LOG_WARNING, "Image can not be cropped, crop rectangle out of bounds");
-    }
+    else TraceLog(LOG_WARNING, "Image can not be cropped, crop rectangle out of bounds");
 }
 
 // Crop image depending on alpha value
@@ -2985,7 +2975,7 @@ static Image LoadAnimatedGIF(const char *fileName, int *frames, int **delays)
         int size = ftell(gifFile);
         fseek(gifFile, 0L, SEEK_SET);	
  
-        char *buffer = (char *)RL_CALLOC(size, sizeof(char));	
+        unsigned char *buffer = (unsigned char *)RL_CALLOC(size, sizeof(char));	
         fread(buffer, sizeof(char), size, gifFile);
         
         fclose(gifFile);    // Close file pointer
