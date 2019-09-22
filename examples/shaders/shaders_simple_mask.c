@@ -1,6 +1,6 @@
 /*******************************************************************************************
 *
-*   raylib [shaders] example - Simple shader
+*   raylib [shaders] example - Simple shader mask
 *
 *   This example has been created using raylib 2.5 (www.raylib.com)
 *   raylib is licensed under an unmodified zlib/libpng license (View raylib.h for details)
@@ -28,7 +28,7 @@ int main(void)
     const int screenWidth = 800;
     const int screenHeight = 450;
 
-    InitWindow(screenWidth, screenHeight, "raylib - simple shader");
+    InitWindow(screenWidth, screenHeight, "raylib - simple shader mask");
 
     // Define the camera to look into our 3d world
     Camera camera = { 0 };
