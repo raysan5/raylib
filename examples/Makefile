@@ -437,6 +437,8 @@ EXAMPLES = \
     shaders/shaders_julia_set \
     shaders/shaders_eratosthenes \
     shaders/shaders_basic_lighting \
+    shaders/shaders_fog \
+    shaders/shaders_simple \
     audio/audio_module_playing \
     audio/audio_music_stream \
     audio/audio_raw_stream \
