@@ -100,9 +100,8 @@ int main(void)
     // De-Initialization
     //--------------------------------------------------------------------------------------
 
-    // user must unload shaders and textures as they could be in use
-    // by other models....
-    UnloadShader(model.materials[0].shader);
+    // Shaders and textures must be unloaded by user, 
+    // they could be in use by other models
     UnloadTexture(model.materials[0].maps[MAP_ALBEDO].texture);
     UnloadTexture(model.materials[0].maps[MAP_NORMAL].texture);
     UnloadTexture(model.materials[0].maps[MAP_METALNESS].texture);
@@ -111,6 +110,7 @@ int main(void)
     UnloadTexture(model.materials[0].maps[MAP_IRRADIANCE].texture);
     UnloadTexture(model.materials[0].maps[MAP_PREFILTER].texture);
     UnloadTexture(model.materials[0].maps[MAP_BRDF].texture);
+    UnloadShader(model.materials[0].shader);
 
     UnloadModel(model);         // Unload model
 

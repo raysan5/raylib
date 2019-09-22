@@ -2967,8 +2967,8 @@ char *LoadText(const char *fileName)
 Shader LoadShader(const char *vsFileName, const char *fsFileName)
 {
     Shader shader = { 0 };
-    // double allocation causing leak (allocation done in LoadShaderCode)
-    //shader.locs = (int *)RL_CALLOC(MAX_SHADER_LOCATIONS, sizeof(int));
+    
+    // NOTE: Shader.locs is allocated by LoadShaderCode()
 
     char *vShaderStr = NULL;
     char *fShaderStr = NULL;

@@ -1,6 +1,6 @@
 /*******************************************************************************************
 *
-*   raylib [shaders] example - demonstrates how you can use your own simple shaders in raylib
+*   raylib [shaders] example - Simple shader
 *
 *   This example has been created using raylib 2.5 (www.raylib.com)
 *   raylib is licensed under an unmodified zlib/libpng license (View raylib.h for details)
@@ -11,28 +11,23 @@
 *
 ********************************************************************************************
 *
-* after a model is loaded it has a default material, this material can be modified in place
-* rather than creating one from scratch...
-* While all of the MAPs have particular names, they can be used for any purpose
-* Three of the MAP are applied as cubic maps (see below)
+*   After a model is loaded it has a default material, this material can be
+*   modified in place rather than creating one from scratch...
+*   While all of the maps have particular names, they can be used for any purpose
+*   except for three maps that are applied as cubic maps (see below)
 *
 ********************************************************************************************/
 
-
-#include <stddef.h>
-
 #include "raylib.h"
 #include "raymath.h"
-
-
-#define screenWidth 1280
-#define screenHeight 720
-
 
 int main(void)
 {
     // Initialization
     //--------------------------------------------------------------------------------------
+    const int screenWidth = 800;
+    const int screenHeight = 450;
+
     InitWindow(screenWidth, screenHeight, "raylib - simple shader");
 
     // Define the camera to look into our 3d world
@@ -43,71 +38,64 @@ int main(void)
     camera.fovy = 45.0f;
     camera.type = CAMERA_PERSPECTIVE;
 
-    // three models to show the shader on
+    // Define our three models to show the shader on
     Mesh torus = GenMeshTorus(.3, 1, 16, 32);
     Model model1 = LoadModelFromMesh(torus);
 
     Mesh cube = GenMeshCube(.8,.8,.8);
     Model model2 = LoadModelFromMesh(cube);
 
-    // this one un shaded just so we can see the gaps in the other two
+    // Generate model to be shaded just to see the gaps in the other two
     Mesh sphere = GenMeshSphere(1, 16, 16);
     Model model3 = LoadModelFromMesh(sphere);
 
-    // load the shader
-    Shader shader = LoadShader("resources/shaders/glsl330/mask.vs",
-                                "resources/shaders/glsl330/mask.fs");
+    // Load the shader
+    Shader shader = LoadShader("resources/shaders/glsl330/mask.vs", "resources/shaders/glsl330/mask.fs");
 
-    // apply the diffuse texture (colour map)
-    Texture tex = LoadTexture("resources/plasma.png");
-    model1.materials[0].maps[MAP_DIFFUSE].texture = tex;
-    model2.materials[0].maps[MAP_DIFFUSE].texture = tex;
+    // Load and apply the diffuse texture (colour map)
+    Texture texDiffuse = LoadTexture("resources/plasma.png");
+    model1.materials[0].maps[MAP_DIFFUSE].texture = texDiffuse;
+    model2.materials[0].maps[MAP_DIFFUSE].texture = texDiffuse;
 
-    // using MAP_EMISSION as a spare slot to use for 2nd texture
-    // dont use MAP_IRRADIANCE, MAP_PREFILTER, or  MAP_CUBEMAP
-    // as they are bound as cube maps (which don't see to work at all on my machine!)
-    Texture maskTx = LoadTexture("resources/mask.png");
-    model1.materials[0].maps[MAP_EMISSION].texture = maskTx;
-    model2.materials[0].maps[MAP_EMISSION].texture = maskTx;
+    // Using MAP_EMISSION as a spare slot to use for 2nd texture
+    // NOTE: Don't use MAP_IRRADIANCE, MAP_PREFILTER or  MAP_CUBEMAP
+    // as they are bound as cube maps
+    Texture texMask = LoadTexture("resources/mask.png");
+    model1.materials[0].maps[MAP_EMISSION].texture = texMask;
+    model2.materials[0].maps[MAP_EMISSION].texture = texMask;
     shader.locs[LOC_MAP_EMISSION] = GetShaderLocation(shader, "mask");
 
-    // frame is incremented each frame to animate the shader
-    int shaderFrame = GetShaderLocation(shader, "frame");
+    // Frame is incremented each frame to animate the shader
+    int shaderFrame = GetShaderLocation(shader, "framesCounter");
 
-    // apply the shader to the two models
+    // Apply the shader to the two models
     model1.materials[0].shader = shader;
     model2.materials[0].shader = shader;
 
-
-    // frame counter
-    int frame = 0;
-
-    // model rotation
-    Vector3 ang = { 0 };
+    int framesCounter = 0;
+    Vector3 rotation = { 0 };       // Model rotation angles
 
     SetTargetFPS(60);               // Set  to run at 60 frames-per-second
     //--------------------------------------------------------------------------------------
-
-
 
     // Main game loop
     while (!WindowShouldClose())    // Detect window close button or ESC key
     {
         // Update
         //----------------------------------------------------------------------------------
+        framesCounter++;
+        rotation.x += 0.01f;
+        rotation.y += 0.005f;
+        rotation.z -= 0.0025f;
 
-        frame ++;
-        ang.x += 0.01;
-        ang.y += 0.005;
-        ang.z -= 0.0025;
+        // Send frames counter to shader for animation
+        SetShaderValue(shader, shaderFrame, &framesCounter, UNIFORM_INT);
 
-        // animate the shader
-        SetShaderValue(shader, shaderFrame, &frame, UNIFORM_INT);
-
-        // rotate one of the models
-        model1.transform = MatrixRotateXYZ(ang);
+        // Rotate one of the models
+        model1.transform = MatrixRotateXYZ(rotation);
 
         UpdateCamera(&camera);
+        //----------------------------------------------------------------------------------
 
         // Draw
         //----------------------------------------------------------------------------------
@@ -124,11 +112,10 @@ int main(void)
 
             EndMode3D();
 
-            DrawFPS(10, 10);
+            DrawRectangle(16, 698, MeasureText(FormatText("Frame: %i", framesCounter), 20) + 8, 42, BLUE);
+            DrawText(FormatText("Frame: %i", framesCounter), 20, 700, 20, WHITE);
 
-            int l = MeasureText(FormatText("Frame %i", frame), 20);
-            DrawRectangle(16, 698, l+8, 42, BLUE);
-            DrawText(FormatText("Frame %i", frame), 20, 700, 20, WHITE);
+            DrawFPS(10, 10);
 
         EndDrawing();
         //----------------------------------------------------------------------------------
@@ -136,18 +123,17 @@ int main(void)
 
     // De-Initialization
     //--------------------------------------------------------------------------------------
-
     UnloadModel(model1);
     UnloadModel(model2);
     UnloadModel(model3);
-    UnloadTexture(tex);
-    UnloadTexture(maskTx);
-    UnloadShader(shader);
+    
+    UnloadTexture(texDiffuse);  // Unload default diffuse texture
+    UnloadTexture(texMask);     // Unload texture mask
+    
+    UnloadShader(shader);       // Unload shader
 
-    CloseWindow();        // Close window and OpenGL context
+    CloseWindow();              // Close window and OpenGL context
     //--------------------------------------------------------------------------------------
 
     return 0;
 }
-
-

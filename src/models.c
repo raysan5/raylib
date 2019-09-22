@@ -2921,7 +2921,8 @@ static Model LoadOBJ(const char *fileName)
         tinyobj_attrib_free(&attrib);
         tinyobj_shapes_free(meshes, meshCount);
         tinyobj_materials_free(materials, materialCount);
-        RL_FREE(data); // oh ray how did you miss this...! :-p
+
+        RL_FREE(data);
     }
 
     // NOTE: At this point we have all model data loaded
