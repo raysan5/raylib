@@ -1298,7 +1298,7 @@ void DrawTriangleStrip(Vector2 *points, int pointsCount, Color color)
 void DrawPoly(Vector2 center, int sides, float radius, float rotation, Color color)
 {
     if (sides < 3) sides = 3;
-    float internalAngle = 360.0f/(float)sides;
+    float centralAngle = 0.0f;
 
     if (rlCheckBufferLimit(4*(360/sides))) rlglDraw();
 
@@ -1318,14 +1318,14 @@ void DrawPoly(Vector2 center, int sides, float radius, float rotation, Color col
                 rlVertex2f(0, 0);
 
                 rlTexCoord2f(recTexShapes.x/texShapes.width, (recTexShapes.y + recTexShapes.height)/texShapes.height);
-                rlVertex2f(sinf(DEG2RAD*internalAngle)*radius, cosf(DEG2RAD*internalAngle)*radius);
+                rlVertex2f(sinf(DEG2RAD*centralAngle)*radius, cosf(DEG2RAD*centralAngle)*radius);
 
                 rlTexCoord2f((recTexShapes.x + recTexShapes.width)/texShapes.width, (recTexShapes.y + recTexShapes.height)/texShapes.height);
-                rlVertex2f(sinf(DEG2RAD*internalAngle)*radius, cosf(DEG2RAD*internalAngle)*radius);
+                rlVertex2f(sinf(DEG2RAD*centralAngle)*radius, cosf(DEG2RAD*centralAngle)*radius);
 
-                internalAngle += 360.0f/(float)sides;
+                centralAngle += 360.0f/(float)sides;
                 rlTexCoord2f((recTexShapes.x + recTexShapes.width)/texShapes.width, recTexShapes.y/texShapes.height);
-                rlVertex2f(sinf(DEG2RAD*internalAngle)*radius, cosf(DEG2RAD*internalAngle)*radius);
+                rlVertex2f(sinf(DEG2RAD*centralAngle)*radius, cosf(DEG2RAD*centralAngle)*radius);
             }
         rlEnd();
         rlDisableTexture();
@@ -1336,10 +1336,10 @@ void DrawPoly(Vector2 center, int sides, float radius, float rotation, Color col
                 rlColor4ub(color.r, color.g, color.b, color.a);
 
                 rlVertex2f(0, 0);
-                rlVertex2f(sinf(DEG2RAD*internalAngle)*radius, cosf(DEG2RAD*internalAngle)*radius);
+                rlVertex2f(sinf(DEG2RAD*centralAngle)*radius, cosf(DEG2RAD*centralAngle)*radius);
 
-                internalAngle += 360.0f/(float)sides;
-                rlVertex2f(sinf(DEG2RAD*internalAngle)*radius, cosf(DEG2RAD*internalAngle)*radius);
+                centralAngle += 360.0f/(float)sides;
+                rlVertex2f(sinf(DEG2RAD*centralAngle)*radius, cosf(DEG2RAD*centralAngle)*radius);
             }
         rlEnd();
 #endif
