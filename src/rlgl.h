@@ -2986,7 +2986,7 @@ Shader LoadShader(const char *vsFileName, const char *fsFileName)
 
 // Load shader from code strings
 // NOTE: If shader string is NULL, using default vertex/fragment shaders
-Shader LoadShaderCode(char *vsCode, char *fsCode)
+Shader LoadShaderCode(const char *vsCode, const char *fsCode)
 {
     Shader shader = { 0 };
     shader.locs = (int *)RL_CALLOC(MAX_SHADER_LOCATIONS, sizeof(int));
