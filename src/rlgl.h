@@ -3868,7 +3868,7 @@ static Shader LoadShaderDefault(void)
     for (int i = 0; i < MAX_SHADER_LOCATIONS; i++) shader.locs[i] = -1;
 
     // Vertex shader directly defined, no external file required
-    char defaultVShaderStr[] =
+    const char *defaultVShaderStr =
 #if defined(GRAPHICS_API_OPENGL_21)
     "#version 120                       \n"
 #elif defined(GRAPHICS_API_OPENGL_ES2)
@@ -3897,7 +3897,7 @@ static Shader LoadShaderDefault(void)
     "}                                  \n";
 
     // Fragment shader directly defined, no external file required
-    char defaultFShaderStr[] =
+    const char *defaultFShaderStr =
 #if defined(GRAPHICS_API_OPENGL_21)
     "#version 120                       \n"
 #elif defined(GRAPHICS_API_OPENGL_ES2)
