@@ -1402,4 +1402,25 @@ RMDEF Quaternion QuaternionTransform(Quaternion q, Matrix mat)
     return result;
 }
 
+// Applies the rotation represented by the quaternion to a Vector3.
+RMDEF Vector3 ApplyQuaternion(Vector3 axis, Quaternion q)
+{
+	//calculate quat * vector
+	Quaternion i = { 0 };
+	
+	i.x = q.w*axis.x + q.y*axis.z - q.z*axis.y;
+	i.y = q.w*axis.y + q.z*axis.x - q.x*axis.z;
+	i.z = q.w*axis.z + q.x*axis.y - q.y*axis.x;
+	i.w = - q.x*axis.x - q.y*axis.y - q.z*axis.z;
+
+	//calculate result*inverse quat
+	Vector3 result = { 0 };
+	
+	result.x = i.x*q.w + i.w* - q.x + i.y*- q.z - i.z* - q.y;
+	result.y = i.y*q.w + i.w* - q.y + i.z*- q.x - i.x* - q.z;
+	result.z = i.z*q.w + i.w* - q.z + i.x*- q.y - i.y* - q.x;
+
+    return result;
+}
+
 #endif  // RAYMATH_H
