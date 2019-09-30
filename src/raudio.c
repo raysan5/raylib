@@ -909,38 +909,41 @@ void ExportWaveAsCode(Wave wave, const char *fileName)
     int dataSize = wave.sampleCount*wave.channels*wave.sampleSize/8;
 
     FILE *txtFile = fopen(fileName, "wt");
-
-    fprintf(txtFile, "\n//////////////////////////////////////////////////////////////////////////////////\n");
-    fprintf(txtFile, "//                                                                              //\n");
-    fprintf(txtFile, "// WaveAsCode exporter v1.0 - Wave data exported as an array of bytes           //\n");
-    fprintf(txtFile, "//                                                                              //\n");
-    fprintf(txtFile, "// more info and bugs-report:  github.com/raysan5/raylib                        //\n");
-    fprintf(txtFile, "// feedback and support:       ray[at]raylib.com                                //\n");
-    fprintf(txtFile, "//                                                                              //\n");
-    fprintf(txtFile, "// Copyright (c) 2018 Ramon Santamaria (@raysan5)                               //\n");
-    fprintf(txtFile, "//                                                                              //\n");
-    fprintf(txtFile, "//////////////////////////////////////////////////////////////////////////////////\n\n");
+    
+    if (txtFile != NULL)
+    {
+        fprintf(txtFile, "\n//////////////////////////////////////////////////////////////////////////////////\n");
+        fprintf(txtFile, "//                                                                              //\n");
+        fprintf(txtFile, "// WaveAsCode exporter v1.0 - Wave data exported as an array of bytes           //\n");
+        fprintf(txtFile, "//                                                                              //\n");
+        fprintf(txtFile, "// more info and bugs-report:  github.com/raysan5/raylib                        //\n");
+        fprintf(txtFile, "// feedback and support:       ray[at]raylib.com                                //\n");
+        fprintf(txtFile, "//                                                                              //\n");
+        fprintf(txtFile, "// Copyright (c) 2018 Ramon Santamaria (@raysan5)                               //\n");
+        fprintf(txtFile, "//                                                                              //\n");
+        fprintf(txtFile, "//////////////////////////////////////////////////////////////////////////////////\n\n");
 
 #if !defined(RAUDIO_STANDALONE)
-    // Get file name from path and convert variable name to uppercase
-    strcpy(varFileName, GetFileNameWithoutExt(fileName));
-    for (int i = 0; varFileName[i] != '\0'; i++) if (varFileName[i] >= 'a' && varFileName[i] <= 'z') { varFileName[i] = varFileName[i] - 32; }
+        // Get file name from path and convert variable name to uppercase
+        strcpy(varFileName, GetFileNameWithoutExt(fileName));
+        for (int i = 0; varFileName[i] != '\0'; i++) if (varFileName[i] >= 'a' && varFileName[i] <= 'z') { varFileName[i] = varFileName[i] - 32; }
 #else
-    strcpy(varFileName, fileName);
+        strcpy(varFileName, fileName);
 #endif
 
-    fprintf(txtFile, "// Wave data information\n");
-    fprintf(txtFile, "#define %s_SAMPLE_COUNT     %i\n", varFileName, wave.sampleCount);
-    fprintf(txtFile, "#define %s_SAMPLE_RATE      %i\n", varFileName, wave.sampleRate);
-    fprintf(txtFile, "#define %s_SAMPLE_SIZE      %i\n", varFileName, wave.sampleSize);
-    fprintf(txtFile, "#define %s_CHANNELS         %i\n\n", varFileName, wave.channels);
+        fprintf(txtFile, "// Wave data information\n");
+        fprintf(txtFile, "#define %s_SAMPLE_COUNT     %i\n", varFileName, wave.sampleCount);
+        fprintf(txtFile, "#define %s_SAMPLE_RATE      %i\n", varFileName, wave.sampleRate);
+        fprintf(txtFile, "#define %s_SAMPLE_SIZE      %i\n", varFileName, wave.sampleSize);
+        fprintf(txtFile, "#define %s_CHANNELS         %i\n\n", varFileName, wave.channels);
 
-    // Write byte data as hexadecimal text
-    fprintf(txtFile, "static unsigned char %s_DATA[%i] = { ", varFileName, dataSize);
-    for (int i = 0; i < dataSize - 1; i++) fprintf(txtFile, ((i%BYTES_TEXT_PER_LINE == 0)? "0x%x,\n" : "0x%x, "), ((unsigned char *)wave.data)[i]);
-    fprintf(txtFile, "0x%x };\n", ((unsigned char *)wave.data)[dataSize - 1]);
+        // Write byte data as hexadecimal text
+        fprintf(txtFile, "static unsigned char %s_DATA[%i] = { ", varFileName, dataSize);
+        for (int i = 0; i < dataSize - 1; i++) fprintf(txtFile, ((i%BYTES_TEXT_PER_LINE == 0)? "0x%x,\n" : "0x%x, "), ((unsigned char *)wave.data)[i]);
+        fprintf(txtFile, "0x%x };\n", ((unsigned char *)wave.data)[dataSize - 1]);
 
-    fclose(txtFile);
+        fclose(txtFile);
+    }
 }
 
 // Play a sound
