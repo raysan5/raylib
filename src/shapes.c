@@ -1183,7 +1183,7 @@ void DrawRectangleRoundedLines(Rectangle rec, float roundness, int segments, int
 void DrawTriangle(Vector2 v1, Vector2 v2, Vector2 v3, Color color)
 {
     if (rlCheckBufferLimit(4)) rlglDraw();
-    
+
 #if defined(SUPPORT_QUADS_DRAW_MODE)
     rlEnableTexture(GetShapesTexture().id);
 
@@ -1219,7 +1219,7 @@ void DrawTriangle(Vector2 v1, Vector2 v2, Vector2 v3, Color color)
 void DrawTriangleLines(Vector2 v1, Vector2 v2, Vector2 v3, Color color)
 {
     if (rlCheckBufferLimit(6)) rlglDraw();
-    
+
     rlBegin(RL_LINES);
         rlColor4ub(color.r, color.g, color.b, color.a);
         rlVertex2f(v1.x, v1.y);
@@ -1298,6 +1298,7 @@ void DrawTriangleStrip(Vector2 *points, int pointsCount, Color color)
 void DrawPoly(Vector2 center, int sides, float radius, float rotation, Color color)
 {
     if (sides < 3) sides = 3;
+    float centralAngle = 0.0f;
 
     if (rlCheckBufferLimit(4*(360/sides))) rlglDraw();
 
@@ -1309,7 +1310,7 @@ void DrawPoly(Vector2 center, int sides, float radius, float rotation, Color col
         rlEnableTexture(GetShapesTexture().id);
 
         rlBegin(RL_QUADS);
-            for (int i = 0; i < 360; i += 360/sides)
+            for (int i = 0; i < sides; i++)
             {
                 rlColor4ub(color.r, color.g, color.b, color.a);
 
@@ -1317,25 +1318,28 @@ void DrawPoly(Vector2 center, int sides, float radius, float rotation, Color col
                 rlVertex2f(0, 0);
 
                 rlTexCoord2f(recTexShapes.x/texShapes.width, (recTexShapes.y + recTexShapes.height)/texShapes.height);
-                rlVertex2f(sinf(DEG2RAD*i)*radius, cosf(DEG2RAD*i)*radius);
+                rlVertex2f(sinf(DEG2RAD*centralAngle)*radius, cosf(DEG2RAD*centralAngle)*radius);
 
                 rlTexCoord2f((recTexShapes.x + recTexShapes.width)/texShapes.width, (recTexShapes.y + recTexShapes.height)/texShapes.height);
-                rlVertex2f(sinf(DEG2RAD*i)*radius, cosf(DEG2RAD*i)*radius);
+                rlVertex2f(sinf(DEG2RAD*centralAngle)*radius, cosf(DEG2RAD*centralAngle)*radius);
 
+                centralAngle += 360.0f/(float)sides;
                 rlTexCoord2f((recTexShapes.x + recTexShapes.width)/texShapes.width, recTexShapes.y/texShapes.height);
-                rlVertex2f(sinf(DEG2RAD*(i + 360/sides))*radius, cosf(DEG2RAD*(i + 360/sides))*radius);
+                rlVertex2f(sinf(DEG2RAD*centralAngle)*radius, cosf(DEG2RAD*centralAngle)*radius);
             }
         rlEnd();
         rlDisableTexture();
 #else
         rlBegin(RL_TRIANGLES);
-            for (int i = 0; i < 360; i += 360/sides)
+            for (int i = 0; i < sides; i++)
             {
                 rlColor4ub(color.r, color.g, color.b, color.a);
 
                 rlVertex2f(0, 0);
-                rlVertex2f(sinf(DEG2RAD*i)*radius, cosf(DEG2RAD*i)*radius);
-                rlVertex2f(sinf(DEG2RAD*(i + 360/sides))*radius, cosf(DEG2RAD*(i + 360/sides))*radius);
+                rlVertex2f(sinf(DEG2RAD*centralAngle)*radius, cosf(DEG2RAD*centralAngle)*radius);
+
+                centralAngle += 360.0f/(float)sides;
+                rlVertex2f(sinf(DEG2RAD*centralAngle)*radius, cosf(DEG2RAD*centralAngle)*radius);
             }
         rlEnd();
 #endif
@@ -1511,9 +1515,9 @@ Rectangle GetCollisionRec(Rectangle rec1, Rectangle rec2)
 static float EaseCubicInOut(float t, float b, float c, float d)
 {
     if ((t /= 0.5f*d) < 1) return 0.5f*c*t*t*t + b;
-    
+
     t -= 2;
-    
+
     return 0.5f*c*(t*t*t + 2.0f) + b;
 }
 

@@ -74,6 +74,11 @@
 *       Allow scale all the drawn content to match the high-DPI equivalent size (only PLATFORM_DESKTOP)
 *       NOTE: This flag is forced on macOS, since most displays are high-DPI
 *
+*   #define SUPPORT_COMPRESSION_API
+*       Support CompressData() and DecompressData() functions, those functions use zlib implementation
+*       provided by stb_image and stb_image_write libraries, so, those libraries must be enabled on textures module
+*       for linkage
+*
 *   DEPENDENCIES:
 *       rglfw    - Manage graphic device, OpenGL context and inputs on PLATFORM_DESKTOP (Windows, Linux, OSX. FreeBSD, OpenBSD, NetBSD, DragonFly)
 *       raymath  - 3D math functionality (Vector2, Vector3, Matrix, Quaternion)
@@ -250,6 +255,12 @@
 
     #include <emscripten/emscripten.h>  // Emscripten library - LLVM to JavaScript compiler
     #include <emscripten/html5.h>       // Emscripten HTML5 library
+#endif
+
+#if defined(SUPPORT_COMPRESSION_API)
+    // NOTE: Those declarations require stb_image and stb_image_write definitions, included in textures module
+    unsigned char *stbi_zlib_compress(unsigned char *data, int data_len, int *out_len, int quality);
+    char *stbi_zlib_decode_malloc(char const *buffer, int len, int *outlen);
 #endif
 
 //----------------------------------------------------------------------------------
@@ -1053,6 +1064,17 @@ int GetMonitorPhysicalHeight(int monitor)
     return 0;
 }
 
+// Get window position XY on monitor
+Vector2 GetWindowPosition(void)
+{
+    int x = 0;
+    int y = 0;
+#if defined(PLATFORM_DESKTOP)
+    glfwGetWindowPos(window, &x, &y);
+#endif
+    return (Vector2){ (float)x, (float)y };
+}
+
 // Get the human-readable, UTF-8 encoded name of the primary monitor
 const char *GetMonitorName(int monitor)
 {
@@ -1838,9 +1860,10 @@ static const char *strprbrk(const char *s, const char *charset)
 // Get pointer to filename for a path string
 const char *GetFileName(const char *filePath)
 {
-    const char *fileName = strprbrk(filePath, "\\/");
+    const char *fileName = NULL;
+    if (filePath != NULL) fileName = strprbrk(filePath, "\\/");
 
-    if (!fileName || fileName == filePath) return filePath;
+    if (!fileName || (fileName == filePath)) return filePath;
 
     return fileName + 1;
 }
@@ -1853,7 +1876,7 @@ const char *GetFileNameWithoutExt(const char *filePath)
     static char fileName[MAX_FILENAMEWITHOUTEXT_LENGTH];
     memset(fileName, 0, MAX_FILENAMEWITHOUTEXT_LENGTH);
 
-    strcpy(fileName, GetFileName(filePath));   // Get filename with extension
+    if (filePath != NULL) strcpy(fileName, GetFileName(filePath));   // Get filename with extension
 
     int len = strlen(fileName);
 
@@ -2016,6 +2039,32 @@ long GetFileModTime(const char *fileName)
     }
 
     return 0;
+}
+
+// Compress data (DEFLATE algorythm)
+unsigned char *CompressData(unsigned char *data, int dataLength, int *compDataLength)
+{
+    #define COMPRESSION_QUALITY_DEFLATE  8
+    
+    unsigned char *compData = NULL;
+    
+#if defined(SUPPORT_COMPRESSION_API)
+    compData = stbi_zlib_compress(data, dataLength, compDataLength, COMPRESSION_QUALITY_DEFLATE);
+#endif
+
+    return compData;
+}
+
+// Decompress data (DEFLATE algorythm)
+unsigned char *DecompressData(unsigned char *compData, int compDataLength, int *dataLength)
+{
+    char *data = NULL;
+    
+#if defined(SUPPORT_COMPRESSION_API)
+    data = stbi_zlib_decode_malloc((char *)compData, compDataLength, dataLength);
+#endif
+
+    return (unsigned char *)data;
 }
 
 // Save integer value to storage file (to defined position)
@@ -3911,7 +3960,7 @@ static void WindowIconifyCallback(GLFWwindow *window, int iconified)
 }
 
 // GLFW3 Window Drop Callback, runs when drop files into window
-// NOTE: Paths are stored in dinamic memory for further retrieval
+// NOTE: Paths are stored in dynamic memory for further retrieval
 // Everytime new files are dropped, old ones are discarded
 static void WindowDropCallback(GLFWwindow *window, int count, const char **paths)
 {
