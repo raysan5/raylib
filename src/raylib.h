@@ -336,6 +336,7 @@ typedef struct MaterialMap {
 
 // Material type (generic)
 typedef struct Material {
+    char* name;             // Material name
     Shader shader;          // Material shader
     MaterialMap *maps;      // Material maps array (MAX_MATERIAL_MAPS)
     float *params;          // Material generic parameters (if required)

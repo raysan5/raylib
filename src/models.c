@@ -3336,6 +3336,89 @@ static unsigned char *DecodeBase64(char *input, int *size)
     return buf;
 }
 
+static Texture LoadTextureFromCGLTFTextureView(cgltf_texture_view* view, Color tint, char* texPath)
+{
+    Texture texture = {0};
+    cgltf_image *image = view->texture->image;
+
+    if (image->uri)
+    {
+        if ((strlen(image->uri) > 5) &&
+            (image->uri[0] == 'd') &&
+            (image->uri[1] == 'a') &&
+            (image->uri[2] == 't') &&
+            (image->uri[3] == 'a') &&
+            (image->uri[4] == ':'))
+        {
+            // Data URI
+            // Format: data:<mediatype>;base64,<data>
+
+            // Find the comma
+            int i = 0;
+            while ((image->uri[i] != ',') && (image->uri[i] != 0))
+                i++;
+
+            if (image->uri[i] == 0)
+                TraceLog(LOG_WARNING, "Invalid data URI");
+            else
+            {
+                int size;
+                unsigned char *data = DecodeBase64(image->uri + i + 1, &size);
+
+                int w, h;
+                unsigned char *raw = stbi_load_from_memory(data, size, &w, &h, NULL, 4);
+
+                Image rimage = LoadImagePro(raw, w, h, UNCOMPRESSED_R8G8B8A8);
+                ImageColorTint(&rimage, tint);
+                texture = LoadTextureFromImage(rimage);
+                UnloadImage(rimage);
+            }
+        }
+        else
+        {
+            char *textureName = image->uri;
+            char *texturePath = RL_MALLOC(strlen(texPath) + strlen(textureName) + 2);
+            strcpy(texturePath, texPath);
+            strcat(texturePath, "/");
+            strcat(texturePath, textureName);
+
+            Image rimage = LoadImage(texturePath);
+            ImageColorTint(&rimage, tint);
+            texture = LoadTextureFromImage(rimage);
+            UnloadImage(rimage);
+            RL_FREE(texturePath);
+        }
+    }
+    else if (image->buffer_view)
+    {
+        unsigned char *data = RL_MALLOC(image->buffer_view->size);
+        int n = image->buffer_view->offset;
+        int stride = image->buffer_view->stride ? image->buffer_view->stride : 1;
+
+        for (int i = 0; i < image->buffer_view->size; i++)
+        {
+            data[i] = ((unsigned char *)image->buffer_view->buffer->data)[n];
+            n += stride;
+        }
+
+        int w, h;
+        unsigned char *raw = stbi_load_from_memory(data, image->buffer_view->size, &w, &h, NULL, 4);
+
+        Image rimage = LoadImagePro(raw, w, h, UNCOMPRESSED_R8G8B8A8);
+        ImageColorTint(&rimage, tint);
+        texture = LoadTextureFromImage(rimage);
+        UnloadImage(rimage);
+    }
+    else
+    {
+        Image rimage = LoadImageEx(&tint, 1, 1);
+        texture = LoadTextureFromImage(rimage);
+        UnloadImage(rimage);
+    }
+
+    return texture;
+}
+
 // Load glTF mesh data
 static Model LoadGLTF(const char *fileName)
 {
@@ -3357,8 +3440,8 @@ static Model LoadGLTF(const char *fileName)
           - Only supports float for texture coordinates (no byte/unsigned short)
           
     *************************************************************************************/
-    
-    #define LOAD_ACCESSOR(type, nbcomp, acc, dst) \
+
+#define LOAD_ACCESSOR(type, nbcomp, acc, dst) \
     { \
         int n = 0; \
         type* buf = (type*)acc->buffer_view->buffer->data+acc->buffer_view->offset/sizeof(type)+acc->offset/sizeof(type); \
@@ -3415,106 +3498,34 @@ static Model LoadGLTF(const char *fileName)
         
         for (int i = 0; i < model.meshCount; i++) model.meshes[i].vboId = (unsigned int *)RL_CALLOC(MAX_MESH_VBO, sizeof(unsigned int));
 
+        //For each material 
         for (int i = 0; i < model.materialCount - 1; i++)
         {
-            Color tint = WHITE;
-            Texture2D texture = { 0 };
+            model.materials[i] = LoadMaterialDefault();
+            Color tint = (Color){ 1.0f, 1.0f, 1.0f, 1.0f };
             const char *texPath = GetDirectoryPath(fileName);
             
-            if (data->materials[i].has_pbr_metallic_roughness)
-            {
+            //Ensure material follows raylibe support for PBR (metallic/roughness flow)
+            if (data->materials[i].has_pbr_metallic_roughness) {
+                float roughness = data->materials[i].pbr_metallic_roughness.roughness_factor;
+                float metallic = data->materials[i].pbr_metallic_roughness.metallic_factor;
+
+                strcpy(model.materials[i].name, data->materials[i].name);
+
                 tint.r = (unsigned char)(data->materials[i].pbr_metallic_roughness.base_color_factor[0]*255.99f);
                 tint.g = (unsigned char)(data->materials[i].pbr_metallic_roughness.base_color_factor[1]*255.99f);
                 tint.b = (unsigned char)(data->materials[i].pbr_metallic_roughness.base_color_factor[2]*255.99f);
                 tint.a = (unsigned char)(data->materials[i].pbr_metallic_roughness.base_color_factor[3]*255.99f);
-            }
-            else
-            {
-                tint.r = 1.0f;
-                tint.g = 1.0f;
-                tint.b = 1.0f;
-                tint.a = 1.0f;
-            }
-            
-            if (data->materials[i].has_pbr_metallic_roughness)
-            {
-                cgltf_image *img = data->materials[i].pbr_metallic_roughness.base_color_texture.texture->image;
+
+                model.materials[i].maps[MAP_ALBEDO].texture = LoadTextureFromCGLTFTextureView(data->materials[i].pbr_metallic_roughness.base_color_texture.texture->image, tint, texPath);
                 
-                if (img->uri) 
-                {
-                    if ((strlen(img->uri) > 5) &&
-                        (img->uri[0] == 'd') &&
-                        (img->uri[1] == 'a') &&
-                        (img->uri[2] == 't') &&
-                        (img->uri[3] == 'a') &&
-                        (img->uri[4] == ':'))
-                    {
-                        // Data URI
-                        // Format: data:<mediatype>;base64,<data>
-
-                        // Find the comma
-                        int i = 0;
-                        while ((img->uri[i] != ',') && (img->uri[i] != 0)) i++;
-
-                        if (img->uri[i] == 0) TraceLog(LOG_WARNING, "[%s] Invalid data URI", fileName);
-                        else
-                        {
-                            int size;
-                            unsigned char *data = DecodeBase64(img->uri + i + 1, &size);
-                            
-                            int w, h;
-                            unsigned char *raw = stbi_load_from_memory(data, size, &w, &h, NULL, 4);
-                            
-                            Image image = LoadImagePro(raw, w, h, UNCOMPRESSED_R8G8B8A8);
-                            ImageColorTint(&image, tint);
-                            texture = LoadTextureFromImage(image);
-                            UnloadImage(image);
-                        }
-                    }
-                    else
-                    {
-                        char *textureName = img->uri;
-                        char *texturePath = RL_MALLOC(strlen(texPath) + strlen(textureName) + 2);
-                        strcpy(texturePath, texPath);
-                        strcat(texturePath, "/");
-                        strcat(texturePath, textureName);
-
-                        Image image = LoadImage(texturePath);
-                        ImageColorTint(&image, tint);
-                        texture = LoadTextureFromImage(image);
-                        UnloadImage(image);
-                        RL_FREE(texturePath);
-                    }
-                }
-                else if (img->buffer_view)
-                {
-                    unsigned char *data = RL_MALLOC(img->buffer_view->size);
-                    int n = img->buffer_view->offset;
-                    int stride = img->buffer_view->stride ? img->buffer_view->stride : 1;
-                    
-                    for (int i = 0; i < img->buffer_view->size; i++)
-                    {
-                        data[i] = ((unsigned char *)img->buffer_view->buffer->data)[n];
-                        n += stride;
-                    }
-
-                    int w, h;
-                    unsigned char *raw = stbi_load_from_memory(data, img->buffer_view->size, &w, &h, NULL, 4);
-                    
-                    Image image = LoadImagePro(raw, w, h, UNCOMPRESSED_R8G8B8A8);
-                    ImageColorTint(&image, tint);
-                    texture = LoadTextureFromImage(image);
-                    UnloadImage(image);
-                }
-                else
-                {
-                    Image image = LoadImageEx(&tint, 1, 1);
-                    texture = LoadTextureFromImage(image);
-                    UnloadImage(image);
-                }
+                tint = (Color){ 1.0f, 1.0f, 1.0f, 1.0f };
+                model.materials[i].maps[MAP_ROUGHNESS].texture = LoadTextureFromCGLTFTextureView(data->materials[i].pbr_metallic_roughness.metallic_roughness_texture.texture->image, tint, texPath);
+                model.materials[i].maps[MAP_ROUGHNESS].value = roughness;
+                model.materials[i].maps[MAP_METALNESS].value = metallic;
                 
-                model.materials[i] = LoadMaterialDefault();
-                model.materials[i].maps[MAP_DIFFUSE].texture = texture;
+                model.materials[i].maps[MAP_NORMAL].texture = LoadTextureFromCGLTFTextureView(data->materials[i].normal_texture.texture->image, tint, texPath);
+                model.materials[i].maps[MAP_OCCLUSION].texture = LoadTextureFromCGLTFTextureView(data->materials[i].occlusion_texture.texture->image, tint, texPath);
             }
         }
         
