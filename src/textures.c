@@ -161,6 +161,9 @@
 //----------------------------------------------------------------------------------
 // Module specific Functions Declaration
 //----------------------------------------------------------------------------------
+#if defined(SUPPORT_FILEFORMAT_GIF)
+static Image LoadAnimatedGIF(const char *fileName, int *frames, int **delays);    // Load animated GIF file
+#endif
 #if defined(SUPPORT_FILEFORMAT_DDS)
 static Image LoadDDS(const char *fileName);   // Load DDS file
 #endif
@@ -253,12 +256,9 @@ Image LoadImage(const char *fileName)
 
         FILE *imFile = fopen(fileName, "rb");
 
-        stbi_set_flip_vertically_on_load(true);
-
         // Load 32 bit per channel floats data
+        //stbi_set_flip_vertically_on_load(true);
         image.data = stbi_loadf_from_file(imFile, &image.width, &image.height, &imgBpp, 0);
-
-        stbi_set_flip_vertically_on_load(false);
 
         fclose(imFile);
 
@@ -551,7 +551,7 @@ Color *GetImageData(Image image)
                     pixels[i].a = 255;
 
                     k += 3;
-                }
+                } break;
                 case UNCOMPRESSED_R32G32B32A32:
                 {
                     pixels[i].r = (unsigned char)(((float *)image.data)[k]*255.0f);
@@ -560,7 +560,7 @@ Color *GetImageData(Image image)
                     pixels[i].a = (unsigned char)(((float *)image.data)[k]*255.0f);
 
                     k += 4;
-                }
+                } break;
                 default: break;
             }
         }
@@ -849,38 +849,40 @@ void ExportImageAsCode(Image image, const char *fileName)
 {
     #define BYTES_TEXT_PER_LINE     20
 
-    char varFileName[256] = { 0 };
-    int dataSize = GetPixelDataSize(image.width, image.height, image.format);
-
     FILE *txtFile = fopen(fileName, "wt");
+    
+    if (txtFile != NULL)
+    {
+        char varFileName[256] = { 0 };
+        int dataSize = GetPixelDataSize(image.width, image.height, image.format);
 
-    fprintf(txtFile, "\n");
-    fprintf(txtFile, "////////////////////////////////////////////////////////////////////////////////////////\n");
-    fprintf(txtFile, "//                                                                                    //\n");
-    fprintf(txtFile, "// ImageAsCode exporter v1.0 - Image pixel data exported as an array of bytes         //\n");
-    fprintf(txtFile, "//                                                                                    //\n");
-    fprintf(txtFile, "// more info and bugs-report:  github.com/raysan5/raylib                              //\n");
-    fprintf(txtFile, "// feedback and support:       ray[at]raylib.com                                      //\n");
-    fprintf(txtFile, "//                                                                                    //\n");
-    fprintf(txtFile, "// Copyright (c) 2019 Ramon Santamaria (@raysan5)                                     //\n");
-    fprintf(txtFile, "//                                                                                    //\n");
-    fprintf(txtFile, "////////////////////////////////////////////////////////////////////////////////////////\n\n");
+        fprintf(txtFile, "////////////////////////////////////////////////////////////////////////////////////////\n");
+        fprintf(txtFile, "//                                                                                    //\n");
+        fprintf(txtFile, "// ImageAsCode exporter v1.0 - Image pixel data exported as an array of bytes         //\n");
+        fprintf(txtFile, "//                                                                                    //\n");
+        fprintf(txtFile, "// more info and bugs-report:  github.com/raysan5/raylib                              //\n");
+        fprintf(txtFile, "// feedback and support:       ray[at]raylib.com                                      //\n");
+        fprintf(txtFile, "//                                                                                    //\n");
+        fprintf(txtFile, "// Copyright (c) 2019 Ramon Santamaria (@raysan5)                                     //\n");
+        fprintf(txtFile, "//                                                                                    //\n");
+        fprintf(txtFile, "////////////////////////////////////////////////////////////////////////////////////////\n\n");
 
-    // Get file name from path and convert variable name to uppercase
-    strcpy(varFileName, GetFileNameWithoutExt(fileName));
-    for (int i = 0; varFileName[i] != '\0'; i++) if ((varFileName[i] >= 'a') && (varFileName[i] <= 'z')) { varFileName[i] = varFileName[i] - 32; }
+        // Get file name from path and convert variable name to uppercase
+        strcpy(varFileName, GetFileNameWithoutExt(fileName));
+        for (int i = 0; varFileName[i] != '\0'; i++) if ((varFileName[i] >= 'a') && (varFileName[i] <= 'z')) { varFileName[i] = varFileName[i] - 32; }
 
-    // Add image information
-    fprintf(txtFile, "// Image data information\n");
-    fprintf(txtFile, "#define %s_WIDTH    %i\n", varFileName, image.width);
-    fprintf(txtFile, "#define %s_HEIGHT   %i\n", varFileName, image.height);
-    fprintf(txtFile, "#define %s_FORMAT   %i          // raylib internal pixel format\n\n", varFileName, image.format);
+        // Add image information
+        fprintf(txtFile, "// Image data information\n");
+        fprintf(txtFile, "#define %s_WIDTH    %i\n", varFileName, image.width);
+        fprintf(txtFile, "#define %s_HEIGHT   %i\n", varFileName, image.height);
+        fprintf(txtFile, "#define %s_FORMAT   %i          // raylib internal pixel format\n\n", varFileName, image.format);
 
-    fprintf(txtFile, "static unsigned char %s_DATA[%i] = { ", varFileName, dataSize);
-    for (int i = 0; i < dataSize - 1; i++) fprintf(txtFile, ((i%BYTES_TEXT_PER_LINE == 0)? "0x%x,\n" : "0x%x, "), ((unsigned char *)image.data)[i]);
-    fprintf(txtFile, "0x%x };\n", ((unsigned char *)image.data)[dataSize - 1]);
+        fprintf(txtFile, "static unsigned char %s_DATA[%i] = { ", varFileName, dataSize);
+        for (int i = 0; i < dataSize - 1; i++) fprintf(txtFile, ((i%BYTES_TEXT_PER_LINE == 0)? "0x%x,\n" : "0x%x, "), ((unsigned char *)image.data)[i]);
+        fprintf(txtFile, "0x%x };\n", ((unsigned char *)image.data)[dataSize - 1]);
 
-    fclose(txtFile);
+        fclose(txtFile);
+    }
 }
 
 // Copy an image to a new image
@@ -1336,20 +1338,13 @@ void ImageCrop(Image *image, Rectangle crop)
 {
     // Security check to avoid program crash
     if ((image->data == NULL) || (image->width == 0) || (image->height == 0)) return;
-
-    // Security checks to make sure cropping rectangle is inside margins
-    if ((crop.x + crop.width) > image->width)
-    {
-        crop.width = image->width - crop.x;
-        TraceLog(LOG_WARNING, "Crop rectangle width out of bounds, rescaled crop width: %i", crop.width);
-    }
-
-    if ((crop.y + crop.height) > image->height)
-    {
-        crop.height = image->height - crop.y;
-        TraceLog(LOG_WARNING, "Crop rectangle height out of bounds, rescaled crop height: %i", crop.height);
-    }
-
+    
+    // Security checks to validate crop rectangle
+    if (crop.x < 0) { crop.width += crop.x; crop.x = 0; }
+    if (crop.y < 0) { crop.height += crop.y; crop.y = 0; }
+    if ((crop.x + crop.width) > image->width) crop.width = image->width - crop.x;
+    if ((crop.y + crop.height) > image->height) crop.height = image->height - crop.y;
+    
     if ((crop.x < image->width) && (crop.y < image->height))
     {
         // Start the cropping process
@@ -1377,10 +1372,7 @@ void ImageCrop(Image *image, Rectangle crop)
         // Reformat 32bit RGBA image to original format
         ImageFormat(image, format);
     }
-    else
-    {
-        TraceLog(LOG_WARNING, "Image can not be cropped, crop rectangle out of bounds");
-    }
+    else TraceLog(LOG_WARNING, "Image can not be cropped, crop rectangle out of bounds");
 }
 
 // Crop image depending on alpha value
@@ -1826,7 +1818,9 @@ void ImageDraw(Image *dst, Image src, Rectangle srcRec, Rectangle dstRec, Color 
     }
 
     Image srcCopy = ImageCopy(src);     // Make a copy of source image to work with it
-    ImageCrop(&srcCopy, srcRec);        // Crop source image to desired source rectangle
+    
+    // Crop source image to desired source rectangle (if required)
+    if ((src.width != (int)srcRec.width) && (src.height != (int)srcRec.height)) ImageCrop(&srcCopy, srcRec);
 
     // Scale source image in case destination rec size is different than source rec size
     if (((int)dstRec.width != (int)srcRec.width) || ((int)dstRec.height != (int)srcRec.height))
@@ -1856,7 +1850,7 @@ void ImageDraw(Image *dst, Image src, Rectangle srcRec, Rectangle dstRec, Color 
         dstRec.y = 0;
     }
     
-    if (dstRec.y > (dst->height - dstRec.height))
+    if ((dstRec.y + dstRec.height) > dst->height)
     {
         ImageCrop(&srcCopy, (Rectangle) { 0, 0, dstRec.width, dst->height - dstRec.y });
         dstRec.height = dst->height - dstRec.y;
@@ -2961,6 +2955,45 @@ void DrawTextureNPatch(Texture2D texture, NPatchInfo nPatchInfo, Rectangle destR
 //----------------------------------------------------------------------------------
 // Module specific Functions Definition
 //----------------------------------------------------------------------------------
+#if defined(SUPPORT_FILEFORMAT_GIF)
+// Load animated GIF data
+//  - Image.data buffer includes all frames: [image#0][image#1][image#2][...]
+//  - Number of frames is returned through 'frames' parameter
+//  - Frames delay is returned through 'delays' parameter (int array)
+//  - All frames are returned in RGBA format
+static Image LoadAnimatedGIF(const char *fileName, int *frames, int **delays)
+{
+    Image image = { 0 };
+
+    FILE *gifFile = fopen(fileName, "rb");
+
+    if (gifFile == NULL)
+    {
+        TraceLog(LOG_WARNING, "[%s] Animated GIF file could not be opened", fileName);
+    }
+    else
+    {
+        fseek(gifFile, 0L, SEEK_END);
+        int size = ftell(gifFile);
+        fseek(gifFile, 0L, SEEK_SET);	
+ 
+        unsigned char *buffer = (unsigned char *)RL_CALLOC(size, sizeof(char));	
+        fread(buffer, sizeof(char), size, gifFile);
+        
+        fclose(gifFile);    // Close file pointer
+ 
+        int comp = 0;
+        image.data = stbi_load_gif_from_memory(buffer, size, delays, &image.width, &image.height, frames, &comp, 4);
+
+        image.mipmaps = 1;
+        image.format = UNCOMPRESSED_R8G8B8A8;
+
+        free(buffer);
+    }
+
+    return image;
+}
+#endif
 
 #if defined(SUPPORT_FILEFORMAT_DDS)
 // Loading DDS image data (compressed or uncompressed)

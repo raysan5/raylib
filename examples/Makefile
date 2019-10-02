@@ -385,9 +385,9 @@ EXAMPLES = \
     shapes/shapes_draw_circle_sector \
     shapes/shapes_draw_rectangle_rounded \
     text/text_raylib_fonts \
-    text/text_sprite_fonts \
-    text/text_ttf_loading \
-    text/text_bmfont_ttf \
+    text/text_font_spritefont \
+    text/text_font_loading \
+    text/text_font_filters \
     text/text_font_sdf \
     text/text_format_text \
     text/text_input_box \
@@ -420,8 +420,7 @@ EXAMPLES = \
     models/models_material_pbr \
     models/models_mesh_generation \
     models/models_mesh_picking \
-    models/models_obj_loading \
-    models/models_obj_viewer \
+    models/models_loading \
     models/models_orthographic_projection \
     models/models_rlgl_solar_system \
     models/models_skybox \
@@ -438,6 +437,8 @@ EXAMPLES = \
     shaders/shaders_julia_set \
     shaders/shaders_eratosthenes \
     shaders/shaders_basic_lighting \
+    shaders/shaders_fog \
+    shaders/shaders_simple \
     audio/audio_module_playing \
     audio/audio_music_stream \
     audio/audio_raw_stream \
