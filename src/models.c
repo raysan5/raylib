@@ -3406,6 +3406,9 @@ static Model LoadGLTF(const char *fileName)
 
         // Read data buffers
         result = cgltf_load_buffers(&options, data, fileName);
+        if (result != cgltf_result_success) {
+            TraceLog(LOG_INFO, "[%s][%s] Error loading mesh/material buffers", fileName, (data->file_type == 2)? "glb" : "gltf");
+        }
 
         int primitivesCount = 0;
 
