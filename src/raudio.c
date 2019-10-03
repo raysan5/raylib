@@ -1870,9 +1870,9 @@ static int SaveWAV(Wave wave, const char *fileName)
         waveData.subChunkID[3] = 'a';
         waveData.subChunkSize = dataSize;
 
-        success = fwrite(&riffHeader, sizeof(RiffHeader), 1, wavFile);
-        success = fwrite(&waveFormat, sizeof(WaveFormat), 1, wavFile);
-        success = fwrite(&waveData, sizeof(WaveData), 1, wavFile);
+        fwrite(&riffHeader, sizeof(RiffHeader), 1, wavFile);
+        fwrite(&waveFormat, sizeof(WaveFormat), 1, wavFile);
+        fwrite(&waveData, sizeof(WaveData), 1, wavFile);
 
         success = fwrite(wave.data, dataSize, 1, wavFile);
 
