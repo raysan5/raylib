@@ -809,6 +809,9 @@ Material *LoadMaterials(const char *fileName, int *materialCount)
         tinyobj_material_t *mats;
 
         int result = tinyobj_parse_mtl_file(&mats, &count, fileName);
+        if (result != TINYOBJ_SUCCESS) {
+            TraceLog(LOG_WARNING, "[%s] Could not parse Materials file", fileName);
+        }
 
         // TODO: Process materials to return
 
