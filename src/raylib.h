@@ -1188,8 +1188,8 @@ RLAPI void DrawTextRecEx(Font font, const char *text, Rectangle rec, float fontS
 RLAPI int MeasureText(const char *text, int fontSize);                                      // Measure string width for default font
 RLAPI Vector2 MeasureTextEx(Font font, const char *text, float fontSize, float spacing);    // Measure string size for Font
 RLAPI int GetGlyphIndex(Font font, int character);                                          // Get index position for a unicode character on font
-RLAPI int GetNextCodepoint(const char *text, int *bytesProcessed);                          // Returns next codepoint in a UTF8 encoded string
-                                                                                            // NOTE: 0x3f('?') is returned on failure
+RLAPI int GetNextCodepoint(const char *text, int *bytesProcessed);                          // Returns next codepoint in a UTF8 encoded string; 0x3f('?') is returned on failure
+RLAPI int *GetCodepoints(const char *text, int *count);                                     // Get all codepoints in a string, codepoints count returned by parameters
 
 // Text strings management functions
 // NOTE: Some strings allocate memory internally for returned strings, just be careful!

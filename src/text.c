@@ -65,6 +65,8 @@
 //----------------------------------------------------------------------------------
 #define MAX_TEXT_BUFFER_LENGTH  1024        // Size of internal static buffers of some Text*() functions
 
+#define MAX_TEXT_UNICODE_CHARS   512        // Maximum number of unicode codepoints
+
 //----------------------------------------------------------------------------------
 // Types and Structures Definition
 //----------------------------------------------------------------------------------
@@ -868,6 +870,26 @@ int GetNextCodepoint(const char *text, int *bytesProcessed)
     
     return code;
 }
+
+// Get all codepoints in a string, codepoints count returned by parameters
+int *GetCodepoints(const char *text, int *count)
+{
+    static int codepoints[MAX_TEXT_UNICODE_CHARS] = { 0 };
+    memset(codepoints, 0, MAX_TEXT_UNICODE_CHARS*sizeof(int));
+    
+    int bytesProcessed = 0;
+    int textLength = strlen(text);
+    int codepointsCount = 0;
+
+    for (int i = 0; i < textLength; codepointsCount++)
+    {
+        codepoints[codepointsCount] = GetNextCodepoint(text + i, &bytesProcessed);
+        i += bytesProcessed;
+    }
+    
+    return codepoints;
+}
+
 
 
 // Draw text (using default font)
