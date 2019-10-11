@@ -1796,29 +1796,18 @@ bool FileExists(const char *fileName)
 bool IsFileExtension(const char *fileName, const char *ext)
 {
     bool result = false;
-    const char *fileExt;
-
-    if ((fileExt = strrchr(fileName, '.')) != NULL)
+    const char *fileExt = GetExtension(fileName);
+    
+    int extCount = 0;
+    const char **checkExts = TextSplit(ext, ';', &extCount);
+    
+    for (int i = 0; i < extCount; i++)
     {
-#if defined(_WIN32)
-        result = true;
-        int extLen = strlen(ext);
-
-        if (strlen(fileExt) == extLen)
+        if (strcmp(fileExt, checkExts[i] + 1) == 0)
         {
-            for (int i = 0; i < extLen; i++)
-            {
-                if (tolower(fileExt[i]) != tolower(ext[i]))
-                {
-                    result = false;
-                    break;
-                }
-            }
+            result = true;
+            break;
         }
-        else result = false;
-#else
-        if (strcmp(fileExt, ext) == 0) result = true;
-#endif
     }
 
     return result;
