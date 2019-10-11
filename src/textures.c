@@ -1181,13 +1181,18 @@ void ImageAlphaMask(Image *image, Image alphaMask)
         // In case image is only grayscale, we just add alpha channel
         if (image->format == UNCOMPRESSED_GRAYSCALE)
         {
-            ImageFormat(image, UNCOMPRESSED_GRAY_ALPHA);
+            unsigned char *data = (unsigned char *)RL_MALLOC(image->width*image->height*2);
 
             // Apply alpha mask to alpha channel
-            for (int i = 0, k = 1; (i < mask.width*mask.height) || (i < image->width*image->height); i++, k += 2)
+            for (int i = 0, k = 0; (i < mask.width*mask.height) || (i < image->width*image->height); i++, k += 2)
             {
-                ((unsigned char *)image->data)[k] = ((unsigned char *)mask.data)[i];
+                data[k] = ((unsigned char *)image->data)[i];
+                data[k + 1] = ((unsigned char *)mask.data)[i];
             }
+            
+            RL_FREE(image->data);
+            image->data = data;
+            image->format = UNCOMPRESSED_GRAY_ALPHA;
         }
         else
         {
