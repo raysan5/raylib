@@ -886,6 +886,8 @@ int *GetCodepoints(const char *text, int *count)
         codepoints[codepointsCount] = GetNextCodepoint(text + i, &bytesProcessed);
         i += bytesProcessed;
     }
+
+    *count = codepointsCount;
     
     return codepoints;
 }
@@ -1594,18 +1596,15 @@ static Font LoadBMFont(const char *fileName)
     TraceLog(LOG_DEBUG, "[%s] Font texture loading path: %s", fileName, texPath);
 
     Image imFont = LoadImage(texPath);
-    Image imFontAlpha = ImageCopy(imFont);
 
     if (imFont.format == UNCOMPRESSED_GRAYSCALE)
     {
-        for (int i = 0; i < imFontAlpha.width*imFontAlpha.height; i++) ((unsigned char *)imFontAlpha.data)[i] = 0xff;
-
-        ImageAlphaMask(&imFontAlpha, imFont);
-        font.texture = LoadTextureFromImage(imFontAlpha);
+        // Convert image to GRAYSCALE + ALPHA, using the mask as the alpha channel
+        ImageAlphaMask(&imFont, imFont);
+        for (int p = 0; p < (imFont.width*imFont.height*2); p += 2) ((unsigned char *)(imFont.data))[p] = 0xff;
     }
-    else font.texture = LoadTextureFromImage(imFont);
     
-    UnloadImage(imFont);
+    font.texture = LoadTextureFromImage(imFont);
 
     RL_FREE(texPath);
 
@@ -1633,10 +1632,10 @@ static Font LoadBMFont(const char *fileName)
         font.chars[i].advanceX = charAdvanceX;
         
         // Fill character image data from imFont data
-        font.chars[i].image = ImageFromImage(imFontAlpha, font.recs[i]);
+        font.chars[i].image = ImageFromImage(imFont, font.recs[i]);
     }
 
-    UnloadImage(imFontAlpha);
+    UnloadImage(imFont);
 
     fclose(fntFile);
 
