@@ -3510,7 +3510,7 @@ static Model LoadGLTF(const char *fileName)
         for (int i = 0; i < model.materialCount - 1; i++)
         {
             model.materials[i] = LoadMaterialDefault();
-            Color tint = (Color){ 1.0f, 1.0f, 1.0f, 1.0f };
+            Color tint = (Color){ 255, 255, 255, 255 };
             const char *texPath = GetDirectoryPath(fileName);
 
             //Ensure material follows raylib support for PBR (metallic/roughness flow)
@@ -3523,10 +3523,10 @@ static Model LoadGLTF(const char *fileName)
                 }
 
                 // shouldn't these be *255 ???
-                tint.r = (data->materials[i].pbr_metallic_roughness.base_color_factor[0]*255);
-                tint.g = (data->materials[i].pbr_metallic_roughness.base_color_factor[1]*255);
-                tint.b = (data->materials[i].pbr_metallic_roughness.base_color_factor[2]*255);
-                tint.a = (data->materials[i].pbr_metallic_roughness.base_color_factor[3]*255);
+                tint.r = (unsigned char)(data->materials[i].pbr_metallic_roughness.base_color_factor[0]*255);
+                tint.g = (unsigned char)(data->materials[i].pbr_metallic_roughness.base_color_factor[1]*255);
+                tint.b = (unsigned char)(data->materials[i].pbr_metallic_roughness.base_color_factor[2]*255);
+                tint.a = (unsigned char)(data->materials[i].pbr_metallic_roughness.base_color_factor[3]*255);
 
                 model.materials[i].maps[MAP_ROUGHNESS].color = tint;
 
