@@ -2382,7 +2382,7 @@ void DrawModelEx(Model model, Vector3 position, Vector3 rotationAxis, float rota
 
     for (int i = 0; i < model.meshCount; i++)
     {
-        model.materials[model.meshMaterial[i]].maps[MAP_DIFFUSE].color = tint;
+        //model.materials[model.meshMaterial[i]].maps[MAP_DIFFUSE].color = tint;
         rlDrawMesh(model.meshes[i], model.materials[model.meshMaterial[i]], model.transform);
     }
 }
@@ -3523,15 +3523,20 @@ static Model LoadGLTF(const char *fileName)
                 }
 
                 // shouldn't these be *255 ???
-                tint.r = (unsigned char)(data->materials[i].pbr_metallic_roughness.base_color_factor[0]*255.99f);
-                tint.g = (unsigned char)(data->materials[i].pbr_metallic_roughness.base_color_factor[1]*255.99f);
-                tint.b = (unsigned char)(data->materials[i].pbr_metallic_roughness.base_color_factor[2]*255.99f);
-                tint.a = (unsigned char)(data->materials[i].pbr_metallic_roughness.base_color_factor[3]*255.99f);
+                tint.r = (data->materials[i].pbr_metallic_roughness.base_color_factor[0]*255);
+                tint.g = (data->materials[i].pbr_metallic_roughness.base_color_factor[1]*255);
+                tint.b = (data->materials[i].pbr_metallic_roughness.base_color_factor[2]*255);
+                tint.a = (data->materials[i].pbr_metallic_roughness.base_color_factor[3]*255);
 
-                model.materials[i].maps[MAP_ALBEDO].texture = LoadTextureFromCGLTFTextureView(data->materials[i].pbr_metallic_roughness.base_color_texture.texture->image, tint, texPath);
+                model.materials[i].maps[MAP_ROUGHNESS].color = tint;
+
+                if (data->materials[i].pbr_metallic_roughness.base_color_texture.texture) {
+                    model.materials[i].maps[MAP_ALBEDO].texture = LoadTextureFromCGLTFTextureView(data->materials[i].pbr_metallic_roughness.base_color_texture.texture->image, tint, texPath);
+                }
 
                 //tint isn't need for other textures.. pass null or clear?
-                tint = (Color){ 0.0f, 0.0f, 0.0f, 0.0f };
+                //tint = (Color){ 0.0f, 0.0f, 0.0f, 0.0f };
+
                 if (data->materials[i].pbr_metallic_roughness.metallic_roughness_texture.texture) {
                     model.materials[i].maps[MAP_ROUGHNESS].texture = LoadTextureFromCGLTFTextureView(data->materials[i].pbr_metallic_roughness.metallic_roughness_texture.texture->image, tint, texPath);
                 }
