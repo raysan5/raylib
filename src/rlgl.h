@@ -2967,7 +2967,7 @@ char *LoadText(const char *fileName)
 Shader LoadShader(const char *vsFileName, const char *fsFileName)
 {
     Shader shader = { 0 };
-    
+
     // NOTE: Shader.locs is allocated by LoadShaderCode()
 
     char *vShaderStr = NULL;

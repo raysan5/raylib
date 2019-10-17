@@ -2,7 +2,7 @@
 *
 *   rglfw - raylib GLFW single file compilation
 *
-*   This file includes latest GLFW sources (https://github.com/glfw/glfw) to be compiled together 
+*   This file includes latest GLFW sources (https://github.com/glfw/glfw) to be compiled together
 *   with raylib for all supported platforms, this way, no external dependencies are required.
 *
 *   LICENSE: zlib/libpng

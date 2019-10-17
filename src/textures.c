@@ -850,7 +850,7 @@ void ExportImageAsCode(Image image, const char *fileName)
     #define BYTES_TEXT_PER_LINE     20
 
     FILE *txtFile = fopen(fileName, "wt");
-    
+
     if (txtFile != NULL)
     {
         char varFileName[256] = { 0 };
@@ -926,11 +926,11 @@ Image ImageCopy(Image image)
 Image ImageFromImage(Image image, Rectangle rec)
 {
     Image result = ImageCopy(image);
-    
+
 #if defined(SUPPORT_IMAGE_MANIPULATION)
     ImageCrop(&result, rec);
 #endif
-    
+
     return result;
 }
 
@@ -1189,7 +1189,7 @@ void ImageAlphaMask(Image *image, Image alphaMask)
                 data[k] = ((unsigned char *)image->data)[i];
                 data[k + 1] = ((unsigned char *)mask.data)[i];
             }
-            
+
             RL_FREE(image->data);
             image->data = data;
             image->format = UNCOMPRESSED_GRAY_ALPHA;
@@ -1343,13 +1343,13 @@ void ImageCrop(Image *image, Rectangle crop)
 {
     // Security check to avoid program crash
     if ((image->data == NULL) || (image->width == 0) || (image->height == 0)) return;
-    
+
     // Security checks to validate crop rectangle
     if (crop.x < 0) { crop.width += crop.x; crop.x = 0; }
     if (crop.y < 0) { crop.height += crop.y; crop.y = 0; }
     if ((crop.x + crop.width) > image->width) crop.width = image->width - crop.x;
     if ((crop.y + crop.height) > image->height) crop.height = image->height - crop.y;
-    
+
     if ((crop.x < image->width) && (crop.y < image->height))
     {
         // Start the cropping process
@@ -1823,7 +1823,7 @@ void ImageDraw(Image *dst, Image src, Rectangle srcRec, Rectangle dstRec, Color 
     }
 
     Image srcCopy = ImageCopy(src);     // Make a copy of source image to work with it
-    
+
     // Crop source image to desired source rectangle (if required)
     if ((src.width != (int)srcRec.width) && (src.height != (int)srcRec.height)) ImageCrop(&srcCopy, srcRec);
 
@@ -1832,7 +1832,7 @@ void ImageDraw(Image *dst, Image src, Rectangle srcRec, Rectangle dstRec, Color 
     {
         ImageResize(&srcCopy, (int)dstRec.width, (int)dstRec.height);
     }
-    
+
     // Check that dstRec is inside dst image
     // Allow negative position within destination with cropping
     if (dstRec.x < 0)
@@ -1841,7 +1841,7 @@ void ImageDraw(Image *dst, Image src, Rectangle srcRec, Rectangle dstRec, Color 
         dstRec.width = dstRec.width + dstRec.x;
         dstRec.x = 0;
     }
-    
+
     if ((dstRec.x + dstRec.width) > dst->width)
     {
         ImageCrop(&srcCopy, (Rectangle) { 0, 0, dst->width - dstRec.x, dstRec.height });
@@ -1854,7 +1854,7 @@ void ImageDraw(Image *dst, Image src, Rectangle srcRec, Rectangle dstRec, Color 
         dstRec.height = dstRec.height + dstRec.y;
         dstRec.y = 0;
     }
-    
+
     if ((dstRec.y + dstRec.height) > dst->height)
     {
         ImageCrop(&srcCopy, (Rectangle) { 0, 0, dstRec.width, dst->height - dstRec.y });
@@ -1880,7 +1880,7 @@ void ImageDraw(Image *dst, Image src, Rectangle srcRec, Rectangle dstRec, Color 
 
             fdst = ColorNormalize(dstPixels[j*(int)dst->width + i]);
             fsrc = ColorNormalize(srcPixels[(j - (int)dstRec.y)*(int)dstRec.width + (i - (int)dstRec.x)]);
-            
+
             // Apply color tint to source image
             fsrc.x *= ftint.x; fsrc.y *= ftint.y; fsrc.z *= ftint.z; fsrc.w *= ftint.w;
 
@@ -1943,16 +1943,16 @@ Image ImageTextEx(Font font, const char *text, float fontSize, float spacing, Co
 
     // Create image to store text
     Image imText = GenImageColor((int)imSize.x, (int)imSize.y, BLANK);
-    
+
     for (int i = 0; i < length; i++)
     {
         int next = 0;
         letter = GetNextCodepoint(&text[i], &next);
         index = GetGlyphIndex(font, letter);
-        
-        if (letter == 0x3f) next = 1; 
+
+        if (letter == 0x3f) next = 1;
         i += (next - 1);
-        
+
         if (letter == '\n')
         {
             // TODO: Support line break
@@ -1962,7 +1962,7 @@ Image ImageTextEx(Font font, const char *text, float fontSize, float spacing, Co
             if (letter != ' ')
             {
                 ImageDraw(&imText, font.chars[index].image, (Rectangle){ 0, 0, font.chars[index].image.width, font.chars[index].image.height },
-                         (Rectangle){ (float)(positionX + font.chars[index].offsetX),(float)font.chars[index].offsetY, 
+                         (Rectangle){ (float)(positionX + font.chars[index].offsetX),(float)font.chars[index].offsetY,
                                       font.chars[index].image.width, font.chars[index].image.height }, tint);
             }
 
@@ -2717,9 +2717,9 @@ void DrawTexturePro(Texture2D texture, Rectangle sourceRec, Rectangle destRec, V
     {
         float width = (float)texture.width;
         float height = (float)texture.height;
-        
+
         bool flipX = false;
-        
+
         if (sourceRec.width < 0) { flipX = true; sourceRec.width *= -1; }
         if (sourceRec.height < 0) sourceRec.y -= sourceRec.height;
 
@@ -2981,12 +2981,12 @@ static Image LoadAnimatedGIF(const char *fileName, int *frames, int **delays)
         fseek(gifFile, 0L, SEEK_END);
         int size = ftell(gifFile);
         fseek(gifFile, 0L, SEEK_SET);	
- 
+
         unsigned char *buffer = (unsigned char *)RL_CALLOC(size, sizeof(char));	
         fread(buffer, sizeof(char), size, gifFile);
-        
+
         fclose(gifFile);    // Close file pointer
- 
+
         int comp = 0;
         image.data = stbi_load_gif_from_memory(buffer, size, delays, &image.width, &image.height, frames, &comp, 4);
 

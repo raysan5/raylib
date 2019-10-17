@@ -198,10 +198,10 @@ typedef enum { AUDIO_BUFFER_USAGE_STATIC = 0, AUDIO_BUFFER_USAGE_STREAM } AudioB
 // playback device depending on whether or not data is streamed
 struct rAudioBuffer {
     ma_pcm_converter dsp;   // PCM data converter
-    
+
     float volume;           // Audio buffer volume
     float pitch;            // Audio buffer pitch
-    
+
     bool playing;           // Audio buffer state: AUDIO_PLAYING
     bool paused;            // Audio buffer state: AUDIO_PAUSED
     bool looping;           // Audio buffer looping, always true for AudioStreams
@@ -209,11 +209,11 @@ struct rAudioBuffer {
 
     bool isSubBufferProcessed[2];       // SubBuffer processed (virtual double buffer)
     unsigned int frameCursorPos;        // Frame cursor position
-    unsigned int bufferSizeInFrames;    // Total buffer size in frames 
+    unsigned int bufferSizeInFrames;    // Total buffer size in frames
     unsigned int totalFramesProcessed;  // Total frames processed in this buffer (required for play timming)
-    
+
     unsigned char *buffer;              // Data buffer, on music stream keeps filling
-    
+
     rAudioBuffer *next;     // Next audio buffer on the list
     rAudioBuffer *prev;     // Previous audio buffer on the list
 };
@@ -289,7 +289,7 @@ static void OnSendAudioDataToDevice(ma_device *pDevice, void *pFramesOut, const 
             if (!audioBuffer->playing || audioBuffer->paused) continue;
 
             ma_uint32 framesRead = 0;
-            
+
             while (1)
             {
                 if (framesRead > frameCount)
@@ -302,7 +302,7 @@ static void OnSendAudioDataToDevice(ma_device *pDevice, void *pFramesOut, const 
 
                 // Just read as much data as we can from the stream
                 ma_uint32 framesToRead = (frameCount - framesRead);
-                
+
                 while (framesToRead > 0)
                 {
                     float tempBuffer[1024]; // 512 frames for stereo
@@ -387,7 +387,7 @@ static ma_uint32 OnAudioBufferDSPRead(ma_pcm_converter *pDSP, void *pFramesOut, 
         {
             if (framesRead >= frameCount) break;
         }
-        else 
+        else
         {
             if (isSubBufferProcessed[currentSubBufferIndex]) break;
         }
@@ -465,7 +465,7 @@ static void MixAudioFrames(float *framesOut, const float *framesIn, ma_uint32 fr
 static void InitAudioBufferPool()
 {
     // Dummy buffers
-    for (int i = 0; i < MAX_AUDIO_BUFFER_POOL_CHANNELS; i++) 
+    for (int i = 0; i < MAX_AUDIO_BUFFER_POOL_CHANNELS; i++)
     {
         audioBufferPool[i] = InitAudioBuffer(DEVICE_FORMAT, DEVICE_CHANNELS, DEVICE_SAMPLE_RATE, 0, AUDIO_BUFFER_USAGE_STATIC);
     }
@@ -486,7 +486,7 @@ void InitAudioDevice(void)
     // Init audio context
     ma_context_config contextConfig = ma_context_config_init();
     contextConfig.logCallback = OnLog;
-    
+
     ma_result result = ma_context_init(NULL, 0, &contextConfig, &context);
     if (result != MA_SUCCESS)
     {
@@ -589,7 +589,7 @@ AudioBuffer *InitAudioBuffer(ma_format format, ma_uint32 channels, ma_uint32 sam
 {
     AudioBuffer *audioBuffer = (AudioBuffer *)RL_CALLOC(1, sizeof(AudioBuffer));
     audioBuffer->buffer = RL_CALLOC(bufferSizeInFrames*channels*ma_get_bytes_per_sample(format), 1);
-    
+
     if (audioBuffer == NULL)
     {
         TraceLog(LOG_ERROR, "InitAudioBuffer() : Failed to allocate memory for audio buffer");
@@ -608,7 +608,7 @@ AudioBuffer *InitAudioBuffer(ma_format format, ma_uint32 channels, ma_uint32 sam
     dspConfig.onRead = OnAudioBufferDSPRead;        // Callback on data reading
     dspConfig.pUserData = audioBuffer;              // Audio data pointer
     dspConfig.allowDynamicSampleRate = true;        // Required for pitch shifting
-    
+
     ma_result result = ma_pcm_converter_init(&dspConfig, &audioBuffer->dsp);
 
     if (result != MA_SUCCESS)
@@ -655,7 +655,7 @@ void CloseAudioBuffer(AudioBuffer *buffer)
 bool IsAudioBufferPlaying(AudioBuffer *buffer)
 {
     bool result = false;
-    
+
     if (buffer != NULL) result = (buffer->playing && !buffer->paused);
     else TraceLog(LOG_ERROR, "IsAudioBufferPlaying() : No audio buffer");
 
@@ -698,7 +698,7 @@ void StopAudioBuffer(AudioBuffer *buffer)
 void PauseAudioBuffer(AudioBuffer *buffer)
 {
     if (buffer != NULL) buffer->paused = true;
-    else TraceLog(LOG_ERROR, "PauseAudioBuffer() : No audio buffer");    
+    else TraceLog(LOG_ERROR, "PauseAudioBuffer() : No audio buffer");
 }
 
 // Resume an audio buffer
@@ -722,8 +722,8 @@ void SetAudioBufferPitch(AudioBuffer *buffer, float pitch)
     {
         float pitchMul = pitch/buffer->pitch;
 
-        // Pitching is just an adjustment of the sample rate. 
-        // Note that this changes the duration of the sound: 
+        // Pitching is just an adjustment of the sample rate.
+        // Note that this changes the duration of the sound:
         //  - higher pitches will make the sound faster
         //  - lower pitches make it slower
         ma_uint32 newOutputSampleRate = (ma_uint32)((float)buffer->dsp.src.config.sampleRateOut/pitchMul);
@@ -816,7 +816,7 @@ Sound LoadSoundFromWave(Wave wave)
 
     if (wave.data != NULL)
     {
-        // When using miniaudio we need to do our own mixing. 
+        // When using miniaudio we need to do our own mixing.
         // To simplify this we need convert the format of each sound to be consistent with
         // the format used to open the playback device. We can do this two ways:
         //
@@ -909,7 +909,7 @@ void ExportWaveAsCode(Wave wave, const char *fileName)
     int dataSize = wave.sampleCount*wave.channels*wave.sampleSize/8;
 
     FILE *txtFile = fopen(fileName, "wt");
-    
+
     if (txtFile != NULL)
     {
         fprintf(txtFile, "\n//////////////////////////////////////////////////////////////////////////////////\n");
@@ -967,7 +967,7 @@ void PlaySoundMulti(Sound sound)
             oldAge = audioBufferPoolChannels[i];
             oldIndex = i;
         }
-        
+
         if (!IsAudioBufferPlaying(audioBufferPool[i]))
         {
             index = i;
@@ -979,17 +979,17 @@ void PlaySoundMulti(Sound sound)
     if (index == -1)
     {
         TraceLog(LOG_WARNING,"pool age %i ended a sound early no room in buffer pool", audioBufferPoolCounter);
-        
+
         if (oldIndex == -1)
         {
             // Shouldn't be able to get here... but just in case something odd happens!
             TraceLog(LOG_ERROR,"sound buffer pool couldn't determine oldest buffer not playing sound");
-            
+
             return;
         }
-        
+
         index = oldIndex;
-        
+
         // Just in case...
         StopAudioBuffer(audioBufferPool[index]);
     }
@@ -1000,7 +1000,7 @@ void PlaySoundMulti(Sound sound)
 
     audioBufferPoolChannels[index] = audioBufferPoolCounter;
     audioBufferPoolCounter++;
-    
+
     audioBufferPool[index]->volume = sound.stream.buffer->volume;
     audioBufferPool[index]->pitch = sound.stream.buffer->pitch;
     audioBufferPool[index]->looping = sound.stream.buffer->looping;
@@ -1023,12 +1023,12 @@ void StopSoundMulti(void)
 int GetSoundsPlaying(void)
 {
     int counter = 0;
-    
+
     for (int i = 0; i < MAX_AUDIO_BUFFER_POOL_CHANNELS; i++)
     {
         if (IsAudioBufferPlaying(audioBufferPool[i])) counter++;
     }
-    
+
     return counter;
 }
 
@@ -1211,7 +1211,7 @@ Music LoadMusicStream(const char *fileName)
     {
         drmp3 *ctxMp3 = RL_MALLOC(sizeof(drmp3));
         music.ctxData = ctxMp3;
-        
+
         int result = drmp3_init_file(ctxMp3, fileName, NULL);
 
         if (result > 0)
@@ -1242,7 +1242,7 @@ Music LoadMusicStream(const char *fileName)
             music.sampleCount = (unsigned int)jar_xm_get_remaining_samples(ctxXm);
             music.loopCount = 0;   // Infinite loop by default
             musicLoaded = true;
-            
+
             music.ctxData = ctxXm;
         }
     }
@@ -1252,7 +1252,7 @@ Music LoadMusicStream(const char *fileName)
     {
         jar_mod_context_t *ctxMod = RL_MALLOC(sizeof(jar_mod_context_t));
         music.ctxData = ctxMod;
-        
+
         jar_mod_init(ctxMod);
         int result = jar_mod_load_file(ctxMod, fileName);
 
@@ -1335,7 +1335,7 @@ void PlayMusicStream(Music music)
     {
         // For music streams, we need to make sure we maintain the frame cursor position
         // This is a hack for this section of code in UpdateMusicStream()
-        // NOTE: In case window is minimized, music stream is stopped, just make sure to 
+        // NOTE: In case window is minimized, music stream is stopped, just make sure to
         // play again on window restore: if (IsMusicPlaying(music)) PlayMusicStream(music);
         ma_uint32 frameCursorPos = audioBuffer->frameCursorPos;
         PlayAudioStream(music.stream);  // WARNING: This resets the cursor position.
@@ -1395,7 +1395,7 @@ void UpdateMusicStream(Music music)
     void *pcm = RL_CALLOC(subBufferSizeInFrames*music.stream.channels*music.stream.sampleSize/8, 1);
 
     int samplesCount = 0;    // Total size of data streamed in L+R samples for xm floats, individual L or R for ogg shorts
-    
+
     // TODO: Get the sampleLeft using totalFramesProcessed... but first, get total frames processed correctly...
     //ma_uint32 frameSizeInBytes = ma_get_bytes_per_sample(music.stream.buffer->dsp.formatConverterIn.config.formatIn)*music.stream.buffer->dsp.formatConverterIn.config.channels;
     int sampleLeft = music.sampleCount - (music.stream.buffer->totalFramesProcessed*music.stream.channels);
@@ -1449,7 +1449,7 @@ void UpdateMusicStream(Music music)
         }
 
         UpdateAudioStream(music.stream, pcm, samplesCount);
-        
+
         if ((music.ctxType == MUSIC_MODULE_XM) || (music.ctxType == MUSIC_MODULE_MOD))
         {
             if (samplesCount > 1) sampleLeft -= samplesCount/2;
@@ -1549,11 +1549,11 @@ AudioStream InitAudioStream(unsigned int sampleRate, unsigned int sampleSize, un
     // The size of a streaming buffer must be at least double the size of a period
     unsigned int periodSize = device.playback.internalBufferSizeInFrames/device.playback.internalPeriods;
     unsigned int subBufferSize = AUDIO_BUFFER_SIZE;
-    
+
     if (subBufferSize < periodSize) subBufferSize = periodSize;
 
     stream.buffer = InitAudioBuffer(formatIn, stream.channels, stream.sampleRate, subBufferSize*2, AUDIO_BUFFER_USAGE_STREAM);
-    
+
     if (stream.buffer != NULL)
     {
         stream.buffer->looping = true;    // Always loop for streaming buffers
@@ -1578,7 +1578,7 @@ void CloseAudioStream(AudioStream stream)
 void UpdateAudioStream(AudioStream stream, const void *data, int samplesCount)
 {
     AudioBuffer *audioBuffer = stream.buffer;
-    
+
     if (audioBuffer != NULL)
     {
         if (audioBuffer->isSubBufferProcessed[0] || audioBuffer->isSubBufferProcessed[1])
@@ -1587,7 +1587,7 @@ void UpdateAudioStream(AudioStream stream, const void *data, int samplesCount)
 
             if (audioBuffer->isSubBufferProcessed[0] && audioBuffer->isSubBufferProcessed[1])
             {
-                // Both buffers are available for updating. 
+                // Both buffers are available for updating.
                 // Update the first one and make sure the cursor is moved back to the front.
                 subBufferToUpdate = 0;
                 audioBuffer->frameCursorPos = 0;
@@ -1604,7 +1604,7 @@ void UpdateAudioStream(AudioStream stream, const void *data, int samplesCount)
             // TODO: Get total frames processed on this buffer... DOES NOT WORK.
             audioBuffer->totalFramesProcessed += subBufferSizeInFrames;
 
-            // Does this API expect a whole buffer to be updated in one go? 
+            // Does this API expect a whole buffer to be updated in one go?
             // Assuming so, but if not will need to change this logic.
             if (subBufferSizeInFrames >= (ma_uint32)samplesCount/stream.channels)
             {

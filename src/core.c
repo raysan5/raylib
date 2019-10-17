@@ -579,7 +579,7 @@ static void InitTerminal(void)
     }
     else
     {
-        
+
         ioctl(STDIN_FILENO, KDSKBMODE, K_XLATE);
     }
 
@@ -590,7 +590,7 @@ static void InitTerminal(void)
 static void RestoreTerminal(void)
 {
     TraceLog(LOG_INFO, "Restore Terminal ...");
-    
+
     // Reset to default keyboard settings
     tcsetattr(STDIN_FILENO, TCSANOW, &defaultKeyboardSettings);
 
@@ -774,7 +774,7 @@ void CloseWindow(void)
             pthread_join(eventWorkers[i].threadId, NULL);
         }
     }
-    
+
     if (gamepadThreadId) pthread_join(gamepadThreadId, NULL);
 #endif
 
@@ -1207,7 +1207,7 @@ void EndDrawing(void)
     // we draw a small rectangle for user reference
     DrawRectangle(mousePosition.x, mousePosition.y, 3, 3, MAROON);
 #endif
-    
+
     rlglDraw();                     // Draw Buffers (Only OpenGL 3+ and ES2)
 
 #if defined(SUPPORT_GIF_RECORDING)
@@ -1270,10 +1270,10 @@ void BeginMode2D(Camera2D camera)
     rlglDraw();                         // Draw Buffers (Only OpenGL 3+ and ES2)
 
     rlLoadIdentity();                   // Reset current matrix (MODELVIEW)
-    
+
     // Apply screen scaling if required
     rlMultMatrixf(MatrixToFloat(screenScaling));
-    
+
     // Apply 2d camera transformation to modelview
     rlMultMatrixf(MatrixToFloat(GetCameraMatrix2D(camera)));
 }
@@ -1465,7 +1465,7 @@ Matrix GetCameraMatrix(Camera camera)
 }
 
 // Returns camera 2d transform matrix
-Matrix GetCameraMatrix2D(Camera2D camera) 
+Matrix GetCameraMatrix2D(Camera2D camera)
 {
     Matrix matTransform = { 0 };
     // The camera in world-space is set by
@@ -1486,9 +1486,9 @@ Matrix GetCameraMatrix2D(Camera2D camera)
     Matrix matRotation = MatrixRotate((Vector3){ 0.0f, 0.0f, 1.0f }, camera.rotation*DEG2RAD);
     Matrix matScale = MatrixScale(camera.zoom, camera.zoom, 1.0f);
     Matrix matTranslation = MatrixTranslate(camera.offset.x, camera.offset.y, 0.0f);
-    
+
     matTransform = MatrixMultiply(MatrixMultiply(matOrigin, MatrixMultiply(matScale, matRotation)), matTranslation);
-    
+
     return matTransform;
 }
 
@@ -1535,20 +1535,20 @@ Vector2 GetWorldToScreen(Vector3 position, Camera camera)
 }
 
 // Returns the screen space position for a 2d camera world space position
-Vector2 GetWorldToScreen2D(Vector2 position, Camera2D camera) 
+Vector2 GetWorldToScreen2D(Vector2 position, Camera2D camera)
 {
     Matrix matCamera = GetCameraMatrix2D(camera);
     Vector3 transform = Vector3Transform((Vector3){ position.x, position.y, 0 }, matCamera);
-    
+
     return (Vector2){ transform.x, transform.y };
 }
 
 // Returns the world space position for a 2d camera screen space position
-Vector2 GetScreenToWorld2D(Vector2 position, Camera2D camera) 
+Vector2 GetScreenToWorld2D(Vector2 position, Camera2D camera)
 {
     Matrix invMatCamera = MatrixInvert(GetCameraMatrix2D(camera));
     Vector3 transform = Vector3Transform((Vector3){ position.x, position.y, 0 }, invMatCamera);
-    
+
     return (Vector2){ transform.x, transform.y };
 }
 
@@ -1797,10 +1797,10 @@ bool IsFileExtension(const char *fileName, const char *ext)
 {
     bool result = false;
     const char *fileExt = GetExtension(fileName);
-    
+
     int extCount = 0;
     const char **checkExts = TextSplit(ext, ';', &extCount);
-    
+
     for (int i = 0; i < extCount; i++)
     {
         if (strcmp(fileExt, checkExts[i] + 1) == 0)
@@ -1905,9 +1905,9 @@ const char *GetPrevDirectoryPath(const char *dirPath)
     static char prevDirPath[MAX_FILEPATH_LENGTH];
     memset(prevDirPath, 0, MAX_FILEPATH_LENGTH);
     int pathLen = strlen(dirPath);
-    
+
     if (pathLen <= 3) strcpy(prevDirPath, dirPath);
-    
+
     for (int i = (pathLen - 1); (i > 0) && (pathLen > 3); i--)
     {
         if ((dirPath[i] == '\\') || (dirPath[i] == '/'))
@@ -1917,7 +1917,7 @@ const char *GetPrevDirectoryPath(const char *dirPath)
             break;
         }
     }
-    
+
     return prevDirPath;
 }
 
@@ -2034,9 +2034,9 @@ long GetFileModTime(const char *fileName)
 unsigned char *CompressData(unsigned char *data, int dataLength, int *compDataLength)
 {
     #define COMPRESSION_QUALITY_DEFLATE  8
-    
+
     unsigned char *compData = NULL;
-    
+
 #if defined(SUPPORT_COMPRESSION_API)
     compData = stbi_zlib_compress(data, dataLength, compDataLength, COMPRESSION_QUALITY_DEFLATE);
 #endif
@@ -2048,7 +2048,7 @@ unsigned char *CompressData(unsigned char *data, int dataLength, int *compDataLe
 unsigned char *DecompressData(unsigned char *compData, int compDataLength, int *dataLength)
 {
     char *data = NULL;
-    
+
 #if defined(SUPPORT_COMPRESSION_API)
     data = stbi_zlib_decode_malloc((char *)compData, compDataLength, dataLength);
 #endif
@@ -2653,9 +2653,9 @@ static bool InitGraphicsDevice(int width, int height)
         glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 0);
         glfwWindowHint(GLFW_CLIENT_API, GLFW_OPENGL_ES_API);
 #if defined(PLATFORM_DESKTOP)
-        glfwWindowHint(GLFW_CONTEXT_CREATION_API, GLFW_EGL_CONTEXT_API);   
+        glfwWindowHint(GLFW_CONTEXT_CREATION_API, GLFW_EGL_CONTEXT_API);
 #else
-        glfwWindowHint(GLFW_CONTEXT_CREATION_API, GLFW_NATIVE_CONTEXT_API); 
+        glfwWindowHint(GLFW_CONTEXT_CREATION_API, GLFW_NATIVE_CONTEXT_API);
 #endif
     }
 
@@ -4920,7 +4920,7 @@ static void *EventThread(void *arg)
                             // TODO: This fifo is not fully threadsafe with multiple writers, so multiple keyboards hitting a key at the exact same time could miss a key (double write to head before it was incremented)
                         }
                         */
-                        
+
                         currentKeyState[keycode] = event.value;
                         if (event.value == 1) lastKeyPressed = keycode;     // Register last key pressed
 
@@ -4934,7 +4934,7 @@ static void *EventThread(void *arg)
                         #endif
 
                         if (currentKeyState[exitKey] == 1) windowShouldClose = true;
-    
+
                         TraceLog(LOG_DEBUG, "KEY%s ScanCode: %4i KeyCode: %4i",event.value == 0 ? "UP":"DOWN", event.code, keycode);
                     }
                 }

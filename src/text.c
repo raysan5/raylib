@@ -323,7 +323,7 @@ Font LoadFontEx(const char *fileName, int fontSize, int *fontChars, int charsCou
     {
         Image atlas = GenImageFontAtlas(font.chars, &font.recs, font.charsCount, font.baseSize, 2, 0);
         font.texture = LoadTextureFromImage(atlas);
-        
+
         // Update chars[i].image to use alpha, required to be used on ImageDrawText()
         for (int i = 0; i < font.charsCount; i++)
         {
@@ -441,7 +441,7 @@ Font LoadFontFromImage(Image image, Color key, int firstChar)
     for (int i = 0; i < spriteFont.charsCount; i++)
     {
         spriteFont.chars[i].value = tempCharValues[i];
-        
+
         // Get character rectangle in the font atlas texture
         spriteFont.recs[i] = tempCharRecs[i];
 
@@ -449,7 +449,7 @@ Font LoadFontFromImage(Image image, Color key, int firstChar)
         spriteFont.chars[i].offsetX = 0;
         spriteFont.chars[i].offsetY = 0;
         spriteFont.chars[i].advanceX = 0;
-        
+
         // Fill character image data from fontClear data
         spriteFont.chars[i].image = ImageFromImage(fontClear, tempCharRecs[i]);
     }
@@ -589,7 +589,7 @@ Image GenImageFontAtlas(const CharInfo *chars, Rectangle **charRecs, int charsCo
 
     // In case no chars count provided we suppose default of 95
     charsCount = (charsCount > 0)? charsCount : 95;
-    
+
     // NOTE: Rectangles memory is loaded here!
     Rectangle *recs = (Rectangle *)RL_MALLOC(charsCount*sizeof(Rectangle));
 
@@ -713,7 +713,7 @@ Image GenImageFontAtlas(const CharInfo *chars, Rectangle **charRecs, int charsCo
     RL_FREE(atlas.data);
     atlas.data = dataGrayAlpha;
     atlas.format = UNCOMPRESSED_GRAY_ALPHA;
-    
+
     *charRecs = recs;
 
     return atlas;
@@ -761,12 +761,12 @@ void DrawFPS(int posX, int posY)
 // Returns next codepoint in a UTF8 encoded text, scanning until '\0' is found
 // When a invalid UTF8 byte is encountered we exit as soon as possible and a '?'(0x3f) codepoint is returned
 // Total number of bytes processed are returned as a parameter
-// NOTE: the standard says U+FFFD should be returned in case of errors 
+// NOTE: the standard says U+FFFD should be returned in case of errors
 // but that character is not supported by the default font in raylib
 // TODO: optimize this code for speed!!
 int GetNextCodepoint(const char *text, int *bytesProcessed)
 {
-/* 
+/*
     UTF8 specs from https://www.ietf.org/rfc/rfc3629.txt
 
     Char. number range  |        UTF-8 octet sequence
@@ -777,26 +777,26 @@ int GetNextCodepoint(const char *text, int *bytesProcessed)
     0000 0800-0000 FFFF | 1110xxxx 10xxxxxx 10xxxxxx
     0001 0000-0010 FFFF | 11110xxx 10xxxxxx 10xxxxxx 10xxxxxx
 */
-    
+
     // NOTE: on decode errors we return as soon as possible
-    
+
     int code = 0x3f;   // Codepoint (defaults to '?')
     int octet = (unsigned char)(text[0]); // The first UTF8 octet
     *bytesProcessed = 1;
-    
+
     if (octet <= 0x7f)
-    { 
+    {
         // Only one octet (ASCII range x00-7F)
         code = text[0];
     }
     else if ((octet & 0xe0) == 0xc0)
     {
-        // Two octets 
+        // Two octets
         // [0]xC2-DF    [1]UTF8-tail(x80-BF)
         unsigned char octet1 = text[1];
-        
+
         if ((octet1 == '\0') || ((octet1 >> 6) != 2)) { *bytesProcessed = 2; return code; } // Unexpected sequence
-        
+
         if ((octet >= 0xc2) && (octet <= 0xdf))
         {
             code = ((octet & 0x1f) << 6) | (octet1 & 0x3f);
@@ -808,66 +808,66 @@ int GetNextCodepoint(const char *text, int *bytesProcessed)
         // Three octets
         unsigned char octet1 = text[1];
         unsigned char octet2 = '\0';
-        
+
         if ((octet1 == '\0') || ((octet1 >> 6) != 2)) { *bytesProcessed = 2; return code; } // Unexpected sequence
-        
+
         octet2 = text[2];
-        
+
         if ((octet2 == '\0') || ((octet2 >> 6) != 2)) { *bytesProcessed = 3; return code; } // Unexpected sequence
-        
-        /* 
+
+        /*
             [0]xE0    [1]xA0-BF       [2]UTF8-tail(x80-BF)
             [0]xE1-EC [1]UTF8-tail    [2]UTF8-tail(x80-BF)
             [0]xED    [1]x80-9F       [2]UTF8-tail(x80-BF)
             [0]xEE-EF [1]UTF8-tail    [2]UTF8-tail(x80-BF)
         */
-        
-        if (((octet == 0xe0) && !((octet1 >= 0xa0) && (octet1 <= 0xbf))) || 
+
+        if (((octet == 0xe0) && !((octet1 >= 0xa0) && (octet1 <= 0xbf))) ||
             ((octet == 0xed) && !((octet1 >= 0x80) && (octet1 <= 0x9f)))) { *bytesProcessed = 2; return code; }
-        
+
         if ((octet >= 0xe0) && (0 <= 0xef))
         {
             code = ((octet & 0xf) << 12) | ((octet1 & 0x3f) << 6) | (octet2 & 0x3f);
             *bytesProcessed = 3;
         }
     }
-    else if ((octet & 0xf8) == 0xf0) 
+    else if ((octet & 0xf8) == 0xf0)
     {
         // Four octets
         if (octet > 0xf4) return code;
-        
+
         unsigned char octet1 = text[1];
         unsigned char octet2 = '\0';
         unsigned char octet3 = '\0';
-        
+
         if ((octet1 == '\0') || ((octet1 >> 6) != 2)) { *bytesProcessed = 2; return code; }  // Unexpected sequence
-        
+
         octet2 = text[2];
-        
+
         if ((octet2 == '\0') || ((octet2 >> 6) != 2)) { *bytesProcessed = 3; return code; }  // Unexpected sequence
-        
+
         octet3 = text[3];
-        
+
         if ((octet3 == '\0') || ((octet3 >> 6) != 2)) { *bytesProcessed = 4; return code; }  // Unexpected sequence
-        
-        /* 
+
+        /*
             [0]xF0       [1]x90-BF       [2]UTF8-tail  [3]UTF8-tail
             [0]xF1-F3    [1]UTF8-tail    [2]UTF8-tail  [3]UTF8-tail
             [0]xF4       [1]x80-8F       [2]UTF8-tail  [3]UTF8-tail
         */
-        
-        if (((octet == 0xf0) && !((octet1 >= 0x90) && (octet1 <= 0xbf))) || 
+
+        if (((octet == 0xf0) && !((octet1 >= 0x90) && (octet1 <= 0xbf))) ||
             ((octet == 0xf4) && !((octet1 >= 0x80) && (octet1 <= 0x8f)))) { *bytesProcessed = 2; return code; } // Unexpected sequence
-        
+
         if (octet >= 0xf0)
         {
             code = ((octet & 0x7) << 18) | ((octet1 & 0x3f) << 12) | ((octet2 & 0x3f) << 6) | (octet3 & 0x3f);
             *bytesProcessed = 4;
         }
     }
-    
+
     if (code > 0x10ffff) code = 0x3f;     // Codepoints after U+10ffff are invalid
-    
+
     return code;
 }
 
@@ -876,7 +876,7 @@ int *GetCodepoints(const char *text, int *count)
 {
     static int codepoints[MAX_TEXT_UNICODE_CHARS] = { 0 };
     memset(codepoints, 0, MAX_TEXT_UNICODE_CHARS*sizeof(int));
-    
+
     int bytesProcessed = 0;
     int textLength = strlen(text);
     int codepointsCount = 0;
@@ -888,7 +888,7 @@ int *GetCodepoints(const char *text, int *count)
     }
 
     *count = codepointsCount;
-    
+
     return codepoints;
 }
 
@@ -931,12 +931,12 @@ void DrawTextEx(Font font, const char *text, Vector2 position, float fontSize, f
         int next = 0;
         letter = GetNextCodepoint(&text[i], &next);
         index = GetGlyphIndex(font, letter);
-        
+
         // NOTE: Normally we exit the decoding sequence as soon as a bad byte is found (and return 0x3f)
         // but we need to draw all of the bad bytes using the '?' symbol so to not skip any we set 'next = 1'
-        if (letter == 0x3f) next = 1; 
+        if (letter == 0x3f) next = 1;
         i += (next - 1);
-        
+
         if (letter == '\n')
         {
             // NOTE: Fixed line spacing of 1.5 lines
@@ -984,17 +984,17 @@ void DrawTextRecEx(Font font, const char *text, Rectangle rec, float fontSize, f
     int startLine = -1;         // Index where to begin drawing (where a line begins)
     int endLine = -1;           // Index where to stop drawing (where a line ends)
     int lastk = -1;             // Holds last value of the character position
-    
+
     for (int i = 0, k = 0; i < length; i++, k++)
     {
         int glyphWidth = 0;
         int next = 0;
         letter = GetNextCodepoint(&text[i], &next);
         index = GetGlyphIndex(font, letter);
-        
+
         // NOTE: normally we exit the decoding sequence as soon as a bad byte is found (and return 0x3f)
         // but we need to draw all of the bad bytes using the '?' symbol so to not skip any we set next = 1
-        if (letter == 0x3f) next = 1; 
+        if (letter == 0x3f) next = 1;
         i += next - 1;
 
         if (letter != '\n')
@@ -1012,7 +1012,7 @@ void DrawTextRecEx(Font font, const char *text, Rectangle rec, float fontSize, f
         if (state == MEASURE_STATE)
         {
             // TODO: there are multiple types of spaces in UNICODE, maybe it's a good idea to add support for more
-            // See: http://jkorpela.fi/chars/spaces.html 
+            // See: http://jkorpela.fi/chars/spaces.html
             if ((letter == ' ') || (letter == '\t') || (letter == '\n')) endLine = i;
 
             if ((textOffsetX + glyphWidth + 1) >= rec.width)
@@ -1037,7 +1037,7 @@ void DrawTextRecEx(Font font, const char *text, Rectangle rec, float fontSize, f
                 textOffsetX = 0;
                 i = startLine;
                 glyphWidth = 0;
-                
+
                 // Save character position when we switch states
                 int tmp = lastk;
                 lastk = k - 1;
@@ -1138,16 +1138,16 @@ Vector2 MeasureTextEx(Font font, const char *text, float fontSize, float spacing
     for (int i = 0; i < len; i++)
     {
         lenCounter++;
-        
+
         int next = 0;
         letter = GetNextCodepoint(&text[i], &next);
         index = GetGlyphIndex(font, letter);
 
         // NOTE: normally we exit the decoding sequence as soon as a bad byte is found (and return 0x3f)
         // but we need to draw all of the bad bytes using the '?' symbol so to not skip any we set next = 1
-        if (letter == 0x3f) next = 1; 
-        i += next - 1;  
-        
+        if (letter == 0x3f) next = 1;
+        i += next - 1;
+
         if (letter != '\n')
         {
             if (font.chars[index].advanceX != 0) textWidth += font.chars[index].advanceX;
@@ -1220,22 +1220,22 @@ unsigned int TextLength(const char *text)
 
 // Returns total number of characters(codepoints) in a UTF8 encoded text, until '\0' is found
 // NOTE: If an invalid UTF8 sequence is encountered a '?'(0x3f) codepoint is counted instead
-unsigned int TextCountCodepoints(const char *text) 
+unsigned int TextCountCodepoints(const char *text)
 {
     unsigned int len = 0;
     char *ptr = (char *)&text[0];
-    
+
     while (*ptr != '\0')
     {
         int next = 0;
         int letter = GetNextCodepoint(ptr, &next);
-        
+
         if (letter == 0x3f) ptr += 1;
         else ptr += next;
-        
+
         len++;
     }
-    
+
     return len;
 }
 
@@ -1362,14 +1362,14 @@ const char *TextJoin(const char **textList, int count, const char *delimiter)
     for (int i = 0; i < count; i++)
     {
         int textListLength = strlen(textList[i]);
-        
+
         // Make sure joined text could fit inside MAX_TEXT_BUFFER_LENGTH
         if ((totalLength + textListLength) < MAX_TEXT_BUFFER_LENGTH)
         {
             strcat(text, textList[i]);
             totalLength += textListLength;
-            
-            if ((delimiterLen > 0) && (i < (count - 1))) 
+
+            if ((delimiterLen > 0) && (i < (count - 1)))
             {
                 strcat(text, delimiter);
                 totalLength += delimiterLen;
@@ -1397,11 +1397,11 @@ const char **TextSplit(const char *text, char delimiter, int *count)
 
     result[0] = buffer;
     int counter = 0;
-    
+
     if (text != NULL)
     {
         counter = 1;
-        
+
         // Count how many substrings we have on text and point to every one
         for (int i = 0; i < MAX_TEXT_BUFFER_LENGTH; i++)
         {
@@ -1603,7 +1603,7 @@ static Font LoadBMFont(const char *fileName)
         ImageAlphaMask(&imFont, imFont);
         for (int p = 0; p < (imFont.width*imFont.height*2); p += 2) ((unsigned char *)(imFont.data))[p] = 0xff;
     }
-    
+
     font.texture = LoadTextureFromImage(imFont);
 
     RL_FREE(texPath);
@@ -1621,7 +1621,7 @@ static Font LoadBMFont(const char *fileName)
         fgets(buffer, MAX_BUFFER_SIZE, fntFile);
         sscanf(buffer, "char id=%i x=%i y=%i width=%i height=%i xoffset=%i yoffset=%i xadvance=%i",
                        &charId, &charX, &charY, &charWidth, &charHeight, &charOffsetX, &charOffsetY, &charAdvanceX);
-        
+
         // Get character rectangle in the font atlas texture
         font.recs[i] = (Rectangle){ (float)charX, (float)charY, (float)charWidth, (float)charHeight };
 
@@ -1630,7 +1630,7 @@ static Font LoadBMFont(const char *fileName)
         font.chars[i].offsetX = charOffsetX;
         font.chars[i].offsetY = charOffsetY;
         font.chars[i].advanceX = charAdvanceX;
-        
+
         // Fill character image data from imFont data
         font.chars[i].image = ImageFromImage(imFont, font.recs[i]);
     }
