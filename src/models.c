@@ -809,6 +809,9 @@ Material *LoadMaterials(const char *fileName, int *materialCount)
         tinyobj_material_t *mats;
 
         int result = tinyobj_parse_mtl_file(&mats, &count, fileName);
+        if (result != TINYOBJ_SUCCESS) {
+            TraceLog(LOG_WARNING, "[%s] Could not parse Materials file", fileName);
+        }
 
         // TODO: Process materials to return
 
@@ -3499,6 +3502,9 @@ static Model LoadGLTF(const char *fileName)
 
         // Read data buffers
         result = cgltf_load_buffers(&options, data, fileName);
+        if (result != cgltf_result_success) {
+            TraceLog(LOG_INFO, "[%s][%s] Error loading mesh/material buffers", fileName, (data->file_type == 2)? "glb" : "gltf");
+        }
 
         int primitivesCount = 0;
 

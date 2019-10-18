@@ -438,7 +438,7 @@ EXAMPLES = \
     shaders/shaders_eratosthenes \
     shaders/shaders_basic_lighting \
     shaders/shaders_fog \
-    shaders/shaders_simple \
+    shaders/shaders_simple_mask \
     audio/audio_module_playing \
     audio/audio_music_stream \
     audio/audio_raw_stream \
