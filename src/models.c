@@ -2382,8 +2382,15 @@ void DrawModelEx(Model model, Vector3 position, Vector3 rotationAxis, float rota
 
     for (int i = 0; i < model.meshCount; i++)
     {
-        model.materials[model.meshMaterial[i]].maps[MAP_DIFFUSE].color = tint;
+        Color c = model.materials[model.meshMaterial[i]].maps[MAP_DIFFUSE].color;
+        Color s = c;
+        c.r = ((c.r/255) * (tint.r/255)) * 255;
+        c.g = ((c.g/255) * (tint.g/255)) * 255;
+        c.b = ((c.b/255) * (tint.b/255)) * 255;
+        c.a = ((c.a/255) * (tint.a/255)) * 255;
+        model.materials[model.meshMaterial[i]].maps[MAP_DIFFUSE].color = c;
         rlDrawMesh(model.meshes[i], model.materials[model.meshMaterial[i]], model.transform);
+        model.materials[model.meshMaterial[i]].maps[MAP_DIFFUSE].color = s;
     }
 }
 
@@ -3341,10 +3348,11 @@ static unsigned char *DecodeBase64(char *input, int *size)
     return buf;
 }
 
-static Texture LoadTextureFromCGLTFTextureView(cgltf_texture_view* view, Color tint, char* texPath)
+//static Texture LoadTextureFromCGLTFTextureView(cgltf_texture_view* view, Color tint, char* texPath)
+static Texture LoadTextureFromCGLTFTextureView(cgltf_image* image, Color tint, const char* texPath)
 {
     Texture texture = {0};
-    cgltf_image *image = view->texture->image;
+    //cgltf_image *image = view->texture->image;
 
     if (image->uri)
     {
@@ -3413,6 +3421,8 @@ static Texture LoadTextureFromCGLTFTextureView(cgltf_texture_view* view, Color t
         ImageColorTint(&rimage, tint);
         texture = LoadTextureFromImage(rimage);
         UnloadImage(rimage);
+        free(raw);
+        free(data);
     }
     else
     {
@@ -3503,35 +3513,49 @@ static Model LoadGLTF(const char *fileName)
 
         for (int i = 0; i < model.meshCount; i++) model.meshes[i].vboId = (unsigned int *)RL_CALLOC(MAX_MESH_VBO, sizeof(unsigned int));
 
-        //For each material 
+        //For each material
         for (int i = 0; i < model.materialCount - 1; i++)
         {
             model.materials[i] = LoadMaterialDefault();
-            Color tint = (Color){ 1.0f, 1.0f, 1.0f, 1.0f };
+            Color tint = (Color){ 255, 255, 255, 255 };
             const char *texPath = GetDirectoryPath(fileName);
-            
+
             //Ensure material follows raylib support for PBR (metallic/roughness flow)
             if (data->materials[i].has_pbr_metallic_roughness) {
                 float roughness = data->materials[i].pbr_metallic_roughness.roughness_factor;
                 float metallic = data->materials[i].pbr_metallic_roughness.metallic_factor;
 
-                strcpy(model.materials[i].name, data->materials[i].name);
+                if (model.materials[i].name && data->materials[i].name) {
+                    strcpy(model.materials[i].name, data->materials[i].name);
+                }
 
-                tint.r = (unsigned char)(data->materials[i].pbr_metallic_roughness.base_color_factor[0]*255.99f);
-                tint.g = (unsigned char)(data->materials[i].pbr_metallic_roughness.base_color_factor[1]*255.99f);
-                tint.b = (unsigned char)(data->materials[i].pbr_metallic_roughness.base_color_factor[2]*255.99f);
-                tint.a = (unsigned char)(data->materials[i].pbr_metallic_roughness.base_color_factor[3]*255.99f);
+                // shouldn't these be *255 ???
+                tint.r = (unsigned char)(data->materials[i].pbr_metallic_roughness.base_color_factor[0]*255);
+                tint.g = (unsigned char)(data->materials[i].pbr_metallic_roughness.base_color_factor[1]*255);
+                tint.b = (unsigned char)(data->materials[i].pbr_metallic_roughness.base_color_factor[2]*255);
+                tint.a = (unsigned char)(data->materials[i].pbr_metallic_roughness.base_color_factor[3]*255);
 
-                model.materials[i].maps[MAP_ALBEDO].texture = LoadTextureFromCGLTFTextureView(data->materials[i].pbr_metallic_roughness.base_color_texture.texture->image, tint, texPath);
-                
-                //tint isn't need for other textures.. pass null or clear?
-                tint = (Color){ 0.0f, 0.0f, 0.0f, 0.0f };
-                model.materials[i].maps[MAP_ROUGHNESS].texture = LoadTextureFromCGLTFTextureView(data->materials[i].pbr_metallic_roughness.metallic_roughness_texture.texture->image, tint, texPath);
+                model.materials[i].maps[MAP_ROUGHNESS].color = tint;
+
+                if (data->materials[i].pbr_metallic_roughness.base_color_texture.texture) {
+                    model.materials[i].maps[MAP_ALBEDO].texture = LoadTextureFromCGLTFTextureView(data->materials[i].pbr_metallic_roughness.base_color_texture.texture->image, tint, texPath);
+                }
+
+                //tint isn't need for other textures.. pass null or clear? (try full white because of mixing (multiplying * white has no effect))
+                tint = (Color){ 255, 255, 255, 255 };
+
+                if (data->materials[i].pbr_metallic_roughness.metallic_roughness_texture.texture) {
+                    model.materials[i].maps[MAP_ROUGHNESS].texture = LoadTextureFromCGLTFTextureView(data->materials[i].pbr_metallic_roughness.metallic_roughness_texture.texture->image, tint, texPath);
+                }
                 model.materials[i].maps[MAP_ROUGHNESS].value = roughness;
                 model.materials[i].maps[MAP_METALNESS].value = metallic;
-                
-                model.materials[i].maps[MAP_NORMAL].texture = LoadTextureFromCGLTFTextureView(data->materials[i].normal_texture.texture->image, tint, texPath);
-                model.materials[i].maps[MAP_OCCLUSION].texture = LoadTextureFromCGLTFTextureView(data->materials[i].occlusion_texture.texture->image, tint, texPath);
+
+                if (data->materials[i].normal_texture.texture) {
+                    model.materials[i].maps[MAP_NORMAL].texture = LoadTextureFromCGLTFTextureView(data->materials[i].normal_texture.texture->image, tint, texPath);
+                }
+                if (data->materials[i].occlusion_texture.texture) {
+                    model.materials[i].maps[MAP_OCCLUSION].texture = LoadTextureFromCGLTFTextureView(data->materials[i].occlusion_texture.texture->image, tint, texPath);
+                }
             }
         }
 
