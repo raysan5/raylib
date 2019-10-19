@@ -81,6 +81,7 @@ extern float stb_perlin_noise3(float x, float y, float z, int x_wrap, int y_wrap
 extern float stb_perlin_ridge_noise3(float x, float y, float z, float lacunarity, float gain, float offset, int octaves);
 extern float stb_perlin_fbm_noise3(float x, float y, float z, float lacunarity, float gain, int octaves);
 extern float stb_perlin_turbulence_noise3(float x, float y, float z, float lacunarity, float gain, int octaves);
+extern float stb_perlin_noise3_wrap_nonpow2(float x, float y, float z, int x_wrap, int y_wrap, int z_wrap, unsigned char seed);
 #ifdef __cplusplus
 }
 #endif
@@ -321,6 +322,66 @@ float stb_perlin_turbulence_noise3(float x, float y, float z, float lacunarity, 
    return sum;
 }
 
+float stb_perlin_noise3_wrap_nonpow2(float x, float y, float z, int x_wrap, int y_wrap, int z_wrap, unsigned char seed)
+{
+   float u,v,w;
+   float n000,n001,n010,n011,n100,n101,n110,n111;
+   float n00,n01,n10,n11;
+   float n0,n1;
+
+   int px = stb__perlin_fastfloor(x);
+   int py = stb__perlin_fastfloor(y);
+   int pz = stb__perlin_fastfloor(z);
+   int x_wrap2 = (x_wrap ? x_wrap : 256);
+   int y_wrap2 = (y_wrap ? y_wrap : 256);
+   int z_wrap2 = (z_wrap ? z_wrap : 256);
+   int x0 = px % x_wrap2, x1;
+   int y0 = py % y_wrap2, y1;
+   int z0 = pz % z_wrap2, z1;
+   int r0,r1, r00,r01,r10,r11;
+
+   if (x0 < 0) x0 += x_wrap2;
+   if (y0 < 0) y0 += y_wrap2;
+   if (z0 < 0) z0 += z_wrap2;
+   x1 = (x0+1) % x_wrap2;
+   y1 = (y0+1) % y_wrap2;
+   z1 = (z0+1) % z_wrap2;
+
+   #define stb__perlin_ease(a)   (((a*6-15)*a + 10) * a * a * a)
+
+   x -= px; u = stb__perlin_ease(x);
+   y -= py; v = stb__perlin_ease(y);
+   z -= pz; w = stb__perlin_ease(z);
+
+   r0 = stb__perlin_randtab[x0];
+   r0 = stb__perlin_randtab[r0+seed];
+   r1 = stb__perlin_randtab[x1];
+   r1 = stb__perlin_randtab[r1+seed];
+
+   r00 = stb__perlin_randtab[r0+y0];
+   r01 = stb__perlin_randtab[r0+y1];
+   r10 = stb__perlin_randtab[r1+y0];
+   r11 = stb__perlin_randtab[r1+y1];
+
+   n000 = stb__perlin_grad(stb__perlin_randtab_grad_idx[r00+z0], x  , y  , z   );
+   n001 = stb__perlin_grad(stb__perlin_randtab_grad_idx[r00+z1], x  , y  , z-1 );
+   n010 = stb__perlin_grad(stb__perlin_randtab_grad_idx[r01+z0], x  , y-1, z   );
+   n011 = stb__perlin_grad(stb__perlin_randtab_grad_idx[r01+z1], x  , y-1, z-1 );
+   n100 = stb__perlin_grad(stb__perlin_randtab_grad_idx[r10+z0], x-1, y  , z   );
+   n101 = stb__perlin_grad(stb__perlin_randtab_grad_idx[r10+z1], x-1, y  , z-1 );
+   n110 = stb__perlin_grad(stb__perlin_randtab_grad_idx[r11+z0], x-1, y-1, z   );
+   n111 = stb__perlin_grad(stb__perlin_randtab_grad_idx[r11+z1], x-1, y-1, z-1 );
+
+   n00 = stb__perlin_lerp(n000,n001,w);
+   n01 = stb__perlin_lerp(n010,n011,w);
+   n10 = stb__perlin_lerp(n100,n101,w);
+   n11 = stb__perlin_lerp(n110,n111,w);
+
+   n0 = stb__perlin_lerp(n00,n01,v);
+   n1 = stb__perlin_lerp(n10,n11,v);
+
+   return stb__perlin_lerp(n0,n1,u);
+}
 #endif  // STB_PERLIN_IMPLEMENTATION
 
 /*
