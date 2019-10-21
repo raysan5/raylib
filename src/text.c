@@ -892,8 +892,6 @@ int *GetCodepoints(const char *text, int *count)
     return codepoints;
 }
 
-
-
 // Draw text (using default font)
 // NOTE: fontSize work like in any drawing program but if fontSize is lower than font-base-size, then font-base-size is used
 // NOTE: chars spacing is proportional to fontSize
