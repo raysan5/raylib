@@ -10,6 +10,15 @@
 *       supported by default, to remove support, just comment unrequired #define in this module
 *
 *   #define SUPPORT_DEFAULT_FONT
+*       Load default raylib font on initialization to be used by DrawText() and MeasureText().
+*       If no default font loaded, DrawTextEx() and MeasureTextEx() are required.
+*
+*   #define TEXTSPLIT_MAX_TEXT_BUFFER_LENGTH
+*       TextSplit() function static buffer max size
+*
+*   #define TEXTSPLIT_MAX_SUBSTRINGS_COUNT
+*       TextSplit() function static substrings pointers array (pointing to static buffer)
+*
 *
 *   DEPENDENCIES:
 *       stb_truetype - Load TTF file and rasterize characters data
@@ -63,9 +72,18 @@
 //----------------------------------------------------------------------------------
 // Defines and Macros
 //----------------------------------------------------------------------------------
-#define MAX_TEXT_BUFFER_LENGTH  1024        // Size of internal static buffers of some Text*() functions
+#define MAX_TEXT_BUFFER_LENGTH  1024        // Size of internal static buffers used on  some functions:
+                                            // TextFormat(), TextSubtext(), TextToUpper(), TextToLower(), TextToPascal()
 
 #define MAX_TEXT_UNICODE_CHARS   512        // Maximum number of unicode codepoints
+
+#if !defined(TEXTSPLIT_MAX_TEXT_BUFFER_LENGTH)
+    #define TEXTSPLIT_MAX_TEXT_BUFFER_LENGTH    1024        // Size of static buffer: TextSplit()
+#endif
+
+#if !defined(TEXTSPLIT_MAX_SUBSTRINGS_COUNT)
+    #define TEXTSPLIT_MAX_SUBSTRINGS_COUNT       128        // Size of static pointers array: TextSplit()
+#endif
 
 //----------------------------------------------------------------------------------
 // Types and Structures Definition
@@ -1384,14 +1402,12 @@ const char **TextSplit(const char *text, char delimiter, int *count)
     // NOTE: Current implementation returns a copy of the provided string with '\0' (string end delimiter)
     // inserted between strings defined by "delimiter" parameter. No memory is dynamically allocated,
     // all used memory is static... it has some limitations:
-    //      1. Maximum number of possible split strings is set by MAX_SUBSTRINGS_COUNT
-    //      2. Maximum size of text to split is MAX_TEXT_BUFFER_LENGTH
+    //      1. Maximum number of possible split strings is set by TEXTSPLIT_MAX_SUBSTRINGS_COUNT
+    //      2. Maximum size of text to split is TEXTSPLIT_MAX_TEXT_BUFFER_LENGTH
 
-    #define MAX_SUBSTRINGS_COUNT  64
-
-    static const char *result[MAX_SUBSTRINGS_COUNT] = { NULL };
-    static char buffer[MAX_TEXT_BUFFER_LENGTH] = { 0 };
-    memset(buffer, 0, MAX_TEXT_BUFFER_LENGTH);
+    static const char *result[TEXTSPLIT_MAX_SUBSTRINGS_COUNT] = { NULL };
+    static char buffer[TEXTSPLIT_MAX_TEXT_BUFFER_LENGTH] = { 0 };
+    memset(buffer, 0, TEXTSPLIT_MAX_TEXT_BUFFER_LENGTH);
 
     result[0] = buffer;
     int counter = 0;
@@ -1411,7 +1427,7 @@ const char **TextSplit(const char *text, char delimiter, int *count)
                 result[counter] = buffer + i + 1;
                 counter++;
 
-                if (counter == MAX_SUBSTRINGS_COUNT) break;
+                if (counter == TEXTSPLIT_MAX_SUBSTRINGS_COUNT) break;
             }
         }
     }
