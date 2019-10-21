@@ -102,7 +102,7 @@ int main(void)
                 default: break;
             }
 
-            Color *pixels = GetImageData(image);        // Get pixel data from image (RGBA 32bit)
+            Color4ub *pixels = GetImageData(image);        // Get pixel data from image (RGBA 32bit)
             UpdateTexture(texture, pixels);             // Update texture with new image data
             free(pixels);                               // Unload pixels data from RAM
 

@@ -41,7 +41,7 @@ int main(void)
     SetPhysicsGravity(0, 0);
 
     // Create random polygon physics body to shatter
-    CreatePhysicsBodyPolygon((Vector2){ screenWidth/2, screenHeight/2 }, GetRandomValue(80, 200), GetRandomValue(3, 8), 10);
+    CreatePhysicsBodyPolygon((Vector2){ screenWidth/2, screenHeight/2 }, GetRandomInt(80, 200), GetRandomInt(3, 8), 10);
 
     SetTargetFPS(60);               // Set our game to run at 60 frames-per-second
     //--------------------------------------------------------------------------------------
@@ -57,7 +57,7 @@ int main(void)
         if (needsReset)
         {
             // Create random polygon physics body to shatter
-            CreatePhysicsBodyPolygon((Vector2){ screenWidth/2, screenHeight/2 }, GetRandomValue(80, 200), GetRandomValue(3, 8), 10);
+            CreatePhysicsBodyPolygon((Vector2){ screenWidth/2, screenHeight/2 }, GetRandomInt(80, 200), GetRandomInt(3, 8), 10);
             needsReset = false;
         }
 

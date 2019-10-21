@@ -35,7 +35,7 @@ int main(void)
     model.materials[0].maps[MAP_DIFFUSE].texture = texture;             // Set map diffuse texture
 
     // Get map image data to be used for collision detection
-    Color *mapPixels = GetImageData(imMap);
+    Color4ub *mapPixels = GetImageData(imMap);
     UnloadImage(imMap);             // Unload image from RAM
 
     Vector3 mapPosition = { -16.0f, 0.0f, -8.0f };  // Set model position

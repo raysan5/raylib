@@ -53,9 +53,9 @@
 
 #include <GLFW/glfw3.h>         // Windows/Context and inputs management
 
-#define RED        (Color){ 230, 41, 55, 255 }     // Red
-#define RAYWHITE   (Color){ 245, 245, 245, 255 }   // My own White (raylib logo)
-#define DARKGRAY   (Color){ 80, 80, 80, 255 }      // Dark Gray
+#define RED        (Color){ 0.89844, 0.16667, 0.21484, 1.0 }     // Red
+#define DARKGRAY   (Color){ 0.3125 , 0.3125 , 0.3125 , 1.0 }   // Dark Gray
+#define RAYWHITE   (Color){ 0.96078, 0.96078, 0.96078, 1.0 }   // My own White (raylib logo)
 
 //----------------------------------------------------------------------------------
 // Module specific Functions Declaration
@@ -128,7 +128,7 @@ int main(void)
     rlMatrixMode(RL_MODELVIEW);                         // Switch back to MODELVIEW matrix
     rlLoadIdentity();                                   // Reset current matrix (MODELVIEW)
 
-    rlClearColor(245, 245, 245, 255);                   // Define clear color
+    rlClearColor(.95, .95, .95, 1);                   // Define clear color
     rlEnableDepthTest();                                // Enable DEPTH_TEST for 3D
     
     Camera camera = { 0 };
@@ -232,7 +232,7 @@ static void KeyCallback(GLFWwindow* window, int key, int scancode, int action, i
 static void DrawRectangleV(Vector2 position, Vector2 size, Color color)
 {
     rlBegin(RL_TRIANGLES);
-        rlColor4ub(color.r, color.g, color.b, color.a);
+        rlColor4f(color.r, color.g, color.b, color.a);
 
         rlVertex2i(position.x, position.y);
         rlVertex2i(position.x, position.y + size.y);
@@ -292,7 +292,7 @@ static void DrawCube(Vector3 position, float width, float height, float length, 
         //rlRotatef(45, 0, 1, 0);
 
         rlBegin(RL_TRIANGLES);
-            rlColor4ub(color.r, color.g, color.b, color.a);
+            rlColor4f(color.r, color.g, color.b, color.a);
 
             // Front Face -----------------------------------------------------
             rlVertex3f(x-width/2, y-height/2, z+length/2);  // Bottom Left
@@ -364,7 +364,7 @@ static void DrawCubeWires(Vector3 position, float width, float height, float len
         //rlRotatef(45, 0, 1, 0);
 
         rlBegin(RL_LINES);
-            rlColor4ub(color.r, color.g, color.b, color.a);
+            rlColor4f(color.r, color.g, color.b, color.a);
 
             // Front Face -----------------------------------------------------
             // Bottom Line

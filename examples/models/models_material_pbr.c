@@ -51,14 +51,14 @@ int main(void)
     MeshTangents(&model.meshes[0]);
 
     UnloadMaterial(model.materials[0]); // get rid of default material
-    model.materials[0] = LoadMaterialPBR((Color){ 255, 255, 255, 255 }, 1.0f, 1.0f);
+    model.materials[0] = LoadMaterialPBR((Color){ 1, 1, 1, 1 }, 1.0f, 1.0f);
 
     // Create lights
     // NOTE: Lights are added to an internal lights pool automatically
-    CreateLight(LIGHT_POINT, (Vector3){ LIGHT_DISTANCE, LIGHT_HEIGHT, 0.0f }, (Vector3){ 0.0f, 0.0f, 0.0f }, (Color){ 255, 0, 0, 255 }, model.materials[0].shader);
-    CreateLight(LIGHT_POINT, (Vector3){ 0.0f, LIGHT_HEIGHT, LIGHT_DISTANCE }, (Vector3){ 0.0f, 0.0f, 0.0f }, (Color){ 0, 255, 0, 255 }, model.materials[0].shader);
-    CreateLight(LIGHT_POINT, (Vector3){ -LIGHT_DISTANCE, LIGHT_HEIGHT, 0.0f }, (Vector3){ 0.0f, 0.0f, 0.0f }, (Color){ 0, 0, 255, 255 }, model.materials[0].shader);
-    CreateLight(LIGHT_DIRECTIONAL, (Vector3){ 0.0f, LIGHT_HEIGHT*2.0f, -LIGHT_DISTANCE }, (Vector3){ 0.0f, 0.0f, 0.0f }, (Color){ 255, 0, 255, 255 }, model.materials[0].shader);
+    CreateLight(LIGHT_POINT, (Vector3){ LIGHT_DISTANCE, LIGHT_HEIGHT, 0.0f }, (Vector3){ 0.0f, 0.0f, 0.0f }, (Color){ 1, 0, 0, 1 }, model.materials[0].shader);
+    CreateLight(LIGHT_POINT, (Vector3){ 0.0f, LIGHT_HEIGHT, LIGHT_DISTANCE }, (Vector3){ 0.0f, 0.0f, 0.0f }, (Color){ 0, 1, 0, 1 }, model.materials[0].shader);
+    CreateLight(LIGHT_POINT, (Vector3){ -LIGHT_DISTANCE, LIGHT_HEIGHT, 0.0f }, (Vector3){ 0.0f, 0.0f, 0.0f }, (Color){ 0, 0, 1, 1 }, model.materials[0].shader);
+    CreateLight(LIGHT_DIRECTIONAL, (Vector3){ 0.0f, LIGHT_HEIGHT*2.0f, -LIGHT_DISTANCE }, (Vector3){ 0.0f, 0.0f, 0.0f }, (Color){ 1, 0, 1, 1 }, model.materials[0].shader);
 
     SetCameraMode(camera, CAMERA_ORBITAL);  // Set an orbital camera mode
 
@@ -223,7 +223,7 @@ static Material LoadMaterialPBR(Color albedo, float metalness, float roughness)
 
     // Set up material properties color
     mat.maps[MAP_ALBEDO].color = albedo;
-    mat.maps[MAP_NORMAL].color = (Color){ 128, 128, 255, 255 };
+    mat.maps[MAP_NORMAL].color = (Color){ 0.5, 0.5, 1, 1 };
     mat.maps[MAP_METALNESS].value = metalness;
     mat.maps[MAP_ROUGHNESS].value = roughness;
     mat.maps[MAP_OCCLUSION].value = 1.0f;

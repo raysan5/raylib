@@ -36,14 +36,14 @@ int main(void)
     int height = 480;
 
     // Dynamic memory allocation to store pixels data (Color type)
-    Color *pixels = (Color *)malloc(width*height*sizeof(Color));
+    Color4ub *pixels = (Color4ub *)malloc(width*height*sizeof(Color4ub));
 
     for (int y = 0; y < height; y++)
     {
         for (int x = 0; x < width; x++)
         {
-            if (((x/32+y/32)/1)%2 == 0) pixels[y*width + x] = ORANGE;
-            else pixels[y*width + x] = GOLD;
+            if (((x/32+y/32)/1)%2 == 0) pixels[y*width + x] = (Color4ub){ 255, 0.62891*255, 0.0, 255 }; // orange
+            else pixels[y*width + x] = (Color4ub){ 255, 0.79297*255, 0.0, 255 };
         }
     }
 

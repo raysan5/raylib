@@ -44,10 +44,10 @@ int main(void)
     {
         circles[i].alpha = 0.0f;
         circles[i].radius = GetRandomValue(10, 40);
-        circles[i].position.x = GetRandomValue(circles[i].radius, screenWidth - circles[i].radius);
-        circles[i].position.y = GetRandomValue(circles[i].radius, screenHeight - circles[i].radius);
-        circles[i].speed = (float)GetRandomValue(1, 100)/2000.0f;
-        circles[i].color = colors[GetRandomValue(0, 13)];
+        circles[i].position.x = GetRandomInt(circles[i].radius, screenWidth - circles[i].radius);
+        circles[i].position.y = GetRandomInt(circles[i].radius, screenHeight - circles[i].radius);
+        circles[i].speed = (float)GetRandomInt(1, 100)/2000.0f;
+        circles[i].color = colors[(int)GetRandomInt(0, 13)];
     }
 
     Music music = LoadMusicStream("resources/mini1111.xm");
@@ -97,11 +97,11 @@ int main(void)
             if (circles[i].alpha <= 0.0f)
             {
                 circles[i].alpha = 0.0f;
-                circles[i].radius = GetRandomValue(10, 40);
-                circles[i].position.x = GetRandomValue(circles[i].radius, screenWidth - circles[i].radius);
-                circles[i].position.y = GetRandomValue(circles[i].radius, screenHeight - circles[i].radius);
-                circles[i].color = colors[GetRandomValue(0, 13)];
-                circles[i].speed = (float)GetRandomValue(1, 100)/2000.0f;
+                circles[i].radius = GetRandomInt(10, 40);
+                circles[i].position.x = GetRandomInt(circles[i].radius, screenWidth - circles[i].radius);
+                circles[i].position.y = GetRandomInt(circles[i].radius, screenHeight - circles[i].radius);
+                circles[i].color = colors[(int)GetRandomInt(0, 13)];
+                circles[i].speed = (float)GetRandomInt(1, 100)/2000.0f;
             }
         }
         //----------------------------------------------------------------------------------

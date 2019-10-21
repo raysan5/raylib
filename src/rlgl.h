@@ -177,13 +177,22 @@ typedef unsigned char byte;
     typedef enum { false, true } bool;
     #endif
 
-    // Color type, RGBA (32bit)
-    typedef struct Color {
+    // colour type used for example in raw images
+    typedef struct Color4ub {
         unsigned char r;
         unsigned char g;
         unsigned char b;
         unsigned char a;
-    } Color;
+    } colour4ub;
+
+    // Color type, RGBA (normalized floats)
+    typedef struct Colour {
+        float r;
+        float g;
+        float b;
+        float a;
+    } Colour;
+
 
     // Texture2D type
     // NOTE: Data stored in GPU memory
@@ -467,7 +476,7 @@ RLAPI void rlDeleteRenderTextures(RenderTexture2D target);    // Delete render t
 RLAPI void rlDeleteShader(unsigned int id);                   // Delete OpenGL shader program from GPU
 RLAPI void rlDeleteVertexArrays(unsigned int id);             // Unload vertex data (VAO) from GPU memory
 RLAPI void rlDeleteBuffers(unsigned int id);                  // Unload vertex data (VBO) from GPU memory
-RLAPI void rlClearColor(byte r, byte g, byte b, byte a);      // Clear color buffer with color
+RLAPI void rlClearColor(float r, float g, float b, float a);  // Clear color buffer with color
 RLAPI void rlClearScreenBuffers(void);                        // Clear used screen buffers (color and depth)
 RLAPI void rlUpdateBuffer(int bufferId, void *data, int dataSize); // Update GPU buffer with new data
 RLAPI unsigned int rlLoadAttribBuffer(unsigned int vaoId, int shaderLoc, void *buffer, int size, bool dynamic);   // Load a new attributes buffer
@@ -875,7 +884,7 @@ static void SetStereoView(int eye, Matrix matProjection, Matrix matModelView);  
 
 #if defined(GRAPHICS_API_OPENGL_11)
 static int GenerateMipmaps(unsigned char *data, int baseWidth, int baseHeight);
-static Color *GenNextMipmap(Color *srcData, int srcWidth, int srcHeight);
+static Color4ub *GenNextMipmap(Color4ub *srcData, int srcWidth, int srcHeight);
 #endif
 
 //----------------------------------------------------------------------------------
@@ -1441,15 +1450,9 @@ void rlDeleteBuffers(unsigned int id)
 }
 
 // Clear color buffer with color
-void rlClearColor(byte r, byte g, byte b, byte a)
+void rlClearColor(float r, float g, float b, float a)
 {
-    // Color values clamp to 0.0f(0) and 1.0f(255)
-    float cr = (float)r/255;
-    float cg = (float)g/255;
-    float cb = (float)b/255;
-    float ca = (float)a/255;
-
-    glClearColor(cr, cg, cb, ca);
+    glClearColor(r, g, b, a);
 }
 
 // Clear used screen buffers (color and depth)
@@ -2591,7 +2594,10 @@ void rlDrawMesh(Mesh mesh, Material material, Matrix transform)
 
     rlPushMatrix();
         rlMultMatrixf(MatrixToFloat(transform));
-        rlColor4ub(material.maps[MAP_DIFFUSE].color.r, material.maps[MAP_DIFFUSE].color.g, material.maps[MAP_DIFFUSE].color.b, material.maps[MAP_DIFFUSE].color.a);
+        rlColor4f(material.maps[MAP_DIFFUSE].color.r,
+                    material.maps[MAP_DIFFUSE].color.g,
+                    material.maps[MAP_DIFFUSE].color.b,
+                    material.maps[MAP_DIFFUSE].color.a);
 
         if (mesh.indices != NULL) glDrawElements(GL_TRIANGLES, mesh.triangleCount*3, GL_UNSIGNED_SHORT, mesh.indices);
         else glDrawArrays(GL_TRIANGLES, 0, mesh.vertexCount);
@@ -2617,17 +2623,17 @@ void rlDrawMesh(Mesh mesh, Material material, Matrix transform)
 
     // Upload to shader material.colDiffuse
     if (material.shader.locs[LOC_COLOR_DIFFUSE] != -1)
-        glUniform4f(material.shader.locs[LOC_COLOR_DIFFUSE], (float)material.maps[MAP_DIFFUSE].color.r/255.0f,
-                                                           (float)material.maps[MAP_DIFFUSE].color.g/255.0f,
-                                                           (float)material.maps[MAP_DIFFUSE].color.b/255.0f,
-                                                           (float)material.maps[MAP_DIFFUSE].color.a/255.0f);
+        glUniform4f(material.shader.locs[LOC_COLOR_DIFFUSE], (float)material.maps[MAP_DIFFUSE].color.r,
+                                                           (float)material.maps[MAP_DIFFUSE].color.g,
+                                                           (float)material.maps[MAP_DIFFUSE].color.b,
+                                                           (float)material.maps[MAP_DIFFUSE].color.a);
 
     // Upload to shader material.colSpecular (if available)
     if (material.shader.locs[LOC_COLOR_SPECULAR] != -1)
-        glUniform4f(material.shader.locs[LOC_COLOR_SPECULAR], (float)material.maps[MAP_SPECULAR].color.r/255.0f,
-                                                               (float)material.maps[MAP_SPECULAR].color.g/255.0f,
-                                                               (float)material.maps[MAP_SPECULAR].color.b/255.0f,
-                                                               (float)material.maps[MAP_SPECULAR].color.a/255.0f);
+        glUniform4f(material.shader.locs[LOC_COLOR_SPECULAR], (float)material.maps[MAP_SPECULAR].color.r,
+                                                               (float)material.maps[MAP_SPECULAR].color.g,
+                                                               (float)material.maps[MAP_SPECULAR].color.b,
+                                                               (float)material.maps[MAP_SPECULAR].color.a);
 
     if (material.shader.locs[LOC_MATRIX_VIEW] != -1) SetShaderValueMatrix(material.shader, material.shader.locs[LOC_MATRIX_VIEW], modelview);
     if (material.shader.locs[LOC_MATRIX_PROJECTION] != -1) SetShaderValueMatrix(material.shader, material.shader.locs[LOC_MATRIX_PROJECTION], projection);
@@ -4467,8 +4473,8 @@ static int GenerateMipmaps(unsigned char *data, int baseWidth, int baseHeight)
 
     // Generate mipmaps
     // NOTE: Every mipmap data is stored after data
-    Color *image = (Color *)RL_MALLOC(width*height*sizeof(Color));
-    Color *mipmap = NULL;
+    Color4ub *image = (Color4ub *)RL_MALLOC(width*height*sizeof(Color4ub));
+    Color4ub *mipmap = NULL;
     int offset = 0;
     int j = 0;
 
@@ -4516,15 +4522,15 @@ static int GenerateMipmaps(unsigned char *data, int baseWidth, int baseHeight)
 }
 
 // Manual mipmap generation (basic scaling algorithm)
-static Color *GenNextMipmap(Color *srcData, int srcWidth, int srcHeight)
+static Color4ub *GenNextMipmap(Color4ub *srcData, int srcWidth, int srcHeight)
 {
     int x2, y2;
-    Color prow, pcol;
+    Color4ub prow, pcol;
 
     int width = srcWidth/2;
     int height = srcHeight/2;
 
-    Color *mipmap = (Color *)RL_MALLOC(width*height*sizeof(Color));
+    Color4ub *mipmap = (Color4ub *)RL_MALLOC(width*height*sizeof(Color4ub));
 
     // Scaling algorithm works perfectly (box-filter)
     for (int y = 0; y < height; y++)

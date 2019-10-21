@@ -30,14 +30,14 @@ int main(void)
 
     for (int i = 0; i < MAX_BUILDINGS; i++)
     {
-        buildings[i].width = GetRandomValue(50, 200);
-        buildings[i].height = GetRandomValue(100, 800);
+        buildings[i].width = GetRandomInt(50, 200);
+        buildings[i].height = GetRandomInt(100, 800);
         buildings[i].y = screenHeight - 130 - buildings[i].height;
         buildings[i].x = -6000 + spacing;
 
         spacing += buildings[i].width;
 
-        buildColors[i] = (Color){ GetRandomValue(200, 240), GetRandomValue(200, 240), GetRandomValue(200, 250), 255 };
+        buildColors[i] = (Color){ GetRandomValue(.8, .95), GetRandomValue(.8, .95), GetRandomValue(.8, .95), 1 };
     }
 
     Camera2D camera = { 0 };

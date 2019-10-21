@@ -137,7 +137,7 @@ void DrawSphereBasic(Color color)
     int slices = 16;
 
     rlBegin(RL_TRIANGLES);
-        rlColor4ub(color.r, color.g, color.b, color.a);
+        rlColor4f(color.r, color.g, color.b, color.a);
 
         for (int i = 0; i < (rings + 2); i++)
         {

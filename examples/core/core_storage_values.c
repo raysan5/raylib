@@ -37,8 +37,8 @@ int main(void)
         //----------------------------------------------------------------------------------
         if (IsKeyPressed(KEY_R))
         {
-            score = GetRandomValue(1000, 2000);
-            hiscore = GetRandomValue(2000, 4000);
+            score = GetRandomInt(1000, 2000);
+            hiscore = GetRandomInt(2000, 4000);
         }
 
         if (IsKeyPressed(KEY_ENTER))

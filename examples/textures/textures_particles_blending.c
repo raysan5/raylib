@@ -39,10 +39,10 @@ int main(void)
     for (int i = 0; i < MAX_PARTICLES; i++)
     {
         mouseTail[i].position = (Vector2){ 0, 0 };
-        mouseTail[i].color = (Color){ GetRandomValue(0, 255), GetRandomValue(0, 255), GetRandomValue(0, 255), 255 };
+        mouseTail[i].color = (Color){ GetRandomValue(0, 1), GetRandomValue(0, 1), GetRandomValue(0, 1), 1 };
         mouseTail[i].alpha = 1.0f;
-        mouseTail[i].size = (float)GetRandomValue(1, 30)/20.0f;
-        mouseTail[i].rotation = (float)GetRandomValue(0, 360);
+        mouseTail[i].size = (float)GetRandomInt(1, 30)/20.0f;
+        mouseTail[i].rotation = (float)GetRandomInt(0, 360);
         mouseTail[i].active = false;
     }
 

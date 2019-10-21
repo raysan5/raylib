@@ -37,9 +37,9 @@ int main(void)
 
     for (int i = 0; i < MAX_COLUMNS; i++)
     {
-        heights[i] = (float)GetRandomValue(1, 12);
-        positions[i] = (Vector3){ GetRandomValue(-15, 15), heights[i]/2, GetRandomValue(-15, 15) };
-        colors[i] = (Color){ GetRandomValue(20, 255), GetRandomValue(10, 55), 30, 255 };
+        heights[i] = (float)GetRandomInt(1, 12);
+        positions[i] = (Vector3){ GetRandomInt(-15, 15), heights[i]/2, GetRandomInt(-15, 15) };
+        colors[i] = (Color){ GetRandomValue(.1, 1), GetRandomValue(.1, .3), .1, 1 };
     }
 
     SetCameraMode(camera, CAMERA_FIRST_PERSON); // Set a first person camera mode

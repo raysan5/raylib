@@ -75,7 +75,7 @@ static Texture2D GetShapesTexture(void);                            // Get textu
 void DrawPixel(int posX, int posY, Color color)
 {
     rlBegin(RL_LINES);
-        rlColor4ub(color.r, color.g, color.b, color.a);
+        rlColor4f(color.r, color.g, color.b, color.a);
         rlVertex2i(posX, posY);
         rlVertex2i(posX + 1, posY + 1);
     rlEnd();
@@ -85,7 +85,7 @@ void DrawPixel(int posX, int posY, Color color)
 void DrawPixelV(Vector2 position, Color color)
 {
     rlBegin(RL_LINES);
-        rlColor4ub(color.r, color.g, color.b, color.a);
+        rlColor4f(color.r, color.g, color.b, color.a);
         rlVertex2f(position.x, position.y);
         rlVertex2f(position.x + 1.0f, position.y + 1.0f);
     rlEnd();
@@ -95,7 +95,7 @@ void DrawPixelV(Vector2 position, Color color)
 void DrawLine(int startPosX, int startPosY, int endPosX, int endPosY, Color color)
 {
     rlBegin(RL_LINES);
-        rlColor4ub(color.r, color.g, color.b, color.a);
+        rlColor4f(color.r, color.g, color.b, color.a);
         rlVertex2i(startPosX, startPosY);
         rlVertex2i(endPosX, endPosY);
     rlEnd();
@@ -105,7 +105,7 @@ void DrawLine(int startPosX, int startPosY, int endPosX, int endPosY, Color colo
 void DrawLineV(Vector2 startPos, Vector2 endPos, Color color)
 {
     rlBegin(RL_LINES);
-        rlColor4ub(color.r, color.g, color.b, color.a);
+        rlColor4f(color.r, color.g, color.b, color.a);
         rlVertex2f(startPos.x, startPos.y);
         rlVertex2f(endPos.x, endPos.y);
     rlEnd();
@@ -135,7 +135,7 @@ void DrawLineEx(Vector2 startPos, Vector2 endPos, float thick, Color color)
         rlTranslatef(0, (thick > 1.0f)? -thick/2.0f : -1.0f, 0.0f);
 
         rlBegin(RL_QUADS);
-            rlColor4ub(color.r, color.g, color.b, color.a);
+            rlColor4f(color.r, color.g, color.b, color.a);
             rlNormal3f(0.0f, 0.0f, 1.0f);
 
             rlTexCoord2f(recTexShapes.x/texShapes.width, recTexShapes.y/texShapes.height);
@@ -184,7 +184,7 @@ void DrawLineStrip(Vector2 *points, int pointsCount, Color color)
         if (rlCheckBufferLimit(pointsCount)) rlglDraw();
 
         rlBegin(RL_LINES);
-            rlColor4ub(color.r, color.g, color.b, color.a);
+            rlColor4f(color.r, color.g, color.b, color.a);
 
             for (int i = 0; i < pointsCount - 1; i++)
             {
@@ -239,7 +239,7 @@ void DrawCircleSector(Vector2 center, float radius, int startAngle, int endAngle
         // NOTE: Every QUAD actually represents two segments
         for (int i = 0; i < segments/2; i++)
         {
-            rlColor4ub(color.r, color.g, color.b, color.a);
+            rlColor4f(color.r, color.g, color.b, color.a);
 
             rlTexCoord2f(recTexShapes.x/texShapes.width, recTexShapes.y/texShapes.height);
             rlVertex2f(center.x, center.y);
@@ -259,7 +259,7 @@ void DrawCircleSector(Vector2 center, float radius, int startAngle, int endAngle
         // NOTE: In case number of segments is odd, we add one last piece to the cake
         if (segments%2)
         {
-            rlColor4ub(color.r, color.g, color.b, color.a);
+            rlColor4f(color.r, color.g, color.b, color.a);
 
             rlTexCoord2f(recTexShapes.x/texShapes.width, recTexShapes.y/texShapes.height);
             rlVertex2f(center.x, center.y);
@@ -282,7 +282,7 @@ void DrawCircleSector(Vector2 center, float radius, int startAngle, int endAngle
     rlBegin(RL_TRIANGLES);
         for (int i = 0; i < segments; i++)
         {
-            rlColor4ub(color.r, color.g, color.b, color.a);
+            rlColor4f(color.r, color.g, color.b, color.a);
 
             rlVertex2f(center.x, center.y);
             rlVertex2f(center.x + sinf(DEG2RAD*angle)*radius, center.y + cosf(DEG2RAD*angle)*radius);
@@ -334,14 +334,14 @@ void DrawCircleSectorLines(Vector2 center, float radius, int startAngle, int end
     rlBegin(RL_LINES);
         if (showCapLines)
         {
-            rlColor4ub(color.r, color.g, color.b, color.a);
+            rlColor4f(color.r, color.g, color.b, color.a);
             rlVertex2f(center.x, center.y);
             rlVertex2f(center.x + sinf(DEG2RAD*angle)*radius, center.y + cosf(DEG2RAD*angle)*radius);
         }
 
         for (int i = 0; i < segments; i++)
         {
-            rlColor4ub(color.r, color.g, color.b, color.a);
+            rlColor4f(color.r, color.g, color.b, color.a);
 
             rlVertex2f(center.x + sinf(DEG2RAD*angle)*radius, center.y + cosf(DEG2RAD*angle)*radius);
             rlVertex2f(center.x + sinf(DEG2RAD*(angle + stepLength))*radius, center.y + cosf(DEG2RAD*(angle + stepLength))*radius);
@@ -351,7 +351,7 @@ void DrawCircleSectorLines(Vector2 center, float radius, int startAngle, int end
 
         if (showCapLines)
         {
-            rlColor4ub(color.r, color.g, color.b, color.a);
+            rlColor4f(color.r, color.g, color.b, color.a);
             rlVertex2f(center.x, center.y);
             rlVertex2f(center.x + sinf(DEG2RAD*angle)*radius, center.y + cosf(DEG2RAD*angle)*radius);
         }
@@ -367,11 +367,11 @@ void DrawCircleGradient(int centerX, int centerY, float radius, Color color1, Co
     rlBegin(RL_TRIANGLES);
         for (int i = 0; i < 360; i += 10)
         {
-            rlColor4ub(color1.r, color1.g, color1.b, color1.a);
+            rlColor4f(color1.r, color1.g, color1.b, color1.a);
             rlVertex2f(centerX, centerY);
-            rlColor4ub(color2.r, color2.g, color2.b, color2.a);
+            rlColor4f(color2.r, color2.g, color2.b, color2.a);
             rlVertex2f(centerX + sinf(DEG2RAD*i)*radius, centerY + cosf(DEG2RAD*i)*radius);
-            rlColor4ub(color2.r, color2.g, color2.b, color2.a);
+            rlColor4f(color2.r, color2.g, color2.b, color2.a);
             rlVertex2f(centerX + sinf(DEG2RAD*(i + 10))*radius, centerY + cosf(DEG2RAD*(i + 10))*radius);
         }
     rlEnd();
@@ -390,7 +390,7 @@ void DrawCircleLines(int centerX, int centerY, float radius, Color color)
     if (rlCheckBufferLimit(2*36)) rlglDraw();
 
     rlBegin(RL_LINES);
-        rlColor4ub(color.r, color.g, color.b, color.a);
+        rlColor4f(color.r, color.g, color.b, color.a);
 
         // NOTE: Circle outline is drawn pixel by pixel every degree (0 to 360)
         for (int i = 0; i < 360; i += 10)
@@ -456,7 +456,7 @@ void DrawRing(Vector2 center, float innerRadius, float outerRadius, int startAng
     rlBegin(RL_QUADS);
         for (int i = 0; i < segments; i++)
         {
-            rlColor4ub(color.r, color.g, color.b, color.a);
+            rlColor4f(color.r, color.g, color.b, color.a);
 
             rlTexCoord2f(recTexShapes.x/texShapes.width, recTexShapes.y/texShapes.height);
             rlVertex2f(center.x + sinf(DEG2RAD*angle)*innerRadius, center.y + cosf(DEG2RAD*angle)*innerRadius);
@@ -481,7 +481,7 @@ void DrawRing(Vector2 center, float innerRadius, float outerRadius, int startAng
     rlBegin(RL_TRIANGLES);
         for (int i = 0; i < segments; i++)
         {
-            rlColor4ub(color.r, color.g, color.b, color.a);
+            rlColor4f(color.r, color.g, color.b, color.a);
 
             rlVertex2f(center.x + sinf(DEG2RAD*angle)*innerRadius, center.y + cosf(DEG2RAD*angle)*innerRadius);
             rlVertex2f(center.x + sinf(DEG2RAD*angle)*outerRadius, center.y + cosf(DEG2RAD*angle)*outerRadius);
@@ -552,14 +552,14 @@ void DrawRingLines(Vector2 center, float innerRadius, float outerRadius, int sta
     rlBegin(RL_LINES);
         if (showCapLines)
         {
-            rlColor4ub(color.r, color.g, color.b, color.a);
+            rlColor4f(color.r, color.g, color.b, color.a);
             rlVertex2f(center.x + sinf(DEG2RAD*angle)*outerRadius, center.y + cosf(DEG2RAD*angle)*outerRadius);
             rlVertex2f(center.x + sinf(DEG2RAD*angle)*innerRadius, center.y + cosf(DEG2RAD*angle)*innerRadius);
         }
 
         for (int i = 0; i < segments; i++)
         {
-            rlColor4ub(color.r, color.g, color.b, color.a);
+            rlColor4f(color.r, color.g, color.b, color.a);
 
             rlVertex2f(center.x + sinf(DEG2RAD*angle)*outerRadius, center.y + cosf(DEG2RAD*angle)*outerRadius);
             rlVertex2f(center.x + sinf(DEG2RAD*(angle + stepLength))*outerRadius, center.y + cosf(DEG2RAD*(angle + stepLength))*outerRadius);
@@ -572,7 +572,7 @@ void DrawRingLines(Vector2 center, float innerRadius, float outerRadius, int sta
 
         if (showCapLines)
         {
-            rlColor4ub(color.r, color.g, color.b, color.a);
+            rlColor4f(color.r, color.g, color.b, color.a);
             rlVertex2f(center.x + sinf(DEG2RAD*angle)*outerRadius, center.y + cosf(DEG2RAD*angle)*outerRadius);
             rlVertex2f(center.x + sinf(DEG2RAD*angle)*innerRadius, center.y + cosf(DEG2RAD*angle)*innerRadius);
         }
@@ -610,7 +610,7 @@ void DrawRectanglePro(Rectangle rec, Vector2 origin, float rotation, Color color
 
         rlBegin(RL_QUADS);
             rlNormal3f(0.0f, 0.0f, 1.0f);
-            rlColor4ub(color.r, color.g, color.b, color.a);
+            rlColor4f(color.r, color.g, color.b, color.a);
 
             rlTexCoord2f(recTexShapes.x/texShapes.width, recTexShapes.y/texShapes.height);
             rlVertex2f(0.0f, 0.0f);
@@ -654,19 +654,19 @@ void DrawRectangleGradientEx(Rectangle rec, Color col1, Color col2, Color col3, 
             rlNormal3f(0.0f, 0.0f, 1.0f);
 
             // NOTE: Default raylib font character 95 is a white square
-            rlColor4ub(col1.r, col1.g, col1.b, col1.a);
+            rlColor4f(col1.r, col1.g, col1.b, col1.a);
             rlTexCoord2f(recTexShapes.x/texShapes.width, recTexShapes.y/texShapes.height);
             rlVertex2f(rec.x, rec.y);
 
-            rlColor4ub(col2.r, col2.g, col2.b, col2.a);
+            rlColor4f(col2.r, col2.g, col2.b, col2.a);
             rlTexCoord2f(recTexShapes.x/texShapes.width, (recTexShapes.y + recTexShapes.height)/texShapes.height);
             rlVertex2f(rec.x, rec.y + rec.height);
 
-            rlColor4ub(col3.r, col3.g, col3.b, col3.a);
+            rlColor4f(col3.r, col3.g, col3.b, col3.a);
             rlTexCoord2f((recTexShapes.x + recTexShapes.width)/texShapes.width, (recTexShapes.y + recTexShapes.height)/texShapes.height);
             rlVertex2f(rec.x + rec.width, rec.y + rec.height);
 
-            rlColor4ub(col4.r, col4.g, col4.b, col4.a);
+            rlColor4f(col4.r, col4.g, col4.b, col4.a);
             rlTexCoord2f((recTexShapes.x + recTexShapes.width)/texShapes.width, recTexShapes.y/texShapes.height);
             rlVertex2f(rec.x + rec.width, rec.y);
         rlEnd();
@@ -686,7 +686,7 @@ void DrawRectangleLines(int posX, int posY, int width, int height, Color color)
     DrawRectangle(posX, posY + 1, 1, height - 2, color);
 #else
     rlBegin(RL_LINES);
-        rlColor4ub(color.r, color.g, color.b, color.a);
+        rlColor4f(color.r, color.g, color.b, color.a);
         rlVertex2i(posX + 1, posY + 1);
         rlVertex2i(posX + width, posY + 1);
 
@@ -789,7 +789,7 @@ void DrawRectangleRounded(Rectangle rec, float roundness, int segments, Color co
             // NOTE: Every QUAD actually represents two segments
             for (int i = 0; i < segments/2; i++)
             {
-                rlColor4ub(color.r, color.g, color.b, color.a);
+                rlColor4f(color.r, color.g, color.b, color.a);
                 rlTexCoord2f(recTexShapes.x/texShapes.width, recTexShapes.y/texShapes.height);
                 rlVertex2f(center.x, center.y);
                 rlTexCoord2f(recTexShapes.x/texShapes.width, (recTexShapes.y + recTexShapes.height)/texShapes.height);
@@ -803,7 +803,7 @@ void DrawRectangleRounded(Rectangle rec, float roundness, int segments, Color co
             // NOTE: In case number of segments is odd, we add one last piece to the cake
             if (segments%2)
             {
-                rlColor4ub(color.r, color.g, color.b, color.a);
+                rlColor4f(color.r, color.g, color.b, color.a);
                 rlTexCoord2f(recTexShapes.x/texShapes.width, recTexShapes.y/texShapes.height);
                 rlVertex2f(center.x, center.y);
                 rlTexCoord2f(recTexShapes.x/texShapes.width, (recTexShapes.y + recTexShapes.height)/texShapes.height);
@@ -816,7 +816,7 @@ void DrawRectangleRounded(Rectangle rec, float roundness, int segments, Color co
         }
 
         // [2] Upper Rectangle
-        rlColor4ub(color.r, color.g, color.b, color.a);
+        rlColor4f(color.r, color.g, color.b, color.a);
         rlTexCoord2f(recTexShapes.x/texShapes.width, recTexShapes.y/texShapes.height);
         rlVertex2f(point[0].x, point[0].y);
         rlTexCoord2f(recTexShapes.x/texShapes.width, (recTexShapes.y + recTexShapes.height)/texShapes.height);
@@ -827,7 +827,7 @@ void DrawRectangleRounded(Rectangle rec, float roundness, int segments, Color co
         rlVertex2f(point[1].x, point[1].y);
 
         // [4] Right Rectangle
-        rlColor4ub(color.r, color.g, color.b, color.a);
+        rlColor4f(color.r, color.g, color.b, color.a);
         rlTexCoord2f(recTexShapes.x/texShapes.width, recTexShapes.y/texShapes.height);
         rlVertex2f(point[2].x, point[2].y);
         rlTexCoord2f(recTexShapes.x/texShapes.width, (recTexShapes.y + recTexShapes.height)/texShapes.height);
@@ -838,7 +838,7 @@ void DrawRectangleRounded(Rectangle rec, float roundness, int segments, Color co
         rlVertex2f(point[3].x, point[3].y);
 
         // [6] Bottom Rectangle
-        rlColor4ub(color.r, color.g, color.b, color.a);
+        rlColor4f(color.r, color.g, color.b, color.a);
         rlTexCoord2f(recTexShapes.x/texShapes.width, recTexShapes.y/texShapes.height);
         rlVertex2f(point[11].x, point[11].y);
         rlTexCoord2f(recTexShapes.x/texShapes.width, (recTexShapes.y + recTexShapes.height)/texShapes.height);
@@ -849,7 +849,7 @@ void DrawRectangleRounded(Rectangle rec, float roundness, int segments, Color co
         rlVertex2f(point[10].x, point[10].y);
 
         // [8] Left Rectangle
-        rlColor4ub(color.r, color.g, color.b, color.a);
+        rlColor4f(color.r, color.g, color.b, color.a);
         rlTexCoord2f(recTexShapes.x/texShapes.width, recTexShapes.y/texShapes.height);
         rlVertex2f(point[7].x, point[7].y);
         rlTexCoord2f(recTexShapes.x/texShapes.width, (recTexShapes.y + recTexShapes.height)/texShapes.height);
@@ -860,7 +860,7 @@ void DrawRectangleRounded(Rectangle rec, float roundness, int segments, Color co
         rlVertex2f(point[8].x, point[8].y);
 
         // [9] Middle Rectangle
-        rlColor4ub(color.r, color.g, color.b, color.a);
+        rlColor4f(color.r, color.g, color.b, color.a);
         rlTexCoord2f(recTexShapes.x/texShapes.width, recTexShapes.y/texShapes.height);
         rlVertex2f(point[8].x, point[8].y);
         rlTexCoord2f(recTexShapes.x/texShapes.width, (recTexShapes.y + recTexShapes.height)/texShapes.height);
@@ -883,7 +883,7 @@ void DrawRectangleRounded(Rectangle rec, float roundness, int segments, Color co
             const Vector2 center = centers[k];
             for (int i = 0; i < segments; i++)
             {
-                rlColor4ub(color.r, color.g, color.b, color.a);
+                rlColor4f(color.r, color.g, color.b, color.a);
                 rlVertex2f(center.x, center.y);
                 rlVertex2f(center.x + sinf(DEG2RAD*angle)*radius, center.y + cosf(DEG2RAD*angle)*radius);
                 rlVertex2f(center.x + sinf(DEG2RAD*(angle + stepLength))*radius, center.y + cosf(DEG2RAD*(angle + stepLength))*radius);
@@ -892,7 +892,7 @@ void DrawRectangleRounded(Rectangle rec, float roundness, int segments, Color co
         }
 
         // [2] Upper Rectangle
-        rlColor4ub(color.r, color.g, color.b, color.a);
+        rlColor4f(color.r, color.g, color.b, color.a);
         rlVertex2f(point[0].x, point[0].y);
         rlVertex2f(point[8].x, point[8].y);
         rlVertex2f(point[9].x, point[9].y);
@@ -901,7 +901,7 @@ void DrawRectangleRounded(Rectangle rec, float roundness, int segments, Color co
         rlVertex2f(point[9].x, point[9].y);
 
         // [4] Right Rectangle
-        rlColor4ub(color.r, color.g, color.b, color.a);
+        rlColor4f(color.r, color.g, color.b, color.a);
         rlVertex2f(point[9].x, point[9].y);
         rlVertex2f(point[10].x, point[10].y);
         rlVertex2f(point[3].x, point[3].y);
@@ -910,7 +910,7 @@ void DrawRectangleRounded(Rectangle rec, float roundness, int segments, Color co
         rlVertex2f(point[3].x, point[3].y);
 
         // [6] Bottom Rectangle
-        rlColor4ub(color.r, color.g, color.b, color.a);
+        rlColor4f(color.r, color.g, color.b, color.a);
         rlVertex2f(point[11].x, point[11].y);
         rlVertex2f(point[5].x, point[5].y);
         rlVertex2f(point[4].x, point[4].y);
@@ -919,7 +919,7 @@ void DrawRectangleRounded(Rectangle rec, float roundness, int segments, Color co
         rlVertex2f(point[4].x, point[4].y);
 
         // [8] Left Rectangle
-        rlColor4ub(color.r, color.g, color.b, color.a);
+        rlColor4f(color.r, color.g, color.b, color.a);
         rlVertex2f(point[7].x, point[7].y);
         rlVertex2f(point[6].x, point[6].y);
         rlVertex2f(point[11].x, point[11].y);
@@ -928,7 +928,7 @@ void DrawRectangleRounded(Rectangle rec, float roundness, int segments, Color co
         rlVertex2f(point[11].x, point[11].y);
 
         // [9] Middle Rectangle
-        rlColor4ub(color.r, color.g, color.b, color.a);
+        rlColor4f(color.r, color.g, color.b, color.a);
         rlVertex2f(point[8].x, point[8].y);
         rlVertex2f(point[11].x, point[11].y);
         rlVertex2f(point[10].x, point[10].y);
@@ -1021,7 +1021,7 @@ void DrawRectangleRoundedLines(Rectangle rec, float roundness, int segments, int
                 const Vector2 center = centers[k];
                 for (int i = 0; i < segments; i++)
                 {
-                    rlColor4ub(color.r, color.g, color.b, color.a);
+                    rlColor4f(color.r, color.g, color.b, color.a);
                     rlTexCoord2f(recTexShapes.x/texShapes.width, recTexShapes.y/texShapes.height);
                     rlVertex2f(center.x + sinf(DEG2RAD*angle)*innerRadius, center.y + cosf(DEG2RAD*angle)*innerRadius);
                     rlTexCoord2f(recTexShapes.x/texShapes.width, (recTexShapes.y + recTexShapes.height)/texShapes.height);
@@ -1036,7 +1036,7 @@ void DrawRectangleRoundedLines(Rectangle rec, float roundness, int segments, int
             }
 
             // Upper rectangle
-            rlColor4ub(color.r, color.g, color.b, color.a);
+            rlColor4f(color.r, color.g, color.b, color.a);
             rlTexCoord2f(recTexShapes.x/texShapes.width, recTexShapes.y/texShapes.height);
             rlVertex2f(point[0].x, point[0].y);
             rlTexCoord2f(recTexShapes.x/texShapes.width, (recTexShapes.y + recTexShapes.height)/texShapes.height);
@@ -1047,7 +1047,7 @@ void DrawRectangleRoundedLines(Rectangle rec, float roundness, int segments, int
             rlVertex2f(point[1].x, point[1].y);
 
             // Right rectangle
-            rlColor4ub(color.r, color.g, color.b, color.a);
+            rlColor4f(color.r, color.g, color.b, color.a);
             rlTexCoord2f(recTexShapes.x/texShapes.width, recTexShapes.y/texShapes.height);
             rlVertex2f(point[2].x, point[2].y);
             rlTexCoord2f(recTexShapes.x/texShapes.width, (recTexShapes.y + recTexShapes.height)/texShapes.height);
@@ -1058,7 +1058,7 @@ void DrawRectangleRoundedLines(Rectangle rec, float roundness, int segments, int
             rlVertex2f(point[3].x, point[3].y);
 
             // Lower rectangle
-            rlColor4ub(color.r, color.g, color.b, color.a);
+            rlColor4f(color.r, color.g, color.b, color.a);
             rlTexCoord2f(recTexShapes.x/texShapes.width, recTexShapes.y/texShapes.height);
             rlVertex2f(point[13].x, point[13].y);
             rlTexCoord2f(recTexShapes.x/texShapes.width, (recTexShapes.y + recTexShapes.height)/texShapes.height);
@@ -1069,7 +1069,7 @@ void DrawRectangleRoundedLines(Rectangle rec, float roundness, int segments, int
             rlVertex2f(point[12].x, point[12].y);
 
             // Left rectangle
-            rlColor4ub(color.r, color.g, color.b, color.a);
+            rlColor4f(color.r, color.g, color.b, color.a);
             rlTexCoord2f(recTexShapes.x/texShapes.width, recTexShapes.y/texShapes.height);
             rlVertex2f(point[15].x, point[15].y);
             rlTexCoord2f(recTexShapes.x/texShapes.width, (recTexShapes.y + recTexShapes.height)/texShapes.height);
@@ -1094,7 +1094,7 @@ void DrawRectangleRoundedLines(Rectangle rec, float roundness, int segments, int
 
                 for (int i = 0; i < segments; i++)
                 {
-                    rlColor4ub(color.r, color.g, color.b, color.a);
+                    rlColor4f(color.r, color.g, color.b, color.a);
 
                     rlVertex2f(center.x + sinf(DEG2RAD*angle)*innerRadius, center.y + cosf(DEG2RAD*angle)*innerRadius);
                     rlVertex2f(center.x + sinf(DEG2RAD*angle)*outerRadius, center.y + cosf(DEG2RAD*angle)*outerRadius);
@@ -1109,7 +1109,7 @@ void DrawRectangleRoundedLines(Rectangle rec, float roundness, int segments, int
             }
 
             // Upper rectangle
-            rlColor4ub(color.r, color.g, color.b, color.a);
+            rlColor4f(color.r, color.g, color.b, color.a);
             rlVertex2f(point[0].x, point[0].y);
             rlVertex2f(point[8].x, point[8].y);
             rlVertex2f(point[9].x, point[9].y);
@@ -1118,7 +1118,7 @@ void DrawRectangleRoundedLines(Rectangle rec, float roundness, int segments, int
             rlVertex2f(point[9].x, point[9].y);
 
             // Right rectangle
-            rlColor4ub(color.r, color.g, color.b, color.a);
+            rlColor4f(color.r, color.g, color.b, color.a);
             rlVertex2f(point[10].x, point[10].y);
             rlVertex2f(point[11].x, point[11].y);
             rlVertex2f(point[3].x, point[3].y);
@@ -1127,7 +1127,7 @@ void DrawRectangleRoundedLines(Rectangle rec, float roundness, int segments, int
             rlVertex2f(point[3].x, point[3].y);
 
             // Lower rectangle
-            rlColor4ub(color.r, color.g, color.b, color.a);
+            rlColor4f(color.r, color.g, color.b, color.a);
             rlVertex2f(point[13].x, point[13].y);
             rlVertex2f(point[5].x, point[5].y);
             rlVertex2f(point[4].x, point[4].y);
@@ -1136,7 +1136,7 @@ void DrawRectangleRoundedLines(Rectangle rec, float roundness, int segments, int
             rlVertex2f(point[4].x, point[4].y);
 
             // Left rectangle
-            rlColor4ub(color.r, color.g, color.b, color.a);
+            rlColor4f(color.r, color.g, color.b, color.a);
             rlVertex2f(point[7].x, point[7].y);
             rlVertex2f(point[6].x, point[6].y);
             rlVertex2f(point[14].x, point[14].y);
@@ -1161,7 +1161,7 @@ void DrawRectangleRoundedLines(Rectangle rec, float roundness, int segments, int
 
                 for (int i = 0; i < segments; i++)
                 {
-                    rlColor4ub(color.r, color.g, color.b, color.a);
+                    rlColor4f(color.r, color.g, color.b, color.a);
                     rlVertex2f(center.x + sinf(DEG2RAD*angle)*outerRadius, center.y + cosf(DEG2RAD*angle)*outerRadius);
                     rlVertex2f(center.x + sinf(DEG2RAD*(angle + stepLength))*outerRadius, center.y + cosf(DEG2RAD*(angle + stepLength))*outerRadius);
                     angle += stepLength;
@@ -1170,7 +1170,7 @@ void DrawRectangleRoundedLines(Rectangle rec, float roundness, int segments, int
             // And now the remaining 4 lines
             for(int i = 0; i < 8; i += 2)
             {
-                rlColor4ub(color.r, color.g, color.b, color.a);
+                rlColor4f(color.r, color.g, color.b, color.a);
                 rlVertex2f(point[i].x, point[i].y);
                 rlVertex2f(point[i + 1].x, point[i + 1].y);
             }
@@ -1188,7 +1188,7 @@ void DrawTriangle(Vector2 v1, Vector2 v2, Vector2 v3, Color color)
     rlEnableTexture(GetShapesTexture().id);
 
     rlBegin(RL_QUADS);
-        rlColor4ub(color.r, color.g, color.b, color.a);
+        rlColor4f(color.r, color.g, color.b, color.a);
 
         rlTexCoord2f(recTexShapes.x/texShapes.width, recTexShapes.y/texShapes.height);
         rlVertex2f(v1.x, v1.y);
@@ -1206,7 +1206,7 @@ void DrawTriangle(Vector2 v1, Vector2 v2, Vector2 v3, Color color)
     rlDisableTexture();
 #else
     rlBegin(RL_TRIANGLES);
-        rlColor4ub(color.r, color.g, color.b, color.a);
+        rlColor4f(color.r, color.g, color.b, color.a);
         rlVertex2f(v1.x, v1.y);
         rlVertex2f(v2.x, v2.y);
         rlVertex2f(v3.x, v3.y);
@@ -1221,7 +1221,7 @@ void DrawTriangleLines(Vector2 v1, Vector2 v2, Vector2 v3, Color color)
     if (rlCheckBufferLimit(6)) rlglDraw();
 
     rlBegin(RL_LINES);
-        rlColor4ub(color.r, color.g, color.b, color.a);
+        rlColor4f(color.r, color.g, color.b, color.a);
         rlVertex2f(v1.x, v1.y);
         rlVertex2f(v2.x, v2.y);
 
@@ -1243,7 +1243,7 @@ void DrawTriangleFan(Vector2 *points, int pointsCount, Color color)
 
         rlEnableTexture(GetShapesTexture().id);
         rlBegin(RL_QUADS);
-            rlColor4ub(color.r, color.g, color.b, color.a);
+            rlColor4f(color.r, color.g, color.b, color.a);
 
             for (int i = 1; i < pointsCount - 1; i++)
             {
@@ -1273,7 +1273,7 @@ void DrawTriangleStrip(Vector2 *points, int pointsCount, Color color)
         if (rlCheckBufferLimit(pointsCount)) rlglDraw();
 
         rlBegin(RL_TRIANGLES);
-            rlColor4ub(color.r, color.g, color.b, color.a);
+            rlColor4f(color.r, color.g, color.b, color.a);
 
             for (int i = 2; i < pointsCount; i++)
             {
@@ -1312,7 +1312,7 @@ void DrawPoly(Vector2 center, int sides, float radius, float rotation, Color col
         rlBegin(RL_QUADS);
             for (int i = 0; i < sides; i++)
             {
-                rlColor4ub(color.r, color.g, color.b, color.a);
+                rlColor4f(color.r, color.g, color.b, color.a);
 
                 rlTexCoord2f(recTexShapes.x/texShapes.width, recTexShapes.y/texShapes.height);
                 rlVertex2f(0, 0);
@@ -1333,7 +1333,7 @@ void DrawPoly(Vector2 center, int sides, float radius, float rotation, Color col
         rlBegin(RL_TRIANGLES);
             for (int i = 0; i < sides; i++)
             {
-                rlColor4ub(color.r, color.g, color.b, color.a);
+                rlColor4f(color.r, color.g, color.b, color.a);
 
                 rlVertex2f(0, 0);
                 rlVertex2f(sinf(DEG2RAD*centralAngle)*radius, cosf(DEG2RAD*centralAngle)*radius);

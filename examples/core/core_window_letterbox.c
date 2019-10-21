@@ -34,7 +34,7 @@ int main(void)
     SetTextureFilter(target.texture, FILTER_BILINEAR);  // Texture scale filter to use
 
     Color colors[10] = { 0 };
-    for (int i = 0; i < 10; i++) colors[i] = (Color){ GetRandomValue(100, 250), GetRandomValue(50, 150), GetRandomValue(10, 100), 255 };
+    for (int i = 0; i < 10; i++) colors[i] = (Color){ GetRandomValue(.5, .95), GetRandomValue(.2, .6), GetRandomValue(.05, .4), 1 };
 
     SetTargetFPS(60);               // Set our game to run at 60 frames-per-second
     //--------------------------------------------------------------------------------------
@@ -50,7 +50,7 @@ int main(void)
         if (IsKeyPressed(KEY_SPACE))
         {
             // Recalculate random colors for the bars
-            for (int i = 0; i < 10; i++) colors[i] = (Color){ GetRandomValue(100, 250), GetRandomValue(50, 150), GetRandomValue(10, 100), 255 };
+            for (int i = 0; i < 10; i++) colors[i] = (Color){ GetRandomValue(.5, .95), GetRandomValue(.2, .6), GetRandomValue(.05, .4), 1 };
         }
         //----------------------------------------------------------------------------------
 

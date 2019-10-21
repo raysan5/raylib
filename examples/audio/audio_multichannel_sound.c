@@ -62,7 +62,7 @@ int main(void)
             if (!inhibitOgg) PlaySoundMulti(fxOgg);
             
             frame = 0;
-            maxFrame = GetRandomValue(6,12);
+            maxFrame = GetRandomInt(6,12);
         }
 
         soundsCounter = GetSoundsPlaying();

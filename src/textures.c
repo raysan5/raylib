@@ -299,7 +299,7 @@ Image LoadImage(const char *fileName)
 
 // Load image from Color array data (RGBA - 32bit)
 // NOTE: Creates a copy of pixels data array
-Image LoadImageEx(Color *pixels, int width, int height)
+Image LoadImageEx(Color4ub *pixels, int width, int height)
 {
     Image image;
     image.data = NULL;
@@ -455,9 +455,9 @@ void UnloadRenderTexture(RenderTexture2D target)
 }
 
 // Get pixel data from image in the form of Color struct array
-Color *GetImageData(Image image)
+Color4ub *GetImageData(Image image)
 {
-    Color *pixels = (Color *)RL_MALLOC(image.width*image.height*sizeof(Color));
+    Color4ub *pixels = (Color4ub *)RL_MALLOC(image.width*image.height*sizeof(Color4ub));
 
     if (image.format >= COMPRESSED_DXT1_RGB) TraceLog(LOG_WARNING, "Pixel data retrieval not supported for compressed image formats");
     else
@@ -683,7 +683,7 @@ Vector4 *GetImageDataNormalized(Image image)
 // Get image alpha border rectangle
 Rectangle GetImageAlphaBorder(Image image, float threshold)
 {
-    Color *pixels = GetImageData(image);
+    Color4ub *pixels = GetImageData(image);
 
     int xMin = 65536;   // Define a big enough number
     int xMax = 0;
@@ -936,12 +936,17 @@ Image ImageFromImage(Image image, Rectangle rec)
 
 // Convert image to POT (power-of-two)
 // NOTE: It could be useful on OpenGL ES 2.0 (RPI, HTML5)
-void ImageToPOT(Image *image, Color fillColor)
+void ImageToPOT(Image *image, Color fill)
 {
+    Color4ub fillColor;
+    fillColor.r = fill.r * 255;
+    fillColor.g = fill.g * 255;
+    fillColor.b = fill.b * 255;
+    fillColor.a = fill.a * 255;
     // Security check to avoid program crash
     if ((image->data == NULL) || (image->width == 0) || (image->height == 0)) return;
 
-    Color *pixels = GetImageData(*image);   // Get pixels data
+    Color4ub *pixels = GetImageData(*image);   // Get pixels data
 
     // Calculate next power-of-two values
     // NOTE: Just add the required amount of pixels at the right and bottom sides of image...
@@ -951,10 +956,10 @@ void ImageToPOT(Image *image, Color fillColor)
     // Check if POT texture generation is required (if texture is not already POT)
     if ((potWidth != image->width) || (potHeight != image->height))
     {
-        Color *pixelsPOT = NULL;
+        Color4ub *pixelsPOT = NULL;
 
         // Generate POT array from NPOT data
-        pixelsPOT = (Color *)RL_MALLOC(potWidth*potHeight*sizeof(Color));
+        pixelsPOT = (Color4ub *)RL_MALLOC(potWidth*potHeight*sizeof(Color4ub));
 
         for (int j = 0; j < potHeight; j++)
         {
@@ -1214,12 +1219,17 @@ void ImageAlphaMask(Image *image, Image alphaMask)
 // NOTE: Threshold defines the alpha limit, 0.0f to 1.0f
 void ImageAlphaClear(Image *image, Color color, float threshold)
 {
+    Color4ub actual;
+    actual.r = color.r * 255;
+    actual.g = color.g * 255;
+    actual.b = color.b * 255;
+    actual.a = color.a * 255;
     // Security check to avoid program crash
     if ((image->data == NULL) || (image->width == 0) || (image->height == 0)) return;
 
-    Color *pixels = GetImageData(*image);
+    Color4ub *pixels = GetImageData(*image);
 
-    for (int i = 0; i < image->width*image->height; i++) if (pixels[i].a <= (unsigned char)(threshold*255.0f)) pixels[i] = color;
+    for (int i = 0; i < image->width*image->height; i++) if (pixels[i].a <= (unsigned char)(threshold*255.0f)) pixels[i] = actual;
 
     UnloadImage(*image);
 
@@ -1236,7 +1246,7 @@ void ImageAlphaPremultiply(Image *image)
     if ((image->data == NULL) || (image->width == 0) || (image->height == 0)) return;
 
     float alpha = 0.0f;
-    Color *pixels = GetImageData(*image);
+    Color4ub *pixels = GetImageData(*image);
 
     for (int i = 0; i < image->width*image->height; i++)
     {
@@ -1353,8 +1363,8 @@ void ImageCrop(Image *image, Rectangle crop)
     if ((crop.x < image->width) && (crop.y < image->height))
     {
         // Start the cropping process
-        Color *pixels = GetImageData(*image);   // Get data as Color pixels array
-        Color *cropPixels = (Color *)RL_MALLOC((int)crop.width*(int)crop.height*sizeof(Color));
+        Color4ub *pixels = GetImageData(*image);   // Get data as Color pixels array
+        Color4ub *cropPixels = (Color4ub *)RL_MALLOC((int)crop.width*(int)crop.height*sizeof(Color4ub));
 
         for (int j = (int)crop.y; j < (int)(crop.y + crop.height); j++)
         {
@@ -1386,7 +1396,7 @@ void ImageAlphaCrop(Image *image, float threshold)
     // Security check to avoid program crash
     if ((image->data == NULL) || (image->width == 0) || (image->height == 0)) return;
 
-    Color *pixels = GetImageData(*image);
+    Color4ub *pixels = GetImageData(*image);
 
     int xMin = 65536;   // Define a big enough number
     int xMax = 0;
@@ -1425,8 +1435,8 @@ void ImageResize(Image *image, int newWidth, int newHeight)
     if ((image->data == NULL) || (image->width == 0) || (image->height == 0)) return;
 
     // Get data as Color pixels array to work with it
-    Color *pixels = GetImageData(*image);
-    Color *output = (Color *)RL_MALLOC(newWidth*newHeight*sizeof(Color));
+    Color4ub *pixels = GetImageData(*image);
+    Color4ub *output = (Color4ub *)RL_MALLOC(newWidth*newHeight*sizeof(Color4ub));
 
     // NOTE: Color data is casted to (unsigned char *), there shouldn't been any problem...
     stbir_resize_uint8((unsigned char *)pixels, image->width, image->height, 0, (unsigned char *)output, newWidth, newHeight, 0, 4);
@@ -1448,8 +1458,8 @@ void ImageResizeNN(Image *image,int newWidth,int newHeight)
     // Security check to avoid program crash
     if ((image->data == NULL) || (image->width == 0) || (image->height == 0)) return;
 
-    Color *pixels = GetImageData(*image);
-    Color *output = (Color *)RL_MALLOC(newWidth*newHeight*sizeof(Color));
+    Color4ub *pixels = GetImageData(*image);
+    Color4ub *output = (Color4ub *)RL_MALLOC(newWidth*newHeight*sizeof(Color4ub));
 
     // EDIT: added +1 to account for an early rounding problem
     int xRatio = (int)((image->width << 16)/newWidth) + 1;
@@ -1654,7 +1664,7 @@ void ImageDither(Image *image, int rBpp, int gBpp, int bBpp, int aBpp)
     }
     else
     {
-        Color *pixels = GetImageData(*image);
+        Color4ub *pixels = GetImageData(*image);
 
         RL_FREE(image->data);      // free old image data
 
@@ -1676,8 +1686,8 @@ void ImageDither(Image *image, int rBpp, int gBpp, int bBpp, int aBpp)
         // NOTE: We will store the dithered data as unsigned short (16bpp)
         image->data = (unsigned short *)RL_MALLOC(image->width*image->height*sizeof(unsigned short));
 
-        Color oldPixel = WHITE;
-        Color newPixel = WHITE;
+        Color4ub oldPixel = (Color4ub){255,255,255,255};
+        Color4ub newPixel = (Color4ub){255,255,255,255};
 
         int rError, gError, bError;
         unsigned short rPixel, gPixel, bPixel, aPixel;   // Used for 16bit pixel composition
@@ -1752,11 +1762,12 @@ Color *ImageExtractPalette(Image image, int maxPaletteSize, int *extractCount)
 {
     #define COLOR_EQUAL(col1, col2) ((col1.r == col2.r)&&(col1.g == col2.g)&&(col1.b == col2.b)&&(col1.a == col2.a))
 
-    Color *pixels = GetImageData(image);
-    Color *palette = (Color *)RL_MALLOC(maxPaletteSize*sizeof(Color));
+    Color4ub *pixels = GetImageData(image);
+    Color4ub *palette = (Color4ub *)RL_MALLOC(maxPaletteSize*sizeof(Color4ub));
+    Color *fPalette = (Color *)RL_MALLOC(maxPaletteSize*sizeof(Color));
 
     int palCount = 0;
-    for (int i = 0; i < maxPaletteSize; i++) palette[i] = BLANK;   // Set all colors to BLANK
+    for (int i = 0; i < maxPaletteSize; i++) palette[i] = (Color4ub){0,0,0,0};   // Set all colors to BLANK
 
     for (int i = 0; i < image.width*image.height; i++)
     {
@@ -1793,8 +1804,15 @@ Color *ImageExtractPalette(Image image, int maxPaletteSize, int *extractCount)
     RL_FREE(pixels);
 
     *extractCount = palCount;
+    for (int i=0; i<palCount; i++) {
+        fPalette[i].r = palette[i].r / 255;
+        fPalette[i].r = palette[i].g / 255;
+        fPalette[i].r = palette[i].b / 255;
+        fPalette[i].r = palette[i].a / 255;
+    }
+    RL_FREE(palette);
 
-    return palette;
+    return fPalette;
 }
 
 // Draw an image (source) within an image (destination)
@@ -1862,13 +1880,13 @@ void ImageDraw(Image *dst, Image src, Rectangle srcRec, Rectangle dstRec, Color 
     }
 
     // Get image data as Color pixels array to work with it
-    Color *dstPixels = GetImageData(*dst);
-    Color *srcPixels = GetImageData(srcCopy);
+    Color4ub *dstPixels = GetImageData(*dst);
+    Color4ub *srcPixels = GetImageData(srcCopy);
 
     UnloadImage(srcCopy);       // Source copy not required any more
 
-    Vector4 fsrc, fdst, fout;   // Normalized pixel data (ready for operation)
-    Vector4 ftint = ColorNormalize(tint);   // Normalized color tint
+    Color fsrc, fdst, fout;   // Normalized pixel data (ready for operation)
+    Color ftint = (Color){tint.r, tint.g, tint.b, tint.a};
 
     // Blit pixels, copy source image into destination
     // TODO: Maybe out-of-bounds blitting could be considered here instead of so much cropping
@@ -1878,31 +1896,31 @@ void ImageDraw(Image *dst, Image src, Rectangle srcRec, Rectangle dstRec, Color 
         {
             // Alpha blending (https://en.wikipedia.org/wiki/Alpha_compositing)
 
-            fdst = ColorNormalize(dstPixels[j*(int)dst->width + i]);
-            fsrc = ColorNormalize(srcPixels[(j - (int)dstRec.y)*(int)dstRec.width + (i - (int)dstRec.x)]);
+            fdst = Color4ubNormalize(dstPixels[j*(int)dst->width + i]);
+            fsrc = Color4ubNormalize(srcPixels[(j - (int)dstRec.y)*(int)dstRec.width + (i - (int)dstRec.x)]);
 
             // Apply color tint to source image
-            fsrc.x *= ftint.x; fsrc.y *= ftint.y; fsrc.z *= ftint.z; fsrc.w *= ftint.w;
+            fsrc.r *= ftint.r; fsrc.g *= ftint.g; fsrc.b *= ftint.b; fsrc.a *= ftint.a;
 
-            fout.w = fsrc.w + fdst.w*(1.0f - fsrc.w);
+            fout.a = fsrc.a + fdst.a*(1.0f - fsrc.a);
 
-            if (fout.w <= 0.0f)
+            if (fout.a <= 0.0f)
             {
-                fout.x = 0.0f;
-                fout.y = 0.0f;
-                fout.z = 0.0f;
+                fout.r = 0.0f;
+                fout.g = 0.0f;
+                fout.b = 0.0f;
             }
             else
             {
-                fout.x = (fsrc.x*fsrc.w + fdst.x*fdst.w*(1 - fsrc.w))/fout.w;
-                fout.y = (fsrc.y*fsrc.w + fdst.y*fdst.w*(1 - fsrc.w))/fout.w;
-                fout.z = (fsrc.z*fsrc.w + fdst.z*fdst.w*(1 - fsrc.w))/fout.w;
+                fout.r = (fsrc.r*fsrc.a + fdst.r*fdst.a*(1 - fsrc.a))/fout.a;
+                fout.g = (fsrc.g*fsrc.a + fdst.g*fdst.a*(1 - fsrc.a))/fout.a;
+                fout.b = (fsrc.b*fsrc.a + fdst.b*fdst.a*(1 - fsrc.a))/fout.a;
             }
 
-            dstPixels[j*(int)dst->width + i] = (Color){ (unsigned char)(fout.x*255.0f),
-                                                        (unsigned char)(fout.y*255.0f),
-                                                        (unsigned char)(fout.z*255.0f),
-                                                        (unsigned char)(fout.w*255.0f) };
+            dstPixels[j*(int)dst->width + i] = (Color4ub){ (unsigned char)(fout.r*255.0f),
+                                                         (unsigned char)(fout.g*255.0f),
+                                                         (unsigned char)(fout.b*255.0f),
+                                                         (unsigned char)(fout.a*255.0f) };
 
             // TODO: Support other blending options
         }
@@ -2031,8 +2049,8 @@ void ImageFlipVertical(Image *image)
     // Security check to avoid program crash
     if ((image->data == NULL) || (image->width == 0) || (image->height == 0)) return;
 
-    Color *srcPixels = GetImageData(*image);
-    Color *dstPixels = (Color *)RL_MALLOC(image->width*image->height*sizeof(Color));
+    Color4ub *srcPixels = GetImageData(*image);
+    Color4ub *dstPixels = (Color4ub *)RL_MALLOC(image->width*image->height*sizeof(Color4ub));
 
     for (int y = 0; y < image->height; y++)
     {
@@ -2058,8 +2076,8 @@ void ImageFlipHorizontal(Image *image)
     // Security check to avoid program crash
     if ((image->data == NULL) || (image->width == 0) || (image->height == 0)) return;
 
-    Color *srcPixels = GetImageData(*image);
-    Color *dstPixels = (Color *)RL_MALLOC(image->width*image->height*sizeof(Color));
+    Color4ub *srcPixels = GetImageData(*image);
+    Color4ub *dstPixels = (Color4ub *)RL_MALLOC(image->width*image->height*sizeof(Color4ub));
 
     for (int y = 0; y < image->height; y++)
     {
@@ -2085,8 +2103,8 @@ void ImageRotateCW(Image *image)
     // Security check to avoid program crash
     if ((image->data == NULL) || (image->width == 0) || (image->height == 0)) return;
 
-    Color *srcPixels = GetImageData(*image);
-    Color *rotPixels = (Color *)RL_MALLOC(image->width*image->height*sizeof(Color));
+    Color4ub *srcPixels = GetImageData(*image);
+    Color4ub *rotPixels = (Color4ub *)RL_MALLOC(image->width*image->height*sizeof(Color4ub));
 
     for (int y = 0; y < image->height; y++)
     {
@@ -2114,8 +2132,8 @@ void ImageRotateCCW(Image *image)
     // Security check to avoid program crash
     if ((image->data == NULL) || (image->width == 0) || (image->height == 0)) return;
 
-    Color *srcPixels = GetImageData(*image);
-    Color *rotPixels = (Color *)RL_MALLOC(image->width*image->height*sizeof(Color));
+    Color4ub *srcPixels = GetImageData(*image);
+    Color4ub *rotPixels = (Color4ub *)RL_MALLOC(image->width*image->height*sizeof(Color4ub));
 
     for (int y = 0; y < image->height; y++)
     {
@@ -2143,12 +2161,12 @@ void ImageColorTint(Image *image, Color color)
     // Security check to avoid program crash
     if ((image->data == NULL) || (image->width == 0) || (image->height == 0)) return;
 
-    Color *pixels = GetImageData(*image);
+    Color4ub *pixels = GetImageData(*image);
 
-    float cR = (float)color.r/255;
-    float cG = (float)color.g/255;
-    float cB = (float)color.b/255;
-    float cA = (float)color.a/255;
+    float cR = (float)color.r;
+    float cG = (float)color.g;
+    float cB = (float)color.b;
+    float cA = (float)color.a;
 
     for (int y = 0; y < image->height; y++)
     {
@@ -2181,7 +2199,7 @@ void ImageColorInvert(Image *image)
     // Security check to avoid program crash
     if ((image->data == NULL) || (image->width == 0) || (image->height == 0)) return;
 
-    Color *pixels = GetImageData(*image);
+    Color4ub *pixels = GetImageData(*image);
 
     for (int y = 0; y < image->height; y++)
     {
@@ -2220,7 +2238,7 @@ void ImageColorContrast(Image *image, float contrast)
     contrast = (100.0f + contrast)/100.0f;
     contrast *= contrast;
 
-    Color *pixels = GetImageData(*image);
+    Color4ub *pixels = GetImageData(*image);
 
     for (int y = 0; y < image->height; y++)
     {
@@ -2274,7 +2292,7 @@ void ImageColorBrightness(Image *image, int brightness)
     if (brightness < -255) brightness = -255;
     if (brightness > 255) brightness = 255;
 
-    Color *pixels = GetImageData(*image);
+    Color4ub *pixels = GetImageData(*image);
 
     for (int y = 0; y < image->height; y++)
     {
@@ -2313,21 +2331,21 @@ void ImageColorReplace(Image *image, Color color, Color replace)
     // Security check to avoid program crash
     if ((image->data == NULL) || (image->width == 0) || (image->height == 0)) return;
 
-    Color *pixels = GetImageData(*image);
+    Color4ub *pixels = GetImageData(*image);
 
     for (int y = 0; y < image->height; y++)
     {
         for (int x = 0; x < image->width; x++)
         {
-            if ((pixels[y*image->width + x].r == color.r) &&
-                (pixels[y*image->width + x].g == color.g) &&
-                (pixels[y*image->width + x].b == color.b) &&
-                (pixels[y*image->width + x].a == color.a))
+            if ((pixels[y*image->width + x].r == color.r * 255) &&
+                (pixels[y*image->width + x].g == color.g * 255) &&
+                (pixels[y*image->width + x].b == color.b * 255) &&
+                (pixels[y*image->width + x].a == color.a * 255))
             {
-                pixels[y*image->width + x].r = replace.r;
-                pixels[y*image->width + x].g = replace.g;
-                pixels[y*image->width + x].b = replace.b;
-                pixels[y*image->width + x].a = replace.a;
+                pixels[y*image->width + x].r = replace.r * 255;
+                pixels[y*image->width + x].g = replace.g * 255;
+                pixels[y*image->width + x].b = replace.b * 255;
+                pixels[y*image->width + x].a = replace.a * 255;
             }
         }
     }
@@ -2344,9 +2362,14 @@ void ImageColorReplace(Image *image, Color color, Color replace)
 // Generate image: plain color
 Image GenImageColor(int width, int height, Color color)
 {
-    Color *pixels = (Color *)RL_CALLOC(width*height, sizeof(Color));
+    Color4ub *pixels = (Color4ub *)RL_CALLOC(width*height, sizeof(Color4ub));
+    Color4ub rcol;
+    rcol.r = color.r * 255;
+    rcol.g = color.g * 255;
+    rcol.b = color.b * 255;
+    rcol.a = color.a * 255;
 
-    for (int i = 0; i < width*height; i++) pixels[i] = color;
+    for (int i = 0; i < width*height; i++) pixels[i] = rcol;
 
     Image image = LoadImageEx(pixels, width, height);
 
@@ -2359,17 +2382,26 @@ Image GenImageColor(int width, int height, Color color)
 // Generate image: vertical gradient
 Image GenImageGradientV(int width, int height, Color top, Color bottom)
 {
-    Color *pixels = (Color *)RL_MALLOC(width*height*sizeof(Color));
+    Color4ub *pixels = (Color4ub *)RL_MALLOC(width*height*sizeof(Color4ub));
+    Color4ub topr, bottomr;
+    topr.r = top.r * 255;
+    topr.g = top.g * 255;
+    topr.b = top.b * 255;
+    topr.a = top.a * 255;
+    bottomr.r = bottom.r * 255;
+    bottomr.g = bottom.r * 255;
+    bottomr.b = bottom.r * 255;
+    bottomr.a = bottom.r * 255;
 
     for (int j = 0; j < height; j++)
     {
         float factor = (float)j/(float)height;
         for (int i = 0; i < width; i++)
         {
-            pixels[j*width + i].r = (int)((float)bottom.r*factor + (float)top.r*(1.f - factor));
-            pixels[j*width + i].g = (int)((float)bottom.g*factor + (float)top.g*(1.f - factor));
-            pixels[j*width + i].b = (int)((float)bottom.b*factor + (float)top.b*(1.f - factor));
-            pixels[j*width + i].a = (int)((float)bottom.a*factor + (float)top.a*(1.f - factor));
+            pixels[j*width + i].r = (int)((float)bottomr.r*factor + (float)topr.r*(1.f - factor));
+            pixels[j*width + i].g = (int)((float)bottomr.g*factor + (float)topr.g*(1.f - factor));
+            pixels[j*width + i].b = (int)((float)bottomr.b*factor + (float)topr.b*(1.f - factor));
+            pixels[j*width + i].a = (int)((float)bottomr.a*factor + (float)topr.a*(1.f - factor));
         }
     }
 
@@ -2382,17 +2414,26 @@ Image GenImageGradientV(int width, int height, Color top, Color bottom)
 // Generate image: horizontal gradient
 Image GenImageGradientH(int width, int height, Color left, Color right)
 {
-    Color *pixels = (Color *)RL_MALLOC(width*height*sizeof(Color));
+    Color4ub *pixels = (Color4ub *)RL_MALLOC(width*height*sizeof(Color4ub));
+    Color4ub leftr, rightr;
+    leftr.r = left.r * 255;
+    leftr.g = left.g * 255;
+    leftr.b = left.b * 255;
+    leftr.a = left.a * 255;
+    rightr.r = right.r * 255;
+    rightr.g = right.g * 255;
+    rightr.b = right.b * 255;
+    rightr.a = right.a * 255;
 
     for (int i = 0; i < width; i++)
     {
         float factor = (float)i/(float)width;
         for (int j = 0; j < height; j++)
         {
-            pixels[j*width + i].r = (int)((float)right.r*factor + (float)left.r*(1.f - factor));
-            pixels[j*width + i].g = (int)((float)right.g*factor + (float)left.g*(1.f - factor));
-            pixels[j*width + i].b = (int)((float)right.b*factor + (float)left.b*(1.f - factor));
-            pixels[j*width + i].a = (int)((float)right.a*factor + (float)left.a*(1.f - factor));
+            pixels[j*width + i].r = (int)((float)rightr.r*factor + (float)leftr.r*(1.f - factor));
+            pixels[j*width + i].g = (int)((float)rightr.g*factor + (float)leftr.g*(1.f - factor));
+            pixels[j*width + i].b = (int)((float)rightr.b*factor + (float)leftr.b*(1.f - factor));
+            pixels[j*width + i].a = (int)((float)rightr.a*factor + (float)leftr.a*(1.f - factor));
         }
     }
 
@@ -2405,8 +2446,17 @@ Image GenImageGradientH(int width, int height, Color left, Color right)
 // Generate image: radial gradient
 Image GenImageGradientRadial(int width, int height, float density, Color inner, Color outer)
 {
-    Color *pixels = (Color *)RL_MALLOC(width*height*sizeof(Color));
+    Color4ub *pixels = (Color4ub *)RL_MALLOC(width*height*sizeof(Color4ub));
     float radius = (width < height)? (float)width/2.0f : (float)height/2.0f;
+    Color4ub innerr, outerr;
+    innerr.r = inner.r * 255;
+    innerr.g = inner.g * 255;
+    innerr.b = inner.b * 255;
+    innerr.a = inner.a * 255;
+    outerr.r = outer.r * 255;
+    outerr.g = outer.g * 255;
+    outerr.b = outer.b * 255;
+    outerr.a = outer.a * 255;
 
     float centerX = (float)width/2.0f;
     float centerY = (float)height/2.0f;
@@ -2421,10 +2471,10 @@ Image GenImageGradientRadial(int width, int height, float density, Color inner, 
             factor = (float)fmax(factor, 0.f);
             factor = (float)fmin(factor, 1.f); // dist can be bigger than radius so we have to check
 
-            pixels[y*width + x].r = (int)((float)outer.r*factor + (float)inner.r*(1.0f - factor));
-            pixels[y*width + x].g = (int)((float)outer.g*factor + (float)inner.g*(1.0f - factor));
-            pixels[y*width + x].b = (int)((float)outer.b*factor + (float)inner.b*(1.0f - factor));
-            pixels[y*width + x].a = (int)((float)outer.a*factor + (float)inner.a*(1.0f - factor));
+            pixels[y*width + x].r = (int)((float)outerr.r*factor + (float)innerr.r*(1.0f - factor));
+            pixels[y*width + x].g = (int)((float)outerr.g*factor + (float)innerr.g*(1.0f - factor));
+            pixels[y*width + x].b = (int)((float)outerr.b*factor + (float)innerr.b*(1.0f - factor));
+            pixels[y*width + x].a = (int)((float)outerr.a*factor + (float)innerr.a*(1.0f - factor));
         }
     }
 
@@ -2437,14 +2487,23 @@ Image GenImageGradientRadial(int width, int height, float density, Color inner, 
 // Generate image: checked
 Image GenImageChecked(int width, int height, int checksX, int checksY, Color col1, Color col2)
 {
-    Color *pixels = (Color *)RL_MALLOC(width*height*sizeof(Color));
+    Color4ub *pixels = (Color4ub *)RL_MALLOC(width*height*sizeof(Color4ub));
+    Color4ub col1r, col2r;
+    col1r.r = col1.r * 255;
+    col1r.g = col1.g * 255;
+    col1r.b = col1.b * 255;
+    col1r.a = col1.a * 255;
+    col2r.r = col2.r * 255;
+    col2r.g = col2.g * 255;
+    col2r.b = col2.b * 255;
+    col2r.a = col2.a * 255;
 
     for (int y = 0; y < height; y++)
     {
         for (int x = 0; x < width; x++)
         {
-            if ((x/checksX + y/checksY)%2 == 0) pixels[y*width + x] = col1;
-            else pixels[y*width + x] = col2;
+            if ((x/checksX + y/checksY)%2 == 0) pixels[y*width + x] = col1r;
+            else pixels[y*width + x] = col2r;
         }
     }
 
@@ -2457,12 +2516,12 @@ Image GenImageChecked(int width, int height, int checksX, int checksY, Color col
 // Generate image: white noise
 Image GenImageWhiteNoise(int width, int height, float factor)
 {
-    Color *pixels = (Color *)RL_MALLOC(width*height*sizeof(Color));
+    Color4ub *pixels = (Color4ub *)RL_MALLOC(width*height*sizeof(Color4ub));
 
     for (int i = 0; i < width*height; i++)
     {
-        if (GetRandomValue(0, 99) < (int)(factor*100.0f)) pixels[i] = WHITE;
-        else pixels[i] = BLACK;
+        if (GetRandomValue(0, 99) < (int)(factor*100.0f)) pixels[i] = (Color4ub){255,255,255,255};
+        else pixels[i] = (Color4ub){0,0,0,255};;
     }
 
     Image image = LoadImageEx(pixels, width, height);
@@ -2474,7 +2533,7 @@ Image GenImageWhiteNoise(int width, int height, float factor)
 // Generate image: perlin noise
 Image GenImagePerlinNoise(int width, int height, int offsetX, int offsetY, float scale)
 {
-    Color *pixels = (Color *)RL_MALLOC(width*height*sizeof(Color));
+    Color4ub *pixels = (Color4ub *)RL_MALLOC(width*height*sizeof(Color4ub));
 
     for (int y = 0; y < height; y++)
     {
@@ -2492,7 +2551,7 @@ Image GenImagePerlinNoise(int width, int height, int offsetX, int offsetY, float
             float p = (stb_perlin_fbm_noise3(nx, ny, 1.0f, 2.0f, 0.5f, 6) + 1.0f)/2.0f;
 
             int intensity = (int)(p*255.0f);
-            pixels[y*width + x] = (Color){intensity, intensity, intensity, 255};
+            pixels[y*width + x] = (Color4ub){intensity, intensity, intensity, 255};
         }
     }
 
@@ -2505,7 +2564,7 @@ Image GenImagePerlinNoise(int width, int height, int offsetX, int offsetY, float
 // Generate image: cellular algorithm. Bigger tileSize means bigger cells
 Image GenImageCellular(int width, int height, int tileSize)
 {
-    Color *pixels = (Color *)RL_MALLOC(width*height*sizeof(Color));
+    Color4ub *pixels = (Color4ub *)RL_MALLOC(width*height*sizeof(Color4ub));
 
     int seedsPerRow = width/tileSize;
     int seedsPerCol = height/tileSize;
@@ -2550,7 +2609,7 @@ Image GenImageCellular(int width, int height, int tileSize)
             int intensity = (int)(minDistance*256.0f/tileSize);
             if (intensity > 255) intensity = 255;
 
-            pixels[y*width + x] = (Color){ intensity, intensity, intensity, 255 };
+            pixels[y*width + x] = (Color4ub){ intensity, intensity, intensity, 255 };
         }
     }
 
@@ -2731,7 +2790,7 @@ void DrawTexturePro(Texture2D texture, Rectangle sourceRec, Rectangle destRec, V
             rlTranslatef(-origin.x, -origin.y, 0.0f);
 
             rlBegin(RL_QUADS);
-                rlColor4ub(tint.r, tint.g, tint.b, tint.a);
+                rlColor4ub(tint.r * 255, tint.g * 255, tint.b * 255, tint.a * 255);
                 rlNormal3f(0.0f, 0.0f, 1.0f);                          // Normal vector pointing towards viewer
 
                 // Bottom-left corner for texture and quad
@@ -2826,7 +2885,7 @@ void DrawTextureNPatch(Texture2D texture, NPatchInfo nPatchInfo, Rectangle destR
             rlTranslatef(-origin.x, -origin.y, 0.0f);
 
             rlBegin(RL_QUADS);
-                rlColor4ub(tint.r, tint.g, tint.b, tint.a);
+                rlColor4f(tint.r, tint.g, tint.b, tint.a);
                 rlNormal3f(0.0f, 0.0f, 1.0f);                          // Normal vector pointing towards viewer
 
                 if (nPatchInfo.type == NPT_9PATCH)
@@ -2980,9 +3039,9 @@ static Image LoadAnimatedGIF(const char *fileName, int *frames, int **delays)
     {
         fseek(gifFile, 0L, SEEK_END);
         int size = ftell(gifFile);
-        fseek(gifFile, 0L, SEEK_SET);	
+        fseek(gifFile, 0L, SEEK_SET);
 
-        unsigned char *buffer = (unsigned char *)RL_CALLOC(size, sizeof(char));	
+        unsigned char *buffer = (unsigned char *)RL_CALLOC(size, sizeof(char));
         fread(buffer, sizeof(char), size, gifFile);
 
         fclose(gifFile);    // Close file pointer

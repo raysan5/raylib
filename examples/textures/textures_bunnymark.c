@@ -57,11 +57,11 @@ int main(void)
                 if (bunniesCount < MAX_BUNNIES)
                 {
                     bunnies[bunniesCount].position = GetMousePosition();
-                    bunnies[bunniesCount].speed.x = (float)GetRandomValue(-250, 250)/60.0f;
-                    bunnies[bunniesCount].speed.y = (float)GetRandomValue(-250, 250)/60.0f;
-                    bunnies[bunniesCount].color = (Color){ GetRandomValue(50, 240),
-                                                       GetRandomValue(80, 240),
-                                                       GetRandomValue(100, 240), 255 };
+                    bunnies[bunniesCount].speed.x = (float)GetRandomInt(-250, 250)/60.0f;
+                    bunnies[bunniesCount].speed.y = (float)GetRandomInt(-250, 250)/60.0f;
+                    bunnies[bunniesCount].color = (Color){ GetRandomValue(0.5, .9),
+                                                       GetRandomValue(.8, .9),
+                                                       GetRandomValue(.5, .9), 1 };
                     bunniesCount++;
                 }
             }

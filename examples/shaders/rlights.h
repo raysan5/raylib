@@ -179,8 +179,7 @@ void UpdateLightValues(Shader shader, Light light)
     SetShaderValue(shader, light.targetLoc, target, UNIFORM_VEC3);
 
     // Send to shader light color values
-    float color[4] = { (float)light.color.r/(float)255, (float)light.color.g/(float)255, 
-                       (float)light.color.b/(float)255, (float)light.color.a/(float)255 };
+    float color[4] = { light.color.r, light.color.g, light.color.b, light.color.a };
     SetShaderValue(shader, light.colorLoc, color, UNIFORM_VEC4);
 }
 

@@ -176,9 +176,9 @@ extern void LoadFontDefault(void)
     int imWidth = 128;
     int imHeight = 128;
 
-    Color *imagePixels = (Color *)RL_MALLOC(imWidth*imHeight*sizeof(Color));
+    Color4ub *imagePixels = (Color4ub *)RL_MALLOC(imWidth*imHeight*sizeof(Color4ub));
 
-    for (int i = 0; i < imWidth*imHeight; i++) imagePixels[i] = BLANK;        // Initialize array
+    for (int i = 0; i < imWidth*imHeight; i++) imagePixels[i] = (Color4ub){0,0,0,0};        // Initialize array
 
     int counter = 0;        // Font data elements counter
 
@@ -187,7 +187,7 @@ extern void LoadFontDefault(void)
     {
         for (int j = 31; j >= 0; j--)
         {
-            if (BIT_CHECK(defaultFontData[counter], j)) imagePixels[i+j] = WHITE;
+            if (BIT_CHECK(defaultFontData[counter], j)) imagePixels[i+j] = (Color4ub){255,255,255,255};
         }
 
         counter++;
@@ -345,7 +345,7 @@ Font LoadFontEx(const char *fileName, int fontSize, int *fontChars, int charsCou
 // Load an Image font file (XNA style)
 Font LoadFontFromImage(Image image, Color key, int firstChar)
 {
-    #define COLOR_EQUAL(col1, col2) ((col1.r == col2.r)&&(col1.g == col2.g)&&(col1.b == col2.b)&&(col1.a == col2.a))
+    #define COLOR_EQUAL(col1, col2) ((col1.r == col2.r*255)&&(col1.g == col2.g*255)&&(col1.b == col2.b*255)&&(col1.a == col2.a*255))
 
     int charSpacing = 0;
     int lineSpacing = 0;
@@ -361,7 +361,7 @@ Font LoadFontFromImage(Image image, Color key, int firstChar)
     int tempCharValues[MAX_FONTCHARS];
     Rectangle tempCharRecs[MAX_FONTCHARS];
 
-    Color *pixels = GetImageData(image);
+    Color4ub *pixels = GetImageData(image);
 
     // Parse image data to get charSpacing and lineSpacing
     for (y = 0; y < image.height; y++)
@@ -420,7 +420,7 @@ Font LoadFontFromImage(Image image, Color key, int firstChar)
 
     // NOTE: We need to remove key color borders from image to avoid weird
     // artifacts on texture scaling when using FILTER_BILINEAR or FILTER_TRILINEAR
-    for (int i = 0; i < image.height*image.width; i++) if (COLOR_EQUAL(pixels[i], key)) pixels[i] = BLANK;
+    for (int i = 0; i < image.height*image.width; i++) if (COLOR_EQUAL(pixels[i], key)) pixels[i] = (Color4ub){0,0,0,0};
 
     // Create a new image with the processed color data (key color replaced by BLANK)
     Image fontClear = LoadImageEx(pixels, image.width, image.height);

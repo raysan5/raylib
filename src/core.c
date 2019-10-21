@@ -1600,18 +1600,24 @@ double GetTime(void)
 // Returns hexadecimal value for a Color
 int ColorToInt(Color color)
 {
-    return (((int)color.r << 24) | ((int)color.g << 16) | ((int)color.b << 8) | (int)color.a);
+    Color4ub c;
+    c.r = color.r * 255;
+    c.g = color.g * 255;
+    c.b = color.b * 255;
+    c.a = color.a * 255;
+
+    return (((int)c.r << 24) | ((int)c.g << 16) | ((int)c.b << 8) | (int)c.a);
 }
 
 // Returns color normalized as float [0..1]
-Vector4 ColorNormalize(Color color)
+Color Color4ubNormalize(Color4ub color)
 {
-    Vector4 result;
+    Color result;
 
-    result.x = (float)color.r/255.0f;
-    result.y = (float)color.g/255.0f;
-    result.z = (float)color.b/255.0f;
-    result.w = (float)color.a/255.0f;
+    result.r = (float)color.r/255.0f;
+    result.g = (float)color.g/255.0f;
+    result.b = (float)color.b/255.0f;
+    result.a = (float)color.a/255.0f;
 
     return result;
 }
@@ -1620,7 +1626,7 @@ Vector4 ColorNormalize(Color color)
 // NOTE: Hue is returned as degrees [0..360]
 Vector3 ColorToHSV(Color color)
 {
-    Vector3 rgb = { (float)color.r/255.0f, (float)color.g/255.0f, (float)color.b/255.0f };
+    Vector3 rgb = { color.r, color.g, color.b };
     Vector3 hsv = { 0.0f, 0.0f, 0.0f };
     float min, max, delta;
 
@@ -1673,7 +1679,7 @@ Vector3 ColorToHSV(Color color)
 // NOTE: Color->HSV->Color conversion will not yield exactly the same color due to rounding errors
 Color ColorFromHSV(Vector3 hsv)
 {
-    Color color = { 0, 0, 0, 255 };
+    Color color = { 0, 0, 0, 1 };
     float h = hsv.x, s = hsv.y, v = hsv.z;
 
     // Red channel
@@ -1682,7 +1688,7 @@ Color ColorFromHSV(Vector3 hsv)
     k = (t < k)? t : k;
     k = (k < 1)? k : 1;
     k = (k > 0)? k : 0;
-    color.r = (v - v*s*k)*255;
+    color.r = v - v*s*k;
 
     // Green channel
     k = fmod((3.0f + h/60.0f), 6);
@@ -1690,7 +1696,7 @@ Color ColorFromHSV(Vector3 hsv)
     k = (t < k)? t : k;
     k = (k < 1)? k : 1;
     k = (k > 0)? k : 0;
-    color.g = (v - v*s*k)*255;
+    color.g = v - v*s*k;
 
     // Blue channel
     k = fmod((1.0f + h/60.0f), 6);
@@ -1698,7 +1704,7 @@ Color ColorFromHSV(Vector3 hsv)
     k = (t < k)? t : k;
     k = (k < 1)? k : 1;
     k = (k > 0)? k : 0;
-    color.b = (v - v*s*k)*255;
+    color.b = v - v*s*k;
 
     return color;
 }
@@ -1708,16 +1714,16 @@ Color GetColor(int hexValue)
 {
     Color color;
 
-    color.r = (unsigned char)(hexValue >> 24) & 0xFF;
-    color.g = (unsigned char)(hexValue >> 16) & 0xFF;
-    color.b = (unsigned char)(hexValue >> 8) & 0xFF;
-    color.a = (unsigned char)hexValue & 0xFF;
+    color.r = ((hexValue >> 24) & 0xFF) / 255;
+    color.g = ((hexValue >> 16) & 0xFF) / 255;
+    color.b = ((hexValue >> 8) & 0xFF) / 255;
+    color.a = (hexValue & 0xFF) / 255;
 
     return color;
 }
 
-// Returns a random value between min and max (both included)
-int GetRandomValue(int min, int max)
+// Returns a random integer between min and max (both included)
+int GetRandomInt(int min, int max)
 {
     if (min > max)
     {
@@ -1729,13 +1735,29 @@ int GetRandomValue(int min, int max)
     return (rand()%(abs(max - min) + 1) + min);
 }
 
+// Returns a random float between min and max (both included)
+// as this is often used to make random colours it was
+// changed to produce floats, GetRandomInt is the
+// original version.
+float GetRandomValue(float min, float max)
+{
+    if (min > max)
+    {
+        int tmp = max;
+        max = min;
+        min = tmp;
+    }
+
+    return (float)rand()/(float)(RAND_MAX/(max-min))+min;
+}
+
 // Color fade-in or fade-out, alpha goes from 0.0f to 1.0f
 Color Fade(Color color, float alpha)
 {
     if (alpha < 0.0f) alpha = 0.0f;
     else if (alpha > 1.0f) alpha = 1.0f;
 
-    return (Color){color.r, color.g, color.b, (unsigned char)(255.0f*alpha)};
+    return (Color){color.r, color.g, color.b, alpha};
 }
 
 // Setup window configuration flags (view FLAGS)

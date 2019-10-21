@@ -115,35 +115,35 @@
     #define CLITERAL(type)      (type)
 #endif
 
-// Some Basic Colors
+// Some Basic Colors (NOTE may bare checking with old 0-255 values in case I miss typed)
 // NOTE: Custom raylib color palette for amazing visuals on WHITE background
-#define LIGHTGRAY  CLITERAL(Color){ 200, 200, 200, 255 }   // Light Gray
-#define GRAY       CLITERAL(Color){ 130, 130, 130, 255 }   // Gray
-#define DARKGRAY   CLITERAL(Color){ 80, 80, 80, 255 }      // Dark Gray
-#define YELLOW     CLITERAL(Color){ 253, 249, 0, 255 }     // Yellow
-#define GOLD       CLITERAL(Color){ 255, 203, 0, 255 }     // Gold
-#define ORANGE     CLITERAL(Color){ 255, 161, 0, 255 }     // Orange
-#define PINK       CLITERAL(Color){ 255, 109, 194, 255 }   // Pink
-#define RED        CLITERAL(Color){ 230, 41, 55, 255 }     // Red
-#define MAROON     CLITERAL(Color){ 190, 33, 55, 255 }     // Maroon
-#define GREEN      CLITERAL(Color){ 0, 228, 48, 255 }      // Green
-#define LIME       CLITERAL(Color){ 0, 158, 47, 255 }      // Lime
-#define DARKGREEN  CLITERAL(Color){ 0, 117, 44, 255 }      // Dark Green
-#define SKYBLUE    CLITERAL(Color){ 102, 191, 255, 255 }   // Sky Blue
-#define BLUE       CLITERAL(Color){ 0, 121, 241, 255 }     // Blue
-#define DARKBLUE   CLITERAL(Color){ 0, 82, 172, 255 }      // Dark Blue
-#define PURPLE     CLITERAL(Color){ 200, 122, 255, 255 }   // Purple
-#define VIOLET     CLITERAL(Color){ 135, 60, 190, 255 }    // Violet
-#define DARKPURPLE CLITERAL(Color){ 112, 31, 126, 255 }    // Dark Purple
-#define BEIGE      CLITERAL(Color){ 211, 176, 131, 255 }   // Beige
-#define BROWN      CLITERAL(Color){ 127, 106, 79, 255 }    // Brown
-#define DARKBROWN  CLITERAL(Color){ 76, 63, 47, 255 }      // Dark Brown
+#define LIGHTGRAY  CLITERAL(Color){ 0.78125, 0.78125, 0.78125, 1.0 }   // Light Gray
+#define GRAY       CLITERAL(Color){ 0.50780, 0.50780, 0.50780, 1.0 }   // Gray
+#define DARKGRAY   CLITERAL(Color){ 0.3125 , 0.3125 , 0.3125 , 1.0 }   // Dark Gray
+#define YELLOW     CLITERAL(Color){ 0.98828, 0.97265, 0.0    , 1.0 }   // Yellow
+#define GOLD       CLITERAL(Color){ 1.0    , 0.79297, 0.0    , 1.0 }   // Gold
+#define ORANGE     CLITERAL(Color){ 1.0    , 0.62891, 0.0    , 1.0 }   // Orange
+#define PINK       CLITERAL(Color){ 1.0    , 0.42578, 0.75781, 1.0 }   // Pink
+#define RED        CLITERAL(Color){ 0.89844, 0.16667, 0.21484, 1.0 }     // Red
+#define MAROON     CLITERAL(Color){ 0.74218, 0.12891, 0.21484, 1.0 }     // Maroon
+#define GREEN      CLITERAL(Color){ 0      , 0.89412, 0.1875 , 1.0 }      // Green
+#define LIME       CLITERAL(Color){ 0      , 0.61719, 0.18359, 1.0 }      // Lime
+#define DARKGREEN  CLITERAL(Color){ 0      , 0.45703, 0.17188, 1.0 }      // Dark Green
+#define SKYBLUE    CLITERAL(Color){ 0.39844, 0.74609, 1.0    , 1.0 }   // Sky Blue
+#define BLUE       CLITERAL(Color){ 0      , 0.47266, 0.94141, 1.0 }     // Blue
+#define DARKBLUE   CLITERAL(Color){ 0      , 0.32031, 0.67188, 1.0 }      // Dark Blue
+#define PURPLE     CLITERAL(Color){ 0.78125, 0.47656, 1.0    , 1.0 }   // Purple
+#define VIOLET     CLITERAL(Color){ 0.52734, 0.23438, 0.74219, 1.0 }    // Violet
+#define DARKPURPLE CLITERAL(Color){ 0.4375 , 0.12109, 0.49219, 1.0 }    // Dark Purple
+#define BEIGE      CLITERAL(Color){ 0.82422, 0.6875 , 0.51172, 1.0 }   // Beige
+#define BROWN      CLITERAL(Color){ 0.5    , 0.41406, 0.30859, 1.0 }    // Brown
+#define DARKBROWN  CLITERAL(Color){ 0.29687, 0.24609, 0.18359, 1.0 }      // Dark Brown
 
-#define WHITE      CLITERAL(Color){ 255, 255, 255, 255 }   // White
-#define BLACK      CLITERAL(Color){ 0, 0, 0, 255 }         // Black
-#define BLANK      CLITERAL(Color){ 0, 0, 0, 0 }           // Blank (Transparent)
-#define MAGENTA    CLITERAL(Color){ 255, 0, 255, 255 }     // Magenta
-#define RAYWHITE   CLITERAL(Color){ 245, 245, 245, 255 }   // My own White (raylib logo)
+#define WHITE      CLITERAL(Color){ 1.0    , 1.0    , 1.0    , 1.0 }   // White
+#define BLACK      CLITERAL(Color){ 0      , 0      , 0      , 1.0 }         // Black
+#define BLANK      CLITERAL(Color){ 0      , 0      , 0      , 0   }           // Blank (Transparent)
+#define MAGENTA    CLITERAL(Color){ 1.0    , 0      , 1.0    , 1.0 }     // Magenta
+#define RAYWHITE   CLITERAL(Color){ 0.96078, 0.96078, 0.96078, 1.0 }   // My own White (raylib logo)
 
 // Temporal hack to avoid breaking old codebases using
 // deprecated raylib implementation of these functions
@@ -193,12 +193,20 @@ typedef struct Matrix {
     float m3, m7, m11, m15;
 } Matrix;
 
-// Color type, RGBA (32bit)
-typedef struct Color {
+// colour type used for example in raw images
+typedef struct Color4ub {
     unsigned char r;
     unsigned char g;
     unsigned char b;
     unsigned char a;
+} Color4ub;
+
+// Color type, RGBA (normalised floats)
+typedef struct Color {
+    float r;
+    float g;
+    float b;
+    float a;
 } Color;
 
 // Rectangle type
@@ -336,6 +344,7 @@ typedef struct MaterialMap {
 
 // Material type (generic)
 typedef struct Material {
+    char* name;             // Material name
     Shader shader;          // Material shader
     MaterialMap *maps;      // Material maps array (MAX_MATERIAL_MAPS)
     float *params;          // Material generic parameters (if required)
@@ -432,7 +441,7 @@ typedef struct Sound {
 typedef struct Music {
     int ctxType;                    // Type of music context (audio filetype)
     void *ctxData;                  // Audio context data, depends on type
-    
+
     unsigned int sampleCount;       // Total number of samples
     unsigned int loopCount;         // Loops count (times music will play), 0 means infinite loop
 
@@ -923,7 +932,7 @@ RLAPI double GetTime(void);                                       // Returns ela
 
 // Color-related functions
 RLAPI int ColorToInt(Color color);                                // Returns hexadecimal value for a Color
-RLAPI Vector4 ColorNormalize(Color color);                        // Returns color normalized as float [0..1]
+RLAPI Color Color4ubNormalize(Color4ub color);                        // Returns color normalized as float [0..1]
 RLAPI Vector3 ColorToHSV(Color color);                            // Returns HSV values for a Color
 RLAPI Color ColorFromHSV(Vector3 hsv);                            // Returns a Color from HSV values
 RLAPI Color GetColor(int hexValue);                               // Returns a Color struct from hexadecimal value
@@ -936,8 +945,8 @@ RLAPI void SetTraceLogExit(int logType);                          // Set the exi
 RLAPI void SetTraceLogCallback(TraceLogCallback callback);        // Set a trace log callback to enable custom logging
 RLAPI void TraceLog(int logType, const char *text, ...);          // Show trace log messages (LOG_DEBUG, LOG_INFO, LOG_WARNING, LOG_ERROR)
 RLAPI void TakeScreenshot(const char *fileName);                  // Takes a screenshot of current screen (saved a .png)
-RLAPI int GetRandomValue(int min, int max);                       // Returns a random value between min and max (both included)
-
+RLAPI float GetRandomValue(float min, float max);                 // Returns a random float between min and max (both included)
+RLAPI int GetRandomInt(int min, int max);                         // Returns a random int between min and max (both included)
 // Files management functions
 RLAPI bool FileExists(const char *fileName);                      // Check if file exists
 RLAPI bool IsFileExtension(const char *fileName, const char *ext);// Check file extension
@@ -1085,7 +1094,7 @@ RLAPI bool CheckCollisionPointTriangle(Vector2 point, Vector2 p1, Vector2 p2, Ve
 
 // Image/Texture2D data loading/unloading/saving functions
 RLAPI Image LoadImage(const char *fileName);                                                             // Load image from file into CPU memory (RAM)
-RLAPI Image LoadImageEx(Color *pixels, int width, int height);                                           // Load image from Color array data (RGBA - 32bit)
+RLAPI Image LoadImageEx(Color4ub *pixels, int width, int height);                                           // Load image from Color array data (RGBA - 32bit)
 RLAPI Image LoadImagePro(void *data, int width, int height, int format);                                 // Load image from raw data with parameters
 RLAPI Image LoadImageRaw(const char *fileName, int width, int height, int format, int headerSize);       // Load image from RAW file data
 RLAPI void ExportImage(Image image, const char *fileName);                                               // Export image data to file
@@ -1097,7 +1106,7 @@ RLAPI RenderTexture2D LoadRenderTexture(int width, int height);                 
 RLAPI void UnloadImage(Image image);                                                                     // Unload image from CPU memory (RAM)
 RLAPI void UnloadTexture(Texture2D texture);                                                             // Unload texture from GPU memory (VRAM)
 RLAPI void UnloadRenderTexture(RenderTexture2D target);                                                  // Unload render texture from GPU memory (VRAM)
-RLAPI Color *GetImageData(Image image);                                                                  // Get pixel data from image as a Color struct array
+RLAPI Color4ub *GetImageData(Image image);                                                                  // Get pixel data from image as a Color struct array
 RLAPI Vector4 *GetImageDataNormalized(Image image);                                                      // Get pixel data from image as Vector4 array (float normalized)
 RLAPI Rectangle GetImageAlphaBorder(Image image, float threshold);                                       // Get image alpha border rectangle
 RLAPI int GetPixelDataSize(int width, int height, int format);                                           // Get pixel data size in bytes (image or texture)

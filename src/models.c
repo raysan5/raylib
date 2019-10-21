@@ -104,7 +104,7 @@ static Model LoadGLTF(const char *fileName);    // Load GLTF mesh data
 void DrawLine3D(Vector3 startPos, Vector3 endPos, Color color)
 {
     rlBegin(RL_LINES);
-        rlColor4ub(color.r, color.g, color.b, color.a);
+        rlColor4f(color.r, color.g, color.b, color.a);
         rlVertex3f(startPos.x, startPos.y, startPos.z);
         rlVertex3f(endPos.x, endPos.y, endPos.z);
     rlEnd();
@@ -122,7 +122,7 @@ void DrawCircle3D(Vector3 center, float radius, Vector3 rotationAxis, float rota
         rlBegin(RL_LINES);
             for (int i = 0; i < 360; i += 10)
             {
-                rlColor4ub(color.r, color.g, color.b, color.a);
+                rlColor4f(color.r, color.g, color.b, color.a);
 
                 rlVertex3f(sinf(DEG2RAD*i)*radius, cosf(DEG2RAD*i)*radius, 0.0f);
                 rlVertex3f(sinf(DEG2RAD*(i + 10))*radius, cosf(DEG2RAD*(i + 10))*radius, 0.0f);
@@ -148,7 +148,7 @@ void DrawCube(Vector3 position, float width, float height, float length, Color c
         //rlScalef(1.0f, 1.0f, 1.0f);   // NOTE: Vertices are directly scaled on definition
 
         rlBegin(RL_TRIANGLES);
-            rlColor4ub(color.r, color.g, color.b, color.a);
+            rlColor4f(color.r, color.g, color.b, color.a);
 
             // Front face
             rlVertex3f(x - width/2, y - height/2, z + length/2);  // Bottom Left
@@ -226,7 +226,7 @@ void DrawCubeWires(Vector3 position, float width, float height, float length, Co
         rlTranslatef(position.x, position.y, position.z);
 
         rlBegin(RL_LINES);
-            rlColor4ub(color.r, color.g, color.b, color.a);
+            rlColor4f(color.r, color.g, color.b, color.a);
 
             // Front Face -----------------------------------------------------
             // Bottom Line
@@ -308,7 +308,7 @@ void DrawCubeTexture(Texture2D texture, Vector3 position, float width, float hei
         //rlScalef(2.0f, 2.0f, 2.0f);
 
         rlBegin(RL_QUADS);
-            rlColor4ub(color.r, color.g, color.b, color.a);
+            rlColor4f(color.r, color.g, color.b, color.a);
             // Front Face
             rlNormal3f(0.0f, 0.0f, 1.0f);                  // Normal Pointing Towards Viewer
             rlTexCoord2f(0.0f, 0.0f); rlVertex3f(x - width/2, y - height/2, z + length/2);  // Bottom Left Of The Texture and Quad
@@ -369,7 +369,7 @@ void DrawSphereEx(Vector3 centerPos, float radius, int rings, int slices, Color 
         rlScalef(radius, radius, radius);
 
         rlBegin(RL_TRIANGLES);
-            rlColor4ub(color.r, color.g, color.b, color.a);
+            rlColor4f(color.r, color.g, color.b, color.a);
 
             for (int i = 0; i < (rings + 2); i++)
             {
@@ -412,7 +412,7 @@ void DrawSphereWires(Vector3 centerPos, float radius, int rings, int slices, Col
         rlScalef(radius, radius, radius);
 
         rlBegin(RL_LINES);
-            rlColor4ub(color.r, color.g, color.b, color.a);
+            rlColor4f(color.r, color.g, color.b, color.a);
 
             for (int i = 0; i < (rings + 2); i++)
             {
@@ -457,7 +457,7 @@ void DrawCylinder(Vector3 position, float radiusTop, float radiusBottom, float h
         rlTranslatef(position.x, position.y, position.z);
 
         rlBegin(RL_TRIANGLES);
-            rlColor4ub(color.r, color.g, color.b, color.a);
+            rlColor4f(color.r, color.g, color.b, color.a);
 
             if (radiusTop > 0)
             {
@@ -516,7 +516,7 @@ void DrawCylinderWires(Vector3 position, float radiusTop, float radiusBottom, fl
         rlTranslatef(position.x, position.y, position.z);
 
         rlBegin(RL_LINES);
-            rlColor4ub(color.r, color.g, color.b, color.a);
+            rlColor4f(color.r, color.g, color.b, color.a);
 
             for (int i = 0; i < 360; i += 360/sides)
             {
@@ -547,7 +547,7 @@ void DrawPlane(Vector3 centerPos, Vector2 size, Color color)
         rlScalef(size.x, 1.0f, size.y);
 
         rlBegin(RL_QUADS);
-            rlColor4ub(color.r, color.g, color.b, color.a);
+            rlColor4f(color.r, color.g, color.b, color.a);
             rlNormal3f(0.0f, 1.0f, 0.0f);
 
             rlVertex3f(-0.5f, 0.0f, -0.5f);
@@ -564,8 +564,8 @@ void DrawRay(Ray ray, Color color)
     float scale = 10000;
 
     rlBegin(RL_LINES);
-        rlColor4ub(color.r, color.g, color.b, color.a);
-        rlColor4ub(color.r, color.g, color.b, color.a);
+        rlColor4f(color.r, color.g, color.b, color.a);
+        rlColor4f(color.r, color.g, color.b, color.a);
 
         rlVertex3f(ray.position.x, ray.position.y, ray.position.z);
         rlVertex3f(ray.position.x + ray.direction.x*scale, ray.position.y + ray.direction.y*scale, ray.position.z + ray.direction.z*scale);
@@ -1775,7 +1775,7 @@ Mesh GenMeshHeightmap(Image heightmap, Vector3 size)
     int mapX = heightmap.width;
     int mapZ = heightmap.height;
 
-    Color *pixels = GetImageData(heightmap);
+    Color4ub *pixels = GetImageData(heightmap);
 
     // NOTE: One vertex per pixel
     mesh.triangleCount = (mapX-1)*(mapZ-1)*2;    // One quad every four pixels
@@ -1881,7 +1881,7 @@ Mesh GenMeshCubicmap(Image cubicmap, Vector3 cubeSize)
     Mesh mesh = { 0 };
     mesh.vboId = (unsigned int *)RL_CALLOC(MAX_MESH_VBO, sizeof(unsigned int));
 
-    Color *cubicmapPixels = GetImageData(cubicmap);
+    Color4ub *cubicmapPixels = GetImageData(cubicmap);
 
     int mapWidth = cubicmap.width;
     int mapHeight = cubicmap.height;
@@ -2385,18 +2385,15 @@ void DrawModelEx(Model model, Vector3 position, Vector3 rotationAxis, float rota
 
     for (int i = 0; i < model.meshCount; i++)
     {
-        // TODO: Review color + tint premultiplication mechanism
-        Color color = model.materials[model.meshMaterial[i]].maps[MAP_DIFFUSE].color;
-        
-        Color colorTint = WHITE;
-        colorTint.r = ((color.r/255)*(tint.r/255))*255;
-        colorTint.g = ((color.g/255)*(tint.g/255))*255;
-        colorTint.b = ((color.b/255)*(tint.b/255))*255;
-        colorTint.a = ((color.a/255)*(tint.a/255))*255;
-        
-        model.materials[model.meshMaterial[i]].maps[MAP_DIFFUSE].color = colorTint;
+        Color s = model.materials[model.meshMaterial[i]].maps[MAP_DIFFUSE].color;
+        Color c = s;
+        c.r *= tint.r;  // mix material colour with tint
+        c.g *= tint.g;
+        c.b *= tint.b;
+        c.a *= tint.a;
+        model.materials[model.meshMaterial[i]].maps[MAP_DIFFUSE].color = c;
         rlDrawMesh(model.meshes[i], model.materials[model.meshMaterial[i]], model.transform);
-        model.materials[model.meshMaterial[i]].maps[MAP_DIFFUSE].color = color;
+        model.materials[model.meshMaterial[i]].maps[MAP_DIFFUSE].color = s; // restore material colour
     }
 }
 
@@ -2464,7 +2461,7 @@ void DrawBillboardRec(Camera camera, Texture2D texture, Rectangle sourceRec, Vec
     rlEnableTexture(texture.id);
 
     rlBegin(RL_QUADS);
-        rlColor4ub(tint.r, tint.g, tint.b, tint.a);
+        rlColor4f(tint.r, tint.g, tint.b, tint.a);
 
         // Bottom-left corner for texture and quad
         rlTexCoord2f((float)sourceRec.x/texture.width, (float)sourceRec.y/texture.height);
@@ -2915,18 +2912,18 @@ static Model LoadOBJ(const char *fileName)
             model.materials[m].maps[MAP_DIFFUSE].texture = GetTextureDefault();     // Get default texture, in case no texture is defined
 
             if (materials[m].diffuse_texname != NULL) model.materials[m].maps[MAP_DIFFUSE].texture = LoadTexture(materials[m].diffuse_texname);  //char *diffuse_texname; // map_Kd
-            model.materials[m].maps[MAP_DIFFUSE].color = (Color){ (float)(materials[m].diffuse[0]*255.0f), (float)(materials[m].diffuse[1]*255.0f), (float)(materials[m].diffuse[2]*255.0f), 255 }; //float diffuse[3];
+            model.materials[m].maps[MAP_DIFFUSE].color = (Color){ (float)(materials[m].diffuse[0]), (float)(materials[m].diffuse[1]), (float)(materials[m].diffuse[2]), 1 }; //float diffuse[3];
             model.materials[m].maps[MAP_DIFFUSE].value = 0.0f;
 
             if (materials[m].specular_texname != NULL) model.materials[m].maps[MAP_SPECULAR].texture = LoadTexture(materials[m].specular_texname);  //char *specular_texname; // map_Ks
-            model.materials[m].maps[MAP_SPECULAR].color = (Color){ (float)(materials[m].specular[0]*255.0f), (float)(materials[m].specular[1]*255.0f), (float)(materials[m].specular[2]*255.0f), 255 }; //float specular[3];
+            model.materials[m].maps[MAP_SPECULAR].color = (Color){ (float)(materials[m].specular[0]), (float)(materials[m].specular[1]), (float)(materials[m].specular[2]), 1 }; //float specular[3];
             model.materials[m].maps[MAP_SPECULAR].value = 0.0f;
 
             if (materials[m].bump_texname != NULL) model.materials[m].maps[MAP_NORMAL].texture = LoadTexture(materials[m].bump_texname);  //char *bump_texname; // map_bump, bump
             model.materials[m].maps[MAP_NORMAL].color = WHITE;
             model.materials[m].maps[MAP_NORMAL].value = materials[m].shininess;
 
-            model.materials[m].maps[MAP_EMISSION].color = (Color){ (float)(materials[m].emission[0]*255.0f), (float)(materials[m].emission[1]*255.0f), (float)(materials[m].emission[2]*255.0f), 255 }; //float emission[3];
+            model.materials[m].maps[MAP_EMISSION].color = (Color){ (float)(materials[m].emission[0]), (float)(materials[m].emission[1]), (float)(materials[m].emission[2]), 1 }; //float emission[3];
 
             if (materials[m].displacement_texname != NULL) model.materials[m].maps[MAP_HEIGHT].texture = LoadTexture(materials[m].displacement_texname);  //char *displacement_texname; // disp
         }
@@ -3394,12 +3391,25 @@ static Texture LoadTextureFromCgltfImage(cgltf_image *image, const char *texPath
         }
         else
         {
-            Image rimage = LoadImage(TextFormat("%s/%s", texPath, image->uri));
-            
-            // TODO: Tint shouldn't be applied here!
+            char *textureName = image->uri;
+            char *texturePath;
+            // path can be null!
+            if (texPath==0) {
+                texturePath = RL_MALLOC(strlen(textureName));
+                strcpy(texturePath, textureName);
+            } else {
+                texturePath = RL_MALLOC(strlen(texPath) + strlen(textureName) + 2);
+                strcpy(texturePath, texPath);
+                strcat(texturePath, "/");
+                strcat(texturePath, textureName);
+            }
+
+            Image rimage = LoadImage(texturePath);
+	    // TODO: Tint shouldn't be applied here!
             ImageColorTint(&rimage, tint);
             texture = LoadTextureFromImage(rimage);
             UnloadImage(rimage);
+            RL_FREE(texturePath);
         }
     }
     else if (image->buffer_view)
@@ -3424,10 +3434,17 @@ static Texture LoadTextureFromCgltfImage(cgltf_image *image, const char *texPath
         ImageColorTint(&rimage, tint);
         texture = LoadTextureFromImage(rimage);
         UnloadImage(rimage);
+        free(raw);
+        free(data);
     }
     else
     {
-        Image rimage = LoadImageEx(&tint, 1, 1);
+        Color4ub c;
+        c.r = tint.r * 255;
+        c.g = tint.g * 255;
+        c.b = tint.b * 255;
+        c.a = tint.a * 255;
+        Image rimage = LoadImageEx(&c, 1, 1);
         texture = LoadTextureFromImage(rimage);
         UnloadImage(rimage);
     }
@@ -3519,7 +3536,7 @@ static Model LoadGLTF(const char *fileName)
         for (int i = 0; i < model.materialCount - 1; i++)
         {
             model.materials[i] = LoadMaterialDefault();
-            Color tint = (Color){ 255, 255, 255, 255 };
+            Color tint = (Color){ 1, 1, 1, 1 };
             const char *texPath = GetDirectoryPath(fileName);
 
             //Ensure material follows raylib support for PBR (metallic/roughness flow)
@@ -3528,16 +3545,20 @@ static Model LoadGLTF(const char *fileName)
                 float roughness = data->materials[i].pbr_metallic_roughness.roughness_factor;
                 float metallic = data->materials[i].pbr_metallic_roughness.metallic_factor;
 
-                // NOTE: Material name not used for the moment
-                //if (model.materials[i].name && data->materials[i].name) strcpy(model.materials[i].name, data->materials[i].name);
+                if (model.materials[i].name && data->materials[i].name) {
+                    strcpy(model.materials[i].name, data->materials[i].name);
+                }
 
-                // TODO: REview: shouldn't these be *255 ???
-                tint.r = (unsigned char)(data->materials[i].pbr_metallic_roughness.base_color_factor[0]*255);
-                tint.g = (unsigned char)(data->materials[i].pbr_metallic_roughness.base_color_factor[1]*255);
-                tint.b = (unsigned char)(data->materials[i].pbr_metallic_roughness.base_color_factor[2]*255);
-                tint.a = (unsigned char)(data->materials[i].pbr_metallic_roughness.base_color_factor[3]*255);
+                tint.r = data->materials[i].pbr_metallic_roughness.base_color_factor[0];
+                tint.g = data->materials[i].pbr_metallic_roughness.base_color_factor[1];
+                tint.b = data->materials[i].pbr_metallic_roughness.base_color_factor[2];
+                tint.a = data->materials[i].pbr_metallic_roughness.base_color_factor[3];
 
+                // for now putting the metallic roughness base colour
+                // as the diffuse colour, so at least none textured
+                // materials look okay
                 model.materials[i].maps[MAP_ROUGHNESS].color = tint;
+                model.materials[i].maps[MAP_DIFFUSE].color = tint;
 
                 if (data->materials[i].pbr_metallic_roughness.base_color_texture.texture) 
                 {
