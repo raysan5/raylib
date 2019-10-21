@@ -2385,15 +2385,18 @@ void DrawModelEx(Model model, Vector3 position, Vector3 rotationAxis, float rota
 
     for (int i = 0; i < model.meshCount; i++)
     {
-        Color c = model.materials[model.meshMaterial[i]].maps[MAP_DIFFUSE].color;
-        Color s = c;
-        c.r = ((c.r/255) * (tint.r/255)) * 255;
-        c.g = ((c.g/255) * (tint.g/255)) * 255;
-        c.b = ((c.b/255) * (tint.b/255)) * 255;
-        c.a = ((c.a/255) * (tint.a/255)) * 255;
-        model.materials[model.meshMaterial[i]].maps[MAP_DIFFUSE].color = c;
+        // TODO: Review color + tint premultiplication mechanism
+        Color color = model.materials[model.meshMaterial[i]].maps[MAP_DIFFUSE].color;
+        
+        Color colorTint = WHITE;
+        colorTint.r = ((color.r/255)*(tint.r/255))*255;
+        colorTint.g = ((color.g/255)*(tint.g/255))*255;
+        colorTint.b = ((color.b/255)*(tint.b/255))*255;
+        colorTint.a = ((color.a/255)*(tint.a/255))*255;
+        
+        model.materials[model.meshMaterial[i]].maps[MAP_DIFFUSE].color = colorTint;
         rlDrawMesh(model.meshes[i], model.materials[model.meshMaterial[i]], model.transform);
-        model.materials[model.meshMaterial[i]].maps[MAP_DIFFUSE].color = s;
+        model.materials[model.meshMaterial[i]].maps[MAP_DIFFUSE].color = color;
     }
 }
 
@@ -3351,11 +3354,10 @@ static unsigned char *DecodeBase64(char *input, int *size)
     return buf;
 }
 
-//static Texture LoadTextureFromCGLTFTextureView(cgltf_texture_view* view, Color tint, char* texPath)
-static Texture LoadTextureFromCGLTFTextureView(cgltf_image* image, Color tint, const char* texPath)
+// Load texture from cgltf_image
+static Texture LoadTextureFromCgltfImage(cgltf_image *image, const char *texPath, Color tint)
 {
-    Texture texture = {0};
-    //cgltf_image *image = view->texture->image;
+    Texture texture = { 0 };
 
     if (image->uri)
     {
@@ -3371,11 +3373,9 @@ static Texture LoadTextureFromCGLTFTextureView(cgltf_image* image, Color tint, c
 
             // Find the comma
             int i = 0;
-            while ((image->uri[i] != ',') && (image->uri[i] != 0))
-                i++;
+            while ((image->uri[i] != ',') && (image->uri[i] != 0)) i++;
 
-            if (image->uri[i] == 0)
-                TraceLog(LOG_WARNING, "Invalid data URI");
+            if (image->uri[i] == 0) TraceLog(LOG_WARNING, "CGLTF Image: Invalid data URI");
             else
             {
                 int size;
@@ -3385,6 +3385,8 @@ static Texture LoadTextureFromCGLTFTextureView(cgltf_image* image, Color tint, c
                 unsigned char *raw = stbi_load_from_memory(data, size, &w, &h, NULL, 4);
 
                 Image rimage = LoadImagePro(raw, w, h, UNCOMPRESSED_R8G8B8A8);
+                
+                // TODO: Tint shouldn't be applied here!
                 ImageColorTint(&rimage, tint);
                 texture = LoadTextureFromImage(rimage);
                 UnloadImage(rimage);
@@ -3392,17 +3394,12 @@ static Texture LoadTextureFromCGLTFTextureView(cgltf_image* image, Color tint, c
         }
         else
         {
-            char *textureName = image->uri;
-            char *texturePath = RL_MALLOC(strlen(texPath) + strlen(textureName) + 2);
-            strcpy(texturePath, texPath);
-            strcat(texturePath, "/");
-            strcat(texturePath, textureName);
-
-            Image rimage = LoadImage(texturePath);
+            Image rimage = LoadImage(TextFormat("%s/%s", texPath, image->uri));
+            
+            // TODO: Tint shouldn't be applied here!
             ImageColorTint(&rimage, tint);
             texture = LoadTextureFromImage(rimage);
             UnloadImage(rimage);
-            RL_FREE(texturePath);
         }
     }
     else if (image->buffer_view)
@@ -3419,13 +3416,14 @@ static Texture LoadTextureFromCGLTFTextureView(cgltf_image* image, Color tint, c
 
         int w, h;
         unsigned char *raw = stbi_load_from_memory(data, image->buffer_view->size, &w, &h, NULL, 4);
+        free(data);
 
         Image rimage = LoadImagePro(raw, w, h, UNCOMPRESSED_R8G8B8A8);
+        
+        // TODO: Tint shouldn't be applied here!
         ImageColorTint(&rimage, tint);
         texture = LoadTextureFromImage(rimage);
         UnloadImage(rimage);
-        free(raw);
-        free(data);
     }
     else
     {
@@ -3502,9 +3500,7 @@ static Model LoadGLTF(const char *fileName)
 
         // Read data buffers
         result = cgltf_load_buffers(&options, data, fileName);
-        if (result != cgltf_result_success) {
-            TraceLog(LOG_INFO, "[%s][%s] Error loading mesh/material buffers", fileName, (data->file_type == 2)? "glb" : "gltf");
-        }
+        if (result != cgltf_result_success) TraceLog(LOG_INFO, "[%s][%s] Error loading mesh/material buffers", fileName, (data->file_type == 2)? "glb" : "gltf");
 
         int primitivesCount = 0;
 
@@ -3527,15 +3523,15 @@ static Model LoadGLTF(const char *fileName)
             const char *texPath = GetDirectoryPath(fileName);
 
             //Ensure material follows raylib support for PBR (metallic/roughness flow)
-            if (data->materials[i].has_pbr_metallic_roughness) {
+            if (data->materials[i].has_pbr_metallic_roughness) 
+            {
                 float roughness = data->materials[i].pbr_metallic_roughness.roughness_factor;
                 float metallic = data->materials[i].pbr_metallic_roughness.metallic_factor;
 
-                if (model.materials[i].name && data->materials[i].name) {
-                    strcpy(model.materials[i].name, data->materials[i].name);
-                }
+                // NOTE: Material name not used for the moment
+                //if (model.materials[i].name && data->materials[i].name) strcpy(model.materials[i].name, data->materials[i].name);
 
-                // shouldn't these be *255 ???
+                // TODO: REview: shouldn't these be *255 ???
                 tint.r = (unsigned char)(data->materials[i].pbr_metallic_roughness.base_color_factor[0]*255);
                 tint.g = (unsigned char)(data->materials[i].pbr_metallic_roughness.base_color_factor[1]*255);
                 tint.b = (unsigned char)(data->materials[i].pbr_metallic_roughness.base_color_factor[2]*255);
@@ -3543,24 +3539,30 @@ static Model LoadGLTF(const char *fileName)
 
                 model.materials[i].maps[MAP_ROUGHNESS].color = tint;
 
-                if (data->materials[i].pbr_metallic_roughness.base_color_texture.texture) {
-                    model.materials[i].maps[MAP_ALBEDO].texture = LoadTextureFromCGLTFTextureView(data->materials[i].pbr_metallic_roughness.base_color_texture.texture->image, tint, texPath);
+                if (data->materials[i].pbr_metallic_roughness.base_color_texture.texture) 
+                {
+                    model.materials[i].maps[MAP_ALBEDO].texture = LoadTextureFromCgltfImage(data->materials[i].pbr_metallic_roughness.base_color_texture.texture->image, texPath, tint);
                 }
 
-                //tint isn't need for other textures.. pass null or clear? (try full white because of mixing (multiplying * white has no effect))
-                tint = (Color){ 255, 255, 255, 255 };
+                // NOTE: Tint isn't need for other textures.. pass null or clear? 
+                // Just set as white, multiplying by white has no effect
+                tint = WHITE;
 
-                if (data->materials[i].pbr_metallic_roughness.metallic_roughness_texture.texture) {
-                    model.materials[i].maps[MAP_ROUGHNESS].texture = LoadTextureFromCGLTFTextureView(data->materials[i].pbr_metallic_roughness.metallic_roughness_texture.texture->image, tint, texPath);
+                if (data->materials[i].pbr_metallic_roughness.metallic_roughness_texture.texture)
+                {
+                    model.materials[i].maps[MAP_ROUGHNESS].texture = LoadTextureFromCgltfImage(data->materials[i].pbr_metallic_roughness.metallic_roughness_texture.texture->image, texPath, tint);
                 }
                 model.materials[i].maps[MAP_ROUGHNESS].value = roughness;
                 model.materials[i].maps[MAP_METALNESS].value = metallic;
 
-                if (data->materials[i].normal_texture.texture) {
-                    model.materials[i].maps[MAP_NORMAL].texture = LoadTextureFromCGLTFTextureView(data->materials[i].normal_texture.texture->image, tint, texPath);
+                if (data->materials[i].normal_texture.texture) 
+                {
+                    model.materials[i].maps[MAP_NORMAL].texture = LoadTextureFromCgltfImage(data->materials[i].normal_texture.texture->image, texPath, tint);
                 }
-                if (data->materials[i].occlusion_texture.texture) {
-                    model.materials[i].maps[MAP_OCCLUSION].texture = LoadTextureFromCGLTFTextureView(data->materials[i].occlusion_texture.texture->image, tint, texPath);
+                
+                if (data->materials[i].occlusion_texture.texture) 
+                {
+                    model.materials[i].maps[MAP_OCCLUSION].texture = LoadTextureFromCgltfImage(data->materials[i].occlusion_texture.texture->image, texPath, tint);
                 }
             }
         }
