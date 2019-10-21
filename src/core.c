@@ -1798,15 +1798,18 @@ bool IsFileExtension(const char *fileName, const char *ext)
     bool result = false;
     const char *fileExt = GetExtension(fileName);
 
-    int extCount = 0;
-    const char **checkExts = TextSplit(ext, ';', &extCount);
-
-    for (int i = 0; i < extCount; i++)
+    if (fileExt != NULL)
     {
-        if (strcmp(fileExt, checkExts[i] + 1) == 0)
+        int extCount = 0;
+        const char **checkExts = TextSplit(ext, ';', &extCount);
+
+        for (int i = 0; i < extCount; i++)
         {
-            result = true;
-            break;
+            if (strcmp(fileExt, checkExts[i] + 1) == 0)
+            {
+                result = true;
+                break;
+            }
         }
     }
 
