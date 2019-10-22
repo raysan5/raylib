@@ -2389,10 +2389,10 @@ void DrawModelEx(Model model, Vector3 position, Vector3 rotationAxis, float rota
         Color color = model.materials[model.meshMaterial[i]].maps[MAP_DIFFUSE].color;
         
         Color colorTint = WHITE;
-        colorTint.r = ((color.r/255)*(tint.r/255))*255;
-        colorTint.g = ((color.g/255)*(tint.g/255))*255;
-        colorTint.b = ((color.b/255)*(tint.b/255))*255;
-        colorTint.a = ((color.a/255)*(tint.a/255))*255;
+        colorTint.r = (((float)color.r/255.0)*((float)tint.r/255.0))*255;
+        colorTint.g = (((float)color.g/255.0)*((float)tint.g/255.0))*255;
+        colorTint.b = (((float)color.b/255.0)*((float)tint.b/255.0))*255;
+        colorTint.a = (((float)color.a/255.0)*((float)tint.a/255.0))*255;
         
         model.materials[model.meshMaterial[i]].maps[MAP_DIFFUSE].color = colorTint;
         rlDrawMesh(model.meshes[i], model.materials[model.meshMaterial[i]], model.transform);
