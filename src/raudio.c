@@ -474,7 +474,11 @@ static void InitAudioBufferPool()
 // Close the audio buffers pool
 static void CloseAudioBufferPool()
 {
-    for (int i = 0; i < MAX_AUDIO_BUFFER_POOL_CHANNELS; i++) RL_FREE(audioBufferPool[i]);
+    for (int i = 0; i < MAX_AUDIO_BUFFER_POOL_CHANNELS; i++) 
+    {
+        RL_FREE(audioBufferPool[i]->buffer);
+        RL_FREE(audioBufferPool[i]);
+    }
 }
 
 //----------------------------------------------------------------------------------
