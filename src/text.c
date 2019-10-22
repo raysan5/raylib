@@ -21,7 +21,8 @@
 *
 *
 *   DEPENDENCIES:
-*       stb_truetype - Load TTF file and rasterize characters data
+*       stb_truetype  - Load TTF file and rasterize characters data
+*       stb_rect_pack - Rectangles packing algorythms, required for font atlas generation
 *
 *
 *   LICENSE: zlib/libpng
@@ -49,7 +50,7 @@
 
 // Check if config flags have been externally provided on compilation line
 #if !defined(EXTERNAL_CONFIG_FLAGS)
-    #include "config.h"         // Defines module configuration flags
+    #include "config.h"     // Defines module configuration flags
 #endif
 
 #include <stdlib.h>         // Required for: malloc(), free()
