@@ -3419,7 +3419,8 @@ static Texture LoadTextureFromCgltfImage(cgltf_image *image, const char *texPath
         free(data);
 
         Image rimage = LoadImagePro(raw, w, h, UNCOMPRESSED_R8G8B8A8);
-        
+        free(raw);
+
         // TODO: Tint shouldn't be applied here!
         ImageColorTint(&rimage, tint);
         texture = LoadTextureFromImage(rimage);
