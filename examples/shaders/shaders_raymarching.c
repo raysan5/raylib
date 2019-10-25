@@ -59,7 +59,7 @@ int main(void)
 
     float runTime = 0.0f;
 
-    SetTargetFPS(60);
+    SetTargetFPS(60);                       // Set our game to run at 60 frames-per-second
     //--------------------------------------------------------------------------------------
 
     // Main game loop
@@ -100,7 +100,7 @@ int main(void)
             // We only draw a white full-screen rectangle,
             // frame is generated in shader using raymarching
             BeginShaderMode(shader);
-                DrawRectangle(0, 0, screenWidth, screenHeight, RAYWHITE);
+                DrawRectangle(0, 0, screenWidth, screenHeight, WHITE);
             EndShaderMode();
 
             DrawText("(c) Raymarching shader by Iñigo Quilez. MIT License.", screenWidth - 280, screenHeight - 20, 10, BLACK);
