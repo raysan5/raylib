@@ -1976,7 +1976,7 @@ char **GetDirectoryFiles(const char *dirPath, int *fileCount)
 // Clear directory files paths buffers
 void ClearDirectoryFiles(void)
 {
-    if (dirFilesPath != NULL)
+    if (dirFilesCount > 0)
     {
         for (int i = 0; i < MAX_DIRECTORY_FILES; i++) RL_FREE(dirFilesPath[i]);
 
