@@ -18,6 +18,8 @@
 
 #include "raylib.h"
 
+#define PLATFORM_DESKTOP // comment this out if you are not compiling this for desktop.
+
 #if defined(PLATFORM_DESKTOP)
     #define GLSL_VERSION            330
 #else   // PLATFORM_RPI, PLATFORM_ANDROID, PLATFORM_WEB
@@ -28,9 +30,10 @@ int main(void)
 {
     // Initialization
     //--------------------------------------------------------------------------------------
-    const int screenWidth = 800;
-    const int screenHeight = 450;
+    int screenWidth = 800;
+    int screenHeight = 450;
 
+    SetConfigFlags(FLAG_WINDOW_RESIZABLE);
     InitWindow(screenWidth, screenHeight, "raylib [shaders] example - raymarching shapes");
 
     Camera camera = { 0 };
@@ -48,29 +51,36 @@ int main(void)
     // Get shader locations for required uniforms
     int viewEyeLoc = GetShaderLocation(shader, "viewEye");
     int viewCenterLoc = GetShaderLocation(shader, "viewCenter");
-    int viewUpLoc = GetShaderLocation(shader, "viewUp");
-    int deltaTimeLoc = GetShaderLocation(shader, "deltaTime");
     int runTimeLoc = GetShaderLocation(shader, "runTime");
     int resolutionLoc = GetShaderLocation(shader, "resolution");
 
-    float resolution[2] = { screenWidth, screenHeight };
+    float resolution[2] = { (float)screenWidth, (float)screenHeight };
     SetShaderValue(shader, resolutionLoc, resolution, UNIFORM_VEC2);
 
     float runTime = 0.0f;
 
-    SetTargetFPS(60);                       // Set our game to run at 60 frames-per-second
+    SetTargetFPS(60);
     //--------------------------------------------------------------------------------------
 
     // Main game loop
     while (!WindowShouldClose())            // Detect window close button or ESC key
     {
+        // Check if screen is resized
+        //----------------------------------------------------------------------------------
+        if(IsWindowResized())
+        {
+            screenWidth = GetScreenWidth();
+            screenHeight = GetScreenHeight();
+            float resolution[2] = { (float)screenWidth, (float)screenHeight };
+            SetShaderValue(shader, resolutionLoc, resolution, UNIFORM_VEC2);
+        }
+
         // Update
         //----------------------------------------------------------------------------------
         UpdateCamera(&camera);              // Update camera
 
         float cameraPos[3] = { camera.position.x, camera.position.y, camera.position.z };
         float cameraTarget[3] = { camera.target.x, camera.target.y, camera.target.z };
-        float cameraUp[3] = { camera.up.x, camera.up.y, camera.up.z };
 
         float deltaTime = GetFrameTime();
         runTime += deltaTime;
@@ -78,8 +88,6 @@ int main(void)
         // Set shader required uniform values
         SetShaderValue(shader, viewEyeLoc, cameraPos, UNIFORM_VEC3);
         SetShaderValue(shader, viewCenterLoc, cameraTarget, UNIFORM_VEC3);
-        SetShaderValue(shader, viewUpLoc, cameraUp, UNIFORM_VEC3);
-        SetShaderValue(shader, deltaTimeLoc, &deltaTime, UNIFORM_FLOAT);
         SetShaderValue(shader, runTimeLoc, &runTime, UNIFORM_FLOAT);
         //----------------------------------------------------------------------------------
 
@@ -92,10 +100,10 @@ int main(void)
             // We only draw a white full-screen rectangle,
             // frame is generated in shader using raymarching
             BeginShaderMode(shader);
-                DrawRectangle(0, 0, screenWidth, screenHeight, WHITE);
+                DrawRectangle(0, 0, screenWidth, screenHeight, RAYWHITE);
             EndShaderMode();
 
-            DrawText("(c) Raymarching shader by Iñigo Quilez. MIT License.", screenWidth - 280, screenHeight - 20, 10, GRAY);
+            DrawText("(c) Raymarching shader by Iñigo Quilez. MIT License.", screenWidth - 280, screenHeight - 20, 10, BLACK);
 
         EndDrawing();
         //----------------------------------------------------------------------------------
