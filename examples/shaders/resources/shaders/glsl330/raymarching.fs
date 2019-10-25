@@ -9,8 +9,6 @@ out vec4 finalColor;
 
 uniform vec3 viewEye;
 uniform vec3 viewCenter; 
-uniform vec3 viewUp;
-uniform float deltaTime;
 uniform float runTime;
 uniform vec2 resolution;
 
