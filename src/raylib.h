@@ -432,7 +432,7 @@ typedef struct Sound {
 typedef struct Music {
     int ctxType;                    // Type of music context (audio filetype)
     void *ctxData;                  // Audio context data, depends on type
-    
+
     unsigned int sampleCount;       // Total number of samples
     unsigned int loopCount;         // Loops count (times music will play), 0 means infinite loop
 
@@ -1319,6 +1319,7 @@ RLAPI void SetShaderValueTexture(Shader shader, int uniformLoc, Texture2D textur
 RLAPI void SetMatrixProjection(Matrix proj);                              // Set a custom projection matrix (replaces internal projection matrix)
 RLAPI void SetMatrixModelview(Matrix view);                               // Set a custom modelview matrix (replaces internal modelview matrix)
 RLAPI Matrix GetMatrixModelview(void);                                    // Get internal modelview matrix
+RLAPI Matrix GetMatrixProjection(void);                                   // Get internal projection matrix
 
 // Texture maps generation (PBR)
 // NOTE: Required shaders should be provided
