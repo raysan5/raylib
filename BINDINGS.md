@@ -12,6 +12,7 @@ Some people ported raylib to other languages in form of bindings or wrappers to 
  - [cray](https://github.com/tapgg/cray) : raylib **Crystal** binding
  - [Graphics::Raylib](https://metacpan.org/pod/Graphics::Raylib) : raylib **Perl** wrapper
  - [raylib-pascal](https://github.com/drezgames/raylib-pascal) - raylib **Pascal** binding
+ - [raylib-pas](https://github.com/tazdij/raylib-pas) - raylib **Pascal** binding (including rlgl & raymath)
  - [Raylib-cs](https://github.com/ChrisDill/Raylib-cs) : raylib **C#** binding
  - [RaylibSharp](https://github.com/TheLumaio/RaylibSharp) : raylib **C#** binding
  - [raylib-ruby-ffi](https://github.com/D3nX/raylib-ruby-ffi) : raylib **Ruby** binding
