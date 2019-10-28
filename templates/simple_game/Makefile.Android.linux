@@ -220,7 +220,6 @@ copy_project_required_libs:
 
 # Copy project required resources: strings.xml, icon.png, assets
 # NOTE: Required strings.xml is generated and game resources are copied to assets folder
-# TODO: Review xcopy usage, it can not be found in some systems!
 copy_project_resources:
 	cp $(APP_ICON_LDPI) $(PROJECT_BUILD_PATH)/res/drawable-ldpi/icon.png
 	cp $(APP_ICON_MDPI) $(PROJECT_BUILD_PATH)/res/drawable-mdpi/icon.png
