@@ -1195,8 +1195,8 @@ RLAPI bool TextIsEqual(const char *text1, const char *text2);                   
 RLAPI unsigned int TextLength(const char *text);                                            // Get text length, checks for '\0' ending
 RLAPI const char *TextFormat(const char *text, ...);                                        // Text formatting with variables (sprintf style)
 RLAPI const char *TextSubtext(const char *text, int position, int length);                  // Get a piece of a text string
-RLAPI char *TextReplace(char *text, const char *replace, const char *by);                   // Replace text string (memory should be freed!)
-RLAPI char *TextInsert(const char *text, const char *insert, int position);                 // Insert text in a position (memory should be freed!)
+RLAPI char *TextReplace(char *text, const char *replace, const char *by);                   // Replace text string (memory must be freed!)
+RLAPI char *TextInsert(const char *text, const char *insert, int position);                 // Insert text in a position (memory must be freed!)
 RLAPI const char *TextJoin(const char **textList, int count, const char *delimiter);        // Join text strings with delimiter
 RLAPI const char **TextSplit(const char *text, char delimiter, int *count);                 // Split text into multiple strings
 RLAPI void TextAppend(char *text, const char *append, int *position);                       // Append text at specific position and move cursor!
@@ -1205,12 +1205,13 @@ RLAPI const char *TextToUpper(const char *text);                      // Get upp
 RLAPI const char *TextToLower(const char *text);                      // Get lower case version of provided string
 RLAPI const char *TextToPascal(const char *text);                     // Get Pascal case notation version of provided string
 RLAPI int TextToInteger(const char *text);                            // Get integer value from text (negative values not supported)
-RLAPI const char *TextToUtf8(int codepoint, int *byteLength);         // Encode codepoint into utf8 text (char array length returned as parameter)
+RLAPI char *TextToUtf8(int *codepoints, int length);                  // Encode text codepoint into utf8 text (memory must be freed!)
 
 // UTF8 text strings management functions
 RLAPI int *GetCodepoints(const char *text, int *count);               // Get all codepoints in a string, codepoints count returned by parameters
 RLAPI int GetCodepointsCount(const char *text);                       // Get total number of characters (codepoints) in a UTF8 encoded string
 RLAPI int GetNextCodepoint(const char *text, int *bytesProcessed);    // Returns next codepoint in a UTF8 encoded string; 0x3f('?') is returned on failure
+RLAPI const char *CodepointToUtf8(int codepoint, int *byteLength);    // Encode codepoint into utf8 text (char array length returned as parameter)
 
 //------------------------------------------------------------------------------------
 // Basic 3d Shapes Drawing Functions (Module: models)
