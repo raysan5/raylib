@@ -110,7 +110,7 @@ typedef struct Sound {
 typedef struct Music {
     int ctxType;                    // Type of music context (audio filetype)
     void *ctxData;                  // Audio context data, depends on type
-    
+
     unsigned int sampleCount;       // Total number of samples
     unsigned int loopCount;         // Loops count (times music will play), 0 means infinite loop
 

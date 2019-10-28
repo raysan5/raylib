@@ -1896,7 +1896,7 @@ static Vector2 TriangleBarycenter(Vector2 v1, Vector2 v2, Vector2 v3)
 static void InitTimer(void)
 {
     srand(time(NULL));              // Initialize random seed
-    
+
 #if defined(_WIN32)
     QueryPerformanceFrequency((unsigned long long int *) &frequency);
 #endif
@@ -1911,7 +1911,7 @@ static void InitTimer(void)
     mach_timebase_info(&timebase);
     frequency = (timebase.denom*1e9)/timebase.numer;
 #endif
-    
+
     baseTime = GetTimeCount();      // Get MONOTONIC clock time offset
     startTime = GetCurrentTime();   // Get current time
 }
@@ -1920,7 +1920,7 @@ static void InitTimer(void)
 static uint64_t GetTimeCount(void)
 {
     uint64_t value = 0;
-    
+
 #if defined(_WIN32)
     QueryPerformanceCounter((unsigned long long int *) &value);
 #endif
