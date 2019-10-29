@@ -662,7 +662,7 @@ Vector4 *GetImageDataNormalized(Image image)
                     pixels[i].w = 1.0f;
 
                     k += 3;
-                }
+                } break;
                 case UNCOMPRESSED_R32G32B32A32:
                 {
                     pixels[i].x = ((float *)image.data)[k];

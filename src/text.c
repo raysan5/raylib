@@ -1394,7 +1394,7 @@ char *TextToUtf8(int *codepoints, int length)
     }
     
     // Resize memory to text length + string NULL terminator
-    realloc(text, size + 1);
+    text = realloc(text, size + 1);
     
     return text;
 }

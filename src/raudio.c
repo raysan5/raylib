@@ -592,13 +592,14 @@ void SetMasterVolume(float volume)
 AudioBuffer *InitAudioBuffer(ma_format format, ma_uint32 channels, ma_uint32 sampleRate, ma_uint32 bufferSizeInFrames, int usage)
 {
     AudioBuffer *audioBuffer = (AudioBuffer *)RL_CALLOC(1, sizeof(AudioBuffer));
-    audioBuffer->buffer = RL_CALLOC(bufferSizeInFrames*channels*ma_get_bytes_per_sample(format), 1);
 
     if (audioBuffer == NULL)
     {
         TraceLog(LOG_ERROR, "InitAudioBuffer() : Failed to allocate memory for audio buffer");
         return NULL;
     }
+    
+    audioBuffer->buffer = RL_CALLOC(bufferSizeInFrames*channels*ma_get_bytes_per_sample(format), 1);
 
     // Audio data runs through a format converter
     ma_pcm_converter_config dspConfig;

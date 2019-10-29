@@ -929,12 +929,16 @@ ModelAnimation *LoadModelAnimations(const char *filename, int *animCount)
     {
         TraceLog(LOG_ERROR, "Magic Number \"%s\"does not match.", iqm.magic);
         fclose(iqmFile);
+
+        return NULL;
     }
 
     if (iqm.version != IQM_VERSION)
     {
         TraceLog(LOG_ERROR, "IQM version %i is incorrect.", iqm.version);
         fclose(iqmFile);
+        
+        return NULL;
     }
 
     // Get bones data
