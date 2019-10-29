@@ -1887,6 +1887,13 @@ unsigned int rlLoadTexture(void *data, int width, int height, int format, int mi
 #endif
 #endif      // GRAPHICS_API_OPENGL_11
 
+    if( data == NULL ){
+        //ups!
+        TraceLog(LOG_WARNING, "Got asked to load texture from a NULL pointer!");
+
+        return id;
+    }
+
     glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
 
     glGenTextures(1, &id);              // Generate texture id

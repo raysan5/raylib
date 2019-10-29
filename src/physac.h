@@ -842,9 +842,17 @@ PHYSACDEF void DestroyPhysicsBody(PhysicsBody body)
             }
         }
 
-        #if defined(PHYSAC_DEBUG)
-        if (index == -1) printf("[PHYSAC] cannot find body id %i in pointers array\n", id);
-        #endif
+        
+        if (index == -1){
+
+            #if defined(PHYSAC_DEBUG)
+                printf("[PHYSAC] cannot find body id %i in pointers array\n", id);
+            #endif
+
+        // prevent access to index -1
+        return;
+        } 
+        
 
         // Free body allocated memory
         PHYSAC_FREE(body);
@@ -1249,9 +1257,16 @@ static void DestroyPhysicsManifold(PhysicsManifold manifold)
             }
         }
 
-        #if defined(PHYSAC_DEBUG)
-            if (index == -1) printf("[PHYSAC] cannot find manifold id %i in pointers array\n", id);
-        #endif
+
+        if (index == -1) {
+            #if defined(PHYSAC_DEBUG)
+                printf("[PHYSAC] cannot find manifold id %i in pointers array\n", id);
+            #endif
+
+            //prevent access to index -1
+            return;
+        } 
+        
 
         // Free manifold allocated memory
         PHYSAC_FREE(manifold);
