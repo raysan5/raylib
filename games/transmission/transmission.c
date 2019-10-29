@@ -70,7 +70,7 @@ int main(void)
     fontMission = LoadFontEx("resources/fonts/traveling_typewriter.ttf", 64, 0, 250);
     texButton = LoadTexture("resources/textures/title_ribbon.png");
     
-	// UI BUTTON
+    // UI BUTTON
     recButton.width = texButton.width;
     recButton.height = texButton.height;
     recButton.x = screenWidth - recButton.width;
@@ -121,7 +121,7 @@ int main(void)
     
     UnloadFont(fontMission);
     UnloadTexture(texButton);
-	
+    
     CloseAudioDevice();     // Close audio context
     
     CloseWindow();          // Close window and OpenGL context
@@ -438,7 +438,7 @@ bool IsButtonPressed()
         }
     }
     else fadeButton = 0.80f;
-	
+    
     return false;
 }
 

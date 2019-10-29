@@ -92,6 +92,7 @@ int main(void)
         while (pitchOffset < -180) pitchOffset += 360;
         pitchOffset *= 10;
 
+        /* matrix transform done with multiplication to combine rotations
         Matrix transform = MatrixIdentity();
 
         transform = MatrixMultiply(transform, MatrixRotateZ(DEG2RAD*roll));
@@ -99,8 +100,11 @@ int main(void)
         transform = MatrixMultiply(transform, MatrixRotateY(DEG2RAD*yaw));
 
         model.transform = transform;
-        //----------------------------------------------------------------------------------
+        */
+        // matrix created from multiple axes at once
+        model.transform = MatrixRotateXYZ((Vector3){DEG2RAD*pitch,DEG2RAD*yaw,DEG2RAD*roll});
 
+        //----------------------------------------------------------------------------------
         // Draw
         //----------------------------------------------------------------------------------
         BeginDrawing();
@@ -165,6 +169,7 @@ int main(void)
     //--------------------------------------------------------------------------------------
 
     // Unload all loaded data
+    UnloadTexture(model.materials[0].maps[MAP_DIFFUSE].texture);
     UnloadModel(model);
 
     UnloadRenderTexture(framebuffer);

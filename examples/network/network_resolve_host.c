@@ -28,30 +28,30 @@ uint16_t port = 0;
 
 int main()
 {
-	// Setup
-	int screenWidth  = 800;
-	int screenHeight = 450;
-	InitWindow(
-		screenWidth, screenHeight, "raylib [network] example - ping pong");
-	SetTargetFPS(60);
+    // Setup
+    int screenWidth  = 800;
+    int screenHeight = 450;
+    InitWindow(
+        screenWidth, screenHeight, "raylib [network] example - ping pong");
+    SetTargetFPS(60);
 
-	SetTraceLogLevel(LOG_DEBUG);
+    SetTraceLogLevel(LOG_DEBUG);
 
-	// Networking
-	InitNetwork(); 
-	 
+    // Networking
+    InitNetwork();
+     
     AddressInformation* addr = AllocAddressList(1);
-	int count = ResolveHost(
-        NULL, 
-        "5210", 
-        ADDRESS_TYPE_IPV4, 
+    int count = ResolveHost(
+        NULL,
+        "5210",
+        ADDRESS_TYPE_IPV4,
         0                               // Uncomment any of these flags
         //  ADDRESS_INFO_NUMERICHOST    // or try them in conjunction to
         //  ADDRESS_INFO_NUMERICSERV    // specify custom behaviour from 
         //  ADDRESS_INFO_DNS_ONLY       // the function getaddrinfo()
         //  ADDRESS_INFO_ALL            //
         //  ADDRESS_INFO_FQDN           // e.g. ADDRESS_INFO_CANONNAME | ADDRESS_INFO_NUMERICSERV
-        , 
+        ,
         addr
     );
 
@@ -61,20 +61,20 @@ int main()
         TraceLog(LOG_INFO, "Resolved to ip %s::%d\n", buffer, port);
     }
 
-	// Main game loop
-	while (!WindowShouldClose())
-	{
-		// Draw
-		BeginDrawing();
+    // Main game loop
+    while (!WindowShouldClose())
+    {
+        // Draw
+        BeginDrawing();
 
-		// Clear
-		ClearBackground(RAYWHITE);
+        // Clear
+        ClearBackground(RAYWHITE);
 
-		// End draw
-		EndDrawing();
-	}
+        // End draw
+        EndDrawing();
+    }
 
-	// Cleanup
-	CloseWindow();
-	return 0;
+    // Cleanup
+    CloseWindow();
+    return 0;
 }

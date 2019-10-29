@@ -161,6 +161,9 @@
 //----------------------------------------------------------------------------------
 // Module specific Functions Declaration
 //----------------------------------------------------------------------------------
+#if defined(SUPPORT_FILEFORMAT_GIF)
+static Image LoadAnimatedGIF(const char *fileName, int *frames, int **delays);    // Load animated GIF file
+#endif
 #if defined(SUPPORT_FILEFORMAT_DDS)
 static Image LoadDDS(const char *fileName);   // Load DDS file
 #endif
@@ -253,12 +256,9 @@ Image LoadImage(const char *fileName)
 
         FILE *imFile = fopen(fileName, "rb");
 
-        stbi_set_flip_vertically_on_load(true);
-
         // Load 32 bit per channel floats data
+        //stbi_set_flip_vertically_on_load(true);
         image.data = stbi_loadf_from_file(imFile, &image.width, &image.height, &imgBpp, 0);
-
-        stbi_set_flip_vertically_on_load(false);
 
         fclose(imFile);
 
@@ -551,7 +551,7 @@ Color *GetImageData(Image image)
                     pixels[i].a = 255;
 
                     k += 3;
-                }
+                } break;
                 case UNCOMPRESSED_R32G32B32A32:
                 {
                     pixels[i].r = (unsigned char)(((float *)image.data)[k]*255.0f);
@@ -560,7 +560,7 @@ Color *GetImageData(Image image)
                     pixels[i].a = (unsigned char)(((float *)image.data)[k]*255.0f);
 
                     k += 4;
-                }
+                } break;
                 default: break;
             }
         }
@@ -678,6 +678,37 @@ Vector4 *GetImageDataNormalized(Image image)
     }
 
     return pixels;
+}
+
+// Get image alpha border rectangle
+Rectangle GetImageAlphaBorder(Image image, float threshold)
+{
+    Color *pixels = GetImageData(image);
+
+    int xMin = 65536;   // Define a big enough number
+    int xMax = 0;
+    int yMin = 65536;
+    int yMax = 0;
+
+    for (int y = 0; y < image.height; y++)
+    {
+        for (int x = 0; x < image.width; x++)
+        {
+            if (pixels[y*image.width + x].a > (unsigned char)(threshold*255.0f))
+            {
+                if (x < xMin) xMin = x;
+                if (x > xMax) xMax = x;
+                if (y < yMin) yMin = y;
+                if (y > yMax) yMax = y;
+            }
+        }
+    }
+
+    Rectangle crop = { xMin, yMin, (xMax + 1) - xMin, (yMax + 1) - yMin };
+
+    RL_FREE(pixels);
+
+    return crop;
 }
 
 // Get pixel data size in bytes (image or texture)
@@ -818,37 +849,40 @@ void ExportImageAsCode(Image image, const char *fileName)
 {
     #define BYTES_TEXT_PER_LINE     20
 
-    char varFileName[256] = { 0 };
-    int dataSize = GetPixelDataSize(image.width, image.height, image.format);
-
     FILE *txtFile = fopen(fileName, "wt");
 
-    fprintf(txtFile, "\n//////////////////////////////////////////////////////////////////////////////////////\n");
-    fprintf(txtFile, "//                                                                                    //\n");
-    fprintf(txtFile, "// ImageAsCode exporter v1.0 - Image pixel data exported as an array of bytes         //\n");
-    fprintf(txtFile, "//                                                                                    //\n");
-    fprintf(txtFile, "// more info and bugs-report:  github.com/raysan5/raylib                              //\n");
-    fprintf(txtFile, "// feedback and support:       ray[at]raylib.com                                      //\n");
-    fprintf(txtFile, "//                                                                                    //\n");
-    fprintf(txtFile, "// Copyright (c) 2018 Ramon Santamaria (@raysan5)                                     //\n");
-    fprintf(txtFile, "//                                                                                    //\n");
-    fprintf(txtFile, "////////////////////////////////////////////////////////////////////////////////////////\n\n");
+    if (txtFile != NULL)
+    {
+        char varFileName[256] = { 0 };
+        int dataSize = GetPixelDataSize(image.width, image.height, image.format);
 
-    // Get file name from path and convert variable name to uppercase
-    strcpy(varFileName, GetFileNameWithoutExt(fileName));
-    for (int i = 0; varFileName[i] != '\0'; i++) if ((varFileName[i] >= 'a') && (varFileName[i] <= 'z')) { varFileName[i] = varFileName[i] - 32; }
+        fprintf(txtFile, "////////////////////////////////////////////////////////////////////////////////////////\n");
+        fprintf(txtFile, "//                                                                                    //\n");
+        fprintf(txtFile, "// ImageAsCode exporter v1.0 - Image pixel data exported as an array of bytes         //\n");
+        fprintf(txtFile, "//                                                                                    //\n");
+        fprintf(txtFile, "// more info and bugs-report:  github.com/raysan5/raylib                              //\n");
+        fprintf(txtFile, "// feedback and support:       ray[at]raylib.com                                      //\n");
+        fprintf(txtFile, "//                                                                                    //\n");
+        fprintf(txtFile, "// Copyright (c) 2019 Ramon Santamaria (@raysan5)                                     //\n");
+        fprintf(txtFile, "//                                                                                    //\n");
+        fprintf(txtFile, "////////////////////////////////////////////////////////////////////////////////////////\n\n");
 
-    // Add image information
-    fprintf(txtFile, "// Image data information\n");
-    fprintf(txtFile, "#define %s_WIDTH    %i\n", varFileName, image.width);
-    fprintf(txtFile, "#define %s_HEIGHT   %i\n", varFileName, image.height);
-    fprintf(txtFile, "#define %s_FORMAT   %i          // raylib internal pixel format\n\n", varFileName, image.format);
+        // Get file name from path and convert variable name to uppercase
+        strcpy(varFileName, GetFileNameWithoutExt(fileName));
+        for (int i = 0; varFileName[i] != '\0'; i++) if ((varFileName[i] >= 'a') && (varFileName[i] <= 'z')) { varFileName[i] = varFileName[i] - 32; }
 
-    fprintf(txtFile, "static unsigned char %s_DATA[%i] = { ", varFileName, dataSize);
-    for (int i = 0; i < dataSize - 1; i++) fprintf(txtFile, ((i%BYTES_TEXT_PER_LINE == 0)? "0x%x,\n" : "0x%x, "), ((unsigned char *)image.data)[i]);
-    fprintf(txtFile, "0x%x };\n", ((unsigned char *)image.data)[dataSize - 1]);
+        // Add image information
+        fprintf(txtFile, "// Image data information\n");
+        fprintf(txtFile, "#define %s_WIDTH    %i\n", varFileName, image.width);
+        fprintf(txtFile, "#define %s_HEIGHT   %i\n", varFileName, image.height);
+        fprintf(txtFile, "#define %s_FORMAT   %i          // raylib internal pixel format\n\n", varFileName, image.format);
 
-    fclose(txtFile);
+        fprintf(txtFile, "static unsigned char %s_DATA[%i] = { ", varFileName, dataSize);
+        for (int i = 0; i < dataSize - 1; i++) fprintf(txtFile, ((i%BYTES_TEXT_PER_LINE == 0)? "0x%x,\n" : "0x%x, "), ((unsigned char *)image.data)[i]);
+        fprintf(txtFile, "0x%x };\n", ((unsigned char *)image.data)[dataSize - 1]);
+
+        fclose(txtFile);
+    }
 }
 
 // Copy an image to a new image
@@ -892,9 +926,11 @@ Image ImageCopy(Image image)
 Image ImageFromImage(Image image, Rectangle rec)
 {
     Image result = ImageCopy(image);
-    
+
+#if defined(SUPPORT_IMAGE_MANIPULATION)
     ImageCrop(&result, rec);
-    
+#endif
+
     return result;
 }
 
@@ -1145,13 +1181,18 @@ void ImageAlphaMask(Image *image, Image alphaMask)
         // In case image is only grayscale, we just add alpha channel
         if (image->format == UNCOMPRESSED_GRAYSCALE)
         {
-            ImageFormat(image, UNCOMPRESSED_GRAY_ALPHA);
+            unsigned char *data = (unsigned char *)RL_MALLOC(image->width*image->height*2);
 
             // Apply alpha mask to alpha channel
-            for (int i = 0, k = 1; (i < mask.width*mask.height) || (i < image->width*image->height); i++, k += 2)
+            for (int i = 0, k = 0; (i < mask.width*mask.height) || (i < image->width*image->height); i++, k += 2)
             {
-                ((unsigned char *)image->data)[k] = ((unsigned char *)mask.data)[i];
+                data[k] = ((unsigned char *)image->data)[i];
+                data[k + 1] = ((unsigned char *)mask.data)[i];
             }
+
+            RL_FREE(image->data);
+            image->data = data;
+            image->format = UNCOMPRESSED_GRAY_ALPHA;
         }
         else
         {
@@ -1303,18 +1344,11 @@ void ImageCrop(Image *image, Rectangle crop)
     // Security check to avoid program crash
     if ((image->data == NULL) || (image->width == 0) || (image->height == 0)) return;
 
-    // Security checks to make sure cropping rectangle is inside margins
-    if ((crop.x + crop.width) > image->width)
-    {
-        crop.width = image->width - crop.x;
-        TraceLog(LOG_WARNING, "Crop rectangle width out of bounds, rescaled crop width: %i", crop.width);
-    }
-
-    if ((crop.y + crop.height) > image->height)
-    {
-        crop.height = image->height - crop.y;
-        TraceLog(LOG_WARNING, "Crop rectangle height out of bounds, rescaled crop height: %i", crop.height);
-    }
+    // Security checks to validate crop rectangle
+    if (crop.x < 0) { crop.width += crop.x; crop.x = 0; }
+    if (crop.y < 0) { crop.height += crop.y; crop.y = 0; }
+    if ((crop.x + crop.width) > image->width) crop.width = image->width - crop.x;
+    if ((crop.y + crop.height) > image->height) crop.height = image->height - crop.y;
 
     if ((crop.x < image->width) && (crop.y < image->height))
     {
@@ -1343,10 +1377,7 @@ void ImageCrop(Image *image, Rectangle crop)
         // Reformat 32bit RGBA image to original format
         ImageFormat(image, format);
     }
-    else
-    {
-        TraceLog(LOG_WARNING, "Image can not be cropped, crop rectangle out of bounds");
-    }
+    else TraceLog(LOG_WARNING, "Image can not be cropped, crop rectangle out of bounds");
 }
 
 // Crop image depending on alpha value
@@ -1792,14 +1823,16 @@ void ImageDraw(Image *dst, Image src, Rectangle srcRec, Rectangle dstRec, Color 
     }
 
     Image srcCopy = ImageCopy(src);     // Make a copy of source image to work with it
-    ImageCrop(&srcCopy, srcRec);        // Crop source image to desired source rectangle
+
+    // Crop source image to desired source rectangle (if required)
+    if ((src.width != (int)srcRec.width) && (src.height != (int)srcRec.height)) ImageCrop(&srcCopy, srcRec);
 
     // Scale source image in case destination rec size is different than source rec size
     if (((int)dstRec.width != (int)srcRec.width) || ((int)dstRec.height != (int)srcRec.height))
     {
         ImageResize(&srcCopy, (int)dstRec.width, (int)dstRec.height);
     }
-    
+
     // Check that dstRec is inside dst image
     // Allow negative position within destination with cropping
     if (dstRec.x < 0)
@@ -1808,7 +1841,7 @@ void ImageDraw(Image *dst, Image src, Rectangle srcRec, Rectangle dstRec, Color 
         dstRec.width = dstRec.width + dstRec.x;
         dstRec.x = 0;
     }
-    
+
     if ((dstRec.x + dstRec.width) > dst->width)
     {
         ImageCrop(&srcCopy, (Rectangle) { 0, 0, dst->width - dstRec.x, dstRec.height });
@@ -1821,8 +1854,8 @@ void ImageDraw(Image *dst, Image src, Rectangle srcRec, Rectangle dstRec, Color 
         dstRec.height = dstRec.height + dstRec.y;
         dstRec.y = 0;
     }
-    
-    if (dstRec.y > (dst->height - dstRec.height))
+
+    if ((dstRec.y + dstRec.height) > dst->height)
     {
         ImageCrop(&srcCopy, (Rectangle) { 0, 0, dstRec.width, dst->height - dstRec.y });
         dstRec.height = dst->height - dstRec.y;
@@ -1847,7 +1880,7 @@ void ImageDraw(Image *dst, Image src, Rectangle srcRec, Rectangle dstRec, Color 
 
             fdst = ColorNormalize(dstPixels[j*(int)dst->width + i]);
             fsrc = ColorNormalize(srcPixels[(j - (int)dstRec.y)*(int)dstRec.width + (i - (int)dstRec.x)]);
-            
+
             // Apply color tint to source image
             fsrc.x *= ftint.x; fsrc.y *= ftint.y; fsrc.z *= ftint.z; fsrc.w *= ftint.w;
 
@@ -1910,16 +1943,16 @@ Image ImageTextEx(Font font, const char *text, float fontSize, float spacing, Co
 
     // Create image to store text
     Image imText = GenImageColor((int)imSize.x, (int)imSize.y, BLANK);
-    
+
     for (int i = 0; i < length; i++)
     {
         int next = 0;
         letter = GetNextCodepoint(&text[i], &next);
         index = GetGlyphIndex(font, letter);
-        
-        if (letter == 0x3f) next = 1; 
+
+        if (letter == 0x3f) next = 1;
         i += (next - 1);
-        
+
         if (letter == '\n')
         {
             // TODO: Support line break
@@ -1929,7 +1962,7 @@ Image ImageTextEx(Font font, const char *text, float fontSize, float spacing, Co
             if (letter != ' ')
             {
                 ImageDraw(&imText, font.chars[index].image, (Rectangle){ 0, 0, font.chars[index].image.width, font.chars[index].image.height },
-                         (Rectangle){ (float)(positionX + font.chars[index].offsetX),(float)font.chars[index].offsetY, 
+                         (Rectangle){ (float)(positionX + font.chars[index].offsetX),(float)font.chars[index].offsetY,
                                       font.chars[index].image.width, font.chars[index].image.height }, tint);
             }
 
@@ -1969,7 +2002,7 @@ void ImageDrawRectangleLines(Image *dst, Rectangle rec, int thick, Color color)
     ImageDrawRectangle(dst, (Rectangle){ rec.x, rec.y, rec.width, thick }, color);
     ImageDrawRectangle(dst, (Rectangle){ rec.x, rec.y + thick, thick, rec.height - thick*2 }, color);
     ImageDrawRectangle(dst, (Rectangle){ rec.x + rec.width - thick, rec.y + thick, thick, rec.height - thick*2 }, color);
-    ImageDrawRectangle(dst, (Rectangle){ rec.x, rec.height - thick, rec.width, thick }, color);
+    ImageDrawRectangle(dst, (Rectangle){ rec.x, rec.y + rec.height - thick, rec.width, thick }, color);
 }
 
 // Draw text (default font) within an image (destination)
@@ -2684,9 +2717,9 @@ void DrawTexturePro(Texture2D texture, Rectangle sourceRec, Rectangle destRec, V
     {
         float width = (float)texture.width;
         float height = (float)texture.height;
-        
+
         bool flipX = false;
-        
+
         if (sourceRec.width < 0) { flipX = true; sourceRec.width *= -1; }
         if (sourceRec.height < 0) sourceRec.y -= sourceRec.height;
 
@@ -2927,6 +2960,45 @@ void DrawTextureNPatch(Texture2D texture, NPatchInfo nPatchInfo, Rectangle destR
 //----------------------------------------------------------------------------------
 // Module specific Functions Definition
 //----------------------------------------------------------------------------------
+#if defined(SUPPORT_FILEFORMAT_GIF)
+// Load animated GIF data
+//  - Image.data buffer includes all frames: [image#0][image#1][image#2][...]
+//  - Number of frames is returned through 'frames' parameter
+//  - Frames delay is returned through 'delays' parameter (int array)
+//  - All frames are returned in RGBA format
+static Image LoadAnimatedGIF(const char *fileName, int *frames, int **delays)
+{
+    Image image = { 0 };
+
+    FILE *gifFile = fopen(fileName, "rb");
+
+    if (gifFile == NULL)
+    {
+        TraceLog(LOG_WARNING, "[%s] Animated GIF file could not be opened", fileName);
+    }
+    else
+    {
+        fseek(gifFile, 0L, SEEK_END);
+        int size = ftell(gifFile);
+        fseek(gifFile, 0L, SEEK_SET);	
+
+        unsigned char *buffer = (unsigned char *)RL_CALLOC(size, sizeof(char));	
+        fread(buffer, sizeof(char), size, gifFile);
+
+        fclose(gifFile);    // Close file pointer
+
+        int comp = 0;
+        image.data = stbi_load_gif_from_memory(buffer, size, delays, &image.width, &image.height, frames, &comp, 4);
+
+        image.mipmaps = 1;
+        image.format = UNCOMPRESSED_R8G8B8A8;
+
+        free(buffer);
+    }
+
+    return image;
+}
+#endif
 
 #if defined(SUPPORT_FILEFORMAT_DDS)
 // Loading DDS image data (compressed or uncompressed)

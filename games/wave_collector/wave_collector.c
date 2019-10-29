@@ -58,8 +58,8 @@ static void UpdateDrawFrame(void);          // Update and Draw one frame
 //----------------------------------------------------------------------------------
 int main(int argc, char *argv[])
 {
-	// Initialization
-	//---------------------------------------------------------
+    // Initialization
+    //---------------------------------------------------------
 #if defined(PLATFORM_DESKTOP)
     // TODO: Support for dropped files on the exe
     
@@ -299,7 +299,7 @@ static void UpdateDrawFrame(void)
             case ENDING: DrawEndingScreen(); break;
             default: break;
         }
-	
+    
         // Draw full screen rectangle in front of everything
         if (onTransition) DrawTransition();
     

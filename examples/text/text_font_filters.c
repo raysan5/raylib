@@ -1,6 +1,10 @@
 /*******************************************************************************************
 *
-*   raylib [text] example - TTF loading and usage
+*   raylib [text] example - Font filters
+*
+*   After font loading, font texture atlas filter could be configured for a softer
+*   display of the font when scaling it to different sizes, that way, it's not required
+*   to generate multiple fonts at multiple sizes (as long as the scaling is not very different)
 *
 *   This example has been created using raylib 1.3.0 (www.raylib.com)
 *   raylib is licensed under an unmodified zlib/libpng license (View raylib.h for details)
@@ -18,9 +22,9 @@ int main(void)
     const int screenWidth = 800;
     const int screenHeight = 450;
 
-    InitWindow(screenWidth, screenHeight, "raylib [text] example - ttf loading");
+    InitWindow(screenWidth, screenHeight, "raylib [text] example - font filters");
 
-    const char msg[50] = "TTF Font";
+    const char msg[50] = "Loaded Font";
 
     // NOTE: Textures/Fonts MUST be loaded after Window initialization (OpenGL context is required)
 
@@ -78,7 +82,8 @@ int main(void)
             int count = 0;
             char **droppedFiles = GetDroppedFiles(&count);
 
-            if (count == 1) // Only support one ttf file dropped
+            // NOTE: We only support first ttf file dropped
+            if (IsFileExtension(droppedFiles[0], ".ttf"))
             {
                 UnloadFont(font);
                 font = LoadFontEx(droppedFiles[0], fontSize, 0, 0);

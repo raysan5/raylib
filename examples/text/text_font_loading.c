@@ -1,11 +1,20 @@
 /*******************************************************************************************
 *
-*   raylib [text] example - BMFont and TTF Fonts loading
+*   raylib [text] example - Font loading
 *
-*   This example has been created using raylib 1.4 (www.raylib.com)
+*   raylib can load fonts from multiple file formats:
+*
+*     - TTF/OTF > Sprite font atlas is generated on loading, user can configure
+*                 some of the generation parameters (size, characters to include)
+*     - BMFonts > Angel code font fileformat, sprite font image must be provided
+*                 together with the .fnt file, font generation cna not be configured
+*     - XNA Spritefont > Sprite font image, following XNA Spritefont conventions,
+*                 Characters in image must follow some spacing and order rules 
+*
+*   This example has been created using raylib 2.6 (www.raylib.com)
 *   raylib is licensed under an unmodified zlib/libpng license (View raylib.h for details)
 *
-*   Copyright (c) 2016 Ramon Santamaria (@raysan5)
+*   Copyright (c) 2016-2019 Ramon Santamaria (@raysan5)
 *
 ********************************************************************************************/
 
@@ -18,7 +27,7 @@ int main(void)
     const int screenWidth = 800;
     const int screenHeight = 450;
 
-    InitWindow(screenWidth, screenHeight, "raylib [text] example - bmfont and ttf sprite fonts loading");
+    InitWindow(screenWidth, screenHeight, "raylib [text] example - font loading");
 
     // Define characters to draw
     // NOTE: raylib supports UTF-8 encoding, following list is actually codified as UTF8 internally
@@ -75,7 +84,7 @@ int main(void)
     UnloadFont(fontBm);     // AngelCode Font unloading
     UnloadFont(fontTtf);    // TTF Font unloading
 
-    CloseWindow();                // Close window and OpenGL context
+    CloseWindow();          // Close window and OpenGL context
     //--------------------------------------------------------------------------------------
 
     return 0;

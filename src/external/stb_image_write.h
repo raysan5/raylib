@@ -1,4 +1,4 @@
-/* stb_image_write - v1.13 - public domain - http://nothings.org/stb/stb_image_write.h
+/* stb_image_write - v1.13 - public domain - http://nothings.org/stb
    writes out PNG/BMP/TGA/JPEG/HDR images to C stdio - Sean Barrett 2010-2015
                                      no warranty implied; use at your own risk
 
@@ -9,11 +9,6 @@
    in the file that you want to have the implementation.
 
    Will probably not work correctly with strict-aliasing optimizations.
-
-   If using a modern Microsoft Compiler, non-safe versions of CRT calls may cause 
-   compilation warnings or even errors. To avoid this, also before #including,
-
-       #define STBI_MSC_SECURE_CRT
 
 ABOUT:
 
@@ -873,7 +868,7 @@ STBIWDEF unsigned char * stbi_zlib_compress(unsigned char *data, int data_len, i
    unsigned int bitbuf=0;
    int i,j, bitcount=0;
    unsigned char *out = NULL;
-   unsigned char ***hash_table = (unsigned char***) STBIW_MALLOC(stbiw__ZHASH * sizeof(char**));
+   unsigned char ***hash_table = (unsigned char***) STBIW_MALLOC(stbiw__ZHASH * sizeof(unsigned char**));
    if (hash_table == NULL)
       return NULL;
    if (quality < 5) quality = 5;
@@ -1535,6 +1530,8 @@ STBIWDEF int stbi_write_jpg(char const *filename, int x, int y, int comp, const 
 #endif // STB_IMAGE_WRITE_IMPLEMENTATION
 
 /* Revision history
+      1.11  (2019-08-11)
+             
       1.10  (2019-02-07)
              support utf8 filenames in Windows; fix warnings and platform ifdefs 
       1.09  (2018-02-11)

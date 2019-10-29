@@ -120,6 +120,10 @@ int main(void)
 
     // De-Initialization
     //--------------------------------------------------------------------------------------
+    DestroyPhysicsBody(circleA);
+    DestroyPhysicsBody(circleB);
+    DestroyPhysicsBody(circleC);
+    DestroyPhysicsBody(floor);
     ClosePhysics();       // Unitialize physics
 
     CloseWindow();        // Close window and OpenGL context

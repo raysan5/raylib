@@ -131,6 +131,10 @@
 #define MAX_MATRIX_STACK_SIZE               32      // Max size of Matrix stack
 #define MAX_DRAWCALL_REGISTERED            256      // Max draws by state changes (mode, texture)
 
+// Shader and material limits
+#define MAX_SHADER_LOCATIONS                32      // Maximum number of predefined locations stored in shader struct
+#define MAX_MATERIAL_MAPS                   12      // Maximum number of texture maps stored in shader struct
+
 // Texture parameters (equivalent to OpenGL defines)
 #define RL_TEXTURE_WRAP_S               0x2802      // GL_TEXTURE_WRAP_S
 #define RL_TEXTURE_WRAP_T               0x2803      // GL_TEXTURE_WRAP_T
@@ -228,7 +232,7 @@ typedef unsigned char byte;
 
         // OpenGL identifiers
         unsigned int vaoId;     // OpenGL Vertex Array Object id
-        unsigned int vboId[7];  // OpenGL Vertex Buffer Objects id (7 types of vertex data)
+        unsigned int *vboId;    // OpenGL Vertex Buffer Objects id (7 types of vertex data)
     } Mesh;
 
     // Shader and material limits
@@ -237,8 +241,8 @@ typedef unsigned char byte;
 
     // Shader type (generic)
     typedef struct Shader {
-        unsigned int id;                // Shader program id
-        int locs[MAX_SHADER_LOCATIONS]; // Shader locations array
+        unsigned int id;        // Shader program id
+        int *locs;              // Shader locations array (MAX_SHADER_LOCATIONS)
     } Shader;
 
     // Material texture map
@@ -251,7 +255,7 @@ typedef unsigned char byte;
     // Material type (generic)
     typedef struct Material {
         Shader shader;          // Material shader
-        MaterialMap maps[MAX_MATERIAL_MAPS]; // Material maps
+        MaterialMap *maps;      // Material maps (MAX_MATERIAL_MAPS)
         float *params;          // Material generic parameters (if required)
     } Material;
 
@@ -453,6 +457,9 @@ RLAPI void rlEnableDepthTest(void);                           // Enable depth te
 RLAPI void rlDisableDepthTest(void);                          // Disable depth test
 RLAPI void rlEnableBackfaceCulling(void);                     // Enable backface culling
 RLAPI void rlDisableBackfaceCulling(void);                    // Disable backface culling
+RLAPI void rlEnableScissorTest(void);                         // Enable scissor test
+RLAPI void rlDisableScissorTest(void);                        // Disable scissor test
+RLAPI void rlScissor(int x, int y, int width, int height);    // Scissor test
 RLAPI void rlEnableWireMode(void);                            // Enable wire mode
 RLAPI void rlDisableWireMode(void);                           // Disable wire mode
 RLAPI void rlDeleteTextures(unsigned int id);                 // Delete OpenGL texture from GPU
@@ -499,7 +506,7 @@ RLAPI bool rlRenderTextureComplete(RenderTexture target);                 // Ver
 RLAPI void rlLoadMesh(Mesh *mesh, bool dynamic);                          // Upload vertex data into GPU and provided VAO/VBO ids
 RLAPI void rlUpdateMesh(Mesh mesh, int buffer, int numVertex);            // Update vertex data on GPU (upload new data to one buffer)
 RLAPI void rlDrawMesh(Mesh mesh, Material material, Matrix transform);    // Draw a 3d mesh with material and transform
-RLAPI void rlUnloadMesh(Mesh *mesh);                                      // Unload mesh data from CPU and GPU
+RLAPI void rlUnloadMesh(Mesh mesh);                                       // Unload mesh data from CPU and GPU
 
 // NOTE: There is a set of shader related functions that are available to end user,
 // to avoid creating function wrappers through core module, they have been directly declared in raylib.h
@@ -512,7 +519,7 @@ RLAPI void rlUnloadMesh(Mesh *mesh);                                      // Unl
 // Shader loading/unloading functions
 RLAPI char *LoadText(const char *fileName);                               // Load chars array from text file
 RLAPI Shader LoadShader(const char *vsFileName, const char *fsFileName);  // Load shader from files and bind default locations
-RLAPI Shader LoadShaderCode(char *vsCode, char *fsCode);                  // Load shader from code strings and bind default locations
+RLAPI Shader LoadShaderCode(const char *vsCode, const char *fsCode);                  // Load shader from code strings and bind default locations
 RLAPI void UnloadShader(Shader shader);                                   // Unload shader from GPU memory (VRAM)
 
 RLAPI Shader GetShaderDefault(void);                                      // Get default shader
@@ -1340,28 +1347,25 @@ void rlDisableRenderTexture(void)
 }
 
 // Enable depth test
-void rlEnableDepthTest(void)
-{
-    glEnable(GL_DEPTH_TEST);
-}
+void rlEnableDepthTest(void) { glEnable(GL_DEPTH_TEST); }
 
 // Disable depth test
-void rlDisableDepthTest(void)
-{
-    glDisable(GL_DEPTH_TEST);
-}
+void rlDisableDepthTest(void) { glDisable(GL_DEPTH_TEST); }
 
 // Enable backface culling
-void rlEnableBackfaceCulling(void)
-{
-    glEnable(GL_CULL_FACE);
-}
+void rlEnableBackfaceCulling(void) { glEnable(GL_CULL_FACE); }
 
 // Disable backface culling
-void rlDisableBackfaceCulling(void)
-{
-    glDisable(GL_CULL_FACE);
-}
+void rlDisableBackfaceCulling(void) { glDisable(GL_CULL_FACE); }
+
+// Enable scissor test
+RLAPI void rlEnableScissorTest(void) { glEnable(GL_SCISSOR_TEST); }
+
+// Disable scissor test
+RLAPI void rlDisableScissorTest(void) { glDisable(GL_SCISSOR_TEST); }
+
+// Scissor test
+RLAPI void rlScissor(int x, int y, int width, int height) { glScissor(x, y, width, height); }
 
 // Enable wire mode
 void rlEnableWireMode(void)
@@ -1523,26 +1527,35 @@ void rlglInit(int width, int height)
 
     // Allocate numExt strings pointers
     const char **extList = RL_MALLOC(sizeof(const char *)*numExt);
-    
+
     // Get extensions strings
-    for (int i = 0; i < numExt; i++) extList[i] = (char *)glGetStringi(GL_EXTENSIONS, i);
+    for (int i = 0; i < numExt; i++) extList[i] = (const char *)glGetStringi(GL_EXTENSIONS, i);
 
 #elif defined(GRAPHICS_API_OPENGL_ES2)
     // Allocate 512 strings pointers (2 KB)
     const char **extList = RL_MALLOC(sizeof(const char *)*512);
-    
-    // Get extensions strings
-    char *extensions = (char *)glGetString(GL_EXTENSIONS);  // One big static const string returned
-    int len = strlen(extensions);
+
+    const char *extensions = (const char *)glGetString(GL_EXTENSIONS);  // One big const string
+
+    // NOTE: We have to duplicate string because glGetString() returns a const string
+    int len = strlen(extensions) + 1;
+    char *extensionsDup = (char *)RL_CALLOC(len, sizeof(char));
+    strcpy(extensionsDup, extensions);
+
+    extList[numExt] = extensionsDup;
 
     for (int i = 0; i < len; i++)
     {
-        if (i == ' ') 
+        if (extensionsDup[i] == ' ')
         {
-            extList[numExt] = &extensions[i + 1];
+            extensionsDup[i] = '\0';
+
             numExt++;
+            extList[numExt] = &extensionsDup[i + 1];
         }
     }
+
+    // NOTE: Duplicated string (extensionsDup) must be deallocated
 #endif
 
     TraceLog(LOG_INFO, "Number of supported extensions: %i", numExt);
@@ -1618,6 +1631,8 @@ void rlglInit(int width, int height)
     RL_FREE(extList);
 
 #if defined(GRAPHICS_API_OPENGL_ES2)
+    RL_FREE(extensionsDup);    // Duplicated string must be deallocated
+
     if (vaoSupported) TraceLog(LOG_INFO, "[EXTENSION] VAO extension detected, VAO functions initialized successfully");
     else TraceLog(LOG_WARNING, "[EXTENSION] VAO extension not found, VAO usage not supported");
 
@@ -1683,7 +1698,6 @@ void rlglInit(int width, int height)
 
     // Initialize OpenGL default states
     //----------------------------------------------------------
-
     // Init state: Depth test
     glDepthFunc(GL_LEQUAL);                                 // Type of depth testing to apply
     glDisable(GL_DEPTH_TEST);                               // Disable depth testing for 2D (only used for 3D)
@@ -2622,11 +2636,11 @@ void rlDrawMesh(Mesh mesh, Material material, Matrix transform)
     // That's because BeginMode3D() sets it an no model-drawing function modifies it, all use rlPushMatrix() and rlPopMatrix()
     Matrix matView = modelview;         // View matrix (camera)
     Matrix matProjection = projection;  // Projection matrix (perspective)
-    
+
     // TODO: Matrix nightmare! Trying to combine stack matrices with view matrix and local model transform matrix..
     // There is some problem in the order matrices are multiplied... it requires some time to figure out...
     Matrix matStackTransform = MatrixIdentity();
-    
+
     // TODO: Consider possible transform matrices in the stack
     // Is this the right order? or should we start with the first stored matrix instead of the last one?
     //for (int i = stackCounter; i > 0; i--) matStackTransform = MatrixMultiply(stack[i], matStackTransform);
@@ -2757,30 +2771,30 @@ void rlDrawMesh(Mesh mesh, Material material, Matrix transform)
 }
 
 // Unload mesh data from CPU and GPU
-void rlUnloadMesh(Mesh *mesh)
+void rlUnloadMesh(Mesh mesh)
 {
-    RL_FREE(mesh->vertices);
-    RL_FREE(mesh->texcoords);
-    RL_FREE(mesh->normals);
-    RL_FREE(mesh->colors);
-    RL_FREE(mesh->tangents);
-    RL_FREE(mesh->texcoords2);
-    RL_FREE(mesh->indices);
+    RL_FREE(mesh.vertices);
+    RL_FREE(mesh.texcoords);
+    RL_FREE(mesh.normals);
+    RL_FREE(mesh.colors);
+    RL_FREE(mesh.tangents);
+    RL_FREE(mesh.texcoords2);
+    RL_FREE(mesh.indices);
 
-    RL_FREE(mesh->animVertices);
-    RL_FREE(mesh->animNormals);
-    RL_FREE(mesh->boneWeights);
-    RL_FREE(mesh->boneIds);
+    RL_FREE(mesh.animVertices);
+    RL_FREE(mesh.animNormals);
+    RL_FREE(mesh.boneWeights);
+    RL_FREE(mesh.boneIds);
 
-    rlDeleteBuffers(mesh->vboId[0]);   // vertex
-    rlDeleteBuffers(mesh->vboId[1]);   // texcoords
-    rlDeleteBuffers(mesh->vboId[2]);   // normals
-    rlDeleteBuffers(mesh->vboId[3]);   // colors
-    rlDeleteBuffers(mesh->vboId[4]);   // tangents
-    rlDeleteBuffers(mesh->vboId[5]);   // texcoords2
-    rlDeleteBuffers(mesh->vboId[6]);   // indices
+    rlDeleteBuffers(mesh.vboId[0]);   // vertex
+    rlDeleteBuffers(mesh.vboId[1]);   // texcoords
+    rlDeleteBuffers(mesh.vboId[2]);   // normals
+    rlDeleteBuffers(mesh.vboId[3]);   // colors
+    rlDeleteBuffers(mesh.vboId[4]);   // tangents
+    rlDeleteBuffers(mesh.vboId[5]);   // texcoords2
+    rlDeleteBuffers(mesh.vboId[6]);   // indices
 
-    rlDeleteVertexArrays(mesh->vaoId);
+    rlDeleteVertexArrays(mesh.vaoId);
 }
 
 // Read screen pixel data (color buffer)
@@ -2954,6 +2968,8 @@ Shader LoadShader(const char *vsFileName, const char *fsFileName)
 {
     Shader shader = { 0 };
 
+    // NOTE: Shader.locs is allocated by LoadShaderCode()
+
     char *vShaderStr = NULL;
     char *fShaderStr = NULL;
 
@@ -2970,9 +2986,10 @@ Shader LoadShader(const char *vsFileName, const char *fsFileName)
 
 // Load shader from code strings
 // NOTE: If shader string is NULL, using default vertex/fragment shaders
-Shader LoadShaderCode(char *vsCode, char *fsCode)
+Shader LoadShaderCode(const char *vsCode, const char *fsCode)
 {
     Shader shader = { 0 };
+    shader.locs = (int *)RL_CALLOC(MAX_SHADER_LOCATIONS, sizeof(int));
 
     // NOTE: All locations must be reseted to -1 (no location)
     for (int i = 0; i < MAX_SHADER_LOCATIONS; i++) shader.locs[i] = -1;
@@ -3008,7 +3025,7 @@ Shader LoadShaderCode(char *vsCode, char *fsCode)
 
     glGetProgramiv(shader.id, GL_ACTIVE_UNIFORMS, &uniformCount);
 
-    for(int i = 0; i < uniformCount; i++)
+    for (int i = 0; i < uniformCount; i++)
     {
         int namelen = -1;
         int num = -1;
@@ -3038,6 +3055,8 @@ void UnloadShader(Shader shader)
         rlDeleteShader(shader.id);
         TraceLog(LOG_INFO, "[SHDR ID %i] Unloaded shader program data", shader.id);
     }
+
+    RL_FREE(shader.locs);
 }
 
 // Begin custom shader mode
@@ -3136,6 +3155,23 @@ void SetMatrixProjection(Matrix proj)
 #endif
 }
 
+// Return internal projection matrix
+Matrix GetMatrixProjection(void) {
+#if defined(GRAPHICS_API_OPENGL_11)
+    float mat[16];
+    glGetFloatv(GL_PROJECTION_MATRIX,mat);
+    Matrix m;
+    m.m0  = mat[0];     m.m1  = mat[1];     m.m2  = mat[2];     m.m3  = mat[3];
+    m.m4  = mat[4];     m.m5  = mat[5];     m.m6  = mat[6];     m.m7  = mat[7];
+    m.m8  = mat[8];     m.m9  = mat[9];     m.m10 = mat[10];    m.m11 = mat[11];
+    m.m12 = mat[12];    m.m13 = mat[13];    m.m14 = mat[14];    m.m15 = mat[15];
+    return m;
+#else
+    return projection;
+#endif
+#
+}
+
 // Set a custom modelview matrix (replaces internal modelview matrix)
 void SetMatrixModelview(Matrix view)
 {
@@ -3151,6 +3187,10 @@ Matrix GetMatrixModelview(void)
 #if defined(GRAPHICS_API_OPENGL_11)
     float mat[16];
     glGetFloatv(GL_MODELVIEW_MATRIX, mat);
+    matrix.m0  = mat[0];     matrix.m1  = mat[1];     matrix.m2  = mat[2];     matrix.m3  = mat[3];
+    matrix.m4  = mat[4];     matrix.m5  = mat[5];     matrix.m6  = mat[6];     matrix.m7  = mat[7];
+    matrix.m8  = mat[8];     matrix.m9  = mat[9];     matrix.m10 = mat[10];    matrix.m11 = mat[11];
+    matrix.m12 = mat[12];    matrix.m13 = mat[13];    matrix.m14 = mat[14];    matrix.m15 = mat[15];
 #else
     matrix = modelview;
 #endif
@@ -3505,24 +3545,6 @@ void EndBlendMode(void)
     BeginBlendMode(BLEND_ALPHA);
 }
 
-// Begin scissor mode (define screen area for following drawing)
-// NOTE: Scissor rec refers to bottom-left corner, we change it to upper-left
-void BeginScissorMode(int x, int y, int width, int height)
-{
-    rlglDraw();             // Force drawing elements
-
-    glEnable(GL_SCISSOR_TEST);
-    glScissor(x, framebufferHeight - (y + height), width, height);
-}
-
-// End scissor mode
-void EndScissorMode(void)
-{
-    rlglDraw();             // Force drawing elements
-
-    glDisable(GL_SCISSOR_TEST);
-}
-
 #if defined(SUPPORT_VR_SIMULATOR)
 // Init VR simulator for selected device parameters
 // NOTE: It modifies the global variable: stereoFbo
@@ -3861,12 +3883,13 @@ static unsigned int LoadShaderProgram(unsigned int vShaderId, unsigned int fShad
 static Shader LoadShaderDefault(void)
 {
     Shader shader = { 0 };
+    shader.locs = (int *)RL_CALLOC(MAX_SHADER_LOCATIONS, sizeof(int));
 
     // NOTE: All locations must be reseted to -1 (no location)
     for (int i = 0; i < MAX_SHADER_LOCATIONS; i++) shader.locs[i] = -1;
 
     // Vertex shader directly defined, no external file required
-    char defaultVShaderStr[] =
+    const char *defaultVShaderStr =
 #if defined(GRAPHICS_API_OPENGL_21)
     "#version 120                       \n"
 #elif defined(GRAPHICS_API_OPENGL_ES2)
@@ -3895,7 +3918,7 @@ static Shader LoadShaderDefault(void)
     "}                                  \n";
 
     // Fragment shader directly defined, no external file required
-    char defaultFShaderStr[] =
+    const char *defaultFShaderStr =
 #if defined(GRAPHICS_API_OPENGL_21)
     "#version 120                       \n"
 #elif defined(GRAPHICS_API_OPENGL_ES2)
@@ -4614,6 +4637,14 @@ int GetPixelDataSize(int width, int height, int format)
     }
 
     dataSize = width*height*bpp/8;  // Total data size in bytes
+
+    // Most compressed formats works on 4x4 blocks,
+    // if texture is smaller, minimum dataSize is 8 or 16
+    if ((width < 4) && (height < 4))
+    {
+        if ((format >= COMPRESSED_DXT1_RGB) && (format < COMPRESSED_DXT3_RGBA)) dataSize = 8;
+        else if ((format >= COMPRESSED_DXT3_RGBA) && (format < COMPRESSED_ASTC_8x8_RGBA)) dataSize = 16;
+    }
 
     return dataSize;
 }

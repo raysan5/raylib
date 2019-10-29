@@ -1,6 +1,6 @@
 /**********************************************************************************************
 *
-*   raudio - A simple and easy-to-use audio library based on mini_al
+*   raudio - A simple and easy-to-use audio library based on miniaudio
 *
 *   FEATURES:
 *       - Manage audio device (init/close)
@@ -20,7 +20,7 @@
 *
 *   CONTRIBUTORS:
 *       David Reid (github: @mackron) (Nov. 2017):
-*           - Complete port to mini_al library
+*           - Complete port to miniaudio library
 *
 *       Joshua Reisenauer (github: @kd7tck) (2015)
 *           - XM audio module support (jar_xm)
@@ -110,9 +110,8 @@ typedef struct Sound {
 typedef struct Music {
     int ctxType;                    // Type of music context (audio filetype)
     void *ctxData;                  // Audio context data, depends on type
-    
+
     unsigned int sampleCount;       // Total number of samples
-    unsigned int sampleLeft;        // Number of samples left to end
     unsigned int loopCount;         // Loops count (times music will play), 0 means infinite loop
 
     AudioStream stream;             // Audio stream
@@ -182,7 +181,7 @@ float GetMusicTimePlayed(Music music);                          // Get current m
 AudioStream InitAudioStream(unsigned int sampleRate, unsigned int sampleSize, unsigned int channels); // Init audio stream (to stream raw audio pcm data)
 void UpdateAudioStream(AudioStream stream, const void *data, int samplesCount); // Update audio stream buffers with data
 void CloseAudioStream(AudioStream stream);                      // Close audio stream and free memory
-bool IsAudioBufferProcessed(AudioStream stream);                // Check if any audio stream buffers requires refill
+bool IsAudioStreamProcessed(AudioStream stream);                // Check if any audio stream buffers requires refill
 void PlayAudioStream(AudioStream stream);                       // Play audio stream
 void PauseAudioStream(AudioStream stream);                      // Pause audio stream
 void ResumeAudioStream(AudioStream stream);                     // Resume audio stream

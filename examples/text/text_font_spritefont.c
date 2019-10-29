@@ -1,6 +1,15 @@
 /*******************************************************************************************
 *
-*   raylib [text] example - Font loading and usage
+*   raylib [text] example - Sprite font loading
+*
+*   Loaded sprite fonts have been generated following XNA SpriteFont conventions:
+*     - Characters must be ordered starting with character 32 (Space)
+*     - Every character must be contained within the same Rectangle height
+*     - Every character and every line must be separated the same distance
+*     - Rectangles must be defined by a MAGENTA color background
+*
+*   If following this constraints, a font can be provided just by an image, 
+*   this is quite handy to avoid additional information files (like BMFonts use). 
 *
 *   This example has been created using raylib 1.0 (www.raylib.com)
 *   raylib is licensed under an unmodified zlib/libpng license (View raylib.h for details)
@@ -18,7 +27,7 @@ int main(void)
     const int screenWidth = 800;
     const int screenHeight = 450;
 
-    InitWindow(screenWidth, screenHeight, "raylib [text] example - sprite fonts usage");
+    InitWindow(screenWidth, screenHeight, "raylib [text] example - sprite font loading");
 
     const char msg1[50] = "THIS IS A custom SPRITE FONT...";
     const char msg2[50] = "...and this is ANOTHER CUSTOM font...";

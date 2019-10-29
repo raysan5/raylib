@@ -8,7 +8,7 @@
 *       - PLATFORM_DESKTOP: FreeBSD, OpenBSD, NetBSD, DragonFly (X11 desktop)
 *       - PLATFORM_DESKTOP: OSX/macOS
 *       - PLATFORM_ANDROID: Android 4.0 (ARM, ARM64)
-*       - PLATFORM_RPI:     Raspberry Pi 0,1,2,3 (Raspbian)
+*       - PLATFORM_RPI:     Raspberry Pi 0,1,2,3,4 (Raspbian)
 *       - PLATFORM_WEB:     HTML5 with asm.js (Chrome, Firefox)
 *       - PLATFORM_UWP:     Windows 10 App, Windows Phone, Xbox One
 *
@@ -55,6 +55,9 @@
 *       WARNING: Reconfiguring standard input could lead to undesired effects, like breaking other running processes or
 *       blocking the device is not restored properly. Use with care.
 *
+*   #define SUPPORT_MOUSE_CURSOR_RPI (Raspberry Pi only)
+*       Draw a mouse reference on screen (square cursor box)
+*
 *   #define SUPPORT_BUSY_WAIT_LOOP
 *       Use busy wait loop for timing sync, if not defined, a high-resolution timer is setup and used
 *
@@ -70,6 +73,11 @@
 *   #define SUPPORT_HIGH_DPI
 *       Allow scale all the drawn content to match the high-DPI equivalent size (only PLATFORM_DESKTOP)
 *       NOTE: This flag is forced on macOS, since most displays are high-DPI
+*
+*   #define SUPPORT_COMPRESSION_API
+*       Support CompressData() and DecompressData() functions, those functions use zlib implementation
+*       provided by stb_image and stb_image_write libraries, so, those libraries must be enabled on textures module
+*       for linkage
 *
 *   DEPENDENCIES:
 *       rglfw    - Manage graphic device, OpenGL context and inputs on PLATFORM_DESKTOP (Windows, Linux, OSX. FreeBSD, OpenBSD, NetBSD, DragonFly)
@@ -105,7 +113,7 @@
 #if !defined(EXTERNAL_CONFIG_FLAGS)
     #include "config.h"         // Defines module configuration flags
 #else
-    #define RAYLIB_VERSION  "2.5"
+    #define RAYLIB_VERSION  "2.6-dev"
 #endif
 
 #if (defined(__linux__) || defined(PLATFORM_WEB)) && _POSIX_C_SOURCE < 199309L
@@ -247,6 +255,12 @@
 
     #include <emscripten/emscripten.h>  // Emscripten library - LLVM to JavaScript compiler
     #include <emscripten/html5.h>       // Emscripten HTML5 library
+#endif
+
+#if defined(SUPPORT_COMPRESSION_API)
+    // NOTE: Those declarations require stb_image and stb_image_write definitions, included in textures module
+    unsigned char *stbi_zlib_compress(unsigned char *data, int data_len, int *out_len, int quality);
+    char *stbi_zlib_decode_malloc(char const *buffer, int len, int *outlen);
 #endif
 
 //----------------------------------------------------------------------------------
@@ -423,7 +437,6 @@ static double targetTime = 0.0;             // Desired time for one frame, if 0 
 // Config internal variables
 //-----------------------------------------------------------------------------------
 static unsigned int configFlags = 0;        // Configuration flags (bit based)
-static bool showLogo = false;               // Track if showing logo at init is enabled
 
 static char **dropFilesPath;                // Store dropped files paths as strings
 static int dropFilesCount = 0;              // Count dropped files strings
@@ -465,8 +478,6 @@ static bool GetMouseButtonStatus(int button);           // Returns if a mouse bu
 static int GetGamepadButton(int button);                // Get gamepad button generic to all platforms
 static int GetGamepadAxis(int axis);                    // Get gamepad axis generic to all platforms
 static void PollInputEvents(void);                      // Register user events
-
-static void LogoAnimation(void);                        // Plays raylib logo appearing animation
 
 #if defined(PLATFORM_DESKTOP) || defined(PLATFORM_WEB)
 static void ErrorCallback(int error, const char *description);                             // GLFW3 Error Callback, runs on GLFW3 error
@@ -568,7 +579,7 @@ static void InitTerminal(void)
     }
     else
     {
-        
+
         ioctl(STDIN_FILENO, KDSKBMODE, K_XLATE);
     }
 
@@ -579,7 +590,7 @@ static void InitTerminal(void)
 static void RestoreTerminal(void)
 {
     TraceLog(LOG_INFO, "Restore Terminal ...");
-    
+
     // Reset to default keyboard settings
     tcsetattr(STDIN_FILENO, TCSANOW, &defaultKeyboardSettings);
 
@@ -697,13 +708,6 @@ void InitWindow(int width, int height, const char *title)
 
     mousePosition.x = (float)screenWidth/2.0f;
     mousePosition.y = (float)screenHeight/2.0f;
-
-    // raylib logo appearing animation (if enabled)
-    if (showLogo)
-    {
-        SetTargetFPS(60);
-        LogoAnimation();
-    }
 #endif        // PLATFORM_ANDROID
 }
 
@@ -770,7 +774,7 @@ void CloseWindow(void)
             pthread_join(eventWorkers[i].threadId, NULL);
         }
     }
-    
+
     if (gamepadThreadId) pthread_join(gamepadThreadId, NULL);
 #endif
 
@@ -1060,6 +1064,17 @@ int GetMonitorPhysicalHeight(int monitor)
     return 0;
 }
 
+// Get window position XY on monitor
+Vector2 GetWindowPosition(void)
+{
+    int x = 0;
+    int y = 0;
+#if defined(PLATFORM_DESKTOP)
+    glfwGetWindowPos(window, &x, &y);
+#endif
+    return (Vector2){ (float)x, (float)y };
+}
+
 // Get the human-readable, UTF-8 encoded name of the primary monitor
 const char *GetMonitorName(int monitor)
 {
@@ -1187,6 +1202,12 @@ void BeginDrawing(void)
 // End canvas drawing and swap buffers (double buffering)
 void EndDrawing(void)
 {
+#if defined(PLATFORM_RPI) && defined(SUPPORT_MOUSE_CURSOR_RPI)
+    // On RPI native mode we have no system mouse cursor, so,
+    // we draw a small rectangle for user reference
+    DrawRectangle(mousePosition.x, mousePosition.y, 3, 3, MAROON);
+#endif
+
     rlglDraw();                     // Draw Buffers (Only OpenGL 3+ and ES2)
 
 #if defined(SUPPORT_GIF_RECORDING)
@@ -1249,17 +1270,12 @@ void BeginMode2D(Camera2D camera)
     rlglDraw();                         // Draw Buffers (Only OpenGL 3+ and ES2)
 
     rlLoadIdentity();                   // Reset current matrix (MODELVIEW)
-    rlMultMatrixf(MatrixToFloat(screenScaling)); // Apply screen scaling if required
 
-    // Camera rotation and scaling is always relative to target
-    Matrix matOrigin = MatrixTranslate(-camera.target.x, -camera.target.y, 0.0f);
-    Matrix matRotation = MatrixRotate((Vector3){ 0.0f, 0.0f, 1.0f }, camera.rotation*DEG2RAD);
-    Matrix matScale = MatrixScale(camera.zoom, camera.zoom, 1.0f);
-    Matrix matTranslation = MatrixTranslate(camera.offset.x + camera.target.x, camera.offset.y + camera.target.y, 0.0f);
+    // Apply screen scaling if required
+    rlMultMatrixf(MatrixToFloat(screenScaling));
 
-    Matrix matTransform = MatrixMultiply(MatrixMultiply(matOrigin, MatrixMultiply(matScale, matRotation)), matTranslation);
-
-    rlMultMatrixf(MatrixToFloat(matTransform));  // Apply transformation to modelview
+    // Apply 2d camera transformation to modelview
+    rlMultMatrixf(MatrixToFloat(GetCameraMatrix2D(camera)));
 }
 
 // Ends 2D mode with custom camera
@@ -1370,6 +1386,23 @@ void EndTextureMode(void)
     currentHeight = GetScreenHeight();
 }
 
+// Begin scissor mode (define screen area for following drawing)
+// NOTE: Scissor rec refers to bottom-left corner, we change it to upper-left
+void BeginScissorMode(int x, int y, int width, int height)
+{
+    rlglDraw(); // Force drawing elements
+
+    rlEnableScissorTest();
+    rlScissor(x, GetScreenHeight() - (y + height), width, height);
+}
+
+// End scissor mode
+void EndScissorMode(void)
+{
+    rlglDraw(); // Force drawing elements
+    rlDisableScissorTest();
+}
+
 // Returns a ray trace from mouse position
 Ray GetMouseRay(Vector2 mousePosition, Camera camera)
 {
@@ -1425,6 +1458,40 @@ Ray GetMouseRay(Vector2 mousePosition, Camera camera)
     return ray;
 }
 
+// Get transform matrix for camera
+Matrix GetCameraMatrix(Camera camera)
+{
+    return MatrixLookAt(camera.position, camera.target, camera.up);
+}
+
+// Returns camera 2d transform matrix
+Matrix GetCameraMatrix2D(Camera2D camera)
+{
+    Matrix matTransform = { 0 };
+    // The camera in world-space is set by
+    //   1. Move it to target
+    //   2. Rotate by -rotation and scale by (1/zoom)
+    //      When setting higher scale, it's more intuitive for the world to become bigger (= camera become smaller),
+    //      not for the camera getting bigger, hence the invert. Same deal with rotation.
+    //   3. Move it by (-offset);
+    //      Offset defines target transform relative to screen, but since we're effectively "moving" screen (camera)
+    //      we need to do it into opposite direction (inverse transform)
+
+    // Having camera transform in world-space, inverse of it gives the modelview transform.
+    // Since (A*B*C)' = C'*B'*A', the modelview is
+    //   1. Move to offset
+    //   2. Rotate and Scale
+    //   3. Move by -target
+    Matrix matOrigin = MatrixTranslate(-camera.target.x, -camera.target.y, 0.0f);
+    Matrix matRotation = MatrixRotate((Vector3){ 0.0f, 0.0f, 1.0f }, camera.rotation*DEG2RAD);
+    Matrix matScale = MatrixScale(camera.zoom, camera.zoom, 1.0f);
+    Matrix matTranslation = MatrixTranslate(camera.offset.x, camera.offset.y, 0.0f);
+
+    matTransform = MatrixMultiply(MatrixMultiply(matOrigin, MatrixMultiply(matScale, matRotation)), matTranslation);
+
+    return matTransform;
+}
+
 // Returns the screen space position from a 3d world space position
 Vector2 GetWorldToScreen(Vector3 position, Camera camera)
 {
@@ -1467,10 +1534,22 @@ Vector2 GetWorldToScreen(Vector3 position, Camera camera)
     return screenPosition;
 }
 
-// Get transform matrix for camera
-Matrix GetCameraMatrix(Camera camera)
+// Returns the screen space position for a 2d camera world space position
+Vector2 GetWorldToScreen2D(Vector2 position, Camera2D camera)
 {
-    return MatrixLookAt(camera.position, camera.target, camera.up);
+    Matrix matCamera = GetCameraMatrix2D(camera);
+    Vector3 transform = Vector3Transform((Vector3){ position.x, position.y, 0 }, matCamera);
+
+    return (Vector2){ transform.x, transform.y };
+}
+
+// Returns the world space position for a 2d camera screen space position
+Vector2 GetScreenToWorld2D(Vector2 position, Camera2D camera)
+{
+    Matrix invMatCamera = MatrixInvert(GetCameraMatrix2D(camera));
+    Vector3 transform = Vector3Transform((Vector3){ position.x, position.y, 0 }, invMatCamera);
+
+    return (Vector2){ transform.x, transform.y };
 }
 
 // Set target FPS (maximum)
@@ -1664,7 +1743,6 @@ void SetConfigFlags(unsigned int flags)
 {
     configFlags = flags;
 
-    if (configFlags & FLAG_SHOW_LOGO) showLogo = true;
     if (configFlags & FLAG_FULLSCREEN_MODE) fullscreen = true;
     if (configFlags & FLAG_WINDOW_ALWAYS_RUN) alwaysRun = true;
 }
@@ -1718,29 +1796,36 @@ bool FileExists(const char *fileName)
 bool IsFileExtension(const char *fileName, const char *ext)
 {
     bool result = false;
-    const char *fileExt;
+    const char *fileExt = GetExtension(fileName);
 
-    if ((fileExt = strrchr(fileName, '.')) != NULL)
+    if (fileExt != NULL)
     {
-#if defined(_WIN32)
-        result = true;
-        int extLen = strlen(ext);
+        int extCount = 0;
+        const char **checkExts = TextSplit(ext, ';', &extCount);
 
-        if (strlen(fileExt) == extLen)
+        for (int i = 0; i < extCount; i++)
         {
-            for (int i = 0; i < extLen; i++)
+            if (strcmp(fileExt, checkExts[i] + 1) == 0)
             {
-                if (tolower(fileExt[i]) != tolower(ext[i]))
-                {
-                    result = false;
-                    break;
-                }
+                result = true;
+                break;
             }
         }
-        else result = false;
-#else
-        if (strcmp(fileExt, ext) == 0) result = true;
-#endif
+    }
+
+    return result;
+}
+
+// Check if a directory path exists
+bool DirectoryExists(const char *dirPath)
+{
+    bool result = false;
+    DIR *dir = opendir(dirPath);
+
+    if (dir != NULL)
+    {
+        result = true;
+        closedir(dir);
     }
 
     return result;
@@ -1767,22 +1852,23 @@ static const char *strprbrk(const char *s, const char *charset)
 // Get pointer to filename for a path string
 const char *GetFileName(const char *filePath)
 {
-    const char *fileName = strprbrk(filePath, "\\/");
+    const char *fileName = NULL;
+    if (filePath != NULL) fileName = strprbrk(filePath, "\\/");
 
-    if (!fileName || fileName == filePath) return filePath;
+    if (!fileName || (fileName == filePath)) return filePath;
 
     return fileName + 1;
 }
 
-// Get filename string without extension (memory should be freed)
+// Get filename string without extension (uses static string)
 const char *GetFileNameWithoutExt(const char *filePath)
 {
-    #define MAX_FILENAMEWITHOUTEXT_LENGTH   64
+    #define MAX_FILENAMEWITHOUTEXT_LENGTH   128
 
     static char fileName[MAX_FILENAMEWITHOUTEXT_LENGTH];
     memset(fileName, 0, MAX_FILENAMEWITHOUTEXT_LENGTH);
 
-    strcpy(fileName, GetFileName(filePath));   // Get filename with extension
+    if (filePath != NULL) strcpy(fileName, GetFileName(filePath));   // Get filename with extension
 
     int len = strlen(fileName);
 
@@ -1799,21 +1885,43 @@ const char *GetFileNameWithoutExt(const char *filePath)
     return fileName;
 }
 
-// Get directory for a given fileName (with path)
-const char *GetDirectoryPath(const char *fileName)
+// Get directory for a given filePath
+const char *GetDirectoryPath(const char *filePath)
 {
     const char *lastSlash = NULL;
-    static char filePath[MAX_FILEPATH_LENGTH];
-    memset(filePath, 0, MAX_FILEPATH_LENGTH);
+    static char dirPath[MAX_FILEPATH_LENGTH];
+    memset(dirPath, 0, MAX_FILEPATH_LENGTH);
 
-    lastSlash = strprbrk(fileName, "\\/");
+    lastSlash = strprbrk(filePath, "\\/");
     if (!lastSlash) return NULL;
 
     // NOTE: Be careful, strncpy() is not safe, it does not care about '\0'
-    strncpy(filePath, fileName, strlen(fileName) - (strlen(lastSlash) - 1));
-    filePath[strlen(fileName) - strlen(lastSlash)] = '\0';  // Add '\0' manually
+    strncpy(dirPath, filePath, strlen(filePath) - (strlen(lastSlash) - 1));
+    dirPath[strlen(filePath) - strlen(lastSlash)] = '\0';  // Add '\0' manually
 
-    return filePath;
+    return dirPath;
+}
+
+// Get previous directory path for a given path
+const char *GetPrevDirectoryPath(const char *dirPath)
+{
+    static char prevDirPath[MAX_FILEPATH_LENGTH];
+    memset(prevDirPath, 0, MAX_FILEPATH_LENGTH);
+    int pathLen = strlen(dirPath);
+
+    if (pathLen <= 3) strcpy(prevDirPath, dirPath);
+
+    for (int i = (pathLen - 1); (i > 0) && (pathLen > 3); i--)
+    {
+        if ((dirPath[i] == '\\') || (dirPath[i] == '/'))
+        {
+            if (i == 2) i++;    // Check for root: "C:\"
+            strncpy(prevDirPath, dirPath, i);
+            break;
+        }
+    }
+
+    return prevDirPath;
 }
 
 // Get current working directory
@@ -1870,11 +1978,12 @@ void ClearDirectoryFiles(void)
 {
     if (dirFilesCount > 0)
     {
-        for (int i = 0; i < dirFilesCount; i++) RL_FREE(dirFilesPath[i]);
+        for (int i = 0; i < MAX_DIRECTORY_FILES; i++) RL_FREE(dirFilesPath[i]);
 
         RL_FREE(dirFilesPath);
-        dirFilesCount = 0;
     }
+    
+    dirFilesCount = 0;
 }
 
 // Change working directory, returns true if success
@@ -1923,6 +2032,32 @@ long GetFileModTime(const char *fileName)
     }
 
     return 0;
+}
+
+// Compress data (DEFLATE algorythm)
+unsigned char *CompressData(unsigned char *data, int dataLength, int *compDataLength)
+{
+    #define COMPRESSION_QUALITY_DEFLATE  8
+
+    unsigned char *compData = NULL;
+
+#if defined(SUPPORT_COMPRESSION_API)
+    compData = stbi_zlib_compress(data, dataLength, compDataLength, COMPRESSION_QUALITY_DEFLATE);
+#endif
+
+    return compData;
+}
+
+// Decompress data (DEFLATE algorythm)
+unsigned char *DecompressData(unsigned char *compData, int compDataLength, int *dataLength)
+{
+    char *data = NULL;
+
+#if defined(SUPPORT_COMPRESSION_API)
+    data = stbi_zlib_decode_malloc((char *)compData, compDataLength, dataLength);
+#endif
+
+    return (unsigned char *)data;
 }
 
 // Save integer value to storage file (to defined position)
@@ -2287,7 +2422,7 @@ int GetMouseX(void)
 int GetMouseY(void)
 {
 #if defined(PLATFORM_ANDROID)
-    return (int)touchPosition[0].x;
+    return (int)touchPosition[0].y;
 #else
     return (int)((mousePosition.y + mouseOffset.y)*mouseScale.y);
 #endif
@@ -2457,9 +2592,6 @@ static bool InitGraphicsDevice(int width, int height)
     if (screenHeight <= 0) screenHeight = displayHeight;
 #endif  // PLATFORM_DESKTOP
 
-    currentWidth = screenWidth;
-    currentHeight = screenHeight;
-
 #if defined(PLATFORM_WEB)
     displayWidth = screenWidth;
     displayHeight = screenHeight;
@@ -2525,9 +2657,9 @@ static bool InitGraphicsDevice(int width, int height)
         glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 0);
         glfwWindowHint(GLFW_CLIENT_API, GLFW_OPENGL_ES_API);
 #if defined(PLATFORM_DESKTOP)
-        glfwWindowHint(GLFW_CONTEXT_CREATION_API, GLFW_EGL_CONTEXT_API);   
+        glfwWindowHint(GLFW_CONTEXT_CREATION_API, GLFW_EGL_CONTEXT_API);
 #else
-        glfwWindowHint(GLFW_CONTEXT_CREATION_API, GLFW_NATIVE_CONTEXT_API); 
+        glfwWindowHint(GLFW_CONTEXT_CREATION_API, GLFW_NATIVE_CONTEXT_API);
 #endif
     }
 
@@ -2989,6 +3121,9 @@ static bool InitGraphicsDevice(int width, int height)
 
     // Setup default viewport
     SetupViewport(fbWidth, fbHeight);
+
+    currentWidth = screenWidth;
+    currentHeight = screenHeight;
 
     ClearBackground(RAYWHITE);      // Default background color for raylib games :P
 
@@ -3818,7 +3953,7 @@ static void WindowIconifyCallback(GLFWwindow *window, int iconified)
 }
 
 // GLFW3 Window Drop Callback, runs when drop files into window
-// NOTE: Paths are stored in dinamic memory for further retrieval
+// NOTE: Paths are stored in dynamic memory for further retrieval
 // Everytime new files are dropped, old ones are discarded
 static void WindowDropCallback(GLFWwindow *window, int count, const char **paths)
 {
@@ -3898,13 +4033,6 @@ static void AndroidCommandCallback(struct android_app *app, int32_t cmd)
                         }
                     }
                     */
-
-                    // raylib logo appearing animation (if enabled)
-                    if (showLogo)
-                    {
-                        SetTargetFPS(60);   // Not required on Android
-                        LogoAnimation();
-                    }
                 }
             }
         } break;
@@ -4235,8 +4363,8 @@ static EM_BOOL EmscriptenGamepadCallback(int eventType, const EmscriptenGamepadE
            eventType != 0? emscripten_event_type_to_string(eventType) : "Gamepad state",
            gamepadEvent->timestamp, gamepadEvent->connected, gamepadEvent->index, gamepadEvent->numAxes, gamepadEvent->numButtons, gamepadEvent->id, gamepadEvent->mapping);
 
-    for(int i = 0; i < gamepadEvent->numAxes; ++i) TraceLog(LOG_DEBUG, "Axis %d: %g", i, gamepadEvent->axis[i]);
-    for(int i = 0; i < gamepadEvent->numButtons; ++i) TraceLog(LOG_DEBUG, "Button %d: Digital: %d, Analog: %g", i, gamepadEvent->digitalButton[i], gamepadEvent->analogButton[i]);
+    for (int i = 0; i < gamepadEvent->numAxes; ++i) TraceLog(LOG_DEBUG, "Axis %d: %g", i, gamepadEvent->axis[i]);
+    for (int i = 0; i < gamepadEvent->numButtons; ++i) TraceLog(LOG_DEBUG, "Button %d: Digital: %d, Analog: %g", i, gamepadEvent->digitalButton[i], gamepadEvent->analogButton[i]);
     */
 
     if ((gamepadEvent->connected) && (gamepadEvent->index < MAX_GAMEPADS)) gamepadReady[gamepadEvent->index] = true;
@@ -4796,7 +4924,7 @@ static void *EventThread(void *arg)
                             // TODO: This fifo is not fully threadsafe with multiple writers, so multiple keyboards hitting a key at the exact same time could miss a key (double write to head before it was incremented)
                         }
                         */
-                        
+
                         currentKeyState[keycode] = event.value;
                         if (event.value == 1) lastKeyPressed = keycode;     // Register last key pressed
 
@@ -4810,7 +4938,7 @@ static void *EventThread(void *arg)
                         #endif
 
                         if (currentKeyState[exitKey] == 1) windowShouldClose = true;
-    
+
                         TraceLog(LOG_DEBUG, "KEY%s ScanCode: %4i KeyCode: %4i",event.value == 0 ? "UP":"DOWN", event.code, keycode);
                     }
                 }
@@ -4952,117 +5080,3 @@ static void *GamepadThread(void *arg)
     return NULL;
 }
 #endif      // PLATFORM_RPI
-
-// Plays raylib logo appearing animation
-static void LogoAnimation(void)
-{
-#if !defined(PLATFORM_WEB) && !defined(PLATFORM_UWP)
-    int logoPositionX = screenWidth/2 - 128;
-    int logoPositionY = screenHeight/2 - 128;
-
-    int framesCounter = 0;
-    int lettersCount = 0;
-
-    int topSideRecWidth = 16;
-    int leftSideRecHeight = 16;
-
-    int bottomSideRecWidth = 16;
-    int rightSideRecHeight = 16;
-
-    int state = 0;                  // Tracking animation states (State Machine)
-    float alpha = 1.0f;             // Useful for fading
-
-    while (!WindowShouldClose() && (state != 4))    // Detect window close button or ESC key
-    {
-        // Update
-        //----------------------------------------------------------------------------------
-        if (state == 0)                 // State 0: Small box blinking
-        {
-            framesCounter++;
-
-            if (framesCounter == 84)
-            {
-                state = 1;
-                framesCounter = 0;      // Reset counter... will be used later...
-            }
-        }
-        else if (state == 1)            // State 1: Top and left bars growing
-        {
-            topSideRecWidth += 4;
-            leftSideRecHeight += 4;
-
-            if (topSideRecWidth == 256) state = 2;
-        }
-        else if (state == 2)            // State 2: Bottom and right bars growing
-        {
-            bottomSideRecWidth += 4;
-            rightSideRecHeight += 4;
-
-            if (bottomSideRecWidth == 256) state = 3;
-        }
-        else if (state == 3)            // State 3: Letters appearing (one by one)
-        {
-            framesCounter++;
-
-            if (framesCounter/12)       // Every 12 frames, one more letter!
-            {
-                lettersCount++;
-                framesCounter = 0;
-            }
-
-            if (lettersCount >= 10)     // When all letters have appeared, just fade out everything
-            {
-                alpha -= 0.02f;
-
-                if (alpha <= 0.0f)
-                {
-                    alpha = 0.0f;
-                    state = 4;
-                }
-            }
-        }
-        //----------------------------------------------------------------------------------
-
-        // Draw
-        //----------------------------------------------------------------------------------
-        BeginDrawing();
-
-            ClearBackground(RAYWHITE);
-
-            if (state == 0)
-            {
-                if ((framesCounter/12)%2) DrawRectangle(logoPositionX, logoPositionY, 16, 16, BLACK);
-            }
-            else if (state == 1)
-            {
-                DrawRectangle(logoPositionX, logoPositionY, topSideRecWidth, 16, BLACK);
-                DrawRectangle(logoPositionX, logoPositionY, 16, leftSideRecHeight, BLACK);
-            }
-            else if (state == 2)
-            {
-                DrawRectangle(logoPositionX, logoPositionY, topSideRecWidth, 16, BLACK);
-                DrawRectangle(logoPositionX, logoPositionY, 16, leftSideRecHeight, BLACK);
-
-                DrawRectangle(logoPositionX + 240, logoPositionY, 16, rightSideRecHeight, BLACK);
-                DrawRectangle(logoPositionX, logoPositionY + 240, bottomSideRecWidth, 16, BLACK);
-            }
-            else if (state == 3)
-            {
-                DrawRectangle(logoPositionX, logoPositionY, topSideRecWidth, 16, Fade(BLACK, alpha));
-                DrawRectangle(logoPositionX, logoPositionY + 16, 16, leftSideRecHeight - 32, Fade(BLACK, alpha));
-
-                DrawRectangle(logoPositionX + 240, logoPositionY + 16, 16, rightSideRecHeight - 32, Fade(BLACK, alpha));
-                DrawRectangle(logoPositionX, logoPositionY + 240, bottomSideRecWidth, 16, Fade(BLACK, alpha));
-
-                DrawRectangle(screenWidth/2 - 112, screenHeight/2 - 112, 224, 224, Fade(RAYWHITE, alpha));
-
-                DrawText(TextSubtext("raylib", 0, lettersCount), screenWidth/2 - 44, screenHeight/2 + 48, 50, Fade(BLACK, alpha));
-            }
-
-        EndDrawing();
-        //----------------------------------------------------------------------------------
-    }
-#endif
-
-    showLogo = false;  // Prevent for repeating when reloading window (Android)
-}

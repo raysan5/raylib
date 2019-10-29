@@ -36,7 +36,7 @@
 // Some basic Defines
 //----------------------------------------------------------------------------------
 #if defined(PLATFORM_ANDROID)
-    #define fopen(name, mode) android_fopen(name, mode) 
+    #define fopen(name, mode) android_fopen(name, mode)
 #endif
 
 //----------------------------------------------------------------------------------
@@ -86,8 +86,8 @@ typedef enum {
 
 typedef struct UWPMessage {
     UWPMessageType type;            // Message type
-    
-    Vector2 paramVector0;           // Vector parameters  
+
+    Vector2 paramVector0;           // Vector parameters
     int paramInt0;                  // Int parameter
     int paramInt1;                  // Int parameter
     char paramChar0;                // Char parameters

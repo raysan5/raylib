@@ -147,34 +147,47 @@ endif
 
 ifeq ($(PLATFORM),PLATFORM_WEB)
     # Emscripten required variables
-    EMSDK_PATH          ?= C:/emsdk
-    EMSCRIPTEN_VERSION  ?= 1.38.32
-    CLANG_VERSION       = e$(EMSCRIPTEN_VERSION)_64bit
-    PYTHON_VERSION      = 2.7.13.1_64bit\python-2.7.13.amd64
-    NODE_VERSION        = 8.9.1_64bit
-    export PATH         = $(EMSDK_PATH);$(EMSDK_PATH)\clang\$(CLANG_VERSION);$(EMSDK_PATH)\node\$(NODE_VERSION)\bin;$(EMSDK_PATH)\python\$(PYTHON_VERSION);$(EMSDK_PATH)\emscripten\$(EMSCRIPTEN_VERSION);C:\raylib\MinGW\bin:$$(PATH)
-    EMSCRIPTEN          = $(EMSDK_PATH)\emscripten\$(EMSCRIPTEN_VERSION)
+    EMSDK_PATH         ?= C:/emsdk
+    EMSCRIPTEN_PATH    ?= $(EMSDK_PATH)/fastcomp/emscripten
+    CLANG_PATH          = $(EMSDK_PATH)/fastcomp/bin
+    PYTHON_PATH         = $(EMSDK_PATH)/python/2.7.13.1_64bit/python-2.7.13.amd64
+    NODE_PATH           = $(EMSDK_PATH)/node/12.9.1_64bit/bin
+    export PATH         = $(EMSDK_PATH);$(EMSCRIPTEN_PATH);$(CLANG_PATH);$(NODE_PATH);$(PYTHON_PATH);C:\raylib\MinGW\bin:$$(PATH)
 endif
 
 ifeq ($(PLATFORM),PLATFORM_ANDROID)
     # Android architecture: ARM64
     # Starting at 2019 using ARM64 is mandatory for published apps
     ANDROID_ARCH ?= ARM
-    ANDROID_API_VERSION = 21
+    ANDROID_API_VERSION = 26
 
     # Android required path variables
     # NOTE: Android NDK is just required to generate the standalone toolchain,
     # in case is not already provided
-    ANDROID_NDK = C:/android-ndk
+    ifeq ($(OS),Windows_NT)
+        ANDROID_NDK = C:/android-ndk
+    else
+        ANDROID_NDK = /usr/lib/android/ndk
+    endif
 
     # Android standalone toolchain path
-    ANDROID_TOOLCHAIN = C:/android_toolchain_$(ANDROID_ARCH)_API$(ANDROID_API_VERSION)
+    ifeq ($(OS),Windows_NT)
+        ANDROID_TOOLCHAIN = C:/android_toolchain_$(ANDROID_ARCH)_API$(ANDROID_API_VERSION)
+    else
+        ANDROID_TOOLCHAIN = /usr/lib/android/toolchain_$(ANDROID_ARCH)_API$(ANDROID_API_VERSION)
+    endif
 
     ifeq ($(ANDROID_ARCH),ARM)
         ANDROID_ARCH_NAME = armeabi-v7a
     endif
     ifeq ($(ANDROID_ARCH),ARM64)
         ANDROID_ARCH_NAME = arm64-v8a
+    endif
+    ifeq ($(ANDROID_ARCH),x86)
+        ANDROID_ARCH_NAME = i686
+    endif
+    ifeq ($(ANDROID_ARCH),x86_64)
+        ANDROID_ARCH_NAME = x86_64
     endif
 endif
 
@@ -242,6 +255,14 @@ ifeq ($(PLATFORM),PLATFORM_ANDROID)
         CC = $(ANDROID_TOOLCHAIN)/bin/aarch64-linux-android-clang
         AR = $(ANDROID_TOOLCHAIN)/bin/aarch64-linux-android-ar
     endif
+    ifeq ($(ANDROID_ARCH),x86)
+        CC = $(ANDROID_TOOLCHAIN)/bin/i686-linux-android$(ANDROID_API_VERSION)-clang
+        AR = $(ANDROID_TOOLCHAIN)/bin/i686-linux-android-ar
+    endif
+    ifeq ($(ANDROID_ARCH),x86_64)
+        CC = $(ANDROID_TOOLCHAIN)/bin/x86_64-linux-android$(ANDROID_API_VERSION)-clang
+        AR = $(ANDROID_TOOLCHAIN)/bin/x86_64-linux-android-ar
+    endif
 endif
 
 
@@ -256,7 +277,13 @@ endif
 #  -D_DEFAULT_SOURCE        use with -std=c99 on Linux and PLATFORM_WEB, required for timespec
 #  -Werror=pointer-arith    catch unportable code that does direct arithmetic on void pointers
 #  -fno-strict-aliasing     jar_xm.h does shady stuff (breaks strict aliasing)
-CFLAGS += -Wall -std=c99 -D_DEFAULT_SOURCE -Wno-missing-braces -Werror=pointer-arith -fno-strict-aliasing
+CFLAGS += -Wall -D_DEFAULT_SOURCE -Wno-missing-braces -Werror=pointer-arith -fno-strict-aliasing
+
+ifeq ($(PLATFORM), PLATFORM_WEB)
+    CFLAGS += -std=gnu99
+else
+    CFLAGS += -std=c99
+endif
 
 ifeq ($(PLATFORM_OS),LINUX)
 	CFLAGS += -fPIC
@@ -304,6 +331,12 @@ ifeq ($(PLATFORM),PLATFORM_ANDROID)
     endif
     ifeq ($(ANDROID_ARCH),ARM64)
         CFLAGS += -target aarch64 -mfix-cortex-a53-835769
+    endif
+    ifeq ($(ANDROID_ARCH), x86)
+        CFLAGS += -march=i686
+    endif
+    ifeq ($(ANDROID_ARCH), x86_64)
+        CFLAGS += -march=x86-64
     endif
     # Compilation functions attributes options
     CFLAGS += -ffunction-sections -funwind-tables -fstack-protector-strong -fPIE -fPIC
@@ -356,11 +389,12 @@ ifeq ($(PLATFORM),PLATFORM_RPI)
     INCLUDE_PATHS += -I$(RPI_TOOLCHAIN_SYSROOT)/opt/vc/include/interface/vcos/pthreads
 endif
 ifeq ($(PLATFORM),PLATFORM_ANDROID)
+    NATIVE_APP_GLUE = $(RAYLIB_RELEASE_PATH)/external/android/native_app_glue
+    #NATIVE_APP_GLUE = $(ANDROID_NDK)/sources/android/native_app_glue
     # Android required libraries
     INCLUDE_PATHS += -I$(ANDROID_TOOLCHAIN)/sysroot/usr/include
     # Include android_native_app_glue.h
-    INCLUDE_PATHS += -Iexternal/android/native_app_glue
-    #INCLUDE_PATHS += -I$(ANDROID_NDK)/sources/android/native_app_glue
+    INCLUDE_PATHS += -I$(NATIVE_APP_GLUE)
 endif
 
 # Define linker options
@@ -635,6 +669,6 @@ else
 	rm -fv *.o $(RAYLIB_RELEASE_PATH)/libraylib.a $(RAYLIB_RELEASE_PATH)/libraylib.bc $(RAYLIB_RELEASE_PATH)/libraylib.so*
 endif
 ifeq ($(PLATFORM),PLATFORM_ANDROID)
-	rm -rf $(ANDROID_TOOLCHAIN)
+	rm -rf $(ANDROID_TOOLCHAIN) $(NATIVE_APP_GLUE)/android_native_app_glue.o
 endif
 	@echo "removed all generated files!"

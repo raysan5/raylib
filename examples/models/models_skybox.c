@@ -89,7 +89,10 @@ int main(void)
 
     // De-Initialization
     //--------------------------------------------------------------------------------------
-    UnloadModel(skybox);        // Unload skybox model (and textures)
+    UnloadShader(skybox.materials[0].shader);
+    UnloadTexture(skybox.materials[0].maps[MAP_CUBEMAP].texture);
+    
+    UnloadModel(skybox);        // Unload skybox model
 
     CloseWindow();              // Close window and OpenGL context
     //--------------------------------------------------------------------------------------

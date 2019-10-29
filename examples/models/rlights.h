@@ -33,6 +33,8 @@
 #ifndef RLIGHTS_H
 #define RLIGHTS_H
 
+#include "raylib.h"
+
 //----------------------------------------------------------------------------------
 // Defines and Macros
 //----------------------------------------------------------------------------------
@@ -66,15 +68,10 @@ extern "C" {            // Prevents name mangling of functions
 #endif
 
 //----------------------------------------------------------------------------------
-// Global Variables Definition
-//----------------------------------------------------------------------------------
-int lightsCount = 0;                     // Current amount of created lights
-
-//----------------------------------------------------------------------------------
 // Module Functions Declaration
 //----------------------------------------------------------------------------------
-Light CreateLight(int type, Vector3 pos, Vector3 targ, Color color, Shader shader);         // Defines a light and get locations from PBR shader
-void UpdateLightValues(Shader shader, Light light);                                         // Send to PBR shader light values
+void CreateLight(int type, Vector3 pos, Vector3 targ, Color color, Shader shader);         // Defines a light and get locations from PBR shader
+void UpdateLightValues(Shader shader, Light light);                                        // Send to PBR shader light values
 
 #ifdef __cplusplus
 }
@@ -106,7 +103,8 @@ void UpdateLightValues(Shader shader, Light light);                             
 //----------------------------------------------------------------------------------
 // Global Variables Definition
 //----------------------------------------------------------------------------------
-// ...
+static Light lights[MAX_LIGHTS] = { 0 };
+static int lightsCount = 0;    // Current amount of created lights
 
 //----------------------------------------------------------------------------------
 // Module specific Functions Declaration
@@ -118,7 +116,7 @@ void UpdateLightValues(Shader shader, Light light);                             
 //----------------------------------------------------------------------------------
 
 // Defines a light and get locations from PBR shader
-Light CreateLight(int type, Vector3 pos, Vector3 targ, Color color, Shader shader)
+void CreateLight(int type, Vector3 pos, Vector3 targ, Color color, Shader shader)
 {
     Light light = { 0 };
 
@@ -148,10 +146,10 @@ Light CreateLight(int type, Vector3 pos, Vector3 targ, Color color, Shader shade
         light.colorLoc = GetShaderLocation(shader, colorName);
 
         UpdateLightValues(shader, light);
+
+        lights[lightsCount] = light;
         lightsCount++;
     }
-
-    return light;
 }
 
 // Send to PBR shader light values

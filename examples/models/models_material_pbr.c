@@ -50,16 +50,15 @@ int main(void)
     // NOTE: New VBO for tangents is generated at default location and also binded to mesh VAO
     MeshTangents(&model.meshes[0]);
 
+    UnloadMaterial(model.materials[0]); // get rid of default material
     model.materials[0] = LoadMaterialPBR((Color){ 255, 255, 255, 255 }, 1.0f, 1.0f);
 
-    // Define lights attributes
-    // NOTE: Shader is passed to every light on creation to define shader bindings internally
-    Light lights[MAX_LIGHTS] = {
-        CreateLight(LIGHT_POINT, (Vector3){ LIGHT_DISTANCE, LIGHT_HEIGHT, 0.0f }, (Vector3){ 0.0f, 0.0f, 0.0f }, (Color){ 255, 0, 0, 255 }, model.materials[0].shader),
-        CreateLight(LIGHT_POINT, (Vector3){ 0.0f, LIGHT_HEIGHT, LIGHT_DISTANCE }, (Vector3){ 0.0f, 0.0f, 0.0f }, (Color){ 0, 255, 0, 255 }, model.materials[0].shader),
-        CreateLight(LIGHT_POINT, (Vector3){ -LIGHT_DISTANCE, LIGHT_HEIGHT, 0.0f }, (Vector3){ 0.0f, 0.0f, 0.0f }, (Color){ 0, 0, 255, 255 }, model.materials[0].shader),
-        CreateLight(LIGHT_DIRECTIONAL, (Vector3){ 0.0f, LIGHT_HEIGHT*2.0f, -LIGHT_DISTANCE }, (Vector3){ 0.0f, 0.0f, 0.0f }, (Color){ 255, 0, 255, 255 }, model.materials[0].shader)
-    };
+    // Create lights
+    // NOTE: Lights are added to an internal lights pool automatically
+    CreateLight(LIGHT_POINT, (Vector3){ LIGHT_DISTANCE, LIGHT_HEIGHT, 0.0f }, (Vector3){ 0.0f, 0.0f, 0.0f }, (Color){ 255, 0, 0, 255 }, model.materials[0].shader);
+    CreateLight(LIGHT_POINT, (Vector3){ 0.0f, LIGHT_HEIGHT, LIGHT_DISTANCE }, (Vector3){ 0.0f, 0.0f, 0.0f }, (Color){ 0, 255, 0, 255 }, model.materials[0].shader);
+    CreateLight(LIGHT_POINT, (Vector3){ -LIGHT_DISTANCE, LIGHT_HEIGHT, 0.0f }, (Vector3){ 0.0f, 0.0f, 0.0f }, (Color){ 0, 0, 255, 255 }, model.materials[0].shader);
+    CreateLight(LIGHT_DIRECTIONAL, (Vector3){ 0.0f, LIGHT_HEIGHT*2.0f, -LIGHT_DISTANCE }, (Vector3){ 0.0f, 0.0f, 0.0f }, (Color){ 255, 0, 255, 255 }, model.materials[0].shader);
 
     SetCameraMode(camera, CAMERA_ORBITAL);  // Set an orbital camera mode
 
@@ -100,7 +99,20 @@ int main(void)
 
     // De-Initialization
     //--------------------------------------------------------------------------------------
-    UnloadModel(model);         // Unload skybox model
+
+    // Shaders and textures must be unloaded by user, 
+    // they could be in use by other models
+    UnloadTexture(model.materials[0].maps[MAP_ALBEDO].texture);
+    UnloadTexture(model.materials[0].maps[MAP_NORMAL].texture);
+    UnloadTexture(model.materials[0].maps[MAP_METALNESS].texture);
+    UnloadTexture(model.materials[0].maps[MAP_ROUGHNESS].texture);
+    UnloadTexture(model.materials[0].maps[MAP_OCCLUSION].texture);
+    UnloadTexture(model.materials[0].maps[MAP_IRRADIANCE].texture);
+    UnloadTexture(model.materials[0].maps[MAP_PREFILTER].texture);
+    UnloadTexture(model.materials[0].maps[MAP_BRDF].texture);
+    UnloadShader(model.materials[0].shader);
+
+    UnloadModel(model);         // Unload model
 
     CloseWindow();              // Close window and OpenGL context
     //--------------------------------------------------------------------------------------
@@ -112,8 +124,8 @@ int main(void)
 // NOTE: PBR shader is loaded inside this function
 static Material LoadMaterialPBR(Color albedo, float metalness, float roughness)
 {
-    Material mat = { 0 };       // NOTE: All maps textures are set to { 0 }
-    
+    Material mat = LoadMaterialDefault();   // Initialize material to default
+
 #if defined(PLATFORM_DESKTOP)
     mat.shader = LoadShader("resources/shaders/glsl330/pbr.vs", "resources/shaders/glsl330/pbr.fs");
 #else   // PLATFORM_RPI, PLATFORM_ANDROID, PLATFORM_WEB
@@ -135,7 +147,7 @@ static Material LoadMaterialPBR(Color albedo, float metalness, float roughness)
 
     // Set view matrix location
     mat.shader.locs[LOC_MATRIX_MODEL] = GetShaderLocation(mat.shader, "matModel");
-    mat.shader.locs[LOC_MATRIX_VIEW] = GetShaderLocation(mat.shader, "view");
+    //mat.shader.locs[LOC_MATRIX_VIEW] = GetShaderLocation(mat.shader, "view");
     mat.shader.locs[LOC_VECTOR_VIEW] = GetShaderLocation(mat.shader, "viewPos");
 
     // Set PBR standard maps

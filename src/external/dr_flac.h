@@ -1,6 +1,6 @@
 /*
 FLAC audio decoder. Choice of public domain or MIT-0. See license statements at the end of this file.
-dr_flac - v0.11.7 - 2019-05-06
+dr_flac - v0.11.10 - 2019-06-26
 
 David Reid - mackron@gmail.com
 */
@@ -149,7 +149,7 @@ typedef drflac_uint32    drflac_bool32;
 #elif (defined(__GNUC__) && __GNUC__ >= 4)  /* GCC 4 */
     #define DRFLAC_DEPRECATED       __attribute__((deprecated))
 #elif defined(__has_feature)                /* Clang */
-    #if defined(__has_feature(attribute_deprecated))
+    #if __has_feature(attribute_deprecated)
         #define DRFLAC_DEPRECATED   __attribute__((deprecated))
     #else
         #define DRFLAC_DEPRECATED
@@ -1008,7 +1008,7 @@ static DRFLAC_INLINE drflac_bool32 drflac_has_sse2()
                 return DRFLAC_FALSE;
             #else
                 int info[4];
-                drflac_cpuid(info, 1);
+                drflac__cpuid(info, 1);
                 return (info[3] & (1 << 26)) != 0;
             #endif
         #endif
@@ -1033,7 +1033,7 @@ static DRFLAC_INLINE drflac_bool32 drflac_has_sse41()
                 return DRFLAC_FALSE;
             #else
                 int info[4];
-                drflac_cpuid(info, 1);
+                drflac__cpuid(info, 1);
                 return (info[2] & (1 << 19)) != 0;
             #endif
         #endif
@@ -1141,21 +1141,43 @@ reference excess prior samples.
 /* CPU caps. */
 static drflac_bool32 drflac__gIsLZCNTSupported = DRFLAC_FALSE;
 #ifndef DRFLAC_NO_CPUID
+/*
+I've had a bug report that Clang's ThreadSanitizer presents a warning in this function. Having reviewed this, this does
+actually make sense. However, since CPU caps should never differ for a running process, I don't think the trade off of
+complicating internal API's by passing around CPU caps versus just disabling the warnings is worthwhile. I'm therefore
+just going to disable these warnings.
+*/
+#if defined(__has_feature)
+    #if __has_feature(thread_sanitizer)
+        #define DRFLAC_NO_THREAD_SANITIZE __attribute__((no_sanitize("thread")))
+    #else
+        #define DRFLAC_NO_THREAD_SANITIZE
+    #endif
+#else
+    #define DRFLAC_NO_THREAD_SANITIZE
+#endif
 static drflac_bool32 drflac__gIsSSE2Supported  = DRFLAC_FALSE;
 static drflac_bool32 drflac__gIsSSE41Supported = DRFLAC_FALSE;
-static void drflac__init_cpu_caps()
+DRFLAC_NO_THREAD_SANITIZE static void drflac__init_cpu_caps()
 {
-    int info[4] = {0};
+    static drflac_bool32 isCPUCapsInitialized = DRFLAC_FALSE;
 
-    /* LZCNT */
-    drflac__cpuid(info, 0x80000001);
-    drflac__gIsLZCNTSupported = (info[2] & (1 << 5)) != 0;
+    if (!isCPUCapsInitialized) {
+        int info[4] = {0};
 
-    /* SSE2 */
-    drflac__gIsSSE2Supported = drflac_has_sse2();
+        /* LZCNT */
+        drflac__cpuid(info, 0x80000001);
+        drflac__gIsLZCNTSupported = (info[2] & (1 << 5)) != 0;
 
-    /* SSE4.1 */
-    drflac__gIsSSE41Supported = drflac_has_sse41();
+        /* SSE2 */
+        drflac__gIsSSE2Supported = drflac_has_sse2();
+
+        /* SSE4.1 */
+        drflac__gIsSSE41Supported = drflac_has_sse41();
+
+        /* Initialized. */
+        isCPUCapsInitialized = DRFLAC_TRUE;
+    }
 }
 #endif
 
@@ -4897,9 +4919,9 @@ typedef struct
 static DRFLAC_INLINE void drflac__decode_block_header(drflac_uint32 blockHeader, drflac_uint8* isLastBlock, drflac_uint8* blockType, drflac_uint32* blockSize)
 {
     blockHeader = drflac__be2host_32(blockHeader);
-    *isLastBlock = (blockHeader & (0x01 << 31)) >> 31;
-    *blockType   = (blockHeader & (0x7F << 24)) >> 24;
-    *blockSize   = (blockHeader & 0xFFFFFF);
+    *isLastBlock = (blockHeader & 0x80000000UL) >> 31;
+    *blockType   = (blockHeader & 0x7F000000UL) >> 24;
+    *blockSize   = (blockHeader & 0x00FFFFFFUL);
 }
 
 static DRFLAC_INLINE drflac_bool32 drflac__read_and_decode_block_header(drflac_read_proc onRead, void* pUserData, drflac_uint8* isLastBlock, drflac_uint8* blockType, drflac_uint32* blockSize)
@@ -6759,10 +6781,10 @@ drflac_uint64 drflac__read_s32__misaligned(drflac* pFlac, drflac_uint64 samplesT
             case DRFLAC_CHANNEL_ASSIGNMENT_LEFT_SIDE:
             {
                 if (channelIndex == 0) {
-                    decodedSample = pFlac->currentFrame.subframes[channelIndex + 0].pDecodedSamples[nextSampleInFrame] << pFlac->currentFrame.subframes[channelIndex + 0].wastedBitsPerSample;
+                    decodedSample = (int)((drflac_uint32)pFlac->currentFrame.subframes[channelIndex + 0].pDecodedSamples[nextSampleInFrame] << pFlac->currentFrame.subframes[channelIndex + 0].wastedBitsPerSample);
                 } else {
-                    int side = pFlac->currentFrame.subframes[channelIndex + 0].pDecodedSamples[nextSampleInFrame] << pFlac->currentFrame.subframes[channelIndex + 0].wastedBitsPerSample;
-                    int left = pFlac->currentFrame.subframes[channelIndex - 1].pDecodedSamples[nextSampleInFrame] << pFlac->currentFrame.subframes[channelIndex - 1].wastedBitsPerSample;
+                    int side = (int)((drflac_uint32)pFlac->currentFrame.subframes[channelIndex + 0].pDecodedSamples[nextSampleInFrame] << pFlac->currentFrame.subframes[channelIndex + 0].wastedBitsPerSample);
+                    int left = (int)((drflac_uint32)pFlac->currentFrame.subframes[channelIndex - 1].pDecodedSamples[nextSampleInFrame] << pFlac->currentFrame.subframes[channelIndex - 1].wastedBitsPerSample);
                     decodedSample = left - side;
                 }
             } break;
@@ -6770,11 +6792,11 @@ drflac_uint64 drflac__read_s32__misaligned(drflac* pFlac, drflac_uint64 samplesT
             case DRFLAC_CHANNEL_ASSIGNMENT_RIGHT_SIDE:
             {
                 if (channelIndex == 0) {
-                    int side  = pFlac->currentFrame.subframes[channelIndex + 0].pDecodedSamples[nextSampleInFrame] << pFlac->currentFrame.subframes[channelIndex + 0].wastedBitsPerSample;
-                    int right = pFlac->currentFrame.subframes[channelIndex + 1].pDecodedSamples[nextSampleInFrame] << pFlac->currentFrame.subframes[channelIndex + 1].wastedBitsPerSample;
+                    int side  = (int)((drflac_uint32)pFlac->currentFrame.subframes[channelIndex + 0].pDecodedSamples[nextSampleInFrame] << pFlac->currentFrame.subframes[channelIndex + 0].wastedBitsPerSample);
+                    int right = (int)((drflac_uint32)pFlac->currentFrame.subframes[channelIndex + 1].pDecodedSamples[nextSampleInFrame] << pFlac->currentFrame.subframes[channelIndex + 1].wastedBitsPerSample);
                     decodedSample = side + right;
                 } else {
-                    decodedSample = pFlac->currentFrame.subframes[channelIndex + 0].pDecodedSamples[nextSampleInFrame] << pFlac->currentFrame.subframes[channelIndex + 0].wastedBitsPerSample;
+                    decodedSample = (int)((drflac_uint32)pFlac->currentFrame.subframes[channelIndex + 0].pDecodedSamples[nextSampleInFrame] << pFlac->currentFrame.subframes[channelIndex + 0].wastedBitsPerSample);
                 }
             } break;
 
@@ -6783,14 +6805,14 @@ drflac_uint64 drflac__read_s32__misaligned(drflac* pFlac, drflac_uint64 samplesT
                 int mid;
                 int side;
                 if (channelIndex == 0) {
-                    mid  = pFlac->currentFrame.subframes[channelIndex + 0].pDecodedSamples[nextSampleInFrame] << pFlac->currentFrame.subframes[channelIndex + 0].wastedBitsPerSample;
-                    side = pFlac->currentFrame.subframes[channelIndex + 1].pDecodedSamples[nextSampleInFrame] << pFlac->currentFrame.subframes[channelIndex + 1].wastedBitsPerSample;
+                    mid  = (int)((drflac_uint32)pFlac->currentFrame.subframes[channelIndex + 0].pDecodedSamples[nextSampleInFrame] << pFlac->currentFrame.subframes[channelIndex + 0].wastedBitsPerSample);
+                    side = (int)((drflac_uint32)pFlac->currentFrame.subframes[channelIndex + 1].pDecodedSamples[nextSampleInFrame] << pFlac->currentFrame.subframes[channelIndex + 1].wastedBitsPerSample);
 
                     mid = (((unsigned int)mid) << 1) | (side & 0x01);
                     decodedSample = (mid + side) >> 1;
                 } else {
-                    mid  = pFlac->currentFrame.subframes[channelIndex - 1].pDecodedSamples[nextSampleInFrame] << pFlac->currentFrame.subframes[channelIndex - 1].wastedBitsPerSample;
-                    side = pFlac->currentFrame.subframes[channelIndex + 0].pDecodedSamples[nextSampleInFrame] << pFlac->currentFrame.subframes[channelIndex + 0].wastedBitsPerSample;
+                    mid  = (int)((drflac_uint32)pFlac->currentFrame.subframes[channelIndex - 1].pDecodedSamples[nextSampleInFrame] << pFlac->currentFrame.subframes[channelIndex - 1].wastedBitsPerSample);
+                    side = (int)((drflac_uint32)pFlac->currentFrame.subframes[channelIndex + 0].pDecodedSamples[nextSampleInFrame] << pFlac->currentFrame.subframes[channelIndex + 0].wastedBitsPerSample);
 
                     mid = (((unsigned int)mid) << 1) | (side & 0x01);
                     decodedSample = (mid - side) >> 1;
@@ -6800,11 +6822,11 @@ drflac_uint64 drflac__read_s32__misaligned(drflac* pFlac, drflac_uint64 samplesT
             case DRFLAC_CHANNEL_ASSIGNMENT_INDEPENDENT:
             default:
             {
-                decodedSample = pFlac->currentFrame.subframes[channelIndex + 0].pDecodedSamples[nextSampleInFrame] << pFlac->currentFrame.subframes[channelIndex + 0].wastedBitsPerSample;
+                decodedSample = (int)((drflac_uint32)pFlac->currentFrame.subframes[channelIndex + 0].pDecodedSamples[nextSampleInFrame] << pFlac->currentFrame.subframes[channelIndex + 0].wastedBitsPerSample);
             } break;
         }
 
-        decodedSample <<= (32 - pFlac->bitsPerSample);
+        decodedSample = (int)((drflac_uint32)decodedSample << (32 - pFlac->bitsPerSample));
 
         if (bufferOut) {
             *bufferOut++ = decodedSample;
@@ -6876,8 +6898,8 @@ drflac_uint64 drflac_read_s32(drflac* pFlac, drflac_uint64 samplesToRead, drflac
                     const drflac_int32* pDecodedSamples1 = pFlac->currentFrame.subframes[1].pDecodedSamples + firstAlignedSampleInFrame;
 
                     for (i = 0; i < alignedSampleCountPerChannel; ++i) {
-                        int left  = pDecodedSamples0[i] << (unusedBitsPerSample + pFlac->currentFrame.subframes[0].wastedBitsPerSample);
-                        int side  = pDecodedSamples1[i] << (unusedBitsPerSample + pFlac->currentFrame.subframes[1].wastedBitsPerSample);
+                        int left  = (int)((drflac_uint32)pDecodedSamples0[i] << (unusedBitsPerSample + pFlac->currentFrame.subframes[0].wastedBitsPerSample));
+                        int side  = (int)((drflac_uint32)pDecodedSamples1[i] << (unusedBitsPerSample + pFlac->currentFrame.subframes[1].wastedBitsPerSample));
                         int right = left - side;
 
                         bufferOut[i*2+0] = left;
@@ -6892,8 +6914,8 @@ drflac_uint64 drflac_read_s32(drflac* pFlac, drflac_uint64 samplesToRead, drflac
                     const drflac_int32* pDecodedSamples1 = pFlac->currentFrame.subframes[1].pDecodedSamples + firstAlignedSampleInFrame;
 
                     for (i = 0; i < alignedSampleCountPerChannel; ++i) {
-                        int side  = pDecodedSamples0[i] << (unusedBitsPerSample + pFlac->currentFrame.subframes[0].wastedBitsPerSample);
-                        int right = pDecodedSamples1[i] << (unusedBitsPerSample + pFlac->currentFrame.subframes[1].wastedBitsPerSample);
+                        int side  = (int)((drflac_uint32)pDecodedSamples0[i] << (unusedBitsPerSample + pFlac->currentFrame.subframes[0].wastedBitsPerSample));
+                        int right = (int)((drflac_uint32)pDecodedSamples1[i] << (unusedBitsPerSample + pFlac->currentFrame.subframes[1].wastedBitsPerSample));
                         int left  = right + side;
 
                         bufferOut[i*2+0] = left;
@@ -6908,13 +6930,13 @@ drflac_uint64 drflac_read_s32(drflac* pFlac, drflac_uint64 samplesToRead, drflac
                     const drflac_int32* pDecodedSamples1 = pFlac->currentFrame.subframes[1].pDecodedSamples + firstAlignedSampleInFrame;
 
                     for (i = 0; i < alignedSampleCountPerChannel; ++i) {
-                        int mid  = pDecodedSamples0[i] << pFlac->currentFrame.subframes[0].wastedBitsPerSample;
-                        int side = pDecodedSamples1[i] << pFlac->currentFrame.subframes[1].wastedBitsPerSample;
+                        int mid  = (int)((drflac_uint32)pDecodedSamples0[i] << pFlac->currentFrame.subframes[0].wastedBitsPerSample);
+                        int side = (int)((drflac_uint32)pDecodedSamples1[i] << pFlac->currentFrame.subframes[1].wastedBitsPerSample);
                         
                         mid = (((drflac_uint32)mid) << 1) | (side & 0x01);
 
-                        bufferOut[i*2+0] = ((mid + side) >> 1) << (unusedBitsPerSample);
-                        bufferOut[i*2+1] = ((mid - side) >> 1) << (unusedBitsPerSample);
+                        bufferOut[i*2+0] = (drflac_int32)((drflac_uint32)((mid + side) >> 1) << (unusedBitsPerSample));
+                        bufferOut[i*2+1] = (drflac_int32)((drflac_uint32)((mid - side) >> 1) << (unusedBitsPerSample));
                     }
                 } break;
 
@@ -6929,8 +6951,8 @@ drflac_uint64 drflac_read_s32(drflac* pFlac, drflac_uint64 samplesToRead, drflac
                         const drflac_int32* pDecodedSamples1 = pFlac->currentFrame.subframes[1].pDecodedSamples + firstAlignedSampleInFrame;
 
                         for (i = 0; i < alignedSampleCountPerChannel; ++i) {
-                            bufferOut[i*2+0] = pDecodedSamples0[i] << (unusedBitsPerSample + pFlac->currentFrame.subframes[0].wastedBitsPerSample);
-                            bufferOut[i*2+1] = pDecodedSamples1[i] << (unusedBitsPerSample + pFlac->currentFrame.subframes[1].wastedBitsPerSample);
+                            bufferOut[i*2+0] = (drflac_int32)((drflac_uint32)pDecodedSamples0[i] << (unusedBitsPerSample + pFlac->currentFrame.subframes[0].wastedBitsPerSample));
+                            bufferOut[i*2+1] = (drflac_int32)((drflac_uint32)pDecodedSamples1[i] << (unusedBitsPerSample + pFlac->currentFrame.subframes[1].wastedBitsPerSample));
                         }
                     }
                     else
@@ -6940,7 +6962,7 @@ drflac_uint64 drflac_read_s32(drflac* pFlac, drflac_uint64 samplesToRead, drflac
                         for (i = 0; i < alignedSampleCountPerChannel; ++i) {
                             unsigned int j;
                             for (j = 0; j < channelCount; ++j) {
-                                bufferOut[(i*channelCount)+j] = (pFlac->currentFrame.subframes[j].pDecodedSamples[firstAlignedSampleInFrame + i]) << (unusedBitsPerSample + pFlac->currentFrame.subframes[j].wastedBitsPerSample);
+                                bufferOut[(i*channelCount)+j] = (drflac_int32)((drflac_uint32)(pFlac->currentFrame.subframes[j].pDecodedSamples[firstAlignedSampleInFrame + i]) << (unusedBitsPerSample + pFlac->currentFrame.subframes[j].wastedBitsPerSample));
                             }
                         }
                     }
@@ -8649,6 +8671,15 @@ drflac_bool32 drflac_next_cuesheet_track(drflac_cuesheet_track_iterator* pIter, 
 /*
 REVISION HISTORY
 ================
+v0.11.10 - 2019-06-26
+  - Fix a compiler error.
+
+v0.11.9 - 2019-06-16
+  - Silence some ThreadSanitizer warnings.
+
+v0.11.8 - 2019-05-21
+  - Fix warnings.
+
 v0.11.7 - 2019-05-06
   - C89 fixes.
 

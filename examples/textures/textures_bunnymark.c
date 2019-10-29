@@ -13,7 +13,7 @@
 
 #include <stdlib.h>                 // Required for: malloc(), free()
 
-#define MAX_BUNNIES       100000    // 100K bunnies limit
+#define MAX_BUNNIES        50000    // 50K bunnies limit
 
 // This is the maximum amount of elements (quads) per batch
 // NOTE: This value is defined in [rlgl] module and can be changed there

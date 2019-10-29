@@ -95,10 +95,10 @@
 // Platform type definitions
 // From: https://github.com/DFHack/clsocket/blob/master/src/Host.h
 //----------------------------------------------------------------------------------
- 
+
 #ifdef WIN32
 typedef int socklen_t;
-#endif  
+#endif
 
 #ifndef RESULT_SUCCESS
 #    define RESULT_SUCCESS 0
@@ -171,7 +171,7 @@ typedef int socklen_t;
 #define SOCKET_MAX_QUEUE_SIZE                   (16)   // Maximum socket queue size
 #define SOCKET_MAX_SOCK_OPTS (4)        // Maximum socket options
 #define SOCKET_MAX_UDPCHANNELS (32)        // Maximum UDP channels
-#define SOCKET_MAX_UDPADDRESSES (4)        // Maximum bound UDP addresses 
+#define SOCKET_MAX_UDPADDRESSES (4)        // Maximum bound UDP addresses
 
 
 // Network address related defines
@@ -386,7 +386,7 @@ int AddSocket(SocketSet *set, Socket *sock);
 int RemoveSocket(SocketSet *set, Socket *sock);
 int CheckSockets(SocketSet *set, unsigned int timeout);
 
-// Packet API 
+// Packet API
 void PacketSend(Packet *packet);
 void PacketReceive(Packet *packet);
 void PacketWrite8(Packet *packet, uint16_t value);
