@@ -1,8 +1,6 @@
 # Ignore generated files
 # ...
 
-.gitignore
-
 # Ignore VIM's backup generated files
 *.swp
 *.swo
