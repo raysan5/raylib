@@ -1887,10 +1887,9 @@ unsigned int rlLoadTexture(void *data, int width, int height, int format, int mi
 #endif
 #endif      // GRAPHICS_API_OPENGL_11
 
-    if( data == NULL ){
-        //ups!
+    if (data == NULL)
+    {
         TraceLog(LOG_WARNING, "Got asked to load texture from a NULL pointer!");
-
         return id;
     }
 

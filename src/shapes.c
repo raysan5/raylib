@@ -1524,7 +1524,7 @@ static float EaseCubicInOut(float t, float b, float c, float d)
 // Get texture to draw shapes (RAII)
 static Texture2D GetShapesTexture(void)
 {
-     if (texShapes.id == 0) //this variable is an unsigned int, will never be negative
+    if (texShapes.id == 0)
     {
 #if defined(SUPPORT_FONT_TEXTURE)
         texShapes = GetFontDefault().texture;           // Use font texture white character
