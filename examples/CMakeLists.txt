@@ -85,9 +85,12 @@ elseif(${PLATFORM} MATCHES "Web")
   # Since WASM is used, ALLOW_MEMORY_GROWTH has no extra overheads
   set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -s ALLOW_MEMORY_GROWTH=1 --no-heap-copy")
   set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} --shell-file ${CMAKE_SOURCE_DIR}/src/shell.html")
-
   set(OUTPUT_EXT ".html")
 
+  # Remove the -rdynamic flag because otherwise emscripten
+  # does not generate HTML+JS+WASM files, only a non-working
+  # and fat HTML
+  string(REPLACE "-rdynamic" "" CMAKE_SHARED_LIBRARY_LINK_C_FLAGS ${CMAKE_SHARED_LIBRARY_LINK_C_FLAGS})
 endif()
 
 include_directories(BEFORE SYSTEM others/external/include)
