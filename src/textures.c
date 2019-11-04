@@ -171,7 +171,7 @@ static Image LoadDDS(const char *fileName);   // Load DDS file
 static Image LoadPKM(const char *fileName);   // Load PKM file
 #endif
 #if defined(SUPPORT_FILEFORMAT_KTX)
-static Image LoadKTX(const char *fileName);             // Load KTX file
+static Image LoadKTX(const char *fileName);   // Load KTX file
 static int SaveKTX(Image image, const char *fileName);  // Save image data as KTX file
 #endif
 #if defined(SUPPORT_FILEFORMAT_PVR)
@@ -459,6 +459,8 @@ Color *GetImageData(Image image)
 {
     Color *pixels = (Color *)RL_MALLOC(image.width*image.height*sizeof(Color));
 
+    if (pixels == NULL) return pixels;
+    
     if (image.format >= COMPRESSED_DXT1_RGB) TraceLog(LOG_WARNING, "Pixel data retrieval not supported for compressed image formats");
     else
     {
@@ -683,30 +685,35 @@ Vector4 *GetImageDataNormalized(Image image)
 // Get image alpha border rectangle
 Rectangle GetImageAlphaBorder(Image image, float threshold)
 {
+    Rectangle crop = { 0 };
+    
     Color *pixels = GetImageData(image);
-
-    int xMin = 65536;   // Define a big enough number
-    int xMax = 0;
-    int yMin = 65536;
-    int yMax = 0;
-
-    for (int y = 0; y < image.height; y++)
+    
+    if (pixels != NULL)
     {
-        for (int x = 0; x < image.width; x++)
+        int xMin = 65536;   // Define a big enough number
+        int xMax = 0;
+        int yMin = 65536;
+        int yMax = 0;
+
+        for (int y = 0; y < image.height; y++)
         {
-            if (pixels[y*image.width + x].a > (unsigned char)(threshold*255.0f))
+            for (int x = 0; x < image.width; x++)
             {
-                if (x < xMin) xMin = x;
-                if (x > xMax) xMax = x;
-                if (y < yMin) yMin = y;
-                if (y > yMax) yMax = y;
+                if (pixels[y*image.width + x].a > (unsigned char)(threshold*255.0f))
+                {
+                    if (x < xMin) xMin = x;
+                    if (x > xMax) xMax = x;
+                    if (y < yMin) yMin = y;
+                    if (y > yMax) yMax = y;
+                }
             }
         }
+
+        crop = (Rectangle){ xMin, yMin, (xMax + 1) - xMin, (yMax + 1) - yMin };
+
+        RL_FREE(pixels);
     }
-
-    Rectangle crop = { xMin, yMin, (xMax + 1) - xMin, (yMax + 1) - yMin };
-
-    RL_FREE(pixels);
 
     return crop;
 }
