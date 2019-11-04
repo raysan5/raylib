@@ -504,7 +504,7 @@ RLAPI bool rlRenderTextureComplete(RenderTexture target);                 // Ver
 
 // Vertex data management
 RLAPI void rlLoadMesh(Mesh *mesh, bool dynamic);                          // Upload vertex data into GPU and provided VAO/VBO ids
-RLAPI void rlUpdateMesh(Mesh mesh, int buffer, int numVertex);            // Update vertex data on GPU (upload new data to one buffer)
+RLAPI void rlUpdateMesh(Mesh mesh, int buffer, int num);                  // Update vertex or index data on GPU (upload new data to one buffer)
 RLAPI void rlDrawMesh(Mesh mesh, Material material, Matrix transform);    // Draw a 3d mesh with material and transform
 RLAPI void rlUnloadMesh(Mesh mesh);                                       // Unload mesh data from CPU and GPU
 
@@ -2471,7 +2471,7 @@ void rlLoadMesh(Mesh *mesh, bool dynamic)
     {
         glGenBuffers(1, &mesh->vboId[6]);
         glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, mesh->vboId[6]);
-        glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(unsigned short)*mesh->triangleCount*3, mesh->indices, GL_STATIC_DRAW);
+        glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(unsigned short)*mesh->triangleCount*3, mesh->indices, drawHint);
     }
 
     if (vaoSupported)
@@ -2509,8 +2509,8 @@ unsigned int rlLoadAttribBuffer(unsigned int vaoId, int shaderLoc, void *buffer,
     return id;
 }
 
-// Update vertex data on GPU (upload new data to one buffer)
-void rlUpdateMesh(Mesh mesh, int buffer, int numVertex)
+// Update vertex or index data on GPU (upload new data to one buffer)
+void rlUpdateMesh(Mesh mesh, int buffer, int num)
 {
 #if defined(GRAPHICS_API_OPENGL_33) || defined(GRAPHICS_API_OPENGL_ES2)
     // Activate mesh VAO
@@ -2521,42 +2521,51 @@ void rlUpdateMesh(Mesh mesh, int buffer, int numVertex)
         case 0:     // Update vertices (vertex position)
         {
             glBindBuffer(GL_ARRAY_BUFFER, mesh.vboId[0]);
-            if (numVertex >= mesh.vertexCount) glBufferData(GL_ARRAY_BUFFER, sizeof(float)*3*numVertex, mesh.vertices, GL_DYNAMIC_DRAW);
-            else glBufferSubData(GL_ARRAY_BUFFER, 0, sizeof(float)*3*numVertex, mesh.vertices);
+            if (num >= mesh.vertexCount) glBufferData(GL_ARRAY_BUFFER, sizeof(float)*3*num, mesh.vertices, GL_DYNAMIC_DRAW);
+            else glBufferSubData(GL_ARRAY_BUFFER, 0, sizeof(float)*3*num, mesh.vertices);
 
         } break;
         case 1:     // Update texcoords (vertex texture coordinates)
         {
             glBindBuffer(GL_ARRAY_BUFFER, mesh.vboId[1]);
-            if (numVertex >= mesh.vertexCount) glBufferData(GL_ARRAY_BUFFER, sizeof(float)*2*numVertex, mesh.texcoords, GL_DYNAMIC_DRAW);
-            else glBufferSubData(GL_ARRAY_BUFFER, 0, sizeof(float)*2*numVertex, mesh.texcoords);
+            if (num >= mesh.vertexCount) glBufferData(GL_ARRAY_BUFFER, sizeof(float)*2*num, mesh.texcoords, GL_DYNAMIC_DRAW);
+            else glBufferSubData(GL_ARRAY_BUFFER, 0, sizeof(float)*2*num, mesh.texcoords);
 
         } break;
         case 2:     // Update normals (vertex normals)
         {
             glBindBuffer(GL_ARRAY_BUFFER, mesh.vboId[2]);
-            if (numVertex >= mesh.vertexCount) glBufferData(GL_ARRAY_BUFFER, sizeof(float)*3*numVertex, mesh.normals, GL_DYNAMIC_DRAW);
-            else glBufferSubData(GL_ARRAY_BUFFER, 0, sizeof(float)*3*numVertex, mesh.normals);
+            if (num >= mesh.vertexCount) glBufferData(GL_ARRAY_BUFFER, sizeof(float)*3*num, mesh.normals, GL_DYNAMIC_DRAW);
+            else glBufferSubData(GL_ARRAY_BUFFER, 0, sizeof(float)*3*num, mesh.normals);
 
         } break;
         case 3:     // Update colors (vertex colors)
         {
             glBindBuffer(GL_ARRAY_BUFFER, mesh.vboId[3]);
-            if (numVertex >= mesh.vertexCount) glBufferData(GL_ARRAY_BUFFER, sizeof(float)*4*numVertex, mesh.colors, GL_DYNAMIC_DRAW);
-            else glBufferSubData(GL_ARRAY_BUFFER, 0, sizeof(unsigned char)*4*numVertex, mesh.colors);
+            if (num >= mesh.vertexCount) glBufferData(GL_ARRAY_BUFFER, sizeof(float)*4*num, mesh.colors, GL_DYNAMIC_DRAW);
+            else glBufferSubData(GL_ARRAY_BUFFER, 0, sizeof(unsigned char)*4*num, mesh.colors);
 
         } break;
         case 4:     // Update tangents (vertex tangents)
         {
             glBindBuffer(GL_ARRAY_BUFFER, mesh.vboId[4]);
-            if (numVertex >= mesh.vertexCount) glBufferData(GL_ARRAY_BUFFER, sizeof(float)*4*numVertex, mesh.tangents, GL_DYNAMIC_DRAW);
-            else glBufferSubData(GL_ARRAY_BUFFER, 0, sizeof(float)*4*numVertex, mesh.tangents);
+            if (num >= mesh.vertexCount) glBufferData(GL_ARRAY_BUFFER, sizeof(float)*4*num, mesh.tangents, GL_DYNAMIC_DRAW);
+            else glBufferSubData(GL_ARRAY_BUFFER, 0, sizeof(float)*4*num, mesh.tangents);
         } break;
         case 5:     // Update texcoords2 (vertex second texture coordinates)
         {
             glBindBuffer(GL_ARRAY_BUFFER, mesh.vboId[5]);
-            if (numVertex >= mesh.vertexCount) glBufferData(GL_ARRAY_BUFFER, sizeof(float)*2*numVertex, mesh.texcoords2, GL_DYNAMIC_DRAW);
-            else glBufferSubData(GL_ARRAY_BUFFER, 0, sizeof(float)*2*numVertex, mesh.texcoords2);
+            if (num >= mesh.vertexCount) glBufferData(GL_ARRAY_BUFFER, sizeof(float)*2*num, mesh.texcoords2, GL_DYNAMIC_DRAW);
+            else glBufferSubData(GL_ARRAY_BUFFER, 0, sizeof(float)*2*num, mesh.texcoords2);
+        } break;
+        case 6:     // Update indices (triangle index buffer)
+        {
+            unsigned short *indices = mesh.indices;
+            glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, mesh.vboId[6]);
+            if (num >= mesh.triangleCount*3) // 3 indices per triangle
+                glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(*indices)*num, indices, GL_DYNAMIC_DRAW);
+            else
+                glBufferSubData(GL_ELEMENT_ARRAY_BUFFER, 0, sizeof(*indices)*num, indices);
         } break;
         default: break;
     }
