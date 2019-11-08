@@ -924,6 +924,7 @@ RLAPI double GetTime(void);                                       // Returns ela
 // Color-related functions
 RLAPI int ColorToInt(Color color);                                // Returns hexadecimal value for a Color
 RLAPI Vector4 ColorNormalize(Color color);                        // Returns color normalized as float [0..1]
+RLAPI Color ColorFromNormalized(Vector4 normalized);              // Returns color from normalized values [0..1]
 RLAPI Vector3 ColorToHSV(Color color);                            // Returns HSV values for a Color
 RLAPI Color ColorFromHSV(Vector3 hsv);                            // Returns a Color from HSV values
 RLAPI Color GetColor(int hexValue);                               // Returns a Color struct from hexadecimal value
