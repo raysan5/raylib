@@ -1616,6 +1616,19 @@ Vector4 ColorNormalize(Color color)
     return result;
 }
 
+// Returns color from normalized values [0..1]
+Color ColorFromNormalized(Vector4 normalized)
+{
+    Color result;
+
+    result.r = normalized.x*255.0f;
+    result.g = normalized.y*255.0f;
+    result.b = normalized.z*255.0f;
+    result.a = normalized.w*255.0f;
+
+    return result;
+}
+
 // Returns HSV values for a Color
 // NOTE: Hue is returned as degrees [0..360]
 Vector3 ColorToHSV(Color color)
