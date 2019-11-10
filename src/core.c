@@ -2216,11 +2216,11 @@ int GetKeyPressed(void)
     return lastKeyPressed;
 }
 
-bool HasWaitingInputCharacter() 
+bool IsCharAvailable() 
 {
 	return 0 < inputCharacterQueueCount;
 }
-unsigned int PullNextInputCharacter()
+unsigned int GetNextChar()
 {
 	if (inputCharacterQueueCount <= 0)
 	{
@@ -3953,7 +3953,7 @@ static void CharCallback(GLFWwindow *window, unsigned int key)
 	static const int CAPACITY = sizeof(inputCharacterQueue) / sizeof(inputCharacterQueue[0]);
 	if (CAPACITY <= inputCharacterQueueCount)
 	{
-		PullNextInputCharacter();
+		GetNextChar();
 	}
 
 	// add to queue
