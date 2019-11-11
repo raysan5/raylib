@@ -2218,28 +2218,28 @@ int GetKeyPressed(void)
 
 bool IsCharAvailable() 
 {
-	return 0 < inputCharacterQueueCount;
+    return 0 < inputCharacterQueueCount;
 }
 unsigned int GetNextChar()
 {
-	if (inputCharacterQueueCount <= 0)
-	{
-		return 0;
-	}
-	// take a character from the head
-	unsigned int c = inputCharacterQueue[0];
+    if (inputCharacterQueueCount <= 0)
+    {
+        return 0;
+    }
+    // take a character from the head
+    unsigned int c = inputCharacterQueue[0];
 
-	// shift elements 1 step toward the head.
-	inputCharacterQueueCount--;
-	for (int i = 0; i < inputCharacterQueueCount; i++)
-	{
-		inputCharacterQueue[i] = inputCharacterQueue[i + 1];
-	}
+    // shift elements 1 step toward the head.
+    inputCharacterQueueCount--;
+    for (int i = 0; i < inputCharacterQueueCount; i++)
+    {
+        inputCharacterQueue[i] = inputCharacterQueue[i + 1];
+    }
 
-	// this is not required, but this can keep clean memory
-	inputCharacterQueue[inputCharacterQueueCount] = 0;
+    // this is not required, but this can keep clean memory
+    inputCharacterQueue[inputCharacterQueueCount] = 0;
 
-	return c;
+    return c;
 }
 
 // Set a custom key to exit program
@@ -3949,15 +3949,15 @@ static void CharCallback(GLFWwindow *window, unsigned int key)
 
     lastKeyPressed = key;
 
-	// If the capacity over, is will waste the old one.
-	static const int CAPACITY = sizeof(inputCharacterQueue) / sizeof(inputCharacterQueue[0]);
-	if (CAPACITY <= inputCharacterQueueCount)
-	{
-		GetNextChar();
-	}
+    // If the capacity over, is will waste the old one.
+    static const int CAPACITY = sizeof(inputCharacterQueue) / sizeof(inputCharacterQueue[0]);
+    if (CAPACITY <= inputCharacterQueueCount)
+    {
+        GetNextChar();
+    }
 
-	// add to queue
-	inputCharacterQueue[inputCharacterQueueCount++] = key;
+    // add to queue
+    inputCharacterQueue[inputCharacterQueueCount++] = key;
 }
 
 // GLFW3 CursorEnter Callback, when cursor enters the window
