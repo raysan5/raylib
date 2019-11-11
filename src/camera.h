@@ -243,9 +243,9 @@ void SetCameraMode(Camera camera, int mode)
 
     cameraTargetDistance = sqrtf(dx*dx + dy*dy + dz*dz);
 
-	// Camera angle calculation
-	cameraAngle.x = atan2f(dx, dz);                   // Camera angle in plane XZ (0 aligned with Z, move positive CCW)
-	cameraAngle.y = atan2f(dy, sqrtf(dx*dx + dz*dz)); // Camera angle in plane XY (0 aligned with X, move positive CW)
+    // Camera angle calculation
+    cameraAngle.x = atan2f(dx, dz);                   // Camera angle in plane XZ (0 aligned with Z, move positive CCW)
+    cameraAngle.y = atan2f(dy, sqrtf(dx*dx + dz*dz)); // Camera angle in plane XY (0 aligned with X, move positive CW)
 
     playerEyesPosition = camera.position.y;
 
@@ -382,9 +382,9 @@ void UpdateCamera(Camera *camera)
             }
 
             // Update camera position with changes
-			camera->position.x = -sinf(cameraAngle.x)*cameraTargetDistance*cosf(cameraAngle.y) + camera->target.x;
-			camera->position.y = -sinf(cameraAngle.y)*cameraTargetDistance + camera->target.y;
-			camera->position.z = -cosf(cameraAngle.x)*cameraTargetDistance*cosf(cameraAngle.y) + camera->target.z;
+            camera->position.x = -sinf(cameraAngle.x)*cameraTargetDistance*cosf(cameraAngle.y) + camera->target.x;
+            camera->position.y = -sinf(cameraAngle.y)*cameraTargetDistance + camera->target.y;
+            camera->position.z = -cosf(cameraAngle.x)*cameraTargetDistance*cosf(cameraAngle.y) + camera->target.z;
         } break;
         case CAMERA_ORBITAL:
         {
