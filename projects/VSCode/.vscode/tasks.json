@@ -9,7 +9,7 @@
             "command": "make",
             "args": [
                 "PLATFORM=PLATFORM_DESKTOP",
-                "DEBUGGING=TRUE"
+                "BUILD_MODE=DEBUG"
             ],
             "windows": {
                 "command": "C:/raylib/mingw/bin/mingw32-make.exe",
