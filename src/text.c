@@ -1102,9 +1102,16 @@ unsigned int TextLength(const char *text)
 }
 
 // Formatting of text with variables to 'embed'
+// WARNING: the string returned will expire after this function is called MAX_TEXT_BUFFERS times
 const char *TextFormat(const char *text, ...)
 {
-    static char buffer[MAX_TEXT_BUFFER_LENGTH] = { 0 };
+    #define MAX_TEXT_BUFFERS 8
+    // We create an array of buffers so strings don't expire until MAX_TEXT_BUFFERS invocations
+    static char cache[MAX_TEXT_BUFFERS][MAX_TEXT_BUFFER_LENGTH] = { 0 };
+    static int  index = 0;
+    char       *buffer = cache[index];
+    index += 1;
+    index %= MAX_TEXT_BUFFERS;
 
     va_list args;
     va_start(args, text);
@@ -1112,6 +1119,7 @@ const char *TextFormat(const char *text, ...)
     va_end(args);
 
     return buffer;
+    #undef MAX_TEXT_BUFFERS
 }
 
 // Get a piece of a text string
