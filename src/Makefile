@@ -360,6 +360,8 @@ ifeq ($(PLATFORM),PLATFORM_DESKTOP)
     ifeq ($(PLATFORM_OS), LINUX)
         ifeq ($(USE_WAYLAND_DISPLAY),TRUE)
             CFLAGS += -D_GLFW_WAYLAND
+        else
+            LDLIBS = -lX11
         endif
     endif
 endif
@@ -488,7 +490,7 @@ else
             ifeq ($(PLATFORM_OS),LINUX)
                 # Compile raylib shared library version $(RAYLIB_VERSION).
                 # WARNING: you should type "make clean" before doing this target
-				$(CC) -shared -o $(RAYLIB_RELEASE_PATH)/libraylib.so.$(RAYLIB_VERSION) $(OBJS) -Wl,-soname,libraylib.so.$(RAYLIB_API_VERSION) -lGL -lc -lm -lpthread -ldl -lrt
+				$(CC) -shared -o $(RAYLIB_RELEASE_PATH)/libraylib.so.$(RAYLIB_VERSION) $(OBJS) -Wl,-soname,libraylib.so.$(RAYLIB_API_VERSION) -lGL -lc -lm -lpthread -ldl -lrt $(LDLIBS)
 				@echo "raylib shared library generated (libraylib.so.$(RAYLIB_VERSION)) in $(RAYLIB_RELEASE_PATH)!"
 				cd $(RAYLIB_RELEASE_PATH) && ln -fsv libraylib.so.$(RAYLIB_VERSION) libraylib.so.$(RAYLIB_API_VERSION)
 				cd $(RAYLIB_RELEASE_PATH) && ln -fsv libraylib.so.$(RAYLIB_API_VERSION) libraylib.so
