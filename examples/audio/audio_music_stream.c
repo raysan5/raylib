@@ -2,8 +2,6 @@
 *
 *   raylib [audio] example - Music playing (streaming)
 *
-*   NOTE: This example requires OpenAL Soft library installed
-*
 *   This example has been created using raylib 1.3 (www.raylib.com)
 *   raylib is licensed under an unmodified zlib/libpng license (View raylib.h for details)
 *
@@ -13,19 +11,19 @@
 
 #include "raylib.h"
 
-int main()
+int main(void)
 {
     // Initialization
     //--------------------------------------------------------------------------------------
-    int screenWidth = 800;
-    int screenHeight = 450;
+    const int screenWidth = 800;
+    const int screenHeight = 450;
 
     InitWindow(screenWidth, screenHeight, "raylib [audio] example - music playing (streaming)");
 
     InitAudioDevice();              // Initialize audio device
 
     Music music = LoadMusicStream("resources/guitar_noodling.ogg");
-    
+
     PlayMusicStream(music);
 
     float timePlayed = 0.0f;
@@ -39,27 +37,27 @@ int main()
     {
         // Update
         //----------------------------------------------------------------------------------
-        UpdateMusicStream(music);        // Update music buffer with new stream data
-        
+        UpdateMusicStream(music);   // Update music buffer with new stream data
+
         // Restart music playing (stop and play)
-        if (IsKeyPressed(KEY_SPACE)) 
+        if (IsKeyPressed(KEY_SPACE))
         {
             StopMusicStream(music);
             PlayMusicStream(music);
         }
-        
-        // Pause/Resume music playing 
+
+        // Pause/Resume music playing
         if (IsKeyPressed(KEY_P))
         {
             pause = !pause;
-            
+
             if (pause) PauseMusicStream(music);
             else ResumeMusicStream(music);
         }
-        
+
         // Get timePlayed scaled to bar dimensions (400 pixels)
         timePlayed = GetMusicTimePlayed(music)/GetMusicTimeLength(music)*400;
-        
+
         if (timePlayed > 400) StopMusicStream(music);
         //----------------------------------------------------------------------------------
 
@@ -74,7 +72,7 @@ int main()
             DrawRectangle(200, 200, 400, 12, LIGHTGRAY);
             DrawRectangle(200, 200, (int)timePlayed, 12, MAROON);
             DrawRectangleLines(200, 200, 400, 12, GRAY);
-            
+
             DrawText("PRESS SPACE TO RESTART MUSIC", 215, 250, 20, LIGHTGRAY);
             DrawText("PRESS P TO PAUSE/RESUME MUSIC", 208, 280, 20, LIGHTGRAY);
 

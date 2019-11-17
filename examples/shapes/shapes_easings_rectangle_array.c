@@ -2,7 +2,7 @@
 *
 *   raylib [shapes] example - easings rectangle array
 *
-*   NOTE: This example requires 'easings.h' library, provided on raylib/src. Just copy 
+*   NOTE: This example requires 'easings.h' library, provided on raylib/src. Just copy
 *   the library to same directory as example or make sure it's available on include path.
 *
 *   This example has been created using raylib 2.0 (www.raylib.com)
@@ -24,17 +24,17 @@
 
 #define PLAY_TIME_IN_FRAMES     240                 // At 60 fps = 4 seconds
 
-int main()
+int main(void)
 {
     // Initialization
     //--------------------------------------------------------------------------------------
-    int screenWidth = 800;
-    int screenHeight = 450;
+    const int screenWidth = 800;
+    const int screenHeight = 450;
 
     InitWindow(screenWidth, screenHeight, "raylib [shapes] example - easings rectangle array");
-    
-    Rectangle recs[MAX_RECS_X*MAX_RECS_Y];
-    
+
+    Rectangle recs[MAX_RECS_X*MAX_RECS_Y] = { 0 };
+
     for (int y = 0; y < MAX_RECS_Y; y++)
     {
         for (int x = 0; x < MAX_RECS_X; x++)
@@ -45,12 +45,12 @@ int main()
             recs[y*MAX_RECS_X + x].height = RECS_HEIGHT;
         }
     }
-    
+
     float rotation = 0.0f;
     int framesCounter = 0;
-    int state = 0;                  // Rectangles animation state: 0-Playing, 1-Finished 
-    
-    SetTargetFPS(60);
+    int state = 0;                  // Rectangles animation state: 0-Playing, 1-Finished
+
+    SetTargetFPS(60);               // Set our game to run at 60 frames-per-second
     //--------------------------------------------------------------------------------------
 
     // Main game loop
@@ -62,16 +62,16 @@ int main()
         {
             framesCounter++;
 
-            for (int i = 0; i < MAX_RECS_X*MAX_RECS_Y; i++) 
+            for (int i = 0; i < MAX_RECS_X*MAX_RECS_Y; i++)
             {
                 recs[i].height = EaseCircOut(framesCounter, RECS_HEIGHT, -RECS_HEIGHT, PLAY_TIME_IN_FRAMES);
                 recs[i].width = EaseCircOut(framesCounter, RECS_WIDTH, -RECS_WIDTH, PLAY_TIME_IN_FRAMES);
-                
+
                 if (recs[i].height < 0) recs[i].height = 0;
                 if (recs[i].width < 0) recs[i].width = 0;
-                
+
                 if ((recs[i].height == 0) && (recs[i].width == 0)) state = 1;   // Finish playing
-                
+
                 rotation = EaseLinearIn(framesCounter, 0.0f, 360.0f, PLAY_TIME_IN_FRAMES);
             }
         }
@@ -79,13 +79,13 @@ int main()
         {
             // When animation has finished, press space to restart
             framesCounter = 0;
-            
-            for (int i = 0; i < MAX_RECS_X*MAX_RECS_Y; i++) 
+
+            for (int i = 0; i < MAX_RECS_X*MAX_RECS_Y; i++)
             {
                 recs[i].height = RECS_HEIGHT;
                 recs[i].width = RECS_WIDTH;
             }
-            
+
             state = 0;
         }
         //----------------------------------------------------------------------------------
@@ -110,7 +110,7 @@ int main()
     }
 
     // De-Initialization
-    //--------------------------------------------------------------------------------------   
+    //--------------------------------------------------------------------------------------
     CloseWindow();        // Close window and OpenGL context
     //--------------------------------------------------------------------------------------
 

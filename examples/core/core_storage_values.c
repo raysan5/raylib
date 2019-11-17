@@ -14,21 +14,20 @@
 // NOTE: Storage positions must start with 0, directly related to file memory layout
 typedef enum { STORAGE_SCORE = 0, STORAGE_HISCORE } StorageData;
 
-int main()
+int main(void)
 {
     // Initialization
     //--------------------------------------------------------------------------------------
-    int screenWidth = 800;
-    int screenHeight = 450;
+    const int screenWidth = 800;
+    const int screenHeight = 450;
 
     InitWindow(screenWidth, screenHeight, "raylib [core] example - storage save/load values");
-    
+
     int score = 0;
     int hiscore = 0;
-    
     int framesCounter = 0;
-    
-    SetTargetFPS(60);
+
+    SetTargetFPS(60);               // Set our game to run at 60 frames-per-second
     //--------------------------------------------------------------------------------------
 
     // Main game loop
@@ -41,7 +40,7 @@ int main()
             score = GetRandomValue(1000, 2000);
             hiscore = GetRandomValue(2000, 4000);
         }
-        
+
         if (IsKeyPressed(KEY_ENTER))
         {
             StorageSaveValue(STORAGE_SCORE, score);
@@ -53,7 +52,7 @@ int main()
             score = StorageLoadValue(STORAGE_SCORE);
             hiscore = StorageLoadValue(STORAGE_HISCORE);
         }
-        
+
         framesCounter++;
         //----------------------------------------------------------------------------------
 
@@ -65,9 +64,9 @@ int main()
 
             DrawText(FormatText("SCORE: %i", score), 280, 130, 40, MAROON);
             DrawText(FormatText("HI-SCORE: %i", hiscore), 210, 200, 50, BLACK);
-            
+
             DrawText(FormatText("frames: %i", framesCounter), 10, 10, 20, LIME);
-            
+
             DrawText("Press R to generate random numbers", 220, 40, 20, LIGHTGRAY);
             DrawText("Press ENTER to SAVE values", 250, 310, 20, LIGHTGRAY);
             DrawText("Press SPACE to LOAD values", 252, 350, 20, LIGHTGRAY);
@@ -77,7 +76,7 @@ int main()
     }
 
     // De-Initialization
-    //--------------------------------------------------------------------------------------   
+    //--------------------------------------------------------------------------------------
     CloseWindow();        // Close window and OpenGL context
     //--------------------------------------------------------------------------------------
 

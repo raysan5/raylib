@@ -12,7 +12,9 @@
 *   This example has been created using raylib 2.3 (www.raylib.com)
 *   raylib is licensed under an unmodified zlib/libpng license (View raylib.h for details)
 *
-*   Copyright (c) 2019 Ramon Santamaria (@raysan5)
+*   Example contributed by Marco Lizza (@MarcoLizza) and reviewed by Ramon Santamaria (@raysan5)
+*
+*   Copyright (c) 2019 Marco Lizza (@MarcoLizza) and Ramon Santamaria (@raysan5)
 *
 ********************************************************************************************/
 
@@ -67,19 +69,19 @@ static const char *paletteText[] = {
     "RKBV (2-strip film)"
 };
 
-int main()
+int main(void)
 {
     // Initialization
     //--------------------------------------------------------------------------------------
-    int screenWidth = 800;
-    int screenHeight = 450;
+    const int screenWidth = 800;
+    const int screenHeight = 450;
 
     InitWindow(screenWidth, screenHeight, "raylib [shaders] example - color palette switch");
 
     // Load shader to be used on some parts drawing
     // NOTE 1: Using GLSL 330 shader version, on OpenGL ES 2.0 use GLSL 100 shader version
     // NOTE 2: Defining 0 (NULL) for vertex shader forces usage of internal default vertex shader
-    Shader shader = LoadShader(0, FormatText("resources/shaders/glsl%i/palette-switch.fs", GLSL_VERSION));
+    Shader shader = LoadShader(0, FormatText("resources/shaders/glsl%i/palette_switch.fs", GLSL_VERSION));
 
     // Get variable (uniform) location on the shader to connect with the program
     // NOTE: If uniform variable could not be found in the shader, function returns -1
@@ -115,7 +117,7 @@ int main()
 
             BeginShaderMode(shader);
 
-                for (int i = 0; i < COLORS_PER_PALETTE; i++) 
+                for (int i = 0; i < COLORS_PER_PALETTE; i++)
                 {
                     // Draw horizontal screen-wide rectangles with increasing "palette index"
                     // The used palette index is encoded in the RGB components of the pixel
@@ -127,7 +129,7 @@ int main()
             DrawText("< >", 10, 10, 30, DARKBLUE);
             DrawText("CURRENT PALETTE:", 60, 15, 20, RAYWHITE);
             DrawText(paletteText[currentPalette], 300, 15, 20, RED);
-            
+
             DrawFPS(700, 15);
 
         EndDrawing();

@@ -1,6 +1,6 @@
 /*******************************************************************************************
 *
-*   raylib [textures] example - Retrieve image data from texture: GetTextureData() 
+*   raylib [textures] example - Retrieve image data from texture: GetTextureData()
 *
 *   NOTE: Images are loaded in CPU memory (RAM); textures are loaded in GPU memory (VRAM)
 *
@@ -13,12 +13,12 @@
 
 #include "raylib.h"
 
-int main()
+int main(void)
 {
     // Initialization
     //--------------------------------------------------------------------------------------
-    int screenWidth = 800;
-    int screenHeight = 450;
+    const int screenWidth = 800;
+    const int screenHeight = 450;
 
     InitWindow(screenWidth, screenHeight, "raylib [textures] example - texture to image");
 
@@ -27,10 +27,10 @@ int main()
     Image image = LoadImage("resources/raylib_logo.png");  // Load image data into CPU memory (RAM)
     Texture2D texture = LoadTextureFromImage(image);       // Image converted to texture, GPU memory (RAM -> VRAM)
     UnloadImage(image);                                    // Unload image data from CPU memory (RAM)
-    
+
     image = GetTextureData(texture);                       // Retrieve image data from GPU memory (VRAM -> RAM)
     UnloadTexture(texture);                                // Unload texture from GPU memory (VRAM)
-    
+
     texture = LoadTextureFromImage(image);                 // Recreate texture from retrieved image data (RAM -> VRAM)
     UnloadImage(image);                                    // Unload retrieved image data from CPU memory (RAM)
     //---------------------------------------------------------------------------------------

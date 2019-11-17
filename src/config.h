@@ -25,7 +25,7 @@
 *
 **********************************************************************************************/
 
-#define RAYLIB_VERSION  "2.5-dev"
+#define RAYLIB_VERSION  "2.6-dev"
 
 // Edit to control what features Makefile'd raylib is compiled with
 #if defined(RAYLIB_CMAKE)
@@ -42,6 +42,10 @@
 #define SUPPORT_GESTURES_SYSTEM     1
 // Mouse gestures are directly mapped like touches and processed by gestures system
 #define SUPPORT_MOUSE_GESTURES      1
+// Reconfigure standard input to receive key inputs, works with SSH connection.
+#define SUPPORT_SSH_KEYBOARD_RPI    1
+// Draw a mouse reference on screen (square cursor box)
+#define SUPPORT_MOUSE_CURSOR_RPI    1
 // Use busy wait loop for timing sync, if not defined, a high-resolution timer is setup and used
 //#define SUPPORT_BUSY_WAIT_LOOP      1
 // Wait for events passively (sleeping while no events) instead of polling them actively every frame
@@ -52,7 +56,8 @@
 #define SUPPORT_GIF_RECORDING       1
 // Allow scale all the drawn content to match the high-DPI equivalent size (only PLATFORM_DESKTOP)
 //#define SUPPORT_HIGH_DPI            1
-
+// Support CompressData() and DecompressData() functions
+#define SUPPORT_COMPRESSION_API     1
 
 //------------------------------------------------------------------------------------
 // Module: rlgl - Configuration Flags
@@ -81,10 +86,10 @@
 //#define SUPPORT_FILEFORMAT_JPG    1
 //#define SUPPORT_FILEFORMAT_GIF    1
 //#define SUPPORT_FILEFORMAT_PSD    1
-#define SUPPORT_FILEFORMAT_DDS      1
+//#define SUPPORT_FILEFORMAT_DDS    1
 #define SUPPORT_FILEFORMAT_HDR      1
-#define SUPPORT_FILEFORMAT_KTX      1
-#define SUPPORT_FILEFORMAT_ASTC     1
+//#define SUPPORT_FILEFORMAT_KTX    1
+//#define SUPPORT_FILEFORMAT_ASTC   1
 //#define SUPPORT_FILEFORMAT_PKM    1
 //#define SUPPORT_FILEFORMAT_PVR    1
 
@@ -129,8 +134,8 @@
 #define SUPPORT_FILEFORMAT_OGG      1
 #define SUPPORT_FILEFORMAT_XM       1
 #define SUPPORT_FILEFORMAT_MOD      1
-//#define SUPPORT_FILEFORMAT_FLAC   1
-#define SUPPORT_FILEFORMAT_MP3    1
+#define SUPPORT_FILEFORMAT_FLAC     1
+#define SUPPORT_FILEFORMAT_MP3      1
 
 
 //------------------------------------------------------------------------------------

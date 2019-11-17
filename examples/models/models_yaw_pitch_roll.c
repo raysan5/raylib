@@ -5,9 +5,9 @@
 *   This example has been created using raylib 1.8 (www.raylib.com)
 *   raylib is licensed under an unmodified zlib/libpng license (View raylib.h for details)
 *
-*   Example based on Berni work on Raspberry Pi.
+*   Example contributed by Berni (@Berni8k) and reviewed by Ramon Santamaria (@raysan5)
 *
-*   Copyright (c) 2017 Ramon Santamaria (@raysan5)
+*   Copyright (c) 2017 Berni (@Berni8k) and Ramon Santamaria (@raysan5)
 *
 ********************************************************************************************/
 
@@ -17,10 +17,7 @@
 // Draw angle gauge controls
 void DrawAngleGauge(Texture2D angleGauge, int x, int y, float angle, char title[], Color color);
 
-//----------------------------------------------------------------------------------
-// Main entry point
-//----------------------------------------------------------------------------------
-int main()
+int main(void)
 {
     // Initialization
     //--------------------------------------------------------------------------------------
@@ -53,10 +50,10 @@ int main()
     float roll = 0.0f;
     float yaw = 0.0f;
 
-    SetTargetFPS(60);
+    SetTargetFPS(60);               // Set our game to run at 60 frames-per-second
     //--------------------------------------------------------------------------------------
 
-
+    // Main game loop
     while (!WindowShouldClose())    // Detect window close button or ESC key
     {
         // Update
@@ -95,6 +92,7 @@ int main()
         while (pitchOffset < -180) pitchOffset += 360;
         pitchOffset *= 10;
 
+        /* matrix transform done with multiplication to combine rotations
         Matrix transform = MatrixIdentity();
 
         transform = MatrixMultiply(transform, MatrixRotateZ(DEG2RAD*roll));
@@ -102,8 +100,11 @@ int main()
         transform = MatrixMultiply(transform, MatrixRotateY(DEG2RAD*yaw));
 
         model.transform = transform;
-        //----------------------------------------------------------------------------------
+        */
+        // matrix created from multiple axes at once
+        model.transform = MatrixRotateXYZ((Vector3){DEG2RAD*pitch,DEG2RAD*yaw,DEG2RAD*roll});
 
+        //----------------------------------------------------------------------------------
         // Draw
         //----------------------------------------------------------------------------------
         BeginDrawing();
@@ -168,6 +169,7 @@ int main()
     //--------------------------------------------------------------------------------------
 
     // Unload all loaded data
+    UnloadTexture(model.materials[0].maps[MAP_DIFFUSE].texture);
     UnloadModel(model);
 
     UnloadRenderTexture(framebuffer);

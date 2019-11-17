@@ -34,7 +34,6 @@
 //----------------------------------------------------------------------------------
 // Types and Structures Definition
 //----------------------------------------------------------------------------------
-
 typedef struct Player {
     Vector2 position;
     Vector2 speed;
@@ -65,25 +64,25 @@ typedef struct Meteor {
 //------------------------------------------------------------------------------------
 // Global Variables Declaration
 //------------------------------------------------------------------------------------
-static int screenWidth = 800;
-static int screenHeight = 450;
+static const int screenWidth = 800;
+static const int screenHeight = 450;
 
-static bool gameOver;
-static bool pause;
-static bool victory;
+static bool gameOver = false;
+static bool pause = false;
+static bool victory = false;
 
 // NOTE: Defined triangle is isosceles with common angles of 70 degrees.
-static float shipHeight;
+static float shipHeight = 0.0f;
 
-static Player player;
-static Shoot shoot[PLAYER_MAX_SHOOTS];
-static Meteor bigMeteor[MAX_BIG_METEORS];
-static Meteor mediumMeteor[MAX_MEDIUM_METEORS];
-static Meteor smallMeteor[MAX_SMALL_METEORS];
+static Player player = { 0 };
+static Shoot shoot[PLAYER_MAX_SHOOTS] = { 0 };
+static Meteor bigMeteor[MAX_BIG_METEORS] = { 0 };
+static Meteor mediumMeteor[MAX_MEDIUM_METEORS] = { 0 };
+static Meteor smallMeteor[MAX_SMALL_METEORS] = { 0 };
 
-static int midMeteorsCount;
-static int smallMeteorsCount;
-static int destroyedMeteorsCount;
+static int midMeteorsCount = 0;
+static int smallMeteorsCount = 0;
+static int destroyedMeteorsCount = 0;
 
 //------------------------------------------------------------------------------------
 // Module Functions Declaration (local)
@@ -108,7 +107,6 @@ int main(void)
 #if defined(PLATFORM_WEB)
     emscripten_set_main_loop(UpdateDrawFrame, 0, 1);
 #else
-
     SetTargetFPS(60);
     //--------------------------------------------------------------------------------------
     
@@ -121,7 +119,6 @@ int main(void)
         //----------------------------------------------------------------------------------
     }
 #endif
-
     // De-Initialization
     //--------------------------------------------------------------------------------------
     UnloadGame();         // Unload loaded data (textures, sounds, models...)

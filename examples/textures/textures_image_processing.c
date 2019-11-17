@@ -13,19 +13,19 @@
 
 #include "raylib.h"
 
-#include <stdlib.h>     // Required for: free()
+#include <stdlib.h>             // Required for: free()
 
 #define NUM_PROCESSES    8
 
-typedef enum { 
-    NONE = 0, 
-    COLOR_GRAYSCALE, 
-    COLOR_TINT, 
-    COLOR_INVERT, 
-    COLOR_CONTRAST, 
-    COLOR_BRIGHTNESS, 
-    FLIP_VERTICAL, 
-    FLIP_HORIZONTAL 
+typedef enum {
+    NONE = 0,
+    COLOR_GRAYSCALE,
+    COLOR_TINT,
+    COLOR_INVERT,
+    COLOR_CONTRAST,
+    COLOR_BRIGHTNESS,
+    FLIP_VERTICAL,
+    FLIP_HORIZONTAL
 } ImageProcess;
 
 static const char *processText[] = {
@@ -39,12 +39,12 @@ static const char *processText[] = {
     "FLIP HORIZONTAL"
 };
 
-int main()
+int main(void)
 {
     // Initialization
     //--------------------------------------------------------------------------------------
-    int screenWidth = 800;
-    int screenHeight = 450;
+    const int screenWidth = 800;
+    const int screenHeight = 450;
 
     InitWindow(screenWidth, screenHeight, "raylib [textures] example - image processing");
 
@@ -57,10 +57,10 @@ int main()
     int currentProcess = NONE;
     bool textureReload = false;
 
-    Rectangle selectRecs[NUM_PROCESSES];
-    
+    Rectangle selectRecs[NUM_PROCESSES] = { 0 };
+
     for (int i = 0; i < NUM_PROCESSES; i++) selectRecs[i] = (Rectangle){ 40.0f, (float)(50 + 32*i), 150.0f, 30.0f };
-    
+
     SetTargetFPS(60);
     //---------------------------------------------------------------------------------------
 
@@ -81,14 +81,14 @@ int main()
             if (currentProcess < 0) currentProcess = 7;
             textureReload = true;
         }
-        
+
         if (textureReload)
         {
             UnloadImage(image);                         // Unload current image data
             image = LoadImage("resources/parrots.png"); // Re-load image data
 
-            // NOTE: Image processing is a costly CPU process to be done every frame, 
-            // If image processing is required in a frame-basis, it should be done 
+            // NOTE: Image processing is a costly CPU process to be done every frame,
+            // If image processing is required in a frame-basis, it should be done
             // with a texture and by shaders
             switch (currentProcess)
             {
@@ -101,11 +101,11 @@ int main()
                 case FLIP_HORIZONTAL: ImageFlipHorizontal(&image); break;
                 default: break;
             }
-            
+
             Color *pixels = GetImageData(image);        // Get pixel data from image (RGBA 32bit)
             UpdateTexture(texture, pixels);             // Update texture with new image data
             free(pixels);                               // Unload pixels data from RAM
-            
+
             textureReload = false;
         }
         //----------------------------------------------------------------------------------
@@ -115,9 +115,9 @@ int main()
         BeginDrawing();
 
             ClearBackground(RAYWHITE);
-            
+
             DrawText("IMAGE PROCESSING:", 40, 30, 10, DARKGRAY);
-            
+
             // Draw rectangles
             for (int i = 0; i < NUM_PROCESSES; i++)
             {
@@ -128,7 +128,7 @@ int main()
 
             DrawTexture(texture, screenWidth - texture.width - 60, screenHeight/2 - texture.height/2, WHITE);
             DrawRectangleLines(screenWidth - texture.width - 60, screenHeight/2 - texture.height/2, texture.width, texture.height, BLACK);
-            
+
         EndDrawing();
         //----------------------------------------------------------------------------------
     }

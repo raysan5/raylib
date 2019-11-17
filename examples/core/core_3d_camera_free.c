@@ -11,25 +11,25 @@
 
 #include "raylib.h"
 
-int main()
+int main(void)
 {
     // Initialization
     //--------------------------------------------------------------------------------------
-    int screenWidth = 800;
-    int screenHeight = 450;
+    const int screenWidth = 800;
+    const int screenHeight = 450;
 
     InitWindow(screenWidth, screenHeight, "raylib [core] example - 3d camera free");
 
     // Define the camera to look into our 3d world
-    Camera3D camera;
+    Camera3D camera = { 0 };
     camera.position = (Vector3){ 10.0f, 10.0f, 10.0f }; // Camera position
     camera.target = (Vector3){ 0.0f, 0.0f, 0.0f };      // Camera looking at point
     camera.up = (Vector3){ 0.0f, 1.0f, 0.0f };          // Camera up vector (rotation towards target)
     camera.fovy = 45.0f;                                // Camera field-of-view Y
     camera.type = CAMERA_PERSPECTIVE;                   // Camera mode type
-    
+
     Vector3 cubePosition = { 0.0f, 0.0f, 0.0f };
-    
+
     SetCameraMode(camera, CAMERA_FREE); // Set a free camera mode
 
     SetTargetFPS(60);                   // Set our game to run at 60 frames-per-second
@@ -41,7 +41,7 @@ int main()
         // Update
         //----------------------------------------------------------------------------------
         UpdateCamera(&camera);          // Update camera
-        
+
         if (IsKeyDown('Z')) camera.target = (Vector3){ 0.0f, 0.0f, 0.0f };
         //----------------------------------------------------------------------------------
 
@@ -59,10 +59,10 @@ int main()
                 DrawGrid(10, 1.0f);
 
             EndMode3D();
-            
+
             DrawRectangle( 10, 10, 320, 133, Fade(SKYBLUE, 0.5f));
             DrawRectangleLines( 10, 10, 320, 133, BLUE);
-            
+
             DrawText("Free camera default controls:", 20, 20, 10, BLACK);
             DrawText("- Mouse Wheel to Zoom in-out", 40, 40, 10, DARKGRAY);
             DrawText("- Mouse Wheel Pressed to Pan", 40, 60, 10, DARKGRAY);

@@ -1,6 +1,6 @@
 /*******************************************************************************************
 *
-*   GLOBAL GAME JAM 2017 - WAVE COLLECTOR
+*   WAVE COLLECTOR [GLOBAL GAME JAM 2017]
 *
 *   The ultimate wave particles collector is here!
 *   You must follow the wave and collect all the particles 
@@ -58,8 +58,8 @@ static void UpdateDrawFrame(void);          // Update and Draw one frame
 //----------------------------------------------------------------------------------
 int main(int argc, char *argv[])
 {
-	// Initialization
-	//---------------------------------------------------------
+    // Initialization
+    //---------------------------------------------------------
 #if defined(PLATFORM_DESKTOP)
     // TODO: Support for dropped files on the exe
     
@@ -85,7 +85,7 @@ int main(int argc, char *argv[])
     SetConfigFlags(FLAG_MSAA_4X_HINT);
 #endif
     // Note windowTitle is unused on Android
-    InitWindow(screenWidth, screenHeight, "GGJ17 - WAVE COLLECTOR");
+    InitWindow(screenWidth, screenHeight, "WAVE COLLECTOR [GGJ17]");
 
     // Global data loading (assets that must be available in all screens, i.e. fonts)
     InitAudioDevice();
@@ -299,7 +299,7 @@ static void UpdateDrawFrame(void)
             case ENDING: DrawEndingScreen(); break;
             default: break;
         }
-	
+    
         // Draw full screen rectangle in front of everything
         if (onTransition) DrawTransition();
     

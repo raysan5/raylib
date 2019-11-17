@@ -54,25 +54,25 @@ typedef struct Shoot{
 //------------------------------------------------------------------------------------
 // Global Variables Declaration
 //------------------------------------------------------------------------------------
-static int screenWidth = 800;
-static int screenHeight = 450;
+static const int screenWidth = 800;
+static const int screenHeight = 450;
 
-static bool gameOver;
-static bool pause;
-static int score;
-static bool victory;
+static bool gameOver = false;
+static bool pause =  false;
+static int score = 0;
+static bool victory = false;
 
-static Player player;
-static Enemy enemy[NUM_MAX_ENEMIES];
-static Shoot shoot[NUM_SHOOTS];
-static EnemyWave wave;
+static Player player = { 0 };
+static Enemy enemy[NUM_MAX_ENEMIES] = { 0 };
+static Shoot shoot[NUM_SHOOTS] = { 0 };
+static EnemyWave wave = { 0 };
 
-static int shootRate;
-static float alpha;
+static int shootRate = 0;
+static float alpha = 0.0f;
 
-static int activeEnemies;
-static int enemiesKill;
-static bool smooth;
+static int activeEnemies = 0;
+static int enemiesKill = 0;
+static bool smooth = false;
 
 //------------------------------------------------------------------------------------
 // Module Functions Declaration (local)
@@ -97,7 +97,6 @@ int main(void)
 #if defined(PLATFORM_WEB)
     emscripten_set_main_loop(UpdateDrawFrame, 0, 1);
 #else
-
     SetTargetFPS(60);
     //--------------------------------------------------------------------------------------
     
@@ -110,7 +109,6 @@ int main(void)
         //----------------------------------------------------------------------------------
     }
 #endif
-
     // De-Initialization
     //--------------------------------------------------------------------------------------
     UnloadGame();         // Unload loaded data (textures, sounds, models...)
@@ -289,7 +287,7 @@ void UpdateGame(void)
             if (player.rec.y <= 0) player.rec.y = 0;
             if (player.rec.y + player.rec.height >= screenHeight) player.rec.y = screenHeight - player.rec.height;
 
-            //Shoot initialization
+            // Shoot initialization
             if (IsKeyDown(KEY_SPACE))
             {
                 shootRate += 5;
@@ -375,7 +373,7 @@ void DrawGame(void)
                 if (shoot[i].active) DrawRectangleRec(shoot[i].rec, shoot[i].color);
             }
             
-            DrawText(FormatText("%04i", score), 20, 20, 40, GRAY);
+            DrawText(TextFormat("%04i", score), 20, 20, 40, GRAY);
         
             if (victory) DrawText("YOU WIN", screenWidth/2 - MeasureText("YOU WIN", 40)/2, screenHeight/2 - 40, 40, BLACK);
         

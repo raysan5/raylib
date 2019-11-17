@@ -24,13 +24,13 @@
     #define GLSL_VERSION            100
 #endif
 
-int main()
+int main(void)
 {
     // Initialization
     //--------------------------------------------------------------------------------------
-    int screenWidth = 800;
-    int screenHeight = 450;
-    
+    const int screenWidth = 800;
+    const int screenHeight = 450;
+
     SetConfigFlags(FLAG_MSAA_4X_HINT);      // Enable Multi Sampling Anti Aliasing 4x (if available)
 
     InitWindow(screenWidth, screenHeight, "raylib [shaders] example - model shader");
@@ -45,16 +45,16 @@ int main()
 
     Model model = LoadModel("resources/models/watermill.obj");                   // Load OBJ model
     Texture2D texture = LoadTexture("resources/models/watermill_diffuse.png");   // Load model texture
-    
+
     // Load shader for model
     // NOTE: Defining 0 (NULL) for vertex shader forces usage of internal default vertex shader
     Shader shader = LoadShader(0, FormatText("resources/shaders/glsl%i/grayscale.fs", GLSL_VERSION));
 
     model.materials[0].shader = shader;                     // Set shader effect to 3d model
     model.materials[0].maps[MAP_DIFFUSE].texture = texture; // Bind texture to model
-    
+
     Vector3 position = { 0.0f, 0.0f, 0.0f };    // Set model position
-    
+
     SetCameraMode(camera, CAMERA_FREE);         // Set an orbital camera mode
 
     SetTargetFPS(60);                           // Set our game to run at 60 frames-per-second
@@ -81,11 +81,8 @@ int main()
                 DrawGrid(10, 1.0f);     // Draw a grid
 
             EndMode3D();
-            
+
             DrawText("(c) Watermill 3D model by Alberto Cano", screenWidth - 210, screenHeight - 20, 10, GRAY);
-            
-            DrawText(FormatText("Camera position: (%.2f, %.2f, %.2f)", camera.position.x, camera.position.y, camera.position.z), 600, 20, 10, BLACK);
-            DrawText(FormatText("Camera target: (%.2f, %.2f, %.2f)", camera.target.x, camera.target.y, camera.target.z), 600, 40, 10, GRAY);
 
             DrawFPS(10, 10);
 

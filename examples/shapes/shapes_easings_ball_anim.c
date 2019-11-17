@@ -11,9 +11,9 @@
 
 #include "raylib.h"
 
-#include "easings.h"            // Required for easing functions
+#include "easings.h"                // Required for easing functions
 
-int main()
+int main(void)
 {
     // Initialization
     //--------------------------------------------------------------------------------------
@@ -21,16 +21,16 @@ int main()
     const int screenHeight = 450;
 
     InitWindow(screenWidth, screenHeight, "raylib [shapes] example - easings ball anim");
-    
+
     // Ball variable value to be animated with easings
     int ballPositionX = -100;
     int ballRadius = 20;
     float ballAlpha = 0.0f;
-    
+
     int state = 0;
     int framesCounter = 0;
-    
-    SetTargetFPS(60);
+
+    SetTargetFPS(60);               // Set our game to run at 60 frames-per-second
     //--------------------------------------------------------------------------------------
 
     // Main game loop
@@ -42,7 +42,7 @@ int main()
         {
             framesCounter++;
             ballPositionX = EaseElasticOut(framesCounter, -100, screenWidth/2 + 100, 120);
-            
+
             if (framesCounter >= 120)
             {
                 framesCounter = 0;
@@ -53,7 +53,7 @@ int main()
         {
             framesCounter++;
             ballRadius = EaseElasticIn(framesCounter, 20, 500, 200);
-            
+
             if (framesCounter >= 200)
             {
                 framesCounter = 0;
@@ -64,7 +64,7 @@ int main()
         {
             framesCounter++;
             ballAlpha = EaseCubicOut(framesCounter, 0.0f, 1.0f, 200);
-            
+
             if (framesCounter >= 200)
             {
                 framesCounter = 0;
@@ -73,7 +73,7 @@ int main()
         }
         else if (state == 3)        // Reset state to play again
         {
-            if (IsKeyPressed(KEY_ENTER)) 
+            if (IsKeyPressed(KEY_ENTER))
             {
                 // Reset required variables to play again
                 ballPositionX = -100;
@@ -82,7 +82,7 @@ int main()
                 state = 0;
             }
         }
-        
+
         if (IsKeyPressed(KEY_R)) framesCounter = 0;
         //----------------------------------------------------------------------------------
 
@@ -94,15 +94,15 @@ int main()
 
             if (state >= 2) DrawRectangle(0, 0, screenWidth, screenHeight, GREEN);
             DrawCircle(ballPositionX, 200, ballRadius, Fade(RED, 1.0f - ballAlpha));
-            
+
             if (state == 3) DrawText("PRESS [ENTER] TO PLAY AGAIN!", 240, 200, 20, BLACK);
-            
+
         EndDrawing();
         //----------------------------------------------------------------------------------
     }
 
     // De-Initialization
-    //--------------------------------------------------------------------------------------   
+    //--------------------------------------------------------------------------------------
     CloseWindow();        // Close window and OpenGL context
     //--------------------------------------------------------------------------------------
 

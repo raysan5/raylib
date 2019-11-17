@@ -58,29 +58,29 @@
 // Check if a key has been pressed
 static int kbhit(void)
 {
-	struct termios oldt, newt;
-	int ch;
-	int oldf;
+    struct termios oldt, newt;
+    int ch;
+    int oldf;
 
-	tcgetattr(STDIN_FILENO, &oldt);
-	newt = oldt;
-	newt.c_lflag &= ~(ICANON | ECHO);
-	tcsetattr(STDIN_FILENO, TCSANOW, &newt);
-	oldf = fcntl(STDIN_FILENO, F_GETFL, 0);
-	fcntl(STDIN_FILENO, F_SETFL, oldf | O_NONBLOCK);
+    tcgetattr(STDIN_FILENO, &oldt);
+    newt = oldt;
+    newt.c_lflag &= ~(ICANON | ECHO);
+    tcsetattr(STDIN_FILENO, TCSANOW, &newt);
+    oldf = fcntl(STDIN_FILENO, F_GETFL, 0);
+    fcntl(STDIN_FILENO, F_SETFL, oldf | O_NONBLOCK);
 
-	ch = getchar();
+    ch = getchar();
 
-	tcsetattr(STDIN_FILENO, TCSANOW, &oldt);
-	fcntl(STDIN_FILENO, F_SETFL, oldf);
+    tcsetattr(STDIN_FILENO, TCSANOW, &oldt);
+    fcntl(STDIN_FILENO, F_SETFL, oldf);
 
-	if (ch != EOF)
-	{
-		ungetc(ch, stdin);
-		return 1;
-	}
+    if (ch != EOF)
+    {
+        ungetc(ch, stdin);
+        return 1;
+    }
 
-	return 0;
+    return 0;
 }
 
 // Get pressed character
@@ -94,7 +94,7 @@ int main()
 {
     // Initialization
     //--------------------------------------------------------------------------------------
-    static unsigned char key;
+    static unsigned char key = 0;
 
     InitAudioDevice();
 

@@ -1,27 +1,32 @@
 changelog
 ---------
 
-Current Release:    raylib 2.0.0 (July 2018)
+Current Release:    raylib 2.5.0 (31 May 2019)
 
 -----------------------------------------------
 Release:     raylib 2.5 (May 2019)
 -----------------------------------------------
 KEY CHANGES:
-  - New text management API
-  - Cubemap textures support
-  - Skeletal model animation support
-  - New textures drawing: Quad and N-Patch based rectangles
-  - New drawing shapes available: CircleSector, Ring and RectangleRounded
-  - VR system redesign to allow custom device parameters and distortion shader
+ - [core] Redesigned Gamepad mechanism, now common to all platforms and gamepads
+ - [core] HighDPI monitors support with automatic content scaling
+ - [rlgl] Complete module redesign to use one single internal buffer
+ - [rlgl] VR system redesign to allow custom device parameters and distortion shader
+ - [shapes] New drawing shapes available: CircleSector, Ring and RectangleRounded
+ - [text] New text management API (multiple functions)
+ - [text] Full Unicode support (utf8 text)
+ - [textures] Cubemap textures support
+ - [textures] Quad and N-Patch drawing
+ - [models] Skeletal model animation support
+ - [models] Support multiple meshes per model
+ - [models] Support glTF model loading
 
 Detailed changes:
-[build] ...
+[build] REVIEWED: Default raylib and examples Makefile
 [build] REVIEWED: Notepad++ NppExec scripts
 [build] REVIEWED: VS2015 and VS2017 projects
 [build] REVIEWED: Android APK build pipeline
-
 [core] Converted most #defined values as enum values
-[core] Complete redesign of RPI input system
+[core] Complete redesign of RPI input system to use evdev events
 [core] ADDED: IsWindowResized() - Check if window has been resized
 [core] ADDED: IsWindowHidden() - Check if window is currently hidden
 [core] ADDED: UnhideWindow() - Show the window
@@ -105,25 +110,44 @@ Detailed changes:
 [raudio] ADDED: IsAudioStreamPlaying() - Check if audio stream is playing
 [raudio] ADDED: SetAudioStreamVolume() - Set volume for audio stream (1.0 is max level)
 [raudio] ADDED: SetAudioStreamPitch() - Set pitch for audio stream (1.0 is base level)
+[examples] Complete review of full examples collection, many additions
 [examples] ADDED: core_custom_logging - Custom trace log system
 [examples] ADDED: core_input_multitouch - Multitouch input example
+[examples] ADDED: core_window_letterbox - Window adapted to screen
+[examples] ADDED: core_loading_thread - Data loading in second thread
+[examples] REVIEWED: core_input_gamepad - Adapted to new gamepad system
 [examples] REVIEWED: core_vr_simulator - HMD device parameters and distortion shader should be provided
 [examples] ADDED: core_window_scale_letterbox - Windows resizing and letterbox content
 [examples] ADDED: shapes_rectangle_scaling_mouse - Scale a rectangle with mouse
-TODO: [examples] ADDED: shapes_draw_circle_sector - Circle sector drawing
-TODO: [examples] ADDED: shapes_draw_ring - Ring drawing
-TODO: [examples] ADDED: shapes_draw_rectangle_rounded - Rounded rectangle drawing
+[examples] ADDED: shapes_draw_circle_sector - Circle sector drawing
+[examples] ADDED: shapes_draw_ring - Ring drawing
+[examples] ADDED: shapes_draw_rectangle_rounded - Rounded rectangle drawing
+[examples] ADDED: shapes_bouncing_ball - Ball bouncing in the screen
+[examples] ADDED: shapes_collision_area - Collision detection and drawing
+[examples] ADDED: shapes_following_eyes - Some maths on eyes and mouse
+[examples] ADDED: shapes_easings_ball_anim - Ball animation
+[examples] ADDED: shapes_easings_box_anim - Box animation
+[examples] ADDED: shapes_easings_rectangle_array - Rectangles animation
+[examples] REVIEWED: shapes_colors_palette - Reviewed color selection and text displaying
 [examples] ADDED: textures_background_scrolling - Scrolling and parallaz background effect
 [examples] ADDED: textures_image_npatch - Drawing N-Patch based boxes
-TODO: [examples] ADDED: textures_sprite_button
-TODO: [examples] ADDED: textures_sprite_explosion
+[examples] ADDED: textures_sprite_button - Sprite button with sound
+[examples] ADDED: textures_sprite_explosion - Sprite explosion with sound
+[examples] ADDED: textures_bunnymark - Benchmarking test
 [examples] ADDED: text_draw_inside_rectangle - Drawing text inside a delimited rectangle box
+[examples] ADDED: text_unicode - Multiple languages text drawing
+[examples] ADDED: text_rectangle_bound - Fit text inside a rectangle
+[examples] REVIEWED: text_bmfont_ttf - Simplified example
 [examples] ADDED: models_animation - Animated models loading and animation playing
 [examples] ADDED: models_obj_viewer - Draw and drop models viewer
 [examples] ADDED: models_rlgl_solar_system - Solar system simulation using rlgl functionality
+[examples] ADDED: models_first_person_maze - 3D maze fps
 [examples] ADDED: shaders_palette_switch - Switching color palette on shader
 [examples] ADDED: shaders_raymarching - Raymarching shader
 [examples] ADDED: shaders_texture_drawing - Texture drawing on GPU
+[examples] ADDED: shaders_texture_waves - Texture waves on shader
+[examples] ADDED: shaders_julia_set - Julia set fractals
+[examples] ADDED: shaders_eratosthenes - Prime number visualization shader
 [examples] REVIEWED: audio_raw_stream - Mostly rewritten
 [games] ADDED: GGJ19 game - Cat vs Roomba
 [*] Updated external libraries to latest version
@@ -134,7 +158,7 @@ Release:     raylib 2.0 (July 2018)
 -----------------------------------------------
 KEY CHANGES:
   - Removed external dependencies (GLFW3 and OpenAL)
-  - Complete redesign of audio module to use mini_al audio library
+  - Complete redesign of audio module to use miniaudio library
   - Support AppVeyor and Travis CI (continuous integration) building
   - Reviewed raymath.h for better consistency and performance (inlining)
   - Refactor all #define SUPPORT_* into a single config.h

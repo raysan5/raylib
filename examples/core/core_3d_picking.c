@@ -11,17 +11,17 @@
 
 #include "raylib.h"
 
-int main()
+int main(void)
 {
     // Initialization
     //--------------------------------------------------------------------------------------
-    int screenWidth = 800;
-    int screenHeight = 450;
+    const int screenWidth = 800;
+    const int screenHeight = 450;
 
     InitWindow(screenWidth, screenHeight, "raylib [core] example - 3d picking");
 
     // Define the camera to look into our 3d world
-    Camera camera;
+    Camera camera = { 0 };
     camera.position = (Vector3){ 10.0f, 10.0f, 10.0f }; // Camera position
     camera.target = (Vector3){ 0.0f, 0.0f, 0.0f };      // Camera looking at point
     camera.up = (Vector3){ 0.0f, 1.0f, 0.0f };          // Camera up vector (rotation towards target)
@@ -31,7 +31,7 @@ int main()
     Vector3 cubePosition = { 0.0f, 1.0f, 0.0f };
     Vector3 cubeSize = { 2.0f, 2.0f, 2.0f };
 
-    Ray ray = {0.0f, 0.0f, 0.0f};        // Picking line ray
+    Ray ray = { 0 };                    // Picking line ray
 
     bool collision = false;
 
@@ -49,12 +49,16 @@ int main()
 
         if (IsMouseButtonPressed(MOUSE_LEFT_BUTTON))
         {
-            ray = GetMouseRay(GetMousePosition(), camera);
+            if (!collision)
+            {
+                ray = GetMouseRay(GetMousePosition(), camera);
 
-            // Check collision between ray and box
-            collision = CheckCollisionRayBox(ray,
-                        (BoundingBox){(Vector3){ cubePosition.x - cubeSize.x/2, cubePosition.y - cubeSize.y/2, cubePosition.z - cubeSize.z/2 },
-                                      (Vector3){ cubePosition.x + cubeSize.x/2, cubePosition.y + cubeSize.y/2, cubePosition.z + cubeSize.z/2 }});
+                // Check collision between ray and box
+                collision = CheckCollisionRayBox(ray,
+                            (BoundingBox){(Vector3){ cubePosition.x - cubeSize.x/2, cubePosition.y - cubeSize.y/2, cubePosition.z - cubeSize.z/2 },
+                                          (Vector3){ cubePosition.x + cubeSize.x/2, cubePosition.y + cubeSize.y/2, cubePosition.z + cubeSize.z/2 }});
+            }
+            else collision = false;
         }
         //----------------------------------------------------------------------------------
 

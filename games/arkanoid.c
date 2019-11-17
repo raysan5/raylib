@@ -25,7 +25,6 @@
 //----------------------------------------------------------------------------------
 // Some Defines
 //----------------------------------------------------------------------------------
-
 #define PLAYER_MAX_LIFE         5
 #define LINES_OF_BRICKS         5
 #define BRICKS_PER_LINE        20
@@ -56,16 +55,16 @@ typedef struct Brick {
 //------------------------------------------------------------------------------------
 // Global Variables Declaration
 //------------------------------------------------------------------------------------
-static int screenWidth = 800;
-static int screenHeight = 450;
+static const int screenWidth = 800;
+static const int screenHeight = 450;
 
-static bool gameOver;
-static bool pause;
+static bool gameOver = false;
+static bool pause = false;
 
-static Player player;
-static Ball ball;
-static Brick brick[LINES_OF_BRICKS][BRICKS_PER_LINE];
-static Vector2 brickSize;
+static Player player = { 0 };
+static Ball ball = { 0 };
+static Brick brick[LINES_OF_BRICKS][BRICKS_PER_LINE] = { 0 };
+static Vector2 brickSize = { 0 };
 
 //------------------------------------------------------------------------------------
 // Module Functions Declaration (local)
@@ -90,7 +89,6 @@ int main(void)
 #if defined(PLATFORM_WEB)
     emscripten_set_main_loop(UpdateDrawFrame, 0, 1);
 #else
-
     SetTargetFPS(60);
     //--------------------------------------------------------------------------------------
     
@@ -103,7 +101,6 @@ int main(void)
         //----------------------------------------------------------------------------------
     }
 #endif
-
     // De-Initialization
     //--------------------------------------------------------------------------------------
     UnloadGame();         // Unload loaded data (textures, sounds, models...)
@@ -272,8 +269,6 @@ void UpdateGame(void)
             gameOver = false;
         }
     }
-    
-
 }
 
 // Draw game (one frame)

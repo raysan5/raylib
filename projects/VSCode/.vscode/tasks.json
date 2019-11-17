@@ -9,12 +9,13 @@
             "command": "make",
             "args": [
                 "PLATFORM=PLATFORM_DESKTOP",
-                "DEBUGGING=TRUE"
+                "BUILD_MODE=DEBUG"
             ],
             "windows": {
-                "command": "C:/raylib/mingw32/bin/mingw32-make.exe",
+                "command": "C:/raylib/mingw/bin/mingw32-make.exe",
                 "args": [
-                    "RAYLIB_PATH=C:/raylib/raylib"
+                    "RAYLIB_PATH=C:/raylib/raylib",
+                    "PROJECT_NAME=${fileBasenameNoExtension}",
                 ],
             },
             "osx": {
@@ -25,7 +26,10 @@
             "group": {
                 "kind": "build",
                 "isDefault": true
-            }
+            },
+            "problemMatcher": [
+                "$gcc"
+            ]
         },
         {
             "label": "build release",
@@ -35,9 +39,10 @@
                 "PLATFORM=PLATFORM_DESKTOP",
             ],
             "windows": {
-                "command": "C:/raylib/mingw32/bin/mingw32-make.exe",
+                "command": "C:/raylib/mingw/bin/mingw32-make.exe",
                 "args": [
                     "RAYLIB_PATH=C:/raylib/raylib",
+                    "PROJECT_NAME=${fileBasenameNoExtension}",
                 ],
             },
             "osx": {
@@ -45,7 +50,10 @@
                     "RAYLIB_PATH=<path_to_raylib>/raylib",
                 ],
             },
-            "group": "build"
+            "group": "build",
+            "problemMatcher": [
+                "$gcc"
+            ]
         }
     ]
 }

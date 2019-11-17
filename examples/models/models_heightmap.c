@@ -11,21 +11,21 @@
 
 #include "raylib.h"
 
-int main()
+int main(void)
 {
     // Initialization
     //--------------------------------------------------------------------------------------
-    int screenWidth = 800;
-    int screenHeight = 450;
+    const int screenWidth = 800;
+    const int screenHeight = 450;
 
     InitWindow(screenWidth, screenHeight, "raylib [models] example - heightmap loading and drawing");
 
     // Define our custom camera to look into our 3d world
-    Camera camera = {{ 18.0f, 16.0f, 18.0f }, { 0.0f, 0.0f, 0.0f }, { 0.0f, 1.0f, 0.0f }, 45.0f, 0 };
+    Camera camera = { { 18.0f, 16.0f, 18.0f }, { 0.0f, 0.0f, 0.0f }, { 0.0f, 1.0f, 0.0f }, 45.0f, 0 };
 
     Image image = LoadImage("resources/heightmap.png");             // Load heightmap image (RAM)
     Texture2D texture = LoadTextureFromImage(image);                // Convert image to texture (VRAM)
-    
+
     Mesh mesh = GenMeshHeightmap(image, (Vector3){ 16, 8, 16 });    // Generate heightmap mesh (RAM and VRAM)
     Model model = LoadModelFromMesh(mesh);                          // Load model from generated mesh
 
@@ -33,7 +33,7 @@ int main()
     Vector3 mapPosition = { -8.0f, 0.0f, -8.0f };                   // Define model position
 
     UnloadImage(image);                     // Unload heightmap image from RAM, already uploaded to VRAM
-    
+
     SetCameraMode(camera, CAMERA_ORBITAL);  // Set an orbital camera mode
 
     SetTargetFPS(60);                       // Set our game to run at 60 frames-per-second
@@ -60,7 +60,7 @@ int main()
                 DrawGrid(20, 1.0f);
 
             EndMode3D();
-            
+
             DrawTexture(texture, screenWidth - texture.width - 20, 20, WHITE);
             DrawRectangleLines(screenWidth - texture.width - 20, 20, texture.width, texture.height, GREEN);
 

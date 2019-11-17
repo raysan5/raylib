@@ -131,6 +131,10 @@
 #define MAX_MATRIX_STACK_SIZE               32      // Max size of Matrix stack
 #define MAX_DRAWCALL_REGISTERED            256      // Max draws by state changes (mode, texture)
 
+// Shader and material limits
+#define MAX_SHADER_LOCATIONS                32      // Maximum number of predefined locations stored in shader struct
+#define MAX_MATERIAL_MAPS                   12      // Maximum number of texture maps stored in shader struct
+
 // Texture parameters (equivalent to OpenGL defines)
 #define RL_TEXTURE_WRAP_S               0x2802      // GL_TEXTURE_WRAP_S
 #define RL_TEXTURE_WRAP_T               0x2803      // GL_TEXTURE_WRAP_T
@@ -228,7 +232,7 @@ typedef unsigned char byte;
 
         // OpenGL identifiers
         unsigned int vaoId;     // OpenGL Vertex Array Object id
-        unsigned int vboId[7];  // OpenGL Vertex Buffer Objects id (7 types of vertex data)
+        unsigned int *vboId;    // OpenGL Vertex Buffer Objects id (7 types of vertex data)
     } Mesh;
 
     // Shader and material limits
@@ -237,8 +241,8 @@ typedef unsigned char byte;
 
     // Shader type (generic)
     typedef struct Shader {
-        unsigned int id;                // Shader program id
-        int locs[MAX_SHADER_LOCATIONS]; // Shader locations array
+        unsigned int id;        // Shader program id
+        int *locs;              // Shader locations array (MAX_SHADER_LOCATIONS)
     } Shader;
 
     // Material texture map
@@ -251,7 +255,7 @@ typedef unsigned char byte;
     // Material type (generic)
     typedef struct Material {
         Shader shader;          // Material shader
-        MaterialMap maps[MAX_MATERIAL_MAPS]; // Material maps
+        MaterialMap *maps;      // Material maps (MAX_MATERIAL_MAPS)
         float *params;          // Material generic parameters (if required)
     } Material;
 
@@ -453,6 +457,9 @@ RLAPI void rlEnableDepthTest(void);                           // Enable depth te
 RLAPI void rlDisableDepthTest(void);                          // Disable depth test
 RLAPI void rlEnableBackfaceCulling(void);                     // Enable backface culling
 RLAPI void rlDisableBackfaceCulling(void);                    // Disable backface culling
+RLAPI void rlEnableScissorTest(void);                         // Enable scissor test
+RLAPI void rlDisableScissorTest(void);                        // Disable scissor test
+RLAPI void rlScissor(int x, int y, int width, int height);    // Scissor test
 RLAPI void rlEnableWireMode(void);                            // Enable wire mode
 RLAPI void rlDisableWireMode(void);                           // Disable wire mode
 RLAPI void rlDeleteTextures(unsigned int id);                 // Delete OpenGL texture from GPU
@@ -497,9 +504,10 @@ RLAPI bool rlRenderTextureComplete(RenderTexture target);                 // Ver
 
 // Vertex data management
 RLAPI void rlLoadMesh(Mesh *mesh, bool dynamic);                          // Upload vertex data into GPU and provided VAO/VBO ids
-RLAPI void rlUpdateMesh(Mesh mesh, int buffer, int numVertex);            // Update vertex data on GPU (upload new data to one buffer)
+RLAPI void rlUpdateMesh(Mesh mesh, int buffer, int num);                  // Update vertex or index data on GPU (upload new data to one buffer)
+RLAPI void rlUpdateMeshAt(Mesh mesh, int buffer, int num, int index);     // Update vertex or index data on GPU, at index
 RLAPI void rlDrawMesh(Mesh mesh, Material material, Matrix transform);    // Draw a 3d mesh with material and transform
-RLAPI void rlUnloadMesh(Mesh *mesh);                                      // Unload mesh data from CPU and GPU
+RLAPI void rlUnloadMesh(Mesh mesh);                                       // Unload mesh data from CPU and GPU
 
 // NOTE: There is a set of shader related functions that are available to end user,
 // to avoid creating function wrappers through core module, they have been directly declared in raylib.h
@@ -512,7 +520,7 @@ RLAPI void rlUnloadMesh(Mesh *mesh);                                      // Unl
 // Shader loading/unloading functions
 RLAPI char *LoadText(const char *fileName);                               // Load chars array from text file
 RLAPI Shader LoadShader(const char *vsFileName, const char *fsFileName);  // Load shader from files and bind default locations
-RLAPI Shader LoadShaderCode(char *vsCode, char *fsCode);                  // Load shader from code strings and bind default locations
+RLAPI Shader LoadShaderCode(const char *vsCode, const char *fsCode);                  // Load shader from code strings and bind default locations
 RLAPI void UnloadShader(Shader shader);                                   // Unload shader from GPU memory (VRAM)
 
 RLAPI Shader GetShaderDefault(void);                                      // Get default shader
@@ -525,7 +533,7 @@ RLAPI void SetShaderValueV(Shader shader, int uniformLoc, const void *value, int
 RLAPI void SetShaderValueMatrix(Shader shader, int uniformLoc, Matrix mat);       // Set shader uniform value (matrix 4x4)
 RLAPI void SetMatrixProjection(Matrix proj);                              // Set a custom projection matrix (replaces internal projection matrix)
 RLAPI void SetMatrixModelview(Matrix view);                               // Set a custom modelview matrix (replaces internal modelview matrix)
-RLAPI Matrix GetMatrixModelview();                                        // Get internal modelview matrix
+RLAPI Matrix GetMatrixModelview(void);                                    // Get internal modelview matrix
 
 // Texture maps generation (PBR)
 // NOTE: Required shaders should be provided
@@ -735,7 +743,7 @@ typedef struct DrawCall {
     int mode;                   // Drawing mode: LINES, TRIANGLES, QUADS
     int vertexCount;            // Number of vertex of the draw
     int vertexAlignment;        // Number of vertex required for index alignment (LINES, TRIANGLES)
-    //unsigned int vaoId;         // Vertex Array id to be used on the draw
+    //unsigned int vaoId;         // Vertex array id to be used on the draw
     //unsigned int shaderId;      // Shader id to be used on the draw
     unsigned int textureId;     // Texture id to be used on the draw
                                 // TODO: Support additional texture units?
@@ -782,14 +790,14 @@ static DrawCall *draws = NULL;
 static int drawsCounter = 0;
 
 // Default texture (1px white) useful for plain color polys (required by shader)
-static unsigned int defaultTextureId;
+static unsigned int defaultTextureId = 0;
 
 // Default shaders
-static unsigned int defaultVShaderId;       // Default vertex shader id (used by default shader program)
-static unsigned int defaultFShaderId;       // Default fragment shader Id (used by default shader program)
+static unsigned int defaultVShaderId = 0;   // Default vertex shader id (used by default shader program)
+static unsigned int defaultFShaderId = 0;   // Default fragment shader Id (used by default shader program)
 
-static Shader defaultShader;                // Basic shader, support vertex color and diffuse texture
-static Shader currentShader;                // Shader to be used on rendering (by default, defaultShader)
+static Shader defaultShader = { 0 };        // Basic shader, support vertex color and diffuse texture
+static Shader currentShader = { 0 };        // Shader to be used on rendering (by default, defaultShader)
 
 // Extension supported flag: VAO
 static bool vaoSupported = false;           // VAO support (OpenGL ES2 could not support VAO extension)
@@ -827,7 +835,7 @@ static PFNGLDELETEVERTEXARRAYSOESPROC glDeleteVertexArrays;
 #if defined(SUPPORT_VR_SIMULATOR)
 // VR global variables
 static VrStereoConfig vrConfig = { 0 };     // VR stereo configuration for simulator
-static RenderTexture2D stereoFbo;           // VR stereo rendering framebuffer
+static RenderTexture2D stereoFbo = { 0 };   // VR stereo rendering framebuffer
 static bool vrSimulatorReady = false;       // VR simulator ready flag
 static bool vrStereoRender = false;         // VR stereo rendering enabled/disabled flag
                                             // NOTE: This flag is useful to render data over stereo image (i.e. FPS)
@@ -835,11 +843,11 @@ static bool vrStereoRender = false;         // VR stereo rendering enabled/disab
 
 #endif  // GRAPHICS_API_OPENGL_33 || GRAPHICS_API_OPENGL_ES2
 
-static int blendMode = 0;   // Track current blending mode
+static int blendMode = 0;                   // Track current blending mode
 
 // Default framebuffer size
-static int screenWidth;     // Default framebuffer width
-static int screenHeight;    // Default framebuffer height
+static int framebufferWidth = 0;            // Default framebuffer width
+static int framebufferHeight = 0;           // Default framebuffer height
 
 //----------------------------------------------------------------------------------
 // Module specific Functions Declaration
@@ -1019,7 +1027,7 @@ void rlOrtho(double left, double right, double bottom, double top, double znear,
 #endif
 
 // Set the viewport area (transformation from normalized device coordinates to window coordinates)
-// NOTE: Updates global variables: screenWidth, screenHeight
+// NOTE: Updates global variables: framebufferWidth, framebufferHeight
 void rlViewport(int x, int y, int width, int height)
 {
     glViewport(x, y, width, height);
@@ -1071,6 +1079,8 @@ void rlBegin(int mode)
             // for the next set of vertex to be drawn
             if (draws[drawsCounter - 1].mode == RL_LINES) draws[drawsCounter - 1].vertexAlignment = ((draws[drawsCounter - 1].vertexCount < 4)? draws[drawsCounter - 1].vertexCount : draws[drawsCounter - 1].vertexCount%4);
             else if (draws[drawsCounter - 1].mode == RL_TRIANGLES) draws[drawsCounter - 1].vertexAlignment = ((draws[drawsCounter - 1].vertexCount < 4)? 1 : (4 - (draws[drawsCounter - 1].vertexCount%4)));
+
+            else draws[drawsCounter - 1].vertexAlignment = 0;
 
             if (rlCheckBufferLimit(draws[drawsCounter - 1].vertexAlignment)) rlglDraw();
             else
@@ -1138,8 +1148,8 @@ void rlEnd(void)
     {
         // WARNING: If we are between rlPushMatrix() and rlPopMatrix() and we need to force a rlglDraw(),
         // we need to call rlPopMatrix() before to recover *currentMatrix (modelview) for the next forced draw call!
-        // Also noted that if we had multiple matrix pushed, it will require "stackCounter" pops before launching the draw
-        rlPopMatrix();
+        // If we have multiple matrix pushed, it will require "stackCounter" pops before launching the draw
+        for (int i = stackCounter; i >= 0; i--) rlPopMatrix();
         rlglDraw();
     }
 }
@@ -1243,6 +1253,8 @@ void rlEnableTexture(unsigned int id)
             if (draws[drawsCounter - 1].mode == RL_LINES) draws[drawsCounter - 1].vertexAlignment = ((draws[drawsCounter - 1].vertexCount < 4)? draws[drawsCounter - 1].vertexCount : draws[drawsCounter - 1].vertexCount%4);
             else if (draws[drawsCounter - 1].mode == RL_TRIANGLES) draws[drawsCounter - 1].vertexAlignment = ((draws[drawsCounter - 1].vertexCount < 4)? 1 : (4 - (draws[drawsCounter - 1].vertexCount%4)));
 
+            else draws[drawsCounter - 1].vertexAlignment = 0;
+
             if (rlCheckBufferLimit(draws[drawsCounter - 1].vertexAlignment)) rlglDraw();
             else
             {
@@ -1287,11 +1299,11 @@ void rlTextureParameters(unsigned int id, int param, int value)
         {
             if (value == RL_WRAP_MIRROR_CLAMP)
             {
-#if !defined(GRAPHICS_API_OPENGL_11)
-                if (!texMirrorClampSupported) TraceLog(LOG_WARNING, "Clamp mirror wrap mode not supported");
-#endif
+                if (texMirrorClampSupported) glTexParameteri(GL_TEXTURE_2D, param, value);
+                else TraceLog(LOG_WARNING, "Clamp mirror wrap mode not supported");
             }
             else glTexParameteri(GL_TEXTURE_2D, param, value);
+
         } break;
         case RL_TEXTURE_MAG_FILTER:
         case RL_TEXTURE_MIN_FILTER: glTexParameteri(GL_TEXTURE_2D, param, value); break;
@@ -1336,28 +1348,25 @@ void rlDisableRenderTexture(void)
 }
 
 // Enable depth test
-void rlEnableDepthTest(void)
-{
-    glEnable(GL_DEPTH_TEST);
-}
+void rlEnableDepthTest(void) { glEnable(GL_DEPTH_TEST); }
 
 // Disable depth test
-void rlDisableDepthTest(void)
-{
-    glDisable(GL_DEPTH_TEST);
-}
+void rlDisableDepthTest(void) { glDisable(GL_DEPTH_TEST); }
 
 // Enable backface culling
-void rlEnableBackfaceCulling(void)
-{
-    glEnable(GL_CULL_FACE);
-}
+void rlEnableBackfaceCulling(void) { glEnable(GL_CULL_FACE); }
 
 // Disable backface culling
-void rlDisableBackfaceCulling(void)
-{
-    glDisable(GL_CULL_FACE);
-}
+void rlDisableBackfaceCulling(void) { glDisable(GL_CULL_FACE); }
+
+// Enable scissor test
+RLAPI void rlEnableScissorTest(void) { glEnable(GL_SCISSOR_TEST); }
+
+// Disable scissor test
+RLAPI void rlDisableScissorTest(void) { glDisable(GL_SCISSOR_TEST); }
+
+// Scissor test
+RLAPI void rlScissor(int x, int y, int width, int height) { glScissor(x, y, width, height); }
 
 // Enable wire mode
 void rlEnableWireMode(void)
@@ -1517,33 +1526,37 @@ void rlglInit(int width, int height)
     // NOTE: We don't need to check again supported extensions but we do (GLAD already dealt with that)
     glGetIntegerv(GL_NUM_EXTENSIONS, &numExt);
 
+    // Allocate numExt strings pointers
     const char **extList = RL_MALLOC(sizeof(const char *)*numExt);
-    for (int i = 0; i < numExt; i++) extList[i] = (char *)glGetStringi(GL_EXTENSIONS, i);
+
+    // Get extensions strings
+    for (int i = 0; i < numExt; i++) extList[i] = (const char *)glGetStringi(GL_EXTENSIONS, i);
 
 #elif defined(GRAPHICS_API_OPENGL_ES2)
-    char *extensions = (char *)glGetString(GL_EXTENSIONS);  // One big const string
-
-    // NOTE: We have to duplicate string because glGetString() returns a const string
-    int len = strlen(extensions) + 1;
-    char *extensionsDup = (char *)RL_MALLOC(len);
-    strcpy(extensionsDup, extensions);
-
-    // NOTE: String could be splitted using strtok() function (string.h)
-    // NOTE: strtok() modifies the passed string, it can not be const
-
     // Allocate 512 strings pointers (2 KB)
     const char **extList = RL_MALLOC(sizeof(const char *)*512);
 
-    extList[numExt] = strtok(extensionsDup, " ");
-    while (extList[numExt] != NULL)
+    const char *extensions = (const char *)glGetString(GL_EXTENSIONS);  // One big const string
+
+    // NOTE: We have to duplicate string because glGetString() returns a const string
+    int len = strlen(extensions) + 1;
+    char *extensionsDup = (char *)RL_CALLOC(len, sizeof(char));
+    strcpy(extensionsDup, extensions);
+
+    extList[numExt] = extensionsDup;
+
+    for (int i = 0; i < len; i++)
     {
-        numExt++;
-        extList[numExt] = strtok(NULL, " ");
+        if (extensionsDup[i] == ' ')
+        {
+            extensionsDup[i] = '\0';
+
+            numExt++;
+            extList[numExt] = &extensionsDup[i + 1];
+        }
     }
 
-    RL_FREE(extensionsDup);    // Duplicated string must be deallocated
-
-    numExt -= 1;
+    // NOTE: Duplicated string (extensionsDup) must be deallocated
 #endif
 
     TraceLog(LOG_INFO, "Number of supported extensions: %i", numExt);
@@ -1559,8 +1572,6 @@ void rlglInit(int width, int height)
         // NOTE: Only check on OpenGL ES, OpenGL 3.3 has VAO support as core feature
         if (strcmp(extList[i], (const char *)"GL_OES_vertex_array_object") == 0)
         {
-            vaoSupported = true;
-
             // The extension is supported by our hardware and driver, try to get related functions pointers
             // NOTE: emscripten does not support VAOs natively, it uses emulation and it reduces overall performance...
             glGenVertexArrays = (PFNGLGENVERTEXARRAYSOESPROC)eglGetProcAddress("glGenVertexArraysOES");
@@ -1568,18 +1579,8 @@ void rlglInit(int width, int height)
             glDeleteVertexArrays = (PFNGLDELETEVERTEXARRAYSOESPROC)eglGetProcAddress("glDeleteVertexArraysOES");
             //glIsVertexArray = (PFNGLISVERTEXARRAYOESPROC)eglGetProcAddress("glIsVertexArrayOES");     // NOTE: Fails in WebGL, omitted
 
-            if (glGenVertexArrays == NULL) printf("glGenVertexArrays is NULL.\n");  // WEB: ISSUE FOUND! ...but why?
-            if (glBindVertexArray == NULL) printf("glBindVertexArray is NULL.\n");  // WEB: ISSUE FOUND! ...but why?
+            if ((glGenVertexArrays != NULL) && (glBindVertexArray != NULL) && (glDeleteVertexArrays != NULL)) vaoSupported = true;
         }
-
-        // TODO: HACK REVIEW!
-        // For some reason on raylib 2.5, VAO usage breaks the build
-        // error seems related to function pointers but I can not get detailed info...
-        // Avoiding VAO usage is the only solution for now... :(
-        // Ref: https://emscripten.org/docs/porting/guidelines/function_pointer_issues.html
-    #if defined(PLATFORM_WEB)
-        vaoSupported = false;
-    #endif
 
         // Check NPOT textures support
         // NOTE: Only check on OpenGL ES, OpenGL 3.3 has NPOT textures full support as core feature
@@ -1627,9 +1628,12 @@ void rlglInit(int width, int height)
         if (strcmp(extList[i], (const char *)"GL_EXT_debug_marker") == 0) debugMarkerSupported = true;
     }
 
+    // Free extensions pointers
     RL_FREE(extList);
 
 #if defined(GRAPHICS_API_OPENGL_ES2)
+    RL_FREE(extensionsDup);    // Duplicated string must be deallocated
+
     if (vaoSupported) TraceLog(LOG_INFO, "[EXTENSION] VAO extension detected, VAO functions initialized successfully");
     else TraceLog(LOG_WARNING, "[EXTENSION] VAO extension not found, VAO usage not supported");
 
@@ -1695,7 +1699,6 @@ void rlglInit(int width, int height)
 
     // Initialize OpenGL default states
     //----------------------------------------------------------
-
     // Init state: Depth test
     glDepthFunc(GL_LEQUAL);                                 // Type of depth testing to apply
     glDisable(GL_DEPTH_TEST);                               // Disable depth testing for 2D (only used for 3D)
@@ -1722,8 +1725,8 @@ void rlglInit(int width, int height)
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);     // Clear color and depth buffers (depth buffer required for 3D)
 
     // Store screen size into global variables
-    screenWidth = width;
-    screenHeight = height;
+    framebufferWidth = width;
+    framebufferHeight = height;
 
     TraceLog(LOG_INFO, "OpenGL default states initialized successfully");
 }
@@ -2469,7 +2472,7 @@ void rlLoadMesh(Mesh *mesh, bool dynamic)
     {
         glGenBuffers(1, &mesh->vboId[6]);
         glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, mesh->vboId[6]);
-        glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(unsigned short)*mesh->triangleCount*3, mesh->indices, GL_STATIC_DRAW);
+        glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(unsigned short)*mesh->triangleCount*3, mesh->indices, drawHint);
     }
 
     if (vaoSupported)
@@ -2507,8 +2510,16 @@ unsigned int rlLoadAttribBuffer(unsigned int vaoId, int shaderLoc, void *buffer,
     return id;
 }
 
-// Update vertex data on GPU (upload new data to one buffer)
-void rlUpdateMesh(Mesh mesh, int buffer, int numVertex)
+// Update vertex or index data on GPU (upload new data to one buffer)
+void rlUpdateMesh(Mesh mesh, int buffer, int num)
+{
+    rlUpdateMeshAt(mesh, buffer, num, 0);
+}
+
+// Update vertex or index data on GPU, at index
+// WARNING: error checking is in place that will cause the data to not be
+//          updated if offset + size exceeds what the buffer can hold
+void rlUpdateMeshAt(Mesh mesh, int buffer, int num, int index)
 {
 #if defined(GRAPHICS_API_OPENGL_33) || defined(GRAPHICS_API_OPENGL_ES2)
     // Activate mesh VAO
@@ -2519,42 +2530,60 @@ void rlUpdateMesh(Mesh mesh, int buffer, int numVertex)
         case 0:     // Update vertices (vertex position)
         {
             glBindBuffer(GL_ARRAY_BUFFER, mesh.vboId[0]);
-            if (numVertex >= mesh.vertexCount) glBufferData(GL_ARRAY_BUFFER, sizeof(float)*3*numVertex, mesh.vertices, GL_DYNAMIC_DRAW);
-            else glBufferSubData(GL_ARRAY_BUFFER, 0, sizeof(float)*3*numVertex, mesh.vertices);
+            if (index == 0 && num >= mesh.vertexCount) glBufferData(GL_ARRAY_BUFFER, sizeof(float)*3*num, mesh.vertices, GL_DYNAMIC_DRAW);
+            else if (index + num >= mesh.vertexCount) break;
+            else glBufferSubData(GL_ARRAY_BUFFER, sizeof(float)*3*index, sizeof(float)*3*num, mesh.vertices);
 
         } break;
         case 1:     // Update texcoords (vertex texture coordinates)
         {
             glBindBuffer(GL_ARRAY_BUFFER, mesh.vboId[1]);
-            if (numVertex >= mesh.vertexCount) glBufferData(GL_ARRAY_BUFFER, sizeof(float)*2*numVertex, mesh.texcoords, GL_DYNAMIC_DRAW);
-            else glBufferSubData(GL_ARRAY_BUFFER, 0, sizeof(float)*2*numVertex, mesh.texcoords);
+            if (index == 0 && num >= mesh.vertexCount) glBufferData(GL_ARRAY_BUFFER, sizeof(float)*2*num, mesh.texcoords, GL_DYNAMIC_DRAW);
+            else if (index + num >= mesh.vertexCount) break;
+            else glBufferSubData(GL_ARRAY_BUFFER, sizeof(float)*2*index, sizeof(float)*2*num, mesh.texcoords);
 
         } break;
         case 2:     // Update normals (vertex normals)
         {
             glBindBuffer(GL_ARRAY_BUFFER, mesh.vboId[2]);
-            if (numVertex >= mesh.vertexCount) glBufferData(GL_ARRAY_BUFFER, sizeof(float)*3*numVertex, mesh.normals, GL_DYNAMIC_DRAW);
-            else glBufferSubData(GL_ARRAY_BUFFER, 0, sizeof(float)*3*numVertex, mesh.normals);
+            if (index == 0 && num >= mesh.vertexCount) glBufferData(GL_ARRAY_BUFFER, sizeof(float)*3*num, mesh.normals, GL_DYNAMIC_DRAW);
+            else if (index + num >= mesh.vertexCount) break;
+            else glBufferSubData(GL_ARRAY_BUFFER, sizeof(float)*3*index, sizeof(float)*3*num, mesh.normals);
 
         } break;
         case 3:     // Update colors (vertex colors)
         {
             glBindBuffer(GL_ARRAY_BUFFER, mesh.vboId[3]);
-            if (numVertex >= mesh.vertexCount) glBufferData(GL_ARRAY_BUFFER, sizeof(float)*4*numVertex, mesh.colors, GL_DYNAMIC_DRAW);
-            else glBufferSubData(GL_ARRAY_BUFFER, 0, sizeof(unsigned char)*4*numVertex, mesh.colors);
+            if (index == 0 && num >= mesh.vertexCount) glBufferData(GL_ARRAY_BUFFER, sizeof(float)*4*num, mesh.colors, GL_DYNAMIC_DRAW);
+            else if (index + num >= mesh.vertexCount) break;
+            else glBufferSubData(GL_ARRAY_BUFFER, sizeof(unsigned char)*4*index, sizeof(unsigned char)*4*num, mesh.colors);
 
         } break;
         case 4:     // Update tangents (vertex tangents)
         {
             glBindBuffer(GL_ARRAY_BUFFER, mesh.vboId[4]);
-            if (numVertex >= mesh.vertexCount) glBufferData(GL_ARRAY_BUFFER, sizeof(float)*4*numVertex, mesh.tangents, GL_DYNAMIC_DRAW);
-            else glBufferSubData(GL_ARRAY_BUFFER, 0, sizeof(float)*4*numVertex, mesh.tangents);
+            if (index == 0 && num >= mesh.vertexCount) glBufferData(GL_ARRAY_BUFFER, sizeof(float)*4*num, mesh.tangents, GL_DYNAMIC_DRAW);
+            else if (index + num >= mesh.vertexCount) break;
+            else glBufferSubData(GL_ARRAY_BUFFER, sizeof(float)*4*index, sizeof(float)*4*num, mesh.tangents);
         } break;
         case 5:     // Update texcoords2 (vertex second texture coordinates)
         {
             glBindBuffer(GL_ARRAY_BUFFER, mesh.vboId[5]);
-            if (numVertex >= mesh.vertexCount) glBufferData(GL_ARRAY_BUFFER, sizeof(float)*2*numVertex, mesh.texcoords2, GL_DYNAMIC_DRAW);
-            else glBufferSubData(GL_ARRAY_BUFFER, 0, sizeof(float)*2*numVertex, mesh.texcoords2);
+            if (index == 0 && num >= mesh.vertexCount) glBufferData(GL_ARRAY_BUFFER, sizeof(float)*2*num, mesh.texcoords2, GL_DYNAMIC_DRAW);
+            else if (index + num >= mesh.vertexCount) break;
+            else glBufferSubData(GL_ARRAY_BUFFER, sizeof(float)*2*index, sizeof(float)*2*num, mesh.texcoords2);
+        } break;
+        case 6:     // Update indices (triangle index buffer)
+        {
+            // the * 3 is because each triangle has 3 indices
+            unsigned short *indices = mesh.indices;
+            glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, mesh.vboId[6]);
+            if (index == 0 && num >= mesh.triangleCount)
+                glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(*indices)*num*3, indices, GL_DYNAMIC_DRAW);
+            else if (index + num >= mesh.triangleCount)
+                break;
+            else
+                glBufferSubData(GL_ELEMENT_ARRAY_BUFFER, sizeof(*indices)*index*3, sizeof(*indices)*num*3, indices);
         } break;
         default: break;
     }
@@ -2635,8 +2664,16 @@ void rlDrawMesh(Mesh mesh, Material material, Matrix transform)
     Matrix matView = modelview;         // View matrix (camera)
     Matrix matProjection = projection;  // Projection matrix (perspective)
 
-    // Calculate model-view matrix combining matModel and matView
-    Matrix matModelView = MatrixMultiply(transform, matView);           // Transform to camera-space coordinates
+    // TODO: Matrix nightmare! Trying to combine stack matrices with view matrix and local model transform matrix..
+    // There is some problem in the order matrices are multiplied... it requires some time to figure out...
+    Matrix matStackTransform = MatrixIdentity();
+
+    // TODO: Consider possible transform matrices in the stack
+    // Is this the right order? or should we start with the first stored matrix instead of the last one?
+    //for (int i = stackCounter; i > 0; i--) matStackTransform = MatrixMultiply(stack[i], matStackTransform);
+
+    Matrix matModel = MatrixMultiply(transform, matStackTransform); // Apply local model transformation
+    Matrix matModelView = MatrixMultiply(matModel, matView);        // Transform to camera-space coordinates
     //-----------------------------------------------------
 
     // Bind active texture maps (if available)
@@ -2761,30 +2798,30 @@ void rlDrawMesh(Mesh mesh, Material material, Matrix transform)
 }
 
 // Unload mesh data from CPU and GPU
-void rlUnloadMesh(Mesh *mesh)
+void rlUnloadMesh(Mesh mesh)
 {
-    RL_FREE(mesh->vertices);
-    RL_FREE(mesh->texcoords);
-    RL_FREE(mesh->normals);
-    RL_FREE(mesh->colors);
-    RL_FREE(mesh->tangents);
-    RL_FREE(mesh->texcoords2);
-    RL_FREE(mesh->indices);
+    RL_FREE(mesh.vertices);
+    RL_FREE(mesh.texcoords);
+    RL_FREE(mesh.normals);
+    RL_FREE(mesh.colors);
+    RL_FREE(mesh.tangents);
+    RL_FREE(mesh.texcoords2);
+    RL_FREE(mesh.indices);
 
-    RL_FREE(mesh->animVertices);
-    RL_FREE(mesh->animNormals);
-    RL_FREE(mesh->boneWeights);
-    RL_FREE(mesh->boneIds);
+    RL_FREE(mesh.animVertices);
+    RL_FREE(mesh.animNormals);
+    RL_FREE(mesh.boneWeights);
+    RL_FREE(mesh.boneIds);
 
-    rlDeleteBuffers(mesh->vboId[0]);   // vertex
-    rlDeleteBuffers(mesh->vboId[1]);   // texcoords
-    rlDeleteBuffers(mesh->vboId[2]);   // normals
-    rlDeleteBuffers(mesh->vboId[3]);   // colors
-    rlDeleteBuffers(mesh->vboId[4]);   // tangents
-    rlDeleteBuffers(mesh->vboId[5]);   // texcoords2
-    rlDeleteBuffers(mesh->vboId[6]);   // indices
+    rlDeleteBuffers(mesh.vboId[0]);   // vertex
+    rlDeleteBuffers(mesh.vboId[1]);   // texcoords
+    rlDeleteBuffers(mesh.vboId[2]);   // normals
+    rlDeleteBuffers(mesh.vboId[3]);   // colors
+    rlDeleteBuffers(mesh.vboId[4]);   // tangents
+    rlDeleteBuffers(mesh.vboId[5]);   // texcoords2
+    rlDeleteBuffers(mesh.vboId[6]);   // indices
 
-    rlDeleteVertexArrays(mesh->vaoId);
+    rlDeleteVertexArrays(mesh.vaoId);
 }
 
 // Read screen pixel data (color buffer)
@@ -2958,6 +2995,8 @@ Shader LoadShader(const char *vsFileName, const char *fsFileName)
 {
     Shader shader = { 0 };
 
+    // NOTE: Shader.locs is allocated by LoadShaderCode()
+
     char *vShaderStr = NULL;
     char *fShaderStr = NULL;
 
@@ -2974,9 +3013,10 @@ Shader LoadShader(const char *vsFileName, const char *fsFileName)
 
 // Load shader from code strings
 // NOTE: If shader string is NULL, using default vertex/fragment shaders
-Shader LoadShaderCode(char *vsCode, char *fsCode)
+Shader LoadShaderCode(const char *vsCode, const char *fsCode)
 {
     Shader shader = { 0 };
+    shader.locs = (int *)RL_CALLOC(MAX_SHADER_LOCATIONS, sizeof(int));
 
     // NOTE: All locations must be reseted to -1 (no location)
     for (int i = 0; i < MAX_SHADER_LOCATIONS; i++) shader.locs[i] = -1;
@@ -3012,7 +3052,7 @@ Shader LoadShaderCode(char *vsCode, char *fsCode)
 
     glGetProgramiv(shader.id, GL_ACTIVE_UNIFORMS, &uniformCount);
 
-    for(int i = 0; i < uniformCount; i++)
+    for (int i = 0; i < uniformCount; i++)
     {
         int namelen = -1;
         int num = -1;
@@ -3042,6 +3082,8 @@ void UnloadShader(Shader shader)
         rlDeleteShader(shader.id);
         TraceLog(LOG_INFO, "[SHDR ID %i] Unloaded shader program data", shader.id);
     }
+
+    RL_FREE(shader.locs);
 }
 
 // Begin custom shader mode
@@ -3140,6 +3182,23 @@ void SetMatrixProjection(Matrix proj)
 #endif
 }
 
+// Return internal projection matrix
+Matrix GetMatrixProjection(void) {
+#if defined(GRAPHICS_API_OPENGL_11)
+    float mat[16];
+    glGetFloatv(GL_PROJECTION_MATRIX,mat);
+    Matrix m;
+    m.m0  = mat[0];     m.m1  = mat[1];     m.m2  = mat[2];     m.m3  = mat[3];
+    m.m4  = mat[4];     m.m5  = mat[5];     m.m6  = mat[6];     m.m7  = mat[7];
+    m.m8  = mat[8];     m.m9  = mat[9];     m.m10 = mat[10];    m.m11 = mat[11];
+    m.m12 = mat[12];    m.m13 = mat[13];    m.m14 = mat[14];    m.m15 = mat[15];
+    return m;
+#else
+    return projection;
+#endif
+#
+}
+
 // Set a custom modelview matrix (replaces internal modelview matrix)
 void SetMatrixModelview(Matrix view)
 {
@@ -3149,12 +3208,16 @@ void SetMatrixModelview(Matrix view)
 }
 
 // Return internal modelview matrix
-Matrix GetMatrixModelview()
+Matrix GetMatrixModelview(void)
 {
     Matrix matrix = MatrixIdentity();
 #if defined(GRAPHICS_API_OPENGL_11)
     float mat[16];
     glGetFloatv(GL_MODELVIEW_MATRIX, mat);
+    matrix.m0  = mat[0];     matrix.m1  = mat[1];     matrix.m2  = mat[2];     matrix.m3  = mat[3];
+    matrix.m4  = mat[4];     matrix.m5  = mat[5];     matrix.m6  = mat[6];     matrix.m7  = mat[7];
+    matrix.m8  = mat[8];     matrix.m9  = mat[9];     matrix.m10 = mat[10];    matrix.m11 = mat[11];
+    matrix.m12 = mat[12];    matrix.m13 = mat[13];    matrix.m14 = mat[14];    matrix.m15 = mat[15];
 #else
     matrix = modelview;
 #endif
@@ -3243,7 +3306,7 @@ Texture2D GenTextureCubemap(Shader shader, Texture2D skyHDR, int size)
     glBindFramebuffer(GL_FRAMEBUFFER, 0);
 
     // Reset viewport dimensions to default
-    glViewport(0, 0, screenWidth, screenHeight);
+    glViewport(0, 0, framebufferWidth, framebufferHeight);
     //glEnable(GL_CULL_FACE);
 
     // NOTE: Texture2D is a GL_TEXTURE_CUBE_MAP, not a GL_TEXTURE_2D!
@@ -3321,7 +3384,7 @@ Texture2D GenTextureIrradiance(Shader shader, Texture2D cubemap, int size)
     glBindFramebuffer(GL_FRAMEBUFFER, 0);
 
     // Reset viewport dimensions to default
-    glViewport(0, 0, screenWidth, screenHeight);
+    glViewport(0, 0, framebufferWidth, framebufferHeight);
 
     irradiance.width = size;
     irradiance.height = size;
@@ -3416,7 +3479,7 @@ Texture2D GenTexturePrefilter(Shader shader, Texture2D cubemap, int size)
     glBindFramebuffer(GL_FRAMEBUFFER, 0);
 
     // Reset viewport dimensions to default
-    glViewport(0, 0, screenWidth, screenHeight);
+    glViewport(0, 0, framebufferWidth, framebufferHeight);
 
     prefilter.width = size;
     prefilter.height = size;
@@ -3473,7 +3536,7 @@ Texture2D GenTextureBRDF(Shader shader, int size)
     glDeleteFramebuffers(1, &fbo);
 
     // Reset viewport dimensions to default
-    glViewport(0, 0, screenWidth, screenHeight);
+    glViewport(0, 0, framebufferWidth, framebufferHeight);
 
     brdf.width = size;
     brdf.height = size;
@@ -3509,24 +3572,6 @@ void EndBlendMode(void)
     BeginBlendMode(BLEND_ALPHA);
 }
 
-// Begin scissor mode (define screen area for following drawing)
-// NOTE: Scissor rec refers to bottom-left corner, we change it to upper-left
-void BeginScissorMode(int x, int y, int width, int height)
-{
-    rlglDraw();             // Force drawing elements
-
-    glEnable(GL_SCISSOR_TEST);
-    glScissor(x, screenHeight - (y + height), width, height);
-}
-
-// End scissor mode
-void EndScissorMode(void)
-{
-    rlglDraw();             // Force drawing elements
-
-    glDisable(GL_SCISSOR_TEST);
-}
-
 #if defined(SUPPORT_VR_SIMULATOR)
 // Init VR simulator for selected device parameters
 // NOTE: It modifies the global variable: stereoFbo
@@ -3535,7 +3580,7 @@ void InitVrSimulator(void)
 #if defined(GRAPHICS_API_OPENGL_33) || defined(GRAPHICS_API_OPENGL_ES2)
     // Initialize framebuffer and textures for stereo rendering
     // NOTE: Screen size should match HMD aspect ratio
-    stereoFbo = rlLoadRenderTexture(screenWidth, screenHeight, UNCOMPRESSED_R8G8B8A8, 24, false);
+    stereoFbo = rlLoadRenderTexture(framebufferWidth, framebufferHeight, UNCOMPRESSED_R8G8B8A8, 24, false);
 
     vrSimulatorReady = true;
 #else
@@ -3663,8 +3708,8 @@ void ToggleVrMode(void)
         vrStereoRender = false;
 
         // Reset viewport and default projection-modelview matrices
-        rlViewport(0, 0, screenWidth, screenHeight);
-        projection = MatrixOrtho(0.0, screenWidth, screenHeight, 0.0, 0.0, 1.0);
+        rlViewport(0, 0, framebufferWidth, framebufferHeight);
+        projection = MatrixOrtho(0.0, framebufferWidth, framebufferHeight, 0.0, 0.0, 1.0);
         modelview = MatrixIdentity();
     }
     else vrStereoRender = true;
@@ -3702,12 +3747,12 @@ void EndVrDrawing(void)
         rlClearScreenBuffers();         // Clear current framebuffer
 
         // Set viewport to default framebuffer size (screen size)
-        rlViewport(0, 0, screenWidth, screenHeight);
+        rlViewport(0, 0, framebufferWidth, framebufferHeight);
 
         // Let rlgl reconfigure internal matrices
         rlMatrixMode(RL_PROJECTION);                            // Enable internal projection matrix
         rlLoadIdentity();                                       // Reset internal projection matrix
-        rlOrtho(0.0, screenWidth, screenHeight, 0.0, 0.0, 1.0); // Recalculate internal projection matrix
+        rlOrtho(0.0, framebufferWidth, framebufferHeight, 0.0, 0.0, 1.0); // Recalculate internal projection matrix
         rlMatrixMode(RL_MODELVIEW);                             // Enable internal modelview matrix
         rlLoadIdentity();                                       // Reset internal modelview matrix
 
@@ -3750,8 +3795,8 @@ void EndVrDrawing(void)
         currentShader = defaultShader;
 
         // Reset viewport and default projection-modelview matrices
-        rlViewport(0, 0, screenWidth, screenHeight);
-        projection = MatrixOrtho(0.0, screenWidth, screenHeight, 0.0, 0.0, 1.0);
+        rlViewport(0, 0, framebufferWidth, framebufferHeight);
+        projection = MatrixOrtho(0.0, framebufferWidth, framebufferHeight, 0.0, 0.0, 1.0);
         modelview = MatrixIdentity();
 
         rlDisableDepthTest();
@@ -3865,12 +3910,13 @@ static unsigned int LoadShaderProgram(unsigned int vShaderId, unsigned int fShad
 static Shader LoadShaderDefault(void)
 {
     Shader shader = { 0 };
+    shader.locs = (int *)RL_CALLOC(MAX_SHADER_LOCATIONS, sizeof(int));
 
     // NOTE: All locations must be reseted to -1 (no location)
     for (int i = 0; i < MAX_SHADER_LOCATIONS; i++) shader.locs[i] = -1;
 
     // Vertex shader directly defined, no external file required
-    char defaultVShaderStr[] =
+    const char *defaultVShaderStr =
 #if defined(GRAPHICS_API_OPENGL_21)
     "#version 120                       \n"
 #elif defined(GRAPHICS_API_OPENGL_ES2)
@@ -3899,7 +3945,7 @@ static Shader LoadShaderDefault(void)
     "}                                  \n";
 
     // Fragment shader directly defined, no external file required
-    char defaultFShaderStr[] =
+    const char *defaultFShaderStr =
 #if defined(GRAPHICS_API_OPENGL_21)
     "#version 120                       \n"
 #elif defined(GRAPHICS_API_OPENGL_ES2)
@@ -4417,7 +4463,7 @@ static void SetStereoView(int eye, Matrix matProjection, Matrix matModelView)
     Matrix eyeModelView = matModelView;
 
     // Setup viewport and projection/modelview matrices using tracking data
-    rlViewport(eye*screenWidth/2, 0, screenWidth/2, screenHeight);
+    rlViewport(eye*framebufferWidth/2, 0, framebufferWidth/2, framebufferHeight);
 
     // Apply view offset to modelview matrix
     eyeModelView = MatrixMultiply(matModelView, vrConfig.eyesViewOffset[eye]);
@@ -4618,6 +4664,14 @@ int GetPixelDataSize(int width, int height, int format)
     }
 
     dataSize = width*height*bpp/8;  // Total data size in bytes
+
+    // Most compressed formats works on 4x4 blocks,
+    // if texture is smaller, minimum dataSize is 8 or 16
+    if ((width < 4) && (height < 4))
+    {
+        if ((format >= COMPRESSED_DXT1_RGB) && (format < COMPRESSED_DXT3_RGBA)) dataSize = 8;
+        else if ((format >= COMPRESSED_DXT3_RGBA) && (format < COMPRESSED_ASTC_8x8_RGBA)) dataSize = 16;
+    }
 
     return dataSize;
 }

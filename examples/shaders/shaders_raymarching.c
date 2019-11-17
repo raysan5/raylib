@@ -18,13 +18,20 @@
 
 #include "raylib.h"
 
-int main()
+#if defined(PLATFORM_DESKTOP)
+    #define GLSL_VERSION            330
+#else   // PLATFORM_RPI, PLATFORM_ANDROID, PLATFORM_WEB
+    #define GLSL_VERSION            100
+#endif
+
+int main(void)
 {
     // Initialization
     //--------------------------------------------------------------------------------------
     int screenWidth = 800;
     int screenHeight = 450;
-    
+
+    SetConfigFlags(FLAG_WINDOW_RESIZABLE);
     InitWindow(screenWidth, screenHeight, "raylib [shaders] example - raymarching shapes");
 
     Camera camera = { 0 };
@@ -37,17 +44,15 @@ int main()
 
     // Load raymarching shader
     // NOTE: Defining 0 (NULL) for vertex shader forces usage of internal default vertex shader
-    Shader shader = LoadShader(0, "resources/shaders/glsl330/raymarching.fs");
-    
+    Shader shader = LoadShader(0, FormatText("resources/shaders/glsl%i/raymarching.fs", GLSL_VERSION));
+
     // Get shader locations for required uniforms
     int viewEyeLoc = GetShaderLocation(shader, "viewEye");
     int viewCenterLoc = GetShaderLocation(shader, "viewCenter");
-    int viewUpLoc = GetShaderLocation(shader, "viewUp");
-    int deltaTimeLoc = GetShaderLocation(shader, "deltaTime");
     int runTimeLoc = GetShaderLocation(shader, "runTime");
     int resolutionLoc = GetShaderLocation(shader, "resolution");
 
-    float resolution[2] = { screenWidth, screenHeight };
+    float resolution[2] = { (float)screenWidth, (float)screenHeight };
     SetShaderValue(shader, resolutionLoc, resolution, UNIFORM_VEC2);
 
     float runTime = 0.0f;
@@ -58,22 +63,29 @@ int main()
     // Main game loop
     while (!WindowShouldClose())            // Detect window close button or ESC key
     {
+        // Check if screen is resized
+        //----------------------------------------------------------------------------------
+        if(IsWindowResized())
+        {
+            screenWidth = GetScreenWidth();
+            screenHeight = GetScreenHeight();
+            float resolution[2] = { (float)screenWidth, (float)screenHeight };
+            SetShaderValue(shader, resolutionLoc, resolution, UNIFORM_VEC2);
+        }
+
         // Update
         //----------------------------------------------------------------------------------
         UpdateCamera(&camera);              // Update camera
 
         float cameraPos[3] = { camera.position.x, camera.position.y, camera.position.z };
         float cameraTarget[3] = { camera.target.x, camera.target.y, camera.target.z };
-        float cameraUp[3] = { camera.up.x, camera.up.y, camera.up.z };
 
-        float deltaTime = GetFrameTime();  
+        float deltaTime = GetFrameTime();
         runTime += deltaTime;
 
         // Set shader required uniform values
         SetShaderValue(shader, viewEyeLoc, cameraPos, UNIFORM_VEC3);
         SetShaderValue(shader, viewCenterLoc, cameraTarget, UNIFORM_VEC3);
-        SetShaderValue(shader, viewUpLoc, cameraUp, UNIFORM_VEC3);
-        SetShaderValue(shader, deltaTimeLoc, &deltaTime, UNIFORM_FLOAT);
         SetShaderValue(shader, runTimeLoc, &runTime, UNIFORM_FLOAT);
         //----------------------------------------------------------------------------------
 
@@ -89,7 +101,7 @@ int main()
                 DrawRectangle(0, 0, screenWidth, screenHeight, WHITE);
             EndShaderMode();
 
-            DrawText("(c) Raymarching shader by Iñigo Quilez. MIT License.", screenWidth - 280, screenHeight - 20, 10, GRAY);
+            DrawText("(c) Raymarching shader by Iñigo Quilez. MIT License.", screenWidth - 280, screenHeight - 20, 10, BLACK);
 
         EndDrawing();
         //----------------------------------------------------------------------------------

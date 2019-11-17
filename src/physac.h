@@ -43,7 +43,7 @@
 *   NOTE 2: Physac requires static C library linkage to avoid dependency on MinGW DLL (-static -lpthread)
 *
 *   Use the following code to compile:
-*   gcc -o $(NAME_PART).exe $(FILE_NAME) -s -static -lraylib -lpthread -lopengl32 -lgdi32 -std=c99
+*   gcc -o $(NAME_PART).exe $(FILE_NAME) -s -static -lraylib -lpthread -lopengl32 -lgdi32 -lwinmm -std=c99
 *
 *   VERY THANKS TO:
 *       Ramon Santamaria (github: @raysan5)
@@ -322,8 +322,6 @@ static Vector2 TriangleBarycenter(Vector2 v1, Vector2 v2, Vector2 v3);          
 static void InitTimer(void);                                                                                // Initializes hi-resolution MONOTONIC timer
 static uint64_t GetTimeCount(void);                                                                         // Get hi-res MONOTONIC time measure in mseconds
 static double GetCurrentTime(void);                                                                         // Get current time measure in milliseconds
-
-static int GetRandomNumber(int min, int max);                                                               // Returns a random number between min and max (both included)
 
 // Math functions
 static Vector2 MathCross(float value, Vector2 vector);                                                      // Returns the cross product of a vector and a value
@@ -844,9 +842,13 @@ PHYSACDEF void DestroyPhysicsBody(PhysicsBody body)
             }
         }
 
+        if (index == -1)
+        {
         #if defined(PHYSAC_DEBUG)
-        if (index == -1) printf("[PHYSAC] cannot find body id %i in pointers array\n", id);
+            printf("[PHYSAC] Not possible to find body id %i in pointers array\n", id);
         #endif
+            return;     // Prevent access to index -1
+        }
 
         // Free body allocated memory
         PHYSAC_FREE(body);
@@ -1251,9 +1253,13 @@ static void DestroyPhysicsManifold(PhysicsManifold manifold)
             }
         }
 
+        if (index == -1)
+        {
         #if defined(PHYSAC_DEBUG)
-            if (index == -1) printf("[PHYSAC] cannot find manifold id %i in pointers array\n", id);
+            printf("[PHYSAC] Not possible to manifold id %i in pointers array\n", id);
         #endif
+            return;     // Prevent access to index -1
+        }      
 
         // Free manifold allocated memory
         PHYSAC_FREE(manifold);
@@ -1771,7 +1777,7 @@ static float FindAxisLeastPenetration(int *faceIndex, PhysicsShape shapeA, Physi
     int bestIndex = 0;
 
     PolygonData dataA = shapeA.vertexData;
-    PolygonData dataB = shapeB.vertexData;
+    //PolygonData dataB = shapeB.vertexData;
 
     for (int i = 0; i < dataA.vertexCount; i++)
     {
@@ -1898,7 +1904,7 @@ static Vector2 TriangleBarycenter(Vector2 v1, Vector2 v2, Vector2 v3)
 static void InitTimer(void)
 {
     srand(time(NULL));              // Initialize random seed
-    
+
 #if defined(_WIN32)
     QueryPerformanceFrequency((unsigned long long int *) &frequency);
 #endif
@@ -1913,7 +1919,7 @@ static void InitTimer(void)
     mach_timebase_info(&timebase);
     frequency = (timebase.denom*1e9)/timebase.numer;
 #endif
-    
+
     baseTime = GetTimeCount();      // Get MONOTONIC clock time offset
     startTime = GetCurrentTime();   // Get current time
 }
@@ -1921,8 +1927,8 @@ static void InitTimer(void)
 // Get hi-res MONOTONIC time measure in seconds
 static uint64_t GetTimeCount(void)
 {
-    uint64_t value;
-    
+    uint64_t value = 0;
+
 #if defined(_WIN32)
     QueryPerformanceCounter((unsigned long long int *) &value);
 #endif
@@ -1944,19 +1950,6 @@ static uint64_t GetTimeCount(void)
 static double GetCurrentTime(void)
 {
     return (double)(GetTimeCount() - baseTime)/frequency*1000;
-}
-
-// Returns a random number between min and max (both included)
-static int GetRandomNumber(int min, int max)
-{
-    if (min > max)
-    {
-        int tmp = max;
-        max = min;
-        min = tmp;
-    }
-
-    return (rand()%(abs(max - min) + 1) + min);
 }
 
 // Returns the cross product of a vector and a value

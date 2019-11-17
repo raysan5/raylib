@@ -2,13 +2,13 @@
 REM Change your executable name here
 set GAME_NAME=game.exe
 
-REM Set your sources here (relative to the builds\windows directory)
+REM Set your sources here (relative paths!)
 REM Example with two source folders:
-REM set SOURCES=..\..\src\*.c ..\..\src\submodule\*.c
-set SOURCES=..\..\core_basic_window.c
+REM set SOURCES=src\*.c src\submodule\*.c
+set SOURCES=core_basic_window.c
 
-REM Set your raylib/src location here, relative to the ./temp/x directory
-set RAYLIB_SRC=..\..\..\..\src
+REM Set your raylib\src location here (relative path!)
+set RAYLIB_SRC=..\..\src
 
 REM About this build script: it does many things, but in essence, it's
 REM very simple. It has 3 compiler invocations: building raylib (which
@@ -111,13 +111,18 @@ IF DEFINED VERBOSE (
 
 
 :BUILD
+REM Directories
+set "ROOT_DIR=%CD%"
+set "SOURCES=!ROOT_DIR!\!SOURCES!"
+set "RAYLIB_SRC=!ROOT_DIR!\!RAYLIB_SRC!"
+
 REM Flags
 set OUTPUT_FLAG=/Fe: "!GAME_NAME!"
 set COMPILATION_FLAGS=/O1 /GL
 set WARNING_FLAGS=
 set SUBSYSTEM_FLAGS=/SUBSYSTEM:WINDOWS /ENTRY:mainCRTStartup
 set LINK_FLAGS=/link /LTCG kernel32.lib user32.lib shell32.lib winmm.lib gdi32.lib opengl32.lib
-set OUTPUT_DIR=builds\windows
+set OUTPUT_DIR=builds\windows-msvc
 REM Debug changes to flags
 IF DEFINED BUILD_DEBUG (
   set OUTPUT_FLAG=/Fe: "!GAME_NAME!"
@@ -125,7 +130,7 @@ IF DEFINED BUILD_DEBUG (
   set WARNING_FLAGS=/Wall
   set SUBSYSTEM_FLAGS=
   set LINK_FLAGS=/link kernel32.lib user32.lib shell32.lib winmm.lib gdi32.lib opengl32.lib
-  set OUTPUT_DIR=builds-debug\windows
+  set OUTPUT_DIR=builds-debug\windows-msvc
 )
 IF NOT DEFINED VERBOSE (
   set VERBOSITY_FLAG=/nologo
@@ -139,7 +144,6 @@ IF DEFINED BUILD_DEBUG (
 )
 
 REM Create the temp directory for raylib
-set "ROOT_DIR=%CD%"
 set "TEMP_DIR=temp\release"
 IF DEFINED BUILD_DEBUG (
   set "TEMP_DIR=temp\debug"
@@ -163,9 +167,9 @@ IF NOT EXIST !TEMP_DIR!\ (
   set RAYLIB_INCLUDE_FLAGS=/I"!RAYLIB_SRC!" /I"!RAYLIB_SRC!\external\glfw\include"
 
   IF DEFINED REALLY_QUIET (
-    cl.exe /w /c !RAYLIB_DEFINES! !RAYLIB_INCLUDE_FLAGS! !COMPILATION_FLAGS! !RAYLIB_C_FILES! > NUL 2>&1
+    cl.exe /w /c !RAYLIB_DEFINES! !RAYLIB_INCLUDE_FLAGS! !COMPILATION_FLAGS! !RAYLIB_C_FILES! > NUL 2>&1 || exit /B
   ) ELSE (
-    cl.exe /w /c !VERBOSITY_FLAG! !RAYLIB_DEFINES! !RAYLIB_INCLUDE_FLAGS! !COMPILATION_FLAGS! !RAYLIB_C_FILES!
+    cl.exe /w /c !VERBOSITY_FLAG! !RAYLIB_DEFINES! !RAYLIB_INCLUDE_FLAGS! !COMPILATION_FLAGS! !RAYLIB_C_FILES! || exit /B
   )
   IF NOT DEFINED QUIET echo COMPILE-INFO: Raylib compiled into object files in: !TEMP_DIR!\
 
@@ -180,13 +184,13 @@ cd !OUTPUT_DIR!
 REM Build the actual game
 IF NOT DEFINED QUIET echo COMPILE-INFO: Compiling game code.
 IF DEFINED REALLY_QUIET (
-  cl.exe !VERBOSITY_FLAG! /Fo"main.obj" !COMPILATION_FLAGS! !WARNING_FLAGS! /c /I"!RAYLIB_SRC!" !SOURCES! > NUL 2>&1
-  cl.exe !VERBOSITY_FLAG! !OUTPUT_FLAG! "!ROOT_DIR!\!TEMP_DIR!\*.obj" main.obj !LINK_FLAGS! !SUBSYSTEM_FLAGS! > NUL 2>&1
+  cl.exe !VERBOSITY_FLAG! !COMPILATION_FLAGS! !WARNING_FLAGS! /c /I"!RAYLIB_SRC!" !SOURCES! > NUL 2>&1 || exit /B
+  cl.exe !VERBOSITY_FLAG! !OUTPUT_FLAG! "!ROOT_DIR!\!TEMP_DIR!\*.obj" *.obj !LINK_FLAGS! !SUBSYSTEM_FLAGS! > NUL 2>&1 || exit /B
 ) ELSE (
-  cl.exe !VERBOSITY_FLAG! /Fo"main.obj" !COMPILATION_FLAGS! !WARNING_FLAGS! /c /I"!RAYLIB_SRC!" !SOURCES!
-  cl.exe !VERBOSITY_FLAG! !OUTPUT_FLAG! "!ROOT_DIR!\!TEMP_DIR!\*.obj" main.obj !LINK_FLAGS! !SUBSYSTEM_FLAGS!
+  cl.exe !VERBOSITY_FLAG! !COMPILATION_FLAGS! !WARNING_FLAGS! /c /I"!RAYLIB_SRC!" !SOURCES! || exit /B
+  cl.exe !VERBOSITY_FLAG! !OUTPUT_FLAG! "!ROOT_DIR!\!TEMP_DIR!\*.obj" *.obj !LINK_FLAGS! !SUBSYSTEM_FLAGS! || exit /B
 )
-del main.obj
+del *.obj
 IF NOT DEFINED QUIET echo COMPILE-INFO: Game compiled into an executable in: !OUTPUT_DIR!\
 
 REM Run upx

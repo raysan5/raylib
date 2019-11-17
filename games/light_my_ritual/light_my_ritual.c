@@ -1,16 +1,16 @@
 /*******************************************************************************************
 *
-*   GLOBAL GAME JAM 2016 - LIGHT MY RITUAL!
+*   LIGHT MY RITUAL [GLOBAL GAME JAM 2016]
 *
 *   Preparing a ritual session is not that easy. 
 *   You must light all the candles before the astral alignment finishes... 
 *   but dark creatures move in the shadows to put out all your lights! 
 *   Be fast! Be smart! Light my ritual!
 *
-*   This game has been created using raylib (www.raylib.com)
+*   This game has been created using raylib 1.6 (www.raylib.com)
 *   raylib is licensed under an unmodified zlib/libpng license (View raylib.h for details)
 *
-*   Copyright (c) 2015 Ramon Santamaria (@raysan5)
+*   Copyright (c) 2016 Ramon Santamaria (@raysan5)
 *
 ********************************************************************************************/
 
@@ -53,9 +53,9 @@ void UpdateDrawFrame(void);         // Update and Draw one frame
 //----------------------------------------------------------------------------------
 int main(void)
 {
-	// Initialization (Note windowTitle is unused on Android)
-	//---------------------------------------------------------
-    InitWindow(screenWidth, screenHeight, "GGJ16 - LIGHT MY RITUAL!");
+    // Initialization (Note windowTitle is unused on Android)
+    //---------------------------------------------------------
+    InitWindow(screenWidth, screenHeight, "LIGHT MY RITUAL! [GGJ16]");
 
     // Global data loading (assets that must be available in all screens, i.e. fonts)
     InitAudioDevice();
@@ -69,7 +69,7 @@ int main(void)
     UnloadImage(image);                         // Unload image from CPU memory (RAM)
     
     font = LoadFont("resources/font_arcadian.png");
-	//doors = LoadTexture("resources/textures/doors.png");
+    //doors = LoadTexture("resources/textures/doors.png");
     //sndDoor = LoadSound("resources/audio/door.ogg");
     
     music = LoadMusicStream("resources/audio/ambient.ogg");
@@ -270,7 +270,7 @@ void UpdateDrawFrame(void)
             case GAMEPLAY: DrawGameplayScreen(); break;
             default: break;
         }
-	
+    
         if (onTransition) DrawTransition();
     
         //DrawFPS(10, 10);

@@ -25,6 +25,7 @@ set(OFF ${INCLUDE_EVERYTHING} CACHE INTERNAL "Replace any OFF by default with \$
 option(SUPPORT_CAMERA_SYSTEM "Provide camera module (camera.h) with multiple predefined cameras: free, 1st/3rd person, orbital" ON)
 option(SUPPORT_GESTURES_SYSTEM "Gestures module is included (gestures.h) to support gestures detection: tap, hold, swipe, drag" ON)
 option(SUPPORT_MOUSE_GESTURES "Mouse gestures are directly mapped like touches and processed by gestures system" ON)
+option(SUPPORT_SSH_KEYBOARD_RPI "Reconfigure standard input to receive key inputs, works with SSH connection" OFF)
 option(SUPPORT_DEFAULT_FONT "Default font is loaded on window initialization to be available for the user to render simple text. If enabled, uses external module functions to load default raylib font (module: text)" ON)
 option(SUPPORT_SCREEN_CAPTURE "Allow automatic screen capture of current screen pressing F12, defined in KeyCallback()" ON)
 option(SUPPORT_GIF_RECORDING "Allow automatic gif recording of current screen pressing CTRL+F12, defined in KeyCallback()" ON)

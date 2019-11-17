@@ -1,4 +1,4 @@
-/* stb_image - v2.22 - public domain image loader - http://nothings.org/stb
+/* stb_image - v2.23 - public domain image loader - http://nothings.org/stb
                                   no warranty implied; use at your own risk
 
    Do this:
@@ -48,6 +48,7 @@ LICENSE
 
 RECENT REVISION HISTORY:
 
+      2.23  (2019-08-11) fix clang static analysis warning
       2.22  (2019-03-04) gif fixes, fix warnings
       2.21  (2019-02-25) fix typo in comment
       2.20  (2019-02-07) support utf8 filenames in Windows; fix warnings and platform ifdefs 
@@ -5079,7 +5080,7 @@ static int stbi__high_bit(unsigned int z)
    if (z >= 0x00100) { n +=  8; z >>=  8; }
    if (z >= 0x00010) { n +=  4; z >>=  4; }
    if (z >= 0x00004) { n +=  2; z >>=  2; }
-   if (z >= 0x00002) { n +=  1; z >>=  1; }
+   if (z >= 0x00002) { n +=  1;/* >>=  1;*/ }
    return n;
 }
 
@@ -5237,7 +5238,10 @@ static void *stbi__bmp_load(stbi__context *s, int *x, int *y, int *comp, int req
          psize = (info.offset - 14 - info.hsz) >> 2;
    }
 
-   s->img_n = ma ? 4 : 3;
+   if (info.bpp == 24 && ma == 0xff000000)
+      s->img_n = 3;
+   else
+      s->img_n = ma ? 4 : 3;
    if (req_comp && req_comp >= 3) // we can directly decode 3 or 4
       target = req_comp;
    else
@@ -5547,6 +5551,8 @@ static void *stbi__tga_load(stbi__context *s, int *x, int *y, int *comp, int req
    int RLE_repeating = 0;
    int read_next_pixel = 1;
    STBI_NOTUSED(ri);
+   STBI_NOTUSED(tga_x_origin); // @TODO
+   STBI_NOTUSED(tga_y_origin); // @TODO
 
    //   do a tiny bit of precessing
    if ( tga_image_type >= 8 )
@@ -5710,6 +5716,7 @@ static void *stbi__tga_load(stbi__context *s, int *x, int *y, int *comp, int req
    //   Microsoft's C compilers happy... [8^(
    tga_palette_start = tga_palette_len = tga_palette_bits =
          tga_x_origin = tga_y_origin = 0;
+   STBI_NOTUSED(tga_palette_start);
    //   OK, done
    return tga_data;
 }
@@ -6936,7 +6943,12 @@ static int stbi__bmp_info(stbi__context *s, int *x, int *y, int *comp)
       return 0;
    if (x) *x = s->img_x;
    if (y) *y = s->img_y;
-   if (comp) *comp = info.ma ? 4 : 3;
+   if (comp) {
+      if (info.bpp == 24 && info.ma == 0xff000000)
+         *comp = 3;
+      else
+         *comp = info.ma ? 4 : 3;
+   }
    return 1;
 }
 #endif

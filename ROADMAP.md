@@ -1,16 +1,25 @@
 roadmap
 -------
 
-Current version of raylib is complete and functional but there is still a lot of room for improvement.
-Here it is a wish-list with features and ideas to improve the library.
+Here it is a wish-list with features and ideas to improve the library. Note that features listed here are quite high-level and could be long term additions for the library. Current version of raylib is complete and functional but there is a lot of room for improvement.
 
-Note that [raylib source code](https://github.com/raysan5/raylib/tree/master/src) has some *TODO* marks around code with pending things to review and improve. Check [GitHub Issues](https://github.com/raysan5/raylib/issues) for further details!
+[raylib source code](https://github.com/raysan5/raylib/tree/master/src) has some *TODO* marks around code with pending things to review and improve. 
+Also, check [GitHub Issues](https://github.com/raysan5/raylib/issues) for further details!
 
 **raylib 2.x**
- - [ ] rnet: Network module
- - [ ] Support Vulkan API (GRAPHICS_API_VULKAN)
+ - [ ] rnet: raylib network module
+ - [ ] rres: raylib resource packer
+ - [ ] rlvk: raylib Vulkan API support (GRAPHICS_API_VULKAN)
  - [ ] Basic CPU/GPU stats sytem (memory, draws, time...)
- - [x] Support Animated models (2.5)
+ 
+**raylib 2.5**
+ - [x] Support Animated models
+ - [x] Support glTF models file format
+ - [x] Unicode support on text drawing
+ 
+**raylib 2.0**
+ - [x] Removed external dependencies (GLFW3 and OpenAL)
+ - [x] Support TCC compiler (32bit and 64bit)
  
 **raylib 1.8**
  - [x] Improved Materials system with PBR support
@@ -47,7 +56,3 @@ Note that [raylib source code](https://github.com/raysan5/raylib/tree/master/src
  - [x] Redesign gestures module to be multiplatform
  - [x] Module raymath as header-only and functions inline
  - [x] Add Easings module (easings.h)
-
-Any feature missing? Do you have a request? [Let me know!][raysan5]
-
-[raysan5]: mailto:ray@raylib.com "Ramon Santamaria - Ray San"

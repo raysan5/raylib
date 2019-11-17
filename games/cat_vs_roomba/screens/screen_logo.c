@@ -33,22 +33,22 @@
 //----------------------------------------------------------------------------------
 
 // Logo screen global variables
-static int framesCounter;
-static int finishScreen;
+static int framesCounter = 0;
+static int finishScreen = 0;
 
-static int logoPositionX;
-static int logoPositionY;
+static int logoPositionX = 0;
+static int logoPositionY = 0;
 
-static int lettersCount;
+static int lettersCount = 0;
 
-static int topSideRecWidth;
-static int leftSideRecHeight;
+static int topSideRecWidth = 0;
+static int leftSideRecHeight = 0;
 
-static int bottomSideRecWidth;
-static int rightSideRecHeight;
+static int bottomSideRecWidth = 0;
+static int rightSideRecHeight = 0;
 
-static char raylib[8];          // raylib text array, max 8 letters
-static int state;               // Tracking animation states (State Machine)
+static char raylib[8] = { 0 };  // raylib text array, max 8 letters
+static int state = 0;           // Tracking animation states (State Machine)
 static float alpha = 1.0f;      // Useful for fading
 
 //----------------------------------------------------------------------------------

@@ -5,18 +5,27 @@
 *   This example has been created using raylib 2.5 (www.raylib.com)
 *   raylib is licensed under an unmodified zlib/libpng license (View raylib.h for details)
 *
-*   Copyright (c) 2019 Ramon Santamaria (@raysan5) and @culacant
+*   Example contributed by Culacant (@culacant) and reviewed by Ramon Santamaria (@raysan5)
+*
+*   Copyright (c) 2019 Culacant (@culacant) and Ramon Santamaria (@raysan5)
+*
+********************************************************************************************
+*
+* To export a model from blender, make sure it is not posed, the vertices need to be in the 
+* same position as they would be in edit mode.
+* and that the scale of your models is set to 0. Scaling can be done from the export menu.
 *
 ********************************************************************************************/
 
+#include <stdlib.h>
 #include "raylib.h"
 
-int main()
+int main(void)
 {
     // Initialization
     //--------------------------------------------------------------------------------------
-    int screenWidth = 800;
-    int screenHeight = 450;
+    const int screenWidth = 800;
+    const int screenHeight = 450;
 
     InitWindow(screenWidth, screenHeight, "raylib [models] example - model animation");
 
@@ -32,7 +41,7 @@ int main()
     Model model = LoadModel("resources/guy/guy.iqm");               // Load the animated model mesh and basic data
     Texture2D texture = LoadTexture("resources/guy/guytex.png");    // Load model texture and set material
     SetMaterialTexture(&model.materials[0], MAP_DIFFUSE, texture);  // Set model material map texture
-    
+
     Vector3 position = { 0.0f, 0.0f, 0.0f };            // Set model position
 
     // Load animation data
@@ -89,9 +98,12 @@ int main()
 
     // De-Initialization
     //--------------------------------------------------------------------------------------
+    UnloadTexture(texture);     // Unload texture
+    
     // Unload model animations data
     for (int i = 0; i < animsCount; i++) UnloadModelAnimation(anims[i]);
-    
+    RL_FREE(anims);
+
     UnloadModel(model);         // Unload model
 
     CloseWindow();              // Close window and OpenGL context

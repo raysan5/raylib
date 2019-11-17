@@ -11,32 +11,33 @@
 
 #include "raylib.h"
 
-int main()
+int main(void)
 {
     // Initialization
     //--------------------------------------------------------------------------------------
-    int screenWidth = 800;
-    int screenHeight = 450;
+    const int screenWidth = 800;
+    const int screenHeight = 450;
 
     InitWindow(screenWidth, screenHeight, "raylib [textures] examples - texture source and destination rectangles");
 
     // NOTE: Textures MUST be loaded after Window initialization (OpenGL context is required)
+    
     Texture2D scarfy = LoadTexture("resources/scarfy.png");        // Texture loading
 
     int frameWidth = scarfy.width/6;
     int frameHeight = scarfy.height;
-    
-    // NOTE: Source rectangle (part of the texture to use for drawing)
+
+    // Source rectangle (part of the texture to use for drawing)
     Rectangle sourceRec = { 0.0f, 0.0f, frameWidth, frameHeight };
 
-    // NOTE: Destination rectangle (screen rectangle where drawing part of texture)
+    // Destination rectangle (screen rectangle where drawing part of texture)
     Rectangle destRec = { screenWidth/2, screenHeight/2, frameWidth*2, frameHeight*2 };
 
-    // NOTE: Origin of the texture (rotation/scale point), it's relative to destination rectangle size
+    // Origin of the texture (rotation/scale point), it's relative to destination rectangle size
     Vector2 origin = { frameWidth, frameHeight };
-    
+
     int rotation = 0;
-    
+
     SetTargetFPS(60);
     //--------------------------------------------------------------------------------------
 
@@ -63,7 +64,7 @@ int main()
 
             DrawLine((int)destRec.x, 0, (int)destRec.x, screenHeight, GRAY);
             DrawLine(0, (int)destRec.y, screenWidth, (int)destRec.y, GRAY);
-            
+
             DrawText("(c) Scarfy sprite by Eiden Marsal", screenWidth - 200, screenHeight - 20, 10, GRAY);
 
         EndDrawing();

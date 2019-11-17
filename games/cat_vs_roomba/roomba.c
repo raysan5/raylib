@@ -1,14 +1,14 @@
 /*******************************************************************************************
 *
-*   raylib - Advance Game template
+*   CAT VS ROOMBA [GLOBAL GAME JAM 2019]
 *
-*   <Game title>
-*   <Game description>
+*   Ah! Home, sweet home! Time for some automatic cleaning... 
+*   if the worst enemy of Roomba allows it... be careful with Cat!
 *
-*   This game has been created using raylib (www.raylib.com)
+*   This game has been created using raylib 2.0 (www.raylib.com)
 *   raylib is licensed under an unmodified zlib/libpng license (View raylib.h for details)
 *
-*   Copyright (c) 2014-2019 Ramon Santamaria (@raysan5)
+*   Copyright (c) 2019 Ramon Santamaria (@raysan5)
 *
 ********************************************************************************************/
 
@@ -57,7 +57,7 @@ int main(void)
 {
     // Initialization (Note windowTitle is unused on Android)
     //---------------------------------------------------------
-    InitWindow(screenWidth, screenHeight, "raylib template - advance game");
+    InitWindow(screenWidth, screenHeight, "CAT VS ROOMBA [GGJ19]");
 
     // Global data loading (assets that must be available in all screens, i.e. fonts)
     InitAudioDevice();

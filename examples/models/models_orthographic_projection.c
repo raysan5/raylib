@@ -1,13 +1,15 @@
 /*******************************************************************************************
 *
-*   raylib [models] example - Show the difference between perspective and orthographic projection 
+*   raylib [models] example - Show the difference between perspective and orthographic projection
 *
 *   This program is heavily based on the geometric objects example
 *
-*   This example has been created using raylib 1.9.7 (www.raylib.com)
+*   This example has been created using raylib 2.0 (www.raylib.com)
 *   raylib is licensed under an unmodified zlib/libpng license (View raylib.h for details)
 *
-*   Copyright (c) 2018 Max Danielsson & Ramon Santamaria (@raysan5)
+*   Example contributed by Max Danielsson (@autious) and reviewed by Ramon Santamaria (@raysan5)
+*
+*   Copyright (c) 2018 Max Danielsson (@autious) and Ramon Santamaria (@raysan5)
 *
 ********************************************************************************************/
 
@@ -16,19 +18,19 @@
 #define FOVY_PERSPECTIVE    45.0f
 #define WIDTH_ORTHOGRAPHIC  10.0f
 
-int main()
+int main(void)
 {
     // Initialization
     //--------------------------------------------------------------------------------------
-    int screenWidth = 800;
-    int screenHeight = 450;
+    const int screenWidth = 800;
+    const int screenHeight = 450;
 
     InitWindow(screenWidth, screenHeight, "raylib [models] example - geometric shapes");
 
     // Define the camera to look into our 3d world
-    Camera camera = {{ 0.0f, 10.0f, 10.0f }, { 0.0f, 0.0f, 0.0f }, { 0.0f, 1.0f, 0.0f }, FOVY_PERSPECTIVE, CAMERA_PERSPECTIVE };
+    Camera camera = { { 0.0f, 10.0f, 10.0f }, { 0.0f, 0.0f, 0.0f }, { 0.0f, 1.0f, 0.0f }, FOVY_PERSPECTIVE, CAMERA_PERSPECTIVE };
 
-    SetTargetFPS(60);   // Set our game to run at 60 frames-per-second
+    SetTargetFPS(60);               // Set our game to run at 60 frames-per-second
     //--------------------------------------------------------------------------------------
 
     // Main game loop
@@ -36,14 +38,14 @@ int main()
     {
         // Update
         //----------------------------------------------------------------------------------
-        if (IsKeyPressed(KEY_SPACE)) 
+        if (IsKeyPressed(KEY_SPACE))
         {
-            if (camera.type == CAMERA_PERSPECTIVE) 
+            if (camera.type == CAMERA_PERSPECTIVE)
             {
                 camera.fovy = WIDTH_ORTHOGRAPHIC;
                 camera.type = CAMERA_ORTHOGRAPHIC;
-            } 
-            else 
+            }
+            else
             {
                 camera.fovy = FOVY_PERSPECTIVE;
                 camera.type = CAMERA_PERSPECTIVE;

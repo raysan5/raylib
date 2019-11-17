@@ -1,20 +1,19 @@
 /*******************************************************************************************
 *
-*   JUST DO - Global Game Jam 2015 Videogame
-*   Experimental puzzle game that lets the user try to find a logic solution to 
-*   different shape-color-based situations.
+*   JUST DO [GLOBAL GAME JAM 2015]
 *
-*   Developed by: Ramon Santamaria (Ray San)
+*   Experimental puzzle game that lets the user try to find a logic 
+*   solution to different shape-color-based situations.
 *
 *   This game has been created using raylib 1.6 (www.raylib.com)
 *   raylib is licensed under an unmodified zlib/libpng license (View raylib.h for details)
 *
-*   raylib - Copyright (c) 2015 Ramon Santamaria (@raysan5)
+*   Copyright (c) 2015 Ramon Santamaria (@raysan5)
 *
 ********************************************************************************************/
 
 #include "raylib.h"
-#include "screens/screens.h"    // NOTE: Defines currentScreen
+#include "screens/screens.h"    // NOTE: Defines global variable: currentScreen
 
 #if defined(PLATFORM_WEB)
     #include <emscripten/emscripten.h>
@@ -51,9 +50,9 @@ void UpdateDrawFrame(void);     // Update and Draw one frame
 //----------------------------------------------------------------------------------
 int main(void)
 {
-	// Initialization (Note windowTitle is unused on Android)
-	//---------------------------------------------------------
-    InitWindow(screenWidth, screenHeight, "GGJ15 - JUST DO");
+    // Initialization (Note windowTitle is unused on Android)
+    //---------------------------------------------------------
+    InitWindow(screenWidth, screenHeight, "JUST DO [GGJ15]");
 
     // Load global data here (assets that must be available in all screens, i.e. fonts)
     InitAudioDevice();
@@ -74,9 +73,6 @@ int main(void)
     // Main game loop
     while (!WindowShouldClose())    // Detect window close button or ESC key
     {
-                
-        if (IsKeyPressed(KEY_SPACE)) PlaySound(levelWin);
-        
         UpdateDrawFrame();
     }
 #endif
@@ -144,6 +140,8 @@ void UpdateDrawFrame(void)
 {
     // Update
     //----------------------------------------------------------------------------------
+    if (currentScreen != LOGO) UpdateMusicStream(music);
+    
     if (!onTransition)
     {
         if (IsKeyPressed('0'))
@@ -196,8 +194,6 @@ void UpdateDrawFrame(void)
             TransitionToScreen(LEVEL09);
             InitLevel08Screen();
         }
-        
-        UpdateMusicStream(music);
         
         switch(currentScreen) 
         {

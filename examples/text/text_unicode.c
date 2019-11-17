@@ -5,6 +5,8 @@
 *   This example has been created using raylib 2.5 (www.raylib.com)
 *   raylib is licensed under an unmodified zlib/libpng license (View raylib.h for details)
 *
+*   Example contributed by Vlad Adrian (@demizdor) and reviewed by Ramon Santamaria (@raysan5)
+*
 *   Copyright (c) 2019 Vlad Adrian (@demizdor) and Ramon Santamaria (@raysan5)
 *
 ********************************************************************************************/
@@ -137,15 +139,12 @@ static void RandomizeEmoji(void);    // Fills the emoji array with random emojis
 // Arrays that holds the random emojis
 struct {
     int index;      // Index inside `emojiCodepoints`
-    int message;    // Message index 
+    int message;    // Message index
     Color color;    // Emoji color
 } emoji[EMOJI_PER_WIDTH*EMOJI_PER_HEIGHT] = { 0 };
 
 static int hovered = -1, selected = -1;
 
-//--------------------------------------------------------------------------------------
-// Main entry point
-//--------------------------------------------------------------------------------------
 int main(int argc, char **argv)
 {
     // Initialization
@@ -154,26 +153,26 @@ int main(int argc, char **argv)
     const int screenHeight = 450;
 
     SetConfigFlags(FLAG_MSAA_4X_HINT | FLAG_VSYNC_HINT);
-    InitWindow(screenWidth, screenHeight, "raylib - unicode test");
+    InitWindow(screenWidth, screenHeight, "raylib [text] example - unicode");
 
     // Load the font resources
-    // NOTE: fontAsian is for asian languages, 
-    // fontEmoji is the emojis and fontDefault is used for everything else 
+    // NOTE: fontAsian is for asian languages,
+    // fontEmoji is the emojis and fontDefault is used for everything else
     Font fontDefault = LoadFont("resources/dejavu.fnt");
     Font fontAsian = LoadFont("resources/notoCJK.fnt");
     Font fontEmoji = LoadFont("resources/emoji.fnt");
-    
+
     Vector2 hoveredPos = { 0.0f, 0.0f };
     Vector2 selectedPos = { 0.0f, 0.0f };
 
     // Set a random set of emojis when starting up
     RandomizeEmoji();
-    
-    SetTargetFPS(60);
+
+    SetTargetFPS(60);               // Set our game to run at 60 frames-per-second
     //--------------------------------------------------------------------------------------
-    
+
     // Main loop
-    while (!WindowShouldClose())
+    while (!WindowShouldClose())    // Detect window close button or ESC key
     {
         // Update
         //----------------------------------------------------------------------------------
@@ -187,117 +186,117 @@ int main(int argc, char **argv)
             selectedPos = hoveredPos;
             SetClipboardText(messages[emoji[selected].message].text);
         }
-        
+
         Vector2 mouse = GetMousePosition();
         Vector2 pos = { 28.8f, 10.0f };
         hovered = -1;
         //----------------------------------------------------------------------------------
-        
+
         // Draw
         //----------------------------------------------------------------------------------
         BeginDrawing();
-        
+
             ClearBackground(RAYWHITE);
-            
+
             // Draw random emojis in the background
             //------------------------------------------------------------------------------
             for (int i = 0; i < SIZEOF(emoji); ++i)
             {
                 const char *txt = &emojiCodepoints[emoji[i].index];
                 Rectangle emojiRect = { pos.x, pos.y, fontEmoji.baseSize, fontEmoji.baseSize };
-                
+
                 if (!CheckCollisionPointRec(mouse, emojiRect))
                 {
                     DrawTextEx(fontEmoji, txt, pos, fontEmoji.baseSize, 1.0, selected == i ? emoji[i].color : Fade(LIGHTGRAY, 0.4f));
                 }
-                else 
+                else
                 {
                     DrawTextEx(fontEmoji, txt, pos, fontEmoji.baseSize, 1.0, emoji[i].color );
                     hovered = i;
                     hoveredPos = pos;
                 }
-                
+
                 if ((i != 0) && (i%EMOJI_PER_WIDTH == 0)) { pos.y += fontEmoji.baseSize + 24.25f; pos.x = 28.8f; }
                 else pos.x += fontEmoji.baseSize + 28.8f;
             }
             //------------------------------------------------------------------------------
-            
+
             // Draw the message when a emoji is selected
             //------------------------------------------------------------------------------
-            if (selected != -1) 
+            if (selected != -1)
             {
                 const int message = emoji[selected].message;
                 const int horizontalPadding = 20, verticalPadding = 30;
                 Font *font = &fontDefault;
-                
+
                 // Set correct font for asian languages
-                if (TextIsEqual(messages[message].language, "Chinese") || 
-                    TextIsEqual(messages[message].language, "Korean") || 
+                if (TextIsEqual(messages[message].language, "Chinese") ||
+                    TextIsEqual(messages[message].language, "Korean") ||
                     TextIsEqual(messages[message].language, "Japanese")) font = &fontAsian;
-                    
+
                 // Calculate size for the message box (approximate the height and width)
                 Vector2 sz = MeasureTextEx(*font, messages[message].text, font->baseSize, 1.0f);
-                if (sz.x > 300) { sz.y *= sz.x/300; sz.x = 300; } 
+                if (sz.x > 300) { sz.y *= sz.x/300; sz.x = 300; }
                 else if (sz.x < 160) sz.x = 160;
-                
+
                 Rectangle msgRect = { selectedPos.x - 38.8f, selectedPos.y, 2 * horizontalPadding + sz.x, 2 * verticalPadding + sz.y };
                 msgRect.y -= msgRect.height;
-                
+
                 // Coordinates for the chat bubble triangle
                 Vector2 a = { selectedPos.x, msgRect.y + msgRect.height }, b = {a.x + 8, a.y + 10}, c= { a.x + 10, a.y };
-                
+
                 // Don't go outside the screen
                 if (msgRect.x < 10) msgRect.x += 28;
-                if (msgRect.y < 10) 
+                if (msgRect.y < 10)
                 {
                     msgRect.y = selectedPos.y + 84;
                     a.y = msgRect.y;
                     c.y = a.y;
                     b.y = a.y - 10;
-                    
+
                     // Swap values so we can actually render the triangle :(
                     Vector2 tmp = a;
                     a = b;
                     b = tmp;
                 }
                 if (msgRect.x + msgRect.width > screenWidth) msgRect.x -= (msgRect.x + msgRect.width) - screenWidth + 10;
-                
+
                 // Draw chat bubble
                 DrawRectangleRec(msgRect, emoji[selected].color);
                 DrawTriangle(a, b, c, emoji[selected].color);
-                
+
                 // Draw the main text message
                 Rectangle textRect = { msgRect.x + horizontalPadding/2, msgRect.y + verticalPadding/2, msgRect.width - horizontalPadding, msgRect.height };
                 DrawTextRec(*font, messages[message].text, textRect, font->baseSize, 1.0f, true, WHITE);
-                
+
                 // Draw the info text below the main message
                 int size = strlen(messages[message].text);
-                unsigned int len = TextCountCodepoints(messages[message].text);
+                int len = GetCodepointsCount(messages[message].text);
                 const char *info = TextFormat("%s %u characters %i bytes", messages[message].language, len, size);
                 sz = MeasureTextEx(GetFontDefault(), info, 10, 1.0f);
                 Vector2 pos = { textRect.x + textRect.width - sz.x,  msgRect.y + msgRect.height - sz.y - 2 };
                 DrawText(info, pos.x, pos.y, 10, RAYWHITE);
             }
             //------------------------------------------------------------------------------
-            
+
             // Draw the info text
             DrawText("These emojis have something to tell you, click each to find out!", (screenWidth - 650)/2, screenHeight - 40, 20, GRAY);
             DrawText("Each emoji is a unicode character from a font, not a texture... Press [SPACEBAR] to refresh", (screenWidth - 484)/2, screenHeight - 16, 10, GRAY);
-            
-		EndDrawing();
+
+        EndDrawing();
         //----------------------------------------------------------------------------------
-	}
-    
+    }
+
     // De-Initialization
-    //-------------------------------------------------------------------------------------- 
+    //--------------------------------------------------------------------------------------
     UnloadFont(fontDefault);    // Unload font resource
     UnloadFont(fontAsian);      // Unload font resource
     UnloadFont(fontEmoji);      // Unload font resource
-    
-	CloseWindow();              // Close window and OpenGL context
-    //-------------------------------------------------------------------------------------- 
 
-	return 0;
+    CloseWindow();              // Close window and OpenGL context
+    //--------------------------------------------------------------------------------------
+
+    return 0;
 }
 
 // Fills the emoji array with random emoji (only those emojis present in fontEmoji)
@@ -305,16 +304,16 @@ static void RandomizeEmoji(void)
 {
     hovered = selected = -1;
     int start = GetRandomValue(45, 360);
-    
+
     for (int i = 0; i < SIZEOF(emoji); ++i)
     {
         // 0-179 emoji codepoints (from emoji char array) each 4bytes + null char
         emoji[i].index = GetRandomValue(0, 179)*5;
-        
+
         // Generate a random color for this emoji
         Vector3 hsv = {(start*(i + 1))%360, 0.6f, 0.85f};
         emoji[i].color = Fade(ColorFromHSV(hsv), 0.8f);
-        
+
         // Set a random message for this emoji
         emoji[i].message = GetRandomValue(0, SIZEOF(messages) - 1);
     }

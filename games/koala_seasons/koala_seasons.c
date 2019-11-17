@@ -1,6 +1,6 @@
 /*******************************************************************************************
 *
-*   raylib - Koala Seasons game
+*   Koala Seasons [emegeme 2015]
 *
 *   Koala Seasons is a runner, you must survive as long as possible jumping from tree to tree
 *   Ready to start the adventure? How long can you survive?
@@ -13,7 +13,7 @@
 ********************************************************************************************/
 
 #include "raylib.h"
-#include "screens/screens.h"    // NOTE: Defines currentScreen
+#include "screens/screens.h"    // NOTE: Defines global variable: currentScreen
 
 #if defined(PLATFORM_WEB)
     #include <emscripten/emscripten.h>
@@ -22,6 +22,9 @@
 //----------------------------------------------------------------------------------
 // Global Variables Definition (local to this module)
 //----------------------------------------------------------------------------------
+static const int screenWidth = 1280;
+static const int screenHeight = 720;
+
 static float transAlpha = 0;
 static bool onTransition = false;
 static bool transFadeOut = false;
@@ -43,17 +46,11 @@ void UpdateDrawFrame(void);     // Update and Draw one frame
 //----------------------------------------------------------------------------------
 // Main entry point
 //----------------------------------------------------------------------------------
-int main(void) {
-	// Initialization
-	//---------------------------------------------------------
-    const int screenWidth = 1280;
-    const int screenHeight = 720;
-	const char windowTitle[30] = "KOALA SEASONS";
-    
-    //SetConfigFlags(FLAG_FULLSCREEN_MODE);
-    
-    // Note that windowTitle is ignored on Android
-    InitWindow(screenWidth, screenHeight, windowTitle);
+int main(void) 
+{
+    // Initialization (Note windowTitle is unused on Android)
+    //---------------------------------------------------------
+    InitWindow(screenWidth, screenHeight, "KOALA SEASONS");
 
     // Load global data here (assets that must be available in all screens, i.e. fonts)
     font = LoadFont("resources/graphics/mainfont.png");
@@ -62,9 +59,9 @@ int main(void) {
     atlas02 = LoadTexture("resources/graphics/atlas02.png");
     
 #if defined(PLATFORM_WEB) || defined(PLATFORM_RPI) || defined(PLATFORM_ANDROID)
-    colorBlend = LoadShader("resources/shaders/glsl100/base.vs", "resources/shaders/glsl100/blend_color.fs");
+    colorBlend = LoadShader(0, "resources/shaders/glsl100/blend_color.fs");
 #else
-    colorBlend = LoadShader("resources/shaders/glsl330/base.vs", "resources/shaders/glsl330/blend_color.fs");
+    colorBlend = LoadShader(0, "resources/shaders/glsl330/blend_color.fs");
 #endif
 
     InitAudioDevice();
@@ -79,20 +76,14 @@ int main(void) {
     fxDieDingo = LoadSound("resources/audio/dingo_die.ogg");
     fxDieOwl = LoadSound("resources/audio/owl_die.ogg");
     
-    
     music = LoadMusicStream("resources/audio/jngl.xm");
     PlayMusicStream(music);
-    SetMusicVolume(music, 1.0f);
+    SetMusicVolume(music, 2.0f);
 
     // Define and init first screen
     // NOTE: currentScreen is defined in screens.h as a global variable
     currentScreen = TITLE;
-
-    InitLogoScreen();
-    //InitOptionsScreen();
     InitTitleScreen();
-    InitGameplayScreen();
-    InitEndingScreen();
 
 #if defined(PLATFORM_WEB)
     emscripten_set_main_loop(UpdateDrawFrame, 0, 1);
@@ -260,9 +251,7 @@ void UpdateDrawFrame(void)
         }
 
         if (onTransition) DrawTransition();
-        
-        DrawFPS(20, GetScreenHeight() - 30);
-        
+
         DrawRectangle(GetScreenWidth() - 200, GetScreenHeight() - 50, 200, 40, Fade(WHITE, 0.6f));
         DrawText("ALPHA VERSION", GetScreenWidth() - 180, GetScreenHeight() - 40, 20, DARKGRAY);
 
