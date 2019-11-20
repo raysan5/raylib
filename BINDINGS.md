@@ -34,6 +34,7 @@ Some people ported raylib to other languages in form of bindings or wrappers to 
  - [conan-raylib](https://github.com/veyroter/conan-raylib) : raylib **conan** package
  - [raylib-squirrel](https://github.com/RobLoach/raylib-squirrel) : raylib **squirrel** binding (probe of concept)
  - [raylib-mruby](https://github.com/lihaochen910/raylib-mruby) : raylib **mruby** binding
+ - [raylib-wren](https://github.com/TSnake41/raylib-wren) : raylib **Wren** binding
  - *[raylib COBOL Usage example](https://github.com/Martinfx/Cobol/tree/master/OpenCobol/Games/raylib)*
  - *raylib flat-assembler Usage example*: not uploaded yet...
  
