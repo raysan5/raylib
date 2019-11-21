@@ -110,20 +110,19 @@ void DrawLine3D(Vector3 startPos, Vector3 endPos, Color color)
     rlEnd();
 }
 
-//Draw a point in 3D space--actually a small line.
-void DrawPoint3D(Vector3 pos, Color color) {
-
+// Draw a point in 3D space--actually a small line.
+void DrawPoint3D(Vector3 position, Color color)
+{
     if (rlCheckBufferLimit(8)) rlglDraw();
+    
     rlPushMatrix();
-    rlTranslatef(pos.x,pos.y,pos.z);
-    rlBegin(RL_LINES);
-        rlColor4ub(color.r, color.g, color.b, color.a);
-        rlVertex3f(0.0,0.0,0.0);
-        rlVertex3f(0.0,0.0,0.1);
-    rlEnd();
+        rlTranslatef(position.x, position.y, position.z);
+        rlBegin(RL_LINES);
+            rlColor4ub(color.r, color.g, color.b, color.a);
+            rlVertex3f(0.0,0.0,0.0);
+            rlVertex3f(0.0,0.0,0.1);
+        rlEnd();
     rlPopMatrix();
-
-return;
 }
 
 // Draw a circle in 3D world space
