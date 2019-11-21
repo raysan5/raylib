@@ -93,6 +93,12 @@ typedef struct ObjPool {
 } ObjPool;
 
 
+// Double-Ended Stack aka Deque
+typedef struct BiStack {
+    uint8_t *mem, *front, *back;
+    size_t size;
+} BiStack;
+
 #if defined(__cplusplus)
 extern "C" {            // Prevents name mangling of functions
 #endif
@@ -108,6 +114,7 @@ RMEMAPI void *MemPoolAlloc(MemPool *mempool, size_t bytes);
 RMEMAPI void *MemPoolRealloc(MemPool *mempool, void *ptr, size_t bytes);
 RMEMAPI void MemPoolFree(MemPool *mempool, void *ptr);
 RMEMAPI void MemPoolCleanUp(MemPool *mempool, void **ptrref);
+RMEMAPI void MemPoolReset(MemPool *mempool);
 RMEMAPI bool MemPoolDefrag(MemPool *mempool);
 
 RMEMAPI size_t GetMemPoolFreeMemory(const MemPool mempool);
@@ -124,6 +131,21 @@ RMEMAPI void *ObjPoolAlloc(ObjPool *objpool);
 RMEMAPI void ObjPoolFree(ObjPool *objpool, void *ptr);
 RMEMAPI void ObjPoolCleanUp(ObjPool *objpool, void **ptrref);
 
+//------------------------------------------------------------------------------------
+// Functions Declaration - Double-Ended Stack
+//------------------------------------------------------------------------------------
+RMEMAPI BiStack CreateBiStack(size_t len);
+RMEMAPI BiStack CreateBiStackFromBuffer(void *buf, size_t len);
+RMEMAPI void DestroyBiStack(BiStack *destack);
+
+RMEMAPI void *BiStackAllocFront(BiStack *destack, size_t len);
+RMEMAPI void *BiStackAllocBack(BiStack *destack, size_t len);
+
+RMEMAPI void BiStackResetFront(BiStack *destack);
+RMEMAPI void BiStackResetBack(BiStack *destack);
+RMEMAPI void BiStackResetAll(BiStack *destack);
+
+RMEMAPI intptr_t BiStackMargins(BiStack destack);
 
 #ifdef __cplusplus
 }
@@ -298,8 +320,7 @@ void *MemPoolAlloc(MemPool *const mempool, const size_t size)
         // --------------
         new_mem->next = new_mem->prev = NULL;
         uint8_t *const final_mem = (uint8_t *)new_mem + sizeof *new_mem;
-        memset(final_mem, 0, new_mem->size - sizeof *new_mem);
-        return final_mem;
+        return memset(final_mem, 0, new_mem->size - sizeof *new_mem);
     }
 }
 
@@ -410,6 +431,15 @@ size_t GetMemPoolFreeMemory(const MemPool mempool)
     return total_remaining;
 }
 
+void MemPoolReset(MemPool *const mempool)
+{
+    if (mempool == NULL) return;
+    mempool->freeList.head = mempool->freeList.tail = NULL;
+    mempool->freeList.len = 0;
+    for (size_t i = 0; i < MEMPOOL_BUCKET_SIZE; i++) mempool->buckets[i] = NULL;
+    mempool->stack.base = mempool->stack.mem + mempool->stack.size;
+}
+
 bool MemPoolDefrag(MemPool *const mempool)
 {
     if (mempool == NULL) return false;
@@ -418,10 +448,7 @@ bool MemPoolDefrag(MemPool *const mempool)
         // If the memory pool has been entirely released, fully defrag it.
         if (mempool->stack.size == GetMemPoolFreeMemory(*mempool))
         {
-            mempool->freeList.head = mempool->freeList.tail = NULL;
-            mempool->freeList.len = 0;
-            for (size_t i = 0; i < MEMPOOL_BUCKET_SIZE; i++) mempool->buckets[i] = NULL;
-            mempool->stack.base = mempool->stack.mem + mempool->stack.size;
+            MemPoolReset(mempool);
             return true;
         }
         else
@@ -657,6 +684,91 @@ void ObjPoolCleanUp(ObjPool *const restrict objpool, void **ptrref)
         ObjPoolFree(objpool, *ptrref);
         *ptrref = NULL;
     }
+}
+
+
+//----------------------------------------------------------------------------------
+// Module Functions Definition - Double-Ended Stack
+//----------------------------------------------------------------------------------
+BiStack CreateBiStack(const size_t len)
+{
+    BiStack destack = { 0 };
+    if (len == 0UL) return destack;
+    
+    destack.size = len;
+    destack.mem = malloc(len*sizeof *destack.mem);
+    if (destack.mem==NULL) destack.size = 0UL;
+    else
+    {
+        destack.front = destack.mem;
+        destack.back = destack.mem + len;
+    }
+    return destack;
+}
+
+BiStack CreateBiStackFromBuffer(void *const buf, const size_t len)
+{
+    BiStack destack = { 0 };
+    if (len == 0UL || buf == NULL) return destack;
+    destack.size = len;
+    destack.mem = destack.front = buf;
+    destack.back = destack.mem + len;
+    return destack;
+}
+
+void DestroyBiStack(BiStack *const destack)
+{
+    if ((destack == NULL) || (destack->mem == NULL)) return;
+    free(destack->mem);
+    *destack = (BiStack){0};
+}
+
+void *BiStackAllocFront(BiStack *const destack, const size_t len)
+{
+    if ((destack == NULL) || (destack->mem == NULL)) return NULL;
+    
+    const size_t ALIGNED_LEN = __AlignSize(len, sizeof(uintptr_t));
+    // front end stack is too high!
+    if (destack->front + ALIGNED_LEN >= destack->back) return NULL;
+    
+    uint8_t *ptr = destack->front;
+    destack->front += ALIGNED_LEN;
+    return ptr;
+}
+
+void *BiStackAllocBack(BiStack *const destack, const size_t len)
+{
+    if ((destack == NULL) || (destack->mem == NULL)) return NULL;
+    
+    const size_t ALIGNED_LEN = __AlignSize(len, sizeof(uintptr_t));
+    // back end stack is too low
+    if (destack->back - ALIGNED_LEN <= destack->front) return NULL;
+    
+    destack->back -= ALIGNED_LEN;
+    return destack->back;
+}
+
+void BiStackResetFront(BiStack *const destack)
+{
+    if ((destack == NULL) || (destack->mem == NULL)) return;
+    destack->front = destack->mem;
+}
+
+void BiStackResetBack(BiStack *const destack)
+{
+    if ((destack == NULL) || (destack->mem == NULL)) return;
+    destack->back = destack->mem + destack->size;
+}
+
+void BiStackResetAll(BiStack *const destack)
+{
+    BiStackResetBack(destack);
+    BiStackResetFront(destack);
+}
+
+intptr_t BiStackMargins(const BiStack destack)
+{
+    return destack.back - destack.front;
 }
 
 #endif  // RMEM_IMPLEMENTATION
