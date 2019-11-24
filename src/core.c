@@ -353,6 +353,9 @@ static char currentKeyState[512] = { 0 };       // Registers current frame key s
 static int lastKeyPressed = -1;                 // Register last key pressed
 static int exitKey = KEY_ESCAPE;                // Default exit key (ESC)
 
+static unsigned int inputCharacterQueue[16] = { 0 }; // Input characters stream queue as produced by the operating system text input system
+static int inputCharacterQueueCount = 0;             // Input characters stream queue count
+
 #if defined(PLATFORM_RPI)
 // NOTE: For keyboard we will use the standard input (but reconfigured...)
 static struct termios defaultKeyboardSettings;  // Used to store default keyboard settings
@@ -2226,6 +2229,32 @@ int GetKeyPressed(void)
     return lastKeyPressed;
 }
 
+bool IsCharAvailable() 
+{
+    return 0 < inputCharacterQueueCount;
+}
+unsigned int GetNextChar()
+{
+    if (inputCharacterQueueCount <= 0)
+    {
+        return 0;
+    }
+    // take a character from the head
+    unsigned int c = inputCharacterQueue[0];
+
+    // shift elements 1 step toward the head.
+    inputCharacterQueueCount--;
+    for (int i = 0; i < inputCharacterQueueCount; i++)
+    {
+        inputCharacterQueue[i] = inputCharacterQueue[i + 1];
+    }
+
+    // this is not required, but this can keep clean memory
+    inputCharacterQueue[inputCharacterQueueCount] = 0;
+
+    return c;
+}
+
 // Set a custom key to exit program
 // NOTE: default exitKey is ESCAPE
 void SetExitKey(int key)
@@ -3932,6 +3961,16 @@ static void CharCallback(GLFWwindow *window, unsigned int key)
     // http://www.glfw.org/docs/latest/input_guide.html#input_char
 
     lastKeyPressed = key;
+
+    // If the capacity over, is will waste the old one.
+    static const int CAPACITY = sizeof(inputCharacterQueue) / sizeof(inputCharacterQueue[0]);
+    if (CAPACITY <= inputCharacterQueueCount)
+    {
+        GetNextChar();
+    }
+
+    // add to queue
+    inputCharacterQueue[inputCharacterQueueCount++] = key;
 }
 
 // GLFW3 CursorEnter Callback, when cursor enters the window
