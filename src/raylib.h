@@ -975,11 +975,8 @@ RLAPI bool IsKeyPressed(int key);                             // Detect if a key
 RLAPI bool IsKeyDown(int key);                                // Detect if a key is being pressed
 RLAPI bool IsKeyReleased(int key);                            // Detect if a key has been released once
 RLAPI bool IsKeyUp(int key);                                  // Detect if a key is NOT being pressed
-RLAPI int GetKeyPressed(void);                                // Get latest key pressed
 RLAPI void SetExitKey(int key);                               // Set a custom key to exit program (default is ESC)
-
-RLAPI bool IsCharAvailable();                                 // Check if input character exists at least one in the internal input character stream. The characters are produced by the operating system text input system.
-RLAPI unsigned int GetNextChar();                             // Pull a input character from the the internal input character stream
+RLAPI int GetKeyPressed(void);                                // Get key pressed, call it multiple times for chars queued
 
 // Input-related functions: gamepads
 RLAPI bool IsGamepadAvailable(int gamepad);                   // Detect if a gamepad is available

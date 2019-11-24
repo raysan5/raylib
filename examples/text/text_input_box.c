@@ -30,7 +30,7 @@ int main(void)
 
     int framesCounter = 0;
 
-    SetTargetFPS(60);               // Set our game to run at 60 frames-per-second
+    SetTargetFPS(10);               // Set our game to run at 60 frames-per-second
     //--------------------------------------------------------------------------------------
 
     // Main game loop
@@ -43,13 +43,20 @@ int main(void)
 
         if (mouseOnText)
         {
+            // Get pressed key (character) on the queue
             int key = GetKeyPressed();
 
-            // NOTE: Only allow keys in range [32..125]
-            if ((key >= 32) && (key <= 125) && (letterCount < MAX_INPUT_CHARS))
+            // Check if more characters have been pressed on the same frame
+            while (key > 0)
             {
-                name[letterCount] = (char)key;
-                letterCount++;
+                // NOTE: Only allow keys in range [32..125]
+                if ((key >= 32) && (key <= 125) && (letterCount < MAX_INPUT_CHARS))
+                {
+                    name[letterCount] = (char)key;
+                    letterCount++;
+                }
+                
+                key = GetKeyPressed();  // Check next character in the queue
             }
 
             if (IsKeyPressed(KEY_BACKSPACE))

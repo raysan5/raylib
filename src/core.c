@@ -286,6 +286,8 @@
 #define MAX_GAMEPAD_BUTTONS       32        // Max bumber of buttons supported (per gamepad)
 #define MAX_GAMEPAD_AXIS          8         // Max number of axis supported (per gamepad)
 
+#define MAX_CHARS_QUEUE           16        // Max number of characters in the input queue
+
 #define STORAGE_FILENAME        "storage.data"
 
 //----------------------------------------------------------------------------------
@@ -350,11 +352,10 @@ static bool contextRebindRequired = false;      // Used to know context rebind r
 // Keyboard states
 static char previousKeyState[512] = { 0 };      // Registers previous frame key state
 static char currentKeyState[512] = { 0 };       // Registers current frame key state
-static int lastKeyPressed = -1;                 // Register last key pressed
 static int exitKey = KEY_ESCAPE;                // Default exit key (ESC)
 
-static unsigned int inputCharacterQueue[16] = { 0 }; // Input characters stream queue as produced by the operating system text input system
-static int inputCharacterQueueCount = 0;             // Input characters stream queue count
+static unsigned int keyPressedQueue[MAX_CHARS_QUEUE] = { 0 }; // Input characters queue
+static int keyPressedQueueCount = 0;             // Input characters queue count
 
 #if defined(PLATFORM_RPI)
 // NOTE: For keyboard we will use the standard input (but reconfigured...)
@@ -2226,33 +2227,22 @@ bool IsKeyUp(int key)
 // Get the last key pressed
 int GetKeyPressed(void)
 {
-    return lastKeyPressed;
-}
+    int value = 0;
 
-bool IsCharAvailable() 
-{
-    return 0 < inputCharacterQueueCount;
-}
-unsigned int GetNextChar()
-{
-    if (inputCharacterQueueCount <= 0)
+    if (keyPressedQueueCount > 0)
     {
-        return 0;
-    }
-    // take a character from the head
-    unsigned int c = inputCharacterQueue[0];
+        // Get character from the queue head
+        value = keyPressedQueue[0];
 
-    // shift elements 1 step toward the head.
-    inputCharacterQueueCount--;
-    for (int i = 0; i < inputCharacterQueueCount; i++)
-    {
-        inputCharacterQueue[i] = inputCharacterQueue[i + 1];
+        // Shift elements 1 step toward the head.
+        for (int i = 0; i < (keyPressedQueueCount - 1); i++) keyPressedQueue[i] = keyPressedQueue[i + 1];
+
+        // Reset last character in the queue
+        keyPressedQueue[keyPressedQueueCount] = 0;
+        keyPressedQueueCount--;
     }
 
-    // this is not required, but this can keep clean memory
-    inputCharacterQueue[inputCharacterQueueCount] = 0;
-
-    return c;
+    return value;
 }
 
 // Set a custom key to exit program
@@ -3454,8 +3444,8 @@ static void PollInputEvents(void)
     UpdateGestures();
 #endif
 
-    // Reset last key pressed registered
-    lastKeyPressed = -1;
+    // Reset key pressed registered
+    keyPressedQueueCount = 0;
 
 #if !defined(PLATFORM_RPI)
     // Reset last gamepad button/axis registered state
@@ -3464,14 +3454,15 @@ static void PollInputEvents(void)
 #endif
 
 #if defined(PLATFORM_RPI)
-
     // Register previous keys states
     for (int i = 0; i < 512; i++)previousKeyState[i] = currentKeyState[i];
 
     // Grab a keypress from the evdev fifo if avalable
     if (lastKeyPressedEvdev.Head != lastKeyPressedEvdev.Tail)
     {
-        lastKeyPressed = lastKeyPressedEvdev.Contents[lastKeyPressedEvdev.Tail];    // Read the key from the buffer
+        keyPressedQueue[keyPressedQueueCount] = lastKeyPressedEvdev.Contents[lastKeyPressedEvdev.Tail];    // Read the key from the buffer
+        keyPressedQueueCount++;
+        
         lastKeyPressedEvdev.Tail = (lastKeyPressedEvdev.Tail + 1) & 0x07;           // Increment the tail pointer forwards and binary wraparound after 7 (fifo is 8 elements long)
     }
 
@@ -3881,13 +3872,7 @@ static void KeyCallback(GLFWwindow *window, int key, int scancode, int action, i
         }
 #endif  // SUPPORT_SCREEN_CAPTURE
     }
-    else
-    {
-        currentKeyState[key] = action;
-
-        // NOTE: lastKeyPressed already registered on CharCallback()
-        //if (action == GLFW_PRESS) lastKeyPressed = key;
-    }
+    else currentKeyState[key] = action;
 }
 
 // GLFW3 Mouse Button Callback, runs on mouse button pressed
@@ -3960,17 +3945,13 @@ static void CharCallback(GLFWwindow *window, unsigned int key)
     // https://github.com/glfw/glfw/issues/668#issuecomment-166794907
     // http://www.glfw.org/docs/latest/input_guide.html#input_char
 
-    lastKeyPressed = key;
-
-    // If the capacity over, is will waste the old one.
-    static const int CAPACITY = sizeof(inputCharacterQueue) / sizeof(inputCharacterQueue[0]);
-    if (CAPACITY <= inputCharacterQueueCount)
+    // Check if there is space available in the queue
+    if (keyPressedQueueCount < MAX_CHARS_QUEUE)
     {
-        GetNextChar();
+        // Add character to the queue
+        keyPressedQueue[keyPressedQueueCount] = key;
+        keyPressedQueueCount++;
     }
-
-    // add to queue
-    inputCharacterQueue[inputCharacterQueueCount++] = key;
 }
 
 // GLFW3 CursorEnter Callback, when cursor enters the window
@@ -4175,7 +4156,9 @@ static int32_t AndroidInputCallback(struct android_app *app, AInputEvent *event)
         if (AKeyEvent_getAction(event) == AKEY_EVENT_ACTION_DOWN)
         {
             currentKeyState[keycode] = 1;  // Key down
-            lastKeyPressed = keycode;
+            
+            keyPressedQueue[keyPressedQueueCount] = keycode;
+            keyPressedQueueCount++;
         }
         else currentKeyState[keycode] = 0;  // Key up
 
@@ -4190,7 +4173,9 @@ static int32_t AndroidInputCallback(struct android_app *app, AInputEvent *event)
         if (AKeyEvent_getAction(event) == AKEY_EVENT_ACTION_DOWN)
         {
             currentKeyState[keycode] = 1;   // Key down
-            lastKeyPressed = keycode;
+            
+            keyPressedQueue[keyPressedQueueCount] = keycode;
+            keyPressedQueueCount++;
         }
         else currentKeyState[keycode] = 0;  // Key up
 
@@ -4552,8 +4537,20 @@ static void ProcessKeyboard(void)
                 }
             }
         }
-        else if (keysBuffer[i] == 0x0a) { lastKeyPressed = 257; currentKeyState[257] = 1; }    // raylib KEY_ENTER (don't mix with <linux/input.h> KEY_*)
-        else if (keysBuffer[i] == 0x7f) { lastKeyPressed = 259; currentKeyState[259] = 1; }    // raylib KEY_BACKSPACE
+        else if (keysBuffer[i] == 0x0a)     // raylib KEY_ENTER (don't mix with <linux/input.h> KEY_*)
+        {
+            currentKeyState[257] = 1; 
+            
+            keyPressedQueue[keyPressedQueueCount] = 257;     // Add keys pressed into queue
+            keyPressedQueueCount++;
+        }
+        else if (keysBuffer[i] == 0x7f)     // raylib KEY_BACKSPACE
+        { 
+            currentKeyState[259] = 1; 
+            
+            keyPressedQueue[keyPressedQueueCount] = 257;     // Add keys pressed into queue
+            keyPressedQueueCount++;
+        }
         else
         {
             TraceLog(LOG_DEBUG, "Pressed key (ASCII): 0x%02x", keysBuffer[i]);
@@ -4565,7 +4562,8 @@ static void ProcessKeyboard(void)
             }
             else currentKeyState[(int)keysBuffer[i]] = 1;
 
-            lastKeyPressed = keysBuffer[i];     // Register last key pressed
+            keyPressedQueue[keyPressedQueueCount] = keysBuffer[i];     // Add keys pressed into queue
+            keyPressedQueueCount++;
         }
     }
 
@@ -4978,7 +4976,11 @@ static void *EventThread(void *arg)
                         */
 
                         currentKeyState[keycode] = event.value;
-                        if (event.value == 1) lastKeyPressed = keycode;     // Register last key pressed
+                        if (event.value == 1) 
+                        {
+                            keyPressedQueue[keyPressedQueueCount] = keycode;     // Register last key pressed
+                            keyPressedQueueCount++;
+                        }
 
                         #if defined(SUPPORT_SCREEN_CAPTURE)
                             // Check screen capture key (raylib key: KEY_F12)
