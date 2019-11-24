@@ -631,8 +631,8 @@ typedef enum {
     GAMEPAD_BUTTON_LEFT_FACE_LEFT,
 
     // This normally corresponds with PlayStation and Xbox controllers
-    // XB: [Y,X,A,B]
-    // PS: [Triangle,Square,Cross,Circle]
+    // XBOX: [Y,X,A,B]
+    // PS3: [Triangle,Square,Cross,Circle]
     // No support for 6 button controllers though..
     GAMEPAD_BUTTON_RIGHT_FACE_UP,
     GAMEPAD_BUTTON_RIGHT_FACE_RIGHT,
