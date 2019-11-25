@@ -47,8 +47,8 @@ int main(void)
 {
     // Initialization
     //--------------------------------------------------------------------------------------
-    const int screenWidth = 1024;
-    const int screenHeight = 768;
+    const int screenWidth = 800;
+    const int screenHeight = 450;
     const char *text;
     bool gridEnabled = true;
     bool helpEnabled = false;
@@ -66,9 +66,6 @@ int main(void)
     camera.type = CAMERA_PERSPECTIVE;
 
     SetCameraMode(camera, CAMERA_FREE);
-
-    SetTargetFPS(60);                   // Set our game to run at 60 frames-per-second
-    //--------------------------------------------------------------------------------------
 
     // Create Bodies
     Body sun        = CreateBody(0.2,     0.0,     0, GOLD,     "sun");
@@ -94,6 +91,9 @@ int main(void)
     AddBodyChildren(&sun, &pluto);
 
     AddBodyChildren(&earth, &moon);
+    
+    SetTargetFPS(60);                   // Set our game to run at 60 frames-per-second
+    //--------------------------------------------------------------------------------------
 
     // Main game loop
     while (!WindowShouldClose())        // Detect window close button or ESC key

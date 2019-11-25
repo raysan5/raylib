@@ -21,7 +21,7 @@ int main(void)
     InitWindow(screenWidth, screenHeight, "raylib [models] example - heightmap loading and drawing");
 
     // Define our custom camera to look into our 3d world
-    Camera camera = { { 18.0f, 16.0f, 18.0f }, { 0.0f, 0.0f, 0.0f }, { 0.0f, 1.0f, 0.0f }, 45.0f, 0 };
+    Camera camera = { { 18.0f, 18.0f, 18.0f }, { 0.0f, 0.0f, 0.0f }, { 0.0f, 1.0f, 0.0f }, 45.0f, 0 };
 
     Image image = LoadImage("resources/heightmap.png");             // Load heightmap image (RAM)
     Texture2D texture = LoadTextureFromImage(image);                // Convert image to texture (VRAM)
