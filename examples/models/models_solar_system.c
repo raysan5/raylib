@@ -13,6 +13,7 @@
 #include "rlgl.h"
 
 #define MAX_BODY_CHILDREN 10
+
 float rotationSpeed = 0.2;
 
 // A celestial body that has children bodies orbiting around
@@ -37,7 +38,7 @@ typedef struct Body {
 Body CreateBody(float radius, float orbitRadius, float orbitPeriod, const char *label, const char *texture); // Initializes a new Body with the given parameters
 void AddBodyChildren(Body *parent, Body *children); // Add a children body to the parent body
 void DrawBody(Body *body, Camera *camera);          // Draw body and its children, updating labelPosition
-void DrawLabels(Body *body);                        // Draw body label and its children labels
+void DrawBodyLabel(Body *body);                        // Draw body label and its children labels
 
 //------------------------------------------------------------------------------------
 // Program main entry point
@@ -46,19 +47,14 @@ int main(void)
 {
     // Initialization
     //--------------------------------------------------------------------------------------
-    const int screenWidth = 1024;
-    const int screenHeight = 768;
-    const char *text;
-    bool gridEnabled = true;
-    bool helpEnabled = false;
-    bool labelEnabled = true;
-    bool cameraParametersEnabled = true;
+    const int screenWidth = 800;
+    const int screenHeight = 450;
 
     InitWindow(screenWidth, screenHeight, "raylib [models] example - solar system");
 
     // Define the camera to look into our 3d world
     Camera camera = { 0 };
-    camera.position = (Vector3){ 16.0f, 16.0f, 16.0f };
+    camera.position = (Vector3){ 20.0f, 12.0f, 20.0f };
     camera.target = (Vector3){ 0.0f, 0.0f, 0.0f };
     camera.up = (Vector3){ 0.0f, 1.0f, 0.0f };
     camera.fovy = 45.0f;
@@ -66,12 +62,9 @@ int main(void)
 
     SetCameraMode(camera, CAMERA_FREE);
 
-    SetTargetFPS(60);                   // Set our game to run at 60 frames-per-second
-    //--------------------------------------------------------------------------------------
-
     // Create Bodies
     Body sun        = CreateBody(0.2,     0.0,     0, "sun",      "2k_sun");
-    Body moon       = CreateBody(0.05,  0.200,    24, "moon",     "2k_moon");
+    Body moon       = CreateBody(0.02,  0.200,    24, "moon",     "2k_moon");
     Body mercury    = CreateBody(0.05,  0.396,    90, "mercury",  "2k_mercury");
     Body venus      = CreateBody(0.05,  0.723,   210, "venus",    "2k_venus_atmosphere");
     Body earth      = CreateBody(0.05,  1.000,   365, "earth",    "2k_earth_daymap");
@@ -83,9 +76,9 @@ int main(void)
     Body pluto      = CreateBody(0.05, 39.463, 89310, "pluto",    "2k_eris_fictional");
 
     AddBodyChildren(&sun, &mercury);
-    // AddBodyChildren(&sun, &venus);
+    AddBodyChildren(&sun, &venus);
     AddBodyChildren(&sun, &earth);
-    // AddBodyChildren(&sun, &mars);
+    AddBodyChildren(&sun, &mars);
     // AddBodyChildren(&sun, &jupiter);
     // AddBodyChildren(&sun, &saturn);
     // AddBodyChildren(&sun, &uranus);
@@ -94,6 +87,12 @@ int main(void)
 
     AddBodyChildren(&earth, &moon);
 
+    bool showHelpMenu = false;
+    bool showBodyLabels = true;
+
+    SetTargetFPS(60);                   // Set our game to run at 60 frames-per-second
+    //--------------------------------------------------------------------------------------
+
     // Main game loop
     while (!WindowShouldClose())        // Detect window close button or ESC key
     {
@@ -101,29 +100,12 @@ int main(void)
         //----------------------------------------------------------------------------------
         UpdateCamera(&camera);
 
-        if (IsKeyPressed(KEY_G)) {
-          gridEnabled = !gridEnabled;
-        }
+        if (IsKeyPressed(KEY_H)) showHelpMenu = !showHelpMenu;
+        if (IsKeyPressed(KEY_L)) showBodyLabels = !showBodyLabels;
 
-        if (IsKeyPressed(KEY_H)) {
-            helpEnabled = !helpEnabled;
-        }
-
-        if (IsKeyPressed(KEY_L)) {
-            labelEnabled = !labelEnabled;
-        }
-
-        if (IsKeyPressed(KEY_P)) {
-          cameraParametersEnabled = !cameraParametersEnabled;
-        }
-
-        if (IsKeyPressed(KEY_LEFT)) {
-            rotationSpeed -= 0.1;
-        }
-
-        if (IsKeyPressed(KEY_RIGHT)) {
-            rotationSpeed += 0.1;
-        }
+        if (IsKeyPressed(KEY_LEFT)) rotationSpeed -= 0.1;
+        if (IsKeyPressed(KEY_RIGHT)) rotationSpeed += 0.1;
+        //----------------------------------------------------------------------------------
 
         // Draw
         //----------------------------------------------------------------------------------
@@ -133,36 +115,18 @@ int main(void)
 
             BeginMode3D(camera);
 
+                // NOTE: DrawBody calls recusively body childrens
                 DrawBody(&sun, &camera);
-
-                // Some reference elements (not affected by previous matrix transformations)
-                if (gridEnabled) {
-                  DrawGrid(80, 1.0f);
-                }
 
             EndMode3D();
 
-            if (labelEnabled) {
-                DrawLabels(&sun);
-            }
+            if (showBodyLabels) DrawBodyLabel(&sun);
 
-            DrawText("FULL SOLAR SYSTEM", 400, 10, 20, YELLOW);
-            text = FormatText("SPEED: %2.2f", rotationSpeed);
-            DrawText(text, 1024 / 2 - MeasureText(text, 20) / 2, 30, 20, YELLOW);
+            DrawText(FormatText("FULL SOLAR SYSTEM - SPEED: %2.2f", rotationSpeed), 120, 10, 20, LIME);
 
-            if (cameraParametersEnabled) {
-                text = FormatText("Camera\nposition: [%3.3f, %3.3f, %3.3f]\ntarget: [%3.3f, %3.3f, %3.3f]\nup: [%3.3f, %3.3f, %3.3f]",
-                                    camera.position.x, camera.position.y, camera.position.z,
-                                    camera.target.x, camera.target.y, camera.target.z,
-                                    camera.up.x, camera.up.y, camera.up.z);
-                DrawText(text, 10, 50, 20, YELLOW);
-            }
-
-            if (helpEnabled) {
-                DrawText("Keys:\n- [g] toggle grid\n- [h] toggle help\n- [l] toggle labels\n- [p] toggle camera parameters\n- [left/right arrows] increase/decrease speed by 0.1", 200, 200, 20, YELLOW);
-            } else {
-                DrawText("press [h] for help", 1016 - MeasureText("press [h] for help", 20), 740, 20, YELLOW);
-            }
+            if (showHelpMenu) DrawText("- [h] Toggle help\n- [l] Toggle labels\n- [left/right arrows] Increase/decrease rotation speed", 10, 40, 10, GREEN);
+            else DrawText("Press [h] for help", 10, 40, 10, GREEN);
+            
             DrawFPS(10, 10);
 
         EndDrawing();
@@ -184,8 +148,8 @@ int main(void)
 // Creates a new body
 Body CreateBody(float radius, float orbitRadius, float orbitPeriod, const char *label, const char *texture_name)
 {
-    Body body;
-    Texture2D texture = LoadTexture(FormatText("resources/solar_system/%s.png", texture_name));
+    Body body = { 0 };
+    Texture2D texture = LoadTexture(FormatText("resources/solar_system/%s.png", texture_name)); // GenImageCellular()
 
     GenTextureMipmaps(&texture);
 
@@ -193,17 +157,19 @@ Body CreateBody(float radius, float orbitRadius, float orbitPeriod, const char *
     body.radius = radius * 10;
     body.orbitRadius = orbitRadius * 10;
     body.orbitPeriod = orbitPeriod;
-    body.model = LoadModel("resources/solar_system/sphere.obj");
+    body.model = LoadModel("resources/solar_system/sphere.obj");    // GenMeshSphere()
     body.model.materials[0].maps[MAP_DIFFUSE].texture = texture;
     body.childrenCount = 0;
     body.orbitPosition = 0.0;
+    
     return body;
 }
 
-void AddBodyChildren(Body *parent, Body *children) {
-    if (parent->childrenCount >= MAX_BODY_CHILDREN) {
-        TraceLog(LOG_ERROR, "BODY HAS TOO MANY CHILDREN");
-    } else {
+void AddBodyChildren(Body *parent, Body *children) 
+{
+    if (parent->childrenCount >= MAX_BODY_CHILDREN) TraceLog(LOG_ERROR, "ERROR: Body has too many children!");
+    else
+    {
         parent->children[parent->childrenCount] = children;
         parent->childrenCount++;
     }
@@ -212,13 +178,16 @@ void AddBodyChildren(Body *parent, Body *children) {
 // Draw body and its children
 void DrawBody(Body *body, Camera *camera)
 {
-    DrawModel(body->model, (Vector3) { 0.0f, 0.0f, 0.0f}, body->radius, WHITE);
+    DrawModel(body->model, (Vector3){ 0.0f, 0.0f, 0.0f}, body->radius, WHITE);
 
-    body->labelPosition = GetWorldToScreen((Vector3) { body->orbitRadius, body->radius, 0.0 }, *camera);
+    // TODO: labelPosition is not transformed to drawing position
+    body->labelPosition = GetWorldToScreen((Vector3){ body->orbitRadius, body->radius, 0.0 }, *camera);
 
-    for (int i = 0; i < body->childrenCount; i++) {
+    for (int i = 0; i < body->childrenCount; i++) 
+    {
         Body *child = body->children[i];
-        child->orbitPosition += rotationSpeed * 360 / child->orbitPeriod;
+        child->orbitPosition += rotationSpeed*360/child->orbitPeriod;
+        
         rlPushMatrix();
             rlRotatef(child->orbitPosition, 0.0, 1.0, 0.0);
             rlTranslatef(child->orbitRadius, 0.0, 0.0);
@@ -232,13 +201,13 @@ void DrawBody(Body *body, Camera *camera)
 }
 
 // Draw body label and its children labels
-void DrawLabels(Body *body)
+void DrawBodyLabel(Body *body)
 {
-    DrawText(body->label, body->labelPosition.x - MeasureText(body->label, 20) / 2, body->labelPosition.y, 20, WHITE);
+    DrawText(body->label, body->labelPosition.x - MeasureText(body->label, 20)/2, body->labelPosition.y, 20, WHITE);
 
-    for (int i = 0; i < body->childrenCount; i++) {
+    for (int i = 0; i < body->childrenCount; i++)
+    {
         Body *child = body->children[i];
-
-        DrawLabels(child);
+        DrawBodyLabel(child);
     }
 }

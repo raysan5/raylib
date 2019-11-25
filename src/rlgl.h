@@ -2664,16 +2664,13 @@ void rlDrawMesh(Mesh mesh, Material material, Matrix transform)
     Matrix matView = modelview;         // View matrix (camera)
     Matrix matProjection = projection;  // Projection matrix (perspective)
 
-    // TODO: Matrix nightmare! Trying to combine stack matrices with view matrix and local model transform matrix..
-    // There is some problem in the order matrices are multiplied... it requires some time to figure out...
-    Matrix matStackTransform = MatrixIdentity();
-
     // TODO: Consider possible transform matrices in the stack
     // Is this the right order? or should we start with the first stored matrix instead of the last one?
+    //Matrix matStackTransform = MatrixIdentity();
     //for (int i = stackCounter; i > 0; i--) matStackTransform = MatrixMultiply(stack[i], matStackTransform);
 
-    Matrix matModel = MatrixMultiply(transform, matStackTransform); // Apply local model transformation
-    Matrix matModelView = MatrixMultiply(matModel, matView);        // Transform to camera-space coordinates
+    // Transform to camera-space coordinates
+    Matrix matModelView = MatrixMultiply(transform, MatrixMultiply(transformMatrix, matView));
     //-----------------------------------------------------
 
     // Bind active texture maps (if available)
