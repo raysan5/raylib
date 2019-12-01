@@ -3284,8 +3284,8 @@ static void InitTimer(void)
 // Wait for some milliseconds (stop program execution)
 // NOTE: Sleep() granularity could be around 10 ms, it means, Sleep() could
 // take longer than expected... for that reason we use the busy wait loop
-// http://stackoverflow.com/questions/43057578/c-programming-win32-games-sleep-taking-longer-than-expected
-// http://www.geisswerks.com/ryan/FAQS/timing.html --> All about timming on Win32!
+// Ref: http://stackoverflow.com/questions/43057578/c-programming-win32-games-sleep-taking-longer-than-expected
+// Ref: http://www.geisswerks.com/ryan/FAQS/timing.html --> All about timming on Win32!
 static void Wait(float ms)
 {
 #if defined(SUPPORT_BUSY_WAIT_LOOP) && !defined(PLATFORM_UWP)
@@ -3942,8 +3942,8 @@ static void CharCallback(GLFWwindow *window, unsigned int key)
 {
     // NOTE: Registers any key down considering OS keyboard layout but
     // do not detects action events, those should be managed by user...
-    // https://github.com/glfw/glfw/issues/668#issuecomment-166794907
-    // http://www.glfw.org/docs/latest/input_guide.html#input_char
+    // Ref: https://github.com/glfw/glfw/issues/668#issuecomment-166794907
+    // Ref: https://www.glfw.org/docs/latest/input_guide.html#input_char
 
     // Check if there is space available in the queue
     if (keyPressedQueueCount < MAX_CHARS_QUEUE)

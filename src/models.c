@@ -2916,7 +2916,7 @@ static Model LoadOBJ(const char *fileName)
                 float shininess;
                 float ior;          // index of refraction
                 float dissolve;     // 1 == opaque; 0 == fully transparent
-                // illumination model (see http://www.fileformat.info/format/material/)
+                // illumination model (Ref: http://www.fileformat.info/format/material/)
                 int illum;
 
                 int pad0;
