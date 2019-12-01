@@ -118,7 +118,34 @@ information on what to include when reporting a bug.
 
 ## Changelog
 
-User-visible changes since the last release.
+ - Added `GLFW_RESIZE_NWSE_CURSOR`, `GLFW_RESIZE_NESW_CURSOR`,
+   `GLFW_RESIZE_ALL_CURSOR` and `GLFW_NOT_ALLOWED_CURSOR` cursor shapes (#427)
+ - Added `GLFW_RESIZE_EW_CURSOR` alias for `GLFW_HRESIZE_CURSOR` (#427)
+ - Added `GLFW_RESIZE_NS_CURSOR` alias for `GLFW_VRESIZE_CURSOR` (#427)
+ - Added `GLFW_POINTING_HAND_CURSOR` alias for `GLFW_HAND_CURSOR` (#427)
+ - Disabled tests and examples by default when built as a CMake subdirectory
+ - Bugfix: The CMake config-file package used an absolute path and was not
+   relocatable (#1470)
+ - Bugfix: Video modes with a duplicate screen area were discarded (#1555,#1556)
+ - Bugfix: Compiling with -Wextra-semi caused warnings (#1440)
+ - [Win32] Added the `GLFW_WIN32_KEYBOARD_MENU` window hint for enabling access
+           to the window menu
+ - [Win32] Bugfix: `GLFW_INCLUDE_VULKAN` plus `VK_USE_PLATFORM_WIN32_KHR` caused
+   symbol redefinition (#1524)
+ - [Win32] Bugfix: The cursor position event was emitted before its cursor enter
+   event (#1490)
+ - [Win32] Bugfix: The window hint `GLFW_MAXIMIZED` did not move or resize the
+   window (#1499)
+ - [Cocoa] Bugfix: `glfwSetWindowSize` used a bottom-left anchor point (#1553)
+ - [Cocoa] Bugfix: Window remained on screen after destruction until event poll
+   (#1412)
+ - [X11] Bugfix: The CMake files did not check for the XInput headers (#1480)
+ - [X11] Bugfix: Key names were not updated when the keyboard layout changed
+   (#1462,#1528)
+ - [X11] Bugfix: Decorations could not be enabled after window creation (#1566)
+ - [X11] Bugfix: Content scale fallback value could be inconsistent (#1578)
+ - [Wayland] Bugfix: The `GLFW_HAND_CURSOR` shape used the wrong image (#1432)
+ - [NSGL] Removed enforcement of forward-compatible flag for core contexts
 
 
 ## Contact
@@ -127,7 +154,7 @@ On [glfw.org](http://www.glfw.org/) you can find the latest version of GLFW, as
 well as news, documentation and other information about the project.
 
 If you have questions related to the use of GLFW, we have a
-[forum](http://discourse.glfw.org/), and the `#glfw` IRC channel on
+[forum](https://discourse.glfw.org/), and the `#glfw` IRC channel on
 [Freenode](http://freenode.net/).
 
 If you have a bug to report, a patch to submit or a feature you'd like to
@@ -157,6 +184,7 @@ skills.
  - blanco
  - Kyle Brenneman
  - Rok Breulj
+ - Kai Burjack
  - Martin Capitanio
  - David Carlier
  - Arturo Castro
@@ -189,6 +217,7 @@ skills.
  - Mário Freitas
  - GeO4d
  - Marcus Geelnard
+ - Charles Giessen
  - Stephen Gowen
  - Kovid Goyal
  - Eloi Marín Gratacós
@@ -200,6 +229,7 @@ skills.
  - Lucas Hinderberger
  - Paul Holden
  - Warren Hu
+ - Charles Huber
  - IntellectualKitty
  - Aaron Jacobs
  - Erik S. V. Jansson
@@ -212,13 +242,17 @@ skills.
  - Peter Knut
  - Christoph Kubisch
  - Yuri Kunde Schlesner
+ - Rokas Kupstys
  - Konstantin Käfer
  - Eric Larson
  - Robin Leffmann
  - Glenn Lewis
  - Shane Liesegang
+ - Anders Lindqvist
+ - Leon Linhart
  - Eyal Lotem
  - Aaron Loucks
+ - Luflosi
  - Tristam MacDonald
  - Hans Mackowiak
  - Дмитри Малышев
@@ -231,6 +265,7 @@ skills.
  - Jonathan Mercier
  - Marcel Metz
  - Liam Middlebrook
+ - Ave Milia
  - Jonathan Miller
  - Kenneth Miller
  - Bruce Mitchener
@@ -258,9 +293,12 @@ skills.
  - Cyril Pichard
  - Keith Pitt
  - Stanislav Podgorskiy
+ - Konstantin Podsvirov
  - Nathan Poirier
  - Alexandre Pretyman
+ - Pablo Prietz
  - przemekmirek
+ - Guillaume Racicot
  - Philip Rideout
  - Eddie Ringle
  - Max Risuhin
@@ -309,6 +347,7 @@ skills.
  - Jay Weisskopf
  - Frank Wille
  - Ryogo Yoshimura
+ - Lukas Zanner
  - Andrey Zholos
  - Santi Zupancic
  - Jonas Ådahl

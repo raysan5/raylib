@@ -1,5 +1,5 @@
 //========================================================================
-// GLFW 3.3 Win32 - www.glfw.org
+// GLFW 3.4 Win32 - www.glfw.org
 //------------------------------------------------------------------------
 // Copyright (c) 2002-2006 Marcus Geelnard
 // Copyright (c) 2006-2019 Camilla Löwy <elmindreda@glfw.org>
@@ -212,7 +212,7 @@ typedef enum
 
 // HACK: Define macros that some dinput.h variants don't
 #ifndef DIDFT_OPTIONAL
- #define DIDFT_OPTIONAL	0x80000000
+ #define DIDFT_OPTIONAL 0x80000000
 #endif
 
 // winmm.dll function pointer typedefs
@@ -315,6 +315,7 @@ typedef struct _GLFWwindowWin32
     // Whether to enable framebuffer transparency on DWM
     GLFWbool            transparent;
     GLFWbool            scaleToMonitor;
+    GLFWbool            keymenu;
 
     // The last received cursor position, regardless of source
     int                 lastCursorPosX, lastCursorPosY;

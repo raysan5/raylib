@@ -1,5 +1,5 @@
 //========================================================================
-// GLFW 3.3 EGL - www.glfw.org
+// GLFW 3.4 EGL - www.glfw.org
 //------------------------------------------------------------------------
 // Copyright (c) 2002-2006 Marcus Geelnard
 // Copyright (c) 2006-2017 Camilla Löwy <elmindreda@glfw.org>
@@ -47,26 +47,26 @@ typedef struct wl_egl_window* EGLNativeWindowType;
  #error "No supported EGL platform selected"
 #endif
 
-#define EGL_SUCCESS	0x3000
-#define EGL_NOT_INITIALIZED	0x3001
+#define EGL_SUCCESS 0x3000
+#define EGL_NOT_INITIALIZED 0x3001
 #define EGL_BAD_ACCESS 0x3002
 #define EGL_BAD_ALLOC 0x3003
 #define EGL_BAD_ATTRIBUTE 0x3004
 #define EGL_BAD_CONFIG 0x3005
-#define EGL_BAD_CONTEXT	0x3006
-#define EGL_BAD_CURRENT_SURFACE	0x3007
-#define EGL_BAD_DISPLAY	0x3008
+#define EGL_BAD_CONTEXT 0x3006
+#define EGL_BAD_CURRENT_SURFACE 0x3007
+#define EGL_BAD_DISPLAY 0x3008
 #define EGL_BAD_MATCH 0x3009
 #define EGL_BAD_NATIVE_PIXMAP 0x300a
 #define EGL_BAD_NATIVE_WINDOW 0x300b
 #define EGL_BAD_PARAMETER 0x300c
-#define EGL_BAD_SURFACE	0x300d
+#define EGL_BAD_SURFACE 0x300d
 #define EGL_CONTEXT_LOST 0x300e
 #define EGL_COLOR_BUFFER_TYPE 0x303f
 #define EGL_RGB_BUFFER 0x308e
 #define EGL_SURFACE_TYPE 0x3033
 #define EGL_WINDOW_BIT 0x0004
-#define EGL_RENDERABLE_TYPE	0x3040
+#define EGL_RENDERABLE_TYPE 0x3040
 #define EGL_OPENGL_ES_BIT 0x0001
 #define EGL_OPENGL_ES2_BIT 0x0004
 #define EGL_OPENGL_BIT 0x0008
@@ -76,7 +76,7 @@ typedef struct wl_egl_window* EGLNativeWindowType;
 #define EGL_RED_SIZE 0x3024
 #define EGL_DEPTH_SIZE 0x3025
 #define EGL_STENCIL_SIZE 0x3026
-#define EGL_SAMPLES	0x3031
+#define EGL_SAMPLES 0x3031
 #define EGL_OPENGL_ES_API 0x30a0
 #define EGL_OPENGL_API 0x30a2
 #define EGL_NONE 0x3038

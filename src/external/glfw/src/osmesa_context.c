@@ -1,5 +1,5 @@
 //========================================================================
-// GLFW 3.3 OSMesa - www.glfw.org
+// GLFW 3.4 OSMesa - www.glfw.org
 //------------------------------------------------------------------------
 // Copyright (c) 2016 Google Inc.
 // Copyright (c) 2016-2017 Camilla Löwy <elmindreda@glfw.org>
@@ -23,6 +23,8 @@
 // 3. This notice may not be removed or altered from any source
 //    distribution.
 //
+//========================================================================
+// Please use C89 style variable declarations in this file because VS 2010
 //========================================================================
 
 #include <stdlib.h>

@@ -1,5 +1,5 @@
 //========================================================================
-// GLFW 3.3 Cocoa - www.glfw.org
+// GLFW 3.4 Cocoa - www.glfw.org
 //------------------------------------------------------------------------
 // Copyright (c) 2006-2017 Camilla Löwy <elmindreda@glfw.org>
 //
@@ -30,7 +30,7 @@
 #include <IOKit/hid/IOHIDKeys.h>
 
 #define _GLFW_PLATFORM_JOYSTICK_STATE         _GLFWjoystickNS ns
-#define _GLFW_PLATFORM_LIBRARY_JOYSTICK_STATE
+#define _GLFW_PLATFORM_LIBRARY_JOYSTICK_STATE struct { int dummyJoystick; }
 
 #define _GLFW_PLATFORM_MAPPING_NAME "Mac OS X"
 

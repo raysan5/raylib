@@ -1,5 +1,5 @@
 //========================================================================
-// GLFW 3.3 Win32 - www.glfw.org
+// GLFW 3.4 Win32 - www.glfw.org
 //------------------------------------------------------------------------
 // Copyright (c) 2006-2017 Camilla Löwy <elmindreda@glfw.org>
 //
@@ -25,7 +25,7 @@
 //========================================================================
 
 #define _GLFW_PLATFORM_JOYSTICK_STATE         _GLFWjoystickWin32 win32
-#define _GLFW_PLATFORM_LIBRARY_JOYSTICK_STATE int dummy
+#define _GLFW_PLATFORM_LIBRARY_JOYSTICK_STATE struct { int dummyLibraryJoystick; }
 
 #define _GLFW_PLATFORM_MAPPING_NAME "Windows"
 

@@ -1,5 +1,5 @@
 //========================================================================
-// GLFW 3.3 - www.glfw.org
+// GLFW 3.4 - www.glfw.org
 //------------------------------------------------------------------------
 // Copyright (c) 2002-2006 Marcus Geelnard
 // Copyright (c) 2006-2018 Camilla Löwy <elmindreda@glfw.org>
@@ -23,6 +23,8 @@
 // 3. This notice may not be removed or altered from any source
 //    distribution.
 //
+//========================================================================
+// Please use C89 style variable declarations in this file because VS 2010
 //========================================================================
 
 #include "internal.h"
@@ -187,6 +189,8 @@ void _glfwInputError(int code, const char* format, ...)
             strcpy(description, "The requested format is unavailable");
         else if (code == GLFW_NO_WINDOW_CONTEXT)
             strcpy(description, "The specified window has no context");
+        else if (code == GLFW_CURSOR_UNAVAILABLE)
+            strcpy(description, "The specified cursor shape is unavailable");
         else
             strcpy(description, "ERROR: UNKNOWN GLFW ERROR");
     }

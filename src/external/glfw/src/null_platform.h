@@ -1,5 +1,5 @@
 //========================================================================
-// GLFW 3.3 - www.glfw.org
+// GLFW 3.4 - www.glfw.org
 //------------------------------------------------------------------------
 // Copyright (c) 2016 Google Inc.
 // Copyright (c) 2016-2017 Camilla Löwy <elmindreda@glfw.org>
@@ -29,13 +29,13 @@
 
 #define _GLFW_PLATFORM_WINDOW_STATE _GLFWwindowNull null
 
-#define _GLFW_PLATFORM_CONTEXT_STATE
-#define _GLFW_PLATFORM_MONITOR_STATE
-#define _GLFW_PLATFORM_CURSOR_STATE
-#define _GLFW_PLATFORM_LIBRARY_WINDOW_STATE
-#define _GLFW_PLATFORM_LIBRARY_CONTEXT_STATE
-#define _GLFW_EGL_CONTEXT_STATE
-#define _GLFW_EGL_LIBRARY_CONTEXT_STATE
+#define _GLFW_PLATFORM_CONTEXT_STATE         struct { int dummyContext; }
+#define _GLFW_PLATFORM_MONITOR_STATE         struct { int dummyMonitor; }
+#define _GLFW_PLATFORM_CURSOR_STATE          struct { int dummyCursor; }
+#define _GLFW_PLATFORM_LIBRARY_WINDOW_STATE  struct { int dummyLibraryWindow; }
+#define _GLFW_PLATFORM_LIBRARY_CONTEXT_STATE struct { int dummyLibraryContext; }
+#define _GLFW_EGL_CONTEXT_STATE              struct { int dummyEGLContext; }
+#define _GLFW_EGL_LIBRARY_CONTEXT_STATE      struct { int dummyEGLLibraryContext; }
 
 #include "osmesa_context.h"
 #include "posix_time.h"

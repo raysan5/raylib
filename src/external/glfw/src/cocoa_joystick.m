@@ -1,5 +1,5 @@
 //========================================================================
-// GLFW 3.3 Cocoa - www.glfw.org
+// GLFW 3.4 Cocoa - www.glfw.org
 //------------------------------------------------------------------------
 // Copyright (c) 2009-2019 Camilla Löwy <elmindreda@glfw.org>
 // Copyright (c) 2012 Torsten Walluhn <tw@mad-cad.net>
@@ -23,6 +23,8 @@
 // 3. This notice may not be removed or altered from any source
 //    distribution.
 //
+//========================================================================
+// It is fine to use C99 in this file because it will not be built with VS
 //========================================================================
 
 #include "internal.h"

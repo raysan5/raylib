@@ -1,5 +1,5 @@
 //========================================================================
-// GLFW 3.3 macOS - www.glfw.org
+// GLFW 3.4 macOS - www.glfw.org
 //------------------------------------------------------------------------
 // Copyright (c) 2009-2019 Camilla Löwy <elmindreda@glfw.org>
 //
@@ -24,6 +24,9 @@
 //
 //========================================================================
 
+// NOTE: Many Cocoa enum values have been renamed and we need to build across
+//       SDK versions where one is unavailable or the other deprecated
+//       We use the newer names in code and these macros to handle compatibility
 #if MAC_OS_X_VERSION_MAX_ALLOWED < 101400
  #define NSOpenGLContextParameterSwapInterval NSOpenGLCPSwapInterval
  #define NSOpenGLContextParameterSurfaceOpacity NSOpenGLCPSurfaceOpacity

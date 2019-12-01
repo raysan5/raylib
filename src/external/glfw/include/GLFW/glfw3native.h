@@ -1,5 +1,5 @@
 /*************************************************************************
- * GLFW 3.3 - www.glfw.org
+ * GLFW 3.4 - www.glfw.org
  * A library for OpenGL, window and input
  *------------------------------------------------------------------------
  * Copyright (c) 2002-2006 Marcus Geelnard
@@ -89,7 +89,7 @@ extern "C" {
   #undef APIENTRY
   #undef GLFW_APIENTRY_DEFINED
  #endif
-// RAY: Actually, only HWND handler needs to be defined
+// @raysan5: Actually, only HWND handler needs to be defined
 // Including windows.h could suppose symbols re-definition issues (i.e Rectangle type)
 //#include <windows.h>
  typedef void *PVOID;
