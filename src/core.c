@@ -313,8 +313,7 @@ static unsigned int displayWidth, displayHeight;// Display width and height (mon
 static int screenWidth, screenHeight;           // Screen width and height (used render area)
 static int renderWidth, renderHeight;           // Framebuffer width and height (render area, including black bars if required)
 static int currentWidth, currentHeight;         // Current render width and height, it could change on BeginTextureMode()
-static int windowLeftPos, windowTopPos;
-static int requireVsync = 0;
+static int windowPositionX, windowPositionY;    // Window position on screen (required on fullscreen toggle)
 static int renderOffsetX = 0;                   // Offset X from render area (must be divided by 2)
 static int renderOffsetY = 0;                   // Offset Y from render area (must be divided by 2)
 static bool fullscreen = false;                 // Fullscreen mode (useful only for PLATFORM_DESKTOP)
@@ -857,11 +856,12 @@ void ToggleFullscreen(void)
 {
 #if defined(PLATFORM_DESKTOP)
     fullscreen = !fullscreen;          // Toggle fullscreen flag
-    requireVsync = true;
 
     // NOTE: glfwSetWindowMonitor() doesn't work properly (bugs)
-    if (fullscreen) {
-        glfwGetWindowPos(window, &windowLeftPos, &windowTopPos);
+    if (fullscreen) 
+    {
+        // Store previous window position (in case we exit fullscreen)
+        glfwGetWindowPos(window, &windowPositionX, &windowPositionY);
 
         GLFWmonitor *monitor = glfwGetPrimaryMonitor();
         if (!monitor)
@@ -873,8 +873,12 @@ void ToggleFullscreen(void)
 
         const GLFWvidmode *mode = glfwGetVideoMode(monitor);
         glfwSetWindowMonitor(window, glfwGetPrimaryMonitor(), 0, 0, screenWidth, screenHeight, mode->refreshRate);
+        
+        // Try to enable GPU V-Sync, so frames are limited to screen refresh rate (60Hz -> 60 FPS)
+        // NOTE: V-Sync can be enabled by graphic driver configuration
+        if (configFlags & FLAG_VSYNC_HINT) glfwSwapInterval(1);
     }
-    else glfwSetWindowMonitor(window, NULL, windowLeftPos, windowTopPos, screenWidth, screenHeight, GLFW_DONT_CARE);
+    else glfwSetWindowMonitor(window, NULL, windowPositionX, windowPositionY, screenWidth, screenHeight, GLFW_DONT_CARE);
 #endif
 
 #if defined(PLATFORM_ANDROID) || defined(PLATFORM_RPI)
@@ -1775,7 +1779,6 @@ Color Fade(Color color, float alpha)
 void SetConfigFlags(unsigned int flags)
 {
     configFlags = flags;
-    requireVsync = true;
 
     if (configFlags & FLAG_FULLSCREEN_MODE) fullscreen = true;
     if (configFlags & FLAG_WINDOW_ALWAYS_RUN) alwaysRun = true;
@@ -2715,11 +2718,11 @@ static bool InitGraphicsDevice(int width, int height)
     if (fullscreen)
     {
         // remember center for switchinging from fullscreen to window
-        windowLeftPos = displayWidth/2 - screenWidth/2;
-        windowTopPos = displayHeight/2 - screenHeight/2;
+        windowPositionX = displayWidth/2 - screenWidth/2;
+        windowPositionY = displayHeight/2 - screenHeight/2;
 
-        if (windowLeftPos < 0) windowLeftPos = 0;
-        if (windowTopPos < 0) windowTopPos = 0;
+        if (windowPositionX < 0) windowPositionX = 0;
+        if (windowPositionY < 0) windowPositionY = 0;
 
         // Obtain recommended displayWidth/displayHeight from a valid videomode for the monitor
         int count = 0;
@@ -2809,10 +2812,8 @@ static bool InitGraphicsDevice(int width, int height)
 
     glfwMakeContextCurrent(window);
 
-    // Try to disable GPU V-Sync by default, set framerate using SetTargetFPS()
-    // NOTE: V-Sync can be enabled by graphic driver configuration
 #if !defined(PLATFORM_WEB)
-    glfwSwapInterval(0);
+    glfwSwapInterval(0);        // No V-Sync by default
 #endif
 
 #if defined(PLATFORM_DESKTOP)
@@ -3818,11 +3819,6 @@ static void PollInputEvents(void)
 static void SwapBuffers(void)
 {
 #if defined(PLATFORM_DESKTOP) || defined(PLATFORM_WEB)
-    if (requireVsync) {
-        glfwMakeContextCurrent(window);
-        glfwSwapInterval((configFlags & FLAG_VSYNC_HINT) != 0);
-        requireVsync = false;
-    }
     glfwSwapBuffers(window);
 #endif
 
