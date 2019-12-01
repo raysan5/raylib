@@ -127,7 +127,7 @@ extern void LoadFontDefault(void)
     #define BIT_CHECK(a,b) ((a) & (1u << (b)))
 
     // NOTE: Using UTF8 encoding table for Unicode U+0000..U+00FF Basic Latin + Latin-1 Supplement
-    // http://www.utf8-chartable.de/unicode-utf8-table.pl
+    // Ref: http://www.utf8-chartable.de/unicode-utf8-table.pl
 
     defaultFont.charsCount = 224;             // Number of chars included in our default font
 
@@ -795,51 +795,66 @@ void DrawText(const char *text, int posX, int posY, int fontSize, Color color)
     }
 }
 
+// Draw one character (codepoint)
+void DrawTextCodepoint(Font font, int codepoint, Vector2 position, float scale, Color tint)
+{
+    // Character index position in sprite font
+    // NOTE: In case a codepoint is not available in the font, index returned points to '?'
+    int index = GetGlyphIndex(font, codepoint);
+
+    // Character rectangle on screen
+    // NOTE: Quad is scaled proportionally to base character width-height
+    Rectangle rec = { position.x, position.y, font.recs[index].width*scale, font.recs[index].height*scale };
+    
+    DrawTexturePro(font.texture, font.recs[index], rec, (Vector2){ 0, 0 }, 0.0f, tint);
+}
+
 // Draw text using Font
 // NOTE: chars spacing is NOT proportional to fontSize
 void DrawTextEx(Font font, const char *text, Vector2 position, float fontSize, float spacing, Color tint)
 {
-    int length = strlen(text);
-    int textOffsetY = 0;        // Required for line break!
-    float textOffsetX = 0.0f;   // Offset between characters
-    float scaleFactor = 0.0f;
+    int length = strlen(text);      // Total length in bytes of the text, scanned by codepoints in loop
 
-    int letter = 0;             // Current character
-    int index = 0;              // Index position in sprite font
-
-    scaleFactor = fontSize/font.baseSize;
+    int textOffsetY = 0;            // Offset between lines (on line break '\n')
+    float textOffsetX = 0.0f;       // Offset X to next character to draw
+    
+    float scaleFactor = fontSize/font.baseSize;     // Character quad scaling factor
 
     for (int i = 0; i < length; i++)
     {
-        int next = 0;
-        letter = GetNextCodepoint(&text[i], &next);
-        index = GetGlyphIndex(font, letter);
+        // Get next codepoint from byte string and glyph index in font
+        int codepointByteCount = 0;
+        int codepoint = GetNextCodepoint(&text[i], &codepointByteCount);
+        int index = GetGlyphIndex(font, codepoint);
 
         // NOTE: Normally we exit the decoding sequence as soon as a bad byte is found (and return 0x3f)
-        // but we need to draw all of the bad bytes using the '?' symbol so to not skip any we set 'next = 1'
-        if (letter == 0x3f) next = 1;
-        i += (next - 1);
+        // but we need to draw all of the bad bytes using the '?' symbol moving one byte
+        if (codepoint == 0x3f) codepointByteCount = 1;
 
-        if (letter == '\n')
+        if (codepoint == '\n')
         {
-            // NOTE: Fixed line spacing of 1.5 lines
+            // NOTE: Fixed line spacing of 1.5 line-height
+            // TODO: Support custom line spacing defined by user
             textOffsetY += (int)((font.baseSize + font.baseSize/2)*scaleFactor);
             textOffsetX = 0.0f;
         }
         else
         {
-            if (letter != ' ')
+            if ((codepoint != ' ') && (codepoint != '\t')) 
             {
-                DrawTexturePro(font.texture, font.recs[index],
-                           (Rectangle){ position.x + textOffsetX + font.chars[index].offsetX*scaleFactor,
-                                        position.y + textOffsetY + font.chars[index].offsetY*scaleFactor,
-                                        font.recs[index].width*scaleFactor,
-                                        font.recs[index].height*scaleFactor }, (Vector2){ 0, 0 }, 0.0f, tint);
+                Rectangle rec = { position.x + textOffsetX + font.chars[index].offsetX*scaleFactor,
+                                  position.y + textOffsetY + font.chars[index].offsetY*scaleFactor, 
+                                  font.recs[index].width*scaleFactor, 
+                                  font.recs[index].height*scaleFactor };
+    
+                DrawTexturePro(font.texture, font.recs[index], rec, (Vector2){ 0, 0 }, 0.0f, tint);
             }
 
             if (font.chars[index].advanceX == 0) textOffsetX += ((float)font.recs[index].width*scaleFactor + spacing);
             else textOffsetX += ((float)font.chars[index].advanceX*scaleFactor + spacing);
         }
+        
+        i += (codepointByteCount - 1);   // Move text bytes counter to next codepoint
     }
 }
 
@@ -850,37 +865,37 @@ void DrawTextRec(Font font, const char *text, Rectangle rec, float fontSize, flo
 }
 
 // Draw text using font inside rectangle limits with support for text selection
-void DrawTextRecEx(Font font, const char *text, Rectangle rec, float fontSize, float spacing, bool wordWrap, Color tint, int selectStart, int selectLength, Color selectText, Color selectBack)
+void DrawTextRecEx(Font font, const char *text, Rectangle rec, float fontSize, float spacing, bool wordWrap, Color tint, int selectStart, int selectLength, Color selectTint, Color selectBackTint)
 {
-    int length = strlen(text);
-    int textOffsetX = 0;        // Offset between characters
-    int textOffsetY = 0;        // Required for line break!
-    float scaleFactor = 0.0f;
+    int length = strlen(text);      // Total length in bytes of the text, scanned by codepoints in loop
 
-    int letter = 0;             // Current character
-    int index = 0;              // Index position in sprite font
+    int textOffsetY = 0;            // Offset between lines (on line break '\n')
+    float textOffsetX = 0.0f;       // Offset X to next character to draw
 
-    scaleFactor = fontSize/font.baseSize;
+    float scaleFactor = fontSize/font.baseSize;     // Character quad scaling factor
 
+    // Word/character wrapping mechanism variables
     enum { MEASURE_STATE = 0, DRAW_STATE = 1 };
     int state = wordWrap? MEASURE_STATE : DRAW_STATE;
+    
     int startLine = -1;         // Index where to begin drawing (where a line begins)
     int endLine = -1;           // Index where to stop drawing (where a line ends)
     int lastk = -1;             // Holds last value of the character position
 
     for (int i = 0, k = 0; i < length; i++, k++)
     {
+        // Get next codepoint from byte string and glyph index in font
+        int codepointByteCount = 0;
+        int codepoint = GetNextCodepoint(&text[i], &codepointByteCount);
+        int index = GetGlyphIndex(font, codepoint);
+
+        // NOTE: Normally we exit the decoding sequence as soon as a bad byte is found (and return 0x3f)
+        // but we need to draw all of the bad bytes using the '?' symbol moving one byte
+        if (codepoint == 0x3f) codepointByteCount = 1;
+        i += (codepointByteCount - 1);
+
         int glyphWidth = 0;
-        int next = 0;
-        letter = GetNextCodepoint(&text[i], &next);
-        index = GetGlyphIndex(font, letter);
-
-        // NOTE: normally we exit the decoding sequence as soon as a bad byte is found (and return 0x3f)
-        // but we need to draw all of the bad bytes using the '?' symbol so to not skip any we set next = 1
-        if (letter == 0x3f) next = 1;
-        i += next - 1;
-
-        if (letter != '\n')
+        if (codepoint != '\n')
         {
             glyphWidth = (font.chars[index].advanceX == 0)?
                          (int)(font.recs[index].width*scaleFactor + spacing):
@@ -894,26 +909,25 @@ void DrawTextRecEx(Font font, const char *text, Rectangle rec, float fontSize, f
         // and begin drawing on the next line before we can get outside the container.
         if (state == MEASURE_STATE)
         {
-            // TODO: there are multiple types of spaces in UNICODE, maybe it's a good idea to add support for more
-            // See: http://jkorpela.fi/chars/spaces.html
-            if ((letter == ' ') || (letter == '\t') || (letter == '\n')) endLine = i;
+            // TODO: There are multiple types of spaces in UNICODE, maybe it's a good idea to add support for more
+            // Ref: http://jkorpela.fi/chars/spaces.html
+            if ((codepoint == ' ') || (codepoint == '\t') || (codepoint == '\n')) endLine = i;
 
             if ((textOffsetX + glyphWidth + 1) >= rec.width)
             {
                 endLine = (endLine < 1)? i : endLine;
-                if (i == endLine) endLine -= next;
-                if ((startLine + next) == endLine) endLine = i - next;
+                if (i == endLine) endLine -= codepointByteCount;
+                if ((startLine + codepointByteCount) == endLine) endLine = (i - codepointByteCount);
+                
                 state = !state;
             }
             else if ((i + 1) == length)
             {
                 endLine = i;
+                
                 state = !state;
             }
-            else if (letter == '\n')
-            {
-                state = !state;
-            }
+            else if (codepoint == '\n') state = !state;
 
             if (state == DRAW_STATE)
             {
@@ -929,7 +943,7 @@ void DrawTextRecEx(Font font, const char *text, Rectangle rec, float fontSize, f
         }
         else
         {
-            if (letter == '\n')
+            if (codepoint == '\n')
             {
                 if (!wordWrap)
                 {
@@ -945,26 +959,25 @@ void DrawTextRecEx(Font font, const char *text, Rectangle rec, float fontSize, f
                     textOffsetX = 0;
                 }
 
+                // When text overflows rectangle height limit, just stop drawing
                 if ((textOffsetY + (int)(font.baseSize*scaleFactor)) > rec.height) break;
 
-                // Draw selected
+                // Draw selection background
                 bool isGlyphSelected = false;
                 if ((selectStart >= 0) && (k >= selectStart) && (k < (selectStart + selectLength)))
                 {
-                    Rectangle strec = {rec.x + textOffsetX-1, rec.y + textOffsetY, glyphWidth, font.baseSize*scaleFactor };
-                    DrawRectangleRec(strec, selectBack);
+                    DrawRectangleRec((Rectangle){ rec.x + textOffsetX - 1, rec.y + textOffsetY, glyphWidth, font.baseSize*scaleFactor }, selectBackTint);
                     isGlyphSelected = true;
                 }
 
-                // Draw glyph
-                if ((letter != ' ') && (letter != '\t'))
+                // Draw current chracter glyph
+                if ((codepoint != ' ') && (codepoint != '\t'))
                 {
                     DrawTexturePro(font.texture, font.recs[index],
-                      (Rectangle){ rec.x + textOffsetX + font.chars[index].offsetX*scaleFactor,
-                                   rec.y + textOffsetY + font.chars[index].offsetY*scaleFactor,
-                                   font.recs[index].width*scaleFactor,
-                                   font.recs[index].height*scaleFactor }, (Vector2){ 0, 0 }, 0.0f,
-                                   (!isGlyphSelected)? tint : selectText);
+                                   (Rectangle){ rec.x + textOffsetX + font.chars[index].offsetX*scaleFactor,
+                                                rec.y + textOffsetY + font.chars[index].offsetY*scaleFactor,
+                                                font.recs[index].width*scaleFactor, font.recs[index].height*scaleFactor }, 
+                                   (Vector2){ 0, 0 }, 0.0f, (!isGlyphSelected)? tint : selectTint);
                 }
             }
 
@@ -976,6 +989,7 @@ void DrawTextRecEx(Font font, const char *text, Rectangle rec, float fontSize, f
                 endLine = -1;
                 glyphWidth = 0;
                 k = lastk;
+                
                 state = !state;
             }
         }
@@ -1057,15 +1071,17 @@ Vector2 MeasureTextEx(Font font, const char *text, float fontSize, float spacing
 }
 
 // Returns index position for a unicode character on spritefont
-int GetGlyphIndex(Font font, int character)
+int GetGlyphIndex(Font font, int codepoint)
 {
+#define TEXT_CHARACTER_NOTFOUND     63      // Character: '?'
+    
 #define UNORDERED_CHARSET
 #if defined(UNORDERED_CHARSET)
-    int index = 0;
+    int index = TEXT_CHARACTER_NOTFOUND;
 
     for (int i = 0; i < font.charsCount; i++)
     {
-        if (font.chars[i].value == character)
+        if (font.chars[i].value == codepoint)
         {
             index = i;
             break;
@@ -1074,7 +1090,7 @@ int GetGlyphIndex(Font font, int character)
 
     return index;
 #else
-    return (character - 32);
+    return (codepoint - 32);
 #endif
 }
 

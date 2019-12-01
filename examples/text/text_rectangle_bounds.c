@@ -22,9 +22,9 @@ int main(void)
 
     InitWindow(screenWidth, screenHeight, "raylib [text] example - draw text inside a rectangle");
 
-    const char text[] = "Text cannot escape\tthis container\t...word wrap also works when active so here's\
-    a long text for testing.\n\nLorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod\
-    tempor incididunt ut labore et dolore magna aliqua. Nec ullamcorper sit amet risus nullam eget felis eget.";
+    const char text[] = "Text cannot escape\tthis container\t...word wrap also works when active so here's \
+a long text for testing.\n\nLorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod \
+tempor incididunt ut labore et dolore magna aliqua. Nec ullamcorper sit amet risus nullam eget felis eget.";
 
     bool resizing = false;
     bool wordWrap = true;
@@ -97,16 +97,18 @@ int main(void)
 
             DrawRectangleRec(resizer, borderColor);         // Draw the resize box
 
-            // Draw info
+            // Draw bottom info
+            DrawRectangle(0, screenHeight - 54, screenWidth, 54, GRAY);
+            DrawRectangleRec((Rectangle){ 382, screenHeight - 34, 12, 12 }, MAROON);
+            
             DrawText("Word Wrap: ", 313, screenHeight-115, 20, BLACK);
             if (wordWrap) DrawText("ON", 447, screenHeight - 115, 20, RED);
             else DrawText("OFF", 447, screenHeight - 115, 20, BLACK);
-            DrawText("Press [SPACE] to toggle word wrap", 218, screenHeight - 91, 20, GRAY);
+            
+            DrawText("Press [SPACE] to toggle word wrap", 218, screenHeight - 86, 20, GRAY);
 
-            DrawRectangle(0, screenHeight - 54, screenWidth, 54, GRAY);
             DrawText("Click hold & drag the    to resize the container", 155, screenHeight - 38, 20, RAYWHITE);
-            DrawRectangleRec((Rectangle){ 382, screenHeight - 34, 12, 12 }, MAROON);
-
+            
         EndDrawing();
         //----------------------------------------------------------------------------------
     }
