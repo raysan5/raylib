@@ -856,6 +856,13 @@ extern "C" {            // Prevents name mangling of functions
 // It's lonely here...
 
 //------------------------------------------------------------------------------------
+// Misc Functions (Module: core)
+//------------------------------------------------------------------------------------
+
+// Raylib info
+RLAPI const char *GetRaylibVersionString(void);                   // Returns the current version string, for example: "2.6"
+
+//------------------------------------------------------------------------------------
 // Window and Graphics Device Functions (Module: core)
 //------------------------------------------------------------------------------------
 

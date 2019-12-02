@@ -534,6 +534,16 @@ static void *GamepadThread(void *arg);                  // Mouse reading thread
 #endif
 
 //----------------------------------------------------------------------------------
+// Misc Functions Definition - Raylib info
+//----------------------------------------------------------------------------------
+
+// Returns the current version string, for example: "2.6"
+const char *GetRaylibVersionString(void)
+{
+    return RAYLIB_VERSION;
+}
+
+//----------------------------------------------------------------------------------
 // Module Functions Definition - Window and OpenGL Context Functions
 //----------------------------------------------------------------------------------
 
