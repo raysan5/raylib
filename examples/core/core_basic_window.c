@@ -20,6 +20,7 @@
 ********************************************************************************************/
 
 #include "raylib.h"
+#include <stdio.h>
 
 int main(void)
 {
@@ -27,7 +28,9 @@ int main(void)
     //--------------------------------------------------------------------------------------
     const int screenWidth = 800;
     const int screenHeight = 450;
+    char raylib_info[1024];
 
+    sprintf(raylib_info, "Using raylib %s", GetRaylibVersionString());
     InitWindow(screenWidth, screenHeight, "raylib [core] example - basic window");
 
     SetTargetFPS(60);               // Set our game to run at 60 frames-per-second
@@ -48,6 +51,7 @@ int main(void)
             ClearBackground(RAYWHITE);
 
             DrawText("Congrats! You created your first window!", 190, 200, 20, LIGHTGRAY);
+            DrawText(raylib_info, 190, 240, 20, LIGHTGRAY);
 
         EndDrawing();
         //----------------------------------------------------------------------------------
