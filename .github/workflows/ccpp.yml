@@ -12,7 +12,7 @@ jobs:
     - name: apt-update
       run: sudo apt-get update -qq
     - name: apt get glfw
-      run: sudo apt-get install -y --no-install-recommends libglfw3 libglfw3-dev libxcursor-dev libxrandr-dev libxinerama-dev
+      run: sudo apt-get install -y --no-install-recommends libglfw3 libglfw3-dev libx11-dev libxcursor-dev libxrandr-dev libxinerama-dev libxi-dev libxext-dev libxfixes-dev
     - name: make src
       run: cd src && make PLATFORM=PLATFORM_DESKTOP
     - name: make examples
