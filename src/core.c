@@ -3174,7 +3174,10 @@ static bool InitGraphicsDevice(int width, int height)
 
     // Screen scaling matrix is required in case desired screen area is different than display area
     screenScaling = MatrixScale((float)fbWidth/screenWidth, (float)fbHeight/screenHeight, 1.0f);
+#if !defined(__APPLE__)
     SetMouseScale((float)screenWidth/fbWidth, (float)screenHeight/fbHeight);
+#endif    
+    SetTextureFilter(GetFontDefault().texture, FILTER_BILINEAR);
 #endif  // PLATFORM_DESKTOP && SUPPORT_HIGH_DPI
 
     // Setup default viewport
