@@ -759,7 +759,7 @@ void UnloadFont(Font font)
 // NOTE: Uses default font
 void DrawFPS(int posX, int posY)
 {
-    // NOTE: We are rendering fps every second for better viewing on high framerates
+    // NOTE: We are rendering fps every certain time for better viewing on high framerates
 
     static int fps = 0;
     static int counter = 0;
@@ -772,6 +772,8 @@ void DrawFPS(int posX, int posY)
         refreshRate = fps;
         counter = 0;
     }
+
+    // TODO: Find a better way to calculate FPS, maybe calculate the mean of multiple measures?
 
     // NOTE: We have rounding errors every frame, so it oscillates a lot
     DrawText(TextFormat("%2i FPS", fps), posX, posY, 20, LIME);

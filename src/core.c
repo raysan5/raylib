@@ -1265,27 +1265,29 @@ void EndDrawing(void)
 
     SwapBuffers();                  // Copy back buffer to front buffer
     PollInputEvents();              // Poll user events
-
+    
     // Frame time control system
     currentTime = GetTime();
     drawTime = currentTime - previousTime;
     previousTime = currentTime;
 
     frameTime = updateTime + drawTime;
-
+    
     // Wait for some milliseconds...
     if (frameTime < targetTime)
     {
         Wait((float)(targetTime - frameTime)*1000.0f);
 
         currentTime = GetTime();
-        double extraTime = currentTime - previousTime;
+        double waitTime = currentTime - previousTime;
         previousTime = currentTime;
 
-        frameTime += extraTime;
+        frameTime += waitTime;      // Total frame time: update + draw + wait
+        
+        //SetWindowTitle(FormatText("Update: %f, Draw: %f, Req.Wait: %f, Real.Wait: %f, Total: %f, Target: %f\n", 
+        //               (float)updateTime, (float)drawTime, (float)(targetTime - (updateTime + drawTime)), 
+        //               (float)waitTime, (float)frameTime, (float)targetTime));
     }
-
-    return;
 }
 
 // Initialize 2D mode with custom camera (2D)
@@ -1588,13 +1590,12 @@ void SetTargetFPS(int fps)
 // Returns current FPS
 int GetFPS(void)
 {
-    return (int)(1.0f/GetFrameTime());
+    return (int)roundf(1.0f/GetFrameTime());
 }
 
 // Returns time in seconds for last frame drawn
 float GetFrameTime(void)
 {
-    // NOTE: We round value to milliseconds
     return (float)frameTime;
 }
 
