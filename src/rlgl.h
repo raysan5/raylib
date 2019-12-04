@@ -1299,8 +1299,10 @@ void rlTextureParameters(unsigned int id, int param, int value)
         {
             if (value == RL_WRAP_MIRROR_CLAMP)
             {
+#if !defined(GRAPHICS_API_OPENGL_11)
                 if (texMirrorClampSupported) glTexParameteri(GL_TEXTURE_2D, param, value);
                 else TraceLog(LOG_WARNING, "Clamp mirror wrap mode not supported");
+#endif
             }
             else glTexParameteri(GL_TEXTURE_2D, param, value);
 
