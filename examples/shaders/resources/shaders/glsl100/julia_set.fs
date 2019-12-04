@@ -11,7 +11,9 @@ uniform vec2 c;                 // c.x = real, c.y = imaginary component. Equati
 uniform vec2 offset;            // Offset of the scale.
 uniform float zoom;             // Zoom of the scale.
 
-const int MAX_ITERATIONS = 255; // Max iterations to do.
+// NOTE: Maximum number of shader for-loop iterations depend on GPU,
+// for example, on RasperryPi for this examply only supports up to 60
+const int MAX_ITERATIONS = 48;  // Max iterations to do
 
 // Square a complex number
 vec2 ComplexSquare(vec2 z)
@@ -56,21 +58,22 @@ void main()
     // NOTE: fragTexCoord already comes as normalized screen coordinates but offset must be normalized before scaling and zoom
     vec2 z = vec2((fragTexCoord.x + offset.x/screenDims.x)*2.5/zoom, (fragTexCoord.y + offset.y/screenDims.y)*1.5/zoom);
 
-    int iterations = 0;
-    for (iterations = 0; iterations < MAX_ITERATIONS; iterations++)
+    int iter = 0;
+    for (int iterations = 0; iterations < 60; iterations++)
     {
         z = ComplexSquare(z) + c;  // Iterate function
-        
         if (dot(z, z) > 4.0) break;
+
+        iter = iterations;
     }
-    
+
     // Another few iterations decreases errors in the smoothing calculation.
     // See http://linas.org/art-gallery/escape/escape.html for more information.
     z = ComplexSquare(z) + c;
     z = ComplexSquare(z) + c;
     
     // This last part smooths the color (again see link above).
-    float smoothVal = float(iterations) + 1.0 - (log(log(length(z)))/log(2.0));
+    float smoothVal = float(iter) + 1.0 - (log(log(length(z)))/log(2.0));
     
     // Normalize the value so it is between 0 and 1.
     float norm = smoothVal/float(MAX_ITERATIONS);

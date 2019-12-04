@@ -7,8 +7,8 @@ varying vec2 fragTexCoord;
 varying vec4 fragColor;
 
 // Custom variables
-#define PI 3.14159265358979323846
-uniform float uTime = 0.0;
+const float PI = 3.14159265358979323846;
+uniform float uTime;
 
 float divisions = 5.0;
 float angle = 0.0;
@@ -19,9 +19,9 @@ vec2 VectorRotateTime(vec2 v, float speed)
     float localTime = fract(time);  // The time domain this works on is 1 sec.
     
     if ((localTime >= 0.0) && (localTime < 0.25)) angle = 0.0;
-    else if ((localTime >= 0.25) && (localTime < 0.50)) angle = PI/4*sin(2*PI*localTime - PI/2);
+    else if ((localTime >= 0.25) && (localTime < 0.50)) angle = PI/4.0*sin(2.0*PI*localTime - PI/2.0);
     else if ((localTime >= 0.50) && (localTime < 0.75)) angle = PI*0.25;
-    else if ((localTime >= 0.75) && (localTime < 1.00)) angle = PI/4*sin(2*PI*localTime);
+    else if ((localTime >= 0.75) && (localTime < 1.00)) angle = PI/4.0*sin(2.0*PI*localTime);
     
     // Rotate vector by angle
     v -= 0.5;
