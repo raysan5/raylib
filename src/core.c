@@ -933,8 +933,9 @@ void SetWindowMonitor(int monitor)
 
     if ((monitor >= 0) && (monitor < monitorCount))
     {
-        //glfwSetWindowMonitor(window, monitors[monitor], 0, 0, screenWidth, screenHeight, GLFW_DONT_CARE);
         TraceLog(LOG_INFO, "Selected fullscreen monitor: [%i] %s", monitor, glfwGetMonitorName(monitors[monitor]));
+        const GLFWvidmode* mode = glfwGetVideoMode(monitors[monitor]);
+        glfwSetWindowMonitor(window, monitors[monitor], 0, 0, mode->width, mode->height, mode->refreshRate);
     }
     else TraceLog(LOG_WARNING, "Selected monitor not found");
 #endif
@@ -2742,6 +2743,15 @@ static bool InitGraphicsDevice(int width, int height)
                 }
             }
         }
+
+#if defined(PLATFORM_DESKTOP)
+        // If we are windowed fullscreen, ensures that window does not minimize
+        // when focus is lost.
+        if (screenHeight == displayHeight && screenWidth == displayWidth)
+        {
+            glfwWindowHint(GLFW_AUTO_ICONIFY, 0);
+        }
+#endif
 
         TraceLog(LOG_WARNING, "Closest fullscreen videomode: %i x %i", displayWidth, displayHeight);
 
