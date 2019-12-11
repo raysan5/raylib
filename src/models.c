@@ -2372,10 +2372,9 @@ void MeshBinormals(Mesh *mesh)
     {
         Vector3 normal = { mesh->normals[i*3 + 0], mesh->normals[i*3 + 1], mesh->normals[i*3 + 2] };
         Vector3 tangent = { mesh->tangents[i*4 + 0], mesh->tangents[i*4 + 1], mesh->tangents[i*4 + 2] };
-        float tangentW = mesh->tangents[i*4 + 3];
-
+        Vector3 binormal = Vector3Multiply(Vector3CrossProduct(normal, tangent), mesh->tangents[i*4 + 3]);
+        
         // TODO: Register computed binormal in mesh->binormal?
-        // Vector3 binormal = Vector3Multiply(Vector3CrossProduct(normal, tangent), tangentW);
     }
 }
 
