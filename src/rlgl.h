@@ -2904,15 +2904,9 @@ void *rlReadTexturePixels(Texture2D texture)
     // NOTE: Previoust attached texture is automatically detached
     glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, texture.id, 0);
 
-    // Allocate enough memory to read back our texture data
-    pixels = (unsigned char *)RL_MALLOC(GetPixelDataSize(texture.width, texture.height, texture.format));
-
-    // Get OpenGL internal formats and data type from our texture format
-    unsigned int glInternalFormat, glFormat, glType;
-    rlGetGlTextureFormats(texture.format, &glInternalFormat, &glFormat, &glType);
-
-    // NOTE: We read data as RGBA because FBO texture is configured as RGBA, despite binding a RGB texture...
-    glReadPixels(0, 0, texture.width, texture.height, glFormat, glType, pixels);
+    // We read data as RGBA because FBO texture is configured as RGBA, despite binding another texture format
+    pixels = (unsigned char *)RL_MALLOC(GetPixelDataSize(texture.width, texture.height, UNCOMPRESSED_R8G8B8A8));
+    glReadPixels(0, 0, texture.width, texture.height, UNCOMPRESSED_R8G8B8A8, GL_UNSIGNED_BYTE, pixels);
 
     // Re-attach internal FBO color texture before deleting it
     glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, fbo.texture.id, 0);

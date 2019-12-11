@@ -773,11 +773,12 @@ Image GetTextureData(Texture2D texture)
             image.format = texture.format;
             image.mipmaps = 1;
 
-            // NOTE: Data retrieved on OpenGL ES 2.0 should be RGBA
-            // coming from FBO color buffer, but it seems original
-            // texture format is retrieved on RPI... weird...
-            //image.format = UNCOMPRESSED_R8G8B8A8;
-
+#if defined(GRAPHICS_API_OPENGL_ES2)
+            // NOTE: Data retrieved on OpenGL ES 2.0 should be RGBA,
+            // coming from FBO color buffer attachment, but it seems
+            // original texture format is retrieved on RPI...
+            image.format = UNCOMPRESSED_R8G8B8A8;
+#endif
             TraceLog(LOG_INFO, "Texture pixel data obtained successfully");
         }
         else TraceLog(LOG_WARNING, "Texture pixel data could not be obtained");
