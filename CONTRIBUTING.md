@@ -6,19 +6,19 @@ Do you enjoy raylib and want to contribute? Nice! You can help with the followin
 
 - C programming - Can you write/review/test/improve the code? 
 - Documentation/Tutorials/Example - Can you write some tutorial/example?
-- Web Development - Can you help [with the web](https://github.com/raysan5/raylib.com)?
-- Porting to other platforms - Can you port and compile raylib on another systems?
-- Testing - Can you find some bugs on raylib?
+- Web Development - Can you help [with the website](https://github.com/raysan5/raylib.com)?
+- Porting to other platforms - Can you port and compile raylib on other systems?
+- Testing - Can you find some bugs in raylib?
 
 This document contains a set of guidelines to contribute to the project. These are mostly guidelines, not rules. 
-Use your best judgement, and feel free to propose changes to this document in a pull-request.
+Use your best judgement, and feel free to propose changes to this document in a pull request.
 
 ### raylib philosophy
 
  - raylib is a tool to enjoy videogames programming, every single function in raylib should be a tutorial on itself.
  - raylib is SIMPLE and EASY-TO-USE, I tried to keep it compact with a small set of functions, if a function is too complex or is not clearly useful, better not to include it.
  - raylib is open source and free; educators and institutions can use this tool to TEACH videogames programming completely by free.
- - raylib is collaborative; contribution of tutorials / code-examples / bugs-solving / code-comments are highly appreciated.
+ - raylib is collaborative; contribution of tutorials / code examples / bug fixes / code comments are highly appreciated.
  - raylib's license (and its external libs respective licenses) allow using it for commercial products.
 
 ### Some interesting reads to start with
@@ -42,7 +42,7 @@ Source code is extensively commented for that purpose, raylib primary learning m
 
  > learn by reading code and examples
 
-For detailed information on building raylib and examples, please check [raylib Wiki](https://github.com/raysan5/raylib/wiki).
+For detailed information on building raylib and examples, please see [raylib Wiki](https://github.com/raysan5/raylib/wiki).
 
 ### Opening new Issues
 
@@ -53,13 +53,13 @@ To open new issue for raylib (bug, enhancement, discussion...), just try to foll
  title and clear description, as much relevant information as possible, and a code sample demonstrating the unexpected behavior.
  - If applies, attach some screenshot of the issue and a .zip file with the code sample and required resources.
  - On issue description, add a brackets tag about the raylib module that relates to this issue. 
- If don't know the module, just report the issue, I will review it.
+ If don't know which module, just report the issue, I will review it.
  - You can check other issues to see how is being done!
 
 ### Sending a Pull-Request
 
  - Make sure the PR description clearly describes the problem and solution. Include the relevant issue number if applicable.
- - Don't send big pull-requests (lots of changelists), they are difficult to review. It's better to send small pull-request, one at a time.
+ - Don't send big pull requests (lots of changelists), they are difficult to review. It's better to send small pull requests, one at a time.
  - Verify that changes don't break the build (at least on Windows platform). As many platforms where you can test it, the better, but don't worry
  if you cannot test all the platforms.
 

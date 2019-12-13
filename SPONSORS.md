@@ -1,4 +1,4 @@
-The following people has contributed with a generous donation to raylib project.
+The following people has contributed with a generous donation to the raylib project.
 
 ## 🥇 Gold Contributors
 
@@ -8,6 +8,6 @@ The following people has contributed with a generous donation to raylib project.
 
 ...
 
-## 🥉 Bronce Contributors
+## 🥉 Bronze Contributors
 
 ...
