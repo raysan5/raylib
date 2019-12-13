@@ -6,7 +6,7 @@ Do you enjoy raylib and want to contribute? Nice! You can help with the followin
 
 - C programming - Can you write/review/test/improve the code? 
 - Documentation/Tutorials/Example - Can you write some tutorial/example?
-- Web Development - Can you help [with the web](https://github.com/raysan5/raylib.com)?
+- Web Development - Can you help [with the website](https://github.com/raysan5/raylib.com)?
 - Porting to other platforms - Can you port and compile raylib on other systems?
 - Testing - Can you find some bugs in raylib?
 
