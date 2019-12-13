@@ -8,6 +8,6 @@ The following people has contributed with a generous donation to raylib project.
 
 ...
 
-## 🥉 Bronce Contributors
+## 🥉 Bronze Contributors
 
 ...
