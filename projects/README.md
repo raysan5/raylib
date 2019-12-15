@@ -9,10 +9,8 @@ IDE | Platform | Template type | State
 [CMake](https://cmake.org/) | n/a | example compiling and raylib source downloading/building if necessary | DONE
 [CodeBlocks](http://www.codeblocks.org/) | Linux, Windows | example compiling | DONE
 [Geany](https://www.geany.org/) | Linux, Windows | - | DONE
-[KDevelop](https://www.kdevelop.org/) | Linux, Windows, macOS | - | INCOMPLETE
 [Notepad++](https://notepad-plus-plus.org/) | Windows | source/example compiling | DONE
-[Sublime Text](https://www.sublimetext.com/) | Windows, Linux, macOS | source and example | DONE
-[VS2015](https://www.visualstudio.com) | Windows | source/example compiling | DONE
+[SublimeText](https://www.sublimetext.com/) | Windows, Linux, macOS | source and example | DONE
 [VS2017](https://www.visualstudio.com) | Windows | source/example compiling | DONE
 [VSCode](https://code.visualstudio.com/) | Windows, macOS | example compiling | DONE
 scripts | Windows, Linux, macOS | source and example | DONE
