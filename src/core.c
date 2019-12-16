@@ -2589,8 +2589,16 @@ Vector2 GetTouchPosition(int index)
         position.y = position.y*((float)renderHeight/(float)displayHeight) - renderOffsetY/2;
     }
 #elif defined(PLATFORM_RPI)
+
     position = touchPosition[index];
+    
 #else   // PLATFORM_DESKTOP
+
+    // TODO: GLFW is not supporting multi-touch input just yet
+    
+    // https://www.codeproject.com/Articles/668404/Programming-for-Multi-Touch
+    // https://docs.microsoft.com/en-us/windows/win32/wintouch/getting-started-with-multi-touch-messages
+
     if (index == 0) position = GetMousePosition();
 #endif
 
