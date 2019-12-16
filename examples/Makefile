@@ -115,13 +115,12 @@ endif
 
 ifeq ($(PLATFORM),PLATFORM_WEB)
     # Emscripten required variables
-    EMSDK_PATH          ?= C:/emsdk
-    EMSCRIPTEN_VERSION  ?= 1.38.31
-    CLANG_VERSION       = e$(EMSCRIPTEN_VERSION)_64bit
-    PYTHON_VERSION      = 2.7.13.1_64bit\python-2.7.13.amd64
-    NODE_VERSION        = 8.9.1_64bit
-    export PATH         = $(EMSDK_PATH);$(EMSDK_PATH)\clang\$(CLANG_VERSION);$(EMSDK_PATH)\node\$(NODE_VERSION)\bin;$(EMSDK_PATH)\python\$(PYTHON_VERSION);$(EMSDK_PATH)\emscripten\$(EMSCRIPTEN_VERSION);C:\raylib\MinGW\bin:$$(PATH)
-    EMSCRIPTEN          = $(EMSDK_PATH)\emscripten\$(EMSCRIPTEN_VERSION)
+    EMSDK_PATH         ?= C:/emsdk
+    EMSCRIPTEN_PATH    ?= $(EMSDK_PATH)/fastcomp/emscripten
+    CLANG_PATH          = $(EMSDK_PATH)/fastcomp/bin
+    PYTHON_PATH         = $(EMSDK_PATH)/python/2.7.13.1_64bit/python-2.7.13.amd64
+    NODE_PATH           = $(EMSDK_PATH)/node/12.9.1_64bit/bin
+    export PATH         = $(EMSDK_PATH);$(EMSCRIPTEN_PATH);$(CLANG_PATH);$(NODE_PATH);$(PYTHON_PATH);C:\raylib\MinGW\bin:$$(PATH)
 endif
 
 # Define raylib release directory for compiled library.
@@ -192,9 +191,11 @@ CFLAGS += -Wall -std=c99 -D_DEFAULT_SOURCE -Wno-missing-braces
 
 ifeq ($(BUILD_MODE),DEBUG)
     CFLAGS += -g
-endif
-ifeq ($(RAYLIB_BUILD_MODE),RELEASE)
-    CFLAGS += -O1 -s
+    ifeq ($(PLATFORM),PLATFORM_WEB)
+        CFLAGS += -s ASSERTIONS=1 --profiling
+    endif
+else
+    CFLAGS += -s -O1
 endif
 
 # Additional flags for compiler (if desired)
@@ -233,10 +234,8 @@ ifeq ($(PLATFORM),PLATFORM_WEB)
     # --profiling                # include information for code profiling
     # --memory-init-file 0       # to avoid an external memory initialization code file (.mem)
     # --preload-file resources   # specify a resources folder for data compilation
-    CFLAGS += -Os -s USE_GLFW=3 -s FORCE_FILESYSTEM=1 -s EMTERPRETIFY=1 -s EMTERPRETIFY_ASYNC=1 --preload-file $(dir $<)resources@resources
-    ifeq ($(BUILD_MODE), DEBUG)
-        CFLAGS += -s ASSERTIONS=1 --profiling
-    endif
+    CFLAGS += -s USE_GLFW=3 -s FORCE_FILESYSTEM=1 -s EMTERPRETIFY=1 -s EMTERPRETIFY_ASYNC=1 --preload-file $(dir $<)resources@resources
+
     # NOTE: Simple raylib examples are compiled to be interpreter by emterpreter, that way,
     # we can compile same code for ALL platforms with no change required, but, working on bigger
     # projects, code needs to be refactored to avoid a blocking while() loop, moving Update and Draw
@@ -346,7 +345,7 @@ ifeq ($(PLATFORM),PLATFORM_WEB)
     LDLIBS = $(RAYLIB_RELEASE_PATH)/libraylib.bc
 endif
 
-# Define all source files required
+# Define all object files required
 EXAMPLES = \
     core/core_basic_window \
     core/core_input_keys \
@@ -384,16 +383,6 @@ EXAMPLES = \
     shapes/shapes_draw_ring \
     shapes/shapes_draw_circle_sector \
     shapes/shapes_draw_rectangle_rounded \
-    text/text_raylib_fonts \
-    text/text_font_spritefont \
-    text/text_font_loading \
-    text/text_font_filters \
-    text/text_font_sdf \
-    text/text_format_text \
-    text/text_input_box \
-    text/text_writing_anim \
-    text/text_rectangle_bounds \
-    text/text_unicode \
     textures/textures_logo_raylib \
     textures/textures_mouse_painting \
     textures/textures_rectangle \
@@ -411,6 +400,16 @@ EXAMPLES = \
     textures/textures_sprite_button \
     textures/textures_sprite_explosion \
     textures/textures_bunnymark \
+    text/text_raylib_fonts \
+    text/text_font_spritefont \
+    text/text_font_loading \
+    text/text_font_filters \
+    text/text_font_sdf \
+    text/text_format_text \
+    text/text_input_box \
+    text/text_writing_anim \
+    text/text_rectangle_bounds \
+    text/text_unicode \
     models/models_animation \
     models/models_billboard \
     models/models_box_collisions \
