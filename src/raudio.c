@@ -1246,6 +1246,7 @@ Music LoadMusicStream(const char *fileName)
             music.stream = InitAudioStream(48000, 16, 2);
             music.sampleCount = (unsigned int)jar_xm_get_remaining_samples(ctxXm);
             music.loopCount = 0;   // Infinite loop by default
+            jar_xm_reset(ctxXm);   // make sure we start at the beginning of the song
             musicLoaded = true;
 
             music.ctxData = ctxXm;

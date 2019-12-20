@@ -2670,7 +2670,7 @@ void jar_xm_reset(jar_xm_context_t* ctx)
         jar_xm_cut_note(&ctx->channels[i]);
     }
     ctx->current_row = 0;
-    ctx->current_table_index = ctx->module.restart_position;
+    ctx->current_table_index = 0;
     ctx->current_tick = 0;
 }
 
