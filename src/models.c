@@ -1164,7 +1164,7 @@ void UpdateModelAnimation(Model model, ModelAnimation anim, int frame)
 
             // Upload new vertex data to GPU for model drawing
             rlUpdateBuffer(model.meshes[m].vboId[0], model.meshes[m].animVertices, model.meshes[m].vertexCount*3*sizeof(float));    // Update vertex position
-            rlUpdateBuffer(model.meshes[m].vboId[2], model.meshes[m].animVertices, model.meshes[m].vertexCount*3*sizeof(float));    // Update vertex normals
+            rlUpdateBuffer(model.meshes[m].vboId[2], model.meshes[m].animNormals, model.meshes[m].vertexCount*3*sizeof(float));     // Update vertex normals
         }
     }
 }
