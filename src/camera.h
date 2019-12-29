@@ -167,8 +167,8 @@ void SetCameraMoveControls(int frontKey, int backKey,
 // FIRST_PERSON
 //#define CAMERA_FIRST_PERSON_MOUSE_SENSITIVITY           0.003f
 #define CAMERA_FIRST_PERSON_FOCUS_DISTANCE              25.0f
-#define CAMERA_FIRST_PERSON_MIN_CLAMP                   85.0f
-#define CAMERA_FIRST_PERSON_MAX_CLAMP                  -85.0f
+#define CAMERA_FIRST_PERSON_MIN_CLAMP                   89.0f
+#define CAMERA_FIRST_PERSON_MAX_CLAMP                  -89.0f
 
 #define CAMERA_FIRST_PERSON_STEP_TRIGONOMETRIC_DIVIDER  5.0f
 #define CAMERA_FIRST_PERSON_STEP_DIVIDER                30.0f
@@ -429,9 +429,15 @@ void UpdateCamera(Camera *camera)
             else if (cameraAngle.y < CAMERA_FIRST_PERSON_MAX_CLAMP*DEG2RAD) cameraAngle.y = CAMERA_FIRST_PERSON_MAX_CLAMP*DEG2RAD;
 
             // Camera is always looking at player
-            camera->target.x = camera->position.x - sinf(cameraAngle.x)*CAMERA_FIRST_PERSON_FOCUS_DISTANCE;
-            camera->target.y = camera->position.y + sinf(cameraAngle.y)*CAMERA_FIRST_PERSON_FOCUS_DISTANCE;
-            camera->target.z = camera->position.z - cosf(cameraAngle.x)*CAMERA_FIRST_PERSON_FOCUS_DISTANCE;
+            //camera->target.x = camera->position.x - sinf(cameraAngle.x)*CAMERA_FIRST_PERSON_FOCUS_DISTANCE;
+            //camera->target.y = camera->position.y + sinf(cameraAngle.y)*CAMERA_FIRST_PERSON_FOCUS_DISTANCE;
+            //camera->target.z = camera->position.z - cosf(cameraAngle.x)*CAMERA_FIRST_PERSON_FOCUS_DISTANCE;
+			Matrix t = MatrixTranslate(0,0,(cameraTargetDistance/CAMERA_FREE_PANNING_DIVIDER));
+			Matrix r = MatrixRotateXYZ((Vector3){PI*2-cameraAngle.y,PI*2-cameraAngle.x,0});
+			r = MatrixMultiply(t,r);
+			camera->target.x = camera->position.x - r.m12;
+			camera->target.y = camera->position.y - r.m13;
+			camera->target.z = camera->position.z - r.m14;
 
             if (isMoving) swingCounter++;
 
