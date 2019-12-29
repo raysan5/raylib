@@ -428,16 +428,14 @@ void UpdateCamera(Camera *camera)
             if (cameraAngle.y > CAMERA_FIRST_PERSON_MIN_CLAMP*DEG2RAD) cameraAngle.y = CAMERA_FIRST_PERSON_MIN_CLAMP*DEG2RAD;
             else if (cameraAngle.y < CAMERA_FIRST_PERSON_MAX_CLAMP*DEG2RAD) cameraAngle.y = CAMERA_FIRST_PERSON_MAX_CLAMP*DEG2RAD;
 
-            // Camera is always looking at player
-            //camera->target.x = camera->position.x - sinf(cameraAngle.x)*CAMERA_FIRST_PERSON_FOCUS_DISTANCE;
-            //camera->target.y = camera->position.y + sinf(cameraAngle.y)*CAMERA_FIRST_PERSON_FOCUS_DISTANCE;
-            //camera->target.z = camera->position.z - cosf(cameraAngle.x)*CAMERA_FIRST_PERSON_FOCUS_DISTANCE;
-			Matrix t = MatrixTranslate(0,0,(cameraTargetDistance/CAMERA_FREE_PANNING_DIVIDER));
-			Matrix r = MatrixRotateXYZ((Vector3){PI*2-cameraAngle.y,PI*2-cameraAngle.x,0});
-			r = MatrixMultiply(t,r);
-			camera->target.x = camera->position.x - r.m12;
-			camera->target.y = camera->position.y - r.m13;
-			camera->target.z = camera->position.z - r.m14;
+            // Recalculate camera target considering translation and rotation
+            Matrix translation = MatrixTranslate(0, 0, (cameraTargetDistance/CAMERA_FREE_PANNING_DIVIDER));
+            Matrix rotation = MatrixRotateXYZ((Vector3){ PI*2 - cameraAngle.y, PI*2 - cameraAngle.x, 0 });
+            Matrix transform = MatrixMultiply(translation, rotation);
+            
+            camera->target.x = camera->position.x - transform.m12;
+            camera->target.y = camera->position.y - transform.m13;
+            camera->target.z = camera->position.z - transform.m14;
 
             if (isMoving) swingCounter++;
 
