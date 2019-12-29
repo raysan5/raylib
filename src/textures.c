@@ -2988,9 +2988,9 @@ static Image LoadAnimatedGIF(const char *fileName, int *frames, int **delays)
     {
         fseek(gifFile, 0L, SEEK_END);
         int size = ftell(gifFile);
-        fseek(gifFile, 0L, SEEK_SET);	
+        fseek(gifFile, 0L, SEEK_SET);    
 
-        unsigned char *buffer = (unsigned char *)RL_CALLOC(size, sizeof(char));	
+        unsigned char *buffer = (unsigned char *)RL_CALLOC(size, sizeof(char));    
         fread(buffer, sizeof(char), size, gifFile);
 
         fclose(gifFile);    // Close file pointer
