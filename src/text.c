@@ -1108,6 +1108,23 @@ bool TextIsEqual(const char *text1, const char *text2)
 
     return result;
 }
+// Check if two text string are equal ignoring case
+// REQUIRES: tolower()
+bool TextIsEqualCase(const char *text1, const char *text2)
+{
+    bool result = false;
+
+	while (tolower((unsigned char)(*text1)) == tolower((unsigned char)(*text2++)))
+	{
+		if(*text1++ == '\0')
+		{
+			result = true;
+			break;
+		}
+	}
+
+    return result;
+}
 
 // Get text length in bytes, check for \0 character
 unsigned int TextLength(const char *text)

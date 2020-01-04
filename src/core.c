@@ -1845,7 +1845,7 @@ bool IsFileExtension(const char *fileName, const char *ext)
 
         for (int i = 0; i < extCount; i++)
         {
-            if (strcmp(fileExt, checkExts[i] + 1) == 0)
+            if (TextIsEqualCase(fileExt, checkExts[i] + 1))
             {
                 result = true;
                 break;
