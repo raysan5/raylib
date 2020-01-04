@@ -1108,6 +1108,7 @@ bool TextIsEqual(const char *text1, const char *text2)
 
     return result;
 }
+
 // Check if two text string are equal ignoring case
 // REQUIRES: tolower()
 bool TextIsEqualCase(const char *text1, const char *text2)
