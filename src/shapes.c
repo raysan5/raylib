@@ -215,7 +215,7 @@ void DrawCircleSector(Vector2 center, float radius, int startAngle, int endAngle
         endAngle = tmp;
     }
 
-    if (segments < 4)
+    if (segments < 3)
     {
         // Calculate how many segments we need to draw a smooth circle, taken from https://stackoverflow.com/a/2244088
         #define CIRCLE_ERROR_RATE  0.5f
@@ -307,7 +307,7 @@ void DrawCircleSectorLines(Vector2 center, float radius, int startAngle, int end
         endAngle = tmp;
     }
 
-    if (segments < 4)
+    if (segments < 3)
     {
         // Calculate how many segments we need to draw a smooth circle, taken from https://stackoverflow.com/a/2244088
         #ifndef CIRCLE_ERROR_RATE
