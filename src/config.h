@@ -6,7 +6,7 @@
 *
 *   LICENSE: zlib/libpng
 *
-*   Copyright (c) 2018-2019 Ahmad Fatoum & Ramon Santamaria (@raysan5)
+*   Copyright (c) 2018-2020 Ahmad Fatoum & Ramon Santamaria (@raysan5)
 *
 *   This software is provided "as-is", without any express or implied warranty. In no event
 *   will the authors be held liable for any damages arising from the use of this software.
@@ -84,9 +84,9 @@
 //#define SUPPORT_FILEFORMAT_BMP    1
 //#define SUPPORT_FILEFORMAT_TGA    1
 //#define SUPPORT_FILEFORMAT_JPG    1
-//#define SUPPORT_FILEFORMAT_GIF    1
+#define SUPPORT_FILEFORMAT_GIF    1
 //#define SUPPORT_FILEFORMAT_PSD    1
-//#define SUPPORT_FILEFORMAT_DDS    1
+#define SUPPORT_FILEFORMAT_DDS    1
 #define SUPPORT_FILEFORMAT_HDR      1
 //#define SUPPORT_FILEFORMAT_KTX    1
 //#define SUPPORT_FILEFORMAT_ASTC   1
