@@ -447,39 +447,39 @@ Font LoadFontFromImage(Image image, Color key, int firstChar)
     RL_FREE(pixels);    // Free pixels array memory
 
     // Create spritefont with all data parsed from image
-    Font spriteFont = { 0 };
+    Font font = { 0 };
 
-    spriteFont.texture = LoadTextureFromImage(fontClear); // Convert processed image to OpenGL texture
-    spriteFont.charsCount = index;
+    font.texture = LoadTextureFromImage(fontClear); // Convert processed image to OpenGL texture
+    font.charsCount = index;
 
     // We got tempCharValues and tempCharsRecs populated with chars data
     // Now we move temp data to sized charValues and charRecs arrays
-    spriteFont.chars = (CharInfo *)RL_MALLOC(spriteFont.charsCount*sizeof(CharInfo));
-    spriteFont.recs = (Rectangle *)RL_MALLOC(spriteFont.charsCount*sizeof(Rectangle));
+    font.chars = (CharInfo *)RL_MALLOC(font.charsCount*sizeof(CharInfo));
+    font.recs = (Rectangle *)RL_MALLOC(font.charsCount*sizeof(Rectangle));
 
-    for (int i = 0; i < spriteFont.charsCount; i++)
+    for (int i = 0; i < font.charsCount; i++)
     {
-        spriteFont.chars[i].value = tempCharValues[i];
+        font.chars[i].value = tempCharValues[i];
 
         // Get character rectangle in the font atlas texture
-        spriteFont.recs[i] = tempCharRecs[i];
+        font.recs[i] = tempCharRecs[i];
 
         // NOTE: On image based fonts (XNA style), character offsets and xAdvance are not required (set to 0)
-        spriteFont.chars[i].offsetX = 0;
-        spriteFont.chars[i].offsetY = 0;
-        spriteFont.chars[i].advanceX = 0;
+        font.chars[i].offsetX = 0;
+        font.chars[i].offsetY = 0;
+        font.chars[i].advanceX = 0;
 
         // Fill character image data from fontClear data
-        spriteFont.chars[i].image = ImageFromImage(fontClear, tempCharRecs[i]);
+        font.chars[i].image = ImageFromImage(fontClear, tempCharRecs[i]);
     }
 
     UnloadImage(fontClear);     // Unload processed image once converted to texture
 
-    spriteFont.baseSize = (int)spriteFont.recs[0].height;
+    font.baseSize = (int)font.recs[0].height;
 
     TraceLog(LOG_INFO, "Image file loaded correctly as Font");
 
-    return spriteFont;
+    return font;
 }
 
 // Load font data for further use
@@ -742,7 +742,7 @@ Image GenImageFontAtlas(const CharInfo *chars, Rectangle **charRecs, int charsCo
 // Unload Font from GPU memory (VRAM)
 void UnloadFont(Font font)
 {
-    // NOTE: Make sure spriteFont is not default font (fallback)
+    // NOTE: Make sure font is not default font (fallback)
     if (font.texture.id != GetFontDefault().texture.id)
     {
         for (int i = 0; i < font.charsCount; i++) UnloadImage(font.chars[i].image);
