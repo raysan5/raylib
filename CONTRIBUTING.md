@@ -25,7 +25,7 @@ Use your best judgement, and feel free to propose changes to this document in a 
 
  - [raylib history](HISTORY.md)
  - [raylib architecture](https://github.com/raysan5/raylib/wiki/raylib-architecture)
- - [raylib license](LICENSE.md)
+ - [raylib license](LICENSE)
  - [raylib roadmap](ROADMAP.md)
  
 [raylib Wiki](https://github.com/raysan5/raylib/wiki) contains some information about the library and is open to anyone for edit. 
