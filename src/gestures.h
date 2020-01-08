@@ -181,12 +181,12 @@ float GetGesturePinchAngle(void);                       // Get gesture pinch ang
 //----------------------------------------------------------------------------------
 
 // Touch gesture variables
-static Vector2 touchDownPosition = { 0.0f, 0.0f };
-static Vector2 touchDownPosition2 = { 0.0f, 0.0f };
-static Vector2 touchDownDragPosition = { 0.0f, 0.0f };
-static Vector2 touchUpPosition = { 0.0f, 0.0f };
-static Vector2 moveDownPosition = { 0.0f, 0.0f };
-static Vector2 moveDownPosition2 = { 0.0f, 0.0f };
+static Vector2 touchDownPosition = { 0.0f, 0.0f };      // First touch down position
+static Vector2 touchDownPosition2 = { 0.0f, 0.0f };     // Second touch down position
+static Vector2 touchDownDragPosition = { 0.0f, 0.0f };  // Touch drag position
+static Vector2 touchUpPosition = { 0.0f, 0.0f };        // Touch up position
+static Vector2 moveDownPosition = { 0.0f, 0.0f };       // First touch down position on move
+static Vector2 moveDownPosition2 = { 0.0f, 0.0f };      // Second touch down position on move
 
 static int pointCount = 0;                      // Touch points counter
 static int firstTouchId = -1;                   // Touch id for first touch point

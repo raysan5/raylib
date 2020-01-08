@@ -813,7 +813,6 @@ static float maxAnisotropicLevel = 0.0f;    // Maximum anisotropy level supporte
 static PFNGLGENVERTEXARRAYSOESPROC glGenVertexArrays;        // Entry point pointer to function glGenVertexArrays()
 static PFNGLBINDVERTEXARRAYOESPROC glBindVertexArray;        // Entry point pointer to function glBindVertexArray()
 static PFNGLDELETEVERTEXARRAYSOESPROC glDeleteVertexArrays;  // Entry point pointer to function glDeleteVertexArrays()
-//static PFNGLISVERTEXARRAYOESPROC glIsVertexArray;          // NOTE: Fails in WebGL, omitted
 #endif
 
 #if defined(SUPPORT_VR_SIMULATOR)
