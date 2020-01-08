@@ -221,20 +221,20 @@ struct rAudioBuffer {
 #define AudioBuffer rAudioBuffer        // HACK: To avoid CoreAudio (macOS) symbol collision
 
 // Audio buffers are tracked in a linked list
-static AudioBuffer *firstAudioBuffer = NULL;
-static AudioBuffer *lastAudioBuffer = NULL;
+static AudioBuffer *firstAudioBuffer = NULL;    // Pointer to first AudioBuffer in the list
+static AudioBuffer *lastAudioBuffer = NULL;     // Pointer to last AudioBuffer in the list
 
 // miniaudio global variables
-static ma_context context;
-static ma_device device;
-static ma_mutex audioLock;
-static bool isAudioInitialized = false;
-static float masterVolume = 1.0f;
+static ma_context context;                      // miniaudio context data
+static ma_device device;                        // miniaudio device
+static ma_mutex audioLock;                      // miniaudio mutex lock
+static bool isAudioInitialized = false;         // Check if audio device is initialized
+static float masterVolume = 1.0f;               // Master volume (multiplied on output mixing)
 
 // Multi channel playback global variables
-AudioBuffer *audioBufferPool[MAX_AUDIO_BUFFER_POOL_CHANNELS] = { 0 };
-unsigned int audioBufferPoolCounter = 0;
-unsigned int audioBufferPoolChannels[MAX_AUDIO_BUFFER_POOL_CHANNELS] = { 0 };
+static AudioBuffer *audioBufferPool[MAX_AUDIO_BUFFER_POOL_CHANNELS] = { 0 };         // Multichannel AudioBuffer pointers pool
+static unsigned int audioBufferPoolCounter = 0;                                      // AudioBuffer pointers pool counter
+static unsigned int audioBufferPoolChannels[MAX_AUDIO_BUFFER_POOL_CHANNELS] = { 0 }; // AudioBuffer pool channels
 
 // miniaudio functions declaration
 static void OnLog(ma_context *pContext, ma_device *pDevice, ma_uint32 logLevel, const char *message);

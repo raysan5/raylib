@@ -767,69 +767,53 @@ typedef struct VrStereoConfig {
 // Global Variables Definition
 //----------------------------------------------------------------------------------
 #if defined(GRAPHICS_API_OPENGL_33) || defined(GRAPHICS_API_OPENGL_ES2)
-static Matrix stack[MAX_MATRIX_STACK_SIZE] = { 0 };
-static int stackCounter = 0;
-
-static Matrix modelview = { 0 };
-static Matrix projection = { 0 };
-static Matrix *currentMatrix = NULL;
-static int currentMatrixMode = -1;
-static float currentDepth = -1.0f;
+static Matrix stack[MAX_MATRIX_STACK_SIZE] = { 0 }; // Matrix stack for push/pop
+static int stackCounter = 0;                // Matrix stack counter
+static Matrix modelview = { 0 };            // Default modelview matrix
+static Matrix projection = { 0 };           // Default projection matrix
+static Matrix *currentMatrix = NULL;        // Current matrix pointer
+static int currentMatrixMode = -1;          // Current matrix mode
+static float currentDepth = -1.0f;          // Current depth value 
 
 // Default dynamic buffer for elements data
 // NOTE: A multi-buffering system is supported
 static DynamicBuffer vertexData[MAX_BATCH_BUFFERING] = { 0 };
-static int currentBuffer = 0;
+static int currentBuffer = 0;               // Current buffer tracking
 
-// Transform matrix to be used with rlTranslate, rlRotate, rlScale
-static Matrix transformMatrix = { 0 };
-static bool useTransformMatrix = false;
+static Matrix transformMatrix = { 0 };      // Transform matrix to be used with rlTranslate, rlRotate, rlScale
+static bool useTransformMatrix = false;     // Use transform matrix against vertex (if required)
 
-// Default buffers draw calls
-static DrawCall *draws = NULL;
-static int drawsCounter = 0;
+static DrawCall *draws = NULL;              // Draw calls array
+static int drawsCounter = 0;                // Draw calls counter
 
-// Default texture (1px white) useful for plain color polys (required by shader)
-static unsigned int defaultTextureId = 0;
-
-// Default shaders
+static unsigned int defaultTextureId = 0;   // Default texture used on shapes/poly drawing (required by shader)
 static unsigned int defaultVShaderId = 0;   // Default vertex shader id (used by default shader program)
 static unsigned int defaultFShaderId = 0;   // Default fragment shader Id (used by default shader program)
-
 static Shader defaultShader = { 0 };        // Basic shader, support vertex color and diffuse texture
 static Shader currentShader = { 0 };        // Shader to be used on rendering (by default, defaultShader)
 
-// Extension supported flag: VAO
+// Extensions supported flags
 static bool vaoSupported = false;           // VAO support (OpenGL ES2 could not support VAO extension)
-
-// Extension supported flag: Compressed textures
 static bool texCompDXTSupported = false;    // DDS texture compression support
 static bool texCompETC1Supported = false;   // ETC1 texture compression support
 static bool texCompETC2Supported = false;   // ETC2/EAC texture compression support
 static bool texCompPVRTSupported = false;   // PVR texture compression support
 static bool texCompASTCSupported = false;   // ASTC texture compression support
-
-// Extension supported flag: Textures format
 static bool texNPOTSupported = false;       // NPOT textures full support
 static bool texFloatSupported = false;      // float textures support (32 bit per channel)
 static bool texDepthSupported = false;      // Depth textures supported
-static int maxDepthBits = 16;               // Maximum bits for depth component
-
-// Extension supported flag: Clamp mirror wrap mode
-static bool texMirrorClampSupported = false;        // Clamp mirror wrap mode supported
-
-// Extension supported flag: Anisotropic filtering
-static bool texAnisotropicFilterSupported = false;  // Anisotropic texture filtering support
-static float maxAnisotropicLevel = 0.0f;            // Maximum anisotropy level supported (minimum is 2.0f)
-
+static bool texMirrorClampSupported = false;// Clamp mirror wrap mode supported
+static bool texAnisoFilterSupported = false;// Anisotropic texture filtering support
 static bool debugMarkerSupported = false;   // Debug marker support
+static int maxDepthBits = 16;               // Maximum bits for depth component
+static float maxAnisotropicLevel = 0.0f;    // Maximum anisotropy level supported (minimum is 2.0f)
 
 #if defined(GRAPHICS_API_OPENGL_ES2)
 // NOTE: VAO functionality is exposed through extensions (OES)
-static PFNGLGENVERTEXARRAYSOESPROC glGenVertexArrays;
-static PFNGLBINDVERTEXARRAYOESPROC glBindVertexArray;
-static PFNGLDELETEVERTEXARRAYSOESPROC glDeleteVertexArrays;
-//static PFNGLISVERTEXARRAYOESPROC glIsVertexArray;   // NOTE: Fails in WebGL, omitted
+static PFNGLGENVERTEXARRAYSOESPROC glGenVertexArrays;        // Entry point pointer to function glGenVertexArrays()
+static PFNGLBINDVERTEXARRAYOESPROC glBindVertexArray;        // Entry point pointer to function glBindVertexArray()
+static PFNGLDELETEVERTEXARRAYSOESPROC glDeleteVertexArrays;  // Entry point pointer to function glDeleteVertexArrays()
+//static PFNGLISVERTEXARRAYOESPROC glIsVertexArray;          // NOTE: Fails in WebGL, omitted
 #endif
 
 #if defined(SUPPORT_VR_SIMULATOR)
@@ -1619,7 +1603,7 @@ void rlglInit(int width, int height)
         // Anisotropic texture filter support
         if (strcmp(extList[i], (const char *)"GL_EXT_texture_filter_anisotropic") == 0)
         {
-            texAnisotropicFilterSupported = true;
+            texAnisoFilterSupported = true;
             glGetFloatv(0x84FF, &maxAnisotropicLevel);   // GL_MAX_TEXTURE_MAX_ANISOTROPY_EXT
         }
 
@@ -1649,7 +1633,7 @@ void rlglInit(int width, int height)
     if (texCompPVRTSupported) TraceLog(LOG_INFO, "[EXTENSION] PVRT compressed textures supported");
     if (texCompASTCSupported) TraceLog(LOG_INFO, "[EXTENSION] ASTC compressed textures supported");
 
-    if (texAnisotropicFilterSupported) TraceLog(LOG_INFO, "[EXTENSION] Anisotropic textures filtering supported (max: %.0fX)", maxAnisotropicLevel);
+    if (texAnisoFilterSupported) TraceLog(LOG_INFO, "[EXTENSION] Anisotropic textures filtering supported (max: %.0fX)", maxAnisotropicLevel);
     if (texMirrorClampSupported) TraceLog(LOG_INFO, "[EXTENSION] Mirror clamp wrap texture mode supported");
 
     if (debugMarkerSupported) TraceLog(LOG_INFO, "[EXTENSION] Debug Marker supported");

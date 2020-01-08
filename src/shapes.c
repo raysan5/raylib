@@ -58,8 +58,8 @@
 //----------------------------------------------------------------------------------
 // Global Variables Definition
 //----------------------------------------------------------------------------------
-static Texture2D texShapes = { 0 };
-static Rectangle recTexShapes = { 0 };
+static Texture2D texShapes = { 0 };         // Texture used on shapes drawing (usually a white)
+static Rectangle recTexShapes = { 0 };      // Texture source rectangle used on shapes drawing
 
 //----------------------------------------------------------------------------------
 // Module specific Functions Declaration

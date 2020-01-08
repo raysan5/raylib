@@ -52,17 +52,26 @@
 
 #define MAX_TRACELOG_BUFFER_SIZE   128  // Max length of one trace-log message
 
+#define MAX_UWP_MESSAGES 512            // Max UWP messages to process
+
 //----------------------------------------------------------------------------------
 // Global Variables Definition
 //----------------------------------------------------------------------------------
 
 // Log types messages
-static int logTypeLevel = LOG_INFO;
-static int logTypeExit = LOG_ERROR;
-static TraceLogCallback logCallback = NULL;
+static int logTypeLevel = LOG_INFO;                     // Minimum log type level
+static int logTypeExit = LOG_ERROR;                     // Log type that exits
+static TraceLogCallback logCallback = NULL;             // Log callback function pointer
 
 #if defined(PLATFORM_ANDROID)
-AAssetManager *assetManager = NULL;
+static AAssetManager *assetManager = NULL;              // Android assets manager pointer 
+#endif
+
+#if defined(PLATFORM_UWP)
+static int UWPOutMessageId = -1;                        // Last index of output message
+static UWPMessage *UWPOutMessages[MAX_UWP_MESSAGES];    // Messages out to UWP
+static int UWPInMessageId = -1;                         // Last index of input message
+static UWPMessage *UWPInMessages[MAX_UWP_MESSAGES];     // Messages in from UWP
 #endif
 
 //----------------------------------------------------------------------------------
@@ -204,16 +213,7 @@ static int android_close(void *cookie)
 #endif  // PLATFORM_ANDROID
 
 #if defined(PLATFORM_UWP)
-
-#define MAX_MESSAGES 512 // If there are over 128 messages, I will cry... either way, this may be too much EDIT: Welp, 512
-
-static int UWPOutMessageId = -1; // Stores the last index for the message
-static UWPMessage* UWPOutMessages[MAX_MESSAGES]; // Messages out to UWP
-
-static int UWPInMessageId = -1; // Stores the last index for the message
-static UWPMessage* UWPInMessages[MAX_MESSAGES]; // Messages in from UWP
-
-UWPMessage* CreateUWPMessage(void)
+UWPMessage *CreateUWPMessage(void)
 {
     UWPMessage *msg = (UWPMessage *)RL_MALLOC(sizeof(UWPMessage));
     msg->type = UWP_MSG_NONE;
@@ -247,7 +247,7 @@ UWPMessage *UWPGetMessage(void)
 
 void UWPSendMessage(UWPMessage *msg)
 {
-    if (UWPInMessageId + 1 < MAX_MESSAGES)
+    if ((UWPInMessageId + 1) < MAX_UWP_MESSAGES)
     {
         UWPInMessageId++;
         UWPInMessages[UWPInMessageId] = msg;
@@ -257,7 +257,7 @@ void UWPSendMessage(UWPMessage *msg)
 
 void SendMessageToUWP(UWPMessage *msg)
 {
-    if (UWPOutMessageId + 1 < MAX_MESSAGES)
+    if ((UWPOutMessageId + 1) < MAX_UWP_MESSAGES)
     {
         UWPOutMessageId++;
         UWPOutMessages[UWPOutMessageId] = msg;
@@ -270,7 +270,7 @@ bool HasMessageFromUWP(void)
     return UWPInMessageId > -1;
 }
 
-UWPMessage* GetMessageFromUWP(void)
+UWPMessage *GetMessageFromUWP(void)
 {
     if (HasMessageFromUWP()) return UWPInMessages[UWPInMessageId--];
 
