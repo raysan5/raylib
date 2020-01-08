@@ -662,7 +662,7 @@ bool IsAudioBufferPlaying(AudioBuffer *buffer)
     bool result = false;
 
     if (buffer != NULL) result = (buffer->playing && !buffer->paused);
-    else TraceLog(LOG_ERROR, "IsAudioBufferPlaying() : No audio buffer");
+    else TraceLog(LOG_WARNING, "IsAudioBufferPlaying() : No audio buffer");
 
     return result;
 }
