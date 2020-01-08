@@ -293,37 +293,42 @@
 //----------------------------------------------------------------------------------
 // Types and Structures Definition
 //----------------------------------------------------------------------------------
-// ...
+#if defined(PLATFORM_RPI)
+typedef struct {
+    pthread_t threadId;                         // Event reading thread id
+    int fd;                                     // File descriptor to the device it is assigned to
+    int eventNum;                               // Number of 'event<N>' device
+    Rectangle absRange;                         // Range of values for absolute pointing devices (touchscreens)
+    int touchSlot;                              // Hold the touch slot number of the currently being sent multitouch block
+    bool isMouse;                               // True if device supports relative X Y movements
+    bool isTouch;                               // True if device supports absolute X Y movements and has BTN_TOUCH
+    bool isMultitouch;                          // True if device supports multiple absolute movevents and has BTN_TOUCH
+    bool isKeyboard;                            // True if device has letter keycodes
+    bool isGamepad;                             // True if device has gamepad buttons
+} InputEventWorker;
+
+typedef struct{
+    int Contents[8];
+    char Head;
+    char Tail;
+} KeyEventFifo;
+#endif
 
 //----------------------------------------------------------------------------------
 // Global Variables Definition
 //----------------------------------------------------------------------------------
 
-// Window/Graphics related variables
+// Window/Graphics variables
 //-----------------------------------------------------------------------------------
 #if defined(PLATFORM_DESKTOP) || defined(PLATFORM_WEB)
 static GLFWwindow *window;                      // Native window (graphic device)
 #endif
-static bool windowReady = false;                // Check if window has been initialized successfully
-static bool windowMinimized = false;            // Check if window has been minimized
-static bool windowResized = false;              // Check if window has been resized
-static const char *windowTitle = NULL;          // Window text title...
-
-static unsigned int displayWidth, displayHeight;// Display width and height (monitor, device-screen, LCD, ...)
-static int screenWidth, screenHeight;           // Screen width and height (used render area)
-static int renderWidth, renderHeight;           // Framebuffer width and height (render area, including black bars if required)
-static int currentWidth, currentHeight;         // Current render width and height, it could change on BeginTextureMode()
-static int windowPositionX, windowPositionY;    // Window position on screen (required on fullscreen toggle)
-static int renderOffsetX = 0;                   // Offset X from render area (must be divided by 2)
-static int renderOffsetY = 0;                   // Offset Y from render area (must be divided by 2)
-static bool fullscreen = false;                 // Fullscreen mode (useful only for PLATFORM_DESKTOP)
-static bool alwaysRun = false;                  // Keep window update/draw running on minimized
-static Matrix screenScaling = { 0 };            // Matrix to scale screen (framebuffer rendering)
-
 #if defined(PLATFORM_RPI)
-static EGL_DISPMANX_WINDOW_T nativeWindow;      // Native window (graphic device)
+static EGL_DISPMANX_WINDOW_T window;            // Native window (graphic device)
 #endif
-
+#if defined(PLATFORM_UWP)
+extern EGLNativeWindowType window;              // Native window handler for UWP (external, defined in UWP App)
+#endif
 #if defined(PLATFORM_ANDROID) || defined(PLATFORM_RPI) || defined(PLATFORM_UWP)
 static EGLDisplay display;                      // Native display device (physical screen connection)
 static EGLSurface surface;                      // Surface to draw on, framebuffers (connected to context)
@@ -333,9 +338,21 @@ static uint64_t baseTime = 0;                   // Base time measure for hi-res 
 static bool windowShouldClose = false;          // Flag to set window for closing
 #endif
 
-#if defined(PLATFORM_UWP)
-extern EGLNativeWindowType uwpWindow;           // Native EGL window handler for UWP (external, defined in UWP App)
-#endif
+static const char *windowTitle = NULL;          // Window text title...
+static bool windowReady = false;                // Check if window has been initialized successfully
+static bool windowMinimized = false;            // Check if window has been minimized
+static bool windowResized = false;              // Check if window has been resized
+static bool fullscreenMode = false;             // Check if fullscreen mode (useful only for PLATFORM_DESKTOP)
+static bool alwaysRun = false;                  // Keep window update/draw running on minimized
+
+static int windowPositionX, windowPositionY;    // Window position on screen (required on fullscreen toggle)
+static int displayWidth, displayHeight;         // Display width and height (monitor, device-screen, LCD, ...)
+static int screenWidth, screenHeight;           // Screen width and height (used render area)
+static int renderWidth, renderHeight;           // Framebuffer width and height (render area, including black bars if required)
+static int currentWidth, currentHeight;         // Current render width and height, it could change on BeginTextureMode()
+static int renderOffsetX = 0;                   // Offset X from render area (must be divided by 2)
+static int renderOffsetY = 0;                   // Offset Y from render area (must be divided by 2)
+static Matrix screenScaling = { 0 };            // Matrix to scale screen (framebuffer rendering)
 //-----------------------------------------------------------------------------------
 
 #if defined(PLATFORM_ANDROID)
@@ -348,7 +365,7 @@ static bool appEnabled = true;                  // Used to detec if app is activ
 static bool contextRebindRequired = false;      // Used to know context rebind required
 #endif
 
-// Inputs related variables
+// Input system variables
 //-----------------------------------------------------------------------------------
 // Keyboard states
 static char previousKeyState[512] = { 0 };      // Registers previous frame key state
@@ -381,32 +398,11 @@ static int currentMouseWheelY = 0;              // Registers current mouse wheel
 
 #if defined(PLATFORM_RPI)
 static char currentMouseStateEvdev[3] = { 0 };  // Holds the new mouse state for the next polling event to grab (Can't be written directly due to multithreading, app could miss the update)
-
-typedef struct {
-    pthread_t threadId;                         // Event reading thread id
-    int fd;                                     // File descriptor to the device it is assigned to
-    int eventNum;                               // Number of 'event<N>' device
-    Rectangle absRange;                         // Range of values for absolute pointing devices (touchscreens)
-    int touchSlot;                              // Hold the touch slot number of the currently being sent multitouch block
-    bool isMouse;                               // True if device supports relative X Y movements
-    bool isTouch;                               // True if device supports absolute X Y movements and has BTN_TOUCH
-    bool isMultitouch;                          // True if device supports multiple absolute movevents and has BTN_TOUCH
-    bool isKeyboard;                            // True if device has letter keycodes
-    bool isGamepad;                             // True if device has gamepad buttons
-} InputEventWorker;
-
 static InputEventWorker eventWorkers[10];       // List of worker threads for every monitored "/dev/input/event<N>"
-
-typedef struct{
-    int Contents[8];
-    char Head;
-    char Tail;
-} KeyEventFifo;
-
 static KeyEventFifo lastKeyPressedEvdev = { 0 }; // Buffer for holding keydown events as they arrive (Needed due to multitreading of event workers)
 static char currentKeyStateEvdev[512] = { 0 };   // Registers current frame key state from event based driver (Needs to be seperate because the legacy console based method clears keys on every frame)
-
 #endif
+
 #if defined(PLATFORM_WEB)
 static bool toggleCursorLock = false;           // Ask for cursor pointer lock on next click
 #endif
@@ -855,10 +851,10 @@ bool IsWindowHidden(void)
 void ToggleFullscreen(void)
 {
 #if defined(PLATFORM_DESKTOP)
-    fullscreen = !fullscreen;          // Toggle fullscreen flag
+    fullscreenMode = !fullscreenMode;          // Toggle fullscreen flag
 
     // NOTE: glfwSetWindowMonitor() doesn't work properly (bugs)
-    if (fullscreen) 
+    if (fullscreenMode) 
     {
         // Store previous window position (in case we exit fullscreen)
         glfwGetWindowPos(window, &windowPositionX, &windowPositionY);
@@ -1783,7 +1779,7 @@ void SetConfigFlags(unsigned int flags)
 {
     configFlags = flags;
 
-    if (configFlags & FLAG_FULLSCREEN_MODE) fullscreen = true;
+    if (configFlags & FLAG_FULLSCREEN_MODE) fullscreenMode = true;
     if (configFlags & FLAG_WINDOW_ALWAYS_RUN) alwaysRun = true;
 }
 
@@ -2726,7 +2722,7 @@ static bool InitGraphicsDevice(int width, int height)
 #endif
     }
 
-    if (fullscreen)
+    if (fullscreenMode)
     {
         // remember center for switchinging from fullscreen to window
         windowPositionX = displayWidth/2 - screenWidth/2;
@@ -2852,7 +2848,7 @@ static bool InitGraphicsDevice(int width, int height)
 #endif // PLATFORM_DESKTOP || PLATFORM_WEB
 
 #if defined(PLATFORM_ANDROID) || defined(PLATFORM_RPI) || defined(PLATFORM_UWP)
-    fullscreen = true;
+    fullscreenMode = true;
 
     // Screen size security check
     if (screenWidth <= 0) screenWidth = displayWidth;
@@ -3044,7 +3040,7 @@ static bool InitGraphicsDevice(int width, int height)
     //https://stackoverflow.com/questions/46550182/how-to-create-eglsurface-using-c-winrt-and-angle
 
     //surface = eglCreateWindowSurface(display, config, reinterpret_cast<IInspectable*>(surfaceCreationProperties), surfaceAttributes);
-    surface = eglCreateWindowSurface(display, config, uwpWindow, surfaceAttributes);
+    surface = eglCreateWindowSurface(display, config, window, surfaceAttributes);
     if (surface == EGL_NO_SURFACE)
     {
         TraceLog(LOG_WARNING, "Failed to create EGL fullscreen surface");
@@ -3149,12 +3145,12 @@ static bool InitGraphicsDevice(int width, int height)
     dispmanElement = vc_dispmanx_element_add(dispmanUpdate, dispmanDisplay, 0/*layer*/, &dstRect, 0/*src*/,
                                             &srcRect, DISPMANX_PROTECTION_NONE, &alpha, 0/*clamp*/, DISPMANX_NO_ROTATE);
 
-    nativeWindow.element = dispmanElement;
-    nativeWindow.width = renderWidth;
-    nativeWindow.height = renderHeight;
+    window.element = dispmanElement;
+    window.width = renderWidth;
+    window.height = renderHeight;
     vc_dispmanx_update_submit_sync(dispmanUpdate);
 
-    surface = eglCreateWindowSurface(display, config, &nativeWindow, NULL);
+    surface = eglCreateWindowSurface(display, config, &window, NULL);
     //---------------------------------------------------------------------------------
 #endif  // PLATFORM_RPI
 
