@@ -12,9 +12,6 @@ jobs:
         mkdir build
         cd build
     - name: Setup CMake Project
-      run: |
-        cmake -G "Visual Studio 14 2015" -DSTATIC=ON -DSHARED=ON -DBUILD_EXAMPLES=ON -DBUILD_GAMES=OFF -DINCLUDE_EVERYTHING=ON ..
-        dir
-        dir ..
+      run: cmake -G "Visual Studio 14 2015" -DSTATIC=ON -DSHARED=ON -DBUILD_EXAMPLES=ON -DBUILD_GAMES=OFF -DINCLUDE_EVERYTHING=ON ../raylib
     - name: Build raylib Source & Examples
       run: cmake --build . --target install
