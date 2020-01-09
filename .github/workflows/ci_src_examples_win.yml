@@ -1,0 +1,15 @@
+name: CI - Source & Examples - Windows
+
+on: [push, pull_request, release]
+
+jobs:
+  build:
+    runs-on: windows-latest
+    steps:
+    - uses: actions/checkout@v1
+    - name: Enable MSVC Developer Command Prompt
+      uses: ilammy/msvc-dev-cmd@v1.0.0
+    - name: Build using CL.EXE
+      run: cd src && make PLATFORM=PLATFORM_DESKTOP
+    - name: make examples
+      run: cd examples && make PLATFORM=PLATFORM_DESKTOP
