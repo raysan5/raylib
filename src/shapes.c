@@ -1346,6 +1346,31 @@ void DrawPoly(Vector2 center, int sides, float radius, float rotation, Color col
     rlPopMatrix();
 }
 
+// Draw a polygon outline of n sides
+void DrawPolyLines(Vector2 center, int sides, float radius, float rotation, Color color)
+{
+    if (sides < 3) sides = 3;
+    float centralAngle = 0.0f;
+
+    if (rlCheckBufferLimit(3*(360/sides))) rlglDraw();
+
+    rlPushMatrix();
+        rlTranslatef(center.x, center.y, 0.0f);
+        rlRotatef(rotation, 0.0f, 0.0f, 1.0f);
+        
+        rlBegin(RL_LINES);
+            for (int i = 0; i < sides; i++)
+            {
+                rlColor4ub(color.r, color.g, color.b, color.a);
+
+                rlVertex2f(sinf(DEG2RAD*centralAngle)*radius, cosf(DEG2RAD*centralAngle)*radius);
+                centralAngle += 360.0f/(float)sides;
+                rlVertex2f(sinf(DEG2RAD*centralAngle)*radius, cosf(DEG2RAD*centralAngle)*radius);
+            }
+        rlEnd();
+    rlPopMatrix();
+}
+
 // Define default texture used to draw shapes
 void SetShapesTexture(Texture2D texture, Rectangle source)
 {
