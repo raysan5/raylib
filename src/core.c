@@ -3820,7 +3820,6 @@ static void PollInputEvents(void)
         // NOTE: Never close window, native activity is controlled by the system!
         if (androidApp->destroyRequested != 0)
         {
-            //TraceLog(LOG_INFO, "Closing Window...");
             //windowShouldClose = true;
             //ANativeActivity_finish(androidApp->activity);
         }
