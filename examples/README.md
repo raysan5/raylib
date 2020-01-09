@@ -4,8 +4,9 @@
 
 Examples using raylib core platform functionality like window creation, inputs, drawing modes and system functionality.
 
-| ## | example                                                                    | image                                                                                          | developer                                       | recent |
-|----|----------------------------------------------------------------------------|------------------------------------------------------------------------------------------------|---------------------------------------------------|--------|
+
+| ## | example  | image  | developer  | new |
+|----|----------|--------|:----------:|:------:|
 | 01 | [core_basic_window](examples/core/core_basic_window.c)                     | <img src="core/core_basic_window.png" alt="core_basic_window" width="200">                     | ray                                               |        |
 | 02 | [core_input_keys](examples/core/core_input_keys.c)                         | <img src="core/core_input_keys.png" alt="core_input_keys" width="200">                         | ray                                               |        |
 | 03 | [core_input_mouse](examples/core/core_input_mouse.c)                       | <img src="core/core_input_mouse.png" alt="core_input_mouse" width="200">                       | ray                                               |        |
