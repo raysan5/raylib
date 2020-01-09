@@ -6,7 +6,7 @@ jobs:
   build:
     runs-on: windows-latest
     steps:
-    - uses: actions/checkout@v1
+    - uses: actions/checkout@master
     - name: Setup Environment
       run: | 
         mkdir build
