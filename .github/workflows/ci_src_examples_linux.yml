@@ -1,6 +1,6 @@
-name: C/C++ CI
+name: CI - Source & Examples - Linux
 
-on: [push, pull_request]
+on: [push, pull_request, release]
 
 jobs:
   build:
