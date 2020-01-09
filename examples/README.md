@@ -98,7 +98,7 @@ Examples using raylib models functionality, including models loading/generation 
 
 | ## | example  | image  | developer  | new |
 |----|----------|--------|:----------:|:---:|
-| 65 | [models_animation](examples/models/models_animation.c)                             | <img src="models/models_animation.png" alt="models_animation" width="200">                             | [culacant](https://github.com/culacant)          |        |
+| 65 | [models_animation](examples/models/models_animation.c)                             | <img src="models/models_animation.png" alt="models_animation" width="200">                             | [culacant](https://github.com/culacant)          |  ⭐️     |
 | 66 | [models_billboard](examples/models/models_billboard.c)                             | <img src="models/models_billboard.png" alt="models_billboard" width="200">                             | ray                                              |        |
 | 67 | [models_box_collisions](examples/models/models_box_collisions.c)                   | <img src="models/models_box_collisions.png" alt="models_box_collisions" width="200">                   | ray                                              |        |
 | 68 | [models_cubicmap](examples/models/models_cubicmap.c)                               | <img src="models/models_cubicmap.png" alt="models_cubicmap" width="200">                               | ray                                              |        |
@@ -123,8 +123,6 @@ Examples using raylib shaders functionality, including shaders loading, paramete
 
 | ## | example  | image  | developer  | new |
 |----|----------|--------|:----------:|:---:|
-| ## | example                                                               | image                                                                                     | contributor                                  | recent |
-|----|-----------------------------------------------------------------------|-------------------------------------------------------------------------------------------|----------------------------------------------|--------|
 | 83 | [shaders_basic_lighting](examples/shaders/shaders_basic_lighting.c)   | <img src="shaders/shaders_basic_lighting.png" alt="shaders_basic_lighting" width="200">   | [Chris Camacho](https://github.com/codifies) | ⭐️     |
 | 84 | [shaders_model_shader](examples/shaders/shaders_model_shader.c)       | <img src="shaders/shaders_model_shader.png" alt="shaders_model_shader" width="200">       | ray                                          |        |
 | 85 | [shaders_shapes_textures](examples/shaders/shaders_shapes_textures.c) | <img src="shaders/shaders_shapes_textures.png" alt="shaders_shapes_textures" width="200"> | ray                                          |        |
@@ -138,3 +136,27 @@ Examples using raylib shaders functionality, including shaders loading, paramete
 | 93 | [shaders_eratosthenes](examples/shaders/shaders_eratosthenes.c)       | <img src="shaders/shaders_eratosthenes.png" alt="shaders_eratosthenes" width="200">       | [ProfJski](https://github.com/ProfJski)      | ⭐️     |
 | 94 | [shaders_fog](examples/shaders/shaders_fog.c)                         | <img src="shaders/shaders_fog.png" alt="shaders_fog" width="200">                         | [Chris Camacho](https://github.com/codifies) | ⭐️     |
 | 95 | [shaders_simple_mask](examples/shaders/shaders_simple_mask.c)         | <img src="shaders/shaders_simple_mask.png" alt="shaders_simple_mask" width="200">         | [Chris Camacho](https://github.com/codifies) | ⭐️     |
+
+### category: audio
+
+Examples using raylib audio functionality, including sound/music loading and playing. This functionality is provided by raylib [raudio](../src/raudio.c) module. Note this module can be used standalone independently of raylib, check [raudio_standalone](examples/others/raudio_standalone.c) example.
+
+| ## | example  | image  | developer  | new |
+|----|----------|--------|:----------:|:---:|
+| 96  | [audio_module_playing](examples/audio/audio_module_playing.c)         | <img src="audio/audio_module_playing.png" alt="audio_module_playing" width="200">         | ray                                          |        |
+| 97  | [audio_music_stream](examples/audio/audio_music_stream.c)             | <img src="audio/audio_music_stream.png" alt="audio_music_stream" width="200">             | ray                                          |        |
+| 98  | [audio_raw_stream](examples/audio/audio_raw_stream.c)                 | <img src="audio/audio_raw_stream.png" alt="audio_raw_stream" width="200">                 | ray                                          |        |
+| 99  | [audio_sound_loading](examples/audio/audio_sound_loading.c)           | <img src="audio/audio_sound_loading.png" alt="audio_sound_loading" width="200">           | ray                                          |        |
+| 100 | [audio_multichannel_sound](examples/audio/audio_multichannel_sound.c) | <img src="audio/audio_multichannel_sound.png" alt="audio_multichannel_sound" width="200"> | [Chris Camacho](https://github.com/codifies) | ⭐️     |
+
+### category: physics
+
+Examples showing physics functionality with raylib. This functionality is provided by [physac](https://github.com/victorfisac/Physac) library, included with raylib [sources](../src/physac.h). Note this library is not linked with raylib by default, it should be manually included in user code.
+
+| ## | example  | image  | developer  | new |
+|----|----------|--------|:----------:|:---:|
+| 101 | [physics_demo](examples/physics/physics_demo.c)               | <img src="physics/physics_demo.png" alt="physics_demo" width="200">               | [Victor Fisac](https://github.com/victorfisac) |        |
+| 102 | [physics_friction](examples/physics/physics_friction.c)       | <img src="physics/physics_friction.png" alt="physics_friction" width="200">       | [Victor Fisac](https://github.com/victorfisac) |        |
+| 103 | [physics_movement](examples/physics/physics_movement.c)       | <img src="physics/physics_movement.png" alt="physics_movement" width="200">       | [Victor Fisac](https://github.com/victorfisac) |        |
+| 104 | [physics_restitution](examples/physics/physics_restitution.c) | <img src="physics/physics_restitution.png" alt="physics_restitution" width="200"> | [Victor Fisac](https://github.com/victorfisac) |        |
+| 105 | [physics_shatter](examples/physics/physics_shatter.c)         | <img src="physics/physics_shatter.png" alt="physics_shatter" width="200">         | [Victor Fisac](https://github.com/victorfisac) |        |
