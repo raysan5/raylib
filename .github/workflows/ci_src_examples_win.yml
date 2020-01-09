@@ -1,6 +1,6 @@
 name: CI - Source & Examples - Windows
 
-on: [push, pull_request, release]
+on: [push, pull_request]
 
 jobs:
   build:
@@ -10,6 +10,7 @@ jobs:
     - name: Setup Environment
       run: | 
         mkdir build
+        cd build
     - name: Setup CMake Project
       run: cmake -G "Visual Studio 14 2015" -DSTATIC=ON -DSHARED=ON -DBUILD_EXAMPLES=ON -DBUILD_GAMES=OFF -DINCLUDE_EVERYTHING=ON ..
     - name: Build raylib Source & Examples
