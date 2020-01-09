@@ -138,3 +138,7 @@ GPATH
 GRTAGS
 GTAGS
 .vs
+
+# Ignore intelliJ project files
+.idea
+cmake-build-debug

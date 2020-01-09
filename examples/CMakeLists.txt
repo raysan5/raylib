@@ -2,7 +2,7 @@
 project(examples)
 
 # Get the sources together
-set(example_dirs audio core models others shaders shapes text textures)
+set(example_dirs audio core models others others/spine shaders shapes text textures)
 set(CMAKE_REQUIRED_DEFINITIONS -D_POSIX_C_SOURCE=199309L)
   include(CheckSymbolExists)
   check_symbol_exists(CLOCK_MONOTONIC time.h HAVE_CLOCK_MONOTONIC)
