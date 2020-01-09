@@ -443,11 +443,11 @@ EXAMPLES = \
     audio/audio_raw_stream \
     audio/audio_sound_loading \
     audio/audio_multichannel_sound \
-    physac/physics_demo \
-    physac/physics_friction \
-    physac/physics_movement \
-    physac/physics_restitution \
-    physac/physics_shatter
+    physics/physics_demo \
+    physics/physics_friction \
+    physics/physics_movement \
+    physics/physics_restitution \
+    physics/physics_shatter
 
 
 CURRENT_MAKEFILE = $(lastword $(MAKEFILE_LIST))
