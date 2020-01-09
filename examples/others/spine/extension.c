@@ -100,7 +100,7 @@ Texture2D* texture_2d_create(char *path) {
     return t;
 }
 
-void texture_2d_destroy() {
+void Texture2dDestroy() {
     while(texture_index--) UnloadTexture(tm_textures[texture_index]);
 }
 
@@ -188,7 +188,7 @@ void _spAtlasPage_createTexture (spAtlasPage* self, const char* path) {
 float worldVerticesPositions[MAX_VERTICES_PER_ATTACHMENT];
 Vertex vertices[MAX_VERTICES_PER_ATTACHMENT];
 
-void drawSkeleton(spSkeleton* skeleton, Vector3 position) {
+void DrawSkeleton(spSkeleton* skeleton, Vector3 position) {
     // For each slot in the draw order array of the skeleton
     for (int i = 0; i < skeleton->slotsCount; ++i) {
         spSlot* slot = skeleton->drawOrder[i];

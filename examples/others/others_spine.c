@@ -34,7 +34,7 @@ int main()
     spAnimationState* animationState;
 
     // Init spine
-    atlas = spAtlas_createFromFile("assets/dragon/NewDragon.atlas", 0);
+    atlas = spAtlas_createFromFile("resources/spine/dragon/NewDragon.atlas", 0);
     json = spSkeletonJson_create(atlas);
 
     skeletonData = spSkeletonJson_readSkeletonDataFile(json, "assets/dragon/NewDragon.json");
@@ -80,7 +80,7 @@ int main()
         spAnimationState_apply(animationState, skeleton);
         spSkeleton_updateWorldTransform(skeleton);
 
-        drawSkeleton(skeleton, skeletonPosition);
+        DrawSkeleton(skeleton, skeletonPosition);
 
         DrawFPS(10, 10);
 
@@ -93,7 +93,7 @@ int main()
 
     spAtlas_dispose(atlas);
     spSkeleton_dispose(skeleton);
-    texture_2d_destroy(); // Destroy textures loaded by spine
+    Texture2dDestroy(); // Destroy textures loaded by spine
     CloseWindow();        // Close window and OpenGL context
     //--------------------------------------------------------------------------------------
 

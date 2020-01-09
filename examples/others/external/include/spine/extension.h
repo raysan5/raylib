@@ -322,9 +322,9 @@ int _spCurveTimeline_binarySearch (float *values, int valuesLength, float target
 #endif
 
 // Extension functions needed to integrate raylib
-void drawSkeleton(spSkeleton* skeleton, Vector3 position);
-Texture2D* texture_2d_create(char *path);
-void texture_2d_destroy();
+void DrawSkeleton(spSkeleton* skeleton, Vector3 position);
+Texture2D* Texture2DCreate(char *path);
+void Texture2dDestroy();
 
 
 #endif /* SPINE_EXTENSION_H_ */
