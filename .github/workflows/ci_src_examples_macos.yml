@@ -1,4 +1,4 @@
-name: CI - Source & Examples - Windows
+name: CI - Source & Examples - macOS
 
 on: [push, pull_request, release]
 
