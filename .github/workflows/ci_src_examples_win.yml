@@ -7,12 +7,9 @@ jobs:
     runs-on: windows-latest
     steps:
     - uses: actions/checkout@v1
-    - name: Enable MSVC Developer Command Prompt
-      uses: ilammy/msvc-dev-cmd@v1.0.0
     - name: Setup Environment
       run: | 
         mkdir build
-        cd build
     - name: Setup CMake Project
       run: cmake -G "Visual Studio 14 2015" -DSTATIC=ON -DSHARED=ON -DBUILD_EXAMPLES=ON -DBUILD_GAMES=OFF -DINCLUDE_EVERYTHING=ON ..
     - name: Build raylib Source & Examples
