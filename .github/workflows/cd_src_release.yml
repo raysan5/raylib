@@ -1,15 +1,16 @@
+name: CD - Source Build & Release - Linux
+
 on: release
 
 jobs:
   release:
-    name: Upload Release Asset
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
         uses: actions/checkout@master
       - name: Build project # This would actually build your project, using zip for an example artifact
         run: |
-          zip --build_path raylib README.md
+          zip raylib README.md
       - name: Create Release
         id: create_release
         uses: actions/create-release@v1
