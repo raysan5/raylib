@@ -1,6 +1,6 @@
 name: CI - Source & Examples - Linux
 
-on: [push, pull_request, release]
+on: [push, pull_request]
 
 jobs:
   build:
@@ -8,7 +8,8 @@ jobs:
     runs-on: ubuntu-latest
     
     steps:
-    - uses: actions/checkout@v1
+    - name: Checkout code
+      uses: actions/checkout@master
     - name: apt-update
       run: sudo apt-get update -qq
     - name: apt get glfw
