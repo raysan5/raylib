@@ -27,16 +27,7 @@ int main(void)
     Sound fxWav = LoadSound("resources/sound.wav");         // Load WAV audio file
     Sound fxOgg = LoadSound("resources/tanatana.ogg");      // Load OGG audio file
     
-    int frame = 0;
-
     SetSoundVolume(fxWav, 0.2);
-    PlaySound(fxOgg);
-
-    bool inhibitWav = false;
-    bool inhibitOgg = false;
-    int maxFrame = 60;
-    
-    int soundsCounter = 0;
 
     SetTargetFPS(60);       // Set our game to run at 60 frames-per-second
     //--------------------------------------------------------------------------------------
@@ -46,26 +37,8 @@ int main(void)
     {
         // Update
         //----------------------------------------------------------------------------------
-        frame++;
-
-        if (IsKeyDown(KEY_ENTER)) inhibitWav = !inhibitWav;
-        if (IsKeyDown(KEY_SPACE)) inhibitOgg = !inhibitOgg;
-
-        // Deliberatly hammer the play pool to see what dropping old pool entries sounds like....
-        if ((frame%5) == 0) 
-        {
-           if (!inhibitWav) PlaySoundMulti(fxWav);
-        }
-        
-        if (frame == maxFrame) 
-        {
-            if (!inhibitOgg) PlaySoundMulti(fxOgg);
-            
-            frame = 0;
-            maxFrame = GetRandomValue(6,12);
-        }
-
-        soundsCounter = GetSoundsPlaying();
+        if (IsKeyPressed(KEY_ENTER)) PlaySoundMulti(fxWav);     // Play a new wav sound instance
+        if (IsKeyPressed(KEY_SPACE)) PlaySoundMulti(fxOgg);     // Play a new ogg sound instance
         //----------------------------------------------------------------------------------
 
         // Draw
@@ -74,11 +47,11 @@ int main(void)
 
             ClearBackground(RAYWHITE);
             
-            DrawText("Multichannel sound abuse!", 200, 180, 20, LIGHTGRAY);
-            DrawText("Space to inhibit new ogg triggering", 200, 200, 20, LIGHTGRAY);
-            DrawText("Enter to inhibit new wav triggering", 200, 220, 20, LIGHTGRAY);
+            DrawText("MULTICHANNEL SOUND PLAYING", 20, 20, 20, GRAY);
+            DrawText("Press SPACE to play new ogg instance!", 200, 120, 20, LIGHTGRAY);
+            DrawText("Press ENTER to play new wav instance!", 200, 180, 20, LIGHTGRAY);
 
-            DrawText(FormatText("Number of concurrentsounds: %i", soundsCounter), 200, 280, 20, LIGHTGRAY);
+            DrawText(FormatText("CONCURRENT SOUNDS PLAYING: %02i", GetSoundsPlaying()), 220, 280, 20, RED);
 
         EndDrawing();
         //----------------------------------------------------------------------------------
