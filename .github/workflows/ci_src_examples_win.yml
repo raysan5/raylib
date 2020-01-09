@@ -9,7 +9,7 @@ jobs:
     - uses: actions/checkout@v1
     - name: Enable MSVC Developer Command Prompt
       uses: ilammy/msvc-dev-cmd@v1.0.0
-    - name: Build using CL.EXE
-      run: cd src && make PLATFORM=PLATFORM_DESKTOP
-    - name: make examples
-      run: cd examples && make PLATFORM=PLATFORM_DESKTOP
+    - name: Setup CMake Project
+      run: cmake -G Visual Studio 14 2015 -DSTATIC=ON -DSHARED=ON -DBUILD_EXAMPLES=ON -DBUILD_GAMES=OFF -DINCLUDE_EVERYTHING=ON ..
+    - name: Build raylib Source & Examples
+      run: cmake --build . --target install
