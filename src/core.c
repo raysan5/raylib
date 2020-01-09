@@ -1829,10 +1829,14 @@ bool FileExists(const char *fileName)
 }
 
 // Check file extension
+// NOTE: Extensions checking is not case-sensitive
 bool IsFileExtension(const char *fileName, const char *ext)
 {
     bool result = false;
     const char *fileExt = GetExtension(fileName);
+    char fileExtLower[16] = { 0 };
+    
+    strcpy(fileExtLower, TextToLower(fileExt));
 
     if (fileExt != NULL)
     {
@@ -1841,7 +1845,7 @@ bool IsFileExtension(const char *fileName, const char *ext)
 
         for (int i = 0; i < extCount; i++)
         {
-            if (strcmp(fileExt, checkExts[i] + 1) == 0)
+            if (TextIsEqual(fileExtLower, TextToLower(checkExts[i] + 1)))
             {
                 result = true;
                 break;
