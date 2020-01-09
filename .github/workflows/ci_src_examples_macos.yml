@@ -1,0 +1,13 @@
+name: CI - Source & Examples - Windows
+
+on: [push, pull_request, release]
+
+jobs:
+  build:
+    runs-on: macos-latest
+    steps:
+    - uses: actions/checkout@v1
+    - name: make src
+      run: cd src && make PLATFORM=PLATFORM_DESKTOP
+    - name: make examples
+      run: cd examples && make PLATFORM=PLATFORM_DESKTOP
