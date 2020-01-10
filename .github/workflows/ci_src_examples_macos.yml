@@ -1,6 +1,6 @@
 name: CI - Source & Examples - macOS
 
-on: [push, pull_request, release]
+on: [push, pull_request]
 
 jobs:
   build:
