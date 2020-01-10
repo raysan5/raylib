@@ -6,6 +6,7 @@ jobs:
   build:
     runs-on: windows-latest
     strategy:
+      max-parallel: 1
       matrix:
         compiler: [mingw, msvc16]
         bits: [32, 64]
@@ -23,7 +24,7 @@ jobs:
           GENERATOR: "Visual Studio 16 2019"
         - compiler: msvc16
           bits: 64
-          GENERATOR: "Visual Studio 16 2019 Win64"
+          GENERATOR: "Visual Studio 16 2019 -A x64"
           
     env:
       CFLAGS: ${{ matrix.CFLAGS }}
