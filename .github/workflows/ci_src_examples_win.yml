@@ -5,15 +5,40 @@ on: [push, pull_request]
 jobs:
   build:
     runs-on: windows-latest
+    strategy:
+      matrix:
+        compiler: [mingw, msvc16]
+        bits: [32, 64]
+        include:
+        - compiler: mingw
+          bits: 32
+          CFLAGS: -m32
+          GENERATOR: "MinGW Makefiles"
+        - compiler: mingw
+          bits: 64
+          CFLAGS: -m64
+          GENERATOR: "MinGW Makefiles"
+        - compiler: msvc16
+          bits: 32
+          GENERATOR: "Visual Studio 16 2019"
+        - compiler: msvc16
+          bits: 64
+          GENERATOR: "Visual Studio 16 2019 Win64"
+
     steps:
-    - uses: actions/checkout@master
+    - name: Checkout
+      uses: actions/checkout@master
+
     - name: Setup Environment
       run: | 
         mkdir build
         cd build
+
     - name: Setup MSBuild.exe
       uses: warrenbuckley/Setup-MSBuild@v1
+
     - name: Setup CMake Project
-      run: cmake -G "Visual Studio 16 2019" -DSTATIC=ON -DSHARED=ON -DBUILD_EXAMPLES=ON -DBUILD_GAMES=OFF -DINCLUDE_EVERYTHING=ON ../raylib
+      run: cmake -G $GENERATOR -DSTATIC=ON -DSHARED=ON -DBUILD_EXAMPLES=ON -DBUILD_GAMES=OFF -DINCLUDE_EVERYTHING=ON ../raylib
+
     - name: Build raylib Source & Examples
       run: cmake --build . --target install
