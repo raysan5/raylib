@@ -1,6 +1,9 @@
 name: CD - Source Build & Release - Linux
 
-on: release
+# Trigger the workflow on release create activity
+on: 
+  release:
+    types: create
 
 jobs:
   release:
@@ -8,23 +11,12 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@master
-      - name: Build project # This would actually build your project, using zip for an example artifact
+        
+      # TODO: Build project and zip generated files
+      - name: Build project
         run: |
           zip raylib.zip README.md
-      - name: Create Release
-        id: create_release
-        uses: actions/create-release@v1
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          tag_name: ${{ github.ref }}
-          release_name: Release ${{ github.ref }}
-          body: |
-            Changes in this Release
-            - First Change
-            - Second Change
-          draft: false
-          prerelease: false
+      
       - name: Upload Release Asset
         id: upload-release-asset 
         uses: actions/upload-release-asset@v1.0.1
