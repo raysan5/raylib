@@ -38,7 +38,7 @@ jobs:
       uses: warrenbuckley/Setup-MSBuild@v1
 
     - name: Setup CMake Project
-      run: cmake -G ${{ matrix.GENERATOR }} -DSTATIC=ON -DSHARED=ON -DBUILD_EXAMPLES=ON -DBUILD_GAMES=OFF -DINCLUDE_EVERYTHING=ON ../raylib
+      run: cmake -G "${{ matrix.GENERATOR }}" -DSTATIC=ON -DSHARED=ON -DBUILD_EXAMPLES=ON -DBUILD_GAMES=OFF -DINCLUDE_EVERYTHING=ON ../raylib
 
     - name: Build raylib Source & Examples
       run: cmake --build . --target install
