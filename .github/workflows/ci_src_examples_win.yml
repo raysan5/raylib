@@ -6,6 +6,7 @@ jobs:
   build:
     runs-on: windows-latest
     strategy:
+      fail-fast: false
       max-parallel: 1
       matrix:
         compiler: [mingw, msvc16]
