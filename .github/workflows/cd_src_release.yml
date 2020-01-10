@@ -6,7 +6,7 @@ on:
     types: [published]
 
 jobs:
-  release:
+  build:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
