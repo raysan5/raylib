@@ -8,12 +8,15 @@ raylib is highly inspired by Borland BGI graphics lib and by XNA framework and i
 
 Ready to learn? Jump to [code examples!](http://www.raylib.com/examples.html)
 
-[![Actions Status](https://github.com/raysan5/raylib/workflows/CI%20-%20Source%20&%20Examples%20-%20Linux/badge.svg)](https://github.com/raysan5/raylib/actions)
 [![Build Status](https://travis-ci.org/raysan5/raylib.svg?branch=master)](https://travis-ci.org/raysan5/raylib)
 [![https://ci.appveyor.com/api/projects/status/github/raysan5/raylib?svg=true](https://ci.appveyor.com/api/projects/status/github/raysan5/raylib?svg=true)](https://ci.appveyor.com/project/raysan5/raylib)
 [![Chat on Discord](https://img.shields.io/discord/426912293134270465.svg?logo=discord)](https://discord.gg/VkzNHUE)
 [![License](https://img.shields.io/badge/license-zlib%2Flibpng-blue.svg)](LICENSE)
 [![Twitter URL](https://img.shields.io/twitter/url/http/shields.io.svg?style=social&label=Follow)](https://twitter.com/raysan5)
+
+[![Actions Status](https://github.com/raysan5/raylib/workflows/CI%20-%20Source%20&%20Examples%20-%20Windows/badge.svg)](https://github.com/raysan5/raylib/actions)
+[![Actions Status](https://github.com/raysan5/raylib/workflows/CI%20-%20Source%20&%20Examples%20-%20Linux/badge.svg)](https://github.com/raysan5/raylib/actions)
+[![Actions Status](https://github.com/raysan5/raylib/workflows/CI%20-%20Source%20&%20Examples%20-%20macOS/badge.svg)](https://github.com/raysan5/raylib/actions)
 
 features
 --------
