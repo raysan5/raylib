@@ -40,6 +40,10 @@ jobs:
       run: | 
         mkdir build
         cd build
+        
+    # Trying to solve an issue with CMake and Chocolatey for MinGW
+    - run: cmake -E remove c:\ProgramData\chocolatey\bin\cpack.exe
+      if: matrix.compiler == 'mingw'
 
     # Setup MSBuild.exe path if required
     - uses: warrenbuckley/Setup-MSBuild@v1
