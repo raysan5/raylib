@@ -1,9 +1,9 @@
 name: CD - Source Build & Release - Linux
 
-# Trigger the workflow on release create activity
+# Trigger the workflow on release publish
 on: 
   release:
-    types: create
+    types: [published]
 
 jobs:
   release:
