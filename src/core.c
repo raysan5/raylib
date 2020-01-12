@@ -1834,14 +1834,14 @@ bool IsFileExtension(const char *fileName, const char *ext)
 {
     bool result = false;
     const char *fileExt = GetExtension(fileName);
-    char fileExtLower[16] = { 0 };
-    
-    strcpy(fileExtLower, TextToLower(fileExt));
 
     if (fileExt != NULL)
     {
         int extCount = 0;
         const char **checkExts = TextSplit(ext, ';', &extCount);
+        
+        char fileExtLower[16] = { 0 };
+        strcpy(fileExtLower, TextToLower(fileExt));
 
         for (int i = 0; i < extCount; i++)
         {
