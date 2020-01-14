@@ -324,6 +324,12 @@ static void OnSendAudioDataToDevice(ma_device *pDevice, void *pFramesOut, const 
                         framesToRead -= framesJustRead;
                         framesRead += framesJustRead;
                     }
+                    
+                    if (!audioBuffer->playing)
+                    {
+                        framesRead = frameCount;
+                        break;
+                    }
 
                     // If we weren't able to read all the frames we requested, break
                     if (framesJustRead < framesToReadRightNow)
