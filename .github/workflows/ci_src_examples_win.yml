@@ -51,7 +51,7 @@ jobs:
    
     - name: Build MinGW Project
       run: |
-        cd ../raylib/raylib/src
+        cd ../raylib/src
         make PLATFORM=PLATFORM_DESKTOP
       if: matrix.compiler == 'mingw'
 
