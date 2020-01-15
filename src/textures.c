@@ -457,9 +457,9 @@ void UnloadRenderTexture(RenderTexture2D target)
 // Get pixel data from image in the form of Color struct array
 Color *GetImageData(Image image)
 {
+    if ((image.width == 0) || (image.height == 0)) return NULL;
+    
     Color *pixels = (Color *)RL_MALLOC(image.width*image.height*sizeof(Color));
-
-    if (pixels == NULL) return pixels;
     
     if (image.format >= COMPRESSED_DXT1_RGB) TraceLog(LOG_WARNING, "Pixel data retrieval not supported for compressed image formats");
     else
