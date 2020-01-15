@@ -2,7 +2,7 @@
 #
 #   raylib makefile for Desktop platforms, Raspberry Pi, Android and HTML5
 #
-#   Copyright (c) 2013-2019 Ramon Santamaria (@raysan5)
+#   Copyright (c) 2013-2020 Ramon Santamaria (@raysan5)
 #
 #   This software is provided "as-is", without any express or implied warranty. In no event
 #   will the authors be held liable for any damages arising from the use of this software.
@@ -164,7 +164,7 @@ ifeq ($(PLATFORM),PLATFORM_RPI)
 endif
 ifeq ($(PLATFORM),PLATFORM_WEB)
     # HTML5 emscripten compiler
-    # WARNING: To compile to HTML5, code must be redesigned
+    # WARNING: To compile to HTML5, code must be redesigned 
     # to use emscripten.h and emscripten_set_main_loop()
     CC = emcc
 endif
@@ -195,7 +195,11 @@ ifeq ($(BUILD_MODE),DEBUG)
         CFLAGS += -s ASSERTIONS=1 --profiling
     endif
 else
-    CFLAGS += -s -O1
+    ifeq ($(PLATFORM),PLATFORM_WEB)
+        CFLAGS += -Os
+    else
+        CFLAGS += -s -O1
+    endif
 endif
 
 # Additional flags for compiler (if desired)
