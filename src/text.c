@@ -55,7 +55,7 @@
 
 #include <stdlib.h>         // Required for: malloc(), free()
 #include <string.h>         // Required for: strlen()
-#include <stdarg.h>         // Required for: va_list, va_start(), vfprintf(), va_end()
+#include <stdarg.h>         // Required for: va_list, va_start(), vsprintf(), va_end()
 #include <stdio.h>          // Required for: FILE, fopen(), fclose(), fscanf(), feof(), rewind(), fgets()
 #include <ctype.h>          // Required for: toupper(), tolower()
 
