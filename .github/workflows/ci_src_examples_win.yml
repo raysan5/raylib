@@ -52,7 +52,7 @@ jobs:
     - name: Build MinGW Project
       run: |
         cd ../raylib/src
-        make PLATFORM=PLATFORM_DESKTOP
+        make PLATFORM=PLATFORM_DESKTOP CC=gcc
       if: matrix.compiler == 'mingw'
 
     - name: Setup CMake Project
