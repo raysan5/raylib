@@ -555,6 +555,24 @@ CharInfo *LoadFontData(const char *fileName, int fontSize, int *fontChars, int c
             if (type != FONT_SDF) chars[i].image.data = stbtt_GetCodepointBitmap(&fontInfo, scaleFactor, scaleFactor, ch, &chw, &chh, &chars[i].offsetX, &chars[i].offsetY);
             else if (ch != 32) chars[i].image.data = stbtt_GetCodepointSDF(&fontInfo, scaleFactor, ch, SDF_CHAR_PADDING, SDF_ON_EDGE_VALUE, SDF_PIXEL_DIST_SCALE, &chw, &chh, &chars[i].offsetX, &chars[i].offsetY);
             else chars[i].image.data = NULL;
+            
+            stbtt_GetCodepointHMetrics(&fontInfo, ch, &chars[i].advanceX, NULL);
+            chars[i].advanceX *= scaleFactor;
+
+            // Load characters images
+            chars[i].image.width = chw;
+            chars[i].image.height = chh;
+            chars[i].image.mipmaps = 1;
+            chars[i].image.format = UNCOMPRESSED_GRAYSCALE;
+
+            chars[i].offsetY += (int)((float)ascent*scaleFactor);
+
+            // NOTE: We create an empty image for space character, it could be further required for atlas packing
+            if (ch == 32)
+            {
+                chars[i].image = GenImageColor(chars[i].advanceX, fontSize, BLANK);
+                ImageFormat(&chars[i].image, UNCOMPRESSED_GRAYSCALE);
+            }
 
             if (type == FONT_BITMAP)
             {
@@ -567,23 +585,14 @@ CharInfo *LoadFontData(const char *fileName, int fontSize, int *fontChars, int c
                 }
             }
 
-            // Load characters images
-            chars[i].image.width = chw;
-            chars[i].image.height = chh;
-            chars[i].image.mipmaps = 1;
-            chars[i].image.format = UNCOMPRESSED_GRAYSCALE;
-
-            chars[i].offsetY += (int)((float)ascent*scaleFactor);
-
             // Get bounding box for character (may be offset to account for chars that dip above or below the line)
+            /*
             int chX1, chY1, chX2, chY2;
             stbtt_GetCodepointBitmapBox(&fontInfo, ch, scaleFactor, scaleFactor, &chX1, &chY1, &chX2, &chY2);
 
             TraceLog(LOG_DEBUG, "Character box measures: %i, %i, %i, %i", chX1, chY1, chX2 - chX1, chY2 - chY1);
             TraceLog(LOG_DEBUG, "Character offsetY: %i", (int)((float)ascent*scaleFactor) + chY1);
-
-            stbtt_GetCodepointHMetrics(&fontInfo, ch, &chars[i].advanceX, NULL);
-            chars[i].advanceX *= scaleFactor;
+            */
         }
 
         RL_FREE(fontBuffer);
