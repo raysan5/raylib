@@ -301,7 +301,7 @@ Image LoadImage(const char *fileName)
 // NOTE: Creates a copy of pixels data array
 Image LoadImageEx(Color *pixels, int width, int height)
 {
-    Image image;
+    Image image = { 0 };
     image.data = NULL;
     image.width = width;
     image.height = height;
@@ -710,7 +710,11 @@ Rectangle GetImageAlphaBorder(Image image, float threshold)
             }
         }
 
-        crop = (Rectangle){ xMin, yMin, (xMax + 1) - xMin, (yMax + 1) - yMin };
+        // Check for empty blank image
+        if ((xMin != 65536) && (xMax != 65536))
+        {
+            crop = (Rectangle){ xMin, yMin, (xMax + 1) - xMin, (yMax + 1) - yMin };
+        }
 
         RL_FREE(pixels);
     }
