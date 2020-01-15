@@ -48,9 +48,15 @@ jobs:
     # Setup MSBuild.exe path if required
     - uses: warrenbuckley/Setup-MSBuild@v1
       if: matrix.compiler == 'msvc16'
+   
+    - name: Build MinGW Project
+      run: ../raylib/raylib/src/mingw32-make PLATFORM=PLATFORM_DESKTOP
+      if: matrix.compiler == 'mingw'
 
     - name: Setup CMake Project
       run: cmake -G "${{ matrix.GENERATOR }}" ${{ matrix.ARCH }} -DCMAKE_SH="CMAKE_SH-NOTFOUND" -DSTATIC=ON -DSHARED=ON -DBUILD_EXAMPLES=ON -DBUILD_GAMES=OFF -DINCLUDE_EVERYTHING=ON ../raylib
-
+      if: matrix.compiler == 'msvc16'
+      
     - name: Build raylib Source & Examples
       run: cmake --build . --target install
+      if: matrix.compiler == 'msvc16'
