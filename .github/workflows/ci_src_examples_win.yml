@@ -50,7 +50,9 @@ jobs:
       if: matrix.compiler == 'msvc16'
    
     - name: Build MinGW Project
-      run: ../raylib/raylib/src/mingw32-make PLATFORM=PLATFORM_DESKTOP
+      run: |
+        cd ../raylib/raylib/src
+        make PLATFORM=PLATFORM_DESKTOP
       if: matrix.compiler == 'mingw'
 
     - name: Setup CMake Project
