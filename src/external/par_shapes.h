@@ -1154,7 +1154,7 @@ par_shapes_mesh* par_shapes_create_lsystem(char const* text, int slices,
     while (cmd) {
         char *arg = strtok(0, " ");
         if (!arg) {
-            puts("lsystem error: unexpected end of program.");
+            //puts("lsystem error: unexpected end of program.");
             break;
         }
         if (!strcmp(cmd, "rule")) {
@@ -1208,6 +1208,7 @@ par_shapes_mesh* par_shapes_create_lsystem(char const* text, int slices,
 
     // For testing purposes, dump out the parsed program.
     #ifdef TEST_PARSE
+    /*
     for (int i = 0; i < nrules; i++) {
         par_shapes__rule rule = rules[i];
         printf("rule %s.%d\n", rule.name, rule.weight);
@@ -1216,6 +1217,7 @@ par_shapes_mesh* par_shapes_create_lsystem(char const* text, int slices,
             printf("\t%s %s\n", cmd.cmd, cmd.arg);
         }
     }
+    */
     #endif
 
     // Instantiate the aggregated shape and the template shapes.
@@ -1256,8 +1258,7 @@ par_shapes_mesh* par_shapes_create_lsystem(char const* text, int slices,
 
         par_shapes__command* cmd = rule->commands + (frame->pc++);
         #ifdef DUMP_TRACE
-        printf("%5s %5s %5s:%d  %03d\n", cmd->cmd, cmd->arg, rule->name,
-            frame->pc - 1, stackptr);
+        //printf("%5s %5s %5s:%d  %03d\n", cmd->cmd, cmd->arg, rule->name, frame->pc - 1, stackptr);
         #endif
 
         float value;
@@ -1619,7 +1620,7 @@ static void par_shapes__weld_points(par_shapes_mesh* mesh, int gridsize,
                     PAR_SHAPES_T binvalue = *(bins + binindex);
                     if (binvalue > 0) {
                         if (nbins == 8) {
-                            printf("Epsilon value is too large.\n");
+                            //printf("Epsilon value is too large.\n");
                             break;
                         }
                         nearby[nbins++] = binindex;
