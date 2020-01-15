@@ -1481,8 +1481,19 @@ void UpdateMusicStream(Music music)
 
     // Reset audio stream for looping
     if (streamEnding)
-    {
-        StopMusicStream(music);        // Stop music (and reset)
+    {	
+		// is this a tracker format or a streamed one (ogg, wav, etc.)	
+		if (!((music.ctxType == MUSIC_MODULE_XM) || (music.ctxType == MUSIC_MODULE_MOD)))
+		{
+			// streamed - stop the music and reset it.
+			StopMusicStream(music);
+		}
+		else
+		{
+			// tracker - don't reset it, but remember that we have hit 
+			// the loop point and are playing normally again.
+			streamEnding = false;
+		}
 
         // Decrease loopCount to stop when required
         if (music.loopCount > 1)
