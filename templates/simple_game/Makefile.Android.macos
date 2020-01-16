@@ -39,10 +39,10 @@ endif
 # NOTE: JAVA_HOME must be set to JDK
 # You should change the username and prepare the android_toolchain
 JAVA_HOME              ?= /Library/Java/JavaVirtualMachines/adoptopenjdk-13.0.1.jdk/Contents/Home
-ANDROID_HOME            = /Users/yunoinsky/Library/Android/sdk
-ANDROID_TOOLCHAIN       = /Users/yunoinsky/Project/android_toolchain_ARM_API29
-ANDROID_BUILD_TOOLS     = /Users/yunoinsky/Library/Android/sdk/build-tools/29.0.2
-ANDROID_PLATFORM_TOOLS  = /Users/yunoinsky/Library/Android/sdk/platform-tools
+ANDROID_HOME            = $(HOME)/Library/Android/sdk
+ANDROID_TOOLCHAIN       = $(HOME)/android_toolchain_$(ANDROID_ARCH)_API$(ANDROID_API_VERSION)
+ANDROID_BUILD_TOOLS     = $(ANDROID_HOME)/build-tools/29.0.2
+ANDROID_PLATFORM_TOOLS  = $(ANDROID_HOME)/platform-tools
 
 # Android project configuration variables
 PROJECT_NAME           ?= simple_game
