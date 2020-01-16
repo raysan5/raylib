@@ -37,6 +37,7 @@ endif
 
 # Required path variables
 # NOTE: JAVA_HOME must be set to JDK
+# You should change the username and prepare the android_toolchain
 JAVA_HOME              ?= /Library/Java/JavaVirtualMachines/adoptopenjdk-13.0.1.jdk/Contents/Home
 ANDROID_HOME            = /Users/yunoinsky/Library/Android/sdk
 ANDROID_TOOLCHAIN       = /Users/yunoinsky/Project/android_toolchain_ARM_API29
@@ -82,6 +83,7 @@ endif
 
 # Compiler and archiver
 # NOTE: GCC is being deprecated in Android NDK r16
+# NOTE: For some old androild device, maybe you should the CC to arm-linux-androideabi-clang
 ifeq ($(ANDROID_ARCH),ARM)
     CC = $(ANDROID_TOOLCHAIN)/bin/armv7a-linux-androideabi29-clang
     AR = $(ANDROID_TOOLCHAIN)/bin/arm-linux-androideabi-ar
@@ -141,7 +143,11 @@ all: create_temp_project_dirs \
      sign_project_apk_package \
      zipalign_project_apk_package
 
-# Create required temp directories for APK building
+# Create required temp directories 
+
+
+
+APK building
 create_temp_project_dirs:
 	test -d $(PROJECT_BUILD_PATH) || mkdir -p $(PROJECT_BUILD_PATH)
 	test -d $(PROJECT_BUILD_PATH)/obj || mkdir -p $(PROJECT_BUILD_PATH)/obj
@@ -160,6 +166,8 @@ create_temp_project_dirs:
 	test -d $(PROJECT_BUILD_PATH)/assets || mkdir -p $(PROJECT_BUILD_PATH)/assets
 	test -d $(PROJECT_BUILD_PATH)/assets/$(PROJECT_RESOURCES_PATH) || mkdir -p $(PROJECT_BUILD_PATH)/assets/$(PROJECT_RESOURCES_PATH)
 	test -d $(PROJECT_BUILD_PATH)/obj/screens || mkdir -p $(PROJECT_BUILD_PATH)/obj/screens
+
+# NOTE: You should uncomment and edit this line if your source files are in different directories	
 #	$(foreach dir, $(PROJECT_SOURCE_DIRS), $(call create_dir, $(dir)))
 
 #define create_dir
