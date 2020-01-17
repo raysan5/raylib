@@ -664,11 +664,14 @@ Model LoadModel(const char *fileName)
 
     if (model.meshCount == 0)
     {
-        TraceLog(LOG_WARNING, "[%s] No meshes can be loaded, default to cube mesh", fileName);
-
         model.meshCount = 1;
         model.meshes = (Mesh *)RL_CALLOC(model.meshCount, sizeof(Mesh));
+#if defined(SUPPORT_MESH_GENERATION)
+        TraceLog(LOG_WARNING, "[%s] No meshes can be loaded, default to cube mesh", fileName);
         model.meshes[0] = GenMeshCube(1.0f, 1.0f, 1.0f);
+#else
+        TraceLog(LOG_WARNING, "[%s] No meshes can be loaded, and can't create a default mesh. The raylib mesh generation is not supported (SUPPORT_MESH_GENERATION).", fileName);
+#endif
     }
     else
     {
