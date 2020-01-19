@@ -115,7 +115,7 @@
 
     #define STBI_MALLOC RL_MALLOC
     #define STBI_FREE RL_FREE
-    #define STBI_REALLOC(p,newsz) realloc(p,newsz)
+    #define STBI_REALLOC RL_REALLOC
 
     #define STB_IMAGE_IMPLEMENTATION
     #include "external/stb_image.h"         // Required for: stbi_load_from_file()
@@ -1604,7 +1604,7 @@ void ImageMipmaps(Image *image)
 
     if (image->mipmaps < mipCount)
     {
-        void *temp = realloc(image->data, mipSize);
+        void *temp = RL_REALLOC(image->data, mipSize);
 
         if (temp != NULL)
         {

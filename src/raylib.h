@@ -106,6 +106,9 @@
 #ifndef RL_CALLOC
     #define RL_CALLOC(n,sz)     calloc(n,sz)
 #endif
+#ifndef RL_REALLOC
+    #define RL_REALLOC(n,sz)    realloc(n,sz)
+#endif
 #ifndef RL_FREE
     #define RL_FREE(p)          free(p)
 #endif

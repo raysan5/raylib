@@ -82,6 +82,9 @@
     #ifndef RL_CALLOC
         #define RL_CALLOC(n,sz)     calloc(n,sz)
     #endif
+    #ifndef RL_REALLOC
+        #define RL_REALLOC(n,sz)    realloc(n,sz)
+    #endif
     #ifndef RL_FREE
         #define RL_FREE(p)          free(p)
     #endif
@@ -4482,7 +4485,7 @@ static int GenerateMipmaps(unsigned char *data, int baseWidth, int baseHeight)
     TraceLog(LOG_DEBUG, "Total mipmaps required: %i", mipmapCount);
     TraceLog(LOG_DEBUG, "Total size of data required: %i", size);
 
-    unsigned char *temp = realloc(data, size);
+    unsigned char *temp = RL_REALLOC(data, size);
 
     if (temp != NULL) data = temp;
     else TraceLog(LOG_WARNING, "Mipmaps required memory could not be allocated");
