@@ -447,7 +447,7 @@ static bool CreateSocket(SocketConfig *config, SocketResult *outresult)
         {
             case AF_INET:
             {
-                outresult->socket->addripv4 = (struct _SocketAddressIPv4 *) malloc(
+                outresult->socket->addripv4 = (struct _SocketAddressIPv4 *) RNET_MALLOC(
                     sizeof(*outresult->socket->addripv4));
                 if (outresult->socket->addripv4 != NULL)
                 {
@@ -470,7 +470,7 @@ static bool CreateSocket(SocketConfig *config, SocketResult *outresult)
             break;
             case AF_INET6:
             {
-                outresult->socket->addripv6 = (struct _SocketAddressIPv6 *) malloc(
+                outresult->socket->addripv6 = (struct _SocketAddressIPv6 *) RNET_MALLOC(
                     sizeof(*outresult->socket->addripv6));
                 if (outresult->socket->addripv6 != NULL)
                 {
@@ -803,7 +803,7 @@ int ResolveHost(const char *address, const char *service, int addressType, int f
     // If not address list was allocated, allocate it dynamically with the known address size
     if (outAddr == NULL)
     {
-        outAddr = (AddressInformation *) malloc(size * sizeof(AddressInformation));
+        outAddr = (AddressInformation *) RNET_MALLOC(size * sizeof(AddressInformation));
     }
 
     // Dynamically allocate an array of address information structs
@@ -975,7 +975,7 @@ bool SocketBind(SocketConfig *config, SocketResult *result)
 
             //
             result->socket->addripv4
-                = (struct _SocketAddressIPv4 *) malloc(sizeof(*result->socket->addripv4));
+                = (struct _SocketAddressIPv4 *) RNET_MALLOC(sizeof(*result->socket->addripv4));
             if (result->socket->addripv4 != NULL)
             {
                 memset(result->socket->addripv4, 0, sizeof(*result->socket->addripv4));
@@ -1228,7 +1228,7 @@ Socket *SocketAccept(Socket *server, SocketConfig *config)
         case AF_INET:
         {
             struct sockaddr_in *s = ((struct sockaddr_in *) &sock_addr);
-            sock->addripv4 = (struct _SocketAddressIPv4 *) malloc(sizeof(*sock->addripv4));
+            sock->addripv4 = (struct _SocketAddressIPv4 *) RNET_MALLOC(sizeof(*sock->addripv4));
             if (sock->addripv4 != NULL)
             {
                 memset(sock->addripv4, 0, sizeof(*sock->addripv4));
@@ -1241,7 +1241,7 @@ Socket *SocketAccept(Socket *server, SocketConfig *config)
         case AF_INET6:
         {
             struct sockaddr_in6 *s = ((struct sockaddr_in6 *) &sock_addr);
-            sock->addripv6 = (struct _SocketAddressIPv6 *) malloc(sizeof(*sock->addripv6));
+            sock->addripv6 = (struct _SocketAddressIPv6 *) RNET_MALLOC(sizeof(*sock->addripv6));
             if (sock->addripv6 != NULL)
             {
                 memset(sock->addripv6, 0, sizeof(*sock->addripv6));
@@ -1321,11 +1321,11 @@ SocketDataPacket *AllocPacket(int size)
     int               error;
 
     error  = 1;
-    packet = (SocketDataPacket *) malloc(sizeof(*packet));
+    packet = (SocketDataPacket *) RNET_MALLOC(sizeof(*packet));
     if (packet != NULL)
     {
         packet->maxlen = size;
-        packet->data   = (uint8_t *) malloc(size);
+        packet->data   = (uint8_t *) RNET_MALLOC(size);
         if (packet->data != NULL)
         {
             error = 0;
@@ -1343,10 +1343,10 @@ int ResizePacket(SocketDataPacket *packet, int newsize)
 {
     uint8_t *newdata;
 
-    newdata = (uint8_t *) malloc(newsize);
+    newdata = (uint8_t *) RNET_MALLOC(newsize);
     if (newdata != NULL)
     {
-        free(packet->data);
+        RNET_FREE(packet->data);
         packet->data   = newdata;
         packet->maxlen = newsize;
     }
@@ -1357,8 +1357,8 @@ void FreePacket(SocketDataPacket *packet)
 {
     if (packet)
     {
-        free(packet->data);
-        free(packet);
+        RNET_FREE(packet->data);
+        RNET_FREE(packet);
     }
 }
 
@@ -1371,7 +1371,7 @@ SocketDataPacket **AllocPacketList(int howmany, int size)
 {
     SocketDataPacket **packetV;
 
-    packetV = (SocketDataPacket **) malloc((howmany + 1) * sizeof(*packetV));
+    packetV = (SocketDataPacket **) RNET_MALLOC((howmany + 1) * sizeof(*packetV));
     if (packetV != NULL)
     {
         int i;
@@ -1403,7 +1403,7 @@ void FreePacketList(SocketDataPacket **packetV)
         {
             FreePacket(packetV[i]);
         }
-        free(packetV);
+        RNET_FREE(packetV);
     }
 }
 
@@ -1628,13 +1628,13 @@ bool IsSocketConnected(Socket *sock)
 SocketResult *AllocSocketResult()
 {
     struct SocketResult *res;
-    res = (struct SocketResult *) malloc(sizeof(*res));
+    res = (struct SocketResult *) RNET_MALLOC(sizeof(*res));
     if (res != NULL)
     {
         memset(res, 0, sizeof(*res));
         if ((res->socket = AllocSocket()) == NULL)
         {
-            free(res);
+            RNET_FREE(res);
             res = NULL;
         }
     }
@@ -1650,7 +1650,7 @@ void FreeSocketResult(SocketResult **result)
         {
             FreeSocket(&((*result)->socket));
         }
-        free(*result);
+        RNET_FREE(*result);
         *result = NULL;
     }
 }
@@ -1660,7 +1660,7 @@ Socket *AllocSocket()
 {
     // Allocate a socket if one already hasn't been
     struct Socket *sock;
-    sock = (Socket *) malloc(sizeof(*sock));
+    sock = (Socket *) RNET_MALLOC(sizeof(*sock));
     if (sock != NULL)
     {
         memset(sock, 0, sizeof(*sock));
@@ -1670,7 +1670,7 @@ Socket *AllocSocket()
         TraceLog(
             LOG_WARNING, "Ran out of memory attempting to allocate a socket");
         SocketClose(sock);
-        free(sock);
+        RNET_FREE(sock);
         sock = NULL;
     }
     return sock;
@@ -1681,7 +1681,7 @@ void FreeSocket(Socket **sock)
 {
     if (*sock != NULL)
     {
-        free(*sock);
+        RNET_FREE(*sock);
         *sock = NULL;
     }
 }
@@ -1692,12 +1692,12 @@ SocketSet *AllocSocketSet(int max)
     struct SocketSet *set;
     int               i;
 
-    set = (struct SocketSet *) malloc(sizeof(*set));
+    set = (struct SocketSet *) RNET_MALLOC(sizeof(*set));
     if (set != NULL)
     {
         set->numsockets = 0;
         set->maxsockets = max;
-        set->sockets = (struct Socket **) malloc(max * sizeof(*set->sockets));
+        set->sockets = (struct Socket **) RNET_MALLOC(max * sizeof(*set->sockets));
         if (set->sockets != NULL)
         {
             for (i = 0; i < max; ++i)
@@ -1707,7 +1707,7 @@ SocketSet *AllocSocketSet(int max)
         }
         else
         {
-            free(set);
+            RNET_FREE(set);
             set = NULL;
         }
     }
@@ -1719,8 +1719,8 @@ void FreeSocketSet(SocketSet *set)
 {
     if (set)
     {
-        free(set->sockets);
-        free(set);
+        RNET_FREE(set->sockets);
+        RNET_FREE(set);
     }
 }
 
@@ -1830,10 +1830,10 @@ int CheckSockets(SocketSet *set, unsigned int timeout)
 AddressInformation AllocAddress()
 {
     AddressInformation addressInfo = NULL;
-    addressInfo = (AddressInformation) calloc(1, sizeof(*addressInfo));
+    addressInfo = (AddressInformation) RNET_CALLOC(1, sizeof(*addressInfo));
     if (addressInfo != NULL)
     {
-        addressInfo->addr.ai_addr = (struct sockaddr *) calloc(1, sizeof(struct sockaddr));
+        addressInfo->addr.ai_addr = (struct sockaddr *) RNET_CALLOC(1, sizeof(struct sockaddr));
         if (addressInfo->addr.ai_addr == NULL)
         {
             TraceLog(LOG_WARNING,
@@ -1855,10 +1855,10 @@ void FreeAddress(AddressInformation *addressInfo)
     {
         if ((*addressInfo)->addr.ai_addr != NULL)
         {
-            free((*addressInfo)->addr.ai_addr);
+            RNET_FREE((*addressInfo)->addr.ai_addr);
             (*addressInfo)->addr.ai_addr = NULL;
         }
-        free(*addressInfo);
+        RNET_FREE(*addressInfo);
         *addressInfo = NULL;
     }
 }
@@ -1867,7 +1867,7 @@ void FreeAddress(AddressInformation *addressInfo)
 AddressInformation *AllocAddressList(int size)
 {
     AddressInformation *addr;
-    addr = (AddressInformation *) malloc(size * sizeof(AddressInformation));
+    addr = (AddressInformation *) RNET_MALLOC(size * sizeof(AddressInformation));
     return addr;
 }
 

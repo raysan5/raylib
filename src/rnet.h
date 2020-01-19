@@ -91,6 +91,17 @@
 #define NOMCX             // Modem Configuration Extensions
 #define MMNOSOUND
 
+// Allow custom memory allocators
+#ifndef RNET_MALLOC
+    #define RNET_MALLOC(sz)       malloc(sz)
+#endif
+#ifndef RNET_CALLOC
+    #define RNET_CALLOC(n,sz)     calloc(n,sz)
+#endif
+#ifndef RNET_FREE
+    #define RNET_FREE(p)          free(p)
+#endif
+
 //----------------------------------------------------------------------------------
 // Platform type definitions
 // From: https://github.com/DFHack/clsocket/blob/master/src/Host.h
