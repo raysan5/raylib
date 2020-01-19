@@ -51,6 +51,8 @@
 #ifndef INCLUDE_JAR_XM_H
 #define INCLUDE_JAR_XM_H
 
+#include <stdint.h>
+
 #define JAR_XM_DEBUG 0
 #define JAR_XM_LINEAR_INTERPOLATION 1 // speed increase with decrease in quality
 #define JAR_XM_DEFENSIVE 1
@@ -69,7 +71,7 @@ struct jar_xm_context_s;
 typedef struct jar_xm_context_s jar_xm_context_t;
 
 #ifdef __cplusplus
-extern "C" {
+extern "C" { 
 #endif
 
 /** Create a XM context.
@@ -308,7 +310,6 @@ uint64_t jar_xm_get_remaining_samples(jar_xm_context_t* ctx);
 #include <math.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include <stdint.h>
 #include <limits.h>
 #include <string.h>
 

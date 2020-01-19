@@ -557,7 +557,7 @@ CharInfo *LoadFontData(const char *fileName, int fontSize, int *fontChars, int c
             else chars[i].image.data = NULL;
             
             stbtt_GetCodepointHMetrics(&fontInfo, ch, &chars[i].advanceX, NULL);
-            chars[i].advanceX *= scaleFactor;
+            chars[i].advanceX = (int)((float)chars[i].advanceX*scaleFactor);
 
             // Load characters images
             chars[i].image.width = chw;
@@ -977,7 +977,7 @@ void DrawTextRecEx(Font font, const char *text, Rectangle rec, float fontSize, f
                 bool isGlyphSelected = false;
                 if ((selectStart >= 0) && (k >= selectStart) && (k < (selectStart + selectLength)))
                 {
-                    DrawRectangleRec((Rectangle){ rec.x + textOffsetX - 1, rec.y + textOffsetY, glyphWidth, font.baseSize*scaleFactor }, selectBackTint);
+                    DrawRectangleRec((Rectangle){ rec.x + textOffsetX - 1, rec.y + textOffsetY, glyphWidth, (int)((float)font.baseSize*scaleFactor) }, selectBackTint);
                     isGlyphSelected = true;
                 }
 
