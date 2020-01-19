@@ -40,6 +40,14 @@
 #define APIENTRYP APIENTRY *
 #endif
 
+// RAY: Added
+#ifndef GLAD_REALLOC
+    #define GLAD_REALLOC(n,sz)  realloc(n,sz)
+#endif
+#ifndef GLAD_FREE
+    #define GLAD_FREE(p)        free(p)
+#endif
+
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -3760,7 +3768,7 @@ static int get_exts(void) {
         num_exts_i = 0;
         glGetIntegerv(GL_NUM_EXTENSIONS, &num_exts_i);
         if (num_exts_i > 0) {
-            exts_i = (const char **)realloc((void *)exts_i, num_exts_i * sizeof *exts_i);
+            exts_i = (const char **)GLAD_REALLOC((void *)exts_i, num_exts_i * sizeof *exts_i);
         }
 
         if (exts_i == NULL) {
@@ -3777,7 +3785,7 @@ static int get_exts(void) {
 
 static void free_exts(void) {
     if (exts_i != NULL) {
-        free((char **)exts_i);
+        GLAD_FREE((char **)exts_i);
         exts_i = NULL;
     }
 }
