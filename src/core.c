@@ -61,6 +61,9 @@
 *   #define SUPPORT_BUSY_WAIT_LOOP
 *       Use busy wait loop for timing sync, if not defined, a high-resolution timer is setup and used
 *
+*   #define SUPPORT_HALFBUSY_WAIT_LOOP
+*       Use a half-busy wait loop, in this case frame sleeps for some time and runs a busy-wait-loop at the end
+*
 *   #define SUPPORT_EVENTS_WAITING
 *       Wait for events passively (sleeping while no events) instead of polling them actively every frame
 *
@@ -3342,6 +3345,12 @@ static void Wait(float ms)
     // Busy wait loop
     while ((nextTime - prevTime) < ms/1000.0f) nextTime = GetTime();
 #else
+    #if defined(SUPPORT_HALFBUSY_WAIT_LOOP)
+        #define MAX_HALFBUSY_WAIT_TIME  4
+        double destTime = GetTime() + ms/1000;
+        if (ms > MAX_HALFBUSY_WAIT_TIME) ms -= MAX_HALFBUSY_WAIT_TIME;
+    #endif
+
     #if defined(_WIN32)
         Sleep((unsigned int)ms);
     #elif defined(__linux__) || defined(PLATFORM_WEB)
@@ -3355,6 +3364,10 @@ static void Wait(float ms)
         while (nanosleep(&req, &req) == -1) continue;
     #elif defined(__APPLE__)
         usleep(ms*1000.0f);
+    #endif
+    
+    #if defined(SUPPORT_HALFBUSY_WAIT_LOOP)
+        while (GetTime() < destTime) { }
     #endif
 #endif
 }
