@@ -152,7 +152,7 @@
 #endif
 
 #include <stdio.h>          // Standard input / output lib
-#include <stdlib.h>         // Required for: malloc(), free(), rand(), atexit()
+#include <stdlib.h>         // Required for: srand(), rand(), atexit()
 #include <stdint.h>         // Required for: typedef unsigned long long int uint64_t, used by hi-res timer
 #include <time.h>           // Required for: time() - Android/RPI hi-res timer (NOTE: Linux only!)
 #include <math.h>           // Required for: tan() [Used in BeginMode3D() to set perspective]
@@ -4073,16 +4073,10 @@ static void AndroidCommandCallback(struct android_app *app, int32_t cmd)
         case APP_CMD_START:
         {
             //rendering = true;
-            TraceLog(LOG_INFO, "APP_CMD_START");
         } break;
-        case APP_CMD_RESUME:
-        {
-            TraceLog(LOG_INFO, "APP_CMD_RESUME");
-        } break;
+        case APP_CMD_RESUME: break;
         case APP_CMD_INIT_WINDOW:
         {
-            TraceLog(LOG_INFO, "APP_CMD_INIT_WINDOW");
-
             if (app->window != NULL)
             {
                 if (contextRebindRequired)
@@ -4131,18 +4125,12 @@ static void AndroidCommandCallback(struct android_app *app, int32_t cmd)
         } break;
         case APP_CMD_GAINED_FOCUS:
         {
-            TraceLog(LOG_INFO, "APP_CMD_GAINED_FOCUS");
             appEnabled = true;
             //ResumeMusicStream();
         } break;
-        case APP_CMD_PAUSE:
-        {
-            TraceLog(LOG_INFO, "APP_CMD_PAUSE");
-        } break;
+        case APP_CMD_PAUSE: break;
         case APP_CMD_LOST_FOCUS:
         {
-            //DrawFrame();
-            TraceLog(LOG_INFO, "APP_CMD_LOST_FOCUS");
             appEnabled = false;
             //PauseMusicStream();
         } break;
@@ -4155,23 +4143,13 @@ static void AndroidCommandCallback(struct android_app *app, int32_t cmd)
             eglDestroySurface(display, surface);
 
             contextRebindRequired = true;
-
-            TraceLog(LOG_INFO, "APP_CMD_TERM_WINDOW");
         } break;
-        case APP_CMD_SAVE_STATE:
-        {
-            TraceLog(LOG_INFO, "APP_CMD_SAVE_STATE");
-        } break;
-        case APP_CMD_STOP:
-        {
-            TraceLog(LOG_INFO, "APP_CMD_STOP");
-        } break;
+        case APP_CMD_SAVE_STATE: break;
+        case APP_CMD_STOP: break;
         case APP_CMD_DESTROY:
         {
             // TODO: Finish activity?
             //ANativeActivity_finish(androidApp->activity);
-
-            TraceLog(LOG_INFO, "APP_CMD_DESTROY");
         } break;
         case APP_CMD_CONFIG_CHANGED:
         {
@@ -4179,8 +4157,6 @@ static void AndroidCommandCallback(struct android_app *app, int32_t cmd)
             //print_cur_config(androidApp);
 
             // Check screen orientation here!
-
-            TraceLog(LOG_INFO, "APP_CMD_CONFIG_CHANGED");
         } break;
         default: break;
     }
