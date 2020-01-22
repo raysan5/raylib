@@ -73,7 +73,7 @@
 //----------------------------------------------------------------------------------
 // Defines and Macros
 //----------------------------------------------------------------------------------
-#define MAX_TEXT_BUFFER_LENGTH  1024        // Size of internal static buffers used on  some functions:
+#define MAX_TEXT_BUFFER_LENGTH  1024        // Size of internal static buffers used on some functions:
                                             // TextFormat(), TextSubtext(), TextToUpper(), TextToLower(), TextToPascal()
 
 #define MAX_TEXT_UNICODE_CHARS   512        // Maximum number of unicode codepoints
@@ -1300,7 +1300,7 @@ const char **TextSplit(const char *text, char delimiter, int *count)
         counter = 1;
 
         // Count how many substrings we have on text and point to every one
-        for (int i = 0; i < MAX_TEXT_BUFFER_LENGTH; i++)
+        for (int i = 0; i < TEXTSPLIT_MAX_TEXT_BUFFER_LENGTH; i++)
         {
             buffer[i] = text[i];
             if (buffer[i] == '\0') break;
