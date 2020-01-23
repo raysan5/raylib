@@ -1092,7 +1092,7 @@ ModelAnimation *LoadModelAnimations(const char *filename, int *animCount)
                     animations[a].framePoses[frame][i].rotation = QuaternionMultiply(animations[a].framePoses[frame][animations[a].bones[i].parent].rotation, animations[a].framePoses[frame][i].rotation);
                     animations[a].framePoses[frame][i].translation = Vector3RotateByQuaternion(animations[a].framePoses[frame][i].translation, animations[a].framePoses[frame][animations[a].bones[i].parent].rotation);
                     animations[a].framePoses[frame][i].translation = Vector3Add(animations[a].framePoses[frame][i].translation, animations[a].framePoses[frame][animations[a].bones[i].parent].translation);
-                    animations[a].framePoses[frame][i].scale = Vector3MultiplyV(animations[a].framePoses[frame][i].scale, animations[a].framePoses[frame][animations[a].bones[i].parent].scale);
+                    animations[a].framePoses[frame][i].scale = Vector3Multiply(animations[a].framePoses[frame][i].scale, animations[a].framePoses[frame][animations[a].bones[i].parent].scale);
                 }
             }
         }
@@ -1145,7 +1145,7 @@ void UpdateModelAnimation(Model model, ModelAnimation anim, int frame)
                 // Vertices processing
                 // NOTE: We use meshes.vertices (default vertex position) to calculate meshes.animVertices (animated vertex position)
                 animVertex = (Vector3){ model.meshes[m].vertices[vCounter], model.meshes[m].vertices[vCounter + 1], model.meshes[m].vertices[vCounter + 2] };
-                animVertex = Vector3MultiplyV(animVertex, outScale);
+                animVertex = Vector3Multiply(animVertex, outScale);
                 animVertex = Vector3Subtract(animVertex, inTranslation);
                 animVertex = Vector3RotateByQuaternion(animVertex, QuaternionMultiply(outRotation, QuaternionInvert(inRotation)));
                 animVertex = Vector3Add(animVertex, outTranslation);
@@ -2344,7 +2344,7 @@ void MeshTangents(Mesh *mesh)
 
         // TODO: Review, not sure if tangent computation is right, just used reference proposed maths...
     #if defined(COMPUTE_TANGENTS_METHOD_01)
-        Vector3 tmp = Vector3Subtract(tangent, Vector3Multiply(normal, Vector3DotProduct(normal, tangent)));
+        Vector3 tmp = Vector3Subtract(tangent, Vector3Scale(normal, Vector3DotProduct(normal, tangent)));
         tmp = Vector3Normalize(tmp);
         mesh->tangents[i*4 + 0] = tmp.x;
         mesh->tangents[i*4 + 1] = tmp.y;
@@ -2375,7 +2375,7 @@ void MeshBinormals(Mesh *mesh)
     {
         Vector3 normal = { mesh->normals[i*3 + 0], mesh->normals[i*3 + 1], mesh->normals[i*3 + 2] };
         Vector3 tangent = { mesh->tangents[i*4 + 0], mesh->tangents[i*4 + 1], mesh->tangents[i*4 + 2] };
-        Vector3 binormal = Vector3Multiply(Vector3CrossProduct(normal, tangent), mesh->tangents[i*4 + 3]);
+        Vector3 binormal = Vector3Scale(Vector3CrossProduct(normal, tangent), mesh->tangents[i*4 + 3]);
         
         // TODO: Register computed binormal in mesh->binormal?
     }
@@ -3285,7 +3285,7 @@ static Model LoadIQM(const char *fileName)
             model.bindPose[i].rotation = QuaternionMultiply(model.bindPose[model.bones[i].parent].rotation, model.bindPose[i].rotation);
             model.bindPose[i].translation = Vector3RotateByQuaternion(model.bindPose[i].translation, model.bindPose[model.bones[i].parent].rotation);
             model.bindPose[i].translation = Vector3Add(model.bindPose[i].translation, model.bindPose[model.bones[i].parent].translation);
-            model.bindPose[i].scale = Vector3MultiplyV(model.bindPose[i].scale, model.bindPose[model.bones[i].parent].scale);
+            model.bindPose[i].scale = Vector3Multiply(model.bindPose[i].scale, model.bindPose[model.bones[i].parent].scale);
         }
     }
 

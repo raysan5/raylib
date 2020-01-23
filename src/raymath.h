@@ -301,14 +301,14 @@ RMDEF Vector3 Vector3Subtract(Vector3 v1, Vector3 v2)
 }
 
 // Multiply vector by scalar
-RMDEF Vector3 Vector3Multiply(Vector3 v, float scalar)
+RMDEF Vector3 Vector3Scale(Vector3 v, float scalar)
 {
     Vector3 result = { v.x*scalar, v.y*scalar, v.z*scalar };
     return result;
 }
 
 // Multiply vector by vector
-RMDEF Vector3 Vector3MultiplyV(Vector3 v1, Vector3 v2)
+RMDEF Vector3 Vector3Multiply(Vector3 v1, Vector3 v2)
 {
     Vector3 result = { v1.x*v2.x, v1.y*v2.y, v1.z*v2.z };
     return result;
