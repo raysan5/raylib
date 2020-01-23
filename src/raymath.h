@@ -371,13 +371,6 @@ RMDEF float Vector3Distance(Vector3 v1, Vector3 v2)
     return result;
 }
 
-// Scale provided vector
-RMDEF Vector3 Vector3Scale(Vector3 v, float scale)
-{
-    Vector3 result = { v.x*scale, v.y*scale, v.z*scale };
-    return result;
-}
-
 // Negate provided vector (invert direction)
 RMDEF Vector3 Vector3Negate(Vector3 v)
 {
