@@ -1396,22 +1396,21 @@ const char *TextToPascal(const char *text)
 }
 
 // Get integer value from text
-// NOTE: Negative values not supported
+// NOTE: This function replaces atoi() [stdlib.h]
 int TextToInteger(const char *text)
 {
-    int result = 0;
-    int len = strlen(text);
-    int units = 1;
+    int value = 0;
+    int sign = 1;
 
-    for (int i = len - 1; i >= 0; i--)
+    if ((text[0] == '+') || (text[0] == '-'))
     {
-        if ((text[i] > 47) && (text[i] < 58)) result += ((int)text[i] - 48)*units;
-        else { result = -1; break; }
-
-        units *= 10;
+        if (text[0] == '-') sign = -1;
+        text++;
     }
+  
+    for (int i = 0; ((text[i] >= '0') && (text[i] <= '9')); ++i) value = value*10 + (int)(text[i] - '0');
 
-    return result;
+    return value*sign; 
 }
 
 // Encode text codepoint into utf8 text (memory must be freed!)
