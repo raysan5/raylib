@@ -1013,6 +1013,7 @@ RLAPI void SetMouseScale(float scaleX, float scaleY);         // Set mouse scali
 RLAPI int GetMouseWheelMove(void);                            // Returns mouse wheel movement Y
 
 // Input-related functions: touch
+RLAPI bool IsTouchDetected(void);                             // Detect if a touch has happened
 RLAPI int GetTouchX(void);                                    // Returns touch position X for touch point 0 (relative to screen size)
 RLAPI int GetTouchY(void);                                    // Returns touch position Y for touch point 0 (relative to screen size)
 RLAPI Vector2 GetTouchPosition(int index);                    // Returns touch position XY for a touch point index (relative to screen size)

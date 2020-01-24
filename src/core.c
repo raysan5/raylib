@@ -426,6 +426,8 @@ static int gamepadStream[MAX_GAMEPADS] = { -1 };// Gamepad device file descripto
 static pthread_t gamepadThreadId;               // Gamepad reading thread id
 static char gamepadName[64];                    // Gamepad name holder
 #endif
+
+bool touchDetected = false;
 //-----------------------------------------------------------------------------------
 
 // Timming system variables
@@ -2427,12 +2429,11 @@ bool IsMouseButtonPressed(int button)
     if ((currentMouseState[button] != previousMouseState[button]) && (currentMouseState[button] == 1)) pressed = true;
 #endif
 
-/*
+
 #if defined(PLATFORM_WEB)
-    Vector2 pos = GetTouchPosition(0);
-    if ((pos.x > 0) && (pos.y > 0)) pressed = true;    // There was a touch!
+    if (IsTouchDetected()) pressed = true;    // There was a touch!
 #endif
-*/
+
     return pressed;
 }
 
@@ -2504,14 +2505,11 @@ Vector2 GetMousePosition(void)
 #else
     position = (Vector2){ (mousePosition.x + mouseOffset.x)*mouseScale.x, (mousePosition.y + mouseOffset.y)*mouseScale.y };
 #endif
-/*
-#if defined(PLATFORM_WEB)
-    Vector2 pos = GetTouchPosition(0);
 
-    // Touch position has priority over mouse position
-    if ((pos.x > 0) && (pos.y > 0)) position = pos; // There was a touch!
+#if defined(PLATFORM_WEB)
+    if (IsTouchDetected()) position = GetTouchPosition(0);
 #endif
-*/
+
     return position;
 }
 
@@ -2555,6 +2553,16 @@ int GetMouseWheelMove(void)
     return previousMouseWheelY/100;
 #else
     return previousMouseWheelY;
+#endif
+}
+
+// Detect if a touch has happened
+bool IsTouchDetected(void)
+{
+#if defined(PLATFORM_ANDROID) || defined(PLATFORM_WEB)
+    return touchDetected;
+#else   // PLATFORM_DESKTOP, PLATFORM_RPI
+    return false;
 #endif
 }
 
@@ -3718,6 +3726,8 @@ static void PollInputEvents(void)
 
     previousMouseWheelY = currentMouseWheelY;
     currentMouseWheelY = 0;
+    
+    touchDetected = false;
 #endif
 
 #if defined(PLATFORM_DESKTOP)
@@ -4362,6 +4372,7 @@ static EM_BOOL EmscriptenMouseCallback(int eventType, const EmscriptenMouseEvent
 // Register touch input events
 static EM_BOOL EmscriptenTouchCallback(int eventType, const EmscriptenTouchEvent *touchEvent, void *userData)
 {
+    touchDetected = true;
     /*
     for (int i = 0; i < touchEvent->numTouches; i++)
     {
