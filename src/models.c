@@ -2373,9 +2373,9 @@ void MeshBinormals(Mesh *mesh)
 {
     for (int i = 0; i < mesh->vertexCount; i++)
     {
-        Vector3 normal = { mesh->normals[i*3 + 0], mesh->normals[i*3 + 1], mesh->normals[i*3 + 2] };
-        Vector3 tangent = { mesh->tangents[i*4 + 0], mesh->tangents[i*4 + 1], mesh->tangents[i*4 + 2] };
-        Vector3 binormal = Vector3Scale(Vector3CrossProduct(normal, tangent), mesh->tangents[i*4 + 3]);
+        //Vector3 normal = { mesh->normals[i*3 + 0], mesh->normals[i*3 + 1], mesh->normals[i*3 + 2] };
+        //Vector3 tangent = { mesh->tangents[i*4 + 0], mesh->tangents[i*4 + 1], mesh->tangents[i*4 + 2] };
+        //Vector3 binormal = Vector3Scale(Vector3CrossProduct(normal, tangent), mesh->tangents[i*4 + 3]);
         
         // TODO: Register computed binormal in mesh->binormal?
     }
@@ -3048,7 +3048,7 @@ static Model LoadIQM(const char *fileName)
     //-----------------------------------------------------------------------------------
 
     // IQM vertex data types
-    typedef enum {
+    enum {
         IQM_POSITION     = 0,
         IQM_TEXCOORD     = 1,
         IQM_NORMAL       = 2,
@@ -3057,7 +3057,7 @@ static Model LoadIQM(const char *fileName)
         IQM_BLENDWEIGHTS = 5,
         IQM_COLOR        = 6,       // NOTE: Vertex colors unused by default
         IQM_CUSTOM       = 0x10     // NOTE: Custom vertex values unused by default
-    } IQMVertexType;
+    };
 
     Model model = { 0 };
 
