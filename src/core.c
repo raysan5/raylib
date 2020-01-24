@@ -1522,43 +1522,51 @@ Matrix GetCameraMatrix2D(Camera2D camera)
 // Returns the screen space position from a 3d world space position
 Vector2 GetWorldToScreen(Vector3 position, Camera camera)
 {
-    // Calculate projection matrix (from perspective instead of frustum
-    Matrix matProj = MatrixIdentity();
-
-    if (camera.type == CAMERA_PERSPECTIVE)
-    {
-        // Calculate projection matrix from perspective
-        matProj = MatrixPerspective(camera.fovy*DEG2RAD, ((double)GetScreenWidth()/(double)GetScreenHeight()), DEFAULT_NEAR_CULL_DISTANCE, DEFAULT_FAR_CULL_DISTANCE);
-    }
-    else if (camera.type == CAMERA_ORTHOGRAPHIC)
-    {
-        float aspect = (float)screenWidth/(float)screenHeight;
-        double top = camera.fovy/2.0;
-        double right = top*aspect;
-
-        // Calculate projection matrix from orthographic
-        matProj = MatrixOrtho(-right, right, -top, top, 0.01, 1000.0);
-    }
-
-    // Calculate view matrix from camera look at (and transpose it)
-    Matrix matView = MatrixLookAt(camera.position, camera.target, camera.up);
-
-    // Convert world position vector to quaternion
-    Quaternion worldPos = { position.x, position.y, position.z, 1.0f };
-
-    // Transform world position to view
-    worldPos = QuaternionTransform(worldPos, matView);
-
-    // Transform result to projection (clip space position)
-    worldPos = QuaternionTransform(worldPos, matProj);
-
-    // Calculate normalized device coordinates (inverted y)
-    Vector3 ndcPos = { worldPos.x/worldPos.w, -worldPos.y/worldPos.w, worldPos.z/worldPos.w };
-
-    // Calculate 2d screen position vector
-    Vector2 screenPosition = { (ndcPos.x + 1.0f)/2.0f*(float)GetScreenWidth(), (ndcPos.y + 1.0f)/2.0f*(float)GetScreenHeight() };
+    Vector2 screenPosition = GetWorldToScreenEx(position, camera, GetScreenWidth(), GetScreenHeight());
 
     return screenPosition;
+}
+
+// Returns size position for a 3d world space position (useful for texture drawing)
+Vector2 GetWorldToScreenEx(Vector3 position, Camera camera, int width, int height)
+{
+	// Calculate projection matrix (from perspective instead of frustum
+	Matrix matProj = MatrixIdentity();
+
+	if (camera.type == CAMERA_PERSPECTIVE)
+	{
+		// Calculate projection matrix from perspective
+		matProj = MatrixPerspective(camera.fovy * DEG2RAD, ((double)width/(double)height), DEFAULT_NEAR_CULL_DISTANCE, DEFAULT_FAR_CULL_DISTANCE);
+	}
+	else if (camera.type == CAMERA_ORTHOGRAPHIC)
+	{
+		float aspect = (float)width/(float)height;
+		double top = camera.fovy/2.0;
+		double right = top*aspect;
+
+		// Calculate projection matrix from orthographic
+		matProj = MatrixOrtho(-right, right, -top, top, DEFAULT_NEAR_CULL_DISTANCE, DEFAULT_FAR_CULL_DISTANCE);
+	}
+
+	// Calculate view matrix from camera look at (and transpose it)
+	Matrix matView = MatrixLookAt(camera.position, camera.target, camera.up);
+
+	// Convert world position vector to quaternion
+	Quaternion worldPos = { position.x, position.y, position.z, 1.0f };
+
+	// Transform world position to view
+	worldPos = QuaternionTransform(worldPos, matView);
+
+	// Transform result to projection (clip space position)
+	worldPos = QuaternionTransform(worldPos, matProj);
+
+	// Calculate normalized device coordinates (inverted y)
+	Vector3 ndcPos = { worldPos.x/worldPos.w, -worldPos.y/worldPos.w, worldPos.z/worldPos.w };
+
+	// Calculate 2d screen position vector
+	Vector2 sizePosition = { (ndcPos.x + 1.0f)/2.0f*(float)width, (ndcPos.y + 1.0f)/2.0f*(float)height };
+
+	return sizePosition;
 }
 
 // Returns the screen space position for a 2d camera world space position
