@@ -132,7 +132,9 @@
     #define MAX_BATCH_ELEMENTS            2048
 #endif
 
-#define MAX_BATCH_BUFFERING                  1      // Max number of buffers for batching (multi-buffering)
+#ifndef MAX_BATCH_BUFFERING
+    #define MAX_BATCH_BUFFERING              1      // Max number of buffers for batching (multi-buffering)
+#endif
 #define MAX_MATRIX_STACK_SIZE               32      // Max size of Matrix stack
 #define MAX_DRAWCALL_REGISTERED            256      // Max draws by state changes (mode, texture)
 
