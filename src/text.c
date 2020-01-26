@@ -1105,8 +1105,32 @@ int GetGlyphIndex(Font font, int codepoint)
 #endif
 }
 
+//----------------------------------------------------------------------------------
 // Text strings management functions
 //----------------------------------------------------------------------------------
+
+// Copy one string to another, returns bytes copied
+int TextCopy(char *dst, const char *src)
+{
+    int bytes = 0;
+    
+    if (dst != NULL)
+    {
+        while (*src != '\0')
+        {
+            *dst = *src;
+            dst++;
+            src++;
+            
+            bytes++;
+        }
+
+        *dst = '\0';
+    }
+
+    return bytes;
+}
+
 // Check if two text string are equal
 // REQUIRES: strcmp()
 bool TextIsEqual(const char *text1, const char *text2)
