@@ -1250,7 +1250,7 @@ Music LoadMusicStream(const char *fileName)
 
             // NOTE: Only stereo is supported for XM
             music.stream = InitAudioStream(48000, 16, 2);
-            music.sampleCount = (unsigned int)jar_xm_get_remaining_samples(ctxXm);
+            music.sampleCount = (unsigned int)jar_xm_get_remaining_samples(ctxXm)*2;
             music.loopCount = 0;   // Infinite loop by default
             jar_xm_reset(ctxXm);   // make sure we start at the beginning of the song
             musicLoaded = true;
@@ -1274,7 +1274,7 @@ Music LoadMusicStream(const char *fileName)
 
             // NOTE: Only stereo is supported for MOD
             music.stream = InitAudioStream(48000, 16, 2);
-            music.sampleCount = (unsigned int)jar_mod_max_samples(ctxMod);
+            music.sampleCount = (unsigned int)jar_mod_max_samples(ctxMod)*2;
             music.loopCount = 0;   // Infinite loop by default
             musicLoaded = true;
         }
