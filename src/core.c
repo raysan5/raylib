@@ -680,6 +680,10 @@ void InitWindow(int width, int height, const char *title)
     // NOTE: External function (defined in module: text)
     LoadFontDefault();
 #endif
+#if defined(PLATFORM_DESKTOP) && defined(SUPPORT_HIGH_DPI)
+    // Set default font texture filter for HighDPI (blurry)
+    SetTextureFilter(GetFontDefault().texture, FILTER_BILINEAR);
+#endif
 
 #if defined(PLATFORM_RPI)
     // Init raw input system
@@ -3229,7 +3233,6 @@ static bool InitGraphicsDevice(int width, int height)
 #if !defined(__APPLE__)
     SetMouseScale((float)screenWidth/fbWidth, (float)screenHeight/fbHeight);
 #endif    
-    SetTextureFilter(GetFontDefault().texture, FILTER_BILINEAR);
 #endif  // PLATFORM_DESKTOP && SUPPORT_HIGH_DPI
 
     // Setup default viewport
