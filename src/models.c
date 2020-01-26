@@ -3537,7 +3537,6 @@ static Model LoadGLTF(const char *fileName)
 
         for (int i = 0; i < model.meshCount; i++) model.meshes[i].vboId = (unsigned int *)RL_CALLOC(MAX_MESH_VBO, sizeof(unsigned int));
 
-        //For each material
         for (int i = 0; i < model.materialCount - 1; i++)
         {
             model.materials[i] = LoadMaterialDefault();

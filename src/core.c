@@ -330,7 +330,7 @@ static GLFWwindow *window;                      // Native window (graphic device
 static EGL_DISPMANX_WINDOW_T window;            // Native window (graphic device)
 #endif
 #if defined(PLATFORM_UWP)
-extern EGLNativeWindowType window;              // Native window handler for UWP (external, defined in UWP App)
+extern EGLNativeWindowType uwpWindow;              // Native window handler for UWP (external, defined in UWP App)
 #endif
 #if defined(PLATFORM_ANDROID) || defined(PLATFORM_RPI) || defined(PLATFORM_UWP)
 static EGLDisplay display;                      // Native display device (physical screen connection)
@@ -3078,7 +3078,7 @@ static bool InitGraphicsDevice(int width, int height)
     //https://stackoverflow.com/questions/46550182/how-to-create-eglsurface-using-c-winrt-and-angle
 
     //surface = eglCreateWindowSurface(display, config, reinterpret_cast<IInspectable*>(surfaceCreationProperties), surfaceAttributes);
-    surface = eglCreateWindowSurface(display, config, window, surfaceAttributes);
+    surface = eglCreateWindowSurface(display, config, uwpWindow, surfaceAttributes);
     if (surface == EGL_NO_SURFACE)
     {
         TraceLog(LOG_WARNING, "Failed to create EGL fullscreen surface");
