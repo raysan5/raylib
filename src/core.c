@@ -2615,9 +2615,9 @@ Vector2 GetTouchPosition(int index)
     if (index < MAX_TOUCH_POINTS) position = touchPosition[index];
     else TraceLog(LOG_WARNING, "Required touch point out of range (Max touch points: %i)", MAX_TOUCH_POINTS);
 
+    #if defined(PLATFORM_ANDROID)
     if ((screenWidth > displayWidth) || (screenHeight > displayHeight))
     {
-        // TODO: Review touch position scaling for screenSize vs displaySize
         position.x = position.x*((float)screenWidth/(float)(displayWidth - renderOffsetX)) - renderOffsetX/2;
         position.y = position.y*((float)screenHeight/(float)(displayHeight - renderOffsetY)) - renderOffsetY/2;
     }
@@ -2626,6 +2626,7 @@ Vector2 GetTouchPosition(int index)
         position.x = position.x*((float)renderWidth/(float)displayWidth) - renderOffsetX/2;
         position.y = position.y*((float)renderHeight/(float)displayHeight) - renderOffsetY/2;
     }
+    #endif
 #elif defined(PLATFORM_RPI)
 
     position = touchPosition[index];
@@ -4336,7 +4337,7 @@ static EM_BOOL EmscriptenFullscreenChangeCallback(int eventType, const Emscripte
     //fullscreenEnabled: int e->fullscreenEnabled
     //fs element nodeName: (char *) e->nodeName
     //fs element id: (char *) e->id
-    //Current element size: (int) e->elementWidth, (int) e->elementHeight
+    //Current element size: (int) e->elementWidth, (int) e->elementHeight // WARNING: Not canvas size but full page!
     //Screen size:(int) e->screenWidth, (int) e->screenHeight
 
     if (e->isFullscreen)
@@ -4347,6 +4348,8 @@ static EM_BOOL EmscriptenFullscreenChangeCallback(int eventType, const Emscripte
     {
         TraceLog(LOG_INFO, "Canvas scaled to windowed. ElementSize: (%ix%i), ScreenSize(%ix%i)", e->elementWidth, e->elementHeight, e->screenWidth, e->screenHeight);
     }
+    
+    TraceLog(LOG_INFO, "Canvas resize?");
 
     // TODO: Depending on scaling factor (screen vs element), calculate factor to scale mouse/touch input
 
@@ -4391,29 +4394,6 @@ static EM_BOOL EmscriptenMouseCallback(int eventType, const EmscriptenMouseEvent
 static EM_BOOL EmscriptenTouchCallback(int eventType, const EmscriptenTouchEvent *touchEvent, void *userData)
 {
     touchDetected = true;
-    /*
-    for (int i = 0; i < touchEvent->numTouches; i++)
-    {
-        long x, y, id;
-
-        if (!touchEvent->touches[i].isChanged) continue;
-
-        id = touchEvent->touches[i].identifier;
-        x = touchEvent->touches[i].canvasX;
-        y = touchEvent->touches[i].canvasY;
-    }
-
-    TraceLog(LOG_DEBUG, "%s, numTouches: %d %s%s%s%s", emscripten_event_type_to_string(eventType), event->numTouches,
-           event->ctrlKey? " CTRL" : "", event->shiftKey? " SHIFT" : "", event->altKey? " ALT" : "", event->metaKey? " META" : "");
-
-    for (int i = 0; i < event->numTouches; ++i)
-    {
-        const EmscriptenTouchPoint *t = &event->touches[i];
-
-        TraceLog(LOG_DEBUG, "  %ld: screen: (%ld,%ld), client: (%ld,%ld), page: (%ld,%ld), isChanged: %d, onTarget: %d, canvas: (%ld, %ld)",
-          t->identifier, t->screenX, t->screenY, t->clientX, t->clientY, t->pageX, t->pageY, t->isChanged, t->onTarget, t->canvasX, t->canvasY);
-    }
-    */
 
 #if defined(SUPPORT_GESTURES_SYSTEM)
     GestureEvent gestureEvent;
@@ -4432,21 +4412,21 @@ static EM_BOOL EmscriptenTouchCallback(int eventType, const EmscriptenTouchEvent
 
     // Register touch points position
     // NOTE: Only two points registered
-    // TODO: Touch data should be scaled accordingly!
-    //gestureEvent.position[0] = (Vector2){ touchEvent->touches[0].canvasX, touchEvent->touches[0].canvasY };
-    //gestureEvent.position[1] = (Vector2){ touchEvent->touches[1].canvasX, touchEvent->touches[1].canvasY };
     gestureEvent.position[0] = (Vector2){ touchEvent->touches[0].targetX, touchEvent->touches[0].targetY };
     gestureEvent.position[1] = (Vector2){ touchEvent->touches[1].targetX, touchEvent->touches[1].targetY };
 
-    touchPosition[0] = gestureEvent.position[0];
-    touchPosition[1] = gestureEvent.position[1];
+    double canvasWidth, canvasHeight;
+    //EMSCRIPTEN_RESULT res = emscripten_get_canvas_element_size("#canvas", &canvasWidth, &canvasHeight);
+    emscripten_get_element_css_size("#canvas", &canvasWidth, &canvasHeight);
 
     // Normalize gestureEvent.position[x] for screenWidth and screenHeight
-    gestureEvent.position[0].x /= (float)GetScreenWidth();
-    gestureEvent.position[0].y /= (float)GetScreenHeight();
+    gestureEvent.position[0].x *= ((float)GetScreenWidth()/(float)canvasWidth);
+    gestureEvent.position[0].y *= ((float)GetScreenHeight()/(float)canvasHeight);
+    gestureEvent.position[1].x *= ((float)GetScreenWidth()/(float)canvasWidth);
+    gestureEvent.position[1].y *= ((float)GetScreenHeight()/(float)canvasHeight);
 
-    gestureEvent.position[1].x /= (float)GetScreenWidth();
-    gestureEvent.position[1].y /= (float)GetScreenHeight();
+    touchPosition[0] = gestureEvent.position[0];
+    touchPosition[1] = gestureEvent.position[1];
 
     // Gesture data is sent to gestures system for processing
     ProcessGestureEvent(gestureEvent);
@@ -4457,8 +4437,13 @@ static EM_BOOL EmscriptenTouchCallback(int eventType, const EmscriptenTouchEvent
         // Get first touch position
         touchPosition[0] = (Vector2){ touchEvent->touches[0].targetX, touchEvent->touches[0].targetY };
 
-        touchPosition[0].x /= (float)GetScreenWidth();
-        touchPosition[0].y /= (float)GetScreenHeight();
+        double canvasWidth, canvasHeight;
+        //EMSCRIPTEN_RESULT res = emscripten_get_canvas_element_size("#canvas", &canvasWidth, &canvasHeight);
+        emscripten_get_element_css_size("#canvas", &canvasWidth, &canvasHeight);
+
+        // Normalize gestureEvent.position[x] for screenWidth and screenHeight
+        gestureEvent.position[0].x *= ((float)GetScreenWidth()/(float)canvasWidth);
+        gestureEvent.position[0].y *= ((float)GetScreenHeight()/(float)canvasHeight);
     }
 #endif
 
