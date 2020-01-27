@@ -427,7 +427,6 @@ static pthread_t gamepadThreadId;               // Gamepad reading thread id
 static char gamepadName[64];                    // Gamepad name holder
 #endif
 
-bool touchDetected = false;
 //-----------------------------------------------------------------------------------
 
 // Timming system variables
@@ -2441,16 +2440,11 @@ bool IsMouseButtonPressed(int button)
 {
     bool pressed = false;
 
-// TODO: Review, gestures could be not supported despite being on Android platform!
 #if defined(PLATFORM_ANDROID)
     if (IsGestureDetected(GESTURE_TAP)) pressed = true;
 #else
-    if ((currentMouseState[button] != previousMouseState[button]) && (currentMouseState[button] == 1)) pressed = true;
-#endif
-
-
-#if defined(PLATFORM_WEB)
-    if (IsTouchDetected()) pressed = true;    // There was a touch!
+    // NOTE: On PLATFORM_DESKTOP and PLATFORM_WEB IsMouseButtonPressed() is equivalent to GESTURE_TAP
+    if (((currentMouseState[button] != previousMouseState[button]) && (currentMouseState[button] == 1)) || IsGestureDetected(GESTURE_TAP))  pressed = true;
 #endif
 
     return pressed;
@@ -2464,7 +2458,8 @@ bool IsMouseButtonDown(int button)
 #if defined(PLATFORM_ANDROID)
     if (IsGestureDetected(GESTURE_HOLD)) down = true;
 #else
-    if (GetMouseButtonStatus(button) == 1) down = true;
+    // NOTE: On PLATFORM_DESKTOP and PLATFORM_WEB IsMouseButtonDown() is equivalent to GESTURE_HOLD or GESTURE_DRAG
+    if ((GetMouseButtonStatus(button) == 1) || IsGestureDetected(GESTURE_HOLD) || IsGestureDetected(GESTURE_DRAG)) down = true;
 #endif
 
     return down;
@@ -2519,14 +2514,10 @@ Vector2 GetMousePosition(void)
 {
     Vector2 position = { 0.0f, 0.0f };
 
-#if defined(PLATFORM_ANDROID)
+#if defined(PLATFORM_ANDROID) || defined(PLATFORM_WEB)
     position = GetTouchPosition(0);
 #else
     position = (Vector2){ (mousePosition.x + mouseOffset.x)*mouseScale.x, (mousePosition.y + mouseOffset.y)*mouseScale.y };
-#endif
-
-#if defined(PLATFORM_WEB)
-    if (IsTouchDetected()) position = GetTouchPosition(0);
 #endif
 
     return position;
@@ -2575,16 +2566,6 @@ int GetMouseWheelMove(void)
 #endif
 }
 
-// Detect if a touch has happened
-bool IsTouchDetected(void)
-{
-#if defined(PLATFORM_ANDROID) || defined(PLATFORM_WEB)
-    return touchDetected;
-#else   // PLATFORM_DESKTOP, PLATFORM_RPI
-    return false;
-#endif
-}
-
 // Returns touch position X for touch point 0 (relative to screen size)
 int GetTouchX(void)
 {
@@ -2627,14 +2608,12 @@ Vector2 GetTouchPosition(int index)
         position.y = position.y*((float)renderHeight/(float)displayHeight) - renderOffsetY/2;
     }
     #endif
-#elif defined(PLATFORM_RPI)
-
+#endif
+#if defined(PLATFORM_RPI)
     position = touchPosition[index];
-    
-#else   // PLATFORM_DESKTOP
-
+#endif
+#if defined(PLATFORM_DESKTOP)
     // TODO: GLFW is not supporting multi-touch input just yet
-    
     // https://www.codeproject.com/Articles/668404/Programming-for-Multi-Touch
     // https://docs.microsoft.com/en-us/windows/win32/wintouch/getting-started-with-multi-touch-messages
 
@@ -3745,8 +3724,6 @@ static void PollInputEvents(void)
 
     previousMouseWheelY = currentMouseWheelY;
     currentMouseWheelY = 0;
-    
-    touchDetected = false;
 #endif
 
 #if defined(PLATFORM_DESKTOP)
@@ -4393,8 +4370,6 @@ static EM_BOOL EmscriptenMouseCallback(int eventType, const EmscriptenMouseEvent
 // Register touch input events
 static EM_BOOL EmscriptenTouchCallback(int eventType, const EmscriptenTouchEvent *touchEvent, void *userData)
 {
-    touchDetected = true;
-
 #if defined(SUPPORT_GESTURES_SYSTEM)
     GestureEvent gestureEvent;
 
