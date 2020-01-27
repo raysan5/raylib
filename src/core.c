@@ -1303,11 +1303,11 @@ void BeginMode2D(Camera2D camera)
 
     rlLoadIdentity();                   // Reset current matrix (MODELVIEW)
 
-    // Apply screen scaling if required
-    rlMultMatrixf(MatrixToFloat(screenScaling));
-
     // Apply 2d camera transformation to modelview
     rlMultMatrixf(MatrixToFloat(GetCameraMatrix2D(camera)));
+    
+    // Apply screen scaling if required
+    rlMultMatrixf(MatrixToFloat(screenScaling));
 }
 
 // Ends 2D mode with custom camera
