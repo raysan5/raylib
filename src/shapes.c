@@ -398,7 +398,38 @@ void DrawCircleLines(int centerX, int centerY, float radius, Color color)
             rlVertex2f(centerX + sinf(DEG2RAD*i)*radius, centerY + cosf(DEG2RAD*i)*radius);
             rlVertex2f(centerX + sinf(DEG2RAD*(i + 10))*radius, centerY + cosf(DEG2RAD*(i + 10))*radius);
         }
-   rlEnd();
+    rlEnd();
+}
+
+// Draw ellipse
+void DrawEllipse(int centerX, int centerY, float radiusH, float radiusV, Color color)
+{
+    if (rlCheckBufferLimit(3*36)) rlglDraw();
+
+    rlBegin(RL_TRIANGLES);
+        for (int i = 0; i < 360; i += 10)
+        {
+            rlColor4ub(color.r, color.g, color.b, color.a);
+            rlVertex2f(centerX, centerY);
+            rlVertex2f(centerX + sinf(DEG2RAD*i)*radiusH, centerY + cosf(DEG2RAD*i)*radiusV);
+            rlVertex2f(centerX + sinf(DEG2RAD*(i + 10))*radiusH, centerY + cosf(DEG2RAD*(i + 10))*radiusV);
+        }
+    rlEnd();
+}
+
+// Draw ellipse outline
+void DrawEllipseLines(int centerX, int centerY, float radiusH, float radiusV, Color color)
+{
+    if (rlCheckBufferLimit(2*36)) rlglDraw();
+
+    rlBegin(RL_LINES);
+        for (int i = 0; i < 360; i += 10)
+        {
+            rlColor4ub(color.r, color.g, color.b, color.a);
+            rlVertex2f(centerX + sinf(DEG2RAD*i)*radiusH, centerY + cosf(DEG2RAD*i)*radiusV);
+            rlVertex2f(centerX + sinf(DEG2RAD*(i + 10))*radiusH, centerY + cosf(DEG2RAD*(i + 10))*radiusV);
+        }
+    rlEnd();
 }
 
 void DrawRing(Vector2 center, float innerRadius, float outerRadius, int startAngle, int endAngle, int segments, Color color)
