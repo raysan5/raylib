@@ -111,7 +111,7 @@ Examples using raylib models functionality, including models loading/generation 
 | 75 | [models_orthographic_projection](models/models_orthographic_projection.c) | <img src="models/models_orthographic_projection.png" alt="models_orthographic_projection" width="200"> | [Max Danielsson](https://github.com/autious)     |        |
 | 76 | *TODO*  | *TODO*  | *TODO*  |       |
 | 77 | *TODO*  | *TODO*  | *TODO*  |       |
-| 78 | [models_solar_system_rlgl](models/models_solar_system_rlgl.c)             | <img src="models/models_solar_system_rlgl.png" alt="models_solar_system_rlgl" width="200">             | ray                                              | ⭐️     |
+| 78 | [models_solar_system_rlgl](models/models_rlgl_solar_system.c)             | <img src="models/models_rlgl_solar_system.png" alt="models_rlgl_solar_system" width="200">             | ray                                              | ⭐️     |
 | 79 | [models_yaw_pitch_roll](models/models_yaw_pitch_roll.c)                   | <img src="models/models_yaw_pitch_roll.png" alt="models_yaw_pitch_roll" width="200">                   | [Berni](https://github.com/Berni8k)              |        |
 | 80 | [models_waving_cubes](models/models_waving_cubes.c)                       | <img src="models/models_waving_cubes.png" alt="models_waving_cubes" width="200">                       | [codecat](https://github.com/codecat)            | ⭐️     |
 | 81 | [models_heightmap](models/models_heightmap.c)                             | <img src="models/models_heightmap.png" alt="models_heightmap" width="200">                             | ray                                              |        |
