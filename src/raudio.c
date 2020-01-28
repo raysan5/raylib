@@ -1729,7 +1729,7 @@ static Wave LoadWAV(const char *fileName)
     WAVData wavData;
 
     Wave wave = { 0 };
-    FILE *wavFile;
+    FILE *wavFile = NULL;
 
     wavFile = fopen(fileName, "rb");
 

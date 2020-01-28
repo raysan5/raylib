@@ -930,7 +930,7 @@ ModelAnimation *LoadModelAnimations(const char *filename, int *animCount)
         unsigned int flags;
     } IQMAnim;
 
-    FILE *iqmFile;
+    FILE *iqmFile = NULL;
     IQMHeader iqm;
 
     iqmFile = fopen(filename,"rb");
@@ -3061,7 +3061,7 @@ static Model LoadIQM(const char *fileName)
 
     Model model = { 0 };
 
-    FILE *iqmFile;
+    FILE *iqmFile = NULL;
     IQMHeader iqm;
 
     IQMMesh *imesh;

@@ -81,7 +81,7 @@
 #ifndef RGIF_H
 #define RGIF_H
 
-#include <stdio.h>          // Required for: FILE
+#include <stdio.h>                      // Required for: FILE
 
 //#define RGIF_STATIC
 #ifdef RGIF_STATIC
@@ -116,16 +116,6 @@ RGIFDEF bool GifEnd();
 
 #include <stdio.h>          // Required for: FILE, fopen(), fclose()
 #include <string.h>         // Required for: memcpy()
-
-// Define these macros to hook into a custom memory allocator.
-// RGIF_TEMP_MALLOC and RGIF_TEMP_FREE will only be called in stack fashion - frees in the reverse order of mallocs
-// and any temp memory allocated by a function will be freed before it exits.
-#if !defined(RGIF_TEMP_MALLOC)
-    #include <stdlib.h>
-    
-    #define RGIF_TEMP_MALLOC malloc
-    #define RGIF_TEMP_FREE free
-#endif
 
 // Check if custom malloc/free functions defined, if not, using standard ones
 // RGIF_MALLOC and RGIF_FREE are used only by GifBegin and GifEnd respectively, 
@@ -185,7 +175,7 @@ typedef struct GifLzwNode {
 //----------------------------------------------------------------------------------
 const int gifTransparentIndex = 0;       // Transparent color index
 
-static FILE *gifFile;
+static FILE *gifFile = NULL;
 unsigned char *gifFrame;
 
 //----------------------------------------------------------------------------------
@@ -201,9 +191,10 @@ static void GifMakePalette(const unsigned char *lastFrame, const unsigned char *
 static void GifDitherImage(const unsigned char *lastFrame, const unsigned char *nextFrame, unsigned char *outFrame, unsigned int width, unsigned int height, GifPalette *pPal);
 static void GifThresholdImage(const unsigned char *lastFrame, const unsigned char *nextFrame, unsigned char *outFrame, unsigned int width, unsigned int height, GifPalette *pPal);
 static void GifWriteBit(GifBitStatus *stat, unsigned int bit);
+
 static void GifWriteChunk(FILE *f, GifBitStatus *stat);
+static void GifWritePalette(FILE *f, const GifPalette *pPal);
 static void GifWriteCode(FILE *f, GifBitStatus *stat, unsigned int code, unsigned int length);
-static void GifWritePalette(const GifPalette *pPal, FILE *f);
 static void GifWriteLzwImage(FILE *f, unsigned char *image, unsigned int left, unsigned int top, unsigned int width, unsigned int height, unsigned int delay, GifPalette *pPal);
 
 //----------------------------------------------------------------------------------
@@ -591,7 +582,7 @@ static void GifMakePalette(const unsigned char *lastFrame, const unsigned char *
     // SplitPalette is destructive (it sorts the pixels by color) so
     // we must create a copy of the image for it to destroy
     int imageSize = width*height*4*sizeof(unsigned char);
-    unsigned char *destroyableImage = (unsigned char*)RGIF_TEMP_MALLOC(imageSize);
+    unsigned char *destroyableImage = (unsigned char*)RGIF_MALLOC(imageSize);
     memcpy(destroyableImage, nextFrame, imageSize);
     
     int numPixels = width*height;
@@ -604,7 +595,7 @@ static void GifMakePalette(const unsigned char *lastFrame, const unsigned char *
     
     GifSplitPalette(destroyableImage, numPixels, 1, lastElt, splitElt, splitDist, 1, buildForDither, pPal);
     
-    RGIF_TEMP_FREE(destroyableImage);
+    RGIF_FREE(destroyableImage);
     
     // add the bottom node for the transparency index
     pPal->treeSplit[1 << (bitDepth-1)] = 0;
@@ -621,7 +612,7 @@ static void GifDitherImage(const unsigned char *lastFrame, const unsigned char *
     // quantPixels initially holds color*256 for all pixels
     // The extra 8 bits of precision allow for sub-single-color error values
     // to be propagated
-    int *quantPixels = (int*)RGIF_TEMP_MALLOC(sizeof(int)*numPixels*4);
+    int *quantPixels = (int*)RGIF_MALLOC(sizeof(int)*numPixels*4);
     
     for (int ii=0; ii<numPixels*4; ++ii)
     {
@@ -719,7 +710,7 @@ static void GifDitherImage(const unsigned char *lastFrame, const unsigned char *
         outFrame[ii] = quantPixels[ii];
     }
     
-    RGIF_TEMP_FREE(quantPixels);
+    RGIF_FREE(quantPixels);
 }
 
 // Picks palette colors for the image using simple thresholding, no dithering
@@ -805,7 +796,7 @@ static void GifWriteCode(FILE *f, GifBitStatus *stat, unsigned int code, unsigne
 }
 
 // write a 256-color (8-bit) image palette to the file
-static void GifWritePalette(const GifPalette *pPal, FILE *f)
+static void GifWritePalette(FILE *f, const GifPalette *pPal)
 {
     fputc(0, f);  // first color: transparency
     fputc(0, f);
@@ -852,14 +843,14 @@ static void GifWriteLzwImage(FILE *f, unsigned char *image, unsigned int left, u
     //fputc(0x80, f); // no local color table, but transparency
     
     fputc(0x80 + pPal->bitDepth-1, f); // local color table present, 2 ^ bitDepth entries
-    GifWritePalette(pPal, f);
+    GifWritePalette(f, pPal);
     
     const int minCodeSize = pPal->bitDepth;
     const unsigned int clearCode = 1 << pPal->bitDepth;
     
     fputc(minCodeSize, f); // min code size 8 bits
     
-    GifLzwNode *codetree = (GifLzwNode *)RGIF_TEMP_MALLOC(sizeof(GifLzwNode)*4096);
+    GifLzwNode *codetree = (GifLzwNode *)RGIF_MALLOC(sizeof(GifLzwNode)*4096);
     
     memset(codetree, 0, sizeof(GifLzwNode)*4096);
     int curCode = -1;
@@ -933,7 +924,7 @@ static void GifWriteLzwImage(FILE *f, unsigned char *image, unsigned int left, u
     
     fputc(0, f); // image block terminator
     
-    RGIF_TEMP_FREE(codetree);
+    RGIF_FREE(codetree);
 }
 
 #endif // RGIF_IMPLEMENTATION
