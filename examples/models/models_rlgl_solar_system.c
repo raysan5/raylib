@@ -4,7 +4,7 @@
 *
 *   This example uses [rlgl] module funtionality (pseudo-OpenGL 1.1 style coding)
 *
-*   This example has been created using raylib 2.2 (www.raylib.com)
+*   This example has been created using raylib 2.5 (www.raylib.com)
 *   raylib is licensed under an unmodified zlib/libpng license (View raylib.h for details)
 *
 *   Copyright (c) 2018 Ramon Santamaria (@raysan5)
