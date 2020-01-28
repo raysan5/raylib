@@ -2056,9 +2056,10 @@ unsigned int rlLoadTextureDepth(int width, int height, int bits, bool useRenderB
 unsigned int rlLoadTextureCubemap(void *data, int size, int format)
 {
     unsigned int cubemapId = 0;
-    unsigned int dataSize = GetPixelDataSize(size, size, format);
 
 #if defined(GRAPHICS_API_OPENGL_33) || defined(GRAPHICS_API_OPENGL_ES2)
+    unsigned int dataSize = GetPixelDataSize(size, size, format);
+    
     glGenTextures(1, &cubemapId);
     glBindTexture(GL_TEXTURE_CUBE_MAP, cubemapId);
 
@@ -2071,9 +2072,8 @@ unsigned int rlLoadTextureCubemap(void *data, int size, int format)
         for (unsigned int i = 0; i < 6; i++)
         {
             if (format < COMPRESSED_DXT1_RGB) glTexImage2D(GL_TEXTURE_CUBE_MAP_POSITIVE_X + i, 0, glInternalFormat, size, size, 0, glFormat, glType, (unsigned char *)data + i*dataSize);
-#if !defined(GRAPHICS_API_OPENGL_11)
             else glCompressedTexImage2D(GL_TEXTURE_CUBE_MAP_POSITIVE_X + i, 0, glInternalFormat, size, size, 0, dataSize, (unsigned char *)data + i*dataSize);
-#endif
+
 #if defined(GRAPHICS_API_OPENGL_33)
             if (format == UNCOMPRESSED_GRAYSCALE)
             {
