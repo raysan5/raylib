@@ -129,13 +129,13 @@ typedef enum PhysicsShapeType { PHYSICS_CIRCLE, PHYSICS_POLYGON } PhysicsShapeTy
 // Previously defined to be used in PhysicsShape struct as circular dependencies
 typedef struct PhysicsBodyData *PhysicsBody;
 
-// Mat2 type (used for polygon shape rotation matrix)
-typedef struct Mat2 {
+// Matrix2x2 type (used for polygon shape rotation matrix)
+typedef struct Matrix2x2 {
     float m00;
     float m01;
     float m10;
     float m11;
-} Mat2;
+} Matrix2x2;
 
 typedef struct PolygonData {
     unsigned int vertexCount;                   // Current used vertex and normals count
@@ -147,7 +147,7 @@ typedef struct PhysicsShape {
     PhysicsShapeType type;                      // Physics shape type (circle or polygon)
     PhysicsBody body;                           // Shape physics body reference
     float radius;                               // Circle shape radius (used for circle shapes)
-    Mat2 transform;                             // Vertices transform matrix 2x2
+    Matrix2x2 transform;                        // Vertices transform matrix 2x2
     PolygonData vertexData;                     // Polygon shape vertices position and normals data (just used for polygon shapes)
 } PhysicsShape;
 
@@ -335,10 +335,10 @@ static Vector2 Vector2Add(Vector2 v1, Vector2 v2);                              
 static Vector2 Vector2Subtract(Vector2 v1, Vector2 v2);                                                     // Returns the subtract of two given vectors
 #endif
 
-static Mat2 Mat2Radians(float radians);                                                                     // Creates a matrix 2x2 from a given radians value
-static void Mat2Set(Mat2 *matrix, float radians);                                                           // Set values from radians to a created matrix 2x2
-static inline Mat2 Mat2Transpose(Mat2 matrix);                                                              // Returns the transpose of a given matrix 2x2
-static inline Vector2 Mat2MultiplyVector2(Mat2 matrix, Vector2 vector);                                     // Multiplies a vector by a matrix 2x2
+static Matrix2x2 Mat2Radians(float radians);                                                                     // Creates a matrix 2x2 from a given radians value
+static void Mat2Set(Matrix2x2 *matrix, float radians);                                                           // Set values from radians to a created matrix 2x2
+static inline Matrix2x2 Mat2Transpose(Matrix2x2 matrix);                                                              // Returns the transpose of a given matrix 2x2
+static inline Vector2 Mat2MultiplyVector2(Matrix2x2 matrix, Vector2 vector);                                     // Multiplies a vector by a matrix 2x2
 
 //----------------------------------------------------------------------------------
 // Module Functions Definition
@@ -605,7 +605,7 @@ PHYSACDEF void PhysicsShatter(PhysicsBody body, Vector2 position, float force)
                 int count = vertexData.vertexCount;
                 Vector2 bodyPos = body->position;
                 Vector2 *vertices = (Vector2*)malloc(sizeof(Vector2) * count);
-                Mat2 trans = body->shape.transform;
+                Matrix2x2 trans = body->shape.transform;
                 for (int i = 0; i < count; i++) vertices[i] = vertexData.positions[i];
 
                 // Destroy shattered physics body
@@ -1786,7 +1786,7 @@ static float FindAxisLeastPenetration(int *faceIndex, PhysicsShape shapeA, Physi
         Vector2 transNormal = Mat2MultiplyVector2(shapeA.transform, normal);
 
         // Transform face normal into B shape's model space
-        Mat2 buT = Mat2Transpose(shapeB.transform);
+        Matrix2x2 buT = Mat2Transpose(shapeB.transform);
         normal = Mat2MultiplyVector2(buT, transNormal);
 
         // Retrieve support point from B shape along -n
@@ -2014,16 +2014,16 @@ static inline Vector2 Vector2Subtract(Vector2 v1, Vector2 v2)
 #endif
 
 // Creates a matrix 2x2 from a given radians value
-static Mat2 Mat2Radians(float radians)
+static Matrix2x2 Mat2Radians(float radians)
 {
     float c = cosf(radians);
     float s = sinf(radians);
 
-    return (Mat2){ c, -s, s, c };
+    return (Matrix2x2){ c, -s, s, c };
 }
 
 // Set values from radians to a created matrix 2x2
-static void Mat2Set(Mat2 *matrix, float radians)
+static void Mat2Set(Matrix2x2 *matrix, float radians)
 {
     float cos = cosf(radians);
     float sin = sinf(radians);
@@ -2035,13 +2035,13 @@ static void Mat2Set(Mat2 *matrix, float radians)
 }
 
 // Returns the transpose of a given matrix 2x2
-static inline Mat2 Mat2Transpose(Mat2 matrix)
+static inline Matrix2x2 Mat2Transpose(Matrix2x2 matrix)
 {
-    return (Mat2){ matrix.m00, matrix.m10, matrix.m01, matrix.m11 };
+    return (Matrix2x2){ matrix.m00, matrix.m10, matrix.m01, matrix.m11 };
 }
 
 // Multiplies a vector by a matrix 2x2
-static inline Vector2 Mat2MultiplyVector2(Mat2 matrix, Vector2 vector)
+static inline Vector2 Mat2MultiplyVector2(Matrix2x2 matrix, Vector2 vector)
 {
     return (Vector2){ matrix.m00*vector.x + matrix.m01*vector.y, matrix.m10*vector.x + matrix.m11*vector.y };
 }
