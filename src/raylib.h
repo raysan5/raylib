@@ -1234,6 +1234,7 @@ RLAPI const char *CodepointToUtf8(int codepoint, int *byteLength);    // Encode 
 
 // Basic geometric 3D shapes drawing functions
 RLAPI void DrawLine3D(Vector3 startPos, Vector3 endPos, Color color);                                    // Draw a line in 3D world space
+RLAPI void DrawPoint3D(Vector3 position, Color color);                                                   // Draw a point in 3D space, actually a small line
 RLAPI void DrawCircle3D(Vector3 center, float radius, Vector3 rotationAxis, float rotationAngle, Color color); // Draw a circle in 3D world space
 RLAPI void DrawCube(Vector3 position, float width, float height, float length, Color color);             // Draw cube
 RLAPI void DrawCubeV(Vector3 position, Vector3 size, Color color);                                       // Draw cube (Vector version)

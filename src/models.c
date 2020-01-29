@@ -110,7 +110,7 @@ void DrawLine3D(Vector3 startPos, Vector3 endPos, Color color)
     rlEnd();
 }
 
-// Draw a point in 3D space--actually a small line.
+// Draw a point in 3D space, actually a small line
 void DrawPoint3D(Vector3 position, Color color)
 {
     if (rlCheckBufferLimit(8)) rlglDraw();
