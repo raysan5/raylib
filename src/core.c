@@ -4108,7 +4108,7 @@ static void AndroidCommandCallback(struct android_app *app, int32_t cmd)
         {
             if (app->window != NULL)
             {
-                if (contextRebindRequired)
+                if (CORE.Android.contextRebindRequired)
                 {
                     // Reset screen scaling to full display size
                     EGLint displayFormat;
@@ -4119,7 +4119,7 @@ static void AndroidCommandCallback(struct android_app *app, int32_t cmd)
                     CORE.Window.surface = eglCreateWindowSurface(CORE.Window.device, config, app->window, NULL);
                     eglMakeCurrent(CORE.Window.device, CORE.Window.surface, CORE.Window.surface, CORE.Window.context);
 
-                    contextRebindRequired = false;
+                    CORE.Android.contextRebindRequired = false;
                 }
                 else
                 {
@@ -4171,7 +4171,7 @@ static void AndroidCommandCallback(struct android_app *app, int32_t cmd)
             eglMakeCurrent(CORE.Window.device, EGL_NO_SURFACE, EGL_NO_SURFACE, EGL_NO_CONTEXT);
             eglDestroySurface(CORE.Window.device, CORE.Window.surface);
 
-            contextRebindRequired = true;
+            CORE.Android.contextRebindRequired = true;
         } break;
         case APP_CMD_SAVE_STATE: break;
         case APP_CMD_STOP: break;
