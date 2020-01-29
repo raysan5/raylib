@@ -73,11 +73,6 @@
 #if !defined(PHYSAC_H)
 #define PHYSAC_H
 
-// #define PHYSAC_STATIC
-// #define  PHYSAC_NO_THREADS
-// #define  PHYSAC_STANDALONE
-// #define  PHYSAC_DEBUG
-
 #if defined(PHYSAC_STATIC)
     #define PHYSACDEF static            // Functions just visible to module including this file
 #else
@@ -91,20 +86,20 @@
 //----------------------------------------------------------------------------------
 // Defines and Macros
 //----------------------------------------------------------------------------------
-#define     PHYSAC_MAX_BODIES               64
-#define     PHYSAC_MAX_MANIFOLDS            4096
-#define     PHYSAC_MAX_VERTICES             24
-#define     PHYSAC_CIRCLE_VERTICES          24
+#define PHYSAC_MAX_BODIES               64
+#define PHYSAC_MAX_MANIFOLDS            4096
+#define PHYSAC_MAX_VERTICES             24
+#define PHYSAC_CIRCLE_VERTICES          24
 
-#define     PHYSAC_COLLISION_ITERATIONS     100
-#define     PHYSAC_PENETRATION_ALLOWANCE    0.05f
-#define     PHYSAC_PENETRATION_CORRECTION   0.4f
+#define PHYSAC_COLLISION_ITERATIONS     100
+#define PHYSAC_PENETRATION_ALLOWANCE    0.05f
+#define PHYSAC_PENETRATION_CORRECTION   0.4f
 
-#define     PHYSAC_PI                       3.14159265358979323846
-#define     PHYSAC_DEG2RAD                  (PHYSAC_PI/180.0f)
+#define PHYSAC_PI                       3.14159265358979323846
+#define PHYSAC_DEG2RAD                  (PHYSAC_PI/180.0f)
 
-#define     PHYSAC_MALLOC(size)             malloc(size)
-#define     PHYSAC_FREE(ptr)                free(ptr)
+#define PHYSAC_MALLOC(size)             malloc(size)
+#define PHYSAC_FREE(ptr)                free(ptr)
 
 //----------------------------------------------------------------------------------
 // Types and Structures Definition
@@ -263,12 +258,12 @@ PHYSACDEF void ClosePhysics(void);                                              
 //----------------------------------------------------------------------------------
 // Defines and Macros
 //----------------------------------------------------------------------------------
-#define     min(a,b)                    (((a)<(b))?(a):(b))
-#define     max(a,b)                    (((a)>(b))?(a):(b))
-#define     PHYSAC_FLT_MAX              3.402823466e+38f
-#define     PHYSAC_EPSILON              0.000001f
-#define     PHYSAC_K                    1.0f/3.0f
-#define     PHYSAC_VECTOR_ZERO          (Vector2){ 0.0f, 0.0f }
+#define min(a,b)            (((a)<(b))?(a):(b))
+#define max(a,b)            (((a)>(b))?(a):(b))
+#define PHYSAC_FLT_MAX      3.402823466e+38f
+#define PHYSAC_EPSILON      0.000001f
+#define PHYSAC_K            1.0f/3.0f
+#define PHYSAC_VECTOR_ZERO  (Vector2){ 0.0f, 0.0f }
 
 //----------------------------------------------------------------------------------
 // Global Variables Definition
