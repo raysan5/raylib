@@ -427,14 +427,14 @@ typedef struct CoreData {
         } Gamepad;
     } Input;
     struct {
-        double current;                 // Current time measure
-        double previous;                // Previous time measure
-        double update;                  // Time measure for frame update
-        double draw;                    // Time measure for frame draw
-        double frame;                   // Time measure for one frame
-        double target;                  // Desired time for one frame, if 0 not applied
+        double current;                     // Current time measure
+        double previous;                    // Previous time measure
+        double update;                      // Time measure for frame update
+        double draw;                        // Time measure for frame draw
+        double frame;                       // Time measure for one frame
+        double target;                      // Desired time for one frame, if 0 not applied
 #if defined(PLATFORM_ANDROID) || defined(PLATFORM_RPI) || defined(PLATFORM_UWP)
-        unsigned long long base;        // Base time measure for hi-res timer
+        unsigned long long base;            // Base time measure for hi-res timer
 #endif
     } Time;
 } CoreData;
@@ -442,7 +442,7 @@ typedef struct CoreData {
 //----------------------------------------------------------------------------------
 // Global Variables Definition
 //----------------------------------------------------------------------------------
-static CoreData CORE = { 0 };
+static CoreData CORE = { 0 };               // Global CORE context
 
 static char **dirFilesPath;                 // Store directory files paths as strings
 static int dirFilesCount = 0;               // Count directory files strings
