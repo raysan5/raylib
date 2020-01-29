@@ -116,7 +116,7 @@
 #if !defined(EXTERNAL_CONFIG_FLAGS)
     #include "config.h"         // Defines module configuration flags
 #else
-    #define RAYLIB_VERSION  "2.6-dev"
+    #define RAYLIB_VERSION  "3.0"
 #endif
 
 #if (defined(__linux__) || defined(PLATFORM_WEB)) && _POSIX_C_SOURCE < 199309L
