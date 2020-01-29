@@ -106,17 +106,18 @@
 // NOTE: Below types are required for PHYSAC_STANDALONE usage
 //----------------------------------------------------------------------------------
 #if defined(PHYSAC_STANDALONE)
+    // Boolean type
+    #if defined(__STDC__) && __STDC_VERSION__ >= 199901L
+        #include <stdbool.h>
+    #elif !defined(__cplusplus) && !defined(bool)
+        typedef enum { false, true } bool;
+    #endif
+    
     // Vector2 type
     typedef struct Vector2 {
         float x;
         float y;
     } Vector2;
-
-    // Boolean type
-    #if !defined(_STDBOOL_H)
-        typedef enum { false, true } bool;
-        #define _STDBOOL_H
-    #endif
 #endif
 
 typedef enum PhysicsShapeType { PHYSICS_CIRCLE, PHYSICS_POLYGON } PhysicsShapeType;
