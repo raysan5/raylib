@@ -2688,7 +2688,9 @@ static bool InitGraphicsDevice(int width, int height)
     //glfwWindowHint(GLFW_CLIENT_API, GLFW_OPENGL_API); // OpenGL API to use. Alternative: GLFW_OPENGL_ES_API
     //glfwWindowHint(GLFW_AUX_BUFFERS, 0);          // Number of auxiliar buffers
 #if defined(PLATFORM_DESKTOP) && defined(SUPPORT_HIGH_DPI)
-    // NOTE: If using external GLFW, it requires latest GLFW 3.3 for this functionality
+    // Resize window content area based on the monitor content scale.
+    // NOTE: This hint only has an effect on platforms where screen coordinates and pixels always map 1:1 such as Windows and X11. 
+    // On platforms like macOS the resolution of the framebuffer is changed independently of the window size.
     glfwWindowHint(GLFW_SCALE_TO_MONITOR, GLFW_TRUE);   // Scale content area based on the monitor content scale where window is placed on
 #endif
 
