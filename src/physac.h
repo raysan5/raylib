@@ -1016,6 +1016,7 @@ static PolygonData CreateRectanglePolygon(Vector2 pos, Vector2 size)
 // Physics loop thread function
 static void *PhysicsLoop(void *arg)
 {
+#if !defined(PHYSAC_NO_THREADS)
     #if defined(PHYSAC_DEBUG)
         printf("[PHYSAC] physics thread created successfully\n");
     #endif
@@ -1028,6 +1029,7 @@ static void *PhysicsLoop(void *arg)
     {
         RunPhysicsStep();
     }
+#endif
 
     return NULL;
 }
@@ -1905,7 +1907,7 @@ static void InitTimer(void)
     QueryPerformanceFrequency((unsigned long long int *) &frequency);
 #endif
 
-#if defined(__linux__)
+#if defined(__EMSCRIPTEN__) || defined(__linux__)
     struct timespec now;
     if (clock_gettime(CLOCK_MONOTONIC, &now) == 0) frequency = 1000000000;
 #endif
