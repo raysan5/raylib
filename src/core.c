@@ -339,7 +339,6 @@ typedef struct CoreData {
         EGLSurface surface;                 // Surface to draw on, framebuffers (connected to context)
         EGLContext context;                 // Graphic context, mode in which drawing can be done
         EGLConfig config;                   // Graphic config
-        unsigned long long baseTime;        // Base time measure for hi-res timer
 #endif
         unsigned int flags;                 // Configuration flags (bit based)
         const char *title;                  // Window text title const pointer
@@ -428,12 +427,15 @@ typedef struct CoreData {
         } Gamepad;
     } Input;
     struct {
-        double current;         // Current time measure
-        double previous;        // Previous time measure
-        double update;          // Time measure for frame update
-        double draw;            // Time measure for frame draw
-        double frame;           // Time measure for one frame
-        double target;          // Desired time for one frame, if 0 not applied
+        double current;                 // Current time measure
+        double previous;                // Previous time measure
+        double update;                  // Time measure for frame update
+        double draw;                    // Time measure for frame draw
+        double frame;                   // Time measure for one frame
+        double target;                  // Desired time for one frame, if 0 not applied
+#if defined(PLATFORM_ANDROID) || defined(PLATFORM_RPI) || defined(PLATFORM_UWP)
+        unsigned long long base;        // Base time measure for hi-res timer
+#endif
     } Time;
 } CoreData;
 
@@ -661,10 +663,10 @@ void InitWindow(int width, int height, const char *title)
     while (!CORE.Window.ready)
     {
         // Process events loop
-        while ((pollResult = ALooper_pollAll(0, NULL, &pollEvents, (void**)&source)) >= 0)
+        while ((pollResult = ALooper_pollAll(0, NULL, &pollEvents, (void**)&CORE.Android.source)) >= 0)
         {
             // Process this event
-            if (source != NULL) source->process(CORE.Android.app, source);
+            if (CORE.Android.source != NULL) CORE.Android.source->process(CORE.Android.app, CORE.Android.source);
 
             // NOTE: Never close window, native activity is controlled by the system!
             //if (CORE.Android.app->destroyRequested != 0) CORE.Window.shouldClose = true;
@@ -1634,7 +1636,7 @@ double GetTime(void)
     clock_gettime(CLOCK_MONOTONIC, &ts);
     uint64_t time = (uint64_t)ts.tv_sec*1000000000LLU + (uint64_t)ts.tv_nsec;
 
-    return (double)(time - baseTime)*1e-9;  // Elapsed time since InitTimer()
+    return (double)(time - CORE.Time.base)*1e-9;  // Elapsed time since InitTimer()
 #endif
 
 #if defined(PLATFORM_UWP)
@@ -2978,8 +2980,6 @@ static bool InitGraphicsDevice(int width, int height)
         EGL_NONE,
     };
 
-    EGLConfig config = NULL;
-
     // eglGetPlatformDisplayEXT is an alternative to eglGetDisplay. It allows us to pass in display attributes, used to configure D3D11.
     PFNEGLGETPLATFORMDISPLAYEXTPROC eglGetPlatformDisplayEXT = (PFNEGLGETPLATFORMDISPLAYEXTPROC)(eglGetProcAddress("eglGetPlatformDisplayEXT"));
     if (!eglGetPlatformDisplayEXT)
@@ -3036,7 +3036,7 @@ static bool InitGraphicsDevice(int width, int height)
     }
 
     EGLint numConfigs = 0;
-    if ((eglChooseConfig(CORE.Window.device, framebufferAttribs, &config, 1, &numConfigs) == EGL_FALSE) || (numConfigs == 0))
+    if ((eglChooseConfig(CORE.Window.device, framebufferAttribs, &CORE.Window.config, 1, &numConfigs) == EGL_FALSE) || (numConfigs == 0))
     {
         TraceLog(LOG_WARNING, "Failed to choose first EGLConfig");
         return false;
@@ -3072,15 +3072,15 @@ static bool InitGraphicsDevice(int width, int height)
 
     //https://stackoverflow.com/questions/46550182/how-to-create-eglsurface-using-c-winrt-and-angle
 
-    //CORE.Window.surface = eglCreateWindowSurface(CORE.Window.device, config, reinterpret_cast<IInspectable*>(surfaceCreationProperties), surfaceAttributes);
-    CORE.Window.surface = eglCreateWindowSurface(CORE.Window.device, config, handle, surfaceAttributes);
+    //CORE.Window.surface = eglCreateWindowSurface(CORE.Window.device, CORE.Window.config, reinterpret_cast<IInspectable*>(surfaceCreationProperties), surfaceAttributes);
+    CORE.Window.surface = eglCreateWindowSurface(CORE.Window.device, CORE.Window.config, handle, surfaceAttributes);
     if (CORE.Window.surface == EGL_NO_SURFACE)
     {
         TraceLog(LOG_WARNING, "Failed to create EGL fullscreen surface");
         return false;
     }
 
-    CORE.Window.context = eglCreateContext(CORE.Window.device, config, EGL_NO_CONTEXT, contextAttribs);
+    CORE.Window.context = eglCreateContext(CORE.Window.device, CORE.Window.config, EGL_NO_CONTEXT, contextAttribs);
     if (CORE.Window.context == EGL_NO_CONTEXT)
     {
         TraceLog(LOG_WARNING, "Failed to create EGL context");
@@ -3111,13 +3111,13 @@ static bool InitGraphicsDevice(int width, int height)
     }
 
     // Get an appropriate EGL framebuffer configuration
-    eglChooseConfig(CORE.Window.device, framebufferAttribs, &config, 1, &numConfigs);
+    eglChooseConfig(CORE.Window.device, framebufferAttribs, &CORE.Window.config, 1, &numConfigs);
 
     // Set rendering API
     eglBindAPI(EGL_OPENGL_ES_API);
 
     // Create an EGL rendering context
-    CORE.Window.context = eglCreateContext(CORE.Window.device, config, EGL_NO_CONTEXT, contextAttribs);
+    CORE.Window.context = eglCreateContext(CORE.Window.device, CORE.Window.config, EGL_NO_CONTEXT, contextAttribs);
     if (CORE.Window.context == EGL_NO_CONTEXT)
     {
         TraceLog(LOG_WARNING, "Failed to create EGL context");
@@ -3135,7 +3135,7 @@ static bool InitGraphicsDevice(int width, int height)
 
     // EGL_NATIVE_VISUAL_ID is an attribute of the EGLConfig that is guaranteed to be accepted by ANativeWindow_setBuffersGeometry()
     // As soon as we picked a EGLConfig, we can safely reconfigure the ANativeWindow buffers to match, using EGL_NATIVE_VISUAL_ID
-    eglGetConfigAttrib(display, config, EGL_NATIVE_VISUAL_ID, &displayFormat);
+    eglGetConfigAttrib(CORE.Window.device, CORE.Window.config, EGL_NATIVE_VISUAL_ID, &displayFormat);
 
     // At this point we need to manage render size vs screen size
     // NOTE: This function use and modify global module variables: CORE.Window.screen.width/CORE.Window.screen.height and CORE.Window.render.width/CORE.Window.render.height and CORE.Window.screenScale
@@ -3144,7 +3144,7 @@ static bool InitGraphicsDevice(int width, int height)
     ANativeWindow_setBuffersGeometry(CORE.Android.app->window, CORE.Window.render.width, CORE.Window.render.height, displayFormat);
     //ANativeWindow_setBuffersGeometry(CORE.Android.app->window, 0, 0, displayFormat);       // Force use of native display size
 
-    CORE.Window.surface = eglCreateWindowSurface(display, config, CORE.Android.app->window, NULL);
+    CORE.Window.surface = eglCreateWindowSurface(CORE.Window.device, CORE.Window.config, CORE.Android.app->window, NULL);
 #endif  // PLATFORM_ANDROID
 
 #if defined(PLATFORM_RPI)
@@ -3183,7 +3183,7 @@ static bool InitGraphicsDevice(int width, int height)
     window.height = CORE.Window.render.height;
     vc_dispmanx_update_submit_sync(dispmanUpdate);
 
-    CORE.Window.surface = eglCreateWindowSurface(CORE.Window.device, config, &window, NULL);
+    CORE.Window.surface = eglCreateWindowSurface(CORE.Window.device, CORE.Window.config, &window, NULL);
     //---------------------------------------------------------------------------------
 #endif  // PLATFORM_RPI
 
@@ -3348,7 +3348,7 @@ static void InitTimer(void)
 
     if (clock_gettime(CLOCK_MONOTONIC, &now) == 0)  // Success
     {
-        baseTime = (uint64_t)now.tv_sec*1000000000LLU + (uint64_t)now.tv_nsec;
+        CORE.Time.base = (uint64_t)now.tv_sec*1000000000LLU + (uint64_t)now.tv_nsec;
     }
     else TraceLog(LOG_WARNING, "No hi-resolution timer available");
 #endif
@@ -3854,10 +3854,10 @@ static void PollInputEvents(void)
     
     // Poll Events (registered events)
     // NOTE: Activity is paused if not enabled (CORE.Android.appEnabled)
-    while ((pollResult = ALooper_pollAll(CORE.Android.appEnabled? 0 : -1, NULL, &pollEvents, (void**)&source)) >= 0)
+    while ((pollResult = ALooper_pollAll(CORE.Android.appEnabled? 0 : -1, NULL, &pollEvents, (void**)&CORE.Android.source)) >= 0)
     {
         // Process this event
-        if (source != NULL) source->process(CORE.Android.app, source);
+        if (CORE.Android.source != NULL) CORE.Android.source->process(CORE.Android.app, CORE.Android.source);
 
         // NOTE: Never close window, native activity is controlled by the system!
         if (CORE.Android.app->destroyRequested != 0)
