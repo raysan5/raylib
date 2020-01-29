@@ -4112,11 +4112,11 @@ static void AndroidCommandCallback(struct android_app *app, int32_t cmd)
                 {
                     // Reset screen scaling to full display size
                     EGLint displayFormat;
-                    eglGetConfigAttrib(CORE.Window.device, config, EGL_NATIVE_VISUAL_ID, &displayFormat);
+                    eglGetConfigAttrib(CORE.Window.device, CORE.Window.config, EGL_NATIVE_VISUAL_ID, &displayFormat);
                     ANativeWindow_setBuffersGeometry(app->window, CORE.Window.render.width, CORE.Window.render.height, displayFormat);
 
                     // Recreate display surface and re-attach OpenGL context
-                    CORE.Window.surface = eglCreateWindowSurface(CORE.Window.device, config, app->window, NULL);
+                    CORE.Window.surface = eglCreateWindowSurface(CORE.Window.device, CORE.Window.config, app->window, NULL);
                     eglMakeCurrent(CORE.Window.device, CORE.Window.surface, CORE.Window.surface, CORE.Window.context);
 
                     CORE.Android.contextRebindRequired = false;
