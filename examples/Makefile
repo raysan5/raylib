@@ -350,7 +350,7 @@ ifeq ($(PLATFORM),PLATFORM_WEB)
 endif
 
 # Define all object files required
-EXAMPLES = \
+CORE = \
     core/core_basic_window \
     core/core_input_keys \
     core/core_input_mouse \
@@ -372,7 +372,9 @@ EXAMPLES = \
     core/core_scissor_test \
     core/core_storage_values \
     core/core_vr_simulator \
-    core/core_loading_thread \
+    core/core_loading_thread
+
+SHAPES = \
     shapes/shapes_basic_shapes \
     shapes/shapes_bouncing_ball \
     shapes/shapes_colors_palette \
@@ -387,7 +389,9 @@ EXAMPLES = \
     shapes/shapes_easings_rectangle_array \
     shapes/shapes_draw_ring \
     shapes/shapes_draw_circle_sector \
-    shapes/shapes_draw_rectangle_rounded \
+    shapes/shapes_draw_rectangle_rounded
+    
+TEXTURES = \
     textures/textures_logo_raylib \
     textures/textures_mouse_painting \
     textures/textures_rectangle \
@@ -404,7 +408,9 @@ EXAMPLES = \
     textures/textures_background_scrolling \
     textures/textures_sprite_button \
     textures/textures_sprite_explosion \
-    textures/textures_bunnymark \
+    textures/textures_bunnymark
+    
+TEXT = \
     text/text_raylib_fonts \
     text/text_font_spritefont \
     text/text_font_loading \
@@ -414,7 +420,9 @@ EXAMPLES = \
     text/text_input_box \
     text/text_writing_anim \
     text/text_rectangle_bounds \
-    text/text_unicode \
+    text/text_unicode
+    
+MODELS = \
     models/models_animation \
     models/models_billboard \
     models/models_box_collisions \
@@ -430,7 +438,9 @@ EXAMPLES = \
     models/models_skybox \
     models/models_yaw_pitch_roll \
     models/models_heightmap \
-    models/models_waving_cubes \
+    models/models_waving_cubes
+    
+SHADERS = \
     shaders/shaders_model_shader \
     shaders/shaders_shapes_textures \
     shaders/shaders_custom_uniform \
@@ -443,12 +453,16 @@ EXAMPLES = \
     shaders/shaders_eratosthenes \
     shaders/shaders_basic_lighting \
     shaders/shaders_fog \
-    shaders/shaders_simple_mask \
+    shaders/shaders_simple_mask
+    
+AUDIO = \
     audio/audio_module_playing \
     audio/audio_music_stream \
     audio/audio_raw_stream \
     audio/audio_sound_loading \
-    audio/audio_multichannel_sound \
+    audio/audio_multichannel_sound
+    
+PHYSICS = \
     physics/physics_demo \
     physics/physics_friction \
     physics/physics_movement \
@@ -459,7 +473,16 @@ EXAMPLES = \
 CURRENT_MAKEFILE = $(lastword $(MAKEFILE_LIST))
 
 # Default target entry
-all: $(EXAMPLES)
+all: $(CORE) $(SHAPES) $(TEXT) $(TEXTURES) $(MODELS) $(SHADERS) $(AUDIO) $(PHYSICS)
+
+core: $(CORE)
+shapes: $(SHAPES)
+text: $(TEXT)
+textures: $(TEXTURES)
+models: $(MODELS)
+shaders: $(SHADERS)
+audio: $(AUDIO)
+physics: $(PHYSICS)
 
 # Generic compilation pattern
 # NOTE: Examples must be ready for Android compilation!
