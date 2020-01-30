@@ -164,7 +164,7 @@ ifeq ($(PLATFORM),PLATFORM_RPI)
 endif
 ifeq ($(PLATFORM),PLATFORM_WEB)
     # HTML5 emscripten compiler
-    # WARNING: To compile to HTML5, code must be redesigned 
+    # WARNING: To compile to HTML5, code must be redesigned
     # to use emscripten.h and emscripten_set_main_loop()
     CC = emcc
 endif
@@ -359,6 +359,7 @@ EXAMPLES = \
     core/core_input_multitouch \
     core/core_input_gestures \
     core/core_2d_camera \
+    core/core_2d_camera_platformer \
     core/core_3d_camera_mode \
     core/core_3d_camera_free \
     core/core_3d_camera_first_person \
@@ -429,6 +430,7 @@ EXAMPLES = \
     models/models_skybox \
     models/models_yaw_pitch_roll \
     models/models_heightmap \
+    models/models_waving_cubes \
     shaders/shaders_model_shader \
     shaders/shaders_shapes_textures \
     shaders/shaders_custom_uniform \
