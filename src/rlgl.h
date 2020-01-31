@@ -539,6 +539,8 @@ RLAPI void UnloadShader(Shader shader);                                   // Unl
 
 RLAPI Shader GetShaderDefault(void);                                      // Get default shader
 RLAPI Texture2D GetTextureDefault(void);                                  // Get default texture
+RLAPI Texture2D GetShapesTexture(void);                                   // Get texture to draw shapes
+RLAPI Rectangle GetShapesTextureRec(void);                                // Get texture rectangle to draw shapes
 
 // Shader configuration functions
 RLAPI int GetShaderLocation(Shader shader, const char *uniformName);              // Get shader uniform location
@@ -792,7 +794,9 @@ typedef struct rlglData {
         int currentBuffer;                  // Current buffer tracking, multi-buffering system is supported
         DrawCall *draws;                    // Draw calls array
         int drawsCounter;                   // Draw calls counter
-
+        
+        Texture2D shapesTexture;            // Texture used on shapes drawing (usually a white)
+        Rectangle shapesTextureRec;         // Texture source rectangle used on shapes drawing
         unsigned int defaultTextureId;      // Default texture used on shapes/poly drawing (required by shader)
         unsigned int defaultVShaderId;      // Default vertex shader id (used by default shader program)
         unsigned int defaultFShaderId;      // Default fragment shader Id (used by default shader program)
@@ -1727,6 +1731,10 @@ void rlglInit(int width, int height)
     // Store screen size into global variables
     RLGL.State.framebufferWidth = width;
     RLGL.State.framebufferHeight = height;
+
+    // Init texture and rectangle used on basic shapes drawing
+    RLGL.State.shapesTexture = GetTextureDefault();
+    RLGL.State.shapesTextureRec = (Rectangle){ 0.0f, 0.0f, 1.0f, 1.0f };
 
     TraceLog(LOG_INFO, "OpenGL default states initialized successfully");
 }
@@ -2935,6 +2943,25 @@ Texture2D GetTextureDefault(void)
     texture.format = UNCOMPRESSED_R8G8B8A8;
 #endif
     return texture;
+}
+
+// Get texture to draw shapes (RAII)
+Texture2D GetShapesTexture(void)
+{
+    return RLGL.State.shapesTexture;
+}
+
+// Get texture rectangle to draw shapes
+Rectangle GetShapesTextureRec(void)
+{
+    return RLGL.State.shapesTextureRec;
+}
+
+// Define default texture used to draw shapes
+void SetShapesTexture(Texture2D texture, Rectangle source)
+{
+    RLGL.State.shapesTexture = texture;
+    RLGL.State.shapesTextureRec = source;
 }
 
 // Get default shader

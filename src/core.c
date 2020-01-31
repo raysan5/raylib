@@ -683,8 +683,9 @@ void InitWindow(int width, int height, const char *title)
 
 #if defined(SUPPORT_DEFAULT_FONT)
     // Load default font
-    // NOTE: External function (defined in module: text)
+    // NOTE: External functions (defined in module: text)
     LoadFontDefault();
+    SetShapesTexture(GetFontDefault().texture, GetFontDefault().recs[95]);
 #endif
 #if defined(PLATFORM_DESKTOP) && defined(SUPPORT_HIGH_DPI)
     // Set default font texture filter for HighDPI (blurry)
@@ -4133,6 +4134,7 @@ static void AndroidCommandCallback(struct android_app *app, int32_t cmd)
                     // Load default font
                     // NOTE: External function (defined in module: text)
                     LoadFontDefault();
+                    SetShapesTexture(GetFontDefault().texture, GetFontDefault().recs[95]);
                 #endif
 
                     // TODO: GPU assets reload in case of lost focus (lost context)
