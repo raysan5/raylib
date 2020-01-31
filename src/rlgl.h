@@ -198,6 +198,14 @@ typedef unsigned char byte;
         unsigned char b;
         unsigned char a;
     } Color;
+    
+    // Rectangle type
+    typedef struct Rectangle {
+        float x;
+        float y;
+        float width;
+        float height;
+    } Rectangle;
 
     // Texture2D type
     // NOTE: Data stored in GPU memory

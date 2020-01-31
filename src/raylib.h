@@ -1331,7 +1331,6 @@ RLAPI Texture2D GetShapesTexture(void);                                   // Get
 RLAPI Rectangle GetShapesTextureRec(void);                                // Get texture rectangle to draw shapes
 RLAPI void SetShapesTexture(Texture2D texture, Rectangle source);         // Define default texture used to draw shapes
 
-
 // Shader configuration functions
 RLAPI int GetShaderLocation(Shader shader, const char *uniformName);      // Get shader uniform location
 RLAPI void SetShaderValue(Shader shader, int uniformLoc, const void *value, int uniformType);               // Set shader uniform value
