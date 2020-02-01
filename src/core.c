@@ -1969,15 +1969,15 @@ const char *GetDirectoryPath(const char *filePath)
     
     // For security, we set starting path to current directory, 
     // obtained path will be concated to this
-    dirPath[0] = '.';
-    dirPath[1] = '/';
+    //dirPath[0] = '.';
+    //dirPath[1] = '/';
 
     lastSlash = strprbrk(filePath, "\\/");
     if (lastSlash)
     {
         // NOTE: Be careful, strncpy() is not safe, it does not care about '\0'
-        strncpy(dirPath + 2, filePath, strlen(filePath) - (strlen(lastSlash) - 1));
-        dirPath[2 + strlen(filePath) - strlen(lastSlash)] = '\0';  // Add '\0' manually
+        strncpy(dirPath, filePath, strlen(filePath) - (strlen(lastSlash) - 1));
+        dirPath[strlen(filePath) - strlen(lastSlash)] = '\0';  // Add '\0' manually
     }
 
     return dirPath;
