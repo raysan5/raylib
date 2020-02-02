@@ -40,20 +40,14 @@ typedef enum GameScreen { LOGO = 0, TITLE, OPTIONS, GAMEPLAY, ENDING } GameScree
 typedef struct {
     int head;
     int colHead;
-    int eyes;
-    int nose;
-    int mouth;
-    int hair;           // Config (decrease value only)
+    int eyes;           // Config
+    int nose;           // Config
+    int mouth;          // Config
+    int hair;           // Config
     int colHair;        // Config
-    int eyeLine;        // Config -> 0, 1, 2
-    int paintLips;      // Config -> 0, 1, 2
-    //Color colLips;      // Config
-    bool makeup;        // Config
-    bool bear;          // Config: remove
-    bool moustache;     // Config: remove
-    bool glasses;       // Config: put/remove
-    bool piercing;      // Config: put/remove
-    //bool freckles;
+    int glasses;        // Config
+    //int piercing;
+    //int freckles;
 } Character;
 
 //----------------------------------------------------------------------------------
@@ -72,6 +66,11 @@ extern NPatchInfo npInfo;
 extern Texture2D texHead, texHair, texNose, texMouth, texEyes, texComp;
 extern Texture2D texMakeup;
 
+extern Character player;
+extern Character playerBase;
+extern Character dating;
+extern Character datingBase;
+
 #ifdef __cplusplus
 extern "C" {            // Prevents name mangling of functions
 #endif
@@ -81,7 +80,7 @@ bool GuiButton(Rectangle rec, const char *text, int forcedState);
 
 Character GenerateCharacter(void);
 void CustomizeCharacter(Character *character);
-void DrawCharacter(Character character);
+void DrawCharacter(Character character, Vector2 position);
 
 //----------------------------------------------------------------------------------
 // Logo Screen Functions Declaration

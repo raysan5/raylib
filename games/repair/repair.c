@@ -30,6 +30,12 @@ NPatchInfo npInfo = { 0 };
 Texture2D texHead, texHair, texNose, texMouth, texEyes, texComp;
 Texture2D texMakeup = { 0 };
 
+Character playerBase = { 0 };
+Character datingBase = { 0 };
+
+Character player = { 0 };
+Character dating = { 0 };
+
 //----------------------------------------------------------------------------------
 // Global Variables Definition (local to this module)
 //----------------------------------------------------------------------------------
@@ -70,6 +76,8 @@ int main(void)
     InitAudioDevice();
 
     font = LoadFont("resources/font.png");
+    SetTextureFilter(font.texture, FILTER_BILINEAR);
+    
     music = LoadMusicStream("resources/elevator_romance.ogg");
     fxCoin = LoadSound("resources/coin.wav");
     
@@ -95,8 +103,8 @@ int main(void)
     //PlayMusicStream(music);
 
     // Setup and Init first screen
-    currentScreen = TITLE;
-    InitTitleScreen();
+    currentScreen = LOGO;
+    InitLogoScreen();
 
 #if defined(PLATFORM_WEB)
     emscripten_set_main_loop(UpdateDrawFrame, 0, 1);
@@ -130,6 +138,14 @@ int main(void)
     UnloadSound(fxCoin);
     UnloadTexture(background);
     UnloadTexture(texNPatch);
+    
+    UnloadTexture(texHead);
+    UnloadTexture(texHair);
+    UnloadTexture(texNose);
+    UnloadTexture(texMouth);
+    UnloadTexture(texEyes);
+    //UnloadTexture(texComp);
+    UnloadTexture(texMakeup);
 
     CloseAudioDevice();     // Close audio context
     
@@ -137,6 +153,91 @@ int main(void)
     //--------------------------------------------------------------------------------------
 
     return 0;
+}
+
+//----------------------------------------------------------------------------------
+// Public Functions Definition
+//----------------------------------------------------------------------------------
+
+Character GenerateCharacter(void)
+{
+    Character character = { 0 };
+    
+    // Generate player character!
+    character.head = GetRandomValue(0, texHead.width/BASE_HEAD_WIDTH - 1);
+    character.colHead = headColors[GetRandomValue(0, 5)];
+    character.hair = GetRandomValue(0, texHair.width/BASE_HAIR_WIDTH - 1);
+    character.colHair = hairColors[GetRandomValue(0, 9)];
+    character.eyes = GetRandomValue(0, texEyes.width/BASE_EYES_WIDTH - 1);
+    character.nose = GetRandomValue(0, texNose.width/BASE_NOSE_WIDTH - 1);
+    character.mouth = GetRandomValue(0, texMouth.width/BASE_MOUTH_WIDTH - 1);
+    
+    // NOTE: No character customization at this point
+    
+    return character;
+}
+
+void CustomizeCharacter(Character *character)
+{
+    if (GetRandomValue(0, 1)) character->hair = GetRandomValue(0, texHair.width/BASE_HAIR_WIDTH - 1);
+    if (GetRandomValue(0, 1)) character->colHair = hairColors[GetRandomValue(0, 9)];
+    if (GetRandomValue(0, 1)) character->eyes = GetRandomValue(0, texEyes.width/BASE_EYES_WIDTH - 1);
+    if (GetRandomValue(0, 1)) character->nose = GetRandomValue(0, texNose.width/BASE_NOSE_WIDTH - 1);
+    if (GetRandomValue(0, 1)) character->mouth = GetRandomValue(0, texMouth.width/BASE_MOUTH_WIDTH - 1);
+}
+
+void DrawCharacter(Character character, Vector2 position)
+{
+    DrawTextureRec(texHair, (Rectangle){ BASE_HAIR_WIDTH*character.hair, 240, BASE_HAIR_WIDTH, texHair.height - 240 }, (Vector2){ position.x + (250 - BASE_HAIR_WIDTH)/2, position.y + 240 }, GetColor(character.colHair));
+    DrawTextureRec(texHead, (Rectangle){ BASE_HEAD_WIDTH*character.head, 0, BASE_HEAD_WIDTH, texHead.height }, (Vector2){ position.x + (250 - BASE_HEAD_WIDTH)/2, position.y + 60 }, GetColor(character.colHead));
+    DrawTextureRec(texHair, (Rectangle){ BASE_HAIR_WIDTH*character.hair, 0, BASE_HAIR_WIDTH, 240 }, (Vector2){ position.x + (250 - BASE_HAIR_WIDTH)/2, position.y }, GetColor(character.colHair));
+    DrawTextureRec(texEyes, (Rectangle){ BASE_EYES_WIDTH*character.eyes, 0, BASE_EYES_WIDTH, texEyes.height }, (Vector2){ position.x + (250 - BASE_EYES_WIDTH)/2, position.y + 190 }, WHITE);
+    DrawTextureRec(texNose, (Rectangle){ BASE_NOSE_WIDTH*character.nose, 0, BASE_NOSE_WIDTH, texNose.height }, (Vector2){ position.x + (250 - BASE_NOSE_WIDTH)/2, position.y + 275 }, GetColor(character.colHead));
+    DrawTextureRec(texMouth, (Rectangle){ BASE_MOUTH_WIDTH*character.mouth, 0, BASE_MOUTH_WIDTH, texMouth.height }, (Vector2){ position.x + (250 - BASE_MOUTH_WIDTH)/2, position.y + 370 }, GetColor(character.colHead));
+}
+
+// Gui Button
+bool GuiButton(Rectangle bounds, const char *text, int forcedState)
+{
+    static const int textColor[4] = { 0xeff6ffff, 0x78e782ff, 0xb04d5fff, 0xd6d6d6ff };
+    
+    int state = (forcedState >= 0)? forcedState : 0;                // NORMAL
+    bool pressed = false;
+    Vector2 textSize = MeasureTextEx(font, text, font.baseSize, 1);
+
+    // Update control
+    //--------------------------------------------------------------------
+    if ((state < 3) && (forcedState < 0))
+    {
+        Vector2 mousePoint = GetMousePosition();
+
+        // Check button state
+        if (CheckCollisionPointRec(mousePoint, bounds))
+        {
+            if (IsMouseButtonDown(MOUSE_LEFT_BUTTON)) state = 2;    // PRESSED
+            else state = 1;                                         // FOCUSED
+
+            if (IsMouseButtonReleased(MOUSE_LEFT_BUTTON))
+            {
+                pressed = true;
+                PlaySound(fxCoin);
+            }
+        }
+    }
+            
+    npInfo.sourceRec.x = 80*state;
+
+    //--------------------------------------------------------------------
+
+    // Draw control
+    //--------------------------------------------------------------------
+    //DrawRectangleRec(bounds, GREEN);
+    //DrawRectangleLinesEx(bounds, 4, DARKGREEN);
+    DrawTextureNPatch(texNPatch, npInfo, bounds, (Vector2){ 0.0f, 0.0f }, 0.0f, WHITE);
+    DrawTextEx(font, text, (Vector2){ bounds.x + bounds.width/2 - textSize.x/2, bounds.y + bounds.height/2 - textSize.y/2 + 4 }, font.baseSize, 1, GetColor(textColor[state]));
+    //------------------------------------------------------------------
+    
+    return pressed;
 }
 
 //----------------------------------------------------------------------------------
@@ -184,7 +285,7 @@ static void UpdateTransition(void)
 {
     if (!transFadeOut)
     {
-        transAlpha += 0.02f;
+        transAlpha += 0.05f;
         
         // NOTE: Due to float internal representation, condition jumps on 1.0f instead of 1.05f
         // For that reason we compare against 1.01f, to avoid last frame loading stop
