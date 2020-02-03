@@ -163,10 +163,10 @@ typedef enum {
 } TraceLogType;
 #endif
 
-// NOTE: Different logic is used when feeding data to the playback device 
+// NOTE: Different logic is used when feeding data to the playback device
 // depending on whether or not data is streamed (Music vs Sound)
-typedef enum { 
-    AUDIO_BUFFER_USAGE_STATIC = 0, 
+typedef enum {
+    AUDIO_BUFFER_USAGE_STATIC = 0,
     AUDIO_BUFFER_USAGE_STREAM
 } AudioBufferUsage;
 
@@ -274,7 +274,7 @@ void InitAudioDevice(void)
 {
     // TODO: Load AUDIO context memory dynamically?
     AUDIO.System.masterVolume = 1.0f;
-    
+
     // Init audio context
     ma_context_config ctxConfig = ma_context_config_init();
     ctxConfig.logCallback = OnLog;
@@ -386,7 +386,7 @@ AudioBuffer *InitAudioBuffer(ma_format format, ma_uint32 channels, ma_uint32 sam
         TRACELOG(LOG_ERROR, "InitAudioBuffer() : Failed to allocate memory for audio buffer");
         return NULL;
     }
-    
+
     audioBuffer->data = RL_CALLOC(sizeInFrames*channels*ma_get_bytes_per_sample(format), 1);
 
     // Audio data runs through a format converter
@@ -1541,7 +1541,7 @@ static void OnSendAudioDataToDevice(ma_device *pDevice, void *pFramesOut, const 
                         framesToRead -= framesJustRead;
                         framesRead += framesJustRead;
                     }
-                    
+
                     if (!audioBuffer->playing)
                     {
                         framesRead = frameCount;
@@ -1697,7 +1697,7 @@ static void InitAudioBufferPool(void)
 // Close the audio buffers pool
 static void CloseAudioBufferPool(void)
 {
-    for (int i = 0; i < MAX_AUDIO_BUFFER_POOL_CHANNELS; i++) 
+    for (int i = 0; i < MAX_AUDIO_BUFFER_POOL_CHANNELS; i++)
     {
         RL_FREE(AUDIO.MultiChannel.pool[i]->data);
         RL_FREE(AUDIO.MultiChannel.pool[i]);

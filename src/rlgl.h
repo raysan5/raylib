@@ -64,7 +64,7 @@
 #if defined(RLGL_STANDALONE)
     #define RAYMATH_STANDALONE
     #define RAYMATH_HEADER_ONLY
-    
+
     #define RLAPI   // We are building or using rlgl as a static library (or Linux shared library)
 
     #if defined(_WIN32)
@@ -74,11 +74,11 @@
             #define RLAPI __declspec(dllimport)         // We are using raylib as a Win32 shared library (.dll)
         #endif
     #endif
-    
+
     // Support TRACELOG macros
     #if defined(SUPPORT_TRACELOG)
         #define TRACELOG(level, ...) TraceLog(level, __VA_ARGS__)
-        
+
         #if defined(SUPPORT_TRACELOG_DEBUG)
             #define TRACELOGD(...) TraceLog(LOG_DEBUG, __VA_ARGS__)
         #else
@@ -212,7 +212,7 @@ typedef unsigned char byte;
         unsigned char b;
         unsigned char a;
     } Color;
-    
+
     // Rectangle type
     typedef struct Rectangle {
         float x;
@@ -816,7 +816,7 @@ typedef struct rlglData {
         int currentBuffer;                  // Current buffer tracking, multi-buffering system is supported
         DrawCall *draws;                    // Draw calls array
         int drawsCounter;                   // Draw calls counter
-        
+
         Texture2D shapesTexture;            // Texture used on shapes drawing (usually a white)
         Rectangle shapesTextureRec;         // Texture source rectangle used on shapes drawing
         unsigned int defaultTextureId;      // Default texture used on shapes/poly drawing (required by shader)

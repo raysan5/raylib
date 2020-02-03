@@ -212,7 +212,7 @@ typedef struct {
 //----------------------------------------------------------------------------------
 // Global Variables Definition
 //----------------------------------------------------------------------------------
-static CameraData CAMERA = { 
+static CameraData CAMERA = {
     .mode = 0,
     .targetDistance = 0,
     .playerEyesPosition = 1.85f,
@@ -444,7 +444,7 @@ void UpdateCamera(Camera *camera)
             Matrix translation = MatrixTranslate(0, 0, (CAMERA.targetDistance/CAMERA_FREE_PANNING_DIVIDER));
             Matrix rotation = MatrixRotateXYZ((Vector3){ PI*2 - CAMERA.angle.y, PI*2 - CAMERA.angle.x, 0 });
             Matrix transform = MatrixMultiply(translation, rotation);
-            
+
             camera->target.x = camera->position.x - transform.m12;
             camera->target.y = camera->position.y - transform.m13;
             camera->target.z = camera->position.z - transform.m14;

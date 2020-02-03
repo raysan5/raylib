@@ -114,7 +114,7 @@ void DrawLine3D(Vector3 startPos, Vector3 endPos, Color color)
 void DrawPoint3D(Vector3 position, Color color)
 {
     if (rlCheckBufferLimit(8)) rlglDraw();
-    
+
     rlPushMatrix();
         rlTranslatef(position.x, position.y, position.z);
         rlBegin(RL_LINES);
@@ -955,7 +955,7 @@ ModelAnimation *LoadModelAnimations(const char *filename, int *animCount)
     {
         TRACELOG(LOG_ERROR, "IQM version %i is incorrect.", iqm.version);
         fclose(iqmFile);
-        
+
         return NULL;
     }
 
@@ -2376,7 +2376,7 @@ void MeshBinormals(Mesh *mesh)
         //Vector3 normal = { mesh->normals[i*3 + 0], mesh->normals[i*3 + 1], mesh->normals[i*3 + 2] };
         //Vector3 tangent = { mesh->tangents[i*4 + 0], mesh->tangents[i*4 + 1], mesh->tangents[i*4 + 2] };
         //Vector3 binormal = Vector3Scale(Vector3CrossProduct(normal, tangent), mesh->tangents[i*4 + 3]);
-        
+
         // TODO: Register computed binormal in mesh->binormal?
     }
 }
@@ -2408,13 +2408,13 @@ void DrawModelEx(Model model, Vector3 position, Vector3 rotationAxis, float rota
     {
         // TODO: Review color + tint premultiplication mechanism
         Color color = model.materials[model.meshMaterial[i]].maps[MAP_DIFFUSE].color;
-        
+
         Color colorTint = WHITE;
         colorTint.r = (((float)color.r/255.0)*((float)tint.r/255.0))*255;
         colorTint.g = (((float)color.g/255.0)*((float)tint.g/255.0))*255;
         colorTint.b = (((float)color.b/255.0)*((float)tint.b/255.0))*255;
         colorTint.a = (((float)color.a/255.0)*((float)tint.a/255.0))*255;
-        
+
         model.materials[model.meshMaterial[i]].maps[MAP_DIFFUSE].color = colorTint;
         rlDrawMesh(model.meshes[i], model.materials[model.meshMaterial[i]], model.transform);
         model.materials[model.meshMaterial[i]].maps[MAP_DIFFUSE].color = color;
@@ -3406,7 +3406,7 @@ static Texture LoadTextureFromCgltfImage(cgltf_image *image, const char *texPath
                 unsigned char *raw = stbi_load_from_memory(data, size, &w, &h, NULL, 4);
 
                 Image rimage = LoadImagePro(raw, w, h, UNCOMPRESSED_R8G8B8A8);
-                
+
                 // TODO: Tint shouldn't be applied here!
                 ImageColorTint(&rimage, tint);
                 texture = LoadTextureFromImage(rimage);
@@ -3416,7 +3416,7 @@ static Texture LoadTextureFromCgltfImage(cgltf_image *image, const char *texPath
         else
         {
             Image rimage = LoadImage(TextFormat("%s/%s", texPath, image->uri));
-            
+
             // TODO: Tint shouldn't be applied here!
             ImageColorTint(&rimage, tint);
             texture = LoadTextureFromImage(rimage);
@@ -3544,7 +3544,7 @@ static Model LoadGLTF(const char *fileName)
             const char *texPath = GetDirectoryPath(fileName);
 
             //Ensure material follows raylib support for PBR (metallic/roughness flow)
-            if (data->materials[i].has_pbr_metallic_roughness) 
+            if (data->materials[i].has_pbr_metallic_roughness)
             {
                 float roughness = data->materials[i].pbr_metallic_roughness.roughness_factor;
                 float metallic = data->materials[i].pbr_metallic_roughness.metallic_factor;
@@ -3560,12 +3560,12 @@ static Model LoadGLTF(const char *fileName)
 
                 model.materials[i].maps[MAP_ROUGHNESS].color = tint;
 
-                if (data->materials[i].pbr_metallic_roughness.base_color_texture.texture) 
+                if (data->materials[i].pbr_metallic_roughness.base_color_texture.texture)
                 {
                     model.materials[i].maps[MAP_ALBEDO].texture = LoadTextureFromCgltfImage(data->materials[i].pbr_metallic_roughness.base_color_texture.texture->image, texPath, tint);
                 }
 
-                // NOTE: Tint isn't need for other textures.. pass null or clear? 
+                // NOTE: Tint isn't need for other textures.. pass null or clear?
                 // Just set as white, multiplying by white has no effect
                 tint = WHITE;
 
@@ -3576,12 +3576,12 @@ static Model LoadGLTF(const char *fileName)
                 model.materials[i].maps[MAP_ROUGHNESS].value = roughness;
                 model.materials[i].maps[MAP_METALNESS].value = metallic;
 
-                if (data->materials[i].normal_texture.texture) 
+                if (data->materials[i].normal_texture.texture)
                 {
                     model.materials[i].maps[MAP_NORMAL].texture = LoadTextureFromCgltfImage(data->materials[i].normal_texture.texture->image, texPath, tint);
                 }
-                
-                if (data->materials[i].occlusion_texture.texture) 
+
+                if (data->materials[i].occlusion_texture.texture)
                 {
                     model.materials[i].maps[MAP_OCCLUSION].texture = LoadTextureFromCgltfImage(data->materials[i].occlusion_texture.texture->image, texPath, tint);
                 }

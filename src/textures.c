@@ -458,9 +458,9 @@ void UnloadRenderTexture(RenderTexture2D target)
 Color *GetImageData(Image image)
 {
     if ((image.width == 0) || (image.height == 0)) return NULL;
-    
+
     Color *pixels = (Color *)RL_MALLOC(image.width*image.height*sizeof(Color));
-    
+
     if (image.format >= COMPRESSED_DXT1_RGB) TRACELOG(LOG_WARNING, "Pixel data retrieval not supported for compressed image formats");
     else
     {
@@ -686,9 +686,9 @@ Vector4 *GetImageDataNormalized(Image image)
 Rectangle GetImageAlphaBorder(Image image, float threshold)
 {
     Rectangle crop = { 0 };
-    
+
     Color *pixels = GetImageData(image);
-    
+
     if (pixels != NULL)
     {
         int xMin = 65536;   // Define a big enough number
@@ -2992,9 +2992,9 @@ static Image LoadAnimatedGIF(const char *fileName, int *frames, int **delays)
     {
         fseek(gifFile, 0L, SEEK_END);
         int size = ftell(gifFile);
-        fseek(gifFile, 0L, SEEK_SET);    
+        fseek(gifFile, 0L, SEEK_SET);
 
-        unsigned char *buffer = (unsigned char *)RL_CALLOC(size, sizeof(char));    
+        unsigned char *buffer = (unsigned char *)RL_CALLOC(size, sizeof(char));
         fread(buffer, sizeof(char), size, gifFile);
 
         fclose(gifFile);    // Close file pointer

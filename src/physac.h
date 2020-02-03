@@ -112,7 +112,7 @@
     #elif !defined(__cplusplus) && !defined(bool)
         typedef enum { false, true } bool;
     #endif
-    
+
     // Vector2 type
     typedef struct Vector2 {
         float x;
@@ -1257,7 +1257,7 @@ static void DestroyPhysicsManifold(PhysicsManifold manifold)
             printf("[PHYSAC] Not possible to manifold id %i in pointers array\n", id);
         #endif
             return;     // Prevent access to index -1
-        }      
+        }
 
         // Free manifold allocated memory
         PHYSAC_FREE(manifold);

@@ -356,7 +356,7 @@ typedef struct CoreData {
         Size render;                        // Framebuffer width and height (render area, including black bars if required)
         Point renderOffset;                 // Offset from render area (must be divided by 2)
         Matrix screenScale;                 // Matrix to scale screen (framebuffer rendering)
-        
+
         char **dropFilesPath;               // Store dropped files paths as strings
         int dropFilesCount;                 // Count dropped files strings
 
@@ -608,12 +608,12 @@ void InitWindow(int width, int height, const char *title)
     TRACELOG(LOG_INFO, "Initializing raylib %s", RAYLIB_VERSION);
 
     CORE.Window.title = title;
-    
+
     // Initialize required global values different than 0
     CORE.Input.Keyboard.exitKey = KEY_ESCAPE;
     CORE.Input.Mouse.scale = (Vector2){ 1.0f, 1.0f };
     CORE.Input.Gamepad.lastButtonPressed = -1;
-    
+
 #if defined(PLATFORM_ANDROID)
     CORE.Window.screen.width = width;
     CORE.Window.screen.height = height;
@@ -824,7 +824,7 @@ bool WindowShouldClose(void)
         while (!CORE.Window.alwaysRun && CORE.Window.minimized) glfwWaitEvents();
 
         CORE.Window.shouldClose = glfwWindowShouldClose(CORE.Window.handle);
-        
+
         return CORE.Window.shouldClose;
     }
     else return true;
@@ -872,7 +872,7 @@ void ToggleFullscreen(void)
     CORE.Window.fullscreen = !CORE.Window.fullscreen;          // Toggle fullscreen flag
 
     // NOTE: glfwSetWindowMonitor() doesn't work properly (bugs)
-    if (CORE.Window.fullscreen) 
+    if (CORE.Window.fullscreen)
     {
         // Store previous window position (in case we exit fullscreen)
         glfwGetWindowPos(CORE.Window.handle, &CORE.Window.position.x, &CORE.Window.position.y);
@@ -887,7 +887,7 @@ void ToggleFullscreen(void)
 
         const GLFWvidmode *mode = glfwGetVideoMode(monitor);
         glfwSetWindowMonitor(CORE.Window.handle, glfwGetPrimaryMonitor(), 0, 0, CORE.Window.screen.width, CORE.Window.screen.height, mode->refreshRate);
-        
+
         // Try to enable GPU V-Sync, so frames are limited to screen refresh rate (60Hz -> 60 FPS)
         // NOTE: V-Sync can be enabled by graphic driver configuration
         if (CORE.Window.flags & FLAG_VSYNC_HINT) glfwSwapInterval(1);
@@ -1281,14 +1281,14 @@ void EndDrawing(void)
 
     SwapBuffers();                  // Copy back buffer to front buffer
     PollInputEvents();              // Poll user events
-    
+
     // Frame time control system
     CORE.Time.current = GetTime();
     CORE.Time.draw = CORE.Time.current - CORE.Time.previous;
     CORE.Time.previous = CORE.Time.current;
 
     CORE.Time.frame = CORE.Time.update + CORE.Time.draw;
-    
+
     // Wait for some milliseconds...
     if (CORE.Time.frame < CORE.Time.target)
     {
@@ -1299,9 +1299,9 @@ void EndDrawing(void)
         CORE.Time.previous = CORE.Time.current;
 
         CORE.Time.frame += waitTime;      // Total frame time: update + draw + wait
-        
-        //SetWindowTitle(FormatText("Update: %f, Draw: %f, Req.Wait: %f, Real.Wait: %f, Total: %f, Target: %f\n", 
-        //               (float)CORE.Time.update, (float)CORE.Time.draw, (float)(CORE.Time.target - (CORE.Time.update + CORE.Time.draw)), 
+
+        //SetWindowTitle(FormatText("Update: %f, Draw: %f, Req.Wait: %f, Real.Wait: %f, Total: %f, Target: %f\n",
+        //               (float)CORE.Time.update, (float)CORE.Time.draw, (float)(CORE.Time.target - (CORE.Time.update + CORE.Time.draw)),
         //               (float)waitTime, (float)CORE.Time.frame, (float)CORE.Time.target));
     }
 }
@@ -1315,7 +1315,7 @@ void BeginMode2D(Camera2D camera)
 
     // Apply 2d camera transformation to modelview
     rlMultMatrixf(MatrixToFloat(GetCameraMatrix2D(camera)));
-    
+
     // Apply screen scaling if required
     rlMultMatrixf(MatrixToFloat(CORE.Window.screenScale));
 }
@@ -1551,7 +1551,7 @@ Vector2 GetWorldToScreenEx(Vector3 position, Camera camera, int width, int heigh
     if (camera.type == CAMERA_PERSPECTIVE)
     {
         // Calculate projection matrix from perspective
-		matProj = MatrixPerspective(camera.fovy * DEG2RAD, ((double)width/(double)height), DEFAULT_NEAR_CULL_DISTANCE, DEFAULT_FAR_CULL_DISTANCE);
+        matProj = MatrixPerspective(camera.fovy * DEG2RAD, ((double)width/(double)height), DEFAULT_NEAR_CULL_DISTANCE, DEFAULT_FAR_CULL_DISTANCE);
     }
     else if (camera.type == CAMERA_ORTHOGRAPHIC)
     {
@@ -1560,7 +1560,7 @@ Vector2 GetWorldToScreenEx(Vector3 position, Camera camera, int width, int heigh
         double right = top*aspect;
 
         // Calculate projection matrix from orthographic
-		matProj = MatrixOrtho(-right, right, -top, top, DEFAULT_NEAR_CULL_DISTANCE, DEFAULT_FAR_CULL_DISTANCE);
+        matProj = MatrixOrtho(-right, right, -top, top, DEFAULT_NEAR_CULL_DISTANCE, DEFAULT_FAR_CULL_DISTANCE);
     }
 
     // Calculate view matrix from camera look at (and transpose it)
@@ -1579,7 +1579,7 @@ Vector2 GetWorldToScreenEx(Vector3 position, Camera camera, int width, int heigh
     Vector3 ndcPos = { worldPos.x/worldPos.w, -worldPos.y/worldPos.w, worldPos.z/worldPos.w };
 
     // Calculate 2d screen position vector
-	Vector2 screenPosition = { (ndcPos.x + 1.0f)/2.0f*(float)width, (ndcPos.y + 1.0f)/2.0f*(float)height };
+    Vector2 screenPosition = { (ndcPos.x + 1.0f)/2.0f*(float)width, (ndcPos.y + 1.0f)/2.0f*(float)height };
 
     return screenPosition;
 }
@@ -1865,7 +1865,7 @@ bool IsFileExtension(const char *fileName, const char *ext)
     {
         int extCount = 0;
         const char **checkExts = TextSplit(ext, ';', &extCount);
-        
+
         char fileExtLower[16] = { 0 };
         strcpy(fileExtLower, TextToLower(fileExt));
 
@@ -1966,8 +1966,8 @@ const char *GetDirectoryPath(const char *filePath)
     const char *lastSlash = NULL;
     static char dirPath[MAX_FILEPATH_LENGTH];
     memset(dirPath, 0, MAX_FILEPATH_LENGTH);
-    
-    // For security, we set starting path to current directory, 
+
+    // For security, we set starting path to current directory,
     // obtained path will be concated to this
     //dirPath[0] = '.';
     //dirPath[1] = '/';
@@ -2063,7 +2063,7 @@ void ClearDirectoryFiles(void)
 
         RL_FREE(dirFilesPath);
     }
-    
+
     dirFilesCount = 0;
 }
 
@@ -2454,8 +2454,8 @@ bool IsMouseButtonPressed(int button)
     if (IsGestureDetected(GESTURE_TAP)) pressed = true;
 #else
     // NOTE: On PLATFORM_DESKTOP and PLATFORM_WEB IsMouseButtonPressed() is equivalent to GESTURE_TAP
-    if (((CORE.Input.Mouse.currentButtonState[button] != CORE.Input.Mouse.previousButtonState[button]) && 
-	     (CORE.Input.Mouse.currentButtonState[button] == 1)) || IsGestureDetected(GESTURE_TAP))  pressed = true;
+    if (((CORE.Input.Mouse.currentButtonState[button] != CORE.Input.Mouse.previousButtonState[button]) &&
+         (CORE.Input.Mouse.currentButtonState[button] == 1)) || IsGestureDetected(GESTURE_TAP))  pressed = true;
 #endif
 
     return pressed;
@@ -2482,7 +2482,7 @@ bool IsMouseButtonReleased(int button)
     bool released = false;
 
 #if !defined(PLATFORM_ANDROID)
-    if ((CORE.Input.Mouse.currentButtonState[button] != CORE.Input.Mouse.previousButtonState[button]) && 
+    if ((CORE.Input.Mouse.currentButtonState[button] != CORE.Input.Mouse.previousButtonState[button]) &&
         (CORE.Input.Mouse.currentButtonState[button] == 0)) released = true;
 #endif
 
@@ -2701,7 +2701,7 @@ static bool InitGraphicsDevice(int width, int height)
     //glfwWindowHint(GLFW_AUX_BUFFERS, 0);          // Number of auxiliar buffers
 #if defined(PLATFORM_DESKTOP) && defined(SUPPORT_HIGH_DPI)
     // Resize window content area based on the monitor content scale.
-    // NOTE: This hint only has an effect on platforms where screen coordinates and pixels always map 1:1 such as Windows and X11. 
+    // NOTE: This hint only has an effect on platforms where screen coordinates and pixels always map 1:1 such as Windows and X11.
     // On platforms like macOS the resolution of the framebuffer is changed independently of the window size.
     glfwWindowHint(GLFW_SCALE_TO_MONITOR, GLFW_TRUE);   // Scale content area based on the monitor content scale where window is placed on
 #endif
@@ -3224,7 +3224,7 @@ static bool InitGraphicsDevice(int width, int height)
     CORE.Window.screenScale = MatrixScale((float)fbWidth/CORE.Window.screen.width, (float)fbHeight/CORE.Window.screen.height, 1.0f);
 #if !defined(__APPLE__)
     SetMouseScale((float)CORE.Window.screen.width/fbWidth, (float)CORE.Window.screen.height/fbHeight);
-#endif    
+#endif
 #endif  // PLATFORM_DESKTOP && SUPPORT_HIGH_DPI
 
     // Setup default viewport
@@ -3391,7 +3391,7 @@ static void Wait(float ms)
     #elif defined(__APPLE__)
         usleep(ms*1000.0f);
     #endif
-    
+
     #if defined(SUPPORT_HALFBUSY_WAIT_LOOP)
         while (GetTime() < destTime) { }
     #endif
@@ -3548,7 +3548,7 @@ static void PollInputEvents(void)
     {
         CORE.Input.Keyboard.keyPressedQueue[CORE.Input.Keyboard.keyPressedQueueCount] = CORE.Input.Keyboard.lastKeyPressed.Contents[CORE.Input.Keyboard.lastKeyPressed.Tail];    // Read the key from the buffer
         CORE.Input.Keyboard.keyPressedQueueCount++;
-        
+
         CORE.Input.Keyboard.lastKeyPressed.Tail = (CORE.Input.Keyboard.lastKeyPressed.Tail + 1) & 0x07;           // Increment the tail pointer forwards and binary wraparound after 7 (fifo is 8 elements long)
     }
 
@@ -3852,7 +3852,7 @@ static void PollInputEvents(void)
     // Android ALooper_pollAll() variables
     int pollResult = 0;
     int pollEvents = 0;
-    
+
     // Poll Events (registered events)
     // NOTE: Activity is paused if not enabled (CORE.Android.appEnabled)
     while ((pollResult = ALooper_pollAll(CORE.Android.appEnabled? 0 : -1, NULL, &pollEvents, (void**)&CORE.Android.source)) >= 0)
@@ -4223,7 +4223,7 @@ static int32_t AndroidInputCallback(struct android_app *app, AInputEvent *event)
         if (AKeyEvent_getAction(event) == AKEY_EVENT_ACTION_DOWN)
         {
             CORE.Input.Keyboard.currentKeyState[keycode] = 1;  // Key down
-            
+
             CORE.Input.Keyboard.keyPressedQueue[CORE.Input.Keyboard.keyPressedQueueCount] = keycode;
             CORE.Input.Keyboard.keyPressedQueueCount++;
         }
@@ -4240,7 +4240,7 @@ static int32_t AndroidInputCallback(struct android_app *app, AInputEvent *event)
         if (AKeyEvent_getAction(event) == AKEY_EVENT_ACTION_DOWN)
         {
             CORE.Input.Keyboard.currentKeyState[keycode] = 1;   // Key down
-            
+
             CORE.Input.Keyboard.keyPressedQueue[CORE.Input.Keyboard.keyPressedQueueCount] = keycode;
             CORE.Input.Keyboard.keyPressedQueueCount++;
         }
@@ -4589,15 +4589,15 @@ static void ProcessKeyboard(void)
         }
         else if (keysBuffer[i] == 0x0a)     // raylib KEY_ENTER (don't mix with <linux/input.h> KEY_*)
         {
-            CORE.Input.Keyboard.currentKeyState[257] = 1; 
-            
+            CORE.Input.Keyboard.currentKeyState[257] = 1;
+
             CORE.Input.Keyboard.keyPressedQueue[CORE.Input.Keyboard.keyPressedQueueCount] = 257;     // Add keys pressed into queue
             CORE.Input.Keyboard.keyPressedQueueCount++;
         }
         else if (keysBuffer[i] == 0x7f)     // raylib KEY_BACKSPACE
-        { 
-            CORE.Input.Keyboard.currentKeyState[259] = 1; 
-            
+        {
+            CORE.Input.Keyboard.currentKeyState[259] = 1;
+
             CORE.Input.Keyboard.keyPressedQueue[CORE.Input.Keyboard.keyPressedQueueCount] = 257;     // Add keys pressed into queue
             CORE.Input.Keyboard.keyPressedQueueCount++;
         }
@@ -5026,7 +5026,7 @@ static void *EventThread(void *arg)
                         */
 
                         CORE.Input.Keyboard.currentKeyState[keycode] = event.value;
-                        if (event.value == 1) 
+                        if (event.value == 1)
                         {
                             CORE.Input.Keyboard.keyPressedQueue[CORE.Input.Keyboard.keyPressedQueueCount] = keycode;     // Register last key pressed
                             CORE.Input.Keyboard.keyPressedQueueCount++;

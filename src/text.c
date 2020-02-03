@@ -555,7 +555,7 @@ CharInfo *LoadFontData(const char *fileName, int fontSize, int *fontChars, int c
             if (type != FONT_SDF) chars[i].image.data = stbtt_GetCodepointBitmap(&fontInfo, scaleFactor, scaleFactor, ch, &chw, &chh, &chars[i].offsetX, &chars[i].offsetY);
             else if (ch != 32) chars[i].image.data = stbtt_GetCodepointSDF(&fontInfo, scaleFactor, ch, SDF_CHAR_PADDING, SDF_ON_EDGE_VALUE, SDF_PIXEL_DIST_SCALE, &chw, &chh, &chars[i].offsetX, &chars[i].offsetY);
             else chars[i].image.data = NULL;
-            
+
             stbtt_GetCodepointHMetrics(&fontInfo, ch, &chars[i].advanceX, NULL);
             chars[i].advanceX = (int)((float)chars[i].advanceX*scaleFactor);
 
@@ -816,7 +816,7 @@ void DrawTextCodepoint(Font font, int codepoint, Vector2 position, float scale, 
     // Character rectangle on screen
     // NOTE: Quad is scaled proportionally to base character width-height
     Rectangle rec = { position.x, position.y, font.recs[index].width*scale, font.recs[index].height*scale };
-    
+
     DrawTexturePro(font.texture, font.recs[index], rec, (Vector2){ 0, 0 }, 0.0f, tint);
 }
 
@@ -828,7 +828,7 @@ void DrawTextEx(Font font, const char *text, Vector2 position, float fontSize, f
 
     int textOffsetY = 0;            // Offset between lines (on line break '\n')
     float textOffsetX = 0.0f;       // Offset X to next character to draw
-    
+
     float scaleFactor = fontSize/font.baseSize;     // Character quad scaling factor
 
     for (int i = 0; i < length; i++)
@@ -851,20 +851,20 @@ void DrawTextEx(Font font, const char *text, Vector2 position, float fontSize, f
         }
         else
         {
-            if ((codepoint != ' ') && (codepoint != '\t')) 
+            if ((codepoint != ' ') && (codepoint != '\t'))
             {
                 Rectangle rec = { position.x + textOffsetX + font.chars[index].offsetX*scaleFactor,
-                                  position.y + textOffsetY + font.chars[index].offsetY*scaleFactor, 
-                                  font.recs[index].width*scaleFactor, 
+                                  position.y + textOffsetY + font.chars[index].offsetY*scaleFactor,
+                                  font.recs[index].width*scaleFactor,
                                   font.recs[index].height*scaleFactor };
-    
+
                 DrawTexturePro(font.texture, font.recs[index], rec, (Vector2){ 0, 0 }, 0.0f, tint);
             }
 
             if (font.chars[index].advanceX == 0) textOffsetX += ((float)font.recs[index].width*scaleFactor + spacing);
             else textOffsetX += ((float)font.chars[index].advanceX*scaleFactor + spacing);
         }
-        
+
         i += (codepointByteCount - 1);   // Move text bytes counter to next codepoint
     }
 }
@@ -888,7 +888,7 @@ void DrawTextRecEx(Font font, const char *text, Rectangle rec, float fontSize, f
     // Word/character wrapping mechanism variables
     enum { MEASURE_STATE = 0, DRAW_STATE = 1 };
     int state = wordWrap? MEASURE_STATE : DRAW_STATE;
-    
+
     int startLine = -1;         // Index where to begin drawing (where a line begins)
     int endLine = -1;           // Index where to stop drawing (where a line ends)
     int lastk = -1;             // Holds last value of the character position
@@ -929,13 +929,13 @@ void DrawTextRecEx(Font font, const char *text, Rectangle rec, float fontSize, f
                 endLine = (endLine < 1)? i : endLine;
                 if (i == endLine) endLine -= codepointByteCount;
                 if ((startLine + codepointByteCount) == endLine) endLine = (i - codepointByteCount);
-                
+
                 state = !state;
             }
             else if ((i + 1) == length)
             {
                 endLine = i;
-                
+
                 state = !state;
             }
             else if (codepoint == '\n') state = !state;
@@ -987,7 +987,7 @@ void DrawTextRecEx(Font font, const char *text, Rectangle rec, float fontSize, f
                     DrawTexturePro(font.texture, font.recs[index],
                                    (Rectangle){ rec.x + textOffsetX + font.chars[index].offsetX*scaleFactor,
                                                 rec.y + textOffsetY + font.chars[index].offsetY*scaleFactor,
-                                                font.recs[index].width*scaleFactor, font.recs[index].height*scaleFactor }, 
+                                                font.recs[index].width*scaleFactor, font.recs[index].height*scaleFactor },
                                    (Vector2){ 0, 0 }, 0.0f, (!isGlyphSelected)? tint : selectTint);
                 }
             }
@@ -1000,7 +1000,7 @@ void DrawTextRecEx(Font font, const char *text, Rectangle rec, float fontSize, f
                 endLine = -1;
                 glyphWidth = 0;
                 k = lastk;
-                
+
                 state = !state;
             }
         }
@@ -1085,7 +1085,7 @@ Vector2 MeasureTextEx(Font font, const char *text, float fontSize, float spacing
 int GetGlyphIndex(Font font, int codepoint)
 {
 #define TEXT_CHARACTER_NOTFOUND     63      // Character: '?'
-    
+
 #define UNORDERED_CHARSET
 #if defined(UNORDERED_CHARSET)
     int index = TEXT_CHARACTER_NOTFOUND;
@@ -1113,7 +1113,7 @@ int GetGlyphIndex(Font font, int codepoint)
 int TextCopy(char *dst, const char *src)
 {
     int bytes = 0;
-    
+
     if (dst != NULL)
     {
         while (*src != '\0')
@@ -1121,7 +1121,7 @@ int TextCopy(char *dst, const char *src)
             *dst = *src;
             dst++;
             src++;
-            
+
             bytes++;
         }
 
@@ -1161,14 +1161,14 @@ const char *TextFormat(const char *text, ...)
     // We create an array of buffers so strings don't expire until MAX_TEXTFORMAT_BUFFERS invocations
     static char buffers[MAX_TEXTFORMAT_BUFFERS][MAX_TEXT_BUFFER_LENGTH] = { 0 };
     static int  index = 0;
-    
+
     char *currentBuffer = buffers[index];
 
     va_list args;
     va_start(args, text);
     vsprintf(currentBuffer, text, args);
     va_end(args);
-    
+
     index += 1;     // Move to next buffer for next function call
     if (index >= MAX_TEXTFORMAT_BUFFERS) index = 0;
 
@@ -1431,10 +1431,10 @@ int TextToInteger(const char *text)
         if (text[0] == '-') sign = -1;
         text++;
     }
-  
+
     for (int i = 0; ((text[i] >= '0') && (text[i] <= '9')); ++i) value = value*10 + (int)(text[i] - '0');
 
-    return value*sign; 
+    return value*sign;
 }
 
 // Encode text codepoint into utf8 text (memory must be freed!)
@@ -1445,17 +1445,17 @@ char *TextToUtf8(int *codepoints, int length)
     char *text = (char *)calloc(length*5, 1);
     const char *utf8 = NULL;
     int size = 0;
-    
+
     for (int i = 0, bytes = 0; i < length; i++)
     {
         utf8 = CodepointToUtf8(codepoints[i], &bytes);
         strncpy(text + size, utf8, bytes);
         size += bytes;
     }
-    
+
     // Resize memory to text length + string NULL terminator
     text = RL_REALLOC(text, size + 1);
-    
+
     return text;
 }
 

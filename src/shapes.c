@@ -1386,7 +1386,7 @@ void DrawPolyLines(Vector2 center, int sides, float radius, float rotation, Colo
     rlPushMatrix();
         rlTranslatef(center.x, center.y, 0.0f);
         rlRotatef(rotation, 0.0f, 0.0f, 1.0f);
-        
+
         rlBegin(RL_LINES);
             for (int i = 0; i < sides; i++)
             {

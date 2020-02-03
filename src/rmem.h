@@ -694,7 +694,7 @@ BiStack CreateBiStack(const size_t len)
 {
     BiStack destack = { 0 };
     if (len == 0UL) return destack;
-    
+
     destack.size = len;
     destack.mem = malloc(len*sizeof *destack.mem);
     if (destack.mem==NULL) destack.size = 0UL;
@@ -726,11 +726,11 @@ void DestroyBiStack(BiStack *const destack)
 void *BiStackAllocFront(BiStack *const destack, const size_t len)
 {
     if ((destack == NULL) || (destack->mem == NULL)) return NULL;
-    
+
     const size_t ALIGNED_LEN = __AlignSize(len, sizeof(uintptr_t));
     // front end stack is too high!
     if (destack->front + ALIGNED_LEN >= destack->back) return NULL;
-    
+
     uint8_t *ptr = destack->front;
     destack->front += ALIGNED_LEN;
     return ptr;
@@ -739,11 +739,11 @@ void *BiStackAllocFront(BiStack *const destack, const size_t len)
 void *BiStackAllocBack(BiStack *const destack, const size_t len)
 {
     if ((destack == NULL) || (destack->mem == NULL)) return NULL;
-    
+
     const size_t ALIGNED_LEN = __AlignSize(len, sizeof(uintptr_t));
     // back end stack is too low
     if (destack->back - ALIGNED_LEN <= destack->front) return NULL;
-    
+
     destack->back -= ALIGNED_LEN;
     return destack->back;
 }
