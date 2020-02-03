@@ -4,11 +4,11 @@
 *
 *   FEATURES:
 *       - Manage audio device (init/close)
+*       - Manage raw audio context
+*       - Manage mixing channels
 *       - Load and unload audio files
 *       - Format wave data (sample rate, size, channels)
 *       - Play/Stop/Pause/Resume loaded audio
-*       - Manage mixing channels
-*       - Manage raw audio context
 *
 *   CONFIGURATION:
 *
@@ -124,7 +124,15 @@
 // After some math, considering a sampleRate of 48000, a buffer refill rate of 1/60 seconds and a
 // standard double-buffering system, a 4096 samples buffer has been chosen, it should be enough
 // In case of music-stalls, just increase this number
-#define AUDIO_BUFFER_SIZE        4096       // PCM data samples (i.e. 16bit, Mono: 8Kb)
+#if !defined(AUDIO_BUFFER_SIZE)
+    #define AUDIO_BUFFER_SIZE 4096      // PCM data samples (i.e. 16bit, Mono: 8Kb)
+#endif
+
+#define DEVICE_FORMAT       ma_format_f32
+#define DEVICE_CHANNELS     2
+#define DEVICE_SAMPLE_RATE  44100
+
+#define MAX_AUDIO_BUFFER_POOL_CHANNELS 16
 
 //----------------------------------------------------------------------------------
 // Types and Structures Definition
@@ -155,14 +163,74 @@ typedef enum {
 } TraceLogType;
 #endif
 
+// NOTE: Different logic is used when feeding data to the playback device 
+// depending on whether or not data is streamed (Music vs Sound)
+typedef enum { 
+    AUDIO_BUFFER_USAGE_STATIC = 0, 
+    AUDIO_BUFFER_USAGE_STREAM
+} AudioBufferUsage;
+
+// Audio buffer structure
+struct rAudioBuffer {
+    ma_pcm_converter dsp;           // PCM data converter
+
+    float volume;                   // Audio buffer volume
+    float pitch;                    // Audio buffer pitch
+
+    bool playing;                   // Audio buffer state: AUDIO_PLAYING
+    bool paused;                    // Audio buffer state: AUDIO_PAUSED
+    bool looping;                   // Audio buffer looping, always true for AudioStreams
+    int usage;                      // Audio buffer usage mode: STATIC or STREAM
+
+    bool isSubBufferProcessed[2];   // SubBuffer processed (virtual double buffer)
+    unsigned int sizeInFrames;      // Total buffer size in frames
+    unsigned int frameCursorPos;    // Frame cursor position
+    unsigned int totalFramesProcessed;  // Total frames processed in this buffer (required for play timming)
+
+    unsigned char *data;            // Data buffer, on music stream keeps filling
+
+    rAudioBuffer *next;             // Next audio buffer on the list
+    rAudioBuffer *prev;             // Previous audio buffer on the list
+};
+
+#define AudioBuffer rAudioBuffer    // HACK: To avoid CoreAudio (macOS) symbol collision
+
+// Audio data context
+typedef struct AudioData {
+    struct {
+        ma_context context;         // miniaudio context data
+        ma_device device;           // miniaudio device
+        ma_mutex lock;              // miniaudio mutex lock
+        bool isReady;               // Check if audio device is ready
+        float masterVolume;         // Master volume (multiplied on output mixing)
+    } System;
+    struct {
+        AudioBuffer *first;         // Pointer to first AudioBuffer in the list
+        AudioBuffer *last;          // Pointer to last AudioBuffer in the list
+    } Buffer;
+    struct {
+        AudioBuffer *pool[MAX_AUDIO_BUFFER_POOL_CHANNELS];      // Multichannel AudioBuffer pointers pool
+        unsigned int poolCounter;                               // AudioBuffer pointers pool counter
+        unsigned int channels[MAX_AUDIO_BUFFER_POOL_CHANNELS];  // AudioBuffer pool channels
+    } MultiChannel;
+} AudioData;
+
 //----------------------------------------------------------------------------------
 // Global Variables Definition
 //----------------------------------------------------------------------------------
-// ...
+static AudioData AUDIO = { 0 };     // Global CORE context
 
 //----------------------------------------------------------------------------------
 // Module specific Functions Declaration
 //----------------------------------------------------------------------------------
+static void OnLog(ma_context *pContext, ma_device *pDevice, ma_uint32 logLevel, const char *message);
+static void OnSendAudioDataToDevice(ma_device *pDevice, void *pFramesOut, const void *pFramesInput, ma_uint32 frameCount);
+static ma_uint32 OnAudioBufferDSPRead(ma_pcm_converter *pDSP, void *pFramesOut, ma_uint32 frameCount, void *pUserData);
+static void MixAudioFrames(float *framesOut, const float *framesIn, ma_uint32 frameCount, float localVolume);
+
+static void InitAudioBufferPool(void);                  // Initialise the multichannel buffer pool
+static void CloseAudioBufferPool(void);                 // Close the audio buffers pool
+
 #if defined(SUPPORT_FILEFORMAT_WAV)
 static Wave LoadWAV(const char *fileName);              // Load WAV file
 static int SaveWAV(Wave wave, const char *fileName);    // Save wave data as WAV file
@@ -178,73 +246,15 @@ static Wave LoadMP3(const char *fileName);              // Load MP3 file
 #endif
 
 #if defined(RAUDIO_STANDALONE)
-bool IsFileExtension(const char *fileName, const char *ext);    // Check file extension
-void TraceLog(int msgType, const char *text, ...);              // Show trace log messages (LOG_INFO, LOG_WARNING, LOG_ERROR, LOG_DEBUG)
+bool IsFileExtension(const char *fileName, const char *ext);// Check file extension
+void TraceLog(int msgType, const char *text, ...);      // Show trace log messages (LOG_INFO, LOG_WARNING, LOG_ERROR, LOG_DEBUG)
 #endif
 
 //----------------------------------------------------------------------------------
-// AudioBuffer Functionality
-//----------------------------------------------------------------------------------
-#define DEVICE_FORMAT       ma_format_f32
-#define DEVICE_CHANNELS     2
-#define DEVICE_SAMPLE_RATE  44100
-
-#define MAX_AUDIO_BUFFER_POOL_CHANNELS 16
-
-typedef enum { AUDIO_BUFFER_USAGE_STATIC = 0, AUDIO_BUFFER_USAGE_STREAM } AudioBufferUsage;
-
-// Audio buffer structure
-// NOTE: Slightly different logic is used when feeding data to the
-// playback device depending on whether or not data is streamed
-struct rAudioBuffer {
-    ma_pcm_converter dsp;   // PCM data converter
-
-    float volume;           // Audio buffer volume
-    float pitch;            // Audio buffer pitch
-
-    bool playing;           // Audio buffer state: AUDIO_PLAYING
-    bool paused;            // Audio buffer state: AUDIO_PAUSED
-    bool looping;           // Audio buffer looping, always true for AudioStreams
-    int usage;              // Audio buffer usage mode: STATIC or STREAM
-
-    bool isSubBufferProcessed[2];       // SubBuffer processed (virtual double buffer)
-    unsigned int frameCursorPos;        // Frame cursor position
-    unsigned int bufferSizeInFrames;    // Total buffer size in frames
-    unsigned int totalFramesProcessed;  // Total frames processed in this buffer (required for play timming)
-
-    unsigned char *buffer;              // Data buffer, on music stream keeps filling
-
-    rAudioBuffer *next;     // Next audio buffer on the list
-    rAudioBuffer *prev;     // Previous audio buffer on the list
-};
-
-#define AudioBuffer rAudioBuffer        // HACK: To avoid CoreAudio (macOS) symbol collision
-
-// Audio buffers are tracked in a linked list
-static AudioBuffer *firstAudioBuffer = NULL;    // Pointer to first AudioBuffer in the list
-static AudioBuffer *lastAudioBuffer = NULL;     // Pointer to last AudioBuffer in the list
-
-// miniaudio global variables
-static ma_context context;                      // miniaudio context data
-static ma_device device;                        // miniaudio device
-static ma_mutex audioLock;                      // miniaudio mutex lock
-static bool isAudioInitialized = false;         // Check if audio device is initialized
-static float masterVolume = 1.0f;               // Master volume (multiplied on output mixing)
-
-// Multi channel playback global variables
-static AudioBuffer *audioBufferPool[MAX_AUDIO_BUFFER_POOL_CHANNELS] = { 0 };         // Multichannel AudioBuffer pointers pool
-static unsigned int audioBufferPoolCounter = 0;                                      // AudioBuffer pointers pool counter
-static unsigned int audioBufferPoolChannels[MAX_AUDIO_BUFFER_POOL_CHANNELS] = { 0 }; // AudioBuffer pool channels
-
-// miniaudio functions declaration
-static void OnLog(ma_context *pContext, ma_device *pDevice, ma_uint32 logLevel, const char *message);
-static void OnSendAudioDataToDevice(ma_device *pDevice, void *pFramesOut, const void *pFramesInput, ma_uint32 frameCount);
-static ma_uint32 OnAudioBufferDSPRead(ma_pcm_converter *pDSP, void *pFramesOut, ma_uint32 frameCount, void *pUserData);
-static void MixAudioFrames(float *framesOut, const float *framesIn, ma_uint32 frameCount, float localVolume);
-
 // AudioBuffer management functions declaration
 // NOTE: Those functions are not exposed by raylib... for the moment
-AudioBuffer *InitAudioBuffer(ma_format format, ma_uint32 channels, ma_uint32 sampleRate, ma_uint32 bufferSizeInFrames, int usage);
+//----------------------------------------------------------------------------------
+AudioBuffer *InitAudioBuffer(ma_format format, ma_uint32 channels, ma_uint32 sampleRate, ma_uint32 sizeInFrames, int usage);
 void CloseAudioBuffer(AudioBuffer *buffer);
 bool IsAudioBufferPlaying(AudioBuffer *buffer);
 void PlayAudioBuffer(AudioBuffer *buffer);
@@ -256,248 +266,20 @@ void SetAudioBufferPitch(AudioBuffer *buffer, float pitch);
 void TrackAudioBuffer(AudioBuffer *buffer);
 void UntrackAudioBuffer(AudioBuffer *buffer);
 
-
-//----------------------------------------------------------------------------------
-// miniaudio functions definitions
-//----------------------------------------------------------------------------------
-
-// Log callback function
-static void OnLog(ma_context *pContext, ma_device *pDevice, ma_uint32 logLevel, const char *message)
-{
-    (void)pContext;
-    (void)pDevice;
-
-    TraceLog(LOG_ERROR, message);   // All log messages from miniaudio are errors
-}
-
-// Sending audio data to device callback function
-// NOTE: All the mixing takes place here
-static void OnSendAudioDataToDevice(ma_device *pDevice, void *pFramesOut, const void *pFramesInput, ma_uint32 frameCount)
-{
-    (void)pDevice;
-
-    // Mixing is basically just an accumulation, we need to initialize the output buffer to 0
-    memset(pFramesOut, 0, frameCount*pDevice->playback.channels*ma_get_bytes_per_sample(pDevice->playback.format));
-
-    // Using a mutex here for thread-safety which makes things not real-time
-    // This is unlikely to be necessary for this project, but may want to consider how you might want to avoid this
-    ma_mutex_lock(&audioLock);
-    {
-        for (AudioBuffer *audioBuffer = firstAudioBuffer; audioBuffer != NULL; audioBuffer = audioBuffer->next)
-        {
-            // Ignore stopped or paused sounds
-            if (!audioBuffer->playing || audioBuffer->paused) continue;
-
-            ma_uint32 framesRead = 0;
-
-            while (1)
-            {
-                if (framesRead > frameCount)
-                {
-                    TraceLog(LOG_DEBUG, "Mixed too many frames from audio buffer");
-                    break;
-                }
-
-                if (framesRead == frameCount) break;
-
-                // Just read as much data as we can from the stream
-                ma_uint32 framesToRead = (frameCount - framesRead);
-
-                while (framesToRead > 0)
-                {
-                    float tempBuffer[1024]; // 512 frames for stereo
-
-                    ma_uint32 framesToReadRightNow = framesToRead;
-                    if (framesToReadRightNow > sizeof(tempBuffer)/sizeof(tempBuffer[0])/DEVICE_CHANNELS)
-                    {
-                        framesToReadRightNow = sizeof(tempBuffer)/sizeof(tempBuffer[0])/DEVICE_CHANNELS;
-                    }
-
-                    ma_uint32 framesJustRead = (ma_uint32)ma_pcm_converter_read(&audioBuffer->dsp, tempBuffer, framesToReadRightNow);
-                    if (framesJustRead > 0)
-                    {
-                        float *framesOut = (float *)pFramesOut + (framesRead*device.playback.channels);
-                        float *framesIn  = tempBuffer;
-
-                        MixAudioFrames(framesOut, framesIn, framesJustRead, audioBuffer->volume);
-
-                        framesToRead -= framesJustRead;
-                        framesRead += framesJustRead;
-                    }
-                    
-                    if (!audioBuffer->playing)
-                    {
-                        framesRead = frameCount;
-                        break;
-                    }
-
-                    // If we weren't able to read all the frames we requested, break
-                    if (framesJustRead < framesToReadRightNow)
-                    {
-                        if (!audioBuffer->looping)
-                        {
-                            StopAudioBuffer(audioBuffer);
-                            break;
-                        }
-                        else
-                        {
-                            // Should never get here, but just for safety,
-                            // move the cursor position back to the start and continue the loop
-                            audioBuffer->frameCursorPos = 0;
-                            continue;
-                        }
-                    }
-                }
-
-                // If for some reason we weren't able to read every frame we'll need to break from the loop
-                // Not doing this could theoretically put us into an infinite loop
-                if (framesToRead > 0) break;
-            }
-        }
-    }
-
-    ma_mutex_unlock(&audioLock);
-}
-
-// DSP read from audio buffer callback function
-static ma_uint32 OnAudioBufferDSPRead(ma_pcm_converter *pDSP, void *pFramesOut, ma_uint32 frameCount, void *pUserData)
-{
-    AudioBuffer *audioBuffer = (AudioBuffer *)pUserData;
-
-    ma_uint32 subBufferSizeInFrames = (audioBuffer->bufferSizeInFrames > 1)? audioBuffer->bufferSizeInFrames/2 : audioBuffer->bufferSizeInFrames;
-    ma_uint32 currentSubBufferIndex = audioBuffer->frameCursorPos/subBufferSizeInFrames;
-
-    if (currentSubBufferIndex > 1)
-    {
-        TraceLog(LOG_DEBUG, "Frame cursor position moved too far forward in audio stream");
-        return 0;
-    }
-
-    // Another thread can update the processed state of buffers so
-    // we just take a copy here to try and avoid potential synchronization problems
-    bool isSubBufferProcessed[2];
-    isSubBufferProcessed[0] = audioBuffer->isSubBufferProcessed[0];
-    isSubBufferProcessed[1] = audioBuffer->isSubBufferProcessed[1];
-
-    ma_uint32 frameSizeInBytes = ma_get_bytes_per_sample(audioBuffer->dsp.formatConverterIn.config.formatIn)*audioBuffer->dsp.formatConverterIn.config.channels;
-
-    // Fill out every frame until we find a buffer that's marked as processed. Then fill the remainder with 0
-    ma_uint32 framesRead = 0;
-    while (1)
-    {
-        // We break from this loop differently depending on the buffer's usage
-        //  - For static buffers, we simply fill as much data as we can
-        //  - For streaming buffers we only fill the halves of the buffer that are processed
-        //    Unprocessed halves must keep their audio data in-tact
-        if (audioBuffer->usage == AUDIO_BUFFER_USAGE_STATIC)
-        {
-            if (framesRead >= frameCount) break;
-        }
-        else
-        {
-            if (isSubBufferProcessed[currentSubBufferIndex]) break;
-        }
-
-        ma_uint32 totalFramesRemaining = (frameCount - framesRead);
-        if (totalFramesRemaining == 0) break;
-
-        ma_uint32 framesRemainingInOutputBuffer;
-        if (audioBuffer->usage == AUDIO_BUFFER_USAGE_STATIC)
-        {
-            framesRemainingInOutputBuffer = audioBuffer->bufferSizeInFrames - audioBuffer->frameCursorPos;
-        }
-        else
-        {
-            ma_uint32 firstFrameIndexOfThisSubBuffer = subBufferSizeInFrames*currentSubBufferIndex;
-            framesRemainingInOutputBuffer = subBufferSizeInFrames - (audioBuffer->frameCursorPos - firstFrameIndexOfThisSubBuffer);
-        }
-
-        ma_uint32 framesToRead = totalFramesRemaining;
-        if (framesToRead > framesRemainingInOutputBuffer) framesToRead = framesRemainingInOutputBuffer;
-
-        memcpy((unsigned char *)pFramesOut + (framesRead*frameSizeInBytes), audioBuffer->buffer + (audioBuffer->frameCursorPos*frameSizeInBytes), framesToRead*frameSizeInBytes);
-        audioBuffer->frameCursorPos = (audioBuffer->frameCursorPos + framesToRead)%audioBuffer->bufferSizeInFrames;
-        framesRead += framesToRead;
-
-        // If we've read to the end of the buffer, mark it as processed
-        if (framesToRead == framesRemainingInOutputBuffer)
-        {
-            audioBuffer->isSubBufferProcessed[currentSubBufferIndex] = true;
-            isSubBufferProcessed[currentSubBufferIndex] = true;
-
-            currentSubBufferIndex = (currentSubBufferIndex + 1)%2;
-
-            // We need to break from this loop if we're not looping
-            if (!audioBuffer->looping)
-            {
-                StopAudioBuffer(audioBuffer);
-                break;
-            }
-        }
-    }
-
-    // Zero-fill excess
-    ma_uint32 totalFramesRemaining = (frameCount - framesRead);
-    if (totalFramesRemaining > 0)
-    {
-        memset((unsigned char *)pFramesOut + (framesRead*frameSizeInBytes), 0, totalFramesRemaining*frameSizeInBytes);
-
-        // For static buffers we can fill the remaining frames with silence for safety, but we don't want
-        // to report those frames as "read". The reason for this is that the caller uses the return value
-        // to know whether or not a non-looping sound has finished playback.
-        if (audioBuffer->usage != AUDIO_BUFFER_USAGE_STATIC) framesRead += totalFramesRemaining;
-    }
-
-    return framesRead;
-}
-
-// This is the main mixing function. Mixing is pretty simple in this project - it's just an accumulation.
-// NOTE: framesOut is both an input and an output. It will be initially filled with zeros outside of this function.
-static void MixAudioFrames(float *framesOut, const float *framesIn, ma_uint32 frameCount, float localVolume)
-{
-    for (ma_uint32 iFrame = 0; iFrame < frameCount; ++iFrame)
-    {
-        for (ma_uint32 iChannel = 0; iChannel < device.playback.channels; ++iChannel)
-        {
-            float *frameOut = framesOut + (iFrame*device.playback.channels);
-            const float *frameIn  = framesIn  + (iFrame*device.playback.channels);
-
-            frameOut[iChannel] += (frameIn[iChannel]*masterVolume*localVolume);
-        }
-    }
-}
-
-// Initialise the multichannel buffer pool
-static void InitAudioBufferPool()
-{
-    // Dummy buffers
-    for (int i = 0; i < MAX_AUDIO_BUFFER_POOL_CHANNELS; i++)
-    {
-        audioBufferPool[i] = InitAudioBuffer(DEVICE_FORMAT, DEVICE_CHANNELS, DEVICE_SAMPLE_RATE, 0, AUDIO_BUFFER_USAGE_STATIC);
-    }
-}
-
-// Close the audio buffers pool
-static void CloseAudioBufferPool()
-{
-    for (int i = 0; i < MAX_AUDIO_BUFFER_POOL_CHANNELS; i++) 
-    {
-        RL_FREE(audioBufferPool[i]->buffer);
-        RL_FREE(audioBufferPool[i]);
-    }
-}
-
 //----------------------------------------------------------------------------------
 // Module Functions Definition - Audio Device initialization and Closing
 //----------------------------------------------------------------------------------
 // Initialize audio device
 void InitAudioDevice(void)
 {
+    // TODO: Load AUDIO context memory dynamically?
+    AUDIO.System.masterVolume = 1.0f;
+    
     // Init audio context
-    ma_context_config contextConfig = ma_context_config_init();
-    contextConfig.logCallback = OnLog;
+    ma_context_config ctxConfig = ma_context_config_init();
+    ctxConfig.logCallback = OnLog;
 
-    ma_result result = ma_context_init(NULL, 0, &contextConfig, &context);
+    ma_result result = ma_context_init(NULL, 0, &ctxConfig, &AUDIO.System.context);
     if (result != MA_SUCCESS)
     {
         TraceLog(LOG_ERROR, "Failed to initialize audio context");
@@ -507,78 +289,78 @@ void InitAudioDevice(void)
     // Init audio device
     // NOTE: Using the default device. Format is floating point because it simplifies mixing.
     ma_device_config config = ma_device_config_init(ma_device_type_playback);
-    config.playback.pDeviceID = NULL;  // NULL for the default playback device.
+    config.playback.pDeviceID = NULL;  // NULL for the default playback AUDIO.System.device.
     config.playback.format    = DEVICE_FORMAT;
     config.playback.channels  = DEVICE_CHANNELS;
-    config.capture.pDeviceID  = NULL;  // NULL for the default capture device.
+    config.capture.pDeviceID  = NULL;  // NULL for the default capture AUDIO.System.device.
     config.capture.format     = ma_format_s16;
     config.capture.channels   = 1;
     config.sampleRate         = DEVICE_SAMPLE_RATE;
     config.dataCallback       = OnSendAudioDataToDevice;
     config.pUserData          = NULL;
 
-    result = ma_device_init(&context, &config, &device);
+    result = ma_device_init(&AUDIO.System.context, &config, &AUDIO.System.device);
     if (result != MA_SUCCESS)
     {
-        TraceLog(LOG_ERROR, "Failed to initialize audio playback device");
-        ma_context_uninit(&context);
+        TraceLog(LOG_ERROR, "Failed to initialize audio playback AUDIO.System.device");
+        ma_context_uninit(&AUDIO.System.context);
         return;
     }
 
     // Keep the device running the whole time. May want to consider doing something a bit smarter and only have the device running
     // while there's at least one sound being played.
-    result = ma_device_start(&device);
+    result = ma_device_start(&AUDIO.System.device);
     if (result != MA_SUCCESS)
     {
-        TraceLog(LOG_ERROR, "Failed to start audio playback device");
-        ma_device_uninit(&device);
-        ma_context_uninit(&context);
+        TraceLog(LOG_ERROR, "Failed to start audio playback AUDIO.System.device");
+        ma_device_uninit(&AUDIO.System.device);
+        ma_context_uninit(&AUDIO.System.context);
         return;
     }
 
     // Mixing happens on a seperate thread which means we need to synchronize. I'm using a mutex here to make things simple, but may
     // want to look at something a bit smarter later on to keep everything real-time, if that's necessary.
-    if (ma_mutex_init(&context, &audioLock) != MA_SUCCESS)
+    if (ma_mutex_init(&AUDIO.System.context, &AUDIO.System.lock) != MA_SUCCESS)
     {
         TraceLog(LOG_ERROR, "Failed to create mutex for audio mixing");
-        ma_device_uninit(&device);
-        ma_context_uninit(&context);
+        ma_device_uninit(&AUDIO.System.device);
+        ma_context_uninit(&AUDIO.System.context);
         return;
     }
 
     TraceLog(LOG_INFO, "Audio device initialized successfully");
-    TraceLog(LOG_INFO, "Audio backend: miniaudio / %s", ma_get_backend_name(context.backend));
-    TraceLog(LOG_INFO, "Audio format: %s -> %s", ma_get_format_name(device.playback.format), ma_get_format_name(device.playback.internalFormat));
-    TraceLog(LOG_INFO, "Audio channels: %d -> %d", device.playback.channels, device.playback.internalChannels);
-    TraceLog(LOG_INFO, "Audio sample rate: %d -> %d", device.sampleRate, device.playback.internalSampleRate);
-    TraceLog(LOG_INFO, "Audio buffer size: %d", device.playback.internalBufferSizeInFrames);
+    TraceLog(LOG_INFO, "Audio backend: miniaudio / %s", ma_get_backend_name(AUDIO.System.context.backend));
+    TraceLog(LOG_INFO, "Audio format: %s -> %s", ma_get_format_name(AUDIO.System.device.playback.format), ma_get_format_name(AUDIO.System.device.playback.internalFormat));
+    TraceLog(LOG_INFO, "Audio channels: %d -> %d", AUDIO.System.device.playback.channels, AUDIO.System.device.playback.internalChannels);
+    TraceLog(LOG_INFO, "Audio sample rate: %d -> %d", AUDIO.System.device.sampleRate, AUDIO.System.device.playback.internalSampleRate);
+    TraceLog(LOG_INFO, "Audio buffer size: %d", AUDIO.System.device.playback.internalBufferSizeInFrames);
 
     InitAudioBufferPool();
     TraceLog(LOG_INFO, "Audio multichannel pool size: %i", MAX_AUDIO_BUFFER_POOL_CHANNELS);
 
-    isAudioInitialized = true;
+    AUDIO.System.isReady = true;
 }
 
 // Close the audio device for all contexts
 void CloseAudioDevice(void)
 {
-    if (isAudioInitialized)
+    if (AUDIO.System.isReady)
     {
-        ma_mutex_uninit(&audioLock);
-        ma_device_uninit(&device);
-        ma_context_uninit(&context);
+        ma_mutex_uninit(&AUDIO.System.lock);
+        ma_device_uninit(&AUDIO.System.device);
+        ma_context_uninit(&AUDIO.System.context);
 
         CloseAudioBufferPool();
 
-        TraceLog(LOG_INFO, "Audio device closed successfully");
+        TraceLog(LOG_INFO, "Audio AUDIO.System.device closed successfully");
     }
-    else TraceLog(LOG_WARNING, "Could not close audio device because it is not currently initialized");
+    else TraceLog(LOG_WARNING, "Could not close audio AUDIO.System.device because it is not currently initialized");
 }
 
 // Check if device has been initialized successfully
 bool IsAudioDeviceReady(void)
 {
-    return isAudioInitialized;
+    return AUDIO.System.isReady;
 }
 
 // Set master volume (listener)
@@ -587,7 +369,7 @@ void SetMasterVolume(float volume)
     if (volume < 0.0f) volume = 0.0f;
     else if (volume > 1.0f) volume = 1.0f;
 
-    masterVolume = volume;
+    AUDIO.System.masterVolume = volume;
 }
 
 //----------------------------------------------------------------------------------
@@ -595,7 +377,7 @@ void SetMasterVolume(float volume)
 //----------------------------------------------------------------------------------
 
 // Initialize a new audio buffer (filled with silence)
-AudioBuffer *InitAudioBuffer(ma_format format, ma_uint32 channels, ma_uint32 sampleRate, ma_uint32 bufferSizeInFrames, int usage)
+AudioBuffer *InitAudioBuffer(ma_format format, ma_uint32 channels, ma_uint32 sampleRate, ma_uint32 sizeInFrames, int usage)
 {
     AudioBuffer *audioBuffer = (AudioBuffer *)RL_CALLOC(1, sizeof(AudioBuffer));
 
@@ -605,7 +387,7 @@ AudioBuffer *InitAudioBuffer(ma_format format, ma_uint32 channels, ma_uint32 sam
         return NULL;
     }
     
-    audioBuffer->buffer = RL_CALLOC(bufferSizeInFrames*channels*ma_get_bytes_per_sample(format), 1);
+    audioBuffer->data = RL_CALLOC(sizeInFrames*channels*ma_get_bytes_per_sample(format), 1);
 
     // Audio data runs through a format converter
     ma_pcm_converter_config dspConfig;
@@ -637,7 +419,7 @@ AudioBuffer *InitAudioBuffer(ma_format format, ma_uint32 channels, ma_uint32 sam
     audioBuffer->looping = false;
     audioBuffer->usage = usage;
     audioBuffer->frameCursorPos = 0;
-    audioBuffer->bufferSizeInFrames = bufferSizeInFrames;
+    audioBuffer->sizeInFrames = sizeInFrames;
 
     // Buffers should be marked as processed by default so that a call to
     // UpdateAudioStream() immediately after initialization works correctly
@@ -656,7 +438,7 @@ void CloseAudioBuffer(AudioBuffer *buffer)
     if (buffer != NULL)
     {
         UntrackAudioBuffer(buffer);
-        RL_FREE(buffer->buffer);
+        RL_FREE(buffer->data);
         RL_FREE(buffer);
     }
     else TraceLog(LOG_ERROR, "CloseAudioBuffer() : No audio buffer");
@@ -748,35 +530,35 @@ void SetAudioBufferPitch(AudioBuffer *buffer, float pitch)
 // Track audio buffer to linked list next position
 void TrackAudioBuffer(AudioBuffer *buffer)
 {
-    ma_mutex_lock(&audioLock);
+    ma_mutex_lock(&AUDIO.System.lock);
     {
-        if (firstAudioBuffer == NULL) firstAudioBuffer = buffer;
+        if (AUDIO.Buffer.first == NULL) AUDIO.Buffer.first = buffer;
         else
         {
-            lastAudioBuffer->next = buffer;
-            buffer->prev = lastAudioBuffer;
+            AUDIO.Buffer.last->next = buffer;
+            buffer->prev = AUDIO.Buffer.last;
         }
 
-        lastAudioBuffer = buffer;
+        AUDIO.Buffer.last = buffer;
     }
-    ma_mutex_unlock(&audioLock);
+    ma_mutex_unlock(&AUDIO.System.lock);
 }
 
 // Untrack audio buffer from linked list
 void UntrackAudioBuffer(AudioBuffer *buffer)
 {
-    ma_mutex_lock(&audioLock);
+    ma_mutex_lock(&AUDIO.System.lock);
     {
-        if (buffer->prev == NULL) firstAudioBuffer = buffer->next;
+        if (buffer->prev == NULL) AUDIO.Buffer.first = buffer->next;
         else buffer->prev->next = buffer->next;
 
-        if (buffer->next == NULL) lastAudioBuffer = buffer->prev;
+        if (buffer->next == NULL) AUDIO.Buffer.last = buffer->prev;
         else buffer->next->prev = buffer->prev;
 
         buffer->prev = NULL;
         buffer->next = NULL;
     }
-    ma_mutex_unlock(&audioLock);
+    ma_mutex_unlock(&AUDIO.System.lock);
 }
 
 //----------------------------------------------------------------------------------
@@ -829,7 +611,7 @@ Sound LoadSoundFromWave(Wave wave)
     {
         // When using miniaudio we need to do our own mixing.
         // To simplify this we need convert the format of each sound to be consistent with
-        // the format used to open the playback device. We can do this two ways:
+        // the format used to open the playback AUDIO.System.device. We can do this two ways:
         //
         //   1) Convert the whole sound in one go at load time (here).
         //   2) Convert the audio data in chunks at mixing time.
@@ -845,7 +627,7 @@ Sound LoadSoundFromWave(Wave wave)
         AudioBuffer *audioBuffer = InitAudioBuffer(DEVICE_FORMAT, DEVICE_CHANNELS, DEVICE_SAMPLE_RATE, frameCount, AUDIO_BUFFER_USAGE_STATIC);
         if (audioBuffer == NULL) TraceLog(LOG_WARNING, "LoadSoundFromWave() : Failed to create audio buffer");
 
-        frameCount = (ma_uint32)ma_convert_frames(audioBuffer->buffer, audioBuffer->dsp.formatConverterIn.config.formatIn, audioBuffer->dsp.formatConverterIn.config.channels, audioBuffer->dsp.src.config.sampleRateIn, wave.data, formatIn, wave.channels, wave.sampleRate, frameCountIn);
+        frameCount = (ma_uint32)ma_convert_frames(audioBuffer->data, audioBuffer->dsp.formatConverterIn.config.formatIn, audioBuffer->dsp.formatConverterIn.config.channels, audioBuffer->dsp.src.config.sampleRateIn, wave.data, formatIn, wave.channels, wave.sampleRate, frameCountIn);
         if (frameCount == 0) TraceLog(LOG_WARNING, "LoadSoundFromWave() : Format conversion failed");
 
         sound.sampleCount = frameCount*DEVICE_CHANNELS;
@@ -884,7 +666,7 @@ void UpdateSound(Sound sound, const void *data, int samplesCount)
         StopAudioBuffer(audioBuffer);
 
         // TODO: May want to lock/unlock this since this data buffer is read at mixing time
-        memcpy(audioBuffer->buffer, data, samplesCount*audioBuffer->dsp.formatConverterIn.config.channels*ma_get_bytes_per_sample(audioBuffer->dsp.formatConverterIn.config.formatIn));
+        memcpy(audioBuffer->data, data, samplesCount*audioBuffer->dsp.formatConverterIn.config.channels*ma_get_bytes_per_sample(audioBuffer->dsp.formatConverterIn.config.formatIn));
     }
     else TraceLog(LOG_ERROR, "UpdateSound() : Invalid sound - no audio buffer");
 }
@@ -973,13 +755,13 @@ void PlaySoundMulti(Sound sound)
     // find the first non playing pool entry
     for (int i = 0; i < MAX_AUDIO_BUFFER_POOL_CHANNELS; i++)
     {
-        if (audioBufferPoolChannels[i] > oldAge)
+        if (AUDIO.MultiChannel.channels[i] > oldAge)
         {
-            oldAge = audioBufferPoolChannels[i];
+            oldAge = AUDIO.MultiChannel.channels[i];
             oldIndex = i;
         }
 
-        if (!IsAudioBufferPlaying(audioBufferPool[i]))
+        if (!IsAudioBufferPlaying(AUDIO.MultiChannel.pool[i]))
         {
             index = i;
             break;
@@ -989,7 +771,7 @@ void PlaySoundMulti(Sound sound)
     // If no none playing pool members can be index choose the oldest
     if (index == -1)
     {
-        TraceLog(LOG_WARNING,"pool age %i ended a sound early no room in buffer pool", audioBufferPoolCounter);
+        TraceLog(LOG_WARNING,"pool age %i ended a sound early no room in buffer pool", AUDIO.MultiChannel.poolCounter);
 
         if (oldIndex == -1)
         {
@@ -1002,32 +784,32 @@ void PlaySoundMulti(Sound sound)
         index = oldIndex;
 
         // Just in case...
-        StopAudioBuffer(audioBufferPool[index]);
+        StopAudioBuffer(AUDIO.MultiChannel.pool[index]);
     }
 
     // Experimentally mutex lock doesn't seem to be needed this makes sense
-    // as audioBufferPool[index] isn't playing and the only stuff we're copying
+    // as AUDIO.MultiChannel.pool[index] isn't playing and the only stuff we're copying
     // shouldn't be changing...
 
-    audioBufferPoolChannels[index] = audioBufferPoolCounter;
-    audioBufferPoolCounter++;
+    AUDIO.MultiChannel.channels[index] = AUDIO.MultiChannel.poolCounter;
+    AUDIO.MultiChannel.poolCounter++;
 
-    audioBufferPool[index]->volume = sound.stream.buffer->volume;
-    audioBufferPool[index]->pitch = sound.stream.buffer->pitch;
-    audioBufferPool[index]->looping = sound.stream.buffer->looping;
-    audioBufferPool[index]->usage = sound.stream.buffer->usage;
-    audioBufferPool[index]->isSubBufferProcessed[0] = false;
-    audioBufferPool[index]->isSubBufferProcessed[1] = false;
-    audioBufferPool[index]->bufferSizeInFrames = sound.stream.buffer->bufferSizeInFrames;
-    audioBufferPool[index]->buffer = sound.stream.buffer->buffer;
+    AUDIO.MultiChannel.pool[index]->volume = sound.stream.buffer->volume;
+    AUDIO.MultiChannel.pool[index]->pitch = sound.stream.buffer->pitch;
+    AUDIO.MultiChannel.pool[index]->looping = sound.stream.buffer->looping;
+    AUDIO.MultiChannel.pool[index]->usage = sound.stream.buffer->usage;
+    AUDIO.MultiChannel.pool[index]->isSubBufferProcessed[0] = false;
+    AUDIO.MultiChannel.pool[index]->isSubBufferProcessed[1] = false;
+    AUDIO.MultiChannel.pool[index]->sizeInFrames = sound.stream.buffer->sizeInFrames;
+    AUDIO.MultiChannel.pool[index]->data = sound.stream.buffer->data;
 
-    PlayAudioBuffer(audioBufferPool[index]);
+    PlayAudioBuffer(AUDIO.MultiChannel.pool[index]);
 }
 
 // Stop any sound played with PlaySoundMulti()
 void StopSoundMulti(void)
 {
-    for (int i = 0; i < MAX_AUDIO_BUFFER_POOL_CHANNELS; i++) StopAudioBuffer(audioBufferPool[i]);
+    for (int i = 0; i < MAX_AUDIO_BUFFER_POOL_CHANNELS; i++) StopAudioBuffer(AUDIO.MultiChannel.pool[i]);
 }
 
 // Get number of sounds playing in the multichannel buffer pool
@@ -1037,7 +819,7 @@ int GetSoundsPlaying(void)
 
     for (int i = 0; i < MAX_AUDIO_BUFFER_POOL_CHANNELS; i++)
     {
-        if (IsAudioBufferPlaying(audioBufferPool[i])) counter++;
+        if (IsAudioBufferPlaying(AUDIO.MultiChannel.pool[i])) counter++;
     }
 
     return counter;
@@ -1243,7 +1025,7 @@ Music LoadMusicStream(const char *fileName)
 
         int result = jar_xm_create_context_from_file(&ctxXm, 48000, fileName);
 
-        if (result == 0)    // XM context created successfully
+        if (result == 0)    // XM AUDIO.System.context created successfully
         {
             music.ctxType = MUSIC_MODULE_XM;
             jar_xm_set_max_loop_count(ctxXm, 0);    // Set infinite number of loops
@@ -1374,7 +1156,6 @@ void StopMusicStream(Music music)
 {
     StopAudioStream(music.stream);
 
-    // Restart music context
     switch (music.ctxType)
     {
 #if defined(SUPPORT_FILEFORMAT_OGG)
@@ -1401,7 +1182,7 @@ void UpdateMusicStream(Music music)
 {
     bool streamEnding = false;
 
-    unsigned int subBufferSizeInFrames = music.stream.buffer->bufferSizeInFrames/2;
+    unsigned int subBufferSizeInFrames = music.stream.buffer->sizeInFrames/2;
 
     // NOTE: Using dynamic allocation because it could require more than 16KB
     void *pcm = RL_CALLOC(subBufferSizeInFrames*music.stream.channels*music.stream.sampleSize/8, 1);
@@ -1559,7 +1340,7 @@ AudioStream InitAudioStream(unsigned int sampleRate, unsigned int sampleSize, un
     ma_format formatIn = ((stream.sampleSize == 8)? ma_format_u8 : ((stream.sampleSize == 16)? ma_format_s16 : ma_format_f32));
 
     // The size of a streaming buffer must be at least double the size of a period
-    unsigned int periodSize = device.playback.internalBufferSizeInFrames/device.playback.internalPeriods;
+    unsigned int periodSize = AUDIO.System.device.playback.internalBufferSizeInFrames/AUDIO.System.device.playback.internalPeriods;
     unsigned int subBufferSize = AUDIO_BUFFER_SIZE;
 
     if (subBufferSize < periodSize) subBufferSize = periodSize;
@@ -1610,8 +1391,8 @@ void UpdateAudioStream(AudioStream stream, const void *data, int samplesCount)
                 subBufferToUpdate = (audioBuffer->isSubBufferProcessed[0])? 0 : 1;
             }
 
-            ma_uint32 subBufferSizeInFrames = audioBuffer->bufferSizeInFrames/2;
-            unsigned char *subBuffer = audioBuffer->buffer + ((subBufferSizeInFrames*stream.channels*(stream.sampleSize/8))*subBufferToUpdate);
+            ma_uint32 subBufferSizeInFrames = audioBuffer->sizeInFrames/2;
+            unsigned char *subBuffer = audioBuffer->data + ((subBufferSizeInFrames*stream.channels*(stream.sampleSize/8))*subBufferToUpdate);
 
             // TODO: Get total frames processed on this buffer... DOES NOT WORK.
             audioBuffer->totalFramesProcessed += subBufferSizeInFrames;
@@ -1696,6 +1477,232 @@ void SetAudioStreamPitch(AudioStream stream, float pitch)
 //----------------------------------------------------------------------------------
 // Module specific Functions Definition
 //----------------------------------------------------------------------------------
+
+// Log callback function
+static void OnLog(ma_context *pContext, ma_device *pDevice, ma_uint32 logLevel, const char *message)
+{
+    (void)pContext;
+    (void)pDevice;
+
+    TraceLog(LOG_ERROR, message);   // All log messages from miniaudio are errors
+}
+
+// Sending audio data to device callback function
+// NOTE: All the mixing takes place here
+static void OnSendAudioDataToDevice(ma_device *pDevice, void *pFramesOut, const void *pFramesInput, ma_uint32 frameCount)
+{
+    (void)pDevice;
+
+    // Mixing is basically just an accumulation, we need to initialize the output buffer to 0
+    memset(pFramesOut, 0, frameCount*pDevice->playback.channels*ma_get_bytes_per_sample(pDevice->playback.format));
+
+    // Using a mutex here for thread-safety which makes things not real-time
+    // This is unlikely to be necessary for this project, but may want to consider how you might want to avoid this
+    ma_mutex_lock(&AUDIO.System.lock);
+    {
+        for (AudioBuffer *audioBuffer = AUDIO.Buffer.first; audioBuffer != NULL; audioBuffer = audioBuffer->next)
+        {
+            // Ignore stopped or paused sounds
+            if (!audioBuffer->playing || audioBuffer->paused) continue;
+
+            ma_uint32 framesRead = 0;
+
+            while (1)
+            {
+                if (framesRead > frameCount)
+                {
+                    TraceLog(LOG_DEBUG, "Mixed too many frames from audio buffer");
+                    break;
+                }
+
+                if (framesRead == frameCount) break;
+
+                // Just read as much data as we can from the stream
+                ma_uint32 framesToRead = (frameCount - framesRead);
+
+                while (framesToRead > 0)
+                {
+                    float tempBuffer[1024]; // 512 frames for stereo
+
+                    ma_uint32 framesToReadRightNow = framesToRead;
+                    if (framesToReadRightNow > sizeof(tempBuffer)/sizeof(tempBuffer[0])/DEVICE_CHANNELS)
+                    {
+                        framesToReadRightNow = sizeof(tempBuffer)/sizeof(tempBuffer[0])/DEVICE_CHANNELS;
+                    }
+
+                    ma_uint32 framesJustRead = (ma_uint32)ma_pcm_converter_read(&audioBuffer->dsp, tempBuffer, framesToReadRightNow);
+                    if (framesJustRead > 0)
+                    {
+                        float *framesOut = (float *)pFramesOut + (framesRead*AUDIO.System.device.playback.channels);
+                        float *framesIn  = tempBuffer;
+
+                        MixAudioFrames(framesOut, framesIn, framesJustRead, audioBuffer->volume);
+
+                        framesToRead -= framesJustRead;
+                        framesRead += framesJustRead;
+                    }
+                    
+                    if (!audioBuffer->playing)
+                    {
+                        framesRead = frameCount;
+                        break;
+                    }
+
+                    // If we weren't able to read all the frames we requested, break
+                    if (framesJustRead < framesToReadRightNow)
+                    {
+                        if (!audioBuffer->looping)
+                        {
+                            StopAudioBuffer(audioBuffer);
+                            break;
+                        }
+                        else
+                        {
+                            // Should never get here, but just for safety,
+                            // move the cursor position back to the start and continue the loop
+                            audioBuffer->frameCursorPos = 0;
+                            continue;
+                        }
+                    }
+                }
+
+                // If for some reason we weren't able to read every frame we'll need to break from the loop
+                // Not doing this could theoretically put us into an infinite loop
+                if (framesToRead > 0) break;
+            }
+        }
+    }
+
+    ma_mutex_unlock(&AUDIO.System.lock);
+}
+
+// DSP read from audio buffer callback function
+static ma_uint32 OnAudioBufferDSPRead(ma_pcm_converter *pDSP, void *pFramesOut, ma_uint32 frameCount, void *pUserData)
+{
+    AudioBuffer *audioBuffer = (AudioBuffer *)pUserData;
+
+    ma_uint32 subBufferSizeInFrames = (audioBuffer->sizeInFrames > 1)? audioBuffer->sizeInFrames/2 : audioBuffer->sizeInFrames;
+    ma_uint32 currentSubBufferIndex = audioBuffer->frameCursorPos/subBufferSizeInFrames;
+
+    if (currentSubBufferIndex > 1)
+    {
+        TraceLog(LOG_DEBUG, "Frame cursor position moved too far forward in audio stream");
+        return 0;
+    }
+
+    // Another thread can update the processed state of buffers so
+    // we just take a copy here to try and avoid potential synchronization problems
+    bool isSubBufferProcessed[2];
+    isSubBufferProcessed[0] = audioBuffer->isSubBufferProcessed[0];
+    isSubBufferProcessed[1] = audioBuffer->isSubBufferProcessed[1];
+
+    ma_uint32 frameSizeInBytes = ma_get_bytes_per_sample(audioBuffer->dsp.formatConverterIn.config.formatIn)*audioBuffer->dsp.formatConverterIn.config.channels;
+
+    // Fill out every frame until we find a buffer that's marked as processed. Then fill the remainder with 0
+    ma_uint32 framesRead = 0;
+    while (1)
+    {
+        // We break from this loop differently depending on the buffer's usage
+        //  - For static buffers, we simply fill as much data as we can
+        //  - For streaming buffers we only fill the halves of the buffer that are processed
+        //    Unprocessed halves must keep their audio data in-tact
+        if (audioBuffer->usage == AUDIO_BUFFER_USAGE_STATIC)
+        {
+            if (framesRead >= frameCount) break;
+        }
+        else
+        {
+            if (isSubBufferProcessed[currentSubBufferIndex]) break;
+        }
+
+        ma_uint32 totalFramesRemaining = (frameCount - framesRead);
+        if (totalFramesRemaining == 0) break;
+
+        ma_uint32 framesRemainingInOutputBuffer;
+        if (audioBuffer->usage == AUDIO_BUFFER_USAGE_STATIC)
+        {
+            framesRemainingInOutputBuffer = audioBuffer->sizeInFrames - audioBuffer->frameCursorPos;
+        }
+        else
+        {
+            ma_uint32 firstFrameIndexOfThisSubBuffer = subBufferSizeInFrames*currentSubBufferIndex;
+            framesRemainingInOutputBuffer = subBufferSizeInFrames - (audioBuffer->frameCursorPos - firstFrameIndexOfThisSubBuffer);
+        }
+
+        ma_uint32 framesToRead = totalFramesRemaining;
+        if (framesToRead > framesRemainingInOutputBuffer) framesToRead = framesRemainingInOutputBuffer;
+
+        memcpy((unsigned char *)pFramesOut + (framesRead*frameSizeInBytes), audioBuffer->data + (audioBuffer->frameCursorPos*frameSizeInBytes), framesToRead*frameSizeInBytes);
+        audioBuffer->frameCursorPos = (audioBuffer->frameCursorPos + framesToRead)%audioBuffer->sizeInFrames;
+        framesRead += framesToRead;
+
+        // If we've read to the end of the buffer, mark it as processed
+        if (framesToRead == framesRemainingInOutputBuffer)
+        {
+            audioBuffer->isSubBufferProcessed[currentSubBufferIndex] = true;
+            isSubBufferProcessed[currentSubBufferIndex] = true;
+
+            currentSubBufferIndex = (currentSubBufferIndex + 1)%2;
+
+            // We need to break from this loop if we're not looping
+            if (!audioBuffer->looping)
+            {
+                StopAudioBuffer(audioBuffer);
+                break;
+            }
+        }
+    }
+
+    // Zero-fill excess
+    ma_uint32 totalFramesRemaining = (frameCount - framesRead);
+    if (totalFramesRemaining > 0)
+    {
+        memset((unsigned char *)pFramesOut + (framesRead*frameSizeInBytes), 0, totalFramesRemaining*frameSizeInBytes);
+
+        // For static buffers we can fill the remaining frames with silence for safety, but we don't want
+        // to report those frames as "read". The reason for this is that the caller uses the return value
+        // to know whether or not a non-looping sound has finished playback.
+        if (audioBuffer->usage != AUDIO_BUFFER_USAGE_STATIC) framesRead += totalFramesRemaining;
+    }
+
+    return framesRead;
+}
+
+// This is the main mixing function. Mixing is pretty simple in this project - it's just an accumulation.
+// NOTE: framesOut is both an input and an output. It will be initially filled with zeros outside of this function.
+static void MixAudioFrames(float *framesOut, const float *framesIn, ma_uint32 frameCount, float localVolume)
+{
+    for (ma_uint32 iFrame = 0; iFrame < frameCount; ++iFrame)
+    {
+        for (ma_uint32 iChannel = 0; iChannel < AUDIO.System.device.playback.channels; ++iChannel)
+        {
+            float *frameOut = framesOut + (iFrame*AUDIO.System.device.playback.channels);
+            const float *frameIn  = framesIn  + (iFrame*AUDIO.System.device.playback.channels);
+
+            frameOut[iChannel] += (frameIn[iChannel]*AUDIO.System.masterVolume*localVolume);
+        }
+    }
+}
+
+// Initialise the multichannel buffer pool
+static void InitAudioBufferPool(void)
+{
+    // Dummy buffers
+    for (int i = 0; i < MAX_AUDIO_BUFFER_POOL_CHANNELS; i++)
+    {
+        AUDIO.MultiChannel.pool[i] = InitAudioBuffer(DEVICE_FORMAT, DEVICE_CHANNELS, DEVICE_SAMPLE_RATE, 0, AUDIO_BUFFER_USAGE_STATIC);
+    }
+}
+
+// Close the audio buffers pool
+static void CloseAudioBufferPool(void)
+{
+    for (int i = 0; i < MAX_AUDIO_BUFFER_POOL_CHANNELS; i++) 
+    {
+        RL_FREE(AUDIO.MultiChannel.pool[i]->data);
+        RL_FREE(AUDIO.MultiChannel.pool[i]);
+    }
+}
 
 #if defined(SUPPORT_FILEFORMAT_WAV)
 // Load WAV file into Wave structure

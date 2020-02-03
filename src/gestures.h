@@ -149,75 +149,76 @@ float GetGesturePinchAngle(void);                       // Get gesture pinch ang
         #undef _POSIX_C_SOURCE
         #define _POSIX_C_SOURCE 199309L // Required for CLOCK_MONOTONIC if compiled with c99 without gnu ext.
     #endif
-    #include <sys/time.h>           // Required for: timespec
-    #include <time.h>               // Required for: clock_gettime()
+    #include <sys/time.h>               // Required for: timespec
+    #include <time.h>                   // Required for: clock_gettime()
 
-    #include <math.h>               // Required for: atan2(), sqrt()
-    #include <stdint.h>             // Required for: uint64_t
+    #include <math.h>                   // Required for: atan2(), sqrt()
+    #include <stdint.h>                 // Required for: uint64_t
 #endif
 
-#if defined(__APPLE__)              // macOS also defines __MACH__
-    #include <mach/clock.h>         // Required for: clock_get_time()
-    #include <mach/mach.h>          // Required for: mach_timespec_t
+#if defined(__APPLE__)                  // macOS also defines __MACH__
+    #include <mach/clock.h>             // Required for: clock_get_time()
+    #include <mach/mach.h>              // Required for: mach_timespec_t
 #endif
 
 //----------------------------------------------------------------------------------
 // Defines and Macros
 //----------------------------------------------------------------------------------
-#define FORCE_TO_SWIPE          0.0005f     // Measured in normalized screen units/time
-#define MINIMUM_DRAG            0.015f      // Measured in normalized screen units (0.0f to 1.0f)
-#define MINIMUM_PINCH           0.005f      // Measured in normalized screen units (0.0f to 1.0f)
-#define TAP_TIMEOUT             300         // Time in milliseconds
-#define PINCH_TIMEOUT           300         // Time in milliseconds
-#define DOUBLETAP_RANGE         0.03f       // Measured in normalized screen units (0.0f to 1.0f)
+#define FORCE_TO_SWIPE      0.0005f     // Measured in normalized screen units/time
+#define MINIMUM_DRAG        0.015f      // Measured in normalized screen units (0.0f to 1.0f)
+#define MINIMUM_PINCH       0.005f      // Measured in normalized screen units (0.0f to 1.0f)
+#define TAP_TIMEOUT         300         // Time in milliseconds
+#define PINCH_TIMEOUT       300         // Time in milliseconds
+#define DOUBLETAP_RANGE     0.03f       // Measured in normalized screen units (0.0f to 1.0f)
 
 //----------------------------------------------------------------------------------
 // Types and Structures Definition
 //----------------------------------------------------------------------------------
-// ...
+
+typedef struct {
+    int current;                        // Current detected gesture
+    unsigned int enabledFlags;          // Enabled gestures flags
+    struct {
+        int firstId;                    // Touch id for first touch point
+        int pointCount;                 // Touch points counter
+        double eventTime;               // Time stamp when an event happened
+        Vector2 upPosition;             // Touch up position
+        Vector2 downPositionA;          // First touch down position
+        Vector2 downPositionB;          // Second touch down position
+        Vector2 downDragPosition;       // Touch drag position
+        Vector2 moveDownPositionA;      // First touch down position on move
+        Vector2 moveDownPositionB;      // Second touch down position on move
+        int tapCounter;                 // TAP counter (one tap implies TOUCH_DOWN and TOUCH_UP actions)
+    } Touch;
+    struct {
+        bool resetRequired;             // HOLD reset to get first touch point again
+        double timeDuration;            // HOLD duration in milliseconds
+    } Hold;
+    struct {
+        Vector2 vector;                 // DRAG vector (between initial and current position)
+        float angle;                    // DRAG angle (relative to x-axis)
+        float distance;                 // DRAG distance (from initial touch point to final) (normalized [0..1])
+        float intensity;                // DRAG intensity, how far why did the DRAG (pixels per frame)
+    } Drag;
+    struct {
+        bool start;                     // SWIPE used to define when start measuring GESTURES.Swipe.timeDuration
+        double timeDuration;            // SWIPE time to calculate drag intensity
+    } Swipe;
+    struct {
+        Vector2 vector;                 // PINCH vector (between first and second touch points)
+        float angle;                    // PINCH angle (relative to x-axis)
+        float distance;                 // PINCH displacement distance (normalized [0..1])
+    } Pinch;
+} GesturesData;
 
 //----------------------------------------------------------------------------------
 // Global Variables Definition
 //----------------------------------------------------------------------------------
-
-// Touch gesture variables
-static Vector2 touchDownPosition = { 0.0f, 0.0f };      // First touch down position
-static Vector2 touchDownPosition2 = { 0.0f, 0.0f };     // Second touch down position
-static Vector2 touchDownDragPosition = { 0.0f, 0.0f };  // Touch drag position
-static Vector2 touchUpPosition = { 0.0f, 0.0f };        // Touch up position
-static Vector2 moveDownPosition = { 0.0f, 0.0f };       // First touch down position on move
-static Vector2 moveDownPosition2 = { 0.0f, 0.0f };      // Second touch down position on move
-
-static int pointCount = 0;                      // Touch points counter
-static int firstTouchId = -1;                   // Touch id for first touch point
-static double eventTime = 0.0;                  // Time stamp when an event happened
-
-// Tap gesture variables
-static int tapCounter = 0;                      // TAP counter (one tap implies TOUCH_DOWN and TOUCH_UP actions)
-
-// Hold gesture variables
-static bool resetHold = false;                  // HOLD reset to get first touch point again
-static double timeHold = 0.0f;                  // HOLD duration in milliseconds
-
-// Drag gesture variables
-static Vector2 dragVector = { 0.0f , 0.0f };    // DRAG vector (between initial and current position)
-static float dragAngle = 0.0f;                  // DRAG angle (relative to x-axis)
-static float dragDistance = 0.0f;               // DRAG distance (from initial touch point to final) (normalized [0..1])
-static float dragIntensity = 0.0f;              // DRAG intensity, how far why did the DRAG (pixels per frame)
-
-// Swipe gestures variables
-static bool startMoving = false;                // SWIPE used to define when start measuring swipeTime
-static double swipeTime = 0.0;                  // SWIPE time to calculate drag intensity
-
-// Pinch gesture variables
-static Vector2 pinchVector = { 0.0f , 0.0f };   // PINCH vector (between first and second touch points)
-static float pinchAngle = 0.0f;                 // PINCH angle (relative to x-axis)
-static float pinchDistance = 0.0f;              // PINCH displacement distance (normalized [0..1])
-
-static int currentGesture = GESTURE_NONE;       // Current detected gesture
-
-// Enabled gestures flags, all gestures enabled by default
-static unsigned int enabledGestures = 0b0000001111111111;
+static GesturesData GESTURES = {
+    .Touch.firstId = -1,
+    .current = GESTURE_NONE,
+    .enabledFlags = 0b0000001111111111          // All gestures enabled by default
+};
 
 //----------------------------------------------------------------------------------
 // Module specific Functions Declaration
@@ -236,13 +237,13 @@ static double GetCurrentTime(void);
 // Enable only desired getures to be detected
 void SetGesturesEnabled(unsigned int gestureFlags)
 {
-    enabledGestures = gestureFlags;
+    GESTURES.enabledFlags = gestureFlags;
 }
 
 // Check if a gesture have been detected
 bool IsGestureDetected(int gesture)
 {
-    if ((enabledGestures & currentGesture) == gesture) return true;
+    if ((GESTURES.enabledFlags & GESTURES.current) == gesture) return true;
     else return false;
 }
 
@@ -250,150 +251,150 @@ bool IsGestureDetected(int gesture)
 void ProcessGestureEvent(GestureEvent event)
 {
     // Reset required variables
-    pointCount = event.pointCount;      // Required on UpdateGestures()
+    GESTURES.Touch.pointCount = event.pointCount;      // Required on UpdateGestures()
 
-    if (pointCount < 2)
+    if (GESTURES.Touch.pointCount < 2)
     {
         if (event.touchAction == TOUCH_DOWN)
         {
-            tapCounter++;    // Tap counter
+            GESTURES.Touch.tapCounter++;    // Tap counter
 
             // Detect GESTURE_DOUBLE_TAP
-            if ((currentGesture == GESTURE_NONE) && (tapCounter >= 2) && ((GetCurrentTime() - eventTime) < TAP_TIMEOUT) && (Vector2Distance(touchDownPosition, event.position[0]) < DOUBLETAP_RANGE))
+            if ((GESTURES.current == GESTURE_NONE) && (GESTURES.Touch.tapCounter >= 2) && ((GetCurrentTime() - GESTURES.Touch.eventTime) < TAP_TIMEOUT) && (Vector2Distance(GESTURES.Touch.downPositionA, event.position[0]) < DOUBLETAP_RANGE))
             {
-                currentGesture = GESTURE_DOUBLETAP;
-                tapCounter = 0;
+                GESTURES.current = GESTURE_DOUBLETAP;
+                GESTURES.Touch.tapCounter = 0;
             }
             else    // Detect GESTURE_TAP
             {
-                tapCounter = 1;
-                currentGesture = GESTURE_TAP;
+                GESTURES.Touch.tapCounter = 1;
+                GESTURES.current = GESTURE_TAP;
             }
 
-            touchDownPosition = event.position[0];
-            touchDownDragPosition = event.position[0];
+            GESTURES.Touch.downPositionA = event.position[0];
+            GESTURES.Touch.downDragPosition = event.position[0];
 
-            touchUpPosition = touchDownPosition;
-            eventTime = GetCurrentTime();
+            GESTURES.Touch.upPosition = GESTURES.Touch.downPositionA;
+            GESTURES.Touch.eventTime = GetCurrentTime();
 
-            firstTouchId = event.pointerId[0];
+            GESTURES.Touch.firstId = event.pointerId[0];
 
-            dragVector = (Vector2){ 0.0f, 0.0f };
+            GESTURES.Drag.vector = (Vector2){ 0.0f, 0.0f };
         }
         else if (event.touchAction == TOUCH_UP)
         {
-            if (currentGesture == GESTURE_DRAG) touchUpPosition = event.position[0];
+            if (GESTURES.current == GESTURE_DRAG) GESTURES.Touch.upPosition = event.position[0];
 
-            // NOTE: dragIntensity dependend on the resolution of the screen
-            dragDistance = Vector2Distance(touchDownPosition, touchUpPosition);
-            dragIntensity = dragDistance/(float)((GetCurrentTime() - swipeTime));
+            // NOTE: GESTURES.Drag.intensity dependend on the resolution of the screen
+            GESTURES.Drag.distance = Vector2Distance(GESTURES.Touch.downPositionA, GESTURES.Touch.upPosition);
+            GESTURES.Drag.intensity = GESTURES.Drag.distance/(float)((GetCurrentTime() - GESTURES.Swipe.timeDuration));
 
-            startMoving = false;
+            GESTURES.Swipe.start = false;
 
             // Detect GESTURE_SWIPE
-            if ((dragIntensity > FORCE_TO_SWIPE) && (firstTouchId == event.pointerId[0]))
+            if ((GESTURES.Drag.intensity > FORCE_TO_SWIPE) && (GESTURES.Touch.firstId == event.pointerId[0]))
             {
                 // NOTE: Angle should be inverted in Y
-                dragAngle = 360.0f - Vector2Angle(touchDownPosition, touchUpPosition);
+                GESTURES.Drag.angle = 360.0f - Vector2Angle(GESTURES.Touch.downPositionA, GESTURES.Touch.upPosition);
 
-                if ((dragAngle < 30) || (dragAngle > 330)) currentGesture = GESTURE_SWIPE_RIGHT;        // Right
-                else if ((dragAngle > 30) && (dragAngle < 120)) currentGesture = GESTURE_SWIPE_UP;      // Up
-                else if ((dragAngle > 120) && (dragAngle < 210)) currentGesture = GESTURE_SWIPE_LEFT;   // Left
-                else if ((dragAngle > 210) && (dragAngle < 300)) currentGesture = GESTURE_SWIPE_DOWN;   // Down
-                else currentGesture = GESTURE_NONE;
+                if ((GESTURES.Drag.angle < 30) || (GESTURES.Drag.angle > 330)) GESTURES.current = GESTURE_SWIPE_RIGHT;        // Right
+                else if ((GESTURES.Drag.angle > 30) && (GESTURES.Drag.angle < 120)) GESTURES.current = GESTURE_SWIPE_UP;      // Up
+                else if ((GESTURES.Drag.angle > 120) && (GESTURES.Drag.angle < 210)) GESTURES.current = GESTURE_SWIPE_LEFT;   // Left
+                else if ((GESTURES.Drag.angle > 210) && (GESTURES.Drag.angle < 300)) GESTURES.current = GESTURE_SWIPE_DOWN;   // Down
+                else GESTURES.current = GESTURE_NONE;
             }
             else
             {
-                dragDistance = 0.0f;
-                dragIntensity = 0.0f;
-                dragAngle = 0.0f;
+                GESTURES.Drag.distance = 0.0f;
+                GESTURES.Drag.intensity = 0.0f;
+                GESTURES.Drag.angle = 0.0f;
 
-                currentGesture = GESTURE_NONE;
+                GESTURES.current = GESTURE_NONE;
             }
 
-            touchDownDragPosition = (Vector2){ 0.0f, 0.0f };
-            pointCount = 0;
+            GESTURES.Touch.downDragPosition = (Vector2){ 0.0f, 0.0f };
+            GESTURES.Touch.pointCount = 0;
         }
         else if (event.touchAction == TOUCH_MOVE)
         {
-            if (currentGesture == GESTURE_DRAG) eventTime = GetCurrentTime();
+            if (GESTURES.current == GESTURE_DRAG) GESTURES.Touch.eventTime = GetCurrentTime();
 
-            if (!startMoving)
+            if (!GESTURES.Swipe.start)
             {
-                swipeTime = GetCurrentTime();
-                startMoving = true;
+                GESTURES.Swipe.timeDuration = GetCurrentTime();
+                GESTURES.Swipe.start = true;
             }
 
-            moveDownPosition = event.position[0];
+            GESTURES.Touch.moveDownPositionA = event.position[0];
 
-            if (currentGesture == GESTURE_HOLD)
+            if (GESTURES.current == GESTURE_HOLD)
             {
-                if (resetHold) touchDownPosition = event.position[0];
+                if (GESTURES.Hold.resetRequired) GESTURES.Touch.downPositionA = event.position[0];
 
-                resetHold = false;
+                GESTURES.Hold.resetRequired = false;
 
                 // Detect GESTURE_DRAG
-                if (Vector2Distance(touchDownPosition, moveDownPosition) >= MINIMUM_DRAG)
+                if (Vector2Distance(GESTURES.Touch.downPositionA, GESTURES.Touch.moveDownPositionA) >= MINIMUM_DRAG)
                 {
-                    eventTime = GetCurrentTime();
-                    currentGesture = GESTURE_DRAG;
+                    GESTURES.Touch.eventTime = GetCurrentTime();
+                    GESTURES.current = GESTURE_DRAG;
                 }
             }
 
-            dragVector.x = moveDownPosition.x - touchDownDragPosition.x;
-            dragVector.y = moveDownPosition.y - touchDownDragPosition.y;
+            GESTURES.Drag.vector.x = GESTURES.Touch.moveDownPositionA.x - GESTURES.Touch.downDragPosition.x;
+            GESTURES.Drag.vector.y = GESTURES.Touch.moveDownPositionA.y - GESTURES.Touch.downDragPosition.y;
         }
     }
     else    // Two touch points
     {
         if (event.touchAction == TOUCH_DOWN)
         {
-            touchDownPosition = event.position[0];
-            touchDownPosition2 = event.position[1];
+            GESTURES.Touch.downPositionA = event.position[0];
+            GESTURES.Touch.downPositionB = event.position[1];
 
-            //pinchDistance = Vector2Distance(touchDownPosition, touchDownPosition2);
+            //GESTURES.Pinch.distance = Vector2Distance(GESTURES.Touch.downPositionA, GESTURES.Touch.downPositionB);
 
-            pinchVector.x = touchDownPosition2.x - touchDownPosition.x;
-            pinchVector.y = touchDownPosition2.y - touchDownPosition.y;
+            GESTURES.Pinch.vector.x = GESTURES.Touch.downPositionB.x - GESTURES.Touch.downPositionA.x;
+            GESTURES.Pinch.vector.y = GESTURES.Touch.downPositionB.y - GESTURES.Touch.downPositionA.y;
 
-            currentGesture = GESTURE_HOLD;
-            timeHold = GetCurrentTime();
+            GESTURES.current = GESTURE_HOLD;
+            GESTURES.Hold.timeDuration = GetCurrentTime();
         }
         else if (event.touchAction == TOUCH_MOVE)
         {
-            pinchDistance = Vector2Distance(moveDownPosition, moveDownPosition2);
+            GESTURES.Pinch.distance = Vector2Distance(GESTURES.Touch.moveDownPositionA, GESTURES.Touch.moveDownPositionB);
 
-            touchDownPosition = moveDownPosition;
-            touchDownPosition2 = moveDownPosition2;
+            GESTURES.Touch.downPositionA = GESTURES.Touch.moveDownPositionA;
+            GESTURES.Touch.downPositionB = GESTURES.Touch.moveDownPositionB;
 
-            moveDownPosition = event.position[0];
-            moveDownPosition2 = event.position[1];
+            GESTURES.Touch.moveDownPositionA = event.position[0];
+            GESTURES.Touch.moveDownPositionB = event.position[1];
 
-            pinchVector.x = moveDownPosition2.x - moveDownPosition.x;
-            pinchVector.y = moveDownPosition2.y - moveDownPosition.y;
+            GESTURES.Pinch.vector.x = GESTURES.Touch.moveDownPositionB.x - GESTURES.Touch.moveDownPositionA.x;
+            GESTURES.Pinch.vector.y = GESTURES.Touch.moveDownPositionB.y - GESTURES.Touch.moveDownPositionA.y;
 
-            if ((Vector2Distance(touchDownPosition, moveDownPosition) >= MINIMUM_PINCH) || (Vector2Distance(touchDownPosition2, moveDownPosition2) >= MINIMUM_PINCH))
+            if ((Vector2Distance(GESTURES.Touch.downPositionA, GESTURES.Touch.moveDownPositionA) >= MINIMUM_PINCH) || (Vector2Distance(GESTURES.Touch.downPositionB, GESTURES.Touch.moveDownPositionB) >= MINIMUM_PINCH))
             {
-                if ((Vector2Distance(moveDownPosition, moveDownPosition2) - pinchDistance) < 0) currentGesture = GESTURE_PINCH_IN;
-                else currentGesture = GESTURE_PINCH_OUT;
+                if ((Vector2Distance(GESTURES.Touch.moveDownPositionA, GESTURES.Touch.moveDownPositionB) - GESTURES.Pinch.distance) < 0) GESTURES.current = GESTURE_PINCH_IN;
+                else GESTURES.current = GESTURE_PINCH_OUT;
             }
             else
             {
-                currentGesture = GESTURE_HOLD;
-                timeHold = GetCurrentTime();
+                GESTURES.current = GESTURE_HOLD;
+                GESTURES.Hold.timeDuration = GetCurrentTime();
             }
 
             // NOTE: Angle should be inverted in Y
-            pinchAngle = 360.0f - Vector2Angle(moveDownPosition, moveDownPosition2);
+            GESTURES.Pinch.angle = 360.0f - Vector2Angle(GESTURES.Touch.moveDownPositionA, GESTURES.Touch.moveDownPositionB);
         }
         else if (event.touchAction == TOUCH_UP)
         {
-            pinchDistance = 0.0f;
-            pinchAngle = 0.0f;
-            pinchVector = (Vector2){ 0.0f, 0.0f };
-            pointCount = 0;
+            GESTURES.Pinch.distance = 0.0f;
+            GESTURES.Pinch.angle = 0.0f;
+            GESTURES.Pinch.vector = (Vector2){ 0.0f, 0.0f };
+            GESTURES.Touch.pointCount = 0;
 
-            currentGesture = GESTURE_NONE;
+            GESTURES.current = GESTURE_NONE;
         }
     }
 }
@@ -404,23 +405,23 @@ void UpdateGestures(void)
     // NOTE: Gestures are processed through system callbacks on touch events
 
     // Detect GESTURE_HOLD
-    if (((currentGesture == GESTURE_TAP) || (currentGesture == GESTURE_DOUBLETAP)) && (pointCount < 2))
+    if (((GESTURES.current == GESTURE_TAP) || (GESTURES.current == GESTURE_DOUBLETAP)) && (GESTURES.Touch.pointCount < 2))
     {
-        currentGesture = GESTURE_HOLD;
-        timeHold = GetCurrentTime();
+        GESTURES.current = GESTURE_HOLD;
+        GESTURES.Hold.timeDuration = GetCurrentTime();
     }
 
-    if (((GetCurrentTime() - eventTime) > TAP_TIMEOUT) && (currentGesture == GESTURE_DRAG) && (pointCount < 2))
+    if (((GetCurrentTime() - GESTURES.Touch.eventTime) > TAP_TIMEOUT) && (GESTURES.current == GESTURE_DRAG) && (GESTURES.Touch.pointCount < 2))
     {
-        currentGesture = GESTURE_HOLD;
-        timeHold = GetCurrentTime();
-        resetHold = true;
+        GESTURES.current = GESTURE_HOLD;
+        GESTURES.Hold.timeDuration = GetCurrentTime();
+        GESTURES.Hold.resetRequired = true;
     }
 
     // Detect GESTURE_NONE
-    if ((currentGesture == GESTURE_SWIPE_RIGHT) || (currentGesture == GESTURE_SWIPE_UP) || (currentGesture == GESTURE_SWIPE_LEFT) || (currentGesture == GESTURE_SWIPE_DOWN))
+    if ((GESTURES.current == GESTURE_SWIPE_RIGHT) || (GESTURES.current == GESTURE_SWIPE_UP) || (GESTURES.current == GESTURE_SWIPE_LEFT) || (GESTURES.current == GESTURE_SWIPE_DOWN))
     {
-        currentGesture = GESTURE_NONE;
+        GESTURES.current = GESTURE_NONE;
     }
 }
 
@@ -429,14 +430,14 @@ int GetTouchPointsCount(void)
 {
     // NOTE: point count is calculated when ProcessGestureEvent(GestureEvent event) is called
 
-    return pointCount;
+    return GESTURES.Touch.pointCount;
 }
 
 // Get latest detected gesture
 int GetGestureDetected(void)
 {
     // Get current gesture only if enabled
-    return (enabledGestures & currentGesture);
+    return (GESTURES.enabledFlags & GESTURES.current);
 }
 
 // Hold time measured in ms
@@ -446,7 +447,7 @@ float GetGestureHoldDuration(void)
 
     double time = 0.0;
 
-    if (currentGesture == GESTURE_HOLD) time = GetCurrentTime() - timeHold;
+    if (GESTURES.current == GESTURE_HOLD) time = GetCurrentTime() - GESTURES.Hold.timeDuration;
 
     return (float)time;
 }
@@ -456,7 +457,7 @@ Vector2 GetGestureDragVector(void)
 {
     // NOTE: drag vector is calculated on one touch points TOUCH_MOVE
 
-    return dragVector;
+    return GESTURES.Drag.vector;
 }
 
 // Get drag angle
@@ -465,16 +466,16 @@ float GetGestureDragAngle(void)
 {
     // NOTE: drag angle is calculated on one touch points TOUCH_UP
 
-    return dragAngle;
+    return GESTURES.Drag.angle;
 }
 
 // Get distance between two pinch points
 Vector2 GetGesturePinchVector(void)
 {
-    // NOTE: The position values used for pinchDistance are not modified like the position values of [core.c]-->GetTouchPosition(int index)
+    // NOTE: The position values used for GESTURES.Pinch.distance are not modified like the position values of [core.c]-->GetTouchPosition(int index)
     // NOTE: pinch distance is calculated on two touch points TOUCH_MOVE
 
-    return pinchVector;
+    return GESTURES.Pinch.vector;
 }
 
 // Get angle beween two pinch points
@@ -483,7 +484,7 @@ float GetGesturePinchAngle(void)
 {
     // NOTE: pinch angle is calculated on two touch points TOUCH_MOVE
 
-    return pinchAngle;
+    return GESTURES.Pinch.angle;
 }
 
 //----------------------------------------------------------------------------------
