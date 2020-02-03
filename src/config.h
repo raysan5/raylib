@@ -41,7 +41,7 @@
 // Gestures module is included (gestures.h) to support gestures detection: tap, hold, swipe, drag
 #define SUPPORT_GESTURES_SYSTEM     1
 // Mouse gestures are directly mapped like touches and processed by gestures system
-//#define SUPPORT_MOUSE_GESTURES      1
+#define SUPPORT_MOUSE_GESTURES      1
 // Reconfigure standard input to receive key inputs, works with SSH connection.
 #define SUPPORT_SSH_KEYBOARD_RPI    1
 // Draw a mouse reference on screen (square cursor box)
