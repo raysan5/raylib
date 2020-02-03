@@ -119,6 +119,8 @@
     #define RAYLIB_VERSION  "3.0"
 #endif
 
+#include "utils.h"              // Required for: TRACELOG macros and fopen() Android mapping
+
 #if (defined(__linux__) || defined(PLATFORM_WEB)) && _POSIX_C_SOURCE < 199309L
     #undef _POSIX_C_SOURCE
     #define _POSIX_C_SOURCE 199309L // Required for CLOCK_MONOTONIC if compiled with c99 without gnu ext.
@@ -129,8 +131,6 @@
 
 #define RLGL_IMPLEMENTATION
 #include "rlgl.h"               // raylib OpenGL abstraction layer to OpenGL 1.1, 3.3+ or ES2
-
-#include "utils.h"              // Required for: fopen() Android mapping
 
 #if defined(SUPPORT_GESTURES_SYSTEM)
     #define GESTURES_IMPLEMENTATION
@@ -559,7 +559,7 @@ struct android_app *GetAndroidApp(void)
 // Init terminal (block echo and signal short cuts)
 static void InitTerminal(void)
 {
-    TraceLog(LOG_INFO, "Reconfigure Terminal ...");
+    TRACELOG(LOG_INFO, "Reconfigure Terminal ...");
     // Save terminal keyboard settings and reconfigure terminal with new settings
     struct termios keyboardNewSettings;
     tcgetattr(STDIN_FILENO, &CORE.Input.Keyboard.defaultSettings);    // Get current keyboard settings
@@ -578,7 +578,7 @@ static void InitTerminal(void)
     if (ioctl(STDIN_FILENO, KDGKBMODE, &CORE.Input.Keyboard.defaultMode) < 0)
     {
         // NOTE: It could mean we are using a remote keyboard through ssh or from the desktop
-        TraceLog(LOG_WARNING, "Could not change keyboard mode (Not a local Terminal)");
+        TRACELOG(LOG_WARNING, "Could not change keyboard mode (Not a local Terminal)");
     }
     else
     {
@@ -592,7 +592,7 @@ static void InitTerminal(void)
 // Restore terminal
 static void RestoreTerminal(void)
 {
-    TraceLog(LOG_INFO, "Restore Terminal ...");
+    TRACELOG(LOG_INFO, "Restore Terminal ...");
 
     // Reset to default keyboard settings
     tcsetattr(STDIN_FILENO, TCSANOW, &CORE.Input.Keyboard.defaultSettings);
@@ -605,7 +605,7 @@ static void RestoreTerminal(void)
 // NOTE: data parameter could be used to pass any kind of required data to the initialization
 void InitWindow(int width, int height, const char *title)
 {
-    TraceLog(LOG_INFO, "Initializing raylib %s", RAYLIB_VERSION);
+    TRACELOG(LOG_INFO, "Initializing raylib %s", RAYLIB_VERSION);
 
     CORE.Window.title = title;
     
@@ -628,19 +628,19 @@ void InitWindow(int width, int height, const char *title)
 
     int orientation = AConfiguration_getOrientation(CORE.Android.app->config);
 
-    if (orientation == ACONFIGURATION_ORIENTATION_PORT) TraceLog(LOG_INFO, "PORTRAIT window orientation");
-    else if (orientation == ACONFIGURATION_ORIENTATION_LAND) TraceLog(LOG_INFO, "LANDSCAPE window orientation");
+    if (orientation == ACONFIGURATION_ORIENTATION_PORT) TRACELOG(LOG_INFO, "PORTRAIT window orientation");
+    else if (orientation == ACONFIGURATION_ORIENTATION_LAND) TRACELOG(LOG_INFO, "LANDSCAPE window orientation");
 
     // TODO: Automatic orientation doesn't seem to work
     if (width <= height)
     {
         AConfiguration_setOrientation(CORE.Android.app->config, ACONFIGURATION_ORIENTATION_PORT);
-        TraceLog(LOG_WARNING, "Window set to portraid mode");
+        TRACELOG(LOG_WARNING, "Window set to portraid mode");
     }
     else
     {
         AConfiguration_setOrientation(CORE.Android.app->config, ACONFIGURATION_ORIENTATION_LAND);
-        TraceLog(LOG_WARNING, "Window set to landscape mode");
+        TRACELOG(LOG_WARNING, "Window set to landscape mode");
     }
 
     //AConfiguration_getDensity(CORE.Android.app->config);
@@ -653,7 +653,7 @@ void InitWindow(int width, int height, const char *title)
 
     InitAssetManager(CORE.Android.app->activity->assetManager);
 
-    TraceLog(LOG_INFO, "Android app initialized successfully");
+    TRACELOG(LOG_INFO, "Android app initialized successfully");
 
     // Android ALooper_pollAll() variables
     int pollResult = 0;
@@ -795,7 +795,7 @@ void CloseWindow(void)
     if (CORE.Input.Gamepad.threadId) pthread_join(CORE.Input.Gamepad.threadId, NULL);
 #endif
 
-    TraceLog(LOG_INFO, "Window closed successfully");
+    TRACELOG(LOG_INFO, "Window closed successfully");
 }
 
 // Check if window has been initialized successfully
@@ -880,7 +880,7 @@ void ToggleFullscreen(void)
         GLFWmonitor *monitor = glfwGetPrimaryMonitor();
         if (!monitor)
         {
-            TraceLog(LOG_WARNING, "Failed to get monitor");
+            TRACELOG(LOG_WARNING, "Failed to get monitor");
             glfwSetWindowMonitor(CORE.Window.handle, glfwGetPrimaryMonitor(), 0, 0, CORE.Window.screen.width, CORE.Window.screen.height, GLFW_DONT_CARE);
             return;
         }
@@ -896,7 +896,7 @@ void ToggleFullscreen(void)
 #endif
 
 #if defined(PLATFORM_ANDROID) || defined(PLATFORM_RPI)
-    TraceLog(LOG_WARNING, "Could not toggle to windowed mode");
+    TRACELOG(LOG_WARNING, "Could not toggle to windowed mode");
 #endif
 }
 
@@ -917,7 +917,7 @@ void SetWindowIcon(Image image)
         // NOTE 2: The specified image data is copied before this function returns
         glfwSetWindowIcon(CORE.Window.handle, 1, icon);
     }
-    else TraceLog(LOG_WARNING, "Window icon image must be in R8G8B8A8 pixel format");
+    else TRACELOG(LOG_WARNING, "Window icon image must be in R8G8B8A8 pixel format");
 #endif
 }
 
@@ -947,12 +947,12 @@ void SetWindowMonitor(int monitor)
 
     if ((monitor >= 0) && (monitor < monitorCount))
     {
-        TraceLog(LOG_INFO, "Selected fullscreen monitor: [%i] %s", monitor, glfwGetMonitorName(monitors[monitor]));
+        TRACELOG(LOG_INFO, "Selected fullscreen monitor: [%i] %s", monitor, glfwGetMonitorName(monitors[monitor]));
 
         const GLFWvidmode *mode = glfwGetVideoMode(monitors[monitor]);
         glfwSetWindowMonitor(CORE.Window.handle, monitors[monitor], 0, 0, mode->width, mode->height, mode->refreshRate);
     }
-    else TraceLog(LOG_WARNING, "Selected monitor not found");
+    else TRACELOG(LOG_WARNING, "Selected monitor not found");
 #endif
 }
 
@@ -1046,7 +1046,7 @@ int GetMonitorWidth(int monitor)
         const GLFWvidmode *mode = glfwGetVideoMode(monitors[monitor]);
         return mode->width;
     }
-    else TraceLog(LOG_WARNING, "Selected monitor not found");
+    else TRACELOG(LOG_WARNING, "Selected monitor not found");
 #endif
     return 0;
 }
@@ -1063,7 +1063,7 @@ int GetMonitorHeight(int monitor)
         const GLFWvidmode *mode = glfwGetVideoMode(monitors[monitor]);
         return mode->height;
     }
-    else TraceLog(LOG_WARNING, "Selected monitor not found");
+    else TRACELOG(LOG_WARNING, "Selected monitor not found");
 #endif
     return 0;
 }
@@ -1081,7 +1081,7 @@ int GetMonitorPhysicalWidth(int monitor)
         glfwGetMonitorPhysicalSize(monitors[monitor], &physicalWidth, NULL);
         return physicalWidth;
     }
-    else TraceLog(LOG_WARNING, "Selected monitor not found");
+    else TRACELOG(LOG_WARNING, "Selected monitor not found");
 #endif
     return 0;
 }
@@ -1099,7 +1099,7 @@ int GetMonitorPhysicalHeight(int monitor)
         glfwGetMonitorPhysicalSize(monitors[monitor], NULL, &physicalHeight);
         return physicalHeight;
     }
-    else TraceLog(LOG_WARNING, "Selected monitor not found");
+    else TRACELOG(LOG_WARNING, "Selected monitor not found");
 #endif
     return 0;
 }
@@ -1126,7 +1126,7 @@ const char *GetMonitorName(int monitor)
     {
         return glfwGetMonitorName(monitors[monitor]);
     }
-    else TraceLog(LOG_WARNING, "Selected monitor not found");
+    else TRACELOG(LOG_WARNING, "Selected monitor not found");
 #endif
     return "";
 }
@@ -1608,7 +1608,7 @@ void SetTargetFPS(int fps)
     if (fps < 1) CORE.Time.target = 0.0;
     else CORE.Time.target = 1.0/(double)fps;
 
-    TraceLog(LOG_INFO, "Target time per frame: %02.03f milliseconds", (float)CORE.Time.target*1000);
+    TRACELOG(LOG_INFO, "Target time per frame: %02.03f milliseconds", (float)CORE.Time.target*1000);
 }
 
 // Returns current FPS
@@ -1809,7 +1809,7 @@ void SetConfigFlags(unsigned int flags)
     if (CORE.Window.flags & FLAG_WINDOW_ALWAYS_RUN) CORE.Window.alwaysRun = true;
 }
 
-// NOTE TraceLog() function is located in [utils.h]
+// NOTE TRACELOG() function is located in [utils.h]
 
 // Takes a screenshot of current screen (saved a .png)
 // NOTE: This function could work in any platform but some platforms: PLATFORM_ANDROID and PLATFORM_WEB
@@ -1837,7 +1837,7 @@ void TakeScreenshot(const char *fileName)
     emscripten_run_script(TextFormat("saveFileFromMEMFSToDisk('%s','%s')", GetFileName(path), GetFileName(path)));
 #endif
 
-    TraceLog(LOG_INFO, "Screenshot taken: %s", path);
+    TRACELOG(LOG_INFO, "Screenshot taken: %s", path);
 }
 
 // Check if the file exists
@@ -2046,7 +2046,7 @@ char **GetDirectoryFiles(const char *dirPath, int *fileCount)
 
         closedir(dir);
     }
-    else TraceLog(LOG_WARNING, "Can not open directory...\n"); // Maybe it's a file...
+    else TRACELOG(LOG_WARNING, "Can not open directory...\n"); // Maybe it's a file...
 
     dirFilesCount = counter;
     *fileCount = dirFilesCount;
@@ -2162,7 +2162,7 @@ void StorageSaveValue(int position, int value)
     // If file doesn't exist, create a new storage data file
     if (!storageFile) storageFile = fopen(path, "wb");
 
-    if (!storageFile) TraceLog(LOG_WARNING, "Storage data file could not be created");
+    if (!storageFile) TRACELOG(LOG_WARNING, "Storage data file could not be created");
     else
     {
         // Get file size
@@ -2170,7 +2170,7 @@ void StorageSaveValue(int position, int value)
         int fileSize = ftell(storageFile);  // Size in bytes
         fseek(storageFile, 0, SEEK_SET);
 
-        if (fileSize < (position*sizeof(int))) TraceLog(LOG_WARNING, "Storage position could not be found");
+        if (fileSize < (position*sizeof(int))) TRACELOG(LOG_WARNING, "Storage position could not be found");
         else
         {
             fseek(storageFile, (position*sizeof(int)), SEEK_SET);
@@ -2199,7 +2199,7 @@ int StorageLoadValue(int position)
     // Try open existing file to append data
     FILE *storageFile = fopen(path, "rb");
 
-    if (!storageFile) TraceLog(LOG_WARNING, "Storage data file could not be found");
+    if (!storageFile) TRACELOG(LOG_WARNING, "Storage data file could not be found");
     else
     {
         // Get file size
@@ -2207,7 +2207,7 @@ int StorageLoadValue(int position)
         int fileSize = ftell(storageFile);      // Size in bytes
         rewind(storageFile);
 
-        if (fileSize < (position*4)) TraceLog(LOG_WARNING, "Storage position could not be found");
+        if (fileSize < (position*4)) TRACELOG(LOG_WARNING, "Storage position could not be found");
         else
         {
             fseek(storageFile, (position*4), SEEK_SET);
@@ -2231,7 +2231,7 @@ void OpenURL(const char *url)
     // sorry for the inconvenience when you hit this point...
     if (strchr(url, '\'') != NULL)
     {
-        TraceLog(LOG_WARNING, "Provided URL does not seem to be valid.");
+        TRACELOG(LOG_WARNING, "Provided URL does not seem to be valid.");
     }
     else
     {
@@ -2606,7 +2606,7 @@ Vector2 GetTouchPosition(int index)
 
 #if defined(PLATFORM_ANDROID) || defined(PLATFORM_WEB)
     if (index < MAX_TOUCH_POINTS) position = CORE.Input.Touch.position[index];
-    else TraceLog(LOG_WARNING, "Required touch point out of range (Max touch points: %i)", MAX_TOUCH_POINTS);
+    else TRACELOG(LOG_WARNING, "Required touch point out of range (Max touch points: %i)", MAX_TOUCH_POINTS);
 
     #if defined(PLATFORM_ANDROID)
     if ((CORE.Window.screen.width > CORE.Window.display.width) || (CORE.Window.screen.height > CORE.Window.display.height))
@@ -2662,7 +2662,7 @@ static bool InitGraphicsDevice(int width, int height)
 
     if (!glfwInit())
     {
-        TraceLog(LOG_WARNING, "Failed to initialize GLFW");
+        TRACELOG(LOG_WARNING, "Failed to initialize GLFW");
         return false;
     }
 
@@ -2672,7 +2672,7 @@ static bool InitGraphicsDevice(int width, int height)
     GLFWmonitor *monitor = glfwGetPrimaryMonitor();
     if (!monitor)
     {
-        TraceLog(LOG_WARNING, "Failed to get monitor");
+        TRACELOG(LOG_WARNING, "Failed to get monitor");
         return false;
     }
     const GLFWvidmode *mode = glfwGetVideoMode(monitor);
@@ -2793,7 +2793,7 @@ static bool InitGraphicsDevice(int width, int height)
         }
 #endif
 
-        TraceLog(LOG_WARNING, "Closest fullscreen videomode: %i x %i", CORE.Window.display.width, CORE.Window.display.height);
+        TRACELOG(LOG_WARNING, "Closest fullscreen videomode: %i x %i", CORE.Window.display.width, CORE.Window.display.height);
 
         // NOTE: ISSUE: Closest videomode could not match monitor aspect-ratio, for example,
         // for a desired screen size of 800x450 (16:9), closest supported videomode is 800x600 (4:3),
@@ -2837,18 +2837,18 @@ static bool InitGraphicsDevice(int width, int height)
     if (!CORE.Window.handle)
     {
         glfwTerminate();
-        TraceLog(LOG_WARNING, "GLFW Failed to initialize Window");
+        TRACELOG(LOG_WARNING, "GLFW Failed to initialize Window");
         return false;
     }
     else
     {
-        TraceLog(LOG_INFO, "Display device initialized successfully");
+        TRACELOG(LOG_INFO, "Display device initialized successfully");
 #if defined(PLATFORM_DESKTOP)
-        TraceLog(LOG_INFO, "Display size: %i x %i", CORE.Window.display.width, CORE.Window.display.height);
+        TRACELOG(LOG_INFO, "Display size: %i x %i", CORE.Window.display.width, CORE.Window.display.height);
 #endif
-        TraceLog(LOG_INFO, "Render size: %i x %i", CORE.Window.render.width, CORE.Window.render.height);
-        TraceLog(LOG_INFO, "Screen size: %i x %i", CORE.Window.screen.width, CORE.Window.screen.height);
-        TraceLog(LOG_INFO, "Viewport offsets: %i, %i", CORE.Window.renderOffset.x, CORE.Window.renderOffset.y);
+        TRACELOG(LOG_INFO, "Render size: %i x %i", CORE.Window.render.width, CORE.Window.render.height);
+        TRACELOG(LOG_INFO, "Screen size: %i x %i", CORE.Window.screen.width, CORE.Window.screen.height);
+        TRACELOG(LOG_INFO, "Viewport offsets: %i, %i", CORE.Window.renderOffset.x, CORE.Window.renderOffset.y);
     }
 
     glfwSetWindowSizeCallback(CORE.Window.handle, WindowSizeCallback);      // NOTE: Resizing not allowed by default!
@@ -2879,7 +2879,7 @@ static bool InitGraphicsDevice(int width, int height)
     {
         // WARNING: It seems to hits a critical render path in Intel HD Graphics
         glfwSwapInterval(1);
-        TraceLog(LOG_INFO, "Trying to enable VSYNC");
+        TRACELOG(LOG_INFO, "Trying to enable VSYNC");
     }
 #endif // PLATFORM_DESKTOP || PLATFORM_WEB
 
@@ -2907,7 +2907,7 @@ static bool InitGraphicsDevice(int width, int height)
     {
         samples = 4;
         sampleBuffer = 1;
-        TraceLog(LOG_INFO, "Trying to enable MSAA x4");
+        TRACELOG(LOG_INFO, "Trying to enable MSAA x4");
     }
 
     const EGLint framebufferAttribs[] =
@@ -2985,7 +2985,7 @@ static bool InitGraphicsDevice(int width, int height)
     PFNEGLGETPLATFORMDISPLAYEXTPROC eglGetPlatformDisplayEXT = (PFNEGLGETPLATFORMDISPLAYEXTPROC)(eglGetProcAddress("eglGetPlatformDisplayEXT"));
     if (!eglGetPlatformDisplayEXT)
     {
-        TraceLog(LOG_WARNING, "Failed to get function eglGetPlatformDisplayEXT");
+        TRACELOG(LOG_WARNING, "Failed to get function eglGetPlatformDisplayEXT");
         return false;
     }
 
@@ -3003,7 +3003,7 @@ static bool InitGraphicsDevice(int width, int height)
     CORE.Window.device = eglGetPlatformDisplayEXT(EGL_PLATFORM_ANGLE_ANGLE, EGL_DEFAULT_DISPLAY, defaultDisplayAttributes);
     if (CORE.Window.device == EGL_NO_DISPLAY)
     {
-        TraceLog(LOG_WARNING, "Failed to initialize EGL device");
+        TRACELOG(LOG_WARNING, "Failed to initialize EGL device");
         return false;
     }
 
@@ -3013,7 +3013,7 @@ static bool InitGraphicsDevice(int width, int height)
         CORE.Window.device = eglGetPlatformDisplayEXT(EGL_PLATFORM_ANGLE_ANGLE, EGL_DEFAULT_DISPLAY, fl9_3DisplayAttributes);
         if (CORE.Window.device == EGL_NO_DISPLAY)
         {
-            TraceLog(LOG_WARNING, "Failed to initialize EGL device");
+            TRACELOG(LOG_WARNING, "Failed to initialize EGL device");
             return false;
         }
 
@@ -3023,14 +3023,14 @@ static bool InitGraphicsDevice(int width, int height)
             CORE.Window.device = eglGetPlatformDisplayEXT(EGL_PLATFORM_ANGLE_ANGLE, EGL_DEFAULT_DISPLAY, warpDisplayAttributes);
             if (CORE.Window.device == EGL_NO_DISPLAY)
             {
-                TraceLog(LOG_WARNING, "Failed to initialize EGL device");
+                TRACELOG(LOG_WARNING, "Failed to initialize EGL device");
                 return false;
             }
 
             if (eglInitialize(CORE.Window.device, NULL, NULL) == EGL_FALSE)
             {
                 // If all of the calls to eglInitialize returned EGL_FALSE then an error has occurred.
-                TraceLog(LOG_WARNING, "Failed to initialize EGL");
+                TRACELOG(LOG_WARNING, "Failed to initialize EGL");
                 return false;
             }
         }
@@ -3039,7 +3039,7 @@ static bool InitGraphicsDevice(int width, int height)
     EGLint numConfigs = 0;
     if ((eglChooseConfig(CORE.Window.device, framebufferAttribs, &CORE.Window.config, 1, &numConfigs) == EGL_FALSE) || (numConfigs == 0))
     {
-        TraceLog(LOG_WARNING, "Failed to choose first EGLConfig");
+        TRACELOG(LOG_WARNING, "Failed to choose first EGLConfig");
         return false;
     }
 
@@ -3077,14 +3077,14 @@ static bool InitGraphicsDevice(int width, int height)
     CORE.Window.surface = eglCreateWindowSurface(CORE.Window.device, CORE.Window.config, handle, surfaceAttributes);
     if (CORE.Window.surface == EGL_NO_SURFACE)
     {
-        TraceLog(LOG_WARNING, "Failed to create EGL fullscreen surface");
+        TRACELOG(LOG_WARNING, "Failed to create EGL fullscreen surface");
         return false;
     }
 
     CORE.Window.context = eglCreateContext(CORE.Window.device, CORE.Window.config, EGL_NO_CONTEXT, contextAttribs);
     if (CORE.Window.context == EGL_NO_CONTEXT)
     {
-        TraceLog(LOG_WARNING, "Failed to create EGL context");
+        TRACELOG(LOG_WARNING, "Failed to create EGL context");
         return false;
     }
 
@@ -3099,7 +3099,7 @@ static bool InitGraphicsDevice(int width, int height)
     CORE.Window.device = eglGetDisplay(EGL_DEFAULT_DISPLAY);
     if (CORE.Window.device == EGL_NO_DISPLAY)
     {
-        TraceLog(LOG_WARNING, "Failed to initialize EGL device");
+        TRACELOG(LOG_WARNING, "Failed to initialize EGL device");
         return false;
     }
 
@@ -3107,7 +3107,7 @@ static bool InitGraphicsDevice(int width, int height)
     if (eglInitialize(CORE.Window.device, NULL, NULL) == EGL_FALSE)
     {
         // If all of the calls to eglInitialize returned EGL_FALSE then an error has occurred.
-        TraceLog(LOG_WARNING, "Failed to initialize EGL");
+        TRACELOG(LOG_WARNING, "Failed to initialize EGL");
         return false;
     }
 
@@ -3121,7 +3121,7 @@ static bool InitGraphicsDevice(int width, int height)
     CORE.Window.context = eglCreateContext(CORE.Window.device, CORE.Window.config, EGL_NO_CONTEXT, contextAttribs);
     if (CORE.Window.context == EGL_NO_CONTEXT)
     {
-        TraceLog(LOG_WARNING, "Failed to create EGL context");
+        TRACELOG(LOG_WARNING, "Failed to create EGL context");
         return false;
     }
 #endif
@@ -3193,7 +3193,7 @@ static bool InitGraphicsDevice(int width, int height)
 
     if (eglMakeCurrent(CORE.Window.device, CORE.Window.surface, CORE.Window.surface, CORE.Window.context) == EGL_FALSE)
     {
-        TraceLog(LOG_WARNING, "Unable to attach EGL rendering context to EGL surface");
+        TRACELOG(LOG_WARNING, "Unable to attach EGL rendering context to EGL surface");
         return false;
     }
     else
@@ -3202,11 +3202,11 @@ static bool InitGraphicsDevice(int width, int height)
         //eglQuerySurface(CORE.Window.device, CORE.Window.surface, EGL_WIDTH, &CORE.Window.render.width);
         //eglQuerySurface(CORE.Window.device, CORE.Window.surface, EGL_HEIGHT, &CORE.Window.render.height);
 
-        TraceLog(LOG_INFO, "Display device initialized successfully");
-        TraceLog(LOG_INFO, "Display size: %i x %i", CORE.Window.display.width, CORE.Window.display.height);
-        TraceLog(LOG_INFO, "Render size: %i x %i", CORE.Window.render.width, CORE.Window.render.height);
-        TraceLog(LOG_INFO, "Screen size: %i x %i", CORE.Window.screen.width, CORE.Window.screen.height);
-        TraceLog(LOG_INFO, "Viewport offsets: %i, %i", CORE.Window.renderOffset.x, CORE.Window.renderOffset.y);
+        TRACELOG(LOG_INFO, "Display device initialized successfully");
+        TRACELOG(LOG_INFO, "Display size: %i x %i", CORE.Window.display.width, CORE.Window.display.height);
+        TRACELOG(LOG_INFO, "Render size: %i x %i", CORE.Window.render.width, CORE.Window.render.height);
+        TRACELOG(LOG_INFO, "Screen size: %i x %i", CORE.Window.screen.width, CORE.Window.screen.height);
+        TRACELOG(LOG_INFO, "Viewport offsets: %i, %i", CORE.Window.renderOffset.x, CORE.Window.renderOffset.y);
     }
 #endif // PLATFORM_ANDROID || PLATFORM_RPI
 
@@ -3270,7 +3270,7 @@ static void SetupFramebuffer(int width, int height)
     // Calculate CORE.Window.render.width and CORE.Window.render.height, we have the display size (input params) and the desired screen size (global var)
     if ((CORE.Window.screen.width > CORE.Window.display.width) || (CORE.Window.screen.height > CORE.Window.display.height))
     {
-        TraceLog(LOG_WARNING, "DOWNSCALING: Required screen size (%ix%i) is bigger than display size (%ix%i)", CORE.Window.screen.width, CORE.Window.screen.height, CORE.Window.display.width, CORE.Window.display.height);
+        TRACELOG(LOG_WARNING, "DOWNSCALING: Required screen size (%ix%i) is bigger than display size (%ix%i)", CORE.Window.screen.width, CORE.Window.screen.height, CORE.Window.display.width, CORE.Window.display.height);
 
         // Downscaling to fit display with border-bars
         float widthRatio = (float)CORE.Window.display.width/(float)CORE.Window.screen.width;
@@ -3300,12 +3300,12 @@ static void SetupFramebuffer(int width, int height)
         CORE.Window.render.width = CORE.Window.display.width;
         CORE.Window.render.height = CORE.Window.display.height;
 
-        TraceLog(LOG_WARNING, "Downscale matrix generated, content will be rendered at: %i x %i", CORE.Window.render.width, CORE.Window.render.height);
+        TRACELOG(LOG_WARNING, "Downscale matrix generated, content will be rendered at: %i x %i", CORE.Window.render.width, CORE.Window.render.height);
     }
     else if ((CORE.Window.screen.width < CORE.Window.display.width) || (CORE.Window.screen.height < CORE.Window.display.height))
     {
         // Required screen size is smaller than display size
-        TraceLog(LOG_INFO, "UPSCALING: Required screen size: %i x %i -> Display size: %i x %i", CORE.Window.screen.width, CORE.Window.screen.height, CORE.Window.display.width, CORE.Window.display.height);
+        TRACELOG(LOG_INFO, "UPSCALING: Required screen size: %i x %i -> Display size: %i x %i", CORE.Window.screen.width, CORE.Window.screen.height, CORE.Window.display.width, CORE.Window.display.height);
 
         // Upscaling to fit display with border-bars
         float displayRatio = (float)CORE.Window.display.width/(float)CORE.Window.display.height;
@@ -3351,7 +3351,7 @@ static void InitTimer(void)
     {
         CORE.Time.base = (uint64_t)now.tv_sec*1000000000LLU + (uint64_t)now.tv_nsec;
     }
-    else TraceLog(LOG_WARNING, "No hi-resolution timer available");
+    else TRACELOG(LOG_WARNING, "No hi-resolution timer available");
 #endif
 
     CORE.Time.previous = GetTime();       // Get time as double
@@ -3829,7 +3829,7 @@ static void PollInputEvents(void)
                 }
                 else CORE.Input.Gamepad.currentState[i][button] = 0;
 
-                //TraceLog(LOG_DEBUG, "Gamepad %d, button %d: Digital: %d, Analog: %g", gamepadState.index, j, gamepadState.digitalButton[j], gamepadState.analogButton[j]);
+                //TRACELOGD("Gamepad %d, button %d: Digital: %d, Analog: %g", gamepadState.index, j, gamepadState.digitalButton[j], gamepadState.analogButton[j]);
             }
 
             // Register axis data for every connected gamepad
@@ -3895,7 +3895,7 @@ static void SwapBuffers(void)
 // GLFW3 Error Callback, runs on GLFW3 error
 static void ErrorCallback(int error, const char *description)
 {
-    TraceLog(LOG_WARNING, "[GLFW3 Error] Code: %i Decription: %s", error, description);
+    TRACELOG(LOG_WARNING, "[GLFW3 Error] Code: %i Decription: %s", error, description);
 }
 
 // GLFW3 Srolling Callback, runs on mouse wheel
@@ -3929,7 +3929,7 @@ static void KeyCallback(GLFWwindow *window, int key, int scancode, int action, i
                 emscripten_run_script(TextFormat("saveFileFromMEMFSToDisk('%s','%s')", TextFormat("screenrec%03i.gif", screenshotCounter - 1), TextFormat("screenrec%03i.gif", screenshotCounter - 1)));
             #endif
 
-                TraceLog(LOG_INFO, "End animated GIF recording");
+                TRACELOG(LOG_INFO, "End animated GIF recording");
             }
             else
             {
@@ -3949,7 +3949,7 @@ static void KeyCallback(GLFWwindow *window, int key, int scancode, int action, i
                 GifBegin(path, CORE.Window.screen.width, CORE.Window.screen.height, (int)(GetFrameTime()*10.0f), 8, false);
                 screenshotCounter++;
 
-                TraceLog(LOG_INFO, "Begin animated GIF recording: %s", TextFormat("screenrec%03i.gif", screenshotCounter));
+                TRACELOG(LOG_INFO, "Begin animated GIF recording: %s", TextFormat("screenrec%03i.gif", screenshotCounter));
             }
         }
         else
@@ -4336,11 +4336,11 @@ static EM_BOOL EmscriptenFullscreenChangeCallback(int eventType, const Emscripte
 
     if (event->isFullscreen)
     {
-        TraceLog(LOG_INFO, "Canvas scaled to fullscreen. ElementSize: (%ix%i), ScreenSize(%ix%i)", event->elementWidth, event->elementHeight, event->screenWidth, event->screenHeight);
+        TRACELOG(LOG_INFO, "Canvas scaled to fullscreen. ElementSize: (%ix%i), ScreenSize(%ix%i)", event->elementWidth, event->elementHeight, event->screenWidth, event->screenHeight);
     }
     else
     {
-        TraceLog(LOG_INFO, "Canvas scaled to windowed. ElementSize: (%ix%i), ScreenSize(%ix%i)", event->elementWidth, event->elementHeight, event->screenWidth, event->screenHeight);
+        TRACELOG(LOG_INFO, "Canvas scaled to windowed. ElementSize: (%ix%i), ScreenSize(%ix%i)", event->elementWidth, event->elementHeight, event->screenWidth, event->screenHeight);
     }
 
     // TODO: Depending on scaling factor (screen vs element), calculate factor to scale mouse/touch input
@@ -4373,7 +4373,7 @@ static EM_BOOL EmscriptenMouseCallback(int eventType, const EmscriptenMouseEvent
         {
             emscripten_exit_pointerlock();
             emscripten_get_pointerlock_status(&plce);
-            //if (plce.isActive) TraceLog(LOG_WARNING, "Pointer lock exit did not work!");
+            //if (plce.isActive) TRACELOG(LOG_WARNING, "Pointer lock exit did not work!");
         }
 
         CORE.Input.Mouse.cursorLockRequired = false;
@@ -4446,12 +4446,12 @@ static EM_BOOL EmscriptenTouchCallback(int eventType, const EmscriptenTouchEvent
 static EM_BOOL EmscriptenGamepadCallback(int eventType, const EmscriptenGamepadEvent *gamepadEvent, void *userData)
 {
     /*
-    TraceLog(LOG_DEBUG, "%s: timeStamp: %g, connected: %d, index: %ld, numAxes: %d, numButtons: %d, id: \"%s\", mapping: \"%s\"",
+    TRACELOGD("%s: timeStamp: %g, connected: %d, index: %ld, numAxes: %d, numButtons: %d, id: \"%s\", mapping: \"%s\"",
            eventType != 0? emscripten_event_type_to_string(eventType) : "Gamepad state",
            gamepadEvent->timestamp, gamepadEvent->connected, gamepadEvent->index, gamepadEvent->numAxes, gamepadEvent->numButtons, gamepadEvent->id, gamepadEvent->mapping);
 
-    for (int i = 0; i < gamepadEvent->numAxes; ++i) TraceLog(LOG_DEBUG, "Axis %d: %g", i, gamepadEvent->axis[i]);
-    for (int i = 0; i < gamepadEvent->numButtons; ++i) TraceLog(LOG_DEBUG, "Button %d: Digital: %d, Analog: %g", i, gamepadEvent->digitalButton[i], gamepadEvent->analogButton[i]);
+    for (int i = 0; i < gamepadEvent->numAxes; ++i) TRACELOGD("Axis %d: %g", i, gamepadEvent->axis[i]);
+    for (int i = 0; i < gamepadEvent->numButtons; ++i) TRACELOGD("Button %d: Digital: %d, Analog: %g", i, gamepadEvent->digitalButton[i], gamepadEvent->analogButton[i]);
     */
 
     if ((gamepadEvent->connected) && (gamepadEvent->index < MAX_GAMEPADS)) CORE.Input.Gamepad.ready[gamepadEvent->index] = true;
@@ -4496,7 +4496,7 @@ static void InitKeyboard(void)
     if (ioctl(STDIN_FILENO, KDGKBMODE, &CORE.Input.Keyboard.defaultMode) < 0)
     {
         // NOTE: It could mean we are using a remote keyboard through ssh!
-        TraceLog(LOG_WARNING, "Could not change keyboard mode (SSH keyboard?)");
+        TRACELOG(LOG_WARNING, "Could not change keyboard mode (SSH keyboard?)");
     }
     else
     {
@@ -4534,7 +4534,7 @@ static void ProcessKeyboard(void)
     // Fill all read bytes (looking for keys)
     for (int i = 0; i < bufferByteCount; i++)
     {
-        TraceLog(LOG_DEBUG, "Bytes on keysBuffer: %i", bufferByteCount);
+        TRACELOGD("Bytes on keysBuffer: %i", bufferByteCount);
 
         // NOTE: If (key == 0x1b), depending on next key, it could be a special keymap code!
         // Up -> 1b 5b 41 / Left -> 1b 5b 44 / Right -> 1b 5b 43 / Down -> 1b 5b 42
@@ -4603,7 +4603,7 @@ static void ProcessKeyboard(void)
         }
         else
         {
-            TraceLog(LOG_DEBUG, "Pressed key (ASCII): 0x%02x", keysBuffer[i]);
+            TRACELOGD("Pressed key (ASCII): 0x%02x", keysBuffer[i]);
 
             // Translate lowercase a-z letters to A-Z
             if ((keysBuffer[i] >= 97) && (keysBuffer[i] <= 122))
@@ -4676,7 +4676,7 @@ static void InitEvdevInput(void)
 
         closedir(directory);
     }
-    else TraceLog(LOG_WARNING, "Unable to open linux event directory: %s", DEFAULT_EVDEV_PATH);
+    else TRACELOG(LOG_WARNING, "Unable to open linux event directory: %s", DEFAULT_EVDEV_PATH);
 }
 
 // Identifies a input device and spawns a thread to handle it if needed
@@ -4722,7 +4722,7 @@ static void EventThreadSpawn(char *device)
     }
     else
     {
-        TraceLog(LOG_WARNING, "Error creating input device thread for [%s]: Out of worker slots", device);
+        TRACELOG(LOG_WARNING, "Error creating input device thread for [%s]: Out of worker slots", device);
         return;
     }
 
@@ -4730,7 +4730,7 @@ static void EventThreadSpawn(char *device)
     fd = open(device, O_RDONLY | O_NONBLOCK);
     if (fd < 0)
     {
-        TraceLog(LOG_WARNING, "Error creating input device thread for [%s]: Can't open device (Error: %d)", device, worker->fd);
+        TRACELOG(LOG_WARNING, "Error creating input device thread for [%s]: Can't open device (Error: %d)", device, worker->fd);
         return;
     }
     worker->fd = fd;
@@ -4831,7 +4831,7 @@ static void EventThreadSpawn(char *device)
     if (worker->isTouch || worker->isMouse || worker->isKeyboard)
     {
         // Looks like a interesting device
-        TraceLog(LOG_INFO, "Opening input device [%s] (%s%s%s%s%s)", device,
+        TRACELOG(LOG_INFO, "Opening input device [%s] (%s%s%s%s%s)", device,
             worker->isMouse? "mouse " : "",
             worker->isMultitouch? "multitouch " : "",
             worker->isTouch? "touchscreen " : "",
@@ -4842,7 +4842,7 @@ static void EventThreadSpawn(char *device)
         int error = pthread_create(&worker->threadId, NULL, &EventThread, (void *)worker);
         if (error != 0)
         {
-            TraceLog(LOG_WARNING, "Error creating input device thread for [%s]: Can't create thread (Error: %d)", device, error);
+            TRACELOG(LOG_WARNING, "Error creating input device thread for [%s]: Can't create thread (Error: %d)", device, error);
             worker->threadId = 0;
             close(fd);
         }
@@ -4863,7 +4863,7 @@ static void EventThreadSpawn(char *device)
             {
                 if (CORE.Input.eventWorker[i].threadId != 0)
                 {
-                    TraceLog(LOG_WARNING, "Duplicate touchscreen found, killing touchscreen on event: %d", i);
+                    TRACELOG(LOG_WARNING, "Duplicate touchscreen found, killing touchscreen on event: %d", i);
                     pthread_cancel(CORE.Input.eventWorker[i].threadId);
                     close(CORE.Input.eventWorker[i].fd);
                 }
@@ -5043,7 +5043,7 @@ static void *EventThread(void *arg)
 
                         if (CORE.Input.Keyboard.currentKeyState[CORE.Input.Keyboard.exitKey] == 1) CORE.Window.shouldClose = true;
 
-                        TraceLog(LOG_DEBUG, "KEY%s ScanCode: %4i KeyCode: %4i",event.value == 0 ? "UP":"DOWN", event.code, keycode);
+                        TRACELOGD("KEY%s ScanCode: %4i KeyCode: %4i",event.value == 0 ? "UP":"DOWN", event.code, keycode);
                     }
                 }
             }
@@ -5106,7 +5106,7 @@ static void InitGamepad(void)
         if ((CORE.Input.Gamepad.streamId[i] = open(gamepadDev, O_RDONLY|O_NONBLOCK)) < 0)
         {
             // NOTE: Only show message for first gamepad
-            if (i == 0) TraceLog(LOG_WARNING, "Gamepad device could not be opened, no gamepad available");
+            if (i == 0) TRACELOG(LOG_WARNING, "Gamepad device could not be opened, no gamepad available");
         }
         else
         {
@@ -5117,8 +5117,8 @@ static void InitGamepad(void)
             {
                 int error = pthread_create(&CORE.Input.Gamepad.threadId, NULL, &GamepadThread, NULL);
 
-                if (error != 0) TraceLog(LOG_WARNING, "Error creating gamepad input event thread");
-                else  TraceLog(LOG_INFO, "Gamepad device initialized successfully");
+                if (error != 0) TRACELOG(LOG_WARNING, "Error creating gamepad input event thread");
+                else  TRACELOG(LOG_INFO, "Gamepad device initialized successfully");
             }
         }
     }
@@ -5152,7 +5152,7 @@ static void *GamepadThread(void *arg)
                 // Process gamepad events by type
                 if (gamepadEvent.type == JS_EVENT_BUTTON)
                 {
-                    TraceLog(LOG_DEBUG, "Gamepad button: %i, value: %i", gamepadEvent.number, gamepadEvent.value);
+                    TRACELOGD("Gamepad button: %i, value: %i", gamepadEvent.number, gamepadEvent.value);
 
                     if (gamepadEvent.number < MAX_GAMEPAD_BUTTONS)
                     {
@@ -5165,7 +5165,7 @@ static void *GamepadThread(void *arg)
                 }
                 else if (gamepadEvent.type == JS_EVENT_AXIS)
                 {
-                    TraceLog(LOG_DEBUG, "Gamepad axis: %i, value: %i", gamepadEvent.number, gamepadEvent.value);
+                    TRACELOGD("Gamepad axis: %i, value: %i", gamepadEvent.number, gamepadEvent.value);
 
                     if (gamepadEvent.number < MAX_GAMEPAD_AXIS)
                     {

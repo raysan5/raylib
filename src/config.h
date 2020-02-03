@@ -143,9 +143,10 @@
 //------------------------------------------------------------------------------------
 // Module: utils - Configuration Flags
 //------------------------------------------------------------------------------------
-// Show TraceLog() output messages
+// Show TRACELOG() output messages
 // NOTE: By default LOG_DEBUG traces not shown
-#define SUPPORT_TRACELOG    1
+#define SUPPORT_TRACELOG            1
+//#define SUPPORT_TRACELOG_DEBUG      1
 
 
 #endif  //defined(RAYLIB_CMAKE)

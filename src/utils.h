@@ -38,10 +38,11 @@
     #if defined(SUPPORT_TRACELOG_DEBUG)
         #define TRACELOGD(...) TraceLog(LOG_DEBUG, __VA_ARGS__)
     #else
-        #define TRACELOGD(...) void(0)
+        #define TRACELOGD(...) (void)0
     #endif
 #else
-    #define TRACELOG(level, ...) void(0)
+    #define TRACELOG(level, ...) (void)0
+    #define TRACELOGD(...) (void)0
 #endif
 
 //----------------------------------------------------------------------------------

@@ -195,7 +195,7 @@ static int android_read(void *cookie, char *buf, int size)
 
 static int android_write(void *cookie, const char *buf, int size)
 {
-    TraceLog(LOG_ERROR, "Can't provide write access to the APK");
+    TRACELOG(LOG_ERROR, "Can't provide write access to the APK");
 
     return EACCES;
 }
@@ -252,7 +252,7 @@ void UWPSendMessage(UWPMessage *msg)
         UWPInMessageId++;
         UWPInMessages[UWPInMessageId] = msg;
     }
-    else TraceLog(LOG_WARNING, "[UWP Messaging] Not enough array space to register new UWP inbound Message.");
+    else TRACELOG(LOG_WARNING, "[UWP Messaging] Not enough array space to register new UWP inbound Message.");
 }
 
 void SendMessageToUWP(UWPMessage *msg)
@@ -262,7 +262,7 @@ void SendMessageToUWP(UWPMessage *msg)
         UWPOutMessageId++;
         UWPOutMessages[UWPOutMessageId] = msg;
     }
-    else TraceLog(LOG_WARNING, "[UWP Messaging] Not enough array space to register new UWP outward Message.");
+    else TRACELOG(LOG_WARNING, "[UWP Messaging] Not enough array space to register new UWP outward Message.");
 }
 
 bool HasMessageFromUWP(void)

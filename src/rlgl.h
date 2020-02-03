@@ -74,6 +74,20 @@
             #define RLAPI __declspec(dllimport)         // We are using raylib as a Win32 shared library (.dll)
         #endif
     #endif
+    
+    // Support TRACELOG macros
+    #if defined(SUPPORT_TRACELOG)
+        #define TRACELOG(level, ...) TraceLog(level, __VA_ARGS__)
+        
+        #if defined(SUPPORT_TRACELOG_DEBUG)
+            #define TRACELOGD(...) TraceLog(LOG_DEBUG, __VA_ARGS__)
+        #else
+            #define TRACELOGD(...) void(0)
+        #endif
+    #else
+        #define TRACELOG(level, ...) void(0)
+        #define TRACELOGD(...) void(0)
+    #endif
 
     // Allow custom memory allocators
     #ifndef RL_MALLOC
@@ -89,7 +103,7 @@
         #define RL_FREE(p)          free(p)
     #endif
 #else
-    #include "raylib.h"         // Required for: Model, Shader, Texture2D, TraceLog()
+    #include "raylib.h"         // Required for: Model, Shader, Texture2D, TRACELOG()
 #endif
 
 #include "raymath.h"            // Required for: Vector3, Matrix
@@ -582,7 +596,7 @@ RLAPI void ToggleVrMode(void);                          // Enable/Disable VR exp
 RLAPI void BeginVrDrawing(void);                        // Begin VR simulator stereo rendering
 RLAPI void EndVrDrawing(void);                          // End VR simulator stereo rendering
 
-RLAPI void TraceLog(int msgType, const char *text, ...);      // Show trace log messages (LOG_INFO, LOG_WARNING, LOG_ERROR, LOG_DEBUG)
+RLAPI void TRACELOG(int msgType, const char *text, ...);      // Show trace log messages (LOG_INFO, LOG_WARNING, LOG_ERROR, LOG_DEBUG)
 RLAPI int GetPixelDataSize(int width, int height, int format);// Get pixel data size in bytes (image or texture)
 #endif
 
@@ -663,7 +677,7 @@ RLAPI int GetPixelDataSize(int width, int height, int format);// Get pixel data 
 #endif
 
 #if defined(RLGL_STANDALONE)
-    #include <stdarg.h>                 // Required for: va_list, va_start(), vfprintf(), va_end() [Used only on TraceLog()]
+    #include <stdarg.h>                 // Required for: va_list, va_start(), vfprintf(), va_end() [Used only on TRACELOG()]
 #endif
 
 //----------------------------------------------------------------------------------
@@ -941,7 +955,7 @@ void rlMatrixMode(int mode)
 // Push the current matrix into RLGL.State.stack
 void rlPushMatrix(void)
 {
-    if (RLGL.State.stackCounter >= MAX_MATRIX_STACK_SIZE) TraceLog(LOG_ERROR, "Matrix RLGL.State.stack overflow");
+    if (RLGL.State.stackCounter >= MAX_MATRIX_STACK_SIZE) TRACELOG(LOG_ERROR, "Matrix RLGL.State.stack overflow");
 
     if (RLGL.State.currentMatrixMode == RL_MODELVIEW)
     {
@@ -1183,7 +1197,7 @@ void rlVertex3f(float x, float y, float z)
 
         RLGL.State.draws[RLGL.State.drawsCounter - 1].vertexCount++;
     }
-    else TraceLog(LOG_ERROR, "MAX_BATCH_ELEMENTS overflow");
+    else TRACELOG(LOG_ERROR, "MAX_BATCH_ELEMENTS overflow");
 }
 
 // Define one vertex (position)
@@ -1311,7 +1325,7 @@ void rlTextureParameters(unsigned int id, int param, int value)
             {
 #if !defined(GRAPHICS_API_OPENGL_11)
                 if (RLGL.ExtSupported.texMirrorClamp) glTexParameteri(GL_TEXTURE_2D, param, value);
-                else TraceLog(LOG_WARNING, "Clamp mirror wrap mode not supported");
+                else TRACELOG(LOG_WARNING, "Clamp mirror wrap mode not supported");
 #endif
             }
             else glTexParameteri(GL_TEXTURE_2D, param, value);
@@ -1325,10 +1339,10 @@ void rlTextureParameters(unsigned int id, int param, int value)
             if (value <= RLGL.ExtSupported.maxAnisotropicLevel) glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAX_ANISOTROPY_EXT, (float)value);
             else if (RLGL.ExtSupported.maxAnisotropicLevel > 0.0f)
             {
-                TraceLog(LOG_WARNING, "[TEX ID %i] Maximum anisotropic filter level supported is %iX", id, RLGL.ExtSupported.maxAnisotropicLevel);
+                TRACELOG(LOG_WARNING, "[TEX ID %i] Maximum anisotropic filter level supported is %iX", id, RLGL.ExtSupported.maxAnisotropicLevel);
                 glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAX_ANISOTROPY_EXT, (float)value);
             }
-            else TraceLog(LOG_WARNING, "Anisotropic filtering not supported");
+            else TRACELOG(LOG_WARNING, "Anisotropic filtering not supported");
 #endif
         } break;
         default: break;
@@ -1417,7 +1431,7 @@ void rlDeleteRenderTextures(RenderTexture2D target)
 
     if (target.id > 0) glDeleteFramebuffers(1, &target.id);
 
-    TraceLog(LOG_INFO, "[FBO ID %i] Unloaded render texture data from VRAM (GPU)", target.id);
+    TRACELOG(LOG_INFO, "[FBO ID %i] Unloaded render texture data from VRAM (GPU)", target.id);
 #endif
 }
 
@@ -1436,7 +1450,7 @@ void rlDeleteVertexArrays(unsigned int id)
     if (RLGL.ExtSupported.vao)
     {
         if (id != 0) glDeleteVertexArrays(1, &id);
-        TraceLog(LOG_INFO, "[VAO ID %i] Unloaded model data from VRAM (GPU)", id);
+        TRACELOG(LOG_INFO, "[VAO ID %i] Unloaded model data from VRAM (GPU)", id);
     }
 #endif
 }
@@ -1448,7 +1462,7 @@ void rlDeleteBuffers(unsigned int id)
     if (id != 0)
     {
         glDeleteBuffers(1, &id);
-        if (!RLGL.ExtSupported.vao) TraceLog(LOG_INFO, "[VBO ID %i] Unloaded model vertex data from VRAM (GPU)", id);
+        if (!RLGL.ExtSupported.vao) TRACELOG(LOG_INFO, "[VBO ID %i] Unloaded model vertex data from VRAM (GPU)", id);
     }
 #endif
 }
@@ -1492,28 +1506,28 @@ void rlglInit(int width, int height)
     //------------------------------------------------------------------------------
 
     // Print current OpenGL and GLSL version
-    TraceLog(LOG_INFO, "GPU: Vendor:   %s", glGetString(GL_VENDOR));
-    TraceLog(LOG_INFO, "GPU: Renderer: %s", glGetString(GL_RENDERER));
-    TraceLog(LOG_INFO, "GPU: Version:  %s", glGetString(GL_VERSION));
-    TraceLog(LOG_INFO, "GPU: GLSL:     %s", glGetString(GL_SHADING_LANGUAGE_VERSION));
+    TRACELOG(LOG_INFO, "GPU: Vendor:   %s", glGetString(GL_VENDOR));
+    TRACELOG(LOG_INFO, "GPU: Renderer: %s", glGetString(GL_RENDERER));
+    TRACELOG(LOG_INFO, "GPU: Version:  %s", glGetString(GL_VERSION));
+    TRACELOG(LOG_INFO, "GPU: GLSL:     %s", glGetString(GL_SHADING_LANGUAGE_VERSION));
 
     // NOTE: We can get a bunch of extra information about GPU capabilities (glGet*)
     //int maxTexSize;
     //glGetIntegerv(GL_MAX_TEXTURE_SIZE, &maxTexSize);
-    //TraceLog(LOG_INFO, "GL_MAX_TEXTURE_SIZE: %i", maxTexSize);
+    //TRACELOG(LOG_INFO, "GL_MAX_TEXTURE_SIZE: %i", maxTexSize);
 
     //GL_MAX_TEXTURE_IMAGE_UNITS
     //GL_MAX_VIEWPORT_DIMS
 
     //int numAuxBuffers;
     //glGetIntegerv(GL_AUX_BUFFERS, &numAuxBuffers);
-    //TraceLog(LOG_INFO, "GL_AUX_BUFFERS: %i", numAuxBuffers);
+    //TRACELOG(LOG_INFO, "GL_AUX_BUFFERS: %i", numAuxBuffers);
 
     //GLint numComp = 0;
     //GLint format[32] = { 0 };
     //glGetIntegerv(GL_NUM_COMPRESSED_TEXTURE_FORMATS, &numComp);
     //glGetIntegerv(GL_COMPRESSED_TEXTURE_FORMATS, format);
-    //for (int i = 0; i < numComp; i++) TraceLog(LOG_INFO, "Supported compressed format: 0x%x", format[i]);
+    //for (int i = 0; i < numComp; i++) TRACELOG(LOG_INFO, "Supported compressed format: 0x%x", format[i]);
 
     // NOTE: We don't need that much data on screen... right now...
 
@@ -1571,10 +1585,10 @@ void rlglInit(int width, int height)
     // NOTE: Duplicated string (extensionsDup) must be deallocated
 #endif
 
-    TraceLog(LOG_INFO, "Number of supported extensions: %i", numExt);
+    TRACELOG(LOG_INFO, "Number of supported extensions: %i", numExt);
 
     // Show supported extensions
-    //for (int i = 0; i < numExt; i++)  TraceLog(LOG_INFO, "Supported extension: %s", extList[i]);
+    //for (int i = 0; i < numExt; i++)  TRACELOG(LOG_INFO, "Supported extension: %s", extList[i]);
 
     // Check required extensions
     for (int i = 0; i < numExt; i++)
@@ -1646,23 +1660,23 @@ void rlglInit(int width, int height)
 #if defined(GRAPHICS_API_OPENGL_ES2)
     RL_FREE(extensionsDup);    // Duplicated string must be deallocated
 
-    if (RLGL.ExtSupported.vao) TraceLog(LOG_INFO, "[EXTENSION] VAO extension detected, VAO functions initialized successfully");
-    else TraceLog(LOG_WARNING, "[EXTENSION] VAO extension not found, VAO usage not supported");
+    if (RLGL.ExtSupported.vao) TRACELOG(LOG_INFO, "[EXTENSION] VAO extension detected, VAO functions initialized successfully");
+    else TRACELOG(LOG_WARNING, "[EXTENSION] VAO extension not found, VAO usage not supported");
 
-    if (RLGL.ExtSupported.texNPOT) TraceLog(LOG_INFO, "[EXTENSION] NPOT textures extension detected, full NPOT textures supported");
-    else TraceLog(LOG_WARNING, "[EXTENSION] NPOT textures extension not found, limited NPOT support (no-mipmaps, no-repeat)");
+    if (RLGL.ExtSupported.texNPOT) TRACELOG(LOG_INFO, "[EXTENSION] NPOT textures extension detected, full NPOT textures supported");
+    else TRACELOG(LOG_WARNING, "[EXTENSION] NPOT textures extension not found, limited NPOT support (no-mipmaps, no-repeat)");
 #endif
 
-    if (RLGL.ExtSupported.texCompDXT) TraceLog(LOG_INFO, "[EXTENSION] DXT compressed textures supported");
-    if (RLGL.ExtSupported.texCompETC1) TraceLog(LOG_INFO, "[EXTENSION] ETC1 compressed textures supported");
-    if (RLGL.ExtSupported.texCompETC2) TraceLog(LOG_INFO, "[EXTENSION] ETC2/EAC compressed textures supported");
-    if (RLGL.ExtSupported.texCompPVRT) TraceLog(LOG_INFO, "[EXTENSION] PVRT compressed textures supported");
-    if (RLGL.ExtSupported.texCompASTC) TraceLog(LOG_INFO, "[EXTENSION] ASTC compressed textures supported");
+    if (RLGL.ExtSupported.texCompDXT) TRACELOG(LOG_INFO, "[EXTENSION] DXT compressed textures supported");
+    if (RLGL.ExtSupported.texCompETC1) TRACELOG(LOG_INFO, "[EXTENSION] ETC1 compressed textures supported");
+    if (RLGL.ExtSupported.texCompETC2) TRACELOG(LOG_INFO, "[EXTENSION] ETC2/EAC compressed textures supported");
+    if (RLGL.ExtSupported.texCompPVRT) TRACELOG(LOG_INFO, "[EXTENSION] PVRT compressed textures supported");
+    if (RLGL.ExtSupported.texCompASTC) TRACELOG(LOG_INFO, "[EXTENSION] ASTC compressed textures supported");
 
-    if (RLGL.ExtSupported.texAnisoFilter) TraceLog(LOG_INFO, "[EXTENSION] Anisotropic textures filtering supported (max: %.0fX)", RLGL.ExtSupported.maxAnisotropicLevel);
-    if (RLGL.ExtSupported.texMirrorClamp) TraceLog(LOG_INFO, "[EXTENSION] Mirror clamp wrap texture mode supported");
+    if (RLGL.ExtSupported.texAnisoFilter) TRACELOG(LOG_INFO, "[EXTENSION] Anisotropic textures filtering supported (max: %.0fX)", RLGL.ExtSupported.maxAnisotropicLevel);
+    if (RLGL.ExtSupported.texMirrorClamp) TRACELOG(LOG_INFO, "[EXTENSION] Mirror clamp wrap texture mode supported");
 
-    if (RLGL.ExtSupported.debugMarker) TraceLog(LOG_INFO, "[EXTENSION] Debug Marker supported");
+    if (RLGL.ExtSupported.debugMarker) TRACELOG(LOG_INFO, "[EXTENSION] Debug Marker supported");
 
     // Initialize buffers, default shaders and default textures
     //----------------------------------------------------------
@@ -1670,8 +1684,8 @@ void rlglInit(int width, int height)
     unsigned char pixels[4] = { 255, 255, 255, 255 };   // 1 pixel RGBA (4 bytes)
     RLGL.State.defaultTextureId = rlLoadTexture(pixels, 1, 1, UNCOMPRESSED_R8G8B8A8, 1);
 
-    if (RLGL.State.defaultTextureId != 0) TraceLog(LOG_INFO, "[TEX ID %i] Base white texture loaded successfully", RLGL.State.defaultTextureId);
-    else TraceLog(LOG_WARNING, "Base white texture could not be loaded");
+    if (RLGL.State.defaultTextureId != 0) TRACELOG(LOG_INFO, "[TEX ID %i] Base white texture loaded successfully", RLGL.State.defaultTextureId);
+    else TRACELOG(LOG_WARNING, "Base white texture could not be loaded");
 
     // Init default Shader (customized for GL 3.3 and ES2)
     RLGL.State.defaultShader = LoadShaderDefault();
@@ -1744,7 +1758,7 @@ void rlglInit(int width, int height)
     RLGL.State.shapesTexture = GetTextureDefault();
     RLGL.State.shapesTextureRec = (Rectangle){ 0.0f, 0.0f, 1.0f, 1.0f };
 
-    TraceLog(LOG_INFO, "OpenGL default states initialized successfully");
+    TRACELOG(LOG_INFO, "OpenGL default states initialized successfully");
 }
 
 // Vertex Buffer Object deinitialization (memory free)
@@ -1755,7 +1769,7 @@ void rlglClose(void)
     UnloadBuffersDefault();             // Unload default buffers
     glDeleteTextures(1, &RLGL.State.defaultTextureId); // Unload default texture
 
-    TraceLog(LOG_INFO, "[TEX ID %i] Unloaded texture data (base white texture) from VRAM", RLGL.State.defaultTextureId);
+    TRACELOG(LOG_INFO, "[TEX ID %i] Unloaded texture data (base white texture) from VRAM", RLGL.State.defaultTextureId);
 
     RL_FREE(RLGL.State.draws);
 #endif
@@ -1817,14 +1831,14 @@ void rlLoadExtensions(void *loader)
 #if defined(GRAPHICS_API_OPENGL_33)
     // NOTE: glad is generated and contains only required OpenGL 3.3 Core extensions (and lower versions)
     #if !defined(__APPLE__)
-        if (!gladLoadGLLoader((GLADloadproc)loader)) TraceLog(LOG_WARNING, "GLAD: Cannot load OpenGL extensions");
-        else TraceLog(LOG_INFO, "GLAD: OpenGL extensions loaded successfully");
+        if (!gladLoadGLLoader((GLADloadproc)loader)) TRACELOG(LOG_WARNING, "GLAD: Cannot load OpenGL extensions");
+        else TRACELOG(LOG_INFO, "GLAD: OpenGL extensions loaded successfully");
 
         #if defined(GRAPHICS_API_OPENGL_21)
-        if (GLAD_GL_VERSION_2_1) TraceLog(LOG_INFO, "OpenGL 2.1 profile supported");
+        if (GLAD_GL_VERSION_2_1) TRACELOG(LOG_INFO, "OpenGL 2.1 profile supported");
         #elif defined(GRAPHICS_API_OPENGL_33)
-        if (GLAD_GL_VERSION_3_3) TraceLog(LOG_INFO, "OpenGL 3.3 Core profile supported");
-        else TraceLog(LOG_ERROR, "OpenGL 3.3 Core profile not supported");
+        if (GLAD_GL_VERSION_3_3) TRACELOG(LOG_INFO, "OpenGL 3.3 Core profile supported");
+        else TRACELOG(LOG_ERROR, "OpenGL 3.3 Core profile not supported");
         #endif
     #endif
 
@@ -1867,38 +1881,38 @@ unsigned int rlLoadTexture(void *data, int width, int height, int format, int mi
 #if defined(GRAPHICS_API_OPENGL_11)
     if (format >= COMPRESSED_DXT1_RGB)
     {
-        TraceLog(LOG_WARNING, "OpenGL 1.1 does not support GPU compressed texture formats");
+        TRACELOG(LOG_WARNING, "OpenGL 1.1 does not support GPU compressed texture formats");
         return id;
     }
 #else
     if ((!RLGL.ExtSupported.texCompDXT) && ((format == COMPRESSED_DXT1_RGB) || (format == COMPRESSED_DXT1_RGBA) ||
         (format == COMPRESSED_DXT3_RGBA) || (format == COMPRESSED_DXT5_RGBA)))
     {
-        TraceLog(LOG_WARNING, "DXT compressed texture format not supported");
+        TRACELOG(LOG_WARNING, "DXT compressed texture format not supported");
         return id;
     }
 #if defined(GRAPHICS_API_OPENGL_33) || defined(GRAPHICS_API_OPENGL_ES2)
     if ((!RLGL.ExtSupported.texCompETC1) && (format == COMPRESSED_ETC1_RGB))
     {
-        TraceLog(LOG_WARNING, "ETC1 compressed texture format not supported");
+        TRACELOG(LOG_WARNING, "ETC1 compressed texture format not supported");
         return id;
     }
 
     if ((!RLGL.ExtSupported.texCompETC2) && ((format == COMPRESSED_ETC2_RGB) || (format == COMPRESSED_ETC2_EAC_RGBA)))
     {
-        TraceLog(LOG_WARNING, "ETC2 compressed texture format not supported");
+        TRACELOG(LOG_WARNING, "ETC2 compressed texture format not supported");
         return id;
     }
 
     if ((!RLGL.ExtSupported.texCompPVRT) && ((format == COMPRESSED_PVRT_RGB) || (format == COMPRESSED_PVRT_RGBA)))
     {
-        TraceLog(LOG_WARNING, "PVRT compressed texture format not supported");
+        TRACELOG(LOG_WARNING, "PVRT compressed texture format not supported");
         return id;
     }
 
     if ((!RLGL.ExtSupported.texCompASTC) && ((format == COMPRESSED_ASTC_4x4_RGBA) || (format == COMPRESSED_ASTC_8x8_RGBA)))
     {
-        TraceLog(LOG_WARNING, "ASTC compressed texture format not supported");
+        TRACELOG(LOG_WARNING, "ASTC compressed texture format not supported");
         return id;
     }
 #endif
@@ -1918,7 +1932,7 @@ unsigned int rlLoadTexture(void *data, int width, int height, int format, int mi
     int mipHeight = height;
     int mipOffset = 0;          // Mipmap data offset
 
-    TraceLog(LOG_DEBUG, "Load texture from data memory address: 0x%x", data);
+    TRACELOGD("Load texture from data memory address: 0x%x", data);
 
     // Load the different mipmap levels
     for (int i = 0; i < mipmapCount; i++)
@@ -1928,7 +1942,7 @@ unsigned int rlLoadTexture(void *data, int width, int height, int format, int mi
         unsigned int glInternalFormat, glFormat, glType;
         rlGetGlTextureFormats(format, &glInternalFormat, &glFormat, &glType);
 
-        TraceLog(LOG_DEBUG, "Load mipmap level %i (%i x %i), size: %i, offset: %i", i, mipWidth, mipHeight, mipSize, mipOffset);
+        TRACELOGD("Load mipmap level %i (%i x %i), size: %i, offset: %i", i, mipWidth, mipHeight, mipSize, mipOffset);
 
         if (glInternalFormat != -1)
         {
@@ -2004,8 +2018,8 @@ unsigned int rlLoadTexture(void *data, int width, int height, int format, int mi
     // Unbind current texture
     glBindTexture(GL_TEXTURE_2D, 0);
 
-    if (id > 0) TraceLog(LOG_INFO, "[TEX ID %i] Texture created successfully (%ix%i - %i mipmaps)", id, width, height, mipmapCount);
-    else TraceLog(LOG_WARNING, "Texture could not be created");
+    if (id > 0) TRACELOG(LOG_INFO, "[TEX ID %i] Texture created successfully (%ix%i - %i mipmaps)", id, width, height, mipmapCount);
+    else TRACELOG(LOG_WARNING, "Texture could not be created");
 
     return id;
 }
@@ -2138,7 +2152,7 @@ void rlUpdateTexture(unsigned int id, int width, int height, int format, const v
     {
         glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, width, height, glFormat, glType, (unsigned char *)data);
     }
-    else TraceLog(LOG_WARNING, "Texture format updating not supported");
+    else TRACELOG(LOG_WARNING, "Texture format updating not supported");
 }
 
 // Get OpenGL internal formats and data type from raylib PixelFormat
@@ -2189,7 +2203,7 @@ void rlGetGlTextureFormats(int format, unsigned int *glInternalFormat, unsigned 
         case COMPRESSED_ASTC_4x4_RGBA: if (RLGL.ExtSupported.texCompASTC) *glInternalFormat = GL_COMPRESSED_RGBA_ASTC_4x4_KHR; break;  // NOTE: Requires OpenGL ES 3.1 or OpenGL 4.3
         case COMPRESSED_ASTC_8x8_RGBA: if (RLGL.ExtSupported.texCompASTC) *glInternalFormat = GL_COMPRESSED_RGBA_ASTC_8x8_KHR; break;  // NOTE: Requires OpenGL ES 3.1 or OpenGL 4.3
         #endif
-        default: TraceLog(LOG_WARNING, "Texture format not supported"); break;
+        default: TRACELOG(LOG_WARNING, "Texture format not supported"); break;
     }
 }
 
@@ -2245,7 +2259,7 @@ RenderTexture2D rlLoadRenderTexture(int width, int height, int format, int depth
 
     // Check if fbo is complete with attachments (valid)
     //-----------------------------------------------------------------------------------------------------
-    if (rlRenderTextureComplete(target)) TraceLog(LOG_INFO, "[FBO ID %i] Framebuffer object created successfully", target.id);
+    if (rlRenderTextureComplete(target)) TRACELOG(LOG_INFO, "[FBO ID %i] Framebuffer object created successfully", target.id);
     //-----------------------------------------------------------------------------------------------------
 
     glBindFramebuffer(GL_FRAMEBUFFER, 0);
@@ -2286,12 +2300,12 @@ bool rlRenderTextureComplete(RenderTexture target)
     {
         switch (status)
         {
-            case GL_FRAMEBUFFER_UNSUPPORTED: TraceLog(LOG_WARNING, "Framebuffer is unsupported"); break;
-            case GL_FRAMEBUFFER_INCOMPLETE_ATTACHMENT: TraceLog(LOG_WARNING, "Framebuffer has incomplete attachment"); break;
+            case GL_FRAMEBUFFER_UNSUPPORTED: TRACELOG(LOG_WARNING, "Framebuffer is unsupported"); break;
+            case GL_FRAMEBUFFER_INCOMPLETE_ATTACHMENT: TRACELOG(LOG_WARNING, "Framebuffer has incomplete attachment"); break;
 #if defined(GRAPHICS_API_OPENGL_ES2)
-            case GL_FRAMEBUFFER_INCOMPLETE_DIMENSIONS: TraceLog(LOG_WARNING, "Framebuffer has incomplete dimensions"); break;
+            case GL_FRAMEBUFFER_INCOMPLETE_DIMENSIONS: TRACELOG(LOG_WARNING, "Framebuffer has incomplete dimensions"); break;
 #endif
-            case GL_FRAMEBUFFER_INCOMPLETE_MISSING_ATTACHMENT: TraceLog(LOG_WARNING, "Framebuffer has a missing attachment"); break;
+            case GL_FRAMEBUFFER_INCOMPLETE_MISSING_ATTACHMENT: TRACELOG(LOG_WARNING, "Framebuffer has a missing attachment"); break;
             default: break;
         }
     }
@@ -2349,16 +2363,16 @@ void rlGenerateMipmaps(Texture2D *texture)
             texture->mipmaps = mipmapCount + 1;
             RL_FREE(data); // Once mipmaps have been generated and data has been uploaded to GPU VRAM, we can discard RAM data
 
-            TraceLog(LOG_WARNING, "[TEX ID %i] Mipmaps [%i] generated manually on CPU side", texture->id, texture->mipmaps);
+            TRACELOG(LOG_WARNING, "[TEX ID %i] Mipmaps [%i] generated manually on CPU side", texture->id, texture->mipmaps);
         }
-        else TraceLog(LOG_WARNING, "[TEX ID %i] Mipmaps could not be generated for texture format", texture->id);
+        else TRACELOG(LOG_WARNING, "[TEX ID %i] Mipmaps could not be generated for texture format", texture->id);
     }
 #elif defined(GRAPHICS_API_OPENGL_33) || defined(GRAPHICS_API_OPENGL_ES2)
     if ((texIsPOT) || (RLGL.ExtSupported.texNPOT))
     {
         //glHint(GL_GENERATE_MIPMAP_HINT, GL_DONT_CARE);   // Hint for mipmaps generation algorythm: GL_FASTEST, GL_NICEST, GL_DONT_CARE
         glGenerateMipmap(GL_TEXTURE_2D);    // Generate mipmaps automatically
-        TraceLog(LOG_INFO, "[TEX ID %i] Mipmaps generated automatically", texture->id);
+        TRACELOG(LOG_INFO, "[TEX ID %i] Mipmaps generated automatically", texture->id);
 
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);   // Activate Trilinear filtering for mipmaps
@@ -2369,7 +2383,7 @@ void rlGenerateMipmaps(Texture2D *texture)
         texture->mipmaps =  1 + (int)floor(log(MAX(texture->width, texture->height))/log(2));
     }
 #endif
-    else TraceLog(LOG_WARNING, "[TEX ID %i] Mipmaps can not be generated", texture->id);
+    else TRACELOG(LOG_WARNING, "[TEX ID %i] Mipmaps can not be generated", texture->id);
 
     glBindTexture(GL_TEXTURE_2D, 0);
 }
@@ -2380,7 +2394,7 @@ void rlLoadMesh(Mesh *mesh, bool dynamic)
     if (mesh->vaoId > 0)
     {
         // Check if mesh has already been loaded in GPU
-        TraceLog(LOG_WARNING, "Trying to re-load an already loaded mesh");
+        TRACELOG(LOG_WARNING, "Trying to re-load an already loaded mesh");
         return;
     }
 
@@ -2493,12 +2507,12 @@ void rlLoadMesh(Mesh *mesh, bool dynamic)
 
     if (RLGL.ExtSupported.vao)
     {
-        if (mesh->vaoId > 0) TraceLog(LOG_INFO, "[VAO ID %i] Mesh uploaded successfully to VRAM (GPU)", mesh->vaoId);
-        else TraceLog(LOG_WARNING, "Mesh could not be uploaded to VRAM (GPU)");
+        if (mesh->vaoId > 0) TRACELOG(LOG_INFO, "[VAO ID %i] Mesh uploaded successfully to VRAM (GPU)", mesh->vaoId);
+        else TRACELOG(LOG_WARNING, "Mesh could not be uploaded to VRAM (GPU)");
     }
     else
     {
-        TraceLog(LOG_INFO, "[VBOs] Mesh uploaded successfully to VRAM (GPU)");
+        TRACELOG(LOG_INFO, "[VBOs] Mesh uploaded successfully to VRAM (GPU)");
     }
 #endif
 }
@@ -2896,7 +2910,7 @@ void *rlReadTexturePixels(Texture2D texture)
         pixels = (unsigned char *)RL_MALLOC(size);
         glGetTexImage(GL_TEXTURE_2D, 0, glFormat, glType, pixels);
     }
-    else TraceLog(LOG_WARNING, "Texture data retrieval not suported for pixel format");
+    else TRACELOG(LOG_WARNING, "Texture data retrieval not suported for pixel format");
 
     glBindTexture(GL_TEXTURE_2D, 0);
 #endif
@@ -3009,7 +3023,7 @@ char *LoadText(const char *fileName)
 
             fclose(textFile);
         }
-        else TraceLog(LOG_WARNING, "[%s] Text file could not be opened", fileName);
+        else TRACELOG(LOG_WARNING, "[%s] Text file could not be opened", fileName);
     }
 
     return text;
@@ -3064,7 +3078,7 @@ Shader LoadShaderCode(const char *vsCode, const char *fsCode)
 
         if (shader.id == 0)
         {
-            TraceLog(LOG_WARNING, "Custom shader could not be loaded");
+            TRACELOG(LOG_WARNING, "Custom shader could not be loaded");
             shader = RLGL.State.defaultShader;
         }
 
@@ -3090,10 +3104,7 @@ Shader LoadShaderCode(const char *vsCode, const char *fsCode)
 
         name[namelen] = 0;
 
-        // Get the location of the named uniform
-        unsigned int location = glGetUniformLocation(shader.id, name);
-
-        TraceLog(LOG_DEBUG, "[SHDR ID %i] Active uniform [%s] set at location: %i", shader.id, name, location);
+        TRACELOGD("[SHDR ID %i] Active uniform [%s] set at location: %i", shader.id, name, glGetUniformLocation(shader.id, name));
     }
 #endif
 
@@ -3106,7 +3117,7 @@ void UnloadShader(Shader shader)
     if (shader.id > 0)
     {
         rlDeleteShader(shader.id);
-        TraceLog(LOG_INFO, "[SHDR ID %i] Unloaded shader program data", shader.id);
+        TRACELOG(LOG_INFO, "[SHDR ID %i] Unloaded shader program data", shader.id);
     }
 
     RL_FREE(shader.locs);
@@ -3139,8 +3150,8 @@ int GetShaderLocation(Shader shader, const char *uniformName)
 #if defined(GRAPHICS_API_OPENGL_33) || defined(GRAPHICS_API_OPENGL_ES2)
     location = glGetUniformLocation(shader.id, uniformName);
 
-    if (location == -1) TraceLog(LOG_WARNING, "[SHDR ID %i][%s] Shader uniform could not be found", shader.id, uniformName);
-    else TraceLog(LOG_INFO, "[SHDR ID %i][%s] Shader uniform set at location: %i", shader.id, uniformName, location);
+    if (location == -1) TRACELOG(LOG_WARNING, "[SHDR ID %i][%s] Shader uniform could not be found", shader.id, uniformName);
+    else TRACELOG(LOG_INFO, "[SHDR ID %i][%s] Shader uniform set at location: %i", shader.id, uniformName, location);
 #endif
     return location;
 }
@@ -3168,7 +3179,7 @@ void SetShaderValueV(Shader shader, int uniformLoc, const void *value, int unifo
         case UNIFORM_IVEC3: glUniform3iv(uniformLoc, count, (int *)value); break;
         case UNIFORM_IVEC4: glUniform4iv(uniformLoc, count, (int *)value); break;
         case UNIFORM_SAMPLER2D: glUniform1iv(uniformLoc, count, (int *)value); break;
-        default: TraceLog(LOG_WARNING, "Shader uniform could not be set data type not recognized");
+        default: TRACELOG(LOG_WARNING, "Shader uniform could not be set data type not recognized");
     }
 
     //glUseProgram(0);      // Avoid reseting current shader program, in case other uniforms are set
@@ -3612,7 +3623,7 @@ void InitVrSimulator(void)
 
     RLGL.Vr.simulatorReady = true;
 #else
-    TraceLog(LOG_WARNING, "VR Simulator not supported on OpenGL 1.1");
+    TRACELOG(LOG_WARNING, "VR Simulator not supported on OpenGL 1.1");
 #endif
 }
 
@@ -3660,17 +3671,17 @@ void SetVrConfiguration(VrDeviceInfo hmd, Shader distortion)
                             hmd.lensDistortionValues[2]*lensRadiusSq*lensRadiusSq +
                             hmd.lensDistortionValues[3]*lensRadiusSq*lensRadiusSq*lensRadiusSq;
 
-    TraceLog(LOG_DEBUG, "VR: Distortion Scale: %f", distortionScale);
+    TRACELOGD("VR: Distortion Scale: %f", distortionScale);
 
     float normScreenWidth = 0.5f;
     float normScreenHeight = 1.0f;
     float scaleIn[2] = { 2.0f/normScreenWidth, 2.0f/normScreenHeight/aspect };
     float scale[2] = { normScreenWidth*0.5f/distortionScale, normScreenHeight*0.5f*aspect/distortionScale };
 
-    TraceLog(LOG_DEBUG, "VR: Distortion Shader: LeftLensCenter = { %f, %f }", leftLensCenter[0], leftLensCenter[1]);
-    TraceLog(LOG_DEBUG, "VR: Distortion Shader: RightLensCenter = { %f, %f }", rightLensCenter[0], rightLensCenter[1]);
-    TraceLog(LOG_DEBUG, "VR: Distortion Shader: Scale = { %f, %f }", scale[0], scale[1]);
-    TraceLog(LOG_DEBUG, "VR: Distortion Shader: ScaleIn = { %f, %f }", scaleIn[0], scaleIn[1]);
+    TRACELOGD("VR: Distortion Shader: LeftLensCenter = { %f, %f }", leftLensCenter[0], leftLensCenter[1]);
+    TRACELOGD("VR: Distortion Shader: RightLensCenter = { %f, %f }", rightLensCenter[0], rightLensCenter[1]);
+    TRACELOGD("VR: Distortion Shader: Scale = { %f, %f }", scale[0], scale[1]);
+    TRACELOGD("VR: Distortion Shader: ScaleIn = { %f, %f }", scaleIn[0], scaleIn[1]);
 
     // Fovy is normally computed with: 2*atan2(hmd.vScreenSize, 2*hmd.eyeToScreenDistance)
     // ...but with lens distortion it is increased (see Oculus SDK Documentation)
@@ -3849,7 +3860,7 @@ static unsigned int CompileShader(const char *shaderStr, int type)
 
     if (success != GL_TRUE)
     {
-        TraceLog(LOG_WARNING, "[SHDR ID %i] Failed to compile shader...", shader);
+        TRACELOG(LOG_WARNING, "[SHDR ID %i] Failed to compile shader...", shader);
         int maxLength = 0;
         int length;
         glGetShaderiv(shader, GL_INFO_LOG_LENGTH, &maxLength);
@@ -3861,13 +3872,13 @@ static unsigned int CompileShader(const char *shaderStr, int type)
 #endif
         glGetShaderInfoLog(shader, maxLength, &length, log);
 
-        TraceLog(LOG_INFO, "%s", log);
+        TRACELOG(LOG_INFO, "%s", log);
 
 #if defined(_MSC_VER)
         RL_FREE(log);
 #endif
     }
-    else TraceLog(LOG_INFO, "[SHDR ID %i] Shader compiled successfully", shader);
+    else TRACELOG(LOG_INFO, "[SHDR ID %i] Shader compiled successfully", shader);
 
     return shader;
 }
@@ -3903,7 +3914,7 @@ static unsigned int LoadShaderProgram(unsigned int vShaderId, unsigned int fShad
 
     if (success == GL_FALSE)
     {
-        TraceLog(LOG_WARNING, "[SHDR ID %i] Failed to link shader program...", program);
+        TRACELOG(LOG_WARNING, "[SHDR ID %i] Failed to link shader program...", program);
 
         int maxLength = 0;
         int length;
@@ -3917,7 +3928,7 @@ static unsigned int LoadShaderProgram(unsigned int vShaderId, unsigned int fShad
 #endif
         glGetProgramInfoLog(program, maxLength, &length, log);
 
-        TraceLog(LOG_INFO, "%s", log);
+        TRACELOG(LOG_INFO, "%s", log);
 
 #if defined(_MSC_VER)
         RL_FREE(log);
@@ -3926,7 +3937,7 @@ static unsigned int LoadShaderProgram(unsigned int vShaderId, unsigned int fShad
 
         program = 0;
     }
-    else TraceLog(LOG_INFO, "[SHDR ID %i] Shader program loaded successfully", program);
+    else TRACELOG(LOG_INFO, "[SHDR ID %i] Shader program loaded successfully", program);
 #endif
     return program;
 }
@@ -4009,7 +4020,7 @@ static Shader LoadShaderDefault(void)
 
     if (shader.id > 0)
     {
-        TraceLog(LOG_INFO, "[SHDR ID %i] Default shader loaded successfully", shader.id);
+        TRACELOG(LOG_INFO, "[SHDR ID %i] Default shader loaded successfully", shader.id);
 
         // Set default shader locations: attributes locations
         shader.locs[LOC_VERTEX_POSITION] = glGetAttribLocation(shader.id, "vertexPosition");
@@ -4025,7 +4036,7 @@ static Shader LoadShaderDefault(void)
         // changed for external custom shaders, we just use direct bindings above
         //SetShaderDefaultLocations(&shader);
     }
-    else TraceLog(LOG_WARNING, "[SHDR ID %i] Default shader could not be loaded", shader.id);
+    else TRACELOG(LOG_WARNING, "[SHDR ID %i] Default shader could not be loaded", shader.id);
 
     return shader;
 }
@@ -4115,7 +4126,7 @@ static void LoadBuffersDefault(void)
         RLGL.State.vertexData[i].cCounter = 0;
     }
 
-    TraceLog(LOG_INFO, "Internal buffers initialized successfully (CPU)");
+    TRACELOG(LOG_INFO, "Internal buffers initialized successfully (CPU)");
     //--------------------------------------------------------------------------------------------
 
     // Upload to GPU (VRAM) vertex data and initialize VAOs/VBOs
@@ -4161,7 +4172,7 @@ static void LoadBuffersDefault(void)
 #endif
     }
 
-    TraceLog(LOG_INFO, "Internal buffers uploaded successfully (GPU)");
+    TRACELOG(LOG_INFO, "Internal buffers uploaded successfully (GPU)");
 
     // Unbind the current VAO
     if (RLGL.ExtSupported.vao) glBindVertexArray(0);
@@ -4521,20 +4532,20 @@ static int GenerateMipmaps(unsigned char *data, int baseWidth, int baseHeight)
         if (width != 1) width /= 2;
         if (height != 1) height /= 2;
 
-        TraceLog(LOG_DEBUG, "Next mipmap size: %i x %i", width, height);
+        TRACELOGD("Next mipmap size: %i x %i", width, height);
 
         mipmapCount++;
 
         size += (width*height*4);       // Add mipmap size (in bytes)
     }
 
-    TraceLog(LOG_DEBUG, "Total mipmaps required: %i", mipmapCount);
-    TraceLog(LOG_DEBUG, "Total size of data required: %i", size);
+    TRACELOGD("Total mipmaps required: %i", mipmapCount);
+    TRACELOGD("Total size of data required: %i", size);
 
     unsigned char *temp = RL_REALLOC(data, size);
 
     if (temp != NULL) data = temp;
-    else TraceLog(LOG_WARNING, "Mipmaps required memory could not be allocated");
+    else TRACELOG(LOG_WARNING, "Mipmaps required memory could not be allocated");
 
     width = baseWidth;
     height = baseHeight;
@@ -4556,7 +4567,7 @@ static int GenerateMipmaps(unsigned char *data, int baseWidth, int baseHeight)
         j++;
     }
 
-    TraceLog(LOG_DEBUG, "Mipmap base (%ix%i)", width, height);
+    TRACELOGD("Mipmap base (%ix%i)", width, height);
 
     for (int mip = 1; mip < mipmapCount; mip++)
     {
@@ -4627,7 +4638,7 @@ static Color *GenNextMipmap(Color *srcData, int srcWidth, int srcHeight)
         }
     }
 
-    TraceLog(LOG_DEBUG, "Mipmap generated successfully (%ix%i)", width, height);
+    TRACELOGD("Mipmap generated successfully (%ix%i)", width, height);
 
     return mipmap;
 }
@@ -4635,7 +4646,7 @@ static Color *GenNextMipmap(Color *srcData, int srcWidth, int srcHeight)
 
 #if defined(RLGL_STANDALONE)
 // Show trace log messages (LOG_INFO, LOG_WARNING, LOG_ERROR, LOG_DEBUG)
-void TraceLog(int msgType, const char *text, ...)
+void TRACELOG(int msgType, const char *text, ...)
 {
     va_list args;
     va_start(args, text);
