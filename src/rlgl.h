@@ -76,10 +76,10 @@
     #endif
 
     // Support TRACELOG macros
-    #if defined(SUPPORT_TRACELOG)
+    #if defined(RLGL_SUPPORT_TRACELOG)
         #define TRACELOG(level, ...) TraceLog(level, __VA_ARGS__)
 
-        #if defined(SUPPORT_TRACELOG_DEBUG)
+        #if defined(RLGL_SUPPORT_TRACELOG_DEBUG)
             #define TRACELOGD(...) TraceLog(LOG_DEBUG, __VA_ARGS__)
         #else
             #define TRACELOGD(...) (void)0
@@ -4646,7 +4646,7 @@ static Color *GenNextMipmap(Color *srcData, int srcWidth, int srcHeight)
 
 #if defined(RLGL_STANDALONE)
 // Show trace log messages (LOG_INFO, LOG_WARNING, LOG_ERROR, LOG_DEBUG)
-void TRACELOG(int msgType, const char *text, ...)
+void TraceLog(int msgType, const char *text, ...)
 {
     va_list args;
     va_start(args, text);

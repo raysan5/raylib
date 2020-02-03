@@ -45,6 +45,7 @@
 
 #define RLGL_IMPLEMENTATION
 #define RLGL_STANDALONE
+#define RLGL_SUPPORT_TRACELOG
 #include "rlgl.h"               // OpenGL 1.1 immediate-mode style coding
 
 #ifdef __EMSCRIPTEN__
