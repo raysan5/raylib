@@ -532,7 +532,7 @@ static double GetCurrentTime(void)
     // NOTE: Only for Linux-based systems
     struct timespec now;
     clock_gettime(CLOCK_MONOTONIC, &now);
-    unsigned long long int nowTime = ((unsigned long long int))now.tv_sec*1000000000LLU + ((unsigned long long int))now.tv_nsec;     // Time in nanoseconds
+    unsigned long long int nowTime = (unsigned long long int)now.tv_sec*1000000000LLU + (unsigned long long int)now.tv_nsec;     // Time in nanoseconds
 
     time = ((double)nowTime/1000000.0);     // Time in miliseconds
 #endif
@@ -548,7 +548,7 @@ static double GetCurrentTime(void)
     // NOTE: OS X does not have clock_gettime(), using clock_get_time()
     clock_get_time(cclock, &now);
     mach_port_deallocate(mach_task_self(), cclock);
-    unsigned long long int nowTime = ((unsigned long long int))now.tv_sec*1000000000LLU + ((unsigned long long int))now.tv_nsec;     // Time in nanoseconds
+    unsigned long long int nowTime = (unsigned long long int)now.tv_sec*1000000000LLU + (unsigned long long int)now.tv_nsec;     // Time in nanoseconds
 
     time = ((double)nowTime/1000000.0);     // Time in miliseconds
 #endif
