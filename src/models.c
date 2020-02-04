@@ -45,10 +45,10 @@
 
 #include "utils.h"          // Required for: fopen() Android mapping
 
-#include <stdio.h>          // Required for: FILE, fopen(), fclose(), fscanf(), feof(), rewind(), fgets()
 #include <stdlib.h>         // Required for: malloc(), free()
-#include <string.h>         // Required for: strcmp()
-#include <math.h>           // Required for: sin(), cos()
+#include <stdio.h>          // Required for: FILE, fopen(), fclose()
+#include <string.h>         // Required for: strncmp() [Used in LoadModelAnimations()], strlen() [Used in LoadTextureFromCgltfImage()]
+#include <math.h>           // Required for: sinf(), cosf(), sqrtf()
 
 #include "rlgl.h"           // raylib OpenGL abstraction layer to OpenGL 1.1, 2.1, 3.3+ or ES2
 

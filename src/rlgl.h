@@ -621,10 +621,10 @@ RLAPI int GetPixelDataSize(int width, int height, int format);// Get pixel data 
     #endif
 #endif
 
-#include <stdio.h>                  // Required for: fopen(), fclose(), fread()... [Used only on LoadText()]
-#include <stdlib.h>                 // Required for: malloc(), free(), rand()
-#include <string.h>                 // Required for: strcmp(), strlen(), strtok() [Used only in extensions loading]
-#include <math.h>                   // Required for: atan2()
+#include <stdlib.h>                 // Required for: malloc(), free()
+#include <stdio.h>                  // Required for: fopen(), fseek(), fread(), fclose() [LoadText]
+#include <string.h>                 // Required for: strcmp(), strlen() [Used in rlglInit(), on extensions loading]
+#include <math.h>                   // Required for: atan2f()
 
 #if !defined(RLGL_STANDALONE)
     #include "raymath.h"            // Required for: Vector3 and Matrix functions
@@ -677,7 +677,7 @@ RLAPI int GetPixelDataSize(int width, int height, int format);// Get pixel data 
 #endif
 
 #if defined(RLGL_STANDALONE)
-    #include <stdarg.h>                 // Required for: va_list, va_start(), vfprintf(), va_end() [Used only on TRACELOG()]
+    #include <stdarg.h>                 // Required for: va_list, va_start(), vfprintf(), va_end() [Used in TraceLog()]
 #endif
 
 //----------------------------------------------------------------------------------
@@ -3683,10 +3683,10 @@ void SetVrConfiguration(VrDeviceInfo hmd, Shader distortion)
     TRACELOGD("VR: Distortion Shader: Scale = { %f, %f }", scale[0], scale[1]);
     TRACELOGD("VR: Distortion Shader: ScaleIn = { %f, %f }", scaleIn[0], scaleIn[1]);
 
-    // Fovy is normally computed with: 2*atan2(hmd.vScreenSize, 2*hmd.eyeToScreenDistance)
+    // Fovy is normally computed with: 2*atan2f(hmd.vScreenSize, 2*hmd.eyeToScreenDistance)
     // ...but with lens distortion it is increased (see Oculus SDK Documentation)
-    //float fovy = 2.0f*atan2(hmd.vScreenSize*0.5f*distortionScale, hmd.eyeToScreenDistance);     // Really need distortionScale?
-    float fovy = 2.0f*(float)atan2(hmd.vScreenSize*0.5f, hmd.eyeToScreenDistance);
+    //float fovy = 2.0f*atan2f(hmd.vScreenSize*0.5f*distortionScale, hmd.eyeToScreenDistance);     // Really need distortionScale?
+    float fovy = 2.0f*(float)atan2f(hmd.vScreenSize*0.5f, hmd.eyeToScreenDistance);
 
     // Compute camera projection matrices
     float projOffset = 4.0f*lensShift;      // Scaled to projection space coordinates [-1..1]

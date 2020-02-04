@@ -65,8 +65,8 @@
 #endif
 
 #include <stdlib.h>             // Required for: malloc(), free()
-#include <string.h>             // Required for: strlen()
 #include <stdio.h>              // Required for: FILE, fopen(), fclose(), fread()
+#include <string.h>             // Required for: strlen() [Used in ImageTextEx()]
 
 #include "utils.h"              // Required for: fopen() Android mapping
 

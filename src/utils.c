@@ -78,7 +78,6 @@ static UWPMessage *UWPInMessages[MAX_UWP_MESSAGES];     // Messages in from UWP
 // Module specific Functions Declaration
 //----------------------------------------------------------------------------------
 #if defined(PLATFORM_ANDROID)
-// This should be in <stdio.h>, but Travis does not find it...
 FILE *funopen(const void *cookie, int (*readfn)(void *, char *, int), int (*writefn)(void *, const char *, int),
               fpos_t (*seekfn)(void *, fpos_t, int), int (*closefn)(void *));
 

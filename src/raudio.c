@@ -78,8 +78,6 @@
     #include "utils.h"          // Required for: fopen() Android mapping
 #endif
 
-
-
 #if defined(_WIN32)
 // @raysan5: To avoid conflicting windows.h symbols with raylib, so flags are defined
 // WARNING: Those flags avoid inclusion of some Win32 headers that could be required 
@@ -163,8 +161,11 @@ typedef struct tagBITMAPINFOHEADER {
 #undef PlaySound                // Win32 API: windows.h > mmsystem.h defines PlaySound macro
 
 #include <stdlib.h>             // Required for: malloc(), free()
-#include <string.h>             // Required for: strcmp(), strncmp()
 #include <stdio.h>              // Required for: FILE, fopen(), fclose(), fread()
+
+#if defined(RAUDIO_STANDALONE)
+    #include <string.h>         // Required for: strcmp() [Used in IsFileExtension()]
+#endif
 
 #if defined(SUPPORT_FILEFORMAT_OGG)
     #define STB_VORBIS_IMPLEMENTATION
@@ -1860,8 +1861,14 @@ static Wave LoadWAV(const char *fileName)
         fread(&wavRiffHeader, sizeof(WAVRiffHeader), 1, wavFile);
 
         // Check for RIFF and WAVE tags
-        if (strncmp(wavRiffHeader.chunkID, "RIFF", 4) ||
-            strncmp(wavRiffHeader.format, "WAVE", 4))
+        if ((wavRiffHeader.chunkID[0] != 'R') ||
+            (wavRiffHeader.chunkID[1] != 'I') ||
+            (wavRiffHeader.chunkID[2] != 'F') ||
+            (wavRiffHeader.chunkID[3] != 'F') ||
+            (wavRiffHeader.format[0] != 'W') ||
+            (wavRiffHeader.format[1] != 'A') ||
+            (wavRiffHeader.format[2] != 'V') ||
+            (wavRiffHeader.format[3] != 'E'))
         {
                 TRACELOG(LOG_WARNING, "[%s] Invalid RIFF or WAVE Header", fileName);
         }
@@ -2037,7 +2044,7 @@ static Wave LoadOGG(const char *fileName)
         wave.data = (short *)RL_MALLOC(wave.sampleCount*wave.channels*sizeof(short));
 
         // NOTE: Returns the number of samples to process (be careful! we ask for number of shorts!)
-        int numSamplesOgg = stb_vorbis_get_samples_short_interleaved(oggFile, info.channels, (short *)wave.data, wave.sampleCount*wave.channels);
+        //int numSamplesOgg = stb_vorbis_get_samples_short_interleaved(oggFile, info.channels, (short *)wave.data, wave.sampleCount*wave.channels);
 
         TRACELOGD("[%s] Samples obtained: %i", fileName, numSamplesOgg);
 

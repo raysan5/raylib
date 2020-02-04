@@ -152,8 +152,7 @@ float GetGesturePinchAngle(void);                       // Get gesture pinch ang
     #include <sys/time.h>               // Required for: timespec
     #include <time.h>                   // Required for: clock_gettime()
 
-    #include <math.h>                   // Required for: atan2(), sqrt()
-    #include <stdint.h>                 // Required for: uint64_t
+    #include <math.h>                   // Required for: sqrtf(), atan2f()
 #endif
 
 #if defined(__APPLE__)                  // macOS also defines __MACH__
@@ -533,7 +532,7 @@ static double GetCurrentTime(void)
     // NOTE: Only for Linux-based systems
     struct timespec now;
     clock_gettime(CLOCK_MONOTONIC, &now);
-    uint64_t nowTime = (uint64_t)now.tv_sec*1000000000LLU + (uint64_t)now.tv_nsec;     // Time in nanoseconds
+    (unsigned long long int) nowTime = ((unsigned long long int))now.tv_sec*1000000000LLU + ((unsigned long long int))now.tv_nsec;     // Time in nanoseconds
 
     time = ((double)nowTime/1000000.0);     // Time in miliseconds
 #endif
@@ -549,7 +548,7 @@ static double GetCurrentTime(void)
     // NOTE: OS X does not have clock_gettime(), using clock_get_time()
     clock_get_time(cclock, &now);
     mach_port_deallocate(mach_task_self(), cclock);
-    uint64_t nowTime = (uint64_t)now.tv_sec*1000000000LLU + (uint64_t)now.tv_nsec;     // Time in nanoseconds
+    (unsigned long long int) nowTime = ((unsigned long long int))now.tv_sec*1000000000LLU + ((unsigned long long int))now.tv_nsec;     // Time in nanoseconds
 
     time = ((double)nowTime/1000000.0);     // Time in miliseconds
 #endif

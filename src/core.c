@@ -151,14 +151,12 @@
     #define SUPPORT_HIGH_DPI    // Force HighDPI support on macOS
 #endif
 
-#include <stdio.h>          // Standard input / output lib
 #include <stdlib.h>         // Required for: srand(), rand(), atexit()
-#include <stdint.h>         // Required for: typedef unsigned long long int uint64_t, used by hi-res timer
+#include <stdio.h>          // Required for: FILE, fopen(), fseek(), fread(), fwrite(), fclose() [Used in StorageSaveValue()/StorageLoadValue()]
+#include <string.h>         // Required for: strrchr(), strcmp(), strlen()
 #include <time.h>           // Required for: time() - Android/RPI hi-res timer (NOTE: Linux only!)
-#include <math.h>           // Required for: tan() [Used in BeginMode3D() to set perspective]
-#include <string.h>         // Required for: strrchr(), strcmp()
-//#include <errno.h>          // Macros for reporting and retrieving error conditions through error codes
-#include <ctype.h>          // Required for: tolower() [Used in IsFileExtension()]
+#include <math.h>           // Required for: tan() [Used in BeginMode3D()]
+
 #include <sys/stat.h>       // Required for stat() [Used in GetLastWriteTime()]
 
 #if (defined(PLATFORM_DESKTOP) || defined(PLATFORM_UWP)) && defined(_WIN32) && (defined(_MSC_VER) || defined(__TINYC__))
@@ -1635,7 +1633,7 @@ double GetTime(void)
 #if defined(PLATFORM_ANDROID) || defined(PLATFORM_RPI)
     struct timespec ts;
     clock_gettime(CLOCK_MONOTONIC, &ts);
-    uint64_t time = (uint64_t)ts.tv_sec*1000000000LLU + (uint64_t)ts.tv_nsec;
+    unsigned long long int time = (unsigned long long int)ts.tv_sec*1000000000LLU + (unsigned long long int)ts.tv_nsec;
 
     return (double)(time - CORE.Time.base)*1e-9;  // Elapsed time since InitTimer()
 #endif
@@ -2205,7 +2203,7 @@ int StorageLoadValue(int position)
         // Get file size
         fseek(storageFile, 0, SEEK_END);
         int fileSize = ftell(storageFile);      // Size in bytes
-        rewind(storageFile);
+        fseek(storageFile, 0, SEEK_SET);        // Reset file pointer
 
         if (fileSize < (position*4)) TRACELOG(LOG_WARNING, "Storage position could not be found");
         else
@@ -3349,7 +3347,7 @@ static void InitTimer(void)
 
     if (clock_gettime(CLOCK_MONOTONIC, &now) == 0)  // Success
     {
-        CORE.Time.base = (uint64_t)now.tv_sec*1000000000LLU + (uint64_t)now.tv_nsec;
+        CORE.Time.base = (unsigned long long int)now.tv_sec*1000000000LLU + (unsigned long long int)now.tv_nsec;
     }
     else TRACELOG(LOG_WARNING, "No hi-resolution timer available");
 #endif

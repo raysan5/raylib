@@ -54,10 +54,9 @@
 #endif
 
 #include <stdlib.h>         // Required for: malloc(), free()
-#include <string.h>         // Required for: strlen()
-#include <stdarg.h>         // Required for: va_list, va_start(), vsprintf(), va_end()
-#include <stdio.h>          // Required for: FILE, fopen(), fclose(), fscanf(), feof(), rewind(), fgets()
-#include <ctype.h>          // Required for: toupper(), tolower()
+#include <stdio.h>          // Required for: FILE, fopen(), fclose(), fgets()
+#include <string.h>         // Required for: strcmp(), strstr(), strcpy(), strncpy(), strcat(), strncat(), sscanf()
+#include <stdarg.h>         // Required for: va_list, va_start(), vsprintf(), va_end() [Used in TextFormat()]
 
 #include "utils.h"          // Required for: fopen() Android mapping
 
@@ -824,7 +823,7 @@ void DrawTextCodepoint(Font font, int codepoint, Vector2 position, float scale, 
 // NOTE: chars spacing is NOT proportional to fontSize
 void DrawTextEx(Font font, const char *text, Vector2 position, float fontSize, float spacing, Color tint)
 {
-    int length = strlen(text);      // Total length in bytes of the text, scanned by codepoints in loop
+    int length = TextLength(text);      // Total length in bytes of the text, scanned by codepoints in loop
 
     int textOffsetY = 0;            // Offset between lines (on line break '\n')
     float textOffsetX = 0.0f;       // Offset X to next character to draw
@@ -878,7 +877,7 @@ void DrawTextRec(Font font, const char *text, Rectangle rec, float fontSize, flo
 // Draw text using font inside rectangle limits with support for text selection
 void DrawTextRecEx(Font font, const char *text, Rectangle rec, float fontSize, float spacing, bool wordWrap, Color tint, int selectStart, int selectLength, Color selectTint, Color selectBackTint)
 {
-    int length = strlen(text);      // Total length in bytes of the text, scanned by codepoints in loop
+    int length = TextLength(text);      // Total length in bytes of the text, scanned by codepoints in loop
 
     int textOffsetY = 0;            // Offset between lines (on line break '\n')
     float textOffsetX = 0.0f;       // Offset X to next character to draw
@@ -1030,7 +1029,7 @@ int MeasureText(const char *text, int fontSize)
 // Measure string size for Font
 Vector2 MeasureTextEx(Font font, const char *text, float fontSize, float spacing)
 {
-    int len = strlen(text);
+    int len = TextLength(text);
     int tempLen = 0;                // Used to count longer text line num chars
     int lenCounter = 0;
 
@@ -1145,7 +1144,7 @@ bool TextIsEqual(const char *text1, const char *text2)
 // Get text length in bytes, check for \0 character
 unsigned int TextLength(const char *text)
 {
-    unsigned int length = 0;
+    unsigned int length = 0; //strlen(text)
 
     while (*text++) length++;
 
@@ -1176,12 +1175,11 @@ const char *TextFormat(const char *text, ...)
 }
 
 // Get a piece of a text string
-// REQUIRES: strlen()
 const char *TextSubtext(const char *text, int position, int length)
 {
     static char buffer[MAX_TEXT_BUFFER_LENGTH] = { 0 };
 
-    int textLength = strlen(text);
+    int textLength = TextLength(text);
 
     if (position >= textLength)
     {
@@ -1203,7 +1201,7 @@ const char *TextSubtext(const char *text, int position, int length)
 }
 
 // Replace text string
-// REQUIRES: strlen(), strstr(), strncpy(), strcpy()
+// REQUIRES: strstr(), strncpy(), strcpy()
 // WARNING: Internally allocated memory must be freed by the user (if return != NULL)
 char *TextReplace(char *text, const char *replace, const char *by)
 {
@@ -1219,18 +1217,18 @@ char *TextReplace(char *text, const char *replace, const char *by)
     // Sanity checks and initialization
     if (!text || !replace) return NULL;
 
-    replaceLen = strlen(replace);
+    replaceLen = TextLength(replace);
     if (replaceLen == 0) return NULL;  // Empty replace causes infinite loop during count
 
     if (!by) by = "";           // Replace by nothing if not provided
-    byLen = strlen(by);
+    byLen = TextLength(by);
 
     // Count the number of replacements needed
     insertPoint = text;
     for (count = 0; (temp = strstr(insertPoint, replace)); count++) insertPoint = temp + replaceLen;
 
     // Allocate returning string and point temp to it
-    temp = result = RL_MALLOC(strlen(text) + (byLen - replaceLen)*count + 1);
+    temp = result = RL_MALLOC(TextLength(text) + (byLen - replaceLen)*count + 1);
 
     if (!result) return NULL;   // Memory could not be allocated
 
@@ -1254,12 +1252,12 @@ char *TextReplace(char *text, const char *replace, const char *by)
 }
 
 // Insert text in a specific position, moves all text forward
-// REQUIRES: strlen(), strcpy(), strtok()
+// REQUIRES: strcpy()
 // WARNING: Allocated memory should be manually freed
 char *TextInsert(const char *text, const char *insert, int position)
 {
-    int textLen = strlen(text);
-    int insertLen =  strlen(insert);
+    int textLen = TextLength(text);
+    int insertLen =  TextLength(insert);
 
     char *result = (char *)RL_MALLOC(textLen + insertLen + 1);
 
@@ -1280,11 +1278,11 @@ const char *TextJoin(const char **textList, int count, const char *delimiter)
     memset(text, 0, MAX_TEXT_BUFFER_LENGTH);
 
     int totalLength = 0;
-    int delimiterLen = strlen(delimiter);
+    int delimiterLen = TextLength(delimiter);
 
     for (int i = 0; i < count; i++)
     {
-        int textListLength = strlen(textList[i]);
+        int textListLength = TextLength(textList[i]);
 
         // Make sure joined text could fit inside MAX_TEXT_BUFFER_LENGTH
         if ((totalLength + textListLength) < MAX_TEXT_BUFFER_LENGTH)
@@ -1348,7 +1346,7 @@ const char **TextSplit(const char *text, char delimiter, int *count)
 void TextAppend(char *text, const char *append, int *position)
 {
     strcpy(text + *position, append);
-    *position += strlen(append);
+    *position += TextLength(append);
 }
 
 // Find first text occurrence within a string
@@ -1365,14 +1363,17 @@ int TextFindIndex(const char *text, const char *find)
 }
 
 // Get upper case version of provided string
-// REQUIRES: toupper()
 const char *TextToUpper(const char *text)
 {
     static char buffer[MAX_TEXT_BUFFER_LENGTH] = { 0 };
 
     for (int i = 0; i < MAX_TEXT_BUFFER_LENGTH; i++)
     {
-        if (text[i] != '\0') buffer[i] = (char)toupper(text[i]);
+        if (text[i] != '\0')
+        {
+            //buffer[i] = (char)toupper(text[i]);
+            if ((text[i] >= 'a') && (text[i] <= 'z')) buffer[i] = text[i] - 32;
+        }
         else { buffer[i] = '\0'; break; }
     }
 
@@ -1380,14 +1381,17 @@ const char *TextToUpper(const char *text)
 }
 
 // Get lower case version of provided string
-// REQUIRES: tolower()
 const char *TextToLower(const char *text)
 {
     static char buffer[MAX_TEXT_BUFFER_LENGTH] = { 0 };
 
     for (int i = 0; i < MAX_TEXT_BUFFER_LENGTH; i++)
     {
-        if (text[i] != '\0') buffer[i] = (char)tolower(text[i]);
+        if (text[i] != '\0')
+        {
+            //buffer[i] = (char)tolower(text[i]);
+            if ((text[i] >= 'A') && (text[i] <= 'Z')) buffer[i] = text[i] + 32;
+        }
         else { buffer[i] = '\0'; break; }
     }
 
@@ -1395,12 +1399,11 @@ const char *TextToLower(const char *text)
 }
 
 // Get Pascal case notation version of provided string
-// REQUIRES: toupper()
 const char *TextToPascal(const char *text)
 {
     static char buffer[MAX_TEXT_BUFFER_LENGTH] = { 0 };
 
-    buffer[0] = (char)toupper(text[0]);
+    buffer[0] = (char)TextToUpper(text[0]);
 
     for (int i = 1, j = 1; i < MAX_TEXT_BUFFER_LENGTH; i++, j++)
     {
@@ -1410,7 +1413,7 @@ const char *TextToPascal(const char *text)
             else
             {
                 j++;
-                buffer[i] = (char)toupper(text[j]);
+                buffer[i] = (char)TextToUpper(text[j]);
             }
         }
         else { buffer[i] = '\0'; break; }
@@ -1466,7 +1469,7 @@ int *GetCodepoints(const char *text, int *count)
     memset(codepoints, 0, MAX_TEXT_UNICODE_CHARS*sizeof(int));
 
     int bytesProcessed = 0;
-    int textLength = strlen(text);
+    int textLength = TextLength(text);
     int codepointsCount = 0;
 
     for (int i = 0; i < textLength; codepointsCount++)
@@ -1721,12 +1724,12 @@ static Font LoadBMFont(const char *fileName)
     }
 
     // NOTE: We need some extra space to avoid memory corruption on next allocations!
-    texPath = RL_MALLOC(strlen(fileName) - strlen(lastSlash) + strlen(texFileName) + 4);
+    texPath = RL_MALLOC(TextLength(fileName) - TextLength(lastSlash) + TextLength(texFileName) + 4);
 
     // NOTE: strcat() and strncat() required a '\0' terminated string to work!
     *texPath = '\0';
-    strncat(texPath, fileName, strlen(fileName) - strlen(lastSlash) + 1);
-    strncat(texPath, texFileName, strlen(texFileName));
+    strncat(texPath, fileName, TextLength(fileName) - TextLength(lastSlash) + 1);
+    strncat(texPath, texFileName, TextLength(texFileName));
 
     TRACELOGD("[%s] Font texture loading path: %s", fileName, texPath);
 

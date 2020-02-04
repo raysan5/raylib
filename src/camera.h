@@ -133,7 +133,7 @@ void SetCameraMoveControls(int frontKey, int backKey,
 
 #if defined(CAMERA_IMPLEMENTATION)
 
-#include <math.h>               // Required for: sqrt(), sinf(), cosf()
+#include <math.h>               // Required for: sinf(), cosf(), sqrtf()
 
 #ifndef PI
     #define PI 3.14159265358979323846
