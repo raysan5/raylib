@@ -45,7 +45,7 @@
 
 #include "utils.h"          // Required for: fopen() Android mapping
 
-#include <stdlib.h>         // Required for: malloc(), free()
+#include <stdlib.h>         // Required for: malloc(), free(), fabs()
 #include <stdio.h>          // Required for: FILE, fopen(), fclose()
 #include <string.h>         // Required for: strncmp() [Used in LoadModelAnimations()], strlen() [Used in LoadTextureFromCgltfImage()]
 #include <math.h>           // Required for: sinf(), cosf(), sqrtf()

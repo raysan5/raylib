@@ -64,7 +64,7 @@
     #include "config.h"         // Defines module configuration flags
 #endif
 
-#include <stdlib.h>             // Required for: malloc(), free()
+#include <stdlib.h>             // Required for: malloc(), free(), fabs()
 #include <stdio.h>              // Required for: FILE, fopen(), fclose(), fread()
 #include <string.h>             // Required for: strlen() [Used in ImageTextEx()]
 

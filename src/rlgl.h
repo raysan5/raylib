@@ -621,7 +621,7 @@ RLAPI int GetPixelDataSize(int width, int height, int format);// Get pixel data 
     #endif
 #endif
 
-#include <stdlib.h>                 // Required for: malloc(), free()
+#include <stdlib.h>                 // Required for: malloc(), free(), fabs()
 #include <stdio.h>                  // Required for: fopen(), fseek(), fread(), fclose() [LoadText]
 #include <string.h>                 // Required for: strcmp(), strlen() [Used in rlglInit(), on extensions loading]
 #include <math.h>                   // Required for: atan2f()
