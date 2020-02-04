@@ -281,7 +281,6 @@ typedef struct AudioData {
         ma_device device;           // miniaudio device
         ma_mutex lock;              // miniaudio mutex lock
         bool isReady;               // Check if audio device is ready
-        float masterVolume;         // Master volume (multiplied on output mixing)
     } System;
     struct {
         AudioBuffer *first;         // Pointer to first AudioBuffer in the list
@@ -351,7 +350,6 @@ void UntrackAudioBuffer(AudioBuffer *buffer);
 void InitAudioDevice(void)
 {
     // TODO: Load AUDIO context memory dynamically?
-    AUDIO.System.masterVolume = 1.0f;
 
     // Init audio context
     ma_context_config ctxConfig = ma_context_config_init();
@@ -444,10 +442,7 @@ bool IsAudioDeviceReady(void)
 // Set master volume (listener)
 void SetMasterVolume(float volume)
 {
-    if (volume < 0.0f) volume = 0.0f;
-    else if (volume > 1.0f) volume = 1.0f;
-
-    AUDIO.System.masterVolume = volume;
+    ma_device_set_master_volume(&AUDIO.System.device, volume);
 }
 
 //----------------------------------------------------------------------------------
@@ -1793,7 +1788,7 @@ static void MixAudioFrames(float *framesOut, const float *framesIn, ma_uint32 fr
             float *frameOut = framesOut + (iFrame*AUDIO.System.device.playback.channels);
             const float *frameIn  = framesIn  + (iFrame*AUDIO.System.device.playback.channels);
 
-            frameOut[iChannel] += (frameIn[iChannel]*AUDIO.System.masterVolume*localVolume);
+            frameOut[iChannel] += (frameIn[iChannel]*localVolume);
         }
     }
 }
