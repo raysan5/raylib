@@ -1371,8 +1371,8 @@ const char *TextToUpper(const char *text)
     {
         if (text[i] != '\0')
         {
-            //buffer[i] = (char)toupper(text[i]);
-            if ((text[i] >= 'a') && (text[i] <= 'z')) buffer[i] = text[i] - 32;
+            buffer[i] = (char)toupper(text[i]);
+            //if ((text[i] >= 'a') && (text[i] <= 'z')) buffer[i] = text[i] - 32;
         }
         else { buffer[i] = '\0'; break; }
     }
@@ -1389,8 +1389,8 @@ const char *TextToLower(const char *text)
     {
         if (text[i] != '\0')
         {
-            //buffer[i] = (char)tolower(text[i]);
-            if ((text[i] >= 'A') && (text[i] <= 'Z')) buffer[i] = text[i] + 32;
+            buffer[i] = (char)tolower(text[i]);
+            //if ((text[i] >= 'A') && (text[i] <= 'Z')) buffer[i] = text[i] + 32;
         }
         else { buffer[i] = '\0'; break; }
     }
