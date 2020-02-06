@@ -57,6 +57,7 @@
 #include <stdio.h>          // Required for: FILE, fopen(), fclose(), fgets()
 #include <string.h>         // Required for: strcmp(), strstr(), strcpy(), strncpy(), strcat(), strncat(), sscanf()
 #include <stdarg.h>         // Required for: va_list, va_start(), vsprintf(), va_end() [Used in TextFormat()]
+#include <ctype.h>          // Requried for: toupper(), tolower() [Used in TextToUpper(), TextToLower()]
 
 #include "utils.h"          // Required for: fopen() Android mapping
 
