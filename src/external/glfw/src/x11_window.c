@@ -613,45 +613,40 @@ static GLFWbool createNativeWindow(_GLFWwindow* window,
 
     window->x11.transparent = _glfwIsVisualTransparentX11(visual);
 
-    // Create the actual window
+    XSetWindowAttributes wa = { 0 };
+    wa.colormap = window->x11.colormap;
+    wa.event_mask = StructureNotifyMask | KeyPressMask | KeyReleaseMask |
+                    PointerMotionMask | ButtonPressMask | ButtonReleaseMask |
+                    ExposureMask | FocusChangeMask | VisibilityChangeMask |
+                    EnterWindowMask | LeaveWindowMask | PropertyChangeMask;
+
+    _glfwGrabErrorHandlerX11();
+
+    window->x11.parent = _glfw.x11.root;
+    window->x11.handle = XCreateWindow(_glfw.x11.display,
+                                       _glfw.x11.root,
+                                       0, 0,   // Position
+                                       width, height,
+                                       0,      // Border width
+                                       depth,  // Color depth
+                                       InputOutput,
+                                       visual,
+                                       CWBorderPixel | CWColormap | CWEventMask,
+                                       &wa);
+
+    _glfwReleaseErrorHandlerX11();
+
+    if (!window->x11.handle)
     {
-        XSetWindowAttributes wa;
-        const unsigned long wamask = CWBorderPixel | CWColormap | CWEventMask;
-
-        wa.colormap = window->x11.colormap;
-        wa.border_pixel = 0;
-        wa.event_mask = StructureNotifyMask | KeyPressMask | KeyReleaseMask |
-                        PointerMotionMask | ButtonPressMask | ButtonReleaseMask |
-                        ExposureMask | FocusChangeMask | VisibilityChangeMask |
-                        EnterWindowMask | LeaveWindowMask | PropertyChangeMask;
-
-        _glfwGrabErrorHandlerX11();
-
-        window->x11.handle = XCreateWindow(_glfw.x11.display,
-                                           _glfw.x11.root,
-                                           0, 0,
-                                           width, height,
-                                           0,      // Border width
-                                           depth,  // Color depth
-                                           InputOutput,
-                                           visual,
-                                           wamask,
-                                           &wa);
-
-        _glfwReleaseErrorHandlerX11();
-
-        if (!window->x11.handle)
-        {
-            _glfwInputErrorX11(GLFW_PLATFORM_ERROR,
-                               "X11: Failed to create window");
-            return GLFW_FALSE;
-        }
-
-        XSaveContext(_glfw.x11.display,
-                     window->x11.handle,
-                     _glfw.x11.context,
-                     (XPointer) window);
+        _glfwInputErrorX11(GLFW_PLATFORM_ERROR,
+                           "X11: Failed to create window");
+        return GLFW_FALSE;
     }
+
+    XSaveContext(_glfw.x11.display,
+                 window->x11.handle,
+                 _glfw.x11.context,
+                 (XPointer) window);
 
     if (!wndconfig->decorated)
         _glfwPlatformSetWindowDecorated(window, GLFW_FALSE);
@@ -682,7 +677,7 @@ static GLFWbool createNativeWindow(_GLFWwindow* window,
         {
             XChangeProperty(_glfw.x11.display, window->x11.handle,
                             _glfw.x11.NET_WM_STATE, XA_ATOM, 32,
-                            PropModeReplace, (unsigned char*) &states, count);
+                            PropModeReplace, (unsigned char*) states, count);
         }
     }
 
@@ -785,6 +780,13 @@ static GLFWbool createNativeWindow(_GLFWwindow* window,
                                    XNFocusWindow,
                                    window->x11.handle,
                                    NULL);
+    }
+
+    if (window->x11.ic)
+    {
+        unsigned long filter = 0;
+        if (XGetICValues(window->x11.ic, XNFilterEvents, &filter, NULL) == NULL)
+            XSelectInput(_glfw.x11.display, window->x11.handle, wa.event_mask | filter);
     }
 
     _glfwPlatformGetWindowPos(window, &window->x11.xpos, &window->x11.ypos);
@@ -1257,6 +1259,12 @@ static void processEvent(XEvent *event)
 
     switch (event->type)
     {
+        case ReparentNotify:
+        {
+            window->x11.parent = event->xreparent.parent;
+            return;
+        }
+
         case KeyPress:
         {
             const int key = translateKey(keycode);
@@ -1541,18 +1549,28 @@ static void processEvent(XEvent *event)
                 window->x11.height = event->xconfigure.height;
             }
 
-            if (event->xconfigure.x != window->x11.xpos ||
-                event->xconfigure.y != window->x11.ypos)
-            {
-                if (window->x11.overrideRedirect || event->xany.send_event)
-                {
-                    _glfwInputWindowPos(window,
-                                        event->xconfigure.x,
-                                        event->xconfigure.y);
+            int xpos = event->xconfigure.x;
+            int ypos = event->xconfigure.y;
 
-                    window->x11.xpos = event->xconfigure.x;
-                    window->x11.ypos = event->xconfigure.y;
-                }
+            // NOTE: ConfigureNotify events from the server are in local
+            //       coordinates, so if we are reparented we need to translate
+            //       the position into root (screen) coordinates
+            if (!event->xany.send_event && window->x11.parent != _glfw.x11.root)
+            {
+                Window dummy;
+                XTranslateCoordinates(_glfw.x11.display,
+                                      window->x11.parent,
+                                      _glfw.x11.root,
+                                      xpos, ypos,
+                                      &xpos, &ypos,
+                                      &dummy);
+            }
+
+            if (xpos != window->x11.xpos || ypos != window->x11.ypos)
+            {
+                _glfwInputWindowPos(window, xpos, ypos);
+                window->x11.xpos = xpos;
+                window->x11.ypos = ypos;
             }
 
             return;
@@ -2340,18 +2358,67 @@ void _glfwPlatformRestoreWindow(_GLFWwindow* window)
 
 void _glfwPlatformMaximizeWindow(_GLFWwindow* window)
 {
-    if (_glfw.x11.NET_WM_STATE &&
-        _glfw.x11.NET_WM_STATE_MAXIMIZED_VERT &&
-        _glfw.x11.NET_WM_STATE_MAXIMIZED_HORZ)
+    if (!_glfw.x11.NET_WM_STATE ||
+        !_glfw.x11.NET_WM_STATE_MAXIMIZED_VERT ||
+        !_glfw.x11.NET_WM_STATE_MAXIMIZED_HORZ)
+    {
+        return;
+    }
+
+    if (_glfwPlatformWindowVisible(window))
     {
         sendEventToWM(window,
-                      _glfw.x11.NET_WM_STATE,
-                      _NET_WM_STATE_ADD,
-                      _glfw.x11.NET_WM_STATE_MAXIMIZED_VERT,
-                      _glfw.x11.NET_WM_STATE_MAXIMIZED_HORZ,
-                      1, 0);
-        XFlush(_glfw.x11.display);
+                    _glfw.x11.NET_WM_STATE,
+                    _NET_WM_STATE_ADD,
+                    _glfw.x11.NET_WM_STATE_MAXIMIZED_VERT,
+                    _glfw.x11.NET_WM_STATE_MAXIMIZED_HORZ,
+                    1, 0);
     }
+    else
+    {
+        Atom* states = NULL;
+        unsigned long count =
+            _glfwGetWindowPropertyX11(window->x11.handle,
+                                      _glfw.x11.NET_WM_STATE,
+                                      XA_ATOM,
+                                      (unsigned char**) &states);
+
+        // NOTE: We don't check for failure as this property may not exist yet
+        //       and that's fine (and we'll create it implicitly with append)
+
+        Atom missing[2] =
+        {
+            _glfw.x11.NET_WM_STATE_MAXIMIZED_VERT,
+            _glfw.x11.NET_WM_STATE_MAXIMIZED_HORZ
+        };
+        unsigned long missingCount = 2;
+
+        for (unsigned long i = 0;  i < count;  i++)
+        {
+            for (unsigned long j = 0;  j < missingCount;  j++)
+            {
+                if (states[i] == missing[j])
+                {
+                    missing[j] = missing[missingCount - 1];
+                    missingCount--;
+                }
+            }
+        }
+
+        if (states)
+            XFree(states);
+
+        if (!missingCount)
+            return;
+
+        XChangeProperty(_glfw.x11.display, window->x11.handle,
+                        _glfw.x11.NET_WM_STATE, XA_ATOM, 32,
+                        PropModeAppend,
+                        (unsigned char*) missing,
+                        missingCount);
+    }
+
+    XFlush(_glfw.x11.display);
 }
 
 void _glfwPlatformShowWindow(_GLFWwindow* window)
@@ -2371,6 +2438,9 @@ void _glfwPlatformHideWindow(_GLFWwindow* window)
 
 void _glfwPlatformRequestWindowAttention(_GLFWwindow* window)
 {
+    if (!_glfw.x11.NET_WM_STATE || !_glfw.x11.NET_WM_STATE_DEMANDS_ATTENTION)
+        return;
+
     sendEventToWM(window,
                   _glfw.x11.NET_WM_STATE,
                   _NET_WM_STATE_ADD,
@@ -2382,7 +2452,7 @@ void _glfwPlatformFocusWindow(_GLFWwindow* window)
 {
     if (_glfw.x11.NET_ACTIVE_WINDOW)
         sendEventToWM(window, _glfw.x11.NET_ACTIVE_WINDOW, 1, 0, 0, 0, 0);
-    else
+    else if (_glfwPlatformWindowVisible(window))
     {
         XRaiseWindow(_glfw.x11.display, window->x11.handle);
         XSetInputFocus(_glfw.x11.display, window->x11.handle,
@@ -2567,7 +2637,7 @@ void _glfwPlatformSetWindowFloating(_GLFWwindow* window, GLFWbool enabled)
 
     if (_glfwPlatformWindowVisible(window))
     {
-        const Atom action = enabled ? _NET_WM_STATE_ADD : _NET_WM_STATE_REMOVE;
+        const long action = enabled ? _NET_WM_STATE_ADD : _NET_WM_STATE_REMOVE;
         sendEventToWM(window,
                       _glfw.x11.NET_WM_STATE,
                       action,
@@ -2576,15 +2646,16 @@ void _glfwPlatformSetWindowFloating(_GLFWwindow* window, GLFWbool enabled)
     }
     else
     {
-        Atom* states;
+        Atom* states = NULL;
         unsigned long i, count;
 
         count = _glfwGetWindowPropertyX11(window->x11.handle,
                                           _glfw.x11.NET_WM_STATE,
                                           XA_ATOM,
                                           (unsigned char**) &states);
-        if (!states)
-            return;
+
+        // NOTE: We don't check for failure as this property may not exist yet
+        //       and that's fine (and we'll create it implicitly with append)
 
         if (enabled)
         {
@@ -2594,32 +2665,36 @@ void _glfwPlatformSetWindowFloating(_GLFWwindow* window, GLFWbool enabled)
                     break;
             }
 
-            if (i == count)
-            {
-                XChangeProperty(_glfw.x11.display, window->x11.handle,
-                                _glfw.x11.NET_WM_STATE, XA_ATOM, 32,
-                                PropModeAppend,
-                                (unsigned char*) &_glfw.x11.NET_WM_STATE_ABOVE,
-                                1);
-            }
+            if (i < count)
+                return;
+
+            XChangeProperty(_glfw.x11.display, window->x11.handle,
+                            _glfw.x11.NET_WM_STATE, XA_ATOM, 32,
+                            PropModeAppend,
+                            (unsigned char*) &_glfw.x11.NET_WM_STATE_ABOVE,
+                            1);
         }
-        else
+        else if (states)
         {
             for (i = 0;  i < count;  i++)
             {
                 if (states[i] == _glfw.x11.NET_WM_STATE_ABOVE)
-                {
-                    states[i] = states[count - 1];
-                    count--;
-                }
+                    break;
             }
+
+            if (i == count)
+                return;
+
+            states[i] = states[count - 1];
+            count--;
 
             XChangeProperty(_glfw.x11.display, window->x11.handle,
                             _glfw.x11.NET_WM_STATE, XA_ATOM, 32,
-                            PropModeReplace, (unsigned char*) &states, count);
+                            PropModeReplace, (unsigned char*) states, count);
         }
 
-        XFree(states);
+        if (states)
+            XFree(states);
     }
 
     XFlush(_glfw.x11.display);
@@ -2786,6 +2861,13 @@ const char* _glfwPlatformGetScancodeName(int scancode)
 {
     if (!_glfw.x11.xkb.available)
         return NULL;
+
+    if (scancode < 0 || scancode > 0xff ||
+        _glfw.x11.keycodes[scancode] == GLFW_KEY_UNKNOWN)
+    {
+        _glfwInputError(GLFW_INVALID_VALUE, "Invalid scancode");
+        return NULL;
+    }
 
     const int key = _glfw.x11.keycodes[scancode];
     const KeySym keysym = XkbKeycodeToKeysym(_glfw.x11.display,

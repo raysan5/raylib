@@ -44,10 +44,6 @@ typedef struct _GLFWcontextNSGL
 {
     id                pixelFormat;
     id                object;
-    CVDisplayLinkRef  displayLink;
-    atomic_int        swapInterval;
-    int               swapIntervalsPassed;
-    id                swapIntervalCond;
 
 } _GLFWcontextNSGL;
 
@@ -67,5 +63,4 @@ GLFWbool _glfwCreateContextNSGL(_GLFWwindow* window,
                                 const _GLFWctxconfig* ctxconfig,
                                 const _GLFWfbconfig* fbconfig);
 void _glfwDestroyContextNSGL(_GLFWwindow* window);
-void _glfwUpdateDisplayLinkDisplayNSGL(_GLFWwindow* window);
 

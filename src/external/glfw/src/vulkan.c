@@ -57,6 +57,8 @@ GLFWbool _glfwInitVulkan(int mode)
     _glfw.vk.handle = _glfw_dlopen("vulkan-1.dll");
 #elif defined(_GLFW_COCOA)
     _glfw.vk.handle = _glfw_dlopen("libvulkan.1.dylib");
+    if (!_glfw.vk.handle)
+        _glfw.vk.handle = _glfwLoadLocalVulkanLoaderNS();
 #else
     _glfw.vk.handle = _glfw_dlopen("libvulkan.so.1");
 #endif
@@ -130,6 +132,8 @@ GLFWbool _glfwInitVulkan(int mode)
 #elif defined(_GLFW_COCOA)
         else if (strcmp(ep[i].extensionName, "VK_MVK_macos_surface") == 0)
             _glfw.vk.MVK_macos_surface = GLFW_TRUE;
+        else if (strcmp(ep[i].extensionName, "VK_EXT_metal_surface") == 0)
+            _glfw.vk.EXT_metal_surface = GLFW_TRUE;
 #elif defined(_GLFW_X11)
         else if (strcmp(ep[i].extensionName, "VK_KHR_xlib_surface") == 0)
             _glfw.vk.KHR_xlib_surface = GLFW_TRUE;

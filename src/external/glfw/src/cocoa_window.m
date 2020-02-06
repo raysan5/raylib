@@ -322,12 +322,6 @@ static const NSRange kEmptyRange = { NSNotFound, 0 };
     _glfwInputWindowFocus(window, GLFW_FALSE);
 }
 
-- (void)windowDidChangeScreen:(NSNotification *)notification
-{
-    if (window->context.source == GLFW_NATIVE_CONTEXT_API)
-        _glfwUpdateDisplayLinkDisplayNSGL(window);
-}
-
 @end
 
 
@@ -891,10 +885,7 @@ int _glfwPlatformCreateWindow(_GLFWwindow* window,
     @autoreleasepool {
 
     if (!_glfw.ns.finishedLaunching)
-    {
         [NSApp run];
-        _glfw.ns.finishedLaunching = GLFW_TRUE;
-    }
 
     if (!createNativeWindow(window, wndconfig, fbconfig))
         return GLFW_FALSE;
@@ -967,13 +958,14 @@ void _glfwPlatformDestroyWindow(_GLFWwindow* window)
     } // autoreleasepool
 }
 
-void _glfwPlatformSetWindowTitle(_GLFWwindow* window, const char *title)
+void _glfwPlatformSetWindowTitle(_GLFWwindow* window, const char* title)
 {
     @autoreleasepool {
-    [window->ns.object setTitle:@(title)];
+    NSString* string = @(title);
+    [window->ns.object setTitle:string];
     // HACK: Set the miniwindow title explicitly as setTitle: doesn't update it
     //       if the window lacks NSWindowStyleMaskTitled
-    [window->ns.object setMiniwindowTitle:@(title)];
+    [window->ns.object setMiniwindowTitle:string];
     } // autoreleasepool
 }
 
@@ -1385,6 +1377,9 @@ void _glfwPlatformPollEvents(void)
 {
     @autoreleasepool {
 
+    if (!_glfw.ns.finishedLaunching)
+        [NSApp run];
+
     for (;;)
     {
         NSEvent* event = [NSApp nextEventMatchingMask:NSEventMaskAny
@@ -1404,6 +1399,9 @@ void _glfwPlatformWaitEvents(void)
 {
     @autoreleasepool {
 
+    if (!_glfw.ns.finishedLaunching)
+        [NSApp run];
+
     // I wanted to pass NO to dequeue:, and rely on PollEvents to
     // dequeue and send.  For reasons not at all clear to me, passing
     // NO to dequeue: causes this method never to return.
@@ -1422,6 +1420,9 @@ void _glfwPlatformWaitEventsTimeout(double timeout)
 {
     @autoreleasepool {
 
+    if (!_glfw.ns.finishedLaunching)
+        [NSApp run];
+
     NSDate* date = [NSDate dateWithTimeIntervalSinceNow:timeout];
     NSEvent* event = [NSApp nextEventMatchingMask:NSEventMaskAny
                                         untilDate:date
@@ -1438,6 +1439,9 @@ void _glfwPlatformWaitEventsTimeout(double timeout)
 void _glfwPlatformPostEmptyEvent(void)
 {
     @autoreleasepool {
+
+    if (!_glfw.ns.finishedLaunching)
+        [NSApp run];
 
     NSEvent* event = [NSEvent otherEventWithType:NSEventTypeApplicationDefined
                                         location:NSMakePoint(0, 0)
@@ -1511,6 +1515,13 @@ void _glfwPlatformSetCursorMode(_GLFWwindow* window, int mode)
 const char* _glfwPlatformGetScancodeName(int scancode)
 {
     @autoreleasepool {
+
+    if (scancode < 0 || scancode > 0xff ||
+        _glfw.ns.keycodes[scancode] == GLFW_KEY_UNKNOWN)
+    {
+        _glfwInputError(GLFW_INVALID_VALUE, "Invalid scancode");
+        return NULL;
+    }
 
     const int key = _glfw.ns.keycodes[scancode];
 
@@ -1607,13 +1618,13 @@ int _glfwPlatformCreateStandardCursor(_GLFWcursor* cursor, int shape)
 
     // HACK: Try to use a private message
     if (shape == GLFW_RESIZE_EW_CURSOR)
-        cursorSelector = @selector(_windowResizeEastWestCursor);
+        cursorSelector = NSSelectorFromString(@"_windowResizeEastWestCursor");
     else if (shape == GLFW_RESIZE_NS_CURSOR)
-        cursorSelector = @selector(_windowResizeNorthSouthCursor);
+        cursorSelector = NSSelectorFromString(@"_windowResizeNorthSouthCursor");
     else if (shape == GLFW_RESIZE_NWSE_CURSOR)
-        cursorSelector = @selector(_windowResizeNorthWestSouthEastCursor);
+        cursorSelector = NSSelectorFromString(@"_windowResizeNorthWestSouthEastCursor");
     else if (shape == GLFW_RESIZE_NESW_CURSOR)
-        cursorSelector = @selector(_windowResizeNorthEastSouthWestCursor);
+        cursorSelector = NSSelectorFromString(@"_windowResizeNorthEastSouthWestCursor");
 
     if (cursorSelector && [NSCursor respondsToSelector:cursorSelector])
     {
@@ -1711,11 +1722,16 @@ const char* _glfwPlatformGetClipboardString(void)
 
 void _glfwPlatformGetRequiredInstanceExtensions(char** extensions)
 {
-    if (!_glfw.vk.KHR_surface || !_glfw.vk.MVK_macos_surface)
-        return;
-
-    extensions[0] = "VK_KHR_surface";
-    extensions[1] = "VK_MVK_macos_surface";
+    if (_glfw.vk.KHR_surface && _glfw.vk.EXT_metal_surface)
+    {
+        extensions[0] = "VK_KHR_surface";
+        extensions[1] = "VK_EXT_metal_surface";
+    }
+    else if (_glfw.vk.KHR_surface && _glfw.vk.MVK_macos_surface)
+    {
+        extensions[0] = "VK_KHR_surface";
+        extensions[1] = "VK_MVK_macos_surface";
+    }
 }
 
 int _glfwPlatformGetPhysicalDevicePresentationSupport(VkInstance instance,
@@ -1733,19 +1749,6 @@ VkResult _glfwPlatformCreateWindowSurface(VkInstance instance,
     @autoreleasepool {
 
 #if MAC_OS_X_VERSION_MAX_ALLOWED >= 101100
-    VkResult err;
-    VkMacOSSurfaceCreateInfoMVK sci;
-    PFN_vkCreateMacOSSurfaceMVK vkCreateMacOSSurfaceMVK;
-
-    vkCreateMacOSSurfaceMVK = (PFN_vkCreateMacOSSurfaceMVK)
-        vkGetInstanceProcAddr(instance, "vkCreateMacOSSurfaceMVK");
-    if (!vkCreateMacOSSurfaceMVK)
-    {
-        _glfwInputError(GLFW_API_UNAVAILABLE,
-                        "Cocoa: Vulkan instance missing VK_MVK_macos_surface extension");
-        return VK_ERROR_EXTENSION_NOT_PRESENT;
-    }
-
     // HACK: Dynamically load Core Animation to avoid adding an extra
     //       dependency for the majority who don't use MoltenVK
     NSBundle* bundle = [NSBundle bundleWithPath:@"/System/Library/Frameworks/QuartzCore.framework"];
@@ -1771,11 +1774,49 @@ VkResult _glfwPlatformCreateWindowSurface(VkInstance instance,
     [window->ns.view setLayer:window->ns.layer];
     [window->ns.view setWantsLayer:YES];
 
-    memset(&sci, 0, sizeof(sci));
-    sci.sType = VK_STRUCTURE_TYPE_MACOS_SURFACE_CREATE_INFO_MVK;
-    sci.pView = window->ns.view;
+    VkResult err;
 
-    err = vkCreateMacOSSurfaceMVK(instance, &sci, allocator, surface);
+    if (_glfw.vk.EXT_metal_surface)
+    {
+        VkMetalSurfaceCreateInfoEXT sci;
+
+        PFN_vkCreateMetalSurfaceEXT vkCreateMetalSurfaceEXT;
+        vkCreateMetalSurfaceEXT = (PFN_vkCreateMetalSurfaceEXT)
+            vkGetInstanceProcAddr(instance, "vkCreateMetalSurfaceEXT");
+        if (!vkCreateMetalSurfaceEXT)
+        {
+            _glfwInputError(GLFW_API_UNAVAILABLE,
+                            "Cocoa: Vulkan instance missing VK_EXT_metal_surface extension");
+            return VK_ERROR_EXTENSION_NOT_PRESENT;
+        }
+
+        memset(&sci, 0, sizeof(sci));
+        sci.sType = VK_STRUCTURE_TYPE_METAL_SURFACE_CREATE_INFO_EXT;
+        sci.pLayer = window->ns.layer;
+
+        err = vkCreateMetalSurfaceEXT(instance, &sci, allocator, surface);
+    }
+    else
+    {
+        VkMacOSSurfaceCreateInfoMVK sci;
+
+        PFN_vkCreateMacOSSurfaceMVK vkCreateMacOSSurfaceMVK;
+        vkCreateMacOSSurfaceMVK = (PFN_vkCreateMacOSSurfaceMVK)
+            vkGetInstanceProcAddr(instance, "vkCreateMacOSSurfaceMVK");
+        if (!vkCreateMacOSSurfaceMVK)
+        {
+            _glfwInputError(GLFW_API_UNAVAILABLE,
+                            "Cocoa: Vulkan instance missing VK_MVK_macos_surface extension");
+            return VK_ERROR_EXTENSION_NOT_PRESENT;
+        }
+
+        memset(&sci, 0, sizeof(sci));
+        sci.sType = VK_STRUCTURE_TYPE_MACOS_SURFACE_CREATE_INFO_MVK;
+        sci.pView = window->ns.view;
+
+        err = vkCreateMacOSSurfaceMVK(instance, &sci, allocator, surface);
+    }
+
     if (err)
     {
         _glfwInputError(GLFW_PLATFORM_ERROR,

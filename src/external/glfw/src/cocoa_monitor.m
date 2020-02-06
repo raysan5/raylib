@@ -144,7 +144,7 @@ static GLFWbool modeIsGood(CGDisplayModeRef mode)
 // Convert Core Graphics display mode to GLFW video mode
 //
 static GLFWvidmode vidmodeFromCGDisplayMode(CGDisplayModeRef mode,
-                                            CVDisplayLinkRef link)
+                                            double fallbackRefreshRate)
 {
     GLFWvidmode result;
     result.width = (int) CGDisplayModeGetWidth(mode);
@@ -152,11 +152,7 @@ static GLFWvidmode vidmodeFromCGDisplayMode(CGDisplayModeRef mode,
     result.refreshRate = (int) round(CGDisplayModeGetRefreshRate(mode));
 
     if (result.refreshRate == 0)
-    {
-        const CVTime time = CVDisplayLinkGetNominalOutputVideoRefreshPeriod(link);
-        if (!(time.flags & kCVTimeIsIndefinite))
-            result.refreshRate = (int) (time.timeScale / (double) time.timeValue);
-    }
+        result.refreshRate = (int) round(fallbackRefreshRate);
 
 #if MAC_OS_X_VERSION_MAX_ALLOWED <= 101100
     CFStringRef format = CGDisplayModeCopyPixelEncoding(mode);
@@ -238,6 +234,68 @@ static GLFWbool refreshMonitorScreen(_GLFWmonitor* monitor)
     return GLFW_FALSE;
 }
 
+// Returns the display refresh rate queried from the I/O registry
+//
+static double getFallbackRefreshRate(CGDirectDisplayID displayID)
+{
+    double refreshRate = 60.0;
+
+    io_iterator_t it;
+    io_service_t service;
+
+    if (IOServiceGetMatchingServices(kIOMasterPortDefault,
+                                     IOServiceMatching("IOFramebuffer"),
+                                     &it) != 0)
+    {
+        return refreshRate;
+    }
+
+    while ((service = IOIteratorNext(it)) != 0)
+    {
+        const CFNumberRef indexRef =
+            IORegistryEntryCreateCFProperty(service,
+                                            CFSTR("IOFramebufferOpenGLIndex"),
+                                            kCFAllocatorDefault,
+                                            kNilOptions);
+        if (!indexRef)
+            continue;
+
+        uint32_t index = 0;
+        CFNumberGetValue(indexRef, kCFNumberIntType, &index);
+        CFRelease(indexRef);
+
+        if (CGOpenGLDisplayMaskToDisplayID(1 << index) != displayID)
+            continue;
+
+        const CFNumberRef clockRef =
+            IORegistryEntryCreateCFProperty(service,
+                                            CFSTR("IOFBCurrentPixelClock"),
+                                            kCFAllocatorDefault,
+                                            kNilOptions);
+        const CFNumberRef countRef =
+            IORegistryEntryCreateCFProperty(service,
+                                            CFSTR("IOFBCurrentPixelCount"),
+                                            kCFAllocatorDefault,
+                                            kNilOptions);
+        if (!clockRef || !countRef)
+            break;
+
+        uint32_t clock = 0, count = 0;
+        CFNumberGetValue(clockRef, kCFNumberIntType, &clock);
+        CFNumberGetValue(countRef, kCFNumberIntType, &count);
+        CFRelease(clockRef);
+        CFRelease(countRef);
+
+        if (clock > 0 && count > 0)
+            refreshRate = clock / (double) count;
+
+        break;
+    }
+
+    IOObjectRelease(it);
+    return refreshRate;
+}
+
 
 //////////////////////////////////////////////////////////////////////////
 //////                       GLFW internal API                      //////
@@ -294,6 +352,11 @@ void _glfwPollMonitorsNS(void)
 
         free(name);
 
+        CGDisplayModeRef mode = CGDisplayCopyDisplayMode(displays[i]);
+        if (CGDisplayModeGetRefreshRate(mode) == 0.0)
+            monitor->ns.fallbackRefreshRate = getFallbackRefreshRate(displays[i]);
+        CGDisplayModeRelease(mode);
+
         _glfwInputMonitor(monitor, GLFW_CONNECTED, _GLFW_INSERT_LAST);
     }
 
@@ -318,9 +381,6 @@ void _glfwSetVideoModeNS(_GLFWmonitor* monitor, const GLFWvidmode* desired)
     if (_glfwCompareVideoModes(&current, best) == 0)
         return;
 
-    CVDisplayLinkRef link;
-    CVDisplayLinkCreateWithCGDisplay(monitor->ns.displayID, &link);
-
     CFArrayRef modes = CGDisplayCopyAllDisplayModes(monitor->ns.displayID, NULL);
     const CFIndex count = CFArrayGetCount(modes);
     CGDisplayModeRef native = NULL;
@@ -331,7 +391,8 @@ void _glfwSetVideoModeNS(_GLFWmonitor* monitor, const GLFWvidmode* desired)
         if (!modeIsGood(dm))
             continue;
 
-        const GLFWvidmode mode = vidmodeFromCGDisplayMode(dm, link);
+        const GLFWvidmode mode =
+            vidmodeFromCGDisplayMode(dm, monitor->ns.fallbackRefreshRate);
         if (_glfwCompareVideoModes(best, &mode) == 0)
         {
             native = dm;
@@ -350,7 +411,6 @@ void _glfwSetVideoModeNS(_GLFWmonitor* monitor, const GLFWvidmode* desired)
     }
 
     CFRelease(modes);
-    CVDisplayLinkRelease(link);
 }
 
 // Restore the previously saved (original) video mode
@@ -440,9 +500,6 @@ GLFWvidmode* _glfwPlatformGetVideoModes(_GLFWmonitor* monitor, int* count)
 
     *count = 0;
 
-    CVDisplayLinkRef link;
-    CVDisplayLinkCreateWithCGDisplay(monitor->ns.displayID, &link);
-
     CFArrayRef modes = CGDisplayCopyAllDisplayModes(monitor->ns.displayID, NULL);
     const CFIndex found = CFArrayGetCount(modes);
     GLFWvidmode* result = calloc(found, sizeof(GLFWvidmode));
@@ -453,7 +510,8 @@ GLFWvidmode* _glfwPlatformGetVideoModes(_GLFWmonitor* monitor, int* count)
         if (!modeIsGood(dm))
             continue;
 
-        const GLFWvidmode mode = vidmodeFromCGDisplayMode(dm, link);
+        const GLFWvidmode mode =
+            vidmodeFromCGDisplayMode(dm, monitor->ns.fallbackRefreshRate);
         CFIndex j;
 
         for (j = 0;  j < *count;  j++)
@@ -471,7 +529,6 @@ GLFWvidmode* _glfwPlatformGetVideoModes(_GLFWmonitor* monitor, int* count)
     }
 
     CFRelease(modes);
-    CVDisplayLinkRelease(link);
     return result;
 
     } // autoreleasepool
@@ -481,14 +538,9 @@ void _glfwPlatformGetVideoMode(_GLFWmonitor* monitor, GLFWvidmode *mode)
 {
     @autoreleasepool {
 
-    CVDisplayLinkRef link;
-    CVDisplayLinkCreateWithCGDisplay(monitor->ns.displayID, &link);
-
     CGDisplayModeRef native = CGDisplayCopyDisplayMode(monitor->ns.displayID);
-    *mode = vidmodeFromCGDisplayMode(native, link);
+    *mode = vidmodeFromCGDisplayMode(native, monitor->ns.fallbackRefreshRate);
     CGDisplayModeRelease(native);
-
-    CVDisplayLinkRelease(link);
 
     } // autoreleasepool
 }

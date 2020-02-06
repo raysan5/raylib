@@ -36,8 +36,6 @@
 #include <windowsx.h>
 #include <shellapi.h>
 
-#define _GLFW_KEY_INVALID -2
-
 // Returns the window style for the specified window
 //
 static DWORD getWindowStyle(const _GLFWwindow* window)
@@ -448,77 +446,6 @@ static int getKeyMods(void)
     return mods;
 }
 
-// Retrieves and translates modifier keys
-//
-static int getAsyncKeyMods(void)
-{
-    int mods = 0;
-
-    if (GetAsyncKeyState(VK_SHIFT) & 0x8000)
-        mods |= GLFW_MOD_SHIFT;
-    if (GetAsyncKeyState(VK_CONTROL) & 0x8000)
-        mods |= GLFW_MOD_CONTROL;
-    if (GetAsyncKeyState(VK_MENU) & 0x8000)
-        mods |= GLFW_MOD_ALT;
-    if ((GetAsyncKeyState(VK_LWIN) | GetAsyncKeyState(VK_RWIN)) & 0x8000)
-        mods |= GLFW_MOD_SUPER;
-    if (GetAsyncKeyState(VK_CAPITAL) & 1)
-        mods |= GLFW_MOD_CAPS_LOCK;
-    if (GetAsyncKeyState(VK_NUMLOCK) & 1)
-        mods |= GLFW_MOD_NUM_LOCK;
-
-    return mods;
-}
-
-// Translates a Windows key to the corresponding GLFW key
-//
-static int translateKey(WPARAM wParam, LPARAM lParam)
-{
-    // The Ctrl keys require special handling
-    if (wParam == VK_CONTROL)
-    {
-        MSG next;
-        DWORD time;
-
-        // Right side keys have the extended key bit set
-        if (HIWORD(lParam) & KF_EXTENDED)
-            return GLFW_KEY_RIGHT_CONTROL;
-
-        // HACK: Alt Gr sends Left Ctrl and then Right Alt in close sequence
-        //       We only want the Right Alt message, so if the next message is
-        //       Right Alt we ignore this (synthetic) Left Ctrl message
-        time = GetMessageTime();
-
-        if (PeekMessageW(&next, NULL, 0, 0, PM_NOREMOVE))
-        {
-            if (next.message == WM_KEYDOWN ||
-                next.message == WM_SYSKEYDOWN ||
-                next.message == WM_KEYUP ||
-                next.message == WM_SYSKEYUP)
-            {
-                if (next.wParam == VK_MENU &&
-                    (HIWORD(next.lParam) & KF_EXTENDED) &&
-                    next.time == time)
-                {
-                    // Next message is Right Alt down so discard this
-                    return _GLFW_KEY_INVALID;
-                }
-            }
-        }
-
-        return GLFW_KEY_LEFT_CONTROL;
-    }
-
-    if (wParam == VK_PROCESSKEY)
-    {
-        // IME notifies that keys have been filtered by setting the virtual
-        // key-code to VK_PROCESSKEY
-        return _GLFW_KEY_INVALID;
-    }
-
-    return _glfw.win32.keycodes[HIWORD(lParam) & 0x1FF];
-}
-
 static void fitToMonitor(_GLFWwindow* window)
 {
     MONITORINFO mi = { sizeof(mi) };
@@ -748,13 +675,64 @@ static LRESULT CALLBACK windowProc(HWND hWnd, UINT uMsg,
         case WM_KEYUP:
         case WM_SYSKEYUP:
         {
-            const int key = translateKey(wParam, lParam);
-            const int scancode = (HIWORD(lParam) & 0x1ff);
+            int key, scancode;
             const int action = (HIWORD(lParam) & KF_UP) ? GLFW_RELEASE : GLFW_PRESS;
             const int mods = getKeyMods();
 
-            if (key == _GLFW_KEY_INVALID)
+            scancode = (HIWORD(lParam) & (KF_EXTENDED | 0xff));
+            if (!scancode)
+            {
+                // NOTE: Some synthetic key messages have a scancode of zero
+                // HACK: Map the virtual key back to a usable scancode
+                scancode = MapVirtualKeyW((UINT) wParam, MAPVK_VK_TO_VSC);
+            }
+
+            key = _glfw.win32.keycodes[scancode];
+
+            // The Ctrl keys require special handling
+            if (wParam == VK_CONTROL)
+            {
+                if (HIWORD(lParam) & KF_EXTENDED)
+                {
+                    // Right side keys have the extended key bit set
+                    key = GLFW_KEY_RIGHT_CONTROL;
+                }
+                else
+                {
+                    // NOTE: Alt Gr sends Left Ctrl followed by Right Alt
+                    // HACK: We only want one event for Alt Gr, so if we detect
+                    //       this sequence we discard this Left Ctrl message now
+                    //       and later report Right Alt normally
+                    MSG next;
+                    const DWORD time = GetMessageTime();
+
+                    if (PeekMessageW(&next, NULL, 0, 0, PM_NOREMOVE))
+                    {
+                        if (next.message == WM_KEYDOWN ||
+                            next.message == WM_SYSKEYDOWN ||
+                            next.message == WM_KEYUP ||
+                            next.message == WM_SYSKEYUP)
+                        {
+                            if (next.wParam == VK_MENU &&
+                                (HIWORD(next.lParam) & KF_EXTENDED) &&
+                                next.time == time)
+                            {
+                                // Next message is Right Alt down so discard this
+                                break;
+                            }
+                        }
+                    }
+
+                    // This is a regular Left Ctrl message
+                    key = GLFW_KEY_LEFT_CONTROL;
+                }
+            }
+            else if (wParam == VK_PROCESSKEY)
+            {
+                // IME notifies that keys have been filtered by setting the
+                // virtual key-code to VK_PROCESSKEY
                 break;
+            }
 
             if (action == GLFW_RELEASE && wParam == VK_SHIFT)
             {
@@ -1934,30 +1912,40 @@ void _glfwPlatformPollEvents(void)
         }
     }
 
+    // HACK: Release modifier keys that the system did not emit KEYUP for
+    // NOTE: Shift keys on Windows tend to "stick" when both are pressed as
+    //       no key up message is generated by the first key release
+    // NOTE: Windows key is not reported as released by the Win+V hotkey
+    //       Other Win hotkeys are handled implicitly by _glfwInputWindowFocus
+    //       because they change the input focus
+    // NOTE: The other half of this is in the WM_*KEY* handler in windowProc
     handle = GetActiveWindow();
     if (handle)
     {
-        // NOTE: Shift keys on Windows tend to "stick" when both are pressed as
-        //       no key up message is generated by the first key release
-        //       The other half of this is in the handling of WM_KEYUP
-        // HACK: Query actual key state and synthesize release events as needed
         window = GetPropW(handle, L"GLFW");
         if (window)
         {
-            const GLFWbool lshift = (GetAsyncKeyState(VK_LSHIFT) & 0x8000) != 0;
-            const GLFWbool rshift = (GetAsyncKeyState(VK_RSHIFT) & 0x8000) != 0;
+            int i;
+            const int keys[4][2] =
+            {
+                { VK_LSHIFT, GLFW_KEY_LEFT_SHIFT },
+                { VK_RSHIFT, GLFW_KEY_RIGHT_SHIFT },
+                { VK_LWIN, GLFW_KEY_LEFT_SUPER },
+                { VK_RWIN, GLFW_KEY_RIGHT_SUPER }
+            };
 
-            if (!lshift && window->keys[GLFW_KEY_LEFT_SHIFT] == GLFW_PRESS)
+            for (i = 0;  i < 4;  i++)
             {
-                const int mods = getAsyncKeyMods();
-                const int scancode = _glfw.win32.scancodes[GLFW_KEY_LEFT_SHIFT];
-                _glfwInputKey(window, GLFW_KEY_LEFT_SHIFT, scancode, GLFW_RELEASE, mods);
-            }
-            else if (!rshift && window->keys[GLFW_KEY_RIGHT_SHIFT] == GLFW_PRESS)
-            {
-                const int mods = getAsyncKeyMods();
-                const int scancode = _glfw.win32.scancodes[GLFW_KEY_RIGHT_SHIFT];
-                _glfwInputKey(window, GLFW_KEY_RIGHT_SHIFT, scancode, GLFW_RELEASE, mods);
+                const int vk = keys[i][0];
+                const int key = keys[i][1];
+                const int scancode = _glfw.win32.scancodes[key];
+
+                if ((GetKeyState(vk) & 0x8000))
+                    continue;
+                if (window->keys[key] != GLFW_PRESS)
+                    continue;
+
+                _glfwInputKey(window, key, scancode, GLFW_RELEASE, getKeyMods());
             }
         }
     }
@@ -2039,6 +2027,13 @@ void _glfwPlatformSetCursorMode(_GLFWwindow* window, int mode)
 
 const char* _glfwPlatformGetScancodeName(int scancode)
 {
+    if (scancode < 0 || scancode > (KF_EXTENDED | 0xff) ||
+        _glfw.win32.keycodes[scancode] == GLFW_KEY_UNKNOWN)
+    {
+        _glfwInputError(GLFW_INVALID_VALUE, "Invalid scancode");
+        return NULL;
+    }
+
     return _glfw.win32.keynames[_glfw.win32.keycodes[scancode]];
 }
 

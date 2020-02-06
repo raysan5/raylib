@@ -28,8 +28,6 @@
 #include <dlfcn.h>
 
 #include <Carbon/Carbon.h>
-#include <CoreVideo/CVBase.h>
-#include <CoreVideo/CVDisplayLink.h>
 
 // NOTE: All of NSGL was deprecated in the 10.14 SDK
 //       This disables the pointless warnings for every symbol we use
@@ -63,6 +61,7 @@ typedef void* id;
 #endif
 
 typedef VkFlags VkMacOSSurfaceCreateFlagsMVK;
+typedef VkFlags VkMetalSurfaceCreateFlagsEXT;
 
 typedef struct VkMacOSSurfaceCreateInfoMVK
 {
@@ -72,7 +71,16 @@ typedef struct VkMacOSSurfaceCreateInfoMVK
     const void*                     pView;
 } VkMacOSSurfaceCreateInfoMVK;
 
+typedef struct VkMetalSurfaceCreateInfoEXT
+{
+    VkStructureType                 sType;
+    const void*                     pNext;
+    VkMetalSurfaceCreateFlagsEXT    flags;
+    const void*                     pLayer;
+} VkMetalSurfaceCreateInfoEXT;
+
 typedef VkResult (APIENTRY *PFN_vkCreateMacOSSurfaceMVK)(VkInstance,const VkMacOSSurfaceCreateInfoMVK*,const VkAllocationCallbacks*,VkSurfaceKHR*);
+typedef VkResult (APIENTRY *PFN_vkCreateMetalSurfaceEXT)(VkInstance,const VkMetalSurfaceCreateInfoEXT*,const VkAllocationCallbacks*,VkSurfaceKHR*);
 
 #include "posix_thread.h"
 #include "cocoa_joystick.h"
@@ -170,6 +178,7 @@ typedef struct _GLFWmonitorNS
     CGDisplayModeRef    previousMode;
     uint32_t            unitNumber;
     id                  screen;
+    double              fallbackRefreshRate;
 
 } _GLFWmonitorNS;
 
@@ -197,4 +206,6 @@ void _glfwSetVideoModeNS(_GLFWmonitor* monitor, const GLFWvidmode* desired);
 void _glfwRestoreVideoModeNS(_GLFWmonitor* monitor);
 
 float _glfwTransformYNS(float y);
+
+void* _glfwLoadLocalVulkanLoaderNS(void);
 
