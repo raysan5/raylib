@@ -19,6 +19,11 @@
     #include <emscripten/emscripten.h>
 #endif
 
+GameScreen currentScreen = 0;
+Font font = { 0 };
+Font font2 = { 0 };
+Music music = { 0 };
+Sound fxCoin = { 0 };
 //----------------------------------------------------------------------------------
 // Global Variables Definition (local to this module)
 //----------------------------------------------------------------------------------

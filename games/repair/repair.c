@@ -1,14 +1,14 @@
 /*******************************************************************************************
 *
-*   raylib - Advance Game template
+*   RE_PAIR [GLOBAL GAME JAM 2020]
 *
-*   <Game title>
-*   <Game description>
+*   Let's find your perfect match! 
+*   Ready for dating? Do you need some face tweaks? Choose wisely!
 *
-*   This game has been created using raylib (www.raylib.com)
+*   This game has been created using raylib 3.0 (www.raylib.com)
 *   raylib is licensed under an unmodified zlib/libpng license (View raylib.h for details)
 *
-*   Copyright (c) 2014-2020 Ramon Santamaria (@raysan5)
+*   Copyright (c) 2020 Ramon Santamaria (@raysan5)
 *
 ********************************************************************************************/
 
@@ -28,7 +28,6 @@ Texture2D texNPatch = { 0 };
 NPatchInfo npInfo = { 0 };
 
 Texture2D texHead, texHair, texNose, texMouth, texEyes, texComp;
-Texture2D texMakeup = { 0 };
 
 Character playerBase = { 0 };
 Character datingBase = { 0 };
@@ -70,7 +69,7 @@ int main(void)
 {
     // Initialization (Note windowTitle is unused on Android)
     //---------------------------------------------------------
-    InitWindow(screenWidth, screenHeight, "raylib template - advance game");
+    InitWindow(screenWidth, screenHeight, "RE-PAIR [GGJ2020]");
 
     // Global data loading (assets that must be available in all screens, i.e. fonts)
     InitAudioDevice();
@@ -97,7 +96,6 @@ int main(void)
     texMouth = LoadTexture("resources/mouth_models.png");
     texEyes = LoadTexture("resources/eyes_models.png");
     //texComp = LoadTexture("resources/comp_models.png");
-    texMakeup = LoadTexture("resources/makeup.png");
     
     SetMusicVolume(music, 0.5f);
     //PlayMusicStream(music);
@@ -145,7 +143,6 @@ int main(void)
     UnloadTexture(texMouth);
     UnloadTexture(texEyes);
     //UnloadTexture(texComp);
-    UnloadTexture(texMakeup);
 
     CloseAudioDevice();     // Close audio context
     
@@ -217,7 +214,7 @@ bool GuiButton(Rectangle bounds, const char *text, int forcedState)
             if (IsMouseButtonDown(MOUSE_LEFT_BUTTON)) state = 2;    // PRESSED
             else state = 1;                                         // FOCUSED
 
-            if (IsMouseButtonReleased(MOUSE_LEFT_BUTTON))
+            if (IsMouseButtonReleased(MOUSE_LEFT_BUTTON) || IsGestureDetected(GESTURE_TAP))
             {
                 pressed = true;
                 PlaySound(fxCoin);

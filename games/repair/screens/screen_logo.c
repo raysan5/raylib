@@ -4,7 +4,7 @@
 *
 *   Logo Screen Functions Definitions (Init, Update, Draw, Unload)
 *
-*   Copyright (c) 2014-2019 Ramon Santamaria (@raysan5)
+*   Copyright (c) 2014-2020 Ramon Santamaria (@raysan5)
 *
 *   This software is provided "as-is", without any express or implied warranty. In no event
 *   will the authors be held liable for any damages arising from the use of this software.
@@ -47,9 +47,9 @@ static int leftSideRecHeight = 0;
 static int bottomSideRecWidth = 0;
 static int rightSideRecHeight = 0;
 
-static char raylib[8] = { 0 };  // raylib text array, max 8 letters
-static int state = 0;           // Tracking animation states (State Machine)
-static float alpha = 1.0f;      // Useful for fading
+static char raylib[8] = { 0 };     // raylib text array, max 8 letters
+static int state = 0;              // Tracking animation states (State Machine)
+static float alpha = 1.0f;         // Useful for fading
 
 //----------------------------------------------------------------------------------
 // Logo Screen Functions Definition
