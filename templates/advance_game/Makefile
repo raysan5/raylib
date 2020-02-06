@@ -25,8 +25,8 @@
 
 # Define required raylib variables
 PROJECT_NAME       ?= advance_game
-RAYLIB_VERSION     ?= 2.5.0
-RAYLIB_API_VERSION ?= 2
+RAYLIB_VERSION     ?= 3.0.0
+RAYLIB_API_VERSION ?= 3
 RAYLIB_PATH        ?= ../..
 
 # Define default options
@@ -164,7 +164,7 @@ ifeq ($(PLATFORM),PLATFORM_RPI)
 endif
 ifeq ($(PLATFORM),PLATFORM_WEB)
     # HTML5 emscripten compiler
-    # WARNING: To compile to HTML5, code must be redesigned 
+    # WARNING: To compile to HTML5, code must be redesigned
     # to use emscripten.h and emscripten_set_main_loop()
     CC = emcc
 endif
@@ -208,7 +208,10 @@ ifeq ($(PLATFORM),PLATFORM_DESKTOP)
     ifeq ($(PLATFORM_OS),WINDOWS)
         # resource file contains windows executable icon and properties
         # -Wl,--subsystem,windows hides the console window
-        CFLAGS += $(RAYLIB_PATH)/src/raylib.rc.data -Wl,--subsystem,windows
+        CFLAGS += $(RAYLIB_PATH)/src/raylib.rc.data 
+        ifeq ($(BUILD_MODE), RELEASE)
+            CFLAGS += -Wl,--subsystem,windows
+        endif
     endif
     ifeq ($(PLATFORM_OS),LINUX)
         ifeq ($(RAYLIB_LIBTYPE),STATIC)
@@ -238,7 +241,7 @@ ifeq ($(PLATFORM),PLATFORM_WEB)
     # --profiling                # include information for code profiling
     # --memory-init-file 0       # to avoid an external memory initialization code file (.mem)
     # --preload-file resources   # specify a resources folder for data compilation
-    CFLAGS += -s USE_GLFW=3 -s TOTAL_MEMORY=16777216 --preload-file resources
+    CFLAGS += -s USE_GLFW=3 -s TOTAL_MEMORY=67108864 --preload-file resources
 
     # Define a custom shell .html and output extension
     CFLAGS += --shell-file $(RAYLIB_PATH)/src/shell.html

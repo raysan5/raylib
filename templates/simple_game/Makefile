@@ -25,8 +25,8 @@
 
 # Define required raylib variables
 PROJECT_NAME       ?= simple_game
-RAYLIB_VERSION     ?= 2.5.0
-RAYLIB_API_VERSION ?= 2
+RAYLIB_VERSION     ?= 3.0.0
+RAYLIB_API_VERSION ?= 3
 RAYLIB_PATH        ?= ../..
 
 # Define default options
@@ -164,7 +164,7 @@ ifeq ($(PLATFORM),PLATFORM_RPI)
 endif
 ifeq ($(PLATFORM),PLATFORM_WEB)
     # HTML5 emscripten compiler
-    # WARNING: To compile to HTML5, code must be redesigned 
+    # WARNING: To compile to HTML5, code must be redesigned
     # to use emscripten.h and emscripten_set_main_loop()
     CC = emcc
 endif
@@ -239,6 +239,11 @@ ifeq ($(PLATFORM),PLATFORM_WEB)
     # --memory-init-file 0       # to avoid an external memory initialization code file (.mem)
     # --preload-file resources   # specify a resources folder for data compilation
     CFLAGS += -s USE_GLFW=3 -s TOTAL_MEMORY=16777216 -s EMTERPRETIFY=1 -s EMTERPRETIFY_ASYNC=1
+
+    # NOTE: Simple raylib examples are compiled to be interpreter by emterpreter, that way,
+    # we can compile same code for ALL platforms with no change required, but, working on bigger
+    # projects, code needs to be refactored to avoid a blocking while() loop, moving Update and Draw
+    # logic to a self contained function: UpdateDrawFrame(), check core_basic_window_web.c for reference.
 
     # Define a custom shell .html and output extension
     CFLAGS += --shell-file $(RAYLIB_PATH)/src/shell.html
