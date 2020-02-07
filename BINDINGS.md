@@ -1,4 +1,4 @@
-### raylib bindings
+## raylib bindings
 
 Some people ported raylib to other languages in form of bindings or wrappers to the library, here is a list with the ones I'm aware of:
 
