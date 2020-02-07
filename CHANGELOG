@@ -104,7 +104,7 @@ Detailed changes:
 [text] REDESIGNED: ImageTextEx(), to avoid font retrieval from GPU
 [models] ADDED: Support rlPushMatrix() and rlPopMatrix() on mesh drawing
 [models] ADDED: DrawPoint3D() - Draw a point in 3D space, actually a small line, by @ProfJski
-[models] ADDED: Multi texture support for materials in GLTF format, by @Gamerfiend
+[models] ADDED: Multi texture support for materials in GLTF format, by @Gamerfiend, @chriscamacho
 [models] REVIEWED: LoadGLTF(), fixed memory leak, by @jubalh
 [models] REVIEWED: LoadIQM(), support multiple animations loading, by @culacant
 [models] REVIEWED: GetCollisionRayModel(), to avoid pointers
