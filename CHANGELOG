@@ -1,7 +1,152 @@
 changelog
 ---------
 
-Current Release:    raylib 2.5.0 (31 May 2019)
+Current Release:    raylib 3.0.0 (Feb.2020) -WIP-
+
+-----------------------------------------------
+Release:     raylib 3.0 (Feb 2020)
+-----------------------------------------------
+KEY CHANGES:
+ - Global context states...
+ - Custom memory allocators...
+ - Structures review...
+ - raudio module review...
+ - text/fonts review...
+ - examples addition, readme table...
+ - GitHub Actions CI
+ 
+Detailed changes:
+[build] ADDED: VS2017.ANGLE project, by @msmshazan
+[build] ADDED: VS2017 project support for x64 platform configuration
+[build] ADDED: Makefile for Android building on macOS, by @Yunoinsky
+[build] ADDED: Makefile for Android building on Linux, by @pamarcos
+[build] REMOVED: VS2015 project
+[build] REVIEWED: VSCode project
+[build] REVIEWED: Makefile build system
+[build] REVIEWED: Android building, by @NimbusFox
+[build] REVIEWED: Compilation with CLion IDE, by @Rover656
+[build] REVIEWED: Generation of web examples, by @pamarcos
+[build] REVIEWED: Makefiles path to 'shell.html', by @niorad
+[build] REVIEWED: Multiple fixes on projkects building, by @ChrisDill, @JuDelCo, @electronstudio
+[core] ADDED: Support touch/mouse indistinctly
+[core] ADDED: FLAG_WINDOW_ALWAYS_RUN to avoid pause on minimize
+[core] ADDED: Config flag SUPPORT_HALFBUSY_WAIT_LOOP
+[core] ADDED: RPI mouse cursor point support on native mode
+[core] ADDED: BeginScissorMode() - Define screen area for following drawing
+[core] ADDED: EndScissorMode() - End scissor mode
+[core] ADDED: GetWorldToScreen2D()- Get screen space position for a 2d camera world space position, by @arvyy
+[core] ADDED: GetScreenToWorld2D() - Get world space position for a 2d camera screen space position, by @arvyy
+[core] ADDED: GetWorldToScreenEx() - Get size position for a 3d world space position
+[core] ADDED: DirectoryExists() - Check if a directory path exists
+[core] ADDED: GetPrevDirectoryPath() - Get previous directory path for a given path
+[core] ADDED: CompressData() - Compress data (DEFLATE algorythm)
+[core] ADDED: DecompressData() - Decompress data (DEFLATE algorythm)
+[core] ADDED: GetWindowPosition() - Get window position XY on monitor
+[core] REMOVED: Show raylib logo at initialization
+[core] REVIEWED: GetFileName(), security checks
+[core] REVIEWED: IsMouseButtonReleased(), when press/release events come too fast, by @oswjk
+[core] REVIEWED: SetWindowMonitor(), by @DropsOfSerenity
+[core] REVIEWED: IsFileExtension() to be case-insensitive
+[core] REVIEWED: IsFileExtension() when checking no-extension files
+[core] REVIEWED: Default font scale filter for HighDPI mode
+[core] REVIEWED: Touch input scaling for PLATFORM_WEB
+[core] REVIEWED: RPI input system, by @DarkElvenAngel
+[core] REVIEWED: RPI input threads issues
+[core] REVIEWED: OpenGL extensions loading and freeing
+[core] REVIEWED: GetDirectoryPath()
+[core] REVIEWED: Camera2D behavior, by @arvyy
+[core] REVIEWED: OpenGL ES 2.0 extensions check
+[rlgl] ADDED: Flags to allow frustrum culling near/far distance configuration at compile time
+[rlgl] ADDED: Flags to sllow MAX_BATCH_BUFFERING config at compile time
+[rlgl] ADDED: GetMatrixProjection(), by @chriscamacho
+[rlgl] ADDED: rlUpdateMeshAt() - Update vertex or index data on GPU, at index, by @brankoku
+[rlgl] REVIEWED: Vertex padding not zeroed for quads, by @kawa-yoiko
+[rlgl] REVIEWED: Read texture data as RGBA from FBO on GLES 2.0
+[rlgl] REVIEWED: LoadShaderCode() for const correctness, by @heretique
+[rlgl] REVIEWED: rlLoadTexture()
+[rlgl] REVIEWED: rlReadTexturePixels()
+[rlgl] REVIEWED: rlUpdateMesh() to supports updating indices, by @brankoku
+[rlgl] REVIEWED: GenTextureCubemap(), renamed parameters for consistency
+[rlgl] REVIEWED: HDR pixels loading
+[raymath] ADDED: MatrixRotateXYZ(), by @chriscamacho
+[raymath] RENAMED: Vector3Multiply() to Vector3Scale()
+[camera] REVIEWED: Free camera pitch, by @chriscamacho
+[camera] REVIEWED: Camera not working properly at z-align, by @Ushio
+[shapes] ADDED: DrawTriangleStrip() - Draw a triangle strip defined by points
+[shapes] ADDED: DrawEllipse() - Draw ellipse
+[shapes] ADDED: DrawEllipseLines() - Draw ellipse outline
+[shapes] ADDED: DrawPolyLines() - Draw a polygon outline of n sides
+[shapes] REVIEWED: DrawPoly() shape rendering, by @AlexHCC
+[textures] ADDED: LoadAnimatedGIF() - Load animated GIF file
+[textures] ADDED: GetImageAlphaBorder() - Get image alpha border rectangle
+[textures] ADDED: ImageFromImage() - Create an image from another image piece
+[textures] REVIEWED: ImageDraw(), now it supports color tint parameter
+[textures] REVIEWED: ImageResizeCanvas()
+[textures] REVIEWED: ImageCrop() with security checks
+[textures] REVIEWED: ImageAlphaMask()
+[textures] REVIEWED: ImageDrawRectangleLines()
+[textures] REVIEWED: GetImageData()
+[text] ADDED: TextCopy() - Copy one string to another, returns bytes copied
+[text] ADDED: GetCodepoints() - Get all codepoints in a string
+[text] ADDED: CodepointToUtf8() - Encode codepoint into utf8 text
+[text] ADDED: DrawTextCodepoint() - Draw one character (codepoint)
+[text] RENAMED: LoadDefaultFont() -> LoadFontDefault()
+[text] RENAMED: TextCountCodepoints() -> GetCodepointsCount()
+[text] REVIEWED: TextFormat(), to support caching, by @brankoku
+[text] REVIEWED: LoadFontData(), generate empty image for space character
+[text] REVIEWED: TextSplit()
+[text] REVIEWED: TextToInteger()
+[text] REVIEWED: GetNextCodepoint(), renamed parameters for clarity
+[text] REVIEWED: GenImageFontAtlas(), improved atlas size computing
+[text] REDESIGNED: struct Font, character rectangles have been moved out from CharInfo to Font
+[text] REDESIGNED: struct CharInfo, now includes directly an Image of the glyph
+[text] REDESIGNED: GenImageFontAtlas(), additional recs parameter added
+[text] REDESIGNED: ImageTextEx(), to avoid font retrieval from GPU
+[models] ADDED: Support rlPushMatrix() and rlPopMatrix() on mesh drawing
+[models] ADDED: DrawPoint3D() - Draw a point in 3D space, actually a small line, by @ProfJski
+[models] ADDED: Multi texture support for materials in GLTF format, by @Gamerfiend
+[models] REVIEWED: LoadGLTF(), fixed memory leak, by @jubalh
+[models] REVIEWED: LoadIQM(), support multiple animations loading, by @culacant
+[models] REVIEWED: GetCollisionRayModel(), to avoid pointers
+[models] REVIEWED: CheckCollisionRay*(), parameters renamed
+[models] REVIEWED: UnloadMesh(), to avoid pointers
+[models] REVIEWED: LoadModel(), memory initialization
+[models] REVIEWED: UpdateModelAnimation(), added security checks
+[models] REVIEWED: Multiple fixes on models loading, by @jubalh
+[models] REVIEWED: Normals updated when using animated meshes, by @@las3rlars
+[models] REVIEWED: Compilation when the SUPPORT_MESH_GENERATION not set, by @@Elkantor
+[raudio] ADDED: Multi-channel audio playing, by @chriscamacho
+[raudio] REMOVED: LoadWaveEx()
+[raudio] RENAMED: IsAudioBufferProcessed() to IsAudioStreamProcessed()
+[raudio] REVIEWED: Ensure .xm playback starts in the right place, by @illegalinstruction
+[raudio] REVIEWED: Fix short non-looping sounds, by @jbosh
+[raudio] REVIEWED: Modules playing time to full length
+[raudio] REDESIGNED: Replaced Music pointer by struct
+[raudio] REDESIGNED: Removed sampleLeft from Music struct
+[examples] ADDED: core_scissor_test, by @ChrisDill
+[examples] ADDED: core_2d_camera_platformer, by @arvyy
+[examples] ADDED: textures_mouse_painting, by @ChrisDill
+[examples] ADDED: models_waving_cubes, by @codecat
+[examples] ADDED: models_solar_system, by @aldrinmartoq
+[examples] ADDED: shaders_fog, by @chriscamacho
+[examples] ADDED: shaders_texture_waves, by @Anata
+[examples] ADDED: shaders_basic_lighting, by @chriscamacho
+[examples] ADDED: shaders_simple_mask, by @chriscamacho
+[examples] ADDED: audio_multichannel_sound, by @chriscamacho
+[examples] RENAMED: text_sprite_font > text_font_spritefont
+[examples] RENAMED: text_ttf_loading > text_font_filters
+[examples] RENAMED: text_bmfont_ttf > text_font_loading
+[examples] REMOVED: models_obj_viewer
+[examples] REMOVED: models_solar_system
+[examples] REVIEWED: models_obj_loading > models_loading
+[examples] REVIEWED: models_materials_pbr, shader issues
+[examples] REVIEWED: core_window_letterbox, detailed explanation, by @jotac0
+[games] ADDED: GGJ2020 game - RE-PAIR
+[*] Misc fixes and tweaks, by @yaram, @oraoto, @zatherz, @piecedigital, @Shylie
+[*] Update ALL supported projects (Notepad++, VS2017)
+[*] Update ALL external libraries to latest versions (29.Jan.2020)
+[*] Update ALL examples and games
+[*] Update BINDINGS list
 
 -----------------------------------------------
 Release:     raylib 2.5 (May 2019)
