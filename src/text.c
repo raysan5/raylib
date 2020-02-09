@@ -1404,7 +1404,7 @@ const char *TextToPascal(const char *text)
 {
     static char buffer[MAX_TEXT_BUFFER_LENGTH] = { 0 };
 
-    buffer[0] = (char)TextToUpper(text[0]);
+    buffer[0] = (char)toupper(text[0]);
 
     for (int i = 1, j = 1; i < MAX_TEXT_BUFFER_LENGTH; i++, j++)
     {
@@ -1414,7 +1414,7 @@ const char *TextToPascal(const char *text)
             else
             {
                 j++;
-                buffer[i] = (char)TextToUpper(text[j]);
+                buffer[i] = (char)toupper(text[j]);
             }
         }
         else { buffer[i] = '\0'; break; }
