@@ -1655,6 +1655,7 @@ Mesh GenMeshCylinder(float radius, float height, int slices)
     par_shapes_mesh *cylinder = par_shapes_create_cylinder(slices, 8);
     par_shapes_scale(cylinder, radius, radius, height);
     par_shapes_rotate(cylinder, -PI/2.0f, (float[]){ 1, 0, 0 });
+    par_shapes_rotate(cylinder, PI/2.0f, (float[]){ 0, 1, 0});
 
     // Generate an orientable disk shape (top cap)
     par_shapes_mesh *capTop = par_shapes_create_disk(radius, slices, (float[]){ 0, 0, 0 }, (float[]){ 0, 0, 1 });
