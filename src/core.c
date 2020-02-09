@@ -151,13 +151,13 @@
     #define SUPPORT_HIGH_DPI    // Force HighDPI support on macOS
 #endif
 
-#include <stdlib.h>         // Required for: srand(), rand(), atexit()
-#include <stdio.h>          // Required for: FILE, fopen(), fseek(), fread(), fwrite(), fclose() [Used in StorageSaveValue()/StorageLoadValue()]
-#include <string.h>         // Required for: strrchr(), strcmp(), strlen()
-#include <time.h>           // Required for: time() - Android/RPI hi-res timer (NOTE: Linux only!)
-#include <math.h>           // Required for: tan() [Used in BeginMode3D()]
+#include <stdlib.h>             // Required for: srand(), rand(), atexit()
+#include <stdio.h>              // Required for: FILE, fopen(), fseek(), fread(), fwrite(), fclose() [Used in StorageSaveValue()/StorageLoadValue()]
+#include <string.h>             // Required for: strrchr(), strcmp(), strlen()
+#include <time.h>               // Required for: time() [Used in InitTimer()]
+#include <math.h>               // Required for: tan() [Used in BeginMode3D()]
 
-#include <sys/stat.h>       // Required for stat() [Used in GetLastWriteTime()]
+#include <sys/stat.h>           // Required for: stat() [Used in GetFileModTime()]
 
 #if (defined(PLATFORM_DESKTOP) || defined(PLATFORM_UWP)) && defined(_WIN32) && (defined(_MSC_VER) || defined(__TINYC__))
     #include "external/dirent.h"    // Required for: DIR, opendir(), closedir() [Used in GetDirectoryFiles()]
@@ -171,7 +171,7 @@
     #define CHDIR _chdir
     #include <io.h>                 // Required for _access() [Used in FileExists()]
 #else
-    #include "unistd.h"             // Required for: getch(), chdir() (POSIX), access()
+    #include <unistd.h>             // Required for: getch(), chdir() (POSIX), access()
     #define GETCWD getcwd
     #define CHDIR chdir
 #endif
@@ -209,8 +209,7 @@
 #endif
 
 #if defined(__linux__)
-    #include <linux/limits.h>               // for NAME_MAX and PATH_MAX defines
-    #define MAX_FILEPATH_LENGTH PATH_MAX    // Use Linux define (4096)
+    #define MAX_FILEPATH_LENGTH    4096     // Use Linux PATH_MAX value
 #else
     #define MAX_FILEPATH_LENGTH     512     // Use common value
 #endif
@@ -228,7 +227,7 @@
     #include <fcntl.h>          // POSIX file control definitions - open(), creat(), fcntl()
     #include <unistd.h>         // POSIX standard function definitions - read(), close(), STDIN_FILENO
     #include <termios.h>        // POSIX terminal control definitions - tcgetattr(), tcsetattr()
-    #include <pthread.h>        // POSIX threads management (mouse input)
+    #include <pthread.h>        // POSIX threads management (inputs reading)
     #include <dirent.h>         // POSIX directory browsing
 
     #include <sys/ioctl.h>      // UNIX System call for device-specific input/output operations - ioctl()
