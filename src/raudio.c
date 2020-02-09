@@ -1841,9 +1841,9 @@ static Wave LoadWAV(const char *fileName)
         int subChunkSize;
     } WAVData;
 
-    WAVRiffHeader wavRiffHeader;
-    WAVFormat wavFormat;
-    WAVData wavData;
+    WAVRiffHeader wavRiffHeader = { 0 };
+    WAVFormat wavFormat = { 0 };
+    WAVData wavData = { 0 };
 
     Wave wave = { 0 };
     FILE *wavFile = NULL;
@@ -1870,7 +1870,7 @@ static Wave LoadWAV(const char *fileName)
             (wavRiffHeader.format[2] != 'V') ||
             (wavRiffHeader.format[3] != 'E'))
         {
-                TRACELOG(LOG_WARNING, "[%s] Invalid RIFF or WAVE Header", fileName);
+            TRACELOG(LOG_WARNING, "[%s] Invalid RIFF or WAVE Header", fileName);
         }
         else
         {
@@ -2045,8 +2045,7 @@ static Wave LoadOGG(const char *fileName)
 
         // NOTE: Returns the number of samples to process (be careful! we ask for number of shorts!)
         //int numSamplesOgg = stb_vorbis_get_samples_short_interleaved(oggFile, info.channels, (short *)wave.data, wave.sampleCount*wave.channels);
-
-        TRACELOGD("[%s] Samples obtained: %i", fileName, numSamplesOgg);
+        //TRACELOGD("[%s] Samples obtained: %i", fileName, numSamplesOgg);
 
         TRACELOG(LOG_INFO, "[%s] OGG file loaded successfully (%i Hz, %i bit, %s)", fileName, wave.sampleRate, wave.sampleSize, (wave.channels == 1)? "Mono" : "Stereo");
 
