@@ -67,7 +67,6 @@
 // Support VR simulation functionality (stereo rendering)
 #define SUPPORT_VR_SIMULATOR        1
 
-
 //------------------------------------------------------------------------------------
 // Module: shapes - Configuration Flags
 //------------------------------------------------------------------------------------
@@ -94,7 +93,6 @@
 //#define SUPPORT_FILEFORMAT_ASTC   1
 //#define SUPPORT_FILEFORMAT_PKM    1
 //#define SUPPORT_FILEFORMAT_PVR    1
-
 // Support image export functionality (.png, .bmp, .tga, .jpg)
 #define SUPPORT_IMAGE_EXPORT        1
 // Support multiple image editing functions to scale, adjust colors, flip, draw on images, crop...
@@ -102,7 +100,6 @@
 #define SUPPORT_IMAGE_MANIPULATION  1
 // Support procedural image generation functionality (gradient, spot, perlin-noise, cellular)
 #define SUPPORT_IMAGE_GENERATION    1
-
 
 //------------------------------------------------------------------------------------
 // Module: text - Configuration Flags
@@ -113,7 +110,6 @@
 // Selected desired font fileformats to be supported for loading
 #define SUPPORT_FILEFORMAT_FNT      1
 #define SUPPORT_FILEFORMAT_TTF      1
-
 
 //------------------------------------------------------------------------------------
 // Module: models - Configuration Flags
@@ -127,7 +123,6 @@
 // NOTE: Some generated meshes DO NOT include generated texture coordinates
 #define SUPPORT_MESH_GENERATION     1
 
-
 //------------------------------------------------------------------------------------
 // Module: audio - Configuration Flags
 //------------------------------------------------------------------------------------
@@ -139,7 +134,6 @@
 #define SUPPORT_FILEFORMAT_FLAC     1
 #define SUPPORT_FILEFORMAT_MP3      1
 
-
 //------------------------------------------------------------------------------------
 // Module: utils - Configuration Flags
 //------------------------------------------------------------------------------------
@@ -147,6 +141,5 @@
 // NOTE: By default LOG_DEBUG traces not shown
 #define SUPPORT_TRACELOG            1
 //#define SUPPORT_TRACELOG_DEBUG      1
-
 
 #endif  //defined(RAYLIB_CMAKE)
