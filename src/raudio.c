@@ -2064,7 +2064,7 @@ static Wave LoadFLAC(const char *fileName)
     Wave wave;
 
     // Decode an entire FLAC file in one go
-    uint64_t totalSampleCount;
+    unsigned long long int totalSampleCount;
     wave.data = drflac_open_file_and_read_pcm_frames_s16(fileName, &wave.channels, &wave.sampleRate, &totalSampleCount);
 
     wave.sampleCount = (unsigned int)totalSampleCount;
@@ -2088,7 +2088,7 @@ static Wave LoadMP3(const char *fileName)
     Wave wave = { 0 };
 
     // Decode an entire MP3 file in one go
-    uint64_t totalFrameCount = 0;
+    unsigned long long int totalFrameCount = 0;
     drmp3_config config = { 0 };
     wave.data = drmp3_open_file_and_read_f32(fileName, &config, &totalFrameCount);
 
