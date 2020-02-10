@@ -410,7 +410,7 @@ void InitAudioDevice(void)
     TRACELOG(LOG_INFO, "Audio format: %s -> %s", ma_get_format_name(AUDIO.System.device.playback.format), ma_get_format_name(AUDIO.System.device.playback.internalFormat));
     TRACELOG(LOG_INFO, "Audio channels: %d -> %d", AUDIO.System.device.playback.channels, AUDIO.System.device.playback.internalChannels);
     TRACELOG(LOG_INFO, "Audio sample rate: %d -> %d", AUDIO.System.device.sampleRate, AUDIO.System.device.playback.internalSampleRate);
-    TRACELOG(LOG_INFO, "Audio buffer size: %d", AUDIO.System.device.playback.internalBufferSizeInFrames);
+    TRACELOG(LOG_INFO, "Audio buffer size: %d", AUDIO.System.device.playback.internalPeriodSizeInFrames);
 
     InitAudioBufferPool();
     TRACELOG(LOG_INFO, "Audio multichannel pool size: %i", MAX_AUDIO_BUFFER_POOL_CHANNELS);
@@ -1406,7 +1406,7 @@ AudioStream InitAudioStream(unsigned int sampleRate, unsigned int sampleSize, un
     ma_format formatIn = ((stream.sampleSize == 8)? ma_format_u8 : ((stream.sampleSize == 16)? ma_format_s16 : ma_format_f32));
 
     // The size of a streaming buffer must be at least double the size of a period
-    unsigned int periodSize = AUDIO.System.device.playback.internalBufferSizeInFrames/AUDIO.System.device.playback.internalPeriods;
+    unsigned int periodSize = AUDIO.System.device.playback.internalPeriodSizeInFrames/AUDIO.System.device.playback.internalPeriods;
     unsigned int subBufferSize = AUDIO_BUFFER_SIZE;
 
     if (subBufferSize < periodSize) subBufferSize = periodSize;
