@@ -59,7 +59,7 @@ using namespace Windows::Graphics::Display;
 using namespace Microsoft::WRL;
 using namespace Platform;
 
-extern "C" { EGLNativeWindowType uwpWindow; };
+extern "C" { EGLNativeWindowType handle; };
 
 /*
 TODO list:
@@ -117,7 +117,7 @@ public:
 
         // The CoreWindow has been created, so EGL can be initialized.
 
-        uwpWindow = (EGLNativeWindowType)window;
+        handle = (EGLNativeWindowType)window;
 
         InitWindow(width, height, NULL);
     }

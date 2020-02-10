@@ -57,9 +57,9 @@ void App::Update()
     //----------------------------------------------------------------------------------
 	BeginDrawing();
 	
-		ClearBackground(RAYWHITE);
+		ClearBackground(RED);
 
-		DrawRectangle(posX, posY, 400, 100, RED);
+		DrawRectangle(posX, posY, 400, 100, WHITE);
 
 		DrawLine(0, 0, GetScreenWidth(), GetScreenHeight(), BLUE);
 

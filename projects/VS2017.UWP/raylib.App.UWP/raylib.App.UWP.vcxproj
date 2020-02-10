@@ -64,7 +64,7 @@
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Platform)'=='ARM'">
     <Link>
-      <AdditionalDependencies>mincore.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>mincore.lib;winmm.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <AdditionalLibraryDirectories>%(AdditionalLibraryDirectories);$(VCInstallDir)\lib\store\arm;$(VCInstallDir)\lib\arm;$(SolutionDir)\raylib\Debug</AdditionalLibraryDirectories>
     </Link>
   </ItemDefinitionGroup>
