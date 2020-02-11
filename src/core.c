@@ -1964,17 +1964,22 @@ const char *GetDirectoryPath(const char *filePath)
     static char dirPath[MAX_FILEPATH_LENGTH];
     memset(dirPath, 0, MAX_FILEPATH_LENGTH);
 
-    // For security, we set starting path to current directory,
-    // obtained path will be concated to this
-    //dirPath[0] = '.';
-    //dirPath[1] = '/';
+    // In case provided path does not contains a root drive letter (C:\, D:\),
+    // we add the current directory path to dirPath
+    if (filePath[1] != ':')
+    {
+        // For security, we set starting path to current directory,
+        // obtained path will be concated to this
+        dirPath[0] = '.';
+        dirPath[1] = '/';
+    }
 
     lastSlash = strprbrk(filePath, "\\/");
     if (lastSlash)
     {
         // NOTE: Be careful, strncpy() is not safe, it does not care about '\0'
-        strncpy(dirPath, filePath, strlen(filePath) - (strlen(lastSlash) - 1));
-        dirPath[strlen(filePath) - strlen(lastSlash)] = '\0';  // Add '\0' manually
+        strncpy(dirPath + ((filePath[1] != ':')? 2 : 0), filePath, strlen(filePath) - (strlen(lastSlash) - 1));
+        dirPath[strlen(filePath) - strlen(lastSlash) + ((filePath[1] != ':')? 2 : 0)] = '\0';  // Add '\0' manually
     }
 
     return dirPath;
