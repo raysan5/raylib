@@ -953,8 +953,6 @@ void ImageToPOT(Image *image, Color fillColor)
     // Security check to avoid program crash
     if ((image->data == NULL) || (image->width == 0) || (image->height == 0)) return;
 
-    Color *pixels = GetImageData(*image);   // Get pixels data
-
     // Calculate next power-of-two values
     // NOTE: Just add the required amount of pixels at the right and bottom sides of image...
     int potWidth = (int)powf(2, ceilf(logf((float)image->width)/logf(2)));
@@ -963,6 +961,7 @@ void ImageToPOT(Image *image, Color fillColor)
     // Check if POT texture generation is required (if texture is not already POT)
     if ((potWidth != image->width) || (potHeight != image->height))
     {
+        Color *pixels = GetImageData(*image);   // Get pixels data
         Color *pixelsPOT = NULL;
 
         // Generate POT array from NPOT data
@@ -1239,6 +1238,7 @@ void ImageAlphaClear(Image *image, Color color, float threshold)
     *image = LoadImageEx(pixels, image->width, image->height);
 
     ImageFormat(image, prevFormat);
+    RL_FREE(pixels);
 }
 
 // Premultiply alpha channel
@@ -1264,6 +1264,7 @@ void ImageAlphaPremultiply(Image *image)
     *image = LoadImageEx(pixels, image->width, image->height);
 
     ImageFormat(image, prevFormat);
+    RL_FREE(pixels);
 }
 
 #if defined(SUPPORT_IMAGE_MANIPULATION)

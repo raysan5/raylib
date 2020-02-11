@@ -113,6 +113,10 @@ docs/examples/web/*/*.html
 !docs/examples/web/shaders/loader.html
 !docs/examples/web/models/loader.html
 
+# Jetbrains project
+.idea/
+cmake-build-debug/
+
 # CMake stuff
 CMakeCache.txt
 CMakeFiles
