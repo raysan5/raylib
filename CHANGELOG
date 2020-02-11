@@ -7,13 +7,13 @@ Current Release:    raylib 3.0.0 (Feb.2020) -WIP-
 Release:     raylib 3.0 (Feb 2020)
 -----------------------------------------------
 KEY CHANGES:
- - Global context states...
- - Custom memory allocators...
- - Structures review...
- - raudio module review...
- - text/fonts review...
- - examples addition, readme table...
- - GitHub Actions CI
+ - Global context states used on all modules. 
+ - Custom memory allocators for all modules and dependencies.
+ - Structures reviewed to reduce size and always used as pass-by-value.
+ - raudio module reviewed to accomodate new Music struct and new miniaudio.
+ - text module reviewed to improve fonts generation and text management functions.
+ - examples addition, multiple new examples and categorized examples table.
+ - GitHub Actions CI implemented for Windows, Linux and macOS.
  
 Detailed changes:
 [build] ADDED: VS2017.ANGLE project, by @msmshazan
