@@ -1446,7 +1446,7 @@ char *TextToUtf8(int *codepoints, int length)
 {
     // We allocate enough memory fo fit all possible codepoints
     // NOTE: 5 bytes for every codepoint should be enough
-    char *text = (char *)calloc(length*5, 1);
+    char *text = (char *)RL_CALLOC(length*5, 1);
     const char *utf8 = NULL;
     int size = 0;
 
@@ -1458,7 +1458,9 @@ char *TextToUtf8(int *codepoints, int length)
     }
 
     // Resize memory to text length + string NULL terminator
-    text = RL_REALLOC(text, size + 1);
+    void *ptr = RL_REALLOC(text, size + 1);
+    
+    if (ptr != NULL) text = (char *)ptr;
 
     return text;
 }

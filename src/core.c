@@ -3974,7 +3974,7 @@ static void MouseButtonCallback(GLFWwindow *window, int button, int action, int 
 
 #if defined(SUPPORT_GESTURES_SYSTEM) && defined(SUPPORT_MOUSE_GESTURES)
     // Process mouse events as touches to be able to use mouse-gestures
-    GestureEvent gestureEvent;
+    GestureEvent gestureEvent = { 0 };
 
     // Register touch actions
     if (IsMouseButtonPressed(MOUSE_LEFT_BUTTON)) gestureEvent.touchAction = TOUCH_DOWN;
@@ -4005,7 +4005,7 @@ static void MouseCursorPosCallback(GLFWwindow *window, double x, double y)
 {
 #if defined(SUPPORT_GESTURES_SYSTEM) && defined(SUPPORT_MOUSE_GESTURES)
     // Process mouse events as touches to be able to use mouse-gestures
-    GestureEvent gestureEvent;
+    GestureEvent gestureEvent = { 0 };
 
     gestureEvent.touchAction = TOUCH_MOVE;
 
@@ -4273,7 +4273,7 @@ static int32_t AndroidInputCallback(struct android_app *app, AInputEvent *event)
     unsigned int flags = action & AMOTION_EVENT_ACTION_MASK;
 
 #if defined(SUPPORT_GESTURES_SYSTEM)
-    GestureEvent gestureEvent;
+    GestureEvent gestureEvent = { 0 };
 
     // Register touch actions
     if (flags == AMOTION_EVENT_ACTION_DOWN) gestureEvent.touchAction = TOUCH_DOWN;
@@ -4388,7 +4388,7 @@ static EM_BOOL EmscriptenMouseCallback(int eventType, const EmscriptenMouseEvent
 static EM_BOOL EmscriptenTouchCallback(int eventType, const EmscriptenTouchEvent *touchEvent, void *userData)
 {
 #if defined(SUPPORT_GESTURES_SYSTEM)
-    GestureEvent gestureEvent;
+    GestureEvent gestureEvent = { 0 };
 
     // Register touch actions
     if (eventType == EMSCRIPTEN_EVENT_TOUCHSTART) gestureEvent.touchAction = TOUCH_DOWN;

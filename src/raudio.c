@@ -791,10 +791,10 @@ void ExportWaveAsCode(Wave wave, const char *fileName)
 #endif
 
         fprintf(txtFile, "// Wave data information\n");
-        fprintf(txtFile, "#define %s_SAMPLE_COUNT     %i\n", varFileName, wave.sampleCount);
-        fprintf(txtFile, "#define %s_SAMPLE_RATE      %i\n", varFileName, wave.sampleRate);
-        fprintf(txtFile, "#define %s_SAMPLE_SIZE      %i\n", varFileName, wave.sampleSize);
-        fprintf(txtFile, "#define %s_CHANNELS         %i\n\n", varFileName, wave.channels);
+        fprintf(txtFile, "#define %s_SAMPLE_COUNT     %d\n", varFileName, wave.sampleCount);
+        fprintf(txtFile, "#define %s_SAMPLE_RATE      %d\n", varFileName, wave.sampleRate);
+        fprintf(txtFile, "#define %s_SAMPLE_SIZE      %d\n", varFileName, wave.sampleSize);
+        fprintf(txtFile, "#define %s_CHANNELS         %d\n\n", varFileName, wave.channels);
 
         // Write byte data as hexadecimal text
         fprintf(txtFile, "static unsigned char %s_DATA[%i] = { ", varFileName, dataSize);
