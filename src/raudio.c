@@ -429,9 +429,9 @@ void CloseAudioDevice(void)
 
         CloseAudioBufferPool();
 
-        TRACELOG(LOG_INFO, "Audio AUDIO.System.device closed successfully");
+        TRACELOG(LOG_INFO, "Audio device closed successfully");
     }
-    else TRACELOG(LOG_WARNING, "Could not close audio AUDIO.System.device because it is not currently initialized");
+    else TRACELOG(LOG_WARNING, "Could not close audio device because it is not currently initialized");
 }
 
 // Check if device has been initialized successfully
