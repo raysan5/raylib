@@ -316,7 +316,7 @@ typedef struct{
 
 
 typedef struct { int x; int y; } Point;
-typedef struct { int width; int height; } Size;
+typedef struct { unsigned int width; unsigned int height; } Size;
 
 #if defined(PLATFORM_UWP)
 extern EGLNativeWindowType handle;          // Native window handler for UWP (external, defined in UWP App)
@@ -3183,12 +3183,12 @@ static bool InitGraphicsDevice(int width, int height)
     dispmanElement = vc_dispmanx_element_add(dispmanUpdate, dispmanDisplay, 0/*layer*/, &dstRect, 0/*src*/,
                                             &srcRect, DISPMANX_PROTECTION_NONE, &alpha, 0/*clamp*/, DISPMANX_NO_ROTATE);
 
-    window.element = dispmanElement;
-    window.width = CORE.Window.render.width;
-    window.height = CORE.Window.render.height;
+    CORE.Window.handle.element = dispmanElement;
+    CORE.Window.handle.width = CORE.Window.render.width;
+    CORE.Window.handle.height = CORE.Window.render.height;
     vc_dispmanx_update_submit_sync(dispmanUpdate);
 
-    CORE.Window.surface = eglCreateWindowSurface(CORE.Window.device, CORE.Window.config, &window, NULL);
+    CORE.Window.surface = eglCreateWindowSurface(CORE.Window.device, CORE.Window.config, &CORE.Window.handle, NULL);
     //---------------------------------------------------------------------------------
 #endif  // PLATFORM_RPI
 
@@ -3562,7 +3562,7 @@ static void PollInputEvents(void)
     for (int i = 0; i < 3; i++)
     {
         CORE.Input.Mouse.previousButtonState[i] = CORE.Input.Mouse.currentButtonState[i];
-        CORE.Input.Mouse.currentButtonState[i] = currentButtonStateEvdev[i];
+        CORE.Input.Mouse.currentButtonState[i] = CORE.Input.Mouse.currentButtonStateEvdev[i];
     }
 #endif
 
@@ -4660,11 +4660,13 @@ static void InitEvdevInput(void)
         CORE.Input.Touch.position[i].x = -1;
         CORE.Input.Touch.position[i].y = -1;
     }
+    
     // Reset keypress buffer
     CORE.Input.Keyboard.lastKeyPressed.Head = 0;
     CORE.Input.Keyboard.lastKeyPressed.Tail = 0;
+    
     // Reset keyboard key state
-    for (int i = 0; i < 512; i++) CORE.Input.Keyboard.currentKeyStateEvdev[i] = 0;
+    for (int i = 0; i < 512; i++) CORE.Input.Keyboard.currentKeyState[i] = 0;
 
     // Open the linux directory of "/dev/input"
     directory = opendir(DEFAULT_EVDEV_PATH);
@@ -4998,7 +5000,7 @@ static void *EventThread(void *arg)
                 // Mouse button parsing
                 if ((event.code == BTN_TOUCH) || (event.code == BTN_LEFT))
                 {
-                    currentButtonStateEvdev[MOUSE_LEFT_BUTTON] = event.value;
+                    CORE.Input.Mouse.currentButtonStateEvdev[MOUSE_LEFT_BUTTON] = event.value;
 
                     #if defined(SUPPORT_GESTURES_SYSTEM)
                         if (event.value > 0) touchAction = TOUCH_DOWN;
@@ -5007,9 +5009,8 @@ static void *EventThread(void *arg)
                     #endif
                 }
 
-                if (event.code == BTN_RIGHT) currentButtonStateEvdev[MOUSE_RIGHT_BUTTON] = event.value;
-
-                if (event.code == BTN_MIDDLE) currentButtonStateEvdev[MOUSE_MIDDLE_BUTTON] = event.value;
+                if (event.code == BTN_RIGHT) CORE.Input.Mouse.currentButtonStateEvdev[MOUSE_RIGHT_BUTTON] = event.value;
+                if (event.code == BTN_MIDDLE) CORE.Input.Mouse.currentButtonStateEvdev[MOUSE_MIDDLE_BUTTON] = event.value;
 
                 // Keyboard button parsing
                 if ((event.code >= 1) && (event.code <= 255))     //Keyboard keys appear for codes 1 to 255
