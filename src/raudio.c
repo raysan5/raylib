@@ -2044,8 +2044,8 @@ static Wave LoadOGG(const char *fileName)
         wave.data = (short *)RL_MALLOC(wave.sampleCount*wave.channels*sizeof(short));
 
         // NOTE: Returns the number of samples to process (be careful! we ask for number of shorts!)
-        //int numSamplesOgg = stb_vorbis_get_samples_short_interleaved(oggFile, info.channels, (short *)wave.data, wave.sampleCount*wave.channels);
-        //TRACELOGD("[%s] Samples obtained: %i", fileName, numSamplesOgg);
+        int numSamplesOgg = stb_vorbis_get_samples_short_interleaved(oggFile, info.channels, (short *)wave.data, wave.sampleCount*wave.channels);
+        TRACELOGD("[%s] Samples obtained: %i", fileName, numSamplesOgg);
 
         TRACELOG(LOG_INFO, "[%s] OGG file loaded successfully (%i Hz, %i bit, %s)", fileName, wave.sampleRate, wave.sampleSize, (wave.channels == 1)? "Mono" : "Stereo");
 
