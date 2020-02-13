@@ -58,8 +58,8 @@ flexibility by allowing a user data pointer to be passed to the custom allocatio
 `ma_allocation_callbacks` structure. Anything making use of heap allocations has been updated to accept this new structure.
 
 The `ma_context_config` structure has been updated with a new member called `allocationCallbacks`. Leaving this set to it's defaults returned by
-`ma_context_config_init()` will cause it to use defaults. Likewise, The `ma_decoder_config` structure has been updated in the same way, and leaving everything
-as-is after `ma_decoder_config_init()` will cause it to use defaults.
+`ma_context_config_init()` will cause it to use MA_MALLOC, MA_REALLOC and MA_FREE. Likewise, The `ma_decoder_config` structure has been updated in the same
+way, and leaving everything as-is after `ma_decoder_config_init()` will cause it to use the same defaults.
 
 The following APIs have been updated to take a pointer to a `ma_allocation_callbacks` object. Setting this parameter to NULL will cause it to use defaults.
 Otherwise they will use the relevant callback in the structure.
@@ -102,6 +102,8 @@ The following macros have been removed:
 Other API Changes
 -----------------
 Other less major API changes have also been made in version 0.10.
+
+`ma_device_set_stop_callback()` has been removed. You now must set the stop callback via the device config just like the data callback.
 
 `ma_sine_wave_read_f32()` and `ma_sine_wave_read_f32_ex()` have been removed and replaced with `ma_sine_wave_process_pcm_frames()` which supports outputting
 PCM frames in any format (specified by a parameter).
@@ -2513,6 +2515,11 @@ typedef struct
     ma_uint32 maxChannels;
     ma_uint32 minSampleRate;
     ma_uint32 maxSampleRate;
+
+    struct
+    {
+        ma_bool32 isDefault;
+    } _private;
 } ma_device_info;
 
 typedef struct
@@ -3005,8 +3012,8 @@ struct ma_device
     ma_device_type type;
     ma_uint32 sampleRate;
     volatile ma_uint32 state;               /* The state of the device is variable and can change at any time on any thread, so tell the compiler as such with `volatile`. */
-    ma_device_callback_proc onData;
-    ma_stop_proc onStop;
+    ma_device_callback_proc onData;         /* Set once at initialization time and should not be changed after. */
+    ma_stop_proc onStop;                    /* Set once at initialization time and should not be changed after. */
     void* pUserData;                        /* Application defined data. */
     ma_mutex lock;
     ma_event wakeupEvent;
@@ -3020,7 +3027,7 @@ struct ma_device
     ma_bool32 isOwnerOfContext        : 1;  /* When set to true, uninitializing the device will also uninitialize the context. Set to true when NULL is passed into ma_device_init(). */
     ma_bool32 noPreZeroedOutputBuffer : 1;
     ma_bool32 noClip                  : 1;
-    float masterVolumeFactor;
+    volatile float masterVolumeFactor;      /* Volatile so we can use some thread safety when applying volume to periods. */
     struct
     {
         ma_resample_algorithm algorithm;
@@ -3696,6 +3703,74 @@ MA_TRUE if the context supports loopback mode; MA_FALSE otherwise.
 ma_bool32 ma_context_is_loopback_supported(ma_context* pContext);
 
 
+
+/*
+Initializes a device config with default settings.
+
+
+Parameters
+----------
+deviceType (in)
+    The type of the device this config is being initialized for. This must set to one of the following:
+
+    |-------------------------|
+    | Device Type             |
+    |-------------------------|
+    | ma_device_type_playback |
+    | ma_device_type_capture  |
+    | ma_device_type_duplex   |
+    | ma_device_type_loopback |
+    |-------------------------|
+
+
+Return Value
+------------
+A new device config object with default settings. You will typically want to adjust the config after this function returns. See remarks.
+
+
+Thread Safety
+-------------
+Safe.
+
+
+Callback Safety
+---------------
+Safe, but don't try initializing a device in a callback.
+
+
+Remarks
+-------
+The returned config will be initialized to defaults. You will normally want to customize a few variables before initializing the device. See Example 1 for a
+typical configuration which sets the sample format, channel count, sample rate, data callback and user data. These are usually things you will want to change
+before initializing the device.
+
+See `ma_device_init()` for details on specific configuration options.
+
+
+Example 1 - Simple Configuration
+--------------------------------
+The example below is what a program will typically want to configure for each device at a minimum. Notice how `ma_device_config_init()` is called first, and
+then the returned object is modified directly. This is important because it ensures that your program continues to work as new configuration options are added
+to the `ma_device_config` structure.
+
+```c
+ma_device_config config = ma_device_config_init(ma_device_type_playback);
+config.playback.format   = ma_format_f32;
+config.playback.channels = 2;
+config.sampleRate        = 48000;
+config.dataCallback      = ma_data_callback;
+config.pUserData         = pMyUserData;
+```
+
+
+See Also
+--------
+ma_device_init()
+ma_device_init_ex()
+*/
+ma_device_config ma_device_config_init(ma_device_type deviceType);
+
+
 /*
 Initializes a device.
 
@@ -3972,136 +4047,309 @@ ma_context_enumerate_devices()
 ma_result ma_device_init(ma_context* pContext, const ma_device_config* pConfig, ma_device* pDevice);
 
 /*
-Initializes a device without a context, with extra parameters for controlling the configuration
-of the internal self-managed context.
+Initializes a device without a context, with extra parameters for controlling the configuration of the internal self-managed context.
 
-See ma_device_init() and ma_context_init().
+This is the same as `ma_device_init()`, only instead of a context being passed in, the parameters from `ma_context_init()` are passed in instead. This function
+allows you to configure the internally created context.
 
-Callback Safety: UNSAFE
-  It is not safe to call this inside any callback.
+
+Parameters
+----------
+backends (in, optional)
+    A list of backends to try initializing, in priority order. Can be NULL, in which case it uses default priority order.
+
+backendCount (in, optional)
+    The number of items in `backend`. Ignored if `backend` is NULL.
+
+pContextConfig (in, optional)
+    The context configuration.
+
+pConfig (in)
+    A pointer to the device configuration. Cannot be null. See remarks for details.
+
+pDevice (out)
+    A pointer to the device object being initialized.
+
+
+Return Value
+------------
+MA_SUCCESS if successful; any other error code otherwise.
+
+
+Thread Safety
+-------------
+Unsafe. It is not safe to call this function simultaneously for different devices because some backends depend on and mutate global state. The same applies to
+calling this at the same time as `ma_device_uninit()`.
+
+
+Callback Safety
+---------------
+Unsafe. It is not safe to call this inside any callback.
+
+
+Remarks
+-------
+You only need to use this function if you want to configure the context differently to it's defaults. You should never use this function if you want to manage
+your own context.
+
+See the documentation for `ma_context_init()` for information on the different context configuration options.
+
+
+See Also
+--------
+ma_device_init()
+ma_device_uninit()
+ma_device_config_init()
+ma_context_init()
 */
 ma_result ma_device_init_ex(const ma_backend backends[], ma_uint32 backendCount, const ma_context_config* pContextConfig, const ma_device_config* pConfig, ma_device* pDevice);
 
 /*
 Uninitializes a device.
 
-This will explicitly stop the device. You do not need to call ma_device_stop() beforehand, but it's
-harmless if you do.
+This will explicitly stop the device. You do not need to call `ma_device_stop()` beforehand, but it's harmless if you do.
 
-Do not call this in any callback.
 
-Return Value:
-  MA_SUCCESS if successful; any other error code otherwise.
+Parameters
+----------
+pDevice (in)
+    A pointer to the device to stop.
 
-Thread Safety: UNSAFE
-  As soon as this API is called the device should be considered undefined. All bets are off if you
-  try using the device at the same time as uninitializing it.
 
-Callback Safety: UNSAFE
-  It is not safe to call this inside any callback. Doing this will result in a deadlock.
+Return Value
+------------
+MA_SUCCESS if successful; any other error code otherwise.
+
+
+Thread Safety
+-------------
+Unsafe. As soon as this API is called the device should be considered undefined.
+
+
+Callback Safety
+---------------
+Unsafe. It is not safe to call this inside any callback. Doing this will result in a deadlock.
+
+
+See Also
+--------
+ma_device_init()
+ma_device_stop()
 */
 void ma_device_uninit(ma_device* pDevice);
 
 /*
-Sets the callback to use when the device has stopped, either explicitly or as a result of an error.
+Starts the device. For playback devices this begins playback. For capture devices it begins recording.
 
-Thread Safety: SAFE
-  This API is implemented as a simple atomic assignment.
-*/
-void ma_device_set_stop_callback(ma_device* pDevice, ma_stop_proc proc);
+Use `ma_device_stop()` to stop the device.
 
-/*
-Activates the device. For playback devices this begins playback. For capture devices it begins
-recording.
 
-For a playback device, this will retrieve an initial chunk of audio data from the client before
-returning. The reason for this is to ensure there is valid audio data in the buffer, which needs
-to be done _before_ the device begins playback.
+Parameters
+----------
+pDevice (in)
+    A pointer to the device to start.
 
-This API waits until the backend device has been started for real by the worker thread. It also
-waits on a mutex for thread-safety.
+
+Return Value
+------------
+MA_SUCCESS if successful; any other error code otherwise.
+
+
+Thread Safety
+-------------
+Safe. It's safe to call this from any thread with the exception of the callback thread.
+
+
+Callback Safety
+---------------
+Unsafe. It is not safe to call this inside any callback.
+
+
+Remarks
+-------
+For a playback device, this will retrieve an initial chunk of audio data from the client before returning. The reason for this is to ensure there is valid
+audio data in the buffer, which needs to be done before the device begins playback.
+
+This API waits until the backend device has been started for real by the worker thread. It also waits on a mutex for thread-safety.
 
 Do not call this in any callback.
 
-Return Value:
-  MA_SUCCESS if successful; any other error code otherwise.
 
-Thread Safety: SAFE
-  It's safe to call this from any thread with the exception of the callback thread.
-
-Callback Safety: UNSAFE
-  It is not safe to call this inside any callback.
+See Also
+--------
+ma_device_stop()
 */
 ma_result ma_device_start(ma_device* pDevice);
 
 /*
-Puts the device to sleep, but does not uninitialize it. Use ma_device_start() to start it up again.
+Stops the device. For playback devices this stops playback. For capture devices it stops recording.
 
-This API needs to wait on the worker thread to stop the backend device properly before returning. It
-also waits on a mutex for thread-safety. In addition, some backends need to wait for the device to
-finish playback/recording of the current fragment which can take some time (usually proportionate to
-the buffer size that was specified at initialization time).
+Use `ma_device_start()` to start the device again.
 
-This should not drop unprocessed samples. Backends are required to either pause the stream in-place
-or drain the buffer if pausing is not possible. The reason for this is that stopping the device and
-the resuming it with ma_device_start() (which you might do when your program loses focus) may result
-in a situation where those samples are never output to the speakers or received from the microphone
-which can in turn result in de-syncs.
+
+Parameters
+----------
+pDevice (in)
+    A pointer to the device to stop.
+
+
+Return Value
+------------
+MA_SUCCESS if successful; any other error code otherwise.
+
+
+Thread Safety
+-------------
+Safe. It's safe to call this from any thread with the exception of the callback thread.
+
+
+Callback Safety
+---------------
+Unsafe. It is not safe to call this inside any callback. Doing this will result in a deadlock.
+
+
+Remarks
+-------
+This API needs to wait on the worker thread to stop the backend device properly before returning. It also waits on a mutex for thread-safety. In addition, some
+backends need to wait for the device to finish playback/recording of the current fragment which can take some time (usually proportionate to the buffer size
+that was specified at initialization time).
+
+Backends are required to either pause the stream in-place or drain the buffer if pausing is not possible. The reason for this is that stopping the device and
+the resuming it with ma_device_start() (which you might do when your program loses focus) may result in a situation where those samples are never output to the
+speakers or received from the microphone which can in turn result in de-syncs.
 
 Do not call this in any callback.
 
-Return Value:
-  MA_SUCCESS if successful; any other error code otherwise.
+This will be called implicitly by `ma_device_uninit()`.
 
-Thread Safety: SAFE
-  It's safe to call this from any thread with the exception of the callback thread.
 
-Callback Safety: UNSAFE
-  It is not safe to call this inside any callback. Doing this will result in a deadlock.
+See Also
+--------
+ma_device_start()
 */
 ma_result ma_device_stop(ma_device* pDevice);
 
 /*
 Determines whether or not the device is started.
 
-This is implemented as a simple accessor.
 
-Return Value:
-  True if the device is started, false otherwise.
+Parameters
+----------
+pDevice (in)
+    A pointer to the device whose start state is being retrieved.
 
-Thread Safety: SAFE
-  If another thread calls ma_device_start() or ma_device_stop() at this same time as this function
-  is called, there's a very small chance the return value will be out of sync.
+
+Return Value
+------------
+True if the device is started, false otherwise.
+
+
+Thread Safety
+-------------
+Safe. If another thread calls `ma_device_start()` or `ma_device_stop()` at this same time as this function is called, there's a very small chance the return
+value will be out of sync.
+
+
+Callback Safety
+---------------
+Safe. This is implemented as a simple accessor.
+
+
+See Also
+--------
+ma_device_start()
+ma_device_stop()
 */
 ma_bool32 ma_device_is_started(ma_device* pDevice);
 
 /*
 Sets the master volume factor for the device.
 
-The volume factor must be between 0 (silence) and 1 (full volume). Use ma_device_set_master_gain_db() to
-use decibel notation, where 0 is full volume.
+The volume factor must be between 0 (silence) and 1 (full volume). Use `ma_device_set_master_gain_db()` to use decibel notation, where 0 is full volume and
+values less than 0 decreases the volume.
 
-This applies the volume factor across all channels.
 
-This does not change the operating system's volume. It only affects the volume for the given ma_device
-object's audio stream.
+Parameters
+----------
+pDevice (in)
+    A pointer to the device whose volume is being set.
+
+volume (in)
+    The new volume factor. Must be within the range of [0, 1].
+
 
 Return Value
 ------------
 MA_SUCCESS if the volume was set successfully.
 MA_INVALID_ARGS if pDevice is NULL.
 MA_INVALID_ARGS if the volume factor is not within the range of [0, 1].
+
+
+Thread Safety
+-------------
+Safe. This just sets a local member of the device object.
+
+
+Callback Safety
+---------------
+Safe. If you set the volume in the data callback, that data written to the output buffer will have the new volume applied.
+
+
+Remarks
+-------
+This applies the volume factor across all channels.
+
+This does not change the operating system's volume. It only affects the volume for the given `ma_device` object's audio stream.
+
+
+See Also
+--------
+ma_device_get_master_volume()
+ma_device_set_master_volume_gain_db()
+ma_device_get_master_volume_gain_db()
 */
 ma_result ma_device_set_master_volume(ma_device* pDevice, float volume);
 
 /*
 Retrieves the master volume factor for the device.
 
+
+Parameters
+----------
+pDevice (in)
+    A pointer to the device whose volume factor is being retrieved.
+
+pVolume (in)
+    A pointer to the variable that will receive the volume factor. The returned value will be in the range of [0, 1].
+
+
 Return Value
 ------------
 MA_SUCCESS if successful.
 MA_INVALID_ARGS if pDevice is NULL.
 MA_INVALID_ARGS if pVolume is NULL.
+
+
+Thread Safety
+-------------
+Safe. This just a simple member retrieval.
+
+
+Callback Safety
+---------------
+Safe.
+
+
+Remarks
+-------
+If an error occurs, `*pVolume` will be set to 0.
+
+
+See Also
+--------
+ma_device_set_master_volume()
+ma_device_set_master_volume_gain_db()
+ma_device_get_master_volume_gain_db()
 */
 ma_result ma_device_get_master_volume(ma_device* pDevice, float* pVolume);
 
@@ -4110,70 +4358,91 @@ Sets the master volume for the device as gain in decibels.
 
 A gain of 0 is full volume, whereas a gain of < 0 will decrease the volume.
 
-This applies the gain across all channels.
 
-This does not change the operating system's volume. It only affects the volume for the given ma_device
-object's audio stream.
+Parameters
+----------
+pDevice (in)
+    A pointer to the device whose gain is being set.
+
+gainDB (in)
+    The new volume as gain in decibels. Must be less than or equal to 0, where 0 is full volume and anything less than 0 decreases the volume.
+
 
 Return Value
 ------------
 MA_SUCCESS if the volume was set successfully.
 MA_INVALID_ARGS if pDevice is NULL.
 MA_INVALID_ARGS if the gain is > 0.
+
+
+Thread Safety
+-------------
+Safe. This just sets a local member of the device object.
+
+
+Callback Safety
+---------------
+Safe. If you set the volume in the data callback, that data written to the output buffer will have the new volume applied.
+
+
+Remarks
+-------
+This applies the gain across all channels.
+
+This does not change the operating system's volume. It only affects the volume for the given `ma_device` object's audio stream.
+
+
+See Also
+--------
+ma_device_get_master_volume_gain_db()
+ma_device_set_master_volume()
+ma_device_get_master_volume()
 */
 ma_result ma_device_set_master_gain_db(ma_device* pDevice, float gainDB);
 
 /*
 Retrieves the master gain in decibels.
 
+
+Parameters
+----------
+pDevice (in)
+    A pointer to the device whose gain is being retrieved.
+
+pGainDB (in)
+    A pointer to the variable that will receive the gain in decibels. The returned value will be <= 0.
+
+
 Return Value
 ------------
 MA_SUCCESS if successful.
 MA_INVALID_ARGS if pDevice is NULL.
 MA_INVALID_ARGS if pGainDB is NULL.
+
+
+Thread Safety
+-------------
+Safe. This just a simple member retrieval.
+
+
+Callback Safety
+---------------
+Safe.
+
+
+Remarks
+-------
+If an error occurs, `*pGainDB` will be set to 0.
+
+
+See Also
+--------
+ma_device_set_master_volume_gain_db()
+ma_device_set_master_volume()
+ma_device_get_master_volume()
 */
 ma_result ma_device_get_master_gain_db(ma_device* pDevice, float* pGainDB);
 
-
-/*
-Initializes a device config.
-
-By default, the device config will use native device settings (format, channels, sample rate, etc.). Using native
-settings means you will get an optimized pass-through data transmission pipeline to and from the device, but you will
-need to do all format conversions manually. Normally you would want to use a known format that your program can handle
-natively, which you can do by specifying it after this function returns, like so:
-
-    ma_device_config config = ma_device_config_init(ma_device_type_playback);
-    config.callback = my_data_callback;
-    config.pUserData = pMyUserData;
-    config.format = ma_format_f32;
-    config.channels = 2;
-    config.sampleRate = 44100;
-
-In this case miniaudio will perform all of the necessary data conversion for you behind the scenes.
-
-Currently miniaudio only supports asynchronous, callback based data delivery which means you must specify callback. A
-pointer to user data can also be specified which is set in the pUserData member of the ma_device object.
-
-To specify a channel map you can use ma_get_standard_channel_map():
-
-    ma_get_standard_channel_map(ma_standard_channel_map_default, config.channels, config.channelMap);
-
-Alternatively you can set the channel map manually if you need something specific or something that isn't one of miniaudio's
-stock channel maps.
-
-By default the system's default device will be used. Set the pDeviceID member to a pointer to a ma_device_id object to 
-use a specific device. You can enumerate over the devices with ma_context_enumerate_devices() or ma_context_get_devices()
-which will give you access to the device ID. Set pDeviceID to NULL to use the default device.
-
-The device type can be one of the ma_device_type's:
-  ma_device_type_playback
-  ma_device_type_capture
-  ma_device_type_duplex
-
-Thread Safety: SAFE
-*/
-ma_device_config ma_device_config_init(ma_device_type deviceType);
 
 
 /************************************************************************************************************************************************************
@@ -4929,6 +5198,15 @@ static MA_INLINE ma_bool32 ma_is_big_endian()
 #define MA_DEFAULT_PERIOD_SIZE_IN_MILLISECONDS_CONSERVATIVE 100
 #endif
 
+/* The default LPF count for linear resampling. Note that this is clamped to MA_MAX_RESAMPLER_LPF_FILTERS. */
+#ifndef MA_DEFAULT_RESAMPLER_LPF_FILTERS
+    #if MA_MAX_RESAMPLER_LPF_FILTERS >= 2
+        #define MA_DEFAULT_RESAMPLER_LPF_FILTERS    2
+    #else
+        #define MA_DEFAULT_RESAMPLER_LPF_FILTERS    MA_MAX_RESAMPLER_LPF_FILTERS
+    #endif
+#endif
+
 
 /* Standard sample rates, in order of priority. */
 ma_uint32 g_maStandardSampleRatePriorities[] = {
@@ -5027,10 +5305,48 @@ Standard Library Stuff
 #define ma_clamp(x, lo, hi)         (ma_max(lo, ma_min(x, hi)))
 #define ma_offset_ptr(p, offset)    (((ma_uint8*)(p)) + (offset))
 
-#define ma_sinf(x)                  ((float)sin((double)(x)))
-#define ma_cosf(x)                  ((float)cos((double)(x)))
-
 #define ma_buffer_frame_capacity(buffer, channels, format) (sizeof(buffer) / ma_get_bytes_per_sample(format) / (channels))
+
+static MA_INLINE double ma_sin(double x)
+{
+    /* TODO: Implement custom sin(x). */
+    return sin(x);
+}
+
+static MA_INLINE double ma_cos(double x)
+{
+    return ma_sin((MA_PI*0.5) - x);
+}
+
+static MA_INLINE double ma_log2(double x)
+{
+    /* TODO: Implement custom log2(x). */
+    return log2(x);
+}
+
+static MA_INLINE double ma_pow(double x, double y)
+{
+    /* TODO: Implement custom pow(x, y). */
+    return pow(x, y);
+}
+
+static MA_INLINE double ma_log10(double x)
+{
+    return ma_log2(x) * 0.30102999566398119521;
+}
+
+static MA_INLINE float ma_powf(float x, float y)
+{
+    return (float)ma_pow((double)x, (double)y);
+}
+
+static MA_INLINE float ma_log10f(float x)
+{
+    return (float)ma_log10((double)x);
+}
+
+
+
 
 /*
 Return Values:
@@ -7007,27 +7323,28 @@ void ma_apply_volume_factor_pcm_frames(void* pPCMFrames, ma_uint32 frameCount, m
 
 float ma_factor_to_gain_db(float factor)
 {
-    return (float)(20*log10(factor));
+    return (float)(20*ma_log10f(factor));
 }
 
 float ma_gain_db_to_factor(float gain)
 {
-    return (float)pow(10, gain/20.0);
+    return (float)ma_powf(10, gain/20.0f);
 }
 
 
 static void ma_device__on_data(ma_device* pDevice, void* pFramesOut, const void* pFramesIn, ma_uint32 frameCount)
 {
-    ma_device_callback_proc onData;
+    float masterVolumeFactor;
+    
+    masterVolumeFactor = pDevice->masterVolumeFactor;
 
-    onData = pDevice->onData;
-    if (onData) {
+    if (pDevice->onData) {
         if (!pDevice->noPreZeroedOutputBuffer && pFramesOut != NULL) {
             ma_zero_pcm_frames(pFramesOut, frameCount, pDevice->playback.format, pDevice->playback.channels);
         }
 
         /* Volume control of input makes things a bit awkward because the input buffer is read-only. We'll need to use a temp buffer and loop in this case. */
-        if (pFramesIn != NULL && pDevice->masterVolumeFactor < 1) {
+        if (pFramesIn != NULL && masterVolumeFactor < 1) {
             ma_uint8 tempFramesIn[MA_DATA_CONVERTER_STACK_BUFFER_SIZE];
             ma_uint32 bpfCapture  = ma_get_bytes_per_frame(pDevice->capture.format, pDevice->capture.channels);
             ma_uint32 bpfPlayback = ma_get_bytes_per_frame(pDevice->playback.format, pDevice->playback.channels);
@@ -7038,21 +7355,21 @@ static void ma_device__on_data(ma_device* pDevice, void* pFramesOut, const void*
                     framesToProcessThisIteration = sizeof(tempFramesIn)/bpfCapture;
                 }
 
-                ma_copy_and_apply_volume_factor_pcm_frames(tempFramesIn, ma_offset_ptr(pFramesIn, totalFramesProcessed*bpfCapture), framesToProcessThisIteration, pDevice->capture.format, pDevice->capture.channels, pDevice->masterVolumeFactor);
+                ma_copy_and_apply_volume_factor_pcm_frames(tempFramesIn, ma_offset_ptr(pFramesIn, totalFramesProcessed*bpfCapture), framesToProcessThisIteration, pDevice->capture.format, pDevice->capture.channels, masterVolumeFactor);
 
-                onData(pDevice, ma_offset_ptr(pFramesOut, totalFramesProcessed*bpfPlayback), tempFramesIn, framesToProcessThisIteration);
+                pDevice->onData(pDevice, ma_offset_ptr(pFramesOut, totalFramesProcessed*bpfPlayback), tempFramesIn, framesToProcessThisIteration);
 
                 totalFramesProcessed += framesToProcessThisIteration;
             }
         } else {
-            onData(pDevice, pFramesOut, pFramesIn, frameCount);
+            pDevice->onData(pDevice, pFramesOut, pFramesIn, frameCount);
         }
 
         /* Volume control and clipping for playback devices. */
         if (pFramesOut != NULL) {
-            if (pDevice->masterVolumeFactor < 1) {
+            if (masterVolumeFactor < 1) {
                 if (pFramesIn == NULL) {    /* <-- In full-duplex situations, the volume will have been applied to the input samples before the data callback. Applying it again post-callback will incorrectly compound it. */
-                    ma_apply_volume_factor_pcm_frames(pFramesOut, frameCount, pDevice->playback.format, pDevice->playback.channels, pDevice->masterVolumeFactor);
+                    ma_apply_volume_factor_pcm_frames(pFramesOut, frameCount, pDevice->playback.format, pDevice->playback.channels, masterVolumeFactor);
                 }
             }
 
@@ -9208,6 +9525,89 @@ static ma_result ma_context_get_device_info_from_IAudioClient__wasapi(ma_context
 }
 
 #ifdef MA_WIN32_DESKTOP
+static ma_EDataFlow ma_device_type_to_EDataFlow(ma_device_type deviceType)
+{
+    if (deviceType == ma_device_type_playback) {
+        return ma_eRender;
+    } else if (deviceType == ma_device_type_capture) {
+        return ma_eCapture;
+    } else {
+        MA_ASSERT(MA_FALSE);
+        return ma_eRender; /* Should never hit this. */
+    }
+}
+
+static ma_result ma_context_create_IMMDeviceEnumerator__wasapi(ma_context* pContext, ma_IMMDeviceEnumerator** ppDeviceEnumerator)
+{
+    HRESULT hr;
+    ma_IMMDeviceEnumerator* pDeviceEnumerator;
+
+    MA_ASSERT(pContext           != NULL);
+    MA_ASSERT(ppDeviceEnumerator != NULL);
+
+    hr = ma_CoCreateInstance(pContext, MA_CLSID_MMDeviceEnumerator, NULL, CLSCTX_ALL, MA_IID_IMMDeviceEnumerator, (void**)&pDeviceEnumerator);
+    if (FAILED(hr)) {
+        return ma_context_post_error(pContext, NULL, MA_LOG_LEVEL_ERROR, "[WASAPI] Failed to create device enumerator.", MA_ERROR);
+    }
+
+    *ppDeviceEnumerator = pDeviceEnumerator;
+
+    return MA_SUCCESS;
+}
+
+static LPWSTR ma_context_get_default_device_id_from_IMMDeviceEnumerator__wasapi(ma_context* pContext, ma_IMMDeviceEnumerator* pDeviceEnumerator, ma_device_type deviceType)
+{
+    HRESULT hr;
+    ma_IMMDevice* pMMDefaultDevice = NULL;
+    LPWSTR pDefaultDeviceID = NULL;
+    ma_EDataFlow dataFlow;
+    ma_ERole role;
+
+    MA_ASSERT(pContext          != NULL);
+    MA_ASSERT(pDeviceEnumerator != NULL);
+
+    /* Grab the EDataFlow type from the device type. */
+    dataFlow = ma_device_type_to_EDataFlow(deviceType);
+
+    /* The role is always eConsole, but we may make this configurable later. */
+    role = ma_eConsole;
+
+    hr = ma_IMMDeviceEnumerator_GetDefaultAudioEndpoint(pDeviceEnumerator, dataFlow, role, &pMMDefaultDevice);
+    if (FAILED(hr)) {
+        return NULL;
+    }
+
+    hr = ma_IMMDevice_GetId(pMMDefaultDevice, &pDefaultDeviceID);
+
+    ma_IMMDevice_Release(pMMDefaultDevice);
+    pMMDefaultDevice = NULL;
+
+    if (FAILED(hr)) {
+        return NULL;
+    }
+
+    return pDefaultDeviceID;
+}
+
+static LPWSTR ma_context_get_default_device_id__wasapi(ma_context* pContext, ma_device_type deviceType)    /* Free the returned pointer with ma_CoTaskMemFree() */
+{
+    ma_result result;
+    ma_IMMDeviceEnumerator* pDeviceEnumerator;
+    LPWSTR pDefaultDeviceID = NULL;
+
+    MA_ASSERT(pContext != NULL);
+
+    result = ma_context_create_IMMDeviceEnumerator__wasapi(pContext, &pDeviceEnumerator);
+    if (result != MA_SUCCESS) {
+        return NULL;
+    }
+
+    pDefaultDeviceID = ma_context_get_default_device_id_from_IMMDeviceEnumerator__wasapi(pContext, pDeviceEnumerator, deviceType);
+    
+    ma_IMMDeviceEnumerator_Release(pDeviceEnumerator);
+    return pDefaultDeviceID;
+}
+
 static ma_result ma_context_get_MMDevice__wasapi(ma_context* pContext, ma_device_type deviceType, const ma_device_id* pDeviceID, ma_IMMDevice** ppMMDevice)
 {
     ma_IMMDeviceEnumerator* pDeviceEnumerator;
@@ -9235,9 +9635,9 @@ static ma_result ma_context_get_MMDevice__wasapi(ma_context* pContext, ma_device
     return MA_SUCCESS;
 }
 
-static ma_result ma_context_get_device_info_from_MMDevice__wasapi(ma_context* pContext, ma_IMMDevice* pMMDevice, ma_share_mode shareMode, ma_bool32 onlySimpleInfo, ma_device_info* pInfo)
+static ma_result ma_context_get_device_info_from_MMDevice__wasapi(ma_context* pContext, ma_IMMDevice* pMMDevice, ma_share_mode shareMode, LPWSTR pDefaultDeviceID, ma_bool32 onlySimpleInfo, ma_device_info* pInfo)
 {
-    LPWSTR id;
+    LPWSTR pDeviceID;
     HRESULT hr;
 
     MA_ASSERT(pContext != NULL);
@@ -9245,19 +9645,26 @@ static ma_result ma_context_get_device_info_from_MMDevice__wasapi(ma_context* pC
     MA_ASSERT(pInfo != NULL);
 
     /* ID. */
-    hr = ma_IMMDevice_GetId(pMMDevice, &id);
+    hr = ma_IMMDevice_GetId(pMMDevice, &pDeviceID);
     if (SUCCEEDED(hr)) {
-        size_t idlen = wcslen(id);
+        size_t idlen = wcslen(pDeviceID);
         if (idlen+1 > ma_countof(pInfo->id.wasapi)) {
-            ma_CoTaskMemFree(pContext, id);
+            ma_CoTaskMemFree(pContext, pDeviceID);
             MA_ASSERT(MA_FALSE);  /* NOTE: If this is triggered, please report it. It means the format of the ID must haved change and is too long to fit in our fixed sized buffer. */
             return MA_ERROR;
         }
 
-        MA_COPY_MEMORY(pInfo->id.wasapi, id, idlen * sizeof(wchar_t));
+        MA_COPY_MEMORY(pInfo->id.wasapi, pDeviceID, idlen * sizeof(wchar_t));
         pInfo->id.wasapi[idlen] = '\0';
 
-        ma_CoTaskMemFree(pContext, id);
+        if (pDefaultDeviceID != NULL) {
+            if (wcscmp(pDeviceID, pDefaultDeviceID) == 0) {
+                /* It's a default device. */
+                pInfo->_private.isDefault = MA_TRUE;
+            }
+        }
+
+        ma_CoTaskMemFree(pContext, pDeviceID);
     }
 
     {
@@ -9295,45 +9702,65 @@ static ma_result ma_context_get_device_info_from_MMDevice__wasapi(ma_context* pC
     return MA_SUCCESS;
 }
 
-static ma_result ma_context_enumerate_device_collection__wasapi(ma_context* pContext, ma_IMMDeviceCollection* pDeviceCollection, ma_device_type deviceType, ma_enum_devices_callback_proc callback, void* pUserData)
+static ma_result ma_context_enumerate_devices_by_type__wasapi(ma_context* pContext, ma_IMMDeviceEnumerator* pDeviceEnumerator, ma_device_type deviceType, ma_enum_devices_callback_proc callback, void* pUserData)
 {
+    ma_result result = MA_SUCCESS;
     UINT deviceCount;
     HRESULT hr;
     ma_uint32 iDevice;
-
+    LPWSTR pDefaultDeviceID = NULL;
+    ma_IMMDeviceCollection* pDeviceCollection = NULL;
+    
     MA_ASSERT(pContext != NULL);
     MA_ASSERT(callback != NULL);
 
-    hr = ma_IMMDeviceCollection_GetCount(pDeviceCollection, &deviceCount);
-    if (FAILED(hr)) {
-        return ma_context_post_error(pContext, NULL, MA_LOG_LEVEL_ERROR, "[WASAPI] Failed to get playback device count.", MA_NO_DEVICE);
-    }
+    /* Grab the default device. We use this to know whether or not flag the returned device info as being the default. */
+    pDefaultDeviceID = ma_context_get_default_device_id_from_IMMDeviceEnumerator__wasapi(pContext, pDeviceEnumerator, deviceType);
 
-    for (iDevice = 0; iDevice < deviceCount; ++iDevice) {
-        ma_device_info deviceInfo;
-        ma_IMMDevice* pMMDevice;
+    /* We need to enumerate the devices which returns a device collection. */
+    hr = ma_IMMDeviceEnumerator_EnumAudioEndpoints(pDeviceEnumerator, ma_device_type_to_EDataFlow(deviceType), MA_MM_DEVICE_STATE_ACTIVE, &pDeviceCollection);
+    if (SUCCEEDED(hr)) {
+        hr = ma_IMMDeviceCollection_GetCount(pDeviceCollection, &deviceCount);
+        if (FAILED(hr)) {
+            result = ma_context_post_error(pContext, NULL, MA_LOG_LEVEL_ERROR, "[WASAPI] Failed to get device count.", MA_NO_DEVICE);
+            goto done;
+        }
+
+        for (iDevice = 0; iDevice < deviceCount; ++iDevice) {
+            ma_device_info deviceInfo;
+            ma_IMMDevice* pMMDevice;
         
-        MA_ZERO_OBJECT(&deviceInfo);
+            MA_ZERO_OBJECT(&deviceInfo);
 
-        hr = ma_IMMDeviceCollection_Item(pDeviceCollection, iDevice, &pMMDevice);
-        if (SUCCEEDED(hr)) {
-            ma_result result = ma_context_get_device_info_from_MMDevice__wasapi(pContext, pMMDevice, ma_share_mode_shared, MA_TRUE, &deviceInfo);   /* MA_TRUE = onlySimpleInfo. */
+            hr = ma_IMMDeviceCollection_Item(pDeviceCollection, iDevice, &pMMDevice);
+            if (SUCCEEDED(hr)) {
+                result = ma_context_get_device_info_from_MMDevice__wasapi(pContext, pMMDevice, ma_share_mode_shared, pDefaultDeviceID, MA_TRUE, &deviceInfo);   /* MA_TRUE = onlySimpleInfo. */
 
-            ma_IMMDevice_Release(pMMDevice);
-            if (result == MA_SUCCESS) {
-                ma_bool32 cbResult = callback(pContext, deviceType, &deviceInfo, pUserData);
-                if (cbResult == MA_FALSE) {
-                    break;
+                ma_IMMDevice_Release(pMMDevice);
+                if (result == MA_SUCCESS) {
+                    ma_bool32 cbResult = callback(pContext, deviceType, &deviceInfo, pUserData);
+                    if (cbResult == MA_FALSE) {
+                        break;
+                    }
                 }
             }
         }
     }
 
-    return MA_SUCCESS;
-}
-#endif
+done:
+    if (pDefaultDeviceID != NULL) {
+        ma_CoTaskMemFree(pContext, pDefaultDeviceID);
+        pDefaultDeviceID = NULL;
+    }
 
-#ifdef MA_WIN32_DESKTOP
+    if (pDeviceCollection != NULL) {
+        ma_IMMDeviceCollection_Release(pDeviceCollection);
+        pDeviceCollection = NULL;
+    }
+
+    return result;
+}
+
 static ma_result ma_context_get_IAudioClient_Desktop__wasapi(ma_context* pContext, ma_device_type deviceType, const ma_device_id* pDeviceID, ma_IAudioClient** ppAudioClient, ma_IMMDevice** ppMMDevice)
 {
     ma_result result;
@@ -9452,26 +9879,14 @@ static ma_result ma_context_enumerate_devices__wasapi(ma_context* pContext, ma_e
     /* Desktop */
     HRESULT hr;
     ma_IMMDeviceEnumerator* pDeviceEnumerator;
-    ma_IMMDeviceCollection* pDeviceCollection;
 
     hr = ma_CoCreateInstance(pContext, MA_CLSID_MMDeviceEnumerator, NULL, CLSCTX_ALL, MA_IID_IMMDeviceEnumerator, (void**)&pDeviceEnumerator);
     if (FAILED(hr)) {
         return ma_context_post_error(pContext, NULL, MA_LOG_LEVEL_ERROR, "[WASAPI] Failed to create device enumerator.", MA_FAILED_TO_OPEN_BACKEND_DEVICE);
     }
 
-    /* Playback. */
-    hr = ma_IMMDeviceEnumerator_EnumAudioEndpoints(pDeviceEnumerator, ma_eRender, MA_MM_DEVICE_STATE_ACTIVE, &pDeviceCollection);
-    if (SUCCEEDED(hr)) {
-        ma_context_enumerate_device_collection__wasapi(pContext, pDeviceCollection, ma_device_type_playback, callback, pUserData);
-        ma_IMMDeviceCollection_Release(pDeviceCollection);
-    }
-
-    /* Capture. */
-    hr = ma_IMMDeviceEnumerator_EnumAudioEndpoints(pDeviceEnumerator, ma_eCapture, MA_MM_DEVICE_STATE_ACTIVE, &pDeviceCollection);
-    if (SUCCEEDED(hr)) {
-        ma_context_enumerate_device_collection__wasapi(pContext, pDeviceCollection, ma_device_type_capture, callback, pUserData);
-        ma_IMMDeviceCollection_Release(pDeviceCollection);
-    }
+    ma_context_enumerate_devices_by_type__wasapi(pContext, pDeviceEnumerator, ma_device_type_playback, callback, pUserData);
+    ma_context_enumerate_devices_by_type__wasapi(pContext, pDeviceEnumerator, ma_device_type_capture,  callback, pUserData);
 
     ma_IMMDeviceEnumerator_Release(pDeviceEnumerator);
 #else
@@ -9491,6 +9906,7 @@ static ma_result ma_context_enumerate_devices__wasapi(ma_context* pContext, ma_e
             ma_device_info deviceInfo;
             MA_ZERO_OBJECT(&deviceInfo);
             ma_strncpy_s(deviceInfo.name, sizeof(deviceInfo.name), MA_DEFAULT_PLAYBACK_DEVICE_NAME, (size_t)-1);
+            deviceInfo._private.isDefault = MA_TRUE;
             cbResult = callback(pContext, ma_device_type_playback, &deviceInfo, pUserData);
         }
 
@@ -9499,6 +9915,7 @@ static ma_result ma_context_enumerate_devices__wasapi(ma_context* pContext, ma_e
             ma_device_info deviceInfo;
             MA_ZERO_OBJECT(&deviceInfo);
             ma_strncpy_s(deviceInfo.name, sizeof(deviceInfo.name), MA_DEFAULT_CAPTURE_DEVICE_NAME, (size_t)-1);
+            deviceInfo._private.isDefault = MA_TRUE;
             cbResult = callback(pContext, ma_device_type_capture, &deviceInfo, pUserData);
         }
     }
@@ -9510,17 +9927,27 @@ static ma_result ma_context_enumerate_devices__wasapi(ma_context* pContext, ma_e
 static ma_result ma_context_get_device_info__wasapi(ma_context* pContext, ma_device_type deviceType, const ma_device_id* pDeviceID, ma_share_mode shareMode, ma_device_info* pDeviceInfo)
 {
 #ifdef MA_WIN32_DESKTOP
-    ma_IMMDevice* pMMDevice = NULL;
     ma_result result;
+    ma_IMMDevice* pMMDevice = NULL;
+    LPWSTR pDefaultDeviceID = NULL;
     
     result = ma_context_get_MMDevice__wasapi(pContext, deviceType, pDeviceID, &pMMDevice);
     if (result != MA_SUCCESS) {
         return result;
     }
 
-    result = ma_context_get_device_info_from_MMDevice__wasapi(pContext, pMMDevice, shareMode, MA_FALSE, pDeviceInfo);   /* MA_FALSE = !onlySimpleInfo. */
+    /* We need the default device ID so we can set the isDefault flag in the device info. */
+    pDefaultDeviceID = ma_context_get_default_device_id__wasapi(pContext, deviceType);
+
+    result = ma_context_get_device_info_from_MMDevice__wasapi(pContext, pMMDevice, shareMode, pDefaultDeviceID, MA_FALSE, pDeviceInfo);   /* MA_FALSE = !onlySimpleInfo. */
+
+    if (pDefaultDeviceID != NULL) {
+        ma_CoTaskMemFree(pContext, pDefaultDeviceID);
+        pDefaultDeviceID = NULL;
+    }
 
     ma_IMMDevice_Release(pMMDevice);
+
     return result;
 #else
     ma_IAudioClient* pAudioClient;
@@ -9544,6 +9971,8 @@ static ma_result ma_context_get_device_info__wasapi(ma_context* pContext, ma_dev
     }
 
     result = ma_context_get_device_info_from_IAudioClient__wasapi(pContext, NULL, pAudioClient, shareMode, pDeviceInfo);
+
+    pDeviceInfo->_private.isDefault = MA_TRUE;  /* UWP only supports default devices. */
 
     ma_IAudioClient_Release(pAudioClient);
     return result;
@@ -9911,7 +10340,7 @@ static ma_result ma_device_init_internal__wasapi(ma_context* pContext, ma_device
 
         /* If we don't have an IAudioClient3 then we need to use the normal initialization routine. */
         if (!wasInitializedUsingIAudioClient3) {
-            MA_REFERENCE_TIME bufferDuration = periodDurationInMicroseconds*10;
+            MA_REFERENCE_TIME bufferDuration = periodDurationInMicroseconds * pData->periodsOut * 10;   /* <-- Multiply by 10 for microseconds to 100-nanoseconds. */
             hr = ma_IAudioClient_Initialize((ma_IAudioClient*)pData->pAudioClient, shareMode, streamFlags, bufferDuration, 0, (WAVEFORMATEX*)&wf, NULL);
             if (FAILED(hr)) {
                 if (hr == E_ACCESSDENIED) {
@@ -9928,13 +10357,14 @@ static ma_result ma_device_init_internal__wasapi(ma_context* pContext, ma_device
     }
 
     if (!wasInitializedUsingIAudioClient3) {
-        hr = ma_IAudioClient_GetBufferSize((ma_IAudioClient*)pData->pAudioClient, &pData->periodSizeInFramesOut);
+        ma_uint32 bufferSizeInFrames;
+        hr = ma_IAudioClient_GetBufferSize((ma_IAudioClient*)pData->pAudioClient, &bufferSizeInFrames);
         if (FAILED(hr)) {
             errorMsg = "[WASAPI] Failed to get audio client's actual buffer size.", result = MA_FAILED_TO_OPEN_BACKEND_DEVICE;
             goto done;
         }
 
-        pData->periodSizeInFramesOut = pData->periodSizeInFramesOut;
+        pData->periodSizeInFramesOut = bufferSizeInFrames / pData->periodsOut;
     }
 
     pData->usingAudioClient3 = wasInitializedUsingIAudioClient3;
@@ -27810,7 +28240,7 @@ ma_device_config ma_device_config_init(ma_device_type deviceType)
 
     /* Resampling defaults. We must never use the Speex backend by default because it uses licensed third party code. */
     config.resampling.algorithm       = ma_resample_algorithm_linear;
-    config.resampling.linear.lpfCount = ma_min(2, MA_MAX_RESAMPLER_LPF_FILTERS);
+    config.resampling.linear.lpfCount = ma_min(MA_DEFAULT_RESAMPLER_LPF_FILTERS, MA_MAX_RESAMPLER_LPF_FILTERS);
     config.resampling.speex.quality   = 3;
 
     return config;
@@ -28164,15 +28594,6 @@ void ma_device_uninit(ma_device* pDevice)
     MA_ZERO_OBJECT(pDevice);
 }
 
-void ma_device_set_stop_callback(ma_device* pDevice, ma_stop_proc proc)
-{
-    if (pDevice == NULL) {
-        return;
-    }
-
-    ma_atomic_exchange_ptr(&pDevice->onStop, proc);
-}
-
 ma_result ma_device_start(ma_device* pDevice)
 {
     ma_result result;
@@ -28300,7 +28721,12 @@ ma_result ma_device_set_master_volume(ma_device* pDevice, float volume)
 
 ma_result ma_device_get_master_volume(ma_device* pDevice, float* pVolume)
 {
-    if (pDevice == NULL || pVolume == NULL) {
+    if (pVolume == NULL) {
+        return MA_INVALID_ARGS;
+    }
+
+    if (pDevice == NULL) {
+        *pVolume = 0;
         return MA_INVALID_ARGS;
     }
 
@@ -28329,6 +28755,7 @@ ma_result ma_device_get_master_gain_db(ma_device* pDevice, float* pGainDB)
 
     result = ma_device_get_master_volume(pDevice, &factor);
     if (result != MA_SUCCESS) {
+        *pGainDB = 0;
         return result;
     }
 
@@ -28569,8 +28996,8 @@ static MA_INLINE ma_biquad_config ma_lpf__get_biquad_config(const ma_lpf_config*
 
     q = 0.707107;
     w = 2 * MA_PI_D * pConfig->cutoffFrequency / pConfig->sampleRate;
-    s = sin(w);
-    c = cos(w);
+    s = ma_sin(w);
+    c = ma_cos(w);
     a = s / (2*q);
 
     bqConfig.b0 = (1 - c) / 2;
@@ -34453,9 +34880,7 @@ ma_uint64 ma_convert_frames(void* pOut, ma_uint64 frameCountOut, ma_format forma
     config = ma_data_converter_config_init(formatIn, formatOut, channelsIn, channelsOut, sampleRateIn, sampleRateOut);
     ma_get_standard_channel_map(ma_standard_channel_map_default, channelsOut, config.channelMapOut);
     ma_get_standard_channel_map(ma_standard_channel_map_default, channelsIn,  config.channelMapIn);
-
-    /* For this we can default to the best resampling available since it's most likely going to be called in non time critical situations. */
-    config.resampling.linear.lpfCount = MA_MAX_RESAMPLER_LPF_FILTERS;
+    config.resampling.linear.lpfCount = ma_min(MA_DEFAULT_RESAMPLER_LPF_FILTERS, MA_MAX_RESAMPLER_LPF_FILTERS);
 
     return ma_convert_frames_ex(pOut, frameCountOut, pIn, frameCountIn, &config);
 }
@@ -35304,7 +35729,7 @@ ma_decoder_config ma_decoder_config_init(ma_format outputFormat, ma_uint32 outpu
     config.sampleRate = outputSampleRate;
     ma_get_standard_channel_map(ma_standard_channel_map_default, config.channels, config.channelMap);
     config.resampling.algorithm = ma_resample_algorithm_linear;
-    config.resampling.linear.lpfCount = 1;
+    config.resampling.linear.lpfCount = ma_min(MA_DEFAULT_RESAMPLER_LPF_FILTERS, MA_MAX_RESAMPLER_LPF_FILTERS);
     config.resampling.speex.quality = 3;
 
     return config;
@@ -37363,7 +37788,7 @@ ma_uint64 ma_sine_wave_read_pcm_frames(ma_sine_wave* pSineWave, void* pFramesOut
             ma_uint64 iChannel;
             float s;
 
-            s = (float)(sin(pSineWave->time * pSineWave->periodsPerSecond) * pSineWave->amplitude);
+            s = (float)(ma_sin(pSineWave->time * pSineWave->periodsPerSecond) * pSineWave->amplitude);
             pSineWave->time += pSineWave->delta;
 
             for (iChannel = 0; iChannel < channels; iChannel += 1) {
