@@ -507,7 +507,6 @@ void CloseAudioBuffer(AudioBuffer *buffer)
         RL_FREE(buffer->data);
         RL_FREE(buffer);
     }
-    else TRACELOG(LOG_ERROR, "CloseAudioBuffer() : No audio buffer");
 }
 
 // Check if an audio buffer is playing
@@ -516,7 +515,6 @@ bool IsAudioBufferPlaying(AudioBuffer *buffer)
     bool result = false;
 
     if (buffer != NULL) result = (buffer->playing && !buffer->paused);
-    else TRACELOG(LOG_WARNING, "IsAudioBufferPlaying() : No audio buffer");
 
     return result;
 }
@@ -532,7 +530,6 @@ void PlayAudioBuffer(AudioBuffer *buffer)
         buffer->paused = false;
         buffer->frameCursorPos = 0;
     }
-    else TRACELOG(LOG_ERROR, "PlayAudioBuffer() : No audio buffer");
 }
 
 // Stop an audio buffer
@@ -550,28 +547,24 @@ void StopAudioBuffer(AudioBuffer *buffer)
             buffer->isSubBufferProcessed[1] = true;
         }
     }
-    else TRACELOG(LOG_ERROR, "StopAudioBuffer() : No audio buffer");
 }
 
 // Pause an audio buffer
 void PauseAudioBuffer(AudioBuffer *buffer)
 {
     if (buffer != NULL) buffer->paused = true;
-    else TRACELOG(LOG_ERROR, "PauseAudioBuffer() : No audio buffer");
 }
 
 // Resume an audio buffer
 void ResumeAudioBuffer(AudioBuffer *buffer)
 {
     if (buffer != NULL) buffer->paused = false;
-    else TRACELOG(LOG_ERROR, "ResumeAudioBuffer() : No audio buffer");
 }
 
 // Set volume for an audio buffer
 void SetAudioBufferVolume(AudioBuffer *buffer, float volume)
 {
     if (buffer != NULL) buffer->volume = volume;
-    else TRACELOG(LOG_WARNING, "SetAudioBufferVolume() : No audio buffer");
 }
 
 // Set pitch for an audio buffer
@@ -590,7 +583,6 @@ void SetAudioBufferPitch(AudioBuffer *buffer, float pitch)
 
         ma_data_converter_set_rate(&buffer->converter, buffer->converter.config.sampleRateIn, newOutputSampleRate);
     }
-    else TRACELOG(LOG_WARNING, "SetAudioBufferPitch() : No audio buffer");
 }
 
 // Track audio buffer to linked list next position
@@ -1201,8 +1193,6 @@ void PlayMusicStream(Music music)
         PlayAudioStream(music.stream);  // WARNING: This resets the cursor position.
         audioBuffer->frameCursorPos = frameCursorPos;
     }
-    else TRACELOG(LOG_ERROR, "PlayMusicStream() : No audio buffer");
-
 }
 
 // Pause music playing
@@ -1411,6 +1401,7 @@ AudioStream InitAudioStream(unsigned int sampleRate, unsigned int sampleSize, un
 
     if (subBufferSize < periodSize) subBufferSize = periodSize;
 
+    // Create a double audio buffer of defined AUDIO_BUFFER_SIZE
     stream.buffer = InitAudioBuffer(formatIn, stream.channels, stream.sampleRate, subBufferSize*2, AUDIO_BUFFER_USAGE_STREAM);
 
     if (stream.buffer != NULL)
@@ -1485,17 +1476,12 @@ void UpdateAudioStream(AudioStream stream, const void *data, int samplesCount)
         }
         else TRACELOG(LOG_ERROR, "UpdateAudioStream() : Audio buffer not available for updating");
     }
-    else TRACELOG(LOG_ERROR, "UpdateAudioStream() : No audio buffer");
 }
 
 // Check if any audio stream buffers requires refill
 bool IsAudioStreamProcessed(AudioStream stream)
 {
-    if (stream.buffer == NULL)
-    {
-        TRACELOG(LOG_ERROR, "IsAudioStreamProcessed() : No audio buffer");
-        return false;
-    }
+    if (stream.buffer == NULL) return false;
 
     return (stream.buffer->isSubBufferProcessed[0] || stream.buffer->isSubBufferProcessed[1]);
 }
