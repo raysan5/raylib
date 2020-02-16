@@ -1147,7 +1147,10 @@ unsigned int TextLength(const char *text)
 {
     unsigned int length = 0; //strlen(text)
 
-    while (*text++) length++;
+    if (text != NULL)
+    {
+        while (*text++) length++;
+    }
 
     return length;
 }
