@@ -42,8 +42,8 @@
 .PHONY: all clean install uninstall
 
 # Define required raylib variables
-RAYLIB_VERSION     = 2.5.0
-RAYLIB_API_VERSION = 251
+RAYLIB_VERSION     = 2.6.0
+RAYLIB_API_VERSION = 261
 
 # See below for alternatives.
 RAYLIB_PATH        = ..
@@ -571,10 +571,11 @@ raudio.o : raudio.c raylib.h
 
 # Compile raygui module
 # NOTE: raygui header should be distributed with raylib.h
-raygui.o : raygui.c raygui.h
-	@echo #define RAYGUI_IMPLEMENTATION > raygui.c
-	@echo #include "$(RAYLIB_MODULE_RAYGUI_PATH)/raygui.h" > raygui.c
+raygui.o : raygui.c raygui.h gui_textbox_extended.h ricons.h
 	$(CC) -c $< $(CFLAGS) $(INCLUDE_PATHS) -D$(PLATFORM) -DRAYGUI_IMPLEMENTATION
+raygui.c:
+	echo '#define RAYGUI_IMPLEMENTATION' > raygui.c
+	echo '#include "$(RAYLIB_MODULE_RAYGUI_PATH)/raygui.h"' >> raygui.c
 
 # Compile physac module
 # NOTE: physac header should be distributed with raylib.h
