@@ -1100,7 +1100,6 @@ Music LoadMusicStream(const char *fileName)
     else if (IsFileExtension(fileName, ".mod"))
     {
         jar_mod_context_t *ctxMod = RL_MALLOC(sizeof(jar_mod_context_t));
-        music.ctxData = ctxMod;
 
         jar_mod_init(ctxMod);
         int result = jar_mod_load_file(ctxMod, fileName);
@@ -1114,6 +1113,8 @@ Music LoadMusicStream(const char *fileName)
             music.sampleCount = (unsigned int)jar_mod_max_samples(ctxMod)*2;
             music.loopCount = 0;   // Infinite loop by default
             musicLoaded = true;
+
+            music.ctxData = ctxMod;
         }
     }
 #endif
@@ -1178,17 +1179,15 @@ void UnloadMusicStream(Music music)
 // Start music playing (open stream)
 void PlayMusicStream(Music music)
 {
-    AudioBuffer *audioBuffer = music.stream.buffer;
-
-    if (audioBuffer != NULL)
+    if (music.stream.buffer != NULL)
     {
         // For music streams, we need to make sure we maintain the frame cursor position
         // This is a hack for this section of code in UpdateMusicStream()
         // NOTE: In case window is minimized, music stream is stopped, just make sure to
         // play again on window restore: if (IsMusicPlaying(music)) PlayMusicStream(music);
-        ma_uint32 frameCursorPos = audioBuffer->frameCursorPos;
+        ma_uint32 frameCursorPos = music.stream.buffer->frameCursorPos;
         PlayAudioStream(music.stream);  // WARNING: This resets the cursor position.
-        audioBuffer->frameCursorPos = frameCursorPos;
+        music.stream.buffer->frameCursorPos = frameCursorPos;
     }
 }
 
@@ -1233,6 +1232,8 @@ void StopMusicStream(Music music)
 // Update (re-fill) music buffers if data already processed
 void UpdateMusicStream(Music music)
 {
+    if (music.stream.buffer == NULL) return;
+
     bool streamEnding = false;
 
     unsigned int subBufferSizeInFrames = music.stream.buffer->sizeInFrames/2;
@@ -1374,9 +1375,12 @@ float GetMusicTimePlayed(Music music)
 {
     float secondsPlayed = 0.0f;
 
-    //ma_uint32 frameSizeInBytes = ma_get_bytes_per_sample(music.stream.buffer->dsp.formatConverterIn.config.formatIn)*music.stream.buffer->dsp.formatConverterIn.config.channels;
-    unsigned int samplesPlayed = music.stream.buffer->totalFramesProcessed*music.stream.channels;
-    secondsPlayed = (float)samplesPlayed/(music.stream.sampleRate*music.stream.channels);
+    if (music.stream.buffer != NULL)
+    {
+        //ma_uint32 frameSizeInBytes = ma_get_bytes_per_sample(music.stream.buffer->dsp.formatConverterIn.config.formatIn)*music.stream.buffer->dsp.formatConverterIn.config.channels;
+        unsigned int samplesPlayed = music.stream.buffer->totalFramesProcessed*music.stream.channels;
+        secondsPlayed = (float)samplesPlayed / (music.stream.sampleRate*music.stream.channels);
+    }
 
     return secondsPlayed;
 }
@@ -1424,32 +1428,30 @@ void CloseAudioStream(AudioStream stream)
 // NOTE 2: To unqueue a buffer it needs to be processed: IsAudioStreamProcessed()
 void UpdateAudioStream(AudioStream stream, const void *data, int samplesCount)
 {
-    AudioBuffer *audioBuffer = stream.buffer;
-
-    if (audioBuffer != NULL)
+    if (stream.buffer != NULL)
     {
-        if (audioBuffer->isSubBufferProcessed[0] || audioBuffer->isSubBufferProcessed[1])
+        if (stream.buffer->isSubBufferProcessed[0] || stream.buffer->isSubBufferProcessed[1])
         {
             ma_uint32 subBufferToUpdate = 0;
 
-            if (audioBuffer->isSubBufferProcessed[0] && audioBuffer->isSubBufferProcessed[1])
+            if (stream.buffer->isSubBufferProcessed[0] && stream.buffer->isSubBufferProcessed[1])
             {
                 // Both buffers are available for updating.
                 // Update the first one and make sure the cursor is moved back to the front.
                 subBufferToUpdate = 0;
-                audioBuffer->frameCursorPos = 0;
+                stream.buffer->frameCursorPos = 0;
             }
             else
             {
                 // Just update whichever sub-buffer is processed.
-                subBufferToUpdate = (audioBuffer->isSubBufferProcessed[0])? 0 : 1;
+                subBufferToUpdate = (stream.buffer->isSubBufferProcessed[0])? 0 : 1;
             }
 
-            ma_uint32 subBufferSizeInFrames = audioBuffer->sizeInFrames/2;
-            unsigned char *subBuffer = audioBuffer->data + ((subBufferSizeInFrames*stream.channels*(stream.sampleSize/8))*subBufferToUpdate);
+            ma_uint32 subBufferSizeInFrames = stream.buffer->sizeInFrames/2;
+            unsigned char *subBuffer = stream.buffer->data + ((subBufferSizeInFrames*stream.channels*(stream.sampleSize/8))*subBufferToUpdate);
 
             // TODO: Get total frames processed on this buffer... DOES NOT WORK.
-            audioBuffer->totalFramesProcessed += subBufferSizeInFrames;
+            stream.buffer->totalFramesProcessed += subBufferSizeInFrames;
 
             // Does this API expect a whole buffer to be updated in one go?
             // Assuming so, but if not will need to change this logic.
@@ -1467,7 +1469,7 @@ void UpdateAudioStream(AudioStream stream, const void *data, int samplesCount)
 
                 if (leftoverFrameCount > 0) memset(subBuffer + bytesToWrite, 0, leftoverFrameCount*stream.channels*(stream.sampleSize/8));
 
-                audioBuffer->isSubBufferProcessed[subBufferToUpdate] = false;
+                stream.buffer->isSubBufferProcessed[subBufferToUpdate] = false;
             }
             else TRACELOG(LOG_ERROR, "UpdateAudioStream() : Attempting to write too many frames to buffer");
         }
