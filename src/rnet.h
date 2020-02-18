@@ -2,16 +2,12 @@
 *
 *   rnet - Provides cross-platform network defines, macros etc
 *
-*   DEPENDENCIES:
-*       <limits.h>    - Used for cross-platform type specifiers
-*
 *   INSPIRED BY:
 *       SFML Sockets - https://www.sfml-dev.org/documentation/2.5.1/classsf_1_1Socket.php
 *       SDL_net - https://www.libsdl.org/projects/SDL_net/
 *       BSD Sockets - https://www.gnu.org/software/libc/manual/html_node/Sockets.html
 *       BEEJ - https://beej.us/guide/bgnet/html/single/bgnet.html
 *       Winsock2 - https://docs.microsoft.com/en-us/windows/desktop/api/winsock2
-*
 *
 *   CONTRIBUTORS:
 *       Jak Barnes (github: @syphonx) (Feb. 2019) - Initial version
@@ -135,14 +131,14 @@ typedef int socklen_t;
 //----------------------------------------------------------------------------------
 
 // Include system network headers
-#if defined(_WIN32)
+#if defined(_WIN32) // Windows
     #define __USE_W32_SOCKETS
     #define WIN32_LEAN_AND_MEAN
     #include <winsock2.h>
     #include <ws2tcpip.h>
     #include <io.h>
     #define IPTOS_LOWDELAY 0x10
-#else   // Unix
+#else               // Unix
     #include <sys/types.h>
     #include <fcntl.h>
     #include <netinet/in.h>
@@ -178,27 +174,34 @@ typedef int socklen_t;
 //----------------------------------------------------------------------------------
 
 // Network connection related defines
-#define SOCKET_MAX_SET_SIZE                     (32)   // Maximum sockets in a set
-#define SOCKET_MAX_QUEUE_SIZE                   (16)   // Maximum socket queue size
-#define SOCKET_MAX_SOCK_OPTS (4)        // Maximum socket options
-#define SOCKET_MAX_UDPCHANNELS (32)        // Maximum UDP channels
-#define SOCKET_MAX_UDPADDRESSES (4)        // Maximum bound UDP addresses
-
-
-// Network address related defines
-#define ADDRESS_IPV4_ADDRSTRLEN                 (22)   // IPv4 string length
-#define ADDRESS_IPV6_ADDRSTRLEN                 (65)   // IPv6 string length
-#define ADDRESS_TYPE_ANY                        (0)    // AF_UNSPEC
-#define ADDRESS_TYPE_IPV4                       (2)    // AF_INET
-#define ADDRESS_TYPE_IPV6                       (23)   // AF_INET6
-#define ADDRESS_MAXHOST                         (1025) // Max size of a fully-qualified domain name
-#define ADDRESS_MAXSERV                         (32)   // Max size of a service name
+#define SOCKET_MAX_SET_SIZE         32     // Maximum sockets in a set
+#define SOCKET_MAX_QUEUE_SIZE       16     // Maximum socket queue size
+#define SOCKET_MAX_SOCK_OPTS        4      // Maximum socket options
+#define SOCKET_MAX_UDPCHANNELS      32     // Maximum UDP channels
+#define SOCKET_MAX_UDPADDRESSES     4      // Maximum bound UDP addresses
 
 // Network address related defines
-#define ADDRESS_ANY                             ((unsigned long) 0x00000000)
-#define ADDRESS_LOOPBACK                        (0x7f000001)
-#define ADDRESS_BROADCAST                       ((unsigned long) 0xffffffff)
-#define ADDRESS_NONE                            (0xffffffff)
+#define ADDRESS_IPV4_ADDRSTRLEN     22     // IPv4 string length
+#define ADDRESS_IPV6_ADDRSTRLEN     65     // IPv6 string length
+#define ADDRESS_TYPE_ANY            0      // AF_UNSPEC
+#define ADDRESS_TYPE_IPV4           2      // AF_INET
+#define ADDRESS_TYPE_IPV6           23     // AF_INET6
+#define ADDRESS_MAXHOST             1025   // Max size of a fully-qualified domain name
+#define ADDRESS_MAXSERV             32     // Max size of a service name
+
+// Network address related defines
+#define ADDRESS_ANY                 (unsigned long)0x00000000
+#define ADDRESS_LOOPBACK            0x7f000001
+#define ADDRESS_BROADCAST           (unsigned long)0xffffffff
+#define ADDRESS_NONE                xffffffff
+
+// Network resolution related defines
+#define NAME_INFO_DEFAULT           0x00   // No flags set
+#define NAME_INFO_NOFQDN            0x01   // Only return nodename portion for local hosts
+#define NAME_INFO_NUMERICHOST       0x02   // Return numeric form of the host's address
+#define NAME_INFO_NAMEREQD          0x04   // Error if the host's name not in DNS
+#define NAME_INFO_NUMERICSERV       0x08   // Return numeric form of the service (port #)
+#define NAME_INFO_DGRAM             0x10   // Service is a datagram service
 
 // Address resolution related defines
 #if defined(_WIN32)
@@ -220,14 +223,6 @@ typedef int socklen_t;
     #define ADDRESS_INFO_RESOLUTION_HANDLE      (0x40000000)  // Request resolution handle
 #endif
 
-// Network resolution related defines
-#define NAME_INFO_DEFAULT                       (0x00) // No flags set
-#define NAME_INFO_NOFQDN                        (0x01) // Only return nodename portion for local hosts
-#define NAME_INFO_NUMERICHOST                   (0x02) // Return numeric form of the host's address
-#define NAME_INFO_NAMEREQD                      (0x04) // Error if the host's name not in DNS
-#define NAME_INFO_NUMERICSERV                   (0x08) // Return numeric form of the service (port #)
-#define NAME_INFO_DGRAM                         (0x10) // Service is a datagram service
-
 //----------------------------------------------------------------------------------
 // Types and Structures Definition
 //----------------------------------------------------------------------------------
@@ -239,6 +234,11 @@ typedef int socklen_t;
     typedef enum { false, true } bool;
 #endif
 
+typedef enum {
+    SOCKET_TCP = 0,             // SOCK_STREAM
+    SOCKET_UDP = 1              // SOCK_DGRAM
+} SocketType;
+
 // Network typedefs
 typedef uint32_t SocketChannel;
 typedef struct _AddressInformation *AddressInformation;
@@ -249,83 +249,78 @@ typedef struct _SocketAddressStorage *SocketAddressStorage;
 
 // IPAddress definition (in network byte order)
 typedef struct IPAddress {
-    unsigned long  host; /* 32-bit IPv4 host address */
-    unsigned short port; /* 16-bit protocol port */
+    unsigned long  host;        // 32-bit IPv4 host address
+    unsigned short port;        // 16-bit protocol port
 } IPAddress;
 
 // An option ID, value, sizeof(value) tuple for setsockopt(2).
 typedef struct SocketOpt {
-    int id;
-    void *value;
-    int valueLen;
+    int id;                     // Socked option id
+    int valueLen;               // Socked option value len
+    void *value;                // Socked option value data
 } SocketOpt;
 
-typedef enum {
-    SOCKET_TCP = 0, // SOCK_STREAM
-    SOCKET_UDP = 1  // SOCK_DGRAM
-} SocketType;
-
 typedef struct UDPChannel {
-    int numbound; // The total number of addresses this channel is bound to
+    int numbound;               // The total number of addresses this channel is bound to
     IPAddress address[SOCKET_MAX_UDPADDRESSES]; // The list of remote addresses this channel is bound to
 } UDPChannel;
 
 typedef struct Socket {
-    int  ready;    // Is the socket ready? i.e. has information
-    int  status;   // The last status code to have occured using this socket
-    bool isServer; // Is this socket a server socket (i.e. TCP/UDP Listen Server)
-    SocketChannel channel; // The socket handle id
-    SocketType    type;    // Is this socket a TCP or UDP socket?
-    bool          isIPv6;  // Is this socket address an ipv6 address?
+    int  ready;                 // Is the socket ready? i.e. has information
+    int  status;                // The last status code to have occured using this socket
+    bool isServer;              // Is this socket a server socket (i.e. TCP/UDP Listen Server)
+    SocketChannel channel;      // The socket handle id
+    SocketType type;            // Is this socket a TCP or UDP socket?
+    bool isIPv6;                // Is this socket address an ipv6 address?
     SocketAddressIPv4 addripv4; // The host/target IPv4 for this socket (in network byte order)
     SocketAddressIPv6 addripv6; // The host/target IPv6 for this socket (in network byte order)
 
     struct UDPChannel binding[SOCKET_MAX_UDPCHANNELS]; // The amount of channels (if UDP) this socket is bound to
 } Socket;
 
+// Result from calling open with a given config
+typedef struct SocketResult {
+    int status;                 // Socket result state
+    Socket *socket;             // Socket ref
+} SocketResult;
+
 typedef struct SocketSet {
-    int numsockets;
-    int maxsockets;
-    struct Socket **sockets;
+    int numsockets;             // Socket set count
+    int maxsockets;             // Socket set max
+    struct Socket **sockets;    // Sockets array
 } SocketSet;
 
 typedef struct SocketDataPacket {
-    int            channel; // The src/dst channel of the packet
-    unsigned char *data;    // The packet data
-    int            len;     // The length of the packet data
-    int            maxlen;  // The size of the data buffer
-    int            status;  // packet status after sending
-    IPAddress address; // The source/dest address of an incoming/outgoing packet
+    IPAddress address;          // The source/dest address of an incoming/outgoing packet
+    int channel;                // The src/dst channel of the packet
+    int maxlen;                 // The size of the data buffer
+    int status;                 // Packet status after sending
+    unsigned int len;           // The length of the packet data
+    unsigned char *data;        // The packet data
 } SocketDataPacket;
 
-// Configuration for a socket.
+// Configuration for a socket
 typedef struct SocketConfig {
-    char *     host;   // The host address in xxx.xxx.xxx.xxx form
-    char *     port;   // The target port/service in the form "http" or "25565"
-    bool       server; // Listen for incoming clients?
-    SocketType type;   // The type of socket, TCP/UDP
-    bool       nonblocking;  // non-blocking operation?
-    int        backlog_size; // set a custom backlog size
-    SocketOpt  sockopts[SOCKET_MAX_SOCK_OPTS];
+    SocketType type;            // The type of socket, TCP/UDP
+    char *host;                 // The host address in xxx.xxx.xxx.xxx form
+    char *port;                 // The target port/service in the form "http" or "25565"
+    bool server;                // Listen for incoming clients?
+    bool nonblocking;           // non-blocking operation?
+    int backlog_size;           // set a custom backlog size
+    SocketOpt sockopts[SOCKET_MAX_SOCK_OPTS];
 } SocketConfig;
-
-// Result from calling open with a given config.
-typedef struct SocketResult {
-    int status;
-    Socket *socket;
-} SocketResult;
 
 // Packet type
 typedef struct Packet {
-    uint32_t size; // The total size of bytes in data
-    uint32_t offs; // The offset to data access
-    uint32_t maxs; // The max size of data
-    uint8_t *data; // Data stored in network byte order
+    uint32_t size;              // The total size of bytes in data
+    uint32_t offs;              // The offset to data access
+    uint32_t maxs;              // The max size of data
+    uint8_t *data;              // Data stored in network byte order
 } Packet;
 
 
 #ifdef __cplusplus
-extern "C" {            // Prevents name mangling of functions
+extern "C" {        // Prevents name mangling of functions
 #endif
 
 //----------------------------------------------------------------------------------
