@@ -4660,11 +4660,11 @@ static void InitEvdevInput(void)
         CORE.Input.Touch.position[i].x = -1;
         CORE.Input.Touch.position[i].y = -1;
     }
-    
+
     // Reset keypress buffer
     CORE.Input.Keyboard.lastKeyPressed.Head = 0;
     CORE.Input.Keyboard.lastKeyPressed.Tail = 0;
-    
+
     // Reset keyboard key state
     for (int i = 0; i < 512; i++) CORE.Input.Keyboard.currentKeyState[i] = 0;
 
