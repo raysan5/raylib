@@ -325,7 +325,7 @@ static Wave LoadMP3(const char *fileName);              // Load MP3 file
 
 #if defined(RAUDIO_STANDALONE)
 bool IsFileExtension(const char *fileName, const char *ext);// Check file extension
-void TRACELOG(int msgType, const char *text, ...);      // Show trace log messages (LOG_INFO, LOG_WARNING, LOG_ERROR, LOG_DEBUG)
+void TraceLog(int msgType, const char *text, ...);      // Show trace log messages (LOG_INFO, LOG_WARNING, LOG_ERROR, LOG_DEBUG)
 #endif
 
 //----------------------------------------------------------------------------------
