@@ -2479,8 +2479,8 @@ bool IsMouseButtonPressed(int button)
     if (IsGestureDetected(GESTURE_TAP)) pressed = true;
 #else
     // NOTE: On PLATFORM_DESKTOP and PLATFORM_WEB IsMouseButtonPressed() is equivalent to GESTURE_TAP
-    if (((CORE.Input.Mouse.currentButtonState[button] != CORE.Input.Mouse.previousButtonState[button]) &&
-         (CORE.Input.Mouse.currentButtonState[button] == 1)) || IsGestureDetected(GESTURE_TAP))  pressed = true;
+    if ((CORE.Input.Mouse.currentButtonState[button] != CORE.Input.Mouse.previousButtonState[button]) &&
+         (GetMouseButtonStatus(button) == 1)) pressed = true;
 #endif
 
     return pressed;
@@ -2495,7 +2495,8 @@ bool IsMouseButtonDown(int button)
     if (IsGestureDetected(GESTURE_HOLD)) down = true;
 #else
     // NOTE: On PLATFORM_DESKTOP and PLATFORM_WEB IsMouseButtonDown() is equivalent to GESTURE_HOLD or GESTURE_DRAG
-    if ((GetMouseButtonStatus(button) == 1) || IsGestureDetected(GESTURE_HOLD) || IsGestureDetected(GESTURE_DRAG)) down = true;
+    if (GetMouseButtonStatus(button) == 1) down = true;
+    // || IsGestureDetected(GESTURE_HOLD) || IsGestureDetected(GESTURE_DRAG)) down = true;
 #endif
 
     return down;
@@ -2508,7 +2509,7 @@ bool IsMouseButtonReleased(int button)
 
 #if !defined(PLATFORM_ANDROID)
     if ((CORE.Input.Mouse.currentButtonState[button] != CORE.Input.Mouse.previousButtonState[button]) &&
-        (CORE.Input.Mouse.currentButtonState[button] == 0)) released = true;
+        (GetMouseButtonStatus(button) == 0)) released = true;
 #endif
 
     return released;
