@@ -105,13 +105,17 @@ Other less major API changes have also been made in version 0.10.
 
 `ma_device_set_stop_callback()` has been removed. You now must set the stop callback via the device config just like the data callback.
 
-`ma_sine_wave_read_f32()` and `ma_sine_wave_read_f32_ex()` have been removed and replaced with `ma_sine_wave_process_pcm_frames()` which supports outputting
-PCM frames in any format (specified by a parameter).
+The `ma_sine_wave` API has been replaced with a more general API called `ma_waveform`. This supports generation of different types of waveforms, including
+sine, square, triangle and sawtooth. Use `ma_waveform_init()` in place of `ma_sine_wave_init()` to initialize the waveform object. This takes the same
+parameters, except an additional `ma_waveform_type` value which you would set to `ma_waveform_type_sine`. Use `ma_waveform_read_pcm_frames()` in place of
+`ma_sine_wave_read_f32()` and `ma_sine_wave_read_f32_ex()`.
 
 `ma_convert_frames()` and `ma_convert_frames_ex()` have been changed. Both of these functions now take a new parameter called `frameCountOut` which specifies
 the size of the output buffer in PCM frames. This has been added for safety. In addition to this, the parameters for `ma_convert_frames_ex()` have changed to
 take a pointer to a `ma_data_converter_config` object to specify the input and output formats to convert between. This was done to make it make it more
 flexible, to prevent the parameter list getting too long, and to prevent API breakage whenever a new conversion property is added.
+
+`ma_calculate_frame_count_after_src()` has been renamed to `ma_calculate_frame_count_after_resampling()` for consistency with the new `ma_resampler` API.
 
 
 Biquad and Low-Pass Filters
@@ -123,6 +127,13 @@ Both formats use transposed direct form 2.
 The low-pass filter is just a biquad filter. By itself it's a second order low-pass filter, but it can be extended to higher orders by chaining low-pass
 filters together. Low-pass filtering is achieved via the `ma_lpf` API. Since the low-pass filter is just a biquad filter, it supports both 32-bit floating
 point and 16-bit signed integer formats.
+
+
+Sine, Square, Triangle and Sawtooth Waveforms
+---------------------------------------------
+Previously miniaudio supported only sine wave generation. This has now been generalized to support sine, square, triangle and sawtooth waveforms. The old
+`ma_sine_wave` API has been removed and replaced with the `ma_waveform` API. Use `ma_waveform_init()` to initialize the waveform. Here you specify tyhe type of
+waveform you want to generated. You then read data using `ma_waveform_read_pcm_frames()`.
 
 
 Miscellaneous Changes
@@ -975,9 +986,9 @@ and will result in an error.
 
 
 
-Low-Pass Filtering
-==================
-Low-pass filtering is achieved with the `ma_lpf` API. Example:
+Low-Pass, High-Pass and Band-Pass Filtering
+===========================================
+Low-pass, high-pass and band-pass filtering is achieved with the `ma_lpf`, `ma_hpf` and `ma_bpf` APIs respective. Low-pass filter example:
 
     ```c
     ma_lpf_config config = ma_lpf_config_init(ma_format_f32, channels, sampleRate, cutoffFrequency);
@@ -1000,7 +1011,7 @@ Filtering can be applied in-place by passing in the same pointer for both the in
     ma_lpf_process_pcm_frames(&lpf, pMyData, pMyData, frameCount);
     ```
 
-The low-pass filter is implemented as a biquad filter. If you need to increase the filter order, simply chain multiple low-pass filters together.
+These filters are implemented as a biquad filter. If you need to increase the filter order, simply chain multiple filters together.
 
     ```c
     for (iFilter = 0; iFilter < filterCount; iFilter += 1) {
@@ -1011,6 +1022,30 @@ The low-pass filter is implemented as a biquad filter. If you need to increase t
 If you need to change the configuration of the filter, but need to maintain the state of internal registers you can do so with `ma_lpf_reinit()`. This may be
 useful if you need to change the sample rate and/or cutoff frequency dynamically while maintaing smooth transitions. Note that changing the format or channel
 count after initialization is invalid and will result in an error.
+
+The example code above is for low-pass filters, but the same applies for high-pass and band-pass filters, only you should use the `ma_hpf` and `ma_bpf` APIs
+instead.
+
+
+
+Waveforms
+=========
+miniaudio supports generation of sine, square, triangle and sawtooth waveforms. This is achieved with the `ma_waveform` API. Example:
+
+    ```c
+    ma_waveform waveform;
+    ma_result result = ma_waveform_init(ma_waveform_type_sine, amplitude, frequency, sampleRate, &waveform);
+    if (result != MA_SUCCESS) {
+        // Error.
+    }
+
+    ...
+
+    ma_waveform_read_pcm_frames(&waveform, pOutput, frameCount, FORMAT, CHANNELS);
+    ```
+
+The amplitude, frequency and sample rate can be changed dynamically with `ma_waveform_set_amplitude()`, `ma_waveform_set_frequency()` and
+`ma_waveform_set_sample_rate()` respectively.
 
 
 
@@ -1445,17 +1480,10 @@ typedef int ma_result;
 #define MA_SAMPLE_RATE_352800                          352800
 #define MA_SAMPLE_RATE_384000                          384000
 
-#define MA_MIN_PCM_SAMPLE_SIZE_IN_BYTES                1   /* For simplicity, miniaudio does not support PCM samples that are not byte aligned. */
-#define MA_MAX_PCM_SAMPLE_SIZE_IN_BYTES                8
 #define MA_MIN_CHANNELS                                1
 #define MA_MAX_CHANNELS                                32
 #define MA_MIN_SAMPLE_RATE                             MA_SAMPLE_RATE_8000
 #define MA_MAX_SAMPLE_RATE                             MA_SAMPLE_RATE_384000
-#define MA_SRC_SINC_MIN_WINDOW_WIDTH                   2
-#define MA_SRC_SINC_MAX_WINDOW_WIDTH                   32
-#define MA_SRC_SINC_DEFAULT_WINDOW_WIDTH               32
-#define MA_SRC_SINC_LOOKUP_TABLE_RESOLUTION            8
-#define MA_SRC_INPUT_BUFFER_SIZE_IN_SAMPLES            256
 
 typedef enum
 {
@@ -1596,6 +1624,58 @@ ma_result ma_lpf_init(const ma_lpf_config* pConfig, ma_lpf* pLPF);
 ma_result ma_lpf_reinit(const ma_lpf_config* pConfig, ma_lpf* pLPF);
 ma_result ma_lpf_process_pcm_frames(ma_lpf* pLPF, void* pFramesOut, const void* pFramesIn, ma_uint64 frameCount);
 ma_uint32 ma_lpf_get_latency(ma_lpf* pLPF);
+
+
+/**************************************************************************************************************************************************************
+
+High-Pass Filtering
+
+**************************************************************************************************************************************************************/
+typedef struct
+{
+    ma_format format;
+    ma_uint32 channels;
+    ma_uint32 sampleRate;
+    double cutoffFrequency;
+} ma_hpf_config;
+
+ma_hpf_config ma_hpf_config_init(ma_format format, ma_uint32 channels, ma_uint32 sampleRate, double cutoffFrequency);
+
+typedef struct
+{
+    ma_biquad bq;   /* The high-pass filter is implemented as a biquad filter. */
+} ma_hpf;
+
+ma_result ma_hpf_init(const ma_hpf_config* pConfig, ma_hpf* pHPF);
+ma_result ma_hpf_reinit(const ma_hpf_config* pConfig, ma_hpf* pHPF);
+ma_result ma_hpf_process_pcm_frames(ma_hpf* pHPF, void* pFramesOut, const void* pFramesIn, ma_uint64 frameCount);
+ma_uint32 ma_hpf_get_latency(ma_hpf* pHPF);
+
+
+/**************************************************************************************************************************************************************
+
+Band-Pass Filtering
+
+**************************************************************************************************************************************************************/
+typedef struct
+{
+    ma_format format;
+    ma_uint32 channels;
+    ma_uint32 sampleRate;
+    double cutoffFrequency;
+} ma_bpf_config;
+
+ma_bpf_config ma_bpf_config_init(ma_format format, ma_uint32 channels, ma_uint32 sampleRate, double cutoffFrequency);
+
+typedef struct
+{
+    ma_biquad bq;   /* The band-pass filter is implemented as a biquad filter. */
+} ma_bpf;
+
+ma_result ma_bpf_init(const ma_bpf_config* pConfig, ma_bpf* pBPF);
+ma_result ma_bpf_reinit(const ma_bpf_config* pConfig, ma_bpf* pBPF);
+ma_result ma_bpf_process_pcm_frames(ma_bpf* pBPF, void* pFramesOut, const void* pFramesIn, ma_uint64 frameCount);
+ma_uint32 ma_bpf_get_latency(ma_bpf* pBPF);
 
 
 /************************************************************************************************************************************************************
@@ -3238,6 +3318,8 @@ struct ma_device
             /*SLRecordItf*/ ma_ptr pAudioRecorder;
             /*SLAndroidSimpleBufferQueueItf*/ ma_ptr pBufferQueuePlayback;
             /*SLAndroidSimpleBufferQueueItf*/ ma_ptr pBufferQueueCapture;
+            ma_bool32 isDrainingCapture;
+            ma_bool32 isDrainingPlayback;
             ma_uint32 currentBufferIndexPlayback;
             ma_uint32 currentBufferIndexCapture;
             ma_uint8* pBufferPlayback;      /* This is malloc()'d and is used for storing audio data. Typed as ma_uint8 for easy offsetting. */
@@ -4717,16 +4799,28 @@ ma_result ma_decode_memory(const void* pData, size_t dataSize, ma_decoder_config
 Generation
 
 ************************************************************************************************************************************************************/
+typedef enum
+{
+    ma_waveform_type_sine,
+    ma_waveform_type_square,
+    ma_waveform_type_triangle,
+    ma_waveform_type_sawtooth
+} ma_waveform_type;
+
 typedef struct
 {
+    ma_waveform_type type;
     double amplitude;
-    double periodsPerSecond;
-    double delta;
+    double frequency;
+    double deltaTime;
     double time;
-} ma_sine_wave;
+} ma_waveform;
 
-ma_result ma_sine_wave_init(double amplitude, double period, ma_uint32 sampleRate, ma_sine_wave* pSineWave);
-ma_uint64 ma_sine_wave_read_pcm_frames(ma_sine_wave* pSineWave, void* pFramesOut, ma_uint64 frameCount, ma_format format, ma_uint32 channels);
+ma_result ma_waveform_init(ma_waveform_type type, double amplitude, double frequency, ma_uint32 sampleRate, ma_waveform* pWaveform);
+ma_uint64 ma_waveform_read_pcm_frames(ma_waveform* pWaveform, void* pFramesOut, ma_uint64 frameCount, ma_format format, ma_uint32 channels);
+ma_result ma_waveform_set_amplitude(ma_waveform* pWaveform, double amplitude);
+ma_result ma_waveform_set_frequency(ma_waveform* pWaveform, double frequency);
+ma_result ma_waveform_set_sample_rate(ma_waveform* pWaveform, ma_uint32 sampleRate);
 
 #ifdef __cplusplus
 }
@@ -4897,6 +4991,7 @@ IMPLEMENTATION
     #endif
 #endif
 
+/* Begin globally disabled warnings. */
 #if defined(_MSC_VER)
     #pragma warning(push)
     #pragma warning(disable:4752)   /* found Intel(R) Advanced Vector Extensions; consider using /arch:AVX */
@@ -5302,6 +5397,7 @@ Standard Library Stuff
 #define ma_countof(x)               (sizeof(x) / sizeof(x[0]))
 #define ma_max(x, y)                (((x) > (y)) ? (x) : (y))
 #define ma_min(x, y)                (((x) < (y)) ? (x) : (y))
+#define ma_abs(x)                   (((x) > 0) ? (x) : -(x))
 #define ma_clamp(x, lo, hi)         (ma_max(lo, ma_min(x, hi)))
 #define ma_offset_ptr(p, offset)    (((ma_uint8*)(p)) + (offset))
 
@@ -5318,10 +5414,10 @@ static MA_INLINE double ma_cos(double x)
     return ma_sin((MA_PI*0.5) - x);
 }
 
-static MA_INLINE double ma_log2(double x)
+static MA_INLINE double ma_log(double x)
 {
-    /* TODO: Implement custom log2(x). */
-    return log2(x);
+    /* TODO: Implement custom log(x). */
+    return log(x);
 }
 
 static MA_INLINE double ma_pow(double x, double y)
@@ -5332,7 +5428,7 @@ static MA_INLINE double ma_pow(double x, double y)
 
 static MA_INLINE double ma_log10(double x)
 {
-    return ma_log2(x) * 0.30102999566398119521;
+    return ma_log(x) * 0.43429448190325182765;
 }
 
 static MA_INLINE float ma_powf(float x, float y)
@@ -5344,8 +5440,6 @@ static MA_INLINE float ma_log10f(float x)
 {
     return (float)ma_log10((double)x);
 }
-
-
 
 
 /*
@@ -6063,17 +6157,23 @@ static ma_result ma_allocation_callbacks_init_copy(ma_allocation_callbacks* pDst
 }
 
 
-ma_uint64 ma_calculate_frame_count_after_src(ma_uint32 sampleRateOut, ma_uint32 sampleRateIn, ma_uint64 frameCountIn)
+ma_uint64 ma_calculate_frame_count_after_resampling(ma_uint32 sampleRateOut, ma_uint32 sampleRateIn, ma_uint64 frameCountIn)
 {
-    double    srcRatio       = (double)sampleRateOut / sampleRateIn;
-    double    frameCountOutF = (ma_int64)frameCountIn * srcRatio; /* Cast to int64 required for VC6. */
-    ma_uint64 frameCountOut  = (ma_uint64)frameCountOutF;
+    /* For robustness we're going to use a resampler object to calculate this since that already has a way of calculating this. */
+    ma_result result;
+    ma_uint64 frameCountOut;
+    ma_resampler_config config;
+    ma_resampler resampler;
 
-    /* If the output frame count is fractional, make sure we add an extra frame to ensure there's enough room for that last sample. */
-    if ((frameCountOutF - (ma_int64)frameCountOut) > 0.0) {
-        frameCountOut += 1;
+    config = ma_resampler_config_init(ma_format_s16, 1, sampleRateIn, sampleRateOut, ma_resample_algorithm_linear);
+    result = ma_resampler_init(&config, &resampler);
+    if (result != MA_SUCCESS) {
+        return 0;
     }
 
+    frameCountOut = ma_resampler_get_expected_output_frame_count(&resampler, frameCountIn);
+
+    ma_resampler_uninit(&resampler);
     return frameCountOut;
 }
 
@@ -6270,7 +6370,7 @@ const char* ma_log_level_to_string(ma_uint32 logLevel)
 }
 
 /* Posts a log message. */
-static void ma_log(ma_context* pContext, ma_device* pDevice, ma_uint32 logLevel, const char* message)
+static void ma_post_log_message(ma_context* pContext, ma_device* pDevice, ma_uint32 logLevel, const char* message)
 {
     if (pContext == NULL) {
         return;
@@ -6304,7 +6404,7 @@ static ma_result ma_context_post_error(ma_context* pContext, ma_device* pDevice,
         }
     }
 
-    ma_log(pContext, pDevice, logLevel, message);
+    ma_post_log_message(pContext, pDevice, logLevel, message);
     return resultCode;
 }
 
@@ -6438,7 +6538,7 @@ ma_handle ma_dlopen(ma_context* pContext, const char* filename)
     if (pContext != NULL) {
         char message[256];
         ma_strappend(message, sizeof(message), "Loading library: ", filename);
-        ma_log(pContext, NULL, MA_LOG_LEVEL_VERBOSE, message);
+        ma_post_log_message(pContext, NULL, MA_LOG_LEVEL_VERBOSE, message);
     }
 #endif
 
@@ -6466,7 +6566,7 @@ ma_handle ma_dlopen(ma_context* pContext, const char* filename)
     if (handle == NULL) {
         char message[256];
         ma_strappend(message, sizeof(message), "Failed to load library: ", filename);
-        ma_log(pContext, NULL, MA_LOG_LEVEL_INFO, message);
+        ma_post_log_message(pContext, NULL, MA_LOG_LEVEL_INFO, message);
     }
 #endif
 
@@ -6493,7 +6593,7 @@ ma_proc ma_dlsym(ma_context* pContext, ma_handle handle, const char* symbol)
     if (pContext != NULL) {
         char message[256];
         ma_strappend(message, sizeof(message), "Loading symbol: ", symbol);
-        ma_log(pContext, NULL, MA_LOG_LEVEL_VERBOSE, message);
+        ma_post_log_message(pContext, NULL, MA_LOG_LEVEL_VERBOSE, message);
     }
 #endif
 
@@ -6514,7 +6614,7 @@ ma_proc ma_dlsym(ma_context* pContext, ma_handle handle, const char* symbol)
     if (handle == NULL) {
         char message[256];
         ma_strappend(message, sizeof(message), "Failed to load symbol: ", symbol);
-        ma_log(pContext, NULL, MA_LOG_LEVEL_WARNING, message);
+        ma_post_log_message(pContext, NULL, MA_LOG_LEVEL_WARNING, message);
     }
 #endif
 
@@ -13945,8 +14045,23 @@ static ma_result ma_device_stop__winmm(ma_device* pDevice)
     }
 
     if (pDevice->type == ma_device_type_playback || pDevice->type == ma_device_type_duplex) {
+        ma_uint32 iPeriod;
+        WAVEHDR* pWAVEHDR;
+
         if (pDevice->winmm.hDevicePlayback == NULL) {
             return MA_INVALID_ARGS;
+        }
+
+        /* We need to drain the device. To do this we just loop over each header and if it's locked just wait for the event. */
+        pWAVEHDR = (WAVEHDR*)pDevice->winmm.pWAVEHDRPlayback;
+        for (iPeriod = 0; iPeriod < pDevice->playback.internalPeriods; iPeriod += 1) {
+            if (pWAVEHDR[iPeriod].dwUser == 1) { /* 1 = locked. */
+                if (WaitForSingleObject((HANDLE)pDevice->winmm.hEventPlayback, INFINITE) != WAIT_OBJECT_0) {
+                    break;  /* An error occurred so just abandon ship and stop the device without draining. */
+                }
+
+                pWAVEHDR[iPeriod].dwUser = 0;
+            }
         }
 
         resultMM = ((MA_PFN_waveOutReset)pDevice->pContext->winmm.waveOutReset)((HWAVEOUT)pDevice->winmm.hDevicePlayback);
@@ -19381,7 +19496,7 @@ static ma_result ma_device_init__jack(ma_context* pContext, const ma_device_conf
     }
 
     if (pDevice->type == ma_device_type_duplex) {
-        ma_uint32 rbSizeInFrames = (ma_uint32)ma_calculate_frame_count_after_src(pDevice->sampleRate, pDevice->capture.internalSampleRate, pDevice->capture.internalPeriodSizeInFrames * pDevice->capture.internalPeriods);
+        ma_uint32 rbSizeInFrames = (ma_uint32)ma_calculate_frame_count_after_resampling(pDevice->sampleRate, pDevice->capture.internalSampleRate, pDevice->capture.internalPeriodSizeInFrames * pDevice->capture.internalPeriods);
         result = ma_pcm_rb_init(pDevice->capture.format, pDevice->capture.channels, rbSizeInFrames, NULL, &pDevice->pContext->allocationCallbacks, &pDevice->jack.duplexRB);
         if (result != MA_SUCCESS) {
             ma_device_uninit__jack(pDevice);
@@ -22285,7 +22400,7 @@ static ma_result ma_device_init__coreaudio(ma_context* pContext, const ma_device
 
     /* Need a ring buffer for duplex mode. */
     if (pConfig->deviceType == ma_device_type_duplex) {
-        ma_uint32 rbSizeInFrames = (ma_uint32)ma_calculate_frame_count_after_src(pDevice->sampleRate, pDevice->capture.internalSampleRate, pDevice->capture.internalPeriodSizeInFrames * pDevice->capture.internalPeriods);
+        ma_uint32 rbSizeInFrames = (ma_uint32)ma_calculate_frame_count_after_resampling(pDevice->sampleRate, pDevice->capture.internalSampleRate, pDevice->capture.internalPeriodSizeInFrames * pDevice->capture.internalPeriods);
         ma_result result = ma_pcm_rb_init(pDevice->capture.format, pDevice->capture.channels, rbSizeInFrames, NULL, &pDevice->pContext->allocationCallbacks, &pDevice->coreaudio.duplexRB);
         if (result != MA_SUCCESS) {
             return ma_post_error(pDevice, MA_LOG_LEVEL_ERROR, "[Core Audio] Failed to initialize ring buffer.", result);
@@ -22342,7 +22457,9 @@ static ma_result ma_device_start__coreaudio(ma_device* pDevice)
 static ma_result ma_device_stop__coreaudio(ma_device* pDevice)
 {
     MA_ASSERT(pDevice != NULL);
-    
+
+    /* It's not clear from the documentation whether or not AudioOutputUnitStop() actually drains the device or not. */
+
     if (pDevice->type == ma_device_type_capture || pDevice->type == ma_device_type_duplex) {
         OSStatus status = ((ma_AudioOutputUnitStop_proc)pDevice->pContext->coreaudio.AudioOutputUnitStop)((AudioUnit)pDevice->coreaudio.audioUnitCapture);
         if (status != noErr) {
@@ -23304,6 +23421,16 @@ static ma_result ma_device_init__sndio(ma_context* pContext, const ma_device_con
 static ma_result ma_device_stop__sndio(ma_device* pDevice)
 {
     MA_ASSERT(pDevice != NULL);
+
+    /*
+    From the documentation:
+
+        The sio_stop() function puts the audio subsystem in the same state as before sio_start() is called. It stops recording, drains the play buffer and then
+        stops playback. If samples to play are queued but playback hasn't started yet then playback is forced immediately; playback will actually stop once the
+        buffer is drained. In no case are samples in the play buffer discarded.
+
+    Therefore, sio_stop() performs all of the necessary draining for us.
+    */
 
     if (pDevice->type == ma_device_type_capture || pDevice->type == ma_device_type_duplex) {
         ((ma_sio_stop_proc)pDevice->pContext->sndio.sio_stop)((struct ma_sio_hdl*)pDevice->sndio.handleCapture);
@@ -24268,14 +24395,24 @@ static ma_result ma_device_stop__audio4(ma_device* pDevice)
     MA_ASSERT(pDevice != NULL);
 
     if (pDevice->type == ma_device_type_capture || pDevice->type == ma_device_type_duplex) {
-        ma_result result = ma_device_stop_fd__audio4(pDevice, pDevice->audio4.fdCapture);
+        ma_result result;
+
+        result = ma_device_stop_fd__audio4(pDevice, pDevice->audio4.fdCapture);
         if (result != MA_SUCCESS) {
             return result;
         }
     }
 
     if (pDevice->type == ma_device_type_playback || pDevice->type == ma_device_type_duplex) {
-        ma_result result = ma_device_stop_fd__audio4(pDevice, pDevice->audio4.fdPlayback);
+        ma_result result;
+
+        /* Drain the device first. If this fails we'll just need to flush without draining. Unfortunately draining isn't available on newer version of OpenBSD. */
+    #if !defined(MA_AUDIO4_USE_NEW_API)
+        ioctl(pDevice->audio4.fdPlayback, AUDIO_DRAIN, 0);
+    #endif
+
+        /* Here is where the device is stopped immediately. */
+        result = ma_device_stop_fd__audio4(pDevice, pDevice->audio4.fdPlayback);
         if (result != MA_SUCCESS) {
             return result;
         }
@@ -25709,7 +25846,7 @@ static ma_result ma_device_init__aaudio(ma_context* pContext, const ma_device_co
     }
 
     if (pConfig->deviceType == ma_device_type_duplex) {
-        ma_uint32 rbSizeInFrames = (ma_uint32)ma_calculate_frame_count_after_src(pDevice->sampleRate, pDevice->capture.internalSampleRate, pDevice->capture.internalPeriodSizeInFrames) * pDevice->capture.internalPeriods;
+        ma_uint32 rbSizeInFrames = (ma_uint32)ma_calculate_frame_count_after_resampling(pDevice->sampleRate, pDevice->capture.internalSampleRate, pDevice->capture.internalPeriodSizeInFrames) * pDevice->capture.internalPeriods;
         ma_result result = ma_pcm_rb_init(pDevice->capture.format, pDevice->capture.channels, rbSizeInFrames, NULL, &pDevice->pContext->allocationCallbacks, &pDevice->aaudio.duplexRB);
         if (result != MA_SUCCESS) {
             if (pDevice->type == ma_device_type_capture || pDevice->type == ma_device_type_duplex) {
@@ -25774,6 +25911,14 @@ static ma_result ma_device_stop_stream__aaudio(ma_device* pDevice, ma_AAudioStre
     ma_aaudio_stream_state_t currentState;
 
     MA_ASSERT(pDevice != NULL);
+
+    /*
+    From the AAudio documentation:
+
+        The stream will stop after all of the data currently buffered has been played.
+
+    This maps with miniaudio's requirement that device's be drained which means we don't need to implement any draining logic.
+    */
 
     resultAA = ((MA_PFN_AAudioStream_requestStop)pDevice->pContext->aaudio.AAudioStream_requestStop)(pStream);
     if (resultAA != MA_AAUDIO_OK) {
@@ -26328,6 +26473,11 @@ static void ma_buffer_queue_callback_capture__opensl_android(SLAndroidSimpleBuff
         return;
     }
 
+    /* Don't do anything if the device is being drained. */
+    if (pDevice->opensl.isDrainingCapture) {
+        return;
+    }
+
     periodSizeInBytes = pDevice->capture.internalPeriodSizeInFrames * ma_get_bytes_per_frame(pDevice->capture.internalFormat, pDevice->capture.internalChannels);
     pBuffer = pDevice->opensl.pBufferCapture + (pDevice->opensl.currentBufferIndexCapture * periodSizeInBytes);
 
@@ -26358,6 +26508,11 @@ static void ma_buffer_queue_callback_playback__opensl_android(SLAndroidSimpleBuf
 
     /* Don't do anything if the device is not started. */
     if (pDevice->state != MA_STATE_STARTED) {
+        return;
+    }
+
+    /* Don't do anything if the device is being drained. */
+    if (pDevice->opensl.isDrainingPlayback) {
         return;
     }
 
@@ -26723,7 +26878,7 @@ static ma_result ma_device_init__opensl(ma_context* pContext, const ma_device_co
     }
 
     if (pConfig->deviceType == ma_device_type_duplex) {
-        ma_uint32 rbSizeInFrames = (ma_uint32)ma_calculate_frame_count_after_src(pDevice->sampleRate, pDevice->capture.internalSampleRate, pDevice->capture.internalPeriodSizeInFrames) * pDevice->capture.internalPeriods;
+        ma_uint32 rbSizeInFrames = (ma_uint32)ma_calculate_frame_count_after_resampling(pDevice->sampleRate, pDevice->capture.internalSampleRate, pDevice->capture.internalPeriodSizeInFrames) * pDevice->capture.internalPeriods;
         ma_result result = ma_pcm_rb_init(pDevice->capture.format, pDevice->capture.channels, rbSizeInFrames, NULL, &pDevice->pContext->allocationCallbacks, &pDevice->opensl.duplexRB);
         if (result != MA_SUCCESS) {
             ma_device_uninit__opensl(pDevice);
@@ -26803,6 +26958,40 @@ static ma_result ma_device_start__opensl(ma_device* pDevice)
     return MA_SUCCESS;
 }
 
+static ma_result ma_device_drain__opensl(ma_device* pDevice, ma_device_type deviceType)
+{
+    SLAndroidSimpleBufferQueueItf pBufferQueue;
+
+    MA_ASSERT(deviceType == ma_device_type_capture || deviceType == ma_device_type_playback);
+
+    if (pDevice->type == ma_device_type_capture) {
+        pBufferQueue = (SLAndroidSimpleBufferQueueItf)pDevice->opensl.pBufferQueueCapture;
+        pDevice->opensl.isDrainingCapture  = MA_TRUE;
+    } else {
+        pBufferQueue = (SLAndroidSimpleBufferQueueItf)pDevice->opensl.pBufferQueuePlayback;
+        pDevice->opensl.isDrainingPlayback = MA_TRUE;
+    }
+
+    for (;;) {
+        SLAndroidSimpleBufferQueueState state;
+
+        MA_OPENSL_BUFFERQUEUE(pBufferQueue)->GetState(pBufferQueue, &state);
+        if (state.count == 0) {
+            break;
+        }
+
+        ma_sleep(10);
+    }
+
+    if (pDevice->type == ma_device_type_capture) {
+        pDevice->opensl.isDrainingCapture  = MA_FALSE;
+    } else {
+        pDevice->opensl.isDrainingPlayback = MA_FALSE;
+    }
+
+    return MA_SUCCESS;
+}
+
 static ma_result ma_device_stop__opensl(ma_device* pDevice)
 {
     SLresult resultSL;
@@ -26815,9 +27004,9 @@ static ma_result ma_device_stop__opensl(ma_device* pDevice)
         return MA_INVALID_OPERATION;
     }
 
-    /* TODO: Wait until all buffers have been processed. Hint: Maybe SLAndroidSimpleBufferQueue::GetState() could be used in a loop? */
-
     if (pDevice->type == ma_device_type_capture || pDevice->type == ma_device_type_duplex) {
+        ma_device_drain__opensl(pDevice, ma_device_type_capture);
+
         resultSL = MA_OPENSL_RECORD(pDevice->opensl.pAudioRecorder)->SetRecordState((SLRecordItf)pDevice->opensl.pAudioRecorder, SL_RECORDSTATE_STOPPED);
         if (resultSL != SL_RESULT_SUCCESS) {
             return ma_post_error(pDevice, MA_LOG_LEVEL_ERROR, "[OpenSL] Failed to stop internal capture device.", MA_FAILED_TO_STOP_BACKEND_DEVICE);
@@ -26827,6 +27016,8 @@ static ma_result ma_device_stop__opensl(ma_device* pDevice)
     }
 
     if (pDevice->type == ma_device_type_playback || pDevice->type == ma_device_type_duplex) {
+        ma_device_drain__opensl(pDevice, ma_device_type_playback);
+
         resultSL = MA_OPENSL_PLAY(pDevice->opensl.pAudioPlayer)->SetPlayState((SLPlayItf)pDevice->opensl.pAudioPlayer, SL_PLAYSTATE_STOPPED);
         if (resultSL != SL_RESULT_SUCCESS) {
             return ma_post_error(pDevice, MA_LOG_LEVEL_ERROR, "[OpenSL] Failed to stop internal playback device.", MA_FAILED_TO_STOP_BACKEND_DEVICE);
@@ -27334,7 +27525,7 @@ static ma_result ma_device_init__webaudio(ma_context* pContext, const ma_device_
     the external sample rate.
     */
     if (pConfig->deviceType == ma_device_type_duplex) {
-        ma_uint32 rbSizeInFrames = (ma_uint32)ma_calculate_frame_count_after_src(pDevice->sampleRate, pDevice->capture.internalSampleRate, pDevice->capture.internalPeriodSizeInFrames) * 2;
+        ma_uint32 rbSizeInFrames = (ma_uint32)ma_calculate_frame_count_after_resampling(pDevice->sampleRate, pDevice->capture.internalSampleRate, pDevice->capture.internalPeriodSizeInFrames) * 2;
         result = ma_pcm_rb_init(pDevice->capture.format, pDevice->capture.channels, rbSizeInFrames, NULL, &pDevice->pContext->allocationCallbacks, &pDevice->webaudio.duplexRB);
         if (result != MA_SUCCESS) {
             if (pDevice->type == ma_device_type_capture || pDevice->type == ma_device_type_duplex) {
@@ -27383,6 +27574,16 @@ static ma_result ma_device_start__webaudio(ma_device* pDevice)
 static ma_result ma_device_stop__webaudio(ma_device* pDevice)
 {
     MA_ASSERT(pDevice != NULL);
+
+    /*
+    From the WebAudio API documentation for AudioContext.suspend():
+
+        Suspends the progression of AudioContext's currentTime, allows any current context processing blocks that are already processed to be played to the
+        destination, and then allows the system to release its claim on audio hardware.
+
+    I read this to mean that "any current context processing blocks" are processed by suspend() - i.e. They they are drained. We therefore shouldn't need to
+    do any kind of explicit draining.
+    */
 
     if (pDevice->type == ma_device_type_capture || pDevice->type == ma_device_type_duplex) {
         EM_ASM({
@@ -29082,6 +29283,226 @@ ma_uint32 ma_lpf_get_latency(ma_lpf* pLPF)
 
     return ma_biquad_get_latency(&pLPF->bq);
 }
+
+
+/**************************************************************************************************************************************************************
+
+High-Pass Filtering
+
+**************************************************************************************************************************************************************/
+ma_hpf_config ma_hpf_config_init(ma_format format, ma_uint32 channels, ma_uint32 sampleRate, double cutoffFrequency)
+{
+    ma_hpf_config config;
+    
+    MA_ZERO_OBJECT(&config);
+    config.format = format;
+    config.channels = channels;
+    config.sampleRate = sampleRate;
+    config.cutoffFrequency = cutoffFrequency;
+
+    return config;
+}
+
+static MA_INLINE ma_biquad_config ma_hpf__get_biquad_config(const ma_hpf_config* pConfig)
+{
+    ma_biquad_config bqConfig;
+    double q;
+    double w;
+    double s;
+    double c;
+    double a;
+
+    MA_ASSERT(pConfig != NULL);
+
+    q = 0.707107;
+    w = 2 * MA_PI_D * pConfig->cutoffFrequency / pConfig->sampleRate;
+    s = ma_sin(w);
+    c = ma_cos(w);
+    a = s / (2*q);
+
+    bqConfig.b0 =  (1 + c) / 2;
+    bqConfig.b1 = -(1 + c);
+    bqConfig.b2 =  (1 + c) / 2;
+    bqConfig.a0 =   1 + a;
+    bqConfig.a1 =  -2 * c;
+    bqConfig.a2 =   1 - a;
+
+    bqConfig.format   = pConfig->format;
+    bqConfig.channels = pConfig->channels;
+
+    return bqConfig;
+}
+
+ma_result ma_hpf_init(const ma_hpf_config* pConfig, ma_hpf* pHPF)
+{
+    ma_result result;
+    ma_biquad_config bqConfig;
+
+    if (pHPF == NULL) {
+        return MA_INVALID_ARGS;
+    }
+
+    MA_ZERO_OBJECT(pHPF);
+
+    if (pConfig == NULL) {
+        return MA_INVALID_ARGS;
+    }
+
+    bqConfig = ma_hpf__get_biquad_config(pConfig);
+    result = ma_biquad_init(&bqConfig, &pHPF->bq);
+    if (result != MA_SUCCESS) {
+        return result;
+    }
+
+    return MA_SUCCESS;
+}
+
+ma_result ma_hpf_reinit(const ma_hpf_config* pConfig, ma_hpf* pHPF)
+{
+    ma_result result;
+    ma_biquad_config bqConfig;
+
+    if (pHPF == NULL || pConfig == NULL) {
+        return MA_INVALID_ARGS;
+    }
+
+    bqConfig = ma_hpf__get_biquad_config(pConfig);
+    result = ma_biquad_reinit(&bqConfig, &pHPF->bq);
+    if (result != MA_SUCCESS) {
+        return result;
+    }
+
+    return MA_SUCCESS;
+}
+
+ma_result ma_hpf_process_pcm_frames(ma_hpf* pHPF, void* pFramesOut, const void* pFramesIn, ma_uint64 frameCount)
+{
+    if (pHPF == NULL) {
+        return MA_INVALID_ARGS;
+    }
+
+    return ma_biquad_process_pcm_frames(&pHPF->bq, pFramesOut, pFramesIn, frameCount);
+}
+
+ma_uint32 ma_hpf_get_latency(ma_hpf* pHPF)
+{
+    if (pHPF == NULL) {
+        return 0;
+    }
+
+    return ma_biquad_get_latency(&pHPF->bq);
+}
+
+
+/**************************************************************************************************************************************************************
+
+Band-Pass Filtering
+
+**************************************************************************************************************************************************************/
+ma_bpf_config ma_bpf_config_init(ma_format format, ma_uint32 channels, ma_uint32 sampleRate, double cutoffFrequency)
+{
+    ma_bpf_config config;
+    
+    MA_ZERO_OBJECT(&config);
+    config.format = format;
+    config.channels = channels;
+    config.sampleRate = sampleRate;
+    config.cutoffFrequency = cutoffFrequency;
+
+    return config;
+}
+
+
+static MA_INLINE ma_biquad_config ma_bpf__get_biquad_config(const ma_bpf_config* pConfig)
+{
+    ma_biquad_config bqConfig;
+    double q;
+    double w;
+    double s;
+    double c;
+    double a;
+
+    MA_ASSERT(pConfig != NULL);
+
+    q = 0.707107;
+    w = 2 * MA_PI_D * pConfig->cutoffFrequency / pConfig->sampleRate;
+    s = ma_sin(w);
+    c = ma_cos(w);
+    a = s / (2*q);
+
+    bqConfig.b0 =  q * a;
+    bqConfig.b1 =  0;
+    bqConfig.b2 = -q * a;
+    bqConfig.a0 =  1 + a;
+    bqConfig.a1 = -2 * c;
+    bqConfig.a2 =  1 - a;
+
+    bqConfig.format   = pConfig->format;
+    bqConfig.channels = pConfig->channels;
+
+    return bqConfig;
+}
+
+ma_result ma_bpf_init(const ma_bpf_config* pConfig, ma_bpf* pBPF)
+{
+    ma_result result;
+    ma_biquad_config bqConfig;
+
+    if (pBPF == NULL) {
+        return MA_INVALID_ARGS;
+    }
+
+    MA_ZERO_OBJECT(pBPF);
+
+    if (pConfig == NULL) {
+        return MA_INVALID_ARGS;
+    }
+
+    bqConfig = ma_bpf__get_biquad_config(pConfig);
+    result = ma_biquad_init(&bqConfig, &pBPF->bq);
+    if (result != MA_SUCCESS) {
+        return result;
+    }
+
+    return MA_SUCCESS;
+}
+
+ma_result ma_bpf_reinit(const ma_bpf_config* pConfig, ma_bpf* pBPF)
+{
+    ma_result result;
+    ma_biquad_config bqConfig;
+
+    if (pBPF == NULL || pConfig == NULL) {
+        return MA_INVALID_ARGS;
+    }
+
+    bqConfig = ma_bpf__get_biquad_config(pConfig);
+    result = ma_biquad_reinit(&bqConfig, &pBPF->bq);
+    if (result != MA_SUCCESS) {
+        return result;
+    }
+
+    return MA_SUCCESS;
+}
+
+ma_result ma_bpf_process_pcm_frames(ma_bpf* pBPF, void* pFramesOut, const void* pFramesIn, ma_uint64 frameCount)
+{
+    if (pBPF == NULL) {
+        return MA_INVALID_ARGS;
+    }
+
+    return ma_biquad_process_pcm_frames(&pBPF->bq, pFramesOut, pFramesIn, frameCount);
+}
+
+ma_uint32 ma_bpf_get_latency(ma_bpf* pBPF)
+{
+    if (pBPF == NULL) {
+        return 0;
+    }
+
+    return ma_biquad_get_latency(&pBPF->bq);
+}
+
 
 
 /**************************************************************************************************************************************************************
@@ -37515,7 +37936,12 @@ ma_uint64 ma_decoder_get_length_in_pcm_frames(ma_decoder* pDecoder)
     }
 
     if (pDecoder->onGetLengthInPCMFrames) {
-        return pDecoder->onGetLengthInPCMFrames(pDecoder);
+        ma_uint64 nativeLengthInPCMFrames = pDecoder->onGetLengthInPCMFrames(pDecoder);
+        if (pDecoder->internalSampleRate == pDecoder->outputSampleRate) {
+            return nativeLengthInPCMFrames;
+        } else {
+            return ma_calculate_frame_count_after_resampling(pDecoder->outputSampleRate, pDecoder->internalSampleRate, nativeLengthInPCMFrames);
+        }
     }
 
     return 0;
@@ -37750,61 +38176,215 @@ ma_result ma_decode_memory(const void* pData, size_t dataSize, ma_decoder_config
 Generation
 
 **************************************************************************************************************************************************************/
-ma_result ma_sine_wave_init(double amplitude, double periodsPerSecond, ma_uint32 sampleRate, ma_sine_wave* pSineWave)
+ma_result ma_waveform_init(ma_waveform_type type, double amplitude, double frequency, ma_uint32 sampleRate, ma_waveform* pWaveform)
 {
-    if (pSineWave == NULL) {
-        return MA_INVALID_ARGS;
-    }
-    MA_ZERO_OBJECT(pSineWave);
-
-    if (amplitude == 0 || periodsPerSecond == 0) {
+    if (pWaveform == NULL) {
         return MA_INVALID_ARGS;
     }
 
-    if (amplitude > 1) {
-        amplitude = 1;
-    }
-    if (amplitude < -1) {
-        amplitude = -1;
-    }
+    MA_ZERO_OBJECT(pWaveform);
 
-    pSineWave->amplitude = amplitude;
-    pSineWave->periodsPerSecond = periodsPerSecond;
-    pSineWave->delta = MA_TAU_D / sampleRate;
-    pSineWave->time = 0;
+    pWaveform->type      = type;
+    pWaveform->amplitude = amplitude;
+    pWaveform->frequency = frequency;
+    pWaveform->deltaTime = 1.0 / sampleRate;
+    pWaveform->time      = 0;
 
     return MA_SUCCESS;
 }
 
-ma_uint64 ma_sine_wave_read_pcm_frames(ma_sine_wave* pSineWave, void* pFramesOut, ma_uint64 frameCount, ma_format format, ma_uint32 channels)
+ma_result ma_waveform_set_amplitude(ma_waveform* pWaveform, double amplitude)
 {
-    if (pSineWave == NULL) {
+    if (pWaveform == NULL) {
+        return MA_INVALID_ARGS;
+    }
+
+    pWaveform->amplitude = amplitude;
+    return MA_SUCCESS;
+}
+
+ma_result ma_waveform_set_frequency(ma_waveform* pWaveform, double frequency)
+{
+    if (pWaveform == NULL) {
+        return MA_INVALID_ARGS;
+    }
+
+    pWaveform->frequency = frequency;
+    return MA_SUCCESS;
+}
+
+ma_result ma_waveform_set_sample_rate(ma_waveform* pWaveform, ma_uint32 sampleRate)
+{
+    if (pWaveform == NULL) {
+        return MA_INVALID_ARGS;
+    }
+
+    pWaveform->deltaTime = 1.0 / sampleRate;
+    return MA_SUCCESS;
+}
+
+static float ma_waveform_sine_f32(double time, double frequency, double amplitude)
+{
+    return (float)(ma_sin(MA_TAU_D * time * frequency) * amplitude);
+}
+
+static float ma_waveform_square_f32(double time, double frequency, double amplitude)
+{
+    double t = time * frequency;
+    double f = t - (ma_uint64)t;
+    double r;
+    
+    if (f < 0.5) {
+        r =  amplitude;
+    } else {
+        r = -amplitude;
+    }
+
+    return (float)r;
+}
+
+static float ma_waveform_triangle_f32(double time, double frequency, double amplitude)
+{
+    double t = time * frequency;
+    double f = t - (ma_uint64)t;
+    double r;
+
+    r = 2 * ma_abs(2 * (f - 0.5)) - 1;
+
+    return (float)(r * amplitude);
+}
+
+static float ma_waveform_sawtooth_f32(double time, double frequency, double amplitude)
+{
+    double t = time * frequency;
+    double f = t - (ma_uint64)t;
+    double r;
+
+    r = 2 * (f - 0.5);
+
+    return (float)(r * amplitude);
+}
+
+static void ma_waveform_read_pcm_frames__sine(ma_waveform* pWaveform, void* pFramesOut, ma_uint64 frameCount, ma_format format, ma_uint32 channels)
+{
+    ma_uint64 iFrame;
+    ma_uint64 iChannel;
+    ma_uint32 bpf = ma_get_bytes_per_frame(format, channels);
+    ma_uint32 bps = ma_get_bytes_per_sample(format);
+
+    MA_ASSERT(pWaveform  != NULL);
+    MA_ASSERT(pFramesOut != NULL);
+
+    for (iFrame = 0; iFrame < frameCount; iFrame += 1) {
+        float s = ma_waveform_sine_f32(pWaveform->time, pWaveform->frequency, pWaveform->amplitude);
+        pWaveform->time += pWaveform->deltaTime;
+
+        for (iChannel = 0; iChannel < channels; iChannel += 1) {
+            ma_pcm_convert(ma_offset_ptr(pFramesOut, iFrame*bpf + iChannel*bps), format, &s, ma_format_f32, 1, ma_dither_mode_none);
+        }
+    }
+}
+
+static void ma_waveform_read_pcm_frames__square(ma_waveform* pWaveform, void* pFramesOut, ma_uint64 frameCount, ma_format format, ma_uint32 channels)
+{
+    ma_uint64 iFrame;
+    ma_uint64 iChannel;
+    ma_uint32 bpf = ma_get_bytes_per_frame(format, channels);
+    ma_uint32 bps = ma_get_bytes_per_sample(format);
+
+    MA_ASSERT(pWaveform  != NULL);
+    MA_ASSERT(pFramesOut != NULL);
+
+    for (iFrame = 0; iFrame < frameCount; iFrame += 1) {
+        float s = ma_waveform_square_f32(pWaveform->time, pWaveform->frequency, pWaveform->amplitude);
+        pWaveform->time += pWaveform->deltaTime;
+
+        for (iChannel = 0; iChannel < channels; iChannel += 1) {
+            ma_pcm_convert(ma_offset_ptr(pFramesOut, iFrame*bpf + iChannel*bps), format, &s, ma_format_f32, 1, ma_dither_mode_none);
+        }
+    }
+}
+
+static void ma_waveform_read_pcm_frames__triangle(ma_waveform* pWaveform, void* pFramesOut, ma_uint64 frameCount, ma_format format, ma_uint32 channels)
+{
+    ma_uint64 iFrame;
+    ma_uint64 iChannel;
+    ma_uint32 bpf = ma_get_bytes_per_frame(format, channels);
+    ma_uint32 bps = ma_get_bytes_per_sample(format);
+
+    MA_ASSERT(pWaveform  != NULL);
+    MA_ASSERT(pFramesOut != NULL);
+
+    for (iFrame = 0; iFrame < frameCount; iFrame += 1) {
+        float s = ma_waveform_triangle_f32(pWaveform->time, pWaveform->frequency, pWaveform->amplitude);
+        pWaveform->time += pWaveform->deltaTime;
+
+        for (iChannel = 0; iChannel < channels; iChannel += 1) {
+            ma_pcm_convert(ma_offset_ptr(pFramesOut, iFrame*bpf + iChannel*bps), format, &s, ma_format_f32, 1, ma_dither_mode_none);
+        }
+    }
+}
+
+static void ma_waveform_read_pcm_frames__sawtooth(ma_waveform* pWaveform, void* pFramesOut, ma_uint64 frameCount, ma_format format, ma_uint32 channels)
+{
+    ma_uint64 iFrame;
+    ma_uint64 iChannel;
+    ma_uint32 bpf = ma_get_bytes_per_frame(format, channels);
+    ma_uint32 bps = ma_get_bytes_per_sample(format);
+
+    MA_ASSERT(pWaveform  != NULL);
+    MA_ASSERT(pFramesOut != NULL);
+
+    for (iFrame = 0; iFrame < frameCount; iFrame += 1) {
+        float s = ma_waveform_sawtooth_f32(pWaveform->time, pWaveform->frequency, pWaveform->amplitude);
+        pWaveform->time += pWaveform->deltaTime;
+
+        for (iChannel = 0; iChannel < channels; iChannel += 1) {
+            ma_pcm_convert(ma_offset_ptr(pFramesOut, iFrame*bpf + iChannel*bps), format, &s, ma_format_f32, 1, ma_dither_mode_none);
+        }
+    }
+}
+
+ma_uint64 ma_waveform_read_pcm_frames(ma_waveform* pWaveform, void* pFramesOut, ma_uint64 frameCount, ma_format format, ma_uint32 channels)
+{
+    if (pWaveform == NULL) {
         return 0;
     }
 
     if (pFramesOut != NULL) {
-        ma_uint64 iFrame;
-        for (iFrame = 0; iFrame < frameCount; iFrame += 1) {
-            ma_uint64 iChannel;
-            float s;
+        switch (pWaveform->type)
+        {
+            case ma_waveform_type_sine:
+            {
+                ma_waveform_read_pcm_frames__sine(pWaveform, pFramesOut, frameCount, format, channels);
+            } break;
 
-            s = (float)(ma_sin(pSineWave->time * pSineWave->periodsPerSecond) * pSineWave->amplitude);
-            pSineWave->time += pSineWave->delta;
+            case ma_waveform_type_square:
+            {
+                ma_waveform_read_pcm_frames__square(pWaveform, pFramesOut, frameCount, format, channels);
+            } break;
 
-            for (iChannel = 0; iChannel < channels; iChannel += 1) {
-                ma_uint32 bpf = ma_get_bytes_per_frame(format, channels);
-                ma_uint32 bps = ma_get_bytes_per_sample(format);
+            case ma_waveform_type_triangle:
+            {
+                ma_waveform_read_pcm_frames__triangle(pWaveform, pFramesOut, frameCount, format, channels);
+            } break;
 
-                ma_pcm_convert(ma_offset_ptr(pFramesOut, iFrame*bpf + iChannel*bps), format, &s, ma_format_f32, 1, ma_dither_mode_none);
-            }
+            case ma_waveform_type_sawtooth:
+            {
+                ma_waveform_read_pcm_frames__sawtooth(pWaveform, pFramesOut, frameCount, format, channels);
+            } break;
+
+            default: return 0;
         }
     } else {
-        pSineWave->time += pSineWave->delta * (ma_int64)frameCount; /* Cast to int64 required for VC6. Won't affect anything in practice. */
+        pWaveform->time += pWaveform->deltaTime * (ma_int64)frameCount; /* Cast to int64 required for VC6. Won't affect anything in practice. */
     }
 
     return frameCount;
 }
 
+
+/* End globally disabled warnings. */
 #if defined(_MSC_VER)
     #pragma warning(pop)
 #endif
