@@ -1,26 +1,17 @@
 /*******************************************************************************************
  *
  *   raylib [network] example - Client/Server ping-pong
- *
- *   Welcome to raylib!
- *
- *   To test examples, just press F6 and execute raylib_compile_execute script
- *   Note that compiled executable is placed in the same folder as .c file
- *
- *   You can find all basic examples on C:\raylib\raylib\examples folder or
- *   raylib official webpage: www.raylib.com
- *
- *   Enjoy using raylib. :)
- *
- *   This example has been created using raylib 2.0 (www.raylib.com)
- *   raylib is licensed under an unmodified zlib/libpng license (View raylib.h
- *for details)
- *
- *   Copyright (c) 2013-2016 Ramon Santamaria (@raysan5)
- *
- ********************************************************************************************/
+*
+*   This example has been created using raylib 3.0 (www.raylib.com)
+*   raylib is licensed under an unmodified zlib/libpng license (View raylib.h for details)
+*
+*   Copyright (c) 2019-2020 Jak Barnes (@syphonx) and Ramon Santamaria (@raysan5)
+*
+********************************************************************************************/
 
 #include "raylib.h"
+
+#define RNET_IMPLEMENTATION
 #include "rnet.h"
 
 #include <assert.h>
@@ -82,7 +73,7 @@ void NetworkConnect()
 
 // Once connected to the network, check the sockets for pending information
 // and when information is ready, send either a Ping or a Pong.
-void NetworkUpdate()
+void UpdateNetwork()
 {
     // CheckSockets
     //
@@ -139,18 +130,20 @@ void NetworkUpdate()
     }
 }
 
-int main()
+int main(void)
 {
-    // Setup
-    int screenWidth  = 800;
-    int screenHeight = 450;
+    // Initialization
+    //--------------------------------------------------------------------------------------
+    const int screenWidth = 800;
+    const int screenHeight = 450;
+
     InitWindow(
         screenWidth, screenHeight, "raylib [network] example - ping pong");
     SetTargetFPS(60);
     SetTraceLogLevel(LOG_DEBUG);
 
     // Networking
-    InitNetwork();
+    InitNetworkDevice();
 
     // Create the server
     //
@@ -212,14 +205,40 @@ int main()
         BeginDrawing();
         ClearBackground(RAYWHITE);
         if (connected) {
-            NetworkUpdate();
+            UpdateNetwork();
         } else {
             NetworkConnect();
         }
         EndDrawing();
     }
+    SetTargetFPS(60);               // Set our game to run at 60 frames-per-second
+    //--------------------------------------------------------------------------------------
 
-    // Cleanup
-    CloseWindow();
+    // Main game loop
+    while (!WindowShouldClose())    // Detect window close button or ESC key
+    {
+        // Update
+        //----------------------------------------------------------------------------------
+        // TODO: Update your variables here
+        //----------------------------------------------------------------------------------
+
+        // Draw
+        //----------------------------------------------------------------------------------
+        BeginDrawing();
+
+            ClearBackground(RAYWHITE);
+
+            if (connected) UpdateNetwork();
+            else NetworkConnect();
+
+        EndDrawing();
+        //----------------------------------------------------------------------------------
+    }
+
+    // De-Initialization
+    //--------------------------------------------------------------------------------------
+    CloseWindow();        // Close window and OpenGL context
+    //--------------------------------------------------------------------------------------
+
     return 0;
 }
