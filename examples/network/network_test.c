@@ -23,17 +23,17 @@ void test_network_initialise()
 
 void test_socket_result()
 {
-    SocketResult *result = AllocSocketResult();
+    SocketResult *result = LoadSocketResult();
     assert(result != NULL);
-    FreeSocketResult(&result);
+    UnloadSocketResult(&result);
     assert(result == NULL);
 }
 
 void test_socket()
 {
-    Socket *socket = AllocSocket();
+    Socket *socket = LoadSocket();
     assert(socket != NULL);
-    FreeSocket(&socket);
+    UnloadSocket(&socket);
     assert(socket == NULL);
 }
 
@@ -84,7 +84,7 @@ void test_resolve_host()
 {
     const char *address = "localhost";
     const char *port = "80";
-    AddressInformation *addr = AllocAddressList(3);
+    AddressInformation *addr = LoadAddressList(3);
     int count = ResolveHost(address, port, ADDRESS_TYPE_ANY, 0, addr); 
 
     assert(GetAddressFamily(addr[0]) == ADDRESS_TYPE_IPV6);
@@ -105,9 +105,9 @@ void test_address_list()
 void test_socket_create()
 {
     SocketConfig server_cfg = { .host = "127.0.0.1", .port = "8080", .server = true, .nonblocking = true };
-    Socket *socket = AllocSocket();
-    SocketResult *server_res = AllocSocketResult();
-    SocketSet *socket_set = AllocSocketSet(1);
+    Socket *socket = LoadSocket();
+    SocketResult *server_res = LoadSocketResult();
+    SocketSet *socket_set = LoadSocketSet(1);
 
     assert(SocketCreate(&server_cfg, server_res));
     assert(AddSocket(socket_set, server_res->socket));

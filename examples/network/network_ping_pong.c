@@ -131,7 +131,7 @@ int main(void)
     InitNetworkDevice();    // Init network communications
 
     //  Create the server: getaddrinfo + socket + setsockopt + bind + listen
-    serverResult = AllocSocketResult();
+    serverResult = LoadSocketResult();
     if (!SocketCreate(&serverConfig, serverResult)) 
     {
         TraceLog(LOG_WARNING, "Failed to open server: status %d, errno %d", serverResult->status, serverResult->socket->status);
@@ -155,7 +155,7 @@ int main(void)
     }
 
     // Create the client: getaddrinfo + socket + setsockopt + connect (TCP only)
-    clientResult = AllocSocketResult();
+    clientResult = LoadSocketResult();
     if (!SocketCreate(&clientConfig, clientResult)) 
     {
         TraceLog(LOG_WARNING, "Failed to open client: status %d, errno %d", clientResult->status, clientResult->socket->status);
@@ -172,7 +172,7 @@ int main(void)
     }
 
     // Create and add sockets to the socket set
-    socketSet = AllocSocketSet(3);
+    socketSet = LoadSocketSet(3);
 
     AddSocket(socketSet, serverResult->socket);
     AddSocket(socketSet, clientResult->socket);

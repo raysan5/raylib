@@ -28,7 +28,7 @@ int main(void)
     char buffer[ADDRESS_IPV6_ADDRSTRLEN];
     unsigned short port = 0;
 
-    AddressInformation *address = AllocAddressList(1);
+    AddressInformation *address = LoadAddressList(1);
     
     // Address info flags
     //  ADDRESS_INFO_NUMERICHOST    // or try them in conjunction to

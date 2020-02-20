@@ -77,15 +77,15 @@
 #define NOMSG             // typedef MSG and associated routines
 #define NOOPENFILE        // OpenFile(), OemToAnsi, AnsiToOem, and OF_*
 #define NOSCROLL          // SB_* and scrolling routines
-#define NOSERVICE          // All Service Controller routines, SERVICE_ equates, etc.
-#define NOSOUND              // Sound driver routines
+#define NOSERVICE         // All Service Controller routines, SERVICE_ equates, etc.
+#define NOSOUND           // Sound driver routines
 #define NOTEXTMETRIC      // typedef TEXTMETRIC and associated routines
 #define NOWH              // SetWindowsHook and WH_*
 #define NOWINOFFSETS      // GWL_*, GCL_*, associated routines
-#define NOCOMM              // COMM driver routines
-#define NOKANJI              // Kanji support stuff.
-#define NOHELP              // Help engine interface.
-#define NOPROFILER          // Profiler interface.
+#define NOCOMM            // COMM driver routines
+#define NOKANJI           // Kanji support stuff.
+#define NOHELP            // Help engine interface.
+#define NOPROFILER        // Profiler interface.
 #define NODEFERWINDOWPOS  // DeferWindowPos routines
 #define NOMCX             // Modem Configuration Extensions
 #define MMNOSOUND
@@ -256,6 +256,11 @@ typedef struct IPAddress {
     unsigned short port;        // 16-bit protocol port
 } IPAddress;
 
+typedef struct UDPChannel {
+    int numbound;               // The total number of addresses this channel is bound to
+    IPAddress address[SOCKET_MAX_UDPADDRESSES]; // The list of remote addresses this channel is bound to
+} UDPChannel;
+
 // An option ID, value, sizeof(value) tuple for setsockopt(2).
 typedef struct SocketOpt {
     int id;                     // Socked option id
@@ -263,23 +268,39 @@ typedef struct SocketOpt {
     void *value;                // Socked option value data
 } SocketOpt;
 
-typedef struct UDPChannel {
-    int numbound;               // The total number of addresses this channel is bound to
-    IPAddress address[SOCKET_MAX_UDPADDRESSES]; // The list of remote addresses this channel is bound to
-} UDPChannel;
-
 typedef struct Socket {
     int ready;                  // Is the socket ready? i.e. has information
     int status;                 // The last status code to have occured using this socket
     bool isServer;              // Is this socket a server socket (i.e. TCP/UDP Listen Server)
     SocketChannel channel;      // The socket handle id
     SocketType type;            // Is this socket a TCP or UDP socket?
+    
     bool isIPv6;                // Is this socket address an ipv6 address?
     SocketAddressIPv4 addripv4; // The host/target IPv4 for this socket (in network byte order)
     SocketAddressIPv6 addripv6; // The host/target IPv6 for this socket (in network byte order)
 
     struct UDPChannel binding[SOCKET_MAX_UDPCHANNELS]; // The amount of channels (if UDP) this socket is bound to
 } Socket;
+
+// Configuration for a socket
+typedef struct SocketConfig {
+    SocketType type;            // The type of socket, TCP/UDP
+    char *host;                 // The host address in xxx.xxx.xxx.xxx form
+    char *port;                 // The target port/service in the form "http" or "25565"
+    bool server;                // Listen for incoming clients?
+    bool nonblocking;           // non-blocking operation?
+    int backlog_size;           // set a custom backlog size
+    SocketOpt sockopts[SOCKET_MAX_SOCK_OPTS];
+} SocketConfig;
+
+typedef struct SocketDataPacket {
+    IPAddress address;          // The source/dest address of an incoming/outgoing packet
+    int channel;                // The src/dst channel of the packet
+    int maxlen;                 // The size of the data buffer
+    int status;                 // Packet status after sending
+    unsigned int len;           // The length of the packet data
+    unsigned char *data;        // The packet data
+} SocketDataPacket;
 
 // Result from calling open with a given config
 typedef struct SocketResult {
@@ -292,26 +313,6 @@ typedef struct SocketSet {
     int maxsockets;             // Socket set max
     struct Socket **sockets;    // Sockets array
 } SocketSet;
-
-typedef struct SocketDataPacket {
-    IPAddress address;          // The source/dest address of an incoming/outgoing packet
-    int channel;                // The src/dst channel of the packet
-    int maxlen;                 // The size of the data buffer
-    int status;                 // Packet status after sending
-    unsigned int len;           // The length of the packet data
-    unsigned char *data;        // The packet data
-} SocketDataPacket;
-
-// Configuration for a socket
-typedef struct SocketConfig {
-    SocketType type;            // The type of socket, TCP/UDP
-    char *host;                 // The host address in xxx.xxx.xxx.xxx form
-    char *port;                 // The target port/service in the form "http" or "25565"
-    bool server;                // Listen for incoming clients?
-    bool nonblocking;           // non-blocking operation?
-    int backlog_size;           // set a custom backlog size
-    SocketOpt sockopts[SOCKET_MAX_SOCK_OPTS];
-} SocketConfig;
 
 // Packet type
 typedef struct Packet {
@@ -347,12 +348,11 @@ int GetAddressSocketType(AddressInformation address);
 int GetAddressProtocol(AddressInformation address);
 char *GetAddressCanonName(AddressInformation address);
 char *GetAddressHostAndPort(AddressInformation address, char *outhost, int *outport);
-void PrintAddressInfo(AddressInformation address);
 
 // Address Memory API
-AddressInformation AllocAddress();
-void FreeAddress(AddressInformation *addressInfo);
-AddressInformation *AllocAddressList(int size);
+AddressInformation LoadAddress(void);
+void UnloadAddress(AddressInformation *addressInfo);
+AddressInformation *LoadAddressList(int size);
 
 // Socket API
 bool SocketCreate(SocketConfig *config, SocketResult *result);
@@ -360,6 +360,14 @@ bool SocketBind(SocketConfig *config, SocketResult *result);
 bool SocketListen(SocketConfig *config, SocketResult *result);
 bool SocketConnect(SocketConfig *config, SocketResult *result);
 Socket *SocketAccept(Socket *server, SocketConfig *config);
+
+// General Socket API
+int SocketSend(Socket *sock, const void *datap, int len);
+int SocketReceive(Socket *sock, void *data, int maxlen);
+SocketAddressStorage SocketGetPeerAddress(Socket *sock);
+char *GetSocketAddressHost(SocketAddressStorage storage);
+short GetSocketAddressPort(SocketAddressStorage storage);
+void SocketClose(Socket *sock);
 
 // UDP Socket API
 int SocketSetChannel(Socket *socket, int channel, const IPAddress *address);
@@ -372,21 +380,13 @@ void FreePacket(SocketDataPacket *packet);
 SocketDataPacket **AllocPacketList(int count, int size);
 void FreePacketList(SocketDataPacket **packets);
 
-// General Socket API
-int SocketSend(Socket *sock, const void *datap, int len);
-int SocketReceive(Socket *sock, void *data, int maxlen);
-void SocketClose(Socket *sock);
-SocketAddressStorage SocketGetPeerAddress(Socket *sock);
-char* GetSocketAddressHost(SocketAddressStorage storage);
-short GetSocketAddressPort(SocketAddressStorage storage);
-
 // Socket Memory API
-Socket *AllocSocket();
-void FreeSocket(Socket **sock);
-SocketResult *AllocSocketResult();
-void FreeSocketResult(SocketResult **result);
-SocketSet *AllocSocketSet(int max);
-void FreeSocketSet(SocketSet *sockset);
+Socket *LoadSocket(void);
+void UnloadSocket(Socket **sock);
+SocketResult *LoadSocketResult(void);
+void UnloadSocketResult(SocketResult **result);
+SocketSet *LoadSocketSet(int max);
+void UnloadSocketSet(SocketSet *sockset);
 
 // Socket I/O API
 bool IsSocketReady(Socket *sock);
@@ -1120,7 +1120,7 @@ int ResolveHost(const char *address, const char *service, int addressType, int f
         int i;
         for (i = 0; i < size; ++i)
         {
-            outAddr[i] = AllocAddress();
+            outAddr[i] = LoadAddress();
             if (outAddr[i] == NULL)
             {
                 break;
@@ -1475,7 +1475,7 @@ Socket *SocketAccept(Socket *server, SocketConfig *config)
 
     struct sockaddr_storage sock_addr;
     socklen_t sock_alen;
-    Socket *sock = AllocSocket();
+    Socket *sock = LoadSocket();
     server->ready = 0;
     sock_alen = sizeof(sock_addr);
     sock->channel = accept(server->channel, (struct sockaddr *)&sock_addr, &sock_alen);
@@ -1863,14 +1863,14 @@ bool IsSocketConnected(Socket *sock)
 }
 
 // Allocate and return a SocketResult struct
-SocketResult *AllocSocketResult(void)
+SocketResult *LoadSocketResult(void)
 {
     struct SocketResult *res = (struct SocketResult *)RNET_MALLOC(sizeof(*res));
 
     if (res != NULL)
     {
         memset(res, 0, sizeof(*res));
-        if ((res->socket = AllocSocket()) == NULL)
+        if ((res->socket = LoadSocket()) == NULL)
         {
             RNET_FREE(res);
             res = NULL;
@@ -1881,11 +1881,11 @@ SocketResult *AllocSocketResult(void)
 }
 
 // Free an allocated SocketResult
-void FreeSocketResult(SocketResult **result)
+void UnloadSocketResult(SocketResult **result)
 {
     if (*result != NULL)
     {
-        if ((*result)->socket != NULL) FreeSocket(&((*result)->socket));
+        if ((*result)->socket != NULL) UnloadSocket(&((*result)->socket));
 
         RNET_FREE(*result);
         *result = NULL;
@@ -1893,7 +1893,7 @@ void FreeSocketResult(SocketResult **result)
 }
 
 // Allocate a Socket
-Socket *AllocSocket(void)
+Socket *LoadSocket(void)
 {
     struct Socket *sock;
     sock = (Socket *)RNET_MALLOC(sizeof(*sock));
@@ -1911,7 +1911,7 @@ Socket *AllocSocket(void)
 }
 
 // Free an allocated Socket
-void FreeSocket(Socket **sock)
+void UnloadSocket(Socket **sock)
 {
     if (*sock != NULL)
     {
@@ -1921,7 +1921,7 @@ void FreeSocket(Socket **sock)
 }
 
 // Allocate a SocketSet
-SocketSet *AllocSocketSet(int max)
+SocketSet *LoadSocketSet(int max)
 {
     struct SocketSet *set = (struct SocketSet *)RNET_MALLOC(sizeof(*set));
 
@@ -1945,7 +1945,7 @@ SocketSet *AllocSocketSet(int max)
 }
 
 // Free an allocated SocketSet
-void FreeSocketSet(SocketSet *set)
+void UnloadSocketSet(SocketSet *set)
 {
     if (set)
     {
@@ -2053,10 +2053,10 @@ int CheckSockets(SocketSet *set, unsigned int timeout)
 }
 
 // Allocate an AddressInformation
-AddressInformation AllocAddress(void)
+AddressInformation LoadAddress(void)
 {
     AddressInformation addressInfo = NULL;
-    addressInfo = (AddressInformation) RNET_CALLOC(1, sizeof(*addressInfo));
+    addressInfo = (AddressInformation)RNET_CALLOC(1, sizeof(*addressInfo));
 
     if (addressInfo != NULL)
     {
@@ -2069,7 +2069,7 @@ AddressInformation AllocAddress(void)
 }
 
 // Free an AddressInformation struct
-void FreeAddress(AddressInformation *addressInfo)
+void UnloadAddress(AddressInformation *addressInfo)
 {
     if (*addressInfo != NULL)
     {
@@ -2085,7 +2085,7 @@ void FreeAddress(AddressInformation *addressInfo)
 }
 
 // Allocate a list of AddressInformation
-AddressInformation *AllocAddressList(int size)
+AddressInformation *LoadAddressList(int size)
 {
     AddressInformation *addr;
     addr = (AddressInformation *)RNET_MALLOC(size * sizeof(AddressInformation));

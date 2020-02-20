@@ -50,7 +50,7 @@ int main(void)
     char receiveBuffer[512] = { 0 };
     
     //  Create the server: getaddrinfo + socket + setsockopt + bind + listen
-    serverResult = AllocSocketResult();
+    serverResult = LoadSocketResult();
     if (!SocketCreate(&serverConfig, serverResult)) 
     {
         TraceLog(LOG_WARNING, "Failed to open server: status %d, errno %d", serverResult->status, serverResult->socket->status);
@@ -71,7 +71,7 @@ int main(void)
     }
 
     // Create and add sockets to the socket set
-    socketSet = AllocSocketSet(2);
+    socketSet = LoadSocketSet(2);
     AddSocket(socketSet, serverResult->socket);
 
     SetTargetFPS(60);               // Set our game to run at 60 frames-per-second
