@@ -252,7 +252,7 @@ typedef struct _SocketAddressStorage *SocketAddressStorage;
 
 // IPAddress definition (in network byte order)
 typedef struct IPAddress {
-    unsigned long  host;        // 32-bit IPv4 host address
+    unsigned long host;         // 32-bit IPv4 host address
     unsigned short port;        // 16-bit protocol port
 } IPAddress;
 
@@ -269,8 +269,8 @@ typedef struct UDPChannel {
 } UDPChannel;
 
 typedef struct Socket {
-    int  ready;                 // Is the socket ready? i.e. has information
-    int  status;                // The last status code to have occured using this socket
+    int ready;                  // Is the socket ready? i.e. has information
+    int status;                 // The last status code to have occured using this socket
     bool isServer;              // Is this socket a server socket (i.e. TCP/UDP Listen Server)
     SocketChannel channel;      // The socket handle id
     SocketType type;            // Is this socket a TCP or UDP socket?
@@ -345,8 +345,8 @@ int ResolveHost(const char *address, const char *service, int addressType, int f
 int GetAddressFamily(AddressInformation address);
 int GetAddressSocketType(AddressInformation address);
 int GetAddressProtocol(AddressInformation address);
-char* GetAddressCanonName(AddressInformation address);
-char* GetAddressHostAndPort(AddressInformation address, char *outhost, int *outport);
+char *GetAddressCanonName(AddressInformation address);
+char *GetAddressHostAndPort(AddressInformation address, char *outhost, int *outport);
 void PrintAddressInfo(AddressInformation address);
 
 // Address Memory API
@@ -632,7 +632,7 @@ static void SocketSetLastError(int err)
 }
 
 // Returns the error status for the last Sockets operation that failed
-static int SocketGetLastError()
+static int SocketGetLastError(void)
 {
 #if defined(_WIN32)
     return WSAGetLastError();
@@ -642,7 +642,7 @@ static int SocketGetLastError()
 }
 
 // Returns a human-readable string representing the last error message
-static char *SocketGetLastErrorString()
+static char *SocketGetLastErrorString(void)
 {
     return SocketErrorCodeToString(SocketGetLastError());
 }
@@ -942,7 +942,7 @@ static void SocketSetHints(SocketConfig *config, struct addrinfo *hints)
 //----------------------------------------------------------------------------------
 
 //    Initialise the network (requires for windows platforms only)
-bool InitNetworkDevice()
+bool InitNetworkDevice(void)
 {
 #if defined(_WIN32)
     WORD wVersionRequested;
@@ -972,7 +972,7 @@ bool InitNetworkDevice()
 }
 
 //    Cleanup, and close the network
-void CloseNetworkDevice()
+void CloseNetworkDevice(void)
 {
 #if defined(_WIN32)
     WSACleanup();
@@ -1863,7 +1863,7 @@ bool IsSocketConnected(Socket *sock)
 }
 
 // Allocate and return a SocketResult struct
-SocketResult *AllocSocketResult()
+SocketResult *AllocSocketResult(void)
 {
     struct SocketResult *res = (struct SocketResult *)RNET_MALLOC(sizeof(*res));
 
@@ -1893,7 +1893,7 @@ void FreeSocketResult(SocketResult **result)
 }
 
 // Allocate a Socket
-Socket *AllocSocket()
+Socket *AllocSocket(void)
 {
     struct Socket *sock;
     sock = (Socket *)RNET_MALLOC(sizeof(*sock));
@@ -2053,7 +2053,7 @@ int CheckSockets(SocketSet *set, unsigned int timeout)
 }
 
 // Allocate an AddressInformation
-AddressInformation AllocAddress()
+AddressInformation AllocAddress(void)
 {
     AddressInformation addressInfo = NULL;
     addressInfo = (AddressInformation) RNET_CALLOC(1, sizeof(*addressInfo));

@@ -123,11 +123,12 @@ int main(void)
 
     InitWindow(screenWidth, screenHeight, "raylib [network] example - network test");
     
-    // Run the tests
-    test_network_initialise();
+    InitNetworkDevice();    // Init network communications
+    
+    // Run some tests
     test_resolve_host();
     //test_socket_create();
-    test_resolve_ip();
+    //test_resolve_ip();
 
     SetTargetFPS(60);               // Set our game to run at 60 frames-per-second
     //--------------------------------------------------------------------------------------
@@ -145,8 +146,8 @@ int main(void)
         BeginDrawing();
 
             ClearBackground(RAYWHITE);
-
-            DrawText("Congrats! You created your first window!", 190, 200, 20, LIGHTGRAY);
+            
+            // TODO: Draw relevant connection info
 
         EndDrawing();
         //----------------------------------------------------------------------------------
@@ -154,7 +155,9 @@ int main(void)
 
     // De-Initialization
     //--------------------------------------------------------------------------------------
-    CloseWindow();        // Close window and OpenGL context
+    CloseNetworkDevice();   // Close network communication
+    
+    CloseWindow();          // Close window and OpenGL context
     //--------------------------------------------------------------------------------------
 
     return 0;

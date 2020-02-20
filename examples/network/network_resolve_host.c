@@ -1,6 +1,6 @@
 /*******************************************************************************************
- *
- *   raylib [network] example - Resolve Host
+*
+*   raylib [network] example - Resolve Host
 *
 *   This example has been created using raylib 3.0 (www.raylib.com)
 *   raylib is licensed under an unmodified zlib/libpng license (View raylib.h for details)
@@ -21,35 +21,26 @@ int main(void)
     const int screenWidth = 800;
     const int screenHeight = 450;
 
-    InitWindow(screenWidth, screenHeight, "raylib [network] example - ping pong");
+    InitWindow(screenWidth, screenHeight, "raylib [network] example - resolve host");
+    
+    InitNetworkDevice();    // Init network communications
     
     char buffer[ADDRESS_IPV6_ADDRSTRLEN];
-    uint16_t port = 0;
+    unsigned short port = 0;
+
+    AddressInformation *address = AllocAddressList(1);
     
-    SetTraceLogLevel(LOG_DEBUG);
-
-
-    // Networking
-    InitNetworkDevice();
-     
-    AddressInformation* addr = AllocAddressList(1);
-    int count = ResolveHost(
-        NULL,
-        "5210",
-        ADDRESS_TYPE_IPV4,
-        0                               // Uncomment any of these flags
-        //  ADDRESS_INFO_NUMERICHOST    // or try them in conjunction to
-        //  ADDRESS_INFO_NUMERICSERV    // specify custom behaviour from 
-        //  ADDRESS_INFO_DNS_ONLY       // the function getaddrinfo()
-        //  ADDRESS_INFO_ALL            //
-        //  ADDRESS_INFO_FQDN           // e.g. ADDRESS_INFO_CANONNAME | ADDRESS_INFO_NUMERICSERV
-        ,
-        addr
-    );
+    // Address info flags
+    //  ADDRESS_INFO_NUMERICHOST    // or try them in conjunction to
+    //  ADDRESS_INFO_NUMERICSERV    // specify custom behaviour from 
+    //  ADDRESS_INFO_DNS_ONLY       // the function getaddrinfo()
+    //  ADDRESS_INFO_ALL            //
+    //  ADDRESS_INFO_FQDN           // e.g. ADDRESS_INFO_CANONNAME | ADDRESS_INFO_NUMERICSERV
+    int count = ResolveHost(NULL, "5210", ADDRESS_TYPE_IPV4, 0, address);
 
     if (count > 0)
     {
-        GetAddressHostAndPort(addr[0], buffer, &port);
+        GetAddressHostAndPort(address[0], buffer, &port);
         TraceLog(LOG_INFO, "Resolved to ip %s::%d", buffer, port);
     }
 
@@ -70,7 +61,7 @@ int main(void)
 
             ClearBackground(RAYWHITE);
 
-            DrawText("Congrats! You created your first window!", 190, 200, 20, LIGHTGRAY);
+            // TODO: Draw relevant connection info
 
         EndDrawing();
         //----------------------------------------------------------------------------------
@@ -78,7 +69,9 @@ int main(void)
 
     // De-Initialization
     //--------------------------------------------------------------------------------------
-    CloseWindow();        // Close window and OpenGL context
+    CloseNetworkDevice();   // Close network communication
+    
+    CloseWindow();          // Close window and OpenGL context
     //--------------------------------------------------------------------------------------
 
     return 0;

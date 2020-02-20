@@ -1,6 +1,6 @@
 /*******************************************************************************************
- *
- *   raylib [network] example - UDP Server
+*
+*   raylib [network] example - UDP Server
 *
 *   This example has been created using raylib 3.0 (www.raylib.com)
 *   raylib is licensed under an unmodified zlib/libpng license (View raylib.h for details)
@@ -14,66 +14,6 @@
 #define RNET_IMPLEMENTATION
 #include "rnet.h"
 
-
-#include <assert.h>
-#include <stdio.h>
-#include <string.h>
-
-float         elapsed    = 0.0f;
-float         delay      = 1.0f;
-bool          ping       = false;
-bool          pong       = false;
-const char *  pingmsg    = "Ping!";
-const char *  pongmsg    = "Pong!";
-int           msglen     = 0;
-SocketConfig  server_cfg = {.host = "127.0.0.1", .port = "4950", .server = true, .type = SOCKET_UDP, .nonblocking = true};
-SocketResult *server_res = NULL;
-SocketSet *   socket_set = NULL;
-char          recvBuffer[512];
-
-// Once connected to the network, check the sockets for pending information
-// and when information is ready, send either a Ping or a Pong.
-void UpdateNetwork()
-{
-    // CheckSockets
-    //
-    // If any of the sockets in the socket_set are pending (received data, or requests)
-    // then mark the socket as being ready. You can check this with IsSocketReady(client_res->socket)
-    int active = CheckSockets(socket_set, 0);
-    if (active != 0) {
-        TraceLog(LOG_DEBUG,
-                 "There are currently %d socket(s) with data to be processed.", active);
-    }
-
-    // IsSocketReady
-    //
-    // If the socket is ready, attempt to receive data from the socket
-    //  int bytesRecv = 0;
-    //  if (IsSocketReady(server_res->socket)) {
-    //      bytesRecv = SocketReceive(server_res->socket, recvBuffer, msglen);
-    //  }
-    int bytesRecv = SocketReceive(server_res->socket, recvBuffer, msglen);
-
-    // If we received data, was that data a "Ping!" or a "Pong!"
-    if (bytesRecv > 0) {
-        if (strcmp(recvBuffer, pingmsg) == 0) { pong = true; }
-        if (strcmp(recvBuffer, pongmsg) == 0) { ping = true; }
-    }
-
-    // After each delay has expired, send a response "Ping!" for a "Pong!" and vice versa
-    elapsed += GetFrameTime();
-    if (elapsed > delay) {
-        if (ping) {
-            ping = false;
-            SocketSend(server_res->socket, pingmsg, msglen);
-        } else if (pong) {
-            pong = false;
-            SocketSend(server_res->socket, pongmsg, msglen);
-        }
-        elapsed = 0.0f;
-    }
-}
-
 int main(void)
 {
     // Initialization
@@ -83,30 +23,37 @@ int main(void)
 
     InitWindow(screenWidth, screenHeight, "raylib [network] example - udp server");
 
-    InitNetworkDevice();
+    InitNetworkDevice();    // Init network communications
+    
+    const char *pingmsg = "Ping!";
+    const char *pongmsg = "Pong!";
+    
+    bool ping = false;
+    bool pong = false;
+    float elapsed = 0.0f;
+    float delay = 1.0f;
 
-    //  Create the server
-    //
-    //  Performs
-    //      getaddrinfo
-    //      socket
-    //      setsockopt
-    //      bind
-    //      listen
-    server_res = AllocSocketResult();
-    if (!SocketCreate(&server_cfg, server_res)) 
-    {
-        TraceLog(LOG_WARNING, "Failed to open server: status %d, errno %d", server_res->status, server_res->socket->status);
-    } else 
-    {
-        if (!SocketBind(&server_cfg, server_res)) TraceLog(LOG_WARNING, "Failed to bind server: status %d, errno %d", server_res->status, server_res->socket->status);
-    }
+    SocketConfig serverConfig = {
+        .host = "127.0.0.1", 
+        .port = "4950", 
+        .server = true, 
+        .type = SOCKET_UDP, 
+        .nonblocking = true
+    };
+    
+    SocketResult *serverResult = NULL;
+    SocketSet *socketSet = NULL;
+    char receiveBuffer[512] = { 0 };
 
-    //  Create & Add sockets to the socket set
-    socket_set = AllocSocketSet(1);
-    msglen = strlen(pingmsg) + 1;
-    memset(recvBuffer, '\0', sizeof(recvBuffer));
-    AddSocket(socket_set, server_res->socket);
+    //  Create the server: getaddrinfo + socket + setsockopt + bind + listen
+    serverResult = AllocSocketResult();
+    
+    if (!SocketCreate(&serverConfig, serverResult)) TraceLog(LOG_WARNING, "Failed to open server: status %d, errno %d", serverResult->status, serverResult->socket->status);
+    else if (!SocketBind(&serverConfig, serverResult)) TraceLog(LOG_WARNING, "Failed to bind server: status %d, errno %d", serverResult->status, serverResult->socket->status);
+
+    //  Create and add sockets to the socket set
+    socketSet = AllocSocketSet(1);
+    AddSocket(socketSet, serverResult->socket);
 
     SetTargetFPS(60);               // Set our game to run at 60 frames-per-second
     //--------------------------------------------------------------------------------------
@@ -116,7 +63,46 @@ int main(void)
     {
         // Update
         //----------------------------------------------------------------------------------
-        UpdateNetwork();
+        // Once connected to the network, check the sockets for pending information
+        // and when information is ready, send either a Ping or a Pong.
+        
+        // CheckSockets, if any of the sockets in the set are pending (received data, or requests)
+        // then mark the socket as being ready. You can check this with IsSocketReady(client_res->socket)
+        int active = CheckSockets(socketSet, 0);
+        if (active != 0) TraceLog(LOG_INFO, "There are currently %d socket(s) with data to be processed.", active);
+
+        // IsSocketReady, if the socket is ready, attempt to receive data from the socket
+        //  int bytesRecv = 0;
+        //  if (IsSocketReady(serverResult->socket)) {
+        //      bytesRecv = SocketReceive(serverResult->socket, receiveBuffer, msglen);
+        //  }
+        int bytesRecv = SocketReceive(serverResult->socket, receiveBuffer, strlen(pingmsg) + 1);
+
+        // If we received data, is that data a "Ping!" or a "Pong!"?
+        if (bytesRecv > 0) 
+        {
+            if (strcmp(receiveBuffer, pingmsg) == 0) { pong = true; }
+            if (strcmp(receiveBuffer, pongmsg) == 0) { ping = true; }
+        }
+
+        // After each delay has expired, send a response "Ping!" for a "Pong!" and vice-versa
+        elapsed += GetFrameTime();
+        
+        if (elapsed > delay)
+        {
+            if (ping) 
+            {
+                ping = false;
+                SocketSend(serverResult->socket, pingmsg, strlen(pingmsg) + 1);
+            } 
+            else if (pong) 
+            {
+                pong = false;
+                SocketSend(serverResult->socket, pongmsg, strlen(pongmsg) + 1);
+            }
+            
+            elapsed = 0.0f;
+        }
         //----------------------------------------------------------------------------------
 
         // Draw
@@ -125,7 +111,7 @@ int main(void)
 
             ClearBackground(RAYWHITE);
 
-            
+            // TODO: Draw relevant connection info
 
         EndDrawing();
         //----------------------------------------------------------------------------------
@@ -133,7 +119,9 @@ int main(void)
 
     // De-Initialization
     //--------------------------------------------------------------------------------------
-    CloseWindow();        // Close window and OpenGL context
+    CloseNetworkDevice();   // Close network communication
+    
+    CloseWindow();          // Close window and OpenGL context
     //--------------------------------------------------------------------------------------
 
     return 0;
