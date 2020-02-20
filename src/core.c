@@ -683,7 +683,7 @@ void InitWindow(int width, int height, const char *title)
     // NOTE: External functions (defined in module: text)
     LoadFontDefault();
     Rectangle rec = GetFontDefault().recs[95];
-    // NOTE: We setup a 1px padding on char rectangle to avoid pixel bleeding on MSAA filtering	
+    // NOTE: We setup a 1px padding on char rectangle to avoid pixel bleeding on MSAA filtering
     SetShapesTexture(GetFontDefault().texture, (Rectangle){ rec.x + 1, rec.y + 1, rec.width - 2, rec.height - 2 });
 #endif
 #if defined(PLATFORM_DESKTOP) && defined(SUPPORT_HIGH_DPI)
@@ -4161,7 +4161,7 @@ static void AndroidCommandCallback(struct android_app *app, int32_t cmd)
                     // NOTE: External function (defined in module: text)
                     LoadFontDefault();
                     Rectangle rec = GetFontDefault().recs[95];
-                    // NOTE: We setup a 1px padding on char rectangle to avoid pixel bleeding on MSAA filtering	
+                    // NOTE: We setup a 1px padding on char rectangle to avoid pixel bleeding on MSAA filtering
                     SetShapesTexture(GetFontDefault().texture, (Rectangle){ rec.x + 1, rec.y + 1, rec.width - 2, rec.height - 2 });
                 #endif
 
