@@ -2260,17 +2260,21 @@ void OpenURL(const char *url)
     }
     else
     {
+#if defined(PLATFORM_DESKTOP)
         char *cmd = (char *)RL_CALLOC(strlen(url) + 10, sizeof(char));
-
-#if defined(_WIN32)
+    #if defined(_WIN32)
         sprintf(cmd, "explorer %s", url);
-#elif defined(__linux__)
+    #elif defined(__linux__)
         sprintf(cmd, "xdg-open '%s'", url); // Alternatives: firefox, x-www-browser
-#elif defined(__APPLE__)
+    #elif defined(__APPLE__)
         sprintf(cmd, "open '%s'", url);
-#endif
+    #endif
         system(cmd);
         RL_FREE(cmd);
+#endif
+#if defined(PLATFORM_WEB)
+        emscripten_run_script(TextFormat("window.open('%s', '_blank')", url));
+#endif
     }
 }
 
