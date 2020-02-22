@@ -867,9 +867,9 @@ bool IsWindowHidden(void)
 // Toggle fullscreen mode (only PLATFORM_DESKTOP)
 void ToggleFullscreen(void)
 {
-#if defined(PLATFORM_DESKTOP)
     CORE.Window.fullscreen = !CORE.Window.fullscreen;          // Toggle fullscreen flag
 
+#if defined(PLATFORM_DESKTOP)
     // NOTE: glfwSetWindowMonitor() doesn't work properly (bugs)
     if (CORE.Window.fullscreen)
     {
@@ -893,7 +893,10 @@ void ToggleFullscreen(void)
     }
     else glfwSetWindowMonitor(CORE.Window.handle, NULL, CORE.Window.position.x, CORE.Window.position.y, CORE.Window.screen.width, CORE.Window.screen.height, GLFW_DONT_CARE);
 #endif
-
+#if defined(PLATFORM_WEB)
+    if (CORE.Window.fullscreen) EM_ASM(Module.requestFullscreen(false, false););
+    else EM_ASM(document.exitFullscreen(););
+#endif
 #if defined(PLATFORM_ANDROID) || defined(PLATFORM_RPI)
     TRACELOG(LOG_WARNING, "Could not toggle to windowed mode");
 #endif
