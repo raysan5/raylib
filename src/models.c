@@ -3406,7 +3406,7 @@ static Image LoadImageFromCgltfImage(cgltf_image *image, const char *texPath, Co
                 int w, h;
                 unsigned char *raw = stbi_load_from_memory(data, size, &w, &h, NULL, 4);
 
-                Image rimage = LoadImagePro(raw, w, h, UNCOMPRESSED_R8G8B8A8);
+                rimage = LoadImagePro(raw, w, h, UNCOMPRESSED_R8G8B8A8);
 
                 // TODO: Tint shouldn't be applied here!
                 ImageColorTint(&rimage, tint);
@@ -3414,7 +3414,7 @@ static Image LoadImageFromCgltfImage(cgltf_image *image, const char *texPath, Co
         }
         else
         {
-            Image rimage = LoadImage(TextFormat("%s/%s", texPath, image->uri));
+            rimage = LoadImage(TextFormat("%s/%s", texPath, image->uri));
 
             // TODO: Tint shouldn't be applied here!
             ImageColorTint(&rimage, tint);
@@ -3436,7 +3436,7 @@ static Image LoadImageFromCgltfImage(cgltf_image *image, const char *texPath, Co
         unsigned char *raw = stbi_load_from_memory(data, image->buffer_view->size, &w, &h, NULL, 4);
         free(data);
 
-        Image rimage = LoadImagePro(raw, w, h, UNCOMPRESSED_R8G8B8A8);
+        rimage = LoadImagePro(raw, w, h, UNCOMPRESSED_R8G8B8A8);
         free(raw);
 
         // TODO: Tint shouldn't be applied here!
@@ -3444,7 +3444,7 @@ static Image LoadImageFromCgltfImage(cgltf_image *image, const char *texPath, Co
     }
     else
     {
-        Image rimage = LoadImageEx(&tint, 1, 1);
+        rimage = LoadImageEx(&tint, 1, 1);
     }
 
     return rimage;
