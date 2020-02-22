@@ -2514,7 +2514,11 @@ bool IsMouseButtonReleased(int button)
 {
     bool released = false;
 
-#if !defined(PLATFORM_ANDROID)
+#if defined(PLATFORM_ANDROID)
+    # if defined(SUPPORT_GESTURES_SYSTEM)
+    released = GetGestureDetected() == GESTURE_TAP;
+    # endif
+#else
     if ((CORE.Input.Mouse.currentButtonState[button] != CORE.Input.Mouse.previousButtonState[button]) &&
         (GetMouseButtonStatus(button) == 0)) released = true;
 #endif
@@ -4233,37 +4237,84 @@ static int32_t AndroidInputCallback(struct android_app *app, AInputEvent *event)
 {
     // If additional inputs are required check:
     // https://developer.android.com/ndk/reference/group/input
+    // https://developer.android.com/training/game-controllers/controller-input
 
     int type = AInputEvent_getType(event);
+    int source = AInputEvent_getSource(event);
 
     if (type == AINPUT_EVENT_TYPE_MOTION)
     {
-        // Get first touch position
-        CORE.Input.Touch.position[0].x = AMotionEvent_getX(event, 0);
-        CORE.Input.Touch.position[0].y = AMotionEvent_getY(event, 0);
-
-        // Get second touch position
-        CORE.Input.Touch.position[1].x = AMotionEvent_getX(event, 1);
-        CORE.Input.Touch.position[1].y = AMotionEvent_getY(event, 1);
-
-        // Useful functions for gamepad inputs:
-        //AMotionEvent_getAction()
-        //AMotionEvent_getAxisValue()
-        //AMotionEvent_getButtonState()
-
-        // Gamepad dpad button presses capturing
-        // TODO: That's weird, key input (or button)
-        // shouldn't come as a TYPE_MOTION event...
-        int32_t keycode = AKeyEvent_getKeyCode(event);
-        if (AKeyEvent_getAction(event) == AKEY_EVENT_ACTION_DOWN)
+        if ((source & AINPUT_SOURCE_JOYSTICK) == AINPUT_SOURCE_JOYSTICK || (source & AINPUT_SOURCE_GAMEPAD) == AINPUT_SOURCE_GAMEPAD)
         {
-            CORE.Input.Keyboard.currentKeyState[keycode] = 1;  // Key down
+            // Get first touch position
+            CORE.Input.Touch.position[0].x = AMotionEvent_getX(event, 0);
+            CORE.Input.Touch.position[0].y = AMotionEvent_getY(event, 0);
 
-            CORE.Input.Keyboard.keyPressedQueue[CORE.Input.Keyboard.keyPressedQueueCount] = keycode;
-            CORE.Input.Keyboard.keyPressedQueueCount++;
+            // Get second touch position
+            CORE.Input.Touch.position[1].x = AMotionEvent_getX(event, 1);
+            CORE.Input.Touch.position[1].y = AMotionEvent_getY(event, 1);
+
+            int32_t keycode = AKeyEvent_getKeyCode(event);
+            if (AKeyEvent_getAction(event) == AKEY_EVENT_ACTION_DOWN)
+            {
+                CORE.Input.Keyboard.currentKeyState[keycode] = 1;  // Key down
+
+                CORE.Input.Keyboard.keyPressedQueue[CORE.Input.Keyboard.keyPressedQueueCount] = keycode;
+                CORE.Input.Keyboard.keyPressedQueueCount++;
+            }
+            else CORE.Input.Keyboard.currentKeyState[keycode] = 0;  // Key up
+
+            // Stop processing gamepad buttons
+            return 1;
         }
-        else CORE.Input.Keyboard.currentKeyState[keycode] = 0;  // Key up
 
+        int32_t action = AMotionEvent_getAction(event);
+        unsigned int flags = action & AMOTION_EVENT_ACTION_MASK;
+
+        // Simple touch position
+        if (flags == AMOTION_EVENT_ACTION_DOWN)
+        {
+            // Get first touch position
+            CORE.Input.Touch.position[0].x = AMotionEvent_getX(event, 0);
+            CORE.Input.Touch.position[0].y = AMotionEvent_getY(event, 0);
+        }
+
+#if defined(SUPPORT_GESTURES_SYSTEM)
+        GestureEvent gestureEvent;
+
+        // Register touch actions
+        if (flags == AMOTION_EVENT_ACTION_DOWN) gestureEvent.touchAction = TOUCH_DOWN;
+        else if (flags == AMOTION_EVENT_ACTION_UP) gestureEvent.touchAction = TOUCH_UP;
+        else if (flags == AMOTION_EVENT_ACTION_MOVE) gestureEvent.touchAction = TOUCH_MOVE;
+
+        // Register touch points count
+        // NOTE: Documentation says pointerCount is Always >= 1,
+        // but in practice it can be 0 or over a million
+        gestureEvent.pointCount = AMotionEvent_getPointerCount(event);
+
+        // Only enable gestures for 1-3 touch points
+        if ((gestureEvent.pointCount > 0) && (gestureEvent.pointCount < 4))
+        {
+            // Register touch points id
+            // NOTE: Only two points registered
+            gestureEvent.pointerId[0] = AMotionEvent_getPointerId(event, 0);
+            gestureEvent.pointerId[1] = AMotionEvent_getPointerId(event, 1);
+
+            // Register touch points position
+            gestureEvent.position[0] = (Vector2){ AMotionEvent_getX(event, 0), AMotionEvent_getY(event, 0) };
+            gestureEvent.position[1] = (Vector2){ AMotionEvent_getX(event, 1), AMotionEvent_getY(event, 1) };
+
+            // Normalize gestureEvent.position[x] for screenWidth and screenHeight
+            gestureEvent.position[0].x /= (float)GetScreenWidth();
+            gestureEvent.position[0].y /= (float)GetScreenHeight();
+
+            gestureEvent.position[1].x /= (float)GetScreenWidth();
+            gestureEvent.position[1].y /= (float)GetScreenHeight();
+
+            // Gesture data is sent to gestures system for processing
+            ProcessGestureEvent(gestureEvent);
+        }
+#endif
     }
     else if (type == AINPUT_EVENT_TYPE_KEY)
     {
@@ -4300,10 +4351,28 @@ static int32_t AndroidInputCallback(struct android_app *app, AInputEvent *event)
             // Set default OS behaviour
             return 0;
         }
+
+        return 0;
     }
 
     int32_t action = AMotionEvent_getAction(event);
     unsigned int flags = action & AMOTION_EVENT_ACTION_MASK;
+
+    // Support only simple touch position
+    if (flags == AMOTION_EVENT_ACTION_DOWN)
+    {
+        // Get first touch position
+        CORE.Input.Touch.position[0].x = AMotionEvent_getX(event, 0);
+        CORE.Input.Touch.position[0].y = AMotionEvent_getY(event, 0);
+    }
+    else if (flags == AMOTION_EVENT_ACTION_UP)
+    {
+        // Get first touch position
+        CORE.Input.Touch.position[0].x = 0;
+        CORE.Input.Touch.position[0].y = 0;
+    }
+    else // TODO:Not sure what else should be handled
+        return 0;
 
 #if defined(SUPPORT_GESTURES_SYSTEM)
     GestureEvent gestureEvent = { 0 };
@@ -4339,17 +4408,6 @@ static int32_t AndroidInputCallback(struct android_app *app, AInputEvent *event)
 
         // Gesture data is sent to gestures system for processing
         ProcessGestureEvent(gestureEvent);
-    }
-#else
-    // Support only simple touch position
-    if (flags == AMOTION_EVENT_ACTION_DOWN)
-    {
-        // Get first touch position
-        CORE.Input.Touch.position[0].x = AMotionEvent_getX(event, 0);
-        CORE.Input.Touch.position[0].y = AMotionEvent_getY(event, 0);
-
-        CORE.Input.Touch.position[0].x /= (float)GetScreenWidth();
-        CORE.Input.Touch.position[0].y /= (float)GetScreenHeight();
     }
 #endif
 
