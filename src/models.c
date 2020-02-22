@@ -3377,9 +3377,9 @@ static unsigned char *DecodeBase64(char *input, int *size)
 }
 
 // Load texture from cgltf_image
-static Texture LoadTextureFromCgltfImage(cgltf_image *image, const char *texPath, Color tint)
+static Image LoadImageFromCgltfImage(cgltf_image *image, const char *texPath, Color tint)
 {
-    Texture texture = { 0 };
+    Image rimage = { 0 };
 
     if (image->uri)
     {
@@ -3406,22 +3406,18 @@ static Texture LoadTextureFromCgltfImage(cgltf_image *image, const char *texPath
                 int w, h;
                 unsigned char *raw = stbi_load_from_memory(data, size, &w, &h, NULL, 4);
 
-                Image rimage = LoadImagePro(raw, w, h, UNCOMPRESSED_R8G8B8A8);
+                rimage = LoadImagePro(raw, w, h, UNCOMPRESSED_R8G8B8A8);
 
                 // TODO: Tint shouldn't be applied here!
                 ImageColorTint(&rimage, tint);
-                texture = LoadTextureFromImage(rimage);
-                UnloadImage(rimage);
             }
         }
         else
         {
-            Image rimage = LoadImage(TextFormat("%s/%s", texPath, image->uri));
+            rimage = LoadImage(TextFormat("%s/%s", texPath, image->uri));
 
             // TODO: Tint shouldn't be applied here!
             ImageColorTint(&rimage, tint);
-            texture = LoadTextureFromImage(rimage);
-            UnloadImage(rimage);
         }
     }
     else if (image->buffer_view)
@@ -3440,41 +3436,36 @@ static Texture LoadTextureFromCgltfImage(cgltf_image *image, const char *texPath
         unsigned char *raw = stbi_load_from_memory(data, image->buffer_view->size, &w, &h, NULL, 4);
         free(data);
 
-        Image rimage = LoadImagePro(raw, w, h, UNCOMPRESSED_R8G8B8A8);
+        rimage = LoadImagePro(raw, w, h, UNCOMPRESSED_R8G8B8A8);
         free(raw);
 
         // TODO: Tint shouldn't be applied here!
         ImageColorTint(&rimage, tint);
-        texture = LoadTextureFromImage(rimage);
-        UnloadImage(rimage);
     }
     else
     {
-        Image rimage = LoadImageEx(&tint, 1, 1);
-        texture = LoadTextureFromImage(rimage);
-        UnloadImage(rimage);
+        rimage = LoadImageEx(&tint, 1, 1);
     }
 
-    return texture;
+    return rimage;
 }
 
-// Load glTF mesh data
+// LoadGLTF loads in model data from given filename, supporting both .gltf and .glb
 static Model LoadGLTF(const char *fileName)
 {
     /***********************************************************************************
 
-        Function implemented by Wilhem Barbier (@wbrbr)
+        Function implemented by Wilhem Barbier(@wbrbr), with modifications by Tyler Bezera(@gamerfiend) 
 
         Features:
           - Supports .gltf and .glb files
           - Supports embedded (base64) or external textures
-          - Loads the albedo/diffuse texture (other maps could be added)
+          - Loads all raylib supported material textures, values and colors
           - Supports multiple mesh per model and multiple primitives per model
 
         Some restrictions (not exhaustive):
           - Triangle-only meshes
           - Not supported node hierarchies or transforms
-          - Only loads the diffuse texture... but not too hard to support other maps (normal, roughness/metalness...)
           - Only supports unsigned short indices (no byte/unsigned int)
           - Only supports float for texture coordinates (no byte/unsigned short)
 
@@ -3547,44 +3538,62 @@ static Model LoadGLTF(const char *fileName)
             //Ensure material follows raylib support for PBR (metallic/roughness flow)
             if (data->materials[i].has_pbr_metallic_roughness)
             {
-                float roughness = data->materials[i].pbr_metallic_roughness.roughness_factor;
-                float metallic = data->materials[i].pbr_metallic_roughness.metallic_factor;
+                tint.r = (unsigned char)(data->materials[i].pbr_metallic_roughness.base_color_factor[0] * 255);
+                tint.g = (unsigned char)(data->materials[i].pbr_metallic_roughness.base_color_factor[1] * 255);
+                tint.b = (unsigned char)(data->materials[i].pbr_metallic_roughness.base_color_factor[2] * 255);
+                tint.a = (unsigned char)(data->materials[i].pbr_metallic_roughness.base_color_factor[3] * 255);
 
-                // NOTE: Material name not used for the moment
-                //if (model.materials[i].name && data->materials[i].name) strcpy(model.materials[i].name, data->materials[i].name);
-
-                // TODO: REview: shouldn't these be *255 ???
-                tint.r = (unsigned char)(data->materials[i].pbr_metallic_roughness.base_color_factor[0]*255);
-                tint.g = (unsigned char)(data->materials[i].pbr_metallic_roughness.base_color_factor[1]*255);
-                tint.b = (unsigned char)(data->materials[i].pbr_metallic_roughness.base_color_factor[2]*255);
-                tint.a = (unsigned char)(data->materials[i].pbr_metallic_roughness.base_color_factor[3]*255);
-
-                model.materials[i].maps[MAP_ROUGHNESS].color = tint;
+                model.materials[i].maps[MAP_ALBEDO].color = tint;
 
                 if (data->materials[i].pbr_metallic_roughness.base_color_texture.texture)
                 {
-                    model.materials[i].maps[MAP_ALBEDO].texture = LoadTextureFromCgltfImage(data->materials[i].pbr_metallic_roughness.base_color_texture.texture->image, texPath, tint);
+                    Image albedo = LoadImageFromCgltfImage(data->materials[i].pbr_metallic_roughness.base_color_texture.texture->image, texPath, tint);
+                    model.materials[i].maps[MAP_ALBEDO].texture = LoadTextureFromImage(albedo);
+                    UnloadImage(albedo);
                 }
 
-                // NOTE: Tint isn't need for other textures.. pass null or clear?
-                // Just set as white, multiplying by white has no effect
+                //Set tint to white after it's been used by Albedo
                 tint = WHITE;
 
                 if (data->materials[i].pbr_metallic_roughness.metallic_roughness_texture.texture)
                 {
-                    model.materials[i].maps[MAP_ROUGHNESS].texture = LoadTextureFromCgltfImage(data->materials[i].pbr_metallic_roughness.metallic_roughness_texture.texture->image, texPath, tint);
+                    Image metallicRoughness = LoadImageFromCgltfImage(data->materials[i].pbr_metallic_roughness.metallic_roughness_texture.texture->image, texPath, tint);
+                    model.materials[i].maps[MAP_ROUGHNESS].texture = LoadTextureFromImage(metallicRoughness);
+
+                    float roughness = data->materials[i].pbr_metallic_roughness.roughness_factor;
+                    model.materials[i].maps[MAP_ROUGHNESS].value = roughness;
+
+                    float metallic = data->materials[i].pbr_metallic_roughness.metallic_factor;
+                    model.materials[i].maps[MAP_METALNESS].value = metallic;
+
+                    UnloadImage(metallicRoughness);
                 }
-                model.materials[i].maps[MAP_ROUGHNESS].value = roughness;
-                model.materials[i].maps[MAP_METALNESS].value = metallic;
+
+
 
                 if (data->materials[i].normal_texture.texture)
                 {
-                    model.materials[i].maps[MAP_NORMAL].texture = LoadTextureFromCgltfImage(data->materials[i].normal_texture.texture->image, texPath, tint);
+                    Image normalImage = LoadImageFromCgltfImage(data->materials[i].normal_texture.texture->image, texPath, tint);
+                    model.materials[i].maps[MAP_NORMAL].texture = LoadTextureFromImage(normalImage);
+                    UnloadImage(normalImage);
                 }
 
                 if (data->materials[i].occlusion_texture.texture)
                 {
-                    model.materials[i].maps[MAP_OCCLUSION].texture = LoadTextureFromCgltfImage(data->materials[i].occlusion_texture.texture->image, texPath, tint);
+                    Image occulsionImage = LoadImageFromCgltfImage(data->materials[i].occlusion_texture.texture->image, texPath, tint);
+                    model.materials[i].maps[MAP_OCCLUSION].texture = LoadTextureFromImage(occulsionImage);
+                    UnloadImage(occulsionImage);
+                }
+
+                if (data->materials[i].emissive_texture.texture)
+                {
+                    Image emissiveImage = LoadImageFromCgltfImage(data->materials[i].emissive_texture.texture->image, texPath, tint);
+                    model.materials[i].maps[MAP_EMISSION].texture = LoadTextureFromImage(emissiveImage);
+                    tint.r = (unsigned char)(data->materials[i].emissive_factor[0] * 255);
+                    tint.g = (unsigned char)(data->materials[i].emissive_factor[1] * 255);
+                    tint.b = (unsigned char)(data->materials[i].emissive_factor[2] * 255);
+                    model.materials[i].maps[MAP_EMISSION].color = tint;
+                    UnloadImage(emissiveImage);
                 }
             }
         }
