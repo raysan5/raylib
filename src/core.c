@@ -151,13 +151,13 @@
     #define SUPPORT_HIGH_DPI    // Force HighDPI support on macOS
 #endif
 
-#include <stdlib.h>         // Required for: srand(), rand(), atexit()
-#include <stdio.h>          // Required for: FILE, fopen(), fseek(), fread(), fwrite(), fclose() [Used in StorageSaveValue()/StorageLoadValue()]
-#include <string.h>         // Required for: strrchr(), strcmp(), strlen()
-#include <time.h>           // Required for: time() - Android/RPI hi-res timer (NOTE: Linux only!)
-#include <math.h>           // Required for: tan() [Used in BeginMode3D()]
+#include <stdlib.h>             // Required for: srand(), rand(), atexit()
+#include <stdio.h>              // Required for: FILE, fopen(), fseek(), fread(), fwrite(), fclose() [Used in StorageSaveValue()/StorageLoadValue()]
+#include <string.h>             // Required for: strrchr(), strcmp(), strlen()
+#include <time.h>               // Required for: time() [Used in InitTimer()]
+#include <math.h>               // Required for: tan() [Used in BeginMode3D()]
 
-#include <sys/stat.h>       // Required for stat() [Used in GetLastWriteTime()]
+#include <sys/stat.h>           // Required for: stat() [Used in GetFileModTime()]
 
 #if (defined(PLATFORM_DESKTOP) || defined(PLATFORM_UWP)) && defined(_WIN32) && (defined(_MSC_VER) || defined(__TINYC__))
     #include "external/dirent.h"    // Required for: DIR, opendir(), closedir() [Used in GetDirectoryFiles()]
@@ -171,7 +171,7 @@
     #define CHDIR _chdir
     #include <io.h>                 // Required for _access() [Used in FileExists()]
 #else
-    #include "unistd.h"             // Required for: getch(), chdir() (POSIX), access()
+    #include <unistd.h>             // Required for: getch(), chdir() (POSIX), access()
     #define GETCWD getcwd
     #define CHDIR chdir
 #endif
@@ -209,8 +209,7 @@
 #endif
 
 #if defined(__linux__)
-    #include <linux/limits.h>               // for NAME_MAX and PATH_MAX defines
-    #define MAX_FILEPATH_LENGTH PATH_MAX    // Use Linux define (4096)
+    #define MAX_FILEPATH_LENGTH    4096     // Use Linux PATH_MAX value
 #else
     #define MAX_FILEPATH_LENGTH     512     // Use common value
 #endif
@@ -228,7 +227,7 @@
     #include <fcntl.h>          // POSIX file control definitions - open(), creat(), fcntl()
     #include <unistd.h>         // POSIX standard function definitions - read(), close(), STDIN_FILENO
     #include <termios.h>        // POSIX terminal control definitions - tcgetattr(), tcsetattr()
-    #include <pthread.h>        // POSIX threads management (mouse input)
+    #include <pthread.h>        // POSIX threads management (inputs reading)
     #include <dirent.h>         // POSIX directory browsing
 
     #include <sys/ioctl.h>      // UNIX System call for device-specific input/output operations - ioctl()
@@ -317,7 +316,7 @@ typedef struct{
 
 
 typedef struct { int x; int y; } Point;
-typedef struct { int width; int height; } Size;
+typedef struct { unsigned int width; unsigned int height; } Size;
 
 #if defined(PLATFORM_UWP)
 extern EGLNativeWindowType handle;          // Native window handler for UWP (external, defined in UWP App)
@@ -683,7 +682,9 @@ void InitWindow(int width, int height, const char *title)
     // Load default font
     // NOTE: External functions (defined in module: text)
     LoadFontDefault();
-    SetShapesTexture(GetFontDefault().texture, GetFontDefault().recs[95]);
+    Rectangle rec = GetFontDefault().recs[95];
+    // NOTE: We setup a 1px padding on char rectangle to avoid pixel bleeding on MSAA filtering
+    SetShapesTexture(GetFontDefault().texture, (Rectangle){ rec.x + 1, rec.y + 1, rec.width - 2, rec.height - 2 });
 #endif
 #if defined(PLATFORM_DESKTOP) && defined(SUPPORT_HIGH_DPI)
     // Set default font texture filter for HighDPI (blurry)
@@ -1610,9 +1611,30 @@ void SetTargetFPS(int fps)
 }
 
 // Returns current FPS
+// NOTE: We calculate an average framerate
 int GetFPS(void)
 {
-    return (int)roundf(1.0f/GetFrameTime());
+    #define FPS_CAPTURE_FRAMES_COUNT    30      // 30 captures
+    #define FPS_AVERAGE_TIME_SECONDS   0.5f     // 500 millisecondes
+    #define FPS_STEP (FPS_AVERAGE_TIME_SECONDS/FPS_CAPTURE_FRAMES_COUNT)
+
+    static int index = 0;
+    static float history[FPS_CAPTURE_FRAMES_COUNT] = { 0 };
+    static float average = 0, last = 0;
+    float fpsFrame = GetFrameTime();
+    
+    if (fpsFrame == 0) return 0;
+
+    if ((GetTime() - last) > FPS_STEP)
+    {
+        last = GetTime();
+        index = (index + 1)%FPS_CAPTURE_FRAMES_COUNT;
+        average -= history[index];
+        history[index] = fpsFrame/FPS_CAPTURE_FRAMES_COUNT;
+        average += history[index];
+    }
+    
+    return (int)roundf(1.0f/average);
 }
 
 // Returns time in seconds for last frame drawn
@@ -1965,17 +1987,22 @@ const char *GetDirectoryPath(const char *filePath)
     static char dirPath[MAX_FILEPATH_LENGTH];
     memset(dirPath, 0, MAX_FILEPATH_LENGTH);
 
-    // For security, we set starting path to current directory,
-    // obtained path will be concated to this
-    //dirPath[0] = '.';
-    //dirPath[1] = '/';
+    // In case provided path does not contains a root drive letter (C:\, D:\),
+    // we add the current directory path to dirPath
+    if (filePath[1] != ':')
+    {
+        // For security, we set starting path to current directory,
+        // obtained path will be concated to this
+        dirPath[0] = '.';
+        dirPath[1] = '/';
+    }
 
     lastSlash = strprbrk(filePath, "\\/");
     if (lastSlash)
     {
         // NOTE: Be careful, strncpy() is not safe, it does not care about '\0'
-        strncpy(dirPath, filePath, strlen(filePath) - (strlen(lastSlash) - 1));
-        dirPath[strlen(filePath) - strlen(lastSlash)] = '\0';  // Add '\0' manually
+        strncpy(dirPath + ((filePath[1] != ':')? 2 : 0), filePath, strlen(filePath) - (strlen(lastSlash) - 1));
+        dirPath[strlen(filePath) - strlen(lastSlash) + ((filePath[1] != ':')? 2 : 0)] = '\0';  // Add '\0' manually
     }
 
     return dirPath;
@@ -2233,17 +2260,21 @@ void OpenURL(const char *url)
     }
     else
     {
+#if defined(PLATFORM_DESKTOP)
         char *cmd = (char *)RL_CALLOC(strlen(url) + 10, sizeof(char));
-
-#if defined(_WIN32)
+    #if defined(_WIN32)
         sprintf(cmd, "explorer %s", url);
-#elif defined(__linux__)
+    #elif defined(__linux__)
         sprintf(cmd, "xdg-open '%s'", url); // Alternatives: firefox, x-www-browser
-#elif defined(__APPLE__)
+    #elif defined(__APPLE__)
         sprintf(cmd, "open '%s'", url);
-#endif
+    #endif
         system(cmd);
         RL_FREE(cmd);
+#endif
+#if defined(PLATFORM_WEB)
+        emscripten_run_script(TextFormat("window.open('%s', '_blank')", url));
+#endif
     }
 }
 
@@ -2452,8 +2483,8 @@ bool IsMouseButtonPressed(int button)
     if (IsGestureDetected(GESTURE_TAP)) pressed = true;
 #else
     // NOTE: On PLATFORM_DESKTOP and PLATFORM_WEB IsMouseButtonPressed() is equivalent to GESTURE_TAP
-    if (((CORE.Input.Mouse.currentButtonState[button] != CORE.Input.Mouse.previousButtonState[button]) &&
-         (CORE.Input.Mouse.currentButtonState[button] == 1)) || IsGestureDetected(GESTURE_TAP))  pressed = true;
+    if ((CORE.Input.Mouse.currentButtonState[button] != CORE.Input.Mouse.previousButtonState[button]) &&
+         (GetMouseButtonStatus(button) == 1)) pressed = true;
 #endif
 
     return pressed;
@@ -2468,7 +2499,8 @@ bool IsMouseButtonDown(int button)
     if (IsGestureDetected(GESTURE_HOLD)) down = true;
 #else
     // NOTE: On PLATFORM_DESKTOP and PLATFORM_WEB IsMouseButtonDown() is equivalent to GESTURE_HOLD or GESTURE_DRAG
-    if ((GetMouseButtonStatus(button) == 1) || IsGestureDetected(GESTURE_HOLD) || IsGestureDetected(GESTURE_DRAG)) down = true;
+    if (GetMouseButtonStatus(button) == 1) down = true;
+    // || IsGestureDetected(GESTURE_HOLD) || IsGestureDetected(GESTURE_DRAG)) down = true;
 #endif
 
     return down;
@@ -2481,7 +2513,7 @@ bool IsMouseButtonReleased(int button)
 
 #if !defined(PLATFORM_ANDROID)
     if ((CORE.Input.Mouse.currentButtonState[button] != CORE.Input.Mouse.previousButtonState[button]) &&
-        (CORE.Input.Mouse.currentButtonState[button] == 0)) released = true;
+        (GetMouseButtonStatus(button) == 0)) released = true;
 #endif
 
     return released;
@@ -3177,12 +3209,12 @@ static bool InitGraphicsDevice(int width, int height)
     dispmanElement = vc_dispmanx_element_add(dispmanUpdate, dispmanDisplay, 0/*layer*/, &dstRect, 0/*src*/,
                                             &srcRect, DISPMANX_PROTECTION_NONE, &alpha, 0/*clamp*/, DISPMANX_NO_ROTATE);
 
-    window.element = dispmanElement;
-    window.width = CORE.Window.render.width;
-    window.height = CORE.Window.render.height;
+    CORE.Window.handle.element = dispmanElement;
+    CORE.Window.handle.width = CORE.Window.render.width;
+    CORE.Window.handle.height = CORE.Window.render.height;
     vc_dispmanx_update_submit_sync(dispmanUpdate);
 
-    CORE.Window.surface = eglCreateWindowSurface(CORE.Window.device, CORE.Window.config, &window, NULL);
+    CORE.Window.surface = eglCreateWindowSurface(CORE.Window.device, CORE.Window.config, &CORE.Window.handle, NULL);
     //---------------------------------------------------------------------------------
 #endif  // PLATFORM_RPI
 
@@ -3556,7 +3588,7 @@ static void PollInputEvents(void)
     for (int i = 0; i < 3; i++)
     {
         CORE.Input.Mouse.previousButtonState[i] = CORE.Input.Mouse.currentButtonState[i];
-        CORE.Input.Mouse.currentButtonState[i] = currentButtonStateEvdev[i];
+        CORE.Input.Mouse.currentButtonState[i] = CORE.Input.Mouse.currentButtonStateEvdev[i];
     }
 #endif
 
@@ -3970,7 +4002,7 @@ static void MouseButtonCallback(GLFWwindow *window, int button, int action, int 
 
 #if defined(SUPPORT_GESTURES_SYSTEM) && defined(SUPPORT_MOUSE_GESTURES)
     // Process mouse events as touches to be able to use mouse-gestures
-    GestureEvent gestureEvent;
+    GestureEvent gestureEvent = { 0 };
 
     // Register touch actions
     if (IsMouseButtonPressed(MOUSE_LEFT_BUTTON)) gestureEvent.touchAction = TOUCH_DOWN;
@@ -4001,7 +4033,7 @@ static void MouseCursorPosCallback(GLFWwindow *window, double x, double y)
 {
 #if defined(SUPPORT_GESTURES_SYSTEM) && defined(SUPPORT_MOUSE_GESTURES)
     // Process mouse events as touches to be able to use mouse-gestures
-    GestureEvent gestureEvent;
+    GestureEvent gestureEvent = { 0 };
 
     gestureEvent.touchAction = TOUCH_MOVE;
 
@@ -4132,7 +4164,9 @@ static void AndroidCommandCallback(struct android_app *app, int32_t cmd)
                     // Load default font
                     // NOTE: External function (defined in module: text)
                     LoadFontDefault();
-                    SetShapesTexture(GetFontDefault().texture, GetFontDefault().recs[95]);
+                    Rectangle rec = GetFontDefault().recs[95];
+                    // NOTE: We setup a 1px padding on char rectangle to avoid pixel bleeding on MSAA filtering
+                    SetShapesTexture(GetFontDefault().texture, (Rectangle){ rec.x + 1, rec.y + 1, rec.width - 2, rec.height - 2 });
                 #endif
 
                     // TODO: GPU assets reload in case of lost focus (lost context)
@@ -4269,7 +4303,7 @@ static int32_t AndroidInputCallback(struct android_app *app, AInputEvent *event)
     unsigned int flags = action & AMOTION_EVENT_ACTION_MASK;
 
 #if defined(SUPPORT_GESTURES_SYSTEM)
-    GestureEvent gestureEvent;
+    GestureEvent gestureEvent = { 0 };
 
     // Register touch actions
     if (flags == AMOTION_EVENT_ACTION_DOWN) gestureEvent.touchAction = TOUCH_DOWN;
@@ -4384,7 +4418,7 @@ static EM_BOOL EmscriptenMouseCallback(int eventType, const EmscriptenMouseEvent
 static EM_BOOL EmscriptenTouchCallback(int eventType, const EmscriptenTouchEvent *touchEvent, void *userData)
 {
 #if defined(SUPPORT_GESTURES_SYSTEM)
-    GestureEvent gestureEvent;
+    GestureEvent gestureEvent = { 0 };
 
     // Register touch actions
     if (eventType == EMSCRIPTEN_EVENT_TOUCHSTART) gestureEvent.touchAction = TOUCH_DOWN;
@@ -4652,11 +4686,13 @@ static void InitEvdevInput(void)
         CORE.Input.Touch.position[i].x = -1;
         CORE.Input.Touch.position[i].y = -1;
     }
+
     // Reset keypress buffer
     CORE.Input.Keyboard.lastKeyPressed.Head = 0;
     CORE.Input.Keyboard.lastKeyPressed.Tail = 0;
+
     // Reset keyboard key state
-    for (int i = 0; i < 512; i++) CORE.Input.Keyboard.currentKeyStateEvdev[i] = 0;
+    for (int i = 0; i < 512; i++) CORE.Input.Keyboard.currentKeyState[i] = 0;
 
     // Open the linux directory of "/dev/input"
     directory = opendir(DEFAULT_EVDEV_PATH);
@@ -4990,7 +5026,7 @@ static void *EventThread(void *arg)
                 // Mouse button parsing
                 if ((event.code == BTN_TOUCH) || (event.code == BTN_LEFT))
                 {
-                    currentButtonStateEvdev[MOUSE_LEFT_BUTTON] = event.value;
+                    CORE.Input.Mouse.currentButtonStateEvdev[MOUSE_LEFT_BUTTON] = event.value;
 
                     #if defined(SUPPORT_GESTURES_SYSTEM)
                         if (event.value > 0) touchAction = TOUCH_DOWN;
@@ -4999,9 +5035,8 @@ static void *EventThread(void *arg)
                     #endif
                 }
 
-                if (event.code == BTN_RIGHT) currentButtonStateEvdev[MOUSE_RIGHT_BUTTON] = event.value;
-
-                if (event.code == BTN_MIDDLE) currentButtonStateEvdev[MOUSE_MIDDLE_BUTTON] = event.value;
+                if (event.code == BTN_RIGHT) CORE.Input.Mouse.currentButtonStateEvdev[MOUSE_RIGHT_BUTTON] = event.value;
+                if (event.code == BTN_MIDDLE) CORE.Input.Mouse.currentButtonStateEvdev[MOUSE_MIDDLE_BUTTON] = event.value;
 
                 // Keyboard button parsing
                 if ((event.code >= 1) && (event.code <= 255))     //Keyboard keys appear for codes 1 to 255

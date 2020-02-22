@@ -161,9 +161,7 @@ RMEMAPI intptr_t BiStackMargins(BiStack destack);
 
 #if defined(RMEM_IMPLEMENTATION)
 
-#include <stdio.h>          // Required for:
-#include <stdlib.h>         // Required for:
-#include <string.h>         // Required for:
+#include <stdio.h>          // Required for: malloc(), calloc(), free()
 
 //----------------------------------------------------------------------------------
 // Defines and Macros
@@ -205,7 +203,7 @@ MemPool CreateMemPool(const size_t size)
         mempool.stack.size = size;
         mempool.stack.mem = malloc(mempool.stack.size*sizeof *mempool.stack.mem);
 
-        if (mempool.stack.mem==NULL)
+        if (mempool.stack.mem == NULL)
         {
             mempool.stack.size = 0UL;
             return mempool;
@@ -252,7 +250,9 @@ void *MemPoolAlloc(MemPool *const mempool, const size_t size)
         const size_t BUCKET_INDEX = (ALLOC_SIZE >> MEMPOOL_BUCKET_BITS) - 1;
 
         // If the size is small enough, let's check if our buckets has a fitting memory block.
-        if (BUCKET_INDEX < MEMPOOL_BUCKET_SIZE && mempool->buckets[BUCKET_INDEX] != NULL && mempool->buckets[BUCKET_INDEX]->size >= ALLOC_SIZE)
+        if ((BUCKET_INDEX < MEMPOOL_BUCKET_SIZE) && 
+            (mempool->buckets[BUCKET_INDEX] != NULL) && 
+            (mempool->buckets[BUCKET_INDEX]->size >= ALLOC_SIZE))
         {
             new_mem = mempool->buckets[BUCKET_INDEX];
             mempool->buckets[BUCKET_INDEX] = mempool->buckets[BUCKET_INDEX]->next;
@@ -424,9 +424,9 @@ size_t GetMemPoolFreeMemory(const MemPool mempool)
 {
     size_t total_remaining = (uintptr_t)mempool.stack.base - (uintptr_t)mempool.stack.mem;
 
-    for (MemNode *n=mempool.freeList.head; n != NULL; n = n->next) total_remaining += n->size;
+    for (MemNode *n = mempool.freeList.head; n != NULL; n = n->next) total_remaining += n->size;
 
-    for (size_t i=0; i<MEMPOOL_BUCKET_SIZE; i++) for (MemNode *n = mempool.buckets[i]; n != NULL; n = n->next) total_remaining += n->size;
+    for (int i = 0; i < MEMPOOL_BUCKET_SIZE; i++) for (MemNode *n = mempool.buckets[i]; n != NULL; n = n->next) total_remaining += n->size;
 
     return total_remaining;
 }
@@ -436,7 +436,7 @@ void MemPoolReset(MemPool *const mempool)
     if (mempool == NULL) return;
     mempool->freeList.head = mempool->freeList.tail = NULL;
     mempool->freeList.len = 0;
-    for (size_t i = 0; i < MEMPOOL_BUCKET_SIZE; i++) mempool->buckets[i] = NULL;
+    for (int i = 0; i < MEMPOOL_BUCKET_SIZE; i++) mempool->buckets[i] = NULL;
     mempool->stack.base = mempool->stack.mem + mempool->stack.size;
 }
 
@@ -453,7 +453,7 @@ bool MemPoolDefrag(MemPool *const mempool)
         }
         else
         {
-            for (size_t i=0; i<MEMPOOL_BUCKET_SIZE; i++)
+            for (int i = 0; i < MEMPOOL_BUCKET_SIZE; i++)
             {
                 while (mempool->buckets[i] != NULL)
                 {
@@ -593,7 +593,7 @@ ObjPool CreateObjPool(const size_t objsize, const size_t len)
         }
         else
         {
-            for (size_t i=0; i<objpool.freeBlocks; i++)
+            for (int i = 0; i < objpool.freeBlocks; i++)
             {
                 union ObjInfo block = { .byte = &objpool.stack.mem[i*objpool.objSize] };
                 *block.index = i + 1;
@@ -617,7 +617,7 @@ ObjPool CreateObjPoolFromBuffer(void *const buf, const size_t objsize, const siz
         objpool.stack.size = objpool.freeBlocks = len;
         objpool.stack.mem = buf;
 
-        for (size_t i=0; i<objpool.freeBlocks; i++)
+        for (int i = 0; i < objpool.freeBlocks; i++)
         {
             union ObjInfo block = { .byte = &objpool.stack.mem[i*objpool.objSize] };
             *block.index = i + 1;
@@ -655,6 +655,7 @@ void *ObjPoolAlloc(ObjPool *const objpool)
             // Head = &pool[*Head * pool.objsize];
             objpool->stack.base = (objpool->freeBlocks != 0UL)? objpool->stack.mem + (*ret.index*objpool->objSize) : NULL;
             memset(ret.byte, 0, objpool->objSize);
+
             return ret.byte;
         }
         else return NULL;

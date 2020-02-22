@@ -46,8 +46,8 @@
 #endif
 
 #include <stdlib.h>                     // Required for: exit()
-#include <stdio.h>                      // Required for: printf(), sprintf()
-#include <stdarg.h>                     // Required for: va_list, va_start(), vfprintf(), va_end()
+#include <stdio.h>                      // Required for: vprintf()
+#include <stdarg.h>                     // Required for: va_list, va_start(), va_end()
 #include <string.h>                     // Required for: strcpy(), strcat()
 
 #define MAX_TRACELOG_BUFFER_SIZE   128  // Max length of one trace-log message

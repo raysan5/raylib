@@ -1,4 +1,4 @@
-### raylib bindings
+## raylib bindings
 
 Some people ported raylib to other languages in form of bindings or wrappers to the library, here is a list with the ones I'm aware of:
 
@@ -46,6 +46,7 @@ Some people ported raylib to other languages in form of bindings or wrappers to 
 | ringraylib         | Ring           | https://github.com/ringpackages/ringraylib                           |
 | cl-raylib          | Common Lisp    | https://github.com/longlene/cl-raylib                                |
 | raylib-scm         | Chicken Scheme | https://github.com/yashrk/raylib-scm                                 |
+| raylib-chibi       | Chibi-Scheme   | https://github.com/VincentToups/raylib-chibi                         |
 | Euraylib           | Euphoria       | https://github.com/gAndy50/Euraylib                                  |
 | raylib-wren        | Wren           | https://github.com/TSnake41/raylib-wren                              |
 | raylib-odin        | Odin           | https://github.com/kevinw/raylib-odin                                |

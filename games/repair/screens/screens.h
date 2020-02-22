@@ -101,15 +101,6 @@ void UnloadTitleScreen(void);
 int FinishTitleScreen(void);
 
 //----------------------------------------------------------------------------------
-// Options Screen Functions Declaration
-//----------------------------------------------------------------------------------
-void InitOptionsScreen(void);
-void UpdateOptionsScreen(void);
-void DrawOptionsScreen(void);
-void UnloadOptionsScreen(void);
-int FinishOptionsScreen(void);
-
-//----------------------------------------------------------------------------------
 // Gameplay Screen Functions Declaration
 //----------------------------------------------------------------------------------
 void InitGameplayScreen(void);

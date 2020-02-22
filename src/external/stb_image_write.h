@@ -1,4 +1,4 @@
-/* stb_image_write - v1.13 - public domain - http://nothings.org/stb
+/* stb_image_write - v1.14 - public domain - http://nothings.org/stb
    writes out PNG/BMP/TGA/JPEG/HDR images to C stdio - Sean Barrett 2010-2015
                                      no warranty implied; use at your own risk
 
@@ -105,7 +105,7 @@ USAGE:
 
    TGA supports RLE or non-RLE compressed data. To use non-RLE-compressed
    data, set the global variable 'stbi_write_tga_with_rle' to 0.
-   
+
    JPEG does ignore alpha channels in input data; quality is between 1 and 100.
    Higher quality looks better but results in a bigger image.
    JPEG baseline (no JPEG progressive).
@@ -113,7 +113,7 @@ USAGE:
 CREDITS:
 
 
-   Sean Barrett           -    PNG/BMP/TGA 
+   Sean Barrett           -    PNG/BMP/TGA
    Baldur Karlsson        -    HDR
    Jean-Sebastien Guay    -    TGA monochrome
    Tim Kelsey             -    misc enhancements
@@ -247,16 +247,16 @@ STBIWDEF void stbi_flip_vertically_on_write(int flip_boolean);
 #define STBIW_UCHAR(x) (unsigned char) ((x) & 0xff)
 
 #ifdef STB_IMAGE_WRITE_STATIC
-static int stbi__flip_vertically_on_write=0;
 static int stbi_write_png_compression_level = 8;
 static int stbi_write_tga_with_rle = 1;
 static int stbi_write_force_png_filter = -1;
 #else
 int stbi_write_png_compression_level = 8;
-int stbi__flip_vertically_on_write=0;
 int stbi_write_tga_with_rle = 1;
 int stbi_write_force_png_filter = -1;
 #endif
+
+static int stbi__flip_vertically_on_write = 0;
 
 STBIWDEF void stbi_flip_vertically_on_write(int flag)
 {
@@ -306,7 +306,7 @@ static FILE *stbiw__fopen(char const *filename, char const *mode)
    wchar_t wFilename[1024];
 	if (0 == MultiByteToWideChar(65001 /* UTF8 */, 0, filename, -1, wFilename, sizeof(wFilename)))
       return 0;
-	
+
 	if (0 == MultiByteToWideChar(65001 /* UTF8 */, 0, mode, -1, wMode, sizeof(wMode)))
       return 0;
 
@@ -774,7 +774,7 @@ STBIWDEF int stbi_write_hdr(char const *filename, int x, int y, int comp, const 
 
 #ifndef STBIW_ZLIB_COMPRESS
 // stretchy buffer; stbiw__sbpush() == vector<>::push_back() -- stbiw__sbcount() == vector<>::size()
-#define stbiw__sbraw(a) ((int *) (a) - 2)
+#define stbiw__sbraw(a) ((int *) (void *) (a) - 2)
 #define stbiw__sbm(a)   stbiw__sbraw(a)[0]
 #define stbiw__sbn(a)   stbiw__sbraw(a)[1]
 
@@ -1044,13 +1044,13 @@ static void stbiw__encode_png_line(unsigned char *pixels, int stride_bytes, int 
    int type = mymap[filter_type];
    unsigned char *z = pixels + stride_bytes * (stbi__flip_vertically_on_write ? height-1-y : y);
    int signed_stride = stbi__flip_vertically_on_write ? -stride_bytes : stride_bytes;
-    
+
    if (type==0) {
       memcpy(line_buffer, z, width*n);
       return;
    }
 
-   // first loop isn't optimized since it's just one pixel    
+   // first loop isn't optimized since it's just one pixel
    for (i = 0; i < n; ++i) {
       switch (type) {
          case 1: line_buffer[i] = z[i]; break;
@@ -1271,26 +1271,31 @@ static void stbiw__jpg_calcBits(int val, unsigned short bits[2]) {
    bits[0] = val & ((1<<bits[1])-1);
 }
 
-static int stbiw__jpg_processDU(stbi__write_context *s, int *bitBuf, int *bitCnt, float *CDU, float *fdtbl, int DC, const unsigned short HTDC[256][2], const unsigned short HTAC[256][2]) {
+static int stbiw__jpg_processDU(stbi__write_context *s, int *bitBuf, int *bitCnt, float *CDU, int du_stride, float *fdtbl, int DC, const unsigned short HTDC[256][2], const unsigned short HTAC[256][2]) {
    const unsigned short EOB[2] = { HTAC[0x00][0], HTAC[0x00][1] };
    const unsigned short M16zeroes[2] = { HTAC[0xF0][0], HTAC[0xF0][1] };
-   int dataOff, i, diff, end0pos;
+   int dataOff, i, j, n, diff, end0pos, x, y;
    int DU[64];
 
    // DCT rows
-   for(dataOff=0; dataOff<64; dataOff+=8) {
+   for(dataOff=0, n=du_stride*8; dataOff<n; dataOff+=du_stride) {
       stbiw__jpg_DCT(&CDU[dataOff], &CDU[dataOff+1], &CDU[dataOff+2], &CDU[dataOff+3], &CDU[dataOff+4], &CDU[dataOff+5], &CDU[dataOff+6], &CDU[dataOff+7]);
    }
    // DCT columns
    for(dataOff=0; dataOff<8; ++dataOff) {
-      stbiw__jpg_DCT(&CDU[dataOff], &CDU[dataOff+8], &CDU[dataOff+16], &CDU[dataOff+24], &CDU[dataOff+32], &CDU[dataOff+40], &CDU[dataOff+48], &CDU[dataOff+56]);
+      stbiw__jpg_DCT(&CDU[dataOff], &CDU[dataOff+du_stride], &CDU[dataOff+du_stride*2], &CDU[dataOff+du_stride*3], &CDU[dataOff+du_stride*4],
+                     &CDU[dataOff+du_stride*5], &CDU[dataOff+du_stride*6], &CDU[dataOff+du_stride*7]);
    }
    // Quantize/descale/zigzag the coefficients
-   for(i=0; i<64; ++i) {
-      float v = CDU[i]*fdtbl[i];
-      // DU[stbiw__jpg_ZigZag[i]] = (int)(v < 0 ? ceilf(v - 0.5f) : floorf(v + 0.5f));
-      // ceilf() and floorf() are C99, not C89, but I /think/ they're not needed here anyway?
-      DU[stbiw__jpg_ZigZag[i]] = (int)(v < 0 ? v - 0.5f : v + 0.5f);
+   for(y = 0, j=0; y < 8; ++y) {
+      for(x = 0; x < 8; ++x,++j) {
+         float v;
+         i = y*du_stride+x;
+         v = CDU[i]*fdtbl[j];
+         // DU[stbiw__jpg_ZigZag[j]] = (int)(v < 0 ? ceilf(v - 0.5f) : floorf(v + 0.5f));
+         // ceilf() and floorf() are C99, not C89, but I /think/ they're not needed here anyway?
+         DU[stbiw__jpg_ZigZag[j]] = (int)(v < 0 ? v - 0.5f : v + 0.5f);
+      }
    }
 
    // Encode DC
@@ -1405,10 +1410,10 @@ static int stbi_write_jpg_core(stbi__write_context *s, int width, int height, in
                              37,56,68,109,103,77,24,35,55,64,81,104,113,92,49,64,78,87,103,121,120,101,72,92,95,98,112,100,103,99};
    static const int UVQT[] = {17,18,24,47,99,99,99,99,18,21,26,66,99,99,99,99,24,26,56,99,99,99,99,99,47,66,99,99,99,99,99,99,
                               99,99,99,99,99,99,99,99,99,99,99,99,99,99,99,99,99,99,99,99,99,99,99,99,99,99,99,99,99,99,99,99};
-   static const float aasf[] = { 1.0f * 2.828427125f, 1.387039845f * 2.828427125f, 1.306562965f * 2.828427125f, 1.175875602f * 2.828427125f, 
+   static const float aasf[] = { 1.0f * 2.828427125f, 1.387039845f * 2.828427125f, 1.306562965f * 2.828427125f, 1.175875602f * 2.828427125f,
                                  1.0f * 2.828427125f, 0.785694958f * 2.828427125f, 0.541196100f * 2.828427125f, 0.275899379f * 2.828427125f };
 
-   int row, col, i, k;
+   int row, col, i, k, subsample;
    float fdtbl_Y[64], fdtbl_UV[64];
    unsigned char YTable[64], UVTable[64];
 
@@ -1417,6 +1422,7 @@ static int stbi_write_jpg_core(stbi__write_context *s, int width, int height, in
    }
 
    quality = quality ? quality : 90;
+   subsample = quality <= 90 ? 1 : 0;
    quality = quality < 1 ? 1 : quality > 100 ? 100 : quality;
    quality = quality < 50 ? 5000 / quality : 200 - quality * 2;
 
@@ -1439,7 +1445,7 @@ static int stbi_write_jpg_core(stbi__write_context *s, int width, int height, in
       static const unsigned char head0[] = { 0xFF,0xD8,0xFF,0xE0,0,0x10,'J','F','I','F',0,1,1,0,0,1,0,1,0,0,0xFF,0xDB,0,0x84,0 };
       static const unsigned char head2[] = { 0xFF,0xDA,0,0xC,3,1,0,2,0x11,3,0x11,0,0x3F,0 };
       const unsigned char head1[] = { 0xFF,0xC0,0,0x11,8,(unsigned char)(height>>8),STBIW_UCHAR(height),(unsigned char)(width>>8),STBIW_UCHAR(width),
-                                      3,1,0x11,0,2,0x11,1,3,0x11,1,0xFF,0xC4,0x01,0xA2,0 };
+                                      3,1,(unsigned char)(subsample?0x22:0x11),0,2,0x11,1,3,0x11,1,0xFF,0xC4,0x01,0xA2,0 };
       s->func(s->context, (void*)head0, sizeof(head0));
       s->func(s->context, (void*)YTable, sizeof(YTable));
       stbiw__putc(s, 1);
@@ -1462,36 +1468,74 @@ static int stbi_write_jpg_core(stbi__write_context *s, int width, int height, in
    // Encode 8x8 macroblocks
    {
       static const unsigned short fillBits[] = {0x7F, 7};
-      const unsigned char *imageData = (const unsigned char *)data;
       int DCY=0, DCU=0, DCV=0;
       int bitBuf=0, bitCnt=0;
       // comp == 2 is grey+alpha (alpha is ignored)
       int ofsG = comp > 2 ? 1 : 0, ofsB = comp > 2 ? 2 : 0;
+      const unsigned char *dataR = (const unsigned char *)data;
+      const unsigned char *dataG = dataR + ofsG;
+      const unsigned char *dataB = dataR + ofsB;
       int x, y, pos;
-      for(y = 0; y < height; y += 8) {
-         for(x = 0; x < width; x += 8) {
-            float YDU[64], UDU[64], VDU[64];
-            for(row = y, pos = 0; row < y+8; ++row) {
-               // row >= height => use last input row
-               int clamped_row = (row < height) ? row : height - 1;
-               int base_p = (stbi__flip_vertically_on_write ? (height-1-clamped_row) : clamped_row)*width*comp;
-               for(col = x; col < x+8; ++col, ++pos) {
-                  float r, g, b;
-                  // if col >= width => use pixel from last input column
-                  int p = base_p + ((col < width) ? col : (width-1))*comp;
+      if(subsample) {
+         for(y = 0; y < height; y += 16) {
+            for(x = 0; x < width; x += 16) {
+               float Y[256], U[256], V[256];
+               for(row = y, pos = 0; row < y+16; ++row) {
+                  // row >= height => use last input row
+                  int clamped_row = (row < height) ? row : height - 1;
+                  int base_p = (stbi__flip_vertically_on_write ? (height-1-clamped_row) : clamped_row)*width*comp;
+                  for(col = x; col < x+16; ++col, ++pos) {
+                     // if col >= width => use pixel from last input column
+                     int p = base_p + ((col < width) ? col : (width-1))*comp;
+                     float r = dataR[p], g = dataG[p], b = dataB[p];
+                     Y[pos]= +0.29900f*r + 0.58700f*g + 0.11400f*b - 128;
+                     U[pos]= -0.16874f*r - 0.33126f*g + 0.50000f*b;
+                     V[pos]= +0.50000f*r - 0.41869f*g - 0.08131f*b;
+                  }
+               }
+               DCY = stbiw__jpg_processDU(s, &bitBuf, &bitCnt, Y+0,   16, fdtbl_Y, DCY, YDC_HT, YAC_HT);
+               DCY = stbiw__jpg_processDU(s, &bitBuf, &bitCnt, Y+8,   16, fdtbl_Y, DCY, YDC_HT, YAC_HT);
+               DCY = stbiw__jpg_processDU(s, &bitBuf, &bitCnt, Y+128, 16, fdtbl_Y, DCY, YDC_HT, YAC_HT);
+               DCY = stbiw__jpg_processDU(s, &bitBuf, &bitCnt, Y+136, 16, fdtbl_Y, DCY, YDC_HT, YAC_HT);
 
-                  r = imageData[p+0];
-                  g = imageData[p+ofsG];
-                  b = imageData[p+ofsB];
-                  YDU[pos]=+0.29900f*r+0.58700f*g+0.11400f*b-128;
-                  UDU[pos]=-0.16874f*r-0.33126f*g+0.50000f*b;
-                  VDU[pos]=+0.50000f*r-0.41869f*g-0.08131f*b;
+               // subsample U,V
+               {
+                  float subU[64], subV[64];
+                  int yy, xx;
+                  for(yy = 0, pos = 0; yy < 8; ++yy) {
+                     for(xx = 0; xx < 8; ++xx, ++pos) {
+                        int j = yy*32+xx*2;
+                        subU[pos] = (U[j+0] + U[j+1] + U[j+16] + U[j+17]) * 0.25f;
+                        subV[pos] = (V[j+0] + V[j+1] + V[j+16] + V[j+17]) * 0.25f;
+                     }
+                  }
+                  DCU = stbiw__jpg_processDU(s, &bitBuf, &bitCnt, subU, 8, fdtbl_UV, DCU, UVDC_HT, UVAC_HT);
+                  DCV = stbiw__jpg_processDU(s, &bitBuf, &bitCnt, subV, 8, fdtbl_UV, DCV, UVDC_HT, UVAC_HT);
                }
             }
+         }
+      } else {
+         for(y = 0; y < height; y += 8) {
+            for(x = 0; x < width; x += 8) {
+               float Y[64], U[64], V[64];
+               for(row = y, pos = 0; row < y+8; ++row) {
+                  // row >= height => use last input row
+                  int clamped_row = (row < height) ? row : height - 1;
+                  int base_p = (stbi__flip_vertically_on_write ? (height-1-clamped_row) : clamped_row)*width*comp;
+                  for(col = x; col < x+8; ++col, ++pos) {
+                     // if col >= width => use pixel from last input column
+                     int p = base_p + ((col < width) ? col : (width-1))*comp;
+                     float r = dataR[p], g = dataG[p], b = dataB[p];
+                     Y[pos]= +0.29900f*r + 0.58700f*g + 0.11400f*b - 128;
+                     U[pos]= -0.16874f*r - 0.33126f*g + 0.50000f*b;
+                     V[pos]= +0.50000f*r - 0.41869f*g - 0.08131f*b;
+                  }
+               }
 
-            DCY = stbiw__jpg_processDU(s, &bitBuf, &bitCnt, YDU, fdtbl_Y, DCY, YDC_HT, YAC_HT);
-            DCU = stbiw__jpg_processDU(s, &bitBuf, &bitCnt, UDU, fdtbl_UV, DCU, UVDC_HT, UVAC_HT);
-            DCV = stbiw__jpg_processDU(s, &bitBuf, &bitCnt, VDU, fdtbl_UV, DCV, UVDC_HT, UVAC_HT);
+               DCY = stbiw__jpg_processDU(s, &bitBuf, &bitCnt, Y, 8, fdtbl_Y,  DCY, YDC_HT, YAC_HT);
+               DCU = stbiw__jpg_processDU(s, &bitBuf, &bitCnt, U, 8, fdtbl_UV, DCU, UVDC_HT, UVAC_HT);
+               DCV = stbiw__jpg_processDU(s, &bitBuf, &bitCnt, V, 8, fdtbl_UV, DCV, UVDC_HT, UVAC_HT);
+            }
          }
       }
 
@@ -1530,10 +1574,13 @@ STBIWDEF int stbi_write_jpg(char const *filename, int x, int y, int comp, const 
 #endif // STB_IMAGE_WRITE_IMPLEMENTATION
 
 /* Revision history
+      1.14  (2020-02-02) updated JPEG writer to downsample chroma channels
+      1.13
+      1.12
       1.11  (2019-08-11)
-             
+
       1.10  (2019-02-07)
-             support utf8 filenames in Windows; fix warnings and platform ifdefs 
+             support utf8 filenames in Windows; fix warnings and platform ifdefs
       1.09  (2018-02-11)
              fix typo in zlib quality API, improve STB_I_W_STATIC in C++
       1.08  (2018-01-29)
@@ -1582,38 +1629,38 @@ This software is available under 2 licenses -- choose whichever you prefer.
 ------------------------------------------------------------------------------
 ALTERNATIVE A - MIT License
 Copyright (c) 2017 Sean Barrett
-Permission is hereby granted, free of charge, to any person obtaining a copy of 
-this software and associated documentation files (the "Software"), to deal in 
-the Software without restriction, including without limitation the rights to 
-use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies 
-of the Software, and to permit persons to whom the Software is furnished to do 
+Permission is hereby granted, free of charge, to any person obtaining a copy of
+this software and associated documentation files (the "Software"), to deal in
+the Software without restriction, including without limitation the rights to
+use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies
+of the Software, and to permit persons to whom the Software is furnished to do
 so, subject to the following conditions:
-The above copyright notice and this permission notice shall be included in all 
+The above copyright notice and this permission notice shall be included in all
 copies or substantial portions of the Software.
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR 
-IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, 
-FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE 
-AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER 
-LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, 
-OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE 
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 ------------------------------------------------------------------------------
 ALTERNATIVE B - Public Domain (www.unlicense.org)
 This is free and unencumbered software released into the public domain.
-Anyone is free to copy, modify, publish, use, compile, sell, or distribute this 
-software, either in source code form or as a compiled binary, for any purpose, 
+Anyone is free to copy, modify, publish, use, compile, sell, or distribute this
+software, either in source code form or as a compiled binary, for any purpose,
 commercial or non-commercial, and by any means.
-In jurisdictions that recognize copyright laws, the author or authors of this 
-software dedicate any and all copyright interest in the software to the public 
-domain. We make this dedication for the benefit of the public at large and to 
-the detriment of our heirs and successors. We intend this dedication to be an 
-overt act of relinquishment in perpetuity of all present and future rights to 
+In jurisdictions that recognize copyright laws, the author or authors of this
+software dedicate any and all copyright interest in the software to the public
+domain. We make this dedication for the benefit of the public at large and to
+the detriment of our heirs and successors. We intend this dedication to be an
+overt act of relinquishment in perpetuity of all present and future rights to
 this software under copyright law.
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR 
-IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, 
-FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE 
-AUTHORS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN 
-ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION 
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN
+ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION
 WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 ------------------------------------------------------------------------------
 */

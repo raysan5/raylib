@@ -57,6 +57,7 @@
 #include <stdio.h>          // Required for: FILE, fopen(), fclose(), fgets()
 #include <string.h>         // Required for: strcmp(), strstr(), strcpy(), strncpy(), strcat(), strncat(), sscanf()
 #include <stdarg.h>         // Required for: va_list, va_start(), vsprintf(), va_end() [Used in TextFormat()]
+#include <ctype.h>          // Requried for: toupper(), tolower() [Used in TextToUpper(), TextToLower()]
 
 #include "utils.h"          // Required for: fopen() Android mapping
 
@@ -767,24 +768,7 @@ void UnloadFont(Font font)
 // NOTE: Uses default font
 void DrawFPS(int posX, int posY)
 {
-    // NOTE: We are rendering fps every certain time for better viewing on high framerates
-
-    static int fps = 0;
-    static int counter = 0;
-    static int refreshRate = 20;
-
-    if (counter < refreshRate) counter++;
-    else
-    {
-        fps = GetFPS();
-        refreshRate = fps;
-        counter = 0;
-    }
-
-    // TODO: Find a better way to calculate FPS, maybe calculate the mean of multiple measures?
-
-    // NOTE: We have rounding errors every frame, so it oscillates a lot
-    DrawText(TextFormat("%2i FPS", fps), posX, posY, 20, LIME);
+    DrawText(TextFormat("%2i FPS", GetFPS()), posX, posY, 20, LIME);
 }
 
 // Draw text (using default font)
@@ -1146,7 +1130,10 @@ unsigned int TextLength(const char *text)
 {
     unsigned int length = 0; //strlen(text)
 
-    while (*text++) length++;
+    if (text != NULL)
+    {
+        while (*text++) length++;
+    }
 
     return length;
 }
@@ -1371,8 +1358,8 @@ const char *TextToUpper(const char *text)
     {
         if (text[i] != '\0')
         {
-            //buffer[i] = (char)toupper(text[i]);
-            if ((text[i] >= 'a') && (text[i] <= 'z')) buffer[i] = text[i] - 32;
+            buffer[i] = (char)toupper(text[i]);
+            //if ((text[i] >= 'a') && (text[i] <= 'z')) buffer[i] = text[i] - 32;
         }
         else { buffer[i] = '\0'; break; }
     }
@@ -1389,8 +1376,8 @@ const char *TextToLower(const char *text)
     {
         if (text[i] != '\0')
         {
-            //buffer[i] = (char)tolower(text[i]);
-            if ((text[i] >= 'A') && (text[i] <= 'Z')) buffer[i] = text[i] + 32;
+            buffer[i] = (char)tolower(text[i]);
+            //if ((text[i] >= 'A') && (text[i] <= 'Z')) buffer[i] = text[i] + 32;
         }
         else { buffer[i] = '\0'; break; }
     }
@@ -1403,7 +1390,7 @@ const char *TextToPascal(const char *text)
 {
     static char buffer[MAX_TEXT_BUFFER_LENGTH] = { 0 };
 
-    buffer[0] = (char)TextToUpper(text[0]);
+    buffer[0] = (char)toupper(text[0]);
 
     for (int i = 1, j = 1; i < MAX_TEXT_BUFFER_LENGTH; i++, j++)
     {
@@ -1413,7 +1400,7 @@ const char *TextToPascal(const char *text)
             else
             {
                 j++;
-                buffer[i] = (char)TextToUpper(text[j]);
+                buffer[i] = (char)toupper(text[j]);
             }
         }
         else { buffer[i] = '\0'; break; }
@@ -1445,7 +1432,7 @@ char *TextToUtf8(int *codepoints, int length)
 {
     // We allocate enough memory fo fit all possible codepoints
     // NOTE: 5 bytes for every codepoint should be enough
-    char *text = (char *)calloc(length*5, 1);
+    char *text = (char *)RL_CALLOC(length*5, 1);
     const char *utf8 = NULL;
     int size = 0;
 
@@ -1457,7 +1444,9 @@ char *TextToUtf8(int *codepoints, int length)
     }
 
     // Resize memory to text length + string NULL terminator
-    text = RL_REALLOC(text, size + 1);
+    void *ptr = RL_REALLOC(text, size + 1);
+    
+    if (ptr != NULL) text = (char *)ptr;
 
     return text;
 }

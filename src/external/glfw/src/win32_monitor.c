@@ -33,6 +33,7 @@
 #include <string.h>
 #include <limits.h>
 #include <malloc.h>
+#include <wchar.h>
 
 
 // Callback for EnumDisplayMonitors in createMonitor

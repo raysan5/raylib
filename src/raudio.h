@@ -189,6 +189,7 @@ bool IsAudioStreamPlaying(AudioStream stream);                  // Check if audi
 void StopAudioStream(AudioStream stream);                       // Stop audio stream
 void SetAudioStreamVolume(AudioStream stream, float volume);    // Set volume for audio stream (1.0 is max level)
 void SetAudioStreamPitch(AudioStream stream, float pitch);      // Set pitch for audio stream (1.0 is base level)
+void SetAudioStreamBufferSizeDefault(int size);                 // Default size for new audio streams
 
 #ifdef __cplusplus
 }

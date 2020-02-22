@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.0)
+cmake_minimum_required(VERSION 3.1)
 
 project(GLFW VERSION 3.4.0 LANGUAGES C)
 
@@ -75,7 +75,7 @@ if (MSVC)
         include(CheckIncludeFile)
         check_include_file(dinput.h DINPUT_H_FOUND)
         if (NOT DINPUT_H_FOUND)
-            message(FATAL_ERROR "DirectX 9 SDK not found")
+            message(FATAL_ERROR "DirectX 9 headers not found; install DirectX 9 SDK")
         endif()
         # Workaround for VS 2008 not shipping with stdint.h
         list(APPEND glfw_INCLUDE_DIRS "${GLFW_SOURCE_DIR}/deps/vs2008")

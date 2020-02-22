@@ -109,11 +109,7 @@ void DrawTitleScreen(void)
 
     if (titleCounter > 180)
     {
-        if (GuiButton((Rectangle){ GetScreenWidth()/2 - 440/2, 580, 440, 80 }, "START DATE!", -1))
-        {
-            finishScreen = 1;   // GAMEPLAY
-            PlaySound(fxCoin);
-        }
+        if (GuiButton((Rectangle){ GetScreenWidth()/2 - 440/2, 580, 440, 80 }, "START DATE!", -1)) finishScreen = 1;   // GAMEPLAY
     }
     
     DrawText("powered by", 20, GetScreenHeight() - texLogo.height - 35, 10, BLACK);

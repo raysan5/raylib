@@ -42,8 +42,8 @@
 .PHONY: all clean install uninstall
 
 # Define required raylib variables
-RAYLIB_VERSION     = 2.5.0
-RAYLIB_API_VERSION = 251
+RAYLIB_VERSION     = 3.0.0
+RAYLIB_API_VERSION = 300
 
 # See below for alternatives.
 RAYLIB_PATH        = ..
@@ -148,8 +148,8 @@ endif
 ifeq ($(PLATFORM),PLATFORM_WEB)
     # Emscripten required variables
     EMSDK_PATH         ?= C:/emsdk
-    EMSCRIPTEN_PATH    ?= $(EMSDK_PATH)/fastcomp/emscripten
-    CLANG_PATH          = $(EMSDK_PATH)/fastcomp/bin
+    EMSCRIPTEN_PATH    ?= $(EMSDK_PATH)/upstream/emscripten
+    CLANG_PATH          = $(EMSDK_PATH)/upstream/bin
     PYTHON_PATH         = $(EMSDK_PATH)/python/2.7.13.1_64bit/python-2.7.13.amd64
     NODE_PATH           = $(EMSDK_PATH)/node/12.9.1_64bit/bin
     export PATH         = $(EMSDK_PATH);$(EMSCRIPTEN_PATH);$(CLANG_PATH);$(NODE_PATH);$(PYTHON_PATH);C:\raylib\MinGW\bin:$$(PATH)
@@ -571,10 +571,11 @@ raudio.o : raudio.c raylib.h
 
 # Compile raygui module
 # NOTE: raygui header should be distributed with raylib.h
-raygui.o : raygui.c raygui.h
-	@echo #define RAYGUI_IMPLEMENTATION > raygui.c
-	@echo #include "$(RAYLIB_MODULE_RAYGUI_PATH)/raygui.h" > raygui.c
+raygui.o : raygui.c raygui.h gui_textbox_extended.h ricons.h
 	$(CC) -c $< $(CFLAGS) $(INCLUDE_PATHS) -D$(PLATFORM) -DRAYGUI_IMPLEMENTATION
+raygui.c:
+	echo '#define RAYGUI_IMPLEMENTATION' > raygui.c
+	echo '#include "$(RAYLIB_MODULE_RAYGUI_PATH)/raygui.h"' >> raygui.c
 
 # Compile physac module
 # NOTE: physac header should be distributed with raylib.h

@@ -186,6 +186,7 @@ typedef struct _GLFWwindowX11
 {
     Colormap        colormap;
     Window          handle;
+    Window          parent;
     XIC             ic;
 
     GLFWbool        overrideRedirect;

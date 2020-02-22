@@ -36,6 +36,7 @@
 #include <limits.h>
 #include <stdio.h>
 #include <locale.h>
+#include <unistd.h>
 
 
 // Translate an X11 key code to a GLFW key code.

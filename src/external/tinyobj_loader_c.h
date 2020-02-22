@@ -748,7 +748,7 @@ static int tinyobj_parse_and_index_mtl_file(tinyobj_material_t **materials_out,
 
   fp = fopen(filename, "r");
   if (!fp) {
-    fprintf(stderr, "TINYOBJ: Error reading file '%s': %s (%d)\n", filename, strerror(errno), errno);
+    //fprintf(stderr, "TINYOBJ: Error reading file '%s': %s (%d)\n", filename, strerror(errno), errno);     // @raysan5: commented
     return TINYOBJ_ERROR_FILE_OPERATION;
   }
 
@@ -1321,7 +1321,7 @@ int tinyobj_parse_obj(tinyobj_attrib_t *attrib, tinyobj_shape_t **shapes,
 
     if (ret != TINYOBJ_SUCCESS) {
       /* warning. */
-      fprintf(stderr, "TINYOBJ: Failed to parse material file '%s': %d\n", filename, ret);
+      //fprintf(stderr, "TINYOBJ: Failed to parse material file '%s': %d\n", filename, ret);     // @raysan5: commented
     }
 
     TINYOBJ_FREE(filename);
