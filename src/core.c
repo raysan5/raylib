@@ -974,6 +974,14 @@ void SetWindowSize(int width, int height)
 #if defined(PLATFORM_DESKTOP)
     glfwSetWindowSize(CORE.Window.handle, width, height);
 #endif
+#if defined(PLATFORM_WEB)
+    emscripten_set_canvas_size(width, height);  // DEPRECATED!
+    
+    // TODO: Below functions should be used to replace previous one but
+    // they do not seem to work properly
+    //emscripten_set_canvas_element_size("canvas", width, height);
+    //emscripten_set_element_css_size("canvas", width, height);
+#endif
 }
 
 // Show the window
