@@ -1149,6 +1149,7 @@ const char *TextFormat(const char *text, ...)
     static int  index = 0;
 
     char *currentBuffer = buffers[index];
+    memset(currentBuffer, 0, MAX_TEXT_BUFFER_LENGTH);   // Clear buffer before using
 
     va_list args;
     va_start(args, text);
