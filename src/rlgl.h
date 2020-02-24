@@ -3001,12 +3001,11 @@ Shader GetShaderDefault(void)
 // NOTE: text chars array should be freed manually
 char *LoadText(const char *fileName)
 {
-    FILE *textFile = NULL;
     char *text = NULL;
 
     if (fileName != NULL)
     {
-        textFile = fopen(fileName,"rt");
+        FILE *textFile = fopen(fileName, "rt");
 
         if (textFile != NULL)
         {
