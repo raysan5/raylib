@@ -80,7 +80,7 @@
 
 #if defined(_WIN32)
 // To avoid conflicting windows.h symbols with raylib, some flags are defined
-// WARNING: Those flags avoid inclusion of some Win32 headers that could be required 
+// WARNING: Those flags avoid inclusion of some Win32 headers that could be required
 // by user at some point and won't be included...
 //-------------------------------------------------------------------------------------
 
@@ -165,6 +165,10 @@ typedef struct tagBITMAPINFOHEADER {
 
 #if defined(RAUDIO_STANDALONE)
     #include <string.h>                 // Required for: strcmp() [Used in IsFileExtension()]
+    
+    #if !defined(TRACELOG)
+        #define TRACELOG(level, ...) (void)0
+    #endif
 #endif
 
 #if defined(SUPPORT_FILEFORMAT_OGG)
@@ -1552,11 +1556,7 @@ static ma_uint32 ReadAudioBufferFramesInInternalFormat(AudioBuffer *audioBuffer,
     ma_uint32 subBufferSizeInFrames = (audioBuffer->sizeInFrames > 1)? audioBuffer->sizeInFrames/2 : audioBuffer->sizeInFrames;
     ma_uint32 currentSubBufferIndex = audioBuffer->frameCursorPos/subBufferSizeInFrames;
 
-    if (currentSubBufferIndex > 1)
-    {
-        TRACELOGD("Frame cursor position moved too far forward in audio stream");
-        return 0;
-    }
+    if (currentSubBufferIndex > 1) return 0;
 
     // Another thread can update the processed state of buffers so
     // we just take a copy here to try and avoid potential synchronization problems
@@ -1639,7 +1639,7 @@ static ma_uint32 ReadAudioBufferFramesInInternalFormat(AudioBuffer *audioBuffer,
 // Reads audio data from an AudioBuffer object in device format. Returned data will be in a format appropriate for mixing.
 static ma_uint32 ReadAudioBufferFramesInMixingFormat(AudioBuffer *audioBuffer, float *framesOut, ma_uint32 frameCount)
 {
-    // What's going on here is that we're continuously converting data from the AudioBuffer's internal format to the mixing format, which 
+    // What's going on here is that we're continuously converting data from the AudioBuffer's internal format to the mixing format, which
     // should be defined by the output format of the data converter. We do this until frameCount frames have been output. The important
     // detail to remember here is that we never, ever attempt to read more input data than is required for the specified number of output
     // frames. This can be achieved with ma_data_converter_get_required_input_frame_count().
@@ -1663,7 +1663,7 @@ static ma_uint32 ReadAudioBufferFramesInMixingFormat(AudioBuffer *audioBuffer, f
         ma_uint64 inputFramesProcessedThisIteration = ReadAudioBufferFramesInInternalFormat(audioBuffer, inputBuffer, (ma_uint32)inputFramesToProcessThisIteration);    /* Safe cast. */
         ma_uint64 outputFramesProcessedThisIteration = outputFramesToProcessThisIteration;
         ma_data_converter_process_pcm_frames(&audioBuffer->converter, inputBuffer, &inputFramesProcessedThisIteration, runningFramesOut, &outputFramesProcessedThisIteration);
-        
+
         totalOutputFramesProcessed += (ma_uint32)outputFramesProcessedThisIteration; /* Safe cast. */
 
         if (inputFramesProcessedThisIteration < inputFramesToProcessThisIteration)
@@ -1704,13 +1704,7 @@ static void OnSendAudioDataToDevice(ma_device *pDevice, void *pFramesOut, const 
 
             while (1)
             {
-                if (framesRead > frameCount)
-                {
-                    TRACELOGD("Mixed too many frames from audio buffer");
-                    break;
-                }
-
-                if (framesRead == frameCount) break;
+                if (framesRead >= frameCount) break;
 
                 // Just read as much data as we can from the stream
                 ma_uint32 framesToRead = (frameCount - framesRead);
@@ -2037,9 +2031,7 @@ static Wave LoadOGG(const char *fileName)
         wave.data = (short *)RL_MALLOC(wave.sampleCount*wave.channels*sizeof(short));
 
         // NOTE: Returns the number of samples to process (be careful! we ask for number of shorts!)
-        int numSamplesOgg = stb_vorbis_get_samples_short_interleaved(oggFile, info.channels, (short *)wave.data, wave.sampleCount*wave.channels);
-        TRACELOGD("[%s] Samples obtained: %i", fileName, numSamplesOgg);
-
+        stb_vorbis_get_samples_short_interleaved(oggFile, info.channels, (short *)wave.data, wave.sampleCount*wave.channels);
         TRACELOG(LOG_INFO, "[%s] OGG file loaded successfully (%i Hz, %i bit, %s)", fileName, wave.sampleRate, wave.sampleSize, (wave.channels == 1)? "Mono" : "Stereo");
 
         stb_vorbis_close(oggFile);
@@ -2114,29 +2106,6 @@ bool IsFileExtension(const char *fileName, const char *ext)
     }
 
     return result;
-}
-
-// Show trace log messages (LOG_INFO, LOG_WARNING, LOG_ERROR, LOG_DEBUG)
-void TRACELOG(int msgType, const char *text, ...)
-{
-    va_list args;
-    va_start(args, text);
-
-    switch (msgType)
-    {
-        case LOG_INFO: fprintf(stdout, "INFO: "); break;
-        case LOG_ERROR: fprintf(stdout, "ERROR: "); break;
-        case LOG_WARNING: fprintf(stdout, "WARNING: "); break;
-        case LOG_DEBUG: fprintf(stdout, "DEBUG: "); break;
-        default: break;
-    }
-
-    vfprintf(stdout, text, args);
-    fprintf(stdout, "\n");
-
-    va_end(args);
-
-    if (msgType == LOG_ERROR) exit(1);
 }
 #endif
 
