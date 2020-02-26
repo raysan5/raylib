@@ -76,15 +76,7 @@
     #endif
 
     // Support TRACELOG macros
-    #if defined(RLGL_SUPPORT_TRACELOG)
-        #define TRACELOG(level, ...) TraceLog(level, __VA_ARGS__)
-
-        #if defined(RLGL_SUPPORT_TRACELOG_DEBUG)
-            #define TRACELOGD(...) TraceLog(LOG_DEBUG, __VA_ARGS__)
-        #else
-            #define TRACELOGD(...) (void)0
-        #endif
-    #else
+    #if !defined(TRACELOG)
         #define TRACELOG(level, ...) (void)0
         #define TRACELOGD(...) (void)0
     #endif
@@ -674,10 +666,6 @@ RLAPI int GetPixelDataSize(int width, int height, int format);// Get pixel data 
     #include <EGL/egl.h>                // EGL library
     #include <GLES2/gl2.h>              // OpenGL ES 2.0 library
     #include <GLES2/gl2ext.h>           // OpenGL ES 2.0 extensions library
-#endif
-
-#if defined(RLGL_STANDALONE)
-    #include <stdarg.h>                 // Required for: va_list, va_start(), vfprintf(), va_end() [Used in TraceLog()]
 #endif
 
 //----------------------------------------------------------------------------------
@@ -4644,29 +4632,6 @@ static Color *GenNextMipmap(Color *srcData, int srcWidth, int srcHeight)
 #endif
 
 #if defined(RLGL_STANDALONE)
-// Show trace log messages (LOG_INFO, LOG_WARNING, LOG_ERROR, LOG_DEBUG)
-void TraceLog(int msgType, const char *text, ...)
-{
-    va_list args;
-    va_start(args, text);
-
-    switch (msgType)
-    {
-        case LOG_INFO: fprintf(stdout, "INFO: "); break;
-        case LOG_ERROR: fprintf(stdout, "ERROR: "); break;
-        case LOG_WARNING: fprintf(stdout, "WARNING: "); break;
-        case LOG_DEBUG: fprintf(stdout, "DEBUG: "); break;
-        default: break;
-    }
-
-    vfprintf(stdout, text, args);
-    fprintf(stdout, "\n");
-
-    va_end(args);
-
-    if (msgType == LOG_ERROR) exit(1);
-}
-
 // Get pixel data size in bytes (image or texture)
 // NOTE: Size depends on pixel format
 int GetPixelDataSize(int width, int height, int format)
