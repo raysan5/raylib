@@ -3455,7 +3455,7 @@ static Model LoadGLTF(const char *fileName)
 {
     /***********************************************************************************
 
-        Function implemented by Wilhem Barbier(@wbrbr), with modifications by Tyler Bezera(@gamerfiend) 
+        Function implemented by Wilhem Barbier(@wbrbr), with modifications by Tyler Bezera(@gamerfiend)
 
         Features:
           - Supports .gltf and .glb files

@@ -1446,7 +1446,7 @@ char *TextToUtf8(int *codepoints, int length)
 
     // Resize memory to text length + string NULL terminator
     void *ptr = RL_REALLOC(text, size + 1);
-    
+
     if (ptr != NULL) text = (char *)ptr;
 
     return text;
