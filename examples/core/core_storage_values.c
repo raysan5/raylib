@@ -43,14 +43,14 @@ int main(void)
 
         if (IsKeyPressed(KEY_ENTER))
         {
-            StorageSaveValue(STORAGE_SCORE, score);
-            StorageSaveValue(STORAGE_HISCORE, hiscore);
+            SaveStorageValue(STORAGE_SCORE, score);
+            SaveStorageValue(STORAGE_HISCORE, hiscore);
         }
         else if (IsKeyPressed(KEY_SPACE))
         {
             // NOTE: If requested position could not be found, value 0 is returned
-            score = StorageLoadValue(STORAGE_SCORE);
-            hiscore = StorageLoadValue(STORAGE_HISCORE);
+            score = LoadStorageValue(STORAGE_SCORE);
+            hiscore = LoadStorageValue(STORAGE_HISCORE);
         }
 
         framesCounter++;
