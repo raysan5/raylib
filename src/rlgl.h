@@ -3004,7 +3004,7 @@ char *LoadText(const char *fileName)
             {
                 text = (char *)RL_MALLOC(sizeof(char)*(size + 1));
                 int count = fread(text, sizeof(char), size, textFile);
-                text[count] = '\0';
+                if (size == count) text[count] = '\0';
             }
 
             fclose(textFile);
