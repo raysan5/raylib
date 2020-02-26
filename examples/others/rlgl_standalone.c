@@ -54,7 +54,7 @@
 
 #include <GLFW/glfw3.h>         // Windows/Context and inputs management
 
-#inclde <stdio.h>               // Requried for: printf()
+#include <stdio.h>              // Required for: printf()
 
 #define RED        (Color){ 230, 41, 55, 255 }     // Red
 #define RAYWHITE   (Color){ 245, 245, 245, 255 }   // My own White (raylib logo)
