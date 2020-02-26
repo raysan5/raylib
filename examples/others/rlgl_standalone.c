@@ -54,6 +54,8 @@
 
 #include <GLFW/glfw3.h>         // Windows/Context and inputs management
 
+#inclde <stdio.h>               // Requried for: printf()
+
 #define RED        (Color){ 230, 41, 55, 255 }     // Red
 #define RAYWHITE   (Color){ 245, 245, 245, 255 }   // My own White (raylib logo)
 #define DARKGRAY   (Color){ 80, 80, 80, 255 }      // Dark Gray
@@ -61,8 +63,8 @@
 //----------------------------------------------------------------------------------
 // Module specific Functions Declaration
 //----------------------------------------------------------------------------------
-static void ErrorCallback(int error, const char* description);
-static void KeyCallback(GLFWwindow* window, int key, int scancode, int action, int mods);
+static void ErrorCallback(int error, const char *description);
+static void KeyCallback(GLFWwindow *window, int key, int scancode, int action, int mods);
 
 // Drawing functions (uses rlgl functionality)
 static void DrawGrid(int slices, float spacing);
@@ -86,10 +88,10 @@ int main(void)
     
     if (!glfwInit())
     {
-        TraceLog(LOG_WARNING, "GLFW3: Can not initialize GLFW");
+        printf("GLFW3: Can not initialize GLFW\n");
         return 1;
     }
-    else TraceLog(LOG_INFO, "GLFW3: GLFW initialized successfully");
+    else printf("GLFW3: GLFW initialized successfully\n");
     
     glfwWindowHint(GLFW_SAMPLES, 4);
     glfwWindowHint(GLFW_DEPTH_BITS, 16);
@@ -105,7 +107,7 @@ int main(void)
         glfwTerminate();
         return 2;
     }
-    else TraceLog(LOG_INFO, "GLFW3: Window created successfully");
+    else printf("GLFW3: Window created successfully\n");
     
     glfwSetWindowPos(window, 200, 200);
     
@@ -215,13 +217,13 @@ int main(void)
 //----------------------------------------------------------------------------------
 
 // GLFW3: Error callback
-static void ErrorCallback(int error, const char* description)
+static void ErrorCallback(int error, const char *description)
 {
-    TraceLog(LOG_ERROR, description);
+    fprintf(stderr, description);
 }
 
 // GLFW3: Keyboard callback
-static void KeyCallback(GLFWwindow* window, int key, int scancode, int action, int mods)
+static void KeyCallback(GLFWwindow *window, int key, int scancode, int action, int mods)
 {
     if (key == GLFW_KEY_ESCAPE && action == GLFW_PRESS)
     {
