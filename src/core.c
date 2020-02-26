@@ -498,7 +498,7 @@ static int32_t AndroidInputCallback(struct android_app *app, AInputEvent *event)
 #endif
 
 #if defined(PLATFORM_WEB)
-static EM_BOOL EmscriptenFullscreenChangeCallback(int eventType, const EmscriptenFullscreenChangeEvent *e, void *userData);
+static EM_BOOL EmscriptenFullscreenChangeCallback(int eventType, const EmscriptenFullscreenChangeEvent *event, void *userData);
 static EM_BOOL EmscriptenKeyboardCallback(int eventType, const EmscriptenKeyboardEvent *keyEvent, void *userData);
 static EM_BOOL EmscriptenMouseCallback(int eventType, const EmscriptenMouseEvent *mouseEvent, void *userData);
 static EM_BOOL EmscriptenTouchCallback(int eventType, const EmscriptenTouchEvent *touchEvent, void *userData);
@@ -703,6 +703,7 @@ void InitWindow(int width, int height, const char *title)
 #endif
 
 #if defined(PLATFORM_WEB)
+    // Detect fullscreen change events
     emscripten_set_fullscreenchange_callback("#canvas", NULL, 1, EmscriptenFullscreenChangeCallback);
 
     // Support keyboard events
@@ -976,7 +977,7 @@ void SetWindowSize(int width, int height)
 #endif
 #if defined(PLATFORM_WEB)
     emscripten_set_canvas_size(width, height);  // DEPRECATED!
-    
+
     // TODO: Below functions should be used to replace previous one but
     // they do not seem to work properly
     //emscripten_set_canvas_element_size("canvas", width, height);
@@ -1633,7 +1634,7 @@ int GetFPS(void)
     static float history[FPS_CAPTURE_FRAMES_COUNT] = { 0 };
     static float average = 0, last = 0;
     float fpsFrame = GetFrameTime();
-    
+
     if (fpsFrame == 0) return 0;
 
     if ((GetTime() - last) > FPS_STEP)
@@ -1644,7 +1645,7 @@ int GetFPS(void)
         history[index] = fpsFrame/FPS_CAPTURE_FRAMES_COUNT;
         average += history[index];
     }
-    
+
     return (int)roundf(1.0f/average);
 }
 
@@ -4424,7 +4425,6 @@ static int32_t AndroidInputCallback(struct android_app *app, AInputEvent *event)
 #endif
 
 #if defined(PLATFORM_WEB)
-
 // Register fullscreen change events
 static EM_BOOL EmscriptenFullscreenChangeCallback(int eventType, const EmscriptenFullscreenChangeEvent *event, void *userData)
 {
@@ -4437,10 +4437,12 @@ static EM_BOOL EmscriptenFullscreenChangeCallback(int eventType, const Emscripte
 
     if (event->isFullscreen)
     {
+        CORE.Window.fullscreen = true;
         TRACELOG(LOG_INFO, "Canvas scaled to fullscreen. ElementSize: (%ix%i), ScreenSize(%ix%i)", event->elementWidth, event->elementHeight, event->screenWidth, event->screenHeight);
     }
     else
     {
+        CORE.Window.fullscreen = false;
         TRACELOG(LOG_INFO, "Canvas scaled to windowed. ElementSize: (%ix%i), ScreenSize(%ix%i)", event->elementWidth, event->elementHeight, event->screenWidth, event->screenHeight);
     }
 
