@@ -152,7 +152,7 @@
 #endif
 
 #include <stdlib.h>             // Required for: srand(), rand(), atexit()
-#include <stdio.h>              // Required for: FILE, fopen(), fseek(), fread(), fwrite(), fclose() [Used in StorageSaveValue()/StorageLoadValue()]
+#include <stdio.h>              // Required for: FILE, fopen(), fseek(), fread(), fwrite(), fclose() [Used in SaveStorageValue()/LoadStorageValue()]
 #include <string.h>             // Required for: strrchr(), strcmp(), strlen()
 #include <time.h>               // Required for: time() [Used in InitTimer()]
 #include <math.h>               // Required for: tan() [Used in BeginMode3D()]
@@ -2179,7 +2179,7 @@ unsigned char *DecompressData(unsigned char *compData, int compDataLength, int *
 
 // Save integer value to storage file (to defined position)
 // NOTE: Storage positions is directly related to file memory layout (4 bytes each integer)
-void StorageSaveValue(int position, int value)
+void SaveStorageValue(int position, int value)
 {
     FILE *storageFile = NULL;
 
@@ -2219,7 +2219,7 @@ void StorageSaveValue(int position, int value)
 
 // Load integer value from storage file (from defined position)
 // NOTE: If requested position could not be found, value 0 is returned
-int StorageLoadValue(int position)
+int LoadStorageValue(int position)
 {
     int value = 0;
 
