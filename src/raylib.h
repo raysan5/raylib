@@ -104,13 +104,13 @@
     #define RL_MALLOC(sz)       malloc(sz)
 #endif
 #ifndef RL_CALLOC
-    #define RL_CALLOC(n,sz)     calloc(n,sz)
+    #define RL_CALLOC(ptr,sz)   calloc(ptr,sz)
 #endif
 #ifndef RL_REALLOC
-    #define RL_REALLOC(n,sz)    realloc(n,sz)
+    #define RL_REALLOC(ptr,sz)  realloc(ptr,sz)
 #endif
 #ifndef RL_FREE
-    #define RL_FREE(p)          free(p)
+    #define RL_FREE(ptr)        free(ptr)
 #endif
 
 // NOTE: MSC C++ compiler does not support compound literals (C99 feature)
