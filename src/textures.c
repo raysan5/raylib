@@ -195,6 +195,7 @@ Image LoadImage(const char *fileName)
     defined(SUPPORT_FILEFORMAT_TGA) || \
     defined(SUPPORT_FILEFORMAT_GIF) || \
     defined(SUPPORT_FILEFORMAT_PIC) || \
+    defined(SUPPORT_FILEFORMAT_HDR) || \
     defined(SUPPORT_FILEFORMAT_PSD)
 #define STBI_REQUIRED
 #endif
@@ -225,53 +226,53 @@ Image LoadImage(const char *fileName)
        )
     {
 #if defined(STBI_REQUIRED)
-        int imgWidth = 0;
-        int imgHeight = 0;
-        int imgBpp = 0;
+        // NOTE: Using stb_image to load images (Supports multiple image formats)
 
-        FILE *imFile = fopen(fileName, "rb");
-
-        if (imFile != NULL)
+        int dataSize = 0;
+        unsigned char *fileData = LoadFileData(fileName, &dataSize);
+        
+        if (fileData != NULL)
         {
-            // NOTE: Using stb_image to load images (Supports multiple image formats)
-            image.data = stbi_load_from_file(imFile, &imgWidth, &imgHeight, &imgBpp, 0);
+            int comp = 0;
+            image.data = stbi_load_from_memory(fileData, dataSize, &image.width, &image.height, &comp, 0);
 
-            fclose(imFile);
-
-            image.width = imgWidth;
-            image.height = imgHeight;
             image.mipmaps = 1;
-
-            if (imgBpp == 1) image.format = UNCOMPRESSED_GRAYSCALE;
-            else if (imgBpp == 2) image.format = UNCOMPRESSED_GRAY_ALPHA;
-            else if (imgBpp == 3) image.format = UNCOMPRESSED_R8G8B8;
-            else if (imgBpp == 4) image.format = UNCOMPRESSED_R8G8B8A8;
+            
+            if (comp == 1) image.format = UNCOMPRESSED_GRAYSCALE;
+            else if (comp == 2) image.format = UNCOMPRESSED_GRAY_ALPHA;
+            else if (comp == 3) image.format = UNCOMPRESSED_R8G8B8;
+            else if (comp == 4) image.format = UNCOMPRESSED_R8G8B8A8;
+            
+            RL_FREE(fileData);
         }
 #endif
     }
 #if defined(SUPPORT_FILEFORMAT_HDR)
     else if (IsFileExtension(fileName, ".hdr"))
     {
-        int imgBpp = 0;
-
-        FILE *imFile = fopen(fileName, "rb");
-
-        // Load 32 bit per channel floats data
-        //stbi_set_flip_vertically_on_load(true);
-        image.data = stbi_loadf_from_file(imFile, &image.width, &image.height, &imgBpp, 0);
-
-        fclose(imFile);
-
-        image.mipmaps = 1;
-
-        if (imgBpp == 1) image.format = UNCOMPRESSED_R32;
-        else if (imgBpp == 3) image.format = UNCOMPRESSED_R32G32B32;
-        else if (imgBpp == 4) image.format = UNCOMPRESSED_R32G32B32A32;
-        else
+#if defined(STBI_REQUIRED)
+        int dataSize = 0;
+        unsigned char *fileData = LoadFileData(fileName, &dataSize);
+        
+        if (fileData != NULL)
         {
-            TRACELOG(LOG_WARNING, "[%s] Image fileformat not supported", fileName);
-            UnloadImage(image);
+            int comp = 0;
+            image.data = stbi_loadf_from_memory(fileData, dataSize, &image.width, &image.height, &comp, 0);
+
+            image.mipmaps = 1;
+            
+            if (imgBpp == 1) image.format = UNCOMPRESSED_R32;
+            else if (imgBpp == 3) image.format = UNCOMPRESSED_R32G32B32;
+            else if (imgBpp == 4) image.format = UNCOMPRESSED_R32G32B32A32;
+            else
+            {
+                TRACELOG(LOG_WARNING, "[%s] HDR Image fileformat not supported", fileName);
+                UnloadImage(image);
+            }
+            
+            RL_FREE(fileData);
         }
+#endif
     }
 #endif
 #if defined(SUPPORT_FILEFORMAT_DDS)
