@@ -221,33 +221,33 @@
     #include <android/window.h>             // Defines AWINDOW_FLAG_FULLSCREEN and others
     #include <android_native_app_glue.h>    // Defines basic app state struct and manages activity
 
-    #include <EGL/egl.h>        // Khronos EGL library - Native platform display device control functions
-    #include <GLES2/gl2.h>      // Khronos OpenGL ES 2.0 library
+    #include <EGL/egl.h>            // Khronos EGL library - Native platform display device control functions
+    #include <GLES2/gl2.h>          // Khronos OpenGL ES 2.0 library
 #endif
 
 #if defined(PLATFORM_RPI)
-    #include <fcntl.h>          // POSIX file control definitions - open(), creat(), fcntl()
-    #include <unistd.h>         // POSIX standard function definitions - read(), close(), STDIN_FILENO
-    #include <termios.h>        // POSIX terminal control definitions - tcgetattr(), tcsetattr()
-    #include <pthread.h>        // POSIX threads management (inputs reading)
-    #include <dirent.h>         // POSIX directory browsing
+    #include <fcntl.h>              // POSIX file control definitions - open(), creat(), fcntl()
+    #include <unistd.h>             // POSIX standard function definitions - read(), close(), STDIN_FILENO
+    #include <termios.h>            // POSIX terminal control definitions - tcgetattr(), tcsetattr()
+    #include <pthread.h>            // POSIX threads management (inputs reading)
+    #include <dirent.h>             // POSIX directory browsing
 
-    #include <sys/ioctl.h>      // UNIX System call for device-specific input/output operations - ioctl()
-    #include <linux/kd.h>       // Linux: KDSKBMODE, K_MEDIUMRAM constants definition
-    #include <linux/input.h>    // Linux: Keycodes constants definition (KEY_A, ...)
-    #include <linux/joystick.h> // Linux: Joystick support library
+    #include <sys/ioctl.h>          // UNIX System call for device-specific input/output operations - ioctl()
+    #include <linux/kd.h>           // Linux: KDSKBMODE, K_MEDIUMRAM constants definition
+    #include <linux/input.h>        // Linux: Keycodes constants definition (KEY_A, ...)
+    #include <linux/joystick.h>     // Linux: Joystick support library
 
-    #include "bcm_host.h"       // Raspberry Pi VideoCore IV access functions
+    #include "bcm_host.h"           // Raspberry Pi VideoCore IV access functions
 
-    #include "EGL/egl.h"        // Khronos EGL library - Native platform display device control functions
-    #include "EGL/eglext.h"     // Khronos EGL library - Extensions
-    #include "GLES2/gl2.h"      // Khronos OpenGL ES 2.0 library
+    #include "EGL/egl.h"            // Khronos EGL library - Native platform display device control functions
+    #include "EGL/eglext.h"         // Khronos EGL library - Extensions
+    #include "GLES2/gl2.h"          // Khronos OpenGL ES 2.0 library
 #endif
 
 #if defined(PLATFORM_UWP)
-    #include "EGL/egl.h"        // Khronos EGL library - Native platform display device control functions
-    #include "EGL/eglext.h"     // Khronos EGL library - Extensions
-    #include "GLES2/gl2.h"      // Khronos OpenGL ES 2.0 library
+    #include "EGL/egl.h"            // Khronos EGL library - Native platform display device control functions
+    #include "EGL/eglext.h"         // Khronos EGL library - Extensions
+    #include "GLES2/gl2.h"          // Khronos OpenGL ES 2.0 library
 #endif
 
 #if defined(PLATFORM_WEB)
@@ -299,22 +299,22 @@
 //----------------------------------------------------------------------------------
 #if defined(PLATFORM_RPI)
 typedef struct {
-    pthread_t threadId;                         // Event reading thread id
-    int fd;                                     // File descriptor to the device it is assigned to
-    int eventNum;                               // Number of 'event<N>' device
-    Rectangle absRange;                         // Range of values for absolute pointing devices (touchscreens)
-    int touchSlot;                              // Hold the touch slot number of the currently being sent multitouch block
-    bool isMouse;                               // True if device supports relative X Y movements
-    bool isTouch;                               // True if device supports absolute X Y movements and has BTN_TOUCH
-    bool isMultitouch;                          // True if device supports multiple absolute movevents and has BTN_TOUCH
-    bool isKeyboard;                            // True if device has letter keycodes
-    bool isGamepad;                             // True if device has gamepad buttons
+    pthread_t threadId;             // Event reading thread id
+    int fd;                         // File descriptor to the device it is assigned to
+    int eventNum;                   // Number of 'event<N>' device
+    Rectangle absRange;             // Range of values for absolute pointing devices (touchscreens)
+    int touchSlot;                  // Hold the touch slot number of the currently being sent multitouch block
+    bool isMouse;                   // True if device supports relative X Y movements
+    bool isTouch;                   // True if device supports absolute X Y movements and has BTN_TOUCH
+    bool isMultitouch;              // True if device supports multiple absolute movevents and has BTN_TOUCH
+    bool isKeyboard;                // True if device has letter keycodes
+    bool isGamepad;                 // True if device has gamepad buttons
 } InputEventWorker;
 
-typedef struct{
-    int Contents[8];
-    char Head;
-    char Tail;
+typedef struct {
+    int contents[8];                // Key events FIFO contents (8 positions)
+    char head;                      // Key events FIFO head position
+    char tail;                      // Key events FIFO tail position
 } KeyEventFifo;
 #endif
 
@@ -2198,7 +2198,7 @@ void SaveStorageValue(int position, int value)
 
     int dataSize = 0;
     unsigned char *fileData = LoadFileData(path, &dataSize);
-    
+
     if (fileData != NULL)
     {
         if (dataSize <= (position*sizeof(int)))
@@ -2215,7 +2215,7 @@ void SaveStorageValue(int position, int value)
             int *dataPtr = (int *)fileData;
             dataPtr[position] = value;
         }
-        
+
         SaveFileData(path, fileData, dataSize);
         RL_FREE(fileData);
     }
@@ -2225,7 +2225,7 @@ void SaveStorageValue(int position, int value)
         fileData = (unsigned char *)RL_MALLOC(dataSize);
         int *dataPtr = (int *)fileData;
         dataPtr[position] = value;
-        
+
         SaveFileData(path, fileData, dataSize);
         RL_FREE(fileData);
     }
@@ -2249,7 +2249,7 @@ int LoadStorageValue(int position)
 
     int dataSize = 0;
     unsigned char *fileData = LoadFileData(path, &dataSize);
-    
+
     if (fileData != NULL)
     {
         if (dataSize < (position*4)) TRACELOG(LOG_WARNING, "Storage position could not be found");
@@ -2258,7 +2258,7 @@ int LoadStorageValue(int position)
             int *dataPtr = (int *)fileData;
             value = dataPtr[position];
         }
-        
+
         RL_FREE(fileData);
     }
 #endif
@@ -3598,12 +3598,12 @@ static void PollInputEvents(void)
     for (int i = 0; i < 512; i++)CORE.Input.Keyboard.previousKeyState[i] = CORE.Input.Keyboard.currentKeyState[i];
 
     // Grab a keypress from the evdev fifo if avalable
-    if (CORE.Input.Keyboard.lastKeyPressed.Head != CORE.Input.Keyboard.lastKeyPressed.Tail)
+    if (CORE.Input.Keyboard.lastKeyPressed.head != CORE.Input.Keyboard.lastKeyPressed.tail)
     {
-        CORE.Input.Keyboard.keyPressedQueue[CORE.Input.Keyboard.keyPressedQueueCount] = CORE.Input.Keyboard.lastKeyPressed.Contents[CORE.Input.Keyboard.lastKeyPressed.Tail];    // Read the key from the buffer
+        CORE.Input.Keyboard.keyPressedQueue[CORE.Input.Keyboard.keyPressedQueueCount] = CORE.Input.Keyboard.lastKeyPressed.contents[CORE.Input.Keyboard.lastKeyPressed.tail];    // Read the key from the buffer
         CORE.Input.Keyboard.keyPressedQueueCount++;
 
-        CORE.Input.Keyboard.lastKeyPressed.Tail = (CORE.Input.Keyboard.lastKeyPressed.Tail + 1) & 0x07;           // Increment the tail pointer forwards and binary wraparound after 7 (fifo is 8 elements long)
+        CORE.Input.Keyboard.lastKeyPressed.tail = (CORE.Input.Keyboard.lastKeyPressed.tail + 1) & 0x07;           // Increment the tail pointer forwards and binary wraparound after 7 (fifo is 8 elements long)
     }
 
     // Register previous mouse states
@@ -4767,8 +4767,8 @@ static void InitEvdevInput(void)
     }
 
     // Reset keypress buffer
-    CORE.Input.Keyboard.lastKeyPressed.Head = 0;
-    CORE.Input.Keyboard.lastKeyPressed.Tail = 0;
+    CORE.Input.Keyboard.lastKeyPressed.head = 0;
+    CORE.Input.Keyboard.lastKeyPressed.tail = 0;
 
     // Reset keyboard key state
     for (int i = 0; i < 512; i++) CORE.Input.Keyboard.currentKeyState[i] = 0;
@@ -5131,8 +5131,8 @@ static void *EventThread(void *arg)
                         if (event.value > 0)
                         {
                             // Add the key int the fifo
-                            CORE.Input.Keyboard.lastKeyPressed.Contents[CORE.Input.Keyboard.lastKeyPressed.Head] = keycode;   // Put the data at the front of the fifo snake
-                            CORE.Input.Keyboard.lastKeyPressed.Head = (CORE.Input.Keyboard.lastKeyPressed.Head + 1) & 0x07;   // Increment the head pointer forwards and binary wraparound after 7 (fifo is 8 elements long)
+                            CORE.Input.Keyboard.lastKeyPressed.contents[CORE.Input.Keyboard.lastKeyPressed.head] = keycode;   // Put the data at the front of the fifo snake
+                            CORE.Input.Keyboard.lastKeyPressed.head = (CORE.Input.Keyboard.lastKeyPressed.head + 1) & 0x07;   // Increment the head pointer forwards and binary wraparound after 7 (fifo is 8 elements long)
                             // TODO: This fifo is not fully threadsafe with multiple writers, so multiple keyboards hitting a key at the exact same time could miss a key (double write to head before it was incremented)
                         }
                         */

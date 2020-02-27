@@ -182,7 +182,7 @@ unsigned char *LoadFileData(const char *fileName, int *bytesRead)
         if (size > 0)
         {
             data = (unsigned char *)RL_MALLOC(sizeof(unsigned char)*size);
-            
+
             // NOTE: fread() returns number of read elements instead of bytes, so we read [1 byte, size elements]
             int count = fread(data, sizeof(unsigned char), size, file);
             *bytesRead = count;

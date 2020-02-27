@@ -230,19 +230,19 @@ Image LoadImage(const char *fileName)
 
         int dataSize = 0;
         unsigned char *fileData = LoadFileData(fileName, &dataSize);
-        
+
         if (fileData != NULL)
         {
             int comp = 0;
             image.data = stbi_load_from_memory(fileData, dataSize, &image.width, &image.height, &comp, 0);
 
             image.mipmaps = 1;
-            
+
             if (comp == 1) image.format = UNCOMPRESSED_GRAYSCALE;
             else if (comp == 2) image.format = UNCOMPRESSED_GRAY_ALPHA;
             else if (comp == 3) image.format = UNCOMPRESSED_R8G8B8;
             else if (comp == 4) image.format = UNCOMPRESSED_R8G8B8A8;
-            
+
             RL_FREE(fileData);
         }
 #endif
@@ -253,14 +253,14 @@ Image LoadImage(const char *fileName)
 #if defined(STBI_REQUIRED)
         int dataSize = 0;
         unsigned char *fileData = LoadFileData(fileName, &dataSize);
-        
+
         if (fileData != NULL)
         {
             int comp = 0;
             image.data = stbi_loadf_from_memory(fileData, dataSize, &image.width, &image.height, &comp, 0);
 
             image.mipmaps = 1;
-            
+
             if (imgBpp == 1) image.format = UNCOMPRESSED_R32;
             else if (imgBpp == 3) image.format = UNCOMPRESSED_R32G32B32;
             else if (imgBpp == 4) image.format = UNCOMPRESSED_R32G32B32A32;
@@ -269,7 +269,7 @@ Image LoadImage(const char *fileName)
                 TRACELOG(LOG_WARNING, "[%s] HDR Image fileformat not supported", fileName);
                 UnloadImage(image);
             }
-            
+
             RL_FREE(fileData);
         }
 #endif
@@ -346,15 +346,15 @@ Image LoadImagePro(void *data, int width, int height, int format)
 Image LoadImageRaw(const char *fileName, int width, int height, int format, int headerSize)
 {
     Image image = { 0 };
-    
+
     int dataSize = 0;
     unsigned char *fileData = LoadFileData(fileName, &dataSize);
-    
+
     if (fileData != NULL)
     {
         unsigned char *dataPtr = fileData;
         unsigned int size = GetPixelDataSize(width, height, format);
-        
+
         if (headerSize > 0) dataPtr += headerSize;
 
         image.data = RL_MALLOC(size);      // Allocate required memory in bytes
@@ -2967,10 +2967,10 @@ void DrawTextureNPatch(Texture2D texture, NPatchInfo nPatchInfo, Rectangle destR
 static Image LoadAnimatedGIF(const char *fileName, int *frames, int **delays)
 {
     Image image = { 0 };
-    
+
     int dataSize = 0;
     unsigned char *fileData = LoadFileData(fileName, &dataSize);
-    
+
     if (fileData != NULL)
     {
         int comp = 0;
@@ -2978,7 +2978,7 @@ static Image LoadAnimatedGIF(const char *fileName, int *frames, int **delays)
 
         image.mipmaps = 1;
         image.format = UNCOMPRESSED_R8G8B8A8;
-        
+
         RL_FREE(fileData);
     }
 

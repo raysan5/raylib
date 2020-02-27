@@ -497,11 +497,11 @@ CharInfo *LoadFontData(const char *fileName, int fontSize, int *fontChars, int c
 
 #if defined(SUPPORT_FILEFORMAT_TTF)
     // Load font data (including pixel data) from TTF file
-    // NOTE: Loaded information should be enough to generate 
+    // NOTE: Loaded information should be enough to generate
     // font image atlas, using any packaging method
     int dataSize = 0;
     unsigned char *fileData = LoadFileData(fileName, &dataSize);
-    
+
     if (fileData != NULL)
     {
         // Init font for data reading

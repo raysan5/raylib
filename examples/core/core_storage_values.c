@@ -12,8 +12,8 @@
 #include "raylib.h"
 
 // NOTE: Storage positions must start with 0, directly related to file memory layout
-typedef enum { 
-    STORAGE_POSITION_SCORE      = 0, 
+typedef enum {
+    STORAGE_POSITION_SCORE      = 0,
     STORAGE_POSITION_HISCORE    = 1
 } StorageData;
 

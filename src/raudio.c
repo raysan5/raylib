@@ -165,7 +165,7 @@ typedef struct tagBITMAPINFOHEADER {
 
 #if defined(RAUDIO_STANDALONE)
     #include <string.h>                 // Required for: strcmp() [Used in IsFileExtension()]
-    
+
     #if !defined(TRACELOG)
         #define TRACELOG(level, ...) (void)0
     #endif

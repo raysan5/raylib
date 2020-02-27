@@ -2996,7 +2996,7 @@ char *LoadText(const char *fileName)
 
         if (textFile != NULL)
         {
-            // WARNING: When reading a file as 'text' file, 
+            // WARNING: When reading a file as 'text' file,
             // text mode causes carriage return-linefeed translation...
             // ...but using fseek() should return correct byte-offset
             fseek(textFile, 0, SEEK_END);
