@@ -745,6 +745,7 @@ void ExportWave(Wave wave, const char *fileName)
         // Export raw sample data (without header)
         // NOTE: It's up to the user to track wave parameters
         SaveFileData(fileName, wave.data, wave.sampleCount*wave.channels*wave.sampleSize/8);
+        success = true;
     }
 
     if (success) TRACELOG(LOG_INFO, "Wave exported successfully: %s", fileName);
