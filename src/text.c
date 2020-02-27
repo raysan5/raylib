@@ -1644,7 +1644,6 @@ static Font LoadBMFont(const char *fileName)
     #define MAX_BUFFER_SIZE     256
 
     Font font = { 0 };
-    font.texture.id = 0;
 
     char buffer[MAX_BUFFER_SIZE] = { 0 };
     char *searchPoint = NULL;
