@@ -830,6 +830,7 @@ void ExportImage(Image image, const char *fileName)
         // Export raw pixel data (without header)
         // NOTE: It's up to the user to track image parameters
         SaveFileData(fileName, image.data, GetPixelDataSize(image.width, image.height, image.format));
+        success = true;
     }
 
     RL_FREE(imgData);
