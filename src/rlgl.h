@@ -3007,7 +3007,14 @@ char *LoadText(const char *fileName)
             {
                 text = (char *)RL_MALLOC(sizeof(char)*(size + 1));
                 int count = fread(text, sizeof(char), size, textFile);
-                if (size == count) text[count] = '\0';
+
+                // WARNING: \r\n is converted to \n on reading, so,
+                // read bytes count gets reduced by the number of lines
+                if (count < size)
+                {
+                    text = RL_REALLOC(text, count + 1);
+                    text[count] = '\0';
+                }
             }
 
             fclose(textFile);
