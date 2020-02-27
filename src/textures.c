@@ -345,41 +345,25 @@ Image LoadImagePro(void *data, int width, int height, int format)
 Image LoadImageRaw(const char *fileName, int width, int height, int format, int headerSize)
 {
     Image image = { 0 };
-
-    FILE *rawFile = fopen(fileName, "rb");
-
-    if (rawFile == NULL)
+    
+    int dataSize = 0;
+    unsigned char *fileData = LoadFileData(fileName, &dataSize);
+    
+    if (fileData != NULL)
     {
-        TRACELOG(LOG_WARNING, "[%s] RAW image file could not be opened", fileName);
-    }
-    else
-    {
-        if (headerSize > 0) fseek(rawFile, headerSize, SEEK_SET);
-
+        unsigned char *dataPtr = fileData;
         unsigned int size = GetPixelDataSize(width, height, format);
+        
+        if (headerSize > 0) dataPtr += headerSize;
 
         image.data = RL_MALLOC(size);      // Allocate required memory in bytes
+        memcpy(image.data, dataPtr, size); // Copy required data to image
+        image.width = width;
+        image.height = height;
+        image.mipmaps = 1;
+        image.format = format;
 
-        // NOTE: fread() returns num read elements instead of bytes,
-        // to get bytes we need to read (1 byte size, elements) instead of (x byte size, 1 element)
-        int bytes = fread(image.data, 1, size, rawFile);
-
-        // Check if data has been read successfully
-        if (bytes < size)
-        {
-            TRACELOG(LOG_WARNING, "[%s] RAW image data can not be read, wrong requested format or size", fileName);
-
-            RL_FREE(image.data);
-        }
-        else
-        {
-            image.width = width;
-            image.height = height;
-            image.mipmaps = 1;
-            image.format = format;
-        }
-
-        fclose(rawFile);
+        RL_FREE(fileData);
     }
 
     return image;
@@ -2982,31 +2966,19 @@ void DrawTextureNPatch(Texture2D texture, NPatchInfo nPatchInfo, Rectangle destR
 static Image LoadAnimatedGIF(const char *fileName, int *frames, int **delays)
 {
     Image image = { 0 };
-
-    FILE *gifFile = fopen(fileName, "rb");
-
-    if (gifFile == NULL)
+    
+    int dataSize = 0;
+    unsigned char *fileData = LoadFileData(fileName, &dataSize);
+    
+    if (fileData != NULL)
     {
-        TRACELOG(LOG_WARNING, "[%s] Animated GIF file could not be opened", fileName);
-    }
-    else
-    {
-        fseek(gifFile, 0L, SEEK_END);
-        int size = ftell(gifFile);
-        fseek(gifFile, 0L, SEEK_SET);
-
-        unsigned char *buffer = (unsigned char *)RL_CALLOC(size, sizeof(char));
-        fread(buffer, sizeof(char), size, gifFile);
-
-        fclose(gifFile);    // Close file pointer
-
         int comp = 0;
-        image.data = stbi_load_gif_from_memory(buffer, size, delays, &image.width, &image.height, frames, &comp, 4);
+        image.data = stbi_load_gif_from_memory(fileData, dataSize, delays, &image.width, &image.height, frames, &comp, 4);
 
         image.mipmaps = 1;
         image.format = UNCOMPRESSED_R8G8B8A8;
-
-        free(buffer);
+        
+        RL_FREE(fileData);
     }
 
     return image;
