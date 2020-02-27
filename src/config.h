@@ -60,6 +60,8 @@
 //#define SUPPORT_HIGH_DPI            1
 // Support CompressData() and DecompressData() functions
 #define SUPPORT_COMPRESSION_API     1
+#define SUPPORT_DATA_STORAGE          1
+// Support saving binary data automatically to a generated storage.data file. This file is managed internally.
 
 //------------------------------------------------------------------------------------
 // Module: rlgl - Configuration Flags

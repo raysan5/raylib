@@ -12,7 +12,10 @@
 #include "raylib.h"
 
 // NOTE: Storage positions must start with 0, directly related to file memory layout
-typedef enum { STORAGE_SCORE = 0, STORAGE_HISCORE } StorageData;
+typedef enum { 
+    STORAGE_POSITION_SCORE      = 0, 
+    STORAGE_POSITION_HISCORE    = 1
+} StorageData;
 
 int main(void)
 {
@@ -43,14 +46,14 @@ int main(void)
 
         if (IsKeyPressed(KEY_ENTER))
         {
-            SaveStorageValue(STORAGE_SCORE, score);
-            SaveStorageValue(STORAGE_HISCORE, hiscore);
+            SaveStorageValue(STORAGE_POSITION_SCORE, score);
+            SaveStorageValue(STORAGE_POSITION_HISCORE, hiscore);
         }
         else if (IsKeyPressed(KEY_SPACE))
         {
             // NOTE: If requested position could not be found, value 0 is returned
-            score = LoadStorageValue(STORAGE_SCORE);
-            hiscore = LoadStorageValue(STORAGE_HISCORE);
+            score = LoadStorageValue(STORAGE_POSITION_SCORE);
+            hiscore = LoadStorageValue(STORAGE_POSITION_HISCORE);
         }
 
         framesCounter++;

@@ -173,6 +173,8 @@ unsigned char *LoadFileData(const char *fileName, int *bytesRead)
 
     if (file != NULL)
     {
+        // WARNING: On binary streams SEEK_END could not be found,
+        // using fseek() and ftell() could not work in some (rare) cases
         fseek(file, 0, SEEK_END);
         int size = ftell(file);
         fseek(file, 0, SEEK_SET);
@@ -180,10 +182,13 @@ unsigned char *LoadFileData(const char *fileName, int *bytesRead)
         if (size > 0)
         {
             data = (unsigned char *)RL_MALLOC(sizeof(unsigned char)*size);
+            
+            // NOTE: fread() returns number of read elements instead of bytes, so we read [1 byte, size elements]
             int count = fread(data, sizeof(unsigned char), size, file);
             *bytesRead = count;
 
-            if (count != size) TRACELOG(LOG_WARNING, "[%s] File partially read", fileName);
+            if (count != size) TRACELOG(LOG_WARNING, "[%s] File partially loaded", fileName);
+            else TRACELOG(LOG_INFO, "[%s] File loaded successfully", fileName);
         }
         else TRACELOG(LOG_WARNING, "[%s] File could not be read", fileName);
 

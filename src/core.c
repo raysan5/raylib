@@ -82,6 +82,9 @@
 *       provided by stb_image and stb_image_write libraries, so, those libraries must be enabled on textures module
 *       for linkage
 *
+*   #define SUPPORT_DATA_STORAGE
+*       Support saving binary data automatically to a generated storage.data file. This file is managed internally.
+*
 *   DEPENDENCIES:
 *       rglfw    - Manage graphic device, OpenGL context and inputs on PLATFORM_DESKTOP (Windows, Linux, OSX. FreeBSD, OpenBSD, NetBSD, DragonFly)
 *       raymath  - 3D math functionality (Vector2, Vector3, Matrix, Quaternion)
@@ -152,7 +155,6 @@
 #endif
 
 #include <stdlib.h>             // Required for: srand(), rand(), atexit()
-#include <stdio.h>              // Required for: FILE, fopen(), fseek(), fread(), fwrite(), fclose() [Used in SaveStorageValue()/LoadStorageValue()]
 #include <string.h>             // Required for: strrchr(), strcmp(), strlen()
 #include <time.h>               // Required for: time() [Used in InitTimer()]
 #include <math.h>               // Required for: tan() [Used in BeginMode3D()]
@@ -283,12 +285,14 @@
 #endif
 
 #define MAX_GAMEPADS              4         // Max number of gamepads supported
-#define MAX_GAMEPAD_BUTTONS       32        // Max bumber of buttons supported (per gamepad)
 #define MAX_GAMEPAD_AXIS          8         // Max number of axis supported (per gamepad)
+#define MAX_GAMEPAD_BUTTONS       32        // Max bumber of buttons supported (per gamepad)
 
 #define MAX_CHARS_QUEUE           16        // Max number of characters in the input queue
 
-#define STORAGE_FILENAME        "storage.data"
+#if defined(SUPPORT_DATA_STORAGE)
+    #define STORAGE_DATA_FILE     "storage.data"
+#endif
 
 //----------------------------------------------------------------------------------
 // Types and Structures Definition
@@ -2182,40 +2186,50 @@ unsigned char *DecompressData(unsigned char *compData, int compDataLength, int *
 // NOTE: Storage positions is directly related to file memory layout (4 bytes each integer)
 void SaveStorageValue(int position, int value)
 {
-    FILE *storageFile = NULL;
-
+#if defined(SUPPORT_DATA_STORAGE)
     char path[512] = { 0 };
 #if defined(PLATFORM_ANDROID)
     strcpy(path, CORE.Android.internalDataPath);
     strcat(path, "/");
-    strcat(path, STORAGE_FILENAME);
+    strcat(path, STORAGE_DATA_FILE);
 #else
-    strcpy(path, STORAGE_FILENAME);
+    strcpy(path, STORAGE_DATA_FILE);
 #endif
 
-    // Try open existing file to append data
-    storageFile = fopen(path, "rb+");
-
-    // If file doesn't exist, create a new storage data file
-    if (!storageFile) storageFile = fopen(path, "wb");
-
-    if (!storageFile) TRACELOG(LOG_WARNING, "Storage data file could not be created");
-    else
+    int dataSize = 0;
+    unsigned char *fileData = LoadFileData(path, &dataSize);
+    
+    if (fileData != NULL)
     {
-        // Get file size
-        fseek(storageFile, 0, SEEK_END);
-        int fileSize = ftell(storageFile);  // Size in bytes
-        fseek(storageFile, 0, SEEK_SET);
-
-        if (fileSize < (position*sizeof(int))) TRACELOG(LOG_WARNING, "Storage position could not be found");
+        if (dataSize <= (position*sizeof(int)))
+        {
+            // Increase data size up to position and store value
+            dataSize = (position + 1)*sizeof(int);
+            fileData = (unsigned char *)RL_REALLOC(fileData, dataSize);
+            int *dataPtr = (int *)fileData;
+            dataPtr[position] = value;
+        }
         else
         {
-            fseek(storageFile, (position*sizeof(int)), SEEK_SET);
-            fwrite(&value, 1, sizeof(int), storageFile);
+            // Replace value on selected position
+            int *dataPtr = (int *)fileData;
+            dataPtr[position] = value;
         }
-
-        fclose(storageFile);
+        
+        SaveFileData(path, fileData, dataSize);
+        RL_FREE(fileData);
     }
+    else
+    {
+        dataSize = (position + 1)*sizeof(int);
+        fileData = (unsigned char *)RL_MALLOC(dataSize);
+        int *dataPtr = (int *)fileData;
+        dataPtr[position] = value;
+        
+        SaveFileData(path, fileData, dataSize);
+        RL_FREE(fileData);
+    }
+#endif
 }
 
 // Load integer value from storage file (from defined position)
@@ -2223,37 +2237,31 @@ void SaveStorageValue(int position, int value)
 int LoadStorageValue(int position)
 {
     int value = 0;
-
+#if defined(SUPPORT_DATA_STORAGE)
     char path[512] = { 0 };
 #if defined(PLATFORM_ANDROID)
     strcpy(path, CORE.Android.internalDataPath);
     strcat(path, "/");
-    strcat(path, STORAGE_FILENAME);
+    strcat(path, STORAGE_DATA_FILE);
 #else
-    strcpy(path, STORAGE_FILENAME);
+    strcpy(path, STORAGE_DATA_FILE);
 #endif
 
-    // Try open existing file to append data
-    FILE *storageFile = fopen(path, "rb");
-
-    if (!storageFile) TRACELOG(LOG_WARNING, "Storage data file could not be found");
-    else
+    int dataSize = 0;
+    unsigned char *fileData = LoadFileData(path, &dataSize);
+    
+    if (fileData != NULL)
     {
-        // Get file size
-        fseek(storageFile, 0, SEEK_END);
-        int fileSize = ftell(storageFile);      // Size in bytes
-        fseek(storageFile, 0, SEEK_SET);        // Reset file pointer
-
-        if (fileSize < (position*4)) TRACELOG(LOG_WARNING, "Storage position could not be found");
+        if (dataSize < (position*4)) TRACELOG(LOG_WARNING, "Storage position could not be found");
         else
         {
-            fseek(storageFile, (position*4), SEEK_SET);
-            fread(&value, 4, 1, storageFile);   // Read 1 element of 4 bytes size
+            int *dataPtr = (int *)fileData;
+            value = dataPtr[position];
         }
-
-        fclose(storageFile);
+        
+        RL_FREE(fileData);
     }
-
+#endif
     return value;
 }
 
