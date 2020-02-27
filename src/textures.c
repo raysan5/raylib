@@ -261,9 +261,9 @@ Image LoadImage(const char *fileName)
 
             image.mipmaps = 1;
 
-            if (imgBpp == 1) image.format = UNCOMPRESSED_R32;
-            else if (imgBpp == 3) image.format = UNCOMPRESSED_R32G32B32;
-            else if (imgBpp == 4) image.format = UNCOMPRESSED_R32G32B32A32;
+            if (comp == 1) image.format = UNCOMPRESSED_R32;
+            else if (comp == 3) image.format = UNCOMPRESSED_R32G32B32;
+            else if (comp == 4) image.format = UNCOMPRESSED_R32G32B32A32;
             else
             {
                 TRACELOG(LOG_WARNING, "[%s] HDR Image fileformat not supported", fileName);
