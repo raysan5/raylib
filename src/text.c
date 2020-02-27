@@ -333,11 +333,11 @@ Font LoadFontEx(const char *fileName, int fontSize, int *fontChars, int charsCou
 {
     Font font = { 0 };
 
+#if defined(SUPPORT_FILEFORMAT_TTF)
     font.baseSize = fontSize;
     font.charsCount = (charsCount > 0)? charsCount : 95;
     font.chars = LoadFontData(fileName, font.baseSize, fontChars, font.charsCount, FONT_DEFAULT);
 
-#if defined(SUPPORT_FILEFORMAT_TTF)
     if (font.chars != NULL)
     {
         Image atlas = GenImageFontAtlas(font.chars, &font.recs, font.charsCount, font.baseSize, 2, 0);
@@ -354,7 +354,6 @@ Font LoadFontEx(const char *fileName, int fontSize, int *fontChars, int charsCou
     }
     else font = GetFontDefault();
 #else
-    UnloadFont(font);
     font = GetFontDefault();
 #endif
 
@@ -498,24 +497,16 @@ CharInfo *LoadFontData(const char *fileName, int fontSize, int *fontChars, int c
 
 #if defined(SUPPORT_FILEFORMAT_TTF)
     // Load font data (including pixel data) from TTF file
-    // NOTE: Loaded information should be enough to generate font image atlas,
-    // using any packaging method
-    FILE *fontFile = fopen(fileName, "rb");     // Load font file
-
-    if (fontFile != NULL)
+    // NOTE: Loaded information should be enough to generate 
+    // font image atlas, using any packaging method
+    int dataSize = 0;
+    unsigned char *fileData = LoadFileData(fileName, &dataSize);
+    
+    if (fileData != NULL)
     {
-        fseek(fontFile, 0, SEEK_END);
-        long size = ftell(fontFile);    // Get file size
-        fseek(fontFile, 0, SEEK_SET);   // Reset file pointer
-
-        unsigned char *fontBuffer = (unsigned char *)RL_MALLOC(size);
-
-        fread(fontBuffer, size, 1, fontFile);
-        fclose(fontFile);
-
         // Init font for data reading
         stbtt_fontinfo fontInfo;
-        if (!stbtt_InitFont(&fontInfo, fontBuffer, 0)) TRACELOG(LOG_WARNING, "Failed to init font!");
+        if (!stbtt_InitFont(&fontInfo, fileData, 0)) TRACELOG(LOG_WARNING, "Failed to init font!");
 
         // Calculate font scale factor
         float scaleFactor = stbtt_ScaleForPixelHeight(&fontInfo, (float)fontSize);
@@ -595,12 +586,9 @@ CharInfo *LoadFontData(const char *fileName, int fontSize, int *fontChars, int c
             */
         }
 
-        RL_FREE(fontBuffer);
+        RL_FREE(fileData);
         if (genFontChars) RL_FREE(fontChars);
     }
-    else TRACELOG(LOG_WARNING, "[%s] TTF file could not be opened", fileName);
-#else
-    TRACELOG(LOG_WARNING, "[%s] TTF support is disabled", fileName);
 #endif
 
     return chars;
