@@ -829,9 +829,7 @@ void ExportImage(Image image, const char *fileName)
     {
         // Export raw pixel data (without header)
         // NOTE: It's up to the user to track image parameters
-        FILE *rawFile = fopen(fileName, "wb");
-        success = fwrite(image.data, GetPixelDataSize(image.width, image.height, image.format), 1, rawFile);
-        fclose(rawFile);
+        SaveFileData(fileName, image.data, GetPixelDataSize(image.width, image.height, image.format));
     }
 
     RL_FREE(imgData);
@@ -3044,7 +3042,7 @@ static Image LoadDDS(const char *fileName)
     else
     {
         // Verify the type of file
-        char ddsHeaderId[4];
+        char ddsHeaderId[4] = { 0 };
 
         fread(ddsHeaderId, 4, 1, ddsFile);
 
@@ -3054,7 +3052,7 @@ static Image LoadDDS(const char *fileName)
         }
         else
         {
-            DDSHeader ddsHeader;
+            DDSHeader ddsHeader = { 0 };
 
             // Get the image header
             fread(&ddsHeader, sizeof(DDSHeader), 1, ddsFile);
@@ -3223,7 +3221,7 @@ static Image LoadPKM(const char *fileName)
     }
     else
     {
-        PKMHeader pkmHeader;
+        PKMHeader pkmHeader = { 0 };
 
         // Get the image header
         fread(&pkmHeader, sizeof(PKMHeader), 1, pkmFile);
@@ -3316,7 +3314,7 @@ static Image LoadKTX(const char *fileName)
     }
     else
     {
-        KTXHeader ktxHeader;
+        KTXHeader ktxHeader = { 0 };
 
         // Get the image header
         fread(&ktxHeader, sizeof(KTXHeader), 1, ktxFile);
@@ -3397,7 +3395,7 @@ static int SaveKTX(Image image, const char *fileName)
     if (ktxFile == NULL) TRACELOG(LOG_WARNING, "[%s] KTX image file could not be created", fileName);
     else
     {
-        KTXHeader ktxHeader;
+        KTXHeader ktxHeader = { 0 };
 
         // KTX identifier (v1.1)
         //unsigned char id[12] = { '«', 'K', 'T', 'X', ' ', '1', '1', '»', '\r', '\n', '\x1A', '\n' };
@@ -3533,7 +3531,7 @@ static Image LoadPVR(const char *fileName)
         // Load different PVR data formats
         if (pvrVersion == 0x50)
         {
-            PVRHeaderV3 pvrHeader;
+            PVRHeaderV3 pvrHeader = { 0 };
 
             // Get PVR image header
             fread(&pvrHeader, sizeof(PVRHeaderV3), 1, pvrFile);
@@ -3643,7 +3641,7 @@ static Image LoadASTC(const char *fileName)
     }
     else
     {
-        ASTCHeader astcHeader;
+        ASTCHeader astcHeader = { 0 };
 
         // Get ASTC image header
         fread(&astcHeader, sizeof(ASTCHeader), 1, astcFile);
