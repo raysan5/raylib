@@ -64,9 +64,10 @@
     #include "config.h"         // Defines module configuration flags
 #endif
 
-#include <stdlib.h>             // Required for: malloc(), free(), fabs()
+#include <stdlib.h>             // Required for: malloc(), free()
 #include <stdio.h>              // Required for: FILE, fopen(), fclose(), fread()
 #include <string.h>             // Required for: strlen() [Used in ImageTextEx()]
+#include <math.h>               // Required for: fabsf()
 
 #include "utils.h"              // Required for: fopen() Android mapping
 
@@ -2688,7 +2689,7 @@ void DrawTextureEx(Texture2D texture, Vector2 position, float rotation, float sc
 // Draw a part of a texture (defined by a rectangle)
 void DrawTextureRec(Texture2D texture, Rectangle sourceRec, Vector2 position, Color tint)
 {
-    Rectangle destRec = { position.x, position.y, (float)fabs(sourceRec.width), (float)fabs(sourceRec.height) };
+    Rectangle destRec = { position.x, position.y, fabsf(sourceRec.width), fabsf(sourceRec.height) };
     Vector2 origin = { 0.0f, 0.0f };
 
     DrawTexturePro(texture, sourceRec, destRec, origin, 0.0f, tint);

@@ -612,10 +612,10 @@ RLAPI int GetPixelDataSize(int width, int height, int format);// Get pixel data 
     #endif
 #endif
 
-#include <stdlib.h>                 // Required for: malloc(), free(), fabs()
+#include <stdlib.h>                 // Required for: malloc(), free()
 #include <stdio.h>                  // Required for: fopen(), fseek(), fread(), fclose() [LoadText]
 #include <string.h>                 // Required for: strcmp(), strlen() [Used in rlglInit(), on extensions loading]
-#include <math.h>                   // Required for: atan2f()
+#include <math.h>                   // Required for: atan2f(), fabs()
 
 #if !defined(RLGL_STANDALONE)
     #include "raymath.h"            // Required for: Vector3 and Matrix functions
@@ -3662,7 +3662,7 @@ void SetVrConfiguration(VrDeviceInfo hmd, Shader distortion)
 
     // Compute distortion scale parameters
     // NOTE: To get lens max radius, lensShift must be normalized to [-1..1]
-    float lensRadius = (float)fabs(-1.0f - 4.0f*lensShift);
+    float lensRadius = fabsf(-1.0f - 4.0f*lensShift);
     float lensRadiusSq = lensRadius*lensRadius;
     float distortionScale = hmd.lensDistortionValues[0] +
                             hmd.lensDistortionValues[1]*lensRadiusSq +
