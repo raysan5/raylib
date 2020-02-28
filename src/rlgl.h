@@ -3013,8 +3013,10 @@ char *LoadText(const char *fileName)
                 if (count < size)
                 {
                     text = RL_REALLOC(text, count + 1);
-                    text[count] = '\0';
                 }
+                
+                // zero-terminate the string
+                text[count] = '\0';
             }
 
             fclose(textFile);
