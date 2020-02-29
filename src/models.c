@@ -3462,12 +3462,14 @@ static Model LoadGLTF(const char *fileName)
           - Supports embedded (base64) or external textures
           - Loads all raylib supported material textures, values and colors
           - Supports multiple mesh per model and multiple primitives per model
+          - Loading joints for a single skin
 
         Some restrictions (not exhaustive):
           - Triangle-only meshes
           - Not supported node hierarchies or transforms
           - Only supports unsigned short indices (no byte/unsigned int)
           - Only supports float for texture coordinates (no byte/unsigned short)
+          - Multiple skins (armatures)
 
     *************************************************************************************/
 
@@ -3529,6 +3531,63 @@ static Model LoadGLTF(const char *fileName)
 
         for (int i = 0; i < model.meshCount; i++) model.meshes[i].vboId = (unsigned int *)RL_CALLOC(MAX_MESH_VBO, sizeof(unsigned int));
 
+        // Currenly only support one skin
+        model.boneCount = data->skins[0].joints_count;
+        model.bones = RL_CALLOC(model.boneCount, sizeof(BoneInfo));
+        model.bindPose = RL_CALLOC(model.boneCount, sizeof(Transform));
+        for (int i = 0; i < model.boneCount; i++) 
+        {
+            if (data->skins[0].joints[i]->name) {
+                // Raylib only supports names up to 34 characters..
+                if (strlen(data->skins[0].joints[i]->name) <= 34) {
+                    strcpy(model.bones[i].name, data->skins[0].joints[i]->name); 
+                }
+            }
+
+            // Mark parents in array
+            if (data->skins[0].joints[i]->children_count > 0) {
+                int numOfChildrenJoints = data->skins[0].joints[i]->children_count; 
+                for (int j = i; j < numOfChildrenJoints; j++) {
+                    model.bones[j].parent = i;
+                }
+            }
+
+            // Set the tranlation for this joint
+            if (data->skins[0].joints[i]->has_translation) {
+                model.bindPose[i].translation.x = data->skins[0].joints[i]->translation[0];
+                model.bindPose[i].translation.y = data->skins[0].joints[i]->translation[1];
+                model.bindPose[i].translation.z = data->skins[0].joints[i]->translation[2]; 
+            }
+
+            // Set the rotation for this joint
+            if (data->skins[0].joints[i]->has_rotation) {
+                model.bindPose[i].rotation.x = data->skins[0].joints[i]->rotation[0];
+                model.bindPose[i].rotation.y = data->skins[0].joints[i]->rotation[1];
+                model.bindPose[i].rotation.z = data->skins[0].joints[i]->rotation[2];
+                model.bindPose[i].rotation.w = data->skins[0].joints[i]->rotation[3];
+            }
+
+            // Set the scale for this joint
+            if (data->skins[0].joints[i]->has_scale) {
+                model.bindPose[i].scale.x = data->skins[0].joints[i]->scale[0];
+                model.bindPose[i].scale.y = data->skins[0].joints[i]->scale[1];
+                model.bindPose[i].scale.z = data->skins[0].joints[i]->scale[2];
+            }
+        }
+
+        // Build bind pose from parent joints... Same IQM Loader
+        for (int i = 0; i < model.boneCount; i++)
+        {
+            if (model.bones[i].parent >= 0)
+            {
+                model.bindPose[i].rotation = QuaternionMultiply(model.bindPose[model.bones[i].parent].rotation, model.bindPose[i].rotation);
+                model.bindPose[i].translation = Vector3RotateByQuaternion(model.bindPose[i].translation, model.bindPose[model.bones[i].parent].rotation);
+                model.bindPose[i].translation = Vector3Add(model.bindPose[i].translation, model.bindPose[model.bones[i].parent].translation);
+                model.bindPose[i].scale = Vector3Multiply(model.bindPose[i].scale, model.bindPose[model.bones[i].parent].scale);
+            }
+        }
+        
+        TRACELOG(LOG_INFO, "[%s][%d] Joints loaded", fileName, data->skins[0].joints_count);
         for (int i = 0; i < model.materialCount - 1; i++)
         {
             model.materials[i] = LoadMaterialDefault();
@@ -3613,6 +3672,8 @@ static Model LoadGLTF(const char *fileName)
                         cgltf_accessor *acc = data->meshes[i].primitives[p].attributes[j].data;
                         model.meshes[primitiveIndex].vertexCount = acc->count;
                         model.meshes[primitiveIndex].vertices = RL_MALLOC(sizeof(float)*model.meshes[primitiveIndex].vertexCount*3);
+                        model.meshes[i].animVertices = RL_CALLOC(model.meshes[i].vertexCount*3, sizeof(float));
+                        model.meshes[i].animNormals = RL_CALLOC(model.meshes[i].vertexCount*3, sizeof(float));
 
                         LOAD_ACCESSOR(float, 3, acc, model.meshes[primitiveIndex].vertices)
                     }
