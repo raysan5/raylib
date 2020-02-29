@@ -64,7 +64,7 @@ static int logTypeExit = LOG_ERROR;                     // Log type that exits
 static TraceLogCallback logCallback = NULL;             // Log callback function pointer
 
 #if defined(PLATFORM_ANDROID)
-static AAssetManager *assetManager = NULL;              // Android assets manager pointer 
+static AAssetManager *assetManager = NULL;              // Android assets manager pointer
 #endif
 
 #if defined(PLATFORM_UWP)
@@ -161,6 +161,59 @@ void TraceLog(int logType, const char *text, ...)
     if (logType >= logTypeExit) exit(1); // If exit message, exit program
 
 #endif  // SUPPORT_TRACELOG
+}
+
+// Load data from file into a buffer
+unsigned char *LoadFileData(const char *fileName, int *bytesRead)
+{
+    unsigned char *data = NULL;
+    *bytesRead = 0;
+
+    FILE *file = fopen(fileName, "rb");
+
+    if (file != NULL)
+    {
+        // WARNING: On binary streams SEEK_END could not be found,
+        // using fseek() and ftell() could not work in some (rare) cases
+        fseek(file, 0, SEEK_END);
+        int size = ftell(file);
+        fseek(file, 0, SEEK_SET);
+
+        if (size > 0)
+        {
+            data = (unsigned char *)RL_MALLOC(sizeof(unsigned char)*size);
+
+            // NOTE: fread() returns number of read elements instead of bytes, so we read [1 byte, size elements]
+            int count = fread(data, sizeof(unsigned char), size, file);
+            *bytesRead = count;
+
+            if (count != size) TRACELOG(LOG_WARNING, "[%s] File partially loaded", fileName);
+            else TRACELOG(LOG_INFO, "[%s] File loaded successfully", fileName);
+        }
+        else TRACELOG(LOG_WARNING, "[%s] File could not be read", fileName);
+
+        fclose(file);
+    }
+    else TRACELOG(LOG_WARNING, "[%s] File could not be opened", fileName);
+
+    return data;
+}
+
+// Save data to file from buffer
+void SaveFileData(const char *fileName, void *data, int bytesToWrite)
+{
+    FILE *file = fopen(fileName, "wb");
+
+    if (file != NULL)
+    {
+        int count = fwrite(data, sizeof(unsigned char), bytesToWrite, file);
+
+        if (count == 0) TRACELOG(LOG_WARNING, "[%s] File could not be written", fileName);
+        else if (count != bytesToWrite) TRACELOG(LOG_WARNING, "[%s] File partially written", fileName);
+
+        fclose(file);
+    }
+    else TRACELOG(LOG_WARNING, "[%s] File could not be opened", fileName);
 }
 
 #if defined(PLATFORM_ANDROID)

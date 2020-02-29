@@ -1135,8 +1135,8 @@ RMDEF Quaternion QuaternionSlerp(Quaternion q1, Quaternion q2, float amount)
     else if (cosHalfTheta > 0.95f) result = QuaternionNlerp(q1, q2, amount);
     else
     {
-        float halfTheta = (float) acos(cosHalfTheta);
-        float sinHalfTheta = (float) sqrt(1.0f - cosHalfTheta*cosHalfTheta);
+        float halfTheta = acosf(cosHalfTheta);
+        float sinHalfTheta = sqrtf(1.0f - cosHalfTheta*cosHalfTheta);
 
         if (fabs(sinHalfTheta) < 0.001f)
         {
@@ -1191,7 +1191,7 @@ RMDEF Quaternion QuaternionFromMatrix(Matrix mat)
 
     if (trace > 0.0f)
     {
-        float s = (float)sqrt(trace + 1)*2.0f;
+        float s = sqrtf(trace + 1)*2.0f;
         float invS = 1.0f/s;
 
         result.w = s*0.25f;
@@ -1215,7 +1215,7 @@ RMDEF Quaternion QuaternionFromMatrix(Matrix mat)
         }
         else if (m11 > m22)
         {
-            float s = (float)sqrt(1.0f + m11 - m00 - m22)*2.0f;
+            float s = sqrtf(1.0f + m11 - m00 - m22)*2.0f;
             float invS = 1.0f/s;
 
             result.w = (mat.m8 - mat.m2)*invS;
@@ -1225,7 +1225,7 @@ RMDEF Quaternion QuaternionFromMatrix(Matrix mat)
         }
         else
         {
-            float s = (float)sqrt(1.0f + m22 - m00 - m11)*2.0f;
+            float s = sqrtf(1.0f + m22 - m00 - m11)*2.0f;
             float invS = 1.0f/s;
 
             result.w = (mat.m1 - mat.m4)*invS;
@@ -1317,8 +1317,8 @@ RMDEF void QuaternionToAxisAngle(Quaternion q, Vector3 *outAxis, float *outAngle
     Vector3 resAxis = { 0.0f, 0.0f, 0.0f };
     float resAngle = 0.0f;
 
-    resAngle = 2.0f*(float)acos(q.w);
-    float den = (float)sqrt(1.0f - q.w*q.w);
+    resAngle = 2.0f*acosf(q.w);
+    float den = sqrtf(1.0f - q.w*q.w);
 
     if (den > 0.0001f)
     {

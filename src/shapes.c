@@ -42,8 +42,7 @@
 
 #include "rlgl.h"       // raylib OpenGL abstraction layer to OpenGL 1.1, 2.1, 3.3+ or ES2
 
-#include <stdlib.h>     // Required for: fabs()
-#include <math.h>       // Required for: sinf(), asinf(), cosf(), acosf(), sqrtf()
+#include <math.h>       // Required for: sinf(), asinf(), cosf(), acosf(), sqrtf(), fabsf()
 
 //----------------------------------------------------------------------------------
 // Defines and Macros
@@ -1471,8 +1470,8 @@ bool CheckCollisionCircleRec(Vector2 center, float radius, Rectangle rec)
     int recCenterX = (int)(rec.x + rec.width/2.0f);
     int recCenterY = (int)(rec.y + rec.height/2.0f);
 
-    float dx = (float)fabs(center.x - recCenterX);
-    float dy = (float)fabs(center.y - recCenterY);
+    float dx = fabsf(center.x - (float)recCenterX);
+    float dy = fabsf(center.y - (float)recCenterY);
 
     if (dx > (rec.width/2.0f + radius)) { return false; }
     if (dy > (rec.height/2.0f + radius)) { return false; }
@@ -1493,8 +1492,8 @@ Rectangle GetCollisionRec(Rectangle rec1, Rectangle rec2)
 
     if (CheckCollisionRecs(rec1, rec2))
     {
-        float dxx = (float)fabs(rec1.x - rec2.x);
-        float dyy = (float)fabs(rec1.y - rec2.y);
+        float dxx = fabsf(rec1.x - rec2.x);
+        float dyy = fabsf(rec1.y - rec2.y);
 
         if (rec1.x <= rec2.x)
         {

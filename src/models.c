@@ -45,10 +45,10 @@
 
 #include "utils.h"          // Required for: fopen() Android mapping
 
-#include <stdlib.h>         // Required for: malloc(), free(), fabs()
+#include <stdlib.h>         // Required for: malloc(), free()
 #include <stdio.h>          // Required for: FILE, fopen(), fclose()
 #include <string.h>         // Required for: strncmp() [Used in LoadModelAnimations()], strlen() [Used in LoadTextureFromCgltfImage()]
-#include <math.h>           // Required for: sinf(), cosf(), sqrtf()
+#include <math.h>           // Required for: sinf(), cosf(), sqrtf(), fabsf()
 
 #include "rlgl.h"           // raylib OpenGL abstraction layer to OpenGL 1.1, 2.1, 3.3+ or ES2
 
@@ -2513,9 +2513,9 @@ void DrawBoundingBox(BoundingBox box, Color color)
 {
     Vector3 size;
 
-    size.x = (float)fabs(box.max.x - box.min.x);
-    size.y = (float)fabs(box.max.y - box.min.y);
-    size.z = (float)fabs(box.max.z - box.min.z);
+    size.x = fabsf(box.max.x - box.min.x);
+    size.y = fabsf(box.max.y - box.min.y);
+    size.z = fabsf(box.max.z - box.min.z);
 
     Vector3 center = { box.min.x + size.x/2.0f, box.min.y + size.y/2.0f, box.min.z + size.z/2.0f };
 
@@ -2761,7 +2761,7 @@ RayHitInfo GetCollisionRayGround(Ray ray, float groundHeight)
 
     RayHitInfo result = { 0 };
 
-    if (fabs(ray.direction.y) > EPSILON)
+    if (fabsf(ray.direction.y) > EPSILON)
     {
         float distance = (ray.position.y - groundHeight)/-ray.direction.y;
 
