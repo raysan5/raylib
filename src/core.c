@@ -398,18 +398,18 @@ typedef struct CoreData {
 #if defined(PLATFORM_WEB)
             bool cursorLockRequired;        // Ask for cursor pointer lock on next click
 #endif
-#if defined(PLATFORM_DESKTOP) || defined(PLATFORM_RPI) || defined(PLATFORM_WEB) || defined(PLATFORM_UWP)
             char currentButtonState[3];     // Registers current mouse button state
             char previousButtonState[3];    // Registers previous mouse button state
             int currentWheelMove;           // Registers current mouse wheel variation
             int previousWheelMove;          // Registers previous mouse wheel variation
-#endif
 #if defined(PLATFORM_RPI)
             char currentButtonStateEvdev[3];    // Holds the new mouse state for the next polling event to grab (Can't be written directly due to multithreading, app could miss the update)
 #endif
         } Mouse;
         struct {
-            Vector2 position[MAX_TOUCH_POINTS]; // Touch position on screen
+            Vector2 position[MAX_TOUCH_POINTS];         // Touch position on screen
+            char currentTouchState[MAX_TOUCH_POINTS];   // Registers current touch state
+            char previousTouchState[MAX_TOUCH_POINTS];  // Registers previous touch state
         } Touch;
         struct {
             int lastButtonPressed;          // Register last gamepad button pressed
@@ -477,8 +477,8 @@ static void SwapBuffers(void);                          // Copy back buffer to f
 static void InitTimer(void);                            // Initialize timer
 static void Wait(float ms);                             // Wait for some milliseconds (stop program execution)
 
-static bool GetKeyStatus(int key);                      // Returns if a key has been pressed
-static bool GetMouseButtonStatus(int button);           // Returns if a mouse button has been pressed
+//static int GetKeyState(int key);
+//static int GetMouseButtonState(int button);
 static int GetGamepadButton(int button);                // Get gamepad button generic to all platforms
 static int GetGamepadAxis(int axis);                    // Get gamepad axis generic to all platforms
 static void PollInputEvents(void);                      // Register user events
@@ -1718,8 +1718,8 @@ Color ColorFromNormalized(Vector4 normalized)
 // NOTE: Hue is returned as degrees [0..360]
 Vector3 ColorToHSV(Color color)
 {
+    Vector3 hsv = { 0 };
     Vector3 rgb = { (float)color.r/255.0f, (float)color.g/255.0f, (float)color.b/255.0f };
-    Vector3 hsv = { 0.0f, 0.0f, 0.0f };
     float min, max, delta;
 
     min = rgb.x < rgb.y? rgb.x : rgb.y;
@@ -2315,7 +2315,7 @@ bool IsKeyPressed(int key)
 // Detect if a key is being pressed (key held down)
 bool IsKeyDown(int key)
 {
-    if (GetKeyStatus(key) == 1) return true;
+    if (CORE.Input.Keyboard.currentKeyState[key] == 1) return true;
     else return false;
 }
 
@@ -2333,7 +2333,7 @@ bool IsKeyReleased(int key)
 // Detect if a key is NOT being pressed (key not held down)
 bool IsKeyUp(int key)
 {
-    if (GetKeyStatus(key) == 0) return true;
+    if (CORE.Input.Keyboard.currentKeyState[key] == 0) return true;
     else return false;
 }
 
@@ -2502,9 +2502,12 @@ bool IsMouseButtonPressed(int button)
 #if defined(PLATFORM_ANDROID)
     if (IsGestureDetected(GESTURE_TAP)) pressed = true;
 #else
-    // NOTE: On PLATFORM_DESKTOP and PLATFORM_WEB IsMouseButtonPressed() is equivalent to GESTURE_TAP
     if ((CORE.Input.Mouse.currentButtonState[button] != CORE.Input.Mouse.previousButtonState[button]) &&
-         (GetMouseButtonStatus(button) == 1)) pressed = true;
+         (CORE.Input.Mouse.currentButtonState[button] == 1)) pressed = true;
+
+    // Map touches to mouse buttons checking
+    if ((CORE.Input.Touch.currentTouchState[button] != CORE.Input.Touch.previousTouchState[button]) &&
+         (CORE.Input.Touch.currentTouchState[button] == 1)) pressed = true;
 #endif
 
     return pressed;
@@ -2518,9 +2521,10 @@ bool IsMouseButtonDown(int button)
 #if defined(PLATFORM_ANDROID)
     if (IsGestureDetected(GESTURE_HOLD)) down = true;
 #else
-    // NOTE: On PLATFORM_DESKTOP and PLATFORM_WEB IsMouseButtonDown() is equivalent to GESTURE_HOLD or GESTURE_DRAG
-    if (GetMouseButtonStatus(button) == 1) down = true;
-    // || IsGestureDetected(GESTURE_HOLD) || IsGestureDetected(GESTURE_DRAG)) down = true;
+    if (CORE.Input.Mouse.currentButtonState[button] == 1) down = true;
+
+    // Map touches to mouse buttons checking
+    if (CORE.Input.Touch.currentTouchState[button] == 1) down = true;
 #endif
 
     return down;
@@ -2532,12 +2536,16 @@ bool IsMouseButtonReleased(int button)
     bool released = false;
 
 #if defined(PLATFORM_ANDROID)
-    # if defined(SUPPORT_GESTURES_SYSTEM)
-    released = GetGestureDetected() == GESTURE_TAP;
-    # endif
+    #if defined(SUPPORT_GESTURES_SYSTEM)
+        released = GetGestureDetected() == GESTURE_TAP;
+    #endif
 #else
     if ((CORE.Input.Mouse.currentButtonState[button] != CORE.Input.Mouse.previousButtonState[button]) &&
-        (GetMouseButtonStatus(button) == 0)) released = true;
+        (CORE.Input.Mouse.currentButtonState[button] == 0)) released = true;
+    
+    // Map touches to mouse buttons checking
+    if ((CORE.Input.Touch.currentTouchState[button] != CORE.Input.Touch.previousTouchState[button]) &&
+         (CORE.Input.Touch.currentTouchState[button] == 0)) released = true;
 #endif
 
     return released;
@@ -2549,7 +2557,10 @@ bool IsMouseButtonUp(int button)
     bool up = false;
 
 #if !defined(PLATFORM_ANDROID)
-    if (GetMouseButtonStatus(button) == 0) up = true;
+    if (CORE.Input.Mouse.currentButtonState[button] == 0) up = true;
+    
+    // Map touches to mouse buttons checking
+    if (CORE.Input.Touch.currentTouchState[button] == 0) up = true;
 #endif
 
     return up;
@@ -2578,12 +2589,13 @@ int GetMouseY(void)
 // Returns mouse position XY
 Vector2 GetMousePosition(void)
 {
-    Vector2 position = { 0.0f, 0.0f };
+    Vector2 position = { 0 };
 
 #if defined(PLATFORM_ANDROID) || defined(PLATFORM_WEB)
     position = GetTouchPosition(0);
 #else
-    position = (Vector2){ (CORE.Input.Mouse.position.x + CORE.Input.Mouse.offset.x)*CORE.Input.Mouse.scale.x, (CORE.Input.Mouse.position.y + CORE.Input.Mouse.offset.y)*CORE.Input.Mouse.scale.y };
+    position.x = (CORE.Input.Mouse.position.x + CORE.Input.Mouse.offset.x)*CORE.Input.Mouse.scale.x;
+    position.y = (CORE.Input.Mouse.position.y + CORE.Input.Mouse.offset.y)*CORE.Input.Mouse.scale.y;
 #endif
 
     return position;
@@ -2682,7 +2694,6 @@ Vector2 GetTouchPosition(int index)
     // TODO: GLFW is not supporting multi-touch input just yet
     // https://www.codeproject.com/Articles/668404/Programming-for-Multi-Touch
     // https://docs.microsoft.com/en-us/windows/win32/wintouch/getting-started-with-multi-touch-messages
-
     if (index == 0) position = GetMousePosition();
 #endif
 
@@ -3452,36 +3463,6 @@ static void Wait(float ms)
 #endif
 }
 
-// Get one key state
-static bool GetKeyStatus(int key)
-{
-#if defined(PLATFORM_DESKTOP) || defined(PLATFORM_WEB)
-    return glfwGetKey(CORE.Window.handle, key);
-#elif defined(PLATFORM_ANDROID)
-    // NOTE: Android supports up to 260 keys
-    if (key < 0 || key > 260) return false;
-    else return CORE.Input.Keyboard.currentKeyState[key];
-#elif defined(PLATFORM_RPI) || defined(PLATFORM_UWP)
-    // NOTE: Keys states are filled in PollInputEvents()
-    if (key < 0 || key > 511) return false;
-    else return CORE.Input.Keyboard.currentKeyState[key];
-#endif
-}
-
-// Get one mouse button state
-static bool GetMouseButtonStatus(int button)
-{
-#if defined(PLATFORM_DESKTOP) || defined(PLATFORM_WEB)
-    return glfwGetMouseButton(CORE.Window.handle, button);
-#elif defined(PLATFORM_ANDROID)
-    // TODO: Check for virtual mouse?
-    return false;
-#elif defined(PLATFORM_RPI) || defined(PLATFORM_UWP)
-    // NOTE: Mouse buttons states are filled in PollInputEvents()
-    return CORE.Input.Mouse.currentButtonState[button];
-#endif
-}
-
 // Get gamepad button generic to all platforms
 static int GetGamepadButton(int button)
 {
@@ -3595,7 +3576,7 @@ static void PollInputEvents(void)
 
 #if defined(PLATFORM_RPI)
     // Register previous keys states
-    for (int i = 0; i < 512; i++)CORE.Input.Keyboard.previousKeyState[i] = CORE.Input.Keyboard.currentKeyState[i];
+    for (int i = 0; i < 512; i++) CORE.Input.Keyboard.previousKeyState[i] = CORE.Input.Keyboard.currentKeyState[i];
 
     // Grab a keypress from the evdev fifo if avalable
     if (CORE.Input.Keyboard.lastKeyPressed.head != CORE.Input.Keyboard.lastKeyPressed.tail)
@@ -3771,25 +3752,28 @@ static void PollInputEvents(void)
 #endif  // PLATFORM_UWP
 
 #if defined(PLATFORM_DESKTOP) || defined(PLATFORM_WEB)
-    // Mouse input polling
-    double mouseX;
-    double mouseY;
-
-    glfwGetCursorPos(CORE.Window.handle, &mouseX, &mouseY);
-
-    CORE.Input.Mouse.position.x = (float)mouseX;
-    CORE.Input.Mouse.position.y = (float)mouseY;
-
-    // Keyboard input polling (automatically managed by GLFW3 through callback)
+    // Keyboard/Mouse input polling (automatically managed by GLFW3 through callback)
 
     // Register previous keys states
     for (int i = 0; i < 512; i++) CORE.Input.Keyboard.previousKeyState[i] = CORE.Input.Keyboard.currentKeyState[i];
 
     // Register previous mouse states
-    for (int i = 0; i < 3; i++) CORE.Input.Mouse.previousButtonState[i] = CORE.Input.Mouse.currentButtonState[i];
+    for (int i = 0; i < 3; i++) 
+    {
+        CORE.Input.Mouse.previousButtonState[i] = CORE.Input.Mouse.currentButtonState[i];
+        CORE.Input.Mouse.currentButtonState[i] = 0;
+    }
 
+    // Register previous mouse wheel state
     CORE.Input.Mouse.previousWheelMove = CORE.Input.Mouse.currentWheelMove;
     CORE.Input.Mouse.currentWheelMove = 0;
+
+    // Register previous touch states
+    for (int i = 0; i < MAX_TOUCH_POINTS; i++) 
+    {
+        CORE.Input.Touch.previousTouchState[i] = CORE.Input.Touch.currentTouchState[i];
+        CORE.Input.Touch.currentTouchState[i] = 0;
+    }
 #endif
 
 #if defined(PLATFORM_DESKTOP)
@@ -4021,7 +4005,6 @@ static void KeyCallback(GLFWwindow *window, int key, int scancode, int action, i
 // GLFW3 Mouse Button Callback, runs on mouse button pressed
 static void MouseButtonCallback(GLFWwindow *window, int button, int action, int mods)
 {
-    CORE.Input.Mouse.previousButtonState[button] = CORE.Input.Mouse.currentButtonState[button];
     CORE.Input.Mouse.currentButtonState[button] = action;
 
 #if defined(SUPPORT_GESTURES_SYSTEM) && defined(SUPPORT_MOUSE_GESTURES)
@@ -4029,8 +4012,10 @@ static void MouseButtonCallback(GLFWwindow *window, int button, int action, int 
     GestureEvent gestureEvent = { 0 };
 
     // Register touch actions
-    if (IsMouseButtonPressed(MOUSE_LEFT_BUTTON)) gestureEvent.touchAction = TOUCH_DOWN;
-    else if (IsMouseButtonReleased(MOUSE_LEFT_BUTTON)) gestureEvent.touchAction = TOUCH_UP;
+    if ((CORE.Input.Mouse.currentButtonState[MOUSE_LEFT_BUTTON] != CORE.Input.Mouse.previousButtonState[MOUSE_LEFT_BUTTON]) &&
+        (CORE.Input.Mouse.currentButtonState[MOUSE_LEFT_BUTTON] == 1)) gestureEvent.touchAction = TOUCH_DOWN;
+    else if ((CORE.Input.Mouse.currentButtonState[button] != CORE.Input.Mouse.previousButtonState[button]) &&
+             (CORE.Input.Mouse.currentButtonState[button] == 0)) gestureEvent.touchAction = TOUCH_UP;
 
     // NOTE: TOUCH_MOVE event is registered in MouseCursorPosCallback()
 
@@ -4055,6 +4040,10 @@ static void MouseButtonCallback(GLFWwindow *window, int button, int action, int 
 // GLFW3 Cursor Position Callback, runs on mouse move
 static void MouseCursorPosCallback(GLFWwindow *window, double x, double y)
 {
+    CORE.Input.Mouse.position.x = (float)x;
+    CORE.Input.Mouse.position.y = (float)y;
+    CORE.Input.Touch.position[0] = CORE.Input.Mouse.position;
+    
 #if defined(SUPPORT_GESTURES_SYSTEM) && defined(SUPPORT_MOUSE_GESTURES)
     // Process mouse events as touches to be able to use mouse-gestures
     GestureEvent gestureEvent = { 0 };
@@ -4068,9 +4057,7 @@ static void MouseCursorPosCallback(GLFWwindow *window, double x, double y)
     gestureEvent.pointCount = 1;
 
     // Register touch points position, only one point registered
-    gestureEvent.position[0] = (Vector2){ (float)x, (float)y };
-
-    CORE.Input.Touch.position[0] = gestureEvent.position[0];
+    gestureEvent.position[0] = CORE.Input.Touch.position[0];
 
     // Normalize gestureEvent.position[0] for CORE.Window.screen.width and CORE.Window.screen.height
     gestureEvent.position[0].x /= (float)GetScreenWidth();
@@ -4496,6 +4483,8 @@ static EM_BOOL EmscriptenMouseCallback(int eventType, const EmscriptenMouseEvent
 // Register touch input events
 static EM_BOOL EmscriptenTouchCallback(int eventType, const EmscriptenTouchEvent *touchEvent, void *userData)
 {
+    for (int i = 0; i < touchEvent->numTouches; i++) if (eventType == EMSCRIPTEN_EVENT_TOUCHSTART) CORE.Input.Touch.currentTouchState[i] = 1;
+
 #if defined(SUPPORT_GESTURES_SYSTEM)
     GestureEvent gestureEvent = { 0 };
 
