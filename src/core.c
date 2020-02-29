@@ -82,6 +82,9 @@
 *       provided by stb_image and stb_image_write libraries, so, those libraries must be enabled on textures module
 *       for linkage
 *
+*   #define SUPPORT_DATA_STORAGE
+*       Support saving binary data automatically to a generated storage.data file. This file is managed internally.
+*
 *   DEPENDENCIES:
 *       rglfw    - Manage graphic device, OpenGL context and inputs on PLATFORM_DESKTOP (Windows, Linux, OSX. FreeBSD, OpenBSD, NetBSD, DragonFly)
 *       raymath  - 3D math functionality (Vector2, Vector3, Matrix, Quaternion)
@@ -152,7 +155,6 @@
 #endif
 
 #include <stdlib.h>             // Required for: srand(), rand(), atexit()
-#include <stdio.h>              // Required for: FILE, fopen(), fseek(), fread(), fwrite(), fclose() [Used in StorageSaveValue()/StorageLoadValue()]
 #include <string.h>             // Required for: strrchr(), strcmp(), strlen()
 #include <time.h>               // Required for: time() [Used in InitTimer()]
 #include <math.h>               // Required for: tan() [Used in BeginMode3D()]
@@ -219,33 +221,33 @@
     #include <android/window.h>             // Defines AWINDOW_FLAG_FULLSCREEN and others
     #include <android_native_app_glue.h>    // Defines basic app state struct and manages activity
 
-    #include <EGL/egl.h>        // Khronos EGL library - Native platform display device control functions
-    #include <GLES2/gl2.h>      // Khronos OpenGL ES 2.0 library
+    #include <EGL/egl.h>            // Khronos EGL library - Native platform display device control functions
+    #include <GLES2/gl2.h>          // Khronos OpenGL ES 2.0 library
 #endif
 
 #if defined(PLATFORM_RPI)
-    #include <fcntl.h>          // POSIX file control definitions - open(), creat(), fcntl()
-    #include <unistd.h>         // POSIX standard function definitions - read(), close(), STDIN_FILENO
-    #include <termios.h>        // POSIX terminal control definitions - tcgetattr(), tcsetattr()
-    #include <pthread.h>        // POSIX threads management (inputs reading)
-    #include <dirent.h>         // POSIX directory browsing
+    #include <fcntl.h>              // POSIX file control definitions - open(), creat(), fcntl()
+    #include <unistd.h>             // POSIX standard function definitions - read(), close(), STDIN_FILENO
+    #include <termios.h>            // POSIX terminal control definitions - tcgetattr(), tcsetattr()
+    #include <pthread.h>            // POSIX threads management (inputs reading)
+    #include <dirent.h>             // POSIX directory browsing
 
-    #include <sys/ioctl.h>      // UNIX System call for device-specific input/output operations - ioctl()
-    #include <linux/kd.h>       // Linux: KDSKBMODE, K_MEDIUMRAM constants definition
-    #include <linux/input.h>    // Linux: Keycodes constants definition (KEY_A, ...)
-    #include <linux/joystick.h> // Linux: Joystick support library
+    #include <sys/ioctl.h>          // UNIX System call for device-specific input/output operations - ioctl()
+    #include <linux/kd.h>           // Linux: KDSKBMODE, K_MEDIUMRAM constants definition
+    #include <linux/input.h>        // Linux: Keycodes constants definition (KEY_A, ...)
+    #include <linux/joystick.h>     // Linux: Joystick support library
 
-    #include "bcm_host.h"       // Raspberry Pi VideoCore IV access functions
+    #include "bcm_host.h"           // Raspberry Pi VideoCore IV access functions
 
-    #include "EGL/egl.h"        // Khronos EGL library - Native platform display device control functions
-    #include "EGL/eglext.h"     // Khronos EGL library - Extensions
-    #include "GLES2/gl2.h"      // Khronos OpenGL ES 2.0 library
+    #include "EGL/egl.h"            // Khronos EGL library - Native platform display device control functions
+    #include "EGL/eglext.h"         // Khronos EGL library - Extensions
+    #include "GLES2/gl2.h"          // Khronos OpenGL ES 2.0 library
 #endif
 
 #if defined(PLATFORM_UWP)
-    #include "EGL/egl.h"        // Khronos EGL library - Native platform display device control functions
-    #include "EGL/eglext.h"     // Khronos EGL library - Extensions
-    #include "GLES2/gl2.h"      // Khronos OpenGL ES 2.0 library
+    #include "EGL/egl.h"            // Khronos EGL library - Native platform display device control functions
+    #include "EGL/eglext.h"         // Khronos EGL library - Extensions
+    #include "GLES2/gl2.h"          // Khronos OpenGL ES 2.0 library
 #endif
 
 #if defined(PLATFORM_WEB)
@@ -283,34 +285,36 @@
 #endif
 
 #define MAX_GAMEPADS              4         // Max number of gamepads supported
-#define MAX_GAMEPAD_BUTTONS       32        // Max bumber of buttons supported (per gamepad)
 #define MAX_GAMEPAD_AXIS          8         // Max number of axis supported (per gamepad)
+#define MAX_GAMEPAD_BUTTONS       32        // Max bumber of buttons supported (per gamepad)
 
 #define MAX_CHARS_QUEUE           16        // Max number of characters in the input queue
 
-#define STORAGE_FILENAME        "storage.data"
+#if defined(SUPPORT_DATA_STORAGE)
+    #define STORAGE_DATA_FILE     "storage.data"
+#endif
 
 //----------------------------------------------------------------------------------
 // Types and Structures Definition
 //----------------------------------------------------------------------------------
 #if defined(PLATFORM_RPI)
 typedef struct {
-    pthread_t threadId;                         // Event reading thread id
-    int fd;                                     // File descriptor to the device it is assigned to
-    int eventNum;                               // Number of 'event<N>' device
-    Rectangle absRange;                         // Range of values for absolute pointing devices (touchscreens)
-    int touchSlot;                              // Hold the touch slot number of the currently being sent multitouch block
-    bool isMouse;                               // True if device supports relative X Y movements
-    bool isTouch;                               // True if device supports absolute X Y movements and has BTN_TOUCH
-    bool isMultitouch;                          // True if device supports multiple absolute movevents and has BTN_TOUCH
-    bool isKeyboard;                            // True if device has letter keycodes
-    bool isGamepad;                             // True if device has gamepad buttons
+    pthread_t threadId;             // Event reading thread id
+    int fd;                         // File descriptor to the device it is assigned to
+    int eventNum;                   // Number of 'event<N>' device
+    Rectangle absRange;             // Range of values for absolute pointing devices (touchscreens)
+    int touchSlot;                  // Hold the touch slot number of the currently being sent multitouch block
+    bool isMouse;                   // True if device supports relative X Y movements
+    bool isTouch;                   // True if device supports absolute X Y movements and has BTN_TOUCH
+    bool isMultitouch;              // True if device supports multiple absolute movevents and has BTN_TOUCH
+    bool isKeyboard;                // True if device has letter keycodes
+    bool isGamepad;                 // True if device has gamepad buttons
 } InputEventWorker;
 
-typedef struct{
-    int Contents[8];
-    char Head;
-    char Tail;
+typedef struct {
+    int contents[8];                // Key events FIFO contents (8 positions)
+    char head;                      // Key events FIFO head position
+    char tail;                      // Key events FIFO tail position
 } KeyEventFifo;
 #endif
 
@@ -498,7 +502,7 @@ static int32_t AndroidInputCallback(struct android_app *app, AInputEvent *event)
 #endif
 
 #if defined(PLATFORM_WEB)
-static EM_BOOL EmscriptenFullscreenChangeCallback(int eventType, const EmscriptenFullscreenChangeEvent *e, void *userData);
+static EM_BOOL EmscriptenFullscreenChangeCallback(int eventType, const EmscriptenFullscreenChangeEvent *event, void *userData);
 static EM_BOOL EmscriptenKeyboardCallback(int eventType, const EmscriptenKeyboardEvent *keyEvent, void *userData);
 static EM_BOOL EmscriptenMouseCallback(int eventType, const EmscriptenMouseEvent *mouseEvent, void *userData);
 static EM_BOOL EmscriptenTouchCallback(int eventType, const EmscriptenTouchEvent *touchEvent, void *userData);
@@ -703,7 +707,8 @@ void InitWindow(int width, int height, const char *title)
 #endif
 
 #if defined(PLATFORM_WEB)
-    emscripten_set_fullscreenchange_callback(0, 0, 1, EmscriptenFullscreenChangeCallback);
+    // Detect fullscreen change events
+    emscripten_set_fullscreenchange_callback("#canvas", NULL, 1, EmscriptenFullscreenChangeCallback);
 
     // Support keyboard events
     emscripten_set_keypress_callback("#canvas", NULL, 1, EmscriptenKeyboardCallback);
@@ -867,9 +872,9 @@ bool IsWindowHidden(void)
 // Toggle fullscreen mode (only PLATFORM_DESKTOP)
 void ToggleFullscreen(void)
 {
-#if defined(PLATFORM_DESKTOP)
     CORE.Window.fullscreen = !CORE.Window.fullscreen;          // Toggle fullscreen flag
 
+#if defined(PLATFORM_DESKTOP)
     // NOTE: glfwSetWindowMonitor() doesn't work properly (bugs)
     if (CORE.Window.fullscreen)
     {
@@ -893,7 +898,10 @@ void ToggleFullscreen(void)
     }
     else glfwSetWindowMonitor(CORE.Window.handle, NULL, CORE.Window.position.x, CORE.Window.position.y, CORE.Window.screen.width, CORE.Window.screen.height, GLFW_DONT_CARE);
 #endif
-
+#if defined(PLATFORM_WEB)
+    if (CORE.Window.fullscreen) EM_ASM(Module.requestFullscreen(false, false););
+    else EM_ASM(document.exitFullscreen(););
+#endif
 #if defined(PLATFORM_ANDROID) || defined(PLATFORM_RPI)
     TRACELOG(LOG_WARNING, "Could not toggle to windowed mode");
 #endif
@@ -970,6 +978,14 @@ void SetWindowSize(int width, int height)
 {
 #if defined(PLATFORM_DESKTOP)
     glfwSetWindowSize(CORE.Window.handle, width, height);
+#endif
+#if defined(PLATFORM_WEB)
+    emscripten_set_canvas_size(width, height);  // DEPRECATED!
+
+    // TODO: Below functions should be used to replace previous one but
+    // they do not seem to work properly
+    //emscripten_set_canvas_element_size("canvas", width, height);
+    //emscripten_set_element_css_size("canvas", width, height);
 #endif
 }
 
@@ -1622,7 +1638,7 @@ int GetFPS(void)
     static float history[FPS_CAPTURE_FRAMES_COUNT] = { 0 };
     static float average = 0, last = 0;
     float fpsFrame = GetFrameTime();
-    
+
     if (fpsFrame == 0) return 0;
 
     if ((GetTime() - last) > FPS_STEP)
@@ -1633,7 +1649,7 @@ int GetFPS(void)
         history[index] = fpsFrame/FPS_CAPTURE_FRAMES_COUNT;
         average += history[index];
     }
-    
+
     return (int)roundf(1.0f/average);
 }
 
@@ -2168,80 +2184,84 @@ unsigned char *DecompressData(unsigned char *compData, int compDataLength, int *
 
 // Save integer value to storage file (to defined position)
 // NOTE: Storage positions is directly related to file memory layout (4 bytes each integer)
-void StorageSaveValue(int position, int value)
+void SaveStorageValue(int position, int value)
 {
-    FILE *storageFile = NULL;
-
+#if defined(SUPPORT_DATA_STORAGE)
     char path[512] = { 0 };
 #if defined(PLATFORM_ANDROID)
     strcpy(path, CORE.Android.internalDataPath);
     strcat(path, "/");
-    strcat(path, STORAGE_FILENAME);
+    strcat(path, STORAGE_DATA_FILE);
 #else
-    strcpy(path, STORAGE_FILENAME);
+    strcpy(path, STORAGE_DATA_FILE);
 #endif
 
-    // Try open existing file to append data
-    storageFile = fopen(path, "rb+");
+    int dataSize = 0;
+    unsigned char *fileData = LoadFileData(path, &dataSize);
 
-    // If file doesn't exist, create a new storage data file
-    if (!storageFile) storageFile = fopen(path, "wb");
-
-    if (!storageFile) TRACELOG(LOG_WARNING, "Storage data file could not be created");
-    else
+    if (fileData != NULL)
     {
-        // Get file size
-        fseek(storageFile, 0, SEEK_END);
-        int fileSize = ftell(storageFile);  // Size in bytes
-        fseek(storageFile, 0, SEEK_SET);
-
-        if (fileSize < (position*sizeof(int))) TRACELOG(LOG_WARNING, "Storage position could not be found");
+        if (dataSize <= (position*sizeof(int)))
+        {
+            // Increase data size up to position and store value
+            dataSize = (position + 1)*sizeof(int);
+            fileData = (unsigned char *)RL_REALLOC(fileData, dataSize);
+            int *dataPtr = (int *)fileData;
+            dataPtr[position] = value;
+        }
         else
         {
-            fseek(storageFile, (position*sizeof(int)), SEEK_SET);
-            fwrite(&value, 1, sizeof(int), storageFile);
+            // Replace value on selected position
+            int *dataPtr = (int *)fileData;
+            dataPtr[position] = value;
         }
 
-        fclose(storageFile);
+        SaveFileData(path, fileData, dataSize);
+        RL_FREE(fileData);
     }
+    else
+    {
+        dataSize = (position + 1)*sizeof(int);
+        fileData = (unsigned char *)RL_MALLOC(dataSize);
+        int *dataPtr = (int *)fileData;
+        dataPtr[position] = value;
+
+        SaveFileData(path, fileData, dataSize);
+        RL_FREE(fileData);
+    }
+#endif
 }
 
 // Load integer value from storage file (from defined position)
 // NOTE: If requested position could not be found, value 0 is returned
-int StorageLoadValue(int position)
+int LoadStorageValue(int position)
 {
     int value = 0;
-
+#if defined(SUPPORT_DATA_STORAGE)
     char path[512] = { 0 };
 #if defined(PLATFORM_ANDROID)
     strcpy(path, CORE.Android.internalDataPath);
     strcat(path, "/");
-    strcat(path, STORAGE_FILENAME);
+    strcat(path, STORAGE_DATA_FILE);
 #else
-    strcpy(path, STORAGE_FILENAME);
+    strcpy(path, STORAGE_DATA_FILE);
 #endif
 
-    // Try open existing file to append data
-    FILE *storageFile = fopen(path, "rb");
+    int dataSize = 0;
+    unsigned char *fileData = LoadFileData(path, &dataSize);
 
-    if (!storageFile) TRACELOG(LOG_WARNING, "Storage data file could not be found");
-    else
+    if (fileData != NULL)
     {
-        // Get file size
-        fseek(storageFile, 0, SEEK_END);
-        int fileSize = ftell(storageFile);      // Size in bytes
-        fseek(storageFile, 0, SEEK_SET);        // Reset file pointer
-
-        if (fileSize < (position*4)) TRACELOG(LOG_WARNING, "Storage position could not be found");
+        if (dataSize < (position*4)) TRACELOG(LOG_WARNING, "Storage position could not be found");
         else
         {
-            fseek(storageFile, (position*4), SEEK_SET);
-            fread(&value, 4, 1, storageFile);   // Read 1 element of 4 bytes size
+            int *dataPtr = (int *)fileData;
+            value = dataPtr[position];
         }
 
-        fclose(storageFile);
+        RL_FREE(fileData);
     }
-
+#endif
     return value;
 }
 
@@ -2511,7 +2531,11 @@ bool IsMouseButtonReleased(int button)
 {
     bool released = false;
 
-#if !defined(PLATFORM_ANDROID)
+#if defined(PLATFORM_ANDROID)
+    # if defined(SUPPORT_GESTURES_SYSTEM)
+    released = GetGestureDetected() == GESTURE_TAP;
+    # endif
+#else
     if ((CORE.Input.Mouse.currentButtonState[button] != CORE.Input.Mouse.previousButtonState[button]) &&
         (GetMouseButtonStatus(button) == 0)) released = true;
 #endif
@@ -3574,12 +3598,12 @@ static void PollInputEvents(void)
     for (int i = 0; i < 512; i++)CORE.Input.Keyboard.previousKeyState[i] = CORE.Input.Keyboard.currentKeyState[i];
 
     // Grab a keypress from the evdev fifo if avalable
-    if (CORE.Input.Keyboard.lastKeyPressed.Head != CORE.Input.Keyboard.lastKeyPressed.Tail)
+    if (CORE.Input.Keyboard.lastKeyPressed.head != CORE.Input.Keyboard.lastKeyPressed.tail)
     {
-        CORE.Input.Keyboard.keyPressedQueue[CORE.Input.Keyboard.keyPressedQueueCount] = CORE.Input.Keyboard.lastKeyPressed.Contents[CORE.Input.Keyboard.lastKeyPressed.Tail];    // Read the key from the buffer
+        CORE.Input.Keyboard.keyPressedQueue[CORE.Input.Keyboard.keyPressedQueueCount] = CORE.Input.Keyboard.lastKeyPressed.contents[CORE.Input.Keyboard.lastKeyPressed.tail];    // Read the key from the buffer
         CORE.Input.Keyboard.keyPressedQueueCount++;
 
-        CORE.Input.Keyboard.lastKeyPressed.Tail = (CORE.Input.Keyboard.lastKeyPressed.Tail + 1) & 0x07;           // Increment the tail pointer forwards and binary wraparound after 7 (fifo is 8 elements long)
+        CORE.Input.Keyboard.lastKeyPressed.tail = (CORE.Input.Keyboard.lastKeyPressed.tail + 1) & 0x07;           // Increment the tail pointer forwards and binary wraparound after 7 (fifo is 8 elements long)
     }
 
     // Register previous mouse states
@@ -4230,37 +4254,84 @@ static int32_t AndroidInputCallback(struct android_app *app, AInputEvent *event)
 {
     // If additional inputs are required check:
     // https://developer.android.com/ndk/reference/group/input
+    // https://developer.android.com/training/game-controllers/controller-input
 
     int type = AInputEvent_getType(event);
+    int source = AInputEvent_getSource(event);
 
     if (type == AINPUT_EVENT_TYPE_MOTION)
     {
-        // Get first touch position
-        CORE.Input.Touch.position[0].x = AMotionEvent_getX(event, 0);
-        CORE.Input.Touch.position[0].y = AMotionEvent_getY(event, 0);
-
-        // Get second touch position
-        CORE.Input.Touch.position[1].x = AMotionEvent_getX(event, 1);
-        CORE.Input.Touch.position[1].y = AMotionEvent_getY(event, 1);
-
-        // Useful functions for gamepad inputs:
-        //AMotionEvent_getAction()
-        //AMotionEvent_getAxisValue()
-        //AMotionEvent_getButtonState()
-
-        // Gamepad dpad button presses capturing
-        // TODO: That's weird, key input (or button)
-        // shouldn't come as a TYPE_MOTION event...
-        int32_t keycode = AKeyEvent_getKeyCode(event);
-        if (AKeyEvent_getAction(event) == AKEY_EVENT_ACTION_DOWN)
+        if ((source & AINPUT_SOURCE_JOYSTICK) == AINPUT_SOURCE_JOYSTICK || (source & AINPUT_SOURCE_GAMEPAD) == AINPUT_SOURCE_GAMEPAD)
         {
-            CORE.Input.Keyboard.currentKeyState[keycode] = 1;  // Key down
+            // Get first touch position
+            CORE.Input.Touch.position[0].x = AMotionEvent_getX(event, 0);
+            CORE.Input.Touch.position[0].y = AMotionEvent_getY(event, 0);
 
-            CORE.Input.Keyboard.keyPressedQueue[CORE.Input.Keyboard.keyPressedQueueCount] = keycode;
-            CORE.Input.Keyboard.keyPressedQueueCount++;
+            // Get second touch position
+            CORE.Input.Touch.position[1].x = AMotionEvent_getX(event, 1);
+            CORE.Input.Touch.position[1].y = AMotionEvent_getY(event, 1);
+
+            int32_t keycode = AKeyEvent_getKeyCode(event);
+            if (AKeyEvent_getAction(event) == AKEY_EVENT_ACTION_DOWN)
+            {
+                CORE.Input.Keyboard.currentKeyState[keycode] = 1;  // Key down
+
+                CORE.Input.Keyboard.keyPressedQueue[CORE.Input.Keyboard.keyPressedQueueCount] = keycode;
+                CORE.Input.Keyboard.keyPressedQueueCount++;
+            }
+            else CORE.Input.Keyboard.currentKeyState[keycode] = 0;  // Key up
+
+            // Stop processing gamepad buttons
+            return 1;
         }
-        else CORE.Input.Keyboard.currentKeyState[keycode] = 0;  // Key up
 
+        int32_t action = AMotionEvent_getAction(event);
+        unsigned int flags = action & AMOTION_EVENT_ACTION_MASK;
+
+        // Simple touch position
+        if (flags == AMOTION_EVENT_ACTION_DOWN)
+        {
+            // Get first touch position
+            CORE.Input.Touch.position[0].x = AMotionEvent_getX(event, 0);
+            CORE.Input.Touch.position[0].y = AMotionEvent_getY(event, 0);
+        }
+
+#if defined(SUPPORT_GESTURES_SYSTEM)
+        GestureEvent gestureEvent;
+
+        // Register touch actions
+        if (flags == AMOTION_EVENT_ACTION_DOWN) gestureEvent.touchAction = TOUCH_DOWN;
+        else if (flags == AMOTION_EVENT_ACTION_UP) gestureEvent.touchAction = TOUCH_UP;
+        else if (flags == AMOTION_EVENT_ACTION_MOVE) gestureEvent.touchAction = TOUCH_MOVE;
+
+        // Register touch points count
+        // NOTE: Documentation says pointerCount is Always >= 1,
+        // but in practice it can be 0 or over a million
+        gestureEvent.pointCount = AMotionEvent_getPointerCount(event);
+
+        // Only enable gestures for 1-3 touch points
+        if ((gestureEvent.pointCount > 0) && (gestureEvent.pointCount < 4))
+        {
+            // Register touch points id
+            // NOTE: Only two points registered
+            gestureEvent.pointerId[0] = AMotionEvent_getPointerId(event, 0);
+            gestureEvent.pointerId[1] = AMotionEvent_getPointerId(event, 1);
+
+            // Register touch points position
+            gestureEvent.position[0] = (Vector2){ AMotionEvent_getX(event, 0), AMotionEvent_getY(event, 0) };
+            gestureEvent.position[1] = (Vector2){ AMotionEvent_getX(event, 1), AMotionEvent_getY(event, 1) };
+
+            // Normalize gestureEvent.position[x] for screenWidth and screenHeight
+            gestureEvent.position[0].x /= (float)GetScreenWidth();
+            gestureEvent.position[0].y /= (float)GetScreenHeight();
+
+            gestureEvent.position[1].x /= (float)GetScreenWidth();
+            gestureEvent.position[1].y /= (float)GetScreenHeight();
+
+            // Gesture data is sent to gestures system for processing
+            ProcessGestureEvent(gestureEvent);
+        }
+#endif
     }
     else if (type == AINPUT_EVENT_TYPE_KEY)
     {
@@ -4297,10 +4368,28 @@ static int32_t AndroidInputCallback(struct android_app *app, AInputEvent *event)
             // Set default OS behaviour
             return 0;
         }
+
+        return 0;
     }
 
     int32_t action = AMotionEvent_getAction(event);
     unsigned int flags = action & AMOTION_EVENT_ACTION_MASK;
+
+    // Support only simple touch position
+    if (flags == AMOTION_EVENT_ACTION_DOWN)
+    {
+        // Get first touch position
+        CORE.Input.Touch.position[0].x = AMotionEvent_getX(event, 0);
+        CORE.Input.Touch.position[0].y = AMotionEvent_getY(event, 0);
+    }
+    else if (flags == AMOTION_EVENT_ACTION_UP)
+    {
+        // Get first touch position
+        CORE.Input.Touch.position[0].x = 0;
+        CORE.Input.Touch.position[0].y = 0;
+    }
+    else // TODO:Not sure what else should be handled
+        return 0;
 
 #if defined(SUPPORT_GESTURES_SYSTEM)
     GestureEvent gestureEvent = { 0 };
@@ -4337,17 +4426,6 @@ static int32_t AndroidInputCallback(struct android_app *app, AInputEvent *event)
         // Gesture data is sent to gestures system for processing
         ProcessGestureEvent(gestureEvent);
     }
-#else
-    // Support only simple touch position
-    if (flags == AMOTION_EVENT_ACTION_DOWN)
-    {
-        // Get first touch position
-        CORE.Input.Touch.position[0].x = AMotionEvent_getX(event, 0);
-        CORE.Input.Touch.position[0].y = AMotionEvent_getY(event, 0);
-
-        CORE.Input.Touch.position[0].x /= (float)GetScreenWidth();
-        CORE.Input.Touch.position[0].y /= (float)GetScreenHeight();
-    }
 #endif
 
     return 0;
@@ -4355,7 +4433,6 @@ static int32_t AndroidInputCallback(struct android_app *app, AInputEvent *event)
 #endif
 
 #if defined(PLATFORM_WEB)
-
 // Register fullscreen change events
 static EM_BOOL EmscriptenFullscreenChangeCallback(int eventType, const EmscriptenFullscreenChangeEvent *event, void *userData)
 {
@@ -4368,10 +4445,12 @@ static EM_BOOL EmscriptenFullscreenChangeCallback(int eventType, const Emscripte
 
     if (event->isFullscreen)
     {
+        CORE.Window.fullscreen = true;
         TRACELOG(LOG_INFO, "Canvas scaled to fullscreen. ElementSize: (%ix%i), ScreenSize(%ix%i)", event->elementWidth, event->elementHeight, event->screenWidth, event->screenHeight);
     }
     else
     {
+        CORE.Window.fullscreen = false;
         TRACELOG(LOG_INFO, "Canvas scaled to windowed. ElementSize: (%ix%i), ScreenSize(%ix%i)", event->elementWidth, event->elementHeight, event->screenWidth, event->screenHeight);
     }
 
@@ -4688,8 +4767,8 @@ static void InitEvdevInput(void)
     }
 
     // Reset keypress buffer
-    CORE.Input.Keyboard.lastKeyPressed.Head = 0;
-    CORE.Input.Keyboard.lastKeyPressed.Tail = 0;
+    CORE.Input.Keyboard.lastKeyPressed.head = 0;
+    CORE.Input.Keyboard.lastKeyPressed.tail = 0;
 
     // Reset keyboard key state
     for (int i = 0; i < 512; i++) CORE.Input.Keyboard.currentKeyState[i] = 0;
@@ -5052,8 +5131,8 @@ static void *EventThread(void *arg)
                         if (event.value > 0)
                         {
                             // Add the key int the fifo
-                            CORE.Input.Keyboard.lastKeyPressed.Contents[CORE.Input.Keyboard.lastKeyPressed.Head] = keycode;   // Put the data at the front of the fifo snake
-                            CORE.Input.Keyboard.lastKeyPressed.Head = (CORE.Input.Keyboard.lastKeyPressed.Head + 1) & 0x07;   // Increment the head pointer forwards and binary wraparound after 7 (fifo is 8 elements long)
+                            CORE.Input.Keyboard.lastKeyPressed.contents[CORE.Input.Keyboard.lastKeyPressed.head] = keycode;   // Put the data at the front of the fifo snake
+                            CORE.Input.Keyboard.lastKeyPressed.head = (CORE.Input.Keyboard.lastKeyPressed.head + 1) & 0x07;   // Increment the head pointer forwards and binary wraparound after 7 (fifo is 8 elements long)
                             // TODO: This fifo is not fully threadsafe with multiple writers, so multiple keyboards hitting a key at the exact same time could miss a key (double write to head before it was incremented)
                         }
                         */

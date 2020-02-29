@@ -76,15 +76,7 @@
     #endif
 
     // Support TRACELOG macros
-    #if defined(RLGL_SUPPORT_TRACELOG)
-        #define TRACELOG(level, ...) TraceLog(level, __VA_ARGS__)
-
-        #if defined(RLGL_SUPPORT_TRACELOG_DEBUG)
-            #define TRACELOGD(...) TraceLog(LOG_DEBUG, __VA_ARGS__)
-        #else
-            #define TRACELOGD(...) (void)0
-        #endif
-    #else
+    #if !defined(TRACELOG)
         #define TRACELOG(level, ...) (void)0
         #define TRACELOGD(...) (void)0
     #endif
@@ -596,7 +588,6 @@ RLAPI void ToggleVrMode(void);                          // Enable/Disable VR exp
 RLAPI void BeginVrDrawing(void);                        // Begin VR simulator stereo rendering
 RLAPI void EndVrDrawing(void);                          // End VR simulator stereo rendering
 
-RLAPI void TRACELOG(int msgType, const char *text, ...);      // Show trace log messages (LOG_INFO, LOG_WARNING, LOG_ERROR, LOG_DEBUG)
 RLAPI int GetPixelDataSize(int width, int height, int format);// Get pixel data size in bytes (image or texture)
 #endif
 
@@ -621,10 +612,10 @@ RLAPI int GetPixelDataSize(int width, int height, int format);// Get pixel data 
     #endif
 #endif
 
-#include <stdlib.h>                 // Required for: malloc(), free(), fabs()
+#include <stdlib.h>                 // Required for: malloc(), free()
 #include <stdio.h>                  // Required for: fopen(), fseek(), fread(), fclose() [LoadText]
 #include <string.h>                 // Required for: strcmp(), strlen() [Used in rlglInit(), on extensions loading]
-#include <math.h>                   // Required for: atan2f()
+#include <math.h>                   // Required for: atan2f(), fabs()
 
 #if !defined(RLGL_STANDALONE)
     #include "raymath.h"            // Required for: Vector3 and Matrix functions
@@ -674,10 +665,6 @@ RLAPI int GetPixelDataSize(int width, int height, int format);// Get pixel data 
     #include <EGL/egl.h>                // EGL library
     #include <GLES2/gl2.h>              // OpenGL ES 2.0 library
     #include <GLES2/gl2ext.h>           // OpenGL ES 2.0 extensions library
-#endif
-
-#if defined(RLGL_STANDALONE)
-    #include <stdarg.h>                 // Required for: va_list, va_start(), vfprintf(), va_end() [Used in TraceLog()]
 #endif
 
 //----------------------------------------------------------------------------------
@@ -3001,15 +2988,17 @@ Shader GetShaderDefault(void)
 // NOTE: text chars array should be freed manually
 char *LoadText(const char *fileName)
 {
-    FILE *textFile = NULL;
     char *text = NULL;
 
     if (fileName != NULL)
     {
-        textFile = fopen(fileName,"rt");
+        FILE *textFile = fopen(fileName, "rt");
 
         if (textFile != NULL)
         {
+            // WARNING: When reading a file as 'text' file,
+            // text mode causes carriage return-linefeed translation...
+            // ...but using fseek() should return correct byte-offset
             fseek(textFile, 0, SEEK_END);
             int size = ftell(textFile);
             fseek(textFile, 0, SEEK_SET);
@@ -3018,6 +3007,15 @@ char *LoadText(const char *fileName)
             {
                 text = (char *)RL_MALLOC(sizeof(char)*(size + 1));
                 int count = fread(text, sizeof(char), size, textFile);
+
+                // WARNING: \r\n is converted to \n on reading, so,
+                // read bytes count gets reduced by the number of lines
+                if (count < size)
+                {
+                    text = RL_REALLOC(text, count + 1);
+                }
+                
+                // zero-terminate the string
                 text[count] = '\0';
             }
 
@@ -3664,7 +3662,7 @@ void SetVrConfiguration(VrDeviceInfo hmd, Shader distortion)
 
     // Compute distortion scale parameters
     // NOTE: To get lens max radius, lensShift must be normalized to [-1..1]
-    float lensRadius = (float)fabs(-1.0f - 4.0f*lensShift);
+    float lensRadius = fabsf(-1.0f - 4.0f*lensShift);
     float lensRadiusSq = lensRadius*lensRadius;
     float distortionScale = hmd.lensDistortionValues[0] +
                             hmd.lensDistortionValues[1]*lensRadiusSq +
@@ -4645,29 +4643,6 @@ static Color *GenNextMipmap(Color *srcData, int srcWidth, int srcHeight)
 #endif
 
 #if defined(RLGL_STANDALONE)
-// Show trace log messages (LOG_INFO, LOG_WARNING, LOG_ERROR, LOG_DEBUG)
-void TraceLog(int msgType, const char *text, ...)
-{
-    va_list args;
-    va_start(args, text);
-
-    switch (msgType)
-    {
-        case LOG_INFO: fprintf(stdout, "INFO: "); break;
-        case LOG_ERROR: fprintf(stdout, "ERROR: "); break;
-        case LOG_WARNING: fprintf(stdout, "WARNING: "); break;
-        case LOG_DEBUG: fprintf(stdout, "DEBUG: "); break;
-        default: break;
-    }
-
-    vfprintf(stdout, text, args);
-    fprintf(stdout, "\n");
-
-    va_end(args);
-
-    if (msgType == LOG_ERROR) exit(1);
-}
-
 // Get pixel data size in bytes (image or texture)
 // NOTE: Size depends on pixel format
 int GetPixelDataSize(int width, int height, int format)

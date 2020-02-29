@@ -64,9 +64,10 @@
     #include "config.h"         // Defines module configuration flags
 #endif
 
-#include <stdlib.h>             // Required for: malloc(), free(), fabs()
+#include <stdlib.h>             // Required for: malloc(), free()
 #include <stdio.h>              // Required for: FILE, fopen(), fclose(), fread()
 #include <string.h>             // Required for: strlen() [Used in ImageTextEx()]
+#include <math.h>               // Required for: fabsf()
 
 #include "utils.h"              // Required for: fopen() Android mapping
 
@@ -195,6 +196,7 @@ Image LoadImage(const char *fileName)
     defined(SUPPORT_FILEFORMAT_TGA) || \
     defined(SUPPORT_FILEFORMAT_GIF) || \
     defined(SUPPORT_FILEFORMAT_PIC) || \
+    defined(SUPPORT_FILEFORMAT_HDR) || \
     defined(SUPPORT_FILEFORMAT_PSD)
 #define STBI_REQUIRED
 #endif
@@ -225,53 +227,53 @@ Image LoadImage(const char *fileName)
        )
     {
 #if defined(STBI_REQUIRED)
-        int imgWidth = 0;
-        int imgHeight = 0;
-        int imgBpp = 0;
+        // NOTE: Using stb_image to load images (Supports multiple image formats)
 
-        FILE *imFile = fopen(fileName, "rb");
+        int dataSize = 0;
+        unsigned char *fileData = LoadFileData(fileName, &dataSize);
 
-        if (imFile != NULL)
+        if (fileData != NULL)
         {
-            // NOTE: Using stb_image to load images (Supports multiple image formats)
-            image.data = stbi_load_from_file(imFile, &imgWidth, &imgHeight, &imgBpp, 0);
+            int comp = 0;
+            image.data = stbi_load_from_memory(fileData, dataSize, &image.width, &image.height, &comp, 0);
 
-            fclose(imFile);
-
-            image.width = imgWidth;
-            image.height = imgHeight;
             image.mipmaps = 1;
 
-            if (imgBpp == 1) image.format = UNCOMPRESSED_GRAYSCALE;
-            else if (imgBpp == 2) image.format = UNCOMPRESSED_GRAY_ALPHA;
-            else if (imgBpp == 3) image.format = UNCOMPRESSED_R8G8B8;
-            else if (imgBpp == 4) image.format = UNCOMPRESSED_R8G8B8A8;
+            if (comp == 1) image.format = UNCOMPRESSED_GRAYSCALE;
+            else if (comp == 2) image.format = UNCOMPRESSED_GRAY_ALPHA;
+            else if (comp == 3) image.format = UNCOMPRESSED_R8G8B8;
+            else if (comp == 4) image.format = UNCOMPRESSED_R8G8B8A8;
+
+            RL_FREE(fileData);
         }
 #endif
     }
 #if defined(SUPPORT_FILEFORMAT_HDR)
     else if (IsFileExtension(fileName, ".hdr"))
     {
-        int imgBpp = 0;
+#if defined(STBI_REQUIRED)
+        int dataSize = 0;
+        unsigned char *fileData = LoadFileData(fileName, &dataSize);
 
-        FILE *imFile = fopen(fileName, "rb");
-
-        // Load 32 bit per channel floats data
-        //stbi_set_flip_vertically_on_load(true);
-        image.data = stbi_loadf_from_file(imFile, &image.width, &image.height, &imgBpp, 0);
-
-        fclose(imFile);
-
-        image.mipmaps = 1;
-
-        if (imgBpp == 1) image.format = UNCOMPRESSED_R32;
-        else if (imgBpp == 3) image.format = UNCOMPRESSED_R32G32B32;
-        else if (imgBpp == 4) image.format = UNCOMPRESSED_R32G32B32A32;
-        else
+        if (fileData != NULL)
         {
-            TRACELOG(LOG_WARNING, "[%s] Image fileformat not supported", fileName);
-            UnloadImage(image);
+            int comp = 0;
+            image.data = stbi_loadf_from_memory(fileData, dataSize, &image.width, &image.height, &comp, 0);
+
+            image.mipmaps = 1;
+
+            if (comp == 1) image.format = UNCOMPRESSED_R32;
+            else if (comp == 3) image.format = UNCOMPRESSED_R32G32B32;
+            else if (comp == 4) image.format = UNCOMPRESSED_R32G32B32A32;
+            else
+            {
+                TRACELOG(LOG_WARNING, "[%s] HDR Image fileformat not supported", fileName);
+                UnloadImage(image);
+            }
+
+            RL_FREE(fileData);
         }
+#endif
     }
 #endif
 #if defined(SUPPORT_FILEFORMAT_DDS)
@@ -346,40 +348,24 @@ Image LoadImageRaw(const char *fileName, int width, int height, int format, int 
 {
     Image image = { 0 };
 
-    FILE *rawFile = fopen(fileName, "rb");
+    int dataSize = 0;
+    unsigned char *fileData = LoadFileData(fileName, &dataSize);
 
-    if (rawFile == NULL)
+    if (fileData != NULL)
     {
-        TRACELOG(LOG_WARNING, "[%s] RAW image file could not be opened", fileName);
-    }
-    else
-    {
-        if (headerSize > 0) fseek(rawFile, headerSize, SEEK_SET);
-
+        unsigned char *dataPtr = fileData;
         unsigned int size = GetPixelDataSize(width, height, format);
 
+        if (headerSize > 0) dataPtr += headerSize;
+
         image.data = RL_MALLOC(size);      // Allocate required memory in bytes
+        memcpy(image.data, dataPtr, size); // Copy required data to image
+        image.width = width;
+        image.height = height;
+        image.mipmaps = 1;
+        image.format = format;
 
-        // NOTE: fread() returns num read elements instead of bytes,
-        // to get bytes we need to read (1 byte size, elements) instead of (x byte size, 1 element)
-        int bytes = fread(image.data, 1, size, rawFile);
-
-        // Check if data has been read successfully
-        if (bytes < size)
-        {
-            TRACELOG(LOG_WARNING, "[%s] RAW image data can not be read, wrong requested format or size", fileName);
-
-            RL_FREE(image.data);
-        }
-        else
-        {
-            image.width = width;
-            image.height = height;
-            image.mipmaps = 1;
-            image.format = format;
-        }
-
-        fclose(rawFile);
+        RL_FREE(fileData);
     }
 
     return image;
@@ -844,9 +830,8 @@ void ExportImage(Image image, const char *fileName)
     {
         // Export raw pixel data (without header)
         // NOTE: It's up to the user to track image parameters
-        FILE *rawFile = fopen(fileName, "wb");
-        success = fwrite(image.data, GetPixelDataSize(image.width, image.height, image.format), 1, rawFile);
-        fclose(rawFile);
+        SaveFileData(fileName, image.data, GetPixelDataSize(image.width, image.height, image.format));
+        success = true;
     }
 
     RL_FREE(imgData);
@@ -2704,7 +2689,7 @@ void DrawTextureEx(Texture2D texture, Vector2 position, float rotation, float sc
 // Draw a part of a texture (defined by a rectangle)
 void DrawTextureRec(Texture2D texture, Rectangle sourceRec, Vector2 position, Color tint)
 {
-    Rectangle destRec = { position.x, position.y, (float)fabs(sourceRec.width), (float)fabs(sourceRec.height) };
+    Rectangle destRec = { position.x, position.y, fabsf(sourceRec.width), fabsf(sourceRec.height) };
     Vector2 origin = { 0.0f, 0.0f };
 
     DrawTexturePro(texture, sourceRec, destRec, origin, 0.0f, tint);
@@ -2983,30 +2968,18 @@ static Image LoadAnimatedGIF(const char *fileName, int *frames, int **delays)
 {
     Image image = { 0 };
 
-    FILE *gifFile = fopen(fileName, "rb");
+    int dataSize = 0;
+    unsigned char *fileData = LoadFileData(fileName, &dataSize);
 
-    if (gifFile == NULL)
+    if (fileData != NULL)
     {
-        TRACELOG(LOG_WARNING, "[%s] Animated GIF file could not be opened", fileName);
-    }
-    else
-    {
-        fseek(gifFile, 0L, SEEK_END);
-        int size = ftell(gifFile);
-        fseek(gifFile, 0L, SEEK_SET);
-
-        unsigned char *buffer = (unsigned char *)RL_CALLOC(size, sizeof(char));
-        fread(buffer, sizeof(char), size, gifFile);
-
-        fclose(gifFile);    // Close file pointer
-
         int comp = 0;
-        image.data = stbi_load_gif_from_memory(buffer, size, delays, &image.width, &image.height, frames, &comp, 4);
+        image.data = stbi_load_gif_from_memory(fileData, dataSize, delays, &image.width, &image.height, frames, &comp, 4);
 
         image.mipmaps = 1;
         image.format = UNCOMPRESSED_R8G8B8A8;
 
-        free(buffer);
+        RL_FREE(fileData);
     }
 
     return image;
@@ -3071,7 +3044,7 @@ static Image LoadDDS(const char *fileName)
     else
     {
         // Verify the type of file
-        char ddsHeaderId[4];
+        char ddsHeaderId[4] = { 0 };
 
         fread(ddsHeaderId, 4, 1, ddsFile);
 
@@ -3081,7 +3054,7 @@ static Image LoadDDS(const char *fileName)
         }
         else
         {
-            DDSHeader ddsHeader;
+            DDSHeader ddsHeader = { 0 };
 
             // Get the image header
             fread(&ddsHeader, sizeof(DDSHeader), 1, ddsFile);
@@ -3250,7 +3223,7 @@ static Image LoadPKM(const char *fileName)
     }
     else
     {
-        PKMHeader pkmHeader;
+        PKMHeader pkmHeader = { 0 };
 
         // Get the image header
         fread(&pkmHeader, sizeof(PKMHeader), 1, pkmFile);
@@ -3343,7 +3316,7 @@ static Image LoadKTX(const char *fileName)
     }
     else
     {
-        KTXHeader ktxHeader;
+        KTXHeader ktxHeader = { 0 };
 
         // Get the image header
         fread(&ktxHeader, sizeof(KTXHeader), 1, ktxFile);
@@ -3424,7 +3397,7 @@ static int SaveKTX(Image image, const char *fileName)
     if (ktxFile == NULL) TRACELOG(LOG_WARNING, "[%s] KTX image file could not be created", fileName);
     else
     {
-        KTXHeader ktxHeader;
+        KTXHeader ktxHeader = { 0 };
 
         // KTX identifier (v1.1)
         //unsigned char id[12] = { '«', 'K', 'T', 'X', ' ', '1', '1', '»', '\r', '\n', '\x1A', '\n' };
@@ -3560,7 +3533,7 @@ static Image LoadPVR(const char *fileName)
         // Load different PVR data formats
         if (pvrVersion == 0x50)
         {
-            PVRHeaderV3 pvrHeader;
+            PVRHeaderV3 pvrHeader = { 0 };
 
             // Get PVR image header
             fread(&pvrHeader, sizeof(PVRHeaderV3), 1, pvrFile);
@@ -3670,7 +3643,7 @@ static Image LoadASTC(const char *fileName)
     }
     else
     {
-        ASTCHeader astcHeader;
+        ASTCHeader astcHeader = { 0 };
 
         // Get ASTC image header
         fread(&astcHeader, sizeof(ASTCHeader), 1, astcFile);

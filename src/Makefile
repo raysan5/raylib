@@ -150,7 +150,7 @@ ifeq ($(PLATFORM),PLATFORM_WEB)
     EMSDK_PATH         ?= C:/emsdk
     EMSCRIPTEN_PATH    ?= $(EMSDK_PATH)/upstream/emscripten
     CLANG_PATH          = $(EMSDK_PATH)/upstream/bin
-    PYTHON_PATH         = $(EMSDK_PATH)/python/2.7.13.1_64bit/python-2.7.13.amd64
+    PYTHON_PATH         = $(EMSDK_PATH)/python/3.7.4_64bit
     NODE_PATH           = $(EMSDK_PATH)/node/12.9.1_64bit/bin
     export PATH         = $(EMSDK_PATH);$(EMSCRIPTEN_PATH);$(CLANG_PATH);$(NODE_PATH);$(PYTHON_PATH);C:\raylib\MinGW\bin:$$(PATH)
 endif
@@ -291,9 +291,16 @@ endif
 
 ifeq ($(RAYLIB_BUILD_MODE),DEBUG)
     CFLAGS += -g
+    ifeq ($(PLATFORM),PLATFORM_WEB)
+        CFLAGS += -s ASSERTIONS=1 --profiling
+    endif
 endif
 ifeq ($(RAYLIB_BUILD_MODE),RELEASE)
-    CFLAGS += -O1
+    ifeq ($(PLATFORM),PLATFORM_WEB)
+        CFLAGS += -Os
+    else
+        CFLAGS += -s -O1
+    endif
 endif
 
 # Additional flags for compiler (if desired)
@@ -311,18 +318,12 @@ ifeq ($(PLATFORM),PLATFORM_WEB)
     # -s ALLOW_MEMORY_GROWTH=1   # to allow memory resizing -> WARNING: Audio buffers could FAIL!
     # -s TOTAL_MEMORY=16777216   # to specify heap memory size (default = 16MB)
     # -s USE_PTHREADS=1          # multithreading support
-    # -s WASM=0                  # disable Web Assembly, emitted by default
-    # -s EMTERPRETIFY=1          # enable emscripten code interpreter (very slow)
-    # -s EMTERPRETIFY_ASYNC=1    # support synchronous loops by emterpreter
     # -s FORCE_FILESYSTEM=1      # force filesystem to load/save files data
     # -s ASSERTIONS=1            # enable runtime checks for common memory allocation errors (-O1 and above turn it off)
     # --profiling                # include information for code profiling
     # --memory-init-file 0       # to avoid an external memory initialization code file (.mem)
     # --preload-file resources   # specify a resources folder for data compilation
     CFLAGS += -s USE_GLFW=3
-    ifeq ($(RAYLIB_BUILD_MODE),DEBUG)
-        CFLAGS += -s ASSERTIONS=1 --profiling
-    endif
 endif
 ifeq ($(PLATFORM),PLATFORM_ANDROID)
     # Compiler flags for arquitecture
@@ -477,7 +478,7 @@ endif
 raylib: $(OBJS)
 ifeq ($(PLATFORM),PLATFORM_WEB)
     # Compile raylib for web.
-	emcc -O1 $(OBJS) -o $(RAYLIB_RELEASE_PATH)/libraylib.bc
+	$(CC) -O1 $(OBJS) -o $(RAYLIB_RELEASE_PATH)/libraylib.bc
 	@echo "raylib library generated (libraylib.bc)!"
 else
     ifeq ($(RAYLIB_LIBTYPE),SHARED)
