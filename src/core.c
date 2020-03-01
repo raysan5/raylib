@@ -2522,9 +2522,16 @@ bool IsMouseButtonDown(int button)
     if (IsGestureDetected(GESTURE_HOLD)) down = true;
 #else
     if (glfwGetMouseButton(CORE.Window.handle, button)) down = true;
+
+    // WARNING: currentButtonState is filled by an event callback and 
+    // reseted every frame (moving value to previousButtonState), consequently,
+    // if button is kept down, it is not properly detected using currentButtonState
+    // Same issue happens with touch events, they should be stycky an not reseted
     //if (CORE.Input.Mouse.currentButtonState[button] == 1) down = true;
 
     // Map touches to mouse buttons checking
+    // WARNING: currentTouchState is reseted every frame and only
+    // refilled on mouse event (not tracking stationary state properly!)
     if (CORE.Input.Touch.currentTouchState[button] == 1) down = true;
 #endif
 
@@ -4008,7 +4015,7 @@ static void KeyCallback(GLFWwindow *window, int key, int scancode, int action, i
 static void MouseButtonCallback(GLFWwindow *window, int button, int action, int mods)
 {
     CORE.Input.Mouse.currentButtonState[button] = action;
-
+    
 #if defined(SUPPORT_GESTURES_SYSTEM) && defined(SUPPORT_MOUSE_GESTURES)
     // Process mouse events as touches to be able to use mouse-gestures
     GestureEvent gestureEvent = { 0 };
