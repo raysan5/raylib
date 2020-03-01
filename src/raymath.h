@@ -271,7 +271,7 @@ RMDEF Vector2 Vector2Lerp(Vector2 v1, Vector2 v2, float amount)
 // Rotate Vector by float in Degrees.
 RMDEF Vector2 Vector2Rotate(Vector2 v, float degs)
 {
-    float rads = degs*DEG2RAD
+    float rads = degs*DEG2RAD;
     Vector2 result = {v.x * cosf(rads) - v.y * sinf(rads) , v.x * sinf(rads) + v.y * cosf(rads) };
     return result;
 }
