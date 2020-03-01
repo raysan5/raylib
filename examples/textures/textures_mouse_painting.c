@@ -166,7 +166,7 @@ int main(void)
             // Draw drawing circle for reference
             if (mousePos.y > 50) 
             {
-                if (IsMouseButtonDown(MOUSE_RIGHT_BUTTON)) DrawCircleLines(mousePos.x, mousePos.y, brushSize, colors[colorSelected]);
+                if (IsMouseButtonDown(MOUSE_RIGHT_BUTTON)) DrawCircleLines(mousePos.x, mousePos.y, brushSize, GRAY);
                 else DrawCircle(GetMouseX(), GetMouseY(), brushSize, colors[colorSelected]);
             }
             
