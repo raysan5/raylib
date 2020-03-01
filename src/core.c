@@ -2521,7 +2521,8 @@ bool IsMouseButtonDown(int button)
 #if defined(PLATFORM_ANDROID)
     if (IsGestureDetected(GESTURE_HOLD)) down = true;
 #else
-    if (CORE.Input.Mouse.currentButtonState[button] == 1) down = true;
+    if (glfwGetMouseButton(CORE.Window.handle, button)) down = true;
+    //if (CORE.Input.Mouse.currentButtonState[button] == 1) down = true;
 
     // Map touches to mouse buttons checking
     if (CORE.Input.Touch.currentTouchState[button] == 1) down = true;
@@ -3612,6 +3613,7 @@ static void PollInputEvents(void)
     // Register previous mouse states
     CORE.Input.Mouse.previousWheelMove = CORE.Input.Mouse.currentWheelMove;
     CORE.Input.Mouse.currentWheelMove = 0;
+
     for (int i = 0; i < 3; i++) CORE.Input.Mouse.previousButtonState[i] = CORE.Input.Mouse.currentButtonState[i];
 
     // Loop over pending messages
@@ -4261,7 +4263,7 @@ static int32_t AndroidInputCallback(struct android_app *app, AInputEvent *event)
             int32_t keycode = AKeyEvent_getKeyCode(event);
             if (AKeyEvent_getAction(event) == AKEY_EVENT_ACTION_DOWN)
             {
-                CORE.Input.Keyboard.currentKeyState[keycode] = 1;  // Key down
+                CORE.Input.Keyboard.currentKeyState[keycode] = 1;   // Key down
 
                 CORE.Input.Keyboard.keyPressedQueue[CORE.Input.Keyboard.keyPressedQueueCount] = keycode;
                 CORE.Input.Keyboard.keyPressedQueueCount++;
@@ -4627,7 +4629,7 @@ static void ProcessKeyboard(void)
 
     // Reset pressed keys array (it will be filled below)
     for (int i = 0; i < 512; i++) CORE.Input.Keyboard.currentKeyState[i] = 0;
-
+    
     // Check keys from event input workers (This is the new keyboard reading method)
     //for (int i = 0; i < 512; i++) CORE.Input.Keyboard.currentKeyState[i] = CORE.Input.Keyboard.currentKeyStateEvdev[i];
 
