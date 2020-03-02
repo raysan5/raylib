@@ -2523,8 +2523,8 @@ bool IsMouseButtonDown(int button)
 #else
     if (glfwGetMouseButton(CORE.Window.handle, button)) down = true;
 
-    // WARNING: currentButtonState is filled by an event callback and 
-    // reseted every frame (moving value to previousButtonState), consequently,
+    // WARNING: currentButtonState is filled by an event callback (only called on event!)
+    // and reseted every frame (moving value to previousButtonState), consequently,
     // if button is kept down, it is not properly detected using currentButtonState
     // Same issue happens with touch events, they should be stycky an not reseted
     //if (CORE.Input.Mouse.currentButtonState[button] == 1) down = true;
@@ -4384,8 +4384,7 @@ static int32_t AndroidInputCallback(struct android_app *app, AInputEvent *event)
         CORE.Input.Touch.position[0].x = 0;
         CORE.Input.Touch.position[0].y = 0;
     }
-    else // TODO:Not sure what else should be handled
-        return 0;
+    else return 0; // TODO: Not sure what else should be handled
 
 #if defined(SUPPORT_GESTURES_SYSTEM)
     GestureEvent gestureEvent = { 0 };
