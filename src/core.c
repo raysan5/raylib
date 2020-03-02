@@ -4021,8 +4021,8 @@ static void MouseButtonCallback(GLFWwindow *window, int button, int action, int 
     GestureEvent gestureEvent = { 0 };
 
     // Register touch actions
-    if ((CORE.Input.Mouse.currentButtonState[MOUSE_LEFT_BUTTON] != CORE.Input.Mouse.previousButtonState[MOUSE_LEFT_BUTTON]) &&
-        (CORE.Input.Mouse.currentButtonState[MOUSE_LEFT_BUTTON] == 1)) gestureEvent.touchAction = TOUCH_DOWN;
+    if ((CORE.Input.Mouse.currentButtonState[button] != CORE.Input.Mouse.previousButtonState[button]) &&
+        (CORE.Input.Mouse.currentButtonState[button] == 1)) gestureEvent.touchAction = TOUCH_DOWN;
     else if ((CORE.Input.Mouse.currentButtonState[button] != CORE.Input.Mouse.previousButtonState[button]) &&
              (CORE.Input.Mouse.currentButtonState[button] == 0)) gestureEvent.touchAction = TOUCH_UP;
 
