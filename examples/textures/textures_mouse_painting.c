@@ -106,7 +106,7 @@ int main(void)
             EndTextureMode();
         }
 
-        if (IsMouseButtonDown(MOUSE_LEFT_BUTTON))
+        if (IsMouseButtonDown(MOUSE_LEFT_BUTTON) || (GetGestureDetected() == GESTURE_DRAG))
         {
             // Paint circle into render texture
             // NOTE: To avoid discontinuous circles, we could store
@@ -194,7 +194,7 @@ int main(void)
                 DrawRectangle(0, 150, GetScreenWidth(), 80, BLACK);
                 DrawText("IMAGE SAVED:  my_amazing_texture_painting.png", 150, 180, 20, RAYWHITE);
             }
-            
+
         EndDrawing();
         //----------------------------------------------------------------------------------
     }
