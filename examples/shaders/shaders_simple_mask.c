@@ -21,6 +21,12 @@
 #include "raylib.h"
 #include "raymath.h"
 
+#if defined(PLATFORM_DESKTOP)
+    #define GLSL_VERSION            330
+#else   // PLATFORM_RPI, PLATFORM_ANDROID, PLATFORM_WEB
+    #define GLSL_VERSION            100
+#endif
+
 int main(void)
 {
     // Initialization
@@ -50,8 +56,8 @@ int main(void)
     Model model3 = LoadModelFromMesh(sphere);
 
     // Load the shader
-    Shader shader = LoadShader("resources/shaders/glsl330/mask.vs", "resources/shaders/glsl330/mask.fs");
-
+    Shader shader = LoadShader(0, FormatText("resources/shaders/glsl%i/mask.fs", GLSL_VERSION));
+    
     // Load and apply the diffuse texture (colour map)
     Texture texDiffuse = LoadTexture("resources/plasma.png");
     model1.materials[0].maps[MAP_DIFFUSE].texture = texDiffuse;
@@ -66,7 +72,7 @@ int main(void)
     shader.locs[LOC_MAP_EMISSION] = GetShaderLocation(shader, "mask");
 
     // Frame is incremented each frame to animate the shader
-    int shaderFrame = GetShaderLocation(shader, "framesCounter");
+    int shaderFrame = GetShaderLocation(shader, "frame");
 
     // Apply the shader to the two models
     model1.materials[0].shader = shader;
