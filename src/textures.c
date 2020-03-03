@@ -299,7 +299,7 @@ Image LoadImage(const char *fileName)
     return image;
 }
 
-// Load image from file in memory
+// Load image from file already in memory
 Image LoadImageBuffer(const char *extension, const void *data, const unsigned int length)
 {
     Image image = { 0 };
