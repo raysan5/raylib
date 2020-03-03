@@ -42,7 +42,7 @@ int main(void)
 
     // Load animation data
     int animsCount = 0;
-    ModelAnimation *anims = LoadModelAnimations("resources/guy/guyanim.iqm", &animsCount);
+    ModelAnimation *anims = LoadModelAnimations("resources/models/RiggedFigure.glb", &animsCount);
     int animFrameCounter = 0;
 
     SetCameraMode(camera, CAMERA_FREE); // Set free camera mode
@@ -60,9 +60,9 @@ int main(void)
         // Play animation when spacebar is held down
         if (IsKeyDown(KEY_SPACE))
         {
-            animFrameCounter++;
+            //animFrameCounter++;
             //UpdateModelAnimation(model, anims[0], animFrameCounter);
-            if (animFrameCounter >= anims[0].frameCount) animFrameCounter = 0;
+            //if (animFrameCounter >= anims[0].frameCount) animFrameCounter = 0;
         }
         //----------------------------------------------------------------------------------
 

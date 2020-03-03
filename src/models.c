@@ -91,9 +91,11 @@ static Model LoadOBJ(const char *fileName);     // Load OBJ mesh data
 #endif
 #if defined(SUPPORT_FILEFORMAT_IQM)
 static Model LoadIQM(const char *fileName);     // Load IQM mesh data
+static ModelAnimation *loadIQMModelAnimations(FILE* iqmFile, int* animsCount);
 #endif
 #if defined(SUPPORT_FILEFORMAT_GLTF)
 static Model LoadGLTF(const char *fileName);    // Load GLTF mesh data
+static ModelAnimation *loadGLTFModelAnimations(FILE* gltfFile, const char* fileName, int* animsCount);
 #endif
 
 //----------------------------------------------------------------------------------
@@ -896,6 +898,160 @@ void SetModelMeshMaterial(Model *model, int meshId, int materialId)
 // Load model animations from file
 ModelAnimation *LoadModelAnimations(const char *filename, int *animCount)
 {
+    #define GLTF_EXTENSION "gltf"
+    #define GLB_EXTENSION "glb"
+    #define IQM_EXTENSION "iqm"
+
+    // Ensure file exists
+    if (!FileExists(filename)) {
+        TRACELOG(LOG_ERROR, "[%s] File doesn't exist", filename);
+        return NULL;
+    }
+
+    // Get Extension to see which static function to call
+    const char* extension = GetExtension(filename);
+    if (!extension) {
+        TRACELOG(LOG_ERROR, "[%s] File has no extension", filename);
+        return NULL;
+    }
+
+    // Open file, pass to correct function
+    FILE *animationFile = NULL;
+    animationFile = fopen(filename,"rb");
+
+    if (!animationFile) {
+        TRACELOG(LOG_ERROR, "[%s] Unable to open file", filename);
+        return NULL;
+    }
+
+    if (TextIsEqual(extension, GLTF_EXTENSION) || TextIsEqual(extension, GLB_EXTENSION)) {
+        return loadGLTFModelAnimations(animationFile, filename, animCount);
+    }
+
+    if (TextIsEqual(extension, IQM_EXTENSION)) {
+        return loadIQMModelAnimations(animationFile, animCount);
+    }
+
+    // Close file
+    fclose(animationFile);
+    return NULL;
+}
+
+static ModelAnimation *loadGLTFModelAnimations(FILE* gltfFile, const char* fileName, int* animCount)
+{
+    #define LOAD_ACCESSOR(type, nbcomp, acc, dst) \
+    { \
+        int n = 0; \
+        type* buf = (type*)acc->buffer_view->buffer->data+acc->buffer_view->offset/sizeof(type)+acc->offset/sizeof(type); \
+        for (int k = 0; k < acc->count; k++) {\
+            for (int l = 0; l < nbcomp; l++) {\
+                dst[nbcomp*k+l] = buf[n+l];\
+            }\
+            n += acc->stride/sizeof(type);\
+        }\
+    }
+
+    typedef struct GLTFSampler {
+        char name[30];
+    } GLTFSampler;
+    typedef struct GLTFChannel {
+        GLTFSampler *samplers;
+        int samplersCount;
+    } GLTFChannel;
+    typedef struct GLTFAnimation {
+        GLTFChannel *channels;
+        int channelsCount;
+
+        GLTFSampler *samplers;
+        int samplersCount;
+    } GLTFAnimation;
+
+    fseek(gltfFile, 0, SEEK_END);
+    int size = ftell(gltfFile);
+    fseek(gltfFile, 0, SEEK_SET);
+
+    void *buffer = RL_MALLOC(size);
+    fread(buffer, size, 1, gltfFile);
+
+    fclose(gltfFile);
+
+    // glTF data loading
+    cgltf_options options = { 0 };
+    cgltf_data *data = NULL;
+    cgltf_result result = cgltf_parse(&options, buffer, size, &data);
+
+    if (result == cgltf_result_success)
+    {
+        // Read data buffers
+        result = cgltf_load_buffers(&options, data, fileName);
+        if (result != cgltf_result_success) TRACELOG(LOG_INFO, "[%s][%s] Error loading mesh/material buffers", fileName, (data->file_type == 2)? "glb" : "gltf");
+        ModelAnimation* animations = RL_CALLOC(data->animations_count, sizeof(ModelAnimation));
+
+        for (int i = 0; i < data->animations_count; i++) {
+            // Copy Animation Name
+            if (data->animations[i].name) {
+                if (TextLength(data->animations[i].name) < 64) {
+                    TextCopy(animations[i].name, data->animations[i].name);
+                }
+            }
+
+            //GLTFAnimation animation = { 0 };
+
+            // Contains Channels, copy those to internal struct
+            if (data->animations[i].channels_count > 0) {
+                for (int j = 0; j < data->animations[i].channels_count; j++) {
+                    cgltf_node* animationTargetNode = data->animations[i].channels[j].target_node;
+                    cgltf_animation_sampler* animationSampler = data->animations[i].channels[j].sampler;
+                    cgltf_animation_path_type animPathType = data->animations[i].channels[j].target_path;
+
+                    cgltf_accessor* inputAcc = animationSampler->input;
+                    cgltf_accessor* outputAcc = animationSampler->output;
+                    cgltf_interpolation_type interpolationType = animationSampler->interpolation;
+
+                    // Inputs are always linear.. they are time in seconds of keyframe
+                    float* inputs = RL_CALLOC(inputAcc->count, sizeof(float));
+                    int inputsCount = inputAcc->count; 
+                    LOAD_ACCESSOR(float, 1, inputAcc, inputs);
+                    
+                    for (int blah = 0; blah < inputsCount; blah++) {
+                        printf("INPUT: animation: %d, channel: %d, index: %d, value: %f\n", i, j, blah, inputs[blah]);
+                    }
+
+                    // Outputs scale based on the sampler buffer type.. for instance outputAcc->type could be Scalar(1).. 
+                    // in most cases it will Vec3(3) or Vec4(4), so we must accomdate the array size
+                    float* outputs = RL_CALLOC(outputAcc->count * outputAcc->type, sizeof(float));
+                    int outputsCount = outputAcc->count * outputAcc->type;
+                    LOAD_ACCESSOR(float, 3, outputAcc, outputs);
+
+                    for (int blah = 0; blah < outputsCount; blah++) {
+                        printf("OUTPUT: animation: %d, channel: %d, index: %d, value: %f\n", i, j, blah, outputs[blah]);
+                    }
+                    puts("\n");
+
+                    //Get raylib bone joint..
+
+                    switch (interpolationType) {
+                        case cgltf_interpolation_type_linear:
+                            break;
+                        case cgltf_interpolation_type_step:
+                            break;
+                        case cgltf_interpolation_type_cubic_spline:
+                            break;
+                        default:
+                            TRACELOG(LOG_WARNING, "Unsupported interpolation type for GLTF/GLB model.");
+                            break;
+                    }
+                }
+            }
+        }
+    }
+
+    free(data);
+    return NULL;
+}
+
+static ModelAnimation *loadIQMModelAnimations(FILE* iqmFile, int *animCount) 
+{
     #define IQM_MAGIC       "INTERQUAKEMODEL"   // IQM file magic number
     #define IQM_VERSION     2                   // only IQM version 2 supported
 
@@ -929,16 +1085,7 @@ ModelAnimation *LoadModelAnimations(const char *filename, int *animCount)
         float framerate;
         unsigned int flags;
     } IQMAnim;
-
-    FILE *iqmFile = NULL;
     IQMHeader iqm;
-
-    iqmFile = fopen(filename,"rb");
-
-    if (!iqmFile)
-    {
-        TRACELOG(LOG_ERROR, "[%s] Unable to open file", filename);
-    }
 
     // Read IQM header
     fread(&iqm, sizeof(IQMHeader), 1, iqmFile);
@@ -3463,6 +3610,7 @@ static Model LoadGLTF(const char *fileName)
           - Loads all raylib supported material textures, values and colors
           - Supports multiple mesh per model and multiple primitives per model
           - Loading joints for a single skin
+          - Primitive(Mesh) weight and joints
 
         Some restrictions (not exhaustive):
           - Triangle-only meshes
@@ -3539,8 +3687,8 @@ static Model LoadGLTF(const char *fileName)
         {
             if (data->skins[0].joints[i]->name) {
                 // Raylib only supports names up to 34 characters..
-                if (strlen(data->skins[0].joints[i]->name) <= 34) {
-                    strcpy(model.bones[i].name, data->skins[0].joints[i]->name); 
+                if (TextLength(data->skins[0].joints[i]->name) <= 34) {
+                    TextCopy(model.bones[i].name, data->skins[0].joints[i]->name); 
                 }
             }
 
@@ -3556,7 +3704,8 @@ static Model LoadGLTF(const char *fileName)
             if (data->skins[0].joints[i]->has_translation) {
                 model.bindPose[i].translation.x = data->skins[0].joints[i]->translation[0];
                 model.bindPose[i].translation.y = data->skins[0].joints[i]->translation[1];
-                model.bindPose[i].translation.z = data->skins[0].joints[i]->translation[2]; 
+                model.bindPose[i].translation.z = data->skins[0].joints[i]->translation[2];
+                printf("\nJoint %i Translation(X: %f, Y: %f, Z: %f) ", i, model.bindPose[i].translation.x, model.bindPose[i].translation.y, model.bindPose[i].translation.z); 
             }
 
             // Set the rotation for this joint
@@ -3565,6 +3714,7 @@ static Model LoadGLTF(const char *fileName)
                 model.bindPose[i].rotation.y = data->skins[0].joints[i]->rotation[1];
                 model.bindPose[i].rotation.z = data->skins[0].joints[i]->rotation[2];
                 model.bindPose[i].rotation.w = data->skins[0].joints[i]->rotation[3];
+                printf("Rotation(X: %f, Y: %f, Z: %f, W: %f) ", model.bindPose[i].rotation.x, model.bindPose[i].rotation.y, model.bindPose[i].rotation.z, model.bindPose[i].rotation.w); 
             }
 
             // Set the scale for this joint
@@ -3572,6 +3722,7 @@ static Model LoadGLTF(const char *fileName)
                 model.bindPose[i].scale.x = data->skins[0].joints[i]->scale[0];
                 model.bindPose[i].scale.y = data->skins[0].joints[i]->scale[1];
                 model.bindPose[i].scale.z = data->skins[0].joints[i]->scale[2];
+                printf("Scale(X: %f, Y: %f, Z: %f)", model.bindPose[i].scale.x, model.bindPose[i].scale.y, model.bindPose[i].scale.z); 
             }
         }
 
@@ -3587,7 +3738,7 @@ static Model LoadGLTF(const char *fileName)
             }
         }
         
-        TRACELOG(LOG_INFO, "[%s][%d] Joints loaded", fileName, data->skins[0].joints_count);
+        TRACELOG(LOG_INFO, "\n[%s][%d] Joints loaded", fileName, data->skins[0].joints_count);
         for (int i = 0; i < model.materialCount - 1; i++)
         {
             model.materials[i] = LoadMaterialDefault();
@@ -3661,29 +3812,37 @@ static Model LoadGLTF(const char *fileName)
 
         int primitiveIndex = 0;
 
+        // For each Mesh
         for (int i = 0; i < data->meshes_count; i++)
         {
+            // For each primitive in mesh
             for (int p = 0; p < data->meshes[i].primitives_count; p++)
             {
+                // For each primitive attribute in mesh
                 for (int j = 0; j < data->meshes[i].primitives[p].attributes_count; j++)
                 {
+                    // If primitive attribute is position type
                     if (data->meshes[i].primitives[p].attributes[j].type == cgltf_attribute_type_position)
                     {
                         cgltf_accessor *acc = data->meshes[i].primitives[p].attributes[j].data;
                         model.meshes[primitiveIndex].vertexCount = acc->count;
                         model.meshes[primitiveIndex].vertices = RL_MALLOC(sizeof(float)*model.meshes[primitiveIndex].vertexCount*3);
-                        model.meshes[i].animVertices = RL_CALLOC(model.meshes[i].vertexCount*3, sizeof(float));
-                        model.meshes[i].animNormals = RL_CALLOC(model.meshes[i].vertexCount*3, sizeof(float));
+                        model.meshes[primitiveIndex].animVertices = RL_MALLOC(sizeof(float)*model.meshes[primitiveIndex].vertexCount*3);
 
                         LOAD_ACCESSOR(float, 3, acc, model.meshes[primitiveIndex].vertices)
                     }
+
+                    // If primitive attribute is normal type
                     else if (data->meshes[i].primitives[p].attributes[j].type == cgltf_attribute_type_normal)
                     {
                         cgltf_accessor *acc = data->meshes[i].primitives[p].attributes[j].data;
                         model.meshes[primitiveIndex].normals = RL_MALLOC(sizeof(float)*acc->count*3);
+                        model.meshes[primitiveIndex].animNormals = RL_MALLOC(sizeof(float)*model.meshes[primitiveIndex].vertexCount*3);
 
                         LOAD_ACCESSOR(float, 3, acc, model.meshes[primitiveIndex].normals)
                     }
+
+                    // If primitive attribute is texcoord type
                     else if (data->meshes[i].primitives[p].attributes[j].type == cgltf_attribute_type_texcoord)
                     {
                         cgltf_accessor *acc = data->meshes[i].primitives[p].attributes[j].data;
@@ -3698,6 +3857,22 @@ static Model LoadGLTF(const char *fileName)
                             // TODO: Support normalized unsigned byte/unsigned short texture coordinates
                             TRACELOG(LOG_WARNING, "[%s] Texture coordinates must be float", fileName);
                         }
+                    }
+
+                    // If primitive attribute is weight type (Up to 4 bones can influence the weight)
+                    else if (data->meshes[i].primitives[p].attributes[j].type == cgltf_attribute_type_weights)
+                    {
+                        cgltf_accessor *acc = data->meshes[i].primitives[p].attributes[j].data;
+                        model.meshes[primitiveIndex].boneWeights = RL_MALLOC(sizeof(float) * acc->count * 4);
+                        LOAD_ACCESSOR(float, 4, acc, model.meshes[primitiveIndex].boneWeights);
+                    }
+
+                    // If primitive attribute is joint type (Up to four joints can influence vertex)
+                    else if (data->meshes[i].primitives[p].attributes[j].type == cgltf_attribute_type_joints)
+                    {
+                        cgltf_accessor *acc = data->meshes[i].primitives[p].attributes[j].data;
+                        model.meshes[primitiveIndex].boneIds = RL_MALLOC(sizeof(int) * acc->count * 4);
+                        LOAD_ACCESSOR(int, 4, acc, model.meshes[primitiveIndex].boneIds);
                     }
                 }
 
