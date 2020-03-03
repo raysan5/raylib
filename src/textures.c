@@ -299,6 +299,128 @@ Image LoadImage(const char *fileName)
     return image;
 }
 
+// Load image from file in memory
+Image LoadImageBuffer(const char *extension, const void *data, const unsigned int length)
+{
+    Image image = { 0 };
+    
+    if (!extension || !data || !length)
+    {
+        TRACELOG(LOG_WARNING, "[ERROR] LoadImageBuffer invalid arguments");
+        return image;
+    }
+
+#if defined(SUPPORT_FILEFORMAT_PNG) || \
+    defined(SUPPORT_FILEFORMAT_BMP) || \
+    defined(SUPPORT_FILEFORMAT_TGA) || \
+    defined(SUPPORT_FILEFORMAT_GIF) || \
+    defined(SUPPORT_FILEFORMAT_PIC) || \
+    defined(SUPPORT_FILEFORMAT_HDR) || \
+    defined(SUPPORT_FILEFORMAT_PSD)
+#define STBI_REQUIRED
+#endif
+
+#if defined(SUPPORT_FILEFORMAT_PNG)
+    if ((IsFileExtension(extension, ".png"))
+#else
+    if ((false)
+#endif
+#if defined(SUPPORT_FILEFORMAT_BMP)
+        || (IsFileExtension(extension, ".bmp"))
+#endif
+#if defined(SUPPORT_FILEFORMAT_TGA)
+        || (IsFileExtension(extension, ".tga"))
+#endif
+#if defined(SUPPORT_FILEFORMAT_JPG)
+        || (IsFileExtension(extension, ".jpg"))
+#endif
+#if defined(SUPPORT_FILEFORMAT_GIF)
+        || (IsFileExtension(extension, ".gif"))
+#endif
+#if defined(SUPPORT_FILEFORMAT_PIC)
+        || (IsFileExtension(extension, ".pic"))
+#endif
+#if defined(SUPPORT_FILEFORMAT_PSD)
+        || (IsFileExtension(extension, ".psd"))
+#endif
+       )
+    {
+#if defined(STBI_REQUIRED)
+        // NOTE: Using stb_image to load images (Supports multiple image formats)
+
+        int dataSize = length;
+        unsigned char *fileData = data;
+
+        if (fileData != NULL)
+        {
+            int comp = 0;
+            image.data = stbi_load_from_memory(fileData, dataSize, &image.width, &image.height, &comp, 0);
+
+            image.mipmaps = 1;
+
+            if (comp == 1) image.format = UNCOMPRESSED_GRAYSCALE;
+            else if (comp == 2) image.format = UNCOMPRESSED_GRAY_ALPHA;
+            else if (comp == 3) image.format = UNCOMPRESSED_R8G8B8;
+            else if (comp == 4) image.format = UNCOMPRESSED_R8G8B8A8;
+
+            RL_FREE(fileData);
+        }
+#endif
+    }
+#if defined(SUPPORT_FILEFORMAT_HDR)
+    else if (IsFileExtension(extension, ".hdr"))
+    {
+#if defined(STBI_REQUIRED)
+
+        int dataSize = length;
+        unsigned char *fileData = data;
+
+        if (fileData != NULL)
+        {
+            int comp = 0;
+            image.data = stbi_loadf_from_memory(fileData, dataSize, &image.width, &image.height, &comp, 0);
+
+            image.mipmaps = 1;
+
+            if (comp == 1) image.format = UNCOMPRESSED_R32;
+            else if (comp == 3) image.format = UNCOMPRESSED_R32G32B32;
+            else if (comp == 4) image.format = UNCOMPRESSED_R32G32B32A32;
+            else
+            {
+                TRACELOG(LOG_WARNING, "[%s] HDR LoadImageBuffer fileformat not supported", extension);
+                UnloadImage(image);
+            }
+
+            RL_FREE(fileData);
+        }
+#endif
+    }
+#endif
+#if 0 /* TODO: in-memory versions of these loaders */
+#if defined(SUPPORT_FILEFORMAT_DDS)
+    else if (IsFileExtension(extension, ".dds")) image = LoadDDS(fileName);
+#endif
+#if defined(SUPPORT_FILEFORMAT_PKM)
+    else if (IsFileExtension(extension, ".pkm")) image = LoadPKM(fileName);
+#endif
+#if defined(SUPPORT_FILEFORMAT_KTX)
+    else if (IsFileExtension(extension, ".ktx")) image = LoadKTX(fileName);
+#endif
+#if defined(SUPPORT_FILEFORMAT_PVR)
+    else if (IsFileExtension(extension, ".pvr")) image = LoadPVR(fileName);
+#endif
+#if defined(SUPPORT_FILEFORMAT_ASTC)
+    else if (IsFileExtension(extension, ".astc")) image = LoadASTC(fileName);
+#endif
+#endif
+    else TRACELOG(LOG_WARNING, "[%s] LoadImageBuffer fileformat not supported", extension);
+
+    if (image.data != NULL) TRACELOG(LOG_INFO, "[%s] LoadImageBuffer loaded successfully (%ix%i)", fileName, image.width, image.height);
+    else TRACELOG(LOG_WARNING, "[%s] LoadImageBuffer could not be loaded", fileName);
+
+    return image;
+}
+
 // Load image from Color array data (RGBA - 32bit)
 // NOTE: Creates a copy of pixels data array
 Image LoadImageEx(Color *pixels, int width, int height)
