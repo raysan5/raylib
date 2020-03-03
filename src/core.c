@@ -445,7 +445,7 @@ typedef struct CoreData {
 //----------------------------------------------------------------------------------
 static CoreData CORE = { 0 };               // Global CORE context
 
-static char **dirFilesPath;                 // Store directory files paths as strings
+static char **dirFilesPath = NULL;          // Store directory files paths as strings
 static int dirFilesCount = 0;               // Count directory files strings
 
 #if defined(SUPPORT_SCREEN_CAPTURE)
@@ -2306,7 +2306,7 @@ bool IsKeyPressed(int key)
 {
     bool pressed = false;
 
-    if ((CORE.Input.Keyboard.currentKeyState[key] != CORE.Input.Keyboard.previousKeyState[key]) && (CORE.Input.Keyboard.currentKeyState[key] == 1)) pressed = true;
+    if ((CORE.Input.Keyboard.previousKeyState[key] == 0) && (CORE.Input.Keyboard.currentKeyState[key] == 1)) pressed = true;
     else pressed = false;
 
     return pressed;
@@ -2324,7 +2324,7 @@ bool IsKeyReleased(int key)
 {
     bool released = false;
 
-    if ((CORE.Input.Keyboard.currentKeyState[key] != CORE.Input.Keyboard.previousKeyState[key]) && (CORE.Input.Keyboard.currentKeyState[key] == 0)) released = true;
+    if ((CORE.Input.Keyboard.previousKeyState[key] == 1) && (CORE.Input.Keyboard.currentKeyState[key] == 0)) released = true;
     else released = false;
 
     return released;
