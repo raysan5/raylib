@@ -477,8 +477,6 @@ static void SwapBuffers(void);                          // Copy back buffer to f
 static void InitTimer(void);                            // Initialize timer
 static void Wait(float ms);                             // Wait for some milliseconds (stop program execution)
 
-//static int GetKeyState(int key);
-//static int GetMouseButtonState(int button);
 static int GetGamepadButton(int button);                // Get gamepad button generic to all platforms
 static int GetGamepadAxis(int axis);                    // Get gamepad axis generic to all platforms
 static void PollInputEvents(void);                      // Register user events
@@ -3988,12 +3986,20 @@ static void KeyCallback(GLFWwindow *window, int key, int scancode, int action, i
         }
 #endif  // SUPPORT_SCREEN_CAPTURE
     }
-    else CORE.Input.Keyboard.currentKeyState[key] = action;
+    else 
+    {
+        // WARNING: GLFW could return GLFW_REPEAT, we need to consider it as 1
+        // to work properly with our implementation (IsKeyDown/IsKeyUp checks)
+        if (action == GLFW_RELEASE) CORE.Input.Keyboard.currentKeyState[key] = 0;
+        else CORE.Input.Keyboard.currentKeyState[key] = 1;
+    }
 }
 
 // GLFW3 Mouse Button Callback, runs on mouse button pressed
 static void MouseButtonCallback(GLFWwindow *window, int button, int action, int mods)
 {
+    // WARNING: GLFW could only return GLFW_PRESS (1) or GLFW_RELEASE (0) for now, 
+    // but future releases may add more actions (i.e. GLFW_REPEAT)
     CORE.Input.Mouse.currentButtonState[button] = action;
     
 #if defined(SUPPORT_GESTURES_SYSTEM) && defined(SUPPORT_MOUSE_GESTURES)
