@@ -2502,12 +2502,10 @@ bool IsMouseButtonPressed(int button)
 #if defined(PLATFORM_ANDROID)
     if (IsGestureDetected(GESTURE_TAP)) pressed = true;
 #else
-    if ((CORE.Input.Mouse.currentButtonState[button] != CORE.Input.Mouse.previousButtonState[button]) &&
-         (CORE.Input.Mouse.currentButtonState[button] == 1)) pressed = true;
+    if ((CORE.Input.Mouse.currentButtonState[button] == 1) && (CORE.Input.Mouse.previousButtonState[button] == 0)) pressed = true;
 
     // Map touches to mouse buttons checking
-    if ((CORE.Input.Touch.currentTouchState[button] != CORE.Input.Touch.previousTouchState[button]) &&
-         (CORE.Input.Touch.currentTouchState[button] == 1)) pressed = true;
+    if ((CORE.Input.Touch.currentTouchState[button] == 1) && (CORE.Input.Touch.previousTouchState[button] == 0)) pressed = true;
 #endif
 
     return pressed;
@@ -2521,17 +2519,9 @@ bool IsMouseButtonDown(int button)
 #if defined(PLATFORM_ANDROID)
     if (IsGestureDetected(GESTURE_HOLD)) down = true;
 #else
-    if (glfwGetMouseButton(CORE.Window.handle, button)) down = true;
-
-    // WARNING: currentButtonState is filled by an event callback (only called on event!)
-    // and reseted every frame (moving value to previousButtonState), consequently,
-    // if button is kept down, it is not properly detected using currentButtonState
-    // Same issue happens with touch events, they should be stycky an not reseted
-    //if (CORE.Input.Mouse.currentButtonState[button] == 1) down = true;
+    if (CORE.Input.Mouse.currentButtonState[button] == 1) down = true;
 
     // Map touches to mouse buttons checking
-    // WARNING: currentTouchState is reseted every frame and only
-    // refilled on mouse event (not tracking stationary state properly!)
     if (CORE.Input.Touch.currentTouchState[button] == 1) down = true;
 #endif
 
@@ -2548,12 +2538,10 @@ bool IsMouseButtonReleased(int button)
         released = GetGestureDetected() == GESTURE_TAP;
     #endif
 #else
-    if ((CORE.Input.Mouse.currentButtonState[button] != CORE.Input.Mouse.previousButtonState[button]) &&
-        (CORE.Input.Mouse.currentButtonState[button] == 0)) released = true;
+    if ((CORE.Input.Mouse.currentButtonState[button] == 0) && (CORE.Input.Mouse.previousButtonState[button] == 1)) released = true;
     
     // Map touches to mouse buttons checking
-    if ((CORE.Input.Touch.currentTouchState[button] != CORE.Input.Touch.previousTouchState[button]) &&
-         (CORE.Input.Touch.currentTouchState[button] == 0)) released = true;
+    if ((CORE.Input.Touch.currentTouchState[button] == 0) && (CORE.Input.Touch.previousTouchState[button] == 1)) released = true;
 #endif
 
     return released;
@@ -3767,22 +3755,14 @@ static void PollInputEvents(void)
     for (int i = 0; i < 512; i++) CORE.Input.Keyboard.previousKeyState[i] = CORE.Input.Keyboard.currentKeyState[i];
 
     // Register previous mouse states
-    for (int i = 0; i < 3; i++) 
-    {
-        CORE.Input.Mouse.previousButtonState[i] = CORE.Input.Mouse.currentButtonState[i];
-        CORE.Input.Mouse.currentButtonState[i] = 0;
-    }
+    for (int i = 0; i < 3; i++) CORE.Input.Mouse.previousButtonState[i] = CORE.Input.Mouse.currentButtonState[i];
 
     // Register previous mouse wheel state
     CORE.Input.Mouse.previousWheelMove = CORE.Input.Mouse.currentWheelMove;
     CORE.Input.Mouse.currentWheelMove = 0;
 
     // Register previous touch states
-    for (int i = 0; i < MAX_TOUCH_POINTS; i++) 
-    {
-        CORE.Input.Touch.previousTouchState[i] = CORE.Input.Touch.currentTouchState[i];
-        CORE.Input.Touch.currentTouchState[i] = 0;
-    }
+    for (int i = 0; i < MAX_TOUCH_POINTS; i++) CORE.Input.Touch.previousTouchState[i] = CORE.Input.Touch.currentTouchState[i];
 #endif
 
 #if defined(PLATFORM_DESKTOP)
@@ -4021,11 +4001,9 @@ static void MouseButtonCallback(GLFWwindow *window, int button, int action, int 
     GestureEvent gestureEvent = { 0 };
 
     // Register touch actions
-    if ((CORE.Input.Mouse.currentButtonState[button] != CORE.Input.Mouse.previousButtonState[button]) &&
-        (CORE.Input.Mouse.currentButtonState[button] == 1)) gestureEvent.touchAction = TOUCH_DOWN;
-    else if ((CORE.Input.Mouse.currentButtonState[button] != CORE.Input.Mouse.previousButtonState[button]) &&
-             (CORE.Input.Mouse.currentButtonState[button] == 0)) gestureEvent.touchAction = TOUCH_UP;
-
+    if ((CORE.Input.Mouse.currentButtonState[button] == 1) && (CORE.Input.Mouse.previousButtonState[button] == 0)) gestureEvent.touchAction = TOUCH_DOWN;
+    else if ((CORE.Input.Mouse.currentButtonState[button] == 0) && (CORE.Input.Mouse.previousButtonState[button] == 1)) gestureEvent.touchAction = TOUCH_UP;
+    
     // NOTE: TOUCH_MOVE event is registered in MouseCursorPosCallback()
 
     // Assign a pointer ID
@@ -4491,7 +4469,11 @@ static EM_BOOL EmscriptenMouseCallback(int eventType, const EmscriptenMouseEvent
 // Register touch input events
 static EM_BOOL EmscriptenTouchCallback(int eventType, const EmscriptenTouchEvent *touchEvent, void *userData)
 {
-    for (int i = 0; i < touchEvent->numTouches; i++) if (eventType == EMSCRIPTEN_EVENT_TOUCHSTART) CORE.Input.Touch.currentTouchState[i] = 1;
+    for (int i = 0; i < touchEvent->numTouches; i++) 
+    {
+        if (eventType == EMSCRIPTEN_EVENT_TOUCHSTART) CORE.Input.Touch.currentTouchState[i] = 1;
+        else if (eventType == EMSCRIPTEN_EVENT_TOUCHEND) CORE.Input.Touch.currentTouchState[i] = 0;
+    }
 
 #if defined(SUPPORT_GESTURES_SYSTEM)
     GestureEvent gestureEvent = { 0 };
