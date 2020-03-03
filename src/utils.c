@@ -169,32 +169,36 @@ unsigned char *LoadFileData(const char *fileName, int *bytesRead)
     unsigned char *data = NULL;
     *bytesRead = 0;
 
-    FILE *file = fopen(fileName, "rb");
-
-    if (file != NULL)
+    if (fileName != NULL)
     {
-        // WARNING: On binary streams SEEK_END could not be found,
-        // using fseek() and ftell() could not work in some (rare) cases
-        fseek(file, 0, SEEK_END);
-        int size = ftell(file);
-        fseek(file, 0, SEEK_SET);
+        FILE *file = fopen(fileName, "rb");
 
-        if (size > 0)
+        if (file != NULL)
         {
-            data = (unsigned char *)RL_MALLOC(sizeof(unsigned char)*size);
+            // WARNING: On binary streams SEEK_END could not be found,
+            // using fseek() and ftell() could not work in some (rare) cases
+            fseek(file, 0, SEEK_END);
+            int size = ftell(file);
+            fseek(file, 0, SEEK_SET);
 
-            // NOTE: fread() returns number of read elements instead of bytes, so we read [1 byte, size elements]
-            int count = fread(data, sizeof(unsigned char), size, file);
-            *bytesRead = count;
+            if (size > 0)
+            {
+                data = (unsigned char *)RL_MALLOC(sizeof(unsigned char)*size);
 
-            if (count != size) TRACELOG(LOG_WARNING, "[%s] File partially loaded", fileName);
-            else TRACELOG(LOG_INFO, "[%s] File loaded successfully", fileName);
+                // NOTE: fread() returns number of read elements instead of bytes, so we read [1 byte, size elements]
+                int count = fread(data, sizeof(unsigned char), size, file);
+                *bytesRead = count;
+
+                if (count != size) TRACELOG(LOG_WARNING, "[%s] File partially loaded", fileName);
+                else TRACELOG(LOG_INFO, "[%s] File loaded successfully", fileName);
+            }
+            else TRACELOG(LOG_WARNING, "[%s] File could not be read", fileName);
+
+            fclose(file);
         }
-        else TRACELOG(LOG_WARNING, "[%s] File could not be read", fileName);
-
-        fclose(file);
+        else TRACELOG(LOG_WARNING, "[%s] File could not be opened", fileName);
     }
-    else TRACELOG(LOG_WARNING, "[%s] File could not be opened", fileName);
+    else TRACELOG(LOG_WARNING, "File name provided is not valid");
 
     return data;
 }
@@ -202,18 +206,88 @@ unsigned char *LoadFileData(const char *fileName, int *bytesRead)
 // Save data to file from buffer
 void SaveFileData(const char *fileName, void *data, int bytesToWrite)
 {
-    FILE *file = fopen(fileName, "wb");
-
-    if (file != NULL)
+    if (fileName != NULL)
     {
-        int count = fwrite(data, sizeof(unsigned char), bytesToWrite, file);
+        FILE *file = fopen(fileName, "wb");
 
-        if (count == 0) TRACELOG(LOG_WARNING, "[%s] File could not be written", fileName);
-        else if (count != bytesToWrite) TRACELOG(LOG_WARNING, "[%s] File partially written", fileName);
+        if (file != NULL)
+        {
+            int count = fwrite(data, sizeof(unsigned char), bytesToWrite, file);
 
-        fclose(file);
+            if (count == 0) TRACELOG(LOG_WARNING, "[%s] File could not be written", fileName);
+            else if (count != bytesToWrite) TRACELOG(LOG_WARNING, "[%s] File partially written", fileName);
+            else TRACELOG(LOG_INFO, "[%s] File successfully saved", fileName);
+
+            fclose(file);
+        }
+        else TRACELOG(LOG_WARNING, "[%s] File could not be opened", fileName);
     }
-    else TRACELOG(LOG_WARNING, "[%s] File could not be opened", fileName);
+    else TRACELOG(LOG_WARNING, "File name provided is not valid");
+}
+
+// Load text data from file, returns a '\0' terminated string
+// NOTE: text chars array should be freed manually
+char *LoadFileText(const char *fileName)
+{
+    char *text = NULL;
+
+    if (fileName != NULL)
+    {
+        FILE *textFile = fopen(fileName, "rt");
+
+        if (textFile != NULL)
+        {
+            // WARNING: When reading a file as 'text' file,
+            // text mode causes carriage return-linefeed translation...
+            // ...but using fseek() should return correct byte-offset
+            fseek(textFile, 0, SEEK_END);
+            int size = ftell(textFile);
+            fseek(textFile, 0, SEEK_SET);
+
+            if (size > 0)
+            {
+                text = (char *)RL_MALLOC(sizeof(char)*(size + 1));
+                int count = fread(text, sizeof(char), size, textFile);
+
+                // WARNING: \r\n is converted to \n on reading, so,
+                // read bytes count gets reduced by the number of lines
+                if (count < size) text = RL_REALLOC(text, count + 1);
+
+                // Zero-terminate the string
+                text[count] = '\0';
+                
+                TRACELOG(LOG_INFO, "[%s] Text file loaded successfully", fileName);
+            }
+            else TRACELOG(LOG_WARNING, "[%s] Text file could not be read", fileName);
+
+            fclose(textFile);
+        }
+        else TRACELOG(LOG_WARNING, "[%s] Text file could not be opened", fileName);
+    }
+    else TRACELOG(LOG_WARNING, "File name provided is not valid");
+
+    return text;
+}
+
+// Save text data to file (write), string must be '\0' terminated
+void SaveFileText(const char *fileName, char *text)
+{
+    if (fileName != NULL)
+    {
+        FILE *file = fopen(fileName, "wt");
+
+        if (file != NULL)
+        {
+            int count = fprintf(file, "%s", text);
+
+            if (count == 0) TRACELOG(LOG_WARNING, "[%s] Text file could not be written", fileName);
+            else TRACELOG(LOG_INFO, "[%s] Text file successfully saved", fileName);
+
+            fclose(file);
+        }
+        else TRACELOG(LOG_WARNING, "[%s] Text file could not be opened", fileName);
+    }
+    else TRACELOG(LOG_WARNING, "File name provided is not valid");
 }
 
 #if defined(PLATFORM_ANDROID)

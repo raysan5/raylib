@@ -156,6 +156,7 @@
 #define FormatText  TextFormat
 #define SubText     TextSubtext
 #define ShowWindow  UnhideWindow
+#define LoadText    LoadFileText
 
 //----------------------------------------------------------------------------------
 // Structures Definition
@@ -951,6 +952,8 @@ RLAPI int GetRandomValue(int min, int max);                       // Returns a r
 // Files management functions
 RLAPI unsigned char *LoadFileData(const char *fileName, int *bytesRead);     // Load file data as byte array (read)
 RLAPI void SaveFileData(const char *fileName, void *data, int bytesToWrite); // Save data to file from byte array (write)
+RLAPI char *LoadFileText(const char *fileName);                   // Load text data from file (read), returns a '\0' terminated string
+RLAPI void SaveFileText(const char *fileName, char *text);        // Save text data to file (write), string must be '\0' terminated
 RLAPI bool FileExists(const char *fileName);                      // Check if file exists
 RLAPI bool IsFileExtension(const char *fileName, const char *ext);// Check file extension
 RLAPI bool DirectoryExists(const char *dirPath);                  // Check if a directory path exists
@@ -1322,9 +1325,8 @@ RLAPI RayHitInfo GetCollisionRayGround(Ray ray, float groundHeight);            
 //------------------------------------------------------------------------------------
 
 // Shader loading/unloading functions
-RLAPI char *LoadText(const char *fileName);                               // Load chars array from text file
 RLAPI Shader LoadShader(const char *vsFileName, const char *fsFileName);  // Load shader from files and bind default locations
-RLAPI Shader LoadShaderCode(const char *vsCode, const char *fsCode);                  // Load shader from code strings and bind default locations
+RLAPI Shader LoadShaderCode(const char *vsCode, const char *fsCode);      // Load shader from code strings and bind default locations
 RLAPI void UnloadShader(Shader shader);                                   // Unload shader from GPU memory (VRAM)
 
 RLAPI Shader GetShaderDefault(void);                                      // Get default shader

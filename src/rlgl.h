@@ -546,9 +546,8 @@ RLAPI void rlUnloadMesh(Mesh mesh);                                       // Unl
 // NOTE: This functions are useless when using OpenGL 1.1
 //------------------------------------------------------------------------------------
 // Shader loading/unloading functions
-RLAPI char *LoadText(const char *fileName);                               // Load chars array from text file
 RLAPI Shader LoadShader(const char *vsFileName, const char *fsFileName);  // Load shader from files and bind default locations
-RLAPI Shader LoadShaderCode(const char *vsCode, const char *fsCode);                  // Load shader from code strings and bind default locations
+RLAPI Shader LoadShaderCode(const char *vsCode, const char *fsCode);      // Load shader from code strings and bind default locations
 RLAPI void UnloadShader(Shader shader);                                   // Unload shader from GPU memory (VRAM)
 
 RLAPI Shader GetShaderDefault(void);                                      // Get default shader
@@ -588,6 +587,7 @@ RLAPI void ToggleVrMode(void);                          // Enable/Disable VR exp
 RLAPI void BeginVrDrawing(void);                        // Begin VR simulator stereo rendering
 RLAPI void EndVrDrawing(void);                          // End VR simulator stereo rendering
 
+RLAPI char *LoadFileText(const char *fileName);         // Load chars array from text file
 RLAPI int GetPixelDataSize(int width, int height, int format);// Get pixel data size in bytes (image or texture)
 #endif
 
@@ -605,21 +605,19 @@ RLAPI int GetPixelDataSize(int width, int height, int format);// Get pixel data 
 
 #if defined(RLGL_IMPLEMENTATION)
 
-#if !defined(RLGL_STANDALONE)
+#if defined(RLGL_STANDALONE)
+    #include <stdio.h>              // Required for: fopen(), fseek(), fread(), fclose() [LoadFileText]
+#else
     // Check if config flags have been externally provided on compilation line
     #if !defined(EXTERNAL_CONFIG_FLAGS)
         #include "config.h"         // Defines module configuration flags
     #endif
+    #include "raymath.h"            // Required for: Vector3 and Matrix functions
 #endif
 
 #include <stdlib.h>                 // Required for: malloc(), free()
-#include <stdio.h>                  // Required for: fopen(), fseek(), fread(), fclose() [LoadText]
 #include <string.h>                 // Required for: strcmp(), strlen() [Used in rlglInit(), on extensions loading]
 #include <math.h>                   // Required for: atan2f(), fabs()
-
-#if !defined(RLGL_STANDALONE)
-    #include "raymath.h"            // Required for: Vector3 and Matrix functions
-#endif
 
 #if defined(GRAPHICS_API_OPENGL_11)
     #if defined(__APPLE__)
@@ -2984,49 +2982,6 @@ Shader GetShaderDefault(void)
 #endif
 }
 
-// Load text data from file
-// NOTE: text chars array should be freed manually
-char *LoadText(const char *fileName)
-{
-    char *text = NULL;
-
-    if (fileName != NULL)
-    {
-        FILE *textFile = fopen(fileName, "rt");
-
-        if (textFile != NULL)
-        {
-            // WARNING: When reading a file as 'text' file,
-            // text mode causes carriage return-linefeed translation...
-            // ...but using fseek() should return correct byte-offset
-            fseek(textFile, 0, SEEK_END);
-            int size = ftell(textFile);
-            fseek(textFile, 0, SEEK_SET);
-
-            if (size > 0)
-            {
-                text = (char *)RL_MALLOC(sizeof(char)*(size + 1));
-                int count = fread(text, sizeof(char), size, textFile);
-
-                // WARNING: \r\n is converted to \n on reading, so,
-                // read bytes count gets reduced by the number of lines
-                if (count < size)
-                {
-                    text = RL_REALLOC(text, count + 1);
-                }
-                
-                // zero-terminate the string
-                text[count] = '\0';
-            }
-
-            fclose(textFile);
-        }
-        else TRACELOG(LOG_WARNING, "[%s] Text file could not be opened", fileName);
-    }
-
-    return text;
-}
-
 // Load shader from files and bind default locations
 // NOTE: If shader string is NULL, using default vertex/fragment shaders
 Shader LoadShader(const char *vsFileName, const char *fsFileName)
@@ -3038,8 +2993,8 @@ Shader LoadShader(const char *vsFileName, const char *fsFileName)
     char *vShaderStr = NULL;
     char *fShaderStr = NULL;
 
-    if (vsFileName != NULL) vShaderStr = LoadText(vsFileName);
-    if (fsFileName != NULL) fShaderStr = LoadText(fsFileName);
+    if (vsFileName != NULL) vShaderStr = LoadFileText(vsFileName);
+    if (fsFileName != NULL) fShaderStr = LoadFileText(fsFileName);
 
     shader = LoadShaderCode(vShaderStr, fShaderStr);
 
@@ -4643,6 +4598,50 @@ static Color *GenNextMipmap(Color *srcData, int srcWidth, int srcHeight)
 #endif
 
 #if defined(RLGL_STANDALONE)
+// Load text data from file, returns a '\0' terminated string
+// NOTE: text chars array should be freed manually
+char *LoadFileText(const char *fileName)
+{
+    char *text = NULL;
+
+    if (fileName != NULL)
+    {
+        FILE *textFile = fopen(fileName, "rt");
+
+        if (textFile != NULL)
+        {
+            // WARNING: When reading a file as 'text' file,
+            // text mode causes carriage return-linefeed translation...
+            // ...but using fseek() should return correct byte-offset
+            fseek(textFile, 0, SEEK_END);
+            int size = ftell(textFile);
+            fseek(textFile, 0, SEEK_SET);
+
+            if (size > 0)
+            {
+                text = (char *)RL_MALLOC(sizeof(char)*(size + 1));
+                int count = fread(text, sizeof(char), size, textFile);
+
+                // WARNING: \r\n is converted to \n on reading, so,
+                // read bytes count gets reduced by the number of lines
+                if (count < size) text = RL_REALLOC(text, count + 1);
+
+                // Zero-terminate the string
+                text[count] = '\0';
+                
+                TRACELOG(LOG_INFO, "[%s] Text file loaded successfully", fileName);
+            }
+            else TRACELOG(LOG_WARNING, "[%s] Text file could not be read", fileName);
+
+            fclose(textFile);
+        }
+        else TRACELOG(LOG_WARNING, "[%s] Text file could not be opened", fileName);
+    }
+    else TRACELOG(LOG_WARNING, "File name provided is not valid");
+
+    return text;
+}
+
 // Get pixel data size in bytes (image or texture)
 // NOTE: Size depends on pixel format
 int GetPixelDataSize(int width, int height, int format)
