@@ -112,7 +112,7 @@ int main(void)
         UpdateCamera(&camera);              // Update camera
 
         // Make the lights do differing orbits
-        angle -= 0.02;
+        angle -= 0.02f;
         lights[0].position.x = cosf(angle)*4.0f;
         lights[0].position.z = sinf(angle)*4.0f;
         lights[1].position.x = cosf(-angle*0.6f)*4.0f;
@@ -128,8 +128,8 @@ int main(void)
         UpdateLightValues(shader, lights[3]);
 
         // Rotate the torus
-        modelA.transform = MatrixMultiply(modelA.transform, MatrixRotateX(-0.025));
-        modelA.transform = MatrixMultiply(modelA.transform, MatrixRotateZ(0.012));
+        modelA.transform = MatrixMultiply(modelA.transform, MatrixRotateX(-0.025f));
+        modelA.transform = MatrixMultiply(modelA.transform, MatrixRotateZ(0.012f));
 
         // Update the light shader with the camera view position
         float cameraPos[3] = { camera.position.x, camera.position.y, camera.position.z };
@@ -161,7 +161,7 @@ int main(void)
 
             DrawFPS(10, 10);
             
-            DrawText("Keys RGB & W toggle lights", 10, 30, 20, DARKGRAY);
+            DrawText("Use keys RGBW to toggle lights", 10, 30, 20, DARKGRAY);
 
         EndDrawing();
         //----------------------------------------------------------------------------------
