@@ -55,6 +55,7 @@ Some people ported raylib to other languages in form of bindings or wrappers to 
 | jaylib             | Janet          | https://github.com/janet-lang/jaylib                                 |
 | raykit             | Kit            | https://github.com/Gamerfiend/raykit                                 |
 | vraylib            | V              | https://github.com/MajorHard/vraylib                                 |
+| ray.mod            | BlitzMax       | https://github.com/bmx-ng/ray.mod  |
 | raylib.cbl         | COBOL          | *[code examples](https://github.com/Martinfx/Cobol/tree/master/OpenCobol/Games/raylib)* |
  
 Missing some language? Check the [bindings not yet in this list](https://gist.github.com/raysan5/5764cc5b885183f523fce47f098f3d9b#bindings-not-yet-in-the-official-list) or create a new binding! :)
