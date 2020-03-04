@@ -18,7 +18,10 @@
 ********************************************************************************************/
 
 #include <stdlib.h>
+#include <stdio.h>
 #include "raylib.h"
+
+#define DEBUG_DRAW 0
 
 int main(void)
 {
@@ -44,7 +47,10 @@ int main(void)
     int animsCount = 0;
     ModelAnimation *anims = LoadModelAnimations("resources/models/RiggedFigure.glb", &animsCount);
     int animFrameCounter = 0;
-
+    bool isValid = IsModelAnimationValid(model2, anims[2]);
+    if (!isValid) {
+        printf("\n\n\n\nModel Bone Count: %i, Animation Bone Count: %i, Animation Count: %i\n\n\n\n", model2.boneCount, anims[2].boneCount, animsCount);
+    }
     SetCameraMode(camera, CAMERA_FREE); // Set free camera mode
 
     SetTargetFPS(60);                   // Set our game to run at 60 frames-per-second
@@ -61,7 +67,7 @@ int main(void)
         if (IsKeyDown(KEY_SPACE))
         {
             //animFrameCounter++;
-            //UpdateModelAnimation(model, anims[0], animFrameCounter);
+            //UpdateModelAnimation(model2, anims[0], animFrameCounter);
             //if (animFrameCounter >= anims[0].frameCount) animFrameCounter = 0;
         }
         //----------------------------------------------------------------------------------
@@ -76,10 +82,16 @@ int main(void)
 
                 DrawModelEx(model2, position, (Vector3){ 1.0f, 0.0f, 0.0f }, -90.0f, (Vector3){ 1.0f, 1.0f, 1.0f }, WHITE);
 
-                for (int i = 0; i < model2.boneCount; i++)
+                //Draw debug
+                if(DEBUG_DRAW) 
                 {
-                    //DrawCube(anims[0].framePoses[animFrameCounter][i].translation, 0.2f, 0.2f, 0.2f, RED);
+                    for (int i = 0; i < model2.boneCount; i++)
+                    {
+                        //DrawCube(anims[0].framePoses[animFrameCounter][i].translation, 0.2f, 0.2f, 0.2f, RED);
+                        //DrawCube(model2.bindPose[i].translation, 0.2f, 0.2f, 0.2f, RED);
+                    }
                 }
+                
 
                 DrawGrid(10, 1.0f);         // Draw a grid
 

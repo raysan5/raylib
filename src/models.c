@@ -925,7 +925,9 @@ ModelAnimation *LoadModelAnimations(const char *filename, int *animCount)
     }
 
     if (TextIsEqual(extension, GLTF_EXTENSION) || TextIsEqual(extension, GLB_EXTENSION)) {
-        return loadGLTFModelAnimations(animationFile, filename, animCount);
+        ModelAnimation *anims = loadGLTFModelAnimations(animationFile, filename, animCount);
+        printf("\n\n\nONCE AGAIN: %i\n\n\n", anims[0].boneCount);
+        return anims;
     }
 
     if (TextIsEqual(extension, IQM_EXTENSION)) {
@@ -979,14 +981,14 @@ static ModelAnimation *loadGLTFModelAnimations(FILE* gltfFile, const char* fileN
     cgltf_options options = { 0 };
     cgltf_data *data = NULL;
     cgltf_result result = cgltf_parse(&options, buffer, size, &data);
-
+    ModelAnimation* animations = NULL;
     if (result == cgltf_result_success)
     {
         // Read data buffers
         result = cgltf_load_buffers(&options, data, fileName);
         if (result != cgltf_result_success) TRACELOG(LOG_INFO, "[%s][%s] Error loading mesh/material buffers", fileName, (data->file_type == 2)? "glb" : "gltf");
-        ModelAnimation* animations = RL_CALLOC(data->animations_count, sizeof(ModelAnimation));
-
+        animations = RL_CALLOC(data->animations_count, sizeof(ModelAnimation));
+        *animCount = data->animations_count;
         for (int i = 0; i < data->animations_count; i++) {
             // Copy Animation Name
             if (data->animations[i].name) {
@@ -995,7 +997,28 @@ static ModelAnimation *loadGLTFModelAnimations(FILE* gltfFile, const char* fileN
                 }
             }
 
-            //GLTFAnimation animation = { 0 };
+            // Load Skeleton Data
+            // Currenly only support one skin
+            printf("\n\n Joints for Animation: %i \n\n", data->skins[0].joints_count);
+            animations[i].boneCount = data->skins[0].joints_count;
+            animations[i].bones = RL_CALLOC(animations[i].boneCount, sizeof(BoneInfo));
+            for (int i = 0; i < animations[i].boneCount; i++) 
+            {
+                if (data->skins[0].joints[i]->name) {
+                    // Raylib only supports names up to 34 characters..
+                    if (TextLength(data->skins[0].joints[i]->name) <= 34) {
+                        TextCopy(animations[i].bones[i].name, data->skins[0].joints[i]->name); 
+                    }
+                }
+
+                // Mark parents in array
+                if (data->skins[0].joints[i]->children_count > 0) {
+                    int numOfChildrenJoints = data->skins[0].joints[i]->children_count; 
+                    for (int j = i; j < numOfChildrenJoints; j++) {
+                        animations[i].bones[j].parent = i;
+                    }
+                }
+            }
 
             // Contains Channels, copy those to internal struct
             if (data->animations[i].channels_count > 0) {
@@ -1021,7 +1044,7 @@ static ModelAnimation *loadGLTFModelAnimations(FILE* gltfFile, const char* fileN
                     // in most cases it will Vec3(3) or Vec4(4), so we must accomdate the array size
                     float* outputs = RL_CALLOC(outputAcc->count * outputAcc->type, sizeof(float));
                     int outputsCount = outputAcc->count * outputAcc->type;
-                    LOAD_ACCESSOR(float, 3, outputAcc, outputs);
+                    LOAD_ACCESSOR(float, outputAcc->type, outputAcc, outputs);
 
                     for (int blah = 0; blah < outputsCount; blah++) {
                         printf("OUTPUT: animation: %d, channel: %d, index: %d, value: %f\n", i, j, blah, outputs[blah]);
@@ -1047,7 +1070,8 @@ static ModelAnimation *loadGLTFModelAnimations(FILE* gltfFile, const char* fileN
     }
 
     free(data);
-    return NULL;
+    printf("\n\n\nANIAMTION JOINT COUNT: %i\n\n\n\n", animations[0].boneCount);
+    return animations;
 }
 
 static ModelAnimation *loadIQMModelAnimations(FILE* iqmFile, int *animCount) 
