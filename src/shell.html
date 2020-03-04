@@ -173,8 +173,8 @@ jwE50AGjLCVuS8Yt4H7OgZLKK5EKOsLviEWJSL/+0uMi7gLUSBseYwqEbXvSHCec1CJvZPyHCmYQffaB
         <div class="emscripten" id="status">Downloading...</div>
 
         <span id='controls'>
-          <span><input type="button" value="🖵 FULLSCREEN" onclick="Module.requestFullscreen(false, false)"></span>
-          <span><input type="button" id="btn-audio" value="🔇 SUSPEND" onclick="toggleAudio()"></span>
+          <span><input type="button" value="FULLSCREEN" onclick="Module.requestFullscreen(false, false)"></span>
+          <span><input type="button" id="btn-audio" value="AUDIO OFF" onclick="toggleAudio()"></span>
         </span>
 
         <div class="emscripten">
@@ -305,7 +305,7 @@ jwE50AGjLCVuS8Yt4H7OgZLKK5EKOsLviEWJSL/+0uMi7gLUSBseYwqEbXvSHCec1CJvZPyHCmYQffaB
                 construct(target, args) {
                     const result = new target(...args);
                     audioContexList.push(result);
-                    if (result.state == "suspended") audioBtn.value = "🔈 RESUME";
+                    if (result.state == "suspended") audioBtn.value = "AUDIO ON";
                     return result;
                 }
             });
@@ -318,8 +318,8 @@ jwE50AGjLCVuS8Yt4H7OgZLKK5EKOsLviEWJSL/+0uMi7gLUSBseYwqEbXvSHCec1CJvZPyHCmYQffaB
                 else if (ctx.state == "running") ctx.suspend();
             });
             
-            if (resumed) audioBtn.value = "🔇 SUSPEND";
-            else audioBtn.value = "🔈 RESUME";
+            if (resumed) audioBtn.value = "AUDIO OFF";
+            else audioBtn.value = "AUDIO ON";
         }
     </script>
     {{{ SCRIPT }}}

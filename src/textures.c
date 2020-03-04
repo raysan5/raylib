@@ -73,7 +73,7 @@
 
 #include "rlgl.h"               // raylib OpenGL abstraction layer to OpenGL 1.1, 3.3 or ES2
                                 // Required for: rlLoadTexture() rlDeleteTextures(),
-                                //      rlGenerateMipmaps(), some funcs for DrawTexturePro()
+                                // rlGenerateMipmaps(), some funcs for DrawTexturePro()
 
 // Support only desired texture formats on stb_image
 #if !defined(SUPPORT_FILEFORMAT_BMP)

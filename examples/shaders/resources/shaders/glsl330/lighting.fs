@@ -69,7 +69,7 @@ void main()
             lightDot += lights[i].color.rgb*NdotL;
 
             float specCo = 0.0;
-            if (NdotL > 0.0) specCo = pow(max(0.0, dot(viewD, reflect(-(light), normal))), 16); // 16 refers to shine
+            if (NdotL > 0.0) specCo = pow(max(0.0, dot(viewD, reflect(-(light), normal))), 16.0); // 16 refers to shine
             specular += specCo;
         }
     }

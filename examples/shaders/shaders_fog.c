@@ -32,6 +32,12 @@
 #define RLIGHTS_IMPLEMENTATION
 #include "rlights.h"
 
+#if defined(PLATFORM_DESKTOP)
+    #define GLSL_VERSION            330
+#else   // PLATFORM_RPI, PLATFORM_ANDROID, PLATFORM_WEB
+    #define GLSL_VERSION            100
+#endif
+
 int main(void)
 {
     // Initialization
@@ -61,7 +67,8 @@ int main(void)
     modelC.materials[0].maps[MAP_DIFFUSE].texture = texture;
 
     // Load shader and set up some uniforms
-    Shader shader = LoadShader("resources/shaders/glsl330/fog.vs", "resources/shaders/glsl330/fog.fs");
+    Shader shader = LoadShader(FormatText("resources/shaders/glsl%i/base_lighting.vs", GLSL_VERSION), 
+                               FormatText("resources/shaders/glsl%i/fog.fs", GLSL_VERSION));
     shader.locs[LOC_MATRIX_MODEL] = GetShaderLocation(shader, "matModel");
     shader.locs[LOC_VECTOR_VIEW] = GetShaderLocation(shader, "viewPos");
 
