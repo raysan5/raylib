@@ -1228,7 +1228,6 @@ char *TextReplace(char *text, const char *replace, const char *by)
 }
 
 // Insert text in a specific position, moves all text forward
-// REQUIRES: strcpy()
 // WARNING: Allocated memory should be manually freed
 char *TextInsert(const char *text, const char *insert, int position)
 {
