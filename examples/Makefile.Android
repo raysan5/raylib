@@ -26,8 +26,10 @@ PLATFORM               ?= PLATFORM_ANDROID
 RAYLIB_PATH            ?= ..\..
 
 # Define Android architecture (armeabi-v7a, arm64-v8a, x86, x86-64) and API version
+# Starting in 2019 using ARM64 is mandatory for published apps,
+# and minimum required target API is Android 9 (API level 28)
 ANDROID_ARCH           ?= ARM
-ANDROID_API_VERSION     = 21
+ANDROID_API_VERSION     = 28
 ifeq ($(ANDROID_ARCH),ARM)
     ANDROID_ARCH_NAME   = armeabi-v7a
 endif
@@ -36,11 +38,11 @@ ifeq ($(ANDROID_ARCH),ARM64)
 endif
 
 # Required path variables
-# NOTE: JAVA_HOME must be set to JDK
-JAVA_HOME              ?= C:/JavaJDK
+# NOTE: JAVA_HOME must be set to JDK (using OpenJDK 13)
+JAVA_HOME              ?= C:/open-jdk
 ANDROID_HOME            = C:/android-sdk
-ANDROID_TOOLCHAIN       = C:/android_toolchain_$(ANDROID_ARCH)_API$(ANDROID_API_VERSION)
-ANDROID_BUILD_TOOLS     = $(ANDROID_HOME)/build-tools/28.0.1
+ANDROID_TOOLCHAIN       = C:/android-ndk-r21/toolchains/llvm/prebuilt/windows-x86_64
+ANDROID_BUILD_TOOLS     = $(ANDROID_HOME)/build-tools/29.0.3
 ANDROID_PLATFORM_TOOLS  = $(ANDROID_HOME)/platform-tools
 
 # Android project configuration variables
@@ -81,13 +83,12 @@ ifeq ($(RAYLIB_LIBTYPE),SHARED)
 endif
 
 # Compiler and archiver
-# NOTE: GCC is being deprecated in Android NDK r16
 ifeq ($(ANDROID_ARCH),ARM)
-    CC = $(ANDROID_TOOLCHAIN)/bin/arm-linux-androideabi-clang
+    CC = $(ANDROID_TOOLCHAIN)/bin/armv7a-linux-androideabi$(ANDROID_API_VERSION)-clang
     AR = $(ANDROID_TOOLCHAIN)/bin/arm-linux-androideabi-ar
 endif
 ifeq ($(ANDROID_ARCH),ARM64)
-    CC = $(ANDROID_TOOLCHAIN)/bin/aarch64-linux-android-clang
+    CC = $(ANDROID_TOOLCHAIN)/bin/aarch64-linux-android$(ANDROID_API_VERSION)-clang
     AR = $(ANDROID_TOOLCHAIN)/bin/aarch64-linux-android-ar
 endif
 
@@ -274,7 +275,7 @@ zipalign_project_apk_package:
 # Install $(PROJECT_NAME).apk to default emulator/device
 # NOTE: Use -e (emulator) or -d (device) parameters if required
 install:
-	$(ANDROID_PLATFORM_TOOLS)/adb install --abi $(ANDROID_ARCH_NAME) -rds $(PROJECT_NAME).apk
+	$(ANDROID_PLATFORM_TOOLS)/adb install $(PROJECT_NAME).apk
     
 # Check supported ABI for the device (armeabi-v7a, arm64-v8a, x86, x86_64)
 check_device_abi:
