@@ -17,6 +17,8 @@ Some people ported raylib to other languages in form of bindings or wrappers to 
 | raylib-lua         | Lua            | https://github.com/raysan5/raylib-lua                                |
 | raylib-lua-ffi     | Lua            | https://github.com/raysan5/raylib/issues/693                         |
 | raylib-lua-sol     | Lua            | https://github.com/RobLoach/raylib-lua-sol                           |
+| raylib-luamore     | Lua            | https://github.com/HDPLocust/raylib-luamore          |
+| raylib-nelua       | Nelua          | https://github.com/Andre-LA/raylib-nelua-mirror      |
 | raylib-Nim         | Nim            | https://gitlab.com/define-private-public/raylib-Nim                  |
 | raylib-nim         | Nim            | https://github.com/Skrylar/raylib-nim                                |
 | raylib-haskell     | Haskell        | https://github.com/DevJac/raylib-haskell                             |
@@ -55,7 +57,8 @@ Some people ported raylib to other languages in form of bindings or wrappers to 
 | jaylib             | Janet          | https://github.com/janet-lang/jaylib                                 |
 | raykit             | Kit            | https://github.com/Gamerfiend/raykit                                 |
 | vraylib            | V              | https://github.com/MajorHard/vraylib                                 |
-| ray.mod            | BlitzMax       | https://github.com/bmx-ng/ray.mod  |
+| ray.mod            | BlitzMax       | https://github.com/bmx-ng/ray.mod                    |
+| raylib-mosaic      | Mosaic         | https://github.com/pluckyporcupine/raylib-mosaic     |
 | raylib.cbl         | COBOL          | *[code examples](https://github.com/Martinfx/Cobol/tree/master/OpenCobol/Games/raylib)* |
  
 Missing some language? Check the [bindings not yet in this list](https://gist.github.com/raysan5/5764cc5b885183f523fce47f098f3d9b#bindings-not-yet-in-the-official-list) or create a new binding! :)
