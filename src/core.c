@@ -650,7 +650,7 @@ void InitWindow(int width, int height, const char *title)
     CORE.Android.app->onAppCmd = AndroidCommandCallback;
     CORE.Android.app->onInputEvent = AndroidInputCallback;
 
-    InitAssetManager(CORE.Android.app->activity->assetManager);
+    InitAssetManager(CORE.Android.app->activity->assetManager, CORE.Android.app->activity->internalDataPath);
 
     TRACELOG(LOG_INFO, "Android app initialized successfully");
 

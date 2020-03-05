@@ -65,6 +65,7 @@ static TraceLogCallback logCallback = NULL;             // Log callback function
 
 #if defined(PLATFORM_ANDROID)
 static AAssetManager *assetManager = NULL;              // Android assets manager pointer
+static const char *internalDataPath = NULL;             // Android internal data path
 #endif
 
 #if defined(PLATFORM_UWP)
@@ -292,21 +293,34 @@ void SaveFileText(const char *fileName, char *text)
 
 #if defined(PLATFORM_ANDROID)
 // Initialize asset manager from android app
-void InitAssetManager(AAssetManager *manager)
+void InitAssetManager(AAssetManager *manager, const char *dataPath)
 {
     assetManager = manager;
+    internalDataPath = dataPath;
 }
 
 // Replacement for fopen
+// Ref: https://developer.android.com/ndk/reference/group/asset
 FILE *android_fopen(const char *fileName, const char *mode)
 {
-    if (mode[0] == 'w') return NULL;
+    if (mode[0] == 'w')     // TODO: Test!
+    {
+        // TODO: fopen() is mapped to android_fopen() that only grants read access
+        // to assets directory through AAssetManager but we want to also be able to
+        // write data when required using the standard stdio FILE access functions
+        // Ref: https://stackoverflow.com/questions/11294487/android-writing-saving-files-from-native-code-only
+        #undef fopen
+        return fopen(TextFormat("%s/%s", internalDataPath, fileName), mode);
+        #define fopen(name, mode) android_fopen(name, mode)
+    }
+    else
+    {
+        // NOTE: AAsset provides access to read-only asset
+        AAsset *asset = AAssetManager_open(assetManager, fileName, AASSET_MODE_UNKNOWN);
 
-    AAsset *asset = AAssetManager_open(assetManager, fileName, 0);
-
-    if (!asset) return NULL;
-
-    return funopen(asset, android_read, android_write, android_seek, android_close);
+        if (asset != NULL) return funopen(asset, android_read, android_write, android_seek, android_close);
+        else return NULL;
+    }
 }
 #endif  // PLATFORM_ANDROID
 
