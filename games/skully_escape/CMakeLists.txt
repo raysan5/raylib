@@ -7,7 +7,7 @@ file(GLOB screen_sources "screens/*.c")
 # Executable & linking
 add_executable(${PROJECT_NAME} skully_escape.c player.c monster.c ${screen_sources})
 if (NOT TARGET raylib)
-  find_package(raylib 2.0 REQUIRED)
+  find_package(raylib REQUIRED)
 endif()
 target_link_libraries(${PROJECT_NAME} raylib)
 

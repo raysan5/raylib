@@ -96,7 +96,7 @@ endif()
 include_directories(BEFORE SYSTEM others/external/include)
 
 if (NOT TARGET raylib)
-  find_package(raylib 2.0 REQUIRED)
+  find_package(raylib REQUIRED)
 endif()
 
 # Do each example
