@@ -17,8 +17,9 @@ Some people ported raylib to other languages in form of bindings or wrappers to 
 | raylib-lua         | Lua            | https://github.com/raysan5/raylib-lua                                |
 | raylib-lua-ffi     | Lua            | https://github.com/raysan5/raylib/issues/693                         |
 | raylib-lua-sol     | Lua            | https://github.com/RobLoach/raylib-lua-sol                           |
-| raylib-luamore     | Lua            | https://github.com/HDPLocust/raylib-luamore          |
-| raylib-nelua       | Nelua          | https://github.com/Andre-LA/raylib-nelua-mirror      |
+| raylib-lua (raylua)| Lua            | https://github.com/TSnake41/raylib-lua                               |
+| raylib-luamore     | Lua            | https://github.com/HDPLocust/raylib-luamore                          |
+| raylib-nelua       | Nelua          | https://github.com/Andre-LA/raylib-nelua-mirror                      |
 | raylib-Nim         | Nim            | https://gitlab.com/define-private-public/raylib-Nim                  |
 | raylib-nim         | Nim            | https://github.com/Skrylar/raylib-nim                                |
 | raylib-haskell     | Haskell        | https://github.com/DevJac/raylib-haskell                             |
