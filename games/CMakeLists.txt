@@ -18,7 +18,7 @@ if(${PLATFORM} MATCHES "Web")
 endif()
 
 if (NOT TARGET raylib)
-  find_package(raylib 2.0 REQUIRED)
+  find_package(raylib REQUIRED)
 endif()
 
 # Do each game
