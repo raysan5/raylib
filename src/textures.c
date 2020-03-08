@@ -3118,7 +3118,7 @@ static Image LoadDDS(const char *fileName)
                     }
                 }
             }
-            if (ddsHeader.ddspf.flags == 0x40 && ddsHeader.ddspf.rgbBitCount == 24)   // DDS_RGB, no compressed
+            else if (ddsHeader.ddspf.flags == 0x40 && ddsHeader.ddspf.rgbBitCount == 24)   // DDS_RGB, no compressed
             {
                 // NOTE: not sure if this case exists...
                 image.data = (unsigned char *)RL_MALLOC(image.width*image.height*3*sizeof(unsigned char));
