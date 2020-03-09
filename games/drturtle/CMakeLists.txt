@@ -4,7 +4,7 @@ project(drturtle)
 # Executable & linking
 add_executable(${PROJECT_NAME} 06_drturtle_final.c)
 if (NOT TARGET raylib)
-  find_package(raylib REQUIRED)
+  find_package(raylib 2.0 REQUIRED)
 endif()
 target_link_libraries(${PROJECT_NAME} raylib)
 

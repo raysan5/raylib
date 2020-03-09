@@ -1,7 +1,7 @@
 # Setup the project and settings
 project(games)
 
-# Get the source together
+# Get the source toegher
 file(GLOB sources *.c)
 
 set(OUTPUT_EXT)
@@ -18,7 +18,7 @@ if(${PLATFORM} MATCHES "Web")
 endif()
 
 if (NOT TARGET raylib)
-  find_package(raylib REQUIRED)
+  find_package(raylib 2.0 REQUIRED)
 endif()
 
 # Do each game
