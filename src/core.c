@@ -2069,7 +2069,7 @@ char **GetDirectoryFiles(const char *dirPath, int *fileCount)
     for (int i = 0; i < MAX_DIRECTORY_FILES; i++) dirFilesPath[i] = (char *)RL_MALLOC(sizeof(char)*MAX_FILEPATH_LENGTH);
 
     int counter = 0;
-    struct dirent *ent;
+    struct dirent *entity;
     DIR *dir = opendir(dirPath);
 
     if (dir != NULL)  // It's a directory
@@ -2078,15 +2078,15 @@ char **GetDirectoryFiles(const char *dirPath, int *fileCount)
         // first one to count files and second one to read names
         // That way we can allocate required memory, instead of a limited pool
 
-        while ((ent = readdir(dir)) != NULL)
+        while ((entity = readdir(dir)) != NULL)
         {
-            strcpy(dirFilesPath[counter], ent->d_name);
+            strcpy(dirFilesPath[counter], entity->d_name);
             counter++;
         }
 
         closedir(dir);
     }
-    else TRACELOG(LOG_WARNING, "Can not open directory...\n"); // Maybe it's a file...
+    else TRACELOG(LOG_WARNING, "Can not open directory...\n");  // Maybe it's a file...
 
     dirFilesCount = counter;
     *fileCount = dirFilesCount;
