@@ -7,7 +7,7 @@ file(GLOB screen_sources "screens/*.c")
 # Executable & linking
 add_executable(${PROJECT_NAME} ${PROJECT_NAME}.c ${screen_sources})
 if (NOT TARGET raylib)
-  find_package(raylib REQUIRED)
+  find_package(raylib 2.0 REQUIRED)
 endif()
 target_link_libraries(${PROJECT_NAME} raylib)
 
