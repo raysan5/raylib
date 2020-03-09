@@ -4638,7 +4638,7 @@ static void ProcessKeyboard(void)
         if (keysBuffer[i] == 0x1b)
         {
             // Detect ESC to stop program
-            if (bufferByteCount == 1) CORE.Input.Keyboard.currentKeyState[256] = 1; // raylib key: KEY_ESCAPE
+            if (bufferByteCount == 1) CORE.Input.Keyboard.currentKeyState[CORE.Input.Keyboard.exitKey] = 1;
             else
             {
                 if (keysBuffer[i + 1] == 0x5b)    // Special function key
