@@ -30,6 +30,7 @@ Thumbs.db
 *.cache
 *.ilk
 *.log
+.vs
 
 [Bb]in
 [Dd]ebug/
@@ -54,7 +55,6 @@ packages/
 *.a
 *.bc
 *.so
-!raylib.rc.o
 
 # Ignore all examples files
 examples/*
@@ -76,7 +76,6 @@ games/*
 !games/*/
 # Unignore all games files with extension
 !games/*.c
-!games/*.lua
 !games/*.png
 # Unignore games makefile
 !games/Makefile
@@ -96,23 +95,6 @@ xcschememanagement.plist
 xcuserdata/
 DerivedData/
 
-# Visual Studio project
-project/VS2015.UWP/packages
-project/VS2017/packages
-
-# Web examples
-docs/examples/web/*.html
-docs/examples/web/*/*.html
-!docs/examples/web/loader.html
-!docs/examples/web/core/loader.html
-!docs/examples/web/shapes/loader.html
-!docs/examples/web/text/loader.html
-!docs/examples/web/textures/loader.html
-!docs/examples/web/audio/loader.html
-!docs/examples/web/physac/loader.html
-!docs/examples/web/shaders/loader.html
-!docs/examples/web/models/loader.html
-
 # Jetbrains project
 .idea/
 cmake-build-debug/
@@ -128,17 +110,12 @@ install_manifest.txt
 compile_commands.json
 CTestTestfile.cmake
 build
-!templates/android_project/Makefile
 
 # Unignore These makefiles...
 !examples/CMakeLists.txt
 !games/CMakeLists.txt
 
-# Ignore Android generated files and folders
-templates/android_project/output
-
 # Ignore GNU global tags
 GPATH
 GRTAGS
 GTAGS
-.vs
