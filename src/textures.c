@@ -1932,9 +1932,8 @@ Image ImageTextEx(Font font, const char *text, float fontSize, float spacing, Co
 {
     int length = strlen(text);
 
-    int index;                  // Index position in sprite font
-    int letter = 0;             // Current character
-    int positionX = 0;          // Image drawing position
+    int textOffsetX = 0;            // Image drawing position X
+    int textOffsetY = 0;            // Offset between lines (on line break '\n')
 
     // NOTE: Text image is generated at font base size, later scaled to desired font size
     Vector2 imSize = MeasureTextEx(font, text, (float)font.baseSize, spacing);
@@ -1944,29 +1943,35 @@ Image ImageTextEx(Font font, const char *text, float fontSize, float spacing, Co
 
     for (int i = 0; i < length; i++)
     {
-        int next = 0;
-        letter = GetNextCodepoint(&text[i], &next);
-        index = GetGlyphIndex(font, letter);
+        // Get next codepoint from byte string and glyph index in font
+        int codepointByteCount = 0;
+        int codepoint = GetNextCodepoint(&text[i], &codepointByteCount);
+        int index = GetGlyphIndex(font, codepoint);
 
-        if (letter == 0x3f) next = 1;
-        i += (next - 1);
+        // NOTE: Normally we exit the decoding sequence as soon as a bad byte is found (and return 0x3f)
+        // but we need to draw all of the bad bytes using the '?' symbol moving one byte
+        if (codepoint == 0x3f) codepointByteCount = 1;
 
-        if (letter == '\n')
+        if (codepoint == '\n')
         {
-            // TODO: Support line break
+            // NOTE: Fixed line spacing of 1.5 line-height
+            // TODO: Support custom line spacing defined by user
+            textOffsetY += font.baseSize + font.baseSize/2);
+            textOffsetX = 0.0f;
         }
         else
-        {
-            if (letter != ' ')
+        {    
+            if ((codepoint != ' ') && (codepoint != '\t'))
             {
-                ImageDraw(&imText, font.chars[index].image, (Rectangle){ 0, 0, font.chars[index].image.width, font.chars[index].image.height },
-                         (Rectangle){ (float)(positionX + font.chars[index].offsetX),(float)font.chars[index].offsetY,
-                                      font.chars[index].image.width, font.chars[index].image.height }, tint);
+                Rectangle rec = { textOffsetX + font.chars[index].offsetX, textOffsetY + font.chars[index].offsetY, font.recs[index].width, font.recs[index].height };
+                ImageDraw(&imText, font.chars[index].image, (Rectangle){ 0, 0, font.chars[index].image.width, font.chars[index].image.height }, rec, tint);
             }
-
-            if (font.chars[index].advanceX == 0) positionX += (int)(font.recs[index].width + spacing);
-            else positionX += font.chars[index].advanceX + (int)spacing;
+            
+            if (font.chars[index].advanceX == 0) textOffsetX += (int)(font.recs[index].width + spacing);
+            else textOffsetX += font.chars[index].advanceX + (int)spacing;
         }
+        
+        i += (codepointByteCount - 1);   // Move text bytes counter to next codepoint
     }
 
     // Scale image depending on text size
