@@ -263,6 +263,11 @@ file(COPY "raymath.h" DESTINATION ".")
 file(COPY "raudio.h" DESTINATION ".")
 
 # Print the flags for the user
+if (DEFINED CMAKE_BUILD_TYPE)
+  message(STATUS "Generated build type: ${CMAKE_BUILD_TYPE}")
+else()
+  message(STATUS "Generated config types: ${CMAKE_CONFIGURATION_TYPES}")
+endif()
 message(STATUS "Compiling with the flags:")
 message(STATUS "  PLATFORM=" ${PLATFORM_CPP})
 message(STATUS "  GRAPHICS=" ${GRAPHICS})
