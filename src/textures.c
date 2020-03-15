@@ -1956,7 +1956,7 @@ Image ImageTextEx(Font font, const char *text, float fontSize, float spacing, Co
         {
             // NOTE: Fixed line spacing of 1.5 line-height
             // TODO: Support custom line spacing defined by user
-            textOffsetY += font.baseSize + font.baseSize/2);
+            textOffsetY += (font.baseSize + font.baseSize/2);
             textOffsetX = 0.0f;
         }
         else
