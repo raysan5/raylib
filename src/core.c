@@ -3191,9 +3191,6 @@ static bool InitGraphicsDevice(int width, int height)
 #if defined(PLATFORM_ANDROID)
     EGLint displayFormat;
 
-    CORE.Window.display.width = ANativeWindow_getWidth(CORE.Android.app->window);
-    CORE.Window.display.height = ANativeWindow_getHeight(CORE.Android.app->window);
-
     // EGL_NATIVE_VISUAL_ID is an attribute of the EGLConfig that is guaranteed to be accepted by ANativeWindow_setBuffersGeometry()
     // As soon as we picked a EGLConfig, we can safely reconfigure the ANativeWindow buffers to match, using EGL_NATIVE_VISUAL_ID
     eglGetConfigAttrib(CORE.Window.device, CORE.Window.config, EGL_NATIVE_VISUAL_ID, &displayFormat);
@@ -4160,6 +4157,9 @@ static void AndroidCommandCallback(struct android_app *app, int32_t cmd)
                 }
                 else
                 {
+                    CORE.Window.display.width  = ANativeWindow_getWidth(CORE.Android.app->window);
+                    CORE.Window.display.height = ANativeWindow_getHeight(CORE.Android.app->window);
+
                     // Init graphics device (display device and OpenGL context)
                     InitGraphicsDevice(CORE.Window.screen.width, CORE.Window.screen.height);
 
