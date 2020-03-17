@@ -53,17 +53,30 @@
 #include "rlgl.h"           // raylib OpenGL abstraction layer to OpenGL 1.1, 2.1, 3.3+ or ES2
 
 #if defined(SUPPORT_FILEFORMAT_OBJ) || defined(SUPPORT_FILEFORMAT_MTL)
+    #define TINYOBJ_MALLOC RL_MALLOC
+    #define TINYOBJ_CALLOC RL_CALLOC
+    #define TINYOBJ_REALLOC RL_REALLOC
+    #define TINYOBJ_FREE RL_FREE
+
     #define TINYOBJ_LOADER_C_IMPLEMENTATION
     #include "external/tinyobj_loader_c.h"      // OBJ/MTL file formats loading
 #endif
 
 #if defined(SUPPORT_FILEFORMAT_GLTF)
+    #define CGLTF_MALLOC RL_MALLOC
+    #define CGLTF_FREE RL_FREE
+    
     #define CGLTF_IMPLEMENTATION
     #include "external/cgltf.h"         // glTF file format loading
     #include "external/stb_image.h"     // glTF texture images loading
 #endif
 
 #if defined(SUPPORT_MESH_GENERATION)
+    #define PAR_MALLOC(T, N) ((T*)RL_MALLOC(N*sizeof(T)))
+    #define PAR_CALLOC(T, N) ((T*)RL_CALLOC(N*sizeof(T), 1))
+    #define PAR_REALLOC(T, BUF, N) ((T*)RL_REALLOC(BUF, sizeof(T)*(N)))
+    #define PAR_FREE RL_FREE
+    
     #define PAR_SHAPES_IMPLEMENTATION
     #include "external/par_shapes.h"    // Shapes 3d parametric generation
 #endif
@@ -1122,7 +1135,7 @@ void UpdateModelAnimation(Model model, ModelAnimation anim, int frame)
 
             Vector3 inTranslation = { 0 };
             Quaternion inRotation = { 0 };
-            Vector3 inScale = { 0 };
+            //Vector3 inScale = { 0 };      // Not used...
 
             Vector3 outTranslation = { 0 };
             Quaternion outRotation = { 0 };
@@ -1137,7 +1150,7 @@ void UpdateModelAnimation(Model model, ModelAnimation anim, int frame)
                 boneId = model.meshes[m].boneIds[boneCounter];
                 inTranslation = model.bindPose[boneId].translation;
                 inRotation = model.bindPose[boneId].rotation;
-                inScale = model.bindPose[boneId].scale;
+                //inScale = model.bindPose[boneId].scale;
                 outTranslation = anim.framePoses[frame][boneId].translation;
                 outRotation = anim.framePoses[frame][boneId].rotation;
                 outScale = anim.framePoses[frame][boneId].scale;

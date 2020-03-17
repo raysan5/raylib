@@ -155,6 +155,9 @@ typedef struct tagBITMAPINFOHEADER {
 #endif
 #endif
 
+#define MA_MALLOC RL_MALLOC
+#define MA_FREE RL_FREE
+
 #define MA_NO_JACK
 #define MINIAUDIO_IMPLEMENTATION
 #include "external/miniaudio.h"         // miniaudio library
@@ -172,27 +175,43 @@ typedef struct tagBITMAPINFOHEADER {
 #endif
 
 #if defined(SUPPORT_FILEFORMAT_OGG)
+    // TODO: Remap malloc()/free() calls to RL_MALLOC/RL_FREE
+
     #define STB_VORBIS_IMPLEMENTATION
     #include "external/stb_vorbis.h"    // OGG loading functions
 #endif
 
 #if defined(SUPPORT_FILEFORMAT_XM)
+    #define JARXM_MALLOC RL_MALLOC
+    #define JARXM_FREE RL_FREE
+    
     #define JAR_XM_IMPLEMENTATION
     #include "external/jar_xm.h"        // XM loading functions
 #endif
 
 #if defined(SUPPORT_FILEFORMAT_MOD)
+    #define JARMOD_MALLOC RL_MALLOC
+    #define JARMOD_FREE RL_FREE
+    
     #define JAR_MOD_IMPLEMENTATION
     #include "external/jar_mod.h"       // MOD loading functions
 #endif
 
 #if defined(SUPPORT_FILEFORMAT_FLAC)
+    #define DRFLAC_MALLOC RL_MALLOC
+    #define DRFLAC_REALLOC RL_REALLOC
+    #define DRFLAC_FREE RL_FREE
+
     #define DR_FLAC_IMPLEMENTATION
     #define DR_FLAC_NO_WIN32_IO
     #include "external/dr_flac.h"       // FLAC loading functions
 #endif
 
 #if defined(SUPPORT_FILEFORMAT_MP3)
+    #define DRMP3_MALLOC RL_MALLOC
+    #define DRMP3_REALLOC RL_REALLOC
+    #define DRMP3_FREE RL_FREE
+    
     #define DR_MP3_IMPLEMENTATION
     #include "external/dr_mp3.h"        // MP3 loading functions
 #endif

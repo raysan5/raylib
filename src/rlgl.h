@@ -650,6 +650,9 @@ RLAPI int GetPixelDataSize(int width, int height, int format);// Get pixel data 
         #include <OpenGL/gl3.h>         // OpenGL 3 library for OSX
         #include <OpenGL/gl3ext.h>      // OpenGL 3 extensions library for OSX
     #else
+        #define GLAD_REALLOC RL_REALLOC
+        #define GLAD_FREE RL_FREE
+    
         #define GLAD_IMPLEMENTATION
         #if defined(RLGL_STANDALONE)
             #include "glad.h"           // GLAD extensions loading library, includes OpenGL headers

@@ -124,14 +124,20 @@
 #endif
 
 #if defined(SUPPORT_IMAGE_EXPORT)
+    #define STBIW_MALLOC RL_MALLOC
+    #define STBIW_FREE RL_FREE
+    #define STBIW_REALLOC RL_REALLOC
+    
     #define STB_IMAGE_WRITE_IMPLEMENTATION
     #include "external/stb_image_write.h"   // Required for: stbi_write_*()
 #endif
 
 #if defined(SUPPORT_IMAGE_MANIPULATION)
+    #define STBIR_MALLOC(size,c) ((void)(c), RL_MALLOC(size))
+    #define STBIR_FREE(ptr,c) ((void)(c), RL_FREE(ptr))
+    
     #define STB_IMAGE_RESIZE_IMPLEMENTATION
-    #include "external/stb_image_resize.h"  // Required for: stbir_resize_uint8()
-                                            // NOTE: Used for image scaling on ImageResize()
+    #include "external/stb_image_resize.h"  // Required for: stbir_resize_uint8() [ImageResize()]
 #endif
 
 #if defined(SUPPORT_IMAGE_GENERATION)

@@ -146,6 +146,9 @@
 #endif
 
 #if defined(SUPPORT_GIF_RECORDING)
+    #define RGIF_MALLOC RL_MALLOC
+    #define RGIF_FREE RL_FREE
+    
     #define RGIF_IMPLEMENTATION
     #include "external/rgif.h"  // Support GIF recording
 #endif
@@ -163,6 +166,9 @@
 #include <sys/stat.h>           // Required for: stat() [Used in GetFileModTime()]
 
 #if (defined(PLATFORM_DESKTOP) || defined(PLATFORM_UWP)) && defined(_WIN32) && (defined(_MSC_VER) || defined(__TINYC__))
+    #define DIRENT_MALLOC RL_MALLOC
+    #define DIRENT_FREE RL_FREE
+    
     #include "external/dirent.h"    // Required for: DIR, opendir(), closedir() [Used in GetDirectoryFiles()]
 #else
     #include <dirent.h>             // Required for: DIR, opendir(), closedir() [Used in GetDirectoryFiles()]
