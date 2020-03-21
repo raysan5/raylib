@@ -1,19 +1,19 @@
 ![raylib logo](logo/raylib_256x256.png)
 
-history
--------
+introduction
+------------
 
-I've developed videogames since 2006 and in 2012 I started teaching videogames development to young people with artistic profile, most of them had never written a single line of code.
+I started developing videogames in 2006 and some years later I started teaching videogames development to young people with artistic profile, most of students had never written a single line of code.
 
-I started with C language basis and, after searching for the most simple and easy-to-use library to teach videogames programming, I found WinBGI; it was great and it worked very well with students, in just a couple of weeks that people that had never written a single line of code were able to program (and understand) a simple PONG and some of them even a BREAKOUT!
+I decided to start with C language basis and, after searching for the most simple and easy-to-use library to teach videogames programming, I found [WinBGI](http://www.codecutter.net/tools/winbgim/); it was great and it worked very well with students, in just a couple of weeks, those students that had never written a single line of code were able to program (and understand) a simple PONG game, some of them even a BREAKOUT!
 
-But WinBGI was not the clearer and most organized lib. There were a lot of things I found confusing and some function names were not clear enough for most of the students; not to mention points like no transparencies support or no hardware acceleration.
+But WinBGI was not the clearer and most organized library for my taste. There were lots of things I found confusing and some function names were not clear enough for most of the students; not to mention the lack of transparencies support and no hardware acceleration.
 
 So, I decided to create my own library, hardware accelerated, clear function names, quite organized, well structured, plain C coding and, the most important, primarily intended to learn videogames programming.
 
-Most of my videogames coding experience was in C# and XNA and I really love it (in fact, my students learn C# after C), so, I decided to use C# language notation and XNA naming conventions. That way, students can jump from raylib to XNA, MonoGame or similar libs extremely easily.
+My previous videogames development experience was mostly in C# and [XNA](https://en.wikipedia.org/wiki/Microsoft_XNA) and I really loved it, so, I decided to use C# language style notation and XNA naming conventions. That way, students were able to move from raylib to XNA, MonoGame or similar libs extremely easily.
 
-raylib started as a weekend project and after three months of hard work, raylib 1.0 was published on November 2013.
+raylib started as a weekend project and after three months of hard work, **raylib 1.0 was published on November 2013**.
 
 Enjoy it.
 
@@ -225,3 +225,7 @@ Experimental **cubemap support**, to automatically load multiple cubemap layouts
 This is a just a brief list with some of the changes of the new **raylib 2.5** but there is way more, about **70 new functions** have been added and several subsystems have been redesigned. More than **30 new examples** have been created to show the new functionalities and better illustrate already available ones.
 
 It has been a long year of hard work to make raylib a solid technology to develop new products over it.
+
+notes on raylib 3.0
+-------------------
+
