@@ -229,11 +229,11 @@ It has been a long year of hard work to make raylib a solid technology to develo
 notes on raylib 3.0
 -------------------
 
-After **10 months of intense development**, new raylib version is ready. Despite primary intended as a minor release, the [CHANGELIST](CHANGELOG) has grown so big and the library has changed so much internally that it finally became a major release. Library **internal ABI** has reveived a big redesign and review, targeting portability, integration with other platforms and making it a perfect option for other progamming [language bindings](BINDINGS.md). Welcome to **raylib 3.0**.
+After **10 months of intense development**, new raylib version is ready. Despite primary intended as a minor release, the [CHANGELIST](CHANGELOG) has grown so big and the library has changed so much internally that it finally became a major release. Library **internal ABI** has reveived a big redesign and review, targeting portability, integration with other platforms and making it a perfect option for other progamming [language bindings](BINDINGS.md).
 
-All **global variables** from the multiple raylib modules have been moved to a **global context state**, it has several benefits, first readability, memory management, it makes it easy to implement **hot-reloading** mechanisms for raylib.
+All **global variables** from the multiple raylib modules have been moved to a **global context state**, it has several benefits, first better code readability with more comprehensive variables naming and categorization (organized by types, i.e. `CORE.Window.display.width`, `CORE.Input.Keyboard.currentKeyState` or `RLGL.State.modelview`). Second, it allows better memory management to load global context state dynamically if required (not at the moment), making it easy to implement a **hot-reloading mechanism** if desired.
 
-All **memory allocations** on raylib and its dependencies have been moved to `RL_MALLOC`, `RL_FREE` and similar macros. Now the users can hook their own memory allocations mechanism having more control over memory allocated and used internally by the library. Additionally it makes it easier to port the library to embedded devices where memory control is critical.
+All **memory allocations** on raylib and its dependencies have been moved to `RL_MALLOC`, `RL_FREE` and similar macros. Now the users can hook their own memory allocations mechanism having more control over memory allocated and used internally by the library. Additionally it makes it easier to port the library to embedded devices where memory control is critical. For more info check raylib issue #1074.
 
 All **I/O file accesses** from raylib are being moved to **memory data access**, now all I/O file access is centralized into just four functions: `LoadFileData()`, `SaveFileData()`, `LoadFileText()`, `SaveFileText()`. Users can just update those functions to any I/O file system. This change makes it easier to integrate raylib with **Virtual File Systems** or custom I/O file implementations.
 
@@ -243,8 +243,15 @@ All **raylib data structures** have been reviewed and optimized for pass-by-valu
 
 `text` module reviewed to improve fonts generation and text management functions... -WIP-
 
-Multiple new examples added and categorized examples table...
+**Multiple new examples added** and some examples reviewed. Most of the new examples have been contributed by raylib users. Also, most of the examples have been adapted to work on web and a detailed categorized table has been created on github for easy examples navigation and code access.
 
-GitHub Actions CI implemented for Windows, Linux and macOS...
+New **GitHub Actions CI** system has been implemented for Windows, Linux and macOS code and examples compilation on every new commit or PR to make sure library keeps stable and usable with no breaking bugs.
+
+
+This is a just a brief list with some of the changes of the new **raylib 2.5** but there is way more, about **70 new functions** have been added and several subsystems have been redesigned. More than **30 new examples** have been created to show the new functionalities and better illustrate already available ones.
+
+It has been a long year of hard work to make raylib a solid technology to develop new products over it.
+
+Welcome to **raylib 3.0**. -WIP-
 
 
