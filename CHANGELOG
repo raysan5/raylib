@@ -1,18 +1,19 @@
 changelog
 ---------
 
-Current Release:    raylib 3.0.0 (Feb.2020) -WIP-
+Current Release:    raylib 3.0.0 (Mar.2020) -WIP-
 
 -----------------------------------------------
-Release:     raylib 3.0 (Feb 2020)
+Release:     raylib 3.0 (Mar 2020) -WIP-
 -----------------------------------------------
 KEY CHANGES:
  - Global context states used on all modules. 
  - Custom memory allocators for all modules and dependencies.
- - Structures reviewed to reduce size and always used as pass-by-value.
+ - Centralized file access system and memory data loading.
+ - Structures reviewed to reduce size and always be used as pass-by-value.
  - raudio module reviewed to accomodate new Music struct and new miniaudio.
  - text module reviewed to improve fonts generation and text management functions.
- - examples addition, multiple new examples and categorized examples table.
+ - Multiple new examples added and categorized examples table.
  - GitHub Actions CI implemented for Windows, Linux and macOS.
  
 Detailed changes:
