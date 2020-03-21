@@ -20,9 +20,6 @@ Ready to learn? Jump to [code examples!](http://www.raylib.com/examples.html)
 ![Twitter Follow](https://img.shields.io/twitter/follow/raysan5?style=social)
 ![Subreddit subscribers](https://img.shields.io/reddit/subreddit-subscribers/raylib?style=social)
 
-[![TravisCI Build Status](https://travis-ci.org/raysan5/raylib.svg?branch=master)](https://travis-ci.org/raysan5/raylib)
-[![https://ci.appveyor.com/api/projects/status/github/raysan5/raylib?svg=true](https://ci.appveyor.com/api/projects/status/github/raysan5/raylib?svg=true)](https://ci.appveyor.com/project/raysan5/raylib)
-
 [![Travis (.org)](https://img.shields.io/travis/raysan5/raylib?label=Travis%20CI%20Build%20Status)](https://travis-ci.org/raysan5/raylib)
 [![AppVeyor](https://img.shields.io/appveyor/build/raysan5/raylib?label=AppVeyor%20CI%20Build%20Status)](https://ci.appveyor.com/project/raysan5/raylib)
 
