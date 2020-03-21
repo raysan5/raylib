@@ -61,6 +61,7 @@ Some people ported raylib to other languages in form of bindings or wrappers to 
 | ray.mod            | BlitzMax       | https://github.com/bmx-ng/ray.mod                    |
 | raylib-mosaic      | Mosaic         | https://github.com/pluckyporcupine/raylib-mosaic     |
 | raylib-xdpw        | XD Pascal      | https://github.com/vtereshkov/raylib-xdpw            |
+| raylib-carp        | Carp           | https://github.com/pluckyporcupine/raylib-carp       |
 | raylib-fb          | FreeBasic      | https://github.com/IchMagBier/raylib-fb              |
 | raylib.cbl         | COBOL          | *[code examples](https://github.com/Martinfx/Cobol/tree/master/OpenCobol/Games/raylib)* |
  
