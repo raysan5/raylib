@@ -8,6 +8,14 @@ raylib is highly inspired by Borland BGI graphics lib and by XNA framework and i
 
 Ready to learn? Jump to [code examples!](http://www.raylib.com/examples.html)
 
+<br>
+
+<a href="https://github.com/raysan5/raylib/graphs/contributors" alt="Contributors"><img src="https://img.shields.io/github/contributors/badges/shields" /></a>
+<a href="#sponsors" alt="raylib Sponsors"><img src="https://img.shields.io/opencollective/sponsors/shields" /></a>
+<a href="https://github.com/raysan5/raylib/pulse" alt="Activity"><img src="https://img.shields.io/github/commit-activity/m/badges/shields" /></a>
+<a href="https://discord.gg/VkzNHUE"><img src="https://img.shields.io/discord/308323056592486420?logo=discord" alt="chat on Discord"></a>
+<a href="https://twitter.com/intent/follow?screen_name=raysan5"><img src="https://img.shields.io/twitter/follow/raysan5?style=social&logo=twitter" alt="follow on Twitter"></a>
+
 [![Chat on Discord](https://img.shields.io/discord/426912293134270465.svg?logo=discord)](https://discord.gg/VkzNHUE)
 [![License](https://img.shields.io/badge/license-zlib%2Flibpng-blue.svg)](LICENSE)
 [![Twitter URL](https://img.shields.io/twitter/url/http/shields.io.svg?style=social&label=@raysan5)](https://twitter.com/raysan5)
