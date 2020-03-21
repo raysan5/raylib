@@ -82,6 +82,10 @@ Detailed changes:
 [textures] ADDED: LoadAnimatedGIF() - Load animated GIF file
 [textures] ADDED: GetImageAlphaBorder() - Get image alpha border rectangle
 [textures] ADDED: ImageFromImage() - Create an image from another image piece
+[textures] ADDED: ImageClearBackground(), by @iamsouravgupta
+[textures] ADDED: ImageDrawPixel(), by @iamsouravgupta
+[textures] ADDED: ImageDrawCircle(), by @iamsouravgupta
+[textures] ADDED: ImageDrawLineEx(), by @iamsouravgupta
 [textures] REVIEWED: ImageDraw(), now it supports color tint parameter
 [textures] REVIEWED: ImageResizeCanvas()
 [textures] REVIEWED: ImageCrop() with security checks
