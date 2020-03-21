@@ -2022,15 +2022,16 @@ void ImageClearBackground(Image *dst, Color color)
 
 // Draw pixel within an image
 void ImageDrawPixel(Image *dst, Vector2 position, Color color) 
-{  
+{
     ImageDrawRectangle(dst, (Rectangle){ position.x, position.y, 1.0f, 1.0f }, color);
 }
 
 // Draw circle within an image
 void ImageDrawCircle(Image *dst, Vector2 center, int radius, Color color)
 {
-    int x = 0, y = radius, xc = center.x, yc = center.y;
-    int decesionParameter = 3 - 2 * radius;
+    int x = 0, y = radius, xc = (int)center.x, yc = (int)center.y;
+    int decesionParameter = 3 - 2*radius;
+
     while (y >= x)
     {
         ImageDrawPixel(dst, (Vector2){ xc + x, yc + y }, color);
@@ -2042,33 +2043,34 @@ void ImageDrawCircle(Image *dst, Vector2 center, int radius, Color color)
         ImageDrawPixel(dst, (Vector2){ xc + y, yc - x }, color);
         ImageDrawPixel(dst, (Vector2){ xc - y, yc - x }, color);
         x++;
+        
         if (decesionParameter > 0)
         {
             y--;
-            decesionParameter = decesionParameter + 4 * (x - y) + 10;
+            decesionParameter = decesionParameter + 4*(x - y) + 10;
         }
-        else
-            decesionParameter = decesionParameter + 4 * x + 6;
+        else decesionParameter = decesionParameter + 4*x + 6;
     }
 }
 
 // Draw line within an image
 void ImageDrawLineEx(Image *dst, Vector2 start, Vector2 end, Color color)
 {
-    int x1 = start.x, y1 = start.y, x2 = end.x, y2 = end.y;
-    int m = 2 * (y2 - y1); 
-    int slopeError = m - (x2 - x1); 
-    for (int x = x1, y = y1; x <= x2; x++) 
+    int x1 = (int)start.x, y1 = (int)start.y, x2 = (int)end.x, y2 = (int)end.y;
+    int m = 2*(y2 - y1);
+    int slopeError = m - (x2 - x1);
+
+    for (int x = x1, y = y1; x <= x2; x++)
     { 
         ImageDrawPixel(dst, (Vector2){ x, y }, color);
         slopeError += m;
-        
-        if (slopeError >= 0) 
-        { 
+
+        if (slopeError >= 0)
+        {
             y++; 
-            slopeError -= 2 * (x2 - x1);
-        } 
-    } 
+            slopeError -= 2*(x2 - x1);
+        }
+    }
 }
 
 // Draw text (default font) within an image (destination)
