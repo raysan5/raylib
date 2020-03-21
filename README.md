@@ -10,15 +10,15 @@ Ready to learn? Jump to [code examples!](http://www.raylib.com/examples.html)
 
 <br>
 
-![GitHub contributors](https://img.shields.io/github/contributors/raysan5/raylib)
-![GitHub All Releases](https://img.shields.io/github/downloads/raysan5/raylib/total)
-![GitHub commits since tagged version](https://img.shields.io/github/commits-since/raysan5/raylib/2.5.0)
+[![GitHub contributors](https://img.shields.io/github/contributors/raysan5/raylib)](https://github.com/raysan5/raylib/graphs/contributors)
+[![GitHub All Releases](https://img.shields.io/github/downloads/raysan5/raylib/total)](https://github.com/raysan5/raylib/releases)
+[![GitHub commits since tagged version](https://img.shields.io/github/commits-since/raysan5/raylib/2.5.0)](https://github.com/raysan5/raylib/commits/master)
 [![License](https://img.shields.io/badge/license-zlib%2Flibpng-blue.svg)](LICENSE)
 
 [![Chat on Discord](https://img.shields.io/discord/426912293134270465.svg?logo=discord)](https://discord.gg/VkzNHUE)
-![GitHub stars](https://img.shields.io/github/stars/raysan5/raylib?style=social)
-![Twitter Follow](https://img.shields.io/twitter/follow/raysan5?style=social)
-![Subreddit subscribers](https://img.shields.io/reddit/subreddit-subscribers/raylib?style=social)
+[![GitHub stars](https://img.shields.io/github/stars/raysan5/raylib?style=social)](https://github.com/raysan5/raylib/stargazers)
+[![Twitter Follow](https://img.shields.io/twitter/follow/raysan5?style=social)](https://twitter.com/raysan5)
+[![Subreddit subscribers](https://img.shields.io/reddit/subreddit-subscribers/raylib?style=social)](https://www.reddit.com/r/raylib/)
 
 [![Travis (.org)](https://img.shields.io/travis/raysan5/raylib?label=Travis%20CI%20Build%20Status)](https://travis-ci.org/raysan5/raylib)
 [![AppVeyor](https://img.shields.io/appveyor/build/raysan5/raylib?label=AppVeyor%20CI%20Build%20Status)](https://ci.appveyor.com/project/raysan5/raylib)
