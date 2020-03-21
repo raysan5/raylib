@@ -23,8 +23,8 @@ Ready to learn? Jump to [code examples!](http://www.raylib.com/examples.html)
 [![TravisCI Build Status](https://travis-ci.org/raysan5/raylib.svg?branch=master)](https://travis-ci.org/raysan5/raylib)
 [![https://ci.appveyor.com/api/projects/status/github/raysan5/raylib?svg=true](https://ci.appveyor.com/api/projects/status/github/raysan5/raylib?svg=true)](https://ci.appveyor.com/project/raysan5/raylib)
 
-![Travis (.org)](https://img.shields.io/travis/raysan5/raylib?label=Travis%20CI%20Build%20Status)
-![AppVeyor](https://img.shields.io/appveyor/build/raysan5/raylib?label=AppVeyor%20CI%20Build%20Status)
+[![Travis (.org)](https://img.shields.io/travis/raysan5/raylib?label=Travis%20CI%20Build%20Status)](https://travis-ci.org/raysan5/raylib)
+[![AppVeyor](https://img.shields.io/appveyor/build/raysan5/raylib?label=AppVeyor%20CI%20Build%20Status)](https://ci.appveyor.com/project/raysan5/raylib)
 
 [![Actions Status](https://github.com/raysan5/raylib/workflows/CI%20-%20Source%20&%20Examples%20-%20Windows/badge.svg)](https://github.com/raysan5/raylib/actions)
 [![Actions Status](https://github.com/raysan5/raylib/workflows/CI%20-%20Source%20&%20Examples%20-%20Linux/badge.svg)](https://github.com/raysan5/raylib/actions)
