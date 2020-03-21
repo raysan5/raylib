@@ -10,12 +10,12 @@ Ready to learn? Jump to [code examples!](http://www.raylib.com/examples.html)
 
 <br>
 
-![GitHub commit activity](https://img.shields.io/github/commit-activity/m/raysan5/raylib)
 ![GitHub contributors](https://img.shields.io/github/contributors/raysan5/raylib)
-![GitHub commits since tagged version](https://img.shields.io/github/commits-since/raysan5/raylib/2.5.0)
 ![GitHub All Releases](https://img.shields.io/github/downloads/raysan5/raylib/total)
-![GitHub stars](https://img.shields.io/github/stars/raysan5/raylib?style=social)
+![GitHub commits since tagged version](https://img.shields.io/github/commits-since/raysan5/raylib/2.5.0)
+![GitHub commit activity](https://img.shields.io/github/commit-activity/m/raysan5/raylib)
 [![License](https://img.shields.io/badge/license-zlib%2Flibpng-blue.svg)](LICENSE)
+![GitHub stars](https://img.shields.io/github/stars/raysan5/raylib?style=social)
 
 [![Chat on Discord](https://img.shields.io/discord/426912293134270465.svg?logo=discord)](https://discord.gg/VkzNHUE)
 ![Twitter Follow](https://img.shields.io/twitter/follow/raysan5?style=social)
