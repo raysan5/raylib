@@ -8,11 +8,12 @@ raylib is highly inspired by Borland BGI graphics lib and by XNA framework and i
 
 Ready to learn? Jump to [code examples!](http://www.raylib.com/examples.html)
 
-[![Build Status](https://travis-ci.org/raysan5/raylib.svg?branch=master)](https://travis-ci.org/raysan5/raylib)
-[![https://ci.appveyor.com/api/projects/status/github/raysan5/raylib?svg=true](https://ci.appveyor.com/api/projects/status/github/raysan5/raylib?svg=true)](https://ci.appveyor.com/project/raysan5/raylib)
 [![Chat on Discord](https://img.shields.io/discord/426912293134270465.svg?logo=discord)](https://discord.gg/VkzNHUE)
 [![License](https://img.shields.io/badge/license-zlib%2Flibpng-blue.svg)](LICENSE)
-[![Twitter URL](https://img.shields.io/twitter/url/http/shields.io.svg?style=social&label=Follow)](https://twitter.com/raysan5)
+[![Twitter URL](https://img.shields.io/twitter/url/http/shields.io.svg?style=social&label=@raysan5)](https://twitter.com/raysan5)
+
+[![TravisCI Build Status](https://travis-ci.org/raysan5/raylib.svg?branch=master)](https://travis-ci.org/raysan5/raylib)
+[![https://ci.appveyor.com/api/projects/status/github/raysan5/raylib?svg=true](https://ci.appveyor.com/api/projects/status/github/raysan5/raylib?svg=true)](https://ci.appveyor.com/project/raysan5/raylib)
 
 [![Actions Status](https://github.com/raysan5/raylib/workflows/CI%20-%20Source%20&%20Examples%20-%20Windows/badge.svg)](https://github.com/raysan5/raylib/actions)
 [![Actions Status](https://github.com/raysan5/raylib/workflows/CI%20-%20Source%20&%20Examples%20-%20Linux/badge.svg)](https://github.com/raysan5/raylib/actions)
@@ -54,9 +55,9 @@ build and installation
 
 raylib binary releases for Windows, Linux and macOS are available at the [Github Releases page](https://github.com/raysan5/raylib/releases). raylib is also available via multiple [package managers](https://github.com/raysan5/raylib/issues/613) on multiple OS distributions.
 
-If you wish to build raylib yourself, [raylib Wiki](https://github.com/raysan5/raylib/wiki#development-platforms) contains detailed instructions on building and using raylib on multiple platforms.
+raylib has been developed on Windows platform using Notepad++ and MinGW GCC compiler but it can be used with multiple IDEs on multiple platforms, [projects directory](https://github.com/raysan5/raylib/tree/master/projects) contains several ready-to-use project templates to build raylib and code examples.
 
-raylib can be used with multiple IDEs, [projects directory](https://github.com/raysan5/raylib/tree/master/projects) includes several ready-to-use project templates to build raylib and code examples.
+[raylib Wiki](https://github.com/raysan5/raylib/wiki#development-platforms) contains detailed instructions on building and usage on multiple platforms.
 
 contact
 -------
@@ -69,7 +70,7 @@ contact
    * Patreon: [https://www.patreon.com/raylib](https://www.patreon.com/raylib)
    * YouTube: [https://www.youtube.com/channel/raylib](https://www.youtube.com/channel/UC8WIBkhYb5sBNqXO1mZ7WSQ)
 
-If you are using raylib and enjoying it, please, join our [Discord server](https://discord.gg/VkzNHUE) and let us know!
+If you are using raylib and enjoying it, please, join our [Discord server](https://discord.gg/VkzNHUE) and let us know! :)
 
 license
 -------
