@@ -65,7 +65,7 @@
 #if defined(SUPPORT_FILEFORMAT_GLTF)
     #define CGLTF_MALLOC RL_MALLOC
     #define CGLTF_FREE RL_FREE
-    
+
     #define CGLTF_IMPLEMENTATION
     #include "external/cgltf.h"         // glTF file format loading
     #include "external/stb_image.h"     // glTF texture images loading
@@ -76,7 +76,7 @@
     #define PAR_CALLOC(T, N) ((T*)RL_CALLOC(N*sizeof(T), 1))
     #define PAR_REALLOC(T, BUF, N) ((T*)RL_REALLOC(BUF, sizeof(T)*(N)))
     #define PAR_FREE RL_FREE
-    
+
     #define PAR_SHAPES_IMPLEMENTATION
     #include "external/par_shapes.h"    // Shapes 3d parametric generation
 #endif
@@ -1831,6 +1831,11 @@ Mesh GenMeshHeightmap(Image heightmap, Vector3 size)
 
     Vector3 scaleFactor = { size.x/mapX, size.y/255.0f, size.z/mapZ };
 
+    Vector3 vA;
+    Vector3 vB;
+    Vector3 vC;
+    Vector3 vN;
+
     for (int z = 0; z < mapZ-1; z++)
     {
         for (int x = 0; x < mapX-1; x++)
@@ -1888,14 +1893,34 @@ Mesh GenMeshHeightmap(Image heightmap, Vector3 size)
 
             // Fill normals array with data
             //--------------------------------------------------------------
-            for (int i = 0; i < 18; i += 3)
+            for (int i = 0; i < 18; i += 9)
             {
-                mesh.normals[nCounter + i] = 0.0f;
-                mesh.normals[nCounter + i + 1] = 1.0f;
-                mesh.normals[nCounter + i + 2] = 0.0f;
-            }
+                vA.x = mesh.vertices[nCounter + i];
+                vA.y = mesh.vertices[nCounter + i + 1];
+                vA.z = mesh.vertices[nCounter + i + 2];
 
-            // TODO: Calculate normals in an efficient way
+                vB.x = mesh.vertices[nCounter + i + 3];
+                vB.y = mesh.vertices[nCounter + i + 4];
+                vB.z = mesh.vertices[nCounter + i + 5];
+
+                vC.x = mesh.vertices[nCounter + i + 6];
+                vC.y = mesh.vertices[nCounter + i + 7];
+                vC.z = mesh.vertices[nCounter + i + 8];
+
+                vN = Vector3Normalize(Vector3CrossProduct(Vector3Subtract(vB, vA), Vector3Subtract(vC, vA)));
+
+                mesh.normals[nCounter + i] = vN.x;
+                mesh.normals[nCounter + i + 1] = vN.y;
+                mesh.normals[nCounter + i + 2] = vN.z;
+
+                mesh.normals[nCounter + i + 3] = vN.x;
+                mesh.normals[nCounter + i + 4] = vN.y;
+                mesh.normals[nCounter + i + 5] = vN.z;
+
+                mesh.normals[nCounter + i + 6] = vN.x;
+                mesh.normals[nCounter + i + 7] = vN.y;
+                mesh.normals[nCounter + i + 8] = vN.z;
+            }
 
             nCounter += 18;     // 6 vertex, 18 floats
             trisCounter += 2;
