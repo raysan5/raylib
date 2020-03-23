@@ -325,7 +325,6 @@ typedef struct {
 } KeyEventFifo;
 #endif
 
-
 typedef struct { int x; int y; } Point;
 typedef struct { unsigned int width; unsigned int height; } Size;
 
@@ -333,6 +332,7 @@ typedef struct { unsigned int width; unsigned int height; } Size;
 extern EGLNativeWindowType handle;          // Native window handler for UWP (external, defined in UWP App)
 #endif
 
+// Core global state context data
 typedef struct CoreData {
     struct {
 #if defined(PLATFORM_DESKTOP) || defined(PLATFORM_WEB)
@@ -450,7 +450,7 @@ typedef struct CoreData {
 //----------------------------------------------------------------------------------
 // Global Variables Definition
 //----------------------------------------------------------------------------------
-static CoreData CORE = { 0 };               // Global CORE context
+static CoreData CORE = { 0 };               // Global CORE state context
 
 static char **dirFilesPath = NULL;          // Store directory files paths as strings
 static int dirFilesCount = 0;               // Count directory files strings
