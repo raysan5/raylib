@@ -197,22 +197,23 @@ typedef enum {
     MOVE_DOWN
 } CameraMove;
 
+// Camera global state context data
 typedef struct {
-    int mode;                     // Current camera mode
-    float targetDistance;         // Camera distance from position to target
-    float playerEyesPosition;     // Default player eyes position from ground (in meters)
-    Vector2 angle;                // Camera angle in plane XZ
+    int mode;                       // Current camera mode
+    float targetDistance;           // Camera distance from position to target
+    float playerEyesPosition;       // Default player eyes position from ground (in meters)
+    Vector2 angle;                  // Camera angle in plane XZ
 
     int moveControl[6];
-    int smoothZoomControl;        // raylib: KEY_LEFT_CONTROL
-    int altControl;               // raylib: KEY_LEFT_ALT
-    int panControl;               // raylib: MOUSE_MIDDLE_BUTTON
+    int smoothZoomControl;          // raylib: KEY_LEFT_CONTROL
+    int altControl;                 // raylib: KEY_LEFT_ALT
+    int panControl;                 // raylib: MOUSE_MIDDLE_BUTTON
 } CameraData;
 
 //----------------------------------------------------------------------------------
 // Global Variables Definition
 //----------------------------------------------------------------------------------
-static CameraData CAMERA = {
+static CameraData CAMERA = {        // Global CAMERA state context
     .mode = 0,
     .targetDistance = 0,
     .playerEyesPosition = 1.85f,
@@ -228,7 +229,6 @@ static CameraData CAMERA = {
 //----------------------------------------------------------------------------------
 #if defined(CAMERA_STANDALONE)
 // NOTE: Camera controls depend on some raylib input functions
-// TODO: Set your own input functions (used in UpdateCamera())
 static void EnableCursor() {}       // Unlock cursor
 static void DisableCursor() {}      // Lock cursor
 
@@ -273,13 +273,13 @@ void SetCameraMode(Camera camera, int mode)
 //       System: EnableCursor(), DisableCursor()
 //       Mouse: IsMouseButtonDown(), GetMousePosition(), GetMouseWheelMove()
 //       Keys:  IsKeyDown()
-// TODO: Port to quaternion-based camera
+// TODO: Port to quaternion-based camera (?)
 void UpdateCamera(Camera *camera)
 {
     static int swingCounter = 0;    // Used for 1st person swinging movement
     static Vector2 previousMousePosition = { 0.0f, 0.0f };
 
-    // TODO: Compute CAMERA.targetDistance and CAMERA.angle here
+    // TODO: Compute CAMERA.targetDistance and CAMERA.angle here (?)
 
     // Mouse movement detection
     Vector2 mousePositionDelta = { 0.0f, 0.0f };
@@ -290,7 +290,6 @@ void UpdateCamera(Camera *camera)
     bool panKey = IsMouseButtonDown(CAMERA.panControl);
     bool altKey = IsKeyDown(CAMERA.altControl);
     bool szoomKey = IsKeyDown(CAMERA.smoothZoomControl);
-
     bool direction[6] = { IsKeyDown(CAMERA.moveControl[MOVE_FRONT]),
                           IsKeyDown(CAMERA.moveControl[MOVE_BACK]),
                           IsKeyDown(CAMERA.moveControl[MOVE_RIGHT]),
@@ -298,7 +297,7 @@ void UpdateCamera(Camera *camera)
                           IsKeyDown(CAMERA.moveControl[MOVE_UP]),
                           IsKeyDown(CAMERA.moveControl[MOVE_DOWN]) };
 
-    // TODO: Consider touch inputs for camera
+    // TODO: Touch input detection (probably gestures system required)
 
     if (CAMERA.mode != CAMERA_CUSTOM)
     {
@@ -309,19 +308,20 @@ void UpdateCamera(Camera *camera)
     }
 
     // Support for multiple automatic camera modes
+    // NOTE: In case of CAMERA_CUSTOM nothing happens here, user must update it manually
     switch (CAMERA.mode)
     {
-        case CAMERA_FREE:
+        case CAMERA_FREE:           // Camera free controls, using standard 3d-content-creation scheme
         {
             // Camera zoom
             if ((CAMERA.targetDistance < CAMERA_FREE_DISTANCE_MAX_CLAMP) && (mouseWheelMove < 0))
             {
                 CAMERA.targetDistance -= (mouseWheelMove*CAMERA_MOUSE_SCROLL_SENSITIVITY);
-
                 if (CAMERA.targetDistance > CAMERA_FREE_DISTANCE_MAX_CLAMP) CAMERA.targetDistance = CAMERA_FREE_DISTANCE_MAX_CLAMP;
             }
+            
             // Camera looking down
-            // TODO: Review, weird comparisson of CAMERA.targetDistance == 120.0f?
+            // TODO: Review, weird comparison of CAMERA.targetDistance == 120.0f?
             else if ((camera->position.y > camera->target.y) && (CAMERA.targetDistance == CAMERA_FREE_DISTANCE_MAX_CLAMP) && (mouseWheelMove < 0))
             {
                 camera->target.x += mouseWheelMove*(camera->target.x - camera->position.x)*CAMERA_MOUSE_SCROLL_SENSITIVITY/CAMERA.targetDistance;
@@ -397,8 +397,9 @@ void UpdateCamera(Camera *camera)
             camera->position.x = -sinf(CAMERA.angle.x)*CAMERA.targetDistance*cosf(CAMERA.angle.y) + camera->target.x;
             camera->position.y = -sinf(CAMERA.angle.y)*CAMERA.targetDistance + camera->target.y;
             camera->position.z = -cosf(CAMERA.angle.x)*CAMERA.targetDistance*cosf(CAMERA.angle.y) + camera->target.z;
+
         } break;
-        case CAMERA_ORBITAL:
+        case CAMERA_ORBITAL:        // Camera just orbits around target, only zoom allowed
         {
             CAMERA.angle.x += CAMERA_ORBITAL_SPEED;      // Camera orbit angle
             CAMERA.targetDistance -= (mouseWheelMove*CAMERA_MOUSE_SCROLL_SENSITIVITY);   // Camera zoom
@@ -412,7 +413,7 @@ void UpdateCamera(Camera *camera)
             camera->position.z = cosf(CAMERA.angle.x)*CAMERA.targetDistance*cosf(CAMERA.angle.y) + camera->target.z;
 
         } break;
-        case CAMERA_FIRST_PERSON:
+        case CAMERA_FIRST_PERSON:   // Camera moves as in a first-person game, controls are configurable
         {
             camera->position.x += (sinf(CAMERA.angle.x)*direction[MOVE_BACK] -
                                    sinf(CAMERA.angle.x)*direction[MOVE_FRONT] -
@@ -427,10 +428,6 @@ void UpdateCamera(Camera *camera)
                                    cosf(CAMERA.angle.x)*direction[MOVE_FRONT] +
                                    sinf(CAMERA.angle.x)*direction[MOVE_LEFT] -
                                    sinf(CAMERA.angle.x)*direction[MOVE_RIGHT])/PLAYER_MOVEMENT_SENSITIVITY;
-
-            bool isMoving = false;  // Required for swinging
-
-            for (int i = 0; i < 6; i++) if (direction[i]) { isMoving = true; break; }
 
             // Camera orientation calculation
             CAMERA.angle.x += (mousePositionDelta.x*-CAMERA_MOUSE_MOVE_SENSITIVITY);
@@ -448,8 +445,9 @@ void UpdateCamera(Camera *camera)
             camera->target.x = camera->position.x - transform.m12;
             camera->target.y = camera->position.y - transform.m13;
             camera->target.z = camera->position.z - transform.m14;
-
-            if (isMoving) swingCounter++;
+            
+            // If movement detected (some key pressed), increase swinging
+            for (int i = 0; i < 6; i++) if (direction[i]) { swingCounter++; break; }
 
             // Camera position update
             // NOTE: On CAMERA_FIRST_PERSON player Y-movement is limited to player 'eyes position'
@@ -458,9 +456,8 @@ void UpdateCamera(Camera *camera)
             camera->up.x = sinf(swingCounter/(CAMERA_FIRST_PERSON_STEP_TRIGONOMETRIC_DIVIDER*2))/CAMERA_FIRST_PERSON_WAVING_DIVIDER;
             camera->up.z = -sinf(swingCounter/(CAMERA_FIRST_PERSON_STEP_TRIGONOMETRIC_DIVIDER*2))/CAMERA_FIRST_PERSON_WAVING_DIVIDER;
 
-
         } break;
-        case CAMERA_THIRD_PERSON:
+        case CAMERA_THIRD_PERSON:   // Camera moves as in a third-person game, following target at a distance, controls are configurable
         {
             camera->position.x += (sinf(CAMERA.angle.x)*direction[MOVE_BACK] -
                                    sinf(CAMERA.angle.x)*direction[MOVE_FRONT] -
@@ -497,6 +494,7 @@ void UpdateCamera(Camera *camera)
             camera->position.z = cosf(CAMERA.angle.x)*CAMERA.targetDistance*cosf(CAMERA.angle.y) + camera->target.z;
 
         } break;
+        case CAMERA_CUSTOM: break;
         default: break;
     }
 }
