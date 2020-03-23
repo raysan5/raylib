@@ -1,10 +1,10 @@
 changelog
 ---------
 
-Current Release:    raylib 3.0.0 (Mar.2020) -WIP-
+Current Release:    raylib 3.0.0 (01 April 2020) (estimated)
 
 -----------------------------------------------
-Release:     raylib 3.0 (Mar 2020) -WIP-
+Release:     raylib 3.0 (01 April 2020) (estimated)
 -----------------------------------------------
 KEY CHANGES:
  - Global context states used on all modules. 
