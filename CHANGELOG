@@ -44,6 +44,10 @@ Detailed changes:
 [core] ADDED: CompressData() - Compress data (DEFLATE algorythm)
 [core] ADDED: DecompressData() - Decompress data (DEFLATE algorythm)
 [core] ADDED: GetWindowPosition() - Get window position XY on monitor
+[core] ADDED: LoadFileData() - Load file data as byte array (read)
+[core] ADDED: SaveFileData() - Save data to file from byte array (write)
+[core] ADDED: LoadFileText() - Load text data from file (read), returns a '\0' terminated string
+[core] ADDED: SaveFileText() - Save text data to file (write), string must be '\0' terminated
 [core] REMOVED: Show raylib logo at initialization
 [core] REVIEWED: GetFileName(), security checks
 [core] REVIEWED: IsMouseButtonReleased(), when press/release events come too fast, by @oswjk
