@@ -456,7 +456,8 @@ SHADERS = \
     shaders/shaders_eratosthenes \
     shaders/shaders_basic_lighting \
     shaders/shaders_fog \
-    shaders/shaders_simple_mask
+    shaders/shaders_simple_mask \
+    shaders/shaders_spotlight
     
 AUDIO = \
     audio/audio_module_playing \
