@@ -249,10 +249,10 @@ New **GitHub Actions CI** system has been implemented for Windows, Linux and mac
 
 -WIP-
 
-This is a just a brief list with some of the changes of the new **raylib 2.5** but there is way more, about **70 new functions** have been added and several subsystems have been redesigned. More than **30 new examples** have been created to show the new functionalities and better illustrate already available ones.
+This is a just a brief list with some of the changes of the new **raylib 3.0** but there is way more, about **30 new functions** have been added and multiple functions have been reviewed. In this time raylib has been binded to [+40 programming languages](https://github.com/raysan5/raylib/blob/master/BINDINGS.md).
 
-It has been a long year of hard work to make raylib a solid technology to develop new products over it.
+It has been **10 months of improvements** and [tools development](https://raylibtech.itch.io/) using raylib technology.
 
-Welcome to **raylib 3.0**. -WIP-
+Welcome to **raylib 3.0**.
 
 
