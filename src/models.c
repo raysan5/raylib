@@ -50,6 +50,14 @@
 #include <string.h>         // Required for: strncmp() [Used in LoadModelAnimations()], strlen() [Used in LoadTextureFromCgltfImage()]
 #include <math.h>           // Required for: sinf(), cosf(), sqrtf(), fabsf()
 
+#if defined(_WIN32)
+    #include <direct.h>     // Required for: _chdir() [Used in LoadOBJ()]
+    #define CHDIR _chdir
+#else
+    #include <unistd.h>     // Required for: chdir() (POSIX) [Used in LoadOBJ()]
+    #define CHDIR chdir
+#endif
+
 #include "rlgl.h"           // raylib OpenGL abstraction layer to OpenGL 1.1, 2.1, 3.3+ or ES2
 
 #if defined(SUPPORT_FILEFORMAT_OBJ) || defined(SUPPORT_FILEFORMAT_MTL)
@@ -2832,29 +2840,17 @@ static Model LoadOBJ(const char *fileName)
     tinyobj_material_t *materials = NULL;
     unsigned int materialCount = 0;
 
-    int dataLength = 0;
-    char *data = NULL;
+    char *fileData = LoadFileText(fileName);
+    int dataSize = strlen(fileData);
 
-    // Load model data
-    FILE *objFile = fopen(fileName, "rb");
-
-    if (objFile != NULL)
+    if (fileData != NULL)
     {
-        fseek(objFile, 0, SEEK_END);
-        long length = ftell(objFile);   // Get file size
-        fseek(objFile, 0, SEEK_SET);    // Reset file pointer
+        char currentDir[1024] = { 0 };
+        strcpy(currentDir, GetWorkingDirectory());
+        chdir(GetDirectoryPath(fileName));
 
-        data = (char *)RL_MALLOC(length);
-
-        fread(data, length, 1, objFile);
-        dataLength = length;
-        fclose(objFile);
-    }
-
-    if (data != NULL)
-    {
         unsigned int flags = TINYOBJ_FLAG_TRIANGULATE;
-        int ret = tinyobj_parse_obj(&attrib, &meshes, &meshCount, &materials, &materialCount, data, dataLength, flags);
+        int ret = tinyobj_parse_obj(&attrib, &meshes, &meshCount, &materials, &materialCount, fileData, dataSize, flags);
 
         if (ret != TINYOBJ_SUCCESS) TRACELOG(LOG_WARNING, "[%s] Model data could not be loaded", fileName);
         else TRACELOG(LOG_INFO, "[%s] Model data loaded successfully: %i meshes / %i materials", fileName, meshCount, materialCount);
@@ -2995,7 +2991,9 @@ static Model LoadOBJ(const char *fileName)
         tinyobj_shapes_free(meshes, meshCount);
         tinyobj_materials_free(materials, materialCount);
 
-        RL_FREE(data);
+        RL_FREE(fileData);
+
+        chdir(currentDir);
     }
 
     // NOTE: At this point we have all model data loaded
@@ -3122,7 +3120,7 @@ static Model LoadIQM(const char *fileName)
         return model;
     }
 
-    fread(&iqm,sizeof(IQMHeader), 1, iqmFile);  // Read IQM header
+    fread(&iqm, sizeof(IQMHeader), 1, iqmFile);  // Read IQM header
 
     if (strncmp(iqm.magic, IQM_MAGIC, sizeof(IQM_MAGIC)))
     {
