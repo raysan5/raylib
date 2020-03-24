@@ -16,15 +16,14 @@
 #define max(a, b) ((a)>(b)? (a) : (b))
 #define min(a, b) ((a)<(b)? (a) : (b))
 
-/**
- * Clamp Vector2 value with min and max and return a new vector2
- */
-Vector2 Clamp( Vector2 value, Vector2 min, Vector2 max ) {
+// Clamp Vector2 value with min and max and return a new vector2
+Vector2 ClampValue(Vector2 value, Vector2 min, Vector2 max)
+{
     Vector2 result = value;
-    result.x = ( result.x > max.x ) ? max.x : result.x;
-    result.x = ( result.x < min.x ) ? min.x : result.x;
-    result.y = ( result.y > max.y ) ? max.y : result.y;
-    result.y = ( result.y < min.y ) ? min.y : result.y;
+    result.x = (result.x > max.x)? max.x : result.x;
+    result.x = (result.x < min.x)? min.x : result.x;
+    result.y = (result.y > max.y)? max.y : result.y;
+    result.y = (result.y < min.y)? min.y : result.y;
     return result;
 }
 
@@ -63,12 +62,11 @@ int main(void)
         //----------------------------------------------------------------------------------
         Vector2 mouse = GetMousePosition();
 
-        mouse.x = (mouse.x - ( GetScreenWidth () - ( gameScreenWidth * scale) ) * 0.5) / scale;
-        mouse.y = (mouse.y - ( GetScreenHeight () - ( gameScreenHeight * scale) ) * 0.5) / scale;
+        mouse.x = (mouse.x - (GetScreenWidth() - (gameScreenWidth*scale))*0.5f)/scale;
+        mouse.y = (mouse.y - (GetScreenHeight() - (gameScreenHeight*scale))*0.5f)/scale;
 
         // Clamp mouse value behind gamescreen
-        mouse = Clamp( mouse, (Vector2){0,0}, (Vector2) { gameScreenWidth, gameScreenHeight } );
-
+        mouse = ClampValue(mouse, (Vector2){ 0, 0 }, (Vector2){ gameScreenWidth, gameScreenHeight });
         //----------------------------------------------------------------------------------
 
         if (IsKeyPressed(KEY_SPACE))
