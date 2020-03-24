@@ -29,13 +29,11 @@ Detailed changes:
 [build] REVIEWED: Generation of web examples, by @pamarcos
 [build] REVIEWED: Makefiles path to 'shell.html', by @niorad
 [build] REVIEWED: VS2017 64bit compilation issues, by @spec-chum
-[build] REVIEWED: Multiple fixes on projkects building, by @ChrisDill, @JuDelCo, @electronstudio
+[build] REVIEWED: Multiple fixes on projects building, by @ChrisDill, @JuDelCo, @electronstudio
 [core] ADDED: Support touch/mouse indistinctly
 [core] ADDED: FLAG_WINDOW_ALWAYS_RUN to avoid pause on minimize
 [core] ADDED: Config flag SUPPORT_HALFBUSY_WAIT_LOOP
 [core] ADDED: RPI mouse cursor point support on native mode
-[core] ADDED: BeginScissorMode() - Define screen area for following drawing
-[core] ADDED: EndScissorMode() - End scissor mode
 [core] ADDED: GetWorldToScreen2D()- Get screen space position for a 2d camera world space position, by @arvyy
 [core] ADDED: GetScreenToWorld2D() - Get world space position for a 2d camera screen space position, by @arvyy
 [core] ADDED: GetWorldToScreenEx() - Get size position for a 3d world space position
