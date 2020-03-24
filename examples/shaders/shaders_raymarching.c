@@ -2,12 +2,8 @@
 *
 *   raylib [shaders] example - Raymarching shapes generation
 *
-*   NOTE: This example requires raylib OpenGL 3.3 or ES2 versions for shaders support,
-*         OpenGL 1.1 does not support shaders, recompile raylib to OpenGL 3.3 version.
-*
-*   NOTE: Shaders used in this example are #version 330 (OpenGL 3.3), to test this example
-*         on OpenGL ES 2.0 platforms (Android, Raspberry Pi, HTML5), use #version 100 shaders
-*         raylib comes with shaders ready for both versions, check raylib/shaders install folder
+*   NOTE: This example requires raylib OpenGL 3.3 for shaders support and only #version 330
+*         is currently supported. OpenGL ES 2.0 platforms are not supported at the moment.
 *
 *   This example has been created using raylib 2.0 (www.raylib.com)
 *   raylib is licensed under an unmodified zlib/libpng license (View raylib.h for details)
@@ -20,7 +16,7 @@
 
 #if defined(PLATFORM_DESKTOP)
     #define GLSL_VERSION            330
-#else   // PLATFORM_RPI, PLATFORM_ANDROID, PLATFORM_WEB
+#else   // PLATFORM_RPI, PLATFORM_ANDROID, PLATFORM_WEB -> Not supported at this moment
     #define GLSL_VERSION            100
 #endif
 
