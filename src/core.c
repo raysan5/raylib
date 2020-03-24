@@ -2504,14 +2504,10 @@ bool IsMouseButtonPressed(int button)
 {
     bool pressed = false;
 
-#if defined(PLATFORM_ANDROID)
-    if (IsGestureDetected(GESTURE_TAP)) pressed = true;
-#else
     if ((CORE.Input.Mouse.currentButtonState[button] == 1) && (CORE.Input.Mouse.previousButtonState[button] == 0)) pressed = true;
 
     // Map touches to mouse buttons checking
     if ((CORE.Input.Touch.currentTouchState[button] == 1) && (CORE.Input.Touch.previousTouchState[button] == 0)) pressed = true;
-#endif
 
     return pressed;
 }
@@ -2521,14 +2517,10 @@ bool IsMouseButtonDown(int button)
 {
     bool down = false;
 
-#if defined(PLATFORM_ANDROID)
-    if (IsGestureDetected(GESTURE_HOLD)) down = true;
-#else
     if (CORE.Input.Mouse.currentButtonState[button] == 1) down = true;
 
     // Map touches to mouse buttons checking
     if (CORE.Input.Touch.currentTouchState[button] == 1) down = true;
-#endif
 
     return down;
 }
@@ -2538,16 +2530,10 @@ bool IsMouseButtonReleased(int button)
 {
     bool released = false;
 
-#if defined(PLATFORM_ANDROID)
-    #if defined(SUPPORT_GESTURES_SYSTEM)
-        released = GetGestureDetected() == GESTURE_TAP;
-    #endif
-#else
     if ((CORE.Input.Mouse.currentButtonState[button] == 0) && (CORE.Input.Mouse.previousButtonState[button] == 1)) released = true;
     
     // Map touches to mouse buttons checking
     if ((CORE.Input.Touch.currentTouchState[button] == 0) && (CORE.Input.Touch.previousTouchState[button] == 1)) released = true;
-#endif
 
     return released;
 }
@@ -2555,16 +2541,7 @@ bool IsMouseButtonReleased(int button)
 // Detect if a mouse button is NOT being pressed
 bool IsMouseButtonUp(int button)
 {
-    bool up = false;
-
-#if !defined(PLATFORM_ANDROID)
-    if (CORE.Input.Mouse.currentButtonState[button] == 0) up = true;
-    
-    // Map touches to mouse buttons checking
-    if (CORE.Input.Touch.currentTouchState[button] == 0) up = true;
-#endif
-
-    return up;
+    return !IsMouseButtonDown(button);
 }
 
 // Returns mouse position X
@@ -2671,7 +2648,7 @@ Vector2 GetTouchPosition(int index)
 {
     Vector2 position = { -1.0f, -1.0f };
 
-#if defined(PLATFORM_ANDROID) || defined(PLATFORM_WEB)
+#if defined(PLATFORM_ANDROID) || defined(PLATFORM_WEB) || defined(PLATFORM_RPI)
     if (index < MAX_TOUCH_POINTS) position = CORE.Input.Touch.position[index];
     else TRACELOG(LOG_WARNING, "Required touch point out of range (Max touch points: %i)", MAX_TOUCH_POINTS);
 
@@ -2687,11 +2664,7 @@ Vector2 GetTouchPosition(int index)
         position.y = position.y*((float)CORE.Window.render.height/(float)CORE.Window.display.height) - CORE.Window.renderOffset.y/2;
     }
     #endif
-#endif
-#if defined(PLATFORM_RPI)
-    position = CORE.Input.Touch.position[index];
-#endif
-#if defined(PLATFORM_DESKTOP)
+#elif defined(PLATFORM_DESKTOP)
     // TODO: GLFW is not supporting multi-touch input just yet
     // https://www.codeproject.com/Articles/668404/Programming-for-Multi-Touch
     // https://docs.microsoft.com/en-us/windows/win32/wintouch/getting-started-with-multi-touch-messages
@@ -3763,7 +3736,9 @@ static void PollInputEvents(void)
     // Register previous mouse wheel state
     CORE.Input.Mouse.previousWheelMove = CORE.Input.Mouse.currentWheelMove;
     CORE.Input.Mouse.currentWheelMove = 0;
+#endif
 
+#if defined(PLATFORM_DESKTOP) || defined(PLATFORM_WEB) || defined(PLATFORM_ANDROID) || defined(PLATFORM_RPI)
     // Register previous touch states
     for (int i = 0; i < MAX_TOUCH_POINTS; i++) CORE.Input.Touch.previousTouchState[i] = CORE.Input.Touch.currentTouchState[i];
 #endif
@@ -4315,9 +4290,19 @@ static int32_t AndroidInputCallback(struct android_app *app, AInputEvent *event)
     CORE.Input.Touch.position[0].x = AMotionEvent_getX(event, 0);
     CORE.Input.Touch.position[0].y = AMotionEvent_getY(event, 0);
 
-#if defined(SUPPORT_GESTURES_SYSTEM)
     int32_t action = AMotionEvent_getAction(event);
     unsigned int flags = action & AMOTION_EVENT_ACTION_MASK;
+
+    if (flags == AMOTION_EVENT_ACTION_DOWN || flags == AMOTION_EVENT_ACTION_MOVE)
+    {
+        CORE.Input.Touch.currentTouchState[MOUSE_LEFT_BUTTON] = 1;
+    }
+    else if (flags == AMOTION_EVENT_ACTION_UP)
+    {
+        CORE.Input.Touch.currentTouchState[MOUSE_LEFT_BUTTON] = 0;
+    }
+
+#if defined(SUPPORT_GESTURES_SYSTEM)
 
     GestureEvent gestureEvent;
 
