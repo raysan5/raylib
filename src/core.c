@@ -2664,6 +2664,7 @@ Vector2 GetTouchPosition(int index)
         position.y = position.y*((float)CORE.Window.render.height/(float)CORE.Window.display.height) - CORE.Window.renderOffset.y/2;
     }
     #endif
+
 #elif defined(PLATFORM_DESKTOP)
     // TODO: GLFW is not supporting multi-touch input just yet
     // https://www.codeproject.com/Articles/668404/Programming-for-Multi-Touch
@@ -3738,10 +3739,8 @@ static void PollInputEvents(void)
     CORE.Input.Mouse.currentWheelMove = 0;
 #endif
 
-#if defined(PLATFORM_DESKTOP) || defined(PLATFORM_WEB) || defined(PLATFORM_ANDROID) || defined(PLATFORM_RPI)
     // Register previous touch states
     for (int i = 0; i < MAX_TOUCH_POINTS; i++) CORE.Input.Touch.previousTouchState[i] = CORE.Input.Touch.currentTouchState[i];
-#endif
 
 #if defined(PLATFORM_DESKTOP)
     // Check if gamepads are ready
