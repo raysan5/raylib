@@ -874,6 +874,7 @@ RLAPI bool IsWindowReady(void);                                   // Check if wi
 RLAPI bool IsWindowMinimized(void);                               // Check if window has been minimized (or lost focus)
 RLAPI bool IsWindowResized(void);                                 // Check if window has been resized
 RLAPI bool IsWindowHidden(void);                                  // Check if window is currently hidden
+RLAPI bool IsWindowFullscreen(void);                              // Check if window is currently fullscreen
 RLAPI void ToggleFullscreen(void);                                // Toggle fullscreen mode (only PLATFORM_DESKTOP)
 RLAPI void UnhideWindow(void);                                    // Show the window
 RLAPI void HideWindow(void);                                      // Hide the window

@@ -874,6 +874,12 @@ bool IsWindowHidden(void)
     return false;
 }
 
+// Check if window is currently fullscreen
+bool IsWindowFullscreen(void)
+{
+    return CORE.Window.fullscreen;
+}
+
 // Toggle fullscreen mode (only PLATFORM_DESKTOP)
 void ToggleFullscreen(void)
 {
