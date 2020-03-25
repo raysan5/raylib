@@ -122,7 +122,7 @@
     #define RAYLIB_VERSION  "3.0"
 #endif
 
-#include "utils.h"              // Required for: TRACELOG macros and fopen() Android mapping
+#include "utils.h"              // Required for: TRACELOG macros
 
 #if (defined(__linux__) || defined(PLATFORM_WEB)) && _POSIX_C_SOURCE < 199309L
     #undef _POSIX_C_SOURCE
