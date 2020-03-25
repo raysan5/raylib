@@ -506,7 +506,7 @@ CharInfo *LoadFontData(const char *fileName, int fontSize, int *fontChars, int c
     {
         int genFontChars = false;
         stbtt_fontinfo fontInfo = { 0 };
-        
+
         if (stbtt_InitFont(&fontInfo, fileData, 0))     // Init font for data reading
         {
             // Calculate font scale factor
@@ -1352,8 +1352,8 @@ const char *TextToUpper(const char *text)
         {
             buffer[i] = (char)toupper(text[i]);
             //if ((text[i] >= 'a') && (text[i] <= 'z')) buffer[i] = text[i] - 32;
-            
-            // TODO: Support Utf8 diacritics! 
+
+            // TODO: Support Utf8 diacritics!
             //if ((text[i] >= 'à') && (text[i] <= 'ý')) buffer[i] = text[i] - 32;
         }
         else { buffer[i] = '\0'; break; }

@@ -652,7 +652,7 @@ RLAPI int GetPixelDataSize(int width, int height, int format);// Get pixel data 
     #else
         #define GLAD_REALLOC RL_REALLOC
         #define GLAD_FREE RL_FREE
-    
+
         #define GLAD_IMPLEMENTATION
         #if defined(RLGL_STANDALONE)
             #include "glad.h"           // GLAD extensions loading library, includes OpenGL headers
@@ -4631,7 +4631,7 @@ char *LoadFileText(const char *fileName)
 
                 // Zero-terminate the string
                 text[count] = '\0';
-                
+
                 TRACELOG(LOG_INFO, "[%s] Text file loaded successfully", fileName);
             }
             else TRACELOG(LOG_WARNING, "[%s] Text file could not be read", fileName);

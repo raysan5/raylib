@@ -148,7 +148,7 @@
 #if defined(SUPPORT_GIF_RECORDING)
     #define RGIF_MALLOC RL_MALLOC
     #define RGIF_FREE RL_FREE
-    
+
     #define RGIF_IMPLEMENTATION
     #include "external/rgif.h"  // Support GIF recording
 #endif
@@ -168,7 +168,7 @@
 #if (defined(PLATFORM_DESKTOP) || defined(PLATFORM_UWP)) && defined(_WIN32) && (defined(_MSC_VER) || defined(__TINYC__))
     #define DIRENT_MALLOC RL_MALLOC
     #define DIRENT_FREE RL_FREE
-    
+
     #include "external/dirent.h"    // Required for: DIR, opendir(), closedir() [Used in GetDirectoryFiles()]
 #else
     #include <dirent.h>             // Required for: DIR, opendir(), closedir() [Used in GetDirectoryFiles()]
@@ -2537,7 +2537,7 @@ bool IsMouseButtonReleased(int button)
     bool released = false;
 
     if ((CORE.Input.Mouse.currentButtonState[button] == 0) && (CORE.Input.Mouse.previousButtonState[button] == 1)) released = true;
-    
+
     // Map touches to mouse buttons checking
     if ((CORE.Input.Touch.currentTouchState[button] == 0) && (CORE.Input.Touch.previousTouchState[button] == 1)) released = true;
 
@@ -3971,7 +3971,7 @@ static void KeyCallback(GLFWwindow *window, int key, int scancode, int action, i
         }
 #endif  // SUPPORT_SCREEN_CAPTURE
     }
-    else 
+    else
     {
         // WARNING: GLFW could return GLFW_REPEAT, we need to consider it as 1
         // to work properly with our implementation (IsKeyDown/IsKeyUp checks)
@@ -3983,10 +3983,10 @@ static void KeyCallback(GLFWwindow *window, int key, int scancode, int action, i
 // GLFW3 Mouse Button Callback, runs on mouse button pressed
 static void MouseButtonCallback(GLFWwindow *window, int button, int action, int mods)
 {
-    // WARNING: GLFW could only return GLFW_PRESS (1) or GLFW_RELEASE (0) for now, 
+    // WARNING: GLFW could only return GLFW_PRESS (1) or GLFW_RELEASE (0) for now,
     // but future releases may add more actions (i.e. GLFW_REPEAT)
     CORE.Input.Mouse.currentButtonState[button] = action;
-    
+
 #if defined(SUPPORT_GESTURES_SYSTEM) && defined(SUPPORT_MOUSE_GESTURES)
     // Process mouse events as touches to be able to use mouse-gestures
     GestureEvent gestureEvent = { 0 };
@@ -3994,7 +3994,7 @@ static void MouseButtonCallback(GLFWwindow *window, int button, int action, int 
     // Register touch actions
     if ((CORE.Input.Mouse.currentButtonState[button] == 1) && (CORE.Input.Mouse.previousButtonState[button] == 0)) gestureEvent.touchAction = TOUCH_DOWN;
     else if ((CORE.Input.Mouse.currentButtonState[button] == 0) && (CORE.Input.Mouse.previousButtonState[button] == 1)) gestureEvent.touchAction = TOUCH_UP;
-    
+
     // NOTE: TOUCH_MOVE event is registered in MouseCursorPosCallback()
 
     // Assign a pointer ID
@@ -4021,7 +4021,7 @@ static void MouseCursorPosCallback(GLFWwindow *window, double x, double y)
     CORE.Input.Mouse.position.x = (float)x;
     CORE.Input.Mouse.position.y = (float)y;
     CORE.Input.Touch.position[0] = CORE.Input.Mouse.position;
-    
+
 #if defined(SUPPORT_GESTURES_SYSTEM) && defined(SUPPORT_MOUSE_GESTURES)
     // Process mouse events as touches to be able to use mouse-gestures
     GestureEvent gestureEvent = { 0 };
@@ -4413,7 +4413,7 @@ static EM_BOOL EmscriptenMouseCallback(int eventType, const EmscriptenMouseEvent
 // Register touch input events
 static EM_BOOL EmscriptenTouchCallback(int eventType, const EmscriptenTouchEvent *touchEvent, void *userData)
 {
-    for (int i = 0; i < touchEvent->numTouches; i++) 
+    for (int i = 0; i < touchEvent->numTouches; i++)
     {
         if (eventType == EMSCRIPTEN_EVENT_TOUCHSTART) CORE.Input.Touch.currentTouchState[i] = 1;
         else if (eventType == EMSCRIPTEN_EVENT_TOUCHEND) CORE.Input.Touch.currentTouchState[i] = 0;
@@ -4561,7 +4561,7 @@ static void ProcessKeyboard(void)
 
     // Reset pressed keys array (it will be filled below)
     for (int i = 0; i < 512; i++) CORE.Input.Keyboard.currentKeyState[i] = 0;
-    
+
     // Check keys from event input workers (This is the new keyboard reading method)
     //for (int i = 0; i < 512; i++) CORE.Input.Keyboard.currentKeyState[i] = CORE.Input.Keyboard.currentKeyStateEvdev[i];
 

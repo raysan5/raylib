@@ -127,7 +127,7 @@
     #define STBIW_MALLOC RL_MALLOC
     #define STBIW_FREE RL_FREE
     #define STBIW_REALLOC RL_REALLOC
-    
+
     #define STB_IMAGE_WRITE_IMPLEMENTATION
     #include "external/stb_image_write.h"   // Required for: stbi_write_*()
 #endif
@@ -135,7 +135,7 @@
 #if defined(SUPPORT_IMAGE_MANIPULATION)
     #define STBIR_MALLOC(size,c) ((void)(c), RL_MALLOC(size))
     #define STBIR_FREE(ptr,c) ((void)(c), RL_FREE(ptr))
-    
+
     #define STB_IMAGE_RESIZE_IMPLEMENTATION
     #include "external/stb_image_resize.h"  // Required for: stbir_resize_uint8() [ImageResize()]
 #endif
@@ -1966,17 +1966,17 @@ Image ImageTextEx(Font font, const char *text, float fontSize, float spacing, Co
             textOffsetX = 0.0f;
         }
         else
-        {    
+        {
             if ((codepoint != ' ') && (codepoint != '\t'))
             {
                 Rectangle rec = { textOffsetX + font.chars[index].offsetX, textOffsetY + font.chars[index].offsetY, font.recs[index].width, font.recs[index].height };
                 ImageDraw(&imText, font.chars[index].image, (Rectangle){ 0, 0, font.chars[index].image.width, font.chars[index].image.height }, rec, tint);
             }
-            
+
             if (font.chars[index].advanceX == 0) textOffsetX += (int)(font.recs[index].width + spacing);
             else textOffsetX += font.chars[index].advanceX + (int)spacing;
         }
-        
+
         i += (codepointByteCount - 1);   // Move text bytes counter to next codepoint
     }
 
@@ -2021,7 +2021,7 @@ void ImageClearBackground(Image *dst, Color color)
 }
 
 // Draw pixel within an image
-void ImageDrawPixel(Image *dst, Vector2 position, Color color) 
+void ImageDrawPixel(Image *dst, Vector2 position, Color color)
 {
     ImageDrawRectangle(dst, (Rectangle){ position.x, position.y, 1.0f, 1.0f }, color);
 }
@@ -2043,7 +2043,7 @@ void ImageDrawCircle(Image *dst, Vector2 center, int radius, Color color)
         ImageDrawPixel(dst, (Vector2){ xc + y, yc - x }, color);
         ImageDrawPixel(dst, (Vector2){ xc - y, yc - x }, color);
         x++;
-        
+
         if (decesionParameter > 0)
         {
             y--;
@@ -2061,13 +2061,13 @@ void ImageDrawLineEx(Image *dst, Vector2 start, Vector2 end, Color color)
     int slopeError = m - (x2 - x1);
 
     for (int x = x1, y = y1; x <= x2; x++)
-    { 
+    {
         ImageDrawPixel(dst, (Vector2){ x, y }, color);
         slopeError += m;
 
         if (slopeError >= 0)
         {
-            y++; 
+            y++;
             slopeError -= 2*(x2 - x1);
         }
     }

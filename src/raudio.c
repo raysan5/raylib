@@ -184,7 +184,7 @@ typedef struct tagBITMAPINFOHEADER {
 #if defined(SUPPORT_FILEFORMAT_XM)
     #define JARXM_MALLOC RL_MALLOC
     #define JARXM_FREE RL_FREE
-    
+
     #define JAR_XM_IMPLEMENTATION
     #include "external/jar_xm.h"        // XM loading functions
 #endif
@@ -192,7 +192,7 @@ typedef struct tagBITMAPINFOHEADER {
 #if defined(SUPPORT_FILEFORMAT_MOD)
     #define JARMOD_MALLOC RL_MALLOC
     #define JARMOD_FREE RL_FREE
-    
+
     #define JAR_MOD_IMPLEMENTATION
     #include "external/jar_mod.h"       // MOD loading functions
 #endif
@@ -211,7 +211,7 @@ typedef struct tagBITMAPINFOHEADER {
     #define DRMP3_MALLOC RL_MALLOC
     #define DRMP3_REALLOC RL_REALLOC
     #define DRMP3_FREE RL_FREE
-    
+
     #define DR_MP3_IMPLEMENTATION
     #include "external/dr_mp3.h"        // MP3 loading functions
 #endif

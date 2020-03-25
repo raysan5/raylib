@@ -256,7 +256,7 @@ char *LoadFileText(const char *fileName)
 
                 // Zero-terminate the string
                 text[count] = '\0';
-                
+
                 TRACELOG(LOG_INFO, "[%s] Text file loaded successfully", fileName);
             }
             else TRACELOG(LOG_WARNING, "[%s] Text file could not be read", fileName);
