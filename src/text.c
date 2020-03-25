@@ -973,6 +973,7 @@ void DrawTextRecEx(Font font, const char *text, Rectangle rec, float fontSize, f
                 startLine = endLine;
                 endLine = -1;
                 glyphWidth = 0;
+                selectStart += lastk - k;
                 k = lastk;
 
                 state = !state;
