@@ -39,8 +39,23 @@
     #define GLSL_VERSION            100
 #endif
 
-#define MAXSPOT           2
+
+#define MAXSPOT           3	// NB must be the same as define in shader
 #define numStars        400
+
+
+// Spot data
+typedef struct {   
+    Vector2 pos;
+    Vector2 vel;
+    float inner;
+    float radius;
+    
+    // Shader locations
+    unsigned int posLoc;
+    unsigned int innerLoc;
+    unsigned int radiusLoc;
+} Spot;
 
 // Stars in the star field have a position and velocity
 typedef struct Star {
@@ -59,6 +74,7 @@ int main(void)
     const int screenHeight = 450;
 
     InitWindow(screenWidth, screenHeight, "raylib - shader spotlight");
+    HideCursor();
 
     Texture texRay = LoadTexture("resources/raysan.png");
     
@@ -74,20 +90,32 @@ int main(void)
 
     int frameCounter = 0;
 
-    unsigned int spotLoc[MAXSPOT];  // shader locations    
- 
-    Vector2 spotPos[MAXSPOT];       // position and velocity
-    Vector2 spotVel[MAXSPOT];
+
        
     // Use default vert shader
     Shader spotShader = LoadShader(0, FormatText("resources/shaders/glsl%i/spotlight.fs", GLSL_VERSION));
     
 	// Get the locations of spots in the shader
-    char spotName[32] = "spots[x]\0";
+	Spot spots[MAXSPOT];
+/*
+    unsigned int posLoc;
+    unsigned int innerLoc;
+    unsigned int radiusLoc;
+*/    
     for (int i = 0; i < MAXSPOT; i++) 
     {
-		spotName[6] = '0' + i;
-		spotLoc[i] = GetShaderLocation(spotShader, spotName);
+		char posName[32] = "spots[x].pos\0";
+		char innerName[32] = "spots[x].inner\0";
+		char radiusName[32] = "spots[x].radius\0";
+
+		posName[6] = '0' + i;
+		innerName[6] = '0' + i;
+		radiusName[6] = '0' + i;
+		
+		spots[i].posLoc = GetShaderLocation(spotShader, posName);
+		spots[i].innerLoc = GetShaderLocation(spotShader, innerName);
+		spots[i].radiusLoc = GetShaderLocation(spotShader, radiusName);
+		
 	}
 	
 	// tell the shader how wide the screen is so we can have
@@ -99,17 +127,26 @@ int main(void)
 	}
 
     // randomise the locations and velocities of the spotlights
+    // and initialise the shader locations
     for (int i = 0; i < MAXSPOT; i++)
     {
-		spotPos[i].x = GetRandomValue(64, screenWidth - 64);
-		spotPos[i].y = GetRandomValue(64, screenHeight - 64);
-		spotVel[i] = (Vector2){ 0, 0 };
+		
+		spots[i].pos.x = GetRandomValue(64, screenWidth - 64);
+		spots[i].pos.y = GetRandomValue(64, screenHeight - 64);
+		spots[i].vel = (Vector2){ 0, 0 };
         
-		while ((fabs(spotVel[i].x) + fabs(spotVel[i].y)) < 2)
+		while ((fabs(spots[i].vel.x) + fabs(spots[i].vel.y)) < 2)
         {
-			spotVel[i].x = GetRandomValue(-40, 40)/10.0;
-			spotVel[i].y = GetRandomValue(-40, 40)/10.0;
+			spots[i].vel.x = GetRandomValue(-40, 40)/10.0;
+			spots[i].vel.y = GetRandomValue(-40, 40)/10.0;
 		}
+		
+		spots[i].inner = 28 * (i + 1);
+		spots[i].radius = 48 * (i + 1);
+		
+		SetShaderValue(spotShader, spots[i].posLoc, &spots[i].pos.x, UNIFORM_VEC2);
+		SetShaderValue(spotShader, spots[i].innerLoc, &spots[i].inner, UNIFORM_FLOAT);
+		SetShaderValue(spotShader, spots[i].radiusLoc, &spots[i].radius, UNIFORM_FLOAT);
 	}
 
     SetTargetFPS(60);               // Set  to run at 60 frames-per-second
@@ -128,15 +165,21 @@ int main(void)
 		// Update the spots, send them to the shader
 		for (int i = 0; i < MAXSPOT; i++)
         {
-			spotPos[i].x += spotVel[i].x;					
-			spotPos[i].y += spotVel[i].y;
+			if ( i == 0 ) {
+				Vector2 mp = GetMousePosition();
+				spots[i].pos.x = mp.x;					
+				spots[i].pos.y = screenHeight - mp.y;
+			} else {
+				spots[i].pos.x += spots[i].vel.x;					
+				spots[i].pos.y += spots[i].vel.y;
+				
+				if (spots[i].pos.x < 64) spots[i].vel.x = -spots[i].vel.x;					
+				if (spots[i].pos.x > screenWidth - 64) spots[i].vel.x = -spots[i].vel.x;					
+				if (spots[i].pos.y < 64) spots[i].vel.y = -spots[i].vel.y;					
+				if (spots[i].pos.y > screenHeight - 64) spots[i].vel.y = -spots[i].vel.y;
+			}
 			
-			if (spotPos[i].x < 64) spotVel[i].x = -spotVel[i].x;					
-			if (spotPos[i].x > screenWidth - 64) spotVel[i].x = -spotVel[i].x;					
-			if (spotPos[i].y < 64) spotVel[i].y = -spotVel[i].y;					
-			if (spotPos[i].y > screenHeight - 64) spotVel[i].y = -spotVel[i].y;
-			
-			SetShaderValue(spotShader, spotLoc[i], &spotPos[i].x, UNIFORM_VEC2);				
+			SetShaderValue(spotShader, spots[i].posLoc, &spots[i].pos.x, UNIFORM_VEC2);				
 		}
 			
         // Draw
@@ -170,6 +213,11 @@ int main(void)
 			EndShaderMode();
 
             DrawFPS(10, 10);
+            
+            DrawText("Move the mouse!", 10, 30, 20, GREEN);
+            DrawText("Pitch Black", screenWidth * .2, screenHeight / 2, 20, GREEN);
+            DrawText("Dark", screenWidth * .66, screenHeight / 2, 20, GREEN);
+            
 
         EndDrawing();
         //----------------------------------------------------------------------------------
