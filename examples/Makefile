@@ -186,7 +186,7 @@ endif
 #  -std=gnu99           defines C language mode (GNU C from 1999 revision)
 #  -Wno-missing-braces  ignore invalid warning (GCC bug 53119)
 #  -D_DEFAULT_SOURCE    use with -std=c99 on Linux and PLATFORM_WEB, required for timespec
-CFLAGS += -D_DEFAULT_SOURCE -Wno-missing-braces -Werror=pointer-arith -fno-strict-aliasing
+CFLAGS += -std=c99 -D_DEFAULT_SOURCE -Wno-missing-braces
 
 # Define compiler warning flags:
 CFLAGS += -Wbool-compare -Wbool-operation -Wbuiltin-declaration-mismatch -Wcast-align -Wchar-subscripts -Wchkp -Wdeprecated -Wformat-overflow -Wfree-nonheap-object -Wimplicit -Wint-in-bool-context -Wint-to-pointer-cast -Wmissing-parameter-type  -Woverlength-strings -Wpointer-sign -Wpointer-to-int-cast -Wunused-label -Wunused-local-typedefs -Wunused-result 
