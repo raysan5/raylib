@@ -265,14 +265,16 @@ endif
 #  -O1                      defines optimization level
 #  -g                       include debug information on compilation
 #  -s                       strip unnecessary data from build
-#  -Wall                    turns on most, but not all, compiler warnings
 #  -std=c99                 defines C language mode (standard C from 1999 revision)
 #  -std=gnu99               defines C language mode (GNU C from 1999 revision)
 #  -Wno-missing-braces      ignore invalid warning (GCC bug 53119)
 #  -D_DEFAULT_SOURCE        use with -std=c99 on Linux and PLATFORM_WEB, required for timespec
 #  -Werror=pointer-arith    catch unportable code that does direct arithmetic on void pointers
 #  -fno-strict-aliasing     jar_xm.h does shady stuff (breaks strict aliasing)
-CFLAGS += -Wall -D_DEFAULT_SOURCE -Wno-missing-braces -Werror=pointer-arith -fno-strict-aliasing
+CFLAGS += -D_DEFAULT_SOURCE -Wno-missing-braces -Werror=pointer-arith -fno-strict-aliasing
+
+# Define compiler warning flags:
+CFLAGS += -Wbool-compare -Wbool-operation -Wbuiltin-declaration-mismatch -Wcast-align -Wchar-subscripts -Wchkp -Wdeprecated -Wformat-overflow -Wfree-nonheap-object -Wimplicit -Wint-in-bool-context -Wint-to-pointer-cast -Wmissing-parameter-type  -Woverlength-strings -Wpointer-sign -Wpointer-to-int-cast -Wunused-label -Wunused-local-typedefs -Wunused-result 
 
 ifeq ($(PLATFORM), PLATFORM_WEB)
     CFLAGS += -std=gnu99
