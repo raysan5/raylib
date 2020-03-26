@@ -2208,30 +2208,52 @@ void SaveStorageValue(int position, int value)
 #endif
 
     int dataSize = 0;
+    int new_dataSize = 0;
     unsigned char *fileData = LoadFileData(path, &dataSize);
+    unsigned char *new_fileData = NULL;
 
     if (fileData != NULL)
     {
         if (dataSize <= (position*sizeof(int)))
         {
             // Increase data size up to position and store value
-            dataSize = (position + 1)*sizeof(int);
-            fileData = (unsigned char *)RL_REALLOC(fileData, dataSize);
-            int *dataPtr = (int *)fileData;
-            dataPtr[position] = value;
+            new_dataSize = (position + 1)*sizeof(int);
+            new_fileData = (unsigned char *)RL_REALLOC(fileData, new_dataSize);
+
+            if (new_fileData != NULL)
+            {
+                // RL_REALLOC succeded
+                int *dataPtr = (int *)new_fileData;
+                dataPtr[position] = value;  
+            }
+            else
+            {
+                // RL_REALLOC failed
+                TRACELOG(LOG_INFO, "Position in bytes [%d] bigger than actual size of file [%d] Realloc function FAIL",position*sizeof(int),dataSize);  
+                
+                // We store the old size of the file.
+                new_fileData=fileData;
+                new_dataSize=dataSize;
+            }
+            
         }
         else
         {
+            // We store the old size of the file.
+            new_fileData=fileData;
+            new_dataSize=dataSize;
+
             // Replace value on selected position
-            int *dataPtr = (int *)fileData;
+            int *dataPtr = (int *)new_fileData;
             dataPtr[position] = value;
         }
 
-        SaveFileData(path, fileData, dataSize);
-        RL_FREE(fileData);
+        SaveFileData(path, new_fileData, new_dataSize);
+        RL_FREE(new_fileData);
     }
     else
     {
+        TRACELOG(LOG_INFO, "Storage file not found, creating a new one.");  
         dataSize = (position + 1)*sizeof(int);
         fileData = (unsigned char *)RL_MALLOC(dataSize);
         int *dataPtr = (int *)fileData;
