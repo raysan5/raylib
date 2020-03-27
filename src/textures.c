@@ -273,7 +273,7 @@ Image LoadImage(const char *fileName)
             else if (comp == 4) image.format = UNCOMPRESSED_R32G32B32A32;
             else
             {
-                TRACELOG(LOG_WARNING, "[%s] HDR Image fileformat not supported", fileName);
+                TRACELOG(LOG_WARNING, "IMAGE: [%s] HDR fileformat not supported", fileName);
                 UnloadImage(image);
             }
 
@@ -297,10 +297,10 @@ Image LoadImage(const char *fileName)
 #if defined(SUPPORT_FILEFORMAT_ASTC)
     else if (IsFileExtension(fileName, ".astc")) image = LoadASTC(fileName);
 #endif
-    else TRACELOG(LOG_WARNING, "[%s] Image fileformat not supported", fileName);
+    else TRACELOG(LOG_WARNING, "IMAGE: [%s] Fileformat not supported", fileName);
 
-    if (image.data != NULL) TRACELOG(LOG_INFO, "[%s] Image loaded successfully (%ix%i)", fileName, image.width, image.height);
-    else TRACELOG(LOG_WARNING, "[%s] Image could not be loaded", fileName);
+    if (image.data != NULL) TRACELOG(LOG_INFO, "IMAGE: [%s] Data loaded successfully (%ix%i)", fileName, image.width, image.height);
+    else TRACELOG(LOG_WARNING, "IMAGE: [%s] Failed to load data", fileName);
 
     return image;
 }
@@ -389,7 +389,6 @@ Texture2D LoadTexture(const char *fileName)
         texture = LoadTextureFromImage(image);
         UnloadImage(image);
     }
-    else TRACELOG(LOG_WARNING, "Texture could not be created");
 
     return texture;
 }
@@ -404,7 +403,7 @@ Texture2D LoadTextureFromImage(Image image)
     {
         texture.id = rlLoadTexture(image.data, image.width, image.height, image.format, image.mipmaps);
     }
-    else TRACELOG(LOG_WARNING, "Texture could not be loaded from Image");
+    else TRACELOG(LOG_WARNING, "IMAGE: Data is not valid to load texture");
 
     texture.width = image.width;
     texture.height = image.height;
@@ -436,7 +435,7 @@ void UnloadTexture(Texture2D texture)
     {
         rlDeleteTextures(texture.id);
 
-        TRACELOG(LOG_INFO, "[TEX ID %i] Unloaded texture data from VRAM (GPU)", texture.id);
+        TRACELOG(LOG_INFO, "TEXTURE: [ID %i] Unloaded texture data from VRAM (GPU)", texture.id);
     }
 }
 
@@ -453,12 +452,12 @@ Color *GetImageData(Image image)
 
     Color *pixels = (Color *)RL_MALLOC(image.width*image.height*sizeof(Color));
 
-    if (image.format >= COMPRESSED_DXT1_RGB) TRACELOG(LOG_WARNING, "Pixel data retrieval not supported for compressed image formats");
+    if (image.format >= COMPRESSED_DXT1_RGB) TRACELOG(LOG_WARNING, "IMAGE: Pixel data retrieval not supported for compressed image formats");
     else
     {
         if ((image.format == UNCOMPRESSED_R32) ||
             (image.format == UNCOMPRESSED_R32G32B32) ||
-            (image.format == UNCOMPRESSED_R32G32B32A32)) TRACELOG(LOG_WARNING, "32bit pixel format converted to 8bit per channel");
+            (image.format == UNCOMPRESSED_R32G32B32A32)) TRACELOG(LOG_WARNING, "IMAGE: Pixel format converted from 32bit to 8bit per channel");
 
         for (int i = 0, k = 0; i < image.width*image.height; i++)
         {
@@ -568,7 +567,7 @@ Vector4 *GetImageDataNormalized(Image image)
 {
     Vector4 *pixels = (Vector4 *)RL_MALLOC(image.width*image.height*sizeof(Vector4));
 
-    if (image.format >= COMPRESSED_DXT1_RGB) TRACELOG(LOG_WARNING, "Pixel data retrieval not supported for compressed image formats");
+    if (image.format >= COMPRESSED_DXT1_RGB) TRACELOG(LOG_WARNING, "IMAGE: Pixel data retrieval not supported for compressed image formats");
     else
     {
         for (int i = 0, k = 0; i < image.width*image.height; i++)
@@ -775,11 +774,11 @@ Image GetTextureData(Texture2D texture)
             // original texture format is retrieved on RPI...
             image.format = UNCOMPRESSED_R8G8B8A8;
 #endif
-            TRACELOG(LOG_INFO, "Texture pixel data obtained successfully");
+            TRACELOG(LOG_INFO, "TEXTURE: [ID %i] Pixel data retrieved successfully", texture.id);
         }
-        else TRACELOG(LOG_WARNING, "Texture pixel data could not be obtained");
+        else TRACELOG(LOG_WARNING, "TEXTURE: [ID %i] Failed to retrieve pixel data", texture.id);
     }
-    else TRACELOG(LOG_WARNING, "Compressed texture data could not be obtained");
+    else TRACELOG(LOG_WARNING, "TEXTURE: [ID %i] Failed to retrieve compressed pixel data", texture.id);
 
     return image;
 }
@@ -843,8 +842,8 @@ void ExportImage(Image image, const char *fileName)
     RL_FREE(imgData);
 #endif
 
-    if (success != 0) TRACELOG(LOG_INFO, "Image exported successfully: %s", fileName);
-    else TRACELOG(LOG_WARNING, "Image could not be exported.");
+    if (success != 0) TRACELOG(LOG_INFO, "FILEIO: [%s] Image exported successfully", fileName);
+    else TRACELOG(LOG_WARNING, "FILEIO: [%s] Failed to export image", fileName);
 }
 
 // Export image as code file (.h) defining an array of bytes
@@ -967,19 +966,20 @@ void ImageToPOT(Image *image, Color fillColor)
             }
         }
 
-        TRACELOG(LOG_WARNING, "Image converted to POT: (%ix%i) -> (%ix%i)", image->width, image->height, potWidth, potHeight);
-
-        RL_FREE(pixels);                       // Free pixels data
-        RL_FREE(image->data);                  // Free old image data
+        RL_FREE(pixels);                    // Free pixels data
+        RL_FREE(image->data);               // Free old image data
 
         int format = image->format;         // Store image data format to reconvert later
 
         // NOTE: Image size changes, new width and height
         *image = LoadImageEx(pixelsPOT, potWidth, potHeight);
 
-        RL_FREE(pixelsPOT);                    // Free POT pixels data
+        RL_FREE(pixelsPOT);                 // Free POT pixels data
 
-        ImageFormat(image, format);  // Reconvert image to previous format
+        ImageFormat(image, format);         // Reconvert image to previous format
+        
+        // TODO: Verification required for log
+        TRACELOG(LOG_WARNING, "IMAGE: Converted to POT: (%ix%i) -> (%ix%i)", image->width, image->height, potWidth, potHeight);
     }
 }
 
@@ -1157,7 +1157,7 @@ void ImageFormat(Image *image, int newFormat)
             #endif
             }
         }
-        else TRACELOG(LOG_WARNING, "Image data format is compressed, can not be converted");
+        else TRACELOG(LOG_WARNING, "IMAGE: Data format is compressed, can not be converted");
     }
 }
 
@@ -1168,11 +1168,11 @@ void ImageAlphaMask(Image *image, Image alphaMask)
 {
     if ((image->width != alphaMask.width) || (image->height != alphaMask.height))
     {
-        TRACELOG(LOG_WARNING, "Alpha mask must be same size as image");
+        TRACELOG(LOG_WARNING, "IMAGE: Alpha mask must be same size as image");
     }
     else if (image->format >= COMPRESSED_DXT1_RGB)
     {
-        TRACELOG(LOG_WARNING, "Alpha mask can not be applied to compressed data formats");
+        TRACELOG(LOG_WARNING, "IMAGE: Alpha mask can not be applied to compressed data formats");
     }
     else
     {
@@ -1332,11 +1332,11 @@ TextureCubemap LoadTextureCubemap(Image image, int layoutType)
         for (int i = 0; i < 6; i++) ImageDraw(&faces, image, faceRecs[i], (Rectangle){ 0, size*i, size, size }, WHITE);
 
         cubemap.id = rlLoadTextureCubemap(faces.data, size, faces.format);
-        if (cubemap.id == 0) TRACELOG(LOG_WARNING, "Cubemap image could not be loaded.");
+        if (cubemap.id == 0) TRACELOG(LOG_WARNING, "IMAGE: Failed to load cubemap image");
 
         UnloadImage(faces);
     }
-    else TRACELOG(LOG_WARNING, "Cubemap image layout can not be detected.");
+    else TRACELOG(LOG_WARNING, "IMAGE: Failed to detect cubemap image layout");
 
     return cubemap;
 }
@@ -1381,7 +1381,7 @@ void ImageCrop(Image *image, Rectangle crop)
         // Reformat 32bit RGBA image to original format
         ImageFormat(image, format);
     }
-    else TRACELOG(LOG_WARNING, "Image can not be cropped, crop rectangle out of bounds");
+    else TRACELOG(LOG_WARNING, "IMAGE: Failed to crop, rectangle out of bounds");
 }
 
 // Crop image depending on alpha value
@@ -1584,26 +1584,18 @@ void ImageMipmaps(Image *image)
         if (mipWidth < 1) mipWidth = 1;
         if (mipHeight < 1) mipHeight = 1;
 
-        TRACELOGD("Next mipmap level: %i x %i - current size %i", mipWidth, mipHeight, mipSize);
+        TRACELOGD("IMAGE: Next mipmap level: %i x %i - current size %i", mipWidth, mipHeight, mipSize);
 
         mipCount++;
         mipSize += GetPixelDataSize(mipWidth, mipHeight, image->format);       // Add mipmap size (in bytes)
     }
 
-    TRACELOGD("Mipmaps available: %i - Mipmaps required: %i", image->mipmaps, mipCount);
-    TRACELOGD("Mipmaps total size required: %i", mipSize);
-    TRACELOGD("Image data memory start address: 0x%x", image->data);
-
     if (image->mipmaps < mipCount)
     {
         void *temp = RL_REALLOC(image->data, mipSize);
 
-        if (temp != NULL)
-        {
-            image->data = temp;      // Assign new pointer (new size) to store mipmaps data
-            TRACELOGD("Image data memory point reallocated: 0x%x", temp);
-        }
-        else TRACELOG(LOG_WARNING, "Mipmaps required memory could not be allocated");
+        if (temp != NULL) image->data = temp;      // Assign new pointer (new size) to store mipmaps data
+        else TRACELOG(LOG_WARNING, "IMAGE: Mipmaps required memory could not be allocated");
 
         // Pointer to allocated memory point where store next mipmap level data
         unsigned char *nextmip = (unsigned char *)image->data + GetPixelDataSize(image->width, image->height, image->format);
@@ -1615,7 +1607,7 @@ void ImageMipmaps(Image *image)
 
         for (int i = 1; i < mipCount; i++)
         {
-            TRACELOGD("Gen mipmap level: %i (%i x %i) - size: %i - offset: 0x%x", i, mipWidth, mipHeight, mipSize, nextmip);
+            TRACELOGD("IMAGE: Generating mipmap level: %i (%i x %i) - size: %i - offset: 0x%x", i, mipWidth, mipHeight, mipSize, nextmip);
 
             ImageResize(&imCopy, mipWidth, mipHeight);  // Uses internally Mitchell cubic downscale filter
 
@@ -1635,7 +1627,7 @@ void ImageMipmaps(Image *image)
 
         UnloadImage(imCopy);
     }
-    else TRACELOG(LOG_WARNING, "Image mipmaps already available");
+    else TRACELOG(LOG_WARNING, "IMAGE: Mipmaps already available");
 }
 
 // Dither image data to 16bpp or lower (Floyd-Steinberg dithering)
@@ -1648,13 +1640,13 @@ void ImageDither(Image *image, int rBpp, int gBpp, int bBpp, int aBpp)
 
     if (image->format >= COMPRESSED_DXT1_RGB)
     {
-        TRACELOG(LOG_WARNING, "Compressed data formats can not be dithered");
+        TRACELOG(LOG_WARNING, "IMAGE: Compressed data formats can not be dithered");
         return;
     }
 
     if ((rBpp + gBpp + bBpp + aBpp) > 16)
     {
-        TRACELOG(LOG_WARNING, "Unsupported dithering bpps (%ibpp), only 16bpp or lower modes supported", (rBpp+gBpp+bBpp+aBpp));
+        TRACELOG(LOG_WARNING, "IMAGE: Unsupported dithering bpps (%ibpp), only 16bpp or lower modes supported", (rBpp+gBpp+bBpp+aBpp));
     }
     else
     {
@@ -1664,7 +1656,7 @@ void ImageDither(Image *image, int rBpp, int gBpp, int bBpp, int aBpp)
 
         if ((image->format != UNCOMPRESSED_R8G8B8) && (image->format != UNCOMPRESSED_R8G8B8A8))
         {
-            TRACELOG(LOG_WARNING, "Image format is already 16bpp or lower, dithering could have no effect");
+            TRACELOG(LOG_WARNING, "IMAGE: Format is already 16bpp or lower, dithering could have no effect");
         }
 
         // Define new image format, check if desired bpp match internal known format
@@ -1674,7 +1666,7 @@ void ImageDither(Image *image, int rBpp, int gBpp, int bBpp, int aBpp)
         else
         {
             image->format = 0;
-            TRACELOG(LOG_WARNING, "Unsupported dithered OpenGL internal format: %ibpp (R%iG%iB%iA%i)", (rBpp+gBpp+bBpp+aBpp), rBpp, gBpp, bBpp, aBpp);
+            TRACELOG(LOG_WARNING, "IMAGE: Unsupported dithered OpenGL internal format: %ibpp (R%iG%iB%iA%i)", (rBpp+gBpp+bBpp+aBpp), rBpp, gBpp, bBpp, aBpp);
         }
 
         // NOTE: We will store the dithered data as unsigned short (16bpp)
@@ -1788,7 +1780,7 @@ Color *ImageExtractPalette(Image image, int maxPaletteSize, int *extractCount)
                 if (palCount >= maxPaletteSize)
                 {
                     i = image.width*image.height;   // Finish palette get
-                    TRACELOG(LOG_WARNING, "Image palette is greater than %i colors!", maxPaletteSize);
+                    TRACELOG(LOG_WARNING, "IMAGE: Palette is greater than %i colors", maxPaletteSize);
                 }
             }
         }
@@ -1817,13 +1809,13 @@ void ImageDraw(Image *dst, Image src, Rectangle srcRec, Rectangle dstRec, Color 
     if ((srcRec.x + srcRec.width) > src.width)
     {
         srcRec.width = src.width - srcRec.x;
-        TRACELOG(LOG_WARNING, "Source rectangle width out of bounds, rescaled width: %i", srcRec.width);
+        TRACELOG(LOG_WARNING, "IMAGE: Source rectangle width out of bounds, rescaled width: %i", srcRec.width);
     }
 
     if ((srcRec.y + srcRec.height) > src.height)
     {
         srcRec.height = src.height - srcRec.y;
-        TRACELOG(LOG_WARNING, "Source rectangle height out of bounds, rescaled height: %i", srcRec.height);
+        TRACELOG(LOG_WARNING, "IMAGE: Source rectangle height out of bounds, rescaled height: %i", srcRec.height);
     }
 
     Image srcCopy = ImageCopy(src);     // Make a copy of source image to work with it
@@ -1984,7 +1976,7 @@ Image ImageTextEx(Font font, const char *text, float fontSize, float spacing, Co
     if (fontSize > imSize.y)
     {
         float scaleFactor = fontSize/imSize.y;
-        TRACELOG(LOG_INFO, "Image text scaled by factor: %f", scaleFactor);
+        TRACELOG(LOG_INFO, "IMAGE: Text scaled by factor: %f", scaleFactor);
 
         // Using nearest-neighbor scaling algorithm for default font
         if (font.texture.id == GetFontDefault().texture.id) ImageResizeNN(&imText, (int)(imSize.x*scaleFactor), (int)(imSize.y*scaleFactor));
@@ -2691,7 +2683,7 @@ void SetTextureFilter(Texture2D texture, int filterMode)
             }
             else
             {
-                TRACELOG(LOG_WARNING, "[TEX ID %i] No mipmaps available for TRILINEAR texture filtering", texture.id);
+                TRACELOG(LOG_WARNING, "TEXTURE: [ID %i] No mipmaps available for TRILINEAR texture filtering", texture.id);
 
                 // RL_FILTER_LINEAR - tex filter: BILINEAR, no mipmaps
                 rlTextureParameters(texture.id, RL_TEXTURE_MIN_FILTER, RL_FILTER_LINEAR);
@@ -3109,7 +3101,7 @@ static Image LoadDDS(const char *fileName)
 
     if (ddsFile == NULL)
     {
-        TRACELOG(LOG_WARNING, "[%s] DDS file could not be opened", fileName);
+        TRACELOG(LOG_WARNING, "FILEIO: [%s] Failed to open DDS file", fileName);
     }
     else
     {
@@ -3120,7 +3112,7 @@ static Image LoadDDS(const char *fileName)
 
         if ((ddsHeaderId[0] != 'D') || (ddsHeaderId[1] != 'D') || (ddsHeaderId[2] != 'S') || (ddsHeaderId[3] != ' '))
         {
-            TRACELOG(LOG_WARNING, "[%s] DDS file does not seem to be a valid image", fileName);
+            TRACELOG(LOG_WARNING, "IMAGE: [%s] DDS file not valid image", fileName);
         }
         else
         {
@@ -3129,11 +3121,12 @@ static Image LoadDDS(const char *fileName)
             // Get the image header
             fread(&ddsHeader, sizeof(DDSHeader), 1, ddsFile);
 
-            TRACELOGD("[%s] DDS file header size: %i", fileName, sizeof(DDSHeader));
-            TRACELOGD("[%s] DDS file pixel format size: %i", fileName, ddsHeader.ddspf.size);
-            TRACELOGD("[%s] DDS file pixel format flags: 0x%x", fileName, ddsHeader.ddspf.flags);
-            TRACELOGD("[%s] DDS file format: 0x%x", fileName, ddsHeader.ddspf.fourCC);
-            TRACELOGD("[%s] DDS file bit count: 0x%x", fileName, ddsHeader.ddspf.rgbBitCount);
+            TRACELOGD("IMAGE: [%s] DDS file info:", fileName);
+            TRACELOGD("    > Header size: %i", fileName, sizeof(DDSHeader));
+            TRACELOGD("    > Pixel format size: %i", fileName, ddsHeader.ddspf.size);
+            TRACELOGD("    > Pixel format flags: 0x%x", fileName, ddsHeader.ddspf.flags);
+            TRACELOGD("    > File format: 0x%x", fileName, ddsHeader.ddspf.fourCC);
+            TRACELOGD("    > File bit count: 0x%x", fileName, ddsHeader.ddspf.rgbBitCount);
 
             image.width = ddsHeader.width;
             image.height = ddsHeader.height;
@@ -3223,8 +3216,6 @@ static Image LoadDDS(const char *fileName)
                 if (ddsHeader.mipmapCount > 1) size = ddsHeader.pitchOrLinearSize*2;
                 else size = ddsHeader.pitchOrLinearSize;
 
-                TRACELOGD("Pitch or linear size: %i", ddsHeader.pitchOrLinearSize);
-
                 image.data = (unsigned char *)RL_MALLOC(size*sizeof(unsigned char));
 
                 fread(image.data, size, 1, ddsFile);
@@ -3289,7 +3280,7 @@ static Image LoadPKM(const char *fileName)
 
     if (pkmFile == NULL)
     {
-        TRACELOG(LOG_WARNING, "[%s] PKM file could not be opened", fileName);
+        TRACELOG(LOG_WARNING, "FILEIO: [%s] Failed to open PKM file", fileName);
     }
     else
     {
@@ -3300,7 +3291,7 @@ static Image LoadPKM(const char *fileName)
 
         if ((pkmHeader.id[0] != 'P') || (pkmHeader.id[1] != 'K') || (pkmHeader.id[2] != 'M') || (pkmHeader.id[3] != ' '))
         {
-            TRACELOG(LOG_WARNING, "[%s] PKM file does not seem to be a valid image", fileName);
+            TRACELOG(LOG_WARNING, "IMAGE: [%s] PKM file not a valid image", fileName);
         }
         else
         {
@@ -3309,9 +3300,10 @@ static Image LoadPKM(const char *fileName)
             pkmHeader.width = ((pkmHeader.width & 0x00FF) << 8) | ((pkmHeader.width & 0xFF00) >> 8);
             pkmHeader.height = ((pkmHeader.height & 0x00FF) << 8) | ((pkmHeader.height & 0xFF00) >> 8);
 
-            TRACELOGD("PKM (ETC) image width: %i", pkmHeader.width);
-            TRACELOGD("PKM (ETC) image height: %i", pkmHeader.height);
-            TRACELOGD("PKM (ETC) image format: %i", pkmHeader.format);
+            TRACELOGD("IMAGE: [%s] PKM file info:", fileName);
+            TRACELOGD("    > Image width: %i", pkmHeader.width);
+            TRACELOGD("    > Image height: %i", pkmHeader.height);
+            TRACELOGD("    > Image format: %i", pkmHeader.format);
 
             image.width = pkmHeader.width;
             image.height = pkmHeader.height;
@@ -3382,7 +3374,7 @@ static Image LoadKTX(const char *fileName)
 
     if (ktxFile == NULL)
     {
-        TRACELOG(LOG_WARNING, "[%s] KTX image file could not be opened", fileName);
+        TRACELOG(LOG_WARNING, "FILEIO: [%s] Failed to load KTX file", fileName);
     }
     else
     {
@@ -3394,7 +3386,7 @@ static Image LoadKTX(const char *fileName)
         if ((ktxHeader.id[1] != 'K') || (ktxHeader.id[2] != 'T') || (ktxHeader.id[3] != 'X') ||
             (ktxHeader.id[4] != ' ') || (ktxHeader.id[5] != '1') || (ktxHeader.id[6] != '1'))
         {
-            TRACELOG(LOG_WARNING, "[%s] KTX file does not seem to be a valid file", fileName);
+            TRACELOG(LOG_WARNING, "IMAGE: [%s] KTX file not a valid image", fileName);
         }
         else
         {
@@ -3402,9 +3394,10 @@ static Image LoadKTX(const char *fileName)
             image.height = ktxHeader.height;
             image.mipmaps = ktxHeader.mipmapLevels;
 
-            TRACELOGD("KTX (ETC) image width: %i", ktxHeader.width);
-            TRACELOGD("KTX (ETC) image height: %i", ktxHeader.height);
-            TRACELOGD("KTX (ETC) image format: 0x%x", ktxHeader.glInternalFormat);
+            TRACELOGD("IMAGE: [%s] KTX file info:", fileName);
+            TRACELOGD("    > Image width: %i", ktxHeader.width);
+            TRACELOGD("    > Image height: %i", ktxHeader.height);
+            TRACELOGD("    > Image format: 0x%x", ktxHeader.glInternalFormat);
 
             unsigned char unused;
 
@@ -3464,7 +3457,7 @@ static int SaveKTX(Image image, const char *fileName)
 
     FILE *ktxFile = fopen(fileName, "wb");
 
-    if (ktxFile == NULL) TRACELOG(LOG_WARNING, "[%s] KTX image file could not be created", fileName);
+    if (ktxFile == NULL) TRACELOG(LOG_WARNING, "FILEIO: [%s] Failed to open KTX file", fileName);
     else
     {
         KTXHeader ktxHeader = { 0 };
@@ -3496,7 +3489,7 @@ static int SaveKTX(Image image, const char *fileName)
 
         // NOTE: We can save into a .ktx all PixelFormats supported by raylib, including compressed formats like DXT, ETC or ASTC
 
-        if (ktxHeader.glFormat == -1) TRACELOG(LOG_WARNING, "Image format not supported for KTX export.");
+        if (ktxHeader.glFormat == -1) TRACELOG(LOG_WARNING, "IMAGE: GL format not supported for KTX export (%i)", ktxHeader.glFormat);
         else
         {
             success = fwrite(&ktxHeader, sizeof(KTXHeader), 1, ktxFile);
@@ -3591,7 +3584,7 @@ static Image LoadPVR(const char *fileName)
 
     if (pvrFile == NULL)
     {
-        TRACELOG(LOG_WARNING, "[%s] PVR file could not be opened", fileName);
+        TRACELOG(LOG_WARNING, "FILEIO: [%s] Failed to load PVR file", fileName);
     }
     else
     {
@@ -3610,7 +3603,7 @@ static Image LoadPVR(const char *fileName)
 
             if ((pvrHeader.id[0] != 'P') || (pvrHeader.id[1] != 'V') || (pvrHeader.id[2] != 'R') || (pvrHeader.id[3] != 3))
             {
-                TRACELOG(LOG_WARNING, "[%s] PVR file does not seem to be a valid image", fileName);
+                TRACELOG(LOG_WARNING, "IMAGE: [%s] PVR file not valid image", fileName);
             }
             else
             {
@@ -3671,7 +3664,7 @@ static Image LoadPVR(const char *fileName)
                 fread(image.data, dataSize, 1, pvrFile);
             }
         }
-        else if (pvrVersion == 52) TRACELOG(LOG_INFO, "PVR v2 not supported, update your files to PVR v3");
+        else if (pvrVersion == 52) TRACELOG(LOG_INFO, "IMAGE: [%s] PVRv2 format not supported, update your files to PVRv3", fileName);
 
         fclose(pvrFile);    // Close file pointer
     }
@@ -3709,7 +3702,7 @@ static Image LoadASTC(const char *fileName)
 
     if (astcFile == NULL)
     {
-        TRACELOG(LOG_WARNING, "[%s] ASTC file could not be opened", fileName);
+        TRACELOG(LOG_WARNING, "FILEIO: [%s] Failed to load ASTC file", fileName);
     }
     else
     {
@@ -3720,7 +3713,7 @@ static Image LoadASTC(const char *fileName)
 
         if ((astcHeader.id[3] != 0x5c) || (astcHeader.id[2] != 0xa1) || (astcHeader.id[1] != 0xab) || (astcHeader.id[0] != 0x13))
         {
-            TRACELOG(LOG_WARNING, "[%s] ASTC file does not seem to be a valid image", fileName);
+            TRACELOG(LOG_WARNING, "IMAGE: [%s] ASTC file not a valid image", fileName);
         }
         else
         {
@@ -3728,9 +3721,10 @@ static Image LoadASTC(const char *fileName)
             image.width = 0x00000000 | ((int)astcHeader.width[2] << 16) | ((int)astcHeader.width[1] << 8) | ((int)astcHeader.width[0]);
             image.height = 0x00000000 | ((int)astcHeader.height[2] << 16) | ((int)astcHeader.height[1] << 8) | ((int)astcHeader.height[0]);
 
-            TRACELOGD("ASTC image width: %i", image.width);
-            TRACELOGD("ASTC image height: %i", image.height);
-            TRACELOGD("ASTC image blocks: %ix%i", astcHeader.blockX, astcHeader.blockY);
+            TRACELOGD("IMAGE: [%s] ASTC file info:", fileName);
+            TRACELOGD("    > Image width: %i", image.width);
+            TRACELOGD("    > Image height: %i", image.height);
+            TRACELOGD("    > Image blocks: %ix%i", astcHeader.blockX, astcHeader.blockY);
 
             image.mipmaps = 1;      // NOTE: ASTC format only contains one mipmap level
 
@@ -3748,7 +3742,7 @@ static Image LoadASTC(const char *fileName)
                 if (bpp == 8) image.format = COMPRESSED_ASTC_4x4_RGBA;
                 else if (bpp == 2) image.format = COMPRESSED_ASTC_8x8_RGBA;
             }
-            else TRACELOG(LOG_WARNING, "[%s] ASTC block size configuration not supported", fileName);
+            else TRACELOG(LOG_WARNING, "IMAGE: [%s] ASTC block size configuration not supported", fileName);
         }
 
         fclose(astcFile);
