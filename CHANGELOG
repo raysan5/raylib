@@ -11,6 +11,7 @@ KEY CHANGES:
  - Custom memory allocators for all modules and dependencies.
  - Centralized file access system and memory data loading.
  - Structures reviewed to reduce size and always be used as pass-by-value.
+ - Tracelog messages completely reviewed and categorized.
  - raudio module reviewed to accomodate new Music struct and new miniaudio.
  - text module reviewed to improve fonts generation and text management functions.
  - Multiple new examples added and categorized examples table.
