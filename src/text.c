@@ -268,7 +268,7 @@ extern void LoadFontDefault(void)
 
     defaultFont.baseSize = (int)defaultFont.recs[0].height;
 
-    TRACELOG(LOG_INFO, "[TEX ID %i] Default font loaded successfully", defaultFont.texture.id);
+    TRACELOG(LOG_INFO, "FONT: Default font loaded successfully");
 }
 
 // Unload raylib default font
@@ -318,7 +318,7 @@ Font LoadFont(const char *fileName)
 
     if (font.texture.id == 0)
     {
-        TRACELOG(LOG_WARNING, "[%s] Font could not be loaded, using default font", fileName);
+        TRACELOG(LOG_WARNING, "FONT: [%s] Failed to load font texture -> Using default font", fileName);
         font = GetFontDefault();
     }
     else SetTextureFilter(font.texture, FILTER_POINT);    // By default we set point filter (best performance)
@@ -434,8 +434,6 @@ Font LoadFontFromImage(Image image, Color key, int firstChar)
         xPosToRead = charSpacing;
     }
 
-    TRACELOGD("Font data parsed correctly from image");
-
     // NOTE: We need to remove key color borders from image to avoid weird
     // artifacts on texture scaling when using FILTER_BILINEAR or FILTER_TRILINEAR
     for (int i = 0; i < image.height*image.width; i++) if (COLOR_EQUAL(pixels[i], key)) pixels[i] = BLANK;
@@ -475,8 +473,6 @@ Font LoadFontFromImage(Image image, Color key, int firstChar)
     UnloadImage(fontClear);     // Unload processed image once converted to texture
 
     font.baseSize = (int)font.recs[0].height;
-
-    TRACELOG(LOG_INFO, "Image file loaded correctly as Font");
 
     return font;
 }
@@ -582,12 +578,12 @@ CharInfo *LoadFontData(const char *fileName, int fontSize, int *fontChars, int c
                 int chX1, chY1, chX2, chY2;
                 stbtt_GetCodepointBitmapBox(&fontInfo, ch, scaleFactor, scaleFactor, &chX1, &chY1, &chX2, &chY2);
 
-                TRACELOGD("Character box measures: %i, %i, %i, %i", chX1, chY1, chX2 - chX1, chY2 - chY1);
-                TRACELOGD("Character offsetY: %i", (int)((float)ascent*scaleFactor) + chY1);
+                TRACELOGD("FONT: Character box measures: %i, %i, %i, %i", chX1, chY1, chX2 - chX1, chY2 - chY1);
+                TRACELOGD("FONT: Character offsetY: %i", (int)((float)ascent*scaleFactor) + chY1);
                 */
             }
         }
-        else TRACELOG(LOG_WARNING, "Failed to init font!");
+        else TRACELOG(LOG_WARNING, "FONT: Failed to process TTF font data");
 
         RL_FREE(fileData);
         if (genFontChars) RL_FREE(fontChars);
@@ -671,8 +667,6 @@ Image GenImageFontAtlas(const CharInfo *chars, Rectangle **charRecs, int charsCo
     }
     else if (packMethod == 1)  // Use Skyline rect packing algorythm (stb_pack_rect)
     {
-        TRACELOGD("Using Skyline packing algorythm!");
-
         stbrp_context *context = (stbrp_context *)RL_MALLOC(sizeof(*context));
         stbrp_node *nodes = (stbrp_node *)RL_MALLOC(charsCount*sizeof(*nodes));
 
@@ -709,7 +703,7 @@ Image GenImageFontAtlas(const CharInfo *chars, Rectangle **charRecs, int charsCo
                     }
                 }
             }
-            else TRACELOG(LOG_WARNING, "Character could not be packed: %i", i);
+            else TRACELOG(LOG_WARNING, "FONT: Failed to package character (%i)", i);
         }
 
         RL_FREE(rects);
@@ -751,7 +745,7 @@ void UnloadFont(Font font)
         RL_FREE(font.chars);
         RL_FREE(font.recs);
 
-        TRACELOGD("Unloaded sprite font data");
+        TRACELOGD("FONT: Unloaded font data from RAM and VRAM");
     }
 }
 
@@ -1668,7 +1662,7 @@ static Font LoadBMFont(const char *fileName)
 
     if (fntFile == NULL)
     {
-        TRACELOG(LOG_WARNING, "[%s] FNT file could not be opened", fileName);
+        TRACELOG(LOG_WARNING, "FILEIO: [%s] Failed to open FNT file", fileName);
         return font;
     }
 
@@ -1681,20 +1675,21 @@ static Font LoadBMFont(const char *fileName)
     searchPoint = strstr(buffer, "lineHeight");
     sscanf(searchPoint, "lineHeight=%i base=%i scaleW=%i scaleH=%i", &fontSize, &base, &texWidth, &texHeight);
 
-    TRACELOGD("[%s] Font size: %i", fileName, fontSize);
-    TRACELOGD("[%s] Font texture scale: %ix%i", fileName, texWidth, texHeight);
+    TRACELOGD("FONT: [%s] Loaded font info:", fileName);
+    TRACELOGD("    > Base size: %i", fontSize);
+    TRACELOGD("    > Texture scale: %ix%i", texWidth, texHeight);
 
     fgets(buffer, MAX_BUFFER_SIZE, fntFile);
     searchPoint = strstr(buffer, "file");
     sscanf(searchPoint, "file=\"%128[^\"]\"", texFileName);
 
-    TRACELOGD("[%s] Font texture filename: %s", fileName, texFileName);
+    TRACELOGD("    > Texture filename: %s", texFileName);
 
     fgets(buffer, MAX_BUFFER_SIZE, fntFile);
     searchPoint = strstr(buffer, "count");
     sscanf(searchPoint, "count=%i", &charsCount);
 
-    TRACELOGD("[%s] Font num chars: %i", fileName, charsCount);
+    TRACELOGD("    > Chars count: %i", charsCount);
 
     // Compose correct path using route of .fnt file (fileName) and texFileName
     char *texPath = NULL;
@@ -1714,7 +1709,7 @@ static Font LoadBMFont(const char *fileName)
     strncat(texPath, fileName, TextLength(fileName) - TextLength(lastSlash) + 1);
     strncat(texPath, texFileName, TextLength(texFileName));
 
-    TRACELOGD("[%s] Font texture loading path: %s", fileName, texPath);
+    TRACELOGD("    > Texture loading path: %s", texPath);
 
     Image imFont = LoadImage(texPath);
 
@@ -1764,8 +1759,9 @@ static Font LoadBMFont(const char *fileName)
     {
         UnloadFont(font);
         font = GetFontDefault();
+        TRACELOG(LOG_WARNING, "FONT: [%s] Failed to load texture, reverted to default font", fileName)
     }
-    else TRACELOG(LOG_INFO, "[%s] Font loaded successfully", fileName);
+    else TRACELOG(LOG_INFO, "FONT: [%s] Font loaded successfully", fileName);
 
     return font;
 }
