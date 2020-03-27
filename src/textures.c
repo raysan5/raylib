@@ -3122,11 +3122,11 @@ static Image LoadDDS(const char *fileName)
             fread(&ddsHeader, sizeof(DDSHeader), 1, ddsFile);
 
             TRACELOGD("IMAGE: [%s] DDS file info:", fileName);
-            TRACELOGD("    > Header size: %i", fileName, sizeof(DDSHeader));
-            TRACELOGD("    > Pixel format size: %i", fileName, ddsHeader.ddspf.size);
+            TRACELOGD("    > Header size:        %i", fileName, sizeof(DDSHeader));
+            TRACELOGD("    > Pixel format size:  %i", fileName, ddsHeader.ddspf.size);
             TRACELOGD("    > Pixel format flags: 0x%x", fileName, ddsHeader.ddspf.flags);
-            TRACELOGD("    > File format: 0x%x", fileName, ddsHeader.ddspf.fourCC);
-            TRACELOGD("    > File bit count: 0x%x", fileName, ddsHeader.ddspf.rgbBitCount);
+            TRACELOGD("    > File format:        0x%x", fileName, ddsHeader.ddspf.fourCC);
+            TRACELOGD("    > File bit count:     0x%x", fileName, ddsHeader.ddspf.rgbBitCount);
 
             image.width = ddsHeader.width;
             image.height = ddsHeader.height;
@@ -3301,7 +3301,7 @@ static Image LoadPKM(const char *fileName)
             pkmHeader.height = ((pkmHeader.height & 0x00FF) << 8) | ((pkmHeader.height & 0xFF00) >> 8);
 
             TRACELOGD("IMAGE: [%s] PKM file info:", fileName);
-            TRACELOGD("    > Image width: %i", pkmHeader.width);
+            TRACELOGD("    > Image width:  %i", pkmHeader.width);
             TRACELOGD("    > Image height: %i", pkmHeader.height);
             TRACELOGD("    > Image format: %i", pkmHeader.format);
 
@@ -3395,7 +3395,7 @@ static Image LoadKTX(const char *fileName)
             image.mipmaps = ktxHeader.mipmapLevels;
 
             TRACELOGD("IMAGE: [%s] KTX file info:", fileName);
-            TRACELOGD("    > Image width: %i", ktxHeader.width);
+            TRACELOGD("    > Image width:  %i", ktxHeader.width);
             TRACELOGD("    > Image height: %i", ktxHeader.height);
             TRACELOGD("    > Image format: 0x%x", ktxHeader.glInternalFormat);
 
@@ -3722,7 +3722,7 @@ static Image LoadASTC(const char *fileName)
             image.height = 0x00000000 | ((int)astcHeader.height[2] << 16) | ((int)astcHeader.height[1] << 8) | ((int)astcHeader.height[0]);
 
             TRACELOGD("IMAGE: [%s] ASTC file info:", fileName);
-            TRACELOGD("    > Image width: %i", image.width);
+            TRACELOGD("    > Image width:  %i", image.width);
             TRACELOGD("    > Image height: %i", image.height);
             TRACELOGD("    > Image blocks: %ix%i", astcHeader.blockX, astcHeader.blockY);
 

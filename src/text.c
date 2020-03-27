@@ -1676,7 +1676,7 @@ static Font LoadBMFont(const char *fileName)
     sscanf(searchPoint, "lineHeight=%i base=%i scaleW=%i scaleH=%i", &fontSize, &base, &texWidth, &texHeight);
 
     TRACELOGD("FONT: [%s] Loaded font info:", fileName);
-    TRACELOGD("    > Base size: %i", fontSize);
+    TRACELOGD("    > Base size:     %i", fontSize);
     TRACELOGD("    > Texture scale: %ix%i", texWidth, texHeight);
 
     fgets(buffer, MAX_BUFFER_SIZE, fntFile);

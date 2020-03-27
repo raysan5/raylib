@@ -1166,9 +1166,9 @@ Music LoadMusicStream(const char *fileName)
         // Show some music stream info
         TRACELOG(LOG_INFO, "FILEIO: [%s] Music file successfully loaded:", fileName);
         TRACELOG(LOG_INFO, "    > Total samples: %i", music.sampleCount);
-        TRACELOG(LOG_INFO, "    > Sample rate: %i Hz", music.stream.sampleRate);
-        TRACELOG(LOG_INFO, "    > Sample size: %i bits", music.stream.sampleSize);
-        TRACELOG(LOG_INFO, "    > Channels: %i (%s)", music.stream.channels, (music.stream.channels == 1)? "Mono" : (music.stream.channels == 2)? "Stereo" : "Multi");
+        TRACELOG(LOG_INFO, "    > Sample rate:   %i Hz", music.stream.sampleRate);
+        TRACELOG(LOG_INFO, "    > Sample size:   %i bits", music.stream.sampleSize);
+        TRACELOG(LOG_INFO, "    > Channels:      %i (%s)", music.stream.channels, (music.stream.channels == 1)? "Mono" : (music.stream.channels == 2)? "Stereo" : "Multi");
     }
 
     return music;
