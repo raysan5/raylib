@@ -1877,7 +1877,7 @@ static Wave LoadWAV(const char *fileName)
             (wavRiffHeader.format[2] != 'V') ||
             (wavRiffHeader.format[3] != 'E'))
         {
-            TRACELOG(LOG_WARNING, "WAVE: [%s] Invalid RIFF or WAVE header", fileName);
+            TRACELOG(LOG_WARNING, "WAVE: [%s] RIFF or WAVE header are not valid", fileName);
         }
         else
         {
@@ -1888,7 +1888,7 @@ static Wave LoadWAV(const char *fileName)
             if ((wavFormat.subChunkID[0] != 'f') || (wavFormat.subChunkID[1] != 'm') ||
                 (wavFormat.subChunkID[2] != 't') || (wavFormat.subChunkID[3] != ' '))
             {
-                TRACELOG(LOG_WARNING, "WAVE: [%s] Invalid Wave format", fileName);
+                TRACELOG(LOG_WARNING, "WAVE: [%s] Wave format header is not valid", fileName);
             }
             else
             {
@@ -1902,7 +1902,7 @@ static Wave LoadWAV(const char *fileName)
                 if ((wavData.subChunkID[0] != 'd') || (wavData.subChunkID[1] != 'a') ||
                     (wavData.subChunkID[2] != 't') || (wavData.subChunkID[3] != 'a'))
                 {
-                    TRACELOG(LOG_WARNING, "WAVE: [%s] Invalid data header", fileName);
+                    TRACELOG(LOG_WARNING, "WAVE: [%s] Data header is not valid", fileName);
                 }
                 else
                 {
