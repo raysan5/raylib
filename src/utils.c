@@ -190,16 +190,16 @@ unsigned char *LoadFileData(const char *fileName, int *bytesRead)
                 int count = fread(data, sizeof(unsigned char), size, file);
                 *bytesRead = count;
 
-                if (count != size) TRACELOG(LOG_WARNING, "[%s] File partially loaded", fileName);
-                else TRACELOG(LOG_INFO, "[%s] File loaded successfully", fileName);
+                if (count != size) TRACELOG(LOG_WARNING, "FILEIO: [%s] File partially loaded", fileName);
+                else TRACELOG(LOG_INFO, "FILEIO: [%s] File loaded successfully", fileName);
             }
-            else TRACELOG(LOG_WARNING, "[%s] File could not be read", fileName);
+            else TRACELOG(LOG_WARNING, "FILEIO: [%s] Failed to read file", fileName);
 
             fclose(file);
         }
-        else TRACELOG(LOG_WARNING, "[%s] File could not be opened", fileName);
+        else TRACELOG(LOG_WARNING, "FILEIO: [%s] Failed to open file", fileName);
     }
-    else TRACELOG(LOG_WARNING, "File name provided is not valid");
+    else TRACELOG(LOG_WARNING, "FILEIO: File name provided is not valid");
 
     return data;
 }
@@ -215,15 +215,15 @@ void SaveFileData(const char *fileName, void *data, int bytesToWrite)
         {
             int count = fwrite(data, sizeof(unsigned char), bytesToWrite, file);
 
-            if (count == 0) TRACELOG(LOG_WARNING, "[%s] File could not be written", fileName);
-            else if (count != bytesToWrite) TRACELOG(LOG_WARNING, "[%s] File partially written", fileName);
-            else TRACELOG(LOG_INFO, "[%s] File successfully saved", fileName);
+            if (count == 0) TRACELOG(LOG_WARNING, "FILEIO: [%s] Failed to write file", fileName);
+            else if (count != bytesToWrite) TRACELOG(LOG_WARNING, "FILEIO: [%s] File partially written", fileName);
+            else TRACELOG(LOG_INFO, "FILEIO: [%s] File saved successfully", fileName);
 
             fclose(file);
         }
-        else TRACELOG(LOG_WARNING, "[%s] File could not be opened", fileName);
+        else TRACELOG(LOG_WARNING, "FILEIO: [%s] Failed to open file", fileName);
     }
-    else TRACELOG(LOG_WARNING, "File name provided is not valid");
+    else TRACELOG(LOG_WARNING, "FILEIO: File name provided is not valid");
 }
 
 // Load text data from file, returns a '\0' terminated string
@@ -257,15 +257,15 @@ char *LoadFileText(const char *fileName)
                 // Zero-terminate the string
                 text[count] = '\0';
 
-                TRACELOG(LOG_INFO, "[%s] Text file loaded successfully", fileName);
+                TRACELOG(LOG_INFO, "FILEIO: [%s] Text file loaded successfully", fileName);
             }
-            else TRACELOG(LOG_WARNING, "[%s] Text file could not be read", fileName);
+            else TRACELOG(LOG_WARNING, "FILEIO: [%s] Failed to read text file", fileName);
 
             fclose(textFile);
         }
-        else TRACELOG(LOG_WARNING, "[%s] Text file could not be opened", fileName);
+        else TRACELOG(LOG_WARNING, "FILEIO: [%s] Failed to open text file", fileName);
     }
-    else TRACELOG(LOG_WARNING, "File name provided is not valid");
+    else TRACELOG(LOG_WARNING, "FILEIO: File name provided is not valid");
 
     return text;
 }
@@ -281,14 +281,14 @@ void SaveFileText(const char *fileName, char *text)
         {
             int count = fprintf(file, "%s", text);
 
-            if (count == 0) TRACELOG(LOG_WARNING, "[%s] Text file could not be written", fileName);
-            else TRACELOG(LOG_INFO, "[%s] Text file successfully saved", fileName);
+            if (count == 0) TRACELOG(LOG_WARNING, "FILEIO: [%s] Failed to write text file", fileName);
+            else TRACELOG(LOG_INFO, "FILEIO: [%s] Text file saved successfully", fileName);
 
             fclose(file);
         }
-        else TRACELOG(LOG_WARNING, "[%s] Text file could not be opened", fileName);
+        else TRACELOG(LOG_WARNING, "FILEIO: [%s] Failed to open text file", fileName);
     }
-    else TRACELOG(LOG_WARNING, "File name provided is not valid");
+    else TRACELOG(LOG_WARNING, "FILEIO: File name provided is not valid");
 }
 
 #if defined(PLATFORM_ANDROID)
@@ -335,7 +335,7 @@ static int android_read(void *cookie, char *buf, int size)
 
 static int android_write(void *cookie, const char *buf, int size)
 {
-    TRACELOG(LOG_ERROR, "Can't provide write access to the APK");
+    TRACELOG(LOG_WARNING, "ANDROID: Failed to provide write access to APK");
 
     return EACCES;
 }
@@ -392,7 +392,7 @@ void UWPSendMessage(UWPMessage *msg)
         UWPInMessageId++;
         UWPInMessages[UWPInMessageId] = msg;
     }
-    else TRACELOG(LOG_WARNING, "[UWP Messaging] Not enough array space to register new UWP inbound Message.");
+    else TRACELOG(LOG_WARNING, "UWP: Not enough array space to register new inbound message");
 }
 
 void SendMessageToUWP(UWPMessage *msg)
@@ -402,7 +402,7 @@ void SendMessageToUWP(UWPMessage *msg)
         UWPOutMessageId++;
         UWPOutMessages[UWPOutMessageId] = msg;
     }
-    else TRACELOG(LOG_WARNING, "[UWP Messaging] Not enough array space to register new UWP outward Message.");
+    else TRACELOG(LOG_WARNING, "UWP: Not enough array space to register new outward message");
 }
 
 bool HasMessageFromUWP(void)
