@@ -1493,7 +1493,7 @@ void rlglInit(int width, int height)
     // Check OpenGL information and capabilities
     //------------------------------------------------------------------------------
     // Print current OpenGL and GLSL version
-    TRACELOG(LOG_INFO, "GPU: OpenGL device information:");
+    TRACELOG(LOG_INFO, "GL: OpenGL device information:");
     TRACELOG(LOG_INFO, "    > Vendor:   %s", glGetString(GL_VENDOR));
     TRACELOG(LOG_INFO, "    > Renderer: %s", glGetString(GL_RENDERER));
     TRACELOG(LOG_INFO, "    > Version:  %s", glGetString(GL_VERSION));
@@ -1746,7 +1746,7 @@ void rlglInit(int width, int height)
     RLGL.State.shapesTexture = GetTextureDefault();
     RLGL.State.shapesTextureRec = (Rectangle){ 0.0f, 0.0f, 1.0f, 1.0f };
 
-    TRACELOG(LOG_INFO, "GL: Default state initialized successfully");
+    TRACELOG(LOG_INFO, "RLGL: Default state initialized successfully");
 }
 
 // Vertex Buffer Object deinitialization (memory free)
