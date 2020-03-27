@@ -3112,7 +3112,7 @@ static Image LoadDDS(const char *fileName)
 
         if ((ddsHeaderId[0] != 'D') || (ddsHeaderId[1] != 'D') || (ddsHeaderId[2] != 'S') || (ddsHeaderId[3] != ' '))
         {
-            TRACELOG(LOG_WARNING, "IMAGE: [%s] DDS file not valid image", fileName);
+            TRACELOG(LOG_WARNING, "IMAGE: [%s] DDS file not a valid image", fileName);
         }
         else
         {
@@ -3603,7 +3603,7 @@ static Image LoadPVR(const char *fileName)
 
             if ((pvrHeader.id[0] != 'P') || (pvrHeader.id[1] != 'V') || (pvrHeader.id[2] != 'R') || (pvrHeader.id[3] != 3))
             {
-                TRACELOG(LOG_WARNING, "IMAGE: [%s] PVR file not valid image", fileName);
+                TRACELOG(LOG_WARNING, "IMAGE: [%s] PVR file not a valid image", fileName);
             }
             else
             {
