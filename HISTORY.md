@@ -239,6 +239,8 @@ All **I/O file accesses** from raylib are being moved to **memory data access**,
 
 All **raylib data structures** have been reviewed and optimized for pass-by-value usage. One of raylib distinctive design decisions is that most of its functions receive and return data by value. This design makes raylib really simple for newcomers, avoiding pointers and allowing complete access to all structures data in a simple way. The downside is that data is copied on stack every function call and that copy could be costly so, all raylib data structures have been optimized to **stay under 64 bytes** for fast copy and retrieve.
 
+All **raylib tracelog messages** have been reviewd and categorized for a more comprehensive output information when developing raylib applications, now all display, input, timer, platform, auxiliar libraries, file-accesses, data loading/unloading issues are properly reported with more detailed and visual messages.
+
 `raudio` module has been internally reviewed to accomodate the new `Music` structure (converted from previous pointer format) and the module has been adapted to the **highly improved** [`miniaudio v0.10`](https://github.com/dr-soft/miniaudio).
 
 `text` module reviewed to **improve fonts generation** and text management functions, `Font` structure has been redesigned to better accomodate characters data, decoupling individual characters as `Image` glyphs from the font atlas parameters. Several improvements have been made to better support Unicode strings with UTF-8 encoding.
@@ -247,12 +249,6 @@ All **raylib data structures** have been reviewed and optimized for pass-by-valu
 
 New **GitHub Actions CI** system has been implemented for Windows, Linux and macOS code and examples compilation on every new commit or PR to make sure library keeps stable and usable with no breaking bugs.
 
--WIP-
-
-This is a just a brief list with some of the changes of the new **raylib 3.0** but there is way more, about **30 new functions** have been added and multiple functions have been reviewed. In this time raylib has been binded to [+40 programming languages](https://github.com/raysan5/raylib/blob/master/BINDINGS.md).
-
-It has been **10 months of improvements** and [tools development](https://raylibtech.itch.io/) using raylib technology.
+Note that this list just reflects key changes of the new **raylib 3.0** but there is way more, about **30 new functions** have been added and multiple functions have been reviewed. Additionally, in the last year raylib has been binded to [+40 programming languages](https://github.com/raysan5/raylib/blob/master/BINDINGS.md). It has been **10 months of improvements** and [tools development](https://raylibtech.itch.io/) to create the best raylib ever.
 
 Welcome to **raylib 3.0**.
-
-
