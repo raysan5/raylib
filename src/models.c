@@ -688,10 +688,10 @@ Model LoadModel(const char *fileName)
         model.meshCount = 1;
         model.meshes = (Mesh *)RL_CALLOC(model.meshCount, sizeof(Mesh));
 #if defined(SUPPORT_MESH_GENERATION)
-        TRACELOG(LOG_WARNING, "[%s] No meshes can be loaded, default to cube mesh", fileName);
+        TRACELOG(LOG_WARNING, "MESH: [%s] Failed to load mesh data, default to cube mesh", fileName);
         model.meshes[0] = GenMeshCube(1.0f, 1.0f, 1.0f);
 #else
-        TRACELOG(LOG_WARNING, "[%s] No meshes can be loaded, and can't create a default mesh. The raylib mesh generation is not supported (SUPPORT_MESH_GENERATION).", fileName);
+        TRACELOG(LOG_WARNING, "MESH: [%s] Failed to load mesh data", fileName);
 #endif
     }
     else
@@ -702,7 +702,7 @@ Model LoadModel(const char *fileName)
 
     if (model.materialCount == 0)
     {
-        TRACELOG(LOG_WARNING, "[%s] No materials can be loaded, default to white material", fileName);
+        TRACELOG(LOG_WARNING, "MATERIAL: [%s] Failed to load material data, default to white material", fileName);
 
         model.materialCount = 1;
         model.materials = (Material *)RL_CALLOC(model.materialCount, sizeof(Material));
@@ -756,7 +756,7 @@ void UnloadModel(Model model)
     RL_FREE(model.bones);
     RL_FREE(model.bindPose);
 
-    TRACELOG(LOG_INFO, "Unloaded model data from RAM and VRAM");
+    TRACELOG(LOG_INFO, "MODEL: Unloaded model from RAM and VRAM");
 }
 
 // Load meshes from model file
@@ -830,8 +830,8 @@ void ExportMesh(Mesh mesh, const char *fileName)
     }
     else if (IsFileExtension(fileName, ".raw")) { }   // TODO: Support additional file formats to export mesh vertex data
 
-    if (success) TRACELOG(LOG_INFO, "Mesh exported successfully: %s", fileName);
-    else TRACELOG(LOG_WARNING, "Mesh could not be exported.");
+    if (success) TRACELOG(LOG_INFO, "FILEIO: [%s] Mesh exported successfully", fileName);
+    else TRACELOG(LOG_WARNING, "FILEIO: [%s] Failed to export mesh data", fileName);
 }
 
 // Load materials from model file
@@ -849,7 +849,7 @@ Material *LoadMaterials(const char *fileName, int *materialCount)
 
         int result = tinyobj_parse_mtl_file(&mats, &count, fileName);
         if (result != TINYOBJ_SUCCESS) {
-            TRACELOG(LOG_WARNING, "[%s] Could not parse Materials file", fileName);
+            TRACELOG(LOG_WARNING, "MATERIAL: [%s] Failed to parse materials file", fileName);
         }
 
         // TODO: Process materials to return
@@ -857,7 +857,7 @@ Material *LoadMaterials(const char *fileName, int *materialCount)
         tinyobj_materials_free(mats, count);
     }
 #else
-    TRACELOG(LOG_WARNING, "[%s] Materials file not supported", fileName);
+    TRACELOG(LOG_WARNING, "FILEIO: [%s] Failed to load material file", fileName);
 #endif
 
     // Set materials shader to default (DIFFUSE, SPECULAR, NORMAL)
@@ -909,8 +909,8 @@ void SetMaterialTexture(Material *material, int mapType, Texture2D texture)
 // Set the material for a mesh
 void SetModelMeshMaterial(Model *model, int meshId, int materialId)
 {
-    if (meshId >= model->meshCount) TRACELOG(LOG_WARNING, "Mesh id greater than mesh count");
-    else if (materialId >= model->materialCount) TRACELOG(LOG_WARNING,"Material id greater than material count");
+    if (meshId >= model->meshCount) TRACELOG(LOG_WARNING, "MESH: Id greater than mesh count");
+    else if (materialId >= model->materialCount) TRACELOG(LOG_WARNING, "MATERIAL: Id greater than material count");
     else  model->meshMaterial[meshId] = materialId;
 }
 
@@ -958,7 +958,8 @@ ModelAnimation *LoadModelAnimations(const char *filename, int *animCount)
 
     if (!iqmFile)
     {
-        TRACELOG(LOG_ERROR, "[%s] Unable to open file", filename);
+        TRACELOG(LOG_WARNING, "FILEIO: [%s] Failed to open file", filename);
+        return NULL;
     }
 
     // Read IQM header
@@ -966,17 +967,15 @@ ModelAnimation *LoadModelAnimations(const char *filename, int *animCount)
 
     if (strncmp(iqm.magic, IQM_MAGIC, sizeof(IQM_MAGIC)))
     {
-        TRACELOG(LOG_ERROR, "Magic Number \"%s\"does not match.", iqm.magic);
+        TRACELOG(LOG_WARNING, "MODEL: [%s] IQM file is not a valid model", filename);
         fclose(iqmFile);
-
         return NULL;
     }
 
     if (iqm.version != IQM_VERSION)
     {
-        TRACELOG(LOG_ERROR, "IQM version %i is incorrect.", iqm.version);
+        TRACELOG(LOG_WARNING, "MODEL: [%s] IQM file version incorrect", filename);
         fclose(iqmFile);
-
         return NULL;
     }
 
@@ -2339,7 +2338,7 @@ BoundingBox MeshBoundingBox(Mesh mesh)
 void MeshTangents(Mesh *mesh)
 {
     if (mesh->tangents == NULL) mesh->tangents = (float *)RL_MALLOC(mesh->vertexCount*4*sizeof(float));
-    else TRACELOG(LOG_WARNING, "Mesh tangents already exist");
+    else TRACELOG(LOG_WARNING, "MESH: Tangents data already available, re-writting");
 
     Vector3 *tan1 = (Vector3 *)RL_MALLOC(mesh->vertexCount*sizeof(Vector3));
     Vector3 *tan2 = (Vector3 *)RL_MALLOC(mesh->vertexCount*sizeof(Vector3));
@@ -2412,7 +2411,7 @@ void MeshTangents(Mesh *mesh)
     // Load a new tangent attributes buffer
     mesh->vboId[LOC_VERTEX_TANGENT] = rlLoadAttribBuffer(mesh->vaoId, LOC_VERTEX_TANGENT, mesh->tangents, mesh->vertexCount*4*sizeof(float), false);
 
-    TRACELOG(LOG_INFO, "Tangents computed for mesh");
+    TRACELOG(LOG_INFO, "MESH: Tangents data computed for provided mesh");
 }
 
 // Compute mesh binormals (aka bitangent)
@@ -2852,8 +2851,8 @@ static Model LoadOBJ(const char *fileName)
         unsigned int flags = TINYOBJ_FLAG_TRIANGULATE;
         int ret = tinyobj_parse_obj(&attrib, &meshes, &meshCount, &materials, &materialCount, fileData, dataSize, flags);
 
-        if (ret != TINYOBJ_SUCCESS) TRACELOG(LOG_WARNING, "[%s] Model data could not be loaded", fileName);
-        else TRACELOG(LOG_INFO, "[%s] Model data loaded successfully: %i meshes / %i materials", fileName, meshCount, materialCount);
+        if (ret != TINYOBJ_SUCCESS) TRACELOG(LOG_WARNING, "MODEL: [%s] Failed to load OBJ data", fileName);
+        else TRACELOG(LOG_INFO, "MODEL: [%s] OBJ data loaded successfully: %i meshes / %i materials", fileName, meshCount, materialCount);
 
         // Init model meshes array
         // TODO: Support multiple meshes... in the meantime, only one mesh is returned
@@ -2902,8 +2901,6 @@ static Model LoadOBJ(const char *fileName)
                 tinyobj_vertex_index_t idx0 = attrib.faces[3*f + 0];
                 tinyobj_vertex_index_t idx1 = attrib.faces[3*f + 1];
                 tinyobj_vertex_index_t idx2 = attrib.faces[3*f + 2];
-
-                // TRACELOGD("Face %i index: v %i/%i/%i . vt %i/%i/%i . vn %i/%i/%i\n", f, idx0.v_idx, idx1.v_idx, idx2.v_idx, idx0.vt_idx, idx1.vt_idx, idx2.vt_idx, idx0.vn_idx, idx1.vn_idx, idx2.vn_idx);
 
                 // Fill vertices buffer (float) using vertex index of the face
                 for (int v = 0; v < 3; v++) { mesh.vertices[vCount + v] = attrib.vertices[idx0.v_idx*3 + v]; } vCount +=3;
@@ -2990,14 +2987,11 @@ static Model LoadOBJ(const char *fileName)
         tinyobj_attrib_free(&attrib);
         tinyobj_shapes_free(meshes, meshCount);
         tinyobj_materials_free(materials, materialCount);
-
+        
         RL_FREE(fileData);
 
         chdir(currentDir);
     }
-
-    // NOTE: At this point we have all model data loaded
-    TRACELOG(LOG_INFO, "[%s] Model loaded successfully in RAM (CPU)", fileName);
 
     return model;
 }
@@ -3116,7 +3110,7 @@ static Model LoadIQM(const char *fileName)
 
     if (iqmFile == NULL)
     {
-        TRACELOG(LOG_WARNING, "[%s] IQM file could not be opened", fileName);
+        TRACELOG(LOG_WARNING, "FILEIO: [%s] Failed to open IQM file", fileName);
         return model;
     }
 
@@ -3124,14 +3118,14 @@ static Model LoadIQM(const char *fileName)
 
     if (strncmp(iqm.magic, IQM_MAGIC, sizeof(IQM_MAGIC)))
     {
-        TRACELOG(LOG_WARNING, "[%s] IQM file does not seem to be valid", fileName);
+        TRACELOG(LOG_WARNING, "MODEL: [%s] IQM file is not a valid model", fileName);
         fclose(iqmFile);
         return model;
     }
 
     if (iqm.version != IQM_VERSION)
     {
-        TRACELOG(LOG_WARNING, "[%s] IQM file version is not supported (%i).", fileName, iqm.version);
+        TRACELOG(LOG_WARNING, "MODEL: [%s] IQM file version not supported (%i)", fileName, iqm.version);
         fclose(iqmFile);
         return model;
     }
@@ -3433,7 +3427,7 @@ static Image LoadImageFromCgltfImage(cgltf_image *image, const char *texPath, Co
             int i = 0;
             while ((image->uri[i] != ',') && (image->uri[i] != 0)) i++;
 
-            if (image->uri[i] == 0) TRACELOG(LOG_WARNING, "CGLTF Image: Invalid data URI");
+            if (image->uri[i] == 0) TRACELOG(LOG_WARNING, "IMAGE: glTF data URI is not a valid image");
             else
             {
                 int size;
@@ -3526,7 +3520,7 @@ static Model LoadGLTF(const char *fileName)
 
     if (gltfFile == NULL)
     {
-        TRACELOG(LOG_WARNING, "[%s] glTF file could not be opened", fileName);
+        TRACELOG(LOG_WARNING, "FILEIO: [%s] Failed to open glTF file", fileName);
         return model;
     }
 
@@ -3546,11 +3540,12 @@ static Model LoadGLTF(const char *fileName)
 
     if (result == cgltf_result_success)
     {
-        TRACELOG(LOG_INFO, "[%s][%s] Model meshes/materials: %i/%i", fileName, (data->file_type == 2)? "glb" : "gltf", data->meshes_count, data->materials_count);
+        TRACELOG(LOG_INFO, "MODEL: [%s] glTF meshes (%s) count: %i", fileName, (data->file_type == 2)? "glb" : "gltf", data->meshes_count, data->materials_count);
+        TRACELOG(LOG_INFO, "MODEL: [%s] glTF materials (%s) count: %i", fileName, (data->file_type == 2)? "glb" : "gltf", data->meshes_count, data->materials_count);
 
         // Read data buffers
         result = cgltf_load_buffers(&options, data, fileName);
-        if (result != cgltf_result_success) TRACELOG(LOG_INFO, "[%s][%s] Error loading mesh/material buffers", fileName, (data->file_type == 2)? "glb" : "gltf");
+        if (result != cgltf_result_success) TRACELOG(LOG_INFO, "MODEL: [%s] Failed to load mesh/material buffers", fileName);
 
         int primitivesCount = 0;
 
@@ -3588,8 +3583,7 @@ static Model LoadGLTF(const char *fileName)
                     UnloadImage(albedo);
                 }
 
-                //Set tint to white after it's been used by Albedo
-                tint = WHITE;
+                tint = WHITE;   // Set tint to white after it's been used by Albedo
 
                 if (data->materials[i].pbr_metallic_roughness.metallic_roughness_texture.texture)
                 {
@@ -3604,8 +3598,6 @@ static Model LoadGLTF(const char *fileName)
 
                     UnloadImage(metallicRoughness);
                 }
-
-
 
                 if (data->materials[i].normal_texture.texture)
                 {
@@ -3625,9 +3617,9 @@ static Model LoadGLTF(const char *fileName)
                 {
                     Image emissiveImage = LoadImageFromCgltfImage(data->materials[i].emissive_texture.texture->image, texPath, tint);
                     model.materials[i].maps[MAP_EMISSION].texture = LoadTextureFromImage(emissiveImage);
-                    tint.r = (unsigned char)(data->materials[i].emissive_factor[0] * 255);
-                    tint.g = (unsigned char)(data->materials[i].emissive_factor[1] * 255);
-                    tint.b = (unsigned char)(data->materials[i].emissive_factor[2] * 255);
+                    tint.r = (unsigned char)(data->materials[i].emissive_factor[0]*255);
+                    tint.g = (unsigned char)(data->materials[i].emissive_factor[1]*255);
+                    tint.b = (unsigned char)(data->materials[i].emissive_factor[2]*255);
                     model.materials[i].maps[MAP_EMISSION].color = tint;
                     UnloadImage(emissiveImage);
                 }
@@ -3671,7 +3663,7 @@ static Model LoadGLTF(const char *fileName)
                         else
                         {
                             // TODO: Support normalized unsigned byte/unsigned short texture coordinates
-                            TRACELOG(LOG_WARNING, "[%s] Texture coordinates must be float", fileName);
+                            TRACELOG(LOG_WARNING, "MODEL: [%s] glTF texture coordinates must be float", fileName);
                         }
                     }
                 }
@@ -3689,7 +3681,7 @@ static Model LoadGLTF(const char *fileName)
                     else
                     {
                         // TODO: Support unsigned byte/unsigned int
-                        TRACELOG(LOG_WARNING, "[%s] Indices must be unsigned short", fileName);
+                        TRACELOG(LOG_WARNING, "MODEL: [%s] glTF index data must be unsigned short", fileName);
                     }
                 }
                 else
@@ -3714,7 +3706,7 @@ static Model LoadGLTF(const char *fileName)
 
         cgltf_free(data);
     }
-    else TRACELOG(LOG_WARNING, "[%s] glTF data could not be loaded", fileName);
+    else TRACELOG(LOG_WARNING, "MODEL: [%s] Failed to load glTF data", fileName);
 
     RL_FREE(buffer);
 
