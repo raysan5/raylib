@@ -249,6 +249,8 @@ All **raylib tracelog messages** have been reviewd and categorized for a more co
 
 New **GitHub Actions CI** system has been implemented for Windows, Linux and macOS code and examples compilation on every new commit or PR to make sure library keeps stable and usable with no breaking bugs.
 
-Note that this list just reflects key changes of the new **raylib 3.0** but there is way more, about **30 new functions** have been added and multiple functions have been reviewed. Additionally, in the last year raylib has been binded to [+40 programming languages](https://github.com/raysan5/raylib/blob/master/BINDINGS.md). It has been **10 months of improvements** and [tools development](https://raylibtech.itch.io/) to create the best raylib ever.
+Note that only key changes are listed here but there is way more! About **30 new functions**, multiple functions reviewed, bindings to [+40 programming languages](https://github.com/raysan5/raylib/blob/master/BINDINGS.md) and great samples/demos/tutorials [created by the community](https://discord.gg/VkzNHUE), including raylib integration with [Spine](https://github.com/WEREMSOFT/spine-raylib-runtimes), [Unity](https://unitycoder.com/blog/2019/12/09/using-raylib-dll-in-unity/), [Tiled](https://github.com/OnACoffeeBreak/raylib_tiled_import_with_tmx), [Nuklear](http://bedroomcoders.co.uk/implementing-a-3d-gui-with-raylib/), [enet](https://github.com/nxrighthere/NetDynamics) and [more](https://github.com/raysan5/raylib/issues/1079)!
+
+It has been **10 months of improvements** to create the best raylib ever.
 
 Welcome to **raylib 3.0**.
