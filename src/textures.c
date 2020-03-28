@@ -1995,7 +1995,7 @@ void ImageDrawRectangle(Image *dst, int posX, int posY, int width, int height, C
 // Draw rectangle within an image (Vector version)
 void ImageDrawRectangleV(Image *dst, Vector2 position, Vector2 size, Color color)
 {
-    ImageDrawRectangleRec(dst, (Rectangle){ position.x, position.y, size.x, size.y }, color);
+    ImageDrawRectangle(dst, position.x, position.y, size.x, size.y, color);
 }
 
 // Draw rectangle within an image
@@ -2012,28 +2012,28 @@ void ImageDrawRectangleRec(Image *dst, Rectangle rec, Color color)
 // Draw rectangle lines within an image
 void ImageDrawRectangleLines(Image *dst, Rectangle rec, int thick, Color color)
 {
-    ImageDrawRectangleRec(dst, (Rectangle){ rec.x, rec.y, rec.width, thick }, color);
-    ImageDrawRectangleRec(dst, (Rectangle){ rec.x, rec.y + thick, thick, rec.height - thick*2 }, color);
-    ImageDrawRectangleRec(dst, (Rectangle){ rec.x + rec.width - thick, rec.y + thick, thick, rec.height - thick*2 }, color);
-    ImageDrawRectangleRec(dst, (Rectangle){ rec.x, rec.y + rec.height - thick, rec.width, thick }, color);
+    ImageDrawRectangle(dst, rec.x, rec.y, rec.width, thick, color);
+    ImageDrawRectangle(dst, rec.x, rec.y + thick, thick, rec.height - thick*2, color);
+    ImageDrawRectangle(dst, rec.x + rec.width - thick, rec.y + thick, thick, rec.height - thick*2, color);
+    ImageDrawRectangle(dst, rec.x, rec.y + rec.height - thick, rec.width, thick, color);
 }
 
 // Clear image background with given color
 void ImageClearBackground(Image *dst, Color color)
 {
-    ImageDrawRectangleRec(dst, (Rectangle){ 0.0f, 0.0f, dst->width, dst->height }, color);
+    ImageDrawRectangle(dst, 0, 0, dst->width, dst->height, color);
 }
 
 // Draw pixel within an image
 void ImageDrawPixel(Image *dst, int x, int y, Color color)
 {
-    ImageDrawRectangleRec(dst, (Rectangle){ x, y, 1.0f, 1.0f }, color);
+    ImageDrawRectangle(dst, x, y, 1, 1, color);
 }
 
 // Draw pixel within an image (Vector version)
 void ImageDrawPixelV(Image *dst, Vector2 position, Color color)
 {
-    ImageDrawRectangleRec(dst, (Rectangle){ position.x, position.y, 1.0f, 1.0f }, color);
+    ImageDrawRectangle(dst, (int)position.x, (int)position.y, 1, 1, color);
 }
 
 // Draw circle within an image
