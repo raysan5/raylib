@@ -35,6 +35,11 @@ int main(void)
     ImageDraw(&parrots, cat, (Rectangle){ 0, 0, cat.width, cat.height }, (Rectangle){ 30, 40, cat.width*1.5f, cat.height*1.5f }, WHITE);
     ImageCrop(&parrots, (Rectangle){ 0, 50, parrots.width, parrots.height - 100 }); // Crop resulting image
 
+    // Draw on the image with a few image draw methods
+    ImageDrawPixel(&parrots, 10, 10, RAYWHITE);
+    ImageDrawCircle(&parrots, 10, 10, 5, RAYWHITE);
+    ImageDrawRectangle(&parrots, 5, 20, 10, 10, RAYWHITE);
+
     UnloadImage(cat);       // Unload image from RAM
 
     // Load custom font for frawing on image
