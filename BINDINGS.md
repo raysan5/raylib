@@ -53,6 +53,7 @@ Some people ported raylib to other languages in form of bindings or wrappers to 
 | Euraylib           | Euphoria       | https://github.com/gAndy50/Euraylib                                  |
 | raylib-wren        | Wren           | https://github.com/TSnake41/raylib-wren                              |
 | raylib-odin        | Odin           | https://github.com/kevinw/raylib-odin                                |
+| raylib-zig         | Zig            | https://github.com/G3bE/raylib-zig                   |
 | ray.zig            | Zig            | https://github.com/BitPuffin/zig-raylib-experiments                  |
 | raylib-Ada         | Ada            | https://github.com/mimo/raylib-Ada                                   |
 | jaylib             | Janet          | https://github.com/janet-lang/jaylib                                 |
