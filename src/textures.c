@@ -1987,7 +1987,19 @@ Image ImageTextEx(Font font, const char *text, float fontSize, float spacing, Co
 }
 
 // Draw rectangle within an image
-void ImageDrawRectangle(Image *dst, Rectangle rec, Color color)
+void ImageDrawRectangle(Image *dst, int posX, int posY, int width, int height, Color color)
+{
+    ImageDrawRectangleRec(dst, (Rectangle){ posX, posY, width, height }, color);
+}
+
+// Draw rectangle within an image (Vector version)
+void ImageDrawRectangleV(Image *dst, Vector2 position, Vector2 size, Color color)
+{
+    ImageDrawRectangle(dst, position.x, position.y, size.x, size.y, color);
+}
+
+// Draw rectangle within an image
+void ImageDrawRectangleRec(Image *dst, Rectangle rec, Color color)
 {
     // Security check to avoid program crash
     if ((dst->data == NULL) || (dst->width == 0) || (dst->height == 0)) return;
@@ -2000,40 +2012,46 @@ void ImageDrawRectangle(Image *dst, Rectangle rec, Color color)
 // Draw rectangle lines within an image
 void ImageDrawRectangleLines(Image *dst, Rectangle rec, int thick, Color color)
 {
-    ImageDrawRectangle(dst, (Rectangle){ rec.x, rec.y, rec.width, thick }, color);
-    ImageDrawRectangle(dst, (Rectangle){ rec.x, rec.y + thick, thick, rec.height - thick*2 }, color);
-    ImageDrawRectangle(dst, (Rectangle){ rec.x + rec.width - thick, rec.y + thick, thick, rec.height - thick*2 }, color);
-    ImageDrawRectangle(dst, (Rectangle){ rec.x, rec.y + rec.height - thick, rec.width, thick }, color);
+    ImageDrawRectangle(dst, rec.x, rec.y, rec.width, thick, color);
+    ImageDrawRectangle(dst, rec.x, rec.y + thick, thick, rec.height - thick*2, color);
+    ImageDrawRectangle(dst, rec.x + rec.width - thick, rec.y + thick, thick, rec.height - thick*2, color);
+    ImageDrawRectangle(dst, rec.x, rec.y + rec.height - thick, rec.width, thick, color);
 }
 
 // Clear image background with given color
 void ImageClearBackground(Image *dst, Color color)
 {
-    ImageDrawRectangle(dst, (Rectangle){ 0.0f, 0.0f, dst->width, dst->height }, color);
+    ImageDrawRectangle(dst, 0, 0, dst->width, dst->height, color);
 }
 
 // Draw pixel within an image
-void ImageDrawPixel(Image *dst, Vector2 position, Color color)
+void ImageDrawPixel(Image *dst, int x, int y, Color color)
 {
-    ImageDrawRectangle(dst, (Rectangle){ position.x, position.y, 1.0f, 1.0f }, color);
+    ImageDrawRectangle(dst, x, y, 1, 1, color);
+}
+
+// Draw pixel within an image (Vector version)
+void ImageDrawPixelV(Image *dst, Vector2 position, Color color)
+{
+    ImageDrawRectangle(dst, (int)position.x, (int)position.y, 1, 1, color);
 }
 
 // Draw circle within an image
-void ImageDrawCircle(Image *dst, Vector2 center, int radius, Color color)
+void ImageDrawCircle(Image *dst, int centerX, int centerY, int radius, Color color)
 {
-    int x = 0, y = radius, xc = (int)center.x, yc = (int)center.y;
+    int x = 0, y = radius;
     int decesionParameter = 3 - 2*radius;
 
     while (y >= x)
     {
-        ImageDrawPixel(dst, (Vector2){ xc + x, yc + y }, color);
-        ImageDrawPixel(dst, (Vector2){ xc - x, yc + y }, color);
-        ImageDrawPixel(dst, (Vector2){ xc + x, yc - y }, color);
-        ImageDrawPixel(dst, (Vector2){ xc - x, yc - y }, color);
-        ImageDrawPixel(dst, (Vector2){ xc + y, yc + x }, color);
-        ImageDrawPixel(dst, (Vector2){ xc - y, yc + x }, color);
-        ImageDrawPixel(dst, (Vector2){ xc + y, yc - x }, color);
-        ImageDrawPixel(dst, (Vector2){ xc - y, yc - x }, color);
+        ImageDrawPixel(dst, centerX + x, centerY + y, color);
+        ImageDrawPixel(dst, centerX - x, centerY + y, color);
+        ImageDrawPixel(dst, centerX + x, centerY - y, color);
+        ImageDrawPixel(dst, centerX - x, centerY - y, color);
+        ImageDrawPixel(dst, centerX + y, centerY + x, color);
+        ImageDrawPixel(dst, centerX - y, centerY + x, color);
+        ImageDrawPixel(dst, centerX + y, centerY - x, color);
+        ImageDrawPixel(dst, centerX - y, centerY - x, color);
         x++;
 
         if (decesionParameter > 0)
@@ -2045,24 +2063,35 @@ void ImageDrawCircle(Image *dst, Vector2 center, int radius, Color color)
     }
 }
 
-// Draw line within an image
-void ImageDrawLineEx(Image *dst, Vector2 start, Vector2 end, Color color)
+// Draw circle within an image (Vector version)
+void ImageDrawCircleV(Image *dst, Vector2 center, int radius, Color color)
 {
-    int x1 = (int)start.x, y1 = (int)start.y, x2 = (int)end.x, y2 = (int)end.y;
-    int m = 2*(y2 - y1);
-    int slopeError = m - (x2 - x1);
+    ImageDrawCircle(dst, (int)center.x, (int)center.y, radius, color);
+}
 
-    for (int x = x1, y = y1; x <= x2; x++)
+// Draw line within an image
+void ImageDrawLine(Image *dst, int startPosX, int startPosY, int endPosX, int endPosY, Color color)
+{
+    int m = 2*(endPosY - startPosY);
+    int slopeError = m - (startPosY - startPosX);
+
+    for (int x = startPosX, y = startPosY; x <= startPosY; x++)
     {
-        ImageDrawPixel(dst, (Vector2){ x, y }, color);
+        ImageDrawPixel(dst, x, y, color);
         slopeError += m;
 
         if (slopeError >= 0)
         {
             y++;
-            slopeError -= 2*(x2 - x1);
+            slopeError -= 2*(startPosY - startPosX);
         }
     }
+}
+
+// Draw line within an image (Vector version)
+void ImageDrawLineV(Image *dst, Vector2 start, Vector2 end, Color color)
+{
+    ImageDrawLine(dst, (int)start.x, (int)start.y, (int)end.x, (int)end.y, color);
 }
 
 // Draw text (default font) within an image (destination)
