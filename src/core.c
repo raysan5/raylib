@@ -16,7 +16,7 @@
 *
 *   #define PLATFORM_DESKTOP
 *       Windowing and input system configured for desktop platforms: Windows, Linux, OSX, FreeBSD, OpenBSD, NetBSD, DragonFly
-*       NOTE: Oculus Ritf CV1 requires PLATFORM_DESKTOP for mirror rendering - View [rlgl] module to enable it
+*       NOTE: Oculus Rift CV1 requires PLATFORM_DESKTOP for mirror rendering - View [rlgl] module to enable it
 *
 *   #define PLATFORM_ANDROID
 *       Windowing and input system configured for Android device, app activity managed internally in this module.
@@ -2226,19 +2226,18 @@ void SaveStorageValue(unsigned int position, int value)
             else
             {
                 // RL_REALLOC failed
-                TRACELOG(LOG_WARNING, "FILEIO: Position in bytes (%u) bigger than actual size of file [%s] (%u) Realloc function FAIL",position*sizeof(int),path,dataSize);  
+                TRACELOG(LOG_WARNING, "FILEIO: [%s] Failed to realloc data (%u), position in bytes (%u) bigger than actual file size", path, dataSize, position*sizeof(int));  
                 
-                // We store the old size of the file.
-                newFileData=fileData;
-                newDataSize=dataSize;
+                // We store the old size of the file
+                newFileData = fileData;
+                newDataSize = dataSize;
             }
-            
         }
         else
         {
-            // We store the old size of the file.
-            newFileData=fileData;
-            newDataSize=dataSize;
+            // Store the old size of the file
+            newFileData = fileData;
+            newDataSize = dataSize;
 
             // Replace value on selected position
             int *dataPtr = (int *)newFileData;
@@ -2250,7 +2249,8 @@ void SaveStorageValue(unsigned int position, int value)
     }
     else
     {
-        TRACELOG(LOG_INFO, "FILEIO: [%s] File not found, creating it.",path);  
+        TRACELOG(LOG_INFO, "FILEIO: [%s] File not found, creating it", path);
+
         dataSize = (position + 1)*sizeof(int);
         fileData = (unsigned char *)RL_MALLOC(dataSize);
         int *dataPtr = (int *)fileData;
