@@ -75,25 +75,31 @@ You can download and install raylib using the [vcpkg](https://github.com/Microso
       ./vcpkg integrate install
       vcpkg install raylib
 
-The raylib port in vcpkg is kept up to date by Microsoft team members and community contributors. If the version is out of date, please [create an issue or pull request](https://github.com/Microsoft/vcpkg) on the vcpkg repository.
+*The raylib port in vcpkg is kept up to date by Microsoft team members and community contributors. If the version is out of date, please [create an issue or pull request](https://github.com/Microsoft/vcpkg) on the vcpkg repository.^*
 
-#### Building and using raylib on multiple platforms
+#### Building raylib on multiple platforms
 
 [raylib Wiki](https://github.com/raysan5/raylib/wiki#development-platforms) contains detailed instructions on building and usage on multiple platforms.
 
-* [Working on Windows](https://github.com/raysan5/raylib/wiki/Working-on-Windows)
-* [Working on macOS](https://github.com/raysan5/raylib/wiki/Working-on-macOS)
-* [Working on GNU Linux](https://github.com/raysan5/raylib/wiki/Working-on-GNU-Linux)
-* [Working on FreeBSD](https://github.com/raysan5/raylib/wiki/Working-on-FreeBSD)
-* [Working on Raspberry Pi](https://github.com/raysan5/raylib/wiki/Working-on-Raspberry-Pi)
-* [Working for Android](https://github.com/raysan5/raylib/wiki/Working-for-Android)
-* [Working for Web (HTML5)](https://github.com/raysan5/raylib/wiki/Working-for-Web-(HTML5))
-* [Working for UWP (Universal Window Platform)](https://github.com/raysan5/raylib/wiki/Working-for-UWP)
-* [Working anywhere with CMake](https://github.com/raysan5/raylib/wiki/Working-with-CMake)
+ - [Working on Windows](https://github.com/raysan5/raylib/wiki/Working-on-Windows)
+ - [Working on macOS](https://github.com/raysan5/raylib/wiki/Working-on-macOS)
+ - [Working on GNU Linux](https://github.com/raysan5/raylib/wiki/Working-on-GNU-Linux)
+ - [Working on FreeBSD](https://github.com/raysan5/raylib/wiki/Working-on-FreeBSD)
+ - [Working on Raspberry Pi](https://github.com/raysan5/raylib/wiki/Working-on-Raspberry-Pi)
+ - [Working for Android](https://github.com/raysan5/raylib/wiki/Working-for-Android)
+ - [Working for Web (HTML5)](https://github.com/raysan5/raylib/wiki/Working-for-Web-(HTML5))
+ - [Working for UWP (Universal Window Platform)](https://github.com/raysan5/raylib/wiki/Working-for-UWP)
+ - [Working anywhere with CMake](https://github.com/raysan5/raylib/wiki/Working-with-CMake)
+
+*Note that Wiki is open for edit, if you find some issue while building raylib for your target platform, feel free to edit the Wiki or open and issue related to it.*
 
 #### Using raylib with multiple IDEs
 
-raylib has been developed on Windows platform using [Notepad++](https://notepad-plus-plus.org/) and [MinGW GCC](http://mingw-w64.org/doku.php) compiler but it can be used with multiple IDEs on multiple platforms, [projects directory](https://github.com/raysan5/raylib/tree/master/projects) contains several ready-to-use project templates to build raylib and code examples.
+raylib has been developed on Windows platform using [Notepad++](https://notepad-plus-plus.org/) and [MinGW GCC](http://mingw-w64.org/doku.php) compiler but it can be used with other IDEs on multiple platforms.
+
+[Projects directory](https://github.com/raysan5/raylib/tree/master/projects) contains several ready-to-use **project templates** to build raylib and code examples with multiple IDEs.
+
+*Note that there are lots of IDEs supported, some of the provided templates could require some review, please, if you find some issue with some template or you think they could be improved, feel free to send a PR or open a related issue.*
 
 contact
 -------
