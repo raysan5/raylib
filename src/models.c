@@ -2840,10 +2840,10 @@ static Model LoadOBJ(const char *fileName)
     unsigned int materialCount = 0;
 
     char *fileData = LoadFileText(fileName);
-    int dataSize = strlen(fileData);
 
     if (fileData != NULL)
     {
+        int dataSize = strlen(fileData);
         char currentDir[1024] = { 0 };
         strcpy(currentDir, GetWorkingDirectory());
         chdir(GetDirectoryPath(fileName));
