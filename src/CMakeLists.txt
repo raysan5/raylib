@@ -3,8 +3,8 @@ project(raylib C)
 include(GNUInstallDirs)
 list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/../cmake")
 
-set(PROJECT_VERSION 2.6.0)
-set(API_VERSION 261)
+set(PROJECT_VERSION 3.0.0)
+set(API_VERSION 301)
 
 include("CMakeOptions.txt")
 include(BuildType)
