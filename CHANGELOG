@@ -1,10 +1,10 @@
 changelog
 ---------
 
-Current Release:    raylib 3.0.0 (01 April 2020) (estimated)
+Current Release:    raylib 3.0.0 (01 April 2020)
 
 -----------------------------------------------
-Release:     raylib 3.0 (01 April 2020) (estimated)
+Release:     raylib 3.0 (01 April 2020)
 -----------------------------------------------
 KEY CHANGES:
  - Global context states used on all modules. 
@@ -153,6 +153,7 @@ Detailed changes:
 [examples] ADDED: shaders_basic_lighting, by @chriscamacho
 [examples] ADDED: shaders_simple_mask, by @chriscamacho
 [examples] ADDED: audio_multichannel_sound, by @chriscamacho
+[examples] ADDED: shaders_spotlight, by @chriscamacho
 [examples] RENAMED: text_sprite_font > text_font_spritefont
 [examples] RENAMED: text_ttf_loading > text_font_filters
 [examples] RENAMED: text_bmfont_ttf > text_font_loading
@@ -161,6 +162,7 @@ Detailed changes:
 [examples] REVIEWED: models_obj_loading > models_loading
 [examples] REVIEWED: models_materials_pbr, shader issues
 [examples] REVIEWED: core_window_letterbox, detailed explanation, by @jotac0
+[examples] REVIEWED: core_window_letterbox, virtual mouse, by @anatagawa
 [games] ADDED: GGJ2020 game - RE-PAIR
 [*] Misc fixes and tweaks, by @yaram, @oraoto, @zatherz, @piecedigital, @Shylie
 [*] Update ALL supported projects (Notepad++, VS2017)
