@@ -258,7 +258,7 @@ Image LoadImage(const char *fileName)
     else if (IsFileExtension(fileName, ".hdr"))
     {
 #if defined(STBI_REQUIRED)
-        int dataSize = 0;
+        unsigned int dataSize = 0;
         unsigned char *fileData = LoadFileData(fileName, &dataSize);
 
         if (fileData != NULL)
