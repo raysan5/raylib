@@ -16,7 +16,7 @@
 *
 *   #define PLATFORM_DESKTOP
 *       Windowing and input system configured for desktop platforms: Windows, Linux, OSX, FreeBSD, OpenBSD, NetBSD, DragonFly
-*       NOTE: Oculus Rift CV1 requires PLATFORM_DESKTOP for mirror rendering - View [rlgl] module to enable it
+*       NOTE: Oculus Ritf CV1 requires PLATFORM_DESKTOP for mirror rendering - View [rlgl] module to enable it
 *
 *   #define PLATFORM_ANDROID
 *       Windowing and input system configured for Android device, app activity managed internally in this module.
@@ -2192,7 +2192,7 @@ unsigned char *DecompressData(unsigned char *compData, int compDataLength, int *
 
 // Save integer value to storage file (to defined position)
 // NOTE: Storage positions is directly related to file memory layout (4 bytes each integer)
-void SaveStorageValue(int position, int value)
+void SaveStorageValue(unsigned int position, int value)
 {
 #if defined(SUPPORT_DATA_STORAGE)
     char path[512] = { 0 };
@@ -2204,8 +2204,8 @@ void SaveStorageValue(int position, int value)
     strcpy(path, STORAGE_DATA_FILE);
 #endif
 
-    int dataSize = 0;
-    int newDataSize = 0;
+    unsigned int dataSize = 0;
+    unsigned int newDataSize = 0;
     unsigned char *fileData = LoadFileData(path, &dataSize);
     unsigned char *newFileData = NULL;
 
@@ -2226,7 +2226,7 @@ void SaveStorageValue(int position, int value)
             else
             {
                 // RL_REALLOC failed
-                TRACELOG(LOG_WARNING, "FILEIO: Position in bytes (%d) bigger than actual size of file [%s] (%d) Realloc function FAIL",position*sizeof(int),path,dataSize);  
+                TRACELOG(LOG_WARNING, "FILEIO: Position in bytes (%u) bigger than actual size of file [%s] (%u) Realloc function FAIL",position*sizeof(int),path,dataSize);  
                 
                 // We store the old size of the file.
                 newFileData=fileData;
@@ -2264,7 +2264,7 @@ void SaveStorageValue(int position, int value)
 
 // Load integer value from storage file (from defined position)
 // NOTE: If requested position could not be found, value 0 is returned
-int LoadStorageValue(int position)
+int LoadStorageValue(unsigned int position)
 {
     int value = 0;
 #if defined(SUPPORT_DATA_STORAGE)
@@ -2277,7 +2277,7 @@ int LoadStorageValue(int position)
     strcpy(path, STORAGE_DATA_FILE);
 #endif
 
-    int dataSize = 0;
+    unsigned int dataSize = 0;
     unsigned char *fileData = LoadFileData(path, &dataSize);
 
     if (fileData != NULL)

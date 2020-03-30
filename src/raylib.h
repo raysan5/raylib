@@ -951,8 +951,8 @@ RLAPI void TakeScreenshot(const char *fileName);                  // Takes a scr
 RLAPI int GetRandomValue(int min, int max);                       // Returns a random value between min and max (both included)
 
 // Files management functions
-RLAPI unsigned char *LoadFileData(const char *fileName, int *bytesRead);     // Load file data as byte array (read)
-RLAPI void SaveFileData(const char *fileName, void *data, int bytesToWrite); // Save data to file from byte array (write)
+RLAPI unsigned char *LoadFileData(const char *fileName, unsigned int *bytesRead);     // Load file data as byte array (read)
+RLAPI void SaveFileData(const char *fileName, void *data, unsigned int bytesToWrite); // Save data to file from byte array (write)
 RLAPI char *LoadFileText(const char *fileName);                   // Load text data from file (read), returns a '\0' terminated string
 RLAPI void SaveFileText(const char *fileName, char *text);        // Save text data to file (write), string must be '\0' terminated
 RLAPI bool FileExists(const char *fileName);                      // Check if file exists
@@ -976,8 +976,8 @@ RLAPI unsigned char *CompressData(unsigned char *data, int dataLength, int *comp
 RLAPI unsigned char *DecompressData(unsigned char *compData, int compDataLength, int *dataLength);  // Decompress data (DEFLATE algorythm)
 
 // Persistent storage management
-RLAPI void SaveStorageValue(int position, int value);             // Save integer value to storage file (to defined position)
-RLAPI int LoadStorageValue(int position);                         // Load integer value from storage file (from defined position)
+RLAPI void SaveStorageValue(unsigned int position, int value);    // Save integer value to storage file (to defined position)
+RLAPI int LoadStorageValue(unsigned int position);                // Load integer value from storage file (from defined position)
 
 RLAPI void OpenURL(const char *url);                              // Open URL with default system browser (if available)
 
