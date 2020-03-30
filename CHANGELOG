@@ -49,6 +49,8 @@ Detailed changes:
 [core] ADDED: SaveFileText() - Save text data to file (write), string must be '\0' terminated
 [core] REMOVED: Show raylib logo at initialization
 [core] REVIEWED: GetFileName(), security checks
+[core] REVIEWED: LoadStorageValue(), by @danimartin82
+[core] REVIEWED: SaveStorageValue(), by @danimartin82
 [core] REVIEWED: IsMouseButtonReleased(), when press/release events come too fast, by @oswjk
 [core] REVIEWED: SetWindowMonitor(), by @DropsOfSerenity
 [core] REVIEWED: IsFileExtension() to be case-insensitive
@@ -89,6 +91,15 @@ Detailed changes:
 [textures] ADDED: ImageDrawPixel(), by @iamsouravgupta
 [textures] ADDED: ImageDrawCircle(), by @iamsouravgupta
 [textures] ADDED: ImageDrawLineEx(), by @iamsouravgupta
+[textures] ADDED: ImageDrawPixelV(), by @RobLoach
+[textures] ADDED: ImageDrawCircleV(), by @RobLoach
+[textures] ADDED: ImageDrawLineV(), by @RobLoach
+[textures] ADDED: ImageDrawRectangleV(), by @RobLoach
+[textures] ADDED: ImageDrawRectangleRec(), by @RobLoach
+[textures] REVIEWED: ImageDrawPixel(), by @RobLoach
+[textures] REVIEWED: ImageDrawLine(), by @RobLoach
+[textures] REVIEWED: ImageDrawCircle(), by @RobLoach
+[textures] REVIEWED: ImageDrawRectangle(), by @RobLoach
 [textures] REVIEWED: ImageDraw(), now it supports color tint parameter
 [textures] REVIEWED: ImageResizeCanvas()
 [textures] REVIEWED: ImageCrop() with security checks
