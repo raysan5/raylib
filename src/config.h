@@ -84,15 +84,15 @@
 //------------------------------------------------------------------------------------
 // Selecte desired fileformats to be supported for image data loading
 #define SUPPORT_FILEFORMAT_PNG      1
-//#define SUPPORT_FILEFORMAT_BMP    1
-//#define SUPPORT_FILEFORMAT_TGA    1
+#define SUPPORT_FILEFORMAT_BMP      1
+#define SUPPORT_FILEFORMAT_TGA      1
 //#define SUPPORT_FILEFORMAT_JPG    1
 #define SUPPORT_FILEFORMAT_GIF      1
 //#define SUPPORT_FILEFORMAT_PSD    1
-//#define SUPPORT_FILEFORMAT_DDS    1
-//#define SUPPORT_FILEFORMAT_HDR    1
-//#define SUPPORT_FILEFORMAT_KTX    1
-//#define SUPPORT_FILEFORMAT_ASTC   1
+#define SUPPORT_FILEFORMAT_DDS      1
+#define SUPPORT_FILEFORMAT_HDR      1
+#define SUPPORT_FILEFORMAT_KTX      1
+#define SUPPORT_FILEFORMAT_ASTC     1
 //#define SUPPORT_FILEFORMAT_PKM    1
 //#define SUPPORT_FILEFORMAT_PVR    1
 
@@ -135,7 +135,7 @@
 #define SUPPORT_FILEFORMAT_XM       1
 #define SUPPORT_FILEFORMAT_MOD      1
 //#define SUPPORT_FILEFORMAT_FLAC     1
-//#define SUPPORT_FILEFORMAT_MP3      1
+#define SUPPORT_FILEFORMAT_MP3      1
 
 //------------------------------------------------------------------------------------
 // Module: utils - Configuration Flags
