@@ -39,7 +39,7 @@ before_build:
   - cd build
 
 build_script:
-  - cmake -G %GENERATOR% -DCMAKE_BUILD_TYPE=RelWithDebInfo -DSTATIC=ON -DSHARED=ON -DBUILD_EXAMPLES=%examples% -DBUILD_GAMES=%examples% -DINCLUDE_EVERYTHING=ON ..
+  - cmake -G %GENERATOR% -DCMAKE_BUILD_TYPE=Release -DSTATIC=ON -DSHARED=ON -DBUILD_EXAMPLES=%examples% -DBUILD_GAMES=%examples% -DINCLUDE_EVERYTHING=ON ..
   - cmake --build . --target install
 
 after_build:
