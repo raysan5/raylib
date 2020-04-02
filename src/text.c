@@ -640,7 +640,7 @@ Image GenImageFontAtlas(const CharInfo *chars, Rectangle **charRecs, int charsCo
             {
                 for (int x = 0; x < chars[i].image.width; x++)
                 {
-                    ((unsigned char *)atlas.data)[(offsetY + y)*atlas.width + (offsetX + x)] = ((unsigned char *)chars[i].image.data)[y*chars[i].image.width + x];
+                    ((unsigned char*)atlas.data)[(offsetY + y)*atlas.width + (offsetX + x)] = ((unsigned char*)chars[i].image.data)[y*chars[i].image.width + x];
                 }
             }
 
@@ -653,7 +653,7 @@ Image GenImageFontAtlas(const CharInfo *chars, Rectangle **charRecs, int charsCo
             // Move atlas position X for next character drawing
             offsetX += (chars[i].image.width + 2*padding);
 
-            if (offsetX >= (atlas.width - chars[i].image.width - padding))
+            if (offsetX >= (atlas.width - chars[i].image.width - 2 * padding))
             {
                 offsetX = padding;
 
