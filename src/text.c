@@ -613,7 +613,7 @@ Image GenImageFontAtlas(const CharInfo *chars, Rectangle **charRecs, int charsCo
     // NOTE 2: SDF font characters already contain an internal padding,
     // so image size would result bigger than default font type
     float requiredArea = 0;
-    for (int i = 0; i < charsCount; i++) requiredArea += ((chars[i].image.width + 2*padding)*(chars[i].image.height + 2*padding));
+    for (int i = 0; i < charsCount; i++) requiredArea += ((chars[i].image.width + padding)*(chars[i].image.height + padding));
     float guessSize = sqrtf(requiredArea)*1.3f;
     int imageSize = (int)powf(2, ceilf(logf((float)guessSize)/logf(2)));  // Calculate next POT
 
@@ -650,7 +650,7 @@ Image GenImageFontAtlas(const CharInfo *chars, Rectangle **charRecs, int charsCo
             recs[i].height = (float)chars[i].image.height;
 
             // Move atlas position X for next character drawing
-            offsetX += (chars[i].image.width + 2*padding);
+            offsetX += (chars[i].image.width + padding);
 
             if (offsetX >= (atlas.width - chars[i].image.width - padding))
             {
@@ -659,7 +659,7 @@ Image GenImageFontAtlas(const CharInfo *chars, Rectangle **charRecs, int charsCo
                 // NOTE: Be careful on offsetY for SDF fonts, by default SDF
                 // use an internal padding of 4 pixels, it means char rectangle
                 // height is bigger than fontSize, it could be up to (fontSize + 8)
-                offsetY += (fontSize + 2*padding);
+                offsetY += (fontSize + padding);
 
                 if (offsetY > (atlas.height - fontSize - padding)) break;
             }
@@ -677,8 +677,8 @@ Image GenImageFontAtlas(const CharInfo *chars, Rectangle **charRecs, int charsCo
         for (int i = 0; i < charsCount; i++)
         {
             rects[i].id = i;
-            rects[i].w = chars[i].image.width + 2*padding;
-            rects[i].h = chars[i].image.height + 2*padding;
+            rects[i].w = chars[i].image.width + padding;
+            rects[i].h = chars[i].image.height + padding;
         }
 
         // Package rectangles into atlas
