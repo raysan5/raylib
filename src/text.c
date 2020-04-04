@@ -1179,6 +1179,9 @@ const char *TextSubtext(const char *text, int position, int length)
 // WARNING: Internally allocated memory must be freed by the user (if return != NULL)
 char *TextReplace(char *text, const char *replace, const char *by)
 {
+    // Sanity checks and initialization
+    if (!text || !replace || !by || by[0] == '\0') return NULL;
+    
     char *result;
 
     char *insertPoint;      // Next insert point
@@ -1188,13 +1191,9 @@ char *TextReplace(char *text, const char *replace, const char *by)
     int lastReplacePos;     // Distance between replace and end of last replace
     int count;              // Number of replacements
 
-    // Sanity checks and initialization
-    if (!text || !replace) return NULL;
-
     replaceLen = TextLength(replace);
     if (replaceLen == 0) return NULL;  // Empty replace causes infinite loop during count
 
-    if (!by) by = "";           // Replace by nothing if not provided
     byLen = TextLength(by);
 
     // Count the number of replacements needed
