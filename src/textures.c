@@ -3042,7 +3042,6 @@ void DrawTextureNPatch(Texture2D texture, NPatchInfo nPatchInfo, Rectangle destR
         rlPopMatrix();
 
         rlDisableTexture();
-
     }
 }
 

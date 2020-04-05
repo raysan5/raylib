@@ -866,7 +866,7 @@ bool IsWindowResized(void)
 bool IsWindowHidden(void)
 {
 #if defined(PLATFORM_DESKTOP)
-    return (glfwGetWindowAttrib(CORE.Window.handle, GLFW_VISIBLE) == GL_FALSE);
+    return (glfwGetWindowAttrib(CORE.Window.handle, GLFW_VISIBLE) == GLFW_FALSE);
 #endif
     return false;
 }
@@ -1255,7 +1255,7 @@ void BeginDrawing(void)
     CORE.Time.update = CORE.Time.current - CORE.Time.previous;
     CORE.Time.previous = CORE.Time.current;
 
-    rlLoadIdentity();                   // Reset current matrix (MODELVIEW)
+    rlLoadIdentity();                   // Reset current matrix (modelview)
     rlMultMatrixf(MatrixToFloat(CORE.Window.screenScale)); // Apply screen scaling
 
     //rlTranslatef(0.375, 0.375, 0);    // HACK to have 2D pixel-perfect drawing on OpenGL 1.1
@@ -1333,7 +1333,7 @@ void BeginMode2D(Camera2D camera)
 {
     rlglDraw();                         // Draw Buffers (Only OpenGL 3+ and ES2)
 
-    rlLoadIdentity();                   // Reset current matrix (MODELVIEW)
+    rlLoadIdentity();                   // Reset current matrix (modelview)
 
     // Apply 2d camera transformation to modelview
     rlMultMatrixf(MatrixToFloat(GetCameraMatrix2D(camera)));
@@ -1347,7 +1347,7 @@ void EndMode2D(void)
 {
     rlglDraw();                         // Draw Buffers (Only OpenGL 3+ and ES2)
 
-    rlLoadIdentity();                   // Reset current matrix (MODELVIEW)
+    rlLoadIdentity();                   // Reset current matrix (modelview)
     rlMultMatrixf(MatrixToFloat(CORE.Window.screenScale)); // Apply screen scaling if required
 }
 
@@ -1358,7 +1358,7 @@ void BeginMode3D(Camera3D camera)
 
     rlMatrixMode(RL_PROJECTION);        // Switch to projection matrix
     rlPushMatrix();                     // Save previous matrix, which contains the settings for the 2d ortho projection
-    rlLoadIdentity();                   // Reset current matrix (PROJECTION)
+    rlLoadIdentity();                   // Reset current matrix (projection)
 
     float aspect = (float)CORE.Window.currentFbo.width/(float)CORE.Window.currentFbo.height;
 
@@ -1368,7 +1368,7 @@ void BeginMode3D(Camera3D camera)
         double top = 0.01*tan(camera.fovy*0.5*DEG2RAD);
         double right = top*aspect;
 
-        rlFrustum(-right, right, -top, top, DEFAULT_NEAR_CULL_DISTANCE, DEFAULT_FAR_CULL_DISTANCE);
+        rlFrustum(-right, right, -top, top, RL_NEAR_CULL_DISTANCE, RL_FAR_CULL_DISTANCE);
     }
     else if (camera.type == CAMERA_ORTHOGRAPHIC)
     {
@@ -1376,17 +1376,17 @@ void BeginMode3D(Camera3D camera)
         double top = camera.fovy/2.0;
         double right = top*aspect;
 
-        rlOrtho(-right, right, -top,top, DEFAULT_NEAR_CULL_DISTANCE, DEFAULT_FAR_CULL_DISTANCE);
+        rlOrtho(-right, right, -top,top, RL_NEAR_CULL_DISTANCE, RL_FAR_CULL_DISTANCE);
     }
 
     // NOTE: zNear and zFar values are important when computing depth buffer values
 
     rlMatrixMode(RL_MODELVIEW);         // Switch back to modelview matrix
-    rlLoadIdentity();                   // Reset current matrix (MODELVIEW)
+    rlLoadIdentity();                   // Reset current matrix (modelview)
 
     // Setup Camera view
     Matrix matView = MatrixLookAt(camera.position, camera.target, camera.up);
-    rlMultMatrixf(MatrixToFloat(matView));      // Multiply MODELVIEW matrix by view matrix (camera)
+    rlMultMatrixf(MatrixToFloat(matView));      // Multiply modelview matrix by view matrix (camera)
 
     rlEnableDepthTest();                // Enable DEPTH_TEST for 3D
 }
@@ -1397,10 +1397,10 @@ void EndMode3D(void)
     rlglDraw();                         // Process internal buffers (update + draw)
 
     rlMatrixMode(RL_PROJECTION);        // Switch to projection matrix
-    rlPopMatrix();                      // Restore previous matrix (PROJECTION) from matrix stack
+    rlPopMatrix();                      // Restore previous matrix (projection) from matrix stack
 
-    rlMatrixMode(RL_MODELVIEW);         // Get back to modelview matrix
-    rlLoadIdentity();                   // Reset current matrix (MODELVIEW)
+    rlMatrixMode(RL_MODELVIEW);         // Switch back to modelview matrix
+    rlLoadIdentity();                   // Reset current matrix (modelview)
 
     rlMultMatrixf(MatrixToFloat(CORE.Window.screenScale)); // Apply screen scaling if required
 
@@ -1417,15 +1417,15 @@ void BeginTextureMode(RenderTexture2D target)
     // Set viewport to framebuffer size
     rlViewport(0, 0, target.texture.width, target.texture.height);
 
-    rlMatrixMode(RL_PROJECTION);        // Switch to PROJECTION matrix
-    rlLoadIdentity();                   // Reset current matrix (PROJECTION)
+    rlMatrixMode(RL_PROJECTION);        // Switch to projection matrix
+    rlLoadIdentity();                   // Reset current matrix (projection)
 
     // Set orthographic projection to current framebuffer size
     // NOTE: Configured top-left corner as (0, 0)
     rlOrtho(0, target.texture.width, target.texture.height, 0, 0.0f, 1.0f);
 
-    rlMatrixMode(RL_MODELVIEW);         // Switch back to MODELVIEW matrix
-    rlLoadIdentity();                   // Reset current matrix (MODELVIEW)
+    rlMatrixMode(RL_MODELVIEW);         // Switch back to modelview matrix
+    rlLoadIdentity();                   // Reset current matrix (modelview)
 
     //rlScalef(0.0f, -1.0f, 0.0f);      // Flip Y-drawing (?)
 
@@ -1489,7 +1489,7 @@ Ray GetMouseRay(Vector2 mouse, Camera camera)
     if (camera.type == CAMERA_PERSPECTIVE)
     {
         // Calculate projection matrix from perspective
-        matProj = MatrixPerspective(camera.fovy*DEG2RAD, ((double)GetScreenWidth()/(double)GetScreenHeight()), DEFAULT_NEAR_CULL_DISTANCE, DEFAULT_FAR_CULL_DISTANCE);
+        matProj = MatrixPerspective(camera.fovy*DEG2RAD, ((double)GetScreenWidth()/(double)GetScreenHeight()), RL_NEAR_CULL_DISTANCE, RL_FAR_CULL_DISTANCE);
     }
     else if (camera.type == CAMERA_ORTHOGRAPHIC)
     {
@@ -1573,7 +1573,7 @@ Vector2 GetWorldToScreenEx(Vector3 position, Camera camera, int width, int heigh
     if (camera.type == CAMERA_PERSPECTIVE)
     {
         // Calculate projection matrix from perspective
-        matProj = MatrixPerspective(camera.fovy * DEG2RAD, ((double)width/(double)height), DEFAULT_NEAR_CULL_DISTANCE, DEFAULT_FAR_CULL_DISTANCE);
+        matProj = MatrixPerspective(camera.fovy * DEG2RAD, ((double)width/(double)height), RL_NEAR_CULL_DISTANCE, RL_FAR_CULL_DISTANCE);
     }
     else if (camera.type == CAMERA_ORTHOGRAPHIC)
     {
@@ -1582,7 +1582,7 @@ Vector2 GetWorldToScreenEx(Vector3 position, Camera camera, int width, int heigh
         double right = top*aspect;
 
         // Calculate projection matrix from orthographic
-        matProj = MatrixOrtho(-right, right, -top, top, DEFAULT_NEAR_CULL_DISTANCE, DEFAULT_FAR_CULL_DISTANCE);
+        matProj = MatrixOrtho(-right, right, -top, top, RL_NEAR_CULL_DISTANCE, RL_FAR_CULL_DISTANCE);
     }
 
     // Calculate view matrix from camera look at (and transpose it)
@@ -2772,13 +2772,13 @@ static bool InitGraphicsDevice(int width, int height)
 #endif
 
     // Check some Window creation flags
-    if (CORE.Window.flags & FLAG_WINDOW_HIDDEN) glfwWindowHint(GLFW_VISIBLE, GL_FALSE);           // Visible window
-    else glfwWindowHint(GLFW_VISIBLE, GL_TRUE);     // Window initially hidden
+    if (CORE.Window.flags & FLAG_WINDOW_HIDDEN) glfwWindowHint(GLFW_VISIBLE, GLFW_FALSE);           // Visible window
+    else glfwWindowHint(GLFW_VISIBLE, GLFW_TRUE);     // Window initially hidden
 
-    if (CORE.Window.flags & FLAG_WINDOW_RESIZABLE) glfwWindowHint(GLFW_RESIZABLE, GL_TRUE);       // Resizable window
-    else glfwWindowHint(GLFW_RESIZABLE, GL_FALSE);  // Avoid window being resizable
+    if (CORE.Window.flags & FLAG_WINDOW_RESIZABLE) glfwWindowHint(GLFW_RESIZABLE, GLFW_TRUE);       // Resizable window
+    else glfwWindowHint(GLFW_RESIZABLE, GLFW_FALSE);  // Avoid window being resizable
 
-    if (CORE.Window.flags & FLAG_WINDOW_UNDECORATED) glfwWindowHint(GLFW_DECORATED, GLFW_FALSE);  // Border and buttons on Window
+    if (CORE.Window.flags & FLAG_WINDOW_UNDECORATED) glfwWindowHint(GLFW_DECORATED, GLFW_FALSE);    // Border and buttons on Window
     else glfwWindowHint(GLFW_DECORATED, GLFW_TRUE);   // Decorated window
     // FLAG_WINDOW_TRANSPARENT not supported on HTML5 and not included in any released GLFW version yet
 #if defined(GLFW_TRANSPARENT_FRAMEBUFFER)
@@ -3315,15 +3315,15 @@ static void SetupViewport(int width, int height)
     // render area does not match full display area (this situation is only applicable on fullscreen mode)
     rlViewport(CORE.Window.renderOffset.x/2, CORE.Window.renderOffset.y/2, CORE.Window.render.width - CORE.Window.renderOffset.x, CORE.Window.render.height - CORE.Window.renderOffset.y);
 
-    rlMatrixMode(RL_PROJECTION);        // Switch to PROJECTION matrix
-    rlLoadIdentity();                   // Reset current matrix (PROJECTION)
+    rlMatrixMode(RL_PROJECTION);        // Switch to projection matrix
+    rlLoadIdentity();                   // Reset current matrix (projection)
 
     // Set orthographic projection to current framebuffer size
     // NOTE: Configured top-left corner as (0, 0)
     rlOrtho(0, CORE.Window.render.width, CORE.Window.render.height, 0, 0.0f, 1.0f);
 
-    rlMatrixMode(RL_MODELVIEW);         // Switch back to MODELVIEW matrix
-    rlLoadIdentity();                   // Reset current matrix (MODELVIEW)
+    rlMatrixMode(RL_MODELVIEW);         // Switch back to modelview matrix
+    rlLoadIdentity();                   // Reset current matrix (modelview)
 }
 
 // Compute framebuffer size relative to screen size and display size
@@ -3724,11 +3724,11 @@ static void PollInputEvents(void)
 
                 // If window is resized, viewport and projection matrix needs to be re-calculated
                 rlViewport(0, 0, CORE.Window.screen.width, CORE.Window.screen.height);            // Set viewport width and height
-                rlMatrixMode(RL_PROJECTION);                // Switch to PROJECTION matrix
-                rlLoadIdentity();                           // Reset current matrix (PROJECTION)
+                rlMatrixMode(RL_PROJECTION);                // Switch to projection matrix
+                rlLoadIdentity();                           // Reset current matrix (projection)
                 rlOrtho(0, CORE.Window.screen.width, CORE.Window.screen.height, 0, 0.0f, 1.0f);   // Orthographic projection mode with top-left corner at (0,0)
-                rlMatrixMode(RL_MODELVIEW);                 // Switch back to MODELVIEW matrix
-                rlLoadIdentity();                           // Reset current matrix (MODELVIEW)
+                rlMatrixMode(RL_MODELVIEW);                 // Switch back to modelview matrix
+                rlLoadIdentity();                           // Reset current matrix (modelview)
                 rlClearScreenBuffers();                     // Clear screen buffers (color and depth)
 
                 // Window size must be updated to be used on 3D mode to get new aspect ratio (BeginMode3D())
