@@ -1180,7 +1180,7 @@ const char *TextSubtext(const char *text, int position, int length)
 char *TextReplace(char *text, const char *replace, const char *by)
 {
     // Sanity checks and initialization
-    if (!text || !replace || !by || by[0] == '\0') return NULL;
+    if (!text || !replace || !by) return NULL;
     
     char *result;
 
