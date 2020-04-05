@@ -1139,6 +1139,7 @@ Music LoadMusicStream(const char *fileName)
         }
     }
 #endif
+    else TraceLog(LOG_WARNING, "[%s] Audio fileformat not supported, it can't be loaded", fileName);
 
     if (!musicLoaded)
     {
