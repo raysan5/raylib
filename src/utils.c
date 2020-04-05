@@ -318,8 +318,18 @@ FILE *android_fopen(const char *fileName, const char *mode)
         // NOTE: AAsset provides access to read-only asset
         AAsset *asset = AAssetManager_open(assetManager, fileName, AASSET_MODE_UNKNOWN);
 
-        if (asset != NULL) return funopen(asset, android_read, android_write, android_seek, android_close);
-        else return NULL;
+        if (asset != NULL) 
+        {
+            // Return pointer to file in the assets
+            return funopen(asset, android_read, android_write, android_seek, android_close);
+        }
+        else
+        {
+            #undef fopen
+            // Just do a regular open if file is not found in the assets
+            return fopen(TextFormat("%s/%s", internalDataPath, fileName), mode);
+            #define fopen(name, mode) android_fopen(name, mode)
+        }
     }
 }
 #endif  // PLATFORM_ANDROID
