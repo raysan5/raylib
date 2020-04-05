@@ -790,7 +790,14 @@ void DrawTextCodepoint(Font font, int codepoint, Vector2 position, float scale, 
 
 // Draw text using Font
 // NOTE: chars spacing is NOT proportional to fontSize
+// NOTE: Fixed line spacing of 1.5 line-height
 void DrawTextEx(Font font, const char *text, Vector2 position, float fontSize, float spacing, Color tint)
+{
+    DrawTextPro(font, text, position, fontSize, spacing, font.baseSize * 1.5, tint);
+}
+
+// Draw text using Font with line spacing
+void DrawTextPro(Font font, const char *text, Vector2 position, float fontSize, float spacing, float lineSpacing, Color tint)
 {
     int length = TextLength(text);      // Total length in bytes of the text, scanned by codepoints in loop
 
@@ -812,9 +819,7 @@ void DrawTextEx(Font font, const char *text, Vector2 position, float fontSize, f
 
         if (codepoint == '\n')
         {
-            // NOTE: Fixed line spacing of 1.5 line-height
-            // TODO: Support custom line spacing defined by user
-            textOffsetY += (int)((font.baseSize + font.baseSize/2)*scaleFactor);
+            textOffsetY += (int)lineSpacing * scaleFactor;
             textOffsetX = 0.0f;
         }
         else
