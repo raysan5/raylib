@@ -1700,7 +1700,8 @@ void rlglInit(int width, int height)
         //RLGL.State.draws[i].RLGL.State.modelview = MatrixIdentity();
     }
 
-    RLGL.State.drawsCounter = 1;
+    RLGL.State.drawsCounter = 1;        // Reset draws counter
+    RLGL.State.currentDepth = -1.0f;    // Reset depth value
 
     // Init RLGL.State.stack matrices (emulating OpenGL 1.1)
     for (int i = 0; i < MAX_MATRIX_STACK_SIZE; i++) RLGL.State.stack[i] = MatrixIdentity();
@@ -1709,6 +1710,7 @@ void rlglInit(int width, int height)
     RLGL.State.projection = MatrixIdentity();
     RLGL.State.modelview = MatrixIdentity();
     RLGL.State.currentMatrix = &RLGL.State.modelview;
+
 #endif      // GRAPHICS_API_OPENGL_33 || GRAPHICS_API_OPENGL_ES2
 
     // Initialize OpenGL default states
