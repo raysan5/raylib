@@ -391,8 +391,7 @@ ifeq ($(PLATFORM),PLATFORM_RPI)
     INCLUDE_PATHS += -I$(RPI_TOOLCHAIN_SYSROOT)/opt/vc/include/interface/vcos/pthreads
 endif
 ifeq ($(PLATFORM),PLATFORM_ANDROID)
-    NATIVE_APP_GLUE = $(RAYLIB_RELEASE_PATH)/external/android/native_app_glue
-    #NATIVE_APP_GLUE = $(ANDROID_NDK)/sources/android/native_app_glue
+    NATIVE_APP_GLUE = $(ANDROID_NDK)/sources/android/native_app_glue
     # Android required libraries
     INCLUDE_PATHS += -I$(ANDROID_TOOLCHAIN)/sysroot/usr/include
     # Include android_native_app_glue.h
@@ -445,32 +444,11 @@ ifeq ($(RAYLIB_MODULE_PHYSAC),TRUE)
 endif
 
 ifeq ($(PLATFORM),PLATFORM_ANDROID)
-    OBJS += external/android/native_app_glue/android_native_app_glue.o
+    OBJS += $(NATIVE_APP_GLUE)/android_native_app_glue.o
 endif
 
 # Default target entry
 all: raylib
-
-# Generate standalone Android toolchain
-# NOTE: If the host system is Windows or Linux, generation is different
-generate_android_toolchain:
-ifeq ($(PLATFORM_OS),WINDOWS)
-    # NOTE: python should be available in the path
-    ifeq ($(ANDROID_ARCH),ARM)
-		$(ANDROID_NDK)/build/tools/python make_standalone_toolchain.py --arch arm --api $(ANDROID_API_VERSION) --install-dir $(ANDROID_TOOLCHAIN)
-    endif
-    ifeq ($(ANDROID_ARCH),ARM64)
-		$(ANDROID_NDK)/build/tools/python make_standalone_toolchain.py --arch arm64 --api $(ANDROID_API_VERSION) --install-dir $(ANDROID_TOOLCHAIN)
-    endif
-endif
-ifeq ($(PLATFORM_OS),LINUX)
-    ifeq ($(ANDROID_ARCH),ARM)
-		$(ANDROID_NDK)/build/tools/make-standalone-toolchain.sh --platform=android-$(ANDROID_API_VERSION) --toolchain=arm-linux-androideabi-4.9 --use-llvm --install-dir=$(ANDROID_TOOLCHAIN)
-    endif
-    ifeq ($(ANDROID_ARCH),ARM64)
-		$(ANDROID_NDK)/build/tools/make-standalone-toolchain.sh --platform=android-$(ANDROID_API_VERSION) --toolchain=aarch64-linux-androideabi-4.9 --use-llvm --install-dir=$(ANDROID_TOOLCHAIN)
-    endif
-endif
 
 # Compile raylib library
 # NOTE: Release directory is created if not exist
