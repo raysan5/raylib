@@ -8,7 +8,7 @@
             "name": "Debug",
             "type": "cppdbg",
             "request": "launch",
-            "program": "${workspaceFolder}/game",
+            "program": "${workspaceFolder}/main",
             "args": [],
             "stopAtEntry": false,
             "cwd": "${workspaceFolder}",
