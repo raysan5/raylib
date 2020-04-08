@@ -104,7 +104,6 @@ CMakeCache.txt
 CMakeFiles
 CMakeScripts
 Testing
-TestingIfSymlinkWorks
 cmake_install.cmake
 install_manifest.txt
 compile_commands.json

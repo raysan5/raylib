@@ -208,16 +208,10 @@ if(SHARED)
   if (${PLATFORM} MATCHES "Desktop")
     target_link_libraries(raylib glfw)
   endif()
-  if (UNIX AND ${FILESYSTEM_LACKS_SYMLINKS})
-    MESSAGE(WARNING "Can't version UNIX shared library on file system without symlink support")
-  else()
-      set_target_properties(raylib PROPERTIES
-          VERSION   ${PROJECT_VERSION}
-          SOVERSION ${API_VERSION}
-      )
-  endif()
   set_target_properties(raylib PROPERTIES
       PUBLIC_HEADER "raylib.h"
+      VERSION   ${PROJECT_VERSION}
+      SOVERSION ${API_VERSION}
   )
 
   if (WIN32)
