@@ -22,8 +22,6 @@ add_if_flag_compiles(-Werror=implicit-function-declaration CMAKE_C_FLAGS)
 # src/external/jar_xm.h does shady stuff
 add_if_flag_compiles(-fno-strict-aliasing CMAKE_C_FLAGS)
 
-include(CheckFileSystemSymlinkSupport)
-
 if (ENABLE_ASAN)
     add_if_flag_compiles(-fno-omit-frame-pointer CMAKE_C_FLAGS CMAKE_LINKER_FLAGS)
     add_if_flag_compiles(-fsanitize=address CMAKE_C_FLAGS CMAKE_LINKER_FLAGS)
