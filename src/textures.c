@@ -2073,9 +2073,9 @@ void ImageDrawCircleV(Image *dst, Vector2 center, int radius, Color color)
 void ImageDrawLine(Image *dst, int startPosX, int startPosY, int endPosX, int endPosY, Color color)
 {
     int m = 2*(endPosY - startPosY);
-    int slopeError = m - (startPosY - startPosX);
+    int slopeError = m - (endPosX - startPosX);
 
-    for (int x = startPosX, y = startPosY; x <= startPosY; x++)
+    for (int x = startPosX, y = startPosY; x <= endPosX; x++)
     {
         ImageDrawPixel(dst, x, y, color);
         slopeError += m;
@@ -2083,7 +2083,7 @@ void ImageDrawLine(Image *dst, int startPosX, int startPosY, int endPosX, int en
         if (slopeError >= 0)
         {
             y++;
-            slopeError -= 2*(startPosY - startPosX);
+            slopeError -= 2*(endPosX - startPosX);
         }
     }
 }
