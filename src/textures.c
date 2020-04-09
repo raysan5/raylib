@@ -2025,15 +2025,124 @@ void ImageClearBackground(Image *dst, Color color)
 }
 
 // Draw pixel within an image
+// NOTE: Compressed image formats not supported
 void ImageDrawPixel(Image *dst, int x, int y, Color color)
 {
-    ImageDrawRectangle(dst, x, y, 1, 1, color);
+    // Security check to avoid program crash
+    if ((dst->data == NULL) || (x < 0) || (x >= dst->width) || (y < 0) || (y >= dst->height)) return;
+    
+    switch (dst->format)
+    {
+        case UNCOMPRESSED_GRAYSCALE: 
+        {
+            // NOTE: Calculate grayscale equivalent color
+            Vector3 coln = { (float)color.r/255.0f, (float)color.g/255.0f, (float)color.b/255.0f };
+            unsigned char gray = (unsigned char)((coln.x*0.299f + coln.y*0.587f + coln.z*0.114f)*255.0f);
+            
+            ((unsigned char *)dst->data)[y*dst->width + x] = gray; 
+            
+        } break;
+        case UNCOMPRESSED_GRAY_ALPHA: 
+        {
+            // NOTE: Calculate grayscale equivalent color
+            Vector3 coln = { (float)color.r/255.0f, (float)color.g/255.0f, (float)color.b/255.0f };
+            unsigned char gray = (unsigned char)((coln.x*0.299f + coln.y*0.587f + coln.z*0.114f)*255.0f);
+            
+            ((unsigned char *)dst->data)[(y*dst->width + x)*2] = gray;
+            ((unsigned char *)dst->data)[(y*dst->width + x)*2 + 1] = color.a;
+
+        } break;
+        case UNCOMPRESSED_R5G6B5:
+        {
+            // NOTE: Calculate R5G6B5 equivalent color
+            Vector3 coln = { (float)color.r/255.0f, (float)color.g/255.0f, (float)color.b/255.0f };
+
+            unsigned char r = (unsigned char)(round(coln.x*31.0f));
+            unsigned char g = (unsigned char)(round(coln.y*63.0f));
+            unsigned char b = (unsigned char)(round(coln.z*31.0f));
+
+            ((unsigned short *)dst->data)[y*dst->width + x] = (unsigned short)r << 11 | (unsigned short)g << 5 | (unsigned short)b;
+            
+        } break;
+        case UNCOMPRESSED_R5G5B5A1:
+        {
+            #define PIXEL_ALPHA_THRESHOLD  50
+
+            // NOTE: Calculate R5G5B5A1 equivalent color
+            Vector4 coln = { (float)color.r/255.0f, (float)color.g/255.0f, (float)color.b/255.0f, (float)color.a/255.0f };
+
+            unsigned char r = (unsigned char)(round(coln.x*31.0f));
+            unsigned char g = (unsigned char)(round(coln.y*31.0f));
+            unsigned char b = (unsigned char)(round(coln.z*31.0f));
+            unsigned char a = (coln.w > ((float)PIXEL_ALPHA_THRESHOLD/255.0f))? 1 : 0;;
+
+            ((unsigned short *)dst->data)[y*dst->width + x] = (unsigned short)r << 11 | (unsigned short)g << 6 | (unsigned short)b << 1 | (unsigned short)a;
+
+        } break;
+        case UNCOMPRESSED_R4G4B4A4:
+        {
+            // NOTE: Calculate R5G5B5A1 equivalent color
+            Vector4 coln = { (float)color.r/255.0f, (float)color.g/255.0f, (float)color.b/255.0f, (float)color.a/255.0f };
+
+            unsigned char r = (unsigned char)(round(coln.x*15.0f));
+            unsigned char g = (unsigned char)(round(coln.y*15.0f));
+            unsigned char b = (unsigned char)(round(coln.z*15.0f));
+            unsigned char a = (unsigned char)(round(coln.w*15.0f));
+
+            ((unsigned short *)dst->data)[y*dst->width + x] = (unsigned short)r << 12 | (unsigned short)g << 8 | (unsigned short)b << 4 | (unsigned short)a;
+            
+        } break;
+        case UNCOMPRESSED_R8G8B8:
+        {
+            ((unsigned char *)dst->data)[(y*dst->width + x)*3] = color.r;
+            ((unsigned char *)dst->data)[(y*dst->width + x)*3 + 1] = color.g;
+            ((unsigned char *)dst->data)[(y*dst->width + x)*3 + 2] = color.b;
+            
+        } break;
+        case UNCOMPRESSED_R8G8B8A8:
+        {
+            ((unsigned char *)dst->data)[(y*dst->width + x)*4] = color.r;
+            ((unsigned char *)dst->data)[(y*dst->width + x)*4 + 1] = color.g;
+            ((unsigned char *)dst->data)[(y*dst->width + x)*4 + 2] = color.b;
+            ((unsigned char *)dst->data)[(y*dst->width + x)*4 + 3] = color.a;
+
+        } break;
+        case UNCOMPRESSED_R32:
+        {
+            // NOTE: Calculate grayscale equivalent color (normalized to 32bit)
+            Vector3 coln = { (float)color.r/255.0f, (float)color.g/255.0f, (float)color.b/255.0f };
+
+            ((float *)dst->data)[y*dst->width + x] = coln.x*0.299f + coln.y*0.587f + coln.z*0.114f; 
+            
+        } break;
+        case UNCOMPRESSED_R32G32B32:
+        {
+            // NOTE: Calculate R32G32B32 equivalent color (normalized to 32bit)
+            Vector3 coln = { (float)color.r/255.0f, (float)color.g/255.0f, (float)color.b/255.0f };
+
+            ((float *)dst->data)[(y*dst->width + x)*3] = coln.x; 
+            ((float *)dst->data)[(y*dst->width + x)*3 + 1] = coln.y; 
+            ((float *)dst->data)[(y*dst->width + x)*3 + 2] = coln.z; 
+        } break;
+        case UNCOMPRESSED_R32G32B32A32:
+        {
+            // NOTE: Calculate R32G32B32A32 equivalent color (normalized to 32bit)
+            Vector4 coln = { (float)color.r/255.0f, (float)color.g/255.0f, (float)color.b/255.0f, (float)color.a/255.0f };
+
+            ((float *)dst->data)[(y*dst->width + x)*4] = coln.x; 
+            ((float *)dst->data)[(y*dst->width + x)*4 + 1] = coln.y; 
+            ((float *)dst->data)[(y*dst->width + x)*4 + 2] = coln.z;
+            ((float *)dst->data)[(y*dst->width + x)*4 + 3] = coln.w;
+
+        } break;
+        default: break;
+    }
 }
 
 // Draw pixel within an image (Vector version)
 void ImageDrawPixelV(Image *dst, Vector2 position, Color color)
 {
-    ImageDrawRectangle(dst, (int)position.x, (int)position.y, 1, 1, color);
+    ImageDrawPixel(dst, (int)position.x, (int)position.y, color);
 }
 
 // Draw circle within an image
