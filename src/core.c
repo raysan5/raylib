@@ -2857,7 +2857,6 @@ static bool InitGraphicsDevice(int width, int height)
             glfwWindowHint(GLFW_AUTO_ICONIFY, 0);
         }
 #endif
-
         TRACELOG(LOG_WARNING, "SYSTEM: Closest fullscreen videomode: %i x %i", CORE.Window.display.width, CORE.Window.display.height);
 
         // NOTE: ISSUE: Closest videomode could not match monitor aspect-ratio, for example,
@@ -2950,10 +2949,6 @@ static bool InitGraphicsDevice(int width, int height)
 
 #if defined(PLATFORM_ANDROID) || defined(PLATFORM_RPI) || defined(PLATFORM_UWP)
     CORE.Window.fullscreen = true;
-
-    // Screen size security check
-    if (CORE.Window.screen.width <= 0) CORE.Window.screen.width = CORE.Window.display.width;
-    if (CORE.Window.screen.height <= 0) CORE.Window.screen.height = CORE.Window.display.height;
 
 #if defined(PLATFORM_RPI)
     bcm_host_init();
@@ -3157,8 +3152,10 @@ static bool InitGraphicsDevice(int width, int height)
     eglQuerySurface(CORE.Window.device, CORE.Window.surface, EGL_WIDTH, &CORE.Window.screen.width);
     eglQuerySurface(CORE.Window.device, CORE.Window.surface, EGL_HEIGHT, &CORE.Window.screen.height);
 
-#else   // PLATFORM_ANDROID, PLATFORM_RPI
-    EGLint numConfigs;
+#endif  // PLATFORM_UWP
+
+#if defined(PLATFORM_ANDROID) || defined(PLATFORM_RPI)
+    EGLint numConfigs = 0;
 
     // Get an EGL device connection
     CORE.Window.device = eglGetDisplay(EGL_DEFAULT_DISPLAY);
@@ -3194,7 +3191,7 @@ static bool InitGraphicsDevice(int width, int height)
     // Create an EGL window surface
     //---------------------------------------------------------------------------------
 #if defined(PLATFORM_ANDROID)
-    EGLint displayFormat;
+    EGLint displayFormat = 0;
 
     // EGL_NATIVE_VISUAL_ID is an attribute of the EGLConfig that is guaranteed to be accepted by ANativeWindow_setBuffersGeometry()
     // As soon as we picked a EGLConfig, we can safely reconfigure the ANativeWindow buffers to match, using EGL_NATIVE_VISUAL_ID
@@ -3212,6 +3209,10 @@ static bool InitGraphicsDevice(int width, int height)
 
 #if defined(PLATFORM_RPI)
     graphics_get_display_size(0, &CORE.Window.display.width, &CORE.Window.display.height);
+    
+    // Screen size security check
+    if (CORE.Window.screen.width <= 0) CORE.Window.screen.width = CORE.Window.display.width;
+    if (CORE.Window.screen.height <= 0) CORE.Window.screen.height = CORE.Window.display.height;
 
     // At this point we need to manage render size vs screen size
     // NOTE: This function use and modify global module variables: CORE.Window.screen.width/CORE.Window.screen.height and CORE.Window.render.width/CORE.Window.render.height and CORE.Window.screenScale
