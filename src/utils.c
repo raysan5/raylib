@@ -63,6 +63,9 @@ static int logTypeLevel = LOG_INFO;                     // Minimum log type leve
 static int logTypeExit = LOG_ERROR;                     // Log type that exits
 static TraceLogCallback logCallback = NULL;             // Log callback function pointer
 
+// Filesystem function override.
+static FilesystemOverride fsOverride = { NULL, NULL, NULL, NULL };
+
 #if defined(PLATFORM_ANDROID)
 static AAssetManager *assetManager = NULL;              // Android assets manager pointer
 static const char *internalDataPath = NULL;             // Android internal data path
@@ -164,6 +167,12 @@ void TraceLog(int logType, const char *text, ...)
 #endif  // SUPPORT_TRACELOG
 }
 
+// Set filesystem functions override.
+void SetFilesystemOverride(FilesystemOverride override)
+{
+    fsOverride = override;
+}
+
 // Load data from file into a buffer
 unsigned char *LoadFileData(const char *fileName, unsigned int *bytesRead)
 {
@@ -172,6 +181,13 @@ unsigned char *LoadFileData(const char *fileName, unsigned int *bytesRead)
 
     if (fileName != NULL)
     {
+        if (fsOverride.loadFileData) {
+            data = fsOverride.loadFileData(fileName, bytesRead);
+
+            if (data)
+                return data;
+        }
+
         FILE *file = fopen(fileName, "rb");
 
         if (file != NULL)
@@ -209,6 +225,11 @@ void SaveFileData(const char *fileName, void *data, unsigned int bytesToWrite)
 {
     if (fileName != NULL)
     {
+        if (fsOverride.saveFileData) {
+            fsOverride.saveFileData(fileName, data, bytesToWrite);
+            return;
+        }
+
         FILE *file = fopen(fileName, "wb");
 
         if (file != NULL)
@@ -234,6 +255,13 @@ char *LoadFileText(const char *fileName)
 
     if (fileName != NULL)
     {
+        if (fsOverride.loadFileText) {
+            text = fsOverride.loadFileText(fileName);
+
+            if (text)
+                return text;
+        }
+
         FILE *textFile = fopen(fileName, "rt");
 
         if (textFile != NULL)
@@ -275,6 +303,11 @@ void SaveFileText(const char *fileName, char *text)
 {
     if (fileName != NULL)
     {
+        if (fsOverride.saveFileText) {
+            fsOverride.saveFileText(fileName, text);
+            return;
+        }
+
         FILE *file = fopen(fileName, "wt");
 
         if (file != NULL)
@@ -318,7 +351,7 @@ FILE *android_fopen(const char *fileName, const char *mode)
         // NOTE: AAsset provides access to read-only asset
         AAsset *asset = AAssetManager_open(assetManager, fileName, AASSET_MODE_UNKNOWN);
 
-        if (asset != NULL) 
+        if (asset != NULL)
         {
             // Return pointer to file in the assets
             return funopen(asset, android_read, android_write, android_seek, android_close);
