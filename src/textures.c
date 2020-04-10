@@ -2204,16 +2204,18 @@ void ImageDrawLineV(Image *dst, Vector2 start, Vector2 end, Color color)
 }
 
 // Draw text (default font) within an image (destination)
-void ImageDrawText(Image *dst, Vector2 position, const char *text, int fontSize, Color color)
+void ImageDrawText(Image *dst, const char *text, int posX, int posY, int fontSize, Color color)
 {
+    Vector2 position = { (float)posX, (float)posY };
+
     // NOTE: For default font, sapcing is set to desired font size / default font size (10)
-    ImageDrawTextEx(dst, position, GetFontDefault(), text, (float)fontSize, (float)fontSize/10, color);
+    ImageDrawTextEx(dst, GetFontDefault(), text, position, (float)fontSize, (float)fontSize/10, color);
 }
 
 // Draw text (custom sprite font) within an image (destination)
-void ImageDrawTextEx(Image *dst, Vector2 position, Font font, const char *text, float fontSize, float spacing, Color color)
+void ImageDrawTextEx(Image *dst, Font font, const char *text, Vector2 position, float fontSize, float spacing, Color tint)
 {
-    Image imText = ImageTextEx(font, text, fontSize, spacing, color);
+    Image imText = ImageTextEx(font, text, fontSize, spacing, tint);
 
     Rectangle srcRec = { 0.0f, 0.0f, (float)imText.width, (float)imText.height };
     Rectangle dstRec = { position.x, position.y, (float)imText.width, (float)imText.height };
