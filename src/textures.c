@@ -332,23 +332,6 @@ Image LoadImageEx(Color *pixels, int width, int height)
     return image;
 }
 
-// Load image from raw data with parameters
-// NOTE: This functions makes a copy of provided data
-Image LoadImagePro(void *data, int width, int height, int format)
-{
-    Image srcImage = { 0 };
-
-    srcImage.data = data;
-    srcImage.width = width;
-    srcImage.height = height;
-    srcImage.mipmaps = 1;
-    srcImage.format = format;
-
-    Image dstImage = ImageCopy(srcImage);
-
-    return dstImage;
-}
-
 // Load an image from RAW file data
 Image LoadImageRaw(const char *fileName, int width, int height, int format, int headerSize)
 {

@@ -3430,13 +3430,18 @@ static Image LoadImageFromCgltfImage(cgltf_image *image, const char *texPath, Co
             if (image->uri[i] == 0) TRACELOG(LOG_WARNING, "IMAGE: glTF data URI is not a valid image");
             else
             {
-                int size;
+                int size = 0;
                 unsigned char *data = DecodeBase64(image->uri + i + 1, &size);
 
-                int w, h;
-                unsigned char *raw = stbi_load_from_memory(data, size, &w, &h, NULL, 4);
+                int width, height;
+                unsigned char *raw = stbi_load_from_memory(data, size, &width, &height, NULL, 4);
+                free(data);
 
-                rimage = LoadImagePro(raw, w, h, UNCOMPRESSED_R8G8B8A8);
+                rimage.data = raw;
+                rimage.width = width;
+                rimage.height = height;
+                rimage.format = UNCOMPRESSED_R8G8B8A8;
+                rimage.mipmaps = 1;
 
                 // TODO: Tint shouldn't be applied here!
                 ImageColorTint(&rimage, tint);
@@ -3462,20 +3467,20 @@ static Image LoadImageFromCgltfImage(cgltf_image *image, const char *texPath, Co
             n += stride;
         }
 
-        int w, h;
-        unsigned char *raw = stbi_load_from_memory(data, image->buffer_view->size, &w, &h, NULL, 4);
+        int width, height;
+        unsigned char *raw = stbi_load_from_memory(data, image->buffer_view->size, &width, &height, NULL, 4);
         free(data);
 
-        rimage = LoadImagePro(raw, w, h, UNCOMPRESSED_R8G8B8A8);
-        free(raw);
+        rimage.data = raw;
+        rimage.width = width;
+        rimage.height = height;
+        rimage.format = UNCOMPRESSED_R8G8B8A8;
+        rimage.mipmaps = 1;
 
         // TODO: Tint shouldn't be applied here!
         ImageColorTint(&rimage, tint);
     }
-    else
-    {
-        rimage = LoadImageEx(&tint, 1, 1);
-    }
+    else rimage = GenImageColor(1, 1, tint);
 
     return rimage;
 }
