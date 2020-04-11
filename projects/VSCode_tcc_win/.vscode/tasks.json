@@ -16,7 +16,10 @@
         {
             "label": "build & run",
             "type": "shell",
-            "command": "tcc.exe ${workspaceFolder}\\${fileBasename} -o ${workspaceFolder}\\${fileBasenameNoExtension}.exe -std=c99 -Wall -lmsvcrt -lraylib -lopengl32 -lgdi32 -lkernel32 -lshell32 -luser32 -lwinmm -Wl,-subsystem=gui && ${fileBasenameNoExtension}.exe",
+            "command": "make.exe all workplaceFolder=${workspaceFolder} outputExe=${workspaceFolderBasename}.exe",
+            "args":[
+                "&& ${workspaceFolderBasename}.exe",
+            ],
             "options": {
                 "env":{
                     "PATH" : "C:\\raylib\\tcc\\;%PATH%"
