@@ -245,12 +245,12 @@ void ResetStar(Star *s)
         
     } while (!(fabs(s->vel.x) + fabs(s->vel.y) > 1));
     
-    s->pos = Vector2Add(s->pos, Vector2MultiplyV(s->vel, (Vector2){ 8, 8 }));
+    s->pos = Vector2AddV(s->pos, Vector2MultiplyV(s->vel, (Vector2){ 8, 8 }));
 }
 
 void UpdateStar(Star *s)
 {
-    s->pos = Vector2Add(s->pos, s->vel);
+    s->pos = Vector2AddV(s->pos, s->vel);
     
     if (s->pos.x < 0 || s->pos.x > GetScreenWidth() ||
         s->pos.y < 0 || s->pos.y > GetScreenHeight())

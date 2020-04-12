@@ -226,13 +226,13 @@ void UpdateCameraCenterSmoothFollow(Camera2D *camera, Player *player, EnvItem *e
     static float fractionSpeed = 0.8f;
     
     camera->offset = (Vector2){ width/2, height/2 };
-    Vector2 diff = Vector2Subtract(player->position, camera->target);
+    Vector2 diff = Vector2SubtractV(player->position, camera->target);
     float length = Vector2Length(diff);
     
     if (length > minEffectLength)
     {
         float speed = fmaxf(fractionSpeed*length, minSpeed);
-        camera->target = Vector2Add(camera->target, Vector2Scale(diff, speed*delta/length));
+        camera->target = Vector2AddV(camera->target, Vector2Scale(diff, speed*delta/length));
     }
 }
 
