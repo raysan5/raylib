@@ -1109,7 +1109,7 @@ ModelAnimation *LoadModelAnimations(const char *filename, int *animCount)
             {
                 if (animations[a].bones[i].parent >= 0)
                 {
-                    animations[a].framePoses[frame][i].rotation = QuaternionMultiplyQ(animations[a].framePoses[frame][animations[a].bones[i].parent].rotation, animations[a].framePoses[frame][i].rotation);
+                    animations[a].framePoses[frame][i].rotation = QuaternionMultiply(animations[a].framePoses[frame][animations[a].bones[i].parent].rotation, animations[a].framePoses[frame][i].rotation);
                     animations[a].framePoses[frame][i].translation = Vector3RotateByQuaternion(animations[a].framePoses[frame][i].translation, animations[a].framePoses[frame][animations[a].bones[i].parent].rotation);
                     animations[a].framePoses[frame][i].translation = Vector3Add(animations[a].framePoses[frame][i].translation, animations[a].framePoses[frame][animations[a].bones[i].parent].translation);
                     animations[a].framePoses[frame][i].scale = Vector3Multiply(animations[a].framePoses[frame][i].scale, animations[a].framePoses[frame][animations[a].bones[i].parent].scale);
@@ -1167,7 +1167,7 @@ void UpdateModelAnimation(Model model, ModelAnimation anim, int frame)
                 animVertex = (Vector3){ model.meshes[m].vertices[vCounter], model.meshes[m].vertices[vCounter + 1], model.meshes[m].vertices[vCounter + 2] };
                 animVertex = Vector3Multiply(animVertex, outScale);
                 animVertex = Vector3Subtract(animVertex, inTranslation);
-                animVertex = Vector3RotateByQuaternion(animVertex, QuaternionMultiplyQ(outRotation, QuaternionInvert(inRotation)));
+                animVertex = Vector3RotateByQuaternion(animVertex, QuaternionMultiply(outRotation, QuaternionInvert(inRotation)));
                 animVertex = Vector3Add(animVertex, outTranslation);
                 model.meshes[m].animVertices[vCounter] = animVertex.x;
                 model.meshes[m].animVertices[vCounter + 1] = animVertex.y;
@@ -1176,7 +1176,7 @@ void UpdateModelAnimation(Model model, ModelAnimation anim, int frame)
                 // Normals processing
                 // NOTE: We use meshes.baseNormals (default normal) to calculate meshes.normals (animated normals)
                 animNormal = (Vector3){ model.meshes[m].normals[vCounter], model.meshes[m].normals[vCounter + 1], model.meshes[m].normals[vCounter + 2] };
-                animNormal = Vector3RotateByQuaternion(animNormal, QuaternionMultiplyQ(outRotation, QuaternionInvert(inRotation)));
+                animNormal = Vector3RotateByQuaternion(animNormal, QuaternionMultiply(outRotation, QuaternionInvert(inRotation)));
                 model.meshes[m].animNormals[vCounter] = animNormal.x;
                 model.meshes[m].animNormals[vCounter + 1] = animNormal.y;
                 model.meshes[m].animNormals[vCounter + 2] = animNormal.z;
@@ -3313,7 +3313,7 @@ static Model LoadIQM(const char *fileName)
     {
         if (model.bones[i].parent >= 0)
         {
-            model.bindPose[i].rotation = QuaternionMultiplyQ(model.bindPose[model.bones[i].parent].rotation, model.bindPose[i].rotation);
+            model.bindPose[i].rotation = QuaternionMultiply(model.bindPose[model.bones[i].parent].rotation, model.bindPose[i].rotation);
             model.bindPose[i].translation = Vector3RotateByQuaternion(model.bindPose[i].translation, model.bindPose[model.bones[i].parent].rotation);
             model.bindPose[i].translation = Vector3Add(model.bindPose[i].translation, model.bindPose[model.bones[i].parent].translation);
             model.bindPose[i].scale = Vector3Multiply(model.bindPose[i].scale, model.bindPose[model.bones[i].parent].scale);
