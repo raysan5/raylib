@@ -250,13 +250,6 @@ RMDEF Vector2 Vector2Negate(Vector2 v)
     return result;
 }
 
-// Divide vector by a float value
-RMDEF Vector2 Vector2DivideValue(Vector2 v, float div)
-{
-    Vector2 result = { v.x/div, v.y/div };
-    return result;
-}
-
 // Divide vector by vector
 RMDEF Vector2 Vector2Divide(Vector2 v1, Vector2 v2)
 {
@@ -267,7 +260,7 @@ RMDEF Vector2 Vector2Divide(Vector2 v1, Vector2 v2)
 // Normalize provided vector
 RMDEF Vector2 Vector2Normalize(Vector2 v)
 {
-    Vector2 result = Vector2DivideValue(v, Vector2Length(v));
+    Vector2 result = Vector2Scale(v, 1/Vector2Length(v));
     return result;
 }
 
@@ -411,13 +404,6 @@ RMDEF float Vector3Distance(Vector3 v1, Vector3 v2)
 RMDEF Vector3 Vector3Negate(Vector3 v)
 {
     Vector3 result = { -v.x, -v.y, -v.z };
-    return result;
-}
-
-// Divide vector by a float value
-RMDEF Vector3 Vector3DivideValue(Vector3 v, float div)
-{
-    Vector3 result = { v.x / div, v.y / div, v.z / div };
     return result;
 }
 
@@ -1164,8 +1150,8 @@ RMDEF Quaternion QuaternionMultiply(Quaternion q1, Quaternion q2)
     return result;
 }
 
-// Multiply quaternion by float value
-RMDEF Quaternion QuaternionMultiplyValue(Quaternion q, float mul)
+// Scale quaternion by float value
+RMDEF Quaternion QuaternionScale(Quaternion q, float mul)
 {
     Quaternion result = { 0 };
 
@@ -1183,13 +1169,6 @@ RMDEF Quaternion QuaternionMultiplyValue(Quaternion q, float mul)
 RMDEF Quaternion QuaternionDivide(Quaternion q1, Quaternion q2)
 {
     Quaternion result = {q1.x / q2.x, q1.y / q2.y, q1.z / q2.z, q1.w / q2.w};
-    return result;
-}
-
-// Divide quaternion by float value
-RMDEF Quaternion QuaternionDivideValue(Quaternion q, float div)
-{
-    Quaternion result = {q.x / div, q.y / div, q.z / div, q.w / div};
     return result;
 }
 
