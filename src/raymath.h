@@ -1069,28 +1069,28 @@ RMDEF float16 MatrixToFloatV(Matrix mat)
 //----------------------------------------------------------------------------------
 
 // Add two quaternions
-RMDEF Quaternion QuaternionAddQ(Quaternion q1, Quaternion q2)
+RMDEF Quaternion QuaternionAdd(Quaternion q1, Quaternion q2)
 {
     Quaternion result = {q1.x + q2.x, q1.y + q2.y, q1.z + q2.z, q1.w + q2.w};
     return result;
 }
 
 // Add quaternion and float value
-RMDEF Quaternion QuaternionAdd(Quaternion q, float add)
+RMDEF Quaternion QuaternionAddValue(Quaternion q, float add)
 {
     Quaternion result = {q.x + add, q.y + add, q.z + add, q.w + add};
     return result;
 }
 
 // Subtract two quaternions
-RMDEF Quaternion QuaternionSubtractQ(Quaternion q1, Quaternion q2)
+RMDEF Quaternion QuaternionSubtract(Quaternion q1, Quaternion q2)
 {
     Quaternion result = {q1.x - q2.x, q1.y - q2.y, q1.z - q2.z, q1.w - q2.w};
     return result;
 }
 
 // Subtract quaternion and float value
-RMDEF Quaternion QuaternionSubtract(Quaternion q, float sub)
+RMDEF Quaternion QuaternionSubtractValue(Quaternion q, float sub)
 {
     Quaternion result = {q.x - sub, q.y - sub, q.z - sub, q.w - sub};
     return result;
@@ -1149,7 +1149,7 @@ RMDEF Quaternion QuaternionInvert(Quaternion q)
 }
 
 // Calculate two quaternion multiplication
-RMDEF Quaternion QuaternionMultiplyQ(Quaternion q1, Quaternion q2)
+RMDEF Quaternion QuaternionMultiply(Quaternion q1, Quaternion q2)
 {
     Quaternion result = { 0 };
 
@@ -1165,7 +1165,7 @@ RMDEF Quaternion QuaternionMultiplyQ(Quaternion q1, Quaternion q2)
 }
 
 // Multiply quaternion by float value
-RMDEF Quaternion QuaternionMultiply(Quaternion q, float mul)
+RMDEF Quaternion QuaternionMultiplyValue(Quaternion q, float mul)
 {
     Quaternion result = { 0 };
 
@@ -1180,14 +1180,14 @@ RMDEF Quaternion QuaternionMultiply(Quaternion q, float mul)
 }
 
 // Divide two quaternions
-RMDEF Quaternion QuaternionDivideQ(Quaternion q1, Quaternion q2)
+RMDEF Quaternion QuaternionDivide(Quaternion q1, Quaternion q2)
 {
     Quaternion result = {q1.x / q2.x, q1.y / q2.y, q1.z / q2.z, q1.w / q2.w};
     return result;
 }
 
 // Divide quaternion by float value
-RMDEF Quaternion QuaternionDivide(Quaternion q, float div)
+RMDEF Quaternion QuaternionDivideValue(Quaternion q, float div)
 {
     Quaternion result = {q.x / div, q.y / div, q.z / div, q.w / div};
     return result;
