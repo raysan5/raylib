@@ -173,28 +173,28 @@ RMDEF Vector2 Vector2One(void)
 }
 
 // Add two vectors (v1 + v2)
-RMDEF Vector2 Vector2AddV(Vector2 v1, Vector2 v2)
+RMDEF Vector2 Vector2Add(Vector2 v1, Vector2 v2)
 {
     Vector2 result = { v1.x + v2.x, v1.y + v2.y };
     return result;
 }
 
 // Add vector and float value
-RMDEF Vector2 Vector2Add(Vector2 v, float add)
+RMDEF Vector2 Vector2AddValue(Vector2 v, float add)
 {
     Vector2 result = { v.x + add, v.y + add };
     return result;
 }
 
 // Subtract two vectors (v1 - v2)
-RMDEF Vector2 Vector2SubtractV(Vector2 v1, Vector2 v2)
+RMDEF Vector2 Vector2Subtract(Vector2 v1, Vector2 v2)
 {
     Vector2 result = { v1.x - v2.x, v1.y - v2.y };
     return result;
 }
 
 // Subtract vector by float value
-RMDEF Vector2 Vector2Subtract(Vector2 v, float sub)
+RMDEF Vector2 Vector2SubtractValue(Vector2 v, float sub)
 {
     Vector2 result = { v.x - sub, v.y - sub };
     return result;
@@ -237,16 +237,9 @@ RMDEF Vector2 Vector2Scale(Vector2 v, float scale)
 }
 
 // Multiply vector by vector
-RMDEF Vector2 Vector2MultiplyV(Vector2 v1, Vector2 v2)
+RMDEF Vector2 Vector2Multiply(Vector2 v1, Vector2 v2)
 {
     Vector2 result = { v1.x*v2.x, v1.y*v2.y };
-    return result;
-}
-
-// Multiply vector by float value
-RMDEF Vector2 Vector2Multiply(Vector2 v, float mul)
-{
-    Vector2 result = { v.x*mul, v.y*mul };
     return result;
 }
 
@@ -258,14 +251,14 @@ RMDEF Vector2 Vector2Negate(Vector2 v)
 }
 
 // Divide vector by a float value
-RMDEF Vector2 Vector2Divide(Vector2 v, float div)
+RMDEF Vector2 Vector2DivideValue(Vector2 v, float div)
 {
     Vector2 result = { v.x/div, v.y/div };
     return result;
 }
 
 // Divide vector by vector
-RMDEF Vector2 Vector2DivideV(Vector2 v1, Vector2 v2)
+RMDEF Vector2 Vector2Divide(Vector2 v1, Vector2 v2)
 {
     Vector2 result = { v1.x/v2.x, v1.y/v2.y };
     return result;
@@ -274,7 +267,7 @@ RMDEF Vector2 Vector2DivideV(Vector2 v1, Vector2 v2)
 // Normalize provided vector
 RMDEF Vector2 Vector2Normalize(Vector2 v)
 {
-    Vector2 result = Vector2Divide(v, Vector2Length(v));
+    Vector2 result = Vector2DivideValue(v, Vector2Length(v));
     return result;
 }
 
@@ -316,28 +309,28 @@ RMDEF Vector3 Vector3One(void)
 }
 
 // Add two vectors
-RMDEF Vector3 Vector3AddV(Vector3 v1, Vector3 v2)
+RMDEF Vector3 Vector3Add(Vector3 v1, Vector3 v2)
 {
     Vector3 result = { v1.x + v2.x, v1.y + v2.y, v1.z + v2.z };
     return result;
 }
 
 // Add vector and float value
-RMDEF Vector3 Vector3Add(Vector3 v, float add)
+RMDEF Vector3 Vector3AddValue(Vector3 v, float add)
 {
     Vector3 result = { v.x + add, v.y + add, v.z + add };
     return result;
 }
 
 // Subtract two vectors
-RMDEF Vector3 Vector3SubtractV(Vector3 v1, Vector3 v2)
+RMDEF Vector3 Vector3Subtract(Vector3 v1, Vector3 v2)
 {
     Vector3 result = { v1.x - v2.x, v1.y - v2.y, v1.z - v2.z };
     return result;
 }
 
 // Subtract vector by float value
-RMDEF Vector3 Vector3Subtract(Vector3 v, float sub)
+RMDEF Vector3 Vector3SubtractValue(Vector3 v, float sub)
 {
     Vector3 result = { v.x - sub, v.y - sub, v.z - sub };
     return result;
@@ -351,16 +344,9 @@ RMDEF Vector3 Vector3Scale(Vector3 v, float scalar)
 }
 
 // Multiply vector by vector
-RMDEF Vector3 Vector3MultiplyV(Vector3 v1, Vector3 v2)
+RMDEF Vector3 Vector3Multiply(Vector3 v1, Vector3 v2)
 {
     Vector3 result = { v1.x*v2.x, v1.y*v2.y, v1.z*v2.z };
-    return result;
-}
-
-// Multiply vector by float value
-RMDEF Vector3 Vector3Multiply(Vector3 v, float mul)
-{
-    Vector3 result = { v.x*mul, v.y*mul, v.z*mul };
     return result;
 }
 
@@ -429,14 +415,14 @@ RMDEF Vector3 Vector3Negate(Vector3 v)
 }
 
 // Divide vector by a float value
-RMDEF Vector3 Vector3Divide(Vector3 v, float div)
+RMDEF Vector3 Vector3DivideValue(Vector3 v, float div)
 {
     Vector3 result = { v.x / div, v.y / div, v.z / div };
     return result;
 }
 
 // Divide vector by vector
-RMDEF Vector3 Vector3DivideV(Vector3 v1, Vector3 v2)
+RMDEF Vector3 Vector3Divide(Vector3 v1, Vector3 v2)
 {
     Vector3 result = { v1.x/v2.x, v1.y/v2.y, v1.z/v2.z };
     return result;
@@ -557,9 +543,9 @@ RMDEF Vector3 Vector3Barycenter(Vector3 p, Vector3 a, Vector3 b, Vector3 c)
 {
     //Vector v0 = b - a, v1 = c - a, v2 = p - a;
 
-    Vector3 v0 = Vector3SubtractV(b, a);
-    Vector3 v1 = Vector3SubtractV(c, a);
-    Vector3 v2 = Vector3SubtractV(p, a);
+    Vector3 v0 = Vector3Subtract(b, a);
+    Vector3 v1 = Vector3Subtract(c, a);
+    Vector3 v2 = Vector3Subtract(p, a);
     float d00 = Vector3DotProduct(v0, v0);
     float d01 = Vector3DotProduct(v0, v1);
     float d11 = Vector3DotProduct(v1, v1);
@@ -1024,7 +1010,7 @@ RMDEF Matrix MatrixLookAt(Vector3 eye, Vector3 target, Vector3 up)
 {
     Matrix result = { 0 };
 
-    Vector3 z = Vector3SubtractV(eye, target);
+    Vector3 z = Vector3Subtract(eye, target);
     z = Vector3Normalize(z);
     Vector3 x = Vector3CrossProduct(up, z);
     x = Vector3Normalize(x);

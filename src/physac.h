@@ -192,7 +192,7 @@ PHYSACDEF void ClosePhysics(void);                                              
 #include <math.h>                   // Required for: cosf(), sinf(), fabs(), sqrtf()
 
 #if !defined(PHYSAC_STANDALONE)
-    #include "raymath.h"            // Required for: Vector2AddV(), Vector2SubtractV()
+    #include "raymath.h"            // Required for: Vector2Add(), Vector2Subtract()
 #endif
 
 // Time management functionality
@@ -343,8 +343,8 @@ static float MathDot(Vector2 v1, Vector2 v2);                                   
 static inline float DistSqr(Vector2 v1, Vector2 v2);                                                        // Returns the square root of distance between two vectors
 static void MathNormalize(Vector2 *vector);                                                                 // Returns the normalized values of a vector
 #if defined(PHYSAC_STANDALONE)
-static Vector2 Vector2AddV(Vector2 v1, Vector2 v2);                                                          // Returns the sum of two given vectors
-static Vector2 Vector2SubtractV(Vector2 v1, Vector2 v2);                                                     // Returns the subtract of two given vectors
+static Vector2 Vector2Add(Vector2 v1, Vector2 v2);                                                          // Returns the sum of two given vectors
+static Vector2 Vector2Subtract(Vector2 v1, Vector2 v2);                                                     // Returns the subtract of two given vectors
 #endif
 
 static Matrix2x2 Mat2Radians(float radians);                                                                     // Creates a matrix 2x2 from a given radians value
@@ -570,7 +570,7 @@ PHYSACDEF PhysicsBody CreatePhysicsBodyPolygon(Vector2 pos, float radius, int si
 // Adds a force to a physics body
 PHYSACDEF void PhysicsAddForce(PhysicsBody body, Vector2 force)
 {
-    if (body != NULL) body->force = Vector2AddV(body->force, force);
+    if (body != NULL) body->force = Vector2Add(body->force, force);
 }
 
 // Adds an angular force to a physics body
@@ -592,9 +592,9 @@ PHYSACDEF void PhysicsShatter(PhysicsBody body, Vector2 position, float force)
             for (int i = 0; i < vertexData.vertexCount; i++)
             {
                 Vector2 positionA = body->position;
-                Vector2 positionB = Mat2MultiplyVector2(body->shape.transform, Vector2AddV(body->position, vertexData.positions[i]));
+                Vector2 positionB = Mat2MultiplyVector2(body->shape.transform, Vector2Add(body->position, vertexData.positions[i]));
                 int nextIndex = (((i + 1) < vertexData.vertexCount) ? (i + 1) : 0);
-                Vector2 positionC = Mat2MultiplyVector2(body->shape.transform, Vector2AddV(body->position, vertexData.positions[nextIndex]));
+                Vector2 positionC = Mat2MultiplyVector2(body->shape.transform, Vector2Add(body->position, vertexData.positions[nextIndex]));
 
                 // Check collision between each triangle
                 float alpha = ((positionB.y - positionC.y)*(position.x - positionC.x) + (positionC.x - positionB.x)*(position.y - positionC.y))/
@@ -627,17 +627,17 @@ PHYSACDEF void PhysicsShatter(PhysicsBody body, Vector2 position, float force)
                 {
                     int nextIndex = (((i + 1) < count) ? (i + 1) : 0);
                     Vector2 center = TriangleBarycenter(vertices[i], vertices[nextIndex], PHYSAC_VECTOR_ZERO);
-                    center = Vector2AddV(bodyPos, center);
-                    Vector2 offset = Vector2SubtractV(center, bodyPos);
+                    center = Vector2Add(bodyPos, center);
+                    Vector2 offset = Vector2Subtract(center, bodyPos);
 
                     PhysicsBody newBody = CreatePhysicsBodyPolygon(center, 10, 3, 10);     // Create polygon physics body with relevant values
 
                     PolygonData newData = { 0 };
                     newData.vertexCount = 3;
 
-                    newData.positions[0] = Vector2SubtractV(vertices[i], offset);
-                    newData.positions[1] = Vector2SubtractV(vertices[nextIndex], offset);
-                    newData.positions[2] = Vector2SubtractV(position, center);
+                    newData.positions[0] = Vector2Subtract(vertices[i], offset);
+                    newData.positions[1] = Vector2Subtract(vertices[nextIndex], offset);
+                    newData.positions[2] = Vector2Subtract(position, center);
 
                     // Separate vertices to avoid unnecessary physics collisions
                     newData.positions[0].x *= 0.95f;
@@ -651,7 +651,7 @@ PHYSACDEF void PhysicsShatter(PhysicsBody body, Vector2 position, float force)
                     for (int j = 0; j < newData.vertexCount; j++)
                     {
                         int nextVertex = (((j + 1) < newData.vertexCount) ? (j + 1) : 0);
-                        Vector2 face = Vector2SubtractV(newData.positions[nextVertex], newData.positions[j]);
+                        Vector2 face = Vector2Subtract(newData.positions[nextVertex], newData.positions[j]);
 
                         newData.normals[j] = (Vector2){ face.y, -face.x };
                         MathNormalize(&newData.normals[j]);
@@ -697,10 +697,10 @@ PHYSACDEF void PhysicsShatter(PhysicsBody body, Vector2 position, float force)
 
                     // Calculate explosion force direction
                     Vector2 pointA = newBody->position;
-                    Vector2 pointB = Vector2SubtractV(newData.positions[1], newData.positions[0]);
+                    Vector2 pointB = Vector2Subtract(newData.positions[1], newData.positions[0]);
                     pointB.x /= 2.0f;
                     pointB.y /= 2.0f;
-                    Vector2 forceDirection = Vector2SubtractV(Vector2AddV(pointA, Vector2AddV(newData.positions[0], pointB)), newBody->position);
+                    Vector2 forceDirection = Vector2Subtract(Vector2Add(pointA, Vector2Add(newData.positions[0], pointB)), newBody->position);
                     MathNormalize(&forceDirection);
                     forceDirection.x *= force;
                     forceDirection.y *= force;
@@ -814,7 +814,7 @@ PHYSACDEF Vector2 GetPhysicsShapeVertex(PhysicsBody body, int vertex)
             case PHYSICS_POLYGON:
             {
                 PolygonData vertexData = body->shape.vertexData;
-                position = Vector2AddV(body->position, Mat2MultiplyVector2(body->shape.transform, vertexData.positions[vertex]));
+                position = Vector2Add(body->position, Mat2MultiplyVector2(body->shape.transform, vertexData.positions[vertex]));
             } break;
             default: break;
         }
@@ -995,7 +995,7 @@ static PolygonData CreateRandomPolygon(float radius, int sides)
     for (int i = 0; i < data.vertexCount; i++)
     {
         int nextIndex = (((i + 1) < sides) ? (i + 1) : 0);
-        Vector2 face = Vector2SubtractV(data.positions[nextIndex], data.positions[i]);
+        Vector2 face = Vector2Subtract(data.positions[nextIndex], data.positions[i]);
 
         data.normals[i] = (Vector2){ face.y, -face.x };
         MathNormalize(&data.normals[i]);
@@ -1020,7 +1020,7 @@ static PolygonData CreateRectanglePolygon(Vector2 pos, Vector2 size)
     for (int i = 0; i < data.vertexCount; i++)
     {
         int nextIndex = (((i + 1) < data.vertexCount) ? (i + 1) : 0);
-        Vector2 face = Vector2SubtractV(data.positions[nextIndex], data.positions[i]);
+        Vector2 face = Vector2Subtract(data.positions[nextIndex], data.positions[i]);
 
         data.normals[i] = (Vector2){ face.y, -face.x };
         MathNormalize(&data.normals[i]);
@@ -1333,7 +1333,7 @@ static void SolveCircleToCircle(PhysicsManifold manifold)
     if ((bodyA == NULL) || (bodyB == NULL)) return;
 
     // Calculate translational vector, which is normal
-    Vector2 normal = Vector2SubtractV(bodyB->position, bodyA->position);
+    Vector2 normal = Vector2Subtract(bodyB->position, bodyA->position);
 
     float distSqr = MathLenSqr(normal);
     float radius = bodyA->shape.radius + bodyB->shape.radius;
@@ -1377,7 +1377,7 @@ static void SolveCircleToPolygon(PhysicsManifold manifold)
 
     // Transform circle center to polygon transform space
     Vector2 center = bodyA->position;
-    center = Mat2MultiplyVector2(Mat2Transpose(bodyB->shape.transform), Vector2SubtractV(center, bodyB->position));
+    center = Mat2MultiplyVector2(Mat2Transpose(bodyB->shape.transform), Vector2Subtract(center, bodyB->position));
 
     // Find edge with minimum penetration
     // It is the same concept as using support points in SolvePolygonToPolygon
@@ -1387,7 +1387,7 @@ static void SolveCircleToPolygon(PhysicsManifold manifold)
 
     for (int i = 0; i < vertexData.vertexCount; i++)
     {
-        float currentSeparation = MathDot(vertexData.normals[i], Vector2SubtractV(center, vertexData.positions[i]));
+        float currentSeparation = MathDot(vertexData.normals[i], Vector2Subtract(center, vertexData.positions[i]));
 
         if (currentSeparation > bodyA->shape.radius) return;
 
@@ -1415,8 +1415,8 @@ static void SolveCircleToPolygon(PhysicsManifold manifold)
     }
 
     // Determine which voronoi region of the edge center of circle lies within
-    float dot1 = MathDot(Vector2SubtractV(center, v1), Vector2SubtractV(v2, v1));
-    float dot2 = MathDot(Vector2SubtractV(center, v2), Vector2SubtractV(v1, v2));
+    float dot1 = MathDot(Vector2Subtract(center, v1), Vector2Subtract(v2, v1));
+    float dot2 = MathDot(Vector2Subtract(center, v2), Vector2Subtract(v1, v2));
     manifold->penetration = bodyA->shape.radius - separation;
 
     if (dot1 <= 0.0f) // Closest to v1
@@ -1424,12 +1424,12 @@ static void SolveCircleToPolygon(PhysicsManifold manifold)
         if (DistSqr(center, v1) > bodyA->shape.radius*bodyA->shape.radius) return;
 
         manifold->contactsCount = 1;
-        Vector2 normal = Vector2SubtractV(v1, center);
+        Vector2 normal = Vector2Subtract(v1, center);
         normal = Mat2MultiplyVector2(bodyB->shape.transform, normal);
         MathNormalize(&normal);
         manifold->normal = normal;
         v1 = Mat2MultiplyVector2(bodyB->shape.transform, v1);
-        v1 = Vector2AddV(v1, bodyB->position);
+        v1 = Vector2Add(v1, bodyB->position);
         manifold->contacts[0] = v1;
     }
     else if (dot2 <= 0.0f) // Closest to v2
@@ -1437,9 +1437,9 @@ static void SolveCircleToPolygon(PhysicsManifold manifold)
         if (DistSqr(center, v2) > bodyA->shape.radius*bodyA->shape.radius) return;
 
         manifold->contactsCount = 1;
-        Vector2 normal = Vector2SubtractV(v2, center);
+        Vector2 normal = Vector2Subtract(v2, center);
         v2 = Mat2MultiplyVector2(bodyB->shape.transform, v2);
-        v2 = Vector2AddV(v2, bodyB->position);
+        v2 = Vector2Add(v2, bodyB->position);
         manifold->contacts[0] = v2;
         normal = Mat2MultiplyVector2(bodyB->shape.transform, normal);
         MathNormalize(&normal);
@@ -1449,7 +1449,7 @@ static void SolveCircleToPolygon(PhysicsManifold manifold)
     {
         Vector2 normal = vertexData.normals[faceNormal];
 
-        if (MathDot(Vector2SubtractV(center, v1), normal) > bodyA->shape.radius) return;
+        if (MathDot(Vector2Subtract(center, v1), normal) > bodyA->shape.radius) return;
 
         normal = Mat2MultiplyVector2(bodyB->shape.transform, normal);
         manifold->normal = (Vector2){ -normal.x, -normal.y };
@@ -1526,12 +1526,12 @@ static void SolvePolygonToPolygon(PhysicsManifold manifold)
 
     // Transform vertices to world space
     v1 = Mat2MultiplyVector2(refPoly.transform, v1);
-    v1 = Vector2AddV(v1, refPoly.body->position);
+    v1 = Vector2Add(v1, refPoly.body->position);
     v2 = Mat2MultiplyVector2(refPoly.transform, v2);
-    v2 = Vector2AddV(v2, refPoly.body->position);
+    v2 = Vector2Add(v2, refPoly.body->position);
 
     // Calculate reference face side normal in world space
-    Vector2 sidePlaneNormal = Vector2SubtractV(v2, v1);
+    Vector2 sidePlaneNormal = Vector2Subtract(v2, v1);
     MathNormalize(&sidePlaneNormal);
 
     // Orthogonalize
@@ -1606,8 +1606,8 @@ static void InitializePhysicsManifolds(PhysicsManifold manifold)
     for (int i = 0; i < manifold->contactsCount; i++)
     {
         // Caculate radius from center of mass to contact
-        Vector2 radiusA = Vector2SubtractV(manifold->contacts[i], bodyA->position);
-        Vector2 radiusB = Vector2SubtractV(manifold->contacts[i], bodyB->position);
+        Vector2 radiusA = Vector2Subtract(manifold->contacts[i], bodyA->position);
+        Vector2 radiusB = Vector2Subtract(manifold->contacts[i], bodyB->position);
 
         Vector2 crossA = MathCross(bodyA->angularVelocity, radiusA);
         Vector2 crossB = MathCross(bodyB->angularVelocity, radiusB);
@@ -1641,8 +1641,8 @@ static void IntegratePhysicsImpulses(PhysicsManifold manifold)
     for (int i = 0; i < manifold->contactsCount; i++)
     {
         // Calculate radius from center of mass to contact
-        Vector2 radiusA = Vector2SubtractV(manifold->contacts[i], bodyA->position);
-        Vector2 radiusB = Vector2SubtractV(manifold->contacts[i], bodyB->position);
+        Vector2 radiusA = Vector2Subtract(manifold->contacts[i], bodyA->position);
+        Vector2 radiusB = Vector2Subtract(manifold->contacts[i], bodyB->position);
 
         // Calculate relative velocity
         Vector2 radiusV = { 0.0f, 0.0f };
@@ -1809,12 +1809,12 @@ static float FindAxisLeastPenetration(int *faceIndex, PhysicsShape shapeA, Physi
         // Retrieve vertex on face from A shape, transform into B shape's model space
         Vector2 vertex = dataA.positions[i];
         vertex = Mat2MultiplyVector2(shapeA.transform, vertex);
-        vertex = Vector2AddV(vertex, shapeA.body->position);
-        vertex = Vector2SubtractV(vertex, shapeB.body->position);
+        vertex = Vector2Add(vertex, shapeA.body->position);
+        vertex = Vector2Subtract(vertex, shapeB.body->position);
         vertex = Mat2MultiplyVector2(buT, vertex);
 
         // Compute penetration distance in B shape's model space
-        float distance = MathDot(normal, Vector2SubtractV(support, vertex));
+        float distance = MathDot(normal, Vector2Subtract(support, vertex));
 
         // Store greatest distance
         if (distance > bestDistance)
@@ -1857,10 +1857,10 @@ static void FindIncidentFace(Vector2 *v0, Vector2 *v1, PhysicsShape ref, Physics
 
     // Assign face vertices for incident face
     *v0 = Mat2MultiplyVector2(inc.transform, incData.positions[incidentFace]);
-    *v0 = Vector2AddV(*v0, inc.body->position);
+    *v0 = Vector2Add(*v0, inc.body->position);
     incidentFace = (((incidentFace + 1) < incData.vertexCount) ? (incidentFace + 1) : 0);
     *v1 = Mat2MultiplyVector2(inc.transform, incData.positions[incidentFace]);
-    *v1 = Vector2AddV(*v1, inc.body->position);
+    *v1 = Vector2Add(*v1, inc.body->position);
 }
 
 // Calculates clipping based on a normal and two faces
@@ -1883,10 +1883,10 @@ static int Clip(Vector2 normal, float clip, Vector2 *faceA, Vector2 *faceB)
         // Push intersection point
         float alpha = distanceA/(distanceA - distanceB);
         out[sp] = *faceA;
-        Vector2 delta = Vector2SubtractV(*faceB, *faceA);
+        Vector2 delta = Vector2Subtract(*faceB, *faceA);
         delta.x *= alpha;
         delta.y *= alpha;
-        out[sp] = Vector2AddV(out[sp], delta);
+        out[sp] = Vector2Add(out[sp], delta);
         sp++;
     }
 
@@ -1993,7 +1993,7 @@ static inline float MathDot(Vector2 v1, Vector2 v2)
 // Returns the square root of distance between two vectors
 static inline float DistSqr(Vector2 v1, Vector2 v2)
 {
-    Vector2 dir = Vector2SubtractV(v1, v2);
+    Vector2 dir = Vector2Subtract(v1, v2);
     return MathDot(dir, dir);
 }
 
@@ -2015,13 +2015,13 @@ static void MathNormalize(Vector2 *vector)
 
 #if defined(PHYSAC_STANDALONE)
 // Returns the sum of two given vectors
-static inline Vector2 Vector2AddV(Vector2 v1, Vector2 v2)
+static inline Vector2 Vector2Add(Vector2 v1, Vector2 v2)
 {
     return (Vector2){ v1.x + v2.x, v1.y + v2.y };
 }
 
 // Returns the subtract of two given vectors
-static inline Vector2 Vector2SubtractV(Vector2 v1, Vector2 v2)
+static inline Vector2 Vector2Subtract(Vector2 v1, Vector2 v2)
 {
     return (Vector2){ v1.x - v2.x, v1.y - v2.y };
 }

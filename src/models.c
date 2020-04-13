@@ -1111,8 +1111,8 @@ ModelAnimation *LoadModelAnimations(const char *filename, int *animCount)
                 {
                     animations[a].framePoses[frame][i].rotation = QuaternionMultiplyQ(animations[a].framePoses[frame][animations[a].bones[i].parent].rotation, animations[a].framePoses[frame][i].rotation);
                     animations[a].framePoses[frame][i].translation = Vector3RotateByQuaternion(animations[a].framePoses[frame][i].translation, animations[a].framePoses[frame][animations[a].bones[i].parent].rotation);
-                    animations[a].framePoses[frame][i].translation = Vector3AddV(animations[a].framePoses[frame][i].translation, animations[a].framePoses[frame][animations[a].bones[i].parent].translation);
-                    animations[a].framePoses[frame][i].scale = Vector3MultiplyV(animations[a].framePoses[frame][i].scale, animations[a].framePoses[frame][animations[a].bones[i].parent].scale);
+                    animations[a].framePoses[frame][i].translation = Vector3Add(animations[a].framePoses[frame][i].translation, animations[a].framePoses[frame][animations[a].bones[i].parent].translation);
+                    animations[a].framePoses[frame][i].scale = Vector3Multiply(animations[a].framePoses[frame][i].scale, animations[a].framePoses[frame][animations[a].bones[i].parent].scale);
                 }
             }
         }
@@ -1165,10 +1165,10 @@ void UpdateModelAnimation(Model model, ModelAnimation anim, int frame)
                 // Vertices processing
                 // NOTE: We use meshes.vertices (default vertex position) to calculate meshes.animVertices (animated vertex position)
                 animVertex = (Vector3){ model.meshes[m].vertices[vCounter], model.meshes[m].vertices[vCounter + 1], model.meshes[m].vertices[vCounter + 2] };
-                animVertex = Vector3MultiplyV(animVertex, outScale);
-                animVertex = Vector3SubtractV(animVertex, inTranslation);
+                animVertex = Vector3Multiply(animVertex, outScale);
+                animVertex = Vector3Subtract(animVertex, inTranslation);
                 animVertex = Vector3RotateByQuaternion(animVertex, QuaternionMultiplyQ(outRotation, QuaternionInvert(inRotation)));
-                animVertex = Vector3AddV(animVertex, outTranslation);
+                animVertex = Vector3Add(animVertex, outTranslation);
                 model.meshes[m].animVertices[vCounter] = animVertex.x;
                 model.meshes[m].animVertices[vCounter + 1] = animVertex.y;
                 model.meshes[m].animVertices[vCounter + 2] = animVertex.z;
@@ -1914,7 +1914,7 @@ Mesh GenMeshHeightmap(Image heightmap, Vector3 size)
                 vC.y = mesh.vertices[nCounter + i + 7];
                 vC.z = mesh.vertices[nCounter + i + 8];
 
-                vN = Vector3Normalize(Vector3CrossProduct(Vector3SubtractV(vB, vA), Vector3SubtractV(vC, vA)));
+                vN = Vector3Normalize(Vector3CrossProduct(Vector3Subtract(vB, vA), Vector3Subtract(vC, vA)));
 
                 mesh.normals[nCounter + i] = vN.x;
                 mesh.normals[nCounter + i + 1] = vN.y;
@@ -2518,13 +2518,13 @@ void DrawBillboardRec(Camera camera, Texture2D texture, Rectangle sourceRec, Vec
     right = Vector3Scale(right, sizeRatio.x/2);
     up = Vector3Scale(up, sizeRatio.y/2);
 
-    Vector3 p1 = Vector3AddV(right, up);
-    Vector3 p2 = Vector3SubtractV(right, up);
+    Vector3 p1 = Vector3Add(right, up);
+    Vector3 p2 = Vector3Subtract(right, up);
 
-    Vector3 a = Vector3SubtractV(center, p2);
-    Vector3 b = Vector3AddV(center, p1);
-    Vector3 c = Vector3AddV(center, p2);
-    Vector3 d = Vector3SubtractV(center, p1);
+    Vector3 a = Vector3Subtract(center, p2);
+    Vector3 b = Vector3Add(center, p1);
+    Vector3 c = Vector3Add(center, p2);
+    Vector3 d = Vector3Subtract(center, p1);
 
     if (rlCheckBufferLimit(4)) rlglDraw();
 
@@ -2585,7 +2585,7 @@ bool CheckCollisionSpheres(Vector3 centerA, float radiusA, Vector3 centerB, floa
     */
 
     // Check for distances squared to avoid sqrtf()
-    if (Vector3DotProduct(Vector3SubtractV(centerB, centerA), Vector3SubtractV(centerB, centerA)) <= (radiusA + radiusB)*(radiusA + radiusB)) collision = true;
+    if (Vector3DotProduct(Vector3Subtract(centerB, centerA), Vector3Subtract(centerB, centerA)) <= (radiusA + radiusB)*(radiusA + radiusB)) collision = true;
 
     return collision;
 }
@@ -2632,7 +2632,7 @@ bool CheckCollisionRaySphere(Ray ray, Vector3 center, float radius)
 {
     bool collision = false;
 
-    Vector3 raySpherePos = Vector3SubtractV(center, ray.position);
+    Vector3 raySpherePos = Vector3Subtract(center, ray.position);
     float distance = Vector3Length(raySpherePos);
     float vector = Vector3DotProduct(raySpherePos, ray.direction);
     float d = radius*radius - (distance*distance - vector*vector);
@@ -2647,7 +2647,7 @@ bool CheckCollisionRaySphereEx(Ray ray, Vector3 center, float radius, Vector3 *c
 {
     bool collision = false;
 
-    Vector3 raySpherePos = Vector3SubtractV(center, ray.position);
+    Vector3 raySpherePos = Vector3Subtract(center, ray.position);
     float distance = Vector3Length(raySpherePos);
     float vector = Vector3DotProduct(raySpherePos, ray.direction);
     float d = radius*radius - (distance*distance - vector*vector);
@@ -2661,7 +2661,7 @@ bool CheckCollisionRaySphereEx(Ray ray, Vector3 center, float radius, Vector3 *c
     else collisionDistance = vector - sqrtf(d);
 
     // Calculate collision point
-    Vector3 cPoint = Vector3AddV(ray.position, Vector3Scale(ray.direction, collisionDistance));
+    Vector3 cPoint = Vector3Add(ray.position, Vector3Scale(ray.direction, collisionDistance));
 
     collisionPoint->x = cPoint.x;
     collisionPoint->y = cPoint.y;
@@ -2752,8 +2752,8 @@ RayHitInfo GetCollisionRayTriangle(Ray ray, Vector3 p1, Vector3 p2, Vector3 p3)
     RayHitInfo result = {0};
 
     // Find vectors for two edges sharing V1
-    edge1 = Vector3SubtractV(p2, p1);
-    edge2 = Vector3SubtractV(p3, p1);
+    edge1 = Vector3Subtract(p2, p1);
+    edge2 = Vector3Subtract(p3, p1);
 
     // Begin calculating determinant - also used to calculate u parameter
     p = Vector3CrossProduct(ray.direction, edge2);
@@ -2767,7 +2767,7 @@ RayHitInfo GetCollisionRayTriangle(Ray ray, Vector3 p1, Vector3 p2, Vector3 p3)
     invDet = 1.0f/det;
 
     // Calculate distance from V1 to ray origin
-    tv = Vector3SubtractV(ray.position, p1);
+    tv = Vector3Subtract(ray.position, p1);
 
     // Calculate u parameter and test bound
     u = Vector3DotProduct(tv, p)*invDet;
@@ -2793,7 +2793,7 @@ RayHitInfo GetCollisionRayTriangle(Ray ray, Vector3 p1, Vector3 p2, Vector3 p3)
         result.distance = t;
         result.hit = true;
         result.normal = Vector3Normalize(Vector3CrossProduct(edge1, edge2));
-        result.position = Vector3AddV(ray.position, Vector3Scale(ray.direction, t));
+        result.position = Vector3Add(ray.position, Vector3Scale(ray.direction, t));
     }
 
     return result;
@@ -2815,7 +2815,7 @@ RayHitInfo GetCollisionRayGround(Ray ray, float groundHeight)
             result.hit = true;
             result.distance = distance;
             result.normal = (Vector3){ 0.0, 1.0, 0.0 };
-            result.position = Vector3AddV(ray.position, Vector3Scale(ray.direction, distance));
+            result.position = Vector3Add(ray.position, Vector3Scale(ray.direction, distance));
         }
     }
 
@@ -3315,8 +3315,8 @@ static Model LoadIQM(const char *fileName)
         {
             model.bindPose[i].rotation = QuaternionMultiplyQ(model.bindPose[model.bones[i].parent].rotation, model.bindPose[i].rotation);
             model.bindPose[i].translation = Vector3RotateByQuaternion(model.bindPose[i].translation, model.bindPose[model.bones[i].parent].rotation);
-            model.bindPose[i].translation = Vector3AddV(model.bindPose[i].translation, model.bindPose[model.bones[i].parent].translation);
-            model.bindPose[i].scale = Vector3MultiplyV(model.bindPose[i].scale, model.bindPose[model.bones[i].parent].scale);
+            model.bindPose[i].translation = Vector3Add(model.bindPose[i].translation, model.bindPose[model.bones[i].parent].translation);
+            model.bindPose[i].scale = Vector3Multiply(model.bindPose[i].scale, model.bindPose[model.bones[i].parent].scale);
         }
     }
 
