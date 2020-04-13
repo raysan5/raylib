@@ -179,10 +179,24 @@ RMDEF Vector2 Vector2Add(Vector2 v1, Vector2 v2)
     return result;
 }
 
+// Add vector and float value
+RMDEF Vector2 Vector2AddValue(Vector2 v, float add)
+{
+    Vector2 result = { v.x + add, v.y + add };
+    return result;
+}
+
 // Subtract two vectors (v1 - v2)
 RMDEF Vector2 Vector2Subtract(Vector2 v1, Vector2 v2)
 {
     Vector2 result = { v1.x - v2.x, v1.y - v2.y };
+    return result;
+}
+
+// Subtract vector by float value
+RMDEF Vector2 Vector2SubtractValue(Vector2 v, float sub)
+{
+    Vector2 result = { v.x - sub, v.y - sub };
     return result;
 }
 
@@ -223,7 +237,7 @@ RMDEF Vector2 Vector2Scale(Vector2 v, float scale)
 }
 
 // Multiply vector by vector
-RMDEF Vector2 Vector2MultiplyV(Vector2 v1, Vector2 v2)
+RMDEF Vector2 Vector2Multiply(Vector2 v1, Vector2 v2)
 {
     Vector2 result = { v1.x*v2.x, v1.y*v2.y };
     return result;
@@ -236,15 +250,8 @@ RMDEF Vector2 Vector2Negate(Vector2 v)
     return result;
 }
 
-// Divide vector by a float value
-RMDEF Vector2 Vector2Divide(Vector2 v, float div)
-{
-    Vector2 result = { v.x/div, v.y/div };
-    return result;
-}
-
 // Divide vector by vector
-RMDEF Vector2 Vector2DivideV(Vector2 v1, Vector2 v2)
+RMDEF Vector2 Vector2Divide(Vector2 v1, Vector2 v2)
 {
     Vector2 result = { v1.x/v2.x, v1.y/v2.y };
     return result;
@@ -253,7 +260,7 @@ RMDEF Vector2 Vector2DivideV(Vector2 v1, Vector2 v2)
 // Normalize provided vector
 RMDEF Vector2 Vector2Normalize(Vector2 v)
 {
-    Vector2 result = Vector2Divide(v, Vector2Length(v));
+    Vector2 result = Vector2Scale(v, 1/Vector2Length(v));
     return result;
 }
 
@@ -301,10 +308,24 @@ RMDEF Vector3 Vector3Add(Vector3 v1, Vector3 v2)
     return result;
 }
 
+// Add vector and float value
+RMDEF Vector3 Vector3AddValue(Vector3 v, float add)
+{
+    Vector3 result = { v.x + add, v.y + add, v.z + add };
+    return result;
+}
+
 // Subtract two vectors
 RMDEF Vector3 Vector3Subtract(Vector3 v1, Vector3 v2)
 {
     Vector3 result = { v1.x - v2.x, v1.y - v2.y, v1.z - v2.z };
+    return result;
+}
+
+// Subtract vector by float value
+RMDEF Vector3 Vector3SubtractValue(Vector3 v, float sub)
+{
+    Vector3 result = { v.x - sub, v.y - sub, v.z - sub };
     return result;
 }
 
@@ -386,15 +407,8 @@ RMDEF Vector3 Vector3Negate(Vector3 v)
     return result;
 }
 
-// Divide vector by a float value
-RMDEF Vector3 Vector3Divide(Vector3 v, float div)
-{
-    Vector3 result = { v.x / div, v.y / div, v.z / div };
-    return result;
-}
-
 // Divide vector by vector
-RMDEF Vector3 Vector3DivideV(Vector3 v1, Vector3 v2)
+RMDEF Vector3 Vector3Divide(Vector3 v1, Vector3 v2)
 {
     Vector3 result = { v1.x/v2.x, v1.y/v2.y, v1.z/v2.z };
     return result;
@@ -1040,6 +1054,34 @@ RMDEF float16 MatrixToFloatV(Matrix mat)
 // Module Functions Definition - Quaternion math
 //----------------------------------------------------------------------------------
 
+// Add two quaternions
+RMDEF Quaternion QuaternionAdd(Quaternion q1, Quaternion q2)
+{
+    Quaternion result = {q1.x + q2.x, q1.y + q2.y, q1.z + q2.z, q1.w + q2.w};
+    return result;
+}
+
+// Add quaternion and float value
+RMDEF Quaternion QuaternionAddValue(Quaternion q, float add)
+{
+    Quaternion result = {q.x + add, q.y + add, q.z + add, q.w + add};
+    return result;
+}
+
+// Subtract two quaternions
+RMDEF Quaternion QuaternionSubtract(Quaternion q1, Quaternion q2)
+{
+    Quaternion result = {q1.x - q2.x, q1.y - q2.y, q1.z - q2.z, q1.w - q2.w};
+    return result;
+}
+
+// Subtract quaternion and float value
+RMDEF Quaternion QuaternionSubtractValue(Quaternion q, float sub)
+{
+    Quaternion result = {q.x - sub, q.y - sub, q.z - sub, q.w - sub};
+    return result;
+}
+
 // Returns identity quaternion
 RMDEF Quaternion QuaternionIdentity(void)
 {
@@ -1105,6 +1147,28 @@ RMDEF Quaternion QuaternionMultiply(Quaternion q1, Quaternion q2)
     result.z = qaz*qbw + qaw*qbz + qax*qby - qay*qbx;
     result.w = qaw*qbw - qax*qbx - qay*qby - qaz*qbz;
 
+    return result;
+}
+
+// Scale quaternion by float value
+RMDEF Quaternion QuaternionScale(Quaternion q, float mul)
+{
+    Quaternion result = { 0 };
+
+    float qax = q.x, qay = q.y, qaz = q.z, qaw = q.w;
+
+    result.x = qax * mul + qaw * mul + qay * mul - qaz * mul;
+    result.y = qay * mul + qaw * mul + qaz * mul - qax * mul;
+    result.z = qaz * mul + qaw * mul + qax * mul - qay * mul;
+    result.w = qaw * mul - qax * mul - qay * mul - qaz * mul;
+
+    return result;
+}
+
+// Divide two quaternions
+RMDEF Quaternion QuaternionDivide(Quaternion q1, Quaternion q2)
+{
+    Quaternion result = {q1.x / q2.x, q1.y / q2.y, q1.z / q2.z, q1.w / q2.w};
     return result;
 }
 
