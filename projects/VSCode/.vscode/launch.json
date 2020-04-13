@@ -8,7 +8,7 @@
             "name": "Debug",
             "type": "cppdbg",
             "request": "launch",
-            "program": "${workspaceFolder}/game",
+            "program": "${workspaceFolder}/${fileBasenameNoExtension}",
             "args": [],
             "stopAtEntry": false,
             "cwd": "${workspaceFolder}",
@@ -42,10 +42,10 @@
             "cwd": "${workspaceFolder}",
             "environment": [],
             "externalConsole": false,
-            "program": "${workspaceFolder}/game",
+            "program": "${workspaceFolder}/${fileBasenameNoExtension}",
             "MIMode": "gdb",
             "windows": {
-              "program": "${workspaceFolder}/game.exe",
+              "program": "${workspaceFolder}/${fileBasenameNoExtension}.exe",
               "miDebuggerPath": "C:/raylib/mingw/bin/gdb.exe"
             },
             "osx": {
