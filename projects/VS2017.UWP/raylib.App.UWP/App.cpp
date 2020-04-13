@@ -5,7 +5,7 @@
 
 using namespace raylibUWP;
 
-// The main function creates an IFrameworkViewSource for our app, and runs the app.
+// The main function creates an IFrameworkViewSource for our app, and runs the app
 [Platform::MTAThread]
 int main(Platform::Array<Platform::String^>^)
 {

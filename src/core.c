@@ -3149,8 +3149,8 @@ static bool InitGraphicsDevice(int width, int height)
     }
 
     // Get EGL device window size
-    eglQuerySurface(CORE.Window.device, CORE.Window.surface, EGL_WIDTH, &CORE.Window.screen.width);
-    eglQuerySurface(CORE.Window.device, CORE.Window.surface, EGL_HEIGHT, &CORE.Window.screen.height);
+    eglQuerySurface(CORE.Window.device, CORE.Window.surface, EGL_WIDTH, &CORE.Window.display.width);
+    eglQuerySurface(CORE.Window.device, CORE.Window.surface, EGL_HEIGHT, &CORE.Window.display.height);
 
 #endif  // PLATFORM_UWP
 
@@ -3263,8 +3263,8 @@ static bool InitGraphicsDevice(int width, int height)
     else
     {
         // Grab the width and height of the surface
-        //eglQuerySurface(CORE.Window.device, CORE.Window.surface, EGL_WIDTH, &CORE.Window.render.width);
-        //eglQuerySurface(CORE.Window.device, CORE.Window.surface, EGL_HEIGHT, &CORE.Window.render.height);
+        CORE.Window.render.width = CORE.Window.display.width;
+        CORE.Window.render.height = CORE.Window.display.height;
 
         TRACELOG(LOG_INFO, "DISPLAY: Device initialized successfully");
         TRACELOG(LOG_INFO, "    > Display size: %i x %i", CORE.Window.display.width, CORE.Window.display.height);

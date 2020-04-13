@@ -16,10 +16,10 @@ namespace raylibUWP
 {
     ref class App sealed : public BaseApp
     {
-    public:
-        App();
+        public:
 
-        // IFrameworkView Methods.
-        void Update() override;
+            App();
+
+            void Update() override; 
     };
 }

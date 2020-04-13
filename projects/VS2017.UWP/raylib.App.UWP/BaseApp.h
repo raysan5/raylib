@@ -119,7 +119,7 @@ public:
 
         handle = (EGLNativeWindowType)window;
 
-        InitWindow(width, height, NULL);
+        InitWindow(width, height, "raylib game example");
     }
 
     virtual void Load(Platform::String^ entryPoint) {}
