@@ -34,6 +34,7 @@ Some people ported raylib to other languages in form of bindings or wrappers to 
 | raylib-mruby       | mruby          | https://github.com/lihaochen910/raylib-mruby                         |
 | raylib-py          | Python         | https://github.com/overdev/raylib-py                                 |
 | raylib-python-cffi | Python         | https://github.com/electronstudio/raylib-python-cffi                 |
+| jaylib             | Java           | https://github.com/electronstudio/jaylib/                 |
 | raylib-java        | Java           | https://github.com/XoanaIO/raylib-java                               |
 | node-raylib        | Node.js        | https://github.com/RobLoach/node-raylib                              |
 | QuickJS-raylib     | QuickJS        | https://github.com/sntg-p/QuickJS-raylib                             |
