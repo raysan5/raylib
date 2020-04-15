@@ -7,8 +7,6 @@ assignees: ''
 
 ---
 
---- 
-
 **WARNING: Please, read this note carefully before submitting a new issue:**
 
 It is important to realise that **this is NOT A SUPPORT FORUM**, this is for reproducible BUGS with raylib ONLY.
