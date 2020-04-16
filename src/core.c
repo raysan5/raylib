@@ -1321,10 +1321,6 @@ void EndDrawing(void)
         CORE.Time.previous = CORE.Time.current;
 
         CORE.Time.frame += waitTime;      // Total frame time: update + draw + wait
-
-        //SetWindowTitle(FormatText("Update: %f, Draw: %f, Req.Wait: %f, Real.Wait: %f, Total: %f, Target: %f\n",
-        //               (float)CORE.Time.update, (float)CORE.Time.draw, (float)(CORE.Time.target - (CORE.Time.update + CORE.Time.draw)),
-        //               (float)waitTime, (float)CORE.Time.frame, (float)CORE.Time.target));
     }
 }
 
