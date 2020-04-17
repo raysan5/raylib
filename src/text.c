@@ -109,6 +109,7 @@ static Font defaultFont = { 0 };    // Default font provided by raylib
 //----------------------------------------------------------------------------------
 #if defined(SUPPORT_FILEFORMAT_FNT)
 static Font LoadBMFont(const char *fileName);     // Load a BMFont file (AngelCode font file)
+static CharInfo* LoadFontDataBase(const char* fileData, int fontSize, int* fontChars, int charsCount, int type);
 #endif
 
 #if defined(SUPPORT_DEFAULT_FONT)
@@ -479,7 +480,7 @@ Font LoadFontFromImage(Image image, Color key, int firstChar)
 
 // Load font data for further use
 // NOTE: Requires TTF font and can generate SDF data
-CharInfo *LoadFontData(const char *fileName, int fontSize, int *fontChars, int charsCount, int type)
+static CharInfo* LoadFontDataBase(const char* fileData, int fontSize, int* fontChars, int charsCount, int type) 
 {
     // NOTE: Using some SDF generation default values,
     // trades off precision with ability to handle *smaller* sizes
@@ -492,12 +493,6 @@ CharInfo *LoadFontData(const char *fileName, int fontSize, int *fontChars, int c
     CharInfo *chars = NULL;
 
 #if defined(SUPPORT_FILEFORMAT_TTF)
-    // Load font data (including pixel data) from TTF file
-    // NOTE: Loaded information should be enough to generate
-    // font image atlas, using any packaging method
-    unsigned int dataSize = 0;
-    unsigned char *fileData = LoadFileData(fileName, &dataSize);
-
     if (fileData != NULL)
     {
         int genFontChars = false;
@@ -585,12 +580,57 @@ CharInfo *LoadFontData(const char *fileName, int fontSize, int *fontChars, int c
         }
         else TRACELOG(LOG_WARNING, "FONT: Failed to process TTF font data");
 
-        RL_FREE(fileData);
         if (genFontChars) RL_FREE(fontChars);
     }
 #endif
 
     return chars;
+}
+
+// Load font data from disk before generating font.
+CharInfo *LoadFontData(const char *fileName, int fontSize, int *fontChars, int charsCount, int type)
+{
+    // Load font data (including pixel data) from TTF file
+    // NOTE: Loaded information should be enough to generate
+    // font image atlas, using any packaging method
+    unsigned int dataSize = 0;
+    unsigned char *fileData = LoadFileData(fileName, &dataSize);
+
+    CharInfo* const chars = LoadFontDataBase(fileData, fontSize, fontChars, charsCount, type);
+
+    RL_FREE(fileData);
+    return chars;
+}
+
+// Loads font from TTF font file from memory buffer.
+Font LoadFontFromMemory(const char* data, int fontSize, int* fontChars, int charsCount) {
+	Font font = { 0 };
+
+#if defined(SUPPORT_FILEFORMAT_TTF)
+	font.baseSize = fontSize;
+	font.charsCount = (charsCount > 0) ? charsCount : 95;
+	font.chars = LoadFontDataBase(data, font.baseSize, fontChars, font.charsCount, FONT_DEFAULT);
+
+	if (font.chars != NULL)
+	{
+		Image atlas = GenImageFontAtlas(font.chars, &font.recs, font.charsCount, font.baseSize, 2, 0);
+		font.texture = LoadTextureFromImage(atlas);
+
+		// Update chars[i].image to use alpha, required to be used on ImageDrawText()
+		for (int i = 0; i < font.charsCount; i++)
+		{
+			UnloadImage(font.chars[i].image);
+			font.chars[i].image = ImageFromImage(atlas, font.recs[i]);
+		}
+
+		UnloadImage(atlas);
+	}
+	else font = GetFontDefault();
+#else
+	font = GetFontDefault();
+#endif
+
+	return font;
 }
 
 // Generate image font atlas using chars info
