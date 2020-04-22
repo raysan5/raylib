@@ -1263,7 +1263,7 @@ void BeginDrawing(void)
 }
 
 // End canvas drawing and swap buffers (double buffering)
-void EndDrawing(void)
+void EndDrawingEx(void(*fn)())
 {
 #if defined(PLATFORM_RPI) && defined(SUPPORT_MOUSE_CURSOR_RPI)
     // On RPI native mode we have no system mouse cursor, so,
@@ -1272,6 +1272,9 @@ void EndDrawing(void)
 #endif
 
     rlglDraw();                     // Draw Buffers (Only OpenGL 3+ and ES2)
+
+    if (fn != NULL)
+        fn();
 
 #if defined(SUPPORT_GIF_RECORDING)
     #define GIF_RECORD_FRAMERATE    10
@@ -1322,6 +1325,12 @@ void EndDrawing(void)
 
         CORE.Time.frame += waitTime;      // Total frame time: update + draw + wait
     }
+}
+
+// End canvas drawing and swap buffers (double buffering)
+void EndDrawing()
+{
+    return EndDrawingEx(NULL);
 }
 
 // Initialize 2D mode with custom camera (2D)

@@ -909,7 +909,8 @@ RLAPI void DisableCursor(void);                                   // Disables cu
 // Drawing-related functions
 RLAPI void ClearBackground(Color color);                          // Set background color (framebuffer clear color)
 RLAPI void BeginDrawing(void);                                    // Setup canvas (framebuffer) to start drawing
-RLAPI void EndDrawing(void);                                      // End canvas drawing and swap buffers (double buffering)
+RLAPI void EndDrawingEx(void(*fn)());                               // End canvas drawing and swap buffers (double buffering). This method adds a spot for additional rendering on-top of Raylib render.
+RLAPI void EndDrawing();                                          // End canvas drawing and swap buffers (double buffering)
 RLAPI void BeginMode2D(Camera2D camera);                          // Initialize 2D mode with custom camera (2D)
 RLAPI void EndMode2D(void);                                       // Ends 2D mode with custom camera
 RLAPI void BeginMode3D(Camera3D camera);                          // Initializes 3D mode with custom camera (3D)
