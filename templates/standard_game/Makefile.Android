@@ -227,7 +227,7 @@ generate_android_manifest:
 # Generate storekey for APK signing: $(PROJECT_NAME).keystore
 # NOTE: Configure here your Distinguished Names (-dname) if required!
 generate_apk_keystore: 
-	if not exist $(PROJECT_BUILD_PATH)/$(PROJECT_NAME).keystore $(JAVA_HOME)/bin/keytool -genkeypair -validity 1000 -dname "CN=$(APP_COMPANY_NAME),O=Android,C=ES" -keystore $(PROJECT_BUILD_PATH)/$(PROJECT_NAME).keystore -storepass $(APP_KEYSTORE_PASS) -keypass $(APP_KEYSTORE_PASS) -alias $(PROJECT_NAME)Key -keyalg RSA
+	if not exist $(PROJECT_BUILD_PATH)/$(PROJECT_NAME).keystore $(JAVA_HOME)/bin/keytool -genkeypair -validity 10000 -dname "CN=$(APP_COMPANY_NAME),O=Android,C=ES" -keystore $(PROJECT_BUILD_PATH)/$(PROJECT_NAME).keystore -storepass $(APP_KEYSTORE_PASS) -keypass $(APP_KEYSTORE_PASS) -alias $(PROJECT_NAME)Key -keyalg RSA
 
 # Config project package and resource using AndroidManifest.xml and res/values/strings.xml
 # NOTE: Generates resources file: src/com/$(APP_COMPANY_NAME)/$(APP_PRODUCT_NAME)/R.java
