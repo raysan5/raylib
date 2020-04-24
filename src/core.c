@@ -1138,6 +1138,21 @@ Vector2 GetWindowPosition(void)
     return (Vector2){ (float)x, (float)y };
 }
 
+// Get window scale DPI factor
+Vector2 GetWindowScaleDPI(void)
+{
+    Vector2 scale = { 1.0f, 1.0f };
+    
+#if defined(PLATFORM_DESKTOP)
+    GLFWmonitor *monitor = glfwGetPrimaryMonitor();
+
+    if (monitor != NULL) glfwGetMonitorContentScale(monitor, &scale.x, &scale.y);
+    else TRACELOG(LOG_WARNING, "GLFW: Failed to get primary monitor");
+#endif
+
+    return scale;
+}
+
 // Get the human-readable, UTF-8 encoded name of the primary monitor
 const char *GetMonitorName(int monitor)
 {
@@ -4245,7 +4260,8 @@ static int32_t AndroidInputCallback(struct android_app *app, AInputEvent *event)
 
     if (type == AINPUT_EVENT_TYPE_MOTION)
     {
-        if ((source & AINPUT_SOURCE_JOYSTICK) == AINPUT_SOURCE_JOYSTICK || (source & AINPUT_SOURCE_GAMEPAD) == AINPUT_SOURCE_GAMEPAD)
+        if (((source & AINPUT_SOURCE_JOYSTICK) == AINPUT_SOURCE_JOYSTICK) || 
+            ((source & AINPUT_SOURCE_GAMEPAD) == AINPUT_SOURCE_GAMEPAD))
         {
             // Get first touch position
             CORE.Input.Touch.position[0].x = AMotionEvent_getX(event, 0);
