@@ -45,6 +45,10 @@ endif()
 
 add_definitions("-DRAYLIB_CMAKE=1")
 
+if(${PLATFORM} MATCHES "Switch")
+  set(USE_AUDIO FALSE)
+endif()
+
 if(USE_AUDIO)
   MESSAGE(STATUS "Audio Backend: miniaudio")
   set(sources ${raylib_sources})
@@ -57,8 +61,13 @@ endif()
 
 ### Config options ###
 # Translate the config options to what raylib wants
-if(${PLATFORM} MATCHES "Desktop")
-  set(PLATFORM_CPP "PLATFORM_DESKTOP")
+if(${PLATFORM} MATCHES "Desktop" OR ${PLATFORM} MATCHES "Switch")
+  if (${PLATFORM} MATCHES "Desktop")
+    set(PLATFORM_CPP "PLATFORM_DESKTOP")
+  else()
+    set(PLATFORM_CPP "PLATFORM_SWITCH")
+    add_compile_definitions(PLATFORM_DESKTOP PLATFORM_SWITCH)
+  endif()
 
   if(APPLE)
     # Need to force OpenGL 3.3 on OS X
@@ -119,7 +128,7 @@ elseif(${PLATFORM} MATCHES "Raspberry Pi")
 
 endif()
 
-if (${OPENGL_VERSION})
+if (OPENGL_VERSION)
   set(${SUGGESTED_GRAPHICS} "${GRAPHICS}")
   if (${OPENGL_VERSION} MATCHES "3.3")
     set(GRAPHICS "GRAPHICS_API_OPENGL_33")
@@ -162,6 +171,10 @@ if(STATIC)
   if (${PLATFORM} MATCHES "Desktop")
     target_link_libraries(raylib_static glfw ${GLFW_LIBRARIES} ${LIBS_PRIVATE})
   endif()
+  if (${PLATFORM} MATCHES "Switch")
+    target_link_libraries(raylib_static glfw3 EGL drm_nouveau glapi GLESv1_CM GLESv2 nxd deko3dd deko3d nx m pthread)
+  endif()
+
 
   if (WITH_PIC)
     set_property(TARGET raylib_static PROPERTY POSITION_INDEPENDENT_CODE ON)

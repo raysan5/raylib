@@ -34,6 +34,9 @@
 *       Universal Windows Platform support, using OpenGL ES 2.0 through ANGLE on multiple Windows platforms,
 *       including Windows 10 App, Windows Phone and Xbox One platforms.
 *
+*   #define PLATFORM_SWITCH
+*       Windowing and input system configured for the Ninendo Switch Platform
+*
 *   #define SUPPORT_DEFAULT_FONT (default)
 *       Default font is loaded on window initialization to be available for the user to render simple text.
 *       NOTE: If enabled, uses external module functions to load default raylib font (module: text)
@@ -2744,6 +2747,7 @@ static bool InitGraphicsDevice(int width, int height)
 
     // NOTE: Getting video modes is not implemented in emscripten GLFW3 version
 #if defined(PLATFORM_DESKTOP)
+#if !defined(PLATFORM_SWITCH)
     // Find monitor resolution
     GLFWmonitor *monitor = glfwGetPrimaryMonitor();
     if (!monitor)
@@ -2755,6 +2759,10 @@ static bool InitGraphicsDevice(int width, int height)
 
     CORE.Window.display.width = mode->width;
     CORE.Window.display.height = mode->height;
+#else
+    CORE.Window.display.width = width;
+    CORE.Window.display.height = height;
+#endif
 
     // Screen size security check
     if (CORE.Window.screen.width <= 0) CORE.Window.screen.width = CORE.Window.display.width;
@@ -2845,6 +2853,7 @@ static bool InitGraphicsDevice(int width, int height)
 
         // Obtain recommended CORE.Window.display.width/CORE.Window.display.height from a valid videomode for the monitor
         int count = 0;
+#if !defined(PLATFORM_SWITCH)
         const GLFWvidmode *modes = glfwGetVideoModes(glfwGetPrimaryMonitor(), &count);
 
         // Get closest video mode to desired CORE.Window.screen.width/CORE.Window.screen.height
@@ -2860,6 +2869,7 @@ static bool InitGraphicsDevice(int width, int height)
                 }
             }
         }
+#endif
 
 #if defined(PLATFORM_DESKTOP)
         // If we are windowed fullscreen, ensures that window does not minimize when focus is lost
