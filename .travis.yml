@@ -59,7 +59,7 @@ before_install:
       if [[ "$ARCH" == *-android ]]; then
         export DONT_TEST=1;
         export RAYLIB_PACKAGE_SUFFIX="-Android-arm64";
-        wget https://dl.google.com/android/repository/android-ndk-r17-linux-x86_64.zip;
+        wget https://dl.google.com/android/repository/android-ndk-r21-linux-x86_64.zip;
         unzip -qq android-ndk*.zip;
         if [[ "$ARCH" == arm64-* ]]; then
           export RAYLIB_PACKAGE_SUFFIX="-Android-arm64";
@@ -70,15 +70,14 @@ before_install:
           TOOLCHAIN_ARCH=arm;
           PREFIX=arm-linux-androideabi-;
         fi;
-        android-ndk*/build/tools/make_standalone_toolchain.py --arch $TOOLCHAIN_ARCH --api 21 --install-dir /tmp/android-toolchain;
-        export PATH=/tmp/android-toolchain/bin:$PATH;
+        export PATH=/android-ndk*/toolchains/llvm/prebuilt/linux-x86_64/bin:$PATH;
         export CC=${PREFIX}clang;
         export CXX=${PREFIX}clang++;
         export CMAKE_ARCH_ARGS='-DPLATFORM=Android';
       elif [ "$ARCH" == "html5" ]; then
         export DONT_TEST=1;
         export RAYLIB_PACKAGE_SUFFIX="-html5";
-        docker run --privileged=true -dit --name emscripten -v $(pwd):/src trzeci/emscripten:sdk-incoming-64bit bash;
+        docker run --privileged=true -dit --name emscripten -v $(pwd):/src trzeci/emscripten:sdk-latest bash;
         export CMAKE_ARCH_ARGS='-DPLATFORM=Web -DCMAKE_TOOLCHAIN_FILE=../cmake/emscripten.cmake';
         RUNNER='docker exec -it emscripten cmake -E chdir build';
       else
