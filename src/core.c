@@ -226,7 +226,9 @@
 #if defined(PLATFORM_ANDROID)
     //#include <android/sensor.h>           // Android sensors functions (accelerometer, gyroscope, light...)
     #include <android/window.h>             // Defines AWINDOW_FLAG_FULLSCREEN and others
+#if defined(PLATFORM_ANDROID_NATIVE_ACTIVITY)
     #include <android_native_app_glue.h>    // Defines basic app state struct and manages activity
+#endif
 
     #include <EGL/egl.h>            // Khronos EGL library - Native platform display device control functions
     #include <GLES2/gl2.h>          // Khronos OpenGL ES 2.0 library
@@ -371,11 +373,14 @@ typedef struct CoreData {
     } Window;
 #if defined(PLATFORM_ANDROID)
     struct {
+#if defined(PLATFORM_ANDROID_NATIVE_ACTIVITY)
         bool appEnabled;                    // Flag to detect if app is active ** = true
         struct android_app *app;            // Android activity
         struct android_poll_source *source; // Android events polling source
         const char *internalDataPath;       // Android internal data path to write data (/data/data/<package>/files)
         bool contextRebindRequired;         // Used to know context rebind required
+#endif
+        /* ANativeWindow */ void* window;
     } Android;
 #endif
     struct {
@@ -502,6 +507,10 @@ static void WindowDropCallback(GLFWwindow *window, int count, const char **paths
 #endif
 
 #if defined(PLATFORM_ANDROID)
+static void LoadFontDefaultANDROID();
+#endif
+
+#if defined(PLATFORM_ANDROID_NATIVE_ACTIVITY)
 static void AndroidCommandCallback(struct android_app *app, int32_t cmd);                  // Process Android activity lifecycle commands
 static int32_t AndroidInputCallback(struct android_app *app, AInputEvent *event);          // Process Android inputs
 #endif
@@ -541,7 +550,7 @@ static void *GamepadThread(void *arg);                  // Mouse reading thread
 // Module Functions Definition - Window and OpenGL Context Functions
 //----------------------------------------------------------------------------------
 
-#if defined(PLATFORM_ANDROID)
+#if defined(PLATFORM_ANDROID_NATIVE_ACTIVITY)
 // To allow easier porting to android, we allow the user to define a
 // main function which we call from android_main, defined by ourselves
 extern int main(int argc, char *argv[]);
@@ -623,6 +632,13 @@ void InitWindow(int width, int height, const char *title)
     CORE.Window.currentFbo.width = width;
     CORE.Window.currentFbo.height = height;
 
+#if defined(PLATFORM_ANDROID_SURFACE)
+    CORE.Window.ready = InitGraphicsDevice(width, height);
+    InitTimer();
+    // Load default font
+    LoadFontDefaultANDROID();
+#endif
+#if defined(PLATFORM_ANDROID_NATIVE_ACTIVITY)
     // Input data is android app pointer
     CORE.Android.internalDataPath = CORE.Android.app->activity->internalDataPath;
 
@@ -675,6 +691,7 @@ void InitWindow(int width, int height, const char *title)
             //if (CORE.Android.app->destroyRequested != 0) CORE.Window.shouldClose = true;
         }
     }
+#endif
 #else
     // Init graphics device (display device and OpenGL context)
     // NOTE: returns true if window and graphic device has been initialized successfully
@@ -1142,7 +1159,7 @@ Vector2 GetWindowPosition(void)
 Vector2 GetWindowScaleDPI(void)
 {
     Vector2 scale = { 1.0f, 1.0f };
-    
+
 #if defined(PLATFORM_DESKTOP)
     GLFWmonitor *monitor = glfwGetPrimaryMonitor();
 
@@ -1874,7 +1891,7 @@ void TakeScreenshot(const char *fileName)
     Image image = { imgData, CORE.Window.render.width, CORE.Window.render.height, 1, UNCOMPRESSED_R8G8B8A8 };
 
     char path[512] = { 0 };
-#if defined(PLATFORM_ANDROID)
+#if defined(PLATFORM_ANDROID_NATIVE_ACTIVITY)
     strcpy(path, CORE.Android.internalDataPath);
     strcat(path, "/");
     strcat(path, fileName);
@@ -3191,7 +3208,7 @@ static bool InitGraphicsDevice(int width, int height)
     eglBindAPI(EGL_OPENGL_ES_API);
 
     // Create an EGL rendering context
-    CORE.Window.context = eglCreateContext(CORE.Window.device, CORE.Window.config, EGL_NO_CONTEXT, contextAttribs);
+    CORE.Window.context = eglCreateContext(CORE.Window.device, CORE.Window.config, CORE.Window.context, contextAttribs);
     if (CORE.Window.context == EGL_NO_CONTEXT)
     {
         TRACELOG(LOG_WARNING, "DISPLAY: Failed to create EGL context");
@@ -3212,10 +3229,17 @@ static bool InitGraphicsDevice(int width, int height)
     // NOTE: This function use and modify global module variables: CORE.Window.screen.width/CORE.Window.screen.height and CORE.Window.render.width/CORE.Window.render.height and CORE.Window.screenScale
     SetupFramebuffer(CORE.Window.display.width, CORE.Window.display.height);
 
+#if defined(PLATFORM_ANDROID_NATIVE_ACTIVITY)
     ANativeWindow_setBuffersGeometry(CORE.Android.app->window, CORE.Window.render.width, CORE.Window.render.height, displayFormat);
     //ANativeWindow_setBuffersGeometry(CORE.Android.app->window, 0, 0, displayFormat);       // Force use of native display size
 
     CORE.Window.surface = eglCreateWindowSurface(CORE.Window.device, CORE.Window.config, CORE.Android.app->window, NULL);
+#endif
+
+#if defined(PLATFORM_ANDROID_SURFACE)
+    CORE.Window.surface = eglCreateWindowSurface(CORE.Window.device, CORE.Window.config, CORE.Android.window, NULL);
+#endif
+
 #endif  // PLATFORM_ANDROID
 
 #if defined(PLATFORM_RPI)
@@ -3885,7 +3909,7 @@ static void PollInputEvents(void)
     }
 #endif
 
-#if defined(PLATFORM_ANDROID)
+#if defined(PLATFORM_ANDROID_NATIVE_ACTIVITY)
     // Register previous keys states
     // NOTE: Android supports up to 260 keys
     for (int i = 0; i < 260; i++) CORE.Input.Keyboard.previousKeyState[i] = CORE.Input.Keyboard.currentKeyState[i];
@@ -4145,6 +4169,16 @@ static void WindowDropCallback(GLFWwindow *window, int count, const char **paths
 #endif
 
 #if defined(PLATFORM_ANDROID)
+static void LoadFontDefaultANDROID() {
+  // NOTE: External function (defined in module: text)
+  LoadFontDefault();
+  Rectangle rec = GetFontDefault().recs[95];
+  // NOTE: We setup a 1px padding on char rectangle to avoid pixel bleeding on MSAA filtering
+  SetShapesTexture(GetFontDefault().texture, (Rectangle){ rec.x + 1, rec.y + 1, rec.width - 2, rec.height - 2 });
+}
+#endif
+
+#if defined(PLATFORM_ANDROID_NATIVE_ACTIVITY)
 // ANDROID: Process activity lifecycle commands
 static void AndroidCommandCallback(struct android_app *app, int32_t cmd)
 {
@@ -4185,11 +4219,7 @@ static void AndroidCommandCallback(struct android_app *app, int32_t cmd)
 
                 #if defined(SUPPORT_DEFAULT_FONT)
                     // Load default font
-                    // NOTE: External function (defined in module: text)
-                    LoadFontDefault();
-                    Rectangle rec = GetFontDefault().recs[95];
-                    // NOTE: We setup a 1px padding on char rectangle to avoid pixel bleeding on MSAA filtering
-                    SetShapesTexture(GetFontDefault().texture, (Rectangle){ rec.x + 1, rec.y + 1, rec.width - 2, rec.height - 2 });
+                    LoadFontDefaultANDROID();
                 #endif
 
                     // TODO: GPU assets reload in case of lost focus (lost context)
@@ -5238,3 +5268,16 @@ static void *GamepadThread(void *arg)
     return NULL;
 }
 #endif      // PLATFORM_RPI
+
+void InitANDROID(int width, int height, void* eglParentContext, void* window, void* assetManager, char* pathDir)
+{
+#if defined(PLATFORM_ANDROID_SURFACE)
+  CORE.Window.context = (EGLContext)eglParentContext;
+  CORE.Android.window = window;
+  TRACELOG(LOG_INFO, "Window is set to %d", window);
+
+  InitAssetManager(assetManager, pathDir);
+  CORE.Window.display.width = width;
+  CORE.Window.display.height = height;
+#endif
+}
