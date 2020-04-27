@@ -873,7 +873,8 @@ RLAPI void InitWindow(int width, int height, const char *title);  // Initialize 
 RLAPI bool WindowShouldClose(void);                               // Check if KEY_ESCAPE pressed or Close icon pressed
 RLAPI void CloseWindow(void);                                     // Close window and unload OpenGL context
 RLAPI bool IsWindowReady(void);                                   // Check if window has been initialized successfully
-RLAPI bool IsWindowMinimized(void);                               // Check if window has been minimized (or lost focus)
+RLAPI bool IsWindowMinimized(void);                               // Check if window has been minimized
+RLAPI bool IsWindowFocused(void);                                 // Check if window has been focused
 RLAPI bool IsWindowResized(void);                                 // Check if window has been resized
 RLAPI bool IsWindowHidden(void);                                  // Check if window is currently hidden
 RLAPI bool IsWindowFullscreen(void);                              // Check if window is currently fullscreen

@@ -352,6 +352,7 @@ typedef struct CoreData {
         const char *title;                  // Window text title const pointer
         bool ready;                         // Flag to check if window has been initialized successfully
         bool minimized;                     // Flag to check if window has been minimized
+        bool focused;                       // Flag to check if window has been focused
         bool resized;                       // Flag to check if window has been resized
         bool fullscreen;                    // Flag to check if fullscreen mode required
         bool alwaysRun;                     // Flag to keep window update/draw running on minimized
@@ -498,6 +499,7 @@ static void ScrollCallback(GLFWwindow *window, double xoffset, double yoffset); 
 static void CursorEnterCallback(GLFWwindow *window, int enter);                            // GLFW3 Cursor Enter Callback, cursor enters client area
 static void WindowSizeCallback(GLFWwindow *window, int width, int height);                 // GLFW3 WindowSize Callback, runs when window is resized
 static void WindowIconifyCallback(GLFWwindow *window, int iconified);                      // GLFW3 WindowIconify Callback, runs when window is minimized/restored
+static void WindowFocusCallback(GLFWwindow *window, int focused);                          // GLFW3 WindowFocus Callback, runs when window get/lose focus
 static void WindowDropCallback(GLFWwindow *window, int count, const char **paths);         // GLFW3 Window Drop Callback, runs when drop files into window
 #endif
 
@@ -842,11 +844,21 @@ bool WindowShouldClose(void)
 #endif
 }
 
-// Check if window has been minimized (or lost focus)
+// Check if window has been minimized
 bool IsWindowMinimized(void)
 {
 #if defined(PLATFORM_DESKTOP) || defined(PLATFORM_WEB) || defined(PLATFORM_UWP)
     return CORE.Window.minimized;
+#else
+    return false;
+#endif
+}
+
+// Check if window has the focus
+bool IsWindowFocused(void)
+{
+#if defined(PLATFORM_DESKTOP) || defined(PLATFORM_WEB) || defined(PLATFORM_UWP)
+    return CORE.Window.focused;
 #else
     return false;
 #endif
@@ -2934,6 +2946,7 @@ static bool InitGraphicsDevice(int width, int height)
     glfwSetCharCallback(CORE.Window.handle, CharCallback);
     glfwSetScrollCallback(CORE.Window.handle, ScrollCallback);
     glfwSetWindowIconifyCallback(CORE.Window.handle, WindowIconifyCallback);
+    glfwSetWindowFocusCallback(CORE.Window.handle, WindowFocusCallback);
     glfwSetDropCallback(CORE.Window.handle, WindowDropCallback);
 
     glfwMakeContextCurrent(CORE.Window.handle);
@@ -4123,6 +4136,13 @@ static void WindowIconifyCallback(GLFWwindow *window, int iconified)
 {
     if (iconified) CORE.Window.minimized = true;  // The window was iconified
     else CORE.Window.minimized = false;           // The window was restored
+}
+
+// GLFW3 WindowFocus Callback, runs when window get/lose focus
+static void WindowFocusCallback(GLFWwindow *window, int focused)
+{
+    if (focused) CORE.Window.focused = true;    // The window was focused
+    else CORE.Window.focused = false;           // The window lost focus
 }
 
 // GLFW3 Window Drop Callback, runs when drop files into window
