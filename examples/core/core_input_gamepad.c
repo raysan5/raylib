@@ -163,7 +163,7 @@ int main(void)
 
                 DrawText(FormatText("DETECTED AXIS [%i]:", GetGamepadAxisCount(GAMEPAD_PLAYER1)), 10, 50, 10, MAROON);
 
-                for (int i = 0; i < GetGamepadAxisCount(GAMEPAD_PLAYER1); i++)
+                for (int i = 1; i <= GetGamepadAxisCount(GAMEPAD_PLAYER1); i++)
                 {
                     DrawText(FormatText("AXIS %i: %.02f", i, GetGamepadAxisMovement(GAMEPAD_PLAYER1, i)), 20, 70 + 20*i, 10, DARKGRAY);
                 }
