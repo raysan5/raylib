@@ -681,7 +681,9 @@ void InitWindow(int width, int height, const char *title)
     // Init graphics device (display device and OpenGL context)
     // NOTE: returns true if window and graphic device has been initialized successfully
     CORE.Window.ready = InitGraphicsDevice(width, height);
+
     if (!CORE.Window.ready) return;
+    else CORE.Window.focused = true;
 
     // Init hi-res timer
     InitTimer();
