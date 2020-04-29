@@ -26,4 +26,7 @@
     <ClCompile Include="..\..\..\src\textures.c" />
     <ClCompile Include="..\..\..\src\utils.c" />
   </ItemGroup>
+  <ItemGroup>
+    <None Include="packages.config" />
+  </ItemGroup>
 </Project>

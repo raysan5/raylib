@@ -8,9 +8,6 @@
 *   
 *    #define PCH
 *        This defines what header is the PCH and needs to be included
-*        
-*    #define HOLDHACK
-*        This enables a hack to fix flickering key presses (Temporary)
 *
 *   Copyright (c) 2013-2020 Ramon Santamaria (@raysan5)
 *
@@ -40,6 +37,7 @@
 #include <chrono>
 #include <memory>
 #include <wrl.h>
+#include <thread>
 
 //EGL
 #include <EGL/eglplatform.h>
@@ -59,25 +57,12 @@ using namespace Windows::Graphics::Display;
 using namespace Microsoft::WRL;
 using namespace Platform;
 
-extern "C" { EGLNativeWindowType handle; };
-
-/*
-TODO list:
-    - Cache reference to our CoreWindow?
-    - Implement gestures support
-*/
-
 // Stand-ins for "core.c" variables
 #define MAX_GAMEPADS              4         // Max number of gamepads supported
 #define MAX_GAMEPAD_BUTTONS       32        // Max bumber of buttons supported (per gamepad)
 #define MAX_GAMEPAD_AXIS          8         // Max number of axis supported (per gamepad)
 
-//Mouse cursor locking
-bool cursorLocked = false;
-Vector2 mouseDelta = {0, 0};
-
-//Our mouse cursor
-CoreCursor ^regularCursor = ref new CoreCursor(CoreCursorType::Arrow, 0); // The "visible arrow" cursor type
+// TODO: I want to remove this "BaseApp" thing and just implement this in App.
 
 //Base app implementation
 ref class BaseApp : public Windows::ApplicationModel::Core::IFrameworkView
@@ -100,26 +85,22 @@ public:
 
     virtual void SetWindow(Windows::UI::Core::CoreWindow^ window)
     {
+        // Hook window events
         window->SizeChanged += ref new TypedEventHandler<CoreWindow^, WindowSizeChangedEventArgs^>(this, &BaseApp::OnWindowSizeChanged);
         window->VisibilityChanged += ref new TypedEventHandler<CoreWindow^, VisibilityChangedEventArgs^>(this, &BaseApp::OnVisibilityChanged);
-        window->Closed += ref new TypedEventHandler<CoreWindow^, CoreWindowEventArgs^>(this, &BaseApp::OnWindowClosed);
 
+        // Hook mouse pointer events
         window->PointerPressed += ref new TypedEventHandler<CoreWindow^, PointerEventArgs^>(this, &BaseApp::PointerPressed);
+        window->PointerReleased += ref new Windows::Foundation::TypedEventHandler<Windows::UI::Core::CoreWindow^, Windows::UI::Core::PointerEventArgs^>(this, &BaseApp::PointerReleased);
         window->PointerWheelChanged += ref new TypedEventHandler<CoreWindow^, PointerEventArgs^>(this, &BaseApp::PointerWheelChanged);
+        window->PointerMoved += ref new Windows::Foundation::TypedEventHandler<Windows::UI::Core::CoreWindow^, Windows::UI::Core::PointerEventArgs^>(this, &BaseApp::PointerMoved);
+
+        // Hook keyboard events.
         window->KeyDown += ref new TypedEventHandler<CoreWindow ^, KeyEventArgs ^>(this, &BaseApp::OnKeyDown);
         window->KeyUp += ref new TypedEventHandler<CoreWindow ^, KeyEventArgs ^>(this, &BaseApp::OnKeyUp);
 
-        Windows::Devices::Input::MouseDevice::GetForCurrentView()->MouseMoved += ref new TypedEventHandler<MouseDevice^, MouseEventArgs^>(this, &BaseApp::MouseMoved);
-
-        DisplayInformation^ currentDisplayInformation = DisplayInformation::GetForCurrentView();
-        currentDisplayInformation->DpiChanged += ref new TypedEventHandler<DisplayInformation^, Object^>(this, &BaseApp::OnDpiChanged);
-        currentDisplayInformation->OrientationChanged += ref new TypedEventHandler<DisplayInformation^, Object^>(this, &BaseApp::OnOrientationChanged);
-
-        // The CoreWindow has been created, so EGL can be initialized.
-
-        handle = (EGLNativeWindowType)window;
-
-        InitWindow(width, height, "raylib game example");
+        // The CoreWindow has been created, we can pass this to raylib for EGL context creation when it's time
+        UWPSetCoreWindowPtr((void*) window);
     }
 
     virtual void Load(Platform::String^ entryPoint) {}
@@ -133,35 +114,85 @@ public:
 
     virtual void Run()
     {
-        // Get display dimensions
-        DisplayInformation^ dInfo = DisplayInformation::GetForCurrentView();
-        Vector2 screenSize = { dInfo->ScreenWidthInRawPixels, dInfo->ScreenHeightInRawPixels };
+        // Set up our UWP implementation
+        UWPSetQueryTimeFunc([]()
+            {
+                static auto timeStart = std::chrono::high_resolution_clock::now();
+                auto delta = std::chrono::high_resolution_clock::now() - timeStart;
+                return (double)std::chrono::duration_cast<std::chrono::seconds>(delta).count();
+            });
 
-        // Send display dimensions
-        UWPMessage *msg = CreateUWPMessage();
-        msg->type = UWP_MSG_SET_DISPLAY_DIMS;
-        msg->paramVector0 = screenSize;
-        UWPSendMessage(msg);
+        UWPSetSleepFunc([](double seconds) { std::this_thread::sleep_for(std::chrono::duration<double>(seconds)); });
 
-        // Send the time to the core
-        using clock = std::chrono::high_resolution_clock;
-        auto timeStart = clock::now();
+        UWPSetDisplaySizeFunc([](int* width, int* height)
+            {
+                // Get display dimensions
+                DisplayInformation^ dInfo = DisplayInformation::GetForCurrentView();
+                *width = dInfo->ScreenWidthInRawPixels;
+                *height = dInfo->ScreenHeightInRawPixels;
+            });
 
+        UWPSetMouseHideFunc([]()
+            {
+                CoreWindow::GetForCurrentThread()->PointerCursor = nullptr;
+            });
+
+        UWPSetMouseShowFunc([]()
+            {
+                CoreWindow::GetForCurrentThread()->PointerCursor = ref new CoreCursor(CoreCursorType::Arrow, 0);
+            });
+
+        UWPSetMouseLockFunc([]()
+            {
+                CoreWindow::GetForCurrentThread()->PointerCursor = nullptr;
+                // TODO:
+            });
+
+        UWPSetMouseUnlockFunc([]()
+            {
+                CoreWindow::GetForCurrentThread()->PointerCursor = ref new CoreCursor(CoreCursorType::Arrow, 0);
+                // TODO:
+            });
+
+        UWPSetMouseSetPosFunc([](int x, int y)
+            {
+                CoreWindow^ window = CoreWindow::GetForCurrentThread();
+                Point mousePosScreen = Point(x + window->Bounds.X, y + window->Bounds.Y);
+                window->PointerPosition = mousePosScreen;
+            });
+
+        // Set custom output handle
+        SetTraceLogCallback([](int logType, const char* text, va_list args)
+            {
+                std::string format = text;
+
+                switch (logType)
+                {
+                case LOG_TRACE: format = std::string("TRACE: ") + format; break;
+                case LOG_DEBUG: format = std::string("DEBUG: ") + format; break;
+                case LOG_INFO: format = std::string("INFO: ") + format; break;
+                case LOG_WARNING: format = std::string("WARNING: ") + format; break;
+                case LOG_ERROR: format = std::string("ERROR: ") + format; break;
+                case LOG_FATAL: format = std::string("FATAL: ") + format; break;
+                default: break;
+                }
+
+                char buf[1024]; // TODO: Is this large enough?
+                vsnprintf(buf, sizeof(buf), format.c_str(), args);
+                std::string output = std::string(buf) + std::string("\n");
+                OutputDebugStringA(output.c_str());
+            });
+
+        // Create window
+        InitWindow(width, height, "raylib game example");
+       
         // Set fps if 0
         if (GetFPS() <= 0) SetTargetFPS(60);
 
-        while (!mWindowClosed)
+        while (!WindowShouldClose())
         {
             if (mWindowVisible)
             {
-                // Send time
-                auto delta = clock::now() - timeStart;
-
-                UWPMessage *timeMsg = CreateUWPMessage();
-                timeMsg->type = UWP_MSG_SET_GAME_TIME;
-                timeMsg->paramDouble0 = std::chrono::duration_cast<std::chrono::seconds>(delta).count();
-                UWPSendMessage(timeMsg);
-
                 // Call update function
                 Update();
 
@@ -188,177 +219,16 @@ protected:
     // Input polling
     void PollInput()
     {
-        // Process Messages
-        {
-            // Loop over pending messages
-            while (UWPHasMessages())
-            {
-                // Get the message
-                auto msg = UWPGetMessage();
-
-                // Carry out the command
-                switch(msg->type)
-                {
-                case UWP_MSG_SHOW_MOUSE: // Do the same thing because of how UWP works...
-                case UWP_MSG_UNLOCK_MOUSE:
-                {
-                    CoreWindow::GetForCurrentThread()->PointerCursor = regularCursor;
-                    cursorLocked = false;
-                    MoveMouse(GetMousePosition());
-                    break;
-                }
-                case UWP_MSG_HIDE_MOUSE: // Do the same thing because of how UWP works...
-                case UWP_MSG_LOCK_MOUSE:
-                {
-                    CoreWindow::GetForCurrentThread()->PointerCursor = nullptr;
-                    cursorLocked = true;
-                    break;
-                }
-                case UWP_MSG_SET_MOUSE_LOCATION:
-                {
-                    MoveMouse(msg->paramVector0);
-                    break;
-                }
-                }
-
-                // Delete the message
-                DeleteUWPMessage(msg);
-            }
-        }
-
-        // Process Keyboard
-        {
-            for (int k = 0x08; k < 0xA6; k++) {
-                auto state = CoreWindow::GetForCurrentThread()->GetKeyState((Windows::System::VirtualKey) k);
-
-#ifdef HOLDHACK
-                // Super hacky way of waiting three frames to see if we are ready to register the key as deregistered
-                // This will wait an entire 4 frames before deregistering the key, this makes sure that the key is not flickering
-                if (KeyboardStateHack[k] == 2)
-                {
-                    if ((state & CoreVirtualKeyStates::None) == CoreVirtualKeyStates::None)
-                    {
-                        KeyboardStateHack[k] = 3;
-                    }
-                }
-                else if (KeyboardStateHack[k] == 3)
-                {
-                    if ((state & CoreVirtualKeyStates::None) == CoreVirtualKeyStates::None)
-                    {
-                        KeyboardStateHack[k] = 4;
-                    }
-                }
-                else if (KeyboardStateHack[k] == 4)
-                {
-                    if ((state & CoreVirtualKeyStates::None) == CoreVirtualKeyStates::None)
-                    {
-                        //Reset key...
-                        KeyboardStateHack[k] = 0;
-
-                        //Tell core
-                        RegisterKey(k, 0);
-                    }
-                }
-#endif
-                // Left and right alt, KeyUp and KeyDown are not called for it
-                // No need to hack because this is not a character
-
-                // TODO: Maybe do all other key registrations like this, no more key events?
-
-                if (k == 0xA4 || k == 0xA5)
-                {
-                    if ((state & CoreVirtualKeyStates::Down) == CoreVirtualKeyStates::Down)
-                    {
-                        RegisterKey(k, 1);
-                    }
-                    else
-                    {
-                        RegisterKey(k, 0);
-                    }
-                }
-            }
-        }
-
-        // Process Mouse
-        {
-            
-            if (CurrentPointerID > -1)
-            {
-                auto point = PointerPoint::GetCurrentPoint(CurrentPointerID);
-                auto props = point->Properties;
-
-                if (props->IsLeftButtonPressed)
-                {
-                    RegisterClick(MOUSE_LEFT_BUTTON, 1);
-                }
-                else
-                {
-                    RegisterClick(MOUSE_LEFT_BUTTON, 0);
-                }
-
-                if (props->IsRightButtonPressed)
-                {
-                    RegisterClick(MOUSE_RIGHT_BUTTON, 1);
-                }
-                else
-                {
-                    RegisterClick(MOUSE_RIGHT_BUTTON, 0);
-                }
-
-                if (props->IsMiddleButtonPressed)
-                {
-                    RegisterClick(MOUSE_MIDDLE_BUTTON, 1);
-                }
-                else
-                {
-                    RegisterClick(MOUSE_MIDDLE_BUTTON, 0);
-                }
-            }
-
-            CoreWindow ^window = CoreWindow::GetForCurrentThread();
-
-            if (cursorLocked)
-            {
-                // Track cursor movement delta, recenter it on the client
-                auto curMousePos = GetMousePosition();
-
-                auto x = curMousePos.x + mouseDelta.x;
-                auto y = curMousePos.y + mouseDelta.y;
-
-                UpdateMousePosition({ x, y });
-
-                // Why we're not using UWPSetMousePosition here...
-                //         UWPSetMousePosition changes the "mousePosition" variable to match where the cursor actually is.
-                //         Our cursor is locked to the middle of screen, and we don't want that reflected in "mousePosition"
-                Vector2 centerClient = { (float)(GetScreenWidth() / 2), (float)(GetScreenHeight() / 2) };
-                window->PointerPosition = Point(centerClient.x + window->Bounds.X, centerClient.y + window->Bounds.Y);
-            }
-            else
-            {
-                // Record the cursor's position relative to the client
-                auto x = window->PointerPosition.X - window->Bounds.X;
-                auto y = window->PointerPosition.Y - window->Bounds.Y;
-
-                UpdateMousePosition({ x, y });
-            }
-
-            mouseDelta = { 0 ,0 };
-        }
-
         // Process Gamepads
         {
             // Check if gamepads are ready
             for (int i = 0; i < MAX_GAMEPADS; i++)
             {
+                // TODO: ROVER - I want to remove this problem if possible.
                 // HACK: UWP keeps a contiguous list of gamepads. For the interest of time I'm just doing a 1:1 mapping of
                 // connected gamepads with their spot in the list, but this has serious robustness problems
                 // e.g. player 1, 2, and 3 are playing a game - if player2 disconnects, p3's controller would now be mapped to p2's character since p3 is now second in the list.
-
-                UWPMessage* msg = CreateUWPMessage();
-                msg->type = UWP_MSG_SET_GAMEPAD_ACTIVE;
-                msg->paramInt0 = i;
-                msg->paramBool0 = i < Gamepad::Gamepads->Size;
-                UWPSendMessage(msg);
+                UWPActivateGamepadEvent(i, i < Gamepad::Gamepads->Size);
             }
 
             // Get current gamepad state
@@ -371,30 +241,30 @@ protected:
                     GamepadReading reading = gamepad->GetCurrentReading();
 
                     // NOTE: Maybe it would be wiser to redefine the gamepad button mappings in "raylib.h" for the UWP platform instead of remapping them manually
-                    RegisterGamepadButton(i, GAMEPAD_BUTTON_RIGHT_FACE_DOWN, ((reading.Buttons & GamepadButtons::A) == GamepadButtons::A));
-                    RegisterGamepadButton(i, GAMEPAD_BUTTON_RIGHT_FACE_RIGHT, ((reading.Buttons & GamepadButtons::B) == GamepadButtons::B));
-                    RegisterGamepadButton(i, GAMEPAD_BUTTON_RIGHT_FACE_LEFT, ((reading.Buttons & GamepadButtons::X) == GamepadButtons::X));
-                    RegisterGamepadButton(i, GAMEPAD_BUTTON_RIGHT_FACE_UP, ((reading.Buttons & GamepadButtons::Y) == GamepadButtons::Y));
+                    UWPRegisterGamepadButton(i, GAMEPAD_BUTTON_RIGHT_FACE_DOWN, ((reading.Buttons & GamepadButtons::A) == GamepadButtons::A));
+                    UWPRegisterGamepadButton(i, GAMEPAD_BUTTON_RIGHT_FACE_RIGHT, ((reading.Buttons & GamepadButtons::B) == GamepadButtons::B));
+                    UWPRegisterGamepadButton(i, GAMEPAD_BUTTON_RIGHT_FACE_LEFT, ((reading.Buttons & GamepadButtons::X) == GamepadButtons::X));
+                    UWPRegisterGamepadButton(i, GAMEPAD_BUTTON_RIGHT_FACE_UP, ((reading.Buttons & GamepadButtons::Y) == GamepadButtons::Y));
 
-                    RegisterGamepadButton(i, GAMEPAD_BUTTON_LEFT_TRIGGER_1, ((reading.Buttons & GamepadButtons::LeftShoulder) == GamepadButtons::LeftShoulder));
-                    RegisterGamepadButton(i, GAMEPAD_BUTTON_RIGHT_TRIGGER_1, ((reading.Buttons & GamepadButtons::RightShoulder) == GamepadButtons::RightShoulder));
+                    UWPRegisterGamepadButton(i, GAMEPAD_BUTTON_LEFT_TRIGGER_1, ((reading.Buttons & GamepadButtons::LeftShoulder) == GamepadButtons::LeftShoulder));
+                    UWPRegisterGamepadButton(i, GAMEPAD_BUTTON_RIGHT_TRIGGER_1, ((reading.Buttons & GamepadButtons::RightShoulder) == GamepadButtons::RightShoulder));
 
-                    RegisterGamepadButton(i, GAMEPAD_BUTTON_MIDDLE_LEFT, ((reading.Buttons & GamepadButtons::View) == GamepadButtons::View)); // Changed for XB1 Controller
-                    RegisterGamepadButton(i, GAMEPAD_BUTTON_MIDDLE_RIGHT, ((reading.Buttons & GamepadButtons::Menu) == GamepadButtons::Menu)); // Changed for XB1 Controller
+                    UWPRegisterGamepadButton(i, GAMEPAD_BUTTON_MIDDLE_LEFT, ((reading.Buttons & GamepadButtons::View) == GamepadButtons::View)); // Changed for XB1 Controller
+                    UWPRegisterGamepadButton(i, GAMEPAD_BUTTON_MIDDLE_RIGHT, ((reading.Buttons & GamepadButtons::Menu) == GamepadButtons::Menu)); // Changed for XB1 Controller
 
-                    RegisterGamepadButton(i, GAMEPAD_BUTTON_LEFT_FACE_UP, ((reading.Buttons & GamepadButtons::DPadUp) == GamepadButtons::DPadUp));
-                    RegisterGamepadButton(i, GAMEPAD_BUTTON_LEFT_FACE_RIGHT, ((reading.Buttons & GamepadButtons::DPadRight) == GamepadButtons::DPadRight));
-                    RegisterGamepadButton(i, GAMEPAD_BUTTON_LEFT_FACE_DOWN, ((reading.Buttons & GamepadButtons::DPadDown) == GamepadButtons::DPadDown));
-                    RegisterGamepadButton(i, GAMEPAD_BUTTON_LEFT_FACE_LEFT, ((reading.Buttons & GamepadButtons::DPadLeft) == GamepadButtons::DPadLeft));
-                    RegisterGamepadButton(i, GAMEPAD_BUTTON_MIDDLE, false); // Home button not supported by UWP
+                    UWPRegisterGamepadButton(i, GAMEPAD_BUTTON_LEFT_FACE_UP, ((reading.Buttons & GamepadButtons::DPadUp) == GamepadButtons::DPadUp));
+                    UWPRegisterGamepadButton(i, GAMEPAD_BUTTON_LEFT_FACE_RIGHT, ((reading.Buttons & GamepadButtons::DPadRight) == GamepadButtons::DPadRight));
+                    UWPRegisterGamepadButton(i, GAMEPAD_BUTTON_LEFT_FACE_DOWN, ((reading.Buttons & GamepadButtons::DPadDown) == GamepadButtons::DPadDown));
+                    UWPRegisterGamepadButton(i, GAMEPAD_BUTTON_LEFT_FACE_LEFT, ((reading.Buttons & GamepadButtons::DPadLeft) == GamepadButtons::DPadLeft));
+                    UWPRegisterGamepadButton(i, GAMEPAD_BUTTON_MIDDLE, false); // Home button not supported by UWP
 
                     // Get current axis state
-                    RegisterGamepadAxis(i, GAMEPAD_AXIS_LEFT_X, (float)reading.LeftThumbstickX);
-                    RegisterGamepadAxis(i, GAMEPAD_AXIS_LEFT_Y, (float)reading.LeftThumbstickY);
-                    RegisterGamepadAxis(i, GAMEPAD_AXIS_RIGHT_X, (float)reading.RightThumbstickX);
-                    RegisterGamepadAxis(i, GAMEPAD_AXIS_RIGHT_Y, (float)reading.RightThumbstickY);
-                    RegisterGamepadAxis(i, GAMEPAD_AXIS_LEFT_TRIGGER, (float)reading.LeftTrigger);
-                    RegisterGamepadAxis(i, GAMEPAD_AXIS_RIGHT_TRIGGER, (float)reading.RightTrigger);
+                    UWPRegisterGamepadAxis(i, GAMEPAD_AXIS_LEFT_X, (float)reading.LeftThumbstickX);
+                    UWPRegisterGamepadAxis(i, GAMEPAD_AXIS_LEFT_Y, (float)reading.LeftThumbstickY);
+                    UWPRegisterGamepadAxis(i, GAMEPAD_AXIS_RIGHT_X, (float)reading.RightThumbstickX);
+                    UWPRegisterGamepadAxis(i, GAMEPAD_AXIS_RIGHT_Y, (float)reading.RightThumbstickY);
+                    UWPRegisterGamepadAxis(i, GAMEPAD_AXIS_LEFT_TRIGGER, (float)reading.LeftTrigger);
+                    UWPRegisterGamepadAxis(i, GAMEPAD_AXIS_RIGHT_TRIGGER, (float)reading.RightTrigger);
                 }
             }
         }
@@ -407,14 +277,16 @@ protected:
         CoreWindow::GetForCurrentThread()->Activate();
     }
 
-    void OnResuming(Platform::Object^ sender, Platform::Object^ args) {}
+    void OnResuming(Platform::Object^ sender, Platform::Object^ args)
+    {
+        // TODO: Suspend and Resume lifecycle. This should be implemented by the developer, however we need to implement an example of it here.
+        // Basically, we'd save all resources here and free any temporary stuff as if we were about to close, however *if* resume is called, we need to be ready.
+    }
 
     // Window event handlers.
     void OnWindowSizeChanged(Windows::UI::Core::CoreWindow^ sender, Windows::UI::Core::WindowSizeChangedEventArgs^ args)
     {
-        UWPMessage* msg = CreateUWPMessage();
-        msg->type = UWP_MSG_HANDLE_RESIZE;
-        UWPSendMessage(msg);
+        UWPResizeEvent(args->Size.Width, args->Size.Height);
     }
 
     void OnVisibilityChanged(Windows::UI::Core::CoreWindow^ sender, Windows::UI::Core::VisibilityChangedEventArgs^ args)
@@ -422,140 +294,137 @@ protected:
         mWindowVisible = args->Visible;
     }
 
-    void OnWindowClosed(Windows::UI::Core::CoreWindow^ sender, Windows::UI::Core::CoreWindowEventArgs^ args)
-    {
-        mWindowClosed = true;
-    }
-
-    // DisplayInformation event handlers.
-    void OnDpiChanged(Windows::Graphics::Display::DisplayInformation^ sender, Platform::Object^ args) {}
-    void OnOrientationChanged(Windows::Graphics::Display::DisplayInformation^ sender, Platform::Object^ args) {}
-
     // Input event handlers
     void PointerPressed(Windows::UI::Core::CoreWindow^ sender, Windows::UI::Core::PointerEventArgs^ args)
     {
-        //Get the current active pointer ID for our loop
-        CurrentPointerID = args->CurrentPoint->PointerId;
-        args->Handled = true;
+        auto props = args->CurrentPoint->Properties;
+
+        // TODO: UWP Touch input/simulation.
+        if (args->CurrentPoint->PointerDevice->PointerDeviceType == Windows::Devices::Input::PointerDeviceType::Mouse)
+        {
+            if (props->IsLeftButtonPressed) UWPMouseButtonEvent(MOUSE_LEFT_BUTTON, true);
+            if (props->IsMiddleButtonPressed) UWPMouseButtonEvent(MOUSE_MIDDLE_BUTTON, true);
+            if (props->IsRightButtonPressed) UWPMouseButtonEvent(MOUSE_RIGHT_BUTTON, true);
+        }
+    }
+
+    void PointerReleased(Windows::UI::Core::CoreWindow^ sender, Windows::UI::Core::PointerEventArgs^ args)
+    {
+        auto props = args->CurrentPoint->Properties;
+
+        // TODO: UWP Touch input.
+        if (args->CurrentPoint->PointerDevice->PointerDeviceType == Windows::Devices::Input::PointerDeviceType::Mouse)
+        {
+            if (!props->IsLeftButtonPressed) UWPMouseButtonEvent(MOUSE_LEFT_BUTTON, false);
+            if (!props->IsMiddleButtonPressed) UWPMouseButtonEvent(MOUSE_MIDDLE_BUTTON, false);
+            if (!props->IsRightButtonPressed) UWPMouseButtonEvent(MOUSE_RIGHT_BUTTON, false);
+        }
     }
 
     void PointerWheelChanged(Windows::UI::Core::CoreWindow ^sender, Windows::UI::Core::PointerEventArgs^ args)
     {
-        UWPMessage* msg = CreateUWPMessage();
-        msg->type = UWP_MSG_SCROLL_WHEEL_UPDATE;
-        msg->paramFloat0 = args->CurrentPoint->Properties->MouseWheelDelta;
-        UWPSendMessage(msg);
+        UWPMouseWheelEvent(args->CurrentPoint->Properties->MouseWheelDelta);
     }
 
-    void MouseMoved(Windows::Devices::Input::MouseDevice^ mouseDevice, Windows::Devices::Input::MouseEventArgs^ args)
+    void PointerMoved(Windows::UI::Core::CoreWindow^ sender, Windows::UI::Core::PointerEventArgs^ args)
     {
-        mouseDelta.x += args->MouseDelta.X;
-        mouseDelta.y += args->MouseDelta.Y;
+        auto pos = args->CurrentPoint->Position;
+        UWPMousePosEvent((double)pos.X, (double)pos.Y);
+    }
+
+    int GetRaylibKey(Windows::System::VirtualKey kVey)
+    {
+        int actualKey = -1;
+        switch ((int) kVey)// TODO: Use VK enum and finish keys
+        {
+        case 0x08: actualKey = KEY_BACKSPACE; break;
+        case 0x20: actualKey = KEY_SPACE; break;
+        case 0x1B: actualKey = KEY_ESCAPE; break;
+        case 0x0D: actualKey = KEY_ENTER; break;
+        case 0x2E: actualKey = KEY_DELETE; break;
+        case 0x27: actualKey = KEY_RIGHT; break;
+        case 0x25: actualKey = KEY_LEFT; break;
+        case 0x28: actualKey = KEY_DOWN; break;
+        case 0x26: actualKey = KEY_UP; break;
+        case 0x70: actualKey = KEY_F1; break;
+        case 0x71: actualKey = KEY_F2; break;
+        case 0x72: actualKey = KEY_F3; break;
+        case 0x73: actualKey = KEY_F4; break;
+        case 0x74: actualKey = KEY_F5; break;
+        case 0x75: actualKey = KEY_F6; break;
+        case 0x76: actualKey = KEY_F7; break;
+        case 0x77: actualKey = KEY_F8; break;
+        case 0x78: actualKey = KEY_F9; break;
+        case 0x79: actualKey = KEY_F10; break;
+        case 0x7A: actualKey = KEY_F11; break;
+        case 0x7B: actualKey = KEY_F12; break;
+        case 0xA0: actualKey = KEY_LEFT_SHIFT; break;
+        case 0xA2: actualKey = KEY_LEFT_CONTROL; break;
+        case 0xA4: actualKey = KEY_LEFT_ALT; break;
+        case 0xA1: actualKey = KEY_RIGHT_SHIFT; break;
+        case 0xA3: actualKey = KEY_RIGHT_CONTROL; break;
+        case 0xA5: actualKey = KEY_RIGHT_ALT; break;
+        case 0x30: actualKey = KEY_ZERO; break;
+        case 0x31: actualKey = KEY_ONE; break;
+        case 0x32: actualKey = KEY_TWO; break;
+        case 0x33: actualKey = KEY_THREE; break;
+        case 0x34: actualKey = KEY_FOUR; break;
+        case 0x35: actualKey = KEY_FIVE; break;
+        case 0x36: actualKey = KEY_SIX; break;
+        case 0x37: actualKey = KEY_SEVEN; break;
+        case 0x38: actualKey = KEY_EIGHT; break;
+        case 0x39: actualKey = KEY_NINE; break;
+        case 0x41: actualKey = KEY_A; break;
+        case 0x42: actualKey = KEY_B; break;
+        case 0x43: actualKey = KEY_C; break;
+        case 0x44: actualKey = KEY_D; break;
+        case 0x45: actualKey = KEY_E; break;
+        case 0x46: actualKey = KEY_F; break;
+        case 0x47: actualKey = KEY_G; break;
+        case 0x48: actualKey = KEY_H; break;
+        case 0x49: actualKey = KEY_I; break;
+        case 0x4A: actualKey = KEY_J; break;
+        case 0x4B: actualKey = KEY_K; break;
+        case 0x4C: actualKey = KEY_L; break;
+        case 0x4D: actualKey = KEY_M; break;
+        case 0x4E: actualKey = KEY_N; break;
+        case 0x4F: actualKey = KEY_O; break;
+        case 0x50: actualKey = KEY_P; break;
+        case 0x51: actualKey = KEY_Q; break;
+        case 0x52: actualKey = KEY_R; break;
+        case 0x53: actualKey = KEY_S; break;
+        case 0x54: actualKey = KEY_T; break;
+        case 0x55: actualKey = KEY_U; break;
+        case 0x56: actualKey = KEY_V; break;
+        case 0x57: actualKey = KEY_W; break;
+        case 0x58: actualKey = KEY_X; break;
+        case 0x59: actualKey = KEY_Y; break;
+        case 0x5A: actualKey = KEY_Z; break;
+        }
+        return actualKey;
     }
 
     void OnKeyDown(Windows::UI::Core::CoreWindow ^ sender, Windows::UI::Core::KeyEventArgs ^ args)
     {
-#ifdef HOLDHACK
-        // Start the hack
-        KeyboardStateHack[(int)args->VirtualKey] = 1;
-#endif
-
-        RegisterKey((int)args->VirtualKey, 1);
+        auto k = GetRaylibKey(args->VirtualKey);
+        if (k != -1)
+            UWPKeyDownEvent(k, true);
     }
 
     void OnKeyUp(Windows::UI::Core::CoreWindow ^ sender, Windows::UI::Core::KeyEventArgs ^ args)
     {
-#ifdef HOLDHACK
-        // The same hack
-        if (KeyboardStateHack[(int)args->VirtualKey] == 1)
-        {
-            KeyboardStateHack[(int)args->VirtualKey] = 2;
-        }
-        else if (KeyboardStateHack[(int)args->VirtualKey] == 2)
-        {
-            KeyboardStateHack[(int)args->VirtualKey] = 3;
-        }
-        else if (KeyboardStateHack[(int)args->VirtualKey] == 3)
-        {
-            KeyboardStateHack[(int)args->VirtualKey] = 4;
-        }
-        else if (KeyboardStateHack[(int)args->VirtualKey] == 4)
-        {
-            RegisterKey((int)args->VirtualKey, 0);
-            KeyboardStateHack[(int)args->VirtualKey] = 0;
-        }
-#else
-        // No hack, allow flickers
-        RegisterKey((int)args->VirtualKey, 0);
-#endif
+        auto k = GetRaylibKey(args->VirtualKey);
+        if (k != -1)
+            UWPKeyDownEvent(k, false);
     }
 
 private:
-
-    void RegisterKey(int key, char status)
-    {
-        UWPMessage* msg = CreateUWPMessage();
-        msg->type = UWPMessageType::UWP_MSG_REGISTER_KEY;
-        msg->paramInt0 = key;
-        msg->paramChar0 = status;
-        UWPSendMessage(msg);
-    }
-
-    void MoveMouse(Vector2 pos)
-    {
-        CoreWindow ^window = CoreWindow::GetForCurrentThread();
-        Point mousePosScreen = Point(pos.x + window->Bounds.X, pos.y + window->Bounds.Y);
-        window->PointerPosition = mousePosScreen;
-    }
-
-    void RegisterGamepadButton(int gamepad, int button, char status)
-    {
-        UWPMessage* msg = CreateUWPMessage();
-        msg->type = UWP_MSG_SET_GAMEPAD_BUTTON;
-        msg->paramInt0 = gamepad;
-        msg->paramInt1 = button;
-        msg->paramChar0 = status;
-        UWPSendMessage(msg);
-    }
-
-    void RegisterGamepadAxis(int gamepad, int axis, float value)
-    {
-        UWPMessage* msg = CreateUWPMessage();
-        msg->type = UWP_MSG_SET_GAMEPAD_AXIS;
-        msg->paramInt0 = gamepad;
-        msg->paramInt1 = axis;
-        msg->paramFloat0 = value;
-        UWPSendMessage(msg);
-    }
-
-    void UpdateMousePosition(Vector2 pos)
-    {
-        UWPMessage* msg = CreateUWPMessage();
-        msg->type = UWP_MSG_UPDATE_MOUSE_LOCATION;
-        msg->paramVector0 = pos;
-        UWPSendMessage(msg);
-    }
-
-    void RegisterClick(int button, char status)
-    {
-        UWPMessage* msg = CreateUWPMessage();
-        msg->type = UWPMessageType::UWP_MSG_REGISTER_CLICK;
-        msg->paramInt0 = button;
-        msg->paramChar0 = status;
-        UWPSendMessage(msg);
-    }
-
     bool mWindowClosed = false;
     bool mWindowVisible = true;
 
     int width = 640;
     int height = 480;
 
-    int CurrentPointerID = -1;
-
-#ifdef HOLDHACK
-    char KeyboardStateHack[0xA6]; // 0xA6 because the highest key we compare against is 0xA5
-#endif
 };
 
 // Application source for creating the program

@@ -73,63 +73,74 @@ FILE *android_fopen(const char *fileName, const char *mode);            // Repla
 #endif
 
 #if defined(PLATFORM_UWP)
-// UWP Messages System
-typedef enum {
-    UWP_MSG_NONE = 0,
+// UWP Implementation Features
 
-    // Send
-    UWP_MSG_SHOW_MOUSE,
-    UWP_MSG_HIDE_MOUSE,
-    UWP_MSG_LOCK_MOUSE,
-    UWP_MSG_UNLOCK_MOUSE,
-    UWP_MSG_SET_MOUSE_LOCATION,     // paramVector0 (pos)
+// Determine if UWP functions are set and ready for raylib's use.
+bool UWPIsConfigured();
 
-    // Receive (Into C)
-    UWP_MSG_REGISTER_KEY,           // paramInt0 (key), paramChar0 (status)
-    UWP_MSG_REGISTER_CLICK,         // paramInt0 (button), paramChar0 (status)
-    UWP_MSG_SCROLL_WHEEL_UPDATE,    // paramInt0 (delta)
-    UWP_MSG_UPDATE_MOUSE_LOCATION,  // paramVector0 (pos)
-    UWP_MSG_SET_GAMEPAD_ACTIVE,     // paramInt0 (gamepad), paramBool0 (active or not)
-    UWP_MSG_SET_GAMEPAD_BUTTON,     // paramInt0 (gamepad), paramInt1 (button), paramChar0 (status)
-    UWP_MSG_SET_GAMEPAD_AXIS,       // paramInt0 (gamepad), int1 (axis), paramFloat0 (value)
-    UWP_MSG_SET_DISPLAY_DIMS,       // paramVector0 (display dimensions)
-    UWP_MSG_HANDLE_RESIZE,          // paramVector0 (new dimensions) - Onresized event
-    UWP_MSG_SET_GAME_TIME,          // paramInt0
-} UWPMessageType;
+// Function for getting program time.
+typedef double(*UWPQueryTimeFunc)();
+UWPQueryTimeFunc UWPGetQueryTimeFunc(void);
+void UWPSetQueryTimeFunc(UWPQueryTimeFunc func);
 
-typedef struct UWPMessage {
-    UWPMessageType type;            // Message type
+// Function for sleeping the current thread
+typedef void (*UWPSleepFunc)(double sleepUntil);
+UWPSleepFunc UWPGetSleepFunc(void);
+void UWPSetSleepFunc(UWPSleepFunc func);
 
-    Vector2 paramVector0;           // Vector parameters
-    int paramInt0;                  // Int parameter
-    int paramInt1;                  // Int parameter
-    char paramChar0;                // Char parameters
-    float paramFloat0;              // Float parameters
-    double paramDouble0;            // Double parameters
-    bool paramBool0;                // Bool parameters
+// Function for querying the display size
+typedef void(*UWPDisplaySizeFunc)(int *width, int* height);
+UWPDisplaySizeFunc UWPGetDisplaySizeFunc(void);
+void UWPSetDisplaySizeFunc(UWPDisplaySizeFunc func);
 
-    // More parameters can be added and fed to functions
-} UWPMessage;
+// Functions for mouse cursor control
+typedef void(*UWPMouseFunc)(void);
+UWPMouseFunc UWPGetMouseLockFunc();
+void UWPSetMouseLockFunc(UWPMouseFunc func);
+UWPMouseFunc UWPGetMouseUnlockFunc();
+void UWPSetMouseUnlockFunc(UWPMouseFunc func);
+UWPMouseFunc UWPGetMouseShowFunc();
+void UWPSetMouseShowFunc(UWPMouseFunc func);
+UWPMouseFunc UWPGetMouseHideFunc();
+void UWPSetMouseHideFunc(UWPMouseFunc func);
 
-// Allocate UWP Message
-RLAPI UWPMessage* CreateUWPMessage(void);
+// Function for setting mouse cursor position.
+typedef void (*UWPMouseSetPosFunc)(int x, int y);
+UWPMouseSetPosFunc UWPGetMouseSetPosFunc();
+void UWPSetMouseSetPosFunc(UWPMouseSetPosFunc func);
 
-// Free UWP Message
-RLAPI void DeleteUWPMessage(UWPMessage* msg);
+// The below functions are implemented in core.c but are placed here so they can be called by user code.
+// This choice is made as platform-specific code is preferred to be kept away from raylib.h
 
-// Get messages into C++
-RLAPI bool UWPHasMessages(void);
-RLAPI UWPMessage* UWPGetMessage(void);
-RLAPI void UWPSendMessage(UWPMessage* msg);
+// Call this when a Key is pressed or released.
+void UWPKeyDownEvent(int key, bool down);
 
-// For C to call
-#ifndef __cplusplus // Hide from C++ code
-void SendMessageToUWP(UWPMessage* msg);
-bool HasMessageFromUWP(void);
-UWPMessage* GetMessageFromUWP(void);
-#endif
+// Call when a mouse button state changes
+void UWPMouseButtonEvent(int button, bool down);
 
-#endif      //defined(PLATFORM_UWP)
+// Call when the mouse cursor moves
+void UWPMousePosEvent(double x, double y);
+
+// Call when the mouse wheel moves
+void UWPMouseWheelEvent(int deltaY);
+
+// Call when the window resizes
+void UWPResizeEvent(int width, int height);
+
+// Call when a gamepad is made active
+void UWPActivateGamepadEvent(int gamepad, bool active);
+
+// Call when a gamepad button state changes
+void UWPRegisterGamepadButton(int gamepad, int button, bool down);
+
+// Call when a gamepad axis state changes
+void UWPRegisterGamepadAxis(int gamepad, int axis, float value);
+
+// Set the core window pointer so that we can pass it to EGL.
+void* UWPGetCoreWindowPtr();
+void UWPSetCoreWindowPtr(void* ptr);
+
+#endif      // defined(PLATFORM_UWP)
 
 #ifdef __cplusplus
 }

@@ -395,16 +395,6 @@ UWPMessage *UWPGetMessage(void)
     return NULL;
 }
 
-void UWPSendMessage(UWPMessage *msg)
-{
-    if ((UWPInMessageId + 1) < MAX_UWP_MESSAGES)
-    {
-        UWPInMessageId++;
-        UWPInMessages[UWPInMessageId] = msg;
-    }
-    else TRACELOG(LOG_WARNING, "UWP: Not enough array space to register new inbound message");
-}
-
 void SendMessageToUWP(UWPMessage *msg)
 {
     if ((UWPOutMessageId + 1) < MAX_UWP_MESSAGES)
@@ -415,15 +405,166 @@ void SendMessageToUWP(UWPMessage *msg)
     else TRACELOG(LOG_WARNING, "UWP: Not enough array space to register new outward message");
 }
 
-bool HasMessageFromUWP(void)
+
+// NEW UWP API
+
+static UWPQueryTimeFunc uwpQueryTimeFunc = NULL;
+static UWPSleepFunc uwpSleepFunc = NULL;
+static UWPDisplaySizeFunc uwpDisplaySizeFunc = NULL;
+static UWPMouseFunc uwpMouseLockFunc = NULL;
+static UWPMouseFunc uwpMouseUnlockFunc = NULL;
+static UWPMouseFunc uwpMouseShowFunc = NULL;
+static UWPMouseFunc uwpMouseHideFunc = NULL;
+static UWPMouseSetPosFunc uwpMouseSetPosFunc = NULL;
+static void* uwpCoreWindow = NULL;
+
+bool UWPIsConfigured()
 {
-    return UWPInMessageId > -1;
+    bool pass = true;
+    if (uwpQueryTimeFunc == NULL)
+    {
+        TRACELOG(LOG_ERROR, "You must call UWPSetQueryTimeFunc with a valid function before calling InitWindow()");
+        pass = false;
+    }
+
+    if (uwpSleepFunc == NULL)
+    {
+        TRACELOG(LOG_ERROR, "You must call UWPSetSleepFunc with a valid function before calling InitWindow()");
+        pass = false;
+    }
+
+    if (uwpDisplaySizeFunc == NULL)
+    {
+        TRACELOG(LOG_ERROR, "You must call UWPSetDisplaySizeFunc with a valid function before calling InitWindow()");
+        pass = false;
+    }
+
+    if (uwpMouseLockFunc == NULL)
+    {
+        TRACELOG(LOG_ERROR, "You must call UWPSetMouseLockFunc with a valid function before calling InitWindow()");
+        pass = false;
+    }
+
+    if (uwpMouseUnlockFunc == NULL)
+    {
+        TRACELOG(LOG_ERROR, "You must call UWPSetMouseUnlockFunc with a valid function before calling InitWindow()");
+        pass = false;
+    }
+
+    if (uwpMouseShowFunc == NULL)
+    {
+        TRACELOG(LOG_ERROR, "You must call UWPSetMouseShowFunc with a valid function before calling InitWindow()");
+        pass = false;
+    }
+
+    if (uwpMouseHideFunc == NULL)
+    {
+        TRACELOG(LOG_ERROR, "You must call UWPSetMouseHideFunc with a valid function before calling InitWindow()");
+        pass = false;
+    }
+
+    if (uwpMouseSetPosFunc == NULL)
+    {
+        TRACELOG(LOG_ERROR, "You must call UWPSetMouseSetPosFunc with a valid function before calling InitWindow()");
+        pass = false;
+    }
+
+    if (uwpCoreWindow == NULL)
+    {
+        TRACELOG(LOG_ERROR, "You must set a pointer to the UWP core window before calling InitWindow()");
+        pass = false;
+    }
+    return pass;
 }
 
-UWPMessage *GetMessageFromUWP(void)
+UWPQueryTimeFunc UWPGetQueryTimeFunc(void)
 {
-    if (HasMessageFromUWP()) return UWPInMessages[UWPInMessageId--];
-
-    return NULL;
+    return uwpQueryTimeFunc;
 }
+
+void UWPSetQueryTimeFunc(UWPQueryTimeFunc func)
+{
+    uwpQueryTimeFunc = func;
+}
+
+UWPSleepFunc UWPGetSleepFunc(void)
+{
+    return uwpSleepFunc;
+}
+
+void UWPSetSleepFunc(UWPSleepFunc func)
+{
+    uwpSleepFunc = func;
+}
+
+UWPDisplaySizeFunc UWPGetDisplaySizeFunc(void)
+{
+    return uwpDisplaySizeFunc;
+}
+
+void UWPSetDisplaySizeFunc(UWPDisplaySizeFunc func)
+{
+    uwpDisplaySizeFunc = func;
+}
+
+UWPMouseFunc UWPGetMouseLockFunc()
+{
+    return uwpMouseLockFunc;
+}
+
+void UWPSetMouseLockFunc(UWPMouseFunc func)
+{
+    uwpMouseLockFunc = func;
+}
+
+UWPMouseFunc UWPGetMouseUnlockFunc()
+{
+    return uwpMouseUnlockFunc;
+}
+
+void UWPSetMouseUnlockFunc(UWPMouseFunc func)
+{
+    uwpMouseUnlockFunc = func;
+}
+
+UWPMouseFunc UWPGetMouseShowFunc()
+{
+    return uwpMouseShowFunc;
+}
+
+void UWPSetMouseShowFunc(UWPMouseFunc func)
+{
+    uwpMouseShowFunc = func;
+}
+
+UWPMouseFunc UWPGetMouseHideFunc()
+{
+    return uwpMouseHideFunc;
+}
+
+void UWPSetMouseHideFunc(UWPMouseFunc func)
+{
+    uwpMouseHideFunc = func;
+}
+
+UWPMouseSetPosFunc UWPGetMouseSetPosFunc()
+{
+    return uwpMouseSetPosFunc;
+}
+
+void UWPSetMouseSetPosFunc(UWPMouseSetPosFunc func)
+{
+    uwpMouseSetPosFunc = func;
+}
+
+void* UWPGetCoreWindowPtr()
+{
+    return uwpCoreWindow;
+}
+
+void UWPSetCoreWindowPtr(void* ptr)
+{
+    uwpCoreWindow = ptr;
+}
+
 #endif  // PLATFORM_UWP
