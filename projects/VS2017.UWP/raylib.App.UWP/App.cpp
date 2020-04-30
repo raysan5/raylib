@@ -91,6 +91,7 @@ void App::SetWindow(Windows::UI::Core::CoreWindow^ window)
 
 void App::Load(Platform::String ^entryPoint) {} // Ignored for this example
 
+static bool mouseLocked = false;
 void App::Run()
 {
     // Set up our UWP implementation
@@ -124,13 +125,13 @@ void App::Run()
     UWPSetMouseLockFunc([]()
         {
             CoreWindow::GetForCurrentThread()->PointerCursor = nullptr;
-            // TODO:
+            mouseLocked = true;
         });
 
     UWPSetMouseUnlockFunc([]()
         {
             CoreWindow::GetForCurrentThread()->PointerCursor = ref new CoreCursor(CoreCursorType::Arrow, 0);
-            // TODO:
+            mouseLocked = false;
         });
 
     UWPSetMouseSetPosFunc([](int x, int y)
@@ -170,8 +171,9 @@ void App::Run()
     {
         if (mWindowVisible)
         {
-            ProcessGamepads();
+            PreProcessInputs();
             GameLoop();
+            PostProcessInputs();
             CoreWindow::GetForCurrentThread()->Dispatcher->ProcessEvents(CoreProcessEventsOption::ProcessAllIfPresent);
         } else CoreWindow::GetForCurrentThread()->Dispatcher->ProcessEvents(CoreProcessEventsOption::ProcessOneAndAllPending);
     }
@@ -247,7 +249,7 @@ struct GamepadBinding
 
 static GamepadBinding gGamepadBindings[MAX_GAMEPADS];
 
-void App::ProcessGamepads()
+void App::PreProcessInputs()
 {
     // Here, we will see if we have bound gamepads. If we do we check they are still present. If they aren't present we free the binding.
     //  if anyone does not have a binding but there is a gamepad available, we will bind it to the first player who is missing a controller.
@@ -348,6 +350,21 @@ void App::ProcessGamepads()
             UWPRegisterGamepadAxis(i, GAMEPAD_AXIS_LEFT_TRIGGER, (float)reading.LeftTrigger);
             UWPRegisterGamepadAxis(i, GAMEPAD_AXIS_RIGHT_TRIGGER, (float)reading.RightTrigger);
         }
+    }
+}
+
+void App::PostProcessInputs()
+{
+    /*
+     * So here's the deal. UWP doesn't officially have mouse locking, so we're doing it ourselves here.
+     * If anyone has any better ideas on how to implement this feel free!
+     * This is done after the game loop so getting mouse delta etc. still works.
+     */
+    if (mouseLocked)
+    {
+        auto w = GetScreenWidth();
+        auto h = GetScreenHeight();
+        SetMousePosition(w / 2, h / 2);
     }
 }
 

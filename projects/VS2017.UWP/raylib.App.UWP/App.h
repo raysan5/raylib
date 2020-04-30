@@ -22,7 +22,8 @@ namespace raylibUWP
         bool mSuspended = false;
 
         void GameLoop();
-        void ProcessGamepads();
+        void PreProcessInputs();
+        void PostProcessInputs();
 
         // Helpers
         int GetRaylibKey(Windows::System::VirtualKey kVey);
