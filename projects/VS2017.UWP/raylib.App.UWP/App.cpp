@@ -447,7 +447,7 @@ int App::GetRaylibKey(Windows::System::VirtualKey kVey)
 {
     using VK = Windows::System::VirtualKey;
     int actualKey = -1;
-    switch (kVey)// TODO: Use VK enum and finish keys
+    switch (kVey)
     {
     case VK::Back: actualKey = KEY_BACKSPACE; break;
     case VK::Space: actualKey = KEY_SPACE; break;
