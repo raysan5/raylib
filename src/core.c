@@ -376,6 +376,11 @@ typedef struct CoreData {
         bool contextRebindRequired;         // Used to know context rebind required
     } Android;
 #endif
+#if defined(PLATFORM_UWP)
+    struct {
+        const char* internalDataPath;       // UWP App data path
+    } UWP;
+#endif
     struct {
 #if defined(PLATFORM_RPI)
         InputEventWorker eventWorker[10];   // List of worker threads for every monitored "/dev/input/event<N>"
@@ -1889,6 +1894,10 @@ void TakeScreenshot(const char *fileName)
     char path[512] = { 0 };
 #if defined(PLATFORM_ANDROID)
     strcpy(path, CORE.Android.internalDataPath);
+    strcat(path, "/");
+    strcat(path, fileName);
+#elif defined(PLATFORM_UWP)
+    strcpy(path, CORE.UWP.internalDataPath);
     strcat(path, "/");
     strcat(path, fileName);
 #else
@@ -5200,6 +5209,10 @@ bool UWPIsConfigured()
     }
     return pass;
 }
+void UWPSetDataPath(const char* path)
+{
+    CORE.UWP.internalDataPath = path;
+}
 
 UWPQueryTimeFunc UWPGetQueryTimeFunc(void)
 {
@@ -5296,13 +5309,64 @@ void UWPMouseWheelEvent(int deltaY)
     CORE.Input.Mouse.currentWheelMove = (int)deltaY;
 }
 
-void UWPKeyDownEvent(int key, bool down)
+void UWPKeyDownEvent(int key, bool down, bool controlKey)
 {
     if (key == CORE.Input.Keyboard.exitKey && down)
     {
         // Time to close the window.
         CORE.Window.shouldClose = true;
-    }// TODO: Could UWP possibly support GIF recording?
+    }
+    else if (key == KEY_F12 && down)
+    {
+#if defined(SUPPORT_GIF_RECORDING)
+        if (controlKey)
+        {
+            if (gifRecording)
+            {
+                GifEnd();
+                gifRecording = false;
+
+#if defined(PLATFORM_WEB)
+                // Download file from MEMFS (emscripten memory filesystem)
+                // saveFileFromMEMFSToDisk() function is defined in raylib/templates/web_shel/shell.html
+                emscripten_run_script(TextFormat("saveFileFromMEMFSToDisk('%s','%s')", TextFormat("screenrec%03i.gif", screenshotCounter - 1), TextFormat("screenrec%03i.gif", screenshotCounter - 1)));
+#endif
+
+                TRACELOG(LOG_INFO, "SYSTEM: Finish animated GIF recording");
+            }
+            else
+            {
+                gifRecording = true;
+                gifFramesCounter = 0;
+
+                char path[512] = { 0 };
+#if defined(PLATFORM_ANDROID)
+                strcpy(path, CORE.Android.internalDataPath);
+                strcat(path, TextFormat("./screenrec%03i.gif", screenshotCounter));
+#elif defined(PLATFORM_UWP)
+                strcpy(path, CORE.UWP.internalDataPath);
+                strcat(path, TextFormat("./screenrec%03i.gif", screenshotCounter));
+#else
+                strcpy(path, TextFormat("./screenrec%03i.gif", screenshotCounter));
+#endif
+
+                // NOTE: delay represents the time between frames in the gif, if we capture a gif frame every
+                // 10 game frames and each frame trakes 16.6ms (60fps), delay between gif frames should be ~16.6*10.
+                GifBegin(path, CORE.Window.screen.width, CORE.Window.screen.height, (int)(GetFrameTime() * 10.0f), 8, false);
+                screenshotCounter++;
+
+                TRACELOG(LOG_INFO, "SYSTEM: Start animated GIF recording: %s", TextFormat("screenrec%03i.gif", screenshotCounter));
+            }
+        }
+        else
+#endif  // SUPPORT_GIF_RECORDING
+#if defined(SUPPORT_SCREEN_CAPTURE)
+        {
+            TakeScreenshot(TextFormat("screenshot%03i.png", screenshotCounter));
+            screenshotCounter++;
+        }
+#endif  // SUPPORT_SCREEN_CAPTURE
+    }
     else
     {
         CORE.Input.Keyboard.currentKeyState[key] = down;

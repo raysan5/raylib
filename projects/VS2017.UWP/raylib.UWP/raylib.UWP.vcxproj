@@ -162,7 +162,7 @@
       <PrecompiledHeader>NotUsing</PrecompiledHeader>
       <CompileAsWinRT>false</CompileAsWinRT>
       <SDLCheck>true</SDLCheck>
-      <PreprocessorDefinitions>_CRT_SECURE_NO_WARNINGS;GRAPHICS_API_OPENGL_ES2;PLATFORM_UWP;_UNICODE;UNICODE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>SUPPORT_GIF_RECORDING;_CRT_SECURE_NO_WARNINGS;GRAPHICS_API_OPENGL_ES2;PLATFORM_UWP;_UNICODE;UNICODE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <AdditionalIncludeDirectories>$(SolutionDir)packages\ANGLE.WindowsStore.2.1.13\Include;$(GeneratedFilesDir);$(IntDir);%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>

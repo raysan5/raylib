@@ -56,6 +56,12 @@ void App::Initialize(Windows::ApplicationModel::Core::CoreApplicationView^ appli
 
     CoreApplication::Suspending += ref new Windows::Foundation::EventHandler<Windows::ApplicationModel::SuspendingEventArgs^>(this, &App::OnSuspending);
     CoreApplication::Resuming += ref new EventHandler<Platform::Object^>(this, &App::OnResuming);
+
+    // Store the app data directory
+    auto dataPath = Windows::Storage::ApplicationData::Current->LocalFolder->Path;
+    std::wstring dataPathW(dataPath->Begin());
+    static std::string dataPathA(dataPathW.begin(), dataPathW.end());
+    UWPSetDataPath(dataPathA.c_str());
 }
 
 void App::SetWindow(Windows::UI::Core::CoreWindow^ window)
@@ -300,11 +306,13 @@ void App::OnSuspending(Platform::Object^ sender, Windows::ApplicationModel::Susp
 void App::OnWindowSizeChanged(Windows::UI::Core::CoreWindow^ sender, Windows::UI::Core::WindowSizeChangedEventArgs^ args)
 {
     UWPResizeEvent(args->Size.Width, args->Size.Height);
+    args->Handled = true;
 }
 
 void App::OnVisibilityChanged(Windows::UI::Core::CoreWindow^ sender, Windows::UI::Core::VisibilityChangedEventArgs^ args)
 {
     mWindowVisible = args->Visible;
+    args->Handled = true;
 }
 
 // Input event handlers
@@ -319,6 +327,8 @@ void App::OnPointerPressed(Windows::UI::Core::CoreWindow^ sender, Windows::UI::C
         if (props->IsMiddleButtonPressed) UWPMouseButtonEvent(MOUSE_MIDDLE_BUTTON, true);
         if (props->IsRightButtonPressed) UWPMouseButtonEvent(MOUSE_RIGHT_BUTTON, true);
     }
+
+    args->Handled = true;
 }
 
 void App::OnPointerReleased(Windows::UI::Core::CoreWindow^ sender, Windows::UI::Core::PointerEventArgs^ args)
@@ -332,17 +342,21 @@ void App::OnPointerReleased(Windows::UI::Core::CoreWindow^ sender, Windows::UI::
         if (!props->IsMiddleButtonPressed) UWPMouseButtonEvent(MOUSE_MIDDLE_BUTTON, false);
         if (!props->IsRightButtonPressed) UWPMouseButtonEvent(MOUSE_RIGHT_BUTTON, false);
     }
+
+    args->Handled = true;
 }
 
 void App::OnPointerWheelChanged(Windows::UI::Core::CoreWindow^ sender, Windows::UI::Core::PointerEventArgs^ args)
 {
     UWPMouseWheelEvent(args->CurrentPoint->Properties->MouseWheelDelta);
+    args->Handled = true;
 }
 
 void App::OnPointerMoved(Windows::UI::Core::CoreWindow^ sender, Windows::UI::Core::PointerEventArgs^ args)
 {
     auto pos = args->CurrentPoint->Position;
     UWPMousePosEvent((double)pos.X, (double)pos.Y);
+    args->Handled = true;
 }
 
 int App::GetRaylibKey(Windows::System::VirtualKey kVey)
@@ -420,15 +434,18 @@ int App::GetRaylibKey(Windows::System::VirtualKey kVey)
 void App::OnKeyDown(Windows::UI::Core::CoreWindow^ sender, Windows::UI::Core::KeyEventArgs^ args)
 {
     auto k = GetRaylibKey(args->VirtualKey);
+    auto controlState = (sender->GetKeyState(Windows::System::VirtualKey::Control) & Windows::UI::Core::CoreVirtualKeyStates::Down) == Windows::UI::Core::CoreVirtualKeyStates::Down;
     if (k != -1)
-        UWPKeyDownEvent(k, true);
+        UWPKeyDownEvent(k, true, controlState);
+    args->Handled = true;
 }
 
 void App::OnKeyUp(Windows::UI::Core::CoreWindow^ sender, Windows::UI::Core::KeyEventArgs^ args)
 {
     auto k = GetRaylibKey(args->VirtualKey);
     if (k != -1)
-        UWPKeyDownEvent(k, false);
+        UWPKeyDownEvent(k, false, false);
+    args->Handled = true;
 }
 
 // AppSource implementation

@@ -36,6 +36,8 @@ extern "C" {
 // Determine if UWP functions are set and ready for raylib's use.
 bool UWPIsConfigured();
 
+void UWPSetDataPath(const char* path);
+
 // Function for getting program time.
 typedef double(*UWPQueryTimeFunc)();
 UWPQueryTimeFunc UWPGetQueryTimeFunc(void);
@@ -71,7 +73,7 @@ void UWPSetMouseSetPosFunc(UWPMouseSetPosFunc func);
 // This choice is made as platform-specific code is preferred to be kept away from raylib.h
 
 // Call this when a Key is pressed or released.
-void UWPKeyDownEvent(int key, bool down);
+void UWPKeyDownEvent(int key, bool down, bool controlKey);
 
 // Call when a mouse button state changes
 void UWPMouseButtonEvent(int button, bool down);
