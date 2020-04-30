@@ -318,7 +318,7 @@ void App::ProcessGamepads()
             auto gamepad = gGamepadBindings[i].Gamepad;
             auto reading = gamepad->GetCurrentReading();
 
-            // NOTE: Maybe it would be wiser to redefine the gamepad button mappings in "raylib.h" for the UWP platform instead of remapping them manually
+            // Register all button presses
             UWPRegisterGamepadButton(i, GAMEPAD_BUTTON_RIGHT_FACE_DOWN, ((reading.Buttons & GamepadButtons::A) == GamepadButtons::A));
             UWPRegisterGamepadButton(i, GAMEPAD_BUTTON_RIGHT_FACE_RIGHT, ((reading.Buttons & GamepadButtons::B) == GamepadButtons::B));
             UWPRegisterGamepadButton(i, GAMEPAD_BUTTON_RIGHT_FACE_LEFT, ((reading.Buttons & GamepadButtons::X) == GamepadButtons::X));
@@ -335,6 +335,10 @@ void App::ProcessGamepads()
             UWPRegisterGamepadButton(i, GAMEPAD_BUTTON_LEFT_FACE_DOWN, ((reading.Buttons & GamepadButtons::DPadDown) == GamepadButtons::DPadDown));
             UWPRegisterGamepadButton(i, GAMEPAD_BUTTON_LEFT_FACE_LEFT, ((reading.Buttons & GamepadButtons::DPadLeft) == GamepadButtons::DPadLeft));
             UWPRegisterGamepadButton(i, GAMEPAD_BUTTON_MIDDLE, false); // Home button not supported by UWP
+
+            // Register buttons for 2nd triggers (because UWP doesn't count these as buttons but rather axis)
+            UWPRegisterGamepadButton(i, GAMEPAD_BUTTON_LEFT_TRIGGER_2, (bool)(reading.LeftTrigger > 0.1));
+            UWPRegisterGamepadButton(i, GAMEPAD_BUTTON_RIGHT_TRIGGER_2, (bool)(reading.RightTrigger > 0.1));
 
             // Get current axis state
             UWPRegisterGamepadAxis(i, GAMEPAD_AXIS_LEFT_X, (float)reading.LeftThumbstickX);
@@ -424,72 +428,90 @@ void App::OnPointerMoved(Windows::UI::Core::CoreWindow^ sender, Windows::UI::Cor
 
 int App::GetRaylibKey(Windows::System::VirtualKey kVey)
 {
+    using VK = Windows::System::VirtualKey;
     int actualKey = -1;
-    switch ((int)kVey)// TODO: Use VK enum and finish keys
+    switch (kVey)// TODO: Use VK enum and finish keys
     {
-    case 0x08: actualKey = KEY_BACKSPACE; break;
-    case 0x20: actualKey = KEY_SPACE; break;
-    case 0x1B: actualKey = KEY_ESCAPE; break;
-    case 0x0D: actualKey = KEY_ENTER; break;
-    case 0x2E: actualKey = KEY_DELETE; break;
-    case 0x27: actualKey = KEY_RIGHT; break;
-    case 0x25: actualKey = KEY_LEFT; break;
-    case 0x28: actualKey = KEY_DOWN; break;
-    case 0x26: actualKey = KEY_UP; break;
-    case 0x70: actualKey = KEY_F1; break;
-    case 0x71: actualKey = KEY_F2; break;
-    case 0x72: actualKey = KEY_F3; break;
-    case 0x73: actualKey = KEY_F4; break;
-    case 0x74: actualKey = KEY_F5; break;
-    case 0x75: actualKey = KEY_F6; break;
-    case 0x76: actualKey = KEY_F7; break;
-    case 0x77: actualKey = KEY_F8; break;
-    case 0x78: actualKey = KEY_F9; break;
-    case 0x79: actualKey = KEY_F10; break;
-    case 0x7A: actualKey = KEY_F11; break;
-    case 0x7B: actualKey = KEY_F12; break;
-    case 0xA0: actualKey = KEY_LEFT_SHIFT; break;
-    case 0xA2: actualKey = KEY_LEFT_CONTROL; break;
-    case 0xA4: actualKey = KEY_LEFT_ALT; break;
-    case 0xA1: actualKey = KEY_RIGHT_SHIFT; break;
-    case 0xA3: actualKey = KEY_RIGHT_CONTROL; break;
-    case 0xA5: actualKey = KEY_RIGHT_ALT; break;
-    case 0x30: actualKey = KEY_ZERO; break;
-    case 0x31: actualKey = KEY_ONE; break;
-    case 0x32: actualKey = KEY_TWO; break;
-    case 0x33: actualKey = KEY_THREE; break;
-    case 0x34: actualKey = KEY_FOUR; break;
-    case 0x35: actualKey = KEY_FIVE; break;
-    case 0x36: actualKey = KEY_SIX; break;
-    case 0x37: actualKey = KEY_SEVEN; break;
-    case 0x38: actualKey = KEY_EIGHT; break;
-    case 0x39: actualKey = KEY_NINE; break;
-    case 0x41: actualKey = KEY_A; break;
-    case 0x42: actualKey = KEY_B; break;
-    case 0x43: actualKey = KEY_C; break;
-    case 0x44: actualKey = KEY_D; break;
-    case 0x45: actualKey = KEY_E; break;
-    case 0x46: actualKey = KEY_F; break;
-    case 0x47: actualKey = KEY_G; break;
-    case 0x48: actualKey = KEY_H; break;
-    case 0x49: actualKey = KEY_I; break;
-    case 0x4A: actualKey = KEY_J; break;
-    case 0x4B: actualKey = KEY_K; break;
-    case 0x4C: actualKey = KEY_L; break;
-    case 0x4D: actualKey = KEY_M; break;
-    case 0x4E: actualKey = KEY_N; break;
-    case 0x4F: actualKey = KEY_O; break;
-    case 0x50: actualKey = KEY_P; break;
-    case 0x51: actualKey = KEY_Q; break;
-    case 0x52: actualKey = KEY_R; break;
-    case 0x53: actualKey = KEY_S; break;
-    case 0x54: actualKey = KEY_T; break;
-    case 0x55: actualKey = KEY_U; break;
-    case 0x56: actualKey = KEY_V; break;
-    case 0x57: actualKey = KEY_W; break;
-    case 0x58: actualKey = KEY_X; break;
-    case 0x59: actualKey = KEY_Y; break;
-    case 0x5A: actualKey = KEY_Z; break;
+    case VK::Back: actualKey = KEY_BACKSPACE; break;
+    case VK::Space: actualKey = KEY_SPACE; break;
+    case VK::Escape: actualKey = KEY_ESCAPE; break;
+    case VK::Enter: actualKey = KEY_ENTER; break;
+    case VK::Delete: actualKey = KEY_DELETE; break;
+    case VK::Right: actualKey = KEY_RIGHT; break;
+    case VK::Left: actualKey = KEY_LEFT; break;
+    case VK::Down: actualKey = KEY_DOWN; break;
+    case VK::Up: actualKey = KEY_UP; break;
+    case VK::F1: actualKey = KEY_F1; break;
+    case VK::F2: actualKey = KEY_F2; break;
+    case VK::F3: actualKey = KEY_F3; break;
+    case VK::F4: actualKey = KEY_F4; break;
+    case VK::F5: actualKey = KEY_F5; break;
+    case VK::F6: actualKey = KEY_F6; break;
+    case VK::F7: actualKey = KEY_F7; break;
+    case VK::F8: actualKey = KEY_F8; break;
+    case VK::F9: actualKey = KEY_F9; break;
+    case VK::F10: actualKey = KEY_F10; break;
+    case VK::F11: actualKey = KEY_F11; break;
+    case VK::F12: actualKey = KEY_F12; break;
+    case VK::LeftShift: actualKey = KEY_LEFT_SHIFT; break;
+    case VK::LeftControl: actualKey = KEY_LEFT_CONTROL; break;
+    case VK::LeftMenu: actualKey = KEY_LEFT_ALT; break;
+    case VK::RightShift: actualKey = KEY_RIGHT_SHIFT; break;
+    case VK::RightControl: actualKey = KEY_RIGHT_CONTROL; break;
+    case VK::RightMenu: actualKey = KEY_RIGHT_ALT; break;
+    case VK::Number0: actualKey = KEY_ZERO; break;
+    case VK::Number1: actualKey = KEY_ONE; break;
+    case VK::Number2: actualKey = KEY_TWO; break;
+    case VK::Number3: actualKey = KEY_THREE; break;
+    case VK::Number4: actualKey = KEY_FOUR; break;
+    case VK::Number5: actualKey = KEY_FIVE; break;
+    case VK::Number6: actualKey = KEY_SIX; break;
+    case VK::Number7: actualKey = KEY_SEVEN; break;
+    case VK::Number8: actualKey = KEY_EIGHT; break;
+    case VK::Number9: actualKey = KEY_NINE; break;
+    case VK::NumberPad0: actualKey = KEY_KP_0; break;
+    case VK::NumberPad1: actualKey = KEY_KP_1; break;
+    case VK::NumberPad2: actualKey = KEY_KP_2; break;
+    case VK::NumberPad3: actualKey = KEY_KP_3; break;
+    case VK::NumberPad4: actualKey = KEY_KP_4; break;
+    case VK::NumberPad5: actualKey = KEY_KP_5; break;
+    case VK::NumberPad6: actualKey = KEY_KP_6; break;
+    case VK::NumberPad7: actualKey = KEY_KP_7; break;
+    case VK::NumberPad8: actualKey = KEY_KP_8; break;
+    case VK::NumberPad9: actualKey = KEY_KP_9; break;
+    case VK::Decimal: actualKey = KEY_KP_DECIMAL; break;
+    case VK::Divide: actualKey = KEY_KP_DIVIDE; break;
+    case VK::Multiply: actualKey = KEY_KP_MULTIPLY; break;
+    case VK::Subtract: actualKey = KEY_KP_SUBTRACT; break;
+    case VK::Add: actualKey = KEY_KP_ADD; break;
+    // UWP Doesn't have a specific keypad enter or equal...
+    case VK::A: actualKey = KEY_A; break;
+    case VK::B: actualKey = KEY_B; break;
+    case VK::C: actualKey = KEY_C; break;
+    case VK::D: actualKey = KEY_D; break;
+    case VK::E: actualKey = KEY_E; break;
+    case VK::F: actualKey = KEY_F; break;
+    case VK::G: actualKey = KEY_G; break;
+    case VK::H: actualKey = KEY_H; break;
+    case VK::I: actualKey = KEY_I; break;
+    case VK::J: actualKey = KEY_J; break;
+    case VK::K: actualKey = KEY_K; break;
+    case VK::L: actualKey = KEY_L; break;
+    case VK::M: actualKey = KEY_M; break;
+    case VK::N: actualKey = KEY_N; break;
+    case VK::O: actualKey = KEY_O; break;
+    case VK::P: actualKey = KEY_P; break;
+    case VK::Q: actualKey = KEY_Q; break;
+    case VK::R: actualKey = KEY_R; break;
+    case VK::S: actualKey = KEY_S; break;
+    case VK::T: actualKey = KEY_T; break;
+    case VK::U: actualKey = KEY_U; break;
+    case VK::V: actualKey = KEY_V; break;
+    case VK::W: actualKey = KEY_W; break;
+    case VK::X: actualKey = KEY_X; break;
+    case VK::Y: actualKey = KEY_Y; break;
+    case VK::Z: actualKey = KEY_Z; break;
+    // I don't think we can have any more
     }
     return actualKey;
 }
@@ -498,8 +520,9 @@ void App::OnKeyDown(Windows::UI::Core::CoreWindow^ sender, Windows::UI::Core::Ke
 {
     auto k = GetRaylibKey(args->VirtualKey);
     auto controlState = (sender->GetKeyState(Windows::System::VirtualKey::Control) & Windows::UI::Core::CoreVirtualKeyStates::Down) == Windows::UI::Core::CoreVirtualKeyStates::Down;
-    if (k != -1)
+    if (k != -1) {
         UWPKeyDownEvent(k, true, controlState);
+    }
     args->Handled = true;
 }
 
