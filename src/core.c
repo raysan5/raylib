@@ -4321,7 +4321,7 @@ static EM_BOOL EmscriptenFullscreenChangeCallback(int eventType, const Emscripte
 // Register keyboard input events
 static EM_BOOL EmscriptenKeyboardCallback(int eventType, const EmscriptenKeyboardEvent *keyEvent, void *userData)
 {
-    if ((eventType == EMSCRIPTEN_EVENT_KEYPRESS) && (strcmp(keyEvent->code, "Escape") == 0))
+    if ((eventType == EMSCRIPTEN_EVENT_KEYPRESS) && (keyEvent->key == 27))  // ESCAPE key
     {
         emscripten_exit_pointerlock();
     }
