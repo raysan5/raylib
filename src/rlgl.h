@@ -663,6 +663,7 @@ RLAPI int GetPixelDataSize(int width, int height, int format);// Get pixel data 
 #endif
 
 #if defined(GRAPHICS_API_OPENGL_ES2)
+    #define GL_GLEXT_PROTOTYPES
     #include <EGL/egl.h>                // EGL library
     #include <GLES2/gl2.h>              // OpenGL ES 2.0 library
     #include <GLES2/gl2ext.h>           // OpenGL ES 2.0 extensions library
