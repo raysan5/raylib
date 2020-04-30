@@ -255,6 +255,7 @@
     #include "EGL/egl.h"            // Khronos EGL library - Native platform display device control functions
     #include "EGL/eglext.h"         // Khronos EGL library - Extensions
     #include "GLES2/gl2.h"          // Khronos OpenGL ES 2.0 library
+    #include "uwp_events.h"         // UWP bootstrapping functions
 #endif
 
 #if defined(PLATFORM_WEB)
@@ -1249,9 +1250,7 @@ void EnableCursor(void)
     CORE.Input.Mouse.cursorLockRequired = true;
 #endif
 #if defined(PLATFORM_UWP)
-    UWPMessage *msg = CreateUWPMessage();
-    msg->type = UWP_MSG_LOCK_MOUSE;
-    SendMessageToUWP(msg);
+    UWPGetMouseUnlockFunc()();
 #endif
     CORE.Input.Mouse.cursorHidden = false;
 }
@@ -1266,9 +1265,7 @@ void DisableCursor(void)
     CORE.Input.Mouse.cursorLockRequired = true;
 #endif
 #if defined(PLATFORM_UWP)
-    UWPMessage *msg = CreateUWPMessage();
-    msg->type = UWP_MSG_UNLOCK_MOUSE;
-    SendMessageToUWP(msg);
+    UWPGetMouseLockFunc()();
 #endif
     CORE.Input.Mouse.cursorHidden = true;
 }
@@ -2640,11 +2637,7 @@ void SetMousePosition(int x, int y)
     glfwSetCursorPos(CORE.Window.handle, CORE.Input.Mouse.position.x, CORE.Input.Mouse.position.y);
 #endif
 #if defined(PLATFORM_UWP)
-    UWPMessage *msg = CreateUWPMessage();
-    msg->type = UWP_MSG_SET_MOUSE_LOCATION;
-    msg->paramVector0.x = CORE.Input.Mouse.position.x;
-    msg->paramVector0.y = CORE.Input.Mouse.position.y;
-    SendMessageToUWP(msg);
+    UWPGetMouseSetPosFunc()(x, y);
 #endif
 }
 
@@ -5138,6 +5131,165 @@ static void *GamepadThread(void *arg)
 #endif      // PLATFORM_RPI
 
 #if defined(PLATFORM_UWP)
+
+static UWPQueryTimeFunc uwpQueryTimeFunc = NULL;
+static UWPSleepFunc uwpSleepFunc = NULL;
+static UWPDisplaySizeFunc uwpDisplaySizeFunc = NULL;
+static UWPMouseFunc uwpMouseLockFunc = NULL;
+static UWPMouseFunc uwpMouseUnlockFunc = NULL;
+static UWPMouseFunc uwpMouseShowFunc = NULL;
+static UWPMouseFunc uwpMouseHideFunc = NULL;
+static UWPMouseSetPosFunc uwpMouseSetPosFunc = NULL;
+static void* uwpCoreWindow = NULL;
+
+bool UWPIsConfigured()
+{
+    bool pass = true;
+    if (uwpQueryTimeFunc == NULL)
+    {
+        TRACELOG(LOG_ERROR, "You must call UWPSetQueryTimeFunc with a valid function before calling InitWindow()");
+        pass = false;
+    }
+
+    if (uwpSleepFunc == NULL)
+    {
+        TRACELOG(LOG_ERROR, "You must call UWPSetSleepFunc with a valid function before calling InitWindow()");
+        pass = false;
+    }
+
+    if (uwpDisplaySizeFunc == NULL)
+    {
+        TRACELOG(LOG_ERROR, "You must call UWPSetDisplaySizeFunc with a valid function before calling InitWindow()");
+        pass = false;
+    }
+
+    if (uwpMouseLockFunc == NULL)
+    {
+        TRACELOG(LOG_ERROR, "You must call UWPSetMouseLockFunc with a valid function before calling InitWindow()");
+        pass = false;
+    }
+
+    if (uwpMouseUnlockFunc == NULL)
+    {
+        TRACELOG(LOG_ERROR, "You must call UWPSetMouseUnlockFunc with a valid function before calling InitWindow()");
+        pass = false;
+    }
+
+    if (uwpMouseShowFunc == NULL)
+    {
+        TRACELOG(LOG_ERROR, "You must call UWPSetMouseShowFunc with a valid function before calling InitWindow()");
+        pass = false;
+    }
+
+    if (uwpMouseHideFunc == NULL)
+    {
+        TRACELOG(LOG_ERROR, "You must call UWPSetMouseHideFunc with a valid function before calling InitWindow()");
+        pass = false;
+    }
+
+    if (uwpMouseSetPosFunc == NULL)
+    {
+        TRACELOG(LOG_ERROR, "You must call UWPSetMouseSetPosFunc with a valid function before calling InitWindow()");
+        pass = false;
+    }
+
+    if (uwpCoreWindow == NULL)
+    {
+        TRACELOG(LOG_ERROR, "You must set a pointer to the UWP core window before calling InitWindow()");
+        pass = false;
+    }
+    return pass;
+}
+
+UWPQueryTimeFunc UWPGetQueryTimeFunc(void)
+{
+    return uwpQueryTimeFunc;
+}
+
+void UWPSetQueryTimeFunc(UWPQueryTimeFunc func)
+{
+    uwpQueryTimeFunc = func;
+}
+
+UWPSleepFunc UWPGetSleepFunc(void)
+{
+    return uwpSleepFunc;
+}
+
+void UWPSetSleepFunc(UWPSleepFunc func)
+{
+    uwpSleepFunc = func;
+}
+
+UWPDisplaySizeFunc UWPGetDisplaySizeFunc(void)
+{
+    return uwpDisplaySizeFunc;
+}
+
+void UWPSetDisplaySizeFunc(UWPDisplaySizeFunc func)
+{
+    uwpDisplaySizeFunc = func;
+}
+
+UWPMouseFunc UWPGetMouseLockFunc()
+{
+    return uwpMouseLockFunc;
+}
+
+void UWPSetMouseLockFunc(UWPMouseFunc func)
+{
+    uwpMouseLockFunc = func;
+}
+
+UWPMouseFunc UWPGetMouseUnlockFunc()
+{
+    return uwpMouseUnlockFunc;
+}
+
+void UWPSetMouseUnlockFunc(UWPMouseFunc func)
+{
+    uwpMouseUnlockFunc = func;
+}
+
+UWPMouseFunc UWPGetMouseShowFunc()
+{
+    return uwpMouseShowFunc;
+}
+
+void UWPSetMouseShowFunc(UWPMouseFunc func)
+{
+    uwpMouseShowFunc = func;
+}
+
+UWPMouseFunc UWPGetMouseHideFunc()
+{
+    return uwpMouseHideFunc;
+}
+
+void UWPSetMouseHideFunc(UWPMouseFunc func)
+{
+    uwpMouseHideFunc = func;
+}
+
+UWPMouseSetPosFunc UWPGetMouseSetPosFunc()
+{
+    return uwpMouseSetPosFunc;
+}
+
+void UWPSetMouseSetPosFunc(UWPMouseSetPosFunc func)
+{
+    uwpMouseSetPosFunc = func;
+}
+
+void* UWPGetCoreWindowPtr()
+{
+    return uwpCoreWindow;
+}
+
+void UWPSetCoreWindowPtr(void* ptr)
+{
+    uwpCoreWindow = ptr;
+}
 
 void UWPMouseWheelEvent(int deltaY)
 {

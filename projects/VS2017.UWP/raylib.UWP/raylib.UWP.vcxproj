@@ -42,6 +42,7 @@
     <ClInclude Include="..\..\..\src\raymath.h" />
     <ClInclude Include="..\..\..\src\rlgl.h" />
     <ClInclude Include="..\..\..\src\utils.h" />
+    <ClInclude Include="..\..\..\src\uwp_events.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\..\..\src\core.c" />
