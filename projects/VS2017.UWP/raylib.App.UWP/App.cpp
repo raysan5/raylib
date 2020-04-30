@@ -5,6 +5,7 @@
 
 #include <raylib.h>
 #include <uwp_events.h>
+#include <gestures.h>
 
 #include <chrono>
 #include <thread>
@@ -403,13 +404,18 @@ void App::OnVisibilityChanged(Windows::UI::Core::CoreWindow^ sender, Windows::UI
 void App::OnPointerPressed(Windows::UI::Core::CoreWindow^ sender, Windows::UI::Core::PointerEventArgs^ args)
 {
     auto props = args->CurrentPoint->Properties;
+    auto device = args->CurrentPoint->PointerDevice;
 
-    // TODO: UWP Touch input/simulation.
-    if (args->CurrentPoint->PointerDevice->PointerDeviceType == Windows::Devices::Input::PointerDeviceType::Mouse)
+    if (device->PointerDeviceType == Windows::Devices::Input::PointerDeviceType::Mouse)
     {
         if (props->IsLeftButtonPressed) UWPMouseButtonEvent(MOUSE_LEFT_BUTTON, true);
         if (props->IsMiddleButtonPressed) UWPMouseButtonEvent(MOUSE_MIDDLE_BUTTON, true);
         if (props->IsRightButtonPressed) UWPMouseButtonEvent(MOUSE_RIGHT_BUTTON, true);
+    }
+    else if (device->PointerDeviceType == PointerDeviceType::Touch)
+    {
+        auto pos = args->CurrentPoint->Position;
+        UWPGestureTouch(args->CurrentPoint->PointerId, pos.X, pos.Y, true);
     }
 
     args->Handled = true;
@@ -418,13 +424,18 @@ void App::OnPointerPressed(Windows::UI::Core::CoreWindow^ sender, Windows::UI::C
 void App::OnPointerReleased(Windows::UI::Core::CoreWindow^ sender, Windows::UI::Core::PointerEventArgs^ args)
 {
     auto props = args->CurrentPoint->Properties;
+    auto device = args->CurrentPoint->PointerDevice;
 
-    // TODO: UWP Touch input.
-    if (args->CurrentPoint->PointerDevice->PointerDeviceType == Windows::Devices::Input::PointerDeviceType::Mouse)
+    if (device->PointerDeviceType == PointerDeviceType::Mouse)
     {
         if (!props->IsLeftButtonPressed) UWPMouseButtonEvent(MOUSE_LEFT_BUTTON, false);
         if (!props->IsMiddleButtonPressed) UWPMouseButtonEvent(MOUSE_MIDDLE_BUTTON, false);
         if (!props->IsRightButtonPressed) UWPMouseButtonEvent(MOUSE_RIGHT_BUTTON, false);
+    }
+    else if (device->PointerDeviceType == PointerDeviceType::Touch)
+    {
+        auto pos = args->CurrentPoint->Position;
+        UWPGestureTouch(args->CurrentPoint->PointerId, pos.X, pos.Y, false);
     }
 
     args->Handled = true;
@@ -439,8 +450,15 @@ void App::OnPointerWheelChanged(Windows::UI::Core::CoreWindow^ sender, Windows::
 void App::OnPointerMoved(Windows::UI::Core::CoreWindow^ sender, Windows::UI::Core::PointerEventArgs^ args)
 {
     auto pos = args->CurrentPoint->Position;
-    UWPMousePosEvent((double)pos.X, (double)pos.Y);
-    args->Handled = true;
+    if (args->CurrentPoint->PointerDevice->PointerDeviceType == PointerDeviceType::Mouse)
+    {
+        UWPMousePosEvent((double)pos.X, (double)pos.Y);
+        args->Handled = true;
+    }
+    else if (args->CurrentPoint->PointerDevice->PointerDeviceType == PointerDeviceType::Touch)
+    {
+        UWPGestureMove(args->CurrentPoint->PointerId, pos.X, pos.Y);
+    }
 }
 
 int App::GetRaylibKey(Windows::System::VirtualKey kVey)

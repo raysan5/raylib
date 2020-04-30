@@ -100,6 +100,12 @@ void UWPRegisterGamepadButton(int gamepad, int button, bool down);
 // Call when a gamepad axis state changes
 void UWPRegisterGamepadAxis(int gamepad, int axis, float value);
 
+// Call when the touch point moves
+void UWPGestureMove(int pointer, float x, float y);
+
+// Call when there is a touch down or up
+void UWPGestureTouch(int pointer, float x, float y, bool touch);
+
 // Set the core window pointer so that we can pass it to EGL.
 void* UWPGetCoreWindowPtr();
 void UWPSetCoreWindowPtr(void* ptr);
