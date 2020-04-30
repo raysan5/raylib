@@ -5150,7 +5150,8 @@ static void *GamepadThread(void *arg)
 #endif      // PLATFORM_RPI
 
 #if defined(PLATFORM_UWP)
-
+// UWP function pointers
+// NOTE: Those pointers are set by UWP App
 static UWPQueryTimeFunc uwpQueryTimeFunc = NULL;
 static UWPSleepFunc uwpSleepFunc = NULL;
 static UWPDisplaySizeFunc uwpDisplaySizeFunc = NULL;
@@ -5159,165 +5160,48 @@ static UWPMouseFunc uwpMouseUnlockFunc = NULL;
 static UWPMouseFunc uwpMouseShowFunc = NULL;
 static UWPMouseFunc uwpMouseHideFunc = NULL;
 static UWPMouseSetPosFunc uwpMouseSetPosFunc = NULL;
-static void* uwpCoreWindow = NULL;
+static void *uwpCoreWindow = NULL;
 
+// Check all required UWP function pointers have been set
 bool UWPIsConfigured()
 {
     bool pass = true;
-    if (uwpQueryTimeFunc == NULL)
-    {
-        TRACELOG(LOG_ERROR, "You must call UWPSetQueryTimeFunc with a valid function before calling InitWindow()");
-        pass = false;
-    }
 
-    if (uwpSleepFunc == NULL)
-    {
-        TRACELOG(LOG_ERROR, "You must call UWPSetSleepFunc with a valid function before calling InitWindow()");
-        pass = false;
-    }
+    if (uwpQueryTimeFunc == NULL) { TRACELOG(LOG_ERROR, "UWP: UWPSetQueryTimeFunc() must be called with a valid function before InitWindow()"); pass = false; }
+    if (uwpSleepFunc == NULL) { TRACELOG(LOG_ERROR, "UWP: UWPSetSleepFunc() must be called with a valid function before InitWindow()"); pass = false; }
+    if (uwpDisplaySizeFunc == NULL) { TRACELOG(LOG_ERROR, "UWP: UWPSetDisplaySizeFunc() must be called with a valid function before InitWindow()"); pass = false; }
+    if (uwpMouseLockFunc == NULL) { TRACELOG(LOG_ERROR, "UWP: UWPSetMouseLockFunc() must be called with a valid function before InitWindow()"); pass = false; }
+    if (uwpMouseUnlockFunc == NULL) { TRACELOG(LOG_ERROR, "UWP: UWPSetMouseUnlockFunc() must be called with a valid function before InitWindow()"); pass = false; }
+    if (uwpMouseShowFunc == NULL) { TRACELOG(LOG_ERROR, "UWP: UWPSetMouseShowFunc() must be called with a valid function before InitWindow()"); pass = false; }
+    if (uwpMouseHideFunc == NULL) { TRACELOG(LOG_ERROR, "UWP: UWPSetMouseHideFunc() must be called with a valid function before InitWindow()"); pass = false; }
+    if (uwpMouseSetPosFunc == NULL) { TRACELOG(LOG_ERROR, "UWP: UWPSetMouseSetPosFunc() must be called with a valid function before InitWindow()"); pass = false; }
+    if (uwpCoreWindow == NULL) { TRACELOG(LOG_ERROR, "UWP: A pointer to the UWP core window must be set before InitWindow()"); pass = false; }
 
-    if (uwpDisplaySizeFunc == NULL)
-    {
-        TRACELOG(LOG_ERROR, "You must call UWPSetDisplaySizeFunc with a valid function before calling InitWindow()");
-        pass = false;
-    }
-
-    if (uwpMouseLockFunc == NULL)
-    {
-        TRACELOG(LOG_ERROR, "You must call UWPSetMouseLockFunc with a valid function before calling InitWindow()");
-        pass = false;
-    }
-
-    if (uwpMouseUnlockFunc == NULL)
-    {
-        TRACELOG(LOG_ERROR, "You must call UWPSetMouseUnlockFunc with a valid function before calling InitWindow()");
-        pass = false;
-    }
-
-    if (uwpMouseShowFunc == NULL)
-    {
-        TRACELOG(LOG_ERROR, "You must call UWPSetMouseShowFunc with a valid function before calling InitWindow()");
-        pass = false;
-    }
-
-    if (uwpMouseHideFunc == NULL)
-    {
-        TRACELOG(LOG_ERROR, "You must call UWPSetMouseHideFunc with a valid function before calling InitWindow()");
-        pass = false;
-    }
-
-    if (uwpMouseSetPosFunc == NULL)
-    {
-        TRACELOG(LOG_ERROR, "You must call UWPSetMouseSetPosFunc with a valid function before calling InitWindow()");
-        pass = false;
-    }
-
-    if (uwpCoreWindow == NULL)
-    {
-        TRACELOG(LOG_ERROR, "You must set a pointer to the UWP core window before calling InitWindow()");
-        pass = false;
-    }
     return pass;
 }
-void UWPSetDataPath(const char* path)
-{
-    CORE.UWP.internalDataPath = path;
-}
 
-UWPQueryTimeFunc UWPGetQueryTimeFunc(void)
-{
-    return uwpQueryTimeFunc;
-}
+// UWP function handlers get/set
+void UWPSetDataPath(const char* path) { CORE.UWP.internalDataPath = path; }
+UWPQueryTimeFunc UWPGetQueryTimeFunc(void) { return uwpQueryTimeFunc; }
+void UWPSetQueryTimeFunc(UWPQueryTimeFunc func) { uwpQueryTimeFunc = func; }
+UWPSleepFunc UWPGetSleepFunc(void) { return uwpSleepFunc; }
+void UWPSetSleepFunc(UWPSleepFunc func) { uwpSleepFunc = func; }
+UWPDisplaySizeFunc UWPGetDisplaySizeFunc(void) { return uwpDisplaySizeFunc; }
+void UWPSetDisplaySizeFunc(UWPDisplaySizeFunc func) { uwpDisplaySizeFunc = func; }
+UWPMouseFunc UWPGetMouseLockFunc() { return uwpMouseLockFunc; }
+void UWPSetMouseLockFunc(UWPMouseFunc func) { uwpMouseLockFunc = func; }
+UWPMouseFunc UWPGetMouseUnlockFunc() { return uwpMouseUnlockFunc; }
+void UWPSetMouseUnlockFunc(UWPMouseFunc func) { uwpMouseUnlockFunc = func; }
+UWPMouseFunc UWPGetMouseShowFunc() { return uwpMouseShowFunc; }
+void UWPSetMouseShowFunc(UWPMouseFunc func) { uwpMouseShowFunc = func; }
+UWPMouseFunc UWPGetMouseHideFunc() { return uwpMouseHideFunc; }
+void UWPSetMouseHideFunc(UWPMouseFunc func) { uwpMouseHideFunc = func; }
+UWPMouseSetPosFunc UWPGetMouseSetPosFunc() { return uwpMouseSetPosFunc; }
+void UWPSetMouseSetPosFunc(UWPMouseSetPosFunc func) { uwpMouseSetPosFunc = func; }
 
-void UWPSetQueryTimeFunc(UWPQueryTimeFunc func)
-{
-    uwpQueryTimeFunc = func;
-}
-
-UWPSleepFunc UWPGetSleepFunc(void)
-{
-    return uwpSleepFunc;
-}
-
-void UWPSetSleepFunc(UWPSleepFunc func)
-{
-    uwpSleepFunc = func;
-}
-
-UWPDisplaySizeFunc UWPGetDisplaySizeFunc(void)
-{
-    return uwpDisplaySizeFunc;
-}
-
-void UWPSetDisplaySizeFunc(UWPDisplaySizeFunc func)
-{
-    uwpDisplaySizeFunc = func;
-}
-
-UWPMouseFunc UWPGetMouseLockFunc()
-{
-    return uwpMouseLockFunc;
-}
-
-void UWPSetMouseLockFunc(UWPMouseFunc func)
-{
-    uwpMouseLockFunc = func;
-}
-
-UWPMouseFunc UWPGetMouseUnlockFunc()
-{
-    return uwpMouseUnlockFunc;
-}
-
-void UWPSetMouseUnlockFunc(UWPMouseFunc func)
-{
-    uwpMouseUnlockFunc = func;
-}
-
-UWPMouseFunc UWPGetMouseShowFunc()
-{
-    return uwpMouseShowFunc;
-}
-
-void UWPSetMouseShowFunc(UWPMouseFunc func)
-{
-    uwpMouseShowFunc = func;
-}
-
-UWPMouseFunc UWPGetMouseHideFunc()
-{
-    return uwpMouseHideFunc;
-}
-
-void UWPSetMouseHideFunc(UWPMouseFunc func)
-{
-    uwpMouseHideFunc = func;
-}
-
-UWPMouseSetPosFunc UWPGetMouseSetPosFunc()
-{
-    return uwpMouseSetPosFunc;
-}
-
-void UWPSetMouseSetPosFunc(UWPMouseSetPosFunc func)
-{
-    uwpMouseSetPosFunc = func;
-}
-
-void* UWPGetCoreWindowPtr()
-{
-    return uwpCoreWindow;
-}
-
-void UWPSetCoreWindowPtr(void* ptr)
-{
-    uwpCoreWindow = ptr;
-}
-
-void UWPMouseWheelEvent(int deltaY)
-{
-    CORE.Input.Mouse.currentWheelMove = (int)deltaY;
-}
+void *UWPGetCoreWindowPtr() { return uwpCoreWindow; }
+void UWPSetCoreWindowPtr(void* ptr) { uwpCoreWindow = ptr; }
+void UWPMouseWheelEvent(int deltaY) { CORE.Input.Mouse.currentWheelMove = (int)deltaY; }
 
 void UWPKeyDownEvent(int key, bool down, bool controlKey)
 {
@@ -5341,7 +5225,6 @@ void UWPKeyDownEvent(int key, bool down, bool controlKey)
                 // saveFileFromMEMFSToDisk() function is defined in raylib/templates/web_shel/shell.html
                 emscripten_run_script(TextFormat("saveFileFromMEMFSToDisk('%s','%s')", TextFormat("screenrec%03i.gif", screenshotCounter - 1), TextFormat("screenrec%03i.gif", screenshotCounter - 1)));
 #endif
-
                 TRACELOG(LOG_INFO, "SYSTEM: Finish animated GIF recording");
             }
             else
@@ -5350,15 +5233,8 @@ void UWPKeyDownEvent(int key, bool down, bool controlKey)
                 gifFramesCounter = 0;
 
                 char path[512] = { 0 };
-#if defined(PLATFORM_ANDROID)
-                strcpy(path, CORE.Android.internalDataPath);
-                strcat(path, TextFormat("./screenrec%03i.gif", screenshotCounter));
-#elif defined(PLATFORM_UWP)
                 strcpy(path, CORE.UWP.internalDataPath);
                 strcat(path, TextFormat("./screenrec%03i.gif", screenshotCounter));
-#else
-                strcpy(path, TextFormat("./screenrec%03i.gif", screenshotCounter));
-#endif
 
                 // NOTE: delay represents the time between frames in the gif, if we capture a gif frame every
                 // 10 game frames and each frame trakes 16.6ms (60fps), delay between gif frames should be ~16.6*10.
@@ -5472,15 +5348,15 @@ void UWPResizeEvent(int width, int height)
 
 void UWPActivateGamepadEvent(int gamepad, bool active)
 {
-    if (gamepad < MAX_GAMEPADS) {
-        CORE.Input.Gamepad.ready[gamepad] = active;
-    }
+    if (gamepad < MAX_GAMEPADS) CORE.Input.Gamepad.ready[gamepad] = active;
 }
 
 void UWPRegisterGamepadButton(int gamepad, int button, bool down)
 {
-    if (gamepad < MAX_GAMEPADS) {
-        if (button < MAX_GAMEPAD_BUTTONS) {
+    if (gamepad < MAX_GAMEPADS)
+    {
+        if (button < MAX_GAMEPAD_BUTTONS)
+        {
             CORE.Input.Gamepad.currentState[gamepad][button] = down;
             CORE.Input.Gamepad.lastButtonPressed = button;
         }
@@ -5491,10 +5367,7 @@ void UWPRegisterGamepadAxis(int gamepad, int axis, float value)
 {
     if (gamepad < MAX_GAMEPADS)
     {
-        if (axis < MAX_GAMEPAD_AXIS)
-        {
-            CORE.Input.Gamepad.axisState[gamepad][axis] = value;
-        }
+        if (axis < MAX_GAMEPAD_AXIS) CORE.Input.Gamepad.axisState[gamepad][axis] = value;
     }
 }
 
