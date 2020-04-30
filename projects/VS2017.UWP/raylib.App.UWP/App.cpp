@@ -79,6 +79,7 @@ void App::SetWindow(Windows::UI::Core::CoreWindow^ window)
     // Hook keyboard events.
     window->KeyDown += ref new TypedEventHandler<CoreWindow^, KeyEventArgs^>(this, &App::OnKeyDown);
     window->KeyUp += ref new TypedEventHandler<CoreWindow^, KeyEventArgs^>(this, &App::OnKeyUp);
+    window->CharacterReceived += ref new Windows::Foundation::TypedEventHandler<Windows::UI::Core::CoreWindow^, Windows::UI::Core::CharacterReceivedEventArgs^>(this, &raylibUWP::App::OnCharacterReceived);
 
     // The CoreWindow has been created, we can pass this to raylib for EGL context creation when it's time
     UWPSetCoreWindowPtr((void*)window);
@@ -446,6 +447,11 @@ void App::OnKeyUp(Windows::UI::Core::CoreWindow^ sender, Windows::UI::Core::KeyE
     if (k != -1)
         UWPKeyDownEvent(k, false, false);
     args->Handled = true;
+}
+
+void App::OnCharacterReceived(Windows::UI::Core::CoreWindow^ sender, Windows::UI::Core::CharacterReceivedEventArgs^ args)
+{
+    UWPKeyCharEvent(args->KeyCode);
 }
 
 // AppSource implementation

@@ -36,6 +36,7 @@ extern "C" {
 // Determine if UWP functions are set and ready for raylib's use.
 bool UWPIsConfigured();
 
+// Call this to set the UWP data path you wish for saving and loading.
 void UWPSetDataPath(const char* path);
 
 // Function for getting program time.
@@ -74,6 +75,9 @@ void UWPSetMouseSetPosFunc(UWPMouseSetPosFunc func);
 
 // Call this when a Key is pressed or released.
 void UWPKeyDownEvent(int key, bool down, bool controlKey);
+
+// Call this on the CoreWindow::CharacterRecieved event
+void UWPKeyCharEvent(int key);
 
 // Call when a mouse button state changes
 void UWPMouseButtonEvent(int button, bool down);

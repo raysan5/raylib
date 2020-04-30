@@ -2233,6 +2233,10 @@ void SaveStorageValue(unsigned int position, int value)
     strcpy(path, CORE.Android.internalDataPath);
     strcat(path, "/");
     strcat(path, STORAGE_DATA_FILE);
+#elif defined(PLATFORM_UWP)
+    strcpy(path, CORE.UWP.internalDataPath);
+    strcat(path, "/");
+    strcat(path, STORAGE_DATA_FILE);
 #else
     strcpy(path, STORAGE_DATA_FILE);
 #endif
@@ -2304,6 +2308,10 @@ int LoadStorageValue(unsigned int position)
     char path[512] = { 0 };
 #if defined(PLATFORM_ANDROID)
     strcpy(path, CORE.Android.internalDataPath);
+    strcat(path, "/");
+    strcat(path, STORAGE_DATA_FILE);
+#elif defined(PLATFORM_UWP)
+    strcpy(path, CORE.UWP.internalDataPath);
     strcat(path, "/");
     strcat(path, STORAGE_DATA_FILE);
 #else
@@ -5371,14 +5379,16 @@ void UWPKeyDownEvent(int key, bool down, bool controlKey)
     {
         CORE.Input.Keyboard.currentKeyState[key] = down;
     }
+}
 
-    // TODO:
-    /*if (CORE.Input.Keyboard.keyPressedQueueCount < MAX_CHARS_QUEUE)
+void UWPKeyCharEvent(int key)
+{
+    if (CORE.Input.Keyboard.keyPressedQueueCount < MAX_CHARS_QUEUE)
     {
         // Add character to the queue
         CORE.Input.Keyboard.keyPressedQueue[CORE.Input.Keyboard.keyPressedQueueCount] = key;
         CORE.Input.Keyboard.keyPressedQueueCount++;
-    }*/
+    }
 }
 
 void UWPMouseButtonEvent(int button, bool down)
