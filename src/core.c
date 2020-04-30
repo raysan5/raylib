@@ -2689,7 +2689,7 @@ int GetTouchX(void)
 {
 #if defined(PLATFORM_ANDROID) || defined(PLATFORM_WEB) || defined(PLATFORM_UWP)
     return (int)CORE.Input.Touch.position[0].x;
-#else   // PLATFORM_DESKTOP, PLATFORM_RPI, PLATFORM_UWP
+#else   // PLATFORM_DESKTOP, PLATFORM_RPI
     return GetMouseX();
 #endif
 }
@@ -2699,7 +2699,7 @@ int GetTouchY(void)
 {
 #if defined(PLATFORM_ANDROID) || defined(PLATFORM_WEB) || defined(PLATFORM_UWP)
     return (int)CORE.Input.Touch.position[0].y;
-#else   // PLATFORM_DESKTOP, PLATFORM_RPI, PLATFORM_UWP
+#else   // PLATFORM_DESKTOP, PLATFORM_RPI
     return GetMouseY();
 #endif
 }
