@@ -83,6 +83,10 @@ void App::SetWindow(Windows::UI::Core::CoreWindow^ window)
 
     // The CoreWindow has been created, we can pass this to raylib for EGL context creation when it's time
     UWPSetCoreWindowPtr((void*)window);
+
+    // Register backrequested event to stop window from being closed (Most noticable on XBox when B is pressed)
+    auto navigation = SystemNavigationManager::GetForCurrentView();
+    navigation->BackRequested += ref new Windows::Foundation::EventHandler<Windows::UI::Core::BackRequestedEventArgs^>(this, &raylibUWP::App::OnBackRequested);
 }
 
 void App::Load(Platform::String ^entryPoint) {} // Ignored for this example
@@ -452,6 +456,12 @@ void App::OnKeyUp(Windows::UI::Core::CoreWindow^ sender, Windows::UI::Core::KeyE
 void App::OnCharacterReceived(Windows::UI::Core::CoreWindow^ sender, Windows::UI::Core::CharacterReceivedEventArgs^ args)
 {
     UWPKeyCharEvent(args->KeyCode);
+}
+
+void App::OnBackRequested(Platform::Object^ sender, Windows::UI::Core::BackRequestedEventArgs^ args)
+{
+    // This simply stops the program from closing.
+    args->Handled = true;
 }
 
 // AppSource implementation
