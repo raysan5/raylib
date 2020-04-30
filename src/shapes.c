@@ -1298,7 +1298,7 @@ void DrawTriangleStrip(Vector2 *points, int pointsCount, Color color)
 {
     if (pointsCount >= 3)
     {
-        if (rlCheckBufferLimit(pointsCount)) rlglDraw();
+        if (rlCheckBufferLimit(3*(pointsCount - 2))) rlglDraw();
 
         rlBegin(RL_TRIANGLES);
             rlColor4ub(color.r, color.g, color.b, color.a);

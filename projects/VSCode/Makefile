@@ -180,6 +180,9 @@ ifeq ($(PLATFORM),PLATFORM_DESKTOP)
     ifeq ($(PLATFORM_OS),LINUX)
         MAKE = make
     endif
+    ifeq ($(PLATFORM_OS),OSX)
+        MAKE = make
+    endif
 endif
 
 # Define compiler flags:
@@ -355,7 +358,7 @@ OBJ_DIR = obj
 # Define all object files from source files
 SRC = $(call rwildcard, *.c, *.h)
 #OBJS = $(SRC:$(SRC_DIR)/%.c=$(OBJ_DIR)/%.o)
-OBJS = main.c
+OBJS ?= main.c
 
 # For Android platform we call a custom Makefile.Android
 ifeq ($(PLATFORM),PLATFORM_ANDROID)

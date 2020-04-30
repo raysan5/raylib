@@ -26,5 +26,7 @@ The following people has contributed with a generous donation to the raylib proj
  - Benjamin Stigsen ([@BenStigsen](https://github.com/BenStigsen))
  - Rahul Nair ([@rahulunair](https://github.com/rahulunair))
  - Snowminx ([@Gamerfiend](https://github.com/Gamerfiend))
- 
+ - Dani Martin ([@danimartin82](https://github.com/danimartin82))
+ - Tommi Sinivuo ([@TommiSinivuo](https://github.com/TommiSinivuo))
+ - Joakim Wennergren ([@joakimwennergren](https://github.com/joakimwennergren))
  

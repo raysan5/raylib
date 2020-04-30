@@ -881,7 +881,8 @@ RLAPI void InitWindow(int width, int height, const char *title);  // Initialize 
 RLAPI bool WindowShouldClose(void);                               // Check if KEY_ESCAPE pressed or Close icon pressed
 RLAPI void CloseWindow(void);                                     // Close window and unload OpenGL context
 RLAPI bool IsWindowReady(void);                                   // Check if window has been initialized successfully
-RLAPI bool IsWindowMinimized(void);                               // Check if window has been minimized (or lost focus)
+RLAPI bool IsWindowMinimized(void);                               // Check if window has been minimized
+RLAPI bool IsWindowFocused(void);                                 // Check if window has been focused
 RLAPI bool IsWindowResized(void);                                 // Check if window has been resized
 RLAPI bool IsWindowHidden(void);                                  // Check if window is currently hidden
 RLAPI bool IsWindowFullscreen(void);                              // Check if window is currently fullscreen
@@ -903,6 +904,7 @@ RLAPI int GetMonitorHeight(int monitor);                          // Get primary
 RLAPI int GetMonitorPhysicalWidth(int monitor);                   // Get primary monitor physical width in millimetres
 RLAPI int GetMonitorPhysicalHeight(int monitor);                  // Get primary monitor physical height in millimetres
 RLAPI Vector2 GetWindowPosition(void);                            // Get window position XY on monitor
+RLAPI Vector2 GetWindowScaleDPI(void);                            // Get window scale DPI factor
 RLAPI const char *GetMonitorName(int monitor);                    // Get the human-readable, UTF-8 encoded name of the primary monitor
 RLAPI const char *GetClipboardText(void);                         // Get clipboard text content
 RLAPI void SetClipboardText(const char *text);                    // Set clipboard text content

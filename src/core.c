@@ -255,6 +255,7 @@
     #include "EGL/egl.h"            // Khronos EGL library - Native platform display device control functions
     #include "EGL/eglext.h"         // Khronos EGL library - Extensions
     #include "GLES2/gl2.h"          // Khronos OpenGL ES 2.0 library
+    #include "uwp_events.h"         // UWP bootstrapping functions
 #endif
 
 #if defined(PLATFORM_WEB)
@@ -328,10 +329,6 @@ typedef struct {
 typedef struct { int x; int y; } Point;
 typedef struct { unsigned int width; unsigned int height; } Size;
 
-#if defined(PLATFORM_UWP)
-extern EGLNativeWindowType handle;          // Native window handler for UWP (external, defined in UWP App)
-#endif
-
 // Core global state context data
 typedef struct CoreData {
     struct {
@@ -352,6 +349,7 @@ typedef struct CoreData {
         const char *title;                  // Window text title const pointer
         bool ready;                         // Flag to check if window has been initialized successfully
         bool minimized;                     // Flag to check if window has been minimized
+        bool focused;                       // Flag to check if window has been focused
         bool resized;                       // Flag to check if window has been resized
         bool fullscreen;                    // Flag to check if fullscreen mode required
         bool alwaysRun;                     // Flag to keep window update/draw running on minimized
@@ -377,6 +375,11 @@ typedef struct CoreData {
         const char *internalDataPath;       // Android internal data path to write data (/data/data/<package>/files)
         bool contextRebindRequired;         // Used to know context rebind required
     } Android;
+#endif
+#if defined(PLATFORM_UWP)
+    struct {
+        const char* internalDataPath;       // UWP App data path
+    } UWP;
 #endif
     struct {
 #if defined(PLATFORM_RPI)
@@ -498,6 +501,7 @@ static void ScrollCallback(GLFWwindow *window, double xoffset, double yoffset); 
 static void CursorEnterCallback(GLFWwindow *window, int enter);                            // GLFW3 Cursor Enter Callback, cursor enters client area
 static void WindowSizeCallback(GLFWwindow *window, int width, int height);                 // GLFW3 WindowSize Callback, runs when window is resized
 static void WindowIconifyCallback(GLFWwindow *window, int iconified);                      // GLFW3 WindowIconify Callback, runs when window is minimized/restored
+static void WindowFocusCallback(GLFWwindow *window, int focused);                          // GLFW3 WindowFocus Callback, runs when window get/lose focus
 static void WindowDropCallback(GLFWwindow *window, int count, const char **paths);         // GLFW3 Window Drop Callback, runs when drop files into window
 #endif
 
@@ -608,6 +612,14 @@ static void RestoreTerminal(void)
 // NOTE: data parameter could be used to pass any kind of required data to the initialization
 void InitWindow(int width, int height, const char *title)
 {
+#if defined(PLATFORM_UWP)
+    if (!UWPIsConfigured())
+    {
+        TRACELOG(LOG_ERROR, "UWP Functions have not been set yet, please set these before initializing raylib!");
+        return;
+    }
+#endif
+
     TRACELOG(LOG_INFO, "Initializing raylib %s", RAYLIB_VERSION);
 
     CORE.Window.title = title;
@@ -616,6 +628,11 @@ void InitWindow(int width, int height, const char *title)
     CORE.Input.Keyboard.exitKey = KEY_ESCAPE;
     CORE.Input.Mouse.scale = (Vector2){ 1.0f, 1.0f };
     CORE.Input.Gamepad.lastButtonPressed = -1;
+
+#if defined(PLATFORM_UWP)
+    // The axis count is 6 (2 thumbsticks and left and right trigger)
+    CORE.Input.Gamepad.axisCount = 6;
+#endif
 
 #if defined(PLATFORM_ANDROID)
     CORE.Window.screen.width = width;
@@ -679,7 +696,9 @@ void InitWindow(int width, int height, const char *title)
     // Init graphics device (display device and OpenGL context)
     // NOTE: returns true if window and graphic device has been initialized successfully
     CORE.Window.ready = InitGraphicsDevice(width, height);
+
     if (!CORE.Window.ready) return;
+    else CORE.Window.focused = true;
 
     // Init hi-res timer
     InitTimer();
@@ -756,7 +775,7 @@ void CloseWindow(void)
     glfwTerminate();
 #endif
 
-#if !defined(SUPPORT_BUSY_WAIT_LOOP) && defined(_WIN32)
+#if !defined(SUPPORT_BUSY_WAIT_LOOP) && defined(_WIN32) && !defined(PLATFORM_UWP)
     timeEndPeriod(1);           // Restore time period
 #endif
 
@@ -842,11 +861,21 @@ bool WindowShouldClose(void)
 #endif
 }
 
-// Check if window has been minimized (or lost focus)
+// Check if window has been minimized
 bool IsWindowMinimized(void)
 {
 #if defined(PLATFORM_DESKTOP) || defined(PLATFORM_WEB) || defined(PLATFORM_UWP)
     return CORE.Window.minimized;
+#else
+    return false;
+#endif
+}
+
+// Check if window has the focus
+bool IsWindowFocused(void)
+{
+#if defined(PLATFORM_DESKTOP) || defined(PLATFORM_WEB) || defined(PLATFORM_UWP)
+    return CORE.Window.focused;
 #else
     return false;
 #endif
@@ -1138,6 +1167,21 @@ Vector2 GetWindowPosition(void)
     return (Vector2){ (float)x, (float)y };
 }
 
+// Get window scale DPI factor
+Vector2 GetWindowScaleDPI(void)
+{
+    Vector2 scale = { 1.0f, 1.0f };
+    
+#if defined(PLATFORM_DESKTOP)
+    GLFWmonitor *monitor = glfwGetPrimaryMonitor();
+
+    if (monitor != NULL) glfwGetMonitorContentScale(monitor, &scale.x, &scale.y);
+    else TRACELOG(LOG_WARNING, "GLFW: Failed to get primary monitor");
+#endif
+
+    return scale;
+}
+
 // Get the human-readable, UTF-8 encoded name of the primary monitor
 const char *GetMonitorName(int monitor)
 {
@@ -1180,9 +1224,7 @@ void ShowCursor(void)
     glfwSetInputMode(CORE.Window.handle, GLFW_CURSOR, GLFW_CURSOR_NORMAL);
 #endif
 #if defined(PLATFORM_UWP)
-    UWPMessage *msg = CreateUWPMessage();
-    msg->type = UWP_MSG_SHOW_MOUSE;
-    SendMessageToUWP(msg);
+    UWPGetMouseShowFunc()();
 #endif
     CORE.Input.Mouse.cursorHidden = false;
 }
@@ -1194,9 +1236,7 @@ void HideCursor(void)
     glfwSetInputMode(CORE.Window.handle, GLFW_CURSOR, GLFW_CURSOR_HIDDEN);
 #endif
 #if defined(PLATFORM_UWP)
-    UWPMessage *msg = CreateUWPMessage();
-    msg->type = UWP_MSG_HIDE_MOUSE;
-    SendMessageToUWP(msg);
+    UWPGetMouseHideFunc()();
 #endif
     CORE.Input.Mouse.cursorHidden = true;
 }
@@ -1217,9 +1257,7 @@ void EnableCursor(void)
     CORE.Input.Mouse.cursorLockRequired = true;
 #endif
 #if defined(PLATFORM_UWP)
-    UWPMessage *msg = CreateUWPMessage();
-    msg->type = UWP_MSG_LOCK_MOUSE;
-    SendMessageToUWP(msg);
+    UWPGetMouseUnlockFunc()();
 #endif
     CORE.Input.Mouse.cursorHidden = false;
 }
@@ -1234,9 +1272,7 @@ void DisableCursor(void)
     CORE.Input.Mouse.cursorLockRequired = true;
 #endif
 #if defined(PLATFORM_UWP)
-    UWPMessage *msg = CreateUWPMessage();
-    msg->type = UWP_MSG_UNLOCK_MOUSE;
-    SendMessageToUWP(msg);
+    UWPGetMouseLockFunc()();
 #endif
     CORE.Input.Mouse.cursorHidden = true;
 }
@@ -1321,10 +1357,6 @@ void EndDrawing(void)
         CORE.Time.previous = CORE.Time.current;
 
         CORE.Time.frame += waitTime;      // Total frame time: update + draw + wait
-
-        //SetWindowTitle(FormatText("Update: %f, Draw: %f, Req.Wait: %f, Real.Wait: %f, Total: %f, Target: %f\n",
-        //               (float)CORE.Time.update, (float)CORE.Time.draw, (float)(CORE.Time.target - (CORE.Time.update + CORE.Time.draw)),
-        //               (float)waitTime, (float)CORE.Time.frame, (float)CORE.Time.target));
     }
 }
 
@@ -1684,8 +1716,7 @@ double GetTime(void)
 #endif
 
 #if defined(PLATFORM_UWP)
-    // Updated through messages
-    return CORE.Time.current;
+    return UWPGetQueryTimeFunc()();
 #endif
 }
 
@@ -1865,6 +1896,10 @@ void TakeScreenshot(const char *fileName)
     char path[512] = { 0 };
 #if defined(PLATFORM_ANDROID)
     strcpy(path, CORE.Android.internalDataPath);
+    strcat(path, "/");
+    strcat(path, fileName);
+#elif defined(PLATFORM_UWP)
+    strcpy(path, CORE.UWP.internalDataPath);
     strcat(path, "/");
     strcat(path, fileName);
 #else
@@ -2200,6 +2235,10 @@ void SaveStorageValue(unsigned int position, int value)
     strcpy(path, CORE.Android.internalDataPath);
     strcat(path, "/");
     strcat(path, STORAGE_DATA_FILE);
+#elif defined(PLATFORM_UWP)
+    strcpy(path, CORE.UWP.internalDataPath);
+    strcat(path, "/");
+    strcat(path, STORAGE_DATA_FILE);
 #else
     strcpy(path, STORAGE_DATA_FILE);
 #endif
@@ -2271,6 +2310,10 @@ int LoadStorageValue(unsigned int position)
     char path[512] = { 0 };
 #if defined(PLATFORM_ANDROID)
     strcpy(path, CORE.Android.internalDataPath);
+    strcat(path, "/");
+    strcat(path, STORAGE_DATA_FILE);
+#elif defined(PLATFORM_UWP)
+    strcpy(path, CORE.UWP.internalDataPath);
     strcat(path, "/");
     strcat(path, STORAGE_DATA_FILE);
 #else
@@ -2613,11 +2656,7 @@ void SetMousePosition(int x, int y)
     glfwSetCursorPos(CORE.Window.handle, CORE.Input.Mouse.position.x, CORE.Input.Mouse.position.y);
 #endif
 #if defined(PLATFORM_UWP)
-    UWPMessage *msg = CreateUWPMessage();
-    msg->type = UWP_MSG_SET_MOUSE_LOCATION;
-    msg->paramVector0.x = CORE.Input.Mouse.position.x;
-    msg->paramVector0.y = CORE.Input.Mouse.position.y;
-    SendMessageToUWP(msg);
+    UWPGetMouseSetPosFunc()(x, y);
 #endif
 }
 
@@ -2650,7 +2689,7 @@ int GetMouseWheelMove(void)
 // Returns touch position X for touch point 0 (relative to screen size)
 int GetTouchX(void)
 {
-#if defined(PLATFORM_ANDROID) || defined(PLATFORM_WEB)
+#if defined(PLATFORM_ANDROID) || defined(PLATFORM_WEB) || defined(PLATFORM_UWP)
     return (int)CORE.Input.Touch.position[0].x;
 #else   // PLATFORM_DESKTOP, PLATFORM_RPI
     return GetMouseX();
@@ -2660,7 +2699,7 @@ int GetTouchX(void)
 // Returns touch position Y for touch point 0 (relative to screen size)
 int GetTouchY(void)
 {
-#if defined(PLATFORM_ANDROID) || defined(PLATFORM_WEB)
+#if defined(PLATFORM_ANDROID) || defined(PLATFORM_WEB) || defined(PLATFORM_UWP)
     return (int)CORE.Input.Touch.position[0].y;
 #else   // PLATFORM_DESKTOP, PLATFORM_RPI
     return GetMouseY();
@@ -2673,7 +2712,7 @@ Vector2 GetTouchPosition(int index)
 {
     Vector2 position = { -1.0f, -1.0f };
 
-#if defined(PLATFORM_ANDROID) || defined(PLATFORM_WEB) || defined(PLATFORM_RPI)
+#if defined(PLATFORM_ANDROID) || defined(PLATFORM_WEB) || defined(PLATFORM_RPI) || defined(PLATFORM_UWP)
     if (index < MAX_TOUCH_POINTS) position = CORE.Input.Touch.position[index];
     else TRACELOG(LOG_WARNING, "INPUT: Required touch point out of range (Max touch points: %i)", MAX_TOUCH_POINTS);
 
@@ -2923,6 +2962,7 @@ static bool InitGraphicsDevice(int width, int height)
     glfwSetCharCallback(CORE.Window.handle, CharCallback);
     glfwSetScrollCallback(CORE.Window.handle, ScrollCallback);
     glfwSetWindowIconifyCallback(CORE.Window.handle, WindowIconifyCallback);
+    glfwSetWindowFocusCallback(CORE.Window.handle, WindowFocusCallback);
     glfwSetDropCallback(CORE.Window.handle, WindowDropCallback);
 
     glfwMakeContextCurrent(CORE.Window.handle);
@@ -3134,7 +3174,7 @@ static bool InitGraphicsDevice(int width, int height)
     //https://stackoverflow.com/questions/46550182/how-to-create-eglsurface-using-c-winrt-and-angle
 
     //CORE.Window.surface = eglCreateWindowSurface(CORE.Window.device, CORE.Window.config, reinterpret_cast<IInspectable*>(surfaceCreationProperties), surfaceAttributes);
-    CORE.Window.surface = eglCreateWindowSurface(CORE.Window.device, CORE.Window.config, handle, surfaceAttributes);
+    CORE.Window.surface = eglCreateWindowSurface(CORE.Window.device, CORE.Window.config, (EGLNativeWindowType) UWPGetCoreWindowPtr(), surfaceAttributes);
     if (CORE.Window.surface == EGL_NO_SURFACE)
     {
         TRACELOG(LOG_WARNING, "DISPLAY: Failed to create EGL fullscreen surface");
@@ -3151,6 +3191,9 @@ static bool InitGraphicsDevice(int width, int height)
     // Get EGL device window size
     eglQuerySurface(CORE.Window.device, CORE.Window.surface, EGL_WIDTH, &CORE.Window.screen.width);
     eglQuerySurface(CORE.Window.device, CORE.Window.surface, EGL_HEIGHT, &CORE.Window.screen.height);
+
+    // Get display size
+    UWPGetDisplaySizeFunc()(&CORE.Window.display.width, &CORE.Window.display.height);
 
 #endif  // PLATFORM_UWP
 
@@ -3263,8 +3306,13 @@ static bool InitGraphicsDevice(int width, int height)
     else
     {
         // Grab the width and height of the surface
-        //eglQuerySurface(CORE.Window.device, CORE.Window.surface, EGL_WIDTH, &CORE.Window.render.width);
-        //eglQuerySurface(CORE.Window.device, CORE.Window.surface, EGL_HEIGHT, &CORE.Window.render.height);
+#if defined(PLATFORM_UWP)
+        CORE.Window.render.width = CORE.Window.screen.width;
+        CORE.Window.render.height = CORE.Window.screen.height;
+#else
+        CORE.Window.render.width = CORE.Window.display.width;
+        CORE.Window.render.height = CORE.Window.display.height;
+#endif
 
         TRACELOG(LOG_INFO, "DISPLAY: Device initialized successfully");
         TRACELOG(LOG_INFO, "    > Display size: %i x %i", CORE.Window.display.width, CORE.Window.display.height);
@@ -3299,7 +3347,7 @@ static bool InitGraphicsDevice(int width, int height)
 
     ClearBackground(RAYWHITE);      // Default background color for raylib games :P
 
-#if defined(PLATFORM_ANDROID)
+#if defined(PLATFORM_ANDROID) || defined(PLATFORM_UWP)
     CORE.Window.ready = true;
 #endif
     return true;
@@ -3404,7 +3452,7 @@ static void InitTimer(void)
 {
     srand((unsigned int)time(NULL));              // Initialize random seed
 
-#if !defined(SUPPORT_BUSY_WAIT_LOOP) && defined(_WIN32)
+#if !defined(SUPPORT_BUSY_WAIT_LOOP) && defined(_WIN32) && !defined(PLATFORM_UWP)
     timeBeginPeriod(1);             // Setup high-resolution timer to 1ms (granularity of 1-2 ms)
 #endif
 
@@ -3428,7 +3476,9 @@ static void InitTimer(void)
 // Ref: http://www.geisswerks.com/ryan/FAQS/timing.html --> All about timming on Win32!
 static void Wait(float ms)
 {
-#if defined(SUPPORT_BUSY_WAIT_LOOP) && !defined(PLATFORM_UWP)
+#if defined(PLATFORM_UWP)
+    UWPGetSleepFunc()(ms / 1000);
+#elif defined(SUPPORT_BUSY_WAIT_LOOP)
     double prevTime = GetTime();
     double nextTime = 0.0;
 
@@ -3456,7 +3506,7 @@ static void Wait(float ms)
         usleep(ms*1000.0f);
     #endif
 
-    #if defined(SUPPORT_HALFBUSY_WAIT_LOOP)
+    #if defined(SUPPORT_HALFBUSY_WAIT_LOOP)// && !defined(PLATFORM_UWP)
         while (GetTime() < destTime) { }
     #endif
 #endif
@@ -3613,142 +3663,6 @@ static void PollInputEvents(void)
     CORE.Input.Mouse.currentWheelMove = 0;
 
     for (int i = 0; i < 3; i++) CORE.Input.Mouse.previousButtonState[i] = CORE.Input.Mouse.currentButtonState[i];
-
-    // Loop over pending messages
-    while (HasMessageFromUWP())
-    {
-        UWPMessage *msg = GetMessageFromUWP();
-
-        switch (msg->type)
-        {
-            case UWP_MSG_REGISTER_KEY:
-            {
-                // Convert from virtualKey
-                int actualKey = -1;
-
-                switch (msg->paramInt0)
-                {
-                    case 0x08: actualKey = KEY_BACKSPACE; break;
-                    case 0x20: actualKey = KEY_SPACE; break;
-                    case 0x1B: actualKey = KEY_ESCAPE; break;
-                    case 0x0D: actualKey = KEY_ENTER; break;
-                    case 0x2E: actualKey = KEY_DELETE; break;
-                    case 0x27: actualKey = KEY_RIGHT; break;
-                    case 0x25: actualKey = KEY_LEFT; break;
-                    case 0x28: actualKey = KEY_DOWN; break;
-                    case 0x26: actualKey = KEY_UP; break;
-                    case 0x70: actualKey = KEY_F1; break;
-                    case 0x71: actualKey = KEY_F2; break;
-                    case 0x72: actualKey = KEY_F3; break;
-                    case 0x73: actualKey = KEY_F4; break;
-                    case 0x74: actualKey = KEY_F5; break;
-                    case 0x75: actualKey = KEY_F6; break;
-                    case 0x76: actualKey = KEY_F7; break;
-                    case 0x77: actualKey = KEY_F8; break;
-                    case 0x78: actualKey = KEY_F9; break;
-                    case 0x79: actualKey = KEY_F10; break;
-                    case 0x7A: actualKey = KEY_F11; break;
-                    case 0x7B: actualKey = KEY_F12; break;
-                    case 0xA0: actualKey = KEY_LEFT_SHIFT; break;
-                    case 0xA2: actualKey = KEY_LEFT_CONTROL; break;
-                    case 0xA4: actualKey = KEY_LEFT_ALT; break;
-                    case 0xA1: actualKey = KEY_RIGHT_SHIFT; break;
-                    case 0xA3: actualKey = KEY_RIGHT_CONTROL; break;
-                    case 0xA5: actualKey = KEY_RIGHT_ALT; break;
-                    case 0x30: actualKey = KEY_ZERO; break;
-                    case 0x31: actualKey = KEY_ONE; break;
-                    case 0x32: actualKey = KEY_TWO; break;
-                    case 0x33: actualKey = KEY_THREE; break;
-                    case 0x34: actualKey = KEY_FOUR; break;
-                    case 0x35: actualKey = KEY_FIVE; break;
-                    case 0x36: actualKey = KEY_SIX; break;
-                    case 0x37: actualKey = KEY_SEVEN; break;
-                    case 0x38: actualKey = KEY_EIGHT; break;
-                    case 0x39: actualKey = KEY_NINE; break;
-                    case 0x41: actualKey = KEY_A; break;
-                    case 0x42: actualKey = KEY_B; break;
-                    case 0x43: actualKey = KEY_C; break;
-                    case 0x44: actualKey = KEY_D; break;
-                    case 0x45: actualKey = KEY_E; break;
-                    case 0x46: actualKey = KEY_F; break;
-                    case 0x47: actualKey = KEY_G; break;
-                    case 0x48: actualKey = KEY_H; break;
-                    case 0x49: actualKey = KEY_I; break;
-                    case 0x4A: actualKey = KEY_J; break;
-                    case 0x4B: actualKey = KEY_K; break;
-                    case 0x4C: actualKey = KEY_L; break;
-                    case 0x4D: actualKey = KEY_M; break;
-                    case 0x4E: actualKey = KEY_N; break;
-                    case 0x4F: actualKey = KEY_O; break;
-                    case 0x50: actualKey = KEY_P; break;
-                    case 0x51: actualKey = KEY_Q; break;
-                    case 0x52: actualKey = KEY_R; break;
-                    case 0x53: actualKey = KEY_S; break;
-                    case 0x54: actualKey = KEY_T; break;
-                    case 0x55: actualKey = KEY_U; break;
-                    case 0x56: actualKey = KEY_V; break;
-                    case 0x57: actualKey = KEY_W; break;
-                    case 0x58: actualKey = KEY_X; break;
-                    case 0x59: actualKey = KEY_Y; break;
-                    case 0x5A: actualKey = KEY_Z; break;
-                    default: break;
-                }
-
-                if (actualKey > -1) CORE.Input.Keyboard.currentKeyState[actualKey] = msg->paramChar0;
-
-            } break;
-            case UWP_MSG_REGISTER_CLICK: CORE.Input.Mouse.currentButtonState[msg->paramInt0] = msg->paramChar0; break;
-            case UWP_MSG_SCROLL_WHEEL_UPDATE: CORE.Input.Mouse.currentWheelMove += msg->paramInt0; break;
-            case UWP_MSG_UPDATE_MOUSE_LOCATION: CORE.Input.Mouse.position = msg->paramVector0; break;
-            case UWP_MSG_SET_GAMEPAD_ACTIVE: if (msg->paramInt0 < MAX_GAMEPADS) CORE.Input.Gamepad.ready[msg->paramInt0] = msg->paramBool0; break;
-            case UWP_MSG_SET_GAMEPAD_BUTTON:
-            {
-                if ((msg->paramInt0 < MAX_GAMEPADS) && (msg->paramInt1 < MAX_GAMEPAD_BUTTONS)) CORE.Input.Gamepad.currentState[msg->paramInt0][msg->paramInt1] = msg->paramChar0;
-            } break;
-            case UWP_MSG_SET_GAMEPAD_AXIS:
-            {
-                if ((msg->paramInt0 < MAX_GAMEPADS) && (msg->paramInt1 < MAX_GAMEPAD_AXIS)) CORE.Input.Gamepad.axisState[msg->paramInt0][msg->paramInt1] = msg->paramFloat0;
-
-                // Register buttons for 2nd triggers
-                CORE.Input.Gamepad.currentState[msg->paramInt0][GAMEPAD_BUTTON_LEFT_TRIGGER_2] = (char)(CORE.Input.Gamepad.axisState[msg->paramInt0][GAMEPAD_AXIS_LEFT_TRIGGER] > 0.1);
-                CORE.Input.Gamepad.currentState[msg->paramInt0][GAMEPAD_BUTTON_RIGHT_TRIGGER_2] = (char)(CORE.Input.Gamepad.axisState[msg->paramInt0][GAMEPAD_AXIS_RIGHT_TRIGGER] > 0.1);
-            } break;
-            case UWP_MSG_SET_DISPLAY_DIMS:
-            {
-                CORE.Window.display.width = msg->paramVector0.x;
-                CORE.Window.display.height = msg->paramVector0.y;
-            } break;
-            case UWP_MSG_HANDLE_RESIZE:
-            {
-                eglQuerySurface(CORE.Window.device, CORE.Window.surface, EGL_WIDTH, &CORE.Window.screen.width);
-                eglQuerySurface(CORE.Window.device, CORE.Window.surface, EGL_HEIGHT, &CORE.Window.screen.height);
-
-                // If window is resized, viewport and projection matrix needs to be re-calculated
-                rlViewport(0, 0, CORE.Window.screen.width, CORE.Window.screen.height);            // Set viewport width and height
-                rlMatrixMode(RL_PROJECTION);                // Switch to projection matrix
-                rlLoadIdentity();                           // Reset current matrix (projection)
-                rlOrtho(0, CORE.Window.screen.width, CORE.Window.screen.height, 0, 0.0f, 1.0f);   // Orthographic projection mode with top-left corner at (0,0)
-                rlMatrixMode(RL_MODELVIEW);                 // Switch back to modelview matrix
-                rlLoadIdentity();                           // Reset current matrix (modelview)
-                rlClearScreenBuffers();                     // Clear screen buffers (color and depth)
-
-                // Window size must be updated to be used on 3D mode to get new aspect ratio (BeginMode3D())
-                // NOTE: Be careful! GLFW3 will choose the closest fullscreen resolution supported by current monitor,
-                // for example, if reescaling back to 800x450 (desired), it could set 720x480 (closest fullscreen supported)
-                CORE.Window.currentFbo.width = CORE.Window.screen.width;
-                CORE.Window.currentFbo.height = CORE.Window.screen.height;
-
-                // NOTE: Postprocessing texture is not scaled to new size
-
-                CORE.Window.resized = true;
-
-            } break;
-            case UWP_MSG_SET_GAME_TIME: CORE.Time.current = msg->paramDouble0; break;
-            default: break;
-        }
-
-        DeleteUWPMessage(msg); //Delete, we are done
-    }
 #endif  // PLATFORM_UWP
 
 #if defined(PLATFORM_DESKTOP) || defined(PLATFORM_WEB)
@@ -4114,6 +4028,13 @@ static void WindowIconifyCallback(GLFWwindow *window, int iconified)
     else CORE.Window.minimized = false;           // The window was restored
 }
 
+// GLFW3 WindowFocus Callback, runs when window get/lose focus
+static void WindowFocusCallback(GLFWwindow *window, int focused)
+{
+    if (focused) CORE.Window.focused = true;    // The window was focused
+    else CORE.Window.focused = false;           // The window lost focus
+}
+
 // GLFW3 Window Drop Callback, runs when drop files into window
 // NOTE: Paths are stored in dynamic memory for further retrieval
 // Everytime new files are dropped, old ones are discarded
@@ -4249,7 +4170,8 @@ static int32_t AndroidInputCallback(struct android_app *app, AInputEvent *event)
 
     if (type == AINPUT_EVENT_TYPE_MOTION)
     {
-        if ((source & AINPUT_SOURCE_JOYSTICK) == AINPUT_SOURCE_JOYSTICK || (source & AINPUT_SOURCE_GAMEPAD) == AINPUT_SOURCE_GAMEPAD)
+        if (((source & AINPUT_SOURCE_JOYSTICK) == AINPUT_SOURCE_JOYSTICK) || 
+            ((source & AINPUT_SOURCE_GAMEPAD) == AINPUT_SOURCE_GAMEPAD))
         {
             // Get first touch position
             CORE.Input.Touch.position[0].x = AMotionEvent_getX(event, 0);
@@ -4399,7 +4321,7 @@ static EM_BOOL EmscriptenFullscreenChangeCallback(int eventType, const Emscripte
 // Register keyboard input events
 static EM_BOOL EmscriptenKeyboardCallback(int eventType, const EmscriptenKeyboardEvent *keyEvent, void *userData)
 {
-    if ((eventType == EMSCRIPTEN_EVENT_KEYPRESS) && (strcmp(keyEvent->code, "Escape") == 0))
+    if ((eventType == EMSCRIPTEN_EVENT_KEYPRESS) && (keyEvent->key == 27))  // ESCAPE key
     {
         emscripten_exit_pointerlock();
     }
@@ -5064,20 +4986,11 @@ static void *EventThread(void *arg)
                     // Make sure we got a valid keycode
                     if ((keycode > 0) && (keycode < sizeof(CORE.Input.Keyboard.currentKeyState)))
                     {
-                        /* Disabled buffer !!
-                        // Store the key information for raylib to later use
-                        CORE.Input.Keyboard.currentKeyState[keycode] = event.value;
-                        if (event.value > 0)
-                        {
-                            // Add the key int the fifo
-                            CORE.Input.Keyboard.lastKeyPressed.contents[CORE.Input.Keyboard.lastKeyPressed.head] = keycode;   // Put the data at the front of the fifo snake
-                            CORE.Input.Keyboard.lastKeyPressed.head = (CORE.Input.Keyboard.lastKeyPressed.head + 1) & 0x07;   // Increment the head pointer forwards and binary wraparound after 7 (fifo is 8 elements long)
-                            // TODO: This fifo is not fully threadsafe with multiple writers, so multiple keyboards hitting a key at the exact same time could miss a key (double write to head before it was incremented)
-                        }
-                        */
-
-                        CORE.Input.Keyboard.currentKeyState[keycode] = event.value;
-                        if (event.value == 1)
+                        // WARNING: https://www.kernel.org/doc/Documentation/input/input.txt
+                        // Event interface: 'value' is the value the event carries. Either a relative change for EV_REL,
+                        // absolute new value for EV_ABS (joysticks ...), or 0 for EV_KEY for release, 1 for keypress and 2 for autorepeat
+                        CORE.Input.Keyboard.currentKeyState[keycode] = (event.value >= 1)? 1 : 0;
+                        if (event.value >= 1)
                         {
                             CORE.Input.Keyboard.keyPressedQueue[CORE.Input.Keyboard.keyPressedQueueCount] = keycode;     // Register last key pressed
                             CORE.Input.Keyboard.keyPressedQueueCount++;
@@ -5235,3 +5148,277 @@ static void *GamepadThread(void *arg)
     return NULL;
 }
 #endif      // PLATFORM_RPI
+
+#if defined(PLATFORM_UWP)
+// UWP function pointers
+// NOTE: Those pointers are set by UWP App
+static UWPQueryTimeFunc uwpQueryTimeFunc = NULL;
+static UWPSleepFunc uwpSleepFunc = NULL;
+static UWPDisplaySizeFunc uwpDisplaySizeFunc = NULL;
+static UWPMouseFunc uwpMouseLockFunc = NULL;
+static UWPMouseFunc uwpMouseUnlockFunc = NULL;
+static UWPMouseFunc uwpMouseShowFunc = NULL;
+static UWPMouseFunc uwpMouseHideFunc = NULL;
+static UWPMouseSetPosFunc uwpMouseSetPosFunc = NULL;
+static void *uwpCoreWindow = NULL;
+
+// Check all required UWP function pointers have been set
+bool UWPIsConfigured()
+{
+    bool pass = true;
+
+    if (uwpQueryTimeFunc == NULL) { TRACELOG(LOG_ERROR, "UWP: UWPSetQueryTimeFunc() must be called with a valid function before InitWindow()"); pass = false; }
+    if (uwpSleepFunc == NULL) { TRACELOG(LOG_ERROR, "UWP: UWPSetSleepFunc() must be called with a valid function before InitWindow()"); pass = false; }
+    if (uwpDisplaySizeFunc == NULL) { TRACELOG(LOG_ERROR, "UWP: UWPSetDisplaySizeFunc() must be called with a valid function before InitWindow()"); pass = false; }
+    if (uwpMouseLockFunc == NULL) { TRACELOG(LOG_ERROR, "UWP: UWPSetMouseLockFunc() must be called with a valid function before InitWindow()"); pass = false; }
+    if (uwpMouseUnlockFunc == NULL) { TRACELOG(LOG_ERROR, "UWP: UWPSetMouseUnlockFunc() must be called with a valid function before InitWindow()"); pass = false; }
+    if (uwpMouseShowFunc == NULL) { TRACELOG(LOG_ERROR, "UWP: UWPSetMouseShowFunc() must be called with a valid function before InitWindow()"); pass = false; }
+    if (uwpMouseHideFunc == NULL) { TRACELOG(LOG_ERROR, "UWP: UWPSetMouseHideFunc() must be called with a valid function before InitWindow()"); pass = false; }
+    if (uwpMouseSetPosFunc == NULL) { TRACELOG(LOG_ERROR, "UWP: UWPSetMouseSetPosFunc() must be called with a valid function before InitWindow()"); pass = false; }
+    if (uwpCoreWindow == NULL) { TRACELOG(LOG_ERROR, "UWP: A pointer to the UWP core window must be set before InitWindow()"); pass = false; }
+
+    return pass;
+}
+
+// UWP function handlers get/set
+void UWPSetDataPath(const char* path) { CORE.UWP.internalDataPath = path; }
+UWPQueryTimeFunc UWPGetQueryTimeFunc(void) { return uwpQueryTimeFunc; }
+void UWPSetQueryTimeFunc(UWPQueryTimeFunc func) { uwpQueryTimeFunc = func; }
+UWPSleepFunc UWPGetSleepFunc(void) { return uwpSleepFunc; }
+void UWPSetSleepFunc(UWPSleepFunc func) { uwpSleepFunc = func; }
+UWPDisplaySizeFunc UWPGetDisplaySizeFunc(void) { return uwpDisplaySizeFunc; }
+void UWPSetDisplaySizeFunc(UWPDisplaySizeFunc func) { uwpDisplaySizeFunc = func; }
+UWPMouseFunc UWPGetMouseLockFunc() { return uwpMouseLockFunc; }
+void UWPSetMouseLockFunc(UWPMouseFunc func) { uwpMouseLockFunc = func; }
+UWPMouseFunc UWPGetMouseUnlockFunc() { return uwpMouseUnlockFunc; }
+void UWPSetMouseUnlockFunc(UWPMouseFunc func) { uwpMouseUnlockFunc = func; }
+UWPMouseFunc UWPGetMouseShowFunc() { return uwpMouseShowFunc; }
+void UWPSetMouseShowFunc(UWPMouseFunc func) { uwpMouseShowFunc = func; }
+UWPMouseFunc UWPGetMouseHideFunc() { return uwpMouseHideFunc; }
+void UWPSetMouseHideFunc(UWPMouseFunc func) { uwpMouseHideFunc = func; }
+UWPMouseSetPosFunc UWPGetMouseSetPosFunc() { return uwpMouseSetPosFunc; }
+void UWPSetMouseSetPosFunc(UWPMouseSetPosFunc func) { uwpMouseSetPosFunc = func; }
+
+void *UWPGetCoreWindowPtr() { return uwpCoreWindow; }
+void UWPSetCoreWindowPtr(void* ptr) { uwpCoreWindow = ptr; }
+void UWPMouseWheelEvent(int deltaY) { CORE.Input.Mouse.currentWheelMove = (int)deltaY; }
+
+void UWPKeyDownEvent(int key, bool down, bool controlKey)
+{
+    if (key == CORE.Input.Keyboard.exitKey && down)
+    {
+        // Time to close the window.
+        CORE.Window.shouldClose = true;
+    }
+    else if (key == KEY_F12 && down)
+    {
+#if defined(SUPPORT_GIF_RECORDING)
+        if (controlKey)
+        {
+            if (gifRecording)
+            {
+                GifEnd();
+                gifRecording = false;
+
+#if defined(PLATFORM_WEB)
+                // Download file from MEMFS (emscripten memory filesystem)
+                // saveFileFromMEMFSToDisk() function is defined in raylib/templates/web_shel/shell.html
+                emscripten_run_script(TextFormat("saveFileFromMEMFSToDisk('%s','%s')", TextFormat("screenrec%03i.gif", screenshotCounter - 1), TextFormat("screenrec%03i.gif", screenshotCounter - 1)));
+#endif
+                TRACELOG(LOG_INFO, "SYSTEM: Finish animated GIF recording");
+            }
+            else
+            {
+                gifRecording = true;
+                gifFramesCounter = 0;
+
+                char path[512] = { 0 };
+                strcpy(path, CORE.UWP.internalDataPath);
+                strcat(path, TextFormat("./screenrec%03i.gif", screenshotCounter));
+
+                // NOTE: delay represents the time between frames in the gif, if we capture a gif frame every
+                // 10 game frames and each frame trakes 16.6ms (60fps), delay between gif frames should be ~16.6*10.
+                GifBegin(path, CORE.Window.screen.width, CORE.Window.screen.height, (int)(GetFrameTime() * 10.0f), 8, false);
+                screenshotCounter++;
+
+                TRACELOG(LOG_INFO, "SYSTEM: Start animated GIF recording: %s", TextFormat("screenrec%03i.gif", screenshotCounter));
+            }
+        }
+        else
+#endif  // SUPPORT_GIF_RECORDING
+#if defined(SUPPORT_SCREEN_CAPTURE)
+        {
+            TakeScreenshot(TextFormat("screenshot%03i.png", screenshotCounter));
+            screenshotCounter++;
+        }
+#endif  // SUPPORT_SCREEN_CAPTURE
+    }
+    else
+    {
+        CORE.Input.Keyboard.currentKeyState[key] = down;
+    }
+}
+
+void UWPKeyCharEvent(int key)
+{
+    if (CORE.Input.Keyboard.keyPressedQueueCount < MAX_CHARS_QUEUE)
+    {
+        // Add character to the queue
+        CORE.Input.Keyboard.keyPressedQueue[CORE.Input.Keyboard.keyPressedQueueCount] = key;
+        CORE.Input.Keyboard.keyPressedQueueCount++;
+    }
+}
+
+void UWPMouseButtonEvent(int button, bool down)
+{
+    CORE.Input.Mouse.currentButtonState[button] = down;
+
+#if defined(SUPPORT_GESTURES_SYSTEM) && defined(SUPPORT_MOUSE_GESTURES)
+    // Process mouse events as touches to be able to use mouse-gestures
+    GestureEvent gestureEvent = { 0 };
+
+    // Register touch actions
+    if ((CORE.Input.Mouse.currentButtonState[button] == 1) && (CORE.Input.Mouse.previousButtonState[button] == 0)) gestureEvent.touchAction = TOUCH_DOWN;
+    else if ((CORE.Input.Mouse.currentButtonState[button] == 0) && (CORE.Input.Mouse.previousButtonState[button] == 1)) gestureEvent.touchAction = TOUCH_UP;
+
+    // NOTE: TOUCH_MOVE event is registered in MouseCursorPosCallback()
+
+    // Assign a pointer ID
+    gestureEvent.pointerId[0] = 0;
+
+    // Register touch points count
+    gestureEvent.pointCount = 1;
+
+    // Register touch points position, only one point registered
+    gestureEvent.position[0] = GetMousePosition();
+
+    // Normalize gestureEvent.position[0] for CORE.Window.screen.width and CORE.Window.screen.height
+    gestureEvent.position[0].x /= (float)GetScreenWidth();
+    gestureEvent.position[0].y /= (float)GetScreenHeight();
+
+    // Gesture data is sent to gestures system for processing
+    ProcessGestureEvent(gestureEvent);
+#endif
+}
+
+void UWPMousePosEvent(double x, double y)
+{
+    CORE.Input.Mouse.position.x = (float)x;
+    CORE.Input.Mouse.position.y = (float)y;
+    CORE.Input.Touch.position[0] = CORE.Input.Mouse.position;
+
+#if defined(SUPPORT_GESTURES_SYSTEM) && defined(SUPPORT_MOUSE_GESTURES)
+    // Process mouse events as touches to be able to use mouse-gestures
+    GestureEvent gestureEvent = { 0 };
+
+    gestureEvent.touchAction = TOUCH_MOVE;
+
+    // Assign a pointer ID
+    gestureEvent.pointerId[0] = 0;
+
+    // Register touch points count
+    gestureEvent.pointCount = 1;
+
+    // Register touch points position, only one point registered
+    gestureEvent.position[0] = CORE.Input.Mouse.position;
+
+    // Normalize gestureEvent.position[0] for CORE.Window.screen.width and CORE.Window.screen.height
+    gestureEvent.position[0].x /= (float)GetScreenWidth();
+    gestureEvent.position[0].y /= (float)GetScreenHeight();
+
+    // Gesture data is sent to gestures system for processing
+    ProcessGestureEvent(gestureEvent);
+#endif
+}
+
+void UWPResizeEvent(int width, int height)
+{
+    SetupViewport(width, height);    // Reset viewport and projection matrix for new size
+
+    // Set current screen size
+    CORE.Window.screen.width = width;
+    CORE.Window.screen.height = height;
+    CORE.Window.currentFbo.width = width;
+    CORE.Window.currentFbo.height = height;
+
+    // NOTE: Postprocessing texture is not scaled to new size
+
+    CORE.Window.resized = true;
+}
+
+void UWPActivateGamepadEvent(int gamepad, bool active)
+{
+    if (gamepad < MAX_GAMEPADS) CORE.Input.Gamepad.ready[gamepad] = active;
+}
+
+void UWPRegisterGamepadButton(int gamepad, int button, bool down)
+{
+    if (gamepad < MAX_GAMEPADS)
+    {
+        if (button < MAX_GAMEPAD_BUTTONS)
+        {
+            CORE.Input.Gamepad.currentState[gamepad][button] = down;
+            CORE.Input.Gamepad.lastButtonPressed = button;
+        }
+    }
+}
+
+void UWPRegisterGamepadAxis(int gamepad, int axis, float value)
+{
+    if (gamepad < MAX_GAMEPADS)
+    {
+        if (axis < MAX_GAMEPAD_AXIS) CORE.Input.Gamepad.axisState[gamepad][axis] = value;
+    }
+}
+
+void UWPGestureMove(int pointer, float x, float y)
+{
+#if defined(SUPPORT_GESTURES_SYSTEM)
+    GestureEvent gestureEvent = { 0 };
+
+    // Assign the pointer ID and touch action
+    gestureEvent.pointerId[0] = pointer;
+    gestureEvent.touchAction = TOUCH_MOVE;
+
+    // Register touch points count
+    gestureEvent.pointCount = 1;
+
+    // Register touch points position, only one point registered
+    gestureEvent.position[0].x = x;
+    gestureEvent.position[0].y = y;
+
+    // Normalize gestureEvent.position[0] for CORE.Window.screen.width and CORE.Window.screen.height
+    gestureEvent.position[0].x /= (float)GetScreenWidth();
+    gestureEvent.position[0].y /= (float)GetScreenHeight();
+
+    // Gesture data is sent to gestures system for processing
+    ProcessGestureEvent(gestureEvent);
+#endif
+}
+
+void UWPGestureTouch(int pointer, float x, float y, bool touch)
+{
+#if defined(SUPPORT_GESTURES_SYSTEM)
+    GestureEvent gestureEvent = { 0 };
+
+    // Assign the pointer ID and touch action
+    gestureEvent.pointerId[0] = pointer;
+    gestureEvent.touchAction = touch ? TOUCH_DOWN : TOUCH_UP;
+
+    // Register touch points count
+    gestureEvent.pointCount = 1;
+
+    // Register touch points position, only one point registered
+    gestureEvent.position[0].x = x;
+    gestureEvent.position[0].y = y;
+
+    // Normalize gestureEvent.position[0] for CORE.Window.screen.width and CORE.Window.screen.height
+    gestureEvent.position[0].x /= (float)GetScreenWidth();
+    gestureEvent.position[0].y /= (float)GetScreenHeight();
+
+    // Gesture data is sent to gestures system for processing
+    ProcessGestureEvent(gestureEvent);
+#endif
+}
+
+#endif // PLATFORM_UWP

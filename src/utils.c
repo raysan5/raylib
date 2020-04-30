@@ -71,13 +71,6 @@ static AAssetManager *assetManager = NULL;              // Android assets manage
 static const char *internalDataPath = NULL;             // Android internal data path
 #endif
 
-#if defined(PLATFORM_UWP)
-static int UWPOutMessageId = -1;                        // Last index of output message
-static UWPMessage *UWPOutMessages[MAX_UWP_MESSAGES];    // Messages out to UWP
-static int UWPInMessageId = -1;                         // Last index of input message
-static UWPMessage *UWPInMessages[MAX_UWP_MESSAGES];     // Messages in from UWP
-#endif
-
 //----------------------------------------------------------------------------------
 // Module specific Functions Declaration
 //----------------------------------------------------------------------------------
@@ -394,69 +387,3 @@ static int android_close(void *cookie)
     return 0;
 }
 #endif  // PLATFORM_ANDROID
-
-#if defined(PLATFORM_UWP)
-UWPMessage *CreateUWPMessage(void)
-{
-    UWPMessage *msg = (UWPMessage *)RL_MALLOC(sizeof(UWPMessage));
-    msg->type = UWP_MSG_NONE;
-    Vector2 v0 = { 0, 0 };
-    msg->paramVector0 = v0;
-    msg->paramInt0 = 0;
-    msg->paramInt1 = 0;
-    msg->paramChar0 = 0;
-    msg->paramFloat0 = 0;
-    msg->paramDouble0 = 0;
-    msg->paramBool0 = false;
-    return msg;
-}
-
-void DeleteUWPMessage(UWPMessage *msg)
-{
-    RL_FREE(msg);
-}
-
-bool UWPHasMessages(void)
-{
-    return (UWPOutMessageId > -1);
-}
-
-UWPMessage *UWPGetMessage(void)
-{
-    if (UWPHasMessages()) return UWPOutMessages[UWPOutMessageId--];
-
-    return NULL;
-}
-
-void UWPSendMessage(UWPMessage *msg)
-{
-    if ((UWPInMessageId + 1) < MAX_UWP_MESSAGES)
-    {
-        UWPInMessageId++;
-        UWPInMessages[UWPInMessageId] = msg;
-    }
-    else TRACELOG(LOG_WARNING, "UWP: Not enough array space to register new inbound message");
-}
-
-void SendMessageToUWP(UWPMessage *msg)
-{
-    if ((UWPOutMessageId + 1) < MAX_UWP_MESSAGES)
-    {
-        UWPOutMessageId++;
-        UWPOutMessages[UWPOutMessageId] = msg;
-    }
-    else TRACELOG(LOG_WARNING, "UWP: Not enough array space to register new outward message");
-}
-
-bool HasMessageFromUWP(void)
-{
-    return UWPInMessageId > -1;
-}
-
-UWPMessage *GetMessageFromUWP(void)
-{
-    if (HasMessageFromUWP()) return UWPInMessages[UWPInMessageId--];
-
-    return NULL;
-}
-#endif  // PLATFORM_UWP

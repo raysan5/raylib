@@ -3521,27 +3521,15 @@ static Model LoadGLTF(const char *fileName)
     Model model = { 0 };
 
     // glTF file loading
-    FILE *gltfFile = fopen(fileName, "rb");
+    unsigned int dataSize = 0;
+    unsigned char *fileData = LoadFileData(fileName, &dataSize);
 
-    if (gltfFile == NULL)
-    {
-        TRACELOG(LOG_WARNING, "FILEIO: [%s] Failed to open glTF file", fileName);
-        return model;
-    }
-
-    fseek(gltfFile, 0, SEEK_END);
-    int size = ftell(gltfFile);
-    fseek(gltfFile, 0, SEEK_SET);
-
-    void *buffer = RL_MALLOC(size);
-    fread(buffer, size, 1, gltfFile);
-
-    fclose(gltfFile);
+    if (fileData == NULL) return model;
 
     // glTF data loading
     cgltf_options options = { 0 };
     cgltf_data *data = NULL;
-    cgltf_result result = cgltf_parse(&options, buffer, size, &data);
+    cgltf_result result = cgltf_parse(&options, fileData, dataSize, &data);
 
     if (result == cgltf_result_success)
     {
@@ -3713,7 +3701,7 @@ static Model LoadGLTF(const char *fileName)
     }
     else TRACELOG(LOG_WARNING, "MODEL: [%s] Failed to load glTF data", fileName);
 
-    RL_FREE(buffer);
+    RL_FREE(fileData);
 
     return model;
 }

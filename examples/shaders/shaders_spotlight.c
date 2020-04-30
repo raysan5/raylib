@@ -245,7 +245,7 @@ void ResetStar(Star *s)
         
     } while (!(fabs(s->vel.x) + fabs(s->vel.y) > 1));
     
-    s->pos = Vector2Add(s->pos, Vector2MultiplyV(s->vel, (Vector2){ 8, 8 }));
+    s->pos = Vector2Add(s->pos, Vector2Multiply(s->vel, (Vector2){ 8, 8 }));
 }
 
 void UpdateStar(Star *s)
