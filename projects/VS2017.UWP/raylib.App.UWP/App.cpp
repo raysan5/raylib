@@ -239,26 +239,84 @@ void App::GameLoop()
     //----------------------------------------------------------------------------------
 }
 
+struct GamepadBinding
+{
+    Gamepad^ Gamepad = nullptr;
+    bool Ready = false;
+};
+
+static GamepadBinding gGamepadBindings[MAX_GAMEPADS];
+
 void App::ProcessGamepads()
 {
-    // Check if gamepads are ready
+    // Here, we will see if we have bound gamepads. If we do we check they are still present. If they aren't present we free the binding.
+    //  if anyone does not have a binding but there is a gamepad available, we will bind it to the first player who is missing a controller.
+    for (auto i = 0; i < MAX_GAMEPADS; i++)
+    {
+        // Ensure that the gamepad bindings are still in tact
+        if (gGamepadBindings[i].Gamepad != nullptr)
+        {
+            // Check the gamepad is present
+            auto found = false;
+            for (auto j = 0; j < Gamepad::Gamepads->Size; j++)
+            {
+                if (gGamepadBindings[i].Gamepad == Gamepad::Gamepads->GetAt(j))
+                {
+                    found = true;
+                    break;
+                }
+            }
+
+            if (!found)
+            {
+                gGamepadBindings[i].Gamepad = nullptr;
+                gGamepadBindings[i].Ready = false;
+            }
+            else gGamepadBindings[i].Ready = true;
+        }
+
+        // Now we check to find any unbound gamepads we can use
+        if (gGamepadBindings[i].Gamepad == nullptr)
+        {
+            // Loop over all the attached gamepads
+            Gamepad^ freeGamepad = nullptr;
+            for (auto j = 0; j < Gamepad::Gamepads->Size; j++)
+            {
+                freeGamepad = Gamepad::Gamepads->GetAt(j);
+                // Loop over existing bindings
+                for (auto k = 0; k < MAX_GAMEPADS; k++)
+                {
+                    if (gGamepadBindings[k].Gamepad == freeGamepad)
+                        freeGamepad = nullptr;
+                }
+
+                // If we passed all 4, this is a free gamepad
+                if (freeGamepad != nullptr) break;
+            }
+
+            if (freeGamepad != nullptr)
+            {
+                gGamepadBindings[i].Gamepad = freeGamepad;
+                gGamepadBindings[i].Ready = true;
+            }
+            else gGamepadBindings[i].Ready = false;
+        }
+    }
+
+    // Send the active gamepads to raylib
     for (int i = 0; i < MAX_GAMEPADS; i++)
     {
-        // TODO: ROVER - I want to remove this problem if possible.
-        // HACK: UWP keeps a contiguous list of gamepads. For the interest of time I'm just doing a 1:1 mapping of
-        // connected gamepads with their spot in the list, but this has serious robustness problems
-        // e.g. player 1, 2, and 3 are playing a game - if player2 disconnects, p3's controller would now be mapped to p2's character since p3 is now second in the list.
-        UWPActivateGamepadEvent(i, i < Gamepad::Gamepads->Size);
+        UWPActivateGamepadEvent(i, gGamepadBindings[i].Ready);
     }
 
     // Get current gamepad state
     for (int i = 0; i < MAX_GAMEPADS; i++)
     {
-        if (IsGamepadAvailable(i))
+        if (gGamepadBindings[i].Ready)
         {
             // Get current gamepad state
-            auto gamepad = Gamepad::Gamepads->GetAt(i);
-            GamepadReading reading = gamepad->GetCurrentReading();
+            auto gamepad = gGamepadBindings[i].Gamepad;
+            auto reading = gamepad->GetCurrentReading();
 
             // NOTE: Maybe it would be wiser to redefine the gamepad button mappings in "raylib.h" for the UWP platform instead of remapping them manually
             UWPRegisterGamepadButton(i, GAMEPAD_BUTTON_RIGHT_FACE_DOWN, ((reading.Buttons & GamepadButtons::A) == GamepadButtons::A));
