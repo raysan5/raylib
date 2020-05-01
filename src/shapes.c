@@ -47,7 +47,12 @@
 //----------------------------------------------------------------------------------
 // Defines and Macros
 //----------------------------------------------------------------------------------
-// Nop...
+
+// Error rate to calculate how many segments we need to draw a smooth circle,
+// taken from https://stackoverflow.com/a/2244088
+#ifndef SMOOTH_CIRCLE_ERROR_RATE
+    #define SMOOTH_CIRCLE_ERROR_RATE  0.5f
+#endif
 
 //----------------------------------------------------------------------------------
 // Types and Structures Definition
@@ -155,17 +160,19 @@ void DrawLineEx(Vector2 startPos, Vector2 endPos, float thick, Color color)
 // Draw line using cubic-bezier curves in-out
 void DrawLineBezier(Vector2 startPos, Vector2 endPos, float thick, Color color)
 {
-    #define LINE_DIVISIONS         24   // Bezier line divisions
+#ifndef BEZIER_LINE_DIVISIONS
+    #define BEZIER_LINE_DIVISIONS         24   // Bezier line divisions
+#endif
 
     Vector2 previous = startPos;
     Vector2 current;
 
-    for (int i = 1; i <= LINE_DIVISIONS; i++)
+    for (int i = 1; i <= BEZIER_LINE_DIVISIONS; i++)
     {
         // Cubic easing in-out
         // NOTE: Easing is calculated only for y position value
-        current.y = EaseCubicInOut((float)i, startPos.y, endPos.y - startPos.y, (float)LINE_DIVISIONS);
-        current.x = previous.x + (endPos.x - startPos.x)/ (float)LINE_DIVISIONS;
+        current.y = EaseCubicInOut((float)i, startPos.y, endPos.y - startPos.y, (float)BEZIER_LINE_DIVISIONS);
+        current.x = previous.x + (endPos.x - startPos.x)/ (float)BEZIER_LINE_DIVISIONS;
 
         DrawLineEx(previous, current, thick, color);
 
@@ -214,11 +221,8 @@ void DrawCircleSector(Vector2 center, float radius, int startAngle, int endAngle
 
     if (segments < 4)
     {
-        // Calculate how many segments we need to draw a smooth circle, taken from https://stackoverflow.com/a/2244088
-        #define CIRCLE_ERROR_RATE  0.5f
-
-        // Calculate the maximum angle between segments based on the error rate.
-        float th = acosf(2*powf(1 - CIRCLE_ERROR_RATE/radius, 2) - 1);
+        // Calculate the maximum angle between segments based on the error rate (usually 0.5f)
+        float th = acosf(2*powf(1 - SMOOTH_CIRCLE_ERROR_RATE/radius, 2) - 1);
         segments = (endAngle - startAngle)*ceilf(2*PI/th)/360;
 
         if (segments <= 0) segments = 4;
@@ -306,13 +310,8 @@ void DrawCircleSectorLines(Vector2 center, float radius, int startAngle, int end
 
     if (segments < 4)
     {
-        // Calculate how many segments we need to draw a smooth circle, taken from https://stackoverflow.com/a/2244088
-        #ifndef CIRCLE_ERROR_RATE
-        #define CIRCLE_ERROR_RATE  0.5f
-        #endif
-
-        // Calculate the maximum angle between segments based on the error rate.
-        float th = acosf(2*powf(1 - CIRCLE_ERROR_RATE/radius, 2) - 1);
+        // Calculate the maximum angle between segments based on the error rate (usually 0.5f)
+        float th = acosf(2*powf(1 - SMOOTH_CIRCLE_ERROR_RATE/radius, 2) - 1);
         segments = (endAngle - startAngle)*ceilf(2*PI/th)/360;
 
         if (segments <= 0) segments = 4;
@@ -454,13 +453,8 @@ void DrawRing(Vector2 center, float innerRadius, float outerRadius, int startAng
 
     if (segments < 4)
     {
-        // Calculate how many segments we need to draw a smooth circle, taken from https://stackoverflow.com/a/2244088
-        #ifndef CIRCLE_ERROR_RATE
-            #define CIRCLE_ERROR_RATE  0.5f
-        #endif
-
-        // Calculate the maximum angle between segments based on the error rate.
-        float th = acosf(2*powf(1 - CIRCLE_ERROR_RATE/outerRadius, 2) - 1);
+        // Calculate the maximum angle between segments based on the error rate (usually 0.5f)
+        float th = acosf(2*powf(1 - SMOOTH_CIRCLE_ERROR_RATE/outerRadius, 2) - 1);
         segments = (endAngle - startAngle)*ceilf(2*PI/th)/360;
 
         if (segments <= 0) segments = 4;
@@ -550,13 +544,8 @@ void DrawRingLines(Vector2 center, float innerRadius, float outerRadius, int sta
 
     if (segments < 4)
     {
-        // Calculate how many segments we need to draw a smooth circle, taken from https://stackoverflow.com/a/2244088
-        #ifndef CIRCLE_ERROR_RATE
-            #define CIRCLE_ERROR_RATE  0.5f
-        #endif
-
-        // Calculate the maximum angle between segments based on the error rate.
-        float th = acosf(2*powf(1 - CIRCLE_ERROR_RATE/outerRadius, 2) - 1);
+        // Calculate the maximum angle between segments based on the error rate (usually 0.5f)
+        float th = acosf(2*powf(1 - SMOOTH_CIRCLE_ERROR_RATE/outerRadius, 2) - 1);
         segments = (endAngle - startAngle)*ceilf(2*PI/th)/360;
 
         if (segments <= 0) segments = 4;
@@ -764,12 +753,8 @@ void DrawRectangleRounded(Rectangle rec, float roundness, int segments, Color co
     // Calculate number of segments to use for the corners
     if (segments < 4)
     {
-        // Calculate how many segments we need to draw a smooth circle, taken from https://stackoverflow.com/a/2244088
-        #ifndef CIRCLE_ERROR_RATE
-        #define CIRCLE_ERROR_RATE  0.5f
-        #endif
-        // Calculate the maximum angle between segments based on the error rate.
-        float th = acosf(2*powf(1 - CIRCLE_ERROR_RATE/radius, 2) - 1);
+        // Calculate the maximum angle between segments based on the error rate (usually 0.5f)
+        float th = acosf(2*powf(1 - SMOOTH_CIRCLE_ERROR_RATE/radius, 2) - 1);
         segments = ceilf(2*PI/th)/4;
         if (segments <= 0) segments = 4;
     }
@@ -988,12 +973,8 @@ void DrawRectangleRoundedLines(Rectangle rec, float roundness, int segments, int
     // Calculate number of segments to use for the corners
     if (segments < 4)
     {
-        // Calculate how many segments we need to draw a smooth circle, taken from https://stackoverflow.com/a/2244088
-        #ifndef CIRCLE_ERROR_RATE
-        #define CIRCLE_ERROR_RATE  0.5f
-        #endif
-        // Calculate the maximum angle between segments based on the error rate.
-        float th = acosf(2*powf(1 - CIRCLE_ERROR_RATE/radius, 2) - 1);
+        // Calculate the maximum angle between segments based on the error rate (usually 0.5f)
+        float th = acosf(2*powf(1 - SMOOTH_CIRCLE_ERROR_RATE/radius, 2) - 1);
         segments = ceilf(2*PI/th)/2;
         if (segments <= 0) segments = 4;
     }

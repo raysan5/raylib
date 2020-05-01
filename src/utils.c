@@ -50,9 +50,15 @@
 #include <stdarg.h>                     // Required for: va_list, va_start(), va_end()
 #include <string.h>                     // Required for: strcpy(), strcat()
 
-#define MAX_TRACELOG_BUFFER_SIZE   128  // Max length of one trace-log message
-
-#define MAX_UWP_MESSAGES 512            // Max UWP messages to process
+//----------------------------------------------------------------------------------
+// Defines and Macros
+//----------------------------------------------------------------------------------
+#ifndef MAX_TRACELOG_MSG_LENGTH
+    #define MAX_TRACELOG_MSG_LENGTH     128     // Max length of one trace-log message
+#endif
+#ifndef MAX_UWP_MESSAGES
+    #define MAX_UWP_MESSAGES            512     // Max UWP messages to process
+#endif
 
 //----------------------------------------------------------------------------------
 // Global Variables Definition
@@ -132,7 +138,7 @@ void TraceLog(int logType, const char *text, ...)
         default: break;
     }
 #else
-    char buffer[MAX_TRACELOG_BUFFER_SIZE] = { 0 };
+    char buffer[MAX_TRACELOG_MSG_LENGTH] = { 0 };
 
     switch (logType)
     {

@@ -148,7 +148,9 @@
 //----------------------------------------------------------------------------------
 // Defines and Macros
 //----------------------------------------------------------------------------------
-// Nop...
+#ifndef R5G5B5A1_ALPHA_THRESHOLD
+    #define R5G5B5A1_ALPHA_THRESHOLD  50    // Threshold over 255 to set alpha as 0
+#endif
 
 //----------------------------------------------------------------------------------
 // Types and Structures Definition
@@ -832,7 +834,9 @@ void ExportImage(Image image, const char *fileName)
 // Export image as code file (.h) defining an array of bytes
 void ExportImageAsCode(Image image, const char *fileName)
 {
-    #define BYTES_TEXT_PER_LINE     20
+#ifndef TEXT_BYTES_PER_LINE
+    #define TEXT_BYTES_PER_LINE     20
+#endif
 
     FILE *txtFile = fopen(fileName, "wt");
 
@@ -863,7 +867,7 @@ void ExportImageAsCode(Image image, const char *fileName)
         fprintf(txtFile, "#define %s_FORMAT   %i          // raylib internal pixel format\n\n", varFileName, image.format);
 
         fprintf(txtFile, "static unsigned char %s_DATA[%i] = { ", varFileName, dataSize);
-        for (int i = 0; i < dataSize - 1; i++) fprintf(txtFile, ((i%BYTES_TEXT_PER_LINE == 0)? "0x%x,\n" : "0x%x, "), ((unsigned char *)image.data)[i]);
+        for (int i = 0; i < dataSize - 1; i++) fprintf(txtFile, ((i%TEXT_BYTES_PER_LINE == 0)? "0x%x,\n" : "0x%x, "), ((unsigned char *)image.data)[i]);
         fprintf(txtFile, "0x%x };\n", ((unsigned char *)image.data)[dataSize - 1]);
 
         fclose(txtFile);
@@ -1038,8 +1042,6 @@ void ImageFormat(Image *image, int newFormat)
                 } break;
                 case UNCOMPRESSED_R5G5B5A1:
                 {
-                    #define ALPHA_THRESHOLD  50
-
                     image->data = (unsigned short *)RL_MALLOC(image->width*image->height*sizeof(unsigned short));
 
                     unsigned char r = 0;
@@ -1052,7 +1054,7 @@ void ImageFormat(Image *image, int newFormat)
                         r = (unsigned char)(round(pixels[i].x*31.0f));
                         g = (unsigned char)(round(pixels[i].y*31.0f));
                         b = (unsigned char)(round(pixels[i].z*31.0f));
-                        a = (pixels[i].w > ((float)ALPHA_THRESHOLD/255.0f))? 1 : 0;
+                        a = (pixels[i].w > ((float)R5G5B5A1_ALPHA_THRESHOLD/255.0f))? 1 : 0;
 
                         ((unsigned short *)image->data)[i] = (unsigned short)r << 11 | (unsigned short)g << 6 | (unsigned short)b << 1 | (unsigned short)a;
                     }
@@ -2049,15 +2051,13 @@ void ImageDrawPixel(Image *dst, int x, int y, Color color)
         } break;
         case UNCOMPRESSED_R5G5B5A1:
         {
-            #define PIXEL_ALPHA_THRESHOLD  50
-
             // NOTE: Calculate R5G5B5A1 equivalent color
             Vector4 coln = { (float)color.r/255.0f, (float)color.g/255.0f, (float)color.b/255.0f, (float)color.a/255.0f };
 
             unsigned char r = (unsigned char)(round(coln.x*31.0f));
             unsigned char g = (unsigned char)(round(coln.y*31.0f));
             unsigned char b = (unsigned char)(round(coln.z*31.0f));
-            unsigned char a = (coln.w > ((float)PIXEL_ALPHA_THRESHOLD/255.0f))? 1 : 0;;
+            unsigned char a = (coln.w > ((float)R5G5B5A1_ALPHA_THRESHOLD/255.0f))? 1 : 0;;
 
             ((unsigned short *)dst->data)[y*dst->width + x] = (unsigned short)r << 11 | (unsigned short)g << 6 | (unsigned short)b << 1 | (unsigned short)a;
 

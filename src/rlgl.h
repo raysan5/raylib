@@ -606,22 +606,22 @@ RLAPI int GetPixelDataSize(int width, int height, int format);// Get pixel data 
 #if defined(RLGL_IMPLEMENTATION)
 
 #if defined(RLGL_STANDALONE)
-    #include <stdio.h>              // Required for: fopen(), fseek(), fread(), fclose() [LoadFileText]
+    #include <stdio.h>                  // Required for: fopen(), fseek(), fread(), fclose() [LoadFileText]
 #else
     // Check if config flags have been externally provided on compilation line
     #if !defined(EXTERNAL_CONFIG_FLAGS)
-        #include "config.h"         // Defines module configuration flags
+        #include "config.h"             // Defines module configuration flags
     #endif
-    #include "raymath.h"            // Required for: Vector3 and Matrix functions
+    #include "raymath.h"                // Required for: Vector3 and Matrix functions
 #endif
 
-#include <stdlib.h>                 // Required for: malloc(), free()
-#include <string.h>                 // Required for: strcmp(), strlen() [Used in rlglInit(), on extensions loading]
-#include <math.h>                   // Required for: atan2f(), fabs()
+#include <stdlib.h>                     // Required for: malloc(), free()
+#include <string.h>                     // Required for: strcmp(), strlen() [Used in rlglInit(), on extensions loading]
+#include <math.h>                       // Required for: atan2f()
 
 #if defined(GRAPHICS_API_OPENGL_11)
     #if defined(__APPLE__)
-        #include <OpenGL/gl.h>      // OpenGL 1.1 library for OSX
+        #include <OpenGL/gl.h>          // OpenGL 1.1 library for OSX
         #include <OpenGL/glext.h>
     #else
         // APIENTRY for OpenGL function pointer declarations is required
@@ -713,7 +713,6 @@ RLAPI int GetPixelDataSize(int width, int height, int format);// Get pixel data 
 #ifndef GL_MAX_TEXTURE_MAX_ANISOTROPY_EXT
     #define GL_MAX_TEXTURE_MAX_ANISOTROPY_EXT   0x84FF
 #endif
-
 #ifndef GL_TEXTURE_MAX_ANISOTROPY_EXT
     #define GL_TEXTURE_MAX_ANISOTROPY_EXT       0x84FE
 #endif
@@ -723,25 +722,36 @@ RLAPI int GetPixelDataSize(int width, int height, int format);// Get pixel data 
     #define GL_UNSIGNED_SHORT_5_5_5_1           0x8034
     #define GL_UNSIGNED_SHORT_4_4_4_4           0x8033
 #endif
-
 #if defined(GRAPHICS_API_OPENGL_21)
     #define GL_LUMINANCE                        0x1909
     #define GL_LUMINANCE_ALPHA                  0x190A
 #endif
 
 #if defined(GRAPHICS_API_OPENGL_ES2)
-    #define glClearDepth                glClearDepthf
+    #define glClearDepth                 glClearDepthf
     #define GL_READ_FRAMEBUFFER         GL_FRAMEBUFFER
     #define GL_DRAW_FRAMEBUFFER         GL_FRAMEBUFFER
 #endif
 
-// Default vertex attribute names on shader to set location points
-#define DEFAULT_ATTRIB_POSITION_NAME    "vertexPosition"    // shader-location = 0
-#define DEFAULT_ATTRIB_TEXCOORD_NAME    "vertexTexCoord"    // shader-location = 1
-#define DEFAULT_ATTRIB_NORMAL_NAME      "vertexNormal"      // shader-location = 2
-#define DEFAULT_ATTRIB_COLOR_NAME       "vertexColor"       // shader-location = 3
-#define DEFAULT_ATTRIB_TANGENT_NAME     "vertexTangent"     // shader-location = 4
-#define DEFAULT_ATTRIB_TEXCOORD2_NAME   "vertexTexCoord2"   // shader-location = 5
+// Default shader vertex attribute names to set location points
+#ifndef DEFAULT_SHADER_ATTRIB_NAME_POSITION
+    #define DEFAULT_SHADER_ATTRIB_NAME_POSITION    "vertexPosition"    // Binded by default to shader location: 0
+#endif
+#ifndef DEFAULT_SHADER_ATTRIB_NAME_TEXCOORD
+    #define DEFAULT_SHADER_ATTRIB_NAME_TEXCOORD    "vertexTexCoord"    // Binded by default to shader location: 1
+#endif
+#ifndef DEFAULT_SHADER_ATTRIB_NAME_NORMAL
+    #define DEFAULT_SHADER_ATTRIB_NAME_NORMAL      "vertexNormal"      // Binded by default to shader location: 2
+#endif
+#ifndef DEFAULT_SHADER_ATTRIB_NAME_COLOR
+    #define DEFAULT_SHADER_ATTRIB_NAME_COLOR       "vertexColor"       // Binded by default to shader location: 3
+#endif
+#ifndef DEFAULT_SHADER_ATTRIB_NAME_TANGENT
+    #define DEFAULT_SHADER_ATTRIB_NAME_TANGENT     "vertexTangent"     // Binded by default to shader location: 4
+#endif
+#ifndef DEFAULT_SHADER_ATTRIB_NAME_TEXCOORD2
+    #define DEFAULT_SHADER_ATTRIB_NAME_TEXCOORD2   "vertexTexCoord2"   // Binded by default to shader location: 5
+#endif
 
 //----------------------------------------------------------------------------------
 // Types and Structures Definition
@@ -1386,7 +1396,7 @@ RLAPI void rlScissor(int x, int y, int width, int height) { glScissor(x, y, widt
 // Enable wire mode
 void rlEnableWireMode(void)
 {
-#if defined (GRAPHICS_API_OPENGL_11) || defined(GRAPHICS_API_OPENGL_33)
+#if defined(GRAPHICS_API_OPENGL_11) || defined(GRAPHICS_API_OPENGL_33)
     // NOTE: glPolygonMode() not available on OpenGL ES
     glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
 #endif
@@ -1395,7 +1405,7 @@ void rlEnableWireMode(void)
 // Disable wire mode
 void rlDisableWireMode(void)
 {
-#if defined (GRAPHICS_API_OPENGL_11) || defined(GRAPHICS_API_OPENGL_33)
+#if defined(GRAPHICS_API_OPENGL_11) || defined(GRAPHICS_API_OPENGL_33)
     // NOTE: glPolygonMode() not available on OpenGL ES
     glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
 #endif
@@ -3270,7 +3280,7 @@ Texture2D GenTextureCubemap(Shader shader, Texture2D map, int size)
     glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 
     // Create projection and different views for each face
-    Matrix fboProjection = MatrixPerspective(90.0*DEG2RAD, 1.0, RL_NEAR_CULL_DISTANCE, RL_FAR_CULL_DISTANCE);
+    Matrix fboProjection = MatrixPerspective(90.0*DEG2RAD, 1.0, RL_CULL_DISTANCE_NEAR, RL_CULL_DISTANCE_FAR);
     Matrix fboViews[6] = {
         MatrixLookAt((Vector3){ 0.0f, 0.0f, 0.0f }, (Vector3){ 1.0f, 0.0f, 0.0f }, (Vector3){ 0.0f, -1.0f, 0.0f }),
         MatrixLookAt((Vector3){ 0.0f, 0.0f, 0.0f }, (Vector3){ -1.0f, 0.0f, 0.0f }, (Vector3){ 0.0f, -1.0f, 0.0f }),
@@ -3348,7 +3358,7 @@ Texture2D GenTextureIrradiance(Shader shader, Texture2D cubemap, int size)
     glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 
     // Create projection (transposed) and different views for each face
-    Matrix fboProjection = MatrixPerspective(90.0*DEG2RAD, 1.0, RL_NEAR_CULL_DISTANCE, RL_FAR_CULL_DISTANCE);
+    Matrix fboProjection = MatrixPerspective(90.0*DEG2RAD, 1.0, RL_CULL_DISTANCE_NEAR, RL_CULL_DISTANCE_FAR);
     Matrix fboViews[6] = {
         MatrixLookAt((Vector3){ 0.0f, 0.0f, 0.0f }, (Vector3){ 1.0f, 0.0f, 0.0f }, (Vector3){ 0.0f, -1.0f, 0.0f }),
         MatrixLookAt((Vector3){ 0.0f, 0.0f, 0.0f }, (Vector3){ -1.0f, 0.0f, 0.0f }, (Vector3){ 0.0f, -1.0f, 0.0f }),
@@ -3429,7 +3439,7 @@ Texture2D GenTexturePrefilter(Shader shader, Texture2D cubemap, int size)
     glGenerateMipmap(GL_TEXTURE_CUBE_MAP);
 
     // Create projection (transposed) and different views for each face
-    Matrix fboProjection = MatrixPerspective(90.0*DEG2RAD, 1.0, RL_NEAR_CULL_DISTANCE, RL_FAR_CULL_DISTANCE);
+    Matrix fboProjection = MatrixPerspective(90.0*DEG2RAD, 1.0, RL_CULL_DISTANCE_NEAR, RL_CULL_DISTANCE_FAR);
     Matrix fboViews[6] = {
         MatrixLookAt((Vector3){ 0.0f, 0.0f, 0.0f }, (Vector3){ 1.0f, 0.0f, 0.0f }, (Vector3){ 0.0f, -1.0f, 0.0f }),
         MatrixLookAt((Vector3){ 0.0f, 0.0f, 0.0f }, (Vector3){ -1.0f, 0.0f, 0.0f }, (Vector3){ 0.0f, -1.0f, 0.0f }),
@@ -3650,7 +3660,7 @@ void SetVrConfiguration(VrDeviceInfo hmd, Shader distortion)
 
     // Compute camera projection matrices
     float projOffset = 4.0f*lensShift;      // Scaled to projection space coordinates [-1..1]
-    Matrix proj = MatrixPerspective(fovy, aspect, RL_NEAR_CULL_DISTANCE, RL_FAR_CULL_DISTANCE);
+    Matrix proj = MatrixPerspective(fovy, aspect, RL_CULL_DISTANCE_NEAR, RL_CULL_DISTANCE_FAR);
     RLGL.Vr.config.eyesProjection[0] = MatrixMultiply(proj, MatrixTranslate(projOffset, 0.0f, 0.0f));
     RLGL.Vr.config.eyesProjection[1] = MatrixMultiply(proj, MatrixTranslate(-projOffset, 0.0f, 0.0f));
 
@@ -3857,12 +3867,12 @@ static unsigned int LoadShaderProgram(unsigned int vShaderId, unsigned int fShad
     glAttachShader(program, fShaderId);
 
     // NOTE: Default attribute shader locations must be binded before linking
-    glBindAttribLocation(program, 0, DEFAULT_ATTRIB_POSITION_NAME);
-    glBindAttribLocation(program, 1, DEFAULT_ATTRIB_TEXCOORD_NAME);
-    glBindAttribLocation(program, 2, DEFAULT_ATTRIB_NORMAL_NAME);
-    glBindAttribLocation(program, 3, DEFAULT_ATTRIB_COLOR_NAME);
-    glBindAttribLocation(program, 4, DEFAULT_ATTRIB_TANGENT_NAME);
-    glBindAttribLocation(program, 5, DEFAULT_ATTRIB_TEXCOORD2_NAME);
+    glBindAttribLocation(program, 0, DEFAULT_SHADER_ATTRIB_NAME_POSITION);
+    glBindAttribLocation(program, 1, DEFAULT_SHADER_ATTRIB_NAME_TEXCOORD);
+    glBindAttribLocation(program, 2, DEFAULT_SHADER_ATTRIB_NAME_NORMAL);
+    glBindAttribLocation(program, 3, DEFAULT_SHADER_ATTRIB_NAME_COLOR);
+    glBindAttribLocation(program, 4, DEFAULT_SHADER_ATTRIB_NAME_TANGENT);
+    glBindAttribLocation(program, 5, DEFAULT_SHADER_ATTRIB_NAME_TEXCOORD2);
 
     // NOTE: If some attrib name is no found on the shader, it locations becomes -1
 
@@ -4014,12 +4024,12 @@ static void SetShaderDefaultLocations(Shader *shader)
     //          vertex texcoord2 location   = 5
 
     // Get handles to GLSL input attibute locations
-    shader->locs[LOC_VERTEX_POSITION] = glGetAttribLocation(shader->id, DEFAULT_ATTRIB_POSITION_NAME);
-    shader->locs[LOC_VERTEX_TEXCOORD01] = glGetAttribLocation(shader->id, DEFAULT_ATTRIB_TEXCOORD_NAME);
-    shader->locs[LOC_VERTEX_TEXCOORD02] = glGetAttribLocation(shader->id, DEFAULT_ATTRIB_TEXCOORD2_NAME);
-    shader->locs[LOC_VERTEX_NORMAL] = glGetAttribLocation(shader->id, DEFAULT_ATTRIB_NORMAL_NAME);
-    shader->locs[LOC_VERTEX_TANGENT] = glGetAttribLocation(shader->id, DEFAULT_ATTRIB_TANGENT_NAME);
-    shader->locs[LOC_VERTEX_COLOR] = glGetAttribLocation(shader->id, DEFAULT_ATTRIB_COLOR_NAME);
+    shader->locs[LOC_VERTEX_POSITION] = glGetAttribLocation(shader->id, DEFAULT_SHADER_ATTRIB_NAME_POSITION);
+    shader->locs[LOC_VERTEX_TEXCOORD01] = glGetAttribLocation(shader->id, DEFAULT_SHADER_ATTRIB_NAME_TEXCOORD);
+    shader->locs[LOC_VERTEX_TEXCOORD02] = glGetAttribLocation(shader->id, DEFAULT_SHADER_ATTRIB_NAME_TEXCOORD2);
+    shader->locs[LOC_VERTEX_NORMAL] = glGetAttribLocation(shader->id, DEFAULT_SHADER_ATTRIB_NAME_NORMAL);
+    shader->locs[LOC_VERTEX_TANGENT] = glGetAttribLocation(shader->id, DEFAULT_SHADER_ATTRIB_NAME_TANGENT);
+    shader->locs[LOC_VERTEX_COLOR] = glGetAttribLocation(shader->id, DEFAULT_SHADER_ATTRIB_NAME_COLOR);
 
     // Get handles to GLSL uniform locations (vertex shader)
     shader->locs[LOC_MATRIX_MVP]  = glGetUniformLocation(shader->id, "mvp");

@@ -135,6 +135,9 @@ void SetCameraMoveControls(int frontKey, int backKey,
 
 #include <math.h>               // Required for: sinf(), cosf(), sqrtf()
 
+//----------------------------------------------------------------------------------
+// Defines and Macros
+//----------------------------------------------------------------------------------
 #ifndef PI
     #define PI 3.14159265358979323846
 #endif
@@ -145,9 +148,6 @@ void SetCameraMoveControls(int frontKey, int backKey,
     #define RAD2DEG (180.0f/PI)
 #endif
 
-//----------------------------------------------------------------------------------
-// Defines and Macros
-//----------------------------------------------------------------------------------
 // Camera mouse movement sensitivity
 #define CAMERA_MOUSE_MOVE_SENSITIVITY                   0.003f
 #define CAMERA_MOUSE_SCROLL_SENSITIVITY                 1.5f

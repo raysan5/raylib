@@ -223,11 +223,18 @@ typedef struct tagBITMAPINFOHEADER {
 //----------------------------------------------------------------------------------
 // Defines and Macros
 //----------------------------------------------------------------------------------
-#define AUDIO_DEVICE_FORMAT         ma_format_f32
-#define AUDIO_DEVICE_CHANNELS       2
-#define AUDIO_DEVICE_SAMPLE_RATE    44100
-
-#define MAX_AUDIO_BUFFER_POOL_CHANNELS 16
+#ifndef AUDIO_DEVICE_FORMAT
+    #define AUDIO_DEVICE_FORMAT    ma_format_f32    // Device output format (float-32bit)
+#endif
+#ifndef AUDIO_DEVICE_CHANNELS
+    #define AUDIO_DEVICE_CHANNELS              2    // Device output channels: stereo
+#endif
+#ifndef AUDIO_DEVICE_SAMPLE_RATE
+    #define AUDIO_DEVICE_SAMPLE_RATE       44100    // Device output sample rate
+#endif
+#ifndef MAX_AUDIO_BUFFER_POOL_CHANNELS
+    #define MAX_AUDIO_BUFFER_POOL_CHANNELS    16    // Audio pool channels
+#endif
 
 //----------------------------------------------------------------------------------
 // Types and Structures Definition
@@ -391,14 +398,14 @@ void InitAudioDevice(void)
     // NOTE: Using the default device. Format is floating point because it simplifies mixing.
     ma_device_config config = ma_device_config_init(ma_device_type_playback);
     config.playback.pDeviceID = NULL;  // NULL for the default playback AUDIO.System.device.
-    config.playback.format    = AUDIO_DEVICE_FORMAT;
-    config.playback.channels  = AUDIO_DEVICE_CHANNELS;
-    config.capture.pDeviceID  = NULL;  // NULL for the default capture AUDIO.System.device.
-    config.capture.format     = ma_format_s16;
-    config.capture.channels   = 1;
-    config.sampleRate         = AUDIO_DEVICE_SAMPLE_RATE;
-    config.dataCallback       = OnSendAudioDataToDevice;
-    config.pUserData          = NULL;
+    config.playback.format = AUDIO_DEVICE_FORMAT;
+    config.playback.channels = AUDIO_DEVICE_CHANNELS;
+    config.capture.pDeviceID = NULL;  // NULL for the default capture AUDIO.System.device.
+    config.capture.format = ma_format_s16;
+    config.capture.channels = 1;
+    config.sampleRate = AUDIO_DEVICE_SAMPLE_RATE;
+    config.dataCallback = OnSendAudioDataToDevice;
+    config.pUserData = NULL;
 
     result = ma_device_init(&AUDIO.System.context, &config, &AUDIO.System.device);
     if (result != MA_SUCCESS)

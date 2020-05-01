@@ -16,7 +16,7 @@
 *   #define TEXTSPLIT_MAX_TEXT_BUFFER_LENGTH
 *       TextSplit() function static buffer max size
 *
-*   #define TEXTSPLIT_MAX_SUBSTRINGS_COUNT
+*   #define MAX_TEXTSPLIT_COUNT
 *       TextSplit() function static substrings pointers array (pointing to static buffer)
 *
 *
@@ -73,17 +73,15 @@
 //----------------------------------------------------------------------------------
 // Defines and Macros
 //----------------------------------------------------------------------------------
-#define MAX_TEXT_BUFFER_LENGTH  1024        // Size of internal static buffers used on some functions:
-                                            // TextFormat(), TextSubtext(), TextToUpper(), TextToLower(), TextToPascal()
-
-#define MAX_TEXT_UNICODE_CHARS   512        // Maximum number of unicode codepoints
-
-#if !defined(TEXTSPLIT_MAX_TEXT_BUFFER_LENGTH)
-    #define TEXTSPLIT_MAX_TEXT_BUFFER_LENGTH    1024        // Size of static buffer: TextSplit()
+#ifndef MAX_TEXT_BUFFER_LENGTH
+    #define MAX_TEXT_BUFFER_LENGTH              1024        // Size of internal static buffers used on some functions:
+                                                            // TextFormat(), TextSubtext(), TextToUpper(), TextToLower(), TextToPascal(), TextSplit()
 #endif
-
-#if !defined(TEXTSPLIT_MAX_SUBSTRINGS_COUNT)
-    #define TEXTSPLIT_MAX_SUBSTRINGS_COUNT       128        // Size of static pointers array: TextSplit()
+#ifndef MAX_TEXT_UNICODE_CHARS
+    #define MAX_TEXT_UNICODE_CHARS               512        // Maximum number of unicode codepoints: GetCodepoints()
+#endif
+#ifndef MAX_TEXTSPLIT_COUNT
+    #define MAX_TEXTSPLIT_COUNT                  128        // Maximum number of substrings to split: TextSplit()
 #endif
 
 //----------------------------------------------------------------------------------
@@ -295,15 +293,21 @@ Font GetFontDefault()
 // Load Font from file into GPU memory (VRAM)
 Font LoadFont(const char *fileName)
 {
-    // Default hardcoded values for ttf file loading
-    #define DEFAULT_TTF_FONTSIZE    32      // Font first character (32 - space)
-    #define DEFAULT_TTF_NUMCHARS    95      // ASCII 32..126 is 95 glyphs
-    #define DEFAULT_FIRST_CHAR      32      // Expected first char for image sprite font
+    // Default values for ttf font generation
+#ifndef FONT_TTF_DEFAULT_SIZE
+    #define FONT_TTF_DEFAULT_SIZE           32      // TTF font generation default char size (char-height)
+#endif
+#ifndef FONT_TTF_DEFAULT_NUMCHARS
+    #define FONT_TTF_DEFAULT_NUMCHARS       95      // TTF font generation default charset: 95 glyphs (ASCII 32..126)
+#endif
+#ifndef FONT_TTF_DEFAULT_FIRST_CHAR
+    #define FONT_TTF_DEFAULT_FIRST_CHAR     32      // TTF font generation default first char for image sprite font (32-Space)
+#endif
 
     Font font = { 0 };
 
 #if defined(SUPPORT_FILEFORMAT_TTF)
-    if (IsFileExtension(fileName, ".ttf;.otf")) font = LoadFontEx(fileName, DEFAULT_TTF_FONTSIZE, NULL, DEFAULT_TTF_NUMCHARS);
+    if (IsFileExtension(fileName, ".ttf;.otf")) font = LoadFontEx(fileName, FONT_TTF_DEFAULT_SIZE, NULL, FONT_TTF_DEFAULT_NUMCHARS);
     else
 #endif
 #if defined(SUPPORT_FILEFORMAT_FNT)
@@ -312,7 +316,7 @@ Font LoadFont(const char *fileName)
 #endif
     {
         Image image = LoadImage(fileName);
-        if (image.data != NULL) font = LoadFontFromImage(image, MAGENTA, DEFAULT_FIRST_CHAR);
+        if (image.data != NULL) font = LoadFontFromImage(image, MAGENTA, FONT_TTF_DEFAULT_FIRST_CHAR);
         UnloadImage(image);
     }
 
@@ -363,6 +367,10 @@ Font LoadFontEx(const char *fileName, int fontSize, int *fontChars, int charsCou
 // Load an Image font file (XNA style)
 Font LoadFontFromImage(Image image, Color key, int firstChar)
 {
+#ifndef MAX_GLYPHS_FROM_IMAGE
+    #define MAX_GLYPHS_FROM_IMAGE   256     // Maximum number of glyphs supported on image scan
+#endif
+    
     #define COLOR_EQUAL(col1, col2) ((col1.r == col2.r)&&(col1.g == col2.g)&&(col1.b == col2.b)&&(col1.a == col2.a))
 
     int charSpacing = 0;
@@ -371,13 +379,10 @@ Font LoadFontFromImage(Image image, Color key, int firstChar)
     int x = 0;
     int y = 0;
 
-    // Default number of characters supported
-    #define MAX_FONTCHARS          256
-
     // We allocate a temporal arrays for chars data measures,
     // once we get the actual number of chars, we copy data to a sized arrays
-    int tempCharValues[MAX_FONTCHARS];
-    Rectangle tempCharRecs[MAX_FONTCHARS];
+    int tempCharValues[MAX_GLYPHS_FROM_IMAGE];
+    Rectangle tempCharRecs[MAX_GLYPHS_FROM_IMAGE];
 
     Color *pixels = GetImageData(image);
 
@@ -483,11 +488,18 @@ CharInfo *LoadFontData(const char *fileName, int fontSize, int *fontChars, int c
 {
     // NOTE: Using some SDF generation default values,
     // trades off precision with ability to handle *smaller* sizes
-    #define SDF_CHAR_PADDING            4
-    #define SDF_ON_EDGE_VALUE         128
-    #define SDF_PIXEL_DIST_SCALE     64.0f
-
-    #define BITMAP_ALPHA_THRESHOLD     80
+#ifndef FONT_SDF_CHAR_PADDING
+    #define FONT_SDF_CHAR_PADDING            4      // SDF font generation char padding
+#endif
+#ifndef FONT_SDF_ON_EDGE_VALUE
+    #define FONT_SDF_ON_EDGE_VALUE         128      // SDF font generation on edge value
+#endif
+#ifndef FONT_SDF_PIXEL_DIST_SCALE
+    #define FONT_SDF_PIXEL_DIST_SCALE     64.0f     // SDF font generation pixel distance scale
+#endif
+#ifndef FONT_BITMAP_ALPHA_THRESHOLD
+    #define FONT_BITMAP_ALPHA_THRESHOLD     80      // Bitmap (B&W) font generation alpha threshold
+#endif
 
     CharInfo *chars = NULL;
 
@@ -541,7 +553,7 @@ CharInfo *LoadFontData(const char *fileName, int fontSize, int *fontChars, int c
                 //      stbtt_MakeCodepointBitmap()          -- renders into bitmap you provide
 
                 if (type != FONT_SDF) chars[i].image.data = stbtt_GetCodepointBitmap(&fontInfo, scaleFactor, scaleFactor, ch, &chw, &chh, &chars[i].offsetX, &chars[i].offsetY);
-                else if (ch != 32) chars[i].image.data = stbtt_GetCodepointSDF(&fontInfo, scaleFactor, ch, SDF_CHAR_PADDING, SDF_ON_EDGE_VALUE, SDF_PIXEL_DIST_SCALE, &chw, &chh, &chars[i].offsetX, &chars[i].offsetY);
+                else if (ch != 32) chars[i].image.data = stbtt_GetCodepointSDF(&fontInfo, scaleFactor, ch, FONT_SDF_CHAR_PADDING, FONT_SDF_ON_EDGE_VALUE, FONT_SDF_PIXEL_DIST_SCALE, &chw, &chh, &chars[i].offsetX, &chars[i].offsetY);
                 else chars[i].image.data = NULL;
 
                 stbtt_GetCodepointHMetrics(&fontInfo, ch, &chars[i].advanceX, NULL);
@@ -568,7 +580,7 @@ CharInfo *LoadFontData(const char *fileName, int fontSize, int *fontChars, int c
                     // NOTE: For optimum results, bitmap font should be generated at base pixel size
                     for (int p = 0; p < chw*chh; p++)
                     {
-                        if (((unsigned char *)chars[i].image.data)[p] < BITMAP_ALPHA_THRESHOLD) ((unsigned char *)chars[i].image.data)[p] = 0;
+                        if (((unsigned char *)chars[i].image.data)[p] < FONT_BITMAP_ALPHA_THRESHOLD) ((unsigned char *)chars[i].image.data)[p] = 0;
                         else ((unsigned char *)chars[i].image.data)[p] = 255;
                     }
                 }
@@ -1053,11 +1065,14 @@ Vector2 MeasureTextEx(Font font, const char *text, float fontSize, float spacing
 // Returns index position for a unicode character on spritefont
 int GetGlyphIndex(Font font, int codepoint)
 {
-#define TEXT_CHARACTER_NOTFOUND     63      // Character: '?'
+#ifndef GLYPH_NOTFOUND_CHAR_FALLBACK    
+    #define GLYPH_NOTFOUND_CHAR_FALLBACK     63      // Character used if requested codepoint is not found: '?'
+#endif
 
-#define UNORDERED_CHARSET
-#if defined(UNORDERED_CHARSET)
-    int index = TEXT_CHARACTER_NOTFOUND;
+// Support charsets with any characters order
+#define SUPPORT_UNORDERED_CHARSET
+#if defined(SUPPORT_UNORDERED_CHARSET)
+    int index = GLYPH_NOTFOUND_CHAR_FALLBACK;
 
     for (int i = 0; i < font.charsCount; i++)
     {
@@ -1128,8 +1143,10 @@ unsigned int TextLength(const char *text)
 // WARNING: String returned will expire after this function is called MAX_TEXTFORMAT_BUFFERS times
 const char *TextFormat(const char *text, ...)
 {
-    #define MAX_TEXTFORMAT_BUFFERS 4
-
+#ifndef MAX_TEXTFORMAT_BUFFERS
+    #define MAX_TEXTFORMAT_BUFFERS 4        // Maximum number of static buffers for text formatting
+#endif
+    
     // We create an array of buffers so strings don't expire until MAX_TEXTFORMAT_BUFFERS invocations
     static char buffers[MAX_TEXTFORMAT_BUFFERS][MAX_TEXT_BUFFER_LENGTH] = { 0 };
     static int  index = 0;
@@ -1279,12 +1296,12 @@ const char **TextSplit(const char *text, char delimiter, int *count)
     // NOTE: Current implementation returns a copy of the provided string with '\0' (string end delimiter)
     // inserted between strings defined by "delimiter" parameter. No memory is dynamically allocated,
     // all used memory is static... it has some limitations:
-    //      1. Maximum number of possible split strings is set by TEXTSPLIT_MAX_SUBSTRINGS_COUNT
-    //      2. Maximum size of text to split is TEXTSPLIT_MAX_TEXT_BUFFER_LENGTH
+    //      1. Maximum number of possible split strings is set by MAX_TEXTSPLIT_COUNT
+    //      2. Maximum size of text to split is MAX_TEXT_BUFFER_LENGTH
 
-    static const char *result[TEXTSPLIT_MAX_SUBSTRINGS_COUNT] = { NULL };
-    static char buffer[TEXTSPLIT_MAX_TEXT_BUFFER_LENGTH] = { 0 };
-    memset(buffer, 0, TEXTSPLIT_MAX_TEXT_BUFFER_LENGTH);
+    static const char *result[MAX_TEXTSPLIT_COUNT] = { NULL };
+    static char buffer[MAX_TEXT_BUFFER_LENGTH] = { 0 };
+    memset(buffer, 0, MAX_TEXT_BUFFER_LENGTH);
 
     result[0] = buffer;
     int counter = 0;
@@ -1294,7 +1311,7 @@ const char **TextSplit(const char *text, char delimiter, int *count)
         counter = 1;
 
         // Count how many substrings we have on text and point to every one
-        for (int i = 0; i < TEXTSPLIT_MAX_TEXT_BUFFER_LENGTH; i++)
+        for (int i = 0; i < MAX_TEXT_BUFFER_LENGTH; i++)
         {
             buffer[i] = text[i];
             if (buffer[i] == '\0') break;
@@ -1304,7 +1321,7 @@ const char **TextSplit(const char *text, char delimiter, int *count)
                 result[counter] = buffer + i + 1;
                 counter++;
 
-                if (counter == TEXTSPLIT_MAX_SUBSTRINGS_COUNT) break;
+                if (counter == MAX_TEXTSPLIT_COUNT) break;
             }
         }
     }

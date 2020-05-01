@@ -174,6 +174,7 @@ float GetGesturePinchAngle(void);                       // Get gesture pinch ang
 // Types and Structures Definition
 //----------------------------------------------------------------------------------
 
+// Gestures module state context
 typedef struct {
     int current;                        // Current detected gesture
     unsigned int enabledFlags;          // Enabled gestures flags
