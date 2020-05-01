@@ -283,6 +283,17 @@ RMDEF Vector2 Vector2Rotate(Vector2 v, float degs)
     return result;
 }
 
+// Move towards Target.
+RMDEF Vector2 Vector2MoveTowards( Vector2 v, Vector2 target, float maxDistance)
+{
+    float dx = target.x - v.x;
+    float dy = target.y - v.y;
+    float value = ( dx * dx ) + ( dy * dy );
+    if ( value == 0 || ( maxDistance >= 0 && value <= maxDistance * maxDistance )) return target;
+    float result = sqrtf( value );
+    return (Vector2){ v.x + dx / result * maxDistance, v.y + dy / result * maxDistance };
+}
+
 //----------------------------------------------------------------------------------
 // Module Functions Definition - Vector3 math
 //----------------------------------------------------------------------------------
