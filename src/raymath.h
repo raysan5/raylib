@@ -283,15 +283,22 @@ RMDEF Vector2 Vector2Rotate(Vector2 v, float degs)
     return result;
 }
 
-// Move towards Target.
-RMDEF Vector2 Vector2MoveTowards( Vector2 v, Vector2 target, float maxDistance)
+// Move Vector towards target
+RMDEF Vector2 Vector2MoveTowards(Vector2 v, Vector2 target, float maxDistance)
 {
+    Vector2 result = { 0 }
     float dx = target.x - v.x;
     float dy = target.y - v.y;
-    float value = ( dx * dx ) + ( dy * dy );
-    if ( value == 0 || ( maxDistance >= 0 && value <= maxDistance * maxDistance )) return target;
-    float result = sqrtf( value );
-    return (Vector2){ v.x + dx / result * maxDistance, v.y + dy / result * maxDistance };
+    float value = (dx*dx) + (dy*dy);
+    
+    if ((value == 0) || ((maxDistance >= 0) && (value <= maxDistance*maxDistance))) result = target;
+    
+    float dist = sqrtf(value);
+    
+    result.x = v.x + dx/dist*maxDistance;
+    result.y = v.y + dy/dist*maxDistance;
+    
+    return result;
 }
 
 //----------------------------------------------------------------------------------
