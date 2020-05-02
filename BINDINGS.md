@@ -7,7 +7,6 @@ Some people ported raylib to other languages in form of bindings or wrappers to 
 | raylib             | C              | https://github.com/raysan5/raylib                                    |
 | raylib-cpp         | C++            | https://github.com/robloach/raylib-cpp                               |
 | Raylib-cs          | C#             | https://github.com/ChrisDill/Raylib-cs                               |
-| RaylibSharp        | C#             | https://github.com/TheLumaio/RaylibSharp                             |
 | RaylibFS           | F#             | https://github.com/dallinbeutler/RaylibFS                            |
 | raylib_d           | D              | https://github.com/0xFireball/raylib_d                               |
 | raylib-d           | D              | https://github.com/onroundit/raylib-d                                |
