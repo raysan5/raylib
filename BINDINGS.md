@@ -22,6 +22,7 @@ Some people ported raylib to other languages in form of bindings or wrappers to 
 | raylib-nelua       | Nelua          | https://github.com/Andre-LA/raylib-nelua-mirror                      |
 | raylib-Nim         | Nim            | https://gitlab.com/define-private-public/raylib-Nim                  |
 | raylib-nim         | Nim            | https://github.com/Skrylar/raylib-nim                                |
+| raylib-Forever     | Nim            | https://github.com/Guevara-chan/Raylib-Forever           |
 | raylib-haskell     | Haskell        | https://github.com/DevJac/raylib-haskell                             |
 | raylib-cr          | Crystal        | https://github.com/AregevDev/raylib-cr                               |
 | cray               | Crystal        | https://gitlab.com/Zatherz/cray                                      |
