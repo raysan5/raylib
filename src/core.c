@@ -113,36 +113,36 @@
 *
 **********************************************************************************************/
 
-#include "raylib.h"             // Declares module functions
+#include "raylib.h"                 // Declares module functions
 
 // Check if config flags have been externally provided on compilation line
 #if !defined(EXTERNAL_CONFIG_FLAGS)
-    #include "config.h"         // Defines module configuration flags
+    #include "config.h"             // Defines module configuration flags
 #else
     #define RAYLIB_VERSION  "3.0"
 #endif
 
-#include "utils.h"              // Required for: TRACELOG macros
+#include "utils.h"                  // Required for: TRACELOG macros
 
 #if (defined(__linux__) || defined(PLATFORM_WEB)) && _POSIX_C_SOURCE < 199309L
     #undef _POSIX_C_SOURCE
     #define _POSIX_C_SOURCE 199309L // Required for CLOCK_MONOTONIC if compiled with c99 without gnu ext.
 #endif
 
-#define RAYMATH_IMPLEMENTATION  // Define external out-of-line implementation of raymath here
-#include "raymath.h"            // Required for: Vector3 and Matrix functions
+#define RAYMATH_IMPLEMENTATION      // Define external out-of-line implementation of raymath here
+#include "raymath.h"                // Required for: Vector3 and Matrix functions
 
 #define RLGL_IMPLEMENTATION
-#include "rlgl.h"               // raylib OpenGL abstraction layer to OpenGL 1.1, 3.3+ or ES2
+#include "rlgl.h"                   // raylib OpenGL abstraction layer to OpenGL 1.1, 3.3+ or ES2
 
 #if defined(SUPPORT_GESTURES_SYSTEM)
     #define GESTURES_IMPLEMENTATION
-    #include "gestures.h"       // Gestures detection functionality
+    #include "gestures.h"           // Gestures detection functionality
 #endif
 
 #if defined(SUPPORT_CAMERA_SYSTEM)
     #define CAMERA_IMPLEMENTATION
-    #include "camera.h"         // Camera system functionality
+    #include "camera.h"             // Camera system functionality
 #endif
 
 #if defined(SUPPORT_GIF_RECORDING)
@@ -150,20 +150,16 @@
     #define RGIF_FREE RL_FREE
 
     #define RGIF_IMPLEMENTATION
-    #include "external/rgif.h"  // Support GIF recording
+    #include "external/rgif.h"      // Support GIF recording
 #endif
 
-#if defined(__APPLE__)
-    #define SUPPORT_HIGH_DPI    // Force HighDPI support on macOS
-#endif
+#include <stdlib.h>                 // Required for: srand(), rand(), atexit()
+#include <stdio.h>                  // Required for: sprintf() [Used in OpenURL()]
+#include <string.h>                 // Required for: strrchr(), strcmp(), strlen()
+#include <time.h>                   // Required for: time() [Used in InitTimer()]
+#include <math.h>                   // Required for: tan() [Used in BeginMode3D()]
 
-#include <stdlib.h>             // Required for: srand(), rand(), atexit()
-#include <stdio.h>              // Required for: sprintf() [Used in OpenURL()]
-#include <string.h>             // Required for: strrchr(), strcmp(), strlen()
-#include <time.h>               // Required for: time() [Used in InitTimer()]
-#include <math.h>               // Required for: tan() [Used in BeginMode3D()]
-
-#include <sys/stat.h>           // Required for: stat() [Used in GetFileModTime()]
+#include <sys/stat.h>               // Required for: stat() [Used in GetFileModTime()]
 
 #if (defined(PLATFORM_DESKTOP) || defined(PLATFORM_UWP)) && defined(_WIN32) && (defined(_MSC_VER) || defined(__TINYC__))
     #define DIRENT_MALLOC RL_MALLOC
@@ -203,24 +199,18 @@
         #endif
 
     #elif defined(__linux__)
-        #include <sys/time.h>           // Required for: timespec, nanosleep(), select() - POSIX
+        #include <sys/time.h>               // Required for: timespec, nanosleep(), select() - POSIX
 
-        //#define GLFW_EXPOSE_NATIVE_X11        // WARNING: Exposing Xlib.h > X.h results in dup symbols for Font type
+        //#define GLFW_EXPOSE_NATIVE_X11      // WARNING: Exposing Xlib.h > X.h results in dup symbols for Font type
         //#define GLFW_EXPOSE_NATIVE_WAYLAND
         //#define GLFW_EXPOSE_NATIVE_MIR
-        #include <GLFW/glfw3native.h>   // Required for: glfwGetX11Window()
+        #include <GLFW/glfw3native.h>       // Required for: glfwGetX11Window()
     #elif defined(__APPLE__)
-        #include <unistd.h>             // Required for: usleep()
+        #include <unistd.h>                 // Required for: usleep()
 
-        //#define GLFW_EXPOSE_NATIVE_COCOA      // WARNING: Fails due to type redefinition
-        #include <GLFW/glfw3native.h>   // Required for: glfwGetCocoaWindow()
+        //#define GLFW_EXPOSE_NATIVE_COCOA    // WARNING: Fails due to type redefinition
+        #include <GLFW/glfw3native.h>       // Required for: glfwGetCocoaWindow()
     #endif
-#endif
-
-#if defined(__linux__)
-    #define MAX_FILEPATH_LENGTH    4096     // Use Linux PATH_MAX value
-#else
-    #define MAX_FILEPATH_LENGTH     512     // Use common value
 #endif
 
 #if defined(PLATFORM_ANDROID)
@@ -228,40 +218,40 @@
     #include <android/window.h>             // Defines AWINDOW_FLAG_FULLSCREEN and others
     #include <android_native_app_glue.h>    // Defines basic app state struct and manages activity
 
-    #include <EGL/egl.h>            // Khronos EGL library - Native platform display device control functions
-    #include <GLES2/gl2.h>          // Khronos OpenGL ES 2.0 library
+    #include <EGL/egl.h>                    // EGL library - Native platform display device control functions
+    #include <GLES2/gl2.h>                  // OpenGL ES 2.0 library
 #endif
 
 #if defined(PLATFORM_RPI)
-    #include <fcntl.h>              // POSIX file control definitions - open(), creat(), fcntl()
-    #include <unistd.h>             // POSIX standard function definitions - read(), close(), STDIN_FILENO
-    #include <termios.h>            // POSIX terminal control definitions - tcgetattr(), tcsetattr()
-    #include <pthread.h>            // POSIX threads management (inputs reading)
-    #include <dirent.h>             // POSIX directory browsing
-
-    #include <sys/ioctl.h>          // UNIX System call for device-specific input/output operations - ioctl()
-    #include <linux/kd.h>           // Linux: KDSKBMODE, K_MEDIUMRAM constants definition
-    #include <linux/input.h>        // Linux: Keycodes constants definition (KEY_A, ...)
-    #include <linux/joystick.h>     // Linux: Joystick support library
-
-    #include "bcm_host.h"           // Raspberry Pi VideoCore IV access functions
-
-    #include "EGL/egl.h"            // Khronos EGL library - Native platform display device control functions
-    #include "EGL/eglext.h"         // Khronos EGL library - Extensions
-    #include "GLES2/gl2.h"          // Khronos OpenGL ES 2.0 library
+    #include <fcntl.h>                  // POSIX file control definitions - open(), creat(), fcntl()
+    #include <unistd.h>                 // POSIX standard function definitions - read(), close(), STDIN_FILENO
+    #include <termios.h>                // POSIX terminal control definitions - tcgetattr(), tcsetattr()
+    #include <pthread.h>                // POSIX threads management (inputs reading)
+    #include <dirent.h>                 // POSIX directory browsing
+    
+    #include <sys/ioctl.h>              // UNIX System call for device-specific input/output operations - ioctl()
+    #include <linux/kd.h>               // Linux: KDSKBMODE, K_MEDIUMRAM constants definition
+    #include <linux/input.h>            // Linux: Keycodes constants definition (KEY_A, ...)
+    #include <linux/joystick.h>         // Linux: Joystick support library
+    
+    #include "bcm_host.h"               // Raspberry Pi VideoCore IV access functions
+    
+    #include "EGL/egl.h"                // EGL library - Native platform display device control functions
+    #include "EGL/eglext.h"             // EGL library - Extensions
+    #include "GLES2/gl2.h"              // OpenGL ES 2.0 library
 #endif
 
 #if defined(PLATFORM_UWP)
-    #include "EGL/egl.h"            // Khronos EGL library - Native platform display device control functions
-    #include "EGL/eglext.h"         // Khronos EGL library - Extensions
-    #include "GLES2/gl2.h"          // Khronos OpenGL ES 2.0 library
-    #include "uwp_events.h"         // UWP bootstrapping functions
+    #include "EGL/egl.h"                // EGL library - Native platform display device control functions
+    #include "EGL/eglext.h"             // EGL library - Extensions
+    #include "GLES2/gl2.h"              // OpenGL ES 2.0 library
+    #include "uwp_events.h"             // UWP bootstrapping functions
 #endif
 
 #if defined(PLATFORM_WEB)
-    #define GLFW_INCLUDE_ES2        // GLFW3: Enable OpenGL ES 2.0 (translated to WebGL)
-    #include <GLFW/glfw3.h>         // GLFW3 library: Windows, OpenGL context and Input management
-    #include <sys/time.h>           // Required for: timespec, nanosleep(), select() - POSIX
+    #define GLFW_INCLUDE_ES2            // GLFW3: Enable OpenGL ES 2.0 (translated to WebGL)
+    #include <GLFW/glfw3.h>             // GLFW3 library: Windows, OpenGL context and Input management
+    #include <sys/time.h>               // Required for: timespec, nanosleep(), select() - POSIX
 
     #include <emscripten/emscripten.h>  // Emscripten library - LLVM to JavaScript compiler
     #include <emscripten/html5.h>       // Emscripten HTML5 library
@@ -288,18 +278,36 @@
     //#define DEFAULT_KEYBOARD_DEV    "/dev/input/eventN"
     //#define DEFAULT_MOUSE_DEV       "/dev/input/eventN"
     //#define DEFAULT_GAMEPAD_DEV     "/dev/input/eventN"
-
-    #define MOUSE_SENSITIVITY         0.8f
 #endif
 
-#define MAX_GAMEPADS              4         // Max number of gamepads supported
-#define MAX_GAMEPAD_AXIS          8         // Max number of axis supported (per gamepad)
-#define MAX_GAMEPAD_BUTTONS       32        // Max bumber of buttons supported (per gamepad)
+#ifndef MAX_FILEPATH_LENGTH
+    #if defined(__linux__)
+        #define MAX_FILEPATH_LENGTH     4096        // Maximum length for filepaths (Linux PATH_MAX default value)
+    #else
+        #define MAX_FILEPATH_LENGTH      512        // Maximum length supported for filepaths
+    #endif
+#endif
 
-#define MAX_CHARS_QUEUE           16        // Max number of characters in the input queue
+#ifndef MAX_GAMEPADS
+    #define MAX_GAMEPADS                   4        // Max number of gamepads supported
+#endif
+#ifndef MAX_GAMEPAD_AXIS
+    #define MAX_GAMEPAD_AXIS               8        // Max number of axis supported (per gamepad)
+#endif
+#ifndef MAX_GAMEPAD_BUTTONS
+    #define MAX_GAMEPAD_BUTTONS           32        // Max bumber of buttons supported (per gamepad)
+#endif
+#ifndef MAX_TOUCH_POINTS
+    #define MAX_TOUCH_POINTS              10        // Maximum number of touch points supported
+#endif
+#ifndef MAX_KEY_PRESSED_QUEUE
+    #define MAX_KEY_PRESSED_QUEUE         16        // Max number of characters in the key input queue
+#endif
 
 #if defined(SUPPORT_DATA_STORAGE)
-    #define STORAGE_DATA_FILE     "storage.data"
+    #ifndef STORAGE_DATA_FILE
+        #define STORAGE_DATA_FILE  "storage.data"   // Automatic storage filename
+    #endif
 #endif
 
 //----------------------------------------------------------------------------------
@@ -390,7 +398,7 @@ typedef struct CoreData {
             char currentKeyState[512];      // Registers current frame key state
             char previousKeyState[512];     // Registers previous frame key state
 
-            int keyPressedQueue[MAX_CHARS_QUEUE]; // Input characters queue
+            int keyPressedQueue[MAX_KEY_PRESSED_QUEUE]; // Input characters queue
             int keyPressedQueueCount;             // Input characters queue count
 #if defined(PLATFORM_RPI)
             int defaultMode;                // Default keyboard mode
@@ -1400,7 +1408,7 @@ void BeginMode3D(Camera3D camera)
         double top = 0.01*tan(camera.fovy*0.5*DEG2RAD);
         double right = top*aspect;
 
-        rlFrustum(-right, right, -top, top, RL_NEAR_CULL_DISTANCE, RL_FAR_CULL_DISTANCE);
+        rlFrustum(-right, right, -top, top, RL_CULL_DISTANCE_NEAR, RL_CULL_DISTANCE_FAR);
     }
     else if (camera.type == CAMERA_ORTHOGRAPHIC)
     {
@@ -1408,7 +1416,7 @@ void BeginMode3D(Camera3D camera)
         double top = camera.fovy/2.0;
         double right = top*aspect;
 
-        rlOrtho(-right, right, -top,top, RL_NEAR_CULL_DISTANCE, RL_FAR_CULL_DISTANCE);
+        rlOrtho(-right, right, -top,top, RL_CULL_DISTANCE_NEAR, RL_CULL_DISTANCE_FAR);
     }
 
     // NOTE: zNear and zFar values are important when computing depth buffer values
@@ -1521,7 +1529,7 @@ Ray GetMouseRay(Vector2 mouse, Camera camera)
     if (camera.type == CAMERA_PERSPECTIVE)
     {
         // Calculate projection matrix from perspective
-        matProj = MatrixPerspective(camera.fovy*DEG2RAD, ((double)GetScreenWidth()/(double)GetScreenHeight()), RL_NEAR_CULL_DISTANCE, RL_FAR_CULL_DISTANCE);
+        matProj = MatrixPerspective(camera.fovy*DEG2RAD, ((double)GetScreenWidth()/(double)GetScreenHeight()), RL_CULL_DISTANCE_NEAR, RL_CULL_DISTANCE_FAR);
     }
     else if (camera.type == CAMERA_ORTHOGRAPHIC)
     {
@@ -1605,7 +1613,7 @@ Vector2 GetWorldToScreenEx(Vector3 position, Camera camera, int width, int heigh
     if (camera.type == CAMERA_PERSPECTIVE)
     {
         // Calculate projection matrix from perspective
-        matProj = MatrixPerspective(camera.fovy * DEG2RAD, ((double)width/(double)height), RL_NEAR_CULL_DISTANCE, RL_FAR_CULL_DISTANCE);
+        matProj = MatrixPerspective(camera.fovy * DEG2RAD, ((double)width/(double)height), RL_CULL_DISTANCE_NEAR, RL_CULL_DISTANCE_FAR);
     }
     else if (camera.type == CAMERA_ORTHOGRAPHIC)
     {
@@ -1614,7 +1622,7 @@ Vector2 GetWorldToScreenEx(Vector3 position, Camera camera, int width, int heigh
         double right = top*aspect;
 
         // Calculate projection matrix from orthographic
-        matProj = MatrixOrtho(-right, right, -top, top, RL_NEAR_CULL_DISTANCE, RL_FAR_CULL_DISTANCE);
+        matProj = MatrixOrtho(-right, right, -top, top, RL_CULL_DISTANCE_NEAR, RL_CULL_DISTANCE_FAR);
     }
 
     // Calculate view matrix from camera look at (and transpose it)
@@ -3989,7 +3997,7 @@ static void CharCallback(GLFWwindow *window, unsigned int key)
     // Ref: https://www.glfw.org/docs/latest/input_guide.html#input_char
 
     // Check if there is space available in the queue
-    if (CORE.Input.Keyboard.keyPressedQueueCount < MAX_CHARS_QUEUE)
+    if (CORE.Input.Keyboard.keyPressedQueueCount < MAX_KEY_PRESSED_QUEUE)
     {
         // Add character to the queue
         CORE.Input.Keyboard.keyPressedQueue[CORE.Input.Keyboard.keyPressedQueueCount] = key;
@@ -5261,7 +5269,7 @@ void UWPKeyDownEvent(int key, bool down, bool controlKey)
 
 void UWPKeyCharEvent(int key)
 {
-    if (CORE.Input.Keyboard.keyPressedQueueCount < MAX_CHARS_QUEUE)
+    if (CORE.Input.Keyboard.keyPressedQueueCount < MAX_KEY_PRESSED_QUEUE)
     {
         // Add character to the queue
         CORE.Input.Keyboard.keyPressedQueue[CORE.Input.Keyboard.keyPressedQueueCount] = key;

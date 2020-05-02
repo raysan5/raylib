@@ -13,6 +13,8 @@
 
 #include "raylib.h"
 
+#define MAX_TOUCH_POINTS 10
+
 int main(void)
 {
     // Initialization

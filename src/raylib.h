@@ -99,8 +99,6 @@
 #define DEG2RAD (PI/180.0f)
 #define RAD2DEG (180.0f/PI)
 
-#define MAX_TOUCH_POINTS        10      // Maximum number of touch points supported
-
 // Allow custom memory allocators
 #ifndef RL_MALLOC
     #define RL_MALLOC(sz)       malloc(sz)
