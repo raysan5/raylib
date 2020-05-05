@@ -64,11 +64,6 @@ void InitLogoScreen(void)
     logoPositionX = GetScreenWidth()/2 - 128;
     logoPositionY = GetScreenHeight()/2 - 128;
     
-    topSideRecWidth = LOGO_RECS_SIDE;
-    leftSideRecHeight = LOGO_RECS_SIDE;
-    bottomSideRecWidth = LOGO_RECS_SIDE;
-    rightSideRecHeight = LOGO_RECS_SIDE;
-    
     for (int i = 0; i < 8; i++) raylib[i] = '\0';
     
     state = 0;
