@@ -119,7 +119,6 @@ elseif(${PLATFORM} MATCHES "Raspberry Pi")
 
   add_definitions(-D_GNU_SOURCE=1)
   
-  find_library(OPENGL_LIBRARY OpenGL)
   find_library(GLESV2 brcmGLESv2 HINTS /opt/vc/lib)
   find_library(EGL brcmEGL HINTS /opt/vc/lib)
   find_library(BCMHOST bcm_host HINTS /opt/vc/lib)
