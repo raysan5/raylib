@@ -117,7 +117,7 @@ elseif(${PLATFORM} MATCHES "Raspberry Pi")
   set(PLATFORM_CPP "PLATFORM_RPI")
   set(GRAPHICS "GRAPHICS_API_OPENGL_ES2")
 
-  add_definitions(-D_GNU_SOURCE=1)
+  add_definitions(-D_DEFAULT_SOURCE)
   
   find_library(GLESV2 brcmGLESv2 HINTS /opt/vc/lib)
   find_library(EGL brcmEGL HINTS /opt/vc/lib)
