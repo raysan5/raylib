@@ -10,6 +10,7 @@ Some people ported raylib to other languages in form of bindings or wrappers to 
 | RaylibFS           | F#             | https://github.com/dallinbeutler/RaylibFS                            |
 | raylib_d           | D              | https://github.com/0xFireball/raylib_d                               |
 | raylib-d           | D              | https://github.com/onroundit/raylib-d                                |
+| bindbc-raylib      | D              | https://github.com/o3o/bindbc-raylib                    |
 | raylib-go          | Go             | https://github.com/gen2brain/raylib-go                               |
 | raylib-goplus      | Go             | https://github.com/Lachee/raylib-goplus                              |
 | raylib-rs          | Rust           | https://github.com/deltaphc/raylib-rs                                |
