@@ -5055,10 +5055,7 @@ static void *EventThread(void *arg)
             #endif
             }
         }
-        else
-        {
-            usleep(5000); // Sleep for 5ms to avoid hogging CPU time
-        }
+        else Wait(5);    // Sleep for 5ms to avoid hogging CPU time
     }
 
     close(worker->fd);
@@ -5146,10 +5143,7 @@ static void *GamepadThread(void *arg)
                     }
                 }
             }
-            else
-            {
-                usleep(1000); //Sleep for 1ms to avoid hogging CPU time
-            }
+            else Wait(1);    // Sleep for 1 ms to avoid hogging CPU time
         }
     }
 
