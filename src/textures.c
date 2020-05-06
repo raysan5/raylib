@@ -689,7 +689,7 @@ Rectangle GetImageAlphaBorder(Image image, float threshold)
         // Check for empty blank image
         if ((xMin != 65536) && (xMax != 65536))
         {
-            crop = (Rectangle){ xMin, yMin, (xMax + 1) - xMin, (yMax + 1) - yMin };
+            crop = (Rectangle){ (float)xMin, (float)yMin, (float)((xMax + 1) - xMin), (float)((yMax + 1) - yMin) };
         }
 
         RL_FREE(pixels);
@@ -1273,12 +1273,12 @@ TextureCubemap LoadTextureCubemap(Image image, int layoutType)
 
         Image faces = { 0 };                // Vertical column image
         Rectangle faceRecs[6] = { 0 };      // Face source rectangles
-        for (int i = 0; i < 6; i++) faceRecs[i] = (Rectangle){ 0, 0, size, size };
+        for (int i = 0; i < 6; i++) faceRecs[i] = (Rectangle){ 0, 0, (float)size, (float)size };
 
         if (layoutType == CUBEMAP_LINE_VERTICAL)
         {
             faces = image;
-            for (int i = 0; i < 6; i++) faceRecs[i].y = size*i;
+            for (int i = 0; i < 6; i++) faceRecs[i].y = (float)size*i;
         }
         else if (layoutType == CUBEMAP_PANORAMA)
         {
@@ -1287,24 +1287,24 @@ TextureCubemap LoadTextureCubemap(Image image, int layoutType)
         }
         else
         {
-            if (layoutType == CUBEMAP_LINE_HORIZONTAL) for (int i = 0; i < 6; i++) faceRecs[i].x = size*i;
+            if (layoutType == CUBEMAP_LINE_HORIZONTAL) for (int i = 0; i < 6; i++) faceRecs[i].x = (float)size*i;
             else if (layoutType == CUBEMAP_CROSS_THREE_BY_FOUR)
             {
-                faceRecs[0].x = size; faceRecs[0].y = size;
-                faceRecs[1].x = size; faceRecs[1].y = 3*size;
-                faceRecs[2].x = size; faceRecs[2].y = 0;
-                faceRecs[3].x = size; faceRecs[3].y = 2*size;
-                faceRecs[4].x = 0; faceRecs[4].y = size;
-                faceRecs[5].x = 2*size; faceRecs[5].y = size;
+                faceRecs[0].x = (float)size; faceRecs[0].y = (float)size;
+                faceRecs[1].x = (float)size; faceRecs[1].y = (float)size*3;
+                faceRecs[2].x = (float)size; faceRecs[2].y = 0;
+                faceRecs[3].x = (float)size; faceRecs[3].y = (float)size*2;
+                faceRecs[4].x = 0; faceRecs[4].y = (float)size;
+                faceRecs[5].x = (float)size*2; faceRecs[5].y = (float)size;
             }
             else if (layoutType == CUBEMAP_CROSS_FOUR_BY_THREE)
             {
-                faceRecs[0].x = 2*size; faceRecs[0].y = size;
-                faceRecs[1].x = 0; faceRecs[1].y = size;
-                faceRecs[2].x = size; faceRecs[2].y = 0;
-                faceRecs[3].x = size; faceRecs[3].y = 2*size;
-                faceRecs[4].x = size; faceRecs[4].y = size;
-                faceRecs[5].x = 3*size; faceRecs[5].y = size;
+                faceRecs[0].x = (float)size*2; faceRecs[0].y = (float)size;
+                faceRecs[1].x = 0; faceRecs[1].y = (float)size;
+                faceRecs[2].x = (float)size; faceRecs[2].y = 0;
+                faceRecs[3].x = (float)size; faceRecs[3].y = (float)size*2;
+                faceRecs[4].x = (float)size; faceRecs[4].y = (float)size;
+                faceRecs[5].x = (float)size*3; faceRecs[5].y = (float)size;
             }
 
             // Convert image data to 6 faces in a vertical column, that's the optimum layout for loading
@@ -1314,7 +1314,7 @@ TextureCubemap LoadTextureCubemap(Image image, int layoutType)
             // TODO: Image formating does not work with compressed textures!
         }
 
-        for (int i = 0; i < 6; i++) ImageDraw(&faces, image, faceRecs[i], (Rectangle){ 0, size*i, size, size }, WHITE);
+        for (int i = 0; i < 6; i++) ImageDraw(&faces, image, faceRecs[i], (Rectangle){ 0, (float)size*i, (float)size, (float)size }, WHITE);
 
         cubemap.id = rlLoadTextureCubemap(faces.data, size, faces.format);
         if (cubemap.id == 0) TRACELOG(LOG_WARNING, "IMAGE: Failed to load cubemap image");
@@ -1396,7 +1396,7 @@ void ImageAlphaCrop(Image *image, float threshold)
         }
     }
 
-    Rectangle crop = { xMin, yMin, (xMax + 1) - xMin, (yMax + 1) - yMin };
+    Rectangle crop = { (float)xMin, (float)yMin, (float)((xMax + 1) - xMin), (float)((yMax + 1) - yMin) };
 
     RL_FREE(pixels);
 
@@ -1479,23 +1479,23 @@ void ImageResizeCanvas(Image *image, int newWidth, int newHeight, int offsetX, i
         // Support offsets out of canvas new size -> original image is cropped
         if (offsetX < 0)
         {
-            ImageCrop(image, (Rectangle) { -offsetX, 0, image->width + offsetX, image->height });
+            ImageCrop(image, (Rectangle) { -(float)offsetX, 0, (float)(image->width + offsetX), (float)image->height });
             offsetX = 0;
         }
         else if (offsetX > (newWidth - image->width))
         {
-            ImageCrop(image, (Rectangle) { 0, 0, image->width - (offsetX - (newWidth - image->width)), image->height });
+            ImageCrop(image, (Rectangle) { 0, 0, (float)(image->width - (offsetX - (newWidth - image->width))), (float)image->height });
             offsetX = newWidth - image->width;
         }
 
         if (offsetY < 0)
         {
-            ImageCrop(image, (Rectangle) { 0, -offsetY, image->width, image->height + offsetY });
+            ImageCrop(image, (Rectangle) { 0, -(float)offsetY, (float)image->width, (float)(image->height + offsetY) });
             offsetY = 0;
         }
         else if (offsetY > (newHeight - image->height))
         {
-            ImageCrop(image, (Rectangle) { 0, 0, image->width, image->height - (offsetY - (newHeight - image->height)) });
+            ImageCrop(image, (Rectangle) { 0, 0, (float)image->width, (float)(image->height - (offsetY - (newHeight - image->height))) });
             offsetY = newHeight - image->height;
         }
 
@@ -1525,15 +1525,15 @@ void ImageResizeCanvas(Image *image, int newWidth, int newHeight, int offsetX, i
 
             if (newWidth < image->width)
             {
-                srcRec.x = offsetX;
-                srcRec.width = newWidth;
+                srcRec.x = (float)offsetX;
+                srcRec.width = (float)newWidth;
                 dstRec.x = 0.0f;
             }
 
             if (newHeight < image->height)
             {
-                srcRec.y = offsetY;
-                srcRec.height = newHeight;
+                srcRec.y = (float)offsetY;
+                srcRec.height = (float)newHeight;
                 dstRec.y = 0.0f;
             }
 
@@ -1913,7 +1913,7 @@ Image ImageText(const char *text, int fontSize, Color color)
 // Create an image from text (custom sprite font)
 Image ImageTextEx(Font font, const char *text, float fontSize, float spacing, Color tint)
 {
-    int length = strlen(text);
+    int length = (int)strlen(text);
 
     int textOffsetX = 0;            // Image drawing position X
     int textOffsetY = 0;            // Offset between lines (on line break '\n')
@@ -1940,14 +1940,14 @@ Image ImageTextEx(Font font, const char *text, float fontSize, float spacing, Co
             // NOTE: Fixed line spacing of 1.5 line-height
             // TODO: Support custom line spacing defined by user
             textOffsetY += (font.baseSize + font.baseSize/2);
-            textOffsetX = 0.0f;
+            textOffsetX = 0;
         }
         else
         {
             if ((codepoint != ' ') && (codepoint != '\t'))
             {
-                Rectangle rec = { textOffsetX + font.chars[index].offsetX, textOffsetY + font.chars[index].offsetY, font.recs[index].width, font.recs[index].height };
-                ImageDraw(&imText, font.chars[index].image, (Rectangle){ 0, 0, font.chars[index].image.width, font.chars[index].image.height }, rec, tint);
+                Rectangle rec = { (float)(textOffsetX + font.chars[index].offsetX), (float)(textOffsetY + font.chars[index].offsetY), (float)font.recs[index].width, (float)font.recs[index].height };
+                ImageDraw(&imText, font.chars[index].image, (Rectangle){ 0, 0, (float)font.chars[index].image.width, (float)font.chars[index].image.height }, rec, tint);
             }
 
             if (font.chars[index].advanceX == 0) textOffsetX += (int)(font.recs[index].width + spacing);
@@ -1974,13 +1974,13 @@ Image ImageTextEx(Font font, const char *text, float fontSize, float spacing, Co
 // Draw rectangle within an image
 void ImageDrawRectangle(Image *dst, int posX, int posY, int width, int height, Color color)
 {
-    ImageDrawRectangleRec(dst, (Rectangle){ posX, posY, width, height }, color);
+    ImageDrawRectangleRec(dst, (Rectangle){ (float)posX, (float)posY, (float)width, (float)height }, color);
 }
 
 // Draw rectangle within an image (Vector version)
 void ImageDrawRectangleV(Image *dst, Vector2 position, Vector2 size, Color color)
 {
-    ImageDrawRectangle(dst, position.x, position.y, size.x, size.y, color);
+    ImageDrawRectangle(dst, (int)position.x, (int)position.y, (int)size.x, (int)size.y, color);
 }
 
 // Draw rectangle within an image
@@ -1997,10 +1997,10 @@ void ImageDrawRectangleRec(Image *dst, Rectangle rec, Color color)
 // Draw rectangle lines within an image
 void ImageDrawRectangleLines(Image *dst, Rectangle rec, int thick, Color color)
 {
-    ImageDrawRectangle(dst, rec.x, rec.y, rec.width, thick, color);
-    ImageDrawRectangle(dst, rec.x, rec.y + thick, thick, rec.height - thick*2, color);
-    ImageDrawRectangle(dst, rec.x + rec.width - thick, rec.y + thick, thick, rec.height - thick*2, color);
-    ImageDrawRectangle(dst, rec.x, rec.y + rec.height - thick, rec.width, thick, color);
+    ImageDrawRectangle(dst, (int)rec.x, (int)rec.y, (int)rec.width, thick, color);
+    ImageDrawRectangle(dst, (int)rec.x, (int)(rec.y + thick), thick, (int)(rec.height - thick*2), color);
+    ImageDrawRectangle(dst, (int)(rec.x + rec.width - thick), (int)(rec.y + thick), thick, (int)(rec.height - thick*2), color);
+    ImageDrawRectangle(dst, (int)rec.x, (int)(rec.y + rec.height - thick), (int)rec.width, thick, color);
 }
 
 // Clear image background with given color
@@ -2338,10 +2338,10 @@ void ImageColorTint(Image *image, Color color)
         for (int x = 0; x < image->width; x++)
         {
             int index = y * image->width + x;
-            unsigned char r = 255*((float)pixels[index].r/255*cR);
-            unsigned char g = 255*((float)pixels[index].g/255*cG);
-            unsigned char b = 255*((float)pixels[index].b/255*cB);
-            unsigned char a = 255*((float)pixels[index].a/255*cA);
+            unsigned char r = (unsigned char)(((float)pixels[index].r/255*cR)*255.0f);
+            unsigned char g = (unsigned char)(((float)pixels[index].g/255*cG)*255.0f);
+            unsigned char b = (unsigned char)(((float)pixels[index].b/255*cB)*255.0f);
+            unsigned char a = (unsigned char)(((float)pixels[index].a/255*cA)*255.0f);
 
             pixels[y*image->width + x].r = r;
             pixels[y*image->width + x].g = g;
@@ -3614,7 +3614,7 @@ static int SaveKTX(Image image, const char *fileName)
         if (ktxHeader.glFormat == -1) TRACELOG(LOG_WARNING, "IMAGE: GL format not supported for KTX export (%i)", ktxHeader.glFormat);
         else
         {
-            success = fwrite(&ktxHeader, sizeof(KTXHeader), 1, ktxFile);
+            success = (int)fwrite(&ktxHeader, sizeof(KTXHeader), 1, ktxFile);
 
             int width = image.width;
             int height = image.height;
@@ -3624,8 +3624,8 @@ static int SaveKTX(Image image, const char *fileName)
             for (int i = 0; i < image.mipmaps; i++)
             {
                 unsigned int dataSize = GetPixelDataSize(width, height, image.format);
-                success = fwrite(&dataSize, sizeof(unsigned int), 1, ktxFile);
-                success = fwrite((unsigned char *)image.data + dataOffset, dataSize, 1, ktxFile);
+                success = (int)fwrite(&dataSize, sizeof(unsigned int), 1, ktxFile);
+                success = (int)fwrite((unsigned char *)image.data + dataOffset, dataSize, 1, ktxFile);
 
                 width /= 2;
                 height /= 2;

@@ -957,7 +957,7 @@ void DrawTextRecEx(Font font, const char *text, Rectangle rec, float fontSize, f
                 bool isGlyphSelected = false;
                 if ((selectStart >= 0) && (k >= selectStart) && (k < (selectStart + selectLength)))
                 {
-                    DrawRectangleRec((Rectangle){ rec.x + textOffsetX - 1, rec.y + textOffsetY, glyphWidth, (int)((float)font.baseSize*scaleFactor) }, selectBackTint);
+                    DrawRectangleRec((Rectangle){ rec.x + textOffsetX - 1, rec.y + textOffsetY, (float)glyphWidth, (float)font.baseSize*scaleFactor }, selectBackTint);
                     isGlyphSelected = true;
                 }
 
@@ -1229,7 +1229,7 @@ char *TextReplace(char *text, const char *replace, const char *by)
     while (count--)
     {
         insertPoint = strstr(text, replace);
-        lastReplacePos = insertPoint - text;
+        lastReplacePos = (int)(insertPoint - text);
         temp = strncpy(temp, text, lastReplacePos) + lastReplacePos;
         temp = strcpy(temp, by) + byLen;
         text += lastReplacePos + replaceLen; // Move to next "end of replace"
@@ -1346,7 +1346,7 @@ int TextFindIndex(const char *text, const char *find)
 
     char *ptr = strstr(text, find);
 
-    if (ptr != NULL) position = ptr - text;
+    if (ptr != NULL) position = (int)(ptr - text);
 
     return position;
 }
