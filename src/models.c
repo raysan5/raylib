@@ -169,6 +169,48 @@ void DrawCircle3D(Vector3 center, float radius, Vector3 rotationAxis, float rota
     rlPopMatrix();
 }
 
+// Draw a color-filled triangle (vertex in counter-clockwise order!)
+void DrawTriangle3D(Vector3 v1, Vector3 v2, Vector3 v3, Color color)
+{
+    if (rlCheckBufferLimit(3)) rlglDraw();
+
+    rlBegin(RL_TRIANGLES);
+        rlColor4ub(color.r, color.g, color.b, color.a);
+        rlVertex3f(v1.x, v1.y, v1.z);
+        rlVertex3f(v2.x, v2.y, v2.z);
+        rlVertex3f(v3.x, v3.y, v3.z);
+    rlEnd();
+}
+
+// Draw a triangle strip defined by points
+void DrawTriangleStrip3D(Vector3 *points, int pointsCount, Color color)
+{
+    if (pointsCount >= 3)
+    {
+        if (rlCheckBufferLimit(3*(pointsCount - 2))) rlglDraw();
+
+        rlBegin(RL_TRIANGLES);
+            rlColor4ub(color.r, color.g, color.b, color.a);
+
+            for (int i = 2; i < pointsCount; i++)
+            {
+                if ((i%2) == 0)
+                {
+                    rlVertex3f(points[i].x, points[i].y, points[i].z);
+                    rlVertex3f(points[i - 2].x, points[i - 2].y, points[i - 2].z);
+                    rlVertex3f(points[i - 1].x, points[i - 1].y, points[i - 1].z);
+                }
+                else
+                {
+                    rlVertex3f(points[i].x, points[i].y, points[i].z);
+                    rlVertex3f(points[i - 1].x, points[i - 1].y, points[i - 1].z);
+                    rlVertex3f(points[i - 2].x, points[i - 2].y, points[i - 2].z);
+                }
+            }
+        rlEnd();
+    }
+}
+
 // Draw cube
 // NOTE: Cube position is the center position
 void DrawCube(Vector3 position, float width, float height, float length, Color color)
