@@ -202,7 +202,7 @@ unsigned char *LoadFileData(const char *fileName, unsigned int *bytesRead)
                 data = (unsigned char *)RL_MALLOC(sizeof(unsigned char)*size);
 
                 // NOTE: fread() returns number of read elements instead of bytes, so we read [1 byte, size elements]
-                unsigned int count = fread(data, sizeof(unsigned char), size, file);
+                unsigned int count = (unsigned int)fread(data, sizeof(unsigned char), size, file);
                 *bytesRead = count;
 
                 if (count != size) TRACELOG(LOG_WARNING, "FILEIO: [%s] File partially loaded", fileName);
@@ -233,7 +233,7 @@ void SaveFileData(const char *fileName, void *data, unsigned int bytesToWrite)
 
         if (file != NULL)
         {
-            unsigned int count = fwrite(data, sizeof(unsigned char), bytesToWrite, file);
+            unsigned int count = (unsigned int)fwrite(data, sizeof(unsigned char), bytesToWrite, file);
 
             if (count == 0) TRACELOG(LOG_WARNING, "FILEIO: [%s] Failed to write file", fileName);
             else if (count != bytesToWrite) TRACELOG(LOG_WARNING, "FILEIO: [%s] File partially written", fileName);
@@ -269,13 +269,13 @@ char *LoadFileText(const char *fileName)
             // text mode causes carriage return-linefeed translation...
             // ...but using fseek() should return correct byte-offset
             fseek(textFile, 0, SEEK_END);
-            int size = ftell(textFile);
+            unsigned int size = (unsigned int)ftell(textFile);
             fseek(textFile, 0, SEEK_SET);
 
             if (size > 0)
             {
                 text = (char *)RL_MALLOC(sizeof(char)*(size + 1));
-                int count = fread(text, sizeof(char), size, textFile);
+                unsigned int count = (unsigned int)fread(text, sizeof(char), size, textFile);
 
                 // WARNING: \r\n is converted to \n on reading, so,
                 // read bytes count gets reduced by the number of lines

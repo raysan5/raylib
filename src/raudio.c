@@ -2024,7 +2024,7 @@ static int SaveWAV(Wave wave, const char *fileName)
         fwrite(&waveFormat, sizeof(WaveFormat), 1, wavFile);
         fwrite(&waveData, sizeof(WaveData), 1, wavFile);
 
-        success = fwrite(wave.data, dataSize, 1, wavFile);
+        success = (int)fwrite(wave.data, dataSize, 1, wavFile);
 
         fclose(wavFile);
     }

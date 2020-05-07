@@ -1577,10 +1577,10 @@ void rlglInit(int width, int height)
     glGetIntegerv(GL_NUM_EXTENSIONS, &numExt);
 
     // Allocate numExt strings pointers
-    const char **extList = RL_MALLOC(sizeof(const char *)*numExt);
+    char **extList = RL_MALLOC(sizeof(char *)*numExt);
 
     // Get extensions strings
-    for (int i = 0; i < numExt; i++) extList[i] = (const char *)glGetStringi(GL_EXTENSIONS, i);
+    for (int i = 0; i < numExt; i++) extList[i] = (char *)glGetStringi(GL_EXTENSIONS, i);
 
 #elif defined(GRAPHICS_API_OPENGL_ES2)
     // Allocate 512 strings pointers (2 KB)

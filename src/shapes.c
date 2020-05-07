@@ -223,13 +223,13 @@ void DrawCircleSector(Vector2 center, float radius, int startAngle, int endAngle
     {
         // Calculate the maximum angle between segments based on the error rate (usually 0.5f)
         float th = acosf(2*powf(1 - SMOOTH_CIRCLE_ERROR_RATE/radius, 2) - 1);
-        segments = (endAngle - startAngle)*ceilf(2*PI/th)/360;
+        segments = (int)((endAngle - startAngle)*ceilf(2*PI/th)/360);
 
         if (segments <= 0) segments = 4;
     }
 
     float stepLength = (float)(endAngle - startAngle)/(float)segments;
-    float angle = startAngle;
+    float angle = (float)startAngle;
 
 #if defined(SUPPORT_QUADS_DRAW_MODE)
     if (rlCheckBufferLimit(4*segments/2)) rlglDraw();
@@ -312,13 +312,13 @@ void DrawCircleSectorLines(Vector2 center, float radius, int startAngle, int end
     {
         // Calculate the maximum angle between segments based on the error rate (usually 0.5f)
         float th = acosf(2*powf(1 - SMOOTH_CIRCLE_ERROR_RATE/radius, 2) - 1);
-        segments = (endAngle - startAngle)*ceilf(2*PI/th)/360;
+        segments = (int)((endAngle - startAngle)*ceilf(2*PI/th)/360);
 
         if (segments <= 0) segments = 4;
     }
 
     float stepLength = (float)(endAngle - startAngle)/(float)segments;
-    float angle = startAngle;
+    float angle = (float)startAngle;
 
     // Hide the cap lines when the circle is full
     bool showCapLines = true;
@@ -364,11 +364,11 @@ void DrawCircleGradient(int centerX, int centerY, float radius, Color color1, Co
         for (int i = 0; i < 360; i += 10)
         {
             rlColor4ub(color1.r, color1.g, color1.b, color1.a);
-            rlVertex2f(centerX, centerY);
+            rlVertex2f((float)centerX, (float)centerY);
             rlColor4ub(color2.r, color2.g, color2.b, color2.a);
-            rlVertex2f(centerX + sinf(DEG2RAD*i)*radius, centerY + cosf(DEG2RAD*i)*radius);
+            rlVertex2f((float)centerX + sinf(DEG2RAD*i)*radius, (float)centerY + cosf(DEG2RAD*i)*radius);
             rlColor4ub(color2.r, color2.g, color2.b, color2.a);
-            rlVertex2f(centerX + sinf(DEG2RAD*(i + 10))*radius, centerY + cosf(DEG2RAD*(i + 10))*radius);
+            rlVertex2f((float)centerX + sinf(DEG2RAD*(i + 10))*radius, (float)centerY + cosf(DEG2RAD*(i + 10))*radius);
         }
     rlEnd();
 }
@@ -406,9 +406,9 @@ void DrawEllipse(int centerX, int centerY, float radiusH, float radiusV, Color c
         for (int i = 0; i < 360; i += 10)
         {
             rlColor4ub(color.r, color.g, color.b, color.a);
-            rlVertex2f(centerX, centerY);
-            rlVertex2f(centerX + sinf(DEG2RAD*i)*radiusH, centerY + cosf(DEG2RAD*i)*radiusV);
-            rlVertex2f(centerX + sinf(DEG2RAD*(i + 10))*radiusH, centerY + cosf(DEG2RAD*(i + 10))*radiusV);
+            rlVertex2f((float)centerX, (float)centerY);
+            rlVertex2f((float)centerX + sinf(DEG2RAD*i)*radiusH, (float)centerY + cosf(DEG2RAD*i)*radiusV);
+            rlVertex2f((float)centerX + sinf(DEG2RAD*(i + 10))*radiusH, (float)centerY + cosf(DEG2RAD*(i + 10))*radiusV);
         }
     rlEnd();
 }
@@ -455,7 +455,7 @@ void DrawRing(Vector2 center, float innerRadius, float outerRadius, int startAng
     {
         // Calculate the maximum angle between segments based on the error rate (usually 0.5f)
         float th = acosf(2*powf(1 - SMOOTH_CIRCLE_ERROR_RATE/outerRadius, 2) - 1);
-        segments = (endAngle - startAngle)*ceilf(2*PI/th)/360;
+        segments = (int)((endAngle - startAngle)*ceilf(2*PI/th)/360);
 
         if (segments <= 0) segments = 4;
     }
@@ -468,7 +468,7 @@ void DrawRing(Vector2 center, float innerRadius, float outerRadius, int startAng
     }
 
     float stepLength = (float)(endAngle - startAngle)/(float)segments;
-    float angle = startAngle;
+    float angle = (float)startAngle;
 
 #if defined(SUPPORT_QUADS_DRAW_MODE)
     if (rlCheckBufferLimit(4*segments)) rlglDraw();
@@ -546,7 +546,7 @@ void DrawRingLines(Vector2 center, float innerRadius, float outerRadius, int sta
     {
         // Calculate the maximum angle between segments based on the error rate (usually 0.5f)
         float th = acosf(2*powf(1 - SMOOTH_CIRCLE_ERROR_RATE/outerRadius, 2) - 1);
-        segments = (endAngle - startAngle)*ceilf(2*PI/th)/360;
+        segments = (int)((endAngle - startAngle)*ceilf(2*PI/th)/360);
 
         if (segments <= 0) segments = 4;
     }
@@ -558,7 +558,7 @@ void DrawRingLines(Vector2 center, float innerRadius, float outerRadius, int sta
     }
 
     float stepLength = (float)(endAngle - startAngle)/(float)segments;
-    float angle = startAngle;
+    float angle = (float)startAngle;
 
     bool showCapLines = true;
     int limit = 4*(segments + 1);
@@ -755,7 +755,7 @@ void DrawRectangleRounded(Rectangle rec, float roundness, int segments, Color co
     {
         // Calculate the maximum angle between segments based on the error rate (usually 0.5f)
         float th = acosf(2*powf(1 - SMOOTH_CIRCLE_ERROR_RATE/radius, 2) - 1);
-        segments = ceilf(2*PI/th)/4;
+        segments = (int)(ceilf(2*PI/th)/4.0f);
         if (segments <= 0) segments = 4;
     }
 
@@ -975,7 +975,7 @@ void DrawRectangleRoundedLines(Rectangle rec, float roundness, int segments, int
     {
         // Calculate the maximum angle between segments based on the error rate (usually 0.5f)
         float th = acosf(2*powf(1 - SMOOTH_CIRCLE_ERROR_RATE/radius, 2) - 1);
-        segments = ceilf(2*PI/th)/2;
+        segments = (int)(ceilf(2*PI/th)/2.0f);
         if (segments <= 0) segments = 4;
     }
 

@@ -1690,7 +1690,7 @@ int GetFPS(void)
 
     if ((GetTime() - last) > FPS_STEP)
     {
-        last = GetTime();
+        last = (float)GetTime();
         index = (index + 1)%FPS_CAPTURE_FRAMES_COUNT;
         average -= history[index];
         history[index] = fpsFrame/FPS_CAPTURE_FRAMES_COUNT;
@@ -1752,10 +1752,10 @@ Color ColorFromNormalized(Vector4 normalized)
 {
     Color result;
 
-    result.r = normalized.x*255.0f;
-    result.g = normalized.y*255.0f;
-    result.b = normalized.z*255.0f;
-    result.a = normalized.w*255.0f;
+    result.r = (unsigned char)(normalized.x*255.0f);
+    result.g = (unsigned char)(normalized.y*255.0f);
+    result.b = (unsigned char)(normalized.z*255.0f);
+    result.a = (unsigned char)(normalized.w*255.0f);
 
     return result;
 }
@@ -1821,28 +1821,28 @@ Color ColorFromHSV(Vector3 hsv)
     float h = hsv.x, s = hsv.y, v = hsv.z;
 
     // Red channel
-    float k = fmod((5.0f + h/60.0f), 6);
+    float k = fmodf((5.0f + h/60.0f), 6);
     float t = 4.0f - k;
     k = (t < k)? t : k;
     k = (k < 1)? k : 1;
     k = (k > 0)? k : 0;
-    color.r = (v - v*s*k)*255;
+    color.r = (unsigned char)((v - v*s*k)*255.0f);
 
     // Green channel
-    k = fmod((3.0f + h/60.0f), 6);
+    k = fmodf((3.0f + h/60.0f), 6);
     t = 4.0f - k;
     k = (t < k)? t : k;
     k = (k < 1)? k : 1;
     k = (k > 0)? k : 0;
-    color.g = (v - v*s*k)*255;
+    color.g = (unsigned char)((v - v*s*k)*255.0f);
 
     // Blue channel
-    k = fmod((1.0f + h/60.0f), 6);
+    k = fmodf((1.0f + h/60.0f), 6);
     t = 4.0f - k;
     k = (t < k)? t : k;
     k = (k < 1)? k : 1;
     k = (k > 0)? k : 0;
-    color.b = (v - v*s*k)*255;
+    color.b = (unsigned char)((v - v*s*k)*255.0f);
 
     return color;
 }
@@ -2023,7 +2023,7 @@ const char *GetFileNameWithoutExt(const char *filePath)
 
     if (filePath != NULL) strcpy(fileName, GetFileName(filePath));   // Get filename with extension
 
-    int len = strlen(fileName);
+    int len = (int)strlen(fileName);
 
     for (int i = 0; (i < len) && (i < MAX_FILENAMEWITHOUTEXT_LENGTH); i++)
     {
@@ -2080,7 +2080,7 @@ const char *GetPrevDirectoryPath(const char *dirPath)
 {
     static char prevDirPath[MAX_FILEPATH_LENGTH];
     memset(prevDirPath, 0, MAX_FILEPATH_LENGTH);
-    int pathLen = strlen(dirPath);
+    int pathLen = (int)strlen(dirPath);
 
     if (pathLen <= 3) strcpy(prevDirPath, dirPath);
 
@@ -2886,9 +2886,9 @@ static bool InitGraphicsDevice(int width, int height)
         // Get closest video mode to desired CORE.Window.screen.width/CORE.Window.screen.height
         for (int i = 0; i < count; i++)
         {
-            if (modes[i].width >= CORE.Window.screen.width)
+            if ((unsigned int)modes[i].width >= CORE.Window.screen.width)
             {
-                if (modes[i].height >= CORE.Window.screen.height)
+                if ((unsigned int)modes[i].height >= CORE.Window.screen.height)
                 {
                     CORE.Window.display.width = modes[i].width;
                     CORE.Window.display.height = modes[i].height;
@@ -5055,10 +5055,7 @@ static void *EventThread(void *arg)
             #endif
             }
         }
-        else
-        {
-            usleep(5000); // Sleep for 5ms to avoid hogging CPU time
-        }
+        else Wait(5);    // Sleep for 5ms to avoid hogging CPU time
     }
 
     close(worker->fd);
@@ -5146,10 +5143,7 @@ static void *GamepadThread(void *arg)
                     }
                 }
             }
-            else
-            {
-                usleep(1000); //Sleep for 1ms to avoid hogging CPU time
-            }
+            else Wait(1);    // Sleep for 1 ms to avoid hogging CPU time
         }
     }
 
