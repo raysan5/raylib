@@ -1,6 +1,8 @@
 ## raylib bindings
 
-Some people ported raylib to other languages in form of bindings or wrappers to the library, here is a list with the ones I'm aware of:
+Some people ported raylib to other languages in form of bindings or wrappers to the library.
+
+Here it is a list with the ones I'm aware of:
 
 |  name              | language       | repo                                                                 |
 |:------------------:|:--------------:|----------------------------------------------------------------------|
@@ -76,5 +78,4 @@ Missing some language? Check the [bindings not yet in this list](https://gist.gi
 
 Usually, raylib bindings follow the convention: `raylib-{language}`
 
-Let me know if you're writing a new binding for raylib, I will list it here and I usually 
-provide the icon/logo for that new language binding.
+Let me know if you're writing a new binding for raylib, I will list it here!
