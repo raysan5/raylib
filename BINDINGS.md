@@ -29,6 +29,7 @@ Here it is a list with the ones I'm aware of:
 | raylib-cr          | Crystal        | https://github.com/AregevDev/raylib-cr                               |
 | cray               | Crystal        | https://gitlab.com/Zatherz/cray                                      |
 | cray               | Crystal        | https://github.com/tapgg/cray                                        |
+| raylib.cr          | Crystal        | https://github.com/sam0x17/raylib.cr                     |
 | raylib-pascal      | Pascal         | https://github.com/drezgames/raylib-pascal                           |
 | raylib-pas         | Pascal         | https://github.com/tazdij/raylib-pas                                 |
 | Graphics-Raylib    | Perl           | https://github.com/athreef/Graphics-Raylib                           |
@@ -74,7 +75,7 @@ Here it is a list with the ones I'm aware of:
 | raylib-beef        | [Beef](https://www.beeflang.org/)          | https://github.com/M0n7y5/raylib-beef    |
 | raylib.cbl         | COBOL          | *[code examples](https://github.com/Martinfx/Cobol/tree/master/OpenCobol/Games/raylib)* |
  
-Missing some language? Check the [bindings not yet in this list](https://gist.github.com/raysan5/5764cc5b885183f523fce47f098f3d9b#bindings-not-yet-in-the-official-list) or create a new binding! :)
+Missing some language? Feel free to create a new binding! :)
 
 Usually, raylib bindings follow the convention: `raylib-{language}`
 
