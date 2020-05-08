@@ -3050,6 +3050,7 @@ static Model LoadIQM(const char *fileName)
 
     #define BONE_NAME_LENGTH    32          // BoneInfo name string length
     #define MESH_NAME_LENGTH    32          // Mesh name string length
+    #define MATERIAL_NAME_LENGTH 32         // Material name string length
 
     // IQM file structs
     //-----------------------------------------------------------------------------------
@@ -3182,12 +3183,25 @@ static Model LoadIQM(const char *fileName)
     model.meshCount = iqm.num_meshes;
     model.meshes = RL_CALLOC(model.meshCount, sizeof(Mesh));
 
+    model.materialCount = model.meshCount;
+    model.materials = (Material *)RL_CALLOC(model.materialCount, sizeof(Material));
+    model.meshMaterial = (int *)RL_CALLOC(model.meshCount, sizeof(int));
+
     char name[MESH_NAME_LENGTH] = { 0 };
+    char material[MATERIAL_NAME_LENGTH] = { 0 };
 
     for (int i = 0; i < model.meshCount; i++)
     {
         fseek(iqmFile, iqm.ofs_text + imesh[i].name, SEEK_SET);
-        fread(name, sizeof(char)*MESH_NAME_LENGTH, 1, iqmFile);     // Mesh name not used...
+        fread(name, sizeof(char)*MESH_NAME_LENGTH, 1, iqmFile);
+
+        fseek(iqmFile, iqm.ofs_text + imesh[i].material, SEEK_SET);
+        fread(material, sizeof(char)*MATERIAL_NAME_LENGTH, 1, iqmFile);
+
+        model.materials[i] = LoadMaterialDefault();
+
+        TRACELOG(LOG_DEBUG, "MODEL: [%s] mesh name (%s), material (%s)", fileName, name, material);
+
         model.meshes[i].vertexCount = imesh[i].num_vertexes;
 
         model.meshes[i].vertices = RL_CALLOC(model.meshes[i].vertexCount*3, sizeof(float));       // Default vertex positions
