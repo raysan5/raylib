@@ -1949,6 +1949,7 @@ bool IsFileExtension(const char *fileName, const char *ext)
 
     if (fileExt != NULL)
     {
+#if defined(SUPPORT_TEXT_MANIPULATION)
         int extCount = 0;
         const char **checkExts = TextSplit(ext, ';', &extCount);
 
@@ -1963,6 +1964,9 @@ bool IsFileExtension(const char *fileName, const char *ext)
                 break;
             }
         }
+#else
+        if (strcmp(fileExt, ext) == 0) result = true;
+#endif
     }
 
     return result;
@@ -2509,8 +2513,8 @@ float GetGamepadAxisMovement(int gamepad, int axis)
 
 #if !defined(PLATFORM_ANDROID)
     if ((gamepad < MAX_GAMEPADS) && CORE.Input.Gamepad.ready[gamepad] && (axis < MAX_GAMEPAD_AXIS) &&
-        (axis == GAMEPAD_AXIS_LEFT_TRIGGER || axis == GAMEPAD_AXIS_RIGHT_TRIGGER ||
-         fabsf(CORE.Input.Gamepad.axisState[gamepad][axis]) >= 0.2f)) value = CORE.Input.Gamepad.axisState[gamepad][axis];
+        ((axis == GAMEPAD_AXIS_LEFT_TRIGGER) || (axis == GAMEPAD_AXIS_RIGHT_TRIGGER) ||
+         (fabsf(CORE.Input.Gamepad.axisState[gamepad][axis]) >= 0.2f))) value = CORE.Input.Gamepad.axisState[gamepad][axis];
 #endif
 
     return value;
@@ -3486,8 +3490,11 @@ static void InitTimer(void)
 static void Wait(float ms)
 {
 #if defined(PLATFORM_UWP)
-    UWPGetSleepFunc()(ms / 1000);
-#elif defined(SUPPORT_BUSY_WAIT_LOOP)
+    UWPGetSleepFunc()(ms/1000);
+    return;
+#endif
+
+#if defined(SUPPORT_BUSY_WAIT_LOOP)
     double prevTime = GetTime();
     double nextTime = 0.0;
 
@@ -3515,7 +3522,7 @@ static void Wait(float ms)
         usleep(ms*1000.0f);
     #endif
 
-    #if defined(SUPPORT_HALFBUSY_WAIT_LOOP)// && !defined(PLATFORM_UWP)
+    #if defined(SUPPORT_HALFBUSY_WAIT_LOOP)
         while (GetTime() < destTime) { }
     #endif
 #endif
@@ -3677,8 +3684,9 @@ static void PollInputEvents(void)
             // Get current gamepad state
             // NOTE: There is no callback available, so we get it manually
             // Get remapped buttons
-            GLFWgamepadstate state;
+            GLFWgamepadstate state = { 0 };
             glfwGetGamepadState(i, &state); // This remapps all gamepads so they have their buttons mapped like an xbox controller
+            
             const unsigned char *buttons = state.buttons;
 
             for (int k = 0; (buttons != NULL) && (k < GLFW_GAMEPAD_BUTTON_DPAD_LEFT + 1) && (k < MAX_GAMEPAD_BUTTONS); k++)
@@ -3705,7 +3713,7 @@ static void PollInputEvents(void)
             CORE.Input.Gamepad.currentState[i][GAMEPAD_BUTTON_LEFT_TRIGGER_2] = (char)(CORE.Input.Gamepad.axisState[i][GAMEPAD_AXIS_LEFT_TRIGGER] > 0.1);
             CORE.Input.Gamepad.currentState[i][GAMEPAD_BUTTON_RIGHT_TRIGGER_2] = (char)(CORE.Input.Gamepad.axisState[i][GAMEPAD_AXIS_RIGHT_TRIGGER] > 0.1);
 
-            CORE.Input.Gamepad.axisCount = GLFW_GAMEPAD_AXIS_LAST + 1;
+            CORE.Input.Gamepad.axisCount = GLFW_GAMEPAD_AXIS_LAST;
         }
     }
 
@@ -4294,7 +4302,7 @@ static EM_BOOL EmscriptenFullscreenChangeCallback(int eventType, const Emscripte
 // Register keyboard input events
 static EM_BOOL EmscriptenKeyboardCallback(int eventType, const EmscriptenKeyboardEvent *keyEvent, void *userData)
 {
-    if ((eventType == EMSCRIPTEN_EVENT_KEYPRESS) && (keyEvent->key == 27))  // ESCAPE key
+    if ((eventType == EMSCRIPTEN_EVENT_KEYPRESS) && (keyEvent->keyCode == 27))  // ESCAPE key
     {
         emscripten_exit_pointerlock();
     }
