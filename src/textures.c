@@ -363,431 +363,10 @@ Image LoadImageRaw(const char *fileName, int width, int height, int format, int 
     return image;
 }
 
-// Load texture from file into GPU memory (VRAM)
-Texture2D LoadTexture(const char *fileName)
-{
-    Texture2D texture = { 0 };
-
-    Image image = LoadImage(fileName);
-
-    if (image.data != NULL)
-    {
-        texture = LoadTextureFromImage(image);
-        UnloadImage(image);
-    }
-
-    return texture;
-}
-
-// Load a texture from image data
-// NOTE: image is not unloaded, it must be done manually
-Texture2D LoadTextureFromImage(Image image)
-{
-    Texture2D texture = { 0 };
-
-    if ((image.data != NULL) && (image.width != 0) && (image.height != 0))
-    {
-        texture.id = rlLoadTexture(image.data, image.width, image.height, image.format, image.mipmaps);
-    }
-    else TRACELOG(LOG_WARNING, "IMAGE: Data is not valid to load texture");
-
-    texture.width = image.width;
-    texture.height = image.height;
-    texture.mipmaps = image.mipmaps;
-    texture.format = image.format;
-
-    return texture;
-}
-
-// Load texture for rendering (framebuffer)
-// NOTE: Render texture is loaded by default with RGBA color attachment and depth RenderBuffer
-RenderTexture2D LoadRenderTexture(int width, int height)
-{
-    RenderTexture2D target = rlLoadRenderTexture(width, height, UNCOMPRESSED_R8G8B8A8, 24, false);
-
-    return target;
-}
-
 // Unload image from CPU memory (RAM)
 void UnloadImage(Image image)
 {
     RL_FREE(image.data);
-}
-
-// Unload texture from GPU memory (VRAM)
-void UnloadTexture(Texture2D texture)
-{
-    if (texture.id > 0)
-    {
-        rlDeleteTextures(texture.id);
-
-        TRACELOG(LOG_INFO, "TEXTURE: [ID %i] Unloaded texture data from VRAM (GPU)", texture.id);
-    }
-}
-
-// Unload render texture from GPU memory (VRAM)
-void UnloadRenderTexture(RenderTexture2D target)
-{
-    if (target.id > 0) rlDeleteRenderTextures(target);
-}
-
-// Get pixel data from image in the form of Color struct array
-Color *GetImageData(Image image)
-{
-    if ((image.width == 0) || (image.height == 0)) return NULL;
-
-    Color *pixels = (Color *)RL_MALLOC(image.width*image.height*sizeof(Color));
-
-    if (image.format >= COMPRESSED_DXT1_RGB) TRACELOG(LOG_WARNING, "IMAGE: Pixel data retrieval not supported for compressed image formats");
-    else
-    {
-        if ((image.format == UNCOMPRESSED_R32) ||
-            (image.format == UNCOMPRESSED_R32G32B32) ||
-            (image.format == UNCOMPRESSED_R32G32B32A32)) TRACELOG(LOG_WARNING, "IMAGE: Pixel format converted from 32bit to 8bit per channel");
-
-        for (int i = 0, k = 0; i < image.width*image.height; i++)
-        {
-            switch (image.format)
-            {
-                case UNCOMPRESSED_GRAYSCALE:
-                {
-                    pixels[i].r = ((unsigned char *)image.data)[i];
-                    pixels[i].g = ((unsigned char *)image.data)[i];
-                    pixels[i].b = ((unsigned char *)image.data)[i];
-                    pixels[i].a = 255;
-
-                } break;
-                case UNCOMPRESSED_GRAY_ALPHA:
-                {
-                    pixels[i].r = ((unsigned char *)image.data)[k];
-                    pixels[i].g = ((unsigned char *)image.data)[k];
-                    pixels[i].b = ((unsigned char *)image.data)[k];
-                    pixels[i].a = ((unsigned char *)image.data)[k + 1];
-
-                    k += 2;
-                } break;
-                case UNCOMPRESSED_R5G5B5A1:
-                {
-                    unsigned short pixel = ((unsigned short *)image.data)[i];
-
-                    pixels[i].r = (unsigned char)((float)((pixel & 0b1111100000000000) >> 11)*(255/31));
-                    pixels[i].g = (unsigned char)((float)((pixel & 0b0000011111000000) >> 6)*(255/31));
-                    pixels[i].b = (unsigned char)((float)((pixel & 0b0000000000111110) >> 1)*(255/31));
-                    pixels[i].a = (unsigned char)((pixel & 0b0000000000000001)*255);
-
-                } break;
-                case UNCOMPRESSED_R5G6B5:
-                {
-                    unsigned short pixel = ((unsigned short *)image.data)[i];
-
-                    pixels[i].r = (unsigned char)((float)((pixel & 0b1111100000000000) >> 11)*(255/31));
-                    pixels[i].g = (unsigned char)((float)((pixel & 0b0000011111100000) >> 5)*(255/63));
-                    pixels[i].b = (unsigned char)((float)(pixel & 0b0000000000011111)*(255/31));
-                    pixels[i].a = 255;
-
-                } break;
-                case UNCOMPRESSED_R4G4B4A4:
-                {
-                    unsigned short pixel = ((unsigned short *)image.data)[i];
-
-                    pixels[i].r = (unsigned char)((float)((pixel & 0b1111000000000000) >> 12)*(255/15));
-                    pixels[i].g = (unsigned char)((float)((pixel & 0b0000111100000000) >> 8)*(255/15));
-                    pixels[i].b = (unsigned char)((float)((pixel & 0b0000000011110000) >> 4)*(255/15));
-                    pixels[i].a = (unsigned char)((float)(pixel & 0b0000000000001111)*(255/15));
-
-                } break;
-                case UNCOMPRESSED_R8G8B8A8:
-                {
-                    pixels[i].r = ((unsigned char *)image.data)[k];
-                    pixels[i].g = ((unsigned char *)image.data)[k + 1];
-                    pixels[i].b = ((unsigned char *)image.data)[k + 2];
-                    pixels[i].a = ((unsigned char *)image.data)[k + 3];
-
-                    k += 4;
-                } break;
-                case UNCOMPRESSED_R8G8B8:
-                {
-                    pixels[i].r = (unsigned char)((unsigned char *)image.data)[k];
-                    pixels[i].g = (unsigned char)((unsigned char *)image.data)[k + 1];
-                    pixels[i].b = (unsigned char)((unsigned char *)image.data)[k + 2];
-                    pixels[i].a = 255;
-
-                    k += 3;
-                } break;
-                case UNCOMPRESSED_R32:
-                {
-                    pixels[i].r = (unsigned char)(((float *)image.data)[k]*255.0f);
-                    pixels[i].g = 0;
-                    pixels[i].b = 0;
-                    pixels[i].a = 255;
-
-                } break;
-                case UNCOMPRESSED_R32G32B32:
-                {
-                    pixels[i].r = (unsigned char)(((float *)image.data)[k]*255.0f);
-                    pixels[i].g = (unsigned char)(((float *)image.data)[k + 1]*255.0f);
-                    pixels[i].b = (unsigned char)(((float *)image.data)[k + 2]*255.0f);
-                    pixels[i].a = 255;
-
-                    k += 3;
-                } break;
-                case UNCOMPRESSED_R32G32B32A32:
-                {
-                    pixels[i].r = (unsigned char)(((float *)image.data)[k]*255.0f);
-                    pixels[i].g = (unsigned char)(((float *)image.data)[k]*255.0f);
-                    pixels[i].b = (unsigned char)(((float *)image.data)[k]*255.0f);
-                    pixels[i].a = (unsigned char)(((float *)image.data)[k]*255.0f);
-
-                    k += 4;
-                } break;
-                default: break;
-            }
-        }
-    }
-
-    return pixels;
-}
-
-// Get pixel data from image as Vector4 array (float normalized)
-Vector4 *GetImageDataNormalized(Image image)
-{
-    Vector4 *pixels = (Vector4 *)RL_MALLOC(image.width*image.height*sizeof(Vector4));
-
-    if (image.format >= COMPRESSED_DXT1_RGB) TRACELOG(LOG_WARNING, "IMAGE: Pixel data retrieval not supported for compressed image formats");
-    else
-    {
-        for (int i = 0, k = 0; i < image.width*image.height; i++)
-        {
-            switch (image.format)
-            {
-                case UNCOMPRESSED_GRAYSCALE:
-                {
-                    pixels[i].x = (float)((unsigned char *)image.data)[i]/255.0f;
-                    pixels[i].y = (float)((unsigned char *)image.data)[i]/255.0f;
-                    pixels[i].z = (float)((unsigned char *)image.data)[i]/255.0f;
-                    pixels[i].w = 1.0f;
-
-                } break;
-                case UNCOMPRESSED_GRAY_ALPHA:
-                {
-                    pixels[i].x = (float)((unsigned char *)image.data)[k]/255.0f;
-                    pixels[i].y = (float)((unsigned char *)image.data)[k]/255.0f;
-                    pixels[i].z = (float)((unsigned char *)image.data)[k]/255.0f;
-                    pixels[i].w = (float)((unsigned char *)image.data)[k + 1]/255.0f;
-
-                    k += 2;
-                } break;
-                case UNCOMPRESSED_R5G5B5A1:
-                {
-                    unsigned short pixel = ((unsigned short *)image.data)[i];
-
-                    pixels[i].x = (float)((pixel & 0b1111100000000000) >> 11)*(1.0f/31);
-                    pixels[i].y = (float)((pixel & 0b0000011111000000) >> 6)*(1.0f/31);
-                    pixels[i].z = (float)((pixel & 0b0000000000111110) >> 1)*(1.0f/31);
-                    pixels[i].w = ((pixel & 0b0000000000000001) == 0)? 0.0f : 1.0f;
-
-                } break;
-                case UNCOMPRESSED_R5G6B5:
-                {
-                    unsigned short pixel = ((unsigned short *)image.data)[i];
-
-                    pixels[i].x = (float)((pixel & 0b1111100000000000) >> 11)*(1.0f/31);
-                    pixels[i].y = (float)((pixel & 0b0000011111100000) >> 5)*(1.0f/63);
-                    pixels[i].z = (float)(pixel & 0b0000000000011111)*(1.0f/31);
-                    pixels[i].w = 1.0f;
-
-                } break;
-                case UNCOMPRESSED_R4G4B4A4:
-                {
-                    unsigned short pixel = ((unsigned short *)image.data)[i];
-
-                    pixels[i].x = (float)((pixel & 0b1111000000000000) >> 12)*(1.0f/15);
-                    pixels[i].y = (float)((pixel & 0b0000111100000000) >> 8)*(1.0f/15);
-                    pixels[i].z = (float)((pixel & 0b0000000011110000) >> 4)*(1.0f/15);
-                    pixels[i].w = (float)(pixel & 0b0000000000001111)*(1.0f/15);
-
-                } break;
-                case UNCOMPRESSED_R8G8B8A8:
-                {
-                    pixels[i].x = (float)((unsigned char *)image.data)[k]/255.0f;
-                    pixels[i].y = (float)((unsigned char *)image.data)[k + 1]/255.0f;
-                    pixels[i].z = (float)((unsigned char *)image.data)[k + 2]/255.0f;
-                    pixels[i].w = (float)((unsigned char *)image.data)[k + 3]/255.0f;
-
-                    k += 4;
-                } break;
-                case UNCOMPRESSED_R8G8B8:
-                {
-                    pixels[i].x = (float)((unsigned char *)image.data)[k]/255.0f;
-                    pixels[i].y = (float)((unsigned char *)image.data)[k + 1]/255.0f;
-                    pixels[i].z = (float)((unsigned char *)image.data)[k + 2]/255.0f;
-                    pixels[i].w = 1.0f;
-
-                    k += 3;
-                } break;
-                case UNCOMPRESSED_R32:
-                {
-                    pixels[i].x = ((float *)image.data)[k];
-                    pixels[i].y = 0.0f;
-                    pixels[i].z = 0.0f;
-                    pixels[i].w = 1.0f;
-
-                } break;
-                case UNCOMPRESSED_R32G32B32:
-                {
-                    pixels[i].x = ((float *)image.data)[k];
-                    pixels[i].y = ((float *)image.data)[k + 1];
-                    pixels[i].z = ((float *)image.data)[k + 2];
-                    pixels[i].w = 1.0f;
-
-                    k += 3;
-                } break;
-                case UNCOMPRESSED_R32G32B32A32:
-                {
-                    pixels[i].x = ((float *)image.data)[k];
-                    pixels[i].y = ((float *)image.data)[k + 1];
-                    pixels[i].z = ((float *)image.data)[k + 2];
-                    pixels[i].w = ((float *)image.data)[k + 3];
-
-                    k += 4;
-                }
-                default: break;
-            }
-        }
-    }
-
-    return pixels;
-}
-
-// Get image alpha border rectangle
-Rectangle GetImageAlphaBorder(Image image, float threshold)
-{
-    Rectangle crop = { 0 };
-
-    Color *pixels = GetImageData(image);
-
-    if (pixels != NULL)
-    {
-        int xMin = 65536;   // Define a big enough number
-        int xMax = 0;
-        int yMin = 65536;
-        int yMax = 0;
-
-        for (int y = 0; y < image.height; y++)
-        {
-            for (int x = 0; x < image.width; x++)
-            {
-                if (pixels[y*image.width + x].a > (unsigned char)(threshold*255.0f))
-                {
-                    if (x < xMin) xMin = x;
-                    if (x > xMax) xMax = x;
-                    if (y < yMin) yMin = y;
-                    if (y > yMax) yMax = y;
-                }
-            }
-        }
-
-        // Check for empty blank image
-        if ((xMin != 65536) && (xMax != 65536))
-        {
-            crop = (Rectangle){ (float)xMin, (float)yMin, (float)((xMax + 1) - xMin), (float)((yMax + 1) - yMin) };
-        }
-
-        RL_FREE(pixels);
-    }
-
-    return crop;
-}
-
-// Get pixel data size in bytes (image or texture)
-// NOTE: Size depends on pixel format
-int GetPixelDataSize(int width, int height, int format)
-{
-    int dataSize = 0;       // Size in bytes
-    int bpp = 0;            // Bits per pixel
-
-    switch (format)
-    {
-        case UNCOMPRESSED_GRAYSCALE: bpp = 8; break;
-        case UNCOMPRESSED_GRAY_ALPHA:
-        case UNCOMPRESSED_R5G6B5:
-        case UNCOMPRESSED_R5G5B5A1:
-        case UNCOMPRESSED_R4G4B4A4: bpp = 16; break;
-        case UNCOMPRESSED_R8G8B8A8: bpp = 32; break;
-        case UNCOMPRESSED_R8G8B8: bpp = 24; break;
-        case UNCOMPRESSED_R32: bpp = 32; break;
-        case UNCOMPRESSED_R32G32B32: bpp = 32*3; break;
-        case UNCOMPRESSED_R32G32B32A32: bpp = 32*4; break;
-        case COMPRESSED_DXT1_RGB:
-        case COMPRESSED_DXT1_RGBA:
-        case COMPRESSED_ETC1_RGB:
-        case COMPRESSED_ETC2_RGB:
-        case COMPRESSED_PVRT_RGB:
-        case COMPRESSED_PVRT_RGBA: bpp = 4; break;
-        case COMPRESSED_DXT3_RGBA:
-        case COMPRESSED_DXT5_RGBA:
-        case COMPRESSED_ETC2_EAC_RGBA:
-        case COMPRESSED_ASTC_4x4_RGBA: bpp = 8; break;
-        case COMPRESSED_ASTC_8x8_RGBA: bpp = 2; break;
-        default: break;
-    }
-
-    dataSize = width*height*bpp/8;  // Total data size in bytes
-
-    return dataSize;
-}
-
-// Get pixel data from GPU texture and return an Image
-// NOTE: Compressed texture formats not supported
-Image GetTextureData(Texture2D texture)
-{
-    Image image = { 0 };
-
-    if (texture.format < 8)
-    {
-        image.data = rlReadTexturePixels(texture);
-
-        if (image.data != NULL)
-        {
-            image.width = texture.width;
-            image.height = texture.height;
-            image.format = texture.format;
-            image.mipmaps = 1;
-
-#if defined(GRAPHICS_API_OPENGL_ES2)
-            // NOTE: Data retrieved on OpenGL ES 2.0 should be RGBA,
-            // coming from FBO color buffer attachment, but it seems
-            // original texture format is retrieved on RPI...
-            image.format = UNCOMPRESSED_R8G8B8A8;
-#endif
-            TRACELOG(LOG_INFO, "TEXTURE: [ID %i] Pixel data retrieved successfully", texture.id);
-        }
-        else TRACELOG(LOG_WARNING, "TEXTURE: [ID %i] Failed to retrieve pixel data", texture.id);
-    }
-    else TRACELOG(LOG_WARNING, "TEXTURE: [ID %i] Failed to retrieve compressed pixel data", texture.id);
-
-    return image;
-}
-
-// Get pixel data from GPU frontbuffer and return an Image (screenshot)
-Image GetScreenData(void)
-{
-    Image image = { 0 };
-
-    image.width = GetScreenWidth();
-    image.height = GetScreenHeight();
-    image.mipmaps = 1;
-    image.format = UNCOMPRESSED_R8G8B8A8;
-    image.data = rlReadScreenPixels(image.width, image.height);
-
-    return image;
-}
-
-// Update GPU texture with new data
-// NOTE: pixels data must match texture.format
-void UpdateTexture(Texture2D texture, const void *pixels)
-{
-    rlUpdateTexture(texture.id, texture.width, texture.height, texture.format, pixels);
 }
 
 // Export image data to file
@@ -875,6 +454,234 @@ void ExportImageAsCode(Image image, const char *fileName)
     }
 }
 
+//------------------------------------------------------------------------------------
+// Image generation functions
+//------------------------------------------------------------------------------------
+// Generate image: plain color
+Image GenImageColor(int width, int height, Color color)
+{
+    Color *pixels = (Color *)RL_CALLOC(width*height, sizeof(Color));
+
+    for (int i = 0; i < width*height; i++) pixels[i] = color;
+
+    Image image = LoadImageEx(pixels, width, height);
+
+    RL_FREE(pixels);
+
+    return image;
+}
+
+#if defined(SUPPORT_IMAGE_GENERATION)
+// Generate image: vertical gradient
+Image GenImageGradientV(int width, int height, Color top, Color bottom)
+{
+    Color *pixels = (Color *)RL_MALLOC(width*height*sizeof(Color));
+
+    for (int j = 0; j < height; j++)
+    {
+        float factor = (float)j/(float)height;
+        for (int i = 0; i < width; i++)
+        {
+            pixels[j*width + i].r = (int)((float)bottom.r*factor + (float)top.r*(1.f - factor));
+            pixels[j*width + i].g = (int)((float)bottom.g*factor + (float)top.g*(1.f - factor));
+            pixels[j*width + i].b = (int)((float)bottom.b*factor + (float)top.b*(1.f - factor));
+            pixels[j*width + i].a = (int)((float)bottom.a*factor + (float)top.a*(1.f - factor));
+        }
+    }
+
+    Image image = LoadImageEx(pixels, width, height);
+    RL_FREE(pixels);
+
+    return image;
+}
+
+// Generate image: horizontal gradient
+Image GenImageGradientH(int width, int height, Color left, Color right)
+{
+    Color *pixels = (Color *)RL_MALLOC(width*height*sizeof(Color));
+
+    for (int i = 0; i < width; i++)
+    {
+        float factor = (float)i/(float)width;
+        for (int j = 0; j < height; j++)
+        {
+            pixels[j*width + i].r = (int)((float)right.r*factor + (float)left.r*(1.f - factor));
+            pixels[j*width + i].g = (int)((float)right.g*factor + (float)left.g*(1.f - factor));
+            pixels[j*width + i].b = (int)((float)right.b*factor + (float)left.b*(1.f - factor));
+            pixels[j*width + i].a = (int)((float)right.a*factor + (float)left.a*(1.f - factor));
+        }
+    }
+
+    Image image = LoadImageEx(pixels, width, height);
+    RL_FREE(pixels);
+
+    return image;
+}
+
+// Generate image: radial gradient
+Image GenImageGradientRadial(int width, int height, float density, Color inner, Color outer)
+{
+    Color *pixels = (Color *)RL_MALLOC(width*height*sizeof(Color));
+    float radius = (width < height)? (float)width/2.0f : (float)height/2.0f;
+
+    float centerX = (float)width/2.0f;
+    float centerY = (float)height/2.0f;
+
+    for (int y = 0; y < height; y++)
+    {
+        for (int x = 0; x < width; x++)
+        {
+            float dist = hypotf((float)x - centerX, (float)y - centerY);
+            float factor = (dist - radius*density)/(radius*(1.0f - density));
+
+            factor = (float)fmax(factor, 0.f);
+            factor = (float)fmin(factor, 1.f); // dist can be bigger than radius so we have to check
+
+            pixels[y*width + x].r = (int)((float)outer.r*factor + (float)inner.r*(1.0f - factor));
+            pixels[y*width + x].g = (int)((float)outer.g*factor + (float)inner.g*(1.0f - factor));
+            pixels[y*width + x].b = (int)((float)outer.b*factor + (float)inner.b*(1.0f - factor));
+            pixels[y*width + x].a = (int)((float)outer.a*factor + (float)inner.a*(1.0f - factor));
+        }
+    }
+
+    Image image = LoadImageEx(pixels, width, height);
+    RL_FREE(pixels);
+
+    return image;
+}
+
+// Generate image: checked
+Image GenImageChecked(int width, int height, int checksX, int checksY, Color col1, Color col2)
+{
+    Color *pixels = (Color *)RL_MALLOC(width*height*sizeof(Color));
+
+    for (int y = 0; y < height; y++)
+    {
+        for (int x = 0; x < width; x++)
+        {
+            if ((x/checksX + y/checksY)%2 == 0) pixels[y*width + x] = col1;
+            else pixels[y*width + x] = col2;
+        }
+    }
+
+    Image image = LoadImageEx(pixels, width, height);
+    RL_FREE(pixels);
+
+    return image;
+}
+
+// Generate image: white noise
+Image GenImageWhiteNoise(int width, int height, float factor)
+{
+    Color *pixels = (Color *)RL_MALLOC(width*height*sizeof(Color));
+
+    for (int i = 0; i < width*height; i++)
+    {
+        if (GetRandomValue(0, 99) < (int)(factor*100.0f)) pixels[i] = WHITE;
+        else pixels[i] = BLACK;
+    }
+
+    Image image = LoadImageEx(pixels, width, height);
+    RL_FREE(pixels);
+
+    return image;
+}
+
+// Generate image: perlin noise
+Image GenImagePerlinNoise(int width, int height, int offsetX, int offsetY, float scale)
+{
+    Color *pixels = (Color *)RL_MALLOC(width*height*sizeof(Color));
+
+    for (int y = 0; y < height; y++)
+    {
+        for (int x = 0; x < width; x++)
+        {
+            float nx = (float)(x + offsetX)*scale/(float)width;
+            float ny = (float)(y + offsetY)*scale/(float)height;
+
+            // Typical values to start playing with:
+            //   lacunarity = ~2.0   -- spacing between successive octaves (use exactly 2.0 for wrapping output)
+            //   gain       =  0.5   -- relative weighting applied to each successive octave
+            //   octaves    =  6     -- number of "octaves" of noise3() to sum
+
+            // NOTE: We need to translate the data from [-1..1] to [0..1]
+            float p = (stb_perlin_fbm_noise3(nx, ny, 1.0f, 2.0f, 0.5f, 6) + 1.0f)/2.0f;
+
+            int intensity = (int)(p*255.0f);
+            pixels[y*width + x] = (Color){intensity, intensity, intensity, 255};
+        }
+    }
+
+    Image image = LoadImageEx(pixels, width, height);
+    RL_FREE(pixels);
+
+    return image;
+}
+
+// Generate image: cellular algorithm. Bigger tileSize means bigger cells
+Image GenImageCellular(int width, int height, int tileSize)
+{
+    Color *pixels = (Color *)RL_MALLOC(width*height*sizeof(Color));
+
+    int seedsPerRow = width/tileSize;
+    int seedsPerCol = height/tileSize;
+    int seedsCount = seedsPerRow * seedsPerCol;
+
+    Vector2 *seeds = (Vector2 *)RL_MALLOC(seedsCount*sizeof(Vector2));
+
+    for (int i = 0; i < seedsCount; i++)
+    {
+        int y = (i/seedsPerRow)*tileSize + GetRandomValue(0, tileSize - 1);
+        int x = (i%seedsPerRow)*tileSize + GetRandomValue(0, tileSize - 1);
+        seeds[i] = (Vector2){ (float)x, (float)y};
+    }
+
+    for (int y = 0; y < height; y++)
+    {
+        int tileY = y/tileSize;
+
+        for (int x = 0; x < width; x++)
+        {
+            int tileX = x/tileSize;
+
+            float minDistance = (float)strtod("Inf", NULL);
+
+            // Check all adjacent tiles
+            for (int i = -1; i < 2; i++)
+            {
+                if ((tileX + i < 0) || (tileX + i >= seedsPerRow)) continue;
+
+                for (int j = -1; j < 2; j++)
+                {
+                    if ((tileY + j < 0) || (tileY + j >= seedsPerCol)) continue;
+
+                    Vector2 neighborSeed = seeds[(tileY + j)*seedsPerRow + tileX + i];
+
+                    float dist = (float)hypot(x - (int)neighborSeed.x, y - (int)neighborSeed.y);
+                    minDistance = (float)fmin(minDistance, dist);
+                }
+            }
+
+            // I made this up but it seems to give good results at all tile sizes
+            int intensity = (int)(minDistance*256.0f/tileSize);
+            if (intensity > 255) intensity = 255;
+
+            pixels[y*width + x] = (Color){ intensity, intensity, intensity, 255 };
+        }
+    }
+
+    RL_FREE(seeds);
+
+    Image image = LoadImageEx(pixels, width, height);
+    RL_FREE(pixels);
+
+    return image;
+}
+#endif      // SUPPORT_IMAGE_GENERATION
+
+//------------------------------------------------------------------------------------
+// Image manipulation functions
+//------------------------------------------------------------------------------------
 // Copy an image to a new image
 Image ImageCopy(Image image)
 {
@@ -917,58 +724,52 @@ Image ImageFromImage(Image image, Rectangle rec)
 {
     Image result = ImageCopy(image);
 
-#if defined(SUPPORT_IMAGE_MANIPULATION)
     ImageCrop(&result, rec);
-#endif
 
     return result;
 }
 
-// Convert image to POT (power-of-two)
-// NOTE: It could be useful on OpenGL ES 2.0 (RPI, HTML5)
-void ImageToPOT(Image *image, Color fillColor)
+// Crop an image to area defined by a rectangle
+// NOTE: Security checks are performed in case rectangle goes out of bounds
+void ImageCrop(Image *image, Rectangle crop)
 {
     // Security check to avoid program crash
     if ((image->data == NULL) || (image->width == 0) || (image->height == 0)) return;
 
-    // Calculate next power-of-two values
-    // NOTE: Just add the required amount of pixels at the right and bottom sides of image...
-    int potWidth = (int)powf(2, ceilf(logf((float)image->width)/logf(2)));
-    int potHeight = (int)powf(2, ceilf(logf((float)image->height)/logf(2)));
+    // Security checks to validate crop rectangle
+    if (crop.x < 0) { crop.width += crop.x; crop.x = 0; }
+    if (crop.y < 0) { crop.height += crop.y; crop.y = 0; }
+    if ((crop.x + crop.width) > image->width) crop.width = image->width - crop.x;
+    if ((crop.y + crop.height) > image->height) crop.height = image->height - crop.y;
 
-    // Check if POT texture generation is required (if texture is not already POT)
-    if ((potWidth != image->width) || (potHeight != image->height))
+    if ((crop.x < image->width) && (crop.y < image->height))
     {
-        Color *pixels = GetImageData(*image);   // Get pixels data
-        Color *pixelsPOT = NULL;
+        // Start the cropping process
+        Color *pixels = GetImageData(*image);   // Get data as Color pixels array
+        Color *cropPixels = (Color *)RL_MALLOC((int)crop.width*(int)crop.height*sizeof(Color));
 
-        // Generate POT array from NPOT data
-        pixelsPOT = (Color *)RL_MALLOC(potWidth*potHeight*sizeof(Color));
-
-        for (int j = 0; j < potHeight; j++)
+        for (int j = (int)crop.y; j < (int)(crop.y + crop.height); j++)
         {
-            for (int i = 0; i < potWidth; i++)
+            for (int i = (int)crop.x; i < (int)(crop.x + crop.width); i++)
             {
-                if ((j < image->height) && (i < image->width)) pixelsPOT[j*potWidth + i] = pixels[j*image->width + i];
-                else pixelsPOT[j*potWidth + i] = fillColor;
+                cropPixels[(j - (int)crop.y)*(int)crop.width + (i - (int)crop.x)] = pixels[j*image->width + i];
             }
         }
 
-        RL_FREE(pixels);                    // Free pixels data
-        RL_FREE(image->data);               // Free old image data
+        RL_FREE(pixels);
 
-        int format = image->format;         // Store image data format to reconvert later
+        int format = image->format;
 
-        // NOTE: Image size changes, new width and height
-        *image = LoadImageEx(pixelsPOT, potWidth, potHeight);
+        UnloadImage(*image);
 
-        RL_FREE(pixelsPOT);                 // Free POT pixels data
+        *image = LoadImageEx(cropPixels, (int)crop.width, (int)crop.height);
 
-        ImageFormat(image, format);         // Reconvert image to previous format
-        
-        // TODO: Verification required for log
-        TRACELOG(LOG_WARNING, "IMAGE: Converted to POT: (%ix%i) -> (%ix%i)", image->width, image->height, potWidth, potHeight);
+        RL_FREE(cropPixels);
+
+        // Reformat 32bit RGBA image to original format
+        ImageFormat(image, format);
     }
+    else TRACELOG(LOG_WARNING, "IMAGE: Failed to crop, rectangle out of bounds");
 }
 
 // Convert image data to desired format
@@ -1147,6 +948,182 @@ void ImageFormat(Image *image, int newFormat)
     }
 }
 
+// Convert image to POT (power-of-two)
+// NOTE: It could be useful on OpenGL ES 2.0 (RPI, HTML5)
+void ImageToPOT(Image *image, Color fillColor)
+{
+    // Security check to avoid program crash
+    if ((image->data == NULL) || (image->width == 0) || (image->height == 0)) return;
+
+    // Calculate next power-of-two values
+    // NOTE: Just add the required amount of pixels at the right and bottom sides of image...
+    int potWidth = (int)powf(2, ceilf(logf((float)image->width)/logf(2)));
+    int potHeight = (int)powf(2, ceilf(logf((float)image->height)/logf(2)));
+
+    // Check if POT texture generation is required (if texture is not already POT)
+    if ((potWidth != image->width) || (potHeight != image->height))
+    {
+        Color *pixels = GetImageData(*image);   // Get pixels data
+        Color *pixelsPOT = NULL;
+
+        // Generate POT array from NPOT data
+        pixelsPOT = (Color *)RL_MALLOC(potWidth*potHeight*sizeof(Color));
+
+        for (int j = 0; j < potHeight; j++)
+        {
+            for (int i = 0; i < potWidth; i++)
+            {
+                if ((j < image->height) && (i < image->width)) pixelsPOT[j*potWidth + i] = pixels[j*image->width + i];
+                else pixelsPOT[j*potWidth + i] = fillColor;
+            }
+        }
+
+        RL_FREE(pixels);                    // Free pixels data
+        RL_FREE(image->data);               // Free old image data
+
+        int format = image->format;         // Store image data format to reconvert later
+
+        // NOTE: Image size changes, new width and height
+        *image = LoadImageEx(pixelsPOT, potWidth, potHeight);
+
+        RL_FREE(pixelsPOT);                 // Free POT pixels data
+
+        ImageFormat(image, format);         // Reconvert image to previous format
+        
+        // TODO: Verification required for log
+        TRACELOG(LOG_WARNING, "IMAGE: Converted to POT: (%ix%i) -> (%ix%i)", image->width, image->height, potWidth, potHeight);
+    }
+}
+
+#if defined(SUPPORT_IMAGE_MANIPULATION)
+// Create an image from text (default font)
+Image ImageText(const char *text, int fontSize, Color color)
+{
+    int defaultFontSize = 10;   // Default Font chars height in pixel
+    if (fontSize < defaultFontSize) fontSize = defaultFontSize;
+    int spacing = fontSize / defaultFontSize;
+
+    Image imText = ImageTextEx(GetFontDefault(), text, (float)fontSize, (float)spacing, color);
+
+    return imText;
+}
+
+// Create an image from text (custom sprite font)
+Image ImageTextEx(Font font, const char *text, float fontSize, float spacing, Color tint)
+{
+    int length = (int)strlen(text);
+
+    int textOffsetX = 0;            // Image drawing position X
+    int textOffsetY = 0;            // Offset between lines (on line break '\n')
+
+    // NOTE: Text image is generated at font base size, later scaled to desired font size
+    Vector2 imSize = MeasureTextEx(font, text, (float)font.baseSize, spacing);
+
+    // Create image to store text
+    Image imText = GenImageColor((int)imSize.x, (int)imSize.y, BLANK);
+
+    for (int i = 0; i < length; i++)
+    {
+        // Get next codepoint from byte string and glyph index in font
+        int codepointByteCount = 0;
+        int codepoint = GetNextCodepoint(&text[i], &codepointByteCount);
+        int index = GetGlyphIndex(font, codepoint);
+
+        // NOTE: Normally we exit the decoding sequence as soon as a bad byte is found (and return 0x3f)
+        // but we need to draw all of the bad bytes using the '?' symbol moving one byte
+        if (codepoint == 0x3f) codepointByteCount = 1;
+
+        if (codepoint == '\n')
+        {
+            // NOTE: Fixed line spacing of 1.5 line-height
+            // TODO: Support custom line spacing defined by user
+            textOffsetY += (font.baseSize + font.baseSize/2);
+            textOffsetX = 0;
+        }
+        else
+        {
+            if ((codepoint != ' ') && (codepoint != '\t'))
+            {
+                Rectangle rec = { (float)(textOffsetX + font.chars[index].offsetX), (float)(textOffsetY + font.chars[index].offsetY), (float)font.recs[index].width, (float)font.recs[index].height };
+                ImageDraw(&imText, font.chars[index].image, (Rectangle){ 0, 0, (float)font.chars[index].image.width, (float)font.chars[index].image.height }, rec, tint);
+            }
+
+            if (font.chars[index].advanceX == 0) textOffsetX += (int)(font.recs[index].width + spacing);
+            else textOffsetX += font.chars[index].advanceX + (int)spacing;
+        }
+
+        i += (codepointByteCount - 1);   // Move text bytes counter to next codepoint
+    }
+
+    // Scale image depending on text size
+    if (fontSize > imSize.y)
+    {
+        float scaleFactor = fontSize/imSize.y;
+        TRACELOG(LOG_INFO, "IMAGE: Text scaled by factor: %f", scaleFactor);
+
+        // Using nearest-neighbor scaling algorithm for default font
+        if (font.texture.id == GetFontDefault().texture.id) ImageResizeNN(&imText, (int)(imSize.x*scaleFactor), (int)(imSize.y*scaleFactor));
+        else ImageResize(&imText, (int)(imSize.x*scaleFactor), (int)(imSize.y*scaleFactor));
+    }
+
+    return imText;
+}
+
+// Crop image depending on alpha value
+void ImageAlphaCrop(Image *image, float threshold)
+{
+    // Security check to avoid program crash
+    if ((image->data == NULL) || (image->width == 0) || (image->height == 0)) return;
+
+    Color *pixels = GetImageData(*image);
+
+    int xMin = 65536;   // Define a big enough number
+    int xMax = 0;
+    int yMin = 65536;
+    int yMax = 0;
+
+    for (int y = 0; y < image->height; y++)
+    {
+        for (int x = 0; x < image->width; x++)
+        {
+            if (pixels[y*image->width + x].a > (unsigned char)(threshold*255.0f))
+            {
+                if (x < xMin) xMin = x;
+                if (x > xMax) xMax = x;
+                if (y < yMin) yMin = y;
+                if (y > yMax) yMax = y;
+            }
+        }
+    }
+
+    Rectangle crop = { (float)xMin, (float)yMin, (float)((xMax + 1) - xMin), (float)((yMax + 1) - yMin) };
+
+    RL_FREE(pixels);
+
+    // Check for not empty image brefore cropping
+    if (!((xMax < xMin) || (yMax < yMin))) ImageCrop(image, crop);
+}
+
+// Clear alpha channel to desired color
+// NOTE: Threshold defines the alpha limit, 0.0f to 1.0f
+void ImageAlphaClear(Image *image, Color color, float threshold)
+{
+    // Security check to avoid program crash
+    if ((image->data == NULL) || (image->width == 0) || (image->height == 0)) return;
+
+    Color *pixels = GetImageData(*image);
+
+    for (int i = 0; i < image->width*image->height; i++) if (pixels[i].a <= (unsigned char)(threshold*255.0f)) pixels[i] = color;
+
+    UnloadImage(*image);
+
+    int prevFormat = image->format;
+    *image = LoadImageEx(pixels, image->width, image->height);
+
+    ImageFormat(image, prevFormat);
+    RL_FREE(pixels);
+}
+
 // Apply alpha mask to image
 // NOTE 1: Returned image is GRAY_ALPHA (16bit) or RGBA (32bit)
 // NOTE 2: alphaMask should be same size as image
@@ -1198,26 +1175,6 @@ void ImageAlphaMask(Image *image, Image alphaMask)
     }
 }
 
-// Clear alpha channel to desired color
-// NOTE: Threshold defines the alpha limit, 0.0f to 1.0f
-void ImageAlphaClear(Image *image, Color color, float threshold)
-{
-    // Security check to avoid program crash
-    if ((image->data == NULL) || (image->width == 0) || (image->height == 0)) return;
-
-    Color *pixels = GetImageData(*image);
-
-    for (int i = 0; i < image->width*image->height; i++) if (pixels[i].a <= (unsigned char)(threshold*255.0f)) pixels[i] = color;
-
-    UnloadImage(*image);
-
-    int prevFormat = image->format;
-    *image = LoadImageEx(pixels, image->width, image->height);
-
-    ImageFormat(image, prevFormat);
-    RL_FREE(pixels);
-}
-
 // Premultiply alpha channel
 void ImageAlphaPremultiply(Image *image)
 {
@@ -1242,167 +1199,6 @@ void ImageAlphaPremultiply(Image *image)
 
     ImageFormat(image, prevFormat);
     RL_FREE(pixels);
-}
-
-#if defined(SUPPORT_IMAGE_MANIPULATION)
-// Load cubemap from image, multiple image cubemap layouts supported
-TextureCubemap LoadTextureCubemap(Image image, int layoutType)
-{
-    TextureCubemap cubemap = { 0 };
-
-    if (layoutType == CUBEMAP_AUTO_DETECT)      // Try to automatically guess layout type
-    {
-        // Check image width/height to determine the type of cubemap provided
-        if (image.width > image.height)
-        {
-            if ((image.width/6) == image.height) { layoutType = CUBEMAP_LINE_HORIZONTAL; cubemap.width = image.width/6; }
-            else if ((image.width/4) == (image.height/3)) { layoutType = CUBEMAP_CROSS_FOUR_BY_THREE; cubemap.width = image.width/4; }
-            else if (image.width >= (int)((float)image.height*1.85f)) { layoutType = CUBEMAP_PANORAMA; cubemap.width = image.width/4; }
-        }
-        else if (image.height > image.width)
-        {
-            if ((image.height/6) == image.width) { layoutType = CUBEMAP_LINE_VERTICAL; cubemap.width = image.height/6; }
-            else if ((image.width/3) == (image.height/4)) { layoutType = CUBEMAP_CROSS_THREE_BY_FOUR; cubemap.width = image.width/3; }
-        }
-
-        cubemap.height = cubemap.width;
-    }
-
-    if (layoutType != CUBEMAP_AUTO_DETECT)
-    {
-        int size = cubemap.width;
-
-        Image faces = { 0 };                // Vertical column image
-        Rectangle faceRecs[6] = { 0 };      // Face source rectangles
-        for (int i = 0; i < 6; i++) faceRecs[i] = (Rectangle){ 0, 0, (float)size, (float)size };
-
-        if (layoutType == CUBEMAP_LINE_VERTICAL)
-        {
-            faces = image;
-            for (int i = 0; i < 6; i++) faceRecs[i].y = (float)size*i;
-        }
-        else if (layoutType == CUBEMAP_PANORAMA)
-        {
-            // TODO: Convert panorama image to square faces...
-            // Ref: https://github.com/denivip/panorama/blob/master/panorama.cpp
-        }
-        else
-        {
-            if (layoutType == CUBEMAP_LINE_HORIZONTAL) for (int i = 0; i < 6; i++) faceRecs[i].x = (float)size*i;
-            else if (layoutType == CUBEMAP_CROSS_THREE_BY_FOUR)
-            {
-                faceRecs[0].x = (float)size; faceRecs[0].y = (float)size;
-                faceRecs[1].x = (float)size; faceRecs[1].y = (float)size*3;
-                faceRecs[2].x = (float)size; faceRecs[2].y = 0;
-                faceRecs[3].x = (float)size; faceRecs[3].y = (float)size*2;
-                faceRecs[4].x = 0; faceRecs[4].y = (float)size;
-                faceRecs[5].x = (float)size*2; faceRecs[5].y = (float)size;
-            }
-            else if (layoutType == CUBEMAP_CROSS_FOUR_BY_THREE)
-            {
-                faceRecs[0].x = (float)size*2; faceRecs[0].y = (float)size;
-                faceRecs[1].x = 0; faceRecs[1].y = (float)size;
-                faceRecs[2].x = (float)size; faceRecs[2].y = 0;
-                faceRecs[3].x = (float)size; faceRecs[3].y = (float)size*2;
-                faceRecs[4].x = (float)size; faceRecs[4].y = (float)size;
-                faceRecs[5].x = (float)size*3; faceRecs[5].y = (float)size;
-            }
-
-            // Convert image data to 6 faces in a vertical column, that's the optimum layout for loading
-            faces = GenImageColor(size, size*6, MAGENTA);
-            ImageFormat(&faces, image.format);
-
-            // TODO: Image formating does not work with compressed textures!
-        }
-
-        for (int i = 0; i < 6; i++) ImageDraw(&faces, image, faceRecs[i], (Rectangle){ 0, (float)size*i, (float)size, (float)size }, WHITE);
-
-        cubemap.id = rlLoadTextureCubemap(faces.data, size, faces.format);
-        if (cubemap.id == 0) TRACELOG(LOG_WARNING, "IMAGE: Failed to load cubemap image");
-
-        UnloadImage(faces);
-    }
-    else TRACELOG(LOG_WARNING, "IMAGE: Failed to detect cubemap image layout");
-
-    return cubemap;
-}
-
-// Crop an image to area defined by a rectangle
-// NOTE: Security checks are performed in case rectangle goes out of bounds
-void ImageCrop(Image *image, Rectangle crop)
-{
-    // Security check to avoid program crash
-    if ((image->data == NULL) || (image->width == 0) || (image->height == 0)) return;
-
-    // Security checks to validate crop rectangle
-    if (crop.x < 0) { crop.width += crop.x; crop.x = 0; }
-    if (crop.y < 0) { crop.height += crop.y; crop.y = 0; }
-    if ((crop.x + crop.width) > image->width) crop.width = image->width - crop.x;
-    if ((crop.y + crop.height) > image->height) crop.height = image->height - crop.y;
-
-    if ((crop.x < image->width) && (crop.y < image->height))
-    {
-        // Start the cropping process
-        Color *pixels = GetImageData(*image);   // Get data as Color pixels array
-        Color *cropPixels = (Color *)RL_MALLOC((int)crop.width*(int)crop.height*sizeof(Color));
-
-        for (int j = (int)crop.y; j < (int)(crop.y + crop.height); j++)
-        {
-            for (int i = (int)crop.x; i < (int)(crop.x + crop.width); i++)
-            {
-                cropPixels[(j - (int)crop.y)*(int)crop.width + (i - (int)crop.x)] = pixels[j*image->width + i];
-            }
-        }
-
-        RL_FREE(pixels);
-
-        int format = image->format;
-
-        UnloadImage(*image);
-
-        *image = LoadImageEx(cropPixels, (int)crop.width, (int)crop.height);
-
-        RL_FREE(cropPixels);
-
-        // Reformat 32bit RGBA image to original format
-        ImageFormat(image, format);
-    }
-    else TRACELOG(LOG_WARNING, "IMAGE: Failed to crop, rectangle out of bounds");
-}
-
-// Crop image depending on alpha value
-void ImageAlphaCrop(Image *image, float threshold)
-{
-    // Security check to avoid program crash
-    if ((image->data == NULL) || (image->width == 0) || (image->height == 0)) return;
-
-    Color *pixels = GetImageData(*image);
-
-    int xMin = 65536;   // Define a big enough number
-    int xMax = 0;
-    int yMin = 65536;
-    int yMax = 0;
-
-    for (int y = 0; y < image->height; y++)
-    {
-        for (int x = 0; x < image->width; x++)
-        {
-            if (pixels[y*image->width + x].a > (unsigned char)(threshold*255.0f))
-            {
-                if (x < xMin) xMin = x;
-                if (x > xMax) xMax = x;
-                if (y < yMin) yMin = y;
-                if (y > yMax) yMax = y;
-            }
-        }
-    }
-
-    Rectangle crop = { (float)xMin, (float)yMin, (float)((xMax + 1) - xMin), (float)((yMax + 1) - yMin) };
-
-    RL_FREE(pixels);
-
-    // Check for not empty image brefore cropping
-    if (!((xMax < xMin) || (yMax < yMin))) ImageCrop(image, crop);
 }
 
 // Resize and image to new size
@@ -1728,487 +1524,6 @@ void ImageDither(Image *image, int rBpp, int gBpp, int bBpp, int aBpp)
     }
 }
 
-// Extract color palette from image to maximum size
-// NOTE: Memory allocated should be freed manually!
-Color *ImageExtractPalette(Image image, int maxPaletteSize, int *extractCount)
-{
-    #define COLOR_EQUAL(col1, col2) ((col1.r == col2.r)&&(col1.g == col2.g)&&(col1.b == col2.b)&&(col1.a == col2.a))
-
-    Color *pixels = GetImageData(image);
-    Color *palette = (Color *)RL_MALLOC(maxPaletteSize*sizeof(Color));
-
-    int palCount = 0;
-    for (int i = 0; i < maxPaletteSize; i++) palette[i] = BLANK;   // Set all colors to BLANK
-
-    for (int i = 0; i < image.width*image.height; i++)
-    {
-        if (pixels[i].a > 0)
-        {
-            bool colorInPalette = false;
-
-            // Check if the color is already on palette
-            for (int j = 0; j < maxPaletteSize; j++)
-            {
-                if (COLOR_EQUAL(pixels[i], palette[j]))
-                {
-                    colorInPalette = true;
-                    break;
-                }
-            }
-
-            // Store color if not on the palette
-            if (!colorInPalette)
-            {
-                palette[palCount] = pixels[i];      // Add pixels[i] to palette
-                palCount++;
-
-                // We reached the limit of colors supported by palette
-                if (palCount >= maxPaletteSize)
-                {
-                    i = image.width*image.height;   // Finish palette get
-                    TRACELOG(LOG_WARNING, "IMAGE: Palette is greater than %i colors", maxPaletteSize);
-                }
-            }
-        }
-    }
-
-    RL_FREE(pixels);
-
-    *extractCount = palCount;
-
-    return palette;
-}
-
-// Draw an image (source) within an image (destination)
-// NOTE: Color tint is applied to source image
-void ImageDraw(Image *dst, Image src, Rectangle srcRec, Rectangle dstRec, Color tint)
-{
-    // Security check to avoid program crash
-    if ((dst->data == NULL) || (dst->width == 0) || (dst->height == 0) ||
-        (src.data == NULL) || (src.width == 0) || (src.height == 0)) return;
-
-    // Security checks to avoid size and rectangle issues (out of bounds)
-    // Check that srcRec is inside src image
-    if (srcRec.x < 0) srcRec.x = 0;
-    if (srcRec.y < 0) srcRec.y = 0;
-
-    if ((srcRec.x + srcRec.width) > src.width)
-    {
-        srcRec.width = src.width - srcRec.x;
-        TRACELOG(LOG_WARNING, "IMAGE: Source rectangle width out of bounds, rescaled width: %i", srcRec.width);
-    }
-
-    if ((srcRec.y + srcRec.height) > src.height)
-    {
-        srcRec.height = src.height - srcRec.y;
-        TRACELOG(LOG_WARNING, "IMAGE: Source rectangle height out of bounds, rescaled height: %i", srcRec.height);
-    }
-
-    Image srcCopy = ImageCopy(src);     // Make a copy of source image to work with it
-
-    // Crop source image to desired source rectangle (if required)
-    if ((src.width != (int)srcRec.width) && (src.height != (int)srcRec.height)) ImageCrop(&srcCopy, srcRec);
-
-    // Scale source image in case destination rec size is different than source rec size
-    if (((int)dstRec.width != (int)srcRec.width) || ((int)dstRec.height != (int)srcRec.height))
-    {
-        ImageResize(&srcCopy, (int)dstRec.width, (int)dstRec.height);
-    }
-
-    // Check that dstRec is inside dst image
-    // Allow negative position within destination with cropping
-    if (dstRec.x < 0)
-    {
-        ImageCrop(&srcCopy, (Rectangle) { -dstRec.x, 0, dstRec.width + dstRec.x, dstRec.height });
-        dstRec.width = dstRec.width + dstRec.x;
-        dstRec.x = 0;
-    }
-
-    if ((dstRec.x + dstRec.width) > dst->width)
-    {
-        ImageCrop(&srcCopy, (Rectangle) { 0, 0, dst->width - dstRec.x, dstRec.height });
-        dstRec.width = dst->width - dstRec.x;
-    }
-
-    if (dstRec.y < 0)
-    {
-        ImageCrop(&srcCopy, (Rectangle) { 0, -dstRec.y, dstRec.width, dstRec.height + dstRec.y });
-        dstRec.height = dstRec.height + dstRec.y;
-        dstRec.y = 0;
-    }
-
-    if ((dstRec.y + dstRec.height) > dst->height)
-    {
-        ImageCrop(&srcCopy, (Rectangle) { 0, 0, dstRec.width, dst->height - dstRec.y });
-        dstRec.height = dst->height - dstRec.y;
-    }
-
-    // Get image data as Color pixels array to work with it
-    Color *dstPixels = GetImageData(*dst);
-    Color *srcPixels = GetImageData(srcCopy);
-
-    UnloadImage(srcCopy);       // Source copy not required any more
-
-    Vector4 fsrc, fdst, fout;   // Normalized pixel data (ready for operation)
-    Vector4 ftint = ColorNormalize(tint);   // Normalized color tint
-
-    // Blit pixels, copy source image into destination
-    // TODO: Maybe out-of-bounds blitting could be considered here instead of so much cropping
-    for (int j = (int)dstRec.y; j < (int)(dstRec.y + dstRec.height); j++)
-    {
-        for (int i = (int)dstRec.x; i < (int)(dstRec.x + dstRec.width); i++)
-        {
-            // Alpha blending (https://en.wikipedia.org/wiki/Alpha_compositing)
-
-            fdst = ColorNormalize(dstPixels[j*(int)dst->width + i]);
-            fsrc = ColorNormalize(srcPixels[(j - (int)dstRec.y)*(int)dstRec.width + (i - (int)dstRec.x)]);
-
-            // Apply color tint to source image
-            fsrc.x *= ftint.x; fsrc.y *= ftint.y; fsrc.z *= ftint.z; fsrc.w *= ftint.w;
-
-            fout.w = fsrc.w + fdst.w*(1.0f - fsrc.w);
-
-            if (fout.w <= 0.0f)
-            {
-                fout.x = 0.0f;
-                fout.y = 0.0f;
-                fout.z = 0.0f;
-            }
-            else
-            {
-                fout.x = (fsrc.x*fsrc.w + fdst.x*fdst.w*(1 - fsrc.w))/fout.w;
-                fout.y = (fsrc.y*fsrc.w + fdst.y*fdst.w*(1 - fsrc.w))/fout.w;
-                fout.z = (fsrc.z*fsrc.w + fdst.z*fdst.w*(1 - fsrc.w))/fout.w;
-            }
-
-            dstPixels[j*(int)dst->width + i] = (Color){ (unsigned char)(fout.x*255.0f),
-                                                        (unsigned char)(fout.y*255.0f),
-                                                        (unsigned char)(fout.z*255.0f),
-                                                        (unsigned char)(fout.w*255.0f) };
-
-            // TODO: Support other blending options
-        }
-    }
-
-    UnloadImage(*dst);
-
-    *dst = LoadImageEx(dstPixels, (int)dst->width, (int)dst->height);
-    ImageFormat(dst, dst->format);
-
-    RL_FREE(srcPixels);
-    RL_FREE(dstPixels);
-}
-
-// Create an image from text (default font)
-Image ImageText(const char *text, int fontSize, Color color)
-{
-    int defaultFontSize = 10;   // Default Font chars height in pixel
-    if (fontSize < defaultFontSize) fontSize = defaultFontSize;
-    int spacing = fontSize / defaultFontSize;
-
-    Image imText = ImageTextEx(GetFontDefault(), text, (float)fontSize, (float)spacing, color);
-
-    return imText;
-}
-
-// Create an image from text (custom sprite font)
-Image ImageTextEx(Font font, const char *text, float fontSize, float spacing, Color tint)
-{
-    int length = (int)strlen(text);
-
-    int textOffsetX = 0;            // Image drawing position X
-    int textOffsetY = 0;            // Offset between lines (on line break '\n')
-
-    // NOTE: Text image is generated at font base size, later scaled to desired font size
-    Vector2 imSize = MeasureTextEx(font, text, (float)font.baseSize, spacing);
-
-    // Create image to store text
-    Image imText = GenImageColor((int)imSize.x, (int)imSize.y, BLANK);
-
-    for (int i = 0; i < length; i++)
-    {
-        // Get next codepoint from byte string and glyph index in font
-        int codepointByteCount = 0;
-        int codepoint = GetNextCodepoint(&text[i], &codepointByteCount);
-        int index = GetGlyphIndex(font, codepoint);
-
-        // NOTE: Normally we exit the decoding sequence as soon as a bad byte is found (and return 0x3f)
-        // but we need to draw all of the bad bytes using the '?' symbol moving one byte
-        if (codepoint == 0x3f) codepointByteCount = 1;
-
-        if (codepoint == '\n')
-        {
-            // NOTE: Fixed line spacing of 1.5 line-height
-            // TODO: Support custom line spacing defined by user
-            textOffsetY += (font.baseSize + font.baseSize/2);
-            textOffsetX = 0;
-        }
-        else
-        {
-            if ((codepoint != ' ') && (codepoint != '\t'))
-            {
-                Rectangle rec = { (float)(textOffsetX + font.chars[index].offsetX), (float)(textOffsetY + font.chars[index].offsetY), (float)font.recs[index].width, (float)font.recs[index].height };
-                ImageDraw(&imText, font.chars[index].image, (Rectangle){ 0, 0, (float)font.chars[index].image.width, (float)font.chars[index].image.height }, rec, tint);
-            }
-
-            if (font.chars[index].advanceX == 0) textOffsetX += (int)(font.recs[index].width + spacing);
-            else textOffsetX += font.chars[index].advanceX + (int)spacing;
-        }
-
-        i += (codepointByteCount - 1);   // Move text bytes counter to next codepoint
-    }
-
-    // Scale image depending on text size
-    if (fontSize > imSize.y)
-    {
-        float scaleFactor = fontSize/imSize.y;
-        TRACELOG(LOG_INFO, "IMAGE: Text scaled by factor: %f", scaleFactor);
-
-        // Using nearest-neighbor scaling algorithm for default font
-        if (font.texture.id == GetFontDefault().texture.id) ImageResizeNN(&imText, (int)(imSize.x*scaleFactor), (int)(imSize.y*scaleFactor));
-        else ImageResize(&imText, (int)(imSize.x*scaleFactor), (int)(imSize.y*scaleFactor));
-    }
-
-    return imText;
-}
-
-// Draw rectangle within an image
-void ImageDrawRectangle(Image *dst, int posX, int posY, int width, int height, Color color)
-{
-    ImageDrawRectangleRec(dst, (Rectangle){ (float)posX, (float)posY, (float)width, (float)height }, color);
-}
-
-// Draw rectangle within an image (Vector version)
-void ImageDrawRectangleV(Image *dst, Vector2 position, Vector2 size, Color color)
-{
-    ImageDrawRectangle(dst, (int)position.x, (int)position.y, (int)size.x, (int)size.y, color);
-}
-
-// Draw rectangle within an image
-void ImageDrawRectangleRec(Image *dst, Rectangle rec, Color color)
-{
-    // Security check to avoid program crash
-    if ((dst->data == NULL) || (dst->width == 0) || (dst->height == 0)) return;
-
-    Image imRec = GenImageColor((int)rec.width, (int)rec.height, color);
-    ImageDraw(dst, imRec, (Rectangle){ 0, 0, rec.width, rec.height }, rec, WHITE);
-    UnloadImage(imRec);
-}
-
-// Draw rectangle lines within an image
-void ImageDrawRectangleLines(Image *dst, Rectangle rec, int thick, Color color)
-{
-    ImageDrawRectangle(dst, (int)rec.x, (int)rec.y, (int)rec.width, thick, color);
-    ImageDrawRectangle(dst, (int)rec.x, (int)(rec.y + thick), thick, (int)(rec.height - thick*2), color);
-    ImageDrawRectangle(dst, (int)(rec.x + rec.width - thick), (int)(rec.y + thick), thick, (int)(rec.height - thick*2), color);
-    ImageDrawRectangle(dst, (int)rec.x, (int)(rec.y + rec.height - thick), (int)rec.width, thick, color);
-}
-
-// Clear image background with given color
-void ImageClearBackground(Image *dst, Color color)
-{
-    ImageDrawRectangle(dst, 0, 0, dst->width, dst->height, color);
-}
-
-// Draw pixel within an image
-// NOTE: Compressed image formats not supported
-void ImageDrawPixel(Image *dst, int x, int y, Color color)
-{
-    // Security check to avoid program crash
-    if ((dst->data == NULL) || (x < 0) || (x >= dst->width) || (y < 0) || (y >= dst->height)) return;
-    
-    switch (dst->format)
-    {
-        case UNCOMPRESSED_GRAYSCALE: 
-        {
-            // NOTE: Calculate grayscale equivalent color
-            Vector3 coln = { (float)color.r/255.0f, (float)color.g/255.0f, (float)color.b/255.0f };
-            unsigned char gray = (unsigned char)((coln.x*0.299f + coln.y*0.587f + coln.z*0.114f)*255.0f);
-            
-            ((unsigned char *)dst->data)[y*dst->width + x] = gray; 
-            
-        } break;
-        case UNCOMPRESSED_GRAY_ALPHA: 
-        {
-            // NOTE: Calculate grayscale equivalent color
-            Vector3 coln = { (float)color.r/255.0f, (float)color.g/255.0f, (float)color.b/255.0f };
-            unsigned char gray = (unsigned char)((coln.x*0.299f + coln.y*0.587f + coln.z*0.114f)*255.0f);
-            
-            ((unsigned char *)dst->data)[(y*dst->width + x)*2] = gray;
-            ((unsigned char *)dst->data)[(y*dst->width + x)*2 + 1] = color.a;
-
-        } break;
-        case UNCOMPRESSED_R5G6B5:
-        {
-            // NOTE: Calculate R5G6B5 equivalent color
-            Vector3 coln = { (float)color.r/255.0f, (float)color.g/255.0f, (float)color.b/255.0f };
-
-            unsigned char r = (unsigned char)(round(coln.x*31.0f));
-            unsigned char g = (unsigned char)(round(coln.y*63.0f));
-            unsigned char b = (unsigned char)(round(coln.z*31.0f));
-
-            ((unsigned short *)dst->data)[y*dst->width + x] = (unsigned short)r << 11 | (unsigned short)g << 5 | (unsigned short)b;
-            
-        } break;
-        case UNCOMPRESSED_R5G5B5A1:
-        {
-            // NOTE: Calculate R5G5B5A1 equivalent color
-            Vector4 coln = { (float)color.r/255.0f, (float)color.g/255.0f, (float)color.b/255.0f, (float)color.a/255.0f };
-
-            unsigned char r = (unsigned char)(round(coln.x*31.0f));
-            unsigned char g = (unsigned char)(round(coln.y*31.0f));
-            unsigned char b = (unsigned char)(round(coln.z*31.0f));
-            unsigned char a = (coln.w > ((float)R5G5B5A1_ALPHA_THRESHOLD/255.0f))? 1 : 0;;
-
-            ((unsigned short *)dst->data)[y*dst->width + x] = (unsigned short)r << 11 | (unsigned short)g << 6 | (unsigned short)b << 1 | (unsigned short)a;
-
-        } break;
-        case UNCOMPRESSED_R4G4B4A4:
-        {
-            // NOTE: Calculate R5G5B5A1 equivalent color
-            Vector4 coln = { (float)color.r/255.0f, (float)color.g/255.0f, (float)color.b/255.0f, (float)color.a/255.0f };
-
-            unsigned char r = (unsigned char)(round(coln.x*15.0f));
-            unsigned char g = (unsigned char)(round(coln.y*15.0f));
-            unsigned char b = (unsigned char)(round(coln.z*15.0f));
-            unsigned char a = (unsigned char)(round(coln.w*15.0f));
-
-            ((unsigned short *)dst->data)[y*dst->width + x] = (unsigned short)r << 12 | (unsigned short)g << 8 | (unsigned short)b << 4 | (unsigned short)a;
-            
-        } break;
-        case UNCOMPRESSED_R8G8B8:
-        {
-            ((unsigned char *)dst->data)[(y*dst->width + x)*3] = color.r;
-            ((unsigned char *)dst->data)[(y*dst->width + x)*3 + 1] = color.g;
-            ((unsigned char *)dst->data)[(y*dst->width + x)*3 + 2] = color.b;
-            
-        } break;
-        case UNCOMPRESSED_R8G8B8A8:
-        {
-            ((unsigned char *)dst->data)[(y*dst->width + x)*4] = color.r;
-            ((unsigned char *)dst->data)[(y*dst->width + x)*4 + 1] = color.g;
-            ((unsigned char *)dst->data)[(y*dst->width + x)*4 + 2] = color.b;
-            ((unsigned char *)dst->data)[(y*dst->width + x)*4 + 3] = color.a;
-
-        } break;
-        case UNCOMPRESSED_R32:
-        {
-            // NOTE: Calculate grayscale equivalent color (normalized to 32bit)
-            Vector3 coln = { (float)color.r/255.0f, (float)color.g/255.0f, (float)color.b/255.0f };
-
-            ((float *)dst->data)[y*dst->width + x] = coln.x*0.299f + coln.y*0.587f + coln.z*0.114f; 
-            
-        } break;
-        case UNCOMPRESSED_R32G32B32:
-        {
-            // NOTE: Calculate R32G32B32 equivalent color (normalized to 32bit)
-            Vector3 coln = { (float)color.r/255.0f, (float)color.g/255.0f, (float)color.b/255.0f };
-
-            ((float *)dst->data)[(y*dst->width + x)*3] = coln.x; 
-            ((float *)dst->data)[(y*dst->width + x)*3 + 1] = coln.y; 
-            ((float *)dst->data)[(y*dst->width + x)*3 + 2] = coln.z; 
-        } break;
-        case UNCOMPRESSED_R32G32B32A32:
-        {
-            // NOTE: Calculate R32G32B32A32 equivalent color (normalized to 32bit)
-            Vector4 coln = { (float)color.r/255.0f, (float)color.g/255.0f, (float)color.b/255.0f, (float)color.a/255.0f };
-
-            ((float *)dst->data)[(y*dst->width + x)*4] = coln.x; 
-            ((float *)dst->data)[(y*dst->width + x)*4 + 1] = coln.y; 
-            ((float *)dst->data)[(y*dst->width + x)*4 + 2] = coln.z;
-            ((float *)dst->data)[(y*dst->width + x)*4 + 3] = coln.w;
-
-        } break;
-        default: break;
-    }
-}
-
-// Draw pixel within an image (Vector version)
-void ImageDrawPixelV(Image *dst, Vector2 position, Color color)
-{
-    ImageDrawPixel(dst, (int)position.x, (int)position.y, color);
-}
-
-// Draw circle within an image
-void ImageDrawCircle(Image *dst, int centerX, int centerY, int radius, Color color)
-{
-    int x = 0, y = radius;
-    int decesionParameter = 3 - 2*radius;
-
-    while (y >= x)
-    {
-        ImageDrawPixel(dst, centerX + x, centerY + y, color);
-        ImageDrawPixel(dst, centerX - x, centerY + y, color);
-        ImageDrawPixel(dst, centerX + x, centerY - y, color);
-        ImageDrawPixel(dst, centerX - x, centerY - y, color);
-        ImageDrawPixel(dst, centerX + y, centerY + x, color);
-        ImageDrawPixel(dst, centerX - y, centerY + x, color);
-        ImageDrawPixel(dst, centerX + y, centerY - x, color);
-        ImageDrawPixel(dst, centerX - y, centerY - x, color);
-        x++;
-
-        if (decesionParameter > 0)
-        {
-            y--;
-            decesionParameter = decesionParameter + 4*(x - y) + 10;
-        }
-        else decesionParameter = decesionParameter + 4*x + 6;
-    }
-}
-
-// Draw circle within an image (Vector version)
-void ImageDrawCircleV(Image *dst, Vector2 center, int radius, Color color)
-{
-    ImageDrawCircle(dst, (int)center.x, (int)center.y, radius, color);
-}
-
-// Draw line within an image
-void ImageDrawLine(Image *dst, int startPosX, int startPosY, int endPosX, int endPosY, Color color)
-{
-    int m = 2*(endPosY - startPosY);
-    int slopeError = m - (endPosX - startPosX);
-
-    for (int x = startPosX, y = startPosY; x <= endPosX; x++)
-    {
-        ImageDrawPixel(dst, x, y, color);
-        slopeError += m;
-
-        if (slopeError >= 0)
-        {
-            y++;
-            slopeError -= 2*(endPosX - startPosX);
-        }
-    }
-}
-
-// Draw line within an image (Vector version)
-void ImageDrawLineV(Image *dst, Vector2 start, Vector2 end, Color color)
-{
-    ImageDrawLine(dst, (int)start.x, (int)start.y, (int)end.x, (int)end.y, color);
-}
-
-// Draw text (default font) within an image (destination)
-void ImageDrawText(Image *dst, const char *text, int posX, int posY, int fontSize, Color color)
-{
-    Vector2 position = { (float)posX, (float)posY };
-
-    // NOTE: For default font, sapcing is set to desired font size / default font size (10)
-    ImageDrawTextEx(dst, GetFontDefault(), text, position, (float)fontSize, (float)fontSize/10, color);
-}
-
-// Draw text (custom sprite font) within an image (destination)
-void ImageDrawTextEx(Image *dst, Font font, const char *text, Vector2 position, float fontSize, float spacing, Color tint)
-{
-    Image imText = ImageTextEx(font, text, fontSize, spacing, tint);
-
-    Rectangle srcRec = { 0.0f, 0.0f, (float)imText.width, (float)imText.height };
-    Rectangle dstRec = { position.x, position.y, (float)imText.width, (float)imText.height };
-
-    ImageDraw(dst, imText, srcRec, dstRec, WHITE);
-
-    UnloadImage(imText);
-}
-
 // Flip image vertically
 void ImageFlipVertical(Image *image)
 {
@@ -2525,228 +1840,890 @@ void ImageColorReplace(Image *image, Color color, Color replace)
 }
 #endif      // SUPPORT_IMAGE_MANIPULATION
 
-// Generate image: plain color
-Image GenImageColor(int width, int height, Color color)
+// Get pixel data from image in the form of Color struct array
+Color *GetImageData(Image image)
 {
-    Color *pixels = (Color *)RL_CALLOC(width*height, sizeof(Color));
+    if ((image.width == 0) || (image.height == 0)) return NULL;
 
-    for (int i = 0; i < width*height; i++) pixels[i] = color;
+    Color *pixels = (Color *)RL_MALLOC(image.width*image.height*sizeof(Color));
 
-    Image image = LoadImageEx(pixels, width, height);
-
-    RL_FREE(pixels);
-
-    return image;
-}
-
-#if defined(SUPPORT_IMAGE_GENERATION)
-// Generate image: vertical gradient
-Image GenImageGradientV(int width, int height, Color top, Color bottom)
-{
-    Color *pixels = (Color *)RL_MALLOC(width*height*sizeof(Color));
-
-    for (int j = 0; j < height; j++)
+    if (image.format >= COMPRESSED_DXT1_RGB) TRACELOG(LOG_WARNING, "IMAGE: Pixel data retrieval not supported for compressed image formats");
+    else
     {
-        float factor = (float)j/(float)height;
-        for (int i = 0; i < width; i++)
+        if ((image.format == UNCOMPRESSED_R32) ||
+            (image.format == UNCOMPRESSED_R32G32B32) ||
+            (image.format == UNCOMPRESSED_R32G32B32A32)) TRACELOG(LOG_WARNING, "IMAGE: Pixel format converted from 32bit to 8bit per channel");
+
+        for (int i = 0, k = 0; i < image.width*image.height; i++)
         {
-            pixels[j*width + i].r = (int)((float)bottom.r*factor + (float)top.r*(1.f - factor));
-            pixels[j*width + i].g = (int)((float)bottom.g*factor + (float)top.g*(1.f - factor));
-            pixels[j*width + i].b = (int)((float)bottom.b*factor + (float)top.b*(1.f - factor));
-            pixels[j*width + i].a = (int)((float)bottom.a*factor + (float)top.a*(1.f - factor));
-        }
-    }
-
-    Image image = LoadImageEx(pixels, width, height);
-    RL_FREE(pixels);
-
-    return image;
-}
-
-// Generate image: horizontal gradient
-Image GenImageGradientH(int width, int height, Color left, Color right)
-{
-    Color *pixels = (Color *)RL_MALLOC(width*height*sizeof(Color));
-
-    for (int i = 0; i < width; i++)
-    {
-        float factor = (float)i/(float)width;
-        for (int j = 0; j < height; j++)
-        {
-            pixels[j*width + i].r = (int)((float)right.r*factor + (float)left.r*(1.f - factor));
-            pixels[j*width + i].g = (int)((float)right.g*factor + (float)left.g*(1.f - factor));
-            pixels[j*width + i].b = (int)((float)right.b*factor + (float)left.b*(1.f - factor));
-            pixels[j*width + i].a = (int)((float)right.a*factor + (float)left.a*(1.f - factor));
-        }
-    }
-
-    Image image = LoadImageEx(pixels, width, height);
-    RL_FREE(pixels);
-
-    return image;
-}
-
-// Generate image: radial gradient
-Image GenImageGradientRadial(int width, int height, float density, Color inner, Color outer)
-{
-    Color *pixels = (Color *)RL_MALLOC(width*height*sizeof(Color));
-    float radius = (width < height)? (float)width/2.0f : (float)height/2.0f;
-
-    float centerX = (float)width/2.0f;
-    float centerY = (float)height/2.0f;
-
-    for (int y = 0; y < height; y++)
-    {
-        for (int x = 0; x < width; x++)
-        {
-            float dist = hypotf((float)x - centerX, (float)y - centerY);
-            float factor = (dist - radius*density)/(radius*(1.0f - density));
-
-            factor = (float)fmax(factor, 0.f);
-            factor = (float)fmin(factor, 1.f); // dist can be bigger than radius so we have to check
-
-            pixels[y*width + x].r = (int)((float)outer.r*factor + (float)inner.r*(1.0f - factor));
-            pixels[y*width + x].g = (int)((float)outer.g*factor + (float)inner.g*(1.0f - factor));
-            pixels[y*width + x].b = (int)((float)outer.b*factor + (float)inner.b*(1.0f - factor));
-            pixels[y*width + x].a = (int)((float)outer.a*factor + (float)inner.a*(1.0f - factor));
-        }
-    }
-
-    Image image = LoadImageEx(pixels, width, height);
-    RL_FREE(pixels);
-
-    return image;
-}
-
-// Generate image: checked
-Image GenImageChecked(int width, int height, int checksX, int checksY, Color col1, Color col2)
-{
-    Color *pixels = (Color *)RL_MALLOC(width*height*sizeof(Color));
-
-    for (int y = 0; y < height; y++)
-    {
-        for (int x = 0; x < width; x++)
-        {
-            if ((x/checksX + y/checksY)%2 == 0) pixels[y*width + x] = col1;
-            else pixels[y*width + x] = col2;
-        }
-    }
-
-    Image image = LoadImageEx(pixels, width, height);
-    RL_FREE(pixels);
-
-    return image;
-}
-
-// Generate image: white noise
-Image GenImageWhiteNoise(int width, int height, float factor)
-{
-    Color *pixels = (Color *)RL_MALLOC(width*height*sizeof(Color));
-
-    for (int i = 0; i < width*height; i++)
-    {
-        if (GetRandomValue(0, 99) < (int)(factor*100.0f)) pixels[i] = WHITE;
-        else pixels[i] = BLACK;
-    }
-
-    Image image = LoadImageEx(pixels, width, height);
-    RL_FREE(pixels);
-
-    return image;
-}
-
-// Generate image: perlin noise
-Image GenImagePerlinNoise(int width, int height, int offsetX, int offsetY, float scale)
-{
-    Color *pixels = (Color *)RL_MALLOC(width*height*sizeof(Color));
-
-    for (int y = 0; y < height; y++)
-    {
-        for (int x = 0; x < width; x++)
-        {
-            float nx = (float)(x + offsetX)*scale/(float)width;
-            float ny = (float)(y + offsetY)*scale/(float)height;
-
-            // Typical values to start playing with:
-            //   lacunarity = ~2.0   -- spacing between successive octaves (use exactly 2.0 for wrapping output)
-            //   gain       =  0.5   -- relative weighting applied to each successive octave
-            //   octaves    =  6     -- number of "octaves" of noise3() to sum
-
-            // NOTE: We need to translate the data from [-1..1] to [0..1]
-            float p = (stb_perlin_fbm_noise3(nx, ny, 1.0f, 2.0f, 0.5f, 6) + 1.0f)/2.0f;
-
-            int intensity = (int)(p*255.0f);
-            pixels[y*width + x] = (Color){intensity, intensity, intensity, 255};
-        }
-    }
-
-    Image image = LoadImageEx(pixels, width, height);
-    RL_FREE(pixels);
-
-    return image;
-}
-
-// Generate image: cellular algorithm. Bigger tileSize means bigger cells
-Image GenImageCellular(int width, int height, int tileSize)
-{
-    Color *pixels = (Color *)RL_MALLOC(width*height*sizeof(Color));
-
-    int seedsPerRow = width/tileSize;
-    int seedsPerCol = height/tileSize;
-    int seedsCount = seedsPerRow * seedsPerCol;
-
-    Vector2 *seeds = (Vector2 *)RL_MALLOC(seedsCount*sizeof(Vector2));
-
-    for (int i = 0; i < seedsCount; i++)
-    {
-        int y = (i/seedsPerRow)*tileSize + GetRandomValue(0, tileSize - 1);
-        int x = (i%seedsPerRow)*tileSize + GetRandomValue(0, tileSize - 1);
-        seeds[i] = (Vector2){ (float)x, (float)y};
-    }
-
-    for (int y = 0; y < height; y++)
-    {
-        int tileY = y/tileSize;
-
-        for (int x = 0; x < width; x++)
-        {
-            int tileX = x/tileSize;
-
-            float minDistance = (float)strtod("Inf", NULL);
-
-            // Check all adjacent tiles
-            for (int i = -1; i < 2; i++)
+            switch (image.format)
             {
-                if ((tileX + i < 0) || (tileX + i >= seedsPerRow)) continue;
-
-                for (int j = -1; j < 2; j++)
+                case UNCOMPRESSED_GRAYSCALE:
                 {
-                    if ((tileY + j < 0) || (tileY + j >= seedsPerCol)) continue;
+                    pixels[i].r = ((unsigned char *)image.data)[i];
+                    pixels[i].g = ((unsigned char *)image.data)[i];
+                    pixels[i].b = ((unsigned char *)image.data)[i];
+                    pixels[i].a = 255;
 
-                    Vector2 neighborSeed = seeds[(tileY + j)*seedsPerRow + tileX + i];
+                } break;
+                case UNCOMPRESSED_GRAY_ALPHA:
+                {
+                    pixels[i].r = ((unsigned char *)image.data)[k];
+                    pixels[i].g = ((unsigned char *)image.data)[k];
+                    pixels[i].b = ((unsigned char *)image.data)[k];
+                    pixels[i].a = ((unsigned char *)image.data)[k + 1];
 
-                    float dist = (float)hypot(x - (int)neighborSeed.x, y - (int)neighborSeed.y);
-                    minDistance = (float)fmin(minDistance, dist);
+                    k += 2;
+                } break;
+                case UNCOMPRESSED_R5G5B5A1:
+                {
+                    unsigned short pixel = ((unsigned short *)image.data)[i];
+
+                    pixels[i].r = (unsigned char)((float)((pixel & 0b1111100000000000) >> 11)*(255/31));
+                    pixels[i].g = (unsigned char)((float)((pixel & 0b0000011111000000) >> 6)*(255/31));
+                    pixels[i].b = (unsigned char)((float)((pixel & 0b0000000000111110) >> 1)*(255/31));
+                    pixels[i].a = (unsigned char)((pixel & 0b0000000000000001)*255);
+
+                } break;
+                case UNCOMPRESSED_R5G6B5:
+                {
+                    unsigned short pixel = ((unsigned short *)image.data)[i];
+
+                    pixels[i].r = (unsigned char)((float)((pixel & 0b1111100000000000) >> 11)*(255/31));
+                    pixels[i].g = (unsigned char)((float)((pixel & 0b0000011111100000) >> 5)*(255/63));
+                    pixels[i].b = (unsigned char)((float)(pixel & 0b0000000000011111)*(255/31));
+                    pixels[i].a = 255;
+
+                } break;
+                case UNCOMPRESSED_R4G4B4A4:
+                {
+                    unsigned short pixel = ((unsigned short *)image.data)[i];
+
+                    pixels[i].r = (unsigned char)((float)((pixel & 0b1111000000000000) >> 12)*(255/15));
+                    pixels[i].g = (unsigned char)((float)((pixel & 0b0000111100000000) >> 8)*(255/15));
+                    pixels[i].b = (unsigned char)((float)((pixel & 0b0000000011110000) >> 4)*(255/15));
+                    pixels[i].a = (unsigned char)((float)(pixel & 0b0000000000001111)*(255/15));
+
+                } break;
+                case UNCOMPRESSED_R8G8B8A8:
+                {
+                    pixels[i].r = ((unsigned char *)image.data)[k];
+                    pixels[i].g = ((unsigned char *)image.data)[k + 1];
+                    pixels[i].b = ((unsigned char *)image.data)[k + 2];
+                    pixels[i].a = ((unsigned char *)image.data)[k + 3];
+
+                    k += 4;
+                } break;
+                case UNCOMPRESSED_R8G8B8:
+                {
+                    pixels[i].r = (unsigned char)((unsigned char *)image.data)[k];
+                    pixels[i].g = (unsigned char)((unsigned char *)image.data)[k + 1];
+                    pixels[i].b = (unsigned char)((unsigned char *)image.data)[k + 2];
+                    pixels[i].a = 255;
+
+                    k += 3;
+                } break;
+                case UNCOMPRESSED_R32:
+                {
+                    pixels[i].r = (unsigned char)(((float *)image.data)[k]*255.0f);
+                    pixels[i].g = 0;
+                    pixels[i].b = 0;
+                    pixels[i].a = 255;
+
+                } break;
+                case UNCOMPRESSED_R32G32B32:
+                {
+                    pixels[i].r = (unsigned char)(((float *)image.data)[k]*255.0f);
+                    pixels[i].g = (unsigned char)(((float *)image.data)[k + 1]*255.0f);
+                    pixels[i].b = (unsigned char)(((float *)image.data)[k + 2]*255.0f);
+                    pixels[i].a = 255;
+
+                    k += 3;
+                } break;
+                case UNCOMPRESSED_R32G32B32A32:
+                {
+                    pixels[i].r = (unsigned char)(((float *)image.data)[k]*255.0f);
+                    pixels[i].g = (unsigned char)(((float *)image.data)[k]*255.0f);
+                    pixels[i].b = (unsigned char)(((float *)image.data)[k]*255.0f);
+                    pixels[i].a = (unsigned char)(((float *)image.data)[k]*255.0f);
+
+                    k += 4;
+                } break;
+                default: break;
+            }
+        }
+    }
+
+    return pixels;
+}
+
+// Extract color palette from image to maximum size
+// NOTE: Memory allocated should be freed manually!
+Color *ImageExtractPalette(Image image, int maxPaletteSize, int *extractCount)
+{
+    #define COLOR_EQUAL(col1, col2) ((col1.r == col2.r)&&(col1.g == col2.g)&&(col1.b == col2.b)&&(col1.a == col2.a))
+
+    Color *pixels = GetImageData(image);
+    Color *palette = (Color *)RL_MALLOC(maxPaletteSize*sizeof(Color));
+
+    int palCount = 0;
+    for (int i = 0; i < maxPaletteSize; i++) palette[i] = BLANK;   // Set all colors to BLANK
+
+    for (int i = 0; i < image.width*image.height; i++)
+    {
+        if (pixels[i].a > 0)
+        {
+            bool colorInPalette = false;
+
+            // Check if the color is already on palette
+            for (int j = 0; j < maxPaletteSize; j++)
+            {
+                if (COLOR_EQUAL(pixels[i], palette[j]))
+                {
+                    colorInPalette = true;
+                    break;
                 }
             }
 
-            // I made this up but it seems to give good results at all tile sizes
-            int intensity = (int)(minDistance*256.0f/tileSize);
-            if (intensity > 255) intensity = 255;
+            // Store color if not on the palette
+            if (!colorInPalette)
+            {
+                palette[palCount] = pixels[i];      // Add pixels[i] to palette
+                palCount++;
 
-            pixels[y*width + x] = (Color){ intensity, intensity, intensity, 255 };
+                // We reached the limit of colors supported by palette
+                if (palCount >= maxPaletteSize)
+                {
+                    i = image.width*image.height;   // Finish palette get
+                    TRACELOG(LOG_WARNING, "IMAGE: Palette is greater than %i colors", maxPaletteSize);
+                }
+            }
         }
     }
 
-    RL_FREE(seeds);
-
-    Image image = LoadImageEx(pixels, width, height);
     RL_FREE(pixels);
+
+    *extractCount = palCount;
+
+    return palette;
+}
+
+// Get pixel data from image as Vector4 array (float normalized)
+Vector4 *GetImageDataNormalized(Image image)
+{
+    Vector4 *pixels = (Vector4 *)RL_MALLOC(image.width*image.height*sizeof(Vector4));
+
+    if (image.format >= COMPRESSED_DXT1_RGB) TRACELOG(LOG_WARNING, "IMAGE: Pixel data retrieval not supported for compressed image formats");
+    else
+    {
+        for (int i = 0, k = 0; i < image.width*image.height; i++)
+        {
+            switch (image.format)
+            {
+                case UNCOMPRESSED_GRAYSCALE:
+                {
+                    pixels[i].x = (float)((unsigned char *)image.data)[i]/255.0f;
+                    pixels[i].y = (float)((unsigned char *)image.data)[i]/255.0f;
+                    pixels[i].z = (float)((unsigned char *)image.data)[i]/255.0f;
+                    pixels[i].w = 1.0f;
+
+                } break;
+                case UNCOMPRESSED_GRAY_ALPHA:
+                {
+                    pixels[i].x = (float)((unsigned char *)image.data)[k]/255.0f;
+                    pixels[i].y = (float)((unsigned char *)image.data)[k]/255.0f;
+                    pixels[i].z = (float)((unsigned char *)image.data)[k]/255.0f;
+                    pixels[i].w = (float)((unsigned char *)image.data)[k + 1]/255.0f;
+
+                    k += 2;
+                } break;
+                case UNCOMPRESSED_R5G5B5A1:
+                {
+                    unsigned short pixel = ((unsigned short *)image.data)[i];
+
+                    pixels[i].x = (float)((pixel & 0b1111100000000000) >> 11)*(1.0f/31);
+                    pixels[i].y = (float)((pixel & 0b0000011111000000) >> 6)*(1.0f/31);
+                    pixels[i].z = (float)((pixel & 0b0000000000111110) >> 1)*(1.0f/31);
+                    pixels[i].w = ((pixel & 0b0000000000000001) == 0)? 0.0f : 1.0f;
+
+                } break;
+                case UNCOMPRESSED_R5G6B5:
+                {
+                    unsigned short pixel = ((unsigned short *)image.data)[i];
+
+                    pixels[i].x = (float)((pixel & 0b1111100000000000) >> 11)*(1.0f/31);
+                    pixels[i].y = (float)((pixel & 0b0000011111100000) >> 5)*(1.0f/63);
+                    pixels[i].z = (float)(pixel & 0b0000000000011111)*(1.0f/31);
+                    pixels[i].w = 1.0f;
+
+                } break;
+                case UNCOMPRESSED_R4G4B4A4:
+                {
+                    unsigned short pixel = ((unsigned short *)image.data)[i];
+
+                    pixels[i].x = (float)((pixel & 0b1111000000000000) >> 12)*(1.0f/15);
+                    pixels[i].y = (float)((pixel & 0b0000111100000000) >> 8)*(1.0f/15);
+                    pixels[i].z = (float)((pixel & 0b0000000011110000) >> 4)*(1.0f/15);
+                    pixels[i].w = (float)(pixel & 0b0000000000001111)*(1.0f/15);
+
+                } break;
+                case UNCOMPRESSED_R8G8B8A8:
+                {
+                    pixels[i].x = (float)((unsigned char *)image.data)[k]/255.0f;
+                    pixels[i].y = (float)((unsigned char *)image.data)[k + 1]/255.0f;
+                    pixels[i].z = (float)((unsigned char *)image.data)[k + 2]/255.0f;
+                    pixels[i].w = (float)((unsigned char *)image.data)[k + 3]/255.0f;
+
+                    k += 4;
+                } break;
+                case UNCOMPRESSED_R8G8B8:
+                {
+                    pixels[i].x = (float)((unsigned char *)image.data)[k]/255.0f;
+                    pixels[i].y = (float)((unsigned char *)image.data)[k + 1]/255.0f;
+                    pixels[i].z = (float)((unsigned char *)image.data)[k + 2]/255.0f;
+                    pixels[i].w = 1.0f;
+
+                    k += 3;
+                } break;
+                case UNCOMPRESSED_R32:
+                {
+                    pixels[i].x = ((float *)image.data)[k];
+                    pixels[i].y = 0.0f;
+                    pixels[i].z = 0.0f;
+                    pixels[i].w = 1.0f;
+
+                } break;
+                case UNCOMPRESSED_R32G32B32:
+                {
+                    pixels[i].x = ((float *)image.data)[k];
+                    pixels[i].y = ((float *)image.data)[k + 1];
+                    pixels[i].z = ((float *)image.data)[k + 2];
+                    pixels[i].w = 1.0f;
+
+                    k += 3;
+                } break;
+                case UNCOMPRESSED_R32G32B32A32:
+                {
+                    pixels[i].x = ((float *)image.data)[k];
+                    pixels[i].y = ((float *)image.data)[k + 1];
+                    pixels[i].z = ((float *)image.data)[k + 2];
+                    pixels[i].w = ((float *)image.data)[k + 3];
+
+                    k += 4;
+                }
+                default: break;
+            }
+        }
+    }
+
+    return pixels;
+}
+
+// Get image alpha border rectangle
+Rectangle GetImageAlphaBorder(Image image, float threshold)
+{
+    Rectangle crop = { 0 };
+
+    Color *pixels = GetImageData(image);
+
+    if (pixels != NULL)
+    {
+        int xMin = 65536;   // Define a big enough number
+        int xMax = 0;
+        int yMin = 65536;
+        int yMax = 0;
+
+        for (int y = 0; y < image.height; y++)
+        {
+            for (int x = 0; x < image.width; x++)
+            {
+                if (pixels[y*image.width + x].a > (unsigned char)(threshold*255.0f))
+                {
+                    if (x < xMin) xMin = x;
+                    if (x > xMax) xMax = x;
+                    if (y < yMin) yMin = y;
+                    if (y > yMax) yMax = y;
+                }
+            }
+        }
+
+        // Check for empty blank image
+        if ((xMin != 65536) && (xMax != 65536))
+        {
+            crop = (Rectangle){ (float)xMin, (float)yMin, (float)((xMax + 1) - xMin), (float)((yMax + 1) - yMin) };
+        }
+
+        RL_FREE(pixels);
+    }
+
+    return crop;
+}
+
+//------------------------------------------------------------------------------------
+// Image drawing functions
+//------------------------------------------------------------------------------------
+#if defined(SUPPORT_IMAGE_DRAWING)
+// Clear image background with given color
+void ImageClearBackground(Image *dst, Color color)
+{
+    ImageDrawRectangle(dst, 0, 0, dst->width, dst->height, color);
+}
+
+// Draw pixel within an image
+// NOTE: Compressed image formats not supported
+void ImageDrawPixel(Image *dst, int x, int y, Color color)
+{
+    // Security check to avoid program crash
+    if ((dst->data == NULL) || (x < 0) || (x >= dst->width) || (y < 0) || (y >= dst->height)) return;
+    
+    switch (dst->format)
+    {
+        case UNCOMPRESSED_GRAYSCALE: 
+        {
+            // NOTE: Calculate grayscale equivalent color
+            Vector3 coln = { (float)color.r/255.0f, (float)color.g/255.0f, (float)color.b/255.0f };
+            unsigned char gray = (unsigned char)((coln.x*0.299f + coln.y*0.587f + coln.z*0.114f)*255.0f);
+            
+            ((unsigned char *)dst->data)[y*dst->width + x] = gray; 
+            
+        } break;
+        case UNCOMPRESSED_GRAY_ALPHA: 
+        {
+            // NOTE: Calculate grayscale equivalent color
+            Vector3 coln = { (float)color.r/255.0f, (float)color.g/255.0f, (float)color.b/255.0f };
+            unsigned char gray = (unsigned char)((coln.x*0.299f + coln.y*0.587f + coln.z*0.114f)*255.0f);
+            
+            ((unsigned char *)dst->data)[(y*dst->width + x)*2] = gray;
+            ((unsigned char *)dst->data)[(y*dst->width + x)*2 + 1] = color.a;
+
+        } break;
+        case UNCOMPRESSED_R5G6B5:
+        {
+            // NOTE: Calculate R5G6B5 equivalent color
+            Vector3 coln = { (float)color.r/255.0f, (float)color.g/255.0f, (float)color.b/255.0f };
+
+            unsigned char r = (unsigned char)(round(coln.x*31.0f));
+            unsigned char g = (unsigned char)(round(coln.y*63.0f));
+            unsigned char b = (unsigned char)(round(coln.z*31.0f));
+
+            ((unsigned short *)dst->data)[y*dst->width + x] = (unsigned short)r << 11 | (unsigned short)g << 5 | (unsigned short)b;
+            
+        } break;
+        case UNCOMPRESSED_R5G5B5A1:
+        {
+            // NOTE: Calculate R5G5B5A1 equivalent color
+            Vector4 coln = { (float)color.r/255.0f, (float)color.g/255.0f, (float)color.b/255.0f, (float)color.a/255.0f };
+
+            unsigned char r = (unsigned char)(round(coln.x*31.0f));
+            unsigned char g = (unsigned char)(round(coln.y*31.0f));
+            unsigned char b = (unsigned char)(round(coln.z*31.0f));
+            unsigned char a = (coln.w > ((float)R5G5B5A1_ALPHA_THRESHOLD/255.0f))? 1 : 0;;
+
+            ((unsigned short *)dst->data)[y*dst->width + x] = (unsigned short)r << 11 | (unsigned short)g << 6 | (unsigned short)b << 1 | (unsigned short)a;
+
+        } break;
+        case UNCOMPRESSED_R4G4B4A4:
+        {
+            // NOTE: Calculate R5G5B5A1 equivalent color
+            Vector4 coln = { (float)color.r/255.0f, (float)color.g/255.0f, (float)color.b/255.0f, (float)color.a/255.0f };
+
+            unsigned char r = (unsigned char)(round(coln.x*15.0f));
+            unsigned char g = (unsigned char)(round(coln.y*15.0f));
+            unsigned char b = (unsigned char)(round(coln.z*15.0f));
+            unsigned char a = (unsigned char)(round(coln.w*15.0f));
+
+            ((unsigned short *)dst->data)[y*dst->width + x] = (unsigned short)r << 12 | (unsigned short)g << 8 | (unsigned short)b << 4 | (unsigned short)a;
+            
+        } break;
+        case UNCOMPRESSED_R8G8B8:
+        {
+            ((unsigned char *)dst->data)[(y*dst->width + x)*3] = color.r;
+            ((unsigned char *)dst->data)[(y*dst->width + x)*3 + 1] = color.g;
+            ((unsigned char *)dst->data)[(y*dst->width + x)*3 + 2] = color.b;
+            
+        } break;
+        case UNCOMPRESSED_R8G8B8A8:
+        {
+            ((unsigned char *)dst->data)[(y*dst->width + x)*4] = color.r;
+            ((unsigned char *)dst->data)[(y*dst->width + x)*4 + 1] = color.g;
+            ((unsigned char *)dst->data)[(y*dst->width + x)*4 + 2] = color.b;
+            ((unsigned char *)dst->data)[(y*dst->width + x)*4 + 3] = color.a;
+
+        } break;
+        case UNCOMPRESSED_R32:
+        {
+            // NOTE: Calculate grayscale equivalent color (normalized to 32bit)
+            Vector3 coln = { (float)color.r/255.0f, (float)color.g/255.0f, (float)color.b/255.0f };
+
+            ((float *)dst->data)[y*dst->width + x] = coln.x*0.299f + coln.y*0.587f + coln.z*0.114f; 
+            
+        } break;
+        case UNCOMPRESSED_R32G32B32:
+        {
+            // NOTE: Calculate R32G32B32 equivalent color (normalized to 32bit)
+            Vector3 coln = { (float)color.r/255.0f, (float)color.g/255.0f, (float)color.b/255.0f };
+
+            ((float *)dst->data)[(y*dst->width + x)*3] = coln.x; 
+            ((float *)dst->data)[(y*dst->width + x)*3 + 1] = coln.y; 
+            ((float *)dst->data)[(y*dst->width + x)*3 + 2] = coln.z; 
+        } break;
+        case UNCOMPRESSED_R32G32B32A32:
+        {
+            // NOTE: Calculate R32G32B32A32 equivalent color (normalized to 32bit)
+            Vector4 coln = { (float)color.r/255.0f, (float)color.g/255.0f, (float)color.b/255.0f, (float)color.a/255.0f };
+
+            ((float *)dst->data)[(y*dst->width + x)*4] = coln.x; 
+            ((float *)dst->data)[(y*dst->width + x)*4 + 1] = coln.y; 
+            ((float *)dst->data)[(y*dst->width + x)*4 + 2] = coln.z;
+            ((float *)dst->data)[(y*dst->width + x)*4 + 3] = coln.w;
+
+        } break;
+        default: break;
+    }
+}
+
+// Draw pixel within an image (Vector version)
+void ImageDrawPixelV(Image *dst, Vector2 position, Color color)
+{
+    ImageDrawPixel(dst, (int)position.x, (int)position.y, color);
+}
+
+// Draw line within an image
+void ImageDrawLine(Image *dst, int startPosX, int startPosY, int endPosX, int endPosY, Color color)
+{
+    int m = 2*(endPosY - startPosY);
+    int slopeError = m - (endPosX - startPosX);
+
+    for (int x = startPosX, y = startPosY; x <= endPosX; x++)
+    {
+        ImageDrawPixel(dst, x, y, color);
+        slopeError += m;
+
+        if (slopeError >= 0)
+        {
+            y++;
+            slopeError -= 2*(endPosX - startPosX);
+        }
+    }
+}
+
+// Draw line within an image (Vector version)
+void ImageDrawLineV(Image *dst, Vector2 start, Vector2 end, Color color)
+{
+    ImageDrawLine(dst, (int)start.x, (int)start.y, (int)end.x, (int)end.y, color);
+}
+
+// Draw circle within an image
+void ImageDrawCircle(Image *dst, int centerX, int centerY, int radius, Color color)
+{
+    int x = 0, y = radius;
+    int decesionParameter = 3 - 2*radius;
+
+    while (y >= x)
+    {
+        ImageDrawPixel(dst, centerX + x, centerY + y, color);
+        ImageDrawPixel(dst, centerX - x, centerY + y, color);
+        ImageDrawPixel(dst, centerX + x, centerY - y, color);
+        ImageDrawPixel(dst, centerX - x, centerY - y, color);
+        ImageDrawPixel(dst, centerX + y, centerY + x, color);
+        ImageDrawPixel(dst, centerX - y, centerY + x, color);
+        ImageDrawPixel(dst, centerX + y, centerY - x, color);
+        ImageDrawPixel(dst, centerX - y, centerY - x, color);
+        x++;
+
+        if (decesionParameter > 0)
+        {
+            y--;
+            decesionParameter = decesionParameter + 4*(x - y) + 10;
+        }
+        else decesionParameter = decesionParameter + 4*x + 6;
+    }
+}
+
+// Draw circle within an image (Vector version)
+void ImageDrawCircleV(Image *dst, Vector2 center, int radius, Color color)
+{
+    ImageDrawCircle(dst, (int)center.x, (int)center.y, radius, color);
+}
+
+// Draw rectangle within an image
+void ImageDrawRectangle(Image *dst, int posX, int posY, int width, int height, Color color)
+{
+    ImageDrawRectangleRec(dst, (Rectangle){ (float)posX, (float)posY, (float)width, (float)height }, color);
+}
+
+// Draw rectangle within an image (Vector version)
+void ImageDrawRectangleV(Image *dst, Vector2 position, Vector2 size, Color color)
+{
+    ImageDrawRectangle(dst, (int)position.x, (int)position.y, (int)size.x, (int)size.y, color);
+}
+
+// Draw rectangle within an image
+void ImageDrawRectangleRec(Image *dst, Rectangle rec, Color color)
+{
+    // Security check to avoid program crash
+    if ((dst->data == NULL) || (dst->width == 0) || (dst->height == 0)) return;
+
+    Image imRec = GenImageColor((int)rec.width, (int)rec.height, color);
+    ImageDraw(dst, imRec, (Rectangle){ 0, 0, rec.width, rec.height }, rec, WHITE);
+    UnloadImage(imRec);
+}
+
+// Draw rectangle lines within an image
+void ImageDrawRectangleLines(Image *dst, Rectangle rec, int thick, Color color)
+{
+    ImageDrawRectangle(dst, (int)rec.x, (int)rec.y, (int)rec.width, thick, color);
+    ImageDrawRectangle(dst, (int)rec.x, (int)(rec.y + thick), thick, (int)(rec.height - thick*2), color);
+    ImageDrawRectangle(dst, (int)(rec.x + rec.width - thick), (int)(rec.y + thick), thick, (int)(rec.height - thick*2), color);
+    ImageDrawRectangle(dst, (int)rec.x, (int)(rec.y + rec.height - thick), (int)rec.width, thick, color);
+}
+
+// Draw an image (source) within an image (destination)
+// NOTE: Color tint is applied to source image
+void ImageDraw(Image *dst, Image src, Rectangle srcRec, Rectangle dstRec, Color tint)
+{
+    // Security check to avoid program crash
+    if ((dst->data == NULL) || (dst->width == 0) || (dst->height == 0) ||
+        (src.data == NULL) || (src.width == 0) || (src.height == 0)) return;
+
+    // Security checks to avoid size and rectangle issues (out of bounds)
+    // Check that srcRec is inside src image
+    if (srcRec.x < 0) srcRec.x = 0;
+    if (srcRec.y < 0) srcRec.y = 0;
+
+    if ((srcRec.x + srcRec.width) > src.width)
+    {
+        srcRec.width = src.width - srcRec.x;
+        TRACELOG(LOG_WARNING, "IMAGE: Source rectangle width out of bounds, rescaled width: %i", srcRec.width);
+    }
+
+    if ((srcRec.y + srcRec.height) > src.height)
+    {
+        srcRec.height = src.height - srcRec.y;
+        TRACELOG(LOG_WARNING, "IMAGE: Source rectangle height out of bounds, rescaled height: %i", srcRec.height);
+    }
+
+    Image srcCopy = ImageCopy(src);     // Make a copy of source image to work with it
+
+    // Crop source image to desired source rectangle (if required)
+    if ((src.width != (int)srcRec.width) && (src.height != (int)srcRec.height)) ImageCrop(&srcCopy, srcRec);
+
+    // Scale source image in case destination rec size is different than source rec size
+    if (((int)dstRec.width != (int)srcRec.width) || ((int)dstRec.height != (int)srcRec.height))
+    {
+        ImageResize(&srcCopy, (int)dstRec.width, (int)dstRec.height);
+    }
+
+    // Check that dstRec is inside dst image
+    // Allow negative position within destination with cropping
+    if (dstRec.x < 0)
+    {
+        ImageCrop(&srcCopy, (Rectangle) { -dstRec.x, 0, dstRec.width + dstRec.x, dstRec.height });
+        dstRec.width = dstRec.width + dstRec.x;
+        dstRec.x = 0;
+    }
+
+    if ((dstRec.x + dstRec.width) > dst->width)
+    {
+        ImageCrop(&srcCopy, (Rectangle) { 0, 0, dst->width - dstRec.x, dstRec.height });
+        dstRec.width = dst->width - dstRec.x;
+    }
+
+    if (dstRec.y < 0)
+    {
+        ImageCrop(&srcCopy, (Rectangle) { 0, -dstRec.y, dstRec.width, dstRec.height + dstRec.y });
+        dstRec.height = dstRec.height + dstRec.y;
+        dstRec.y = 0;
+    }
+
+    if ((dstRec.y + dstRec.height) > dst->height)
+    {
+        ImageCrop(&srcCopy, (Rectangle) { 0, 0, dstRec.width, dst->height - dstRec.y });
+        dstRec.height = dst->height - dstRec.y;
+    }
+
+    // Get image data as Color pixels array to work with it
+    Color *dstPixels = GetImageData(*dst);
+    Color *srcPixels = GetImageData(srcCopy);
+
+    UnloadImage(srcCopy);       // Source copy not required any more
+
+    Vector4 fsrc, fdst, fout;   // Normalized pixel data (ready for operation)
+    Vector4 ftint = ColorNormalize(tint);   // Normalized color tint
+
+    // Blit pixels, copy source image into destination
+    // TODO: Maybe out-of-bounds blitting could be considered here instead of so much cropping
+    for (int j = (int)dstRec.y; j < (int)(dstRec.y + dstRec.height); j++)
+    {
+        for (int i = (int)dstRec.x; i < (int)(dstRec.x + dstRec.width); i++)
+        {
+            // Alpha blending (https://en.wikipedia.org/wiki/Alpha_compositing)
+
+            fdst = ColorNormalize(dstPixels[j*(int)dst->width + i]);
+            fsrc = ColorNormalize(srcPixels[(j - (int)dstRec.y)*(int)dstRec.width + (i - (int)dstRec.x)]);
+
+            // Apply color tint to source image
+            fsrc.x *= ftint.x; fsrc.y *= ftint.y; fsrc.z *= ftint.z; fsrc.w *= ftint.w;
+
+            fout.w = fsrc.w + fdst.w*(1.0f - fsrc.w);
+
+            if (fout.w <= 0.0f)
+            {
+                fout.x = 0.0f;
+                fout.y = 0.0f;
+                fout.z = 0.0f;
+            }
+            else
+            {
+                fout.x = (fsrc.x*fsrc.w + fdst.x*fdst.w*(1 - fsrc.w))/fout.w;
+                fout.y = (fsrc.y*fsrc.w + fdst.y*fdst.w*(1 - fsrc.w))/fout.w;
+                fout.z = (fsrc.z*fsrc.w + fdst.z*fdst.w*(1 - fsrc.w))/fout.w;
+            }
+
+            dstPixels[j*(int)dst->width + i] = (Color){ (unsigned char)(fout.x*255.0f),
+                                                        (unsigned char)(fout.y*255.0f),
+                                                        (unsigned char)(fout.z*255.0f),
+                                                        (unsigned char)(fout.w*255.0f) };
+
+            // TODO: Support other blending options
+        }
+    }
+
+    UnloadImage(*dst);
+
+    *dst = LoadImageEx(dstPixels, (int)dst->width, (int)dst->height);
+    ImageFormat(dst, dst->format);
+
+    RL_FREE(srcPixels);
+    RL_FREE(dstPixels);
+}
+
+// Draw text (default font) within an image (destination)
+void ImageDrawText(Image *dst, const char *text, int posX, int posY, int fontSize, Color color)
+{
+    Vector2 position = { (float)posX, (float)posY };
+
+    // NOTE: For default font, sapcing is set to desired font size / default font size (10)
+    ImageDrawTextEx(dst, GetFontDefault(), text, position, (float)fontSize, (float)fontSize/10, color);
+}
+
+// Draw text (custom sprite font) within an image (destination)
+void ImageDrawTextEx(Image *dst, Font font, const char *text, Vector2 position, float fontSize, float spacing, Color tint)
+{
+    Image imText = ImageTextEx(font, text, fontSize, spacing, tint);
+
+    Rectangle srcRec = { 0.0f, 0.0f, (float)imText.width, (float)imText.height };
+    Rectangle dstRec = { position.x, position.y, (float)imText.width, (float)imText.height };
+
+    ImageDraw(dst, imText, srcRec, dstRec, WHITE);
+
+    UnloadImage(imText);
+}
+#endif      // SUPPORT_IMAGE_DRAWING
+
+//------------------------------------------------------------------------------------
+// Texture loading functions
+//------------------------------------------------------------------------------------
+// Load texture from file into GPU memory (VRAM)
+Texture2D LoadTexture(const char *fileName)
+{
+    Texture2D texture = { 0 };
+
+    Image image = LoadImage(fileName);
+
+    if (image.data != NULL)
+    {
+        texture = LoadTextureFromImage(image);
+        UnloadImage(image);
+    }
+
+    return texture;
+}
+
+// Load a texture from image data
+// NOTE: image is not unloaded, it must be done manually
+Texture2D LoadTextureFromImage(Image image)
+{
+    Texture2D texture = { 0 };
+
+    if ((image.data != NULL) && (image.width != 0) && (image.height != 0))
+    {
+        texture.id = rlLoadTexture(image.data, image.width, image.height, image.format, image.mipmaps);
+    }
+    else TRACELOG(LOG_WARNING, "IMAGE: Data is not valid to load texture");
+
+    texture.width = image.width;
+    texture.height = image.height;
+    texture.mipmaps = image.mipmaps;
+    texture.format = image.format;
+
+    return texture;
+}
+
+// Load cubemap from image, multiple image cubemap layouts supported
+TextureCubemap LoadTextureCubemap(Image image, int layoutType)
+{
+    TextureCubemap cubemap = { 0 };
+
+    if (layoutType == CUBEMAP_AUTO_DETECT)      // Try to automatically guess layout type
+    {
+        // Check image width/height to determine the type of cubemap provided
+        if (image.width > image.height)
+        {
+            if ((image.width/6) == image.height) { layoutType = CUBEMAP_LINE_HORIZONTAL; cubemap.width = image.width/6; }
+            else if ((image.width/4) == (image.height/3)) { layoutType = CUBEMAP_CROSS_FOUR_BY_THREE; cubemap.width = image.width/4; }
+            else if (image.width >= (int)((float)image.height*1.85f)) { layoutType = CUBEMAP_PANORAMA; cubemap.width = image.width/4; }
+        }
+        else if (image.height > image.width)
+        {
+            if ((image.height/6) == image.width) { layoutType = CUBEMAP_LINE_VERTICAL; cubemap.width = image.height/6; }
+            else if ((image.width/3) == (image.height/4)) { layoutType = CUBEMAP_CROSS_THREE_BY_FOUR; cubemap.width = image.width/3; }
+        }
+
+        cubemap.height = cubemap.width;
+    }
+
+    if (layoutType != CUBEMAP_AUTO_DETECT)
+    {
+        int size = cubemap.width;
+
+        Image faces = { 0 };                // Vertical column image
+        Rectangle faceRecs[6] = { 0 };      // Face source rectangles
+        for (int i = 0; i < 6; i++) faceRecs[i] = (Rectangle){ 0, 0, (float)size, (float)size };
+
+        if (layoutType == CUBEMAP_LINE_VERTICAL)
+        {
+            faces = image;
+            for (int i = 0; i < 6; i++) faceRecs[i].y = (float)size*i;
+        }
+        else if (layoutType == CUBEMAP_PANORAMA)
+        {
+            // TODO: Convert panorama image to square faces...
+            // Ref: https://github.com/denivip/panorama/blob/master/panorama.cpp
+        }
+        else
+        {
+            if (layoutType == CUBEMAP_LINE_HORIZONTAL) for (int i = 0; i < 6; i++) faceRecs[i].x = (float)size*i;
+            else if (layoutType == CUBEMAP_CROSS_THREE_BY_FOUR)
+            {
+                faceRecs[0].x = (float)size; faceRecs[0].y = (float)size;
+                faceRecs[1].x = (float)size; faceRecs[1].y = (float)size*3;
+                faceRecs[2].x = (float)size; faceRecs[2].y = 0;
+                faceRecs[3].x = (float)size; faceRecs[3].y = (float)size*2;
+                faceRecs[4].x = 0; faceRecs[4].y = (float)size;
+                faceRecs[5].x = (float)size*2; faceRecs[5].y = (float)size;
+            }
+            else if (layoutType == CUBEMAP_CROSS_FOUR_BY_THREE)
+            {
+                faceRecs[0].x = (float)size*2; faceRecs[0].y = (float)size;
+                faceRecs[1].x = 0; faceRecs[1].y = (float)size;
+                faceRecs[2].x = (float)size; faceRecs[2].y = 0;
+                faceRecs[3].x = (float)size; faceRecs[3].y = (float)size*2;
+                faceRecs[4].x = (float)size; faceRecs[4].y = (float)size;
+                faceRecs[5].x = (float)size*3; faceRecs[5].y = (float)size;
+            }
+
+            // Convert image data to 6 faces in a vertical column, that's the optimum layout for loading
+            faces = GenImageColor(size, size*6, MAGENTA);
+            ImageFormat(&faces, image.format);
+
+            // TODO: Image formating does not work with compressed textures!
+        }
+
+        //for (int i = 0; i < 6; i++) ImageDraw(&faces, image, faceRecs[i], (Rectangle){ 0, (float)size*i, (float)size, (float)size }, WHITE);
+
+        cubemap.id = rlLoadTextureCubemap(faces.data, size, faces.format);
+        if (cubemap.id == 0) TRACELOG(LOG_WARNING, "IMAGE: Failed to load cubemap image");
+
+        UnloadImage(faces);
+    }
+    else TRACELOG(LOG_WARNING, "IMAGE: Failed to detect cubemap image layout");
+
+    return cubemap;
+}
+
+// Load texture for rendering (framebuffer)
+// NOTE: Render texture is loaded by default with RGBA color attachment and depth RenderBuffer
+RenderTexture2D LoadRenderTexture(int width, int height)
+{
+    RenderTexture2D target = rlLoadRenderTexture(width, height, UNCOMPRESSED_R8G8B8A8, 24, false);
+
+    return target;
+}
+
+// Unload texture from GPU memory (VRAM)
+void UnloadTexture(Texture2D texture)
+{
+    if (texture.id > 0)
+    {
+        rlDeleteTextures(texture.id);
+
+        TRACELOG(LOG_INFO, "TEXTURE: [ID %i] Unloaded texture data from VRAM (GPU)", texture.id);
+    }
+}
+
+// Unload render texture from GPU memory (VRAM)
+void UnloadRenderTexture(RenderTexture2D target)
+{
+    if (target.id > 0) rlDeleteRenderTextures(target);
+}
+
+// Update GPU texture with new data
+// NOTE: pixels data must match texture.format
+void UpdateTexture(Texture2D texture, const void *pixels)
+{
+    rlUpdateTexture(texture.id, texture.width, texture.height, texture.format, pixels);
+}
+
+// Get pixel data from GPU texture and return an Image
+// NOTE: Compressed texture formats not supported
+Image GetTextureData(Texture2D texture)
+{
+    Image image = { 0 };
+
+    if (texture.format < 8)
+    {
+        image.data = rlReadTexturePixels(texture);
+
+        if (image.data != NULL)
+        {
+            image.width = texture.width;
+            image.height = texture.height;
+            image.format = texture.format;
+            image.mipmaps = 1;
+
+#if defined(GRAPHICS_API_OPENGL_ES2)
+            // NOTE: Data retrieved on OpenGL ES 2.0 should be RGBA,
+            // coming from FBO color buffer attachment, but it seems
+            // original texture format is retrieved on RPI...
+            image.format = UNCOMPRESSED_R8G8B8A8;
+#endif
+            TRACELOG(LOG_INFO, "TEXTURE: [ID %i] Pixel data retrieved successfully", texture.id);
+        }
+        else TRACELOG(LOG_WARNING, "TEXTURE: [ID %i] Failed to retrieve pixel data", texture.id);
+    }
+    else TRACELOG(LOG_WARNING, "TEXTURE: [ID %i] Failed to retrieve compressed pixel data", texture.id);
 
     return image;
 }
-#endif      // SUPPORT_IMAGE_GENERATION
 
+// Get pixel data from GPU frontbuffer and return an Image (screenshot)
+Image GetScreenData(void)
+{
+    Image image = { 0 };
+
+    image.width = GetScreenWidth();
+    image.height = GetScreenHeight();
+    image.mipmaps = 1;
+    image.format = UNCOMPRESSED_R8G8B8A8;
+    image.data = rlReadScreenPixels(image.width, image.height);
+
+    return image;
+}
+
+//------------------------------------------------------------------------------------
+// Texture configuration functions
+//------------------------------------------------------------------------------------
 // Generate GPU mipmaps for a texture
 void GenTextureMipmaps(Texture2D *texture)
 {
@@ -2850,6 +2827,9 @@ void SetTextureWrap(Texture2D texture, int wrapMode)
     }
 }
 
+//------------------------------------------------------------------------------------
+// Texture drawing functions
+//------------------------------------------------------------------------------------
 // Draw a Texture2D
 void DrawTexture(Texture2D texture, int posX, int posY, Color tint)
 {
@@ -3138,6 +3118,44 @@ void DrawTextureNPatch(Texture2D texture, NPatchInfo nPatchInfo, Rectangle destR
 
         rlDisableTexture();
     }
+}
+
+// Get pixel data size in bytes (image or texture)
+// NOTE: Size depends on pixel format
+int GetPixelDataSize(int width, int height, int format)
+{
+    int dataSize = 0;       // Size in bytes
+    int bpp = 0;            // Bits per pixel
+
+    switch (format)
+    {
+        case UNCOMPRESSED_GRAYSCALE: bpp = 8; break;
+        case UNCOMPRESSED_GRAY_ALPHA:
+        case UNCOMPRESSED_R5G6B5:
+        case UNCOMPRESSED_R5G5B5A1:
+        case UNCOMPRESSED_R4G4B4A4: bpp = 16; break;
+        case UNCOMPRESSED_R8G8B8A8: bpp = 32; break;
+        case UNCOMPRESSED_R8G8B8: bpp = 24; break;
+        case UNCOMPRESSED_R32: bpp = 32; break;
+        case UNCOMPRESSED_R32G32B32: bpp = 32*3; break;
+        case UNCOMPRESSED_R32G32B32A32: bpp = 32*4; break;
+        case COMPRESSED_DXT1_RGB:
+        case COMPRESSED_DXT1_RGBA:
+        case COMPRESSED_ETC1_RGB:
+        case COMPRESSED_ETC2_RGB:
+        case COMPRESSED_PVRT_RGB:
+        case COMPRESSED_PVRT_RGBA: bpp = 4; break;
+        case COMPRESSED_DXT3_RGBA:
+        case COMPRESSED_DXT5_RGBA:
+        case COMPRESSED_ETC2_EAC_RGBA:
+        case COMPRESSED_ASTC_4x4_RGBA: bpp = 8; break;
+        case COMPRESSED_ASTC_8x8_RGBA: bpp = 2; break;
+        default: break;
+    }
+
+    dataSize = width*height*bpp/8;  // Total data size in bytes
+
+    return dataSize;
 }
 
 //----------------------------------------------------------------------------------

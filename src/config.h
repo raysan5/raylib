@@ -98,11 +98,14 @@
 
 // Support image export functionality (.png, .bmp, .tga, .jpg)
 #define SUPPORT_IMAGE_EXPORT        1
-// Support multiple image editing functions to scale, adjust colors, flip, draw on images, crop...
-// If not defined only three image editing functions supported: ImageFormat(), ImageAlphaMask(), ImageToPOT()
-#define SUPPORT_IMAGE_MANIPULATION  1
+
 // Support procedural image generation functionality (gradient, spot, perlin-noise, cellular)
 #define SUPPORT_IMAGE_GENERATION    1
+// Support multiple image editing functions to scale, adjust colors, flip, draw on images, crop...
+// If not defined only three image editing functions supported: ImageFormat(), ImageCrop(), ImageToPOT()
+#define SUPPORT_IMAGE_MANIPULATION  1
+// Support drawing on image (software rendering)
+#define SUPPORT_IMAGE_DRAWING       1
 
 //------------------------------------------------------------------------------------
 // Module: text - Configuration Flags

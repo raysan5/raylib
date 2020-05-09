@@ -1733,8 +1733,17 @@ static Font LoadBMFont(const char *fileName)
     if (imFont.format == UNCOMPRESSED_GRAYSCALE)
     {
         // Convert image to GRAYSCALE + ALPHA, using the mask as the alpha channel
-        ImageAlphaMask(&imFont, imFont);
-        for (int p = 0; p < (imFont.width*imFont.height*2); p += 2) ((unsigned char *)(imFont.data))[p] = 0xff;
+        Image imFontAlpha = ImageCopy(imFont);
+        ImageFormat(&imFontAlpha, UNCOMPRESSED_GRAY_ALPHA);
+        
+        for (int p = 0, i = 0; p < (imFont.width*imFont.height*2); p += 2, i++)
+        {
+            ((unsigned char *)(imFontAlpha.data))[p] = 0xff;
+            ((unsigned char *)(imFontAlpha.data))[p + 1] = ((unsigned char *)imFont.data)[i];
+        }
+        
+        UnloadImage(imFont);
+        imFont = imFontAlpha;
     }
 
     font.texture = LoadTextureFromImage(imFont);
