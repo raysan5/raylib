@@ -1957,9 +1957,9 @@ Color *GetImageData(Image image)
     return pixels;
 }
 
-// Extract color palette from image to maximum size
+// Get color palette from image to maximum size
 // NOTE: Memory allocated should be freed manually!
-Color *ImageExtractPalette(Image image, int maxPaletteSize, int *extractCount)
+Color *GetImagePalette(Image image, int maxPaletteSize, int *extractCount)
 {
     #define COLOR_EQUAL(col1, col2) ((col1.r == col2.r)&&(col1.g == col2.g)&&(col1.b == col2.b)&&(col1.a == col2.a))
 
