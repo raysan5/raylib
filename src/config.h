@@ -102,7 +102,7 @@
 // Support procedural image generation functionality (gradient, spot, perlin-noise, cellular)
 #define SUPPORT_IMAGE_GENERATION    1
 // Support multiple image editing functions to scale, adjust colors, flip, draw on images, crop...
-// If not defined only three image editing functions supported: ImageFormat(), ImageCrop(), ImageToPOT()
+// If not defined, still some functions are supported: ImageFormat(), ImageCrop(), ImageToPOT()
 #define SUPPORT_IMAGE_MANIPULATION  1
 // Support drawing on image (software rendering)
 #define SUPPORT_IMAGE_DRAWING       1
@@ -116,6 +116,10 @@
 // Selected desired font fileformats to be supported for loading
 #define SUPPORT_FILEFORMAT_FNT      1
 #define SUPPORT_FILEFORMAT_TTF      1
+
+// Support text management functions
+// If not defined, still some functions are supported: TextLength(), TextFormat()
+#define SUPPORT_TEXT_MANIPULATION   1
 
 //------------------------------------------------------------------------------------
 // Module: models - Configuration Flags

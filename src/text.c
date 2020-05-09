@@ -1093,40 +1093,6 @@ int GetGlyphIndex(Font font, int codepoint)
 //----------------------------------------------------------------------------------
 // Text strings management functions
 //----------------------------------------------------------------------------------
-
-// Copy one string to another, returns bytes copied
-int TextCopy(char *dst, const char *src)
-{
-    int bytes = 0;
-
-    if (dst != NULL)
-    {
-        while (*src != '\0')
-        {
-            *dst = *src;
-            dst++;
-            src++;
-
-            bytes++;
-        }
-
-        *dst = '\0';
-    }
-
-    return bytes;
-}
-
-// Check if two text string are equal
-// REQUIRES: strcmp()
-bool TextIsEqual(const char *text1, const char *text2)
-{
-    bool result = false;
-
-    if (strcmp(text1, text2) == 0) result = true;
-
-    return result;
-}
-
 // Get text length in bytes, check for \0 character
 unsigned int TextLength(const char *text)
 {
@@ -1164,6 +1130,40 @@ const char *TextFormat(const char *text, ...)
     if (index >= MAX_TEXTFORMAT_BUFFERS) index = 0;
 
     return currentBuffer;
+}
+
+#if defined(SUPPORT_TEXT_MANIPULATION)
+// Copy one string to another, returns bytes copied
+int TextCopy(char *dst, const char *src)
+{
+    int bytes = 0;
+
+    if (dst != NULL)
+    {
+        while (*src != '\0')
+        {
+            *dst = *src;
+            dst++;
+            src++;
+
+            bytes++;
+        }
+
+        *dst = '\0';
+    }
+
+    return bytes;
+}
+
+// Check if two text string are equal
+// REQUIRES: strcmp()
+bool TextIsEqual(const char *text1, const char *text2)
+{
+    bool result = false;
+
+    if (strcmp(text1, text2) == 0) result = true;
+
+    return result;
 }
 
 // Get a piece of a text string
@@ -1457,6 +1457,44 @@ char *TextToUtf8(int *codepoints, int length)
     return text;
 }
 
+// Encode codepoint into utf8 text (char array length returned as parameter)
+RLAPI const char *CodepointToUtf8(int codepoint, int *byteLength)
+{
+    static char utf8[6] = { 0 };
+    int length = 0;
+
+    if (codepoint <= 0x7f)
+    {
+        utf8[0] = (char)codepoint;
+        length = 1;
+    }
+    else if (codepoint <= 0x7ff)
+    {
+        utf8[0] = (char)(((codepoint >> 6) & 0x1f) | 0xc0);
+        utf8[1] = (char)((codepoint & 0x3f) | 0x80);
+        length = 2;
+    }
+    else if (codepoint <= 0xffff)
+    {
+        utf8[0] = (char)(((codepoint >> 12) & 0x0f) | 0xe0);
+        utf8[1] = (char)(((codepoint >>  6) & 0x3f) | 0x80);
+        utf8[2] = (char)((codepoint & 0x3f) | 0x80);
+        length = 3;
+    }
+    else if (codepoint <= 0x10ffff)
+    {
+        utf8[0] = (char)(((codepoint >> 18) & 0x07) | 0xf0);
+        utf8[1] = (char)(((codepoint >> 12) & 0x3f) | 0x80);
+        utf8[2] = (char)(((codepoint >>  6) & 0x3f) | 0x80);
+        utf8[3] = (char)((codepoint & 0x3f) | 0x80);
+        length = 4;
+    }
+
+    *byteLength = length;
+
+    return utf8;
+}
+
 // Get all codepoints in a string, codepoints count returned by parameters
 int *GetCodepoints(const char *text, int *count)
 {
@@ -1498,7 +1536,7 @@ int GetCodepointsCount(const char *text)
 
     return len;
 }
-
+#endif      // SUPPORT_TEXT_MANIPULATION
 
 // Returns next codepoint in a UTF8 encoded text, scanning until '\0' is found
 // When a invalid UTF8 byte is encountered we exit as soon as possible and a '?'(0x3f) codepoint is returned
@@ -1611,45 +1649,6 @@ int GetNextCodepoint(const char *text, int *bytesProcessed)
 
     return code;
 }
-
-// Encode codepoint into utf8 text (char array length returned as parameter)
-RLAPI const char *CodepointToUtf8(int codepoint, int *byteLength)
-{
-    static char utf8[6] = { 0 };
-    int length = 0;
-
-    if (codepoint <= 0x7f)
-    {
-        utf8[0] = (char)codepoint;
-        length = 1;
-    }
-    else if (codepoint <= 0x7ff)
-    {
-        utf8[0] = (char)(((codepoint >> 6) & 0x1f) | 0xc0);
-        utf8[1] = (char)((codepoint & 0x3f) | 0x80);
-        length = 2;
-    }
-    else if (codepoint <= 0xffff)
-    {
-        utf8[0] = (char)(((codepoint >> 12) & 0x0f) | 0xe0);
-        utf8[1] = (char)(((codepoint >>  6) & 0x3f) | 0x80);
-        utf8[2] = (char)((codepoint & 0x3f) | 0x80);
-        length = 3;
-    }
-    else if (codepoint <= 0x10ffff)
-    {
-        utf8[0] = (char)(((codepoint >> 18) & 0x07) | 0xf0);
-        utf8[1] = (char)(((codepoint >> 12) & 0x3f) | 0x80);
-        utf8[2] = (char)(((codepoint >>  6) & 0x3f) | 0x80);
-        utf8[3] = (char)((codepoint & 0x3f) | 0x80);
-        length = 4;
-    }
-
-    *byteLength = length;
-
-    return utf8;
-}
-//----------------------------------------------------------------------------------
 
 //----------------------------------------------------------------------------------
 // Module specific Functions Definition
