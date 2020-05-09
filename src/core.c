@@ -291,15 +291,9 @@
     #define MOUSE_SENSITIVITY         0.8f
 #endif
 
-#ifndef MAX_GAMEPADS
-    #define MAX_GAMEPADS                   4        // Max number of gamepads supported
-#endif
-#ifndef MAX_GAMEPAD_AXIS
-    #define MAX_GAMEPAD_AXIS               6        // Max number of axis supported (per gamepad)
-#endif
-#ifndef MAX_GAMEPAD_BUTTONS
-    #define MAX_GAMEPAD_BUTTONS           32        // Max bumber of buttons supported (per gamepad)
-#endif
+#define MAX_GAMEPADS              4         // Max number of gamepads supported
+#define MAX_GAMEPAD_AXIS          6         // Max number of axis supported (per gamepad)
+#define MAX_GAMEPAD_BUTTONS       32        // Max bumber of buttons supported (per gamepad)
 
 #define MAX_CHARS_QUEUE           16        // Max number of characters in the input queue
 
