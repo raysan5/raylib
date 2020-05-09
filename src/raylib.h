@@ -665,20 +665,17 @@ typedef enum {
 } GamepadButton;
 
 typedef enum {
-    // This is here just for error checking
-    GAMEPAD_AXIS_UNKNOWN = 0,
-
     // Left stick
-    GAMEPAD_AXIS_LEFT_X,
-    GAMEPAD_AXIS_LEFT_Y,
+    GAMEPAD_AXIS_LEFT_X = 0,
+    GAMEPAD_AXIS_LEFT_Y = 1,
 
     // Right stick
-    GAMEPAD_AXIS_RIGHT_X,
-    GAMEPAD_AXIS_RIGHT_Y,
+    GAMEPAD_AXIS_RIGHT_X = 2,
+    GAMEPAD_AXIS_RIGHT_Y = 3,
 
     // Pressure levels for the back triggers
-    GAMEPAD_AXIS_LEFT_TRIGGER,      // [1..-1] (pressure-level)
-    GAMEPAD_AXIS_RIGHT_TRIGGER      // [1..-1] (pressure-level)
+    GAMEPAD_AXIS_LEFT_TRIGGER = 4,      // [1..-1] (pressure-level)
+    GAMEPAD_AXIS_RIGHT_TRIGGER = 5      // [1..-1] (pressure-level)
 } GamepadAxis;
 
 // Shader location point type

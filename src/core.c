@@ -292,7 +292,7 @@
 #endif
 
 #define MAX_GAMEPADS              4         // Max number of gamepads supported
-#define MAX_GAMEPAD_AXIS          8         // Max number of axis supported (per gamepad)
+#define MAX_GAMEPAD_AXIS          6         // Max number of axis supported (per gamepad)
 #define MAX_GAMEPAD_BUTTONS       32        // Max bumber of buttons supported (per gamepad)
 
 #define MAX_CHARS_QUEUE           16        // Max number of characters in the input queue
@@ -486,7 +486,6 @@ static void InitTimer(void);                            // Initialize timer
 static void Wait(float ms);                             // Wait for some milliseconds (stop program execution)
 
 static int GetGamepadButton(int button);                // Get gamepad button generic to all platforms
-static int GetGamepadAxis(int axis);                    // Get gamepad axis generic to all platforms
 static void PollInputEvents(void);                      // Register user events
 
 #if defined(PLATFORM_DESKTOP) || defined(PLATFORM_WEB)
@@ -3547,40 +3546,6 @@ static int GetGamepadButton(int button)
     return btn;
 }
 
-// Get gamepad axis generic to all platforms
-static int GetGamepadAxis(int axis)
-{
-    int axs = GAMEPAD_AXIS_UNKNOWN;
-#if defined(PLATFORM_DESKTOP)
-    switch (axis)
-    {
-        case GLFW_GAMEPAD_AXIS_LEFT_X: axs = GAMEPAD_AXIS_LEFT_X; break;
-        case GLFW_GAMEPAD_AXIS_LEFT_Y: axs = GAMEPAD_AXIS_LEFT_Y; break;
-        case GLFW_GAMEPAD_AXIS_RIGHT_X: axs = GAMEPAD_AXIS_RIGHT_X; break;
-        case GLFW_GAMEPAD_AXIS_RIGHT_Y: axs = GAMEPAD_AXIS_RIGHT_Y; break;
-        case GLFW_GAMEPAD_AXIS_LEFT_TRIGGER: axs = GAMEPAD_AXIS_LEFT_TRIGGER; break;
-        case GLFW_GAMEPAD_AXIS_RIGHT_TRIGGER: axs = GAMEPAD_AXIS_RIGHT_TRIGGER; break;
-    }
-#endif
-
-#if defined(PLATFORM_UWP)
-    axs = axis;     // UWP will provide the correct axis
-#endif
-
-#if defined(PLATFORM_WEB)
-    // Gamepad axis reference:https://www.w3.org/TR/gamepad/#gamepad-interface
-    switch (axis)
-    {
-        case 0: axs = GAMEPAD_AXIS_LEFT_X;
-        case 1: axs = GAMEPAD_AXIS_LEFT_Y;
-        case 2: axs = GAMEPAD_AXIS_RIGHT_X;
-        case 3: axs = GAMEPAD_AXIS_RIGHT_X;
-    }
-#endif
-
-    return axs;
-}
-
 // Poll (store) all input events
 static void PollInputEvents(void)
 {
@@ -3835,15 +3800,14 @@ static void PollInputEvents(void)
 
             for (int k = 0; (axes != NULL) && (k < GLFW_GAMEPAD_AXIS_LAST + 1) && (k < MAX_GAMEPAD_AXIS); k++)
             {
-                const int axis = GetGamepadAxis(k);
-                CORE.Input.Gamepad.axisState[i][axis] = axes[k];
+                CORE.Input.Gamepad.axisState[i][k] = axes[k];
             }
 
             // Register buttons for 2nd triggers (because GLFW doesn't count these as buttons but rather axis)
             CORE.Input.Gamepad.currentState[i][GAMEPAD_BUTTON_LEFT_TRIGGER_2] = (char)(CORE.Input.Gamepad.axisState[i][GAMEPAD_AXIS_LEFT_TRIGGER] > 0.1);
             CORE.Input.Gamepad.currentState[i][GAMEPAD_BUTTON_RIGHT_TRIGGER_2] = (char)(CORE.Input.Gamepad.axisState[i][GAMEPAD_AXIS_RIGHT_TRIGGER] > 0.1);
 
-            CORE.Input.Gamepad.axisCount = GLFW_GAMEPAD_AXIS_LAST;
+            CORE.Input.Gamepad.axisCount = GLFW_GAMEPAD_AXIS_LAST + 1;
         }
     }
 
@@ -3891,8 +3855,7 @@ static void PollInputEvents(void)
             // Register axis data for every connected gamepad
             for (int j = 0; (j < gamepadState.numAxes) && (j < MAX_GAMEPAD_AXIS); j++)
             {
-                const int axis = GetGamepadAxis(j);
-                CORE.Input.Gamepad.axisState[i][axis] = gamepadState.axis[j];
+                CORE.Input.Gamepad.axisState[i][j] = gamepadState.axis[j];
             }
 
             CORE.Input.Gamepad.axisCount = gamepadState.numAxes;
