@@ -292,7 +292,7 @@
 #endif
 
 #define MAX_GAMEPADS              4         // Max number of gamepads supported
-#define MAX_GAMEPAD_AXIS          6         // Max number of axis supported (per gamepad)
+#define MAX_GAMEPAD_AXIS          8         // Max number of axis supported (per gamepad)
 #define MAX_GAMEPAD_BUTTONS       32        // Max bumber of buttons supported (per gamepad)
 
 #define MAX_CHARS_QUEUE           16        // Max number of characters in the input queue
