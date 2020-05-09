@@ -2162,7 +2162,6 @@ Rectangle GetImageAlphaBorder(Image image, float threshold)
 //------------------------------------------------------------------------------------
 // Image drawing functions
 //------------------------------------------------------------------------------------
-#if defined(SUPPORT_IMAGE_DRAWING)
 // Clear image background with given color
 void ImageClearBackground(Image *dst, Color color)
 {
@@ -2519,7 +2518,6 @@ void ImageDrawTextEx(Image *dst, Font font, const char *text, Vector2 position, 
 
     UnloadImage(imText);
 }
-#endif      // SUPPORT_IMAGE_DRAWING
 
 //------------------------------------------------------------------------------------
 // Texture loading functions
@@ -2630,7 +2628,7 @@ TextureCubemap LoadTextureCubemap(Image image, int layoutType)
             // TODO: Image formating does not work with compressed textures!
         }
 
-        //for (int i = 0; i < 6; i++) ImageDraw(&faces, image, faceRecs[i], (Rectangle){ 0, (float)size*i, (float)size, (float)size }, WHITE);
+        for (int i = 0; i < 6; i++) ImageDraw(&faces, image, faceRecs[i], (Rectangle){ 0, (float)size*i, (float)size, (float)size }, WHITE);
 
         cubemap.id = rlLoadTextureCubemap(faces.data, size, faces.format);
         if (cubemap.id == 0) TRACELOG(LOG_WARNING, "IMAGE: Failed to load cubemap image");
@@ -3779,7 +3777,7 @@ static Image LoadPVR(const char *fileName)
 
                 // Skip meta data header
                 unsigned char unused = 0;
-                for (int i = 0; i < pvrHeader.metaDataSize; i++) fread(&unused, sizeof(unsigned char), 1, pvrFile);
+                for (unsigned int i = 0; i < pvrHeader.metaDataSize; i++) fread(&unused, sizeof(unsigned char), 1, pvrFile);
 
                 // Calculate data size (depends on format)
                 int bpp = 0;

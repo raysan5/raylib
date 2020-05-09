@@ -104,8 +104,6 @@
 // Support multiple image editing functions to scale, adjust colors, flip, draw on images, crop...
 // If not defined, still some functions are supported: ImageFormat(), ImageCrop(), ImageToPOT()
 #define SUPPORT_IMAGE_MANIPULATION  1
-// Support drawing on image (software rendering)
-#define SUPPORT_IMAGE_DRAWING       1
 
 //------------------------------------------------------------------------------------
 // Module: text - Configuration Flags
