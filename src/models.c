@@ -1990,6 +1990,8 @@ Mesh GenMeshHeightmap(Image heightmap, Vector3 size)
 // NOTE: Vertex data is uploaded to GPU
 Mesh GenMeshCubicmap(Image cubicmap, Vector3 cubeSize)
 {
+    #define COLOR_EQUAL(col1, col2) ((col1.r == col2.r)&&(col1.g == col2.g)&&(col1.b == col2.b)&&(col1.a == col2.a))
+
     Mesh mesh = { 0 };
     mesh.vboId = (unsigned int *)RL_CALLOC(DEFAULT_MESH_VERTEX_BUFFERS, sizeof(unsigned int));
 
@@ -2050,15 +2052,14 @@ Mesh GenMeshCubicmap(Image cubicmap, Vector3 cubeSize)
             Vector3 v7 = { w*(x - 0.5f), 0, h*(z + 0.5f) };
             Vector3 v8 = { w*(x + 0.5f), 0, h*(z + 0.5f) };
 
-            // We check pixel color to be WHITE, we will full cubes
-            if ((cubicmapPixels[z*cubicmap.width + x].r == 255) &&
-                (cubicmapPixels[z*cubicmap.width + x].g == 255) &&
-                (cubicmapPixels[z*cubicmap.width + x].b == 255))
+            // We check pixel color to be WHITE -> draw full cube
+            if (COLOR_EQUAL(cubicmapPixels[z*cubicmap.width + x], WHITE))
             {
-                // Define triangles (Checking Collateral Cubes!)
-                //----------------------------------------------
+                // Define triangles and checking collateral cubes
+                //------------------------------------------------
 
                 // Define top triangles (2 tris, 6 vertex --> v1-v2-v3, v1-v3-v4)
+                // WARNING: Not required for a WHITE cubes, created to allow seeing the map from outside
                 mapVertices[vCounter] = v1;
                 mapVertices[vCounter + 1] = v2;
                 mapVertices[vCounter + 2] = v3;
@@ -2108,10 +2109,8 @@ Mesh GenMeshCubicmap(Image cubicmap, Vector3 cubeSize)
                 mapTexcoords[tcCounter + 5] = (Vector2){ bottomTexUV.x, bottomTexUV.y + bottomTexUV.height };
                 tcCounter += 6;
 
-                if (((z < cubicmap.height - 1) &&
-                (cubicmapPixels[(z + 1)*cubicmap.width + x].r == 0) &&
-                (cubicmapPixels[(z + 1)*cubicmap.width + x].g == 0) &&
-                (cubicmapPixels[(z + 1)*cubicmap.width + x].b == 0)) || (z == cubicmap.height - 1))
+                // Checking cube on bottom of current cube
+                if (((z < cubicmap.height - 1) && COLOR_EQUAL(cubicmapPixels[(z + 1)*cubicmap.width + x], BLACK)) || (z == cubicmap.height - 1))
                 {
                     // Define front triangles (2 tris, 6 vertex) --> v2 v7 v3, v3 v7 v8
                     // NOTE: Collateral occluded faces are not generated
@@ -2140,10 +2139,8 @@ Mesh GenMeshCubicmap(Image cubicmap, Vector3 cubeSize)
                     tcCounter += 6;
                 }
 
-                if (((z > 0) &&
-                (cubicmapPixels[(z - 1)*cubicmap.width + x].r == 0) &&
-                (cubicmapPixels[(z - 1)*cubicmap.width + x].g == 0) &&
-                (cubicmapPixels[(z - 1)*cubicmap.width + x].b == 0)) || (z == 0))
+                // Checking cube on top of current cube
+                if (((z > 0) && COLOR_EQUAL(cubicmapPixels[(z - 1)*cubicmap.width + x], BLACK)) || (z == 0))
                 {
                     // Define back triangles (2 tris, 6 vertex) --> v1 v5 v6, v1 v4 v5
                     // NOTE: Collateral occluded faces are not generated
@@ -2172,10 +2169,8 @@ Mesh GenMeshCubicmap(Image cubicmap, Vector3 cubeSize)
                     tcCounter += 6;
                 }
 
-                if (((x < cubicmap.width - 1) &&
-                (cubicmapPixels[z*cubicmap.width + (x + 1)].r == 0) &&
-                (cubicmapPixels[z*cubicmap.width + (x + 1)].g == 0) &&
-                (cubicmapPixels[z*cubicmap.width + (x + 1)].b == 0)) || (x == cubicmap.width - 1))
+                // Checking cube on right of current cube
+                if (((x < cubicmap.width - 1) && COLOR_EQUAL(cubicmapPixels[z*cubicmap.width + (x + 1)], BLACK)) || (x == cubicmap.width - 1))
                 {
                     // Define right triangles (2 tris, 6 vertex) --> v3 v8 v4, v4 v8 v5
                     // NOTE: Collateral occluded faces are not generated
@@ -2204,10 +2199,8 @@ Mesh GenMeshCubicmap(Image cubicmap, Vector3 cubeSize)
                     tcCounter += 6;
                 }
 
-                if (((x > 0) &&
-                (cubicmapPixels[z*cubicmap.width + (x - 1)].r == 0) &&
-                (cubicmapPixels[z*cubicmap.width + (x - 1)].g == 0) &&
-                (cubicmapPixels[z*cubicmap.width + (x - 1)].b == 0)) || (x == 0))
+                // Checking cube on left of current cube
+                if (((x > 0) && COLOR_EQUAL(cubicmapPixels[z*cubicmap.width + (x - 1)], BLACK)) || (x == 0))
                 {
                     // Define left triangles (2 tris, 6 vertex) --> v1 v7 v2, v1 v6 v7
                     // NOTE: Collateral occluded faces are not generated
@@ -2237,9 +2230,7 @@ Mesh GenMeshCubicmap(Image cubicmap, Vector3 cubeSize)
                 }
             }
             // We check pixel color to be BLACK, we will only draw floor and roof
-            else if  ((cubicmapPixels[z*cubicmap.width + x].r == 0) &&
-                      (cubicmapPixels[z*cubicmap.width + x].g == 0) &&
-                      (cubicmapPixels[z*cubicmap.width + x].b == 0))
+            else if (COLOR_EQUAL(cubicmapPixels[z*cubicmap.width + x], BLACK))
             {
                 // Define top triangles (2 tris, 6 vertex --> v1-v2-v3, v1-v3-v4)
                 mapVertices[vCounter] = v1;
