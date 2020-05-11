@@ -2018,8 +2018,8 @@ Mesh GenMeshCubicmap(Image cubicmap, Vector3 cubeSize)
     Vector3 n2 = { -1.0f, 0.0f, 0.0f };
     Vector3 n3 = { 0.0f, 1.0f, 0.0f };
     Vector3 n4 = { 0.0f, -1.0f, 0.0f };
-    Vector3 n5 = { 0.0f, 0.0f, 1.0f };
-    Vector3 n6 = { 0.0f, 0.0f, -1.0f };
+    Vector3 n5 = { 0.0f, 0.0f, -1.0f };
+    Vector3 n6 = { 0.0f, 0.0f, 1.0f };
 
     // NOTE: We use texture rectangles to define different textures for top-bottom-front-back-right-left (6)
     typedef struct RectangleF {
