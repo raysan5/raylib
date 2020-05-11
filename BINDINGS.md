@@ -28,7 +28,6 @@ Here it is a list with the ones I'm aware of:
 | raylib-haskell     | [Haskell](https://www.haskell.org/)        | https://github.com/DevJac/raylib-haskell |
 | raylib-cr          | Crystal        | https://github.com/AregevDev/raylib-cr                               |
 | cray               | Crystal        | https://gitlab.com/Zatherz/cray                                      |
-| cray               | Crystal        | https://github.com/tapgg/cray                                        |
 | raylib.cr          | Crystal        | https://github.com/sam0x17/raylib.cr                     |
 | raylib-pascal      | Pascal         | https://github.com/drezgames/raylib-pascal                           |
 | raylib-pas         | Pascal         | https://github.com/tazdij/raylib-pas                                 |
