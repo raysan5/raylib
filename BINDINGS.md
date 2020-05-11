@@ -58,7 +58,7 @@ Here it is a list with the ones I'm aware of:
 | Euraylib           | [Euphoria](https://openeuphoria.org/)  | https://github.com/gAndy50/Euraylib          |
 | raylib-wren        | [Wren](http://wren.io/)           | https://github.com/TSnake41/raylib-wren           |
 | raylib-odin        | [Odin](https://odin-lang.org/)            | https://github.com/kevinw/raylib-odin     |
-| raylib-zig         | [Zig](https://ziglang.org/)               | https://github.com/G3bE/raylib-zig        |
+| raylib-zig         | [Zig](https://ziglang.org/)               | https://github.com/Not-Nik/raylib-zig     |
 | ray.zig            | [Zig](https://ziglang.org/)               | https://github.com/BitPuffin/zig-raylib-experiments |
 | raylib-Ada         | [Ada](https://www.adacore.com/about-ada)  | https://github.com/mimo/raylib-Ada        |
 | jaylib             | [Janet](https://janet-lang.org/)          | https://github.com/janet-lang/jaylib      |
