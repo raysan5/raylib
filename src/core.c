@@ -2087,11 +2087,12 @@ const char *GetPrevDirectoryPath(const char *dirPath)
 
     if (pathLen <= 3) strcpy(prevDirPath, dirPath);
 
-    for (int i = (pathLen - 1); (i > 0) && (pathLen > 3); i--)
+    for (int i = (pathLen - 1); (i >= 0) && (pathLen > 3); i--)
     {
         if ((dirPath[i] == '\\') || (dirPath[i] == '/'))
         {
-            if (i == 2) i++;    // Check for root: "C:\"
+            if ((i == 2) && (dirPath[1] ==':') // Check for root: "C:\"
+                || i == 0) i++;                // Check for root: "/"
             strncpy(prevDirPath, dirPath, i);
             break;
         }
