@@ -519,6 +519,7 @@ static int32_t AndroidInputCallback(struct android_app *app, AInputEvent *event)
 
 #if defined(PLATFORM_WEB)
 static EM_BOOL EmscriptenFullscreenChangeCallback(int eventType, const EmscriptenFullscreenChangeEvent *event, void *userData);
+static EM_BOOL EmscriptenWindowResizedCallback(int eventType, const void *reserved, void *userData);
 static EM_BOOL EmscriptenKeyboardCallback(int eventType, const EmscriptenKeyboardEvent *keyEvent, void *userData);
 static EM_BOOL EmscriptenMouseCallback(int eventType, const EmscriptenMouseEvent *mouseEvent, void *userData);
 static EM_BOOL EmscriptenTouchCallback(int eventType, const EmscriptenTouchEvent *touchEvent, void *userData);
@@ -739,7 +740,8 @@ void InitWindow(int width, int height, const char *title)
     emscripten_set_fullscreenchange_callback("#canvas", NULL, 1, EmscriptenFullscreenChangeCallback);
 
     // Support keyboard events
-    emscripten_set_keypress_callback("#canvas", NULL, 1, EmscriptenKeyboardCallback);
+    //emscripten_set_keypress_callback("#canvas", NULL, 1, EmscriptenKeyboardCallback);
+    emscripten_set_keydown_callback("#canvas", NULL, 1, EmscriptenKeyboardCallback);
 
     // Support mouse events
     emscripten_set_click_callback("#canvas", NULL, 1, EmscriptenMouseCallback);
@@ -916,11 +918,9 @@ bool IsWindowFullscreen(void)
 // Toggle fullscreen mode (only PLATFORM_DESKTOP)
 void ToggleFullscreen(void)
 {
-    CORE.Window.fullscreen = !CORE.Window.fullscreen;          // Toggle fullscreen flag
-
 #if defined(PLATFORM_DESKTOP)
     // NOTE: glfwSetWindowMonitor() doesn't work properly (bugs)
-    if (CORE.Window.fullscreen)
+    if (!CORE.Window.fullscreen)
     {
         // Store previous window position (in case we exit fullscreen)
         glfwGetWindowPos(CORE.Window.handle, &CORE.Window.position.x, &CORE.Window.position.y);
@@ -941,14 +941,48 @@ void ToggleFullscreen(void)
         if (CORE.Window.flags & FLAG_VSYNC_HINT) glfwSwapInterval(1);
     }
     else glfwSetWindowMonitor(CORE.Window.handle, NULL, CORE.Window.position.x, CORE.Window.position.y, CORE.Window.screen.width, CORE.Window.screen.height, GLFW_DONT_CARE);
+    
+    CORE.Window.fullscreen = !CORE.Window.fullscreen;          // Toggle fullscreen flag
 #endif
 #if defined(PLATFORM_WEB)
-    if (CORE.Window.fullscreen) EM_ASM(Module.requestFullscreen(false, false););
-    else EM_ASM(document.exitFullscreen(););
+    /*
+    EM_ASM(
+        if (document.fullscreenElement) document.exitFullscreen();
+        else Module.requestFullscreen(true, true);
+    );
+    */
+    
+    //EM_ASM(Module.requestFullscreen(false, false););
+
+    /*
+    if (!CORE.Window.fullscreen)
+    {
+        //https://github.com/emscripten-core/emscripten/issues/5124
+        EmscriptenFullscreenStrategy strategy = {
+            .scaleMode = EMSCRIPTEN_FULLSCREEN_SCALE_STRETCH, //EMSCRIPTEN_FULLSCREEN_SCALE_ASPECT,
+            .canvasResolutionScaleMode = EMSCRIPTEN_FULLSCREEN_CANVAS_SCALE_STDDEF,
+            .filteringMode = EMSCRIPTEN_FULLSCREEN_FILTERING_DEFAULT,
+            .canvasResizedCallback = EmscriptenWindowResizedCallback, //on_canvassize_changed,
+            .canvasResizedCallbackUserData = NULL
+        };
+        
+        emscripten_request_fullscreen("#canvas", false);
+        //emscripten_request_fullscreen_strategy("#canvas", EM_FALSE, &strategy);
+        //emscripten_enter_soft_fullscreen("canvas", &strategy);
+        TraceLog(LOG_INFO, "emscripten_request_fullscreen_strategy");
+    }
+    else 
+    {
+        TraceLog(LOG_INFO, "emscripten_exit_fullscreen");
+        emscripten_exit_fullscreen();
+    }
+    */
 #endif
 #if defined(PLATFORM_ANDROID) || defined(PLATFORM_RPI)
     TRACELOG(LOG_WARNING, "SYSTEM: Failed to toggle to windowed mode");
 #endif
+
+    CORE.Window.fullscreen = !CORE.Window.fullscreen;          // Toggle fullscreen flag
 }
 
 // Set icon for window (only PLATFORM_DESKTOP)
@@ -4283,7 +4317,7 @@ static EM_BOOL EmscriptenFullscreenChangeCallback(int eventType, const Emscripte
     //fs element id: (char *) event->id
     //Current element size: (int) event->elementWidth, (int) event->elementHeight
     //Screen size:(int) event->screenWidth, (int) event->screenHeight
-
+/*
     if (event->isFullscreen)
     {
         CORE.Window.fullscreen = true;
@@ -4296,16 +4330,20 @@ static EM_BOOL EmscriptenFullscreenChangeCallback(int eventType, const Emscripte
     }
 
     // TODO: Depending on scaling factor (screen vs element), calculate factor to scale mouse/touch input
-
+*/
     return 0;
 }
 
 // Register keyboard input events
 static EM_BOOL EmscriptenKeyboardCallback(int eventType, const EmscriptenKeyboardEvent *keyEvent, void *userData)
 {
-    if ((eventType == EMSCRIPTEN_EVENT_KEYPRESS) && (keyEvent->keyCode == 27))  // ESCAPE key
+    if ((eventType == EMSCRIPTEN_EVENT_KEYDOWN) && (keyEvent->keyCode == 27))  // ESCAPE key (strcmp(keyEvent->code, "Escape") == 0)
     {
+        // WARNING: Not executed when pressing Esc to exit fullscreen, it seems document has priority over #canvas
+        
         emscripten_exit_pointerlock();
+        CORE.Window.fullscreen = false;
+        TraceLog(LOG_INFO, "CORE.Window.fullscreen = %s", CORE.Window.fullscreen? "true" : "false");
     }
 
     return 0;
@@ -4418,6 +4456,16 @@ static EM_BOOL EmscriptenGamepadCallback(int eventType, const EmscriptenGamepadE
     // TODO: Test gamepadEvent->index
 
     return 0;
+}
+
+static EM_BOOL EmscriptenWindowResizedCallback(int eventType, const void *reserved, void *userData)
+{
+    double width, height;
+    emscripten_get_element_css_size("canvas", &width, &height);
+
+    // TODO.
+
+    return true;
 }
 #endif
 
