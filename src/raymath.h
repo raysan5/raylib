@@ -207,6 +207,13 @@ RMDEF float Vector2Length(Vector2 v)
     return result;
 }
 
+// Calculate vector square length
+RMDEF float Vector2LengthSqr(Vector2 v)
+{
+    float result = (v.x*v.x) + (v.y*v.y);
+    return result;
+}
+
 // Calculate two vectors dot product
 RMDEF float Vector2DotProduct(Vector2 v1, Vector2 v2)
 {
@@ -398,6 +405,13 @@ RMDEF Vector3 Vector3Perpendicular(Vector3 v)
 RMDEF float Vector3Length(const Vector3 v)
 {
     float result = sqrtf(v.x*v.x + v.y*v.y + v.z*v.z);
+    return result;
+}
+
+// Calculate vector square length
+RMDEF float Vector3LengthSqr(const Vector3 v)
+{
+    float result = v.x*v.x + v.y*v.y + v.z*v.z;
     return result;
 }
 
