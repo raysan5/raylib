@@ -191,32 +191,30 @@ extern void LoadFontDefault(void)
 
     // Re-construct image from defaultFontData and generate OpenGL texture
     //----------------------------------------------------------------------
-    int imWidth = 128;
-    int imHeight = 128;
+    Image imFont = {
+        .data = calloc(128*128, 2),  // 2 bytes per pixel (gray + alpha)
+        .width = 128, 
+        .height = 128,
+        .format = UNCOMPRESSED_GRAY_ALPHA,
+        .mipmaps = 1
+    };
 
-    Color *imagePixels = (Color *)RL_MALLOC(imWidth*imHeight*sizeof(Color));
-
-    for (int i = 0; i < imWidth*imHeight; i++) imagePixels[i] = BLANK;        // Initialize array
-
-    int counter = 0;        // Font data elements counter
-
-    // Fill imgData with defaultFontData (convert from bit to pixel!)
-    for (int i = 0; i < imWidth*imHeight; i += 32)
+    // Fill image.data with defaultFontData (convert from bit to pixel!)
+    for (int i = 0, counter = 0; i < imFont.width*imFont.height; i += 32)
     {
         for (int j = 31; j >= 0; j--)
         {
-            if (BIT_CHECK(defaultFontData[counter], j)) imagePixels[i+j] = WHITE;
+            if (BIT_CHECK(defaultFontData[counter], j))
+            {
+                // NOTE: We are unreferencing data as short, so,
+                // we must consider data as little-endian order (alpha + gray)
+                ((unsigned short *)imFont.data)[i + j] = 0xffff;
+            }
+            else ((unsigned short *)imFont.data)[i + j] = 0x00ff;
         }
 
         counter++;
-
-        if (counter > 512) counter = 0;         // Security check...
     }
-
-    Image imFont = LoadImageEx(imagePixels, imWidth, imHeight);
-    ImageFormat(&imFont, UNCOMPRESSED_GRAY_ALPHA);
-
-    RL_FREE(imagePixels);
 
     defaultFont.texture = LoadTextureFromImage(imFont);
 
@@ -445,9 +443,13 @@ Font LoadFontFromImage(Image image, Color key, int firstChar)
     for (int i = 0; i < image.height*image.width; i++) if (COLOR_EQUAL(pixels[i], key)) pixels[i] = BLANK;
 
     // Create a new image with the processed color data (key color replaced by BLANK)
-    Image fontClear = LoadImageEx(pixels, image.width, image.height);
-
-    RL_FREE(pixels);    // Free pixels array memory
+    Image fontClear = {
+        .data = pixels,
+        .width = image.width,
+        .height = image.height,
+        .format = UNCOMPRESSED_R8G8B8A8,
+        .mipmaps = 1
+    };
 
     // Create spritefont with all data parsed from image
     Font font = { 0 };
@@ -571,8 +573,15 @@ CharInfo *LoadFontData(const char *fileName, int fontSize, int *fontChars, int c
                 // NOTE: We create an empty image for space character, it could be further required for atlas packing
                 if (ch == 32)
                 {
-                    chars[i].image = GenImageColor(chars[i].advanceX, fontSize, BLANK);
-                    ImageFormat(&chars[i].image, UNCOMPRESSED_GRAYSCALE);
+                    Image imSpace = {
+                        .data = calloc(chars[i].advanceX*fontSize, 2),
+                        .width = chars[i].advanceX,
+                        .height = fontSize,
+                        .format = UNCOMPRESSED_GRAYSCALE,
+                        .mipmaps = 1
+                    };
+                    
+                    chars[i].image = imSpace;
                 }
 
                 if (type == FONT_BITMAP)
@@ -727,7 +736,6 @@ Image GenImageFontAtlas(const CharInfo *chars, Rectangle **charRecs, int charsCo
     // TODO: Crop image if required for smaller size
 
     // Convert image data from GRAYSCALE to GRAY_ALPHA
-    // WARNING: ImageAlphaMask(&atlas, atlas) does not work in this case, requires manual operation
     unsigned char *dataGrayAlpha = (unsigned char *)RL_MALLOC(atlas.width*atlas.height*sizeof(unsigned char)*2); // Two channels
 
     for (int i = 0, k = 0; i < atlas.width*atlas.height; i++, k += 2)
@@ -1732,9 +1740,14 @@ static Font LoadBMFont(const char *fileName)
     if (imFont.format == UNCOMPRESSED_GRAYSCALE)
     {
         // Convert image to GRAYSCALE + ALPHA, using the mask as the alpha channel
-        Image imFontAlpha = ImageCopy(imFont);
-        ImageFormat(&imFontAlpha, UNCOMPRESSED_GRAY_ALPHA);
-        
+        Image imFontAlpha = {
+            .data = calloc(imFont.width*imFont.height, 2),
+            .width = imFont.width,
+            .height = imFont.height,
+            .format = UNCOMPRESSED_GRAY_ALPHA,
+            .mipmaps = 1
+        };
+
         for (int p = 0, i = 0; p < (imFont.width*imFont.height*2); p += 2, i++)
         {
             ((unsigned char *)(imFontAlpha.data))[p] = 0xff;
