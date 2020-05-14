@@ -2125,8 +2125,9 @@ const char *GetPrevDirectoryPath(const char *dirPath)
     {
         if ((dirPath[i] == '\\') || (dirPath[i] == '/'))
         {
-            if ((i == 2) && (dirPath[1] ==':') // Check for root: "C:\"
-                || i == 0) i++;                // Check for root: "/"
+            // Check for root: "C:\" or "/"
+            if (((i == 2) && (dirPath[1] ==':')) || (i == 0)) i++;
+            
             strncpy(prevDirPath, dirPath, i);
             break;
         }
