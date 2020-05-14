@@ -1132,6 +1132,24 @@ const char *TextFormat(const char *text, ...)
     return currentBuffer;
 }
 
+// Get integer value from text
+// NOTE: This function replaces atoi() [stdlib.h]
+int TextToInteger(const char *text)
+{
+    int value = 0;
+    int sign = 1;
+
+    if ((text[0] == '+') || (text[0] == '-'))
+    {
+        if (text[0] == '-') sign = -1;
+        text++;
+    }
+
+    for (int i = 0; ((text[i] >= '0') && (text[i] <= '9')); ++i) value = value*10 + (int)(text[i] - '0');
+
+    return value*sign;
+}
+
 #if defined(SUPPORT_TEXT_MANIPULATION)
 // Copy one string to another, returns bytes copied
 int TextCopy(char *dst, const char *src)
@@ -1413,24 +1431,6 @@ const char *TextToPascal(const char *text)
     }
 
     return buffer;
-}
-
-// Get integer value from text
-// NOTE: This function replaces atoi() [stdlib.h]
-int TextToInteger(const char *text)
-{
-    int value = 0;
-    int sign = 1;
-
-    if ((text[0] == '+') || (text[0] == '-'))
-    {
-        if (text[0] == '-') sign = -1;
-        text++;
-    }
-
-    for (int i = 0; ((text[i] >= '0') && (text[i] <= '9')); ++i) value = value*10 + (int)(text[i] - '0');
-
-    return value*sign;
 }
 
 // Encode text codepoint into utf8 text (memory must be freed!)
