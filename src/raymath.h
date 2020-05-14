@@ -208,7 +208,7 @@ RMDEF float Vector2Length(Vector2 v)
 }
 
 // Calculate vector square length
-RMDEF float Vector2SqrLength(Vector2 v)
+RMDEF float Vector2LengthSqr(Vector2 v)
 {
     float result = (v.x*v.x) + (v.y*v.y);
     return result;
@@ -409,7 +409,7 @@ RMDEF float Vector3Length(const Vector3 v)
 }
 
 // Calculate vector square length
-RMDEF float Vector3SqrLength(const Vector3 v)
+RMDEF float Vector3LengthSqr(const Vector3 v)
 {
     float result = v.x*v.x + v.y*v.y + v.z*v.z;
     return result;
