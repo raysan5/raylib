@@ -440,8 +440,8 @@ typedef struct Music {
     int ctxType;                    // Type of music context (audio filetype)
     void *ctxData;                  // Audio context data, depends on type
 
+    bool looping;                   // Music looping enable
     unsigned int sampleCount;       // Total number of samples
-    unsigned int loopCount;         // Loops count (times music will play), 0 means infinite loop
 
     AudioStream stream;             // Audio stream
 } Music;
@@ -1435,7 +1435,6 @@ RLAPI void ResumeMusicStream(Music music);                            // Resume 
 RLAPI bool IsMusicPlaying(Music music);                               // Check if music is playing
 RLAPI void SetMusicVolume(Music music, float volume);                 // Set volume for music (1.0 is max level)
 RLAPI void SetMusicPitch(Music music, float pitch);                   // Set pitch for a music (1.0 is base level)
-RLAPI void SetMusicLoopCount(Music music, int count);                 // Set music loop count (loop repeats)
 RLAPI float GetMusicTimeLength(Music music);                          // Get music time length (in seconds)
 RLAPI float GetMusicTimePlayed(Music music);                          // Get current music time played (in seconds)
 

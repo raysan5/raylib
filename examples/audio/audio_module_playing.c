@@ -51,6 +51,7 @@ int main(void)
     }
 
     Music music = LoadMusicStream("resources/mini1111.xm");
+    music.looping = false;
 
     PlayMusicStream(music);
 

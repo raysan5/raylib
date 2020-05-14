@@ -1060,7 +1060,7 @@ Music LoadMusicStream(const char *fileName)
             // OGG bit rate defaults to 16 bit, it's enough for compressed format
             music.stream = InitAudioStream(info.sample_rate, 16, info.channels);
             music.sampleCount = (unsigned int)stb_vorbis_stream_length_in_samples((stb_vorbis *)music.ctxData)*info.channels;
-            music.loopCount = 0;   // Infinite loop by default
+            music.looping = true;   // Looping enabled by default
             musicLoaded = true;
         }
     }
@@ -1077,7 +1077,7 @@ Music LoadMusicStream(const char *fileName)
 
             music.stream = InitAudioStream(ctxFlac->sampleRate, ctxFlac->bitsPerSample, ctxFlac->channels);
             music.sampleCount = (unsigned int)ctxFlac->totalSampleCount;
-            music.loopCount = 0;   // Infinite loop by default
+            music.looping = true;   // Looping enabled by default
             musicLoaded = true;
         }
     }
@@ -1096,7 +1096,7 @@ Music LoadMusicStream(const char *fileName)
 
             music.stream = InitAudioStream(ctxMp3->sampleRate, 32, ctxMp3->channels);
             music.sampleCount = (unsigned int)drmp3_get_pcm_frame_count(ctxMp3)*ctxMp3->channels;
-            music.loopCount = 0;   // Infinite loop by default
+            music.looping = true;   // Looping enabled by default
             musicLoaded = true;
         }
     }
@@ -1116,7 +1116,7 @@ Music LoadMusicStream(const char *fileName)
             // NOTE: Only stereo is supported for XM
             music.stream = InitAudioStream(48000, 16, 2);
             music.sampleCount = (unsigned int)jar_xm_get_remaining_samples(ctxXm)*2;
-            music.loopCount = 0;   // Infinite loop by default
+            music.looping = true;   // Looping enabled by default
             jar_xm_reset(ctxXm);   // make sure we start at the beginning of the song
             musicLoaded = true;
 
@@ -1139,7 +1139,7 @@ Music LoadMusicStream(const char *fileName)
             // NOTE: Only stereo is supported for MOD
             music.stream = InitAudioStream(48000, 16, 2);
             music.sampleCount = (unsigned int)jar_mod_max_samples(ctxMod)*2;
-            music.loopCount = 0;   // Infinite loop by default
+            music.looping = true;   // Looping enabled by default
             musicLoaded = true;
 
             music.ctxData = ctxMod;
@@ -1346,15 +1346,8 @@ void UpdateMusicStream(Music music)
     // Reset audio stream for looping
     if (streamEnding)
     {
-        StopMusicStream(music);        // Stop music (and reset)
-
-        // Decrease loopCount to stop when required
-        if (music.loopCount > 1)
-        {
-            music.loopCount--;         // Decrease loop count
-            PlayMusicStream(music);    // Play again
-        }
-        else if (music.loopCount == 0) PlayMusicStream(music);
+        StopMusicStream(music);                     // Stop music (and reset)
+        if (music.looping) PlayMusicStream(music);  // Play again
     }
     else
     {
@@ -1380,13 +1373,6 @@ void SetMusicVolume(Music music, float volume)
 void SetMusicPitch(Music music, float pitch)
 {
     SetAudioStreamPitch(music.stream, pitch);
-}
-
-// Set music loop count (loop repeats)
-// NOTE: If set to 0, means infinite loop
-void SetMusicLoopCount(Music music, int count)
-{
-    music.loopCount = count;
 }
 
 // Get music time length (in seconds)
