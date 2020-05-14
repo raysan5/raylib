@@ -464,9 +464,13 @@ Image GenImageColor(int width, int height, Color color)
 
     for (int i = 0; i < width*height; i++) pixels[i] = color;
 
-    Image image = LoadImageEx(pixels, width, height);
-
-    RL_FREE(pixels);
+    Image image = {
+        .data = pixels,
+        .width = width,
+        .height = height,
+        .format = UNCOMPRESSED_R8G8B8A8,
+        .mipmaps = 1
+    };
 
     return image;
 }
@@ -489,8 +493,13 @@ Image GenImageGradientV(int width, int height, Color top, Color bottom)
         }
     }
 
-    Image image = LoadImageEx(pixels, width, height);
-    RL_FREE(pixels);
+    Image image = {
+        .data = pixels,
+        .width = width,
+        .height = height,
+        .format = UNCOMPRESSED_R8G8B8A8,
+        .mipmaps = 1
+    };
 
     return image;
 }
@@ -512,8 +521,13 @@ Image GenImageGradientH(int width, int height, Color left, Color right)
         }
     }
 
-    Image image = LoadImageEx(pixels, width, height);
-    RL_FREE(pixels);
+    Image image = {
+        .data = pixels,
+        .width = width,
+        .height = height,
+        .format = UNCOMPRESSED_R8G8B8A8,
+        .mipmaps = 1
+    };
 
     return image;
 }
@@ -544,8 +558,13 @@ Image GenImageGradientRadial(int width, int height, float density, Color inner, 
         }
     }
 
-    Image image = LoadImageEx(pixels, width, height);
-    RL_FREE(pixels);
+    Image image = {
+        .data = pixels,
+        .width = width,
+        .height = height,
+        .format = UNCOMPRESSED_R8G8B8A8,
+        .mipmaps = 1
+    };
 
     return image;
 }
@@ -564,8 +583,13 @@ Image GenImageChecked(int width, int height, int checksX, int checksY, Color col
         }
     }
 
-    Image image = LoadImageEx(pixels, width, height);
-    RL_FREE(pixels);
+    Image image = {
+        .data = pixels,
+        .width = width,
+        .height = height,
+        .format = UNCOMPRESSED_R8G8B8A8,
+        .mipmaps = 1
+    };
 
     return image;
 }
@@ -581,8 +605,13 @@ Image GenImageWhiteNoise(int width, int height, float factor)
         else pixels[i] = BLACK;
     }
 
-    Image image = LoadImageEx(pixels, width, height);
-    RL_FREE(pixels);
+    Image image = {
+        .data = pixels,
+        .width = width,
+        .height = height,
+        .format = UNCOMPRESSED_R8G8B8A8,
+        .mipmaps = 1
+    };
 
     return image;
 }
@@ -612,8 +641,13 @@ Image GenImagePerlinNoise(int width, int height, int offsetX, int offsetY, float
         }
     }
 
-    Image image = LoadImageEx(pixels, width, height);
-    RL_FREE(pixels);
+    Image image = {
+        .data = pixels,
+        .width = width,
+        .height = height,
+        .format = UNCOMPRESSED_R8G8B8A8,
+        .mipmaps = 1
+    };
 
     return image;
 }
@@ -672,8 +706,13 @@ Image GenImageCellular(int width, int height, int tileSize)
 
     RL_FREE(seeds);
 
-    Image image = LoadImageEx(pixels, width, height);
-    RL_FREE(pixels);
+    Image image = {
+        .data = pixels,
+        .width = width,
+        .height = height,
+        .format = UNCOMPRESSED_R8G8B8A8,
+        .mipmaps = 1
+    };
 
     return image;
 }
@@ -760,11 +799,12 @@ void ImageCrop(Image *image, Rectangle crop)
 
         int format = image->format;
 
-        UnloadImage(*image);
+        RL_FREE(image->data);
 
-        *image = LoadImageEx(cropPixels, (int)crop.width, (int)crop.height);
-
-        RL_FREE(cropPixels);
+        image->data = cropPixels;
+        image->width = (int)crop.width;
+        image->height = (int)crop.height;
+        image->format = UNCOMPRESSED_R8G8B8A8;
 
         // Reformat 32bit RGBA image to original format
         ImageFormat(image, format);
@@ -983,10 +1023,11 @@ void ImageToPOT(Image *image, Color fillColor)
 
         int format = image->format;         // Store image data format to reconvert later
 
-        // NOTE: Image size changes, new width and height
-        *image = LoadImageEx(pixelsPOT, potWidth, potHeight);
-
-        RL_FREE(pixelsPOT);                 // Free POT pixels data
+        // Fill new image data
+        image->data = pixelsPOT;
+        image->width = potWidth;
+        image->height = potHeight;
+        image->format = UNCOMPRESSED_R8G8B8A8;
 
         ImageFormat(image, format);         // Reconvert image to previous format
         
@@ -1115,13 +1156,13 @@ void ImageAlphaClear(Image *image, Color color, float threshold)
 
     for (int i = 0; i < image->width*image->height; i++) if (pixels[i].a <= (unsigned char)(threshold*255.0f)) pixels[i] = color;
 
-    UnloadImage(*image);
-
+    RL_FREE(image->data);
     int prevFormat = image->format;
-    *image = LoadImageEx(pixels, image->width, image->height);
+    
+    image->data = pixels;
+    image->format = UNCOMPRESSED_R8G8B8A8;
 
     ImageFormat(image, prevFormat);
-    RL_FREE(pixels);
 }
 
 // Apply alpha mask to image
@@ -1192,13 +1233,13 @@ void ImageAlphaPremultiply(Image *image)
         pixels[i].b = (unsigned char)((float)pixels[i].b*alpha);
     }
 
-    UnloadImage(*image);
+    RL_FREE(image->data);
 
     int prevFormat = image->format;
-    *image = LoadImageEx(pixels, image->width, image->height);
-
+    image->data = pixels;
+    image->format = UNCOMPRESSED_R8G8B8A8;
+    
     ImageFormat(image, prevFormat);
-    RL_FREE(pixels);
 }
 
 // Resize and image to new size
@@ -1218,14 +1259,16 @@ void ImageResize(Image *image, int newWidth, int newHeight)
     stbir_resize_uint8((unsigned char *)pixels, image->width, image->height, 0, (unsigned char *)output, newWidth, newHeight, 0, 4);
 
     int format = image->format;
-
-    UnloadImage(*image);
-
-    *image = LoadImageEx(output, newWidth, newHeight);
-    ImageFormat(image, format);  // Reformat 32bit RGBA image to original format
-
-    RL_FREE(output);
+    
     RL_FREE(pixels);
+    RL_FREE(image->data);
+
+    image->data = output;
+    image->width = newWidth;
+    image->height = newHeight;
+    image->format = UNCOMPRESSED_R8G8B8A8;
+
+    ImageFormat(image, format);  // Reformat 32bit RGBA image to original format
 }
 
 // Resize and image to new size using Nearest-Neighbor scaling algorithm
@@ -1255,12 +1298,15 @@ void ImageResizeNN(Image *image,int newWidth,int newHeight)
 
     int format = image->format;
 
-    UnloadImage(*image);
+    RL_FREE(image->data);
+    
+    image->data = output;
+    image->width = newWidth;
+    image->height = newHeight;
+    image->format = UNCOMPRESSED_R8G8B8A8;
 
-    *image = LoadImageEx(output, newWidth, newHeight);
     ImageFormat(image, format);  // Reformat 32bit RGBA image to original format
 
-    RL_FREE(output);
     RL_FREE(pixels);
 }
 
@@ -1305,7 +1351,7 @@ void ImageResizeCanvas(Image *image, int newWidth, int newHeight, int offsetX, i
 
             ImageDraw(&imTemp, *image, srcRec, dstRec, WHITE);
             ImageFormat(&imTemp, image->format);
-            UnloadImage(*image);
+            RL_FREE(image->data);
             *image = imTemp;
         }
         else if ((newWidth < image->width) && (newHeight < image->height))
@@ -1336,7 +1382,7 @@ void ImageResizeCanvas(Image *image, int newWidth, int newHeight, int offsetX, i
 
             ImageDraw(&imTemp, *image, srcRec, dstRec, WHITE);
             ImageFormat(&imTemp, image->format);
-            UnloadImage(*image);
+            RL_FREE(image->data);
             *image = imTemp;
         }
     }
@@ -1541,14 +1587,15 @@ void ImageFlipVertical(Image *image)
         }
     }
 
-    Image processed = LoadImageEx(dstPixels, image->width, image->height);
-    ImageFormat(&processed, image->format);
-    UnloadImage(*image);
+    int format = image->format;
+    RL_FREE(image->data);
+    
+    image->data = dstPixels;
+    image->format = UNCOMPRESSED_R8G8B8A8;
+    
+    ImageFormat(image, format);
 
     RL_FREE(srcPixels);
-    RL_FREE(dstPixels);
-
-    image->data = processed.data;
 }
 
 // Flip image horizontally
@@ -1568,14 +1615,15 @@ void ImageFlipHorizontal(Image *image)
         }
     }
 
-    Image processed = LoadImageEx(dstPixels, image->width, image->height);
-    ImageFormat(&processed, image->format);
-    UnloadImage(*image);
+    int format = image->format;
+    RL_FREE(image->data);
+    
+    image->data = dstPixels;
+    image->format = UNCOMPRESSED_R8G8B8A8;
+    
+    ImageFormat(image, format);
 
     RL_FREE(srcPixels);
-    RL_FREE(dstPixels);
-
-    image->data = processed.data;
 }
 
 // Rotate image clockwise 90deg
@@ -1595,16 +1643,19 @@ void ImageRotateCW(Image *image)
         }
     }
 
-    Image processed = LoadImageEx(rotPixels, image->height, image->width);
-    ImageFormat(&processed, image->format);
-    UnloadImage(*image);
-
+    int format = image->format;
+    int width = image->width;
+    int height = image-> height;
+    RL_FREE(image->data);
+    
+    image->data = rotPixels;
+    image->width = height;
+    image->height = width;
+    image->format = UNCOMPRESSED_R8G8B8A8;
+    
+    ImageFormat(image, format);
+    
     RL_FREE(srcPixels);
-    RL_FREE(rotPixels);
-
-    image->data = processed.data;
-    image->width = processed.width;
-    image->height = processed.height;
 }
 
 // Rotate image counter-clockwise 90deg
@@ -1624,16 +1675,19 @@ void ImageRotateCCW(Image *image)
         }
     }
 
-    Image processed = LoadImageEx(rotPixels, image->height, image->width);
-    ImageFormat(&processed, image->format);
-    UnloadImage(*image);
-
+    int format = image->format;
+    int width = image->width;
+    int height = image-> height;
+    RL_FREE(image->data);
+    
+    image->data = rotPixels;
+    image->width = height;
+    image->height = width;
+    image->format = UNCOMPRESSED_R8G8B8A8;
+    
+    ImageFormat(image, format);
+    
     RL_FREE(srcPixels);
-    RL_FREE(rotPixels);
-
-    image->data = processed.data;
-    image->width = processed.width;
-    image->height = processed.height;
 }
 
 // Modify image color: tint
@@ -1666,12 +1720,13 @@ void ImageColorTint(Image *image, Color color)
         }
     }
 
-    Image processed = LoadImageEx(pixels, image->width, image->height);
-    ImageFormat(&processed, image->format);
-    UnloadImage(*image);
-    RL_FREE(pixels);
-
-    image->data = processed.data;
+    int format = image->format;
+    RL_FREE(image->data);
+    
+    image->data = pixels;
+    image->format = UNCOMPRESSED_R8G8B8A8;
+    
+    ImageFormat(image, format);
 }
 
 // Modify image color: invert
@@ -1692,12 +1747,13 @@ void ImageColorInvert(Image *image)
         }
     }
 
-    Image processed = LoadImageEx(pixels, image->width, image->height);
-    ImageFormat(&processed, image->format);
-    UnloadImage(*image);
-    RL_FREE(pixels);
-
-    image->data = processed.data;
+    int format = image->format;
+    RL_FREE(image->data);
+    
+    image->data = pixels;
+    image->format = UNCOMPRESSED_R8G8B8A8;
+    
+    ImageFormat(image, format);
 }
 
 // Modify image color: grayscale
@@ -1755,12 +1811,13 @@ void ImageColorContrast(Image *image, float contrast)
         }
     }
 
-    Image processed = LoadImageEx(pixels, image->width, image->height);
-    ImageFormat(&processed, image->format);
-    UnloadImage(*image);
-    RL_FREE(pixels);
-
-    image->data = processed.data;
+    int format = image->format;
+    RL_FREE(image->data);
+    
+    image->data = pixels;
+    image->format = UNCOMPRESSED_R8G8B8A8;
+    
+    ImageFormat(image, format);
 }
 
 // Modify image color: brightness
@@ -1798,12 +1855,13 @@ void ImageColorBrightness(Image *image, int brightness)
         }
     }
 
-    Image processed = LoadImageEx(pixels, image->width, image->height);
-    ImageFormat(&processed, image->format);
-    UnloadImage(*image);
-    RL_FREE(pixels);
-
-    image->data = processed.data;
+    int format = image->format;
+    RL_FREE(image->data);
+    
+    image->data = pixels;
+    image->format = UNCOMPRESSED_R8G8B8A8;
+    
+    ImageFormat(image, format);
 }
 
 // Modify image color: replace color
@@ -1831,12 +1889,13 @@ void ImageColorReplace(Image *image, Color color, Color replace)
         }
     }
 
-    Image processed = LoadImageEx(pixels, image->width, image->height);
-    ImageFormat(&processed, image->format);
-    UnloadImage(*image);
-    RL_FREE(pixels);
-
-    image->data = processed.data;
+    int format = image->format;
+    RL_FREE(image->data);
+    
+    image->data = pixels;
+    image->format = UNCOMPRESSED_R8G8B8A8;
+    
+    ImageFormat(image, format);
 }
 #endif      // SUPPORT_IMAGE_MANIPULATION
 
@@ -2488,13 +2547,21 @@ void ImageDraw(Image *dst, Image src, Rectangle srcRec, Rectangle dstRec, Color 
         }
     }
 
-    UnloadImage(*dst);
+    Image final = {
+        .data = dstPixels,
+        .width = dst->width,
+        .height = dst->height,
+        .format = UNCOMPRESSED_R8G8B8A8,
+        .mipmaps = 1
+    };
 
-    *dst = LoadImageEx(dstPixels, (int)dst->width, (int)dst->height);
-    ImageFormat(dst, dst->format);
+    // NOTE: dstPixels are free() inside ImageFormat()
+    ImageFormat(&final, dst->format);
+   
+    UnloadImage(*dst);
+    *dst = final;
 
     RL_FREE(srcPixels);
-    RL_FREE(dstPixels);
 }
 
 // Draw text (default font) within an image (destination)
