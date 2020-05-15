@@ -155,7 +155,7 @@ RMDEF float Lerp(float start, float end, float amount)
 }
 
 // Normalize input value within input range
-RMDEF float Norm(float value, float start, float end)
+RMDEF float Normalize(float value, float start, float end)
 {
     return (value - start) / (end - start);
 }
