@@ -161,8 +161,9 @@ RMDEF float Normalize(float value, float start, float end)
 }
 
 // Remap input value within input range to output range
-RMDEF float Remap(float value, float inputStart, float inputEnd, float outputStart, float outputEnd) {
-    return Lerp(outputStart, outputEnd, Norm(value, inputStart, inputEnd));
+RMDEF float Remap(float value, float inputStart, float inputEnd, float outputStart, float outputEnd) 
+{
+    return (value - inputStart) / (inputEnd - inputStart) * (outputEnd - outputStart) + outputStart;
 }
 
 //----------------------------------------------------------------------------------
