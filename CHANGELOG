@@ -1,18 +1,20 @@
 changelog
 ---------
 
-Current Release:    raylib 3.0.0 (Feb.2020) -WIP-
+Current Release:    raylib 3.0.0 (01 April 2020)
 
 -----------------------------------------------
-Release:     raylib 3.0 (Feb 2020)
+Release:     raylib 3.0 (01 April 2020)
 -----------------------------------------------
 KEY CHANGES:
  - Global context states used on all modules. 
  - Custom memory allocators for all modules and dependencies.
- - Structures reviewed to reduce size and always used as pass-by-value.
+ - Centralized file access system and memory data loading.
+ - Structures reviewed to reduce size and always be used as pass-by-value.
+ - Tracelog messages completely reviewed and categorized.
  - raudio module reviewed to accomodate new Music struct and new miniaudio.
  - text module reviewed to improve fonts generation and text management functions.
- - examples addition, multiple new examples and categorized examples table.
+ - Multiple new examples added and categorized examples table.
  - GitHub Actions CI implemented for Windows, Linux and macOS.
  
 Detailed changes:
@@ -28,13 +30,11 @@ Detailed changes:
 [build] REVIEWED: Generation of web examples, by @pamarcos
 [build] REVIEWED: Makefiles path to 'shell.html', by @niorad
 [build] REVIEWED: VS2017 64bit compilation issues, by @spec-chum
-[build] REVIEWED: Multiple fixes on projkects building, by @ChrisDill, @JuDelCo, @electronstudio
+[build] REVIEWED: Multiple fixes on projects building, by @ChrisDill, @JuDelCo, @electronstudio
 [core] ADDED: Support touch/mouse indistinctly
 [core] ADDED: FLAG_WINDOW_ALWAYS_RUN to avoid pause on minimize
 [core] ADDED: Config flag SUPPORT_HALFBUSY_WAIT_LOOP
 [core] ADDED: RPI mouse cursor point support on native mode
-[core] ADDED: BeginScissorMode() - Define screen area for following drawing
-[core] ADDED: EndScissorMode() - End scissor mode
 [core] ADDED: GetWorldToScreen2D()- Get screen space position for a 2d camera world space position, by @arvyy
 [core] ADDED: GetScreenToWorld2D() - Get world space position for a 2d camera screen space position, by @arvyy
 [core] ADDED: GetWorldToScreenEx() - Get size position for a 3d world space position
@@ -43,8 +43,14 @@ Detailed changes:
 [core] ADDED: CompressData() - Compress data (DEFLATE algorythm)
 [core] ADDED: DecompressData() - Decompress data (DEFLATE algorythm)
 [core] ADDED: GetWindowPosition() - Get window position XY on monitor
+[core] ADDED: LoadFileData() - Load file data as byte array (read)
+[core] ADDED: SaveFileData() - Save data to file from byte array (write)
+[core] ADDED: LoadFileText() - Load text data from file (read), returns a '\0' terminated string
+[core] ADDED: SaveFileText() - Save text data to file (write), string must be '\0' terminated
 [core] REMOVED: Show raylib logo at initialization
 [core] REVIEWED: GetFileName(), security checks
+[core] REVIEWED: LoadStorageValue(), by @danimartin82
+[core] REVIEWED: SaveStorageValue(), by @danimartin82
 [core] REVIEWED: IsMouseButtonReleased(), when press/release events come too fast, by @oswjk
 [core] REVIEWED: SetWindowMonitor(), by @DropsOfSerenity
 [core] REVIEWED: IsFileExtension() to be case-insensitive
@@ -81,6 +87,19 @@ Detailed changes:
 [textures] ADDED: LoadAnimatedGIF() - Load animated GIF file
 [textures] ADDED: GetImageAlphaBorder() - Get image alpha border rectangle
 [textures] ADDED: ImageFromImage() - Create an image from another image piece
+[textures] ADDED: ImageClearBackground(), by @iamsouravgupta
+[textures] ADDED: ImageDrawPixel(), by @iamsouravgupta
+[textures] ADDED: ImageDrawCircle(), by @iamsouravgupta
+[textures] ADDED: ImageDrawLineEx(), by @iamsouravgupta
+[textures] ADDED: ImageDrawPixelV(), by @RobLoach
+[textures] ADDED: ImageDrawCircleV(), by @RobLoach
+[textures] ADDED: ImageDrawLineV(), by @RobLoach
+[textures] ADDED: ImageDrawRectangleV(), by @RobLoach
+[textures] ADDED: ImageDrawRectangleRec(), by @RobLoach
+[textures] REVIEWED: ImageDrawPixel(), by @RobLoach
+[textures] REVIEWED: ImageDrawLine(), by @RobLoach
+[textures] REVIEWED: ImageDrawCircle(), by @RobLoach
+[textures] REVIEWED: ImageDrawRectangle(), by @RobLoach
 [textures] REVIEWED: ImageDraw(), now it supports color tint parameter
 [textures] REVIEWED: ImageResizeCanvas()
 [textures] REVIEWED: ImageCrop() with security checks
@@ -134,6 +153,7 @@ Detailed changes:
 [examples] ADDED: shaders_basic_lighting, by @chriscamacho
 [examples] ADDED: shaders_simple_mask, by @chriscamacho
 [examples] ADDED: audio_multichannel_sound, by @chriscamacho
+[examples] ADDED: shaders_spotlight, by @chriscamacho
 [examples] RENAMED: text_sprite_font > text_font_spritefont
 [examples] RENAMED: text_ttf_loading > text_font_filters
 [examples] RENAMED: text_bmfont_ttf > text_font_loading
@@ -142,6 +162,7 @@ Detailed changes:
 [examples] REVIEWED: models_obj_loading > models_loading
 [examples] REVIEWED: models_materials_pbr, shader issues
 [examples] REVIEWED: core_window_letterbox, detailed explanation, by @jotac0
+[examples] REVIEWED: core_window_letterbox, virtual mouse, by @anatagawa
 [games] ADDED: GGJ2020 game - RE-PAIR
 [*] Misc fixes and tweaks, by @yaram, @oraoto, @zatherz, @piecedigital, @Shylie
 [*] Update ALL supported projects (Notepad++, VS2017)

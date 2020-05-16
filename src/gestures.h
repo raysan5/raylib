@@ -154,7 +154,6 @@ float GetGesturePinchAngle(void);                       // Get gesture pinch ang
 
     #include <math.h>                   // Required for: sqrtf(), atan2f()
 #endif
-
 #if defined(__APPLE__)                  // macOS also defines __MACH__
     #include <mach/clock.h>             // Required for: clock_get_time()
     #include <mach/mach.h>              // Required for: mach_timespec_t
@@ -163,19 +162,20 @@ float GetGesturePinchAngle(void);                       // Get gesture pinch ang
 //----------------------------------------------------------------------------------
 // Defines and Macros
 //----------------------------------------------------------------------------------
-#define FORCE_TO_SWIPE      0.0005f     // Measured in normalized screen units/time
-#define MINIMUM_DRAG        0.015f      // Measured in normalized screen units (0.0f to 1.0f)
-#define MINIMUM_PINCH       0.005f      // Measured in normalized screen units (0.0f to 1.0f)
-#define TAP_TIMEOUT         300         // Time in milliseconds
-#define PINCH_TIMEOUT       300         // Time in milliseconds
-#define DOUBLETAP_RANGE     0.03f       // Measured in normalized screen units (0.0f to 1.0f)
+#define FORCE_TO_SWIPE      0.0005f     // Swipe force, measured in normalized screen units/time
+#define MINIMUM_DRAG        0.015f      // Drag minimum force, measured in normalized screen units (0.0f to 1.0f)
+#define MINIMUM_PINCH       0.005f      // Pinch minimum force, measured in normalized screen units (0.0f to 1.0f)
+#define TAP_TIMEOUT         300         // Tap minimum time, measured in milliseconds
+#define PINCH_TIMEOUT       300         // Pinch minimum time, measured in milliseconds
+#define DOUBLETAP_RANGE     0.03f       // DoubleTap range, measured in normalized screen units (0.0f to 1.0f)
 
 //----------------------------------------------------------------------------------
 // Types and Structures Definition
 //----------------------------------------------------------------------------------
 
+// Gestures module state context [136 bytes]
 typedef struct {
-    int current;                        // Current detected gesture
+    unsigned int current;               // Current detected gesture
     unsigned int enabledFlags;          // Enabled gestures flags
     struct {
         int firstId;                    // Touch id for first touch point
@@ -215,8 +215,8 @@ typedef struct {
 //----------------------------------------------------------------------------------
 static GesturesData GESTURES = {
     .Touch.firstId = -1,
-    .current = GESTURE_NONE,
-    .enabledFlags = 0b0000001111111111          // All gestures enabled by default
+    .current = GESTURE_NONE,            // No current gesture detected
+    .enabledFlags = 0b0000001111111111  // All gestures supported by default
 };
 
 //----------------------------------------------------------------------------------

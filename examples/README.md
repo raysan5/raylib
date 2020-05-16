@@ -185,7 +185,7 @@ Examples showing raylib misc functionality that does not fit in other categories
 |----|----------|--------|:----------:|:---:|
 | 113 | [raudio_standalone](others/raudio_standalone.c) |       | ray         |        |
 | 114 | [rlgl_standalone](others/rlgl_standalone.c)     |       | ray         |        |
-| 115 | [easings_testbed](others/easings_testbed.c)     |       | ray         |        |
+| 115 | [easings_testbed](others/easings_testbed.c)     |       | [Juan Miguel López](https://github.com/flashback-fx)        |        |
 
 As always contributions are welcome, feel free to send new examples! Here it is an [examples template](examples_template.c) to start with!
 

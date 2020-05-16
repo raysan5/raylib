@@ -157,24 +157,19 @@ endif
 
 ifeq ($(PLATFORM),PLATFORM_ANDROID)
     # Android architecture: ARM64
-    # Starting at 2019 using ARM64 is mandatory for published apps
+    # Starting at 2019 using ARM64 is mandatory for published apps,
+    # and minimum required target API is Android 9 (API level 28)
     ANDROID_ARCH ?= ARM
-    ANDROID_API_VERSION = 26
+    ANDROID_API_VERSION = 28
 
     # Android required path variables
-    # NOTE: Android NDK is just required to generate the standalone toolchain,
-    # in case is not already provided
+    # NOTE: Starting with Android NDK r21, no more toolchain generation is required, NDK is the toolchain on itself
     ifeq ($(OS),Windows_NT)
-        ANDROID_NDK = C:/android-ndk
+        ANDROID_NDK = C:/android-ndk-r21
+        ANDROID_TOOLCHAIN = $(ANDROID_NDK)/toolchains/llvm/prebuilt/windows-x86_64
     else
         ANDROID_NDK = /usr/lib/android/ndk
-    endif
-
-    # Android standalone toolchain path
-    ifeq ($(OS),Windows_NT)
-        ANDROID_TOOLCHAIN = C:/android_toolchain_$(ANDROID_ARCH)_API$(ANDROID_API_VERSION)
-    else
-        ANDROID_TOOLCHAIN = /usr/lib/android/toolchain_$(ANDROID_ARCH)_API$(ANDROID_API_VERSION)
+        ANDROID_TOOLCHAIN = $(ANDROID_NDK)/toolchains/llvm/prebuilt/linux
     endif
 
     ifeq ($(ANDROID_ARCH),ARM)
@@ -219,7 +214,7 @@ ifeq ($(PLATFORM),PLATFORM_ANDROID)
 endif
 
 # Define default C compiler and archiver to pack library
-CC ?= gcc
+CC = gcc
 AR = ar
 
 ifeq ($(PLATFORM),PLATFORM_DESKTOP)
@@ -248,11 +243,11 @@ endif
 ifeq ($(PLATFORM),PLATFORM_ANDROID)
     # Android toolchain (must be provided for desired architecture and compiler)
     ifeq ($(ANDROID_ARCH),ARM)
-        CC = $(ANDROID_TOOLCHAIN)/bin/arm-linux-androideabi-clang
+        CC = $(ANDROID_TOOLCHAIN)/bin/armv7a-linux-androideabi$(ANDROID_API_VERSION)-clang
         AR = $(ANDROID_TOOLCHAIN)/bin/arm-linux-androideabi-ar
     endif
     ifeq ($(ANDROID_ARCH),ARM64)
-        CC = $(ANDROID_TOOLCHAIN)/bin/aarch64-linux-android-clang
+        CC = $(ANDROID_TOOLCHAIN)/bin/aarch64-linux-android$(ANDROID_API_VERSION)-clang
         AR = $(ANDROID_TOOLCHAIN)/bin/aarch64-linux-android-ar
     endif
     ifeq ($(ANDROID_ARCH),x86)
@@ -298,8 +293,12 @@ endif
 ifeq ($(RAYLIB_BUILD_MODE),RELEASE)
     ifeq ($(PLATFORM),PLATFORM_WEB)
         CFLAGS += -Os
-    else
+    endif
+    ifeq ($(PLATFORM),PLATFORM_DESKTOP)
         CFLAGS += -s -O1
+    endif
+    ifeq ($(PLATFORM),PLATFORM_ANDROID)
+        CFLAGS += -O2
     endif
 endif
 
@@ -392,8 +391,7 @@ ifeq ($(PLATFORM),PLATFORM_RPI)
     INCLUDE_PATHS += -I$(RPI_TOOLCHAIN_SYSROOT)/opt/vc/include/interface/vcos/pthreads
 endif
 ifeq ($(PLATFORM),PLATFORM_ANDROID)
-    NATIVE_APP_GLUE = $(RAYLIB_RELEASE_PATH)/external/android/native_app_glue
-    #NATIVE_APP_GLUE = $(ANDROID_NDK)/sources/android/native_app_glue
+    NATIVE_APP_GLUE = $(ANDROID_NDK)/sources/android/native_app_glue
     # Android required libraries
     INCLUDE_PATHS += -I$(ANDROID_TOOLCHAIN)/sysroot/usr/include
     # Include android_native_app_glue.h
@@ -446,32 +444,11 @@ ifeq ($(RAYLIB_MODULE_PHYSAC),TRUE)
 endif
 
 ifeq ($(PLATFORM),PLATFORM_ANDROID)
-    OBJS += external/android/native_app_glue/android_native_app_glue.o
+    OBJS += $(NATIVE_APP_GLUE)/android_native_app_glue.o
 endif
 
 # Default target entry
 all: raylib
-
-# Generate standalone Android toolchain
-# NOTE: If the host system is Windows or Linux, generation is different
-generate_android_toolchain:
-ifeq ($(PLATFORM_OS),WINDOWS)
-    # NOTE: python should be available in the path
-    ifeq ($(ANDROID_ARCH),ARM)
-		$(ANDROID_NDK)/build/tools/python make_standalone_toolchain.py --arch arm --api $(ANDROID_API_VERSION) --install-dir $(ANDROID_TOOLCHAIN)
-    endif
-    ifeq ($(ANDROID_ARCH),ARM64)
-		$(ANDROID_NDK)/build/tools/python make_standalone_toolchain.py --arch arm64 --api $(ANDROID_API_VERSION) --install-dir $(ANDROID_TOOLCHAIN)
-    endif
-endif
-ifeq ($(PLATFORM_OS),LINUX)
-    ifeq ($(ANDROID_ARCH),ARM)
-		$(ANDROID_NDK)/build/tools/make-standalone-toolchain.sh --platform=android-$(ANDROID_API_VERSION) --toolchain=arm-linux-androideabi-4.9 --use-llvm --install-dir=$(ANDROID_TOOLCHAIN)
-    endif
-    ifeq ($(ANDROID_ARCH),ARM64)
-		$(ANDROID_NDK)/build/tools/make-standalone-toolchain.sh --platform=android-$(ANDROID_API_VERSION) --toolchain=aarch64-linux-androideabi-4.9 --use-llvm --install-dir=$(ANDROID_TOOLCHAIN)
-    endif
-endif
 
 # Compile raylib library
 # NOTE: Release directory is created if not exist
@@ -485,7 +462,7 @@ else
         ifeq ($(PLATFORM),PLATFORM_DESKTOP)
             ifeq ($(PLATFORM_OS),WINDOWS)
                 # TODO: Compile resource file raylib.dll.rc for linkage on raylib.dll generation
-				$(CC) -shared -o $(RAYLIB_RELEASE_PATH)/raylib.dll $(OBJS) -L$(RAYLIB_RELEASE_PATH) -static-libgcc -lopengl32 -lgdi32 -lwinmm -Wl,--out-implib,$(RAYLIB_RELEASE_PATH)/libraylibdll.a
+				$(CC) -shared -o $(RAYLIB_RELEASE_PATH)/raylib.dll $(OBJS) $(RAYLIB_RELEASE_PATH)/raylib.dll.rc.data -L$(RAYLIB_RELEASE_PATH) -static-libgcc -lopengl32 -lgdi32 -lwinmm -Wl,--out-implib,$(RAYLIB_RELEASE_PATH)/libraylib.dll.a
 				@echo "raylib dynamic library (raylib.dll) and import library (libraylibdll.a) generated!"
             endif
             ifeq ($(PLATFORM_OS),LINUX)

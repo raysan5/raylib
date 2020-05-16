@@ -10,6 +10,9 @@ set SOURCES=core_basic_window.c
 REM Set your raylib\src location here (relative path!)
 set RAYLIB_SRC=..\..\src
 
+REM Set the target platform for the compiler (Ex: x86 or x64)
+set TARGET_PLATFORM=x86
+
 REM About this build script: it does many things, but in essence, it's
 REM very simple. It has 3 compiler invocations: building raylib (which
 REM is not done always, see logic by searching "Build raylib"), building
@@ -63,7 +66,7 @@ IF NOT "%1" == "" (
 
 
 :HELP
-echo Usage: windows-build.bat [-hdurcqqv]
+echo Usage: build-windows.bat [-hdurcqqv]
 echo  -h  Show this information
 echo  -d  Faster builds that have debug symbols, and enable warnings
 echo  -u  Run upx* on the executable after compilation (before -r)
@@ -81,10 +84,10 @@ echo   easier, and it's a very small bit in the build scripts. The option
 echo   requires that you have upx installed and on your path, of course.
 echo.
 echo Examples:
-echo  Build a release build:                    windows-build.bat
-echo  Build a release build, full recompile:    windows-build.bat -c
-echo  Build a debug build and run:              windows-build.bat -d -r
-echo  Build in debug, run, don't print at all:  windows-build.bat -drqq
+echo  Build a release build:                    build-windows.bat
+echo  Build a release build, full recompile:    build-windows.bat -c
+echo  Build a debug build and run:              build-windows.bat -d -r
+echo  Build in debug, run, don't print at all:  build-windows.bat -drqq
 exit /B
 
 
@@ -104,9 +107,9 @@ IF EXIST "C:\Program Files (x86)\Microsoft Visual Studio\2017\Community\VC\Auxil
   exit /B
 )
 IF DEFINED VERBOSE (
-  call !VC_INIT! x86
+  call !VC_INIT! !TARGET_PLATFORM!
 ) ELSE (
-  call !VC_INIT! x86 > NUL 2>&1
+  call !VC_INIT! !TARGET_PLATFORM! > NUL 2>&1
 )
 
 
@@ -128,7 +131,7 @@ IF DEFINED BUILD_DEBUG (
   set OUTPUT_FLAG=/Fe: "!GAME_NAME!"
   set COMPILATION_FLAGS=/Od /Zi
   set WARNING_FLAGS=/Wall
-  set SUBSYSTEM_FLAGS=
+  set SUBSYSTEM_FLAGS=/DEBUG
   set LINK_FLAGS=/link kernel32.lib user32.lib shell32.lib winmm.lib gdi32.lib opengl32.lib
   set OUTPUT_DIR=builds-debug\windows-msvc
 )

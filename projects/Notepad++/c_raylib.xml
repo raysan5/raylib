@@ -983,8 +983,89 @@
         <KeyWord name="ImageDrawRectangle" func="yes">
             <Overload retVal="void" descr="Draw rectangle within an image">
                 <Param name="Image *dst" />
+                <Param name="int posX" />
+                <Param name="int posY" />
+                <Param name="int width" />
+                <Param name="int height" />
+                <Param name="Color color" />
+            </Overload>
+        </KeyWord>
+        <KeyWord name="ImageDrawRectangleV" func="yes">
+            <Overload retVal="void" descr="Draw rectangle within an image (Vector version)">
+                <Param name="Image *dst" />
                 <Param name="Vector2 position" />
+                <Param name="Vector2 size" />
+                <Param name="Color color" />
+            </Overload>
+        </KeyWord>
+        <KeyWord name="ImageDrawRectangleRec" func="yes">
+            <Overload retVal="void" descr="Draw rectangle within an image">
+                <Param name="Image *dst" />
                 <Param name="Rectangle rec" />
+                <Param name="Color color" />
+            </Overload>
+        </KeyWord>
+        <KeyWord name="ImageDrawRectangleLines" func="yes">
+            <Overload retVal="void" descr="Draw rectangle lines within an image">
+                <Param name="Image *dst" />
+                <Param name="Rectangle rec" />
+                <Param name="int thick" />
+                <Param name="Color color" />
+            </Overload>
+        </KeyWord>
+        <KeyWord name="ImageClearBackground" func="yes">
+            <Overload retVal="void" descr="Clear image background with given color">
+                <Param name="Image *dst" />
+                <Param name="Color color" />
+            </Overload>
+        </KeyWord>
+        <KeyWord name="ImageDrawPixel" func="yes">
+            <Overload retVal="void" descr="Clear image background with given color">
+                <Param name="Image *dst" />
+		<Param name="int posX" />
+		<Param name="int posY" />
+                <Param name="Color color" />
+            </Overload>
+        </KeyWord>
+        <KeyWord name="ImageDrawPixelV" func="yes">
+            <Overload retVal="void" descr="Clear image background with given color (Vector version)">
+                <Param name="Image *dst" />
+		<Param name="Vector2 position" />
+                <Param name="Color color" />
+            </Overload>
+        </KeyWord>
+        <KeyWord name="ImageDrawCircle" func="yes">
+            <Overload retVal="void" descr="Draw circle within an image">
+                <Param name="Image *dst" />
+		<Param name="int centerX" />
+		<Param name="int centerY" />
+		<Param name="int radius" />
+                <Param name="Color color" />
+            </Overload>
+        </KeyWord>
+        <KeyWord name="ImageDrawCircleV" func="yes">
+            <Overload retVal="void" descr="Draw circle within an image (Vector version)">
+                <Param name="Image *dst" />
+		<Param name="Vector2 center" />
+		<Param name="int radius" />
+                <Param name="Color color" />
+            </Overload>
+        </KeyWord>
+        <KeyWord name="ImageDrawLine" func="yes">
+            <Overload retVal="void" descr="Draw line within an image">
+                <Param name="Image *dst" />
+		<Param name="int startPosX" />
+		<Param name="int startPosY" />
+		<Param name="int endPosX" />
+		<Param name="int endPosY" />
+                <Param name="Color color" />
+            </Overload>
+        </KeyWord>
+        <KeyWord name="ImageDrawLineV" func="yes">
+            <Overload retVal="void" descr="Draw line within an image (Vector2 version)">
+                <Param name="Image *dst" />
+		<Param name="Vector2 start" />
+		<Param name="Vector2 end" />
                 <Param name="Color color" />
             </Overload>
         </KeyWord>

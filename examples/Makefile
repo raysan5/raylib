@@ -25,8 +25,8 @@
 
 # Define required raylib variables
 PROJECT_NAME       ?= raylib_examples
-RAYLIB_VERSION     ?= 2.5.0
-RAYLIB_API_VERSION ?= 2
+RAYLIB_VERSION     ?= 3.0.0
+RAYLIB_API_VERSION ?= 3
 RAYLIB_PATH        ?= ..
 
 # Define default options
@@ -456,7 +456,8 @@ SHADERS = \
     shaders/shaders_eratosthenes \
     shaders/shaders_basic_lighting \
     shaders/shaders_fog \
-    shaders/shaders_simple_mask
+    shaders/shaders_simple_mask \
+    shaders/shaders_spotlight
     
 AUDIO = \
     audio/audio_module_playing \
