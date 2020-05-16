@@ -382,7 +382,8 @@ typedef unsigned char byte;
     typedef enum {
         BLEND_ALPHA = 0,
         BLEND_ADDITIVE,
-        BLEND_MULTIPLIED
+        BLEND_MULTIPLIED,
+        BLEND_SET
     } BlendMode;
 
     // Shader location point type
@@ -3558,15 +3559,16 @@ void BeginBlendMode(int mode)
 {
     static int blendMode = 0;   // Track current blending mode
 
-    if ((blendMode != mode) && (mode < 3))
+    if ((blendMode != mode) && (mode < 4))
     {
         rlglDraw();
 
         switch (mode)
         {
             case BLEND_ALPHA: glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA); break;
-            case BLEND_ADDITIVE: glBlendFunc(GL_SRC_ALPHA, GL_ONE); break; // Alternative: glBlendFunc(GL_ONE, GL_ONE);
+            case BLEND_ADDITIVE: glBlendFunc(GL_SRC_ALPHA, GL_ONE); break;
             case BLEND_MULTIPLIED: glBlendFunc(GL_DST_COLOR, GL_ONE_MINUS_SRC_ALPHA); break;
+            case BLEND_SET: glBlendFunc(GL_ONE, GL_ONE); break;
             default: break;
         }
 
