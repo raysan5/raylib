@@ -3716,14 +3716,6 @@ static Model LoadGLTF(const char *fileName)
                 }
             }
 
-            // Mark parents in array
-            if (data->skins[0].joints[i]->children_count > 0) {
-                int numOfChildrenJoints = data->skins[0].joints[i]->children_count; 
-                for (int j = i; j < numOfChildrenJoints; j++) {
-                    model.bones[j].parent = i;
-                }
-            }
-
             // Set the tranlation for this joint
             if (data->skins[0].joints[i]->has_translation) {
                 model.bindPose[i].translation.x = data->skins[0].joints[i]->translation[0];
@@ -3750,7 +3742,34 @@ static Model LoadGLTF(const char *fileName)
             }
         }
 
-        // Build bind pose from parent joints... Same IQM Loader
+        for (int i = 0; i < model.boneCount; i++)  {
+            // Mark parents in array
+            printf("BONE %d: %d\n", i, data->skins[0].joints[i]->children_count);
+            if (data->skins[0].joints[i]->children_count > 0) {
+                int numOfChildrenJoints = data->skins[0].joints[i]->children_count; 
+                for (int j = i; j < numOfChildrenJoints; j++) {
+                    model.bones[j].parent = i;
+                }
+            }
+        }
+
+        //INVERSE MATRIX, for transposing joint into skin space
+        /*
+        float* inverseMatrix = (float*)RL_CALLOC((16 * data->skins[0].joints_count), sizeof(float));
+        LOAD_ACCESSOR(float, 16, data->skins[0].inverse_bind_matrices, inverseMatrix)
+        int matrixIndex = 0;
+        
+        for (int i = 0; i < (16 * data->skins[0].joints_count) - 1; i+= 15) {
+            printf("\n\nMATRIX %d\n%f, %f, %f, %f\n%f, %f, %f, %f\n%f, %f, %f, %f\n%f, %f, %f, %f\n", matrixIndex,
+            inverseMatrix[i], inverseMatrix[i+1], inverseMatrix[i+2], inverseMatrix[i+3],
+            inverseMatrix[i+4], inverseMatrix[i+5], inverseMatrix[i+6], inverseMatrix[i+7],
+            inverseMatrix[i+8], inverseMatrix[i+9], inverseMatrix[i+10], inverseMatrix[i+11],
+            inverseMatrix[i+12], inverseMatrix[i+13], inverseMatrix[i+14], inverseMatrix[i+15]);
+            matrixIndex++;
+        }
+        */
+
+        //Build bind pose from parent joints... Same IQM Loader
         for (int i = 0; i < model.boneCount; i++)
         {
             if (model.bones[i].parent >= 0)

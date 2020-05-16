@@ -20,8 +20,9 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include "raylib.h"
+#include "raymath.h"
 
-#define DEBUG_DRAW 0
+#define DEBUG_DRAW 1
 
 int main(void)
 {
@@ -40,17 +41,17 @@ int main(void)
     camera.fovy = 45.0f;                                // Camera field-of-view Y
     camera.type = CAMERA_PERSPECTIVE;                   // Camera mode type
 
-    Model model2 = LoadModel("resources/models/RiggedFigure.glb");
+    Model model2 = LoadModel("resources/models/MonsterScaled.glb");
     Vector3 position = { 0.0f, 0.0f, 0.0f };            // Set model position
 
     // Load animation data
     int animsCount = 0;
-    ModelAnimation *anims = LoadModelAnimations("resources/models/RiggedFigure.glb", &animsCount);
+    ModelAnimation *anims = LoadModelAnimations("resources/models/MonsterScaled.glb", &animsCount);
     int animFrameCounter = 0;
-    bool isValid = IsModelAnimationValid(model2, anims[2]);
-    if (!isValid) {
-        printf("\n\n\n\nModel Bone Count: %i, Animation Bone Count: %i, Animation Count: %i\n\n\n\n", model2.boneCount, anims[2].boneCount, animsCount);
-    }
+    //bool isValid = IsModelAnimationValid(model2, anims[0]);
+    // if (!isValid) {
+    //     printf("\n\n\n\nModel Bone Count: %i, Animation Bone Count: %i, Animation Count: %i\n\n\n\n", model2.boneCount, anims[2].boneCount, animsCount);
+    // }
     SetCameraMode(camera, CAMERA_FREE); // Set free camera mode
 
     SetTargetFPS(60);                   // Set our game to run at 60 frames-per-second
@@ -80,7 +81,7 @@ int main(void)
 
             BeginMode3D(camera);
 
-                DrawModelEx(model2, position, (Vector3){ 1.0f, 0.0f, 0.0f }, -90.0f, (Vector3){ 1.0f, 1.0f, 1.0f }, WHITE);
+                DrawModelEx(model2, position, (Vector3){ 0.0f, 0.0f, 0.0f }, 0.0f, (Vector3){ 1.0f, 1.0f, 1.0f }, WHITE);
 
                 //Draw debug
                 if(DEBUG_DRAW) 
@@ -88,7 +89,7 @@ int main(void)
                     for (int i = 0; i < model2.boneCount; i++)
                     {
                         //DrawCube(anims[0].framePoses[animFrameCounter][i].translation, 0.2f, 0.2f, 0.2f, RED);
-                        //DrawCube(model2.bindPose[i].translation, 0.2f, 0.2f, 0.2f, RED);
+                        DrawCube(Vector3Negate(model2.bindPose[i].translation), 0.05f, 0.05f, 0.05f, RED);
                     }
                 }
                 
@@ -103,7 +104,7 @@ int main(void)
         //----------------------------------------------------------------------------------
     }
 
-    // Unload model animations data
+   // Unload model animations data
     for (int i = 0; i < animsCount; i++) UnloadModelAnimation(anims[i]);
     RL_FREE(anims);
 
