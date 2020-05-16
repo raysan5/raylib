@@ -37,7 +37,6 @@ int main(void)
     camera.fovy = 45.0f;                                // Camera field-of-view Y
     camera.type = CAMERA_PERSPECTIVE;                   // Camera mode type
 
-
     Model model = LoadModel("resources/guy/guy.iqm");               // Load the animated model mesh and basic data
     Texture2D texture = LoadTexture("resources/guy/guytex.png");    // Load model texture and set material
     SetMaterialTexture(&model.materials[0], MAP_DIFFUSE, texture);  // Set model material map texture

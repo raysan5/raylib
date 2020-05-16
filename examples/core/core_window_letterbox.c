@@ -1,6 +1,6 @@
 /*******************************************************************************************
 *
-*   raylib [core] example - window scale letterbox
+*   raylib [core] example - window scale letterbox (and virtual mouse)
 *
 *   This example has been created using raylib 2.5 (www.raylib.com)
 *   raylib is licensed under an unmodified zlib/libpng license (View raylib.h for details)
@@ -15,6 +15,18 @@
 
 #define max(a, b) ((a)>(b)? (a) : (b))
 #define min(a, b) ((a)<(b)? (a) : (b))
+
+// Clamp Vector2 value with min and max and return a new vector2
+// NOTE: Required for virtual mouse, to clamp inside virtual game size
+Vector2 ClampValue(Vector2 value, Vector2 min, Vector2 max)
+{
+    Vector2 result = value;
+    result.x = (result.x > max.x)? max.x : result.x;
+    result.x = (result.x < min.x)? min.x : result.x;
+    result.y = (result.y > max.y)? max.y : result.y;
+    result.y = (result.y < min.y)? min.y : result.y;
+    return result;
+}
 
 int main(void)
 {
@@ -52,6 +64,13 @@ int main(void)
             // Recalculate random colors for the bars
             for (int i = 0; i < 10; i++) colors[i] = (Color){ GetRandomValue(100, 250), GetRandomValue(50, 150), GetRandomValue(10, 100), 255 };
         }
+        
+        // Update virtual mouse (clamped mouse value behind game screen)
+        Vector2 mouse = GetMousePosition();
+        Vector2 virtualMouse = { 0 };
+        virtualMouse.x = (mouse.x - (GetScreenWidth() - (gameScreenWidth*scale))*0.5f)/scale;
+        virtualMouse.y = (mouse.y - (GetScreenHeight() - (gameScreenHeight*scale))*0.5f)/scale;
+        virtualMouse = ClampValue(virtualMouse, (Vector2){ 0, 0 }, (Vector2){ gameScreenWidth, gameScreenHeight }); 
         //----------------------------------------------------------------------------------
 
         // Draw
@@ -67,6 +86,9 @@ int main(void)
                 for (int i = 0; i < 10; i++) DrawRectangle(0, (gameScreenHeight/10)*i, gameScreenWidth, gameScreenHeight/10, colors[i]);
 
                 DrawText("If executed inside a window,\nyou can resize the window,\nand see the screen scaling!", 10, 25, 20, WHITE);
+                
+                DrawText(TextFormat("Default Mouse: [%i , %i]", (int)mouse.x, (int)mouse.y), 350, 25, 20, GREEN);
+                DrawText(TextFormat("Virtual Mouse: [%i , %i]", (int)virtualMouse.x, (int)virtualMouse.y), 350, 55, 20, YELLOW);
 
             EndTextureMode();
 

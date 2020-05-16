@@ -25,8 +25,8 @@
 
 # Define required raylib variables
 PROJECT_NAME       ?= raylib_examples
-RAYLIB_VERSION     ?= 2.5.0
-RAYLIB_API_VERSION ?= 2
+RAYLIB_VERSION     ?= 3.0.0
+RAYLIB_API_VERSION ?= 3
 RAYLIB_PATH        ?= ..
 
 # Define default options
@@ -118,7 +118,7 @@ ifeq ($(PLATFORM),PLATFORM_WEB)
     EMSDK_PATH         ?= C:/emsdk
     EMSCRIPTEN_PATH    ?= $(EMSDK_PATH)/upstream/emscripten
     CLANG_PATH          = $(EMSDK_PATH)/upstream/bin
-    PYTHON_PATH         = $(EMSDK_PATH)/python/2.7.13.1_64bit/python-2.7.13.amd64
+    PYTHON_PATH         = $(EMSDK_PATH)/python/3.7.4_64bit
     NODE_PATH           = $(EMSDK_PATH)/node/12.9.1_64bit/bin
     export PATH         = $(EMSDK_PATH);$(EMSCRIPTEN_PATH);$(CLANG_PATH);$(NODE_PATH);$(PYTHON_PATH);C:\raylib\MinGW\bin:$$(PATH)
 endif
@@ -456,7 +456,8 @@ SHADERS = \
     shaders/shaders_eratosthenes \
     shaders/shaders_basic_lighting \
     shaders/shaders_fog \
-    shaders/shaders_simple_mask
+    shaders/shaders_simple_mask \
+    shaders/shaders_spotlight
     
 AUDIO = \
     audio/audio_module_playing \

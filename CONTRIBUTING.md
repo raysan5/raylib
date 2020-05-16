@@ -6,8 +6,8 @@ Do you enjoy raylib and want to contribute? Nice! You can help with the followin
 
 - C programming - Can you write/review/test/improve the code? 
 - Documentation/Tutorials/Example - Can you write some tutorial/example?
-- Web Development - Can you help [with the website](https://github.com/raysan5/raylib.com)?
 - Porting to other platforms - Can you port and compile raylib on other systems?
+- Web Development - Can you help [with the website](https://github.com/raysan5/raylib.com)?
 - Testing - Can you find some bugs in raylib?
 
 This document contains a set of guidelines to contribute to the project. These are mostly guidelines, not rules. 
@@ -16,10 +16,10 @@ Use your best judgement, and feel free to propose changes to this document in a 
 ### raylib philosophy
 
  - raylib is a tool to enjoy videogames programming, every single function in raylib should be a tutorial on itself.
- - raylib is SIMPLE and EASY-TO-USE, I tried to keep it compact with a small set of functions, if a function is too complex or is not clearly useful, better not to include it.
- - raylib is open source and free; educators and institutions can use this tool to TEACH videogames programming completely by free.
+ - raylib is **SIMPLE** and **EASY-TO-USE**, I tried to keep it compact with a small set of functions, if a function is too complex or is not clearly useful, better not including it.
+ - raylib is open source and free; educators and institutions can use this tool to **TEACH** videogames programming completely for free.
  - raylib is collaborative; contribution of tutorials / code examples / bug fixes / code comments are highly appreciated.
- - raylib's license (and its external libs respective licenses) allow using it for commercial products.
+ - raylib's license (and its external libs respective licenses) allow using it on commercial projects.
 
 ### Some interesting reads to start with
 
@@ -36,7 +36,7 @@ Feel free to review it if required, just take care not to break something.
 Despite being written in C, raylib does not follow the standard Hungarian notation for C, 
 it [follows Pascal-case/camel-case notation](https://github.com/raysan5/raylib/wiki/raylib-coding-conventions), 
 more common on C# language. All code formatting decisions have been carefully taken
-to make it easier for students to read, write and understand code. 
+to make it easier for students/users to read, write and understand code.
 
 Source code is extensively commented for that purpose, raylib primary learning method is:
 
@@ -133,4 +133,4 @@ contributing (in some way or another) to make the raylib project better. Huge th
  - [PompPenguin](https://github.com/PompPenguin) for reviewing 3rd person camera
  - [Mohamed Shazan](https://github.com/msmshazan) for adding support for ANGLE graphics backend
  
-Please, if I forget someone in this list, excuse me and send a PR!
+Please, if I forget someone in this list, excuse me and send me a PR!

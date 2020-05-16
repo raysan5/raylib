@@ -7,6 +7,16 @@ assignees: ''
 
 ---
 
+**WARNING: Please, read this note carefully before submitting a new issue:**
+
+It is important to realise that **this is NOT A SUPPORT FORUM**, this is for reproducible BUGS with raylib ONLY.
+
+There are lots of generous and helpful people ready to help you out on [raylib Discord forum](https://discord.gg/VkzNHUE) or [raylib reddit](https://www.reddit.com/r/raylib/).
+
+Remember that asking for support questions here actively takes developer time away from improving raylib.
+
+---
+
 Please, before submitting a new issue verify and check:
 
  - [ ] I tested it on latest raylib version from master branch

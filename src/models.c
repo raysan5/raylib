@@ -45,25 +45,46 @@
 
 #include "utils.h"          // Required for: fopen() Android mapping
 
-#include <stdlib.h>         // Required for: malloc(), free(), fabs()
+#include <stdlib.h>         // Required for: malloc(), free()
 #include <stdio.h>          // Required for: FILE, fopen(), fclose()
 #include <string.h>         // Required for: strncmp() [Used in LoadModelAnimations()], strlen() [Used in LoadTextureFromCgltfImage()]
-#include <math.h>           // Required for: sinf(), cosf(), sqrtf()
+#include <math.h>           // Required for: sinf(), cosf(), sqrtf(), fabsf()
+
+#if defined(_WIN32)
+    #include <direct.h>     // Required for: _chdir() [Used in LoadOBJ()]
+    #define CHDIR _chdir
+#else
+    #include <unistd.h>     // Required for: chdir() (POSIX) [Used in LoadOBJ()]
+    #define CHDIR chdir
+#endif
 
 #include "rlgl.h"           // raylib OpenGL abstraction layer to OpenGL 1.1, 2.1, 3.3+ or ES2
 
 #if defined(SUPPORT_FILEFORMAT_OBJ) || defined(SUPPORT_FILEFORMAT_MTL)
+    #define TINYOBJ_MALLOC RL_MALLOC
+    #define TINYOBJ_CALLOC RL_CALLOC
+    #define TINYOBJ_REALLOC RL_REALLOC
+    #define TINYOBJ_FREE RL_FREE
+
     #define TINYOBJ_LOADER_C_IMPLEMENTATION
     #include "external/tinyobj_loader_c.h"      // OBJ/MTL file formats loading
 #endif
 
 #if defined(SUPPORT_FILEFORMAT_GLTF)
+    #define CGLTF_MALLOC RL_MALLOC
+    #define CGLTF_FREE RL_FREE
+
     #define CGLTF_IMPLEMENTATION
     #include "external/cgltf.h"         // glTF file format loading
     #include "external/stb_image.h"     // glTF texture images loading
 #endif
 
 #if defined(SUPPORT_MESH_GENERATION)
+    #define PAR_MALLOC(T, N) ((T*)RL_MALLOC(N*sizeof(T)))
+    #define PAR_CALLOC(T, N) ((T*)RL_CALLOC(N*sizeof(T), 1))
+    #define PAR_REALLOC(T, BUF, N) ((T*)RL_REALLOC(BUF, sizeof(T)*(N)))
+    #define PAR_FREE RL_FREE
+
     #define PAR_SHAPES_IMPLEMENTATION
     #include "external/par_shapes.h"    // Shapes 3d parametric generation
 #endif
@@ -71,7 +92,9 @@
 //----------------------------------------------------------------------------------
 // Defines and Macros
 //----------------------------------------------------------------------------------
-#define MAX_MESH_VBO    7               // Maximum number of vbo per mesh
+#ifndef DEFAULT_MESH_VERTEX_BUFFERS
+    #define DEFAULT_MESH_VERTEX_BUFFERS    7    // Number of vertex buffers (VBO) per mesh
+#endif
 
 //----------------------------------------------------------------------------------
 // Types and Structures Definition
@@ -91,11 +114,9 @@ static Model LoadOBJ(const char *fileName);     // Load OBJ mesh data
 #endif
 #if defined(SUPPORT_FILEFORMAT_IQM)
 static Model LoadIQM(const char *fileName);     // Load IQM mesh data
-static ModelAnimation *loadIQMModelAnimations(FILE* iqmFile, int* animsCount);
 #endif
 #if defined(SUPPORT_FILEFORMAT_GLTF)
 static Model LoadGLTF(const char *fileName);    // Load GLTF mesh data
-static ModelAnimation *loadGLTFModelAnimations(FILE* gltfFile, const char* fileName, int* animsCount);
 #endif
 
 //----------------------------------------------------------------------------------
@@ -121,8 +142,8 @@ void DrawPoint3D(Vector3 position, Color color)
         rlTranslatef(position.x, position.y, position.z);
         rlBegin(RL_LINES);
             rlColor4ub(color.r, color.g, color.b, color.a);
-            rlVertex3f(0.0,0.0,0.0);
-            rlVertex3f(0.0,0.0,0.1);
+            rlVertex3f(0.0f, 0.0f, 0.0f);
+            rlVertex3f(0.0f, 0.0f, 0.1f);
         rlEnd();
     rlPopMatrix();
 }
@@ -146,6 +167,48 @@ void DrawCircle3D(Vector3 center, float radius, Vector3 rotationAxis, float rota
             }
         rlEnd();
     rlPopMatrix();
+}
+
+// Draw a color-filled triangle (vertex in counter-clockwise order!)
+void DrawTriangle3D(Vector3 v1, Vector3 v2, Vector3 v3, Color color)
+{
+    if (rlCheckBufferLimit(3)) rlglDraw();
+
+    rlBegin(RL_TRIANGLES);
+        rlColor4ub(color.r, color.g, color.b, color.a);
+        rlVertex3f(v1.x, v1.y, v1.z);
+        rlVertex3f(v2.x, v2.y, v2.z);
+        rlVertex3f(v3.x, v3.y, v3.z);
+    rlEnd();
+}
+
+// Draw a triangle strip defined by points
+void DrawTriangleStrip3D(Vector3 *points, int pointsCount, Color color)
+{
+    if (pointsCount >= 3)
+    {
+        if (rlCheckBufferLimit(3*(pointsCount - 2))) rlglDraw();
+
+        rlBegin(RL_TRIANGLES);
+            rlColor4ub(color.r, color.g, color.b, color.a);
+
+            for (int i = 2; i < pointsCount; i++)
+            {
+                if ((i%2) == 0)
+                {
+                    rlVertex3f(points[i].x, points[i].y, points[i].z);
+                    rlVertex3f(points[i - 2].x, points[i - 2].y, points[i - 2].z);
+                    rlVertex3f(points[i - 1].x, points[i - 1].y, points[i - 1].z);
+                }
+                else
+                {
+                    rlVertex3f(points[i].x, points[i].y, points[i].z);
+                    rlVertex3f(points[i - 1].x, points[i - 1].y, points[i - 1].z);
+                    rlVertex3f(points[i - 2].x, points[i - 2].y, points[i - 2].z);
+                }
+            }
+        rlEnd();
+    }
 }
 
 // Draw cube
@@ -669,10 +732,10 @@ Model LoadModel(const char *fileName)
         model.meshCount = 1;
         model.meshes = (Mesh *)RL_CALLOC(model.meshCount, sizeof(Mesh));
 #if defined(SUPPORT_MESH_GENERATION)
-        TRACELOG(LOG_WARNING, "[%s] No meshes can be loaded, default to cube mesh", fileName);
+        TRACELOG(LOG_WARNING, "MESH: [%s] Failed to load mesh data, default to cube mesh", fileName);
         model.meshes[0] = GenMeshCube(1.0f, 1.0f, 1.0f);
 #else
-        TRACELOG(LOG_WARNING, "[%s] No meshes can be loaded, and can't create a default mesh. The raylib mesh generation is not supported (SUPPORT_MESH_GENERATION).", fileName);
+        TRACELOG(LOG_WARNING, "MESH: [%s] Failed to load mesh data", fileName);
 #endif
     }
     else
@@ -683,7 +746,7 @@ Model LoadModel(const char *fileName)
 
     if (model.materialCount == 0)
     {
-        TRACELOG(LOG_WARNING, "[%s] No materials can be loaded, default to white material", fileName);
+        TRACELOG(LOG_WARNING, "MATERIAL: [%s] Failed to load material data, default to white material", fileName);
 
         model.materialCount = 1;
         model.materials = (Material *)RL_CALLOC(model.materialCount, sizeof(Material));
@@ -737,7 +800,7 @@ void UnloadModel(Model model)
     RL_FREE(model.bones);
     RL_FREE(model.bindPose);
 
-    TRACELOG(LOG_INFO, "Unloaded model data from RAM and VRAM");
+    TRACELOG(LOG_INFO, "MODEL: Unloaded model from RAM and VRAM");
 }
 
 // Load meshes from model file
@@ -811,8 +874,8 @@ void ExportMesh(Mesh mesh, const char *fileName)
     }
     else if (IsFileExtension(fileName, ".raw")) { }   // TODO: Support additional file formats to export mesh vertex data
 
-    if (success) TRACELOG(LOG_INFO, "Mesh exported successfully: %s", fileName);
-    else TRACELOG(LOG_WARNING, "Mesh could not be exported.");
+    if (success) TRACELOG(LOG_INFO, "FILEIO: [%s] Mesh exported successfully", fileName);
+    else TRACELOG(LOG_WARNING, "FILEIO: [%s] Failed to export mesh data", fileName);
 }
 
 // Load materials from model file
@@ -830,7 +893,7 @@ Material *LoadMaterials(const char *fileName, int *materialCount)
 
         int result = tinyobj_parse_mtl_file(&mats, &count, fileName);
         if (result != TINYOBJ_SUCCESS) {
-            TRACELOG(LOG_WARNING, "[%s] Could not parse Materials file", fileName);
+            TRACELOG(LOG_WARNING, "MATERIAL: [%s] Failed to parse materials file", fileName);
         }
 
         // TODO: Process materials to return
@@ -838,11 +901,11 @@ Material *LoadMaterials(const char *fileName, int *materialCount)
         tinyobj_materials_free(mats, count);
     }
 #else
-    TRACELOG(LOG_WARNING, "[%s] Materials file not supported", fileName);
+    TRACELOG(LOG_WARNING, "FILEIO: [%s] Failed to load material file", fileName);
 #endif
 
     // Set materials shader to default (DIFFUSE, SPECULAR, NORMAL)
-    for (int i = 0; i < count; i++) materials[i].shader = GetShaderDefault();
+    for (unsigned int i = 0; i < count; i++) materials[i].shader = GetShaderDefault();
 
     *materialCount = count;
     return materials;
@@ -890,191 +953,13 @@ void SetMaterialTexture(Material *material, int mapType, Texture2D texture)
 // Set the material for a mesh
 void SetModelMeshMaterial(Model *model, int meshId, int materialId)
 {
-    if (meshId >= model->meshCount) TRACELOG(LOG_WARNING, "Mesh id greater than mesh count");
-    else if (materialId >= model->materialCount) TRACELOG(LOG_WARNING,"Material id greater than material count");
+    if (meshId >= model->meshCount) TRACELOG(LOG_WARNING, "MESH: Id greater than mesh count");
+    else if (materialId >= model->materialCount) TRACELOG(LOG_WARNING, "MATERIAL: Id greater than material count");
     else  model->meshMaterial[meshId] = materialId;
 }
 
 // Load model animations from file
 ModelAnimation *LoadModelAnimations(const char *filename, int *animCount)
-{
-    #define GLTF_EXTENSION "gltf"
-    #define GLB_EXTENSION "glb"
-    #define IQM_EXTENSION "iqm"
-
-    // Ensure file exists
-    if (!FileExists(filename)) {
-        TRACELOG(LOG_ERROR, "[%s] File doesn't exist", filename);
-        return NULL;
-    }
-
-    // Get Extension to see which static function to call
-    const char* extension = GetExtension(filename);
-    if (!extension) {
-        TRACELOG(LOG_ERROR, "[%s] File has no extension", filename);
-        return NULL;
-    }
-
-    // Open file, pass to correct function
-    FILE *animationFile = NULL;
-    animationFile = fopen(filename,"rb");
-
-    if (!animationFile) {
-        TRACELOG(LOG_ERROR, "[%s] Unable to open file", filename);
-        return NULL;
-    }
-
-    if (TextIsEqual(extension, GLTF_EXTENSION) || TextIsEqual(extension, GLB_EXTENSION)) {
-        ModelAnimation *anims = loadGLTFModelAnimations(animationFile, filename, animCount);
-        printf("\n\n\nONCE AGAIN: %i\n\n\n", anims[0].boneCount);
-        return anims;
-    }
-
-    if (TextIsEqual(extension, IQM_EXTENSION)) {
-        return loadIQMModelAnimations(animationFile, animCount);
-    }
-
-    // Close file
-    fclose(animationFile);
-    return NULL;
-}
-
-static ModelAnimation *loadGLTFModelAnimations(FILE* gltfFile, const char* fileName, int* animCount)
-{
-    #define LOAD_ACCESSOR(type, nbcomp, acc, dst) \
-    { \
-        int n = 0; \
-        type* buf = (type*)acc->buffer_view->buffer->data+acc->buffer_view->offset/sizeof(type)+acc->offset/sizeof(type); \
-        for (int k = 0; k < acc->count; k++) {\
-            for (int l = 0; l < nbcomp; l++) {\
-                dst[nbcomp*k+l] = buf[n+l];\
-            }\
-            n += acc->stride/sizeof(type);\
-        }\
-    }
-
-    typedef struct GLTFSampler {
-        char name[30];
-    } GLTFSampler;
-    typedef struct GLTFChannel {
-        GLTFSampler *samplers;
-        int samplersCount;
-    } GLTFChannel;
-    typedef struct GLTFAnimation {
-        GLTFChannel *channels;
-        int channelsCount;
-
-        GLTFSampler *samplers;
-        int samplersCount;
-    } GLTFAnimation;
-
-    fseek(gltfFile, 0, SEEK_END);
-    int size = ftell(gltfFile);
-    fseek(gltfFile, 0, SEEK_SET);
-
-    void *buffer = RL_MALLOC(size);
-    fread(buffer, size, 1, gltfFile);
-
-    fclose(gltfFile);
-
-    // glTF data loading
-    cgltf_options options = { 0 };
-    cgltf_data *data = NULL;
-    cgltf_result result = cgltf_parse(&options, buffer, size, &data);
-    ModelAnimation* animations = NULL;
-    if (result == cgltf_result_success)
-    {
-        // Read data buffers
-        result = cgltf_load_buffers(&options, data, fileName);
-        if (result != cgltf_result_success) TRACELOG(LOG_INFO, "[%s][%s] Error loading mesh/material buffers", fileName, (data->file_type == 2)? "glb" : "gltf");
-        animations = RL_CALLOC(data->animations_count, sizeof(ModelAnimation));
-        *animCount = data->animations_count;
-        for (int i = 0; i < data->animations_count; i++) {
-            // Copy Animation Name
-            if (data->animations[i].name) {
-                if (TextLength(data->animations[i].name) < 64) {
-                    TextCopy(animations[i].name, data->animations[i].name);
-                }
-            }
-
-            // Load Skeleton Data
-            // Currenly only support one skin
-            printf("\n\n Joints for Animation: %i \n\n", data->skins[0].joints_count);
-            animations[i].boneCount = data->skins[0].joints_count;
-            animations[i].bones = RL_CALLOC(animations[i].boneCount, sizeof(BoneInfo));
-            for (int i = 0; i < animations[i].boneCount; i++) 
-            {
-                if (data->skins[0].joints[i]->name) {
-                    // Raylib only supports names up to 34 characters..
-                    if (TextLength(data->skins[0].joints[i]->name) <= 34) {
-                        TextCopy(animations[i].bones[i].name, data->skins[0].joints[i]->name); 
-                    }
-                }
-
-                // Mark parents in array
-                if (data->skins[0].joints[i]->children_count > 0) {
-                    int numOfChildrenJoints = data->skins[0].joints[i]->children_count; 
-                    for (int j = i; j < numOfChildrenJoints; j++) {
-                        animations[i].bones[j].parent = i;
-                    }
-                }
-            }
-
-            // Contains Channels, copy those to internal struct
-            if (data->animations[i].channels_count > 0) {
-                for (int j = 0; j < data->animations[i].channels_count; j++) {
-                    cgltf_node* animationTargetNode = data->animations[i].channels[j].target_node;
-                    cgltf_animation_sampler* animationSampler = data->animations[i].channels[j].sampler;
-                    cgltf_animation_path_type animPathType = data->animations[i].channels[j].target_path;
-
-                    cgltf_accessor* inputAcc = animationSampler->input;
-                    cgltf_accessor* outputAcc = animationSampler->output;
-                    cgltf_interpolation_type interpolationType = animationSampler->interpolation;
-
-                    // Inputs are always linear.. they are time in seconds of keyframe
-                    float* inputs = RL_CALLOC(inputAcc->count, sizeof(float));
-                    int inputsCount = inputAcc->count; 
-                    LOAD_ACCESSOR(float, 1, inputAcc, inputs);
-                    
-                    for (int blah = 0; blah < inputsCount; blah++) {
-                        printf("INPUT: animation: %d, channel: %d, index: %d, value: %f\n", i, j, blah, inputs[blah]);
-                    }
-
-                    // Outputs scale based on the sampler buffer type.. for instance outputAcc->type could be Scalar(1).. 
-                    // in most cases it will Vec3(3) or Vec4(4), so we must accomdate the array size
-                    float* outputs = RL_CALLOC(outputAcc->count * outputAcc->type, sizeof(float));
-                    int outputsCount = outputAcc->count * outputAcc->type;
-                    LOAD_ACCESSOR(float, outputAcc->type, outputAcc, outputs);
-
-                    for (int blah = 0; blah < outputsCount; blah++) {
-                        printf("OUTPUT: animation: %d, channel: %d, index: %d, value: %f\n", i, j, blah, outputs[blah]);
-                    }
-                    puts("\n");
-
-                    //Get raylib bone joint..
-
-                    switch (interpolationType) {
-                        case cgltf_interpolation_type_linear:
-                            break;
-                        case cgltf_interpolation_type_step:
-                            break;
-                        case cgltf_interpolation_type_cubic_spline:
-                            break;
-                        default:
-                            TRACELOG(LOG_WARNING, "Unsupported interpolation type for GLTF/GLB model.");
-                            break;
-                    }
-                }
-            }
-        }
-    }
-
-    free(data);
-    printf("\n\n\nANIAMTION JOINT COUNT: %i\n\n\n\n", animations[0].boneCount);
-    return animations;
-}
-
-static ModelAnimation *loadIQMModelAnimations(FILE* iqmFile, int *animCount) 
 {
     #define IQM_MAGIC       "INTERQUAKEMODEL"   // IQM file magic number
     #define IQM_VERSION     2                   // only IQM version 2 supported
@@ -1116,17 +1001,15 @@ static ModelAnimation *loadIQMModelAnimations(FILE* iqmFile, int *animCount)
 
     if (strncmp(iqm.magic, IQM_MAGIC, sizeof(IQM_MAGIC)))
     {
-        TRACELOG(LOG_ERROR, "Magic Number \"%s\"does not match.", iqm.magic);
+        TRACELOG(LOG_WARNING, "MODEL: [%s] IQM file is not a valid model", filename);
         fclose(iqmFile);
-
         return NULL;
     }
 
     if (iqm.version != IQM_VERSION)
     {
-        TRACELOG(LOG_ERROR, "IQM version %i is incorrect.", iqm.version);
+        TRACELOG(LOG_WARNING, "MODEL: [%s] IQM file version incorrect", filename);
         fclose(iqmFile);
-
         return NULL;
     }
 
@@ -1147,7 +1030,7 @@ static ModelAnimation *loadIQMModelAnimations(FILE* iqmFile, int *animCount)
     fseek(iqmFile, iqm.ofs_frames, SEEK_SET);
     fread(framedata, iqm.num_frames*iqm.num_framechannels*sizeof(unsigned short), 1, iqmFile);
 
-    for (int a = 0; a < iqm.num_anims; a++)
+    for (unsigned int a = 0; a < iqm.num_anims; a++)
     {
         animations[a].frameCount = anim[a].num_frames;
         animations[a].boneCount = iqm.num_poses;
@@ -1155,19 +1038,19 @@ static ModelAnimation *loadIQMModelAnimations(FILE* iqmFile, int *animCount)
         animations[a].framePoses = RL_MALLOC(anim[a].num_frames*sizeof(Transform *));
         //animations[a].framerate = anim.framerate;     // TODO: Use framerate?
 
-        for (int j = 0; j < iqm.num_poses; j++)
+        for (unsigned int j = 0; j < iqm.num_poses; j++)
         {
             strcpy(animations[a].bones[j].name, "ANIMJOINTNAME");
             animations[a].bones[j].parent = poses[j].parent;
         }
 
-        for (int j = 0; j < anim[a].num_frames; j++) animations[a].framePoses[j] = RL_MALLOC(iqm.num_poses*sizeof(Transform));
+        for (unsigned int j = 0; j < anim[a].num_frames; j++) animations[a].framePoses[j] = RL_MALLOC(iqm.num_poses*sizeof(Transform));
 
         int dcounter = anim[a].first_frame*iqm.num_framechannels;
 
-        for (int frame = 0; frame < anim[a].num_frames; frame++)
+        for (unsigned int frame = 0; frame < anim[a].num_frames; frame++)
         {
-            for (int i = 0; i < iqm.num_poses; i++)
+            for (unsigned int i = 0; i < iqm.num_poses; i++)
             {
                 animations[a].framePoses[frame][i].translation.x = poses[i].channeloffset[0];
 
@@ -1254,7 +1137,7 @@ static ModelAnimation *loadIQMModelAnimations(FILE* iqmFile, int *animCount)
         }
 
         // Build frameposes
-        for (int frame = 0; frame < anim[a].num_frames; frame++)
+        for (unsigned int frame = 0; frame < anim[a].num_frames; frame++)
         {
             for (int i = 0; i < animations[a].boneCount; i++)
             {
@@ -1293,7 +1176,7 @@ void UpdateModelAnimation(Model model, ModelAnimation anim, int frame)
 
             Vector3 inTranslation = { 0 };
             Quaternion inRotation = { 0 };
-            Vector3 inScale = { 0 };
+            //Vector3 inScale = { 0 };      // Not used...
 
             Vector3 outTranslation = { 0 };
             Quaternion outRotation = { 0 };
@@ -1308,7 +1191,7 @@ void UpdateModelAnimation(Model model, ModelAnimation anim, int frame)
                 boneId = model.meshes[m].boneIds[boneCounter];
                 inTranslation = model.bindPose[boneId].translation;
                 inRotation = model.bindPose[boneId].rotation;
-                inScale = model.bindPose[boneId].scale;
+                //inScale = model.bindPose[boneId].scale;
                 outTranslation = anim.framePoses[frame][boneId].translation;
                 outRotation = anim.framePoses[frame][boneId].rotation;
                 outScale = anim.framePoses[frame][boneId].scale;
@@ -1375,7 +1258,7 @@ bool IsModelAnimationValid(Model model, ModelAnimation anim)
 Mesh GenMeshPoly(int sides, float radius)
 {
     Mesh mesh = { 0 };
-    mesh.vboId = (unsigned int *)RL_CALLOC(MAX_MESH_VBO, sizeof(unsigned int));
+    mesh.vboId = (unsigned int *)RL_CALLOC(DEFAULT_MESH_VERTEX_BUFFERS, sizeof(unsigned int));
     int vertexCount = sides*3;
 
     // Vertices definition
@@ -1438,7 +1321,7 @@ Mesh GenMeshPoly(int sides, float radius)
 Mesh GenMeshPlane(float width, float length, int resX, int resZ)
 {
     Mesh mesh = { 0 };
-    mesh.vboId = (unsigned int *)RL_CALLOC(MAX_MESH_VBO, sizeof(unsigned int));
+    mesh.vboId = (unsigned int *)RL_CALLOC(DEFAULT_MESH_VERTEX_BUFFERS, sizeof(unsigned int));
 
 #define CUSTOM_MESH_GEN_PLANE
 #if defined(CUSTOM_MESH_GEN_PLANE)
@@ -1541,7 +1424,7 @@ Mesh GenMeshPlane(float width, float length, int resX, int resZ)
     mesh.vertices = (float *)RL_MALLOC(plane->ntriangles*3*3*sizeof(float));
     mesh.texcoords = (float *)RL_MALLOC(plane->ntriangles*3*2*sizeof(float));
     mesh.normals = (float *)RL_MALLOC(plane->ntriangles*3*3*sizeof(float));
-    mesh.vboId = (unsigned int *)RL_CALLOC(MAX_MESH_VBO, sizeof(unsigned int));
+    mesh.vboId = (unsigned int *)RL_CALLOC(DEFAULT_MESH_VERTEX_BUFFERS, sizeof(unsigned int));
 
     mesh.vertexCount = plane->ntriangles*3;
     mesh.triangleCount = plane->ntriangles;
@@ -1573,7 +1456,7 @@ Mesh GenMeshPlane(float width, float length, int resX, int resZ)
 Mesh GenMeshCube(float width, float height, float length)
 {
     Mesh mesh = { 0 };
-    mesh.vboId = (unsigned int *)RL_CALLOC(MAX_MESH_VBO, sizeof(unsigned int));
+    mesh.vboId = (unsigned int *)RL_CALLOC(DEFAULT_MESH_VERTEX_BUFFERS, sizeof(unsigned int));
 
 #define CUSTOM_MESH_GEN_CUBE
 #if defined(CUSTOM_MESH_GEN_CUBE)
@@ -1739,7 +1622,7 @@ par_shapes_mesh* par_shapes_create_icosahedron();       // 20 sides polyhedron
 RLAPI Mesh GenMeshSphere(float radius, int rings, int slices)
 {
     Mesh mesh = { 0 };
-    mesh.vboId = (unsigned int *)RL_CALLOC(MAX_MESH_VBO, sizeof(unsigned int));
+    mesh.vboId = (unsigned int *)RL_CALLOC(DEFAULT_MESH_VERTEX_BUFFERS, sizeof(unsigned int));
 
     par_shapes_mesh *sphere = par_shapes_create_parametric_sphere(slices, rings);
     par_shapes_scale(sphere, radius, radius, radius);
@@ -1778,7 +1661,7 @@ RLAPI Mesh GenMeshSphere(float radius, int rings, int slices)
 RLAPI Mesh GenMeshHemiSphere(float radius, int rings, int slices)
 {
     Mesh mesh = { 0 };
-    mesh.vboId = (unsigned int *)RL_CALLOC(MAX_MESH_VBO, sizeof(unsigned int));
+    mesh.vboId = (unsigned int *)RL_CALLOC(DEFAULT_MESH_VERTEX_BUFFERS, sizeof(unsigned int));
 
     par_shapes_mesh *sphere = par_shapes_create_hemisphere(slices, rings);
     par_shapes_scale(sphere, radius, radius, radius);
@@ -1817,7 +1700,7 @@ RLAPI Mesh GenMeshHemiSphere(float radius, int rings, int slices)
 Mesh GenMeshCylinder(float radius, float height, int slices)
 {
     Mesh mesh = { 0 };
-    mesh.vboId = (unsigned int *)RL_CALLOC(MAX_MESH_VBO, sizeof(unsigned int));
+    mesh.vboId = (unsigned int *)RL_CALLOC(DEFAULT_MESH_VERTEX_BUFFERS, sizeof(unsigned int));
 
     // Instance a cylinder that sits on the Z=0 plane using the given tessellation
     // levels across the UV domain.  Think of "slices" like a number of pizza
@@ -1877,7 +1760,7 @@ Mesh GenMeshCylinder(float radius, float height, int slices)
 Mesh GenMeshTorus(float radius, float size, int radSeg, int sides)
 {
     Mesh mesh = { 0 };
-    mesh.vboId = (unsigned int *)RL_CALLOC(MAX_MESH_VBO, sizeof(unsigned int));
+    mesh.vboId = (unsigned int *)RL_CALLOC(DEFAULT_MESH_VERTEX_BUFFERS, sizeof(unsigned int));
 
     if (radius > 1.0f) radius = 1.0f;
     else if (radius < 0.1f) radius = 0.1f;
@@ -1920,7 +1803,7 @@ Mesh GenMeshTorus(float radius, float size, int radSeg, int sides)
 Mesh GenMeshKnot(float radius, float size, int radSeg, int sides)
 {
     Mesh mesh = { 0 };
-    mesh.vboId = (unsigned int *)RL_CALLOC(MAX_MESH_VBO, sizeof(unsigned int));
+    mesh.vboId = (unsigned int *)RL_CALLOC(DEFAULT_MESH_VERTEX_BUFFERS, sizeof(unsigned int));
 
     if (radius > 3.0f) radius = 3.0f;
     else if (radius < 0.5f) radius = 0.5f;
@@ -1964,7 +1847,7 @@ Mesh GenMeshHeightmap(Image heightmap, Vector3 size)
     #define GRAY_VALUE(c) ((c.r+c.g+c.b)/3)
 
     Mesh mesh = { 0 };
-    mesh.vboId = (unsigned int *)RL_CALLOC(MAX_MESH_VBO, sizeof(unsigned int));
+    mesh.vboId = (unsigned int *)RL_CALLOC(DEFAULT_MESH_VERTEX_BUFFERS, sizeof(unsigned int));
 
     int mapX = heightmap.width;
     int mapZ = heightmap.height;
@@ -1988,6 +1871,11 @@ Mesh GenMeshHeightmap(Image heightmap, Vector3 size)
     int trisCounter = 0;
 
     Vector3 scaleFactor = { size.x/mapX, size.y/255.0f, size.z/mapZ };
+
+    Vector3 vA;
+    Vector3 vB;
+    Vector3 vC;
+    Vector3 vN;
 
     for (int z = 0; z < mapZ-1; z++)
     {
@@ -2046,14 +1934,34 @@ Mesh GenMeshHeightmap(Image heightmap, Vector3 size)
 
             // Fill normals array with data
             //--------------------------------------------------------------
-            for (int i = 0; i < 18; i += 3)
+            for (int i = 0; i < 18; i += 9)
             {
-                mesh.normals[nCounter + i] = 0.0f;
-                mesh.normals[nCounter + i + 1] = 1.0f;
-                mesh.normals[nCounter + i + 2] = 0.0f;
-            }
+                vA.x = mesh.vertices[nCounter + i];
+                vA.y = mesh.vertices[nCounter + i + 1];
+                vA.z = mesh.vertices[nCounter + i + 2];
 
-            // TODO: Calculate normals in an efficient way
+                vB.x = mesh.vertices[nCounter + i + 3];
+                vB.y = mesh.vertices[nCounter + i + 4];
+                vB.z = mesh.vertices[nCounter + i + 5];
+
+                vC.x = mesh.vertices[nCounter + i + 6];
+                vC.y = mesh.vertices[nCounter + i + 7];
+                vC.z = mesh.vertices[nCounter + i + 8];
+
+                vN = Vector3Normalize(Vector3CrossProduct(Vector3Subtract(vB, vA), Vector3Subtract(vC, vA)));
+
+                mesh.normals[nCounter + i] = vN.x;
+                mesh.normals[nCounter + i + 1] = vN.y;
+                mesh.normals[nCounter + i + 2] = vN.z;
+
+                mesh.normals[nCounter + i + 3] = vN.x;
+                mesh.normals[nCounter + i + 4] = vN.y;
+                mesh.normals[nCounter + i + 5] = vN.z;
+
+                mesh.normals[nCounter + i + 6] = vN.x;
+                mesh.normals[nCounter + i + 7] = vN.y;
+                mesh.normals[nCounter + i + 8] = vN.z;
+            }
 
             nCounter += 18;     // 6 vertex, 18 floats
             trisCounter += 2;
@@ -2072,8 +1980,10 @@ Mesh GenMeshHeightmap(Image heightmap, Vector3 size)
 // NOTE: Vertex data is uploaded to GPU
 Mesh GenMeshCubicmap(Image cubicmap, Vector3 cubeSize)
 {
+    #define COLOR_EQUAL(col1, col2) ((col1.r == col2.r)&&(col1.g == col2.g)&&(col1.b == col2.b)&&(col1.a == col2.a))
+
     Mesh mesh = { 0 };
-    mesh.vboId = (unsigned int *)RL_CALLOC(MAX_MESH_VBO, sizeof(unsigned int));
+    mesh.vboId = (unsigned int *)RL_CALLOC(DEFAULT_MESH_VERTEX_BUFFERS, sizeof(unsigned int));
 
     Color *cubicmapPixels = GetImageData(cubicmap);
 
@@ -2100,8 +2010,8 @@ Mesh GenMeshCubicmap(Image cubicmap, Vector3 cubeSize)
     Vector3 n2 = { -1.0f, 0.0f, 0.0f };
     Vector3 n3 = { 0.0f, 1.0f, 0.0f };
     Vector3 n4 = { 0.0f, -1.0f, 0.0f };
-    Vector3 n5 = { 0.0f, 0.0f, 1.0f };
-    Vector3 n6 = { 0.0f, 0.0f, -1.0f };
+    Vector3 n5 = { 0.0f, 0.0f, -1.0f };
+    Vector3 n6 = { 0.0f, 0.0f, 1.0f };
 
     // NOTE: We use texture rectangles to define different textures for top-bottom-front-back-right-left (6)
     typedef struct RectangleF {
@@ -2132,15 +2042,14 @@ Mesh GenMeshCubicmap(Image cubicmap, Vector3 cubeSize)
             Vector3 v7 = { w*(x - 0.5f), 0, h*(z + 0.5f) };
             Vector3 v8 = { w*(x + 0.5f), 0, h*(z + 0.5f) };
 
-            // We check pixel color to be WHITE, we will full cubes
-            if ((cubicmapPixels[z*cubicmap.width + x].r == 255) &&
-                (cubicmapPixels[z*cubicmap.width + x].g == 255) &&
-                (cubicmapPixels[z*cubicmap.width + x].b == 255))
+            // We check pixel color to be WHITE -> draw full cube
+            if (COLOR_EQUAL(cubicmapPixels[z*cubicmap.width + x], WHITE))
             {
-                // Define triangles (Checking Collateral Cubes!)
-                //----------------------------------------------
+                // Define triangles and checking collateral cubes
+                //------------------------------------------------
 
                 // Define top triangles (2 tris, 6 vertex --> v1-v2-v3, v1-v3-v4)
+                // WARNING: Not required for a WHITE cubes, created to allow seeing the map from outside
                 mapVertices[vCounter] = v1;
                 mapVertices[vCounter + 1] = v2;
                 mapVertices[vCounter + 2] = v3;
@@ -2190,10 +2099,8 @@ Mesh GenMeshCubicmap(Image cubicmap, Vector3 cubeSize)
                 mapTexcoords[tcCounter + 5] = (Vector2){ bottomTexUV.x, bottomTexUV.y + bottomTexUV.height };
                 tcCounter += 6;
 
-                if (((z < cubicmap.height - 1) &&
-                (cubicmapPixels[(z + 1)*cubicmap.width + x].r == 0) &&
-                (cubicmapPixels[(z + 1)*cubicmap.width + x].g == 0) &&
-                (cubicmapPixels[(z + 1)*cubicmap.width + x].b == 0)) || (z == cubicmap.height - 1))
+                // Checking cube on bottom of current cube
+                if (((z < cubicmap.height - 1) && COLOR_EQUAL(cubicmapPixels[(z + 1)*cubicmap.width + x], BLACK)) || (z == cubicmap.height - 1))
                 {
                     // Define front triangles (2 tris, 6 vertex) --> v2 v7 v3, v3 v7 v8
                     // NOTE: Collateral occluded faces are not generated
@@ -2222,10 +2129,8 @@ Mesh GenMeshCubicmap(Image cubicmap, Vector3 cubeSize)
                     tcCounter += 6;
                 }
 
-                if (((z > 0) &&
-                (cubicmapPixels[(z - 1)*cubicmap.width + x].r == 0) &&
-                (cubicmapPixels[(z - 1)*cubicmap.width + x].g == 0) &&
-                (cubicmapPixels[(z - 1)*cubicmap.width + x].b == 0)) || (z == 0))
+                // Checking cube on top of current cube
+                if (((z > 0) && COLOR_EQUAL(cubicmapPixels[(z - 1)*cubicmap.width + x], BLACK)) || (z == 0))
                 {
                     // Define back triangles (2 tris, 6 vertex) --> v1 v5 v6, v1 v4 v5
                     // NOTE: Collateral occluded faces are not generated
@@ -2254,10 +2159,8 @@ Mesh GenMeshCubicmap(Image cubicmap, Vector3 cubeSize)
                     tcCounter += 6;
                 }
 
-                if (((x < cubicmap.width - 1) &&
-                (cubicmapPixels[z*cubicmap.width + (x + 1)].r == 0) &&
-                (cubicmapPixels[z*cubicmap.width + (x + 1)].g == 0) &&
-                (cubicmapPixels[z*cubicmap.width + (x + 1)].b == 0)) || (x == cubicmap.width - 1))
+                // Checking cube on right of current cube
+                if (((x < cubicmap.width - 1) && COLOR_EQUAL(cubicmapPixels[z*cubicmap.width + (x + 1)], BLACK)) || (x == cubicmap.width - 1))
                 {
                     // Define right triangles (2 tris, 6 vertex) --> v3 v8 v4, v4 v8 v5
                     // NOTE: Collateral occluded faces are not generated
@@ -2286,10 +2189,8 @@ Mesh GenMeshCubicmap(Image cubicmap, Vector3 cubeSize)
                     tcCounter += 6;
                 }
 
-                if (((x > 0) &&
-                (cubicmapPixels[z*cubicmap.width + (x - 1)].r == 0) &&
-                (cubicmapPixels[z*cubicmap.width + (x - 1)].g == 0) &&
-                (cubicmapPixels[z*cubicmap.width + (x - 1)].b == 0)) || (x == 0))
+                // Checking cube on left of current cube
+                if (((x > 0) && COLOR_EQUAL(cubicmapPixels[z*cubicmap.width + (x - 1)], BLACK)) || (x == 0))
                 {
                     // Define left triangles (2 tris, 6 vertex) --> v1 v7 v2, v1 v6 v7
                     // NOTE: Collateral occluded faces are not generated
@@ -2319,9 +2220,7 @@ Mesh GenMeshCubicmap(Image cubicmap, Vector3 cubeSize)
                 }
             }
             // We check pixel color to be BLACK, we will only draw floor and roof
-            else if  ((cubicmapPixels[z*cubicmap.width + x].r == 0) &&
-                      (cubicmapPixels[z*cubicmap.width + x].g == 0) &&
-                      (cubicmapPixels[z*cubicmap.width + x].b == 0))
+            else if (COLOR_EQUAL(cubicmapPixels[z*cubicmap.width + x], BLACK))
             {
                 // Define top triangles (2 tris, 6 vertex --> v1-v2-v3, v1-v3-v4)
                 mapVertices[vCounter] = v1;
@@ -2464,7 +2363,7 @@ BoundingBox MeshBoundingBox(Mesh mesh)
 void MeshTangents(Mesh *mesh)
 {
     if (mesh->tangents == NULL) mesh->tangents = (float *)RL_MALLOC(mesh->vertexCount*4*sizeof(float));
-    else TRACELOG(LOG_WARNING, "Mesh tangents already exist");
+    else TRACELOG(LOG_WARNING, "MESH: Tangents data already available, re-writting");
 
     Vector3 *tan1 = (Vector3 *)RL_MALLOC(mesh->vertexCount*sizeof(Vector3));
     Vector3 *tan2 = (Vector3 *)RL_MALLOC(mesh->vertexCount*sizeof(Vector3));
@@ -2537,7 +2436,7 @@ void MeshTangents(Mesh *mesh)
     // Load a new tangent attributes buffer
     mesh->vboId[LOC_VERTEX_TANGENT] = rlLoadAttribBuffer(mesh->vaoId, LOC_VERTEX_TANGENT, mesh->tangents, mesh->vertexCount*4*sizeof(float), false);
 
-    TRACELOG(LOG_INFO, "Tangents computed for mesh");
+    TRACELOG(LOG_INFO, "MESH: Tangents data computed for provided mesh");
 }
 
 // Compute mesh binormals (aka bitangent)
@@ -2582,10 +2481,10 @@ void DrawModelEx(Model model, Vector3 position, Vector3 rotationAxis, float rota
         Color color = model.materials[model.meshMaterial[i]].maps[MAP_DIFFUSE].color;
 
         Color colorTint = WHITE;
-        colorTint.r = (((float)color.r/255.0)*((float)tint.r/255.0))*255;
-        colorTint.g = (((float)color.g/255.0)*((float)tint.g/255.0))*255;
-        colorTint.b = (((float)color.b/255.0)*((float)tint.b/255.0))*255;
-        colorTint.a = (((float)color.a/255.0)*((float)tint.a/255.0))*255;
+        colorTint.r = (unsigned char)((((float)color.r/255.0)*((float)tint.r/255.0))*255.0f);
+        colorTint.g = (unsigned char)((((float)color.g/255.0)*((float)tint.g/255.0))*255.0f);
+        colorTint.b = (unsigned char)((((float)color.b/255.0)*((float)tint.b/255.0))*255.0f);
+        colorTint.a = (unsigned char)((((float)color.a/255.0)*((float)tint.a/255.0))*255.0f);
 
         model.materials[model.meshMaterial[i]].maps[MAP_DIFFUSE].color = colorTint;
         rlDrawMesh(model.meshes[i], model.materials[model.meshMaterial[i]], model.transform);
@@ -2684,9 +2583,9 @@ void DrawBoundingBox(BoundingBox box, Color color)
 {
     Vector3 size;
 
-    size.x = (float)fabs(box.max.x - box.min.x);
-    size.y = (float)fabs(box.max.y - box.min.y);
-    size.z = (float)fabs(box.max.z - box.min.z);
+    size.x = fabsf(box.max.x - box.min.x);
+    size.y = fabsf(box.max.y - box.min.y);
+    size.z = fabsf(box.max.z - box.min.z);
 
     Vector3 center = { box.min.x + size.x/2.0f, box.min.y + size.y/2.0f, box.min.z + size.z/2.0f };
 
@@ -2932,7 +2831,7 @@ RayHitInfo GetCollisionRayGround(Ray ray, float groundHeight)
 
     RayHitInfo result = { 0 };
 
-    if (fabs(ray.direction.y) > EPSILON)
+    if (fabsf(ray.direction.y) > EPSILON)
     {
         float distance = (ray.position.y - groundHeight)/-ray.direction.y;
 
@@ -2965,32 +2864,20 @@ static Model LoadOBJ(const char *fileName)
     tinyobj_material_t *materials = NULL;
     unsigned int materialCount = 0;
 
-    int dataLength = 0;
-    char *data = NULL;
+    char *fileData = LoadFileText(fileName);
 
-    // Load model data
-    FILE *objFile = fopen(fileName, "rb");
-
-    if (objFile != NULL)
+    if (fileData != NULL)
     {
-        fseek(objFile, 0, SEEK_END);
-        long length = ftell(objFile);   // Get file size
-        fseek(objFile, 0, SEEK_SET);    // Reset file pointer
+        unsigned int dataSize = (unsigned int)strlen(fileData);
+        char currentDir[1024] = { 0 };
+        strcpy(currentDir, GetWorkingDirectory());
+        chdir(GetDirectoryPath(fileName));
 
-        data = (char *)RL_MALLOC(length);
-
-        fread(data, length, 1, objFile);
-        dataLength = length;
-        fclose(objFile);
-    }
-
-    if (data != NULL)
-    {
         unsigned int flags = TINYOBJ_FLAG_TRIANGULATE;
-        int ret = tinyobj_parse_obj(&attrib, &meshes, &meshCount, &materials, &materialCount, data, dataLength, flags);
+        int ret = tinyobj_parse_obj(&attrib, &meshes, &meshCount, &materials, &materialCount, fileData, dataSize, flags);
 
-        if (ret != TINYOBJ_SUCCESS) TRACELOG(LOG_WARNING, "[%s] Model data could not be loaded", fileName);
-        else TRACELOG(LOG_INFO, "[%s] Model data loaded successfully: %i meshes / %i materials", fileName, meshCount, materialCount);
+        if (ret != TINYOBJ_SUCCESS) TRACELOG(LOG_WARNING, "MODEL: [%s] Failed to load OBJ data", fileName);
+        else TRACELOG(LOG_INFO, "MODEL: [%s] OBJ data loaded successfully: %i meshes / %i materials", fileName, meshCount, materialCount);
 
         // Init model meshes array
         // TODO: Support multiple meshes... in the meantime, only one mesh is returned
@@ -3027,20 +2914,18 @@ static Model LoadOBJ(const char *fileName)
             mesh.vertices = (float *)RL_CALLOC(mesh.vertexCount*3, sizeof(float));
             mesh.texcoords = (float *)RL_CALLOC(mesh.vertexCount*2, sizeof(float));
             mesh.normals = (float *)RL_CALLOC(mesh.vertexCount*3, sizeof(float));
-            mesh.vboId = (unsigned int *)RL_CALLOC(MAX_MESH_VBO, sizeof(unsigned int));
+            mesh.vboId = (unsigned int *)RL_CALLOC(DEFAULT_MESH_VERTEX_BUFFERS, sizeof(unsigned int));
 
             int vCount = 0;
             int vtCount = 0;
             int vnCount = 0;
 
-            for (int f = 0; f < attrib.num_faces; f++)
+            for (unsigned int f = 0; f < attrib.num_faces; f++)
             {
                 // Get indices for the face
                 tinyobj_vertex_index_t idx0 = attrib.faces[3*f + 0];
                 tinyobj_vertex_index_t idx1 = attrib.faces[3*f + 1];
                 tinyobj_vertex_index_t idx2 = attrib.faces[3*f + 2];
-
-                // TRACELOGD("Face %i index: v %i/%i/%i . vt %i/%i/%i . vn %i/%i/%i\n", f, idx0.v_idx, idx1.v_idx, idx2.v_idx, idx0.vt_idx, idx1.vt_idx, idx2.vt_idx, idx0.vn_idx, idx1.vn_idx, idx2.vn_idx);
 
                 // Fill vertices buffer (float) using vertex index of the face
                 for (int v = 0; v < 3; v++) { mesh.vertices[vCount + v] = attrib.vertices[idx0.v_idx*3 + v]; } vCount +=3;
@@ -3072,7 +2957,7 @@ static Model LoadOBJ(const char *fileName)
         }
 
         // Init model materials
-        for (int m = 0; m < materialCount; m++)
+        for (unsigned int m = 0; m < materialCount; m++)
         {
             // Init material to default
             // NOTE: Uses default shader, only MAP_DIFFUSE supported
@@ -3108,18 +2993,18 @@ static Model LoadOBJ(const char *fileName)
             model.materials[m].maps[MAP_DIFFUSE].texture = GetTextureDefault();     // Get default texture, in case no texture is defined
 
             if (materials[m].diffuse_texname != NULL) model.materials[m].maps[MAP_DIFFUSE].texture = LoadTexture(materials[m].diffuse_texname);  //char *diffuse_texname; // map_Kd
-            model.materials[m].maps[MAP_DIFFUSE].color = (Color){ (float)(materials[m].diffuse[0]*255.0f), (float)(materials[m].diffuse[1]*255.0f), (float)(materials[m].diffuse[2]*255.0f), 255 }; //float diffuse[3];
+            model.materials[m].maps[MAP_DIFFUSE].color = (Color){ (unsigned char)(materials[m].diffuse[0]*255.0f), (unsigned char)(materials[m].diffuse[1]*255.0f), (unsigned char)(materials[m].diffuse[2]*255.0f), 255 }; //float diffuse[3];
             model.materials[m].maps[MAP_DIFFUSE].value = 0.0f;
 
             if (materials[m].specular_texname != NULL) model.materials[m].maps[MAP_SPECULAR].texture = LoadTexture(materials[m].specular_texname);  //char *specular_texname; // map_Ks
-            model.materials[m].maps[MAP_SPECULAR].color = (Color){ (float)(materials[m].specular[0]*255.0f), (float)(materials[m].specular[1]*255.0f), (float)(materials[m].specular[2]*255.0f), 255 }; //float specular[3];
+            model.materials[m].maps[MAP_SPECULAR].color = (Color){ (unsigned char)(materials[m].specular[0]*255.0f), (unsigned char)(materials[m].specular[1]*255.0f), (unsigned char)(materials[m].specular[2]*255.0f), 255 }; //float specular[3];
             model.materials[m].maps[MAP_SPECULAR].value = 0.0f;
 
             if (materials[m].bump_texname != NULL) model.materials[m].maps[MAP_NORMAL].texture = LoadTexture(materials[m].bump_texname);  //char *bump_texname; // map_bump, bump
             model.materials[m].maps[MAP_NORMAL].color = WHITE;
             model.materials[m].maps[MAP_NORMAL].value = materials[m].shininess;
 
-            model.materials[m].maps[MAP_EMISSION].color = (Color){ (float)(materials[m].emission[0]*255.0f), (float)(materials[m].emission[1]*255.0f), (float)(materials[m].emission[2]*255.0f), 255 }; //float emission[3];
+            model.materials[m].maps[MAP_EMISSION].color = (Color){ (unsigned char)(materials[m].emission[0]*255.0f), (unsigned char)(materials[m].emission[1]*255.0f), (unsigned char)(materials[m].emission[2]*255.0f), 255 }; //float emission[3];
 
             if (materials[m].displacement_texname != NULL) model.materials[m].maps[MAP_HEIGHT].texture = LoadTexture(materials[m].displacement_texname);  //char *displacement_texname; // disp
         }
@@ -3127,12 +3012,11 @@ static Model LoadOBJ(const char *fileName)
         tinyobj_attrib_free(&attrib);
         tinyobj_shapes_free(meshes, meshCount);
         tinyobj_materials_free(materials, materialCount);
+        
+        RL_FREE(fileData);
 
-        RL_FREE(data);
+        chdir(currentDir);
     }
-
-    // NOTE: At this point we have all model data loaded
-    TRACELOG(LOG_INFO, "[%s] Model loaded successfully in RAM (CPU)", fileName);
 
     return model;
 }
@@ -3147,6 +3031,7 @@ static Model LoadIQM(const char *fileName)
 
     #define BONE_NAME_LENGTH    32          // BoneInfo name string length
     #define MESH_NAME_LENGTH    32          // Mesh name string length
+    #define MATERIAL_NAME_LENGTH 32         // Material name string length
 
     // IQM file structs
     //-----------------------------------------------------------------------------------
@@ -3251,22 +3136,22 @@ static Model LoadIQM(const char *fileName)
 
     if (iqmFile == NULL)
     {
-        TRACELOG(LOG_WARNING, "[%s] IQM file could not be opened", fileName);
+        TRACELOG(LOG_WARNING, "FILEIO: [%s] Failed to open IQM file", fileName);
         return model;
     }
 
-    fread(&iqm,sizeof(IQMHeader), 1, iqmFile);  // Read IQM header
+    fread(&iqm, sizeof(IQMHeader), 1, iqmFile);  // Read IQM header
 
     if (strncmp(iqm.magic, IQM_MAGIC, sizeof(IQM_MAGIC)))
     {
-        TRACELOG(LOG_WARNING, "[%s] IQM file does not seem to be valid", fileName);
+        TRACELOG(LOG_WARNING, "MODEL: [%s] IQM file is not a valid model", fileName);
         fclose(iqmFile);
         return model;
     }
 
     if (iqm.version != IQM_VERSION)
     {
-        TRACELOG(LOG_WARNING, "[%s] IQM file version is not supported (%i).", fileName, iqm.version);
+        TRACELOG(LOG_WARNING, "MODEL: [%s] IQM file version not supported (%i)", fileName, iqm.version);
         fclose(iqmFile);
         return model;
     }
@@ -3279,12 +3164,25 @@ static Model LoadIQM(const char *fileName)
     model.meshCount = iqm.num_meshes;
     model.meshes = RL_CALLOC(model.meshCount, sizeof(Mesh));
 
+    model.materialCount = model.meshCount;
+    model.materials = (Material *)RL_CALLOC(model.materialCount, sizeof(Material));
+    model.meshMaterial = (int *)RL_CALLOC(model.meshCount, sizeof(int));
+
     char name[MESH_NAME_LENGTH] = { 0 };
+    char material[MATERIAL_NAME_LENGTH] = { 0 };
 
     for (int i = 0; i < model.meshCount; i++)
     {
         fseek(iqmFile, iqm.ofs_text + imesh[i].name, SEEK_SET);
-        fread(name, sizeof(char)*MESH_NAME_LENGTH, 1, iqmFile);     // Mesh name not used...
+        fread(name, sizeof(char)*MESH_NAME_LENGTH, 1, iqmFile);
+
+        fseek(iqmFile, iqm.ofs_text + imesh[i].material, SEEK_SET);
+        fread(material, sizeof(char)*MATERIAL_NAME_LENGTH, 1, iqmFile);
+
+        model.materials[i] = LoadMaterialDefault();
+
+        TRACELOG(LOG_DEBUG, "MODEL: [%s] mesh name (%s), material (%s)", fileName, name, material);
+
         model.meshes[i].vertexCount = imesh[i].num_vertexes;
 
         model.meshes[i].vertices = RL_CALLOC(model.meshes[i].vertexCount*3, sizeof(float));       // Default vertex positions
@@ -3302,7 +3200,7 @@ static Model LoadIQM(const char *fileName)
         model.meshes[i].animVertices = RL_CALLOC(model.meshes[i].vertexCount*3, sizeof(float));
         model.meshes[i].animNormals = RL_CALLOC(model.meshes[i].vertexCount*3, sizeof(float));
 
-        model.meshes[i].vboId = (unsigned int *)RL_CALLOC(MAX_MESH_VBO, sizeof(unsigned int));
+        model.meshes[i].vboId = (unsigned int *)RL_CALLOC(DEFAULT_MESH_VERTEX_BUFFERS, sizeof(unsigned int));
     }
 
     // Triangles data processing
@@ -3314,7 +3212,7 @@ static Model LoadIQM(const char *fileName)
     {
         int tcounter = 0;
 
-        for (int i = imesh[m].first_triangle; i < (imesh[m].first_triangle + imesh[m].num_triangles); i++)
+        for (unsigned int i = imesh[m].first_triangle; i < (imesh[m].first_triangle + imesh[m].num_triangles); i++)
         {
             // IQM triangles are stored counter clockwise, but raylib sets opengl to clockwise drawing, so we swap them around
             model.meshes[m].indices[tcounter + 2] = tri[i].vertex[0] - imesh[m].first_vertex;
@@ -3329,7 +3227,7 @@ static Model LoadIQM(const char *fileName)
     fseek(iqmFile, iqm.ofs_vertexarrays, SEEK_SET);
     fread(va, iqm.num_vertexarrays*sizeof(IQMVertexArray), 1, iqmFile);
 
-    for (int i = 0; i < iqm.num_vertexarrays; i++)
+    for (unsigned int i = 0; i < iqm.num_vertexarrays; i++)
     {
         switch (va[i].type)
         {
@@ -3339,10 +3237,10 @@ static Model LoadIQM(const char *fileName)
                 fseek(iqmFile, va[i].offset, SEEK_SET);
                 fread(vertex, iqm.num_vertexes*3*sizeof(float), 1, iqmFile);
 
-                for (int m = 0; m < iqm.num_meshes; m++)
+                for (unsigned int m = 0; m < iqm.num_meshes; m++)
                 {
                     int vCounter = 0;
-                    for (int i = imesh[m].first_vertex*3; i < (imesh[m].first_vertex + imesh[m].num_vertexes)*3; i++)
+                    for (unsigned int i = imesh[m].first_vertex*3; i < (imesh[m].first_vertex + imesh[m].num_vertexes)*3; i++)
                     {
                         model.meshes[m].vertices[vCounter] = vertex[i];
                         model.meshes[m].animVertices[vCounter] = vertex[i];
@@ -3356,10 +3254,10 @@ static Model LoadIQM(const char *fileName)
                 fseek(iqmFile, va[i].offset, SEEK_SET);
                 fread(normal, iqm.num_vertexes*3*sizeof(float), 1, iqmFile);
 
-                for (int m = 0; m < iqm.num_meshes; m++)
+                for (unsigned int m = 0; m < iqm.num_meshes; m++)
                 {
                     int vCounter = 0;
-                    for (int i = imesh[m].first_vertex*3; i < (imesh[m].first_vertex + imesh[m].num_vertexes)*3; i++)
+                    for (unsigned int i = imesh[m].first_vertex*3; i < (imesh[m].first_vertex + imesh[m].num_vertexes)*3; i++)
                     {
                         model.meshes[m].normals[vCounter] = normal[i];
                         model.meshes[m].animNormals[vCounter] = normal[i];
@@ -3373,10 +3271,10 @@ static Model LoadIQM(const char *fileName)
                 fseek(iqmFile, va[i].offset, SEEK_SET);
                 fread(text, iqm.num_vertexes*2*sizeof(float), 1, iqmFile);
 
-                for (int m = 0; m < iqm.num_meshes; m++)
+                for (unsigned int m = 0; m < iqm.num_meshes; m++)
                 {
                     int vCounter = 0;
-                    for (int i = imesh[m].first_vertex*2; i < (imesh[m].first_vertex + imesh[m].num_vertexes)*2; i++)
+                    for (unsigned int i = imesh[m].first_vertex*2; i < (imesh[m].first_vertex + imesh[m].num_vertexes)*2; i++)
                     {
                         model.meshes[m].texcoords[vCounter] = text[i];
                         vCounter++;
@@ -3389,10 +3287,10 @@ static Model LoadIQM(const char *fileName)
                 fseek(iqmFile, va[i].offset, SEEK_SET);
                 fread(blendi, iqm.num_vertexes*4*sizeof(char), 1, iqmFile);
 
-                for (int m = 0; m < iqm.num_meshes; m++)
+                for (unsigned int m = 0; m < iqm.num_meshes; m++)
                 {
                     int boneCounter = 0;
-                    for (int i = imesh[m].first_vertex*4; i < (imesh[m].first_vertex + imesh[m].num_vertexes)*4; i++)
+                    for (unsigned int i = imesh[m].first_vertex*4; i < (imesh[m].first_vertex + imesh[m].num_vertexes)*4; i++)
                     {
                         model.meshes[m].boneIds[boneCounter] = blendi[i];
                         boneCounter++;
@@ -3405,10 +3303,10 @@ static Model LoadIQM(const char *fileName)
                 fseek(iqmFile, va[i].offset, SEEK_SET);
                 fread(blendw, iqm.num_vertexes*4*sizeof(unsigned char), 1, iqmFile);
 
-                for (int m = 0; m < iqm.num_meshes; m++)
+                for (unsigned int m = 0; m < iqm.num_meshes; m++)
                 {
                     int boneCounter = 0;
-                    for (int i = imesh[m].first_vertex*4; i < (imesh[m].first_vertex + imesh[m].num_vertexes)*4; i++)
+                    for (unsigned int i = imesh[m].first_vertex*4; i < (imesh[m].first_vertex + imesh[m].num_vertexes)*4; i++)
                     {
                         model.meshes[m].boneWeights[boneCounter] = blendw[i]/255.0f;
                         boneCounter++;
@@ -3427,7 +3325,7 @@ static Model LoadIQM(const char *fileName)
     model.bones = RL_MALLOC(iqm.num_joints*sizeof(BoneInfo));
     model.bindPose = RL_MALLOC(iqm.num_joints*sizeof(Transform));
 
-    for (int i = 0; i < iqm.num_joints; i++)
+    for (unsigned int i = 0; i < iqm.num_joints; i++)
     {
         // Bones
         model.bones[i].parent = ijoint[i].parent;
@@ -3568,16 +3466,21 @@ static Image LoadImageFromCgltfImage(cgltf_image *image, const char *texPath, Co
             int i = 0;
             while ((image->uri[i] != ',') && (image->uri[i] != 0)) i++;
 
-            if (image->uri[i] == 0) TRACELOG(LOG_WARNING, "CGLTF Image: Invalid data URI");
+            if (image->uri[i] == 0) TRACELOG(LOG_WARNING, "IMAGE: glTF data URI is not a valid image");
             else
             {
-                int size;
+                int size = 0;
                 unsigned char *data = DecodeBase64(image->uri + i + 1, &size);
 
-                int w, h;
-                unsigned char *raw = stbi_load_from_memory(data, size, &w, &h, NULL, 4);
+                int width, height;
+                unsigned char *raw = stbi_load_from_memory(data, size, &width, &height, NULL, 4);
+                free(data);
 
-                rimage = LoadImagePro(raw, w, h, UNCOMPRESSED_R8G8B8A8);
+                rimage.data = raw;
+                rimage.width = width;
+                rimage.height = height;
+                rimage.format = UNCOMPRESSED_R8G8B8A8;
+                rimage.mipmaps = 1;
 
                 // TODO: Tint shouldn't be applied here!
                 ImageColorTint(&rimage, tint);
@@ -3594,29 +3497,29 @@ static Image LoadImageFromCgltfImage(cgltf_image *image, const char *texPath, Co
     else if (image->buffer_view)
     {
         unsigned char *data = RL_MALLOC(image->buffer_view->size);
-        int n = image->buffer_view->offset;
-        int stride = image->buffer_view->stride ? image->buffer_view->stride : 1;
+        int n = (int)image->buffer_view->offset;
+        int stride = (int)image->buffer_view->stride ? (int)image->buffer_view->stride : 1;
 
-        for (int i = 0; i < image->buffer_view->size; i++)
+        for (unsigned int i = 0; i < image->buffer_view->size; i++)
         {
             data[i] = ((unsigned char *)image->buffer_view->buffer->data)[n];
             n += stride;
         }
 
-        int w, h;
-        unsigned char *raw = stbi_load_from_memory(data, image->buffer_view->size, &w, &h, NULL, 4);
+        int width, height;
+        unsigned char *raw = stbi_load_from_memory(data, (int)image->buffer_view->size, &width, &height, NULL, 4);
         free(data);
 
-        rimage = LoadImagePro(raw, w, h, UNCOMPRESSED_R8G8B8A8);
-        free(raw);
+        rimage.data = raw;
+        rimage.width = width;
+        rimage.height = height;
+        rimage.format = UNCOMPRESSED_R8G8B8A8;
+        rimage.mipmaps = 1;
 
         // TODO: Tint shouldn't be applied here!
         ImageColorTint(&rimage, tint);
     }
-    else
-    {
-        rimage = LoadImageEx(&tint, 1, 1);
-    }
+    else rimage = GenImageColor(1, 1, tint);
 
     return rimage;
 }
@@ -3648,60 +3551,49 @@ static Model LoadGLTF(const char *fileName)
     #define LOAD_ACCESSOR(type, nbcomp, acc, dst) \
     { \
         int n = 0; \
-        type* buf = (type*)acc->buffer_view->buffer->data+acc->buffer_view->offset/sizeof(type)+acc->offset/sizeof(type); \
-        for (int k = 0; k < acc->count; k++) {\
+        type* buf = (type*)acc->buffer_view->buffer->data + acc->buffer_view->offset/sizeof(type) + acc->offset/sizeof(type); \
+        for (unsigned int k = 0; k < acc->count; k++) {\
             for (int l = 0; l < nbcomp; l++) {\
-                dst[nbcomp*k+l] = buf[n+l];\
+                dst[nbcomp*k + l] = buf[n + l];\
             }\
-            n += acc->stride/sizeof(type);\
+            n += (int)(acc->stride/sizeof(type));\
         }\
     }
 
     Model model = { 0 };
 
     // glTF file loading
-    FILE *gltfFile = fopen(fileName, "rb");
+    unsigned int dataSize = 0;
+    unsigned char *fileData = LoadFileData(fileName, &dataSize);
 
-    if (gltfFile == NULL)
-    {
-        TRACELOG(LOG_WARNING, "[%s] glTF file could not be opened", fileName);
-        return model;
-    }
-
-    fseek(gltfFile, 0, SEEK_END);
-    int size = ftell(gltfFile);
-    fseek(gltfFile, 0, SEEK_SET);
-
-    void *buffer = RL_MALLOC(size);
-    fread(buffer, size, 1, gltfFile);
-
-    fclose(gltfFile);
+    if (fileData == NULL) return model;
 
     // glTF data loading
     cgltf_options options = { 0 };
     cgltf_data *data = NULL;
-    cgltf_result result = cgltf_parse(&options, buffer, size, &data);
+    cgltf_result result = cgltf_parse(&options, fileData, dataSize, &data);
 
     if (result == cgltf_result_success)
     {
-        TRACELOG(LOG_INFO, "[%s][%s] Model meshes/materials: %i/%i", fileName, (data->file_type == 2)? "glb" : "gltf", data->meshes_count, data->materials_count);
+        TRACELOG(LOG_INFO, "MODEL: [%s] glTF meshes (%s) count: %i", fileName, (data->file_type == 2)? "glb" : "gltf", data->meshes_count, data->materials_count);
+        TRACELOG(LOG_INFO, "MODEL: [%s] glTF materials (%s) count: %i", fileName, (data->file_type == 2)? "glb" : "gltf", data->meshes_count, data->materials_count);
 
         // Read data buffers
         result = cgltf_load_buffers(&options, data, fileName);
-        if (result != cgltf_result_success) TRACELOG(LOG_INFO, "[%s][%s] Error loading mesh/material buffers", fileName, (data->file_type == 2)? "glb" : "gltf");
+        if (result != cgltf_result_success) TRACELOG(LOG_INFO, "MODEL: [%s] Failed to load mesh/material buffers", fileName);
 
         int primitivesCount = 0;
 
-        for (int i = 0; i < data->meshes_count; i++) primitivesCount += (int)data->meshes[i].primitives_count;
+        for (unsigned int i = 0; i < data->meshes_count; i++) primitivesCount += (int)data->meshes[i].primitives_count;
 
         // Process glTF data and map to model
         model.meshCount = primitivesCount;
         model.meshes = RL_CALLOC(model.meshCount, sizeof(Mesh));
-        model.materialCount = data->materials_count + 1;
+        model.materialCount = (int)data->materials_count + 1;
         model.materials = RL_MALLOC(model.materialCount*sizeof(Material));
         model.meshMaterial = RL_MALLOC(model.meshCount*sizeof(int));
 
-        for (int i = 0; i < model.meshCount; i++) model.meshes[i].vboId = (unsigned int *)RL_CALLOC(MAX_MESH_VBO, sizeof(unsigned int));
+        for (int i = 0; i < model.meshCount; i++) model.meshes[i].vboId = (unsigned int *)RL_CALLOC(DEFAULT_MESH_VERTEX_BUFFERS, sizeof(unsigned int));
 
         // Currenly only support one skin
         model.boneCount = data->skins[0].joints_count;
@@ -3786,8 +3678,7 @@ static Model LoadGLTF(const char *fileName)
                     UnloadImage(albedo);
                 }
 
-                //Set tint to white after it's been used by Albedo
-                tint = WHITE;
+                tint = WHITE;   // Set tint to white after it's been used by Albedo
 
                 if (data->materials[i].pbr_metallic_roughness.metallic_roughness_texture.texture)
                 {
@@ -3802,8 +3693,6 @@ static Model LoadGLTF(const char *fileName)
 
                     UnloadImage(metallicRoughness);
                 }
-
-
 
                 if (data->materials[i].normal_texture.texture)
                 {
@@ -3823,9 +3712,9 @@ static Model LoadGLTF(const char *fileName)
                 {
                     Image emissiveImage = LoadImageFromCgltfImage(data->materials[i].emissive_texture.texture->image, texPath, tint);
                     model.materials[i].maps[MAP_EMISSION].texture = LoadTextureFromImage(emissiveImage);
-                    tint.r = (unsigned char)(data->materials[i].emissive_factor[0] * 255);
-                    tint.g = (unsigned char)(data->materials[i].emissive_factor[1] * 255);
-                    tint.b = (unsigned char)(data->materials[i].emissive_factor[2] * 255);
+                    tint.r = (unsigned char)(data->materials[i].emissive_factor[0]*255);
+                    tint.g = (unsigned char)(data->materials[i].emissive_factor[1]*255);
+                    tint.b = (unsigned char)(data->materials[i].emissive_factor[2]*255);
                     model.materials[i].maps[MAP_EMISSION].color = tint;
                     UnloadImage(emissiveImage);
                 }
@@ -3849,7 +3738,7 @@ static Model LoadGLTF(const char *fileName)
                     if (data->meshes[i].primitives[p].attributes[j].type == cgltf_attribute_type_position)
                     {
                         cgltf_accessor *acc = data->meshes[i].primitives[p].attributes[j].data;
-                        model.meshes[primitiveIndex].vertexCount = acc->count;
+                        model.meshes[primitiveIndex].vertexCount = (int)acc->count;
                         model.meshes[primitiveIndex].vertices = RL_MALLOC(sizeof(float)*model.meshes[primitiveIndex].vertexCount*3);
                         model.meshes[primitiveIndex].animVertices = RL_MALLOC(sizeof(float)*model.meshes[primitiveIndex].vertexCount*3);
 
@@ -3879,7 +3768,7 @@ static Model LoadGLTF(const char *fileName)
                         else
                         {
                             // TODO: Support normalized unsigned byte/unsigned short texture coordinates
-                            TRACELOG(LOG_WARNING, "[%s] Texture coordinates must be float", fileName);
+                            TRACELOG(LOG_WARNING, "MODEL: [%s] glTF texture coordinates must be float", fileName);
                         }
                     }
 
@@ -3906,14 +3795,14 @@ static Model LoadGLTF(const char *fileName)
                 {
                     if (acc->component_type == cgltf_component_type_r_16u)
                     {
-                        model.meshes[primitiveIndex].triangleCount = acc->count/3;
+                        model.meshes[primitiveIndex].triangleCount = (int)acc->count/3;
                         model.meshes[primitiveIndex].indices = RL_MALLOC(sizeof(unsigned short)*model.meshes[primitiveIndex].triangleCount*3);
                         LOAD_ACCESSOR(unsigned short, 1, acc, model.meshes[primitiveIndex].indices)
                     }
                     else
                     {
                         // TODO: Support unsigned byte/unsigned int
-                        TRACELOG(LOG_WARNING, "[%s] Indices must be unsigned short", fileName);
+                        TRACELOG(LOG_WARNING, "MODEL: [%s] glTF index data must be unsigned short", fileName);
                     }
                 }
                 else
@@ -3925,7 +3814,7 @@ static Model LoadGLTF(const char *fileName)
                 if (data->meshes[i].primitives[p].material)
                 {
                     // Compute the offset
-                    model.meshMaterial[primitiveIndex] = data->meshes[i].primitives[p].material - data->materials;
+                    model.meshMaterial[primitiveIndex] = (int)(data->meshes[i].primitives[p].material - data->materials);
                 }
                 else
                 {
@@ -3938,9 +3827,9 @@ static Model LoadGLTF(const char *fileName)
 
         cgltf_free(data);
     }
-    else TRACELOG(LOG_WARNING, "[%s] glTF data could not be loaded", fileName);
+    else TRACELOG(LOG_WARNING, "MODEL: [%s] Failed to load glTF data", fileName);
 
-    RL_FREE(buffer);
+    RL_FREE(fileData);
 
     return model;
 }

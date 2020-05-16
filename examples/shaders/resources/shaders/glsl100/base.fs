@@ -11,7 +11,6 @@ uniform sampler2D texture0;
 uniform vec4 colDiffuse;
 
 // NOTE: Add here your custom variables
-uniform vec2 resolution = vec2(800, 450);
 
 void main()
 {
