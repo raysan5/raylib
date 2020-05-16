@@ -3618,36 +3618,10 @@ static Model LoadGLTF(const char *fileName)
                     TextCopy(model.bones[i].name, data->skins[0].joints[i]->name); 
                 }
             }
-
-            // Set the tranlation for this joint
-            if (data->skins[0].joints[i]->has_translation) {
-                model.bindPose[i].translation.x = data->skins[0].joints[i]->translation[0];
-                model.bindPose[i].translation.y = data->skins[0].joints[i]->translation[1];
-                model.bindPose[i].translation.z = data->skins[0].joints[i]->translation[2];
-                printf("\nJoint %i Translation(X: %f, Y: %f, Z: %f) ", i, model.bindPose[i].translation.x, model.bindPose[i].translation.y, model.bindPose[i].translation.z); 
-            }
-
-            // Set the rotation for this joint
-            if (data->skins[0].joints[i]->has_rotation) {
-                model.bindPose[i].rotation.x = data->skins[0].joints[i]->rotation[0];
-                model.bindPose[i].rotation.y = data->skins[0].joints[i]->rotation[1];
-                model.bindPose[i].rotation.z = data->skins[0].joints[i]->rotation[2];
-                model.bindPose[i].rotation.w = data->skins[0].joints[i]->rotation[3];
-                printf("Rotation(X: %f, Y: %f, Z: %f, W: %f) ", model.bindPose[i].rotation.x, model.bindPose[i].rotation.y, model.bindPose[i].rotation.z, model.bindPose[i].rotation.w); 
-            }
-
-            // Set the scale for this joint
-            if (data->skins[0].joints[i]->has_scale) {
-                model.bindPose[i].scale.x = data->skins[0].joints[i]->scale[0];
-                model.bindPose[i].scale.y = data->skins[0].joints[i]->scale[1];
-                model.bindPose[i].scale.z = data->skins[0].joints[i]->scale[2];
-                printf("Scale(X: %f, Y: %f, Z: %f)", model.bindPose[i].scale.x, model.bindPose[i].scale.y, model.bindPose[i].scale.z); 
-            }
         }
 
         for (int i = 0; i < model.boneCount; i++)  {
             // Mark parents in array
-            printf("BONE %d: %d\n", i, data->skins[0].joints[i]->children_count);
             if (data->skins[0].joints[i]->children_count > 0) {
                 int numOfChildrenJoints = data->skins[0].joints[i]->children_count; 
                 for (int j = i; j < numOfChildrenJoints; j++) {
@@ -3656,35 +3630,6 @@ static Model LoadGLTF(const char *fileName)
             }
         }
 
-        //INVERSE MATRIX, for transposing joint into skin space
-        /*
-        float* inverseMatrix = (float*)RL_CALLOC((16 * data->skins[0].joints_count), sizeof(float));
-        LOAD_ACCESSOR(float, 16, data->skins[0].inverse_bind_matrices, inverseMatrix)
-        int matrixIndex = 0;
-        
-        for (int i = 0; i < (16 * data->skins[0].joints_count) - 1; i+= 15) {
-            printf("\n\nMATRIX %d\n%f, %f, %f, %f\n%f, %f, %f, %f\n%f, %f, %f, %f\n%f, %f, %f, %f\n", matrixIndex,
-            inverseMatrix[i], inverseMatrix[i+1], inverseMatrix[i+2], inverseMatrix[i+3],
-            inverseMatrix[i+4], inverseMatrix[i+5], inverseMatrix[i+6], inverseMatrix[i+7],
-            inverseMatrix[i+8], inverseMatrix[i+9], inverseMatrix[i+10], inverseMatrix[i+11],
-            inverseMatrix[i+12], inverseMatrix[i+13], inverseMatrix[i+14], inverseMatrix[i+15]);
-            matrixIndex++;
-        }
-        */
-
-        //Build bind pose from parent joints... Same IQM Loader
-        for (int i = 0; i < model.boneCount; i++)
-        {
-            if (model.bones[i].parent >= 0)
-            {
-                model.bindPose[i].rotation = QuaternionMultiply(model.bindPose[model.bones[i].parent].rotation, model.bindPose[i].rotation);
-                model.bindPose[i].translation = Vector3RotateByQuaternion(model.bindPose[i].translation, model.bindPose[model.bones[i].parent].rotation);
-                model.bindPose[i].translation = Vector3Add(model.bindPose[i].translation, model.bindPose[model.bones[i].parent].translation);
-                model.bindPose[i].scale = Vector3Multiply(model.bindPose[i].scale, model.bindPose[model.bones[i].parent].scale);
-            }
-        }
-        
-        TRACELOG(LOG_INFO, "\n[%s][%d] Joints loaded", fileName, data->skins[0].joints_count);
         for (int i = 0; i < model.materialCount - 1; i++)
         {
             model.materials[i] = LoadMaterialDefault();
