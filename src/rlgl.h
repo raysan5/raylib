@@ -383,7 +383,7 @@ typedef unsigned char byte;
         BLEND_ALPHA = 0,
         BLEND_ADDITIVE,
         BLEND_MULTIPLIED,
-        BLEND_SET
+        BLEND_ADD_COLORS
     } BlendMode;
 
     // Shader location point type
@@ -3568,7 +3568,7 @@ void BeginBlendMode(int mode)
             case BLEND_ALPHA: glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA); break;
             case BLEND_ADDITIVE: glBlendFunc(GL_SRC_ALPHA, GL_ONE); break;
             case BLEND_MULTIPLIED: glBlendFunc(GL_DST_COLOR, GL_ONE_MINUS_SRC_ALPHA); break;
-            case BLEND_SET: glBlendFunc(GL_ONE, GL_ONE); break;
+            case BLEND_ADD_COLORS: glBlendFunc(GL_ONE, GL_ONE); break;
             default: break;
         }
 
