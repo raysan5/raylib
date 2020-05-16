@@ -380,7 +380,6 @@ typedef struct Model {
 
 // Model animation
 typedef struct ModelAnimation {
-    char name[64];          // Animation Name
     int boneCount;          // Number of bones
     BoneInfo *bones;        // Bones information (skeleton)
 
