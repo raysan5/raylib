@@ -15,7 +15,7 @@ BEGIN
       VALUE "InternalName", "raylib app"
       VALUE "LegalCopyright", "(c) 2020 Ramon Santamaria (@raysan5)"
       //VALUE "OriginalFilename", "raylib_app.exe"
-      VALUE "ProductName", "raylib game"
+      VALUE "ProductName", "raylib app"
       VALUE "ProductVersion", "3.0.0"
     END
   END

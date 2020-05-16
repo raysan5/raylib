@@ -34,7 +34,7 @@ void main()
     mat3 normalMatrix = transpose(inverse(mat3(matModel)));
 
     // Calculate fragment position based on model transformations
-    fragPosition = vec3(matModel*vec4(vertexPosition, 1.0f));
+    fragPosition = vec3(matModel*vec4(vertexPosition, 1.0));
 
     // Send vertex attributes to fragment shader
     fragTexCoord = vertexTexCoord;

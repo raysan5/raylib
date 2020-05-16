@@ -1,4 +1,5 @@
 {
+<<<<<<< HEAD
     "cmake.configureOnOpen": false,
     "files.associations": {
         "chrono": "c",
@@ -11,4 +12,7 @@
         "xtr1common": "c",
         "xutility": "c"
     }
+=======
+    "cmake.configureOnOpen": true
+>>>>>>> 7b20e00596cfce39af3b9cb3503fe549575b25d8
 }

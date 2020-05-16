@@ -3,8 +3,8 @@ project(raylib C)
 include(GNUInstallDirs)
 list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/../cmake")
 
-set(PROJECT_VERSION 2.6.0)
-set(API_VERSION 261)
+set(PROJECT_VERSION 3.0.0)
+set(API_VERSION 301)
 
 include("CMakeOptions.txt")
 include(BuildType)
@@ -117,6 +117,15 @@ elseif(${PLATFORM} MATCHES "Raspberry Pi")
   set(PLATFORM_CPP "PLATFORM_RPI")
   set(GRAPHICS "GRAPHICS_API_OPENGL_ES2")
 
+  add_definitions(-D_DEFAULT_SOURCE)
+  
+  find_library(GLESV2 brcmGLESv2 HINTS /opt/vc/lib)
+  find_library(EGL brcmEGL HINTS /opt/vc/lib)
+  find_library(BCMHOST bcm_host HINTS /opt/vc/lib)
+  include_directories(/opt/vc/include /opt/vc/include/interface/vmcs_host/linux /opt/vc/include/interface/vcos/pthreads)
+  link_directories(/opt/vc/lib)
+  set(LIBS_PRIVATE ${GLESV2} ${EGL} ${BCMHOST} pthread rt m dl)
+
 endif()
 
 if (${OPENGL_VERSION})
@@ -208,16 +217,10 @@ if(SHARED)
   if (${PLATFORM} MATCHES "Desktop")
     target_link_libraries(raylib glfw)
   endif()
-  if (UNIX AND ${FILESYSTEM_LACKS_SYMLINKS})
-    MESSAGE(WARNING "Can't version UNIX shared library on file system without symlink support")
-  else()
-      set_target_properties(raylib PROPERTIES
-          VERSION   ${PROJECT_VERSION}
-          SOVERSION ${API_VERSION}
-      )
-  endif()
   set_target_properties(raylib PROPERTIES
       PUBLIC_HEADER "raylib.h"
+      VERSION   ${PROJECT_VERSION}
+      SOVERSION ${API_VERSION}
   )
 
   if (WIN32)
@@ -263,6 +266,11 @@ file(COPY "raymath.h" DESTINATION ".")
 file(COPY "raudio.h" DESTINATION ".")
 
 # Print the flags for the user
+if (DEFINED CMAKE_BUILD_TYPE)
+  message(STATUS "Generated build type: ${CMAKE_BUILD_TYPE}")
+else()
+  message(STATUS "Generated config types: ${CMAKE_CONFIGURATION_TYPES}")
+endif()
 message(STATUS "Compiling with the flags:")
 message(STATUS "  PLATFORM=" ${PLATFORM_CPP})
 message(STATUS "  GRAPHICS=" ${GRAPHICS})

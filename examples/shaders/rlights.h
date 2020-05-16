@@ -69,16 +69,10 @@ extern "C" {            // Prevents name mangling of functions
 #endif
 
 //----------------------------------------------------------------------------------
-// Global Variables Definition
-//----------------------------------------------------------------------------------
-int lightsCount = 0;    // Current amount of created lights
-
-//----------------------------------------------------------------------------------
 // Module Functions Declaration
 //----------------------------------------------------------------------------------
 Light CreateLight(int type, Vector3 position, Vector3 target, Color color, Shader shader);   // Create a light and get shader locations
 void UpdateLightValues(Shader shader, Light light);         // Send light properties to shader
-//void InitLightLocations(Shader shader, Light *light);     // Init light shader locations
 
 #ifdef __cplusplus
 }
@@ -110,7 +104,7 @@ void UpdateLightValues(Shader shader, Light light);         // Send light proper
 //----------------------------------------------------------------------------------
 // Global Variables Definition
 //----------------------------------------------------------------------------------
-// ...
+static int lightsCount = 0;    // Current amount of created lights
 
 //----------------------------------------------------------------------------------
 // Module specific Functions Declaration
@@ -142,6 +136,8 @@ Light CreateLight(int type, Vector3 position, Vector3 target, Color color, Shade
         char posName[32] = "lights[x].position\0";
         char targetName[32] = "lights[x].target\0";
         char colorName[32] = "lights[x].color\0";
+        
+        // Set location name [x] depending on lights count
         enabledName[7] = '0' + lightsCount;
         typeName[7] = '0' + lightsCount;
         posName[7] = '0' + lightsCount;

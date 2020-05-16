@@ -55,11 +55,13 @@
 // Allow automatic screen capture of current screen pressing F12, defined in KeyCallback()
 #define SUPPORT_SCREEN_CAPTURE      1
 // Allow automatic gif recording of current screen pressing CTRL+F12, defined in KeyCallback()
-#define SUPPORT_GIF_RECORDING       1
+//#define SUPPORT_GIF_RECORDING       1
 // Allow scale all the drawn content to match the high-DPI equivalent size (only PLATFORM_DESKTOP)
 //#define SUPPORT_HIGH_DPI            1
 // Support CompressData() and DecompressData() functions
-#define SUPPORT_COMPRESSION_API     1
+#define SUPPORT_COMPRESSION_API       1
+// Support saving binary data automatically to a generated storage.data file. This file is managed internally.
+#define SUPPORT_DATA_STORAGE          1
 
 //------------------------------------------------------------------------------------
 // Module: rlgl - Configuration Flags
@@ -82,24 +84,26 @@
 //------------------------------------------------------------------------------------
 // Selecte desired fileformats to be supported for image data loading
 #define SUPPORT_FILEFORMAT_PNG      1
-//#define SUPPORT_FILEFORMAT_BMP    1
-//#define SUPPORT_FILEFORMAT_TGA    1
+#define SUPPORT_FILEFORMAT_BMP      1
+#define SUPPORT_FILEFORMAT_TGA      1
 //#define SUPPORT_FILEFORMAT_JPG    1
-#define SUPPORT_FILEFORMAT_GIF    1
+#define SUPPORT_FILEFORMAT_GIF      1
 //#define SUPPORT_FILEFORMAT_PSD    1
-#define SUPPORT_FILEFORMAT_DDS    1
+#define SUPPORT_FILEFORMAT_DDS      1
 #define SUPPORT_FILEFORMAT_HDR      1
-//#define SUPPORT_FILEFORMAT_KTX    1
-//#define SUPPORT_FILEFORMAT_ASTC   1
+#define SUPPORT_FILEFORMAT_KTX      1
+#define SUPPORT_FILEFORMAT_ASTC     1
 //#define SUPPORT_FILEFORMAT_PKM    1
 //#define SUPPORT_FILEFORMAT_PVR    1
+
 // Support image export functionality (.png, .bmp, .tga, .jpg)
 #define SUPPORT_IMAGE_EXPORT        1
-// Support multiple image editing functions to scale, adjust colors, flip, draw on images, crop...
-// If not defined only three image editing functions supported: ImageFormat(), ImageAlphaMask(), ImageToPOT()
-#define SUPPORT_IMAGE_MANIPULATION  1
+
 // Support procedural image generation functionality (gradient, spot, perlin-noise, cellular)
 #define SUPPORT_IMAGE_GENERATION    1
+// Support multiple image editing functions to scale, adjust colors, flip, draw on images, crop...
+// If not defined, still some functions are supported: ImageFormat(), ImageCrop(), ImageToPOT()
+#define SUPPORT_IMAGE_MANIPULATION  1
 
 //------------------------------------------------------------------------------------
 // Module: text - Configuration Flags
@@ -110,6 +114,10 @@
 // Selected desired font fileformats to be supported for loading
 #define SUPPORT_FILEFORMAT_FNT      1
 #define SUPPORT_FILEFORMAT_TTF      1
+
+// Support text management functions
+// If not defined, still some functions are supported: TextLength(), TextFormat()
+#define SUPPORT_TEXT_MANIPULATION   1
 
 //------------------------------------------------------------------------------------
 // Module: models - Configuration Flags
@@ -131,7 +139,7 @@
 #define SUPPORT_FILEFORMAT_OGG      1
 #define SUPPORT_FILEFORMAT_XM       1
 #define SUPPORT_FILEFORMAT_MOD      1
-#define SUPPORT_FILEFORMAT_FLAC     1
+//#define SUPPORT_FILEFORMAT_FLAC     1
 #define SUPPORT_FILEFORMAT_MP3      1
 
 //------------------------------------------------------------------------------------
