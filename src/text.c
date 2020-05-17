@@ -811,13 +811,11 @@ void DrawTextCodepoint(Font font, int codepoint, Vector2 position, float scale, 
 
 // Draw text using Font
 // NOTE: chars spacing is NOT proportional to fontSize
-void DrawTextEx(Font font, const char *text, Vector2 position, float fontSize, float spacing, Color tint)
+Vector2 DrawTextEx(Font font, const char *text, Vector2 position, float fontSize, float spacing, Color tint)
 {
     int length = TextLength(text);      // Total length in bytes of the text, scanned by codepoints in loop
 
-    int textOffsetY = 0;            // Offset between lines (on line break '\n')
-    float textOffsetX = 0.0f;       // Offset X to next character to draw
-
+    Vector2 textOffset = {0.0f, 0.0f};
     float scaleFactor = fontSize/font.baseSize;     // Character quad scaling factor
 
     for (int i = 0; i < length; i++)
@@ -835,27 +833,28 @@ void DrawTextEx(Font font, const char *text, Vector2 position, float fontSize, f
         {
             // NOTE: Fixed line spacing of 1.5 line-height
             // TODO: Support custom line spacing defined by user
-            textOffsetY += (int)((font.baseSize + font.baseSize/2)*scaleFactor);
-            textOffsetX = 0.0f;
+            textOffset.y += font.baseSize + font.baseSize/2 * scaleFactor;
+            textOffset.x = 0.0f;
         }
         else
         {
             if ((codepoint != ' ') && (codepoint != '\t'))
             {
-                Rectangle rec = { position.x + textOffsetX + font.chars[index].offsetX*scaleFactor,
-                                  position.y + textOffsetY + font.chars[index].offsetY*scaleFactor,
+                Rectangle rec = { position.x + textOffset.x + font.chars[index].offsetX*scaleFactor,
+                                  position.y + textOffset.y + font.chars[index].offsetY*scaleFactor,
                                   font.recs[index].width*scaleFactor,
                                   font.recs[index].height*scaleFactor };
 
                 DrawTexturePro(font.texture, font.recs[index], rec, (Vector2){ 0, 0 }, 0.0f, tint);
             }
 
-            if (font.chars[index].advanceX == 0) textOffsetX += ((float)font.recs[index].width*scaleFactor + spacing);
-            else textOffsetX += ((float)font.chars[index].advanceX*scaleFactor + spacing);
+            if (font.chars[index].advanceX == 0) textOffset.x += (float)font.recs[index].width*scaleFactor + spacing;
+            else textOffset.x += (float)font.chars[index].advanceX*scaleFactor + spacing;
         }
 
         i += (codepointByteCount - 1);   // Move text bytes counter to next codepoint
     }
+   return textOffset;
 }
 
 // Draw text using font inside rectangle limits
