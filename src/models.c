@@ -2942,19 +2942,25 @@ static Model LoadOBJ(const char *fileName)
                 for (int v = 0; v < 3; v++) { mesh.vertices[vCount + v] = attrib.vertices[idx1.v_idx*3 + v]; } vCount +=3;
                 for (int v = 0; v < 3; v++) { mesh.vertices[vCount + v] = attrib.vertices[idx2.v_idx*3 + v]; } vCount +=3;
 
-                // Fill texcoords buffer (float) using vertex index of the face
-                // NOTE: Y-coordinate must be flipped upside-down
-                mesh.texcoords[vtCount + 0] = attrib.texcoords[idx0.vt_idx*2 + 0];
-                mesh.texcoords[vtCount + 1] = 1.0f - attrib.texcoords[idx0.vt_idx*2 + 1]; vtCount += 2;
-                mesh.texcoords[vtCount + 0] = attrib.texcoords[idx1.vt_idx*2 + 0];
-                mesh.texcoords[vtCount + 1] = 1.0f - attrib.texcoords[idx1.vt_idx*2 + 1]; vtCount += 2;
-                mesh.texcoords[vtCount + 0] = attrib.texcoords[idx2.vt_idx*2 + 0];
-                mesh.texcoords[vtCount + 1] = 1.0f - attrib.texcoords[idx2.vt_idx*2 + 1]; vtCount += 2;
+                if (attrib.num_texcoords > 0)
+                {
+                    // Fill texcoords buffer (float) using vertex index of the face
+                    // NOTE: Y-coordinate must be flipped upside-down
+                    mesh.texcoords[vtCount + 0] = attrib.texcoords[idx0.vt_idx*2 + 0];
+                    mesh.texcoords[vtCount + 1] = 1.0f - attrib.texcoords[idx0.vt_idx*2 + 1]; vtCount += 2;
+                    mesh.texcoords[vtCount + 0] = attrib.texcoords[idx1.vt_idx*2 + 0];
+                    mesh.texcoords[vtCount + 1] = 1.0f - attrib.texcoords[idx1.vt_idx*2 + 1]; vtCount += 2;
+                    mesh.texcoords[vtCount + 0] = attrib.texcoords[idx2.vt_idx*2 + 0];
+                    mesh.texcoords[vtCount + 1] = 1.0f - attrib.texcoords[idx2.vt_idx*2 + 1]; vtCount += 2;
+                }
 
-                // Fill normals buffer (float) using vertex index of the face
-                for (int v = 0; v < 3; v++) { mesh.normals[vnCount + v] = attrib.normals[idx0.vn_idx*3 + v]; } vnCount +=3;
-                for (int v = 0; v < 3; v++) { mesh.normals[vnCount + v] = attrib.normals[idx1.vn_idx*3 + v]; } vnCount +=3;
-                for (int v = 0; v < 3; v++) { mesh.normals[vnCount + v] = attrib.normals[idx2.vn_idx*3 + v]; } vnCount +=3;
+                if (attrib.num_normals > 0)
+                {
+                    // Fill normals buffer (float) using vertex index of the face
+                    for (int v = 0; v < 3; v++) { mesh.normals[vnCount + v] = attrib.normals[idx0.vn_idx*3 + v]; } vnCount +=3;
+                    for (int v = 0; v < 3; v++) { mesh.normals[vnCount + v] = attrib.normals[idx1.vn_idx*3 + v]; } vnCount +=3;
+                    for (int v = 0; v < 3; v++) { mesh.normals[vnCount + v] = attrib.normals[idx2.vn_idx*3 + v]; } vnCount +=3;
+                }
             }
 
             model.meshes[m] = mesh;                 // Assign mesh data to model
