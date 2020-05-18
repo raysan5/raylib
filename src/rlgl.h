@@ -1564,7 +1564,7 @@ void rlglInit(int width, int height)
     // Get supported extensions list
     GLint numExt = 0;
 
-#if defined(GRAPHICS_API_OPENGL_33)
+#if defined(GRAPHICS_API_OPENGL_33) && !defined(GRAPHICS_API_OPENGL_21)
     // NOTE: On OpenGL 3.3 VAO and NPOT are supported by default
     RLGL.ExtSupported.vao = true;
 
@@ -1583,7 +1583,8 @@ void rlglInit(int width, int height)
     // Get extensions strings
     for (int i = 0; i < numExt; i++) extList[i] = (char *)glGetStringi(GL_EXTENSIONS, i);
 
-#elif defined(GRAPHICS_API_OPENGL_ES2)
+#endif
+#if defined(GRAPHICS_API_OPENGL_ES2) || defined(GRAPHICS_API_OPENGL_21)
     // Allocate 512 strings pointers (2 KB)
     const char **extList = RL_MALLOC(sizeof(const char *)*512);
 
@@ -1682,9 +1683,11 @@ void rlglInit(int width, int height)
     // Free extensions pointers
     RL_FREE(extList);
 
-#if defined(GRAPHICS_API_OPENGL_ES2)
+#if defined(GRAPHICS_API_OPENGL_ES2) || defined(GRAPHICS_API_OPENGL_21)
     RL_FREE(extensionsDup);    // Duplicated string must be deallocated
+#endif
 
+#if defined(GRAPHICS_API_OPENGL_ES2)
     if (RLGL.ExtSupported.vao) TRACELOG(LOG_INFO, "GL: VAO extension detected, VAO functions initialized successfully");
     else TRACELOG(LOG_WARNING, "GL: VAO extension not found, VAO usage not supported");
 
