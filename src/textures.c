@@ -3258,6 +3258,10 @@ static Image LoadAnimatedGIF(const char *fileName, int *frames, int **delays)
 // Loading DDS image data (compressed or uncompressed)
 static Image LoadDDS(const char *fileName)
 {
+    unsigned int fileSize = 0;
+    unsigned char *fileData = LoadFileData(fileName, &fileSize);
+    unsigned char *fileDataPtr = fileData;
+    
     // Required extension:
     // GL_EXT_texture_compression_s3tc
 
@@ -3303,18 +3307,11 @@ static Image LoadDDS(const char *fileName)
 
     Image image = { 0 };
 
-    FILE *ddsFile = fopen(fileName, "rb");
-
-    if (ddsFile == NULL)
-    {
-        TRACELOG(LOG_WARNING, "FILEIO: [%s] Failed to open DDS file", fileName);
-    }
-    else
+    if (fileDataPtr != NULL)
     {
         // Verify the type of file
-        char ddsHeaderId[4] = { 0 };
-
-        fread(ddsHeaderId, 4, 1, ddsFile);
+        unsigned char *ddsHeaderId = fileDataPtr;
+        fileDataPtr += 4;
 
         if ((ddsHeaderId[0] != 'D') || (ddsHeaderId[1] != 'D') || (ddsHeaderId[2] != 'S') || (ddsHeaderId[3] != ' '))
         {
@@ -3322,39 +3319,42 @@ static Image LoadDDS(const char *fileName)
         }
         else
         {
-            DDSHeader ddsHeader = { 0 };
-
-            // Get the image header
-            fread(&ddsHeader, sizeof(DDSHeader), 1, ddsFile);
+            DDSHeader *ddsHeader = (DDSHeader *)fileDataPtr;
 
             TRACELOGD("IMAGE: [%s] DDS file info:", fileName);
             TRACELOGD("    > Header size:        %i", fileName, sizeof(DDSHeader));
-            TRACELOGD("    > Pixel format size:  %i", fileName, ddsHeader.ddspf.size);
-            TRACELOGD("    > Pixel format flags: 0x%x", fileName, ddsHeader.ddspf.flags);
-            TRACELOGD("    > File format:        0x%x", fileName, ddsHeader.ddspf.fourCC);
-            TRACELOGD("    > File bit count:     0x%x", fileName, ddsHeader.ddspf.rgbBitCount);
+            TRACELOGD("    > Pixel format size:  %i", fileName, ddsHeader->ddspf.size);
+            TRACELOGD("    > Pixel format flags: 0x%x", fileName, ddsHeader->ddspf.flags);
+            TRACELOGD("    > File format:        0x%x", fileName, ddsHeader->ddspf.fourCC);
+            TRACELOGD("    > File bit count:     0x%x", fileName, ddsHeader->ddspf.rgbBitCount);
+            
+            fileDataPtr += sizeof(DDSHeader);   // Skip header
 
-            image.width = ddsHeader.width;
-            image.height = ddsHeader.height;
+            image.width = ddsHeader->width;
+            image.height = ddsHeader->height;
 
-            if (ddsHeader.mipmapCount == 0) image.mipmaps = 1;      // Parameter not used
-            else image.mipmaps = ddsHeader.mipmapCount;
+            if (ddsHeader->mipmapCount == 0) image.mipmaps = 1;      // Parameter not used
+            else image.mipmaps = ddsHeader->mipmapCount;
 
-            if (ddsHeader.ddspf.rgbBitCount == 16)     // 16bit mode, no compressed
+            if (ddsHeader->ddspf.rgbBitCount == 16)     // 16bit mode, no compressed
             {
-                if (ddsHeader.ddspf.flags == 0x40)         // no alpha channel
+                if (ddsHeader->ddspf.flags == 0x40)         // no alpha channel
                 {
-                    image.data = (unsigned short *)RL_MALLOC(image.width*image.height*sizeof(unsigned short));
-                    fread(image.data, image.width*image.height*sizeof(unsigned short), 1, ddsFile);
+                    int dataSize = image.width*image.height*sizeof(unsigned short);
+                    image.data = (unsigned short *)RL_MALLOC(dataSize);
+
+                    memcpy(image.data, fileDataPtr, dataSize);
 
                     image.format = UNCOMPRESSED_R5G6B5;
                 }
-                else if (ddsHeader.ddspf.flags == 0x41)        // with alpha channel
+                else if (ddsHeader->ddspf.flags == 0x41)        // with alpha channel
                 {
-                    if (ddsHeader.ddspf.aBitMask == 0x8000)    // 1bit alpha
+                    if (ddsHeader->ddspf.aBitMask == 0x8000)    // 1bit alpha
                     {
-                        image.data = (unsigned short *)RL_MALLOC(image.width*image.height*sizeof(unsigned short));
-                        fread(image.data, image.width*image.height*sizeof(unsigned short), 1, ddsFile);
+                        int dataSize = image.width*image.height*sizeof(unsigned short);
+                        image.data = (unsigned short *)RL_MALLOC(dataSize);
+
+                        memcpy(image.data, fileDataPtr, dataSize);
 
                         unsigned char alpha = 0;
 
@@ -3368,10 +3368,12 @@ static Image LoadDDS(const char *fileName)
 
                         image.format = UNCOMPRESSED_R5G5B5A1;
                     }
-                    else if (ddsHeader.ddspf.aBitMask == 0xf000)   // 4bit alpha
+                    else if (ddsHeader->ddspf.aBitMask == 0xf000)   // 4bit alpha
                     {
-                        image.data = (unsigned short *)RL_MALLOC(image.width*image.height*sizeof(unsigned short));
-                        fread(image.data, image.width*image.height*sizeof(unsigned short), 1, ddsFile);
+                        int dataSize = image.width*image.height*sizeof(unsigned short);
+                        image.data = (unsigned short *)RL_MALLOC(dataSize);
+
+                        memcpy(image.data, fileDataPtr, dataSize);
 
                         unsigned char alpha = 0;
 
@@ -3387,18 +3389,21 @@ static Image LoadDDS(const char *fileName)
                     }
                 }
             }
-            else if (ddsHeader.ddspf.flags == 0x40 && ddsHeader.ddspf.rgbBitCount == 24)   // DDS_RGB, no compressed
+            else if (ddsHeader->ddspf.flags == 0x40 && ddsHeader->ddspf.rgbBitCount == 24)   // DDS_RGB, no compressed
             {
-                // NOTE: not sure if this case exists...
-                image.data = (unsigned char *)RL_MALLOC(image.width*image.height*3*sizeof(unsigned char));
-                fread(image.data, image.width*image.height*3, 1, ddsFile);
+                int dataSize = image.width*image.height*3*sizeof(unsigned char);
+                image.data = (unsigned short *)RL_MALLOC(dataSize);
+
+                memcpy(image.data, fileDataPtr, dataSize);
 
                 image.format = UNCOMPRESSED_R8G8B8;
             }
-            else if (ddsHeader.ddspf.flags == 0x41 && ddsHeader.ddspf.rgbBitCount == 32) // DDS_RGBA, no compressed
+            else if (ddsHeader->ddspf.flags == 0x41 && ddsHeader->ddspf.rgbBitCount == 32) // DDS_RGBA, no compressed
             {
-                image.data = (unsigned char *)RL_MALLOC(image.width*image.height*4*sizeof(unsigned char));
-                fread(image.data, image.width*image.height*4, 1, ddsFile);
+                int dataSize = image.width*image.height*4*sizeof(unsigned char);
+                image.data = (unsigned short *)RL_MALLOC(dataSize);
+
+                memcpy(image.data, fileDataPtr, dataSize);
 
                 unsigned char blue = 0;
 
@@ -3414,23 +3419,23 @@ static Image LoadDDS(const char *fileName)
 
                 image.format = UNCOMPRESSED_R8G8B8A8;
             }
-            else if (((ddsHeader.ddspf.flags == 0x04) || (ddsHeader.ddspf.flags == 0x05)) && (ddsHeader.ddspf.fourCC > 0)) // Compressed
+            else if (((ddsHeader->ddspf.flags == 0x04) || (ddsHeader->ddspf.flags == 0x05)) && (ddsHeader->ddspf.fourCC > 0)) // Compressed
             {
-                int size;       // DDS image data size
+                int dataSize = 0;
 
                 // Calculate data size, including all mipmaps
-                if (ddsHeader.mipmapCount > 1) size = ddsHeader.pitchOrLinearSize*2;
-                else size = ddsHeader.pitchOrLinearSize;
+                if (ddsHeader->mipmapCount > 1) dataSize = ddsHeader->pitchOrLinearSize*2;
+                else dataSize = ddsHeader->pitchOrLinearSize;
 
-                image.data = (unsigned char *)RL_MALLOC(size*sizeof(unsigned char));
+                image.data = (unsigned char *)RL_MALLOC(dataSize*sizeof(unsigned char));
 
-                fread(image.data, size, 1, ddsFile);
+                memcpy(image.data, fileDataPtr, dataSize);
 
-                switch (ddsHeader.ddspf.fourCC)
+                switch (ddsHeader->ddspf.fourCC)
                 {
                     case FOURCC_DXT1:
                     {
-                        if (ddsHeader.ddspf.flags == 0x04) image.format = COMPRESSED_DXT1_RGB;
+                        if (ddsHeader->ddspf.flags == 0x04) image.format = COMPRESSED_DXT1_RGB;
                         else image.format = COMPRESSED_DXT1_RGBA;
                     } break;
                     case FOURCC_DXT3: image.format = COMPRESSED_DXT3_RGBA; break;
@@ -3440,7 +3445,7 @@ static Image LoadDDS(const char *fileName)
             }
         }
 
-        fclose(ddsFile);    // Close file pointer
+        free(fileData);    // Free file data buffer
     }
 
     return image;
@@ -3453,6 +3458,10 @@ static Image LoadDDS(const char *fileName)
 // PKM is a much simpler file format used mainly to contain a single ETC1/ETC2 compressed image (no mipmaps)
 static Image LoadPKM(const char *fileName)
 {
+    unsigned int fileSize = 0;
+    unsigned char *fileData = LoadFileData(fileName, &fileSize);
+    unsigned char *fileDataPtr = fileData;
+    
     // Required extensions:
     // GL_OES_compressed_ETC1_RGB8_texture  (ETC1) (OpenGL ES 2.0)
     // GL_ARB_ES3_compatibility  (ETC2/EAC) (OpenGL ES 3.0)
@@ -3482,54 +3491,47 @@ static Image LoadPKM(const char *fileName)
 
     Image image = { 0 };
 
-    FILE *pkmFile = fopen(fileName, "rb");
-
-    if (pkmFile == NULL)
+    if (fileDataPtr != NULL)
     {
-        TRACELOG(LOG_WARNING, "FILEIO: [%s] Failed to open PKM file", fileName);
-    }
-    else
-    {
-        PKMHeader pkmHeader = { 0 };
+        PKMHeader *pkmHeader = (PKMHeader *)fileDataPtr;
 
-        // Get the image header
-        fread(&pkmHeader, sizeof(PKMHeader), 1, pkmFile);
-
-        if ((pkmHeader.id[0] != 'P') || (pkmHeader.id[1] != 'K') || (pkmHeader.id[2] != 'M') || (pkmHeader.id[3] != ' '))
+        if ((pkmHeader->id[0] != 'P') || (pkmHeader->id[1] != 'K') || (pkmHeader->id[2] != 'M') || (pkmHeader->id[3] != ' '))
         {
             TRACELOG(LOG_WARNING, "IMAGE: [%s] PKM file not a valid image", fileName);
         }
         else
         {
+            fileDataPtr += sizeof(PKMHeader);   // Skip header
+            
             // NOTE: format, width and height come as big-endian, data must be swapped to little-endian
-            pkmHeader.format = ((pkmHeader.format & 0x00FF) << 8) | ((pkmHeader.format & 0xFF00) >> 8);
-            pkmHeader.width = ((pkmHeader.width & 0x00FF) << 8) | ((pkmHeader.width & 0xFF00) >> 8);
-            pkmHeader.height = ((pkmHeader.height & 0x00FF) << 8) | ((pkmHeader.height & 0xFF00) >> 8);
+            pkmHeader->format = ((pkmHeader->format & 0x00FF) << 8) | ((pkmHeader->format & 0xFF00) >> 8);
+            pkmHeader->width = ((pkmHeader->width & 0x00FF) << 8) | ((pkmHeader->width & 0xFF00) >> 8);
+            pkmHeader->height = ((pkmHeader->height & 0x00FF) << 8) | ((pkmHeader->height & 0xFF00) >> 8);
 
             TRACELOGD("IMAGE: [%s] PKM file info:", fileName);
-            TRACELOGD("    > Image width:  %i", pkmHeader.width);
-            TRACELOGD("    > Image height: %i", pkmHeader.height);
-            TRACELOGD("    > Image format: %i", pkmHeader.format);
+            TRACELOGD("    > Image width:  %i", pkmHeader->width);
+            TRACELOGD("    > Image height: %i", pkmHeader->height);
+            TRACELOGD("    > Image format: %i", pkmHeader->format);
 
-            image.width = pkmHeader.width;
-            image.height = pkmHeader.height;
+            image.width = pkmHeader->width;
+            image.height = pkmHeader->height;
             image.mipmaps = 1;
 
             int bpp = 4;
-            if (pkmHeader.format == 3) bpp = 8;
+            if (pkmHeader->format == 3) bpp = 8;
 
-            int size = image.width*image.height*bpp/8;  // Total data size in bytes
+            int dataSize = image.width*image.height*bpp/8;  // Total data size in bytes
 
             image.data = (unsigned char *)RL_MALLOC(size*sizeof(unsigned char));
 
-            fread(image.data, size, 1, pkmFile);
+            memcpy(image.data, fileDataPtr, dataSize);
 
-            if (pkmHeader.format == 0) image.format = COMPRESSED_ETC1_RGB;
-            else if (pkmHeader.format == 1) image.format = COMPRESSED_ETC2_RGB;
-            else if (pkmHeader.format == 3) image.format = COMPRESSED_ETC2_EAC_RGBA;
+            if (pkmHeader->format == 0) image.format = COMPRESSED_ETC1_RGB;
+            else if (pkmHeader->format == 1) image.format = COMPRESSED_ETC2_RGB;
+            else if (pkmHeader->format == 3) image.format = COMPRESSED_ETC2_EAC_RGBA;
         }
 
-        fclose(pkmFile);    // Close file pointer
+        free(fileData);    // Free file data buffer
     }
 
     return image;
@@ -3540,6 +3542,10 @@ static Image LoadPKM(const char *fileName)
 // Load KTX compressed image data (ETC1/ETC2 compression)
 static Image LoadKTX(const char *fileName)
 {
+    unsigned int fileSize = 0;
+    unsigned char *fileData = LoadFileData(fileName, &fileSize);
+    unsigned char *fileDataPtr = fileData;
+    
     // Required extensions:
     // GL_OES_compressed_ETC1_RGB8_texture  (ETC1)
     // GL_ARB_ES3_compatibility  (ETC2/EAC)
@@ -3576,55 +3582,43 @@ static Image LoadKTX(const char *fileName)
 
     Image image = { 0 };
 
-    FILE *ktxFile = fopen(fileName, "rb");
-
-    if (ktxFile == NULL)
+    if (fileDataPtr != NULL)
     {
-        TRACELOG(LOG_WARNING, "FILEIO: [%s] Failed to load KTX file", fileName);
-    }
-    else
-    {
-        KTXHeader ktxHeader = { 0 };
+        KTXHeader *ktxHeader = (KTXHeader *)fileDataPtr;
 
-        // Get the image header
-        fread(&ktxHeader, sizeof(KTXHeader), 1, ktxFile);
-
-        if ((ktxHeader.id[1] != 'K') || (ktxHeader.id[2] != 'T') || (ktxHeader.id[3] != 'X') ||
-            (ktxHeader.id[4] != ' ') || (ktxHeader.id[5] != '1') || (ktxHeader.id[6] != '1'))
+        if ((ktxHeader->id[1] != 'K') || (ktxHeader->id[2] != 'T') || (ktxHeader->id[3] != 'X') ||
+            (ktxHeader->id[4] != ' ') || (ktxHeader->id[5] != '1') || (ktxHeader->id[6] != '1'))
         {
             TRACELOG(LOG_WARNING, "IMAGE: [%s] KTX file not a valid image", fileName);
         }
         else
         {
-            image.width = ktxHeader.width;
-            image.height = ktxHeader.height;
-            image.mipmaps = ktxHeader.mipmapLevels;
+            fileDataPtr += sizeof(KTXHeader);           // Move file data pointer
+            
+            image.width = ktxHeader->width;
+            image.height = ktxHeader->height;
+            image.mipmaps = ktxHeader->mipmapLevels;
 
             TRACELOGD("IMAGE: [%s] KTX file info:", fileName);
-            TRACELOGD("    > Image width:  %i", ktxHeader.width);
-            TRACELOGD("    > Image height: %i", ktxHeader.height);
-            TRACELOGD("    > Image format: 0x%x", ktxHeader.glInternalFormat);
+            TRACELOGD("    > Image width:  %i", ktxHeader->width);
+            TRACELOGD("    > Image height: %i", ktxHeader->height);
+            TRACELOGD("    > Image format: 0x%x", ktxHeader->glInternalFormat);
 
-            unsigned char unused;
+            fileDataPtr += ktxHeader->keyValueDataSize; // Skip value data size
 
-            if (ktxHeader.keyValueDataSize > 0)
-            {
-                for (unsigned int i = 0; i < ktxHeader.keyValueDataSize; i++) fread(&unused, sizeof(unsigned char), 1U, ktxFile);
-            }
-
-            int dataSize;
-            fread(&dataSize, sizeof(unsigned int), 1, ktxFile);
-
+            int dataSize = ((int *)fileDataPtr)[0];
+            fileDataPtr += sizeof(int);
+            
             image.data = (unsigned char *)RL_MALLOC(dataSize*sizeof(unsigned char));
 
-            fread(image.data, dataSize, 1, ktxFile);
+            memcpy(image.data, fileDataPtr, dataSize);
 
-            if (ktxHeader.glInternalFormat == 0x8D64) image.format = COMPRESSED_ETC1_RGB;
-            else if (ktxHeader.glInternalFormat == 0x9274) image.format = COMPRESSED_ETC2_RGB;
-            else if (ktxHeader.glInternalFormat == 0x9278) image.format = COMPRESSED_ETC2_EAC_RGBA;
+            if (ktxHeader->glInternalFormat == 0x8D64) image.format = COMPRESSED_ETC1_RGB;
+            else if (ktxHeader->glInternalFormat == 0x9274) image.format = COMPRESSED_ETC2_RGB;
+            else if (ktxHeader->glInternalFormat == 0x9278) image.format = COMPRESSED_ETC2_EAC_RGBA;
         }
 
-        fclose(ktxFile);    // Close file pointer
+        free(fileData);    // Free file data buffer
     }
 
     return image;
@@ -3634,12 +3628,9 @@ static Image LoadKTX(const char *fileName)
 // NOTE: By default KTX 1.1 spec is used, 2.0 is still on draft (01Oct2018)
 static int SaveKTX(Image image, const char *fileName)
 {
-    int success = 0;
-
     // KTX file Header (64 bytes)
     // v1.1 - https://www.khronos.org/opengles/sdk/tools/KTX/file_format_spec/
     // v2.0 - http://github.khronos.org/KTX-Specification/ - still on draft, not ready for implementation
-
     typedef struct {
         char id[12];                        // Identifier: "«KTX 11»\r\n\x1A\n"             // KTX 2.0: "«KTX 22»\r\n\x1A\n"
         unsigned int endianness;            // Little endian: 0x01 0x02 0x03 0x04
@@ -3659,69 +3650,77 @@ static int SaveKTX(Image image, const char *fileName)
         // KTX 2.0 defines additional header elements...
     } KTXHeader;
 
-    // NOTE: Before start of every mipmap data block, we have: unsigned int dataSize
-
-    FILE *ktxFile = fopen(fileName, "wb");
-
-    if (ktxFile == NULL) TRACELOG(LOG_WARNING, "FILEIO: [%s] Failed to open KTX file", fileName);
-    else
+    // Calculate file dataSize required
+    int dataSize = sizeof(KTXHeader);
+    
+    for (int i = 0, width = image.width, height = image.height; i < image.mipmaps; i++)
     {
-        KTXHeader ktxHeader = { 0 };
-
-        // KTX identifier (v1.1)
-        //unsigned char id[12] = { '«', 'K', 'T', 'X', ' ', '1', '1', '»', '\r', '\n', '\x1A', '\n' };
-        //unsigned char id[12] = { 0xAB, 0x4B, 0x54, 0x58, 0x20, 0x31, 0x31, 0xBB, 0x0D, 0x0A, 0x1A, 0x0A };
-
-        const char ktxIdentifier[12] = { 0xAB, 'K', 'T', 'X', ' ', '1', '1', 0xBB, '\r', '\n', 0x1A, '\n' };
-
-        // Get the image header
-        strncpy(ktxHeader.id, ktxIdentifier, 12); // KTX 1.1 signature
-        ktxHeader.endianness = 0;
-        ktxHeader.glType = 0;                     // Obtained from image.format
-        ktxHeader.glTypeSize = 1;
-        ktxHeader.glFormat = 0;                   // Obtained from image.format
-        ktxHeader.glInternalFormat = 0;           // Obtained from image.format
-        ktxHeader.glBaseInternalFormat = 0;
-        ktxHeader.width = image.width;
-        ktxHeader.height = image.height;
-        ktxHeader.depth = 0;
-        ktxHeader.elements = 0;
-        ktxHeader.faces = 1;
-        ktxHeader.mipmapLevels = image.mipmaps;   // If it was 0, it means mipmaps should be generated on loading (not for compressed formats)
-        ktxHeader.keyValueDataSize = 0;           // No extra data after the header
-
-        rlGetGlTextureFormats(image.format, &ktxHeader.glInternalFormat, &ktxHeader.glFormat, &ktxHeader.glType);   // rlgl module function
-        ktxHeader.glBaseInternalFormat = ktxHeader.glFormat;    // KTX 1.1 only
-
-        // NOTE: We can save into a .ktx all PixelFormats supported by raylib, including compressed formats like DXT, ETC or ASTC
-
-        if (ktxHeader.glFormat == -1) TRACELOG(LOG_WARNING, "IMAGE: GL format not supported for KTX export (%i)", ktxHeader.glFormat);
-        else
-        {
-            success = (int)fwrite(&ktxHeader, sizeof(KTXHeader), 1, ktxFile);
-
-            int width = image.width;
-            int height = image.height;
-            int dataOffset = 0;
-
-            // Save all mipmaps data
-            for (int i = 0; i < image.mipmaps; i++)
-            {
-                unsigned int dataSize = GetPixelDataSize(width, height, image.format);
-                success = (int)fwrite(&dataSize, sizeof(unsigned int), 1, ktxFile);
-                success = (int)fwrite((unsigned char *)image.data + dataOffset, dataSize, 1, ktxFile);
-
-                width /= 2;
-                height /= 2;
-                dataOffset += dataSize;
-            }
-        }
-
-        fclose(ktxFile);    // Close file pointer
+        dataSize += GetPixelDataSize(width, height, image.format);
+        width /= 2; height /= 2;
     }
 
+    unsigned char *fileData = RL_CALLOC(dataSize, 1);
+    unsigned char *fileDataPtr = fileData;
+
+    KTXHeader ktxHeader = { 0 };
+
+    // KTX identifier (v1.1)
+    //unsigned char id[12] = { '«', 'K', 'T', 'X', ' ', '1', '1', '»', '\r', '\n', '\x1A', '\n' };
+    //unsigned char id[12] = { 0xAB, 0x4B, 0x54, 0x58, 0x20, 0x31, 0x31, 0xBB, 0x0D, 0x0A, 0x1A, 0x0A };
+
+    const char ktxIdentifier[12] = { 0xAB, 'K', 'T', 'X', ' ', '1', '1', 0xBB, '\r', '\n', 0x1A, '\n' };
+
+    // Get the image header
+    memcpy(ktxHeader.id, ktxIdentifier, 12);  // KTX 1.1 signature
+    ktxHeader.endianness = 0;
+    ktxHeader.glType = 0;                     // Obtained from image.format
+    ktxHeader.glTypeSize = 1;
+    ktxHeader.glFormat = 0;                   // Obtained from image.format
+    ktxHeader.glInternalFormat = 0;           // Obtained from image.format
+    ktxHeader.glBaseInternalFormat = 0;
+    ktxHeader.width = image.width;
+    ktxHeader.height = image.height;
+    ktxHeader.depth = 0;
+    ktxHeader.elements = 0;
+    ktxHeader.faces = 1;
+    ktxHeader.mipmapLevels = image.mipmaps;   // If it was 0, it means mipmaps should be generated on loading (not for compressed formats)
+    ktxHeader.keyValueDataSize = 0;           // No extra data after the header
+
+    rlGetGlTextureFormats(image.format, &ktxHeader.glInternalFormat, &ktxHeader.glFormat, &ktxHeader.glType);   // rlgl module function
+    ktxHeader.glBaseInternalFormat = ktxHeader.glFormat;    // KTX 1.1 only
+
+    // NOTE: We can save into a .ktx all PixelFormats supported by raylib, including compressed formats like DXT, ETC or ASTC
+
+    if (ktxHeader.glFormat == -1) TRACELOG(LOG_WARNING, "IMAGE: GL format not supported for KTX export (%i)", ktxHeader.glFormat);
+    else
+    {
+        memcpy(fileDataPtr, &ktxHeader, sizeof(KTXHeader));
+        fileDataPtr += sizeof(KTXHeader);
+        
+        int width = image.width;
+        int height = image.height;
+        int dataOffset = 0;
+
+        // Save all mipmaps data
+        for (int i = 0; i < image.mipmaps; i++)
+        {
+            unsigned int dataSize = GetPixelDataSize(width, height, image.format);
+            
+            memcpy(fileDataPtr, &dataSize, sizeof(unsigned int));
+            memcpy(fileDataPtr + 4, (unsigned char *)image.data + dataOffset, dataSize);
+            
+            width /= 2;
+            height /= 2;
+            dataOffset += dataSize;
+            fileDataPtr += (4 + dataSize);
+        }
+    }
+
+    SaveFileData(fileName, fileData, dataSize);
+    free(fileData);    // Free file data buffer
+
     // If all data has been written correctly to file, success = 1
-    return success;
+    return true;
 }
 #endif
 
@@ -3730,6 +3729,10 @@ static int SaveKTX(Image image, const char *fileName)
 // NOTE: PVR v2 not supported, use PVR v3 instead
 static Image LoadPVR(const char *fileName)
 {
+    unsigned int fileSize = 0;
+    unsigned char *fileData = LoadFileData(fileName, &fileSize);
+    unsigned char *fileDataPtr = fileData;
+    
     // Required extension:
     // GL_IMG_texture_compression_pvrtc
 
@@ -3786,69 +3789,52 @@ static Image LoadPVR(const char *fileName)
 
     Image image = { 0 };
 
-    FILE *pvrFile = fopen(fileName, "rb");
-
-    if (pvrFile == NULL)
-    {
-        TRACELOG(LOG_WARNING, "FILEIO: [%s] Failed to load PVR file", fileName);
-    }
-    else
+    if (fileDataPtr != NULL)
     {
         // Check PVR image version
-        unsigned char pvrVersion = 0;
-        fread(&pvrVersion, sizeof(unsigned char), 1, pvrFile);
-        fseek(pvrFile, 0, SEEK_SET);
+        unsigned char pvrVersion = fileDataPtr[0];
 
         // Load different PVR data formats
         if (pvrVersion == 0x50)
         {
-            PVRHeaderV3 pvrHeader = { 0 };
+            PVRHeaderV3 *pvrHeader = (PVRHeaderV3 *)fileDataPtr;
 
-            // Get PVR image header
-            fread(&pvrHeader, sizeof(PVRHeaderV3), 1, pvrFile);
-
-            if ((pvrHeader.id[0] != 'P') || (pvrHeader.id[1] != 'V') || (pvrHeader.id[2] != 'R') || (pvrHeader.id[3] != 3))
+            if ((pvrHeader->id[0] != 'P') || (pvrHeader->id[1] != 'V') || (pvrHeader->id[2] != 'R') || (pvrHeader->id[3] != 3))
             {
                 TRACELOG(LOG_WARNING, "IMAGE: [%s] PVR file not a valid image", fileName);
             }
             else
             {
-                image.width = pvrHeader.width;
-                image.height = pvrHeader.height;
-                image.mipmaps = pvrHeader.numMipmaps;
+                fileDataPtr += sizeof(PVRHeaderV3);   // Skip header
+                
+                image.width = pvrHeader->width;
+                image.height = pvrHeader->height;
+                image.mipmaps = pvrHeader->numMipmaps;
 
                 // Check data format
-                if (((pvrHeader.channels[0] == 'l') && (pvrHeader.channels[1] == 0)) && (pvrHeader.channelDepth[0] == 8))
-                    image.format = UNCOMPRESSED_GRAYSCALE;
-                else if (((pvrHeader.channels[0] == 'l') && (pvrHeader.channels[1] == 'a')) && ((pvrHeader.channelDepth[0] == 8) && (pvrHeader.channelDepth[1] == 8)))
-                    image.format = UNCOMPRESSED_GRAY_ALPHA;
-                else if ((pvrHeader.channels[0] == 'r') && (pvrHeader.channels[1] == 'g') && (pvrHeader.channels[2] == 'b'))
+                if (((pvrHeader->channels[0] == 'l') && (pvrHeader->channels[1] == 0)) && (pvrHeader->channelDepth[0] == 8)) image.format = UNCOMPRESSED_GRAYSCALE;
+                else if (((pvrHeader->channels[0] == 'l') && (pvrHeader->channels[1] == 'a')) && ((pvrHeader->channelDepth[0] == 8) && (pvrHeader->channelDepth[1] == 8))) image.format = UNCOMPRESSED_GRAY_ALPHA;
+                else if ((pvrHeader->channels[0] == 'r') && (pvrHeader->channels[1] == 'g') && (pvrHeader->channels[2] == 'b'))
                 {
-                    if (pvrHeader.channels[3] == 'a')
+                    if (pvrHeader->channels[3] == 'a')
                     {
-                        if ((pvrHeader.channelDepth[0] == 5) && (pvrHeader.channelDepth[1] == 5) && (pvrHeader.channelDepth[2] == 5) && (pvrHeader.channelDepth[3] == 1))
-                            image.format = UNCOMPRESSED_R5G5B5A1;
-                        else if ((pvrHeader.channelDepth[0] == 4) && (pvrHeader.channelDepth[1] == 4) && (pvrHeader.channelDepth[2] == 4) && (pvrHeader.channelDepth[3] == 4))
-                            image.format = UNCOMPRESSED_R4G4B4A4;
-                        else if ((pvrHeader.channelDepth[0] == 8) && (pvrHeader.channelDepth[1] == 8) && (pvrHeader.channelDepth[2] == 8) && (pvrHeader.channelDepth[3] == 8))
-                            image.format = UNCOMPRESSED_R8G8B8A8;
+                        if ((pvrHeader->channelDepth[0] == 5) && (pvrHeader->channelDepth[1] == 5) && (pvrHeader->channelDepth[2] == 5) && (pvrHeader->channelDepth[3] == 1)) image.format = UNCOMPRESSED_R5G5B5A1;
+                        else if ((pvrHeader->channelDepth[0] == 4) && (pvrHeader->channelDepth[1] == 4) && (pvrHeader->channelDepth[2] == 4) && (pvrHeader->channelDepth[3] == 4)) image.format = UNCOMPRESSED_R4G4B4A4;
+                        else if ((pvrHeader->channelDepth[0] == 8) && (pvrHeader->channelDepth[1] == 8) && (pvrHeader->channelDepth[2] == 8) && (pvrHeader->channelDepth[3] == 8)) image.format = UNCOMPRESSED_R8G8B8A8;
                     }
-                    else if (pvrHeader.channels[3] == 0)
+                    else if (pvrHeader->channels[3] == 0)
                     {
-                        if ((pvrHeader.channelDepth[0] == 5) && (pvrHeader.channelDepth[1] == 6) && (pvrHeader.channelDepth[2] == 5)) image.format = UNCOMPRESSED_R5G6B5;
-                        else if ((pvrHeader.channelDepth[0] == 8) && (pvrHeader.channelDepth[1] == 8) && (pvrHeader.channelDepth[2] == 8)) image.format = UNCOMPRESSED_R8G8B8;
+                        if ((pvrHeader->channelDepth[0] == 5) && (pvrHeader->channelDepth[1] == 6) && (pvrHeader->channelDepth[2] == 5)) image.format = UNCOMPRESSED_R5G6B5;
+                        else if ((pvrHeader->channelDepth[0] == 8) && (pvrHeader->channelDepth[1] == 8) && (pvrHeader->channelDepth[2] == 8)) image.format = UNCOMPRESSED_R8G8B8;
                     }
                 }
-                else if (pvrHeader.channels[0] == 2) image.format = COMPRESSED_PVRT_RGB;
-                else if (pvrHeader.channels[0] == 3) image.format = COMPRESSED_PVRT_RGBA;
+                else if (pvrHeader->channels[0] == 2) image.format = COMPRESSED_PVRT_RGB;
+                else if (pvrHeader->channels[0] == 3) image.format = COMPRESSED_PVRT_RGBA;
 
-                // Skip meta data header
-                unsigned char unused = 0;
-                for (unsigned int i = 0; i < pvrHeader.metaDataSize; i++) fread(&unused, sizeof(unsigned char), 1, pvrFile);
+                fileDataPtr += pvrHeader->metaDataSize);    // Skip meta data header
 
                 // Calculate data size (depends on format)
                 int bpp = 0;
-
                 switch (image.format)
                 {
                     case UNCOMPRESSED_GRAYSCALE: bpp = 8; break;
@@ -3866,13 +3852,12 @@ static Image LoadPVR(const char *fileName)
                 int dataSize = image.width*image.height*bpp/8;  // Total data size in bytes
                 image.data = (unsigned char *)RL_MALLOC(dataSize*sizeof(unsigned char));
 
-                // Read data from file
-                fread(image.data, dataSize, 1, pvrFile);
+                memcpy(image.data, fileDataPtr, dataSize);
             }
         }
         else if (pvrVersion == 52) TRACELOG(LOG_INFO, "IMAGE: [%s] PVRv2 format not supported, update your files to PVRv3", fileName);
 
-        fclose(pvrFile);    // Close file pointer
+        free(fileData);    // Free file data buffer
     }
 
     return image;
@@ -3883,6 +3868,10 @@ static Image LoadPVR(const char *fileName)
 // Load ASTC compressed image data (ASTC compression)
 static Image LoadASTC(const char *fileName)
 {
+    unsigned int fileSize = 0;
+    unsigned char *fileData = LoadFileData(fileName, &fileSize);
+    unsigned char *fileDataPtr = fileData;
+    
     // Required extensions:
     // GL_KHR_texture_compression_astc_hdr
     // GL_KHR_texture_compression_astc_ldr
@@ -3904,38 +3893,31 @@ static Image LoadASTC(const char *fileName)
 
     Image image = { 0 };
 
-    FILE *astcFile = fopen(fileName, "rb");
-
-    if (astcFile == NULL)
+    if (fileDataPtr != NULL)
     {
-        TRACELOG(LOG_WARNING, "FILEIO: [%s] Failed to load ASTC file", fileName);
-    }
-    else
-    {
-        ASTCHeader astcHeader = { 0 };
+        ASTCHeader *astcHeader = (ASTCHeader *)fileDataPtr;
 
-        // Get ASTC image header
-        fread(&astcHeader, sizeof(ASTCHeader), 1, astcFile);
-
-        if ((astcHeader.id[3] != 0x5c) || (astcHeader.id[2] != 0xa1) || (astcHeader.id[1] != 0xab) || (astcHeader.id[0] != 0x13))
+        if ((astcHeader->id[3] != 0x5c) || (astcHeader->id[2] != 0xa1) || (astcHeader->id[1] != 0xab) || (astcHeader->id[0] != 0x13))
         {
             TRACELOG(LOG_WARNING, "IMAGE: [%s] ASTC file not a valid image", fileName);
         }
         else
         {
+            fileDataPtr += sizeof(ASTCHeader);   // Skip header
+            
             // NOTE: Assuming Little Endian (could it be wrong?)
-            image.width = 0x00000000 | ((int)astcHeader.width[2] << 16) | ((int)astcHeader.width[1] << 8) | ((int)astcHeader.width[0]);
-            image.height = 0x00000000 | ((int)astcHeader.height[2] << 16) | ((int)astcHeader.height[1] << 8) | ((int)astcHeader.height[0]);
+            image.width = 0x00000000 | ((int)astcHeader->width[2] << 16) | ((int)astcHeader->width[1] << 8) | ((int)astcHeader->width[0]);
+            image.height = 0x00000000 | ((int)astcHeader->height[2] << 16) | ((int)astcHeader->height[1] << 8) | ((int)astcHeader->height[0]);
 
             TRACELOGD("IMAGE: [%s] ASTC file info:", fileName);
             TRACELOGD("    > Image width:  %i", image.width);
             TRACELOGD("    > Image height: %i", image.height);
-            TRACELOGD("    > Image blocks: %ix%i", astcHeader.blockX, astcHeader.blockY);
+            TRACELOGD("    > Image blocks: %ix%i", astcHeader->blockX, astcHeader->blockY);
 
             image.mipmaps = 1;      // NOTE: ASTC format only contains one mipmap level
 
             // NOTE: Each block is always stored in 128bit so we can calculate the bpp
-            int bpp = 128/(astcHeader.blockX*astcHeader.blockY);
+            int bpp = 128/(astcHeader->blockX*astcHeader->blockY);
 
             // NOTE: Currently we only support 2 blocks configurations: 4x4 and 8x8
             if ((bpp == 8) || (bpp == 2))
@@ -3943,7 +3925,8 @@ static Image LoadASTC(const char *fileName)
                 int dataSize = image.width*image.height*bpp/8;  // Data size in bytes
 
                 image.data = (unsigned char *)RL_MALLOC(dataSize*sizeof(unsigned char));
-                fread(image.data, dataSize, 1, astcFile);
+                
+                memcpy(image.data, fileDataPtr, dataSize);
 
                 if (bpp == 8) image.format = COMPRESSED_ASTC_4x4_RGBA;
                 else if (bpp == 2) image.format = COMPRESSED_ASTC_8x8_RGBA;
@@ -3951,7 +3934,7 @@ static Image LoadASTC(const char *fileName)
             else TRACELOG(LOG_WARNING, "IMAGE: [%s] ASTC block size configuration not supported", fileName);
         }
 
-        fclose(astcFile);
+        free(fileData);    // Free file data buffer
     }
 
     return image;
