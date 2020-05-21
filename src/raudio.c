@@ -491,7 +491,7 @@ AudioBuffer *LoadAudioBuffer(ma_format format, ma_uint32 channels, ma_uint32 sam
         return NULL;
     }
 
-    audioBuffer->data = RL_CALLOC(sizeInFrames*channels*ma_get_bytes_per_sample(format), 1);
+    if (sizeInFrames > 0) audioBuffer->data = RL_CALLOC(sizeInFrames*channels*ma_get_bytes_per_sample(format), 1);
 
     // Audio data runs through a format converter
     ma_data_converter_config converterConfig = ma_data_converter_config_init(format, AUDIO_DEVICE_FORMAT, channels, AUDIO_DEVICE_CHANNELS, sampleRate, AUDIO_DEVICE_SAMPLE_RATE);
@@ -1798,6 +1798,7 @@ static void InitAudioBufferPool(void)
     // Dummy buffers
     for (int i = 0; i < MAX_AUDIO_BUFFER_POOL_CHANNELS; i++)
     {
+        // WARNING: An empty audioBuffer is created (data = 0)
         AUDIO.MultiChannel.pool[i] = LoadAudioBuffer(AUDIO_DEVICE_FORMAT, AUDIO_DEVICE_CHANNELS, AUDIO_DEVICE_SAMPLE_RATE, 0, AUDIO_BUFFER_USAGE_STATIC);
     }
     
@@ -1808,11 +1809,7 @@ static void InitAudioBufferPool(void)
 // Close the audio buffers pool
 static void CloseAudioBufferPool(void)
 {
-    for (int i = 0; i < MAX_AUDIO_BUFFER_POOL_CHANNELS; i++)
-    {
-        RL_FREE(AUDIO.MultiChannel.pool[i]->data);
-        RL_FREE(AUDIO.MultiChannel.pool[i]);
-    }
+    for (int i = 0; i < MAX_AUDIO_BUFFER_POOL_CHANNELS; i++) RL_FREE(AUDIO.MultiChannel.pool[i]);
 }
 
 #if defined(SUPPORT_FILEFORMAT_WAV)
