@@ -411,7 +411,8 @@ TEXTURES = \
     textures/textures_background_scrolling \
     textures/textures_sprite_button \
     textures/textures_sprite_explosion \
-    textures/textures_bunnymark
+    textures/textures_bunnymark \
+    textures/textures_blend_modes
     
 TEXT = \
     text/text_raylib_fonts \
