@@ -1937,8 +1937,6 @@ unsigned int rlLoadTexture(void *data, int width, int height, int format, int mi
     int mipHeight = height;
     int mipOffset = 0;          // Mipmap data offset
 
-    TRACELOGD("TEXTURE: Load texture from data memory address: 0x%x", data);
-
     // Load the different mipmap levels
     for (int i = 0; i < mipmapCount; i++)
     {
