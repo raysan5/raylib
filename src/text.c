@@ -54,12 +54,12 @@
 #endif
 
 #include <stdlib.h>         // Required for: malloc(), free()
-#include <stdio.h>          // Required for: FILE, fopen(), fclose(), fgets()
+#include <stdio.h>          // Required for: vsprintf()
 #include <string.h>         // Required for: strcmp(), strstr(), strcpy(), strncpy(), strcat(), strncat(), sscanf()
 #include <stdarg.h>         // Required for: va_list, va_start(), vsprintf(), va_end() [Used in TextFormat()]
 #include <ctype.h>          // Requried for: toupper(), tolower() [Used in TextToUpper(), TextToLower()]
 
-#include "utils.h"          // Required for: fopen() Android mapping
+#include "utils.h"          // Required for: LoadFileText()
 
 #if defined(SUPPORT_FILEFORMAT_TTF)
     #define STB_RECT_PACK_IMPLEMENTATION
@@ -1691,8 +1691,8 @@ static Font LoadBMFont(const char *fileName)
 
     int base = 0;   // Useless data
 
-    unsigned char *fileText = LoadFileText(fileName);
-    unsigned char *fileTextPtr = fileText;
+    char *fileText = LoadFileText(fileName);
+    char *fileTextPtr = fileText;
     
     // NOTE: We skip first line, it contains no useful information
     int lineBytes = GetLine(fileTextPtr, buffer, MAX_BUFFER_SIZE);
