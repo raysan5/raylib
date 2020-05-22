@@ -1662,6 +1662,16 @@ int GetNextCodepoint(const char *text, int *bytesProcessed)
 // Module specific Functions Definition
 //----------------------------------------------------------------------------------
 #if defined(SUPPORT_FILEFORMAT_FNT)
+
+// Read a line from memory
+static int GetLine(const char *origin, char *buffer, int maxLength)
+{
+    int count = 0;
+    for (; count < maxLength; count++) if (origin[count] == '\n') break;
+    memcpy(buffer, origin, count);
+    return count;
+}
+
 // Load a BMFont file (AngelCode font file)
 static Font LoadBMFont(const char *fileName)
 {
@@ -1673,49 +1683,46 @@ static Font LoadBMFont(const char *fileName)
     char *searchPoint = NULL;
 
     int fontSize = 0;
-    int texWidth = 0;
-    int texHeight = 0;
-    char texFileName[129];
     int charsCount = 0;
+    
+    int imWidth = 0;
+    int imHeight = 0;
+    char imFileName[129];
 
     int base = 0;   // Useless data
 
-    FILE *fntFile = NULL;
-
-    fntFile = fopen(fileName, "rt");
-
-    if (fntFile == NULL)
-    {
-        TRACELOG(LOG_WARNING, "FILEIO: [%s] Failed to open FNT file", fileName);
-        return font;
-    }
-
+    unsigned char *fileText = LoadFileText(fileName);
+    unsigned char *fileTextPtr = fileText;
+    
     // NOTE: We skip first line, it contains no useful information
-    fgets(buffer, MAX_BUFFER_SIZE, fntFile);
-    //searchPoint = strstr(buffer, "size");
-    //sscanf(searchPoint, "size=%i", &fontSize);
+    int lineBytes = GetLine(fileTextPtr, buffer, MAX_BUFFER_SIZE);
+    fileTextPtr += (lineBytes + 1);
 
-    fgets(buffer, MAX_BUFFER_SIZE, fntFile);
+    // Read line data
+    lineBytes = GetLine(fileTextPtr, buffer, MAX_BUFFER_SIZE);
     searchPoint = strstr(buffer, "lineHeight");
-    sscanf(searchPoint, "lineHeight=%i base=%i scaleW=%i scaleH=%i", &fontSize, &base, &texWidth, &texHeight);
+    sscanf(searchPoint, "lineHeight=%i base=%i scaleW=%i scaleH=%i", &fontSize, &base, &imWidth, &imHeight);
+    fileTextPtr += (lineBytes + 1);
 
     TRACELOGD("FONT: [%s] Loaded font info:", fileName);
-    TRACELOGD("    > Base size:     %i", fontSize);
-    TRACELOGD("    > Texture scale: %ix%i", texWidth, texHeight);
+    TRACELOGD("    > Base size: %i", fontSize);
+    TRACELOGD("    > Texture scale: %ix%i", imWidth, imHeight);
 
-    fgets(buffer, MAX_BUFFER_SIZE, fntFile);
+    lineBytes = GetLine(fileTextPtr, buffer, MAX_BUFFER_SIZE);
     searchPoint = strstr(buffer, "file");
-    sscanf(searchPoint, "file=\"%128[^\"]\"", texFileName);
+    sscanf(searchPoint, "file=\"%128[^\"]\"", imFileName);
+    fileTextPtr += (lineBytes + 1);
 
-    TRACELOGD("    > Texture filename: %s", texFileName);
+    TRACELOGD("    > Texture filename: %s", imFileName);
 
-    fgets(buffer, MAX_BUFFER_SIZE, fntFile);
+    lineBytes = GetLine(fileTextPtr, buffer, MAX_BUFFER_SIZE);
     searchPoint = strstr(buffer, "count");
     sscanf(searchPoint, "count=%i", &charsCount);
+    fileTextPtr += (lineBytes + 1);
 
     TRACELOGD("    > Chars count: %i", charsCount);
 
-    // Compose correct path using route of .fnt file (fileName) and texFileName
+    // Compose correct path using route of .fnt file (fileName) and imFileName
     char *texPath = NULL;
     char *lastSlash = NULL;
 
@@ -1726,12 +1733,12 @@ static Font LoadBMFont(const char *fileName)
     }
 
     // NOTE: We need some extra space to avoid memory corruption on next allocations!
-    texPath = RL_MALLOC(TextLength(fileName) - TextLength(lastSlash) + TextLength(texFileName) + 4);
+    texPath = RL_MALLOC(TextLength(fileName) - TextLength(lastSlash) + TextLength(imFileName) + 4);
 
     // NOTE: strcat() and strncat() required a '\0' terminated string to work!
     *texPath = '\0';
     strncat(texPath, fileName, TextLength(fileName) - TextLength(lastSlash) + 1);
-    strncat(texPath, texFileName, TextLength(texFileName));
+    strncat(texPath, imFileName, TextLength(imFileName));
 
     TRACELOGD("    > Texture loading path: %s", texPath);
 
@@ -1772,9 +1779,10 @@ static Font LoadBMFont(const char *fileName)
 
     for (int i = 0; i < charsCount; i++)
     {
-        fgets(buffer, MAX_BUFFER_SIZE, fntFile);
+        lineBytes = GetLine(fileTextPtr, buffer, MAX_BUFFER_SIZE);
         sscanf(buffer, "char id=%i x=%i y=%i width=%i height=%i xoffset=%i yoffset=%i xadvance=%i",
                        &charId, &charX, &charY, &charWidth, &charHeight, &charOffsetX, &charOffsetY, &charAdvanceX);
+        fileTextPtr += (lineBytes + 1);
 
         // Get character rectangle in the font atlas texture
         font.recs[i] = (Rectangle){ (float)charX, (float)charY, (float)charWidth, (float)charHeight };
@@ -1790,8 +1798,7 @@ static Font LoadBMFont(const char *fileName)
     }
 
     UnloadImage(imFont);
-
-    fclose(fntFile);
+    free(fileText);
 
     if (font.texture.id == 0)
     {
