@@ -43,11 +43,10 @@
     #include "config.h"         // Defines module configuration flags
 #endif
 
-#include "utils.h"          // Required for: fopen() Android mapping
+#include "utils.h"          // Required for: LoadFileData(), LoadFileText(), SaveFileText()
 
 #include <stdlib.h>         // Required for: malloc(), free()
-#include <stdio.h>          // Required for: FILE, fopen(), fclose()
-#include <string.h>         // Required for: strncmp() [Used in LoadModelAnimations()], strlen() [Used in LoadTextureFromCgltfImage()]
+#include <string.h>         // Required for: memcmp(), strlen()
 #include <math.h>           // Required for: sinf(), cosf(), sqrtf(), fabsf()
 
 #if defined(_WIN32)
@@ -825,57 +824,64 @@ void UnloadMesh(Mesh mesh)
 // Export mesh data to file
 void ExportMesh(Mesh mesh, const char *fileName)
 {
-    bool success = false;
-
     if (IsFileExtension(fileName, ".obj"))
     {
-        FILE *objFile = fopen(fileName, "wt");
+        // Estimated data size, it should be enough...
+        int dataSize = mesh.vertexCount/3*strlen("v 0000.00f 0000.00f 0000.00f") + 
+                       mesh.vertexCount/2*strlen("vt 0.000f 0.00f") + 
+                       mesh.vertexCount/3*strlen("vn 0.000f 0.00f 0.00f") + 
+                       mesh.triangleCount/3*strlen("f 00000/00000/00000 00000/00000/00000 00000/00000/00000");
 
-        fprintf(objFile, "# //////////////////////////////////////////////////////////////////////////////////\n");
-        fprintf(objFile, "# //                                                                              //\n");
-        fprintf(objFile, "# // rMeshOBJ exporter v1.0 - Mesh exported as triangle faces and not optimized   //\n");
-        fprintf(objFile, "# //                                                                              //\n");
-        fprintf(objFile, "# // more info and bugs-report:  github.com/raysan5/raylib                        //\n");
-        fprintf(objFile, "# // feedback and support:       ray[at]raylib.com                                //\n");
-        fprintf(objFile, "# //                                                                              //\n");
-        fprintf(objFile, "# // Copyright (c) 2018 Ramon Santamaria (@raysan5)                               //\n");
-        fprintf(objFile, "# //                                                                              //\n");
-        fprintf(objFile, "# //////////////////////////////////////////////////////////////////////////////////\n\n");
-        fprintf(objFile, "# Vertex Count:     %i\n", mesh.vertexCount);
-        fprintf(objFile, "# Triangle Count:   %i\n\n", mesh.triangleCount);
+        // NOTE: Text data buffer size is estimated considering mesh data size
+        char *txtData = (char *)RL_CALLOC(dataSize + 2000, sizeof(char));
 
-        fprintf(objFile, "g mesh\n");
+        int bytesCount = 0;
+        bytesCount += sprintf(txtData + bytesCount, "# //////////////////////////////////////////////////////////////////////////////////\n");
+        bytesCount += sprintf(txtData + bytesCount, "# //                                                                              //\n");
+        bytesCount += sprintf(txtData + bytesCount, "# // rMeshOBJ exporter v1.0 - Mesh exported as triangle faces and not optimized   //\n");
+        bytesCount += sprintf(txtData + bytesCount, "# //                                                                              //\n");
+        bytesCount += sprintf(txtData + bytesCount, "# // more info and bugs-report:  github.com/raysan5/raylib                        //\n");
+        bytesCount += sprintf(txtData + bytesCount, "# // feedback and support:       ray[at]raylib.com                                //\n");
+        bytesCount += sprintf(txtData + bytesCount, "# //                                                                              //\n");
+        bytesCount += sprintf(txtData + bytesCount, "# // Copyright (c) 2018 Ramon Santamaria (@raysan5)                               //\n");
+        bytesCount += sprintf(txtData + bytesCount, "# //                                                                              //\n");
+        bytesCount += sprintf(txtData + bytesCount, "# //////////////////////////////////////////////////////////////////////////////////\n\n");
+        bytesCount += sprintf(txtData + bytesCount, "# Vertex Count:     %i\n", mesh.vertexCount);
+        bytesCount += sprintf(txtData + bytesCount, "# Triangle Count:   %i\n\n", mesh.triangleCount);
+
+        bytesCount += sprintf(txtData + bytesCount, "g mesh\n");
 
         for (int i = 0, v = 0; i < mesh.vertexCount; i++, v += 3)
         {
-            fprintf(objFile, "v %.2f %.2f %.2f\n", mesh.vertices[v], mesh.vertices[v + 1], mesh.vertices[v + 2]);
+            bytesCount += sprintf(txtData + bytesCount, "v %.2f %.2f %.2f\n", mesh.vertices[v], mesh.vertices[v + 1], mesh.vertices[v + 2]);
         }
 
         for (int i = 0, v = 0; i < mesh.vertexCount; i++, v += 2)
         {
-            fprintf(objFile, "vt %.2f %.2f\n", mesh.texcoords[v], mesh.texcoords[v + 1]);
+            bytesCount += sprintf(txtData + bytesCount, "vt %.3f %.3f\n", mesh.texcoords[v], mesh.texcoords[v + 1]);
         }
 
         for (int i = 0, v = 0; i < mesh.vertexCount; i++, v += 3)
         {
-            fprintf(objFile, "vn %.2f %.2f %.2f\n", mesh.normals[v], mesh.normals[v + 1], mesh.normals[v + 2]);
+            bytesCount += sprintf(txtData + bytesCount, "vn %.3f %.3f %.3f\n", mesh.normals[v], mesh.normals[v + 1], mesh.normals[v + 2]);
         }
 
         for (int i = 0; i < mesh.triangleCount; i += 3)
         {
-            fprintf(objFile, "f %i/%i/%i %i/%i/%i %i/%i/%i\n", i, i, i, i + 1, i + 1, i + 1, i + 2, i + 2, i + 2);
+            bytesCount += sprintf(txtData + bytesCount, "f %i/%i/%i %i/%i/%i %i/%i/%i\n", i, i, i, i + 1, i + 1, i + 1, i + 2, i + 2, i + 2);
         }
 
-        fprintf(objFile, "\n");
+        bytesCount += sprintf(txtData + bytesCount, "\n");
 
-        fclose(objFile);
+        // NOTE: Text data length exported is determined by '\0' (NULL) character
+        SaveFileText(fileName, txtData);
 
-        success = true;
+        RL_FREE(txtData);
     }
-    else if (IsFileExtension(fileName, ".raw")) { }   // TODO: Support additional file formats to export mesh vertex data
-
-    if (success) TRACELOG(LOG_INFO, "FILEIO: [%s] Mesh exported successfully", fileName);
-    else TRACELOG(LOG_WARNING, "FILEIO: [%s] Failed to export mesh data", fileName);
+    else if (IsFileExtension(fileName, ".raw")) 
+    {
+        // TODO: Support additional file formats to export mesh vertex data
+    }
 }
 
 // Load materials from model file
