@@ -418,40 +418,40 @@ void ExportImageAsCode(Image image, const char *fileName)
     #define TEXT_BYTES_PER_LINE     20
 #endif
 
-    FILE *txtFile = fopen(fileName, "wt");
+    int dataSize = GetPixelDataSize(image.width, image.height, image.format);
+    
+    // NOTE: Text data buffer size is estimated considering image data size
+    char *txtData = (char *)RL_CALLOC(6*dataSize + 2000, sizeof(char));
 
-    if (txtFile != NULL)
-    {
-        char varFileName[256] = { 0 };
-        int dataSize = GetPixelDataSize(image.width, image.height, image.format);
+    int bytesCount = 0;
+    bytesCount += sprintf(txtData + bytesCount, "////////////////////////////////////////////////////////////////////////////////////////\n");
+    bytesCount += sprintf(txtData + bytesCount, "//                                                                                    //\n");
+    bytesCount += sprintf(txtData + bytesCount, "// ImageAsCode exporter v1.0 - Image pixel data exported as an array of bytes         //\n");
+    bytesCount += sprintf(txtData + bytesCount, "//                                                                                    //\n");
+    bytesCount += sprintf(txtData + bytesCount, "// more info and bugs-report:  github.com/raysan5/raylib                              //\n");
+    bytesCount += sprintf(txtData + bytesCount, "// feedback and support:       ray[at]raylib.com                                      //\n");
+    bytesCount += sprintf(txtData + bytesCount, "//                                                                                    //\n");
+    bytesCount += sprintf(txtData + bytesCount, "// Copyright (c) 2020 Ramon Santamaria (@raysan5)                                     //\n");
+    bytesCount += sprintf(txtData + bytesCount, "//                                                                                    //\n");
+    bytesCount += sprintf(txtData + bytesCount, "////////////////////////////////////////////////////////////////////////////////////////\n\n");
 
-        fprintf(txtFile, "////////////////////////////////////////////////////////////////////////////////////////\n");
-        fprintf(txtFile, "//                                                                                    //\n");
-        fprintf(txtFile, "// ImageAsCode exporter v1.0 - Image pixel data exported as an array of bytes         //\n");
-        fprintf(txtFile, "//                                                                                    //\n");
-        fprintf(txtFile, "// more info and bugs-report:  github.com/raysan5/raylib                              //\n");
-        fprintf(txtFile, "// feedback and support:       ray[at]raylib.com                                      //\n");
-        fprintf(txtFile, "//                                                                                    //\n");
-        fprintf(txtFile, "// Copyright (c) 2020 Ramon Santamaria (@raysan5)                                     //\n");
-        fprintf(txtFile, "//                                                                                    //\n");
-        fprintf(txtFile, "////////////////////////////////////////////////////////////////////////////////////////\n\n");
+    // Get file name from path and convert variable name to uppercase
+    char varFileName[256] = { 0 };
+    strcpy(varFileName, GetFileNameWithoutExt(fileName));
+    for (int i = 0; varFileName[i] != '\0'; i++) if ((varFileName[i] >= 'a') && (varFileName[i] <= 'z')) { varFileName[i] = varFileName[i] - 32; }
 
-        // Get file name from path and convert variable name to uppercase
-        strcpy(varFileName, GetFileNameWithoutExt(fileName));
-        for (int i = 0; varFileName[i] != '\0'; i++) if ((varFileName[i] >= 'a') && (varFileName[i] <= 'z')) { varFileName[i] = varFileName[i] - 32; }
+    // Add image information
+    bytesCount += sprintf(txtData + bytesCount, "// Image data information\n");
+    bytesCount += sprintf(txtData + bytesCount, "#define %s_WIDTH    %i\n", varFileName, image.width);
+    bytesCount += sprintf(txtData + bytesCount, "#define %s_HEIGHT   %i\n", varFileName, image.height);
+    bytesCount += sprintf(txtData + bytesCount, "#define %s_FORMAT   %i          // raylib internal pixel format\n\n", varFileName, image.format);
 
-        // Add image information
-        fprintf(txtFile, "// Image data information\n");
-        fprintf(txtFile, "#define %s_WIDTH    %i\n", varFileName, image.width);
-        fprintf(txtFile, "#define %s_HEIGHT   %i\n", varFileName, image.height);
-        fprintf(txtFile, "#define %s_FORMAT   %i          // raylib internal pixel format\n\n", varFileName, image.format);
+    bytesCount += sprintf(txtData + bytesCount, "static unsigned char %s_DATA[%i] = { ", varFileName, dataSize);
+    for (int i = 0; i < dataSize - 1; i++) bytesCount += sprintf(txtData + bytesCount, ((i%TEXT_BYTES_PER_LINE == 0)? "0x%x,\n" : "0x%x, "), ((unsigned char *)image.data)[i]);
+    bytesCount += sprintf(txtData + bytesCount, "0x%x };\n", ((unsigned char *)image.data)[dataSize - 1]);
 
-        fprintf(txtFile, "static unsigned char %s_DATA[%i] = { ", varFileName, dataSize);
-        for (int i = 0; i < dataSize - 1; i++) fprintf(txtFile, ((i%TEXT_BYTES_PER_LINE == 0)? "0x%x,\n" : "0x%x, "), ((unsigned char *)image.data)[i]);
-        fprintf(txtFile, "0x%x };\n", ((unsigned char *)image.data)[dataSize - 1]);
-
-        fclose(txtFile);
-    }
+    SaveFileText(fileName, txtData);
+    free(txtData);
 }
 
 //------------------------------------------------------------------------------------
