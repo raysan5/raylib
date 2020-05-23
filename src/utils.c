@@ -183,7 +183,7 @@ unsigned char *LoadFileData(const char *fileName, unsigned int *bytesRead)
 
             if (size > 0)
             {
-                data = (unsigned char *)RL_MALLOC(sizeof(unsigned char)*size);
+                data = (unsigned char *)RL_MALLOC(size*sizeof(unsigned char));
 
                 // NOTE: fread() returns number of read elements instead of bytes, so we read [1 byte, size elements]
                 unsigned int count = (unsigned int)fread(data, sizeof(unsigned char), size, file);
@@ -246,7 +246,7 @@ char *LoadFileText(const char *fileName)
 
             if (size > 0)
             {
-                text = (char *)RL_MALLOC(sizeof(char)*(size + 1));
+                text = (char *)RL_MALLOC((size + 1)*sizeof(char));
                 unsigned int count = (unsigned int)fread(text, sizeof(char), size, textFile);
 
                 // WARNING: \r\n is converted to \n on reading, so,

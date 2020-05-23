@@ -4687,7 +4687,7 @@ static void InitEvdevInput(void)
 // Identifies a input device and spawns a thread to handle it if needed
 static void EventThreadSpawn(char *device)
 {
-    #define BITS_PER_LONG   (sizeof(long)*8)
+    #define BITS_PER_LONG   (8*sizeof(long))
     #define NBITS(x)        ((((x) - 1)/BITS_PER_LONG) + 1)
     #define OFF(x)          ((x)%BITS_PER_LONG)
     #define BIT(x)          (1UL<<OFF(x))
