@@ -55,7 +55,7 @@
 
 #include <stdlib.h>         // Required for: malloc(), free()
 #include <stdio.h>          // Required for: vsprintf()
-#include <string.h>         // Required for: strcmp(), strstr(), strcpy(), strncpy(), strcat(), strncat(), sscanf()
+#include <string.h>         // Required for: strcmp(), strstr(), strcpy(), strncpy() [Used in TextReplace()], sscanf() [Used in LoadBMFont()]
 #include <stdarg.h>         // Required for: va_list, va_start(), vsprintf(), va_end() [Used in TextFormat()]
 #include <ctype.h>          // Requried for: toupper(), tolower() [Used in TextToUpper(), TextToLower()]
 
@@ -1287,29 +1287,32 @@ char *TextInsert(const char *text, const char *insert, int position)
 }
 
 // Join text strings with delimiter
-// REQUIRES: strcat()
+// REQUIRES: memset(), memcpy()
 const char *TextJoin(const char **textList, int count, const char *delimiter)
 {
     static char text[MAX_TEXT_BUFFER_LENGTH] = { 0 };
     memset(text, 0, MAX_TEXT_BUFFER_LENGTH);
+    char *textPtr = text;
 
     int totalLength = 0;
     int delimiterLen = TextLength(delimiter);
 
     for (int i = 0; i < count; i++)
     {
-        int textListLength = TextLength(textList[i]);
+        int textLength = TextLength(textList[i]);
 
         // Make sure joined text could fit inside MAX_TEXT_BUFFER_LENGTH
-        if ((totalLength + textListLength) < MAX_TEXT_BUFFER_LENGTH)
+        if ((totalLength + textLength) < MAX_TEXT_BUFFER_LENGTH)
         {
-            strcat(text, textList[i]);
-            totalLength += textListLength;
+            memcpy(textPtr, textList[i], textLength);
+            totalLength += textLength;
+            textPtr += textLength;
 
             if ((delimiterLen > 0) && (i < (count - 1)))
             {
-                strcat(text, delimiter);
+                memcpy(textPtr, delimiter, delimiterLen);
                 totalLength += delimiterLen;
+                textPtr += textLength;
             }
         }
     }
@@ -1453,7 +1456,7 @@ char *TextToUtf8(int *codepoints, int length)
     for (int i = 0, bytes = 0; i < length; i++)
     {
         utf8 = CodepointToUtf8(codepoints[i], &bytes);
-        strncpy(text + size, utf8, bytes);
+        memcpy(text + size, utf8, bytes);
         size += bytes;
     }
 
@@ -1664,6 +1667,7 @@ int GetNextCodepoint(const char *text, int *bytesProcessed)
 #if defined(SUPPORT_FILEFORMAT_FNT)
 
 // Read a line from memory
+// NOTE: Returns the number of bytes read
 static int GetLine(const char *origin, char *buffer, int maxLength)
 {
     int count = 0;
@@ -1673,6 +1677,7 @@ static int GetLine(const char *origin, char *buffer, int maxLength)
 }
 
 // Load a BMFont file (AngelCode font file)
+// REQUIRES: strstr(), sscanf(), strrchr(), memcpy()
 static Font LoadBMFont(const char *fileName)
 {
     #define MAX_BUFFER_SIZE     256
@@ -1727,18 +1732,12 @@ static Font LoadBMFont(const char *fileName)
     char *lastSlash = NULL;
 
     lastSlash = strrchr(fileName, '/');
-    if (lastSlash == NULL)
-    {
-        lastSlash = strrchr(fileName, '\\');
-    }
+    if (lastSlash == NULL) lastSlash = strrchr(fileName, '\\');
 
     // NOTE: We need some extra space to avoid memory corruption on next allocations!
-    texPath = RL_MALLOC(TextLength(fileName) - TextLength(lastSlash) + TextLength(imFileName) + 4);
-
-    // NOTE: strcat() and strncat() required a '\0' terminated string to work!
-    *texPath = '\0';
-    strncat(texPath, fileName, TextLength(fileName) - TextLength(lastSlash) + 1);
-    strncat(texPath, imFileName, TextLength(imFileName));
+    texPath = RL_CALLOC(TextLength(fileName) - TextLength(lastSlash) + TextLength(imFileName) + 4, 1);
+    memcpy(texPath, fileName, TextLength(fileName) - TextLength(lastSlash) + 1);
+    memcpy(texPath + TextLength(fileName) - TextLength(lastSlash) + 1, imFileName, TextLength(imFileName));
 
     TRACELOGD("    > Texture loading path: %s", texPath);
 
