@@ -197,14 +197,13 @@ typedef struct tagBITMAPINFOHEADER {
     #include "external/jar_mod.h"       // MOD loading functions
 #endif
 
-#if defined(SUPPORT_FILEFORMAT_FLAC)
-    #define DRFLAC_MALLOC RL_MALLOC
-    #define DRFLAC_REALLOC RL_REALLOC
-    #define DRFLAC_FREE RL_FREE
+#if defined(SUPPORT_FILEFORMAT_WAV)
+    #define DRWAV_MALLOC RL_MALLOC
+    #define DRWAV_REALLOC RL_REALLOC
+    #define DRWAV_FREE RL_FREE
 
-    #define DR_FLAC_IMPLEMENTATION
-    #define DR_FLAC_NO_WIN32_IO
-    #include "external/dr_flac.h"       // FLAC loading functions
+    #define DR_WAV_IMPLEMENTATION
+    #include "external/dr_wav.h"        // WAV loading functions
 #endif
 
 #if defined(SUPPORT_FILEFORMAT_MP3)
@@ -214,6 +213,16 @@ typedef struct tagBITMAPINFOHEADER {
 
     #define DR_MP3_IMPLEMENTATION
     #include "external/dr_mp3.h"        // MP3 loading functions
+#endif
+
+#if defined(SUPPORT_FILEFORMAT_FLAC)
+    #define DRFLAC_MALLOC RL_MALLOC
+    #define DRFLAC_REALLOC RL_REALLOC
+    #define DRFLAC_FREE RL_FREE
+
+    #define DR_FLAC_IMPLEMENTATION
+    #define DR_FLAC_NO_WIN32_IO
+    #include "external/dr_flac.h"       // FLAC loading functions
 #endif
 
 #if defined(_MSC_VER)
@@ -437,11 +446,11 @@ void InitAudioDevice(void)
     }
 
     TRACELOG(LOG_INFO, "AUDIO: Device initialized successfully");
-    TRACELOG(LOG_INFO, "    > Backend:      miniaudio / %s", ma_get_backend_name(AUDIO.System.context.backend));
-    TRACELOG(LOG_INFO, "    > Format:       %s -> %s", ma_get_format_name(AUDIO.System.device.playback.format), ma_get_format_name(AUDIO.System.device.playback.internalFormat));
-    TRACELOG(LOG_INFO, "    > Channels:     %d -> %d", AUDIO.System.device.playback.channels, AUDIO.System.device.playback.internalChannels);
-    TRACELOG(LOG_INFO, "    > Sample rate:  %d -> %d", AUDIO.System.device.sampleRate, AUDIO.System.device.playback.internalSampleRate);
-    TRACELOG(LOG_INFO, "    > Periods size: %d", AUDIO.System.device.playback.internalPeriodSizeInFrames*AUDIO.System.device.playback.internalPeriods);
+    TRACELOG(LOG_INFO, "    > Backend:       miniaudio / %s", ma_get_backend_name(AUDIO.System.context.backend));
+    TRACELOG(LOG_INFO, "    > Format:        %s -> %s", ma_get_format_name(AUDIO.System.device.playback.format), ma_get_format_name(AUDIO.System.device.playback.internalFormat));
+    TRACELOG(LOG_INFO, "    > Channels:      %d -> %d", AUDIO.System.device.playback.channels, AUDIO.System.device.playback.internalChannels);
+    TRACELOG(LOG_INFO, "    > Sample rate:   %d -> %d", AUDIO.System.device.sampleRate, AUDIO.System.device.playback.internalSampleRate);
+    TRACELOG(LOG_INFO, "    > Periods size:  %d", AUDIO.System.device.playback.internalPeriodSizeInFrames*AUDIO.System.device.playback.internalPeriods);
 
     InitAudioBufferPool();
 
@@ -1046,6 +1055,24 @@ Music LoadMusicStream(const char *fileName)
     bool musicLoaded = false;
 
     if (false) { }
+#if defined(SUPPORT_FILEFORMAT_WAV)
+    else if (IsFileExtension(fileName, ".wav"))
+    {
+        drwav *ctxWav = RL_MALLOC(sizeof(drwav));
+        bool success = drwav_init_file(ctxWav, fileName, NULL);
+
+        if (success)
+        {
+            music.ctxType = MUSIC_AUDIO_WAV;
+            music.ctxData = ctxWav;
+
+            music.stream = InitAudioStream(ctxWav->sampleRate, ctxWav->bitsPerSample, ctxWav->channels);
+            music.sampleCount = (unsigned int)ctxWav->totalPCMFrameCount*ctxWav->channels;
+            music.looping = true;   // Looping enabled by default
+            musicLoaded = true;
+        }
+    }
+#endif
 #if defined(SUPPORT_FILEFORMAT_OGG)
     else if (IsFileExtension(fileName, ".ogg"))
     {
@@ -1151,6 +1178,9 @@ Music LoadMusicStream(const char *fileName)
     if (!musicLoaded)
     {
         if (false) { }
+    #if defined(SUPPORT_FILEFORMAT_WAV)
+        else if (music.ctxType == MUSIC_AUDIO_WAV) drwav_uninit((drwav *)music.ctxData);
+    #endif
     #if defined(SUPPORT_FILEFORMAT_OGG)
         else if (music.ctxType == MUSIC_AUDIO_OGG) stb_vorbis_close((stb_vorbis *)music.ctxData);
     #endif
@@ -1188,6 +1218,9 @@ void UnloadMusicStream(Music music)
     CloseAudioStream(music.stream);
 
     if (false) { }
+#if defined(SUPPORT_FILEFORMAT_WAV)
+    else if (music.ctxType == MUSIC_AUDIO_WAV) drwav_uninit((drwav *)music.ctxData);
+#endif
 #if defined(SUPPORT_FILEFORMAT_OGG)
     else if (music.ctxType == MUSIC_AUDIO_OGG) stb_vorbis_close((stb_vorbis *)music.ctxData);
 #endif
@@ -1239,6 +1272,9 @@ void StopMusicStream(Music music)
 
     switch (music.ctxType)
     {
+#if defined(SUPPORT_FILEFORMAT_WAV)
+        case MUSIC_AUDIO_WAV: drwav_seek_to_pcm_frame((drwav *)music.ctxData, 0); break;
+#endif
 #if defined(SUPPORT_FILEFORMAT_OGG)
         case MUSIC_AUDIO_OGG: stb_vorbis_seek_start((stb_vorbis *)music.ctxData); break;
 #endif
@@ -1283,6 +1319,14 @@ void UpdateMusicStream(Music music)
 
         switch (music.ctxType)
         {
+        #if defined(SUPPORT_FILEFORMAT_WAV)
+            case MUSIC_AUDIO_WAV:
+            {
+                // NOTE: Returns the number of samples to process (not required)
+                drwav_read_pcm_frames_s16((drwav *)music.ctxData, samplesCount/music.stream.channels, (short *)pcm);
+
+            } break;
+        #endif
         #if defined(SUPPORT_FILEFORMAT_OGG)
             case MUSIC_AUDIO_OGG:
             {
@@ -1816,204 +1860,43 @@ static void CloseAudioBufferPool(void)
 // Load WAV file into Wave structure
 static Wave LoadWAV(const char *fileName)
 {
-    // Basic WAV headers structs
-    typedef struct {
-        char chunkID[4];
-        int chunkSize;
-        char format[4];
-    } WAVRiffHeader;
-
-    typedef struct {
-        char subChunkID[4];
-        int subChunkSize;
-        short audioFormat;
-        short numChannels;
-        int sampleRate;
-        int byteRate;
-        short blockAlign;
-        short bitsPerSample;
-    } WAVFormat;
-
-    typedef struct {
-        char subChunkID[4];
-        int subChunkSize;
-    } WAVData;
-
-    WAVRiffHeader wavRiffHeader = { 0 };
-    WAVFormat wavFormat = { 0 };
-    WAVData wavData = { 0 };
-
     Wave wave = { 0 };
-    FILE *wavFile = NULL;
 
-    wavFile = fopen(fileName, "rb");
+    // Decode an entire FLAC file in one go
+    unsigned long long int totalPCMFrameCount = 0;
+    wave.data = drwav_open_file_and_read_pcm_frames_s16(fileName, &wave.channels, &wave.sampleRate, &totalPCMFrameCount, NULL);
 
-    if (wavFile == NULL)
-    {
-        TRACELOG(LOG_WARNING, "FILEIO: [%s] Failed to open WAV file", fileName);
-        wave.data = NULL;
-    }
+    if (wave.data == NULL) TRACELOG(LOG_WARNING, "FILEIO: [%s] Failed to load WAV data", fileName);
     else
     {
-        // Read in the first chunk into the struct
-        fread(&wavRiffHeader, sizeof(WAVRiffHeader), 1, wavFile);
+        wave.sampleCount = (unsigned int)totalPCMFrameCount*wave.channels;
+        wave.sampleSize = 16;
 
-        // Check for RIFF and WAVE tags
-        if ((wavRiffHeader.chunkID[0] != 'R') ||
-            (wavRiffHeader.chunkID[1] != 'I') ||
-            (wavRiffHeader.chunkID[2] != 'F') ||
-            (wavRiffHeader.chunkID[3] != 'F') ||
-            (wavRiffHeader.format[0] != 'W') ||
-            (wavRiffHeader.format[1] != 'A') ||
-            (wavRiffHeader.format[2] != 'V') ||
-            (wavRiffHeader.format[3] != 'E'))
-        {
-            TRACELOG(LOG_WARNING, "WAVE: [%s] RIFF or WAVE header are not valid", fileName);
-        }
-        else
-        {
-            // Read in the 2nd chunk for the wave info
-            fread(&wavFormat, sizeof(WAVFormat), 1, wavFile);
-
-            // Check for fmt tag
-            if ((wavFormat.subChunkID[0] != 'f') || (wavFormat.subChunkID[1] != 'm') ||
-                (wavFormat.subChunkID[2] != 't') || (wavFormat.subChunkID[3] != ' '))
-            {
-                TRACELOG(LOG_WARNING, "WAVE: [%s] Wave format header is not valid", fileName);
-            }
-            else
-            {
-                // Check for extra parameters;
-                if (wavFormat.subChunkSize > 16) fseek(wavFile, sizeof(short), SEEK_CUR);
-
-                // Read in the the last byte of data before the sound file
-                fread(&wavData, sizeof(WAVData), 1, wavFile);
-
-                // Check for data tag
-                if ((wavData.subChunkID[0] != 'd') || (wavData.subChunkID[1] != 'a') ||
-                    (wavData.subChunkID[2] != 't') || (wavData.subChunkID[3] != 'a'))
-                {
-                    TRACELOG(LOG_WARNING, "WAVE: [%s] Data header is not valid", fileName);
-                }
-                else
-                {
-                    // Allocate memory for data
-                    wave.data = RL_MALLOC(wavData.subChunkSize);
-
-                    // Read in the sound data into the soundData variable
-                    fread(wave.data, wavData.subChunkSize, 1, wavFile);
-
-                    // Store wave parameters
-                    wave.sampleRate = wavFormat.sampleRate;
-                    wave.sampleSize = wavFormat.bitsPerSample;
-                    wave.channels = wavFormat.numChannels;
-
-                    // NOTE: Only support 8 bit, 16 bit and 32 bit sample sizes
-                    if ((wave.sampleSize != 8) && (wave.sampleSize != 16) && (wave.sampleSize != 32))
-                    {
-                        TRACELOG(LOG_WARNING, "WAVE: [%s] Sample size (%ibit) not supported, converted to 16bit", fileName, wave.sampleSize);
-                        WaveFormat(&wave, wave.sampleRate, 16, wave.channels);
-                    }
-
-                    // NOTE: Only support up to 2 channels (mono, stereo)
-                    if (wave.channels > 2)
-                    {
-                        WaveFormat(&wave, wave.sampleRate, wave.sampleSize, 2);
-                        TRACELOG(LOG_WARNING, "WAVE: [%s] Channels number (%i) not supported, converted to 2 channels", fileName, wave.channels);
-                    }
-
-                    // NOTE: subChunkSize comes in bytes, we need to translate it to number of samples
-                    wave.sampleCount = (wavData.subChunkSize/(wave.sampleSize/8))/wave.channels;
-
-                    TRACELOG(LOG_INFO, "WAVE: [%s] File loaded successfully (%i Hz, %i bit, %s)", fileName, wave.sampleRate, wave.sampleSize, (wave.channels == 1)? "Mono" : "Stereo");
-                }
-            }
-        }
-
-        fclose(wavFile);
+        TRACELOG(LOG_INFO, "WAVE: [%s] WAV file loaded successfully (%i Hz, %i bit, %s)", fileName, wave.sampleRate, wave.sampleSize, (wave.channels == 1)? "Mono" : "Stereo");
     }
-
+ 
     return wave;
 }
 
 // Save wave data as WAV file
 static int SaveWAV(Wave wave, const char *fileName)
 {
-    int success = 0;
-    int dataSize = wave.sampleCount*wave.channels*wave.sampleSize/8;
-
-    // Basic WAV headers structs
-    typedef struct {
-        char chunkID[4];
-        int chunkSize;
-        char format[4];
-    } RiffHeader;
-
-    typedef struct {
-        char subChunkID[4];
-        int subChunkSize;
-        short audioFormat;
-        short numChannels;
-        int sampleRate;
-        int byteRate;
-        short blockAlign;
-        short bitsPerSample;
-    } WaveFormat;
-
-    typedef struct {
-        char subChunkID[4];
-        int subChunkSize;
-    } WaveData;
-
-    FILE *wavFile = fopen(fileName, "wb");
-
-    if (wavFile == NULL) TRACELOG(LOG_WARNING, "FILEIO: [%s] Failed to open audio file", fileName);
-    else
-    {
-        RiffHeader riffHeader;
-        WaveFormat waveFormat;
-        WaveData waveData;
-
-        // Fill structs with data
-        riffHeader.chunkID[0] = 'R';
-        riffHeader.chunkID[1] = 'I';
-        riffHeader.chunkID[2] = 'F';
-        riffHeader.chunkID[3] = 'F';
-        riffHeader.chunkSize = 44 - 4 + wave.sampleCount*wave.sampleSize/8;
-        riffHeader.format[0] = 'W';
-        riffHeader.format[1] = 'A';
-        riffHeader.format[2] = 'V';
-        riffHeader.format[3] = 'E';
-
-        waveFormat.subChunkID[0] = 'f';
-        waveFormat.subChunkID[1] = 'm';
-        waveFormat.subChunkID[2] = 't';
-        waveFormat.subChunkID[3] = ' ';
-        waveFormat.subChunkSize = 16;
-        waveFormat.audioFormat = 1;
-        waveFormat.numChannels = wave.channels;
-        waveFormat.sampleRate = wave.sampleRate;
-        waveFormat.byteRate = wave.sampleRate*wave.sampleSize/8;
-        waveFormat.blockAlign = wave.sampleSize/8;
-        waveFormat.bitsPerSample = wave.sampleSize;
-
-        waveData.subChunkID[0] = 'd';
-        waveData.subChunkID[1] = 'a';
-        waveData.subChunkID[2] = 't';
-        waveData.subChunkID[3] = 'a';
-        waveData.subChunkSize = dataSize;
-
-        fwrite(&riffHeader, sizeof(RiffHeader), 1, wavFile);
-        fwrite(&waveFormat, sizeof(WaveFormat), 1, wavFile);
-        fwrite(&waveData, sizeof(WaveData), 1, wavFile);
-
-        success = (int)fwrite(wave.data, dataSize, 1, wavFile);
-
-        fclose(wavFile);
-    }
-
-    // If all data has been written correctly to file, success = 1
-    return success;
+    drwav wav = { 0 };
+    drwav_data_format format = { 0 };
+    format.container = drwav_container_riff;     // <-- drwav_container_riff = normal WAV files, drwav_container_w64 = Sony Wave64.
+    format.format = DR_WAVE_FORMAT_PCM;          // <-- Any of the DR_WAVE_FORMAT_* codes.
+    format.channels = wave.channels;
+    format.sampleRate = wave.sampleRate;
+    format.bitsPerSample = wave.sampleSize;
+    
+    drwav_init_file_write(&wav, fileName, &format, NULL);
+    drwav_write_pcm_frames(&wav, wave.sampleCount/wave.channels, wave.data);
+    
+    printf("save!\n");
+    
+    drwav_uninit(&wav);
+    
+    return true;
 }
 #endif
 
@@ -2068,9 +1951,6 @@ static Wave LoadFLAC(const char *fileName)
     {
         wave.sampleCount = (unsigned int)totalSampleCount;
         wave.sampleSize = 16;
-
-        // NOTE: Only support up to 2 channels (mono, stereo)
-        if (wave.channels > 2) TRACELOG(LOG_WARNING, "WAVE: [%s] FLAC channels number (%i) not supported", fileName, wave.channels);
 
         TRACELOG(LOG_INFO, "WAVE: [%s] FLAC file loaded successfully (%i Hz, %i bit, %s)", fileName, wave.sampleRate, wave.sampleSize, (wave.channels == 1)? "Mono" : "Stereo");
     }
