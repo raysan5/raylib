@@ -3522,7 +3522,7 @@ static Image LoadPKM(const char *fileName)
 
             int dataSize = image.width*image.height*bpp/8;  // Total data size in bytes
 
-            image.data = (unsigned char *)RL_MALLOC(size*sizeof(unsigned char));
+            image.data = (unsigned char *)RL_MALLOC(dataSize*sizeof(unsigned char));
 
             memcpy(image.data, fileDataPtr, dataSize);
 
@@ -3831,7 +3831,7 @@ static Image LoadPVR(const char *fileName)
                 else if (pvrHeader->channels[0] == 2) image.format = COMPRESSED_PVRT_RGB;
                 else if (pvrHeader->channels[0] == 3) image.format = COMPRESSED_PVRT_RGBA;
 
-                fileDataPtr += pvrHeader->metaDataSize);    // Skip meta data header
+                fileDataPtr += pvrHeader->metaDataSize;    // Skip meta data header
 
                 // Calculate data size (depends on format)
                 int bpp = 0;
