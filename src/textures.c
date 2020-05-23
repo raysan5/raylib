@@ -451,7 +451,8 @@ void ExportImageAsCode(Image image, const char *fileName)
     bytesCount += sprintf(txtData + bytesCount, "0x%x };\n", ((unsigned char *)image.data)[dataSize - 1]);
 
     SaveFileText(fileName, txtData);
-    free(txtData);
+
+    RL_FREE(txtData);
 }
 
 //------------------------------------------------------------------------------------
@@ -3445,7 +3446,7 @@ static Image LoadDDS(const char *fileName)
             }
         }
 
-        free(fileData);    // Free file data buffer
+        RL_FREE(fileData);    // Free file data buffer
     }
 
     return image;
@@ -3531,7 +3532,7 @@ static Image LoadPKM(const char *fileName)
             else if (pkmHeader->format == 3) image.format = COMPRESSED_ETC2_EAC_RGBA;
         }
 
-        free(fileData);    // Free file data buffer
+        RL_FREE(fileData);    // Free file data buffer
     }
 
     return image;
@@ -3618,7 +3619,7 @@ static Image LoadKTX(const char *fileName)
             else if (ktxHeader->glInternalFormat == 0x9278) image.format = COMPRESSED_ETC2_EAC_RGBA;
         }
 
-        free(fileData);    // Free file data buffer
+        RL_FREE(fileData);    // Free file data buffer
     }
 
     return image;
@@ -3717,7 +3718,8 @@ static int SaveKTX(Image image, const char *fileName)
     }
 
     SaveFileData(fileName, fileData, dataSize);
-    free(fileData);    // Free file data buffer
+
+    RL_FREE(fileData);    // Free file data buffer
 
     // If all data has been written correctly to file, success = 1
     return true;
@@ -3857,7 +3859,7 @@ static Image LoadPVR(const char *fileName)
         }
         else if (pvrVersion == 52) TRACELOG(LOG_INFO, "IMAGE: [%s] PVRv2 format not supported, update your files to PVRv3", fileName);
 
-        free(fileData);    // Free file data buffer
+        RL_FREE(fileData);    // Free file data buffer
     }
 
     return image;
@@ -3934,7 +3936,7 @@ static Image LoadASTC(const char *fileName)
             else TRACELOG(LOG_WARNING, "IMAGE: [%s] ASTC block size configuration not supported", fileName);
         }
 
-        free(fileData);    // Free file data buffer
+        RL_FREE(fileData);    // Free file data buffer
     }
 
     return image;
