@@ -1862,7 +1862,7 @@ static Wave LoadWAV(const char *fileName)
 {
     Wave wave = { 0 };
 
-    // Decode an entire FLAC file in one go
+    // Decode an entire WAV file in one go
     unsigned long long int totalPCMFrameCount = 0;
     wave.data = drwav_open_file_and_read_pcm_frames_s16(fileName, &wave.channels, &wave.sampleRate, &totalPCMFrameCount, NULL);
 
@@ -1874,7 +1874,30 @@ static Wave LoadWAV(const char *fileName)
 
         TRACELOG(LOG_INFO, "WAVE: [%s] WAV file loaded successfully (%i Hz, %i bit, %s)", fileName, wave.sampleRate, wave.sampleSize, (wave.channels == 1)? "Mono" : "Stereo");
     }
- 
+    
+/*
+    // Loading WAV from memory to avoid FILE accesses
+    unsigned int fileSize = 0;
+    unsigned char *fileData = LoadFileData(fileName, &fileSize);
+    
+    drwav wav = { 0 };
+    
+    bool success = drwav_init_memory(&wav, fileData, fileSize, NULL);
+    
+    if (success)
+    {
+        wave.sampleCount = wav.totalPCMFrameCount*wav.channels;
+        wave.sampleRate = wav.sampleRate;
+        wave.sampleSize = 16;   // NOTE: We are forcing conversion to 16bit
+        wave.channels = wav.channels;
+        wave.data = (short *)RL_MALLOC(wave.sampleCount*sizeof(short));
+        drwav_read_pcm_frames_s16(&wav, wav.totalPCMFrameCount, wave.data);
+    }
+    else TRACELOG(LOG_WARNING, "FILEIO: [%s] Failed to load WAV data", fileName);
+    
+    drwav_uninit(&wav);
+    RL_FREE(fileData);
+*/
     return wave;
 }
 
@@ -1890,11 +1913,13 @@ static int SaveWAV(Wave wave, const char *fileName)
     format.bitsPerSample = wave.sampleSize;
     
     drwav_init_file_write(&wav, fileName, &format, NULL);
+    //drwav_init_memory_write(&wav, &fileData, &fileDataSize, &format, NULL);       // Memory version
     drwav_write_pcm_frames(&wav, wave.sampleCount/wave.channels, wave.data);
     
-    printf("save!\n");
-    
     drwav_uninit(&wav);
+    
+    // SaveFileData(fileName, fileData, fileDataSize);
+    //drwav_free(fileData, NULL);
     
     return true;
 }
