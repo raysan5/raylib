@@ -123,7 +123,7 @@
                                             // NOTE: Used to read image data (multiple formats support)
 #endif
 
-#if defined(SUPPORT_IMAGE_EXPORT)
+#if (defined(SUPPORT_IMAGE_EXPORT) || defined(SUPPORT_COMPRESSION_API))
     #define STBIW_MALLOC RL_MALLOC
     #define STBIW_FREE RL_FREE
     #define STBIW_REALLOC RL_REALLOC
