@@ -450,6 +450,7 @@ void ExportImageAsCode(Image image, const char *fileName)
     for (int i = 0; i < dataSize - 1; i++) bytesCount += sprintf(txtData + bytesCount, ((i%TEXT_BYTES_PER_LINE == 0)? "0x%x,\n" : "0x%x, "), ((unsigned char *)image.data)[i]);
     bytesCount += sprintf(txtData + bytesCount, "0x%x };\n", ((unsigned char *)image.data)[dataSize - 1]);
 
+    // NOTE: Text data length exported is determined by '\0' (NULL) character
     SaveFileText(fileName, txtData);
 
     RL_FREE(txtData);
