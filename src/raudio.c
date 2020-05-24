@@ -363,8 +363,8 @@ static Wave LoadMP3(const char *fileName);              // Load MP3 file
 #endif
 
 #if defined(RAUDIO_STANDALONE)
-bool IsFileExtension(const char *fileName, const char *ext);// Check file extension
-void TraceLog(int msgType, const char *text, ...);      // Show trace log messages (LOG_INFO, LOG_WARNING, LOG_ERROR, LOG_DEBUG)
+static bool IsFileExtension(const char *fileName, const char *ext); // Check file extension
+static void SaveFileText(const char *fileName, char *text);         // Save text data to file (write), string must be '\0' terminated
 #endif
 
 //----------------------------------------------------------------------------------
@@ -789,47 +789,52 @@ void ExportWave(Wave wave, const char *fileName)
 // Export wave sample data to code (.h)
 void ExportWaveAsCode(Wave wave, const char *fileName)
 {
-    #define BYTES_TEXT_PER_LINE     20
-
-    char varFileName[256] = { 0 };
-    int dataSize = wave.sampleCount*wave.channels*wave.sampleSize/8;
-
-    FILE *txtFile = fopen(fileName, "wt");
-
-    if (txtFile != NULL)
-    {
-        fprintf(txtFile, "\n//////////////////////////////////////////////////////////////////////////////////\n");
-        fprintf(txtFile, "//                                                                              //\n");
-        fprintf(txtFile, "// WaveAsCode exporter v1.0 - Wave data exported as an array of bytes           //\n");
-        fprintf(txtFile, "//                                                                              //\n");
-        fprintf(txtFile, "// more info and bugs-report:  github.com/raysan5/raylib                        //\n");
-        fprintf(txtFile, "// feedback and support:       ray[at]raylib.com                                //\n");
-        fprintf(txtFile, "//                                                                              //\n");
-        fprintf(txtFile, "// Copyright (c) 2018 Ramon Santamaria (@raysan5)                               //\n");
-        fprintf(txtFile, "//                                                                              //\n");
-        fprintf(txtFile, "//////////////////////////////////////////////////////////////////////////////////\n\n");
-
-#if !defined(RAUDIO_STANDALONE)
-        // Get file name from path and convert variable name to uppercase
-        strcpy(varFileName, GetFileNameWithoutExt(fileName));
-        for (int i = 0; varFileName[i] != '\0'; i++) if (varFileName[i] >= 'a' && varFileName[i] <= 'z') { varFileName[i] = varFileName[i] - 32; }
-#else
-        strcpy(varFileName, fileName);
+#ifndef TEXT_BYTES_PER_LINE
+    #define TEXT_BYTES_PER_LINE     20
 #endif
 
-        fprintf(txtFile, "// Wave data information\n");
-        fprintf(txtFile, "#define %s_SAMPLE_COUNT     %u\n", varFileName, wave.sampleCount);
-        fprintf(txtFile, "#define %s_SAMPLE_RATE      %u\n", varFileName, wave.sampleRate);
-        fprintf(txtFile, "#define %s_SAMPLE_SIZE      %u\n", varFileName, wave.sampleSize);
-        fprintf(txtFile, "#define %s_CHANNELS         %u\n\n", varFileName, wave.channels);
+    int waveDataSize = wave.sampleCount*wave.channels*wave.sampleSize/8;
 
-        // Write byte data as hexadecimal text
-        fprintf(txtFile, "static unsigned char %s_DATA[%i] = { ", varFileName, dataSize);
-        for (int i = 0; i < dataSize - 1; i++) fprintf(txtFile, ((i%BYTES_TEXT_PER_LINE == 0)? "0x%x,\n" : "0x%x, "), ((unsigned char *)wave.data)[i]);
-        fprintf(txtFile, "0x%x };\n", ((unsigned char *)wave.data)[dataSize - 1]);
+    // NOTE: Text data buffer size is estimated considering wave data size in bytes
+    // and requiring 6 char bytes for every byte: "0x00, "
+    char *txtData = (char *)RL_CALLOC(6*waveDataSize + 2000, sizeof(char));
 
-        fclose(txtFile);
-    }
+    int bytesCount = 0;
+    bytesCount += sprintf(txtData + bytesCount, "\n//////////////////////////////////////////////////////////////////////////////////\n");
+    bytesCount += sprintf(txtData + bytesCount, "//                                                                              //\n");
+    bytesCount += sprintf(txtData + bytesCount, "// WaveAsCode exporter v1.0 - Wave data exported as an array of bytes           //\n");
+    bytesCount += sprintf(txtData + bytesCount, "//                                                                              //\n");
+    bytesCount += sprintf(txtData + bytesCount, "// more info and bugs-report:  github.com/raysan5/raylib                        //\n");
+    bytesCount += sprintf(txtData + bytesCount, "// feedback and support:       ray[at]raylib.com                                //\n");
+    bytesCount += sprintf(txtData + bytesCount, "//                                                                              //\n");
+    bytesCount += sprintf(txtData + bytesCount, "// Copyright (c) 2018 Ramon Santamaria (@raysan5)                               //\n");
+    bytesCount += sprintf(txtData + bytesCount, "//                                                                              //\n");
+    bytesCount += sprintf(txtData + bytesCount, "//////////////////////////////////////////////////////////////////////////////////\n\n");
+
+    char varFileName[256] = { 0 };
+#if !defined(RAUDIO_STANDALONE)
+    // Get file name from path and convert variable name to uppercase
+    strcpy(varFileName, GetFileNameWithoutExt(fileName));
+    for (int i = 0; varFileName[i] != '\0'; i++) if (varFileName[i] >= 'a' && varFileName[i] <= 'z') { varFileName[i] = varFileName[i] - 32; }
+#else
+    strcpy(varFileName, fileName);
+#endif
+
+    bytesCount += sprintf(txtData + bytesCount, "// Wave data information\n");
+    bytesCount += sprintf(txtData + bytesCount, "#define %s_SAMPLE_COUNT     %u\n", varFileName, wave.sampleCount);
+    bytesCount += sprintf(txtData + bytesCount, "#define %s_SAMPLE_RATE      %u\n", varFileName, wave.sampleRate);
+    bytesCount += sprintf(txtData + bytesCount, "#define %s_SAMPLE_SIZE      %u\n", varFileName, wave.sampleSize);
+    bytesCount += sprintf(txtData + bytesCount, "#define %s_CHANNELS         %u\n\n", varFileName, wave.channels);
+
+    // Write byte data as hexadecimal text
+    bytesCount += sprintf(txtData + bytesCount, "static unsigned char %s_DATA[%i] = { ", varFileName, waveDataSize);
+    for (int i = 0; i < waveDataSize - 1; i++) bytesCount += sprintf(txtData + bytesCount, ((i%TEXT_BYTES_PER_LINE == 0)? "0x%x,\n" : "0x%x, "), ((unsigned char *)wave.data)[i]);
+    bytesCount += sprintf(txtData + bytesCount, "0x%x };\n", ((unsigned char *)wave.data)[waveDataSize - 1]);
+
+    // NOTE: Text data length exported is determined by '\0' (NULL) character
+    SaveFileText(fileName, txtData);
+
+    RL_FREE(txtData);
 }
 
 // Play a sound
@@ -2017,7 +2022,7 @@ static Wave LoadMP3(const char *fileName)
 // Some required functions for audio standalone module version
 #if defined(RAUDIO_STANDALONE)
 // Check file extension
-bool IsFileExtension(const char *fileName, const char *ext)
+static bool IsFileExtension(const char *fileName, const char *ext)
 {
     bool result = false;
     const char *fileExt;
@@ -2028,6 +2033,27 @@ bool IsFileExtension(const char *fileName, const char *ext)
     }
 
     return result;
+}
+
+// Save text data to file (write), string must be '\0' terminated
+static void SaveFileText(const char *fileName, char *text)
+{
+    if (fileName != NULL)
+    {
+        FILE *file = fopen(fileName, "wt");
+
+        if (file != NULL)
+        {
+            int count = fprintf(file, "%s", text);
+
+            if (count == 0) TRACELOG(LOG_WARNING, "FILEIO: [%s] Failed to write text file", fileName);
+            else TRACELOG(LOG_INFO, "FILEIO: [%s] Text file saved successfully", fileName);
+
+            fclose(file);
+        }
+        else TRACELOG(LOG_WARNING, "FILEIO: [%s] Failed to open text file", fileName);
+    }
+    else TRACELOG(LOG_WARNING, "FILEIO: File name provided is not valid");
 }
 #endif
 
