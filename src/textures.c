@@ -420,7 +420,8 @@ void ExportImageAsCode(Image image, const char *fileName)
 
     int dataSize = GetPixelDataSize(image.width, image.height, image.format);
     
-    // NOTE: Text data buffer size is estimated considering image data size
+    // NOTE: Text data buffer size is estimated considering image data size in bytes
+    // and requiring 6 char bytes for every byte: "0x00, "
     char *txtData = (char *)RL_CALLOC(6*dataSize + 2000, sizeof(char));
 
     int bytesCount = 0;
