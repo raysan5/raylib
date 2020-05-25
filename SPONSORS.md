@@ -8,6 +8,7 @@ The following people has contributed with a generous donation to the raylib proj
 
  - Jonathan Johnson ([@ecton](https://github.com/ecton))
  - Eric J. ([@ProfJski](https://github.com/ProfJski))
+ - Rudy Faile ([@rfaile313](https://github.com/rfaile313))
 
 ## 🥉 Bronze Contributors
 
