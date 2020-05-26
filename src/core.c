@@ -1318,6 +1318,12 @@ void DisableCursor(void)
     CORE.Input.Mouse.cursorHidden = true;
 }
 
+// Check if cursor is on the current screen.
+bool IsCursorOnScreen(void)
+{
+    return CORE.Input.Mouse.cursorOnScreen;
+}
+
 // Set background color (framebuffer clear color)
 void ClearBackground(Color color)
 {
