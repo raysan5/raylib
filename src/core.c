@@ -496,7 +496,6 @@ static void InitTimer(void);                            // Initialize timer
 static void Wait(float ms);                             // Wait for some milliseconds (stop program execution)
 
 static int GetGamepadButton(int button);                // Get gamepad button generic to all platforms
-static int GetGamepadAxis(int axis);                    // Get gamepad axis generic to all platforms
 static void PollInputEvents(void);                      // Register user events
 
 #if defined(PLATFORM_DESKTOP) || defined(PLATFORM_WEB)
@@ -520,6 +519,7 @@ static int32_t AndroidInputCallback(struct android_app *app, AInputEvent *event)
 
 #if defined(PLATFORM_WEB)
 static EM_BOOL EmscriptenFullscreenChangeCallback(int eventType, const EmscriptenFullscreenChangeEvent *event, void *userData);
+static EM_BOOL EmscriptenWindowResizedCallback(int eventType, const void *reserved, void *userData);
 static EM_BOOL EmscriptenKeyboardCallback(int eventType, const EmscriptenKeyboardEvent *keyEvent, void *userData);
 static EM_BOOL EmscriptenMouseCallback(int eventType, const EmscriptenMouseEvent *mouseEvent, void *userData);
 static EM_BOOL EmscriptenTouchCallback(int eventType, const EmscriptenTouchEvent *touchEvent, void *userData);
@@ -740,7 +740,8 @@ void InitWindow(int width, int height, const char *title)
     emscripten_set_fullscreenchange_callback("#canvas", NULL, 1, EmscriptenFullscreenChangeCallback);
 
     // Support keyboard events
-    emscripten_set_keypress_callback("#canvas", NULL, 1, EmscriptenKeyboardCallback);
+    //emscripten_set_keypress_callback("#canvas", NULL, 1, EmscriptenKeyboardCallback);
+    emscripten_set_keydown_callback("#canvas", NULL, 1, EmscriptenKeyboardCallback);
 
     // Support mouse events
     emscripten_set_click_callback("#canvas", NULL, 1, EmscriptenMouseCallback);
@@ -917,11 +918,9 @@ bool IsWindowFullscreen(void)
 // Toggle fullscreen mode (only PLATFORM_DESKTOP)
 void ToggleFullscreen(void)
 {
-    CORE.Window.fullscreen = !CORE.Window.fullscreen;          // Toggle fullscreen flag
-
 #if defined(PLATFORM_DESKTOP)
     // NOTE: glfwSetWindowMonitor() doesn't work properly (bugs)
-    if (CORE.Window.fullscreen)
+    if (!CORE.Window.fullscreen)
     {
         // Store previous window position (in case we exit fullscreen)
         glfwGetWindowPos(CORE.Window.handle, &CORE.Window.position.x, &CORE.Window.position.y);
@@ -942,14 +941,48 @@ void ToggleFullscreen(void)
         if (CORE.Window.flags & FLAG_VSYNC_HINT) glfwSwapInterval(1);
     }
     else glfwSetWindowMonitor(CORE.Window.handle, NULL, CORE.Window.position.x, CORE.Window.position.y, CORE.Window.screen.width, CORE.Window.screen.height, GLFW_DONT_CARE);
+    
+    CORE.Window.fullscreen = !CORE.Window.fullscreen;          // Toggle fullscreen flag
 #endif
 #if defined(PLATFORM_WEB)
-    if (CORE.Window.fullscreen) EM_ASM(Module.requestFullscreen(false, false););
-    else EM_ASM(document.exitFullscreen(););
+    /*
+    EM_ASM(
+        if (document.fullscreenElement) document.exitFullscreen();
+        else Module.requestFullscreen(true, true);
+    );
+    */
+    
+    //EM_ASM(Module.requestFullscreen(false, false););
+
+    /*
+    if (!CORE.Window.fullscreen)
+    {
+        //https://github.com/emscripten-core/emscripten/issues/5124
+        EmscriptenFullscreenStrategy strategy = {
+            .scaleMode = EMSCRIPTEN_FULLSCREEN_SCALE_STRETCH, //EMSCRIPTEN_FULLSCREEN_SCALE_ASPECT,
+            .canvasResolutionScaleMode = EMSCRIPTEN_FULLSCREEN_CANVAS_SCALE_STDDEF,
+            .filteringMode = EMSCRIPTEN_FULLSCREEN_FILTERING_DEFAULT,
+            .canvasResizedCallback = EmscriptenWindowResizedCallback, //on_canvassize_changed,
+            .canvasResizedCallbackUserData = NULL
+        };
+        
+        emscripten_request_fullscreen("#canvas", false);
+        //emscripten_request_fullscreen_strategy("#canvas", EM_FALSE, &strategy);
+        //emscripten_enter_soft_fullscreen("canvas", &strategy);
+        TraceLog(LOG_INFO, "emscripten_request_fullscreen_strategy");
+    }
+    else 
+    {
+        TraceLog(LOG_INFO, "emscripten_exit_fullscreen");
+        emscripten_exit_fullscreen();
+    }
+    */
 #endif
 #if defined(PLATFORM_ANDROID) || defined(PLATFORM_RPI)
     TRACELOG(LOG_WARNING, "SYSTEM: Failed to toggle to windowed mode");
 #endif
+
+    CORE.Window.fullscreen = !CORE.Window.fullscreen;          // Toggle fullscreen flag
 }
 
 // Set icon for window (only PLATFORM_DESKTOP)
@@ -1283,6 +1316,12 @@ void DisableCursor(void)
     UWPGetMouseLockFunc()();
 #endif
     CORE.Input.Mouse.cursorHidden = true;
+}
+
+// Check if cursor is on the current screen.
+bool IsCursorOnScreen(void)
+{
+    return CORE.Input.Mouse.cursorOnScreen;
 }
 
 // Set background color (framebuffer clear color)
@@ -1950,6 +1989,7 @@ bool IsFileExtension(const char *fileName, const char *ext)
 
     if (fileExt != NULL)
     {
+#if defined(SUPPORT_TEXT_MANIPULATION)
         int extCount = 0;
         const char **checkExts = TextSplit(ext, ';', &extCount);
 
@@ -1964,6 +2004,9 @@ bool IsFileExtension(const char *fileName, const char *ext)
                 break;
             }
         }
+#else
+        if (strcmp(fileExt, ext) == 0) result = true;
+#endif
     }
 
     return result;
@@ -2084,11 +2127,13 @@ const char *GetPrevDirectoryPath(const char *dirPath)
 
     if (pathLen <= 3) strcpy(prevDirPath, dirPath);
 
-    for (int i = (pathLen - 1); (i > 0) && (pathLen > 3); i--)
+    for (int i = (pathLen - 1); (i >= 0) && (pathLen > 3); i--)
     {
         if ((dirPath[i] == '\\') || (dirPath[i] == '/'))
         {
-            if (i == 2) i++;    // Check for root: "C:\"
+            // Check for root: "C:\" or "/"
+            if (((i == 2) && (dirPath[1] ==':')) || (i == 0)) i++;
+            
             strncpy(prevDirPath, dirPath, i);
             break;
         }
@@ -2509,7 +2554,9 @@ float GetGamepadAxisMovement(int gamepad, int axis)
     float value = 0;
 
 #if !defined(PLATFORM_ANDROID)
-    if ((gamepad < MAX_GAMEPADS) && CORE.Input.Gamepad.ready[gamepad] && (axis < MAX_GAMEPAD_AXIS)) value = CORE.Input.Gamepad.axisState[gamepad][axis];
+    if ((gamepad < MAX_GAMEPADS) && CORE.Input.Gamepad.ready[gamepad] && (axis < MAX_GAMEPAD_AXIS) &&
+        ((axis == GAMEPAD_AXIS_LEFT_TRIGGER) || (axis == GAMEPAD_AXIS_RIGHT_TRIGGER) ||
+         (fabsf(CORE.Input.Gamepad.axisState[gamepad][axis]) >= 0.2f))) value = CORE.Input.Gamepad.axisState[gamepad][axis];
 #endif
 
     return value;
@@ -3485,8 +3532,11 @@ static void InitTimer(void)
 static void Wait(float ms)
 {
 #if defined(PLATFORM_UWP)
-    UWPGetSleepFunc()(ms / 1000);
-#elif defined(SUPPORT_BUSY_WAIT_LOOP)
+    UWPGetSleepFunc()(ms/1000);
+    return;
+#endif
+
+#if defined(SUPPORT_BUSY_WAIT_LOOP)
     double prevTime = GetTime();
     double nextTime = 0.0;
 
@@ -3514,7 +3564,7 @@ static void Wait(float ms)
         usleep(ms*1000.0f);
     #endif
 
-    #if defined(SUPPORT_HALFBUSY_WAIT_LOOP)// && !defined(PLATFORM_UWP)
+    #if defined(SUPPORT_HALFBUSY_WAIT_LOOP)
         while (GetTime() < destTime) { }
     #endif
 #endif
@@ -3577,40 +3627,6 @@ static int GetGamepadButton(int button)
 #endif
 
     return btn;
-}
-
-// Get gamepad axis generic to all platforms
-static int GetGamepadAxis(int axis)
-{
-    int axs = GAMEPAD_AXIS_UNKNOWN;
-#if defined(PLATFORM_DESKTOP)
-    switch (axis)
-    {
-        case GLFW_GAMEPAD_AXIS_LEFT_X: axs = GAMEPAD_AXIS_LEFT_X; break;
-        case GLFW_GAMEPAD_AXIS_LEFT_Y: axs = GAMEPAD_AXIS_LEFT_Y; break;
-        case GLFW_GAMEPAD_AXIS_RIGHT_X: axs = GAMEPAD_AXIS_RIGHT_X; break;
-        case GLFW_GAMEPAD_AXIS_RIGHT_Y: axs = GAMEPAD_AXIS_RIGHT_Y; break;
-        case GLFW_GAMEPAD_AXIS_LEFT_TRIGGER: axs = GAMEPAD_AXIS_LEFT_TRIGGER; break;
-        case GLFW_GAMEPAD_AXIS_RIGHT_TRIGGER: axs = GAMEPAD_AXIS_RIGHT_TRIGGER; break;
-    }
-#endif
-
-#if defined(PLATFORM_UWP)
-    axs = axis;     // UWP will provide the correct axis
-#endif
-
-#if defined(PLATFORM_WEB)
-    // Gamepad axis reference:https://www.w3.org/TR/gamepad/#gamepad-interface
-    switch (axis)
-    {
-        case 0: axs = GAMEPAD_AXIS_LEFT_X;
-        case 1: axs = GAMEPAD_AXIS_LEFT_Y;
-        case 2: axs = GAMEPAD_AXIS_RIGHT_X;
-        case 3: axs = GAMEPAD_AXIS_RIGHT_X;
-    }
-#endif
-
-    return axs;
 }
 
 // Poll (store) all input events
@@ -3710,8 +3726,9 @@ static void PollInputEvents(void)
             // Get current gamepad state
             // NOTE: There is no callback available, so we get it manually
             // Get remapped buttons
-            GLFWgamepadstate state;
+            GLFWgamepadstate state = { 0 };
             glfwGetGamepadState(i, &state); // This remapps all gamepads so they have their buttons mapped like an xbox controller
+            
             const unsigned char *buttons = state.buttons;
 
             for (int k = 0; (buttons != NULL) && (k < GLFW_GAMEPAD_BUTTON_DPAD_LEFT + 1) && (k < MAX_GAMEPAD_BUTTONS); k++)
@@ -3731,8 +3748,7 @@ static void PollInputEvents(void)
 
             for (int k = 0; (axes != NULL) && (k < GLFW_GAMEPAD_AXIS_LAST + 1) && (k < MAX_GAMEPAD_AXIS); k++)
             {
-                const int axis = GetGamepadAxis(k);
-                CORE.Input.Gamepad.axisState[i][axis] = axes[k];
+                CORE.Input.Gamepad.axisState[i][k] = axes[k];
             }
 
             // Register buttons for 2nd triggers (because GLFW doesn't count these as buttons but rather axis)
@@ -3787,8 +3803,7 @@ static void PollInputEvents(void)
             // Register axis data for every connected gamepad
             for (int j = 0; (j < gamepadState.numAxes) && (j < MAX_GAMEPAD_AXIS); j++)
             {
-                const int axis = GetGamepadAxis(j);
-                CORE.Input.Gamepad.axisState[i][axis] = gamepadState.axis[j];
+                CORE.Input.Gamepad.axisState[i][j] = gamepadState.axis[j];
             }
 
             CORE.Input.Gamepad.axisCount = gamepadState.numAxes;
@@ -4309,7 +4324,7 @@ static EM_BOOL EmscriptenFullscreenChangeCallback(int eventType, const Emscripte
     //fs element id: (char *) event->id
     //Current element size: (int) event->elementWidth, (int) event->elementHeight
     //Screen size:(int) event->screenWidth, (int) event->screenHeight
-
+/*
     if (event->isFullscreen)
     {
         CORE.Window.fullscreen = true;
@@ -4322,16 +4337,20 @@ static EM_BOOL EmscriptenFullscreenChangeCallback(int eventType, const Emscripte
     }
 
     // TODO: Depending on scaling factor (screen vs element), calculate factor to scale mouse/touch input
-
+*/
     return 0;
 }
 
 // Register keyboard input events
 static EM_BOOL EmscriptenKeyboardCallback(int eventType, const EmscriptenKeyboardEvent *keyEvent, void *userData)
 {
-    if ((eventType == EMSCRIPTEN_EVENT_KEYPRESS) && (keyEvent->key == 27))  // ESCAPE key
+    if ((eventType == EMSCRIPTEN_EVENT_KEYDOWN) && (keyEvent->keyCode == 27))  // ESCAPE key (strcmp(keyEvent->code, "Escape") == 0)
     {
+        // WARNING: Not executed when pressing Esc to exit fullscreen, it seems document has priority over #canvas
+        
         emscripten_exit_pointerlock();
+        CORE.Window.fullscreen = false;
+        TraceLog(LOG_INFO, "CORE.Window.fullscreen = %s", CORE.Window.fullscreen? "true" : "false");
     }
 
     return 0;
@@ -4444,6 +4463,16 @@ static EM_BOOL EmscriptenGamepadCallback(int eventType, const EmscriptenGamepadE
     // TODO: Test gamepadEvent->index
 
     return 0;
+}
+
+static EM_BOOL EmscriptenWindowResizedCallback(int eventType, const void *reserved, void *userData)
+{
+    double width, height;
+    emscripten_get_element_css_size("canvas", &width, &height);
+
+    // TODO.
+
+    return true;
 }
 #endif
 
@@ -4664,7 +4693,7 @@ static void InitEvdevInput(void)
 // Identifies a input device and spawns a thread to handle it if needed
 static void EventThreadSpawn(char *device)
 {
-    #define BITS_PER_LONG   (sizeof(long)*8)
+    #define BITS_PER_LONG   (8*sizeof(long))
     #define NBITS(x)        ((((x) - 1)/BITS_PER_LONG) + 1)
     #define OFF(x)          ((x)%BITS_PER_LONG)
     #define BIT(x)          (1UL<<OFF(x))

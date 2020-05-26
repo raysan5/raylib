@@ -60,6 +60,9 @@
 // Selected desired fileformats to be supported for loading. 
 #cmakedefine SUPPORT_FILEFORMAT_FNT 1
 #cmakedefine SUPPORT_FILEFORMAT_TTF 1
+// Support text management functions
+// If not defined, still some functions are supported: TextLength(), TextFormat()
+#cmakedefine SUPPORT_TEXT_MANIPULATION 1
 
 // models.c
 // Selected desired fileformats to be supported for loading.

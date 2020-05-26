@@ -154,6 +154,18 @@ RMDEF float Lerp(float start, float end, float amount)
     return start + amount*(end - start);
 }
 
+// Normalize input value within input range
+RMDEF float Normalize(float value, float start, float end)
+{
+    return (value - start) / (end - start);
+}
+
+// Remap input value within input range to output range
+RMDEF float Remap(float value, float inputStart, float inputEnd, float outputStart, float outputEnd) 
+{
+    return (value - inputStart) / (inputEnd - inputStart) * (outputEnd - outputStart) + outputStart;
+}
+
 //----------------------------------------------------------------------------------
 // Module Functions Definition - Vector2 math
 //----------------------------------------------------------------------------------
@@ -204,6 +216,13 @@ RMDEF Vector2 Vector2SubtractValue(Vector2 v, float sub)
 RMDEF float Vector2Length(Vector2 v)
 {
     float result = sqrtf((v.x*v.x) + (v.y*v.y));
+    return result;
+}
+
+// Calculate vector square length
+RMDEF float Vector2LengthSqr(Vector2 v)
+{
+    float result = (v.x*v.x) + (v.y*v.y);
     return result;
 }
 
@@ -398,6 +417,13 @@ RMDEF Vector3 Vector3Perpendicular(Vector3 v)
 RMDEF float Vector3Length(const Vector3 v)
 {
     float result = sqrtf(v.x*v.x + v.y*v.y + v.z*v.z);
+    return result;
+}
+
+// Calculate vector square length
+RMDEF float Vector3LengthSqr(const Vector3 v)
+{
+    float result = v.x*v.x + v.y*v.y + v.z*v.z;
     return result;
 }
 

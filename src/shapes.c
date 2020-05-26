@@ -618,6 +618,8 @@ void DrawRectangleRec(Rectangle rec, Color color)
 // Draw a color-filled rectangle with pro parameters
 void DrawRectanglePro(Rectangle rec, Vector2 origin, float rotation, Color color)
 {
+    if (rlCheckBufferLimit(4)) rlglDraw();
+    
     rlEnableTexture(GetShapesTexture().id);
 
     rlPushMatrix();

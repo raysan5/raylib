@@ -117,6 +117,15 @@ elseif(${PLATFORM} MATCHES "Raspberry Pi")
   set(PLATFORM_CPP "PLATFORM_RPI")
   set(GRAPHICS "GRAPHICS_API_OPENGL_ES2")
 
+  add_definitions(-D_DEFAULT_SOURCE)
+  
+  find_library(GLESV2 brcmGLESv2 HINTS /opt/vc/lib)
+  find_library(EGL brcmEGL HINTS /opt/vc/lib)
+  find_library(BCMHOST bcm_host HINTS /opt/vc/lib)
+  include_directories(/opt/vc/include /opt/vc/include/interface/vmcs_host/linux /opt/vc/include/interface/vcos/pthreads)
+  link_directories(/opt/vc/lib)
+  set(LIBS_PRIVATE ${GLESV2} ${EGL} ${BCMHOST} pthread rt m dl)
+
 endif()
 
 if (${OPENGL_VERSION})

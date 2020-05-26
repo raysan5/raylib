@@ -440,8 +440,8 @@ typedef struct Music {
     int ctxType;                    // Type of music context (audio filetype)
     void *ctxData;                  // Audio context data, depends on type
 
+    bool looping;                   // Music looping enable
     unsigned int sampleCount;       // Total number of samples
-    unsigned int loopCount;         // Loops count (times music will play), 0 means infinite loop
 
     AudioStream stream;             // Audio stream
 } Music;
@@ -663,20 +663,17 @@ typedef enum {
 } GamepadButton;
 
 typedef enum {
-    // This is here just for error checking
-    GAMEPAD_AXIS_UNKNOWN = 0,
-
     // Left stick
-    GAMEPAD_AXIS_LEFT_X,
-    GAMEPAD_AXIS_LEFT_Y,
+    GAMEPAD_AXIS_LEFT_X = 0,
+    GAMEPAD_AXIS_LEFT_Y = 1,
 
     // Right stick
-    GAMEPAD_AXIS_RIGHT_X,
-    GAMEPAD_AXIS_RIGHT_Y,
+    GAMEPAD_AXIS_RIGHT_X = 2,
+    GAMEPAD_AXIS_RIGHT_Y = 3,
 
     // Pressure levels for the back triggers
-    GAMEPAD_AXIS_LEFT_TRIGGER,      // [1..-1] (pressure-level)
-    GAMEPAD_AXIS_RIGHT_TRIGGER      // [1..-1] (pressure-level)
+    GAMEPAD_AXIS_LEFT_TRIGGER = 4,      // [1..-1] (pressure-level)
+    GAMEPAD_AXIS_RIGHT_TRIGGER = 5      // [1..-1] (pressure-level)
 } GamepadAxis;
 
 // Shader location point type
@@ -809,7 +806,8 @@ typedef enum {
 typedef enum {
     BLEND_ALPHA = 0,        // Blend textures considering alpha (default)
     BLEND_ADDITIVE,         // Blend textures adding colors
-    BLEND_MULTIPLIED        // Blend textures multiplying colors
+    BLEND_MULTIPLIED,       // Blend textures multiplying colors
+    BLEND_ADD_COLORS        // Blend textures adding colors (alternative)
 } BlendMode;
 
 // Gestures type
@@ -913,6 +911,7 @@ RLAPI void HideCursor(void);                                      // Hides curso
 RLAPI bool IsCursorHidden(void);                                  // Check if cursor is not visible
 RLAPI void EnableCursor(void);                                    // Enables cursor (unlock cursor)
 RLAPI void DisableCursor(void);                                   // Disables cursor (lock cursor)
+RLAPI bool IsCursorOnScreen(void);                                // Check if cursor is on the current screen.
 
 // Drawing-related functions
 RLAPI void ClearBackground(Color color);                          // Set background color (framebuffer clear color)
@@ -1119,8 +1118,6 @@ RLAPI Image LoadImageRaw(const char *fileName, int width, int height, int format
 RLAPI void UnloadImage(Image image);                                                                     // Unload image from CPU memory (RAM)
 RLAPI void ExportImage(Image image, const char *fileName);                                               // Export image data to file
 RLAPI void ExportImageAsCode(Image image, const char *fileName);                                         // Export image as code file defining an array of bytes
-RLAPI Color *GetImageData(Image image);                                                                  // Get pixel data from image as a Color struct array
-RLAPI Vector4 *GetImageDataNormalized(Image image);                                                      // Get pixel data from image as Vector4 array (float normalized)
 
 // Image generation functions
 RLAPI Image GenImageColor(int width, int height, Color color);                                           // Generate image: plain color
@@ -1137,13 +1134,13 @@ RLAPI Image ImageCopy(Image image);                                             
 RLAPI Image ImageFromImage(Image image, Rectangle rec);                                                  // Create an image from another image piece
 RLAPI Image ImageText(const char *text, int fontSize, Color color);                                      // Create an image from text (default font)
 RLAPI Image ImageTextEx(Font font, const char *text, float fontSize, float spacing, Color tint);         // Create an image from text (custom sprite font)
-RLAPI void ImageToPOT(Image *image, Color fillColor);                                                    // Convert image to POT (power-of-two)
 RLAPI void ImageFormat(Image *image, int newFormat);                                                     // Convert image data to desired format
-RLAPI void ImageAlphaMask(Image *image, Image alphaMask);                                                // Apply alpha mask to image
-RLAPI void ImageAlphaClear(Image *image, Color color, float threshold);                                  // Clear alpha channel to desired color
-RLAPI void ImageAlphaCrop(Image *image, float threshold);                                                // Crop image depending on alpha value
-RLAPI void ImageAlphaPremultiply(Image *image);                                                          // Premultiply alpha channel
+RLAPI void ImageToPOT(Image *image, Color fillColor);                                                    // Convert image to POT (power-of-two)
 RLAPI void ImageCrop(Image *image, Rectangle crop);                                                      // Crop an image to a defined rectangle
+RLAPI void ImageAlphaCrop(Image *image, float threshold);                                                // Crop image depending on alpha value
+RLAPI void ImageAlphaClear(Image *image, Color color, float threshold);                                  // Clear alpha channel to desired color
+RLAPI void ImageAlphaMask(Image *image, Image alphaMask);                                                // Apply alpha mask to image
+RLAPI void ImageAlphaPremultiply(Image *image);                                                          // Premultiply alpha channel
 RLAPI void ImageResize(Image *image, int newWidth, int newHeight);                                       // Resize image (Bicubic scaling algorithm)
 RLAPI void ImageResizeNN(Image *image, int newWidth,int newHeight);                                      // Resize image (Nearest-Neighbor scaling algorithm)
 RLAPI void ImageResizeCanvas(Image *image, int newWidth, int newHeight, int offsetX, int offsetY, Color color);  // Resize canvas and fill with color
@@ -1159,7 +1156,10 @@ RLAPI void ImageColorGrayscale(Image *image);                                   
 RLAPI void ImageColorContrast(Image *image, float contrast);                                             // Modify image color: contrast (-100 to 100)
 RLAPI void ImageColorBrightness(Image *image, int brightness);                                           // Modify image color: brightness (-255 to 255)
 RLAPI void ImageColorReplace(Image *image, Color color, Color replace);                                  // Modify image color: replace color
-RLAPI Color *ImageExtractPalette(Image image, int maxPaletteSize, int *extractCount);                    // Extract color palette from image to maximum size (memory should be freed)
+
+RLAPI Color *GetImageData(Image image);                                                                  // Get pixel data from image as a Color struct array
+RLAPI Color *GetImagePalette(Image image, int maxPaletteSize, int *extractCount);                        // Get color palette from image to maximum size (memory should be freed)
+RLAPI Vector4 *GetImageDataNormalized(Image image);                                                      // Get pixel data from image as Vector4 array (float normalized)
 RLAPI Rectangle GetImageAlphaBorder(Image image, float threshold);                                       // Get image alpha border rectangle
 
 // Image drawing functions
@@ -1446,7 +1446,6 @@ RLAPI void ResumeMusicStream(Music music);                            // Resume 
 RLAPI bool IsMusicPlaying(Music music);                               // Check if music is playing
 RLAPI void SetMusicVolume(Music music, float volume);                 // Set volume for music (1.0 is max level)
 RLAPI void SetMusicPitch(Music music, float pitch);                   // Set pitch for a music (1.0 is base level)
-RLAPI void SetMusicLoopCount(Music music, int count);                 // Set music loop count (loop repeats)
 RLAPI float GetMusicTimeLength(Music music);                          // Get music time length (in seconds)
 RLAPI float GetMusicTimePlayed(Music music);                          // Get current music time played (in seconds)
 
