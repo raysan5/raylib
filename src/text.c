@@ -1312,7 +1312,7 @@ const char *TextJoin(const char **textList, int count, const char *delimiter)
             {
                 memcpy(textPtr, delimiter, delimiterLen);
                 totalLength += delimiterLen;
-                textPtr += textLength;
+                textPtr += delimiterLen;
             }
         }
     }
