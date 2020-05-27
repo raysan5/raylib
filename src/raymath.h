@@ -1284,7 +1284,7 @@ RMDEF Quaternion QuaternionFromVector3ToVector3(Vector3 from, Vector3 to)
 
     result.x = cross.x;
     result.y = cross.y;
-    result.z = cross.y;
+    result.z = cross.z;
     result.w = 1.0f + cos2Theta;     // NOTE: Added QuaternioIdentity()
 
     // Normalize to essentially nlerp the original and identity to 0.5
