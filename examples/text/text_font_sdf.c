@@ -37,7 +37,7 @@ int main(void)
     fontDefault.baseSize = 16;
     fontDefault.charsCount = 95;
     // Parameters > font size: 16, no chars array provided (0), chars count: 95 (autogenerate chars array)
-    fontDefault.chars = LoadFontData("resources/AnonymousPro-Bold.ttf", 16, 0, 95, FONT_DEFAULT);
+    fontDefault.chars = LoadFontData("resources/anonymous_pro_bold.ttf", 16, 0, 95, FONT_DEFAULT);
     // Parameters > chars count: 95, font size: 16, chars padding in image: 4 px, pack method: 0 (default)
     Image atlas = GenImageFontAtlas(fontDefault.chars, &fontDefault.recs, 95, 16, 4, 0);
     fontDefault.texture = LoadTextureFromImage(atlas);
