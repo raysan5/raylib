@@ -168,8 +168,8 @@ ifeq ($(PLATFORM),PLATFORM_ANDROID)
         ANDROID_NDK = C:/android-ndk-r21
         ANDROID_TOOLCHAIN = $(ANDROID_NDK)/toolchains/llvm/prebuilt/windows-x86_64
     else
-        ANDROID_NDK = /usr/lib/android/ndk
-        ANDROID_TOOLCHAIN = $(ANDROID_NDK)/toolchains/llvm/prebuilt/linux
+        ANDROID_NDK ?= /usr/lib/android/ndk
+        ANDROID_TOOLCHAIN = $(ANDROID_NDK)/toolchains/llvm/prebuilt/linux-x86_64
     endif
 
     ifeq ($(ANDROID_ARCH),ARM)
