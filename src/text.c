@@ -622,6 +622,12 @@ Image GenImageFontAtlas(const CharInfo *chars, Rectangle **charRecs, int charsCo
 {
     Image atlas = { 0 };
 
+    if (chars == NULL)
+    {
+        TraceLog(LOG_WARNING, "FONT: Provided chars info not valid, returning empty image atlas");
+        return atlas;
+    }
+
     *charRecs = NULL;
 
     // In case no chars count provided we suppose default of 95

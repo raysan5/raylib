@@ -48,7 +48,7 @@ int main(void)
     fontSDF.baseSize = 16;
     fontSDF.charsCount = 95;
     // Parameters > font size: 16, no chars array provided (0), chars count: 0 (defaults to 95)
-    fontSDF.chars = LoadFontData("resources/AnonymousPro-Bold.ttf", 16, 0, 0, FONT_SDF);
+    fontSDF.chars = LoadFontData("resources/anonymous_pro_bold.ttf", 16, 0, 0, FONT_SDF);
     // Parameters > chars count: 95, font size: 16, chars padding in image: 0 px, pack method: 1 (Skyline algorythm)
     atlas = GenImageFontAtlas(fontSDF.chars, &fontSDF.recs, 95, 16, 0, 1);
     fontSDF.texture = LoadTextureFromImage(atlas);
