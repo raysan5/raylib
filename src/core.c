@@ -969,11 +969,11 @@ void ToggleFullscreen(void)
         emscripten_request_fullscreen("#canvas", false);
         //emscripten_request_fullscreen_strategy("#canvas", EM_FALSE, &strategy);
         //emscripten_enter_soft_fullscreen("canvas", &strategy);
-        TraceLog(LOG_INFO, "emscripten_request_fullscreen_strategy");
+        TRACELOG(LOG_INFO, "emscripten_request_fullscreen_strategy");
     }
     else 
     {
-        TraceLog(LOG_INFO, "emscripten_exit_fullscreen");
+        TRACELOG(LOG_INFO, "emscripten_exit_fullscreen");
         emscripten_exit_fullscreen();
     }
     */
@@ -4350,7 +4350,7 @@ static EM_BOOL EmscriptenKeyboardCallback(int eventType, const EmscriptenKeyboar
         
         emscripten_exit_pointerlock();
         CORE.Window.fullscreen = false;
-        TraceLog(LOG_INFO, "CORE.Window.fullscreen = %s", CORE.Window.fullscreen? "true" : "false");
+        TRACELOG(LOG_INFO, "CORE.Window.fullscreen = %s", CORE.Window.fullscreen? "true" : "false");
     }
 
     return 0;
