@@ -80,8 +80,8 @@ int main(void)
         {
             if (mouseTail[i].active)
             {
-                mouseTail[i].position.y += gravity;
-                mouseTail[i].alpha -= 0.01f;
+                mouseTail[i].position.y += gravity/2;
+                mouseTail[i].alpha -= 0.005f;
 
                 if (mouseTail[i].alpha <= 0.0f) mouseTail[i].active = false;
 
