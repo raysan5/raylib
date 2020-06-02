@@ -22,7 +22,7 @@ int main(void)
 
     InitAudioDevice();              // Initialize audio device
 
-    Music music = LoadMusicStream("resources/guitar_noodling.ogg");
+    Music music = LoadMusicStream("resources/country.mp3");
 
     PlayMusicStream(music);
 

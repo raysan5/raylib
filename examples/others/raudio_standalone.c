@@ -98,10 +98,10 @@ int main()
 
     InitAudioDevice();
 
-    Sound fxWav = LoadSound("resources/audio/weird.wav");         // Load WAV audio file
-    Sound fxOgg = LoadSound("resources/audio/tanatana.ogg");      // Load OGG audio file
+    Sound fxWav = LoadSound("resources/audio/weird.wav");       // Load WAV audio file
+    Sound fxOgg = LoadSound("resources/audio/target.ogg");      // Load OGG audio file
 
-    Music music = LoadMusicStream("resources/audio/guitar_noodling.ogg");
+    Music music = LoadMusicStream("resources/audio/country.mp3");
     PlayMusicStream(music);
 
     printf("\nPress s or d to play sounds...\n");

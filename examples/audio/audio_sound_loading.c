@@ -23,7 +23,7 @@ int main(void)
     InitAudioDevice();      // Initialize audio device
 
     Sound fxWav = LoadSound("resources/sound.wav");         // Load WAV audio file
-    Sound fxOgg = LoadSound("resources/tanatana.ogg");      // Load OGG audio file
+    Sound fxOgg = LoadSound("resources/target.ogg");        // Load OGG audio file
 
     SetTargetFPS(60);               // Set our game to run at 60 frames-per-second
     //--------------------------------------------------------------------------------------
