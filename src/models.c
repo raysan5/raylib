@@ -1273,15 +1273,21 @@ Mesh GenMeshPoly(int sides, float radius)
 {
     Mesh mesh = { 0 };
     mesh.vboId = (unsigned int *)RL_CALLOC(DEFAULT_MESH_VERTEX_BUFFERS, sizeof(unsigned int));
+
+    if (sides < 3) return mesh;
+
     int vertexCount = sides*3;
 
     // Vertices definition
     Vector3 *vertices = (Vector3 *)RL_MALLOC(vertexCount*sizeof(Vector3));
-    for (int i = 0, v = 0; i < 360; i += 360/sides, v += 3)
+
+    float d = 0.0f, dStep = 360.0f/sides;
+    for (int v = 0; v < vertexCount; v += 3)
     {
         vertices[v] = (Vector3){ 0.0f, 0.0f, 0.0f };
-        vertices[v + 1] = (Vector3){ sinf(DEG2RAD*i)*radius, 0.0f, cosf(DEG2RAD*i)*radius };
-        vertices[v + 2] = (Vector3){ sinf(DEG2RAD*(i + 360/sides))*radius, 0.0f, cosf(DEG2RAD*(i + 360/sides))*radius };
+        vertices[v + 1] = (Vector3){ sinf(DEG2RAD*d)*radius, 0.0f, cosf(DEG2RAD*d)*radius };
+        vertices[v + 2] = (Vector3){sinf(DEG2RAD*(d+dStep)) * radius, 0.0f, cosf(DEG2RAD * (d+dStep)) * radius };
+        d += dStep;
     }
 
     // Normals definition
