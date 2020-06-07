@@ -1111,12 +1111,12 @@ void ImageAlphaClear(Image *image, Color color, float threshold)
     for (int i = 0; i < image->width*image->height; i++) if (pixels[i].a <= (unsigned char)(threshold*255.0f)) pixels[i] = color;
 
     RL_FREE(image->data);
-    int prevFormat = image->format;
+    int format = image->format;
     
     image->data = pixels;
     image->format = UNCOMPRESSED_R8G8B8A8;
 
-    ImageFormat(image, prevFormat);
+    ImageFormat(image, format);
 }
 
 // Apply alpha mask to image
@@ -1189,11 +1189,11 @@ void ImageAlphaPremultiply(Image *image)
 
     RL_FREE(image->data);
 
-    int prevFormat = image->format;
+    int format = image->format;
     image->data = pixels;
     image->format = UNCOMPRESSED_R8G8B8A8;
     
-    ImageFormat(image, prevFormat);
+    ImageFormat(image, format);
 }
 
 // Resize and image to new size
