@@ -1266,12 +1266,14 @@ void ImageResizeNN(Image *image,int newWidth,int newHeight)
 
 // Resize canvas and fill with color
 // NOTE: Resize offset is relative to the top-left corner of the original image
-void ImageResizeCanvas(Image *image, int newWidth, int newHeight, int offsetX, int offsetY, Color color)
+void ImageResizeCanvas(Image *image, int newWidth, int newHeight, int offsetX, int offsetY, Color fill)
 {
     // Security check to avoid program crash
     if ((image->data == NULL) || (image->width == 0) || (image->height == 0)) return;
-
-    if ((newWidth != image->width) || (newHeight != image->height))
+    
+    if (image->mipmaps > 1) TRACELOG(LOG_WARNING, "Image manipulation only applied to base mipmap level");
+    if (image->format >= COMPRESSED_DXT1_RGB) TRACELOG(LOG_WARNING, "Image manipulation not supported for compressed formats");
+    else if ((newWidth != image->width) || (newHeight != image->height))
     {
         // Support offsets out of canvas new size -> original image is cropped
         if (offsetX < 0)
@@ -1295,50 +1297,30 @@ void ImageResizeCanvas(Image *image, int newWidth, int newHeight, int offsetX, i
             ImageCrop(image, (Rectangle) { 0, 0, (float)image->width, (float)(image->height - (offsetY - (newHeight - image->height))) });
             offsetY = newHeight - image->height;
         }
-
-        if ((newWidth > image->width) && (newHeight > image->height))
-        {
-            Image imTemp = GenImageColor(newWidth, newHeight, color);
-
-            Rectangle srcRec = { 0.0f, 0.0f, (float)image->width, (float)image->height };
-            Rectangle dstRec = { (float)offsetX, (float)offsetY, srcRec.width, srcRec.height };
-
-            ImageDraw(&imTemp, *image, srcRec, dstRec, WHITE);
-            ImageFormat(&imTemp, image->format);
-            RL_FREE(image->data);
-            *image = imTemp;
-        }
-        else if ((newWidth < image->width) && (newHeight < image->height))
+        
+        if ((newWidth < image->width) || (newHeight < image->height))
         {
             Rectangle crop = { (float)offsetX, (float)offsetY, (float)newWidth, (float)newHeight };
             ImageCrop(image, crop);
         }
-        else    // One side is bigger and the other is smaller
+
+        int dataSize = GetPixelDataSize(image->width, image->height, image->format);
+        int bytesPerPixel = dataSize/(image->width*image->height);
+        
+        unsigned char *resizedData = (unsigned char *)RL_CALLOC(newWidth*newHeight*bytesPerPixel, 1);
+        
+        // TODO: Fill resizedData with fill color (must be formatted to image->format)
+        
+        for (int y = 0, offsetSize = (offsetY*newWidth + offsetX)*bytesPerPixel; y < image->height; y++)
         {
-            Image imTemp = GenImageColor(newWidth, newHeight, color);
-
-            Rectangle srcRec = { 0.0f, 0.0f, (float)image->width, (float)image->height };
-            Rectangle dstRec = { (float)offsetX, (float)offsetY, (float)image->width, (float)image->height };
-
-            if (newWidth < image->width)
-            {
-                srcRec.x = (float)offsetX;
-                srcRec.width = (float)newWidth;
-                dstRec.x = 0.0f;
-            }
-
-            if (newHeight < image->height)
-            {
-                srcRec.y = (float)offsetY;
-                srcRec.height = (float)newHeight;
-                dstRec.y = 0.0f;
-            }
-
-            ImageDraw(&imTemp, *image, srcRec, dstRec, WHITE);
-            ImageFormat(&imTemp, image->format);
-            RL_FREE(image->data);
-            *image = imTemp;
+            memcpy(resizedData + offsetSize, ((unsigned char *)image->data) + y*image->width*bytesPerPixel, image->width*bytesPerPixel);
+            offsetSize += (newWidth*bytesPerPixel);
         }
+        
+        RL_FREE(image->data);
+        image->data = resizedData;
+        image->width = newWidth;
+        image->height = newHeight;
     }
 }
 
