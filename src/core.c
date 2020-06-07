@@ -2111,7 +2111,7 @@ const char *GetDirectoryPath(const char *filePath)
     if (lastSlash)
     {
         // NOTE: Be careful, strncpy() is not safe, it does not care about '\0'
-        strncpy(dirPath + ((filePath[1] != ':')? 2 : 0), filePath, strlen(filePath) - (strlen(lastSlash) - 1));
+        memcpy(dirPath + ((filePath[1] != ':')? 2 : 0), filePath, strlen(filePath) - (strlen(lastSlash) - 1));
         dirPath[strlen(filePath) - strlen(lastSlash) + ((filePath[1] != ':')? 2 : 0)] = '\0';  // Add '\0' manually
     }
 
