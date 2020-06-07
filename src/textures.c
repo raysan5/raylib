@@ -1579,26 +1579,24 @@ void ImageFlipVertical(Image *image)
     // Security check to avoid program crash
     if ((image->data == NULL) || (image->width == 0) || (image->height == 0)) return;
 
-    Color *srcPixels = GetImageData(*image);
-    Color *dstPixels = (Color *)RL_MALLOC(image->width*image->height*sizeof(Color));
-
-    for (int y = 0; y < image->height; y++)
+    if (image->mipmaps > 1) TRACELOG(LOG_WARNING, "Image manipulation only applied to base mipmap level");
+    if (image->format >= COMPRESSED_DXT1_RGB) TRACELOG(LOG_WARNING, "Image manipulation not supported for compressed formats");
+    else
     {
-        for (int x = 0; x < image->width; x++)
+        int dataSize = GetPixelDataSize(image->width, image->height, image->format);
+        int bytesPerPixel = dataSize/(image->width*image->height);
+        
+        unsigned char *flippedData = (unsigned char *)RL_MALLOC(dataSize);
+        
+        for (int i = (image->height - 1), offsetSize = 0; i >= 0; i--)
         {
-            dstPixels[y*image->width + x] = srcPixels[(image->height - 1 - y)*image->width + x];
+            memcpy(flippedData + offsetSize, ((unsigned char *)image->data) + i*image->width*bytesPerPixel, image->width*bytesPerPixel);
+            offsetSize += image->width*bytesPerPixel;
         }
+        
+        RL_FREE(image->data);
+        image->data = flippedData;
     }
-
-    int format = image->format;
-    RL_FREE(image->data);
-    
-    image->data = dstPixels;
-    image->format = UNCOMPRESSED_R8G8B8A8;
-    
-    ImageFormat(image, format);
-
-    RL_FREE(srcPixels);
 }
 
 // Flip image horizontally
