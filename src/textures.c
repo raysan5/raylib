@@ -794,6 +794,15 @@ void ImageCrop(Image *image, Rectangle crop)
         
         unsigned char *croppedData = (unsigned char *)RL_MALLOC(crop.width*crop.height*bytesPerPixel);
         
+        // OPTION 1: Move cropped data line-by-line
+        for (int y = (int)crop.y, offsetSize = 0; y < (int)(crop.y + crop.height); y++)
+        {
+            memcpy(croppedData + offsetSize, ((unsigned char *)image->data) + (y*image->width + (int)crop.x)*bytesPerPixel, (int)crop.width*bytesPerPixel);
+            offsetSize += ((int)crop.width*bytesPerPixel);
+        }
+        
+        /*
+        // OPTION 2: Move cropped data pixel-by-pixel or byte-by-byte
         for (int y = (int)crop.y; y < (int)(crop.y + crop.height); y++)
         {
             for (int x = (int)crop.x; x < (int)(crop.x + crop.width); x++)
@@ -802,6 +811,7 @@ void ImageCrop(Image *image, Rectangle crop)
                 for (int i = 0; i < bytesPerPixel; i++) croppedData[((y - (int)crop.y)*(int)crop.width + (x - (int)crop.x))*bytesPerPixel + i] = ((unsigned char *)image->data)[(y*image->width + x)*bytesPerPixel + i];
             }
         }
+        */
 
         RL_FREE(image->data);
         image->data = croppedData;
