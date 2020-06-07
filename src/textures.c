@@ -1109,38 +1109,16 @@ Image ImageTextEx(Font font, const char *text, float fontSize, float spacing, Co
 }
 
 // Crop image depending on alpha value
+// NOTE: Threshold is defined as a percentatge: 0.0f -> 1.0f
 void ImageAlphaCrop(Image *image, float threshold)
 {
     // Security check to avoid program crash
     if ((image->data == NULL) || (image->width == 0) || (image->height == 0)) return;
 
-    Color *pixels = GetImageData(*image);
+    Rectangle crop = GetImageAlphaBorder(*image, threshold);
 
-    int xMin = 65536;   // Define a big enough number
-    int xMax = 0;
-    int yMin = 65536;
-    int yMax = 0;
-
-    for (int y = 0; y < image->height; y++)
-    {
-        for (int x = 0; x < image->width; x++)
-        {
-            if (pixels[y*image->width + x].a > (unsigned char)(threshold*255.0f))
-            {
-                if (x < xMin) xMin = x;
-                if (x > xMax) xMax = x;
-                if (y < yMin) yMin = y;
-                if (y > yMax) yMax = y;
-            }
-        }
-    }
-
-    Rectangle crop = { (float)xMin, (float)yMin, (float)((xMax + 1) - xMin), (float)((yMax + 1) - yMin) };
-
-    RL_FREE(pixels);
-
-    // Check for not empty image brefore cropping
-    if (!((xMax < xMin) || (yMax < yMin))) ImageCrop(image, crop);
+    // Crop if rectangle is valid
+    if (((int)crop.width != 0) && ((int)crop.height != 0)) ImageCrop(image, crop);
 }
 
 // Clear alpha channel to desired color
@@ -2198,6 +2176,7 @@ Vector4 *GetImageDataNormalized(Image image)
 }
 
 // Get image alpha border rectangle
+// NOTE: Threshold is defined as a percentatge: 0.0f -> 1.0f
 Rectangle GetImageAlphaBorder(Image image, float threshold)
 {
     Rectangle crop = { 0 };
