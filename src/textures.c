@@ -998,7 +998,7 @@ void ImageFormat(Image *image, int newFormat)
 
 // Convert image to POT (power-of-two)
 // NOTE: It could be useful on OpenGL ES 2.0 (RPI, HTML5)
-void ImageToPOT(Image *image, Color fillColor)
+void ImageToPOT(Image *image, Color fill)
 {
     // Security check to avoid program crash
     if ((image->data == NULL) || (image->width == 0) || (image->height == 0)) return;
@@ -1009,7 +1009,7 @@ void ImageToPOT(Image *image, Color fillColor)
     int potHeight = (int)powf(2, ceilf(logf((float)image->height)/logf(2)));
 
     // Check if POT texture generation is required (if texture is not already POT)
-    if ((potWidth != image->width) || (potHeight != image->height)) ImageResizeCanvas(image, potWidth, potHeight, 0, 0, fillColor);
+    if ((potWidth != image->width) || (potHeight != image->height)) ImageResizeCanvas(image, potWidth, potHeight, 0, 0, fill);
 }
 
 #if defined(SUPPORT_IMAGE_MANIPULATION)
