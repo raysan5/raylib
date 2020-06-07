@@ -999,39 +999,7 @@ void ImageToPOT(Image *image, Color fillColor)
     int potHeight = (int)powf(2, ceilf(logf((float)image->height)/logf(2)));
 
     // Check if POT texture generation is required (if texture is not already POT)
-    if ((potWidth != image->width) || (potHeight != image->height))
-    {
-        Color *pixels = GetImageData(*image);   // Get pixels data
-        Color *pixelsPOT = NULL;
-
-        // Generate POT array from NPOT data
-        pixelsPOT = (Color *)RL_MALLOC(potWidth*potHeight*sizeof(Color));
-
-        for (int j = 0; j < potHeight; j++)
-        {
-            for (int i = 0; i < potWidth; i++)
-            {
-                if ((j < image->height) && (i < image->width)) pixelsPOT[j*potWidth + i] = pixels[j*image->width + i];
-                else pixelsPOT[j*potWidth + i] = fillColor;
-            }
-        }
-
-        RL_FREE(pixels);                    // Free pixels data
-        RL_FREE(image->data);               // Free old image data
-
-        int format = image->format;         // Store image data format to reconvert later
-
-        // Fill new image data
-        image->data = pixelsPOT;
-        image->width = potWidth;
-        image->height = potHeight;
-        image->format = UNCOMPRESSED_R8G8B8A8;
-
-        ImageFormat(image, format);         // Reconvert image to previous format
-        
-        // TODO: Verification required for log
-        TRACELOG(LOG_WARNING, "IMAGE: Converted to POT: (%ix%i) -> (%ix%i)", image->width, image->height, potWidth, potHeight);
-    }
+    if ((potWidth != image->width) || (potHeight != image->height)) ImageResizeCanvas(image, potWidth, potHeight, 0, 0, fillColor);
 }
 
 #if defined(SUPPORT_IMAGE_MANIPULATION)
