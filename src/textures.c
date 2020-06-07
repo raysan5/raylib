@@ -1605,26 +1605,45 @@ void ImageFlipHorizontal(Image *image)
     // Security check to avoid program crash
     if ((image->data == NULL) || (image->width == 0) || (image->height == 0)) return;
 
-    Color *srcPixels = GetImageData(*image);
-    Color *dstPixels = (Color *)RL_MALLOC(image->width*image->height*sizeof(Color));
-
-    for (int y = 0; y < image->height; y++)
+    if (image->mipmaps > 1) TRACELOG(LOG_WARNING, "Image manipulation only applied to base mipmap level");
+    if (image->format >= COMPRESSED_DXT1_RGB) TRACELOG(LOG_WARNING, "Image manipulation not supported for compressed formats");
+    else
     {
-        for (int x = 0; x < image->width; x++)
+        int dataSize = GetPixelDataSize(image->width, image->height, image->format);
+        int bytesPerPixel = dataSize/(image->width*image->height);
+        
+        unsigned char *flippedData = (unsigned char *)RL_MALLOC(dataSize);
+        
+        for (int y = 0; y < image->height; y++)
         {
-            dstPixels[y*image->width + x] = srcPixels[y*image->width + (image->width - 1 - x)];
+            for (int x = 0; x < image->width; x++)
+            {
+                // OPTION 1: Move pixels with memcopy()
+                //memcpy(flippedData + (y*image->width + x)*bytesPerPixel, ((unsigned char *)image->data) + (y*image->width + (image->width - 1 - x))*bytesPerPixel, bytesPerPixel);
+                
+                // OPTION 2: Just copy data pixel by pixel
+                for (int i = 0; i < bytesPerPixel; i++) flippedData[(y*image->width + x)*bytesPerPixel + i] = ((unsigned char *)image->data)[(y*image->width + (image->width - 1 - x))*bytesPerPixel + i];
+            }
         }
+        
+        RL_FREE(image->data);
+        image->data = flippedData;
+
+        /*
+        // OPTION 3: Faster implementation (specific for 32bit pixels)
+        // NOTE: It does not require additional allocations
+        uint32_t *ptr = (uint32_t *)image->data;
+        for (int y = 0; y < image->height; y++)
+        {
+            for (int x = 0; x < image->width/2; x++)
+            {
+                uint32_t backup = ptr[y*image->width + x];
+                ptr[y*image->width + x] = ptr[y*image->width + (image->width - 1 - x)];
+                ptr[y*image->width + (image->width - 1 - x)] = backup;
+            }
+        }
+        */
     }
-
-    int format = image->format;
-    RL_FREE(image->data);
-    
-    image->data = dstPixels;
-    image->format = UNCOMPRESSED_R8G8B8A8;
-    
-    ImageFormat(image, format);
-
-    RL_FREE(srcPixels);
 }
 
 // Rotate image clockwise 90deg
