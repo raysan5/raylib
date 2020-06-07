@@ -1652,30 +1652,32 @@ void ImageRotateCW(Image *image)
     // Security check to avoid program crash
     if ((image->data == NULL) || (image->width == 0) || (image->height == 0)) return;
 
-    Color *srcPixels = GetImageData(*image);
-    Color *rotPixels = (Color *)RL_MALLOC(image->width*image->height*sizeof(Color));
-
-    for (int y = 0; y < image->height; y++)
+    if (image->mipmaps > 1) TRACELOG(LOG_WARNING, "Image manipulation only applied to base mipmap level");
+    if (image->format >= COMPRESSED_DXT1_RGB) TRACELOG(LOG_WARNING, "Image manipulation not supported for compressed formats");
+    else
     {
-        for (int x = 0; x < image->width; x++)
+        int dataSize = GetPixelDataSize(image->width, image->height, image->format);
+        int bytesPerPixel = dataSize/(image->width*image->height);
+        
+        unsigned char *rotatedData = (unsigned char *)RL_MALLOC(dataSize);
+        
+        for (int y = 0; y < image->height; y++)
         {
-            rotPixels[x*image->height + (image->height - y - 1)] = srcPixels[y*image->width + x];
+            for (int x = 0; x < image->width; x++)
+            {
+                //memcpy(rotatedData + (x*image->height + (image->height - y - 1))*bytesPerPixel, ((unsigned char *)image->data) + (y*image->width + x)*bytesPerPixel, bytesPerPixel);
+                for (int i = 0; i < bytesPerPixel; i++) rotatedData[(x*image->height + (image->height - y - 1))*bytesPerPixel + i] = ((unsigned char *)image->data)[(y*image->width + x)*bytesPerPixel + i];
+            }
         }
+        
+        RL_FREE(image->data);
+        image->data = rotatedData;
+        int width = image->width;
+        int height = image-> height;
+        
+        image->width = height;
+        image->height = width;
     }
-
-    int format = image->format;
-    int width = image->width;
-    int height = image-> height;
-    RL_FREE(image->data);
-    
-    image->data = rotPixels;
-    image->width = height;
-    image->height = width;
-    image->format = UNCOMPRESSED_R8G8B8A8;
-    
-    ImageFormat(image, format);
-    
-    RL_FREE(srcPixels);
 }
 
 // Rotate image counter-clockwise 90deg
