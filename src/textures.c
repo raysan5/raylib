@@ -779,36 +779,35 @@ void ImageCrop(Image *image, Rectangle crop)
     if (crop.y < 0) { crop.height += crop.y; crop.y = 0; }
     if ((crop.x + crop.width) > image->width) crop.width = image->width - crop.x;
     if ((crop.y + crop.height) > image->height) crop.height = image->height - crop.y;
-
-    if ((crop.x < image->width) && (crop.y < image->height))
+    if ((crop.x > image->width) || (crop.y > image->height)) 
     {
-        // Start the cropping process
-        Color *pixels = GetImageData(*image);   // Get data as Color pixels array
-        Color *cropPixels = (Color *)RL_MALLOC((int)crop.width*(int)crop.height*sizeof(Color));
+        TRACELOG(LOG_WARNING, "IMAGE: Failed to crop, rectangle out of bounds");
+        return;
+    }
 
-        for (int j = (int)crop.y; j < (int)(crop.y + crop.height); j++)
+    if (image->mipmaps > 1) TRACELOG(LOG_WARNING, "Image manipulation only applied to base mipmap level");
+    if (image->format >= COMPRESSED_DXT1_RGB) TRACELOG(LOG_WARNING, "Image manipulation not supported for compressed formats");
+    else
+    {
+        int dataSize = GetPixelDataSize(image->width, image->height, image->format);
+        int bytesPerPixel = dataSize/(image->width*image->height);
+        
+        unsigned char *croppedData = (unsigned char *)RL_MALLOC(crop.width*crop.height*bytesPerPixel);
+        
+        for (int y = (int)crop.y; y < (int)(crop.y + crop.height); y++)
         {
-            for (int i = (int)crop.x; i < (int)(crop.x + crop.width); i++)
+            for (int x = (int)crop.x; x < (int)(crop.x + crop.width); x++)
             {
-                cropPixels[(j - (int)crop.y)*(int)crop.width + (i - (int)crop.x)] = pixels[j*image->width + i];
+                //memcpy(croppedData + ((y - (int)crop.y)*(int)crop.width + (x - (int)crop.x))*bytesPerPixel, ((unsigned char *)image->data) + (y*image->width + x)*bytesPerPixel, bytesPerPixel);
+                for (int i = 0; i < bytesPerPixel; i++) croppedData[((y - (int)crop.y)*(int)crop.width + (x - (int)crop.x))*bytesPerPixel + i] = ((unsigned char *)image->data)[(y*image->width + x)*bytesPerPixel + i];
             }
         }
 
-        RL_FREE(pixels);
-
-        int format = image->format;
-
         RL_FREE(image->data);
-
-        image->data = cropPixels;
+        image->data = croppedData;
         image->width = (int)crop.width;
         image->height = (int)crop.height;
-        image->format = UNCOMPRESSED_R8G8B8A8;
-
-        // Reformat 32bit RGBA image to original format
-        ImageFormat(image, format);
     }
-    else TRACELOG(LOG_WARNING, "IMAGE: Failed to crop, rectangle out of bounds");
 }
 
 // Convert image data to desired format
