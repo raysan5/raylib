@@ -1107,8 +1107,9 @@ void ImageAlphaClear(Image *image, Color color, float threshold)
     if ((image->data == NULL) || (image->width == 0) || (image->height == 0)) return;
 
     Color *pixels = GetImageData(*image);
+    unsigned char thresholdValue = (unsigned char)(threshold*255.0f);
 
-    for (int i = 0; i < image->width*image->height; i++) if (pixels[i].a <= (unsigned char)(threshold*255.0f)) pixels[i] = color;
+    for (int i = 0; i < image->width*image->height; i++) if (pixels[i].a <= thresholdValue) pixels[i] = color;
 
     RL_FREE(image->data);
     int format = image->format;
