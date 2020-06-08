@@ -2587,7 +2587,7 @@ void rlUpdateMeshAt(Mesh mesh, int buffer, int count, int index)
         case 3:     // Update colors (vertex colors)
         {
             glBindBuffer(GL_ARRAY_BUFFER, mesh.vboId[3]);
-            if (index == 0 && count >= mesh.vertexCount) glBufferData(GL_ARRAY_BUFFER, count*4*sizeof(float), mesh.colors, GL_DYNAMIC_DRAW);
+            if (index == 0 && count >= mesh.vertexCount) glBufferData(GL_ARRAY_BUFFER, count*4*sizeof(unsigned char), mesh.colors, GL_DYNAMIC_DRAW);
             else if (index + count >= mesh.vertexCount) break;
             else glBufferSubData(GL_ARRAY_BUFFER, index*4*sizeof(unsigned char), count*4*sizeof(unsigned char), mesh.colors);
 
