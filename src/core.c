@@ -1536,7 +1536,7 @@ void BeginScissorMode(int x, int y, int width, int height)
     rlglDraw(); // Force drawing elements
 
     rlEnableScissorTest();
-    rlScissor(x, GetScreenHeight() - (y + height), width, height);
+    rlScissor(x, CORE.Window.currentFbo.height - (y + height), width, height);
 }
 
 // End scissor mode
