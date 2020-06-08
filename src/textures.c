@@ -1182,10 +1182,19 @@ void ImageAlphaPremultiply(Image *image)
 
     for (int i = 0; i < image->width*image->height; i++)
     {
-        alpha = (float)pixels[i].a/255.0f;
-        pixels[i].r = (unsigned char)((float)pixels[i].r*alpha);
-        pixels[i].g = (unsigned char)((float)pixels[i].g*alpha);
-        pixels[i].b = (unsigned char)((float)pixels[i].b*alpha);
+        if (pixels[i].a == 0)
+        {
+            pixels[i].r = 0;
+            pixels[i].g = 0;
+            pixels[i].b = 0;
+        }
+        else if (pixels[i].a < 255)
+        {
+            alpha = (float)pixels[i].a/255.0f;
+            pixels[i].r = (unsigned char)((float)pixels[i].r*alpha);
+            pixels[i].g = (unsigned char)((float)pixels[i].g*alpha);
+            pixels[i].b = (unsigned char)((float)pixels[i].b*alpha);
+        }
     }
 
     RL_FREE(image->data);
