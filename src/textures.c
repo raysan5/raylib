@@ -376,22 +376,34 @@ void ExportImage(Image image, const char *fileName)
     int success = 0;
 
 #if defined(SUPPORT_IMAGE_EXPORT)
-    // NOTE: Getting Color array as RGBA unsigned char values	
-    unsigned char *imgData = (unsigned char *)GetImageData(image);
+    int channels = 4;
+    bool allocatedData = false;
+    unsigned char *imgData = (unsigned char *)image.data;
+    
+    if (image.format == UNCOMPRESSED_GRAYSCALE) channels = 1;
+    else if (image.format == UNCOMPRESSED_GRAY_ALPHA) channels = 2;
+    else if (image.format == UNCOMPRESSED_R8G8B8) channels = 3;
+    else if (image.format == UNCOMPRESSED_R8G8B8A8) channels = 4;
+    else
+    {
+        // NOTE: Getting Color array as RGBA unsigned char values
+        imgData = (unsigned char *)GetImageData(image);
+        allocatedData = true;
+    }
     
 #if defined(SUPPORT_FILEFORMAT_PNG)
-    if (IsFileExtension(fileName, ".png")) success = stbi_write_png(fileName, image.width, image.height, 4, imgData, image.width*4);
+    if (IsFileExtension(fileName, ".png")) success = stbi_write_png(fileName, image.width, image.height, channels, imgData, image.width*channels);
 #else
     if (false) {}
 #endif
 #if defined(SUPPORT_FILEFORMAT_BMP)
-    else if (IsFileExtension(fileName, ".bmp")) success = stbi_write_bmp(fileName, image.width, image.height, 4, imgData);
+    else if (IsFileExtension(fileName, ".bmp")) success = stbi_write_bmp(fileName, image.width, image.height, channels, imgData);
 #endif
 #if defined(SUPPORT_FILEFORMAT_TGA)
-    else if (IsFileExtension(fileName, ".tga")) success = stbi_write_tga(fileName, image.width, image.height, 4, imgData);
+    else if (IsFileExtension(fileName, ".tga")) success = stbi_write_tga(fileName, image.width, image.height, channels, imgData);
 #endif
 #if defined(SUPPORT_FILEFORMAT_JPG)
-    else if (IsFileExtension(fileName, ".jpg")) success = stbi_write_jpg(fileName, image.width, image.height, 4, imgData, 80);  // JPG quality: between 1 and 100
+    else if (IsFileExtension(fileName, ".jpg")) success = stbi_write_jpg(fileName, image.width, image.height, channels, imgData, 80);  // JPG quality: between 1 and 100
 #endif
 #if defined(SUPPORT_FILEFORMAT_KTX)
     else if (IsFileExtension(fileName, ".ktx")) success = SaveKTX(image, fileName);
@@ -404,7 +416,7 @@ void ExportImage(Image image, const char *fileName)
         success = true;
     }
     
-    RL_FREE(imgData);
+    if (allocatedData) RL_FREE(imgData);
 #endif      // SUPPORT_IMAGE_EXPORT
 
     if (success != 0) TRACELOG(LOG_INFO, "FILEIO: [%s] Image exported successfully", fileName);
