@@ -1121,19 +1121,89 @@ void ImageAlphaClear(Image *image, Color color, float threshold)
 {
     // Security check to avoid program crash
     if ((image->data == NULL) || (image->width == 0) || (image->height == 0)) return;
-
-    Color *pixels = GetImageData(*image);
-    unsigned char thresholdValue = (unsigned char)(threshold*255.0f);
-
-    for (int i = 0; i < image->width*image->height; i++) if (pixels[i].a <= thresholdValue) pixels[i] = color;
-
-    RL_FREE(image->data);
-    int format = image->format;
     
-    image->data = pixels;
-    image->format = UNCOMPRESSED_R8G8B8A8;
+    if (image->mipmaps > 1) TRACELOG(LOG_WARNING, "Image manipulation only applied to base mipmap level");
+    if (image->format >= COMPRESSED_DXT1_RGB) TRACELOG(LOG_WARNING, "Image manipulation not supported for compressed formats");
+    else
+    {
+        switch (image->format)
+        {
+            case UNCOMPRESSED_GRAY_ALPHA:
+            {
+                unsigned char thresholdValue = (unsigned char)(threshold*255.0f);
+                for (int i = 1; i < image->width*image->height*2; i += 2) 
+                {
+                    if (((unsigned char *)image->data)[i] <= thresholdValue)
+                    {
+                        ((unsigned char *)image->data)[i - 1] = color.r;
+                        ((unsigned char *)image->data)[i] = color.a;
+                    }
+                }
+            } break;
+            case UNCOMPRESSED_R5G5B5A1:
+            {
+                unsigned char thresholdValue = ((threshold < 0.5f)? 0 : 1);
+                
+                unsigned char r = (unsigned char)(round((float)color.r*31.0f));
+                unsigned char g = (unsigned char)(round((float)color.g*31.0f));
+                unsigned char b = (unsigned char)(round((float)color.b*31.0f));
+                unsigned char a = (color.a < 128)? 0 : 1;
 
-    ImageFormat(image, format);
+                for (int i = 0; i < image->width*image->height; i++)
+                {
+                    if ((((unsigned short *)image->data)[i] & 0b0000000000000001) <= thresholdValue)
+                    {
+                        ((unsigned short *)image->data)[i] = (unsigned short)r << 11 | (unsigned short)g << 6 | (unsigned short)b << 1 | (unsigned short)a;
+                    }
+                }
+            } break;
+            case UNCOMPRESSED_R4G4B4A4:
+            {
+                unsigned char thresholdValue = (unsigned char)(threshold*15.0f);
+                
+                unsigned char r = (unsigned char)(round((float)color.r*15.0f));
+                unsigned char g = (unsigned char)(round((float)color.g*15.0f));
+                unsigned char b = (unsigned char)(round((float)color.b*15.0f));
+                unsigned char a = (unsigned char)(round((float)color.a*15.0f));
+
+                for (int i = 0; i < image->width*image->height; i++)
+                {
+                    if ((((unsigned short *)image->data)[i] & 0x000f) <= thresholdValue)
+                    {
+                        ((unsigned short *)image->data)[i] = (unsigned short)r << 12 | (unsigned short)g << 8 | (unsigned short)b << 4 | (unsigned short)a;
+                    }
+                }
+            } break;
+            case UNCOMPRESSED_R8G8B8A8:
+            {
+                unsigned char thresholdValue = (unsigned char)(threshold*255.0f);
+                for (int i = 3; i < image->width*image->height*4; i += 4) 
+                {
+                    if (((unsigned char *)image->data)[i] <= thresholdValue)
+                    {
+                        ((unsigned char *)image->data)[i - 3] = color.r;
+                        ((unsigned char *)image->data)[i - 2] = color.g;
+                        ((unsigned char *)image->data)[i - 1] = color.b;
+                        ((unsigned char *)image->data)[i] = color.a;
+                    }
+                }
+            } break;
+            case UNCOMPRESSED_R32G32B32A32:
+            {
+                for (int i = 3; i < image->width*image->height*4; i += 4) 
+                {
+                    if (((float *)image->data)[i] <= threshold)
+                    {
+                        ((float *)image->data)[i - 3] = (float)color.r/255.0f;
+                        ((float *)image->data)[i - 2] = (float)color.g/255.0f;
+                        ((float *)image->data)[i - 1] = (float)color.b/255.0f;
+                        ((float *)image->data)[i] = (float)color.a/255.0f;
+                    }
+                }
+            } break;
+            default: break;
+        }
+    }
 }
 
 // Apply alpha mask to image
