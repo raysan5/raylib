@@ -1301,34 +1301,27 @@ void ImageResizeCanvas(Image *image, int newWidth, int newHeight, int offsetX, i
     if (image->format >= COMPRESSED_DXT1_RGB) TRACELOG(LOG_WARNING, "Image manipulation not supported for compressed formats");
     else if ((newWidth != image->width) || (newHeight != image->height))
     {
-        // Support offsets out of canvas new size -> original image is cropped
+        Rectangle srcRec = { 0, 0, image->width, image->height };
+        Vector2 dstPos = { offsetX, offsetY }; 
+        
         if (offsetX < 0)
         {
-            ImageCrop(image, (Rectangle) { -(float)offsetX, 0, (float)(image->width + offsetX), (float)image->height });
-            offsetX = 0;
+            srcRec.x = -offsetX;
+            srcRec.width += offsetX;
+            dstPos.x = 0;
         }
-        else if (offsetX > (newWidth - image->width))
-        {
-            ImageCrop(image, (Rectangle) { 0, 0, (float)(image->width - (offsetX - (newWidth - image->width))), (float)image->height });
-            offsetX = newWidth - image->width;
-        }
+        else if ((offsetX + image->width) > newWidth) srcRec.width = newWidth - offsetX;
 
         if (offsetY < 0)
         {
-            ImageCrop(image, (Rectangle) { 0, -(float)offsetY, (float)image->width, (float)(image->height + offsetY) });
-            offsetY = 0;
+            srcRec.y = -offsetY;
+            srcRec.height += offsetY;
+            dstPos.y = 0;
         }
-        else if (offsetY > (newHeight - image->height))
-        {
-            ImageCrop(image, (Rectangle) { 0, 0, (float)image->width, (float)(image->height - (offsetY - (newHeight - image->height))) });
-            offsetY = newHeight - image->height;
-        }
-        
-        if ((newWidth < image->width) || (newHeight < image->height))
-        {
-            Rectangle crop = { (float)offsetX, (float)offsetY, (float)newWidth, (float)newHeight };
-            ImageCrop(image, crop);
-        }
+        else if ((offsetY + image->height) > newHeight) srcRec.height = newHeight - offsetY;
+
+        if (newWidth < srcRec.width) srcRec.width = newWidth;
+        if (newHeight < srcRec.height) srcRec.height = newHeight;
 
         int dataSize = GetPixelDataSize(image->width, image->height, image->format);
         int bytesPerPixel = dataSize/(image->width*image->height);
@@ -1337,10 +1330,12 @@ void ImageResizeCanvas(Image *image, int newWidth, int newHeight, int offsetX, i
         
         // TODO: Fill resizedData with fill color (must be formatted to image->format)
         
-        for (int y = 0, offsetSize = (offsetY*newWidth + offsetX)*bytesPerPixel; y < image->height; y++)
+        int dstOffsetSize = ((int)dstPos.y*newWidth + (int)dstPos.x)*bytesPerPixel;
+        
+        for (int y = 0; y < (int)srcRec.height; y++)
         {
-            memcpy(resizedData + offsetSize, ((unsigned char *)image->data) + y*image->width*bytesPerPixel, image->width*bytesPerPixel);
-            offsetSize += (newWidth*bytesPerPixel);
+            memcpy(resizedData + dstOffsetSize, ((unsigned char *)image->data) + ((y + (int)srcRec.y)*image->width + (int)srcRec.x)*bytesPerPixel, (int)srcRec.width*bytesPerPixel);
+            dstOffsetSize += (newWidth*bytesPerPixel);
         }
         
         RL_FREE(image->data);
@@ -2444,11 +2439,16 @@ void ImageDraw(Image *dst, Image src, Rectangle srcRec, Rectangle dstRec, Color 
         srcRec.height = src.height - srcRec.y;
         TRACELOG(LOG_WARNING, "IMAGE: Source rectangle height out of bounds, rescaled height: %i", srcRec.height);
     }
+    
+    // TODO: OPTIMIZATION: Avoid ImageCrop(), not required, it should be enough to know the src/dst rectangles to copy data
 
     Image srcCopy = ImageCopy(src);     // Make a copy of source image to work with it
 
     // Crop source image to desired source rectangle (if required)
-    if ((src.width != (int)srcRec.width) && (src.height != (int)srcRec.height)) ImageCrop(&srcCopy, srcRec);
+    if ((src.width != (int)srcRec.width) && (src.height != (int)srcRec.height)) 
+    {
+        ImageCrop(&srcCopy, srcRec);
+    }
 
     // Scale source image in case destination rec size is different than source rec size
     if (((int)dstRec.width != (int)srcRec.width) || ((int)dstRec.height != (int)srcRec.height))
@@ -2494,7 +2494,6 @@ void ImageDraw(Image *dst, Image src, Rectangle srcRec, Rectangle dstRec, Color 
     Vector4 ftint = ColorNormalize(tint);   // Normalized color tint
 
     // Blit pixels, copy source image into destination
-    // TODO: Maybe out-of-bounds blitting could be considered here instead of so much cropping
     for (int j = (int)dstRec.y; j < (int)(dstRec.y + dstRec.height); j++)
     {
         for (int i = (int)dstRec.x; i < (int)(dstRec.x + dstRec.width); i++)
