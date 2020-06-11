@@ -2493,128 +2493,241 @@ void ImageDraw(Image *dst, Image src, Rectangle srcRec, Rectangle dstRec, Color 
     if ((dst->data == NULL) || (dst->width == 0) || (dst->height == 0) ||
         (src.data == NULL) || (src.width == 0) || (src.height == 0)) return;
 
-    // Security checks to avoid size and rectangle issues (out of bounds)
-    // Check that srcRec is inside src image
-    if (srcRec.x < 0) srcRec.x = 0;
-    if (srcRec.y < 0) srcRec.y = 0;
-
-    if ((srcRec.x + srcRec.width) > src.width)
+    if (dst->mipmaps > 1) TRACELOG(LOG_WARNING, "Image drawing only applied to base mipmap level");
+    if (dst->format >= COMPRESSED_DXT1_RGB) TRACELOG(LOG_WARNING, "Image drawing not supported for compressed formats");
+    else
     {
-        srcRec.width = src.width - srcRec.x;
-        TRACELOG(LOG_WARNING, "IMAGE: Source rectangle width out of bounds, rescaled width: %i", srcRec.width);
-    }
+        // Despite all my efforts for optimization, original implementation is faster...
+        // I left here other implementations for future reference
+#define IMAGEDRAW_METHOD01
+#if defined(IMAGEDRAW_METHOD01)
+        // Security checks to avoid size and rectangle issues (out of bounds)
+        // Check that srcRec is inside src image
+        if (srcRec.x < 0) srcRec.x = 0;
+        if (srcRec.y < 0) srcRec.y = 0;
 
-    if ((srcRec.y + srcRec.height) > src.height)
-    {
-        srcRec.height = src.height - srcRec.y;
-        TRACELOG(LOG_WARNING, "IMAGE: Source rectangle height out of bounds, rescaled height: %i", srcRec.height);
-    }
-    
-    // TODO: OPTIMIZATION: Avoid ImageCrop(), not required, it should be enough to know the src/dst rectangles to copy data
+        if ((srcRec.x + srcRec.width) > src.width)srcRec.width = src.width - srcRec.x;
+        if ((srcRec.y + srcRec.height) > src.height) srcRec.height = src.height - srcRec.y;
+        
+        Image srcMod = ImageCopy(src);     // Make a copy of source image to work with it
 
-    Image srcCopy = ImageCopy(src);     // Make a copy of source image to work with it
-
-    // Crop source image to desired source rectangle (if required)
-    if ((src.width != (int)srcRec.width) && (src.height != (int)srcRec.height)) 
-    {
-        ImageCrop(&srcCopy, srcRec);
-    }
-
-    // Scale source image in case destination rec size is different than source rec size
-    if (((int)dstRec.width != (int)srcRec.width) || ((int)dstRec.height != (int)srcRec.height))
-    {
-        ImageResize(&srcCopy, (int)dstRec.width, (int)dstRec.height);
-    }
-
-    // Check that dstRec is inside dst image
-    // Allow negative position within destination with cropping
-    if (dstRec.x < 0)
-    {
-        ImageCrop(&srcCopy, (Rectangle) { -dstRec.x, 0, dstRec.width + dstRec.x, dstRec.height });
-        dstRec.width = dstRec.width + dstRec.x;
-        dstRec.x = 0;
-    }
-
-    if ((dstRec.x + dstRec.width) > dst->width)
-    {
-        ImageCrop(&srcCopy, (Rectangle) { 0, 0, dst->width - dstRec.x, dstRec.height });
-        dstRec.width = dst->width - dstRec.x;
-    }
-
-    if (dstRec.y < 0)
-    {
-        ImageCrop(&srcCopy, (Rectangle) { 0, -dstRec.y, dstRec.width, dstRec.height + dstRec.y });
-        dstRec.height = dstRec.height + dstRec.y;
-        dstRec.y = 0;
-    }
-
-    if ((dstRec.y + dstRec.height) > dst->height)
-    {
-        ImageCrop(&srcCopy, (Rectangle) { 0, 0, dstRec.width, dst->height - dstRec.y });
-        dstRec.height = dst->height - dstRec.y;
-    }
-
-    // Get image data as Color pixels array to work with it
-    Color *dstPixels = GetImageData(*dst);
-    Color *srcPixels = GetImageData(srcCopy);
-
-    UnloadImage(srcCopy);       // Source copy not required any more
-
-    Vector4 fsrc, fdst, fout;   // Normalized pixel data (ready for operation)
-    Vector4 ftint = ColorNormalize(tint);   // Normalized color tint
-
-    // Blit pixels, copy source image into destination
-    for (int j = (int)dstRec.y; j < (int)(dstRec.y + dstRec.height); j++)
-    {
-        for (int i = (int)dstRec.x; i < (int)(dstRec.x + dstRec.width); i++)
+        // Crop source image to desired source rectangle (if required)
+        if ((src.width != (int)srcRec.width) && (src.height != (int)srcRec.height)) 
         {
-            // Alpha blending (https://en.wikipedia.org/wiki/Alpha_compositing)
-
-            fdst = ColorNormalize(dstPixels[j*(int)dst->width + i]);
-            fsrc = ColorNormalize(srcPixels[(j - (int)dstRec.y)*(int)dstRec.width + (i - (int)dstRec.x)]);
-
-            // Apply color tint to source image
-            fsrc.x *= ftint.x; fsrc.y *= ftint.y; fsrc.z *= ftint.z; fsrc.w *= ftint.w;
-
-            fout.w = fsrc.w + fdst.w*(1.0f - fsrc.w);
-
-            if (fout.w <= 0.0f)
-            {
-                fout.x = 0.0f;
-                fout.y = 0.0f;
-                fout.z = 0.0f;
-            }
-            else
-            {
-                fout.x = (fsrc.x*fsrc.w + fdst.x*fdst.w*(1 - fsrc.w))/fout.w;
-                fout.y = (fsrc.y*fsrc.w + fdst.y*fdst.w*(1 - fsrc.w))/fout.w;
-                fout.z = (fsrc.z*fsrc.w + fdst.z*fdst.w*(1 - fsrc.w))/fout.w;
-            }
-
-            dstPixels[j*(int)dst->width + i] = (Color){ (unsigned char)(fout.x*255.0f),
-                                                        (unsigned char)(fout.y*255.0f),
-                                                        (unsigned char)(fout.z*255.0f),
-                                                        (unsigned char)(fout.w*255.0f) };
-
-            // TODO: Support other blending options
+            ImageCrop(&srcMod, srcRec);
         }
+
+        // Scale source image in case destination rec size is different than source rec size
+        if (((int)dstRec.width != (int)srcRec.width) || ((int)dstRec.height != (int)srcRec.height))
+        {
+            ImageResize(&srcMod, (int)dstRec.width, (int)dstRec.height);
+        }
+
+        // Check that dstRec is inside dst image
+        // Allow negative position within destination with cropping
+        if (dstRec.x < 0)
+        {
+            ImageCrop(&srcMod, (Rectangle) { -dstRec.x, 0, dstRec.width + dstRec.x, dstRec.height });
+            dstRec.width = dstRec.width + dstRec.x;
+            dstRec.x = 0;
+        }
+
+        if ((dstRec.x + dstRec.width) > dst->width)
+        {
+            ImageCrop(&srcMod, (Rectangle) { 0, 0, dst->width - dstRec.x, dstRec.height });
+            dstRec.width = dst->width - dstRec.x;
+        }
+
+        if (dstRec.y < 0)
+        {
+            ImageCrop(&srcMod, (Rectangle) { 0, -dstRec.y, dstRec.width, dstRec.height + dstRec.y });
+            dstRec.height = dstRec.height + dstRec.y;
+            dstRec.y = 0;
+        }
+
+        if ((dstRec.y + dstRec.height) > dst->height)
+        {
+            ImageCrop(&srcMod, (Rectangle) { 0, 0, dstRec.width, dst->height - dstRec.y });
+            dstRec.height = dst->height - dstRec.y;
+        }
+
+        // Get image data as Color pixels array to work with it
+        Color *dstPixels = GetImageData(*dst);
+        Color *srcPixels = GetImageData(srcMod);
+
+        UnloadImage(srcMod);       // Source copy not required any more
+
+        Vector4 fsrc, fdst, fout;   // Normalized pixel data (ready for operation)
+        Vector4 ftint = ColorNormalize(tint);   // Normalized color tint
+
+        // Blit pixels, copy source image into destination
+        for (int j = (int)dstRec.y; j < (int)(dstRec.y + dstRec.height); j++)
+        {
+            for (int i = (int)dstRec.x; i < (int)(dstRec.x + dstRec.width); i++)
+            {
+                // Alpha blending (https://en.wikipedia.org/wiki/Alpha_compositing)
+
+                fdst = ColorNormalize(dstPixels[j*(int)dst->width + i]);
+                fsrc = ColorNormalize(srcPixels[(j - (int)dstRec.y)*(int)dstRec.width + (i - (int)dstRec.x)]);
+
+                // Apply color tint to source image
+                fsrc.x *= ftint.x; fsrc.y *= ftint.y; fsrc.z *= ftint.z; fsrc.w *= ftint.w;
+
+                fout.w = fsrc.w + fdst.w*(1.0f - fsrc.w);
+
+                if (fout.w <= 0.0f)
+                {
+                    fout.x = 0.0f;
+                    fout.y = 0.0f;
+                    fout.z = 0.0f;
+                }
+                else
+                {
+                    fout.x = (fsrc.x*fsrc.w + fdst.x*fdst.w*(1 - fsrc.w))/fout.w;
+                    fout.y = (fsrc.y*fsrc.w + fdst.y*fdst.w*(1 - fsrc.w))/fout.w;
+                    fout.z = (fsrc.z*fsrc.w + fdst.z*fdst.w*(1 - fsrc.w))/fout.w;
+                }
+
+                dstPixels[j*(int)dst->width + i] = (Color){ (unsigned char)(fout.x*255.0f),
+                                                            (unsigned char)(fout.y*255.0f),
+                                                            (unsigned char)(fout.z*255.0f),
+                                                            (unsigned char)(fout.w*255.0f) };
+
+                // TODO: Support other blending options
+            }
+        }
+
+        Image final = {
+            .data = dstPixels,
+            .width = dst->width,
+            .height = dst->height,
+            .format = UNCOMPRESSED_R8G8B8A8,
+            .mipmaps = 1
+        };
+
+        // NOTE: dstPixels are free() inside ImageFormat()
+        ImageFormat(&final, dst->format);
+       
+        UnloadImage(*dst);
+        *dst = final;
+
+        RL_FREE(srcPixels);
+#elif defined(IMAGEDRAW_METHOD02)
+        Image srcMod = ImageCopy(src);                 // Make a copy of source image to work with it
+        ImageFormat(&srcMod, UNCOMPRESSED_R8G8B8A8);   // Convert to R8G8B8A8 to help on blending
+
+        // Source rectangle out-of-bounds security checks
+        if (srcRec.x < 0) { srcRec.width -= srcRec.x; srcRec.x = 0; }
+        if (srcRec.y < 0) { srcRec.height -= srcRec.y; srcRec.y = 0; }
+        if ((srcRec.x + srcRec.width) > src.width) srcRec.width = src.width - srcRec.x;
+        if ((srcRec.y + srcRec.height) > src.height) srcRec.height = src.height - srcRec.y;
+        
+        // Check if source rectangle needs to be resized to destination rectangle
+        // In that case, we make a copy of source and we apply all required transform
+        if ((srcRec.width != fabs(dstRec.width - dstRec.x)) || (srcRec.height != fabs(dstRec.height - dstRec.y)))
+        {
+            ImageCrop(&srcMod, srcRec);        // Crop to source rectangle
+            ImageResize(&srcMod, (int)dstRec.width, (int)dstRec.height);   // Resize to destination rectangle
+            srcRec = (Rectangle){ 0, 0, srcMod.width, srcMod.height };
+        }
+        
+        // Check if destination format is different than source format and no source copy created yet
+        if (dst->format != src.format)
+        {
+            ImageCrop(&srcMod, srcRec);        // Crop to source rectangle
+            srcRec = (Rectangle){ 0, 0, srcMod.width, srcMod.height };
+        }
+
+        // Destination rectangle out-of-bounds security checks
+        if (dstRec.x < 0)
+        {
+            srcRec.x = -dstRec.x;
+            srcRec.width += dstRec.x;
+            dstRec.x = 0;
+        }
+        else if ((dstRec.x + srcMod.width) > dst->width) srcRec.width = dst->width - dstRec.x;
+
+        if (dstRec.y < 0)
+        {
+            srcRec.y = -dstRec.y;
+            srcRec.height += dstRec.y;
+            dstRec.y = 0;
+        }
+        else if ((dstRec.y + srcMod.height) > dst->height) srcRec.height = dst->height - dstRec.y;
+
+        if (dst->width < srcRec.width) srcRec.width = dst->width;
+        if (dst->height < srcRec.height) srcRec.height = dst->height;
+        
+    #if defined(IMAGEDRAW_NO_BLENDING)
+        // This method is very fast but no pixels blending is considered
+        int dataSize = GetPixelDataSize(dst->width, dst->height, dst->format);
+        int bytesPerPixel = dataSize/(dst->width*dst->height);
+        
+        // Image blitting src -> destination, line by line
+        for (int y = 0; y < (int)srcRec.height; y++)
+        {
+            memcpy((unsigned char *)dst->data + ((int)dstRec.y*dst->width + (int)dstRec.x + y*dst->width)*bytesPerPixel, 
+                   (unsigned char *)srcMod.data + ((y + (int)srcRec.y)*srcMod.width + (int)srcRec.x)*bytesPerPixel,
+                   (int)srcRec.width*bytesPerPixel);
+        }
+    #else
+        // This method is very slow considering alpha blending...
+    
+        // Convert destination to R8G8B8A8 for blending calculation
+        int dstFormat = dst->format;
+        ImageFormat(dst, UNCOMPRESSED_R8G8B8A8);    // Force 4 bytes per pixel with alpha for blending
+        
+        Vector4 fsrc, fdst, fout;                   // Normalized pixel data (ready for operation)
+        Vector4 ftint = ColorNormalize(tint);       // Normalized color tint
+        unsigned char srcAlpha = 0;
+        
+        for (int y = 0; y < (int)srcRec.height; y++)
+        {
+            for (int x = 0; x < (int)srcRec.width; x++)
+            {
+                srcAlpha = ((Color *)srcMod.data)[((y + (int)srcRec.y)*srcMod.width + (int)srcRec.x) + x].a;
+                
+                if (srcAlpha == 255)
+                {
+                    ((Color *)dst->data)[((int)dstRec.y*dst->width + (int)dstRec.x) + y*(dst->width) + x] = ((Color *)srcMod.data)[((y + (int)srcRec.y)*srcMod.width + (int)srcRec.x) + x];
+                }
+                else if (srcAlpha > 0)
+                {
+                    // Alpha blending (https://en.wikipedia.org/wiki/Alpha_compositing)
+
+                    fdst = ColorNormalize(((Color *)dst->data)[((int)dstRec.y*dst->width + (int)dstRec.x) + y*(dst->width) + x]);
+                    fsrc = ColorNormalize(((Color *)srcMod.data)[((y + (int)srcRec.y)*srcMod.width + (int)srcRec.x) + x]);
+
+                    // Apply color tint to source image
+                    fsrc.x *= ftint.x; fsrc.y *= ftint.y; fsrc.z *= ftint.z; fsrc.w *= ftint.w;
+
+                    fout.w = fsrc.w + fdst.w*(1.0f - fsrc.w);
+
+                    if (fout.w <= 0.0f)
+                    {
+                        fout.x = 0.0f;
+                        fout.y = 0.0f;
+                        fout.z = 0.0f;
+                    }
+                    else
+                    {
+                        fout.x = (fsrc.x*fsrc.w + fdst.x*fdst.w*(1 - fsrc.w))/fout.w;
+                        fout.y = (fsrc.y*fsrc.w + fdst.y*fdst.w*(1 - fsrc.w))/fout.w;
+                        fout.z = (fsrc.z*fsrc.w + fdst.z*fdst.w*(1 - fsrc.w))/fout.w;
+                    }
+
+                    ((Color *)dst->data)[((int)dstRec.y*dst->width + (int)dstRec.x) + y*(dst->width) + x] = (Color){ (unsigned char)(fout.x*255.0f), (unsigned char)(fout.y*255.0f), (unsigned char)(fout.z*255.0f), (unsigned char)(fout.w*255.0f) };
+
+                    // TODO: Support other blending options
+                }
+            }
+        }
+        
+        ImageFormat(dst, dstFormat);    // Restore original image format after drawing with blending
+        UnloadImage(srcMod);            // Unload source modified image
+    #endif
+#endif
     }
-
-    Image final = {
-        .data = dstPixels,
-        .width = dst->width,
-        .height = dst->height,
-        .format = UNCOMPRESSED_R8G8B8A8,
-        .mipmaps = 1
-    };
-
-    // NOTE: dstPixels are free() inside ImageFormat()
-    ImageFormat(&final, dst->format);
-   
-    UnloadImage(*dst);
-    *dst = final;
-
-    RL_FREE(srcPixels);
 }
 
 // Draw text (default font) within an image (destination)
