@@ -1174,7 +1174,7 @@ void SetClipboardText(const char *text)
 }
 
 // Get current operating system used
-void GetOS()
+const char *GetOS(void)
 {
     #ifdef _WIN32 || _WIN64
         return "Windows";
