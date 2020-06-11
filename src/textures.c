@@ -2485,6 +2485,159 @@ void ImageDrawRectangleLines(Image *dst, Rectangle rec, int thick, Color color)
     ImageDrawRectangle(dst, (int)rec.x, (int)(rec.y + rec.height - thick), (int)rec.width, thick, color);
 }
 
+Color GetPixelColor(void *pixel, int format)
+{
+    Color col = { 0 };
+    
+    switch (format)
+    {
+        case UNCOMPRESSED_GRAYSCALE: col = (Color){ ((unsigned char *)pixel)[0], ((unsigned char *)pixel)[0], ((unsigned char *)pixel)[0], 255 }; break;
+        case UNCOMPRESSED_GRAY_ALPHA: col = (Color){ ((unsigned char *)pixel)[0], ((unsigned char *)pixel)[0], ((unsigned char *)pixel)[0], ((unsigned char *)pixel)[1] }; break;
+        case UNCOMPRESSED_R5G6B5:
+        {
+            col.r = (unsigned char)(((((unsigned short *)pixel)[0] >> 11)*31)/255);
+            col.g = (unsigned char)((((((unsigned short *)pixel)[0] >> 5) & 0b0000000000111111)*63)/255);
+            col.b = (unsigned char)(((((unsigned short *)pixel)[0] & 0b0000000000011111)*31)/255);
+            col.a = 255;
+            
+        } break;
+        case UNCOMPRESSED_R5G5B5A1:
+        {
+            col.r = (unsigned char)(((((unsigned short *)pixel)[0] >> 11)*31)/255);
+            col.g = (unsigned char)((((((unsigned short *)pixel)[0] >> 6) & 0b0000000000011111)*31)/255);
+            col.b = (unsigned char)(((((unsigned short *)pixel)[0] & 0b0000000000011111)*31)/255);
+            col.a = (((unsigned short *)pixel)[0] & 0b0000000000000001)? 255 : 0;
+
+        } break;
+        case UNCOMPRESSED_R4G4B4A4:
+        {
+            col.r = (unsigned char)(((((unsigned short *)pixel)[0] >> 12)*15)/255);
+            col.g = (unsigned char)((((((unsigned short *)pixel)[0] >> 8) & 0b0000000000001111)*15)/255);
+            col.b = (unsigned char)((((((unsigned short *)pixel)[0] >> 4) & 0b0000000000001111)*15)/255);
+            col.a = (unsigned char)(((((unsigned short *)pixel)[0] & 0b0000000000001111)*15)/255);
+            
+        } break;
+        case UNCOMPRESSED_R8G8B8A8: col = (Color){ ((unsigned char *)pixel)[0], ((unsigned char *)pixel)[1], ((unsigned char *)pixel)[2], ((unsigned char *)pixel)[3] }; break;
+        case UNCOMPRESSED_R8G8B8: col = (Color){ ((unsigned char *)pixel)[0], ((unsigned char *)pixel)[1], ((unsigned char *)pixel)[2], 255 }; break;
+        //case UNCOMPRESSED_R32: break;
+        //case UNCOMPRESSED_R32G32B32: break;
+        //case UNCOMPRESSED_R32G32B32A32: break;
+        default: break;
+    }
+    
+    return col;
+}
+
+Color ColorAlphaBlend(Color dst, Color src, Color tint)
+{
+    Vector4 fdst = ColorNormalize(dst);
+    Vector4 fsrc = ColorNormalize(src);
+    Vector4 fout = { 0.0f };
+    Vector4 ftint = ColorNormalize(tint);
+
+    // Apply color tint to source image
+    fsrc.x *= ftint.x; fsrc.y *= ftint.y; fsrc.z *= ftint.z; fsrc.w *= ftint.w;
+
+    fout.w = fsrc.w + fdst.w*(1.0f - fsrc.w);
+
+    if (fout.w <= 0.0f)
+    {
+        fout.x = 0.0f;
+        fout.y = 0.0f;
+        fout.z = 0.0f;
+    }
+    else
+    {
+        fout.x = (fsrc.x*fsrc.w + fdst.x*fdst.w*(1 - fsrc.w))/fout.w;
+        fout.y = (fsrc.y*fsrc.w + fdst.y*fdst.w*(1 - fsrc.w))/fout.w;
+        fout.z = (fsrc.z*fsrc.w + fdst.z*fdst.w*(1 - fsrc.w))/fout.w;
+    }
+
+    Color out = { (unsigned char)(fout.x*255.0f), (unsigned char)(fout.y*255.0f), (unsigned char)(fout.z*255.0f), (unsigned char)(fout.w*255.0f) };
+    
+    return out;
+}
+
+void ColorWrite(unsigned char *dstPtr, Color color, int format)
+{
+    switch (format)
+    {
+        case UNCOMPRESSED_GRAYSCALE: 
+        {
+            // NOTE: Calculate grayscale equivalent color
+            Vector3 coln = { (float)color.r/255.0f, (float)color.g/255.0f, (float)color.b/255.0f };
+            unsigned char gray = (unsigned char)((coln.x*0.299f + coln.y*0.587f + coln.z*0.114f)*255.0f);
+            
+            dstPtr[0] = gray;
+
+        } break;
+        case UNCOMPRESSED_GRAY_ALPHA: 
+        {
+            // NOTE: Calculate grayscale equivalent color
+            Vector3 coln = { (float)color.r/255.0f, (float)color.g/255.0f, (float)color.b/255.0f };
+            unsigned char gray = (unsigned char)((coln.x*0.299f + coln.y*0.587f + coln.z*0.114f)*255.0f);
+            
+            dstPtr[0] = gray;
+            dstPtr[1] = color.a;
+
+        } break;
+        case UNCOMPRESSED_R5G6B5:
+        {
+            // NOTE: Calculate R5G6B5 equivalent color
+            Vector3 coln = { (float)color.r/255.0f, (float)color.g/255.0f, (float)color.b/255.0f };
+
+            unsigned char r = (unsigned char)(round(coln.x*31.0f));
+            unsigned char g = (unsigned char)(round(coln.y*63.0f));
+            unsigned char b = (unsigned char)(round(coln.z*31.0f));
+
+            ((unsigned short *)dstPtr)[0] = (unsigned short)r << 11 | (unsigned short)g << 5 | (unsigned short)b;
+            
+        } break;
+        case UNCOMPRESSED_R5G5B5A1:
+        {
+            // NOTE: Calculate R5G5B5A1 equivalent color
+            Vector4 coln = { (float)color.r/255.0f, (float)color.g/255.0f, (float)color.b/255.0f, (float)color.a/255.0f };
+
+            unsigned char r = (unsigned char)(round(coln.x*31.0f));
+            unsigned char g = (unsigned char)(round(coln.y*31.0f));
+            unsigned char b = (unsigned char)(round(coln.z*31.0f));
+            unsigned char a = (coln.w > ((float)R5G5B5A1_ALPHA_THRESHOLD/255.0f))? 1 : 0;;
+
+            ((unsigned short *)dstPtr)[0] = (unsigned short)r << 11 | (unsigned short)g << 6 | (unsigned short)b << 1 | (unsigned short)a;
+
+        } break;
+        case UNCOMPRESSED_R4G4B4A4:
+        {
+            // NOTE: Calculate R5G5B5A1 equivalent color
+            Vector4 coln = { (float)color.r/255.0f, (float)color.g/255.0f, (float)color.b/255.0f, (float)color.a/255.0f };
+
+            unsigned char r = (unsigned char)(round(coln.x*15.0f));
+            unsigned char g = (unsigned char)(round(coln.y*15.0f));
+            unsigned char b = (unsigned char)(round(coln.z*15.0f));
+            unsigned char a = (unsigned char)(round(coln.w*15.0f));
+
+            ((unsigned short *)dstPtr)[0] = (unsigned short)r << 12 | (unsigned short)g << 8 | (unsigned short)b << 4 | (unsigned short)a;
+            
+        } break;
+        case UNCOMPRESSED_R8G8B8:
+        {
+            dstPtr[0] = color.r;
+            dstPtr[1] = color.g;
+            dstPtr[2] = color.b;
+            
+        } break;
+        case UNCOMPRESSED_R8G8B8A8:
+        {
+            dstPtr[0] = color.r;
+            dstPtr[1] = color.g;
+            dstPtr[2] = color.b;
+            dstPtr[3] = color.a;
+            
+        } break;
+        default: break;
+    }
+}
+
 // Draw an image (source) within an image (destination)
 // NOTE: Color tint is applied to source image
 void ImageDraw(Image *dst, Image src, Rectangle srcRec, Rectangle dstRec, Color tint)
@@ -2499,7 +2652,7 @@ void ImageDraw(Image *dst, Image src, Rectangle srcRec, Rectangle dstRec, Color 
     {
         // Despite all my efforts for optimization, original implementation is faster...
         // I left here other implementations for future reference
-#define IMAGEDRAW_METHOD01
+#define IMAGEDRAW_METHOD02
 #if defined(IMAGEDRAW_METHOD01)
         // Security checks to avoid size and rectangle issues (out of bounds)
         // Check that srcRec is inside src image
@@ -2612,7 +2765,8 @@ void ImageDraw(Image *dst, Image src, Rectangle srcRec, Rectangle dstRec, Color 
         *dst = final;
 
         RL_FREE(srcPixels);
-#elif defined(IMAGEDRAW_METHOD02)
+#endif
+#if defined(IMAGEDRAW_METHOD02)
         Image srcMod = ImageCopy(src);                 // Make a copy of source image to work with it
         ImageFormat(&srcMod, UNCOMPRESSED_R8G8B8A8);   // Convert to R8G8B8A8 to help on blending
 
@@ -2658,6 +2812,7 @@ void ImageDraw(Image *dst, Image src, Rectangle srcRec, Rectangle dstRec, Color 
         if (dst->width < srcRec.width) srcRec.width = dst->width;
         if (dst->height < srcRec.height) srcRec.height = dst->height;
         
+    #define IMAGEDRAW_NO_IMAGEFORMAT
     #if defined(IMAGEDRAW_NO_BLENDING)
         // This method is very fast but no pixels blending is considered
         int dataSize = GetPixelDataSize(dst->width, dst->height, dst->format);
@@ -2670,9 +2825,11 @@ void ImageDraw(Image *dst, Image src, Rectangle srcRec, Rectangle dstRec, Color 
                    (unsigned char *)srcMod.data + ((y + (int)srcRec.y)*srcMod.width + (int)srcRec.x)*bytesPerPixel,
                    (int)srcRec.width*bytesPerPixel);
         }
-    #else
-        // This method is very slow considering alpha blending...
-    
+    #endif
+    #if defined(IMAGEDRAW_IMAGEFORMAT)
+        // This method is slower than expected, it seems ImageFormat() to RGBA and back to original format,
+        // combined with alpha blending makes it quite slow
+
         // Convert destination to R8G8B8A8 for blending calculation
         int dstFormat = dst->format;
         ImageFormat(dst, UNCOMPRESSED_R8G8B8A8);    // Force 4 bytes per pixel with alpha for blending
@@ -2680,7 +2837,7 @@ void ImageDraw(Image *dst, Image src, Rectangle srcRec, Rectangle dstRec, Color 
         Vector4 fsrc, fdst, fout;                   // Normalized pixel data (ready for operation)
         Vector4 ftint = ColorNormalize(tint);       // Normalized color tint
         unsigned char srcAlpha = 0;
-        
+
         for (int y = 0; y < (int)srcRec.height; y++)
         {
             for (int x = 0; x < (int)srcRec.width; x++)
@@ -2724,6 +2881,36 @@ void ImageDraw(Image *dst, Image src, Rectangle srcRec, Rectangle dstRec, Color 
         }
         
         ImageFormat(dst, dstFormat);    // Restore original image format after drawing with blending
+        UnloadImage(srcMod);            // Unload source modified image
+    #endif
+    #if defined(IMAGEDRAW_NO_IMAGEFORMAT)
+        // This new method is quite fast, it seems it gets the best results! 
+        // It [formats_src -> blend -> format_dst] per pixel! and it can be further optimized!
+        // Some ideas:
+        //    - Optimize ColorAlphaBlend() to avoid processing (alpha = 0) and (alpha = 1)
+        //    - Optimize ColorAlphaBlend() for faster operations (maybe avoiding divs?)
+        //    - GetPixelColor(): Return Vector4 instead of Color, easier for ColorAlphaBlend()
+        //    - Consider special src/dst format cases when there is no alpha -> [formats_src -> format_dst]
+        Color psrc, pdst, blend;
+        
+        int dataSizeDst = GetPixelDataSize(dst->width, dst->height, dst->format);
+        int bytesPerPixelDst = dataSizeDst/(dst->width*dst->height);
+        
+        int dataSizeSrc = GetPixelDataSize(srcMod.width, srcMod.height, srcMod.format);
+        int bytesPerPixelSrc = dataSizeSrc/(srcMod.width*srcMod.height);
+    
+        for (int y = 0; y < (int)srcRec.height; y++)
+        {
+            for (int x = 0; x < (int)srcRec.width; x++)
+            {
+                psrc = GetPixelColor((unsigned char *)srcMod.data + (((y + (int)srcRec.y)*srcMod.width + (int)srcRec.x) + x)*bytesPerPixelSrc, srcMod.format);
+                pdst = GetPixelColor((unsigned char *)dst->data + (((int)dstRec.y*dst->width + (int)dstRec.x) + y*(dst->width) + x)*bytesPerPixelDst, dst->format);
+                blend = ColorAlphaBlend(pdst, psrc, tint);
+                
+                ColorWrite((unsigned char *)dst->data + (((int)dstRec.y*dst->width + (int)dstRec.x) + y*(dst->width) + x)*bytesPerPixelDst, blend, dst->format);
+            }
+        }
+
         UnloadImage(srcMod);            // Unload source modified image
     #endif
 #endif
