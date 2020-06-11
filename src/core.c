@@ -1190,10 +1190,20 @@ const char *GetOS(void)
         return "iOS";  
     #elif __sun
         return "Solaris";
+    #elif __FreeBSD__
+        return "FreeBSD";
+    #elif __OpenBSD__
+        return "OpenBSD";
+    #elif __NetBSD__
+        return "NetBSD";
+    #elif __DragonFly__
+        return "DragonFlyBSD";
     #elif BSD
         return "BSD";
+    #elif __hpux
+        return "HPUX";
     #else
-        return NULL:
+        return "";
     #endif
 }
 
