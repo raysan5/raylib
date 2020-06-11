@@ -1192,6 +1192,8 @@ const char *GetOS(void)
         return "Solaris";
     #elif BSD
         return "BSD";
+    #else
+        return NULL:
     #endif
 }
 

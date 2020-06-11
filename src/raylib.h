@@ -898,7 +898,7 @@ RLAPI Vector2 GetWindowPosition(void);                            // Get window 
 RLAPI const char *GetMonitorName(int monitor);                    // Get the human-readable, UTF-8 encoded name of the primary monitor
 RLAPI const char *GetClipboardText(void);                         // Get clipboard text content
 RLAPI void SetClipboardText(const char *text);                    // Set clipboard text content
-RLAPI const char *GetOS(void);                                    // Get current operating system
+RLAPI const char *GetOS(void);                                          // Get current operating system
 
 // Cursor-related functions
 RLAPI void ShowCursor(void);                                      // Shows cursor
