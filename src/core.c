@@ -1176,22 +1176,22 @@ void SetClipboardText(const char *text)
 // Get current operating system used
 void GetOS()
 {
-    #ifdef _WIN16 || _WIN32 || _WIN64
-        return "Windows"
+    #ifdef _WIN32 || _WIN64
+        return "Windows";
     #elif __MACH__ || TARGET_OS_MAC
-        return "OSX"
+        return "OSX";
     #elif __linux__
-        return "Linux"
+        return "Linux";
     #elif __unix__
-        return "Unix"   
+        return "Unix";   
     #elif __ANDROID__
-        return "Android"
+        return "Android";
     #elif TARGET_OS_IPHONE || TARGET_IPHONE_SIMULATOR || TARGET_OS_EMBEDDED
-        return "iOS"  
+        return "iOS";  
     #elif __sun
-        return "Solaris"
+        return "Solaris";
     #elif BSD
-        return "BSD"
+        return "BSD";
     #endif
 }
 
