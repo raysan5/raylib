@@ -1210,9 +1210,9 @@ const char *GetOS(void)
 void Execute(const char *command)
 {
     #ifdef __ANDROID__ || TARGET_OS_IPHONE || TARGET_IPHONE_SIMULATOR || TARGET_OS_EMBEDDED
-        return NULL;
+        return -1;
     #else
-        system(command);
+        return system(command);
     #endif
 }
 
