@@ -1207,6 +1207,15 @@ const char *GetOS(void)
     #endif
 }
 
+void Execute(const char *command)
+{
+    #ifdef __ANDROID__ || TARGET_OS_IPHONE || TARGET_IPHONE_SIMULATOR || TARGET_OS_EMBEDDED
+        return NULL;
+    #else
+        system(command);
+    #endif
+}
+
 // Show mouse cursor
 void ShowCursor(void)
 {

@@ -899,6 +899,7 @@ RLAPI const char *GetMonitorName(int monitor);                    // Get the hum
 RLAPI const char *GetClipboardText(void);                         // Get clipboard text content
 RLAPI void SetClipboardText(const char *text);                    // Set clipboard text content
 RLAPI const char *GetOS(void);                                    // Get current operating system
+RLAPI void Execute(const char *command);                          // Executes a command from batch or shell               
 
 // Cursor-related functions
 RLAPI void ShowCursor(void);                                      // Shows cursor
