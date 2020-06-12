@@ -127,8 +127,14 @@
 
 // Type required before windows.h inclusion
 typedef struct tagMSG *LPMSG;
-
+ 
+#define CloseWindow CloseWindowDontUse
+#define ShowCursor ShowCursorDontUse
+#define UnhideWindow UnHideWindowDontUse
 #include <windows.h>
+#undef UnhideWindow
+#undef ShowCursor
+#undef CloseWindow
 
 // Type required by some unused function...
 typedef struct tagBITMAPINFOHEADER {
