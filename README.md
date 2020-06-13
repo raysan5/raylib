@@ -155,6 +155,6 @@ if (GetOS() == "Windows") {
 ```c
 // This lets command prompt or the shell to execute this command
 // This command creates a folder with name "new_folder"
+// NOTES: This function does not work on Android and iOS,So it returns nothing on Android and iOS
 Execute("mkdir new_folder");
 ```
-
