@@ -146,7 +146,9 @@ Functions added usage
 ------
 - `RLAPI const char *GetOS(void);`
 ```c
-if (GetOS() == "Windows") // Do something...
+if (GetOS() == "Windows") {
+    // Do something...
+}
 ```
 
 - `RLAPI void Execute(const char *command);`
