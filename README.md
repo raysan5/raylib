@@ -119,3 +119,40 @@ license
 -------
 
 raylib is licensed under an unmodified zlib/libpng license, which is an OSI-certified, BSD-like license that allows static linking with closed source software. Check [LICENSE](LICENSE) for further details.
+
+About this fork
+-------
+This fork adds some features,Like:
+- More 120 colors to raylib,To become 145 colors
+- More functions
+
+Functions added in this fork to raylib API
+-------
+- `RLAPI const char *GetOS(void);`, To get OS,Returns one of the following as string:
+  - `Windows`
+  - `OSX`
+  - `Linux`
+  - `Unix`
+  - `Android`
+  - `iOS`
+  - `FreeBSD`
+  - `OpenBSD`
+  - `NetBSD`
+  - `DragonFlyBSD`
+  - `Solaris`
+- `RLAPI void Execute(const char *command);`, To execute shell/batch command
+
+Functions added usage
+------
+- `RLAPI const char *GetOS(void);`
+```c
+if (GetOS() == "Windows") // Do something...
+```
+
+- `RLAPI void Execute(const char *command);`
+```c
+// This lets command prompt or the shell to execute this command
+// This command creates a folder with name "new_folder"
+Execute("mkdir new_folder");
+```
+
