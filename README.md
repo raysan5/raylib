@@ -123,7 +123,7 @@ raylib is licensed under an unmodified zlib/libpng license, which is an OSI-cert
 About this fork
 -------
 This fork adds some features,Like:
-- More 120 colors to raylib to become 145 colors,See [here](https://github.com/Rabios/raylib/blob/master/src/raylib.h#L156) for the new 120 colors added list
+- More 120 colors to raylib to become 145 colors,See [here](https://github.com/Rabios/raylib/blob/master/src/raylib.h#L155) for the new 120 colors added list
 - More functions
 
 Functions added in this fork to raylib API
