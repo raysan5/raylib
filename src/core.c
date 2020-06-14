@@ -541,6 +541,45 @@ static void *GamepadThread(void *arg);                  // Mouse reading thread
 // Module Functions Definition - Window and OpenGL Context Functions
 //----------------------------------------------------------------------------------
 
+// Function got from Stack Overflow
+// https://stackoverflow.com/questions/2736753/how-to-remove-extension-from-file-name
+const char *remove_extension(char* myStr, char extSep, char pathSep) {
+    char *retStr, *lastExt, *lastPath;
+
+    // Error checks and allocate string.
+
+    if (myStr == NULL) return NULL;
+    if ((retStr = malloc (strlen (myStr) + 1)) == NULL) return NULL;
+
+    // Make a copy and find the relevant characters.
+
+    strcpy (retStr, myStr);
+    lastExt = strrchr (retStr, extSep);
+    lastPath = (pathSep == 0) ? NULL : strrchr (retStr, pathSep);
+
+    // If it has an extension separator.
+
+    if (lastExt != NULL) {
+        // and it's to the right of the path separator.
+
+        if (lastPath != NULL) {
+            if (lastPath < lastExt) {
+                // then remove it.
+
+                *lastExt = '\0';
+            }
+        } else {
+            // Has extension separator with no path separator.
+
+            *lastExt = '\0';
+        }
+    }
+
+    // Return the modified string.
+
+    return retStr;
+}
+
 #if defined(PLATFORM_ANDROID)
 // To allow easier porting to android, we allow the user to define a
 // main function which we call from android_main, defined by ourselves
@@ -2205,6 +2244,21 @@ long GetFileModTime(const char *fileName)
     }
 
     return 0;
+}
+
+// Downloads a file from source (URL) to directory
+// NOTES: It uses cURL
+void DownloadFile(const char *src,const char *dir)
+{
+    #ifdef __ANDROID__ || TARGET_OS_IPHONE || TARGET_OS_EMBEDDED || TARGET_IPHONE_SIMULATOR
+        return -1;
+    #else
+        if (system("curl --version") == 0) {
+            if (!system(FormatText("cd %s",remove_extension(dir,".","/"))) == 0) system(FormatText("mkdir %s",remove_extension(dir,".","/")));
+            system(FormatText("curl -o %s/%s %s",dir,GetFileName(src),src));
+        }
+        else return -1;
+    #endif
 }
 
 // Compress data (DEFLATE algorythm)
