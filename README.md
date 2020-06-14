@@ -128,7 +128,7 @@ This fork adds some features,Like:
 
 Functions added in this fork to raylib API
 -------
-- `RLAPI const char *GetOS(void);`, To get OS,Returns one of the following as string:
+- `RLAPI const char *GetOS(void);` To get OS,Returns one of the following as string:
   - `Windows`
   - `OSX`
   - `Linux`
@@ -140,7 +140,7 @@ Functions added in this fork to raylib API
   - `NetBSD`
   - `DragonFlyBSD`
   - `Solaris`
-- `RLAPI void Execute(const char *command);`, To execute shell/batch command
+- `RLAPI void Execute(const char *command);` To execute shell/batch command
 
 Functions added usage
 ------
