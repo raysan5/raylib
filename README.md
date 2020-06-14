@@ -141,6 +141,7 @@ Functions added in this fork to raylib API
   - `DragonFlyBSD`
   - `Solaris`
 - `RLAPI void Execute(const char *command);` To execute shell/batch command
+- `RLAPI void DownloadFile(const char *src,const char *dir);` To download files from internet and store it in directory
 
 Functions added usage
 ------
@@ -157,4 +158,11 @@ if (GetOS() == "Windows") {
 // This command creates a folder with name "new_folder"
 // NOTES: This function does not work on Android and iOS,So it returns nothing on Android and iOS
 Execute("mkdir new_folder");
+```
+
+- `RLAPI void DownloadFile(const char *src,const char *src);`
+```c
+// NOTES: This function does not work on Android and iOS,So it returns nothing on Android and iOS
+// This downloads file core_basic_window.c and store it in folder named "downloaded",If not found it will be created
+DownloadFile("https://github.com/Rabios/raylib/raw/master/examples/core/core_basic_window.c","downloaded");
 ```
