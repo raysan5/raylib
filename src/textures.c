@@ -2485,159 +2485,6 @@ void ImageDrawRectangleLines(Image *dst, Rectangle rec, int thick, Color color)
     ImageDrawRectangle(dst, (int)rec.x, (int)(rec.y + rec.height - thick), (int)rec.width, thick, color);
 }
 
-Color GetPixelColor(void *pixel, int format)
-{
-    Color col = { 0 };
-    
-    switch (format)
-    {
-        case UNCOMPRESSED_GRAYSCALE: col = (Color){ ((unsigned char *)pixel)[0], ((unsigned char *)pixel)[0], ((unsigned char *)pixel)[0], 255 }; break;
-        case UNCOMPRESSED_GRAY_ALPHA: col = (Color){ ((unsigned char *)pixel)[0], ((unsigned char *)pixel)[0], ((unsigned char *)pixel)[0], ((unsigned char *)pixel)[1] }; break;
-        case UNCOMPRESSED_R5G6B5:
-        {
-            col.r = (unsigned char)(((((unsigned short *)pixel)[0] >> 11)*31)/255);
-            col.g = (unsigned char)((((((unsigned short *)pixel)[0] >> 5) & 0b0000000000111111)*63)/255);
-            col.b = (unsigned char)(((((unsigned short *)pixel)[0] & 0b0000000000011111)*31)/255);
-            col.a = 255;
-            
-        } break;
-        case UNCOMPRESSED_R5G5B5A1:
-        {
-            col.r = (unsigned char)(((((unsigned short *)pixel)[0] >> 11)*31)/255);
-            col.g = (unsigned char)((((((unsigned short *)pixel)[0] >> 6) & 0b0000000000011111)*31)/255);
-            col.b = (unsigned char)(((((unsigned short *)pixel)[0] & 0b0000000000011111)*31)/255);
-            col.a = (((unsigned short *)pixel)[0] & 0b0000000000000001)? 255 : 0;
-
-        } break;
-        case UNCOMPRESSED_R4G4B4A4:
-        {
-            col.r = (unsigned char)(((((unsigned short *)pixel)[0] >> 12)*15)/255);
-            col.g = (unsigned char)((((((unsigned short *)pixel)[0] >> 8) & 0b0000000000001111)*15)/255);
-            col.b = (unsigned char)((((((unsigned short *)pixel)[0] >> 4) & 0b0000000000001111)*15)/255);
-            col.a = (unsigned char)(((((unsigned short *)pixel)[0] & 0b0000000000001111)*15)/255);
-            
-        } break;
-        case UNCOMPRESSED_R8G8B8A8: col = (Color){ ((unsigned char *)pixel)[0], ((unsigned char *)pixel)[1], ((unsigned char *)pixel)[2], ((unsigned char *)pixel)[3] }; break;
-        case UNCOMPRESSED_R8G8B8: col = (Color){ ((unsigned char *)pixel)[0], ((unsigned char *)pixel)[1], ((unsigned char *)pixel)[2], 255 }; break;
-        //case UNCOMPRESSED_R32: break;
-        //case UNCOMPRESSED_R32G32B32: break;
-        //case UNCOMPRESSED_R32G32B32A32: break;
-        default: break;
-    }
-    
-    return col;
-}
-
-Color ColorAlphaBlend(Color dst, Color src, Color tint)
-{
-    Vector4 fdst = ColorNormalize(dst);
-    Vector4 fsrc = ColorNormalize(src);
-    Vector4 fout = { 0.0f };
-    Vector4 ftint = ColorNormalize(tint);
-
-    // Apply color tint to source image
-    fsrc.x *= ftint.x; fsrc.y *= ftint.y; fsrc.z *= ftint.z; fsrc.w *= ftint.w;
-
-    fout.w = fsrc.w + fdst.w*(1.0f - fsrc.w);
-
-    if (fout.w <= 0.0f)
-    {
-        fout.x = 0.0f;
-        fout.y = 0.0f;
-        fout.z = 0.0f;
-    }
-    else
-    {
-        fout.x = (fsrc.x*fsrc.w + fdst.x*fdst.w*(1 - fsrc.w))/fout.w;
-        fout.y = (fsrc.y*fsrc.w + fdst.y*fdst.w*(1 - fsrc.w))/fout.w;
-        fout.z = (fsrc.z*fsrc.w + fdst.z*fdst.w*(1 - fsrc.w))/fout.w;
-    }
-
-    Color out = { (unsigned char)(fout.x*255.0f), (unsigned char)(fout.y*255.0f), (unsigned char)(fout.z*255.0f), (unsigned char)(fout.w*255.0f) };
-    
-    return out;
-}
-
-void ColorWrite(unsigned char *dstPtr, Color color, int format)
-{
-    switch (format)
-    {
-        case UNCOMPRESSED_GRAYSCALE: 
-        {
-            // NOTE: Calculate grayscale equivalent color
-            Vector3 coln = { (float)color.r/255.0f, (float)color.g/255.0f, (float)color.b/255.0f };
-            unsigned char gray = (unsigned char)((coln.x*0.299f + coln.y*0.587f + coln.z*0.114f)*255.0f);
-            
-            dstPtr[0] = gray;
-
-        } break;
-        case UNCOMPRESSED_GRAY_ALPHA: 
-        {
-            // NOTE: Calculate grayscale equivalent color
-            Vector3 coln = { (float)color.r/255.0f, (float)color.g/255.0f, (float)color.b/255.0f };
-            unsigned char gray = (unsigned char)((coln.x*0.299f + coln.y*0.587f + coln.z*0.114f)*255.0f);
-            
-            dstPtr[0] = gray;
-            dstPtr[1] = color.a;
-
-        } break;
-        case UNCOMPRESSED_R5G6B5:
-        {
-            // NOTE: Calculate R5G6B5 equivalent color
-            Vector3 coln = { (float)color.r/255.0f, (float)color.g/255.0f, (float)color.b/255.0f };
-
-            unsigned char r = (unsigned char)(round(coln.x*31.0f));
-            unsigned char g = (unsigned char)(round(coln.y*63.0f));
-            unsigned char b = (unsigned char)(round(coln.z*31.0f));
-
-            ((unsigned short *)dstPtr)[0] = (unsigned short)r << 11 | (unsigned short)g << 5 | (unsigned short)b;
-            
-        } break;
-        case UNCOMPRESSED_R5G5B5A1:
-        {
-            // NOTE: Calculate R5G5B5A1 equivalent color
-            Vector4 coln = { (float)color.r/255.0f, (float)color.g/255.0f, (float)color.b/255.0f, (float)color.a/255.0f };
-
-            unsigned char r = (unsigned char)(round(coln.x*31.0f));
-            unsigned char g = (unsigned char)(round(coln.y*31.0f));
-            unsigned char b = (unsigned char)(round(coln.z*31.0f));
-            unsigned char a = (coln.w > ((float)R5G5B5A1_ALPHA_THRESHOLD/255.0f))? 1 : 0;;
-
-            ((unsigned short *)dstPtr)[0] = (unsigned short)r << 11 | (unsigned short)g << 6 | (unsigned short)b << 1 | (unsigned short)a;
-
-        } break;
-        case UNCOMPRESSED_R4G4B4A4:
-        {
-            // NOTE: Calculate R5G5B5A1 equivalent color
-            Vector4 coln = { (float)color.r/255.0f, (float)color.g/255.0f, (float)color.b/255.0f, (float)color.a/255.0f };
-
-            unsigned char r = (unsigned char)(round(coln.x*15.0f));
-            unsigned char g = (unsigned char)(round(coln.y*15.0f));
-            unsigned char b = (unsigned char)(round(coln.z*15.0f));
-            unsigned char a = (unsigned char)(round(coln.w*15.0f));
-
-            ((unsigned short *)dstPtr)[0] = (unsigned short)r << 12 | (unsigned short)g << 8 | (unsigned short)b << 4 | (unsigned short)a;
-            
-        } break;
-        case UNCOMPRESSED_R8G8B8:
-        {
-            dstPtr[0] = color.r;
-            dstPtr[1] = color.g;
-            dstPtr[2] = color.b;
-            
-        } break;
-        case UNCOMPRESSED_R8G8B8A8:
-        {
-            dstPtr[0] = color.r;
-            dstPtr[1] = color.g;
-            dstPtr[2] = color.b;
-            dstPtr[3] = color.a;
-            
-        } break;
-        default: break;
-    }
-}
-
 // Draw an image (source) within an image (destination)
 // NOTE: Color tint is applied to source image
 void ImageDraw(Image *dst, Image src, Rectangle srcRec, Rectangle dstRec, Color tint)
@@ -3538,8 +3385,304 @@ void DrawTextureNPatch(Texture2D texture, NPatchInfo nPatchInfo, Rectangle destR
     }
 }
 
-// Get pixel data size in bytes (image or texture)
-// NOTE: Size depends on pixel format
+// Returns hexadecimal value for a Color
+int ColorToInt(Color color)
+{
+    return (((int)color.r << 24) | ((int)color.g << 16) | ((int)color.b << 8) | (int)color.a);
+}
+
+// Returns color normalized as float [0..1]
+Vector4 ColorNormalize(Color color)
+{
+    Vector4 result;
+
+    result.x = (float)color.r/255.0f;
+    result.y = (float)color.g/255.0f;
+    result.z = (float)color.b/255.0f;
+    result.w = (float)color.a/255.0f;
+
+    return result;
+}
+
+// Returns color from normalized values [0..1]
+Color ColorFromNormalized(Vector4 normalized)
+{
+    Color result;
+
+    result.r = (unsigned char)(normalized.x*255.0f);
+    result.g = (unsigned char)(normalized.y*255.0f);
+    result.b = (unsigned char)(normalized.z*255.0f);
+    result.a = (unsigned char)(normalized.w*255.0f);
+
+    return result;
+}
+
+// Returns HSV values for a Color
+// NOTE: Hue is returned as degrees [0..360]
+Vector3 ColorToHSV(Color color)
+{
+    Vector3 hsv = { 0 };
+    Vector3 rgb = { (float)color.r/255.0f, (float)color.g/255.0f, (float)color.b/255.0f };
+    float min, max, delta;
+
+    min = rgb.x < rgb.y? rgb.x : rgb.y;
+    min = min  < rgb.z? min  : rgb.z;
+
+    max = rgb.x > rgb.y? rgb.x : rgb.y;
+    max = max  > rgb.z? max  : rgb.z;
+
+    hsv.z = max;            // Value
+    delta = max - min;
+
+    if (delta < 0.00001f)
+    {
+        hsv.y = 0.0f;
+        hsv.x = 0.0f;       // Undefined, maybe NAN?
+        return hsv;
+    }
+
+    if (max > 0.0f)
+    {
+        // NOTE: If max is 0, this divide would cause a crash
+        hsv.y = (delta/max);    // Saturation
+    }
+    else
+    {
+        // NOTE: If max is 0, then r = g = b = 0, s = 0, h is undefined
+        hsv.y = 0.0f;
+        hsv.x = NAN;        // Undefined
+        return hsv;
+    }
+
+    // NOTE: Comparing float values could not work properly
+    if (rgb.x >= max) hsv.x = (rgb.y - rgb.z)/delta;    // Between yellow & magenta
+    else
+    {
+        if (rgb.y >= max) hsv.x = 2.0f + (rgb.z - rgb.x)/delta;  // Between cyan & yellow
+        else hsv.x = 4.0f + (rgb.x - rgb.y)/delta;      // Between magenta & cyan
+    }
+
+    hsv.x *= 60.0f;     // Convert to degrees
+
+    if (hsv.x < 0.0f) hsv.x += 360.0f;
+
+    return hsv;
+}
+
+// Returns a Color from HSV values
+// Implementation reference: https://en.wikipedia.org/wiki/HSL_and_HSV#Alternative_HSV_conversion
+// NOTE: Color->HSV->Color conversion will not yield exactly the same color due to rounding errors
+Color ColorFromHSV(Vector3 hsv)
+{
+    Color color = { 0, 0, 0, 255 };
+    float h = hsv.x, s = hsv.y, v = hsv.z;
+
+    // Red channel
+    float k = fmodf((5.0f + h/60.0f), 6);
+    float t = 4.0f - k;
+    k = (t < k)? t : k;
+    k = (k < 1)? k : 1;
+    k = (k > 0)? k : 0;
+    color.r = (unsigned char)((v - v*s*k)*255.0f);
+
+    // Green channel
+    k = fmodf((3.0f + h/60.0f), 6);
+    t = 4.0f - k;
+    k = (t < k)? t : k;
+    k = (k < 1)? k : 1;
+    k = (k > 0)? k : 0;
+    color.g = (unsigned char)((v - v*s*k)*255.0f);
+
+    // Blue channel
+    k = fmodf((1.0f + h/60.0f), 6);
+    t = 4.0f - k;
+    k = (t < k)? t : k;
+    k = (k < 1)? k : 1;
+    k = (k > 0)? k : 0;
+    color.b = (unsigned char)((v - v*s*k)*255.0f);
+
+    return color;
+}
+
+// Returns color with alpha applied, alpha goes from 0.0f to 1.0f
+Color ColorAlpha(Color color, float alpha)
+{
+    if (alpha < 0.0f) alpha = 0.0f;
+    else if (alpha > 1.0f) alpha = 1.0f;
+
+    return (Color){color.r, color.g, color.b, (unsigned char)(255.0f*alpha)};
+}
+
+// Returns src alpha-blended into dst color with tint
+Color ColorAlphaBlend(Color dst, Color src, Color tint)
+{
+    Vector4 fdst = ColorNormalize(dst);
+    Vector4 fsrc = ColorNormalize(src);
+    Vector4 ftint = ColorNormalize(tint);
+    Vector4 fout = { 0.0f };
+
+    // Apply color tint to source image
+    fsrc.x *= ftint.x; fsrc.y *= ftint.y; fsrc.z *= ftint.z; fsrc.w *= ftint.w;
+    
+    if (fsrc.w <= 0.0f) fout = fdst;
+    else if (fsrc.w >= 1.0f) fout = fsrc;
+    else
+    {
+        fout.w = fsrc.w + fdst.w*(1.0f - fsrc.w);
+
+        if (fout.w > 0.0f)
+        {
+            fout.x = (fsrc.x*fsrc.w + fdst.x*fdst.w*(1 - fsrc.w))/fout.w;
+            fout.y = (fsrc.y*fsrc.w + fdst.y*fdst.w*(1 - fsrc.w))/fout.w;
+            fout.z = (fsrc.z*fsrc.w + fdst.z*fdst.w*(1 - fsrc.w))/fout.w;
+        }
+    }
+
+    Color out = { (unsigned char)(fout.x*255.0f), (unsigned char)(fout.y*255.0f), (unsigned char)(fout.z*255.0f), (unsigned char)(fout.w*255.0f) };
+
+    return out;
+}
+
+// Returns a Color struct from hexadecimal value
+Color GetColor(int hexValue)
+{
+    Color color;
+
+    color.r = (unsigned char)(hexValue >> 24) & 0xFF;
+    color.g = (unsigned char)(hexValue >> 16) & 0xFF;
+    color.b = (unsigned char)(hexValue >> 8) & 0xFF;
+    color.a = (unsigned char)hexValue & 0xFF;
+
+    return color;
+}
+
+// Get color from a pixel from certain format
+Color GetPixelColor(void *srcPtr, int format)
+{
+    Color col = { 0 };
+    
+    switch (format)
+    {
+        case UNCOMPRESSED_GRAYSCALE: col = (Color){ ((unsigned char *)srcPtr)[0], ((unsigned char *)srcPtr)[0], ((unsigned char *)srcPtr)[0], 255 }; break;
+        case UNCOMPRESSED_GRAY_ALPHA: col = (Color){ ((unsigned char *)srcPtr)[0], ((unsigned char *)srcPtr)[0], ((unsigned char *)srcPtr)[0], ((unsigned char *)srcPtr)[1] }; break;
+        case UNCOMPRESSED_R5G6B5:
+        {
+            col.r = (unsigned char)(((((unsigned short *)srcPtr)[0] >> 11)*31)/255);
+            col.g = (unsigned char)((((((unsigned short *)srcPtr)[0] >> 5) & 0b0000000000111111)*63)/255);
+            col.b = (unsigned char)(((((unsigned short *)srcPtr)[0] & 0b0000000000011111)*31)/255);
+            col.a = 255;
+            
+        } break;
+        case UNCOMPRESSED_R5G5B5A1:
+        {
+            col.r = (unsigned char)(((((unsigned short *)srcPtr)[0] >> 11)*31)/255);
+            col.g = (unsigned char)((((((unsigned short *)srcPtr)[0] >> 6) & 0b0000000000011111)*31)/255);
+            col.b = (unsigned char)(((((unsigned short *)srcPtr)[0] & 0b0000000000011111)*31)/255);
+            col.a = (((unsigned short *)srcPtr)[0] & 0b0000000000000001)? 255 : 0;
+
+        } break;
+        case UNCOMPRESSED_R4G4B4A4:
+        {
+            col.r = (unsigned char)(((((unsigned short *)srcPtr)[0] >> 12)*15)/255);
+            col.g = (unsigned char)((((((unsigned short *)srcPtr)[0] >> 8) & 0b0000000000001111)*15)/255);
+            col.b = (unsigned char)((((((unsigned short *)srcPtr)[0] >> 4) & 0b0000000000001111)*15)/255);
+            col.a = (unsigned char)(((((unsigned short *)srcPtr)[0] & 0b0000000000001111)*15)/255);
+            
+        } break;
+        case UNCOMPRESSED_R8G8B8A8: col = (Color){ ((unsigned char *)srcPtr)[0], ((unsigned char *)srcPtr)[1], ((unsigned char *)srcPtr)[2], ((unsigned char *)srcPtr)[3] }; break;
+        case UNCOMPRESSED_R8G8B8: col = (Color){ ((unsigned char *)srcPtr)[0], ((unsigned char *)srcPtr)[1], ((unsigned char *)srcPtr)[2], 255 }; break;
+        // TODO: case UNCOMPRESSED_R32: break;
+        // TODO: case UNCOMPRESSED_R32G32B32: break;
+        // TODO: case UNCOMPRESSED_R32G32B32A32: break;
+        default: break;
+    }
+    
+    return col;
+}
+
+// Set pixel color formatted into destination pointer
+void SetPixelColor(void *dstPtr, Color color, int format)
+{
+    switch (format)
+    {
+        case UNCOMPRESSED_GRAYSCALE: 
+        {
+            // NOTE: Calculate grayscale equivalent color
+            Vector3 coln = { (float)color.r/255.0f, (float)color.g/255.0f, (float)color.b/255.0f };
+            unsigned char gray = (unsigned char)((coln.x*0.299f + coln.y*0.587f + coln.z*0.114f)*255.0f);
+            
+            ((unsigned char *)dstPtr)[0] = gray;
+
+        } break;
+        case UNCOMPRESSED_GRAY_ALPHA: 
+        {
+            // NOTE: Calculate grayscale equivalent color
+            Vector3 coln = { (float)color.r/255.0f, (float)color.g/255.0f, (float)color.b/255.0f };
+            unsigned char gray = (unsigned char)((coln.x*0.299f + coln.y*0.587f + coln.z*0.114f)*255.0f);
+            
+            ((unsigned char *)dstPtr)[0] = gray;
+            ((unsigned char *)dstPtr)[1] = color.a;
+
+        } break;
+        case UNCOMPRESSED_R5G6B5:
+        {
+            // NOTE: Calculate R5G6B5 equivalent color
+            Vector3 coln = { (float)color.r/255.0f, (float)color.g/255.0f, (float)color.b/255.0f };
+
+            unsigned char r = (unsigned char)(round(coln.x*31.0f));
+            unsigned char g = (unsigned char)(round(coln.y*63.0f));
+            unsigned char b = (unsigned char)(round(coln.z*31.0f));
+
+            ((unsigned short *)dstPtr)[0] = (unsigned short)r << 11 | (unsigned short)g << 5 | (unsigned short)b;
+            
+        } break;
+        case UNCOMPRESSED_R5G5B5A1:
+        {
+            // NOTE: Calculate R5G5B5A1 equivalent color
+            Vector4 coln = { (float)color.r/255.0f, (float)color.g/255.0f, (float)color.b/255.0f, (float)color.a/255.0f };
+
+            unsigned char r = (unsigned char)(round(coln.x*31.0f));
+            unsigned char g = (unsigned char)(round(coln.y*31.0f));
+            unsigned char b = (unsigned char)(round(coln.z*31.0f));
+            unsigned char a = (coln.w > ((float)R5G5B5A1_ALPHA_THRESHOLD/255.0f))? 1 : 0;;
+
+            ((unsigned short *)dstPtr)[0] = (unsigned short)r << 11 | (unsigned short)g << 6 | (unsigned short)b << 1 | (unsigned short)a;
+
+        } break;
+        case UNCOMPRESSED_R4G4B4A4:
+        {
+            // NOTE: Calculate R5G5B5A1 equivalent color
+            Vector4 coln = { (float)color.r/255.0f, (float)color.g/255.0f, (float)color.b/255.0f, (float)color.a/255.0f };
+
+            unsigned char r = (unsigned char)(round(coln.x*15.0f));
+            unsigned char g = (unsigned char)(round(coln.y*15.0f));
+            unsigned char b = (unsigned char)(round(coln.z*15.0f));
+            unsigned char a = (unsigned char)(round(coln.w*15.0f));
+
+            ((unsigned short *)dstPtr)[0] = (unsigned short)r << 12 | (unsigned short)g << 8 | (unsigned short)b << 4 | (unsigned short)a;
+            
+        } break;
+        case UNCOMPRESSED_R8G8B8:
+        {
+            ((unsigned char *)dstPtr)[0] = color.r;
+            ((unsigned char *)dstPtr)[1] = color.g;
+            ((unsigned char *)dstPtr)[2] = color.b;
+            
+        } break;
+        case UNCOMPRESSED_R8G8B8A8:
+        {
+            ((unsigned char *)dstPtr)[0] = color.r;
+            ((unsigned char *)dstPtr)[1] = color.g;
+            ((unsigned char *)dstPtr)[2] = color.b;
+            ((unsigned char *)dstPtr)[3] = color.a;
+            
+        } break;
+        default: break;
+    }
+}
+
+// Get pixel data size in bytes for certain format
+// NOTE: Size can be requested for Image or Texture data
 int GetPixelDataSize(int width, int height, int format)
 {
     int dataSize = 0;       // Size in bytes

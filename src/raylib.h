@@ -158,6 +158,8 @@
 #define ShowWindow  UnhideWindow
 #define LoadText    LoadFileText
 
+#define Fade(c, a)  ColorAlpha(c, a)
+
 //----------------------------------------------------------------------------------
 // Structures Definition
 //----------------------------------------------------------------------------------
@@ -933,15 +935,6 @@ RLAPI int GetFPS(void);                                           // Returns cur
 RLAPI float GetFrameTime(void);                                   // Returns time in seconds for last frame drawn
 RLAPI double GetTime(void);                                       // Returns elapsed time in seconds since InitWindow()
 
-// Color-related functions
-RLAPI int ColorToInt(Color color);                                // Returns hexadecimal value for a Color
-RLAPI Vector4 ColorNormalize(Color color);                        // Returns color normalized as float [0..1]
-RLAPI Color ColorFromNormalized(Vector4 normalized);              // Returns color from normalized values [0..1]
-RLAPI Vector3 ColorToHSV(Color color);                            // Returns HSV values for a Color
-RLAPI Color ColorFromHSV(Vector3 hsv);                            // Returns a Color from HSV values
-RLAPI Color GetColor(int hexValue);                               // Returns a Color struct from hexadecimal value
-RLAPI Color Fade(Color color, float alpha);                       // Color fade-in or fade-out, alpha goes from 0.0f to 1.0f
-
 // Misc. functions
 RLAPI void SetConfigFlags(unsigned int flags);                    // Setup window configuration flags (view FLAGS)
 RLAPI void SetTraceLogLevel(int logType);                         // Set the current threshold (minimum) log level
@@ -1196,9 +1189,18 @@ RLAPI void DrawTextureQuad(Texture2D texture, Vector2 tiling, Vector2 offset, Re
 RLAPI void DrawTexturePro(Texture2D texture, Rectangle sourceRec, Rectangle destRec, Vector2 origin, float rotation, Color tint);       // Draw a part of a texture defined by a rectangle with 'pro' parameters
 RLAPI void DrawTextureNPatch(Texture2D texture, NPatchInfo nPatchInfo, Rectangle destRec, Vector2 origin, float rotation, Color tint);  // Draws a texture (or part of it) that stretches or shrinks nicely
 
-// Image/Texture misc functions
-RLAPI int GetPixelDataSize(int width, int height, int format);                                           // Get pixel data size in bytes (image or texture)
-
+// Color/pixel related functions
+RLAPI int ColorToInt(Color color);                                          // Returns hexadecimal value for a Color
+RLAPI Vector4 ColorNormalize(Color color);                                  // Returns Color normalized as float [0..1]
+RLAPI Color ColorFromNormalized(Vector4 normalized);                        // Returns Color from normalized values [0..1]
+RLAPI Vector3 ColorToHSV(Color color);                                      // Returns HSV values for a Color
+RLAPI Color ColorFromHSV(Vector3 hsv);                                      // Returns a Color from HSV values
+RLAPI Color ColorAlpha(Color color, float alpha);                           // Returns color with alpha applied, alpha goes from 0.0f to 1.0f
+RLAPI Color ColorAlphaBlend(Color dst, Color src, Color tint);              // Returns src alpha-blended into dst color with tint
+RLAPI Color GetColor(int hexValue);                                         // Get Color structure from hexadecimal value
+RLAPI Color GetPixelColor(void *srcPtr, int format);                        // Get Color from a source pixel pointer of certain format
+RLAPI void SetPixelColor(void *dstPtr, Color color, int format);            // Set color formatted into destination pixel pointer
+RLAPI int GetPixelDataSize(int width, int height, int format);              // Get pixel data size in bytes for certain format
 
 //------------------------------------------------------------------------------------
 // Font Loading and Text Drawing Functions (Module: text)

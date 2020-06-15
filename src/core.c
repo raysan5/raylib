@@ -1767,160 +1767,6 @@ double GetTime(void)
 #endif
 }
 
-// Returns hexadecimal value for a Color
-int ColorToInt(Color color)
-{
-    return (((int)color.r << 24) | ((int)color.g << 16) | ((int)color.b << 8) | (int)color.a);
-}
-
-// Returns color normalized as float [0..1]
-Vector4 ColorNormalize(Color color)
-{
-    Vector4 result;
-
-    result.x = (float)color.r/255.0f;
-    result.y = (float)color.g/255.0f;
-    result.z = (float)color.b/255.0f;
-    result.w = (float)color.a/255.0f;
-
-    return result;
-}
-
-// Returns color from normalized values [0..1]
-Color ColorFromNormalized(Vector4 normalized)
-{
-    Color result;
-
-    result.r = (unsigned char)(normalized.x*255.0f);
-    result.g = (unsigned char)(normalized.y*255.0f);
-    result.b = (unsigned char)(normalized.z*255.0f);
-    result.a = (unsigned char)(normalized.w*255.0f);
-
-    return result;
-}
-
-// Returns HSV values for a Color
-// NOTE: Hue is returned as degrees [0..360]
-Vector3 ColorToHSV(Color color)
-{
-    Vector3 hsv = { 0 };
-    Vector3 rgb = { (float)color.r/255.0f, (float)color.g/255.0f, (float)color.b/255.0f };
-    float min, max, delta;
-
-    min = rgb.x < rgb.y? rgb.x : rgb.y;
-    min = min  < rgb.z? min  : rgb.z;
-
-    max = rgb.x > rgb.y? rgb.x : rgb.y;
-    max = max  > rgb.z? max  : rgb.z;
-
-    hsv.z = max;            // Value
-    delta = max - min;
-
-    if (delta < 0.00001f)
-    {
-        hsv.y = 0.0f;
-        hsv.x = 0.0f;       // Undefined, maybe NAN?
-        return hsv;
-    }
-
-    if (max > 0.0f)
-    {
-        // NOTE: If max is 0, this divide would cause a crash
-        hsv.y = (delta/max);    // Saturation
-    }
-    else
-    {
-        // NOTE: If max is 0, then r = g = b = 0, s = 0, h is undefined
-        hsv.y = 0.0f;
-        hsv.x = NAN;        // Undefined
-        return hsv;
-    }
-
-    // NOTE: Comparing float values could not work properly
-    if (rgb.x >= max) hsv.x = (rgb.y - rgb.z)/delta;    // Between yellow & magenta
-    else
-    {
-        if (rgb.y >= max) hsv.x = 2.0f + (rgb.z - rgb.x)/delta;  // Between cyan & yellow
-        else hsv.x = 4.0f + (rgb.x - rgb.y)/delta;      // Between magenta & cyan
-    }
-
-    hsv.x *= 60.0f;     // Convert to degrees
-
-    if (hsv.x < 0.0f) hsv.x += 360.0f;
-
-    return hsv;
-}
-
-// Returns a Color from HSV values
-// Implementation reference: https://en.wikipedia.org/wiki/HSL_and_HSV#Alternative_HSV_conversion
-// NOTE: Color->HSV->Color conversion will not yield exactly the same color due to rounding errors
-Color ColorFromHSV(Vector3 hsv)
-{
-    Color color = { 0, 0, 0, 255 };
-    float h = hsv.x, s = hsv.y, v = hsv.z;
-
-    // Red channel
-    float k = fmodf((5.0f + h/60.0f), 6);
-    float t = 4.0f - k;
-    k = (t < k)? t : k;
-    k = (k < 1)? k : 1;
-    k = (k > 0)? k : 0;
-    color.r = (unsigned char)((v - v*s*k)*255.0f);
-
-    // Green channel
-    k = fmodf((3.0f + h/60.0f), 6);
-    t = 4.0f - k;
-    k = (t < k)? t : k;
-    k = (k < 1)? k : 1;
-    k = (k > 0)? k : 0;
-    color.g = (unsigned char)((v - v*s*k)*255.0f);
-
-    // Blue channel
-    k = fmodf((1.0f + h/60.0f), 6);
-    t = 4.0f - k;
-    k = (t < k)? t : k;
-    k = (k < 1)? k : 1;
-    k = (k > 0)? k : 0;
-    color.b = (unsigned char)((v - v*s*k)*255.0f);
-
-    return color;
-}
-
-// Returns a Color struct from hexadecimal value
-Color GetColor(int hexValue)
-{
-    Color color;
-
-    color.r = (unsigned char)(hexValue >> 24) & 0xFF;
-    color.g = (unsigned char)(hexValue >> 16) & 0xFF;
-    color.b = (unsigned char)(hexValue >> 8) & 0xFF;
-    color.a = (unsigned char)hexValue & 0xFF;
-
-    return color;
-}
-
-// Returns a random value between min and max (both included)
-int GetRandomValue(int min, int max)
-{
-    if (min > max)
-    {
-        int tmp = max;
-        max = min;
-        min = tmp;
-    }
-
-    return (rand()%(abs(max - min) + 1) + min);
-}
-
-// Color fade-in or fade-out, alpha goes from 0.0f to 1.0f
-Color Fade(Color color, float alpha)
-{
-    if (alpha < 0.0f) alpha = 0.0f;
-    else if (alpha > 1.0f) alpha = 1.0f;
-
-    return (Color){color.r, color.g, color.b, (unsigned char)(255.0f*alpha)};
-}
-
 // Setup window configuration flags (view FLAGS)
 void SetConfigFlags(unsigned int flags)
 {
@@ -1964,6 +1810,19 @@ void TakeScreenshot(const char *fileName)
 
     // TODO: Verification required for log
     TRACELOG(LOG_INFO, "SYSTEM: [%s] Screenshot taken successfully", path);
+}
+
+// Returns a random value between min and max (both included)
+int GetRandomValue(int min, int max)
+{
+    if (min > max)
+    {
+        int tmp = max;
+        max = min;
+        min = tmp;
+    }
+
+    return (rand()%(abs(max - min) + 1) + min);
 }
 
 // Check if the file exists
