@@ -818,8 +818,7 @@ void ImageCrop(Image *image, Rectangle crop)
     if (image->format >= COMPRESSED_DXT1_RGB) TRACELOG(LOG_WARNING, "Image manipulation not supported for compressed formats");
     else
     {
-        int dataSize = GetPixelDataSize(image->width, image->height, image->format);
-        int bytesPerPixel = dataSize/(image->width*image->height);
+        int bytesPerPixel = GetPixelDataSize(1, 1, image->format);
         
         unsigned char *croppedData = (unsigned char *)RL_MALLOC(crop.width*crop.height*bytesPerPixel);
         
@@ -1431,9 +1430,7 @@ void ImageResizeCanvas(Image *image, int newWidth, int newHeight, int offsetX, i
         if (newWidth < srcRec.width) srcRec.width = newWidth;
         if (newHeight < srcRec.height) srcRec.height = newHeight;
 
-        int dataSize = GetPixelDataSize(image->width, image->height, image->format);
-        int bytesPerPixel = dataSize/(image->width*image->height);
-        
+        int bytesPerPixel = GetPixelDataSize(1, 1, image->format);
         unsigned char *resizedData = (unsigned char *)RL_CALLOC(newWidth*newHeight*bytesPerPixel, 1);
         
         // TODO: Fill resizedData with fill color (must be formatted to image->format)
@@ -1645,10 +1642,8 @@ void ImageFlipVertical(Image *image)
     if (image->format >= COMPRESSED_DXT1_RGB) TRACELOG(LOG_WARNING, "Image manipulation not supported for compressed formats");
     else
     {
-        int dataSize = GetPixelDataSize(image->width, image->height, image->format);
-        int bytesPerPixel = dataSize/(image->width*image->height);
-        
-        unsigned char *flippedData = (unsigned char *)RL_MALLOC(dataSize);
+        int bytesPerPixel = GetPixelDataSize(1, 1, image->format);
+        unsigned char *flippedData = (unsigned char *)RL_MALLOC(image->width*image->height*bytesPerPixel);
         
         for (int i = (image->height - 1), offsetSize = 0; i >= 0; i--)
         {
@@ -1671,10 +1666,8 @@ void ImageFlipHorizontal(Image *image)
     if (image->format >= COMPRESSED_DXT1_RGB) TRACELOG(LOG_WARNING, "Image manipulation not supported for compressed formats");
     else
     {
-        int dataSize = GetPixelDataSize(image->width, image->height, image->format);
-        int bytesPerPixel = dataSize/(image->width*image->height);
-        
-        unsigned char *flippedData = (unsigned char *)RL_MALLOC(dataSize);
+        int bytesPerPixel = GetPixelDataSize(1, 1, image->format);
+        unsigned char *flippedData = (unsigned char *)RL_MALLOC(image->width*image->height*bytesPerPixel);
         
         for (int y = 0; y < image->height; y++)
         {
@@ -1718,10 +1711,8 @@ void ImageRotateCW(Image *image)
     if (image->format >= COMPRESSED_DXT1_RGB) TRACELOG(LOG_WARNING, "Image manipulation not supported for compressed formats");
     else
     {
-        int dataSize = GetPixelDataSize(image->width, image->height, image->format);
-        int bytesPerPixel = dataSize/(image->width*image->height);
-        
-        unsigned char *rotatedData = (unsigned char *)RL_MALLOC(dataSize);
+        int bytesPerPixel = GetPixelDataSize(1, 1, image->format);
+        unsigned char *rotatedData = (unsigned char *)RL_MALLOC(image->width*image->height*bytesPerPixel);
         
         for (int y = 0; y < image->height; y++)
         {
@@ -1752,10 +1743,8 @@ void ImageRotateCCW(Image *image)
     if (image->format >= COMPRESSED_DXT1_RGB) TRACELOG(LOG_WARNING, "Image manipulation not supported for compressed formats");
     else
     {
-        int dataSize = GetPixelDataSize(image->width, image->height, image->format);
-        int bytesPerPixel = dataSize/(image->width*image->height);
-        
-        unsigned char *rotatedData = (unsigned char *)RL_MALLOC(dataSize);
+        int bytesPerPixel = GetPixelDataSize(1, 1, image->format);
+        unsigned char *rotatedData = (unsigned char *)RL_MALLOC(image->width*image->height*bytesPerPixel);
         
         for (int y = 0; y < image->height; y++)
         {
