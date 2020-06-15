@@ -776,9 +776,22 @@ Image ImageCopy(Image image)
 // Create an image from another image piece
 Image ImageFromImage(Image image, Rectangle rec)
 {
-    Image result = ImageCopy(image);
+    Image result = { 0 };
+    
+    int bytesPerPixel = GetPixelDataSize(1, 1, image.format);
+    
+    // TODO: Check rec is valid?
 
-    ImageCrop(&result, rec);
+    result.width = rec.width;
+    result.height = rec.height;
+    result.data = RL_CALLOC(rec.width*rec.height*bytesPerPixel, 1);
+    result.format = image.format;
+    result.mipmaps = 1;
+    
+    for (int y = 0; y < rec.height; y++)
+    {
+        memcpy(((unsigned char *)result.data) + y*(int)rec.width*bytesPerPixel, ((unsigned char *)image.data) + ((y + (int)rec.y)*image.width + (int)rec.x)*bytesPerPixel, (int)rec.width*bytesPerPixel);
+    }
 
     return result;
 }
