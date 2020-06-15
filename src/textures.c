@@ -1313,25 +1313,50 @@ void ImageResize(Image *image, int newWidth, int newHeight)
 {
     // Security check to avoid program crash
     if ((image->data == NULL) || (image->width == 0) || (image->height == 0)) return;
-
-    // Get data as Color pixels array to work with it
-    Color *pixels = GetImageData(*image);
-    Color *output = (Color *)RL_MALLOC(newWidth*newHeight*sizeof(Color));
-
-    // NOTE: Color data is casted to (unsigned char *), there shouldn't been any problem...
-    stbir_resize_uint8((unsigned char *)pixels, image->width, image->height, 0, (unsigned char *)output, newWidth, newHeight, 0, 4);
-
-    int format = image->format;
     
-    RL_FREE(pixels);
-    RL_FREE(image->data);
+    bool fastPath = true;
+    if ((image->format != UNCOMPRESSED_GRAYSCALE) && (image->format != UNCOMPRESSED_GRAY_ALPHA) && (image->format != UNCOMPRESSED_R8G8B8) && (image->format != UNCOMPRESSED_R8G8B8A8)) fastPath = true;
+    
+    if (fastPath)
+    {
+        int bytesPerPixel = GetPixelDataSize(1, 1, image->format);
+        unsigned char *output = RL_MALLOC(newWidth*newHeight*bytesPerPixel);
+        
+        switch (image->format)
+        {
+            case UNCOMPRESSED_GRAYSCALE: stbir_resize_uint8((unsigned char *)image->data, image->width, image->height, 0, output, newWidth, newHeight, 0, 1); break;
+            case UNCOMPRESSED_GRAY_ALPHA: stbir_resize_uint8((unsigned char *)image->data, image->width, image->height, 0, output, newWidth, newHeight, 0, 2); break;
+            case UNCOMPRESSED_R8G8B8: stbir_resize_uint8((unsigned char *)image->data, image->width, image->height, 0, output, newWidth, newHeight, 0, 3); break;
+            case UNCOMPRESSED_R8G8B8A8: stbir_resize_uint8((unsigned char *)image->data, image->width, image->height, 0, output, newWidth, newHeight, 0, 4); break;
+            default: break;
+        }
 
-    image->data = output;
-    image->width = newWidth;
-    image->height = newHeight;
-    image->format = UNCOMPRESSED_R8G8B8A8;
+        RL_FREE(image->data);
+        image->data = output;
+        image->width = newWidth;
+        image->height = newHeight;
+    }
+    else
+    {
+        // Get data as Color pixels array to work with it
+        Color *pixels = GetImageData(*image);
+        Color *output = (Color *)RL_MALLOC(newWidth*newHeight*sizeof(Color));
 
-    ImageFormat(image, format);  // Reformat 32bit RGBA image to original format
+        // NOTE: Color data is casted to (unsigned char *), there shouldn't been any problem...
+        stbir_resize_uint8((unsigned char *)pixels, image->width, image->height, 0, (unsigned char *)output, newWidth, newHeight, 0, 4);
+
+        int format = image->format;
+        
+        RL_FREE(pixels);
+        RL_FREE(image->data);
+
+        image->data = output;
+        image->width = newWidth;
+        image->height = newHeight;
+        image->format = UNCOMPRESSED_R8G8B8A8;
+
+        ImageFormat(image, format);  // Reformat 32bit RGBA image to original format
+    }
 }
 
 // Resize and image to new size using Nearest-Neighbor scaling algorithm
