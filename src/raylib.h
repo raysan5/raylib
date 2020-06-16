@@ -157,8 +157,7 @@
 #define SubText     TextSubtext
 #define ShowWindow  UnhideWindow
 #define LoadText    LoadFileText
-
-#define Fade(c, a)  ColorAlpha(c, a)
+//#define Fade(c, a)  ColorAlpha(c, a)
 
 //----------------------------------------------------------------------------------
 // Structures Definition
