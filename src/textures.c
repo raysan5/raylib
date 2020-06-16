@@ -3246,6 +3246,15 @@ void DrawTextureNPatch(Texture2D texture, NPatchInfo nPatchInfo, Rectangle destR
     }
 }
 
+// Returns color with alpha applied, alpha goes from 0.0f to 1.0f
+Color Fade(Color color, float alpha)
+{
+    if (alpha < 0.0f) alpha = 0.0f;
+    else if (alpha > 1.0f) alpha = 1.0f;
+
+    return (Color){color.r, color.g, color.b, (unsigned char)(255.0f*alpha)};
+}
+
 // Returns hexadecimal value for a Color
 int ColorToInt(Color color)
 {
