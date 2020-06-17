@@ -373,6 +373,7 @@ typedef struct CoreData {
 
         char **dropFilesPath;               // Store dropped files paths as strings
         int dropFilesCount;                 // Count dropped files strings
+        void (*sizeCallback)(int, int);     // Additional user configurable window size callback
 
     } Window;
 #if defined(PLATFORM_ANDROID)
@@ -1048,6 +1049,11 @@ void SetWindowMinSize(int width, int height)
     const GLFWvidmode *mode = glfwGetVideoMode(glfwGetPrimaryMonitor());
     glfwSetWindowSizeLimits(CORE.Window.handle, width, height, mode->width, mode->height);
 #endif
+}
+
+// Set window size callback
+void SetWindowSizeCallback(void (*callback)(int, int)) {
+    CORE.Window.sizeCallback = callback;
 }
 
 // Set window dimensions
@@ -3901,6 +3907,8 @@ static void WindowSizeCallback(GLFWwindow *window, int width, int height)
     // NOTE: Postprocessing texture is not scaled to new size
 
     CORE.Window.resized = true;
+    if (CORE.Window.sizeCallback)
+        CORE.Window.sizeCallback(width, height);
 }
 
 // GLFW3 WindowIconify Callback, runs when window is minimized/restored
@@ -5234,6 +5242,9 @@ void UWPResizeEvent(int width, int height)
     // NOTE: Postprocessing texture is not scaled to new size
 
     CORE.Window.resized = true;
+
+    if (CORE.Window.sizeCallback)
+        CORE.Window.sizeCallback(width, height);
 }
 
 void UWPActivateGamepadEvent(int gamepad, bool active)
