@@ -1,4 +1,4 @@
-﻿#include "pch.h"
+#include "pch.h"
 #include "app.h"
 
 #include <Windows.h>
@@ -99,8 +99,8 @@ void App::Run()
     UWPSetQueryTimeFunc([]()
         {
             static auto timeStart = std::chrono::high_resolution_clock::now();
-            auto delta = std::chrono::high_resolution_clock::now() - timeStart;
-            return (double)std::chrono::duration_cast<std::chrono::seconds>(delta).count();
+            std::chrono::duration<double> time_span = std::chrono::duration_cast<std::chrono::duration<double>>(std::chrono::high_resolution_clock::now() - timeStart);
+            return time_span.count();
         });
 
     UWPSetSleepFunc([](double seconds) { std::this_thread::sleep_for(std::chrono::duration<double>(seconds)); });
