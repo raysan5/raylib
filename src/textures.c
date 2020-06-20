@@ -2529,8 +2529,8 @@ void ImageDraw(Image *dst, Image src, Rectangle srcRec, Rectangle dstRec, Color 
         bool useSrcMod = false;     // Track source copy required
 
         // Source rectangle out-of-bounds security checks
-        if (srcRec.x < 0) { srcRec.width -= srcRec.x; srcRec.x = 0; }
-        if (srcRec.y < 0) { srcRec.height -= srcRec.y; srcRec.y = 0; }
+        if (srcRec.x < 0) { srcRec.width += srcRec.x; srcRec.x = 0; }
+        if (srcRec.y < 0) { srcRec.height += srcRec.y; srcRec.y = 0; }
         if ((srcRec.x + srcRec.width) > src.width) srcRec.width = src.width - srcRec.x;
         if ((srcRec.y + srcRec.height) > src.height) srcRec.height = src.height - srcRec.y;
 
