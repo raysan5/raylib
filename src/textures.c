@@ -3388,18 +3388,15 @@ Color ColorAlphaBlend(Color dst, Color src, Color tint)
 {
     Color out = WHITE;
     
-    // TODO: Compute tint color over source properly (before alpha blending)
-    
+    // Apply color tint to source color
+    src.r = (unsigned char)(((unsigned int)src.r*(unsigned int)tint.r) >> 8);
+    src.g = (unsigned char)(((unsigned int)src.g*(unsigned int)tint.g) >> 8);
+    src.b = (unsigned char)(((unsigned int)src.b*(unsigned int)tint.b) >> 8);
+    src.a = (unsigned char)(((unsigned int)src.a*(unsigned int)tint.a) >> 8);
+
 //#define COLORALPHABLEND_FLOAT
 #define COLORALPHABLEND_INTEGERS
 #if defined(COLORALPHABLEND_INTEGERS)
-    // Apply color tint to source color
-    // NOTE: Some problems when aplying source tinting
-    //src.r = (unsigned char)(((unsigned int)src.r*(unsigned int)tint.r) >> 8);
-    //src.g = (unsigned char)(((unsigned int)src.g*(unsigned int)tint.g) >> 8);
-    //src.b = (unsigned char)(((unsigned int)src.b*(unsigned int)tint.b) >> 8);
-    //src.a = (unsigned char)(((unsigned int)src.a*255 + (unsigned int)tint.a*(255 - src.a)) >> 8);
-
     if (src.a == 0) out = dst;
     else if (src.a == 255) out = src;
     else
@@ -3416,9 +3413,6 @@ Color ColorAlphaBlend(Color dst, Color src, Color tint)
     }
 #endif
 #if defined(COLORALPHABLEND_FLOAT)
-    // Apply color tint to source color
-    //fsrc.x *= ftint.x; fsrc.y *= ftint.y; fsrc.z *= ftint.z; fsrc.w *= ftint.w;
-
     if (src.a == 0) out = dst;
     else if (src.a == 255) out = src;
     else
