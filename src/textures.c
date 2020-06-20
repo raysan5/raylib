@@ -3386,18 +3386,48 @@ Color ColorAlpha(Color color, float alpha)
 // Returns src alpha-blended into dst color with tint
 Color ColorAlphaBlend(Color dst, Color src, Color tint)
 {
-    Vector4 fdst = ColorNormalize(dst);
-    Vector4 fsrc = ColorNormalize(src);
-    Vector4 ftint = ColorNormalize(tint);
-    Vector4 fout = { 0.0f };
-
-    // Apply color tint to source image
-    fsrc.x *= ftint.x; fsrc.y *= ftint.y; fsrc.z *= ftint.z; fsrc.w *= ftint.w;
+    Color out = WHITE;
     
-    if (fsrc.w <= 0.0f) fout = fdst;
-    else if (fsrc.w >= 1.0f) fout = fsrc;
+    // TODO: Compute tint color over source properly (before alpha blending)
+    
+//#define COLORALPHABLEND_FLOAT
+#define COLORALPHABLEND_INTEGERS
+#if defined(COLORALPHABLEND_INTEGERS)
+    // Apply color tint to source color
+    // NOTE: Some problems when aplying source tinting
+    //src.r = (unsigned char)(((unsigned int)src.r*(unsigned int)tint.r) >> 8);
+    //src.g = (unsigned char)(((unsigned int)src.g*(unsigned int)tint.g) >> 8);
+    //src.b = (unsigned char)(((unsigned int)src.b*(unsigned int)tint.b) >> 8);
+    //src.a = (unsigned char)(((unsigned int)src.a*255 + (unsigned int)tint.a*(255 - src.a)) >> 8);
+
+    if (src.a == 0) out = dst;
+    else if (src.a == 255) out = src;
     else
     {
+        unsigned int alpha = (unsigned int)src.a + 1;     // We are shifting by 8 (dividing by 256), so we need to take that excess into account
+        out.a = (unsigned char)(((unsigned int)alpha*256 + (unsigned int)dst.a*(256 - alpha)) >> 8);
+
+        if (out.a > 0)
+        {
+            out.r = (unsigned char)((((unsigned int)src.r*alpha*256 + (unsigned int)dst.r*(unsigned int)dst.a*(256 - alpha))/out.a) >> 8);
+            out.g = (unsigned char)((((unsigned int)src.g*alpha*256 + (unsigned int)dst.g*(unsigned int)dst.a*(256 - alpha))/out.a) >> 8);
+            out.b = (unsigned char)((((unsigned int)src.b*alpha*256 + (unsigned int)dst.b*(unsigned int)dst.a*(256 - alpha))/out.a) >> 8);
+        }
+    }
+#endif
+#if defined(COLORALPHABLEND_FLOAT)
+    // Apply color tint to source color
+    //fsrc.x *= ftint.x; fsrc.y *= ftint.y; fsrc.z *= ftint.z; fsrc.w *= ftint.w;
+
+    if (src.a == 0) out = dst;
+    else if (src.a == 255) out = src;
+    else
+    {
+        Vector4 fdst = ColorNormalize(dst);
+        Vector4 fsrc = ColorNormalize(src);
+        Vector4 ftint = ColorNormalize(tint);
+        Vector4 fout = { 0.0f };
+
         fout.w = fsrc.w + fdst.w*(1.0f - fsrc.w);
 
         if (fout.w > 0.0f)
@@ -3406,9 +3436,10 @@ Color ColorAlphaBlend(Color dst, Color src, Color tint)
             fout.y = (fsrc.y*fsrc.w + fdst.y*fdst.w*(1 - fsrc.w))/fout.w;
             fout.z = (fsrc.z*fsrc.w + fdst.z*fdst.w*(1 - fsrc.w))/fout.w;
         }
+        
+        out = (Color){ (unsigned char)(fout.x*255.0f), (unsigned char)(fout.y*255.0f), (unsigned char)(fout.z*255.0f), (unsigned char)(fout.w*255.0f) };
     }
-
-    Color out = { (unsigned char)(fout.x*255.0f), (unsigned char)(fout.y*255.0f), (unsigned char)(fout.z*255.0f), (unsigned char)(fout.w*255.0f) };
+#endif
 
     return out;
 }
