@@ -2553,7 +2553,7 @@ void ImageDraw(Image *dst, Image src, Rectangle srcRec, Rectangle dstRec, Color 
             srcRec.width += dstRec.x;
             dstRec.x = 0;
         }
-        else if ((dstRec.x + srcPtr->width) > dst->width) srcRec.width = dst->width - dstRec.x;
+        else if ((dstRec.x + srcRec.width) > dst->width) srcRec.width = dst->width - dstRec.x;
 
         if (dstRec.y < 0)
         {
@@ -2561,7 +2561,7 @@ void ImageDraw(Image *dst, Image src, Rectangle srcRec, Rectangle dstRec, Color 
             srcRec.height += dstRec.y;
             dstRec.y = 0;
         }
-        else if ((dstRec.y + srcPtr->height) > dst->height) srcRec.height = dst->height - dstRec.y;
+        else if ((dstRec.y + srcRec.height) > dst->height) srcRec.height = dst->height - dstRec.y;
 
         if (dst->width < srcRec.width) srcRec.width = dst->width;
         if (dst->height < srcRec.height) srcRec.height = dst->height;
