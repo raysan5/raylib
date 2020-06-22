@@ -45,6 +45,7 @@
 
 #include "utils.h"          // Required for: LoadFileData(), LoadFileText(), SaveFileText()
 
+#include <stdio.h>          // Required for: sprintf()
 #include <stdlib.h>         // Required for: malloc(), free()
 #include <string.h>         // Required for: memcmp(), strlen()
 #include <math.h>           // Required for: sinf(), cosf(), sqrtf(), fabsf()
