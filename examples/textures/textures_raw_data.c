@@ -48,12 +48,16 @@ int main(void)
     }
 
     // Load pixels data into an image structure and create texture
-    Image checkedIm = LoadImageEx(pixels, width, height);
+    Image checkedIm = {
+        .data = pixels,             // We can assign pixels directly to data
+        .width = width,
+        .height = height,
+        .format = UNCOMPRESSED_R8G8B8A8,
+        .mipmaps = 1
+    };        
+    
     Texture2D checked = LoadTextureFromImage(checkedIm);
-    UnloadImage(checkedIm);         // Unload CPU (RAM) image data
-
-    // Dynamic memory must be freed after using it
-    free(pixels);                   // Unload CPU (RAM) pixels data
+    UnloadImage(checkedIm);         // Unload CPU (RAM) image data (pixels)
     //---------------------------------------------------------------------------------------
 
     // Main game loop
