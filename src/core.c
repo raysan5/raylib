@@ -1195,6 +1195,22 @@ int GetMonitorPhysicalHeight(int monitor)
     return 0;
 }
 
+int GetMonitorRefreshRate(int monitor)
+{
+#if defined(PLATFORM_DESKTOP)
+    int monitorCount;
+    GLFWmonitor **monitors = glfwGetMonitors(&monitorCount);
+
+    if ((monitor >= 0) && (monitor < monitorCount))
+    {
+        const GLFWvidmode *vidmode = glfwGetVideoMode(monitors[monitor]);
+        return vidmode->refreshRate;
+    }
+    else TRACELOG(LOG_WARNING, "GLFW: Failed to find selected monitor");
+#endif
+    return 0;
+}
+
 // Get window position XY on monitor
 Vector2 GetWindowPosition(void)
 {
