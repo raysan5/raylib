@@ -528,7 +528,7 @@ RLAPI Vector3 rlUnproject(Vector3 source, Matrix proj, Matrix view);  // Get wor
 RLAPI unsigned int rlLoadTexture(void *data, int width, int height, int format, int mipmapCount); // Load texture in GPU
 RLAPI unsigned int rlLoadTextureDepth(int width, int height, int bits, bool useRenderBuffer);     // Load depth texture/renderbuffer (to be attached to fbo)
 RLAPI unsigned int rlLoadTextureCubemap(void *data, int size, int format);                        // Load texture cubemap
-RLAPI void rlUpdateTexture(unsigned int id, int width, int height, int format, const void *data); // Update GPU texture with new data
+RLAPI void rlUpdateTexture(unsigned int id, int offsetX, int offsetY, int width, int height, int format, const void *data);  // Update GPU texture with new data
 RLAPI void rlGetGlTextureFormats(int format, unsigned int *glInternalFormat, unsigned int *glFormat, unsigned int *glType);  // Get OpenGL internal formats
 RLAPI void rlUnloadTexture(unsigned int id);                              // Unload texture from GPU memory
 
@@ -2144,7 +2144,7 @@ unsigned int rlLoadTextureCubemap(void *data, int size, int format)
 
 // Update already loaded texture in GPU with new data
 // NOTE: We don't know safely if internal texture format is the expected one...
-void rlUpdateTexture(unsigned int id, int width, int height, int format, const void *data)
+void rlUpdateTexture(unsigned int id, int offsetX, int offsetY, int width, int height, int format, const void *data)
 {
     glBindTexture(GL_TEXTURE_2D, id);
 
@@ -2153,7 +2153,7 @@ void rlUpdateTexture(unsigned int id, int width, int height, int format, const v
 
     if ((glInternalFormat != -1) && (format < COMPRESSED_DXT1_RGB))
     {
-        glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, width, height, glFormat, glType, (unsigned char *)data);
+        glTexSubImage2D(GL_TEXTURE_2D, 0, offsetY, offsetY, width, height, glFormat, glType, (unsigned char *)data);
     }
     else TRACELOG(LOG_WARNING, "TEXTURE: [ID %i] Failed to update for current texture format (%i)", id, format);
 }

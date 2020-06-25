@@ -2798,7 +2798,14 @@ void UnloadRenderTexture(RenderTexture2D target)
 // NOTE: pixels data must match texture.format
 void UpdateTexture(Texture2D texture, const void *pixels)
 {
-    rlUpdateTexture(texture.id, texture.width, texture.height, texture.format, pixels);
+    rlUpdateTexture(texture.id, 0, 0, texture.width, texture.height, texture.format, pixels);
+}
+
+// Update GPU texture rectangle with new data
+// NOTE: pixels data must match texture.format
+void UpdateTextureRec(Texture2D texture, Rectangle rec, const void *pixels)
+{
+    rlUpdateTexture(texture.id, (int)rec.x, (int)rec.y, (int)rec.width, (int)rec.height, texture.format, pixels);
 }
 
 // Get pixel data from GPU texture and return an Image
