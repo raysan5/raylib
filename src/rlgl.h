@@ -136,7 +136,7 @@
         #define DEFAULT_BATCH_BUFFER_ELEMENTS   8192
     #elif defined(GRAPHICS_API_OPENGL_ES2)
         // We reduce memory sizes for embedded systems (RPI and HTML5)
-        // NOTE: On HTML5 (emscripten) this is allocated on heap, 
+        // NOTE: On HTML5 (emscripten) this is allocated on heap,
         // by default it's only 16MB!...just take care...
         #define DEFAULT_BATCH_BUFFER_ELEMENTS   2048
     #endif
@@ -675,7 +675,11 @@ RLAPI int GetPixelDataSize(int width, int height, int format);// Get pixel data 
 
 #if defined(GRAPHICS_API_OPENGL_ES2)
     #define GL_GLEXT_PROTOTYPES
+
+    /* We are not using EGL with X11. */
+    #define EGL_NO_X11
     #include <EGL/egl.h>                // EGL library
+
     #include <GLES2/gl2.h>              // OpenGL ES 2.0 library
     #include <GLES2/gl2ext.h>           // OpenGL ES 2.0 extensions library
 #endif
@@ -771,7 +775,7 @@ RLAPI int GetPixelDataSize(int width, int height, int format);// Get pixel data 
 // Dynamic vertex buffers (position + texcoords + colors + indices arrays)
 typedef struct VertexBuffer {
     int elementsCount;          // Number of elements in the buffer (QUADS)
-    
+
     int vCounter;               // Vertex position counter to process (and draw) from full buffer
     int tcCounter;              // Vertex texcoord counter to process (and draw) from full buffer
     int cCounter;               // Vertex color counter to process (and draw) from full buffer
@@ -789,7 +793,7 @@ typedef struct VertexBuffer {
 } VertexBuffer;
 
 // Draw call type
-// NOTE: Only texture changes register a new draw, other state-change-related elements are not 
+// NOTE: Only texture changes register a new draw, other state-change-related elements are not
 // used at this moment (vaoId, shaderId, matrices), raylib just forces a batch draw call if any
 // of those state-change happens (this is done in core module)
 typedef struct DrawCall {
@@ -2600,7 +2604,7 @@ void rlUpdateMeshAt(Mesh mesh, int buffer, int count, int index)
             if (index == 0 && count >= mesh.vertexCount) glBufferData(GL_ARRAY_BUFFER, count*4*sizeof(float), mesh.tangents, GL_DYNAMIC_DRAW);
             else if (index + count >= mesh.vertexCount) break;
             else glBufferSubData(GL_ARRAY_BUFFER, index*4*sizeof(float), count*4*sizeof(float), mesh.tangents);
-            
+
         } break;
         case 5:     // Update texcoords2 (vertex second texture coordinates)
         {
@@ -2608,18 +2612,18 @@ void rlUpdateMeshAt(Mesh mesh, int buffer, int count, int index)
             if (index == 0 && count >= mesh.vertexCount) glBufferData(GL_ARRAY_BUFFER, count*2*sizeof(float), mesh.texcoords2, GL_DYNAMIC_DRAW);
             else if (index + count >= mesh.vertexCount) break;
             else glBufferSubData(GL_ARRAY_BUFFER, index*2*sizeof(float), count*2*sizeof(float), mesh.texcoords2);
-            
+
         } break;
         case 6:     // Update indices (triangle index buffer)
         {
             // the * 3 is because each triangle has 3 indices
             unsigned short *indices = mesh.indices;
             glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, mesh.vboId[6]);
-            
+
             if (index == 0 && count >= mesh.triangleCount) glBufferData(GL_ELEMENT_ARRAY_BUFFER, count*3*sizeof(*indices), indices, GL_DYNAMIC_DRAW);
             else if (index + count >= mesh.triangleCount) break;
             else glBufferSubData(GL_ELEMENT_ARRAY_BUFFER, index*3*sizeof(*indices), count*3*sizeof(*indices), indices);
-            
+
         } break;
         default: break;
     }
@@ -4076,15 +4080,15 @@ static void UnloadShaderDefault(void)
 static RenderBatch LoadRenderBatch(int numBuffers, int bufferElements)
 {
     RenderBatch batch = { 0 };
-       
+
     // Initialize CPU (RAM) vertex buffers (position, texcoord, color data and indexes)
     //--------------------------------------------------------------------------------------------
     batch.vertexBuffer = (VertexBuffer *)RL_MALLOC(sizeof(VertexBuffer)*numBuffers);
-    
+
     for (int i = 0; i < numBuffers; i++)
     {
         batch.vertexBuffer[i].elementsCount = bufferElements;
-        
+
         batch.vertexBuffer[i].vertices = (float *)RL_MALLOC(bufferElements*3*4*sizeof(float));        // 3 float by vertex, 4 vertex by quad
         batch.vertexBuffer[i].texcoords = (float *)RL_MALLOC(bufferElements*2*4*sizeof(float));       // 2 float by texcoord, 4 texcoord by quad
         batch.vertexBuffer[i].colors = (unsigned char *)RL_MALLOC(bufferElements*4*4*sizeof(unsigned char));   // 4 float by color, 4 colors by quad
@@ -4169,7 +4173,7 @@ static RenderBatch LoadRenderBatch(int numBuffers, int bufferElements)
     // Unbind the current VAO
     if (RLGL.ExtSupported.vao) glBindVertexArray(0);
     //--------------------------------------------------------------------------------------------
-    
+
     // Init draw calls tracking system
     //--------------------------------------------------------------------------------------------
     batch.draws = (DrawCall *)RL_MALLOC(DEFAULT_BATCH_DRAWCALLS*sizeof(DrawCall));
@@ -4189,7 +4193,7 @@ static RenderBatch LoadRenderBatch(int numBuffers, int bufferElements)
     batch.drawsCounter = 1;        // Reset draws counter
     batch.currentDepth = -1.0f;    // Reset depth value
     //--------------------------------------------------------------------------------------------
-    
+
     return batch;
 }
 
@@ -4240,7 +4244,7 @@ static void DrawRenderBatch(RenderBatch *batch)
         if (RLGL.ExtSupported.vao) glBindVertexArray(0);
     }
     //------------------------------------------------------------------------------------------------------------
-    
+
     // Draw batch vertex buffers (considering VR stereo if required)
     //------------------------------------------------------------------------------------------------------------
     Matrix matProjection = RLGL.State.projection;
@@ -4339,7 +4343,7 @@ static void DrawRenderBatch(RenderBatch *batch)
         glUseProgram(0);    // Unbind shader program
     }
     //------------------------------------------------------------------------------------------------------------
-    
+
     // Reset batch buffers
     //------------------------------------------------------------------------------------------------------------
     // Reset vertex counters for next frame

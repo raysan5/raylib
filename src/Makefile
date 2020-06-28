@@ -50,14 +50,14 @@ RAYLIB_PATH        = ..
 
 # Define default options
 
-# One of PLATFORM_DESKTOP, PLATFORM_RPI, PLATFORM_ANDROID, PLATFORM_WEB
-PLATFORM             ?= PLATFORM_DESKTOP
+# One of PLATFORM_DESKTOP, PLATFORM_RPI, PLATFORM_ANDROID, PLATFORM_WEB, PLATFORM_GBM
+PLATFORM             ?= PLATFORM_GBM
 
 # Library type used for raylib: STATIC (.a) or SHARED (.so/.dll)
 RAYLIB_LIBTYPE       ?= STATIC
 
 # Build mode for library: DEBUG or RELEASE
-RAYLIB_BUILD_MODE    ?= RELEASE
+RAYLIB_BUILD_MODE    ?= DEBUG
 
 # Include raylib modules on compilation
 # NOTE: Some programs like tools could not require those modules
@@ -98,7 +98,7 @@ endif
 ROOT = $(shell whoami)
 
 # By default we suppose we are working on Windows
-HOST_PLATFORM_OS ?= WINDOWS
+HOST_PLATFORM_OS ?= LINUX
 
 # Determine PLATFORM_OS in case PLATFORM_DESKTOP selected
 ifeq ($(PLATFORM),PLATFORM_DESKTOP)
@@ -211,6 +211,10 @@ endif
 ifeq ($(PLATFORM),PLATFORM_ANDROID)
     # By default use OpenGL ES 2.0 on Android
     GRAPHICS = GRAPHICS_API_OPENGL_ES2
+endif
+ifeq ($(PLATFORM),PLATFORM_GBM)
+	# Might be good to add support to other OpenGL versions.
+	GRAPHICS = GRAPHICS_API_OPENGL_ES2
 endif
 
 # Define default C compiler and archiver to pack library
@@ -474,7 +478,7 @@ else
 				cd $(RAYLIB_RELEASE_PATH) && ln -fsv libraylib.so.$(RAYLIB_API_VERSION) libraylib.so
             endif
             ifeq ($(PLATFORM_OS),OSX)
-				$(CC) -dynamiclib -o $(RAYLIB_RELEASE_PATH)/libraylib.$(RAYLIB_VERSION).dylib $(OBJS) -compatibility_version $(RAYLIB_API_VERSION) -current_version $(RAYLIB_VERSION) -framework OpenGL -framework Cocoa -framework IOKit -framework CoreAudio -framework CoreVideo 
+				$(CC) -dynamiclib -o $(RAYLIB_RELEASE_PATH)/libraylib.$(RAYLIB_VERSION).dylib $(OBJS) -compatibility_version $(RAYLIB_API_VERSION) -current_version $(RAYLIB_VERSION) -framework OpenGL -framework Cocoa -framework IOKit -framework CoreAudio -framework CoreVideo
 				install_name_tool -id "libraylib.$(VERSION).dylib" $(RAYLIB_RELEASE_PATH)/libraylib.$(RAYLIB_VERSION).dylib
 				@echo "raylib shared library generated (libraylib.$(RAYLIB_VERSION).dylib)!"
 				cd $(RAYLIB_RELEASE_PATH) && ln -fs libraylib.$(RAYLIB_VERSION).dylib libraylib.$(RAYLIB_API_VERSION).dylib

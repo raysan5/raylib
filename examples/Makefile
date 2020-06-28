@@ -31,8 +31,8 @@ RAYLIB_PATH        ?= ..
 
 # Define default options
 
-# One of PLATFORM_DESKTOP, PLATFORM_RPI, PLATFORM_ANDROID, PLATFORM_WEB
-PLATFORM           ?= PLATFORM_DESKTOP
+# One of PLATFORM_DESKTOP, PLATFORM_RPI, PLATFORM_ANDROID, PLATFORM_WEB, PLATFORM_GBM
+PLATFORM           ?= PLATFORM_GBM
 
 # Locations of your newly installed library and associated headers. See ../src/Makefile
 # On Linux, if you have installed raylib but cannot compile the examples, check that
@@ -52,7 +52,7 @@ RAYLIB_H_INSTALL_PATH ?= $(DESTDIR)/include
 RAYLIB_LIBTYPE        ?= STATIC
 
 # Build mode for project: DEBUG or RELEASE
-BUILD_MODE            ?= RELEASE
+BUILD_MODE            ?= DEBUG
 
 # Use external GLFW library instead of rglfw module
 # TODO: Review usage on Linux. Target version of choice. Switch on -lglfw or -lglfw3
@@ -274,7 +274,7 @@ LDFLAGS = -L. -L$(RAYLIB_RELEASE_PATH) -L$(RAYLIB_PATH)/src
 ifeq ($(PLATFORM),PLATFORM_DESKTOP)
     ifeq ($(PLATFORM_OS),WINDOWS)
         # resource file contains windows executable icon and properties
-        LDFLAGS += $(RAYLIB_PATH)/src/raylib.rc.data 
+        LDFLAGS += $(RAYLIB_PATH)/src/raylib.rc.data
         # -Wl,--subsystem,windows hides the console window
         ifeq ($(BUILD_MODE), RELEASE)
             LDFLAGS += -Wl,--subsystem,windows
@@ -327,7 +327,7 @@ ifeq ($(PLATFORM),PLATFORM_DESKTOP)
     ifeq ($(PLATFORM_OS),OSX)
         # Libraries for OSX 10.9 desktop compiling
         # NOTE: Required packages: libopenal-dev libegl1-mesa-dev
-        LDLIBS = -lraylib -framework OpenGL -framework Cocoa -framework IOKit -framework CoreAudio -framework CoreVideo 
+        LDLIBS = -lraylib -framework OpenGL -framework Cocoa -framework IOKit -framework CoreAudio -framework CoreVideo
     endif
     ifeq ($(PLATFORM_OS),BSD)
         # Libraries for FreeBSD, OpenBSD, NetBSD, DragonFly desktop compiling
@@ -350,6 +350,9 @@ endif
 ifeq ($(PLATFORM),PLATFORM_WEB)
     # Libraries for web (HTML5) compiling
     LDLIBS = $(RAYLIB_RELEASE_PATH)/libraylib.bc
+endif
+ifeq ($(PLATFORM),PLATFORM_GBM)
+	LDLIBS = -lraylib -lEGL -lgbm -lGLESv2 -lm -ldl -lpthread
 endif
 
 # Define all object files required
@@ -393,7 +396,7 @@ SHAPES = \
     shapes/shapes_draw_ring \
     shapes/shapes_draw_circle_sector \
     shapes/shapes_draw_rectangle_rounded
-    
+
 TEXTURES = \
     textures/textures_logo_raylib \
     textures/textures_mouse_painting \
@@ -413,7 +416,7 @@ TEXTURES = \
     textures/textures_sprite_explosion \
     textures/textures_bunnymark \
     textures/textures_blend_modes
-    
+
 TEXT = \
     text/text_raylib_fonts \
     text/text_font_spritefont \
@@ -425,7 +428,7 @@ TEXT = \
     text/text_writing_anim \
     text/text_rectangle_bounds \
     text/text_unicode
-    
+
 MODELS = \
     models/models_animation \
     models/models_billboard \
@@ -443,7 +446,7 @@ MODELS = \
     models/models_yaw_pitch_roll \
     models/models_heightmap \
     models/models_waving_cubes
-    
+
 SHADERS = \
     shaders/shaders_model_shader \
     shaders/shaders_shapes_textures \
@@ -459,14 +462,14 @@ SHADERS = \
     shaders/shaders_fog \
     shaders/shaders_simple_mask \
     shaders/shaders_spotlight
-    
+
 AUDIO = \
     audio/audio_module_playing \
     audio/audio_music_stream \
     audio/audio_raw_stream \
     audio/audio_sound_loading \
     audio/audio_multichannel_sound
-    
+
 PHYSICS = \
     physics/physics_demo \
     physics/physics_friction \
@@ -521,4 +524,3 @@ ifeq ($(PLATFORM),PLATFORM_WEB)
 	del *.o *.html *.js
 endif
 	@echo Cleaning done
-

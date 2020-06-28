@@ -1,3 +1,4 @@
+#define PLATFORM_GBM
 /**********************************************************************************************
 *
 *   raylib.core - Basic functions to manage windows, OpenGL context and input on multiple platforms
@@ -9,6 +10,7 @@
 *       - PLATFORM_DESKTOP: OSX/macOS
 *       - PLATFORM_ANDROID: Android 4.0 (ARM, ARM64)
 *       - PLATFORM_RPI:     Raspberry Pi 0,1,2,3,4 (Raspbian)
+*       - PLATFORM_GBM:     Linux (desktop-less, Generic Buffer Management)
 *       - PLATFORM_WEB:     HTML5 with asm.js (Chrome, Firefox)
 *       - PLATFORM_UWP:     Windows 10 App, Windows Phone, Xbox One
 *
@@ -25,6 +27,11 @@
 *   #define PLATFORM_RPI
 *       Windowing and input system configured for Raspberry Pi i native mode (no X.org required, tested on Raspbian),
 *       graphic device is managed by EGL and inputs are processed is raw mode, reading from /dev/input/
+*
+*   #define PLATFORM_GBM
+*       Similar to PLATFORM_RPI, use GBM to instantiate a EGL display (no X.org/Wayland required).
+*       Requires Mesa drivers.
+*       Graphic device is managed by EGL and inputs are processed is raw mode, reading from /dev/input/
 *
 *   #define PLATFORM_WEB
 *       Windowing and input system configured for HTML5 (run on browser), code converted from C to asm.js
@@ -222,23 +229,27 @@
     #include <GLES2/gl2.h>                  // OpenGL ES 2.0 library
 #endif
 
-#if defined(PLATFORM_RPI)
+#if defined(PLATFORM_RPI) || defined(PLATFORM_GBM)
     #include <fcntl.h>                  // POSIX file control definitions - open(), creat(), fcntl()
     #include <unistd.h>                 // POSIX standard function definitions - read(), close(), STDIN_FILENO
     #include <termios.h>                // POSIX terminal control definitions - tcgetattr(), tcsetattr()
     #include <pthread.h>                // POSIX threads management (inputs reading)
     #include <dirent.h>                 // POSIX directory browsing
-    
+
     #include <sys/ioctl.h>              // UNIX System call for device-specific input/output operations - ioctl()
     #include <linux/kd.h>               // Linux: KDSKBMODE, K_MEDIUMRAM constants definition
     #include <linux/input.h>            // Linux: Keycodes constants definition (KEY_A, ...)
     #include <linux/joystick.h>         // Linux: Joystick support library
-    
+
+    #if defined(PLATFORM_RPI)
     #include "bcm_host.h"               // Raspberry Pi VideoCore IV access functions
-    
+    #include "GLES2/gl2.h"              // OpenGL ES 2.0 library
+    #elif defined(PLATFORM_GBM)
+    #include "external/drm/drm-common.h"
+    #endif
+
     #include "EGL/egl.h"                // EGL library - Native platform display device control functions
     #include "EGL/eglext.h"             // EGL library - Extensions
-    #include "GLES2/gl2.h"              // OpenGL ES 2.0 library
 #endif
 
 #if defined(PLATFORM_UWP)
@@ -266,7 +277,7 @@
 //----------------------------------------------------------------------------------
 // Defines and Macros
 //----------------------------------------------------------------------------------
-#if defined(PLATFORM_RPI)
+#if defined(PLATFORM_RPI) || defined(PLATFORM_GBM)
     #define USE_LAST_TOUCH_DEVICE       // When multiple touchscreens are connected, only use the one with the highest event<N> number
 
     // Old device inputs system
@@ -278,6 +289,14 @@
     //#define DEFAULT_KEYBOARD_DEV    "/dev/input/eventN"
     //#define DEFAULT_MOUSE_DEV       "/dev/input/eventN"
     //#define DEFAULT_GAMEPAD_DEV     "/dev/input/eventN"
+#endif
+
+#if defined(PLATFORM_GBM)
+
+#if !defined(GBM_DISPLAY_FORMAT)
+#define USE_GBM_SURFACE_FORMAT GBM_FORMAT_XRGB8888
+#endif
+
 #endif
 
 #ifndef MAX_FILEPATH_LENGTH
@@ -313,7 +332,7 @@
 //----------------------------------------------------------------------------------
 // Types and Structures Definition
 //----------------------------------------------------------------------------------
-#if defined(PLATFORM_RPI)
+#if defined(PLATFORM_RPI) || defined(PLATFORM_GBM)
 typedef struct {
     pthread_t threadId;             // Event reading thread id
     int fd;                         // File descriptor to the device it is assigned to
@@ -347,7 +366,13 @@ typedef struct CoreData {
         // NOTE: RPI4 does not support Dispmanx anymore, system should be redesigned
         EGL_DISPMANX_WINDOW_T handle;       // Native window handle (graphic device)
 #endif
-#if defined(PLATFORM_ANDROID) || defined(PLATFORM_RPI) || defined(PLATFORM_UWP)
+#if defined(PLATFORM_GBM)
+        struct {
+          struct gbm_device *gbm;
+          drmDevice *drm;
+        } handle;
+#endif
+#if defined(PLATFORM_ANDROID) || defined(PLATFORM_RPI) || defined(PLATFORM_UWP) || defined(PLATFORM_GBM)
         EGLDisplay device;                  // Native display device (physical screen connection)
         EGLSurface surface;                 // Surface to draw on, framebuffers (connected to context)
         EGLContext context;                 // Graphic context, mode in which drawing can be done
@@ -390,7 +415,7 @@ typedef struct CoreData {
     } UWP;
 #endif
     struct {
-#if defined(PLATFORM_RPI)
+#if defined(PLATFORM_RPI) || defined(PLATFORM_GBM)
         InputEventWorker eventWorker[10];   // List of worker threads for every monitored "/dev/input/event<N>"
 #endif
         struct {
@@ -400,7 +425,7 @@ typedef struct CoreData {
 
             int keyPressedQueue[MAX_KEY_PRESSED_QUEUE]; // Input characters queue
             int keyPressedQueueCount;             // Input characters queue count
-#if defined(PLATFORM_RPI)
+#if defined(PLATFORM_RPI) || defined(PLATFORM_GBM)
             int defaultMode;                // Default keyboard mode
             struct termios defaultSettings; // Default keyboard settings
             KeyEventFifo lastKeyPressed;    // Buffer for holding keydown events as they arrive (Needed due to multitreading of event workers)
@@ -420,7 +445,7 @@ typedef struct CoreData {
             char previousButtonState[3];    // Registers previous mouse button state
             int currentWheelMove;           // Registers current mouse wheel variation
             int previousWheelMove;          // Registers previous mouse wheel variation
-#if defined(PLATFORM_RPI)
+#if defined(PLATFORM_RPI) || defined(PLATFORM_GBM)
             char currentButtonStateEvdev[3];    // Holds the new mouse state for the next polling event to grab (Can't be written directly due to multithreading, app could miss the update)
 #endif
         } Mouse;
@@ -432,13 +457,13 @@ typedef struct CoreData {
         struct {
             int lastButtonPressed;          // Register last gamepad button pressed
             int axisCount;                  // Register number of available gamepad axis
-#if defined(PLATFORM_DESKTOP) || defined(PLATFORM_RPI) || defined(PLATFORM_WEB) || defined(PLATFORM_UWP)
+#if defined(PLATFORM_DESKTOP) || defined(PLATFORM_RPI) || defined(PLATFORM_WEB) || defined(PLATFORM_UWP) || defined(PLATFORM_GBM)
             bool ready[MAX_GAMEPADS];       // Flag to know if gamepad is ready
             float axisState[MAX_GAMEPADS][MAX_GAMEPAD_AXIS];        // Gamepad axis state
             char currentState[MAX_GAMEPADS][MAX_GAMEPAD_BUTTONS];   // Current gamepad buttons state
             char previousState[MAX_GAMEPADS][MAX_GAMEPAD_BUTTONS];  // Previous gamepad buttons state
 #endif
-#if defined(PLATFORM_RPI)
+#if defined(PLATFORM_RPI) || defined(PLATFORM_GBM)
             pthread_t threadId;             // Gamepad reading thread id
             int streamId[MAX_GAMEPADS];     // Gamepad device file descriptor
             char name[64];                  // Gamepad name holder
@@ -452,7 +477,7 @@ typedef struct CoreData {
         double draw;                        // Time measure for frame draw
         double frame;                       // Time measure for one frame
         double target;                      // Desired time for one frame, if 0 not applied
-#if defined(PLATFORM_ANDROID) || defined(PLATFORM_RPI) || defined(PLATFORM_UWP)
+#if defined(PLATFORM_ANDROID) || defined(PLATFORM_RPI) || defined(PLATFORM_UWP) || defined(PLATFORM_GBM)
         unsigned long long base;            // Base time measure for hi-res timer
 #endif
     } Time;
@@ -526,7 +551,7 @@ static EM_BOOL EmscriptenTouchCallback(int eventType, const EmscriptenTouchEvent
 static EM_BOOL EmscriptenGamepadCallback(int eventType, const EmscriptenGamepadEvent *gamepadEvent, void *userData);
 #endif
 
-#if defined(PLATFORM_RPI)
+#if defined(PLATFORM_RPI) || defined(PLATFORM_GBM)
 #if defined(SUPPORT_SSH_KEYBOARD_RPI)
 static void InitKeyboard(void);                         // Init raw keyboard system (standard input reading)
 static void ProcessKeyboard(void);                      // Process keyboard events
@@ -542,7 +567,7 @@ static void *EventThread(void *arg);                    // Input device events r
 
 static void InitGamepad(void);                          // Init raw gamepad input
 static void *GamepadThread(void *arg);                  // Mouse reading thread
-#endif  // PLATFORM_RPI
+#endif  // PLATFORM_RPI || PLATFORM_GBM
 
 #if defined(_WIN32)
     // NOTE: We include Sleep() function signature here to avoid windows.h inclusion
@@ -573,7 +598,7 @@ struct android_app *GetAndroidApp(void)
     return CORE.Android.app;
 }
 #endif
-#if defined(PLATFORM_RPI) && !defined(SUPPORT_SSH_KEYBOARD_RPI)
+#if (defined(PLATFORM_RPI) || defined(PLATFORM_GBM)) && !defined(SUPPORT_SSH_KEYBOARD_RPI)
 // Init terminal (block echo and signal short cuts)
 static void InitTerminal(void)
 {
@@ -616,6 +641,7 @@ static void RestoreTerminal(void)
     ioctl(STDIN_FILENO, KDSKBMODE, CORE.Input.Keyboard.defaultMode);
 }
 #endif
+
 // Initialize window and OpenGL context
 // NOTE: data parameter could be used to pass any kind of required data to the initialization
 void InitWindow(int width, int height, const char *title)
@@ -724,7 +750,7 @@ void InitWindow(int width, int height, const char *title)
     SetTextureFilter(GetFontDefault().texture, FILTER_BILINEAR);
 #endif
 
-#if defined(PLATFORM_RPI)
+#if defined(PLATFORM_RPI) || defined(PLATFORM_GBM)
     // Init raw input system
     InitEvdevInput();   // Evdev inputs initialization
     InitGamepad();      // Gamepad init
@@ -759,7 +785,8 @@ void InitWindow(int width, int height, const char *title)
 
     CORE.Input.Mouse.position.x = (float)CORE.Window.screen.width/2.0f;
     CORE.Input.Mouse.position.y = (float)CORE.Window.screen.height/2.0f;
-#endif        // PLATFORM_ANDROID
+#endif
+ // PLATFORM_ANDROID
 }
 
 // Close window and unload OpenGL context
@@ -788,7 +815,7 @@ void CloseWindow(void)
     timeEndPeriod(1);           // Restore time period
 #endif
 
-#if defined(PLATFORM_ANDROID) || defined(PLATFORM_RPI) || defined(PLATFORM_UWP)
+#if defined(PLATFORM_ANDROID) || defined(PLATFORM_RPI) || defined(PLATFORM_UWP) || defined(PLATFORM_GBM)
     // Close surface, context and display
     if (CORE.Window.device != EGL_NO_DISPLAY)
     {
@@ -811,7 +838,7 @@ void CloseWindow(void)
     }
 #endif
 
-#if defined(PLATFORM_RPI)
+#if defined(PLATFORM_RPI) || defined(PLATFORM_GBM)
     // Wait for mouse and gamepad threads to finish before closing
     // NOTE: Those threads should already have finished at this point
     // because they are controlled by CORE.Window.shouldClose variable
@@ -864,7 +891,7 @@ bool WindowShouldClose(void)
     else return true;
 #endif
 
-#if defined(PLATFORM_ANDROID) || defined(PLATFORM_RPI) || defined(PLATFORM_UWP)
+#if defined(PLATFORM_ANDROID) || defined(PLATFORM_RPI) || defined(PLATFORM_UWP) || defined(PLATFORM_GBM)
     if (CORE.Window.ready) return CORE.Window.shouldClose;
     else return true;
 #endif
@@ -949,7 +976,7 @@ void ToggleFullscreen(void)
         else Module.requestFullscreen(true, true);
     );
     */
-    
+
     //EM_ASM(Module.requestFullscreen(false, false););
 
     /*
@@ -963,20 +990,20 @@ void ToggleFullscreen(void)
             .canvasResizedCallback = EmscriptenWindowResizedCallback, //on_canvassize_changed,
             .canvasResizedCallbackUserData = NULL
         };
-        
+
         emscripten_request_fullscreen("#canvas", false);
         //emscripten_request_fullscreen_strategy("#canvas", EM_FALSE, &strategy);
         //emscripten_enter_soft_fullscreen("canvas", &strategy);
         TRACELOG(LOG_INFO, "emscripten_request_fullscreen_strategy");
     }
-    else 
+    else
     {
         TRACELOG(LOG_INFO, "emscripten_exit_fullscreen");
         emscripten_exit_fullscreen();
     }
     */
 #endif
-#if defined(PLATFORM_ANDROID) || defined(PLATFORM_RPI)
+#if defined(PLATFORM_ANDROID) || defined(PLATFORM_RPI) || defined(PLATFORM_GBM)
     TRACELOG(LOG_WARNING, "SYSTEM: Failed to toggle to windowed mode");
 #endif
 
@@ -1226,7 +1253,7 @@ Vector2 GetWindowPosition(void)
 Vector2 GetWindowScaleDPI(void)
 {
     Vector2 scale = { 1.0f, 1.0f };
-    
+
 #if defined(PLATFORM_DESKTOP)
     GLFWmonitor *monitor = glfwGetPrimaryMonitor();
 
@@ -1362,7 +1389,7 @@ void BeginDrawing(void)
 // End canvas drawing and swap buffers (double buffering)
 void EndDrawing(void)
 {
-#if defined(PLATFORM_RPI) && defined(SUPPORT_MOUSE_CURSOR_RPI)
+#if (defined(PLATFORM_RPI) || defined(PLATFORM_GBM)) && defined(SUPPORT_MOUSE_CURSOR_RPI)
     // On RPI native mode we have no system mouse cursor, so,
     // we draw a small rectangle for user reference
     DrawRectangle(CORE.Input.Mouse.position.x, CORE.Input.Mouse.position.y, 3, 3, MAROON);
@@ -1768,7 +1795,7 @@ double GetTime(void)
     return glfwGetTime();                   // Elapsed time since glfwInit()
 #endif
 
-#if defined(PLATFORM_ANDROID) || defined(PLATFORM_RPI)
+#if defined(PLATFORM_ANDROID) || defined(PLATFORM_RPI) || defined(PLATFORM_GBM)
     struct timespec ts;
     clock_gettime(CLOCK_MONOTONIC, &ts);
     unsigned long long int time = (unsigned long long int)ts.tv_sec*1000000000LLU + (unsigned long long int)ts.tv_nsec;
@@ -2006,7 +2033,7 @@ const char *GetPrevDirectoryPath(const char *dirPath)
         {
             // Check for root: "C:\" or "/"
             if (((i == 2) && (dirPath[1] ==':')) || (i == 0)) i++;
-            
+
             strncpy(prevDirPath, dirPath, i);
             break;
         }
@@ -2186,13 +2213,13 @@ void SaveStorageValue(unsigned int position, int value)
             {
                 // RL_REALLOC succeded
                 int *dataPtr = (int *)newFileData;
-                dataPtr[position] = value;  
+                dataPtr[position] = value;
             }
             else
             {
                 // RL_REALLOC failed
-                TRACELOG(LOG_WARNING, "FILEIO: [%s] Failed to realloc data (%u), position in bytes (%u) bigger than actual file size", path, dataSize, position*sizeof(int));  
-                
+                TRACELOG(LOG_WARNING, "FILEIO: [%s] Failed to realloc data (%u), position in bytes (%u) bigger than actual file size", path, dataSize, position*sizeof(int));
+
                 // We store the old size of the file
                 newFileData = fileData;
                 newDataSize = dataSize;
@@ -2401,7 +2428,7 @@ const char *GetGamepadName(int gamepad)
 #if defined(PLATFORM_DESKTOP)
     if (CORE.Input.Gamepad.ready[gamepad]) return glfwGetJoystickName(gamepad);
     else return NULL;
-#elif defined(PLATFORM_RPI)
+#elif defined(PLATFORM_RPI) || defined(PLATFORM_GBM)
     if (CORE.Input.Gamepad.ready[gamepad]) ioctl(CORE.Input.Gamepad.streamId[gamepad], JSIOCGNAME(64), &CORE.Input.Gamepad.name);
 
     return CORE.Input.Gamepad.name;
@@ -2413,7 +2440,7 @@ const char *GetGamepadName(int gamepad)
 // Return gamepad axis count
 int GetGamepadAxisCount(int gamepad)
 {
-#if defined(PLATFORM_RPI)
+#if defined(PLATFORM_RPI) || defined(PLATFORM_GBM)
     int axisCount = 0;
     if (CORE.Input.Gamepad.ready[gamepad]) ioctl(CORE.Input.Gamepad.streamId[gamepad], JSIOCGAXES, &axisCount);
     CORE.Input.Gamepad.axisCount = axisCount;
@@ -2640,7 +2667,7 @@ Vector2 GetTouchPosition(int index)
 {
     Vector2 position = { -1.0f, -1.0f };
 
-#if defined(PLATFORM_ANDROID) || defined(PLATFORM_WEB) || defined(PLATFORM_RPI) || defined(PLATFORM_UWP)
+#if defined(PLATFORM_ANDROID) || defined(PLATFORM_WEB) || defined(PLATFORM_RPI) || defined(PLATFORM_UWP) || defined(PLATFORM_GBM)
     if (index < MAX_TOUCH_POINTS) position = CORE.Input.Touch.position[index];
     else TRACELOG(LOG_WARNING, "INPUT: Required touch point out of range (Max touch points: %i)", MAX_TOUCH_POINTS);
 
@@ -2915,19 +2942,34 @@ static bool InitGraphicsDevice(int width, int height)
     }
 #endif // PLATFORM_DESKTOP || PLATFORM_WEB
 
-#if defined(PLATFORM_ANDROID) || defined(PLATFORM_RPI) || defined(PLATFORM_UWP)
-    CORE.Window.fullscreen = true;
+#if defined(PLATFORM_ANDROID) || defined(PLATFORM_RPI) || defined(PLATFORM_UWP) || defined(PLATFORM_GBM)
+  CORE.Window.fullscreen = true;
 
-#if defined(PLATFORM_RPI)
-    bcm_host_init();
+  #if defined(PLATFORM_RPI)
+  bcm_host_init();
 
-    DISPMANX_ELEMENT_HANDLE_T dispmanElement;
-    DISPMANX_DISPLAY_HANDLE_T dispmanDisplay;
-    DISPMANX_UPDATE_HANDLE_T dispmanUpdate;
+  DISPMANX_ELEMENT_HANDLE_T dispmanElement;
+  DISPMANX_DISPLAY_HANDLE_T dispmanDisplay;
+  DISPMANX_UPDATE_HANDLE_T dispmanUpdate;
 
-    VC_RECT_T dstRect;
-    VC_RECT_T srcRect;
-#endif
+  VC_RECT_T dstRect;
+  VC_RECT_T srcRect;
+  #elif defined(PLATFORM_GBM)
+  /* Initialize gbm device. */
+  int fd = open("/dev/dri/card0", O_RDWR | O_CLOEXEC);
+
+  if (fd < 0)
+    TRACELOG(LOG_ERROR, "DISPLAY: Can't open dri device. (/dev/dri/card0)");
+
+  fflush(stderr);
+  struct gbm_device *gbmDevice = gbm_create_device(fd);
+  if (!gbmDevice)
+    TRACELOG(LOG_ERROR, "DISPLAY: Can't create gbm device.");
+
+  drmModeAddFB(int fd, uint32_t width, uint32_t height, uint8_t depth, uint8_t bpp, uint32_t pitch, uint32_t bo_handle, uint32_t *buf_id)
+
+  CORE.Window.handle.gbm = gbmDevice;
+  #endif
 
     EGLint samples = 0;
     EGLint sampleBuffer = 0;
@@ -2940,18 +2982,9 @@ static bool InitGraphicsDevice(int width, int height)
 
     const EGLint framebufferAttribs[] =
     {
-        EGL_RENDERABLE_TYPE, EGL_OPENGL_ES2_BIT,     // Type of context support -> Required on RPI?
-        //EGL_SURFACE_TYPE, EGL_WINDOW_BIT,          // Don't use it on Android!
-        EGL_RED_SIZE, 8,            // RED color bit depth (alternative: 5)
-        EGL_GREEN_SIZE, 8,          // GREEN color bit depth (alternative: 6)
-        EGL_BLUE_SIZE, 8,           // BLUE color bit depth (alternative: 5)
-        //EGL_ALPHA_SIZE, 8,        // ALPHA bit depth (required for transparent framebuffer)
-        //EGL_TRANSPARENT_TYPE, EGL_NONE, // Request transparent framebuffer (EGL_TRANSPARENT_RGB does not work on RPI)
-        EGL_DEPTH_SIZE, 16,         // Depth buffer size (Required to use Depth testing!)
-        //EGL_STENCIL_SIZE, 8,      // Stencil buffer size
-        EGL_SAMPLE_BUFFERS, sampleBuffer,    // Activate MSAA
-        EGL_SAMPLES, samples,       // 4x Antialiasing if activated (Free on MALI GPUs)
-        EGL_NONE
+      EGL_RENDERABLE_TYPE,    EGL_OPENGL_ES2_BIT,
+      EGL_SURFACE_TYPE,       EGL_WINDOW_BIT,
+      EGL_NONE
     };
 
     const EGLint contextAttribs[] =
@@ -3125,11 +3158,17 @@ static bool InitGraphicsDevice(int width, int height)
 
 #endif  // PLATFORM_UWP
 
-#if defined(PLATFORM_ANDROID) || defined(PLATFORM_RPI)
+#if defined(PLATFORM_ANDROID) || defined(PLATFORM_RPI) || defined(PLATFORM_GBM)
     EGLint numConfigs = 0;
 
     // Get an EGL device connection
+    #if defined(PLATFORM_GBM)
+    //CORE.Window.device = eglGetPlatformDisplay(EGL_PLATFORM_GBM_MESA, gbmDevice, NULL);
+    CORE.Window.device = eglGetPlatformDisplay(EGL_PLATFORM_GBM_MESA, gbmDevice, NULL);
+    #else
     CORE.Window.device = eglGetDisplay(EGL_DEFAULT_DISPLAY);
+    #endif
+
     if (CORE.Window.device == EGL_NO_DISPLAY)
     {
         TRACELOG(LOG_WARNING, "DISPLAY: Failed to initialize EGL device");
@@ -3144,8 +3183,43 @@ static bool InitGraphicsDevice(int width, int height)
         return false;
     }
 
+    #if defined(PLATFORM_GBM)
+    /* GBM/EGL needs a appropriate EGLConfig to work. */
+
+    if (!eglGetConfigs(CORE.Window.device, NULL, 0, &numConfigs))
+      TRACELOG(LOG_ERROR, "DISPLAY: Can't get EGL configs");
+
+    EGLConfig *configs = malloc(numConfigs * sizeof(EGLConfig));
+    if (!eglChooseConfig(CORE.Window.device, framebufferAttribs,
+                         configs, numConfigs, &numConfigs))
+        TRACELOG(LOG_ERROR, "DISPLAY: Can't get EGL configs");
+
+    if (numConfigs == 0)
+      TRACELOG(LOG_ERROR, "DISPLAY: Can't get EGL configs");
+
+    // Find a config whose native visual ID is the desired GBM format.
+    bool found = false;
+    for (int i = 0; i < numConfigs; ++i) {
+        EGLint gbm_format;
+
+        if (!eglGetConfigAttrib(CORE.Window.device, configs[i],
+                                EGL_NATIVE_VISUAL_ID, &gbm_format))
+            TRACELOG(LOG_ERROR, "DISPLAY: Can't get EGL_NATIVE_VISUAL_ID attribute");
+
+        if (gbm_format == USE_GBM_SURFACE_FORMAT) {
+            CORE.Window.config = configs[i];
+            found = true;
+            free(configs);
+            break;
+        }
+    }
+    if (!found)
+      TRACELOG(LOG_ERROR, "DISPLAY: Appropriate EGLConfig not found.");
+
+    #else
     // Get an appropriate EGL framebuffer configuration
     eglChooseConfig(CORE.Window.device, framebufferAttribs, &CORE.Window.config, 1, &numConfigs);
+    #endif
 
     // Set rendering API
     eglBindAPI(EGL_OPENGL_ES_API);
@@ -3180,7 +3254,7 @@ static bool InitGraphicsDevice(int width, int height)
 
 #if defined(PLATFORM_RPI)
     graphics_get_display_size(0, &CORE.Window.display.width, &CORE.Window.display.height);
-    
+
     // Screen size security check
     if (CORE.Window.screen.width <= 0) CORE.Window.screen.width = CORE.Window.display.width;
     if (CORE.Window.screen.height <= 0) CORE.Window.screen.height = CORE.Window.display.height;
@@ -3222,6 +3296,26 @@ static bool InitGraphicsDevice(int width, int height)
     CORE.Window.surface = eglCreateWindowSurface(CORE.Window.device, CORE.Window.config, &CORE.Window.handle, NULL);
     //---------------------------------------------------------------------------------
 #endif  // PLATFORM_RPI
+
+  #if defined(PLATFORM_GBM)
+  CORE.Window.render.width = width;
+  CORE.Window.render.height = height;
+
+  CORE.Window.display.width = width;
+  CORE.Window.display.height = height;
+
+  /* Create gbm surface */
+  struct gbm_surface *gbmSurface = gbm_surface_create(gbmDevice, width, height,
+    USE_GBM_SURFACE_FORMAT, GBM_BO_USE_RENDERING);
+
+  if (!gbmSurface)
+    TRACELOG(LOG_ERROR, "DISPLAY: Can't create gbm surface.");
+
+  CORE.Window.surface = eglCreatePlatformWindowSurface(CORE.Window.device, CORE.Window.config, gbmSurface, NULL);
+
+  if (!CORE.Window.surface)
+    TRACELOG(LOG_ERROR, "DISPLAY: Can't create EGL window surface.");
+  #endif
 
     // There must be at least one frame displayed before the buffers are swapped
     //eglSwapInterval(CORE.Window.device, 1);
@@ -3275,7 +3369,7 @@ static bool InitGraphicsDevice(int width, int height)
 
     ClearBackground(RAYWHITE);      // Default background color for raylib games :P
 
-#if defined(PLATFORM_ANDROID) || defined(PLATFORM_UWP)
+#if defined(PLATFORM_ANDROID) || defined(PLATFORM_UWP) || defined(PLATFORM_GBM)
     CORE.Window.ready = true;
 #endif
     return true;
@@ -3384,7 +3478,7 @@ static void InitTimer(void)
     timeBeginPeriod(1);             // Setup high-resolution timer to 1ms (granularity of 1-2 ms)
 #endif
 
-#if defined(PLATFORM_ANDROID) || defined(PLATFORM_RPI)
+#if defined(PLATFORM_ANDROID) || defined(PLATFORM_RPI) || defined(PLATFORM_GBM)
     struct timespec now;
 
     if (clock_gettime(CLOCK_MONOTONIC, &now) == 0)  // Success
@@ -3520,7 +3614,7 @@ static void PollInputEvents(void)
     CORE.Input.Gamepad.axisCount = 0;
 #endif
 
-#if defined(PLATFORM_RPI)
+#if defined(PLATFORM_RPI) || defined(PLATFORM_GBM)
     // Register previous keys states
     for (int i = 0; i < 512; i++) CORE.Input.Keyboard.previousKeyState[i] = CORE.Input.Keyboard.currentKeyState[i];
 
@@ -3601,7 +3695,7 @@ static void PollInputEvents(void)
             // Get remapped buttons
             GLFWgamepadstate state = { 0 };
             glfwGetGamepadState(i, &state); // This remapps all gamepads so they have their buttons mapped like an xbox controller
-            
+
             const unsigned char *buttons = state.buttons;
 
             for (int k = 0; (buttons != NULL) && (k < GLFW_GAMEPAD_BUTTON_DPAD_LEFT + 1) && (k < MAX_GAMEPAD_BUTTONS); k++)
@@ -3709,7 +3803,7 @@ static void PollInputEvents(void)
     }
 #endif
 
-#if defined(PLATFORM_RPI) && defined(SUPPORT_SSH_KEYBOARD_RPI)
+#if (defined(PLATFORM_RPI) || defined(PLATFORM_GBM)) && defined(SUPPORT_SSH_KEYBOARD_RPI)
     // NOTE: Keyboard reading could be done using input_event(s) reading or just read from stdin,
     // we now use both methods inside here. 2nd method is still used for legacy purposes (Allows for input trough SSH console)
     ProcessKeyboard();
@@ -3726,7 +3820,7 @@ static void SwapBuffers(void)
     glfwSwapBuffers(CORE.Window.handle);
 #endif
 
-#if defined(PLATFORM_ANDROID) || defined(PLATFORM_RPI) || defined(PLATFORM_UWP)
+#if defined(PLATFORM_ANDROID) || defined(PLATFORM_RPI) || defined(PLATFORM_UWP) || defined(PLATFORM_GBM)
     eglSwapBuffers(CORE.Window.device, CORE.Window.surface);
 #endif
 }
@@ -4066,7 +4160,7 @@ static int32_t AndroidInputCallback(struct android_app *app, AInputEvent *event)
 
     if (type == AINPUT_EVENT_TYPE_MOTION)
     {
-        if (((source & AINPUT_SOURCE_JOYSTICK) == AINPUT_SOURCE_JOYSTICK) || 
+        if (((source & AINPUT_SOURCE_JOYSTICK) == AINPUT_SOURCE_JOYSTICK) ||
             ((source & AINPUT_SOURCE_GAMEPAD) == AINPUT_SOURCE_GAMEPAD))
         {
             // Get first touch position
@@ -4220,7 +4314,7 @@ static EM_BOOL EmscriptenKeyboardCallback(int eventType, const EmscriptenKeyboar
     if ((eventType == EMSCRIPTEN_EVENT_KEYDOWN) && (keyEvent->keyCode == 27))  // ESCAPE key (strcmp(keyEvent->code, "Escape") == 0)
     {
         // WARNING: Not executed when pressing Esc to exit fullscreen, it seems document has priority over #canvas
-        
+
         emscripten_exit_pointerlock();
         CORE.Window.fullscreen = false;
         TRACELOG(LOG_INFO, "CORE.Window.fullscreen = %s", CORE.Window.fullscreen? "true" : "false");
@@ -4349,7 +4443,7 @@ static EM_BOOL EmscriptenWindowResizedCallback(int eventType, const void *reserv
 }
 #endif
 
-#if defined(PLATFORM_RPI)
+#if defined(PLATFORM_RPI) || defined(PLATFORM_GBM)
 
 #if defined(SUPPORT_SSH_KEYBOARD_RPI)
 // Initialize Keyboard system (using standard input)
