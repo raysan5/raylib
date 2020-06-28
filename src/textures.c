@@ -3005,6 +3005,80 @@ void DrawTextureQuad(Texture2D texture, Vector2 tiling, Vector2 offset, Rectangl
     DrawTexturePro(texture, source, quad, origin, 0.0f, tint);
 }
 
+// Draw part of a texture (defined by a rectangle) with rotation and scale tiled into destRec.
+// NOTE: For tilling a whole texture DrawTextureQuad() is better
+void DrawTextureTiled(Texture2D texture, Rectangle sourceRec, Rectangle destRec, Vector2 origin, float rotation, float scale, Color tint)
+{
+    if(texture.id <= 0 || scale <= 0.0f) return;  // Wanna see a infinite loop?!...just delete this line!
+    
+    int tileWidth = sourceRec.width*scale, tileHeight = sourceRec.height*scale;
+    if(destRec.width < tileWidth && destRec.height < tileHeight) 
+    {
+        // Can fit only one tile
+        DrawTexturePro(texture, (Rectangle){sourceRec.x, sourceRec.y, ((float)destRec.width/tileWidth)*sourceRec.width, ((float)destRec.height/tileHeight)*sourceRec.height}, 
+                    (Rectangle){destRec.x, destRec.y, destRec.width, destRec.height}, origin, rotation, tint);
+    }
+    else if(destRec.width <= tileWidth) 
+    {
+        // Tiled vertically (one column)
+        int dy = 0;
+        for(;dy+tileHeight < destRec.height; dy += tileHeight) {
+            DrawTexturePro(texture, (Rectangle){sourceRec.x, sourceRec.y, ((float)destRec.width/tileWidth)*sourceRec.width, sourceRec.height}, (Rectangle){destRec.x, destRec.y + dy, destRec.width, tileHeight}, origin, rotation, tint);
+        }
+        
+        // Fit last tile
+        if(dy < destRec.height) {
+            DrawTexturePro(texture, (Rectangle){sourceRec.x, sourceRec.y, ((float)destRec.width/tileWidth)*sourceRec.width, ((float)(destRec.height - dy)/tileHeight)*sourceRec.height}, 
+                        (Rectangle){destRec.x, destRec.y + dy, destRec.width, destRec.height - dy}, origin, rotation, tint);
+        }
+    } 
+    else if(destRec.height <= tileHeight) 
+    {
+        // Tiled horizontally (one row)
+        int dx = 0;
+        for(;dx+tileWidth < destRec.width; dx += tileWidth) {
+            DrawTexturePro(texture, (Rectangle){sourceRec.x, sourceRec.y, sourceRec.width, ((float)destRec.height/tileHeight)*sourceRec.height}, (Rectangle){destRec.x + dx, destRec.y, tileWidth, destRec.height}, origin, rotation, tint);
+        }
+        
+        // Fit last tile
+        if(dx < destRec.width) {
+            DrawTexturePro(texture, (Rectangle){sourceRec.x, sourceRec.y, ((float)(destRec.width - dx)/tileWidth)*sourceRec.width, ((float)destRec.height/tileHeight)*sourceRec.height}, 
+                        (Rectangle){destRec.x + dx, destRec.y, destRec.width - dx, destRec.height}, origin, rotation, tint);
+        }
+    }
+    else
+    {
+        // Tiled both horizontally and vertically (rows and columns)
+        int dx = 0;
+        for(;dx+tileWidth < destRec.width; dx += tileWidth) {
+            int dy = 0;
+            for(;dy+tileHeight < destRec.height; dy += tileHeight) {
+                DrawTexturePro(texture, sourceRec, (Rectangle){destRec.x + dx, destRec.y + dy, tileWidth, tileHeight}, origin, rotation, tint);
+            }
+            
+            if(dy < destRec.height) {
+                DrawTexturePro(texture, (Rectangle){sourceRec.x, sourceRec.y, sourceRec.width, ((float)(destRec.height - dy)/tileHeight)*sourceRec.height}, 
+                    (Rectangle){destRec.x + dx, destRec.y + dy, tileWidth, destRec.height - dy}, origin, rotation, tint);
+            }
+        }
+        
+        // Fit last column of tiles
+        if(dx < destRec.width) {
+            int dy = 0;
+            for(;dy+tileHeight < destRec.height; dy += tileHeight) {
+                DrawTexturePro(texture, (Rectangle){sourceRec.x, sourceRec.y, ((float)(destRec.width - dx)/tileWidth)*sourceRec.width, sourceRec.height}, 
+                        (Rectangle){destRec.x + dx, destRec.y + dy, destRec.width - dx, tileHeight}, origin, rotation, tint);
+            }
+            
+            // Draw final tile in the bottom right corner
+            if(dy < destRec.height) {
+                DrawTexturePro(texture, (Rectangle){sourceRec.x, sourceRec.y, ((float)(destRec.width - dx)/tileWidth)*sourceRec.width, ((float)(destRec.height - dy)/tileHeight)*sourceRec.height}, 
+                    (Rectangle){destRec.x + dx, destRec.y + dy, destRec.width - dx, destRec.height - dy}, origin, rotation, tint);
+            }
+        }
+    }
+}
+
 // Draw a part of a texture (defined by a rectangle) with 'pro' parameters
 // NOTE: origin is relative to destination rectangle size
 void DrawTexturePro(Texture2D texture, Rectangle sourceRec, Rectangle destRec, Vector2 origin, float rotation, Color tint)

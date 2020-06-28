@@ -1761,6 +1761,7 @@ void rlglInit(int width, int height)
     glClearDepth(1.0f);                                     // Set clear depth value (default)
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);     // Clear color and depth buffers (depth buffer required for 3D)
 
+#if defined(GRAPHICS_API_OPENGL_ES2) || defined(GRAPHICS_API_OPENGL_21)
     // Store screen size into global variables
     RLGL.State.framebufferWidth = width;
     RLGL.State.framebufferHeight = height;
@@ -1768,6 +1769,7 @@ void rlglInit(int width, int height)
     // Init texture and rectangle used on basic shapes drawing
     RLGL.State.shapesTexture = GetTextureDefault();
     RLGL.State.shapesTextureRec = (Rectangle){ 0.0f, 0.0f, 1.0f, 1.0f };
+#endif
 
     TRACELOG(LOG_INFO, "RLGL: Default state initialized successfully");
 }
@@ -2974,20 +2976,32 @@ Texture2D GetTextureDefault(void)
 // Get texture to draw shapes (RAII)
 Texture2D GetShapesTexture(void)
 {
+#if defined(GRAPHICS_API_OPENGL_11)
+    Texture2D texture = { 0 };
+    return texture;
+#else
     return RLGL.State.shapesTexture;
+#endif
 }
 
 // Get texture rectangle to draw shapes
 Rectangle GetShapesTextureRec(void)
 {
+#if defined(GRAPHICS_API_OPENGL_11)
+    Rectangle rec = { 0 };
+    return rec;
+#else
     return RLGL.State.shapesTextureRec;
+#endif
 }
 
 // Define default texture used to draw shapes
 void SetShapesTexture(Texture2D texture, Rectangle source)
 {
+#if defined(GRAPHICS_API_OPENGL_33) || defined(GRAPHICS_API_OPENGL_ES2)
     RLGL.State.shapesTexture = texture;
     RLGL.State.shapesTextureRec = source;
+#endif
 }
 
 // Get default shader

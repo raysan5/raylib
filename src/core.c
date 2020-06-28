@@ -386,7 +386,7 @@ typedef struct CoreData {
 #endif
 #if defined(PLATFORM_UWP)
     struct {
-        const char* internalDataPath;       // UWP App data path
+        const char *internalDataPath;       // UWP App data path
     } UWP;
 #endif
     struct {
