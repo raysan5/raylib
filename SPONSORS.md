@@ -36,4 +36,5 @@ The following people has contributed with a generous donation to the raylib proj
  - cob ([@majorcob](https://github.com/majorcob))
  - Samuel Batista ([@gamedevsam](https://github.com/gamedevsam))
  - Alexandre Chêne ([@kooparse](https://github.com/kooparse))
+ - daddio69 ([@daddio69](https://github.com/daddio69))
  
