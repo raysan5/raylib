@@ -50,8 +50,8 @@ RAYLIB_PATH        = ..
 
 # Define default options
 
-# One of PLATFORM_DESKTOP, PLATFORM_RPI, PLATFORM_ANDROID, PLATFORM_WEB, PLATFORM_GBM
-PLATFORM             ?= PLATFORM_GBM
+# One of PLATFORM_DESKTOP, PLATFORM_RPI, PLATFORM_ANDROID, PLATFORM_WEB, PLATFORM_DRM
+PLATFORM             ?= PLATFORM_DRM
 
 # Library type used for raylib: STATIC (.a) or SHARED (.so/.dll)
 RAYLIB_LIBTYPE       ?= STATIC
@@ -212,7 +212,7 @@ ifeq ($(PLATFORM),PLATFORM_ANDROID)
     # By default use OpenGL ES 2.0 on Android
     GRAPHICS = GRAPHICS_API_OPENGL_ES2
 endif
-ifeq ($(PLATFORM),PLATFORM_GBM)
+ifeq ($(PLATFORM),PLATFORM_DRM)
 	# Might be good to add support to other OpenGL versions.
 	GRAPHICS = GRAPHICS_API_OPENGL_ES2
 endif
@@ -368,6 +368,10 @@ ifeq ($(PLATFORM),PLATFORM_DESKTOP)
             LDLIBS = -lX11
         endif
     endif
+endif
+
+ifeq ($(PLATFORM),PLATFORM_DRM)
+	CFLAGS += -I"/usr/include/libdrm"
 endif
 
 # Define include paths for required headers
