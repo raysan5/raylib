@@ -31,8 +31,8 @@ RAYLIB_PATH        ?= ..
 
 # Define default options
 
-# One of PLATFORM_DESKTOP, PLATFORM_RPI, PLATFORM_ANDROID, PLATFORM_WEB, PLATFORM_GBM
-PLATFORM           ?= PLATFORM_GBM
+# One of PLATFORM_DESKTOP, PLATFORM_RPI, PLATFORM_ANDROID, PLATFORM_WEB, PLATFORM_DRM
+PLATFORM           ?= PLATFORM_DRM
 
 # Locations of your newly installed library and associated headers. See ../src/Makefile
 # On Linux, if you have installed raylib but cannot compile the examples, check that
@@ -351,8 +351,8 @@ ifeq ($(PLATFORM),PLATFORM_WEB)
     # Libraries for web (HTML5) compiling
     LDLIBS = $(RAYLIB_RELEASE_PATH)/libraylib.bc
 endif
-ifeq ($(PLATFORM),PLATFORM_GBM)
-	LDLIBS = -lraylib -lEGL -lgbm -lGLESv2 -lm -ldl -lpthread
+ifeq ($(PLATFORM),PLATFORM_DRM)
+	LDLIBS = -lraylib -lEGL -lgbm -ldrm -lGLESv2 -lm -ldl -lpthread
 endif
 
 # Define all object files required
