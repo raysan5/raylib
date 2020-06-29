@@ -3031,9 +3031,23 @@ static bool InitGraphicsDevice(int width, int height)
 
     const EGLint framebufferAttribs[] =
     {
-      EGL_RENDERABLE_TYPE,    EGL_OPENGL_ES2_BIT,
-      EGL_SURFACE_TYPE,       EGL_WINDOW_BIT,
-      EGL_NONE
+        EGL_RENDERABLE_TYPE, EGL_OPENGL_ES2_BIT,     // Type of context support -> Required on RPI?
+        #if defined(PLATFORM_DRM)
+        EGL_SURFACE_TYPE, EGL_WINDOW_BIT,          // Don't use it on Android!
+        #endif
+
+        #if !defined(PLATFORM_DRM) /* For some reasons, these attributes bugs GBM. */
+        EGL_RED_SIZE, 8,            // RED color bit depth (alternative: 5)
+        EGL_GREEN_SIZE, 8,          // GREEN color bit depth (alternative: 6)
+        EGL_BLUE_SIZE, 8,           // BLUE color bit depth (alternative: 5)
+        #endif
+        //EGL_ALPHA_SIZE, 8,        // ALPHA bit depth (required for transparent framebuffer)
+        //EGL_TRANSPARENT_TYPE, EGL_NONE, // Request transparent framebuffer (EGL_TRANSPARENT_RGB does not work on RPI)
+        EGL_DEPTH_SIZE, 16,         // Depth buffer size (Required to use Depth testing!)
+        //EGL_STENCIL_SIZE, 8,      // Stencil buffer size
+        EGL_SAMPLE_BUFFERS, sampleBuffer,    // Activate MSAA
+        EGL_SAMPLES, samples,       // 4x Antialiasing if activated (Free on MALI GPUs)
+        EGL_NONE
     };
 
     const EGLint contextAttribs[] =
