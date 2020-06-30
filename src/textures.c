@@ -148,8 +148,8 @@
 //----------------------------------------------------------------------------------
 // Defines and Macros
 //----------------------------------------------------------------------------------
-#ifndef R5G5B5A1_ALPHA_THRESHOLD
-    #define R5G5B5A1_ALPHA_THRESHOLD  50    // Threshold over 255 to set alpha as 0
+#ifndef UNCOMPRESSED_R5G5B5A1_ALPHA_THRESHOLD
+    #define UNCOMPRESSED_R5G5B5A1_ALPHA_THRESHOLD  50    // Threshold over 255 to set alpha as 0
 #endif
 
 //----------------------------------------------------------------------------------
@@ -932,7 +932,7 @@ void ImageFormat(Image *image, int newFormat)
                         r = (unsigned char)(round(pixels[i].x*31.0f));
                         g = (unsigned char)(round(pixels[i].y*31.0f));
                         b = (unsigned char)(round(pixels[i].z*31.0f));
-                        a = (pixels[i].w > ((float)R5G5B5A1_ALPHA_THRESHOLD/255.0f))? 1 : 0;
+                        a = (pixels[i].w > ((float)UNCOMPRESSED_R5G5B5A1_ALPHA_THRESHOLD/255.0f))? 1 : 0;
 
                         ((unsigned short *)image->data)[i] = (unsigned short)r << 11 | (unsigned short)g << 6 | (unsigned short)b << 1 | (unsigned short)a;
                     }
@@ -2351,7 +2351,7 @@ void ImageDrawPixel(Image *dst, int x, int y, Color color)
             unsigned char r = (unsigned char)(round(coln.x*31.0f));
             unsigned char g = (unsigned char)(round(coln.y*31.0f));
             unsigned char b = (unsigned char)(round(coln.z*31.0f));
-            unsigned char a = (coln.w > ((float)R5G5B5A1_ALPHA_THRESHOLD/255.0f))? 1 : 0;;
+            unsigned char a = (coln.w > ((float)UNCOMPRESSED_R5G5B5A1_ALPHA_THRESHOLD/255.0f))? 1 : 0;;
 
             ((unsigned short *)dst->data)[y*dst->width + x] = (unsigned short)r << 11 | (unsigned short)g << 6 | (unsigned short)b << 1 | (unsigned short)a;
 
@@ -3620,7 +3620,7 @@ void SetPixelColor(void *dstPtr, Color color, int format)
             unsigned char r = (unsigned char)(round(coln.x*31.0f));
             unsigned char g = (unsigned char)(round(coln.y*31.0f));
             unsigned char b = (unsigned char)(round(coln.z*31.0f));
-            unsigned char a = (coln.w > ((float)R5G5B5A1_ALPHA_THRESHOLD/255.0f))? 1 : 0;;
+            unsigned char a = (coln.w > ((float)UNCOMPRESSED_R5G5B5A1_ALPHA_THRESHOLD/255.0f))? 1 : 0;;
 
             ((unsigned short *)dstPtr)[0] = (unsigned short)r << 11 | (unsigned short)g << 6 | (unsigned short)b << 1 | (unsigned short)a;
 

@@ -244,6 +244,10 @@ typedef struct tagBITMAPINFOHEADER {
 #ifndef MAX_AUDIO_BUFFER_POOL_CHANNELS
     #define MAX_AUDIO_BUFFER_POOL_CHANNELS    16    // Audio pool channels
 #endif
+#ifndef DEFAULT_AUDIO_BUFFER_SIZE
+    #define DEFAULT_AUDIO_BUFFER_SIZE       4096    // Default audio buffer size
+#endif
+
 
 //----------------------------------------------------------------------------------
 // Types and Structures Definition
@@ -335,7 +339,7 @@ static AudioData AUDIO = {          // Global AUDIO context
     // After some math, considering a sampleRate of 48000, a buffer refill rate of 1/60 seconds and a
     // standard double-buffering system, a 4096 samples buffer has been chosen, it should be enough
     // In case of music-stalls, just increase this number
-    .Buffer.defaultSize = 4096
+    .Buffer.defaultSize = DEFAULT_AUDIO_BUFFER_SIZE
 };
 
 //----------------------------------------------------------------------------------

@@ -119,7 +119,7 @@
 #if !defined(EXTERNAL_CONFIG_FLAGS)
     #include "config.h"             // Defines module configuration flags
 #else
-    #define RAYLIB_VERSION  "3.0"
+    #define RAYLIB_VERSION  "3.1-dev"
 #endif
 
 #include "utils.h"                  // Required for: TRACELOG macros
@@ -269,15 +269,8 @@
 #if defined(PLATFORM_RPI)
     #define USE_LAST_TOUCH_DEVICE       // When multiple touchscreens are connected, only use the one with the highest event<N> number
 
-    // Old device inputs system
-    #define DEFAULT_KEYBOARD_DEV      STDIN_FILENO              // Standard input
-    #define DEFAULT_GAMEPAD_DEV       "/dev/input/js"           // Gamepad input (base dev for all gamepads: js0, js1, ...)
-    #define DEFAULT_EVDEV_PATH        "/dev/input/"             // Path to the linux input events
-
-    // New device input events (evdev) (must be detected)
-    //#define DEFAULT_KEYBOARD_DEV    "/dev/input/eventN"
-    //#define DEFAULT_MOUSE_DEV       "/dev/input/eventN"
-    //#define DEFAULT_GAMEPAD_DEV     "/dev/input/eventN"
+    #define DEFAULT_GAMEPAD_DEV    "/dev/input/js"      // Gamepad input (base dev for all gamepads: js0, js1, ...)
+    #define DEFAULT_EVDEV_PATH       "/dev/input/"      // Path to the linux input events
 #endif
 
 #ifndef MAX_FILEPATH_LENGTH
