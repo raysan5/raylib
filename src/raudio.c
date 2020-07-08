@@ -419,6 +419,9 @@ void InitAudioDevice(void)
     config.sampleRate = AUDIO_DEVICE_SAMPLE_RATE;
     config.dataCallback = OnSendAudioDataToDevice;
     config.pUserData = NULL;
+#if defined(PLATFORM_WEB)
+    config.periodSizeInMilliseconds = 33;
+#endif
 
     result = ma_device_init(&AUDIO.System.context, &config, &AUDIO.System.device);
     if (result != MA_SUCCESS)
