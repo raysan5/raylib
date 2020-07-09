@@ -172,5 +172,6 @@ DownloadFile("https://github.com/Rabios/raylib/raw/master/examples/core/core_bas
 // NOTE 1: To run this on Android you might need busybox or termux,iOS not supported
 // NOTE 2: On Windows you need to have 7z installed,unzip on other Platforms
 // NOTE 3: If deps not installed the function returns and does nothing
-ExtractArchive("resources.zip"); // Extract archive named "resources.zip" to the current directory
+// This extracts archive named "resources.zip" to the current directory
+ExtractArchive("resources.zip");
 ```
