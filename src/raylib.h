@@ -1101,6 +1101,7 @@ RLAPI void DownloadFile(const char *src,const char *dir);         // Downloads a
 
 RLAPI unsigned char *CompressData(unsigned char *data, int dataLength, int *compDataLength);        // Compress data (DEFLATE algorythm)
 RLAPI unsigned char *DecompressData(unsigned char *compData, int compDataLength, int *dataLength);  // Decompress data (DEFLATE algorythm)
+RLAPI void ExtractArchive(const char *archivepath);               // Extracts archive
 
 // Persistent storage management
 RLAPI void SaveStorageValue(unsigned int position, int value);    // Save integer value to storage file (to defined position)

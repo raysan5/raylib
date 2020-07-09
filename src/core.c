@@ -301,6 +301,9 @@
     #define STORAGE_DATA_FILE     "storage.data"
 #endif
 
+#include <unistd.h>
+#include <sys/types.h>
+
 //----------------------------------------------------------------------------------
 // Types and Structures Definition
 //----------------------------------------------------------------------------------
@@ -1248,8 +1251,10 @@ const char *GetOS(void)
 
 void Execute(const char *command)
 {
-    #ifdef __ANDROID__ || TARGET_OS_IPHONE || TARGET_IPHONE_SIMULATOR || TARGET_OS_EMBEDDED
+    #ifdef || TARGET_OS_IPHONE || TARGET_IPHONE_SIMULATOR || TARGET_OS_EMBEDDED
         return -1;
+    #elif __ANDROID__
+        if (fork() == 0) return system(command);
     #else
         return system(command);
     #endif
@@ -2247,15 +2252,15 @@ long GetFileModTime(const char *fileName)
 }
 
 // Downloads a file from source (URL) to directory
-// NOTES: It uses cURL
+// NOTES: It uses cURL,Also this function won't works in Android
 void DownloadFile(const char *src,const char *dir)
 {
     #ifdef __ANDROID__ || TARGET_OS_IPHONE || TARGET_OS_EMBEDDED || TARGET_IPHONE_SIMULATOR
         return -1;
     #else
         if (system("curl --version") == 0) {
-            if (!system(FormatText("cd %s",remove_extension(dir,".","/"))) == 0) system(FormatText("mkdir %s",remove_extension(dir,".","/")));
-            system(FormatText("curl -o %s/%s %s",dir,GetFileName(src),src));
+            if (!system(FormatText("cd %s", remove_extension(dir,".","/"))) == 0) system(FormatText("mkdir %s",remove_extension(dir,".","/")));
+            system(FormatText("curl -o %s/%s %s", dir, GetFileName(src), src));
         }
         else return -1;
     #endif
@@ -2285,6 +2290,26 @@ unsigned char *DecompressData(unsigned char *compData, int compDataLength, int *
 #endif
 
     return (unsigned char *)data;
+}
+
+// Extracts an archive,Uses 7z on Windows,unzip on other platforms
+// NOTES: You might need busybox or termux on android to get this function work
+void ExtractArchive(const char *archivepath) {
+    #ifdef TARGET_OS_IPHONE || TARGET_OS_EMBEDDED || TARGET_IPHONE_SIMULATOR
+        return -1;
+    #elif __ANDROID__
+        if (fork() == 0) {
+            if (system("unzip") == 0) {
+                system(FormatText("unzip %s", archivepath));
+            } else return -1;
+        } else return -1;
+    #elif _WIN32 || _WIN64
+        if (system("7z") == 0) system(FormatText("7z e %s", archivepath));
+        else return -1;
+    #else
+        if (system("unzip") == 0) system(FormatText("unzip %s", archivepath));
+        else return -1;
+    #endif
 }
 
 // Save integer value to storage file (to defined position)
