@@ -140,8 +140,9 @@ Functions added in this fork to raylib API
   - `NetBSD`
   - `DragonFlyBSD`
   - `Solaris`
-- `RLAPI void Execute(const char *command);` To execute shell/batch command
-- `RLAPI void DownloadFile(const char *src,const char *dir);` To download files from internet and store it in directory
+- `RLAPI void Execute(const char *command);` To execute shell/batch command.
+- `RLAPI void DownloadFile(const char *src,const char *dir);` To download files from internet and store it in directory.
+- `RLAPI void ExtractArchive(const char *archivepath);` To extract ZIP archive to current directory.
 
 Functions added usage
 ------
@@ -156,7 +157,6 @@ if (GetOS() == "Windows") {
 ```c
 // This lets command prompt or the shell to execute this command
 // This command creates a folder with name "new_folder"
-// NOTES: This function does not work on Android and iOS,So it returns nothing on Android and iOS
 Execute("mkdir new_folder");
 ```
 
@@ -164,5 +164,13 @@ Execute("mkdir new_folder");
 ```c
 // NOTES: This function does not work on Android and iOS,So it returns nothing on Android and iOS
 // This downloads file core_basic_window.c and store it in folder named "downloaded",If not found it will be created
-DownloadFile("https://github.com/Rabios/raylib/raw/master/examples/core/core_basic_window.c","downloaded");
+DownloadFile("https://github.com/Rabios/raylib/raw/master/examples/core/core_basic_window.c", "downloaded");
+```
+
+- `RLAPI void ExtractArchive(const char *archivepath);`
+```c
+// NOTE 1: To run this on Android you might need busybox or termux,iOS not supported
+// NOTE 2: On Windows you need to have 7z installed,unzip on other Platforms
+// NOTE 3: If deps not installed the function returns and does nothing
+ExtractArchive("resources.zip"); // Extract archive named "resources.zip" to the current directory
 ```
