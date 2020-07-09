@@ -4070,6 +4070,8 @@ static void UnloadShaderDefault(void)
     glDeleteShader(RLGL.State.defaultFShaderId);
 
     glDeleteProgram(RLGL.State.defaultShader.id);
+
+    RL_FREE(RLGL.State.defaultShader.locs);
 }
 
 // Load render batch
@@ -4186,8 +4188,9 @@ static RenderBatch LoadRenderBatch(int numBuffers, int bufferElements)
         //batch.draws[i].RLGL.State.modelview = MatrixIdentity();
     }
 
-    batch.drawsCounter = 1;        // Reset draws counter
-    batch.currentDepth = -1.0f;    // Reset depth value
+    batch.buffersCount = numBuffers;    // Record buffer count
+    batch.drawsCounter = 1;             // Reset draws counter
+    batch.currentDepth = -1.0f;         // Reset depth value
     //--------------------------------------------------------------------------------------------
     
     return batch;
