@@ -1558,7 +1558,7 @@ void rlglInit(int width, int height)
 
     // TODO: Automatize extensions loading using rlLoadExtensions() and GLAD
     // Actually, when rlglInit() is called in InitWindow() in core.c,
-    // OpenGL required extensions have already been loaded (PLATFORM_DESKTOP)
+    // OpenGL context has already been created and required extensions loaded
 
 #if defined(GRAPHICS_API_OPENGL_33) || defined(GRAPHICS_API_OPENGL_ES2)
     // Get supported extensions list
