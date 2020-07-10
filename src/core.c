@@ -2994,24 +2994,23 @@ static bool InitGraphicsDevice(int width, int height)
 	// save the first mode
   // TODO: Take a better resolution.
 	CORE.Window.mode_info = connector->modes[0];
-  printf ("resolution: %ix%i\n", CORE.Window.mode_info.hdisplay, CORE.Window.mode_info.vdisplay);
 
 	// find an encoder
 	drmModeEncoder *encoder;
-  if (connector->encoder_id) {
-		encoder = drmModeGetEncoder (fd, connector->encoder_id);
-	}
+  
+  if (connector->encoder_id)
+		encoder = drmModeGetEncoder(fd, connector->encoder_id);
 
 	if (!encoder)
     TRACELOG(LOG_ERROR, "DISPLAY: No DRM encoder found.");
 
 	// find a CRTC
 	if (encoder->crtc_id)
-		CORE.Window.crtc = drmModeGetCrtc (fd, encoder->crtc_id);
+		CORE.Window.crtc = drmModeGetCrtc(fd, encoder->crtc_id);
 
-	drmModeFreeEncoder (encoder);
-	drmModeFreeConnector (connector);
-	drmModeFreeResources (resources);
+	drmModeFreeEncoder(encoder);
+	drmModeFreeConnector(connector);
+	drmModeFreeResources(resources);
 
   struct gbm_device *gbmDevice = gbm_create_device(fd);
   if (!gbmDevice)
