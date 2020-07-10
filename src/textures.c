@@ -372,9 +372,6 @@ Image LoadImageAnim(const char *fileName, int *frames)
     
 #if defined(SUPPORT_FILEFORMAT_GIF)
     if (IsFileExtension(fileName, ".gif"))
-#else
-    if (false)
-#endif
     {
         unsigned int dataSize = 0;
         unsigned char *fileData = LoadFileData(fileName, &dataSize);
@@ -392,6 +389,9 @@ Image LoadImageAnim(const char *fileName, int *frames)
             RL_FREE(delays);        // NOTE: Frames delays are discarded
         }
     }
+#else
+    if (false) { }
+#endif
     else image = LoadImage(fileName);
     
     // TODO: Support APNG animated images?
