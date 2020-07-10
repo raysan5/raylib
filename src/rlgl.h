@@ -1379,7 +1379,7 @@ void rlTextureParameters(unsigned int id, int param, int value)
 // Enable rendering to texture (fbo)
 void rlEnableRenderTexture(unsigned int id)
 {
-#if defined(GRAPHICS_API_OPENGL_33) || defined(GRAPHICS_API_OPENGL_ES2)
+#if !defined(GRAPHICS_API_OPENGL_21) && (defined(GRAPHICS_API_OPENGL_33) || defined(GRAPHICS_API_OPENGL_ES2))
     glBindFramebuffer(GL_FRAMEBUFFER, id);
 
     //glDisable(GL_CULL_FACE);    // Allow double side drawing for texture flipping
@@ -1390,7 +1390,7 @@ void rlEnableRenderTexture(unsigned int id)
 // Disable rendering to texture
 void rlDisableRenderTexture(void)
 {
-#if defined(GRAPHICS_API_OPENGL_33) || defined(GRAPHICS_API_OPENGL_ES2)
+#if !defined(GRAPHICS_API_OPENGL_21) && (defined(GRAPHICS_API_OPENGL_33) || defined(GRAPHICS_API_OPENGL_ES2))
     glBindFramebuffer(GL_FRAMEBUFFER, 0);
 
     //glEnable(GL_CULL_FACE);
@@ -1446,7 +1446,7 @@ void rlDeleteTextures(unsigned int id)
 // Unload render texture from GPU memory
 void rlDeleteRenderTextures(RenderTexture2D target)
 {
-#if defined(GRAPHICS_API_OPENGL_33) || defined(GRAPHICS_API_OPENGL_ES2)
+#if !defined(GRAPHICS_API_OPENGL_21) && (defined(GRAPHICS_API_OPENGL_33) || defined(GRAPHICS_API_OPENGL_ES2))
     if (target.texture.id > 0) glDeleteTextures(1, &target.texture.id);
     if (target.depth.id > 0)
     {
@@ -2224,7 +2224,7 @@ RenderTexture2D rlLoadRenderTexture(int width, int height, int format, int depth
 {
     RenderTexture2D target = { 0 };
 
-#if defined(GRAPHICS_API_OPENGL_33) || defined(GRAPHICS_API_OPENGL_ES2)
+#if !defined(GRAPHICS_API_OPENGL_21) && (defined(GRAPHICS_API_OPENGL_33) || defined(GRAPHICS_API_OPENGL_ES2))
     if (useDepthTexture && RLGL.ExtSupported.texDepth) target.depthTexture = true;
 
     // Create the framebuffer object
@@ -2277,7 +2277,7 @@ RenderTexture2D rlLoadRenderTexture(int width, int height, int format, int depth
 // NOTE: Attach type: 0-Color, 1-Depth renderbuffer, 2-Depth texture
 void rlRenderTextureAttach(RenderTexture2D target, unsigned int id, int attachType)
 {
-#if defined(GRAPHICS_API_OPENGL_33) || defined(GRAPHICS_API_OPENGL_ES2)
+#if !defined(GRAPHICS_API_OPENGL_21) && (defined(GRAPHICS_API_OPENGL_33) || defined(GRAPHICS_API_OPENGL_ES2))
     glBindFramebuffer(GL_FRAMEBUFFER, target.id);
 
     if (attachType == 0) glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, id, 0);
@@ -2296,7 +2296,7 @@ bool rlRenderTextureComplete(RenderTexture target)
 {
     bool result = false;
 
-#if defined(GRAPHICS_API_OPENGL_33) || defined(GRAPHICS_API_OPENGL_ES2)
+#if !defined(GRAPHICS_API_OPENGL_21) && (defined(GRAPHICS_API_OPENGL_33) || defined(GRAPHICS_API_OPENGL_ES2))
     glBindFramebuffer(GL_FRAMEBUFFER, target.id);
 
     GLenum status = glCheckFramebufferStatus(GL_FRAMEBUFFER);
