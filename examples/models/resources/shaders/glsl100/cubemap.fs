@@ -9,13 +9,10 @@
 #version 330
 
 // Input vertex attributes (from vertex shader)
-in vec3 fragPosition;
+varying vec3 fragPosition;
 
 // Input uniform values
 uniform sampler2D equirectangularMap;
-
-// Output fragment color
-out vec4 finalColor;
 
 vec2 SampleSphericalMap(vec3 v)
 {
@@ -34,5 +31,5 @@ void main()
     vec3 color = texture(equirectangularMap, uv).rgb;
 
     // Calculate final fragment color
-    finalColor = vec4(color, 1.0);
+    gl_FragColor = vec4(color, 1.0);
 }
