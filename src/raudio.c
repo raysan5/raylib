@@ -159,6 +159,9 @@ typedef struct tagBITMAPINFOHEADER {
 #define MA_FREE RL_FREE
 
 #define MA_NO_JACK
+#define MA_NO_WAV
+#define MA_NO_FLAC
+#define MA_NO_MP3
 #define MINIAUDIO_IMPLEMENTATION
 #include "external/miniaudio.h"         // miniaudio library
 #undef PlaySound                        // Win32 API: windows.h > mmsystem.h defines PlaySound macro
@@ -444,7 +447,7 @@ void InitAudioDevice(void)
 
     // Mixing happens on a seperate thread which means we need to synchronize. I'm using a mutex here to make things simple, but may
     // want to look at something a bit smarter later on to keep everything real-time, if that's necessary.
-    if (ma_mutex_init(&AUDIO.System.context, &AUDIO.System.lock) != MA_SUCCESS)
+    if (ma_mutex_init(&AUDIO.System.lock) != MA_SUCCESS)
     {
         TRACELOG(LOG_ERROR, "AUDIO: Failed to create mutex for mixing");
         ma_device_uninit(&AUDIO.System.device);
