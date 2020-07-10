@@ -170,9 +170,6 @@
 //----------------------------------------------------------------------------------
 // Module specific Functions Declaration
 //----------------------------------------------------------------------------------
-#if defined(SUPPORT_FILEFORMAT_GIF)
-static Image LoadAnimatedGIF(const char *fileName, int *frames, int **delays);    // Load animated GIF file
-#endif
 #if defined(SUPPORT_FILEFORMAT_DDS)
 static Image LoadDDS(const char *fileName);   // Load DDS file
 #endif
@@ -360,6 +357,46 @@ Image LoadImageRaw(const char *fileName, int width, int height, int format, int 
         RL_FREE(fileData);
     }
 
+    return image;
+}
+
+// Load animated image data
+//  - Image.data buffer includes all frames: [image#0][image#1][image#2][...]
+//  - Number of frames is returned through 'frames' parameter
+//  - All frames are returned in RGBA format
+//  - Frames delay data is discarded
+Image LoadImageAnim(const char *fileName, int *frames)
+{
+    Image image = { 0 };
+    int framesCount = 1;
+    
+#if defined(SUPPORT_FILEFORMAT_GIF)
+    if (IsFileExtension(fileName, ".gif"))
+#else
+    if (false)
+#endif
+    {
+        unsigned int dataSize = 0;
+        unsigned char *fileData = LoadFileData(fileName, &dataSize);
+
+        if (fileData != NULL)
+        {
+            int comp = 0;
+            int **delays = NULL;
+            image.data = stbi_load_gif_from_memory(fileData, dataSize, delays, &image.width, &image.height, &framesCount, &comp, 4);
+
+            image.mipmaps = 1;
+            image.format = UNCOMPRESSED_R8G8B8A8;
+
+            RL_FREE(fileData);
+            RL_FREE(delays);        // NOTE: Frames delays are discarded
+        }
+    }
+    else image = LoadImage(fileName);
+    
+    // TODO: Support APNG animated images?
+
+    *frames = framesCount;
     return image;
 }
 
@@ -3706,34 +3743,6 @@ int GetPixelDataSize(int width, int height, int format)
 //----------------------------------------------------------------------------------
 // Module specific Functions Definition
 //----------------------------------------------------------------------------------
-#if defined(SUPPORT_FILEFORMAT_GIF)
-// Load animated GIF data
-//  - Image.data buffer includes all frames: [image#0][image#1][image#2][...]
-//  - Number of frames is returned through 'frames' parameter
-//  - Frames delay is returned through 'delays' parameter (int array)
-//  - All frames are returned in RGBA format
-static Image LoadAnimatedGIF(const char *fileName, int *frames, int **delays)
-{
-    Image image = { 0 };
-
-    unsigned int dataSize = 0;
-    unsigned char *fileData = LoadFileData(fileName, &dataSize);
-
-    if (fileData != NULL)
-    {
-        int comp = 0;
-        image.data = stbi_load_gif_from_memory(fileData, dataSize, delays, &image.width, &image.height, frames, &comp, 4);
-
-        image.mipmaps = 1;
-        image.format = UNCOMPRESSED_R8G8B8A8;
-
-        RL_FREE(fileData);
-    }
-
-    return image;
-}
-#endif
-
 #if defined(SUPPORT_FILEFORMAT_DDS)
 // Loading DDS image data (compressed or uncompressed)
 static Image LoadDDS(const char *fileName)
