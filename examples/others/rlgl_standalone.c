@@ -219,7 +219,7 @@ int main(void)
 // GLFW3: Error callback
 static void ErrorCallback(int error, const char *description)
 {
-    fprintf(stderr, description);
+    fprintf(stderr, "%s", description);
 }
 
 // GLFW3: Keyboard callback
