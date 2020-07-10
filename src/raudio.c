@@ -419,7 +419,7 @@ void InitAudioDevice(void)
     config.sampleRate = AUDIO_DEVICE_SAMPLE_RATE;
     config.dataCallback = OnSendAudioDataToDevice;
     config.pUserData = NULL;
-#if defined(PLATFORM_WEB)
+#if defined(__EMSCRIPTEN__)
     config.periodSizeInMilliseconds = 33;
 #endif
 
