@@ -305,33 +305,6 @@ Image LoadImage(const char *fileName)
     return image;
 }
 
-// Load image from Color array data (RGBA - 32bit)
-// NOTE: Creates a copy of pixels data array
-Image LoadImageEx(Color *pixels, int width, int height)
-{
-    Image image = { 0 };
-    image.data = NULL;
-    image.width = width;
-    image.height = height;
-    image.mipmaps = 1;
-    image.format = UNCOMPRESSED_R8G8B8A8;
-
-    int k = 0;
-
-    image.data = (unsigned char *)RL_MALLOC(image.width*image.height*4*sizeof(unsigned char));
-
-    for (int i = 0; i < image.width*image.height*4; i += 4)
-    {
-        ((unsigned char *)image.data)[i] = pixels[k].r;
-        ((unsigned char *)image.data)[i + 1] = pixels[k].g;
-        ((unsigned char *)image.data)[i + 2] = pixels[k].b;
-        ((unsigned char *)image.data)[i + 3] = pixels[k].a;
-        k++;
-    }
-
-    return image;
-}
-
 // Load an image from RAW file data
 Image LoadImageRaw(const char *fileName, int width, int height, int format, int headerSize)
 {
