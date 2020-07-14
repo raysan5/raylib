@@ -4218,15 +4218,15 @@ static EM_BOOL EmscriptenKeyboardCallback(int eventType, const EmscriptenKeyboar
 static EM_BOOL EmscriptenMouseCallback(int eventType, const EmscriptenMouseEvent *mouseEvent, void *userData)
 {
     // Lock mouse pointer when click on screen
-    if ((eventType == EMSCRIPTEN_EVENT_CLICK))
+    if (eventType == EMSCRIPTEN_EVENT_CLICK)
     {
         EmscriptenPointerlockChangeEvent plce;
         emscripten_get_pointerlock_status(&plce);
-        
+
         int result = emscripten_request_pointerlock("#canvas", 1);   // TODO: It does not work!
-        
+
         // result -> EMSCRIPTEN_RESULT_DEFERRED
-        // The requested operation cannot be completed now for web security reasons, 
+        // The requested operation cannot be completed now for web security reasons,
         // and has been deferred for completion in the next event handler. --> but it never happens!
 
         //if (!plce.isActive) emscripten_request_pointerlock(0, 1);
