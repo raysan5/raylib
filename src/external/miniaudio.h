@@ -1,6 +1,6 @@
 /*
 Audio playback and capture library. Choice of public domain or MIT-0. See license statements at the end of this file.
-miniaudio - v0.10.13 - 2020-07-11
+miniaudio - v0.10.14 - 2020-07-14
 
 David Reid - davidreidsoftware@gmail.com
 
@@ -18,7 +18,7 @@ miniaudio is a single file library for audio playback and capture. To use it, do
     #include "miniaudio.h"
     ```
 
-You can #include miniaudio.h in other parts of the program just like any other header.
+You can do `#include miniaudio.h` in other parts of the program just like any other header.
 
 miniaudio uses the concept of a "device" as the abstraction for physical devices. The idea is that you choose a physical device to emit or capture audio from,
 and then move data to/from the device when miniaudio tells you to. Data is delivered to and from devices asynchronously via a callback which you specify when
@@ -34,8 +34,9 @@ but you could allocate it on the heap if that suits your situation better.
     ```c
     void data_callback(ma_device* pDevice, void* pOutput, const void* pInput, ma_uint32 frameCount)
     {
-        // In playback mode copy data to pOutput. In capture mode read data from pInput. In full-duplex mode, both pOutput and pInput will be valid and you can
-        // move data from pInput into pOutput. Never process more than frameCount frames.
+        // In playback mode copy data to pOutput. In capture mode read data from pInput. In full-duplex mode, both
+        // pOutput and pInput will be valid and you can move data from pInput into pOutput. Never process more than
+        // frameCount frames.
     }
 
     ...
@@ -101,11 +102,13 @@ it, which is what the example above does, but you can also stop the device with 
 Note that it's important to never stop or start the device from inside the callback. This will result in a deadlock. Instead you set a variable or signal an
 event indicating that the device needs to stop and handle it in a different thread. The following APIs must never be called inside the callback:
 
+    ```c
     ma_device_init()
     ma_device_init_ex()
     ma_device_uninit()
     ma_device_start()
     ma_device_stop()
+    ```
 
 You must never try uninitializing and reinitializing a device inside the callback. You must also never try to stop and start it from inside the callback. There
 are a few other things you shouldn't do in the callback depending on your requirements, however this isn't so much a thread-safety thing, but rather a real-
@@ -217,140 +220,119 @@ allocate memory for the context.
 miniaudio should work cleanly out of the box without the need to download or install any dependencies. See below for platform-specific details.
 
 
-Windows
--------
+2.1. Windows
+------------
 The Windows build should compile cleanly on all popular compilers without the need to configure any include paths nor link to any libraries.
 
-macOS and iOS
--------------
+2.2. macOS and iOS
+------------------
 The macOS build should compile cleanly without the need to download any dependencies nor link to any libraries or frameworks. The iOS build needs to be
 compiled as Objective-C (sorry) and will need to link the relevant frameworks but should Just Work with Xcode. Compiling through the command line requires
-linking to -lpthread and -lm.
+linking to `-lpthread` and `-lm`.
 
-Linux
------
-The Linux build only requires linking to -ldl, -lpthread and -lm. You do not need any development packages.
+2.3. Linux
+----------
+The Linux build only requires linking to `-ldl`, `-lpthread` and `-lm`. You do not need any development packages.
 
-BSD
----
-The BSD build only requires linking to -lpthread and -lm. NetBSD uses audio(4), OpenBSD uses sndio and FreeBSD uses OSS.
+2.4. BSD
+--------
+The BSD build only requires linking to `-lpthread` and `-lm`. NetBSD uses audio(4), OpenBSD uses sndio and FreeBSD uses OSS.
 
-Android
--------
+2.5. Android
+------------
 AAudio is the highest priority backend on Android. This should work out of the box without needing any kind of compiler configuration. Support for AAudio
 starts with Android 8 which means older versions will fall back to OpenSL|ES which requires API level 16+.
 
-Emscripten
-----------
+2.6. Emscripten
+---------------
 The Emscripten build emits Web Audio JavaScript directly and should Just Work without any configuration. You cannot use -std=c* compiler flags, nor -ansi.
 
 
-Build Options
--------------
-#define these options before including miniaudio.h.
+2.7. Build Options
+------------------
+`#define` these options before including miniaudio.h.
 
-#define MA_NO_WASAPI
-  Disables the WASAPI backend.
-
-#define MA_NO_DSOUND
-  Disables the DirectSound backend.
-
-#define MA_NO_WINMM
-  Disables the WinMM backend.
-
-#define MA_NO_ALSA
-  Disables the ALSA backend.
-
-#define MA_NO_PULSEAUDIO
-  Disables the PulseAudio backend.
-
-#define MA_NO_JACK
-  Disables the JACK backend.
-
-#define MA_NO_COREAUDIO
-  Disables the Core Audio backend.
-
-#define MA_NO_SNDIO
-  Disables the sndio backend.
-
-#define MA_NO_AUDIO4
-  Disables the audio(4) backend.
-
-#define MA_NO_OSS
-  Disables the OSS backend.
-
-#define MA_NO_AAUDIO
-  Disables the AAudio backend.
-
-#define MA_NO_OPENSL
-  Disables the OpenSL|ES backend.
-
-#define MA_NO_WEBAUDIO
-  Disables the Web Audio backend.
-
-#define MA_NO_NULL
-  Disables the null backend.
-
-#define MA_NO_DECODING
-  Disables decoding APIs.
-
-#define MA_NO_ENCODING
-  Disables encoding APIs.
-
-#define MA_NO_WAV
-  Disables the built-in WAV decoder and encoder.
-
-#define MA_NO_FLAC
-  Disables the built-in FLAC decoder.
-
-#define MA_NO_MP3
-  Disables the built-in MP3 decoder.
-
-#define MA_NO_DEVICE_IO
-  Disables playback and recording. This will disable ma_context and ma_device APIs. This is useful if you only want to use miniaudio's data conversion and/or
-  decoding APIs.
-
-#define MA_NO_THREADING
-  Disables the ma_thread, ma_mutex, ma_semaphore and ma_event APIs. This option is useful if you only need to use miniaudio for data conversion, decoding
-  and/or encoding. Some families of APIs require threading which means the following options must also be set:
-    MA_NO_DEVICE_IO
-
-#define MA_NO_GENERATION
-  Disables generation APIs such a ma_waveform and ma_noise.
-
-#define MA_NO_SSE2
-  Disables SSE2 optimizations.
-
-#define MA_NO_AVX2
-  Disables AVX2 optimizations.
-
-#define MA_NO_AVX512
-  Disables AVX-512 optimizations.
-
-#define MA_NO_NEON
-  Disables NEON optimizations.
-
-#define MA_LOG_LEVEL <Level>
-  Sets the logging level. Set level to one of the following:
-    MA_LOG_LEVEL_VERBOSE
-    MA_LOG_LEVEL_INFO
-    MA_LOG_LEVEL_WARNING
-    MA_LOG_LEVEL_ERROR
-
-#define MA_DEBUG_OUTPUT
-  Enable printf() debug output.
-
-#define MA_COINIT_VALUE
-  Windows only. The value to pass to internal calls to CoInitializeEx(). Defaults to COINIT_MULTITHREADED.
-
-#define MA_API
-  Controls how public APIs should be decorated. Defaults to `extern`.
-
-#define MA_DLL
-  If set, configures MA_API to either import or export APIs depending on whether or not the implementation is being defined. If defining the implementation,
-  MA_API will be configured to export. Otherwise it will be configured to import. This has no effect if MA_API is defined externally.
-    
-
+    +----------------------+----------------------------------------------------------------------------------------------------------------------------------+
+    | Option               | Description                                                                                                                      |
+    +----------------------+----------------------------------------------------------------------------------------------------------------------------------+
+    | MA_NO_WASAPI         | Disables the WASAPI backend.                                                                                                     |
+    +----------------------+----------------------------------------------------------------------------------------------------------------------------------+
+    | MA_NO_DSOUND         | Disables the DirectSound backend.                                                                                                |
+    +----------------------+----------------------------------------------------------------------------------------------------------------------------------+
+    | MA_NO_WINMM          | Disables the WinMM backend.                                                                                                      |
+    +----------------------+----------------------------------------------------------------------------------------------------------------------------------+
+    | MA_NO_ALSA           | Disables the ALSA backend.                                                                                                       |
+    +----------------------+----------------------------------------------------------------------------------------------------------------------------------+
+    | MA_NO_PULSEAUDIO     | Disables the PulseAudio backend.                                                                                                 |
+    +----------------------+----------------------------------------------------------------------------------------------------------------------------------+
+    | MA_NO_JACK           | Disables the JACK backend.                                                                                                       |
+    +----------------------+----------------------------------------------------------------------------------------------------------------------------------+
+    | MA_NO_COREAUDIO      | Disables the Core Audio backend.                                                                                                 |
+    +----------------------+----------------------------------------------------------------------------------------------------------------------------------+
+    | MA_NO_SNDIO          | Disables the sndio backend.                                                                                                      |
+    +----------------------+----------------------------------------------------------------------------------------------------------------------------------+
+    | MA_NO_AUDIO4         | Disables the audio(4) backend.                                                                                                   |
+    +----------------------+----------------------------------------------------------------------------------------------------------------------------------+
+    | MA_NO_OSS            | Disables the OSS backend.                                                                                                        |
+    +----------------------+----------------------------------------------------------------------------------------------------------------------------------+
+    | MA_NO_AAUDIO         | Disables the AAudio backend.                                                                                                     |
+    +----------------------+----------------------------------------------------------------------------------------------------------------------------------+
+    | MA_NO_OPENSL         | Disables the OpenSL|ES backend.                                                                                                  |
+    +----------------------+----------------------------------------------------------------------------------------------------------------------------------+
+    | MA_NO_WEBAUDIO       | Disables the Web Audio backend.                                                                                                  |
+    +----------------------+----------------------------------------------------------------------------------------------------------------------------------+
+    | MA_NO_NULL           | Disables the null backend.                                                                                                       |
+    +----------------------+----------------------------------------------------------------------------------------------------------------------------------+
+    | MA_NO_DECODING       | Disables decoding APIs.                                                                                                          |
+    +----------------------+----------------------------------------------------------------------------------------------------------------------------------+
+    | MA_NO_ENCODING       | Disables encoding APIs.                                                                                                          |
+    +----------------------+----------------------------------------------------------------------------------------------------------------------------------+
+    | MA_NO_WAV            | Disables the built-in WAV decoder and encoder.                                                                                   |
+    +----------------------+----------------------------------------------------------------------------------------------------------------------------------+
+    | MA_NO_FLAC           | Disables the built-in FLAC decoder.                                                                                              |
+    +----------------------+----------------------------------------------------------------------------------------------------------------------------------+
+    | MA_NO_MP3            | Disables the built-in MP3 decoder.                                                                                               |
+    +----------------------+----------------------------------------------------------------------------------------------------------------------------------+
+    | MA_NO_DEVICE_IO      | Disables playback and recording. This will disable ma_context and ma_device APIs. This is useful if you only want to use         |
+    |                      | miniaudio's data conversion and/or decoding APIs.                                                                                |
+    +----------------------+----------------------------------------------------------------------------------------------------------------------------------+
+    | MA_NO_THREADING      | Disables the ma_thread, ma_mutex, ma_semaphore and ma_event APIs. This option is useful if you only need to use miniaudio for    |
+    |                      | data conversion, decoding and/or encoding. Some families of APIs require threading which means the following options must also   |
+    |                      | be set:                                                                                                                          |
+    |                      |                                                                                                                                  |
+    |                      |     ```                                                                                                                          |
+    |                      |     MA_NO_DEVICE_IO                                                                                                              |
+    |                      |     ```                                                                                                                          |
+    +----------------------+----------------------------------------------------------------------------------------------------------------------------------+
+    | MA_NO_GENERATION     | Disables generation APIs such a ma_waveform and ma_noise.                                                                        |
+    +----------------------+----------------------------------------------------------------------------------------------------------------------------------+
+    | MA_NO_SSE2           | Disables SSE2 optimizations.                                                                                                     |
+    +----------------------+----------------------------------------------------------------------------------------------------------------------------------+
+    | MA_NO_AVX2           | Disables AVX2 optimizations.                                                                                                     |
+    +----------------------+----------------------------------------------------------------------------------------------------------------------------------+
+    | MA_NO_AVX512         | Disables AVX-512 optimizations.                                                                                                  |
+    +----------------------+----------------------------------------------------------------------------------------------------------------------------------+
+    | MA_NO_NEON           | Disables NEON optimizations.                                                                                                     |
+    +----------------------+----------------------------------------------------------------------------------------------------------------------------------+
+    | MA_LOG_LEVEL [level] | Sets the logging level. Set level to one of the following:                                                                       |
+    |                      |                                                                                                                                  |
+    |                      |     ```                                                                                                                          |
+    |                      |     MA_LOG_LEVEL_VERBOSE                                                                                                         |
+    |                      |     MA_LOG_LEVEL_INFO                                                                                                            |
+    |                      |     MA_LOG_LEVEL_WARNING                                                                                                         |
+    |                      |     MA_LOG_LEVEL_ERROR                                                                                                           |
+    |                      |     ```                                                                                                                          |
+    +----------------------+----------------------------------------------------------------------------------------------------------------------------------+
+    | MA_DEBUG_OUTPUT      | Enable printf() debug output.                                                                                                    |
+    +----------------------+----------------------------------------------------------------------------------------------------------------------------------+
+    | MA_COINIT_VALUE      | Windows only. The value to pass to internal calls to `CoInitializeEx()`. Defaults to `COINIT_MULTITHREADED`.                     |
+    +----------------------+----------------------------------------------------------------------------------------------------------------------------------+
+    | MA_API               | Controls how public APIs should be decorated. Defaults to `extern`.                                                              |
+    +----------------------+----------------------------------------------------------------------------------------------------------------------------------+
+    | MA_DLL               | If set, configures MA_API to either import or export APIs depending on whether or not the implementation is being defined. If    |
+    |                      | defining the implementation, MA_API will be configured to export. Otherwise it will be configured to import. This has no effect  |
+    |                      | if MA_API is defined externally.                                                                                                 |
+    +----------------------+----------------------------------------------------------------------------------------------------------------------------------+
 
 
 3. Definitions
@@ -567,6 +549,7 @@ The different dithering modes include the following, in order of efficiency:
 Note that even if the dither mode is set to something other than `ma_dither_mode_none`, it will be ignored for conversions where dithering is not needed.
 Dithering is available for the following conversions:
 
+    ```
     s16 -> u8
     s24 -> u8
     s32 -> u8
@@ -574,6 +557,7 @@ Dithering is available for the following conversions:
     s24 -> s16
     s32 -> s16
     f32 -> s16
+    ```
 
 Note that it is not an error to pass something other than ma_dither_mode_none for conversions where dither is not used. It will just be ignored.
 
@@ -643,63 +627,63 @@ be one of the following:
     | ma_standard_channel_map_flac      | FLAC channel map.                                         |
     | ma_standard_channel_map_vorbis    | Vorbis channel map.                                       |
     | ma_standard_channel_map_sound4    | FreeBSD's sound(4).                                       |
-    | ma_standard_channel_map_sndio     | sndio channel map. www.sndio.org/tips.html                |
+    | ma_standard_channel_map_sndio     | sndio channel map. http://www.sndio.org/tips.html         |
     | ma_standard_channel_map_webaudio  | https://webaudio.github.io/web-audio-api/#ChannelOrdering | 
     +-----------------------------------+-----------------------------------------------------------+
 
 Below are the channel maps used by default in miniaudio (ma_standard_channel_map_default):
 
-    +---------------+------------------------------+
-    | Channel Count | Mapping                      |
-    +---------------+------------------------------+
-    | 1 (Mono)      | 0: MA_CHANNEL_MONO           |
-    +---------------+------------------------------+
-    | 2 (Stereo)    | 0: MA_CHANNEL_FRONT_LEFT     |
-    |               | 1: MA_CHANNEL_FRONT_RIGHT    |
-    +---------------+------------------------------+
-    | 3             | 0: MA_CHANNEL_FRONT_LEFT     |
-    |               | 1: MA_CHANNEL_FRONT_RIGHT    |
-    |               | 2: MA_CHANNEL_FRONT_CENTER   |
-    +---------------+------------------------------+
-    | 4 (Surround)  | 0: MA_CHANNEL_FRONT_LEFT     |
-    |               | 1: MA_CHANNEL_FRONT_RIGHT    |
-    |               | 2: MA_CHANNEL_FRONT_CENTER   |
-    |               | 3: MA_CHANNEL_BACK_CENTER    |
-    +---------------+------------------------------+
-    | 5             | 0: MA_CHANNEL_FRONT_LEFT     |
-    |               | 1: MA_CHANNEL_FRONT_RIGHT    |
-    |               | 2: MA_CHANNEL_FRONT_CENTER   |
-    |               | 3: MA_CHANNEL_BACK_LEFT      |
-    |               | 4: MA_CHANNEL_BACK_RIGHT     |
-    +---------------+------------------------------+
-    | 6 (5.1)       | 0: MA_CHANNEL_FRONT_LEFT     |
-    |               | 1: MA_CHANNEL_FRONT_RIGHT    |
-    |               | 2: MA_CHANNEL_FRONT_CENTER   |
-    |               | 3: MA_CHANNEL_LFE            |
-    |               | 4: MA_CHANNEL_SIDE_LEFT      |
-    |               | 5: MA_CHANNEL_SIDE_RIGHT     |
-    +---------------+------------------------------+
-    | 7             | 0: MA_CHANNEL_FRONT_LEFT     |
-    |               | 1: MA_CHANNEL_FRONT_RIGHT    |
-    |               | 2: MA_CHANNEL_FRONT_CENTER   |
-    |               | 3: MA_CHANNEL_LFE            |
-    |               | 4: MA_CHANNEL_BACK_CENTER    |
-    |               | 4: MA_CHANNEL_SIDE_LEFT      |
-    |               | 5: MA_CHANNEL_SIDE_RIGHT     |
-    +---------------+------------------------------+
-    | 8 (7.1)       | 0: MA_CHANNEL_FRONT_LEFT     |
-    |               | 1: MA_CHANNEL_FRONT_RIGHT    |
-    |               | 2: MA_CHANNEL_FRONT_CENTER   |
-    |               | 3: MA_CHANNEL_LFE            |
-    |               | 4: MA_CHANNEL_BACK_LEFT      |
-    |               | 5: MA_CHANNEL_BACK_RIGHT     |
-    |               | 6: MA_CHANNEL_SIDE_LEFT      |
-    |               | 7: MA_CHANNEL_SIDE_RIGHT     |
-    +---------------+------------------------------+
-    | Other         | All channels set to 0. This  |
-    |               | is equivalent to the same    |
-    |               | mapping as the device.       |
-    +---------------+------------------------------+
+    +---------------+---------------------------------+
+    | Channel Count | Mapping                         |
+    +---------------+---------------------------------+
+    | 1 (Mono)      | 0: MA_CHANNEL_MONO              |
+    +---------------+---------------------------------+
+    | 2 (Stereo)    | 0: MA_CHANNEL_FRONT_LEFT   <br> |
+    |               | 1: MA_CHANNEL_FRONT_RIGHT       |
+    +---------------+---------------------------------+
+    | 3             | 0: MA_CHANNEL_FRONT_LEFT   <br> |
+    |               | 1: MA_CHANNEL_FRONT_RIGHT  <br> |
+    |               | 2: MA_CHANNEL_FRONT_CENTER      |
+    +---------------+---------------------------------+
+    | 4 (Surround)  | 0: MA_CHANNEL_FRONT_LEFT   <br> |
+    |               | 1: MA_CHANNEL_FRONT_RIGHT  <br> |
+    |               | 2: MA_CHANNEL_FRONT_CENTER <br> |
+    |               | 3: MA_CHANNEL_BACK_CENTER       |
+    +---------------+---------------------------------+
+    | 5             | 0: MA_CHANNEL_FRONT_LEFT   <br> |
+    |               | 1: MA_CHANNEL_FRONT_RIGHT  <br> |
+    |               | 2: MA_CHANNEL_FRONT_CENTER <br> |
+    |               | 3: MA_CHANNEL_BACK_LEFT    <br> |
+    |               | 4: MA_CHANNEL_BACK_RIGHT        |
+    +---------------+---------------------------------+
+    | 6 (5.1)       | 0: MA_CHANNEL_FRONT_LEFT   <br> |
+    |               | 1: MA_CHANNEL_FRONT_RIGHT  <br> |
+    |               | 2: MA_CHANNEL_FRONT_CENTER <br> |
+    |               | 3: MA_CHANNEL_LFE          <br> |
+    |               | 4: MA_CHANNEL_SIDE_LEFT    <br> |
+    |               | 5: MA_CHANNEL_SIDE_RIGHT        |
+    +---------------+---------------------------------+
+    | 7             | 0: MA_CHANNEL_FRONT_LEFT   <br> |
+    |               | 1: MA_CHANNEL_FRONT_RIGHT  <br> |
+    |               | 2: MA_CHANNEL_FRONT_CENTER <br> |
+    |               | 3: MA_CHANNEL_LFE          <br> |
+    |               | 4: MA_CHANNEL_BACK_CENTER  <br> |
+    |               | 4: MA_CHANNEL_SIDE_LEFT    <br> |
+    |               | 5: MA_CHANNEL_SIDE_RIGHT        |
+    +---------------+---------------------------------+
+    | 8 (7.1)       | 0: MA_CHANNEL_FRONT_LEFT   <br> |
+    |               | 1: MA_CHANNEL_FRONT_RIGHT  <br> |
+    |               | 2: MA_CHANNEL_FRONT_CENTER <br> |
+    |               | 3: MA_CHANNEL_LFE          <br> |
+    |               | 4: MA_CHANNEL_BACK_LEFT    <br> |
+    |               | 5: MA_CHANNEL_BACK_RIGHT   <br> |
+    |               | 6: MA_CHANNEL_SIDE_LEFT    <br> |
+    |               | 7: MA_CHANNEL_SIDE_RIGHT        |
+    +---------------+---------------------------------+
+    | Other         | All channels set to 0. This     |
+    |               | is equivalent to the same       |
+    |               | mapping as the device.          |
+    +---------------+---------------------------------+
 
 
 
@@ -732,7 +716,8 @@ The following example shows how data can be processed
         // An error occurred...
     }
 
-    // At this point, frameCountIn contains the number of input frames that were consumed and frameCountOut contains the number of output frames written.
+    // At this point, frameCountIn contains the number of input frames that were consumed and frameCountOut contains the
+    // number of output frames written.
     ```
 
 To initialize the resampler you first need to set up a config (`ma_resampler_config`) with `ma_resampler_config_init()`. You need to specify the sample format
@@ -809,12 +794,16 @@ The Speex resampler is made up of third party code which is released under the B
 domain, it is strictly opt-in and all of it's code is stored in separate files. If you opt-in to the Speex resampler you must consider the license text in it's
 source files. To opt-in, you must first #include the following file before the implementation of miniaudio.h:
 
+    ```c
     #include "extras/speex_resampler/ma_speex_resampler.h"
+    ```
 
 Both the header and implementation is contained within the same file. The implementation can be included in your program like so:
 
+    ```c
     #define MINIAUDIO_SPEEX_RESAMPLER_IMPLEMENTATION
     #include "extras/speex_resampler/ma_speex_resampler.h"
+    ```
 
 Note that even if you opt-in to the Speex backend, miniaudio won't use it unless you explicitly ask for it in the respective config of the object you are
 initializing. If you try to use the Speex resampler without opting in, initialization of the `ma_resampler` object will fail with `MA_NO_BACKEND`.
@@ -831,7 +820,15 @@ internally to convert between the format requested when the device was initializ
 conversion is very similar to the resampling API. Create a `ma_data_converter` object like this:
 
     ```c
-    ma_data_converter_config config = ma_data_converter_config_init(inputFormat, outputFormat, inputChannels, outputChannels, inputSampleRate, outputSampleRate);
+    ma_data_converter_config config = ma_data_converter_config_init(
+        inputFormat,
+        outputFormat,
+        inputChannels,
+        outputChannels,
+        inputSampleRate,
+        outputSampleRate
+    );
+
     ma_data_converter converter;
     ma_result result = ma_data_converter_init(&config, &converter);
     if (result != MA_SUCCESS) {
@@ -870,7 +867,8 @@ The following example shows how data can be processed
         // An error occurred...
     }
 
-    // At this point, frameCountIn contains the number of input frames that were consumed and frameCountOut contains the number of output frames written.
+    // At this point, frameCountIn contains the number of input frames that were consumed and frameCountOut contains the number
+    // of output frames written.
     ```
 
 The data converter supports multiple channels and is always interleaved (both input and output). The channel count cannot be changed after initialization.
@@ -1178,6 +1176,7 @@ Sometimes it can be convenient to allocate the memory for the `ma_audio_buffer` 
 the raw audio data will be located immediately after the `ma_audio_buffer` structure. To do this, use `ma_audio_buffer_alloc_and_init()`:
 
     ```c
+    ma_audio_buffer_config config = ma_audio_buffer_config_init(format, channels, sizeInFrames, pExistingData, &allocationCallbacks);
     ma_audio_buffer* pBuffer
     result = ma_audio_buffer_alloc_and_init(&config, &pBuffer);
     if (result != MA_SUCCESS) {
@@ -1189,13 +1188,13 @@ the raw audio data will be located immediately after the `ma_audio_buffer` struc
     ma_audio_buffer_uninit_and_free(&buffer);
     ```
 
-If you initialize the buffer with `ma_audio_buffer_alloc_and_init()` you should uninitialize it with `ma_audio_buffer_uninit_and_free()`.
+If you initialize the buffer with `ma_audio_buffer_alloc_and_init()` you should uninitialize it with `ma_audio_buffer_uninit_and_free()`. In the example above,
+the memory pointed to by `pExistingData` will be copied into the buffer, which is contrary to the behavior of `ma_audio_buffer_init()`.
 
-An audio buffer has a playback cursor just like a decoder. As you read frames from the buffer, the cursor moves forward. It does not automatically loop back to
-the start. To do this, you should inspect the number of frames returned by `ma_audio_buffer_read_pcm_frames()` to determine if the end has been reached, which
-you can know by comparing it with the requested frame count you specified when you called the function. If the return value is less it means the end has been
-reached. In this case you can seem back to the start with `ma_audio_buffer_seek_to_pcm_frame(pAudioBuffer, 0)`. Below is an example for reading data from an
-audio buffer.
+An audio buffer has a playback cursor just like a decoder. As you read frames from the buffer, the cursor moves forward. The last parameter (`loop`) can be
+used to determine if the buffer should loop. The return value is the number of frames actually read. If this is less than the number of frames requested it
+means the end has been reached. This should never happen if the `loop` parameter is set to true. If you want to manually loop back to the start, you can do so
+with with `ma_audio_buffer_seek_to_pcm_frame(pAudioBuffer, 0)`. Below is an example for reading data from an audio buffer.
 
     ```c
     ma_uint64 framesRead = ma_audio_buffer_read_pcm_frames(pAudioBuffer, pFramesOut, desiredFrameCount, isLooping);
@@ -1204,15 +1203,16 @@ audio buffer.
     }
     ```
 
-Sometimes you may want to avoid the cost of data movement between the internal buffer and the output buffer as it's just a copy operation. Instead you can use
-memory mapping to retrieve a pointer to a segment of data:
+Sometimes you may want to avoid the cost of data movement between the internal buffer and the output buffer. Instead you can use memory mapping to retrieve a
+pointer to a segment of data:
 
     ```c
     void* pMappedFrames;
     ma_uint64 frameCount = frameCountToTryMapping;
     ma_result result = ma_audio_buffer_map(pAudioBuffer, &pMappedFrames, &frameCount);
     if (result == MA_SUCCESS) {
-        // Map was successful. The value in frameCount will be how many frames were _actually_ mapped, which may be less due to the end of the buffer being reached.
+        // Map was successful. The value in frameCount will be how many frames were _actually_ mapped, which may be
+        // less due to the end of the buffer being reached.
         ma_copy_pcm_frames(pFramesOut, pMappedFrames, frameCount, pAudioBuffer->format, pAudioBuffer->channels);
 
         // You must unmap the buffer.
@@ -1222,7 +1222,8 @@ memory mapping to retrieve a pointer to a segment of data:
 
 When you use memory mapping, the read cursor is increment by the frame count passed in to `ma_audio_buffer_unmap()`. If you decide not to process every frame
 you can pass in a value smaller than the value returned by `ma_audio_buffer_map()`. The disadvantage to using memory mapping is that it does not handle looping
-for you. You can determine if the buffer is at the end for the purpose of looping with `ma_audio_buffer_at_end()`.
+for you. You can determine if the buffer is at the end for the purpose of looping with `ma_audio_buffer_at_end()` or by inspecting the return value of
+`ma_audio_buffer_unmap()` and checking if it equals `MA_AT_END`. You should not treat `MA_AT_END` as an error when returned by `ma_audio_buffer_unmap()`.
 
 
 
@@ -1248,7 +1249,7 @@ something like the following:
 The `ma_pcm_rb_init()` function takes the sample format and channel count as parameters because it's the PCM varient of the ring buffer API. For the regular
 ring buffer that operates on bytes you would call `ma_rb_init()` which leaves these out and just takes the size of the buffer in bytes instead of frames. The
 fourth parameter is an optional pre-allocated buffer and the fifth parameter is a pointer to a `ma_allocation_callbacks` structure for custom memory allocation
-routines. Passing in NULL for this results in MA_MALLOC() and MA_FREE() being used.
+routines. Passing in `NULL` for this results in `MA_MALLOC()` and `MA_FREE()` being used.
 
 Use `ma_pcm_rb_init_ex()` if you need a deinterleaved buffer. The data for each sub-buffer is offset from each other based on the stride. To manage your sub-
 buffers you can use `ma_pcm_rb_get_subbuffer_stride()`, `ma_pcm_rb_get_subbuffer_offset()` and `ma_pcm_rb_get_subbuffer_ptr()`.
@@ -1268,9 +1269,9 @@ the consumer thread, and the write pointer forward by the producer thread. If th
 there is too little space between the pointers, move the write pointer forward.
 
 You can use a ring buffer at the byte level instead of the PCM frame level by using the `ma_rb` API. This is exactly the same, only you will use the `ma_rb`
-functions instead of `ma_pcm_rb` and instead of frame counts you'll pass around byte counts.
+functions instead of `ma_pcm_rb` and instead of frame counts pass around byte counts.
 
-The maximum size of the buffer in bytes is 0x7FFFFFFF-(MA_SIMD_ALIGNMENT-1) due to the most significant bit being used to encode a loop flag and the internally
+The maximum size of the buffer in bytes is `0x7FFFFFFF-(MA_SIMD_ALIGNMENT-1)` due to the most significant bit being used to encode a loop flag and the internally
 managed buffers always being aligned to MA_SIMD_ALIGNMENT.
 
 Note that the ring buffer is only thread safe when used by a single consumer thread and single producer thread.
@@ -1295,7 +1296,7 @@ The following backends are supported by miniaudio.
     | audio(4)    | ma_backend_audio4     | NetBSD, OpenBSD                                        |
     | OSS         | ma_backend_oss        | FreeBSD                                                |
     | AAudio      | ma_backend_aaudio     | Android 8+                                             |
-    | OpenSL|ES   | ma_backend_opensl     | Android (API level 16+)                                |
+    | OpenSL ES   | ma_backend_opensl     | Android (API level 16+)                                |
     | Web Audio   | ma_backend_webaudio   | Web (via Emscripten)                                   |
     | Null        | ma_backend_null       | Cross Platform (not used on Web)                       |
     +-------------+-----------------------+--------------------------------------------------------+
@@ -1305,20 +1306,18 @@ Some backends have some nuance details you may want to be aware of.
 11.1. WASAPI
 ------------
 - Low-latency shared mode will be disabled when using an application-defined sample rate which is different to the device's native sample rate. To work around
-  this, set wasapi.noAutoConvertSRC to true in the device config. This is due to IAudioClient3_InitializeSharedAudioStream() failing when the
-  AUDCLNT_STREAMFLAGS_AUTOCONVERTPCM flag is specified. Setting wasapi.noAutoConvertSRC will result in miniaudio's internal resampler being used instead which
-  will in turn enable the use of low-latency shared mode.
+  this, set `wasapi.noAutoConvertSRC` to true in the device config. This is due to IAudioClient3_InitializeSharedAudioStream() failing when the
+  `AUDCLNT_STREAMFLAGS_AUTOCONVERTPCM` flag is specified. Setting wasapi.noAutoConvertSRC will result in miniaudio's internal resampler being used instead
+  which will in turn enable the use of low-latency shared mode.
 
 11.2. PulseAudio
 ----------------
 - If you experience bad glitching/noise on Arch Linux, consider this fix from the Arch wiki:
-    https://wiki.archlinux.org/index.php/PulseAudio/Troubleshooting#Glitches,_skips_or_crackling
-  Alternatively, consider using a different backend such as ALSA.
+  https://wiki.archlinux.org/index.php/PulseAudio/Troubleshooting#Glitches,_skips_or_crackling. Alternatively, consider using a different backend such as ALSA.
 
 11.3. Android
 -------------
-- To capture audio on Android, remember to add the RECORD_AUDIO permission to your manifest:
-    <uses-permission android:name="android.permission.RECORD_AUDIO" />
+- To capture audio on Android, remember to add the RECORD_AUDIO permission to your manifest: `<uses-permission android:name="android.permission.RECORD_AUDIO" />`
 - With OpenSL|ES, only a single ma_context can be active at any given time. This is due to a limitation with OpenSL|ES.
 - With AAudio, only default devices are enumerated. This is due to AAudio not having an enumeration API (devices are enumerated through Java). You can however
   perform your own device enumeration through Java and then set the ID in the ma_device_id structure (ma_device_id.aaudio) and pass it to ma_device_init().
@@ -1329,16 +1328,19 @@ Some backends have some nuance details you may want to be aware of.
 ---------
 - UWP only supports default playback and capture devices.
 - UWP requires the Microphone capability to be enabled in the application's manifest (Package.appxmanifest):
-      <Package ...>
-          ...
-          <Capabilities>
-              <DeviceCapability Name="microphone" />
-          </Capabilities>
-      </Package>
+
+    ```
+    <Package ...>
+        ...
+        <Capabilities>
+            <DeviceCapability Name="microphone" />
+        </Capabilities>
+    </Package>
+    ```
 
 11.5. Web Audio / Emscripten
-----------------------
-- You cannot use -std=c* compiler flags, nor -ansi. This only applies to the Emscripten build.
+----------------------------
+- You cannot use `-std=c*` compiler flags, nor `-ansi`. This only applies to the Emscripten build.
 - The first time a context is initialized it will create a global object called "miniaudio" whose primary purpose is to act as a factory for device objects.
 - Currently the Web Audio backend uses ScriptProcessorNode's, but this may need to change later as they've been deprecated.
 - Google has implemented a policy in their browsers that prevent automatic media output without first receiving some kind of user input. The following web page
@@ -1351,13 +1353,13 @@ Some backends have some nuance details you may want to be aware of.
 =======================
 - Automatic stream routing is enabled on a per-backend basis. Support is explicitly enabled for WASAPI and Core Audio, however other backends such as
   PulseAudio may naturally support it, though not all have been tested.
-- The contents of the output buffer passed into the data callback will always be pre-initialized to zero unless the noPreZeroedOutputBuffer config variable in
-  ma_device_config is set to true, in which case it'll be undefined which will require you to write something to the entire buffer.
-- By default miniaudio will automatically clip samples. This only applies when the playback sample format is configured as ma_format_f32. If you are doing
-  clipping yourself, you can disable this overhead by setting noClip to true in the device config.
+- The contents of the output buffer passed into the data callback will always be pre-initialized to zero unless the `noPreZeroedOutputBuffer` config variable
+  in `ma_device_config` is set to true, in which case it'll be undefined which will require you to write something to the entire buffer.
+- By default miniaudio will automatically clip samples. This only applies when the playback sample format is configured as `ma_format_f32`. If you are doing
+  clipping yourself, you can disable this overhead by setting `noClip` to true in the device config.
 - The sndio backend is currently only enabled on OpenBSD builds.
 - The audio(4) backend is supported on OpenBSD, but you may need to disable sndiod before you can use it.
-- Note that GCC and Clang requires "-msse2", "-mavx2", etc. for SIMD optimizations.
+- Note that GCC and Clang requires `-msse2`, `-mavx2`, etc. for SIMD optimizations.
 */
 
 #ifndef miniaudio_h
@@ -1372,7 +1374,7 @@ extern "C" {
 
 #define MA_VERSION_MAJOR    0
 #define MA_VERSION_MINOR    10
-#define MA_VERSION_REVISION 13
+#define MA_VERSION_REVISION 14
 #define MA_VERSION_STRING   MA_XSTRINGIFY(MA_VERSION_MAJOR) "." MA_XSTRINGIFY(MA_VERSION_MINOR) "." MA_XSTRINGIFY(MA_VERSION_REVISION)
 
 #if defined(_MSC_VER) && !defined(__clang__)
@@ -6142,13 +6144,13 @@ static MA_INLINE void ma_yield()
     #else
         __asm__ __volatile__ ("pause");
     #endif
-#elif (defined(__arm__) && defined(__ARM_ARCH) && __ARM_ARCH >= 6) || (defined(_M_ARM) && _M_ARM >= 6)
+#elif (defined(__arm__) && defined(__ARM_ARCH) && __ARM_ARCH >= 7) || (defined(_M_ARM) && _M_ARM >= 7) || defined(__ARM_ARCH_6K__) || defined(__ARM_ARCH_6T2__)
     /* ARM */
     #if defined(_MSC_VER)
         /* Apparently there is a __yield() intrinsic that's compatible with ARM, but I cannot find documentation for it nor can I find where it's declared. */
         __yield();
     #else
-        __asm__ __volatile__ ("yield");
+        __asm__ __volatile__ ("yield"); /* ARMv6K/ARMv6T2 and above. */
     #endif
 #else
     /* Unknown or unsupported architecture. No-op. */
@@ -28840,7 +28842,7 @@ static SLuint32 ma_channel_map_to_channel_mask__opensl(const ma_channel* pChanne
     SLuint32 channelMask = 0;
     ma_uint32 iChannel;
     for (iChannel = 0; iChannel < channels; ++iChannel) {
-        channelMask |= ma_channel_id_to_opensl(channelMap[iChannel]);
+        channelMask |= ma_channel_id_to_opensl(pChannelMap[iChannel]);
     }
 
     return channelMask;
@@ -28850,13 +28852,13 @@ static SLuint32 ma_channel_map_to_channel_mask__opensl(const ma_channel* pChanne
 static void ma_channel_mask_to_channel_map__opensl(SLuint32 channelMask, ma_uint32 channels, ma_channel* pChannelMap)
 {
     if (channels == 1 && channelMask == 0) {
-        channelMap[0] = MA_CHANNEL_MONO;
+        pChannelMap[0] = MA_CHANNEL_MONO;
     } else if (channels == 2 && channelMask == 0) {
-        channelMap[0] = MA_CHANNEL_FRONT_LEFT;
-        channelMap[1] = MA_CHANNEL_FRONT_RIGHT;
+        pChannelMap[0] = MA_CHANNEL_FRONT_LEFT;
+        pChannelMap[1] = MA_CHANNEL_FRONT_RIGHT;
     } else {
         if (channels == 1 && (channelMask & SL_SPEAKER_FRONT_CENTER) != 0) {
-            channelMap[0] = MA_CHANNEL_MONO;
+            pChannelMap[0] = MA_CHANNEL_MONO;
         } else {
             /* Just iterate over each bit. */
             ma_uint32 iChannel = 0;
@@ -28865,7 +28867,7 @@ static void ma_channel_mask_to_channel_map__opensl(SLuint32 channelMask, ma_uint
                 SLuint32 bitValue = (channelMask & (1UL << iBit));
                 if (bitValue != 0) {
                     /* The bit is set. */
-                    channelMap[iChannel] = ma_channel_id_to_ma__opensl(bitValue);
+                    pChannelMap[iChannel] = ma_channel_id_to_ma__opensl(bitValue);
                     iChannel += 1;
                 }
             }
@@ -61964,6 +61966,11 @@ The following miscellaneous changes have also been made.
 /*
 REVISION HISTORY
 ================
+v0.10.14 - 2020-07-14
+  - Fix compilation errors on Android.
+  - Fix compilation errors with -march=armv6.
+  - Updates to the documentation.
+
 v0.10.13 - 2020-07-11
   - Fix some potential buffer overflow errors with channel maps when channel counts are greater than MA_MAX_CHANNELS.
   - Fix compilation error on Emscripten.
