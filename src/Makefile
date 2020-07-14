@@ -160,12 +160,12 @@ ifeq ($(PLATFORM),PLATFORM_ANDROID)
     # Starting at 2019 using ARM64 is mandatory for published apps,
     # and minimum required target API is Android 9 (API level 28)
     ANDROID_ARCH ?= ARM
-    ANDROID_API_VERSION = 28
+    ANDROID_API_VERSION ?= 28
 
     # Android required path variables
     # NOTE: Starting with Android NDK r21, no more toolchain generation is required, NDK is the toolchain on itself
     ifeq ($(OS),Windows_NT)
-        ANDROID_NDK = C:/android-ndk-r21
+        ANDROID_NDK = C:/android-ndk
         ANDROID_TOOLCHAIN = $(ANDROID_NDK)/toolchains/llvm/prebuilt/windows-x86_64
     else
         ANDROID_NDK ?= /usr/lib/android/ndk
