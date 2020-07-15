@@ -2862,6 +2862,7 @@ RayHitInfo GetCollisionRayGround(Ray ray, float groundHeight)
             result.distance = distance;
             result.normal = (Vector3){ 0.0, 1.0, 0.0 };
             result.position = Vector3Add(ray.position, Vector3Scale(ray.direction, distance));
+            result.position.y = groundHeight;
         }
     }
 
