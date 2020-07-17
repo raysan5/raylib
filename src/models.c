@@ -3243,7 +3243,9 @@ static Model LoadIQM(const char *fileName)
 
         for (unsigned int i = imesh[m].first_triangle; i < (imesh[m].first_triangle + imesh[m].num_triangles); i++)
         {
-            // IQM triangles are stored counter clockwise, but raylib sets opengl to clockwise drawing, so we swap them around
+            // IQM triangles indexes are stored in counter-clockwise, but raylib processes the index in linear order,
+            // expecting they point to the counter-clockwise vertex triangle, so we need to reverse triangle indexes         
+            // NOTE: raylib renders vertex data in counter-clockwise order (standard convention) by default
             model.meshes[m].indices[tcounter + 2] = tri[i].vertex[0] - imesh[m].first_vertex;
             model.meshes[m].indices[tcounter + 1] = tri[i].vertex[1] - imesh[m].first_vertex;
             model.meshes[m].indices[tcounter] = tri[i].vertex[2] - imesh[m].first_vertex;
