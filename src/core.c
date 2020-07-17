@@ -3108,6 +3108,10 @@ static bool InitGraphicsDevice(int width, int height)
     // Get display size
     UWPGetDisplaySizeFunc()(&CORE.Window.display.width, &CORE.Window.display.height);
 
+    // Use the width and height of the surface for render
+    CORE.Window.render.width = CORE.Window.screen.width;
+    CORE.Window.render.height = CORE.Window.screen.height;
+
 #endif  // PLATFORM_UWP
 
 #if defined(PLATFORM_ANDROID) || defined(PLATFORM_RPI)
@@ -3154,7 +3158,10 @@ static bool InitGraphicsDevice(int width, int height)
     eglGetConfigAttrib(CORE.Window.device, CORE.Window.config, EGL_NATIVE_VISUAL_ID, &displayFormat);
 
     // At this point we need to manage render size vs screen size
-    // NOTE: This function use and modify global module variables: CORE.Window.screen.width/CORE.Window.screen.height and CORE.Window.render.width/CORE.Window.render.height and CORE.Window.screenScale
+    // NOTE: This function use and modify global module variables: 
+    //  -> CORE.Window.screen.width/CORE.Window.screen.height
+    //  -> CORE.Window.render.width/CORE.Window.render.height
+    //  -> CORE.Window.screenScale
     SetupFramebuffer(CORE.Window.display.width, CORE.Window.display.height);
 
     ANativeWindow_setBuffersGeometry(CORE.Android.app->window, CORE.Window.render.width, CORE.Window.render.height, displayFormat);
@@ -3171,7 +3178,10 @@ static bool InitGraphicsDevice(int width, int height)
     if (CORE.Window.screen.height <= 0) CORE.Window.screen.height = CORE.Window.display.height;
 
     // At this point we need to manage render size vs screen size
-    // NOTE: This function use and modify global module variables: CORE.Window.screen.width/CORE.Window.screen.height and CORE.Window.render.width/CORE.Window.render.height and CORE.Window.screenScale
+    // NOTE: This function use and modify global module variables: 
+    //  -> CORE.Window.screen.width/CORE.Window.screen.height
+    //  -> CORE.Window.render.width/CORE.Window.render.height
+    //  -> CORE.Window.screenScale    
     SetupFramebuffer(CORE.Window.display.width, CORE.Window.display.height);
 
     dstRect.x = 0;
@@ -3218,22 +3228,13 @@ static bool InitGraphicsDevice(int width, int height)
     }
     else
     {
-        // Grab the width and height of the surface
-#if defined(PLATFORM_UWP)
-        CORE.Window.render.width = CORE.Window.screen.width;
-        CORE.Window.render.height = CORE.Window.screen.height;
-#else
-        CORE.Window.render.width = CORE.Window.display.width;
-        CORE.Window.render.height = CORE.Window.display.height;
-#endif
-
         TRACELOG(LOG_INFO, "DISPLAY: Device initialized successfully");
         TRACELOG(LOG_INFO, "    > Display size: %i x %i", CORE.Window.display.width, CORE.Window.display.height);
         TRACELOG(LOG_INFO, "    > Render size:  %i x %i", CORE.Window.render.width, CORE.Window.render.height);
         TRACELOG(LOG_INFO, "    > Screen size:  %i x %i", CORE.Window.screen.width, CORE.Window.screen.height);
         TRACELOG(LOG_INFO, "    > Viewport offsets: %i, %i", CORE.Window.renderOffset.x, CORE.Window.renderOffset.y);
     }
-#endif // PLATFORM_ANDROID || PLATFORM_RPI
+#endif // PLATFORM_ANDROID || PLATFORM_RPI || defined(PLATFORM_UWP)
 
     // Initialize OpenGL context (states and resources)
     // NOTE: CORE.Window.screen.width and CORE.Window.screen.height not used, just stored as globals in rlgl
