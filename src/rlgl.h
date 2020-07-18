@@ -2839,7 +2839,7 @@ void rlDrawMeshInstanced(Mesh mesh, Material material, int count, Matrix *transf
 #if defined(GRAPHICS_API_OPENGL_33)
 
     if (!RLGL.ExtSupported.vao) {
-        TRACELOG(LOG_INFO, "VAO: Instanced rendering requires VAO support");
+        TRACELOG(LOG_ERROR, "VAO: Instanced rendering requires VAO support");
         return;
     }
 
@@ -2943,7 +2943,7 @@ void rlDrawMeshInstanced(Mesh mesh, Material material, int count, Matrix *transf
     RLGL.State.modelview = matView;
 
 #else
-    TRACELOG(LOG_INFO, "VAO: Instanced rendering requires GRAPHICS_API_OPENGL_33");
+    TRACELOG(LOG_ERROR, "VAO: Instanced rendering requires GRAPHICS_API_OPENGL_33");
 #endif
 }
 
