@@ -548,6 +548,7 @@ RLAPI void rlLoadMesh(Mesh *mesh, bool dynamic);                          // Upl
 RLAPI void rlUpdateMesh(Mesh mesh, int buffer, int count);                // Update vertex or index data on GPU (upload new data to one buffer)
 RLAPI void rlUpdateMeshAt(Mesh mesh, int buffer, int count, int index);   // Update vertex or index data on GPU, at index
 RLAPI void rlDrawMesh(Mesh mesh, Material material, Matrix transform);    // Draw a 3d mesh with material and transform
+RLAPI void rlDrawMeshInstanced(Mesh mesh, Material material, int count, Matrix *transforms);    // Draw a 3d mesh with material and transform
 RLAPI void rlUnloadMesh(Mesh mesh);                                       // Unload mesh data from CPU and GPU
 
 // NOTE: There is a set of shader related functions that are available to end user,
@@ -2829,6 +2830,120 @@ void rlDrawMesh(Mesh mesh, Material material, Matrix transform)
     // NOTE: In stereo rendering matrices are being modified to fit every eye
     RLGL.State.projection = matProjection;
     RLGL.State.modelview = matView;
+#endif
+}
+
+// Draw a 3d mesh with material and transform
+void rlDrawMeshInstanced(Mesh mesh, Material material, int count, Matrix *transforms)
+{
+#if defined(GRAPHICS_API_OPENGL_33)
+
+    if (!RLGL.ExtSupported.vao) {
+        TRACELOG(LOG_INFO, "VAO: Instanced rendering requires VAO support");
+        return;
+    }
+
+    // Bind shader program
+    glUseProgram(material.shader.id);
+
+    // Matrices and other values required by shader
+    //-----------------------------------------------------
+
+    // Upload to shader material.colDiffuse
+    if (material.shader.locs[LOC_COLOR_DIFFUSE] != -1)
+        glUniform4f(material.shader.locs[LOC_COLOR_DIFFUSE], (float)material.maps[MAP_DIFFUSE].color.r/255.0f,
+                                                           (float)material.maps[MAP_DIFFUSE].color.g/255.0f,
+                                                           (float)material.maps[MAP_DIFFUSE].color.b/255.0f,
+                                                           (float)material.maps[MAP_DIFFUSE].color.a/255.0f);
+
+    // Upload to shader material.colSpecular (if available)
+    if (material.shader.locs[LOC_COLOR_SPECULAR] != -1)
+        glUniform4f(material.shader.locs[LOC_COLOR_SPECULAR], (float)material.maps[MAP_SPECULAR].color.r/255.0f,
+                                                               (float)material.maps[MAP_SPECULAR].color.g/255.0f,
+                                                               (float)material.maps[MAP_SPECULAR].color.b/255.0f,
+                                                               (float)material.maps[MAP_SPECULAR].color.a/255.0f);
+
+    //-----------------------------------------------------
+
+    // Bind active texture maps (if available)
+    for (int i = 0; i < MAX_MATERIAL_MAPS; i++)
+    {
+        if (material.maps[i].texture.id > 0)
+        {
+            glActiveTexture(GL_TEXTURE0 + i);
+            if ((i == MAP_IRRADIANCE) || (i == MAP_PREFILTER) || (i == MAP_CUBEMAP)) glBindTexture(GL_TEXTURE_CUBE_MAP, material.maps[i].texture.id);
+            else glBindTexture(GL_TEXTURE_2D, material.maps[i].texture.id);
+
+            glUniform1i(material.shader.locs[LOC_MAP_DIFFUSE + i], i);
+        }
+    }
+
+    // Bind vertex array objects (or VBOs)
+    glBindVertexArray(mesh.vaoId);
+
+    // At this point the modelview matrix just contains the view matrix (camera)
+    // That's because BeginMode3D() sets it an no model-drawing function modifies it, all use rlPushMatrix() and rlPopMatrix()
+    Matrix matView = RLGL.State.modelview;         // View matrix (camera)
+    Matrix matProjection = RLGL.State.projection;  // Projection matrix (perspective)
+
+    SetShaderValueMatrix(material.shader, material.shader.locs[LOC_MATRIX_MODEL], RLGL.State.transform);
+    SetShaderValueMatrix(material.shader, material.shader.locs[LOC_MATRIX_VIEW], RLGL.State.modelview);
+    SetShaderValueMatrix(material.shader, material.shader.locs[LOC_MATRIX_PROJECTION], RLGL.State.projection);
+
+    float16* instances = calloc(count, sizeof(float16));
+
+    for (int i = 0; i < count; i++) {
+        instances[i] = MatrixToFloatV(transforms[i]);
+    }
+
+    unsigned int instancesB;
+    glGenBuffers(1, &instancesB);
+    glBindBuffer(GL_ARRAY_BUFFER, instancesB);
+    glBufferData(GL_ARRAY_BUFFER, count * sizeof(float16), instances, GL_STATIC_DRAW);
+
+    unsigned int instanceA = glGetAttribLocation(material.shader.id, "instance");
+
+    // Set attribute pointers for matrix (4 times sizeof Vector4).
+    for (unsigned int i = 0; i < 4; i++) {
+        glEnableVertexAttribArray(instanceA+i);
+        glVertexAttribPointer(instanceA+i, 4, GL_FLOAT, GL_FALSE, sizeof(Matrix), (void*)(i * sizeof(Vector4)));
+        glVertexAttribDivisor(instanceA+i, 1);
+    }
+
+    glBindBuffer(GL_ARRAY_BUFFER, 0);
+
+    // Draw call!
+    if (mesh.indices != NULL) {
+        // Indexed vertices draw
+        glDrawElementsInstanced(GL_TRIANGLES, mesh.triangleCount*3, GL_UNSIGNED_SHORT, 0, count);
+    } else {
+        glDrawArraysInstanced(GL_TRIANGLES, 0, mesh.vertexCount, count);
+    }
+
+    glDeleteBuffers(1, &instancesB);
+    free(instances);
+
+    // Unbind all binded texture maps
+    for (int i = 0; i < MAX_MATERIAL_MAPS; i++)
+    {
+        glActiveTexture(GL_TEXTURE0 + i);       // Set shader active texture
+        if ((i == MAP_IRRADIANCE) || (i == MAP_PREFILTER) || (i == MAP_CUBEMAP)) glBindTexture(GL_TEXTURE_CUBE_MAP, 0);
+        else glBindTexture(GL_TEXTURE_2D, 0);   // Unbind current active texture
+    }
+
+    // Unind vertex array objects (or VBOs)
+    glBindVertexArray(0);
+
+    // Unbind shader program
+    glUseProgram(0);
+
+    // Restore RLGL.State.projection/RLGL.State.modelview matrices
+    // NOTE: In stereo rendering matrices are being modified to fit every eye
+    RLGL.State.projection = matProjection;
+    RLGL.State.modelview = matView;
+
+#else
+    TRACELOG(LOG_INFO, "VAO: Instanced rendering requires GRAPHICS_API_OPENGL_33");
 #endif
 }
 
