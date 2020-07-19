@@ -2474,7 +2474,7 @@ void MeshBinormals(Mesh *mesh)
 }
 
 // Smooth (average) vertex normals
-void MeshSmoothNormals(Mesh *mesh)
+void MeshNormalsSmooth(Mesh *mesh)
 {
     #define EPSILON 0.000001 // A small number
 
