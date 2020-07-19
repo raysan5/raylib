@@ -2493,7 +2493,7 @@ void MeshSmoothNormals(Mesh *mesh)
 
         bool matched = false;
 
-        // TODO: Matching vertices is brute force O(N). Do it more efficiently?
+        // TODO: Matching vertices is brute force O(N^2). Do it more efficiently?
         for (int j = 0; j < uvCounter; j++)
         {
             Vector3 uv = uniqueVertices[j];
