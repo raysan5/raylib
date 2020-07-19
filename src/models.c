@@ -2483,7 +2483,7 @@ void MeshSmoothNormals(Mesh *mesh)
     Vector3 *summedNormals = (Vector3 *)RL_CALLOC(mesh->vertexCount, sizeof(Vector3));
 
     int uiCounter = 0;
-    int *uniqueIndicies = (int *)RL_CALLOC(mesh->vertexCount, sizeof(int));
+    int *uniqueIndices = (int *)RL_CALLOC(mesh->vertexCount, sizeof(int));
 
     // Sum normals grouped by vertex
     for (int i = 0; i < mesh->vertexCount; i++)
@@ -2507,7 +2507,7 @@ void MeshSmoothNormals(Mesh *mesh)
             {
                 matched = true;
                 summedNormals[j] = Vector3Add(summedNormals[j], n);
-                uniqueIndicies[i] = j;
+                uniqueIndices[i] = j;
                 break;
             }
         }
@@ -2517,14 +2517,14 @@ void MeshSmoothNormals(Mesh *mesh)
             int j = uvCounter++;
             uniqueVertices[j] = v;
             summedNormals[j] = n;
-            uniqueIndicies[i] = j;
+            uniqueIndices[i] = j;
         }
     }
 
     // Average and update normals
     for (int i = 0; i < mesh->vertexCount; i++)
     {
-        int j = uniqueIndicies[i];
+        int j = uniqueIndices[i];
         Vector3 n = Vector3Normalize(summedNormals[j]);
         mesh->normals[(i + 0)*3 + 0] = n.x;
         mesh->normals[(i + 0)*3 + 1] = n.y;
@@ -2536,7 +2536,7 @@ void MeshSmoothNormals(Mesh *mesh)
 
     RL_FREE(uniqueVertices);
     RL_FREE(summedNormals);
-    RL_FREE(uniqueIndicies);
+    RL_FREE(uniqueIndices);
 
     TRACELOG(LOG_INFO, "MESH: Normals smoothed (%d vertices, %d unique)", mesh->vertexCount, uvCounter);
 }
