@@ -571,6 +571,7 @@ RLAPI Rectangle GetShapesTextureRec(void);                                // Get
 
 // Shader configuration functions
 RLAPI int GetShaderLocation(Shader shader, const char *uniformName);              // Get shader uniform location
+RLAPI int GetShaderAttribLocation(Shader shader, const char *attribName);         // Get shader attribute location
 RLAPI void SetShaderValue(Shader shader, int uniformLoc, const void *value, int uniformType);               // Set shader uniform value
 RLAPI void SetShaderValueV(Shader shader, int uniformLoc, const void *value, int uniformType, int count);   // Set shader uniform value vector
 RLAPI void SetShaderValueMatrix(Shader shader, int uniformLoc, Matrix mat);       // Set shader uniform value (matrix 4x4)
@@ -2846,9 +2847,6 @@ void rlDrawMeshInstanced(Mesh mesh, Material material, int count, Matrix *transf
     // Bind shader program
     glUseProgram(material.shader.id);
 
-    // Matrices and other values required by shader
-    //-----------------------------------------------------
-
     // Upload to shader material.colDiffuse
     if (material.shader.locs[LOC_COLOR_DIFFUSE] != -1)
         glUniform4f(material.shader.locs[LOC_COLOR_DIFFUSE], (float)material.maps[MAP_DIFFUSE].color.r/255.0f,
@@ -2863,15 +2861,14 @@ void rlDrawMeshInstanced(Mesh mesh, Material material, int count, Matrix *transf
                                                                (float)material.maps[MAP_SPECULAR].color.b/255.0f,
                                                                (float)material.maps[MAP_SPECULAR].color.a/255.0f);
 
-    //-----------------------------------------------------
-
     // Bind active texture maps (if available)
     for (int i = 0; i < MAX_MATERIAL_MAPS; i++)
     {
         if (material.maps[i].texture.id > 0)
         {
             glActiveTexture(GL_TEXTURE0 + i);
-            if ((i == MAP_IRRADIANCE) || (i == MAP_PREFILTER) || (i == MAP_CUBEMAP)) glBindTexture(GL_TEXTURE_CUBE_MAP, material.maps[i].texture.id);
+            if ((i == MAP_IRRADIANCE) || (i == MAP_PREFILTER) || (i == MAP_CUBEMAP))
+                glBindTexture(GL_TEXTURE_CUBE_MAP, material.maps[i].texture.id);
             else glBindTexture(GL_TEXTURE_2D, material.maps[i].texture.id);
 
             glUniform1i(material.shader.locs[LOC_MAP_DIFFUSE + i], i);
@@ -2882,29 +2879,31 @@ void rlDrawMeshInstanced(Mesh mesh, Material material, int count, Matrix *transf
     glBindVertexArray(mesh.vaoId);
 
     // At this point the modelview matrix just contains the view matrix (camera)
-    // That's because BeginMode3D() sets it an no model-drawing function modifies it, all use rlPushMatrix() and rlPopMatrix()
-    Matrix matView = RLGL.State.modelview;         // View matrix (camera)
-    Matrix matProjection = RLGL.State.projection;  // Projection matrix (perspective)
+    // For instanced shaders "mvp" is not premultiplied by any instance transform, only RLGL.State.transform
+    glUniformMatrix4fv(material.shader.locs[LOC_MATRIX_MVP], 1, false, MatrixToFloat(
+        MatrixMultiply(MatrixMultiply(RLGL.State.transform, RLGL.State.modelview), RLGL.State.projection)
+    ));
 
-    SetShaderValueMatrix(material.shader, material.shader.locs[LOC_MATRIX_MODEL], RLGL.State.transform);
-    SetShaderValueMatrix(material.shader, material.shader.locs[LOC_MATRIX_VIEW], RLGL.State.modelview);
-    SetShaderValueMatrix(material.shader, material.shader.locs[LOC_MATRIX_PROJECTION], RLGL.State.projection);
+    float16* instances = RL_MALLOC(count * sizeof(float16));
 
-    float16* instances = calloc(count, sizeof(float16));
-
-    for (int i = 0; i < count; i++) {
+    for (int i = 0; i < count; i++)
         instances[i] = MatrixToFloatV(transforms[i]);
-    }
 
+    // This could alternatively use a static VBO and either glMapBuffer or glBufferSubData.
+    // It isn't clear which would be reliably faster in all cases and on all platforms, and
+    // anecdotally glMapBuffer seems very slow (syncs) while glBufferSubData seems no faster
+    // since we're transferring all the transform matrices anyway.
     unsigned int instancesB;
     glGenBuffers(1, &instancesB);
     glBindBuffer(GL_ARRAY_BUFFER, instancesB);
     glBufferData(GL_ARRAY_BUFFER, count * sizeof(float16), instances, GL_STATIC_DRAW);
 
-    unsigned int instanceA = glGetAttribLocation(material.shader.id, "instance");
+    // Instances are put in LOC_MATRIX_MODEL attribute location with space for 4x Vector4, eg:
+    // layout (location = 12) in mat4 instance;
+    unsigned int instanceA = material.shader.locs[LOC_MATRIX_MODEL];
 
-    // Set attribute pointers for matrix (4 times sizeof Vector4).
-    for (unsigned int i = 0; i < 4; i++) {
+    for (unsigned int i = 0; i < 4; i++)
+    {
         glEnableVertexAttribArray(instanceA+i);
         glVertexAttribPointer(instanceA+i, 4, GL_FLOAT, GL_FALSE, sizeof(Matrix), (void*)(i * sizeof(Vector4)));
         glVertexAttribDivisor(instanceA+i, 1);
@@ -2921,7 +2920,7 @@ void rlDrawMeshInstanced(Mesh mesh, Material material, int count, Matrix *transf
     }
 
     glDeleteBuffers(1, &instancesB);
-    free(instances);
+    RL_FREE(instances);
 
     // Unbind all binded texture maps
     for (int i = 0; i < MAX_MATERIAL_MAPS; i++)
@@ -2936,11 +2935,6 @@ void rlDrawMeshInstanced(Mesh mesh, Material material, int count, Matrix *transf
 
     // Unbind shader program
     glUseProgram(0);
-
-    // Restore RLGL.State.projection/RLGL.State.modelview matrices
-    // NOTE: In stereo rendering matrices are being modified to fit every eye
-    RLGL.State.projection = matProjection;
-    RLGL.State.modelview = matView;
 
 #else
     TRACELOG(LOG_ERROR, "VAO: Instanced rendering requires GRAPHICS_API_OPENGL_33");
@@ -3255,6 +3249,19 @@ int GetShaderLocation(Shader shader, const char *uniformName)
 
     if (location == -1) TRACELOG(LOG_WARNING, "SHADER: [ID %i] Failed to find shader uniform: %s", shader.id, uniformName);
     else TRACELOG(LOG_INFO, "SHADER: [ID %i] Shader uniform (%s) set at location: %i", shader.id, uniformName, location);
+#endif
+    return location;
+}
+
+// Get shader attribute location
+int GetShaderAttribLocation(Shader shader, const char *attribName)
+{
+    int location = -1;
+#if defined(GRAPHICS_API_OPENGL_33) || defined(GRAPHICS_API_OPENGL_ES2)
+    location = glGetAttribLocation(shader.id, attribName);
+
+    if (location == -1) TRACELOG(LOG_WARNING, "SHADER: [ID %i] Failed to find shader attribute: %s", shader.id, attribName);
+    else TRACELOG(LOG_INFO, "SHADER: [ID %i] Shader attribute (%s) set at location: %i", shader.id, attribName, location);
 #endif
     return location;
 }
