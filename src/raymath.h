@@ -114,6 +114,14 @@
         float z;
     } Vector3;
 
+    // Vector4 type
+    typedef struct Vector4 {
+        float x;
+        float y;
+        float z;
+        float w;
+    } Vector4;
+
     // Quaternion type
     typedef struct Quaternion {
         float x;
