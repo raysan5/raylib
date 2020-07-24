@@ -1809,28 +1809,28 @@ void rlglCheckErrors() {
                 check = 0;
                 break;
             case 0x0500: // GL_INVALID_ENUM:
-                TRACELOG(LOG_ERROR, "GL_INVALID_ENUM");
+                TRACELOG(LOG_WARNING, "GL_INVALID_ENUM");
                 break;
             case 0x0501: //GL_INVALID_VALUE:
-                TRACELOG(LOG_ERROR, "GL_INVALID_VALUE");
+                TRACELOG(LOG_WARNING, "GL_INVALID_VALUE");
                 break;
             case 0x0502: //GL_INVALID_OPERATION:
-                TRACELOG(LOG_ERROR, "GL_INVALID_OPERATION");
+                TRACELOG(LOG_WARNING, "GL_INVALID_OPERATION");
                 break;
             case 0x0503: // GL_STACK_OVERFLOW:
-                TRACELOG(LOG_ERROR, "GL_STACK_OVERFLOW");
+                TRACELOG(LOG_WARNING, "GL_STACK_OVERFLOW");
                 break;
             case 0x0504: // GL_STACK_UNDERFLOW:
-                TRACELOG(LOG_ERROR, "GL_STACK_UNDERFLOW");
+                TRACELOG(LOG_WARNING, "GL_STACK_UNDERFLOW");
                 break;
             case 0x0505: // GL_OUT_OF_MEMORY:
-                TRACELOG(LOG_ERROR, "GL_OUT_OF_MEMORY");
+                TRACELOG(LOG_WARNING, "GL_OUT_OF_MEMORY");
                 break;
             case 0x0506: // GL_INVALID_FRAMEBUFFER_OPERATION:
-                TRACELOG(LOG_ERROR, "GL_INVALID_FRAMEBUFFER_OPERATION");
+                TRACELOG(LOG_WARNING, "GL_INVALID_FRAMEBUFFER_OPERATION");
                 break;
             default:
-                TRACELOG(LOG_ERROR, "unknown GL error %x", err);
+                TRACELOG(LOG_WARNING, "unknown GL error %x", err);
                 break;
         }
     }
