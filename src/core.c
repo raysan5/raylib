@@ -621,7 +621,7 @@ void InitWindow(int width, int height, const char *title)
 
     TRACELOG(LOG_INFO, "Initializing raylib %s", RAYLIB_VERSION);
 
-    CORE.Window.title = title;
+    if ((title != NULL) && (title[0] != 0)) CORE.Window.title = title;
 
     // Initialize required global values different than 0
     CORE.Input.Keyboard.exitKey = KEY_ESCAPE;
@@ -2823,7 +2823,7 @@ static bool InitGraphicsDevice(int width, int height)
         // HighDPI monitors are properly considered in a following similar function: SetupViewport()
         SetupFramebuffer(CORE.Window.display.width, CORE.Window.display.height);
 
-        CORE.Window.handle = glfwCreateWindow(CORE.Window.display.width, CORE.Window.display.height, CORE.Window.title, glfwGetPrimaryMonitor(), NULL);
+        CORE.Window.handle = glfwCreateWindow(CORE.Window.display.width, CORE.Window.display.height, (CORE.Window.title != 0)? CORE.Window.title : " ", glfwGetPrimaryMonitor(), NULL);
 
         // NOTE: Full-screen change, not working properly...
         //glfwSetWindowMonitor(CORE.Window.handle, glfwGetPrimaryMonitor(), 0, 0, CORE.Window.screen.width, CORE.Window.screen.height, GLFW_DONT_CARE);
@@ -2831,7 +2831,7 @@ static bool InitGraphicsDevice(int width, int height)
     else
     {
         // No-fullscreen window creation
-        CORE.Window.handle = glfwCreateWindow(CORE.Window.screen.width, CORE.Window.screen.height, CORE.Window.title, NULL, NULL);
+        CORE.Window.handle = glfwCreateWindow(CORE.Window.screen.width, CORE.Window.screen.height, (CORE.Window.title != 0)? CORE.Window.title : " ", NULL, NULL);
 
         if (CORE.Window.handle)
         {
