@@ -808,7 +808,8 @@ typedef enum {
     BLEND_ALPHA = 0,        // Blend textures considering alpha (default)
     BLEND_ADDITIVE,         // Blend textures adding colors
     BLEND_MULTIPLIED,       // Blend textures multiplying colors
-    BLEND_ADD_COLORS        // Blend textures adding colors (alternative)
+    BLEND_ADD_COLORS,        // Blend textures adding colors (alternative)
+    BLEND_SUBTRACT_COLORS        // Blend textures subtracting colors (alternative)
 } BlendMode;
 
 // Gestures type
@@ -1385,7 +1386,9 @@ RLAPI Texture2D GenTextureBRDF(Shader shader, int size);                  // Gen
 RLAPI void BeginShaderMode(Shader shader);                                // Begin custom shader drawing
 RLAPI void EndShaderMode(void);                                           // End custom shader drawing (use default shader)
 RLAPI void BeginBlendMode(int mode);                                      // Begin blending mode (alpha, additive, multiplied)
+RLAPI void BeginBlendModeEx(int sFactor, int dFactor, int equation);      // Begin blending mode (full options)
 RLAPI void EndBlendMode(void);                                            // End blending mode (reset to default: alpha blending)
+
 
 // VR control functions
 RLAPI void InitVrSimulator(void);                       // Init VR simulator for selected device parameters

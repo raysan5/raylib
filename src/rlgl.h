@@ -588,6 +588,7 @@ RLAPI Texture2D GenTextureBRDF(Shader shader, int size);                  // Gen
 RLAPI void BeginShaderMode(Shader shader);              // Begin custom shader drawing
 RLAPI void EndShaderMode(void);                         // End custom shader drawing (use default shader)
 RLAPI void BeginBlendMode(int mode);                    // Begin blending mode (alpha, additive, multiplied)
+RLAPI void BeginBlendModeEx(int sFactor, int dFactor, int equation);    // Begin blending mode (full options)
 RLAPI void EndBlendMode(void);                          // End blending mode (reset to default: alpha blending)
 
 // VR control functions
@@ -3571,26 +3572,40 @@ Texture2D GenTextureBRDF(Shader shader, int size)
     return brdf;
 }
 
+
+void BeginBlendModeEx(int sFactor, int dFactor, int equation)
+{
+    static int glSFactor = 0;   // Track current blending mode
+    static int glDFactor = 0;   // Track current blending mode
+    static int glEquation = 0;   // Track current blending mode
+
+    if (glSFactor != sFactor || glDFactor != dFactor || glEquation != equation) {
+
+        rlglDraw();
+        glBlendFunc(sFactor, dFactor);
+        glBlendEquation(equation);
+
+        glSFactor = sFactor;
+        glDFactor = dFactor;
+        glEquation = equation;
+    }
+}
+
 // Begin blending mode (alpha, additive, multiplied)
 // NOTE: Only 3 blending modes supported, default blend mode is alpha
 void BeginBlendMode(int mode)
 {
-    static int blendMode = 0;   // Track current blending mode
-
-    if ((blendMode != mode) && (mode < 4))
+    if (mode < 5)
     {
-        rlglDraw();
-
         switch (mode)
         {
-            case BLEND_ALPHA: glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA); break;
-            case BLEND_ADDITIVE: glBlendFunc(GL_SRC_ALPHA, GL_ONE); break;
-            case BLEND_MULTIPLIED: glBlendFunc(GL_DST_COLOR, GL_ONE_MINUS_SRC_ALPHA); break;
-            case BLEND_ADD_COLORS: glBlendFunc(GL_ONE, GL_ONE); break;
-            default: break;
+        case BLEND_ALPHA: BeginBlendModeEx(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA, GL_FUNC_ADD); break;
+        case BLEND_ADDITIVE: BeginBlendModeEx(GL_SRC_ALPHA, GL_ONE, GL_FUNC_ADD); break;
+        case BLEND_MULTIPLIED: BeginBlendModeEx(GL_DST_COLOR, GL_ONE_MINUS_SRC_ALPHA, GL_FUNC_ADD); break;
+        case BLEND_ADD_COLORS: BeginBlendModeEx(GL_ONE, GL_ONE, GL_FUNC_ADD); break;
+        case BLEND_SUBTRACT_COLORS: BeginBlendModeEx(GL_ONE, GL_ONE, GL_FUNC_SUBTRACT); break;
+        default: break;
         }
-
-        blendMode = mode;
     }
 }
 
