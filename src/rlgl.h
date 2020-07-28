@@ -1078,7 +1078,6 @@ void rlOrtho(double left, double right, double bottom, double top, double znear,
 #endif
 
 // Set the viewport area (transformation from normalized device coordinates to window coordinates)
-// NOTE: Updates global variables: RLGL.State.framebufferWidth, RLGL.State.framebufferHeight
 void rlViewport(int x, int y, int width, int height)
 {
     glViewport(x, y, width, height);
@@ -1763,7 +1762,6 @@ void rlglInit(int width, int height)
     glClearDepth(1.0f);                                     // Set clear depth value (default)
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);     // Clear color and depth buffers (depth buffer required for 3D)
 
-#if defined(GRAPHICS_API_OPENGL_ES2) || defined(GRAPHICS_API_OPENGL_21)
     // Store screen size into global variables
     RLGL.State.framebufferWidth = width;
     RLGL.State.framebufferHeight = height;
@@ -1771,7 +1769,6 @@ void rlglInit(int width, int height)
     // Init texture and rectangle used on basic shapes drawing
     RLGL.State.shapesTexture = GetTextureDefault();
     RLGL.State.shapesTextureRec = (Rectangle){ 0.0f, 0.0f, 1.0f, 1.0f };
-#endif
 
     TRACELOG(LOG_INFO, "RLGL: Default state initialized successfully");
 }
