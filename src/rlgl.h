@@ -519,6 +519,7 @@ RLAPI unsigned int rlLoadAttribBuffer(unsigned int vaoId, int shaderLoc, void *b
 RLAPI void rlglInit(int width, int height);           // Initialize rlgl (buffers, shaders, textures, states)
 RLAPI void rlglClose(void);                           // De-inititialize rlgl (buffers, shaders, textures)
 RLAPI void rlglDraw(void);                            // Update and draw default internal buffers
+RLAPI void rlCheckErrors(void);                       // Check and log OpenGL error codes
 
 RLAPI int rlGetVersion(void);                         // Returns current OpenGL version
 RLAPI bool rlCheckBufferLimit(int vCount);            // Check internal buffer overflow for a given number of vertex
@@ -1791,6 +1792,45 @@ void rlglDraw(void)
 {
 #if defined(GRAPHICS_API_OPENGL_33) || defined(GRAPHICS_API_OPENGL_ES2)
     DrawRenderBatch(RLGL.currentBatch);    // NOTE: Stereo rendering is checked inside
+#endif
+}
+
+// Check and log OpenGL error codes
+void rlCheckErrors() {
+#if defined(GRAPHICS_API_OPENGL_21) || defined(GRAPHICS_API_OPENGL_33) || defined(GRAPHICS_API_OPENGL_ES2)
+    int check = 1;
+    while (check) {
+        const GLenum err = glGetError();
+        switch (err) {
+            case GL_NO_ERROR:
+                check = 0;
+                break;
+            case 0x0500: // GL_INVALID_ENUM:
+                TRACELOG(LOG_WARNING, "GL: Error detected: GL_INVALID_ENUM");
+                break;
+            case 0x0501: //GL_INVALID_VALUE:
+                TRACELOG(LOG_WARNING, "GL: Error detected: GL_INVALID_VALUE");
+                break;
+            case 0x0502: //GL_INVALID_OPERATION:
+                TRACELOG(LOG_WARNING, "GL: Error detected: GL_INVALID_OPERATION");
+                break;
+            case 0x0503: // GL_STACK_OVERFLOW:
+                TRACELOG(LOG_WARNING, "GL: Error detected: GL_STACK_OVERFLOW");
+                break;
+            case 0x0504: // GL_STACK_UNDERFLOW:
+                TRACELOG(LOG_WARNING, "GL: Error detected: GL_STACK_UNDERFLOW");
+                break;
+            case 0x0505: // GL_OUT_OF_MEMORY:
+                TRACELOG(LOG_WARNING, "GL: Error detected: GL_OUT_OF_MEMORY");
+                break;
+            case 0x0506: // GL_INVALID_FRAMEBUFFER_OPERATION:
+                TRACELOG(LOG_WARNING, "GL: Error detected: GL_INVALID_FRAMEBUFFER_OPERATION");
+                break;
+            default:
+                TRACELOG(LOG_WARNING, "GL: Error detected: unknown error code %x", err);
+                break;
+        }
+    }
 #endif
 }
 
