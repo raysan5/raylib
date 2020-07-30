@@ -75,7 +75,7 @@ void main()
     }
 
     finalColor = (texelColor*((colDiffuse + vec4(specular, 1.0))*vec4(lightDot, 1.0)));
-    finalColor += texelColor*(ambient/10.0);
+    finalColor += texelColor*(ambient/10.0)*colDiffuse;
     
     // Gamma correction
     finalColor = pow(finalColor, vec4(1.0/2.2));
