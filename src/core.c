@@ -1383,8 +1383,6 @@ void EndDrawing(void)
     }
 #endif
 
-    rlglCheckErrors();
-
     SwapBuffers();                  // Copy back buffer to front buffer
     PollInputEvents();              // Poll user events
 
