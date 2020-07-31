@@ -175,6 +175,20 @@ typedef struct tagBITMAPINFOHEADER {
     #if !defined(TRACELOG)
         #define TRACELOG(level, ...) (void)0
     #endif
+    
+    // Allow custom memory allocators
+    #ifndef RL_MALLOC
+        #define RL_MALLOC(sz)       malloc(sz)
+    #endif
+    #ifndef RL_CALLOC
+        #define RL_CALLOC(n,sz)     calloc(n,sz)
+    #endif
+    #ifndef RL_REALLOC
+        #define RL_REALLOC(ptr,sz)  realloc(ptr,sz)
+    #endif
+    #ifndef RL_FREE
+        #define RL_FREE(ptr)        free(ptr)
+    #endif
 #endif
 
 #if defined(SUPPORT_FILEFORMAT_OGG)
@@ -371,6 +385,8 @@ static Wave LoadMP3(const char *fileName);              // Load MP3 file
 
 #if defined(RAUDIO_STANDALONE)
 static bool IsFileExtension(const char *fileName, const char *ext); // Check file extension
+static unsigned char *LoadFileData(const char *fileName, unsigned int *bytesRead);     // Load file data as byte array (read)
+static void SaveFileData(const char *fileName, void *data, unsigned int bytesToWrite); // Save data to file from byte array (write)
 static void SaveFileText(const char *fileName, char *text);         // Save text data to file (write), string must be '\0' terminated
 #endif
 
@@ -1874,20 +1890,6 @@ static Wave LoadWAV(const char *fileName)
 {
     Wave wave = { 0 };
 
-    // Decode an entire WAV file in one go
-    unsigned long long int totalPCMFrameCount = 0;
-    wave.data = drwav_open_file_and_read_pcm_frames_s16(fileName, &wave.channels, &wave.sampleRate, &totalPCMFrameCount, NULL);
-
-    if (wave.data == NULL) TRACELOG(LOG_WARNING, "FILEIO: [%s] Failed to load WAV data", fileName);
-    else
-    {
-        wave.sampleCount = (unsigned int)totalPCMFrameCount*wave.channels;
-        wave.sampleSize = 16;
-
-        TRACELOG(LOG_INFO, "WAVE: [%s] WAV file loaded successfully (%i Hz, %i bit, %s)", fileName, wave.sampleRate, wave.sampleSize, (wave.channels == 1)? "Mono" : "Stereo");
-    }
-    
-/*
     // Loading WAV from memory to avoid FILE accesses
     unsigned int fileSize = 0;
     unsigned char *fileData = LoadFileData(fileName, &fileSize);
@@ -1909,7 +1911,7 @@ static Wave LoadWAV(const char *fileName)
     
     drwav_uninit(&wav);
     RL_FREE(fileData);
-*/
+
     return wave;
 }
 
@@ -1925,7 +1927,7 @@ static int SaveWAV(Wave wave, const char *fileName)
     format.bitsPerSample = wave.sampleSize;
     
     drwav_init_file_write(&wav, fileName, &format, NULL);
-    //drwav_init_memory_write(&wav, &fileData, &fileDataSize, &format, NULL);       // Memory version
+    //drwav_init_memory_write(&wav, &fileData, &fileDataSize, &format, NULL);       // TODO: Memory version
     drwav_write_pcm_frames(&wav, wave.sampleCount/wave.channels, wave.data);
     
     drwav_uninit(&wav);
@@ -1944,7 +1946,11 @@ static Wave LoadOGG(const char *fileName)
 {
     Wave wave = { 0 };
 
-    stb_vorbis *oggFile = stb_vorbis_open_filename(fileName, NULL, NULL);
+    // Loading OGG from memory to avoid FILE accesses
+    unsigned int fileSize = 0;
+    unsigned char *fileData = LoadFileData(fileName, &fileSize);
+    
+    stb_vorbis *oggFile = stb_vorbis_open_memory(fileData, fileSize, NULL, NULL);
 
     if (oggFile == NULL) TRACELOG(LOG_WARNING, "FILEIO: [%s] Failed to open OGG file", fileName);
     else
@@ -1967,6 +1973,8 @@ static Wave LoadOGG(const char *fileName)
 
         stb_vorbis_close(oggFile);
     }
+    
+    RL_FREE(fileData);
 
     return wave;
 }
@@ -1978,10 +1986,14 @@ static Wave LoadOGG(const char *fileName)
 static Wave LoadFLAC(const char *fileName)
 {
     Wave wave = { 0 };
+    
+    // Loading FLAC from memory to avoid FILE accesses
+    unsigned int fileSize = 0;
+    unsigned char *fileData = LoadFileData(fileName, &fileSize);
 
     // Decode an entire FLAC file in one go
     unsigned long long int totalSampleCount = 0;
-    wave.data = drflac_open_file_and_read_pcm_frames_s16(fileName, &wave.channels, &wave.sampleRate, &totalSampleCount);
+    wave.data = drflac_open_memory_and_read_pcm_frames_s16(fileData, fileSize, &wave.channels, &wave.sampleRate, &totalSampleCount);
 
     if (wave.data == NULL) TRACELOG(LOG_WARNING, "FILEIO: [%s] Failed to load FLAC data", fileName);
     else
@@ -1991,6 +2003,8 @@ static Wave LoadFLAC(const char *fileName)
 
         TRACELOG(LOG_INFO, "WAVE: [%s] FLAC file loaded successfully (%i Hz, %i bit, %s)", fileName, wave.sampleRate, wave.sampleSize, (wave.channels == 1)? "Mono" : "Stereo");
     }
+    
+    RL_FREE(fileData);
  
     return wave;
 }
@@ -2003,10 +2017,14 @@ static Wave LoadMP3(const char *fileName)
 {
     Wave wave = { 0 };
 
+    // Loading MP3 from memory to avoid FILE accesses
+    unsigned int fileSize = 0;
+    unsigned char *fileData = LoadFileData(fileName, &fileSize);
+    
     // Decode an entire MP3 file in one go
     unsigned long long int totalFrameCount = 0;
     drmp3_config config = { 0 };
-    wave.data = drmp3_open_file_and_read_f32(fileName, &config, &totalFrameCount);
+    wave.data = drmp3_open_memory_and_read_f32(fileData, fileSize, &config, &totalFrameCount);
 
     if (wave.data == NULL) TRACELOG(LOG_WARNING, "FILEIO: [%s] Failed to load MP3 data", fileName);
     else
@@ -2022,6 +2040,8 @@ static Wave LoadMP3(const char *fileName)
         TRACELOG(LOG_INFO, "WAVE: [%s] MP3 file loaded successfully (%i Hz, %i bit, %s)", fileName, wave.sampleRate, wave.sampleSize, (wave.channels == 1)? "Mono" : "Stereo");
     }
     
+    RL_FREE(fileData);
+
     return wave;
 }
 #endif
@@ -2040,6 +2060,68 @@ static bool IsFileExtension(const char *fileName, const char *ext)
     }
 
     return result;
+}
+
+// Load data from file into a buffer
+static unsigned char *LoadFileData(const char *fileName, unsigned int *bytesRead)
+{
+    unsigned char *data = NULL;
+    *bytesRead = 0;
+
+    if (fileName != NULL)
+    {
+        FILE *file = fopen(fileName, "rb");
+
+        if (file != NULL)
+        {
+            // WARNING: On binary streams SEEK_END could not be found,
+            // using fseek() and ftell() could not work in some (rare) cases
+            fseek(file, 0, SEEK_END);
+            int size = ftell(file);
+            fseek(file, 0, SEEK_SET);
+
+            if (size > 0)
+            {
+                data = (unsigned char *)RL_MALLOC(size*sizeof(unsigned char));
+
+                // NOTE: fread() returns number of read elements instead of bytes, so we read [1 byte, size elements]
+                unsigned int count = (unsigned int)fread(data, sizeof(unsigned char), size, file);
+                *bytesRead = count;
+
+                if (count != size) TRACELOG(LOG_WARNING, "FILEIO: [%s] File partially loaded", fileName);
+                else TRACELOG(LOG_INFO, "FILEIO: [%s] File loaded successfully", fileName);
+            }
+            else TRACELOG(LOG_WARNING, "FILEIO: [%s] Failed to read file", fileName);
+
+            fclose(file);
+        }
+        else TRACELOG(LOG_WARNING, "FILEIO: [%s] Failed to open file", fileName);
+    }
+    else TRACELOG(LOG_WARNING, "FILEIO: File name provided is not valid");
+
+    return data;
+}
+
+// Save data to file from buffer
+static void SaveFileData(const char *fileName, void *data, unsigned int bytesToWrite)
+{
+    if (fileName != NULL)
+    {
+        FILE *file = fopen(fileName, "wb");
+
+        if (file != NULL)
+        {
+            unsigned int count = (unsigned int)fwrite(data, sizeof(unsigned char), bytesToWrite, file);
+
+            if (count == 0) TRACELOG(LOG_WARNING, "FILEIO: [%s] Failed to write file", fileName);
+            else if (count != bytesToWrite) TRACELOG(LOG_WARNING, "FILEIO: [%s] File partially written", fileName);
+            else TRACELOG(LOG_INFO, "FILEIO: [%s] File saved successfully", fileName);
+
+            fclose(file);
+        }
+        else TRACELOG(LOG_WARNING, "FILEIO: [%s] Failed to open file", fileName);
+    }
+    else TRACELOG(LOG_WARNING, "FILEIO: File name provided is not valid");
 }
 
 // Save text data to file (write), string must be '\0' terminated
