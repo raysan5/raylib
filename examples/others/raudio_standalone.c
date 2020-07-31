@@ -5,8 +5,9 @@
 *   NOTE: This example does not require any graphic device, it can run directly on console.
 *
 *   DEPENDENCIES:
-*       mini_al.h    - Audio device management lib (https://github.com/dr-soft/mini_al)
+*       miniaudio.h  - Audio device management lib (https://github.com/dr-soft/miniaudio)
 *       stb_vorbis.h - Ogg audio files loading (http://www.nothings.org/stb_vorbis/)
+*       dr_wav.h     - WAV audio file loading (https://github.com/mackron/dr_libs)
 *       dr_mp3.h     - MP3 audio file loading (https://github.com/mackron/dr_libs)
 *       dr_flac.h    - FLAC audio file loading (https://github.com/mackron/dr_libs)
 *       jar_xm.h     - XM module file loading
@@ -22,7 +23,7 @@
 *   This example is licensed under an unmodified zlib/libpng license, which is an OSI-certified,
 *   BSD-like license that allows static linking with closed source software:
 *
-*   Copyright (c) 2014-2019 Ramon Santamaria (@raysan5)
+*   Copyright (c) 2014-2020 Ramon Santamaria (@raysan5)
 *
 *   This software is provided "as-is", without any express or implied warranty. In no event
 *   will the authors be held liable for any damages arising from the use of this software.
@@ -104,7 +105,7 @@ int main()
     Music music = LoadMusicStream("resources/audio/country.mp3");
     PlayMusicStream(music);
 
-    printf("\nPress s or d to play sounds...\n");
+    printf("\nPress s or d to play sounds, ESC to stop...\n");
     //--------------------------------------------------------------------------------------
 
     // Main loop
