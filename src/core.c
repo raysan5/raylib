@@ -849,6 +849,9 @@ bool WindowShouldClose(void)
         while (!CORE.Window.alwaysRun && CORE.Window.minimized) glfwWaitEvents();
 
         CORE.Window.shouldClose = glfwWindowShouldClose(CORE.Window.handle);
+        
+        // Reset close status for next frame
+        glfwSetWindowShouldClose(CORE.Window.handle, GLFW_FALSE);
 
         return CORE.Window.shouldClose;
     }
