@@ -176,7 +176,7 @@ if(STATIC)
     set_property(TARGET raylib_static PROPERTY POSITION_INDEPENDENT_CODE ON)
   endif()
   set_target_properties(raylib_static PROPERTIES PUBLIC_HEADER "raylib.h")
-  if(NOT WIN32) # Keep lib*.(a|dll) name, but avoid *.lib files overwriting each other on Windows
+  if(NOT MSVC) # Keep lib*.(a|dll) name, but avoid *.lib files overwriting each other on Windows
     set_target_properties(raylib_static PROPERTIES OUTPUT_NAME raylib)
   endif()
   install(
