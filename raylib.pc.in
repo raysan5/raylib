@@ -7,7 +7,7 @@ Name: raylib
 Description: Simple and easy-to-use library to enjoy videogames programming
 URL: http://github.com/raysan5/raylib
 Version: @PROJECT_VERSION@
-Libs: -L${libdir} -lraylib @PKG_CONFIG_LIBS_EXTRA@
+Libs: -L"${libdir}" -lraylib @PKG_CONFIG_LIBS_EXTRA@
 Libs.private: @PKG_CONFIG_LIBS_PRIVATE@
 Requires.private: @GLFW_PKG_DEPS@
-Cflags: -I${includedir}
+Cflags: -I"${includedir}"
