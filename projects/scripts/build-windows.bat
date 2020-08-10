@@ -22,15 +22,38 @@ REM verbose, sorry.
 
 REM To skip to the actual building part of the script, search for ":BUILD"
 
+REM Checks if cl is available and skips to the argument loop if it is 
+REM (Prevents calling vcvarsall every time you run this script)
+WHERE cl >nul 2>nul
+IF %ERRORLEVEL% == 0 goto READ_ARGS
+REM Activate the msvc build environment if cl isn't available yet
+IF EXIST "C:\Program Files (x86)\Microsoft Visual Studio\2017\Community\VC\Auxiliary\Build\vcvarsall.bat" (
+  set VC_INIT="C:\Program Files (x86)\Microsoft Visual Studio\2017\Community\VC\Auxiliary\Build\vcvarsall.bat"
+) ELSE IF EXIST "C:\Program Files (x86)\Microsoft Visual Studio\2017\BuildTools\VC\Auxiliary\Build\vcvarsall.bat" (
+  set VC_INIT="C:\Program Files (x86)\Microsoft Visual Studio\2017\BuildTools\VC\Auxiliary\Build\vcvarsall.bat"
+) ELSE IF EXIST "C:\Program Files (x86)\Microsoft Visual C++ Build Tools\vcbuildtools.bat" (
+  set VC_INIT="C:\Program Files (x86)\Microsoft Visual C++ Build Tools\vcbuildtools.bat"
+) ELSE (
+  REM Initialize your vc environment here if the defaults don't work
+  REM  set VC_INIT="C:\your\path\here\vcvarsall.bat"
+  REM And then remove/comment out the following two lines
+  echo "Couldn't find vcvarsall.bat or vcbuildtools.bat, please set it manually."
+  exit /B
+)
+echo Setting up the msvc build environment, this could take some time but the next builds should be faster
+REM Remove everything after %TARGET_PLATFORM% if you want to see
+REM the vcvarsall.bat or vcbuildtools.bat output
+call %VC_INIT% %TARGET_PLATFORM% > NUL 2>&1
+
+:READ_ARGS
 REM For the ! variable notation
 setlocal EnableDelayedExpansion
 REM For shifting, which the command line argument parsing needs
 setlocal EnableExtensions
 
-
 :ARG_LOOP
 set ARG=%1
-if "!ARG!" == "" ( goto PREPARE )
+if "!ARG!" == "" ( goto BUILD )
 IF NOT "x!ARG!" == "x!ARG:h=!" (
   goto HELP
 )
@@ -89,28 +112,6 @@ echo  Build a release build, full recompile:    build-windows.bat -c
 echo  Build a debug build and run:              build-windows.bat -d -r
 echo  Build in debug, run, don't print at all:  build-windows.bat -drqq
 exit /B
-
-
-:PREPARE
-REM Activate the msvc build environment
-IF EXIST "C:\Program Files (x86)\Microsoft Visual Studio\2017\Community\VC\Auxiliary\Build\vcvarsall.bat" (
-  set VC_INIT="C:\Program Files (x86)\Microsoft Visual Studio\2017\Community\VC\Auxiliary\Build\vcvarsall.bat"
-) ELSE IF EXIST "C:\Program Files (x86)\Microsoft Visual Studio\2017\BuildTools\VC\Auxiliary\Build\vcvarsall.bat" (
-  set VC_INIT="C:\Program Files (x86)\Microsoft Visual Studio\2017\BuildTools\VC\Auxiliary\Build\vcvarsall.bat"
-) ELSE IF EXIST "C:\Program Files (x86)\Microsoft Visual C++ Build Tools\vcbuildtools.bat" (
-  set VC_INIT="C:\Program Files (x86)\Microsoft Visual C++ Build Tools\vcbuildtools.bat"
-) ELSE (
-  REM Initialize your vc environment here if the defaults don't work
-  REM  set VC_INIT="C:\your\path\here\vcvarsall.bat"
-  REM And then remove/comment out the following two lines
-  echo "Couldn't find vcvarsall.bat or vcbuildtools.bat, please set it manually."
-  exit /B
-)
-IF DEFINED VERBOSE (
-  call !VC_INIT! !TARGET_PLATFORM!
-) ELSE (
-  call !VC_INIT! !TARGET_PLATFORM! > NUL 2>&1
-)
 
 
 :BUILD
