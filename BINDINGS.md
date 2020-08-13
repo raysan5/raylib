@@ -21,6 +21,7 @@ Here it is a list with the ones I'm aware of:
 | raylib-lua-sol     | Lua            | https://github.com/RobLoach/raylib-lua-sol                           |
 | raylib-lua (raylua)| Lua            | https://github.com/TSnake41/raylib-lua                               |
 | raylib-luamore     | Lua            | https://github.com/HDPLocust/raylib-luamore                          |
+| raylib-luajit      | Lua            | https://github.com/Rabios/raylib-luajit                              |
 | raylib-nelua       | [Nelua](https://nelua.io/)      | https://github.com/Andre-LA/raylib-nelua-mirror     |
 | raylib-Nim         | Nim            | https://gitlab.com/define-private-public/raylib-Nim                  |
 | raylib-nim         | Nim            | https://github.com/Skrylar/raylib-nim                                |
