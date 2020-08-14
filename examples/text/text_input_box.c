@@ -59,7 +59,7 @@ int main(void)
                 key = GetKeyPressed();  // Check next character in the queue
             }
 
-            if (IsKeyPressed(KEY_BACKSPACE))
+            if (IsKeyDown(KEY_BACKSPACE))
             {
                 letterCount--;
                 name[letterCount] = '\0';
