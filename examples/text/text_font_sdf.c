@@ -55,7 +55,7 @@ int main(void)
     UnloadImage(atlas);
 
     // Load SDF required shader (we use default vertex shader)
-    Shader shader = LoadShader(0, FormatText("resources/shaders/glsl%i/sdf.fs", GLSL_VERSION));
+    Shader shader = LoadShader(0, TextFormat("resources/shaders/glsl%i/sdf.fs", GLSL_VERSION));
     SetTextureFilter(fontSDF.texture, FILTER_BILINEAR);    // Required for SDF font
 
     Vector2 fontPosition = { 40, screenHeight/2 - 50 };
@@ -110,7 +110,7 @@ int main(void)
             else DrawText("default font", 315, 40, 30, GRAY);
 
             DrawText("FONT SIZE: 16.0", GetScreenWidth() - 240, 20, 20, DARKGRAY);
-            DrawText(FormatText("RENDER SIZE: %02.02f", fontSize), GetScreenWidth() - 240, 50, 20, DARKGRAY);
+            DrawText(TextFormat("RENDER SIZE: %02.02f", fontSize), GetScreenWidth() - 240, 50, 20, DARKGRAY);
             DrawText("Use MOUSE WHEEL to SCALE TEXT!", GetScreenWidth() - 240, 90, 10, DARKGRAY);
 
             DrawText("HOLD SPACE to USE SDF FONT VERSION!", 340, GetScreenHeight() - 30, 20, MAROON);

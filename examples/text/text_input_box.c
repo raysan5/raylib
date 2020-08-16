@@ -86,7 +86,7 @@ int main(void)
 
             DrawText(name, textBox.x + 5, textBox.y + 8, 40, MAROON);
 
-            DrawText(FormatText("INPUT CHARS: %i/%i", letterCount, MAX_INPUT_CHARS), 315, 250, 20, DARKGRAY);
+            DrawText(TextFormat("INPUT CHARS: %i/%i", letterCount, MAX_INPUT_CHARS), 315, 250, 20, DARKGRAY);
 
             if (mouseOnText)
             {

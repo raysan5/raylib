@@ -64,7 +64,7 @@ int main(void)
             segments = GuiSliderBar((Rectangle){ 600, 170, 120, 20}, "Segments", segments, 0, 100, true);
             //------------------------------------------------------------------------------
             
-            DrawText(FormatText("MODE: %s", (segments >= 4)? "MANUAL" : "AUTO"), 600, 200, 10, (segments >= 4)? MAROON : DARKGRAY);
+            DrawText(TextFormat("MODE: %s", (segments >= 4)? "MANUAL" : "AUTO"), 600, 200, 10, (segments >= 4)? MAROON : DARKGRAY);
             
             DrawFPS(10, 10);
             

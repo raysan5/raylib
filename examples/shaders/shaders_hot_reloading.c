@@ -32,11 +32,11 @@ int main(void)
     InitWindow(screenWidth, screenHeight, "raylib [shaders] example - hot reloading");
 
     const char *fragShaderFileName = "resources/shaders/glsl%i/reload.fs";
-    long fragShaderFileModTime = GetFileModTime(FormatText(fragShaderFileName, GLSL_VERSION));
+    long fragShaderFileModTime = GetFileModTime(TextFormat(fragShaderFileName, GLSL_VERSION));
 
     // Load raymarching shader
     // NOTE: Defining 0 (NULL) for vertex shader forces usage of internal default vertex shader
-    Shader shader = LoadShader(0, FormatText(fragShaderFileName, GLSL_VERSION));
+    Shader shader = LoadShader(0, TextFormat(fragShaderFileName, GLSL_VERSION));
 
     // Get shader locations for required uniforms
     int resolutionLoc = GetShaderLocation(shader, "resolution");
@@ -68,13 +68,13 @@ int main(void)
         // Hot shader reloading
         if (shaderAutoReloading || (IsMouseButtonPressed(MOUSE_LEFT_BUTTON)))
         {
-            long currentFragShaderModTime = GetFileModTime(FormatText(fragShaderFileName, GLSL_VERSION));
+            long currentFragShaderModTime = GetFileModTime(TextFormat(fragShaderFileName, GLSL_VERSION));
             
             // Check if shader file has been modified
             if (currentFragShaderModTime != fragShaderFileModTime)
             {
                 // Try reloading updated shader
-                Shader updatedShader = LoadShader(0, FormatText(fragShaderFileName, GLSL_VERSION));
+                Shader updatedShader = LoadShader(0, TextFormat(fragShaderFileName, GLSL_VERSION));
                 
                 if (updatedShader.id != GetShaderDefault().id)      // It was correctly loaded
                 {
@@ -108,7 +108,7 @@ int main(void)
                 DrawRectangle(0, 0, screenWidth, screenHeight, WHITE);
             EndShaderMode();
 
-            DrawText(FormatText("PRESS [A] to TOGGLE SHADER AUTOLOADING: %s", 
+            DrawText(TextFormat("PRESS [A] to TOGGLE SHADER AUTOLOADING: %s", 
                      shaderAutoReloading? "AUTO" : "MANUAL"), 10, 10, 10, shaderAutoReloading? RED : BLACK);
             if (!shaderAutoReloading) DrawText("MOUSE CLICK to SHADER RE-LOADING", 10, 30, 10, BLACK);
             

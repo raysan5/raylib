@@ -71,7 +71,7 @@ int main(void)
             DrawRectangleLines(15 + frameRec.x, 40 + frameRec.y, frameRec.width, frameRec.height, RED);
 
             DrawText("FRAME SPEED: ", 165, 210, 10, DARKGRAY);
-            DrawText(FormatText("%02i FPS", framesSpeed), 575, 210, 10, DARKGRAY);
+            DrawText(TextFormat("%02i FPS", framesSpeed), 575, 210, 10, DARKGRAY);
             DrawText("PRESS RIGHT/LEFT KEYS to CHANGE SPEED!", 290, 240, 10, DARKGRAY);
 
             for (int i = 0; i < MAX_FRAME_SPEED; i++)

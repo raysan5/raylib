@@ -134,7 +134,7 @@ int main(void)
 
             ClearBackground(RAYWHITE);
 
-            DrawText(FormatText("sine frequency: %i",(int)frequency), GetScreenWidth() - 220, 10, 20, RED);
+            DrawText(TextFormat("sine frequency: %i",(int)frequency), GetScreenWidth() - 220, 10, 20, RED);
             DrawText("click mouse button to change frequency", 10, 10, 20, DARKGRAY);
 
             // Draw the current buffer state proportionate to the screen

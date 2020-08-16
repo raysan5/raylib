@@ -81,7 +81,7 @@ int main(void)
     // Load shader to be used on some parts drawing
     // NOTE 1: Using GLSL 330 shader version, on OpenGL ES 2.0 use GLSL 100 shader version
     // NOTE 2: Defining 0 (NULL) for vertex shader forces usage of internal default vertex shader
-    Shader shader = LoadShader(0, FormatText("resources/shaders/glsl%i/palette_switch.fs", GLSL_VERSION));
+    Shader shader = LoadShader(0, TextFormat("resources/shaders/glsl%i/palette_switch.fs", GLSL_VERSION));
 
     // Get variable (uniform) location on the shader to connect with the program
     // NOTE: If uniform variable could not be found in the shader, function returns -1

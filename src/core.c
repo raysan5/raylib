@@ -4494,7 +4494,7 @@ static void ProcessKeyboard(void)
     // Check screen capture key (raylib key: KEY_F12)
     if (CORE.Input.Keyboard.currentKeyState[301] == 1)
     {
-        TakeScreenshot(FormatText("screenshot%03i.png", screenshotCounter));
+        TakeScreenshot(TextFormat("screenshot%03i.png", screenshotCounter));
         screenshotCounter++;
     }
 #endif
@@ -4898,7 +4898,7 @@ static void *EventThread(void *arg)
                             // Check screen capture key (raylib key: KEY_F12)
                             if (CORE.Input.Keyboard.currentKeyState[301] == 1)
                             {
-                                TakeScreenshot(FormatText("screenshot%03i.png", screenshotCounter));
+                                TakeScreenshot(TextFormat("screenshot%03i.png", screenshotCounter));
                                 screenshotCounter++;
                             }
                         #endif
