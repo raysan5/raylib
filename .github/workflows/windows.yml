@@ -1,0 +1,75 @@
+name: Windows
+
+on: [push, pull_request]
+
+jobs:
+  build:
+    runs-on: windows-latest
+    strategy:
+      fail-fast: false
+      max-parallel: 1
+      matrix:
+        compiler: [mingw-w64, msvc16]
+        bits: [32, 64]
+        include:
+        - compiler: mingw-w64
+          bits: 32
+          CFLAGS: -m32
+        - compiler: mingw-w64
+          bits: 64
+          CFLAGS: -m64
+        - compiler: msvc16
+          bits: 32
+          ARCH: "x86"  
+        - compiler: msvc16
+          bits: 64
+          ARCH: "x64" 
+          
+    env:
+      CFLAGS: ${{ matrix.CFLAGS }}
+
+    steps:
+    - name: Checkout
+      uses: actions/checkout@master
+
+    - name: Setup Environment
+      run: | 
+        mkdir build
+        cd build
+        mkdir raylib_3.1_win${{ matrix.bits }}
+        cd raylib_3.1_win${{ matrix.bits }}
+        mkdir include
+        mkdir lib-${{ matrix.compiler }}
+        cd ../../raylib
+
+    # Setup MSBuild.exe path if required
+    - uses: warrenbuckley/Setup-MSBuild@v1
+      if: matrix.compiler == 'msvc16'
+   
+    - name: Build MinGW Projects
+      run: |
+        cd src
+        make PLATFORM=PLATFORM_DESKTOP CC=gcc RAYLIB_LIBTYPE=STATIC RAYLIB_RELEASE_PATH="../../build/raylib_3.1_win${{ matrix.bits }}/lib-mingw-w64
+        make PLATFORM=PLATFORM_DESKTOP CC=gcc RAYLIB_LIBTYPE=SHARED RAYLIB_RELEASE_PATH="../../build/raylib_3.1_win${{ matrix.bits }}/lib-mingw-w64
+        cd ..
+      if: matrix.compiler == 'mingw-w64'
+      
+    - name: Build VS2019 Projects
+      run: |
+        cd projects/VS2017
+        MSBuild.exe raylib.sln /target:raylib /p:OutputPath="..\..\..\build\raylib_3.1_win${{ matrix.bits }}/lib-msvc16 /property:Configuration=Release /property:Platform=${{ matrix.ARCH }}
+        MSBuild.exe raylib.sln /target:raylib /p:OutputPath="..\..\..\build\raylib_3.1_win${{ matrix.bits }}/lib-msvc16 /property:Configuration=Release.DLL /property:Platform=${{ matrix.ARCH }}
+        cd ../..
+      if: matrix.compiler == 'msvc16'
+      
+    - name: Generate artifacts
+      run: |
+        cd ..
+        copy /Y src/raylib.h ../../build/raylib_3.1_win${{ matrix.bits }}/include
+        cd ../build
+        zip raylib_3.1_win${{ matrix.bits }}.zip raylib_3.1_win${{ matrix.bits }}
+        
+    - uses: actions/upload-artifact@v2
+      with:
+        name: raylib_3.1_win${{ matrix.bits }}.zip
+        path: raylib_3.1_win${{ matrix.bits }}.zip
