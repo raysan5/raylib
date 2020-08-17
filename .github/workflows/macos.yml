@@ -33,7 +33,8 @@ jobs:
         cd ../build
         zip raylib_3.1_macos.zip raylib_3.1_macos
         
-    - uses: actions/upload-artifact@v2
+    - name: Upload Artifacts
+      uses: actions/upload-artifact@v2
       with:
         name: raylib_3.1_macos.zip
         path: raylib_3.1_macos.zip
