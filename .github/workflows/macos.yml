@@ -1,0 +1,39 @@
+name: CI - Source & Examples - macOS
+
+on: [push, pull_request]
+
+jobs:
+  build:
+    runs-on: macos-latest
+    steps:
+    - name: Checkout
+      uses: actions/checkout@master
+
+    - name: Setup Environment
+      run: | 
+        mkdir build
+        cd build
+        mkdir raylib_3.1_macos
+        cd raylib_3.1_macos
+        mkdir include
+        mkdir lib
+        cd ../../raylib
+   
+    - name: Build Library
+      run: |
+        cd src
+        make PLATFORM=PLATFORM_DESKTOP CC=gcc RAYLIB_LIBTYPE=STATIC RAYLIB_RELEASE_PATH="../../build/raylib_3.1_macos/lib
+        make PLATFORM=PLATFORM_DESKTOP CC=gcc RAYLIB_LIBTYPE=SHARED RAYLIB_RELEASE_PATH="../../build/raylib_3.1_macos/lib
+        cd ..
+  
+    - name: Generate Artifacts
+      run: |
+        cd ..
+        copy /Y src/raylib.h ../../build/raylib_3.1_macos/include
+        cd ../build
+        zip raylib_3.1_macos.zip raylib_3.1_macos
+        
+    - uses: actions/upload-artifact@v2
+      with:
+        name: raylib_3.1_macos.zip
+        path: raylib_3.1_macos.zip
