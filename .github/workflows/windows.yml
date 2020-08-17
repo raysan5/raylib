@@ -53,7 +53,6 @@ jobs:
         gcc -v
         make PLATFORM=PLATFORM_DESKTOP CC=gcc RAYLIB_BUILD_ARCH=${{ matrix.ARCH }} RAYLIB_LIBTYPE=STATIC RAYLIB_RELEASE_PATH="../build/raylib_3.1_win${{ matrix.bits }}/lib-mingw-w64"
         make SHELL=cmd clean
-        make PLATFORM=PLATFORM_DESKTOP CC=gcc RAYLIB_LIBTYPE=SHARED RAYLIB_RELEASE_PATH="../build/raylib_3.1_win${{ matrix.bits }}/lib-mingw-w64" -B
         cd ..
       if: matrix.compiler == 'mingw-w64'
       
@@ -61,10 +60,10 @@ jobs:
       run: |
         cd projects/VS2017
         msbuild.exe raylib.sln /target:raylib /property:Configuration=Release /property:Platform=${{ matrix.ARCH }}
-        copy /Y bin\Win32\Release\raylib.lib ..\..\build\raylib_3.1_win${{ matrix.bits }}\lib-msvc16\raylib.lib
-        msbuild.exe raylib.sln /target:raylib /p:OutputPath="..\..\build\raylib_3.1_win${{ matrix.bits }}/lib-msvc16" /property:Configuration=Release.DLL /property:Platform=${{ matrix.ARCH }}
-        copy /Y bin\Win32\Release.DLL\raylib.dll ..\..\build\raylib_3.1_win${{ matrix.bits }}\lib-msvc16\raylib.dll
-        copy /Y bin\Win32\Release.DLL\raylib.lib ..\..\build\raylib_3.1_win${{ matrix.bits }}\lib-msvc16\raylibdll.lib
+        copy /Y .\bin\Win32\Release\raylib.lib .\..\..\build\raylib_3.1_win${{ matrix.bits }}\lib-msvc16\raylib.lib
+        msbuild.exe raylib.sln /target:raylib /property:Configuration=Release.DLL /property:Platform=${{ matrix.ARCH }}
+        copy /Y .\bin\Win32\Release.DLL\raylib.dll .\..\..\build\raylib_3.1_win${{ matrix.bits }}\lib-msvc16\raylib.dll
+        copy /Y .\bin\Win32\Release.DLL\raylib.lib .\..\..\build\raylib_3.1_win${{ matrix.bits }}\lib-msvc16\raylibdll.lib
         cd ../..
       if: matrix.compiler == 'msvc16'
       
