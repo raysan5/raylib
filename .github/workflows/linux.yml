@@ -1,0 +1,60 @@
+name: CI - Source & Examples - Linux
+
+on: [push, pull_request]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      max-parallel: 1
+      matrix:
+        bits: [32, 64]
+        include:
+        - bits: 32
+          CFLAGS: -m32
+          ARCH: i386 
+        - bits: 64
+          CFLAGS: -m64
+          ARCH: amd64
+          
+    env:
+      CFLAGS: ${{ matrix.CFLAGS }}:   
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@master
+      
+    - name: Update System
+      run: sudo apt-get update -qq
+      
+    - name: Setup Environment
+      run: | 
+        mkdir build
+        cd build
+        mkdir raylib_3.1_linux_${{ matrix.ARCH }}
+        cd raylib_3.1_linux_${{ matrix.ARCH }}
+        mkdir include
+        mkdir lib
+        cd ../../raylib
+        sudo apt-get install -y --no-install-recommends libglfw3 libglfw3-dev libx11-dev libxcursor-dev libxrandr-dev libxinerama-dev libxi-dev libxext-dev libxfixes-dev
+      
+    - name: Build Library
+      run: |
+        cd src
+        make PLATFORM=PLATFORM_DESKTOP CC=gcc RAYLIB_LIBTYPE=STATIC RAYLIB_RELEASE_PATH="../../build/raylib_3.1_linux_${{ matrix.ARCH }}/lib
+        make PLATFORM=PLATFORM_DESKTOP CC=gcc RAYLIB_LIBTYPE=SHARED RAYLIB_RELEASE_PATH="../../build/raylib_3.1_linux_${{ matrix.ARCH }}/lib
+        cd ..
+    
+    - name: Generate artifacts
+      run: |
+        cd ..
+        copy /Y src/raylib.h ../../build/raylib_3.1_linux_${{ matrix.ARCH }}/include
+        cd ../build
+        tar -czvf raylib_3.1_linux_${{ matrix.ARCH }}.tar.gz raylib_3.1_linux_${{ matrix.ARCH }}
+        
+    - uses: actions/upload-artifact@v2
+      with:
+        name: raylib_3.1_linux_${{ matrix.ARCH }}.tar.gz
+        path: raylib_3.1_linux_${{ matrix.ARCH }}.tar.gz
+
