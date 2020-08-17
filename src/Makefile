@@ -42,22 +42,25 @@
 .PHONY: all clean install uninstall
 
 # Define required raylib variables
-RAYLIB_VERSION     = 3.0.0
-RAYLIB_API_VERSION = 300
+RAYLIB_VERSION        = 3.1.0
+RAYLIB_API_VERSION    = 310
 
-# See below for alternatives.
-RAYLIB_PATH        = ..
+# Define raylib source code path
+RAYLIB_SRC_PATH      ?= ../src
 
-# Define default options
-
-# One of PLATFORM_DESKTOP, PLATFORM_RPI, PLATFORM_ANDROID, PLATFORM_WEB
-PLATFORM             ?= PLATFORM_DESKTOP
+# Define output directory for compiled library, defaults to src directory
+# NOTE: If externally provided, make sure directory exists
+RAYLIB_RELEASE_PATH  ?= $(RAYLIB_SRC_PATH)
 
 # Library type used for raylib: STATIC (.a) or SHARED (.so/.dll)
 RAYLIB_LIBTYPE       ?= STATIC
 
 # Build mode for library: DEBUG or RELEASE
 RAYLIB_BUILD_MODE    ?= RELEASE
+
+# Define raylib platform
+# Options:  PLATFORM_DESKTOP, PLATFORM_RPI, PLATFORM_ANDROID, PLATFORM_WEB
+PLATFORM             ?= PLATFORM_DESKTOP
 
 # Include raylib modules on compilation
 # NOTE: Some programs like tools could not require those modules
@@ -66,8 +69,8 @@ RAYLIB_MODULE_MODELS ?= TRUE
 RAYLIB_MODULE_RAYGUI ?= FALSE
 RAYLIB_MODULE_PHYSAC ?= FALSE
 
-RAYLIB_MODULE_RAYGUI_PATH ?= .
-RAYLIB_MODULE_PHYSAC_PATH ?= .
+RAYLIB_MODULE_RAYGUI_PATH ?= $(RAYLIB_SRC_PATH)/../../raygui/src
+RAYLIB_MODULE_PHYSAC_PATH ?= $(RAYLIB_SRC_PATH)
 
 # Use external GLFW library instead of rglfw module
 # TODO: Review usage of examples on Linux.
@@ -135,13 +138,13 @@ ifeq ($(PLATFORM),PLATFORM_RPI)
     endif
 endif
 
-# RAYLIB_PATH adjustment for different platforms.
+# RAYLIB_SRC_PATH adjustment for different platforms.
 # If using GNU make, we can get the full path to the top of the tree. Windows? BSD?
 # Required for ldconfig or other tools that do not perform path expansion.
 ifeq ($(PLATFORM),PLATFORM_DESKTOP)
     ifeq ($(PLATFORM_OS),LINUX)
-        RAYLIB_PREFIX ?= ..
-        RAYLIB_PATH    = $(realpath $(RAYLIB_PREFIX))
+        RAYLIB_PREFIX  ?= ..
+        RAYLIB_SRC_PATH = $(realpath $(RAYLIB_PREFIX))
     endif
 endif
 
@@ -185,13 +188,6 @@ ifeq ($(PLATFORM),PLATFORM_ANDROID)
         ANDROID_ARCH_NAME = x86_64
     endif
 endif
-
-# Define raylib source code path
-RAYLIB_SRC_PATH ?= $(RAYLIB_PATH)/src
-
-# Define output directory for compiled library, defaults to src directory
-# NOTE: If externally provided, make sure directory exists
-RAYLIB_RELEASE_PATH  ?= $(RAYLIB_PATH)/src
 
 # Define raylib graphics api depending on selected platform
 ifeq ($(PLATFORM),PLATFORM_DESKTOP)
