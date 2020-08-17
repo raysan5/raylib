@@ -40,7 +40,7 @@ jobs:
         cd raylib_3.1_win${{ matrix.bits }}
         mkdir include
         mkdir lib-${{ matrix.compiler }}
-        cd ../../raylib
+        cd ../../../raylib
 
     # Setup MSBuild.exe path if required
     - name: Setup MSBuild
