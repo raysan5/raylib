@@ -72,7 +72,7 @@ jobs:
       run: |
         copy /Y ./src/raylib.h ./build/raylib_3.1_win${{ matrix.bits }}/include/raylib.h
         cd build
-        zip ./raylib_3.1_win${{ matrix.bits }}.zip ./raylib_3.1_win${{ matrix.bits }}
+        7za a ./raylib_3.1_win${{ matrix.bits }}.zip ./raylib_3.1_win${{ matrix.bits }}
       shell: cmd
         
     - name: Upload Artifacts
