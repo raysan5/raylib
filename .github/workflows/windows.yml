@@ -14,19 +14,16 @@ jobs:
         include:
         - compiler: mingw-w64
           bits: 32
-          CFLAGS: -m32
+          ARCH: "x86"
         - compiler: mingw-w64
           bits: 64
-          CFLAGS: -m64
+          ARCH: "x64"
         - compiler: msvc16
           bits: 32
           ARCH: "x86"  
         - compiler: msvc16
           bits: 64
           ARCH: "x64" 
-          
-    env:
-      CFLAGS: ${{ matrix.CFLAGS }}
 
     steps:
     - name: Checkout
@@ -53,7 +50,7 @@ jobs:
     - name: Build Library (MinGW-w64)
       run: |
         cd src
-        make PLATFORM=PLATFORM_DESKTOP CC=gcc RAYLIB_LIBTYPE=STATIC RAYLIB_RELEASE_PATH="../build/raylib_3.1_win${{ matrix.bits }}/lib-mingw-w64"
+        make PLATFORM=PLATFORM_DESKTOP CC=gcc RAYLIB_BUILD_ARCH=${{ matrix.ARCH }} RAYLIB_LIBTYPE=STATIC RAYLIB_RELEASE_PATH="../build/raylib_3.1_win${{ matrix.bits }}/lib-mingw-w64"
         make SHELL=cmd clean
         make PLATFORM=PLATFORM_DESKTOP CC=gcc RAYLIB_LIBTYPE=SHARED RAYLIB_RELEASE_PATH="../build/raylib_3.1_win${{ matrix.bits }}/lib-mingw-w64" -B
         cd ..
