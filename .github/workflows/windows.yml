@@ -53,16 +53,16 @@ jobs:
     - name: Build Library (MinGW-w64)
       run: |
         cd src
-        make PLATFORM=PLATFORM_DESKTOP CC=gcc RAYLIB_LIBTYPE=STATIC RAYLIB_RELEASE_PATH="../../../build/raylib_3.1_win${{ matrix.bits }}/lib-mingw-w64"
-        make PLATFORM=PLATFORM_DESKTOP CC=gcc RAYLIB_LIBTYPE=SHARED RAYLIB_RELEASE_PATH="../../../build/raylib_3.1_win${{ matrix.bits }}/lib-mingw-w64"
+        make PLATFORM=PLATFORM_DESKTOP CC=gcc RAYLIB_LIBTYPE=STATIC RAYLIB_RELEASE_PATH="../build/raylib_3.1_win${{ matrix.bits }}/lib-mingw-w64"
+        make PLATFORM=PLATFORM_DESKTOP CC=gcc RAYLIB_LIBTYPE=SHARED RAYLIB_RELEASE_PATH="../build/raylib_3.1_win${{ matrix.bits }}/lib-mingw-w64"
         cd ..
       if: matrix.compiler == 'mingw-w64'
       
     - name: Build Library (MSVC16)
       run: |
         cd projects/VS2017
-        msbuild.exe raylib.sln /target:raylib /p:OutputPath="..\..\..\..\build\raylib_3.1_win${{ matrix.bits }}/lib-msvc16 /property:Configuration=Release /property:Platform=${{ matrix.ARCH }}
-        msbuild.exe raylib.sln /target:raylib /p:OutputPath="..\..\..\..\build\raylib_3.1_win${{ matrix.bits }}/lib-msvc16 /property:Configuration=Release.DLL /property:Platform=${{ matrix.ARCH }}
+        msbuild.exe raylib.sln /target:raylib /p:OutputPath="..\..\build\raylib_3.1_win${{ matrix.bits }}/lib-msvc16 /property:Configuration=Release /property:Platform=${{ matrix.ARCH }}
+        msbuild.exe raylib.sln /target:raylib /p:OutputPath="..\..\build\raylib_3.1_win${{ matrix.bits }}/lib-msvc16 /property:Configuration=Release.DLL /property:Platform=${{ matrix.ARCH }}
         cd ../..
       if: matrix.compiler == 'msvc16'
       
