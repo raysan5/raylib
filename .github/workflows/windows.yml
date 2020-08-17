@@ -50,8 +50,8 @@ jobs:
     - name: Build Library (MinGW-w64)
       run: |
         cd src
-        make PLATFORM=PLATFORM_DESKTOP CC=gcc RAYLIB_LIBTYPE=STATIC RAYLIB_RELEASE_PATH="../../../build/raylib_3.1_win${{ matrix.bits }}/lib-mingw-w64
-        make PLATFORM=PLATFORM_DESKTOP CC=gcc RAYLIB_LIBTYPE=SHARED RAYLIB_RELEASE_PATH="../../../build/raylib_3.1_win${{ matrix.bits }}/lib-mingw-w64
+        make PLATFORM=PLATFORM_DESKTOP CC=gcc RAYLIB_LIBTYPE=STATIC RAYLIB_RELEASE_PATH="../../build/raylib_3.1_win${{ matrix.bits }}/lib-mingw-w64"
+        make PLATFORM=PLATFORM_DESKTOP CC=gcc RAYLIB_LIBTYPE=SHARED RAYLIB_RELEASE_PATH="../../build/raylib_3.1_win${{ matrix.bits }}/lib-mingw-w64"
         cd ..
       if: matrix.compiler == 'mingw-w64'
       
