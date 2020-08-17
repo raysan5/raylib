@@ -50,6 +50,7 @@ jobs:
     - name: Build Library (MinGW-w64)
       run: |
         cd src
+        gcc -v
         make PLATFORM=PLATFORM_DESKTOP CC=gcc RAYLIB_BUILD_ARCH=${{ matrix.ARCH }} RAYLIB_LIBTYPE=STATIC RAYLIB_RELEASE_PATH="../build/raylib_3.1_win${{ matrix.bits }}/lib-mingw-w64"
         make SHELL=cmd clean
         make PLATFORM=PLATFORM_DESKTOP CC=gcc RAYLIB_LIBTYPE=SHARED RAYLIB_RELEASE_PATH="../build/raylib_3.1_win${{ matrix.bits }}/lib-mingw-w64" -B
@@ -59,16 +60,18 @@ jobs:
     - name: Build Library (MSVC16)
       run: |
         cd projects/VS2017
-        msbuild.exe raylib.sln /target:raylib /p:OutputPath="..\..\build\raylib_3.1_win${{ matrix.bits }}/lib-msvc16" /property:Configuration=Release /property:Platform=${{ matrix.ARCH }}
+        msbuild.exe raylib.sln /target:raylib /property:Configuration=Release /property:Platform=${{ matrix.ARCH }}
+        copy /Y bin\Win32\Release\raylib.lib ..\..\build\raylib_3.1_win${{ matrix.bits }}\lib-msvc16\raylib.lib
         msbuild.exe raylib.sln /target:raylib /p:OutputPath="..\..\build\raylib_3.1_win${{ matrix.bits }}/lib-msvc16" /property:Configuration=Release.DLL /property:Platform=${{ matrix.ARCH }}
+        copy /Y bin\Win32\Release.DLL\raylib.dll ..\..\build\raylib_3.1_win${{ matrix.bits }}\lib-msvc16\raylib.dll
+        copy /Y bin\Win32\Release.DLL\raylib.lib ..\..\build\raylib_3.1_win${{ matrix.bits }}\lib-msvc16\raylibdll.lib
         cd ../..
       if: matrix.compiler == 'msvc16'
       
     - name: Generate Artifacts
       run: |
-        dir
-        copy /Y src/raylib.h ../../build/raylib_3.1_win${{ matrix.bits }}/include
-        cd ../build
+        copy /Y src/raylib.h build/raylib_3.1_win${{ matrix.bits }}/include/raylib.h
+        cd build
         zip raylib_3.1_win${{ matrix.bits }}.zip raylib_3.1_win${{ matrix.bits }}
         
     - name: Upload Artifacts
