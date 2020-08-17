@@ -57,7 +57,6 @@ jobs:
       if: matrix.compiler == 'mingw-w64'
       
     - name: Build Library (MSVC16)
-      shell: cmd
       run: |
         cd projects/VS2017
         msbuild.exe raylib.sln /target:raylib /property:Configuration=Release /property:Platform=${{ matrix.ARCH }}
@@ -66,13 +65,15 @@ jobs:
         copy /Y .\bin\Win32\Release.DLL\raylib.dll .\..\..\build\raylib_3.1_win${{ matrix.bits }}\lib-msvc16\raylib.dll
         copy /Y .\bin\Win32\Release.DLL\raylib.lib .\..\..\build\raylib_3.1_win${{ matrix.bits }}\lib-msvc16\raylibdll.lib
         cd ../..
+      shell: cmd
       if: matrix.compiler == 'msvc16'
       
     - name: Generate Artifacts
       run: |
-        copy /Y src/raylib.h build/raylib_3.1_win${{ matrix.bits }}/include/raylib.h
+        copy /Y ./src/raylib.h ./build/raylib_3.1_win${{ matrix.bits }}/include/raylib.h
         cd build
         zip raylib_3.1_win${{ matrix.bits }}.zip raylib_3.1_win${{ matrix.bits }}
+      shell: cmd
         
     - name: Upload Artifacts
       uses: actions/upload-artifact@v2
