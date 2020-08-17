@@ -1,4 +1,4 @@
-name: CI - Source & Examples - Linux
+name: Linux
 
 on: [push, pull_request]
 
@@ -19,7 +19,7 @@ jobs:
           ARCH: amd64
           
     env:
-      CFLAGS: ${{ matrix.CFLAGS }}:   
+      CFLAGS: ${{ matrix.CFLAGS }}
     
     steps:
     - name: Checkout code
