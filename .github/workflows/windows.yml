@@ -14,7 +14,7 @@ jobs:
         include:
         - compiler: mingw-w64
           bits: 32
-          CFLAGS: -m32
+          CFLAGS: -m64
         - compiler: mingw-w64
           bits: 64
           CFLAGS: -m64
@@ -54,7 +54,7 @@ jobs:
       run: |
         cd src
         make PLATFORM=PLATFORM_DESKTOP CC=gcc RAYLIB_LIBTYPE=STATIC RAYLIB_RELEASE_PATH="../build/raylib_3.1_win${{ matrix.bits }}/lib-mingw-w64"
-        make clean
+        make SHELL=cmd clean
         make PLATFORM=PLATFORM_DESKTOP CC=gcc RAYLIB_LIBTYPE=SHARED RAYLIB_RELEASE_PATH="../build/raylib_3.1_win${{ matrix.bits }}/lib-mingw-w64"
         cd ..
       if: matrix.compiler == 'mingw-w64'
