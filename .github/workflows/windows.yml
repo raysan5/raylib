@@ -52,7 +52,6 @@ jobs:
         cd src
         gcc -v
         make PLATFORM=PLATFORM_DESKTOP CC=gcc RAYLIB_BUILD_ARCH=${{ matrix.ARCH }} RAYLIB_LIBTYPE=STATIC RAYLIB_RELEASE_PATH="../build/raylib_3.1_win${{ matrix.bits }}/lib-mingw-w64"
-        make SHELL=cmd clean
         cd ..
       if: matrix.compiler == 'mingw-w64'
       
@@ -70,7 +69,7 @@ jobs:
       
     - name: Generate Artifacts
       run: |
-        copy /Y ./src/raylib.h ./build/raylib_3.1_win${{ matrix.bits }}/include/raylib.h
+        copy /Y .\src\raylib.h .\build\raylib_3.1_win${{ matrix.bits }}\include\raylib.h
         cd build
         7z a ./raylib_3.1_win${{ matrix.bits }}.zip ./raylib_3.1_win${{ matrix.bits }}
         dir
