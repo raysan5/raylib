@@ -62,14 +62,14 @@ jobs:
     - name: Build Library (MSVC16)
       run: |
         cd projects/VS2017
-        msbuild.exe raylib.sln /target:raylib /p:OutputPath="..\..\build\raylib_3.1_win${{ matrix.bits }}/lib-msvc16 /property:Configuration=Release /property:Platform=${{ matrix.ARCH }}
-        msbuild.exe raylib.sln /target:raylib /p:OutputPath="..\..\build\raylib_3.1_win${{ matrix.bits }}/lib-msvc16 /property:Configuration=Release.DLL /property:Platform=${{ matrix.ARCH }}
+        msbuild.exe raylib.sln /target:raylib /p:OutputPath="..\..\build\raylib_3.1_win${{ matrix.bits }}/lib-msvc16" /property:Configuration=Release /property:Platform=${{ matrix.ARCH }}
+        msbuild.exe raylib.sln /target:raylib /p:OutputPath="..\..\build\raylib_3.1_win${{ matrix.bits }}/lib-msvc16" /property:Configuration=Release.DLL /property:Platform=${{ matrix.ARCH }}
         cd ../..
       if: matrix.compiler == 'msvc16'
       
     - name: Generate Artifacts
       run: |
-        cd ..
+        dir
         copy /Y src/raylib.h ../../build/raylib_3.1_win${{ matrix.bits }}/include
         cd ../build
         zip raylib_3.1_win${{ matrix.bits }}.zip raylib_3.1_win${{ matrix.bits }}
