@@ -57,6 +57,7 @@ jobs:
       if: matrix.compiler == 'mingw-w64'
       
     - name: Build Library (MSVC16)
+      shell: cmd
       run: |
         cd projects/VS2017
         msbuild.exe raylib.sln /target:raylib /property:Configuration=Release /property:Platform=${{ matrix.ARCH }}
