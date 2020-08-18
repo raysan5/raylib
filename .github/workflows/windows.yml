@@ -1,6 +1,10 @@
 name: Windows
 
-on: [push, pull_request]
+on: 
+  push:
+  pull_request:
+  release:
+    types: [published]
 
 jobs:
   build:
@@ -84,3 +88,16 @@ jobs:
       with:
         name: ${{ env.RELEASE_NAME }}.zip
         path: ./build/${{ env.RELEASE_NAME }}.zip
+        
+    - name: Upload Artifact to Release
+      uses: actions/upload-release-asset@v1.0.1
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+          upload_url: ${{ github.event.release.upload_url }}
+          asset_path: ./build/${{ env.RELEASE_NAME }}.zip
+          asset_name: ${{ env.RELEASE_NAME }}.zip
+          asset_content_type: application/zip
+      if: release.published == true
+
+       
