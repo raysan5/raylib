@@ -37,6 +37,7 @@ jobs:
         cd ../../../raylib
         sudo apt-get install gcc-multilib lib32gcc-7-dev
         sudo apt-get install -y --no-install-recommends libglfw3 libglfw3-dev libx11-dev libxcursor-dev libxrandr-dev libxinerama-dev libxi-dev libxext-dev libxfixes-dev
+        configure --build=i686-pc-linux-gnu
       
     - name: Build Library
       run: |
