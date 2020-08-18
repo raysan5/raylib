@@ -35,7 +35,7 @@ jobs:
         mkdir include
         mkdir lib
         cd ../../../raylib
-        sudo apt-get install gcc-multilib lib32gcc-7.5-dev
+        sudo apt-get install gcc-multilib lib32gcc-7-dev
         sudo apt-get install -y --no-install-recommends libglfw3 libglfw3-dev libx11-dev libxcursor-dev libxrandr-dev libxinerama-dev libxi-dev libxext-dev libxfixes-dev
       
     - name: Build Library
