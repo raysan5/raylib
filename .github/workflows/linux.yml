@@ -13,11 +13,13 @@ jobs:
         include:
         - bits: 32
           ARCH: "x86"
+          ARCH_NAME: "i386"
         - bits: 64
           ARCH: "x64"
+          ARCH_NAME: "amd64" 
           
     env:
-      RELEASE_NAME: raylib-3.1_linux_${{ matrix.ARCH }}
+      RELEASE_NAME: raylib-3.1_linux_${{ matrix.ARCH_NAME }}
     
     steps:
     - name: Checkout code
