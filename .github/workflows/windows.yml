@@ -14,16 +14,21 @@ jobs:
         include:
         - compiler: mingw-w64
           bits: 32
-          ARCH: "x86"
+          ARCH: "x86"  
         - compiler: mingw-w64
           bits: 64
           ARCH: "x64"
         - compiler: msvc16
           bits: 32
-          ARCH: "x86"  
+          ARCH: "x86"
+          VSBINPATH: "Win32" 
         - compiler: msvc16
           bits: 64
           ARCH: "x64" 
+          VSBINPATH: "x64"
+          
+    env:
+      RELEASE_NAME: raylib-3.1_win${{ matrix.bits }}_${{ matrix.compiler }}
 
     steps:
     - name: Checkout
@@ -34,10 +39,10 @@ jobs:
         dir
         mkdir build
         cd build
-        mkdir raylib_3.1_win${{ matrix.bits }}
-        cd raylib_3.1_win${{ matrix.bits }}
+        mkdir ${{ env.RELEASE_NAME }}
+        cd ${{ env.RELEASE_NAME }}
         mkdir include
-        mkdir lib-${{ matrix.compiler }}
+        mkdir lib
         dir
         cd ../../../raylib
         dir
@@ -51,7 +56,7 @@ jobs:
       run: |
         cd src
         gcc -v
-        make PLATFORM=PLATFORM_DESKTOP CC=gcc RAYLIB_BUILD_ARCH=${{ matrix.ARCH }} RAYLIB_LIBTYPE=STATIC RAYLIB_RELEASE_PATH="../build/raylib_3.1_win${{ matrix.bits }}/lib-mingw-w64"
+        make PLATFORM=PLATFORM_DESKTOP CC=gcc RAYLIB_BUILD_ARCH=${{ matrix.ARCH }} RAYLIB_LIBTYPE=STATIC RAYLIB_RELEASE_PATH="../${{ env.RELEASE_NAME }}/lib"
         cd ..
       if: matrix.compiler == 'mingw-w64'
       
@@ -59,24 +64,24 @@ jobs:
       run: |
         cd projects/VS2017
         msbuild.exe raylib.sln /target:raylib /property:Configuration=Release /property:Platform=${{ matrix.ARCH }}
-        copy /Y .\bin\Win32\Release\raylib.lib .\..\..\build\raylib_3.1_win${{ matrix.bits }}\lib-msvc16\raylib.lib
+        copy /Y .\bin\${{ matrix.VSBINPATH }}\Release\raylib.lib .\..\..\build\${{ env.RELEASE_NAME }}\lib\raylib.lib
         msbuild.exe raylib.sln /target:raylib /property:Configuration=Release.DLL /property:Platform=${{ matrix.ARCH }}
-        copy /Y .\bin\Win32\Release.DLL\raylib.dll .\..\..\build\raylib_3.1_win${{ matrix.bits }}\lib-msvc16\raylib.dll
-        copy /Y .\bin\Win32\Release.DLL\raylib.lib .\..\..\build\raylib_3.1_win${{ matrix.bits }}\lib-msvc16\raylibdll.lib
+        copy /Y .\bin\${{ matrix.VSBINPATH }}\Release.DLL\raylib.dll .\..\..\build\${{ env.RELEASE_NAME }}\lib\raylib.dll
+        copy /Y .\bin\${{ matrix.VSBINPATH }}\Release.DLL\raylib.lib .\..\..\build\${{ env.RELEASE_NAME }}\lib\raylibdll.lib
         cd ../..
       shell: cmd
       if: matrix.compiler == 'msvc16'
       
     - name: Generate Artifacts
       run: |
-        copy /Y .\src\raylib.h .\build\raylib_3.1_win${{ matrix.bits }}\include\raylib.h
+        copy /Y .\src\raylib.h .\build\${{ env.RELEASE_NAME }}\include\raylib.h
         cd build
-        7z a ./raylib_3.1_win${{ matrix.bits }}.zip ./raylib_3.1_win${{ matrix.bits }}
+        7z a ./${{ env.RELEASE_NAME }}.zip ./${{ env.RELEASE_NAME }}
         dir
       shell: cmd
         
     - name: Upload Artifacts
       uses: actions/upload-artifact@v2
       with:
-        name: raylib_3.1_win${{ matrix.bits }}.zip
-        path: ./build/raylib_3.1_win${{ matrix.bits }}.zip
+        name: ${{ env.RELEASE_NAME }}.zip
+        path: ./build/${{ env.RELEASE_NAME }}.zip
