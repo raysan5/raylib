@@ -98,6 +98,6 @@ jobs:
           asset_path: ./build/${{ env.RELEASE_NAME }}.zip
           asset_name: ${{ env.RELEASE_NAME }}.zip
           asset_content_type: application/zip
-      if: release.published == true
+      if: github.event_name == 'release' && github.event.action == 'published'
 
        
