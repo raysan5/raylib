@@ -43,9 +43,7 @@ jobs:
         cd ${{ env.RELEASE_NAME }}
         mkdir include
         mkdir lib
-        dir
         cd ../../../raylib
-        dir
 
     # Setup MSBuild.exe path if required
     - name: Setup MSBuild
@@ -56,10 +54,8 @@ jobs:
       run: |
         cd src
         gcc -v
-        make PLATFORM=PLATFORM_DESKTOP CC=gcc RAYLIB_BUILD_ARCH=${{ matrix.ARCH }} RAYLIB_LIBTYPE=STATIC RAYLIB_RELEASE_PATH="../${{ env.RELEASE_NAME }}/lib"
-        dir
+        make PLATFORM=PLATFORM_DESKTOP CC=gcc RAYLIB_BUILD_ARCH=${{ matrix.ARCH }} RAYLIB_LIBTYPE=STATIC RAYLIB_RELEASE_PATH="../build/${{ env.RELEASE_NAME }}/lib"
         cd ..
-        dir build
       shell: cmd
       if: matrix.compiler == 'mingw-w64'
       
