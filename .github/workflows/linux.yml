@@ -42,16 +42,16 @@ jobs:
       run: |
         cd src
         gcc -v
-        make BUILD="i686-pc-linux-gnu" PLATFORM=PLATFORM_DESKTOP CC=gcc RAYLIB_BUILD_ARCH=${{ matrix.ARCH }} RAYLIB_LIBTYPE=STATIC RAYLIB_RELEASE_PATH="../build/${{ env.RELEASE_NAME }}/lib"
+        make PLATFORM=PLATFORM_DESKTOP CC=gcc RAYLIB_BUILD_ARCH=${{ matrix.ARCH }} RAYLIB_LIBTYPE=STATIC RAYLIB_RELEASE_PATH="../build/${{ env.RELEASE_NAME }}/lib"
         make clean
-        make BUILD="i686-pc-linux-gnu" PLATFORM=PLATFORM_DESKTOP CC=gcc RAYLIB_BUILD_ARCH=${{ matrix.ARCH }} RAYLIB_LIBTYPE=SHARED RAYLIB_RELEASE_PATH="../build/${{ env.RELEASE_NAME }}/lib" -B
+        make PLATFORM=PLATFORM_DESKTOP CC=gcc RAYLIB_BUILD_ARCH=${{ matrix.ARCH }} RAYLIB_LIBTYPE=SHARED RAYLIB_RELEASE_PATH="../build/${{ env.RELEASE_NAME }}/lib" -B
         cd ..
     
     - name: Generate Artifacts
       run: |
         cp -v ./src/raylib.h ./build/${{ env.RELEASE_NAME }}/include
         cd build
-        tar -czvf ./${{ env.RELEASE_NAME }}.tar.gz ./${{ env.RELEASE_NAME }}
+        tar -czvf ${{ env.RELEASE_NAME }}.tar.gz ${{ env.RELEASE_NAME }}
         
     - name: Upload Artifacts
       uses: actions/upload-artifact@v2
