@@ -12,14 +12,12 @@ jobs:
         bits: [32, 64]
         include:
         - bits: 32
-          CFLAGS: -m32
-          ARCH: i386 
+          ARCH: "x86"
         - bits: 64
-          CFLAGS: -m64
-          ARCH: amd64
+          ARCH: "x64"
           
     env:
-      CFLAGS: ${{ matrix.CFLAGS }}
+      RELEASE_NAME: raylib-3.1_linux_${{ matrix.ARCH }}
     
     steps:
     - name: Checkout code
@@ -32,30 +30,29 @@ jobs:
       run: | 
         mkdir build
         cd build
-        mkdir raylib_3.1_linux_${{ matrix.ARCH }}
-        cd raylib_3.1_linux_${{ matrix.ARCH }}
+        mkdir ${{ env.RELEASE_NAME }}
+        cd ${{ env.RELEASE_NAME }}
         mkdir include
         mkdir lib
-        cd ../../raylib
+        cd ../../../raylib
         sudo apt-get install -y --no-install-recommends libglfw3 libglfw3-dev libx11-dev libxcursor-dev libxrandr-dev libxinerama-dev libxi-dev libxext-dev libxfixes-dev
       
     - name: Build Library
       run: |
         cd src
-        make PLATFORM=PLATFORM_DESKTOP CC=gcc RAYLIB_LIBTYPE=STATIC RAYLIB_RELEASE_PATH="../../build/raylib_3.1_linux_${{ matrix.ARCH }}/lib
-        make PLATFORM=PLATFORM_DESKTOP CC=gcc RAYLIB_LIBTYPE=SHARED RAYLIB_RELEASE_PATH="../../build/raylib_3.1_linux_${{ matrix.ARCH }}/lib
+        gcc -v
+        make PLATFORM=PLATFORM_DESKTOP CC=gcc RAYLIB_BUILD_ARCH=${{ matrix.ARCH }} RAYLIB_LIBTYPE=STATIC RAYLIB_RELEASE_PATH="../../build/${{ env.RELEASE_NAME }}/lib
+        make PLATFORM=PLATFORM_DESKTOP CC=gcc RAYLIB_BUILD_ARCH=${{ matrix.ARCH }} RAYLIB_LIBTYPE=SHARED RAYLIB_RELEASE_PATH="../../build/${{ env.RELEASE_NAME }}/lib
         cd ..
     
     - name: Generate Artifacts
       run: |
-        cd ..
-        copy /Y src/raylib.h ../../build/raylib_3.1_linux_${{ matrix.ARCH }}/include
-        cd ../build
-        tar -czvf raylib_3.1_linux_${{ matrix.ARCH }}.tar.gz raylib_3.1_linux_${{ matrix.ARCH }}
+        cp -v ./src/raylib.h ./build/${{ env.RELEASE_NAME }}/include
+        cd build
+        tar -czvf ./${{ env.RELEASE_NAME }}.tar.gz ./${{ env.RELEASE_NAME }}
         
     - name: Upload Artifacts
       uses: actions/upload-artifact@v2
       with:
-        name: raylib_3.1_linux_${{ matrix.ARCH }}.tar.gz
-        path: raylib_3.1_linux_${{ matrix.ARCH }}.tar.gz
-
+        name: ${{ env.RELEASE_NAME }}.tar.gz
+        path: ${{ env.RELEASE_NAME }}.tar.gz
