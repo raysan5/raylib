@@ -57,7 +57,10 @@ jobs:
         cd src
         gcc -v
         make PLATFORM=PLATFORM_DESKTOP CC=gcc RAYLIB_BUILD_ARCH=${{ matrix.ARCH }} RAYLIB_LIBTYPE=STATIC RAYLIB_RELEASE_PATH="../${{ env.RELEASE_NAME }}/lib"
+        dir
         cd ..
+        dir build
+      shell: cmd
       if: matrix.compiler == 'mingw-w64'
       
     - name: Build Library (MSVC16)
