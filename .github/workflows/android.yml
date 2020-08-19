@@ -28,7 +28,7 @@ jobs:
         cd ../..
         cd "C:\Program Files (x86)\Android\android-sdk\"
         dir
-        cd ndk
+        cd ndk-bundle
         dir
    
     # Generating static + shared library for 64bit arquitectures and API version 28
