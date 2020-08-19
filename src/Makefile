@@ -464,7 +464,7 @@ ifeq ($(RAYLIB_MODULE_PHYSAC),TRUE)
 endif
 
 ifeq ($(PLATFORM),PLATFORM_ANDROID)
-    OBJS += $(NATIVE_APP_GLUE)/android_native_app_glue.o
+    OBJS += android_native_app_glue.o
 endif
 
 # Default target entry
@@ -583,7 +583,7 @@ physac.o : physac.c physac.h
 	$(CC) -c $< $(CFLAGS) $(INCLUDE_PATHS) -D$(PLATFORM) -DPHYSAC_IMPLEMENTATION
 
 # Compile android_native_app_glue module
-$(NATIVE_APP_GLUE)/android_native_app_glue.o : android_native_app_glue.c
+android_native_app_glue.o : $(NATIVE_APP_GLUE)/android_native_app_glue.c
 	$(CC) -c $< $(CFLAGS) $(INCLUDE_PATHS)
     
 
