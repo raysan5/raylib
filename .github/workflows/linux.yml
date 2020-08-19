@@ -73,7 +73,7 @@ jobs:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       with:
           upload_url: ${{ github.event.release.upload_url }}
-          asset_path: ./build/${{ env.RELEASE_NAME }}.zip
-          asset_name: ${{ env.RELEASE_NAME }}.zip
-          asset_content_type: application/zip
+          asset_path: ./build/${{ env.RELEASE_NAME }}.tar.gz
+          asset_name: ${{ env.RELEASE_NAME }}.tar.gz
+          asset_content_type: application/gzip
       if: github.event_name == 'release' && github.event.action == 'published'  
