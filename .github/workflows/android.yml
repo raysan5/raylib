@@ -33,7 +33,7 @@ jobs:
         dir prebuilt
         dir toolchains
         dir toolchains/bin
-        dir toolchains/llvm/prebuilt
+        dir toolchains/llvm
         dir sysroot
         dir 
    
