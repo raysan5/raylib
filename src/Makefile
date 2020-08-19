@@ -161,29 +161,37 @@ ifeq ($(PLATFORM),PLATFORM_ANDROID)
     # and minimum required target API is Android 9 (API level 28)
     ANDROID_ARCH ?= ARM
     ANDROID_API_VERSION ?= 28
-
+    
     # Android required path variables
     # NOTE: Starting with Android NDK r21, no more toolchain generation is required, NDK is the toolchain on itself
     ifeq ($(OS),Windows_NT)
         ANDROID_NDK ?= C:/android-ndk
-        ANDROID_TOOLCHAIN ?= $(ANDROID_NDK)/toolchains/llvm/prebuilt/windows-x86_64
+        ANDROID_TOOLCHAIN = $(ANDROID_NDK)/toolchains/llvm/prebuilt/windows-x86_64
     else
         ANDROID_NDK ?= /usr/lib/android/ndk
-        ANDROID_TOOLCHAIN ?= $(ANDROID_NDK)/toolchains/llvm/prebuilt/linux-x86_64
+        ANDROID_TOOLCHAIN = $(ANDROID_NDK)/toolchains/llvm/prebuilt/linux-x86_64
     endif
+    
+    # NOTE: Sysroot can also be reference from $(ANDROID_NDK)/sysroot
+    ANDROID_SYSROOT ?= $(ANDROID_TOOLCHAIN)/sysroot
 
     ifeq ($(ANDROID_ARCH),ARM)
         ANDROID_ARCH_NAME = armeabi-v7a
+        INCLUDE_PATHS += -I$(ANDROID_SYSROOT)/usr/include/arm-linux-androideabi
     endif
     ifeq ($(ANDROID_ARCH),ARM64)
         ANDROID_ARCH_NAME = arm64-v8a
+        INCLUDE_PATHS += -I$(ANDROID_SYSROOT)/usr/include/aarch64-linux-android
     endif
     ifeq ($(ANDROID_ARCH),x86)
         ANDROID_ARCH_NAME = i686
+        INCLUDE_PATHS += -I$(ANDROID_SYSROOT)/usr/include/i686-linux-android
     endif
     ifeq ($(ANDROID_ARCH),x86_64)
         ANDROID_ARCH_NAME = x86_64
+        INCLUDE_PATHS += -I$(ANDROID_SYSROOT)/usr/include/x86_64-linux-android
     endif
+    
 endif
 
 # Define raylib graphics api depending on selected platform
@@ -396,7 +404,7 @@ endif
 ifeq ($(PLATFORM),PLATFORM_ANDROID)
     NATIVE_APP_GLUE = $(ANDROID_NDK)/sources/android/native_app_glue
     # Android required libraries
-    INCLUDE_PATHS += -I$(ANDROID_TOOLCHAIN)/sysroot/usr/include
+    INCLUDE_PATHS += -I$(ANDROID_SYSROOT)/usr/include
     # Include android_native_app_glue.h
     INCLUDE_PATHS += -I$(NATIVE_APP_GLUE)
 endif
