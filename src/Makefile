@@ -4,10 +4,10 @@
 #
 #  Platforms supported:
 #    PLATFORM_DESKTOP:  Windows (Win32, Win64)
-#    PLATFORM_DESKTOP:  Linux (32 and 64 bit)
-#    PLATFORM_DESKTOP:  OSX/macOS
+#    PLATFORM_DESKTOP:  Linux (i386, x64)
+#    PLATFORM_DESKTOP:  OSX/macOS (arm64, x86_64)
 #    PLATFORM_DESKTOP:  FreeBSD, OpenBSD, NetBSD, DragonFly
-#    PLATFORM_ANDROID:  Android (ARM, ARM64)
+#    PLATFORM_ANDROID:  Android (arm, i686, arm64, x86_64)
 #    PLATFORM_RPI:      Raspberry Pi (Raspbian)
 #    PLATFORM_WEB:      HTML5 (Chrome, Firefox)
 #
@@ -156,10 +156,10 @@ ifeq ($(PLATFORM),PLATFORM_WEB)
 endif
 
 ifeq ($(PLATFORM),PLATFORM_ANDROID)
-    # Android architecture: ARM64
-    # Starting at 2019 using ARM64 is mandatory for published apps,
+    # Android architecture
+    # Starting at 2019 using arm64 is mandatory for published apps,
     # and minimum required target API is Android 9 (API level 28)
-    ANDROID_ARCH ?= ARM
+    ANDROID_ARCH ?= arm
     ANDROID_API_VERSION ?= 28
     
     # Android required path variables
@@ -175,10 +175,10 @@ ifeq ($(PLATFORM),PLATFORM_ANDROID)
     # NOTE: Sysroot can also be reference from $(ANDROID_NDK)/sysroot
     ANDROID_SYSROOT ?= $(ANDROID_TOOLCHAIN)/sysroot
 
-    ifeq ($(ANDROID_ARCH),ARM)
+    ifeq ($(ANDROID_ARCH),arm)
         ANDROID_ARCH_NAME = armeabi-v7a
     endif
-    ifeq ($(ANDROID_ARCH),ARM64)
+    ifeq ($(ANDROID_ARCH),arm64)
         ANDROID_ARCH_NAME = arm64-v8a
     endif
     ifeq ($(ANDROID_ARCH),x86)
@@ -239,11 +239,11 @@ ifeq ($(PLATFORM),PLATFORM_WEB)
 endif
 ifeq ($(PLATFORM),PLATFORM_ANDROID)
     # Android toolchain (must be provided for desired architecture and compiler)
-    ifeq ($(ANDROID_ARCH),ARM)
+    ifeq ($(ANDROID_ARCH),arm)
         CC = $(ANDROID_TOOLCHAIN)/bin/armv7a-linux-androideabi$(ANDROID_API_VERSION)-clang
         AR = $(ANDROID_TOOLCHAIN)/bin/arm-linux-androideabi-ar
     endif
-    ifeq ($(ANDROID_ARCH),ARM64)
+    ifeq ($(ANDROID_ARCH),arm64)
         CC = $(ANDROID_TOOLCHAIN)/bin/aarch64-linux-android$(ANDROID_API_VERSION)-clang
         AR = $(ANDROID_TOOLCHAIN)/bin/aarch64-linux-android-ar
     endif
@@ -333,10 +333,10 @@ ifeq ($(PLATFORM),PLATFORM_WEB)
 endif
 ifeq ($(PLATFORM),PLATFORM_ANDROID)
     # Compiler flags for arquitecture
-    ifeq ($(ANDROID_ARCH),ARM)
+    ifeq ($(ANDROID_ARCH),arm)
         CFLAGS += -march=armv7-a -mfloat-abi=softfp -mfpu=vfpv3-d16
     endif
-    ifeq ($(ANDROID_ARCH),ARM64)
+    ifeq ($(ANDROID_ARCH),arm64)
         CFLAGS += -target aarch64 -mfix-cortex-a53-835769
     endif
     ifeq ($(ANDROID_ARCH), x86)
@@ -404,10 +404,10 @@ ifeq ($(PLATFORM),PLATFORM_ANDROID)
     
     # Android required libraries
     INCLUDE_PATHS += -I$(ANDROID_SYSROOT)/usr/include
-    ifeq ($(ANDROID_ARCH),ARM)
+    ifeq ($(ANDROID_ARCH),arm)
         INCLUDE_PATHS += -I$(ANDROID_SYSROOT)/usr/include/arm-linux-androideabi
     endif
-    ifeq ($(ANDROID_ARCH),ARM64)
+    ifeq ($(ANDROID_ARCH),arm64)
         INCLUDE_PATHS += -I$(ANDROID_SYSROOT)/usr/include/aarch64-linux-android
     endif
     ifeq ($(ANDROID_ARCH),x86)
