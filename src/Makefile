@@ -166,10 +166,10 @@ ifeq ($(PLATFORM),PLATFORM_ANDROID)
     # NOTE: Starting with Android NDK r21, no more toolchain generation is required, NDK is the toolchain on itself
     ifeq ($(OS),Windows_NT)
         ANDROID_NDK ?= C:/android-ndk
-        ANDROID_TOOLCHAIN = $(ANDROID_NDK)/toolchains/llvm/prebuilt/windows-x86_64
+        ANDROID_TOOLCHAIN ?= $(ANDROID_NDK)/toolchains/llvm/prebuilt/windows-x86_64
     else
         ANDROID_NDK ?= /usr/lib/android/ndk
-        ANDROID_TOOLCHAIN = $(ANDROID_NDK)/toolchains/llvm/prebuilt/linux-x86_64
+        ANDROID_TOOLCHAIN ?= $(ANDROID_NDK)/toolchains/llvm/prebuilt/linux-x86_64
     endif
 
     ifeq ($(ANDROID_ARCH),ARM)
@@ -184,8 +184,6 @@ ifeq ($(PLATFORM),PLATFORM_ANDROID)
     ifeq ($(ANDROID_ARCH),x86_64)
         ANDROID_ARCH_NAME = x86_64
     endif
-    
-    ANDROID_COMPILER_PATH ?= $(ANDROID_TOOLCHAIN)/bin
 endif
 
 # Define raylib graphics api depending on selected platform
@@ -238,19 +236,19 @@ endif
 ifeq ($(PLATFORM),PLATFORM_ANDROID)
     # Android toolchain (must be provided for desired architecture and compiler)
     ifeq ($(ANDROID_ARCH),ARM)
-        CC = $(ANDROID_COMPILER_PATH)/armv7a-linux-androideabi$(ANDROID_API_VERSION)-clang
+        CC = $(ANDROID_TOOLCHAIN)/bin/armv7a-linux-androideabi$(ANDROID_API_VERSION)-clang
         AR = $(ANDROID_TOOLCHAIN)/bin/arm-linux-androideabi-ar
     endif
     ifeq ($(ANDROID_ARCH),ARM64)
-        CC = $(ANDROID_COMPILER_PATH)/aarch64-linux-android$(ANDROID_API_VERSION)-clang
+        CC = $(ANDROID_TOOLCHAIN)/bin/aarch64-linux-android$(ANDROID_API_VERSION)-clang
         AR = $(ANDROID_TOOLCHAIN)/bin/aarch64-linux-android-ar
     endif
     ifeq ($(ANDROID_ARCH),x86)
-        CC = $(ANDROID_COMPILER_PATH)/i686-linux-android$(ANDROID_API_VERSION)-clang
+        CC = $(ANDROID_TOOLCHAIN)/bin/i686-linux-android$(ANDROID_API_VERSION)-clang
         AR = $(ANDROID_TOOLCHAIN)/bin/i686-linux-android-ar
     endif
     ifeq ($(ANDROID_ARCH),x86_64)
-        CC = $(ANDROID_COMPILER_PATH)/x86_64-linux-android$(ANDROID_API_VERSION)-clang
+        CC = $(ANDROID_TOOLCHAIN)/bin/x86_64-linux-android$(ANDROID_API_VERSION)-clang
         AR = $(ANDROID_TOOLCHAIN)/bin/x86_64-linux-android-ar
     endif
 endif
