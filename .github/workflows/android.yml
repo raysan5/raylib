@@ -16,7 +16,7 @@ jobs:
         ARCH: ["arm64", "x86_64"]
           
     env:
-      RELEASE_NAME: raylib-3.1_android_${{ matrix.ARCH }}
+      RELEASE_NAME: raylib-3.1_android_api28_${{ matrix.ARCH }}
     
     steps:
     - name: Checkout
