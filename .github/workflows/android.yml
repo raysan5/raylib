@@ -26,15 +26,19 @@ jobs:
         mkdir include
         mkdir lib
         cd ../..
+        cd "C:\Program Files (x86)\Android\android-sdk\"
+        dir
+        cd ndk
+        dir
    
     # Generating static + shared library for 64bit arquitectures and API version 28
     # ANDROID_ARCH=ARM64/x86_64
     - name: Build Library
       run: |
         cd src
-        make PLATFORM=PLATFORM_ANDROID ANDROID_ARCH=ARM64 ANDROID_COMPILER_PATH=. RAYLIB_LIBTYPE=STATIC RAYLIB_RELEASE_PATH="../build/${{ env.RELEASE_NAME }}/lib"
+        make PLATFORM=PLATFORM_ANDROID ANDROID_ARCH=ARM64 ANDROID_COMPILER_PATH= RAYLIB_LIBTYPE=STATIC RAYLIB_RELEASE_PATH="../build/${{ env.RELEASE_NAME }}/lib"
         make clean
-        make PLATFORM=PLATFORM_ANDROID ANDROID_ARCH=ARM64 ANDROID_COMPILER_PATH=. RAYLIB_LIBTYPE=SHARED RAYLIB_RELEASE_PATH="../build/${{ env.RELEASE_NAME }}/lib" -B
+        make PLATFORM=PLATFORM_ANDROID ANDROID_ARCH=ARM64 ANDROID_COMPILER_PATH= RAYLIB_LIBTYPE=SHARED RAYLIB_RELEASE_PATH="../build/${{ env.RELEASE_NAME }}/lib" -B
         cd ..
   
     - name: Generate Artifacts
