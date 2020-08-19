@@ -22,6 +22,9 @@ jobs:
       with:
         version: 2.0.0
         actions-cache-folder: 'emsdk-cache'
+        
+    - name: Test emsdk Installation
+      run: emcc -v
 
     - name: Setup Environment
       run: | 
