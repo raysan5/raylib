@@ -37,7 +37,7 @@ jobs:
         cd ../..
         dir C:\
         dir C:\tools
-        dir C:\tools\msys64
+        dir C:\msys64
         dir C:\PROGRA~2\
         dir D:\
    
