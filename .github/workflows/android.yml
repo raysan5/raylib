@@ -9,9 +9,21 @@ on:
 jobs:
   build:
     runs-on: windows-latest
-    
+    strategy:
+      fail-fast: false
+      max-parallel: 1
+      matrix:
+        bits: [32, 64]
+        include:
+        - bits: 32
+          ARCH: "x86_64"
+          ARCH_NAME: "x86_64"
+        - bits: 64
+          ARCH: "ARM64"
+          ARCH_NAME: "arm64" 
+          
     env:
-      RELEASE_NAME: raylib-3.1_android
+      RELEASE_NAME: raylib-3.1_android_${{ matrix.ARCH_NAME }}
     
     steps:
     - name: Checkout
@@ -26,26 +38,13 @@ jobs:
         mkdir include
         mkdir lib
         cd ../..
-        cd "C:\Program Files (x86)\Android\android-sdk\"
-        dir
-        cd ndk-bundle
-        dir
-        dir toolchains
-        dir toolchains/llvm
-        dir toolchains/llvm/prebuilt
-        dir toolchains/llvm/prebuilt/windows-x86_64
-        dir toolchains/llvm/prebuilt/windows-x86_64/bin
-        dir sources/android/native_app_glue
-        dir 
    
     # Generating static + shared library for 64bit arquitectures and API version 28
-    # ANDROID_ARCH=ARM64/x86_64
     - name: Build Library
       run: |
         cd src
-        make PLATFORM=PLATFORM_ANDROID ANDROID_ARCH=ARM64 ANDROID_NDK="C:\PROGRA~2\Android\android-sdk\ndk-bundle" RAYLIB_LIBTYPE=STATIC RAYLIB_RELEASE_PATH="../build/${{ env.RELEASE_NAME }}/lib"
-        make clean
-        make PLATFORM=PLATFORM_ANDROID ANDROID_ARCH=ARM64 ANDROID_NDK="C:\PROGRA~2\Android\android-sdk\ndk-bundle" RAYLIB_LIBTYPE=SHARED RAYLIB_RELEASE_PATH="../build/${{ env.RELEASE_NAME }}/lib" -B
+        make PLATFORM=PLATFORM_ANDROID ANDROID_ARCH=${{ env.ARCH }} ANDROID_NDK="C:\PROGRA~2\Android\android-sdk\ndk-bundle" RAYLIB_LIBTYPE=STATIC RAYLIB_RELEASE_PATH="../build/${{ env.RELEASE_NAME }}/lib"
+        make PLATFORM=PLATFORM_ANDROID ANDROID_ARCH=${{ env.ARCH }} ANDROID_NDK="C:\PROGRA~2\Android\android-sdk\ndk-bundle" RAYLIB_LIBTYPE=SHARED RAYLIB_RELEASE_PATH="../build/${{ env.RELEASE_NAME }}/lib" -B
         cd ..
       shell: cmd
   
