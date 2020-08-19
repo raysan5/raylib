@@ -35,11 +35,8 @@ jobs:
         mkdir include
         mkdir lib
         cd ../..
-        dir C:\
-        dir C:\tools
-        dir C:\msys64
-        dir C:\PROGRA~2\
-        dir D:\
+        dir C:\msys64\mingw32
+        dir C:\msys64\mingw64
    
     - name: Build Library
       run: |
