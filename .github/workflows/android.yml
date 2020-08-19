@@ -30,6 +30,12 @@ jobs:
         dir
         cd ndk-bundle
         dir
+        dir prebuilt
+        dir toolchains
+        dir toolchains/bin
+        dir toolchains/llvm/prebuilt
+        dir sysroot
+        dir 
    
     # Generating static + shared library for 64bit arquitectures and API version 28
     # ANDROID_ARCH=ARM64/x86_64
