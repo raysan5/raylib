@@ -36,7 +36,7 @@ jobs:
       run: |
         cp -v ./src/raylib.h ./build/${{ env.RELEASE_NAME }}/include
         cd build
-        tar -czvf ./${{ env.RELEASE_NAME }}.tar.gz ./${{ env.RELEASE_NAME }}
+        tar -czvf ${{ env.RELEASE_NAME }}.tar.gz ${{ env.RELEASE_NAME }}
         
     - name: Upload Artifacts
       uses: actions/upload-artifact@v2
