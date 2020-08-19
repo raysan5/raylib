@@ -23,13 +23,15 @@ jobs:
         mkdir lib
         cd ../..
    
+    # Generating static + shared library, note that i386 architecture is deprecated
+    # Defining GL_SILENCE_DEPRECATION because OpenGL is deprecated on macOS
     - name: Build Library
       run: |
         cd src
         gcc -v
         make PLATFORM=PLATFORM_DESKTOP RAYLIB_LIBTYPE=STATIC RAYLIB_RELEASE_PATH="../build/${{ env.RELEASE_NAME }}/lib" CFLAGS="-target x86_64-apple-macos10.12 -DGL_SILENCE_DEPRECATION"
         make clean
-        make PLATFORM=PLATFORM_DESKTOP RAYLIB_LIBTYPE=SHARED RAYLIB_RELEASE_PATH="../build/${{ env.RELEASE_NAME }}/lib" CFLAGS=-DGL_SILENCE_DEPRECATION -B
+        make PLATFORM=PLATFORM_DESKTOP RAYLIB_LIBTYPE=SHARED RAYLIB_RELEASE_PATH="../build/${{ env.RELEASE_NAME }}/lib" CFLAGS="-target x86_64-apple-macos10.12 -DGL_SILENCE_DEPRECATION" -B
         cd ..
   
     - name: Generate Artifacts
