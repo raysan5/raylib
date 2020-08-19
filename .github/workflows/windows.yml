@@ -54,6 +54,7 @@ jobs:
       uses: microsoft/setup-msbuild@v1.0.1
       if: matrix.compiler == 'msvc16'
    
+    # TODO: Review x86 dynamic library building or remove it
     - name: Build Library (MinGW-w64)
       run: |
         cd src
@@ -99,5 +100,4 @@ jobs:
           asset_name: ${{ env.RELEASE_NAME }}.zip
           asset_content_type: application/zip
       if: github.event_name == 'release' && github.event.action == 'published'
-
        
