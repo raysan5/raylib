@@ -26,6 +26,7 @@ Ready to learn? Jump to [code examples!](http://www.raylib.com/examples.html)
 ![Windows](https://github.com/raysan5/raylib/workflows/Windows/badge.svg)
 ![Linux](https://github.com/raysan5/raylib/workflows/Linux/badge.svg)
 ![macOS](https://github.com/raysan5/raylib/workflows/macOS/badge.svg)
+![Android](https://github.com/raysan5/raylib/workflows/Android/badge.svg)
 
 features
 --------
