@@ -23,9 +23,9 @@ Ready to learn? Jump to [code examples!](http://www.raylib.com/examples.html)
 [![Travis (.org)](https://img.shields.io/travis/raysan5/raylib?label=Travis%20CI%20Build%20Status%20-%20Linux,%20OSX,%20Android,%20Windows)](https://travis-ci.org/raysan5/raylib)
 [![AppVeyor](https://img.shields.io/appveyor/build/raysan5/raylib?label=AppVeyor%20CI%20Build%20Status%20-%20Windows%20(mingw,%20msvc15))](https://ci.appveyor.com/project/raysan5/raylib)
 
-[![Actions Status](https://github.com/raysan5/raylib/workflows/CI%20-%20Source%20&%20Examples%20-%20Windows/badge.svg)](https://github.com/raysan5/raylib/actions)
-[![Actions Status](https://github.com/raysan5/raylib/workflows/CI%20-%20Source%20&%20Examples%20-%20Linux/badge.svg)](https://github.com/raysan5/raylib/actions)
-[![Actions Status](https://github.com/raysan5/raylib/workflows/CI%20-%20Source%20&%20Examples%20-%20macOS/badge.svg)](https://github.com/raysan5/raylib/actions)
+![Windows](https://github.com/raysan5/raylib/workflows/Windows/badge.svg)
+![Linux](https://github.com/raysan5/raylib/workflows/Linux/badge.svg)
+![macOS](https://github.com/raysan5/raylib/workflows/macOS/badge.svg)
 
 features
 --------
