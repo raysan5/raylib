@@ -177,19 +177,15 @@ ifeq ($(PLATFORM),PLATFORM_ANDROID)
 
     ifeq ($(ANDROID_ARCH),ARM)
         ANDROID_ARCH_NAME = armeabi-v7a
-        INCLUDE_PATHS += -I$(ANDROID_SYSROOT)/usr/include/arm-linux-androideabi
     endif
     ifeq ($(ANDROID_ARCH),ARM64)
         ANDROID_ARCH_NAME = arm64-v8a
-        INCLUDE_PATHS += -I$(ANDROID_SYSROOT)/usr/include/aarch64-linux-android
     endif
     ifeq ($(ANDROID_ARCH),x86)
         ANDROID_ARCH_NAME = i686
-        INCLUDE_PATHS += -I$(ANDROID_SYSROOT)/usr/include/i686-linux-android
     endif
     ifeq ($(ANDROID_ARCH),x86_64)
         ANDROID_ARCH_NAME = x86_64
-        INCLUDE_PATHS += -I$(ANDROID_SYSROOT)/usr/include/x86_64-linux-android
     endif
     
 endif
@@ -403,10 +399,23 @@ ifeq ($(PLATFORM),PLATFORM_RPI)
 endif
 ifeq ($(PLATFORM),PLATFORM_ANDROID)
     NATIVE_APP_GLUE = $(ANDROID_NDK)/sources/android/native_app_glue
-    # Android required libraries
-    INCLUDE_PATHS += -I$(ANDROID_SYSROOT)/usr/include
     # Include android_native_app_glue.h
     INCLUDE_PATHS += -I$(NATIVE_APP_GLUE)
+    
+    # Android required libraries
+    INCLUDE_PATHS += -I$(ANDROID_SYSROOT)/usr/include
+    ifeq ($(ANDROID_ARCH),ARM)
+        INCLUDE_PATHS += -I$(ANDROID_SYSROOT)/usr/include/arm-linux-androideabi
+    endif
+    ifeq ($(ANDROID_ARCH),ARM64)
+        INCLUDE_PATHS += -I$(ANDROID_SYSROOT)/usr/include/aarch64-linux-android
+    endif
+    ifeq ($(ANDROID_ARCH),x86)
+        INCLUDE_PATHS += -I$(ANDROID_SYSROOT)/usr/include/i686-linux-android
+    endif
+    ifeq ($(ANDROID_ARCH),x86_64)
+        INCLUDE_PATHS += -I$(ANDROID_SYSROOT)/usr/include/x86_64-linux-android
+    endif
 endif
 
 # Define linker options
