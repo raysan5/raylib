@@ -54,15 +54,28 @@ jobs:
       uses: microsoft/setup-msbuild@v1.0.1
       if: matrix.compiler == 'msvc16'
    
-    # TODO: Review x86 dynamic library building or remove it
+    # TODO: Review x86 dynamic library building, linking does not work because x86 libraries are not available
     - name: Build Library (MinGW-w64)
       run: |
         cd src
         gcc -v
         make PLATFORM=PLATFORM_DESKTOP CC=gcc RAYLIB_BUILD_ARCH=${{ matrix.ARCH }} RAYLIB_LIBTYPE=STATIC RAYLIB_RELEASE_PATH="../build/${{ env.RELEASE_NAME }}/lib"
+        # make PLATFORM=PLATFORM_DESKTOP CC=gcc RAYLIB_BUILD_ARCH=${{ matrix.ARCH }} RAYLIB_LIBTYPE=SHARED RAYLIB_RELEASE_PATH="../build/${{ env.RELEASE_NAME }}/lib" -B
         cd ..
       shell: cmd
-      if: matrix.compiler == 'mingw-w64'
+      if: matrix.compiler == 'mingw-w64' && matrix.bits == 32
+      
+    # Previous job should do 32bit and 64bit but there are config issues with the host-machine
+    # TODO: Compile resource file raylib.dll.rc for linkage on raylib.dll generation
+    - name: Build Library (MinGW-w64)
+      run: |
+        cd src
+        gcc -v
+        make PLATFORM=PLATFORM_DESKTOP CC=gcc RAYLIB_BUILD_ARCH=${{ matrix.ARCH }} RAYLIB_LIBTYPE=STATIC RAYLIB_RELEASE_PATH="../build/${{ env.RELEASE_NAME }}/lib"
+        make PLATFORM=PLATFORM_DESKTOP CC=gcc RAYLIB_BUILD_ARCH=${{ matrix.ARCH }} RAYLIB_LIBTYPE=SHARED RAYLIB_RELEASE_PATH="../build/${{ env.RELEASE_NAME }}/lib"
+        cd ..
+      shell: cmd
+      if: matrix.compiler == 'mingw-w64' && matrix.bits == 64
       
     - name: Build Library (MSVC16)
       run: |
