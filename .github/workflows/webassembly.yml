@@ -36,7 +36,9 @@ jobs:
         mkdir lib
         cd ../..
         dir C:\
-        dir C:\Program Files (x86)\
+        dir C:\tools
+        dir C:\tools\msys64
+        dir C:\PROGRA~2\
         dir D:\
    
     - name: Build Library
