@@ -582,6 +582,10 @@ physac.o : physac.c physac.h
 	@echo #include "$(RAYLIB_MODULE_PHYSAC_PATH)/physac.h" > physac.c
 	$(CC) -c $< $(CFLAGS) $(INCLUDE_PATHS) -D$(PLATFORM) -DPHYSAC_IMPLEMENTATION
 
+# Compile android_native_app_glue module
+$(NATIVE_APP_GLUE)/android_native_app_glue.o : android_native_app_glue.c
+	$(CC) -c $< $(CFLAGS) $(INCLUDE_PATHS)
+    
 
 # Install generated and needed files to desired directories.
 # On GNU/Linux and BSDs, there are some standard directories that contain extra
