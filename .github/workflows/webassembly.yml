@@ -35,6 +35,9 @@ jobs:
         mkdir include
         mkdir lib
         cd ../..
+        dir C:\
+        dir C:\Program Files (x86)\
+        dir D:\
    
     - name: Build Library
       run: |
