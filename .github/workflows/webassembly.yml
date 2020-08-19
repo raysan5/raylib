@@ -16,6 +16,12 @@ jobs:
     steps:
     - name: Checkout
       uses: actions/checkout@master
+  
+    - name: Setup emsdk
+      uses: mymindstorm/setup-emsdk@v6
+      with:
+        version: 2.0.0
+        actions-cache-folder: 'emsdk-cache'
 
     - name: Setup Environment
       run: | 
@@ -30,6 +36,7 @@ jobs:
     - name: Build Library
       run: |
         cd src
+        emcc -v
         make PLATFORM=PLATFORM_WEB RAYLIB_RELEASE_PATH="../build/${{ env.RELEASE_NAME }}/lib"
         cd ..
   
