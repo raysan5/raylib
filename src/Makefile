@@ -210,14 +210,6 @@ endif
 CC = gcc
 AR = ar
 
-# GCC could support multilib building for x86 (-m32) and x64 (-m64)
-ifeq ($(CC), gcc)
-    ARCH = -m32
-    ifeq ($(RAYLIB_BUILD_ARCH),x64)
-        ARCH = -m64
-    endif
-endif
-
 ifeq ($(PLATFORM),PLATFORM_DESKTOP)
     ifeq ($(PLATFORM_OS),OSX)
         # OSX default compiler
@@ -258,6 +250,14 @@ ifeq ($(PLATFORM),PLATFORM_ANDROID)
     ifeq ($(ANDROID_ARCH),x86_64)
         CC = $(ANDROID_TOOLCHAIN)/bin/x86_64-linux-android$(ANDROID_API_VERSION)-clang
         AR = $(ANDROID_TOOLCHAIN)/bin/x86_64-linux-android-ar
+    endif
+endif
+
+# GCC could support multilib building for x86 (-m32) and x64 (-m64)
+ifeq ($(CC), gcc)
+    ARCH = -m32
+    ifeq ($(RAYLIB_BUILD_ARCH),x64)
+        ARCH = -m64
     endif
 endif
 
