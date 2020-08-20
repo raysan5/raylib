@@ -58,11 +58,11 @@ RAYLIB_LIBTYPE       ?= STATIC
 # Build mode for library: DEBUG or RELEASE
 RAYLIB_BUILD_MODE    ?= RELEASE
 
-# Build architecture (x86: 32bit or x64: 64bit)
-RAYLIB_BUILD_ARCH    ?= x86
-
 # Build output name for the library
 RAYLIB_LIB_NAME      ?= raylib
+
+# Define resource file for DLL properties
+RAYLIB_RES_FILE      ?= ./raylib.dll.rc.data
 
 # Define raylib platform
 # Options:  PLATFORM_DESKTOP, PLATFORM_RPI, PLATFORM_ANDROID, PLATFORM_WEB
@@ -259,17 +259,6 @@ ifeq ($(PLATFORM),PLATFORM_ANDROID)
         AR = $(ANDROID_TOOLCHAIN)/bin/x86_64-linux-android-ar
     endif
 endif
-
-# GCC could support multilib building for x86 (-m32) and x64 (-m64)
-ifeq ($(CC), gcc)
-    CFLAGS += -m32
-    LDFLAGS += -m32
-    ifeq ($(RAYLIB_BUILD_ARCH),x64)
-        CFLAGS += -m64
-        LDFLAGS += -m64
-    endif
-endif
-
 
 # Define compiler flags:
 #  -O1                      defines optimization level
@@ -484,8 +473,8 @@ else
     ifeq ($(RAYLIB_LIBTYPE),SHARED)
         ifeq ($(PLATFORM),PLATFORM_DESKTOP)
             ifeq ($(PLATFORM_OS),WINDOWS)
-                # TODO: Compile resource file raylib.dll.rc for linkage on raylib.dll generation
-				$(CC) -shared -o $(RAYLIB_RELEASE_PATH)/$(RAYLIB_LIB_NAME).dll $(OBJS) $(LDFLAGS) -static-libgcc -lopengl32 -lgdi32 -lwinmm -Wl,--out-implib,$(RAYLIB_RELEASE_PATH)/lib$(RAYLIB_LIB_NAME)dll.a
+                # NOTE: Linking with provided resource file
+				$(CC) -shared -o $(RAYLIB_RELEASE_PATH)/$(RAYLIB_LIB_NAME).dll $(OBJS) $(RAYLIB_RES_FILE) $(LDFLAGS) -static-libgcc -lopengl32 -lgdi32 -lwinmm -Wl,--out-implib,$(RAYLIB_RELEASE_PATH)/lib$(RAYLIB_LIB_NAME)dll.a
 				@echo "raylib dynamic library ($(RAYLIB_LIB_NAME).dll) and import library (lib$(RAYLIB_LIB_NAME)dll.a) generated!"
             endif
             ifeq ($(PLATFORM_OS),LINUX)
