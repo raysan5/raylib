@@ -19,12 +19,10 @@ jobs:
           ARCH: "i386"
           ARCH_NAME: "i386"
           COMPILER_PATH: "/user/bin"
-          GCC_CFLAGS: "-m32"
         - bits: 64
           ARCH: "x86_64"
           ARCH_NAME: "amd64"
           COMPILER_PATH: "/user/bin"
-          GCC_CFLAGS: "-m64"
           
     env:
       RELEASE_NAME: raylib-3.1_linux_${{ matrix.ARCH_NAME }}
@@ -47,12 +45,22 @@ jobs:
         cd ../../../raylib
         # ${{ matrix.ARCH }}-linux-gnu-gcc -v
       
+    # TODO: Support 32bit (i386) shared library building
+    - name: Build Library
+      run: |
+        cd src
+        make PLATFORM=PLATFORM_DESKTOP CC=gcc RAYLIB_LIBTYPE=STATIC RAYLIB_RELEASE_PATH="../build/${{ env.RELEASE_NAME }}/lib" CFLAGS="-m32"
+        # make PLATFORM=PLATFORM_DESKTOP CC=gcc RAYLIB_LIBTYPE=SHARED RAYLIB_RELEASE_PATH="../build/${{ env.RELEASE_NAME }}/lib" -B
+        cd ..
+      if: matrix.bits == 32
+
     - name: Build Library
       run: |
         cd src
         make PLATFORM=PLATFORM_DESKTOP CC=gcc RAYLIB_LIBTYPE=STATIC RAYLIB_RELEASE_PATH="../build/${{ env.RELEASE_NAME }}/lib"
         make PLATFORM=PLATFORM_DESKTOP CC=gcc RAYLIB_LIBTYPE=SHARED RAYLIB_RELEASE_PATH="../build/${{ env.RELEASE_NAME }}/lib" -B
         cd ..
+      if: matrix.bits == 64
     
     - name: Generate Artifacts
       run: |
