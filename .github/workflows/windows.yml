@@ -61,7 +61,12 @@ jobs:
         mkdir include
         mkdir lib
         cd ../../../raylib
+        
+    - name: Test Environment
+      run: |
+        dir C:\msys64\clang32
         dir C:\msys64\clang32\bin
+      shell: cmd
 
     # Setup MSBuild.exe path if required
     - name: Setup MSBuild
@@ -84,8 +89,8 @@ jobs:
       run: |
         cd src
         ${{ matrix.COMPILER_PATH }}\clang.exe -v
-        make PLATFORM=PLATFORM_DESKTOP CC=${{ matrix.ARCH }}-w64-mingw32-gcc.exe RAYLIB_LIBTYPE=STATIC RAYLIB_RELEASE_PATH="../build/${{ env.RELEASE_NAME }}/lib"
-        make PLATFORM=PLATFORM_DESKTOP CC=${{ matrix.ARCH }}-w64-mingw32-gcc.exe RAYLIB_LIBTYPE=SHARED RAYLIB_RELEASE_PATH="../build/${{ env.RELEASE_NAME }}/lib" -B
+        make PLATFORM=PLATFORM_DESKTOP CC=${{ matrix.COMPILER_PATH }}/clang.exe RAYLIB_LIBTYPE=STATIC RAYLIB_RELEASE_PATH="../build/${{ env.RELEASE_NAME }}/lib"
+        make PLATFORM=PLATFORM_DESKTOP CC=${{ matrix.COMPILER_PATH }}/clang.exe RAYLIB_LIBTYPE=SHARED RAYLIB_RELEASE_PATH="../build/${{ env.RELEASE_NAME }}/lib" -B
         cd ..
       shell: cmd
       if: matrix.compiler == 'clang'
