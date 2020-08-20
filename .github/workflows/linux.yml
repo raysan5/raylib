@@ -46,7 +46,7 @@ jobs:
         
     - name: Check Environment
       run: |
-        ls /usr/lib32/gcc
+        ls /usr/lib32
       
     - name: Build Library (i386 or amd64)
       run: |
