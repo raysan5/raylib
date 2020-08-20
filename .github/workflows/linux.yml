@@ -45,18 +45,13 @@ jobs:
         cd ../../../raylib
         sudo apt-get install gcc-multilib lib32gcc-7-dev
         sudo apt-get install -y --no-install-recommends libglfw3 libglfw3-dev libx11-dev libxcursor-dev libxrandr-dev libxinerama-dev libxi-dev libxext-dev libxfixes-dev
-        export PATH=$PATH:${{ matrix.COMPILER_PATH }}
-        ls
-        ls /usr
-        ls /usr/bin
-        ls /usr/bin/gcc
+        ${{ matrix.ARCH }}-linux-gnu-gcc -v
       
     - name: Build Library (i386 or amd64)
       run: |
         cd src
-        ${{ matrix.ARCH }}-w64-mingw32-gcc -v
-        make PLATFORM=PLATFORM_DESKTOP CC=${{ matrix.ARCH }}-w64-mingw32-gcc RAYLIB_LIBTYPE=STATIC RAYLIB_RELEASE_PATH="../build/${{ env.RELEASE_NAME }}/lib"
-        make PLATFORM=PLATFORM_DESKTOP CC=${{ matrix.ARCH }}-w64-mingw32-gcc RAYLIB_LIBTYPE=SHARED RAYLIB_RELEASE_PATH="../build/${{ env.RELEASE_NAME }}/lib" -B
+        make PLATFORM=PLATFORM_DESKTOP CC=${{ matrix.ARCH }}-linux-gnu-gcc RAYLIB_LIBTYPE=STATIC RAYLIB_RELEASE_PATH="../build/${{ env.RELEASE_NAME }}/lib"
+        make PLATFORM=PLATFORM_DESKTOP CC=${{ matrix.ARCH }}-linux-gnu-gcc RAYLIB_LIBTYPE=SHARED RAYLIB_RELEASE_PATH="../build/${{ env.RELEASE_NAME }}/lib" -B
         cd ..
     
     - name: Generate Artifacts
