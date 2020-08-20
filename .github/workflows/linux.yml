@@ -40,7 +40,7 @@ jobs:
         mkdir include
         mkdir lib
         cd ../../../raylib
-        sudo apt-get install -y --no-install-recommends libx11-dev libxcursor-dev libxrandr-dev libxinerama-dev libxi-dev libxext-dev libxfixes-dev
+        sudo apt-get install -y --no-install-recommends mesa-utils libx11-dev libxcursor-dev libxrandr-dev libxinerama-dev libxi-dev libxext-dev libxfixes-dev
         # ${{ matrix.ARCH }}-linux-gnu-gcc -v
         
     - name: Check Environment
