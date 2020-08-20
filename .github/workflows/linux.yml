@@ -16,7 +16,7 @@ jobs:
         bits: [32, 64]
         include:
         - bits: 32
-          ARCH: "i686"
+          ARCH: "i386"
           ARCH_NAME: "i386"
           COMPILER_PATH: "/user/bin"
         - bits: 64
