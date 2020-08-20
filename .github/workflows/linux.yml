@@ -19,10 +19,12 @@ jobs:
           ARCH: "i386"
           ARCH_NAME: "i386"
           COMPILER_PATH: "/user/bin"
+          GCC_CFLAGS: "-m32"
         - bits: 64
           ARCH: "x86_64"
           ARCH_NAME: "amd64"
           COMPILER_PATH: "/user/bin"
+          GCC_CFLAGS: "-m64"
           
     env:
       RELEASE_NAME: raylib-3.1_linux_${{ matrix.ARCH_NAME }}
@@ -34,6 +36,7 @@ jobs:
     - name: Setup Environment
       run: | 
         sudo apt-get update -qq
+        sudo apt-get install gcc-multilib
         sudo apt-get install -y --no-install-recommends libglfw3 libglfw3-dev libx11-dev libxcursor-dev libxrandr-dev libxinerama-dev libxi-dev libxext-dev libxfixes-dev
         mkdir build
         cd build
@@ -46,13 +49,13 @@ jobs:
         
     - name: Check Environment
       run: |
-        ls /usr/lib32
+        ls /usr/lib/gcc
       
     - name: Build Library (i386 or amd64)
       run: |
         cd src
-        make PLATFORM=PLATFORM_DESKTOP CC=${{ matrix.ARCH }}-linux-gnu-gcc RAYLIB_LIBTYPE=STATIC RAYLIB_RELEASE_PATH="../build/${{ env.RELEASE_NAME }}/lib"
-        make PLATFORM=PLATFORM_DESKTOP CC=${{ matrix.ARCH }}-linux-gnu-gcc RAYLIB_LIBTYPE=SHARED RAYLIB_RELEASE_PATH="../build/${{ env.RELEASE_NAME }}/lib" -B
+        make PLATFORM=PLATFORM_DESKTOP CC=${{ matrix.ARCH }}-linux-gnu-gcc RAYLIB_LIBTYPE=STATIC RAYLIB_RELEASE_PATH="../build/${{ env.RELEASE_NAME }}/lib" CFLAGS=${{ matrix.GCC_CFLAGS }}
+        make PLATFORM=PLATFORM_DESKTOP CC=${{ matrix.ARCH }}-linux-gnu-gcc RAYLIB_LIBTYPE=SHARED RAYLIB_RELEASE_PATH="../build/${{ env.RELEASE_NAME }}/lib" CFLAGS=${{ matrix.GCC_CFLAGS }} -B
         cd ..
     
     - name: Generate Artifacts
