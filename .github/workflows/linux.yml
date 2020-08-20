@@ -31,9 +31,6 @@ jobs:
     - name: Checkout code
       uses: actions/checkout@master
       
-    - name: Update System
-      run: sudo apt-get update -qq
-      
     - name: Setup Environment
       run: | 
         mkdir build
@@ -43,9 +40,14 @@ jobs:
         mkdir include
         mkdir lib
         cd ../../../raylib
-        sudo apt-get install gcc-multilib lib32gcc-7-dev
-        sudo apt-get install -y --no-install-recommends libglfw3 libglfw3-dev libx11-dev libxcursor-dev libxrandr-dev libxinerama-dev libxi-dev libxext-dev libxfixes-dev
-        ${{ matrix.ARCH }}-linux-gnu-gcc -v
+        sudo apt-get install -y --no-install-recommends libx11-dev libxcursor-dev libxrandr-dev libxinerama-dev libxi-dev libxext-dev libxfixes-dev
+        # ${{ matrix.ARCH }}-linux-gnu-gcc -v
+        
+    - name: Check Environment
+      run: |
+        ls
+        ls /usr
+        ls /usr/lib
       
     - name: Build Library (i386 or amd64)
       run: |
