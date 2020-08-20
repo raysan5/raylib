@@ -19,10 +19,12 @@ jobs:
         - compiler: mingw-w64
           bits: 32
           ARCH: "x86"
+          COMPILER_PATH: "C:\\msys64\\mingw32\\bin"
           COMPILER_NAME: "i686-w64-mingw32-gcc.exe" 
         - compiler: mingw-w64
           bits: 64
           ARCH: "x64"
+          COMPILER_PATH: "C:\\msys64\\mingw64\\bin"
           COMPILER_NAME: "x86_64-w64-mingw32-gcc.exe"  
         - compiler: msvc16
           bits: 32
@@ -60,6 +62,7 @@ jobs:
     - name: Build Library (MinGW-w64)
       run: |
         cd src
+        set PATH=%PATH%;${{ matrix.COMPILER_PATH }}
         ${{ matrix.COMPILER_NAME }} -v
         make PLATFORM=PLATFORM_DESKTOP CC=${{ matrix.COMPILER_NAME }} RAYLIB_BUILD_ARCH=${{ matrix.ARCH }} RAYLIB_LIBTYPE=STATIC RAYLIB_RELEASE_PATH="../build/${{ env.RELEASE_NAME }}/lib"
         make PLATFORM=PLATFORM_DESKTOP CC=${{ matrix.COMPILER_NAME }} RAYLIB_BUILD_ARCH=${{ matrix.ARCH }} RAYLIB_LIBTYPE=SHARED RAYLIB_RELEASE_PATH="../build/${{ env.RELEASE_NAME }}/lib" -B
