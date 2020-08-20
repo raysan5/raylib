@@ -62,9 +62,9 @@ jobs:
     - name: Build Library (MinGW-w64)
       run: |
         cd src
-        ${{ matrix.ARCH }}-w64-mingw32-gcc.exe -v
-        ${{ matrix.COMPILER_PATH }}/windres.exe -h
         set PATH=%PATH%;${{ matrix.COMPILER_PATH }}
+        ${{ matrix.ARCH }}-w64-mingw32-gcc.exe --version
+        ${{ matrix.COMPILER_PATH }}/windres.exe --version
         make PLATFORM=PLATFORM_DESKTOP CC=${{ matrix.ARCH }}-w64-mingw32-gcc.exe RAYLIB_LIBTYPE=STATIC RAYLIB_RELEASE_PATH="../build/${{ env.RELEASE_NAME }}/lib"
         ${{ matrix.COMPILER_PATH }}/windres.exe -i raylib.dll.rc -o raylib.dll.rc.data -O coff --target=${{ matrix.WINDRES_ARCH }}
         make PLATFORM=PLATFORM_DESKTOP CC=${{ matrix.ARCH }}-w64-mingw32-gcc.exe RAYLIB_LIBTYPE=SHARED RAYLIB_RELEASE_PATH="../build/${{ env.RELEASE_NAME }}/lib" -B
