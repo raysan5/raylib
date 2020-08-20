@@ -221,7 +221,7 @@ ifeq ($(PLATFORM),PLATFORM_DESKTOP)
     ifeq ($(PLATFORM_OS),OSX)
         # OSX default compiler
         CC = clang
-        GLFW_CFLAGS = -x objective-c
+        GLFW_OSX = -x objective-c
     endif
     ifeq ($(PLATFORM_OS),BSD)
         # FreeBSD, OpenBSD, NetBSD, DragonFly default compiler
@@ -533,7 +533,7 @@ core.o : core.c raylib.h rlgl.h utils.h raymath.h camera.h gestures.h
 
 # Compile rglfw module
 rglfw.o : rglfw.c
-	$(CC) -c $< $(CFLAGS) $(GLFW_CFLAGS) $(INCLUDE_PATHS) -D$(PLATFORM) -D$(GRAPHICS)
+	$(CC) $(GLFW_OSX) -c $< $(CFLAGS) $(INCLUDE_PATHS) -D$(PLATFORM) -D$(GRAPHICS)
 
 # Compile shapes module
 shapes.o : shapes.c raylib.h rlgl.h
