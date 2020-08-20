@@ -18,9 +18,11 @@ jobs:
         - bits: 32
           ARCH: "i686"
           ARCH_NAME: "i386"
+          COMPILER_PATH: "/user/bin"
         - bits: 64
           ARCH: "x86_64"
-          ARCH_NAME: "amd64" 
+          ARCH_NAME: "amd64"
+          COMPILER_PATH: "/user/bin"
           
     env:
       RELEASE_NAME: raylib-3.1_linux_${{ matrix.ARCH_NAME }}
@@ -43,6 +45,11 @@ jobs:
         cd ../../../raylib
         sudo apt-get install gcc-multilib lib32gcc-7-dev
         sudo apt-get install -y --no-install-recommends libglfw3 libglfw3-dev libx11-dev libxcursor-dev libxrandr-dev libxinerama-dev libxi-dev libxext-dev libxfixes-dev
+        export PATH=$PATH:${{ matrix.COMPILER_PATH }}
+        ls
+        ls /usr
+        ls /usr/bin
+        ls /usr/bin/gcc
       
     - name: Build Library (i386 or amd64)
       run: |
