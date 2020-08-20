@@ -46,16 +46,12 @@ jobs:
         mkdir lib
         cd ../../../raylib
         # ${{ matrix.ARCH }}-linux-gnu-gcc -v
-        
-    - name: Check Environment
-      run: |
-        ls /usr/lib/gcc
       
-    - name: Build Library (i386 or amd64)
+    - name: Build Library
       run: |
         cd src
-        make PLATFORM=PLATFORM_DESKTOP CC=${{ matrix.ARCH }}-linux-gnu-gcc RAYLIB_LIBTYPE=STATIC RAYLIB_RELEASE_PATH="../build/${{ env.RELEASE_NAME }}/lib" CFLAGS=${{ matrix.GCC_CFLAGS }}
-        make PLATFORM=PLATFORM_DESKTOP CC=${{ matrix.ARCH }}-linux-gnu-gcc RAYLIB_LIBTYPE=SHARED RAYLIB_RELEASE_PATH="../build/${{ env.RELEASE_NAME }}/lib" CFLAGS=${{ matrix.GCC_CFLAGS }} -B
+        make PLATFORM=PLATFORM_DESKTOP CC=gcc RAYLIB_LIBTYPE=STATIC RAYLIB_RELEASE_PATH="../build/${{ env.RELEASE_NAME }}/lib" CFLAGS=${{ matrix.GCC_CFLAGS }}
+        make PLATFORM=PLATFORM_DESKTOP CC=gcc RAYLIB_LIBTYPE=SHARED RAYLIB_RELEASE_PATH="../build/${{ env.RELEASE_NAME }}/lib" CFLAGS=${{ matrix.GCC_CFLAGS }} -B
         cd ..
     
     - name: Generate Artifacts
