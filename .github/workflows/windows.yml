@@ -25,6 +25,7 @@ jobs:
           bits: 64
           ARCH: "x86_64"
           COMPILER_PATH: "C:\\msys64\\mingw64\\bin"
+          WINDRES_ARCH: pe-x86-64
         - compiler: msvc16
           bits: 32
           ARCH: "x86"
@@ -54,7 +55,7 @@ jobs:
         cd ../../../raylib
         set PATH=%PATH%;${{ matrix.COMPILER_PATH }}
         ${{ matrix.ARCH }}-w64-mingw32-gcc.exe -v
-        ${{ matrix.COMPILER_PATH }}/windres.exe -h
+        ${{ matrix.COMPILER_PATH }}/windres.exe -v
 
     # Setup MSBuild.exe path if required
     - name: Setup MSBuild
@@ -65,7 +66,7 @@ jobs:
       run: |
         cd src
         make PLATFORM=PLATFORM_DESKTOP CC=${{ matrix.ARCH }}-w64-mingw32-gcc.exe RAYLIB_LIBTYPE=STATIC RAYLIB_RELEASE_PATH="../build/${{ env.RELEASE_NAME }}/lib"
-        ${{ matrix.COMPILER_PATH }}/windres.exe -i raylib.dll.rc -o raylib.dll.rc.data -O coff --target=pe-${{ matrix.ARCH }}
+        ${{ matrix.COMPILER_PATH }}/windres.exe -i raylib.dll.rc -o raylib.dll.rc.data -O coff --target=${{ matrix.WINDRES_ARCH }}
         make PLATFORM=PLATFORM_DESKTOP CC=${{ matrix.ARCH }}-w64-mingw32-gcc.exe RAYLIB_LIBTYPE=SHARED RAYLIB_RELEASE_PATH="../build/${{ env.RELEASE_NAME }}/lib" -B
         cd ..
       shell: cmd
