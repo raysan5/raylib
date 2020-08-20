@@ -33,6 +33,8 @@ jobs:
       
     - name: Setup Environment
       run: | 
+        sudo apt-get update -qq
+        sudo apt-get install -y --no-install-recommends libglfw3 libglfw3-dev libx11-dev libxcursor-dev libxrandr-dev libxinerama-dev libxi-dev libxext-dev libxfixes-dev
         mkdir build
         cd build
         mkdir ${{ env.RELEASE_NAME }}
@@ -40,14 +42,11 @@ jobs:
         mkdir include
         mkdir lib
         cd ../../../raylib
-        sudo apt-get install -y --no-install-recommends mesa-utils libx11-dev libxcursor-dev libxrandr-dev libxinerama-dev libxi-dev libxext-dev libxfixes-dev
         # ${{ matrix.ARCH }}-linux-gnu-gcc -v
         
     - name: Check Environment
       run: |
-        ls
-        ls /usr
-        ls /usr/lib
+        ls /usr/lib32/gcc
       
     - name: Build Library (i386 or amd64)
       run: |
