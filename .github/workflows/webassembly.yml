@@ -22,9 +22,6 @@ jobs:
       with:
         version: 2.0.0
         actions-cache-folder: 'emsdk-cache'
-        
-    - name: Test emsdk
-      run: emcc -v
 
     - name: Setup Environment
       run: | 
@@ -39,6 +36,7 @@ jobs:
     - name: Build Library
       run: |
         cd src
+        emcc -v
         make PLATFORM=PLATFORM_WEB EMSDK_PATH="D:/a/raylib/raylib/emsdk-cache/emsdk-master" RAYLIB_RELEASE_PATH="../build/${{ env.RELEASE_NAME }}/lib"
         cd ..
   
