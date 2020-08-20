@@ -21,7 +21,6 @@ Ready to learn? Jump to [code examples!](http://www.raylib.com/examples.html)
 [![Subreddit subscribers](https://img.shields.io/reddit/subreddit-subscribers/raylib?style=social)](https://www.reddit.com/r/raylib/)
 
 [![Travis (.org)](https://img.shields.io/travis/raysan5/raylib?label=Travis%20-%20Linux,%20OSX,%20Android,%20Windows)](https://travis-ci.org/raysan5/raylib)
-[![AppVeyor](https://img.shields.io/appveyor/build/raysan5/raylib?label=AppVeyor%20-%20Windows)](https://ci.appveyor.com/project/raysan5/raylib)
 
 ![Windows](https://github.com/raysan5/raylib/workflows/Windows/badge.svg)
 ![Linux](https://github.com/raysan5/raylib/workflows/Linux/badge.svg)
