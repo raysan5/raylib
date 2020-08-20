@@ -53,6 +53,8 @@ jobs:
         mkdir include
         mkdir lib
         cd ../../../raylib
+        dir C:\msys64\clang32
+        dir C:\msys64\clang64
 
     # Setup MSBuild.exe path if required
     - name: Setup MSBuild
