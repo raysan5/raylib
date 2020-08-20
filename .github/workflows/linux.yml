@@ -16,10 +16,10 @@ jobs:
         bits: [32, 64]
         include:
         - bits: 32
-          ARCH: "x86"
+          ARCH: "i686"
           ARCH_NAME: "i386"
         - bits: 64
-          ARCH: "x64"
+          ARCH: "x86_64"
           ARCH_NAME: "amd64" 
           
     env:
@@ -44,25 +44,13 @@ jobs:
         sudo apt-get install gcc-multilib lib32gcc-7-dev
         sudo apt-get install -y --no-install-recommends libglfw3 libglfw3-dev libx11-dev libxcursor-dev libxrandr-dev libxinerama-dev libxi-dev libxext-dev libxfixes-dev
       
-    # TODO: Review i386 shared library building or remove it
-    - name: Build Library i386
+    - name: Build Library (i386 or amd64)
       run: |
         cd src
-        gcc -v
-        make PLATFORM=PLATFORM_DESKTOP CC=gcc RAYLIB_BUILD_ARCH=${{ matrix.ARCH }} RAYLIB_LIBTYPE=STATIC RAYLIB_RELEASE_PATH="../build/${{ env.RELEASE_NAME }}/lib"
-        # make PLATFORM=PLATFORM_DESKTOP CC=gcc RAYLIB_BUILD_ARCH=${{ matrix.ARCH }} RAYLIB_LIBTYPE=SHARED RAYLIB_RELEASE_PATH="../build/${{ env.RELEASE_NAME }}/lib" -B
+        ${{ matrix.ARCH }}-w64-mingw32-gcc -v
+        make PLATFORM=PLATFORM_DESKTOP CC=${{ matrix.ARCH }}-w64-mingw32-gcc RAYLIB_LIBTYPE=STATIC RAYLIB_RELEASE_PATH="../build/${{ env.RELEASE_NAME }}/lib"
+        make PLATFORM=PLATFORM_DESKTOP CC=${{ matrix.ARCH }}-w64-mingw32-gcc RAYLIB_LIBTYPE=SHARED RAYLIB_RELEASE_PATH="../build/${{ env.RELEASE_NAME }}/lib" -B
         cd ..
-      if: matrix.bits == 32
- 
-    - name: Build Library amd64
-      run: |
-        cd src
-        gcc -v
-        make PLATFORM=PLATFORM_DESKTOP CC=gcc RAYLIB_BUILD_ARCH=${{ matrix.ARCH }} RAYLIB_LIBTYPE=STATIC RAYLIB_RELEASE_PATH="../build/${{ env.RELEASE_NAME }}/lib"
-        make clean
-        make PLATFORM=PLATFORM_DESKTOP CC=gcc RAYLIB_BUILD_ARCH=${{ matrix.ARCH }} RAYLIB_LIBTYPE=SHARED RAYLIB_RELEASE_PATH="../build/${{ env.RELEASE_NAME }}/lib" -B
-        cd ..
-      if: matrix.bits == 64
     
     - name: Generate Artifacts
       run: |
