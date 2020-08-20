@@ -60,9 +60,9 @@ jobs:
     - name: Build Library (MinGW-w64)
       run: |
         cd src
-        gcc -v
-        make PLATFORM=PLATFORM_DESKTOP CC="${{ matrix.COMPILER_PATH }}\\gcc" RAYLIB_BUILD_ARCH=${{ matrix.ARCH }} RAYLIB_LIBTYPE=STATIC RAYLIB_RELEASE_PATH="../build/${{ env.RELEASE_NAME }}/lib"
-        make PLATFORM=PLATFORM_DESKTOP CC="${{ matrix.COMPILER_PATH }}\\gcc" RAYLIB_BUILD_ARCH=${{ matrix.ARCH }} RAYLIB_LIBTYPE=SHARED RAYLIB_RELEASE_PATH="../build/${{ env.RELEASE_NAME }}/lib" -B
+        ${{ matrix.COMPILER_PATH }}\gcc -v
+        make PLATFORM=PLATFORM_DESKTOP CC="${{ matrix.COMPILER_PATH }}\gcc" RAYLIB_BUILD_ARCH=${{ matrix.ARCH }} RAYLIB_LIBTYPE=STATIC RAYLIB_RELEASE_PATH="../build/${{ env.RELEASE_NAME }}/lib"
+        make PLATFORM=PLATFORM_DESKTOP CC="${{ matrix.COMPILER_PATH }}\gcc" RAYLIB_BUILD_ARCH=${{ matrix.ARCH }} RAYLIB_LIBTYPE=SHARED RAYLIB_RELEASE_PATH="../build/${{ env.RELEASE_NAME }}/lib" -B
         cd ..
       shell: cmd
       if: matrix.compiler == 'mingw-w64' && matrix.bits == 32
