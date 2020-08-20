@@ -52,6 +52,9 @@ jobs:
         mkdir include
         mkdir lib
         cd ../../../raylib
+        set PATH=%PATH%;${{ matrix.COMPILER_PATH }}
+        ${{ matrix.ARCH }}-w64-mingw32-gcc.exe -v
+        ${{ matrix.COMPILER_PATH }}/windres.exe -h
 
     # Setup MSBuild.exe path if required
     - name: Setup MSBuild
@@ -61,9 +64,6 @@ jobs:
     - name: Build Library (MinGW-w64)
       run: |
         cd src
-        set PATH=%PATH%;${{ matrix.COMPILER_PATH }}
-        ${{ matrix.ARCH }}-w64-mingw32-gcc.exe -v
-        ${{ matrix.COMPILER_PATH }}/windres.exe -h
         make PLATFORM=PLATFORM_DESKTOP CC=${{ matrix.ARCH }}-w64-mingw32-gcc.exe RAYLIB_LIBTYPE=STATIC RAYLIB_RELEASE_PATH="../build/${{ env.RELEASE_NAME }}/lib"
         ${{ matrix.COMPILER_PATH }}/windres.exe -i raylib.dll.rc -o raylib.dll.rc.data -O coff --target=pe-${{ matrix.ARCH }}
         make PLATFORM=PLATFORM_DESKTOP CC=${{ matrix.ARCH }}-w64-mingw32-gcc.exe RAYLIB_LIBTYPE=SHARED RAYLIB_RELEASE_PATH="../build/${{ env.RELEASE_NAME }}/lib" -B
