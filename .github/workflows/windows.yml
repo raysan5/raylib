@@ -56,6 +56,7 @@ jobs:
         set PATH=%PATH%;${{ matrix.COMPILER_PATH }}
         ${{ matrix.ARCH }}-w64-mingw32-gcc.exe -v
         ${{ matrix.COMPILER_PATH }}/windres.exe -v
+      shell: cmd
 
     # Setup MSBuild.exe path if required
     - name: Setup MSBuild
