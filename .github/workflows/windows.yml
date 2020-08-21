@@ -36,12 +36,18 @@ jobs:
           VSBINPATH: "x64"
 
     env:
-      RELEASE_NAME: raylib-3.1_win${{ matrix.bits }}_${{ matrix.compiler }}
+      RELEASE_NAME: raylib-dev_win${{ matrix.bits }}_${{ matrix.compiler }}
       GNUTARGET: default
 
     steps:
     - name: Checkout
       uses: actions/checkout@master
+    
+    - name: Setup Release Version
+      run: |
+        echo "::set-env name=RELEASE_NAME::raylib-${{ github.event.release.tag_name }}_win${{ matrix.bits }}_${{ matrix.compiler }}"
+      shell: bash
+      if: github.event_name == 'release' && github.event.action == 'published'
 
     - name: Setup Environment
       run: | 
