@@ -11,7 +11,8 @@ jobs:
     runs-on: windows-latest
     
     env:
-      RELEASE_NAME: raylib-3.1_wasm
+      VERSION: ${{ github.event.release.tag_name }}
+      RELEASE_NAME: raylib-${{ github.event.release.tag_name }}_webassembly
     
     steps:
     - name: Checkout
@@ -32,6 +33,13 @@ jobs:
         mkdir include
         mkdir lib
         cd ../..
+        
+    - name: Setup Release Version
+      run: |
+        echo "::set-env name=RELEASE_NAME::raylib-${{ github.event.release.tag_name }}_webassembly"
+        echo "::set-env name=VERSION_SHORT::${VERSION//.}"
+      shell: bash
+      if: github.event_name == 'release' && github.event.action == 'published'
    
     - name: Build Library
       run: |
