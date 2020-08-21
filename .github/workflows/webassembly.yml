@@ -12,7 +12,7 @@ jobs:
     
     env:
       VERSION: ${{ github.event.release.tag_name }}
-      RELEASE_NAME: raylib-${{ github.event.release.tag_name }}_webassembly
+      RELEASE_NAME: raylib-dev_webassembly
     
     steps:
     - name: Checkout
