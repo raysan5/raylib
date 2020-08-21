@@ -11,11 +11,17 @@ jobs:
     runs-on: macos-latest
     
     env:
-      RELEASE_NAME: raylib-3.1_macos
+      RELEASE_NAME: raylib-dev_macos
     
     steps:
     - name: Checkout
       uses: actions/checkout@master
+    
+    - name: Setup Release Version
+      run: |
+        echo "::set-env name=RELEASE_NAME::raylib-${{ github.event.release.tag_name }}_macos"
+      shell: bash
+      if: github.event_name == 'release' && github.event.action == 'published'
 
     - name: Setup Environment
       run: | 
