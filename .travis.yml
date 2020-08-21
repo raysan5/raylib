@@ -33,15 +33,6 @@ matrix:
     - os: osx
       osx_image: xcode9.4
       env: ARCH=universal SHARED=OFF RELEASE=NO
-    - os: linux
-      env: ARCH=arm64-android RELEASE=NO
-      sudo: required
-    - os: linux
-      env: ARCH=arm32-android RELEASE=NO
-      sudo: required
-    - os: linux
-      env: ARCH=html5 RELEASE=NO
-      sudo: required
     - os: windows
       compiler: gcc
       env: ARCH=i386 SHARED=OFF RELEASE=NO
@@ -56,53 +47,26 @@ before_install:
       export DONT_TEST=1;
     fi
   - if [ "$TRAVIS_OS_NAME" == "linux" ]; then
-      if [[ "$ARCH" == *-android ]]; then
-        export DONT_TEST=1;
-        export RAYLIB_PACKAGE_SUFFIX="-Android-arm64";
-        wget https://dl.google.com/android/repository/android-ndk-r21-linux-x86_64.zip;
-        unzip -qq android-ndk*.zip;
-        if [[ "$ARCH" == arm64-* ]]; then
-          export RAYLIB_PACKAGE_SUFFIX="-Android-arm64";
-          TOOLCHAIN_ARCH=arm64;
-          PREFIX=aarch64-linux-android-;
-        else
-          export RAYLIB_PACKAGE_SUFFIX="-Android-arm32";
-          TOOLCHAIN_ARCH=arm;
-          PREFIX=arm-linux-androideabi-;
-        fi;
-        export PATH=/android-ndk*/toolchains/llvm/prebuilt/linux-x86_64/bin:$PATH;
-        export CC=${PREFIX}clang;
-        export CXX=${PREFIX}clang++;
-        export CMAKE_ARCH_ARGS='-DPLATFORM=Android';
-      elif [ "$ARCH" == "html5" ]; then
-        export DONT_TEST=1;
-        export RAYLIB_PACKAGE_SUFFIX="-html5";
-        docker run --privileged=true -dit --name emscripten -v $(pwd):/src trzeci/emscripten:sdk-latest bash;
-        export CMAKE_ARCH_ARGS='-DPLATFORM=Web -DCMAKE_TOOLCHAIN_FILE=../cmake/emscripten.cmake';
-        RUNNER='docker exec -it emscripten cmake -E chdir build';
-      else
-        sudo apt-get install -y gcc-multilib
-                                libasound2-dev:$ARCH
-                                libxcursor-dev:$ARCH libxinerama-dev:$ARCH mesa-common-dev:$ARCH
-                                libx11-dev:$ARCH libxrandr-dev:$ARCH libxrandr2:$ARCH libxi-dev:$ARCH
-                                libgl1-mesa-dev:$ARCH libglu1-mesa-dev:$ARCH;
+      sudo apt-get install -y gcc-multilib
+                              libasound2-dev:$ARCH
+                              libxcursor-dev:$ARCH libxinerama-dev:$ARCH mesa-common-dev:$ARCH
+                              libx11-dev:$ARCH libxrandr-dev:$ARCH libxrandr2:$ARCH libxi-dev:$ARCH
+                              libgl1-mesa-dev:$ARCH libglu1-mesa-dev:$ARCH;
 
-        if [ "$OPENAL" == "ON" ]; then sudo apt-get install -y libopenal-dev; fi;
-        if [ "$ARCH" == "i386" ]; then export CMAKE_ARCH_ARGS='-DCMAKE_C_FLAGS=-m32 -DCMAKE_SYSTEM_LIBRARY_PATH=/usr/lib/i386-linux-gnu -DSUPPORT_FILEFORMAT_FLAC=OFF'; fi;
+      if [ "$ARCH" == "i386" ]; then export CMAKE_ARCH_ARGS='-DCMAKE_C_FLAGS=-m32 -DCMAKE_SYSTEM_LIBRARY_PATH=/usr/lib/i386-linux-gnu -DSUPPORT_FILEFORMAT_FLAC=OFF'; fi;
 
-        export RAYLIB_PACKAGE_SUFFIX="-Linux-$ARCH";
-        if [ "$INSTALL_GLFW" == "YES" ]; then
-          pushd src/external/glfw;
-          cmake . -DGLFW_BUILD_DOCS=OFF
-                  -DGLFW_BUILD_TESTS=OFF
-                  -DGLFW_BUILD_EXAMPLES=OFF
-                  -DGLFW_INSTALL=ON
-                  -DBUILD_SHARED_LIBS=ON
-                  -DGLFW_USE_WAYLAND=$WAYLAND;
-          make;
-          sudo make install;
-          popd;
-        fi;
+      export RAYLIB_PACKAGE_SUFFIX="-Linux-$ARCH";
+      if [ "$INSTALL_GLFW" == "YES" ]; then
+        pushd src/external/glfw;
+        cmake . -DGLFW_BUILD_DOCS=OFF
+                -DGLFW_BUILD_TESTS=OFF
+                -DGLFW_BUILD_EXAMPLES=OFF
+                -DGLFW_INSTALL=ON
+                -DBUILD_SHARED_LIBS=ON
+                -DGLFW_USE_WAYLAND=$WAYLAND;
+        make;
+        sudo make install;
+        popd;
       fi;
     fi
   - if [ "$TRAVIS_OS_NAME" == "osx" ]; then
