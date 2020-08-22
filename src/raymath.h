@@ -78,6 +78,8 @@
     #define PI 3.14159265358979323846
 #endif
 
+
+
 #ifndef DEG2RAD
     #define DEG2RAD (PI/180.0f)
 #endif
@@ -926,6 +928,8 @@ RMDEF Matrix MatrixRotateZ(float angle)
     return result;
 }
 
+
+
 // Returns scaling matrix
 RMDEF Matrix MatrixScale(float x, float y, float z)
 {
@@ -960,6 +964,17 @@ RMDEF Matrix MatrixMultiply(Matrix left, Matrix right)
     result.m14 = left.m12*right.m2 + left.m13*right.m6 + left.m14*right.m10 + left.m15*right.m14;
     result.m15 = left.m12*right.m3 + left.m13*right.m7 + left.m14*right.m11 + left.m15*right.m15;
 
+    return result;
+}
+
+// TODO suboptimal should be able to create this matrix in one go
+// this is an aditional 3 matrix multiplies!
+RMDEF Matrix MatrixRotateZYX(Vector3 v)
+{
+    Matrix result = MatrixRotateZ(v.z);
+    result = MatrixMultiply(result, MatrixRotateY(v.y));
+    result = MatrixMultiply(result, MatrixRotateX(v.x));
+    
     return result;
 }
 
@@ -1297,105 +1312,53 @@ RMDEF Quaternion QuaternionFromVector3ToVector3(Vector3 from, Vector3 to)
 }
 
 // Returns a quaternion for a given rotation matrix
-RMDEF Quaternion QuaternionFromMatrix(Matrix mat)
+RMDEF Quaternion QuaternionFromMatrix(Matrix m)
 {
-    Quaternion result = { 0 };
-
-    float trace = MatrixTrace(mat);
-
-    if (trace > 0.0f)
-    {
-        float s = sqrtf(trace + 1)*2.0f;
-        float invS = 1.0f/s;
-
-        result.w = s*0.25f;
-        result.x = (mat.m6 - mat.m9)*invS;
-        result.y = (mat.m8 - mat.m2)*invS;
-        result.z = (mat.m1 - mat.m4)*invS;
-    }
-    else
-    {
-        float m00 = mat.m0, m11 = mat.m5, m22 = mat.m10;
-
-        if (m00 > m11 && m00 > m22)
-        {
-            float s = (float)sqrt(1.0f + m00 - m11 - m22)*2.0f;
-            float invS = 1.0f/s;
-
-            result.w = (mat.m6 - mat.m9)*invS;
-            result.x = s*0.25f;
-            result.y = (mat.m4 + mat.m1)*invS;
-            result.z = (mat.m8 + mat.m2)*invS;
-        }
-        else if (m11 > m22)
-        {
-            float s = sqrtf(1.0f + m11 - m00 - m22)*2.0f;
-            float invS = 1.0f/s;
-
-            result.w = (mat.m8 - mat.m2)*invS;
-            result.x = (mat.m4 + mat.m1)*invS;
-            result.y = s*0.25f;
-            result.z = (mat.m9 + mat.m6)*invS;
-        }
-        else
-        {
-            float s = sqrtf(1.0f + m22 - m00 - m11)*2.0f;
-            float invS = 1.0f/s;
-
-            result.w = (mat.m1 - mat.m4)*invS;
-            result.x = (mat.m8 + mat.m2)*invS;
-            result.y = (mat.m9 + mat.m6)*invS;
-            result.z = s*0.25f;
-        }
-    }
-
-    return result;
+    Quaternion q;
+    if ( m.m0 > m.m5 && m.m0 > m.m10 )  {
+        float s  = sqrt( 1.0 + m.m0 - m.m5 - m.m10 ) * 2;
+        q.x = 0.25 * s;
+        q.y = (m.m4 + m.m1 ) / s;
+        q.z = (m.m2 + m.m8 ) / s;
+        q.w = (m.m9 - m.m6 ) / s;
+    } else if ( m.m5 > m.m10 ) {
+        float s  = sqrt( 1.0 + m.m5 - m.m0 - m.m10 ) * 2;
+        q.x = (m.m4 + m.m1 ) / s;
+        q.y = 0.25 * s;
+        q.z = (m.m9 + m.m6 ) / s;
+        q.w = (m.m2 - m.m8 ) / s;
+    } else {
+        float s  = sqrt( 1.0 + m.m10 - m.m0 - m.m5 ) * 2;
+        q.x = (m.m2 + m.m8 ) / s;
+        q.y = (m.m9 + m.m6 ) / s;
+        q.z = 0.25 * s;
+        q.w = (m.m4 - m.m1 ) / s;
+    } 
+    return q;
 }
 
 // Returns a matrix for a given quaternion
 RMDEF Matrix QuaternionToMatrix(Quaternion q)
 {
-    Matrix result = { 0 };
+    Matrix m = MatrixIdentity();
+    float a2=2*(q.x*q.x), b2=2*(q.y*q.y), c2=2*(q.z*q.z); //, d2=2*(q.w*q.w);
+    
+    float ab=2*(q.x*q.y), ac=2*(q.x*q.z), bc=2*(q.y*q.z);
+    float ad=2*(q.x*q.w), bd=2*(q.y*q.w), cd=2*(q.z*q.w);
 
-    float x = q.x, y = q.y, z = q.z, w = q.w;
+    m.m0  = 1 - b2 - c2;
+    m.m1  = ab - cd;
+    m.m2  = ac + bd;
+    
+    m.m4  = ab + cd;
+    m.m5  = 1 - a2 - c2;
+    m.m6  = bc - ad;
+    
+    m.m8  = ac - bd;
+    m.m9  = bc + ad;
+    m.m10 = 1 - a2 - b2;
 
-    float x2 = x + x;
-    float y2 = y + y;
-    float z2 = z + z;
-
-    float length = QuaternionLength(q);
-    float lengthSquared = length*length;
-
-    float xx = x*x2/lengthSquared;
-    float xy = x*y2/lengthSquared;
-    float xz = x*z2/lengthSquared;
-
-    float yy = y*y2/lengthSquared;
-    float yz = y*z2/lengthSquared;
-    float zz = z*z2/lengthSquared;
-
-    float wx = w*x2/lengthSquared;
-    float wy = w*y2/lengthSquared;
-    float wz = w*z2/lengthSquared;
-
-    result.m0 = 1.0f - (yy + zz);
-    result.m1 = xy - wz;
-    result.m2 = xz + wy;
-    result.m3 = 0.0f;
-    result.m4 = xy + wz;
-    result.m5 = 1.0f - (xx + zz);
-    result.m6 = yz - wx;
-    result.m7 = 0.0f;
-    result.m8 = xz - wy;
-    result.m9 = yz + wx;
-    result.m10 = 1.0f - (xx + yy);
-    result.m11 = 0.0f;
-    result.m12 = 0.0f;
-    result.m13 = 0.0f;
-    result.m14 = 0.0f;
-    result.m15 = 1.0f;
-
-    return result;
+    return m;
 }
 
 // Returns rotation quaternion for an angle and axis
