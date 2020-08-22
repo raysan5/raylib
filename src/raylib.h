@@ -1218,7 +1218,7 @@ RLAPI void DrawPolyLines(Vector2 center, int sides, float radius, float rotation
 
 // Basic shapes collision detection functions
 RLAPI bool CheckCollisionLineLine(Vector2 startPos1, Vector2 endPos1, Vector2 startPos2, Vector2 endPos2);   // Check collision between two lines
-RLAPI bool CheckCollisionLineRec(Vector2 startPos, Vector2 endPos, Rectangle rec);                                 // Check collision between line and rectangle
+RLAPI bool CheckCollisionLineRec(Vector2 startPos, Vector2 endPos, Rectangle rec);                           // Check collision between line and rectangle
 RLAPI bool CheckCollisionRecs(Rectangle rec1, Rectangle rec2);                                               // Check collision between two rectangles
 RLAPI bool CheckCollisionCircles(Vector2 center1, float radius1, Vector2 center2, float radius2);            // Check collision between two circles
 RLAPI bool CheckCollisionCircleRec(Vector2 center, float radius, Rectangle rec);                             // Check collision between circle and rectangle
