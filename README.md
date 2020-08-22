@@ -126,52 +126,60 @@ This fork adds some features,Like:
 - More 120 colors to raylib to become 145 colors,See [here](https://github.com/Rabios/raylib/blob/master/src/raylib.h#L155) for the new 120 colors added list
 - More functions
 
-Functions added in this fork to raylib API
--------
-- `RLAPI const char *GetOS(void);` To get OS,Returns one of the following as string:
-  - `Windows`
-  - `OSX`
-  - `Linux`
-  - `Unix`
-  - `Android`
-  - `iOS`
-  - `FreeBSD`
-  - `OpenBSD`
-  - `NetBSD`
-  - `DragonFlyBSD`
-  - `Solaris`
-- `RLAPI void Execute(const char *command);` To execute shell/batch command.
-- `RLAPI void DownloadFile(const char *src,const char *dir);` To download files from internet and store it in directory.
-- `RLAPI void ExtractArchive(const char *archivepath);` To extract ZIP archive to current directory.
-
 Functions added usage
 ------
-- `RLAPI const char *GetOS(void);`
+
 ```c
+// RLAPI const char *GetOS(void);
+// Returns any OS as string
 if (GetOS() == "Windows") {
     // Do something...
 }
 ```
 
-- `RLAPI void Execute(const char *command);`
 ```c
+// RLAPI void Execute(const char *command);
 // This lets command prompt or the shell to execute this command
 // This command creates a folder with name "new_folder"
 Execute("mkdir new_folder");
 ```
 
-- `RLAPI void DownloadFile(const char *src,const char *src);`
 ```c
+// RLAPI void DownloadFile(const char *src,const char *src);
 // NOTES: This function does not work on Android and iOS,So it returns nothing on Android and iOS
 // This downloads file core_basic_window.c and store it in folder named "downloaded",If not found it will be created
 DownloadFile("https://github.com/Rabios/raylib/raw/master/examples/core/core_basic_window.c", "downloaded");
 ```
 
-- `RLAPI void ExtractArchive(const char *archivepath);`
 ```c
+// RLAPI void ExtractArchive(const char *archivepath);
 // NOTE 1: To run this on Android you might need busybox or termux,iOS not supported
 // NOTE 2: On Windows you need to have 7z installed,unzip on other Platforms
 // NOTE 3: If deps not installed the function returns and does nothing
 // This extracts archive named "resources.zip" to the current directory
 ExtractArchive("resources.zip");
+```
+
+```c
+// RLAPI bool CheckCollisionLineLine(Vector2 startPos1, Vector2 endPos1, Vector2 startPos2, Vector2 endPos2);
+// Check collision between two lines
+if (CheckCollisionLineLine((Vector2) { 100.0f, 100.0f }, (Vector2) { 300.0f, 300.0f }, (Vector2) { 80.0f, 80.0f }, (Vector2) { 350.0f, 350.0f }) {
+    printf("Collision between two lines works!");
+}
+```
+
+```c
+// RLAPI bool CheckCollisionLineRec(Vector2 startPos, Vector2 endPos, Rectangle rec);
+// Check collision between line and rectangle
+if (CheckCollisionLineRec((Vector2) { 100.0f, 100.0f }, (Vector2) { 300.0f, 300.0f }, (Rectangle) { 250.0f, 250.0f, 100, 100 }) {
+    printf("Collision between line and rectangle works!");
+}
+```
+
+```c
+// RLAPI bool CheckCollisionCircleLine(Vector2 center, float radius, Vector2 startPos, Vector2 endPos);
+// Check collision between circle and line
+if (CheckCollisionCircleLine((Vector2) { 100.0f, 100.0f }, 10.0f, (Vector2) { 50.0f, 50.0f }, (Vector2) { 150.0f, 50.0f }) {
+    printf("Collision between circle and line works!");
+}
 ```
