@@ -153,6 +153,7 @@
 #define RAYWHITE   CLITERAL(Color){ 245, 245, 245, 255 }            // My own White (raylib logo)
 
 // Colors added by github user Rabios as fork
+// https://github.com/Rabios
 #define OLIVE      CLITERAL(Color){ 128, 128, 0, 255 }               // Olive
 #define SILVER     CLITERAL(Color){ 192, 192, 192, 255 }             // Silver
 #define MAROON     CLITERAL(Color){ 128, 0, 0, 255 }                 // Maroon
@@ -1216,13 +1217,16 @@ RLAPI void DrawPoly(Vector2 center, int sides, float radius, float rotation, Col
 RLAPI void DrawPolyLines(Vector2 center, int sides, float radius, float rotation, Color color);          // Draw a polygon outline of n sides
 
 // Basic shapes collision detection functions
-RLAPI bool CheckCollisionRecs(Rectangle rec1, Rectangle rec2);                                           // Check collision between two rectangles
-RLAPI bool CheckCollisionCircles(Vector2 center1, float radius1, Vector2 center2, float radius2);        // Check collision between two circles
-RLAPI bool CheckCollisionCircleRec(Vector2 center, float radius, Rectangle rec);                         // Check collision between circle and rectangle
-RLAPI Rectangle GetCollisionRec(Rectangle rec1, Rectangle rec2);                                         // Get collision rectangle for two rectangles collision
-RLAPI bool CheckCollisionPointRec(Vector2 point, Rectangle rec);                                         // Check if point is inside rectangle
-RLAPI bool CheckCollisionPointCircle(Vector2 point, Vector2 center, float radius);                       // Check if point is inside circle
-RLAPI bool CheckCollisionPointTriangle(Vector2 point, Vector2 p1, Vector2 p2, Vector2 p3);               // Check if point is inside a triangle
+RLAPI bool CheckCollisionLineLine(Vector2 startPos1, Vector2 endPos1, Vector2 startPos2, Vector2 endPos2);   // Check collision between two lines
+RLAPI bool CheckCollisionLineRec(Vector2 startPos, Vector2 endPos, Rectangle rec);                                 // Check collision between line and rectangle
+RLAPI bool CheckCollisionRecs(Rectangle rec1, Rectangle rec2);                                               // Check collision between two rectangles
+RLAPI bool CheckCollisionCircles(Vector2 center1, float radius1, Vector2 center2, float radius2);            // Check collision between two circles
+RLAPI bool CheckCollisionCircleRec(Vector2 center, float radius, Rectangle rec);                             // Check collision between circle and rectangle
+RLAPI bool CheckCollisionCircleLine(Vector2 center, float radius, Vector2 startPos, Vector2 endPos);         // Check collision between circle and line
+RLAPI Rectangle GetCollisionRec(Rectangle rec1, Rectangle rec2);                                             // Get collision rectangle for two rectangles collision
+RLAPI bool CheckCollisionPointRec(Vector2 point, Rectangle rec);                                             // Check if point is inside rectangle
+RLAPI bool CheckCollisionPointCircle(Vector2 point, Vector2 center, float radius);                           // Check if point is inside circle
+RLAPI bool CheckCollisionPointTriangle(Vector2 point, Vector2 p1, Vector2 p2, Vector2 p3);                   // Check if point is inside a triangle
 
 //------------------------------------------------------------------------------------
 // Texture Loading and Drawing Functions (Module: textures)

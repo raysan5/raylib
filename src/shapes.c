@@ -47,12 +47,7 @@
 //----------------------------------------------------------------------------------
 // Defines and Macros
 //----------------------------------------------------------------------------------
-
-// Error rate to calculate how many segments we need to draw a smooth circle,
-// taken from https://stackoverflow.com/a/2244088
-#ifndef SMOOTH_CIRCLE_ERROR_RATE
-    #define SMOOTH_CIRCLE_ERROR_RATE  0.5f
-#endif
+// Nop...
 
 //----------------------------------------------------------------------------------
 // Types and Structures Definition
@@ -160,19 +155,17 @@ void DrawLineEx(Vector2 startPos, Vector2 endPos, float thick, Color color)
 // Draw line using cubic-bezier curves in-out
 void DrawLineBezier(Vector2 startPos, Vector2 endPos, float thick, Color color)
 {
-#ifndef BEZIER_LINE_DIVISIONS
-    #define BEZIER_LINE_DIVISIONS         24   // Bezier line divisions
-#endif
+    #define LINE_DIVISIONS         24   // Bezier line divisions
 
     Vector2 previous = startPos;
     Vector2 current;
 
-    for (int i = 1; i <= BEZIER_LINE_DIVISIONS; i++)
+    for (int i = 1; i <= LINE_DIVISIONS; i++)
     {
         // Cubic easing in-out
         // NOTE: Easing is calculated only for y position value
-        current.y = EaseCubicInOut((float)i, startPos.y, endPos.y - startPos.y, (float)BEZIER_LINE_DIVISIONS);
-        current.x = previous.x + (endPos.x - startPos.x)/ (float)BEZIER_LINE_DIVISIONS;
+        current.y = EaseCubicInOut((float)i, startPos.y, endPos.y - startPos.y, (float)LINE_DIVISIONS);
+        current.x = previous.x + (endPos.x - startPos.x)/ (float)LINE_DIVISIONS;
 
         DrawLineEx(previous, current, thick, color);
 
@@ -221,15 +214,18 @@ void DrawCircleSector(Vector2 center, float radius, int startAngle, int endAngle
 
     if (segments < 4)
     {
-        // Calculate the maximum angle between segments based on the error rate (usually 0.5f)
-        float th = acosf(2*powf(1 - SMOOTH_CIRCLE_ERROR_RATE/radius, 2) - 1);
-        segments = (int)((endAngle - startAngle)*ceilf(2*PI/th)/360);
+        // Calculate how many segments we need to draw a smooth circle, taken from https://stackoverflow.com/a/2244088
+        #define CIRCLE_ERROR_RATE  0.5f
+
+        // Calculate the maximum angle between segments based on the error rate.
+        float th = acosf(2*powf(1 - CIRCLE_ERROR_RATE/radius, 2) - 1);
+        segments = (endAngle - startAngle)*ceilf(2*PI/th)/360;
 
         if (segments <= 0) segments = 4;
     }
 
     float stepLength = (float)(endAngle - startAngle)/(float)segments;
-    float angle = (float)startAngle;
+    float angle = startAngle;
 
 #if defined(SUPPORT_QUADS_DRAW_MODE)
     if (rlCheckBufferLimit(4*segments/2)) rlglDraw();
@@ -310,15 +306,20 @@ void DrawCircleSectorLines(Vector2 center, float radius, int startAngle, int end
 
     if (segments < 4)
     {
-        // Calculate the maximum angle between segments based on the error rate (usually 0.5f)
-        float th = acosf(2*powf(1 - SMOOTH_CIRCLE_ERROR_RATE/radius, 2) - 1);
-        segments = (int)((endAngle - startAngle)*ceilf(2*PI/th)/360);
+        // Calculate how many segments we need to draw a smooth circle, taken from https://stackoverflow.com/a/2244088
+        #ifndef CIRCLE_ERROR_RATE
+        #define CIRCLE_ERROR_RATE  0.5f
+        #endif
+
+        // Calculate the maximum angle between segments based on the error rate.
+        float th = acosf(2*powf(1 - CIRCLE_ERROR_RATE/radius, 2) - 1);
+        segments = (endAngle - startAngle)*ceilf(2*PI/th)/360;
 
         if (segments <= 0) segments = 4;
     }
 
     float stepLength = (float)(endAngle - startAngle)/(float)segments;
-    float angle = (float)startAngle;
+    float angle = startAngle;
 
     // Hide the cap lines when the circle is full
     bool showCapLines = true;
@@ -364,11 +365,11 @@ void DrawCircleGradient(int centerX, int centerY, float radius, Color color1, Co
         for (int i = 0; i < 360; i += 10)
         {
             rlColor4ub(color1.r, color1.g, color1.b, color1.a);
-            rlVertex2f((float)centerX, (float)centerY);
+            rlVertex2f(centerX, centerY);
             rlColor4ub(color2.r, color2.g, color2.b, color2.a);
-            rlVertex2f((float)centerX + sinf(DEG2RAD*i)*radius, (float)centerY + cosf(DEG2RAD*i)*radius);
+            rlVertex2f(centerX + sinf(DEG2RAD*i)*radius, centerY + cosf(DEG2RAD*i)*radius);
             rlColor4ub(color2.r, color2.g, color2.b, color2.a);
-            rlVertex2f((float)centerX + sinf(DEG2RAD*(i + 10))*radius, (float)centerY + cosf(DEG2RAD*(i + 10))*radius);
+            rlVertex2f(centerX + sinf(DEG2RAD*(i + 10))*radius, centerY + cosf(DEG2RAD*(i + 10))*radius);
         }
     rlEnd();
 }
@@ -406,9 +407,9 @@ void DrawEllipse(int centerX, int centerY, float radiusH, float radiusV, Color c
         for (int i = 0; i < 360; i += 10)
         {
             rlColor4ub(color.r, color.g, color.b, color.a);
-            rlVertex2f((float)centerX, (float)centerY);
-            rlVertex2f((float)centerX + sinf(DEG2RAD*i)*radiusH, (float)centerY + cosf(DEG2RAD*i)*radiusV);
-            rlVertex2f((float)centerX + sinf(DEG2RAD*(i + 10))*radiusH, (float)centerY + cosf(DEG2RAD*(i + 10))*radiusV);
+            rlVertex2f(centerX, centerY);
+            rlVertex2f(centerX + sinf(DEG2RAD*i)*radiusH, centerY + cosf(DEG2RAD*i)*radiusV);
+            rlVertex2f(centerX + sinf(DEG2RAD*(i + 10))*radiusH, centerY + cosf(DEG2RAD*(i + 10))*radiusV);
         }
     rlEnd();
 }
@@ -453,9 +454,14 @@ void DrawRing(Vector2 center, float innerRadius, float outerRadius, int startAng
 
     if (segments < 4)
     {
-        // Calculate the maximum angle between segments based on the error rate (usually 0.5f)
-        float th = acosf(2*powf(1 - SMOOTH_CIRCLE_ERROR_RATE/outerRadius, 2) - 1);
-        segments = (int)((endAngle - startAngle)*ceilf(2*PI/th)/360);
+        // Calculate how many segments we need to draw a smooth circle, taken from https://stackoverflow.com/a/2244088
+        #ifndef CIRCLE_ERROR_RATE
+            #define CIRCLE_ERROR_RATE  0.5f
+        #endif
+
+        // Calculate the maximum angle between segments based on the error rate.
+        float th = acosf(2*powf(1 - CIRCLE_ERROR_RATE/outerRadius, 2) - 1);
+        segments = (endAngle - startAngle)*ceilf(2*PI/th)/360;
 
         if (segments <= 0) segments = 4;
     }
@@ -468,7 +474,7 @@ void DrawRing(Vector2 center, float innerRadius, float outerRadius, int startAng
     }
 
     float stepLength = (float)(endAngle - startAngle)/(float)segments;
-    float angle = (float)startAngle;
+    float angle = startAngle;
 
 #if defined(SUPPORT_QUADS_DRAW_MODE)
     if (rlCheckBufferLimit(4*segments)) rlglDraw();
@@ -544,9 +550,14 @@ void DrawRingLines(Vector2 center, float innerRadius, float outerRadius, int sta
 
     if (segments < 4)
     {
-        // Calculate the maximum angle between segments based on the error rate (usually 0.5f)
-        float th = acosf(2*powf(1 - SMOOTH_CIRCLE_ERROR_RATE/outerRadius, 2) - 1);
-        segments = (int)((endAngle - startAngle)*ceilf(2*PI/th)/360);
+        // Calculate how many segments we need to draw a smooth circle, taken from https://stackoverflow.com/a/2244088
+        #ifndef CIRCLE_ERROR_RATE
+            #define CIRCLE_ERROR_RATE  0.5f
+        #endif
+
+        // Calculate the maximum angle between segments based on the error rate.
+        float th = acosf(2*powf(1 - CIRCLE_ERROR_RATE/outerRadius, 2) - 1);
+        segments = (endAngle - startAngle)*ceilf(2*PI/th)/360;
 
         if (segments <= 0) segments = 4;
     }
@@ -558,7 +569,7 @@ void DrawRingLines(Vector2 center, float innerRadius, float outerRadius, int sta
     }
 
     float stepLength = (float)(endAngle - startAngle)/(float)segments;
-    float angle = (float)startAngle;
+    float angle = startAngle;
 
     bool showCapLines = true;
     int limit = 4*(segments + 1);
@@ -618,8 +629,6 @@ void DrawRectangleRec(Rectangle rec, Color color)
 // Draw a color-filled rectangle with pro parameters
 void DrawRectanglePro(Rectangle rec, Vector2 origin, float rotation, Color color)
 {
-    if (rlCheckBufferLimit(4)) rlglDraw();
-    
     rlEnableTexture(GetShapesTexture().id);
 
     rlPushMatrix();
@@ -755,9 +764,13 @@ void DrawRectangleRounded(Rectangle rec, float roundness, int segments, Color co
     // Calculate number of segments to use for the corners
     if (segments < 4)
     {
-        // Calculate the maximum angle between segments based on the error rate (usually 0.5f)
-        float th = acosf(2*powf(1 - SMOOTH_CIRCLE_ERROR_RATE/radius, 2) - 1);
-        segments = (int)(ceilf(2*PI/th)/4.0f);
+        // Calculate how many segments we need to draw a smooth circle, taken from https://stackoverflow.com/a/2244088
+        #ifndef CIRCLE_ERROR_RATE
+        #define CIRCLE_ERROR_RATE  0.5f
+        #endif
+        // Calculate the maximum angle between segments based on the error rate.
+        float th = acosf(2*powf(1 - CIRCLE_ERROR_RATE/radius, 2) - 1);
+        segments = ceilf(2*PI/th)/4;
         if (segments <= 0) segments = 4;
     }
 
@@ -975,9 +988,13 @@ void DrawRectangleRoundedLines(Rectangle rec, float roundness, int segments, int
     // Calculate number of segments to use for the corners
     if (segments < 4)
     {
-        // Calculate the maximum angle between segments based on the error rate (usually 0.5f)
-        float th = acosf(2*powf(1 - SMOOTH_CIRCLE_ERROR_RATE/radius, 2) - 1);
-        segments = (int)(ceilf(2*PI/th)/2.0f);
+        // Calculate how many segments we need to draw a smooth circle, taken from https://stackoverflow.com/a/2244088
+        #ifndef CIRCLE_ERROR_RATE
+        #define CIRCLE_ERROR_RATE  0.5f
+        #endif
+        // Calculate the maximum angle between segments based on the error rate.
+        float th = acosf(2*powf(1 - CIRCLE_ERROR_RATE/radius, 2) - 1);
+        segments = ceilf(2*PI/th)/2;
         if (segments <= 0) segments = 4;
     }
 
@@ -1281,7 +1298,7 @@ void DrawTriangleStrip(Vector2 *points, int pointsCount, Color color)
 {
     if (pointsCount >= 3)
     {
-        if (rlCheckBufferLimit(3*(pointsCount - 2))) rlglDraw();
+        if (rlCheckBufferLimit(pointsCount)) rlglDraw();
 
         rlBegin(RL_TRIANGLES);
             rlColor4ub(color.r, color.g, color.b, color.a);
@@ -1386,6 +1403,32 @@ void DrawPolyLines(Vector2 center, int sides, float radius, float rotation, Colo
 // Module Functions Definition - Collision Detection functions
 //----------------------------------------------------------------------------------
 
+// Check collision between two lines
+bool CheckCollisionLineLine(Vector2 startPos1, Vector2 endPos1, Vector2 startPos2, Vector2 endPos2) {
+    // calculate the direction of the lines
+    float uA = ((endPos2.x - startPos1.x) * (startPos1.y - startPos2.y) - (endPos2.y - startPos2.y) * (startPos1.x - startPos2.x)) / ((endPos2.y - startPos2.y) * (endPos1.x - startPos1.x) - (endPos2.x - startPos2.x) * (endPos1.y - startPos1.y));
+    float uB = ((endPos1.x - startPos1.x) * (startPos1.y - startPos2.y) - (endPos1.y - startPos1.y) * (startPos1.x - startPos2.x)) / ((endPos2.y - startPos2.y) * (endPos1.x - startPos1.x) - (endPos2.x - startPos2.x) * (endPos1.y - startPos1.y));
+
+    // if uA and uB are between 0-1, lines are colliding
+    if (uA >= 0 && uA <= 1 && uB >= 0 && uB <= 1) { return true; }
+    return false;
+}
+
+// Check collision between line and rectangle
+bool CheckCollisionLineRec(Vector2 startPos, Vector2 endPos, Rectangle rec) {
+    // check if the line has hit any of the rectangle's sides
+    // uses the Line/Line function below
+    bool left =   rl.CheckCollisionLineLine(startPos.x, startPos.y, endPos.x, endPos.y, rec.x, rec.y, rec.x, rec.y + rec.height);
+    bool right =  rl.CheckCollisionLineLine(startPos.x, startPos.y, endPos.x, endPos.y, rec.x + rec.width, rec.y, rec.x + rec.width, rec.y + rec.height);
+    bool top =    rl.CheckCollisionLineLine(startPos.x, startPos.y, endPos.x, endPos.y, rec.x, rec.y, rec.x + rec.width, rec.y);
+    bool bottom = rl.CheckCollisionLineLine(startPos.x, startPos.y, endPos.x, endPos.y, rec.x, rec.y + rec.height, rec.x + rec.width, rec.y + rec.height);
+
+    // if ANY of the above are true, the line
+    // has hit the rectangle
+    if (left || right || top || bottom) { return true; }
+    return false;
+}
+
 // Check if point is inside rectangle
 bool CheckCollisionPointRec(Vector2 point, Rectangle rec)
 {
@@ -1466,6 +1509,22 @@ bool CheckCollisionCircleRec(Vector2 center, float radius, Rectangle rec)
                              (dy - rec.height/2.0f)*(dy - rec.height/2.0f);
 
     return (cornerDistanceSq <= (radius*radius));
+}
+
+// Check collision between circle and line
+bool CheckCollisionCircleLine(Vector2 center, float radius, Vector2 startPos, Vector2 endPos) {
+    float u = ((center.x - startPos1.x) * (endPos.x - startPos1.x) + (center.y - startPos.y) * (endPos.y - startPos.y)) / ((endPos.y - startPos.y) * (endPos.y - startPos.y) + (endPos.x - startPos.x) * (endPos.x - startPos.x));
+    float dist = 0;
+    if (u >= 0 && u <= 1) {
+        dist = pow((startPos.x + (endPos.x - startPos1.x) * u - center.x), 2) + pow((startPos.y + (endPos.y - startPos.y) * u - center.y), 2);
+    } else {
+        if (u < 0) {
+            dist = pow((startPos.x - center.x), 2) + pow((startPos.y - center.y), 2);
+        } else {
+            dist = pow((endPos.x - center.x), 2) + pow((startPos.y - center.y), 2);
+        }
+    }
+    return (dist < pow(radius, 2));
 }
 
 // Get collision rectangle for two rectangles collision
