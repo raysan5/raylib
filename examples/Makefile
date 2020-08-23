@@ -291,7 +291,7 @@ ifeq ($(PLATFORM),PLATFORM_DESKTOP)
     ifeq ($(PLATFORM_OS),LINUX)
         # Reset everything.
         # Precedence: immediately local, installed version, raysan5 provided libs
-        LDFLAGS = -L. -L$(RAYLIB_INSTALL_PATH) -L$(RAYLIB_RELEASE_PATH)  -L$(RAYLIB_PATH)
+        LDFLAGS = -L. -L$(RAYLIB_INSTALL_PATH) -L$(RAYLIB_RELEASE_PATH) -L$(RAYLIB_PATH)
     endif
 endif
 

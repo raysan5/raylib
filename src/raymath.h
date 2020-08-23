@@ -78,8 +78,6 @@
     #define PI 3.14159265358979323846
 #endif
 
-
-
 #ifndef DEG2RAD
     #define DEG2RAD (PI/180.0f)
 #endif
@@ -880,6 +878,18 @@ RMDEF Matrix MatrixRotateXYZ(Vector3 ang)
     return result;
 }
 
+// Returns zyx-rotation matrix (angles in radians)
+// TODO: This solution is suboptimal, it should be possible to create this matrix in one go 
+// instead of using a 3 matrix multiplication
+RMDEF Matrix MatrixRotateZYX(Vector3 ang)
+{
+    Matrix result = MatrixRotateZ(ang.z);
+    result = MatrixMultiply(result, MatrixRotateY(ang.y));
+    result = MatrixMultiply(result, MatrixRotateX(ang.x));
+    
+    return result;
+}
+
 // Returns x-rotation matrix (angle in radians)
 RMDEF Matrix MatrixRotateX(float angle)
 {
@@ -928,8 +938,6 @@ RMDEF Matrix MatrixRotateZ(float angle)
     return result;
 }
 
-
-
 // Returns scaling matrix
 RMDEF Matrix MatrixScale(float x, float y, float z)
 {
@@ -964,17 +972,6 @@ RMDEF Matrix MatrixMultiply(Matrix left, Matrix right)
     result.m14 = left.m12*right.m2 + left.m13*right.m6 + left.m14*right.m10 + left.m15*right.m14;
     result.m15 = left.m12*right.m3 + left.m13*right.m7 + left.m14*right.m11 + left.m15*right.m15;
 
-    return result;
-}
-
-// TODO suboptimal should be able to create this matrix in one go
-// this is an aditional 3 matrix multiplies!
-RMDEF Matrix MatrixRotateZYX(Vector3 v)
-{
-    Matrix result = MatrixRotateZ(v.z);
-    result = MatrixMultiply(result, MatrixRotateY(v.y));
-    result = MatrixMultiply(result, MatrixRotateX(v.x));
-    
     return result;
 }
 
@@ -1312,53 +1309,62 @@ RMDEF Quaternion QuaternionFromVector3ToVector3(Vector3 from, Vector3 to)
 }
 
 // Returns a quaternion for a given rotation matrix
-RMDEF Quaternion QuaternionFromMatrix(Matrix m)
+RMDEF Quaternion QuaternionFromMatrix(Matrix mat)
 {
-    Quaternion q;
-    if ( m.m0 > m.m5 && m.m0 > m.m10 )  {
-        float s  = sqrt( 1.0 + m.m0 - m.m5 - m.m10 ) * 2;
-        q.x = 0.25 * s;
-        q.y = (m.m4 + m.m1 ) / s;
-        q.z = (m.m2 + m.m8 ) / s;
-        q.w = (m.m9 - m.m6 ) / s;
-    } else if ( m.m5 > m.m10 ) {
-        float s  = sqrt( 1.0 + m.m5 - m.m0 - m.m10 ) * 2;
-        q.x = (m.m4 + m.m1 ) / s;
-        q.y = 0.25 * s;
-        q.z = (m.m9 + m.m6 ) / s;
-        q.w = (m.m2 - m.m8 ) / s;
-    } else {
-        float s  = sqrt( 1.0 + m.m10 - m.m0 - m.m5 ) * 2;
-        q.x = (m.m2 + m.m8 ) / s;
-        q.y = (m.m9 + m.m6 ) / s;
-        q.z = 0.25 * s;
-        q.w = (m.m4 - m.m1 ) / s;
+    Quaternion result = { 0.0f };
+    
+    if ((mat.m0 > mat.m5) && (mat.m0 > mat.m10))
+    {
+        float s = sqrtf(1.0f + mat.m0 - mat.m5 - mat.m10)*2;
+        
+        result.x = 0.25f*s;
+        result.y = (mat.m4 + mat.m1)/s;
+        result.z = (mat.m2 + mat.m8)/s;
+        result.w = (mat.m9 - mat.m6)/s;
     } 
-    return q;
+    else if (mat.m5 > mat.m10)
+    {
+        float s = sqrtf(1.0f + mat.m5 - mat.m0 - mat.m10)*2;
+        result.x = (mat.m4 + mat.m1)/s;
+        result.y = 0.25f*s;
+        result.z = (mat.m9 + mat.m6)/s;
+        result.w = (mat.m2 - mat.m8)/s;
+    } 
+    else
+    {
+        float s  = sqrtf(1.0f + mat.m10 - mat.m0 - mat.m5)*2;
+        result.x = (mat.m2 + mat.m8)/s;
+        result.y = (mat.m9 + mat.m6)/s;
+        result.z = 0.25f*s;
+        result.w = (mat.m4 - mat.m1)/s;
+    }
+    
+    return result;
 }
 
 // Returns a matrix for a given quaternion
 RMDEF Matrix QuaternionToMatrix(Quaternion q)
 {
-    Matrix m = MatrixIdentity();
-    float a2=2*(q.x*q.x), b2=2*(q.y*q.y), c2=2*(q.z*q.z); //, d2=2*(q.w*q.w);
+    Matrix result = MatrixIdentity();
     
-    float ab=2*(q.x*q.y), ac=2*(q.x*q.z), bc=2*(q.y*q.z);
-    float ad=2*(q.x*q.w), bd=2*(q.y*q.w), cd=2*(q.z*q.w);
+    float a2 = 2*(q.x*q.x), b2=2*(q.y*q.y), c2=2*(q.z*q.z); //, d2=2*(q.w*q.w);
+    
+    float ab = 2*(q.x*q.y), ac=2*(q.x*q.z), bc=2*(q.y*q.z);
+    float ad = 2*(q.x*q.w), bd=2*(q.y*q.w), cd=2*(q.z*q.w);
 
-    m.m0  = 1 - b2 - c2;
-    m.m1  = ab - cd;
-    m.m2  = ac + bd;
+    result.m0 = 1 - b2 - c2;
+    result.m1 = ab - cd;
+    result.m2 = ac + bd;
     
-    m.m4  = ab + cd;
-    m.m5  = 1 - a2 - c2;
-    m.m6  = bc - ad;
+    result.m4 = ab + cd;
+    result.m5 = 1 - a2 - c2;
+    result.m6 = bc - ad;
     
-    m.m8  = ac - bd;
-    m.m9  = bc + ad;
-    m.m10 = 1 - a2 - b2;
+    result.m8 = ac - bd;
+    result.m9 = bc + ad;
+    result.m10 = 1 - a2 - b2;
 
-    return m;
+    return result;
 }
 
 // Returns rotation quaternion for an angle and axis
