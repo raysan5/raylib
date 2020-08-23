@@ -795,6 +795,32 @@ RMDEF Matrix MatrixSubtract(Matrix left, Matrix right)
     return result;
 }
 
+// Returns two matrix multiplication
+// NOTE: When multiplying matrices... the order matters!
+RMDEF Matrix MatrixMultiply(Matrix left, Matrix right)
+{
+    Matrix result = { 0 };
+
+    result.m0 = left.m0*right.m0 + left.m1*right.m4 + left.m2*right.m8 + left.m3*right.m12;
+    result.m1 = left.m0*right.m1 + left.m1*right.m5 + left.m2*right.m9 + left.m3*right.m13;
+    result.m2 = left.m0*right.m2 + left.m1*right.m6 + left.m2*right.m10 + left.m3*right.m14;
+    result.m3 = left.m0*right.m3 + left.m1*right.m7 + left.m2*right.m11 + left.m3*right.m15;
+    result.m4 = left.m4*right.m0 + left.m5*right.m4 + left.m6*right.m8 + left.m7*right.m12;
+    result.m5 = left.m4*right.m1 + left.m5*right.m5 + left.m6*right.m9 + left.m7*right.m13;
+    result.m6 = left.m4*right.m2 + left.m5*right.m6 + left.m6*right.m10 + left.m7*right.m14;
+    result.m7 = left.m4*right.m3 + left.m5*right.m7 + left.m6*right.m11 + left.m7*right.m15;
+    result.m8 = left.m8*right.m0 + left.m9*right.m4 + left.m10*right.m8 + left.m11*right.m12;
+    result.m9 = left.m8*right.m1 + left.m9*right.m5 + left.m10*right.m9 + left.m11*right.m13;
+    result.m10 = left.m8*right.m2 + left.m9*right.m6 + left.m10*right.m10 + left.m11*right.m14;
+    result.m11 = left.m8*right.m3 + left.m9*right.m7 + left.m10*right.m11 + left.m11*right.m15;
+    result.m12 = left.m12*right.m0 + left.m13*right.m4 + left.m14*right.m8 + left.m15*right.m12;
+    result.m13 = left.m12*right.m1 + left.m13*right.m5 + left.m14*right.m9 + left.m15*right.m13;
+    result.m14 = left.m12*right.m2 + left.m13*right.m6 + left.m14*right.m10 + left.m15*right.m14;
+    result.m15 = left.m12*right.m3 + left.m13*right.m7 + left.m14*right.m11 + left.m15*right.m15;
+
+    return result;
+}
+
 // Returns translation matrix
 RMDEF Matrix MatrixTranslate(float x, float y, float z)
 {
@@ -851,45 +877,6 @@ RMDEF Matrix MatrixRotate(Vector3 axis, float angle)
     return result;
 }
 
-// Returns xyz-rotation matrix (angles in radians)
-RMDEF Matrix MatrixRotateXYZ(Vector3 ang)
-{
-    Matrix result = MatrixIdentity();
-
-    float cosz = cosf(-ang.z);
-    float sinz = sinf(-ang.z);
-    float cosy = cosf(-ang.y);
-    float siny = sinf(-ang.y);
-    float cosx = cosf(-ang.x);
-    float sinx = sinf(-ang.x);
-
-    result.m0 = cosz * cosy;
-    result.m4 = (cosz * siny * sinx) - (sinz * cosx);
-    result.m8 = (cosz * siny * cosx) + (sinz * sinx);
-
-    result.m1 = sinz * cosy;
-    result.m5 = (sinz * siny * sinx) + (cosz * cosx);
-    result.m9 = (sinz * siny * cosx) - (cosz * sinx);
-
-    result.m2 = -siny;
-    result.m6 = cosy * sinx;
-    result.m10= cosy * cosx;
-
-    return result;
-}
-
-// Returns zyx-rotation matrix (angles in radians)
-// TODO: This solution is suboptimal, it should be possible to create this matrix in one go 
-// instead of using a 3 matrix multiplication
-RMDEF Matrix MatrixRotateZYX(Vector3 ang)
-{
-    Matrix result = MatrixRotateZ(ang.z);
-    result = MatrixMultiply(result, MatrixRotateY(ang.y));
-    result = MatrixMultiply(result, MatrixRotateX(ang.x));
-    
-    return result;
-}
-
 // Returns x-rotation matrix (angle in radians)
 RMDEF Matrix MatrixRotateX(float angle)
 {
@@ -938,6 +925,46 @@ RMDEF Matrix MatrixRotateZ(float angle)
     return result;
 }
 
+
+// Returns xyz-rotation matrix (angles in radians)
+RMDEF Matrix MatrixRotateXYZ(Vector3 ang)
+{
+    Matrix result = MatrixIdentity();
+
+    float cosz = cosf(-ang.z);
+    float sinz = sinf(-ang.z);
+    float cosy = cosf(-ang.y);
+    float siny = sinf(-ang.y);
+    float cosx = cosf(-ang.x);
+    float sinx = sinf(-ang.x);
+
+    result.m0 = cosz * cosy;
+    result.m4 = (cosz * siny * sinx) - (sinz * cosx);
+    result.m8 = (cosz * siny * cosx) + (sinz * sinx);
+
+    result.m1 = sinz * cosy;
+    result.m5 = (sinz * siny * sinx) + (cosz * cosx);
+    result.m9 = (sinz * siny * cosx) - (cosz * sinx);
+
+    result.m2 = -siny;
+    result.m6 = cosy * sinx;
+    result.m10= cosy * cosx;
+
+    return result;
+}
+
+// Returns zyx-rotation matrix (angles in radians)
+// TODO: This solution is suboptimal, it should be possible to create this matrix in one go 
+// instead of using a 3 matrix multiplication
+RMDEF Matrix MatrixRotateZYX(Vector3 ang)
+{
+    Matrix result = MatrixRotateZ(ang.z);
+    result = MatrixMultiply(result, MatrixRotateY(ang.y));
+    result = MatrixMultiply(result, MatrixRotateX(ang.x));
+    
+    return result;
+}
+
 // Returns scaling matrix
 RMDEF Matrix MatrixScale(float x, float y, float z)
 {
@@ -945,32 +972,6 @@ RMDEF Matrix MatrixScale(float x, float y, float z)
                       0.0f, y, 0.0f, 0.0f,
                       0.0f, 0.0f, z, 0.0f,
                       0.0f, 0.0f, 0.0f, 1.0f };
-
-    return result;
-}
-
-// Returns two matrix multiplication
-// NOTE: When multiplying matrices... the order matters!
-RMDEF Matrix MatrixMultiply(Matrix left, Matrix right)
-{
-    Matrix result = { 0 };
-
-    result.m0 = left.m0*right.m0 + left.m1*right.m4 + left.m2*right.m8 + left.m3*right.m12;
-    result.m1 = left.m0*right.m1 + left.m1*right.m5 + left.m2*right.m9 + left.m3*right.m13;
-    result.m2 = left.m0*right.m2 + left.m1*right.m6 + left.m2*right.m10 + left.m3*right.m14;
-    result.m3 = left.m0*right.m3 + left.m1*right.m7 + left.m2*right.m11 + left.m3*right.m15;
-    result.m4 = left.m4*right.m0 + left.m5*right.m4 + left.m6*right.m8 + left.m7*right.m12;
-    result.m5 = left.m4*right.m1 + left.m5*right.m5 + left.m6*right.m9 + left.m7*right.m13;
-    result.m6 = left.m4*right.m2 + left.m5*right.m6 + left.m6*right.m10 + left.m7*right.m14;
-    result.m7 = left.m4*right.m3 + left.m5*right.m7 + left.m6*right.m11 + left.m7*right.m15;
-    result.m8 = left.m8*right.m0 + left.m9*right.m4 + left.m10*right.m8 + left.m11*right.m12;
-    result.m9 = left.m8*right.m1 + left.m9*right.m5 + left.m10*right.m9 + left.m11*right.m13;
-    result.m10 = left.m8*right.m2 + left.m9*right.m6 + left.m10*right.m10 + left.m11*right.m14;
-    result.m11 = left.m8*right.m3 + left.m9*right.m7 + left.m10*right.m11 + left.m11*right.m15;
-    result.m12 = left.m12*right.m0 + left.m13*right.m4 + left.m14*right.m8 + left.m15*right.m12;
-    result.m13 = left.m12*right.m1 + left.m13*right.m5 + left.m14*right.m9 + left.m15*right.m13;
-    result.m14 = left.m12*right.m2 + left.m13*right.m6 + left.m14*right.m10 + left.m15*right.m14;
-    result.m15 = left.m12*right.m3 + left.m13*right.m7 + left.m14*right.m11 + left.m15*right.m15;
 
     return result;
 }
