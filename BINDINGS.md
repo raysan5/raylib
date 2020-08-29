@@ -67,6 +67,7 @@ Here it is a list with the ones I'm aware of:
 | raykit             | [Kit](https://www.kitlang.org/)           | https://github.com/Gamerfiend/raykit      |
 | vraylib            | [V](https://vlang.io/)                    | https://github.com/MajorHard/vraylib      |
 | ray.mod            | [BlitzMax](https://blitzmax.org/)         | https://github.com/bmx-ng/ray.mod         |
+| ray-ocaml          | [OCaml](https://ocaml.org/)               | https://github.com/tjammer/raylib-ocaml   |
 | raylib-mosaic      | Mosaic         | https://github.com/pluckyporcupine/raylib-mosaic     |
 | raylib-xdpw        | XD Pascal      | https://github.com/vtereshkov/raylib-xdpw            |
 | raylib-carp        | Carp           | https://github.com/pluckyporcupine/raylib-carp       |
