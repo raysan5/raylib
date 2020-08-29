@@ -826,7 +826,7 @@ void DrawTextEx(Font font, const char *text, Vector2 position, float fontSize, f
 
     float scaleFactor = fontSize/font.baseSize;     // Character quad scaling factor
 
-    for (int i = 0; i < length; i++)
+    for (int i = 0; i < length;)
     {
         // Get next codepoint from byte string and glyph index in font
         int codepointByteCount = 0;
@@ -860,7 +860,7 @@ void DrawTextEx(Font font, const char *text, Vector2 position, float fontSize, f
             else textOffsetX += ((float)font.chars[index].advanceX*scaleFactor + spacing);
         }
 
-        i += (codepointByteCount - 1);   // Move text bytes counter to next codepoint
+        i += codepointByteCount;   // Move text bytes counter to next codepoint
     }
 }
 
