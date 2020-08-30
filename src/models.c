@@ -2482,7 +2482,6 @@ void MeshNormalsSmooth(Mesh *mesh)
     Vector3 *uniqueVertices = (Vector3 *)RL_CALLOC(mesh->vertexCount, sizeof(Vector3));
     Vector3 *summedNormals = (Vector3 *)RL_CALLOC(mesh->vertexCount, sizeof(Vector3));
 
-    int uiCounter = 0;
     int *uniqueIndices = (int *)RL_CALLOC(mesh->vertexCount, sizeof(int));
 
     // Sum normals grouped by vertex
