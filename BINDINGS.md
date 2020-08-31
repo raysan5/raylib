@@ -9,23 +9,28 @@ Here it is a list with the ones I'm aware of:
 | raylib             | C              | https://github.com/raysan5/raylib                                    |
 | raylib-cpp         | C++            | https://github.com/robloach/raylib-cpp                               |
 | Raylib-cs          | C#             | https://github.com/ChrisDill/Raylib-cs                               |
+| raylib-cppsharp    | C#             | https://github.com/phxvyper/raylib-cppsharp             |
 | RaylibFS           | F#             | https://github.com/dallinbeutler/RaylibFS                            |
-| raylib_d           | D              | https://github.com/0xFireball/raylib_d                               |
+| raylib_d           | D              | https://github.com/Sepheus/raylib_d                     |
 | raylib-d           | D              | https://github.com/onroundit/raylib-d                                |
 | bindbc-raylib      | D              | https://github.com/o3o/bindbc-raylib                    |
+| dray               | D              | https://github.com/xdrie/dray                           |
 | raylib-go          | Go             | https://github.com/gen2brain/raylib-go                               |
 | raylib-goplus      | Go             | https://github.com/Lachee/raylib-goplus                              |
+| ray-go             | Go             | https://github.com/hecate-tech/ray-go                   |
 | raylib-rs          | [Rust](https://www.rust-lang.org/)      | https://github.com/deltaphc/raylib-rs       |
 | raylib-lua         | Lua            | https://github.com/raysan5/raylib-lua                                |
 | raylib-lua-ffi     | Lua            | https://github.com/raysan5/raylib/issues/693                         |
 | raylib-lua-sol     | Lua            | https://github.com/RobLoach/raylib-lua-sol                           |
 | raylib-lua         | Lua            | https://github.com/TSnake41/raylib-lua                               |
 | raylib-luamore     | Lua            | https://github.com/HDPLocust/raylib-luamore                          |
-| raylua             | Lua            | https://github.com/Rabios/raylua                             |
+| raylua             | Lua            | https://github.com/Rabios/raylua                         |
+| LuaJIT-Raylib      | Lua            | https://github.com/Bambofy/LuaJIT-Raylib                 |
 | raylib-nelua       | [Nelua](https://nelua.io/)      | https://github.com/Andre-LA/raylib-nelua-mirror     |
 | raylib-Nim         | Nim            | https://gitlab.com/define-private-public/raylib-Nim                  |
 | raylib-nim         | Nim            | https://github.com/Skrylar/raylib-nim                                |
 | raylib-Forever     | Nim            | https://github.com/Guevara-chan/Raylib-Forever           |
+| nim-raylib         | Nim            | https://github.com/tomc1998/nim-raylib                   |
 | raylib-haskell     | [Haskell](https://www.haskell.org/)        | https://github.com/DevJac/raylib-haskell |
 | raylib-cr          | Crystal        | https://github.com/AregevDev/raylib-cr                               |
 | cray               | Crystal        | https://gitlab.com/Zatherz/cray                                      |
@@ -38,6 +43,7 @@ Here it is a list with the ones I'm aware of:
 | raylib-mruby       | mruby          | https://github.com/lihaochen910/raylib-mruby                         |
 | raylib-py          | Python         | https://github.com/overdev/raylib-py                                 |
 | raylib-python-cffi | Python         | https://github.com/electronstudio/raylib-python-cffi                 |
+| raylib-py-ctbg     | Python         | https://github.com/overdev/raylib-py-ctbg                 |
 | jaylib             | Java           | https://github.com/electronstudio/jaylib/                 |
 | raylib-java        | Java           | https://github.com/XoanaIO/raylib-java                               |
 | clj-raylib         | [Clojure](https://clojure.org/)         | https://github.com/lsevero/clj-raylib       |
@@ -75,8 +81,9 @@ Here it is a list with the ones I'm aware of:
 | raylib-purebasic   | [PureBasic](https://www.purebasic.com/)      | https://github.com/D-a-n-i-l-o/raylib-purebasic   |
 | raylib-ats2        | ATS2           | https://github.com/mephistopheles-8/raylib-ats2      |
 | raylib-beef        | [Beef](https://www.beeflang.org/)          | https://github.com/M0n7y5/raylib-beef    |
-| raylib.cbl         | COBOL          | *[code examples](https://github.com/Martinfx/Cobol/tree/master/OpenCobol/Games/raylib)* |
 | raylib-never       | [Never](https://github.com/never-lang/never) | https://github.com/never-lang/raylib-never |
+| raylib.cbl         | COBOL          | *[code examples](https://github.com/Martinfx/Cobol/tree/master/OpenCobol/Games/raylib)* |
+
  
 Missing some language? Feel free to create a new binding! :)
 
