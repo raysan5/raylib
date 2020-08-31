@@ -80,7 +80,8 @@ Here it is a list with the ones I'm aware of:
 | raylib-ats2        | ATS2           | https://github.com/mephistopheles-8/raylib-ats2      |
 | raylib-beef        | [Beef](https://www.beeflang.org/)          | https://github.com/M0n7y5/raylib-beef    |
 | raylib.cbl         | COBOL          | *[code examples](https://github.com/Martinfx/Cobol/tree/master/OpenCobol/Games/raylib)* |
- 
+| raylib-never 	     | [Never](https://github.com/never-lang/never) 	        | https://github.com/never-lang/raylib-never           |
+
 Missing some language? Feel free to create a new binding! :)
 
 Usually, raylib bindings follow the convention: `raylib-{language}`
