@@ -1477,4 +1477,27 @@ RMDEF Quaternion QuaternionTransform(Quaternion q, Matrix mat)
     return result;
 }
 
+// Projects a Vector3 from screen space into object space
+RMDEF Vector3 Vector3Unproject(Vector3 source, Matrix projection, Matrix view)
+{
+    Vector3 result = { 0.0f, 0.0f, 0.0f };
+
+    // Calculate unproject matrix (multiply view patrix by projection matrix) and invert it
+    Matrix matViewProj = MatrixMultiply(view, projection);
+    matViewProj = MatrixInvert(matViewProj);
+
+    // Create quaternion from source point
+    Quaternion quat = { source.x, source.y, source.z, 1.0f };
+
+    // Multiply quat point by unproject matrix
+    quat = QuaternionTransform(quat, matViewProj);
+
+    // Normalized world points in vectors
+    result.x = quat.x/quat.w;
+    result.y = quat.y/quat.w;
+    result.z = quat.z/quat.w;
+
+    return result;
+}
+
 #endif  // RAYMATH_H

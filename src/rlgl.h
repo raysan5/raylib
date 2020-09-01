@@ -526,7 +526,6 @@ RLAPI bool rlCheckBufferLimit(int vCount);            // Check internal buffer o
 RLAPI void rlSetDebugMarker(const char *text);        // Set debug marker for analysis
 RLAPI void rlSetBlendMode(int glSrcFactor, int glDstFactor, int glEquation);    // // Set blending mode factor and equation (using OpenGL factors)
 RLAPI void rlLoadExtensions(void *loader);            // Load OpenGL extensions
-RLAPI Vector3 rlUnproject(Vector3 source, Matrix proj, Matrix view);  // Get world coordinates from screen coordinates
 
 // Textures data management
 RLAPI unsigned int rlLoadTexture(void *data, int width, int height, int format, int mipmapCount); // Load texture in GPU
@@ -1905,29 +1904,6 @@ void rlLoadExtensions(void *loader)
     // With GLAD, we can check if an extension is supported using the GLAD_GL_xxx booleans
     //if (GLAD_GL_ARB_vertex_array_object) // Use GL_ARB_vertex_array_object
 #endif
-}
-
-// Get world coordinates from screen coordinates
-Vector3 rlUnproject(Vector3 source, Matrix proj, Matrix view)
-{
-    Vector3 result = { 0.0f, 0.0f, 0.0f };
-
-    // Calculate unproject matrix (multiply view patrix by projection matrix) and invert it
-    Matrix matViewProj = MatrixMultiply(view, proj);
-    matViewProj = MatrixInvert(matViewProj);
-
-    // Create quaternion from source point
-    Quaternion quat = { source.x, source.y, source.z, 1.0f };
-
-    // Multiply quat point by unproject matrix
-    quat = QuaternionTransform(quat, matViewProj);
-
-    // Normalized world points in vectors
-    result.x = quat.x/quat.w;
-    result.y = quat.y/quat.w;
-    result.z = quat.z/quat.w;
-
-    return result;
 }
 
 // Convert image data to OpenGL texture (returns OpenGL valid Id)
