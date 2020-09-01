@@ -8,9 +8,9 @@ Here it is a list with the ones I'm aware of:
 |:------------------:|:-------------: | :--------:|----------------------------------------------------------------------|
 | raylib             | **3.1-dev** | [C](https://en.wikipedia.org/wiki/C_(programming_language))    | https://github.com/raysan5/raylib    |
 | raylib-cpp         | ? | [C++](https://en.wikipedia.org/wiki/C%2B%2B)            | https://github.com/robloach/raylib-cpp          |
-| Raylib-cs          | ? | [C#](https://en.wikipedia.org/wiki/C_Sharp_(programming_language))       | https://github.com/ChrisDill/Raylib-cs      |
+| Raylib-cs          | 3.0 | [C#](https://en.wikipedia.org/wiki/C_Sharp_(programming_language))       | https://github.com/ChrisDill/Raylib-cs      |
 | raylib-cppsharp    | ? | [C#](https://en.wikipedia.org/wiki/C_Sharp_(programming_language))       | https://github.com/phxvyper/raylib-cppsharp |
-| RaylibFS           | ? | [F#](https://fsharp.org/)             | https://github.com/dallinbeutler/RaylibFS     |
+| RaylibFS           | 2.5 | [F#](https://fsharp.org/)             | https://github.com/dallinbeutler/RaylibFS     |
 | raylib_d           | ? | [D](https://dlang.org/)               | https://github.com/Sepheus/raylib_d     |
 | raylib-d           | ? | [D](https://dlang.org/)               | https://github.com/onroundit/raylib-d     |
 | bindbc-raylib      | ? | [D](https://dlang.org/)               | https://github.com/o3o/bindbc-raylib   |
@@ -70,11 +70,11 @@ Here it is a list with the ones I'm aware of:
 | raylib-jai         | ? | [Jai](https://github.com/BSVino/JaiPrimer/blob/master/JaiPrimer.md)  | https://github.com/kevinw/raylib-jai   |
 | ray.zig            | ? | [Zig](https://ziglang.org/)               | https://github.com/BitPuffin/zig-raylib-experiments |
 | raylib-Ada         | ? | [Ada](https://www.adacore.com/about-ada)  | https://github.com/mimo/raylib-Ada        |
-| jaylib             | ? | [Janet](https://janet-lang.org/)          | https://github.com/janet-lang/jaylib      |
+| jaylib             | 3.0 | [Janet](https://janet-lang.org/)          | https://github.com/janet-lang/jaylib      |
 | raykit             | ? | [Kit](https://www.kitlang.org/)           | https://github.com/Gamerfiend/raykit      |
 | vraylib            | ? | [V](https://vlang.io/)                    | https://github.com/MajorHard/vraylib      |
 | ray.mod            | ? | [BlitzMax](https://blitzmax.org/)         | https://github.com/bmx-ng/ray.mod         |
-| ray-ocaml          | ? | [OCaml](https://ocaml.org/)               | https://github.com/tjammer/raylib-ocaml   |
+| ray-ocaml          | 3.0 | [OCaml](https://ocaml.org/)               | https://github.com/tjammer/raylib-ocaml   |
 | raylib-mosaic      | ? | [Mosaic](https://github.com/sal55/langs/tree/master/Mosaic)     | https://github.com/pluckyporcupine/raylib-mosaic   |
 | raylib-xdpw        | ? | [XD Pascal](https://github.com/vtereshkov/xdpw)     | https://github.com/vtereshkov/raylib-xdpw   |
 | raylib-carp        | ? | [Carp](https://github.com/carp-lang/Carp)           | https://github.com/pluckyporcupine/raylib-carp   |
