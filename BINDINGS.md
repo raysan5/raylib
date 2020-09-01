@@ -18,13 +18,14 @@ Here it is a list with the ones I'm aware of:
 | raylib-go          | ? | [Go](https://golang.org/)             | https://github.com/gen2brain/raylib-go  |
 | raylib-goplus      | ? | [Go](https://golang.org/)             | https://github.com/Lachee/raylib-goplus         |
 | ray-go             | ? | [Go](https://golang.org/)             | https://github.com/hecate-tech/ray-go     |
+| go-raylib          | 3.1-dev | [Go](https://golang.org/)       | https://github.com/chunqian/go-raylib  |
 | raylib-rs          | ? | [Rust](https://www.rust-lang.org/)    | https://github.com/deltaphc/raylib-rs     |
 | raylib-lua         | ? | [Lua](http://www.lua.org/)            | https://github.com/raysan5/raylib-lua       |
-| raylib-lua-ffi     | ? | [Lua](http://www.lua.org/)            | https://github.com/raysan5/raylib/issues/693    |
+| raylib-lua-ffi     | 2.0 | [Lua](http://www.lua.org/)            | https://github.com/raysan5/raylib/issues/693    |
 | raylib-lua-sol     | ? | [Lua](http://www.lua.org/)            | https://github.com/RobLoach/raylib-lua-sol     |
 | raylib-lua         | ? | [Lua](http://www.lua.org/)            | https://github.com/TSnake41/raylib-lua       |
 | raylib-luamore     | ? | [Lua](http://www.lua.org/)            | https://github.com/HDPLocust/raylib-luamore    |
-| raylua             | ? | [Lua](http://www.lua.org/)            | https://github.com/Rabios/raylua          |
+| raylua             | 3.0 | [Lua](http://www.lua.org/)            | https://github.com/Rabios/raylua          |
 | LuaJIT-Raylib      | ? | [Lua](http://www.lua.org/)            | https://github.com/Bambofy/LuaJIT-Raylib    |
 | raylib-nelua       | ? | [Nelua](https://nelua.io/)            | https://github.com/Andre-LA/raylib-nelua-mirror     |
 | raylib-Nim         | ? | [Nim](https://nim-lang.org/)          | https://gitlab.com/define-private-public/raylib-Nim     |
@@ -43,7 +44,7 @@ Here it is a list with the ones I'm aware of:
 | raylib-mruby       | ? | [mruby](https://github.com/mruby/mruby)  | https://github.com/lihaochen910/raylib-mruby    |
 | raylib-py          | ? | [Python](https://www.python.org/)        | https://github.com/overdev/raylib-py       |
 | raylib-python-cffi | ? | [Python](https://www.python.org/)        | https://github.com/electronstudio/raylib-python-cffi    |
-| raylib-py-ctbg     | ? | [Python](https://www.python.org/)        | https://github.com/overdev/raylib-py-ctbg                 |
+| raylib-py-ctbg     | 2.6 | [Python](https://www.python.org/)        | https://github.com/overdev/raylib-py-ctbg                 |
 | jaylib             | ? | [Java](https://en.wikipedia.org/wiki/Java_(programming_language))           | https://github.com/electronstudio/jaylib/   |
 | raylib-java        | ? | [Java](https://en.wikipedia.org/wiki/Java_(programming_language))           | https://github.com/XoanaIO/raylib-java   |
 | clj-raylib         | ? | [Clojure](https://clojure.org/)          | https://github.com/lsevero/clj-raylib       |
