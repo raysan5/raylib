@@ -7,7 +7,7 @@ Here it is a list with the ones I'm aware of:
 |  name              | raylib version | language  | repo                                                                 |
 |:------------------:|:-------------: | :--------:|----------------------------------------------------------------------|
 | raylib             | **3.1-dev** | [C](https://en.wikipedia.org/wiki/C_(programming_language))    | https://github.com/raysan5/raylib    |
-| raylib-cpp         | ? | [C++](https://en.wikipedia.org/wiki/C%2B%2B)            | https://github.com/robloach/raylib-cpp          |
+| raylib-cpp         | 3.1-dev | [C++](https://en.wikipedia.org/wiki/C%2B%2B)                       | https://github.com/robloach/raylib-cpp      |
 | Raylib-cs          | 3.0 | [C#](https://en.wikipedia.org/wiki/C_Sharp_(programming_language))       | https://github.com/ChrisDill/Raylib-cs      |
 | raylib-cppsharp    | ? | [C#](https://en.wikipedia.org/wiki/C_Sharp_(programming_language))       | https://github.com/phxvyper/raylib-cppsharp |
 | RaylibFS           | 2.5 | [F#](https://fsharp.org/)             | https://github.com/dallinbeutler/RaylibFS     |
@@ -22,7 +22,7 @@ Here it is a list with the ones I'm aware of:
 | raylib-rs          | ? | [Rust](https://www.rust-lang.org/)    | https://github.com/deltaphc/raylib-rs     |
 | raylib-lua         | ? | [Lua](http://www.lua.org/)            | https://github.com/raysan5/raylib-lua       |
 | raylib-lua-ffi     | 2.0 | [Lua](http://www.lua.org/)            | https://github.com/raysan5/raylib/issues/693    |
-| raylib-lua-sol     | ? | [Lua](http://www.lua.org/)            | https://github.com/RobLoach/raylib-lua-sol     |
+| raylib-lua-sol     | 2.5 | [Lua](http://www.lua.org/)          | https://github.com/RobLoach/raylib-lua-sol     |
 | raylib-lua         | ? | [Lua](http://www.lua.org/)            | https://github.com/TSnake41/raylib-lua       |
 | raylib-luamore     | ? | [Lua](http://www.lua.org/)            | https://github.com/HDPLocust/raylib-luamore    |
 | raylua             | 3.0 | [Lua](http://www.lua.org/)            | https://github.com/Rabios/raylua          |
@@ -48,11 +48,11 @@ Here it is a list with the ones I'm aware of:
 | jaylib             | ? | [Java](https://en.wikipedia.org/wiki/Java_(programming_language))           | https://github.com/electronstudio/jaylib/   |
 | raylib-java        | ? | [Java](https://en.wikipedia.org/wiki/Java_(programming_language))           | https://github.com/XoanaIO/raylib-java   |
 | clj-raylib         | ? | [Clojure](https://clojure.org/)          | https://github.com/lsevero/clj-raylib       |
-| node-raylib        | ? | [Node.js](https://nodejs.org/en/)        | https://github.com/RobLoach/node-raylib     |
+| node-raylib        | 3.0 | [Node.js](https://nodejs.org/en/)        | https://github.com/RobLoach/node-raylib     |
 | QuickJS-raylib     | ? | [QuickJS](https://bellard.org/quickjs/)  | https://github.com/sntg-p/QuickJS-raylib    |
-| raylib-js          | ? | [JavaScript](https://en.wikipedia.org/wiki/JavaScript)     | https://github.com/RobLoach/raylib-js    |
-| raylib-chaiscript  | ? | [ChaiScript](http://chaiscript.com/)     | https://github.com/RobLoach/raylib-chaiscript        |
-| raylib-squirrel    | ? | [Squirrel](http://www.squirrel-lang.org/)     | https://github.com/RobLoach/raylib-squirrel    |
+| raylib-js          | 2.6 | [JavaScript](https://en.wikipedia.org/wiki/JavaScript)     | https://github.com/RobLoach/raylib-js    |
+| raylib-chaiscript  | 2.6 | [ChaiScript](http://chaiscript.com/)     | https://github.com/RobLoach/raylib-chaiscript        |
+| raylib-squirrel    | 2.5 | [Squirrel](http://www.squirrel-lang.org/)     | https://github.com/RobLoach/raylib-squirrel    |
 | racket-raylib-2d   | ? | [Racket](https://racket-lang.org/)       | https://github.com/arvyy/racket-raylib-2d           |
 | raylib-php         | ? | [PHP](https://en.wikipedia.org/wiki/PHP)      | https://github.com/joseph-montanez/raylib-php   |
 | raylib-php-ffi     | ? | [PHP](https://en.wikipedia.org/wiki/PHP)      | https://github.com/oraoto/raylib-php-ffi      |
