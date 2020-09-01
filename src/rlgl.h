@@ -524,6 +524,7 @@ RLAPI void rlCheckErrors(void);                       // Check and log OpenGL er
 RLAPI int rlGetVersion(void);                         // Returns current OpenGL version
 RLAPI bool rlCheckBufferLimit(int vCount);            // Check internal buffer overflow for a given number of vertex
 RLAPI void rlSetDebugMarker(const char *text);        // Set debug marker for analysis
+RLAPI void rlSetBlendMode(int glSrcFactor, int glDstFactor, int glEquation);    // // Set blending mode factor and equation (using OpenGL factors)
 RLAPI void rlLoadExtensions(void *loader);            // Load OpenGL extensions
 RLAPI Vector3 rlUnproject(Vector3 source, Matrix proj, Matrix view);  // Get world coordinates from screen coordinates
 
@@ -589,7 +590,6 @@ RLAPI Texture2D GenTextureBRDF(Shader shader, int size);                  // Gen
 RLAPI void BeginShaderMode(Shader shader);              // Begin custom shader drawing
 RLAPI void EndShaderMode(void);                         // End custom shader drawing (use default shader)
 RLAPI void BeginBlendMode(int mode);                    // Begin blending mode (alpha, additive, multiplied)
-RLAPI void BeginBlendModeEx(int sFactor, int dFactor, int equation);    // Begin blending mode (full options)
 RLAPI void EndBlendMode(void);                          // End blending mode (reset to default: alpha blending)
 
 // VR control functions
@@ -852,6 +852,11 @@ typedef struct rlglData {
         unsigned int defaultFShaderId;      // Default fragment shader Id (used by default shader program)
         Shader defaultShader;               // Basic shader, support vertex color and diffuse texture
         Shader currentShader;               // Shader to be used on rendering (by default, defaultShader)
+        
+        int currentBlendMode;               // Blending mode active
+        int glBlendSrcFactor;               // Blending source factor
+        int glBlendDstFactor;               // Blending destination factor
+        int glBlendEquation;                // Blending equation
 
         int framebufferWidth;               // Default framebuffer width
         int framebufferHeight;              // Default framebuffer height
@@ -1869,6 +1874,14 @@ void rlSetDebugMarker(const char *text)
 #if defined(GRAPHICS_API_OPENGL_33)
     if (RLGL.ExtSupported.debugMarker) glInsertEventMarkerEXT(0, text);
 #endif
+}
+
+// Set blending mode factor and equation
+void rlSetBlendMode(int glSrcFactor, int glDstFactor, int glEquation)
+{
+    RLGL.State.glBlendSrcFactor = glSrcFactor;
+    RLGL.State.glBlendDstFactor = glDstFactor;
+    RLGL.State.glBlendEquation = glEquation;
 }
 
 // Load OpenGL extensions
@@ -3609,40 +3622,26 @@ Texture2D GenTextureBRDF(Shader shader, int size)
     return brdf;
 }
 
-
-void BeginBlendModeEx(int sFactor, int dFactor, int equation)
-{
-    static int glSFactor = 0;   // Track current blending mode
-    static int glDFactor = 0;   // Track current blending mode
-    static int glEquation = 0;   // Track current blending mode
-
-    if (glSFactor != sFactor || glDFactor != dFactor || glEquation != equation) {
-
-        rlglDraw();
-        glBlendFunc(sFactor, dFactor);
-        glBlendEquation(equation);
-
-        glSFactor = sFactor;
-        glDFactor = dFactor;
-        glEquation = equation;
-    }
-}
-
 // Begin blending mode (alpha, additive, multiplied)
 // NOTE: Only 3 blending modes supported, default blend mode is alpha
 void BeginBlendMode(int mode)
 {
-    if (mode < 5)
+    if (RLGL.State.currentBlendMode != mode)
     {
+        rlglDraw();
+
         switch (mode)
         {
-        case BLEND_ALPHA: BeginBlendModeEx(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA, GL_FUNC_ADD); break;
-        case BLEND_ADDITIVE: BeginBlendModeEx(GL_SRC_ALPHA, GL_ONE, GL_FUNC_ADD); break;
-        case BLEND_MULTIPLIED: BeginBlendModeEx(GL_DST_COLOR, GL_ONE_MINUS_SRC_ALPHA, GL_FUNC_ADD); break;
-        case BLEND_ADD_COLORS: BeginBlendModeEx(GL_ONE, GL_ONE, GL_FUNC_ADD); break;
-        case BLEND_SUBTRACT_COLORS: BeginBlendModeEx(GL_ONE, GL_ONE, GL_FUNC_SUBTRACT); break;
-        default: break;
+            case BLEND_ALPHA: glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA); glBlendEquation(GL_FUNC_ADD); break;	    
+            case BLEND_ADDITIVE: glBlendFunc(GL_SRC_ALPHA, GL_ONE); glBlendEquation(GL_FUNC_ADD); break;	                
+            case BLEND_MULTIPLIED: glBlendFunc(GL_DST_COLOR, GL_ONE_MINUS_SRC_ALPHA); glBlendEquation(GL_FUNC_ADD); break;
+            case BLEND_ADD_COLORS: glBlendFunc(GL_ONE, GL_ONE); glBlendEquation(GL_FUNC_ADD); break;
+            case BLEND_SUBTRACT_COLORS: glBlendFunc(GL_ONE, GL_ONE); glBlendEquation(GL_FUNC_SUBTRACT); break;
+            case BLEND_CUSTOM: glBlendFunc(RLGL.State.glBlendSrcFactor, RLGL.State.glBlendDstFactor); glBlendEquation(RLGL.State.glBlendEquation); break;
+            default: break;
         }
+        
+        RLGL.State.currentBlendMode = mode;
     }
 }
 
