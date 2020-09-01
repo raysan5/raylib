@@ -8,19 +8,18 @@ Here it is a list with the ones I'm aware of:
 |:------------------:|:-------------: | :--------:|----------------------------------------------------------------------|
 | raylib             | **3.1-dev** | [C](https://en.wikipedia.org/wiki/C_(programming_language))    | https://github.com/raysan5/raylib    |
 | raylib-cpp         | ? | [C++](https://en.wikipedia.org/wiki/C%2B%2B)            | https://github.com/robloach/raylib-cpp          |
-| Raylib-cs          | 3.0 | [C#](https://en.wikipedia.org/wiki/C_Sharp_(programming_language))       | https://github.com/ChrisDill/Raylib-cs      |
+| Raylib-cs          | ? | [C#](https://en.wikipedia.org/wiki/C_Sharp_(programming_language))       | https://github.com/ChrisDill/Raylib-cs      |
 | raylib-cppsharp    | ? | [C#](https://en.wikipedia.org/wiki/C_Sharp_(programming_language))       | https://github.com/phxvyper/raylib-cppsharp |
-| RaylibFS           | 2.5 | [F#](https://fsharp.org/)             | https://github.com/dallinbeutler/RaylibFS     |
+| RaylibFS           | ? | [F#](https://fsharp.org/)             | https://github.com/dallinbeutler/RaylibFS     |
 | raylib_d           | ? | [D](https://dlang.org/)               | https://github.com/Sepheus/raylib_d     |
 | raylib-d           | ? | [D](https://dlang.org/)               | https://github.com/onroundit/raylib-d     |
 | bindbc-raylib      | ? | [D](https://dlang.org/)               | https://github.com/o3o/bindbc-raylib   |
-| dray               | ? | [D](https://dlang.org/)               | https://github.com/xdrie/dray       |
+| dray               | 3.0 | [D](https://dlang.org/)               | https://github.com/xdrie/dray       |
 | raylib-go          | ? | [Go](https://golang.org/)             | https://github.com/gen2brain/raylib-go  |
 | raylib-goplus      | ? | [Go](https://golang.org/)             | https://github.com/Lachee/raylib-goplus         |
 | ray-go             | ? | [Go](https://golang.org/)             | https://github.com/hecate-tech/ray-go     |
-| go-raylib          | 3.1-dev | [Go](https://golang.org/)       | https://github.com/chunqian/go-raylib  |
-| raylib-rs          | ? | [Rust](https://www.rust-lang.org/)    | https://github.com/deltaphc/raylib-rs     |
-| raylib-lua         | ? | [Lua](http://www.lua.org/)            | https://github.com/raysan5/raylib-lua       |
+| raylib-rs          | 3.0 | [Rust](https://www.rust-lang.org/)    | https://github.com/deltaphc/raylib-rs     |
+| raylib-lua         | 1.7 | [Lua](http://www.lua.org/)            | https://github.com/raysan5/raylib-lua       |
 | raylib-lua-ffi     | 2.0 | [Lua](http://www.lua.org/)            | https://github.com/raysan5/raylib/issues/693    |
 | raylib-lua-sol     | ? | [Lua](http://www.lua.org/)            | https://github.com/RobLoach/raylib-lua-sol     |
 | raylib-lua         | ? | [Lua](http://www.lua.org/)            | https://github.com/TSnake41/raylib-lua       |
@@ -45,7 +44,7 @@ Here it is a list with the ones I'm aware of:
 | raylib-py          | ? | [Python](https://www.python.org/)        | https://github.com/overdev/raylib-py       |
 | raylib-python-cffi | ? | [Python](https://www.python.org/)        | https://github.com/electronstudio/raylib-python-cffi    |
 | raylib-py-ctbg     | 2.6 | [Python](https://www.python.org/)        | https://github.com/overdev/raylib-py-ctbg                 |
-| jaylib             | ? | [Java](https://en.wikipedia.org/wiki/Java_(programming_language))           | https://github.com/electronstudio/jaylib/   |
+| jaylib             | 3.0 | [Java](https://en.wikipedia.org/wiki/Java_(programming_language))           | https://github.com/electronstudio/jaylib/   |
 | raylib-java        | ? | [Java](https://en.wikipedia.org/wiki/Java_(programming_language))           | https://github.com/XoanaIO/raylib-java   |
 | clj-raylib         | ? | [Clojure](https://clojure.org/)          | https://github.com/lsevero/clj-raylib       |
 | node-raylib        | ? | [Node.js](https://nodejs.org/en/)        | https://github.com/RobLoach/node-raylib     |
@@ -70,11 +69,11 @@ Here it is a list with the ones I'm aware of:
 | raylib-jai         | ? | [Jai](https://github.com/BSVino/JaiPrimer/blob/master/JaiPrimer.md)  | https://github.com/kevinw/raylib-jai   |
 | ray.zig            | ? | [Zig](https://ziglang.org/)               | https://github.com/BitPuffin/zig-raylib-experiments |
 | raylib-Ada         | ? | [Ada](https://www.adacore.com/about-ada)  | https://github.com/mimo/raylib-Ada        |
-| jaylib             | 3.0 | [Janet](https://janet-lang.org/)          | https://github.com/janet-lang/jaylib      |
+| jaylib             | ? | [Janet](https://janet-lang.org/)          | https://github.com/janet-lang/jaylib      |
 | raykit             | ? | [Kit](https://www.kitlang.org/)           | https://github.com/Gamerfiend/raykit      |
 | vraylib            | ? | [V](https://vlang.io/)                    | https://github.com/MajorHard/vraylib      |
 | ray.mod            | ? | [BlitzMax](https://blitzmax.org/)         | https://github.com/bmx-ng/ray.mod         |
-| ray-ocaml          | 3.0 | [OCaml](https://ocaml.org/)               | https://github.com/tjammer/raylib-ocaml   |
+| ray-ocaml          | ? | [OCaml](https://ocaml.org/)               | https://github.com/tjammer/raylib-ocaml   |
 | raylib-mosaic      | ? | [Mosaic](https://github.com/sal55/langs/tree/master/Mosaic)     | https://github.com/pluckyporcupine/raylib-mosaic   |
 | raylib-xdpw        | ? | [XD Pascal](https://github.com/vtereshkov/xdpw)     | https://github.com/vtereshkov/raylib-xdpw   |
 | raylib-carp        | ? | [Carp](https://github.com/carp-lang/Carp)           | https://github.com/pluckyporcupine/raylib-carp   |
