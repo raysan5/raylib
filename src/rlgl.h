@@ -382,10 +382,12 @@ typedef unsigned char byte;
 
     // Color blending modes (pre-defined)
     typedef enum {
-        BLEND_ALPHA = 0,
-        BLEND_ADDITIVE,
-        BLEND_MULTIPLIED,
-        BLEND_ADD_COLORS
+        BLEND_ALPHA = 0,                // Blend textures considering alpha (default)
+        BLEND_ADDITIVE,                 // Blend textures adding colors
+        BLEND_MULTIPLIED,               // Blend textures multiplying colors
+        BLEND_ADD_COLORS,               // Blend textures adding colors (alternative)
+        BLEND_SUBTRACT_COLORS,          // Blend textures subtracting colors (alternative)
+        BLEND_CUSTOM                    // Belnd textures using custom src/dst factors (use SetBlendModeCustom())
     } BlendMode;
 
     // Shader location point type
