@@ -350,6 +350,7 @@ typedef struct CoreData {
         const char *title;                  // Window text title const pointer
         bool ready;                         // Flag to check if window has been initialized successfully
         bool minimized;                     // Flag to check if window has been minimized
+        bool maximized;                     // Flag to check if window has been maximized
         bool focused;                       // Flag to check if window has been focused
         bool resized;                       // Flag to check if window has been resized
         bool fullscreen;                    // Flag to check if fullscreen mode required
@@ -501,6 +502,7 @@ static void WindowSizeCallback(GLFWwindow *window, int width, int height);      
 static void WindowIconifyCallback(GLFWwindow *window, int iconified);                      // GLFW3 WindowIconify Callback, runs when window is minimized/restored
 static void WindowFocusCallback(GLFWwindow *window, int focused);                          // GLFW3 WindowFocus Callback, runs when window get/lose focus
 static void WindowDropCallback(GLFWwindow *window, int count, const char **paths);         // GLFW3 Window Drop Callback, runs when drop files into window
+static void WindowMaximizeCallback(GLFWwindow *window, int maximized);                     // GLFW3 Window Maximize Callback, runs when window is maximized
 #endif
 
 #if defined(PLATFORM_ANDROID)
@@ -874,6 +876,16 @@ bool IsWindowMinimized(void)
 #endif
 }
 
+// Check if window has been maximized (only PLATFORM_DESKTOP)
+bool IsWindowMaximized(void)
+{
+#if defined(PLATFORM_DESKTOP)
+    return CORE.Window.maximized;
+#else
+    return false;
+#endif
+}
+
 // Check if window has the focus
 bool IsWindowFocused(void)
 {
@@ -1072,6 +1084,44 @@ void HideWindow(void)
 {
 #if defined(PLATFORM_DESKTOP)
     glfwHideWindow(CORE.Window.handle);
+#endif
+}
+
+// Decorate the window (only PLATFORM_DESKTOP)
+void DecorateWindow(void)
+{
+#if defined(PLATFORM_DESKTOP)
+    glfwSetWindowAttrib(CORE.Window.handle, GLFW_DECORATED, GLFW_TRUE);
+#endif
+}
+
+// // Undecorate the window (only PLATFORM_DESKTOP)
+void UndecorateWindow(void)
+{
+#if defined(PLATFORM_DESKTOP)
+    glfwSetWindowAttrib(CORE.Window.handle, GLFW_DECORATED, GLFW_FALSE);
+#endif
+}
+
+// Maximize the window, if resizable (only PLATFORM_DESKTOP)
+void MaximizeWindow(void)
+{
+#if defined(PLATFORM_DESKTOP)
+    if (glfwGetWindowAttrib(CORE.Window.handle, GLFW_RESIZABLE) == GLFW_TRUE)
+    {
+        glfwMaximizeWindow(CORE.Window.handle);
+    }
+#endif
+}
+
+// Restore the window, if resizable (only PLATFORM_DESKTOP)
+void RestoreWindow(void)
+{
+#if defined(PLATFORM_DESKTOP)
+    if (glfwGetWindowAttrib(CORE.Window.handle, GLFW_RESIZABLE) == GLFW_TRUE)
+    {
+        glfwRestoreWindow(CORE.Window.handle);
+    }
 #endif
 }
 
@@ -2880,6 +2930,7 @@ static bool InitGraphicsDevice(int width, int height)
     glfwSetWindowIconifyCallback(CORE.Window.handle, WindowIconifyCallback);
     glfwSetWindowFocusCallback(CORE.Window.handle, WindowFocusCallback);
     glfwSetDropCallback(CORE.Window.handle, WindowDropCallback);
+    glfwSetWindowMaximizeCallback(CORE.Window.handle, WindowMaximizeCallback);
 
     glfwMakeContextCurrent(CORE.Window.handle);
 
@@ -3936,6 +3987,12 @@ static void WindowDropCallback(GLFWwindow *window, int count, const char **paths
     }
 
     CORE.Window.dropFilesCount = count;
+}
+
+static void WindowMaximizeCallback(GLFWwindow *window, int maximized)
+{
+    if (maximized) CORE.Window.maximized = true;  // The window was maximized
+    else CORE.Window.maximized = false;           // The window was restored
 }
 #endif
 

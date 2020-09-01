@@ -871,6 +871,7 @@ RLAPI bool WindowShouldClose(void);                               // Check if KE
 RLAPI void CloseWindow(void);                                     // Close window and unload OpenGL context
 RLAPI bool IsWindowReady(void);                                   // Check if window has been initialized successfully
 RLAPI bool IsWindowMinimized(void);                               // Check if window has been minimized
+RLAPI bool IsWindowMaximized(void);                               // Check if window has been maximized (only PLATFORM_DESKTOP)
 RLAPI bool IsWindowFocused(void);                                 // Check if window has been focused
 RLAPI bool IsWindowResized(void);                                 // Check if window has been resized
 RLAPI bool IsWindowHidden(void);                                  // Check if window is currently hidden
@@ -878,6 +879,10 @@ RLAPI bool IsWindowFullscreen(void);                              // Check if wi
 RLAPI void ToggleFullscreen(void);                                // Toggle fullscreen mode (only PLATFORM_DESKTOP)
 RLAPI void UnhideWindow(void);                                    // Show the window
 RLAPI void HideWindow(void);                                      // Hide the window
+RLAPI void DecorateWindow(void);                                  // Decorate the window (only PLATFORM_DESKTOP)
+RLAPI void UndecorateWindow(void);                                // Undecorate the window (only PLATFORM_DESKTOP)
+RLAPI void MaximizeWindow(void);                                  // Maximize the window, if resizable (only PLATFORM_DESKTOP)
+RLAPI void RestoreWindow(void);                                   // Restore the window, if resizable (only PLATFORM_DESKTOP)
 RLAPI void SetWindowIcon(Image image);                            // Set icon for window (only PLATFORM_DESKTOP)
 RLAPI void SetWindowTitle(const char *title);                     // Set title for window (only PLATFORM_DESKTOP)
 RLAPI void SetWindowPosition(int x, int y);                       // Set window position on screen (only PLATFORM_DESKTOP)
