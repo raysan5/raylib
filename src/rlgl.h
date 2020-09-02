@@ -548,7 +548,7 @@ RLAPI void rlLoadMesh(Mesh *mesh, bool dynamic);                          // Upl
 RLAPI void rlUpdateMesh(Mesh mesh, int buffer, int count);                // Update vertex or index data on GPU (upload new data to one buffer)
 RLAPI void rlUpdateMeshAt(Mesh mesh, int buffer, int count, int index);   // Update vertex or index data on GPU, at index
 RLAPI void rlDrawMesh(Mesh mesh, Material material, Matrix transform);    // Draw a 3d mesh with material and transform
-RLAPI void rlDrawMeshInstanced(Mesh mesh, Material material, int count, Matrix *transforms);    // Draw a 3d mesh with material and transform
+RLAPI void rlDrawMeshInstanced(Mesh mesh, Material material, Matrix *transforms, int count);    // Draw a 3d mesh with material and transform
 RLAPI void rlUnloadMesh(Mesh mesh);                                       // Unload mesh data from CPU and GPU
 
 // NOTE: There is a set of shader related functions that are available to end user,
@@ -571,7 +571,7 @@ RLAPI Rectangle GetShapesTextureRec(void);                                // Get
 
 // Shader configuration functions
 RLAPI int GetShaderLocation(Shader shader, const char *uniformName);              // Get shader uniform location
-RLAPI int GetShaderAttribLocation(Shader shader, const char *attribName);         // Get shader attribute location
+RLAPI int GetShaderLocationAttrib(Shader shader, const char *attribName);         // Get shader attribute location
 RLAPI void SetShaderValue(Shader shader, int uniformLoc, const void *value, int uniformType);               // Set shader uniform value
 RLAPI void SetShaderValueV(Shader shader, int uniformLoc, const void *value, int uniformType, int count);   // Set shader uniform value vector
 RLAPI void SetShaderValueMatrix(Shader shader, int uniformLoc, Matrix mat);       // Set shader uniform value (matrix 4x4)
@@ -2835,7 +2835,7 @@ void rlDrawMesh(Mesh mesh, Material material, Matrix transform)
 }
 
 // Draw a 3d mesh with material and transform
-void rlDrawMeshInstanced(Mesh mesh, Material material, int count, Matrix *transforms)
+void rlDrawMeshInstanced(Mesh mesh, Material material, Matrix *transforms, int count)
 {
 #if defined(GRAPHICS_API_OPENGL_33)
 
@@ -3254,7 +3254,7 @@ int GetShaderLocation(Shader shader, const char *uniformName)
 }
 
 // Get shader attribute location
-int GetShaderAttribLocation(Shader shader, const char *attribName)
+int GetShaderLocationAttrib(Shader shader, const char *attribName)
 {
     int location = -1;
 #if defined(GRAPHICS_API_OPENGL_33) || defined(GRAPHICS_API_OPENGL_ES2)
