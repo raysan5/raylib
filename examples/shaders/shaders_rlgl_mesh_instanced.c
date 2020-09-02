@@ -32,12 +32,6 @@ int main(void)
     const int screenWidth = 1024;
     const int screenHeight = 768;
 
-    const float sunRadius = 4.0f;
-    const float earthRadius = 0.6f;
-    const float earthOrbitRadius = 8.0f;
-    const float moonRadius = 0.16f;
-    const float moonOrbitRadius = 1.5f;
-
     SetConfigFlags(FLAG_MSAA_4X_HINT);  // Enable Multi Sampling Anti Aliasing 4x (if available)
     InitWindow(screenWidth, screenHeight, "raylib [shaders] example - rlgl module usage for instanced meshes");
 
