@@ -13,18 +13,18 @@ Here it is a list with the ones I'm aware of:
 | RaylibFS           | 2.5 | [F#](https://fsharp.org/)             | https://github.com/dallinbeutler/RaylibFS     |
 | raylib_d           | 2.5 | [D](https://dlang.org/)               | https://github.com/Sepheus/raylib_d     |
 | raylib-d           | 3.0 | [D](https://dlang.org/)               | https://github.com/onroundit/raylib-d     |
-| bindbc-raylib      | ? | [D](https://dlang.org/)               | https://github.com/o3o/bindbc-raylib   |
-| dray               | ? | [D](https://dlang.org/)               | https://github.com/xdrie/dray       |
-| raylib-go          | ? | [Go](https://golang.org/)             | https://github.com/gen2brain/raylib-go  |
-| raylib-goplus      | ? | [Go](https://golang.org/)             | https://github.com/Lachee/raylib-goplus         |
-| ray-go             | ? | [Go](https://golang.org/)             | https://github.com/hecate-tech/ray-go     |
+| bindbc-raylib      | 3.0 | [D](https://dlang.org/)               | https://github.com/o3o/bindbc-raylib   |
+| dray               | 3.0 | [D](https://dlang.org/)               | https://github.com/xdrie/dray       |
+| raylib-go          | 3.0 | [Go](https://golang.org/)             | https://github.com/gen2brain/raylib-go  |
+| raylib-goplus      | 2.6-dev | [Go](https://golang.org/)             | https://github.com/Lachee/raylib-goplus         |
+| ray-go             | 2.6-dev | [Go](https://golang.org/)             | https://github.com/hecate-tech/ray-go     |
 | go-raylib          | 3.1-dev | [Go](https://golang.org/)       | https://github.com/chunqian/go-raylib  |
 | raylib-rs          | 3.0 | [Rust](https://www.rust-lang.org/)    | https://github.com/deltaphc/raylib-rs     |
 | raylib-lua         | 1.7 | [Lua](http://www.lua.org/)            | https://github.com/raysan5/raylib-lua       |
 | raylib-lua-ffi     | 2.0 | [Lua](http://www.lua.org/)            | https://github.com/raysan5/raylib/issues/693    |
 | raylib-lua-sol     | 2.5 | [Lua](http://www.lua.org/)          | https://github.com/RobLoach/raylib-lua-sol     |
 | raylib-lua         | 3.0 | [Lua](http://www.lua.org/)            | https://github.com/TSnake41/raylib-lua       |
-| raylib-luamore     | ? | [Lua](http://www.lua.org/)            | https://github.com/HDPLocust/raylib-luamore    |
+| raylib-luamore     | 3.0 | [Lua](http://www.lua.org/)            | https://github.com/HDPLocust/raylib-luamore    |
 | raylua             | 3.0 | [Lua](http://www.lua.org/)            | https://github.com/Rabios/raylua          |
 | LuaJIT-Raylib      | 2.6 | [Lua](http://www.lua.org/)            | https://github.com/Bambofy/LuaJIT-Raylib    |
 | raylib-nelua       | 3.0 | [Nelua](https://nelua.io/)            | https://github.com/Andre-LA/raylib-nelua-mirror     |
@@ -32,17 +32,17 @@ Here it is a list with the ones I'm aware of:
 | raylib-nim         | 2.0 | [Nim](https://nim-lang.org/)          | https://github.com/Skrylar/raylib-nim                  |
 | raylib-Forever     | ? | [Nim](https://nim-lang.org/)          | https://github.com/Guevara-chan/Raylib-Forever    |
 | nim-raylib         | ? | [Nim](https://nim-lang.org/)          | https://github.com/tomc1998/nim-raylib            |
-| raylib-haskell     | ? | [Haskell](https://www.haskell.org/)   | https://github.com/DevJac/raylib-haskell |
+| raylib-haskell     | 2.0 | [Haskell](https://www.haskell.org/)   | https://github.com/DevJac/raylib-haskell |
 | raylib-cr          | ? | [Crystal](https://crystal-lang.org/)  | https://github.com/AregevDev/raylib-cr      |
-| cray               | ? | [Crystal](https://crystal-lang.org/)  | https://gitlab.com/Zatherz/cray           |
+| cray               | 1.8 | [Crystal](https://crystal-lang.org/)  | https://gitlab.com/Zatherz/cray           |
 | raylib.cr          | ? | [Crystal](https://crystal-lang.org/)  | https://github.com/sam0x17/raylib.cr     |
 | raylib-pascal      | 2.0 | [Pascal](https://en.wikipedia.org/wiki/Pascal_(programming_language))         | https://github.com/drezgames/raylib-pascal    |
 | raylib-pas         | 2.6-dev | [Pascal](https://en.wikipedia.org/wiki/Pascal_(programming_language))         | https://github.com/tazdij/raylib-pas      |
 | Graphics-Raylib    | ? | [Perl](https://www.perl.org/)            | https://github.com/athreef/Graphics-Raylib      |
 | raylib-ruby-ffi    | ? | [Ruby](https://www.ruby-lang.org/en/)    | https://github.com/D3nX/raylib-ruby-ffi      |
-| raylib-ruby        | ? | [Ruby](https://www.ruby-lang.org/en/)    | https://github.com/a0/raylib-ruby        |
+| raylib-ruby        | 2.6 | [Ruby](https://www.ruby-lang.org/en/)    | https://github.com/a0/raylib-ruby        |
 | raylib-mruby       | ? | [mruby](https://github.com/mruby/mruby)  | https://github.com/lihaochen910/raylib-mruby    |
-| raylib-py          | ? | [Python](https://www.python.org/)        | https://github.com/overdev/raylib-py       |
+| raylib-py          | 2.0 | [Python](https://www.python.org/)        | https://github.com/overdev/raylib-py       |
 | raylib-python-cffi | 2.6 | [Python](https://www.python.org/)        | https://github.com/electronstudio/raylib-python-cffi    |
 | raylib-py-ctbg     | 2.6 | [Python](https://www.python.org/)        | https://github.com/overdev/raylib-py-ctbg                 |
 | jaylib             | 3.0 | [Java](https://en.wikipedia.org/wiki/Java_(programming_language))           | https://github.com/electronstudio/jaylib/   |
@@ -61,14 +61,14 @@ Here it is a list with the ones I'm aware of:
 | raylib-haxe        | 2.4 | [Haxe](https://haxe.org/)                | https://github.com/ibilon/raylib-haxe           |
 | ringraylib         | 2.6 | [Ring](http://ring-lang.sourceforge.net/)  | https://github.com/ringpackages/ringraylib     |
 | cl-raylib          | 3.0 | [Common Lisp](https://common-lisp.net/)    | https://github.com/longlene/cl-raylib    |
-| raylib-scm         | ? | [Chicken Scheme](https://www.call-cc.org/) | https://github.com/yashrk/raylib-scm     |
+| raylib-scm         | 2.5 | [Chicken Scheme](https://www.call-cc.org/) | https://github.com/yashrk/raylib-scm     |
 | raylib-chibi       | ? | [Chibi-Scheme](https://github.com/ashinn/chibi-scheme)   | https://github.com/VincentToups/raylib-chibi  |
 | Euraylib           | 3.0 | [Euphoria](https://openeuphoria.org/)  | https://github.com/gAndy50/Euraylib          |
 | raylib-wren        | 3.0 | [Wren](http://wren.io/)           | https://github.com/TSnake41/raylib-wren           |
 | raylib-odin        | 3.0 | [Odin](https://odin-lang.org/)            | https://github.com/kevinw/raylib-odin     |
 | raylib-zig         | 3.0 | [Zig](https://ziglang.org/)               | https://github.com/Not-Nik/raylib-zig     |
-| raylib-jai         | ? | [Jai](https://github.com/BSVino/JaiPrimer/blob/master/JaiPrimer.md)  | https://github.com/kevinw/raylib-jai   |
-| ray.zig            | ? | [Zig](https://ziglang.org/)               | https://github.com/BitPuffin/zig-raylib-experiments |
+| raylib-jai         | 3.1-dev | [Jai](https://github.com/BSVino/JaiPrimer/blob/master/JaiPrimer.md)  | https://github.com/kevinw/raylib-jai   |
+| ray.zig            | 2.5 | [Zig](https://ziglang.org/)               | https://github.com/BitPuffin/zig-raylib-experiments |
 | raylib-Ada         | 3.0 | [Ada](https://www.adacore.com/about-ada)  | https://github.com/mimo/raylib-Ada        |
 | jaylib             | 3.0 | [Janet](https://janet-lang.org/)          | https://github.com/janet-lang/jaylib      |
 | raykit             | ? | [Kit](https://www.kitlang.org/)           | https://github.com/Gamerfiend/raykit      |
@@ -79,10 +79,10 @@ Here it is a list with the ones I'm aware of:
 | raylib-xdpw        | 2.6 | [XD Pascal](https://github.com/vtereshkov/xdpw)     | https://github.com/vtereshkov/raylib-xdpw   |
 | raylib-carp        | 3.0 | [Carp](https://github.com/carp-lang/Carp)           | https://github.com/pluckyporcupine/raylib-carp   |
 | raylib-fb          | 3.0 | [FreeBasic](https://www.freebasic.net/)    | https://github.com/IchMagBier/raylib-fb  |
-| raylib-purebasic   | ? | [PureBasic](https://www.purebasic.com/)    | https://github.com/D-a-n-i-l-o/raylib-purebasic   |
+| raylib-purebasic   | 3.0 | [PureBasic](https://www.purebasic.com/)    | https://github.com/D-a-n-i-l-o/raylib-purebasic   |
 | raylib-ats2        | ? | [ATS2](http://www.ats-lang.org/)           | https://github.com/mephistopheles-8/raylib-ats2      |
 | raylib-beef        | 3.0 | [Beef](https://www.beeflang.org/)          | https://github.com/M0n7y5/raylib-beef    |
-| raylib-never       | ? | [Never](https://github.com/never-lang/never) | https://github.com/never-lang/raylib-never |
+| raylib-never       | 3.0 | [Never](https://github.com/never-lang/never) | https://github.com/never-lang/raylib-never |
 | raylib.cbl         | ? | [COBOL](https://en.wikipedia.org/wiki/COBOL)        | *[code examples](https://github.com/Martinfx/Cobol/tree/master/OpenCobol/Games/raylib)* |
 
  
