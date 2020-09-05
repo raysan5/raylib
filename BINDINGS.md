@@ -63,6 +63,7 @@ Here it is a list with the ones I'm aware of:
 | cl-raylib          | 3.0 | [Common Lisp](https://common-lisp.net/)    | https://github.com/longlene/cl-raylib    |
 | raylib-scm         | 2.5 | [Chicken Scheme](https://www.call-cc.org/) | https://github.com/yashrk/raylib-scm     |
 | raylib-chibi       | ? | [Chibi-Scheme](https://github.com/ashinn/chibi-scheme)   | https://github.com/VincentToups/raylib-chibi  |
+| raylib-gambit-scheme | 3.1-dev | [Gambit Scheme](https://github.com/gambit/gambit)   | https://github.com/georgjz/raylib-gambit-scheme  |
 | Euraylib           | 3.0 | [Euphoria](https://openeuphoria.org/)  | https://github.com/gAndy50/Euraylib          |
 | raylib-wren        | 3.0 | [Wren](http://wren.io/)           | https://github.com/TSnake41/raylib-wren           |
 | raylib-odin        | 3.0 | [Odin](https://odin-lang.org/)            | https://github.com/kevinw/raylib-odin     |
