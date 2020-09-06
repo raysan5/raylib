@@ -195,6 +195,6 @@ void DrawAngleGauge(Texture2D angleGauge, int x, int y, float angle, char title[
 
     DrawTexturePro(angleGauge, srcRec, dstRec, origin, angle, color);
 
-    DrawText(FormatText("%5.1f", angle), x - MeasureText(FormatText("%5.1f", angle), textSize) / 2, y + 10, textSize, DARKGRAY);
+    DrawText(TextFormat("%5.1f", angle), x - MeasureText(TextFormat("%5.1f", angle), textSize) / 2, y + 10, textSize, DARKGRAY);
     DrawText(title, x - MeasureText(title, textSize) / 2, y + 60, textSize, DARKGRAY);
 }

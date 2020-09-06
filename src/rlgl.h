@@ -125,6 +125,8 @@
     #define GRAPHICS_API_OPENGL_33
 #endif
 
+#define SUPPORT_RENDER_TEXTURES_HINT
+
 //----------------------------------------------------------------------------------
 // Defines and Macros
 //----------------------------------------------------------------------------------
@@ -380,10 +382,12 @@ typedef unsigned char byte;
 
     // Color blending modes (pre-defined)
     typedef enum {
-        BLEND_ALPHA = 0,
-        BLEND_ADDITIVE,
-        BLEND_MULTIPLIED,
-        BLEND_ADD_COLORS
+        BLEND_ALPHA = 0,                // Blend textures considering alpha (default)
+        BLEND_ADDITIVE,                 // Blend textures adding colors
+        BLEND_MULTIPLIED,               // Blend textures multiplying colors
+        BLEND_ADD_COLORS,               // Blend textures adding colors (alternative)
+        BLEND_SUBTRACT_COLORS,          // Blend textures subtracting colors (alternative)
+        BLEND_CUSTOM                    // Belnd textures using custom src/dst factors (use SetBlendModeCustom())
     } BlendMode;
 
     // Shader location point type
@@ -517,12 +521,13 @@ RLAPI unsigned int rlLoadAttribBuffer(unsigned int vaoId, int shaderLoc, void *b
 RLAPI void rlglInit(int width, int height);           // Initialize rlgl (buffers, shaders, textures, states)
 RLAPI void rlglClose(void);                           // De-inititialize rlgl (buffers, shaders, textures)
 RLAPI void rlglDraw(void);                            // Update and draw default internal buffers
+RLAPI void rlCheckErrors(void);                       // Check and log OpenGL error codes
 
 RLAPI int rlGetVersion(void);                         // Returns current OpenGL version
 RLAPI bool rlCheckBufferLimit(int vCount);            // Check internal buffer overflow for a given number of vertex
 RLAPI void rlSetDebugMarker(const char *text);        // Set debug marker for analysis
+RLAPI void rlSetBlendMode(int glSrcFactor, int glDstFactor, int glEquation);    // // Set blending mode factor and equation (using OpenGL factors)
 RLAPI void rlLoadExtensions(void *loader);            // Load OpenGL extensions
-RLAPI Vector3 rlUnproject(Vector3 source, Matrix proj, Matrix view);  // Get world coordinates from screen coordinates
 
 // Textures data management
 RLAPI unsigned int rlLoadTexture(void *data, int width, int height, int format, int mipmapCount); // Load texture in GPU
@@ -852,6 +857,11 @@ typedef struct rlglData {
         unsigned int defaultFShaderId;      // Default fragment shader Id (used by default shader program)
         Shader defaultShader;               // Basic shader, support vertex color and diffuse texture
         Shader currentShader;               // Shader to be used on rendering (by default, defaultShader)
+        
+        int currentBlendMode;               // Blending mode active
+        int glBlendSrcFactor;               // Blending source factor
+        int glBlendDstFactor;               // Blending destination factor
+        int glBlendEquation;                // Blending equation
 
         int framebufferWidth;               // Default framebuffer width
         int framebufferHeight;              // Default framebuffer height
@@ -1080,7 +1090,6 @@ void rlOrtho(double left, double right, double bottom, double top, double znear,
 #endif
 
 // Set the viewport area (transformation from normalized device coordinates to window coordinates)
-// NOTE: Updates global variables: RLGL.State.framebufferWidth, RLGL.State.framebufferHeight
 void rlViewport(int x, int y, int width, int height)
 {
     glViewport(x, y, width, height);
@@ -1383,7 +1392,7 @@ void rlTextureParameters(unsigned int id, int param, int value)
 // Enable rendering to texture (fbo)
 void rlEnableRenderTexture(unsigned int id)
 {
-#if defined(GRAPHICS_API_OPENGL_33) || defined(GRAPHICS_API_OPENGL_ES2)
+#if (defined(GRAPHICS_API_OPENGL_33) || defined(GRAPHICS_API_OPENGL_ES2)) && defined(SUPPORT_RENDER_TEXTURES_HINT)
     glBindFramebuffer(GL_FRAMEBUFFER, id);
 
     //glDisable(GL_CULL_FACE);    // Allow double side drawing for texture flipping
@@ -1394,7 +1403,7 @@ void rlEnableRenderTexture(unsigned int id)
 // Disable rendering to texture
 void rlDisableRenderTexture(void)
 {
-#if defined(GRAPHICS_API_OPENGL_33) || defined(GRAPHICS_API_OPENGL_ES2)
+#if (defined(GRAPHICS_API_OPENGL_33) || defined(GRAPHICS_API_OPENGL_ES2)) && defined(SUPPORT_RENDER_TEXTURES_HINT)
     glBindFramebuffer(GL_FRAMEBUFFER, 0);
 
     //glEnable(GL_CULL_FACE);
@@ -1450,7 +1459,7 @@ void rlDeleteTextures(unsigned int id)
 // Unload render texture from GPU memory
 void rlDeleteRenderTextures(RenderTexture2D target)
 {
-#if defined(GRAPHICS_API_OPENGL_33) || defined(GRAPHICS_API_OPENGL_ES2)
+#if (defined(GRAPHICS_API_OPENGL_33) || defined(GRAPHICS_API_OPENGL_ES2)) && defined(SUPPORT_RENDER_TEXTURES_HINT)
     if (target.texture.id > 0) glDeleteTextures(1, &target.texture.id);
     if (target.depth.id > 0)
     {
@@ -1562,7 +1571,7 @@ void rlglInit(int width, int height)
 
     // TODO: Automatize extensions loading using rlLoadExtensions() and GLAD
     // Actually, when rlglInit() is called in InitWindow() in core.c,
-    // OpenGL required extensions have already been loaded (PLATFORM_DESKTOP)
+    // OpenGL context has already been created and required extensions loaded
 
 #if defined(GRAPHICS_API_OPENGL_33) || defined(GRAPHICS_API_OPENGL_ES2)
     // Get supported extensions list
@@ -1765,7 +1774,6 @@ void rlglInit(int width, int height)
     glClearDepth(1.0f);                                     // Set clear depth value (default)
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);     // Clear color and depth buffers (depth buffer required for 3D)
 
-#if defined(GRAPHICS_API_OPENGL_ES2) || defined(GRAPHICS_API_OPENGL_21)
     // Store screen size into global variables
     RLGL.State.framebufferWidth = width;
     RLGL.State.framebufferHeight = height;
@@ -1773,7 +1781,6 @@ void rlglInit(int width, int height)
     // Init texture and rectangle used on basic shapes drawing
     RLGL.State.shapesTexture = GetTextureDefault();
     RLGL.State.shapesTextureRec = (Rectangle){ 0.0f, 0.0f, 1.0f, 1.0f };
-#endif
 
     TRACELOG(LOG_INFO, "RLGL: Default state initialized successfully");
 }
@@ -1796,6 +1803,45 @@ void rlglDraw(void)
 {
 #if defined(GRAPHICS_API_OPENGL_33) || defined(GRAPHICS_API_OPENGL_ES2)
     DrawRenderBatch(RLGL.currentBatch);    // NOTE: Stereo rendering is checked inside
+#endif
+}
+
+// Check and log OpenGL error codes
+void rlCheckErrors() {
+#if defined(GRAPHICS_API_OPENGL_21) || defined(GRAPHICS_API_OPENGL_33) || defined(GRAPHICS_API_OPENGL_ES2)
+    int check = 1;
+    while (check) {
+        const GLenum err = glGetError();
+        switch (err) {
+            case GL_NO_ERROR:
+                check = 0;
+                break;
+            case 0x0500: // GL_INVALID_ENUM:
+                TRACELOG(LOG_WARNING, "GL: Error detected: GL_INVALID_ENUM");
+                break;
+            case 0x0501: //GL_INVALID_VALUE:
+                TRACELOG(LOG_WARNING, "GL: Error detected: GL_INVALID_VALUE");
+                break;
+            case 0x0502: //GL_INVALID_OPERATION:
+                TRACELOG(LOG_WARNING, "GL: Error detected: GL_INVALID_OPERATION");
+                break;
+            case 0x0503: // GL_STACK_OVERFLOW:
+                TRACELOG(LOG_WARNING, "GL: Error detected: GL_STACK_OVERFLOW");
+                break;
+            case 0x0504: // GL_STACK_UNDERFLOW:
+                TRACELOG(LOG_WARNING, "GL: Error detected: GL_STACK_UNDERFLOW");
+                break;
+            case 0x0505: // GL_OUT_OF_MEMORY:
+                TRACELOG(LOG_WARNING, "GL: Error detected: GL_OUT_OF_MEMORY");
+                break;
+            case 0x0506: // GL_INVALID_FRAMEBUFFER_OPERATION:
+                TRACELOG(LOG_WARNING, "GL: Error detected: GL_INVALID_FRAMEBUFFER_OPERATION");
+                break;
+            default:
+                TRACELOG(LOG_WARNING, "GL: Error detected: unknown error code %x", err);
+                break;
+        }
+    }
 #endif
 }
 
@@ -1835,6 +1881,14 @@ void rlSetDebugMarker(const char *text)
 #endif
 }
 
+// Set blending mode factor and equation
+void rlSetBlendMode(int glSrcFactor, int glDstFactor, int glEquation)
+{
+    RLGL.State.glBlendSrcFactor = glSrcFactor;
+    RLGL.State.glBlendDstFactor = glDstFactor;
+    RLGL.State.glBlendEquation = glEquation;
+}
+
 // Load OpenGL extensions
 // NOTE: External loader function could be passed as a pointer
 void rlLoadExtensions(void *loader)
@@ -1856,29 +1910,6 @@ void rlLoadExtensions(void *loader)
     // With GLAD, we can check if an extension is supported using the GLAD_GL_xxx booleans
     //if (GLAD_GL_ARB_vertex_array_object) // Use GL_ARB_vertex_array_object
 #endif
-}
-
-// Get world coordinates from screen coordinates
-Vector3 rlUnproject(Vector3 source, Matrix proj, Matrix view)
-{
-    Vector3 result = { 0.0f, 0.0f, 0.0f };
-
-    // Calculate unproject matrix (multiply view patrix by projection matrix) and invert it
-    Matrix matViewProj = MatrixMultiply(view, proj);
-    matViewProj = MatrixInvert(matViewProj);
-
-    // Create quaternion from source point
-    Quaternion quat = { source.x, source.y, source.z, 1.0f };
-
-    // Multiply quat point by unproject matrix
-    quat = QuaternionTransform(quat, matViewProj);
-
-    // Normalized world points in vectors
-    result.x = quat.x/quat.w;
-    result.y = quat.y/quat.w;
-    result.z = quat.z/quat.w;
-
-    return result;
 }
 
 // Convert image data to OpenGL texture (returns OpenGL valid Id)
@@ -2228,7 +2259,7 @@ RenderTexture2D rlLoadRenderTexture(int width, int height, int format, int depth
 {
     RenderTexture2D target = { 0 };
 
-#if defined(GRAPHICS_API_OPENGL_33) || defined(GRAPHICS_API_OPENGL_ES2)
+#if (defined(GRAPHICS_API_OPENGL_33) || defined(GRAPHICS_API_OPENGL_ES2)) && defined(SUPPORT_RENDER_TEXTURES_HINT)
     if (useDepthTexture && RLGL.ExtSupported.texDepth) target.depthTexture = true;
 
     // Create the framebuffer object
@@ -2281,7 +2312,7 @@ RenderTexture2D rlLoadRenderTexture(int width, int height, int format, int depth
 // NOTE: Attach type: 0-Color, 1-Depth renderbuffer, 2-Depth texture
 void rlRenderTextureAttach(RenderTexture2D target, unsigned int id, int attachType)
 {
-#if defined(GRAPHICS_API_OPENGL_33) || defined(GRAPHICS_API_OPENGL_ES2)
+#if (defined(GRAPHICS_API_OPENGL_33) || defined(GRAPHICS_API_OPENGL_ES2)) && defined(SUPPORT_RENDER_TEXTURES_HINT)
     glBindFramebuffer(GL_FRAMEBUFFER, target.id);
 
     if (attachType == 0) glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, id, 0);
@@ -2300,7 +2331,7 @@ bool rlRenderTextureComplete(RenderTexture target)
 {
     bool result = false;
 
-#if defined(GRAPHICS_API_OPENGL_33) || defined(GRAPHICS_API_OPENGL_ES2)
+#if (defined(GRAPHICS_API_OPENGL_33) || defined(GRAPHICS_API_OPENGL_ES2)) && defined(SUPPORT_RENDER_TEXTURES_HINT)
     glBindFramebuffer(GL_FRAMEBUFFER, target.id);
 
     GLenum status = glCheckFramebufferStatus(GL_FRAMEBUFFER);
@@ -3577,22 +3608,22 @@ Texture2D GenTextureBRDF(Shader shader, int size)
 // NOTE: Only 3 blending modes supported, default blend mode is alpha
 void BeginBlendMode(int mode)
 {
-    static int blendMode = 0;   // Track current blending mode
-
-    if ((blendMode != mode) && (mode < 4))
+    if (RLGL.State.currentBlendMode != mode)
     {
         rlglDraw();
 
         switch (mode)
         {
-            case BLEND_ALPHA: glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA); break;
-            case BLEND_ADDITIVE: glBlendFunc(GL_SRC_ALPHA, GL_ONE); break;
-            case BLEND_MULTIPLIED: glBlendFunc(GL_DST_COLOR, GL_ONE_MINUS_SRC_ALPHA); break;
-            case BLEND_ADD_COLORS: glBlendFunc(GL_ONE, GL_ONE); break;
+            case BLEND_ALPHA: glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA); glBlendEquation(GL_FUNC_ADD); break;	    
+            case BLEND_ADDITIVE: glBlendFunc(GL_SRC_ALPHA, GL_ONE); glBlendEquation(GL_FUNC_ADD); break;	                
+            case BLEND_MULTIPLIED: glBlendFunc(GL_DST_COLOR, GL_ONE_MINUS_SRC_ALPHA); glBlendEquation(GL_FUNC_ADD); break;
+            case BLEND_ADD_COLORS: glBlendFunc(GL_ONE, GL_ONE); glBlendEquation(GL_FUNC_ADD); break;
+            case BLEND_SUBTRACT_COLORS: glBlendFunc(GL_ONE, GL_ONE); glBlendEquation(GL_FUNC_SUBTRACT); break;
+            case BLEND_CUSTOM: glBlendFunc(RLGL.State.glBlendSrcFactor, RLGL.State.glBlendDstFactor); glBlendEquation(RLGL.State.glBlendEquation); break;
             default: break;
         }
-
-        blendMode = mode;
+        
+        RLGL.State.currentBlendMode = mode;
     }
 }
 
@@ -4074,6 +4105,8 @@ static void UnloadShaderDefault(void)
     glDeleteShader(RLGL.State.defaultFShaderId);
 
     glDeleteProgram(RLGL.State.defaultShader.id);
+
+    RL_FREE(RLGL.State.defaultShader.locs);
 }
 
 // Load render batch
@@ -4190,8 +4223,9 @@ static RenderBatch LoadRenderBatch(int numBuffers, int bufferElements)
         //batch.draws[i].RLGL.State.modelview = MatrixIdentity();
     }
 
-    batch.drawsCounter = 1;        // Reset draws counter
-    batch.currentDepth = -1.0f;    // Reset depth value
+    batch.buffersCount = numBuffers;    // Record buffer count
+    batch.drawsCounter = 1;             // Reset draws counter
+    batch.currentDepth = -1.0f;         // Reset depth value
     //--------------------------------------------------------------------------------------------
 
     return batch;

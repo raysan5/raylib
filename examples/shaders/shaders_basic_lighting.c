@@ -69,8 +69,8 @@ int main(void)
     modelB.materials[0].maps[MAP_DIFFUSE].texture = texture;
     modelC.materials[0].maps[MAP_DIFFUSE].texture = texture;
 
-    Shader shader = LoadShader(FormatText("resources/shaders/glsl%i/base_lighting.vs", GLSL_VERSION), 
-                               FormatText("resources/shaders/glsl%i/lighting.fs", GLSL_VERSION));
+    Shader shader = LoadShader(TextFormat("resources/shaders/glsl%i/base_lighting.vs", GLSL_VERSION), 
+                               TextFormat("resources/shaders/glsl%i/lighting.fs", GLSL_VERSION));
     
     // Get some shader loactions
     shader.locs[LOC_MATRIX_MODEL] = GetShaderLocation(shader, "matModel");

@@ -1,0 +1,77 @@
+name: macOS
+
+on:   
+  push:
+  pull_request:
+  release:
+    types: [published]
+
+jobs:
+  build:
+    runs-on: macos-latest
+    
+    env:
+      RELEASE_NAME: raylib-dev_macos
+    
+    steps:
+    - name: Checkout
+      uses: actions/checkout@master
+    
+    - name: Setup Release Version
+      run: |
+        echo "::set-env name=RELEASE_NAME::raylib-${{ github.event.release.tag_name }}_macos"
+      shell: bash
+      if: github.event_name == 'release' && github.event.action == 'published'
+
+    - name: Setup Environment
+      run: | 
+        mkdir build
+        cd build
+        mkdir ${{ env.RELEASE_NAME }}
+        cd ${{ env.RELEASE_NAME }}
+        mkdir include
+        mkdir lib
+        cd ../..
+   
+    # Generating static + shared library, note that i386 architecture is deprecated
+    # Defining GL_SILENCE_DEPRECATION because OpenGL is deprecated on macOS
+    # TODO: Support Universal ARCH libraries (build arm64 + x86_64 and merge)
+    - name: Build Library
+      run: |
+        cd src
+        clang --version
+        make PLATFORM=PLATFORM_DESKTOP RAYLIB_LIBTYPE=STATIC RAYLIB_RELEASE_PATH="../build/${{ env.RELEASE_NAME }}/lib" CFLAGS="-target x86_64-apple-macos10.12 -DGL_SILENCE_DEPRECATION"
+        # make PLATFORM=PLATFORM_DESKTOP RAYLIB_LIBTYPE=STATIC RAYLIB_LIB_NAME=raylib_x86_64 CFLAGS="-target x86_64-apple-macos10.12 -DGL_SILENCE_DEPRECATION"
+        # make PLATFORM=PLATFORM_DESKTOP RAYLIB_LIBTYPE=STATIC RAYLIB_LIB_NAME=raylib_arm64 CFLAGS="-target arm64-apple-macos11 -DGL_SILENCE_DEPRECATION" -B
+        # lipo -create -output ../build/${{ env.RELEASE_NAME }}/lib/libraylib.a libraylib_x86_64.a libraylib_arm64.a
+        make clean
+        make PLATFORM=PLATFORM_DESKTOP RAYLIB_LIBTYPE=SHARED RAYLIB_RELEASE_PATH="../build/${{ env.RELEASE_NAME }}/lib" CFLAGS="-target x86_64-apple-macos10.12 -DGL_SILENCE_DEPRECATION"
+        # make PLATFORM=PLATFORM_DESKTOP RAYLIB_LIBTYPE=SHARED RAYLIB_LIB_NAME=raylib_x86_64 CFLAGS="-target x86_64-apple-macos10.12 -DGL_SILENCE_DEPRECATION" -B
+        # make PLATFORM=PLATFORM_DESKTOP RAYLIB_LIBTYPE=SHARED RAYLIB_LIB_NAME=raylib_arm64 CFLAGS="-target i686-apple-macos -DGL_SILENCE_DEPRECATION" -B
+        # lipo -create -output ../build/${{ env.RELEASE_NAME }}/lib/libraylib.3.1.0.dylib libraylib_x86_64.3.1.0.dylib libraylib_arm64.3.1.0.dylib
+        # cp -v ./libraylib_arm64.dylib ../build/${{ env.RELEASE_NAME }}/lib/libraylib.dylib
+        # cp -v ./libraylib_arm64.310.dylib ../build/${{ env.RELEASE_NAME }}/lib/libraylib.310.dylib
+        cd ..
+  
+    - name: Generate Artifacts
+      run: |
+        cp -v ./src/raylib.h ./build/${{ env.RELEASE_NAME }}/include
+        cd build
+        tar -czvf ${{ env.RELEASE_NAME }}.tar.gz ${{ env.RELEASE_NAME }}
+        
+    - name: Upload Artifacts
+      uses: actions/upload-artifact@v2
+      with:
+        name: ${{ env.RELEASE_NAME }}.tar.gz
+        path: ./build/${{ env.RELEASE_NAME }}.tar.gz
+        
+    - name: Upload Artifact to Release
+      uses: actions/upload-release-asset@v1.0.1
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+          upload_url: ${{ github.event.release.upload_url }}
+          asset_path: ./build/${{ env.RELEASE_NAME }}.tar.gz
+          asset_name: ${{ env.RELEASE_NAME }}.tar.gz
+          asset_content_type: application/gzip
+      if: github.event_name == 'release' && github.event.action == 'published'

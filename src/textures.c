@@ -148,8 +148,8 @@
 //----------------------------------------------------------------------------------
 // Defines and Macros
 //----------------------------------------------------------------------------------
-#ifndef R5G5B5A1_ALPHA_THRESHOLD
-    #define R5G5B5A1_ALPHA_THRESHOLD  50    // Threshold over 255 to set alpha as 0
+#ifndef UNCOMPRESSED_R5G5B5A1_ALPHA_THRESHOLD
+    #define UNCOMPRESSED_R5G5B5A1_ALPHA_THRESHOLD  50    // Threshold over 255 to set alpha as 0
 #endif
 
 //----------------------------------------------------------------------------------
@@ -170,9 +170,6 @@
 //----------------------------------------------------------------------------------
 // Module specific Functions Declaration
 //----------------------------------------------------------------------------------
-#if defined(SUPPORT_FILEFORMAT_GIF)
-static Image LoadAnimatedGIF(const char *fileName, int *frames, int **delays);    // Load animated GIF file
-#endif
 #if defined(SUPPORT_FILEFORMAT_DDS)
 static Image LoadDDS(const char *fileName);   // Load DDS file
 #endif
@@ -308,33 +305,6 @@ Image LoadImage(const char *fileName)
     return image;
 }
 
-// Load image from Color array data (RGBA - 32bit)
-// NOTE: Creates a copy of pixels data array
-Image LoadImageEx(Color *pixels, int width, int height)
-{
-    Image image = { 0 };
-    image.data = NULL;
-    image.width = width;
-    image.height = height;
-    image.mipmaps = 1;
-    image.format = UNCOMPRESSED_R8G8B8A8;
-
-    int k = 0;
-
-    image.data = (unsigned char *)RL_MALLOC(image.width*image.height*4*sizeof(unsigned char));
-
-    for (int i = 0; i < image.width*image.height*4; i += 4)
-    {
-        ((unsigned char *)image.data)[i] = pixels[k].r;
-        ((unsigned char *)image.data)[i + 1] = pixels[k].g;
-        ((unsigned char *)image.data)[i + 2] = pixels[k].b;
-        ((unsigned char *)image.data)[i + 3] = pixels[k].a;
-        k++;
-    }
-
-    return image;
-}
-
 // Load an image from RAW file data
 Image LoadImageRaw(const char *fileName, int width, int height, int format, int headerSize)
 {
@@ -360,6 +330,46 @@ Image LoadImageRaw(const char *fileName, int width, int height, int format, int 
         RL_FREE(fileData);
     }
 
+    return image;
+}
+
+// Load animated image data
+//  - Image.data buffer includes all frames: [image#0][image#1][image#2][...]
+//  - Number of frames is returned through 'frames' parameter
+//  - All frames are returned in RGBA format
+//  - Frames delay data is discarded
+Image LoadImageAnim(const char *fileName, int *frames)
+{
+    Image image = { 0 };
+    int framesCount = 1;
+    
+#if defined(SUPPORT_FILEFORMAT_GIF)
+    if (IsFileExtension(fileName, ".gif"))
+    {
+        unsigned int dataSize = 0;
+        unsigned char *fileData = LoadFileData(fileName, &dataSize);
+
+        if (fileData != NULL)
+        {
+            int comp = 0;
+            int **delays = NULL;
+            image.data = stbi_load_gif_from_memory(fileData, dataSize, delays, &image.width, &image.height, &framesCount, &comp, 4);
+
+            image.mipmaps = 1;
+            image.format = UNCOMPRESSED_R8G8B8A8;
+
+            RL_FREE(fileData);
+            RL_FREE(delays);        // NOTE: Frames delays are discarded
+        }
+    }
+#else
+    if (false) { }
+#endif
+    else image = LoadImage(fileName);
+    
+    // TODO: Support APNG animated images?
+
+    *frames = framesCount;
     return image;
 }
 
@@ -932,7 +942,7 @@ void ImageFormat(Image *image, int newFormat)
                         r = (unsigned char)(round(pixels[i].x*31.0f));
                         g = (unsigned char)(round(pixels[i].y*31.0f));
                         b = (unsigned char)(round(pixels[i].z*31.0f));
-                        a = (pixels[i].w > ((float)R5G5B5A1_ALPHA_THRESHOLD/255.0f))? 1 : 0;
+                        a = (pixels[i].w > ((float)UNCOMPRESSED_R5G5B5A1_ALPHA_THRESHOLD/255.0f))? 1 : 0;
 
                         ((unsigned short *)image->data)[i] = (unsigned short)r << 11 | (unsigned short)g << 6 | (unsigned short)b << 1 | (unsigned short)a;
                     }
@@ -2351,7 +2361,7 @@ void ImageDrawPixel(Image *dst, int x, int y, Color color)
             unsigned char r = (unsigned char)(round(coln.x*31.0f));
             unsigned char g = (unsigned char)(round(coln.y*31.0f));
             unsigned char b = (unsigned char)(round(coln.z*31.0f));
-            unsigned char a = (coln.w > ((float)R5G5B5A1_ALPHA_THRESHOLD/255.0f))? 1 : 0;;
+            unsigned char a = (coln.w > ((float)UNCOMPRESSED_R5G5B5A1_ALPHA_THRESHOLD/255.0f))? 1 : 0;;
 
             ((unsigned short *)dst->data)[y*dst->width + x] = (unsigned short)r << 11 | (unsigned short)g << 6 | (unsigned short)b << 1 | (unsigned short)a;
 
@@ -3543,26 +3553,26 @@ Color GetPixelColor(void *srcPtr, int format)
         case UNCOMPRESSED_GRAY_ALPHA: col = (Color){ ((unsigned char *)srcPtr)[0], ((unsigned char *)srcPtr)[0], ((unsigned char *)srcPtr)[0], ((unsigned char *)srcPtr)[1] }; break;
         case UNCOMPRESSED_R5G6B5:
         {
-            col.r = (unsigned char)(((((unsigned short *)srcPtr)[0] >> 11)*31)/255);
-            col.g = (unsigned char)((((((unsigned short *)srcPtr)[0] >> 5) & 0b0000000000111111)*63)/255);
-            col.b = (unsigned char)(((((unsigned short *)srcPtr)[0] & 0b0000000000011111)*31)/255);
+            col.r = (unsigned char)((((unsigned short *)srcPtr)[0] >> 11)*255/31);
+            col.g = (unsigned char)(((((unsigned short *)srcPtr)[0] >> 5) & 0b0000000000111111)*255/63);
+            col.b = (unsigned char)((((unsigned short *)srcPtr)[0] & 0b0000000000011111)*255/31);
             col.a = 255;
             
         } break;
         case UNCOMPRESSED_R5G5B5A1:
         {
-            col.r = (unsigned char)(((((unsigned short *)srcPtr)[0] >> 11)*31)/255);
-            col.g = (unsigned char)((((((unsigned short *)srcPtr)[0] >> 6) & 0b0000000000011111)*31)/255);
-            col.b = (unsigned char)(((((unsigned short *)srcPtr)[0] & 0b0000000000011111)*31)/255);
+            col.r = (unsigned char)((((unsigned short *)srcPtr)[0] >> 11)*255/31);
+            col.g = (unsigned char)(((((unsigned short *)srcPtr)[0] >> 6) & 0b0000000000011111)*255/31);
+            col.b = (unsigned char)((((unsigned short *)srcPtr)[0] & 0b0000000000011111)*255/31);
             col.a = (((unsigned short *)srcPtr)[0] & 0b0000000000000001)? 255 : 0;
 
         } break;
         case UNCOMPRESSED_R4G4B4A4:
         {
-            col.r = (unsigned char)(((((unsigned short *)srcPtr)[0] >> 12)*15)/255);
-            col.g = (unsigned char)((((((unsigned short *)srcPtr)[0] >> 8) & 0b0000000000001111)*15)/255);
-            col.b = (unsigned char)((((((unsigned short *)srcPtr)[0] >> 4) & 0b0000000000001111)*15)/255);
-            col.a = (unsigned char)(((((unsigned short *)srcPtr)[0] & 0b0000000000001111)*15)/255);
+            col.r = (unsigned char)((((unsigned short *)srcPtr)[0] >> 12)*255/15);
+            col.g = (unsigned char)(((((unsigned short *)srcPtr)[0] >> 8) & 0b0000000000001111)*255/15);
+            col.b = (unsigned char)(((((unsigned short *)srcPtr)[0] >> 4) & 0b0000000000001111)*255/15);
+            col.a = (unsigned char)((((unsigned short *)srcPtr)[0] & 0b0000000000001111)*255/15);
             
         } break;
         case UNCOMPRESSED_R8G8B8A8: col = (Color){ ((unsigned char *)srcPtr)[0], ((unsigned char *)srcPtr)[1], ((unsigned char *)srcPtr)[2], ((unsigned char *)srcPtr)[3] }; break;
@@ -3620,7 +3630,7 @@ void SetPixelColor(void *dstPtr, Color color, int format)
             unsigned char r = (unsigned char)(round(coln.x*31.0f));
             unsigned char g = (unsigned char)(round(coln.y*31.0f));
             unsigned char b = (unsigned char)(round(coln.z*31.0f));
-            unsigned char a = (coln.w > ((float)R5G5B5A1_ALPHA_THRESHOLD/255.0f))? 1 : 0;;
+            unsigned char a = (coln.w > ((float)UNCOMPRESSED_R5G5B5A1_ALPHA_THRESHOLD/255.0f))? 1 : 0;;
 
             ((unsigned short *)dstPtr)[0] = (unsigned short)r << 11 | (unsigned short)g << 6 | (unsigned short)b << 1 | (unsigned short)a;
 
@@ -3706,34 +3716,6 @@ int GetPixelDataSize(int width, int height, int format)
 //----------------------------------------------------------------------------------
 // Module specific Functions Definition
 //----------------------------------------------------------------------------------
-#if defined(SUPPORT_FILEFORMAT_GIF)
-// Load animated GIF data
-//  - Image.data buffer includes all frames: [image#0][image#1][image#2][...]
-//  - Number of frames is returned through 'frames' parameter
-//  - Frames delay is returned through 'delays' parameter (int array)
-//  - All frames are returned in RGBA format
-static Image LoadAnimatedGIF(const char *fileName, int *frames, int **delays)
-{
-    Image image = { 0 };
-
-    unsigned int dataSize = 0;
-    unsigned char *fileData = LoadFileData(fileName, &dataSize);
-
-    if (fileData != NULL)
-    {
-        int comp = 0;
-        image.data = stbi_load_gif_from_memory(fileData, dataSize, delays, &image.width, &image.height, frames, &comp, 4);
-
-        image.mipmaps = 1;
-        image.format = UNCOMPRESSED_R8G8B8A8;
-
-        RL_FREE(fileData);
-    }
-
-    return image;
-}
-#endif
-
 #if defined(SUPPORT_FILEFORMAT_DDS)
 // Loading DDS image data (compressed or uncompressed)
 static Image LoadDDS(const char *fileName)

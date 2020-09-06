@@ -826,7 +826,7 @@ void DrawTextEx(Font font, const char *text, Vector2 position, float fontSize, f
 
     float scaleFactor = fontSize/font.baseSize;     // Character quad scaling factor
 
-    for (int i = 0; i < length; i++)
+    for (int i = 0; i < length;)
     {
         // Get next codepoint from byte string and glyph index in font
         int codepointByteCount = 0;
@@ -860,7 +860,7 @@ void DrawTextEx(Font font, const char *text, Vector2 position, float fontSize, f
             else textOffsetX += ((float)font.chars[index].advanceX*scaleFactor + spacing);
         }
 
-        i += (codepointByteCount - 1);   // Move text bytes counter to next codepoint
+        i += codepointByteCount;   // Move text bytes counter to next codepoint
     }
 }
 
@@ -1703,6 +1703,9 @@ static Font LoadBMFont(const char *fileName)
     int base = 0;   // Useless data
 
     char *fileText = LoadFileText(fileName);
+
+    if (fileText == NULL) return font;
+
     char *fileTextPtr = fileText;
     
     // NOTE: We skip first line, it contains no useful information
@@ -1734,20 +1737,24 @@ static Font LoadBMFont(const char *fileName)
     TRACELOGD("    > Chars count: %i", charsCount);
 
     // Compose correct path using route of .fnt file (fileName) and imFileName
-    char *texPath = NULL;
+    char *imPath = NULL;
     char *lastSlash = NULL;
 
     lastSlash = strrchr(fileName, '/');
     if (lastSlash == NULL) lastSlash = strrchr(fileName, '\\');
 
-    // NOTE: We need some extra space to avoid memory corruption on next allocations!
-    texPath = RL_CALLOC(TextLength(fileName) - TextLength(lastSlash) + TextLength(imFileName) + 4, 1);
-    memcpy(texPath, fileName, TextLength(fileName) - TextLength(lastSlash) + 1);
-    memcpy(texPath + TextLength(fileName) - TextLength(lastSlash) + 1, imFileName, TextLength(imFileName));
+    if (lastSlash != NULL)
+    {
+        // NOTE: We need some extra space to avoid memory corruption on next allocations!
+        imPath = RL_CALLOC(TextLength(fileName) - TextLength(lastSlash) + TextLength(imFileName) + 4, 1);
+        memcpy(imPath, fileName, TextLength(fileName) - TextLength(lastSlash) + 1);
+        memcpy(imPath + TextLength(fileName) - TextLength(lastSlash) + 1, imFileName, TextLength(imFileName));
+    }
+    else imPath = imFileName;
 
-    TRACELOGD("    > Texture loading path: %s", texPath);
+    TRACELOGD("    > Image loading path: %s", imPath);
 
-    Image imFont = LoadImage(texPath);
+    Image imFont = LoadImage(imPath);
 
     if (imFont.format == UNCOMPRESSED_GRAYSCALE)
     {
@@ -1772,7 +1779,7 @@ static Font LoadBMFont(const char *fileName)
 
     font.texture = LoadTextureFromImage(imFont);
 
-    RL_FREE(texPath);
+    if (lastSlash != NULL) RL_FREE(imPath);
 
     // Fill font characters info data
     font.baseSize = fontSize;

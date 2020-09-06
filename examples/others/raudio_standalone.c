@@ -5,8 +5,9 @@
 *   NOTE: This example does not require any graphic device, it can run directly on console.
 *
 *   DEPENDENCIES:
-*       mini_al.h    - Audio device management lib (https://github.com/dr-soft/mini_al)
+*       miniaudio.h  - Audio device management lib (https://github.com/dr-soft/miniaudio)
 *       stb_vorbis.h - Ogg audio files loading (http://www.nothings.org/stb_vorbis/)
+*       dr_wav.h     - WAV audio file loading (https://github.com/mackron/dr_libs)
 *       dr_mp3.h     - MP3 audio file loading (https://github.com/mackron/dr_libs)
 *       dr_flac.h    - FLAC audio file loading (https://github.com/mackron/dr_libs)
 *       jar_xm.h     - XM module file loading
@@ -22,7 +23,7 @@
 *   This example is licensed under an unmodified zlib/libpng license, which is an OSI-certified,
 *   BSD-like license that allows static linking with closed source software:
 *
-*   Copyright (c) 2014-2019 Ramon Santamaria (@raysan5)
+*   Copyright (c) 2014-2020 Ramon Santamaria (@raysan5)
 *
 *   This software is provided "as-is", without any express or implied warranty. In no event
 *   will the authors be held liable for any damages arising from the use of this software.
@@ -48,49 +49,27 @@
 #if defined(_WIN32)
     #include <conio.h>          // Windows only, no stardard library
 #else
-    
-// Provide kbhit() function in non-Windows platforms
-#include <stdio.h>
-#include <termios.h>
-#include <unistd.h>
-#include <fcntl.h>
-
-// Check if a key has been pressed
-static int kbhit(void)
-{
-    struct termios oldt, newt;
-    int ch;
-    int oldf;
-
-    tcgetattr(STDIN_FILENO, &oldt);
-    newt = oldt;
-    newt.c_lflag &= ~(ICANON | ECHO);
-    tcsetattr(STDIN_FILENO, TCSANOW, &newt);
-    oldf = fcntl(STDIN_FILENO, F_GETFL, 0);
-    fcntl(STDIN_FILENO, F_SETFL, oldf | O_NONBLOCK);
-
-    ch = getchar();
-
-    tcsetattr(STDIN_FILENO, TCSANOW, &oldt);
-    fcntl(STDIN_FILENO, F_SETFL, oldf);
-
-    if (ch != EOF)
-    {
-        ungetc(ch, stdin);
-        return 1;
-    }
-
-    return 0;
-}
-
-// Get pressed character
-static char getch() { return getchar(); }
-
+    // Required for kbhit() function in non-Windows platforms
+    #include <stdio.h>
+    #include <termios.h>
+    #include <unistd.h>
+    #include <fcntl.h>
 #endif
 
 #define KEY_ESCAPE  27
 
-int main()
+//----------------------------------------------------------------------------------
+// Module Functions Declaration
+//----------------------------------------------------------------------------------
+#if !defined(_WIN32)
+static int kbhit(void);             // Check if a key has been pressed
+static char getch();                // Get pressed character
+#endif
+
+//------------------------------------------------------------------------------------
+// Program main entry point
+//------------------------------------------------------------------------------------
+int main(int argc, char *argv[])
 {
     // Initialization
     //--------------------------------------------------------------------------------------
@@ -104,7 +83,7 @@ int main()
     Music music = LoadMusicStream("resources/audio/country.mp3");
     PlayMusicStream(music);
 
-    printf("\nPress s or d to play sounds...\n");
+    printf("\nPress s or d to play sounds, ESC to stop...\n");
     //--------------------------------------------------------------------------------------
 
     // Main loop
@@ -112,17 +91,10 @@ int main()
     {
         if (kbhit()) key = getch();
 
-        if (key == 's')
-        {
-            PlaySound(fxWav);
-            key = 0;
-        }
-
-        if (key == 'd')
-        {
-            PlaySound(fxOgg);
-            key = 0;
-        }
+        if ((key == 's') || (key == 'S')) PlaySound(fxWav);
+        if ((key == 'd') || (key == 'D')) PlaySound(fxOgg);
+        
+        key = 0;
 
         UpdateMusicStream(music);
     }
@@ -139,3 +111,39 @@ int main()
 
     return 0;
 }
+
+//----------------------------------------------------------------------------------
+// Module Functions Definition
+//----------------------------------------------------------------------------------
+#if !defined(_WIN32)
+// Check if a key has been pressed
+static int kbhit(void)
+{
+	struct termios oldt, newt;
+	int ch;
+	int oldf;
+
+	tcgetattr(STDIN_FILENO, &oldt);
+	newt = oldt;
+	newt.c_lflag &= ~(ICANON | ECHO);
+	tcsetattr(STDIN_FILENO, TCSANOW, &newt);
+	oldf = fcntl(STDIN_FILENO, F_GETFL, 0);
+	fcntl(STDIN_FILENO, F_SETFL, oldf | O_NONBLOCK);
+
+	ch = getchar();
+
+	tcsetattr(STDIN_FILENO, TCSANOW, &oldt);
+	fcntl(STDIN_FILENO, F_SETFL, oldf);
+
+	if (ch != EOF)
+	{
+		ungetc(ch, stdin);
+		return 1;
+	}
+
+	return 0;
+}
+
+// Get pressed character
+static char getch() { return getchar(); }
+#endif

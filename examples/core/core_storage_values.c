@@ -65,10 +65,10 @@ int main(void)
 
             ClearBackground(RAYWHITE);
 
-            DrawText(FormatText("SCORE: %i", score), 280, 130, 40, MAROON);
-            DrawText(FormatText("HI-SCORE: %i", hiscore), 210, 200, 50, BLACK);
+            DrawText(TextFormat("SCORE: %i", score), 280, 130, 40, MAROON);
+            DrawText(TextFormat("HI-SCORE: %i", hiscore), 210, 200, 50, BLACK);
 
-            DrawText(FormatText("frames: %i", framesCounter), 10, 10, 20, LIME);
+            DrawText(TextFormat("frames: %i", framesCounter), 10, 10, 20, LIME);
 
             DrawText("Press R to generate random numbers", 220, 40, 20, LIGHTGRAY);
             DrawText("Press ENTER to SAVE values", 250, 310, 20, LIGHTGRAY);

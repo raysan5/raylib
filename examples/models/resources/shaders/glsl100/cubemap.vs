@@ -9,14 +9,14 @@
 #version 330
 
 // Input vertex attributes
-in vec3 vertexPosition;
+attribute vec3 vertexPosition;
 
 // Input uniform values
 uniform mat4 projection;
 uniform mat4 view;
 
 // Output vertex attributes (to fragment shader)
-out vec3 fragPosition;
+varying vec3 fragPosition;
 
 void main()
 {

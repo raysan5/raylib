@@ -2473,6 +2473,73 @@ void MeshBinormals(Mesh *mesh)
     }
 }
 
+// Smooth (average) vertex normals
+void MeshNormalsSmooth(Mesh *mesh)
+{
+    #define EPSILON 0.000001 // A small number
+
+    int uvCounter = 0;
+    Vector3 *uniqueVertices = (Vector3 *)RL_CALLOC(mesh->vertexCount, sizeof(Vector3));
+    Vector3 *summedNormals = (Vector3 *)RL_CALLOC(mesh->vertexCount, sizeof(Vector3));
+
+    int *uniqueIndices = (int *)RL_CALLOC(mesh->vertexCount, sizeof(int));
+
+    // Sum normals grouped by vertex
+    for (int i = 0; i < mesh->vertexCount; i++)
+    {
+        Vector3 v = { mesh->vertices[(i + 0)*3 + 0], mesh->vertices[(i + 0)*3 + 1], mesh->vertices[(i + 0)*3 + 2] };
+        Vector3 n = { mesh->normals[(i + 0)*3 + 0], mesh->normals[(i + 0)*3 + 1], mesh->normals[(i + 0)*3 + 2] };
+
+        bool matched = false;
+
+        // TODO: Matching vertices is brute force O(N^2). Do it more efficiently?
+        for (int j = 0; j < uvCounter; j++)
+        {
+            Vector3 uv = uniqueVertices[j];
+
+            bool match = true;
+            match = match && fabs(uv.x - v.x) < EPSILON;
+            match = match && fabs(uv.y - v.y) < EPSILON;
+            match = match && fabs(uv.z - v.z) < EPSILON;
+
+            if (match)
+            {
+                matched = true;
+                summedNormals[j] = Vector3Add(summedNormals[j], n);
+                uniqueIndices[i] = j;
+                break;
+            }
+        }
+
+        if (!matched)
+        {
+            int j = uvCounter++;
+            uniqueVertices[j] = v;
+            summedNormals[j] = n;
+            uniqueIndices[i] = j;
+        }
+    }
+
+    // Average and update normals
+    for (int i = 0; i < mesh->vertexCount; i++)
+    {
+        int j = uniqueIndices[i];
+        Vector3 n = Vector3Normalize(summedNormals[j]);
+        mesh->normals[(i + 0)*3 + 0] = n.x;
+        mesh->normals[(i + 0)*3 + 1] = n.y;
+        mesh->normals[(i + 0)*3 + 2] = n.z;
+    }
+
+    // 2=normals, see rlUpdateMeshAt()
+    rlUpdateMesh(*mesh, 2, mesh->vertexCount);
+
+    RL_FREE(uniqueVertices);
+    RL_FREE(summedNormals);
+    RL_FREE(uniqueIndices);
+
+    TRACELOG(LOG_INFO, "MESH: Normals smoothed (%d vertices, %d unique)", mesh->vertexCount, uvCounter);
+}
+
 // Draw a model (with texture if set)
 void DrawModel(Model model, Vector3 position, float scale, Color tint)
 {
@@ -2862,6 +2929,7 @@ RayHitInfo GetCollisionRayGround(Ray ray, float groundHeight)
             result.distance = distance;
             result.normal = (Vector3){ 0.0, 1.0, 0.0 };
             result.position = Vector3Add(ray.position, Vector3Scale(ray.direction, distance));
+            result.position.y = groundHeight;
         }
     }
 
@@ -3242,7 +3310,9 @@ static Model LoadIQM(const char *fileName)
 
         for (unsigned int i = imesh[m].first_triangle; i < (imesh[m].first_triangle + imesh[m].num_triangles); i++)
         {
-            // IQM triangles are stored counter clockwise, but raylib sets opengl to clockwise drawing, so we swap them around
+            // IQM triangles indexes are stored in counter-clockwise, but raylib processes the index in linear order,
+            // expecting they point to the counter-clockwise vertex triangle, so we need to reverse triangle indexes         
+            // NOTE: raylib renders vertex data in counter-clockwise order (standard convention) by default
             model.meshes[m].indices[tcounter + 2] = tri[i].vertex[0] - imesh[m].first_vertex;
             model.meshes[m].indices[tcounter + 1] = tri[i].vertex[1] - imesh[m].first_vertex;
             model.meshes[m].indices[tcounter] = tri[i].vertex[2] - imesh[m].first_vertex;

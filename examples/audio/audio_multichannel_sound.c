@@ -51,7 +51,7 @@ int main(void)
             DrawText("Press SPACE to play new ogg instance!", 200, 120, 20, LIGHTGRAY);
             DrawText("Press ENTER to play new wav instance!", 200, 180, 20, LIGHTGRAY);
 
-            DrawText(FormatText("CONCURRENT SOUNDS PLAYING: %02i", GetSoundsPlaying()), 220, 280, 20, RED);
+            DrawText(TextFormat("CONCURRENT SOUNDS PLAYING: %02i", GetSoundsPlaying()), 220, 280, 20, RED);
 
         EndDrawing();
         //----------------------------------------------------------------------------------
