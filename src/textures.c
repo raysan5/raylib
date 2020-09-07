@@ -3433,34 +3433,35 @@ Vector3 ColorToHSV(Color color)
 // Returns a Color from HSV values
 // Implementation reference: https://en.wikipedia.org/wiki/HSL_and_HSV#Alternative_HSV_conversion
 // NOTE: Color->HSV->Color conversion will not yield exactly the same color due to rounding errors
-Color ColorFromHSV(Vector3 hsv)
+// Hue is provided in degrees: [0..360]
+// Saturation/Value are provided normalized: [0.0f..1.0f]
+Color ColorFromHSV(float hue, float saturation, float value)
 {
     Color color = { 0, 0, 0, 255 };
-    float h = hsv.x, s = hsv.y, v = hsv.z;
 
     // Red channel
-    float k = fmodf((5.0f + h/60.0f), 6);
+    float k = fmodf((5.0f + hue/60.0f), 6);
     float t = 4.0f - k;
     k = (t < k)? t : k;
     k = (k < 1)? k : 1;
     k = (k > 0)? k : 0;
-    color.r = (unsigned char)((v - v*s*k)*255.0f);
+    color.r = (unsigned char)((value - value*saturation*k)*255.0f);
 
     // Green channel
-    k = fmodf((3.0f + h/60.0f), 6);
+    k = fmodf((3.0f + hue/60.0f), 6);
     t = 4.0f - k;
     k = (t < k)? t : k;
     k = (k < 1)? k : 1;
     k = (k > 0)? k : 0;
-    color.g = (unsigned char)((v - v*s*k)*255.0f);
+    color.g = (unsigned char)((value - value*saturation*k)*255.0f);
 
     // Blue channel
-    k = fmodf((1.0f + h/60.0f), 6);
+    k = fmodf((1.0f + hue/60.0f), 6);
     t = 4.0f - k;
     k = (t < k)? t : k;
     k = (k < 1)? k : 1;
     k = (k > 0)? k : 0;
-    color.b = (unsigned char)((v - v*s*k)*255.0f);
+    color.b = (unsigned char)((value - value*saturation*k)*255.0f);
 
     return color;
 }
