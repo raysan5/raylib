@@ -2930,7 +2930,9 @@ static bool InitGraphicsDevice(int width, int height)
     glfwSetWindowIconifyCallback(CORE.Window.handle, WindowIconifyCallback);
     glfwSetWindowFocusCallback(CORE.Window.handle, WindowFocusCallback);
     glfwSetDropCallback(CORE.Window.handle, WindowDropCallback);
+#if !defined(PLATFORM_WEB)
     glfwSetWindowMaximizeCallback(CORE.Window.handle, WindowMaximizeCallback);
+#endif
 
     glfwMakeContextCurrent(CORE.Window.handle);
 
