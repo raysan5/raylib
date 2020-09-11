@@ -145,6 +145,8 @@
     #include "camera.h"             // Camera system functionality
 #endif
 
+#define ignore_result(x) if (x) {}  // This should fix compiler warnings
+
 #if defined(SUPPORT_GIF_RECORDING)
     #define RGIF_MALLOC RL_MALLOC
     #define RGIF_FREE RL_FREE
@@ -2059,7 +2061,7 @@ const char *GetWorkingDirectory(void)
     static char currentDir[MAX_FILEPATH_LENGTH];
     memset(currentDir, 0, MAX_FILEPATH_LENGTH);
 
-    GETCWD(currentDir, MAX_FILEPATH_LENGTH - 1);
+    ignore_result(GETCWD(currentDir, MAX_FILEPATH_LENGTH - 1));
 
     return currentDir;
 }
@@ -2326,7 +2328,7 @@ void OpenURL(const char *url)
     #elif defined(__APPLE__)
         sprintf(cmd, "open '%s'", url);
     #endif
-        system(cmd);
+        ignore_result(system(cmd));
         RL_FREE(cmd);
 #endif
 #if defined(PLATFORM_WEB)
