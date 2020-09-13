@@ -3679,8 +3679,8 @@ static Model LoadGLTF(const char *fileName)
 
     if (result == cgltf_result_success)
     {
-        TRACELOG(LOG_INFO, "MODEL: [%s] glTF meshes (%s) count: %i", fileName, (data->file_type == 2)? "glb" : "gltf", data->meshes_count, data->materials_count);
-        TRACELOG(LOG_INFO, "MODEL: [%s] glTF materials (%s) count: %i", fileName, (data->file_type == 2)? "glb" : "gltf", data->meshes_count, data->materials_count);
+        TRACELOG(LOG_INFO, "MODEL: [%s] glTF meshes (%s) count: %i", fileName, (data->file_type == 2)? "glb" : "gltf", data->meshes_count);
+        TRACELOG(LOG_INFO, "MODEL: [%s] glTF materials (%s) count: %i", fileName, (data->file_type == 2)? "glb" : "gltf", data->materials_count);
 
         // Read data buffers
         result = cgltf_load_buffers(&options, data, fileName);
