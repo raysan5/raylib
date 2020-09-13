@@ -1298,7 +1298,6 @@ RLAPI void DrawGizmo(Vector3 position);                                         
 // Model loading/unloading functions
 RLAPI Model LoadModel(const char *fileName);                                                            // Load model from files (meshes and materials)
 RLAPI Model LoadModelFromMesh(Mesh mesh);                                                               // Load model from generated mesh (default material)
-RLAPI Model LoadModelFromMemory(const char *fileType, const char *fileData, int dataSize);              // Load model from memory buffer, fileType refers to extension: i.e. "obj"
 RLAPI void UnloadModel(Model model);                                                                    // Unload model from memory (RAM and/or VRAM)
 
 // Mesh loading/unloading functions
