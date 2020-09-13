@@ -1896,7 +1896,7 @@ bool FileExists(const char *fileName)
 bool IsFileExtension(const char *fileName, const char *ext)
 {
     bool result = false;
-    const char *fileExt = GetExtension(fileName);
+    const char *fileExt = GetFileExtension(fileName);
 
     if (fileExt != NULL)
     {
@@ -1939,7 +1939,7 @@ bool DirectoryExists(const char *dirPath)
 }
 
 // Get pointer to extension for a filename string
-const char *GetExtension(const char *fileName)
+const char *GetFileExtension(const char *fileName)
 {
     const char *dot = strrchr(fileName, '.');
 

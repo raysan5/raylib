@@ -957,9 +957,9 @@ RLAPI void SaveFileData(const char *fileName, void *data, unsigned int bytesToWr
 RLAPI char *LoadFileText(const char *fileName);                   // Load text data from file (read), returns a '\0' terminated string
 RLAPI void SaveFileText(const char *fileName, char *text);        // Save text data to file (write), string must be '\0' terminated
 RLAPI bool FileExists(const char *fileName);                      // Check if file exists
-RLAPI bool IsFileExtension(const char *fileName, const char *ext);// Check file extension
+RLAPI bool IsFileExtension(const char *fileName, const char *ext);// Check file extension (including point: .png,.wav)
 RLAPI bool DirectoryExists(const char *dirPath);                  // Check if a directory path exists
-RLAPI const char *GetExtension(const char *fileName);             // Get pointer to extension for a filename string
+RLAPI const char *GetFileExtension(const char *fileName);         // Get pointer to extension for a filename string  (including point: ".png")
 RLAPI const char *GetFileName(const char *filePath);              // Get pointer to filename for a path string
 RLAPI const char *GetFileNameWithoutExt(const char *filePath);    // Get filename string without extension (uses static string)
 RLAPI const char *GetDirectoryPath(const char *filePath);         // Get full path for a given fileName with path (uses static string)
