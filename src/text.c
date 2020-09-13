@@ -335,30 +335,15 @@ Font LoadFont(const char *fileName)
 Font LoadFontEx(const char *fileName, int fontSize, int *fontChars, int charsCount)
 {
     Font font = { 0 };
-
-#if defined(SUPPORT_FILEFORMAT_TTF)
-    font.baseSize = fontSize;
-    font.charsCount = (charsCount > 0)? charsCount : 95;
-    font.chars = LoadFontData(fileName, font.baseSize, fontChars, font.charsCount, FONT_DEFAULT);
-
-    if (font.chars != NULL)
-    {
-        Image atlas = GenImageFontAtlas(font.chars, &font.recs, font.charsCount, font.baseSize, 2, 0);
-        font.texture = LoadTextureFromImage(atlas);
-
-        // Update chars[i].image to use alpha, required to be used on ImageDrawText()
-        for (int i = 0; i < font.charsCount; i++)
-        {
-            UnloadImage(font.chars[i].image);
-            font.chars[i].image = ImageFromImage(atlas, font.recs[i]);
-        }
-
-        UnloadImage(atlas);
-    }
-    else font = GetFontDefault();
-#else
-    font = GetFontDefault();
-#endif
+    
+    // Loading file to memory
+    unsigned int fileSize = 0;
+    unsigned char *fileData = LoadFileData(fileName, &fileSize);
+    
+    // Loading font from memory data
+    font = LoadFontFromMemory(GetFileExtension(fileName), (char *)fileData, fileSize, fontSize, fontChars, charsCount);
+    
+    RL_FREE(fileData);
 
     return font;
 }
@@ -481,6 +466,45 @@ Font LoadFontFromImage(Image image, Color key, int firstChar)
     UnloadImage(fontClear);     // Unload processed image once converted to texture
 
     font.baseSize = (int)font.recs[0].height;
+
+    return font;
+}
+
+// Load font from memory buffer, fileType refers to extension: i.e. "ttf"
+Font LoadFontFromMemory(const char *fileType, const char *fileData, int dataSize, int fontSize, int *fontChars, int charsCount)
+{
+    Font font = { 0 };
+    
+    char fileExtLower[16] = { 0 };
+    strcpy(fileExtLower, TextToLower(fileType));
+
+#if defined(SUPPORT_FILEFORMAT_TTF)
+    if (TextIsEqual(fileExtLower, "ttf") ||
+        TextIsEqual(fileExtLower, "otf"))
+    {
+        font.baseSize = fontSize;
+        font.charsCount = (charsCount > 0)? charsCount : 95;
+        font.chars = LoadFontData(fileData, dataSize, font.baseSize, fontChars, font.charsCount, FONT_DEFAULT);
+
+        if (font.chars != NULL)
+        {
+            Image atlas = GenImageFontAtlas(font.chars, &font.recs, font.charsCount, font.baseSize, 2, 0);
+            font.texture = LoadTextureFromImage(atlas);
+
+            // Update chars[i].image to use alpha, required to be used on ImageDrawText()
+            for (int i = 0; i < font.charsCount; i++)
+            {
+                UnloadImage(font.chars[i].image);
+                font.chars[i].image = ImageFromImage(atlas, font.recs[i]);
+            }
+
+            UnloadImage(atlas);
+        }
+        else font = GetFontDefault();
+    }
+#else
+    font = GetFontDefault();
+#endif
 
     return font;
 }
