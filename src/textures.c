@@ -171,20 +171,20 @@
 // Module specific Functions Declaration
 //----------------------------------------------------------------------------------
 #if defined(SUPPORT_FILEFORMAT_DDS)
-static Image LoadDDS(const char *fileName);   // Load DDS file
+static Image LoadDDS(const char *fileData, unsigned int fileSize);   // Load DDS file data
 #endif
 #if defined(SUPPORT_FILEFORMAT_PKM)
-static Image LoadPKM(const char *fileName);   // Load PKM file
+static Image LoadPKM(const char *fileData, unsigned int fileSize);   // Load PKM file data
 #endif
 #if defined(SUPPORT_FILEFORMAT_KTX)
-static Image LoadKTX(const char *fileName);   // Load KTX file
+static Image LoadKTX(const char *fileData, unsigned int fileSize);   // Load KTX file data
 static int SaveKTX(Image image, const char *fileName);  // Save image data as KTX file
 #endif
 #if defined(SUPPORT_FILEFORMAT_PVR)
-static Image LoadPVR(const char *fileName);   // Load PVR file
+static Image LoadPVR(const char *fileData, unsigned int fileSize);   // Load PVR file data
 #endif
 #if defined(SUPPORT_FILEFORMAT_ASTC)
-static Image LoadASTC(const char *fileName);  // Load ASTC file
+static Image LoadASTC(const char *fileData, unsigned int fileSize);  // Load ASTC file data
 #endif
 
 //----------------------------------------------------------------------------------
@@ -207,100 +207,17 @@ Image LoadImage(const char *fileName)
 #define STBI_REQUIRED
 #endif
 
-#if defined(SUPPORT_FILEFORMAT_PNG)
-    if ((IsFileExtension(fileName, ".png"))
-#else
-    if ((false)
-#endif
-#if defined(SUPPORT_FILEFORMAT_BMP)
-        || (IsFileExtension(fileName, ".bmp"))
-#endif
-#if defined(SUPPORT_FILEFORMAT_TGA)
-        || (IsFileExtension(fileName, ".tga"))
-#endif
-#if defined(SUPPORT_FILEFORMAT_JPG)
-        || (IsFileExtension(fileName, ".jpg"))
-#endif
-#if defined(SUPPORT_FILEFORMAT_GIF)
-        || (IsFileExtension(fileName, ".gif"))
-#endif
-#if defined(SUPPORT_FILEFORMAT_PIC)
-        || (IsFileExtension(fileName, ".pic"))
-#endif
-#if defined(SUPPORT_FILEFORMAT_PSD)
-        || (IsFileExtension(fileName, ".psd"))
-#endif
-       )
-    {
-#if defined(STBI_REQUIRED)
-        // NOTE: Using stb_image to load images (Supports multiple image formats)
-
-        unsigned int dataSize = 0;
-        unsigned char *fileData = LoadFileData(fileName, &dataSize);
-
-        if (fileData != NULL)
-        {
-            int comp = 0;
-            image.data = stbi_load_from_memory(fileData, dataSize, &image.width, &image.height, &comp, 0);
-
-            image.mipmaps = 1;
-
-            if (comp == 1) image.format = UNCOMPRESSED_GRAYSCALE;
-            else if (comp == 2) image.format = UNCOMPRESSED_GRAY_ALPHA;
-            else if (comp == 3) image.format = UNCOMPRESSED_R8G8B8;
-            else if (comp == 4) image.format = UNCOMPRESSED_R8G8B8A8;
-
-            RL_FREE(fileData);
-        }
-#endif
-    }
-#if defined(SUPPORT_FILEFORMAT_HDR)
-    else if (IsFileExtension(fileName, ".hdr"))
-    {
-#if defined(STBI_REQUIRED)
-        unsigned int dataSize = 0;
-        unsigned char *fileData = LoadFileData(fileName, &dataSize);
-
-        if (fileData != NULL)
-        {
-            int comp = 0;
-            image.data = stbi_loadf_from_memory(fileData, dataSize, &image.width, &image.height, &comp, 0);
-
-            image.mipmaps = 1;
-
-            if (comp == 1) image.format = UNCOMPRESSED_R32;
-            else if (comp == 3) image.format = UNCOMPRESSED_R32G32B32;
-            else if (comp == 4) image.format = UNCOMPRESSED_R32G32B32A32;
-            else
-            {
-                TRACELOG(LOG_WARNING, "IMAGE: [%s] HDR fileformat not supported", fileName);
-                UnloadImage(image);
-            }
-
-            RL_FREE(fileData);
-        }
-#endif
-    }
-#endif
-#if defined(SUPPORT_FILEFORMAT_DDS)
-    else if (IsFileExtension(fileName, ".dds")) image = LoadDDS(fileName);
-#endif
-#if defined(SUPPORT_FILEFORMAT_PKM)
-    else if (IsFileExtension(fileName, ".pkm")) image = LoadPKM(fileName);
-#endif
-#if defined(SUPPORT_FILEFORMAT_KTX)
-    else if (IsFileExtension(fileName, ".ktx")) image = LoadKTX(fileName);
-#endif
-#if defined(SUPPORT_FILEFORMAT_PVR)
-    else if (IsFileExtension(fileName, ".pvr")) image = LoadPVR(fileName);
-#endif
-#if defined(SUPPORT_FILEFORMAT_ASTC)
-    else if (IsFileExtension(fileName, ".astc")) image = LoadASTC(fileName);
-#endif
-    else TRACELOG(LOG_WARNING, "IMAGE: [%s] Fileformat not supported", fileName);
+    // Loading file to memory
+    unsigned int fileSize = 0;
+    unsigned char *fileData = LoadFileData(fileName, &fileSize);
+    
+    // Loading image from memory data
+    image = LoadImageFromMemory(GetFileExtension(fileName), (char *)fileData, fileSize);
 
     if (image.data != NULL) TRACELOG(LOG_INFO, "IMAGE: [%s] Data loaded successfully (%ix%i)", fileName, image.width, image.height);
     else TRACELOG(LOG_WARNING, "IMAGE: [%s] Failed to load data", fileName);
+    
+    RL_FREE(fileData);
 
     return image;
 }
@@ -370,6 +287,100 @@ Image LoadImageAnim(const char *fileName, int *frames)
     // TODO: Support APNG animated images?
 
     *frames = framesCount;
+    return image;
+}
+
+// Load image from memory buffer, fileType refers to extension: i.e. "png"
+Image LoadImageFromMemory(const char *fileType, const char *fileData, int dataSize)
+{
+    Image image = { 0 };
+    
+    char fileExtLower[16] = { 0 };
+    strcpy(fileExtLower, TextToLower(fileType));
+
+#if defined(SUPPORT_FILEFORMAT_PNG)
+    if ((TextIsEqual(fileExtLower, "png"))
+#else
+    if ((false)
+#endif
+#if defined(SUPPORT_FILEFORMAT_BMP)
+        || (TextIsEqual(fileExtLower, "bmp"))
+#endif
+#if defined(SUPPORT_FILEFORMAT_TGA)
+        || (TextIsEqual(fileExtLower, "tga"))
+#endif
+#if defined(SUPPORT_FILEFORMAT_JPG)
+        || (TextIsEqual(fileExtLower, "jpg") || 
+            TextIsEqual(fileExtLower, "jpeg"))
+#endif
+#if defined(SUPPORT_FILEFORMAT_GIF)
+        || (TextIsEqual(fileExtLower, "gif"))
+#endif
+#if defined(SUPPORT_FILEFORMAT_PIC)
+        || (TextIsEqual(fileExtLower, "pic"))
+#endif
+#if defined(SUPPORT_FILEFORMAT_PSD)
+        || (TextIsEqual(fileExtLower, "psd"))
+#endif
+       )
+    {
+#if defined(STBI_REQUIRED)
+        // NOTE: Using stb_image to load images (Supports multiple image formats)
+        
+        if (fileData != NULL)
+        {
+            int comp = 0;
+            image.data = stbi_load_from_memory((unsigned char *)fileData, dataSize, &image.width, &image.height, &comp, 0);
+
+            image.mipmaps = 1;
+
+            if (comp == 1) image.format = UNCOMPRESSED_GRAYSCALE;
+            else if (comp == 2) image.format = UNCOMPRESSED_GRAY_ALPHA;
+            else if (comp == 3) image.format = UNCOMPRESSED_R8G8B8;
+            else if (comp == 4) image.format = UNCOMPRESSED_R8G8B8A8;
+        }
+#endif
+    }
+#if defined(SUPPORT_FILEFORMAT_HDR)
+    else if (TextIsEqual(fileExtLower, "hdr"))
+    {
+#if defined(STBI_REQUIRED)
+        if (fileData != NULL)
+        {
+            int comp = 0;
+            image.data = stbi_loadf_from_memory((unsigned char *)fileData, dataSize, &image.width, &image.height, &comp, 0);
+
+            image.mipmaps = 1;
+
+            if (comp == 1) image.format = UNCOMPRESSED_R32;
+            else if (comp == 3) image.format = UNCOMPRESSED_R32G32B32;
+            else if (comp == 4) image.format = UNCOMPRESSED_R32G32B32A32;
+            else
+            {
+                TRACELOG(LOG_WARNING, "IMAGE: HDR file format not supported");
+                UnloadImage(image);
+            }
+        }
+#endif
+    }
+#endif
+#if defined(SUPPORT_FILEFORMAT_DDS)
+    else if (TextIsEqual(fileExtLower, "dds")) image = LoadDDS(fileData, dataSize);
+#endif
+#if defined(SUPPORT_FILEFORMAT_PKM)
+    else if (TextIsEqual(fileExtLower, "pkm")) image = LoadPKM(fileData, dataSize);
+#endif
+#if defined(SUPPORT_FILEFORMAT_KTX)
+    else if (TextIsEqual(fileExtLower, "ktx")) image = LoadKTX(fileData, dataSize);
+#endif
+#if defined(SUPPORT_FILEFORMAT_PVR)
+    else if (TextIsEqual(fileExtLower, "pvr")) image = LoadPVR(fileData, dataSize);
+#endif
+#if defined(SUPPORT_FILEFORMAT_ASTC)
+    else if (TextIsEqual(fileExtLower, "astc")) image = LoadASTC(fileData, dataSize);
+#endif
+    else TRACELOG(LOG_WARNING, "IMAGE: File format not supported");
+    
     return image;
 }
 
@@ -3719,11 +3730,9 @@ int GetPixelDataSize(int width, int height, int format)
 //----------------------------------------------------------------------------------
 #if defined(SUPPORT_FILEFORMAT_DDS)
 // Loading DDS image data (compressed or uncompressed)
-static Image LoadDDS(const char *fileName)
+static Image LoadDDS(const char *fileData, unsigned int fileSize)
 {
-    unsigned int fileSize = 0;
-    unsigned char *fileData = LoadFileData(fileName, &fileSize);
-    unsigned char *fileDataPtr = fileData;
+    unsigned char *fileDataPtr = (unsigned char *)fileData;
     
     // Required extension:
     // GL_EXT_texture_compression_s3tc
@@ -3778,18 +3787,18 @@ static Image LoadDDS(const char *fileName)
 
         if ((ddsHeaderId[0] != 'D') || (ddsHeaderId[1] != 'D') || (ddsHeaderId[2] != 'S') || (ddsHeaderId[3] != ' '))
         {
-            TRACELOG(LOG_WARNING, "IMAGE: [%s] DDS file not a valid image", fileName);
+            TRACELOG(LOG_WARNING, "IMAGE: DDS file data not valid");
         }
         else
         {
             DDSHeader *ddsHeader = (DDSHeader *)fileDataPtr;
 
-            TRACELOGD("IMAGE: [%s] DDS file info:", fileName);
-            TRACELOGD("    > Header size:        %i", fileName, sizeof(DDSHeader));
-            TRACELOGD("    > Pixel format size:  %i", fileName, ddsHeader->ddspf.size);
-            TRACELOGD("    > Pixel format flags: 0x%x", fileName, ddsHeader->ddspf.flags);
-            TRACELOGD("    > File format:        0x%x", fileName, ddsHeader->ddspf.fourCC);
-            TRACELOGD("    > File bit count:     0x%x", fileName, ddsHeader->ddspf.rgbBitCount);
+            TRACELOGD("IMAGE: DDS file data info:");
+            TRACELOGD("    > Header size:        %i", sizeof(DDSHeader));
+            TRACELOGD("    > Pixel format size:  %i", ddsHeader->ddspf.size);
+            TRACELOGD("    > Pixel format flags: 0x%x", ddsHeader->ddspf.flags);
+            TRACELOGD("    > File format:        0x%x", ddsHeader->ddspf.fourCC);
+            TRACELOGD("    > File bit count:     0x%x", ddsHeader->ddspf.rgbBitCount);
             
             fileDataPtr += sizeof(DDSHeader);   // Skip header
 
@@ -3907,8 +3916,6 @@ static Image LoadDDS(const char *fileName)
                 }
             }
         }
-
-        RL_FREE(fileData);    // Free file data buffer
     }
 
     return image;
@@ -3919,10 +3926,8 @@ static Image LoadDDS(const char *fileName)
 // Loading PKM image data (ETC1/ETC2 compression)
 // NOTE: KTX is the standard Khronos Group compression format (ETC1/ETC2, mipmaps)
 // PKM is a much simpler file format used mainly to contain a single ETC1/ETC2 compressed image (no mipmaps)
-static Image LoadPKM(const char *fileName)
+static Image LoadPKM(const char *fileData, unsigned int fileSize)
 {
-    unsigned int fileSize = 0;
-    unsigned char *fileData = LoadFileData(fileName, &fileSize);
     unsigned char *fileDataPtr = fileData;
     
     // Required extensions:
@@ -3960,7 +3965,7 @@ static Image LoadPKM(const char *fileName)
 
         if ((pkmHeader->id[0] != 'P') || (pkmHeader->id[1] != 'K') || (pkmHeader->id[2] != 'M') || (pkmHeader->id[3] != ' '))
         {
-            TRACELOG(LOG_WARNING, "IMAGE: [%s] PKM file not a valid image", fileName);
+            TRACELOG(LOG_WARNING, "IMAGE: PKM file data not valid");
         }
         else
         {
@@ -3971,7 +3976,7 @@ static Image LoadPKM(const char *fileName)
             pkmHeader->width = ((pkmHeader->width & 0x00FF) << 8) | ((pkmHeader->width & 0xFF00) >> 8);
             pkmHeader->height = ((pkmHeader->height & 0x00FF) << 8) | ((pkmHeader->height & 0xFF00) >> 8);
 
-            TRACELOGD("IMAGE: [%s] PKM file info:", fileName);
+            TRACELOGD("IMAGE: PKM file data info:");
             TRACELOGD("    > Image width:  %i", pkmHeader->width);
             TRACELOGD("    > Image height: %i", pkmHeader->height);
             TRACELOGD("    > Image format: %i", pkmHeader->format);
@@ -3993,8 +3998,6 @@ static Image LoadPKM(const char *fileName)
             else if (pkmHeader->format == 1) image.format = COMPRESSED_ETC2_RGB;
             else if (pkmHeader->format == 3) image.format = COMPRESSED_ETC2_EAC_RGBA;
         }
-
-        RL_FREE(fileData);    // Free file data buffer
     }
 
     return image;
@@ -4003,11 +4006,9 @@ static Image LoadPKM(const char *fileName)
 
 #if defined(SUPPORT_FILEFORMAT_KTX)
 // Load KTX compressed image data (ETC1/ETC2 compression)
-static Image LoadKTX(const char *fileName)
+static Image LoadKTX(const char *fileData, unsigned int fileSize)
 {
-    unsigned int fileSize = 0;
-    unsigned char *fileData = LoadFileData(fileName, &fileSize);
-    unsigned char *fileDataPtr = fileData;
+    unsigned char *fileDataPtr = (unsigned char *)fileData;
     
     // Required extensions:
     // GL_OES_compressed_ETC1_RGB8_texture  (ETC1)
@@ -4052,7 +4053,7 @@ static Image LoadKTX(const char *fileName)
         if ((ktxHeader->id[1] != 'K') || (ktxHeader->id[2] != 'T') || (ktxHeader->id[3] != 'X') ||
             (ktxHeader->id[4] != ' ') || (ktxHeader->id[5] != '1') || (ktxHeader->id[6] != '1'))
         {
-            TRACELOG(LOG_WARNING, "IMAGE: [%s] KTX file not a valid image", fileName);
+            TRACELOG(LOG_WARNING, "IMAGE: KTX file data not valid");
         }
         else
         {
@@ -4062,7 +4063,7 @@ static Image LoadKTX(const char *fileName)
             image.height = ktxHeader->height;
             image.mipmaps = ktxHeader->mipmapLevels;
 
-            TRACELOGD("IMAGE: [%s] KTX file info:", fileName);
+            TRACELOGD("IMAGE: KTX file data info:");
             TRACELOGD("    > Image width:  %i", ktxHeader->width);
             TRACELOGD("    > Image height: %i", ktxHeader->height);
             TRACELOGD("    > Image format: 0x%x", ktxHeader->glInternalFormat);
@@ -4080,8 +4081,6 @@ static Image LoadKTX(const char *fileName)
             else if (ktxHeader->glInternalFormat == 0x9274) image.format = COMPRESSED_ETC2_RGB;
             else if (ktxHeader->glInternalFormat == 0x9278) image.format = COMPRESSED_ETC2_EAC_RGBA;
         }
-
-        RL_FREE(fileData);    // Free file data buffer
     }
 
     return image;
@@ -4191,11 +4190,9 @@ static int SaveKTX(Image image, const char *fileName)
 #if defined(SUPPORT_FILEFORMAT_PVR)
 // Loading PVR image data (uncompressed or PVRT compression)
 // NOTE: PVR v2 not supported, use PVR v3 instead
-static Image LoadPVR(const char *fileName)
+static Image LoadPVR(const char *fileData, unsigned int fileSize)
 {
-    unsigned int fileSize = 0;
-    unsigned char *fileData = LoadFileData(fileName, &fileSize);
-    unsigned char *fileDataPtr = fileData;
+    unsigned char *fileDataPtr = (unsigned char *)fileData;
     
     // Required extension:
     // GL_IMG_texture_compression_pvrtc
@@ -4265,7 +4262,7 @@ static Image LoadPVR(const char *fileName)
 
             if ((pvrHeader->id[0] != 'P') || (pvrHeader->id[1] != 'V') || (pvrHeader->id[2] != 'R') || (pvrHeader->id[3] != 3))
             {
-                TRACELOG(LOG_WARNING, "IMAGE: [%s] PVR file not a valid image", fileName);
+                TRACELOG(LOG_WARNING, "IMAGE: PVR file data not valid");
             }
             else
             {
@@ -4319,9 +4316,7 @@ static Image LoadPVR(const char *fileName)
                 memcpy(image.data, fileDataPtr, dataSize);
             }
         }
-        else if (pvrVersion == 52) TRACELOG(LOG_INFO, "IMAGE: [%s] PVRv2 format not supported, update your files to PVRv3", fileName);
-
-        RL_FREE(fileData);    // Free file data buffer
+        else if (pvrVersion == 52) TRACELOG(LOG_INFO, "IMAGE: PVRv2 format not supported, update your files to PVRv3");
     }
 
     return image;
@@ -4330,11 +4325,9 @@ static Image LoadPVR(const char *fileName)
 
 #if defined(SUPPORT_FILEFORMAT_ASTC)
 // Load ASTC compressed image data (ASTC compression)
-static Image LoadASTC(const char *fileName)
+static Image LoadASTC(const char *fileData, unsigned int fileSize)
 {
-    unsigned int fileSize = 0;
-    unsigned char *fileData = LoadFileData(fileName, &fileSize);
-    unsigned char *fileDataPtr = fileData;
+    unsigned char *fileDataPtr = (unsigned char *)fileData;
     
     // Required extensions:
     // GL_KHR_texture_compression_astc_hdr
@@ -4363,7 +4356,7 @@ static Image LoadASTC(const char *fileName)
 
         if ((astcHeader->id[3] != 0x5c) || (astcHeader->id[2] != 0xa1) || (astcHeader->id[1] != 0xab) || (astcHeader->id[0] != 0x13))
         {
-            TRACELOG(LOG_WARNING, "IMAGE: [%s] ASTC file not a valid image", fileName);
+            TRACELOG(LOG_WARNING, "IMAGE: ASTC file data not valid");
         }
         else
         {
@@ -4373,7 +4366,7 @@ static Image LoadASTC(const char *fileName)
             image.width = 0x00000000 | ((int)astcHeader->width[2] << 16) | ((int)astcHeader->width[1] << 8) | ((int)astcHeader->width[0]);
             image.height = 0x00000000 | ((int)astcHeader->height[2] << 16) | ((int)astcHeader->height[1] << 8) | ((int)astcHeader->height[0]);
 
-            TRACELOGD("IMAGE: [%s] ASTC file info:", fileName);
+            TRACELOGD("IMAGE: ASTC file data info:");
             TRACELOGD("    > Image width:  %i", image.width);
             TRACELOGD("    > Image height: %i", image.height);
             TRACELOGD("    > Image blocks: %ix%i", astcHeader->blockX, astcHeader->blockY);
@@ -4395,10 +4388,8 @@ static Image LoadASTC(const char *fileName)
                 if (bpp == 8) image.format = COMPRESSED_ASTC_4x4_RGBA;
                 else if (bpp == 2) image.format = COMPRESSED_ASTC_8x8_RGBA;
             }
-            else TRACELOG(LOG_WARNING, "IMAGE: [%s] ASTC block size configuration not supported", fileName);
+            else TRACELOG(LOG_WARNING, "IMAGE: ASTC block size configuration not supported");
         }
-
-        RL_FREE(fileData);    // Free file data buffer
     }
 
     return image;
