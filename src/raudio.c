@@ -370,17 +370,17 @@ static void InitAudioBufferPool(void);                  // Initialise the multic
 static void CloseAudioBufferPool(void);                 // Close the audio buffers pool
 
 #if defined(SUPPORT_FILEFORMAT_WAV)
-static Wave LoadWAV(const char *fileName);              // Load WAV file
+static Wave LoadWAV(const char *fileData, unsigned int fileSize);   // Load WAV file
 static int SaveWAV(Wave wave, const char *fileName);    // Save wave data as WAV file
 #endif
 #if defined(SUPPORT_FILEFORMAT_OGG)
-static Wave LoadOGG(const char *fileName);              // Load OGG file
+static Wave LoadOGG(const char *fileData, unsigned int fileSize);   // Load OGG file
 #endif
 #if defined(SUPPORT_FILEFORMAT_FLAC)
-static Wave LoadFLAC(const char *fileName);             // Load FLAC file
+static Wave LoadFLAC(const char *fileData, unsigned int fileSize);  // Load FLAC file
 #endif
 #if defined(SUPPORT_FILEFORMAT_MP3)
-static Wave LoadMP3(const char *fileName);              // Load MP3 file
+static Wave LoadMP3(const char *fileData, unsigned int fileSize);   // Load MP3 file
 #endif
 
 #if defined(RAUDIO_STANDALONE)
@@ -689,22 +689,42 @@ void UntrackAudioBuffer(AudioBuffer *buffer)
 Wave LoadWave(const char *fileName)
 {
     Wave wave = { 0 };
+    
+    // Loading file to memory
+    unsigned int fileSize = 0;
+    unsigned char *fileData = LoadFileData(fileName, &fileSize);
 
+    // Loading wave from memory data
+    wave = LoadWaveFromMemory(GetFileExtension(fileName), (char *)fileData, fileSize);
+
+    RL_FREE(fileData);
+
+    return wave;
+}
+
+// Load wave from memory buffer, fileType refers to extension: i.e. "wav"
+Wave LoadWaveFromMemory(const char *fileType, const char *fileData, int dataSize)
+{
+    Wave wave = { 0 };
+    
+    char fileExtLower[16] = { 0 };
+    strcpy(fileExtLower, TextToLower(fileType));
+    
     if (false) { }
 #if defined(SUPPORT_FILEFORMAT_WAV)
-    else if (IsFileExtension(fileName, ".wav")) wave = LoadWAV(fileName);
+    else if (TextIsEqual(fileExtLower, "wav")) wave = LoadWAV(fileData, dataSize);
 #endif
 #if defined(SUPPORT_FILEFORMAT_OGG)
-    else if (IsFileExtension(fileName, ".ogg")) wave = LoadOGG(fileName);
+    else if (TextIsEqual(fileExtLower, "ogg")) wave = LoadOGG(fileData, dataSize);
 #endif
 #if defined(SUPPORT_FILEFORMAT_FLAC)
-    else if (IsFileExtension(fileName, ".flac")) wave = LoadFLAC(fileName);
+    else if (TextIsEqual(fileExtLower, "flac")) wave = LoadFLAC(fileData, dataSize);
 #endif
 #if defined(SUPPORT_FILEFORMAT_MP3)
-    else if (IsFileExtension(fileName, ".mp3")) wave = LoadMP3(fileName);
+    else if (TextIsEqual(fileExtLower, "mp3")) wave = LoadMP3(fileData, dataSize);
 #endif
-    else TRACELOG(LOG_WARNING, "FILEIO: [%s] File format not supported", fileName);
-
+    else TRACELOG(LOG_WARNING, "WAVE: File format not supported");
+    
     return wave;
 }
 
@@ -1889,15 +1909,11 @@ static void CloseAudioBufferPool(void)
 }
 
 #if defined(SUPPORT_FILEFORMAT_WAV)
-// Load WAV file into Wave structure
-static Wave LoadWAV(const char *fileName)
+// Load WAV file data into Wave structure
+// NOTE: Using dr_wav library
+static Wave LoadWAV(const char *fileData, unsigned int fileSize)
 {
     Wave wave = { 0 };
-
-    // Loading WAV from memory to avoid FILE accesses
-    unsigned int fileSize = 0;
-    unsigned char *fileData = LoadFileData(fileName, &fileSize);
-    
     drwav wav = { 0 };
     
     bool success = drwav_init_memory(&wav, fileData, fileSize, NULL);
@@ -1911,15 +1927,15 @@ static Wave LoadWAV(const char *fileName)
         wave.data = (short *)RL_MALLOC(wave.sampleCount*sizeof(short));
         drwav_read_pcm_frames_s16(&wav, wav.totalPCMFrameCount, wave.data);
     }
-    else TRACELOG(LOG_WARNING, "FILEIO: [%s] Failed to load WAV data", fileName);
+    else TRACELOG(LOG_WARNING, "WAVE: Failed to load WAV data");
     
     drwav_uninit(&wav);
-    RL_FREE(fileData);
 
     return wave;
 }
 
 // Save wave data as WAV file
+// NOTE: Using dr_wav library
 static int SaveWAV(Wave wave, const char *fileName)
 {
     drwav wav = { 0 };
@@ -1944,94 +1960,77 @@ static int SaveWAV(Wave wave, const char *fileName)
 #endif
 
 #if defined(SUPPORT_FILEFORMAT_OGG)
-// Load OGG file into Wave structure
+// Load OGG file data into Wave structure
 // NOTE: Using stb_vorbis library
-static Wave LoadOGG(const char *fileName)
+static Wave LoadOGG(const char *fileData, unsigned int fileSize)
 {
     Wave wave = { 0 };
 
-    // Loading OGG from memory to avoid FILE accesses
-    unsigned int fileSize = 0;
-    unsigned char *fileData = LoadFileData(fileName, &fileSize);
-    
-    stb_vorbis *oggFile = stb_vorbis_open_memory(fileData, fileSize, NULL, NULL);
+    stb_vorbis *oggData = stb_vorbis_open_memory((unsigned char *)fileData, fileSize, NULL, NULL);
 
-    if (oggFile == NULL) TRACELOG(LOG_WARNING, "FILEIO: [%s] Failed to open OGG file", fileName);
-    else
+    if (oggData != NULL)
     {
-        stb_vorbis_info info = stb_vorbis_get_info(oggFile);
+        stb_vorbis_info info = stb_vorbis_get_info(oggData);
 
         wave.sampleRate = info.sample_rate;
         wave.sampleSize = 16;                   // 16 bit per sample (short)
         wave.channels = info.channels;
-        wave.sampleCount = (unsigned int)stb_vorbis_stream_length_in_samples(oggFile)*info.channels;  // Independent by channel
+        wave.sampleCount = (unsigned int)stb_vorbis_stream_length_in_samples(oggData)*info.channels;  // Independent by channel
 
-        float totalSeconds = stb_vorbis_stream_length_in_seconds(oggFile);
-        if (totalSeconds > 10) TRACELOG(LOG_WARNING, "WAVE: [%s] Ogg audio length larger than 10 seconds (%f), that's a big file in memory, consider music streaming", fileName, totalSeconds);
+        float totalSeconds = stb_vorbis_stream_length_in_seconds(oggData);
+        if (totalSeconds > 10) TRACELOG(LOG_WARNING, "WAVE: OGG audio length larger than 10 seconds (%f sec.), that's a big file in memory, consider music streaming", totalSeconds);
 
         wave.data = (short *)RL_MALLOC(wave.sampleCount*wave.channels*sizeof(short));
 
         // NOTE: Returns the number of samples to process (be careful! we ask for number of shorts!)
-        stb_vorbis_get_samples_short_interleaved(oggFile, info.channels, (short *)wave.data, wave.sampleCount*wave.channels);
-        TRACELOG(LOG_INFO, "WAVE: [%s] OGG file loaded successfully (%i Hz, %i bit, %s)", fileName, wave.sampleRate, wave.sampleSize, (wave.channels == 1)? "Mono" : "Stereo");
+        stb_vorbis_get_samples_short_interleaved(oggData, info.channels, (short *)wave.data, wave.sampleCount*wave.channels);
+        TRACELOG(LOG_INFO, "WAVE: OGG data loaded successfully (%i Hz, %i bit, %s)", wave.sampleRate, wave.sampleSize, (wave.channels == 1)? "Mono" : "Stereo");
 
-        stb_vorbis_close(oggFile);
+        stb_vorbis_close(oggData);
     }
-    
-    RL_FREE(fileData);
+    else TRACELOG(LOG_WARNING, "WAVE: Failed to load OGG data");
 
     return wave;
 }
 #endif
 
 #if defined(SUPPORT_FILEFORMAT_FLAC)
-// Load FLAC file into Wave structure
+// Load FLAC file data into Wave structure
 // NOTE: Using dr_flac library
-static Wave LoadFLAC(const char *fileName)
+static Wave LoadFLAC(const char *fileData, unsigned int fileSize)
 {
     Wave wave = { 0 };
-    
-    // Loading FLAC from memory to avoid FILE accesses
-    unsigned int fileSize = 0;
-    unsigned char *fileData = LoadFileData(fileName, &fileSize);
 
-    // Decode an entire FLAC file in one go
+    // Decode the entire FLAC file in one go
     unsigned long long int totalSampleCount = 0;
     wave.data = drflac_open_memory_and_read_pcm_frames_s16(fileData, fileSize, &wave.channels, &wave.sampleRate, &totalSampleCount);
 
-    if (wave.data == NULL) TRACELOG(LOG_WARNING, "FILEIO: [%s] Failed to load FLAC data", fileName);
-    else
+    if (wave.data != NULL)
     {
         wave.sampleCount = (unsigned int)totalSampleCount;
         wave.sampleSize = 16;
 
-        TRACELOG(LOG_INFO, "WAVE: [%s] FLAC file loaded successfully (%i Hz, %i bit, %s)", fileName, wave.sampleRate, wave.sampleSize, (wave.channels == 1)? "Mono" : "Stereo");
+        TRACELOG(LOG_INFO, "WAVE: FLAC data loaded successfully (%i Hz, %i bit, %s)", wave.sampleRate, wave.sampleSize, (wave.channels == 1)? "Mono" : "Stereo");
     }
-    
-    RL_FREE(fileData);
+    else TRACELOG(LOG_WARNING, "WAVE: Failed to load FLAC data");
  
     return wave;
 }
 #endif
 
 #if defined(SUPPORT_FILEFORMAT_MP3)
-// Load MP3 file into Wave structure
+// Load MP3 file data into Wave structure
 // NOTE: Using dr_mp3 library
-static Wave LoadMP3(const char *fileName)
+static Wave LoadMP3(const char *fileData, unsigned int fileSize)
 {
     Wave wave = { 0 };
-
-    // Loading MP3 from memory to avoid FILE accesses
-    unsigned int fileSize = 0;
-    unsigned char *fileData = LoadFileData(fileName, &fileSize);
-    
-    // Decode an entire MP3 file in one go
-    unsigned long long int totalFrameCount = 0;
     drmp3_config config = { 0 };
+    
+    // Decode the entire MP3 file in one go
+    unsigned long long int totalFrameCount = 0;
     wave.data = drmp3_open_memory_and_read_f32(fileData, fileSize, &config, &totalFrameCount);
 
-    if (wave.data == NULL) TRACELOG(LOG_WARNING, "FILEIO: [%s] Failed to load MP3 data", fileName);
-    else
+    if (wave.data != NULL)
     {
         wave.channels = config.outputChannels;
         wave.sampleRate = config.outputSampleRate;
@@ -2039,12 +2038,12 @@ static Wave LoadMP3(const char *fileName)
         wave.sampleSize = 32;
 
         // NOTE: Only support up to 2 channels (mono, stereo)
-        if (wave.channels > 2) TRACELOG(LOG_WARNING, "WAVE: [%s] MP3 channels number (%i) not supported", fileName, wave.channels);
+        // TODO: Really?
+        if (wave.channels > 2) TRACELOG(LOG_WARNING, "WAVE: MP3 channels number (%i) not supported", wave.channels);
 
-        TRACELOG(LOG_INFO, "WAVE: [%s] MP3 file loaded successfully (%i Hz, %i bit, %s)", fileName, wave.sampleRate, wave.sampleSize, (wave.channels == 1)? "Mono" : "Stereo");
+        TRACELOG(LOG_INFO, "WAVE: MP3 file loaded successfully (%i Hz, %i bit, %s)", wave.sampleRate, wave.sampleSize, (wave.channels == 1)? "Mono" : "Stereo");
     }
-    
-    RL_FREE(fileData);
+    else TRACELOG(LOG_WARNING, "WAVE: Failed to load MP3 data");
 
     return wave;
 }
