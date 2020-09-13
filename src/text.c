@@ -486,8 +486,8 @@ Font LoadFontFromImage(Image image, Color key, int firstChar)
 }
 
 // Load font data for further use
-// NOTE: Requires TTF font and can generate SDF data
-CharInfo *LoadFontData(const char *fileName, int fontSize, int *fontChars, int charsCount, int type)
+// NOTE: Requires TTF font memory data and can generate SDF data
+CharInfo *LoadFontData(const char *fileData, int dataSize, int fontSize, int *fontChars, int charsCount, int type)
 {
     // NOTE: Using some SDF generation default values,
     // trades off precision with ability to handle *smaller* sizes
@@ -507,18 +507,14 @@ CharInfo *LoadFontData(const char *fileName, int fontSize, int *fontChars, int c
     CharInfo *chars = NULL;
 
 #if defined(SUPPORT_FILEFORMAT_TTF)
-    // Load font data (including pixel data) from TTF file
-    // NOTE: Loaded information should be enough to generate
-    // font image atlas, using any packaging method
-    unsigned int dataSize = 0;
-    unsigned char *fileData = LoadFileData(fileName, &dataSize);
-
+    // Load font data (including pixel data) from TTF memory file
+    // NOTE: Loaded information should be enough to generate font image atlas, using any packaging method
     if (fileData != NULL)
     {
         int genFontChars = false;
         stbtt_fontinfo fontInfo = { 0 };
 
-        if (stbtt_InitFont(&fontInfo, fileData, 0))     // Init font for data reading
+        if (stbtt_InitFont(&fontInfo, (unsigned char *)fileData, 0))     // Init font for data reading
         {
             // Calculate font scale factor
             float scaleFactor = stbtt_ScaleForPixelHeight(&fontInfo, (float)fontSize);
@@ -607,7 +603,6 @@ CharInfo *LoadFontData(const char *fileName, int fontSize, int *fontChars, int c
         }
         else TRACELOG(LOG_WARNING, "FONT: Failed to process TTF font data");
 
-        RL_FREE(fileData);
         if (genFontChars) RL_FREE(fontChars);
     }
 #endif

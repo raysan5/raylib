@@ -1222,8 +1222,8 @@ RLAPI Font GetFontDefault(void);                                                
 RLAPI Font LoadFont(const char *fileName);                                                  // Load font from file into GPU memory (VRAM)
 RLAPI Font LoadFontEx(const char *fileName, int fontSize, int *fontChars, int charsCount);  // Load font from file with extended parameters
 RLAPI Font LoadFontFromImage(Image image, Color key, int firstChar);                        // Load font from Image (XNA style)
-RLAPI CharInfo *LoadFontData(const char *fileName, int fontSize, int *fontChars, int charsCount, int type); // Load font data for further use
 RLAPI Image GenImageFontAtlas(const CharInfo *chars, Rectangle **recs, int charsCount, int fontSize, int padding, int packMethod);  // Generate image font atlas using chars info
+RLAPI CharInfo *LoadFontData(const char *fileData, int dataSize, int fontSize, int *fontChars, int charsCount, int type);               // Load font data for further use
 RLAPI void UnloadFont(Font font);                                                           // Unload Font from GPU memory (VRAM)
 
 // Text drawing functions
@@ -1297,6 +1297,7 @@ RLAPI void DrawGizmo(Vector3 position);                                         
 // Model loading/unloading functions
 RLAPI Model LoadModel(const char *fileName);                                                            // Load model from files (meshes and materials)
 RLAPI Model LoadModelFromMesh(Mesh mesh);                                                               // Load model from generated mesh (default material)
+RLAPI Model LoadModelFromMemory(const char *fileType, const char *fileData, int dataSize);              // Load model from memory buffer, fileType refers to extension: i.e. "obj"
 RLAPI void UnloadModel(Model model);                                                                    // Unload model from memory (RAM and/or VRAM)
 
 // Mesh loading/unloading functions
