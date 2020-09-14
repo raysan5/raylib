@@ -171,20 +171,20 @@
 // Module specific Functions Declaration
 //----------------------------------------------------------------------------------
 #if defined(SUPPORT_FILEFORMAT_DDS)
-static Image LoadDDS(const char *fileData, unsigned int fileSize);   // Load DDS file data
+static Image LoadDDS(const unsigned char *fileData, unsigned int fileSize);   // Load DDS file data
 #endif
 #if defined(SUPPORT_FILEFORMAT_PKM)
-static Image LoadPKM(const char *fileData, unsigned int fileSize);   // Load PKM file data
+static Image LoadPKM(const unsigned char *fileData, unsigned int fileSize);   // Load PKM file data
 #endif
 #if defined(SUPPORT_FILEFORMAT_KTX)
-static Image LoadKTX(const char *fileData, unsigned int fileSize);   // Load KTX file data
+static Image LoadKTX(const unsigned char *fileData, unsigned int fileSize);   // Load KTX file data
 static int SaveKTX(Image image, const char *fileName);  // Save image data as KTX file
 #endif
 #if defined(SUPPORT_FILEFORMAT_PVR)
-static Image LoadPVR(const char *fileData, unsigned int fileSize);   // Load PVR file data
+static Image LoadPVR(const unsigned char *fileData, unsigned int fileSize);   // Load PVR file data
 #endif
 #if defined(SUPPORT_FILEFORMAT_ASTC)
-static Image LoadASTC(const char *fileData, unsigned int fileSize);  // Load ASTC file data
+static Image LoadASTC(const unsigned char *fileData, unsigned int fileSize);  // Load ASTC file data
 #endif
 
 //----------------------------------------------------------------------------------
@@ -212,7 +212,7 @@ Image LoadImage(const char *fileName)
     unsigned char *fileData = LoadFileData(fileName, &fileSize);
     
     // Loading image from memory data
-    image = LoadImageFromMemory(GetFileExtension(fileName), (char *)fileData, fileSize);
+    image = LoadImageFromMemory(GetFileExtension(fileName), fileData, fileSize);
 
     if (image.data != NULL) TRACELOG(LOG_INFO, "IMAGE: [%s] Data loaded successfully (%ix%i)", fileName, image.width, image.height);
     else TRACELOG(LOG_WARNING, "IMAGE: [%s] Failed to load data", fileName);
@@ -291,7 +291,7 @@ Image LoadImageAnim(const char *fileName, int *frames)
 }
 
 // Load image from memory buffer, fileType refers to extension: i.e. "png"
-Image LoadImageFromMemory(const char *fileType, const char *fileData, int dataSize)
+Image LoadImageFromMemory(const char *fileType, const unsigned char *fileData, int dataSize)
 {
     Image image = { 0 };
     
@@ -330,7 +330,7 @@ Image LoadImageFromMemory(const char *fileType, const char *fileData, int dataSi
         if (fileData != NULL)
         {
             int comp = 0;
-            image.data = stbi_load_from_memory((unsigned char *)fileData, dataSize, &image.width, &image.height, &comp, 0);
+            image.data = stbi_load_from_memory(fileData, dataSize, &image.width, &image.height, &comp, 0);
 
             image.mipmaps = 1;
 
@@ -348,7 +348,7 @@ Image LoadImageFromMemory(const char *fileType, const char *fileData, int dataSi
         if (fileData != NULL)
         {
             int comp = 0;
-            image.data = stbi_loadf_from_memory((unsigned char *)fileData, dataSize, &image.width, &image.height, &comp, 0);
+            image.data = stbi_loadf_from_memory(fileData, dataSize, &image.width, &image.height, &comp, 0);
 
             image.mipmaps = 1;
 
@@ -3730,7 +3730,7 @@ int GetPixelDataSize(int width, int height, int format)
 //----------------------------------------------------------------------------------
 #if defined(SUPPORT_FILEFORMAT_DDS)
 // Loading DDS image data (compressed or uncompressed)
-static Image LoadDDS(const char *fileData, unsigned int fileSize)
+static Image LoadDDS(const unsigned char *fileData, unsigned int fileSize)
 {
     unsigned char *fileDataPtr = (unsigned char *)fileData;
     
@@ -3926,9 +3926,9 @@ static Image LoadDDS(const char *fileData, unsigned int fileSize)
 // Loading PKM image data (ETC1/ETC2 compression)
 // NOTE: KTX is the standard Khronos Group compression format (ETC1/ETC2, mipmaps)
 // PKM is a much simpler file format used mainly to contain a single ETC1/ETC2 compressed image (no mipmaps)
-static Image LoadPKM(const char *fileData, unsigned int fileSize)
+static Image LoadPKM(const unsigned char *fileData, unsigned int fileSize)
 {
-    unsigned char *fileDataPtr = fileData;
+    unsigned char *fileDataPtr = (unsigned char *)fileData;
     
     // Required extensions:
     // GL_OES_compressed_ETC1_RGB8_texture  (ETC1) (OpenGL ES 2.0)
@@ -4006,7 +4006,7 @@ static Image LoadPKM(const char *fileData, unsigned int fileSize)
 
 #if defined(SUPPORT_FILEFORMAT_KTX)
 // Load KTX compressed image data (ETC1/ETC2 compression)
-static Image LoadKTX(const char *fileData, unsigned int fileSize)
+static Image LoadKTX(const unsigned char *fileData, unsigned int fileSize)
 {
     unsigned char *fileDataPtr = (unsigned char *)fileData;
     
@@ -4190,7 +4190,7 @@ static int SaveKTX(Image image, const char *fileName)
 #if defined(SUPPORT_FILEFORMAT_PVR)
 // Loading PVR image data (uncompressed or PVRT compression)
 // NOTE: PVR v2 not supported, use PVR v3 instead
-static Image LoadPVR(const char *fileData, unsigned int fileSize)
+static Image LoadPVR(const unsigned char *fileData, unsigned int fileSize)
 {
     unsigned char *fileDataPtr = (unsigned char *)fileData;
     
@@ -4325,7 +4325,7 @@ static Image LoadPVR(const char *fileData, unsigned int fileSize)
 
 #if defined(SUPPORT_FILEFORMAT_ASTC)
 // Load ASTC compressed image data (ASTC compression)
-static Image LoadASTC(const char *fileData, unsigned int fileSize)
+static Image LoadASTC(const unsigned char *fileData, unsigned int fileSize)
 {
     unsigned char *fileDataPtr = (unsigned char *)fileData;
     

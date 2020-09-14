@@ -370,17 +370,17 @@ static void InitAudioBufferPool(void);                  // Initialise the multic
 static void CloseAudioBufferPool(void);                 // Close the audio buffers pool
 
 #if defined(SUPPORT_FILEFORMAT_WAV)
-static Wave LoadWAV(const char *fileData, unsigned int fileSize);   // Load WAV file
+static Wave LoadWAV(const unsigned char *fileData, unsigned int fileSize);   // Load WAV file
 static int SaveWAV(Wave wave, const char *fileName);    // Save wave data as WAV file
 #endif
 #if defined(SUPPORT_FILEFORMAT_OGG)
-static Wave LoadOGG(const char *fileData, unsigned int fileSize);   // Load OGG file
+static Wave LoadOGG(const unsigned char *fileData, unsigned int fileSize);   // Load OGG file
 #endif
 #if defined(SUPPORT_FILEFORMAT_FLAC)
-static Wave LoadFLAC(const char *fileData, unsigned int fileSize);  // Load FLAC file
+static Wave LoadFLAC(const unsigned char *fileData, unsigned int fileSize);  // Load FLAC file
 #endif
 #if defined(SUPPORT_FILEFORMAT_MP3)
-static Wave LoadMP3(const char *fileData, unsigned int fileSize);   // Load MP3 file
+static Wave LoadMP3(const unsigned char *fileData, unsigned int fileSize);   // Load MP3 file
 #endif
 
 #if defined(RAUDIO_STANDALONE)
@@ -695,7 +695,7 @@ Wave LoadWave(const char *fileName)
     unsigned char *fileData = LoadFileData(fileName, &fileSize);
 
     // Loading wave from memory data
-    wave = LoadWaveFromMemory(GetFileExtension(fileName), (char *)fileData, fileSize);
+    wave = LoadWaveFromMemory(GetFileExtension(fileName), fileData, fileSize);
 
     RL_FREE(fileData);
 
@@ -703,7 +703,7 @@ Wave LoadWave(const char *fileName)
 }
 
 // Load wave from memory buffer, fileType refers to extension: i.e. "wav"
-Wave LoadWaveFromMemory(const char *fileType, const char *fileData, int dataSize)
+Wave LoadWaveFromMemory(const char *fileType, const unsigned char *fileData, int dataSize)
 {
     Wave wave = { 0 };
     
@@ -1911,7 +1911,7 @@ static void CloseAudioBufferPool(void)
 #if defined(SUPPORT_FILEFORMAT_WAV)
 // Load WAV file data into Wave structure
 // NOTE: Using dr_wav library
-static Wave LoadWAV(const char *fileData, unsigned int fileSize)
+static Wave LoadWAV(const unsigned char *fileData, unsigned int fileSize)
 {
     Wave wave = { 0 };
     drwav wav = { 0 };
@@ -1962,7 +1962,7 @@ static int SaveWAV(Wave wave, const char *fileName)
 #if defined(SUPPORT_FILEFORMAT_OGG)
 // Load OGG file data into Wave structure
 // NOTE: Using stb_vorbis library
-static Wave LoadOGG(const char *fileData, unsigned int fileSize)
+static Wave LoadOGG(const unsigned char *fileData, unsigned int fileSize)
 {
     Wave wave = { 0 };
 
@@ -1997,7 +1997,7 @@ static Wave LoadOGG(const char *fileData, unsigned int fileSize)
 #if defined(SUPPORT_FILEFORMAT_FLAC)
 // Load FLAC file data into Wave structure
 // NOTE: Using dr_flac library
-static Wave LoadFLAC(const char *fileData, unsigned int fileSize)
+static Wave LoadFLAC(const unsigned char *fileData, unsigned int fileSize)
 {
     Wave wave = { 0 };
 
@@ -2021,7 +2021,7 @@ static Wave LoadFLAC(const char *fileData, unsigned int fileSize)
 #if defined(SUPPORT_FILEFORMAT_MP3)
 // Load MP3 file data into Wave structure
 // NOTE: Using dr_mp3 library
-static Wave LoadMP3(const char *fileData, unsigned int fileSize)
+static Wave LoadMP3(const unsigned char *fileData, unsigned int fileSize)
 {
     Wave wave = { 0 };
     drmp3_config config = { 0 };

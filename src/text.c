@@ -341,7 +341,7 @@ Font LoadFontEx(const char *fileName, int fontSize, int *fontChars, int charsCou
     unsigned char *fileData = LoadFileData(fileName, &fileSize);
     
     // Loading font from memory data
-    font = LoadFontFromMemory(GetFileExtension(fileName), (char *)fileData, fileSize, fontSize, fontChars, charsCount);
+    font = LoadFontFromMemory(GetFileExtension(fileName), fileData, fileSize, fontSize, fontChars, charsCount);
     
     RL_FREE(fileData);
 
@@ -471,7 +471,7 @@ Font LoadFontFromImage(Image image, Color key, int firstChar)
 }
 
 // Load font from memory buffer, fileType refers to extension: i.e. "ttf"
-Font LoadFontFromMemory(const char *fileType, const char *fileData, int dataSize, int fontSize, int *fontChars, int charsCount)
+Font LoadFontFromMemory(const char *fileType, const unsigned char *fileData, int dataSize, int fontSize, int *fontChars, int charsCount)
 {
     Font font = { 0 };
     
@@ -511,7 +511,7 @@ Font LoadFontFromMemory(const char *fileType, const char *fileData, int dataSize
 
 // Load font data for further use
 // NOTE: Requires TTF font memory data and can generate SDF data
-CharInfo *LoadFontData(const char *fileData, int dataSize, int fontSize, int *fontChars, int charsCount, int type)
+CharInfo *LoadFontData(const unsigned char *fileData, int dataSize, int fontSize, int *fontChars, int charsCount, int type)
 {
     // NOTE: Using some SDF generation default values,
     // trades off precision with ability to handle *smaller* sizes

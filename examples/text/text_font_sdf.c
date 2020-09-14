@@ -31,13 +31,19 @@ int main(void)
     // NOTE: Textures/Fonts MUST be loaded after Window initialization (OpenGL context is required)
 
     const char msg[50] = "Signed Distance Fields";
+    
+    // Loading file to memory
+    unsigned int fileSize = 0;
+    unsigned char *fileData = LoadFileData("resources/anonymous_pro_bold.ttf", &fileSize);
 
     // Default font generation from TTF font
     Font fontDefault = { 0 };
     fontDefault.baseSize = 16;
     fontDefault.charsCount = 95;
+    
+    // Loading font data from memory data
     // Parameters > font size: 16, no chars array provided (0), chars count: 95 (autogenerate chars array)
-    fontDefault.chars = LoadFontData("resources/anonymous_pro_bold.ttf", 16, 0, 95, FONT_DEFAULT);
+    fontDefault.chars = LoadFontData(fileData, fileSize, 16, 0, 95, FONT_DEFAULT);
     // Parameters > chars count: 95, font size: 16, chars padding in image: 4 px, pack method: 0 (default)
     Image atlas = GenImageFontAtlas(fontDefault.chars, &fontDefault.recs, 95, 16, 4, 0);
     fontDefault.texture = LoadTextureFromImage(atlas);
@@ -48,11 +54,13 @@ int main(void)
     fontSDF.baseSize = 16;
     fontSDF.charsCount = 95;
     // Parameters > font size: 16, no chars array provided (0), chars count: 0 (defaults to 95)
-    fontSDF.chars = LoadFontData("resources/anonymous_pro_bold.ttf", 16, 0, 0, FONT_SDF);
+    fontSDF.chars = LoadFontData(fileData, fileSize, 16, 0, 0, FONT_SDF);
     // Parameters > chars count: 95, font size: 16, chars padding in image: 0 px, pack method: 1 (Skyline algorythm)
     atlas = GenImageFontAtlas(fontSDF.chars, &fontSDF.recs, 95, 16, 0, 1);
     fontSDF.texture = LoadTextureFromImage(atlas);
     UnloadImage(atlas);
+    
+    RL_FREE(fileData);      // Free memory from loaded file
 
     // Load SDF required shader (we use default vertex shader)
     Shader shader = LoadShader(0, TextFormat("resources/shaders/glsl%i/sdf.fs", GLSL_VERSION));
