@@ -367,9 +367,8 @@ typedef struct Model {
     Matrix transform;       // Local transform matrix
 
     int meshCount;          // Number of meshes
-    Mesh *meshes;           // Meshes array
-
     int materialCount;      // Number of materials
+    Mesh *meshes;           // Meshes array
     Material *materials;    // Materials array
     int *meshMaterial;      // Mesh material number
 
@@ -382,9 +381,8 @@ typedef struct Model {
 // Model animation
 typedef struct ModelAnimation {
     int boneCount;          // Number of bones
-    BoneInfo *bones;        // Bones information (skeleton)
-
     int frameCount;         // Number of animation frames
+    BoneInfo *bones;        // Bones information (skeleton)
     Transform **framePoses; // Poses array by frame
 } ModelAnimation;
 
@@ -422,29 +420,28 @@ typedef struct rAudioBuffer rAudioBuffer;
 // Audio stream type
 // NOTE: Useful to create custom audio streams not bound to a specific file
 typedef struct AudioStream {
-    unsigned int sampleRate;        // Frequency (samples per second)
-    unsigned int sampleSize;        // Bit depth (bits per sample): 8, 16, 32 (24 not supported)
-    unsigned int channels;          // Number of channels (1-mono, 2-stereo)
-
     rAudioBuffer *buffer;           // Pointer to internal data used by the audio system
+
+    unsigned int sampleRate;        // Frequency (samples per second)
+    unsigned short sampleSize;        // Bit depth (bits per sample): 8, 16, 32 (24 not supported)
+    unsigned short channels;          // Number of channels (1-mono, 2-stereo)
 } AudioStream;
 
 // Sound source type
 typedef struct Sound {
-    unsigned int sampleCount;       // Total number of samples
     AudioStream stream;             // Audio stream
+    unsigned int sampleCount;       // Total number of samples
 } Sound;
 
 // Music stream type (audio file streaming from memory)
 // NOTE: Anything longer than ~10 seconds should be streamed
 typedef struct Music {
+    AudioStream stream;             // Audio stream
+    unsigned int sampleCount;       // Total number of samples
+    bool looping;                   // Music looping enable
+
     int ctxType;                    // Type of music context (audio filetype)
     void *ctxData;                  // Audio context data, depends on type
-
-    bool looping;                   // Music looping enable
-    unsigned int sampleCount;       // Total number of samples
-
-    AudioStream stream;             // Audio stream
 } Music;
 
 // Head-Mounted-Display device parameters
