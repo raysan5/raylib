@@ -2835,7 +2835,7 @@ Image GetTextureData(Texture2D texture)
 {
     Image image = { 0 };
 
-    if (texture.format < 8)
+    if (texture.format < COMPRESSED_DXT1_RGB)
     {
         image.data = rlReadTexturePixels(texture);
 

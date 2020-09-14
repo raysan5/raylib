@@ -2944,7 +2944,7 @@ void *rlReadTexturePixels(Texture2D texture)
 
     if ((glInternalFormat != -1) && (texture.format < COMPRESSED_DXT1_RGB))
     {
-        pixels = (unsigned char *)RL_MALLOC(size);
+        pixels = RL_MALLOC(size);
         glGetTexImage(GL_TEXTURE_2D, 0, glFormat, glType, pixels);
     }
     else TRACELOG(LOG_WARNING, "TEXTURE: [ID %i] Data retrieval not suported for pixel format (%i)", texture.id, texture.format);
