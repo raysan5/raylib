@@ -1940,20 +1940,20 @@ static int SaveWAV(Wave wave, const char *fileName)
 {
     drwav wav = { 0 };
     drwav_data_format format = { 0 };
-    format.container = drwav_container_riff;     // <-- drwav_container_riff = normal WAV files, drwav_container_w64 = Sony Wave64.
-    format.format = DR_WAVE_FORMAT_PCM;          // <-- Any of the DR_WAVE_FORMAT_* codes.
+    format.container = drwav_container_riff;
+    format.format = DR_WAVE_FORMAT_PCM;
     format.channels = wave.channels;
     format.sampleRate = wave.sampleRate;
     format.bitsPerSample = wave.sampleSize;
     
-    drwav_init_file_write(&wav, fileName, &format, NULL);
-    //drwav_init_memory_write(&wav, &fileData, &fileDataSize, &format, NULL);       // TODO: Memory version
+    unsigned char *fileData = NULL;
+    unsigned int fileDataSize = 0;
+    drwav_init_memory_write(&wav, &fileData, &fileDataSize, &format, NULL);
     drwav_write_pcm_frames(&wav, wave.sampleCount/wave.channels, wave.data);
-    
     drwav_uninit(&wav);
     
-    // SaveFileData(fileName, fileData, fileDataSize);
-    //drwav_free(fileData, NULL);
+    SaveFileData(fileName, fileData, fileDataSize);
+    drwav_free(fileData, NULL);
     
     return true;
 }
