@@ -1765,11 +1765,7 @@ void rlglInit(int width, int height)
     glShadeModel(GL_SMOOTH);                                // Smooth shading between vertex (vertex colors interpolation)
 #endif
 
-    // Init state: Color/Depth buffers clear
-    glClearColor(0.0f, 0.0f, 0.0f, 1.0f);                   // Set clear color (black)
-    glClearDepth(1.0f);                                     // Set clear depth value (default)
-    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);     // Clear color and depth buffers (depth buffer required for 3D)
-
+#if defined(GRAPHICS_API_OPENGL_33) || defined(GRAPHICS_API_OPENGL_ES2)
     // Store screen size into global variables
     RLGL.State.framebufferWidth = width;
     RLGL.State.framebufferHeight = height;
@@ -1779,6 +1775,12 @@ void rlglInit(int width, int height)
     RLGL.State.shapesTextureRec = (Rectangle){ 0.0f, 0.0f, 1.0f, 1.0f };
 
     TRACELOG(LOG_INFO, "RLGL: Default state initialized successfully");
+#endif
+ 
+    // Init state: Color/Depth buffers clear
+    glClearColor(0.0f, 0.0f, 0.0f, 1.0f);                   // Set clear color (black)
+    glClearDepth(1.0f);                                     // Set clear depth value (default)
+    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);     // Clear color and depth buffers (depth buffer required for 3D)
 }
 
 // Vertex Buffer Object deinitialization (memory free)
@@ -1880,9 +1882,11 @@ void rlSetDebugMarker(const char *text)
 // Set blending mode factor and equation
 void rlSetBlendMode(int glSrcFactor, int glDstFactor, int glEquation)
 {
+#if defined(GRAPHICS_API_OPENGL_33) || defined(GRAPHICS_API_OPENGL_ES2)
     RLGL.State.glBlendSrcFactor = glSrcFactor;
     RLGL.State.glBlendDstFactor = glDstFactor;
     RLGL.State.glBlendEquation = glEquation;
+#endif
 }
 
 // Load OpenGL extensions
@@ -3604,6 +3608,7 @@ Texture2D GenTextureBRDF(Shader shader, int size)
 // NOTE: Only 3 blending modes supported, default blend mode is alpha
 void BeginBlendMode(int mode)
 {
+#if defined(GRAPHICS_API_OPENGL_33) || defined(GRAPHICS_API_OPENGL_ES2)
     if (RLGL.State.currentBlendMode != mode)
     {
         rlglDraw();
@@ -3621,6 +3626,7 @@ void BeginBlendMode(int mode)
         
         RLGL.State.currentBlendMode = mode;
     }
+#endif
 }
 
 // End blending mode (reset to default: alpha blending)
