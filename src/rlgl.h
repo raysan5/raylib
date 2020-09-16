@@ -3161,13 +3161,13 @@ Shader LoadShaderCode(const char *vsCode, const char *fsCode)
 // Unload shader from GPU memory (VRAM)
 void UnloadShader(Shader shader)
 {
-    if (shader.id > 0)
+    if ((shader.id != RLGL.State.defaultShader.id) && (shader.id > 0))
     {
         rlDeleteShader(shader.id);
+        RL_FREE(shader.locs);
+        
         TRACELOG(LOG_INFO, "SHADER: [ID %i] Unloaded shader program data from VRAM (GPU)", shader.id);
     }
-
-    RL_FREE(shader.locs);
 }
 
 // Begin custom shader mode
