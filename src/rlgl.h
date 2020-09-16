@@ -1456,11 +1456,23 @@ void rlDeleteTextures(unsigned int id)
 void rlDeleteRenderTextures(RenderTexture2D target)
 {
 #if (defined(GRAPHICS_API_OPENGL_33) || defined(GRAPHICS_API_OPENGL_ES2)) && defined(SUPPORT_RENDER_TEXTURES_HINT)
-    if (target.texture.id > 0) glDeleteTextures(1, &target.texture.id);
+    if (target.texture.id > 0) 
+    {
+        glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, 0, 0);  // Detach texture from FBO
+        glDeleteTextures(1, &target.texture.id);
+    }
     if (target.depth.id > 0)
     {
-        if (target.depthTexture) glDeleteTextures(1, &target.depth.id);
-        else glDeleteRenderbuffers(1, &target.depth.id);
+        if (target.depthTexture) 
+        {
+            glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_TEXTURE_2D, 0, 0);
+            glDeleteTextures(1, &target.depth.id);
+        }
+        else 
+        {
+            glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_RENDERBUFFER, 0);
+            glDeleteRenderbuffers(1, &target.depth.id);
+        }
     }
 
     if (target.id > 0) glDeleteFramebuffers(1, &target.id);
@@ -1483,8 +1495,12 @@ void rlDeleteVertexArrays(unsigned int id)
 #if defined(GRAPHICS_API_OPENGL_33) || defined(GRAPHICS_API_OPENGL_ES2)
     if (RLGL.ExtSupported.vao)
     {
-        if (id != 0) glDeleteVertexArrays(1, &id);
-        TRACELOG(LOG_INFO, "VAO: [ID %i] Unloaded vertex data from VRAM (GPU)", id);
+        if (id != 0) 
+        {
+            glBindVertexArray(0);
+            glDeleteVertexArrays(1, &id);
+            TRACELOG(LOG_INFO, "VAO: [ID %i] Unloaded vertex data from VRAM (GPU)", id);
+        }
     }
 #endif
 }
@@ -3094,8 +3110,18 @@ Shader LoadShaderCode(const char *vsCode, const char *fsCode)
     {
         shader.id = LoadShaderProgram(vertexShaderId, fragmentShaderId);
 
-        if (vertexShaderId != RLGL.State.defaultVShaderId) glDeleteShader(vertexShaderId);
-        if (fragmentShaderId != RLGL.State.defaultFShaderId) glDeleteShader(fragmentShaderId);
+        if (vertexShaderId != RLGL.State.defaultVShaderId) 
+        {
+            // Detach shader before deletion to make sure memory is freed
+            glDetachShader(shader.id, vertexShaderId);
+            glDeleteShader(vertexShaderId);
+        }
+        if (fragmentShaderId != RLGL.State.defaultFShaderId) 
+        {
+            // Detach shader before deletion to make sure memory is freed
+            glDetachShader(shader.id, fragmentShaderId);
+            glDeleteShader(fragmentShaderId);
+        }
 
         if (shader.id == 0)
         {
