@@ -211,13 +211,16 @@ Image LoadImage(const char *fileName)
     unsigned int fileSize = 0;
     unsigned char *fileData = LoadFileData(fileName, &fileSize);
     
-    // Loading image from memory data
-    image = LoadImageFromMemory(GetFileExtension(fileName), fileData, fileSize);
+    if (fileData != NULL)
+    {
+        // Loading image from memory data
+        image = LoadImageFromMemory(GetFileExtension(fileName), fileData, fileSize);
 
-    if (image.data != NULL) TRACELOG(LOG_INFO, "IMAGE: [%s] Data loaded successfully (%ix%i)", fileName, image.width, image.height);
-    else TRACELOG(LOG_WARNING, "IMAGE: [%s] Failed to load data", fileName);
-    
-    RL_FREE(fileData);
+        if (image.data != NULL) TRACELOG(LOG_INFO, "IMAGE: [%s] Data loaded successfully (%ix%i)", fileName, image.width, image.height);
+        else TRACELOG(LOG_WARNING, "IMAGE: [%s] Failed to load data", fileName);
+        
+        RL_FREE(fileData);
+    }
 
     return image;
 }

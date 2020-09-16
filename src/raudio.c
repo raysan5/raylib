@@ -694,10 +694,13 @@ Wave LoadWave(const char *fileName)
     unsigned int fileSize = 0;
     unsigned char *fileData = LoadFileData(fileName, &fileSize);
 
-    // Loading wave from memory data
-    wave = LoadWaveFromMemory(GetFileExtension(fileName), fileData, fileSize);
+    if (fileData != NULL)
+    {
+        // Loading wave from memory data
+        wave = LoadWaveFromMemory(GetFileExtension(fileName), fileData, fileSize);
 
-    RL_FREE(fileData);
+        RL_FREE(fileData);
+    }
 
     return wave;
 }

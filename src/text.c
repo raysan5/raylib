@@ -340,10 +340,14 @@ Font LoadFontEx(const char *fileName, int fontSize, int *fontChars, int charsCou
     unsigned int fileSize = 0;
     unsigned char *fileData = LoadFileData(fileName, &fileSize);
     
-    // Loading font from memory data
-    font = LoadFontFromMemory(GetFileExtension(fileName), fileData, fileSize, fontSize, fontChars, charsCount);
-    
-    RL_FREE(fileData);
+    if (fileData != NULL)
+    {
+        // Loading font from memory data
+        font = LoadFontFromMemory(GetFileExtension(fileName), fileData, fileSize, fontSize, fontChars, charsCount);
+        
+        RL_FREE(fileData);
+    }
+    else font = GetFontDefault();
 
     return font;
 }
