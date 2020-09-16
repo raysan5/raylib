@@ -2059,9 +2059,9 @@ const char *GetWorkingDirectory(void)
     static char currentDir[MAX_FILEPATH_LENGTH];
     memset(currentDir, 0, MAX_FILEPATH_LENGTH);
 
-    GETCWD(currentDir, MAX_FILEPATH_LENGTH - 1);
+    char *ptr = GETCWD(currentDir, MAX_FILEPATH_LENGTH - 1);
 
-    return currentDir;
+    return ptr;
 }
 
 // Get filenames in a directory path (max 512 files)
