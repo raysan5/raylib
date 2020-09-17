@@ -247,9 +247,8 @@ typedef Texture2D TextureCubemap;
 // RenderTexture2D type, for texture rendering
 typedef struct RenderTexture2D {
     unsigned int id;        // OpenGL Framebuffer Object (FBO) id
-    Texture2D texture;      // Color buffer attachment texture
-    Texture2D depth;        // Depth buffer attachment texture
-    bool depthTexture;      // Track if depth attachment is a texture or renderbuffer
+    Texture texture;      // Color buffer attachment texture
+    Texture depth;        // Depth buffer attachment texture
 } RenderTexture2D;
 
 // RenderTexture type, same as RenderTexture2D

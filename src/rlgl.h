@@ -250,7 +250,6 @@ typedef unsigned char byte;
         unsigned int id;        // OpenGL framebuffer (fbo) id
         Texture2D texture;      // Color buffer attachment texture
         Texture2D depth;        // Depth buffer attachment texture
-        bool depthTexture;      // Track if depth attachment is a texture or renderbuffer
     } RenderTexture2D;
 
     // RenderTexture type, same as RenderTexture2D
@@ -1453,9 +1452,18 @@ void rlDeleteTextures(unsigned int id)
 }
 
 // Unload render texture from GPU memory
+// NOTE: All attached textures/cubemaps/renderbuffers are also deleted
 void rlDeleteRenderTextures(RenderTexture2D target)
 {
 #if (defined(GRAPHICS_API_OPENGL_33) || defined(GRAPHICS_API_OPENGL_ES2)) && defined(SUPPORT_RENDER_TEXTURES_HINT)
+    int depthType = 0;
+    glBindFramebuffer(GL_FRAMEBUFFER, target.id);   // Bind framebuffer to query depth texture type
+    glGetFramebufferAttachmentParameteriv(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_FRAMEBUFFER_ATTACHMENT_OBJECT_TYPE, &depthType);
+    glBindFramebuffer(GL_FRAMEBUFFER, 0);           // Unbind framebuffer to delete textures
+
+    // NOTE: If a texture object is deleted while its image is attached to the *currently bound* framebuffer, 
+    // the texture image is automatically detached from the currently bound framebuffer.
+
     if (target.texture.id > 0) 
     {
         glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, 0, 0);  // Detach texture from FBO
@@ -1463,12 +1471,12 @@ void rlDeleteRenderTextures(RenderTexture2D target)
     }
     if (target.depth.id > 0)
     {
-        if (target.depthTexture) 
+        if (depthType == GL_TEXTURE) 
         {
             glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_TEXTURE_2D, 0, 0);
             glDeleteTextures(1, &target.depth.id);
         }
-        else 
+        else if (depthType == GL_RENDERBUFFER) 
         {
             glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_RENDERBUFFER, 0);
             glDeleteRenderbuffers(1, &target.depth.id);
@@ -2276,7 +2284,7 @@ RenderTexture2D rlLoadRenderTexture(int width, int height, int format, int depth
     RenderTexture2D target = { 0 };
 
 #if (defined(GRAPHICS_API_OPENGL_33) || defined(GRAPHICS_API_OPENGL_ES2)) && defined(SUPPORT_RENDER_TEXTURES_HINT)
-    if (useDepthTexture && RLGL.ExtSupported.texDepth) target.depthTexture = true;
+    if (useDepthTexture && !RLGL.ExtSupported.texDepth) useDepthTexture = false;
 
     // Create the framebuffer object
     glGenFramebuffers(1, &target.id);
@@ -2334,8 +2342,11 @@ void rlRenderTextureAttach(RenderTexture2D target, unsigned int id, int attachTy
     if (attachType == 0) glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, id, 0);
     else if (attachType == 1)
     {
-        if (target.depthTexture) glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_TEXTURE_2D, id, 0);
-        else glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_RENDERBUFFER, id);
+        int depthType = 0;
+        glGetFramebufferAttachmentParameteriv(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_FRAMEBUFFER_ATTACHMENT_OBJECT_TYPE, &depthType);
+
+        if (depthType == GL_TEXTURE) glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_TEXTURE_2D, id, 0);
+        else if (depthType == GL_RENDERBUFFER) glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_RENDERBUFFER, id);
     }
 
     glBindFramebuffer(GL_FRAMEBUFFER, 0);
