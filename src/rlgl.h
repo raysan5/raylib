@@ -591,7 +591,7 @@ RLAPI Matrix GetMatrixModelview(void);                                    // Get
 
 // Texture maps generation (PBR)
 // NOTE: Required shaders should be provided
-RLAPI TextureCubemap GenTextureCubemap(Shader shader, Texture2D panorama, int size);        // Generate cubemap texture from HDR texture
+RLAPI TextureCubemap GenTextureCubemap(Shader shader, Texture2D panorama, int size);        // Generate cubemap texture from 2D panorama texture
 RLAPI TextureCubemap GenTextureIrradiance(Shader shader, TextureCubemap cubemap, int size); // Generate irradiance texture using cubemap data
 RLAPI TextureCubemap GenTexturePrefilter(Shader shader, TextureCubemap cubemap, int size);  // Generate prefilter texture using cubemap data
 RLAPI Texture2D GenTextureBRDF(Shader shader, int size);                  // Generate BRDF texture using cubemap data
