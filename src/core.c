@@ -1543,7 +1543,7 @@ void BeginTextureMode(RenderTexture2D target)
 {
     rlglDraw();                         // Draw Buffers (Only OpenGL 3+ and ES2)
 
-    rlEnableRenderTexture(target.id);   // Enable render target
+    rlEnableFramebuffer(target.id);   // Enable render target
 
     // Set viewport to framebuffer size
     rlViewport(0, 0, target.texture.width, target.texture.height);
@@ -1569,9 +1569,9 @@ void BeginTextureMode(RenderTexture2D target)
 // Ends drawing to render texture
 void EndTextureMode(void)
 {
-    rlglDraw();                         // Draw Buffers (Only OpenGL 3+ and ES2)
+    rlglDraw();                 // Draw Buffers (Only OpenGL 3+ and ES2)
 
-    rlDisableRenderTexture();           // Disable render target
+    rlDisableFramebuffer();     // Disable render target (fbo)
 
     // Set viewport to default framebuffer size
     SetupViewport(CORE.Window.render.width, CORE.Window.render.height);

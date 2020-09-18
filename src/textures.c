@@ -72,7 +72,7 @@
 #include "utils.h"              // Required for: fopen() Android mapping
 
 #include "rlgl.h"               // raylib OpenGL abstraction layer to OpenGL 1.1, 3.3 or ES2
-                                // Required for: rlLoadTexture() rlDeleteTextures(),
+                                // Required for: rlLoadTexture() rlUnloadTexture(),
                                 // rlGenerateMipmaps(), some funcs for DrawTexturePro()
 
 // Support only desired texture formats on stb_image
@@ -2796,7 +2796,38 @@ TextureCubemap LoadTextureCubemap(Image image, int layoutType)
 // NOTE: Render texture is loaded by default with RGBA color attachment and depth RenderBuffer
 RenderTexture2D LoadRenderTexture(int width, int height)
 {
-    RenderTexture2D target = rlLoadRenderTexture(width, height, UNCOMPRESSED_R8G8B8A8, 24, false);
+    RenderTexture2D target = { 0 };
+    
+    target.id = rlLoadFramebuffer(width, height);   // Load an empty framebuffer
+    
+    if (target.id > 0)
+    {
+        rlEnableFramebuffer(target.id);
+        
+        // Create color texture (default to RGBA)
+        target.texture.id = rlLoadTexture(NULL, width, height, UNCOMPRESSED_R8G8B8A8, 1);
+        target.texture.width = width;
+        target.texture.height = height;
+        target.texture.format = UNCOMPRESSED_R8G8B8A8;
+        target.texture.mipmaps = 1;
+
+        // Create depth renderbuffer/texture
+        target.depth.id = rlLoadTextureDepth(width, height, true);
+        target.depth.width = width;
+        target.depth.height = height;
+        target.depth.format = 19;       //DEPTH_COMPONENT_24BIT?
+        target.depth.mipmaps = 1;
+
+        // Attach color texture and depth renderbuffer/texture to FBO
+        rlFramebufferAttach(target.id, target.texture.id, RL_ATTACHMENT_COLOR_TEXTURE);    // COLOR attachment
+        rlFramebufferAttach(target.id, target.depth.id, RL_ATTACHMENT_DEPTH_RENDERBUFFER); // DEPTH attachment
+
+        // Check if fbo is complete with attachments (valid)
+        if (rlFramebufferComplete(target.id)) TRACELOG(LOG_INFO, "FBO: [ID %i] Framebuffer object created successfully", target.id);
+
+        rlDisableFramebuffer();
+    }
+    else TRACELOG(LOG_WARNING, "FBO: Framebuffer object can not be created");
 
     return target;
 }
@@ -2806,7 +2837,7 @@ void UnloadTexture(Texture2D texture)
 {
     if (texture.id > 0)
     {
-        rlDeleteTextures(texture.id);
+        rlUnloadTexture(texture.id);
 
         TRACELOG(LOG_INFO, "TEXTURE: [ID %i] Unloaded texture data from VRAM (GPU)", texture.id);
     }
@@ -2815,7 +2846,15 @@ void UnloadTexture(Texture2D texture)
 // Unload render texture from GPU memory (VRAM)
 void UnloadRenderTexture(RenderTexture2D target)
 {
-    if (target.id > 0) rlDeleteRenderTextures(target);
+    if (target.id > 0) 
+    {
+        // Color texture attached to FBO is deleted
+        rlUnloadTexture(target.texture.id);
+        
+        // NOTE: Depth texture/renderbuffer is automatically
+        // queried and deleted before deleting framebuffer
+        rlUnloadFramebuffer(target.id);
+    }
 }
 
 // Update GPU texture with new data

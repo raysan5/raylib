@@ -944,7 +944,7 @@ void UnloadMaterial(Material material)
     // Unload loaded texture maps (avoid unloading default texture, managed by raylib)
     for (int i = 0; i < MAX_MATERIAL_MAPS; i++)
     {
-        if (material.maps[i].texture.id != GetTextureDefault().id) rlDeleteTextures(material.maps[i].texture.id);
+        if (material.maps[i].texture.id != GetTextureDefault().id) rlUnloadTexture(material.maps[i].texture.id);
     }
 
     RL_FREE(material.maps);
