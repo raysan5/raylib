@@ -468,8 +468,8 @@ all: raylib
 raylib: $(OBJS)
 ifeq ($(PLATFORM),PLATFORM_WEB)
     # Compile raylib libray for web
-    #$(AR) rcs $(RAYLIB_RELEASE_PATH)/lib$(RAYLIB_LIB_NAME).a $(OBJS)
-	$(CC) $(OBJS) -r -o $(RAYLIB_RELEASE_PATH)/lib$(RAYLIB_LIB_NAME).bc
+    #$(CC) $(OBJS) -r -o $(RAYLIB_RELEASE_PATH)/lib$(RAYLIB_LIB_NAME).bc
+	$(AR) rcs $(RAYLIB_RELEASE_PATH)/lib$(RAYLIB_LIB_NAME).a $(OBJS)
 	@echo "raylib library generated (lib$(RAYLIB_LIB_NAME).a)!"
 else
     ifeq ($(RAYLIB_LIBTYPE),SHARED)
