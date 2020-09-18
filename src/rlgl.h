@@ -504,6 +504,8 @@ RLAPI void rlColor4f(float x, float y, float z, float w); // Define one vertex (
 RLAPI void rlEnableTexture(unsigned int id);                  // Enable texture usage
 RLAPI void rlDisableTexture(void);                            // Disable texture usage
 RLAPI void rlTextureParameters(unsigned int id, int param, int value); // Set texture parameters (filter, wrap)
+RLAPI void rlEnableShader(unsigned int id);                   // Enable shader program usage
+RLAPI void rlDisableShader(void);                             // Disable shader program usage
 RLAPI void rlEnableFramebuffer(unsigned int id);              // Enable render texture (fbo)
 RLAPI void rlDisableFramebuffer(void);                        // Disable render texture (fbo), return to default framebuffer
 RLAPI void rlEnableDepthTest(void);                           // Enable depth test
@@ -589,9 +591,9 @@ RLAPI Matrix GetMatrixModelview(void);                                    // Get
 
 // Texture maps generation (PBR)
 // NOTE: Required shaders should be provided
-RLAPI TextureCubemap GenTextureCubemap(Shader shader, Texture2D map, int size);          // Generate cubemap texture from HDR texture
-RLAPI Texture2D GenTextureIrradiance(Shader shader, Texture2D cubemap, int size);   // Generate irradiance texture using cubemap data
-RLAPI Texture2D GenTexturePrefilter(Shader shader, Texture2D cubemap, int size);    // Generate prefilter texture using cubemap data
+RLAPI TextureCubemap GenTextureCubemap(Shader shader, Texture2D panorama, int size);        // Generate cubemap texture from HDR texture
+RLAPI TextureCubemap GenTextureIrradiance(Shader shader, TextureCubemap cubemap, int size); // Generate irradiance texture using cubemap data
+RLAPI TextureCubemap GenTexturePrefilter(Shader shader, TextureCubemap cubemap, int size);  // Generate prefilter texture using cubemap data
 RLAPI Texture2D GenTextureBRDF(Shader shader, int size);                  // Generate BRDF texture using cubemap data
 
 // Shading begin/end functions
@@ -1393,14 +1395,27 @@ void rlTextureParameters(unsigned int id, int param, int value)
     glBindTexture(GL_TEXTURE_2D, 0);
 }
 
+// Enable shader program usage
+void rlEnableShader(unsigned int id)
+{
+#if (defined(GRAPHICS_API_OPENGL_33) || defined(GRAPHICS_API_OPENGL_ES2))
+    glUseProgram(id);
+#endif
+}
+
+// Disable shader program usage
+void rlDisableShader(void)
+{
+#if (defined(GRAPHICS_API_OPENGL_33) || defined(GRAPHICS_API_OPENGL_ES2))
+    glUseProgram(0);
+#endif
+}
+
 // Enable rendering to texture (fbo)
 void rlEnableFramebuffer(unsigned int id)
 {
 #if (defined(GRAPHICS_API_OPENGL_33) || defined(GRAPHICS_API_OPENGL_ES2)) && defined(SUPPORT_RENDER_TEXTURES_HINT)
     glBindFramebuffer(GL_FRAMEBUFFER, id);
-
-    //glDisable(GL_CULL_FACE);    // Allow double side drawing for texture flipping
-    //glCullFace(GL_FRONT);
 #endif
 }
 
@@ -1409,9 +1424,6 @@ void rlDisableFramebuffer(void)
 {
 #if (defined(GRAPHICS_API_OPENGL_33) || defined(GRAPHICS_API_OPENGL_ES2)) && defined(SUPPORT_RENDER_TEXTURES_HINT)
     glBindFramebuffer(GL_FRAMEBUFFER, 0);
-
-    //glEnable(GL_CULL_FACE);
-    //glCullFace(GL_BACK);
 #endif
 }
 
@@ -3268,91 +3280,69 @@ Matrix GetMatrixModelview(void)
 }
 
 // Generate cubemap texture from HDR texture
-// TODO: OpenGL ES 2.0 does not support GL_RGB16F texture format, neither GL_DEPTH_COMPONENT24
-Texture2D GenTextureCubemap(Shader shader, Texture2D map, int size)
+TextureCubemap GenTextureCubemap(Shader shader, Texture2D panorama, int size)
 {
-    Texture2D cubemap = { 0 };
+    TextureCubemap cubemap = { 0 };
 #if defined(GRAPHICS_API_OPENGL_33) || defined(GRAPHICS_API_OPENGL_ES2)
-    // NOTE: SetShaderDefaultLocations() already setups locations for projection and view Matrix in shader
-    // Other locations should be setup externally in shader before calling the function
+    rlDisableBackfaceCulling();     // Disable backface culling to render inside the cube
 
-    // Set up depth face culling and cubemap seamless
-    glDisable(GL_CULL_FACE);
-#if defined(GRAPHICS_API_OPENGL_33)
-    glEnable(GL_TEXTURE_CUBE_MAP_SEAMLESS);     // Flag not supported on OpenGL ES 2.0
-#endif
+    // STEP 1: Setup framebuffer
+    //------------------------------------------------------------------------------------------
+    unsigned int rbo = rlLoadTextureDepth(size, size, true);
+    cubemap.id = rlLoadTextureCubemap(NULL, size, UNCOMPRESSED_R32G32B32);
+    
+    unsigned int fbo = rlLoadFramebuffer(size, size);
+    rlFramebufferAttach(fbo, rbo, RL_ATTACHMENT_DEPTH, RL_ATTACHMENT_RENDERBUFFER);
+    rlFramebufferAttach(fbo, cubemap.id, RL_ATTACHMENT_COLOR_CHANNEL0, RL_ATTACHMENT_CUBEMAP_POSITIVE_X);
+    //------------------------------------------------------------------------------------------
 
-    // Setup framebuffer
-    unsigned int fbo, rbo;
-    glGenFramebuffers(1, &fbo);
-    glGenRenderbuffers(1, &rbo);
-    glBindFramebuffer(GL_FRAMEBUFFER, fbo);
-    glBindRenderbuffer(GL_RENDERBUFFER, rbo);
-#if defined(GRAPHICS_API_OPENGL_33)
-    glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH_COMPONENT24, size, size);
-#elif defined(GRAPHICS_API_OPENGL_ES2)
-    glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH_COMPONENT16, size, size);
-#endif
-    glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_RENDERBUFFER, rbo);
+    // STEP 2: Draw to framebuffer
+    //------------------------------------------------------------------------------------------
+    // NOTE: Shader is used to convert HDR equirectangular environment map to cubemap equivalent (6 faces)
 
-    // Set up cubemap to render and attach to framebuffer
-    // NOTE: Faces are stored as 32 bit floating point values
-    glGenTextures(1, &cubemap.id);
-    glBindTexture(GL_TEXTURE_CUBE_MAP, cubemap.id);
-    for (unsigned int i = 0; i < 6; i++)
-    {
-#if defined(GRAPHICS_API_OPENGL_33)
-        glTexImage2D(GL_TEXTURE_CUBE_MAP_POSITIVE_X + i, 0, GL_RGB32F, size, size, 0, GL_RGB, GL_FLOAT, NULL);
-#elif defined(GRAPHICS_API_OPENGL_ES2)
-        if (RLGL.ExtSupported.texFloat32) glTexImage2D(GL_TEXTURE_CUBE_MAP_POSITIVE_X + i, 0, GL_RGB, size, size, 0, GL_RGB, GL_FLOAT, NULL);
-#endif
-    }
-
-    glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-    glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-#if defined(GRAPHICS_API_OPENGL_33)
-    glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_R, GL_CLAMP_TO_EDGE);  // Flag not supported on OpenGL ES 2.0
-#endif
-    glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-    glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-
-    // Create projection and different views for each face
+    // Define projection matrix and send it to shader
     Matrix fboProjection = MatrixPerspective(90.0*DEG2RAD, 1.0, RL_CULL_DISTANCE_NEAR, RL_CULL_DISTANCE_FAR);
+    SetShaderValueMatrix(shader, shader.locs[LOC_MATRIX_PROJECTION], fboProjection);
+    
+    // Define view matrix for every side of the cubemap
     Matrix fboViews[6] = {
-        MatrixLookAt((Vector3){ 0.0f, 0.0f, 0.0f }, (Vector3){ 1.0f, 0.0f, 0.0f }, (Vector3){ 0.0f, -1.0f, 0.0f }),
-        MatrixLookAt((Vector3){ 0.0f, 0.0f, 0.0f }, (Vector3){ -1.0f, 0.0f, 0.0f }, (Vector3){ 0.0f, -1.0f, 0.0f }),
-        MatrixLookAt((Vector3){ 0.0f, 0.0f, 0.0f }, (Vector3){ 0.0f, 1.0f, 0.0f }, (Vector3){ 0.0f, 0.0f, 1.0f }),
-        MatrixLookAt((Vector3){ 0.0f, 0.0f, 0.0f }, (Vector3){ 0.0f, -1.0f, 0.0f }, (Vector3){ 0.0f, 0.0f, -1.0f }),
-        MatrixLookAt((Vector3){ 0.0f, 0.0f, 0.0f }, (Vector3){ 0.0f, 0.0f, 1.0f }, (Vector3){ 0.0f, -1.0f, 0.0f }),
-        MatrixLookAt((Vector3){ 0.0f, 0.0f, 0.0f }, (Vector3){ 0.0f, 0.0f, -1.0f }, (Vector3){ 0.0f, -1.0f, 0.0f })
+        MatrixLookAt((Vector3){ 0.0f, 0.0f, 0.0f }, (Vector3){  1.0f,  0.0f,  0.0f }, (Vector3){ 0.0f, -1.0f,  0.0f }),
+        MatrixLookAt((Vector3){ 0.0f, 0.0f, 0.0f }, (Vector3){ -1.0f,  0.0f,  0.0f }, (Vector3){ 0.0f, -1.0f,  0.0f }),
+        MatrixLookAt((Vector3){ 0.0f, 0.0f, 0.0f }, (Vector3){  0.0f,  1.0f,  0.0f }, (Vector3){ 0.0f,  0.0f,  1.0f }),
+        MatrixLookAt((Vector3){ 0.0f, 0.0f, 0.0f }, (Vector3){  0.0f, -1.0f,  0.0f }, (Vector3){ 0.0f,  0.0f, -1.0f }),
+        MatrixLookAt((Vector3){ 0.0f, 0.0f, 0.0f }, (Vector3){  0.0f,  0.0f,  1.0f }, (Vector3){ 0.0f, -1.0f,  0.0f }),
+        MatrixLookAt((Vector3){ 0.0f, 0.0f, 0.0f }, (Vector3){  0.0f,  0.0f, -1.0f }, (Vector3){ 0.0f, -1.0f,  0.0f })
     };
 
-    // Convert HDR equirectangular environment map to cubemap equivalent
-    glUseProgram(shader.id);
+    rlEnableShader(shader.id);
     glActiveTexture(GL_TEXTURE0);
-    glBindTexture(GL_TEXTURE_2D, map.id);
-    SetShaderValueMatrix(shader, shader.locs[LOC_MATRIX_PROJECTION], fboProjection);
+    glBindTexture(GL_TEXTURE_2D, panorama.id);
 
-    // Note: don't forget to configure the viewport to the capture dimensions
-    glViewport(0, 0, size, size);
-    glBindFramebuffer(GL_FRAMEBUFFER, fbo);
+    rlViewport(0, 0, size, size);   // Set viewport to current fbo dimensions
 
     for (int i = 0; i < 6; i++)
     {
         SetShaderValueMatrix(shader, shader.locs[LOC_MATRIX_VIEW], fboViews[i]);
-        glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_CUBE_MAP_POSITIVE_X + i, cubemap.id, 0);
-        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+        rlFramebufferAttach(fbo, cubemap.id, RL_ATTACHMENT_COLOR_CHANNEL0, RL_ATTACHMENT_CUBEMAP_POSITIVE_X + i);
+
+        rlEnableFramebuffer(fbo);
+        rlClearScreenBuffers();
         GenDrawCube();
     }
+    //------------------------------------------------------------------------------------------
 
-    // Unbind framebuffer and textures
-    glBindFramebuffer(GL_FRAMEBUFFER, 0);
+    // STEP 3: Unload framebuffer and reset state
+    //------------------------------------------------------------------------------------------
+    rlDisableShader();          // Unbind shader
+    rlDisableTexture();         // Unbind texture
+    rlDisableFramebuffer();     // Unbind framebuffer
+    rlUnloadFramebuffer(fbo);   // Unload framebuffer (and automatically attached depth texture/renderbuffer)
 
     // Reset viewport dimensions to default
-    glViewport(0, 0, RLGL.State.framebufferWidth, RLGL.State.framebufferHeight);
-    //glEnable(GL_CULL_FACE);
+    rlViewport(0, 0, RLGL.State.framebufferWidth, RLGL.State.framebufferHeight);
+    //rlEnableBackfaceCulling();
+    //------------------------------------------------------------------------------------------
 
-    // NOTE: Texture2D is a GL_TEXTURE_CUBE_MAP, not a GL_TEXTURE_2D!
     cubemap.width = size;
     cubemap.height = size;
     cubemap.mipmaps = 1;
@@ -3362,137 +3352,126 @@ Texture2D GenTextureCubemap(Shader shader, Texture2D map, int size)
 }
 
 // Generate irradiance texture using cubemap data
-// TODO: OpenGL ES 2.0 does not support GL_RGB16F texture format, neither GL_DEPTH_COMPONENT24
-Texture2D GenTextureIrradiance(Shader shader, Texture2D cubemap, int size)
+TextureCubemap GenTextureIrradiance(Shader shader, TextureCubemap cubemap, int size)
 {
-    Texture2D irradiance = { 0 };
+    TextureCubemap irradiance = { 0 };
 
-#if defined(GRAPHICS_API_OPENGL_33) // || defined(GRAPHICS_API_OPENGL_ES2)
-    // NOTE: SetShaderDefaultLocations() already setups locations for projection and view Matrix in shader
-    // Other locations should be setup externally in shader before calling the function
+#if defined(GRAPHICS_API_OPENGL_33) || defined(GRAPHICS_API_OPENGL_ES2)
+    rlDisableBackfaceCulling();     // Disable backface culling to render inside the cube
 
-    // Setup framebuffer
-    unsigned int fbo, rbo;
-    glGenFramebuffers(1, &fbo);
-    glGenRenderbuffers(1, &rbo);
-    glBindFramebuffer(GL_FRAMEBUFFER, fbo);
-    glBindRenderbuffer(GL_RENDERBUFFER, rbo);
-    glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH_COMPONENT24, size, size);
-    glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_RENDERBUFFER, rbo);
+    // STEP 1: Setup framebuffer
+    //------------------------------------------------------------------------------------------
+    unsigned int rbo = rlLoadTextureDepth(size, size, true);
+    irradiance.id = rlLoadTextureCubemap(NULL, size, UNCOMPRESSED_R32G32B32);
+    
+    unsigned int fbo = rlLoadFramebuffer(size, size);
+    rlFramebufferAttach(fbo, rbo, RL_ATTACHMENT_DEPTH, RL_ATTACHMENT_RENDERBUFFER);
+    rlFramebufferAttach(fbo, cubemap.id, RL_ATTACHMENT_COLOR_CHANNEL0, RL_ATTACHMENT_CUBEMAP_POSITIVE_X);
+    //------------------------------------------------------------------------------------------
 
-    // Create an irradiance cubemap, and re-scale capture FBO to irradiance scale
-    glGenTextures(1, &irradiance.id);
-    glBindTexture(GL_TEXTURE_CUBE_MAP, irradiance.id);
-    for (unsigned int i = 0; i < 6; i++)
-    {
-        glTexImage2D(GL_TEXTURE_CUBE_MAP_POSITIVE_X + i, 0, GL_RGB16F, size, size, 0, GL_RGB, GL_FLOAT, NULL);
-    }
+    // STEP 2: Draw to framebuffer
+    //------------------------------------------------------------------------------------------
+    // NOTE: Shader is used to solve diffuse integral by convolution to create an irradiance cubemap
 
-    glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-    glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-    glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_R, GL_CLAMP_TO_EDGE);
-    glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-    glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-
-    // Create projection (transposed) and different views for each face
+    // Define projection matrix and send it to shader
     Matrix fboProjection = MatrixPerspective(90.0*DEG2RAD, 1.0, RL_CULL_DISTANCE_NEAR, RL_CULL_DISTANCE_FAR);
+    SetShaderValueMatrix(shader, shader.locs[LOC_MATRIX_PROJECTION], fboProjection);
+    
+    // Define view matrix for every side of the cubemap
     Matrix fboViews[6] = {
-        MatrixLookAt((Vector3){ 0.0f, 0.0f, 0.0f }, (Vector3){ 1.0f, 0.0f, 0.0f }, (Vector3){ 0.0f, -1.0f, 0.0f }),
-        MatrixLookAt((Vector3){ 0.0f, 0.0f, 0.0f }, (Vector3){ -1.0f, 0.0f, 0.0f }, (Vector3){ 0.0f, -1.0f, 0.0f }),
-        MatrixLookAt((Vector3){ 0.0f, 0.0f, 0.0f }, (Vector3){ 0.0f, 1.0f, 0.0f }, (Vector3){ 0.0f, 0.0f, 1.0f }),
-        MatrixLookAt((Vector3){ 0.0f, 0.0f, 0.0f }, (Vector3){ 0.0f, -1.0f, 0.0f }, (Vector3){ 0.0f, 0.0f, -1.0f }),
-        MatrixLookAt((Vector3){ 0.0f, 0.0f, 0.0f }, (Vector3){ 0.0f, 0.0f, 1.0f }, (Vector3){ 0.0f, -1.0f, 0.0f }),
-        MatrixLookAt((Vector3){ 0.0f, 0.0f, 0.0f }, (Vector3){ 0.0f, 0.0f, -1.0f }, (Vector3){ 0.0f, -1.0f, 0.0f })
+        MatrixLookAt((Vector3){ 0.0f, 0.0f, 0.0f }, (Vector3){  1.0f,  0.0f,  0.0f }, (Vector3){ 0.0f, -1.0f,  0.0f }),
+        MatrixLookAt((Vector3){ 0.0f, 0.0f, 0.0f }, (Vector3){ -1.0f,  0.0f,  0.0f }, (Vector3){ 0.0f, -1.0f,  0.0f }),
+        MatrixLookAt((Vector3){ 0.0f, 0.0f, 0.0f }, (Vector3){  0.0f,  1.0f,  0.0f }, (Vector3){ 0.0f,  0.0f,  1.0f }),
+        MatrixLookAt((Vector3){ 0.0f, 0.0f, 0.0f }, (Vector3){  0.0f, -1.0f,  0.0f }, (Vector3){ 0.0f,  0.0f, -1.0f }),
+        MatrixLookAt((Vector3){ 0.0f, 0.0f, 0.0f }, (Vector3){  0.0f,  0.0f,  1.0f }, (Vector3){ 0.0f, -1.0f,  0.0f }),
+        MatrixLookAt((Vector3){ 0.0f, 0.0f, 0.0f }, (Vector3){  0.0f,  0.0f, -1.0f }, (Vector3){ 0.0f, -1.0f,  0.0f })
     };
-
-    // Solve diffuse integral by convolution to create an irradiance cubemap
-    glUseProgram(shader.id);
+    
+    rlEnableShader(shader.id);
     glActiveTexture(GL_TEXTURE0);
     glBindTexture(GL_TEXTURE_CUBE_MAP, cubemap.id);
-    SetShaderValueMatrix(shader, shader.locs[LOC_MATRIX_PROJECTION], fboProjection);
 
-    // Note: don't forget to configure the viewport to the capture dimensions
-    glViewport(0, 0, size, size);
-    glBindFramebuffer(GL_FRAMEBUFFER, fbo);
+    rlViewport(0, 0, size, size);   // Set viewport to current fbo dimensions
 
     for (int i = 0; i < 6; i++)
     {
         SetShaderValueMatrix(shader, shader.locs[LOC_MATRIX_VIEW], fboViews[i]);
-        glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_CUBE_MAP_POSITIVE_X + i, irradiance.id, 0);
-        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+        rlFramebufferAttach(fbo, irradiance.id, RL_ATTACHMENT_COLOR_CHANNEL0, RL_ATTACHMENT_CUBEMAP_POSITIVE_X + i);
+
+        rlEnableFramebuffer(fbo);
+        rlClearScreenBuffers();
         GenDrawCube();
     }
+    //------------------------------------------------------------------------------------------
 
-    // Unbind framebuffer and textures
-    glBindFramebuffer(GL_FRAMEBUFFER, 0);
+    // STEP 3: Unload framebuffer and reset state
+    //------------------------------------------------------------------------------------------
+    rlDisableShader();          // Unbind shader
+    rlDisableTexture();         // Unbind texture
+    rlDisableFramebuffer();     // Unbind framebuffer
+    rlUnloadFramebuffer(fbo);   // Unload framebuffer (and automatically attached depth texture/renderbuffer)
 
     // Reset viewport dimensions to default
-    glViewport(0, 0, RLGL.State.framebufferWidth, RLGL.State.framebufferHeight);
+    rlViewport(0, 0, RLGL.State.framebufferWidth, RLGL.State.framebufferHeight);
+    //rlEnableBackfaceCulling();
+    //------------------------------------------------------------------------------------------
 
     irradiance.width = size;
     irradiance.height = size;
     irradiance.mipmaps = 1;
-    //irradiance.format = UNCOMPRESSED_R16G16B16;
+    irradiance.format = UNCOMPRESSED_R32G32B32;
 #endif
     return irradiance;
 }
 
 // Generate prefilter texture using cubemap data
-// TODO: OpenGL ES 2.0 does not support GL_RGB16F texture format, neither GL_DEPTH_COMPONENT24
-Texture2D GenTexturePrefilter(Shader shader, Texture2D cubemap, int size)
+TextureCubemap GenTexturePrefilter(Shader shader, TextureCubemap cubemap, int size)
 {
-    Texture2D prefilter = { 0 };
+    TextureCubemap prefilter = { 0 };
 
 #if defined(GRAPHICS_API_OPENGL_33) // || defined(GRAPHICS_API_OPENGL_ES2)
-    // NOTE: SetShaderDefaultLocations() already setups locations for projection and view Matrix in shader
-    // Other locations should be setup externally in shader before calling the function
-    // TODO: Locations should be taken out of this function... too shader dependant...
-    int roughnessLoc = GetShaderLocation(shader, "roughness");
+    rlDisableBackfaceCulling();     // Disable backface culling to render inside the cube
 
-    // Setup framebuffer
-    unsigned int fbo, rbo;
-    glGenFramebuffers(1, &fbo);
-    glGenRenderbuffers(1, &rbo);
-    glBindFramebuffer(GL_FRAMEBUFFER, fbo);
-    glBindRenderbuffer(GL_RENDERBUFFER, rbo);
-    glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH_COMPONENT24, size, size);
-    glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_RENDERBUFFER, rbo);
-
-    // Create a prefiltered HDR environment map
-    glGenTextures(1, &prefilter.id);
-    glBindTexture(GL_TEXTURE_CUBE_MAP, prefilter.id);
-    for (unsigned int i = 0; i < 6; i++)
-    {
-        glTexImage2D(GL_TEXTURE_CUBE_MAP_POSITIVE_X + i, 0, GL_RGB16F, size, size, 0, GL_RGB, GL_FLOAT, NULL);
-    }
-
-    glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-    glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-    glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_R, GL_CLAMP_TO_EDGE);
-    glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
-    glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+    // STEP 1: Setup framebuffer
+    //------------------------------------------------------------------------------------------
+    unsigned int rbo = rlLoadTextureDepth(size, size, true);
+    prefilter.id = rlLoadTextureCubemap(NULL, size, UNCOMPRESSED_R32G32B32);
+    rlTextureParameters(prefilter.id, RL_TEXTURE_MIN_FILTER, RL_FILTER_MIP_LINEAR);
+    
+    unsigned int fbo = rlLoadFramebuffer(size, size);
+    rlFramebufferAttach(fbo, rbo, RL_ATTACHMENT_DEPTH, RL_ATTACHMENT_RENDERBUFFER);
+    rlFramebufferAttach(fbo, cubemap.id, RL_ATTACHMENT_COLOR_CHANNEL0, RL_ATTACHMENT_CUBEMAP_POSITIVE_X);
+    //------------------------------------------------------------------------------------------
 
     // Generate mipmaps for the prefiltered HDR texture
     glGenerateMipmap(GL_TEXTURE_CUBE_MAP);
 
-    // Create projection (transposed) and different views for each face
+    // STEP 2: Draw to framebuffer
+    //------------------------------------------------------------------------------------------
+    // NOTE: Shader is used to prefilter HDR and store data into mipmap levels
+
+    // Define projection matrix and send it to shader
     Matrix fboProjection = MatrixPerspective(90.0*DEG2RAD, 1.0, RL_CULL_DISTANCE_NEAR, RL_CULL_DISTANCE_FAR);
+    SetShaderValueMatrix(shader, shader.locs[LOC_MATRIX_PROJECTION], fboProjection);
+    
+    // Define view matrix for every side of the cubemap
     Matrix fboViews[6] = {
-        MatrixLookAt((Vector3){ 0.0f, 0.0f, 0.0f }, (Vector3){ 1.0f, 0.0f, 0.0f }, (Vector3){ 0.0f, -1.0f, 0.0f }),
-        MatrixLookAt((Vector3){ 0.0f, 0.0f, 0.0f }, (Vector3){ -1.0f, 0.0f, 0.0f }, (Vector3){ 0.0f, -1.0f, 0.0f }),
-        MatrixLookAt((Vector3){ 0.0f, 0.0f, 0.0f }, (Vector3){ 0.0f, 1.0f, 0.0f }, (Vector3){ 0.0f, 0.0f, 1.0f }),
-        MatrixLookAt((Vector3){ 0.0f, 0.0f, 0.0f }, (Vector3){ 0.0f, -1.0f, 0.0f }, (Vector3){ 0.0f, 0.0f, -1.0f }),
-        MatrixLookAt((Vector3){ 0.0f, 0.0f, 0.0f }, (Vector3){ 0.0f, 0.0f, 1.0f }, (Vector3){ 0.0f, -1.0f, 0.0f }),
-        MatrixLookAt((Vector3){ 0.0f, 0.0f, 0.0f }, (Vector3){ 0.0f, 0.0f, -1.0f }, (Vector3){ 0.0f, -1.0f, 0.0f })
+        MatrixLookAt((Vector3){ 0.0f, 0.0f, 0.0f }, (Vector3){  1.0f,  0.0f,  0.0f }, (Vector3){ 0.0f, -1.0f,  0.0f }),
+        MatrixLookAt((Vector3){ 0.0f, 0.0f, 0.0f }, (Vector3){ -1.0f,  0.0f,  0.0f }, (Vector3){ 0.0f, -1.0f,  0.0f }),
+        MatrixLookAt((Vector3){ 0.0f, 0.0f, 0.0f }, (Vector3){  0.0f,  1.0f,  0.0f }, (Vector3){ 0.0f,  0.0f,  1.0f }),
+        MatrixLookAt((Vector3){ 0.0f, 0.0f, 0.0f }, (Vector3){  0.0f, -1.0f,  0.0f }, (Vector3){ 0.0f,  0.0f, -1.0f }),
+        MatrixLookAt((Vector3){ 0.0f, 0.0f, 0.0f }, (Vector3){  0.0f,  0.0f,  1.0f }, (Vector3){ 0.0f, -1.0f,  0.0f }),
+        MatrixLookAt((Vector3){ 0.0f, 0.0f, 0.0f }, (Vector3){  0.0f,  0.0f, -1.0f }, (Vector3){ 0.0f, -1.0f,  0.0f })
     };
 
-    // Prefilter HDR and store data into mipmap levels
-    glUseProgram(shader.id);
+    rlEnableShader(shader.id);
     glActiveTexture(GL_TEXTURE0);
     glBindTexture(GL_TEXTURE_CUBE_MAP, cubemap.id);
-    SetShaderValueMatrix(shader, shader.locs[LOC_MATRIX_PROJECTION], fboProjection);
 
-    glBindFramebuffer(GL_FRAMEBUFFER, fbo);
+    // TODO: Locations should be taken out of this function... too shader dependant...
+    int roughnessLoc = GetShaderLocation(shader, "roughness");
+
+    rlEnableFramebuffer(fbo);
 
     #define MAX_MIPMAP_LEVELS   5   // Max number of prefilter texture mipmaps
 
@@ -3501,11 +3480,12 @@ Texture2D GenTexturePrefilter(Shader shader, Texture2D cubemap, int size)
         // Resize framebuffer according to mip-level size.
         unsigned int mipWidth  = size*(int)powf(0.5f, (float)mip);
         unsigned int mipHeight = size*(int)powf(0.5f, (float)mip);
+        
+        rlViewport(0, 0, mipWidth, mipHeight);
 
         glBindRenderbuffer(GL_RENDERBUFFER, rbo);
         glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH_COMPONENT24, mipWidth, mipHeight);
-        glViewport(0, 0, mipWidth, mipHeight);
-
+        
         float roughness = (float)mip/(float)(MAX_MIPMAP_LEVELS - 1);
         glUniform1f(roughnessLoc, roughness);
 
@@ -3513,73 +3493,74 @@ Texture2D GenTexturePrefilter(Shader shader, Texture2D cubemap, int size)
         {
             SetShaderValueMatrix(shader, shader.locs[LOC_MATRIX_VIEW], fboViews[i]);
             glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_CUBE_MAP_POSITIVE_X + i, prefilter.id, mip);
-            glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+            //rlFramebufferAttach(fbo, irradiance.id, RL_ATTACHMENT_COLOR_CHANNEL0, RL_ATTACHMENT_CUBEMAP_POSITIVE_X + i);  // TODO: Support mip levels?
+
+            rlEnableFramebuffer(fbo);
+            rlClearScreenBuffers();
             GenDrawCube();
         }
     }
+    //------------------------------------------------------------------------------------------
 
-    // Unbind framebuffer and textures
-    glBindFramebuffer(GL_FRAMEBUFFER, 0);
+    // STEP 3: Unload framebuffer and reset state
+    //------------------------------------------------------------------------------------------
+    rlDisableShader();          // Unbind shader
+    rlDisableTexture();         // Unbind texture
+    rlDisableFramebuffer();     // Unbind framebuffer
+    rlUnloadFramebuffer(fbo);   // Unload framebuffer (and automatically attached depth texture/renderbuffer)
 
     // Reset viewport dimensions to default
-    glViewport(0, 0, RLGL.State.framebufferWidth, RLGL.State.framebufferHeight);
+    rlViewport(0, 0, RLGL.State.framebufferWidth, RLGL.State.framebufferHeight);
+    //rlEnableBackfaceCulling();
+    //------------------------------------------------------------------------------------------
 
     prefilter.width = size;
     prefilter.height = size;
-    //prefilter.mipmaps = 1 + (int)floor(log(size)/log(2));
-    //prefilter.format = UNCOMPRESSED_R16G16B16;
+    //prefilter.mipmaps = 1 + (int)floor(log(size)/log(2)); // MAX_MIPMAP_LEVELS
+    //prefilter.format = UNCOMPRESSED_R32G32B32;
 #endif
     return prefilter;
 }
 
 // Generate BRDF texture using cubemap data
-// NOTE: OpenGL ES 2.0 does not support GL_RGB16F texture format, neither GL_DEPTH_COMPONENT24
 // TODO: Review implementation: https://github.com/HectorMF/BRDFGenerator
 Texture2D GenTextureBRDF(Shader shader, int size)
 {
     Texture2D brdf = { 0 };
 #if defined(GRAPHICS_API_OPENGL_33) || defined(GRAPHICS_API_OPENGL_ES2)
-    // Generate BRDF convolution texture
-    glGenTextures(1, &brdf.id);
-    glBindTexture(GL_TEXTURE_2D, brdf.id);
-#if defined(GRAPHICS_API_OPENGL_33)
-    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB32F, size, size, 0, GL_RGB, GL_FLOAT, NULL);
-#elif defined(GRAPHICS_API_OPENGL_ES2)
-    if (RLGL.ExtSupported.texFloat32) glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, size, size, 0, GL_RGB, GL_FLOAT, NULL);
-#endif
+    // STEP 1: Setup framebuffer
+    //------------------------------------------------------------------------------------------
+    unsigned int rbo = rlLoadTextureDepth(size, size, true);
+    brdf.id = rlLoadTexture(NULL, size, size, UNCOMPRESSED_R32G32B32, 1);
 
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+    unsigned int fbo = rlLoadFramebuffer(size, size);
+    rlFramebufferAttach(fbo, rbo, RL_ATTACHMENT_DEPTH, RL_ATTACHMENT_RENDERBUFFER);
+    rlFramebufferAttach(fbo, brdf.id, RL_ATTACHMENT_COLOR_CHANNEL0, RL_ATTACHMENT_TEXTURE2D);
+    //------------------------------------------------------------------------------------------
 
-    // Render BRDF LUT into a quad using FBO
-    unsigned int fbo, rbo;
-    glGenFramebuffers(1, &fbo);
-    glGenRenderbuffers(1, &rbo);
-    glBindFramebuffer(GL_FRAMEBUFFER, fbo);
-    glBindRenderbuffer(GL_RENDERBUFFER, rbo);
-#if defined(GRAPHICS_API_OPENGL_33)
-    glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH_COMPONENT24, size, size);
-#elif defined(GRAPHICS_API_OPENGL_ES2)
-    glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH_COMPONENT16, size, size);
-#endif
-    glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, brdf.id, 0);
+    // STEP 2: Draw to framebuffer
+    //------------------------------------------------------------------------------------------
+    // NOTE: Render BRDF LUT into a quad using FBO
 
-    glViewport(0, 0, size, size);
-    glUseProgram(shader.id);
-    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+    rlEnableShader(shader.id);
+
+    rlViewport(0, 0, size, size);
+    
+    rlEnableFramebuffer(fbo);
+    rlClearScreenBuffers();
     GenDrawQuad();
+    //------------------------------------------------------------------------------------------
 
-    // Unbind framebuffer and textures
-    glBindFramebuffer(GL_FRAMEBUFFER, 0);
-
-    // Unload framebuffer but keep color texture
-    glDeleteRenderbuffers(1, &rbo);
-    glDeleteFramebuffers(1, &fbo);
+    // STEP 3: Unload framebuffer and reset state
+    //------------------------------------------------------------------------------------------
+    rlDisableShader();          // Unbind shader
+    rlDisableTexture();         // Unbind texture
+    rlDisableFramebuffer();     // Unbind framebuffer
+    rlUnloadFramebuffer(fbo);   // Unload framebuffer (and automatically attached depth texture/renderbuffer)
 
     // Reset viewport dimensions to default
-    glViewport(0, 0, RLGL.State.framebufferWidth, RLGL.State.framebufferHeight);
+    rlViewport(0, 0, RLGL.State.framebufferWidth, RLGL.State.framebufferHeight);
+    //------------------------------------------------------------------------------------------
 
     brdf.width = size;
     brdf.height = size;
