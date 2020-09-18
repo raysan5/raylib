@@ -2909,7 +2909,6 @@ void *rlReadTexturePixels(Texture2D texture)
     unsigned int fboId = rlLoadFramebuffer(texture.width, texture.height);
 
     // TODO: Create depth texture/renderbuffer for fbo?
-	
 
     glBindFramebuffer(GL_FRAMEBUFFER, fboId);
     glBindTexture(GL_TEXTURE_2D, 0);
@@ -2921,13 +2920,10 @@ void *rlReadTexturePixels(Texture2D texture)
     pixels = (unsigned char *)RL_MALLOC(GetPixelDataSize(texture.width, texture.height, UNCOMPRESSED_R8G8B8A8));
     glReadPixels(0, 0, texture.width, texture.height, GL_RGBA, GL_UNSIGNED_BYTE, pixels);
 
-    // Re-attach internal FBO color texture before deleting it
-    glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, fbo.texture.id, 0);
-
     glBindFramebuffer(GL_FRAMEBUFFER, 0);
 
     // Clean up temporal fbo
-    rlUnloadFramebuffer(fbo);
+    rlUnloadFramebuffer(fboId);
 #endif
 
     return pixels;
