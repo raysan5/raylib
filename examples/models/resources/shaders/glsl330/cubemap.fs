@@ -1,11 +1,3 @@
-/*******************************************************************************************
-*
-*   rPBR [shader] - Equirectangular to cubemap fragment shader
-*
-*   Copyright (c) 2017 Victor Fisac
-*
-**********************************************************************************************/
-
 #version 330
 
 // Input vertex attributes (from vertex shader)

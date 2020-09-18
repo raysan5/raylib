@@ -1,12 +1,4 @@
-/*******************************************************************************************
-*
-*   rPBR [shader] - Equirectangular to cubemap vertex shader
-*
-*   Copyright (c) 2017 Victor Fisac
-*
-**********************************************************************************************/
-
-#version 330
+#version 100
 
 // Input vertex attributes
 attribute vec3 vertexPosition;

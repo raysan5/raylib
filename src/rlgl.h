@@ -2065,20 +2065,20 @@ unsigned int rlLoadTexture(void *data, int width, int height, int format, int mi
 unsigned int rlLoadTextureDepth(int width, int height, bool useRenderBuffer)
 {
     unsigned int id = 0;
-    
+
 #if defined(GRAPHICS_API_OPENGL_33) || defined(GRAPHICS_API_OPENGL_ES2)
-    if (!RLGL.ExtSupported.texDepth) useRenderBuffer = false;
+    // In case depth textures not supported, we force renderbuffer usage
+    if (!RLGL.ExtSupported.texDepth) useRenderBuffer = true;
 
     // NOTE: We let the implementation to choose the best bit-depth
     unsigned int glInternalFormat = GL_DEPTH_COMPONENT;
-/*
-#if defined(GRAPHICS_API_OPENGL_33)
-    glInternalFormat = GL_DEPTH_COMPONENT24;    // GL_DEPTH_COMPONENT32
-#elif defined(GRAPHICS_API_OPENGL_ES2)
+
+#if defined(GRAPHICS_API_OPENGL_ES2)
     if (RLGL.ExtSupported.maxDepthBits == 32) glInternalFormat = GL_DEPTH_COMPONENT32_OES;
     else if (RLGL.ExtSupported.maxDepthBits == 24) glInternalFormat = GL_DEPTH_COMPONENT24_OES;
+    else glInternalFormat = GL_DEPTH_COMPONENT16;
 #endif
-*/
+
     if (!useRenderBuffer && RLGL.ExtSupported.texDepth)
     {
         glGenTextures(1, &id);
