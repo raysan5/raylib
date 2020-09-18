@@ -158,7 +158,6 @@
 #include <string.h>                 // Required for: strrchr(), strcmp(), strlen()
 #include <time.h>                   // Required for: time() [Used in InitTimer()]
 #include <math.h>                   // Required for: tan() [Used in BeginMode3D()]
-#include <errno.h>
 
 #include <sys/stat.h>               // Required for: stat() [Used in GetFileModTime()]
 
@@ -4603,7 +4602,7 @@ static void EventThreadSpawn(char *device)
     fd = open(device, O_RDONLY | O_NONBLOCK);
     if (fd < 0)
     {
-        TRACELOG(LOG_WARNING, "RPI: Failed to open input device %s (error: %d)", device, errno);
+        TRACELOG(LOG_WARNING, "RPI: Failed to open input device %s", device);
         return;
     }
     worker->fd = fd;
