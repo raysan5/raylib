@@ -2819,8 +2819,8 @@ RenderTexture2D LoadRenderTexture(int width, int height)
         target.depth.mipmaps = 1;
 
         // Attach color texture and depth renderbuffer/texture to FBO
-        rlFramebufferAttach(target.id, target.texture.id, RL_ATTACHMENT_COLOR_TEXTURE);    // COLOR attachment
-        rlFramebufferAttach(target.id, target.depth.id, RL_ATTACHMENT_DEPTH_RENDERBUFFER); // DEPTH attachment
+        rlFramebufferAttach(target.id, target.texture.id, RL_ATTACHMENT_COLOR_CHANNEL0, RL_ATTACHMENT_TEXTURE2D);
+        rlFramebufferAttach(target.id, target.depth.id, RL_ATTACHMENT_DEPTH, RL_ATTACHMENT_RENDERBUFFER);
 
         // Check if fbo is complete with attachments (valid)
         if (rlFramebufferComplete(target.id)) TRACELOG(LOG_INFO, "FBO: [ID %i] Framebuffer object created successfully", target.id);

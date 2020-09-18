@@ -206,14 +206,28 @@
 typedef enum { OPENGL_11 = 1, OPENGL_21, OPENGL_33, OPENGL_ES_20 } GlVersion;
 
 typedef enum {
-    RL_ATTACHMENT_COLOR_TEXTURE = 0,
-    RL_ATTACHMENT_COLOR_CUBEMAP = 20,
-    RL_ATTACHMENT_COLOR_RENDERBUFFER = 40,
-    RL_ATTACHMENT_DEPTH_TEXTURE = 100,
-    RL_ATTACHMENT_DEPTH_RENDERBUFFER = 101,
-    RL_ATTACHMENT_STENCIL_TEXTURE = 200,
-    RL_ATTACHMENT_STENCIL_RENDERBUFFER = 201,
+    RL_ATTACHMENT_COLOR_CHANNEL0 = 0,
+    RL_ATTACHMENT_COLOR_CHANNEL1,
+    RL_ATTACHMENT_COLOR_CHANNEL2,
+    RL_ATTACHMENT_COLOR_CHANNEL3,
+    RL_ATTACHMENT_COLOR_CHANNEL4,
+    RL_ATTACHMENT_COLOR_CHANNEL5,
+    RL_ATTACHMENT_COLOR_CHANNEL6,
+    RL_ATTACHMENT_COLOR_CHANNEL7,
+    RL_ATTACHMENT_DEPTH = 100,
+    RL_ATTACHMENT_STENCIL = 200,
 } FramebufferAttachType;
+
+typedef enum {
+    RL_ATTACHMENT_CUBEMAP_POSITIVE_X = 0,
+    RL_ATTACHMENT_CUBEMAP_NEGATIVE_X,
+    RL_ATTACHMENT_CUBEMAP_POSITIVE_Y,
+    RL_ATTACHMENT_CUBEMAP_NEGATIVE_Y,
+    RL_ATTACHMENT_CUBEMAP_POSITIVE_Z,
+    RL_ATTACHMENT_CUBEMAP_NEGATIVE_Z,
+    RL_ATTACHMENT_TEXTURE2D = 100,
+    RL_ATTACHMENT_RENDERBUFFER = 200,
+} FramebufferTexType;
 
 #if defined(RLGL_STANDALONE)
     #ifndef __cplusplus
@@ -535,7 +549,7 @@ RLAPI unsigned char *rlReadScreenPixels(int width, int height);           // Rea
 
 // Framebuffer management (fbo)
 RLAPI unsigned int rlLoadFramebuffer(int width, int height);              // Load an empty framebuffer
-RLAPI void rlFramebufferAttach(unsigned int fboId, unsigned int texId, int attachType);  // Attach texture/renderbuffer to a framebuffer
+RLAPI void rlFramebufferAttach(unsigned int fboId, unsigned int texId, int attachType, int texType);  // Attach texture/renderbuffer to a framebuffer
 RLAPI bool rlFramebufferComplete(unsigned int id);                        // Verify framebuffer is complete
 RLAPI void rlUnloadFramebuffer(unsigned int id);                          // Delete framebuffer from GPU
 
@@ -575,7 +589,7 @@ RLAPI Matrix GetMatrixModelview(void);                                    // Get
 
 // Texture maps generation (PBR)
 // NOTE: Required shaders should be provided
-RLAPI Texture2D GenTextureCubemap(Shader shader, Texture2D map, int size);          // Generate cubemap texture from HDR texture
+RLAPI TextureCubemap GenTextureCubemap(Shader shader, Texture2D map, int size);          // Generate cubemap texture from HDR texture
 RLAPI Texture2D GenTextureIrradiance(Shader shader, Texture2D cubemap, int size);   // Generate irradiance texture using cubemap data
 RLAPI Texture2D GenTexturePrefilter(Shader shader, Texture2D cubemap, int size);    // Generate prefilter texture using cubemap data
 RLAPI Texture2D GenTextureBRDF(Shader shader, int size);                  // Generate BRDF texture using cubemap data
@@ -1723,6 +1737,11 @@ void rlglInit(int width, int height)
     glCullFace(GL_BACK);                                    // Cull the back face (default)
     glFrontFace(GL_CCW);                                    // Front face are defined counter clockwise (default)
     glEnable(GL_CULL_FACE);                                 // Enable backface culling
+    
+    // Init state: Cubemap seamless
+#if defined(GRAPHICS_API_OPENGL_33)
+    glEnable(GL_TEXTURE_CUBE_MAP_SEAMLESS);                 // Seamless cubemaps (not supported on OpenGL ES 2.0)
+#endif
 
 #if defined(GRAPHICS_API_OPENGL_11)
     // Init state: Color hints (deprecated in OpenGL 3.0+)
@@ -2103,13 +2122,8 @@ unsigned int rlLoadTextureCubemap(void *data, int size, int format)
                 {
                     if (format == UNCOMPRESSED_R32G32B32)
                     {
-                    #if defined(GRAPHICS_API_OPENGL_33)
-                        // Instead of using a sized internal texture format (GL_RGB16F, GL_RGB32F),
-                        // we let the driver to choose the better format for us (GL_RGB)
-                        glTexImage2D(GL_TEXTURE_CUBE_MAP_POSITIVE_X + i, 0, GL_RGB, size, size, 0, GL_RGB, GL_FLOAT, NULL);
-                    #elif defined(GRAPHICS_API_OPENGL_ES2)
+                        // Instead of using a sized internal texture format (GL_RGB16F, GL_RGB32F), we let the driver to choose the better format for us (GL_RGB)
                         if (RLGL.ExtSupported.texFloat32) glTexImage2D(GL_TEXTURE_CUBE_MAP_POSITIVE_X + i, 0, GL_RGB, size, size, 0, GL_RGB, GL_FLOAT, NULL);
-                    #endif
                     }
                     else if ((format == UNCOMPRESSED_R32) || (format == UNCOMPRESSED_R32G32B32A32)) TRACELOG(LOG_WARNING, "TEXTURES: Cubemap requested format not supported");
                     else glTexImage2D(GL_TEXTURE_CUBE_MAP_POSITIVE_X + i, 0, glInternalFormat, size, size, 0, glFormat, glType, NULL);
@@ -2246,20 +2260,39 @@ unsigned int rlLoadFramebuffer(int width, int height)
 
 // Attach color buffer texture to an fbo (unloads previous attachment)
 // NOTE: Attach type: 0-Color, 1-Depth renderbuffer, 2-Depth texture
-void rlFramebufferAttach(unsigned int fboId, unsigned int texId, int attachType)
+void rlFramebufferAttach(unsigned int fboId, unsigned int texId, int attachType, int texType)
 {
 #if (defined(GRAPHICS_API_OPENGL_33) || defined(GRAPHICS_API_OPENGL_ES2)) && defined(SUPPORT_RENDER_TEXTURES_HINT)
     glBindFramebuffer(GL_FRAMEBUFFER, fboId);
 
     switch (attachType)
     {
-        case RL_ATTACHMENT_COLOR_TEXTURE: glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, texId, 0); break;  // TODO: Support multiple color attachments
-        case RL_ATTACHMENT_COLOR_CUBEMAP: glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_CUBE_MAP_POSITIVE_X, texId, 0); break; // TODO: Support multiple faces attachments
-        case RL_ATTACHMENT_COLOR_RENDERBUFFER: glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_RENDERBUFFER, texId, 0); break;
-        case RL_ATTACHMENT_DEPTH_TEXTURE: glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_TEXTURE_2D, texId, 0); break;
-        case RL_ATTACHMENT_DEPTH_RENDERBUFFER: glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_RENDERBUFFER, texId); break;
-        case RL_ATTACHMENT_STENCIL_TEXTURE: glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_STENCIL_ATTACHMENT, GL_TEXTURE_2D, texId); break;
-        case RL_ATTACHMENT_STENCIL_RENDERBUFFER: glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_STENCIL_ATTACHMENT, GL_RENDERBUFFER, texId); break;
+        case RL_ATTACHMENT_COLOR_CHANNEL0:
+        case RL_ATTACHMENT_COLOR_CHANNEL1:
+        case RL_ATTACHMENT_COLOR_CHANNEL2: 
+        case RL_ATTACHMENT_COLOR_CHANNEL3: 
+        case RL_ATTACHMENT_COLOR_CHANNEL4: 
+        case RL_ATTACHMENT_COLOR_CHANNEL5: 
+        case RL_ATTACHMENT_COLOR_CHANNEL6: 
+        case RL_ATTACHMENT_COLOR_CHANNEL7: 
+        {
+            if (texType == RL_ATTACHMENT_TEXTURE2D) glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0 + attachType, GL_TEXTURE_2D, texId, 0);
+            else if (texType == RL_ATTACHMENT_RENDERBUFFER) glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0 + attachType, GL_RENDERBUFFER, texId);
+            else if (texType >= RL_ATTACHMENT_CUBEMAP_POSITIVE_X) glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0 + attachType, GL_TEXTURE_CUBE_MAP_POSITIVE_X + texType, texId, 0);
+
+        } break;
+        case RL_ATTACHMENT_DEPTH:
+        {
+            if (texType == RL_ATTACHMENT_TEXTURE2D) glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_TEXTURE_2D, texId, 0);
+            else if (texType == RL_ATTACHMENT_RENDERBUFFER)  glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_RENDERBUFFER, texId);
+            
+        } break;
+        case RL_ATTACHMENT_STENCIL:
+        {
+            if (texType == RL_ATTACHMENT_TEXTURE2D) glFramebufferTexture2D(GL_FRAMEBUFFER, GL_STENCIL_ATTACHMENT, GL_TEXTURE_2D, texId, 0);
+            else if (texType == RL_ATTACHMENT_RENDERBUFFER)  glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_STENCIL_ATTACHMENT, GL_RENDERBUFFER, texId);
+            
+        } break;
         default: break;
     }
 
@@ -3602,8 +3635,8 @@ void InitVrSimulator(void)
     unsigned int depthId = rlLoadTextureDepth(RLGL.State.framebufferWidth, RLGL.State.framebufferHeight, true);
 
     // Attach color texture and depth renderbuffer/texture to FBO
-    rlFramebufferAttach(RLGL.Vr.stereoFboId, RLGL.Vr.stereoTexId, RL_ATTACHMENT_COLOR_TEXTURE);
-    rlFramebufferAttach(RLGL.Vr.stereoFboId, depthId, RL_ATTACHMENT_DEPTH_RENDERBUFFER);
+    rlFramebufferAttach(RLGL.Vr.stereoFboId, RLGL.Vr.stereoTexId, RL_ATTACHMENT_COLOR_CHANNEL0, RL_ATTACHMENT_TEXTURE2D);
+    rlFramebufferAttach(RLGL.Vr.stereoFboId, depthId, RL_ATTACHMENT_DEPTH, RL_ATTACHMENT_RENDERBUFFER);
 
     RLGL.Vr.simulatorReady = true;
 #else
