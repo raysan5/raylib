@@ -239,6 +239,7 @@ endif
 ifeq ($(PLATFORM),PLATFORM_WEB)
     # HTML5 emscripten compiler
     CC = emcc
+    AR = emar
 endif
 ifeq ($(PLATFORM),PLATFORM_ANDROID)
     # Android toolchain (must be provided for desired architecture and compiler)
@@ -466,9 +467,10 @@ all: raylib
 # NOTE: Release directory is created if not exist
 raylib: $(OBJS)
 ifeq ($(PLATFORM),PLATFORM_WEB)
-    # Compile raylib for web.
-	$(CC) -O1 $(OBJS) -o $(RAYLIB_RELEASE_PATH)/lib$(RAYLIB_LIB_NAME).bc
-	@echo "raylib library generated (lib$(RAYLIB_LIB_NAME).bc)!"
+    # Compile raylib libray for web
+    #$(AR) rcs $(RAYLIB_RELEASE_PATH)/lib$(RAYLIB_LIB_NAME).a $(OBJS)
+	$(CC) $(OBJS) -r -o $(RAYLIB_RELEASE_PATH)/lib$(RAYLIB_LIB_NAME).bc
+	@echo "raylib library generated (lib$(RAYLIB_LIB_NAME).a)!"
 else
     ifeq ($(RAYLIB_LIBTYPE),SHARED)
         ifeq ($(PLATFORM),PLATFORM_DESKTOP)
