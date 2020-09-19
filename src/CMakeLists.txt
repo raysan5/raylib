@@ -163,7 +163,13 @@ if(STATIC)
 
   target_compile_definitions(raylib_static
       PUBLIC ${PLATFORM_CPP}
+      PUBLIC PLATFORM=${PLATFORM_CPP}
       PUBLIC ${GRAPHICS}
+      PUBLIC GRAPHICS=${GRAPHICS}
+  )
+
+  target_link_libraries(raylib_static
+    PUBLIC ${LIBS_PRIVATE}
   )
 
   set(PKG_CONFIG_LIBS_PRIVATE ${__PKG_CONFIG_LIBS_PRIVATE} ${GLFW_PKG_LIBS})
