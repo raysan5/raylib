@@ -9,6 +9,7 @@
 *       - PLATFORM_DESKTOP: OSX/macOS
 *       - PLATFORM_ANDROID: Android 4.0 (ARM, ARM64)
 *       - PLATFORM_RPI:     Raspberry Pi 0,1,2,3,4 (Raspbian)
+*       - PLATFORM_DRM:     Linux native mode, including Raspberry Pi 4 with V3D fkms driver
 *       - PLATFORM_WEB:     HTML5 with asm.js (Chrome, Firefox)
 *       - PLATFORM_UWP:     Windows 10 App, Windows Phone, Xbox One
 *
@@ -222,7 +223,7 @@
     #include <GLES2/gl2.h>                  // OpenGL ES 2.0 library
 #endif
 
-#if defined(PLATFORM_RPI)
+#if defined(PLATFORM_RPI) || defined(PLATFORM_DRM)
     #include <fcntl.h>                  // POSIX file control definitions - open(), creat(), fcntl()
     #include <unistd.h>                 // POSIX standard function definitions - read(), close(), STDIN_FILENO
     #include <termios.h>                // POSIX terminal control definitions - tcgetattr(), tcsetattr()
@@ -234,7 +235,15 @@
     #include <linux/input.h>            // Linux: Keycodes constants definition (KEY_A, ...)
     #include <linux/joystick.h>         // Linux: Joystick support library
     
+#if defined(PLATFORM_RPI)
     #include "bcm_host.h"               // Raspberry Pi VideoCore IV access functions
+#endif
+
+#if defined(PLATFORM_DRM)
+    #include <gbm.h>                    // Generic Buffer Management
+    #include <xf86drm.h>                // Direct Rendering Manager user-level library interface
+    #include <xf86drmMode.h>            // Direct Rendering Manager modesetting interface
+#endif
     
     #include "EGL/egl.h"                // EGL library - Native platform display device control functions
     #include "EGL/eglext.h"             // EGL library - Extensions
@@ -266,7 +275,7 @@
 //----------------------------------------------------------------------------------
 // Defines and Macros
 //----------------------------------------------------------------------------------
-#if defined(PLATFORM_RPI)
+#if defined(PLATFORM_RPI) || defined(PLATFORM_DRM)
     #define USE_LAST_TOUCH_DEVICE       // When multiple touchscreens are connected, only use the one with the highest event<N> number
 
     #define DEFAULT_GAMEPAD_DEV    "/dev/input/js"      // Gamepad input (base dev for all gamepads: js0, js1, ...)
@@ -306,7 +315,7 @@
 //----------------------------------------------------------------------------------
 // Types and Structures Definition
 //----------------------------------------------------------------------------------
-#if defined(PLATFORM_RPI)
+#if defined(PLATFORM_RPI) || defined(PLATFORM_DRM)
 typedef struct {
     pthread_t threadId;             // Event reading thread id
     int fd;                         // File descriptor to the device it is assigned to
@@ -336,11 +345,24 @@ typedef struct CoreData {
 #if defined(PLATFORM_DESKTOP) || defined(PLATFORM_WEB)
         GLFWwindow *handle;                 // Native window handle (graphic device)
 #endif
+#if (defined(PLATFORM_RPI) && defined(SUPPORT_MOUSE_CURSOR_RPI)) || defined(PLATFORM_DRM)
+        Texture2D mouseTX;                       // software mouse on framebuffer
+#endif
 #if defined(PLATFORM_RPI)
-        // NOTE: RPI4 does not support Dispmanx anymore, system should be redesigned
         EGL_DISPMANX_WINDOW_T handle;       // Native window handle (graphic device)
 #endif
-#if defined(PLATFORM_ANDROID) || defined(PLATFORM_RPI) || defined(PLATFORM_UWP)
+#if defined(PLATFORM_ANDROID) || defined(PLATFORM_RPI) || defined(PLATFORM_DRM) || defined(PLATFORM_UWP)
+#if defined(PLATFORM_DRM)
+        const char *card;                   // /dev/dri/... file name
+        int fd;                             // /dev/dri/... file descriptor
+        drmModeConnector *connector;        // Direct Rendering Manager (DRM) mode connector
+        int modeIndex;                      // index of the used mode of connector->modes
+        drmModeCrtc *crtc;                  // crt controller
+        struct gbm_device *gbmDevice;       // device of Generic Buffer Management (GBM, native platform for EGL on DRM)
+        struct gbm_surface *gbmSurface;     // surface of GBM
+        struct gbm_bo *prevBO;              // previous used GBM buffer object (during frame swapping)
+        uint32_t prevFB;                    // previous used GBM framebufer (during frame swapping)
+#endif
         EGLDisplay device;                  // Native display device (physical screen connection)
         EGLSurface surface;                 // Surface to draw on, framebuffers (connected to context)
         EGLContext context;                 // Graphic context, mode in which drawing can be done
@@ -384,7 +406,7 @@ typedef struct CoreData {
     } UWP;
 #endif
     struct {
-#if defined(PLATFORM_RPI)
+#if defined(PLATFORM_RPI) || defined(PLATFORM_DRM)
         InputEventWorker eventWorker[10];   // List of worker threads for every monitored "/dev/input/event<N>"
 #endif
         struct {
@@ -394,7 +416,7 @@ typedef struct CoreData {
 
             int keyPressedQueue[MAX_KEY_PRESSED_QUEUE]; // Input characters queue
             int keyPressedQueueCount;             // Input characters queue count
-#if defined(PLATFORM_RPI)
+#if defined(PLATFORM_RPI) || defined(PLATFORM_DRM)
             int defaultMode;                // Default keyboard mode
             struct termios defaultSettings; // Default keyboard settings
             KeyEventFifo lastKeyPressed;    // Buffer for holding keydown events as they arrive (Needed due to multitreading of event workers)
@@ -412,7 +434,7 @@ typedef struct CoreData {
             char previousButtonState[3];    // Registers previous mouse button state
             int currentWheelMove;           // Registers current mouse wheel variation
             int previousWheelMove;          // Registers previous mouse wheel variation
-#if defined(PLATFORM_RPI)
+#if defined(PLATFORM_RPI) || defined(PLATFORM_DRM)
             char currentButtonStateEvdev[3];    // Holds the new mouse state for the next polling event to grab (Can't be written directly due to multithreading, app could miss the update)
 #endif
         } Mouse;
@@ -424,13 +446,13 @@ typedef struct CoreData {
         struct {
             int lastButtonPressed;          // Register last gamepad button pressed
             int axisCount;                  // Register number of available gamepad axis
-#if defined(PLATFORM_DESKTOP) || defined(PLATFORM_RPI) || defined(PLATFORM_WEB) || defined(PLATFORM_UWP)
+#if defined(PLATFORM_DESKTOP) || defined(PLATFORM_RPI) || defined(PLATFORM_DRM) || defined(PLATFORM_WEB) || defined(PLATFORM_UWP)
             bool ready[MAX_GAMEPADS];       // Flag to know if gamepad is ready
             float axisState[MAX_GAMEPADS][MAX_GAMEPAD_AXIS];        // Gamepad axis state
             char currentState[MAX_GAMEPADS][MAX_GAMEPAD_BUTTONS];   // Current gamepad buttons state
             char previousState[MAX_GAMEPADS][MAX_GAMEPAD_BUTTONS];  // Previous gamepad buttons state
 #endif
-#if defined(PLATFORM_RPI)
+#if defined(PLATFORM_RPI) || defined(PLATFORM_DRM)
             pthread_t threadId;             // Gamepad reading thread id
             int streamId[MAX_GAMEPADS];     // Gamepad device file descriptor
             char name[64];                  // Gamepad name holder
@@ -444,7 +466,7 @@ typedef struct CoreData {
         double draw;                        // Time measure for frame draw
         double frame;                       // Time measure for one frame
         double target;                      // Desired time for one frame, if 0 not applied
-#if defined(PLATFORM_ANDROID) || defined(PLATFORM_RPI) || defined(PLATFORM_UWP)
+#if defined(PLATFORM_ANDROID) || defined(PLATFORM_RPI) || defined(PLATFORM_DRM) || defined(PLATFORM_UWP)
         unsigned long long base;            // Base time measure for hi-res timer
 #endif
     } Time;
@@ -519,7 +541,7 @@ static EM_BOOL EmscriptenTouchCallback(int eventType, const EmscriptenTouchEvent
 static EM_BOOL EmscriptenGamepadCallback(int eventType, const EmscriptenGamepadEvent *gamepadEvent, void *userData);
 #endif
 
-#if defined(PLATFORM_RPI)
+#if defined(PLATFORM_RPI) || defined(PLATFORM_DRM)
 #if defined(SUPPORT_SSH_KEYBOARD_RPI)
 static void InitKeyboard(void);                         // Init raw keyboard system (standard input reading)
 static void ProcessKeyboard(void);                      // Process keyboard events
@@ -535,7 +557,7 @@ static void *EventThread(void *arg);                    // Input device events r
 
 static void InitGamepad(void);                          // Init raw gamepad input
 static void *GamepadThread(void *arg);                  // Mouse reading thread
-#endif  // PLATFORM_RPI
+#endif  // PLATFORM_RPI || PLATFORM_DRM
 
 #if defined(_WIN32)
     // NOTE: We include Sleep() function signature here to avoid windows.h inclusion
@@ -566,7 +588,7 @@ struct android_app *GetAndroidApp(void)
     return CORE.Android.app;
 }
 #endif
-#if defined(PLATFORM_RPI) && !defined(SUPPORT_SSH_KEYBOARD_RPI)
+#if (defined(PLATFORM_RPI) || defined(PLATFORM_DRM)) && !defined(SUPPORT_SSH_KEYBOARD_RPI)
 // Init terminal (block echo and signal short cuts)
 static void InitTerminal(void)
 {
@@ -717,7 +739,7 @@ void InitWindow(int width, int height, const char *title)
     SetTextureFilter(GetFontDefault().texture, FILTER_BILINEAR);
 #endif
 
-#if defined(PLATFORM_RPI)
+#if defined(PLATFORM_RPI) || defined(PLATFORM_DRM)
     // Init raw input system
     InitEvdevInput();   // Evdev inputs initialization
     InitGamepad();      // Gamepad init
@@ -781,12 +803,59 @@ void CloseWindow(void)
     timeEndPeriod(1);           // Restore time period
 #endif
 
-#if defined(PLATFORM_ANDROID) || defined(PLATFORM_RPI) || defined(PLATFORM_UWP)
+#if defined(PLATFORM_ANDROID) || defined(PLATFORM_RPI) || defined(PLATFORM_DRM) || defined(PLATFORM_UWP)
+#if defined(PLATFORM_DRM)
+    if (CORE.Window.prevFB)
+    {
+        drmModeRmFB(CORE.Window.fd, CORE.Window.prevFB);
+        CORE.Window.prevFB = 0;
+    }
+
+    if (CORE.Window.prevBO)
+    {
+        gbm_surface_release_buffer(CORE.Window.gbmSurface, CORE.Window.prevBO);
+        CORE.Window.prevBO = NULL;
+    }
+
+    if (CORE.Window.gbmSurface)
+    {
+        gbm_surface_destroy(CORE.Window.gbmSurface);
+        CORE.Window.gbmSurface = NULL;
+    }
+
+    if (CORE.Window.gbmDevice)
+    {
+        gbm_device_destroy(CORE.Window.gbmDevice);
+        CORE.Window.gbmDevice = NULL;
+    }
+
+    if(CORE.Window.crtc)
+    {
+        if (CORE.Window.connector)
+        {
+            drmModeSetCrtc(CORE.Window.fd, CORE.Window.crtc->crtc_id, CORE.Window.crtc->buffer_id,
+                CORE.Window.crtc->x, CORE.Window.crtc->y, &CORE.Window.connector->connector_id, 1, &CORE.Window.crtc->mode);
+            drmModeFreeConnector(CORE.Window.connector);
+            CORE.Window.connector = NULL;
+        }
+
+        drmModeFreeCrtc(CORE.Window.crtc);
+        CORE.Window.crtc = NULL;
+    }
+
+    if (CORE.Window.fd != -1)
+    {
+        close(CORE.Window.fd);
+        CORE.Window.fd = -1;
+    }
+#endif
+
     // Close surface, context and display
     if (CORE.Window.device != EGL_NO_DISPLAY)
     {
+#if !defined(PLATFORM_DRM)
         eglMakeCurrent(CORE.Window.device, EGL_NO_SURFACE, EGL_NO_SURFACE, EGL_NO_CONTEXT);
-
+#endif
         if (CORE.Window.surface != EGL_NO_SURFACE)
         {
             eglDestroySurface(CORE.Window.device, CORE.Window.surface);
@@ -804,7 +873,7 @@ void CloseWindow(void)
     }
 #endif
 
-#if defined(PLATFORM_RPI)
+#if defined(PLATFORM_RPI) || defined(PLATFORM_DRM)
     // Wait for mouse and gamepad threads to finish before closing
     // NOTE: Those threads should already have finished at this point
     // because they are controlled by CORE.Window.shouldClose variable
@@ -860,7 +929,7 @@ bool WindowShouldClose(void)
     else return true;
 #endif
 
-#if defined(PLATFORM_ANDROID) || defined(PLATFORM_RPI) || defined(PLATFORM_UWP)
+#if defined(PLATFORM_ANDROID) || defined(PLATFORM_RPI) || defined(PLATFORM_DRM) || defined(PLATFORM_UWP)
     if (CORE.Window.ready) return CORE.Window.shouldClose;
     else return true;
 #endif
@@ -982,7 +1051,7 @@ void ToggleFullscreen(void)
     }
     */
 #endif
-#if defined(PLATFORM_ANDROID) || defined(PLATFORM_RPI)
+#if defined(PLATFORM_ANDROID) || defined(PLATFORM_RPI) || defined(PLATFORM_DRM)
     TRACELOG(LOG_WARNING, "SYSTEM: Failed to toggle to windowed mode");
 #endif
 
@@ -1400,10 +1469,13 @@ void BeginDrawing(void)
 // End canvas drawing and swap buffers (double buffering)
 void EndDrawing(void)
 {
-#if defined(PLATFORM_RPI) && defined(SUPPORT_MOUSE_CURSOR_RPI)
-    // On RPI native mode we have no system mouse cursor, so,
-    // we draw a small rectangle for user reference
-    DrawRectangle(CORE.Input.Mouse.position.x, CORE.Input.Mouse.position.y, 3, 3, MAROON);
+#if defined(PLATFORM_DRM)
+    // On DRM mode we have no system mouse cursor, so,
+    // we draw a nice mouse cursor respecting cursorHidden...
+    //DrawRectangle(CORE.Input.Mouse.position.x, CORE.Input.Mouse.position.y, 3, 3, MAROON);
+    if (!CORE.Input.Mouse.cursorHidden) {
+        DrawTexture(CORE.Window.mouseTX,CORE.Input.Mouse.position.x, CORE.Input.Mouse.position.y,WHITE);
+    }
 #endif
 
     rlglDraw();                     // Draw Buffers (Only OpenGL 3+ and ES2)
@@ -1806,7 +1878,7 @@ double GetTime(void)
     return glfwGetTime();                   // Elapsed time since glfwInit()
 #endif
 
-#if defined(PLATFORM_ANDROID) || defined(PLATFORM_RPI)
+#if defined(PLATFORM_ANDROID) || defined(PLATFORM_RPI) || defined(PLATFORM_DRM)
     struct timespec ts;
     clock_gettime(CLOCK_MONOTONIC, &ts);
     unsigned long long int time = (unsigned long long int)ts.tv_sec*1000000000LLU + (unsigned long long int)ts.tv_nsec;
@@ -2439,7 +2511,7 @@ const char *GetGamepadName(int gamepad)
 #if defined(PLATFORM_DESKTOP)
     if (CORE.Input.Gamepad.ready[gamepad]) return glfwGetJoystickName(gamepad);
     else return NULL;
-#elif defined(PLATFORM_RPI)
+#elif defined(PLATFORM_RPI) || defined(PLATFORM_DRM)
     if (CORE.Input.Gamepad.ready[gamepad]) ioctl(CORE.Input.Gamepad.streamId[gamepad], JSIOCGNAME(64), &CORE.Input.Gamepad.name);
 
     return CORE.Input.Gamepad.name;
@@ -2451,7 +2523,7 @@ const char *GetGamepadName(int gamepad)
 // Return gamepad axis count
 int GetGamepadAxisCount(int gamepad)
 {
-#if defined(PLATFORM_RPI)
+#if defined(PLATFORM_RPI) || defined(PLATFORM_DRM)
     int axisCount = 0;
     if (CORE.Input.Gamepad.ready[gamepad]) ioctl(CORE.Input.Gamepad.streamId[gamepad], JSIOCGAXES, &axisCount);
     CORE.Input.Gamepad.axisCount = axisCount;
@@ -2657,7 +2729,7 @@ int GetTouchX(void)
 {
 #if defined(PLATFORM_ANDROID) || defined(PLATFORM_WEB) || defined(PLATFORM_UWP)
     return (int)CORE.Input.Touch.position[0].x;
-#else   // PLATFORM_DESKTOP, PLATFORM_RPI
+#else   // PLATFORM_DESKTOP, PLATFORM_RPI, PLATFORM_DRM
     return GetMouseX();
 #endif
 }
@@ -2667,7 +2739,7 @@ int GetTouchY(void)
 {
 #if defined(PLATFORM_ANDROID) || defined(PLATFORM_WEB) || defined(PLATFORM_UWP)
     return (int)CORE.Input.Touch.position[0].y;
-#else   // PLATFORM_DESKTOP, PLATFORM_RPI
+#else   // PLATFORM_DESKTOP, PLATFORM_RPI, PLATFORM_DRM
     return GetMouseY();
 #endif
 }
@@ -2678,7 +2750,7 @@ Vector2 GetTouchPosition(int index)
 {
     Vector2 position = { -1.0f, -1.0f };
 
-#if defined(PLATFORM_ANDROID) || defined(PLATFORM_WEB) || defined(PLATFORM_RPI) || defined(PLATFORM_UWP)
+#if defined(PLATFORM_ANDROID) || defined(PLATFORM_WEB) || defined(PLATFORM_RPI) || defined(PLATFORM_DRM) || defined(PLATFORM_UWP)
     if (index < MAX_TOUCH_POINTS) position = CORE.Input.Touch.position[index];
     else TRACELOG(LOG_WARNING, "INPUT: Required touch point out of range (Max touch points: %i)", MAX_TOUCH_POINTS);
 
@@ -2956,7 +3028,7 @@ static bool InitGraphicsDevice(int width, int height)
     }
 #endif // PLATFORM_DESKTOP || PLATFORM_WEB
 
-#if defined(PLATFORM_ANDROID) || defined(PLATFORM_RPI) || defined(PLATFORM_UWP)
+#if defined(PLATFORM_ANDROID) || defined(PLATFORM_RPI) || defined(PLATFORM_DRM) || defined(PLATFORM_UWP)
     CORE.Window.fullscreen = true;
 
 #if defined(PLATFORM_RPI)
@@ -2968,6 +3040,260 @@ static bool InitGraphicsDevice(int width, int height)
 
     VC_RECT_T dstRect;
     VC_RECT_T srcRect;
+#endif
+
+#if defined(PLATFORM_DRM)
+    CORE.Window.card = NULL;
+    CORE.Window.fd = -1;
+    CORE.Window.connector = NULL;
+    CORE.Window.modeIndex = -1;
+    CORE.Window.crtc = NULL;
+    CORE.Window.gbmDevice = NULL;
+    CORE.Window.gbmSurface = NULL;
+    CORE.Window.prevBO = NULL;
+    CORE.Window.prevFB = 0;
+
+    if ((NULL != CORE.Window.card) && ('\0' != CORE.Window.card[0]))
+    {
+        char *base = "/dev/dri/";
+        const int len = strlen(base) + strlen(CORE.Window.card);
+        char *path = malloc(len);
+        if (!path) {
+            TRACELOG(LOG_WARNING, "DISPLAY: failed to get memory for path");
+            return false;
+        }
+        path[0] = '\0';
+        strncpy(path, base, len - 1);
+        strncat(path, CORE.Window.card, len - strlen(base));
+        CORE.Window.fd = open(path, O_RDWR);
+        free(path);
+    }
+    else
+    {
+        TRACELOG(LOG_INFO, "DISPLAY: no graphic card set, trying card1");
+        CORE.Window.fd = open("/dev/dri/card1", O_RDWR); // VideoCore VI (Raspberry Pi 4)
+        if (-1 == CORE.Window.fd)
+        {
+            TRACELOG(LOG_INFO, "DISPLAY: failed to open graphic card1, trying card0");
+            CORE.Window.fd = open("/dev/dri/card0", O_RDWR); // VideoCore IV (Raspberry Pi 1-3)
+        }
+    }
+    if (-1 == CORE.Window.fd)
+    {
+        TRACELOG(LOG_WARNING, "DISPLAY: failed to open graphic card");
+        return false;
+    }
+    
+
+    drmModeRes *res = drmModeGetResources(CORE.Window.fd);
+    if (!res)
+    {
+        TRACELOG(LOG_WARNING, "DISPLAY: failed get DRM resources");
+        close(CORE.Window.fd);
+        return false;
+    }
+
+    TRACELOG(LOG_TRACE, "DISPLAY: %i connectors found", res->count_connectors);
+    for (size_t i = 0; i < res->count_connectors; i++)
+    {
+        TRACELOG(LOG_TRACE, "DISPLAY: connector index %i", i);
+        drmModeConnector *con = drmModeGetConnector(CORE.Window.fd, res->connectors[i]);
+        TRACELOG(LOG_TRACE, "DISPLAY: there are %i connector modes", con->count_modes);
+#if 0
+        for (int j = 0; j < con->count_modes; j++) {
+            TRACELOG(LOG_TRACE, "clock %i", con->modes[j].clock);
+            TRACELOG(LOG_TRACE, "hdisplay %i", con->modes[j].hdisplay);
+            TRACELOG(LOG_TRACE, "vdisplay %i", con->modes[j].vdisplay);
+            TRACELOG(LOG_TRACE, "vrefresh %i", con->modes[j].vrefresh);
+            TRACELOG(LOG_TRACE, "flags %X", con->modes[j].flags);
+            TRACELOG(LOG_TRACE, "type %i", con->modes[j].type);
+            TRACELOG(LOG_TRACE, "name %s", con->modes[j].name);
+        }
+#endif
+        if ((con->connection == DRM_MODE_CONNECTED) && (con->encoder_id))
+        {
+            TRACELOG(LOG_TRACE, "DRM mode connected");
+            CORE.Window.connector = con;
+            break;
+        }
+        else
+        {
+            TRACELOG(LOG_TRACE, "DRM mode NOT connected (deleting)");
+            drmModeFreeConnector(con);
+        }
+    }
+    if (!CORE.Window.connector)
+    {
+        TRACELOG(LOG_WARNING, "no suitable DRM connector found");
+        drmModeFreeResources(res);
+        close(CORE.Window.fd);
+        return false;
+    }
+
+    drmModeEncoder *enc = drmModeGetEncoder(CORE.Window.fd, CORE.Window.connector->encoder_id);
+    if (!enc)
+    {
+        TRACELOG(LOG_WARNING, "failed to get DRM mode encoder");
+        drmModeFreeConnector(CORE.Window.connector);
+        drmModeFreeResources(res);
+        close(CORE.Window.fd);
+        return false;
+    }
+
+#if 0
+    TRACELOG(LOG_TRACE, "Encoder id %i", enc->encoder_id);
+    TRACELOG(LOG_TRACE, "Encoder type %i", enc->encoder_type);
+    TRACELOG(LOG_TRACE, "Encoder crtc id %i", enc->crtc_id);
+    TRACELOG(LOG_TRACE, "Encoder possible crtcs %i", enc->possible_crtcs);
+    TRACELOG(LOG_TRACE, "Encoder possible clones %i", enc->possible_clones);
+#endif
+
+    CORE.Window.crtc = drmModeGetCrtc(CORE.Window.fd, enc->crtc_id);
+    if (!CORE.Window.crtc)
+    {
+        TRACELOG(LOG_WARNING, "failed to get DRM mode crtc");
+        drmModeFreeEncoder(enc);
+        drmModeFreeConnector(CORE.Window.connector);
+        drmModeFreeResources(res);
+        close(CORE.Window.fd);
+        return false;
+    }
+
+    int findExactly = 1;
+find_connector_mode:
+    // If InitWindow should use the current mode find it in the connector's mode list
+    if ((CORE.Window.screen.width <= 0) || (CORE.Window.screen.height <= 0))
+    {
+        #define BINCMP(a, b) memcmp((a), (b), sizeof(a) < sizeof(b) ? sizeof(a) : sizeof(b))
+        TRACELOG(LOG_TRACE, "selecting for (res 0x0)");
+        for (int i = CORE.Window.connector->count_modes - 1; i >= 0; i--)
+        {
+            TRACELOG(LOG_TRACE, "mode %i h=%i v=%i", i, CORE.Window.connector->modes[i].hdisplay, CORE.Window.connector->modes[i].vdisplay);
+            if (CORE.Window.connector->modes[i].flags & DRM_MODE_FLAG_INTERLACE)
+            {
+                TRACELOG(LOG_TRACE, "interlaced mode");
+                if (!(CORE.Window.flags & FLAG_INTERLACED_HINT))
+                {
+                    TRACELOG(LOG_TRACE, "but shouldn't choose an interlaced mode");
+                    continue;
+                }
+            }
+            else
+            {
+                TRACELOG(LOG_TRACE, "progressive mode");
+            }
+
+            if (0 == BINCMP(&CORE.Window.crtc->mode, &CORE.Window.connector->modes[i]))
+            {
+                TRACELOG(LOG_TRACE, "above mode selected");
+                CORE.Window.screen.width = CORE.Window.connector->modes[i].hdisplay;
+                CORE.Window.screen.height = CORE.Window.connector->modes[i].vdisplay;
+
+                CORE.Window.display.width = CORE.Window.connector->modes[i].hdisplay;
+                CORE.Window.display.height = CORE.Window.connector->modes[i].vdisplay;
+                CORE.Window.modeIndex = i;
+                break;
+            }
+        }
+        #undef BINCMP
+    }
+    else
+    {
+        TRACELOG(LOG_TRACE, "selecting for (res %ix%i)", CORE.Window.screen.width, CORE.Window.screen.height);
+        // Get closest video mode to desired CORE.Window.screen.width/CORE.Window.screen.height
+        for (int i = CORE.Window.connector->count_modes - 1; i >= 0; i--)
+        {
+            TRACELOG(LOG_TRACE, "mode %i h=%i v=%i", i, CORE.Window.connector->modes[i].hdisplay, CORE.Window.connector->modes[i].vdisplay);
+            if (CORE.Window.connector->modes[i].flags & DRM_MODE_FLAG_INTERLACE)
+            {
+                TRACELOG(LOG_TRACE, "interlaced mode");
+                if (!(CORE.Window.flags & FLAG_INTERLACED_HINT))
+                {
+                    TRACELOG(LOG_TRACE, "but shouldn't choose an interlaced mode");
+                    continue;
+                }
+            }
+            else
+            {
+                TRACELOG(LOG_TRACE, "progressive mode");
+            }
+            
+            int found = 0;
+            if (findExactly) {
+                found = (CORE.Window.connector->modes[i].hdisplay == CORE.Window.screen.width) &&
+                (CORE.Window.connector->modes[i].vdisplay == CORE.Window.screen.height);
+            }
+            else
+            {
+                found = (CORE.Window.connector->modes[i].hdisplay >= CORE.Window.screen.width) &&
+                (CORE.Window.connector->modes[i].vdisplay >= CORE.Window.screen.height);
+            }
+            if (found)
+            {
+                TRACELOG(LOG_TRACE, "above mode selected");
+                CORE.Window.display.width = CORE.Window.connector->modes[i].hdisplay;
+                CORE.Window.display.height = CORE.Window.connector->modes[i].vdisplay;
+                CORE.Window.modeIndex = i;
+                break;
+            }
+        }
+    }
+    if (CORE.Window.modeIndex < 0)
+    {
+        if (findExactly)
+        {
+            findExactly = 0;
+            goto find_connector_mode;
+        }
+        else
+        {
+            if (CORE.Window.flags & FLAG_INTERLACED_HINT)
+            {
+                CORE.Window.flags &= ~FLAG_INTERLACED_HINT;
+                findExactly = 1;
+                goto find_connector_mode;
+            }
+        }
+    }
+    if (CORE.Window.modeIndex < 0)
+    {
+        TRACELOG(LOG_WARNING, "no suitable DRM connector mode found");
+        drmModeFreeEncoder(enc);
+        drmModeFreeConnector(CORE.Window.connector);
+        drmModeFreeResources(res);
+        close(CORE.Window.fd);
+        return false;
+    }
+
+    // Use the width and height of the surface for render
+    CORE.Window.render.width = CORE.Window.screen.width;
+    CORE.Window.render.height = CORE.Window.screen.height;
+
+    drmModeFreeEncoder(enc);
+    enc = NULL;
+
+    drmModeFreeResources(res);
+    res = NULL;
+
+    CORE.Window.gbmDevice = gbm_create_device(CORE.Window.fd);
+    if (!CORE.Window.gbmDevice)
+    {
+        TRACELOG(LOG_WARNING, "failed to create GBM device");
+        drmModeFreeConnector(CORE.Window.connector);
+        close(CORE.Window.fd);
+        return false;
+    }
+
+    CORE.Window.gbmSurface = gbm_surface_create(CORE.Window.gbmDevice, CORE.Window.connector->modes[CORE.Window.modeIndex].hdisplay,
+        CORE.Window.connector->modes[CORE.Window.modeIndex].vdisplay, GBM_FORMAT_ARGB8888, GBM_BO_USE_SCANOUT | GBM_BO_USE_RENDERING);
+    if (!CORE.Window.gbmSurface)
+    {
+        TRACELOG(LOG_WARNING, "failed to create GBM surface");
+        gbm_device_destroy(CORE.Window.gbmDevice);
+        drmModeFreeConnector(CORE.Window.connector);
+        close(CORE.Window.fd);
+        return false;
+    }
 #endif
 
     EGLint samples = 0;
@@ -2982,11 +3308,15 @@ static bool InitGraphicsDevice(int width, int height)
     const EGLint framebufferAttribs[] =
     {
         EGL_RENDERABLE_TYPE, EGL_OPENGL_ES2_BIT,     // Type of context support -> Required on RPI?
-        //EGL_SURFACE_TYPE, EGL_WINDOW_BIT,          // Don't use it on Android!
+        #if defined(PLATFORM_DRM)
+        EGL_SURFACE_TYPE, EGL_WINDOW_BIT,          // Don't use it on Android!
+        #endif
         EGL_RED_SIZE, 8,            // RED color bit depth (alternative: 5)
         EGL_GREEN_SIZE, 8,          // GREEN color bit depth (alternative: 6)
         EGL_BLUE_SIZE, 8,           // BLUE color bit depth (alternative: 5)
-        //EGL_ALPHA_SIZE, 8,        // ALPHA bit depth (required for transparent framebuffer)
+        #if defined(PLATFORM_DRM)
+        EGL_ALPHA_SIZE, 8,        // ALPHA bit depth (required for transparent framebuffer)
+        #endif
         //EGL_TRANSPARENT_TYPE, EGL_NONE, // Request transparent framebuffer (EGL_TRANSPARENT_RGB does not work on RPI)
         EGL_DEPTH_SIZE, 16,         // Depth buffer size (Required to use Depth testing!)
         //EGL_STENCIL_SIZE, 8,      // Stencil buffer size
@@ -3170,14 +3500,22 @@ static bool InitGraphicsDevice(int width, int height)
 
 #endif  // PLATFORM_UWP
 
-#if defined(PLATFORM_ANDROID) || defined(PLATFORM_RPI)
+#if defined(PLATFORM_ANDROID) || defined(PLATFORM_RPI) || defined(PLATFORM_DRM)
     EGLint numConfigs = 0;
 
     // Get an EGL device connection
+#if defined(PLATFORM_DRM)
+    CORE.Window.device = eglGetDisplay((EGLNativeDisplayType)CORE.Window.gbmDevice);
+#else
     CORE.Window.device = eglGetDisplay(EGL_DEFAULT_DISPLAY);
+#endif
     if (CORE.Window.device == EGL_NO_DISPLAY)
     {
         TRACELOG(LOG_WARNING, "DISPLAY: Failed to initialize EGL device");
+        gbm_surface_destroy(CORE.Window.gbmSurface);
+        gbm_device_destroy(CORE.Window.gbmDevice);
+        drmModeFreeConnector(CORE.Window.connector);
+        close(CORE.Window.fd);
         return false;
     }
 
@@ -3186,11 +3524,92 @@ static bool InitGraphicsDevice(int width, int height)
     {
         // If all of the calls to eglInitialize returned EGL_FALSE then an error has occurred.
         TRACELOG(LOG_WARNING, "DISPLAY: Failed to initialize EGL device");
+#if defined(PLATFORM_DRM)
+        gbm_surface_destroy(CORE.Window.gbmSurface);
+        gbm_device_destroy(CORE.Window.gbmDevice);
+        drmModeFreeConnector(CORE.Window.connector);
+        close(CORE.Window.fd);
+#endif
         return false;
     }
 
+#if defined(PLATFORM_DRM)
+    if (!eglGetConfigs(CORE.Window.device, NULL, 0, &numConfigs))
+    {
+        TRACELOG(LOG_WARNING, "DISPLAY: Failed to get EGL config count: 0x%x", eglGetError());
+        gbm_surface_destroy(CORE.Window.gbmSurface);
+        gbm_device_destroy(CORE.Window.gbmDevice);
+        drmModeFreeConnector(CORE.Window.connector);
+        close(CORE.Window.fd);
+        return false;
+    }
+
+    TRACELOG(LOG_TRACE, "DISPLAY: %d EGL configs available", numConfigs);
+
+    EGLConfig *configs = calloc(numConfigs, sizeof(*configs));
+    if (!configs) {
+        TRACELOG(LOG_WARNING, "DISPLAY: Failed to get memory for EGL configs");
+        gbm_surface_destroy(CORE.Window.gbmSurface);
+        gbm_device_destroy(CORE.Window.gbmDevice);
+        drmModeFreeConnector(CORE.Window.connector);
+        close(CORE.Window.fd);
+        return false;
+    }
+
+    EGLint matchingNumConfigs = 0;
+    if (!eglGetConfigs(CORE.Window.device, configs, numConfigs, &matchingNumConfigs)) {
+        TRACELOG(LOG_WARNING, "DISPLAY: Failed to get EGL configs: 0x%x", eglGetError());
+        free(configs);
+        gbm_surface_destroy(CORE.Window.gbmSurface);
+        gbm_device_destroy(CORE.Window.gbmDevice);
+        drmModeFreeConnector(CORE.Window.connector);
+        close(CORE.Window.fd);
+        return false;
+    }
+
+    TRACELOG(LOG_TRACE, "DISPLAY: %d matching EGL configs available", matchingNumConfigs);
+
+    if (!eglChooseConfig(CORE.Window.device, framebufferAttribs, configs, numConfigs, &matchingNumConfigs))
+    {
+        TRACELOG(LOG_WARNING, "DISPLAY: Failed to choose EGL config: 0x%x", eglGetError());
+        free(configs);
+        gbm_surface_destroy(CORE.Window.gbmSurface);
+        gbm_device_destroy(CORE.Window.gbmDevice);
+        drmModeFreeConnector(CORE.Window.connector);
+        close(CORE.Window.fd);
+        return false;
+    }
+
+    int found = 0;
+    for (EGLint i = 0; i < matchingNumConfigs; ++i) {
+        EGLint id = 0;
+        if (!eglGetConfigAttrib(CORE.Window.device, configs[i], EGL_NATIVE_VISUAL_ID, &id)) {
+            TRACELOG(LOG_WARNING, "DISPLAY: Failed to get EGL config attribute: 0x%x", eglGetError());
+            continue;
+        }
+        if (GBM_FORMAT_ARGB8888 == id) {
+            TRACELOG(LOG_TRACE, "DISPLAY: using EGL config %d", i);
+            CORE.Window.config = configs[i];
+            found = 1;
+            break;
+        }
+    }
+
+    free(configs);
+
+    if (!found)
+    {
+        TRACELOG(LOG_WARNING, "DISPLAY: Failed to find a suitable EGL config");
+        gbm_surface_destroy(CORE.Window.gbmSurface);
+        gbm_device_destroy(CORE.Window.gbmDevice);
+        drmModeFreeConnector(CORE.Window.connector);
+        close(CORE.Window.fd);
+        return false;
+    }
+#else
     // Get an appropriate EGL framebuffer configuration
     eglChooseConfig(CORE.Window.device, framebufferAttribs, &CORE.Window.config, 1, &numConfigs);
+#endif
 
     // Set rendering API
     eglBindAPI(EGL_OPENGL_ES_API);
@@ -3200,6 +3619,10 @@ static bool InitGraphicsDevice(int width, int height)
     if (CORE.Window.context == EGL_NO_CONTEXT)
     {
         TRACELOG(LOG_WARNING, "DISPLAY: Failed to create EGL context");
+        gbm_surface_destroy(CORE.Window.gbmSurface);
+        gbm_device_destroy(CORE.Window.gbmDevice);
+        drmModeFreeConnector(CORE.Window.connector);
+        close(CORE.Window.fd);
         return false;
     }
 #endif
@@ -3271,8 +3694,36 @@ static bool InitGraphicsDevice(int width, int height)
     vc_dispmanx_update_submit_sync(dispmanUpdate);
 
     CORE.Window.surface = eglCreateWindowSurface(CORE.Window.device, CORE.Window.config, &CORE.Window.handle, NULL);
+
+    const unsigned char *const renderer = glGetString(GL_RENDERER);
+    if (renderer) {
+        TRACELOG(LOG_INFO, "Renderer is: %s\n", renderer);
+    } else {
+        TRACELOG(LOG_WARNING, "failed to get renderer\n");
+    }
     //---------------------------------------------------------------------------------
 #endif  // PLATFORM_RPI
+
+#if defined(PLATFORM_DRM)
+    CORE.Window.surface = eglCreateWindowSurface(CORE.Window.device, CORE.Window.config, (EGLNativeWindowType)CORE.Window.gbmSurface, NULL);
+    if (EGL_NO_SURFACE == CORE.Window.surface)
+    {
+        TRACELOG(LOG_WARNING, "DISPLAY: Failed to create EGL window surface: 0x%04x", eglGetError());
+        eglDestroyContext(CORE.Window.device, CORE.Window.context);
+        gbm_surface_destroy(CORE.Window.gbmSurface);
+        gbm_device_destroy(CORE.Window.gbmDevice);
+        drmModeFreeConnector(CORE.Window.connector);
+        close(CORE.Window.fd);
+        return false;
+    }
+
+    // At this point we need to manage render size vs screen size
+    // NOTE: This function use and modify global module variables: 
+    //  -> CORE.Window.screen.width/CORE.Window.screen.height
+    //  -> CORE.Window.render.width/CORE.Window.render.height
+    //  -> CORE.Window.screenScale    
+    SetupFramebuffer(CORE.Window.display.width, CORE.Window.display.height);
+#endif  // PLATFORM_DRM
 
     // There must be at least one frame displayed before the buffers are swapped
     //eglSwapInterval(CORE.Window.device, 1);
@@ -3280,6 +3731,14 @@ static bool InitGraphicsDevice(int width, int height)
     if (eglMakeCurrent(CORE.Window.device, CORE.Window.surface, CORE.Window.surface, CORE.Window.context) == EGL_FALSE)
     {
         TRACELOG(LOG_WARNING, "DISPLAY: Failed to attach EGL rendering context to EGL surface");
+#if defined(PLATFORM_DRM)
+        eglDestroySurface(CORE.Window.device, CORE.Window.surface);
+        eglDestroyContext(CORE.Window.device, CORE.Window.context);
+        gbm_surface_destroy(CORE.Window.gbmSurface);
+        gbm_device_destroy(CORE.Window.gbmDevice);
+        drmModeFreeConnector(CORE.Window.connector);
+        close(CORE.Window.fd);
+#endif        
         return false;
     }
     else
@@ -3290,7 +3749,7 @@ static bool InitGraphicsDevice(int width, int height)
         TRACELOG(LOG_INFO, "    > Screen size:  %i x %i", CORE.Window.screen.width, CORE.Window.screen.height);
         TRACELOG(LOG_INFO, "    > Viewport offsets: %i, %i", CORE.Window.renderOffset.x, CORE.Window.renderOffset.y);
     }
-#endif // PLATFORM_ANDROID || PLATFORM_RPI || defined(PLATFORM_UWP)
+#endif // PLATFORM_ANDROID || PLATFORM_RPI || PLATFORM_DRM || PLATFORM_UWP
 
     // Initialize OpenGL context (states and resources)
     // NOTE: CORE.Window.screen.width and CORE.Window.screen.height not used, just stored as globals in rlgl
@@ -3316,6 +3775,23 @@ static bool InitGraphicsDevice(int width, int height)
     CORE.Window.currentFbo.height = CORE.Window.screen.height;
 
     ClearBackground(RAYWHITE);      // Default background color for raylib games :P
+
+    // suggest changing to SUPPORT_DRM_POINTER instead of SUPPORT_MOUSE_CURSOR_RPI
+    #if defined(PLATFORM_DRM)
+    // software mouse on framebuffer
+    
+      #include "drm_mouse_img.h"
+    
+      static Image mImg = {
+          .data = DRM_MOUSE_IMG_DATA,
+          .width = DRM_MOUSE_IMG_WIDTH,
+          .height = DRM_MOUSE_IMG_HEIGHT,
+          .format = DRM_MOUSE_IMG_FORMAT,
+          .mipmaps = 1
+      };
+      
+      CORE.Window.mouseTX = LoadTextureFromImage(mImg);
+#endif
 
 #if defined(PLATFORM_ANDROID) || defined(PLATFORM_UWP)
     CORE.Window.ready = true;
@@ -3426,7 +3902,7 @@ static void InitTimer(void)
     timeBeginPeriod(1);             // Setup high-resolution timer to 1ms (granularity of 1-2 ms)
 #endif
 
-#if defined(PLATFORM_ANDROID) || defined(PLATFORM_RPI)
+#if defined(PLATFORM_ANDROID) || defined(PLATFORM_RPI) || defined(PLATFORM_DRM)
     struct timespec now;
 
     if (clock_gettime(CLOCK_MONOTONIC, &now) == 0)  // Success
@@ -3556,13 +4032,13 @@ static void PollInputEvents(void)
     // Reset key pressed registered
     CORE.Input.Keyboard.keyPressedQueueCount = 0;
 
-#if !defined(PLATFORM_RPI)
+#if !(defined(PLATFORM_RPI) || defined(PLATFORM_DRM))
     // Reset last gamepad button/axis registered state
     CORE.Input.Gamepad.lastButtonPressed = -1;
     CORE.Input.Gamepad.axisCount = 0;
 #endif
 
-#if defined(PLATFORM_RPI)
+#if defined(PLATFORM_RPI) || defined(PLATFORM_DRM)
     // Register previous keys states
     for (int i = 0; i < 512; i++) CORE.Input.Keyboard.previousKeyState[i] = CORE.Input.Keyboard.currentKeyState[i];
 
@@ -3751,7 +4227,7 @@ static void PollInputEvents(void)
     }
 #endif
 
-#if defined(PLATFORM_RPI) && defined(SUPPORT_SSH_KEYBOARD_RPI)
+#if (defined(PLATFORM_RPI) || defined(PLATFORM_DRM)) && defined(SUPPORT_SSH_KEYBOARD_RPI)
     // NOTE: Keyboard reading could be done using input_event(s) reading or just read from stdin,
     // we now use both methods inside here. 2nd method is still used for legacy purposes (Allows for input trough SSH console)
     ProcessKeyboard();
@@ -3768,9 +4244,58 @@ static void SwapBuffers(void)
     glfwSwapBuffers(CORE.Window.handle);
 #endif
 
-#if defined(PLATFORM_ANDROID) || defined(PLATFORM_RPI) || defined(PLATFORM_UWP)
+#if defined(PLATFORM_ANDROID) || defined(PLATFORM_RPI) || defined(PLATFORM_DRM) || defined(PLATFORM_UWP)
     eglSwapBuffers(CORE.Window.device, CORE.Window.surface);
-#endif
+
+#if defined(PLATFORM_DRM)
+    if (!CORE.Window.gbmSurface || (-1 == CORE.Window.fd) || !CORE.Window.connector || !CORE.Window.crtc)
+    {
+        TRACELOG(LOG_ERROR, "DRM initialization failed, can't swap");
+        abort();
+    }
+
+    struct gbm_bo *bo = gbm_surface_lock_front_buffer(CORE.Window.gbmSurface);
+    if (!bo)
+    {
+        TRACELOG(LOG_ERROR, "GBM failed to lock front buffer");
+        abort();
+    }
+
+    uint32_t fb = 0;
+    int result = drmModeAddFB(CORE.Window.fd, CORE.Window.connector->modes[CORE.Window.modeIndex].hdisplay,
+        CORE.Window.connector->modes[CORE.Window.modeIndex].vdisplay, 24, 32, gbm_bo_get_stride(bo), gbm_bo_get_handle(bo).u32, &fb);
+    if (0 != result)
+    {
+        TRACELOG(LOG_ERROR, "drmModeAddFB failed with %d", result);
+        abort();
+    }
+
+    result = drmModeSetCrtc(CORE.Window.fd, CORE.Window.crtc->crtc_id, fb, 0, 0,
+        &CORE.Window.connector->connector_id, 1, &CORE.Window.connector->modes[CORE.Window.modeIndex]);
+    if (0 != result)
+    {
+        TRACELOG(LOG_ERROR, "drmModeSetCrtc failed with %d", result);
+        abort();
+    }
+
+    if (CORE.Window.prevFB)
+    {
+        result = drmModeRmFB(CORE.Window.fd, CORE.Window.prevFB);
+        if (0 != result)
+        {
+            TRACELOG(LOG_ERROR, "drmModeRmFB failed with %d", result);
+            abort();
+        }
+    }
+    CORE.Window.prevFB = fb;
+
+    if (CORE.Window.prevBO)
+    {
+        gbm_surface_release_buffer(CORE.Window.gbmSurface, CORE.Window.prevBO);
+    }
+    CORE.Window.prevBO = bo;
+#endif // defined(PLATFORM_DRM)
+#endif // defined(PLATFORM_ANDROID) || defined(PLATFORM_RPI) || defined(PLATFORM_DRM) || defined(PLATFORM_UWP)
 }
 
 #if defined(PLATFORM_DESKTOP) || defined(PLATFORM_WEB)
@@ -4396,7 +4921,7 @@ static EM_BOOL EmscriptenWindowResizedCallback(int eventType, const void *reserv
 }
 #endif
 
-#if defined(PLATFORM_RPI)
+#if defined(PLATFORM_RPI) || defined(PLATFORM_DRM)
 
 #if defined(SUPPORT_SSH_KEYBOARD_RPI)
 // Initialize Keyboard system (using standard input)
@@ -5098,7 +5623,7 @@ static void *GamepadThread(void *arg)
 
     return NULL;
 }
-#endif      // PLATFORM_RPI
+#endif      // PLATFORM_RPI || PLATFORM_DRM
 
 #if defined(PLATFORM_UWP)
 // UWP function pointers
@@ -5373,3 +5898,10 @@ void UWPGestureTouch(int pointer, float x, float y, bool touch)
 }
 
 #endif // PLATFORM_UWP
+
+void SetGraphicDeviceName(const char *name)
+{
+#if defined(PLATFORM_DRM)
+    if ((name != NULL) && (name[0] != 0)) CORE.Window.card = name;
+#endif
+}

@@ -472,7 +472,8 @@ typedef enum {
     FLAG_WINDOW_HIDDEN      = 128,  // Set to create the window initially hidden
     FLAG_WINDOW_ALWAYS_RUN  = 256,  // Set to allow windows running while minimized
     FLAG_MSAA_4X_HINT       = 32,   // Set to try enabling MSAA 4X
-    FLAG_VSYNC_HINT         = 64    // Set to try enabling V-Sync on GPU
+    FLAG_VSYNC_HINT         = 64,   // Set to try enabling V-Sync on GPU
+    FLAG_INTERLACED_HINT    = 512   // Set to try V3D to choose an interlaced video format
 } ConfigFlag;
 
 // Trace log type
@@ -865,6 +866,7 @@ extern "C" {            // Prevents name mangling of functions
 //------------------------------------------------------------------------------------
 
 // Window-related functions
+RLAPI void SetGraphicDeviceName(const char *name);                // Set the name of the graphic device to use
 RLAPI void InitWindow(int width, int height, const char *title);  // Initialize window and OpenGL context
 RLAPI bool WindowShouldClose(void);                               // Check if KEY_ESCAPE pressed or Close icon pressed
 RLAPI void CloseWindow(void);                                     // Close window and unload OpenGL context
