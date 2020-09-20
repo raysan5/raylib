@@ -3089,7 +3089,6 @@ static bool InitGraphicsDevice(int width, int height)
     if (!res)
     {
         TRACELOG(LOG_WARNING, "DISPLAY: failed get DRM resources");
-        close(CORE.Window.fd);
         return false;
     }
 
@@ -3126,7 +3125,6 @@ static bool InitGraphicsDevice(int width, int height)
     {
         TRACELOG(LOG_WARNING, "no suitable DRM connector found");
         drmModeFreeResources(res);
-        close(CORE.Window.fd);
         return false;
     }
 
@@ -3134,9 +3132,7 @@ static bool InitGraphicsDevice(int width, int height)
     if (!enc)
     {
         TRACELOG(LOG_WARNING, "failed to get DRM mode encoder");
-        drmModeFreeConnector(CORE.Window.connector);
         drmModeFreeResources(res);
-        close(CORE.Window.fd);
         return false;
     }
 
@@ -3153,9 +3149,7 @@ static bool InitGraphicsDevice(int width, int height)
     {
         TRACELOG(LOG_WARNING, "failed to get DRM mode crtc");
         drmModeFreeEncoder(enc);
-        drmModeFreeConnector(CORE.Window.connector);
         drmModeFreeResources(res);
-        close(CORE.Window.fd);
         return false;
     }
 
@@ -3259,9 +3253,7 @@ find_connector_mode:
     {
         TRACELOG(LOG_WARNING, "no suitable DRM connector mode found");
         drmModeFreeEncoder(enc);
-        drmModeFreeConnector(CORE.Window.connector);
         drmModeFreeResources(res);
-        close(CORE.Window.fd);
         return false;
     }
 
@@ -3279,8 +3271,6 @@ find_connector_mode:
     if (!CORE.Window.gbmDevice)
     {
         TRACELOG(LOG_WARNING, "failed to create GBM device");
-        drmModeFreeConnector(CORE.Window.connector);
-        close(CORE.Window.fd);
         return false;
     }
 
@@ -3289,9 +3279,6 @@ find_connector_mode:
     if (!CORE.Window.gbmSurface)
     {
         TRACELOG(LOG_WARNING, "failed to create GBM surface");
-        gbm_device_destroy(CORE.Window.gbmDevice);
-        drmModeFreeConnector(CORE.Window.connector);
-        close(CORE.Window.fd);
         return false;
     }
 #endif
@@ -3512,10 +3499,6 @@ find_connector_mode:
     if (CORE.Window.device == EGL_NO_DISPLAY)
     {
         TRACELOG(LOG_WARNING, "DISPLAY: Failed to initialize EGL device");
-        gbm_surface_destroy(CORE.Window.gbmSurface);
-        gbm_device_destroy(CORE.Window.gbmDevice);
-        drmModeFreeConnector(CORE.Window.connector);
-        close(CORE.Window.fd);
         return false;
     }
 
@@ -3524,12 +3507,6 @@ find_connector_mode:
     {
         // If all of the calls to eglInitialize returned EGL_FALSE then an error has occurred.
         TRACELOG(LOG_WARNING, "DISPLAY: Failed to initialize EGL device");
-#if defined(PLATFORM_DRM)
-        gbm_surface_destroy(CORE.Window.gbmSurface);
-        gbm_device_destroy(CORE.Window.gbmDevice);
-        drmModeFreeConnector(CORE.Window.connector);
-        close(CORE.Window.fd);
-#endif
         return false;
     }
 
@@ -3537,10 +3514,6 @@ find_connector_mode:
     if (!eglGetConfigs(CORE.Window.device, NULL, 0, &numConfigs))
     {
         TRACELOG(LOG_WARNING, "DISPLAY: Failed to get EGL config count: 0x%x", eglGetError());
-        gbm_surface_destroy(CORE.Window.gbmSurface);
-        gbm_device_destroy(CORE.Window.gbmDevice);
-        drmModeFreeConnector(CORE.Window.connector);
-        close(CORE.Window.fd);
         return false;
     }
 
@@ -3549,10 +3522,6 @@ find_connector_mode:
     EGLConfig *configs = calloc(numConfigs, sizeof(*configs));
     if (!configs) {
         TRACELOG(LOG_WARNING, "DISPLAY: Failed to get memory for EGL configs");
-        gbm_surface_destroy(CORE.Window.gbmSurface);
-        gbm_device_destroy(CORE.Window.gbmDevice);
-        drmModeFreeConnector(CORE.Window.connector);
-        close(CORE.Window.fd);
         return false;
     }
 
@@ -3560,10 +3529,6 @@ find_connector_mode:
     if (!eglGetConfigs(CORE.Window.device, configs, numConfigs, &matchingNumConfigs)) {
         TRACELOG(LOG_WARNING, "DISPLAY: Failed to get EGL configs: 0x%x", eglGetError());
         free(configs);
-        gbm_surface_destroy(CORE.Window.gbmSurface);
-        gbm_device_destroy(CORE.Window.gbmDevice);
-        drmModeFreeConnector(CORE.Window.connector);
-        close(CORE.Window.fd);
         return false;
     }
 
@@ -3573,10 +3538,6 @@ find_connector_mode:
     {
         TRACELOG(LOG_WARNING, "DISPLAY: Failed to choose EGL config: 0x%x", eglGetError());
         free(configs);
-        gbm_surface_destroy(CORE.Window.gbmSurface);
-        gbm_device_destroy(CORE.Window.gbmDevice);
-        drmModeFreeConnector(CORE.Window.connector);
-        close(CORE.Window.fd);
         return false;
     }
 
@@ -3600,10 +3561,6 @@ find_connector_mode:
     if (!found)
     {
         TRACELOG(LOG_WARNING, "DISPLAY: Failed to find a suitable EGL config");
-        gbm_surface_destroy(CORE.Window.gbmSurface);
-        gbm_device_destroy(CORE.Window.gbmDevice);
-        drmModeFreeConnector(CORE.Window.connector);
-        close(CORE.Window.fd);
         return false;
     }
 #else
@@ -3619,10 +3576,6 @@ find_connector_mode:
     if (CORE.Window.context == EGL_NO_CONTEXT)
     {
         TRACELOG(LOG_WARNING, "DISPLAY: Failed to create EGL context");
-        gbm_surface_destroy(CORE.Window.gbmSurface);
-        gbm_device_destroy(CORE.Window.gbmDevice);
-        drmModeFreeConnector(CORE.Window.connector);
-        close(CORE.Window.fd);
         return false;
     }
 #endif
@@ -3709,11 +3662,6 @@ find_connector_mode:
     if (EGL_NO_SURFACE == CORE.Window.surface)
     {
         TRACELOG(LOG_WARNING, "DISPLAY: Failed to create EGL window surface: 0x%04x", eglGetError());
-        eglDestroyContext(CORE.Window.device, CORE.Window.context);
-        gbm_surface_destroy(CORE.Window.gbmSurface);
-        gbm_device_destroy(CORE.Window.gbmDevice);
-        drmModeFreeConnector(CORE.Window.connector);
-        close(CORE.Window.fd);
         return false;
     }
 
@@ -3731,14 +3679,6 @@ find_connector_mode:
     if (eglMakeCurrent(CORE.Window.device, CORE.Window.surface, CORE.Window.surface, CORE.Window.context) == EGL_FALSE)
     {
         TRACELOG(LOG_WARNING, "DISPLAY: Failed to attach EGL rendering context to EGL surface");
-#if defined(PLATFORM_DRM)
-        eglDestroySurface(CORE.Window.device, CORE.Window.surface);
-        eglDestroyContext(CORE.Window.device, CORE.Window.context);
-        gbm_surface_destroy(CORE.Window.gbmSurface);
-        gbm_device_destroy(CORE.Window.gbmDevice);
-        drmModeFreeConnector(CORE.Window.connector);
-        close(CORE.Window.fd);
-#endif        
         return false;
     }
     else
