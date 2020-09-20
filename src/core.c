@@ -3265,6 +3265,7 @@ find_connector_mode:
         drmModeFreeResources(res);
         return false;
     }
+    TRACELOG(LOG_INFO, "DRM: choosen mode %s", CORE.Window.connector->modes[CORE.Window.modeIndex].name);
 
     // Use the width and height of the surface for render
     CORE.Window.render.width = CORE.Window.screen.width;
