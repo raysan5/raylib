@@ -3155,6 +3155,7 @@ static bool InitGraphicsDevice(int width, int height)
 
     bool findExactly = true;
     bool avoidProgressive = CORE.Window.flags & FLAG_INTERLACED_HINT;
+    const double fps = (CORE.Time.target > 0) ? (1.0 / CORE.Time.target) : 60;
     #define IS_INTERLACED(mode) (mode.flags & DRM_MODE_FLAG_INTERLACE)
     #define IS_PROGRESSIVE(mode) (!IS_INTERLACED(mode))
 find_connector_mode:
@@ -3164,11 +3165,11 @@ find_connector_mode:
     if ((CORE.Window.screen.width <= 0) || (CORE.Window.screen.height <= 0))
     {
         #define BINCMP(a, b) memcmp((a), (b), sizeof(a) < sizeof(b) ? sizeof(a) : sizeof(b))
-        TRACELOG(LOG_TRACE, "selecting for (res 0x0)");
+        TRACELOG(LOG_TRACE, "selecting for (res 0x0@%f)", fps);
         for (int i = CORE.Window.connector->count_modes - 1; i >= 0; i--)
         {
-            TRACELOG(LOG_TRACE, "mode %i h=%i v=%i %s", i, CORE.Window.connector->modes[i].hdisplay, CORE.Window.connector->modes[i].vdisplay,
-                IS_INTERLACED(CORE.Window.connector->modes[i]) ? "interlaced" : "progressive");
+            TRACELOG(LOG_TRACE, "mode %d h=%u v=%u %s refresh=%u", i, CORE.Window.connector->modes[i].hdisplay, CORE.Window.connector->modes[i].vdisplay,
+                IS_INTERLACED(CORE.Window.connector->modes[i]) ? "interlaced" : "progressive", CORE.Window.connector->modes[i].vrefresh);
             if (IS_PROGRESSIVE(CORE.Window.connector->modes[i]))
             {
                 TRACELOG(LOG_TRACE, "progressive mode");
@@ -3199,12 +3200,12 @@ find_connector_mode:
     }
     else
     {
-        TRACELOG(LOG_TRACE, "selecting for (res %ix%i)", CORE.Window.screen.width, CORE.Window.screen.height);
+        TRACELOG(LOG_TRACE, "selecting for (res %ux%u@%f)", CORE.Window.screen.width, CORE.Window.screen.height, fps);
         // Get closest video mode to desired CORE.Window.screen.width/CORE.Window.screen.height
         for (int i = CORE.Window.connector->count_modes - 1; i >= 0; i--)
         {
-            TRACELOG(LOG_TRACE, "mode %i h=%i v=%i %s", i, CORE.Window.connector->modes[i].hdisplay, CORE.Window.connector->modes[i].vdisplay,
-                IS_INTERLACED(CORE.Window.connector->modes[i]) ? "interlaced" : "progressive");
+            TRACELOG(LOG_TRACE, "mode %d h=%u v=%u %s refresh=%u", i, CORE.Window.connector->modes[i].hdisplay, CORE.Window.connector->modes[i].vdisplay,
+                IS_INTERLACED(CORE.Window.connector->modes[i]) ? "interlaced" : "progressive", CORE.Window.connector->modes[i].vrefresh);
             if (IS_PROGRESSIVE(CORE.Window.connector->modes[i]))
             {
                 TRACELOG(LOG_TRACE, "progressive mode");
@@ -3222,12 +3223,14 @@ find_connector_mode:
             bool found = false;
             if (findExactly) {
                 found = (CORE.Window.connector->modes[i].hdisplay == CORE.Window.screen.width) &&
-                    (CORE.Window.connector->modes[i].vdisplay == CORE.Window.screen.height);
+                    (CORE.Window.connector->modes[i].vdisplay == CORE.Window.screen.height) &&
+                    (CORE.Window.connector->modes[i].vrefresh == fps);
             }
             else
             {
                 found = (CORE.Window.connector->modes[i].hdisplay >= CORE.Window.screen.width) &&
-                    (CORE.Window.connector->modes[i].vdisplay >= CORE.Window.screen.height);
+                    (CORE.Window.connector->modes[i].vdisplay >= CORE.Window.screen.height) &&
+                    (CORE.Window.connector->modes[i].vrefresh >= fps);
             }
             if (found)
             {
@@ -3239,8 +3242,6 @@ find_connector_mode:
             }
         }
     }
-    #undef IS_PROGRESSIVE
-    #undef IS_INTERLACED
     if (CORE.Window.modeIndex < 0)
     {
         if (findExactly)
@@ -3265,7 +3266,12 @@ find_connector_mode:
         drmModeFreeResources(res);
         return false;
     }
-    TRACELOG(LOG_INFO, "DRM: choosen mode %s", CORE.Window.connector->modes[CORE.Window.modeIndex].name);
+    TRACELOG(LOG_INFO, "DRM: choosen mode %s (%ux%u%c@%u)", CORE.Window.connector->modes[CORE.Window.modeIndex].name,
+        CORE.Window.connector->modes[CORE.Window.modeIndex].hdisplay, CORE.Window.connector->modes[CORE.Window.modeIndex].vdisplay,
+        IS_INTERLACED(CORE.Window.connector->modes[CORE.Window.modeIndex]) ? 'i' : 'p',
+        CORE.Window.connector->modes[CORE.Window.modeIndex].vrefresh);
+    #undef IS_PROGRESSIVE
+    #undef IS_INTERLACED
 
     // Use the width and height of the surface for render
     CORE.Window.render.width = CORE.Window.screen.width;
