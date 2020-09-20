@@ -3153,8 +3153,13 @@ static bool InitGraphicsDevice(int width, int height)
         return false;
     }
 
-    int findExactly = 1;
+    bool findExactly = true;
+    bool avoidProgressive = CORE.Window.flags & FLAG_INTERLACED_HINT;
+    #define IS_INTERLACED(mode) (mode.flags & DRM_MODE_FLAG_INTERLACE)
+    #define IS_PROGRESSIVE(mode) (!IS_INTERLACED(mode))
 find_connector_mode:
+    TRACELOG(LOG_TRACE, "searching connector mode, should find exactly matching: %s, should avoid progressive mode: %s",
+        findExactly ? "yes" : "no", avoidProgressive ? "yes" : "no");
     // If InitWindow should use the current mode find it in the connector's mode list
     if ((CORE.Window.screen.width <= 0) || (CORE.Window.screen.height <= 0))
     {
@@ -3162,19 +3167,20 @@ find_connector_mode:
         TRACELOG(LOG_TRACE, "selecting for (res 0x0)");
         for (int i = CORE.Window.connector->count_modes - 1; i >= 0; i--)
         {
-            TRACELOG(LOG_TRACE, "mode %i h=%i v=%i", i, CORE.Window.connector->modes[i].hdisplay, CORE.Window.connector->modes[i].vdisplay);
-            if (CORE.Window.connector->modes[i].flags & DRM_MODE_FLAG_INTERLACE)
+            TRACELOG(LOG_TRACE, "mode %i h=%i v=%i %s", i, CORE.Window.connector->modes[i].hdisplay, CORE.Window.connector->modes[i].vdisplay,
+                IS_INTERLACED(CORE.Window.connector->modes[i]) ? "interlaced" : "progressive");
+            if (IS_PROGRESSIVE(CORE.Window.connector->modes[i]))
             {
-                TRACELOG(LOG_TRACE, "interlaced mode");
-                if (!(CORE.Window.flags & FLAG_INTERLACED_HINT))
+                TRACELOG(LOG_TRACE, "progressive mode");
+                if (avoidProgressive)
                 {
-                    TRACELOG(LOG_TRACE, "but shouldn't choose an interlaced mode");
+                    TRACELOG(LOG_TRACE, "but shouldn't choose an progressive mode");
                     continue;
                 }
             }
             else
             {
-                TRACELOG(LOG_TRACE, "progressive mode");
+                TRACELOG(LOG_TRACE, "interlaced mode");
             }
 
             if (0 == BINCMP(&CORE.Window.crtc->mode, &CORE.Window.connector->modes[i]))
@@ -3197,30 +3203,31 @@ find_connector_mode:
         // Get closest video mode to desired CORE.Window.screen.width/CORE.Window.screen.height
         for (int i = CORE.Window.connector->count_modes - 1; i >= 0; i--)
         {
-            TRACELOG(LOG_TRACE, "mode %i h=%i v=%i", i, CORE.Window.connector->modes[i].hdisplay, CORE.Window.connector->modes[i].vdisplay);
-            if (CORE.Window.connector->modes[i].flags & DRM_MODE_FLAG_INTERLACE)
+            TRACELOG(LOG_TRACE, "mode %i h=%i v=%i %s", i, CORE.Window.connector->modes[i].hdisplay, CORE.Window.connector->modes[i].vdisplay,
+                IS_INTERLACED(CORE.Window.connector->modes[i]) ? "interlaced" : "progressive");
+            if (IS_PROGRESSIVE(CORE.Window.connector->modes[i]))
             {
-                TRACELOG(LOG_TRACE, "interlaced mode");
-                if (!(CORE.Window.flags & FLAG_INTERLACED_HINT))
+                TRACELOG(LOG_TRACE, "progressive mode");
+                if (avoidProgressive)
                 {
-                    TRACELOG(LOG_TRACE, "but shouldn't choose an interlaced mode");
+                    TRACELOG(LOG_TRACE, "but shouldn't choose an progressive mode");
                     continue;
                 }
             }
             else
             {
-                TRACELOG(LOG_TRACE, "progressive mode");
+                TRACELOG(LOG_TRACE, "interlaced mode");
             }
-            
-            int found = 0;
+
+            bool found = false;
             if (findExactly) {
                 found = (CORE.Window.connector->modes[i].hdisplay == CORE.Window.screen.width) &&
-                (CORE.Window.connector->modes[i].vdisplay == CORE.Window.screen.height);
+                    (CORE.Window.connector->modes[i].vdisplay == CORE.Window.screen.height);
             }
             else
             {
                 found = (CORE.Window.connector->modes[i].hdisplay >= CORE.Window.screen.width) &&
-                (CORE.Window.connector->modes[i].vdisplay >= CORE.Window.screen.height);
+                    (CORE.Window.connector->modes[i].vdisplay >= CORE.Window.screen.height);
             }
             if (found)
             {
@@ -3232,19 +3239,21 @@ find_connector_mode:
             }
         }
     }
+    #undef IS_PROGRESSIVE
+    #undef IS_INTERLACED
     if (CORE.Window.modeIndex < 0)
     {
         if (findExactly)
         {
-            findExactly = 0;
+            findExactly = false;
             goto find_connector_mode;
         }
         else
         {
-            if (CORE.Window.flags & FLAG_INTERLACED_HINT)
+            if (avoidProgressive)
             {
-                CORE.Window.flags &= ~FLAG_INTERLACED_HINT;
-                findExactly = 1;
+                avoidProgressive = false;
+                findExactly = true;
                 goto find_connector_mode;
             }
         }
