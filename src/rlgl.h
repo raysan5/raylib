@@ -591,9 +591,9 @@ RLAPI Matrix GetMatrixModelview(void);                                    // Get
 
 // Texture maps generation (PBR)
 // NOTE: Required shaders should be provided
-RLAPI TextureCubemap GenTextureCubemap(Shader shader, Texture2D panorama, int size);        // Generate cubemap texture from 2D panorama texture
-RLAPI TextureCubemap GenTextureIrradiance(Shader shader, TextureCubemap cubemap, int size); // Generate irradiance texture using cubemap data
-RLAPI TextureCubemap GenTexturePrefilter(Shader shader, TextureCubemap cubemap, int size);  // Generate prefilter texture using cubemap data
+RLAPI TextureCubemap GenTextureCubemap(Shader shader, Texture2D panorama, int size, int format); // Generate cubemap texture from 2D panorama texture
+RLAPI TextureCubemap GenTextureIrradiance(Shader shader, TextureCubemap cubemap, int size);      // Generate irradiance texture using cubemap data
+RLAPI TextureCubemap GenTexturePrefilter(Shader shader, TextureCubemap cubemap, int size);       // Generate prefilter texture using cubemap data
 RLAPI Texture2D GenTextureBRDF(Shader shader, int size);                  // Generate BRDF texture using cubemap data
 
 // Shading begin/end functions
@@ -2071,6 +2071,7 @@ unsigned int rlLoadTextureDepth(int width, int height, bool useRenderBuffer)
     if (!RLGL.ExtSupported.texDepth) useRenderBuffer = true;
 
     // NOTE: We let the implementation to choose the best bit-depth
+    // Possible formats: GL_DEPTH_COMPONENT16, GL_DEPTH_COMPONENT24, GL_DEPTH_COMPONENT32 and GL_DEPTH_COMPONENT32F
     unsigned int glInternalFormat = GL_DEPTH_COMPONENT;
 
 #if defined(GRAPHICS_API_OPENGL_ES2)
@@ -2091,6 +2092,8 @@ unsigned int rlLoadTextureDepth(int width, int height, bool useRenderBuffer)
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
 
         glBindTexture(GL_TEXTURE_2D, 0);
+        
+        TRACELOG(LOG_INFO, "TEXTURE: Depth texture loaded successfully");
     }
     else
     {
@@ -2101,6 +2104,8 @@ unsigned int rlLoadTextureDepth(int width, int height, bool useRenderBuffer)
         glRenderbufferStorage(GL_RENDERBUFFER, glInternalFormat, width, height);
 
         glBindRenderbuffer(GL_RENDERBUFFER, 0);
+        
+        TRACELOG(LOG_INFO, "TEXTURE: [ID %i] Depth renderbuffer loaded successfully (%i bits)", id, (RLGL.ExtSupported.maxDepthBits >= 24)? RLGL.ExtSupported.maxDepthBits : 16);
     }
 #endif
 
@@ -2112,13 +2117,13 @@ unsigned int rlLoadTextureDepth(int width, int height, bool useRenderBuffer)
 // expected the following convention: +X, -X, +Y, -Y, +Z, -Z
 unsigned int rlLoadTextureCubemap(void *data, int size, int format)
 {
-    unsigned int cubemapId = 0;
+    unsigned int id = 0;
 
 #if defined(GRAPHICS_API_OPENGL_33) || defined(GRAPHICS_API_OPENGL_ES2)
     unsigned int dataSize = GetPixelDataSize(size, size, format);
 
-    glGenTextures(1, &cubemapId);
-    glBindTexture(GL_TEXTURE_CUBE_MAP, cubemapId);
+    glGenTextures(1, &id);
+    glBindTexture(GL_TEXTURE_CUBE_MAP, id);
 
     unsigned int glInternalFormat, glFormat, glType;
     rlGetGlTextureFormats(format, &glInternalFormat, &glFormat, &glType);
@@ -2136,6 +2141,7 @@ unsigned int rlLoadTextureCubemap(void *data, int size, int format)
                     {
                         // Instead of using a sized internal texture format (GL_RGB16F, GL_RGB32F), we let the driver to choose the better format for us (GL_RGB)
                         if (RLGL.ExtSupported.texFloat32) glTexImage2D(GL_TEXTURE_CUBE_MAP_POSITIVE_X + i, 0, GL_RGB, size, size, 0, GL_RGB, GL_FLOAT, NULL);
+                        else TRACELOG(LOG_WARNING, "TEXTURES: Cubemap requested format not supported");
                     }
                     else if ((format == UNCOMPRESSED_R32) || (format == UNCOMPRESSED_R32G32B32A32)) TRACELOG(LOG_WARNING, "TEXTURES: Cubemap requested format not supported");
                     else glTexImage2D(GL_TEXTURE_CUBE_MAP_POSITIVE_X + i, 0, glInternalFormat, size, size, 0, glFormat, glType, NULL);
@@ -2179,7 +2185,10 @@ unsigned int rlLoadTextureCubemap(void *data, int size, int format)
     glBindTexture(GL_TEXTURE_CUBE_MAP, 0);
 #endif
 
-    return cubemapId;
+    if (id > 0) TRACELOG(LOG_INFO, "TEXTURE: [ID %i] Cubemap texture created successfully (%ix%i)", id, size, size);
+    else TRACELOG(LOG_WARNING, "TEXTURE: Failed to load cubemap texture");
+
+    return id;
 }
 
 // Update already loaded texture in GPU with new data
@@ -3280,7 +3289,7 @@ Matrix GetMatrixModelview(void)
 }
 
 // Generate cubemap texture from HDR texture
-TextureCubemap GenTextureCubemap(Shader shader, Texture2D panorama, int size)
+TextureCubemap GenTextureCubemap(Shader shader, Texture2D panorama, int size, int format)
 {
     TextureCubemap cubemap = { 0 };
 #if defined(GRAPHICS_API_OPENGL_33) || defined(GRAPHICS_API_OPENGL_ES2)
@@ -3289,11 +3298,14 @@ TextureCubemap GenTextureCubemap(Shader shader, Texture2D panorama, int size)
     // STEP 1: Setup framebuffer
     //------------------------------------------------------------------------------------------
     unsigned int rbo = rlLoadTextureDepth(size, size, true);
-    cubemap.id = rlLoadTextureCubemap(NULL, size, UNCOMPRESSED_R32G32B32);
+    cubemap.id = rlLoadTextureCubemap(NULL, size, format);
     
     unsigned int fbo = rlLoadFramebuffer(size, size);
     rlFramebufferAttach(fbo, rbo, RL_ATTACHMENT_DEPTH, RL_ATTACHMENT_RENDERBUFFER);
     rlFramebufferAttach(fbo, cubemap.id, RL_ATTACHMENT_COLOR_CHANNEL0, RL_ATTACHMENT_CUBEMAP_POSITIVE_X);
+    
+    // Check if framebuffer is complete with attachments (valid)
+    if (rlFramebufferComplete(fbo)) TRACELOG(LOG_INFO, "FBO: [ID %i] Framebuffer object created successfully", fbo);
     //------------------------------------------------------------------------------------------
 
     // STEP 2: Draw to framebuffer

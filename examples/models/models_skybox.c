@@ -51,8 +51,10 @@ int main(void)
     Texture2D panorama = LoadTexture(panoFileName);
 
     // Generate cubemap (texture with 6 quads-cube-mapping) from panorama HDR texture
-    // NOTE: New texture is generated rendering to texture, shader computes the sphre->cube coordinates mapping
-    skybox.materials[0].maps[MAP_CUBEMAP].texture = GenTextureCubemap(shdrCubemap, panorama, 1024);
+    // NOTE 1: New texture is generated rendering to texture, shader calculates the sphere->cube coordinates mapping
+    // NOTE 2: It seems on some Android devices WebGL, fbo does not properly support a FLOAT-based attachment,
+    // despite texture can be successfully created.. so using UNCOMPRESSED_R8G8B8A8 instead of UNCOMPRESSED_R32G32B32A32
+    skybox.materials[0].maps[MAP_CUBEMAP].texture = GenTextureCubemap(shdrCubemap, panorama, 1024, UNCOMPRESSED_R8G8B8A8);
 
     UnloadTexture(panorama);    // Texture not required anymore, cubemap already generated
 
@@ -84,7 +86,7 @@ int main(void)
                     TextCopy(panoFileName, droppedFiles[0]);
                     
                     // Generate cubemap from panorama texture
-                    skybox.materials[0].maps[MAP_CUBEMAP].texture = GenTextureCubemap(shdrCubemap, panorama, 512);
+                    skybox.materials[0].maps[MAP_CUBEMAP].texture = GenTextureCubemap(shdrCubemap, panorama, 1024);
                     UnloadTexture(panorama);
                 }
             }
