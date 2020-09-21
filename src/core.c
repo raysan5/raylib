@@ -1321,6 +1321,12 @@ int GetMonitorRefreshRate(int monitor)
     }
     else TRACELOG(LOG_WARNING, "GLFW: Failed to find selected monitor");
 #endif
+#if defined(PLATFORM_DRM)
+    if ((CORE.Window.connector) && (CORE.Window.modeIndex >= 0))
+    {
+        return CORE.Window.connector->modes[CORE.Window.modeIndex].vrefresh;
+    }
+#endif
     return 0;
 }
 
