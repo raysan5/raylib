@@ -1,6 +1,7 @@
 # Setup the project and settings
 project(raylib C)
 include(GNUInstallDirs)
+include(JoinPaths)
 list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/../cmake")
 
 set(PROJECT_VERSION 3.0.0)
@@ -248,6 +249,10 @@ endif(SHARED)
 if (NOT DEFINED PKG_CONFIG_LIBS_EXTRA)
   set(PKG_CONFIG_LIBS_EXTRA "${PKG_CONFIG_LIBS_PRIVATE}")
 endif()
+
+join_paths(libdir_for_pc_file "\${exec_prefix}" "${CMAKE_INSTALL_LIBDIR}")
+join_paths(includedir_for_pc_file "\${prefix}" "${CMAKE_INSTALL_INCLUDEDIR}")
+
 configure_file(../raylib.pc.in raylib.pc @ONLY)
 install(FILES ${CMAKE_CURRENT_BINARY_DIR}/raylib.pc DESTINATION "${CMAKE_INSTALL_LIBDIR}/pkgconfig")
 configure_file(../cmake/raylib-config-version.cmake raylib-config-version.cmake @ONLY)
