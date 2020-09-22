@@ -56,8 +56,8 @@
 *       WARNING: Reconfiguring standard input could lead to undesired effects, like breaking other running processes or
 *       blocking the device is not restored properly. Use with care.
 *
-*   #define SUPPORT_MOUSE_CURSOR_RPI (Raspberry Pi only)
-*       Draw a mouse reference on screen (square cursor box)
+*   #define SUPPORT_MOUSE_CURSOR_NATIVE (Raspberry Pi and DRM only)
+*       Draw a mouse pointer on screen
 *
 *   #define SUPPORT_BUSY_WAIT_LOOP
 *       Use busy wait loop for timing sync, if not defined, a high-resolution timer is setup and used
@@ -345,7 +345,7 @@ typedef struct CoreData {
 #if defined(PLATFORM_DESKTOP) || defined(PLATFORM_WEB)
         GLFWwindow *handle;                 // Native window handle (graphic device)
 #endif
-#if (defined(PLATFORM_RPI) && defined(SUPPORT_MOUSE_CURSOR_RPI)) || defined(PLATFORM_DRM)
+#if (defined(PLATFORM_RPI) || defined(PLATFORM_DRM)) && defined(SUPPORT_MOUSE_CURSOR_NATIVE)
         Texture2D mouseTX;                       // software mouse on framebuffer
 #endif
 #if defined(PLATFORM_RPI)
@@ -1475,11 +1475,11 @@ void BeginDrawing(void)
 // End canvas drawing and swap buffers (double buffering)
 void EndDrawing(void)
 {
-#if defined(PLATFORM_DRM)
+#if (defined(PLATFORM_RPI) || defined(PLATFORM_DRM)) && defined(SUPPORT_MOUSE_CURSOR_NATIVE)
     // On DRM mode we have no system mouse cursor, so,
     // we draw a nice mouse cursor respecting cursorHidden...
-    //DrawRectangle(CORE.Input.Mouse.position.x, CORE.Input.Mouse.position.y, 3, 3, MAROON);
-    if (!CORE.Input.Mouse.cursorHidden) {
+    if (!CORE.Input.Mouse.cursorHidden)
+    {
         DrawTexture(CORE.Window.mouseTX,CORE.Input.Mouse.position.x, CORE.Input.Mouse.position.y,WHITE);
     }
 #endif
@@ -3104,17 +3104,6 @@ static bool InitGraphicsDevice(int width, int height)
         TRACELOG(LOG_TRACE, "DISPLAY: connector index %i", i);
         drmModeConnector *con = drmModeGetConnector(CORE.Window.fd, res->connectors[i]);
         TRACELOG(LOG_TRACE, "DISPLAY: there are %i connector modes", con->count_modes);
-#if 0
-        for (int j = 0; j < con->count_modes; j++) {
-            TRACELOG(LOG_TRACE, "clock %i", con->modes[j].clock);
-            TRACELOG(LOG_TRACE, "hdisplay %i", con->modes[j].hdisplay);
-            TRACELOG(LOG_TRACE, "vdisplay %i", con->modes[j].vdisplay);
-            TRACELOG(LOG_TRACE, "vrefresh %i", con->modes[j].vrefresh);
-            TRACELOG(LOG_TRACE, "flags %X", con->modes[j].flags);
-            TRACELOG(LOG_TRACE, "type %i", con->modes[j].type);
-            TRACELOG(LOG_TRACE, "name %s", con->modes[j].name);
-        }
-#endif
         if ((con->connection == DRM_MODE_CONNECTED) && (con->encoder_id))
         {
             TRACELOG(LOG_TRACE, "DRM mode connected");
@@ -3141,14 +3130,6 @@ static bool InitGraphicsDevice(int width, int height)
         drmModeFreeResources(res);
         return false;
     }
-
-#if 0
-    TRACELOG(LOG_TRACE, "Encoder id %i", enc->encoder_id);
-    TRACELOG(LOG_TRACE, "Encoder type %i", enc->encoder_type);
-    TRACELOG(LOG_TRACE, "Encoder crtc id %i", enc->crtc_id);
-    TRACELOG(LOG_TRACE, "Encoder possible crtcs %i", enc->possible_crtcs);
-    TRACELOG(LOG_TRACE, "Encoder possible clones %i", enc->possible_clones);
-#endif
 
     CORE.Window.crtc = drmModeGetCrtc(CORE.Window.fd, enc->crtc_id);
     if (!CORE.Window.crtc)
@@ -3317,15 +3298,15 @@ find_connector_mode:
     const EGLint framebufferAttribs[] =
     {
         EGL_RENDERABLE_TYPE, EGL_OPENGL_ES2_BIT,     // Type of context support -> Required on RPI?
-        #if defined(PLATFORM_DRM)
+#if defined(PLATFORM_DRM)
         EGL_SURFACE_TYPE, EGL_WINDOW_BIT,          // Don't use it on Android!
-        #endif
+#endif
         EGL_RED_SIZE, 8,            // RED color bit depth (alternative: 5)
         EGL_GREEN_SIZE, 8,          // GREEN color bit depth (alternative: 6)
         EGL_BLUE_SIZE, 8,           // BLUE color bit depth (alternative: 5)
-        #if defined(PLATFORM_DRM)
+#if defined(PLATFORM_DRM)
         EGL_ALPHA_SIZE, 8,        // ALPHA bit depth (required for transparent framebuffer)
-        #endif
+#endif
         //EGL_TRANSPARENT_TYPE, EGL_NONE, // Request transparent framebuffer (EGL_TRANSPARENT_RGB does not work on RPI)
         EGL_DEPTH_SIZE, 16,         // Depth buffer size (Required to use Depth testing!)
         //EGL_STENCIL_SIZE, 8,      // Stencil buffer size
@@ -3738,8 +3719,7 @@ find_connector_mode:
 
     ClearBackground(RAYWHITE);      // Default background color for raylib games :P
 
-    // suggest changing to SUPPORT_DRM_POINTER instead of SUPPORT_MOUSE_CURSOR_RPI
-    #if defined(PLATFORM_DRM)
+ #if (defined(PLATFORM_RPI) || defined(PLATFORM_DRM)) && defined(SUPPORT_MOUSE_CURSOR_NATIVE)
     // software mouse on framebuffer
     
       #include "drm_mouse_img.h"
