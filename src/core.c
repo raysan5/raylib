@@ -3141,13 +3141,13 @@ static bool InitGraphicsDevice(int width, int height)
     }
 
     bool findExactly = true;
-    bool avoidProgressive = CORE.Window.flags & FLAG_INTERLACED_HINT;
+    bool allowInterlaced = CORE.Window.flags & FLAG_INTERLACED_HINT;
     const double fps = (CORE.Time.target > 0) ? (1.0 / CORE.Time.target) : 60;
     #define IS_INTERLACED(mode) (mode.flags & DRM_MODE_FLAG_INTERLACE)
     #define IS_PROGRESSIVE(mode) (!IS_INTERLACED(mode))
 find_connector_mode:
-    TRACELOG(LOG_TRACE, "searching connector mode, should find exactly matching: %s, should avoid progressive mode: %s",
-        findExactly ? "yes" : "no", avoidProgressive ? "yes" : "no");
+    TRACELOG(LOG_TRACE, "searching connector mode, should find exactly matching: %s, selecting an interlace mode is allowed: %s",
+        findExactly ? "yes" : "no", allowInterlaced ? "yes" : "no");
     // If InitWindow should use the current mode find it in the connector's mode list
     if ((CORE.Window.screen.width <= 0) || (CORE.Window.screen.height <= 0))
     {
@@ -3157,18 +3157,18 @@ find_connector_mode:
         {
             TRACELOG(LOG_TRACE, "mode %d h=%u v=%u %s refresh=%u", i, CORE.Window.connector->modes[i].hdisplay, CORE.Window.connector->modes[i].vdisplay,
                 IS_INTERLACED(CORE.Window.connector->modes[i]) ? "interlaced" : "progressive", CORE.Window.connector->modes[i].vrefresh);
-            if (IS_PROGRESSIVE(CORE.Window.connector->modes[i]))
+            if (IS_INTERLACED(CORE.Window.connector->modes[i]))
             {
-                TRACELOG(LOG_TRACE, "progressive mode");
-                if (avoidProgressive)
+                TRACELOG(LOG_TRACE, "interlaced mode");
+                if (!allowInterlaced)
                 {
-                    TRACELOG(LOG_TRACE, "but shouldn't choose an progressive mode");
+                    TRACELOG(LOG_TRACE, "but shouldn't choose an interlaced mode");
                     continue;
                 }
             }
             else
             {
-                TRACELOG(LOG_TRACE, "interlaced mode");
+                TRACELOG(LOG_TRACE, "progressive mode");
             }
 
             if (0 == BINCMP(&CORE.Window.crtc->mode, &CORE.Window.connector->modes[i]))
@@ -3193,18 +3193,18 @@ find_connector_mode:
         {
             TRACELOG(LOG_TRACE, "mode %d h=%u v=%u %s refresh=%u", i, CORE.Window.connector->modes[i].hdisplay, CORE.Window.connector->modes[i].vdisplay,
                 IS_INTERLACED(CORE.Window.connector->modes[i]) ? "interlaced" : "progressive", CORE.Window.connector->modes[i].vrefresh);
-            if (IS_PROGRESSIVE(CORE.Window.connector->modes[i]))
+            if (IS_INTERLACED(CORE.Window.connector->modes[i]))
             {
-                TRACELOG(LOG_TRACE, "progressive mode");
-                if (avoidProgressive)
+                TRACELOG(LOG_TRACE, "interlaced mode");
+                if (!allowInterlaced)
                 {
-                    TRACELOG(LOG_TRACE, "but shouldn't choose an progressive mode");
+                    TRACELOG(LOG_TRACE, "but shouldn't choose an interlaced mode");
                     continue;
                 }
             }
             else
             {
-                TRACELOG(LOG_TRACE, "interlaced mode");
+                TRACELOG(LOG_TRACE, "progressive mode");
             }
 
             bool found = false;
@@ -3238,9 +3238,9 @@ find_connector_mode:
         }
         else
         {
-            if (avoidProgressive)
+            if (!allowInterlaced)
             {
-                avoidProgressive = false;
+                allowInterlaced = true;
                 findExactly = true;
                 goto find_connector_mode;
             }
