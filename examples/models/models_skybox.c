@@ -86,7 +86,7 @@ int main(void)
                     TextCopy(panoFileName, droppedFiles[0]);
                     
                     // Generate cubemap from panorama texture
-                    skybox.materials[0].maps[MAP_CUBEMAP].texture = GenTextureCubemap(shdrCubemap, panorama, 1024);
+                    skybox.materials[0].maps[MAP_CUBEMAP].texture = GenTextureCubemap(shdrCubemap, panorama, 1024, UNCOMPRESSED_R8G8B8A8);
                     UnloadTexture(panorama);
                 }
             }
