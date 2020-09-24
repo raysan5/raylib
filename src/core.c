@@ -557,6 +557,13 @@ static void *EventThread(void *arg);                    // Input device events r
 
 static void InitGamepad(void);                          // Init raw gamepad input
 static void *GamepadThread(void *arg);                  // Mouse reading thread
+
+#if defined(PLATFORM_DRM)
+static int FindMatchingConnectorMode(const drmModeConnector *connector, const drmModeModeInfo *mode);                               // Search matching DRM mode in connector's mode list
+static int FindExactConnectorMode(const drmModeConnector *connector, uint width, uint height, uint fps, bool allowInterlaced);      // Search exactly matching DRM connector mode in connector's list
+static int FindNearestConnectorMode(const drmModeConnector *connector, uint width, uint height, uint fps, bool allowInterlaced);    // Search the nearest matching DRM connector mode in connector's list
+#endif
+
 #endif  // PLATFORM_RPI || PLATFORM_DRM
 
 #if defined(_WIN32)
@@ -3140,112 +3147,39 @@ static bool InitGraphicsDevice(int width, int height)
         return false;
     }
 
-    bool findExactly = true;
-    bool allowInterlaced = CORE.Window.flags & FLAG_INTERLACED_HINT;
-    const double fps = (CORE.Time.target > 0) ? (1.0 / CORE.Time.target) : 60;
-    #define IS_INTERLACED(mode) (mode.flags & DRM_MODE_FLAG_INTERLACE)
-    #define IS_PROGRESSIVE(mode) (!IS_INTERLACED(mode))
-find_connector_mode:
-    TRACELOG(LOG_TRACE, "searching connector mode, should find exactly matching: %s, selecting an interlace mode is allowed: %s",
-        findExactly ? "yes" : "no", allowInterlaced ? "yes" : "no");
     // If InitWindow should use the current mode find it in the connector's mode list
     if ((CORE.Window.screen.width <= 0) || (CORE.Window.screen.height <= 0))
     {
-        #define BINCMP(a, b) memcmp((a), (b), sizeof(a) < sizeof(b) ? sizeof(a) : sizeof(b))
-        TRACELOG(LOG_TRACE, "selecting for (res 0x0@%f)", fps);
-        for (int i = CORE.Window.connector->count_modes - 1; i >= 0; i--)
+        TRACELOG(LOG_TRACE, "selecting DRM connector mode for current used mode");
+
+        CORE.Window.modeIndex = FindMatchingConnectorMode(CORE.Window.connector, &CORE.Window.crtc->mode);
+
+        if (CORE.Window.modeIndex < 0)
         {
-            TRACELOG(LOG_TRACE, "mode %d h=%u v=%u %s refresh=%u", i, CORE.Window.connector->modes[i].hdisplay, CORE.Window.connector->modes[i].vdisplay,
-                IS_INTERLACED(CORE.Window.connector->modes[i]) ? "interlaced" : "progressive", CORE.Window.connector->modes[i].vrefresh);
-            if (IS_INTERLACED(CORE.Window.connector->modes[i]))
-            {
-                TRACELOG(LOG_TRACE, "interlaced mode");
-                if (!allowInterlaced)
-                {
-                    TRACELOG(LOG_TRACE, "but shouldn't choose an interlaced mode");
-                    continue;
-                }
-            }
-            else
-            {
-                TRACELOG(LOG_TRACE, "progressive mode");
-            }
-
-            if (0 == BINCMP(&CORE.Window.crtc->mode, &CORE.Window.connector->modes[i]))
-            {
-                TRACELOG(LOG_TRACE, "above mode selected");
-                CORE.Window.screen.width = CORE.Window.connector->modes[i].hdisplay;
-                CORE.Window.screen.height = CORE.Window.connector->modes[i].vdisplay;
-
-                CORE.Window.display.width = CORE.Window.connector->modes[i].hdisplay;
-                CORE.Window.display.height = CORE.Window.connector->modes[i].vdisplay;
-                CORE.Window.modeIndex = i;
-                break;
-            }
+            TRACELOG(LOG_WARNING, "no matching DRM connector mode found");
+            drmModeFreeEncoder(enc);
+            drmModeFreeResources(res);
+            return false;
         }
-        #undef BINCMP
-    }
-    else
-    {
-        TRACELOG(LOG_TRACE, "selecting for (res %ux%u@%f)", CORE.Window.screen.width, CORE.Window.screen.height, fps);
-        // Get closest video mode to desired CORE.Window.screen.width/CORE.Window.screen.height
-        for (int i = CORE.Window.connector->count_modes - 1; i >= 0; i--)
-        {
-            TRACELOG(LOG_TRACE, "mode %d h=%u v=%u %s refresh=%u", i, CORE.Window.connector->modes[i].hdisplay, CORE.Window.connector->modes[i].vdisplay,
-                IS_INTERLACED(CORE.Window.connector->modes[i]) ? "interlaced" : "progressive", CORE.Window.connector->modes[i].vrefresh);
-            if (IS_INTERLACED(CORE.Window.connector->modes[i]))
-            {
-                TRACELOG(LOG_TRACE, "interlaced mode");
-                if (!allowInterlaced)
-                {
-                    TRACELOG(LOG_TRACE, "but shouldn't choose an interlaced mode");
-                    continue;
-                }
-            }
-            else
-            {
-                TRACELOG(LOG_TRACE, "progressive mode");
-            }
 
-            bool found = false;
-            if (findExactly) {
-                found = (CORE.Window.connector->modes[i].hdisplay == CORE.Window.screen.width) &&
-                    (CORE.Window.connector->modes[i].vdisplay == CORE.Window.screen.height) &&
-                    (CORE.Window.connector->modes[i].vrefresh == fps);
-            }
-            else
-            {
-                found = (CORE.Window.connector->modes[i].hdisplay >= CORE.Window.screen.width) &&
-                    (CORE.Window.connector->modes[i].vdisplay >= CORE.Window.screen.height) &&
-                    (CORE.Window.connector->modes[i].vrefresh >= fps);
-            }
-            if (found)
-            {
-                TRACELOG(LOG_TRACE, "above mode selected");
-                CORE.Window.display.width = CORE.Window.connector->modes[i].hdisplay;
-                CORE.Window.display.height = CORE.Window.connector->modes[i].vdisplay;
-                CORE.Window.modeIndex = i;
-                break;
-            }
-        }
+        CORE.Window.screen.width = CORE.Window.display.width;
+        CORE.Window.screen.height = CORE.Window.display.height;
     }
+
+    const bool allowInterlaced = CORE.Window.flags & FLAG_INTERLACED_HINT;
+    const int fps = (CORE.Time.target > 0) ? (1.0 / CORE.Time.target) : 60;
+    // try to find an exact matching mode
+    CORE.Window.modeIndex = FindExactConnectorMode(CORE.Window.connector, CORE.Window.screen.width, CORE.Window.screen.height, fps, allowInterlaced);
+    // if nothing found, try to find a nearly matching mode
     if (CORE.Window.modeIndex < 0)
-    {
-        if (findExactly)
-        {
-            findExactly = false;
-            goto find_connector_mode;
-        }
-        else
-        {
-            if (!allowInterlaced)
-            {
-                allowInterlaced = true;
-                findExactly = true;
-                goto find_connector_mode;
-            }
-        }
-    }
+        CORE.Window.modeIndex = FindNearestConnectorMode(CORE.Window.connector, CORE.Window.screen.width, CORE.Window.screen.height, fps, allowInterlaced);
+    // if nothing found, try to find an exactly matching mode including interlaced
+    if (CORE.Window.modeIndex < 0)
+        CORE.Window.modeIndex = FindExactConnectorMode(CORE.Window.connector, CORE.Window.screen.width, CORE.Window.screen.height, fps, true);
+    // if nothing found, try to find a nearly matching mode including interlaced
+    if (CORE.Window.modeIndex < 0)
+        CORE.Window.modeIndex = FindNearestConnectorMode(CORE.Window.connector, CORE.Window.screen.width, CORE.Window.screen.height, fps, true);
+    // if nothing found, there is no suitable mode
     if (CORE.Window.modeIndex < 0)
     {
         TRACELOG(LOG_WARNING, "no suitable DRM connector mode found");
@@ -3253,12 +3187,14 @@ find_connector_mode:
         drmModeFreeResources(res);
         return false;
     }
+
+    CORE.Window.display.width = CORE.Window.connector->modes[CORE.Window.modeIndex].hdisplay;
+    CORE.Window.display.height = CORE.Window.connector->modes[CORE.Window.modeIndex].vdisplay;
+
     TRACELOG(LOG_INFO, "DRM: choosen mode %s (%ux%u%c@%u)", CORE.Window.connector->modes[CORE.Window.modeIndex].name,
         CORE.Window.connector->modes[CORE.Window.modeIndex].hdisplay, CORE.Window.connector->modes[CORE.Window.modeIndex].vdisplay,
-        IS_INTERLACED(CORE.Window.connector->modes[CORE.Window.modeIndex]) ? 'i' : 'p',
+        (CORE.Window.connector->modes[CORE.Window.modeIndex].flags & DRM_MODE_FLAG_INTERLACE) ? 'i' : 'p',
         CORE.Window.connector->modes[CORE.Window.modeIndex].vrefresh);
-    #undef IS_PROGRESSIVE
-    #undef IS_INTERLACED
 
     // Use the width and height of the surface for render
     CORE.Window.render.width = CORE.Window.screen.width;
@@ -3544,6 +3480,7 @@ find_connector_mode:
         return false;
     }
 
+    // find the EGL config that matches the previously setup GBM format
     int found = 0;
     for (EGLint i = 0; i < matchingNumConfigs; ++i) {
         EGLint id = 0;
@@ -5847,3 +5784,189 @@ void SetGraphicDeviceName(const char *name)
     if ((name != NULL) && (name[0] != 0)) CORE.Window.card = name;
 #endif
 }
+
+#if defined(PLATFORM_DRM)
+
+static int FindMatchingConnectorMode(const drmModeConnector *connector, const drmModeModeInfo *mode)
+{
+    if (NULL == connector) return -1;
+    if (NULL == mode) return -1;
+
+    // safe bitwise comparison of two modes
+    #define BINCMP(a, b) memcmp((a), (b), (sizeof(a) < sizeof(b)) ? sizeof(a) : sizeof(b))
+
+    for (size_t i = 0; i < connector->count_modes; i++)
+    {
+        TRACELOG(LOG_TRACE, "mode %d %ux%u@%u %s", i, connector->modes[i].hdisplay, connector->modes[i].vdisplay,
+            connector->modes[i].vrefresh, (connector->modes[i].flags & DRM_MODE_FLAG_INTERLACE) ? "interlaced" : "progressive");
+
+        if (0 == BINCMP(&CORE.Window.crtc->mode, &CORE.Window.connector->modes[i]))
+        {
+            TRACELOG(LOG_TRACE, "above mode selected");
+            return i;
+        }
+    }
+
+    return -1;
+
+    #undef BINCMP
+}
+
+static int FindExactConnectorMode(const drmModeConnector *connector, uint width, uint height, uint fps, bool allowInterlaced) {
+    TRACELOG(LOG_TRACE, "searching exact connector mode for %ux%u@%u, selecting an interlaced mode is allowed: %s", width, height, fps, allowInterlaced ? "yes" : "no");
+
+    if (NULL == connector) return -1;
+
+    for (int i = 0; i < CORE.Window.connector->count_modes; i++)
+    {
+        const drmModeModeInfo *const mode = &CORE.Window.connector->modes[i];
+
+        TRACELOG(LOG_TRACE, "mode %d %ux%u@%u %s", i, mode->hdisplay, mode->vdisplay, mode->vrefresh, (mode->flags & DRM_MODE_FLAG_INTERLACE) ? "interlaced" : "progressive");
+
+        if ((mode->flags & DRM_MODE_FLAG_INTERLACE) && (!allowInterlaced))
+        {
+            TRACELOG(LOG_TRACE, "but shouldn't choose an interlaced mode");
+            continue;
+        }
+
+        if ((mode->hdisplay == width) && (mode->vdisplay == height) && (mode->vrefresh == fps))
+        {
+            TRACELOG(LOG_TRACE, "mode selected");
+            return i;
+        }
+    }
+
+    TRACELOG(LOG_TRACE, "no exact matching mode found");
+    return -1;
+}
+
+static int FindNearestConnectorMode(const drmModeConnector *connector, uint width, uint height, uint fps, bool allowInterlaced) {
+    TRACELOG(LOG_TRACE, "searching nearest connector mode for %ux%u@%u, selecting an interlaced mode is allowed: %s", width, height, fps, allowInterlaced ? "yes" : "no");
+
+    if (NULL == connector) return -1;
+
+    int nearestIndex = -1;
+    for (int i = 0; i < CORE.Window.connector->count_modes; i++)
+    {
+        const drmModeModeInfo *const mode = &CORE.Window.connector->modes[i];
+
+        TRACELOG(LOG_TRACE, "mode %d %ux%u@%u %s", i, mode->hdisplay, mode->vdisplay, mode->vrefresh,
+            (mode->flags & DRM_MODE_FLAG_INTERLACE) ? "interlaced" : "progressive");
+
+        if ((mode->hdisplay < width) || (mode->vdisplay < height) | (mode->vrefresh < fps))
+        {
+            TRACELOG(LOG_TRACE, "mode is too small");
+            continue;
+        }
+
+        if ((mode->flags & DRM_MODE_FLAG_INTERLACE) && (!allowInterlaced))
+        {
+            TRACELOG(LOG_TRACE, "shouldn't choose an interlaced mode");
+            continue;
+        }
+
+        if ((mode->hdisplay >= width) && (mode->vdisplay >= height) && (mode->vrefresh >= fps))
+        {
+            const int widthDiff = mode->hdisplay - width;
+            const int heightDiff = mode->vdisplay - height;
+            const int fpsDiff = mode->vrefresh - fps;
+
+            if (nearestIndex < 0)
+            {
+                TRACELOG(LOG_TRACE, "first suitable mode");
+                nearestIndex = i;
+                continue;
+            }
+
+            const int nearestWidthDiff = CORE.Window.connector->modes[nearestIndex].hdisplay - width;
+            const int nearestHeightDiff = CORE.Window.connector->modes[nearestIndex].vdisplay - height;
+            const int nearestFpsDiff = CORE.Window.connector->modes[nearestIndex].vrefresh - fps;
+
+            if ((widthDiff < nearestWidthDiff) || (heightDiff < nearestHeightDiff) || (fpsDiff < nearestFpsDiff))
+            {
+                TRACELOG(LOG_TRACE, "mode is nearer than the previous one");
+                nearestIndex = i;
+            }
+            else
+            {
+                TRACELOG(LOG_TRACE, "mode is not nearer");
+            }
+        }
+    }
+
+    TRACELOG(LOG_TRACE, "returning nearest mode: %d", nearestIndex);
+    return nearestIndex;
+}
+
+#if 0
+static int FindConnectorMode(bool findExactly, bool allowInterlaced) {
+    TRACELOG(LOG_TRACE, "searching connector mode, should find exactly matching: %s, selecting an interlaced mode is allowed: %s",
+        findExactly ? "yes" : "no", allowInterlaced ? "yes" : "no");
+
+    if (!CORE.Window.connector) return -1;
+
+    // If InitWindow should use the current mode find it in the connector's mode list
+    if ((CORE.Window.screen.width <= 0) || (CORE.Window.screen.height <= 0))
+    {
+        TRACELOG(LOG_TRACE, "selecting DRM connector mode for current used mode");
+
+        // safe bitwise comparison of two modes
+        #define BINCMP(a, b) memcmp((a), (b), (sizeof(a) < sizeof(b)) ? sizeof(a) : sizeof(b))
+
+        for (int i = CORE.Window.connector->count_modes - 1; i >= 0; i--)
+        {
+            TRACELOG(LOG_TRACE, "mode %d %ux%u@%u %s", i, CORE.Window.connector->modes[i].hdisplay, CORE.Window.connector->modes[i].vdisplay,
+                CORE.Window.connector->modes[i].vrefresh, (CORE.Window.connector->modes[i].flags & DRM_MODE_FLAG_INTERLACE) ? "interlaced" : "progressive");
+
+            if (0 == BINCMP(&CORE.Window.crtc->mode, &CORE.Window.connector->modes[i]))
+            {
+                TRACELOG(LOG_TRACE, "above mode selected");
+                return i;
+            }
+        }
+        return -1;
+
+        #undef BINCMP
+    }
+    else
+    {
+        const double fps = (CORE.Time.target > 0) ? (1.0 / CORE.Time.target) : 60;
+
+        TRACELOG(LOG_TRACE, "selecting for %ux%u@%f", CORE.Window.screen.width, CORE.Window.screen.height, fps);
+
+        // Get closest video mode to desired CORE.Window.screen.width/CORE.Window.screen.height
+        for (int i = CORE.Window.connector->count_modes - 1; i >= 0; i--)
+        {
+            TRACELOG(LOG_TRACE, "mode %d %ux%u@%u %s", i, CORE.Window.connector->modes[i].hdisplay, CORE.Window.connector->modes[i].vdisplay,
+                CORE.Window.connector->modes[i].vrefresh, (CORE.Window.connector->modes[i].flags & DRM_MODE_FLAG_INTERLACE) ? "interlaced" : "progressive");
+
+            if (CORE.Window.connector->modes[i].flags & DRM_MODE_FLAG_INTERLACE)
+            {
+                TRACELOG(LOG_TRACE, "interlaced mode");
+                if (!allowInterlaced)
+                {
+                    TRACELOG(LOG_TRACE, "but shouldn't choose an interlaced mode");
+                    continue;
+                }
+            }
+            else TRACELOG(LOG_TRACE, "progressive mode");
+
+            const bool found = (findExactly)
+                ?   (CORE.Window.connector->modes[i].hdisplay == CORE.Window.screen.width) &&
+                    (CORE.Window.connector->modes[i].vdisplay == CORE.Window.screen.height) &&
+                    (CORE.Window.connector->modes[i].vrefresh == fps)
+                :   (CORE.Window.connector->modes[i].hdisplay >= CORE.Window.screen.width) &&
+                    (CORE.Window.connector->modes[i].vdisplay >= CORE.Window.screen.height) &&
+                    (CORE.Window.connector->modes[i].vrefresh >= fps);
+            if (found)
+            {
+                TRACELOG(LOG_TRACE, "above mode selected");
+                return i;
+            }
+        }
+    }
+    return -1;
+}
+#endif
+
+#endif
