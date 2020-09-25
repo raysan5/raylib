@@ -3327,8 +3327,8 @@ TextureCubemap GenTextureCubemap(Shader shader, Texture2D panorama, int size, in
     };
 
     rlEnableShader(shader.id);
-    glActiveTexture(GL_TEXTURE0);
-    glBindTexture(GL_TEXTURE_2D, panorama.id);
+    //glActiveTexture(GL_TEXTURE0);
+    //glBindTexture(GL_TEXTURE_2D, panorama.id);
 
     rlViewport(0, 0, size, size);   // Set viewport to current fbo dimensions
 
@@ -3338,8 +3338,14 @@ TextureCubemap GenTextureCubemap(Shader shader, Texture2D panorama, int size, in
         rlFramebufferAttach(fbo, cubemap.id, RL_ATTACHMENT_COLOR_CHANNEL0, RL_ATTACHMENT_CUBEMAP_POSITIVE_X + i);
 
         rlEnableFramebuffer(fbo);
+        rlEnableTexture(panorama.id);   // WARNING: It must be called after enabling current framebuffer if using internal batch system!
+        
         rlClearScreenBuffers();
-        GenDrawCube();
+        //GenDrawCube();
+        
+        // Using internal batch system instead of raw OpenGL cube creating+drawing
+        DrawCubeV(Vector3Zero(), Vector3One(), WHITE);
+        DrawRenderBatch(RLGL.currentBatch);
     }
     //------------------------------------------------------------------------------------------
 
