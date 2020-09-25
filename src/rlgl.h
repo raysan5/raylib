@@ -1150,7 +1150,7 @@ void rlBegin(int mode)
 
             else RLGL.currentBatch->draws[RLGL.currentBatch->drawsCounter - 1].vertexAlignment = 0;
 
-            if (rlCheckBufferLimit(RLGL.currentBatch->draws[RLGL.currentBatch->drawsCounter - 1].vertexAlignment)) rlglDraw();
+            if (rlCheckBufferLimit(RLGL.currentBatch->draws[RLGL.currentBatch->drawsCounter - 1].vertexAlignment)) DrawRenderBatch(RLGL.currentBatch);
             else
             {
                 RLGL.currentBatch->vertexBuffer[RLGL.currentBatch->currentBuffer].vCounter += RLGL.currentBatch->draws[RLGL.currentBatch->drawsCounter - 1].vertexAlignment;
@@ -1161,7 +1161,7 @@ void rlBegin(int mode)
             }
         }
 
-        if (RLGL.currentBatch->drawsCounter >= DEFAULT_BATCH_DRAWCALLS) rlglDraw();
+        if (RLGL.currentBatch->drawsCounter >= DEFAULT_BATCH_DRAWCALLS) DrawRenderBatch(RLGL.currentBatch);
 
         RLGL.currentBatch->draws[RLGL.currentBatch->drawsCounter - 1].mode = mode;
         RLGL.currentBatch->draws[RLGL.currentBatch->drawsCounter - 1].vertexCount = 0;
@@ -1214,11 +1214,11 @@ void rlEnd(void)
     // NOTE: This check is combined with usage of rlCheckBufferLimit()
     if ((RLGL.currentBatch->vertexBuffer[RLGL.currentBatch->currentBuffer].vCounter) >= (RLGL.currentBatch->vertexBuffer[RLGL.currentBatch->currentBuffer].elementsCount*4 - 4))
     {
-        // WARNING: If we are between rlPushMatrix() and rlPopMatrix() and we need to force a rlglDraw(),
+        // WARNING: If we are between rlPushMatrix() and rlPopMatrix() and we need to force a DrawRenderBatch(),
         // we need to call rlPopMatrix() before to recover *RLGL.State.currentMatrix (RLGL.State.modelview) for the next forced draw call!
         // If we have multiple matrix pushed, it will require "RLGL.State.stackCounter" pops before launching the draw
         for (int i = RLGL.State.stackCounter; i >= 0; i--) rlPopMatrix();
-        rlglDraw();
+        DrawRenderBatch(RLGL.currentBatch);
     }
 }
 
@@ -1323,7 +1323,7 @@ void rlEnableTexture(unsigned int id)
 
             else RLGL.currentBatch->draws[RLGL.currentBatch->drawsCounter - 1].vertexAlignment = 0;
 
-            if (rlCheckBufferLimit(RLGL.currentBatch->draws[RLGL.currentBatch->drawsCounter - 1].vertexAlignment)) rlglDraw();
+            if (rlCheckBufferLimit(RLGL.currentBatch->draws[RLGL.currentBatch->drawsCounter - 1].vertexAlignment)) DrawRenderBatch(RLGL.currentBatch);
             else
             {
                 RLGL.currentBatch->vertexBuffer[RLGL.currentBatch->currentBuffer].vCounter += RLGL.currentBatch->draws[RLGL.currentBatch->drawsCounter - 1].vertexAlignment;
@@ -1334,7 +1334,7 @@ void rlEnableTexture(unsigned int id)
             }
         }
 
-        if (RLGL.currentBatch->drawsCounter >= DEFAULT_BATCH_DRAWCALLS) rlglDraw();
+        if (RLGL.currentBatch->drawsCounter >= DEFAULT_BATCH_DRAWCALLS) DrawRenderBatch(RLGL.currentBatch);
 
         RLGL.currentBatch->draws[RLGL.currentBatch->drawsCounter - 1].textureId = id;
         RLGL.currentBatch->draws[RLGL.currentBatch->drawsCounter - 1].vertexCount = 0;
@@ -1351,7 +1351,7 @@ void rlDisableTexture(void)
 #else
     // NOTE: If quads batch limit is reached,
     // we force a draw call and next batch starts
-    if (RLGL.currentBatch->vertexBuffer[RLGL.currentBatch->currentBuffer].vCounter >= (RLGL.currentBatch->vertexBuffer[RLGL.currentBatch->currentBuffer].elementsCount*4)) rlglDraw();
+    if (RLGL.currentBatch->vertexBuffer[RLGL.currentBatch->currentBuffer].vCounter >= (RLGL.currentBatch->vertexBuffer[RLGL.currentBatch->currentBuffer].elementsCount*4)) DrawRenderBatch(RLGL.currentBatch);
 #endif
 }
 
@@ -3156,7 +3156,7 @@ void BeginShaderMode(Shader shader)
 #if defined(GRAPHICS_API_OPENGL_33) || defined(GRAPHICS_API_OPENGL_ES2)
     if (RLGL.State.currentShader.id != shader.id)
     {
-        rlglDraw();
+        DrawRenderBatch(RLGL.currentBatch);
         RLGL.State.currentShader = shader;
     }
 #endif
@@ -3595,7 +3595,7 @@ void BeginBlendMode(int mode)
 #if defined(GRAPHICS_API_OPENGL_33) || defined(GRAPHICS_API_OPENGL_ES2)
     if (RLGL.State.currentBlendMode != mode)
     {
-        rlglDraw();
+        DrawRenderBatch(RLGL.currentBatch);
 
         switch (mode)
         {
