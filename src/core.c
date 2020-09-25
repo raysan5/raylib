@@ -345,9 +345,6 @@ typedef struct CoreData {
 #if defined(PLATFORM_DESKTOP) || defined(PLATFORM_WEB)
         GLFWwindow *handle;                 // Native window handle (graphic device)
 #endif
-#if (defined(PLATFORM_RPI) || defined(PLATFORM_DRM)) && defined(SUPPORT_MOUSE_CURSOR_NATIVE)
-        Texture2D mouseTX;                       // software mouse on framebuffer
-#endif
 #if defined(PLATFORM_RPI)
         EGL_DISPMANX_WINDOW_T handle;       // Native window handle (graphic device)
 #endif
@@ -1483,11 +1480,11 @@ void BeginDrawing(void)
 void EndDrawing(void)
 {
 #if (defined(PLATFORM_RPI) || defined(PLATFORM_DRM)) && defined(SUPPORT_MOUSE_CURSOR_NATIVE)
-    // On DRM mode we have no system mouse cursor, so,
-    // we draw a nice mouse cursor respecting cursorHidden...
+    // On native mode we have no system mouse cursor, so,
+    // we draw a small rectangle for user reference
     if (!CORE.Input.Mouse.cursorHidden)
     {
-        DrawTexture(CORE.Window.mouseTX,CORE.Input.Mouse.position.x, CORE.Input.Mouse.position.y,WHITE);
+        DrawRectangle(CORE.Input.Mouse.position.x, CORE.Input.Mouse.position.y, 3, 3, MAROON);
     }
 #endif
 
@@ -3655,22 +3652,6 @@ static bool InitGraphicsDevice(int width, int height)
     CORE.Window.currentFbo.height = CORE.Window.screen.height;
 
     ClearBackground(RAYWHITE);      // Default background color for raylib games :P
-
- #if (defined(PLATFORM_RPI) || defined(PLATFORM_DRM)) && defined(SUPPORT_MOUSE_CURSOR_NATIVE)
-    // software mouse on framebuffer
-    
-      #include "drm_mouse_img.h"
-    
-      static Image mImg = {
-          .data = DRM_MOUSE_IMG_DATA,
-          .width = DRM_MOUSE_IMG_WIDTH,
-          .height = DRM_MOUSE_IMG_HEIGHT,
-          .format = DRM_MOUSE_IMG_FORMAT,
-          .mipmaps = 1
-      };
-      
-      CORE.Window.mouseTX = LoadTextureFromImage(mImg);
-#endif
 
 #if defined(PLATFORM_ANDROID) || defined(PLATFORM_UWP)
     CORE.Window.ready = true;
