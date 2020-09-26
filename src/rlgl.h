@@ -3327,8 +3327,10 @@ TextureCubemap GenTextureCubemap(Shader shader, Texture2D panorama, int size, in
     };
 
     rlEnableShader(shader.id);
-    //glActiveTexture(GL_TEXTURE0);
-    //glBindTexture(GL_TEXTURE_2D, panorama.id);
+#if !defined(GENTEXTURECUBEMAP_USE_BATCH_SYSTEM)
+    glActiveTexture(GL_TEXTURE0);
+    glBindTexture(GL_TEXTURE_2D, panorama.id);
+#endif
 
     rlViewport(0, 0, size, size);   // Set viewport to current fbo dimensions
 
@@ -3338,14 +3340,18 @@ TextureCubemap GenTextureCubemap(Shader shader, Texture2D panorama, int size, in
         rlFramebufferAttach(fbo, cubemap.id, RL_ATTACHMENT_COLOR_CHANNEL0, RL_ATTACHMENT_CUBEMAP_POSITIVE_X + i);
 
         rlEnableFramebuffer(fbo);
+#if defined(GENTEXTURECUBEMAP_USE_BATCH_SYSTEM)
         rlEnableTexture(panorama.id);   // WARNING: It must be called after enabling current framebuffer if using internal batch system!
-        
+#endif
         rlClearScreenBuffers();
-        //GenDrawCube();
+        GenDrawCube();
         
+#if defined(GENTEXTURECUBEMAP_USE_BATCH_SYSTEM)
         // Using internal batch system instead of raw OpenGL cube creating+drawing
+        // NOTE: DrawCubeV() is actually provided by models.c! -> GenTextureCubemap() should be moved to user code!
         DrawCubeV(Vector3Zero(), Vector3One(), WHITE);
         DrawRenderBatch(RLGL.currentBatch);
+#endif
     }
     //------------------------------------------------------------------------------------------
 
