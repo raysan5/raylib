@@ -866,7 +866,6 @@ extern "C" {            // Prevents name mangling of functions
 //------------------------------------------------------------------------------------
 
 // Window-related functions
-RLAPI void SetGraphicDeviceName(const char *name);                // Set the name of the graphic device to use
 RLAPI void InitWindow(int width, int height, const char *title);  // Initialize window and OpenGL context
 RLAPI bool WindowShouldClose(void);                               // Check if KEY_ESCAPE pressed or Close icon pressed
 RLAPI void CloseWindow(void);                                     // Close window and unload OpenGL context

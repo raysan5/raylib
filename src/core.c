@@ -350,7 +350,6 @@ typedef struct CoreData {
 #endif
 #if defined(PLATFORM_ANDROID) || defined(PLATFORM_RPI) || defined(PLATFORM_DRM) || defined(PLATFORM_UWP)
 #if defined(PLATFORM_DRM)
-        const char *card;                   // /dev/dri/... file name
         int fd;                             // /dev/dri/... file descriptor
         drmModeConnector *connector;        // Direct Rendering Manager (DRM) mode connector
         int modeIndex;                      // index of the used mode of connector->modes
@@ -3053,7 +3052,6 @@ static bool InitGraphicsDevice(int width, int height)
 #endif
 
 #if defined(PLATFORM_DRM)
-    CORE.Window.card = NULL;
     CORE.Window.fd = -1;
     CORE.Window.connector = NULL;
     CORE.Window.modeIndex = -1;
@@ -3063,37 +3061,22 @@ static bool InitGraphicsDevice(int width, int height)
     CORE.Window.prevBO = NULL;
     CORE.Window.prevFB = 0;
 
-    if ((NULL != CORE.Window.card) && ('\0' != CORE.Window.card[0]))
+#if defined(DEFAULT_GRAPHIC_DEVICE_DRM)
+    CORE.Window.fd = open(DEFAULT_GRAPHIC_DEVICE_DRM, O_RDWR);
+#else
+    TRACELOG(LOG_INFO, "DISPLAY: no graphic card set, trying card1");
+    CORE.Window.fd = open("/dev/dri/card1", O_RDWR); // VideoCore VI (Raspberry Pi 4)
+    if (-1 == CORE.Window.fd)
     {
-        char *base = "/dev/dri/";
-        const int len = strlen(base) + strlen(CORE.Window.card);
-        char *path = malloc(len);
-        if (!path) {
-            TRACELOG(LOG_WARNING, "DISPLAY: failed to get memory for path");
-            return false;
-        }
-        path[0] = '\0';
-        strncpy(path, base, len - 1);
-        strncat(path, CORE.Window.card, len - strlen(base));
-        CORE.Window.fd = open(path, O_RDWR);
-        free(path);
+        TRACELOG(LOG_INFO, "DISPLAY: failed to open graphic card1, trying card0");
+        CORE.Window.fd = open("/dev/dri/card0", O_RDWR); // VideoCore IV (Raspberry Pi 1-3)
     }
-    else
-    {
-        TRACELOG(LOG_INFO, "DISPLAY: no graphic card set, trying card1");
-        CORE.Window.fd = open("/dev/dri/card1", O_RDWR); // VideoCore VI (Raspberry Pi 4)
-        if (-1 == CORE.Window.fd)
-        {
-            TRACELOG(LOG_INFO, "DISPLAY: failed to open graphic card1, trying card0");
-            CORE.Window.fd = open("/dev/dri/card0", O_RDWR); // VideoCore IV (Raspberry Pi 1-3)
-        }
-    }
+#endif
     if (-1 == CORE.Window.fd)
     {
         TRACELOG(LOG_WARNING, "DISPLAY: failed to open graphic card");
         return false;
     }
-    
 
     drmModeRes *res = drmModeGetResources(CORE.Window.fd);
     if (!res)
@@ -5758,13 +5741,6 @@ void UWPGestureTouch(int pointer, float x, float y, bool touch)
 }
 
 #endif // PLATFORM_UWP
-
-void SetGraphicDeviceName(const char *name)
-{
-#if defined(PLATFORM_DRM)
-    if ((name != NULL) && (name[0] != 0)) CORE.Window.card = name;
-#endif
-}
 
 #if defined(PLATFORM_DRM)
 
