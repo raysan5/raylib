@@ -228,31 +228,31 @@ typedef struct Image {
     int format;             // Data format (PixelFormat type)
 } Image;
 
-// Texture2D type
+// Texture type
 // NOTE: Data stored in GPU memory
-typedef struct Texture2D {
+typedef struct Texture {
     unsigned int id;        // OpenGL texture id
     int width;              // Texture base width
     int height;             // Texture base height
     int mipmaps;            // Mipmap levels, 1 by default
     int format;             // Data format (PixelFormat type)
-} Texture2D;
+} Texture;
 
-// Texture type, same as Texture2D
-typedef Texture2D Texture;
+// Texture2D type, same as Texture
+typedef Texture Texture2D;
 
-// TextureCubemap type, actually, same as Texture2D
-typedef Texture2D TextureCubemap;
+// TextureCubemap type, actually, same as Texture
+typedef Texture TextureCubemap;
 
-// RenderTexture2D type, for texture rendering
-typedef struct RenderTexture2D {
+// RenderTexture type, for texture rendering
+typedef struct RenderTexture {
     unsigned int id;        // OpenGL Framebuffer Object (FBO) id
     Texture texture;      // Color buffer attachment texture
     Texture depth;        // Depth buffer attachment texture
-} RenderTexture2D;
+} RenderTexture;
 
-// RenderTexture type, same as RenderTexture2D
-typedef RenderTexture2D RenderTexture;
+// RenderTexture2D type, same as RenderTexture
+typedef RenderTexture RenderTexture2D;
 
 // N-Patch layout info
 typedef struct NPatchInfo {

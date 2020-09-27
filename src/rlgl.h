@@ -251,21 +251,21 @@ typedef enum {
         float height;
     } Rectangle;
 
-    // Texture2D type
+    // Texture type
     // NOTE: Data stored in GPU memory
-    typedef struct Texture2D {
+    typedef struct Texture {
         unsigned int id;        // OpenGL texture id
         int width;              // Texture base width
         int height;             // Texture base height
         int mipmaps;            // Mipmap levels, 1 by default
         int format;             // Data format (PixelFormat)
-    } Texture2D;
+    } Texture;
 
-    // Texture type, same as Texture2D
-    typedef Texture2D Texture;
+    // Texture2D type, same as Texture
+    typedef Texture Texture2D;
 
-    // TextureCubemap type, actually, same as Texture2D
-    typedef Texture2D TextureCubemap;
+    // TextureCubemap type, actually, same as Texture
+    typedef Texture TextureCubemap;
 
     // Vertex data definning a mesh
     typedef struct Mesh {
