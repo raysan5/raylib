@@ -560,6 +560,7 @@ RLAPI void rlLoadMesh(Mesh *mesh, bool dynamic);                          // Upl
 RLAPI void rlUpdateMesh(Mesh mesh, int buffer, int count);                // Update vertex or index data on GPU (upload new data to one buffer)
 RLAPI void rlUpdateMeshAt(Mesh mesh, int buffer, int count, int index);   // Update vertex or index data on GPU, at index
 RLAPI void rlDrawMesh(Mesh mesh, Material material, Matrix transform);    // Draw a 3d mesh with material and transform
+RLAPI void rlDrawMeshInstanced(Mesh mesh, Material material, Matrix *transforms, int count);    // Draw a 3d mesh with material and transform
 RLAPI void rlUnloadMesh(Mesh mesh);                                       // Unload mesh data from CPU and GPU
 
 // NOTE: There is a set of shader related functions that are available to end user,
@@ -582,6 +583,7 @@ RLAPI Rectangle GetShapesTextureRec(void);                                // Get
 
 // Shader configuration functions
 RLAPI int GetShaderLocation(Shader shader, const char *uniformName);              // Get shader uniform location
+RLAPI int GetShaderLocationAttrib(Shader shader, const char *attribName);         // Get shader attribute location
 RLAPI void SetShaderValue(Shader shader, int uniformLoc, const void *value, int uniformType);               // Set shader uniform value
 RLAPI void SetShaderValueV(Shader shader, int uniformLoc, const void *value, int uniformType, int count);   // Set shader uniform value vector
 RLAPI void SetShaderValueMatrix(Shader shader, int uniformLoc, Matrix mat);       // Set shader uniform value (matrix 4x4)
@@ -2860,6 +2862,113 @@ void rlDrawMesh(Mesh mesh, Material material, Matrix transform)
 #endif
 }
 
+// Draw a 3d mesh with material and transform
+void rlDrawMeshInstanced(Mesh mesh, Material material, Matrix *transforms, int count)
+{
+#if defined(GRAPHICS_API_OPENGL_33)
+
+    if (!RLGL.ExtSupported.vao) {
+        TRACELOG(LOG_ERROR, "VAO: Instanced rendering requires VAO support");
+        return;
+    }
+
+    // Bind shader program
+    glUseProgram(material.shader.id);
+
+    // Upload to shader material.colDiffuse
+    if (material.shader.locs[LOC_COLOR_DIFFUSE] != -1)
+        glUniform4f(material.shader.locs[LOC_COLOR_DIFFUSE], (float)material.maps[MAP_DIFFUSE].color.r/255.0f,
+                                                           (float)material.maps[MAP_DIFFUSE].color.g/255.0f,
+                                                           (float)material.maps[MAP_DIFFUSE].color.b/255.0f,
+                                                           (float)material.maps[MAP_DIFFUSE].color.a/255.0f);
+
+    // Upload to shader material.colSpecular (if available)
+    if (material.shader.locs[LOC_COLOR_SPECULAR] != -1)
+        glUniform4f(material.shader.locs[LOC_COLOR_SPECULAR], (float)material.maps[MAP_SPECULAR].color.r/255.0f,
+                                                               (float)material.maps[MAP_SPECULAR].color.g/255.0f,
+                                                               (float)material.maps[MAP_SPECULAR].color.b/255.0f,
+                                                               (float)material.maps[MAP_SPECULAR].color.a/255.0f);
+
+    // Bind active texture maps (if available)
+    for (int i = 0; i < MAX_MATERIAL_MAPS; i++)
+    {
+        if (material.maps[i].texture.id > 0)
+        {
+            glActiveTexture(GL_TEXTURE0 + i);
+            if ((i == MAP_IRRADIANCE) || (i == MAP_PREFILTER) || (i == MAP_CUBEMAP))
+                glBindTexture(GL_TEXTURE_CUBE_MAP, material.maps[i].texture.id);
+            else glBindTexture(GL_TEXTURE_2D, material.maps[i].texture.id);
+
+            glUniform1i(material.shader.locs[LOC_MAP_DIFFUSE + i], i);
+        }
+    }
+
+    // Bind vertex array objects (or VBOs)
+    glBindVertexArray(mesh.vaoId);
+
+    // At this point the modelview matrix just contains the view matrix (camera)
+    // For instanced shaders "mvp" is not premultiplied by any instance transform, only RLGL.State.transform
+    glUniformMatrix4fv(material.shader.locs[LOC_MATRIX_MVP], 1, false, MatrixToFloat(
+        MatrixMultiply(MatrixMultiply(RLGL.State.transform, RLGL.State.modelview), RLGL.State.projection)
+    ));
+
+    float16* instances = RL_MALLOC(count * sizeof(float16));
+
+    for (int i = 0; i < count; i++)
+        instances[i] = MatrixToFloatV(transforms[i]);
+
+    // This could alternatively use a static VBO and either glMapBuffer or glBufferSubData.
+    // It isn't clear which would be reliably faster in all cases and on all platforms, and
+    // anecdotally glMapBuffer seems very slow (syncs) while glBufferSubData seems no faster
+    // since we're transferring all the transform matrices anyway.
+    unsigned int instancesB;
+    glGenBuffers(1, &instancesB);
+    glBindBuffer(GL_ARRAY_BUFFER, instancesB);
+    glBufferData(GL_ARRAY_BUFFER, count * sizeof(float16), instances, GL_STATIC_DRAW);
+
+    // Instances are put in LOC_MATRIX_MODEL attribute location with space for 4x Vector4, eg:
+    // layout (location = 12) in mat4 instance;
+    unsigned int instanceA = material.shader.locs[LOC_MATRIX_MODEL];
+
+    for (unsigned int i = 0; i < 4; i++)
+    {
+        glEnableVertexAttribArray(instanceA+i);
+        glVertexAttribPointer(instanceA+i, 4, GL_FLOAT, GL_FALSE, sizeof(Matrix), (void*)(i * sizeof(Vector4)));
+        glVertexAttribDivisor(instanceA+i, 1);
+    }
+
+    glBindBuffer(GL_ARRAY_BUFFER, 0);
+
+    // Draw call!
+    if (mesh.indices != NULL) {
+        // Indexed vertices draw
+        glDrawElementsInstanced(GL_TRIANGLES, mesh.triangleCount*3, GL_UNSIGNED_SHORT, 0, count);
+    } else {
+        glDrawArraysInstanced(GL_TRIANGLES, 0, mesh.vertexCount, count);
+    }
+
+    glDeleteBuffers(1, &instancesB);
+    RL_FREE(instances);
+
+    // Unbind all binded texture maps
+    for (int i = 0; i < MAX_MATERIAL_MAPS; i++)
+    {
+        glActiveTexture(GL_TEXTURE0 + i);       // Set shader active texture
+        if ((i == MAP_IRRADIANCE) || (i == MAP_PREFILTER) || (i == MAP_CUBEMAP)) glBindTexture(GL_TEXTURE_CUBE_MAP, 0);
+        else glBindTexture(GL_TEXTURE_2D, 0);   // Unbind current active texture
+    }
+
+    // Unind vertex array objects (or VBOs)
+    glBindVertexArray(0);
+
+    // Unbind shader program
+    glUseProgram(0);
+
+#else
+    TRACELOG(LOG_ERROR, "VAO: Instanced rendering requires GRAPHICS_API_OPENGL_33");
+#endif
+}
+
 // Unload mesh data from CPU and GPU
 void rlUnloadMesh(Mesh mesh)
 {
@@ -3179,6 +3288,19 @@ int GetShaderLocation(Shader shader, const char *uniformName)
 
     if (location == -1) TRACELOG(LOG_WARNING, "SHADER: [ID %i] Failed to find shader uniform: %s", shader.id, uniformName);
     else TRACELOG(LOG_INFO, "SHADER: [ID %i] Shader uniform (%s) set at location: %i", shader.id, uniformName, location);
+#endif
+    return location;
+}
+
+// Get shader attribute location
+int GetShaderLocationAttrib(Shader shader, const char *attribName)
+{
+    int location = -1;
+#if defined(GRAPHICS_API_OPENGL_33) || defined(GRAPHICS_API_OPENGL_ES2)
+    location = glGetAttribLocation(shader.id, attribName);
+
+    if (location == -1) TRACELOG(LOG_WARNING, "SHADER: [ID %i] Failed to find shader attribute: %s", shader.id, attribName);
+    else TRACELOG(LOG_INFO, "SHADER: [ID %i] Shader attribute (%s) set at location: %i", shader.id, attribName, location);
 #endif
     return location;
 }

@@ -114,13 +114,16 @@
         float z;
     } Vector3;
 
-    // Quaternion type
-    typedef struct Quaternion {
+    // Vector4 type
+    typedef struct Vector4 {
         float x;
         float y;
         float z;
         float w;
-    } Quaternion;
+    } Vector4;
+
+    // Quaternion type
+    typedef Vector4 Quaternion;
 
     // Matrix type (OpenGL style 4x4 - right handed, column major)
     typedef struct Matrix {

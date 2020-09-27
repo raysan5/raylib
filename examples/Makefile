@@ -488,7 +488,8 @@ SHADERS = \
     shaders/shaders_basic_lighting \
     shaders/shaders_fog \
     shaders/shaders_simple_mask \
-    shaders/shaders_spotlight
+    shaders/shaders_spotlight \
+    shaders/shaders_rlgl_mesh_instanced
     
 AUDIO = \
     audio/audio_module_playing \
