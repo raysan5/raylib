@@ -44,8 +44,8 @@
 #define SUPPORT_MOUSE_GESTURES      1
 // Reconfigure standard input to receive key inputs, works with SSH connection.
 #define SUPPORT_SSH_KEYBOARD_RPI    1
-// Draw a mouse reference on screen (square cursor box)
-#define SUPPORT_MOUSE_CURSOR_RPI    1
+// Draw a mouse pointer on screen
+#define SUPPORT_MOUSE_CURSOR_NATIVE 1
 // Use busy wait loop for timing sync, if not defined, a high-resolution timer is setup and used
 //#define SUPPORT_BUSY_WAIT_LOOP      1
 // Use a half-busy wait loop, in this case frame sleeps for some time and runs a busy-wait-loop at the end

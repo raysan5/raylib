@@ -472,7 +472,8 @@ typedef enum {
     FLAG_WINDOW_HIDDEN      = 128,  // Set to create the window initially hidden
     FLAG_WINDOW_ALWAYS_RUN  = 256,  // Set to allow windows running while minimized
     FLAG_MSAA_4X_HINT       = 32,   // Set to try enabling MSAA 4X
-    FLAG_VSYNC_HINT         = 64    // Set to try enabling V-Sync on GPU
+    FLAG_VSYNC_HINT         = 64,   // Set to try enabling V-Sync on GPU
+    FLAG_INTERLACED_HINT    = 512   // Set to try V3D to choose an interlaced video format
 } ConfigFlag;
 
 // Trace log type

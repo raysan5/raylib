@@ -9,6 +9,7 @@
 #    PLATFORM_DESKTOP:  FreeBSD, OpenBSD, NetBSD, DragonFly
 #    PLATFORM_ANDROID:  Android (arm, i686, arm64, x86_64)
 #    PLATFORM_RPI:      Raspberry Pi (Raspbian)
+#    PLATFORM_DRM:      Linux native mode, including Raspberry Pi 4 with V3D fkms driver
 #    PLATFORM_WEB:      HTML5 (Chrome, Firefox)
 #
 #  Many thanks to Milan Nikolic (@gen2brain) for implementing Android platform pipeline.
@@ -137,6 +138,12 @@ ifeq ($(PLATFORM),PLATFORM_RPI)
         PLATFORM_OS = LINUX
     endif
 endif
+ifeq ($(PLATFORM),PLATFORM_DRM)
+    UNAMEOS = $(shell uname)
+    ifeq ($(UNAMEOS),Linux)
+        PLATFORM_OS = LINUX
+    endif
+endif
 
 # RAYLIB_SRC_PATH adjustment for different platforms.
 # If using GNU make, we can get the full path to the top of the tree. Windows? BSD?
@@ -202,6 +209,10 @@ ifeq ($(PLATFORM),PLATFORM_DESKTOP)
 endif
 ifeq ($(PLATFORM),PLATFORM_RPI)
     # On RPI OpenGL ES 2.0 must be used
+    GRAPHICS = GRAPHICS_API_OPENGL_ES2
+endif
+ifeq ($(PLATFORM),PLATFORM_DRM)
+    # On DRM OpenGL ES 2.0 must be used
     GRAPHICS = GRAPHICS_API_OPENGL_ES2
 endif
 ifeq ($(PLATFORM),PLATFORM_WEB)
@@ -354,6 +365,11 @@ ifeq ($(RAYLIB_LIBTYPE),SHARED)
     # MinGW32 just doesn't need -fPIC, it shows warnings
     CFLAGS += -fPIC -DBUILD_LIBTYPE_SHARED
 endif
+ifeq ($(PLATFORM),PLATFORM_DRM)
+    # without EGL_NO_X11 eglplatform.h tears Xlib.h in which tears X.h in
+    # which contains a conflicting type Font
+    CFLAGS += -DEGL_NO_X11
+endif
 
 # Use Wayland display on Linux desktop
 ifeq ($(PLATFORM),PLATFORM_DESKTOP)
@@ -389,6 +405,10 @@ ifeq ($(PLATFORM),PLATFORM_RPI)
     INCLUDE_PATHS += -I$(RPI_TOOLCHAIN_SYSROOT)/opt/vc/include/interface/vmcs_host/linux
     INCLUDE_PATHS += -I$(RPI_TOOLCHAIN_SYSROOT)/opt/vc/include/interface/vcos/pthreads
     INCLUDE_PATHS += -I$(RPI_TOOLCHAIN_SYSROOT)/opt/vc/include/interface/vcos/pthreads
+endif
+ifeq ($(PLATFORM),PLATFORM_DRM)
+    # DRM required libraries
+    INCLUDE_PATHS += -I/usr/include/libdrm
 endif
 ifeq ($(PLATFORM),PLATFORM_ANDROID)
     NATIVE_APP_GLUE = $(ANDROID_NDK)/sources/android/native_app_glue
@@ -506,6 +526,14 @@ else
                 # Compile raylib shared library version $(RAYLIB_VERSION).
                 # WARNING: you should type "make clean" before doing this target
 				$(CC) -shared -o $(RAYLIB_RELEASE_PATH)/lib$(RAYLIB_LIB_NAME).so.$(RAYLIB_VERSION) $(OBJS) $(LDFLAGS) -Wl,-soname,lib$(RAYLIB_LIB_NAME).so.$(RAYLIB_API_VERSION) -L/opt/vc/lib -lbrcmGLESv2 -lbrcmEGL -lpthread -lrt -lm -lbcm_host -ldl
+				@echo "raylib shared library generated (lib$(RAYLIB_LIB_NAME).so.$(RAYLIB_VERSION)) in $(RAYLIB_RELEASE_PATH)!"
+				cd $(RAYLIB_RELEASE_PATH) && ln -fsv lib$(RAYLIB_LIB_NAME).so.$(RAYLIB_VERSION) lib$(RAYLIB_LIB_NAME).so.$(RAYLIB_API_VERSION)
+				cd $(RAYLIB_RELEASE_PATH) && ln -fsv lib$(RAYLIB_LIB_NAME).so.$(RAYLIB_API_VERSION) lib$(RAYLIB_LIB_NAME).so
+        endif
+        ifeq ($(PLATFORM),PLATFORM_DRM)
+                # Compile raylib shared library version $(RAYLIB_VERSION).
+                # WARNING: you should type "make clean" before doing this target
+				$(CC) -shared -o $(RAYLIB_RELEASE_PATH)/lib$(RAYLIB_LIB_NAME).so.$(RAYLIB_VERSION) $(OBJS) $(LDFLAGS) -Wl,-soname,lib$(RAYLIB_LIB_NAME).so.$(RAYLIB_API_VERSION) -lGLESv2 -lEGL -ldrm -lgbm -lpthread -lrt -lm -ldl
 				@echo "raylib shared library generated (lib$(RAYLIB_LIB_NAME).so.$(RAYLIB_VERSION)) in $(RAYLIB_RELEASE_PATH)!"
 				cd $(RAYLIB_RELEASE_PATH) && ln -fsv lib$(RAYLIB_LIB_NAME).so.$(RAYLIB_VERSION) lib$(RAYLIB_LIB_NAME).so.$(RAYLIB_API_VERSION)
 				cd $(RAYLIB_RELEASE_PATH) && ln -fsv lib$(RAYLIB_LIB_NAME).so.$(RAYLIB_API_VERSION) lib$(RAYLIB_LIB_NAME).so

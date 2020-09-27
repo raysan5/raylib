@@ -127,6 +127,22 @@ elseif(${PLATFORM} MATCHES "Raspberry Pi")
   link_directories(/opt/vc/lib)
   set(LIBS_PRIVATE ${GLESV2} ${EGL} ${BCMHOST} pthread rt m dl)
 
+  elseif(${PLATFORM} MATCHES "DRM")
+  set(PLATFORM_CPP "PLATFORM_DRM")
+  set(GRAPHICS "GRAPHICS_API_OPENGL_ES2")
+
+  add_definitions(-D_DEFAULT_SOURCE)
+  add_definitions(-DEGL_NO_X11)
+  add_definitions(-DPLATFORM_DRM)
+      
+  find_library(GLESV2 GLESv2)
+  find_library(EGL EGL)
+  find_library(DRM drm)
+  find_library(GBM gbm)
+
+  include_directories(/usr/include/libdrm)
+  set(LIBS_PRIVATE ${GLESV2} ${EGL} ${DRM} ${GBM} pthread m dl)
+
 endif()
 
 if (${OPENGL_VERSION})
@@ -164,7 +180,13 @@ if(STATIC)
 
   target_compile_definitions(raylib_static
       PUBLIC ${PLATFORM_CPP}
+      PUBLIC PLATFORM=${PLATFORM_CPP}
       PUBLIC ${GRAPHICS}
+      PUBLIC GRAPHICS=${GRAPHICS}
+  )
+
+  target_link_libraries(raylib_static
+    PUBLIC ${LIBS_PRIVATE}
   )
 
   set(PKG_CONFIG_LIBS_PRIVATE ${__PKG_CONFIG_LIBS_PRIVATE} ${GLFW_PKG_LIBS})
