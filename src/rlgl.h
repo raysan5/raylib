@@ -3591,6 +3591,7 @@ TextureCubemap GenTexturePrefilter(Shader shader, TextureCubemap cubemap, int si
 
     // Generate mipmaps for the prefiltered HDR texture
     glGenerateMipmap(GL_TEXTURE_CUBE_MAP);
+    //rlGenerateMipmaps(Texture2D *texture); // Only GL_TEXTURE_2D
 
     // STEP 2: Draw to framebuffer
     //------------------------------------------------------------------------------------------
