@@ -192,7 +192,7 @@ if(STATIC)
   set(PKG_CONFIG_LIBS_PRIVATE ${__PKG_CONFIG_LIBS_PRIVATE} ${GLFW_PKG_LIBS})
   string (REPLACE ";" " " PKG_CONFIG_LIBS_PRIVATE "${PKG_CONFIG_LIBS_PRIVATE}")
   if (${PLATFORM} MATCHES "Desktop")
-    target_link_libraries(raylib_static glfw ${GLFW_LIBRARIES} ${LIBS_PRIVATE})
+    target_link_libraries(raylib_static PRIVATE glfw ${GLFW_LIBRARIES} ${LIBS_PRIVATE})
   endif()
 
   if (WITH_PIC)
