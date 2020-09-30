@@ -213,7 +213,7 @@ void App::GameLoop()
         DisableCursor();
     }
 
-    static int pos = 0;
+    static float pos = 0;
     pos -= GetMouseWheelMove();
     //----------------------------------------------------------------------------------
 
@@ -235,7 +235,7 @@ void App::GameLoop()
 		if (IsKeyDown(KEY_BACKSPACE)) DrawRectangle(280, 250, 20, 20, BLACK);
 		if (IsMouseButtonDown(MOUSE_LEFT_BUTTON)) DrawRectangle(280, 250, 20, 20, BLACK);
 
-		DrawRectangle(280, pos + 50, 20, 20, BLACK);
+		DrawRectangle(280, (int)pos + 50, 20, 20, BLACK);
 		DrawRectangle(250, 280 + (gTime++ % 60), 10, 10, PURPLE);
 
 	EndDrawing();

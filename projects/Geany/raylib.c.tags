@@ -103,7 +103,7 @@ GetMousePosition|Vector2|(void);|
 SetMousePosition|void|(int x, int y);|
 SetMouseOffset|void|(int offsetX, int offsetY);|
 SetMouseScale|void|(float scaleX, float scaleY);|
-GetMouseWheelMove|int|(void);|
+GetMouseWheelMove|float|(void);|
 GetTouchX|int|(void);|
 GetTouchY|int|(void);|
 GetTouchPosition|Vector2|(int index);|
