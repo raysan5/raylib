@@ -30,8 +30,8 @@ Here it is a list with the ones I'm aware of:
 | raylib-nelua       | 3.0 | [Nelua](https://nelua.io/)            | https://github.com/Andre-LA/raylib-nelua     |
 | raylib-Nim         | ? | [Nim](https://nim-lang.org/)          | https://gitlab.com/define-private-public/raylib-Nim     |
 | raylib-nim         | 2.0 | [Nim](https://nim-lang.org/)          | https://github.com/Skrylar/raylib-nim                  |
-| raylib-Forever     | ? | [Nim](https://nim-lang.org/)          | https://github.com/Guevara-chan/Raylib-Forever    |
-| nim-raylib         | ? | [Nim](https://nim-lang.org/)          | https://github.com/tomc1998/nim-raylib            |
+| raylib-Forever     | 3.1-dev | [Nim](https://nim-lang.org/)          | https://github.com/Guevara-chan/Raylib-Forever    |
+| nim-raylib         | 3.1-dev | [Nim](https://nim-lang.org/)          | https://github.com/tomc1998/nim-raylib            |
 | raylib-haskell     | 2.0 | [Haskell](https://www.haskell.org/)   | https://github.com/DevJac/raylib-haskell |
 | raylib-cr          | ? | [Crystal](https://crystal-lang.org/)  | https://github.com/AregevDev/raylib-cr      |
 | cray               | 1.8 | [Crystal](https://crystal-lang.org/)  | https://gitlab.com/Zatherz/cray           |
@@ -46,7 +46,7 @@ Here it is a list with the ones I'm aware of:
 | raylib-python-cffi | 2.6 | [Python](https://www.python.org/)        | https://github.com/electronstudio/raylib-python-cffi    |
 | raylib-py-ctbg     | 2.6 | [Python](https://www.python.org/)        | https://github.com/overdev/raylib-py-ctbg                 |
 | jaylib             | 3.0 | [Java](https://en.wikipedia.org/wiki/Java_(programming_language))           | https://github.com/electronstudio/jaylib/   |
-| raylib-java        | ? | [Java](https://en.wikipedia.org/wiki/Java_(programming_language))           | https://github.com/XoanaIO/raylib-java   |
+| raylib-java        | 2.0 | [Java](https://en.wikipedia.org/wiki/Java_(programming_language))           | https://github.com/XoanaIO/raylib-java   |
 | clj-raylib         | ? | [Clojure](https://clojure.org/)          | https://github.com/lsevero/clj-raylib       |
 | node-raylib        | 3.0 | [Node.js](https://nodejs.org/en/)        | https://github.com/RobLoach/node-raylib     |
 | QuickJS-raylib     | 3.0 | [QuickJS](https://bellard.org/quickjs/)  | https://github.com/sntg-p/QuickJS-raylib    |
@@ -54,7 +54,7 @@ Here it is a list with the ones I'm aware of:
 | raylib-chaiscript  | 2.6 | [ChaiScript](http://chaiscript.com/)     | https://github.com/RobLoach/raylib-chaiscript        |
 | raylib-squirrel    | 2.5 | [Squirrel](http://www.squirrel-lang.org/)     | https://github.com/RobLoach/raylib-squirrel    |
 | racket-raylib-2d   | 2.5 | [Racket](https://racket-lang.org/)       | https://github.com/arvyy/racket-raylib-2d           |
-| raylib-php         | ? | [PHP](https://en.wikipedia.org/wiki/PHP)      | https://github.com/joseph-montanez/raylib-php   |
+| raylib-php         | 3.0 | [PHP](https://en.wikipedia.org/wiki/PHP)      | https://github.com/joseph-montanez/raylib-php   |
 | raylib-php-ffi     | 2.4-dev | [PHP](https://en.wikipedia.org/wiki/PHP)      | https://github.com/oraoto/raylib-php-ffi      |
 | raylib-phpcpp      | 3.0 | [PHP](https://en.wikipedia.org/wiki/PHP)      | https://github.com/oraoto/raylib-phpcpp      |
 | raylib-factor      | 2.5 | [Factor](https://factorcode.org/)        | https://github.com/ArnautDaniel/raylib-factor   |
