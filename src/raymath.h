@@ -297,6 +297,19 @@ RMDEF Vector2 Vector2Lerp(Vector2 v1, Vector2 v2, float amount)
     return result;
 }
 
+// Calculate reflected vector to normal
+RMDEF Vector2 Vector2Reflect(Vector2 v, Vector2 normal)
+{
+    Vector2 result = { 0 };
+
+    float dotProduct = Vector2DotProduct(v, normal);
+
+    result.x = v.x - (2.0f*normal.x)*dotProduct;
+    result.y = v.y - (2.0f*normal.y)*dotProduct;
+
+    return result;
+}
+
 // Rotate Vector by float in Degrees.
 RMDEF Vector2 Vector2Rotate(Vector2 v, float degs)
 {
