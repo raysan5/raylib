@@ -2725,9 +2725,9 @@ void SetMouseScale(float scaleX, float scaleY)
 float GetMouseWheelMove(void)
 {
 #if defined(PLATFORM_ANDROID)
-    return 0.f;
+    return 0.0f;
 #elif defined(PLATFORM_WEB)
-    return CORE.Input.Mouse.previousWheelMove/100.f;
+    return CORE.Input.Mouse.previousWheelMove/100.0f;
 #else
     return CORE.Input.Mouse.previousWheelMove;
 #endif
@@ -3896,7 +3896,7 @@ static void PollInputEvents(void)
 
     // Register previous mouse states
     CORE.Input.Mouse.previousWheelMove = CORE.Input.Mouse.currentWheelMove;
-    CORE.Input.Mouse.currentWheelMove = 0.f;
+    CORE.Input.Mouse.currentWheelMove = 0.0f;
     for (int i = 0; i < 3; i++)
     {
         CORE.Input.Mouse.previousButtonState[i] = CORE.Input.Mouse.currentButtonState[i];
@@ -3918,7 +3918,7 @@ static void PollInputEvents(void)
 
     // Register previous mouse states
     CORE.Input.Mouse.previousWheelMove = CORE.Input.Mouse.currentWheelMove;
-    CORE.Input.Mouse.currentWheelMove = 0.f;
+    CORE.Input.Mouse.currentWheelMove = 0.0f;
 
     for (int i = 0; i < 3; i++) CORE.Input.Mouse.previousButtonState[i] = CORE.Input.Mouse.currentButtonState[i];
 #endif  // PLATFORM_UWP
@@ -3934,7 +3934,7 @@ static void PollInputEvents(void)
 
     // Register previous mouse wheel state
     CORE.Input.Mouse.previousWheelMove = CORE.Input.Mouse.currentWheelMove;
-    CORE.Input.Mouse.currentWheelMove = 0.f;
+    CORE.Input.Mouse.currentWheelMove = 0.0f;
 #endif
 
     // Register previous touch states

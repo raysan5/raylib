@@ -236,7 +236,7 @@ static void DisableCursor() {}      // Lock cursor
 static int IsKeyDown(int key) { return 0; }
 
 static int IsMouseButtonDown(int button) { return 0;}
-static float GetMouseWheelMove() { return 0.f; }
+static float GetMouseWheelMove() { return 0.0f; }
 static Vector2 GetMousePosition() { return (Vector2){ 0.0f, 0.0f }; }
 #endif
 

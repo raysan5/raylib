@@ -27,7 +27,7 @@ int main(void)
 
     Vector2 center = {(GetScreenWidth() - 300)/2, GetScreenHeight()/2 };
 
-    float outerRadius = 180.f;
+    float outerRadius = 180.0f;
     int startAngle = 0;
     int endAngle = 180;
     int segments = 0;

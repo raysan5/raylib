@@ -587,7 +587,7 @@ Image GenImageGradientRadial(int width, int height, float density, Color inner, 
             float dist = hypotf((float)x - centerX, (float)y - centerY);
             float factor = (dist - radius*density)/(radius*(1.0f - density));
 
-            factor = (float)fmax(factor, 0.f);
+            factor = (float)fmax(factor, 0.0f);
             factor = (float)fmin(factor, 1.f); // dist can be bigger than radius so we have to check
 
             pixels[y*width + x].r = (int)((float)outer.r*factor + (float)inner.r*(1.0f - factor));
