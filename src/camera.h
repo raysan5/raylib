@@ -236,7 +236,7 @@ static void DisableCursor() {}      // Lock cursor
 static int IsKeyDown(int key) { return 0; }
 
 static int IsMouseButtonDown(int button) { return 0;}
-static int GetMouseWheelMove() { return 0; }
+static float GetMouseWheelMove() { return 0.f; }
 static Vector2 GetMousePosition() { return (Vector2){ 0.0f, 0.0f }; }
 #endif
 
@@ -285,7 +285,7 @@ void UpdateCamera(Camera *camera)
     // Mouse movement detection
     Vector2 mousePositionDelta = { 0.0f, 0.0f };
     Vector2 mousePosition = GetMousePosition();
-    int mouseWheelMove = GetMouseWheelMove();
+    float mouseWheelMove = GetMouseWheelMove();
 
     // Keys input detection
     // TODO: Input detection is raylib-dependant, it could be moved outside the module

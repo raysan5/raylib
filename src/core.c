@@ -428,8 +428,8 @@ typedef struct CoreData {
 
             char currentButtonState[3];     // Registers current mouse button state
             char previousButtonState[3];    // Registers previous mouse button state
-            int currentWheelMove;           // Registers current mouse wheel variation
-            int previousWheelMove;          // Registers previous mouse wheel variation
+            float currentWheelMove;         // Registers current mouse wheel variation
+            float previousWheelMove;        // Registers previous mouse wheel variation
 #if defined(PLATFORM_RPI) || defined(PLATFORM_DRM)
             char currentButtonStateEvdev[3];    // Holds the new mouse state for the next polling event to grab (Can't be written directly due to multithreading, app could miss the update)
 #endif
@@ -2722,12 +2722,12 @@ void SetMouseScale(float scaleX, float scaleY)
 }
 
 // Returns mouse wheel movement Y
-int GetMouseWheelMove(void)
+float GetMouseWheelMove(void)
 {
 #if defined(PLATFORM_ANDROID)
-    return 0;
+    return 0.f;
 #elif defined(PLATFORM_WEB)
-    return CORE.Input.Mouse.previousWheelMove/100;
+    return CORE.Input.Mouse.previousWheelMove/100.f;
 #else
     return CORE.Input.Mouse.previousWheelMove;
 #endif
@@ -3896,7 +3896,7 @@ static void PollInputEvents(void)
 
     // Register previous mouse states
     CORE.Input.Mouse.previousWheelMove = CORE.Input.Mouse.currentWheelMove;
-    CORE.Input.Mouse.currentWheelMove = 0;
+    CORE.Input.Mouse.currentWheelMove = 0.f;
     for (int i = 0; i < 3; i++)
     {
         CORE.Input.Mouse.previousButtonState[i] = CORE.Input.Mouse.currentButtonState[i];
@@ -3918,7 +3918,7 @@ static void PollInputEvents(void)
 
     // Register previous mouse states
     CORE.Input.Mouse.previousWheelMove = CORE.Input.Mouse.currentWheelMove;
-    CORE.Input.Mouse.currentWheelMove = 0;
+    CORE.Input.Mouse.currentWheelMove = 0.f;
 
     for (int i = 0; i < 3; i++) CORE.Input.Mouse.previousButtonState[i] = CORE.Input.Mouse.currentButtonState[i];
 #endif  // PLATFORM_UWP
@@ -3934,7 +3934,7 @@ static void PollInputEvents(void)
 
     // Register previous mouse wheel state
     CORE.Input.Mouse.previousWheelMove = CORE.Input.Mouse.currentWheelMove;
-    CORE.Input.Mouse.currentWheelMove = 0;
+    CORE.Input.Mouse.currentWheelMove = 0.f;
 #endif
 
     // Register previous touch states
@@ -4151,7 +4151,7 @@ static void ErrorCallback(int error, const char *description)
 // GLFW3 Srolling Callback, runs on mouse wheel
 static void ScrollCallback(GLFWwindow *window, double xoffset, double yoffset)
 {
-    CORE.Input.Mouse.currentWheelMove = (int)yoffset;
+    CORE.Input.Mouse.currentWheelMove = (float)yoffset;
 }
 
 // GLFW3 Keyboard Callback, runs on key pressed
@@ -5520,7 +5520,7 @@ void UWPSetMouseSetPosFunc(UWPMouseSetPosFunc func) { uwpMouseSetPosFunc = func;
 
 void *UWPGetCoreWindowPtr() { return uwpCoreWindow; }
 void UWPSetCoreWindowPtr(void* ptr) { uwpCoreWindow = ptr; }
-void UWPMouseWheelEvent(int deltaY) { CORE.Input.Mouse.currentWheelMove = (int)deltaY; }
+void UWPMouseWheelEvent(int deltaY) { CORE.Input.Mouse.currentWheelMove = (float)deltaY; }
 
 void UWPKeyDownEvent(int key, bool down, bool controlKey)
 {
