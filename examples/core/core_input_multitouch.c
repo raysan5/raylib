@@ -28,7 +28,7 @@ int main(void)
     Color ballColor = BEIGE;
 
     int touchCounter = 0;
-    Vector2 touchPosition = { 0.0f };
+    Vector2 touchPosition = { 0 };
 
     SetTargetFPS(60);               // Set our game to run at 60 frames-per-second
     //---------------------------------------------------------------------------------------

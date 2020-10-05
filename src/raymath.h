@@ -1328,7 +1328,7 @@ RMDEF Quaternion QuaternionFromVector3ToVector3(Vector3 from, Vector3 to)
 // Returns a quaternion for a given rotation matrix
 RMDEF Quaternion QuaternionFromMatrix(Matrix mat)
 {
-    Quaternion result = { 0.0f };
+    Quaternion result = { 0 };
     
     if ((mat.m0 > mat.m5) && (mat.m0 > mat.m10))
     {

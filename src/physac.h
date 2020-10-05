@@ -407,8 +407,8 @@ PHYSACDEF PhysicsBody CreatePhysicsBodyRectangle(Vector2 pos, float width, float
         newBody->id = newId;
         newBody->enabled = true;
         newBody->position = pos;
-        newBody->velocity = (Vector2){ 0.0f };
-        newBody->force = (Vector2){ 0.0f };
+        newBody->velocity = (Vector2){ 0.0f, 0.0f };
+        newBody->force = (Vector2){ 0.0f, 0.0f };
         newBody->angularVelocity = 0.0f;
         newBody->torque = 0.0f;
         newBody->orient = 0.0f;

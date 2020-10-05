@@ -3565,7 +3565,7 @@ Color ColorAlphaBlend(Color dst, Color src, Color tint)
         Vector4 fdst = ColorNormalize(dst);
         Vector4 fsrc = ColorNormalize(src);
         Vector4 ftint = ColorNormalize(tint);
-        Vector4 fout = { 0.0f };
+        Vector4 fout = { 0 };
 
         fout.w = fsrc.w + fdst.w*(1.0f - fsrc.w);
 
