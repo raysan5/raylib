@@ -436,7 +436,7 @@
             </Overload>
         </KeyWord>
         <KeyWord name="GetMouseWheelMove" func="yes">
-            <Overload retVal="int" descr="Returns mouse wheel movement Y"></Overload>
+            <Overload retVal="float" descr="Returns mouse wheel movement Y"></Overload>
         </KeyWord>
 
         <!-- Input-related functions: touch -->

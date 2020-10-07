@@ -47,7 +47,7 @@ void main()
     {
         for (int i = 2; (i < max(2, sqrt(value) + 1)); i++) 
         {
-            if ((value - i*floor(value/i)) == 0) 
+            if ((value - i*floor(float(value)/float(i))) == 0)
             {
                 color = Colorizer(float(i), scale);
                 //break;    // Uncomment to color by the largest factor instead

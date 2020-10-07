@@ -1,22 +1,14 @@
-/*******************************************************************************************
-*
-*   rPBR [shader] - Background skybox vertex shader
-*
-*   Copyright (c) 2017 Victor Fisac
-*
-**********************************************************************************************/
-
-#version 330
+#version 100
 
 // Input vertex attributes
-in vec3 vertexPosition;
+attribute vec3 vertexPosition;
 
 // Input uniform values
 uniform mat4 projection;
 uniform mat4 view;
 
 // Output vertex attributes (to fragment shader)
-out vec3 fragPosition;
+varying vec3 fragPosition;
 
 void main()
 {
@@ -28,5 +20,5 @@ void main()
     vec4 clipPos = projection*rotView*vec4(vertexPosition, 1.0);
 
     // Calculate final vertex position
-    gl_Position = clipPos.xyww;
+    gl_Position = clipPos.xyzw;
 }

@@ -46,7 +46,7 @@ int main(void)
     Font font = LoadFont("resources/custom_jupiter_crash.png");
 
     // Draw over image using custom font
-    ImageDrawTextEx(&parrots, (Vector2){ 300, 230 }, font, "PARROTS & CAT", font.baseSize, -2, WHITE);
+    ImageDrawTextEx(&parrots, font, "PARROTS & CAT", (Vector2){ 300, 230 }, font.baseSize, -2, WHITE);
 
     UnloadFont(font); // Unload custom spritefont (already drawn used on image)
 

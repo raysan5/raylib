@@ -13,6 +13,8 @@
 
 #include "raylib.h"
 
+#define MAX_TOUCH_POINTS 10
+
 int main(void)
 {
     // Initialization
@@ -26,7 +28,7 @@ int main(void)
     Color ballColor = BEIGE;
 
     int touchCounter = 0;
-    Vector2 touchPosition = { 0.0f };
+    Vector2 touchPosition = { 0 };
 
     SetTargetFPS(60);               // Set our game to run at 60 frames-per-second
     //---------------------------------------------------------------------------------------
@@ -66,7 +68,7 @@ int main(void)
                 {
                     // Draw circle and touch index number
                     DrawCircleV(touchPosition, 34, ORANGE);
-                    DrawText(FormatText("%d", i), touchPosition.x - 10, touchPosition.y - 70, 40, BLACK);
+                    DrawText(TextFormat("%d", i), touchPosition.x - 10, touchPosition.y - 70, 40, BLACK);
                 }
             }
 

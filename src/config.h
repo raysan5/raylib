@@ -25,7 +25,7 @@
 *
 **********************************************************************************************/
 
-#define RAYLIB_VERSION  "3.0"
+#define RAYLIB_VERSION  "3.1-dev"
 
 // Edit to control what features Makefile'd raylib is compiled with
 #if defined(RAYLIB_CMAKE)
@@ -44,8 +44,8 @@
 #define SUPPORT_MOUSE_GESTURES      1
 // Reconfigure standard input to receive key inputs, works with SSH connection.
 #define SUPPORT_SSH_KEYBOARD_RPI    1
-// Draw a mouse reference on screen (square cursor box)
-#define SUPPORT_MOUSE_CURSOR_RPI    1
+// Draw a mouse pointer on screen
+#define SUPPORT_MOUSE_CURSOR_NATIVE 1
 // Use busy wait loop for timing sync, if not defined, a high-resolution timer is setup and used
 //#define SUPPORT_BUSY_WAIT_LOOP      1
 // Use a half-busy wait loop, in this case frame sleeps for some time and runs a busy-wait-loop at the end
@@ -63,11 +63,55 @@
 // Support saving binary data automatically to a generated storage.data file. This file is managed internally.
 #define SUPPORT_DATA_STORAGE          1
 
+// core: Configuration values
+//------------------------------------------------------------------------------------
+#if defined(__linux__)
+    #define MAX_FILEPATH_LENGTH     4096        // Maximum length for filepaths (Linux PATH_MAX default value)
+#else
+    #define MAX_FILEPATH_LENGTH      512        // Maximum length supported for filepaths
+#endif
+
+#define MAX_GAMEPADS                   4        // Max number of gamepads supported
+#define MAX_GAMEPAD_AXIS               8        // Max number of axis supported (per gamepad)
+#define MAX_GAMEPAD_BUTTONS           32        // Max bumber of buttons supported (per gamepad)
+#define MAX_TOUCH_POINTS              10        // Maximum number of touch points supported
+#define MAX_KEY_PRESSED_QUEUE         16        // Max number of characters in the key input queue
+
+#define STORAGE_DATA_FILE  "storage.data"       // Automatic storage filename
+
+
 //------------------------------------------------------------------------------------
 // Module: rlgl - Configuration Flags
 //------------------------------------------------------------------------------------
 // Support VR simulation functionality (stereo rendering)
 #define SUPPORT_VR_SIMULATOR        1
+
+// rlgl: Configuration values
+//------------------------------------------------------------------------------------
+#if defined(GRAPHICS_API_OPENGL_11) || defined(GRAPHICS_API_OPENGL_33)
+    #define DEFAULT_BATCH_BUFFER_ELEMENTS   8192    // Default internal render batch limits
+#elif defined(GRAPHICS_API_OPENGL_ES2)
+    #define DEFAULT_BATCH_BUFFER_ELEMENTS   2048    // Default internal render batch limits
+#endif
+
+#define DEFAULT_BATCH_BUFFERS            1      // Default number of batch buffers (multi-buffering)
+#define DEFAULT_BATCH_DRAWCALLS        256      // Default number of batch draw calls (by state changes: mode, texture)
+
+#define MAX_MATRIX_STACK_SIZE           32      // Maximum size of internal Matrix stack
+#define MAX_SHADER_LOCATIONS            32      // Maximum number of shader locations supported
+#define MAX_MATERIAL_MAPS               12      // Maximum number of shader maps supported
+
+#define RL_CULL_DISTANCE_NEAR         0.01      // Default projection matrix near cull distance
+#define RL_CULL_DISTANCE_FAR        1000.0      // Default projection matrix far cull distance
+
+// Default shader vertex attribute names to set location points
+#define DEFAULT_SHADER_ATTRIB_NAME_POSITION    "vertexPosition"    // Binded by default to shader location: 0
+#define DEFAULT_SHADER_ATTRIB_NAME_TEXCOORD    "vertexTexCoord"    // Binded by default to shader location: 1
+#define DEFAULT_SHADER_ATTRIB_NAME_NORMAL      "vertexNormal"      // Binded by default to shader location: 2
+#define DEFAULT_SHADER_ATTRIB_NAME_COLOR       "vertexColor"       // Binded by default to shader location: 3
+#define DEFAULT_SHADER_ATTRIB_NAME_TANGENT     "vertexTangent"     // Binded by default to shader location: 4
+#define DEFAULT_SHADER_ATTRIB_NAME_TEXCOORD2   "vertexTexCoord2"   // Binded by default to shader location: 5
+
 
 //------------------------------------------------------------------------------------
 // Module: shapes - Configuration Flags
@@ -78,6 +122,7 @@
 // Use QUADS instead of TRIANGLES for drawing when possible
 // Some lines-based shapes could still use lines
 #define SUPPORT_QUADS_DRAW_MODE     1
+
 
 //------------------------------------------------------------------------------------
 // Module: textures - Configuration Flags
@@ -98,11 +143,12 @@
 
 // Support image export functionality (.png, .bmp, .tga, .jpg)
 #define SUPPORT_IMAGE_EXPORT        1
-// Support multiple image editing functions to scale, adjust colors, flip, draw on images, crop...
-// If not defined only three image editing functions supported: ImageFormat(), ImageAlphaMask(), ImageToPOT()
-#define SUPPORT_IMAGE_MANIPULATION  1
 // Support procedural image generation functionality (gradient, spot, perlin-noise, cellular)
 #define SUPPORT_IMAGE_GENERATION    1
+// Support multiple image editing functions to scale, adjust colors, flip, draw on images, crop...
+// If not defined, still some functions are supported: ImageFormat(), ImageCrop(), ImageToPOT()
+#define SUPPORT_IMAGE_MANIPULATION  1
+
 
 //------------------------------------------------------------------------------------
 // Module: text - Configuration Flags
@@ -113,6 +159,18 @@
 // Selected desired font fileformats to be supported for loading
 #define SUPPORT_FILEFORMAT_FNT      1
 #define SUPPORT_FILEFORMAT_TTF      1
+
+// Support text management functions
+// If not defined, still some functions are supported: TextLength(), TextFormat()
+#define SUPPORT_TEXT_MANIPULATION   1
+
+// text: Configuration values
+//------------------------------------------------------------------------------------
+#define MAX_TEXT_BUFFER_LENGTH      1024        // Size of internal static buffers used on some functions:
+                                                // TextFormat(), TextSubtext(), TextToUpper(), TextToLower(), TextToPascal(), TextSplit()
+#define MAX_TEXT_UNICODE_CHARS       512        // Maximum number of unicode codepoints: GetCodepoints()
+#define MAX_TEXTSPLIT_COUNT          128        // Maximum number of substrings to split: TextSplit()
+
 
 //------------------------------------------------------------------------------------
 // Module: models - Configuration Flags
@@ -126,6 +184,7 @@
 // NOTE: Some generated meshes DO NOT include generated texture coordinates
 #define SUPPORT_MESH_GENERATION     1
 
+
 //------------------------------------------------------------------------------------
 // Module: audio - Configuration Flags
 //------------------------------------------------------------------------------------
@@ -137,6 +196,15 @@
 //#define SUPPORT_FILEFORMAT_FLAC     1
 #define SUPPORT_FILEFORMAT_MP3      1
 
+// audio: Configuration values
+//------------------------------------------------------------------------------------
+#define AUDIO_DEVICE_FORMAT    ma_format_f32    // Device output format (miniaudio: float-32bit)
+#define AUDIO_DEVICE_CHANNELS              2    // Device output channels: stereo
+#define AUDIO_DEVICE_SAMPLE_RATE       44100    // Device output sample rate
+
+#define DEFAULT_AUDIO_BUFFER_SIZE       4096    // Default audio buffer size for streaming
+#define MAX_AUDIO_BUFFER_POOL_CHANNELS    16    // Maximum number of audio pool channels
+
 //------------------------------------------------------------------------------------
 // Module: utils - Configuration Flags
 //------------------------------------------------------------------------------------
@@ -144,5 +212,11 @@
 // NOTE: By default LOG_DEBUG traces not shown
 #define SUPPORT_TRACELOG            1
 //#define SUPPORT_TRACELOG_DEBUG      1
+
+// utils: Configuration values
+//------------------------------------------------------------------------------------
+#define MAX_TRACELOG_MSG_LENGTH          128    // Max length of one trace-log message
+#define MAX_UWP_MESSAGES                 512    // Max UWP messages to process
+
 
 #endif  //defined(RAYLIB_CMAKE)

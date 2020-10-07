@@ -16,6 +16,7 @@
     <ClInclude Include="..\..\..\src\external\stb_rect_pack.h" />
     <ClInclude Include="..\..\..\src\external\stb_truetype.h" />
     <ClInclude Include="..\..\..\src\external\stb_vorbis.h" />
+    <ClInclude Include="..\..\..\src\uwp_events.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\..\..\src\core.c" />
@@ -25,5 +26,8 @@
     <ClCompile Include="..\..\..\src\text.c" />
     <ClCompile Include="..\..\..\src\textures.c" />
     <ClCompile Include="..\..\..\src\utils.c" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="packages.config" />
   </ItemGroup>
 </Project>

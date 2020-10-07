@@ -1,21 +1,12 @@
-/*******************************************************************************************
-*
-*   rPBR [shader] - Equirectangular to cubemap fragment shader
-*
-*   Copyright (c) 2017 Victor Fisac
-*
-**********************************************************************************************/
+#version 100
 
-#version 330
+precision mediump float;
 
 // Input vertex attributes (from vertex shader)
-in vec3 fragPosition;
+varying vec3 fragPosition;
 
 // Input uniform values
 uniform sampler2D equirectangularMap;
-
-// Output fragment color
-out vec4 finalColor;
 
 vec2 SampleSphericalMap(vec3 v)
 {
@@ -31,8 +22,8 @@ void main()
     vec2 uv = SampleSphericalMap(normalize(fragPosition));
 
     // Fetch color from texture map
-    vec3 color = texture(equirectangularMap, uv).rgb;
+    vec3 color = texture2D(equirectangularMap, uv).rgb;
 
     // Calculate final fragment color
-    finalColor = vec4(color, 1.0);
+    gl_FragColor = vec4(color, 1.0);
 }

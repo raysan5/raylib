@@ -56,7 +56,7 @@ int main(void)
     Model model3 = LoadModelFromMesh(sphere);
 
     // Load the shader
-    Shader shader = LoadShader(0, FormatText("resources/shaders/glsl%i/mask.fs", GLSL_VERSION));
+    Shader shader = LoadShader(0, TextFormat("resources/shaders/glsl%i/mask.fs", GLSL_VERSION));
     
     // Load and apply the diffuse texture (colour map)
     Texture texDiffuse = LoadTexture("resources/plasma.png");
@@ -118,8 +118,8 @@ int main(void)
 
             EndMode3D();
 
-            DrawRectangle(16, 698, MeasureText(FormatText("Frame: %i", framesCounter), 20) + 8, 42, BLUE);
-            DrawText(FormatText("Frame: %i", framesCounter), 20, 700, 20, WHITE);
+            DrawRectangle(16, 698, MeasureText(TextFormat("Frame: %i", framesCounter), 20) + 8, 42, BLUE);
+            DrawText(TextFormat("Frame: %i", framesCounter), 20, 700, 20, WHITE);
 
             DrawFPS(10, 10);
 

@@ -16,11 +16,16 @@
                 "args": [
                     "RAYLIB_PATH=C:/raylib/raylib",
                     "PROJECT_NAME=${fileBasenameNoExtension}",
+                    "OBJS=${fileBasenameNoExtension}.c",
+                    "BUILD_MODE=DEBUG"
                 ],
             },
             "osx": {
                 "args": [
-                    "RAYLIB_PATH=<path_to_raylib>/raylib"
+                    "RAYLIB_PATH=<path_to_raylib>/raylib",
+                    "PROJECT_NAME=${fileBasenameNoExtension}",
+                    "OBJS=${fileBasenameNoExtension}.c",
+                    "BUILD_MODE=DEBUG"
                 ],
             },
             "group": {
@@ -43,11 +48,14 @@
                 "args": [
                     "RAYLIB_PATH=C:/raylib/raylib",
                     "PROJECT_NAME=${fileBasenameNoExtension}",
+                    "OBJS=${fileBasenameNoExtension}.c"
                 ],
             },
             "osx": {
                 "args": [
                     "RAYLIB_PATH=<path_to_raylib>/raylib",
+                    "PROJECT_NAME=${fileBasenameNoExtension}",
+                    "OBJS=${fileBasenameNoExtension}.c"
                 ],
             },
             "group": "build",

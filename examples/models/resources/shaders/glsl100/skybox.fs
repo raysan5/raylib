@@ -1,31 +1,28 @@
-/*******************************************************************************************
-*
-*   rPBR [shader] - Background skybox fragment shader
-*
-*   Copyright (c) 2017 Victor Fisac
-*
-**********************************************************************************************/
+#version 100
 
-#version 330
+precision mediump float;
 
 // Input vertex attributes (from vertex shader)
-in vec3 fragPosition;
+varying vec3 fragPosition;
 
 // Input uniform values
 uniform samplerCube environmentMap;
-
-// Output fragment color
-out vec4 finalColor;
+uniform bool vflipped;
 
 void main()
 {
     // Fetch color from texture map
-    vec3 color = texture(environmentMap, fragPosition).rgb;
+    vec4 texelColor = vec4(0.0);
 
+    if (vflipped) texelColor = textureCube(environmentMap, vec3(fragPosition.x, -fragPosition.y, fragPosition.z));
+    else texelColor = textureCube(environmentMap, fragPosition);
+
+    vec3 color = vec3(texelColor.x, texelColor.y, texelColor.z);
+    
     // Apply gamma correction
     color = color/(color + vec3(1.0));
     color = pow(color, vec3(1.0/2.2));
 
     // Calculate final fragment color
-    finalColor = vec4(color, 1.0);
+    gl_FragColor = vec4(color, 1.0);
 }

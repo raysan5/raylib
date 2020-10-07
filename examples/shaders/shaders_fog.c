@@ -67,8 +67,8 @@ int main(void)
     modelC.materials[0].maps[MAP_DIFFUSE].texture = texture;
 
     // Load shader and set up some uniforms
-    Shader shader = LoadShader(FormatText("resources/shaders/glsl%i/base_lighting.vs", GLSL_VERSION), 
-                               FormatText("resources/shaders/glsl%i/fog.fs", GLSL_VERSION));
+    Shader shader = LoadShader(TextFormat("resources/shaders/glsl%i/base_lighting.vs", GLSL_VERSION), 
+                               TextFormat("resources/shaders/glsl%i/fog.fs", GLSL_VERSION));
     shader.locs[LOC_MATRIX_MODEL] = GetShaderLocation(shader, "matModel");
     shader.locs[LOC_VECTOR_VIEW] = GetShaderLocation(shader, "viewPos");
 

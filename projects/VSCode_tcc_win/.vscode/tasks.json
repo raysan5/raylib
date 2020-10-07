@@ -1,0 +1,37 @@
+{
+    // See https://go.microsoft.com/fwlink/?LinkId=733558
+    // for the documentation about the tasks.json format
+    "version": "2.0.0",
+    "windows": {
+        "options": {
+            "shell": {
+                "executable": "C:\\windows\\System32\\cmd.exe",
+                "args": [
+                    "/d", "/c"
+                ]
+            }
+        }
+    },
+    "tasks": [
+        {
+            "label": "build & run",
+            "type": "shell",
+            "command": "make.exe all workplaceFolder=${workspaceFolder} outputExe=${workspaceFolderBasename}.exe",
+            "args":[
+                "&& ${workspaceFolderBasename}.exe",
+            ],
+            "options": {
+                "env":{
+                    "PATH" : "C:\\raylib\\tcc\\;%PATH%"
+                }
+            },
+            "group": {
+                "kind": "build",
+                "isDefault": true
+            },
+            "problemMatcher": [
+                "$gcc"
+            ]
+        }
+    ]
+}

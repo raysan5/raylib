@@ -1,22 +1,14 @@
-/*******************************************************************************************
-*
-*   rPBR [shader] - Equirectangular to cubemap vertex shader
-*
-*   Copyright (c) 2017 Victor Fisac
-*
-**********************************************************************************************/
-
-#version 330
+#version 100
 
 // Input vertex attributes
-in vec3 vertexPosition;
+attribute vec3 vertexPosition;
 
 // Input uniform values
 uniform mat4 projection;
 uniform mat4 view;
 
 // Output vertex attributes (to fragment shader)
-out vec3 fragPosition;
+varying vec3 fragPosition;
 
 void main()
 {

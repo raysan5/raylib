@@ -20,7 +20,7 @@
 #define RLIGHTS_IMPLEMENTATION
 #include "rlights.h"
 
-#define CUBEMAP_SIZE         512        // Cubemap texture size
+#define CUBEMAP_SIZE        1024        // Cubemap texture size
 #define IRRADIANCE_SIZE       32        // Irradiance texture size
 #define PREFILTERED_SIZE     256        // Prefiltered HDR environment texture size
 #define BRDF_SIZE            512        // BRDF LUT texture size
@@ -51,9 +51,8 @@ int main(void)
 
     // Mesh tangents are generated... and uploaded to GPU
     // NOTE: New VBO for tangents is generated at default location and also binded to mesh VAO
-    MeshTangents(&model.meshes[0]);
+    //MeshTangents(&model.meshes[0]);
 
-    UnloadMaterial(model.materials[0]); // get rid of default material
     model.materials[0] = LoadMaterialPBR((Color){ 255, 255, 255, 255 }, 1.0f, 1.0f);
 
     // Create lights
@@ -102,18 +101,7 @@ int main(void)
 
     // De-Initialization
     //--------------------------------------------------------------------------------------
-
-    // Shaders and textures must be unloaded by user, 
-    // they could be in use by other models
-    UnloadTexture(model.materials[0].maps[MAP_ALBEDO].texture);
-    UnloadTexture(model.materials[0].maps[MAP_NORMAL].texture);
-    UnloadTexture(model.materials[0].maps[MAP_METALNESS].texture);
-    UnloadTexture(model.materials[0].maps[MAP_ROUGHNESS].texture);
-    UnloadTexture(model.materials[0].maps[MAP_OCCLUSION].texture);
-    UnloadTexture(model.materials[0].maps[MAP_IRRADIANCE].texture);
-    UnloadTexture(model.materials[0].maps[MAP_PREFILTER].texture);
-    UnloadTexture(model.materials[0].maps[MAP_BRDF].texture);
-    UnloadShader(model.materials[0].shader);
+    UnloadMaterial(model.materials[0]); // Unload material: shader and textures
 
     UnloadModel(model);         // Unload model
 
@@ -129,6 +117,7 @@ static Material LoadMaterialPBR(Color albedo, float metalness, float roughness)
 {
     Material mat = LoadMaterialDefault();   // Initialize material to default
 
+    // Load PBR shader (requires several maps)
 #if defined(PLATFORM_DESKTOP)
     mat.shader = LoadShader("resources/shaders/glsl330/pbr.vs", "resources/shaders/glsl330/pbr.fs");
 #else   // PLATFORM_RPI, PLATFORM_ANDROID, PLATFORM_WEB
@@ -160,60 +149,13 @@ static Material LoadMaterialPBR(Color albedo, float metalness, float roughness)
     mat.maps[MAP_ROUGHNESS].texture = LoadTexture("resources/pbr/trooper_roughness.png");
     mat.maps[MAP_OCCLUSION].texture = LoadTexture("resources/pbr/trooper_ao.png");
     
-    // Load equirectangular to cubemap shader
-#if defined(PLATFORM_DESKTOP)
-    Shader shdrCubemap = LoadShader("resources/shaders/glsl330/cubemap.vs", "resources/shaders/glsl330/cubemap.fs");
-#else   // PLATFORM_RPI, PLATFORM_ANDROID, PLATFORM_WEB
-    Shader shdrCubemap = LoadShader("resources/shaders/glsl100/cubemap.vs", "resources/shaders/glsl100/cubemap.fs");
-#endif
-
-    // Load irradiance (GI) calculation shader
-#if defined(PLATFORM_DESKTOP)
-    Shader shdrIrradiance = LoadShader("resources/shaders/glsl330/skybox.vs", "resources/shaders/glsl330/irradiance.fs");
-#else   // PLATFORM_RPI, PLATFORM_ANDROID, PLATFORM_WEB
-    Shader shdrIrradiance = LoadShader("resources/shaders/glsl100/skybox.vs", "resources/shaders/glsl100/irradiance.fs");
-#endif
-
-    // Load reflection prefilter calculation shader
-#if defined(PLATFORM_DESKTOP)
-    Shader shdrPrefilter = LoadShader("resources/shaders/glsl330/skybox.vs", "resources/shaders/glsl330/prefilter.fs");
-#else
-    Shader shdrPrefilter = LoadShader("resources/shaders/glsl100/skybox.vs", "resources/shaders/glsl100/prefilter.fs");
-#endif
-
-    // Load bidirectional reflectance distribution function shader
-#if defined(PLATFORM_DESKTOP)
-    Shader shdrBRDF = LoadShader("resources/shaders/glsl330/brdf.vs", "resources/shaders/glsl330/brdf.fs");
-#else
-    Shader shdrBRDF = LoadShader("resources/shaders/glsl100/brdf.vs", "resources/shaders/glsl100/brdf.fs");
-#endif
-    
-    // Setup required shader locations
-    SetShaderValue(shdrCubemap, GetShaderLocation(shdrCubemap, "equirectangularMap"), (int[1]){ 0 }, UNIFORM_INT);
-    SetShaderValue(shdrIrradiance, GetShaderLocation(shdrIrradiance, "environmentMap"), (int[1]){ 0 }, UNIFORM_INT);
-    SetShaderValue(shdrPrefilter, GetShaderLocation(shdrPrefilter, "environmentMap"), (int[1]){ 0 }, UNIFORM_INT);
-
-    Texture2D texHDR = LoadTexture("resources/dresden_square.hdr");
-    Texture2D cubemap = GenTextureCubemap(shdrCubemap, texHDR, CUBEMAP_SIZE);
-    mat.maps[MAP_IRRADIANCE].texture = GenTextureIrradiance(shdrIrradiance, cubemap, IRRADIANCE_SIZE);
-    mat.maps[MAP_PREFILTER].texture = GenTexturePrefilter(shdrPrefilter, cubemap, PREFILTERED_SIZE);
-    mat.maps[MAP_BRDF].texture = GenTextureBRDF(shdrBRDF, BRDF_SIZE);
-    UnloadTexture(cubemap);
-    UnloadTexture(texHDR);
-
-    // Unload already used shaders (to create specific textures)
-    UnloadShader(shdrCubemap);
-    UnloadShader(shdrIrradiance);
-    UnloadShader(shdrPrefilter);
-    UnloadShader(shdrBRDF);
-
     // Set textures filtering for better quality
     SetTextureFilter(mat.maps[MAP_ALBEDO].texture, FILTER_BILINEAR);
     SetTextureFilter(mat.maps[MAP_NORMAL].texture, FILTER_BILINEAR);
     SetTextureFilter(mat.maps[MAP_METALNESS].texture, FILTER_BILINEAR);
     SetTextureFilter(mat.maps[MAP_ROUGHNESS].texture, FILTER_BILINEAR);
     SetTextureFilter(mat.maps[MAP_OCCLUSION].texture, FILTER_BILINEAR);
-
+    
     // Enable sample usage in shader for assigned textures
     SetShaderValue(mat.shader, GetShaderLocation(mat.shader, "albedo.useSampler"), (int[1]){ 1 }, UNIFORM_INT);
     SetShaderValue(mat.shader, GetShaderLocation(mat.shader, "normals.useSampler"), (int[1]){ 1 }, UNIFORM_INT);
@@ -232,6 +174,59 @@ static Material LoadMaterialPBR(Color albedo, float metalness, float roughness)
     mat.maps[MAP_OCCLUSION].value = 1.0f;
     mat.maps[MAP_EMISSION].value = 0.5f;
     mat.maps[MAP_HEIGHT].value = 0.5f;
+    
+    // Generate cubemap from panorama texture
+    //--------------------------------------------------------------------------------------------------------
+    Texture2D panorama = LoadTexture("resources/dresden_square.hdr");
+    // Load equirectangular to cubemap shader
+#if defined(PLATFORM_DESKTOP)
+    Shader shdrCubemap = LoadShader("resources/shaders/glsl330/cubemap.vs", "resources/shaders/glsl330/cubemap.fs");
+#else   // PLATFORM_RPI, PLATFORM_ANDROID, PLATFORM_WEB
+    Shader shdrCubemap = LoadShader("resources/shaders/glsl100/cubemap.vs", "resources/shaders/glsl100/cubemap.fs");
+#endif
+    SetShaderValue(shdrCubemap, GetShaderLocation(shdrCubemap, "equirectangularMap"), (int[1]){ 0 }, UNIFORM_INT);
+    TextureCubemap cubemap = GenTextureCubemap(shdrCubemap, panorama, CUBEMAP_SIZE, UNCOMPRESSED_R32G32B32);
+    UnloadTexture(panorama);
+    UnloadShader(shdrCubemap);
+    //--------------------------------------------------------------------------------------------------------
+    
+    // Generate irradiance map from cubemap texture
+    //--------------------------------------------------------------------------------------------------------
+    // Load irradiance (GI) calculation shader
+#if defined(PLATFORM_DESKTOP)
+    Shader shdrIrradiance = LoadShader("resources/shaders/glsl330/skybox.vs", "resources/shaders/glsl330/irradiance.fs");
+#else   // PLATFORM_RPI, PLATFORM_ANDROID, PLATFORM_WEB
+    Shader shdrIrradiance = LoadShader("resources/shaders/glsl100/skybox.vs", "resources/shaders/glsl100/irradiance.fs");
+#endif
+    SetShaderValue(shdrIrradiance, GetShaderLocation(shdrIrradiance, "environmentMap"), (int[1]){ 0 }, UNIFORM_INT);
+    mat.maps[MAP_IRRADIANCE].texture = GenTextureIrradiance(shdrIrradiance, cubemap, IRRADIANCE_SIZE);
+    UnloadShader(shdrIrradiance);
+    //--------------------------------------------------------------------------------------------------------
+    
+    // Generate prefilter map from cubemap texture
+    //--------------------------------------------------------------------------------------------------------
+    // Load reflection prefilter calculation shader
+#if defined(PLATFORM_DESKTOP)
+    Shader shdrPrefilter = LoadShader("resources/shaders/glsl330/skybox.vs", "resources/shaders/glsl330/prefilter.fs");
+#else
+    Shader shdrPrefilter = LoadShader("resources/shaders/glsl100/skybox.vs", "resources/shaders/glsl100/prefilter.fs");
+#endif
+    SetShaderValue(shdrPrefilter, GetShaderLocation(shdrPrefilter, "environmentMap"), (int[1]){ 0 }, UNIFORM_INT);
+    mat.maps[MAP_PREFILTER].texture = GenTexturePrefilter(shdrPrefilter, cubemap, PREFILTERED_SIZE);
+    UnloadTexture(cubemap);
+    UnloadShader(shdrPrefilter);
+    //--------------------------------------------------------------------------------------------------------
+    
+    // Generate BRDF (bidirectional reflectance distribution function) texture (using shader)
+    //--------------------------------------------------------------------------------------------------------
+#if defined(PLATFORM_DESKTOP)
+    Shader shdrBRDF = LoadShader("resources/shaders/glsl330/brdf.vs", "resources/shaders/glsl330/brdf.fs");
+#else
+    Shader shdrBRDF = LoadShader("resources/shaders/glsl100/brdf.vs", "resources/shaders/glsl100/brdf.fs");
+#endif
+    mat.maps[MAP_BRDF].texture = GenTextureBRDF(shdrBRDF, BRDF_SIZE);
+    UnloadShader(shdrBRDF);
+    //--------------------------------------------------------------------------------------------------------
 
     return mat;
 }

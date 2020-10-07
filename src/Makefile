@@ -4,11 +4,12 @@
 #
 #  Platforms supported:
 #    PLATFORM_DESKTOP:  Windows (Win32, Win64)
-#    PLATFORM_DESKTOP:  Linux (32 and 64 bit)
-#    PLATFORM_DESKTOP:  OSX/macOS
+#    PLATFORM_DESKTOP:  Linux (i386, x64)
+#    PLATFORM_DESKTOP:  OSX/macOS (arm64, x86_64)
 #    PLATFORM_DESKTOP:  FreeBSD, OpenBSD, NetBSD, DragonFly
-#    PLATFORM_ANDROID:  Android (ARM, ARM64)
+#    PLATFORM_ANDROID:  Android (arm, i686, arm64, x86_64)
 #    PLATFORM_RPI:      Raspberry Pi (Raspbian)
+#    PLATFORM_DRM:      Linux native mode, including Raspberry Pi 4 with V3D fkms driver
 #    PLATFORM_WEB:      HTML5 (Chrome, Firefox)
 #
 #  Many thanks to Milan Nikolic (@gen2brain) for implementing Android platform pipeline.
@@ -42,22 +43,31 @@
 .PHONY: all clean install uninstall
 
 # Define required raylib variables
-RAYLIB_VERSION     = 3.0.0
-RAYLIB_API_VERSION = 300
+RAYLIB_VERSION        = 3.1.0
+RAYLIB_API_VERSION    = 310
 
-# See below for alternatives.
-RAYLIB_PATH        = ..
+# Define raylib source code path
+RAYLIB_SRC_PATH      ?= ../src
 
-# Define default options
-
-# One of PLATFORM_DESKTOP, PLATFORM_RPI, PLATFORM_ANDROID, PLATFORM_WEB
-PLATFORM             ?= PLATFORM_DESKTOP
+# Define output directory for compiled library, defaults to src directory
+# NOTE: If externally provided, make sure directory exists
+RAYLIB_RELEASE_PATH  ?= $(RAYLIB_SRC_PATH)
 
 # Library type used for raylib: STATIC (.a) or SHARED (.so/.dll)
 RAYLIB_LIBTYPE       ?= STATIC
 
 # Build mode for library: DEBUG or RELEASE
 RAYLIB_BUILD_MODE    ?= RELEASE
+
+# Build output name for the library
+RAYLIB_LIB_NAME      ?= raylib
+
+# Define resource file for DLL properties
+RAYLIB_RES_FILE      ?= ./raylib.dll.rc.data
+
+# Define raylib platform
+# Options:  PLATFORM_DESKTOP, PLATFORM_RPI, PLATFORM_ANDROID, PLATFORM_WEB
+PLATFORM             ?= PLATFORM_DESKTOP
 
 # Include raylib modules on compilation
 # NOTE: Some programs like tools could not require those modules
@@ -66,8 +76,8 @@ RAYLIB_MODULE_MODELS ?= TRUE
 RAYLIB_MODULE_RAYGUI ?= FALSE
 RAYLIB_MODULE_PHYSAC ?= FALSE
 
-RAYLIB_MODULE_RAYGUI_PATH ?= .
-RAYLIB_MODULE_PHYSAC_PATH ?= .
+RAYLIB_MODULE_RAYGUI_PATH ?= $(RAYLIB_SRC_PATH)/../../raygui/src
+RAYLIB_MODULE_PHYSAC_PATH ?= $(RAYLIB_SRC_PATH)
 
 # Use external GLFW library instead of rglfw module
 # TODO: Review usage of examples on Linux.
@@ -76,12 +86,6 @@ USE_EXTERNAL_GLFW    ?= FALSE
 # Use Wayland display server protocol on Linux desktop
 # by default it uses X11 windowing system
 USE_WAYLAND_DISPLAY  ?= FALSE
-
-# See below for more GRAPHICS options.
-
-# See below for RAYLIB_RELEASE_PATH.
-
-# See install target for *_INSTALL_PATH locations.
 
 # Use cross-compiler for PLATFORM_RPI
 ifeq ($(PLATFORM),PLATFORM_RPI)
@@ -134,14 +138,20 @@ ifeq ($(PLATFORM),PLATFORM_RPI)
         PLATFORM_OS = LINUX
     endif
 endif
+ifeq ($(PLATFORM),PLATFORM_DRM)
+    UNAMEOS = $(shell uname)
+    ifeq ($(UNAMEOS),Linux)
+        PLATFORM_OS = LINUX
+    endif
+endif
 
-# RAYLIB_PATH adjustment for different platforms.
+# RAYLIB_SRC_PATH adjustment for different platforms.
 # If using GNU make, we can get the full path to the top of the tree. Windows? BSD?
 # Required for ldconfig or other tools that do not perform path expansion.
 ifeq ($(PLATFORM),PLATFORM_DESKTOP)
     ifeq ($(PLATFORM_OS),LINUX)
-        RAYLIB_PREFIX ?= ..
-        RAYLIB_PATH    = $(realpath $(RAYLIB_PREFIX))
+        RAYLIB_PREFIX  ?= ..
+        RAYLIB_SRC_PATH = $(realpath $(RAYLIB_PREFIX))
     endif
 endif
 
@@ -150,32 +160,35 @@ ifeq ($(PLATFORM),PLATFORM_WEB)
     EMSDK_PATH         ?= C:/emsdk
     EMSCRIPTEN_PATH    ?= $(EMSDK_PATH)/upstream/emscripten
     CLANG_PATH          = $(EMSDK_PATH)/upstream/bin
-    PYTHON_PATH         = $(EMSDK_PATH)/python/3.7.4_64bit
-    NODE_PATH           = $(EMSDK_PATH)/node/12.9.1_64bit/bin
+    PYTHON_PATH         = $(EMSDK_PATH)/python/3.7.4-pywin32_64bit
+    NODE_PATH           = $(EMSDK_PATH)/node/12.18.1_64bit/bin
     export PATH         = $(EMSDK_PATH);$(EMSCRIPTEN_PATH);$(CLANG_PATH);$(NODE_PATH);$(PYTHON_PATH);C:\raylib\MinGW\bin:$$(PATH)
 endif
 
 ifeq ($(PLATFORM),PLATFORM_ANDROID)
-    # Android architecture: ARM64
-    # Starting at 2019 using ARM64 is mandatory for published apps,
+    # Android architecture
+    # Starting at 2019 using arm64 is mandatory for published apps,
     # and minimum required target API is Android 9 (API level 28)
-    ANDROID_ARCH ?= ARM
-    ANDROID_API_VERSION = 28
-
+    ANDROID_ARCH ?= arm
+    ANDROID_API_VERSION ?= 28
+    
     # Android required path variables
     # NOTE: Starting with Android NDK r21, no more toolchain generation is required, NDK is the toolchain on itself
     ifeq ($(OS),Windows_NT)
-        ANDROID_NDK = C:/android-ndk-r21
+        ANDROID_NDK ?= C:/android-ndk
         ANDROID_TOOLCHAIN = $(ANDROID_NDK)/toolchains/llvm/prebuilt/windows-x86_64
     else
-        ANDROID_NDK = /usr/lib/android/ndk
-        ANDROID_TOOLCHAIN = $(ANDROID_NDK)/toolchains/llvm/prebuilt/linux
+        ANDROID_NDK ?= /usr/lib/android/ndk
+        ANDROID_TOOLCHAIN = $(ANDROID_NDK)/toolchains/llvm/prebuilt/linux-x86_64
     endif
+    
+    # NOTE: Sysroot can also be reference from $(ANDROID_NDK)/sysroot
+    ANDROID_SYSROOT ?= $(ANDROID_TOOLCHAIN)/sysroot
 
-    ifeq ($(ANDROID_ARCH),ARM)
+    ifeq ($(ANDROID_ARCH),arm)
         ANDROID_ARCH_NAME = armeabi-v7a
     endif
-    ifeq ($(ANDROID_ARCH),ARM64)
+    ifeq ($(ANDROID_ARCH),arm64)
         ANDROID_ARCH_NAME = arm64-v8a
     endif
     ifeq ($(ANDROID_ARCH),x86)
@@ -184,14 +197,8 @@ ifeq ($(PLATFORM),PLATFORM_ANDROID)
     ifeq ($(ANDROID_ARCH),x86_64)
         ANDROID_ARCH_NAME = x86_64
     endif
+    
 endif
-
-# Define raylib source code path
-RAYLIB_SRC_PATH ?= $(RAYLIB_PATH)/src
-
-# Define output directory for compiled library, defaults to src directory
-# NOTE: If externally provided, make sure directory exists
-RAYLIB_RELEASE_PATH  ?= $(RAYLIB_PATH)/src
 
 # Define raylib graphics api depending on selected platform
 ifeq ($(PLATFORM),PLATFORM_DESKTOP)
@@ -202,6 +209,10 @@ ifeq ($(PLATFORM),PLATFORM_DESKTOP)
 endif
 ifeq ($(PLATFORM),PLATFORM_RPI)
     # On RPI OpenGL ES 2.0 must be used
+    GRAPHICS = GRAPHICS_API_OPENGL_ES2
+endif
+ifeq ($(PLATFORM),PLATFORM_DRM)
+    # On DRM OpenGL ES 2.0 must be used
     GRAPHICS = GRAPHICS_API_OPENGL_ES2
 endif
 ifeq ($(PLATFORM),PLATFORM_WEB)
@@ -221,7 +232,7 @@ ifeq ($(PLATFORM),PLATFORM_DESKTOP)
     ifeq ($(PLATFORM_OS),OSX)
         # OSX default compiler
         CC = clang
-        GLFW_CFLAGS = -x objective-c
+        GLFW_OSX = -x objective-c
     endif
     ifeq ($(PLATFORM_OS),BSD)
         # FreeBSD, OpenBSD, NetBSD, DragonFly default compiler
@@ -239,14 +250,15 @@ endif
 ifeq ($(PLATFORM),PLATFORM_WEB)
     # HTML5 emscripten compiler
     CC = emcc
+    AR = emar
 endif
 ifeq ($(PLATFORM),PLATFORM_ANDROID)
     # Android toolchain (must be provided for desired architecture and compiler)
-    ifeq ($(ANDROID_ARCH),ARM)
+    ifeq ($(ANDROID_ARCH),arm)
         CC = $(ANDROID_TOOLCHAIN)/bin/armv7a-linux-androideabi$(ANDROID_API_VERSION)-clang
         AR = $(ANDROID_TOOLCHAIN)/bin/arm-linux-androideabi-ar
     endif
-    ifeq ($(ANDROID_ARCH),ARM64)
+    ifeq ($(ANDROID_ARCH),arm64)
         CC = $(ANDROID_TOOLCHAIN)/bin/aarch64-linux-android$(ANDROID_API_VERSION)-clang
         AR = $(ANDROID_TOOLCHAIN)/bin/aarch64-linux-android-ar
     endif
@@ -259,7 +271,6 @@ ifeq ($(PLATFORM),PLATFORM_ANDROID)
         AR = $(ANDROID_TOOLCHAIN)/bin/x86_64-linux-android-ar
     endif
 endif
-
 
 # Define compiler flags:
 #  -O1                      defines optimization level
@@ -280,8 +291,8 @@ else
     CFLAGS += -std=c99
 endif
 
-ifeq ($(PLATFORM_OS),LINUX)
-	CFLAGS += -fPIC
+ifeq ($(PLATFORM_OS), LINUX)
+    CFLAGS += -fPIC
 endif
 
 ifeq ($(RAYLIB_BUILD_MODE),DEBUG)
@@ -326,10 +337,10 @@ ifeq ($(PLATFORM),PLATFORM_WEB)
 endif
 ifeq ($(PLATFORM),PLATFORM_ANDROID)
     # Compiler flags for arquitecture
-    ifeq ($(ANDROID_ARCH),ARM)
+    ifeq ($(ANDROID_ARCH),arm)
         CFLAGS += -march=armv7-a -mfloat-abi=softfp -mfpu=vfpv3-d16
     endif
-    ifeq ($(ANDROID_ARCH),ARM64)
+    ifeq ($(ANDROID_ARCH),arm64)
         CFLAGS += -target aarch64 -mfix-cortex-a53-835769
     endif
     ifeq ($(ANDROID_ARCH), x86)
@@ -353,6 +364,11 @@ ifeq ($(RAYLIB_LIBTYPE),SHARED)
     # BE CAREFUL: It seems that for gcc -fpic is not the same as -fPIC
     # MinGW32 just doesn't need -fPIC, it shows warnings
     CFLAGS += -fPIC -DBUILD_LIBTYPE_SHARED
+endif
+ifeq ($(PLATFORM),PLATFORM_DRM)
+    # without EGL_NO_X11 eglplatform.h tears Xlib.h in which tears X.h in
+    # which contains a conflicting type Font
+    CFLAGS += -DEGL_NO_X11
 endif
 
 # Use Wayland display on Linux desktop
@@ -390,18 +406,34 @@ ifeq ($(PLATFORM),PLATFORM_RPI)
     INCLUDE_PATHS += -I$(RPI_TOOLCHAIN_SYSROOT)/opt/vc/include/interface/vcos/pthreads
     INCLUDE_PATHS += -I$(RPI_TOOLCHAIN_SYSROOT)/opt/vc/include/interface/vcos/pthreads
 endif
+ifeq ($(PLATFORM),PLATFORM_DRM)
+    # DRM required libraries
+    INCLUDE_PATHS += -I/usr/include/libdrm
+endif
 ifeq ($(PLATFORM),PLATFORM_ANDROID)
-    NATIVE_APP_GLUE = $(RAYLIB_RELEASE_PATH)/external/android/native_app_glue
-    #NATIVE_APP_GLUE = $(ANDROID_NDK)/sources/android/native_app_glue
-    # Android required libraries
-    INCLUDE_PATHS += -I$(ANDROID_TOOLCHAIN)/sysroot/usr/include
+    NATIVE_APP_GLUE = $(ANDROID_NDK)/sources/android/native_app_glue
     # Include android_native_app_glue.h
     INCLUDE_PATHS += -I$(NATIVE_APP_GLUE)
+    
+    # Android required libraries
+    INCLUDE_PATHS += -I$(ANDROID_SYSROOT)/usr/include
+    ifeq ($(ANDROID_ARCH),arm)
+        INCLUDE_PATHS += -I$(ANDROID_SYSROOT)/usr/include/arm-linux-androideabi
+    endif
+    ifeq ($(ANDROID_ARCH),arm64)
+        INCLUDE_PATHS += -I$(ANDROID_SYSROOT)/usr/include/aarch64-linux-android
+    endif
+    ifeq ($(ANDROID_ARCH),x86)
+        INCLUDE_PATHS += -I$(ANDROID_SYSROOT)/usr/include/i686-linux-android
+    endif
+    ifeq ($(ANDROID_ARCH),x86_64)
+        INCLUDE_PATHS += -I$(ANDROID_SYSROOT)/usr/include/x86_64-linux-android
+    endif
 endif
 
 # Define linker options
 ifeq ($(PLATFORM),PLATFORM_ANDROID)
-    LDFLAGS = -Wl,-soname,libraylib.$(API_VERSION).so -Wl,--exclude-libs,libatomic.a
+    LDFLAGS += -Wl,-soname,libraylib.$(API_VERSION).so -Wl,--exclude-libs,libatomic.a
     LDFLAGS += -Wl,--build-id -Wl,-z,noexecstack -Wl,-z,relro -Wl,-z,now -Wl,--warn-shared-textrel -Wl,--fatal-warnings
     # Force linking of library module to define symbol
     LDFLAGS += -u ANativeActivity_onCreate
@@ -410,7 +442,7 @@ ifeq ($(PLATFORM),PLATFORM_ANDROID)
     # Avoid unresolved symbol pointing to external main()
     LDFLAGS += -Wl,-undefined,dynamic_lookup
 
-    LDLIBS = -llog -landroid -lEGL -lGLESv2 -lOpenSLES -lc -lm
+    LDLIBS += -llog -landroid -lEGL -lGLESv2 -lOpenSLES -lc -lm
 endif
 
 # Define all object files required with a wildcard
@@ -445,93 +477,81 @@ ifeq ($(RAYLIB_MODULE_PHYSAC),TRUE)
 endif
 
 ifeq ($(PLATFORM),PLATFORM_ANDROID)
-    OBJS += external/android/native_app_glue/android_native_app_glue.o
+    OBJS += android_native_app_glue.o
 endif
 
 # Default target entry
 all: raylib
 
-# Generate standalone Android toolchain
-# NOTE: If the host system is Windows or Linux, generation is different
-generate_android_toolchain:
-ifeq ($(PLATFORM_OS),WINDOWS)
-    # NOTE: python should be available in the path
-    ifeq ($(ANDROID_ARCH),ARM)
-		$(ANDROID_NDK)/build/tools/python make_standalone_toolchain.py --arch arm --api $(ANDROID_API_VERSION) --install-dir $(ANDROID_TOOLCHAIN)
-    endif
-    ifeq ($(ANDROID_ARCH),ARM64)
-		$(ANDROID_NDK)/build/tools/python make_standalone_toolchain.py --arch arm64 --api $(ANDROID_API_VERSION) --install-dir $(ANDROID_TOOLCHAIN)
-    endif
-endif
-ifeq ($(PLATFORM_OS),LINUX)
-    ifeq ($(ANDROID_ARCH),ARM)
-		$(ANDROID_NDK)/build/tools/make-standalone-toolchain.sh --platform=android-$(ANDROID_API_VERSION) --toolchain=arm-linux-androideabi-4.9 --use-llvm --install-dir=$(ANDROID_TOOLCHAIN)
-    endif
-    ifeq ($(ANDROID_ARCH),ARM64)
-		$(ANDROID_NDK)/build/tools/make-standalone-toolchain.sh --platform=android-$(ANDROID_API_VERSION) --toolchain=aarch64-linux-androideabi-4.9 --use-llvm --install-dir=$(ANDROID_TOOLCHAIN)
-    endif
-endif
-
 # Compile raylib library
 # NOTE: Release directory is created if not exist
 raylib: $(OBJS)
 ifeq ($(PLATFORM),PLATFORM_WEB)
-    # Compile raylib for web.
-	$(CC) -O1 $(OBJS) -o $(RAYLIB_RELEASE_PATH)/libraylib.bc
-	@echo "raylib library generated (libraylib.bc)!"
+    # Compile raylib libray for web
+    #$(CC) $(OBJS) -r -o $(RAYLIB_RELEASE_PATH)/lib$(RAYLIB_LIB_NAME).bc
+	$(AR) rcs $(RAYLIB_RELEASE_PATH)/lib$(RAYLIB_LIB_NAME).a $(OBJS)
+	@echo "raylib library generated (lib$(RAYLIB_LIB_NAME).a)!"
 else
     ifeq ($(RAYLIB_LIBTYPE),SHARED)
         ifeq ($(PLATFORM),PLATFORM_DESKTOP)
             ifeq ($(PLATFORM_OS),WINDOWS)
-                # TODO: Compile resource file raylib.dll.rc for linkage on raylib.dll generation
-				$(CC) -shared -o $(RAYLIB_RELEASE_PATH)/raylib.dll $(OBJS) $(RAYLIB_RELEASE_PATH)/raylib.dll.rc.data -L$(RAYLIB_RELEASE_PATH) -static-libgcc -lopengl32 -lgdi32 -lwinmm -Wl,--out-implib,$(RAYLIB_RELEASE_PATH)/libraylib.dll.a
-				@echo "raylib dynamic library (raylib.dll) and import library (libraylibdll.a) generated!"
+                # NOTE: Linking with provided resource file
+				$(CC) -shared -o $(RAYLIB_RELEASE_PATH)/$(RAYLIB_LIB_NAME).dll $(OBJS) $(RAYLIB_RES_FILE) $(LDFLAGS) -static-libgcc -lopengl32 -lgdi32 -lwinmm -Wl,--out-implib,$(RAYLIB_RELEASE_PATH)/lib$(RAYLIB_LIB_NAME)dll.a
+				@echo "raylib dynamic library ($(RAYLIB_LIB_NAME).dll) and import library (lib$(RAYLIB_LIB_NAME)dll.a) generated!"
             endif
             ifeq ($(PLATFORM_OS),LINUX)
                 # Compile raylib shared library version $(RAYLIB_VERSION).
                 # WARNING: you should type "make clean" before doing this target
-				$(CC) -shared -o $(RAYLIB_RELEASE_PATH)/libraylib.so.$(RAYLIB_VERSION) $(OBJS) -Wl,-soname,libraylib.so.$(RAYLIB_API_VERSION) -lGL -lc -lm -lpthread -ldl -lrt $(LDLIBS)
-				@echo "raylib shared library generated (libraylib.so.$(RAYLIB_VERSION)) in $(RAYLIB_RELEASE_PATH)!"
-				cd $(RAYLIB_RELEASE_PATH) && ln -fsv libraylib.so.$(RAYLIB_VERSION) libraylib.so.$(RAYLIB_API_VERSION)
-				cd $(RAYLIB_RELEASE_PATH) && ln -fsv libraylib.so.$(RAYLIB_API_VERSION) libraylib.so
+				$(CC) -shared -o $(RAYLIB_RELEASE_PATH)/lib$(RAYLIB_LIB_NAME).so.$(RAYLIB_VERSION) $(OBJS) $(LDFLAGS) -Wl,-soname,lib$(RAYLIB_LIB_NAME).so.$(RAYLIB_API_VERSION) -lGL -lc -lm -lpthread -ldl -lrt $(LDLIBS)
+				@echo "raylib shared library generated (lib$(RAYLIB_LIB_NAME).so.$(RAYLIB_VERSION)) in $(RAYLIB_RELEASE_PATH)!"
+				cd $(RAYLIB_RELEASE_PATH) && ln -fsv lib$(RAYLIB_LIB_NAME).so.$(RAYLIB_VERSION) lib$(RAYLIB_LIB_NAME).so.$(RAYLIB_API_VERSION)
+				cd $(RAYLIB_RELEASE_PATH) && ln -fsv lib$(RAYLIB_LIB_NAME).so.$(RAYLIB_API_VERSION) lib$(RAYLIB_LIB_NAME).so
             endif
             ifeq ($(PLATFORM_OS),OSX)
-				$(CC) -dynamiclib -o $(RAYLIB_RELEASE_PATH)/libraylib.$(RAYLIB_VERSION).dylib $(OBJS) -compatibility_version $(RAYLIB_API_VERSION) -current_version $(RAYLIB_VERSION) -framework OpenGL -framework Cocoa -framework IOKit -framework CoreAudio -framework CoreVideo 
-				install_name_tool -id "libraylib.$(VERSION).dylib" $(RAYLIB_RELEASE_PATH)/libraylib.$(RAYLIB_VERSION).dylib
-				@echo "raylib shared library generated (libraylib.$(RAYLIB_VERSION).dylib)!"
-				cd $(RAYLIB_RELEASE_PATH) && ln -fs libraylib.$(RAYLIB_VERSION).dylib libraylib.$(RAYLIB_API_VERSION).dylib
-				cd $(RAYLIB_RELEASE_PATH) && ln -fs libraylib.$(RAYLIB_VERSION).dylib libraylib.dylib
+				$(CC) -dynamiclib -o $(RAYLIB_RELEASE_PATH)/lib$(RAYLIB_LIB_NAME).$(RAYLIB_VERSION).dylib $(OBJS) $(LDFLAGS) -compatibility_version $(RAYLIB_API_VERSION) -current_version $(RAYLIB_VERSION) -framework OpenGL -framework Cocoa -framework IOKit -framework CoreAudio -framework CoreVideo 
+				install_name_tool -id "lib$(RAYLIB_LIB_NAME).$(VERSION).dylib" $(RAYLIB_RELEASE_PATH)/lib$(RAYLIB_LIB_NAME).$(RAYLIB_VERSION).dylib
+				@echo "raylib shared library generated (lib$(RAYLIB_LIB_NAME).$(RAYLIB_VERSION).dylib)!"
+				cd $(RAYLIB_RELEASE_PATH) && ln -fs lib$(RAYLIB_LIB_NAME).$(RAYLIB_VERSION).dylib lib$(RAYLIB_LIB_NAME).$(RAYLIB_API_VERSION).dylib
+				cd $(RAYLIB_RELEASE_PATH) && ln -fs lib$(RAYLIB_LIB_NAME).$(RAYLIB_VERSION).dylib lib$(RAYLIB_LIB_NAME).dylib
             endif
             ifeq ($(PLATFORM_OS),BSD)
                 # WARNING: you should type "gmake clean" before doing this target
-				$(CC) -shared -o $(RAYLIB_RELEASE_PATH)/libraylib.$(RAYLIB_VERSION).so $(OBJS) -Wl,-soname,libraylib.$(RAYLIB_API_VERSION).so -lGL -lpthread
-				@echo "raylib shared library generated (libraylib.$(RAYLIB_VERSION).so)!"
-				cd $(RAYLIB_RELEASE_PATH) && ln -fs libraylib.$(RAYLIB_VERSION).so libraylib.$(RAYLIB_API_VERSION).so
-				cd $(RAYLIB_RELEASE_PATH) && ln -fs libraylib.$(RAYLIB_VERSION).so libraylib.so
+				$(CC) -shared -o $(RAYLIB_RELEASE_PATH)/lib$(RAYLIB_LIB_NAME).$(RAYLIB_VERSION).so $(OBJS) $(LDFLAGS) -Wl,-soname,lib$(RAYLIB_LIB_NAME).$(RAYLIB_API_VERSION).so -lGL -lpthread
+				@echo "raylib shared library generated (lib$(RAYLIB_LIB_NAME).$(RAYLIB_VERSION).so)!"
+				cd $(RAYLIB_RELEASE_PATH) && ln -fs lib$(RAYLIB_LIB_NAME).$(RAYLIB_VERSION).so lib$(RAYLIB_LIB_NAME).$(RAYLIB_API_VERSION).so
+				cd $(RAYLIB_RELEASE_PATH) && ln -fs lib$(RAYLIB_LIB_NAME).$(RAYLIB_VERSION).so lib$(RAYLIB_LIB_NAME).so
             endif
         endif
         ifeq ($(PLATFORM),PLATFORM_RPI)
                 # Compile raylib shared library version $(RAYLIB_VERSION).
                 # WARNING: you should type "make clean" before doing this target
-				$(CC) -shared -o $(RAYLIB_RELEASE_PATH)/libraylib.so.$(RAYLIB_VERSION) $(OBJS) -Wl,-soname,libraylib.so.$(RAYLIB_API_VERSION) -L/opt/vc/lib -lbrcmGLESv2 -lbrcmEGL -lpthread -lrt -lm -lbcm_host -ldl
-				@echo "raylib shared library generated (libraylib.so.$(RAYLIB_VERSION)) in $(RAYLIB_RELEASE_PATH)!"
-				cd $(RAYLIB_RELEASE_PATH) && ln -fsv libraylib.so.$(RAYLIB_VERSION) libraylib.so.$(RAYLIB_API_VERSION)
-				cd $(RAYLIB_RELEASE_PATH) && ln -fsv libraylib.so.$(RAYLIB_API_VERSION) libraylib.so
+				$(CC) -shared -o $(RAYLIB_RELEASE_PATH)/lib$(RAYLIB_LIB_NAME).so.$(RAYLIB_VERSION) $(OBJS) $(LDFLAGS) -Wl,-soname,lib$(RAYLIB_LIB_NAME).so.$(RAYLIB_API_VERSION) -L/opt/vc/lib -lbrcmGLESv2 -lbrcmEGL -lpthread -lrt -lm -lbcm_host -ldl
+				@echo "raylib shared library generated (lib$(RAYLIB_LIB_NAME).so.$(RAYLIB_VERSION)) in $(RAYLIB_RELEASE_PATH)!"
+				cd $(RAYLIB_RELEASE_PATH) && ln -fsv lib$(RAYLIB_LIB_NAME).so.$(RAYLIB_VERSION) lib$(RAYLIB_LIB_NAME).so.$(RAYLIB_API_VERSION)
+				cd $(RAYLIB_RELEASE_PATH) && ln -fsv lib$(RAYLIB_LIB_NAME).so.$(RAYLIB_API_VERSION) lib$(RAYLIB_LIB_NAME).so
+        endif
+        ifeq ($(PLATFORM),PLATFORM_DRM)
+                # Compile raylib shared library version $(RAYLIB_VERSION).
+                # WARNING: you should type "make clean" before doing this target
+				$(CC) -shared -o $(RAYLIB_RELEASE_PATH)/lib$(RAYLIB_LIB_NAME).so.$(RAYLIB_VERSION) $(OBJS) $(LDFLAGS) -Wl,-soname,lib$(RAYLIB_LIB_NAME).so.$(RAYLIB_API_VERSION) -lGLESv2 -lEGL -ldrm -lgbm -lpthread -lrt -lm -ldl
+				@echo "raylib shared library generated (lib$(RAYLIB_LIB_NAME).so.$(RAYLIB_VERSION)) in $(RAYLIB_RELEASE_PATH)!"
+				cd $(RAYLIB_RELEASE_PATH) && ln -fsv lib$(RAYLIB_LIB_NAME).so.$(RAYLIB_VERSION) lib$(RAYLIB_LIB_NAME).so.$(RAYLIB_API_VERSION)
+				cd $(RAYLIB_RELEASE_PATH) && ln -fsv lib$(RAYLIB_LIB_NAME).so.$(RAYLIB_API_VERSION) lib$(RAYLIB_LIB_NAME).so
         endif
         ifeq ($(PLATFORM),PLATFORM_ANDROID)
-			$(CC) -shared -o $(RAYLIB_RELEASE_PATH)/libraylib.$(RAYLIB_VERSION).so $(OBJS) $(LDFLAGS) $(LDLIBS)
-			@echo "raylib shared library generated (libraylib.$(RAYLIB_VERSION).so)!"
+			$(CC) -shared -o $(RAYLIB_RELEASE_PATH)/lib$(RAYLIB_LIB_NAME).$(RAYLIB_VERSION).so $(OBJS) $(LDFLAGS) $(LDLIBS)
+			@echo "raylib shared library generated (lib$(RAYLIB_LIB_NAME).$(RAYLIB_VERSION).so)!"
             # WARNING: symbolic links creation on Windows should be done using mklink command, no ln available
             ifeq ($(HOST_PLATFORM_OS),LINUX)
-				cd $(RAYLIB_RELEASE_PATH) && ln -fs libraylib.$(RAYLIB_VERSION).so libraylib.$(RAYLIB_API_VERSION).so
-				cd $(RAYLIB_RELEASE_PATH) && ln -fs libraylib.$(RAYLIB_VERSION).so libraylib.so
+				cd $(RAYLIB_RELEASE_PATH) && ln -fs lib$(RAYLIB_LIB_NAME).$(RAYLIB_VERSION).so lib$(RAYLIB_LIB_NAME).$(RAYLIB_API_VERSION).so
+				cd $(RAYLIB_RELEASE_PATH) && ln -fs lib$(RAYLIB_LIB_NAME).$(RAYLIB_VERSION).so lib$(RAYLIB_LIB_NAME).so
             endif
         endif
     else
         # Compile raylib static library version $(RAYLIB_VERSION)
         # WARNING: You should type "make clean" before doing this target.
-		$(AR) rcs $(RAYLIB_RELEASE_PATH)/libraylib.a $(OBJS)
-		@echo "raylib static library generated (libraylib.a) in $(RAYLIB_RELEASE_PATH)!"
+		$(AR) rcs $(RAYLIB_RELEASE_PATH)/lib$(RAYLIB_LIB_NAME).a $(OBJS)
+		@echo "raylib static library generated (lib$(RAYLIB_LIB_NAME).a) in $(RAYLIB_RELEASE_PATH)!"
     endif
 endif
 
@@ -543,7 +563,7 @@ core.o : core.c raylib.h rlgl.h utils.h raymath.h camera.h gestures.h
 
 # Compile rglfw module
 rglfw.o : rglfw.c
-	$(CC) $(CFLAGS) $(GLFW_CFLAGS) -c $<  $(INCLUDE_PATHS) -D$(PLATFORM) -D$(GRAPHICS)
+	$(CC) $(GLFW_OSX) -c $< $(CFLAGS) $(INCLUDE_PATHS) -D$(PLATFORM) -D$(GRAPHICS)
 
 # Compile shapes module
 shapes.o : shapes.c raylib.h rlgl.h
@@ -584,6 +604,10 @@ physac.o : physac.c physac.h
 	@echo #include "$(RAYLIB_MODULE_PHYSAC_PATH)/physac.h" > physac.c
 	$(CC) -c $< $(CFLAGS) $(INCLUDE_PATHS) -D$(PLATFORM) -DPHYSAC_IMPLEMENTATION
 
+# Compile android_native_app_glue module
+android_native_app_glue.o : $(NATIVE_APP_GLUE)/android_native_app_glue.c
+	$(CC) -c $< $(CFLAGS) $(INCLUDE_PATHS)
+    
 
 # Install generated and needed files to desired directories.
 # On GNU/Linux and BSDs, there are some standard directories that contain extra
@@ -613,15 +637,15 @@ ifeq ($(ROOT),root)
 		mkdir --parents --verbose $(RAYLIB_H_INSTALL_PATH)
         ifeq ($(RAYLIB_LIBTYPE),SHARED)
             # Installing raylib to $(RAYLIB_INSTALL_PATH).
-			cp --update --verbose $(RAYLIB_RELEASE_PATH)/libraylib.so.$(RAYLIB_VERSION) $(RAYLIB_INSTALL_PATH)/libraylib.so.$(RAYLIB_VERSION)
-			cd $(RAYLIB_INSTALL_PATH); ln -fsv libraylib.so.$(RAYLIB_VERSION) libraylib.so.$(RAYLIB_API_VERSION)
-			cd $(RAYLIB_INSTALL_PATH); ln -fsv libraylib.so.$(RAYLIB_API_VERSION) libraylib.so
+			cp --update --verbose $(RAYLIB_RELEASE_PATH)/libraylib.so.$(RAYLIB_VERSION) $(RAYLIB_INSTALL_PATH)/lib$(RAYLIB_LIB_NAME).so.$(RAYLIB_VERSION)
+			cd $(RAYLIB_INSTALL_PATH); ln -fsv lib$(RAYLIB_LIB_NAME).so.$(RAYLIB_VERSION) lib$(RAYLIB_LIB_NAME).so.$(RAYLIB_API_VERSION)
+			cd $(RAYLIB_INSTALL_PATH); ln -fsv lib$(RAYLIB_LIB_NAME).so.$(RAYLIB_API_VERSION) lib$(RAYLIB_LIB_NAME).so
             # Uncomment to update the runtime linker cache with RAYLIB_INSTALL_PATH.
             # Not necessary if later embedding RPATH in your executable. See examples/Makefile.
 			ldconfig $(RAYLIB_INSTALL_PATH)
         else
             # Installing raylib to $(RAYLIB_INSTALL_PATH).
-			cp --update --verbose $(RAYLIB_RELEASE_PATH)/libraylib.a $(RAYLIB_INSTALL_PATH)/libraylib.a
+			cp --update --verbose $(RAYLIB_RELEASE_PATH)/lib$(RAYLIB_LIB_NAME).a $(RAYLIB_INSTALL_PATH)/lib$(RAYLIB_LIB_NAME).a
         endif
         # Copying raylib development files to $(RAYLIB_H_INSTALL_PATH).
 		cp --update raylib.h $(RAYLIB_H_INSTALL_PATH)/raylib.h
@@ -667,9 +691,13 @@ endif
 # Clean everything
 clean:
 ifeq ($(PLATFORM_OS),WINDOWS)
-	del *.o $(RAYLIB_RELEASE_PATH)/libraylib.a $(RAYLIB_RELEASE_PATH)/libraylib.bc $(RAYLIB_RELEASE_PATH)/libraylib.so
+	del *.o /s
+	cd $(RAYLIB_RELEASE_PATH)
+	del lib$(RAYLIB_LIB_NAME).a /s
+	del lib$(RAYLIB_LIB_NAME)dll.a /s
+	del $(RAYLIB_LIB_NAME).dll /s
 else
-	rm -fv *.o $(RAYLIB_RELEASE_PATH)/libraylib.a $(RAYLIB_RELEASE_PATH)/libraylib.bc $(RAYLIB_RELEASE_PATH)/libraylib.so*
+	rm -fv *.o $(RAYLIB_RELEASE_PATH)/lib$(RAYLIB_LIB_NAME).a $(RAYLIB_RELEASE_PATH)/lib$(RAYLIB_LIB_NAME).bc $(RAYLIB_RELEASE_PATH)/lib$(RAYLIB_LIB_NAME).so*
 endif
 ifeq ($(PLATFORM),PLATFORM_ANDROID)
 	rm -rf $(ANDROID_TOOLCHAIN) $(NATIVE_APP_GLUE)/android_native_app_glue.o

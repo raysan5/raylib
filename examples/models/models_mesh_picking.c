@@ -160,25 +160,25 @@ int main(void)
             EndMode3D();
 
             // Draw some debug GUI text
-            DrawText(FormatText("Hit Object: %s", hitObjectName), 10, 50, 10, BLACK);
+            DrawText(TextFormat("Hit Object: %s", hitObjectName), 10, 50, 10, BLACK);
 
             if (nearestHit.hit)
             {
                 int ypos = 70;
 
-                DrawText(FormatText("Distance: %3.2f", nearestHit.distance), 10, ypos, 10, BLACK);
+                DrawText(TextFormat("Distance: %3.2f", nearestHit.distance), 10, ypos, 10, BLACK);
 
-                DrawText(FormatText("Hit Pos: %3.2f %3.2f %3.2f",
+                DrawText(TextFormat("Hit Pos: %3.2f %3.2f %3.2f",
                                     nearestHit.position.x,
                                     nearestHit.position.y,
                                     nearestHit.position.z), 10, ypos + 15, 10, BLACK);
 
-                DrawText(FormatText("Hit Norm: %3.2f %3.2f %3.2f",
+                DrawText(TextFormat("Hit Norm: %3.2f %3.2f %3.2f",
                                     nearestHit.normal.x,
                                     nearestHit.normal.y,
                                     nearestHit.normal.z), 10, ypos + 30, 10, BLACK);
 
-                if (hitTriangle) DrawText(FormatText("Barycenter: %3.2f %3.2f %3.2f",  bary.x, bary.y, bary.z), 10, ypos + 45, 10, BLACK);
+                if (hitTriangle) DrawText(TextFormat("Barycenter: %3.2f %3.2f %3.2f",  bary.x, bary.y, bary.z), 10, ypos + 45, 10, BLACK);
             }
 
             DrawText("Use Mouse to Move Camera", 10, 430, 10, GRAY);

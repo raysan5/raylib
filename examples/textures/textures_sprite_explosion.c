@@ -11,8 +11,8 @@
 
 #include "raylib.h"
 
-#define NUM_FRAMES      8
-#define NUM_LINES       6
+#define NUM_FRAMES_PER_LINE     5
+#define NUM_LINES               5
 
 int main(void)
 {
@@ -32,8 +32,8 @@ int main(void)
     Texture2D explosion = LoadTexture("resources/explosion.png");
     
     // Init variables for animation
-    int frameWidth = explosion.width/NUM_FRAMES;    // Sprite one frame rectangle width
-    int frameHeight = explosion.height/NUM_LINES;   // Sprite one frame rectangle height
+    int frameWidth = explosion.width/NUM_FRAMES_PER_LINE;   // Sprite one frame rectangle width
+    int frameHeight = explosion.height/NUM_LINES;           // Sprite one frame rectangle height
     int currentFrame = 0;
     int currentLine = 0;
 
@@ -73,7 +73,7 @@ int main(void)
             {
                 currentFrame++;
 
-                if (currentFrame >= NUM_FRAMES)
+                if (currentFrame >= NUM_FRAMES_PER_LINE)
                 {
                     currentFrame = 0;
                     currentLine++;

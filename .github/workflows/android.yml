@@ -1,0 +1,72 @@
+name: Android
+
+on:
+  push:
+  pull_request:
+  release:
+    types: [published]
+
+jobs:
+  build:
+    runs-on: windows-latest
+    strategy:
+      fail-fast: false
+      max-parallel: 1
+      matrix:
+        ARCH: ["arm64", "x86_64"]
+          
+    env:
+      RELEASE_NAME: raylib-dev_android_api28_${{ matrix.ARCH }}
+    
+    steps:
+    - name: Checkout
+      uses: actions/checkout@master
+    
+    - name: Setup Release Version
+      run: |
+        echo "::set-env name=RELEASE_NAME::raylib-${{ github.event.release.tag_name }}_android_api28_${{ matrix.ARCH }}"
+      shell: bash
+      if: github.event_name == 'release' && github.event.action == 'published'
+
+    - name: Setup Environment
+      run: | 
+        mkdir build
+        cd build
+        mkdir ${{ env.RELEASE_NAME }}
+        cd ${{ env.RELEASE_NAME }}
+        mkdir include
+        mkdir lib
+        cd ../..
+   
+    # Generating static + shared library for 64bit arquitectures and API version 28
+    - name: Build Library
+      run: |
+        cd src
+        make PLATFORM=PLATFORM_ANDROID ANDROID_ARCH=${{ matrix.ARCH }} ANDROID_API_VERSION=28 ANDROID_NDK="C:\PROGRA~2\Android\android-sdk\ndk-bundle" RAYLIB_LIBTYPE=STATIC RAYLIB_RELEASE_PATH="../build/${{ env.RELEASE_NAME }}/lib"
+        make PLATFORM=PLATFORM_ANDROID ANDROID_ARCH=${{ matrix.ARCH }} ANDROID_API_VERSION=28 ANDROID_NDK="C:\PROGRA~2\Android\android-sdk\ndk-bundle" RAYLIB_LIBTYPE=SHARED RAYLIB_RELEASE_PATH="../build/${{ env.RELEASE_NAME }}/lib" -B
+        cd ..
+      shell: cmd
+  
+    - name: Generate Artifacts
+      run: |
+        cp -v ./src/raylib.h ./build/${{ env.RELEASE_NAME }}/include
+        cd build
+        tar -czvf ${{ env.RELEASE_NAME }}.tar.gz ${{ env.RELEASE_NAME }}
+        
+    - name: Upload Artifacts
+      uses: actions/upload-artifact@v2
+      with:
+        name: ${{ env.RELEASE_NAME }}.tar.gz
+        path: ./build/${{ env.RELEASE_NAME }}.tar.gz
+        
+    - name: Upload Artifact to Release
+      uses: actions/upload-release-asset@v1.0.1
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+          upload_url: ${{ github.event.release.upload_url }}
+          asset_path: ./build/${{ env.RELEASE_NAME }}.tar.gz
+          asset_name: ${{ env.RELEASE_NAME }}.tar.gz
+          asset_content_type: application/gzip
+      if: github.event_name == 'release' && github.event.action == 'published'  
+

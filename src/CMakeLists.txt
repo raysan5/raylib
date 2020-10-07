@@ -1,6 +1,7 @@
 # Setup the project and settings
 project(raylib C)
 include(GNUInstallDirs)
+include(JoinPaths)
 list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/../cmake")
 
 set(PROJECT_VERSION 3.0.0)
@@ -117,6 +118,31 @@ elseif(${PLATFORM} MATCHES "Raspberry Pi")
   set(PLATFORM_CPP "PLATFORM_RPI")
   set(GRAPHICS "GRAPHICS_API_OPENGL_ES2")
 
+  add_definitions(-D_DEFAULT_SOURCE)
+  
+  find_library(GLESV2 brcmGLESv2 HINTS /opt/vc/lib)
+  find_library(EGL brcmEGL HINTS /opt/vc/lib)
+  find_library(BCMHOST bcm_host HINTS /opt/vc/lib)
+  include_directories(/opt/vc/include /opt/vc/include/interface/vmcs_host/linux /opt/vc/include/interface/vcos/pthreads)
+  link_directories(/opt/vc/lib)
+  set(LIBS_PRIVATE ${GLESV2} ${EGL} ${BCMHOST} pthread rt m dl)
+
+  elseif(${PLATFORM} MATCHES "DRM")
+  set(PLATFORM_CPP "PLATFORM_DRM")
+  set(GRAPHICS "GRAPHICS_API_OPENGL_ES2")
+
+  add_definitions(-D_DEFAULT_SOURCE)
+  add_definitions(-DEGL_NO_X11)
+  add_definitions(-DPLATFORM_DRM)
+      
+  find_library(GLESV2 GLESv2)
+  find_library(EGL EGL)
+  find_library(DRM drm)
+  find_library(GBM gbm)
+
+  include_directories(/usr/include/libdrm)
+  set(LIBS_PRIVATE ${GLESV2} ${EGL} ${DRM} ${GBM} pthread m dl)
+
 endif()
 
 if (${OPENGL_VERSION})
@@ -154,20 +180,26 @@ if(STATIC)
 
   target_compile_definitions(raylib_static
       PUBLIC ${PLATFORM_CPP}
+      PUBLIC PLATFORM=${PLATFORM_CPP}
       PUBLIC ${GRAPHICS}
+      PUBLIC GRAPHICS=${GRAPHICS}
+  )
+
+  target_link_libraries(raylib_static
+    PUBLIC ${LIBS_PRIVATE}
   )
 
   set(PKG_CONFIG_LIBS_PRIVATE ${__PKG_CONFIG_LIBS_PRIVATE} ${GLFW_PKG_LIBS})
   string (REPLACE ";" " " PKG_CONFIG_LIBS_PRIVATE "${PKG_CONFIG_LIBS_PRIVATE}")
   if (${PLATFORM} MATCHES "Desktop")
-    target_link_libraries(raylib_static glfw ${GLFW_LIBRARIES} ${LIBS_PRIVATE})
+    target_link_libraries(raylib_static PRIVATE glfw ${GLFW_LIBRARIES} ${LIBS_PRIVATE})
   endif()
 
   if (WITH_PIC)
     set_property(TARGET raylib_static PROPERTY POSITION_INDEPENDENT_CODE ON)
   endif()
   set_target_properties(raylib_static PROPERTIES PUBLIC_HEADER "raylib.h")
-  if(NOT WIN32) # Keep lib*.(a|dll) name, but avoid *.lib files overwriting each other on Windows
+  if(NOT MSVC) # Keep lib*.(a|dll) name, but avoid *.lib files overwriting each other on Windows
     set_target_properties(raylib_static PROPERTIES OUTPUT_NAME raylib)
   endif()
   install(
@@ -208,16 +240,10 @@ if(SHARED)
   if (${PLATFORM} MATCHES "Desktop")
     target_link_libraries(raylib glfw)
   endif()
-  if (UNIX AND ${FILESYSTEM_LACKS_SYMLINKS})
-    MESSAGE(WARNING "Can't version UNIX shared library on file system without symlink support")
-  else()
-      set_target_properties(raylib PROPERTIES
-          VERSION   ${PROJECT_VERSION}
-          SOVERSION ${API_VERSION}
-      )
-  endif()
   set_target_properties(raylib PROPERTIES
       PUBLIC_HEADER "raylib.h"
+      VERSION   ${PROJECT_VERSION}
+      SOVERSION ${API_VERSION}
   )
 
   if (WIN32)
@@ -245,6 +271,10 @@ endif(SHARED)
 if (NOT DEFINED PKG_CONFIG_LIBS_EXTRA)
   set(PKG_CONFIG_LIBS_EXTRA "${PKG_CONFIG_LIBS_PRIVATE}")
 endif()
+
+join_paths(libdir_for_pc_file "\${exec_prefix}" "${CMAKE_INSTALL_LIBDIR}")
+join_paths(includedir_for_pc_file "\${prefix}" "${CMAKE_INSTALL_INCLUDEDIR}")
+
 configure_file(../raylib.pc.in raylib.pc @ONLY)
 install(FILES ${CMAKE_CURRENT_BINARY_DIR}/raylib.pc DESTINATION "${CMAKE_INSTALL_LIBDIR}/pkgconfig")
 configure_file(../cmake/raylib-config-version.cmake raylib-config-version.cmake @ONLY)

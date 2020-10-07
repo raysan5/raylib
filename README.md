@@ -12,7 +12,7 @@ Ready to learn? Jump to [code examples!](http://www.raylib.com/examples.html)
 
 [![GitHub contributors](https://img.shields.io/github/contributors/raysan5/raylib)](https://github.com/raysan5/raylib/graphs/contributors)
 [![GitHub All Releases](https://img.shields.io/github/downloads/raysan5/raylib/total)](https://github.com/raysan5/raylib/releases)
-[![GitHub commits since tagged version](https://img.shields.io/github/commits-since/raysan5/raylib/2.6.0)](https://github.com/raysan5/raylib/commits/master)
+[![GitHub commits since tagged version](https://img.shields.io/github/commits-since/raysan5/raylib/3.0.0)](https://github.com/raysan5/raylib/commits/master)
 [![License](https://img.shields.io/badge/license-zlib%2Flibpng-blue.svg)](LICENSE)
 
 [![Chat on Discord](https://img.shields.io/discord/426912293134270465.svg?logo=discord)](https://discord.gg/VkzNHUE)
@@ -20,12 +20,12 @@ Ready to learn? Jump to [code examples!](http://www.raylib.com/examples.html)
 [![Twitter Follow](https://img.shields.io/twitter/follow/raysan5?style=social)](https://twitter.com/raysan5)
 [![Subreddit subscribers](https://img.shields.io/reddit/subreddit-subscribers/raylib?style=social)](https://www.reddit.com/r/raylib/)
 
-[![Travis (.org)](https://img.shields.io/travis/raysan5/raylib?label=Travis%20CI%20Build%20Status%20-%20Linux,%20OSX,%20Android,%20Windows)](https://travis-ci.org/raysan5/raylib)
-[![AppVeyor](https://img.shields.io/appveyor/build/raysan5/raylib?label=AppVeyor%20CI%20Build%20Status%20-%20Windows%20(mingw,%20msvc15))](https://ci.appveyor.com/project/raysan5/raylib)
-
-[![Actions Status](https://github.com/raysan5/raylib/workflows/CI%20-%20Source%20&%20Examples%20-%20Windows/badge.svg)](https://github.com/raysan5/raylib/actions)
-[![Actions Status](https://github.com/raysan5/raylib/workflows/CI%20-%20Source%20&%20Examples%20-%20Linux/badge.svg)](https://github.com/raysan5/raylib/actions)
-[![Actions Status](https://github.com/raysan5/raylib/workflows/CI%20-%20Source%20&%20Examples%20-%20macOS/badge.svg)](https://github.com/raysan5/raylib/actions)
+[![Travis (.org)](https://img.shields.io/travis/raysan5/raylib?label=Linux,%20OSX,%20Windows)](https://travis-ci.org/raysan5/raylib)
+[![Windows](https://github.com/raysan5/raylib/workflows/Windows/badge.svg)](https://github.com/raysan5/raylib/actions?query=workflow%3AWindows)
+[![Linux](https://github.com/raysan5/raylib/workflows/Linux/badge.svg)](https://github.com/raysan5/raylib/actions?query=workflow%3ALinux)
+[![macOS](https://github.com/raysan5/raylib/workflows/macOS/badge.svg)](https://github.com/raysan5/raylib/actions?query=workflow%3AmacOS)
+[![Android](https://github.com/raysan5/raylib/workflows/Android/badge.svg)](https://github.com/raysan5/raylib/actions?query=workflow%3AAndroid)
+[![WebAssembly](https://github.com/raysan5/raylib/workflows/WebAssembly/badge.svg)](https://github.com/raysan5/raylib/actions?query=workflow%3AWebAssembly)
 
 features
 --------
@@ -118,4 +118,4 @@ If you are using raylib and enjoying it, please, join our [Discord server](https
 license
 -------
 
-raylib is licensed under an unmodified zlib/libpng license, which is an OSI-certified, BSD-like license that allows static linking with closed source software. Check [LICENSE](LICENSE.md) for further details.
+raylib is licensed under an unmodified zlib/libpng license, which is an OSI-certified, BSD-like license that allows static linking with closed source software. Check [LICENSE](LICENSE) for further details.

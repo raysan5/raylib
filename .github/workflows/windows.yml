@@ -1,0 +1,116 @@
+name: Windows
+
+on: 
+  push:
+  pull_request:
+  release:
+    types: [published]
+
+jobs:
+  build:
+    runs-on: windows-latest
+    strategy:
+      fail-fast: false
+      max-parallel: 1
+      matrix:
+        compiler: [mingw-w64, msvc16]
+        bits: [32, 64]
+        include:
+        - compiler: mingw-w64
+          bits: 32
+          ARCH: "i686"
+          COMPILER_PATH: "C:\\msys64\\mingw32\\bin"
+          WINDRES_ARCH: pe-i386
+        - compiler: mingw-w64
+          bits: 64
+          ARCH: "x86_64"
+          COMPILER_PATH: "C:\\msys64\\mingw64\\bin"
+          WINDRES_ARCH: pe-x86-64
+        - compiler: msvc16
+          bits: 32
+          ARCH: "x86"
+          VSBINPATH: "Win32" 
+        - compiler: msvc16
+          bits: 64
+          ARCH: "x64" 
+          VSBINPATH: "x64"
+
+    env:
+      RELEASE_NAME: raylib-dev_win${{ matrix.bits }}_${{ matrix.compiler }}
+      GNUTARGET: default
+
+    steps:
+    - name: Checkout
+      uses: actions/checkout@master
+    
+    - name: Setup Release Version
+      run: |
+        echo "::set-env name=RELEASE_NAME::raylib-${{ github.event.release.tag_name }}_win${{ matrix.bits }}_${{ matrix.compiler }}"
+      shell: bash
+      if: github.event_name == 'release' && github.event.action == 'published'
+
+    - name: Setup Environment
+      run: | 
+        dir
+        mkdir build
+        cd build
+        mkdir ${{ env.RELEASE_NAME }}
+        cd ${{ env.RELEASE_NAME }}
+        mkdir include
+        mkdir lib
+        cd ../../../raylib
+
+    # Setup MSBuild.exe path if required
+    - name: Setup MSBuild
+      uses: microsoft/setup-msbuild@v1.0.1
+      if: matrix.compiler == 'msvc16'
+
+    - name: Build Library (MinGW-w64)
+      run: |
+        cd src
+        set PATH=%PATH%;${{ matrix.COMPILER_PATH }}
+        ${{ matrix.ARCH }}-w64-mingw32-gcc.exe --version
+        ${{ matrix.COMPILER_PATH }}/windres.exe --version
+        make PLATFORM=PLATFORM_DESKTOP CC=${{ matrix.ARCH }}-w64-mingw32-gcc.exe RAYLIB_LIBTYPE=STATIC RAYLIB_RELEASE_PATH="../build/${{ env.RELEASE_NAME }}/lib"
+        ${{ matrix.COMPILER_PATH }}/windres.exe -i raylib.dll.rc -o raylib.dll.rc.data -O coff --target=${{ matrix.WINDRES_ARCH }}
+        make PLATFORM=PLATFORM_DESKTOP CC=${{ matrix.ARCH }}-w64-mingw32-gcc.exe RAYLIB_LIBTYPE=SHARED RAYLIB_RELEASE_PATH="../build/${{ env.RELEASE_NAME }}/lib" -B
+        cd ..
+      shell: cmd
+      if: matrix.compiler == 'mingw-w64'
+
+    - name: Build Library (MSVC16)
+      run: |
+        cd projects/VS2017
+        msbuild.exe raylib.sln /target:raylib /property:Configuration=Release /property:Platform=${{ matrix.ARCH }}
+        copy /Y .\bin\${{ matrix.VSBINPATH }}\Release\raylib.lib .\..\..\build\${{ env.RELEASE_NAME }}\lib\raylib.lib
+        msbuild.exe raylib.sln /target:raylib /property:Configuration=Release.DLL /property:Platform=${{ matrix.ARCH }}
+        copy /Y .\bin\${{ matrix.VSBINPATH }}\Release.DLL\raylib.dll .\..\..\build\${{ env.RELEASE_NAME }}\lib\raylib.dll
+        copy /Y .\bin\${{ matrix.VSBINPATH }}\Release.DLL\raylib.lib .\..\..\build\${{ env.RELEASE_NAME }}\lib\raylibdll.lib
+        cd ../..
+      shell: cmd
+      if: matrix.compiler == 'msvc16'
+
+    - name: Generate Artifacts
+      run: |
+        copy /Y .\src\raylib.h .\build\${{ env.RELEASE_NAME }}\include\raylib.h
+        cd build
+        7z a ./${{ env.RELEASE_NAME }}.zip ./${{ env.RELEASE_NAME }}
+        dir
+      shell: cmd
+
+    - name: Upload Artifacts
+      uses: actions/upload-artifact@v2
+      with:
+        name: ${{ env.RELEASE_NAME }}.zip
+        path: ./build/${{ env.RELEASE_NAME }}.zip
+        
+    - name: Upload Artifact to Release
+      uses: actions/upload-release-asset@v1.0.1
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+          upload_url: ${{ github.event.release.upload_url }}
+          asset_path: ./build/${{ env.RELEASE_NAME }}.zip
+          asset_name: ${{ env.RELEASE_NAME }}.zip
+          asset_content_type: application/zip
+      if: github.event_name == 'release' && github.event.action == 'published'

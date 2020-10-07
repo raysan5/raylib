@@ -93,7 +93,7 @@ int main(void)
 
        
     // Use default vert shader
-    Shader spotShader = LoadShader(0, FormatText("resources/shaders/glsl%i/spotlight.fs", GLSL_VERSION));
+    Shader spotShader = LoadShader(0, TextFormat("resources/shaders/glsl%i/spotlight.fs", GLSL_VERSION));
     
 	// Get the locations of spots in the shader
 	Spot spots[MAXSPOT];
@@ -245,7 +245,7 @@ void ResetStar(Star *s)
         
     } while (!(fabs(s->vel.x) + fabs(s->vel.y) > 1));
     
-    s->pos = Vector2Add(s->pos, Vector2MultiplyV(s->vel, (Vector2){ 8, 8 }));
+    s->pos = Vector2Add(s->pos, Vector2Multiply(s->vel, (Vector2){ 8, 8 }));
 }
 
 void UpdateStar(Star *s)

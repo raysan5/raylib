@@ -48,7 +48,7 @@ int main(void)
 
     float gravity = 3.0f;
 
-    Texture2D smoke = LoadTexture("resources/smoke.png");
+    Texture2D smoke = LoadTexture("resources/spark_flame.png");
 
     int blending = BLEND_ALPHA;
 
@@ -80,12 +80,12 @@ int main(void)
         {
             if (mouseTail[i].active)
             {
-                mouseTail[i].position.y += gravity;
-                mouseTail[i].alpha -= 0.01f;
+                mouseTail[i].position.y += gravity/2;
+                mouseTail[i].alpha -= 0.005f;
 
                 if (mouseTail[i].alpha <= 0.0f) mouseTail[i].active = false;
 
-                mouseTail[i].rotation += 5.0f;
+                mouseTail[i].rotation += 2.0f;
             }
         }
 

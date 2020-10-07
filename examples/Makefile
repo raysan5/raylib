@@ -96,6 +96,12 @@ ifeq ($(PLATFORM),PLATFORM_RPI)
         PLATFORM_OS=LINUX
     endif
 endif
+ifeq ($(PLATFORM),PLATFORM_DRM)
+    UNAMEOS=$(shell uname)
+    ifeq ($(UNAMEOS),Linux)
+        PLATFORM_OS=LINUX
+    endif
+endif
 
 # RAYLIB_PATH adjustment for different platforms.
 # If using GNU make, we can get the full path to the top of the tree. Windows? BSD?
@@ -112,14 +118,17 @@ endif
 ifeq ($(PLATFORM),PLATFORM_RPI)
     RAYLIB_PATH       ?= /home/pi/raylib
 endif
+ifeq ($(PLATFORM),PLATFORM_DRM)
+    RAYLIB_PATH       ?= /home/pi/raylib
+endif
 
 ifeq ($(PLATFORM),PLATFORM_WEB)
     # Emscripten required variables
     EMSDK_PATH         ?= C:/emsdk
     EMSCRIPTEN_PATH    ?= $(EMSDK_PATH)/upstream/emscripten
     CLANG_PATH          = $(EMSDK_PATH)/upstream/bin
-    PYTHON_PATH         = $(EMSDK_PATH)/python/3.7.4_64bit
-    NODE_PATH           = $(EMSDK_PATH)/node/12.9.1_64bit/bin
+    PYTHON_PATH         = $(EMSDK_PATH)/python/3.7.4-pywin32_64bit
+    NODE_PATH           = $(EMSDK_PATH)/node/12.18.1_64bit/bin
     export PATH         = $(EMSDK_PATH);$(EMSCRIPTEN_PATH);$(CLANG_PATH);$(NODE_PATH);$(PYTHON_PATH);C:\raylib\MinGW\bin:$$(PATH)
 endif
 
@@ -176,6 +185,9 @@ ifeq ($(PLATFORM),PLATFORM_DESKTOP)
     ifeq ($(PLATFORM_OS),LINUX)
         MAKE = make
     endif
+    ifeq ($(PLATFORM_OS),OSX)
+        MAKE = make
+    endif
 endif
 
 # Define compiler flags:
@@ -196,7 +208,7 @@ ifeq ($(BUILD_MODE),DEBUG)
     endif
 else
     ifeq ($(PLATFORM),PLATFORM_WEB)
-        CFLAGS += -O3
+        CFLAGS += -Os
     else
         CFLAGS += -s -O1
     endif
@@ -217,6 +229,9 @@ ifeq ($(PLATFORM),PLATFORM_DESKTOP)
 endif
 ifeq ($(PLATFORM),PLATFORM_RPI)
     CFLAGS += -std=gnu99
+endif
+ifeq ($(PLATFORM),PLATFORM_DRM)
+    CFLAGS += -std=gnu99 -DEGL_NO_X11
 endif
 ifeq ($(PLATFORM),PLATFORM_WEB)
     # -Os                        # size optimization
@@ -256,6 +271,10 @@ ifeq ($(PLATFORM),PLATFORM_RPI)
     INCLUDE_PATHS += -I/opt/vc/include/interface/vmcs_host/linux
     INCLUDE_PATHS += -I/opt/vc/include/interface/vcos/pthreads
 endif
+ifeq ($(PLATFORM),PLATFORM_DRM)
+    # DRM required libraries
+    INCLUDE_PATHS += -I/usr/include/libdrm
+endif
 ifeq ($(PLATFORM),PLATFORM_DESKTOP)
     ifeq ($(PLATFORM_OS),BSD)
         # Consider -L$(RAYLIB_H_INSTALL_PATH)
@@ -264,7 +283,8 @@ ifeq ($(PLATFORM),PLATFORM_DESKTOP)
     ifeq ($(PLATFORM_OS),LINUX)
         # Reset everything.
         # Precedence: immediately local, installed version, raysan5 provided libs -I$(RAYLIB_H_INSTALL_PATH) -I$(RAYLIB_PATH)/release/include
-        INCLUDE_PATHS = -I$(RAYLIB_H_INSTALL_PATH) -isystem. -isystem$(RAYLIB_PATH)/src -isystem$(RAYLIB_PATH)/release/include -isystem$(RAYLIB_PATH)/src/external
+        #INCLUDE_PATHS = -I$(RAYLIB_H_INSTALL_PATH) -isystem. -isystem$(RAYLIB_PATH)/src -isystem$(RAYLIB_PATH)/release/include -isystem$(RAYLIB_PATH)/src/external
+        INCLUDE_PATHS = -I$(RAYLIB_H_INSTALL_PATH) -I. -I$(RAYLIB_PATH)/src -I$(RAYLIB_PATH)/release/include -I$(RAYLIB_PATH)/src/external
     endif
 endif
 
@@ -287,12 +307,16 @@ ifeq ($(PLATFORM),PLATFORM_DESKTOP)
     ifeq ($(PLATFORM_OS),LINUX)
         # Reset everything.
         # Precedence: immediately local, installed version, raysan5 provided libs
-        LDFLAGS = -L. -L$(RAYLIB_INSTALL_PATH) -L$(RAYLIB_RELEASE_PATH)
+        LDFLAGS = -L. -L$(RAYLIB_INSTALL_PATH) -L$(RAYLIB_RELEASE_PATH) -L$(RAYLIB_PATH)
     endif
 endif
 
 ifeq ($(PLATFORM),PLATFORM_RPI)
     LDFLAGS += -L/opt/vc/lib
+endif
+
+ifeq ($(PLATFORM),PLATFORM_DRM)
+    LDFLAGS += -lGLESv2 -lEGL -ldrm -lgbm
 endif
 
 # Define any libraries required on linking
@@ -347,9 +371,14 @@ ifeq ($(PLATFORM),PLATFORM_RPI)
     # NOTE: Required packages: libasound2-dev (ALSA)
     LDLIBS = -lraylib -lbrcmGLESv2 -lbrcmEGL -lpthread -lrt -lm -lbcm_host -ldl
 endif
+ifeq ($(PLATFORM),PLATFORM_DRM)
+    # Libraries for DRM compiling
+    # NOTE: Required packages: libasound2-dev (ALSA)
+    LDLIBS = -lraylib -lGLESv2 -lEGL -lpthread -lrt -lm -lgbm -ldrm -ldl
+endif
 ifeq ($(PLATFORM),PLATFORM_WEB)
     # Libraries for web (HTML5) compiling
-    LDLIBS = $(RAYLIB_RELEASE_PATH)/libraylib.bc
+    LDLIBS = $(RAYLIB_RELEASE_PATH)/libraylib.a
 endif
 
 # Define all object files required
@@ -375,7 +404,8 @@ CORE = \
     core/core_scissor_test \
     core/core_storage_values \
     core/core_vr_simulator \
-    core/core_loading_thread
+    core/core_loading_thread \
+    core/core_quat_conversion 
 
 SHAPES = \
     shapes/shapes_basic_shapes \
@@ -411,7 +441,8 @@ TEXTURES = \
     textures/textures_background_scrolling \
     textures/textures_sprite_button \
     textures/textures_sprite_explosion \
-    textures/textures_bunnymark
+    textures/textures_bunnymark \
+    textures/textures_blend_modes
     
 TEXT = \
     text/text_raylib_fonts \
@@ -457,7 +488,8 @@ SHADERS = \
     shaders/shaders_basic_lighting \
     shaders/shaders_fog \
     shaders/shaders_simple_mask \
-    shaders/shaders_spotlight
+    shaders/shaders_spotlight \
+    shaders/shaders_rlgl_mesh_instanced
     
 AUDIO = \
     audio/audio_module_playing \
@@ -513,6 +545,10 @@ ifeq ($(PLATFORM),PLATFORM_DESKTOP)
     endif
 endif
 ifeq ($(PLATFORM),PLATFORM_RPI)
+	find . -type f -executable -delete
+	rm -fv *.o
+endif
+ifeq ($(PLATFORM),PLATFORM_DRM)
 	find . -type f -executable -delete
 	rm -fv *.o
 endif

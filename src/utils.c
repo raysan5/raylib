@@ -50,9 +50,15 @@
 #include <stdarg.h>                     // Required for: va_list, va_start(), va_end()
 #include <string.h>                     // Required for: strcpy(), strcat()
 
-#define MAX_TRACELOG_BUFFER_SIZE   128  // Max length of one trace-log message
-
-#define MAX_UWP_MESSAGES 512            // Max UWP messages to process
+//----------------------------------------------------------------------------------
+// Defines and Macros
+//----------------------------------------------------------------------------------
+#ifndef MAX_TRACELOG_MSG_LENGTH
+    #define MAX_TRACELOG_MSG_LENGTH     128     // Max length of one trace-log message
+#endif
+#ifndef MAX_UWP_MESSAGES
+    #define MAX_UWP_MESSAGES            512     // Max UWP messages to process
+#endif
 
 //----------------------------------------------------------------------------------
 // Global Variables Definition
@@ -66,13 +72,6 @@ static TraceLogCallback logCallback = NULL;             // Log callback function
 #if defined(PLATFORM_ANDROID)
 static AAssetManager *assetManager = NULL;              // Android assets manager pointer
 static const char *internalDataPath = NULL;             // Android internal data path
-#endif
-
-#if defined(PLATFORM_UWP)
-static int UWPOutMessageId = -1;                        // Last index of output message
-static UWPMessage *UWPOutMessages[MAX_UWP_MESSAGES];    // Messages out to UWP
-static int UWPInMessageId = -1;                         // Last index of input message
-static UWPMessage *UWPInMessages[MAX_UWP_MESSAGES];     // Messages in from UWP
 #endif
 
 //----------------------------------------------------------------------------------
@@ -139,7 +138,7 @@ void TraceLog(int logType, const char *text, ...)
         default: break;
     }
 #else
-    char buffer[MAX_TRACELOG_BUFFER_SIZE] = { 0 };
+    char buffer[MAX_TRACELOG_MSG_LENGTH] = { 0 };
 
     switch (logType)
     {
@@ -184,10 +183,10 @@ unsigned char *LoadFileData(const char *fileName, unsigned int *bytesRead)
 
             if (size > 0)
             {
-                data = (unsigned char *)RL_MALLOC(sizeof(unsigned char)*size);
+                data = (unsigned char *)RL_MALLOC(size*sizeof(unsigned char));
 
                 // NOTE: fread() returns number of read elements instead of bytes, so we read [1 byte, size elements]
-                unsigned int count = fread(data, sizeof(unsigned char), size, file);
+                unsigned int count = (unsigned int)fread(data, sizeof(unsigned char), size, file);
                 *bytesRead = count;
 
                 if (count != size) TRACELOG(LOG_WARNING, "FILEIO: [%s] File partially loaded", fileName);
@@ -213,7 +212,7 @@ void SaveFileData(const char *fileName, void *data, unsigned int bytesToWrite)
 
         if (file != NULL)
         {
-            unsigned int count = fwrite(data, sizeof(unsigned char), bytesToWrite, file);
+            unsigned int count = (unsigned int)fwrite(data, sizeof(unsigned char), bytesToWrite, file);
 
             if (count == 0) TRACELOG(LOG_WARNING, "FILEIO: [%s] Failed to write file", fileName);
             else if (count != bytesToWrite) TRACELOG(LOG_WARNING, "FILEIO: [%s] File partially written", fileName);
@@ -242,13 +241,13 @@ char *LoadFileText(const char *fileName)
             // text mode causes carriage return-linefeed translation...
             // ...but using fseek() should return correct byte-offset
             fseek(textFile, 0, SEEK_END);
-            int size = ftell(textFile);
+            unsigned int size = (unsigned int)ftell(textFile);
             fseek(textFile, 0, SEEK_SET);
 
             if (size > 0)
             {
-                text = (char *)RL_MALLOC(sizeof(char)*(size + 1));
-                int count = fread(text, sizeof(char), size, textFile);
+                text = (char *)RL_MALLOC((size + 1)*sizeof(char));
+                unsigned int count = (unsigned int)fread(text, sizeof(char), size, textFile);
 
                 // WARNING: \r\n is converted to \n on reading, so,
                 // read bytes count gets reduced by the number of lines
@@ -318,8 +317,18 @@ FILE *android_fopen(const char *fileName, const char *mode)
         // NOTE: AAsset provides access to read-only asset
         AAsset *asset = AAssetManager_open(assetManager, fileName, AASSET_MODE_UNKNOWN);
 
-        if (asset != NULL) return funopen(asset, android_read, android_write, android_seek, android_close);
-        else return NULL;
+        if (asset != NULL) 
+        {
+            // Return pointer to file in the assets
+            return funopen(asset, android_read, android_write, android_seek, android_close);
+        }
+        else
+        {
+            #undef fopen
+            // Just do a regular open if file is not found in the assets
+            return fopen(TextFormat("%s/%s", internalDataPath, fileName), mode);
+            #define fopen(name, mode) android_fopen(name, mode)
+        }
     }
 }
 #endif  // PLATFORM_ANDROID
@@ -351,69 +360,3 @@ static int android_close(void *cookie)
     return 0;
 }
 #endif  // PLATFORM_ANDROID
-
-#if defined(PLATFORM_UWP)
-UWPMessage *CreateUWPMessage(void)
-{
-    UWPMessage *msg = (UWPMessage *)RL_MALLOC(sizeof(UWPMessage));
-    msg->type = UWP_MSG_NONE;
-    Vector2 v0 = { 0, 0 };
-    msg->paramVector0 = v0;
-    msg->paramInt0 = 0;
-    msg->paramInt1 = 0;
-    msg->paramChar0 = 0;
-    msg->paramFloat0 = 0;
-    msg->paramDouble0 = 0;
-    msg->paramBool0 = false;
-    return msg;
-}
-
-void DeleteUWPMessage(UWPMessage *msg)
-{
-    RL_FREE(msg);
-}
-
-bool UWPHasMessages(void)
-{
-    return (UWPOutMessageId > -1);
-}
-
-UWPMessage *UWPGetMessage(void)
-{
-    if (UWPHasMessages()) return UWPOutMessages[UWPOutMessageId--];
-
-    return NULL;
-}
-
-void UWPSendMessage(UWPMessage *msg)
-{
-    if ((UWPInMessageId + 1) < MAX_UWP_MESSAGES)
-    {
-        UWPInMessageId++;
-        UWPInMessages[UWPInMessageId] = msg;
-    }
-    else TRACELOG(LOG_WARNING, "UWP: Not enough array space to register new inbound message");
-}
-
-void SendMessageToUWP(UWPMessage *msg)
-{
-    if ((UWPOutMessageId + 1) < MAX_UWP_MESSAGES)
-    {
-        UWPOutMessageId++;
-        UWPOutMessages[UWPOutMessageId] = msg;
-    }
-    else TRACELOG(LOG_WARNING, "UWP: Not enough array space to register new outward message");
-}
-
-bool HasMessageFromUWP(void)
-{
-    return UWPInMessageId > -1;
-}
-
-UWPMessage *GetMessageFromUWP(void)
-{
-    if (HasMessageFromUWP()) return UWPInMessages[UWPInMessageId--];
-
-    return NULL;
-}
-#endif  // PLATFORM_UWP
