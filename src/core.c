@@ -400,6 +400,8 @@ typedef struct CoreData {
             Vector2 offset;                 // Mouse offset
             Vector2 scale;                  // Mouse scaling
 
+            MouseCursor cursor;             // Tracks current mouse cursor
+            void* standardCursors[10];     // Opaque pointers to GLFW cursors
             bool cursorHidden;              // Track if cursor is hidden
             bool cursorOnScreen;            // Tracks if cursor is inside client area
 #if defined(PLATFORM_WEB)
@@ -615,7 +617,28 @@ void InitWindow(int width, int height, const char *title)
     // Initialize required global values different than 0
     CORE.Input.Keyboard.exitKey = KEY_ESCAPE;
     CORE.Input.Mouse.scale = (Vector2){ 1.0f, 1.0f };
+    CORE.Input.Mouse.cursor = MOUSE_CURSOR_ARROW;
     CORE.Input.Gamepad.lastButtonPressed = -1;
+
+#if defined(PLATFORM_DESKTOP)
+    // Initialize GLFW's standard cursors
+    const int shapes[] = {
+        MOUSE_CURSOR_ARROW,
+        MOUSE_CURSOR_IBEAM,
+        MOUSE_CURSOR_CROSSHAIR,
+        MOUSE_CURSOR_POINTING_HAND,
+        MOUSE_CURSOR_RESIZE_EW,
+        MOUSE_CURSOR_RESIZE_NS,
+        MOUSE_CURSOR_RESIZE_NWSE,
+        MOUSE_CURSOR_RESIZE_NESW,
+        MOUSE_CURSOR_RESIZE_ALL,
+        MOUSE_CURSOR_NOT_ALLOWED
+    };
+    for (int i = 0; i < sizeof(CORE.Input.Mouse.standardCursors) / sizeof(CORE.Input.Mouse.standardCursors[0]); i += 1)
+    {
+        CORE.Input.Mouse.standardCursors[i] = glfwCreateStandardCursor(shapes[i]);
+    }
+#endif
 
 #if defined(PLATFORM_ANDROID)
     CORE.Window.screen.width = width;
@@ -750,6 +773,11 @@ void CloseWindow(void)
 #endif
 
     rlglClose();                // De-init rlgl
+
+#if defined(PLATFORM_DESKTOP)
+    for (int i = 0; i < sizeof(CORE.Input.Mouse.standardCursors) / sizeof(CORE.Input.Mouse.standardCursors[0]); i += 1)
+        glfwDestroyCursor(CORE.Input.Mouse.standardCursors[i]);
+#endif
 
 #if defined(PLATFORM_DESKTOP) || defined(PLATFORM_WEB)
     glfwDestroyWindow(CORE.Window.handle);
@@ -2644,6 +2672,29 @@ int GetMouseWheelMove(void)
     return CORE.Input.Mouse.previousWheelMove/100;
 #else
     return CORE.Input.Mouse.previousWheelMove;
+#endif
+}
+
+// Returns mouse cursor
+MouseCursor GetMouseCursor(void)
+{
+    return CORE.Input.Mouse.cursor;
+}
+
+// Set mouse cursor
+// NOTE: This is a no-op on platforms other than PLATFORM_DESKTOP
+void SetMouseCursor(MouseCursor cursor)
+{
+#if defined(PLATFORM_DESKTOP)
+    CORE.Input.Mouse.cursor = cursor;
+    if (cursor == MOUSE_CURSOR_DEFAULT)
+    {
+        glfwSetCursor(CORE.Window.handle, NULL);
+    }
+    else
+    {
+        glfwSetCursor(CORE.Window.handle, CORE.Input.Mouse.standardCursors[cursor]);
+    }
 #endif
 }
 

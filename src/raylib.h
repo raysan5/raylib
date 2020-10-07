@@ -620,6 +620,27 @@ typedef enum {
     MOUSE_MIDDLE_BUTTON = 2
 } MouseButton;
 
+// Mouse cursor types
+typedef enum {
+    MOUSE_CURSOR_DEFAULT = 0,
+    MOUSE_CURSOR_ARROW = 0x00036001,
+    MOUSE_CURSOR_IBEAM = 0x00036002,
+    MOUSE_CURSOR_CROSSHAIR = 0x00036003,
+    MOUSE_CURSOR_POINTING_HAND = 0x00036004,
+    // The horizontal resize/move arrow shape.
+    MOUSE_CURSOR_RESIZE_EW = 0x00036005,
+    // The vertical resize/move arrow shape.
+    MOUSE_CURSOR_RESIZE_NS = 0x00036006,
+    // The top-left to bottom-right diagonal resize/move arrow shape.
+    MOUSE_CURSOR_RESIZE_NWSE = 0x00036007,
+    // The top-right to bottom-left diagonal resize/move arrow shape.
+    MOUSE_CURSOR_RESIZE_NESW = 0x00036008,
+    // The omni-directional resize/move cursor shape.
+    MOUSE_CURSOR_RESIZE_ALL = 0x00036009,
+    // The operation-not-allowed shape.
+    MOUSE_CURSOR_NOT_ALLOWED = 0x0003600A,
+} MouseCursor;
+
 // Gamepad number
 typedef enum {
     GAMEPAD_PLAYER1     = 0,
@@ -1019,6 +1040,8 @@ RLAPI void SetMousePosition(int x, int y);                    // Set mouse posit
 RLAPI void SetMouseOffset(int offsetX, int offsetY);          // Set mouse offset
 RLAPI void SetMouseScale(float scaleX, float scaleY);         // Set mouse scaling
 RLAPI int GetMouseWheelMove(void);                            // Returns mouse wheel movement Y
+RLAPI MouseCursor GetMouseCursor(void);                       // Returns mouse cursor
+RLAPI void SetMouseCursor(MouseCursor cursor);                // Set mouse cursor
 
 // Input-related functions: touch
 RLAPI int GetTouchX(void);                                    // Returns touch position X for touch point 0 (relative to screen size)
