@@ -43,6 +43,9 @@ int main(void)
 
         if (mouseOnText)
         {
+            // Set the window's cursor to the I-Beam
+            SetMouseCursor(MOUSE_CURSOR_IBEAM);
+
             // Get pressed key (character) on the queue
             int key = GetKeyPressed();
 
@@ -66,6 +69,10 @@ int main(void)
 
                 if (letterCount < 0) letterCount = 0;
             }
+        }
+        else if (GetMouseCursor() != MOUSE_CURSOR_DEFAULT)
+        {
+            SetMouseCursor(MOUSE_CURSOR_DEFAULT);
         }
 
         if (mouseOnText) framesCounter++;
