@@ -663,26 +663,6 @@ void InitWindow(int width, int height, const char *title)
     CORE.Input.Gamepad.axisCount = 6;
 #endif
 
-#if defined(PLATFORM_DESKTOP)
-    // Initialize GLFW's standard cursors
-    const int shapes[] = {
-        MOUSE_CURSOR_ARROW,
-        MOUSE_CURSOR_IBEAM,
-        MOUSE_CURSOR_CROSSHAIR,
-        MOUSE_CURSOR_POINTING_HAND,
-        MOUSE_CURSOR_RESIZE_EW,
-        MOUSE_CURSOR_RESIZE_NS,
-        MOUSE_CURSOR_RESIZE_NWSE,
-        MOUSE_CURSOR_RESIZE_NESW,
-        MOUSE_CURSOR_RESIZE_ALL,
-        MOUSE_CURSOR_NOT_ALLOWED
-    };
-    for (int i = 0; i < sizeof(CORE.Input.Mouse.standardCursors) / sizeof(CORE.Input.Mouse.standardCursors[0]); i += 1)
-    {
-        CORE.Input.Mouse.standardCursors[i] = glfwCreateStandardCursor(shapes[i]);
-    }
-#endif
-
 #if defined(PLATFORM_ANDROID)
     CORE.Window.screen.width = width;
     CORE.Window.screen.height = height;
@@ -774,6 +754,26 @@ void InitWindow(int width, int height, const char *title)
 #else
     InitTerminal();     // Terminal init
 #endif
+#endif
+
+#if defined(PLATFORM_DESKTOP)
+    // Initialize GLFW's standard cursors
+    const int shapes[] = {
+        0x00036001, // MOUSE_CURSOR_ARROW
+        0x00036002, // MOUSE_CURSOR_IBEAM
+        0x00036003, // MOUSE_CURSOR_CROSSHAIR
+        0x00036004, // MOUSE_CURSOR_POINTING_HAND
+        0x00036005, // MOUSE_CURSOR_RESIZE_EW
+        0x00036006, // MOUSE_CURSOR_RESIZE_NS
+        0x00036007, // MOUSE_CURSOR_RESIZE_NWSE
+        0x00036008, // MOUSE_CURSOR_RESIZE_NESW
+        0x00036009, // MOUSE_CURSOR_RESIZE_ALL
+        0x0003600A, // MOUSE_CURSOR_NOT_ALLOWED
+    };
+    for (int i = 0; i < sizeof(CORE.Input.Mouse.standardCursors) / sizeof(CORE.Input.Mouse.standardCursors[0]); i += 1)
+    {
+        CORE.Input.Mouse.standardCursors[i] = glfwCreateStandardCursor(shapes[i]);
+    }
 #endif
 
 #if defined(PLATFORM_WEB)

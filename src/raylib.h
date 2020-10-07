@@ -619,23 +619,23 @@ typedef enum {
 
 // Mouse cursor types
 typedef enum {
-    MOUSE_CURSOR_DEFAULT = 0,
-    MOUSE_CURSOR_ARROW = 0x00036001,
-    MOUSE_CURSOR_IBEAM = 0x00036002,
-    MOUSE_CURSOR_CROSSHAIR = 0x00036003,
-    MOUSE_CURSOR_POINTING_HAND = 0x00036004,
+    MOUSE_CURSOR_DEFAULT       = -1,
+    MOUSE_CURSOR_ARROW         = 0,
+    MOUSE_CURSOR_IBEAM         = 1,
+    MOUSE_CURSOR_CROSSHAIR     = 2,
+    MOUSE_CURSOR_POINTING_HAND = 3,
     // The horizontal resize/move arrow shape.
-    MOUSE_CURSOR_RESIZE_EW = 0x00036005,
+    MOUSE_CURSOR_RESIZE_EW     = 4,
     // The vertical resize/move arrow shape.
-    MOUSE_CURSOR_RESIZE_NS = 0x00036006,
+    MOUSE_CURSOR_RESIZE_NS     = 5,
     // The top-left to bottom-right diagonal resize/move arrow shape.
-    MOUSE_CURSOR_RESIZE_NWSE = 0x00036007,
+    MOUSE_CURSOR_RESIZE_NWSE   = 6,
     // The top-right to bottom-left diagonal resize/move arrow shape.
-    MOUSE_CURSOR_RESIZE_NESW = 0x00036008,
+    MOUSE_CURSOR_RESIZE_NESW   = 7,
     // The omni-directional resize/move cursor shape.
-    MOUSE_CURSOR_RESIZE_ALL = 0x00036009,
+    MOUSE_CURSOR_RESIZE_ALL    = 8,
     // The operation-not-allowed shape.
-    MOUSE_CURSOR_NOT_ALLOWED = 0x0003600A,
+    MOUSE_CURSOR_NOT_ALLOWED   = 9
 } MouseCursor;
 
 // Gamepad number
