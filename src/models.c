@@ -889,7 +889,7 @@ void ExportMesh(Mesh mesh, const char *fileName)
 Material *LoadMaterials(const char *fileName, int *materialCount)
 {
     Material *materials = NULL;
-    size_t count = 0;
+    unsigned int count = 0;
 
     // TODO: Support IQM and GLTF for materials parsing
 
@@ -2987,12 +2987,11 @@ static Model LoadOBJ(const char *fileName)
         {
             model.materialCount = materialCount;
             model.materials = (Material *)RL_CALLOC(model.materialCount, sizeof(Material));
+            TraceLog(LOG_INFO, "MODEL: model has %i material meshes", materialCount);
         } else {
             model.meshCount = 1;  
             TraceLog(LOG_INFO, "MODEL: No materials, putting all meshes in a default material");         
         }
-
-        TraceLog(LOG_INFO, "MODEL: model has %i material meshes", meshCount);
 
         model.meshes = (Mesh *)RL_CALLOC(model.meshCount, sizeof(Mesh));
         model.meshMaterial = (int *)RL_CALLOC(model.meshCount, sizeof(int));
