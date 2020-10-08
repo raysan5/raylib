@@ -24,6 +24,10 @@
 #ifndef TINOBJ_LOADER_C_H_
 #define TINOBJ_LOADER_C_H_
 
+// TODO (codifies) I have commented out many printf's I used to observe
+// the several bugs in action related to hashmap, they can be removed at
+// some point - I only left them in case (paranoid - me?)
+
 /* @todo { Remove stddef dependency. unsigned int? } ---> RAY: DONE. */
 //#include <stddef.h>
 
@@ -164,6 +168,10 @@ static unsigned int length_until_newline(const char *token, unsigned int n) {
       break;
     }
     if ((token[len] == '\r') && ((len < (n - 2)) && (token[len + 1] != '\n'))) {
+      break;
+    }
+    // codifies  -  added this, to get this working
+    if ((token[len] == '\n') && ((len < (n - 2)) && (token[len + 1] != '\r'))) {
       break;
     }
   }
@@ -547,7 +555,7 @@ static void initMaterial(tinyobj_material_t *material) {
 #define HASH_TABLE_ERROR 1 
 #define HASH_TABLE_SUCCESS 0
 
-#define HASH_TABLE_DEFAULT_SIZE 10
+#define HASH_TABLE_DEFAULT_SIZE 11
 
 typedef struct hash_table_entry_t
 {
@@ -571,11 +579,11 @@ static unsigned long hash_djb2(const unsigned char* str)
 {
   unsigned long hash = 5381;
   int c;
-
+  //printf("hashed >>>%s<<< into ",str);
   while ((c = *str++)) {
     hash = ((hash << 5) + hash) + (unsigned long)(c);
   }
-
+  //printf("into %lu\n",hash);
   return hash;
 }
 
@@ -607,8 +615,10 @@ static int hash_table_insert_value(unsigned long hash, long value, hash_table_t*
 
   for (i = 1; hash_table->entries[index].filled; i++)
   {
-    if (i >= hash_table->capacity)
+    if (i >= hash_table->capacity) {
+      //printf("insert failed\n");
       return HASH_TABLE_ERROR;
+    }
     index = (start_index + (i * i)) % hash_table->capacity; 
   }
 
@@ -622,12 +632,15 @@ static int hash_table_insert_value(unsigned long hash, long value, hash_table_t*
     entry->next = start_entry->next;
     start_entry->next = entry;
   }
+  
+  //printf("using hash %lu \n",hash);
 
   return HASH_TABLE_SUCCESS;
 }
 
 static int hash_table_insert(unsigned long hash, long value, hash_table_t* hash_table)
 {
+  //printf("inserting %i into hash ",value);   
   int ret = hash_table_insert_value(hash, value, hash_table);
   if (ret == HASH_TABLE_SUCCESS)
   {
@@ -639,15 +652,19 @@ static int hash_table_insert(unsigned long hash, long value, hash_table_t* hash_
 
 static hash_table_entry_t* hash_table_find(unsigned long hash, hash_table_t* hash_table)
 {
+  //printf("looking for hash %lu  - ",hash);
   hash_table_entry_t* entry = hash_table->entries + (hash % hash_table->capacity);
   while (entry)
   {
     if (entry->hash == hash && entry->filled)
     {
+      //printf(" found\n");
       return entry;
     }
     entry = entry->next;
   }
+  //printf(" NOT found\n");
+  
   return NULL;
 }
 
@@ -656,6 +673,9 @@ static void hash_table_maybe_grow(unsigned int new_n, hash_table_t* hash_table)
   unsigned int new_capacity;
   hash_table_t new_hash_table;
   unsigned int i;
+
+  // extra room for collisions
+  new_n *= 2;
 
   if (new_n <= hash_table->capacity) {
     return;
@@ -668,7 +688,9 @@ static void hash_table_maybe_grow(unsigned int new_n, hash_table_t* hash_table)
   new_hash_table.n = hash_table->n;
 
   /* Rehash */
-  for (i = 0; i < hash_table->capacity; i++)
+  // we asked for twice as much as was in there so just rehash the first half which
+  // is the whole source table
+  for (i = 0; i < hash_table->capacity / 2; i++)
   {
     hash_table_entry_t* entry = hash_table_find(hash_table->hashes[i], hash_table);
     hash_table_insert_value(hash_table->hashes[i], entry->value, &new_hash_table);
@@ -708,6 +730,7 @@ static void hash_table_set(const char* name, unsigned int val, hash_table_t* has
 static long hash_table_get(const char* name, hash_table_t* hash_table)
 {
   hash_table_entry_t* ret = hash_table_find(hash_djb2((const unsigned char*)(name)), hash_table);
+  //printf("found a value of %i for %s\n",ret->value, name);
   return ret->value;
 }
 
@@ -1137,7 +1160,7 @@ static int parseLine(Command *command, const char *p, unsigned int p_len,
     skip_space(&token);
     command->material_name = p + (token - linebuf);
     command->material_name_len = (unsigned int)length_until_newline(
-                                                                    token, (p_len - (unsigned int)(token - linebuf)) + 1);
+                                      token, (p_len - (unsigned int)(token - linebuf)) + 1);
     command->type = COMMAND_USEMTL;
 
     return 1;
@@ -1151,8 +1174,7 @@ static int parseLine(Command *command, const char *p, unsigned int p_len,
     skip_space(&token);
     command->mtllib_name = p + (token - linebuf);
     command->mtllib_name_len = (unsigned int)length_until_newline(
-                                                                  token, p_len - (unsigned int)(token - linebuf)) +
-      1;
+                                    token, (p_len - (unsigned int)(token - linebuf)) + 1);
     command->type = COMMAND_MTLLIB;
 
     return 1;
@@ -1377,7 +1399,7 @@ int tinyobj_parse_obj(tinyobj_attrib_t *attrib, tinyobj_shape_t **shapes,
           /* Create a null terminated string */
           char* material_name_null_term = (char*) TINYOBJ_MALLOC(commands[i].material_name_len + 1);
           memcpy((void*) material_name_null_term, (const void*) commands[i].material_name, commands[i].material_name_len);
-          material_name_null_term[commands[i].material_name_len - 1] = 0;
+          material_name_null_term[commands[i].material_name_len] = 0;
 
           if (hash_table_exists(material_name_null_term, &material_table))
             material_id = (int)hash_table_get(material_name_null_term, &material_table);

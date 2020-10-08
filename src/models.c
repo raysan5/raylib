@@ -896,8 +896,8 @@ Material *LoadMaterials(const char *fileName, int *materialCount)
 #if defined(SUPPORT_FILEFORMAT_MTL)
     if (IsFileExtension(fileName, ".mtl"))
     {
-        tinyobj_material_t *mats;
-
+        tinyobj_material_t *mats = NULL;
+                                           
         int result = tinyobj_parse_mtl_file(&mats, &count, fileName);
         if (result != TINYOBJ_SUCCESS) {
             TRACELOG(LOG_WARNING, "MATERIAL: [%s] Failed to parse materials file", fileName);
@@ -2566,6 +2566,12 @@ void DrawModelEx(Model model, Vector3 position, Vector3 rotationAxis, float rota
     for (int i = 0; i < model.meshCount; i++)
     {
         // TODO: Review color + tint premultiplication mechanism
+        
+        // (codifies)  Ray not only does this work as expected but
+        // multiplying *is* definately the way to tint 
+        // can we call it reviewed ?
+        
+        // would you prefer an extra model.tint, that rlDrawMesh uses ?
         Color color = model.materials[model.meshMaterial[i]].maps[MAP_DIFFUSE].color;
 
         Color colorTint = WHITE;
@@ -2942,11 +2948,15 @@ RayHitInfo GetCollisionRayGround(Ray ray, float groundHeight)
 
 #if defined(SUPPORT_FILEFORMAT_OBJ)
 // Load OBJ mesh data
+
+// TODO used by loadOBJ, could change to a function that could handle
+// data coming from a file, memory or archive...
+
 static Model LoadOBJ(const char *fileName)
 {
     Model model = { 0 };
 
-    tinyobj_attrib_t attrib;
+    tinyobj_attrib_t attrib = { 0 };
     tinyobj_shape_t *meshes = NULL;
     unsigned int meshCount = 0;
 
@@ -2968,126 +2978,112 @@ static Model LoadOBJ(const char *fileName)
         if (ret != TINYOBJ_SUCCESS) TRACELOG(LOG_WARNING, "MODEL: [%s] Failed to load OBJ data", fileName);
         else TRACELOG(LOG_INFO, "MODEL: [%s] OBJ data loaded successfully: %i meshes / %i materials", fileName, meshCount, materialCount);
 
-        // Init model meshes array
-        // TODO: Support multiple meshes... in the meantime, only one mesh is returned
-        //model.meshCount = meshCount;
-        model.meshCount = 1;
-        model.meshes = (Mesh *)RL_CALLOC(model.meshCount, sizeof(Mesh));
-
+       
+        model.meshCount = materialCount;
+        
+                
         // Init model materials array
         if (materialCount > 0)
         {
             model.materialCount = materialCount;
             model.materials = (Material *)RL_CALLOC(model.materialCount, sizeof(Material));
+            TraceLog(LOG_INFO, "MODEL: model has %i material meshes", materialCount);
+        } else {
+            model.meshCount = 1;  
+            TraceLog(LOG_INFO, "MODEL: No materials, putting all meshes in a default material");         
         }
 
+        model.meshes = (Mesh *)RL_CALLOC(model.meshCount, sizeof(Mesh));
         model.meshMaterial = (int *)RL_CALLOC(model.meshCount, sizeof(int));
-
-        /*
-        // Multiple meshes data reference
-        // NOTE: They are provided as a faces offset
-        typedef struct {
-            char *name;         // group name or object name
-            unsigned int face_offset;
-            unsigned int length;
-        } tinyobj_shape_t;
-        */
-
-        // Init model meshes
-        for (int m = 0; m < 1; m++)
-        {
-            Mesh mesh = { 0 };
-            memset(&mesh, 0, sizeof(Mesh));
-            mesh.vertexCount = attrib.num_faces*3;
-            mesh.triangleCount = attrib.num_faces;
-            mesh.vertices = (float *)RL_CALLOC(mesh.vertexCount*3, sizeof(float));
-            mesh.texcoords = (float *)RL_CALLOC(mesh.vertexCount*2, sizeof(float));
-            mesh.normals = (float *)RL_CALLOC(mesh.vertexCount*3, sizeof(float));
-            mesh.vboId = (unsigned int *)RL_CALLOC(DEFAULT_MESH_VERTEX_BUFFERS, sizeof(unsigned int));
-
-            int vCount = 0;
-            int vtCount = 0;
-            int vnCount = 0;
-
-            for (unsigned int f = 0; f < attrib.num_faces; f++)
-            {
-                // Get indices for the face
-                tinyobj_vertex_index_t idx0 = attrib.faces[3*f + 0];
-                tinyobj_vertex_index_t idx1 = attrib.faces[3*f + 1];
-                tinyobj_vertex_index_t idx2 = attrib.faces[3*f + 2];
-
-                // Fill vertices buffer (float) using vertex index of the face
-                for (int v = 0; v < 3; v++) { mesh.vertices[vCount + v] = attrib.vertices[idx0.v_idx*3 + v]; } vCount +=3;
-                for (int v = 0; v < 3; v++) { mesh.vertices[vCount + v] = attrib.vertices[idx1.v_idx*3 + v]; } vCount +=3;
-                for (int v = 0; v < 3; v++) { mesh.vertices[vCount + v] = attrib.vertices[idx2.v_idx*3 + v]; } vCount +=3;
-
-                if (attrib.num_texcoords > 0)
-                {
-                    // Fill texcoords buffer (float) using vertex index of the face
-                    // NOTE: Y-coordinate must be flipped upside-down
-                    mesh.texcoords[vtCount + 0] = attrib.texcoords[idx0.vt_idx*2 + 0];
-                    mesh.texcoords[vtCount + 1] = 1.0f - attrib.texcoords[idx0.vt_idx*2 + 1]; vtCount += 2;
-                    mesh.texcoords[vtCount + 0] = attrib.texcoords[idx1.vt_idx*2 + 0];
-                    mesh.texcoords[vtCount + 1] = 1.0f - attrib.texcoords[idx1.vt_idx*2 + 1]; vtCount += 2;
-                    mesh.texcoords[vtCount + 0] = attrib.texcoords[idx2.vt_idx*2 + 0];
-                    mesh.texcoords[vtCount + 1] = 1.0f - attrib.texcoords[idx2.vt_idx*2 + 1]; vtCount += 2;
-                }
-
-                if (attrib.num_normals > 0)
-                {
-                    // Fill normals buffer (float) using vertex index of the face
-                    for (int v = 0; v < 3; v++) { mesh.normals[vnCount + v] = attrib.normals[idx0.vn_idx*3 + v]; } vnCount +=3;
-                    for (int v = 0; v < 3; v++) { mesh.normals[vnCount + v] = attrib.normals[idx1.vn_idx*3 + v]; } vnCount +=3;
-                    for (int v = 0; v < 3; v++) { mesh.normals[vnCount + v] = attrib.normals[idx2.vn_idx*3 + v]; } vnCount +=3;
-                }
+        
+        // count the faces for each material
+        int* matFaces = RL_CALLOC(meshCount, sizeof(int));
+        
+        for (int mi=0; mi<meshCount; mi++) {
+            for (int fi=0; fi<meshes[mi].length; fi++) {
+                int idx = attrib.material_ids[meshes[mi].face_offset + fi];
+                if (idx == -1) idx = 0; // for no material face (which could be the whole model)
+                matFaces[idx]++;
             }
-
-            model.meshes[m] = mesh;                 // Assign mesh data to model
-
-            // Assign mesh material for current mesh
-            model.meshMaterial[m] = attrib.material_ids[m];
-
-            // Set unfound materials to default
-            if (model.meshMaterial[m] == -1) model.meshMaterial[m] = 0;
+        }
+        
+        //--------------------------------------
+        // create the material meshes
+ 
+        // running counts / indexes for each material mesh as we are 
+        // building them at the same time     
+        int* vCount = RL_CALLOC(model.meshCount, sizeof(int));
+        int* vtCount = RL_CALLOC(model.meshCount, sizeof(int));
+        int* vnCount = RL_CALLOC(model.meshCount, sizeof(int));
+        int* faceCount = RL_CALLOC(model.meshCount, sizeof(int));
+ 
+        // allocate space for each of the material meshes
+        for (int mi=0; mi<model.meshCount; mi++) 
+        {
+            model.meshes[mi].vertexCount = matFaces[mi] * 3;
+            model.meshes[mi].triangleCount = matFaces[mi];
+            model.meshes[mi].vertices = (float *)RL_CALLOC(model.meshes[mi].vertexCount*3, sizeof(float));
+            model.meshes[mi].texcoords = (float *)RL_CALLOC(model.meshes[mi].vertexCount*2, sizeof(float));
+            model.meshes[mi].normals = (float *)RL_CALLOC(model.meshes[mi].vertexCount*3, sizeof(float));
+            model.meshes[mi].vboId = (unsigned int *)RL_CALLOC(DEFAULT_MESH_VERTEX_BUFFERS, sizeof(unsigned int));
+            model.meshMaterial[mi] = mi;
+        }
+        
+        // scan through the combined sub meshes and pick out each material mesh
+        for (unsigned int af = 0; af < attrib.num_faces; af++) 
+        {
+            int mm = attrib.material_ids[af];   // mesh material for this face
+            if (mm == -1) { mm = 0; }           // no material object..
+            // Get indices for the face
+            tinyobj_vertex_index_t idx0 = attrib.faces[3 * af + 0];
+            tinyobj_vertex_index_t idx1 = attrib.faces[3 * af + 1];
+            tinyobj_vertex_index_t idx2 = attrib.faces[3 * af + 2]; 
+            
+            // Fill vertices buffer (float) using vertex index of the face
+            for (int v = 0; v < 3; v++) { model.meshes[mm].vertices[vCount[mm] + v] = attrib.vertices[idx0.v_idx*3 + v]; } vCount[mm] +=3;
+            for (int v = 0; v < 3; v++) { model.meshes[mm].vertices[vCount[mm] + v] = attrib.vertices[idx1.v_idx*3 + v]; } vCount[mm] +=3;
+            for (int v = 0; v < 3; v++) { model.meshes[mm].vertices[vCount[mm] + v] = attrib.vertices[idx2.v_idx*3 + v]; } vCount[mm] +=3; 
+            
+            if (attrib.num_texcoords > 0)
+            {
+                // Fill texcoords buffer (float) using vertex index of the face
+                // NOTE: Y-coordinate must be flipped upside-down to account for 
+                // raylib's upside down textures...
+                model.meshes[mm].texcoords[vtCount[mm] + 0] = attrib.texcoords[idx0.vt_idx*2 + 0];
+                model.meshes[mm].texcoords[vtCount[mm] + 1] = 1.0f - attrib.texcoords[idx0.vt_idx*2 + 1]; vtCount[mm] += 2;
+                model.meshes[mm].texcoords[vtCount[mm] + 0] = attrib.texcoords[idx1.vt_idx*2 + 0];
+                model.meshes[mm].texcoords[vtCount[mm] + 1] = 1.0f - attrib.texcoords[idx1.vt_idx*2 + 1]; vtCount[mm] += 2;
+                model.meshes[mm].texcoords[vtCount[mm] + 0] = attrib.texcoords[idx2.vt_idx*2 + 0];
+                model.meshes[mm].texcoords[vtCount[mm] + 1] = 1.0f - attrib.texcoords[idx2.vt_idx*2 + 1]; vtCount[mm] += 2;
+            }  
+            
+            if (attrib.num_normals > 0)
+            {
+                // Fill normals buffer (float) using vertex index of the face
+                for (int v = 0; v < 3; v++) { model.meshes[mm].normals[vnCount[mm] + v] = attrib.normals[idx0.vn_idx*3 + v]; } vnCount[mm] +=3;
+                for (int v = 0; v < 3; v++) { model.meshes[mm].normals[vnCount[mm] + v] = attrib.normals[idx1.vn_idx*3 + v]; } vnCount[mm] +=3;
+                for (int v = 0; v < 3; v++) { model.meshes[mm].normals[vnCount[mm] + v] = attrib.normals[idx2.vn_idx*3 + v]; } vnCount[mm] +=3;
+            }                                            
         }
 
         // Init model materials
         for (unsigned int m = 0; m < materialCount; m++)
-        {
+        {            
             // Init material to default
-            // NOTE: Uses default shader, only MAP_DIFFUSE supported
+            // NOTE: Uses default shader, which only supports MAP_DIFFUSE
+            
+            // (codifies)  TODO my lighting shader should support at least
+            // diffuse AND specular ...
             model.materials[m] = LoadMaterialDefault();
-
-            /*
-            typedef struct {
-                char *name;
-
-                float ambient[3];
-                float diffuse[3];
-                float specular[3];
-                float transmittance[3];
-                float emission[3];
-                float shininess;
-                float ior;          // index of refraction
-                float dissolve;     // 1 == opaque; 0 == fully transparent
-                // illumination model (Ref: http://www.fileformat.info/format/material/)
-                int illum;
-
-                int pad0;
-
-                char *ambient_texname;            // map_Ka
-                char *diffuse_texname;            // map_Kd
-                char *specular_texname;           // map_Ks
-                char *specular_highlight_texname; // map_Ns
-                char *bump_texname;               // map_bump, bump
-                char *displacement_texname;       // disp
-                char *alpha_texname;              // map_d
-            } tinyobj_material_t;
-            */
 
             model.materials[m].maps[MAP_DIFFUSE].texture = GetTextureDefault();     // Get default texture, in case no texture is defined
 
-            if (materials[m].diffuse_texname != NULL) model.materials[m].maps[MAP_DIFFUSE].texture = LoadTexture(materials[m].diffuse_texname);  //char *diffuse_texname; // map_Kd
+            if (materials[m].diffuse_texname != NULL) {
+                model.materials[m].maps[MAP_DIFFUSE].texture = LoadTexture(materials[m].diffuse_texname);  //char *diffuse_texname; // map_Kd
+            } else {
+                model.materials[m].maps[MAP_DIFFUSE].texture = GetTextureDefault();
+            }
+    
             model.materials[m].maps[MAP_DIFFUSE].color = (Color){ (unsigned char)(materials[m].diffuse[0]*255.0f), (unsigned char)(materials[m].diffuse[1]*255.0f), (unsigned char)(materials[m].diffuse[2]*255.0f), 255 }; //float diffuse[3];
             model.materials[m].maps[MAP_DIFFUSE].value = 0.0f;
 
@@ -3109,6 +3105,11 @@ static Model LoadOBJ(const char *fileName)
         tinyobj_materials_free(materials, materialCount);
         
         RL_FREE(fileData);
+        
+        RL_FREE(vCount);
+        RL_FREE(vtCount);
+        RL_FREE(vnCount);
+        RL_FREE(faceCount);
 
         chdir(currentDir);
     }
