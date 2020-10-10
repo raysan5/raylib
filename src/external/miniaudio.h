@@ -1,6 +1,6 @@
 /*
 Audio playback and capture library. Choice of public domain or MIT-0. See license statements at the end of this file.
-miniaudio - v0.10.18 - 2020-08-30
+miniaudio - v0.10.20 - 2020-10-06
 
 David Reid - mackron@gmail.com
 
@@ -114,8 +114,8 @@ event indicating that the device needs to stop and handle it in a different thre
     ```
 
 You must never try uninitializing and reinitializing a device inside the callback. You must also never try to stop and start it from inside the callback. There
-are a few other things you shouldn't do in the callback depending on your requirements, however this isn't so much a thread-safety thing, but rather a real-
-time processing thing which is beyond the scope of this introduction.
+are a few other things you shouldn't do in the callback depending on your requirements, however this isn't so much a thread-safety thing, but rather a
+real-time processing thing which is beyond the scope of this introduction.
 
 The example above demonstrates the initialization of a playback device, but it works exactly the same for capture. All you need to do is change the device type
 from `ma_device_type_playback` to `ma_device_type_capture` when setting up the config, like so:
@@ -230,8 +230,8 @@ The Windows build should compile cleanly on all popular compilers without the ne
 2.2. macOS and iOS
 ------------------
 The macOS build should compile cleanly without the need to download any dependencies nor link to any libraries or frameworks. The iOS build needs to be
-compiled as Objective-C (sorry) and will need to link the relevant frameworks but should Just Work with Xcode. Compiling through the command line requires
-linking to `-lpthread` and `-lm`.
+compiled as Objective-C and will need to link the relevant frameworks but should compile cleanly out of the box with Xcode. Compiling through the command line
+requires linking to `-lpthread` and `-lm`.
 
 2.3. Linux
 ----------
@@ -248,7 +248,7 @@ starts with Android 8 which means older versions will fall back to OpenSL|ES whi
 
 2.6. Emscripten
 ---------------
-The Emscripten build emits Web Audio JavaScript directly and should Just Work without any configuration. You cannot use -std=c* compiler flags, nor -ansi.
+The Emscripten build emits Web Audio JavaScript directly and should compile cleanly out of the box. You cannot use -std=c* compiler flags, nor -ansi.
 
 
 2.7. Build Options
@@ -1421,7 +1421,7 @@ extern "C" {
 
 #define MA_VERSION_MAJOR    0
 #define MA_VERSION_MINOR    10
-#define MA_VERSION_REVISION 18
+#define MA_VERSION_REVISION 20
 #define MA_VERSION_STRING   MA_XSTRINGIFY(MA_VERSION_MAJOR) "." MA_XSTRINGIFY(MA_VERSION_MINOR) "." MA_XSTRINGIFY(MA_VERSION_REVISION)
 
 #if defined(_MSC_VER) && !defined(__clang__)
@@ -2026,6 +2026,7 @@ typedef struct
 {
     ma_format format;
     ma_uint32 channels;
+    ma_uint32 sampleRate;
     ma_uint32 lpf1Count;
     ma_uint32 lpf2Count;
     ma_lpf1 lpf1[1];
@@ -2094,6 +2095,7 @@ typedef struct
 {
     ma_format format;
     ma_uint32 channels;
+    ma_uint32 sampleRate;
     ma_uint32 hpf1Count;
     ma_uint32 hpf2Count;
     ma_hpf1 hpf1[1];
@@ -12860,6 +12862,22 @@ static ma_result ma_device_init_internal__wasapi(ma_context* pContext, ma_device
     }
 
     pData->formatOut = ma_format_from_WAVEFORMATEX((WAVEFORMATEX*)&wf);
+    if (pData->formatOut == ma_format_unknown) {
+        /*
+        The format isn't supported. This is almost certainly because the exclusive mode format isn't supported by miniaudio. We need to return MA_SHARE_MODE_NOT_SUPPORTED
+        in this case so that the caller can detect it and fall back to shared mode if desired. We should never get here if shared mode was requested, but just for
+        completeness we'll check for it and return MA_FORMAT_NOT_SUPPORTED.
+        */
+        if (shareMode == ma_share_mode_exclusive) {
+            result = MA_SHARE_MODE_NOT_SUPPORTED;
+        } else {
+            result = MA_FORMAT_NOT_SUPPORTED;
+        }
+        
+        errorMsg = "[WASAPI] Native format not supported.";
+        goto done;
+    }
+
     pData->channelsOut = wf.Format.nChannels;
     pData->sampleRateOut = wf.Format.nSamplesPerSec;
 
@@ -13237,8 +13255,11 @@ static ma_result ma_device_reinit__wasapi(ma_device* pDevice, ma_device_type dev
 static ma_result ma_device_init__wasapi(ma_context* pContext, const ma_device_config* pConfig, ma_device* pDevice)
 {
     ma_result result = MA_SUCCESS;
+
+#ifdef MA_WIN32_DESKTOP
     HRESULT hr;
     ma_IMMDeviceEnumerator* pDeviceEnumerator;
+#endif
 
     (void)pContext;
 
@@ -20059,7 +20080,7 @@ static ma_result ma_result_from_pulse(int result)
         case MA_PA_ERR_ACCESS:   return MA_ACCESS_DENIED;
         case MA_PA_ERR_INVALID:  return MA_INVALID_ARGS;
         case MA_PA_ERR_NOENTITY: return MA_NO_DEVICE;
-        default:                  return MA_ERROR;
+        default:                 return MA_ERROR;
     }
 }
 
@@ -35203,10 +35224,11 @@ static ma_result ma_lpf_reinit__internal(const ma_lpf_config* pConfig, ma_lpf* p
         }
     }
 
-    pLPF->lpf1Count = lpf1Count;
-    pLPF->lpf2Count = lpf2Count;
-    pLPF->format    = pConfig->format;
-    pLPF->channels  = pConfig->channels;
+    pLPF->lpf1Count  = lpf1Count;
+    pLPF->lpf2Count  = lpf2Count;
+    pLPF->format     = pConfig->format;
+    pLPF->channels   = pConfig->channels;
+    pLPF->sampleRate = pConfig->sampleRate;
 
     return MA_SUCCESS;
 }
@@ -35709,10 +35731,11 @@ static ma_result ma_hpf_reinit__internal(const ma_hpf_config* pConfig, ma_hpf* p
         }
     }
 
-    pHPF->hpf1Count = hpf1Count;
-    pHPF->hpf2Count = hpf2Count;
-    pHPF->format    = pConfig->format;
-    pHPF->channels  = pConfig->channels;
+    pHPF->hpf1Count  = hpf1Count;
+    pHPF->hpf2Count  = hpf2Count;
+    pHPF->format     = pConfig->format;
+    pHPF->channels   = pConfig->channels;
+    pHPF->sampleRate = pConfig->sampleRate;
 
     return MA_SUCCESS;
 }
@@ -42383,7 +42406,7 @@ static ma_result ma_default_vfs_tell__stdio(ma_vfs* pVFS, ma_vfs_file file, ma_i
     return MA_SUCCESS;
 }
 
-#if !((defined(_POSIX_C_SOURCE) && _POSIX_C_SOURCE >= 1) || defined(_XOPEN_SOURCE) || defined(_POSIX_SOURCE))
+#if !defined(_MSC_VER) && !((defined(_POSIX_C_SOURCE) && _POSIX_C_SOURCE >= 1) || defined(_XOPEN_SOURCE) || defined(_POSIX_SOURCE))
 int fileno(FILE *stream);
 #endif
 
@@ -45883,6 +45906,8 @@ MA_API ma_result ma_decoder_seek_to_pcm_frame(ma_decoder* pDecoder, ma_uint64 fr
         if (result == MA_SUCCESS) {
             pDecoder->readPointerInPCMFrames = frameIndex;
         }
+
+        return result;
     }
 
     /* Should never get here, but if we do it means onSeekToPCMFrame was not set by the backend. */
@@ -62529,6 +62554,15 @@ The following miscellaneous changes have also been made.
 /*
 REVISION HISTORY
 ================
+v0.10.20 - 2020-10-06
+  - Fix build errors with UWP.
+  - Minor documentation updates.
+
+v0.10.19 - 2020-09-22
+  - WASAPI: Return an error when exclusive mode is requested, but the native format is not supported by miniaudio.
+  - Fix a bug where ma_decoder_seek_to_pcm_frames() never returns MA_SUCCESS even though it was successful.
+  - Store the sample rate in the `ma_lpf` and `ma_hpf` structures.
+
 v0.10.18 - 2020-08-30
   - Fix build errors with VC6.
   - Fix a bug in channel converter for s32 format.
