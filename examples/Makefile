@@ -248,13 +248,7 @@ ifeq ($(PLATFORM),PLATFORM_WEB)
     # --profiling                # include information for code profiling
     # --memory-init-file 0       # to avoid an external memory initialization code file (.mem)
     # --preload-file resources   # specify a resources folder for data compilation
-    CFLAGS += -s USE_GLFW=3 -s FORCE_FILESYSTEM=1 -s ASYNCIFY -s TOTAL_MEMORY=67108864
-    CFLAGS += --preload-file models/resources/shaders/glsl100/skybox.vs@resources/shaders/glsl100/skybox.vs
-    CFLAGS += --preload-file models/resources/shaders/glsl100/skybox.fs@resources/shaders/glsl100/skybox.fs 
-    CFLAGS += --preload-file models/resources/dresden_square_2k.hdr@resources/dresden_square_2k.hdr 
-    CFLAGS += --preload-file models/resources/shaders/glsl100/cubemap.vs@resources/shaders/glsl100/cubemap.vs 
-    CFLAGS += --preload-file models/resources/shaders/glsl100/cubemap.fs@resources/shaders/glsl100/cubemap.fs
-    #$(dir $<)resources@resources
+    CFLAGS += -s USE_GLFW=3 -s FORCE_FILESYSTEM=1 -s ASYNCIFY -s TOTAL_MEMORY=67108864 $(dir $<)resources@resources
 
     # NOTE: Simple raylib examples are compiled to be interpreter by emterpreter, that way,
     # we can compile same code for ALL platforms with no change required, but, working on bigger
