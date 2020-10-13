@@ -5338,11 +5338,14 @@ static void *EventThread(void *arg)
             }
 
             // Screen confinement
-            if (CORE.Input.Mouse.position.x < 0) CORE.Input.Mouse.position.x = 0;
-            if (CORE.Input.Mouse.position.x > CORE.Window.screen.width/CORE.Input.Mouse.scale.x) CORE.Input.Mouse.position.x = CORE.Window.screen.width/CORE.Input.Mouse.scale.x;
+            if (!CORE.Input.Mouse.cursorHidden)
+            {
+                if (CORE.Input.Mouse.position.x < 0) CORE.Input.Mouse.position.x = 0;
+                if (CORE.Input.Mouse.position.x > CORE.Window.screen.width/CORE.Input.Mouse.scale.x) CORE.Input.Mouse.position.x = CORE.Window.screen.width/CORE.Input.Mouse.scale.x;
 
-            if (CORE.Input.Mouse.position.y < 0) CORE.Input.Mouse.position.y = 0;
-            if (CORE.Input.Mouse.position.y > CORE.Window.screen.height/CORE.Input.Mouse.scale.y) CORE.Input.Mouse.position.y = CORE.Window.screen.height/CORE.Input.Mouse.scale.y;
+                if (CORE.Input.Mouse.position.y < 0) CORE.Input.Mouse.position.y = 0;
+                if (CORE.Input.Mouse.position.y > CORE.Window.screen.height/CORE.Input.Mouse.scale.y) CORE.Input.Mouse.position.y = CORE.Window.screen.height/CORE.Input.Mouse.scale.y;
+            }
 
             // Gesture update
             if (gestureUpdate)
