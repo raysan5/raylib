@@ -4827,7 +4827,7 @@ static void ProcessKeyboard(void)
     bufferByteCount = read(STDIN_FILENO, keysBuffer, MAX_KEYBUFFER_SIZE);     // POSIX system call
 
     // Reset pressed keys array (it will be filled below)
-    for (int i = 0; i < 512; i++) CORE.Input.Keyboard.currentKeyState[i] = 0;
+    if (bufferByteCount > 0) for (int i = 0; i < 512; i++) CORE.Input.Keyboard.currentKeyState[i] = 0;
 
     // Check keys from event input workers (This is the new keyboard reading method)
     //for (int i = 0; i < 512; i++) CORE.Input.Keyboard.currentKeyState[i] = CORE.Input.Keyboard.currentKeyStateEvdev[i];
@@ -5207,7 +5207,7 @@ static void *EventThread(void *arg)
     while (!CORE.Window.shouldClose)
     {
         // Try to read data from the device and only continue if successful
-        if (read(worker->fd, &event, sizeof(event)) == (int)sizeof(event))
+        while(read(worker->fd, &event, sizeof(event)) == (int)sizeof(event))
         {
             // Relative movement parsing
             if (event.type == EV_REL)
@@ -5375,7 +5375,7 @@ static void *EventThread(void *arg)
             #endif
             }
         }
-        else Wait(5);    // Sleep for 5ms to avoid hogging CPU time
+        Wait(5);    // Sleep for 5ms to avoid hogging CPU time
     }
 
     close(worker->fd);
