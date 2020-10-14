@@ -5207,7 +5207,7 @@ static void *EventThread(void *arg)
     while (!CORE.Window.shouldClose)
     {
         // Try to read data from the device and only continue if successful
-        if (read(worker->fd, &event, sizeof(event)) == (int)sizeof(event))
+        while(read(worker->fd, &event, sizeof(event)) == (int)sizeof(event))
         {
             // Relative movement parsing
             if (event.type == EV_REL)
@@ -5375,7 +5375,7 @@ static void *EventThread(void *arg)
             #endif
             }
         }
-        else Wait(5);    // Sleep for 5ms to avoid hogging CPU time
+        Wait(5);    // Sleep for 5ms to avoid hogging CPU time
     }
 
     close(worker->fd);
