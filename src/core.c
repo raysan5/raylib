@@ -1958,6 +1958,17 @@ int GetRandomValue(int min, int max)
     return (rand()%(abs(max - min) + 1) + min);
 }
 
+float GetRandomFloat(float min, float max)
+{
+    if (min > max) {
+        float tmp = max;
+        max = min;
+        min = tmp;
+    }
+    
+    return rand()/(RAND_MAX/(max-min))+min;        
+}
+
 // Check if the file exists
 bool FileExists(const char *fileName)
 {

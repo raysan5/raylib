@@ -652,9 +652,25 @@ void DrawRay(Ray ray, Color color)
     rlEnd();
 }
 
+
+static float GridMajor[] = { 0.5f,  0.5f,  0.5f  };
+static float GridMinor[] = { 0.75f, 0.75f, 0.75f };
+
+void SetGridColours(Color major, Color minor) 
+{
+    GridMajor[0] = major.r / 256.0;
+    GridMajor[1] = major.g / 256.0;
+    GridMajor[2] = major.b / 256.0;
+    
+    GridMinor[0] = minor.r / 256.0;
+    GridMinor[1] = minor.g / 256.0;
+    GridMinor[2] = minor.b / 256.0;
+}
+
 // Draw a grid centered at (0, 0, 0)
 void DrawGrid(int slices, float spacing)
 {
+
     int halfSlices = slices/2;
 
     if (rlCheckBufferLimit(slices*4)) rlglDraw();
@@ -664,17 +680,17 @@ void DrawGrid(int slices, float spacing)
         {
             if (i == 0)
             {
-                rlColor3f(0.5f, 0.5f, 0.5f);
-                rlColor3f(0.5f, 0.5f, 0.5f);
-                rlColor3f(0.5f, 0.5f, 0.5f);
-                rlColor3f(0.5f, 0.5f, 0.5f);
+                rlColor3f(GridMinor[0], GridMinor[1], GridMinor[2]);
+                rlColor3f(GridMinor[0], GridMinor[1], GridMinor[2]);
+                rlColor3f(GridMinor[0], GridMinor[1], GridMinor[2]);
+                rlColor3f(GridMinor[0], GridMinor[1], GridMinor[2]);
             }
             else
             {
-                rlColor3f(0.75f, 0.75f, 0.75f);
-                rlColor3f(0.75f, 0.75f, 0.75f);
-                rlColor3f(0.75f, 0.75f, 0.75f);
-                rlColor3f(0.75f, 0.75f, 0.75f);
+                rlColor3f(GridMajor[0], GridMajor[1], GridMajor[2]);
+                rlColor3f(GridMajor[0], GridMajor[1], GridMajor[2]);
+                rlColor3f(GridMajor[0], GridMajor[1], GridMajor[2]);
+                rlColor3f(GridMajor[0], GridMajor[1], GridMajor[2]);
             }
 
             rlVertex3f((float)i*spacing, 0.0f, (float)-halfSlices*spacing);
