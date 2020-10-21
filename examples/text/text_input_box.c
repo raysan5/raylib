@@ -70,10 +70,7 @@ int main(void)
                 if (letterCount < 0) letterCount = 0;
             }
         }
-        else if (GetMouseCursor() != MOUSE_CURSOR_DEFAULT)
-        {
-            SetMouseCursor(MOUSE_CURSOR_DEFAULT);
-        }
+        else if (GetMouseCursor() != MOUSE_CURSOR_DEFAULT) SetMouseCursor(MOUSE_CURSOR_DEFAULT);
 
         if (mouseOnText) framesCounter++;
         else framesCounter = 0;
