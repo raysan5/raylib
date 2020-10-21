@@ -617,6 +617,27 @@ typedef enum {
     MOUSE_MIDDLE_BUTTON = 2
 } MouseButton;
 
+// Mouse cursor types
+typedef enum {
+    MOUSE_CURSOR_DEFAULT       = -1,
+    MOUSE_CURSOR_ARROW         = 0,
+    MOUSE_CURSOR_IBEAM         = 1,
+    MOUSE_CURSOR_CROSSHAIR     = 2,
+    MOUSE_CURSOR_POINTING_HAND = 3,
+    // The horizontal resize/move arrow shape.
+    MOUSE_CURSOR_RESIZE_EW     = 4,
+    // The vertical resize/move arrow shape.
+    MOUSE_CURSOR_RESIZE_NS     = 5,
+    // The top-left to bottom-right diagonal resize/move arrow shape.
+    MOUSE_CURSOR_RESIZE_NWSE   = 6,
+    // The top-right to bottom-left diagonal resize/move arrow shape.
+    MOUSE_CURSOR_RESIZE_NESW   = 7,
+    // The omni-directional resize/move cursor shape.
+    MOUSE_CURSOR_RESIZE_ALL    = 8,
+    // The operation-not-allowed shape.
+    MOUSE_CURSOR_NOT_ALLOWED   = 9
+} MouseCursor;
+
 // Gamepad number
 typedef enum {
     GAMEPAD_PLAYER1     = 0,
@@ -1016,6 +1037,8 @@ RLAPI void SetMousePosition(int x, int y);                    // Set mouse posit
 RLAPI void SetMouseOffset(int offsetX, int offsetY);          // Set mouse offset
 RLAPI void SetMouseScale(float scaleX, float scaleY);         // Set mouse scaling
 RLAPI float GetMouseWheelMove(void);                          // Returns mouse wheel movement Y
+RLAPI MouseCursor GetMouseCursor(void);                       // Returns mouse cursor
+RLAPI void SetMouseCursor(MouseCursor cursor);                // Set mouse cursor
 
 // Input-related functions: touch
 RLAPI int GetTouchX(void);                                    // Returns touch position X for touch point 0 (relative to screen size)

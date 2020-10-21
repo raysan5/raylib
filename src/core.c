@@ -423,6 +423,8 @@ typedef struct CoreData {
             Vector2 offset;                 // Mouse offset
             Vector2 scale;                  // Mouse scaling
 
+            MouseCursor cursor;             // Tracks current mouse cursor
+            void* standardCursors[10];     // Opaque pointers to GLFW cursors
             bool cursorHidden;              // Track if cursor is hidden
             bool cursorOnScreen;            // Tracks if cursor is inside client area
 
@@ -653,8 +655,9 @@ void InitWindow(int width, int height, const char *title)
     // Initialize required global values different than 0
     CORE.Input.Keyboard.exitKey = KEY_ESCAPE;
     CORE.Input.Mouse.scale = (Vector2){ 1.0f, 1.0f };
+    CORE.Input.Mouse.cursor = MOUSE_CURSOR_ARROW;
     CORE.Input.Gamepad.lastButtonPressed = -1;
-
+  
 #if defined(PLATFORM_UWP)
     // The axis count is 6 (2 thumbsticks and left and right trigger)
     CORE.Input.Gamepad.axisCount = 6;
@@ -753,6 +756,26 @@ void InitWindow(int width, int height, const char *title)
 #endif
 #endif
 
+#if defined(PLATFORM_DESKTOP)
+    // Initialize GLFW's standard cursors
+    const int shapes[] = {
+        0x00036001, // MOUSE_CURSOR_ARROW
+        0x00036002, // MOUSE_CURSOR_IBEAM
+        0x00036003, // MOUSE_CURSOR_CROSSHAIR
+        0x00036004, // MOUSE_CURSOR_POINTING_HAND
+        0x00036005, // MOUSE_CURSOR_RESIZE_EW
+        0x00036006, // MOUSE_CURSOR_RESIZE_NS
+        0x00036007, // MOUSE_CURSOR_RESIZE_NWSE
+        0x00036008, // MOUSE_CURSOR_RESIZE_NESW
+        0x00036009, // MOUSE_CURSOR_RESIZE_ALL
+        0x0003600A, // MOUSE_CURSOR_NOT_ALLOWED
+    };
+    for (int i = 0; i < sizeof(CORE.Input.Mouse.standardCursors) / sizeof(CORE.Input.Mouse.standardCursors[0]); i += 1)
+    {
+        CORE.Input.Mouse.standardCursors[i] = glfwCreateStandardCursor(shapes[i]);
+    }
+#endif
+
 #if defined(PLATFORM_WEB)
     // Detect fullscreen change events
     emscripten_set_fullscreenchange_callback("#canvas", NULL, 1, EmscriptenFullscreenChangeCallback);
@@ -796,6 +819,11 @@ void CloseWindow(void)
 #endif
 
     rlglClose();                // De-init rlgl
+
+#if defined(PLATFORM_DESKTOP)
+    for (int i = 0; i < sizeof(CORE.Input.Mouse.standardCursors) / sizeof(CORE.Input.Mouse.standardCursors[0]); i += 1)
+        glfwDestroyCursor(CORE.Input.Mouse.standardCursors[i]);
+#endif
 
 #if defined(PLATFORM_DESKTOP) || defined(PLATFORM_WEB)
     glfwDestroyWindow(CORE.Window.handle);
@@ -2730,6 +2758,29 @@ float GetMouseWheelMove(void)
     return CORE.Input.Mouse.previousWheelMove/100.0f;
 #else
     return CORE.Input.Mouse.previousWheelMove;
+#endif
+}
+
+// Returns mouse cursor
+MouseCursor GetMouseCursor(void)
+{
+    return CORE.Input.Mouse.cursor;
+}
+
+// Set mouse cursor
+// NOTE: This is a no-op on platforms other than PLATFORM_DESKTOP
+void SetMouseCursor(MouseCursor cursor)
+{
+#if defined(PLATFORM_DESKTOP)
+    CORE.Input.Mouse.cursor = cursor;
+    if (cursor == MOUSE_CURSOR_DEFAULT)
+    {
+        glfwSetCursor(CORE.Window.handle, NULL);
+    }
+    else
+    {
+        glfwSetCursor(CORE.Window.handle, CORE.Input.Mouse.standardCursors[cursor]);
+    }
 #endif
 }
 
