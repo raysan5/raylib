@@ -640,7 +640,7 @@ typedef enum {
     GAMEPAD_PLAYER4     = 3
 } GamepadNumber;
 
-// Gamepad Buttons
+// Gamepad buttons
 typedef enum {
     // This is here just for error checking
     GAMEPAD_BUTTON_UNKNOWN = 0,
@@ -676,6 +676,7 @@ typedef enum {
     GAMEPAD_BUTTON_RIGHT_THUMB
 } GamepadButton;
 
+// Gamepad axis
 typedef enum {
     // Left stick
     GAMEPAD_AXIS_LEFT_X = 0,
@@ -690,7 +691,7 @@ typedef enum {
     GAMEPAD_AXIS_RIGHT_TRIGGER = 5      // [1..-1] (pressure-level)
 } GamepadAxis;
 
-// Shader location point type
+// Shader location points
 typedef enum {
     LOC_VERTEX_POSITION = 0,
     LOC_VERTEX_TEXCOORD01,
@@ -735,7 +736,7 @@ typedef enum {
     UNIFORM_SAMPLER2D
 } ShaderUniformDataType;
 
-// Material map type
+// Material maps
 typedef enum {
     MAP_ALBEDO    = 0,       // MAP_DIFFUSE
     MAP_METALNESS = 1,       // MAP_SPECULAR
@@ -791,7 +792,15 @@ typedef enum {
     FILTER_ANISOTROPIC_16X,         // Anisotropic filtering 16x
 } TextureFilterMode;
 
-// Cubemap layout type
+// Texture parameters: wrap mode
+typedef enum {
+    WRAP_REPEAT = 0,        // Repeats texture in tiled mode
+    WRAP_CLAMP,             // Clamps texture to edge pixel in tiled mode
+    WRAP_MIRROR_REPEAT,     // Mirrors and repeats the texture in tiled mode
+    WRAP_MIRROR_CLAMP       // Mirrors and clamps to border the texture in tiled mode
+} TextureWrapMode;
+
+// Cubemap layouts
 typedef enum {
     CUBEMAP_AUTO_DETECT = 0,        // Automatically detect layout type
     CUBEMAP_LINE_VERTICAL,          // Layout is defined by a vertical line with faces
@@ -800,14 +809,6 @@ typedef enum {
     CUBEMAP_CROSS_FOUR_BY_THREE,    // Layout is defined by a 4x3 cross with cubemap faces
     CUBEMAP_PANORAMA                // Layout is defined by a panorama image (equirectangular map)
 } CubemapLayoutType;
-
-// Texture parameters: wrap mode
-typedef enum {
-    WRAP_REPEAT = 0,        // Repeats texture in tiled mode
-    WRAP_CLAMP,             // Clamps texture to edge pixel in tiled mode
-    WRAP_MIRROR_REPEAT,     // Mirrors and repeats the texture in tiled mode
-    WRAP_MIRROR_CLAMP       // Mirrors and clamps to border the texture in tiled mode
-} TextureWrapMode;
 
 // Font type, defines generation method
 typedef enum {
@@ -857,7 +858,7 @@ typedef enum {
     CAMERA_ORTHOGRAPHIC
 } CameraType;
 
-// Type of n-patch
+// N-patch types
 typedef enum {
     NPT_9PATCH = 0,         // Npatch defined by 3x3 tiles
     NPT_3PATCH_VERTICAL,    // Npatch defined by 1x3 tiles
@@ -898,6 +899,7 @@ RLAPI void DecorateWindow(void);                                  // Decorate th
 RLAPI void UndecorateWindow(void);                                // Undecorate the window (only PLATFORM_DESKTOP)
 RLAPI void MaximizeWindow(void);                                  // Maximize the window, if resizable (only PLATFORM_DESKTOP)
 RLAPI void RestoreWindow(void);                                   // Restore the window, if resizable (only PLATFORM_DESKTOP)
+
 RLAPI void SetWindowIcon(Image image);                            // Set icon for window (only PLATFORM_DESKTOP)
 RLAPI void SetWindowTitle(const char *title);                     // Set title for window (only PLATFORM_DESKTOP)
 RLAPI void SetWindowPosition(int x, int y);                       // Set window position on screen (only PLATFORM_DESKTOP)
@@ -916,8 +918,8 @@ RLAPI int GetMonitorRefreshRate(int monitor);                     // Get primary
 RLAPI Vector2 GetWindowPosition(void);                            // Get window position XY on monitor
 RLAPI Vector2 GetWindowScaleDPI(void);                            // Get window scale DPI factor
 RLAPI const char *GetMonitorName(int monitor);                    // Get the human-readable, UTF-8 encoded name of the primary monitor
-RLAPI const char *GetClipboardText(void);                         // Get clipboard text content
 RLAPI void SetClipboardText(const char *text);                    // Set clipboard text content
+RLAPI const char *GetClipboardText(void);                         // Get clipboard text content
 
 // Cursor-related functions
 RLAPI void ShowCursor(void);                                      // Shows cursor
@@ -957,10 +959,12 @@ RLAPI double GetTime(void);                                       // Returns ela
 
 // Misc. functions
 RLAPI void SetConfigFlags(unsigned int flags);                    // Setup window configuration flags (view FLAGS)
+
 RLAPI void SetTraceLogLevel(int logType);                         // Set the current threshold (minimum) log level
 RLAPI void SetTraceLogExit(int logType);                          // Set the exit threshold (minimum) log level
 RLAPI void SetTraceLogCallback(TraceLogCallback callback);        // Set a trace log callback to enable custom logging
 RLAPI void TraceLog(int logType, const char *text, ...);          // Show trace log messages (LOG_DEBUG, LOG_INFO, LOG_WARNING, LOG_ERROR)
+
 RLAPI void TakeScreenshot(const char *fileName);                  // Takes a screenshot of current screen (saved a .png)
 RLAPI int GetRandomValue(int min, int max);                       // Returns a random value between min and max (both included)
 

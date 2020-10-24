@@ -5769,7 +5769,7 @@ void UWPGestureTouch(int pointer, float x, float y, bool touch)
 #endif // PLATFORM_UWP
 
 #if defined(PLATFORM_DRM)
-
+// Search matching DRM mode in connector's mode list
 static int FindMatchingConnectorMode(const drmModeConnector *connector, const drmModeModeInfo *mode)
 {
     if (NULL == connector) return -1;
@@ -5795,6 +5795,7 @@ static int FindMatchingConnectorMode(const drmModeConnector *connector, const dr
     #undef BINCMP
 }
 
+// Search exactly matching DRM connector mode in connector's list
 static int FindExactConnectorMode(const drmModeConnector *connector, uint width, uint height, uint fps, bool allowInterlaced) {
     TRACELOG(LOG_TRACE, "searching exact connector mode for %ux%u@%u, selecting an interlaced mode is allowed: %s", width, height, fps, allowInterlaced ? "yes" : "no");
 
@@ -5823,6 +5824,7 @@ static int FindExactConnectorMode(const drmModeConnector *connector, uint width,
     return -1;
 }
 
+// Search the nearest matching DRM connector mode in connector's list
 static int FindNearestConnectorMode(const drmModeConnector *connector, uint width, uint height, uint fps, bool allowInterlaced) {
     TRACELOG(LOG_TRACE, "searching nearest connector mode for %ux%u@%u, selecting an interlaced mode is allowed: %s", width, height, fps, allowInterlaced ? "yes" : "no");
 
@@ -5880,5 +5882,4 @@ static int FindNearestConnectorMode(const drmModeConnector *connector, uint widt
     TRACELOG(LOG_TRACE, "returning nearest mode: %d", nearestIndex);
     return nearestIndex;
 }
-
 #endif
