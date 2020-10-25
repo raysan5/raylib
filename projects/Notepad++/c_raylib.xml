@@ -2,9 +2,9 @@
 <NotepadPlus>
 	<AutoComplete language="C">
 		<Environment ignoreCase="no" startFunc="(" stopFunc=")" paramSeparator="," terminal=";" additionalWordChar = "."/>
-        
+
         <!-- raylib Autocompletion -->
-        
+
         <!-- raylib data types -->
         <KeyWord name="bool" />
         <KeyWord name="Vector2" />
@@ -69,6 +69,9 @@
             <Overload retVal="void" descr="Set title for window (only PLATFORM_DESKTOP)">
                 <Param name="const char *title" />
             </Overload>
+        </KeyWord>
+        <KeyWord name="GetWindowTitle" func="yes">
+            <Overload retVal="const char *" descr="Get title for window"></Overload>
         </KeyWord>
         <KeyWord name="SetWindowPosition" func="yes">
             <Overload retVal="void" descr="Set window position on screen (only PLATFORM_DESKTOP)">

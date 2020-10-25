@@ -4,7 +4,7 @@
 *
 *   Welcome to raylib!
 *
-*   To test examples in Notepad++, provided with default raylib installer package, 
+*   To test examples in Notepad++, provided with default raylib installer package,
 *   just press F6 and run [raylib_compile_execute] script, it will compile and execute.
 *   Note that compiled executable is placed in the same folder as .c file
 *

@@ -1,4 +1,4 @@
-# format=pipe 
+# format=pipe
 InitWindow|void|(int width, int height, const char *title);|
 WindowShouldClose|bool|(void);|
 CloseWindow|void|(void);|
@@ -16,6 +16,7 @@ SetWindowMonitor|void|(int monitor);|
 SetWindowMinSize|void|(int width, int height);|
 SetWindowSize|void|(int width, int height);|
 GetWindowHandle|void *|(void);|
+GetWindowTitle|const char *|(void);|
 GetScreenWidth|int|(void);|
 GetScreenHeight|int|(void);|
 GetMonitorCount|int|(void);|
@@ -117,7 +118,7 @@ GetGestureDragAngle|float|(void);|
 GetGesturePinchVector|Vector2|(void);|
 GetGesturePinchAngle|float|(void);|
 SetCameraMode|void|(Camera camera, int mode);|
-UpdateCamera|void|(Camera *camera);|            
+UpdateCamera|void|(Camera *camera);|
 SetCameraPanControl|void|(int panKey);|
 SetCameraAltControl|void|(int altKey);|
 SetCameraSmoothZoomControl|void|(int szKey);|

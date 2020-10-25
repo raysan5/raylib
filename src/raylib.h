@@ -917,6 +917,7 @@ RLAPI int GetMonitorPhysicalHeight(int monitor);                  // Get primary
 RLAPI int GetMonitorRefreshRate(int monitor);                     // Get primary monitor refresh rate
 RLAPI Vector2 GetWindowPosition(void);                            // Get window position XY on monitor
 RLAPI Vector2 GetWindowScaleDPI(void);                            // Get window scale DPI factor
+RLAPI const char *GetWindowTitle();                               // Get title for window
 RLAPI const char *GetMonitorName(int monitor);                    // Get the human-readable, UTF-8 encoded name of the primary monitor
 RLAPI void SetClipboardText(const char *text);                    // Set clipboard text content
 RLAPI const char *GetClipboardText(void);                         // Get clipboard text content
@@ -1184,7 +1185,7 @@ RLAPI void ImageDrawCircle(Image *dst, int centerX, int centerY, int radius, Col
 RLAPI void ImageDrawCircleV(Image *dst, Vector2 center, int radius, Color color);                        // Draw circle within an image (Vector version)
 RLAPI void ImageDrawRectangle(Image *dst, int posX, int posY, int width, int height, Color color);       // Draw rectangle within an image
 RLAPI void ImageDrawRectangleV(Image *dst, Vector2 position, Vector2 size, Color color);                 // Draw rectangle within an image (Vector version)
-RLAPI void ImageDrawRectangleRec(Image *dst, Rectangle rec, Color color);                                // Draw rectangle within an image 
+RLAPI void ImageDrawRectangleRec(Image *dst, Rectangle rec, Color color);                                // Draw rectangle within an image
 RLAPI void ImageDrawRectangleLines(Image *dst, Rectangle rec, int thick, Color color);                   // Draw rectangle lines within an image
 RLAPI void ImageDraw(Image *dst, Image src, Rectangle srcRec, Rectangle dstRec, Color tint);             // Draw a source image within a destination image (tint applied to source)
 RLAPI void ImageDrawText(Image *dst, const char *text, int posX, int posY, int fontSize, Color color);   // Draw text (using default font) within an image (destination)

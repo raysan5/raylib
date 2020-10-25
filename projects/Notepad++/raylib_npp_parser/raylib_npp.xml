@@ -47,6 +47,9 @@
                 <Param name="const char *title" />
             </Overload>
         </KeyWord>
+        <KeyWord name="GetWindowTitle" func="yes">
+            <Overload retVal="const char *" descr="Get title for window"></Overload>
+        </KeyWord>
         <KeyWord name="SetWindowPosition" func="yes">
             <Overload retVal="void" descr="Set window position on screen (only PLATFORM_DESKTOP)">
                 <Param name="int x" />
