@@ -423,6 +423,7 @@ typedef struct CoreData {
             Vector2 offset;                 // Mouse offset
             Vector2 scale;                  // Mouse scaling
 
+            int cursor;                     // Tracks current mouse cursor
             bool cursorHidden;              // Track if cursor is hidden
             bool cursorOnScreen;            // Tracks if cursor is inside client area
 
@@ -653,8 +654,9 @@ void InitWindow(int width, int height, const char *title)
     // Initialize required global values different than 0
     CORE.Input.Keyboard.exitKey = KEY_ESCAPE;
     CORE.Input.Mouse.scale = (Vector2){ 1.0f, 1.0f };
+    CORE.Input.Mouse.cursor = MOUSE_CURSOR_ARROW;
     CORE.Input.Gamepad.lastButtonPressed = -1;
-
+  
 #if defined(PLATFORM_UWP)
     // The axis count is 6 (2 thumbsticks and left and right trigger)
     CORE.Input.Gamepad.axisCount = 6;
@@ -2730,6 +2732,27 @@ float GetMouseWheelMove(void)
     return CORE.Input.Mouse.previousWheelMove/100.0f;
 #else
     return CORE.Input.Mouse.previousWheelMove;
+#endif
+}
+
+// Returns mouse cursor
+int GetMouseCursor(void)
+{
+    return CORE.Input.Mouse.cursor;
+}
+
+// Set mouse cursor
+// NOTE: This is a no-op on platforms other than PLATFORM_DESKTOP
+void SetMouseCursor(int cursor)
+{
+#if defined(PLATFORM_DESKTOP)
+    CORE.Input.Mouse.cursor = cursor;
+    if (cursor == MOUSE_CURSOR_DEFAULT) glfwSetCursor(CORE.Window.handle, NULL);
+    else
+    {
+        // NOTE: We are relating internal GLFW enum values to our MouseCursor enum values
+        glfwSetCursor(CORE.Window.handle, glfwCreateStandardCursor(0x00036000 + cursor));
+    }
 #endif
 }
 
@@ -5338,11 +5361,14 @@ static void *EventThread(void *arg)
             }
 
             // Screen confinement
-            if (CORE.Input.Mouse.position.x < 0) CORE.Input.Mouse.position.x = 0;
-            if (CORE.Input.Mouse.position.x > CORE.Window.screen.width/CORE.Input.Mouse.scale.x) CORE.Input.Mouse.position.x = CORE.Window.screen.width/CORE.Input.Mouse.scale.x;
+            if (!CORE.Input.Mouse.cursorHidden)
+            {
+                if (CORE.Input.Mouse.position.x < 0) CORE.Input.Mouse.position.x = 0;
+                if (CORE.Input.Mouse.position.x > CORE.Window.screen.width/CORE.Input.Mouse.scale.x) CORE.Input.Mouse.position.x = CORE.Window.screen.width/CORE.Input.Mouse.scale.x;
 
-            if (CORE.Input.Mouse.position.y < 0) CORE.Input.Mouse.position.y = 0;
-            if (CORE.Input.Mouse.position.y > CORE.Window.screen.height/CORE.Input.Mouse.scale.y) CORE.Input.Mouse.position.y = CORE.Window.screen.height/CORE.Input.Mouse.scale.y;
+                if (CORE.Input.Mouse.position.y < 0) CORE.Input.Mouse.position.y = 0;
+                if (CORE.Input.Mouse.position.y > CORE.Window.screen.height/CORE.Input.Mouse.scale.y) CORE.Input.Mouse.position.y = CORE.Window.screen.height/CORE.Input.Mouse.scale.y;
+            }
 
             // Gesture update
             if (gestureUpdate)
@@ -5743,7 +5769,7 @@ void UWPGestureTouch(int pointer, float x, float y, bool touch)
 #endif // PLATFORM_UWP
 
 #if defined(PLATFORM_DRM)
-
+// Search matching DRM mode in connector's mode list
 static int FindMatchingConnectorMode(const drmModeConnector *connector, const drmModeModeInfo *mode)
 {
     if (NULL == connector) return -1;
@@ -5769,6 +5795,7 @@ static int FindMatchingConnectorMode(const drmModeConnector *connector, const dr
     #undef BINCMP
 }
 
+// Search exactly matching DRM connector mode in connector's list
 static int FindExactConnectorMode(const drmModeConnector *connector, uint width, uint height, uint fps, bool allowInterlaced) {
     TRACELOG(LOG_TRACE, "searching exact connector mode for %ux%u@%u, selecting an interlaced mode is allowed: %s", width, height, fps, allowInterlaced ? "yes" : "no");
 
@@ -5797,6 +5824,7 @@ static int FindExactConnectorMode(const drmModeConnector *connector, uint width,
     return -1;
 }
 
+// Search the nearest matching DRM connector mode in connector's list
 static int FindNearestConnectorMode(const drmModeConnector *connector, uint width, uint height, uint fps, bool allowInterlaced) {
     TRACELOG(LOG_TRACE, "searching nearest connector mode for %ux%u@%u, selecting an interlaced mode is allowed: %s", width, height, fps, allowInterlaced ? "yes" : "no");
 
@@ -5854,5 +5882,4 @@ static int FindNearestConnectorMode(const drmModeConnector *connector, uint widt
     TRACELOG(LOG_TRACE, "returning nearest mode: %d", nearestIndex);
     return nearestIndex;
 }
-
 #endif

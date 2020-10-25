@@ -3,6 +3,156 @@ changelog
 
 Current Release:    raylib 3.0.0 (01 April 2020)
 
+-------------------------------------------------------------------------
+Release:     raylib 3.5 - 7th Anniversary Edition (November 2020) -WIP-
+-------------------------------------------------------------------------
+KEY CHANGES:
+ - [core] NEW platform supported: PLATFORM_DRM (#1388) by @kernelkinetic
+ - [rlgl] ADDED RenderBatch type and related functions to allow custom batching
+ - [rlgl] REDESIGN framebuffers API to support multiple attachment types (#721) 
+ - [textures] REDESIGNED Image*() functions, big performance improvements (software rendering)
+ - [*] REVIEWED multiple functions to replace file accesses by memory accesses
+ - [*] NEW GitHub Actions CI to support multiple raylib build configurations
+ 
+Detailed changes:
+[core] ADDED: IsWindowFocused()
+[core] ADDED: GetWindowScaleDPI()
+[core] ADDED: GetMonitorRefreshRate() (#1289) by @Shylie
+[core] ADDED: IsCursorOnScreen() (#1262) by @ChrisDill
+[core] ADDED: SetMouseCursor() and GetMouseCursor() for standard Desktop cursors (#1407) by @chances
+[core] REMOVED: struct RenderTexture2D: depthTexture variable 
+[core] RENAMED: GetExtension() to GetFileExtension()
+[core] REVIEWED: Several structs to reduce size and padding
+[core] REVIEWED: struct Texture maps to Texture2D and TextureCubemap
+[core] REVIEWED: ToggleFullscreen() (#1287)
+[core] REVIEWED: InitWindow(), support empty title for window (#1323)
+[core] REVIEWED: RPI: Mouse movements are bound to the screen resolution (#1392) (#1410) by @kernelkinetic
+[core] REVIEWED: GetPrevDirectoryPath() fixes on Unix-like systems (#1246) by @ivan-cx
+[core] REDESIGNED: GetMouseWheelMove() to return float movement for precise scrolling (#1397) by @Doy-lee 
+[core] UWP rework with improvements (#1231) by @Rover656
+[core] Gamepad axis bug fixes and improvement (#1228) by @mmalecot
+[core] Updated joystick mappings with latest version of gamecontrollerdb (#1381) by @coderoth
+[rlgl] Corrected issue with OpenGL 1.1 support
+[rlgl] ADDED: rlDrawMeshInstanced() (#1318) by @seanpringle
+[rlgl] ADDED: rlCheckErrors (#1321) by @seanpringle
+[rlgl] ADDED: BLEND_SET blending mode (#1251) by @RandomErrorMessage
+[rlgl] RENAMED: rlUnproject() to Vector3Unproject() [raymath]
+[rlgl] REVIEWED: Replace rlglDraw() calls by DrawRenderBatch() internal calls
+[rlgl] REVIEWED: GenTextureCubemap(), use rlgl functionality only
+[rlgl] REVIEWED: rlFramebufferAttach() to support texture layers
+[rlgl] REVIEWED: GenDrawCube() and GenDrawQuad()
+[rlgl] REVIEWED: Issues with vertex batch overflow (#1223)
+[rlgl] REDESIGNED: GenTexture*() to use the new fbo API (#721)
+[raymath] ADDED: Normalize() and Remap() functions (#1247) by @NoorWachid
+[raymath] ADDED: Vector2Reflect() (#1400) by @daniel-junior-dube
+[raymath] ADDED: Vector2LengthSqr() and Vector3LengthSqr() (#1248) by @ThePituLegend
+[raymath] ADDED: Vector2MoveTowards() function (#1233) by @anatagawa
+[raymath] REVIEWED: Some functions consistency (#1197) by @Not-Nik
+[raymath] REVIEWED: QuaternionFromVector3ToVector3() (#1263) by @jvocaturo 
+[text] Avoid [textures] functions dependencies
+[text] ADDED: Config flag: SUPPORT_TEXT_MANIPULATION
+[text] ADDED: LoadFontFromMemory() (TTF only) (#1327)
+[text] RENAMED: FormatText() -> TextFormat() 
+[text] REVIEWED: TextJoin()
+[text] REVIEWED: TextReplace() (#1172)
+[text] REVIEWED: LoadBMFont() to load data from memory (#1232)
+[text] REVIEWED: GenImageFontAtlas(), fixed offset (#1171) 
+[text] REDESIGNED: LoadFontData()
+[text] REDESIGNED: LoadFontDefault(), some code simplifications
+[text] REDESIGNED: LoadFontFromImage(), avoid LoadImageEx()
+[text] REDESIGNED: LoadFontData(), avoid GenImageColor(), ImageFormat()
+[text] REDESIGNED: LoadBMFont(), avoid ImageCopy(), ImageFormat(), ImageAlphaMask()
+[textures] Move Color functions from [core] to [textures] module
+[textures] ADDED: ColorAlphaBlend()
+[textures] ADDED: GetPixelColor()
+[textures] ADDED: SetPixelColor()
+[textures] ADDED: LoadImageFromMemory() (#1327)
+[textures] ADDED: LoadImageAnim() to load animated sequence of images
+[textures] ADDED: DrawTextureTiled() (#1291) - @Demizdor
+[textures] ADDED: UpdateTextureRec()
+[textures] REMOVED: Config flag: SUPPORT_IMAGE_DRAWING 
+[textures] REMOVED: LoadImageEx()
+[textures] REMOVED: LoadImagePro() 
+[textures] RENAMED: ImageExtractPalette() to GetImagePalette()
+[textures] RENAMED: Fade() to ColorAlpha(), added #define for compatibility
+[textures] REVIEWED: GetPixelDataSize() to consider compressed data properly
+[textures] REVIEWED: GetTextureData(), allow retrieving 32bit float data
+[textures] REVIEWED: ImageDrawText*() params order
+[textures] REVIEWED: ColorAlphaBlend(), support tint color
+[textures] REVIEWED: ColorAlphaBlend(), integers-version, optimized (#1218)
+[textures] REVIEWED: ImageDraw(), consider negative source offset properly (#1283)
+[textures] REVIEWED: ImageDraw(), optimizations test (#1218) 
+[textures] REVIEWED: ImageResizeCanvas(), optimization (#1218)
+[textures] REVIEWED: ExportImage(), optimized
+[textures] REVIEWED: ImageAlphaPremultiply(), optimization
+[textures] REVIEWED: ImageAlphaClear(), minor optimization
+[textures] REVIEWED: ImageToPOT(), renamed parameter
+[textures] REVIEWED: ImageCrop() (#1218)
+[textures] REVIEWED: ImageToPOT() (#1218)
+[textures] REVIEWED: ImageAlphaCrop() (#1218)
+[textures] REVIEWED: ExportImage(), optimized (#1218)
+[textures] REDESIGNED: ImageCrop(), optimized (#1218)
+[textures] REDESIGNED: ImageRotateCCW(), optimized (#1218)
+[textures] REDESIGNED: ImageRotateCW(), optimized (#1218)
+[textures] REDESIGNED: ImageFlipHorizontal(), optimized (#1218)
+[textures] REDESIGNED: ImageFlipVertical(), optimized (#1218)
+[textures] REDESIGNED: ImageResizeCanvas(), optimized (#1218)
+[textures] REDESIGNED: ImageDrawPixel(), optimized
+[textures] REDESIGNED: ImageDrawLine(), optimized
+[textures] REDESIGNED: ImageDraw(), optimized (#1218)
+[textures] REDESIGNED: ImageResize(), optimized (#1218)
+[textures] REDESIGNED: ImageFromImage(), optimized (#1218)
+[textures] REDESIGNED: ImageDraw(), optimization (#1218)
+[textures] REDESIGNED: ImageAlphaClear(), optimized (#1218)
+[textures] REDESIGNED: ExportImageAsCode() to use memory buffer (#1232)
+[textures] REDESIGNED: ColorFromHSV() 
+[models] ADDED: DrawTriangle3D() and DrawTriangleStrip3D()
+[models] REVIEWED: LoadModel(), avoid loading texcoords and normals from model if not existent
+[models] REVIEWED: GenMeshCubicmap(), added comments and simplification
+[models] REVIEWED: GenMeshCubicmap(), fixed generated normals (#1244) by @GoldenThumbs
+[models] REVIEWED: GenMeshPoly(), fixed buffer overflow (#1269) by @frithrah 
+[models] REVIEWED: LoadOBJ(): Allow for multiple materials in obj files (#1408) by @chriscamacho and @codifies
+[models] REVIEWED: LoadIQM() materials loading (#1227) by @sikor666
+[models] REVIEWED: LoadGLTF() to read from memory buffer
+[models] REVIEWED: UpdateMesh(), fix extra memory allocated when updating color buffer (#1271) by @4yn
+[models] REVIEWED: MeshNormalsSmooth() (#1317) by @seanpringle
+[models] REDESIGNED: ExportMesh() to use memory buffer (#1232) 
+[models] REDESIGNED: LoadIQM() and LoadModelAnimations() to use memory buffers
+[audio] ADDED: LoadWaveFromMemory() (#1327)
+[audio] REMOVED: SetMusicLoopCount()
+[audio] REVIEWED: SaveWAV() to use memory write insted of file
+[audio] REVIEWED: LoadMusicStream(), support WAV music streaming (#1198) 
+[audio] REVIEWED: Support multiple WAV sampleSize for MusicStream (#1340) 
+[audio] REDESIGNED: Audio looping system
+[audio] REDESIGNED: LoadSound(): Use memory loading (WAV, OGG, MP3, FLAC) (#1312)
+[audio] REDESIGNED: ExportWaveAsCode() to use memory buffers
+[utils] REVIEWED: android_fopen() to support SDCard access
+[rmem] REVIEWED: MemPool and other allocators optimization (#1211) by @assyrianic
+[examples] ADDED: others/embedded_files_loading
+[examples] ADDED: shaders/shaders_hot_reloading (#1198)
+[examples] ADDED: textures/textures_blend_modes (#1261) by @accidentalrebel
+[examples] REVIEWED: models/models_skybox to work on OpenGL ES 2.0
+[examples] REVIEWED: textures/textures_raw_data (#1286)
+[examples] REVIEWED: others/raudio_standalone.c
+[examples] REVIEWED: audio/resources, use open license resources
+[examples] REVIEWED: textures/textures_sprite_explosion, replace resources
+[examples] REVIEWED: textures/textures_particles_blending, replace resources
+[build] REMOVED: ANGLE VS2017 template project
+[build] Avoided all MSVC compile warnings
+[build] Additional config.h configuration options exposing multiple #define values
+[build] Updated Makefile for web (#1332) by @rfaile313
+[build] Updated build pipelines to use latest emscripten and android ndk
+[build] Updated emscriptem build script to generate .a on WebAssembly
+[build] Updated Android build for Linux, supporting ANDROID_NDK at compile time by @branlix3000
+[build] Updated VSCode project template tasks
+[build] Updated VS2017.UWP project template by @Rover656
+[build] Updated Android build pipeline 
+[*] Moved raysan5/raylib/games to independent repo: raysan5/raylib-games 
+[*] Replaced several examples resources with more open licensed alternatives
+[*] Updated BINDINGS.md with NEW bindings and added raylib version binding!
+[*] Updated all external libraries to latest versions
+[*] Multiple code improvements and small fixes
+
 -----------------------------------------------
 Release:     raylib 3.0 (01 April 2020)
 -----------------------------------------------

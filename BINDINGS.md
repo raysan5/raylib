@@ -9,7 +9,8 @@ Here it is a list with the ones I'm aware of:
 | raylib             | **3.1-dev** | [C](https://en.wikipedia.org/wiki/C_(programming_language))    | https://github.com/raysan5/raylib    |
 | raylib-cpp         | 3.1-dev | [C++](https://en.wikipedia.org/wiki/C%2B%2B)                       | https://github.com/robloach/raylib-cpp      |
 | Raylib-cs          | 3.0 | [C#](https://en.wikipedia.org/wiki/C_Sharp_(programming_language))       | https://github.com/ChrisDill/Raylib-cs      |
-| raylib-cppsharp    | ? | [C#](https://en.wikipedia.org/wiki/C_Sharp_(programming_language))       | https://github.com/phxvyper/raylib-cppsharp |
+| raylib-cppsharp    | 2.5 | [C#](https://en.wikipedia.org/wiki/C_Sharp_(programming_language))       | https://github.com/phxvyper/raylib-cppsharp |
+| raylib-boo         | 3.0 | [Boo](http://boo-language.github.io/) | https://github.com/Rabios/raylib-boo          |
 | RaylibFS           | 2.5 | [F#](https://fsharp.org/)             | https://github.com/dallinbeutler/RaylibFS     |
 | raylib_d           | 2.5 | [D](https://dlang.org/)               | https://github.com/Sepheus/raylib_d     |
 | raylib-d           | 3.0 | [D](https://dlang.org/)               | https://github.com/onroundit/raylib-d     |

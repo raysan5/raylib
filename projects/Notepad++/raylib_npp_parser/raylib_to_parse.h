@@ -148,6 +148,8 @@ RLAPI void SetMousePosition(int x, int y);                    // Set mouse posit
 RLAPI void SetMouseOffset(int offsetX, int offsetY);          // Set mouse offset
 RLAPI void SetMouseScale(float scaleX, float scaleY);         // Set mouse scaling
 RLAPI float GetMouseWheelMove(void);                          // Returns mouse wheel movement Y
+RLAPI MouseCursor GetMouseCursor(void);                       // Returns mouse cursor
+RLAPI void SetMouseCursor(MouseCursor cursor);                // Set mouse cursor
 
 // Input-related functions: touch
 RLAPI int GetTouchX(void);                                    // Returns touch position X for touch point 0 (relative to screen size)
