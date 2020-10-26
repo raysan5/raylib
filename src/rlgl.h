@@ -812,12 +812,12 @@ typedef struct DrawCall {
     int mode;                   // Drawing mode: LINES, TRIANGLES, QUADS
     int vertexCount;            // Number of vertex of the draw
     int vertexAlignment;        // Number of vertex required for index alignment (LINES, TRIANGLES)
-    //unsigned int vaoId;       // Vertex array id to be used on the draw
-    //unsigned int shaderId;    // Shader id to be used on the draw
-    unsigned int textureId;     // Texture id to be used on the draw
+    //unsigned int vaoId;       // Vertex array id to be used on the draw -> Using RLGL.currentBatch->vertexBuffer.vaoId
+    //unsigned int shaderId;    // Shader id to be used on the draw -> Using RLGL.currentShader.id
+    unsigned int textureId;     // Texture id to be used on the draw -> Use to create new draw call if changes
 
-    //Matrix projection;        // Projection matrix for this draw
-    //Matrix modelview;         // Modelview matrix for this draw
+    //Matrix projection;        // Projection matrix for this draw -> Using RLGL.projection
+    //Matrix modelview;         // Modelview matrix for this draw -> Using RLGL.modelview
 } DrawCall;
 
 // RenderBatch type
@@ -826,7 +826,7 @@ typedef struct RenderBatch {
     int currentBuffer;          // Current buffer tracking in case of multi-buffering
     VertexBuffer *vertexBuffer; // Dynamic buffer(s) for vertex data
 
-    DrawCall *draws;            // Draw calls array
+    DrawCall *draws;            // Draw calls array, depends on textureId
     int drawsCounter;           // Draw calls counter
     float currentDepth;         // Current depth value for next draw
 } RenderBatch;
@@ -857,7 +857,7 @@ typedef struct rlglData {
         Matrix stack[MAX_MATRIX_STACK_SIZE];// Matrix stack for push/pop
         int stackCounter;                   // Matrix stack counter
 
-        Texture2D shapesTexture;            // Texture used on shapes drawing (usually a white)
+        Texture2D shapesTexture;            // Texture used on shapes drawing (usually a white pixel)
         Rectangle shapesTextureRec;         // Texture source rectangle used on shapes drawing
         unsigned int defaultTextureId;      // Default texture used on shapes/poly drawing (required by shader)
         unsigned int defaultVShaderId;      // Default vertex shader id (used by default shader program)
@@ -4421,16 +4421,14 @@ static void DrawRenderBatch(RenderBatch *batch)
 #if defined(SUPPORT_VR_SIMULATOR)
         if (eyesCount == 2) SetStereoView(eye, matProjection, matModelView);
 #endif
-
         // Draw buffers
         if (batch->vertexBuffer[batch->currentBuffer].vCounter > 0)
         {
             // Set current shader and upload current MVP matrix
             glUseProgram(RLGL.State.currentShader.id);
 
-            // Create modelview-projection matrix
+            // Create modelview-projection matrix and upload to shader
             Matrix matMVP = MatrixMultiply(RLGL.State.modelview, RLGL.State.projection);
-
             glUniformMatrix4fv(RLGL.State.currentShader.locs[LOC_MATRIX_MVP], 1, false, MatrixToFloat(matMVP));
             glUniform4f(RLGL.State.currentShader.locs[LOC_COLOR_DIFFUSE], 1.0f, 1.0f, 1.0f, 1.0f);
             glUniform1i(RLGL.State.currentShader.locs[LOC_MAP_DIFFUSE], 0);    // Provided value refers to the texture unit (active)
@@ -4440,8 +4438,6 @@ static void DrawRenderBatch(RenderBatch *batch)
             //if (RLGL.State.currentShader->locs[LOC_MAP_NORMAL] > 0) glUniform1i(RLGL.State.currentShader.locs[LOC_MAP_NORMAL], 2);
 
             // NOTE: Right now additional map textures not considered for default buffers drawing
-
-            int vertexOffset = 0;
 
             if (RLGL.ExtSupported.vao) glBindVertexArray(batch->vertexBuffer[batch->currentBuffer].vaoId);
             else
@@ -4470,9 +4466,10 @@ static void DrawRenderBatch(RenderBatch *batch)
             {
                 glBindTexture(GL_TEXTURE_2D, batch->draws[i].textureId);
 
-                // TODO: Find some way to bind additional textures --> Use global texture IDs? Register them on draw[i]?
-                //if (RLGL.State.currentShader->locs[LOC_MAP_SPECULAR] > 0) { glActiveTexture(GL_TEXTURE1); glBindTexture(GL_TEXTURE_2D, textureUnit1_id); }
-                //if (RLGL.State.currentShader->locs[LOC_MAP_SPECULAR] > 0) { glActiveTexture(GL_TEXTURE2); glBindTexture(GL_TEXTURE_2D, textureUnit2_id); }
+            for (int i = 0, vertexOffset = 0; i < batch->drawsCounter; i++)
+            {
+                // Texture 0 is always active by default, bind the texture for current draw call
+                glBindTexture(GL_TEXTURE_2D, batch->draws[i].textureId);
 
                 if ((batch->draws[i].mode == RL_LINES) || (batch->draws[i].mode == RL_TRIANGLES)) glDrawArrays(batch->draws[i].mode, vertexOffset, batch->draws[i].vertexCount);
                 else
