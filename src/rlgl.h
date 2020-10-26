@@ -860,6 +860,7 @@ typedef struct rlglData {
         Texture2D shapesTexture;            // Texture used on shapes drawing (usually a white pixel)
         Rectangle shapesTextureRec;         // Texture source rectangle used on shapes drawing
         unsigned int defaultTextureId;      // Default texture used on shapes/poly drawing (required by shader)
+        unsigned int activeTextureId[4];    // Active texture ids to be enabled on batch drawing (0 active by default)
         unsigned int defaultVShaderId;      // Default vertex shader id (used by default shader program)
         unsigned int defaultFShaderId;      // Default fragment shader Id (used by default shader program)
         Shader defaultShader;               // Basic shader, support vertex color and diffuse texture
@@ -3354,7 +3355,15 @@ void SetShaderValueTexture(Shader shader, int uniformLoc, Texture2D texture)
 #if defined(GRAPHICS_API_OPENGL_33) || defined(GRAPHICS_API_OPENGL_ES2)
     glUseProgram(shader.id);
 
-    glUniform1i(uniformLoc, texture.id);
+    // Register a new active texture for the internal batch system
+    for (int i = 0; i < 4; i++) 
+    {
+        if (RLGL.State.activeTextureId[i] == 0) 
+        {
+            glUniform1i(uniformLoc, i + 1); // Activate new texture unit (0 is used by default texture)
+            RLGL.State.activeTextureId[i] = texture.id; // Save texture id for binding on drawing
+        }
+    }
 
     //glUseProgram(0);
 #endif
@@ -4430,14 +4439,6 @@ static void DrawRenderBatch(RenderBatch *batch)
             // Create modelview-projection matrix and upload to shader
             Matrix matMVP = MatrixMultiply(RLGL.State.modelview, RLGL.State.projection);
             glUniformMatrix4fv(RLGL.State.currentShader.locs[LOC_MATRIX_MVP], 1, false, MatrixToFloat(matMVP));
-            glUniform4f(RLGL.State.currentShader.locs[LOC_COLOR_DIFFUSE], 1.0f, 1.0f, 1.0f, 1.0f);
-            glUniform1i(RLGL.State.currentShader.locs[LOC_MAP_DIFFUSE], 0);    // Provided value refers to the texture unit (active)
-
-            // TODO: Support additional texture units on custom shader
-            //if (RLGL.State.currentShader->locs[LOC_MAP_SPECULAR] > 0) glUniform1i(RLGL.State.currentShader.locs[LOC_MAP_SPECULAR], 1);
-            //if (RLGL.State.currentShader->locs[LOC_MAP_NORMAL] > 0) glUniform1i(RLGL.State.currentShader.locs[LOC_MAP_NORMAL], 2);
-
-            // NOTE: Right now additional map textures not considered for default buffers drawing
 
             if (RLGL.ExtSupported.vao) glBindVertexArray(batch->vertexBuffer[batch->currentBuffer].vaoId);
             else
@@ -4460,11 +4461,22 @@ static void DrawRenderBatch(RenderBatch *batch)
                 glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, batch->vertexBuffer[batch->currentBuffer].vboId[3]);
             }
 
-            glActiveTexture(GL_TEXTURE0);
+            glActiveTexture(GL_TEXTURE0);   // One texture is always active for default shader
+            glUniform1i(RLGL.State.currentShader.locs[LOC_MAP_DIFFUSE], 0); // Active texture 0
 
-            for (int i = 0; i < batch->drawsCounter; i++)
+            // Activate additional sampler textures
+            // Those additional textures will be common for all draw calls of the batch
+            for (int i = 0; i < 4; i++)
             {
-                glBindTexture(GL_TEXTURE_2D, batch->draws[i].textureId);
+                if (RLGL.State.activeTextureId[i] > 0) 
+                {
+                    glActiveTexture(GL_TEXTURE0 + 1 + i);
+                    glBindTexture(GL_TEXTURE_2D, RLGL.State.activeTextureId[i]);
+                }
+            }
+            
+            // Setup some default shader values
+            glUniform4f(RLGL.State.currentShader.locs[LOC_COLOR_DIFFUSE], 1.0f, 1.0f, 1.0f, 1.0f);
 
             for (int i = 0, vertexOffset = 0; i < batch->drawsCounter; i++)
             {
