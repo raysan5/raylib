@@ -1352,10 +1352,29 @@ Vector2 GetWindowScaleDPI(void)
     Vector2 scale = { 1.0f, 1.0f };
     
 #if defined(PLATFORM_DESKTOP)
-    GLFWmonitor *monitor = glfwGetPrimaryMonitor();
+    float xdpi = 1.0;
+    float ydpi = 1.0;
+    Vector2 windowPos = GetWindowPosition();
+    
+    int monitorCount = 0;
+    GLFWmonitor **monitors = glfwGetMonitors(&monitorCount);
 
-    if (monitor != NULL) glfwGetMonitorContentScale(monitor, &scale.x, &scale.y);
-    else TRACELOG(LOG_WARNING, "GLFW: Failed to get primary monitor");
+    // Check window monitor
+    for (int i = 0; i < monitorCount; i++)
+    {
+        glfwGetMonitorContentScale(monitors[i], &xdpi, &ydpi);
+        
+        int xpos, ypos, width, height;
+        glfwGetMonitorWorkarea(monitors[i], &xpos, &ypos, &width, &height);
+        
+        if ((windowPos.x >= xpos) && (windowPos.x < xpos + width) && 
+            (windowPos.y >= ypos) && (windowPos.y < ypos + height)) 
+        {
+            scale.x = xdpi;
+            scale.y = ydpi;
+            break;
+        }
+    }
 #endif
 
     return scale;
@@ -1626,7 +1645,7 @@ void BeginTextureMode(RenderTexture2D target)
 {
     rlglDraw();                         // Draw Buffers (Only OpenGL 3+ and ES2)
 
-    rlEnableFramebuffer(target.id);   // Enable render target
+    rlEnableFramebuffer(target.id);     // Enable render target
 
     // Set viewport to framebuffer size
     rlViewport(0, 0, target.texture.width, target.texture.height);
