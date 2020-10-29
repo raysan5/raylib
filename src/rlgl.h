@@ -3356,12 +3356,14 @@ void SetShaderValueTexture(Shader shader, int uniformLoc, Texture2D texture)
     glUseProgram(shader.id);
 
     // Register a new active texture for the internal batch system
+    // NOTE: Default texture is always activated as GL_TEXTURE0
     for (int i = 0; i < 4; i++) 
     {
-        if (RLGL.State.activeTextureId[i] == 0) 
+        if (RLGL.State.activeTextureId[i] == 0)
         {
-            glUniform1i(uniformLoc, i + 1); // Activate new texture unit (0 is used by default texture)
+            glUniform1i(uniformLoc, 1 + i);             // Activate new texture unit
             RLGL.State.activeTextureId[i] = texture.id; // Save texture id for binding on drawing
+            break;
         }
     }
 
@@ -4461,9 +4463,10 @@ static void DrawRenderBatch(RenderBatch *batch)
                 glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, batch->vertexBuffer[batch->currentBuffer].vboId[3]);
             }
 
-            glActiveTexture(GL_TEXTURE0);   // One texture is always active for default shader
-            glUniform1i(RLGL.State.currentShader.locs[LOC_MAP_DIFFUSE], 0); // Active texture 0
-
+            // Setup some default shader values
+            glUniform4f(RLGL.State.currentShader.locs[LOC_COLOR_DIFFUSE], 1.0f, 1.0f, 1.0f, 1.0f);
+            glUniform1i(RLGL.State.currentShader.locs[LOC_MAP_DIFFUSE], 0);  // Active default sampler2D: texture0
+            
             // Activate additional sampler textures
             // Those additional textures will be common for all draw calls of the batch
             for (int i = 0; i < 4; i++)
@@ -4474,13 +4477,15 @@ static void DrawRenderBatch(RenderBatch *batch)
                     glBindTexture(GL_TEXTURE_2D, RLGL.State.activeTextureId[i]);
                 }
             }
-            
-            // Setup some default shader values
-            glUniform4f(RLGL.State.currentShader.locs[LOC_COLOR_DIFFUSE], 1.0f, 1.0f, 1.0f, 1.0f);
+
+            // Activate default sampler texture (one texture is always active for default shader)
+            // NOTE: Batch system accumulates calls by texture0 changes,
+            // additional textures are enabled for all the draw calls
+            glActiveTexture(GL_TEXTURE0);
 
             for (int i = 0, vertexOffset = 0; i < batch->drawsCounter; i++)
             {
-                // Texture 0 is always active by default, bind the texture for current draw call
+                // Texture0 is always active by default, bind the texture for current draw call
                 glBindTexture(GL_TEXTURE_2D, batch->draws[i].textureId);
 
                 if ((batch->draws[i].mode == RL_LINES) || (batch->draws[i].mode == RL_TRIANGLES)) glDrawArrays(batch->draws[i].mode, vertexOffset, batch->draws[i].vertexCount);
