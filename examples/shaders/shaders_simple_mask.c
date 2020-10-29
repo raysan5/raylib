@@ -64,8 +64,7 @@ int main(void)
     model2.materials[0].maps[MAP_DIFFUSE].texture = texDiffuse;
 
     // Using MAP_EMISSION as a spare slot to use for 2nd texture
-    // NOTE: Don't use MAP_IRRADIANCE, MAP_PREFILTER or  MAP_CUBEMAP
-    // as they are bound as cube maps
+    // NOTE: Don't use MAP_IRRADIANCE, MAP_PREFILTER or  MAP_CUBEMAP as they are bound as cube maps
     Texture texMask = LoadTexture("resources/mask.png");
     model1.materials[0].maps[MAP_EMISSION].texture = texMask;
     model2.materials[0].maps[MAP_EMISSION].texture = texMask;
