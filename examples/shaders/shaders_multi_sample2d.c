@@ -44,7 +44,7 @@ int main(void)
     Shader shader = LoadShader(0, TextFormat("resources/shaders/glsl%i/color_mix.fs", GLSL_VERSION));
     
     // Get an additional sampler2D location to be enabled on drawing
-    int texRedLoc = GetShaderLocation(shader, "texture1");
+    int texBlueLoc = GetShaderLocation(shader, "texture1");
 
     SetTargetFPS(60);                           // Set our game to run at 60 frames-per-second
     //--------------------------------------------------------------------------------------
@@ -68,7 +68,7 @@ int main(void)
                 // WARNING: Additional samplers are enabled for all draw calls in the batch,
                 // EndShaderMode() forces batch drawing and consequently resets active textures
                 // to let other sampler2D to be activated on consequent drawings (if required)
-                SetShaderValueTexture(shader, texRedLoc, texBlue);
+                SetShaderValueTexture(shader, texBlueLoc, texBlue);
             
                 // We are drawing texRed using default sampler2D texture0 but
                 // an additional texture units is enabled for texBlue (sampler2D texture1)
