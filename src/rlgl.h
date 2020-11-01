@@ -2870,12 +2870,6 @@ void rlDrawMesh(Mesh mesh, Material material, Matrix transform)
 void rlDrawMeshInstanced(Mesh mesh, Material material, Matrix *transforms, int count)
 {
 #if defined(GRAPHICS_API_OPENGL_33)
-
-    if (!RLGL.ExtSupported.vao) {
-        TRACELOG(LOG_ERROR, "VAO: Instanced rendering requires VAO support");
-        return;
-    }
-
     // Bind shader program
     glUseProgram(material.shader.id);
 
@@ -2912,23 +2906,21 @@ void rlDrawMeshInstanced(Mesh mesh, Material material, Matrix *transforms, int c
 
     // At this point the modelview matrix just contains the view matrix (camera)
     // For instanced shaders "mvp" is not premultiplied by any instance transform, only RLGL.State.transform
-    glUniformMatrix4fv(material.shader.locs[LOC_MATRIX_MVP], 1, false, MatrixToFloat(
-        MatrixMultiply(MatrixMultiply(RLGL.State.transform, RLGL.State.modelview), RLGL.State.projection)
-    ));
+    glUniformMatrix4fv(material.shader.locs[LOC_MATRIX_MVP], 1, false, 
+                       MatrixToFloat(MatrixMultiply(MatrixMultiply(RLGL.State.transform, RLGL.State.modelview), RLGL.State.projection)));
 
-    float16* instances = RL_MALLOC(count * sizeof(float16));
+    float16* instances = RL_MALLOC(count*sizeof(float16));
 
-    for (int i = 0; i < count; i++)
-        instances[i] = MatrixToFloatV(transforms[i]);
+    for (int i = 0; i < count; i++) instances[i] = MatrixToFloatV(transforms[i]);
 
     // This could alternatively use a static VBO and either glMapBuffer or glBufferSubData.
     // It isn't clear which would be reliably faster in all cases and on all platforms, and
     // anecdotally glMapBuffer seems very slow (syncs) while glBufferSubData seems no faster
     // since we're transferring all the transform matrices anyway.
-    unsigned int instancesB;
+    unsigned int instancesB = 0;
     glGenBuffers(1, &instancesB);
     glBindBuffer(GL_ARRAY_BUFFER, instancesB);
-    glBufferData(GL_ARRAY_BUFFER, count * sizeof(float16), instances, GL_STATIC_DRAW);
+    glBufferData(GL_ARRAY_BUFFER, count*sizeof(float16), instances, GL_STATIC_DRAW);
 
     // Instances are put in LOC_MATRIX_MODEL attribute location with space for 4x Vector4, eg:
     // layout (location = 12) in mat4 instance;
@@ -2937,19 +2929,15 @@ void rlDrawMeshInstanced(Mesh mesh, Material material, Matrix *transforms, int c
     for (unsigned int i = 0; i < 4; i++)
     {
         glEnableVertexAttribArray(instanceA+i);
-        glVertexAttribPointer(instanceA+i, 4, GL_FLOAT, GL_FALSE, sizeof(Matrix), (void*)(i * sizeof(Vector4)));
-        glVertexAttribDivisor(instanceA+i, 1);
+        glVertexAttribPointer(instanceA + i, 4, GL_FLOAT, GL_FALSE, sizeof(Matrix), (void *)(i*sizeof(Vector4)));
+        glVertexAttribDivisor(instanceA + i, 1);
     }
 
     glBindBuffer(GL_ARRAY_BUFFER, 0);
 
     // Draw call!
-    if (mesh.indices != NULL) {
-        // Indexed vertices draw
-        glDrawElementsInstanced(GL_TRIANGLES, mesh.triangleCount*3, GL_UNSIGNED_SHORT, 0, count);
-    } else {
-        glDrawArraysInstanced(GL_TRIANGLES, 0, mesh.vertexCount, count);
-    }
+    if (mesh.indices != NULL) glDrawElementsInstanced(GL_TRIANGLES, mesh.triangleCount*3, GL_UNSIGNED_SHORT, 0, count);
+    else glDrawArraysInstanced(GL_TRIANGLES, 0, mesh.vertexCount, count);
 
     glDeleteBuffers(1, &instancesB);
     RL_FREE(instances);
