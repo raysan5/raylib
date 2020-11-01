@@ -128,9 +128,13 @@ Detailed changes:
 [audio] REDESIGNED: ExportWaveAsCode() to use memory buffers
 [utils] REVIEWED: android_fopen() to support SDCard access
 [rmem] REVIEWED: MemPool and other allocators optimization (#1211) by @assyrianic
-[examples] ADDED: others/embedded_files_loading
-[examples] ADDED: shaders/shaders_hot_reloading (#1198)
+[examples] ADDED: core/core_quat_conversion by @chriscamacho and @codifies
 [examples] ADDED: textures/textures_blend_modes (#1261) by @accidentalrebel
+[examples] ADDED: textures/textures_draw_tiled (#1291) by @Demizdor
+[examples] ADDED: shaders/shaders_hot_reloading (#1198)
+[examples] ADDED: shaders/shaders_rlgl_mesh_instanced (#1318) by @seanpringle
+[examples] ADDED: shaders/shaders_multi_sampler2d
+[examples] ADDED: others/embedded_files_loading
 [examples] REVIEWED: models/models_skybox to work on OpenGL ES 2.0
 [examples] REVIEWED: textures/textures_raw_data (#1286)
 [examples] REVIEWED: others/raudio_standalone.c
