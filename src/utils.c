@@ -280,7 +280,7 @@ void SaveFileText(const char *fileName, char *text)
         {
             int count = fprintf(file, "%s", text);
 
-            if (count == 0) TRACELOG(LOG_WARNING, "FILEIO: [%s] Failed to write text file", fileName);
+            if (count < 0) TRACELOG(LOG_WARNING, "FILEIO: [%s] Failed to write text file", fileName);
             else TRACELOG(LOG_INFO, "FILEIO: [%s] Text file saved successfully", fileName);
 
             fclose(file);
