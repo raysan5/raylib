@@ -2217,12 +2217,14 @@ void ClearDirectoryFiles(void)
     dirFilesCount = 0;
 }
 
-// Change working directory
-void ChangeDirectory(const char *dir)
+// Change working directory, returns true on success
+bool ChangeDirectory(const char *dir)
 {
     bool result = CHDIR(dir);
     
     if (result != 0) TRACELOG(LOG_WARNING, "SYSTEM: Failed to change to directory: %s", dir);
+    
+    return (result == 0);
 }
 
 // Check if a file has been dropped into window
