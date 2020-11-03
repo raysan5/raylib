@@ -229,12 +229,12 @@
     #include <termios.h>                // POSIX terminal control definitions - tcgetattr(), tcsetattr()
     #include <pthread.h>                // POSIX threads management (inputs reading)
     #include <dirent.h>                 // POSIX directory browsing
-    
+
     #include <sys/ioctl.h>              // UNIX System call for device-specific input/output operations - ioctl()
     #include <linux/kd.h>               // Linux: KDSKBMODE, K_MEDIUMRAM constants definition
     #include <linux/input.h>            // Linux: Keycodes constants definition (KEY_A, ...)
     #include <linux/joystick.h>         // Linux: Joystick support library
-    
+
 #if defined(PLATFORM_RPI)
     #include "bcm_host.h"               // Raspberry Pi VideoCore IV access functions
 #endif
@@ -244,7 +244,7 @@
     #include <xf86drm.h>                // Direct Rendering Manager user-level library interface
     #include <xf86drmMode.h>            // Direct Rendering Manager modesetting interface
 #endif
-    
+
     #include "EGL/egl.h"                // EGL library - Native platform display device control functions
     #include "EGL/eglext.h"             // EGL library - Extensions
     #include "GLES2/gl2.h"              // OpenGL ES 2.0 library
@@ -656,7 +656,7 @@ void InitWindow(int width, int height, const char *title)
     CORE.Input.Mouse.scale = (Vector2){ 1.0f, 1.0f };
     CORE.Input.Mouse.cursor = MOUSE_CURSOR_ARROW;
     CORE.Input.Gamepad.lastButtonPressed = -1;
-  
+
 #if defined(PLATFORM_UWP)
     // The axis count is 6 (2 thumbsticks and left and right trigger)
     CORE.Input.Gamepad.axisCount = 6;
@@ -834,7 +834,7 @@ void CloseWindow(void)
         CORE.Window.gbmDevice = NULL;
     }
 
-    if(CORE.Window.crtc)
+    if (CORE.Window.crtc)
     {
         if (CORE.Window.connector)
         {
@@ -925,7 +925,7 @@ bool WindowShouldClose(void)
         while (!CORE.Window.alwaysRun && CORE.Window.minimized) glfwWaitEvents();
 
         CORE.Window.shouldClose = glfwWindowShouldClose(CORE.Window.handle);
-        
+
         // Reset close status for next frame
         glfwSetWindowShouldClose(CORE.Window.handle, GLFW_FALSE);
 
@@ -1029,7 +1029,7 @@ void ToggleFullscreen(void)
         else Module.requestFullscreen(true, true);
     );
     */
-    
+
     //EM_ASM(Module.requestFullscreen(false, false););
 
     /*
@@ -1043,13 +1043,13 @@ void ToggleFullscreen(void)
             .canvasResizedCallback = EmscriptenWindowResizedCallback, //on_canvassize_changed,
             .canvasResizedCallbackUserData = NULL
         };
-        
+
         emscripten_request_fullscreen("#canvas", false);
         //emscripten_request_fullscreen_strategy("#canvas", EM_FALSE, &strategy);
         //emscripten_enter_soft_fullscreen("canvas", &strategy);
         TRACELOG(LOG_INFO, "emscripten_request_fullscreen_strategy");
     }
-    else 
+    else
     {
         TRACELOG(LOG_INFO, "emscripten_exit_fullscreen");
         emscripten_exit_fullscreen();
@@ -1350,12 +1350,12 @@ Vector2 GetWindowPosition(void)
 Vector2 GetWindowScaleDPI(void)
 {
     Vector2 scale = { 1.0f, 1.0f };
-    
+
 #if defined(PLATFORM_DESKTOP)
     float xdpi = 1.0;
     float ydpi = 1.0;
     Vector2 windowPos = GetWindowPosition();
-    
+
     int monitorCount = 0;
     GLFWmonitor **monitors = glfwGetMonitors(&monitorCount);
 
@@ -1363,12 +1363,12 @@ Vector2 GetWindowScaleDPI(void)
     for (int i = 0; i < monitorCount; i++)
     {
         glfwGetMonitorContentScale(monitors[i], &xdpi, &ydpi);
-        
+
         int xpos, ypos, width, height;
         glfwGetMonitorWorkarea(monitors[i], &xpos, &ypos, &width, &height);
-        
-        if ((windowPos.x >= xpos) && (windowPos.x < xpos + width) && 
-            (windowPos.y >= ypos) && (windowPos.y < ypos + height)) 
+
+        if ((windowPos.x >= xpos) && (windowPos.x < xpos + width) &&
+            (windowPos.y >= ypos) && (windowPos.y < ypos + height))
         {
             scale.x = xdpi;
             scale.y = ydpi;
@@ -2146,7 +2146,7 @@ const char *GetPrevDirectoryPath(const char *dirPath)
         {
             // Check for root: "C:\" or "/"
             if (((i == 2) && (dirPath[1] ==':')) || (i == 0)) i++;
-            
+
             strncpy(prevDirPath, dirPath, i);
             break;
         }
@@ -2221,9 +2221,9 @@ void ClearDirectoryFiles(void)
 bool ChangeDirectory(const char *dir)
 {
     bool result = CHDIR(dir);
-    
+
     if (result != 0) TRACELOG(LOG_WARNING, "SYSTEM: Failed to change to directory: %s", dir);
-    
+
     return (result == 0);
 }
 
@@ -2330,13 +2330,13 @@ void SaveStorageValue(unsigned int position, int value)
             {
                 // RL_REALLOC succeded
                 int *dataPtr = (int *)newFileData;
-                dataPtr[position] = value;  
+                dataPtr[position] = value;
             }
             else
             {
                 // RL_REALLOC failed
-                TRACELOG(LOG_WARNING, "FILEIO: [%s] Failed to realloc data (%u), position in bytes (%u) bigger than actual file size", path, dataSize, position*sizeof(int));  
-                
+                TRACELOG(LOG_WARNING, "FILEIO: [%s] Failed to realloc data (%u), position in bytes (%u) bigger than actual file size", path, dataSize, position*sizeof(int));
+
                 // We store the old size of the file
                 newFileData = fileData;
                 newDataSize = dataSize;
@@ -3556,7 +3556,7 @@ static bool InitGraphicsDevice(int width, int height)
     eglGetConfigAttrib(CORE.Window.device, CORE.Window.config, EGL_NATIVE_VISUAL_ID, &displayFormat);
 
     // At this point we need to manage render size vs screen size
-    // NOTE: This function use and modify global module variables: 
+    // NOTE: This function use and modify global module variables:
     //  -> CORE.Window.screen.width/CORE.Window.screen.height
     //  -> CORE.Window.render.width/CORE.Window.render.height
     //  -> CORE.Window.screenScale
@@ -3570,16 +3570,16 @@ static bool InitGraphicsDevice(int width, int height)
 
 #if defined(PLATFORM_RPI)
     graphics_get_display_size(0, &CORE.Window.display.width, &CORE.Window.display.height);
-    
+
     // Screen size security check
     if (CORE.Window.screen.width <= 0) CORE.Window.screen.width = CORE.Window.display.width;
     if (CORE.Window.screen.height <= 0) CORE.Window.screen.height = CORE.Window.display.height;
 
     // At this point we need to manage render size vs screen size
-    // NOTE: This function use and modify global module variables: 
+    // NOTE: This function use and modify global module variables:
     //  -> CORE.Window.screen.width/CORE.Window.screen.height
     //  -> CORE.Window.render.width/CORE.Window.render.height
-    //  -> CORE.Window.screenScale    
+    //  -> CORE.Window.screenScale
     SetupFramebuffer(CORE.Window.display.width, CORE.Window.display.height);
 
     dstRect.x = 0;
@@ -3632,10 +3632,10 @@ static bool InitGraphicsDevice(int width, int height)
     }
 
     // At this point we need to manage render size vs screen size
-    // NOTE: This function use and modify global module variables: 
+    // NOTE: This function use and modify global module variables:
     //  -> CORE.Window.screen.width/CORE.Window.screen.height
     //  -> CORE.Window.render.width/CORE.Window.render.height
-    //  -> CORE.Window.screenScale    
+    //  -> CORE.Window.screenScale
     SetupFramebuffer(CORE.Window.display.width, CORE.Window.display.height);
 #endif  // PLATFORM_DRM
 
@@ -4008,7 +4008,7 @@ static void PollInputEvents(void)
             // Get remapped buttons
             GLFWgamepadstate state = { 0 };
             glfwGetGamepadState(i, &state); // This remapps all gamepads so they have their buttons mapped like an xbox controller
-            
+
             const unsigned char *buttons = state.buttons;
 
             for (int k = 0; (buttons != NULL) && (k < GLFW_GAMEPAD_BUTTON_DPAD_LEFT + 1) && (k < MAX_GAMEPAD_BUTTONS); k++)
@@ -4528,7 +4528,7 @@ static int32_t AndroidInputCallback(struct android_app *app, AInputEvent *event)
 
     if (type == AINPUT_EVENT_TYPE_MOTION)
     {
-        if (((source & AINPUT_SOURCE_JOYSTICK) == AINPUT_SOURCE_JOYSTICK) || 
+        if (((source & AINPUT_SOURCE_JOYSTICK) == AINPUT_SOURCE_JOYSTICK) ||
             ((source & AINPUT_SOURCE_GAMEPAD) == AINPUT_SOURCE_GAMEPAD))
         {
             // Get first touch position
@@ -4682,7 +4682,7 @@ static EM_BOOL EmscriptenKeyboardCallback(int eventType, const EmscriptenKeyboar
     if ((eventType == EMSCRIPTEN_EVENT_KEYDOWN) && (keyEvent->keyCode == 27))  // ESCAPE key (strcmp(keyEvent->code, "Escape") == 0)
     {
         // WARNING: Not executed when pressing Esc to exit fullscreen, it seems document has priority over #canvas
-        
+
         emscripten_exit_pointerlock();
         CORE.Window.fullscreen = false;
         TRACELOG(LOG_INFO, "CORE.Window.fullscreen = %s", CORE.Window.fullscreen? "true" : "false");
@@ -5253,7 +5253,7 @@ static void *EventThread(void *arg)
     while (!CORE.Window.shouldClose)
     {
         // Try to read data from the device and only continue if successful
-        while(read(worker->fd, &event, sizeof(event)) == (int)sizeof(event))
+        while (read(worker->fd, &event, sizeof(event)) == (int)sizeof(event))
         {
             // Relative movement parsing
             if (event.type == EV_REL)

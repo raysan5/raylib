@@ -193,7 +193,7 @@ extern void LoadFontDefault(void)
     //----------------------------------------------------------------------
     Image imFont = {
         .data = calloc(128*128, 2),  // 2 bytes per pixel (gray + alpha)
-        .width = 128, 
+        .width = 128,
         .height = 128,
         .format = UNCOMPRESSED_GRAY_ALPHA,
         .mipmaps = 1
@@ -335,16 +335,16 @@ Font LoadFont(const char *fileName)
 Font LoadFontEx(const char *fileName, int fontSize, int *fontChars, int charsCount)
 {
     Font font = { 0 };
-    
+
     // Loading file to memory
     unsigned int fileSize = 0;
     unsigned char *fileData = LoadFileData(fileName, &fileSize);
-    
+
     if (fileData != NULL)
     {
         // Loading font from memory data
         font = LoadFontFromMemory(GetFileExtension(fileName), fileData, fileSize, fontSize, fontChars, charsCount);
-        
+
         RL_FREE(fileData);
     }
     else font = GetFontDefault();
@@ -358,7 +358,7 @@ Font LoadFontFromImage(Image image, Color key, int firstChar)
 #ifndef MAX_GLYPHS_FROM_IMAGE
     #define MAX_GLYPHS_FROM_IMAGE   256     // Maximum number of glyphs supported on image scan
 #endif
-    
+
     #define COLOR_EQUAL(col1, col2) ((col1.r == col2.r)&&(col1.g == col2.g)&&(col1.b == col2.b)&&(col1.a == col2.a))
 
     int charSpacing = 0;
@@ -478,7 +478,7 @@ Font LoadFontFromImage(Image image, Color key, int firstChar)
 Font LoadFontFromMemory(const char *fileType, const unsigned char *fileData, int dataSize, int fontSize, int *fontChars, int charsCount)
 {
     Font font = { 0 };
-    
+
     char fileExtLower[16] = { 0 };
     strcpy(fileExtLower, TextToLower(fileType));
 
@@ -604,7 +604,7 @@ CharInfo *LoadFontData(const unsigned char *fileData, int dataSize, int fontSize
                         .format = UNCOMPRESSED_GRAYSCALE,
                         .mipmaps = 1
                     };
-                    
+
                     chars[i].image = imSpace;
                 }
 
@@ -1103,7 +1103,7 @@ Vector2 MeasureTextEx(Font font, const char *text, float fontSize, float spacing
 // Returns index position for a unicode character on spritefont
 int GetGlyphIndex(Font font, int codepoint)
 {
-#ifndef GLYPH_NOTFOUND_CHAR_FALLBACK    
+#ifndef GLYPH_NOTFOUND_CHAR_FALLBACK
     #define GLYPH_NOTFOUND_CHAR_FALLBACK     63      // Character used if requested codepoint is not found: '?'
 #endif
 
@@ -1150,7 +1150,7 @@ const char *TextFormat(const char *text, ...)
 #ifndef MAX_TEXTFORMAT_BUFFERS
     #define MAX_TEXTFORMAT_BUFFERS 4        // Maximum number of static buffers for text formatting
 #endif
-    
+
     // We create an array of buffers so strings don't expire until MAX_TEXTFORMAT_BUFFERS invocations
     static char buffers[MAX_TEXTFORMAT_BUFFERS][MAX_TEXT_BUFFER_LENGTH] = { 0 };
     static int  index = 0;
@@ -1254,7 +1254,7 @@ char *TextReplace(char *text, const char *replace, const char *by)
 {
     // Sanity checks and initialization
     if (!text || !replace || !by) return NULL;
-    
+
     char *result;
 
     char *insertPoint;      // Next insert point
@@ -1718,7 +1718,7 @@ static Font LoadBMFont(const char *fileName)
 
     int fontSize = 0;
     int charsCount = 0;
-    
+
     int imWidth = 0;
     int imHeight = 0;
     char imFileName[129];
@@ -1730,7 +1730,7 @@ static Font LoadBMFont(const char *fileName)
     if (fileText == NULL) return font;
 
     char *fileTextPtr = fileText;
-    
+
     // NOTE: We skip first line, it contains no useful information
     int lineBytes = GetLine(fileTextPtr, buffer, MAX_BUFFER_SIZE);
     fileTextPtr += (lineBytes + 1);
@@ -1795,7 +1795,7 @@ static Font LoadBMFont(const char *fileName)
             ((unsigned char *)(imFontAlpha.data))[p] = 0xff;
             ((unsigned char *)(imFontAlpha.data))[p + 1] = ((unsigned char *)imFont.data)[i];
         }
-        
+
         UnloadImage(imFont);
         imFont = imFontAlpha;
     }

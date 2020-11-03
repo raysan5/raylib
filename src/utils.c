@@ -317,7 +317,7 @@ FILE *android_fopen(const char *fileName, const char *mode)
         // NOTE: AAsset provides access to read-only asset
         AAsset *asset = AAssetManager_open(assetManager, fileName, AASSET_MODE_UNKNOWN);
 
-        if (asset != NULL) 
+        if (asset != NULL)
         {
             // Return pointer to file in the assets
             return funopen(asset, android_read, android_write, android_seek, android_close);

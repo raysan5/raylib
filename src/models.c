@@ -828,9 +828,9 @@ void ExportMesh(Mesh mesh, const char *fileName)
     if (IsFileExtension(fileName, ".obj"))
     {
         // Estimated data size, it should be enough...
-        int dataSize = mesh.vertexCount/3*strlen("v 0000.00f 0000.00f 0000.00f") + 
-                       mesh.vertexCount/2*strlen("vt 0.000f 0.00f") + 
-                       mesh.vertexCount/3*strlen("vn 0.000f 0.00f 0.00f") + 
+        int dataSize = mesh.vertexCount/3*strlen("v 0000.00f 0000.00f 0000.00f") +
+                       mesh.vertexCount/2*strlen("vt 0.000f 0.00f") +
+                       mesh.vertexCount/3*strlen("vn 0.000f 0.00f 0.00f") +
                        mesh.triangleCount/3*strlen("f 00000/00000/00000 00000/00000/00000 00000/00000/00000");
 
         // NOTE: Text data buffer size is estimated considering mesh data size
@@ -879,7 +879,7 @@ void ExportMesh(Mesh mesh, const char *fileName)
 
         RL_FREE(txtData);
     }
-    else if (IsFileExtension(fileName, ".raw")) 
+    else if (IsFileExtension(fileName, ".raw"))
     {
         // TODO: Support additional file formats to export mesh vertex data
     }
@@ -897,7 +897,7 @@ Material *LoadMaterials(const char *fileName, int *materialCount)
     if (IsFileExtension(fileName, ".mtl"))
     {
         tinyobj_material_t *mats = NULL;
-                                           
+
         int result = tinyobj_parse_mtl_file(&mats, &count, fileName);
         if (result != TINYOBJ_SUCCESS) {
             TRACELOG(LOG_WARNING, "MATERIAL: [%s] Failed to parse materials file", fileName);
@@ -970,7 +970,7 @@ ModelAnimation *LoadModelAnimations(const char *fileName, int *animCount)
 {
     #define IQM_MAGIC       "INTERQUAKEMODEL"   // IQM file magic number
     #define IQM_VERSION     2                   // only IQM version 2 supported
-    
+
     unsigned int fileSize = 0;
     unsigned char *fileData = LoadFileData(fileName, &fileSize);
     unsigned char *fileDataPtr = fileData;
@@ -1036,7 +1036,7 @@ ModelAnimation *LoadModelAnimations(const char *fileName, int *animCount)
     //fseek(iqmFile, iqmHeader->ofs_anims, SEEK_SET);
     //fread(anim, iqmHeader->num_anims*sizeof(IQMAnim), 1, iqmFile);
     memcpy(anim, fileDataPtr + iqmHeader->ofs_anims, iqmHeader->num_anims*sizeof(IQMAnim));
-    
+
     ModelAnimation *animations = RL_MALLOC(iqmHeader->num_anims*sizeof(ModelAnimation));
 
     // frameposes
@@ -1166,7 +1166,7 @@ ModelAnimation *LoadModelAnimations(const char *fileName, int *animCount)
             }
         }
     }
-    
+
     RL_FREE(fileData);
 
     RL_FREE(framedata);
@@ -2566,11 +2566,11 @@ void DrawModelEx(Model model, Vector3 position, Vector3 rotationAxis, float rota
     for (int i = 0; i < model.meshCount; i++)
     {
         // TODO: Review color + tint premultiplication mechanism
-        
+
         // (codifies)  Ray not only does this work as expected but
-        // multiplying *is* definately the way to tint 
+        // multiplying *is* definately the way to tint
         // can we call it reviewed ?
-        
+
         // would you prefer an extra model.tint, that rlDrawMesh uses ?
         Color color = model.materials[model.meshMaterial[i]].maps[MAP_DIFFUSE].color;
 
@@ -2978,10 +2978,10 @@ static Model LoadOBJ(const char *fileName)
         if (ret != TINYOBJ_SUCCESS) TRACELOG(LOG_WARNING, "MODEL: [%s] Failed to load OBJ data", fileName);
         else TRACELOG(LOG_INFO, "MODEL: [%s] OBJ data loaded successfully: %i meshes / %i materials", fileName, meshCount, materialCount);
 
-       
+
         model.meshCount = materialCount;
-        
-                
+
+
         // Init model materials array
         if (materialCount > 0)
         {
@@ -2989,16 +2989,16 @@ static Model LoadOBJ(const char *fileName)
             model.materials = (Material *)RL_CALLOC(model.materialCount, sizeof(Material));
             TraceLog(LOG_INFO, "MODEL: model has %i material meshes", materialCount);
         } else {
-            model.meshCount = 1;  
-            TraceLog(LOG_INFO, "MODEL: No materials, putting all meshes in a default material");         
+            model.meshCount = 1;
+            TraceLog(LOG_INFO, "MODEL: No materials, putting all meshes in a default material");
         }
 
         model.meshes = (Mesh *)RL_CALLOC(model.meshCount, sizeof(Mesh));
         model.meshMaterial = (int *)RL_CALLOC(model.meshCount, sizeof(int));
-        
+
         // count the faces for each material
         int* matFaces = RL_CALLOC(meshCount, sizeof(int));
-        
+
         for (int mi=0; mi<meshCount; mi++) {
             for (int fi=0; fi<meshes[mi].length; fi++) {
                 int idx = attrib.material_ids[meshes[mi].face_offset + fi];
@@ -3006,19 +3006,19 @@ static Model LoadOBJ(const char *fileName)
                 matFaces[idx]++;
             }
         }
-        
+
         //--------------------------------------
         // create the material meshes
- 
-        // running counts / indexes for each material mesh as we are 
-        // building them at the same time     
+
+        // running counts / indexes for each material mesh as we are
+        // building them at the same time
         int* vCount = RL_CALLOC(model.meshCount, sizeof(int));
         int* vtCount = RL_CALLOC(model.meshCount, sizeof(int));
         int* vnCount = RL_CALLOC(model.meshCount, sizeof(int));
         int* faceCount = RL_CALLOC(model.meshCount, sizeof(int));
- 
+
         // allocate space for each of the material meshes
-        for (int mi=0; mi<model.meshCount; mi++) 
+        for (int mi=0; mi<model.meshCount; mi++)
         {
             model.meshes[mi].vertexCount = matFaces[mi] * 3;
             model.meshes[mi].triangleCount = matFaces[mi];
@@ -3028,26 +3028,26 @@ static Model LoadOBJ(const char *fileName)
             model.meshes[mi].vboId = (unsigned int *)RL_CALLOC(DEFAULT_MESH_VERTEX_BUFFERS, sizeof(unsigned int));
             model.meshMaterial[mi] = mi;
         }
-        
+
         // scan through the combined sub meshes and pick out each material mesh
-        for (unsigned int af = 0; af < attrib.num_faces; af++) 
+        for (unsigned int af = 0; af < attrib.num_faces; af++)
         {
             int mm = attrib.material_ids[af];   // mesh material for this face
             if (mm == -1) { mm = 0; }           // no material object..
             // Get indices for the face
             tinyobj_vertex_index_t idx0 = attrib.faces[3 * af + 0];
             tinyobj_vertex_index_t idx1 = attrib.faces[3 * af + 1];
-            tinyobj_vertex_index_t idx2 = attrib.faces[3 * af + 2]; 
-            
+            tinyobj_vertex_index_t idx2 = attrib.faces[3 * af + 2];
+
             // Fill vertices buffer (float) using vertex index of the face
             for (int v = 0; v < 3; v++) { model.meshes[mm].vertices[vCount[mm] + v] = attrib.vertices[idx0.v_idx*3 + v]; } vCount[mm] +=3;
             for (int v = 0; v < 3; v++) { model.meshes[mm].vertices[vCount[mm] + v] = attrib.vertices[idx1.v_idx*3 + v]; } vCount[mm] +=3;
-            for (int v = 0; v < 3; v++) { model.meshes[mm].vertices[vCount[mm] + v] = attrib.vertices[idx2.v_idx*3 + v]; } vCount[mm] +=3; 
-            
+            for (int v = 0; v < 3; v++) { model.meshes[mm].vertices[vCount[mm] + v] = attrib.vertices[idx2.v_idx*3 + v]; } vCount[mm] +=3;
+
             if (attrib.num_texcoords > 0)
             {
                 // Fill texcoords buffer (float) using vertex index of the face
-                // NOTE: Y-coordinate must be flipped upside-down to account for 
+                // NOTE: Y-coordinate must be flipped upside-down to account for
                 // raylib's upside down textures...
                 model.meshes[mm].texcoords[vtCount[mm] + 0] = attrib.texcoords[idx0.vt_idx*2 + 0];
                 model.meshes[mm].texcoords[vtCount[mm] + 1] = 1.0f - attrib.texcoords[idx0.vt_idx*2 + 1]; vtCount[mm] += 2;
@@ -3055,23 +3055,23 @@ static Model LoadOBJ(const char *fileName)
                 model.meshes[mm].texcoords[vtCount[mm] + 1] = 1.0f - attrib.texcoords[idx1.vt_idx*2 + 1]; vtCount[mm] += 2;
                 model.meshes[mm].texcoords[vtCount[mm] + 0] = attrib.texcoords[idx2.vt_idx*2 + 0];
                 model.meshes[mm].texcoords[vtCount[mm] + 1] = 1.0f - attrib.texcoords[idx2.vt_idx*2 + 1]; vtCount[mm] += 2;
-            }  
-            
+            }
+
             if (attrib.num_normals > 0)
             {
                 // Fill normals buffer (float) using vertex index of the face
                 for (int v = 0; v < 3; v++) { model.meshes[mm].normals[vnCount[mm] + v] = attrib.normals[idx0.vn_idx*3 + v]; } vnCount[mm] +=3;
                 for (int v = 0; v < 3; v++) { model.meshes[mm].normals[vnCount[mm] + v] = attrib.normals[idx1.vn_idx*3 + v]; } vnCount[mm] +=3;
                 for (int v = 0; v < 3; v++) { model.meshes[mm].normals[vnCount[mm] + v] = attrib.normals[idx2.vn_idx*3 + v]; } vnCount[mm] +=3;
-            }                                            
+            }
         }
 
         // Init model materials
         for (unsigned int m = 0; m < materialCount; m++)
-        {            
+        {
             // Init material to default
             // NOTE: Uses default shader, which only supports MAP_DIFFUSE
-            
+
             // (codifies)  TODO my lighting shader should support at least
             // diffuse AND specular ...
             model.materials[m] = LoadMaterialDefault();
@@ -3083,7 +3083,7 @@ static Model LoadOBJ(const char *fileName)
             } else {
                 model.materials[m].maps[MAP_DIFFUSE].texture = GetTextureDefault();
             }
-    
+
             model.materials[m].maps[MAP_DIFFUSE].color = (Color){ (unsigned char)(materials[m].diffuse[0]*255.0f), (unsigned char)(materials[m].diffuse[1]*255.0f), (unsigned char)(materials[m].diffuse[2]*255.0f), 255 }; //float diffuse[3];
             model.materials[m].maps[MAP_DIFFUSE].value = 0.0f;
 
@@ -3103,9 +3103,9 @@ static Model LoadOBJ(const char *fileName)
         tinyobj_attrib_free(&attrib);
         tinyobj_shapes_free(meshes, meshCount);
         tinyobj_materials_free(materials, materialCount);
-        
+
         RL_FREE(fileData);
-        
+
         RL_FREE(vCount);
         RL_FREE(vtCount);
         RL_FREE(vnCount);
@@ -3128,7 +3128,7 @@ static Model LoadIQM(const char *fileName)
     #define BONE_NAME_LENGTH    32          // BoneInfo name string length
     #define MESH_NAME_LENGTH    32          // Mesh name string length
     #define MATERIAL_NAME_LENGTH 32         // Material name string length
-    
+
     unsigned int fileSize = 0;
     unsigned char *fileData = LoadFileData(fileName, &fileSize);
     unsigned char *fileDataPtr = fileData;
@@ -3246,7 +3246,7 @@ static Model LoadIQM(const char *fileName)
         TRACELOG(LOG_WARNING, "MODEL: [%s] IQM file version not supported (%i)", fileName, iqmHeader->version);
         return model;
     }
-    
+
     //fileDataPtr += sizeof(IQMHeader);       // Move file data pointer
 
     // Meshes data processing
@@ -3312,7 +3312,7 @@ static Model LoadIQM(const char *fileName)
         for (unsigned int i = imesh[m].first_triangle; i < (imesh[m].first_triangle + imesh[m].num_triangles); i++)
         {
             // IQM triangles indexes are stored in counter-clockwise, but raylib processes the index in linear order,
-            // expecting they point to the counter-clockwise vertex triangle, so we need to reverse triangle indexes         
+            // expecting they point to the counter-clockwise vertex triangle, so we need to reverse triangle indexes
             // NOTE: raylib renders vertex data in counter-clockwise order (standard convention) by default
             model.meshes[m].indices[tcounter + 2] = tri[i].vertex[0] - imesh[m].first_vertex;
             model.meshes[m].indices[tcounter + 1] = tri[i].vertex[1] - imesh[m].first_vertex;
@@ -3467,7 +3467,7 @@ static Model LoadIQM(const char *fileName)
     }
 
     RL_FREE(fileData);
-    
+
     RL_FREE(imesh);
     RL_FREE(tri);
     RL_FREE(va);

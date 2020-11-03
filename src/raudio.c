@@ -175,7 +175,7 @@ typedef struct tagBITMAPINFOHEADER {
     #if !defined(TRACELOG)
         #define TRACELOG(level, ...) (void)0
     #endif
-    
+
     // Allow custom memory allocators
     #ifndef RL_MALLOC
         #define RL_MALLOC(sz)       malloc(sz)
@@ -689,7 +689,7 @@ void UntrackAudioBuffer(AudioBuffer *buffer)
 Wave LoadWave(const char *fileName)
 {
     Wave wave = { 0 };
-    
+
     // Loading file to memory
     unsigned int fileSize = 0;
     unsigned char *fileData = LoadFileData(fileName, &fileSize);
@@ -709,10 +709,10 @@ Wave LoadWave(const char *fileName)
 Wave LoadWaveFromMemory(const char *fileType, const unsigned char *fileData, int dataSize)
 {
     Wave wave = { 0 };
-    
+
     char fileExtLower[16] = { 0 };
     strcpy(fileExtLower, TextToLower(fileType));
-    
+
     if (false) { }
 #if defined(SUPPORT_FILEFORMAT_WAV)
     else if (TextIsEqual(fileExtLower, "wav")) wave = LoadWAV(fileData, dataSize);
@@ -727,7 +727,7 @@ Wave LoadWaveFromMemory(const char *fileType, const unsigned char *fileData, int
     else if (TextIsEqual(fileExtLower, "mp3")) wave = LoadMP3(fileData, dataSize);
 #endif
     else TRACELOG(LOG_WARNING, "WAVE: File format not supported");
-    
+
     return wave;
 }
 
@@ -1116,7 +1116,7 @@ Music LoadMusicStream(const char *fileName)
         {
             music.ctxType = MUSIC_AUDIO_WAV;
             music.ctxData = ctxWav;
-            
+
             int sampleSize = ctxWav->bitsPerSample;
             if (ctxWav->bitsPerSample == 24) sampleSize = 16;   // Forcing conversion to s16 on UpdateMusicStream()
 
@@ -1228,7 +1228,7 @@ Music LoadMusicStream(const char *fileName)
     }
 #endif
     else TRACELOG(LOG_WARNING, "STREAM: [%s] Fileformat not supported", fileName);
-    
+
     if (!musicLoaded)
     {
         if (false) { }
@@ -1900,7 +1900,7 @@ static void InitAudioBufferPool(void)
         // WARNING: An empty audioBuffer is created (data = 0)
         AUDIO.MultiChannel.pool[i] = LoadAudioBuffer(AUDIO_DEVICE_FORMAT, AUDIO_DEVICE_CHANNELS, AUDIO_DEVICE_SAMPLE_RATE, 0, AUDIO_BUFFER_USAGE_STATIC);
     }
-    
+
     // TODO: Verification required for log
     TRACELOG(LOG_INFO, "AUDIO: Multichannel pool size: %i", MAX_AUDIO_BUFFER_POOL_CHANNELS);
 }
@@ -1918,9 +1918,9 @@ static Wave LoadWAV(const unsigned char *fileData, unsigned int fileSize)
 {
     Wave wave = { 0 };
     drwav wav = { 0 };
-    
+
     bool success = drwav_init_memory(&wav, fileData, fileSize, NULL);
-    
+
     if (success)
     {
         wave.sampleCount = wav.totalPCMFrameCount*wav.channels;
@@ -1931,7 +1931,7 @@ static Wave LoadWAV(const unsigned char *fileData, unsigned int fileSize)
         drwav_read_pcm_frames_s16(&wav, wav.totalPCMFrameCount, wave.data);
     }
     else TRACELOG(LOG_WARNING, "WAVE: Failed to load WAV data");
-    
+
     drwav_uninit(&wav);
 
     return wave;
@@ -1948,16 +1948,16 @@ static int SaveWAV(Wave wave, const char *fileName)
     format.channels = wave.channels;
     format.sampleRate = wave.sampleRate;
     format.bitsPerSample = wave.sampleSize;
-    
+
     unsigned char *fileData = NULL;
     unsigned int fileDataSize = 0;
     drwav_init_memory_write(&wav, &fileData, &fileDataSize, &format, NULL);
     drwav_write_pcm_frames(&wav, wave.sampleCount/wave.channels, wave.data);
     drwav_uninit(&wav);
-    
+
     SaveFileData(fileName, fileData, fileDataSize);
     drwav_free(fileData, NULL);
-    
+
     return true;
 }
 #endif
@@ -2016,7 +2016,7 @@ static Wave LoadFLAC(const unsigned char *fileData, unsigned int fileSize)
         TRACELOG(LOG_INFO, "WAVE: FLAC data loaded successfully (%i Hz, %i bit, %s)", wave.sampleRate, wave.sampleSize, (wave.channels == 1)? "Mono" : "Stereo");
     }
     else TRACELOG(LOG_WARNING, "WAVE: Failed to load FLAC data");
- 
+
     return wave;
 }
 #endif
@@ -2028,7 +2028,7 @@ static Wave LoadMP3(const unsigned char *fileData, unsigned int fileSize)
 {
     Wave wave = { 0 };
     drmp3_config config = { 0 };
-    
+
     // Decode the entire MP3 file in one go
     unsigned long long int totalFrameCount = 0;
     wave.data = drmp3_open_memory_and_read_f32(fileData, fileSize, &config, &totalFrameCount);

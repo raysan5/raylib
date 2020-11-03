@@ -319,7 +319,7 @@ void UpdateCamera(Camera *camera)
                 CAMERA.targetDistance -= (mouseWheelMove*CAMERA_MOUSE_SCROLL_SENSITIVITY);
                 if (CAMERA.targetDistance > CAMERA_FREE_DISTANCE_MAX_CLAMP) CAMERA.targetDistance = CAMERA_FREE_DISTANCE_MAX_CLAMP;
             }
-            
+
             // Camera looking down
             else if ((camera->position.y > camera->target.y) && (CAMERA.targetDistance == CAMERA_FREE_DISTANCE_MAX_CLAMP) && (mouseWheelMove < 0))
             {
@@ -443,7 +443,7 @@ void UpdateCamera(Camera *camera)
             camera->target.x = camera->position.x - transform.m12;
             camera->target.y = camera->position.y - transform.m13;
             camera->target.z = camera->position.z - transform.m14;
-            
+
             // If movement detected (some key pressed), increase swinging
             for (int i = 0; i < 6; i++) if (direction[i]) { swingCounter++; break; }
 
@@ -487,10 +487,10 @@ void UpdateCamera(Camera *camera)
 
             // TODO: It seems camera->position is not correctly updated or some rounding issue makes the camera move straight to camera->target...
             camera->position.x = sinf(CAMERA.angle.x)*CAMERA.targetDistance*cosf(CAMERA.angle.y) + camera->target.x;
-            
+
             if (CAMERA.angle.y <= 0.0f) camera->position.y = sinf(CAMERA.angle.y)*CAMERA.targetDistance*sinf(CAMERA.angle.y) + camera->target.y;
             else camera->position.y = -sinf(CAMERA.angle.y)*CAMERA.targetDistance*sinf(CAMERA.angle.y) + camera->target.y;
-            
+
             camera->position.z = cosf(CAMERA.angle.x)*CAMERA.targetDistance*cosf(CAMERA.angle.y) + camera->target.z;
 
         } break;
