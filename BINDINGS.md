@@ -83,6 +83,7 @@ Here it is a list with the ones I'm aware of:
 | raylib-carp        | 3.0 | [Carp](https://github.com/carp-lang/Carp)           | https://github.com/pluckyporcupine/raylib-carp   |
 | raylib-fb          | 3.0 | [FreeBasic](https://www.freebasic.net/)    | https://github.com/IchMagBier/raylib-fb  |
 | raylib-purebasic   | 3.0 | [PureBasic](https://www.purebasic.com/)    | https://github.com/D-a-n-i-l-o/raylib-purebasic   |
+| raylib-smallBasic  | 3.1-dev | [SmallBASIC](https://github.com/smallbasic/SmallBASIC) | https://github.com/smallbasic/smallbasic.plugins/tree/master/raylib |
 | raylib-ats2        | ? | [ATS2](http://www.ats-lang.org/)           | https://github.com/mephistopheles-8/raylib-ats2      |
 | raylib-beef        | 3.0 | [Beef](https://www.beeflang.org/)          | https://github.com/M0n7y5/raylib-beef    |
 | raylib-never       | 3.0 | [Never](https://github.com/never-lang/never) | https://github.com/never-lang/raylib-never |
