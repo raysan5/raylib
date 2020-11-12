@@ -3032,6 +3032,10 @@ void DrawTexture(Texture2D texture, int posX, int posY, Color tint)
     DrawTextureEx(texture, (Vector2){ (float)posX, (float)posY }, 0.0f, 1.0f, tint);
 }
 
+void DrawTextureScaleRotate(Texture2D texture, int posX, int posY, float rotation, float scale, Color tint)
+{
+    DrawTextureEx(texture, (Vector2){ (float)posX, (float)posY }, float rotation, float scale, tint);
+}
 // Draw a Texture2D with position defined as Vector2
 void DrawTextureV(Texture2D texture, Vector2 position, Color tint)
 {
