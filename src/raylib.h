@@ -170,37 +170,41 @@
     typedef enum { false, true } bool;
 #endif
 
-// Vector2 type
-typedef struct Vector2 {
-    float x;
-    float y;
-} Vector2;
+#if !defined(RAYMATH_TYPES_DEFINED)
+    #define RAYMATH_TYPES_DEFINED
+    
+    // Vector2 type
+    typedef struct Vector2 {
+        float x;
+        float y;
+    } Vector2;
 
-// Vector3 type
-typedef struct Vector3 {
-    float x;
-    float y;
-    float z;
-} Vector3;
+    // Vector3 type
+    typedef struct Vector3 {
+        float x;
+        float y;
+        float z;
+    } Vector3;
 
-// Vector4 type
-typedef struct Vector4 {
-    float x;
-    float y;
-    float z;
-    float w;
-} Vector4;
+    // Vector4 type
+    typedef struct Vector4 {
+        float x;
+        float y;
+        float z;
+        float w;
+    } Vector4;
 
-// Quaternion type, same as Vector4
-typedef Vector4 Quaternion;
+    // Quaternion type, same as Vector4
+    typedef Vector4 Quaternion;
 
-// Matrix type (OpenGL style 4x4 - right handed, column major)
-typedef struct Matrix {
-    float m0, m4, m8, m12;
-    float m1, m5, m9, m13;
-    float m2, m6, m10, m14;
-    float m3, m7, m11, m15;
-} Matrix;
+    // Matrix type (OpenGL style 4x4 - right handed, column major)
+    typedef struct Matrix {
+        float m0, m4, m8, m12;
+        float m1, m5, m9, m13;
+        float m2, m6, m10, m14;
+        float m3, m7, m11, m15;
+    } Matrix;
+#endif
 
 // Color type, RGBA (32bit)
 typedef struct Color {

@@ -100,7 +100,8 @@
 // Types and Structures Definition
 //----------------------------------------------------------------------------------
 
-#if defined(RAYMATH_STANDALONE)
+#if defined(RAYMATH_STANDALONE) && !defined(RAYMATH_TYPES_DEFINED)
+    #define RAYMATH_TYPES_DEFINED
     // Vector2 type
     typedef struct Vector2 {
         float x;
