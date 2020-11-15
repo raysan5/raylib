@@ -495,7 +495,7 @@ Font LoadFontFromMemory(const char *fileType, const unsigned char *fileData, int
 
         if (font.chars != NULL)
         {
-            font.charsPadding = FONT_TTF_DEFAULT_CHARS_PADDING;
+            //font.charsPadding = FONT_TTF_DEFAULT_CHARS_PADDING;
             
             Image atlas = GenImageFontAtlas(font.chars, &font.recs, font.charsCount, font.baseSize, FONT_TTF_DEFAULT_CHARS_PADDING, 0);
             font.texture = LoadTextureFromImage(atlas);
