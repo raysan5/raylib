@@ -1,6 +1,6 @@
 /*
 Audio playback and capture library. Choice of public domain or MIT-0. See license statements at the end of this file.
-miniaudio - v0.10.20 - 2020-10-06
+miniaudio - v0.10.25 - 2020-11-15
 
 David Reid - mackron@gmail.com
 
@@ -233,6 +233,28 @@ The macOS build should compile cleanly without the need to download any dependen
 compiled as Objective-C and will need to link the relevant frameworks but should compile cleanly out of the box with Xcode. Compiling through the command line
 requires linking to `-lpthread` and `-lm`.
 
+Due to the way miniaudio links to frameworks at runtime, your application may not pass Apple's notarization process. To fix this there are two options. The
+first is to use the `MA_NO_RUNTIME_LINKING` option, like so:
+
+    ```c
+    #ifdef __APPLE__
+        #define MA_NO_RUNTIME_LINKING
+    #endif 
+    #define MINIAUDIO_IMPLEMENTATION
+    #include "miniaudio.h"
+    ```
+
+This will require linking with `-framework CoreFoundation -framework CoreAudio -framework AudioUnit`. Alternatively, if you would rather keep using runtime
+linking you can add the following to your entitlements.xcent file:
+
+    ```
+    <key>com.apple.security.cs.allow-dyld-environment-variables</key>
+    <true/>
+    <key>com.apple.security.cs.allow-unsigned-executable-memory</key>
+    <true/>
+    ```
+
+
 2.3. Linux
 ----------
 The Linux build only requires linking to `-ldl`, `-lpthread` and `-lm`. You do not need any development packages.
@@ -255,87 +277,91 @@ The Emscripten build emits Web Audio JavaScript directly and should compile clea
 ------------------
 `#define` these options before including miniaudio.h.
 
-    +----------------------+----------------------------------------------------------------------------------------------------------------------------------+
-    | Option               | Description                                                                                                                      |
-    +----------------------+----------------------------------------------------------------------------------------------------------------------------------+
-    | MA_NO_WASAPI         | Disables the WASAPI backend.                                                                                                     |
-    +----------------------+----------------------------------------------------------------------------------------------------------------------------------+
-    | MA_NO_DSOUND         | Disables the DirectSound backend.                                                                                                |
-    +----------------------+----------------------------------------------------------------------------------------------------------------------------------+
-    | MA_NO_WINMM          | Disables the WinMM backend.                                                                                                      |
-    +----------------------+----------------------------------------------------------------------------------------------------------------------------------+
-    | MA_NO_ALSA           | Disables the ALSA backend.                                                                                                       |
-    +----------------------+----------------------------------------------------------------------------------------------------------------------------------+
-    | MA_NO_PULSEAUDIO     | Disables the PulseAudio backend.                                                                                                 |
-    +----------------------+----------------------------------------------------------------------------------------------------------------------------------+
-    | MA_NO_JACK           | Disables the JACK backend.                                                                                                       |
-    +----------------------+----------------------------------------------------------------------------------------------------------------------------------+
-    | MA_NO_COREAUDIO      | Disables the Core Audio backend.                                                                                                 |
-    +----------------------+----------------------------------------------------------------------------------------------------------------------------------+
-    | MA_NO_SNDIO          | Disables the sndio backend.                                                                                                      |
-    +----------------------+----------------------------------------------------------------------------------------------------------------------------------+
-    | MA_NO_AUDIO4         | Disables the audio(4) backend.                                                                                                   |
-    +----------------------+----------------------------------------------------------------------------------------------------------------------------------+
-    | MA_NO_OSS            | Disables the OSS backend.                                                                                                        |
-    +----------------------+----------------------------------------------------------------------------------------------------------------------------------+
-    | MA_NO_AAUDIO         | Disables the AAudio backend.                                                                                                     |
-    +----------------------+----------------------------------------------------------------------------------------------------------------------------------+
-    | MA_NO_OPENSL         | Disables the OpenSL|ES backend.                                                                                                  |
-    +----------------------+----------------------------------------------------------------------------------------------------------------------------------+
-    | MA_NO_WEBAUDIO       | Disables the Web Audio backend.                                                                                                  |
-    +----------------------+----------------------------------------------------------------------------------------------------------------------------------+
-    | MA_NO_NULL           | Disables the null backend.                                                                                                       |
-    +----------------------+----------------------------------------------------------------------------------------------------------------------------------+
-    | MA_NO_DECODING       | Disables decoding APIs.                                                                                                          |
-    +----------------------+----------------------------------------------------------------------------------------------------------------------------------+
-    | MA_NO_ENCODING       | Disables encoding APIs.                                                                                                          |
-    +----------------------+----------------------------------------------------------------------------------------------------------------------------------+
-    | MA_NO_WAV            | Disables the built-in WAV decoder and encoder.                                                                                   |
-    +----------------------+----------------------------------------------------------------------------------------------------------------------------------+
-    | MA_NO_FLAC           | Disables the built-in FLAC decoder.                                                                                              |
-    +----------------------+----------------------------------------------------------------------------------------------------------------------------------+
-    | MA_NO_MP3            | Disables the built-in MP3 decoder.                                                                                               |
-    +----------------------+----------------------------------------------------------------------------------------------------------------------------------+
-    | MA_NO_DEVICE_IO      | Disables playback and recording. This will disable ma_context and ma_device APIs. This is useful if you only want to use         |
-    |                      | miniaudio's data conversion and/or decoding APIs.                                                                                |
-    +----------------------+----------------------------------------------------------------------------------------------------------------------------------+
-    | MA_NO_THREADING      | Disables the ma_thread, ma_mutex, ma_semaphore and ma_event APIs. This option is useful if you only need to use miniaudio for    |
-    |                      | data conversion, decoding and/or encoding. Some families of APIs require threading which means the following options must also   |
-    |                      | be set:                                                                                                                          |
-    |                      |                                                                                                                                  |
-    |                      |     ```                                                                                                                          |
-    |                      |     MA_NO_DEVICE_IO                                                                                                              |
-    |                      |     ```                                                                                                                          |
-    +----------------------+----------------------------------------------------------------------------------------------------------------------------------+
-    | MA_NO_GENERATION     | Disables generation APIs such a ma_waveform and ma_noise.                                                                        |
-    +----------------------+----------------------------------------------------------------------------------------------------------------------------------+
-    | MA_NO_SSE2           | Disables SSE2 optimizations.                                                                                                     |
-    +----------------------+----------------------------------------------------------------------------------------------------------------------------------+
-    | MA_NO_AVX2           | Disables AVX2 optimizations.                                                                                                     |
-    +----------------------+----------------------------------------------------------------------------------------------------------------------------------+
-    | MA_NO_AVX512         | Disables AVX-512 optimizations.                                                                                                  |
-    +----------------------+----------------------------------------------------------------------------------------------------------------------------------+
-    | MA_NO_NEON           | Disables NEON optimizations.                                                                                                     |
-    +----------------------+----------------------------------------------------------------------------------------------------------------------------------+
-    | MA_LOG_LEVEL [level] | Sets the logging level. Set level to one of the following:                                                                       |
-    |                      |                                                                                                                                  |
-    |                      |     ```                                                                                                                          |
-    |                      |     MA_LOG_LEVEL_VERBOSE                                                                                                         |
-    |                      |     MA_LOG_LEVEL_INFO                                                                                                            |
-    |                      |     MA_LOG_LEVEL_WARNING                                                                                                         |
-    |                      |     MA_LOG_LEVEL_ERROR                                                                                                           |
-    |                      |     ```                                                                                                                          |
-    +----------------------+----------------------------------------------------------------------------------------------------------------------------------+
-    | MA_DEBUG_OUTPUT      | Enable printf() debug output.                                                                                                    |
-    +----------------------+----------------------------------------------------------------------------------------------------------------------------------+
-    | MA_COINIT_VALUE      | Windows only. The value to pass to internal calls to `CoInitializeEx()`. Defaults to `COINIT_MULTITHREADED`.                     |
-    +----------------------+----------------------------------------------------------------------------------------------------------------------------------+
-    | MA_API               | Controls how public APIs should be decorated. Defaults to `extern`.                                                              |
-    +----------------------+----------------------------------------------------------------------------------------------------------------------------------+
-    | MA_DLL               | If set, configures MA_API to either import or export APIs depending on whether or not the implementation is being defined. If    |
-    |                      | defining the implementation, MA_API will be configured to export. Otherwise it will be configured to import. This has no effect  |
-    |                      | if MA_API is defined externally.                                                                                                 |
-    +----------------------+----------------------------------------------------------------------------------------------------------------------------------+
+    +-----------------------+---------------------------------------------------------------------------------------------------------------------------------+
+    | Option                | Description                                                                                                                     |
+    +-----------------------+---------------------------------------------------------------------------------------------------------------------------------+
+    | MA_NO_WASAPI          | Disables the WASAPI backend.                                                                                                    |
+    +-----------------------+---------------------------------------------------------------------------------------------------------------------------------+
+    | MA_NO_DSOUND          | Disables the DirectSound backend.                                                                                               |
+    +-----------------------+---------------------------------------------------------------------------------------------------------------------------------+
+    | MA_NO_WINMM           | Disables the WinMM backend.                                                                                                     |
+    +-----------------------+---------------------------------------------------------------------------------------------------------------------------------+
+    | MA_NO_ALSA            | Disables the ALSA backend.                                                                                                      |
+    +-----------------------+---------------------------------------------------------------------------------------------------------------------------------+
+    | MA_NO_PULSEAUDIO      | Disables the PulseAudio backend.                                                                                                |
+    +-----------------------+---------------------------------------------------------------------------------------------------------------------------------+
+    | MA_NO_JACK            | Disables the JACK backend.                                                                                                      |
+    +-----------------------+---------------------------------------------------------------------------------------------------------------------------------+
+    | MA_NO_COREAUDIO       | Disables the Core Audio backend.                                                                                                |
+    +-----------------------+---------------------------------------------------------------------------------------------------------------------------------+
+    | MA_NO_SNDIO           | Disables the sndio backend.                                                                                                     |
+    +-----------------------+---------------------------------------------------------------------------------------------------------------------------------+
+    | MA_NO_AUDIO4          | Disables the audio(4) backend.                                                                                                  |
+    +-----------------------+---------------------------------------------------------------------------------------------------------------------------------+
+    | MA_NO_OSS             | Disables the OSS backend.                                                                                                       |
+    +-----------------------+---------------------------------------------------------------------------------------------------------------------------------+
+    | MA_NO_AAUDIO          | Disables the AAudio backend.                                                                                                    |
+    +-----------------------+---------------------------------------------------------------------------------------------------------------------------------+
+    | MA_NO_OPENSL          | Disables the OpenSL|ES backend.                                                                                                 |
+    +-----------------------+---------------------------------------------------------------------------------------------------------------------------------+
+    | MA_NO_WEBAUDIO        | Disables the Web Audio backend.                                                                                                 |
+    +-----------------------+---------------------------------------------------------------------------------------------------------------------------------+
+    | MA_NO_NULL            | Disables the null backend.                                                                                                      |
+    +-----------------------+---------------------------------------------------------------------------------------------------------------------------------+
+    | MA_NO_DECODING        | Disables decoding APIs.                                                                                                         |
+    +-----------------------+---------------------------------------------------------------------------------------------------------------------------------+
+    | MA_NO_ENCODING        | Disables encoding APIs.                                                                                                         |
+    +-----------------------+---------------------------------------------------------------------------------------------------------------------------------+
+    | MA_NO_WAV             | Disables the built-in WAV decoder and encoder.                                                                                  |
+    +-----------------------+---------------------------------------------------------------------------------------------------------------------------------+
+    | MA_NO_FLAC            | Disables the built-in FLAC decoder.                                                                                             |
+    +-----------------------+---------------------------------------------------------------------------------------------------------------------------------+
+    | MA_NO_MP3             | Disables the built-in MP3 decoder.                                                                                              |
+    +-----------------------+---------------------------------------------------------------------------------------------------------------------------------+
+    | MA_NO_DEVICE_IO       | Disables playback and recording. This will disable ma_context and ma_device APIs. This is useful if you only want to use        |
+    |                       | miniaudio's data conversion and/or decoding APIs.                                                                               |
+    +-----------------------+---------------------------------------------------------------------------------------------------------------------------------+
+    | MA_NO_THREADING       | Disables the ma_thread, ma_mutex, ma_semaphore and ma_event APIs. This option is useful if you only need to use miniaudio for   |
+    |                       | data conversion, decoding and/or encoding. Some families of APIs require threading which means the following options must also  |
+    |                       | be set:                                                                                                                         |
+    |                       |                                                                                                                                 |
+    |                       |     ```                                                                                                                         |
+    |                       |     MA_NO_DEVICE_IO                                                                                                             |
+    |                       |     ```                                                                                                                         |
+    +-----------------------+---------------------------------------------------------------------------------------------------------------------------------+
+    | MA_NO_GENERATION      | Disables generation APIs such a ma_waveform and ma_noise.                                                                       |
+    +-----------------------+---------------------------------------------------------------------------------------------------------------------------------+
+    | MA_NO_SSE2            | Disables SSE2 optimizations.                                                                                                    |
+    +-----------------------+---------------------------------------------------------------------------------------------------------------------------------+
+    | MA_NO_AVX2            | Disables AVX2 optimizations.                                                                                                    |
+    +-----------------------+---------------------------------------------------------------------------------------------------------------------------------+
+    | MA_NO_AVX512          | Disables AVX-512 optimizations.                                                                                                 |
+    +-----------------------+---------------------------------------------------------------------------------------------------------------------------------+
+    | MA_NO_NEON            | Disables NEON optimizations.                                                                                                    |
+    +-----------------------+---------------------------------------------------------------------------------------------------------------------------------+
+    | MA_NO_RUNTIME_LINKING | Disables runtime linking. This is useful for passing Apple's notarization process. When enabling this, you may need to avoid    |
+    |                       | using `-std=c89` or `-std=c99` on Linux builds or else you may end up with compilation errors due to conflicts with `timespec`  |
+    |                       | and `timeval` data types.                                                                                                       |
+    +-----------------------+---------------------------------------------------------------------------------------------------------------------------------+
+    | MA_LOG_LEVEL [level]  | Sets the logging level. Set level to one of the following:                                                                      |
+    |                       |                                                                                                                                 |
+    |                       |     ```                                                                                                                         |
+    |                       |     MA_LOG_LEVEL_VERBOSE                                                                                                        |
+    |                       |     MA_LOG_LEVEL_INFO                                                                                                           |
+    |                       |     MA_LOG_LEVEL_WARNING                                                                                                        |
+    |                       |     MA_LOG_LEVEL_ERROR                                                                                                          |
+    |                       |     ```                                                                                                                         |
+    +-----------------------+---------------------------------------------------------------------------------------------------------------------------------+
+    | MA_DEBUG_OUTPUT       | Enable printf() debug output.                                                                                                   |
+    +-----------------------+---------------------------------------------------------------------------------------------------------------------------------+
+    | MA_COINIT_VALUE       | Windows only. The value to pass to internal calls to `CoInitializeEx()`. Defaults to `COINIT_MULTITHREADED`.                    |
+    +-----------------------+---------------------------------------------------------------------------------------------------------------------------------+
+    | MA_API                | Controls how public APIs should be decorated. Defaults to `extern`.                                                             |
+    +-----------------------+---------------------------------------------------------------------------------------------------------------------------------+
+    | MA_DLL                | If set, configures MA_API to either import or export APIs depending on whether or not the implementation is being defined. If   |
+    |                       | defining the implementation, MA_API will be configured to export. Otherwise it will be configured to import. This has no effect |
+    |                       | if MA_API is defined externally.                                                                                                |
+    +-----------------------+---------------------------------------------------------------------------------------------------------------------------------+
 
 
 3. Definitions
@@ -1421,7 +1447,7 @@ extern "C" {
 
 #define MA_VERSION_MAJOR    0
 #define MA_VERSION_MINOR    10
-#define MA_VERSION_REVISION 20
+#define MA_VERSION_REVISION 25
 #define MA_VERSION_STRING   MA_XSTRINGIFY(MA_VERSION_MAJOR) "." MA_XSTRINGIFY(MA_VERSION_MINOR) "." MA_XSTRINGIFY(MA_VERSION_REVISION)
 
 #if defined(_MSC_VER) && !defined(__clang__)
@@ -1429,7 +1455,7 @@ extern "C" {
     #pragma warning(disable:4201)   /* nonstandard extension used: nameless struct/union */
     #pragma warning(disable:4214)   /* nonstandard extension used: bit field types other than int */
     #pragma warning(disable:4324)   /* structure was padded due to alignment specifier */
-#else
+#elif defined(__clang__) || (defined(__GNUC__) && (__GNUC__ > 4 || (__GNUC__ == 4 && __GNUC_MINOR__ >= 8)))
     #pragma GCC diagnostic push
     #pragma GCC diagnostic ignored "-Wpedantic" /* For ISO C99 doesn't support unnamed structs/unions [-Wpedantic] */
     #if defined(__clang__)
@@ -1482,7 +1508,7 @@ typedef unsigned int            ma_uint32;
     typedef   signed __int64    ma_int64;
     typedef unsigned __int64    ma_uint64;
 #else
-    #if defined(__GNUC__)
+    #if defined(__clang__) || (defined(__GNUC__) && (__GNUC__ > 4 || (__GNUC__ == 4 && __GNUC_MINOR__ >= 6)))
         #pragma GCC diagnostic push
         #pragma GCC diagnostic ignored "-Wlong-long"
         #if defined(__clang__)
@@ -1491,7 +1517,7 @@ typedef unsigned int            ma_uint32;
     #endif
     typedef   signed long long  ma_int64;
     typedef unsigned long long  ma_uint64;
-    #if defined(__GNUC__)
+    #if defined(__clang__) || (defined(__GNUC__) && (__GNUC__ > 4 || (__GNUC__ == 4 && __GNUC_MINOR__ >= 6)))
         #pragma GCC diagnostic pop
     #endif
 #endif
@@ -2734,6 +2760,25 @@ MA_API ma_uint32 ma_pcm_rb_get_subbuffer_offset(ma_pcm_rb* pRB, ma_uint32 subbuf
 MA_API void* ma_pcm_rb_get_subbuffer_ptr(ma_pcm_rb* pRB, ma_uint32 subbufferIndex, void* pBuffer);
 
 
+/*
+The idea of the duplex ring buffer is to act as the intermediary buffer when running two asynchronous devices in a duplex set up. The
+capture device writes to it, and then a playback device reads from it.
+
+At the moment this is just a simple naive implementation, but in the future I want to implement some dynamic resampling to seamlessly
+handle desyncs. Note that the API is work in progress and may change at any time in any version.
+
+The size of the buffer is based on the capture side since that's what'll be written to the buffer. It is based on the capture period size
+in frames. The internal sample rate of the capture device is also needed in order to calculate the size.
+*/
+typedef struct
+{
+    ma_pcm_rb rb;
+} ma_duplex_rb;
+
+MA_API ma_result ma_duplex_rb_init(ma_uint32 inputSampleRate, ma_format captureFormat, ma_uint32 captureChannels, ma_uint32 captureSampleRate, ma_uint32 capturePeriodSizeInFrames, const ma_allocation_callbacks* pAllocationCallbacks, ma_duplex_rb* pRB);
+MA_API ma_result ma_duplex_rb_uninit(ma_duplex_rb* pRB);
+
+
 /************************************************************************************************************************************************************
 
 Miscellaneous Helpers
@@ -2848,6 +2893,9 @@ This section contains the APIs for device playback and capture. Here is where yo
     #define MA_SUPPORT_WEBAUDIO
 #endif
 
+/* All platforms should support custom backends. */
+#define MA_SUPPORT_CUSTOM
+
 /* Explicitly disable the Null backend for Emscripten because it uses a background thread which is not properly supported right now. */
 #if !defined(MA_EMSCRIPTEN)
 #define MA_SUPPORT_NULL
@@ -2893,9 +2941,18 @@ This section contains the APIs for device playback and capture. Here is where yo
 #if !defined(MA_NO_WEBAUDIO) && defined(MA_SUPPORT_WEBAUDIO)
     #define MA_ENABLE_WEBAUDIO
 #endif
+#if !defined(MA_NO_CUSTOM) && defined(MA_SUPPORT_CUSTOM)
+    #define MA_ENABLE_CUSTOM
+#endif
 #if !defined(MA_NO_NULL) && defined(MA_SUPPORT_NULL)
     #define MA_ENABLE_NULL
 #endif
+
+#define MA_STATE_UNINITIALIZED     0
+#define MA_STATE_STOPPED           1   /* The device's default state after initialization. */
+#define MA_STATE_STARTED           2   /* The device is started and is requesting and/or delivering audio data. */
+#define MA_STATE_STARTING          3   /* Transitioning from a stopped state to started. */
+#define MA_STATE_STOPPING          4   /* Transitioning from a started state to stopped. */
 
 #ifdef MA_SUPPORT_WASAPI
 /* We need a IMMNotificationClient object for WASAPI. */
@@ -2923,8 +2980,11 @@ typedef enum
     ma_backend_aaudio,
     ma_backend_opensl,
     ma_backend_webaudio,
-    ma_backend_null    /* <-- Must always be the last item. Lowest priority, and used as the terminator for backend enumeration. */
+    ma_backend_custom,  /* <-- Custom backend, with callbacks defined by the context config. */
+    ma_backend_null     /* <-- Must always be the last item. Lowest priority, and used as the terminator for backend enumeration. */
 } ma_backend;
+
+#define MA_BACKEND_COUNT (ma_backend_null+1)
 
 
 /*
@@ -3003,14 +3063,14 @@ pDevice (in)
 logLevel (in)
     The log level. This can be one of the following:
 
-    |----------------------|
+    +----------------------+
     | Log Level            |
-    |----------------------|
+    +----------------------+
     | MA_LOG_LEVEL_VERBOSE |
     | MA_LOG_LEVEL_INFO    |
     | MA_LOG_LEVEL_WARNING |
     | MA_LOG_LEVEL_ERROR   |
-    |----------------------|
+    +----------------------+
 
 message (in)
     The log message.
@@ -3061,6 +3121,74 @@ typedef enum
     ma_ios_session_category_option_allow_air_play                             = 0x40,   /* AVAudioSessionCategoryOptionAllowAirPlay */
 } ma_ios_session_category_option;
 
+/* OpenSL stream types. */
+typedef enum
+{
+    ma_opensl_stream_type_default = 0,              /* Leaves the stream type unset. */
+    ma_opensl_stream_type_voice,                    /* SL_ANDROID_STREAM_VOICE */
+    ma_opensl_stream_type_system,                   /* SL_ANDROID_STREAM_SYSTEM */
+    ma_opensl_stream_type_ring,                     /* SL_ANDROID_STREAM_RING */
+    ma_opensl_stream_type_media,                    /* SL_ANDROID_STREAM_MEDIA */
+    ma_opensl_stream_type_alarm,                    /* SL_ANDROID_STREAM_ALARM */
+    ma_opensl_stream_type_notification              /* SL_ANDROID_STREAM_NOTIFICATION */
+} ma_opensl_stream_type;
+
+/* OpenSL recording presets. */
+typedef enum
+{
+    ma_opensl_recording_preset_default = 0,         /* Leaves the input preset unset. */
+    ma_opensl_recording_preset_generic,             /* SL_ANDROID_RECORDING_PRESET_GENERIC */
+    ma_opensl_recording_preset_camcorder,           /* SL_ANDROID_RECORDING_PRESET_CAMCORDER */
+    ma_opensl_recording_preset_voice_recognition,   /* SL_ANDROID_RECORDING_PRESET_VOICE_RECOGNITION */
+    ma_opensl_recording_preset_voice_communication, /* SL_ANDROID_RECORDING_PRESET_VOICE_COMMUNICATION */
+    ma_opensl_recording_preset_voice_unprocessed    /* SL_ANDROID_RECORDING_PRESET_UNPROCESSED */
+} ma_opensl_recording_preset;
+
+/* AAudio usage types. */
+typedef enum
+{
+    ma_aaudio_usage_default = 0,                    /* Leaves the usage type unset. */
+    ma_aaudio_usage_announcement,                   /* AAUDIO_SYSTEM_USAGE_ANNOUNCEMENT */
+    ma_aaudio_usage_emergency,                      /* AAUDIO_SYSTEM_USAGE_EMERGENCY */
+    ma_aaudio_usage_safety,                         /* AAUDIO_SYSTEM_USAGE_SAFETY */
+    ma_aaudio_usage_vehicle_status,                 /* AAUDIO_SYSTEM_USAGE_VEHICLE_STATUS */
+    ma_aaudio_usage_alarm,                          /* AAUDIO_USAGE_ALARM */
+    ma_aaudio_usage_assistance_accessibility,       /* AAUDIO_USAGE_ASSISTANCE_ACCESSIBILITY */
+    ma_aaudio_usage_assistance_navigation_guidance, /* AAUDIO_USAGE_ASSISTANCE_NAVIGATION_GUIDANCE */
+    ma_aaudio_usage_assistance_sonification,        /* AAUDIO_USAGE_ASSISTANCE_SONIFICATION */
+    ma_aaudio_usage_assitant,                       /* AAUDIO_USAGE_ASSISTANT */
+    ma_aaudio_usage_game,                           /* AAUDIO_USAGE_GAME */
+    ma_aaudio_usage_media,                          /* AAUDIO_USAGE_MEDIA */
+    ma_aaudio_usage_notification,                   /* AAUDIO_USAGE_NOTIFICATION */
+    ma_aaudio_usage_notification_event,             /* AAUDIO_USAGE_NOTIFICATION_EVENT */
+    ma_aaudio_usage_notification_ringtone,          /* AAUDIO_USAGE_NOTIFICATION_RINGTONE */
+    ma_aaudio_usage_voice_communication,            /* AAUDIO_USAGE_VOICE_COMMUNICATION */
+    ma_aaudio_usage_voice_communication_signalling  /* AAUDIO_USAGE_VOICE_COMMUNICATION_SIGNALLING */
+} ma_aaudio_usage;
+
+/* AAudio content types. */
+typedef enum
+{
+    ma_aaudio_content_type_default = 0,             /* Leaves the content type unset. */
+    ma_aaudio_content_type_movie,                   /* AAUDIO_CONTENT_TYPE_MOVIE */
+    ma_aaudio_content_type_music,                   /* AAUDIO_CONTENT_TYPE_MUSIC */
+    ma_aaudio_content_type_sonification,            /* AAUDIO_CONTENT_TYPE_SONIFICATION */
+    ma_aaudio_content_type_speech                   /* AAUDIO_CONTENT_TYPE_SPEECH */
+} ma_aaudio_content_type;
+
+/* AAudio input presets. */
+typedef enum
+{
+    ma_aaudio_input_preset_default = 0,             /* Leaves the input preset unset. */
+    ma_aaudio_input_preset_generic,                 /* AAUDIO_INPUT_PRESET_GENERIC */
+    ma_aaudio_input_preset_camcorder,               /* AAUDIO_INPUT_PRESET_CAMCORDER */
+    ma_aaudio_input_preset_unprocessed,             /* AAUDIO_INPUT_PRESET_UNPROCESSED */
+    ma_aaudio_input_preset_voice_recognition,       /* AAUDIO_INPUT_PRESET_VOICE_RECOGNITION */
+    ma_aaudio_input_preset_voice_communication,     /* AAUDIO_INPUT_PRESET_VOICE_COMMUNICATION */
+    ma_aaudio_input_preset_voice_performance        /* AAUDIO_INPUT_PRESET_VOICE_PERFORMANCE */
+} ma_aaudio_input_preset;
+
+
 typedef union
 {
     ma_int64 counter;
@@ -3082,14 +3210,28 @@ typedef union
     ma_int32 aaudio;                /* AAudio uses a 32-bit integer for identification. */
     ma_uint32 opensl;               /* OpenSL|ES uses a 32-bit unsigned integer for identification. */
     char webaudio[32];              /* Web Audio always uses default devices for now, but if this changes it'll be a GUID. */
+    union
+    {
+        int i;
+        char s[256];
+        void* p;
+    } custom;                       /* The custom backend could be anything. Give them a few options. */
     int nullbackend;                /* The null backend uses an integer for device IDs. */
 } ma_device_id;
+
+
+typedef struct ma_context_config    ma_context_config;
+typedef struct ma_device_config     ma_device_config;
+typedef struct ma_backend_callbacks ma_backend_callbacks;
+
+#define MA_DATA_FORMAT_FLAG_EXCLUSIVE_MODE (1U << 1)    /* If set, this is supported in exclusive mode. Otherwise not natively supported by exclusive mode. */
 
 typedef struct
 {
     /* Basic info. This is the only information guaranteed to be filled in during device enumeration. */
     ma_device_id id;
     char name[256];
+    ma_bool32 isDefault;
 
     /*
     Detailed info. As much of this is filled as possible with ma_context_get_device_info(). Note that you are allowed to initialize
@@ -3106,13 +3248,19 @@ typedef struct
     ma_uint32 minSampleRate;
     ma_uint32 maxSampleRate;
 
+
+    /* Experimental. Don't use these right now. */
+    ma_uint32 nativeDataFormatCount;
     struct
     {
-        ma_bool32 isDefault;
-    } _private;
+        ma_format format;       /* Sample format. If set to ma_format_unknown, all sample formats are supported. */
+        ma_uint32 channels;     /* If set to 0, all channels are supported. */
+        ma_uint32 sampleRate;   /* If set to 0, all sample rates are supported. */
+        ma_uint32 flags;        
+    } nativeDataFormats[64];
 } ma_device_info;
 
-typedef struct
+struct ma_device_config
 {
     ma_device_type deviceType;
     ma_uint32 sampleRate;
@@ -3173,9 +3321,146 @@ typedef struct
         const char* pStreamNamePlayback;
         const char* pStreamNameCapture;
     } pulse;
-} ma_device_config;
+    struct
+    {
+        ma_bool32 allowNominalSampleRateChange; /* Desktop only. When enabled, allows changing of the sample rate at the operating system level. */
+    } coreaudio;
+    struct
+    {
+        ma_opensl_stream_type streamType;
+        ma_opensl_recording_preset recordingPreset;
+    } opensl;
+    struct
+    {
+        ma_aaudio_usage usage;
+        ma_aaudio_content_type contentType;
+        ma_aaudio_input_preset inputPreset;
+    } aaudio;
+};
 
+
+/*
+The callback for handling device enumeration. This is fired from `ma_context_enumerated_devices()`.
+
+
+Parameters
+----------
+pContext (in)
+    A pointer to the context performing the enumeration.
+
+deviceType (in)
+    The type of the device being enumerated. This will always be either `ma_device_type_playback` or `ma_device_type_capture`.
+
+pInfo (in)
+    A pointer to a `ma_device_info` containing the ID and name of the enumerated device. Note that this will not include detailed information about the device,
+    only basic information (ID and name). The reason for this is that it would otherwise require opening the backend device to probe for the information which
+    is too inefficient.
+
+pUserData (in)
+    The user data pointer passed into `ma_context_enumerate_devices()`.
+*/
+typedef ma_bool32 (* ma_enum_devices_callback_proc)(ma_context* pContext, ma_device_type deviceType, const ma_device_info* pInfo, void* pUserData);
+
+
+/*
+Describes some basic details about a playback or capture device.
+*/
 typedef struct
+{
+    const ma_device_id* pDeviceID;
+    ma_share_mode shareMode;
+    ma_format format;
+    ma_uint32 channels;
+    ma_uint32 sampleRate;
+    ma_channel channelMap[MA_MAX_CHANNELS];
+    ma_uint32 periodSizeInFrames;
+    ma_uint32 periodSizeInMilliseconds;
+    ma_uint32 periodCount;
+} ma_device_descriptor;
+
+/*
+These are the callbacks required to be implemented for a backend. These callbacks are grouped into two parts: context and device. There is one context
+to many devices. A device is created from a context.
+
+The general flow goes like this:
+
+  1) A context is created with `onContextInit()`
+     1a) Available devices can be enumerated with `onContextEnumerateDevices()` if required.
+     1b) Detailed information about a device can be queried with `onContextGetDeviceInfo()` if required.
+  2) A device is created from the context that was created in the first step using `onDeviceInit()`, and optionally a device ID that was
+     selected from device enumeration via `onContextEnumerateDevices()`.
+  3) A device is started or stopped with `onDeviceStart()` / `onDeviceStop()`
+  4) Data is delivered to and from the device by the backend. This is always done based on the native format returned by the prior call
+     to `onDeviceInit()`. Conversion between the device's native format and the format requested by the application will be handled by
+     miniaudio internally.
+
+Initialization of the context is quite simple. You need to do any necessary initialization of internal objects and then output the
+callbacks defined in this structure.
+
+Once the context has been initialized you can initialize a device. Before doing so, however, the application may want to know which
+physical devices are available. This is where `onContextEnumerateDevices()` comes in. This is fairly simple. For each device, fire the
+given callback with, at a minimum, the basic information filled out in `ma_device_info`. When the callback returns `MA_FALSE`, enumeration
+needs to stop and the `onContextEnumerateDevices()` function return with a success code.
+
+Detailed device information can be retrieved from a device ID using `onContextGetDeviceInfo()`. This takes as input the device type and ID,
+and on output returns detailed information about the device in `ma_device_info`. The `onContextGetDeviceInfo()` callback must handle the
+case when the device ID is NULL, in which case information about the default device needs to be retrieved.
+
+Once the context has been created and the device ID retrieved (if using anything other than the default device), the device can be created.
+This is a little bit more complicated than initialization of the context due to it's more complicated configuration. When initializing a
+device, a duplex device may be requested. This means a separate data format needs to be specified for both playback and capture. On input,
+the data format is set to what the application wants. On output it's set to the native format which should match as closely as possible to
+the requested format. The conversion between the format requested by the application and the device's native format will be handled
+internally by miniaudio.
+
+On input, if the sample format is set to `ma_format_unknown`, the backend is free to use whatever sample format it desires, so long as it's
+supported by miniaudio. When the channel count is set to 0, the backend should use the device's native channel count. The same applies for
+sample rate. For the channel map, the default should be used when `ma_channel_map_blank()` returns true (all channels set to
+`MA_CHANNEL_NONE`). On input, the `periodSizeInFrames` or `periodSizeInMilliseconds` option should always be set. The backend should
+inspect both of these variables. If `periodSizeInFrames` is set, it should take priority, otherwise it needs to be derived from the period
+size in milliseconds (`periodSizeInMilliseconds`) and the sample rate, keeping in mind that the sample rate may be 0, in which case the
+sample rate will need to be determined before calculating the period size in frames. On output, all members of the `ma_device_data_format`
+object should be set to a valid value, except for `periodSizeInMilliseconds` which is optional (`periodSizeInFrames` *must* be set).
+
+Starting and stopping of the device is done with `onDeviceStart()` and `onDeviceStop()` and should be self-explanatory. If the backend uses
+asynchronous reading and writing, `onDeviceStart()` is optional, so long as the device is automatically started in `onDeviceWrite()`.
+
+The handling of data delivery between the application and the device is the most complicated part of the process. To make this a bit
+easier, some helper callbacks are available. If the backend uses a blocking read/write style of API, the `onDeviceRead()` and
+`onDeviceWrite()` callbacks can optionally be implemented. These are blocking and work just like reading and writing from a file. If the
+backend uses a callback for data delivery, that callback must call `ma_device_handle_backend_data_callback()` from within it's callback.
+This allows miniaudio to then process any necessary data conversion and then pass it to the miniaudio data callback.
+
+If the backend requires absolute flexibility with it's data delivery, it can optionally implement the `onDeviceWorkerThread()` callback
+which will allow it to implement the logic that will run on the audio thread. This is much more advanced and is completely optional.
+
+The audio thread follows this general flow:
+
+    1) Start the device before entering the main loop.
+    2) Run data delivery logic in a loop while `ma_device_get_state() == MA_STATE_STARTED` and no errors have been encounted.
+    3) Stop thd device after leaving the main loop.
+
+The invocation of the `onDeviceAudioThread()` callback will be handled by miniaudio. When you start the device, miniaudio will fire this
+callback. When the device is stopped, the `ma_device_get_state() == MA_STATE_STARTED` condition will fail and the loop will be terminated
+which will then fall through to the part that stops the device. For an example on how to implement the `onDeviceAudioThread()` callback,
+look at `ma_device_audio_thread__default_read_write()`.
+*/
+struct ma_backend_callbacks
+{
+    ma_result (* onContextInit)(ma_context* pContext, const ma_context_config* pConfig, ma_backend_callbacks* pCallbacks);
+    ma_result (* onContextUninit)(ma_context* pContext);
+    ma_result (* onContextEnumerateDevices)(ma_context* pContext, ma_enum_devices_callback_proc callback, void* pUserData);
+    ma_result (* onContextGetDeviceInfo)(ma_context* pContext, ma_device_type deviceType, const ma_device_id* pDeviceID, ma_device_info* pDeviceInfo);
+    ma_result (* onDeviceInit)(ma_device* pDevice, const ma_device_config* pConfig, ma_device_descriptor* pDescriptorPlayback, ma_device_descriptor* pDescriptorCapture);
+    ma_result (* onDeviceUninit)(ma_device* pDevice);
+    ma_result (* onDeviceStart)(ma_device* pDevice);
+    ma_result (* onDeviceStop)(ma_device* pDevice);
+    ma_result (* onDeviceRead)(ma_device* pDevice, void* pFrames, ma_uint32 frameCount, ma_uint32* pFramesRead);
+    ma_result (* onDeviceWrite)(ma_device* pDevice, const void* pFrames, ma_uint32 frameCount, ma_uint32* pFramesWritten);
+    ma_result (* onDeviceAudioThread)(ma_device* pDevice);
+};
+
+struct ma_context_config
 {
     ma_log_proc logCallback;
     ma_thread_priority threadPriority;
@@ -3204,32 +3489,12 @@ typedef struct
         const char* pClientName;
         ma_bool32 tryStartServer;
     } jack;
-} ma_context_config;
-
-/*
-The callback for handling device enumeration. This is fired from `ma_context_enumerated_devices()`.
-
-
-Parameters
-----------
-pContext (in)
-    A pointer to the context performing the enumeration.
-
-deviceType (in)
-    The type of the device being enumerated. This will always be either `ma_device_type_playback` or `ma_device_type_capture`.
-
-pInfo (in)
-    A pointer to a `ma_device_info` containing the ID and name of the enumerated device. Note that this will not include detailed information about the device,
-    only basic information (ID and name). The reason for this is that it would otherwise require opening the backend device to probe for the information which
-    is too inefficient.
-
-pUserData (in)
-    The user data pointer passed into `ma_context_enumerate_devices()`.
-*/
-typedef ma_bool32 (* ma_enum_devices_callback_proc)(ma_context* pContext, ma_device_type deviceType, const ma_device_info* pInfo, void* pUserData);
+    ma_backend_callbacks custom;
+};
 
 struct ma_context
 {
+    ma_backend_callbacks callbacks;
     ma_backend backend;                    /* DirectSound, ALSA, etc. */
     ma_log_proc logCallback;
     ma_thread_priority threadPriority;
@@ -3245,7 +3510,6 @@ struct ma_context
     ma_bool32 isBackendAsynchronous : 1;   /* Set when the context is initialized. Set to 1 for asynchronous backends such as Core Audio and JACK. Do not modify. */
 
     ma_result (* onUninit        )(ma_context* pContext);
-    ma_bool32 (* onDeviceIDEqual )(ma_context* pContext, const ma_device_id* pID0, const ma_device_id* pID1);
     ma_result (* onEnumDevices   )(ma_context* pContext, ma_enum_devices_callback_proc callback, void* pUserData);    /* Return false from the callback to stop enumeration. */
     ma_result (* onGetDeviceInfo )(ma_context* pContext, ma_device_type deviceType, const ma_device_id* pDeviceID, ma_share_mode shareMode, ma_device_info* pDeviceInfo);
     ma_result (* onDeviceInit    )(ma_context* pContext, const ma_device_config* pConfig, ma_device* pDevice);
@@ -3365,9 +3629,23 @@ struct ma_context
             ma_handle pulseSO;
             ma_proc pa_mainloop_new;
             ma_proc pa_mainloop_free;
+            ma_proc pa_mainloop_quit;
             ma_proc pa_mainloop_get_api;
             ma_proc pa_mainloop_iterate;
             ma_proc pa_mainloop_wakeup;
+            ma_proc pa_threaded_mainloop_new;
+            ma_proc pa_threaded_mainloop_free;
+            ma_proc pa_threaded_mainloop_start;
+            ma_proc pa_threaded_mainloop_stop;
+            ma_proc pa_threaded_mainloop_lock;
+            ma_proc pa_threaded_mainloop_unlock;
+            ma_proc pa_threaded_mainloop_wait;
+            ma_proc pa_threaded_mainloop_signal;
+            ma_proc pa_threaded_mainloop_accept;
+            ma_proc pa_threaded_mainloop_get_retval;
+            ma_proc pa_threaded_mainloop_get_api;
+            ma_proc pa_threaded_mainloop_in_thread;
+            ma_proc pa_threaded_mainloop_set_name;
             ma_proc pa_context_new;
             ma_proc pa_context_unref;
             ma_proc pa_context_connect;
@@ -3408,9 +3686,8 @@ struct ma_context
             ma_proc pa_stream_writable_size;
             ma_proc pa_stream_readable_size;
 
-            char* pApplicationName;
-            char* pServerName;
-            ma_bool32 tryAutoSpawn;
+            /*pa_threaded_mainloop**/ ma_ptr pMainLoop;
+            /*pa_context**/ ma_ptr pPulseContext;
         } pulse;
 #endif
 #ifdef MA_SUPPORT_JACK
@@ -3523,6 +3800,9 @@ struct ma_context
             ma_proc AAudioStreamBuilder_setDataCallback;
             ma_proc AAudioStreamBuilder_setErrorCallback;
             ma_proc AAudioStreamBuilder_setPerformanceMode;
+            ma_proc AAudioStreamBuilder_setUsage;
+            ma_proc AAudioStreamBuilder_setContentType;
+            ma_proc AAudioStreamBuilder_setInputPreset;
             ma_proc AAudioStreamBuilder_openStream;
             ma_proc AAudioStream_close;
             ma_proc AAudioStream_getState;
@@ -3547,6 +3827,7 @@ struct ma_context
             ma_handle SL_IID_RECORD;
             ma_handle SL_IID_PLAY;
             ma_handle SL_IID_OUTPUTMIX;
+            ma_handle SL_IID_ANDROIDCONFIGURATION;
             ma_proc   slCreateEngine;
         } opensl;
 #endif
@@ -3634,6 +3915,7 @@ struct ma_device
     ma_bool32 noPreZeroedOutputBuffer : 1;
     ma_bool32 noClip                  : 1;
     volatile float masterVolumeFactor;      /* Volatile so we can use some thread safety when applying volume to periods. */
+    ma_duplex_rb duplexRB;                  /* Intermediary buffer for duplex device on asynchronous backends. */
     struct
     {
         ma_resample_algorithm algorithm;
@@ -3757,19 +4039,9 @@ struct ma_device
 #ifdef MA_SUPPORT_PULSEAUDIO
         struct
         {
-            /*pa_mainloop**/ ma_ptr pMainLoop;
-            /*pa_mainloop_api**/ ma_ptr pAPI;
-            /*pa_context**/ ma_ptr pPulseContext;
             /*pa_stream**/ ma_ptr pStreamPlayback;
             /*pa_stream**/ ma_ptr pStreamCapture;
-            /*pa_context_state*/ ma_uint32 pulseContextState;
-            void* pMappedBufferPlayback;
-            const void* pMappedBufferCapture;
-            ma_uint32 mappedBufferFramesRemainingPlayback;
-            ma_uint32 mappedBufferFramesRemainingCapture;
-            ma_uint32 mappedBufferFramesCapacityPlayback;
-            ma_uint32 mappedBufferFramesCapacityCapture;
-            ma_bool32 breakFromMainLoop : 1;
+            ma_pcm_rb duplexRB;
         } pulse;
 #endif
 #ifdef MA_SUPPORT_JACK
@@ -3790,7 +4062,8 @@ struct ma_device
             ma_uint32 deviceObjectIDCapture;
             /*AudioUnit*/ ma_ptr audioUnitPlayback;
             /*AudioUnit*/ ma_ptr audioUnitCapture;
-            /*AudioBufferList**/ ma_ptr pAudioBufferList;  /* Only used for input devices. */
+            /*AudioBufferList**/ ma_ptr pAudioBufferList;   /* Only used for input devices. */
+            ma_uint32 audioBufferCapInFrames;               /* Only used for input devices. The capacity in frames of each buffer in pAudioBufferList. */
             ma_event stopEvent;
             ma_uint32 originalPeriodSizeInFrames;
             ma_uint32 originalPeriodSizeInMilliseconds;
@@ -3875,7 +4148,7 @@ struct ma_device
             ma_uint32 currentPeriodFramesRemainingPlayback;
             ma_uint32 currentPeriodFramesRemainingCapture;
             ma_uint64 lastProcessedFramePlayback;
-            ma_uint32 lastProcessedFrameCapture;
+            ma_uint64 lastProcessedFrameCapture;
             ma_bool32 isStarted;
         } null_device;
 #endif
@@ -3883,7 +4156,7 @@ struct ma_device
 };
 #if defined(_MSC_VER) && !defined(__clang__)
     #pragma warning(pop)
-#else
+#elif defined(__clang__) || (defined(__GNUC__) && (__GNUC__ > 4 || (__GNUC__ == 4 && __GNUC_MINOR__ >= 8)))
     #pragma GCC diagnostic pop  /* For ISO C99 doesn't support unnamed structs/unions [-Wpedantic] */
 #endif
 
@@ -3969,7 +4242,7 @@ The context can be configured via the `pConfig` argument. The config object is i
 can then be set directly on the structure. Below are the members of the `ma_context_config` object.
 
     logCallback
-        Callback for handling log messages from miniaudio. 
+        Callback for handling log messages from miniaudio.
 
     threadPriority
         The desired priority to use for the audio thread. Allowable values include the following:
@@ -4543,7 +4816,7 @@ then be set directly on the structure. Below are the members of the `ma_device_c
         ma_share_mode_shared and reinitializing.
 
     wasapi.noAutoConvertSRC
-        WASAPI only. When set to true, disables WASAPI's automatic resampling and forces the use of miniaudio's resampler. Defaults to false. 
+        WASAPI only. When set to true, disables WASAPI's automatic resampling and forces the use of miniaudio's resampler. Defaults to false.
 
     wasapi.noDefaultQualitySRC
         WASAPI only. Only used when `wasapi.noAutoConvertSRC` is set to false. When set to true, disables the use of `AUDCLNT_STREAMFLAGS_SRC_DEFAULT_QUALITY`.
@@ -4572,6 +4845,13 @@ then be set directly on the structure. Below are the members of the `ma_device_c
 
     pulse.pStreamNameCapture
         PulseAudio only. Sets the stream name for capture.
+
+    coreaudio.allowNominalSampleRateChange
+        Core Audio only. Desktop only. When enabled, allows the sample rate of the device to be changed at the operating system level. This
+        is disabled by default in order to prevent intrusive changes to the user's system. This is useful if you want to use a sample rate
+        that is known to be natively supported by the hardware thereby avoiding the cost of resampling. When set to true, miniaudio will
+        find the closest match between the sample rate requested in the device config and the sample rates natively supported by the
+        hardware. When set to false, the sample rate currently set by the operating system will always be used.
 
 
 Once initialized, the device's config is immutable. If you need to change the config you will need to initialize a new device.
@@ -4886,7 +5166,63 @@ See Also
 ma_device_start()
 ma_device_stop()
 */
-MA_API ma_bool32 ma_device_is_started(ma_device* pDevice);
+MA_API ma_bool32 ma_device_is_started(const ma_device* pDevice);
+
+
+/*
+Retrieves the state of the device.
+
+
+Parameters
+----------
+pDevice (in)
+    A pointer to the device whose state is being retrieved.
+
+
+Return Value
+------------
+The current state of the device. The return value will be one of the following:
+
+    +------------------------+------------------------------------------------------------------------------+
+    | MA_STATE_UNINITIALIZED | Will only be returned if the device is in the middle of initialization.      |
+    +------------------------+------------------------------------------------------------------------------+
+    | MA_STATE_STOPPED       | The device is stopped. The initial state of the device after initialization. |
+    +------------------------+------------------------------------------------------------------------------+
+    | MA_STATE_STARTED       | The device started and requesting and/or delivering audio data.              |
+    +------------------------+------------------------------------------------------------------------------+
+    | MA_STATE_STARTING      | The device is in the process of starting.                                    |
+    +------------------------+------------------------------------------------------------------------------+
+    | MA_STATE_STOPPING      | The device is in the process of stopping.                                    |
+    +------------------------+------------------------------------------------------------------------------+
+
+
+Thread Safety
+-------------
+Safe. This is implemented as a simple accessor. Note that if the device is started or stopped at the same time as this function is called,
+there's a possibility the return value could be out of sync. See remarks.
+
+
+Callback Safety
+---------------
+Safe. This is implemented as a simple accessor.
+
+
+Remarks
+-------
+The general flow of a devices state goes like this:
+
+    ```
+    ma_device_init()  -> MA_STATE_UNINITIALIZED -> MA_STATE_STOPPED
+    ma_device_start() -> MA_STATE_STARTING      -> MA_STATE_STARTED
+    ma_device_stop()  -> MA_STATE_STOPPING      -> MA_STATE_STOPPED
+    ```
+
+When the state of the device is changed with `ma_device_start()` or `ma_device_stop()` at this same time as this function is called, the
+value returned by this function could potentially be out of sync. If this is significant to your program you need to implement your own
+synchronization.
+*/
+MA_API ma_uint32 ma_device_get_state(const ma_device* pDevice);
+
 
 /*
 Sets the master volume factor for the device.
@@ -5071,9 +5407,137 @@ MA_API ma_result ma_device_get_master_gain_db(ma_device* pDevice, float* pGainDB
 
 
 /*
+Called from the data callback of asynchronous backends to allow miniaudio to process the data and fire the miniaudio data callback.
+
+
+Parameters
+----------
+pDevice (in)
+    A pointer to device whose processing the data callback.
+
+pOutput (out)
+    A pointer to the buffer that will receive the output PCM frame data. On a playback device this must not be NULL. On a duplex device
+    this can be NULL, in which case pInput must not be NULL.
+
+pInput (in)
+    A pointer to the buffer containing input PCM frame data. On a capture device this must not be NULL. On a duplex device this can be
+    NULL, in which case `pOutput` must not be NULL.
+
+frameCount (in)
+    The number of frames being processed.
+
+
+Return Value
+------------
+MA_SUCCESS if successful; any other result code otherwise.
+
+
+Thread Safety
+-------------
+This function should only ever be called from the internal data callback of the backend. It is safe to call this simultaneously between a
+playback and capture device in duplex setups.
+
+
+Callback Safety
+---------------
+Do not call this from the miniaudio data callback. It should only ever be called from the internal data callback of the backend.
+
+
+Remarks
+-------
+If both `pOutput` and `pInput` are NULL, and error will be returned. In duplex scenarios, both `pOutput` and `pInput` can be non-NULL, in
+which case `pInput` will be processed first, followed by `pOutput`.
+
+If you are implementing a custom backend, and that backend uses a callback for data delivery, you'll need to call this from inside that
+callback.
+*/
+MA_API ma_result ma_device_handle_backend_data_callback(ma_device* pDevice, void* pOutput, const void* pInput, ma_uint32 frameCount);
+
+
+
+
+/*
 Retrieves a friendly name for a backend.
 */
 MA_API const char* ma_get_backend_name(ma_backend backend);
+
+/*
+Determines whether or not the given backend is available by the compilation environment.
+*/
+MA_API ma_bool32 ma_is_backend_enabled(ma_backend backend);
+
+/*
+Retrieves compile-time enabled backends.
+
+
+Parameters
+----------
+pBackends (out, optional)
+    A pointer to the buffer that will receive the enabled backends. Set to NULL to retrieve the backend count. Setting
+    the capacity of the buffer to `MA_BUFFER_COUNT` will guarantee it's large enough for all backends.
+
+backendCap (in)
+    The capacity of the `pBackends` buffer.
+
+pBackendCount (out)
+    A pointer to the variable that will receive the enabled backend count.
+
+
+Return Value
+------------
+MA_SUCCESS if successful.
+MA_INVALID_ARGS if `pBackendCount` is NULL.
+MA_NO_SPACE if the capacity of `pBackends` is not large enough.
+
+If `MA_NO_SPACE` is returned, the `pBackends` buffer will be filled with `*pBackendCount` values.
+
+
+Thread Safety
+-------------
+Safe.
+
+
+Callback Safety
+---------------
+Safe.
+
+
+Remarks
+-------
+If you want to retrieve the number of backends so you can determine the capacity of `pBackends` buffer, you can call
+this function with `pBackends` set to NULL.
+
+This will also enumerate the null backend. If you don't want to include this you need to check for `ma_backend_null`
+when you enumerate over the returned backends and handle it appropriately. Alternatively, you can disable it at
+compile time with `MA_NO_NULL`.
+
+The returned backends are determined based on compile time settings, not the platform it's currently running on. For
+example, PulseAudio will be returned if it was enabled at compile time, even when the user doesn't actually have
+PulseAudio installed.
+
+
+Example 1
+---------
+The example below retrieves the enabled backend count using a fixed sized buffer allocated on the stack. The buffer is
+given a capacity of `MA_BACKEND_COUNT` which will guarantee it'll be large enough to store all available backends.
+Since `MA_BACKEND_COUNT` is always a relatively small value, this should be suitable for most scenarios.
+
+```
+ma_backend enabledBackends[MA_BACKEND_COUNT];
+size_t enabledBackendCount;
+
+result = ma_get_enabled_backends(enabledBackends, MA_BACKEND_COUNT, &enabledBackendCount);
+if (result != MA_SUCCESS) {
+    // Failed to retrieve enabled backends. Should never happen in this example since all inputs are valid.
+}
+```
+
+
+See Also
+--------
+ma_is_backend_enabled()
+*/
+MA_API ma_result ma_get_enabled_backends(ma_backend* pBackends, size_t backendCap, size_t* pBackendCount);
 
 /*
 Determines whether or not loopback mode is support by a backend.
@@ -5881,7 +6345,7 @@ IMPLEMENTATION
             It looks like the -fPIC option uses the ebx register which GCC complains about. We can work around this by just using a different register, the
             specific register of which I'm letting the compiler decide on. The "k" prefix is used to specify a 32-bit register. The {...} syntax is for
             supporting different assembly dialects.
-            
+
             What's basically happening is that we're saving and restoring the ebx register manually.
             */
             #if defined(DRFLAC_X86) && defined(__PIC__)
@@ -6287,7 +6751,7 @@ static MA_INLINE void ma_yield()
 #endif
 
 
-#if defined(__GNUC__)
+#if defined(__clang__) || (defined(__GNUC__) && (__GNUC__ > 4 || (__GNUC__ == 4 && __GNUC_MINOR__ >= 6)))
     #pragma GCC diagnostic push
     #pragma GCC diagnostic ignored "-Wunused-variable"
 #endif
@@ -6316,15 +6780,15 @@ static ma_uint32 g_maStandardSampleRatePriorities[] = {
 static ma_format g_maFormatPriorities[] = {
     ma_format_s16,         /* Most common */
     ma_format_f32,
-    
+
     /*ma_format_s24_32,*/    /* Clean alignment */
     ma_format_s32,
-    
+
     ma_format_s24,         /* Unclean alignment */
-    
+
     ma_format_u8           /* Low quality */
 };
-#if defined(__GNUC__)
+#if defined(__clang__) || (defined(__GNUC__) && (__GNUC__ > 4 || (__GNUC__ == 4 && __GNUC_MINOR__ >= 6)))
     #pragma GCC diagnostic pop
 #endif
 
@@ -7372,10 +7836,10 @@ static MA_INLINE unsigned int ma_count_set_bits(unsigned int x)
         if (x & 1) {
             count += 1;
         }
-        
+
         x = x >> 1;
     }
-    
+
     return count;
 }
 
@@ -7625,7 +8089,7 @@ typedef unsigned int            c89atomic_uint32;
     typedef   signed __int64    c89atomic_int64;
     typedef unsigned __int64    c89atomic_uint64;
 #else
-    #if defined(__GNUC__)
+    #if defined(__clang__) || (defined(__GNUC__) && (__GNUC__ > 4 || (__GNUC__ == 4 && __GNUC_MINOR__ >= 6)))
         #pragma GCC diagnostic push
         #pragma GCC diagnostic ignored "-Wlong-long"
         #if defined(__clang__)
@@ -7634,7 +8098,7 @@ typedef unsigned int            c89atomic_uint32;
     #endif
     typedef   signed long long  c89atomic_int64;
     typedef unsigned long long  c89atomic_uint64;
-    #if defined(__GNUC__)
+    #if defined(__clang__) || (defined(__GNUC__) && (__GNUC__ > 4 || (__GNUC__ == 4 && __GNUC_MINOR__ >= 6)))
         #pragma GCC diagnostic pop
     #endif
 #endif
@@ -8044,7 +8508,7 @@ typedef unsigned char           c89atomic_flag;
     #define c89atomic_clear_explicit_64(dst, order) c89atomic_store_explicit_64(dst, 0, order)
     #define c89atomic_flag_test_and_set_explicit(ptr, order)    (c89atomic_flag)c89atomic_test_and_set_explicit_8(ptr, order)
     #define c89atomic_flag_clear_explicit(ptr, order)           c89atomic_clear_explicit_8(ptr, order)
-#elif defined(__clang__) || (defined(__GNUC__) && (__GNUC__ > 4 || (__GNUC__ == 4 && __GNUC__ >= 7)))
+#elif defined(__clang__) || (defined(__GNUC__) && (__GNUC__ > 4 || (__GNUC__ == 4 && __GNUC_MINOR__ >= 7)))
     #define C89ATOMIC_HAS_NATIVE_COMPARE_EXCHANGE
     #define C89ATOMIC_HAS_NATIVE_IS_LOCK_FREE
     #define c89atomic_memory_order_relaxed  __ATOMIC_RELAXED
@@ -9223,6 +9687,7 @@ MA_API ma_result ma_semaphore_release(ma_semaphore* pSemaphore)
 #endif  /* MA_NO_THREADING */
 
 
+
 /************************************************************************************************************************************************************
 *************************************************************************************************************************************************************
 
@@ -9328,6 +9793,9 @@ certain unused functions and variables can be excluded from the build to avoid w
 #ifdef MA_ENABLE_WEBAUDIO
     #define MA_HAS_WEBAUDIO
 #endif
+#ifdef MA_ENABLE_CUSTOM
+    #define MA_HAS_CUSTOM
+#endif
 #ifdef MA_ENABLE_NULL
     #define MA_HAS_NULL    /* Everything supports the null backend. */
 #endif
@@ -9349,9 +9817,147 @@ MA_API const char* ma_get_backend_name(ma_backend backend)
         case ma_backend_aaudio:     return "AAudio";
         case ma_backend_opensl:     return "OpenSL|ES";
         case ma_backend_webaudio:   return "Web Audio";
+        case ma_backend_custom:     return "Custom";
         case ma_backend_null:       return "Null";
         default:                    return "Unknown";
     }
+}
+
+MA_API ma_bool32 ma_is_backend_enabled(ma_backend backend)
+{
+    /*
+    This looks a little bit gross, but we want all backends to be included in the switch to avoid warnings on some compilers
+    about some enums not being handled by the switch statement.
+    */
+    switch (backend)
+    {
+        case ma_backend_wasapi:
+        #if defined(MA_HAS_WASAPI)
+            return MA_TRUE;
+        #else
+            return MA_FALSE;
+        #endif
+        case ma_backend_dsound:
+        #if defined(MA_HAS_DSOUND)
+            return MA_TRUE;
+        #else
+            return MA_FALSE;
+        #endif
+        case ma_backend_winmm:
+        #if defined(MA_HAS_WINMM)
+            return MA_TRUE;
+        #else
+            return MA_FALSE;
+        #endif
+        case ma_backend_coreaudio:
+        #if defined(MA_HAS_COREAUDIO)
+            return MA_TRUE;
+        #else
+            return MA_FALSE;
+        #endif
+        case ma_backend_sndio:
+        #if defined(MA_HAS_SNDIO)
+            return MA_TRUE;
+        #else
+            return MA_FALSE;
+        #endif
+        case ma_backend_audio4:
+        #if defined(MA_HAS_AUDIO4)
+            return MA_TRUE;
+        #else
+            return MA_FALSE;
+        #endif
+        case ma_backend_oss:
+        #if defined(MA_HAS_OSS)
+            return MA_TRUE;
+        #else
+            return MA_FALSE;
+        #endif
+        case ma_backend_pulseaudio:
+        #if defined(MA_HAS_PULSEAUDIO)
+            return MA_TRUE;
+        #else
+            return MA_FALSE;
+        #endif
+        case ma_backend_alsa:
+        #if defined(MA_HAS_ALSA)
+            return MA_TRUE;
+        #else
+            return MA_FALSE;
+        #endif
+        case ma_backend_jack:
+        #if defined(MA_HAS_JACK)
+            return MA_TRUE;
+        #else
+            return MA_FALSE;
+        #endif
+        case ma_backend_aaudio:
+        #if defined(MA_HAS_AAUDIO)
+            return MA_TRUE;
+        #else
+            return MA_FALSE;
+        #endif
+        case ma_backend_opensl:
+        #if defined(MA_HAS_OPENSL)
+            return MA_TRUE;
+        #else
+            return MA_FALSE;
+        #endif
+        case ma_backend_webaudio:
+        #if defined(MA_HAS_WEBAUDIO)
+            return MA_TRUE;
+        #else
+            return MA_FALSE;
+        #endif
+        case ma_backend_custom:
+        #if defined(MA_HAS_CUSTOM)
+            return MA_TRUE;
+        #else
+            return MA_FALSE;
+        #endif
+        case ma_backend_null:
+        #if defined(MA_HAS_NULL)
+            return MA_TRUE;
+        #else
+            return MA_FALSE;
+        #endif
+
+        default: return MA_FALSE;
+    }
+}
+
+MA_API ma_result ma_get_enabled_backends(ma_backend* pBackends, size_t backendCap, size_t* pBackendCount)
+{
+    size_t backendCount;
+    size_t iBackend;
+    ma_result result = MA_SUCCESS;
+
+    if (pBackendCount == NULL) {
+        return MA_INVALID_ARGS;
+    }
+
+    backendCount = 0;
+
+    for (iBackend = 0; iBackend <= ma_backend_null; iBackend += 1) {
+        ma_backend backend = (ma_backend)iBackend;
+
+        if (ma_is_backend_enabled(backend)) {
+            /* The backend is enabled. Try adding it to the list. If there's no room, MA_NO_SPACE needs to be returned. */
+            if (backendCount == backendCap) {
+                result = MA_NO_SPACE;
+                break;
+            } else {
+                pBackends[backendCount] = backend;
+                backendCount += 1;
+            }
+        }
+    }
+
+    if (pBackendCount != NULL) {
+        *pBackendCount = backendCount;
+    }
+
+    return result;
 }
 
 MA_API ma_bool32 ma_is_loopback_supported(ma_backend backend)
@@ -9371,6 +9977,7 @@ MA_API ma_bool32 ma_is_loopback_supported(ma_backend backend)
         case ma_backend_aaudio:     return MA_FALSE;
         case ma_backend_opensl:     return MA_FALSE;
         case ma_backend_webaudio:   return MA_FALSE;
+        case ma_backend_custom:     return MA_FALSE;    /* <-- Will depend on the implementation of the backend. */
         case ma_backend_null:       return MA_FALSE;
         default:                    return MA_FALSE;
     }
@@ -9555,12 +10162,6 @@ typedef LONG (WINAPI * MA_PFN_RegQueryValueExA)(HKEY hKey, LPCSTR lpValueName, L
 #endif
 
 
-#define MA_STATE_UNINITIALIZED     0
-#define MA_STATE_STOPPED           1   /* The device's default state after initialization. */
-#define MA_STATE_STARTED           2   /* The worker thread is in it's main loop waiting for the driver to request or deliver audio data. */
-#define MA_STATE_STARTING          3   /* Transitioning from a stopped state to started. */
-#define MA_STATE_STOPPING          4   /* Transitioning from a started state to stopped. */
-
 #define MA_DEFAULT_PLAYBACK_DEVICE_NAME    "Default Playback Device"
 #define MA_DEFAULT_CAPTURE_DEVICE_NAME     "Default Capture Device"
 
@@ -9594,7 +10195,7 @@ static void ma_post_log_message(ma_context* pContext, ma_device* pDevice, ma_uin
     if (pContext == NULL) {
         return;
     }
-    
+
 #if defined(MA_LOG_LEVEL)
     if (logLevel <= MA_LOG_LEVEL) {
         ma_log_proc onLog;
@@ -9638,7 +10239,7 @@ int ma_vscprintf(const char* format, va_list args)
 
         result = _vsnprintf(pTempBuffer, tempBufferCap, format, args);
         ma_free(pTempBuffer, NULL);
-        
+
         if (result != -1) {
             break;  /* Got it. */
         }
@@ -9703,7 +10304,7 @@ static void ma_post_log_messagev(ma_context* pContext, ma_device* pDevice, ma_ui
             #else
                 vsprintf(pFormattedMessage, pFormat, args);
             #endif
-                
+
                 ma_post_log_message(pContext, pDevice, logLevel, pFormattedMessage);
                 ma_free(pFormattedMessage, pAllocationCallbacks);
             }
@@ -9929,12 +10530,12 @@ MA_API ma_proc ma_dlsym(ma_context* pContext, ma_handle handle, const char* symb
 #ifdef _WIN32
     proc = (ma_proc)GetProcAddress((HMODULE)handle, symbol);
 #else
-#if defined(__GNUC__) && (__GNUC__ > 4 || (__GNUC__ == 4 && __GNUC_MINOR__ >= 6))
+#if defined(__GNUC__) && (__GNUC__ > 4 || (__GNUC__ == 4 && __GNUC_MINOR__ >= 8))
     #pragma GCC diagnostic push
     #pragma GCC diagnostic ignored "-Wpedantic"
 #endif
     proc = (ma_proc)dlsym((void*)handle, symbol);
-#if defined(__GNUC__) && (__GNUC__ > 4 || (__GNUC__ == 4 && __GNUC_MINOR__ >= 6))
+#if defined(__GNUC__) && (__GNUC__ > 4 || (__GNUC__ == 4 && __GNUC_MINOR__ >= 8))
     #pragma GCC diagnostic pop
 #endif
 #endif
@@ -9987,7 +10588,7 @@ static ma_uint32 ma_get_closest_standard_sample_rate(ma_uint32 sampleRateIn)
 static void ma_device__on_data(ma_device* pDevice, void* pFramesOut, const void* pFramesIn, ma_uint32 frameCount)
 {
     float masterVolumeFactor;
-    
+
     masterVolumeFactor = pDevice->masterVolumeFactor;
 
     if (pDevice->onData) {
@@ -10144,13 +10745,6 @@ static void ma_device__send_frames_to_client(ma_device* pDevice, ma_uint32 frame
     }
 }
 
-
-/* We only want to expose ma_device__handle_duplex_callback_capture() and ma_device__handle_duplex_callback_playback() if we have an asynchronous backend enabled. */
-#if defined(MA_HAS_JACK)      || \
-    defined(MA_HAS_COREAUDIO) || \
-    defined(MA_HAS_AAUDIO)    || \
-    defined(MA_HAS_OPENSL)    || \
-    defined(MA_HAS_WEBAUDIO)
 static ma_result ma_device__handle_duplex_callback_capture(ma_device* pDevice, ma_uint32 frameCountInDeviceFormat, const void* pFramesInDeviceFormat, ma_pcm_rb* pRB)
 {
     ma_result result;
@@ -10161,7 +10755,7 @@ static ma_result ma_device__handle_duplex_callback_capture(ma_device* pDevice, m
     MA_ASSERT(frameCountInDeviceFormat > 0);
     MA_ASSERT(pFramesInDeviceFormat != NULL);
     MA_ASSERT(pRB != NULL);
-    
+
     /* Write to the ring buffer. The ring buffer is in the client format which means we need to convert. */
     for (;;) {
         ma_uint32 framesToProcessInDeviceFormat = (frameCountInDeviceFormat - totalDeviceFramesProcessed);
@@ -10221,7 +10815,7 @@ static ma_result ma_device__handle_duplex_callback_playback(ma_device* pDevice, 
     MA_ASSERT(frameCount > 0);
     MA_ASSERT(pFramesInInternalFormat != NULL);
     MA_ASSERT(pRB != NULL);
-    
+
     /*
     Sitting in the ring buffer should be captured data from the capture callback in external format. If there's not enough data in there for
     the whole frameCount frames we just use silence instead for the input data.
@@ -10255,7 +10849,7 @@ static ma_result ma_device__handle_duplex_callback_playback(ma_device* pDevice, 
                     break;  /* Underrun. */
                 }
             }
-            
+
             /* We're done with the captured samples. */
             result = ma_pcm_rb_commit_read(pRB, inputFrameCount, pInputFrames);
             if (result != MA_SUCCESS) {
@@ -10285,18 +10879,11 @@ static ma_result ma_device__handle_duplex_callback_playback(ma_device* pDevice, 
 
     return MA_SUCCESS;
 }
-#endif  /* Asynchronous backends. */
 
 /* A helper for changing the state of the device. */
 static MA_INLINE void ma_device__set_state(ma_device* pDevice, ma_uint32 newState)
 {
     c89atomic_exchange_32(&pDevice->state, newState);
-}
-
-/* A helper for getting the state of the device. */
-static MA_INLINE ma_uint32 ma_device__get_state(ma_device* pDevice)
-{
-    return pDevice->state;
 }
 
 
@@ -10307,64 +10894,6 @@ static MA_INLINE ma_uint32 ma_device__get_state(ma_device* pDevice)
     /*GUID MA_GUID_KSDATAFORMAT_SUBTYPE_MULAW      = {0x00000007, 0x0000, 0x0010, {0x80, 0x00, 0x00, 0xaa, 0x00, 0x38, 0x9b, 0x71}};*/
 #endif
 
-
-typedef struct
-{
-    ma_device_type deviceType;
-    const ma_device_id* pDeviceID;
-    char* pName;
-    size_t nameBufferSize;
-    ma_bool32 foundDevice;
-} ma_context__try_get_device_name_by_id__enum_callback_data;
-
-static ma_bool32 ma_context__try_get_device_name_by_id__enum_callback(ma_context* pContext, ma_device_type deviceType, const ma_device_info* pDeviceInfo, void* pUserData)
-{
-    ma_context__try_get_device_name_by_id__enum_callback_data* pData = (ma_context__try_get_device_name_by_id__enum_callback_data*)pUserData;
-    MA_ASSERT(pData != NULL);
-
-    if (pData->deviceType == deviceType) {
-        if (pContext->onDeviceIDEqual(pContext, pData->pDeviceID, &pDeviceInfo->id)) {
-            ma_strncpy_s(pData->pName, pData->nameBufferSize, pDeviceInfo->name, (size_t)-1);
-            pData->foundDevice = MA_TRUE;
-        }
-    }
-
-    return !pData->foundDevice;
-}
-
-/*
-Generic function for retrieving the name of a device by it's ID.
-
-This function simply enumerates every device and then retrieves the name of the first device that has the same ID.
-*/
-static ma_result ma_context__try_get_device_name_by_id(ma_context* pContext, ma_device_type deviceType, const ma_device_id* pDeviceID, char* pName, size_t nameBufferSize)
-{
-    ma_result result;
-    ma_context__try_get_device_name_by_id__enum_callback_data data;
-
-    MA_ASSERT(pContext != NULL);
-    MA_ASSERT(pName != NULL);
-
-    if (pDeviceID == NULL) {
-        return MA_NO_DEVICE;
-    }
-
-    data.deviceType = deviceType;
-    data.pDeviceID = pDeviceID;
-    data.pName = pName;
-    data.nameBufferSize = nameBufferSize;
-    data.foundDevice = MA_FALSE;
-    result = ma_context_enumerate_devices(pContext, ma_context__try_get_device_name_by_id__enum_callback, &data);
-    if (result != MA_SUCCESS) {
-        return result;
-    }
-
-    if (!data.foundDevice) {
-        return MA_NO_DEVICE;
-    } else {
-        return MA_SUCCESS;
-    }
-}
 
 
 MA_API ma_uint32 ma_get_format_priority_index(ma_format format) /* Lower = better. */
@@ -10381,6 +10910,215 @@ MA_API ma_uint32 ma_get_format_priority_index(ma_format format) /* Lower = bette
 }
 
 static ma_result ma_device__post_init_setup(ma_device* pDevice, ma_device_type deviceType);
+
+
+static ma_bool32 ma_device_descriptor_is_valid(const ma_device_descriptor* pDeviceDescriptor)
+{
+    if (pDeviceDescriptor == NULL) {
+        return MA_FALSE;
+    }
+
+    if (pDeviceDescriptor->format == ma_format_unknown) {
+        return MA_FALSE;
+    }
+
+    if (pDeviceDescriptor->channels < MA_MIN_CHANNELS || pDeviceDescriptor->channels > MA_MAX_CHANNELS) {
+        return MA_FALSE;
+    }
+
+    if (pDeviceDescriptor->sampleRate == 0) {
+        return MA_FALSE;
+    }
+
+    return MA_TRUE;
+}
+
+
+/* TODO: Remove the pCallbacks parameter when we move all backends to the new callbacks system, at which time we can just reference the context directly. */
+static ma_result ma_device_audio_thread__default_read_write(ma_device* pDevice, ma_backend_callbacks* pCallbacks)
+{
+    ma_result result = MA_SUCCESS;
+    ma_bool32 exitLoop = MA_FALSE;
+    ma_uint8  capturedDeviceData[MA_DATA_CONVERTER_STACK_BUFFER_SIZE];
+    ma_uint8  playbackDeviceData[MA_DATA_CONVERTER_STACK_BUFFER_SIZE];
+    ma_uint32 capturedDeviceDataCapInFrames = sizeof(capturedDeviceData) / ma_get_bytes_per_frame(pDevice->capture.internalFormat,  pDevice->capture.internalChannels);
+    ma_uint32 playbackDeviceDataCapInFrames = sizeof(playbackDeviceData) / ma_get_bytes_per_frame(pDevice->playback.internalFormat, pDevice->playback.internalChannels);
+
+    MA_ASSERT(pDevice != NULL);
+
+    /* Just some quick validation on the device type and the available callbacks. */
+    if (pDevice->type == ma_device_type_capture || pDevice->type == ma_device_type_duplex || pDevice->type == ma_device_type_loopback) {
+        if (pCallbacks->onDeviceRead == NULL) {
+            return MA_NOT_IMPLEMENTED;
+        }
+    }
+
+    if (pDevice->type == ma_device_type_playback || pDevice->type == ma_device_type_duplex) {
+        if (pCallbacks->onDeviceWrite == NULL) {
+            return MA_NOT_IMPLEMENTED;
+        }
+    }
+
+    /* The device needs to be started immediately. */
+    if (pCallbacks->onDeviceStart != NULL) {
+        result = pCallbacks->onDeviceStart(pDevice);
+        if (result != MA_SUCCESS) {
+            return result;
+        }
+    } else {
+        /* Getting here means no start callback is defined. This is OK, as the backend may auto-start the device when reading or writing data. */
+    }
+
+    while (ma_device_get_state(pDevice) == MA_STATE_STARTED && !exitLoop) {
+        switch (pDevice->type) {
+            case ma_device_type_duplex:
+            {
+                /* The process is: onDeviceRead() -> convert -> callback -> convert -> onDeviceWrite() */
+                ma_uint32 totalCapturedDeviceFramesProcessed = 0;
+                ma_uint32 capturedDevicePeriodSizeInFrames = ma_min(pDevice->capture.internalPeriodSizeInFrames, pDevice->playback.internalPeriodSizeInFrames);
+
+                while (totalCapturedDeviceFramesProcessed < capturedDevicePeriodSizeInFrames) {
+                    ma_uint32 capturedDeviceFramesRemaining;
+                    ma_uint32 capturedDeviceFramesProcessed;
+                    ma_uint32 capturedDeviceFramesToProcess;
+                    ma_uint32 capturedDeviceFramesToTryProcessing = capturedDevicePeriodSizeInFrames - totalCapturedDeviceFramesProcessed;
+                    if (capturedDeviceFramesToTryProcessing > capturedDeviceDataCapInFrames) {
+                        capturedDeviceFramesToTryProcessing = capturedDeviceDataCapInFrames;
+                    }
+
+                    result = pCallbacks->onDeviceRead(pDevice, capturedDeviceData, capturedDeviceFramesToTryProcessing, &capturedDeviceFramesToProcess);
+                    if (result != MA_SUCCESS) {
+                        exitLoop = MA_TRUE;
+                        break;
+                    }
+
+                    capturedDeviceFramesRemaining = capturedDeviceFramesToProcess;
+                    capturedDeviceFramesProcessed = 0;
+
+                    /* At this point we have our captured data in device format and we now need to convert it to client format. */
+                    for (;;) {
+                        ma_uint8  capturedClientData[MA_DATA_CONVERTER_STACK_BUFFER_SIZE];
+                        ma_uint8  playbackClientData[MA_DATA_CONVERTER_STACK_BUFFER_SIZE];
+                        ma_uint32 capturedClientDataCapInFrames = sizeof(capturedClientData) / ma_get_bytes_per_frame(pDevice->capture.format,  pDevice->capture.channels);
+                        ma_uint32 playbackClientDataCapInFrames = sizeof(playbackClientData) / ma_get_bytes_per_frame(pDevice->playback.format, pDevice->playback.channels);
+                        ma_uint64 capturedClientFramesToProcessThisIteration = ma_min(capturedClientDataCapInFrames, playbackClientDataCapInFrames);
+                        ma_uint64 capturedDeviceFramesToProcessThisIteration = capturedDeviceFramesRemaining;
+                        ma_uint8* pRunningCapturedDeviceFrames = ma_offset_ptr(capturedDeviceData, capturedDeviceFramesProcessed * ma_get_bytes_per_frame(pDevice->capture.internalFormat,  pDevice->capture.internalChannels));
+
+                        /* Convert capture data from device format to client format. */
+                        result = ma_data_converter_process_pcm_frames(&pDevice->capture.converter, pRunningCapturedDeviceFrames, &capturedDeviceFramesToProcessThisIteration, capturedClientData, &capturedClientFramesToProcessThisIteration);
+                        if (result != MA_SUCCESS) {
+                            break;
+                        }
+
+                        /*
+                        If we weren't able to generate any output frames it must mean we've exhaused all of our input. The only time this would not be the case is if capturedClientData was too small
+                        which should never be the case when it's of the size MA_DATA_CONVERTER_STACK_BUFFER_SIZE.
+                        */
+                        if (capturedClientFramesToProcessThisIteration == 0) {
+                            break;
+                        }
+
+                        ma_device__on_data(pDevice, playbackClientData, capturedClientData, (ma_uint32)capturedClientFramesToProcessThisIteration);    /* Safe cast .*/
+
+                        capturedDeviceFramesProcessed += (ma_uint32)capturedDeviceFramesToProcessThisIteration; /* Safe cast. */
+                        capturedDeviceFramesRemaining -= (ma_uint32)capturedDeviceFramesToProcessThisIteration; /* Safe cast. */
+
+                        /* At this point the playbackClientData buffer should be holding data that needs to be written to the device. */
+                        for (;;) {
+                            ma_uint64 convertedClientFrameCount = capturedClientFramesToProcessThisIteration;
+                            ma_uint64 convertedDeviceFrameCount = playbackDeviceDataCapInFrames;
+                            result = ma_data_converter_process_pcm_frames(&pDevice->playback.converter, playbackClientData, &convertedClientFrameCount, playbackDeviceData, &convertedDeviceFrameCount);
+                            if (result != MA_SUCCESS) {
+                                break;
+                            }
+
+                            result = pCallbacks->onDeviceWrite(pDevice, playbackDeviceData, (ma_uint32)convertedDeviceFrameCount, NULL);   /* Safe cast. */
+                            if (result != MA_SUCCESS) {
+                                exitLoop = MA_TRUE;
+                                break;
+                            }
+
+                            capturedClientFramesToProcessThisIteration -= (ma_uint32)convertedClientFrameCount;  /* Safe cast. */
+                            if (capturedClientFramesToProcessThisIteration == 0) {
+                                break;
+                            }
+                        }
+
+                        /* In case an error happened from ma_device_write__null()... */
+                        if (result != MA_SUCCESS) {
+                            exitLoop = MA_TRUE;
+                            break;
+                        }
+                    }
+
+                    totalCapturedDeviceFramesProcessed += capturedDeviceFramesProcessed;
+                }
+            } break;
+
+            case ma_device_type_capture:
+            case ma_device_type_loopback:
+            {
+                ma_uint32 periodSizeInFrames = pDevice->capture.internalPeriodSizeInFrames;
+                ma_uint32 framesReadThisPeriod = 0;
+                while (framesReadThisPeriod < periodSizeInFrames) {
+                    ma_uint32 framesRemainingInPeriod = periodSizeInFrames - framesReadThisPeriod;
+                    ma_uint32 framesProcessed;
+                    ma_uint32 framesToReadThisIteration = framesRemainingInPeriod;
+                    if (framesToReadThisIteration > capturedDeviceDataCapInFrames) {
+                        framesToReadThisIteration = capturedDeviceDataCapInFrames;
+                    }
+
+                    result = pCallbacks->onDeviceRead(pDevice, capturedDeviceData, framesToReadThisIteration, &framesProcessed);
+                    if (result != MA_SUCCESS) {
+                        exitLoop = MA_TRUE;
+                        break;
+                    }
+
+                    ma_device__send_frames_to_client(pDevice, framesProcessed, capturedDeviceData);
+
+                    framesReadThisPeriod += framesProcessed;
+                }
+            } break;
+
+            case ma_device_type_playback:
+            {
+                /* We write in chunks of the period size, but use a stack allocated buffer for the intermediary. */
+                ma_uint32 periodSizeInFrames = pDevice->playback.internalPeriodSizeInFrames;
+                ma_uint32 framesWrittenThisPeriod = 0;
+                while (framesWrittenThisPeriod < periodSizeInFrames) {
+                    ma_uint32 framesRemainingInPeriod = periodSizeInFrames - framesWrittenThisPeriod;
+                    ma_uint32 framesProcessed;
+                    ma_uint32 framesToWriteThisIteration = framesRemainingInPeriod;
+                    if (framesToWriteThisIteration > playbackDeviceDataCapInFrames) {
+                        framesToWriteThisIteration = playbackDeviceDataCapInFrames;
+                    }
+
+                    ma_device__read_frames_from_client(pDevice, framesToWriteThisIteration, playbackDeviceData);
+
+                    result = pCallbacks->onDeviceWrite(pDevice, playbackDeviceData, framesToWriteThisIteration, &framesProcessed);
+                    if (result != MA_SUCCESS) {
+                        exitLoop = MA_TRUE;
+                        break;
+                    }
+
+                    framesWrittenThisPeriod += framesProcessed;
+                }
+            } break;
+
+            /* Should never get here. */
+            default: break;
+        }
+    }
+
+    /* We've exited the loop so we'll need to stop the device. */
+    if (pCallbacks->onDeviceStop != NULL) {
+        pCallbacks->onDeviceStop(pDevice);
+    }
+
+    return result;
+}
+
 
 
 /*******************************************************************************
@@ -10483,16 +11221,6 @@ static ma_uint64 ma_device_get_total_run_time_in_frames__null(ma_device* pDevice
 
 
     return (ma_uint64)((pDevice->null_device.priorRunTime + ma_timer_get_time_in_seconds(&pDevice->null_device.timer)) * internalSampleRate);
-}
-
-static ma_bool32 ma_context_is_device_id_equal__null(ma_context* pContext, const ma_device_id* pID0, const ma_device_id* pID1)
-{
-    MA_ASSERT(pContext != NULL);
-    MA_ASSERT(pID0 != NULL);
-    MA_ASSERT(pID1 != NULL);
-    (void)pContext;
-
-    return pID0->nullbackend == pID1->nullbackend;
 }
 
 static ma_result ma_context_enumerate_devices__null(ma_context* pContext, ma_enum_devices_callback_proc callback, void* pUserData)
@@ -10797,176 +11525,12 @@ static ma_result ma_device_read__null(ma_device* pDevice, void* pPCMFrames, ma_u
 
 static ma_result ma_device_main_loop__null(ma_device* pDevice)
 {
-    ma_result result = MA_SUCCESS;
-    ma_bool32 exitLoop = MA_FALSE;
-    
-    MA_ASSERT(pDevice != NULL);
-
-    /* The capture device needs to be started immediately. */
-    if (pDevice->type == ma_device_type_capture || pDevice->type == ma_device_type_duplex) {
-        result = ma_device_start__null(pDevice);
-        if (result != MA_SUCCESS) {
-            return result;
-        }
-    }
-
-    while (ma_device__get_state(pDevice) == MA_STATE_STARTED && !exitLoop) {
-        switch (pDevice->type)
-        {
-            case ma_device_type_duplex:
-            {
-                /* The process is: device_read -> convert -> callback -> convert -> device_write */
-                ma_uint32 totalCapturedDeviceFramesProcessed = 0;
-                ma_uint32 capturedDevicePeriodSizeInFrames = ma_min(pDevice->capture.internalPeriodSizeInFrames, pDevice->playback.internalPeriodSizeInFrames);
-                    
-                while (totalCapturedDeviceFramesProcessed < capturedDevicePeriodSizeInFrames) {
-                    ma_uint8  capturedDeviceData[MA_DATA_CONVERTER_STACK_BUFFER_SIZE];
-                    ma_uint8  playbackDeviceData[MA_DATA_CONVERTER_STACK_BUFFER_SIZE];
-                    ma_uint32 capturedDeviceDataCapInFrames = sizeof(capturedDeviceData) / ma_get_bytes_per_frame(pDevice->capture.internalFormat,  pDevice->capture.internalChannels);
-                    ma_uint32 playbackDeviceDataCapInFrames = sizeof(playbackDeviceData) / ma_get_bytes_per_frame(pDevice->playback.internalFormat, pDevice->playback.internalChannels);
-                    ma_uint32 capturedDeviceFramesRemaining;
-                    ma_uint32 capturedDeviceFramesProcessed;
-                    ma_uint32 capturedDeviceFramesToProcess;
-                    ma_uint32 capturedDeviceFramesToTryProcessing = capturedDevicePeriodSizeInFrames - totalCapturedDeviceFramesProcessed;
-                    if (capturedDeviceFramesToTryProcessing > capturedDeviceDataCapInFrames) {
-                        capturedDeviceFramesToTryProcessing = capturedDeviceDataCapInFrames;
-                    }
-
-                    result = ma_device_read__null(pDevice, capturedDeviceData, capturedDeviceFramesToTryProcessing, &capturedDeviceFramesToProcess);
-                    if (result != MA_SUCCESS) {
-                        exitLoop = MA_TRUE;
-                        break;
-                    }
-
-                    capturedDeviceFramesRemaining = capturedDeviceFramesToProcess;
-                    capturedDeviceFramesProcessed = 0;
-
-                    /* At this point we have our captured data in device format and we now need to convert it to client format. */
-                    for (;;) {
-                        ma_uint8  capturedClientData[MA_DATA_CONVERTER_STACK_BUFFER_SIZE];
-                        ma_uint8  playbackClientData[MA_DATA_CONVERTER_STACK_BUFFER_SIZE];
-                        ma_uint32 capturedClientDataCapInFrames = sizeof(capturedClientData) / ma_get_bytes_per_frame(pDevice->capture.format, pDevice->capture.channels);
-                        ma_uint32 playbackClientDataCapInFrames = sizeof(playbackClientData) / ma_get_bytes_per_frame(pDevice->playback.format, pDevice->playback.channels);
-                        ma_uint64 capturedClientFramesToProcessThisIteration = ma_min(capturedClientDataCapInFrames, playbackClientDataCapInFrames);
-                        ma_uint64 capturedDeviceFramesToProcessThisIteration = capturedDeviceFramesRemaining;
-                        ma_uint8* pRunningCapturedDeviceFrames = ma_offset_ptr(capturedDeviceData, capturedDeviceFramesProcessed * ma_get_bytes_per_frame(pDevice->capture.internalFormat,  pDevice->capture.internalChannels));
-                        
-                        /* Convert capture data from device format to client format. */
-                        result = ma_data_converter_process_pcm_frames(&pDevice->capture.converter, pRunningCapturedDeviceFrames, &capturedDeviceFramesToProcessThisIteration, capturedClientData, &capturedClientFramesToProcessThisIteration);
-                        if (result != MA_SUCCESS) {
-                            break;
-                        }
-
-                        /*
-                        If we weren't able to generate any output frames it must mean we've exhaused all of our input. The only time this would not be the case is if capturedClientData was too small
-                        which should never be the case when it's of the size MA_DATA_CONVERTER_STACK_BUFFER_SIZE.
-                        */
-                        if (capturedClientFramesToProcessThisIteration == 0) {
-                            break;
-                        }
-
-                        ma_device__on_data(pDevice, playbackClientData, capturedClientData, (ma_uint32)capturedClientFramesToProcessThisIteration);    /* Safe cast .*/
-
-                        capturedDeviceFramesProcessed += (ma_uint32)capturedDeviceFramesToProcessThisIteration; /* Safe cast. */
-                        capturedDeviceFramesRemaining -= (ma_uint32)capturedDeviceFramesToProcessThisIteration; /* Safe cast. */
-
-                        /* At this point the playbackClientData buffer should be holding data that needs to be written to the device. */
-                        for (;;) {
-                            ma_uint64 convertedClientFrameCount = capturedClientFramesToProcessThisIteration;
-                            ma_uint64 convertedDeviceFrameCount = playbackDeviceDataCapInFrames;
-                            result = ma_data_converter_process_pcm_frames(&pDevice->playback.converter, playbackClientData, &convertedClientFrameCount, playbackDeviceData, &convertedDeviceFrameCount);
-                            if (result != MA_SUCCESS) {
-                                break;
-                            }
-
-                            result = ma_device_write__null(pDevice, playbackDeviceData, (ma_uint32)convertedDeviceFrameCount, NULL);   /* Safe cast. */
-                            if (result != MA_SUCCESS) {
-                                exitLoop = MA_TRUE;
-                                break;
-                            }
-
-                            capturedClientFramesToProcessThisIteration -= (ma_uint32)convertedClientFrameCount;  /* Safe cast. */
-                            if (capturedClientFramesToProcessThisIteration == 0) {
-                                break;
-                            }
-                        }
-
-                        /* In case an error happened from ma_device_write__null()... */
-                        if (result != MA_SUCCESS) {
-                            exitLoop = MA_TRUE;
-                            break;
-                        }
-                    }
-
-                    totalCapturedDeviceFramesProcessed += capturedDeviceFramesProcessed;
-                }
-            } break;
-
-            case ma_device_type_capture:
-            {
-                /* We read in chunks of the period size, but use a stack allocated buffer for the intermediary. */
-                ma_uint8 intermediaryBuffer[8192];
-                ma_uint32 intermediaryBufferSizeInFrames = sizeof(intermediaryBuffer) / ma_get_bytes_per_frame(pDevice->capture.internalFormat, pDevice->capture.internalChannels);
-                ma_uint32 periodSizeInFrames = pDevice->capture.internalPeriodSizeInFrames;
-                ma_uint32 framesReadThisPeriod = 0;
-                while (framesReadThisPeriod < periodSizeInFrames) {
-                    ma_uint32 framesRemainingInPeriod = periodSizeInFrames - framesReadThisPeriod;
-                    ma_uint32 framesProcessed;
-                    ma_uint32 framesToReadThisIteration = framesRemainingInPeriod;
-                    if (framesToReadThisIteration > intermediaryBufferSizeInFrames) {
-                        framesToReadThisIteration = intermediaryBufferSizeInFrames;
-                    }
-
-                    result = ma_device_read__null(pDevice, intermediaryBuffer, framesToReadThisIteration, &framesProcessed);
-                    if (result != MA_SUCCESS) {
-                        exitLoop = MA_TRUE;
-                        break;
-                    }
-
-                    ma_device__send_frames_to_client(pDevice, framesProcessed, intermediaryBuffer);
-
-                    framesReadThisPeriod += framesProcessed;
-                }
-            } break;
-
-            case ma_device_type_playback:
-            {
-                /* We write in chunks of the period size, but use a stack allocated buffer for the intermediary. */
-                ma_uint8 intermediaryBuffer[8192];
-                ma_uint32 intermediaryBufferSizeInFrames = sizeof(intermediaryBuffer) / ma_get_bytes_per_frame(pDevice->playback.internalFormat, pDevice->playback.internalChannels);
-                ma_uint32 periodSizeInFrames = pDevice->playback.internalPeriodSizeInFrames;
-                ma_uint32 framesWrittenThisPeriod = 0;
-                while (framesWrittenThisPeriod < periodSizeInFrames) {
-                    ma_uint32 framesRemainingInPeriod = periodSizeInFrames - framesWrittenThisPeriod;
-                    ma_uint32 framesProcessed;
-                    ma_uint32 framesToWriteThisIteration = framesRemainingInPeriod;
-                    if (framesToWriteThisIteration > intermediaryBufferSizeInFrames) {
-                        framesToWriteThisIteration = intermediaryBufferSizeInFrames;
-                    }
-
-                    ma_device__read_frames_from_client(pDevice, framesToWriteThisIteration, intermediaryBuffer);
-
-                    result = ma_device_write__null(pDevice, intermediaryBuffer, framesToWriteThisIteration, &framesProcessed);
-                    if (result != MA_SUCCESS) {
-                        exitLoop = MA_TRUE;
-                        break;
-                    }
-
-                    framesWrittenThisPeriod += framesProcessed;
-                }
-            } break;
-
-            /* To silence a warning. Will never hit this. */
-            case ma_device_type_loopback:
-            default: break;
-        }
-    }
-
-
-    /* Here is where the device is started. */
-    ma_device_stop__null(pDevice);
-
-    return result;
+    ma_backend_callbacks callbacks;
+    callbacks.onDeviceStart = ma_device_start__null;
+    callbacks.onDeviceStop  = ma_device_stop__null;
+    callbacks.onDeviceRead  = ma_device_read__null;
+    callbacks.onDeviceWrite = ma_device_write__null;
+    return ma_device_audio_thread__default_read_write(pDevice, &callbacks);
 }
 
 static ma_result ma_context_uninit__null(ma_context* pContext)
@@ -10985,7 +11549,6 @@ static ma_result ma_context_init__null(const ma_context_config* pConfig, ma_cont
     (void)pConfig;
 
     pContext->onUninit         = ma_context_uninit__null;
-    pContext->onDeviceIDEqual  = ma_context_is_device_id_equal__null;
     pContext->onEnumDevices    = ma_context_enumerate_devices__null;
     pContext->onGetDeviceInfo  = ma_context_get_device_info__null;
     pContext->onDeviceInit     = ma_device_init__null;
@@ -11943,7 +12506,7 @@ static HRESULT STDMETHODCALLTYPE ma_IMMNotificationClient_OnDeviceStateChanged(m
     if (isThisDevice) {
         ma_device_stop(pThis->pDevice);
     }
-    
+
     return S_OK;
 }
 
@@ -12051,155 +12614,146 @@ typedef ma_IUnknown ma_WASAPIDeviceInterface;
 #endif
 
 
-
-static ma_bool32 ma_context_is_device_id_equal__wasapi(ma_context* pContext, const ma_device_id* pID0, const ma_device_id* pID1)
-{
-    MA_ASSERT(pContext != NULL);
-    MA_ASSERT(pID0 != NULL);
-    MA_ASSERT(pID1 != NULL);
-    (void)pContext;
-
-    return memcmp(pID0->wasapi, pID1->wasapi, sizeof(pID0->wasapi)) == 0;
-}
-
-static void ma_set_device_info_from_WAVEFORMATEX(const WAVEFORMATEX* pWF, ma_device_info* pInfo)
+static void ma_add_native_data_format_to_device_info_from_WAVEFORMATEX(const WAVEFORMATEX* pWF, ma_share_mode shareMode, ma_device_info* pInfo)
 {
     MA_ASSERT(pWF != NULL);
     MA_ASSERT(pInfo != NULL);
 
-    pInfo->formatCount   = 1;
-    pInfo->formats[0]    = ma_format_from_WAVEFORMATEX(pWF);
-    pInfo->minChannels   = pWF->nChannels;
-    pInfo->maxChannels   = pWF->nChannels;
-    pInfo->minSampleRate = pWF->nSamplesPerSec;
-    pInfo->maxSampleRate = pWF->nSamplesPerSec;
+    if (pInfo->nativeDataFormatCount >= ma_countof(pInfo->nativeDataFormats)) {
+        return; /* Too many data formats. Need to ignore this one. Don't think this should ever happen with WASAPI. */
+    }
+
+    pInfo->nativeDataFormats[pInfo->nativeDataFormatCount].format     = ma_format_from_WAVEFORMATEX(pWF);
+    pInfo->nativeDataFormats[pInfo->nativeDataFormatCount].channels   = pWF->nChannels;
+    pInfo->nativeDataFormats[pInfo->nativeDataFormatCount].sampleRate = pWF->nSamplesPerSec;
+    pInfo->nativeDataFormats[pInfo->nativeDataFormatCount].flags      = (shareMode == ma_share_mode_exclusive) ? MA_DATA_FORMAT_FLAG_EXCLUSIVE_MODE : 0;
+    pInfo->nativeDataFormatCount += 1;
 }
 
-static ma_result ma_context_get_device_info_from_IAudioClient__wasapi(ma_context* pContext, /*ma_IMMDevice**/void* pMMDevice, ma_IAudioClient* pAudioClient, ma_share_mode shareMode, ma_device_info* pInfo)
+static ma_result ma_context_get_device_info_from_IAudioClient__wasapi(ma_context* pContext, /*ma_IMMDevice**/void* pMMDevice, ma_IAudioClient* pAudioClient, ma_device_info* pInfo)
 {
+    HRESULT hr;
+    WAVEFORMATEX* pWF = NULL;
+#ifdef MA_WIN32_DESKTOP
+    ma_IPropertyStore *pProperties;
+#endif
+
     MA_ASSERT(pAudioClient != NULL);
     MA_ASSERT(pInfo != NULL);
 
-    /* We use a different technique to retrieve the device information depending on whether or not we are using shared or exclusive mode. */
-    if (shareMode == ma_share_mode_shared) {
-        /* Shared Mode. We use GetMixFormat() here. */
-        WAVEFORMATEX* pWF = NULL;
-        HRESULT hr = ma_IAudioClient_GetMixFormat((ma_IAudioClient*)pAudioClient, (WAVEFORMATEX**)&pWF);
-        if (SUCCEEDED(hr)) {
-            ma_set_device_info_from_WAVEFORMATEX(pWF, pInfo);
-            return MA_SUCCESS;
-        } else {
-            return ma_context_post_error(pContext, NULL, MA_LOG_LEVEL_ERROR, "[WASAPI] Failed to retrieve mix format for device info retrieval.", ma_result_from_HRESULT(hr));
-        }
+    /* Shared Mode. We use GetMixFormat() here. */
+    hr = ma_IAudioClient_GetMixFormat((ma_IAudioClient*)pAudioClient, (WAVEFORMATEX**)&pWF);
+    if (SUCCEEDED(hr)) {
+        ma_add_native_data_format_to_device_info_from_WAVEFORMATEX(pWF, ma_share_mode_shared, pInfo);
     } else {
-        /* Exlcusive Mode. We repeatedly call IsFormatSupported() here. This is not currently support on UWP. */
+        return ma_context_post_error(pContext, NULL, MA_LOG_LEVEL_ERROR, "[WASAPI] Failed to retrieve mix format for device info retrieval.", ma_result_from_HRESULT(hr));
+    }
+
+    /* Exlcusive Mode. We repeatedly call IsFormatSupported() here. This is not currently support on UWP. */
 #ifdef MA_WIN32_DESKTOP
-        /*
-        The first thing to do is get the format from PKEY_AudioEngine_DeviceFormat. This should give us a channel count we assume is
-        correct which will simplify our searching.
-        */
-        ma_IPropertyStore *pProperties;
-        HRESULT hr = ma_IMMDevice_OpenPropertyStore((ma_IMMDevice*)pMMDevice, STGM_READ, &pProperties);
+    /*
+    The first thing to do is get the format from PKEY_AudioEngine_DeviceFormat. This should give us a channel count we assume is
+    correct which will simplify our searching.
+    */
+    hr = ma_IMMDevice_OpenPropertyStore((ma_IMMDevice*)pMMDevice, STGM_READ, &pProperties);
+    if (SUCCEEDED(hr)) {
+        PROPVARIANT var;
+        ma_PropVariantInit(&var);
+
+        hr = ma_IPropertyStore_GetValue(pProperties, &MA_PKEY_AudioEngine_DeviceFormat, &var);
         if (SUCCEEDED(hr)) {
-            PROPVARIANT var;
-            ma_PropVariantInit(&var);
+            pWF = (WAVEFORMATEX*)var.blob.pBlobData;
 
-            hr = ma_IPropertyStore_GetValue(pProperties, &MA_PKEY_AudioEngine_DeviceFormat, &var);
+            /*
+            In my testing, the format returned by PKEY_AudioEngine_DeviceFormat is suitable for exclusive mode so we check this format
+            first. If this fails, fall back to a search.
+            */
+            hr = ma_IAudioClient_IsFormatSupported((ma_IAudioClient*)pAudioClient, MA_AUDCLNT_SHAREMODE_EXCLUSIVE, pWF, NULL);
+            ma_PropVariantClear(pContext, &var);
+
             if (SUCCEEDED(hr)) {
-                WAVEFORMATEX* pWF = (WAVEFORMATEX*)var.blob.pBlobData;
-                ma_set_device_info_from_WAVEFORMATEX(pWF, pInfo);
-
+                /* The format returned by PKEY_AudioEngine_DeviceFormat is not supported. */
+                ma_add_native_data_format_to_device_info_from_WAVEFORMATEX(pWF, ma_share_mode_exclusive, pInfo);
+            } else {
                 /*
-                In my testing, the format returned by PKEY_AudioEngine_DeviceFormat is suitable for exclusive mode so we check this format
-                first. If this fails, fall back to a search.
+                The format returned by PKEY_AudioEngine_DeviceFormat is not supported, so fall back to a search. We assume the channel
+                count returned by MA_PKEY_AudioEngine_DeviceFormat is valid and correct. For simplicity we're only returning one format.
                 */
-                hr = ma_IAudioClient_IsFormatSupported((ma_IAudioClient*)pAudioClient, MA_AUDCLNT_SHAREMODE_EXCLUSIVE, pWF, NULL);
-                ma_PropVariantClear(pContext, &var);
+                ma_uint32 channels = pInfo->minChannels;
+                ma_format formatsToSearch[] = {
+                    ma_format_s16,
+                    ma_format_s24,
+                    /*ma_format_s24_32,*/
+                    ma_format_f32,
+                    ma_format_s32,
+                    ma_format_u8
+                };
+                ma_channel defaultChannelMap[MA_MAX_CHANNELS];
+                WAVEFORMATEXTENSIBLE wf;
+                ma_bool32 found;
+                ma_uint32 iFormat;
 
-                if (FAILED(hr)) {
-                    /*
-                    The format returned by PKEY_AudioEngine_DeviceFormat is not supported, so fall back to a search. We assume the channel
-                    count returned by MA_PKEY_AudioEngine_DeviceFormat is valid and correct. For simplicity we're only returning one format.
-                    */
-                    ma_uint32 channels = pInfo->minChannels;
-                    ma_format formatsToSearch[] = {
-                        ma_format_s16,
-                        ma_format_s24,
-                        /*ma_format_s24_32,*/
-                        ma_format_f32,
-                        ma_format_s32,
-                        ma_format_u8
-                    };
-                    ma_channel defaultChannelMap[MA_MAX_CHANNELS];
-                    WAVEFORMATEXTENSIBLE wf;
-                    ma_bool32 found;
-                    ma_uint32 iFormat;
+                /* Make sure we don't overflow the channel map. */
+                if (channels > MA_MAX_CHANNELS) {
+                    channels = MA_MAX_CHANNELS;
+                }
 
-                    /* Make sure we don't overflow the channel map. */
-                    if (channels > MA_MAX_CHANNELS) {
-                        channels = MA_MAX_CHANNELS;
+                ma_get_standard_channel_map(ma_standard_channel_map_microsoft, channels, defaultChannelMap);
+
+                MA_ZERO_OBJECT(&wf);
+                wf.Format.cbSize     = sizeof(wf);
+                wf.Format.wFormatTag = WAVE_FORMAT_EXTENSIBLE;
+                wf.Format.nChannels  = (WORD)channels;
+                wf.dwChannelMask     = ma_channel_map_to_channel_mask__win32(defaultChannelMap, channels);
+
+                found = MA_FALSE;
+                for (iFormat = 0; iFormat < ma_countof(formatsToSearch); ++iFormat) {
+                    ma_format format = formatsToSearch[iFormat];
+                    ma_uint32 iSampleRate;
+
+                    wf.Format.wBitsPerSample       = (WORD)(ma_get_bytes_per_sample(format)*8);
+                    wf.Format.nBlockAlign          = (WORD)(wf.Format.nChannels * wf.Format.wBitsPerSample / 8);
+                    wf.Format.nAvgBytesPerSec      = wf.Format.nBlockAlign * wf.Format.nSamplesPerSec;
+                    wf.Samples.wValidBitsPerSample = /*(format == ma_format_s24_32) ? 24 :*/ wf.Format.wBitsPerSample;
+                    if (format == ma_format_f32) {
+                        wf.SubFormat = MA_GUID_KSDATAFORMAT_SUBTYPE_IEEE_FLOAT;
+                    } else {
+                        wf.SubFormat = MA_GUID_KSDATAFORMAT_SUBTYPE_PCM;
                     }
 
-                    ma_get_standard_channel_map(ma_standard_channel_map_microsoft, channels, defaultChannelMap);
+                    for (iSampleRate = 0; iSampleRate < ma_countof(g_maStandardSampleRatePriorities); ++iSampleRate) {
+                        wf.Format.nSamplesPerSec = g_maStandardSampleRatePriorities[iSampleRate];
 
-                    MA_ZERO_OBJECT(&wf);
-                    wf.Format.cbSize     = sizeof(wf);
-                    wf.Format.wFormatTag = WAVE_FORMAT_EXTENSIBLE;
-                    wf.Format.nChannels  = (WORD)channels;
-                    wf.dwChannelMask     = ma_channel_map_to_channel_mask__win32(defaultChannelMap, channels);
-
-                    found = MA_FALSE;
-                    for (iFormat = 0; iFormat < ma_countof(formatsToSearch); ++iFormat) {
-                        ma_format format = formatsToSearch[iFormat];
-                        ma_uint32 iSampleRate;
-
-                        wf.Format.wBitsPerSample       = (WORD)(ma_get_bytes_per_sample(format)*8);
-                        wf.Format.nBlockAlign          = (WORD)(wf.Format.nChannels * wf.Format.wBitsPerSample / 8);
-                        wf.Format.nAvgBytesPerSec      = wf.Format.nBlockAlign * wf.Format.nSamplesPerSec;
-                        wf.Samples.wValidBitsPerSample = /*(format == ma_format_s24_32) ? 24 :*/ wf.Format.wBitsPerSample;
-                        if (format == ma_format_f32) {
-                            wf.SubFormat = MA_GUID_KSDATAFORMAT_SUBTYPE_IEEE_FLOAT;
-                        } else {
-                            wf.SubFormat = MA_GUID_KSDATAFORMAT_SUBTYPE_PCM;
-                        }
-
-                        for (iSampleRate = 0; iSampleRate < ma_countof(g_maStandardSampleRatePriorities); ++iSampleRate) {
-                            wf.Format.nSamplesPerSec = g_maStandardSampleRatePriorities[iSampleRate];
-
-                            hr = ma_IAudioClient_IsFormatSupported((ma_IAudioClient*)pAudioClient, MA_AUDCLNT_SHAREMODE_EXCLUSIVE, (WAVEFORMATEX*)&wf, NULL);
-                            if (SUCCEEDED(hr)) {
-                                ma_set_device_info_from_WAVEFORMATEX((WAVEFORMATEX*)&wf, pInfo);
-                                found = MA_TRUE;
-                                break;
-                            }
-                        }
-
-                        if (found) {
+                        hr = ma_IAudioClient_IsFormatSupported((ma_IAudioClient*)pAudioClient, MA_AUDCLNT_SHAREMODE_EXCLUSIVE, (WAVEFORMATEX*)&wf, NULL);
+                        if (SUCCEEDED(hr)) {
+                            ma_add_native_data_format_to_device_info_from_WAVEFORMATEX((WAVEFORMATEX*)&wf, ma_share_mode_exclusive, pInfo);
+                            found = MA_TRUE;
                             break;
                         }
                     }
 
-                    if (!found) {
-                        ma_IPropertyStore_Release(pProperties);
-                        return ma_context_post_error(pContext, NULL, MA_LOG_LEVEL_ERROR, "[WASAPI] Failed to find suitable device format for device info retrieval.", MA_FORMAT_NOT_SUPPORTED);
+                    if (found) {
+                        break;
                     }
                 }
-            } else {
-                ma_IPropertyStore_Release(pProperties);
-                return ma_context_post_error(pContext, NULL, MA_LOG_LEVEL_ERROR, "[WASAPI] Failed to retrieve device format for device info retrieval.", ma_result_from_HRESULT(hr));
-            }
 
-            ma_IPropertyStore_Release(pProperties);
+                if (!found) {
+                    ma_IPropertyStore_Release(pProperties);
+                    return ma_context_post_error(pContext, NULL, MA_LOG_LEVEL_ERROR, "[WASAPI] Failed to find suitable device format for device info retrieval.", MA_FORMAT_NOT_SUPPORTED);
+                }
+            }
         } else {
-            return ma_context_post_error(pContext, NULL, MA_LOG_LEVEL_ERROR, "[WASAPI] Failed to open property store for device info retrieval.", ma_result_from_HRESULT(hr));
+            ma_IPropertyStore_Release(pProperties);
+            return ma_context_post_error(pContext, NULL, MA_LOG_LEVEL_ERROR, "[WASAPI] Failed to retrieve device format for device info retrieval.", ma_result_from_HRESULT(hr));
         }
 
-        return MA_SUCCESS;
-#else
-        /* Exclusive mode not fully supported in UWP right now. */
-        return MA_ERROR;
-#endif
+        ma_IPropertyStore_Release(pProperties);
+    } else {
+        return ma_context_post_error(pContext, NULL, MA_LOG_LEVEL_ERROR, "[WASAPI] Failed to open property store for device info retrieval.", ma_result_from_HRESULT(hr));
     }
+#endif
+
+    return MA_SUCCESS;
 }
 
 #ifdef MA_WIN32_DESKTOP
@@ -12283,7 +12837,7 @@ static LPWSTR ma_context_get_default_device_id__wasapi(ma_context* pContext, ma_
     }
 
     pDefaultDeviceID = ma_context_get_default_device_id_from_IMMDeviceEnumerator__wasapi(pContext, pDeviceEnumerator, deviceType);
-    
+
     ma_IMMDeviceEnumerator_Release(pDeviceEnumerator);
     return pDefaultDeviceID;
 }
@@ -12315,7 +12869,7 @@ static ma_result ma_context_get_MMDevice__wasapi(ma_context* pContext, ma_device
     return MA_SUCCESS;
 }
 
-static ma_result ma_context_get_device_info_from_MMDevice__wasapi(ma_context* pContext, ma_IMMDevice* pMMDevice, ma_share_mode shareMode, LPWSTR pDefaultDeviceID, ma_bool32 onlySimpleInfo, ma_device_info* pInfo)
+static ma_result ma_context_get_device_info_from_MMDevice__wasapi(ma_context* pContext, ma_IMMDevice* pMMDevice, LPWSTR pDefaultDeviceID, ma_bool32 onlySimpleInfo, ma_device_info* pInfo)
 {
     LPWSTR pDeviceID;
     HRESULT hr;
@@ -12340,7 +12894,7 @@ static ma_result ma_context_get_device_info_from_MMDevice__wasapi(ma_context* pC
         if (pDefaultDeviceID != NULL) {
             if (wcscmp(pDeviceID, pDefaultDeviceID) == 0) {
                 /* It's a default device. */
-                pInfo->_private.isDefault = MA_TRUE;
+                pInfo->isDefault = MA_TRUE;
             }
         }
 
@@ -12370,8 +12924,8 @@ static ma_result ma_context_get_device_info_from_MMDevice__wasapi(ma_context* pC
         ma_IAudioClient* pAudioClient;
         hr = ma_IMMDevice_Activate(pMMDevice, &MA_IID_IAudioClient, CLSCTX_ALL, NULL, (void**)&pAudioClient);
         if (SUCCEEDED(hr)) {
-            ma_result result = ma_context_get_device_info_from_IAudioClient__wasapi(pContext, pMMDevice, pAudioClient, shareMode, pInfo);
-            
+            ma_result result = ma_context_get_device_info_from_IAudioClient__wasapi(pContext, pMMDevice, pAudioClient, pInfo);
+
             ma_IAudioClient_Release(pAudioClient);
             return result;
         } else {
@@ -12390,7 +12944,7 @@ static ma_result ma_context_enumerate_devices_by_type__wasapi(ma_context* pConte
     ma_uint32 iDevice;
     LPWSTR pDefaultDeviceID = NULL;
     ma_IMMDeviceCollection* pDeviceCollection = NULL;
-    
+
     MA_ASSERT(pContext != NULL);
     MA_ASSERT(callback != NULL);
 
@@ -12409,12 +12963,12 @@ static ma_result ma_context_enumerate_devices_by_type__wasapi(ma_context* pConte
         for (iDevice = 0; iDevice < deviceCount; ++iDevice) {
             ma_device_info deviceInfo;
             ma_IMMDevice* pMMDevice;
-        
+
             MA_ZERO_OBJECT(&deviceInfo);
 
             hr = ma_IMMDeviceCollection_Item(pDeviceCollection, iDevice, &pMMDevice);
             if (SUCCEEDED(hr)) {
-                result = ma_context_get_device_info_from_MMDevice__wasapi(pContext, pMMDevice, ma_share_mode_shared, pDefaultDeviceID, MA_TRUE, &deviceInfo);   /* MA_TRUE = onlySimpleInfo. */
+                result = ma_context_get_device_info_from_MMDevice__wasapi(pContext, pMMDevice, pDefaultDeviceID, MA_TRUE, &deviceInfo);   /* MA_TRUE = onlySimpleInfo. */
 
                 ma_IMMDevice_Release(pMMDevice);
                 if (result == MA_SUCCESS) {
@@ -12572,10 +13126,10 @@ static ma_result ma_context_enumerate_devices__wasapi(ma_context* pContext, ma_e
 #else
     /*
     UWP
-    
+
     The MMDevice API is only supported on desktop applications. For now, while I'm still figuring out how to properly enumerate
     over devices without using MMDevice, I'm restricting devices to defaults.
-    
+
     Hint: DeviceInformation::FindAllAsync() with DeviceClass.AudioCapture/AudioRender. https://blogs.windows.com/buildingapps/2014/05/15/real-time-audio-in-windows-store-and-windows-phone-apps/
     */
     if (callback) {
@@ -12586,7 +13140,7 @@ static ma_result ma_context_enumerate_devices__wasapi(ma_context* pContext, ma_e
             ma_device_info deviceInfo;
             MA_ZERO_OBJECT(&deviceInfo);
             ma_strncpy_s(deviceInfo.name, sizeof(deviceInfo.name), MA_DEFAULT_PLAYBACK_DEVICE_NAME, (size_t)-1);
-            deviceInfo._private.isDefault = MA_TRUE;
+            deviceInfo.isDefault = MA_TRUE;
             cbResult = callback(pContext, ma_device_type_playback, &deviceInfo, pUserData);
         }
 
@@ -12595,7 +13149,7 @@ static ma_result ma_context_enumerate_devices__wasapi(ma_context* pContext, ma_e
             ma_device_info deviceInfo;
             MA_ZERO_OBJECT(&deviceInfo);
             ma_strncpy_s(deviceInfo.name, sizeof(deviceInfo.name), MA_DEFAULT_CAPTURE_DEVICE_NAME, (size_t)-1);
-            deviceInfo._private.isDefault = MA_TRUE;
+            deviceInfo.isDefault = MA_TRUE;
             cbResult = callback(pContext, ma_device_type_capture, &deviceInfo, pUserData);
         }
     }
@@ -12604,13 +13158,13 @@ static ma_result ma_context_enumerate_devices__wasapi(ma_context* pContext, ma_e
     return MA_SUCCESS;
 }
 
-static ma_result ma_context_get_device_info__wasapi(ma_context* pContext, ma_device_type deviceType, const ma_device_id* pDeviceID, ma_share_mode shareMode, ma_device_info* pDeviceInfo)
+static ma_result ma_context_get_device_info__wasapi(ma_context* pContext, ma_device_type deviceType, const ma_device_id* pDeviceID, ma_device_info* pDeviceInfo)
 {
 #ifdef MA_WIN32_DESKTOP
     ma_result result;
     ma_IMMDevice* pMMDevice = NULL;
     LPWSTR pDefaultDeviceID = NULL;
-    
+
     result = ma_context_get_MMDevice__wasapi(pContext, deviceType, pDeviceID, &pMMDevice);
     if (result != MA_SUCCESS) {
         return result;
@@ -12619,7 +13173,7 @@ static ma_result ma_context_get_device_info__wasapi(ma_context* pContext, ma_dev
     /* We need the default device ID so we can set the isDefault flag in the device info. */
     pDefaultDeviceID = ma_context_get_default_device_id__wasapi(pContext, deviceType);
 
-    result = ma_context_get_device_info_from_MMDevice__wasapi(pContext, pMMDevice, shareMode, pDefaultDeviceID, MA_FALSE, pDeviceInfo);   /* MA_FALSE = !onlySimpleInfo. */
+    result = ma_context_get_device_info_from_MMDevice__wasapi(pContext, pMMDevice, pDefaultDeviceID, MA_FALSE, pDeviceInfo);   /* MA_FALSE = !onlySimpleInfo. */
 
     if (pDefaultDeviceID != NULL) {
         ma_CoTaskMemFree(pContext, pDefaultDeviceID);
@@ -12640,26 +13194,21 @@ static ma_result ma_context_get_device_info__wasapi(ma_context* pContext, ma_dev
         ma_strncpy_s(pDeviceInfo->name, sizeof(pDeviceInfo->name), MA_DEFAULT_CAPTURE_DEVICE_NAME, (size_t)-1);
     }
 
-    /* Not currently supporting exclusive mode on UWP. */
-    if (shareMode == ma_share_mode_exclusive) {
-        return MA_ERROR;
-    }
-
     result = ma_context_get_IAudioClient_UWP__wasapi(pContext, deviceType, pDeviceID, &pAudioClient, NULL);
     if (result != MA_SUCCESS) {
         return result;
     }
 
-    result = ma_context_get_device_info_from_IAudioClient__wasapi(pContext, NULL, pAudioClient, shareMode, pDeviceInfo);
+    result = ma_context_get_device_info_from_IAudioClient__wasapi(pContext, NULL, pAudioClient, pDeviceInfo);
 
-    pDeviceInfo->_private.isDefault = MA_TRUE;  /* UWP only supports default devices. */
+    pDeviceInfo->isDefault = MA_TRUE;  /* UWP only supports default devices. */
 
     ma_IAudioClient_Release(pAudioClient);
     return result;
 #endif
 }
 
-static void ma_device_uninit__wasapi(ma_device* pDevice)
+static ma_result ma_device_uninit__wasapi(ma_device* pDevice)
 {
     MA_ASSERT(pDevice != NULL);
 
@@ -12690,6 +13239,8 @@ static void ma_device_uninit__wasapi(ma_device* pDevice)
     if (pDevice->wasapi.hEventCapture) {
         CloseHandle(pDevice->wasapi.hEventCapture);
     }
+
+    return MA_SUCCESS;
 }
 
 
@@ -12703,10 +13254,10 @@ typedef struct
     ma_uint32 periodSizeInFramesIn;
     ma_uint32 periodSizeInMillisecondsIn;
     ma_uint32 periodsIn;
-    ma_bool32 usingDefaultFormat;
+    /*ma_bool32 usingDefaultFormat;
     ma_bool32 usingDefaultChannels;
     ma_bool32 usingDefaultSampleRate;
-    ma_bool32 usingDefaultChannelMap;
+    ma_bool32 usingDefaultChannelMap;*/
     ma_share_mode shareMode;
     ma_bool32 noAutoConvertSRC;
     ma_bool32 noDefaultQualitySRC;
@@ -12753,10 +13304,10 @@ static ma_result ma_device_init_internal__wasapi(ma_context* pContext, ma_device
     pData->pCaptureClient = NULL;
 
     streamFlags = MA_AUDCLNT_STREAMFLAGS_EVENTCALLBACK;
-    if (!pData->noAutoConvertSRC && !pData->usingDefaultSampleRate && pData->shareMode != ma_share_mode_exclusive) {    /* <-- Exclusive streams must use the native sample rate. */
+    if (!pData->noAutoConvertSRC && pData->sampleRateIn != 0 && pData->shareMode != ma_share_mode_exclusive) {    /* <-- Exclusive streams must use the native sample rate. */
         streamFlags |= MA_AUDCLNT_STREAMFLAGS_AUTOCONVERTPCM;
     }
-    if (!pData->noDefaultQualitySRC && !pData->usingDefaultSampleRate && (streamFlags & MA_AUDCLNT_STREAMFLAGS_AUTOCONVERTPCM) != 0) {
+    if (!pData->noDefaultQualitySRC && pData->sampleRateIn != 0 && (streamFlags & MA_AUDCLNT_STREAMFLAGS_AUTOCONVERTPCM) != 0) {
         streamFlags |= MA_AUDCLNT_STREAMFLAGS_SRC_DEFAULT_QUALITY;
     }
     if (deviceType == ma_device_type_loopback) {
@@ -12817,7 +13368,7 @@ static ma_result ma_device_init_internal__wasapi(ma_context* pContext, ma_device
         I do not know how to query the device's native format on UWP so for now I'm just disabling support for
         exclusive mode. The alternative is to enumerate over different formats and check IsFormatSupported()
         until you find one that works.
-        
+
         TODO: Add support for exclusive mode to UWP.
         */
         hr = S_FALSE;
@@ -12857,7 +13408,7 @@ static ma_result ma_device_init_internal__wasapi(ma_context* pContext, ma_device
     */
     nativeSampleRate = wf.Format.nSamplesPerSec;
     if (streamFlags & MA_AUDCLNT_STREAMFLAGS_AUTOCONVERTPCM) {
-        wf.Format.nSamplesPerSec = pData->sampleRateIn;
+        wf.Format.nSamplesPerSec = (pData->sampleRateIn != 0) ? pData->sampleRateIn : MA_DEFAULT_SAMPLE_RATE;
         wf.Format.nAvgBytesPerSec = wf.Format.nSamplesPerSec * wf.Format.nBlockAlign;
     }
 
@@ -12873,7 +13424,7 @@ static ma_result ma_device_init_internal__wasapi(ma_context* pContext, ma_device
         } else {
             result = MA_FORMAT_NOT_SUPPORTED;
         }
-        
+
         errorMsg = "[WASAPI] Native format not supported.";
         goto done;
     }
@@ -12885,7 +13436,7 @@ static ma_result ma_device_init_internal__wasapi(ma_context* pContext, ma_device
     ma_channel_mask_to_channel_map__win32(wf.dwChannelMask, pData->channelsOut, pData->channelMapOut);
 
     /* Period size. */
-    pData->periodsOut = pData->periodsIn;
+    pData->periodsOut = (pData->periodsIn != 0) ? pData->periodsIn : MA_DEFAULT_PERIODS;
     pData->periodSizeInFramesOut = pData->periodSizeInFramesIn;
     if (pData->periodSizeInFramesOut == 0) {
         pData->periodSizeInFramesOut = ma_calculate_buffer_size_in_frames_from_milliseconds(pData->periodSizeInMillisecondsIn, wf.Format.nSamplesPerSec);
@@ -12920,7 +13471,7 @@ static ma_result ma_device_init_internal__wasapi(ma_context* pContext, ma_device
                 break;
             }
         }
-        
+
         if (hr == MA_AUDCLNT_E_BUFFER_SIZE_NOT_ALIGNED) {
             ma_uint32 bufferSizeInFrames;
             hr = ma_IAudioClient_GetBufferSize((ma_IAudioClient*)pData->pAudioClient, &bufferSizeInFrames);
@@ -13012,7 +13563,7 @@ static ma_result ma_device_init_internal__wasapi(ma_context* pContext, ma_device
                         } else {
                         #if defined(MA_DEBUG_OUTPUT)
                             printf("[WASAPI] IAudioClient3_InitializeSharedAudioStream failed. Falling back to IAudioClient.\n");
-                        #endif    
+                        #endif
                         }
                     } else {
                     #if defined(MA_DEBUG_OUTPUT)
@@ -13150,21 +13701,14 @@ static ma_result ma_device_reinit__wasapi(ma_device* pDevice, ma_device_type dev
         data.channelsIn             = pDevice->playback.channels;
         MA_COPY_MEMORY(data.channelMapIn, pDevice->playback.channelMap, sizeof(pDevice->playback.channelMap));
         data.shareMode              = pDevice->playback.shareMode;
-        data.usingDefaultFormat     = pDevice->playback.usingDefaultFormat;
-        data.usingDefaultChannels   = pDevice->playback.usingDefaultChannels;
-        data.usingDefaultChannelMap = pDevice->playback.usingDefaultChannelMap;
     } else {
         data.formatIn               = pDevice->capture.format;
         data.channelsIn             = pDevice->capture.channels;
         MA_COPY_MEMORY(data.channelMapIn, pDevice->capture.channelMap, sizeof(pDevice->capture.channelMap));
         data.shareMode              = pDevice->capture.shareMode;
-        data.usingDefaultFormat     = pDevice->capture.usingDefaultFormat;
-        data.usingDefaultChannels   = pDevice->capture.usingDefaultChannels;
-        data.usingDefaultChannelMap = pDevice->capture.usingDefaultChannelMap;
     }
-    
+
     data.sampleRateIn               = pDevice->sampleRate;
-    data.usingDefaultSampleRate     = pDevice->usingDefaultSampleRate;
     data.periodSizeInFramesIn       = pDevice->wasapi.originalPeriodSizeInFrames;
     data.periodSizeInMillisecondsIn = pDevice->wasapi.originalPeriodSizeInMilliseconds;
     data.periodsIn                  = pDevice->wasapi.originalPeriods;
@@ -13252,7 +13796,7 @@ static ma_result ma_device_reinit__wasapi(ma_device* pDevice, ma_device_type dev
     return MA_SUCCESS;
 }
 
-static ma_result ma_device_init__wasapi(ma_context* pContext, const ma_device_config* pConfig, ma_device* pDevice)
+static ma_result ma_device_init__wasapi(ma_device* pDevice, const ma_device_config* pConfig, ma_device_descriptor* pDescriptorPlayback, ma_device_descriptor* pDescriptorCapture)
 {
     ma_result result = MA_SUCCESS;
 
@@ -13261,18 +13805,12 @@ static ma_result ma_device_init__wasapi(ma_context* pContext, const ma_device_co
     ma_IMMDeviceEnumerator* pDeviceEnumerator;
 #endif
 
-    (void)pContext;
-
-    MA_ASSERT(pContext != NULL);
     MA_ASSERT(pDevice != NULL);
 
     MA_ZERO_OBJECT(&pDevice->wasapi);
-    pDevice->wasapi.originalPeriodSizeInFrames       = pConfig->periodSizeInFrames;
-    pDevice->wasapi.originalPeriodSizeInMilliseconds = pConfig->periodSizeInMilliseconds;
-    pDevice->wasapi.originalPeriods                  = pConfig->periods;
-    pDevice->wasapi.noAutoConvertSRC                 = pConfig->wasapi.noAutoConvertSRC;
-    pDevice->wasapi.noDefaultQualitySRC              = pConfig->wasapi.noDefaultQualitySRC;
-    pDevice->wasapi.noHardwareOffloading             = pConfig->wasapi.noHardwareOffloading;
+    pDevice->wasapi.noAutoConvertSRC     = pConfig->wasapi.noAutoConvertSRC;
+    pDevice->wasapi.noDefaultQualitySRC  = pConfig->wasapi.noDefaultQualitySRC;
+    pDevice->wasapi.noHardwareOffloading = pConfig->wasapi.noHardwareOffloading;
 
     /* Exclusive mode is not allowed with loopback. */
     if (pConfig->deviceType == ma_device_type_loopback && pConfig->playback.shareMode == ma_share_mode_exclusive) {
@@ -13281,37 +13819,28 @@ static ma_result ma_device_init__wasapi(ma_context* pContext, const ma_device_co
 
     if (pConfig->deviceType == ma_device_type_capture || pConfig->deviceType == ma_device_type_duplex || pConfig->deviceType == ma_device_type_loopback) {
         ma_device_init_internal_data__wasapi data;
-        data.formatIn                   = pConfig->capture.format;
-        data.channelsIn                 = pConfig->capture.channels;
-        data.sampleRateIn               = pConfig->sampleRate;
-        MA_COPY_MEMORY(data.channelMapIn, pConfig->capture.channelMap, sizeof(pConfig->capture.channelMap));
-        data.usingDefaultFormat         = pDevice->capture.usingDefaultFormat;
-        data.usingDefaultChannels       = pDevice->capture.usingDefaultChannels;
-        data.usingDefaultSampleRate     = pDevice->usingDefaultSampleRate;
-        data.usingDefaultChannelMap     = pDevice->capture.usingDefaultChannelMap;
-        data.shareMode                  = pConfig->capture.shareMode;
-        data.periodSizeInFramesIn       = pConfig->periodSizeInFrames;
-        data.periodSizeInMillisecondsIn = pConfig->periodSizeInMilliseconds;
-        data.periodsIn                  = pConfig->periods;
+        data.formatIn                   = pDescriptorCapture->format;
+        data.channelsIn                 = pDescriptorCapture->channels;
+        data.sampleRateIn               = pDescriptorCapture->sampleRate;
+        MA_COPY_MEMORY(data.channelMapIn, pDescriptorCapture->channelMap, sizeof(pDescriptorCapture->channelMap));
+        data.periodSizeInFramesIn       = pDescriptorCapture->periodSizeInFrames;
+        data.periodSizeInMillisecondsIn = pDescriptorCapture->periodSizeInMilliseconds;
+        data.periodsIn                  = pDescriptorCapture->periodCount;
+        data.shareMode                  = pDescriptorCapture->shareMode;
         data.noAutoConvertSRC           = pConfig->wasapi.noAutoConvertSRC;
         data.noDefaultQualitySRC        = pConfig->wasapi.noDefaultQualitySRC;
         data.noHardwareOffloading       = pConfig->wasapi.noHardwareOffloading;
 
-        result = ma_device_init_internal__wasapi(pDevice->pContext, (pConfig->deviceType == ma_device_type_loopback) ? ma_device_type_loopback : ma_device_type_capture, pConfig->capture.pDeviceID, &data);
+        result = ma_device_init_internal__wasapi(pDevice->pContext, (pConfig->deviceType == ma_device_type_loopback) ? ma_device_type_loopback : ma_device_type_capture, pDescriptorCapture->pDeviceID, &data);
         if (result != MA_SUCCESS) {
             return result;
         }
 
-        pDevice->wasapi.pAudioClientCapture         = data.pAudioClient;
-        pDevice->wasapi.pCaptureClient              = data.pCaptureClient;
-
-        pDevice->capture.internalFormat             = data.formatOut;
-        pDevice->capture.internalChannels           = data.channelsOut;
-        pDevice->capture.internalSampleRate         = data.sampleRateOut;
-        MA_COPY_MEMORY(pDevice->capture.internalChannelMap, data.channelMapOut, sizeof(data.channelMapOut));
-        pDevice->capture.internalPeriodSizeInFrames = data.periodSizeInFramesOut;
-        pDevice->capture.internalPeriods            = data.periodsOut;
-        ma_strcpy_s(pDevice->capture.name, sizeof(pDevice->capture.name), data.deviceName);
+        pDevice->wasapi.pAudioClientCapture              = data.pAudioClient;
+        pDevice->wasapi.pCaptureClient                   = data.pCaptureClient;
+        pDevice->wasapi.originalPeriodSizeInMilliseconds = pDescriptorCapture->periodSizeInMilliseconds;
+        pDevice->wasapi.originalPeriodSizeInFrames       = pDescriptorCapture->periodSizeInFrames;
+        pDevice->wasapi.originalPeriods                  = pDescriptorCapture->periodCount;
 
         /*
         The event for capture needs to be manual reset for the same reason as playback. We keep the initial state set to unsignaled,
@@ -13336,27 +13865,31 @@ static ma_result ma_device_init__wasapi(ma_context* pContext, const ma_device_co
 
         pDevice->wasapi.periodSizeInFramesCapture = data.periodSizeInFramesOut;
         ma_IAudioClient_GetBufferSize((ma_IAudioClient*)pDevice->wasapi.pAudioClientCapture, &pDevice->wasapi.actualPeriodSizeInFramesCapture);
+
+        /* The descriptor needs to be updated with actual values. */
+        pDescriptorCapture->format             = data.formatOut;
+        pDescriptorCapture->channels           = data.channelsOut;
+        pDescriptorCapture->sampleRate         = data.sampleRateOut;
+        MA_COPY_MEMORY(pDescriptorCapture->channelMap, data.channelMapOut, sizeof(data.channelMapOut));
+        pDescriptorCapture->periodSizeInFrames = data.periodSizeInFramesOut;
+        pDescriptorCapture->periodCount        = data.periodsOut;
     }
 
     if (pConfig->deviceType == ma_device_type_playback || pConfig->deviceType == ma_device_type_duplex) {
         ma_device_init_internal_data__wasapi data;
-        data.formatIn                   = pConfig->playback.format;
-        data.channelsIn                 = pConfig->playback.channels;
-        data.sampleRateIn               = pConfig->sampleRate;
-        MA_COPY_MEMORY(data.channelMapIn, pConfig->playback.channelMap, sizeof(pConfig->playback.channelMap));
-        data.usingDefaultFormat         = pDevice->playback.usingDefaultFormat;
-        data.usingDefaultChannels       = pDevice->playback.usingDefaultChannels;
-        data.usingDefaultSampleRate     = pDevice->usingDefaultSampleRate;
-        data.usingDefaultChannelMap     = pDevice->playback.usingDefaultChannelMap;
-        data.shareMode                  = pConfig->playback.shareMode;
-        data.periodSizeInFramesIn       = pConfig->periodSizeInFrames;
-        data.periodSizeInMillisecondsIn = pConfig->periodSizeInMilliseconds;
-        data.periodsIn                  = pConfig->periods;
+        data.formatIn                   = pDescriptorPlayback->format;
+        data.channelsIn                 = pDescriptorPlayback->channels;
+        data.sampleRateIn               = pDescriptorPlayback->sampleRate;
+        MA_COPY_MEMORY(data.channelMapIn, pDescriptorPlayback->channelMap, sizeof(pDescriptorPlayback->channelMap));
+        data.periodSizeInFramesIn       = pDescriptorPlayback->periodSizeInFrames;
+        data.periodSizeInMillisecondsIn = pDescriptorPlayback->periodSizeInMilliseconds;
+        data.periodsIn                  = pDescriptorPlayback->periodCount;
+        data.shareMode                  = pDescriptorPlayback->shareMode;
         data.noAutoConvertSRC           = pConfig->wasapi.noAutoConvertSRC;
         data.noDefaultQualitySRC        = pConfig->wasapi.noDefaultQualitySRC;
         data.noHardwareOffloading       = pConfig->wasapi.noHardwareOffloading;
 
-        result = ma_device_init_internal__wasapi(pDevice->pContext, ma_device_type_playback, pConfig->playback.pDeviceID, &data);
+        result = ma_device_init_internal__wasapi(pDevice->pContext, ma_device_type_playback, pDescriptorPlayback->pDeviceID, &data);
         if (result != MA_SUCCESS) {
             if (pConfig->deviceType == ma_device_type_duplex) {
                 if (pDevice->wasapi.pCaptureClient != NULL) {
@@ -13374,16 +13907,11 @@ static ma_result ma_device_init__wasapi(ma_context* pContext, const ma_device_co
             return result;
         }
 
-        pDevice->wasapi.pAudioClientPlayback         = data.pAudioClient;
-        pDevice->wasapi.pRenderClient                = data.pRenderClient;
-
-        pDevice->playback.internalFormat             = data.formatOut;
-        pDevice->playback.internalChannels           = data.channelsOut;
-        pDevice->playback.internalSampleRate         = data.sampleRateOut;
-        MA_COPY_MEMORY(pDevice->playback.internalChannelMap, data.channelMapOut, sizeof(data.channelMapOut));
-        pDevice->playback.internalPeriodSizeInFrames = data.periodSizeInFramesOut;
-        pDevice->playback.internalPeriods            = data.periodsOut;
-        ma_strcpy_s(pDevice->playback.name, sizeof(pDevice->playback.name), data.deviceName);
+        pDevice->wasapi.pAudioClientPlayback             = data.pAudioClient;
+        pDevice->wasapi.pRenderClient                    = data.pRenderClient;
+        pDevice->wasapi.originalPeriodSizeInMilliseconds = pDescriptorPlayback->periodSizeInMilliseconds;
+        pDevice->wasapi.originalPeriodSizeInFrames       = pDescriptorPlayback->periodSizeInFrames;
+        pDevice->wasapi.originalPeriods                  = pDescriptorPlayback->periodCount;
 
         /*
         The event for playback is needs to be manual reset because we want to explicitly control the fact that it becomes signalled
@@ -13425,6 +13953,15 @@ static ma_result ma_device_init__wasapi(ma_context* pContext, const ma_device_co
 
         pDevice->wasapi.periodSizeInFramesPlayback = data.periodSizeInFramesOut;
         ma_IAudioClient_GetBufferSize((ma_IAudioClient*)pDevice->wasapi.pAudioClientPlayback, &pDevice->wasapi.actualPeriodSizeInFramesPlayback);
+
+
+        /* The descriptor needs to be updated with actual values. */
+        pDescriptorPlayback->format             = data.formatOut;
+        pDescriptorPlayback->channels           = data.channelsOut;
+        pDescriptorPlayback->sampleRate         = data.sampleRateOut;
+        MA_COPY_MEMORY(pDescriptorPlayback->channelMap, data.channelMapOut, sizeof(data.channelMapOut));
+        pDescriptorPlayback->periodSizeInFrames = data.periodSizeInFramesOut;
+        pDescriptorPlayback->periodCount        = data.periodsOut;
     }
 
     /*
@@ -13442,7 +13979,7 @@ static ma_result ma_device_init__wasapi(ma_context* pContext, const ma_device_co
         }
     }
 
-    hr = ma_CoCreateInstance(pContext, MA_CLSID_MMDeviceEnumerator, NULL, CLSCTX_ALL, MA_IID_IMMDeviceEnumerator, (void**)&pDeviceEnumerator);
+    hr = ma_CoCreateInstance(pDevice->pContext, MA_CLSID_MMDeviceEnumerator, NULL, CLSCTX_ALL, MA_IID_IMMDeviceEnumerator, (void**)&pDeviceEnumerator);
     if (FAILED(hr)) {
         ma_device_uninit__wasapi(pDevice);
         return ma_post_error(pDevice, MA_LOG_LEVEL_ERROR, "[WASAPI] Failed to create device enumerator.", ma_result_from_HRESULT(hr));
@@ -13475,7 +14012,7 @@ static ma_result ma_device__get_available_frames__wasapi(ma_device* pDevice, ma_
 
     MA_ASSERT(pDevice != NULL);
     MA_ASSERT(pFrameCount != NULL);
-    
+
     *pFrameCount = 0;
 
     if ((ma_ptr)pAudioClient != pDevice->wasapi.pAudioClientPlayback && (ma_ptr)pAudioClient != pDevice->wasapi.pAudioClientCapture) {
@@ -13513,7 +14050,7 @@ static ma_bool32 ma_device_is_reroute_required__wasapi(ma_device* pDevice, ma_de
     if (deviceType == ma_device_type_capture || deviceType == ma_device_type_loopback) {
         return pDevice->wasapi.hasDefaultCaptureDeviceChanged;
     }
-    
+
     return MA_FALSE;
 }
 
@@ -13531,7 +14068,7 @@ static ma_result ma_device_reroute__wasapi(ma_device* pDevice, ma_device_type de
     if (deviceType == ma_device_type_capture || deviceType == ma_device_type_loopback) {
         c89atomic_exchange_32(&pDevice->wasapi.hasDefaultCaptureDeviceChanged,  MA_FALSE);
     }
-    
+
 
     #ifdef MA_DEBUG_OUTPUT
         printf("=== CHANGING DEVICE ===\n");
@@ -13554,11 +14091,11 @@ static ma_result ma_device_stop__wasapi(ma_device* pDevice)
 
     /*
     It's possible for the main loop to get stuck if the device is disconnected.
-    
+
     In loopback mode it's possible for WaitForSingleObject() to get stuck in a deadlock when nothing is being played. When nothing
     is being played, the event is never signalled internally by WASAPI which means we will deadlock when stopping the device.
     */
-    if (pDevice->type == ma_device_type_capture || pDevice->type == ma_device_type_duplex || pDevice->type == ma_device_type_duplex) {
+    if (pDevice->type == ma_device_type_capture || pDevice->type == ma_device_type_duplex || pDevice->type == ma_device_type_loopback) {
         SetEvent((HANDLE)pDevice->wasapi.hEventCapture);
     }
 
@@ -13570,7 +14107,7 @@ static ma_result ma_device_stop__wasapi(ma_device* pDevice)
 }
 
 
-static ma_result ma_device_main_loop__wasapi(ma_device* pDevice)
+static ma_result ma_device_audio_thread__wasapi(ma_device* pDevice)
 {
     ma_result result;
     HRESULT hr;
@@ -13607,7 +14144,7 @@ static ma_result ma_device_main_loop__wasapi(ma_device* pDevice)
         c89atomic_exchange_32(&pDevice->wasapi.isStartedCapture, MA_TRUE);
     }
 
-    while (ma_device__get_state(pDevice) == MA_STATE_STARTED && !exitLoop) {
+    while (ma_device_get_state(pDevice) == MA_STATE_STARTED && !exitLoop) {
         /* We may need to reroute the device. */
         if (ma_device_is_reroute_required__wasapi(pDevice, ma_device_type_playback)) {
             result = ma_device_reroute__wasapi(pDevice, ma_device_type_playback);
@@ -13744,7 +14281,7 @@ static ma_result ma_device_main_loop__wasapi(ma_device* pDevice)
                                     }
 
                                     framesAvailableCapture -= mappedDeviceBufferSizeInFramesCapture;
-                                    
+
                                     if (framesAvailableCapture > 0) {
                                         mappedDeviceBufferSizeInFramesCapture = ma_min(framesAvailableCapture, periodSizeInFramesCapture);
                                         hr = ma_IAudioCaptureClient_GetBuffer((ma_IAudioCaptureClient*)pDevice->wasapi.pCaptureClient, (BYTE**)&pMappedDeviceBufferCapture, &mappedDeviceBufferSizeInFramesCapture, &flagsCapture, NULL, NULL);
@@ -13783,7 +14320,7 @@ static ma_result ma_device_main_loop__wasapi(ma_device* pDevice)
 
                         pRunningDeviceBufferCapture  = pMappedDeviceBufferCapture  + ((mappedDeviceBufferSizeInFramesCapture  - mappedDeviceBufferFramesRemainingCapture ) * bpfCaptureDevice);
                         pRunningDeviceBufferPlayback = pMappedDeviceBufferPlayback + ((mappedDeviceBufferSizeInFramesPlayback - mappedDeviceBufferFramesRemainingPlayback) * bpfPlaybackDevice);
-                        
+
                         /* There may be some data sitting in the converter that needs to be processed first. Once this is exhaused, run the data callback again. */
                         if (!pDevice->playback.converter.isPassthrough && outputDataInClientFormatConsumed < outputDataInClientFormatCount) {
                             ma_uint64 convertedFrameCountClient = (outputDataInClientFormatCount - outputDataInClientFormatConsumed);
@@ -13868,7 +14405,7 @@ static ma_result ma_device_main_loop__wasapi(ma_device* pDevice)
                             }
 
                             ma_device__on_data(pDevice, outputDataInClientFormat, inputDataInClientFormat, (ma_uint32)capturedClientFramesToProcess);
-                            
+
                             mappedDeviceBufferFramesRemainingCapture -= (ma_uint32)capturedDeviceFramesToProcess;
                             outputDataInClientFormatCount             = (ma_uint32)capturedClientFramesToProcess;
                             outputDataInClientFormatConsumed          = 0;
@@ -13994,7 +14531,7 @@ static ma_result ma_device_main_loop__wasapi(ma_device* pDevice)
                             }
 
                             framesAvailableCapture -= mappedDeviceBufferSizeInFramesCapture;
-                                    
+
                             if (framesAvailableCapture > 0) {
                                 mappedDeviceBufferSizeInFramesCapture = ma_min(framesAvailableCapture, periodSizeInFramesCapture);
                                 hr = ma_IAudioCaptureClient_GetBuffer((ma_IAudioCaptureClient*)pDevice->wasapi.pCaptureClient, (BYTE**)&pMappedDeviceBufferCapture, &mappedDeviceBufferSizeInFramesCapture, &flagsCapture, NULL, NULL);
@@ -14190,12 +14727,12 @@ static ma_result ma_context_uninit__wasapi(ma_context* pContext)
     return MA_SUCCESS;
 }
 
-static ma_result ma_context_init__wasapi(const ma_context_config* pConfig, ma_context* pContext)
+static ma_result ma_context_init__wasapi(ma_context* pContext, const ma_context_config* pConfig, ma_backend_callbacks* pCallbacks)
 {
     ma_result result = MA_SUCCESS;
 
     MA_ASSERT(pContext != NULL);
-
+    
     (void)pConfig;
 
 #ifdef MA_WIN32_DESKTOP
@@ -14203,7 +14740,7 @@ static ma_result ma_context_init__wasapi(const ma_context_config* pConfig, ma_co
     WASAPI is only supported in Vista SP1 and newer. The reason for SP1 and not the base version of Vista is that event-driven
     exclusive mode does not work until SP1.
 
-    Unfortunately older compilers don't define these functions so we need to dynamically load them in order to avoid a lin error.
+    Unfortunately older compilers don't define these functions so we need to dynamically load them in order to avoid a link error.
     */
     {
         ma_OSVERSIONINFOEXW osvi;
@@ -14216,7 +14753,7 @@ static ma_result ma_context_init__wasapi(const ma_context_config* pConfig, ma_co
             return MA_NO_BACKEND;
         }
 
-        _VerifyVersionInfoW = (ma_PFNVerifyVersionInfoW)ma_dlsym(pContext, kernel32DLL, "VerifyVersionInfoW");
+        _VerifyVersionInfoW  = (ma_PFNVerifyVersionInfoW )ma_dlsym(pContext, kernel32DLL, "VerifyVersionInfoW");
         _VerSetConditionMask = (ma_PFNVerSetConditionMask)ma_dlsym(pContext, kernel32DLL, "VerSetConditionMask");
         if (_VerifyVersionInfoW == NULL || _VerSetConditionMask == NULL) {
             ma_dlclose(pContext, kernel32DLL);
@@ -14242,15 +14779,17 @@ static ma_result ma_context_init__wasapi(const ma_context_config* pConfig, ma_co
         return result;
     }
 
-    pContext->onUninit         = ma_context_uninit__wasapi;
-    pContext->onDeviceIDEqual  = ma_context_is_device_id_equal__wasapi;
-    pContext->onEnumDevices    = ma_context_enumerate_devices__wasapi;
-    pContext->onGetDeviceInfo  = ma_context_get_device_info__wasapi;
-    pContext->onDeviceInit     = ma_device_init__wasapi;
-    pContext->onDeviceUninit   = ma_device_uninit__wasapi;
-    pContext->onDeviceStart    = NULL;                      /* Not used. Started in onDeviceMainLoop. */
-    pContext->onDeviceStop     = ma_device_stop__wasapi;    /* Required to ensure the capture event is signalled when stopping a loopback device while nothing is playing. */
-    pContext->onDeviceMainLoop = ma_device_main_loop__wasapi;
+    pCallbacks->onContextInit             = ma_context_init__wasapi;
+    pCallbacks->onContextUninit           = ma_context_uninit__wasapi;
+    pCallbacks->onContextEnumerateDevices = ma_context_enumerate_devices__wasapi;
+    pCallbacks->onContextGetDeviceInfo    = ma_context_get_device_info__wasapi;
+    pCallbacks->onDeviceInit              = ma_device_init__wasapi;
+    pCallbacks->onDeviceUninit            = ma_device_uninit__wasapi;
+    pCallbacks->onDeviceStart             = NULL;                   /* Not used. Started in onDeviceAudioThread. */
+    pCallbacks->onDeviceStop              = ma_device_stop__wasapi; /* Required to ensure the capture event is signalled when stopping a loopback device while nothing is playing. */
+    pCallbacks->onDeviceRead              = NULL;                   /* Not used. Reading is done manually in the audio thread. */
+    pCallbacks->onDeviceWrite             = NULL;                   /* Not used. Writing is done manually in the audio thread. */
+    pCallbacks->onDeviceAudioThread       = ma_device_audio_thread__wasapi;
 
     return result;
 }
@@ -14816,16 +15355,6 @@ static ma_result ma_context_get_format_info_for_IDirectSoundCapture__dsound(ma_c
     return MA_SUCCESS;
 }
 
-static ma_bool32 ma_context_is_device_id_equal__dsound(ma_context* pContext, const ma_device_id* pID0, const ma_device_id* pID1)
-{
-    MA_ASSERT(pContext != NULL);
-    MA_ASSERT(pID0 != NULL);
-    MA_ASSERT(pID1 != NULL);
-    (void)pContext;
-
-    return memcmp(pID0->dsound, pID1->dsound, sizeof(pID0->dsound)) == 0;
-}
-
 
 typedef struct
 {
@@ -14839,7 +15368,7 @@ typedef struct
 static BOOL CALLBACK ma_context_enumerate_devices_callback__dsound(LPGUID lpGuid, LPCSTR lpcstrDescription, LPCSTR lpcstrModule, LPVOID lpContext)
 {
     ma_context_enumerate_devices_callback_data__dsound* pData = (ma_context_enumerate_devices_callback_data__dsound*)lpContext;
-    ma_device_info deviceInfo;    
+    ma_device_info deviceInfo;
 
     MA_ZERO_OBJECT(&deviceInfo);
 
@@ -14848,6 +15377,7 @@ static BOOL CALLBACK ma_context_enumerate_devices_callback__dsound(LPGUID lpGuid
         MA_COPY_MEMORY(deviceInfo.id.dsound, lpGuid, 16);
     } else {
         MA_ZERO_MEMORY(deviceInfo.id.dsound, 16);
+        deviceInfo.isDefault = MA_TRUE;
     }
 
     /* Name / Description */
@@ -14909,6 +15439,7 @@ static BOOL CALLBACK ma_context_get_device_info_callback__dsound(LPGUID lpGuid, 
     if ((pData->pDeviceID == NULL || ma_is_guid_null(pData->pDeviceID->dsound)) && (lpGuid == NULL || ma_is_guid_null(lpGuid))) {
         /* Default device. */
         ma_strncpy_s(pData->pDeviceInfo->name, sizeof(pData->pDeviceInfo->name), lpcstrDescription, (size_t)-1);
+        pData->pDeviceInfo->isDefault = MA_TRUE;
         pData->found = MA_TRUE;
         return FALSE;   /* Stop enumeration. */
     } else {
@@ -14926,15 +15457,10 @@ static BOOL CALLBACK ma_context_get_device_info_callback__dsound(LPGUID lpGuid, 
     return TRUE;
 }
 
-static ma_result ma_context_get_device_info__dsound(ma_context* pContext, ma_device_type deviceType, const ma_device_id* pDeviceID, ma_share_mode shareMode, ma_device_info* pDeviceInfo)
+static ma_result ma_context_get_device_info__dsound(ma_context* pContext, ma_device_type deviceType, const ma_device_id* pDeviceID, ma_device_info* pDeviceInfo)
 {
     ma_result result;
     HRESULT hr;
-
-    /* Exclusive mode and capture not supported with DirectSound. */
-    if (deviceType == ma_device_type_capture && shareMode == ma_share_mode_exclusive) {
-        return MA_SHARE_MODE_NOT_SUPPORTED;
-    }
 
     if (pDeviceID != NULL) {
         ma_context_get_device_info_callback_data__dsound data;
@@ -14967,6 +15493,8 @@ static ma_result ma_context_get_device_info__dsound(ma_context* pContext, ma_dev
         } else {
             ma_strncpy_s(pDeviceInfo->name, sizeof(pDeviceInfo->name), MA_DEFAULT_CAPTURE_DEVICE_NAME, (size_t)-1);
         }
+
+        pDeviceInfo->isDefault = MA_TRUE;
     }
 
     /* Retrieving detailed information is slightly different depending on the device type. */
@@ -14974,9 +15502,9 @@ static ma_result ma_context_get_device_info__dsound(ma_context* pContext, ma_dev
         /* Playback. */
         ma_IDirectSound* pDirectSound;
         MA_DSCAPS caps;
-        ma_uint32 iFormat;
+        WORD channels;
 
-        result = ma_context_create_IDirectSound__dsound(pContext, shareMode, pDeviceID, &pDirectSound);
+        result = ma_context_create_IDirectSound__dsound(pContext, ma_share_mode_shared, pDeviceID, &pDirectSound);
         if (result != MA_SUCCESS) {
             return result;
         }
@@ -14988,9 +15516,11 @@ static ma_result ma_context_get_device_info__dsound(ma_context* pContext, ma_dev
             return ma_context_post_error(pContext, NULL, MA_LOG_LEVEL_ERROR, "[DirectSound] IDirectSound_GetCaps() failed for playback device.", ma_result_from_HRESULT(hr));
         }
 
+
+        /* Channels. Only a single channel count is reported for DirectSound. */
         if ((caps.dwFlags & MA_DSCAPS_PRIMARYSTEREO) != 0) {
             /* It supports at least stereo, but could support more. */
-            WORD channels = 2;
+            channels = 2;
 
             /* Look at the speaker configuration to get a better idea on the channel count. */
             DWORD speakerConfig;
@@ -14998,40 +15528,37 @@ static ma_result ma_context_get_device_info__dsound(ma_context* pContext, ma_dev
             if (SUCCEEDED(hr)) {
                 ma_get_channels_from_speaker_config__dsound(speakerConfig, &channels, NULL);
             }
-
-            pDeviceInfo->minChannels = channels;
-            pDeviceInfo->maxChannels = channels;
         } else {
             /* It does not support stereo, which means we are stuck with mono. */
-            pDeviceInfo->minChannels = 1;
-            pDeviceInfo->maxChannels = 1;
+            channels = 1;
         }
 
-        /* Sample rate. */
-        if ((caps.dwFlags & MA_DSCAPS_CONTINUOUSRATE) != 0) {
-            pDeviceInfo->minSampleRate = caps.dwMinSecondarySampleRate;
-            pDeviceInfo->maxSampleRate = caps.dwMaxSecondarySampleRate;
 
-            /*
-            On my machine the min and max sample rates can return 100 and 200000 respectively. I'd rather these be within
-            the range of our standard sample rates so I'm clamping.
-            */
-            if (caps.dwMinSecondarySampleRate < MA_MIN_SAMPLE_RATE && caps.dwMaxSecondarySampleRate >= MA_MIN_SAMPLE_RATE) {
-                pDeviceInfo->minSampleRate = MA_MIN_SAMPLE_RATE;
-            }
-            if (caps.dwMaxSecondarySampleRate > MA_MAX_SAMPLE_RATE && caps.dwMinSecondarySampleRate <= MA_MAX_SAMPLE_RATE) {
-                pDeviceInfo->maxSampleRate = MA_MAX_SAMPLE_RATE;
+        /*
+        In DirectSound, our native formats are centered around sample rates. All formats are supported, and we're only reporting a single channel
+        count. However, DirectSound can report a range of supported sample rates. We're only going to include standard rates known by miniaudio
+        in order to keep the size of this within reason.
+        */
+        if ((caps.dwFlags & MA_DSCAPS_CONTINUOUSRATE) != 0) {
+            /* Multiple sample rates are supported. We'll report in order of our preferred sample rates. */
+            size_t iStandardSampleRate;
+            for (iStandardSampleRate = 0; iStandardSampleRate < ma_countof(g_maStandardSampleRatePriorities); iStandardSampleRate += 1) {
+                ma_uint32 sampleRate = g_maStandardSampleRatePriorities[iStandardSampleRate];
+                if (sampleRate >= caps.dwMinSecondarySampleRate && sampleRate <= caps.dwMaxSecondarySampleRate) {
+                    pDeviceInfo->nativeDataFormats[pDeviceInfo->nativeDataFormatCount].format     = ma_format_unknown;
+                    pDeviceInfo->nativeDataFormats[pDeviceInfo->nativeDataFormatCount].channels   = channels;
+                    pDeviceInfo->nativeDataFormats[pDeviceInfo->nativeDataFormatCount].sampleRate = sampleRate;
+                    pDeviceInfo->nativeDataFormats[pDeviceInfo->nativeDataFormatCount].flags      = 0;
+                    pDeviceInfo->nativeDataFormatCount += 1;
+                }
             }
         } else {
-            /* Only supports a single sample rate. Set both min an max to the same thing. Do not clamp within the standard rates. */
-            pDeviceInfo->minSampleRate = caps.dwMaxSecondarySampleRate;
-            pDeviceInfo->maxSampleRate = caps.dwMaxSecondarySampleRate;
-        }
-
-        /* DirectSound can support all formats. */
-        pDeviceInfo->formatCount = ma_format_count - 1;    /* Minus one because we don't want to include ma_format_unknown. */
-        for (iFormat = 0; iFormat < pDeviceInfo->formatCount; ++iFormat) {
-            pDeviceInfo->formats[iFormat] = (ma_format)(iFormat + 1);  /* +1 to skip over ma_format_unknown. */
+            /* Only a single sample rate is supported. */
+            pDeviceInfo->nativeDataFormats[pDeviceInfo->nativeDataFormatCount].format     = ma_format_unknown;
+            pDeviceInfo->nativeDataFormats[pDeviceInfo->nativeDataFormatCount].channels   = channels;
+            pDeviceInfo->nativeDataFormats[pDeviceInfo->nativeDataFormatCount].sampleRate = caps.dwMaxSecondarySampleRate;
+            pDeviceInfo->nativeDataFormats[pDeviceInfo->nativeDataFormatCount].flags      = 0;
+            pDeviceInfo->nativeDataFormatCount += 1;
         }
 
         ma_IDirectSound_Release(pDirectSound);
@@ -15046,7 +15573,7 @@ static ma_result ma_context_get_device_info__dsound(ma_context* pContext, ma_dev
         WORD bitsPerSample;
         DWORD sampleRate;
 
-        result = ma_context_create_IDirectSoundCapture__dsound(pContext, shareMode, pDeviceID, &pDirectSoundCapture);
+        result = ma_context_create_IDirectSoundCapture__dsound(pContext, ma_share_mode_shared, pDeviceID, &pDirectSoundCapture);
         if (result != MA_SUCCESS) {
             return result;
         }
@@ -15057,11 +15584,9 @@ static ma_result ma_context_get_device_info__dsound(ma_context* pContext, ma_dev
             return result;
         }
 
-        pDeviceInfo->minChannels = channels;
-        pDeviceInfo->maxChannels = channels;
-        pDeviceInfo->minSampleRate = sampleRate;
-        pDeviceInfo->maxSampleRate = sampleRate;
-        pDeviceInfo->formatCount = 1;
+        ma_IDirectSoundCapture_Release(pDirectSoundCapture);
+
+        /* The format is always an integer format and is based on the bits per sample. */
         if (bitsPerSample == 8) {
             pDeviceInfo->formats[0] = ma_format_u8;
         } else if (bitsPerSample == 16) {
@@ -15070,12 +15595,14 @@ static ma_result ma_context_get_device_info__dsound(ma_context* pContext, ma_dev
             pDeviceInfo->formats[0] = ma_format_s24;
         } else if (bitsPerSample == 32) {
             pDeviceInfo->formats[0] = ma_format_s32;
-        } else {
-            ma_IDirectSoundCapture_Release(pDirectSoundCapture);
+        } else {   
             return MA_FORMAT_NOT_SUPPORTED;
         }
 
-        ma_IDirectSoundCapture_Release(pDirectSoundCapture);
+        pDeviceInfo->nativeDataFormats[0].channels   = channels;
+        pDeviceInfo->nativeDataFormats[0].sampleRate = sampleRate;
+        pDeviceInfo->nativeDataFormats[0].flags      = 0;
+        pDeviceInfo->nativeDataFormatCount = 1;
     }
 
     return MA_SUCCESS;
@@ -15083,7 +15610,7 @@ static ma_result ma_context_get_device_info__dsound(ma_context* pContext, ma_dev
 
 
 
-static void ma_device_uninit__dsound(ma_device* pDevice)
+static ma_result ma_device_uninit__dsound(ma_device* pDevice)
 {
     MA_ASSERT(pDevice != NULL);
 
@@ -15103,11 +15630,25 @@ static void ma_device_uninit__dsound(ma_device* pDevice)
     if (pDevice->dsound.pPlayback != NULL) {
         ma_IDirectSound_Release((ma_IDirectSound*)pDevice->dsound.pPlayback);
     }
+
+    return MA_SUCCESS;
 }
 
 static ma_result ma_config_to_WAVEFORMATEXTENSIBLE(ma_format format, ma_uint32 channels, ma_uint32 sampleRate, const ma_channel* pChannelMap, WAVEFORMATEXTENSIBLE* pWF)
 {
     GUID subformat;
+
+    if (format == ma_format_unknown) {
+        format = MA_DEFAULT_FORMAT;
+    }
+
+    if (channels == 0) {
+        channels = MA_DEFAULT_CHANNELS;
+    }
+
+    if (sampleRate == 0) {
+        sampleRate = MA_DEFAULT_SAMPLE_RATE;
+    }
 
     switch (format)
     {
@@ -15144,36 +15685,33 @@ static ma_result ma_config_to_WAVEFORMATEXTENSIBLE(ma_format format, ma_uint32 c
     return MA_SUCCESS;
 }
 
-static ma_result ma_device_init__dsound(ma_context* pContext, const ma_device_config* pConfig, ma_device* pDevice)
+static ma_uint32 ma_calculate_period_size_in_frames__dsound(ma_uint32 periodSizeInFrames, ma_uint32 periodSizeInMilliseconds, ma_uint32 sampleRate)
+{
+    /* DirectSound has a minimum period size of 20ms. */
+    ma_uint32 minPeriodSizeInFrames = ma_calculate_buffer_size_in_frames_from_milliseconds(20, sampleRate);
+
+    if (periodSizeInFrames == 0) {
+        periodSizeInFrames = ma_calculate_buffer_size_in_frames_from_milliseconds(periodSizeInMilliseconds, sampleRate);
+    }
+
+    if (periodSizeInFrames < minPeriodSizeInFrames) {
+        periodSizeInFrames = minPeriodSizeInFrames;
+    }
+
+    return periodSizeInFrames;
+}
+
+static ma_result ma_device_init__dsound(ma_device* pDevice, const ma_device_config* pConfig, ma_device_descriptor* pDescriptorPlayback, ma_device_descriptor* pDescriptorCapture)
 {
     ma_result result;
     HRESULT hr;
-    ma_uint32 periodSizeInMilliseconds;
 
     MA_ASSERT(pDevice != NULL);
+
     MA_ZERO_OBJECT(&pDevice->dsound);
 
     if (pConfig->deviceType == ma_device_type_loopback) {
         return MA_DEVICE_TYPE_NOT_SUPPORTED;
-    }
-
-    periodSizeInMilliseconds = pConfig->periodSizeInMilliseconds;
-    if (periodSizeInMilliseconds == 0) {
-        periodSizeInMilliseconds = ma_calculate_buffer_size_in_milliseconds_from_frames(pConfig->periodSizeInFrames, pConfig->sampleRate);
-    }
-    
-    /* DirectSound should use a latency of about 20ms per period for low latency mode. */
-    if (pDevice->usingDefaultBufferSize) {
-        if (pConfig->performanceProfile == ma_performance_profile_low_latency) {
-            periodSizeInMilliseconds =  20;
-        } else {
-            periodSizeInMilliseconds = 200;
-        }
-    }
-
-    /* DirectSound breaks down with tiny buffer sizes (bad glitching and silent output). I am therefore restricting the size of the buffer to a minimum of 20 milliseconds. */
-    if (periodSizeInMilliseconds < 20) {
-        periodSizeInMilliseconds = 20;
     }
 
     /*
@@ -15185,21 +15723,22 @@ static ma_result ma_device_init__dsound(ma_context* pContext, const ma_device_co
         WAVEFORMATEXTENSIBLE wf;
         MA_DSCBUFFERDESC descDS;
         ma_uint32 periodSizeInFrames;
+        ma_uint32 periodCount;
         char rawdata[1024]; /* <-- Ugly hack to avoid a malloc() due to a crappy DirectSound API. */
         WAVEFORMATEXTENSIBLE* pActualFormat;
 
-        result = ma_config_to_WAVEFORMATEXTENSIBLE(pConfig->capture.format, pConfig->capture.channels, pConfig->sampleRate, pConfig->capture.channelMap, &wf);
+        result = ma_config_to_WAVEFORMATEXTENSIBLE(pDescriptorCapture->format, pDescriptorCapture->channels, pDescriptorCapture->sampleRate, pDescriptorCapture->channelMap, &wf);
         if (result != MA_SUCCESS) {
             return result;
         }
 
-        result = ma_context_create_IDirectSoundCapture__dsound(pContext, pConfig->capture.shareMode, pConfig->capture.pDeviceID, (ma_IDirectSoundCapture**)&pDevice->dsound.pCapture);
+        result = ma_context_create_IDirectSoundCapture__dsound(pDevice->pContext, pDescriptorCapture->shareMode, pDescriptorCapture->pDeviceID, (ma_IDirectSoundCapture**)&pDevice->dsound.pCapture);
         if (result != MA_SUCCESS) {
             ma_device_uninit__dsound(pDevice);
             return result;
         }
 
-        result = ma_context_get_format_info_for_IDirectSoundCapture__dsound(pContext, (ma_IDirectSoundCapture*)pDevice->dsound.pCapture, &wf.Format.nChannels, &wf.Format.wBitsPerSample, &wf.Format.nSamplesPerSec);
+        result = ma_context_get_format_info_for_IDirectSoundCapture__dsound(pDevice->pContext, (ma_IDirectSoundCapture*)pDevice->dsound.pCapture, &wf.Format.nChannels, &wf.Format.wBitsPerSample, &wf.Format.nSamplesPerSec);
         if (result != MA_SUCCESS) {
             ma_device_uninit__dsound(pDevice);
             return result;
@@ -15211,13 +15750,14 @@ static ma_result ma_device_init__dsound(ma_context* pContext, const ma_device_co
         wf.SubFormat                   = MA_GUID_KSDATAFORMAT_SUBTYPE_PCM;
 
         /* The size of the buffer must be a clean multiple of the period count. */
-        periodSizeInFrames = ma_calculate_buffer_size_in_frames_from_milliseconds(periodSizeInMilliseconds, wf.Format.nSamplesPerSec);
+        periodSizeInFrames = ma_calculate_period_size_in_frames__dsound(pDescriptorCapture->periodSizeInFrames, pDescriptorCapture->periodSizeInMilliseconds, wf.Format.nSamplesPerSec);
+        periodCount = (pDescriptorCapture->periodCount > 0) ? pDescriptorCapture->periodCount : MA_DEFAULT_PERIODS;
 
         MA_ZERO_OBJECT(&descDS);
-        descDS.dwSize = sizeof(descDS);
-        descDS.dwFlags = 0;
-        descDS.dwBufferBytes = periodSizeInFrames * pConfig->periods * ma_get_bytes_per_frame(pDevice->capture.internalFormat, wf.Format.nChannels);
-        descDS.lpwfxFormat = (WAVEFORMATEX*)&wf;
+        descDS.dwSize        = sizeof(descDS);
+        descDS.dwFlags       = 0;
+        descDS.dwBufferBytes = periodSizeInFrames * periodCount * wf.Format.nBlockAlign;
+        descDS.lpwfxFormat   = (WAVEFORMATEX*)&wf;
         hr = ma_IDirectSoundCapture_CreateCaptureBuffer((ma_IDirectSoundCapture*)pDevice->dsound.pCapture, &descDS, (ma_IDirectSoundCaptureBuffer**)&pDevice->dsound.pCaptureBuffer, NULL);
         if (FAILED(hr)) {
             ma_device_uninit__dsound(pDevice);
@@ -15232,23 +15772,24 @@ static ma_result ma_device_init__dsound(ma_context* pContext, const ma_device_co
             return ma_post_error(pDevice, MA_LOG_LEVEL_ERROR, "[DirectSound] Failed to retrieve the actual format of the capture device's buffer.", ma_result_from_HRESULT(hr));
         }
 
-        pDevice->capture.internalFormat = ma_format_from_WAVEFORMATEX((WAVEFORMATEX*)pActualFormat);
-        pDevice->capture.internalChannels = pActualFormat->Format.nChannels;
-        pDevice->capture.internalSampleRate = pActualFormat->Format.nSamplesPerSec;
+        /* We can now start setting the output data formats. */
+        pDescriptorCapture->format     = ma_format_from_WAVEFORMATEX((WAVEFORMATEX*)pActualFormat);
+        pDescriptorCapture->channels   = pActualFormat->Format.nChannels;
+        pDescriptorCapture->sampleRate = pActualFormat->Format.nSamplesPerSec;
 
-        /* Get the internal channel map based on the channel mask. */
+        /* Get the native channel map based on the channel mask. */
         if (pActualFormat->Format.wFormatTag == WAVE_FORMAT_EXTENSIBLE) {
-            ma_channel_mask_to_channel_map__win32(pActualFormat->dwChannelMask, pDevice->capture.internalChannels, pDevice->capture.internalChannelMap);
+            ma_channel_mask_to_channel_map__win32(pActualFormat->dwChannelMask, pDescriptorCapture->channels, pDescriptorCapture->channelMap);
         } else {
-            ma_channel_mask_to_channel_map__win32(wf.dwChannelMask, pDevice->capture.internalChannels, pDevice->capture.internalChannelMap);
+            ma_channel_mask_to_channel_map__win32(wf.dwChannelMask, pDescriptorCapture->channels, pDescriptorCapture->channelMap);
         }
 
         /*
         After getting the actual format the size of the buffer in frames may have actually changed. However, we want this to be as close to what the
         user has asked for as possible, so let's go ahead and release the old capture buffer and create a new one in this case.
         */
-        if (periodSizeInFrames != (descDS.dwBufferBytes / ma_get_bytes_per_frame(pDevice->capture.internalFormat, pDevice->capture.internalChannels) / pConfig->periods)) {
-            descDS.dwBufferBytes = periodSizeInFrames * ma_get_bytes_per_frame(pDevice->capture.internalFormat, wf.Format.nChannels) * pConfig->periods;
+        if (periodSizeInFrames != (descDS.dwBufferBytes / ma_get_bytes_per_frame(pDescriptorCapture->format, pDescriptorCapture->channels) / periodCount)) {
+            descDS.dwBufferBytes = periodSizeInFrames * ma_get_bytes_per_frame(pDescriptorCapture->format, pDescriptorCapture->channels) * periodCount;
             ma_IDirectSoundCaptureBuffer_Release((ma_IDirectSoundCaptureBuffer*)pDevice->dsound.pCaptureBuffer);
 
             hr = ma_IDirectSoundCapture_CreateCaptureBuffer((ma_IDirectSoundCapture*)pDevice->dsound.pCapture, &descDS, (ma_IDirectSoundCaptureBuffer**)&pDevice->dsound.pCaptureBuffer, NULL);
@@ -15259,8 +15800,8 @@ static ma_result ma_device_init__dsound(ma_context* pContext, const ma_device_co
         }
 
         /* DirectSound should give us a buffer exactly the size we asked for. */
-        pDevice->capture.internalPeriodSizeInFrames = periodSizeInFrames;
-        pDevice->capture.internalPeriods            = pConfig->periods;
+        pDescriptorCapture->periodSizeInFrames = periodSizeInFrames;
+        pDescriptorCapture->periodCount        = periodCount;
     }
 
     if (pConfig->deviceType == ma_device_type_playback || pConfig->deviceType == ma_device_type_duplex) {
@@ -15270,14 +15811,15 @@ static ma_result ma_device_init__dsound(ma_context* pContext, const ma_device_co
         char rawdata[1024]; /* <-- Ugly hack to avoid a malloc() due to a crappy DirectSound API. */
         WAVEFORMATEXTENSIBLE* pActualFormat;
         ma_uint32 periodSizeInFrames;
+        ma_uint32 periodCount;
         MA_DSBUFFERDESC descDS;
 
-        result = ma_config_to_WAVEFORMATEXTENSIBLE(pConfig->playback.format, pConfig->playback.channels, pConfig->sampleRate, pConfig->playback.channelMap, &wf);
+        result = ma_config_to_WAVEFORMATEXTENSIBLE(pDescriptorPlayback->format, pDescriptorPlayback->channels, pDescriptorPlayback->sampleRate, pDescriptorPlayback->channelMap, &wf);
         if (result != MA_SUCCESS) {
             return result;
         }
 
-        result = ma_context_create_IDirectSound__dsound(pContext, pConfig->playback.shareMode, pConfig->playback.pDeviceID, (ma_IDirectSound**)&pDevice->dsound.pPlayback);
+        result = ma_context_create_IDirectSound__dsound(pDevice->pContext, pDescriptorPlayback->shareMode, pDescriptorPlayback->pDeviceID, (ma_IDirectSound**)&pDevice->dsound.pPlayback);
         if (result != MA_SUCCESS) {
             ma_device_uninit__dsound(pDevice);
             return result;
@@ -15302,7 +15844,7 @@ static ma_result ma_device_init__dsound(ma_context* pContext, const ma_device_co
             return ma_post_error(pDevice, MA_LOG_LEVEL_ERROR, "[DirectSound] IDirectSound_GetCaps() failed for playback device.", ma_result_from_HRESULT(hr));
         }
 
-        if (pDevice->playback.usingDefaultChannels) {
+        if (pDescriptorPlayback->channels == 0) {
             if ((caps.dwFlags & MA_DSCAPS_PRIMARYSTEREO) != 0) {
                 DWORD speakerConfig;
 
@@ -15319,7 +15861,7 @@ static ma_result ma_device_init__dsound(ma_context* pContext, const ma_device_co
             }
         }
 
-        if (pDevice->usingDefaultSampleRate) {
+        if (pDescriptorPlayback->sampleRate == 0) {
             /* We base the sample rate on the values returned by GetCaps(). */
             if ((caps.dwFlags & MA_DSCAPS_CONTINUOUSRATE) != 0) {
                 wf.Format.nSamplesPerSec = ma_get_best_sample_rate_within_range(caps.dwMinSecondarySampleRate, caps.dwMaxSecondarySampleRate);
@@ -15333,7 +15875,7 @@ static ma_result ma_device_init__dsound(ma_context* pContext, const ma_device_co
 
         /*
         From MSDN:
-        
+
         The method succeeds even if the hardware does not support the requested format; DirectSound sets the buffer to the closest
         supported format. To determine whether this has happened, an application can call the GetFormat method for the primary buffer
         and compare the result with the format that was requested with the SetFormat method.
@@ -15352,30 +15894,32 @@ static ma_result ma_device_init__dsound(ma_context* pContext, const ma_device_co
             return ma_post_error(pDevice, MA_LOG_LEVEL_ERROR, "[DirectSound] Failed to retrieve the actual format of the playback device's primary buffer.", ma_result_from_HRESULT(hr));
         }
 
-        pDevice->playback.internalFormat = ma_format_from_WAVEFORMATEX((WAVEFORMATEX*)pActualFormat);
-        pDevice->playback.internalChannels = pActualFormat->Format.nChannels;
-        pDevice->playback.internalSampleRate = pActualFormat->Format.nSamplesPerSec;
+        /* We now have enough information to start setting some output properties. */
+        pDescriptorPlayback->format     = ma_format_from_WAVEFORMATEX((WAVEFORMATEX*)pActualFormat);
+        pDescriptorPlayback->channels   = pActualFormat->Format.nChannels;
+        pDescriptorPlayback->sampleRate = pActualFormat->Format.nSamplesPerSec;
 
         /* Get the internal channel map based on the channel mask. */
         if (pActualFormat->Format.wFormatTag == WAVE_FORMAT_EXTENSIBLE) {
-            ma_channel_mask_to_channel_map__win32(pActualFormat->dwChannelMask, pDevice->playback.internalChannels, pDevice->playback.internalChannelMap);
+            ma_channel_mask_to_channel_map__win32(pActualFormat->dwChannelMask, pDescriptorPlayback->channels, pDescriptorPlayback->channelMap);
         } else {
-            ma_channel_mask_to_channel_map__win32(wf.dwChannelMask, pDevice->playback.internalChannels, pDevice->playback.internalChannelMap);
+            ma_channel_mask_to_channel_map__win32(wf.dwChannelMask, pDescriptorPlayback->channels, pDescriptorPlayback->channelMap);
         }
 
         /* The size of the buffer must be a clean multiple of the period count. */
-        periodSizeInFrames = ma_calculate_buffer_size_in_frames_from_milliseconds(periodSizeInMilliseconds, pDevice->playback.internalSampleRate);
+        periodSizeInFrames = ma_calculate_period_size_in_frames__dsound(pDescriptorPlayback->periodSizeInFrames, pDescriptorPlayback->periodSizeInMilliseconds, pDescriptorPlayback->sampleRate);
+        periodCount = (pDescriptorPlayback->periodCount > 0) ? pDescriptorPlayback->periodCount : MA_DEFAULT_PERIODS;
 
         /*
         Meaning of dwFlags (from MSDN):
-        
+
         DSBCAPS_CTRLPOSITIONNOTIFY
           The buffer has position notification capability.
-        
+
         DSBCAPS_GLOBALFOCUS
           With this flag set, an application using DirectSound can continue to play its buffers if the user switches focus to
           another application, even if the new application uses DirectSound.
-        
+
         DSBCAPS_GETCURRENTPOSITION2
           In the first version of DirectSound, the play cursor was significantly ahead of the actual playing sound on emulated
           sound cards; it was directly behind the write cursor. Now, if the DSBCAPS_GETCURRENTPOSITION2 flag is specified, the
@@ -15384,7 +15928,7 @@ static ma_result ma_device_init__dsound(ma_context* pContext, const ma_device_co
         MA_ZERO_OBJECT(&descDS);
         descDS.dwSize = sizeof(descDS);
         descDS.dwFlags = MA_DSBCAPS_CTRLPOSITIONNOTIFY | MA_DSBCAPS_GLOBALFOCUS | MA_DSBCAPS_GETCURRENTPOSITION2;
-        descDS.dwBufferBytes = periodSizeInFrames * pConfig->periods * ma_get_bytes_per_frame(pDevice->playback.internalFormat, pDevice->playback.internalChannels);
+        descDS.dwBufferBytes = periodSizeInFrames * periodCount * ma_get_bytes_per_frame(pDescriptorPlayback->format, pDescriptorPlayback->channels);
         descDS.lpwfxFormat = (WAVEFORMATEX*)&wf;
         hr = ma_IDirectSound_CreateSoundBuffer((ma_IDirectSound*)pDevice->dsound.pPlayback, &descDS, (ma_IDirectSoundBuffer**)&pDevice->dsound.pPlaybackBuffer, NULL);
         if (FAILED(hr)) {
@@ -15393,16 +15937,15 @@ static ma_result ma_device_init__dsound(ma_context* pContext, const ma_device_co
         }
 
         /* DirectSound should give us a buffer exactly the size we asked for. */
-        pDevice->playback.internalPeriodSizeInFrames = periodSizeInFrames;
-        pDevice->playback.internalPeriods            = pConfig->periods;
+        pDescriptorPlayback->periodSizeInFrames = periodSizeInFrames;
+        pDescriptorPlayback->periodCount        = periodCount;
     }
 
-    (void)pContext;
     return MA_SUCCESS;
 }
 
 
-static ma_result ma_device_main_loop__dsound(ma_device* pDevice)
+static ma_result ma_device_audio_thread__dsound(ma_device* pDevice)
 {
     ma_result result = MA_SUCCESS;
     ma_uint32 bpfDeviceCapture  = ma_get_bytes_per_frame(pDevice->capture.internalFormat, pDevice->capture.internalChannels);
@@ -15434,8 +15977,8 @@ static ma_result ma_device_main_loop__dsound(ma_device* pDevice)
             return ma_post_error(pDevice, MA_LOG_LEVEL_ERROR, "[DirectSound] IDirectSoundCaptureBuffer_Start() failed.", MA_FAILED_TO_START_BACKEND_DEVICE);
         }
     }
-    
-    while (ma_device__get_state(pDevice) == MA_STATE_STARTED) {
+
+    while (ma_device_get_state(pDevice) == MA_STATE_STARTED) {
         switch (pDevice->type)
         {
             case ma_device_type_duplex:
@@ -15629,7 +16172,7 @@ static ma_result ma_device_main_loop__dsound(ma_device* pDevice)
                             outputFramesInClientFormatConsumed += (ma_uint32)convertedFrameCountOut;
                             framesWrittenThisIteration          = (ma_uint32)convertedFrameCountOut;
                         }
-                        
+
 
                         hr = ma_IDirectSoundBuffer_Unlock((ma_IDirectSoundBuffer*)pDevice->dsound.pPlaybackBuffer, pMappedDeviceBufferPlayback, framesWrittenThisIteration*bpfDevicePlayback, NULL, 0);
                         if (FAILED(hr)) {
@@ -15642,7 +16185,7 @@ static ma_result ma_device_main_loop__dsound(ma_device* pDevice)
                             virtualWriteCursorInBytesPlayback  = 0;
                             virtualWriteCursorLoopFlagPlayback = !virtualWriteCursorLoopFlagPlayback;
                         }
-                        
+
                         /*
                         We may need to start the device. We want two full periods to be written before starting the playback device. Having an extra period adds
                         a bit of a buffer to prevent the playback buffer from getting starved.
@@ -15840,7 +16383,7 @@ static ma_result ma_device_main_loop__dsound(ma_device* pDevice)
                     virtualWriteCursorInBytesPlayback  = 0;
                     virtualWriteCursorLoopFlagPlayback = !virtualWriteCursorLoopFlagPlayback;
                 }
-                        
+
                 /*
                 We may need to start the device. We want two full periods to be written before starting the playback device. Having an extra period adds
                 a bit of a buffer to prevent the playback buffer from getting starved.
@@ -15935,7 +16478,7 @@ static ma_result ma_context_uninit__dsound(ma_context* pContext)
     return MA_SUCCESS;
 }
 
-static ma_result ma_context_init__dsound(const ma_context_config* pConfig, ma_context* pContext)
+static ma_result ma_context_init__dsound(ma_context* pContext, const ma_context_config* pConfig, ma_backend_callbacks* pCallbacks)
 {
     MA_ASSERT(pContext != NULL);
 
@@ -15951,15 +16494,17 @@ static ma_result ma_context_init__dsound(const ma_context_config* pConfig, ma_co
     pContext->dsound.DirectSoundCaptureCreate     = ma_dlsym(pContext, pContext->dsound.hDSoundDLL, "DirectSoundCaptureCreate");
     pContext->dsound.DirectSoundCaptureEnumerateA = ma_dlsym(pContext, pContext->dsound.hDSoundDLL, "DirectSoundCaptureEnumerateA");
 
-    pContext->onUninit         = ma_context_uninit__dsound;
-    pContext->onDeviceIDEqual  = ma_context_is_device_id_equal__dsound;
-    pContext->onEnumDevices    = ma_context_enumerate_devices__dsound;
-    pContext->onGetDeviceInfo  = ma_context_get_device_info__dsound;
-    pContext->onDeviceInit     = ma_device_init__dsound;
-    pContext->onDeviceUninit   = ma_device_uninit__dsound;
-    pContext->onDeviceStart    = NULL;  /* Not used. Started in onDeviceMainLoop. */
-    pContext->onDeviceStop     = NULL;  /* Not used. Stopped in onDeviceMainLoop. */
-    pContext->onDeviceMainLoop = ma_device_main_loop__dsound;
+    pCallbacks->onContextInit             = ma_context_init__dsound;
+    pCallbacks->onContextUninit           = ma_context_uninit__dsound;
+    pCallbacks->onContextEnumerateDevices = ma_context_enumerate_devices__dsound;
+    pCallbacks->onContextGetDeviceInfo    = ma_context_get_device_info__dsound;
+    pCallbacks->onDeviceInit              = ma_device_init__dsound;
+    pCallbacks->onDeviceUninit            = ma_device_uninit__dsound;
+    pCallbacks->onDeviceStart             = NULL;   /* Not used. Started in onDeviceAudioThread. */
+    pCallbacks->onDeviceStop              = NULL;   /* Not used. Stopped in onDeviceAudioThread. */
+    pCallbacks->onDeviceRead              = NULL;   /* Not used. Data is read directly in onDeviceAudioThread. */
+    pCallbacks->onDeviceWrite             = NULL;   /* Not used. Data is written directly in onDeviceAudioThread. */
+    pCallbacks->onDeviceAudioThread       = ma_device_audio_thread__dsound;
 
     return MA_SUCCESS;
 }
@@ -16160,6 +16705,8 @@ static ma_result ma_get_best_info_from_formats_flags__winmm(DWORD dwFormats, WOR
 
 static ma_result ma_formats_flags_to_WAVEFORMATEX__winmm(DWORD dwFormats, WORD channels, WAVEFORMATEX* pWF)
 {
+    ma_result result;
+
     MA_ASSERT(pWF != NULL);
 
     MA_ZERO_OBJECT(pWF);
@@ -16170,62 +16717,9 @@ static ma_result ma_formats_flags_to_WAVEFORMATEX__winmm(DWORD dwFormats, WORD c
         pWF->nChannels = 2;
     }
 
-    if (channels == 1) {
-        pWF->wBitsPerSample = 16;
-        if ((dwFormats & WAVE_FORMAT_48M16) != 0) {
-            pWF->nSamplesPerSec = 48000;
-        } else if ((dwFormats & WAVE_FORMAT_44M16) != 0) {
-            pWF->nSamplesPerSec = 44100;
-        } else if ((dwFormats & WAVE_FORMAT_2M16) != 0) {
-            pWF->nSamplesPerSec = 22050;
-        } else if ((dwFormats & WAVE_FORMAT_1M16) != 0) {
-            pWF->nSamplesPerSec = 11025;
-        } else if ((dwFormats & WAVE_FORMAT_96M16) != 0) {
-            pWF->nSamplesPerSec = 96000;
-        } else {
-            pWF->wBitsPerSample = 8;
-            if ((dwFormats & WAVE_FORMAT_48M08) != 0) {
-                pWF->nSamplesPerSec = 48000;
-            } else if ((dwFormats & WAVE_FORMAT_44M08) != 0) {
-                pWF->nSamplesPerSec = 44100;
-            } else if ((dwFormats & WAVE_FORMAT_2M08) != 0) {
-                pWF->nSamplesPerSec = 22050;
-            } else if ((dwFormats & WAVE_FORMAT_1M08) != 0) {
-                pWF->nSamplesPerSec = 11025;
-            } else if ((dwFormats & WAVE_FORMAT_96M08) != 0) {
-                pWF->nSamplesPerSec = 96000;
-            } else {
-                return MA_FORMAT_NOT_SUPPORTED;
-            }
-        }
-    } else {
-        pWF->wBitsPerSample = 16;
-        if ((dwFormats & WAVE_FORMAT_48S16) != 0) {
-            pWF->nSamplesPerSec = 48000;
-        } else if ((dwFormats & WAVE_FORMAT_44S16) != 0) {
-            pWF->nSamplesPerSec = 44100;
-        } else if ((dwFormats & WAVE_FORMAT_2S16) != 0) {
-            pWF->nSamplesPerSec = 22050;
-        } else if ((dwFormats & WAVE_FORMAT_1S16) != 0) {
-            pWF->nSamplesPerSec = 11025;
-        } else if ((dwFormats & WAVE_FORMAT_96S16) != 0) {
-            pWF->nSamplesPerSec = 96000;
-        } else {
-            pWF->wBitsPerSample = 8;
-            if ((dwFormats & WAVE_FORMAT_48S08) != 0) {
-                pWF->nSamplesPerSec = 48000;
-            } else if ((dwFormats & WAVE_FORMAT_44S08) != 0) {
-                pWF->nSamplesPerSec = 44100;
-            } else if ((dwFormats & WAVE_FORMAT_2S08) != 0) {
-                pWF->nSamplesPerSec = 22050;
-            } else if ((dwFormats & WAVE_FORMAT_1S08) != 0) {
-                pWF->nSamplesPerSec = 11025;
-            } else if ((dwFormats & WAVE_FORMAT_96S08) != 0) {
-                pWF->nSamplesPerSec = 96000;
-            } else {
-                return MA_FORMAT_NOT_SUPPORTED;
-            }
-        }
+    result = ma_get_best_info_from_formats_flags__winmm(dwFormats, channels, &pWF->wBitsPerSample, &pWF->nSamplesPerSec);
+    if (result != MA_SUCCESS) {
+        return result;
     }
 
     pWF->nBlockAlign     = (WORD)(pWF->nChannels * pWF->wBitsPerSample / 8);
@@ -16246,7 +16740,7 @@ static ma_result ma_context_get_device_info_from_WAVECAPS(ma_context* pContext, 
 
     /*
     Name / Description
-    
+
     Unfortunately the name specified in WAVE(OUT/IN)CAPS2 is limited to 31 characters. This results in an unprofessional looking
     situation where the names of the devices are truncated. To help work around this, we need to look at the name GUID and try
     looking in the registry for the full name. If we can't find it there, we need to just fall back to the default name.
@@ -16311,22 +16805,21 @@ static ma_result ma_context_get_device_info_from_WAVECAPS(ma_context* pContext, 
         return result;
     }
 
-    pDeviceInfo->minChannels = pCaps->wChannels;
-    pDeviceInfo->maxChannels = pCaps->wChannels;
-    pDeviceInfo->minSampleRate = sampleRate;
-    pDeviceInfo->maxSampleRate = sampleRate;
-    pDeviceInfo->formatCount = 1;
     if (bitsPerSample == 8) {
-        pDeviceInfo->formats[0] = ma_format_u8;
+        pDeviceInfo->nativeDataFormats[0].format = ma_format_u8;
     } else if (bitsPerSample == 16) {
-        pDeviceInfo->formats[0] = ma_format_s16;
+        pDeviceInfo->nativeDataFormats[0].format = ma_format_s16;
     } else if (bitsPerSample == 24) {
-        pDeviceInfo->formats[0] = ma_format_s24;
+        pDeviceInfo->nativeDataFormats[0].format = ma_format_s24;
     } else if (bitsPerSample == 32) {
-        pDeviceInfo->formats[0] = ma_format_s32;
+        pDeviceInfo->nativeDataFormats[0].format = ma_format_s32;
     } else {
         return MA_FORMAT_NOT_SUPPORTED;
     }
+    pDeviceInfo->nativeDataFormats[0].channels   = pCaps->wChannels;
+    pDeviceInfo->nativeDataFormats[0].sampleRate = sampleRate;
+    pDeviceInfo->nativeDataFormats[0].flags      = 0;
+    pDeviceInfo->nativeDataFormatCount = 1;
 
     return MA_SUCCESS;
 }
@@ -16342,7 +16835,7 @@ static ma_result ma_context_get_device_info_from_WAVEOUTCAPS2(ma_context* pConte
     MA_COPY_MEMORY(caps.szPname, pCaps->szPname, sizeof(caps.szPname));
     caps.dwFormats = pCaps->dwFormats;
     caps.wChannels = pCaps->wChannels;
-    caps.NameGuid = pCaps->NameGuid;
+    caps.NameGuid  = pCaps->NameGuid;
     return ma_context_get_device_info_from_WAVECAPS(pContext, &caps, pDeviceInfo);
 }
 
@@ -16357,20 +16850,10 @@ static ma_result ma_context_get_device_info_from_WAVEINCAPS2(ma_context* pContex
     MA_COPY_MEMORY(caps.szPname, pCaps->szPname, sizeof(caps.szPname));
     caps.dwFormats = pCaps->dwFormats;
     caps.wChannels = pCaps->wChannels;
-    caps.NameGuid = pCaps->NameGuid;
+    caps.NameGuid  = pCaps->NameGuid;
     return ma_context_get_device_info_from_WAVECAPS(pContext, &caps, pDeviceInfo);
 }
 
-
-static ma_bool32 ma_context_is_device_id_equal__winmm(ma_context* pContext, const ma_device_id* pID0, const ma_device_id* pID1)
-{
-    MA_ASSERT(pContext != NULL);
-    MA_ASSERT(pID0 != NULL);
-    MA_ASSERT(pID1 != NULL);
-    (void)pContext;
-
-    return pID0->winmm == pID1->winmm;
-}
 
 static ma_result ma_context_enumerate_devices__winmm(ma_context* pContext, ma_enum_devices_callback_proc callback, void* pUserData)
 {
@@ -16397,6 +16880,11 @@ static ma_result ma_context_enumerate_devices__winmm(ma_context* pContext, ma_en
             MA_ZERO_OBJECT(&deviceInfo);
             deviceInfo.id.winmm = iPlaybackDevice;
 
+            /* The first enumerated device is the default device. */
+            if (iPlaybackDevice == 0) {
+                deviceInfo.isDefault = MA_TRUE;
+            }
+
             if (ma_context_get_device_info_from_WAVEOUTCAPS2(pContext, &caps, &deviceInfo) == MA_SUCCESS) {
                 ma_bool32 cbResult = callback(pContext, ma_device_type_playback, &deviceInfo, pUserData);
                 if (cbResult == MA_FALSE) {
@@ -16421,6 +16909,11 @@ static ma_result ma_context_enumerate_devices__winmm(ma_context* pContext, ma_en
             MA_ZERO_OBJECT(&deviceInfo);
             deviceInfo.id.winmm = iCaptureDevice;
 
+            /* The first enumerated device is the default device. */
+            if (iCaptureDevice == 0) {
+                deviceInfo.isDefault = MA_TRUE;
+            }
+
             if (ma_context_get_device_info_from_WAVEINCAPS2(pContext, &caps, &deviceInfo) == MA_SUCCESS) {
                 ma_bool32 cbResult = callback(pContext, ma_device_type_capture, &deviceInfo, pUserData);
                 if (cbResult == MA_FALSE) {
@@ -16433,15 +16926,11 @@ static ma_result ma_context_enumerate_devices__winmm(ma_context* pContext, ma_en
     return MA_SUCCESS;
 }
 
-static ma_result ma_context_get_device_info__winmm(ma_context* pContext, ma_device_type deviceType, const ma_device_id* pDeviceID, ma_share_mode shareMode, ma_device_info* pDeviceInfo)
+static ma_result ma_context_get_device_info__winmm(ma_context* pContext, ma_device_type deviceType, const ma_device_id* pDeviceID, ma_device_info* pDeviceInfo)
 {
     UINT winMMDeviceID;
 
     MA_ASSERT(pContext != NULL);
-
-    if (shareMode == ma_share_mode_exclusive) {
-        return MA_SHARE_MODE_NOT_SUPPORTED;
-    }
 
     winMMDeviceID = 0;
     if (pDeviceID != NULL) {
@@ -16450,12 +16939,17 @@ static ma_result ma_context_get_device_info__winmm(ma_context* pContext, ma_devi
 
     pDeviceInfo->id.winmm = winMMDeviceID;
 
+    /* The first ID is the default device. */
+    if (winMMDeviceID == 0) {
+        pDeviceInfo->isDefault = MA_TRUE;
+    }
+
     if (deviceType == ma_device_type_playback) {
         MMRESULT result;
         MA_WAVEOUTCAPS2A caps;
 
         MA_ZERO_OBJECT(&caps);
-        
+
         result = ((MA_PFN_waveOutGetDevCapsA)pContext->winmm.waveOutGetDevCapsA)(winMMDeviceID, (WAVEOUTCAPSA*)&caps, sizeof(caps));
         if (result == MMSYSERR_NOERROR) {
             return ma_context_get_device_info_from_WAVEOUTCAPS2(pContext, &caps, pDeviceInfo);
@@ -16465,7 +16959,7 @@ static ma_result ma_context_get_device_info__winmm(ma_context* pContext, ma_devi
         MA_WAVEINCAPS2A caps;
 
         MA_ZERO_OBJECT(&caps);
-        
+
         result = ((MA_PFN_waveInGetDevCapsA)pContext->winmm.waveInGetDevCapsA)(winMMDeviceID, (WAVEINCAPSA*)&caps, sizeof(caps));
         if (result == MMSYSERR_NOERROR) {
             return ma_context_get_device_info_from_WAVEINCAPS2(pContext, &caps, pDeviceInfo);
@@ -16476,7 +16970,7 @@ static ma_result ma_context_get_device_info__winmm(ma_context* pContext, ma_devi
 }
 
 
-static void ma_device_uninit__winmm(ma_device* pDevice)
+static ma_result ma_device_uninit__winmm(ma_device* pDevice)
 {
     MA_ASSERT(pDevice != NULL);
 
@@ -16494,9 +16988,27 @@ static void ma_device_uninit__winmm(ma_device* pDevice)
     ma__free_from_callbacks(pDevice->winmm._pHeapData, &pDevice->pContext->allocationCallbacks);
 
     MA_ZERO_OBJECT(&pDevice->winmm);   /* Safety. */
+
+    return MA_SUCCESS;
 }
 
-static ma_result ma_device_init__winmm(ma_context* pContext, const ma_device_config* pConfig, ma_device* pDevice)
+static ma_uint32 ma_calculate_period_size_in_frames__winmm(ma_uint32 periodSizeInFrames, ma_uint32 periodSizeInMilliseconds, ma_uint32 sampleRate)
+{
+    /* DirectSound has a minimum period size of 40ms. */
+    ma_uint32 minPeriodSizeInFrames = ma_calculate_buffer_size_in_frames_from_milliseconds(40, sampleRate);
+
+    if (periodSizeInFrames == 0) {
+        periodSizeInFrames = ma_calculate_buffer_size_in_frames_from_milliseconds(periodSizeInMilliseconds, sampleRate);
+    }
+
+    if (periodSizeInFrames < minPeriodSizeInFrames) {
+        periodSizeInFrames = minPeriodSizeInFrames;
+    }
+
+    return periodSizeInFrames;
+}
+
+static ma_result ma_device_init__winmm(ma_device* pDevice, const ma_device_config* pConfig, ma_device_descriptor* pDescriptorPlayback, ma_device_descriptor* pDescriptorCapture)
 {
     const char* errorMsg = "";
     ma_result errorCode = MA_ERROR;
@@ -16504,9 +17016,9 @@ static ma_result ma_device_init__winmm(ma_context* pContext, const ma_device_con
     ma_uint32 heapSize;
     UINT winMMDeviceIDPlayback = 0;
     UINT winMMDeviceIDCapture  = 0;
-    ma_uint32 periodSizeInMilliseconds;
 
     MA_ASSERT(pDevice != NULL);
+
     MA_ZERO_OBJECT(&pDevice->winmm);
 
     if (pConfig->deviceType == ma_device_type_loopback) {
@@ -16519,26 +17031,11 @@ static ma_result ma_device_init__winmm(ma_context* pContext, const ma_device_con
         return MA_SHARE_MODE_NOT_SUPPORTED;
     }
 
-    periodSizeInMilliseconds = pConfig->periodSizeInMilliseconds;
-    if (periodSizeInMilliseconds == 0) {
-        periodSizeInMilliseconds = ma_calculate_buffer_size_in_milliseconds_from_frames(pConfig->periodSizeInFrames, pConfig->sampleRate);
+    if (pDescriptorPlayback->pDeviceID != NULL) {
+        winMMDeviceIDPlayback = (UINT)pDescriptorPlayback->pDeviceID->winmm;
     }
-    
-    /* WinMM has horrible latency. */
-    if (pDevice->usingDefaultBufferSize) {
-        if (pConfig->performanceProfile == ma_performance_profile_low_latency) {
-            periodSizeInMilliseconds =  40;
-        } else {
-            periodSizeInMilliseconds = 400;
-        }
-    }
-
-
-    if (pConfig->playback.pDeviceID != NULL) {
-        winMMDeviceIDPlayback = (UINT)pConfig->playback.pDeviceID->winmm;
-    }
-    if (pConfig->capture.pDeviceID != NULL) {
-        winMMDeviceIDCapture = (UINT)pConfig->capture.pDeviceID->winmm;
+    if (pDescriptorCapture->pDeviceID != NULL) {
+        winMMDeviceIDCapture = (UINT)pDescriptorCapture->pDeviceID->winmm;
     }
 
     /* The capture device needs to be initialized first. */
@@ -16555,7 +17052,7 @@ static ma_result ma_device_init__winmm(ma_context* pContext, const ma_device_con
         }
 
         /* The format should be based on the device's actual format. */
-        if (((MA_PFN_waveInGetDevCapsA)pContext->winmm.waveInGetDevCapsA)(winMMDeviceIDCapture, &caps, sizeof(caps)) != MMSYSERR_NOERROR) {
+        if (((MA_PFN_waveInGetDevCapsA)pDevice->pContext->winmm.waveInGetDevCapsA)(winMMDeviceIDCapture, &caps, sizeof(caps)) != MMSYSERR_NOERROR) {
             errorMsg = "[WinMM] Failed to retrieve internal device caps.", errorCode = MA_FORMAT_NOT_SUPPORTED;
             goto on_error;
         }
@@ -16572,12 +17069,12 @@ static ma_result ma_device_init__winmm(ma_context* pContext, const ma_device_con
             goto on_error;
         }
 
-        pDevice->capture.internalFormat             = ma_format_from_WAVEFORMATEX(&wf);
-        pDevice->capture.internalChannels           = wf.nChannels;
-        pDevice->capture.internalSampleRate         = wf.nSamplesPerSec;
-        ma_get_standard_channel_map(ma_standard_channel_map_microsoft, pDevice->capture.internalChannels, pDevice->capture.internalChannelMap);
-        pDevice->capture.internalPeriods            = pConfig->periods;
-        pDevice->capture.internalPeriodSizeInFrames = ma_calculate_buffer_size_in_frames_from_milliseconds(periodSizeInMilliseconds, pDevice->capture.internalSampleRate);
+        pDescriptorCapture->format             = ma_format_from_WAVEFORMATEX(&wf);
+        pDescriptorCapture->channels           = wf.nChannels;
+        pDescriptorCapture->sampleRate         = wf.nSamplesPerSec;
+        ma_get_standard_channel_map(ma_standard_channel_map_microsoft, pDescriptorCapture->channels, pDescriptorCapture->channelMap);
+        pDescriptorCapture->periodCount        = pDescriptorCapture->periodCount;
+        pDescriptorCapture->periodSizeInFrames = ma_calculate_period_size_in_frames__winmm(pDescriptorCapture->periodSizeInFrames, pDescriptorCapture->periodSizeInMilliseconds, pDescriptorCapture->sampleRate);
     }
 
     if (pConfig->deviceType == ma_device_type_playback || pConfig->deviceType == ma_device_type_duplex) {
@@ -16593,7 +17090,7 @@ static ma_result ma_device_init__winmm(ma_context* pContext, const ma_device_con
         }
 
         /* The format should be based on the device's actual format. */
-        if (((MA_PFN_waveOutGetDevCapsA)pContext->winmm.waveOutGetDevCapsA)(winMMDeviceIDPlayback, &caps, sizeof(caps)) != MMSYSERR_NOERROR) {
+        if (((MA_PFN_waveOutGetDevCapsA)pDevice->pContext->winmm.waveOutGetDevCapsA)(winMMDeviceIDPlayback, &caps, sizeof(caps)) != MMSYSERR_NOERROR) {
             errorMsg = "[WinMM] Failed to retrieve internal device caps.", errorCode = MA_FORMAT_NOT_SUPPORTED;
             goto on_error;
         }
@@ -16604,34 +17101,34 @@ static ma_result ma_device_init__winmm(ma_context* pContext, const ma_device_con
             goto on_error;
         }
 
-        resultMM = ((MA_PFN_waveOutOpen)pContext->winmm.waveOutOpen)((LPHWAVEOUT)&pDevice->winmm.hDevicePlayback, winMMDeviceIDPlayback, &wf, (DWORD_PTR)pDevice->winmm.hEventPlayback, (DWORD_PTR)pDevice, CALLBACK_EVENT | WAVE_ALLOWSYNC);
+        resultMM = ((MA_PFN_waveOutOpen)pDevice->pContext->winmm.waveOutOpen)((LPHWAVEOUT)&pDevice->winmm.hDevicePlayback, winMMDeviceIDPlayback, &wf, (DWORD_PTR)pDevice->winmm.hEventPlayback, (DWORD_PTR)pDevice, CALLBACK_EVENT | WAVE_ALLOWSYNC);
         if (resultMM != MMSYSERR_NOERROR) {
             errorMsg = "[WinMM] Failed to open playback device.", errorCode = MA_FAILED_TO_OPEN_BACKEND_DEVICE;
             goto on_error;
         }
 
-        pDevice->playback.internalFormat             = ma_format_from_WAVEFORMATEX(&wf);
-        pDevice->playback.internalChannels           = wf.nChannels;
-        pDevice->playback.internalSampleRate         = wf.nSamplesPerSec;
-        ma_get_standard_channel_map(ma_standard_channel_map_microsoft, pDevice->playback.internalChannels, pDevice->playback.internalChannelMap);
-        pDevice->playback.internalPeriods            = pConfig->periods;
-        pDevice->playback.internalPeriodSizeInFrames = ma_calculate_buffer_size_in_frames_from_milliseconds(periodSizeInMilliseconds, pDevice->playback.internalSampleRate);
+        pDescriptorPlayback->format             = ma_format_from_WAVEFORMATEX(&wf);
+        pDescriptorPlayback->channels           = wf.nChannels;
+        pDescriptorPlayback->sampleRate         = wf.nSamplesPerSec;
+        ma_get_standard_channel_map(ma_standard_channel_map_microsoft, pDescriptorPlayback->channels, pDescriptorPlayback->channelMap);
+        pDescriptorPlayback->periodCount        = pDescriptorPlayback->periodCount;
+        pDescriptorPlayback->periodSizeInFrames = ma_calculate_period_size_in_frames__winmm(pDescriptorPlayback->periodSizeInFrames, pDescriptorPlayback->periodSizeInMilliseconds, pDescriptorPlayback->sampleRate);
     }
 
     /*
     The heap allocated data is allocated like so:
-    
+
     [Capture WAVEHDRs][Playback WAVEHDRs][Capture Intermediary Buffer][Playback Intermediary Buffer]
     */
     heapSize = 0;
     if (pConfig->deviceType == ma_device_type_capture || pConfig->deviceType == ma_device_type_duplex) {
-        heapSize += sizeof(WAVEHDR)*pDevice->capture.internalPeriods + (pDevice->capture.internalPeriodSizeInFrames*pDevice->capture.internalPeriods*ma_get_bytes_per_frame(pDevice->capture.internalFormat, pDevice->capture.internalChannels));
+        heapSize += sizeof(WAVEHDR)*pDescriptorCapture->periodCount + (pDescriptorCapture->periodSizeInFrames * pDescriptorCapture->periodCount * ma_get_bytes_per_frame(pDescriptorCapture->format, pDescriptorCapture->channels));
     }
     if (pConfig->deviceType == ma_device_type_playback || pConfig->deviceType == ma_device_type_duplex) {
-        heapSize += sizeof(WAVEHDR)*pDevice->playback.internalPeriods + (pDevice->playback.internalPeriodSizeInFrames*pDevice->playback.internalPeriods*ma_get_bytes_per_frame(pDevice->playback.internalFormat, pDevice->playback.internalChannels));
+        heapSize += sizeof(WAVEHDR)*pDescriptorPlayback->periodCount + (pDescriptorPlayback->periodSizeInFrames * pDescriptorPlayback->periodCount * ma_get_bytes_per_frame(pDescriptorPlayback->format, pDescriptorPlayback->channels));
     }
 
-    pDevice->winmm._pHeapData = (ma_uint8*)ma__calloc_from_callbacks(heapSize, &pContext->allocationCallbacks);
+    pDevice->winmm._pHeapData = (ma_uint8*)ma__calloc_from_callbacks(heapSize, &pDevice->pContext->allocationCallbacks);
     if (pDevice->winmm._pHeapData == NULL) {
         errorMsg = "[WinMM] Failed to allocate memory for the intermediary buffer.", errorCode = MA_OUT_OF_MEMORY;
         goto on_error;
@@ -16644,21 +17141,21 @@ static ma_result ma_device_init__winmm(ma_context* pContext, const ma_device_con
 
         if (pConfig->deviceType == ma_device_type_capture) {
             pDevice->winmm.pWAVEHDRCapture            = pDevice->winmm._pHeapData;
-            pDevice->winmm.pIntermediaryBufferCapture = pDevice->winmm._pHeapData + (sizeof(WAVEHDR)*(pDevice->capture.internalPeriods));
+            pDevice->winmm.pIntermediaryBufferCapture = pDevice->winmm._pHeapData + (sizeof(WAVEHDR)*(pDescriptorCapture->periodCount));
         } else {
             pDevice->winmm.pWAVEHDRCapture            = pDevice->winmm._pHeapData;
-            pDevice->winmm.pIntermediaryBufferCapture = pDevice->winmm._pHeapData + (sizeof(WAVEHDR)*(pDevice->capture.internalPeriods + pDevice->playback.internalPeriods));
+            pDevice->winmm.pIntermediaryBufferCapture = pDevice->winmm._pHeapData + (sizeof(WAVEHDR)*(pDescriptorCapture->periodCount + pDescriptorPlayback->periodCount));
         }
 
         /* Prepare headers. */
-        for (iPeriod = 0; iPeriod < pDevice->capture.internalPeriods; ++iPeriod) {
-            ma_uint32 periodSizeInBytes = ma_get_period_size_in_bytes(pDevice->capture.internalPeriodSizeInFrames, pDevice->capture.internalFormat, pDevice->capture.internalChannels);
+        for (iPeriod = 0; iPeriod < pDescriptorCapture->periodCount; ++iPeriod) {
+            ma_uint32 periodSizeInBytes = ma_get_period_size_in_bytes(pDescriptorCapture->periodSizeInFrames, pDescriptorCapture->format, pDescriptorCapture->channels);
 
             ((WAVEHDR*)pDevice->winmm.pWAVEHDRCapture)[iPeriod].lpData         = (LPSTR)(pDevice->winmm.pIntermediaryBufferCapture + (periodSizeInBytes*iPeriod));
             ((WAVEHDR*)pDevice->winmm.pWAVEHDRCapture)[iPeriod].dwBufferLength = periodSizeInBytes;
             ((WAVEHDR*)pDevice->winmm.pWAVEHDRCapture)[iPeriod].dwFlags        = 0L;
             ((WAVEHDR*)pDevice->winmm.pWAVEHDRCapture)[iPeriod].dwLoops        = 0L;
-            ((MA_PFN_waveInPrepareHeader)pContext->winmm.waveInPrepareHeader)((HWAVEIN)pDevice->winmm.hDeviceCapture, &((WAVEHDR*)pDevice->winmm.pWAVEHDRCapture)[iPeriod], sizeof(WAVEHDR));
+            ((MA_PFN_waveInPrepareHeader)pDevice->pContext->winmm.waveInPrepareHeader)((HWAVEIN)pDevice->winmm.hDeviceCapture, &((WAVEHDR*)pDevice->winmm.pWAVEHDRCapture)[iPeriod], sizeof(WAVEHDR));
 
             /*
             The user data of the WAVEHDR structure is a single flag the controls whether or not it is ready for writing. Consider it to be named "isLocked". A value of 0 means
@@ -16667,26 +17164,27 @@ static ma_result ma_device_init__winmm(ma_context* pContext, const ma_device_con
             ((WAVEHDR*)pDevice->winmm.pWAVEHDRCapture)[iPeriod].dwUser = 0;
         }
     }
+
     if (pConfig->deviceType == ma_device_type_playback || pConfig->deviceType == ma_device_type_duplex) {
         ma_uint32 iPeriod;
 
         if (pConfig->deviceType == ma_device_type_playback) {
             pDevice->winmm.pWAVEHDRPlayback            = pDevice->winmm._pHeapData;
-            pDevice->winmm.pIntermediaryBufferPlayback = pDevice->winmm._pHeapData + (sizeof(WAVEHDR)*pDevice->playback.internalPeriods);
+            pDevice->winmm.pIntermediaryBufferPlayback = pDevice->winmm._pHeapData + (sizeof(WAVEHDR)*pDescriptorPlayback->periodCount);
         } else {
-            pDevice->winmm.pWAVEHDRPlayback            = pDevice->winmm._pHeapData + (sizeof(WAVEHDR)*(pDevice->capture.internalPeriods));
-            pDevice->winmm.pIntermediaryBufferPlayback = pDevice->winmm._pHeapData + (sizeof(WAVEHDR)*(pDevice->capture.internalPeriods + pDevice->playback.internalPeriods)) + (pDevice->capture.internalPeriodSizeInFrames*pDevice->capture.internalPeriods*ma_get_bytes_per_frame(pDevice->capture.internalFormat, pDevice->capture.internalChannels));
+            pDevice->winmm.pWAVEHDRPlayback            = pDevice->winmm._pHeapData + (sizeof(WAVEHDR)*(pDescriptorCapture->periodCount));
+            pDevice->winmm.pIntermediaryBufferPlayback = pDevice->winmm._pHeapData + (sizeof(WAVEHDR)*(pDescriptorCapture->periodCount + pDescriptorPlayback->periodCount)) + (pDescriptorCapture->periodSizeInFrames*pDescriptorCapture->periodCount*ma_get_bytes_per_frame(pDescriptorCapture->format, pDescriptorCapture->channels));
         }
 
         /* Prepare headers. */
-        for (iPeriod = 0; iPeriod < pDevice->playback.internalPeriods; ++iPeriod) {
-            ma_uint32 periodSizeInBytes = ma_get_period_size_in_bytes(pDevice->playback.internalPeriodSizeInFrames, pDevice->playback.internalFormat, pDevice->playback.internalChannels);
+        for (iPeriod = 0; iPeriod < pDescriptorPlayback->periodCount; ++iPeriod) {
+            ma_uint32 periodSizeInBytes = ma_get_period_size_in_bytes(pDescriptorPlayback->periodSizeInFrames, pDescriptorPlayback->format, pDescriptorPlayback->channels);
 
             ((WAVEHDR*)pDevice->winmm.pWAVEHDRPlayback)[iPeriod].lpData         = (LPSTR)(pDevice->winmm.pIntermediaryBufferPlayback + (periodSizeInBytes*iPeriod));
             ((WAVEHDR*)pDevice->winmm.pWAVEHDRPlayback)[iPeriod].dwBufferLength = periodSizeInBytes;
             ((WAVEHDR*)pDevice->winmm.pWAVEHDRPlayback)[iPeriod].dwFlags        = 0L;
             ((WAVEHDR*)pDevice->winmm.pWAVEHDRPlayback)[iPeriod].dwLoops        = 0L;
-            ((MA_PFN_waveOutPrepareHeader)pContext->winmm.waveOutPrepareHeader)((HWAVEOUT)pDevice->winmm.hDevicePlayback, &((WAVEHDR*)pDevice->winmm.pWAVEHDRPlayback)[iPeriod], sizeof(WAVEHDR));
+            ((MA_PFN_waveOutPrepareHeader)pDevice->pContext->winmm.waveOutPrepareHeader)((HWAVEOUT)pDevice->winmm.hDevicePlayback, &((WAVEHDR*)pDevice->winmm.pWAVEHDRPlayback)[iPeriod], sizeof(WAVEHDR));
 
             /*
             The user data of the WAVEHDR structure is a single flag the controls whether or not it is ready for writing. Consider it to be named "isLocked". A value of 0 means
@@ -16702,27 +17200,66 @@ on_error:
     if (pDevice->type == ma_device_type_capture || pDevice->type == ma_device_type_duplex) {
         if (pDevice->winmm.pWAVEHDRCapture != NULL) {
             ma_uint32 iPeriod;
-            for (iPeriod = 0; iPeriod < pDevice->capture.internalPeriods; ++iPeriod) {
-                ((MA_PFN_waveInUnprepareHeader)pContext->winmm.waveInUnprepareHeader)((HWAVEIN)pDevice->winmm.hDeviceCapture, &((WAVEHDR*)pDevice->winmm.pWAVEHDRCapture)[iPeriod], sizeof(WAVEHDR));
+            for (iPeriod = 0; iPeriod < pDescriptorCapture->periodCount; ++iPeriod) {
+                ((MA_PFN_waveInUnprepareHeader)pDevice->pContext->winmm.waveInUnprepareHeader)((HWAVEIN)pDevice->winmm.hDeviceCapture, &((WAVEHDR*)pDevice->winmm.pWAVEHDRCapture)[iPeriod], sizeof(WAVEHDR));
             }
         }
 
-        ((MA_PFN_waveInClose)pContext->winmm.waveInClose)((HWAVEIN)pDevice->winmm.hDeviceCapture);
+        ((MA_PFN_waveInClose)pDevice->pContext->winmm.waveInClose)((HWAVEIN)pDevice->winmm.hDeviceCapture);
     }
 
     if (pDevice->type == ma_device_type_playback || pDevice->type == ma_device_type_duplex) {
         if (pDevice->winmm.pWAVEHDRCapture != NULL) {
             ma_uint32 iPeriod;
-            for (iPeriod = 0; iPeriod < pDevice->playback.internalPeriods; ++iPeriod) {
-                ((MA_PFN_waveOutUnprepareHeader)pContext->winmm.waveOutUnprepareHeader)((HWAVEOUT)pDevice->winmm.hDevicePlayback, &((WAVEHDR*)pDevice->winmm.pWAVEHDRPlayback)[iPeriod], sizeof(WAVEHDR));
+            for (iPeriod = 0; iPeriod < pDescriptorPlayback->periodCount; ++iPeriod) {
+                ((MA_PFN_waveOutUnprepareHeader)pDevice->pContext->winmm.waveOutUnprepareHeader)((HWAVEOUT)pDevice->winmm.hDevicePlayback, &((WAVEHDR*)pDevice->winmm.pWAVEHDRPlayback)[iPeriod], sizeof(WAVEHDR));
             }
         }
 
-        ((MA_PFN_waveOutClose)pContext->winmm.waveOutClose)((HWAVEOUT)pDevice->winmm.hDevicePlayback);
+        ((MA_PFN_waveOutClose)pDevice->pContext->winmm.waveOutClose)((HWAVEOUT)pDevice->winmm.hDevicePlayback);
     }
 
-    ma__free_from_callbacks(pDevice->winmm._pHeapData, &pContext->allocationCallbacks);
+    ma__free_from_callbacks(pDevice->winmm._pHeapData, &pDevice->pContext->allocationCallbacks);
     return ma_post_error(pDevice, MA_LOG_LEVEL_ERROR, errorMsg, errorCode);
+}
+
+static ma_result ma_device_start__winmm(ma_device* pDevice)
+{
+    MA_ASSERT(pDevice != NULL);
+
+    if (pDevice->type == ma_device_type_capture || pDevice->type == ma_device_type_duplex) {
+        MMRESULT resultMM;
+        WAVEHDR* pWAVEHDR;
+        ma_uint32 iPeriod;
+
+        pWAVEHDR = (WAVEHDR*)pDevice->winmm.pWAVEHDRCapture;
+
+        /* Make sure the event is reset to a non-signaled state to ensure we don't prematurely return from WaitForSingleObject(). */
+        ResetEvent((HANDLE)pDevice->winmm.hEventCapture);
+
+        /* To start the device we attach all of the buffers and then start it. As the buffers are filled with data we will get notifications. */
+        for (iPeriod = 0; iPeriod < pDevice->capture.internalPeriods; ++iPeriod) {
+            resultMM = ((MA_PFN_waveInAddBuffer)pDevice->pContext->winmm.waveInAddBuffer)((HWAVEIN)pDevice->winmm.hDeviceCapture, &((LPWAVEHDR)pDevice->winmm.pWAVEHDRCapture)[iPeriod], sizeof(WAVEHDR));
+            if (resultMM != MMSYSERR_NOERROR) {
+                return ma_post_error(pDevice, MA_LOG_LEVEL_ERROR, "[WinMM] Failed to attach input buffers to capture device in preparation for capture.", ma_result_from_MMRESULT(resultMM));
+            }
+
+            /* Make sure all of the buffers start out locked. We don't want to access them until the backend tells us we can. */
+            pWAVEHDR[iPeriod].dwUser = 1;   /* 1 = locked. */
+        }
+
+        /* Capture devices need to be explicitly started, unlike playback devices. */
+        resultMM = ((MA_PFN_waveInStart)pDevice->pContext->winmm.waveInStart)((HWAVEIN)pDevice->winmm.hDeviceCapture);
+        if (resultMM != MMSYSERR_NOERROR) {
+            return ma_post_error(pDevice, MA_LOG_LEVEL_ERROR, "[WinMM] Failed to start backend device.", ma_result_from_MMRESULT(resultMM));
+        }
+    }
+
+    if (pDevice->type == ma_device_type_playback || pDevice->type == ma_device_type_duplex) {
+        /* Don't need to do anything for playback. It'll be started automatically in ma_device_start__winmm(). */
+    }
+
+    return MA_SUCCESS;
 }
 
 static ma_result ma_device_stop__winmm(ma_device* pDevice)
@@ -16851,7 +17388,7 @@ static ma_result ma_device_write__winmm(ma_device* pDevice, const void* pPCMFram
         }
 
         /* If the device has been stopped we need to break. */
-        if (ma_device__get_state(pDevice) != MA_STATE_STARTED) {
+        if (ma_device_get_state(pDevice) != MA_STATE_STARTED) {
             break;
         }
     }
@@ -16940,7 +17477,7 @@ static ma_result ma_device_read__winmm(ma_device* pDevice, void* pPCMFrames, ma_
         }
 
         /* If the device has been stopped we need to break. */
-        if (ma_device__get_state(pDevice) != MA_STATE_STARTED) {
+        if (ma_device_get_state(pDevice) != MA_STATE_STARTED) {
             break;
         }
     }
@@ -16948,201 +17485,6 @@ static ma_result ma_device_read__winmm(ma_device* pDevice, void* pPCMFrames, ma_
     if (pFramesRead != NULL) {
         *pFramesRead = totalFramesRead;
     }
-
-    return result;
-}
-
-static ma_result ma_device_main_loop__winmm(ma_device* pDevice)
-{
-    ma_result result = MA_SUCCESS;
-    ma_bool32 exitLoop = MA_FALSE;
-    
-    MA_ASSERT(pDevice != NULL);
-
-    /* The capture device needs to be started immediately. */
-    if (pDevice->type == ma_device_type_capture || pDevice->type == ma_device_type_duplex) {
-        MMRESULT resultMM;
-        WAVEHDR* pWAVEHDR;
-        ma_uint32 iPeriod;
-
-        pWAVEHDR = (WAVEHDR*)pDevice->winmm.pWAVEHDRCapture;
-
-        /* Make sure the event is reset to a non-signaled state to ensure we don't prematurely return from WaitForSingleObject(). */
-        ResetEvent((HANDLE)pDevice->winmm.hEventCapture);
-
-        /* To start the device we attach all of the buffers and then start it. As the buffers are filled with data we will get notifications. */
-        for (iPeriod = 0; iPeriod < pDevice->capture.internalPeriods; ++iPeriod) {
-            resultMM = ((MA_PFN_waveInAddBuffer)pDevice->pContext->winmm.waveInAddBuffer)((HWAVEIN)pDevice->winmm.hDeviceCapture, &((LPWAVEHDR)pDevice->winmm.pWAVEHDRCapture)[iPeriod], sizeof(WAVEHDR));
-            if (resultMM != MMSYSERR_NOERROR) {
-                return ma_post_error(pDevice, MA_LOG_LEVEL_ERROR, "[WinMM] Failed to attach input buffers to capture device in preparation for capture.", ma_result_from_MMRESULT(resultMM));
-            }
-
-            /* Make sure all of the buffers start out locked. We don't want to access them until the backend tells us we can. */
-            pWAVEHDR[iPeriod].dwUser = 1;   /* 1 = locked. */
-        }
-
-        /* Capture devices need to be explicitly started, unlike playback devices. */
-        resultMM = ((MA_PFN_waveInStart)pDevice->pContext->winmm.waveInStart)((HWAVEIN)pDevice->winmm.hDeviceCapture);
-        if (resultMM != MMSYSERR_NOERROR) {
-            return ma_post_error(pDevice, MA_LOG_LEVEL_ERROR, "[WinMM] Failed to start backend device.", ma_result_from_MMRESULT(resultMM));
-        }
-    }
-
-
-    while (ma_device__get_state(pDevice) == MA_STATE_STARTED && !exitLoop) {
-        switch (pDevice->type)
-        {
-            case ma_device_type_duplex:
-            {
-                /* The process is: device_read -> convert -> callback -> convert -> device_write */
-                ma_uint32 totalCapturedDeviceFramesProcessed = 0;
-                ma_uint32 capturedDevicePeriodSizeInFrames = ma_min(pDevice->capture.internalPeriodSizeInFrames, pDevice->playback.internalPeriodSizeInFrames);
-                    
-                while (totalCapturedDeviceFramesProcessed < capturedDevicePeriodSizeInFrames) {
-                    ma_uint8  capturedDeviceData[MA_DATA_CONVERTER_STACK_BUFFER_SIZE];
-                    ma_uint8  playbackDeviceData[MA_DATA_CONVERTER_STACK_BUFFER_SIZE];
-                    ma_uint32 capturedDeviceDataCapInFrames = sizeof(capturedDeviceData) / ma_get_bytes_per_frame(pDevice->capture.internalFormat,  pDevice->capture.internalChannels);
-                    ma_uint32 playbackDeviceDataCapInFrames = sizeof(playbackDeviceData) / ma_get_bytes_per_frame(pDevice->playback.internalFormat, pDevice->playback.internalChannels);
-                    ma_uint32 capturedDeviceFramesRemaining;
-                    ma_uint32 capturedDeviceFramesProcessed;
-                    ma_uint32 capturedDeviceFramesToProcess;
-                    ma_uint32 capturedDeviceFramesToTryProcessing = capturedDevicePeriodSizeInFrames - totalCapturedDeviceFramesProcessed;
-                    if (capturedDeviceFramesToTryProcessing > capturedDeviceDataCapInFrames) {
-                        capturedDeviceFramesToTryProcessing = capturedDeviceDataCapInFrames;
-                    }
-
-                    result = ma_device_read__winmm(pDevice, capturedDeviceData, capturedDeviceFramesToTryProcessing, &capturedDeviceFramesToProcess);
-                    if (result != MA_SUCCESS) {
-                        exitLoop = MA_TRUE;
-                        break;
-                    }
-
-                    capturedDeviceFramesRemaining = capturedDeviceFramesToProcess;
-                    capturedDeviceFramesProcessed = 0;
-
-                    for (;;) {
-                        ma_uint8  capturedClientData[MA_DATA_CONVERTER_STACK_BUFFER_SIZE];
-                        ma_uint8  playbackClientData[MA_DATA_CONVERTER_STACK_BUFFER_SIZE];
-                        ma_uint32 capturedClientDataCapInFrames = sizeof(capturedClientData) / ma_get_bytes_per_frame(pDevice->capture.format, pDevice->capture.channels);
-                        ma_uint32 playbackClientDataCapInFrames = sizeof(playbackClientData) / ma_get_bytes_per_frame(pDevice->playback.format, pDevice->playback.channels);
-                        ma_uint64 capturedClientFramesToProcessThisIteration = ma_min(capturedClientDataCapInFrames, playbackClientDataCapInFrames);
-                        ma_uint64 capturedDeviceFramesToProcessThisIteration = capturedDeviceFramesRemaining;
-                        ma_uint8* pRunningCapturedDeviceFrames = ma_offset_ptr(capturedDeviceData, capturedDeviceFramesProcessed * ma_get_bytes_per_frame(pDevice->capture.internalFormat, pDevice->capture.internalChannels));
-
-                        /* Convert capture data from device format to client format. */
-                        result = ma_data_converter_process_pcm_frames(&pDevice->capture.converter, pRunningCapturedDeviceFrames, &capturedDeviceFramesToProcessThisIteration, capturedClientData, &capturedClientFramesToProcessThisIteration);
-                        if (result != MA_SUCCESS) {
-                            break;
-                        }
-
-                        /*
-                        If we weren't able to generate any output frames it must mean we've exhaused all of our input. The only time this would not be the case is if capturedClientData was too small
-                        which should never be the case when it's of the size MA_DATA_CONVERTER_STACK_BUFFER_SIZE.
-                        */
-                        if (capturedClientFramesToProcessThisIteration == 0) {
-                            break;
-                        }
-
-                        ma_device__on_data(pDevice, playbackClientData, capturedClientData, (ma_uint32)capturedClientFramesToProcessThisIteration);    /* Safe cast .*/
-
-                        capturedDeviceFramesProcessed += (ma_uint32)capturedDeviceFramesToProcessThisIteration; /* Safe cast. */
-                        capturedDeviceFramesRemaining -= (ma_uint32)capturedDeviceFramesToProcessThisIteration; /* Safe cast. */
-
-                        /* At this point the playbackClientData buffer should be holding data that needs to be written to the device. */
-                        for (;;) {
-                            ma_uint64 convertedClientFrameCount = capturedClientFramesToProcessThisIteration;
-                            ma_uint64 convertedDeviceFrameCount = playbackDeviceDataCapInFrames;
-                            result = ma_data_converter_process_pcm_frames(&pDevice->playback.converter, playbackClientData, &convertedClientFrameCount, playbackDeviceData, &convertedDeviceFrameCount);
-                            if (result != MA_SUCCESS) {
-                                break;
-                            }
-
-                            result = ma_device_write__winmm(pDevice, playbackDeviceData, (ma_uint32)convertedDeviceFrameCount, NULL);  /* Safe cast. */
-                            if (result != MA_SUCCESS) {
-                                exitLoop = MA_TRUE;
-                                break;
-                            }
-
-                            capturedClientFramesToProcessThisIteration -= (ma_uint32)convertedClientFrameCount;  /* Safe cast. */
-                            if (capturedClientFramesToProcessThisIteration == 0) {
-                                break;
-                            }
-                        }
-
-                        /* In case an error happened from ma_device_write__winmm()... */
-                        if (result != MA_SUCCESS) {
-                            exitLoop = MA_TRUE;
-                            break;
-                        }
-                    }
-
-                    totalCapturedDeviceFramesProcessed += capturedDeviceFramesProcessed;
-                }
-            } break;
-
-            case ma_device_type_capture:
-            {
-                /* We read in chunks of the period size, but use a stack allocated buffer for the intermediary. */
-                ma_uint8 intermediaryBuffer[MA_DATA_CONVERTER_STACK_BUFFER_SIZE];
-                ma_uint32 intermediaryBufferSizeInFrames = sizeof(intermediaryBuffer) / ma_get_bytes_per_frame(pDevice->capture.internalFormat, pDevice->capture.internalChannels);
-                ma_uint32 periodSizeInFrames = pDevice->capture.internalPeriodSizeInFrames;
-                ma_uint32 framesReadThisPeriod = 0;
-                while (framesReadThisPeriod < periodSizeInFrames) {
-                    ma_uint32 framesRemainingInPeriod = periodSizeInFrames - framesReadThisPeriod;
-                    ma_uint32 framesProcessed;
-                    ma_uint32 framesToReadThisIteration = framesRemainingInPeriod;
-                    if (framesToReadThisIteration > intermediaryBufferSizeInFrames) {
-                        framesToReadThisIteration = intermediaryBufferSizeInFrames;
-                    }
-
-                    result = ma_device_read__winmm(pDevice, intermediaryBuffer, framesToReadThisIteration, &framesProcessed);
-                    if (result != MA_SUCCESS) {
-                        exitLoop = MA_TRUE;
-                        break;
-                    }
-
-                    ma_device__send_frames_to_client(pDevice, framesProcessed, intermediaryBuffer);
-
-                    framesReadThisPeriod += framesProcessed;
-                }
-            } break;
-
-            case ma_device_type_playback:
-            {
-                /* We write in chunks of the period size, but use a stack allocated buffer for the intermediary. */
-                ma_uint8 intermediaryBuffer[MA_DATA_CONVERTER_STACK_BUFFER_SIZE];
-                ma_uint32 intermediaryBufferSizeInFrames = sizeof(intermediaryBuffer) / ma_get_bytes_per_frame(pDevice->playback.internalFormat, pDevice->playback.internalChannels);
-                ma_uint32 periodSizeInFrames = pDevice->playback.internalPeriodSizeInFrames;
-                ma_uint32 framesWrittenThisPeriod = 0;
-                while (framesWrittenThisPeriod < periodSizeInFrames) {
-                    ma_uint32 framesRemainingInPeriod = periodSizeInFrames - framesWrittenThisPeriod;
-                    ma_uint32 framesProcessed;
-                    ma_uint32 framesToWriteThisIteration = framesRemainingInPeriod;
-                    if (framesToWriteThisIteration > intermediaryBufferSizeInFrames) {
-                        framesToWriteThisIteration = intermediaryBufferSizeInFrames;
-                    }
-
-                    ma_device__read_frames_from_client(pDevice, framesToWriteThisIteration, intermediaryBuffer);
-
-                    result = ma_device_write__winmm(pDevice, intermediaryBuffer, framesToWriteThisIteration, &framesProcessed);
-                    if (result != MA_SUCCESS) {
-                        exitLoop = MA_TRUE;
-                        break;
-                    }
-
-                    framesWrittenThisPeriod += framesProcessed;
-                }
-            } break;
-
-            /* To silence a warning. Will never hit this. */
-            case ma_device_type_loopback:
-            default: break;
-        }
-    }
-
-
-    /* Here is where the device is started. */
-    ma_device_stop__winmm(pDevice);
 
     return result;
 }
@@ -17156,7 +17498,7 @@ static ma_result ma_context_uninit__winmm(ma_context* pContext)
     return MA_SUCCESS;
 }
 
-static ma_result ma_context_init__winmm(const ma_context_config* pConfig, ma_context* pContext)
+static ma_result ma_context_init__winmm(ma_context* pContext, const ma_context_config* pConfig, ma_backend_callbacks* pCallbacks)
 {
     MA_ASSERT(pContext != NULL);
 
@@ -17185,15 +17527,17 @@ static ma_result ma_context_init__winmm(const ma_context_config* pConfig, ma_con
     pContext->winmm.waveInStart            = ma_dlsym(pContext, pContext->winmm.hWinMM, "waveInStart");
     pContext->winmm.waveInReset            = ma_dlsym(pContext, pContext->winmm.hWinMM, "waveInReset");
 
-    pContext->onUninit         = ma_context_uninit__winmm;
-    pContext->onDeviceIDEqual  = ma_context_is_device_id_equal__winmm;
-    pContext->onEnumDevices    = ma_context_enumerate_devices__winmm;
-    pContext->onGetDeviceInfo  = ma_context_get_device_info__winmm;
-    pContext->onDeviceInit     = ma_device_init__winmm;
-    pContext->onDeviceUninit   = ma_device_uninit__winmm;
-    pContext->onDeviceStart    = NULL; /* Not used with synchronous backends. */
-    pContext->onDeviceStop     = NULL; /* Not used with synchronous backends. */
-    pContext->onDeviceMainLoop = ma_device_main_loop__winmm;
+    pCallbacks->onContextInit             = ma_context_init__winmm;
+    pCallbacks->onContextUninit           = ma_context_uninit__winmm;
+    pCallbacks->onContextEnumerateDevices = ma_context_enumerate_devices__winmm;
+    pCallbacks->onContextGetDeviceInfo    = ma_context_get_device_info__winmm;
+    pCallbacks->onDeviceInit              = ma_device_init__winmm;
+    pCallbacks->onDeviceUninit            = ma_device_uninit__winmm;
+    pCallbacks->onDeviceStart             = ma_device_start__winmm;
+    pCallbacks->onDeviceStop              = ma_device_stop__winmm;
+    pCallbacks->onDeviceRead              = ma_device_read__winmm;
+    pCallbacks->onDeviceWrite             = ma_device_write__winmm;
+    pCallbacks->onDeviceAudioThread       = NULL;   /* This is a blocking read-write API, so this can be NULL since miniaudio will manage the audio thread for us. */
 
     return MA_SUCCESS;
 }
@@ -17872,7 +18216,7 @@ static ma_result ma_context_open_pcm__alsa(ma_context* pContext, ma_share_mode s
     } else {
         /*
         We're trying to open a specific device. There's a few things to consider here:
-        
+
         miniaudio recongnizes a special format of device id that excludes the "hw", "dmix", etc. prefix. It looks like this: ":0,0", ":0,1", etc. When
         an ID of this format is specified, it indicates to miniaudio that it can try different combinations of plugins ("hw", "dmix", etc.) until it
         finds an appropriate one that works. This comes in very handy when trying to open a device in shared mode ("dmix"), vs exclusive mode ("hw").
@@ -17923,16 +18267,6 @@ static ma_result ma_context_open_pcm__alsa(ma_context* pContext, ma_share_mode s
     return MA_SUCCESS;
 }
 
-
-static ma_bool32 ma_context_is_device_id_equal__alsa(ma_context* pContext, const ma_device_id* pID0, const ma_device_id* pID1)
-{
-    MA_ASSERT(pContext != NULL);
-    MA_ASSERT(pID0 != NULL);
-    MA_ASSERT(pID1 != NULL);
-    (void)pContext;
-
-    return ma_strcmp(pID0->alsa, pID1->alsa) == 0;
-}
 
 static ma_result ma_context_enumerate_devices__alsa(ma_context* pContext, ma_enum_devices_callback_proc callback, void* pUserData)
 {
@@ -18016,11 +18350,20 @@ static ma_result ma_context_enumerate_devices__alsa(ma_context* pContext, ma_enu
         ma_strncpy_s(deviceInfo.id.alsa, sizeof(deviceInfo.id.alsa), hwid, (size_t)-1);
 
         /*
+        There's no good way to determine whether or not a device is the default on Linux. We're just going to do something simple and
+        just use the name of "default" as the indicator.
+        */
+        if (ma_strcmp(deviceInfo.id.alsa, "default") == 0) {
+            deviceInfo.isDefault = MA_TRUE;
+        }
+
+
+        /*
         DESC is the friendly name. We treat this slightly differently depending on whether or not we are using verbose
         device enumeration. In verbose mode we want to take the entire description so that the end-user can distinguish
         between the subdevices of each card/dev pair. In simplified mode, however, we only want the first part of the
         description.
-        
+
         The value in DESC seems to be split into two lines, with the first line being the name of the device and the
         second line being a description of the device. I don't like having the description be across two lines because
         it makes formatting ugly and annoying. I'm therefore deciding to put it all on a single line with the second line
@@ -18109,11 +18452,13 @@ static ma_bool32 ma_context_get_device_info_enum_callback__alsa(ma_context* pCon
     ma_context_get_device_info_enum_callback_data__alsa* pData = (ma_context_get_device_info_enum_callback_data__alsa*)pUserData;
     MA_ASSERT(pData != NULL);
 
+    (void)pContext;
+
     if (pData->pDeviceID == NULL && ma_strcmp(pDeviceInfo->id.alsa, "default") == 0) {
         ma_strncpy_s(pData->pDeviceInfo->name, sizeof(pData->pDeviceInfo->name), pDeviceInfo->name, (size_t)-1);
         pData->foundDevice = MA_TRUE;
     } else {
-        if (pData->deviceType == deviceType && ma_context_is_device_id_equal__alsa(pContext, pData->pDeviceID, &pDeviceInfo->id)) {
+        if (pData->deviceType == deviceType && (pData->pDeviceID != NULL && ma_strcmp(pData->pDeviceID->alsa, pDeviceInfo->id.alsa) == 0)) {
             ma_strncpy_s(pData->pDeviceInfo->name, sizeof(pData->pDeviceInfo->name), pDeviceInfo->name, (size_t)-1);
             pData->foundDevice = MA_TRUE;
         }
@@ -18136,9 +18481,9 @@ static ma_result ma_context_get_device_info__alsa(ma_context* pContext, ma_devic
     MA_ASSERT(pContext != NULL);
 
     /* We just enumerate to find basic information about the device. */
-    data.deviceType = deviceType;
-    data.pDeviceID = pDeviceID;
-    data.shareMode = shareMode;
+    data.deviceType  = deviceType;
+    data.pDeviceID   = pDeviceID;
+    data.shareMode   = shareMode;
     data.pDeviceInfo = pDeviceInfo;
     data.foundDevice = MA_FALSE;
     result = ma_context_enumerate_devices__alsa(pContext, ma_context_get_device_info_enum_callback__alsa, &data);
@@ -18150,6 +18495,10 @@ static ma_result ma_context_get_device_info__alsa(ma_context* pContext, ma_devic
         return MA_NO_DEVICE;
     }
 
+    if (ma_strcmp(pDeviceInfo->id.alsa, "default") == 0) {
+        pDeviceInfo->isDefault = MA_TRUE;
+    }
+
     /* For detailed info we need to open the device. */
     result = ma_context_open_pcm__alsa(pContext, shareMode, deviceType, pDeviceID, 0, &pPCM);
     if (result != MA_SUCCESS) {
@@ -18159,12 +18508,14 @@ static ma_result ma_context_get_device_info__alsa(ma_context* pContext, ma_devic
     /* We need to initialize a HW parameters object in order to know what formats are supported. */
     pHWParams = (ma_snd_pcm_hw_params_t*)ma__calloc_from_callbacks(((ma_snd_pcm_hw_params_sizeof_proc)pContext->alsa.snd_pcm_hw_params_sizeof)(), &pContext->allocationCallbacks);
     if (pHWParams == NULL) {
+        ((ma_snd_pcm_close_proc)pContext->alsa.snd_pcm_close)(pPCM);
         return MA_OUT_OF_MEMORY;
     }
 
     resultALSA = ((ma_snd_pcm_hw_params_any_proc)pContext->alsa.snd_pcm_hw_params_any)(pPCM, pHWParams);
     if (resultALSA < 0) {
         ma__free_from_callbacks(pHWParams, &pContext->allocationCallbacks);
+        ((ma_snd_pcm_close_proc)pContext->alsa.snd_pcm_close)(pPCM);
         return ma_context_post_error(pContext, NULL, MA_LOG_LEVEL_ERROR, "[ALSA] Failed to initialize hardware parameters. snd_pcm_hw_params_any() failed.", ma_result_from_errno(-resultALSA));
     }
 
@@ -18177,6 +18528,7 @@ static ma_result ma_context_get_device_info__alsa(ma_context* pContext, ma_devic
     pFormatMask = (ma_snd_pcm_format_mask_t*)ma__calloc_from_callbacks(((ma_snd_pcm_format_mask_sizeof_proc)pContext->alsa.snd_pcm_format_mask_sizeof)(), &pContext->allocationCallbacks);
     if (pFormatMask == NULL) {
         ma__free_from_callbacks(pHWParams, &pContext->allocationCallbacks);
+        ((ma_snd_pcm_close_proc)pContext->alsa.snd_pcm_close)(pPCM);
         return MA_OUT_OF_MEMORY;
     }
 
@@ -18277,7 +18629,7 @@ static ma_uint32 ma_device__wait_for_frames__alsa(ma_device* pDevice, ma_bool32*
 static ma_bool32 ma_device_read_from_client_and_write__alsa(ma_device* pDevice)
 {
     MA_ASSERT(pDevice != NULL);
-    if (!ma_device_is_started(pDevice) && ma_device__get_state(pDevice) != MA_STATE_STARTING) {
+    if (!ma_device_is_started(pDevice) && ma_device_get_state(pDevice) != MA_STATE_STARTING) {
         return MA_FALSE;
     }
     if (pDevice->alsa.breakFromMainLoop) {
@@ -18692,7 +19044,7 @@ static ma_result ma_device_init_by_type__alsa(ma_context* pContext, const ma_dev
             ((ma_snd_pcm_close_proc)pDevice->pContext->alsa.snd_pcm_close)(pPCM);
             return ma_post_error(pDevice, MA_LOG_LEVEL_ERROR, "[ALSA] Format not supported. snd_pcm_hw_params_set_format() failed.", ma_result_from_errno(-resultALSA));
         }
-        
+
         internalFormat = ma_format_from_alsa(formatALSA);
         if (internalFormat == ma_format_unknown) {
             ma__free_from_callbacks(pHWParams, &pContext->allocationCallbacks);
@@ -18721,16 +19073,16 @@ static ma_result ma_device_init_by_type__alsa(ma_context* pContext, const ma_dev
         It appears there's either a bug in ALSA, a bug in some drivers, or I'm doing something silly; but having resampling enabled causes
         problems with some device configurations when used in conjunction with MMAP access mode. To fix this problem we need to disable
         resampling.
-        
+
         To reproduce this problem, open the "plug:dmix" device, and set the sample rate to 44100. Internally, it looks like dmix uses a
         sample rate of 48000. The hardware parameters will get set correctly with no errors, but it looks like the 44100 -> 48000 resampling
         doesn't work properly - but only with MMAP access mode. You will notice skipping/crackling in the audio, and it'll run at a slightly
         faster rate.
-        
+
         miniaudio has built-in support for sample rate conversion (albeit low quality at the moment), so disabling resampling should be fine
         for us. The only problem is that it won't be taking advantage of any kind of hardware-accelerated resampling and it won't be very
         good quality until I get a chance to improve the quality of miniaudio's software sample rate conversion.
-        
+
         I don't currently know if the dmix plugin is the only one with this error. Indeed, this is the only one I've been able to reproduce
         this error with. In the future, we may want to restrict the disabling of resampling to only known bad plugins.
         */
@@ -19081,7 +19433,7 @@ static ma_result ma_device_main_loop__alsa(ma_device* pDevice)
         }
     }
 
-    while (ma_device__get_state(pDevice) == MA_STATE_STARTED && !exitLoop) {
+    while (ma_device_get_state(pDevice) == MA_STATE_STARTED && !exitLoop) {
         switch (pDevice->type)
         {
             case ma_device_type_duplex:
@@ -19095,7 +19447,7 @@ static ma_result ma_device_main_loop__alsa(ma_device* pDevice)
                     /* The process is: device_read -> convert -> callback -> convert -> device_write */
                     ma_uint32 totalCapturedDeviceFramesProcessed = 0;
                     ma_uint32 capturedDevicePeriodSizeInFrames = ma_min(pDevice->capture.internalPeriodSizeInFrames, pDevice->playback.internalPeriodSizeInFrames);
-                    
+
                     while (totalCapturedDeviceFramesProcessed < capturedDevicePeriodSizeInFrames) {
                         ma_uint8  capturedDeviceData[MA_DATA_CONVERTER_STACK_BUFFER_SIZE];
                         ma_uint8  playbackDeviceData[MA_DATA_CONVERTER_STACK_BUFFER_SIZE];
@@ -19250,7 +19602,7 @@ static ma_result ma_device_main_loop__alsa(ma_device* pDevice)
             /* To silence a warning. Will never hit this. */
             case ma_device_type_loopback:
             default: break;
-        } 
+        }
     }
 
     /* Here is where the device needs to be stopped. */
@@ -19496,7 +19848,6 @@ static ma_result ma_context_init__alsa(const ma_context_config* pConfig, ma_cont
     }
 
     pContext->onUninit         = ma_context_uninit__alsa;
-    pContext->onDeviceIDEqual  = ma_context_is_device_id_equal__alsa;
     pContext->onEnumDevices    = ma_context_enumerate_devices__alsa;
     pContext->onGetDeviceInfo  = ma_context_get_device_info__alsa;
     pContext->onDeviceInit     = ma_device_init__alsa;
@@ -19518,11 +19869,120 @@ PulseAudio Backend
 ******************************************************************************/
 #ifdef MA_HAS_PULSEAUDIO
 /*
-It is assumed pulseaudio.h is available when compile-time linking is being used. We use this for type safety when using
-compile time linking (we don't have this luxury when using runtime linking without headers).
+The PulseAudio API, along with Apple's Core Audio, is the worst of the maintream audio APIs. This is a brief description of what's going on
+in the PulseAudio backend. I apologize if this gets a bit ranty for your liking - you might want to skip this discussion.
 
-When using compile time linking, each of our ma_* equivalents should use the sames types as defined by the header. The
-reason for this is that it allow us to take advantage of proper type safety.
+PulseAudio has something they call the "Simple API", which unfortunately isn't suitable for miniaudio. I've not seen anywhere where it
+allows you to enumerate over devices, nor does it seem to support the ability to stop and start streams. Looking at the documentation, it
+appears as though the stream is constantly running and you prevent sound from being emitted or captured by simply not calling the read or
+write functions. This is not a professional solution as it would be much better to *actually* stop the underlying stream. Perhaps the
+simple API has some smarts to do this automatically, but I'm not sure. Another limitation with the simple API is that it seems inefficient
+when you want to have multiple streams to a single context. For these reasons, miniaudio is not using the simple API.
+
+Since we're not using the simple API, we're left with the asynchronous API as our only other option. And boy, is this where it starts to
+get fun, and I don't mean that in a good way...
+
+The problems start with the very name of the API - "asynchronous". Yes, this is an asynchronous oriented API which means your commands
+don't immediately take effect. You instead need to issue your commands, and then wait for them to complete. The waiting mechanism is
+enabled through the use of a "main loop". In the asychronous API you cannot get away from the main loop, and the main loop is where almost
+all of PulseAudio's problems stem from.
+
+When you first initialize PulseAudio you need an object referred to as "main loop". You can implement this yourself by defining your own
+vtable, but it's much easier to just use one of the built-in main loop implementations. There's two generic implementations called
+pa_mainloop and pa_threaded_mainloop, and another implementation specific to GLib called pa_glib_mainloop. We're using pa_threaded_mainloop
+because it simplifies management of the worker thread. The idea of the main loop object is pretty self explanatory - you're supposed to use
+it to implement a worker thread which runs in a loop. The main loop is where operations are actually executed.
+
+To initialize the main loop, you just use `pa_threaded_mainloop_new()`. This is the first function you'll call. You can then get a pointer
+to the vtable with `pa_threaded_mainloop_get_api()` (the main loop vtable is called `pa_mainloop_api`). Again, you can bypass the threaded
+main loop object entirely and just implement `pa_mainloop_api` directly, but there's no need for it unless you're doing something extremely
+specialized such as if you want to integrate it into your application's existing main loop infrastructure.
+
+Once you have your main loop vtable (the `pa_mainloop_api` object) you can create the PulseAudio context. This is very similar to
+miniaudio's context and they map to each other quite well. You have one context to many streams, which is basically the same as miniaudio's
+one `ma_context` to many `ma_device`s. Here's where it starts to get annoying, however. When you first create the PulseAudio context, which
+is done with `pa_context_new()`, it's not actually connected to anything. When you connect, you call `pa_context_connect()`. However, if
+you remember, PulseAudio is an asynchronous API. That means you cannot just assume the context is connected after `pa_context_context()`
+has returned. You instead need to wait for it to connect. To do this, you need to either wait for a callback to get fired, which you can
+set with `pa_context_set_state_callback()`, or you can continuously poll the context's state. Either way, you need to run this in a loop.
+All objects from here out are created from the context, and, I believe, you can't be creating these objects until the context is connected.
+This waiting loop is therefore unavoidable. In order for the waiting to ever complete, however, the main loop needs to be running. Before
+attempting to connect the context, the main loop needs to be started with `pa_threaded_mainloop_start()`.
+
+The reason for this asynchronous design is to support cases where you're connecting to a remote server, say through a local network or an
+internet connection. However, the *VAST* majority of cases don't involve this at all - they just connect to a local "server" running on the
+host machine. The fact that this would be the default rather than making `pa_context_connect()` synchronous tends to boggle the mind.
+
+Once the context has been created and connected you can start creating a stream. A PulseAudio stream is analogous to miniaudio's device.
+The initialization of a stream is fairly standard - you configure some attributes (analogous to miniaudio's device config) and then call
+`pa_stream_new()` to actually create it. Here is where we start to get into "operations". When configuring the stream, you can get
+information about the source (such as sample format, sample rate, etc.), however it's not synchronous. Instead, a `pa_operation` object
+is returned from `pa_context_get_source_info_by_name()` (capture) or `pa_context_get_sink_info_by_name()` (playback). Then, you need to
+run a loop (again!) to wait for the operation to complete which you can determine via a callback or polling, just like we did with the
+context. Then, as an added bonus, you need to decrement the reference counter of the `pa_operation` object to ensure memory is cleaned up.
+All of that just to retrieve basic information about a device!
+
+Once the basic information about the device has been retrieved, miniaudio can now create the stream with `ma_stream_new()`. Like the
+context, this needs to be connected. But we need to be careful here, because we're now about to introduce one of the most horrific design
+choices in PulseAudio.
+
+PulseAudio allows you to specify a callback that is fired when data can be written to or read from a stream. The language is important here
+because PulseAudio takes it literally, specifically the "can be". You would think these callbacks would be appropriate as the place for
+writing and reading data to and from the stream, and that would be right, except when it's not. When you initialize the stream, you can
+set a flag that tells PulseAudio to not start the stream automatically. This is required because miniaudio does not auto-start devices
+straight after initialization - you need to call `ma_device_start()` manually. The problem is that even when this flag is specified,
+PulseAudio will immediately fire it's write or read callback. This is *technically* correct (based on the wording in the documentation)
+because indeed, data *can* be written at this point. The problem is that it's not *practical*. It makes sense that the write/read callback
+would be where a program will want to write or read data to or from the stream, but when it's called before the application has even
+requested that the stream be started, it's just not practical because the program probably isn't ready for any kind of data delivery at
+that point (it may still need to load files or whatnot). Instead, this callback should only be fired when the application requests the
+stream be started which is how it works with literally *every* other callback-based audio API. Since miniaudio forbids firing of the data
+callback until the device has been started (as it should be with *all* callback based APIs), logic needs to be added to ensure miniaudio
+doesn't just blindly fire the application-defined data callback from within the PulseAudio callback before the stream has actually been
+started. The device state is used for this - if the state is anything other than `MA_STATE_STARTING` or `MA_STATE_STARTED`, the main data
+callback is not fired.
+
+This, unfortunately, is not the end of the problems with the PulseAudio write callback. Any normal callback based audio API will
+continuously fire the callback at regular intervals based on the size of the internal buffer. This will only ever be fired when the device
+is running, and will be fired regardless of whether or not the user actually wrote anything to the device/stream. This not the case in
+PulseAudio. In PulseAudio, the data callback will *only* be called if you wrote something to it previously. That means, if you don't call
+`pa_stream_write()`, the callback will not get fired. On the surface you wouldn't think this would matter because you should be always
+writing data, and if you don't have anything to write, just write silence. That's fine until you want to drain the stream. You see, if
+you're continuously writing data to the stream, the stream will never get drained! That means in order to drain the stream, you need to
+*not* write data to it! But remember, when you don't write data to the stream, the callback won't get fired again! Why is draining
+important? Because that's how we've defined stopping to work in miniaudio. In miniaudio, stopping the device requires it to be drained
+before returning from ma_device_stop(). So we've stopped the device, which requires us to drain, but draining requires us to *not* write
+data to the stream (or else it won't ever complete draining), but not writing to the stream means the callback won't get fired again!
+
+This becomes a problem when stopping and then restarting the device. When the device is stopped, it's drained, which requires us to *not*
+write anything to the stream. But then, since we didn't write anything to it, the write callback will *never* get called again if we just
+resume the stream naively. This means that starting the stream requires us to write data to the stream from outside the callback. This
+disconnect is something PulseAudio has got seriously wrong - there should only ever be a single source of data delivery, that being the
+callback. (I have tried using `pa_stream_flush()` to trigger the write callback to fire, but this just doesn't work for some reason.)
+
+Once you've created the stream, you need to connect it which involves the whole waiting procedure. This is the same process as the context,
+only this time you'll poll for the state with `pa_stream_get_status()`. The starting and stopping of a streaming is referred to as
+"corking" in PulseAudio. The analogy is corking a barrel. To start the stream, you uncork it, to stop it you cork it. Personally I think
+it's silly - why would you not just call it "starting" and "stopping" like any other normal audio API? Anyway, the act of corking is, you
+guessed it, asynchronous. This means you'll need our waiting loop as usual. Again, why this asynchronous design is the default is
+absolutely beyond me. Would it really be that hard to just make it run synchronously?
+
+Teardown is pretty simple (what?!). It's just a matter of calling the relevant `_unref()` function on each object in reverse order that
+they were initialized in.
+
+That's about it from the PulseAudio side. A bit ranty, I know, but they really need to fix that main loop and callback system. They're
+embarrassingly unpractical. The main loop thing is an easy fix - have synchronous versions of all APIs. If an application wants these to
+run asynchronously, they can execute them in a separate thread themselves. The desire to run these asynchronously is such a niche
+requirement - it makes no sense to make it the default. The stream write callback needs to be change, or an alternative provided, that is
+constantly fired, regardless of whether or not `pa_stream_write()` has been called, and it needs to take a pointer to a buffer as a
+parameter which the program just writes to directly rather than having to call `pa_stream_writable_size()` and `pa_stream_write()`. These
+changes alone will change PulseAudio from one of the worst audio APIs to one of the best.
+*/
+
+
+/*
+It is assumed pulseaudio.h is available when linking at compile time. When linking at compile time, we use the declarations in the header
+to check for type safety. We cannot do this when linking at run time because the header might not be available.
 */
 #ifdef MA_NO_RUNTIME_LINKING
 
@@ -19721,18 +20181,19 @@ typedef pa_sample_format_t ma_pa_sample_format_t;
 #define MA_PA_SAMPLE_S24_32LE                          PA_SAMPLE_S24_32LE
 #define MA_PA_SAMPLE_S24_32BE                          PA_SAMPLE_S24_32BE
 
-typedef pa_mainloop     ma_pa_mainloop;
-typedef pa_mainloop_api ma_pa_mainloop_api;
-typedef pa_context      ma_pa_context;
-typedef pa_operation    ma_pa_operation;
-typedef pa_stream       ma_pa_stream;
-typedef pa_spawn_api    ma_pa_spawn_api;
-typedef pa_buffer_attr  ma_pa_buffer_attr;
-typedef pa_channel_map  ma_pa_channel_map;
-typedef pa_cvolume      ma_pa_cvolume;
-typedef pa_sample_spec  ma_pa_sample_spec;
-typedef pa_sink_info    ma_pa_sink_info;
-typedef pa_source_info  ma_pa_source_info;
+typedef pa_mainloop           ma_pa_mainloop;
+typedef pa_threaded_mainloop  ma_pa_threaded_mainloop;
+typedef pa_mainloop_api       ma_pa_mainloop_api;
+typedef pa_context            ma_pa_context;
+typedef pa_operation          ma_pa_operation;
+typedef pa_stream             ma_pa_stream;
+typedef pa_spawn_api          ma_pa_spawn_api;
+typedef pa_buffer_attr        ma_pa_buffer_attr;
+typedef pa_channel_map        ma_pa_channel_map;
+typedef pa_cvolume            ma_pa_cvolume;
+typedef pa_sample_spec        ma_pa_sample_spec;
+typedef pa_sink_info          ma_pa_sink_info;
+typedef pa_source_info        ma_pa_source_info;
 
 typedef pa_context_notify_cb_t ma_pa_context_notify_cb_t;
 typedef pa_sink_info_cb_t ma_pa_sink_info_cb_t;
@@ -19921,12 +20382,13 @@ typedef int ma_pa_sample_format_t;
 #define MA_PA_SAMPLE_S24_32LE                          11
 #define MA_PA_SAMPLE_S24_32BE                          12
 
-typedef struct ma_pa_mainloop     ma_pa_mainloop;
-typedef struct ma_pa_mainloop_api ma_pa_mainloop_api;
-typedef struct ma_pa_context      ma_pa_context;
-typedef struct ma_pa_operation    ma_pa_operation;
-typedef struct ma_pa_stream       ma_pa_stream;
-typedef struct ma_pa_spawn_api    ma_pa_spawn_api;
+typedef struct ma_pa_mainloop           ma_pa_mainloop;
+typedef struct ma_pa_threaded_mainloop  ma_pa_threaded_mainloop;
+typedef struct ma_pa_mainloop_api       ma_pa_mainloop_api;
+typedef struct ma_pa_context            ma_pa_context;
+typedef struct ma_pa_operation          ma_pa_operation;
+typedef struct ma_pa_stream             ma_pa_stream;
+typedef struct ma_pa_spawn_api          ma_pa_spawn_api;
 
 typedef struct
 {
@@ -20023,9 +20485,23 @@ typedef void (* ma_pa_free_cb_t)          (void* p);
 
 typedef ma_pa_mainloop*          (* ma_pa_mainloop_new_proc)                   (void);
 typedef void                     (* ma_pa_mainloop_free_proc)                  (ma_pa_mainloop* m);
+typedef void                     (* ma_pa_mainloop_quit_proc)                  (ma_pa_mainloop* m, int retval);
 typedef ma_pa_mainloop_api*      (* ma_pa_mainloop_get_api_proc)               (ma_pa_mainloop* m);
 typedef int                      (* ma_pa_mainloop_iterate_proc)               (ma_pa_mainloop* m, int block, int* retval);
 typedef void                     (* ma_pa_mainloop_wakeup_proc)                (ma_pa_mainloop* m);
+typedef ma_pa_threaded_mainloop* (* ma_pa_threaded_mainloop_new_proc)          (void);
+typedef void                     (* ma_pa_threaded_mainloop_free_proc)         (ma_pa_threaded_mainloop* m);
+typedef int                      (* ma_pa_threaded_mainloop_start_proc)        (ma_pa_threaded_mainloop* m);
+typedef void                     (* ma_pa_threaded_mainloop_stop_proc)         (ma_pa_threaded_mainloop* m);
+typedef void                     (* ma_pa_threaded_mainloop_lock_proc)         (ma_pa_threaded_mainloop* m);
+typedef void                     (* ma_pa_threaded_mainloop_unlock_proc)       (ma_pa_threaded_mainloop* m);
+typedef void                     (* ma_pa_threaded_mainloop_wait_proc)         (ma_pa_threaded_mainloop* m);
+typedef void                     (* ma_pa_threaded_mainloop_signal_proc)       (ma_pa_threaded_mainloop* m, int wait_for_accept);
+typedef void                     (* ma_pa_threaded_mainloop_accept_proc)       (ma_pa_threaded_mainloop* m);
+typedef int                      (* ma_pa_threaded_mainloop_get_retval_proc)   (ma_pa_threaded_mainloop* m);
+typedef ma_pa_mainloop_api*      (* ma_pa_threaded_mainloop_get_api_proc)      (ma_pa_threaded_mainloop* m);
+typedef int                      (* ma_pa_threaded_mainloop_in_thread_proc)    (ma_pa_threaded_mainloop* m);
+typedef void                     (* ma_pa_threaded_mainloop_set_name_proc)     (ma_pa_threaded_mainloop* m, const char* name);
 typedef ma_pa_context*           (* ma_pa_context_new_proc)                    (ma_pa_mainloop_api* mainloop, const char* name);
 typedef void                     (* ma_pa_context_unref_proc)                  (ma_pa_context* c);
 typedef int                      (* ma_pa_context_connect_proc)                (ma_pa_context* c, const char* server, ma_pa_context_flags_t flags, const ma_pa_spawn_api* api);
@@ -20075,6 +20551,10 @@ typedef struct
 
 static ma_result ma_result_from_pulse(int result)
 {
+    if (result < 0) {
+        return MA_ERROR;
+    }
+
     switch (result) {
         case MA_PA_OK:           return MA_SUCCESS;
         case MA_PA_ERR_ACCESS:   return MA_ACCESS_DENIED;
@@ -20243,387 +20723,115 @@ static ma_pa_channel_position_t ma_channel_position_to_pulse(ma_channel position
 }
 #endif
 
-static ma_result ma_wait_for_operation__pulse(ma_context* pContext, ma_pa_mainloop* pMainLoop, ma_pa_operation* pOP)
+static void ma_mainloop_lock__pulse(ma_context* pContext, const char* what)
 {
+    (void)what;
+
     MA_ASSERT(pContext != NULL);
-    MA_ASSERT(pMainLoop != NULL);
+
+    /*printf("locking mainloop by %s\n", what);*/
+    ((ma_pa_threaded_mainloop_lock_proc)pContext->pulse.pa_threaded_mainloop_lock)((ma_pa_threaded_mainloop*)pContext->pulse.pMainLoop);
+}
+
+static void ma_mainloop_unlock__pulse(ma_context* pContext, const char* what)
+{
+    (void)what;
+
+    MA_ASSERT(pContext != NULL);
+
+    /*printf("unlocking mainloop by %s\n", what);*/
+    ((ma_pa_threaded_mainloop_unlock_proc)pContext->pulse.pa_threaded_mainloop_unlock)((ma_pa_threaded_mainloop*)pContext->pulse.pMainLoop);
+}
+
+static ma_result ma_wait_for_operation__pulse(ma_context* pContext, ma_pa_operation* pOP)
+{
+    ma_pa_operation_state_t state;
+
+    MA_ASSERT(pContext != NULL);
     MA_ASSERT(pOP != NULL);
 
-    while (((ma_pa_operation_get_state_proc)pContext->pulse.pa_operation_get_state)(pOP) == MA_PA_OPERATION_RUNNING) {
-        int error = ((ma_pa_mainloop_iterate_proc)pContext->pulse.pa_mainloop_iterate)(pMainLoop, 1, NULL);
-        if (error < 0) {
-            return ma_result_from_pulse(error);
+    for (;;) {
+        ma_mainloop_lock__pulse(pContext, "ma_wait_for_operation__pulse");
+        {
+            state = ((ma_pa_operation_get_state_proc)pContext->pulse.pa_operation_get_state)(pOP);
         }
+        ma_mainloop_unlock__pulse(pContext, "ma_wait_for_operation__pulse");
+
+        if (state != MA_PA_OPERATION_RUNNING) {
+            break;  /* Done. */
+        }
+
+        ma_yield();
     }
 
     return MA_SUCCESS;
 }
 
-static ma_result ma_device__wait_for_operation__pulse(ma_device* pDevice, ma_pa_operation* pOP)
+static ma_result ma_wait_for_operation_and_unref__pulse(ma_context* pContext, ma_pa_operation* pOP)
 {
-    MA_ASSERT(pDevice != NULL);
-    MA_ASSERT(pOP != NULL);
+    ma_result result;
 
-    return ma_wait_for_operation__pulse(pDevice->pContext, (ma_pa_mainloop*)pDevice->pulse.pMainLoop, pOP);
-}
-
-
-static ma_bool32 ma_context_is_device_id_equal__pulse(ma_context* pContext, const ma_device_id* pID0, const ma_device_id* pID1)
-{
-    MA_ASSERT(pContext != NULL);
-    MA_ASSERT(pID0 != NULL);
-    MA_ASSERT(pID1 != NULL);
-    (void)pContext;
-
-    return ma_strcmp(pID0->pulse, pID1->pulse) == 0;
-}
-
-
-typedef struct
-{
-    ma_context* pContext;
-    ma_enum_devices_callback_proc callback;
-    void* pUserData;
-    ma_bool32 isTerminated;
-} ma_context_enumerate_devices_callback_data__pulse;
-
-static void ma_context_enumerate_devices_sink_callback__pulse(ma_pa_context* pPulseContext, const ma_pa_sink_info* pSinkInfo, int endOfList, void* pUserData)
-{
-    ma_context_enumerate_devices_callback_data__pulse* pData = (ma_context_enumerate_devices_callback_data__pulse*)pUserData;
-    ma_device_info deviceInfo;
-
-    MA_ASSERT(pData != NULL);
-
-    if (endOfList || pData->isTerminated) {
-        return;
+    if (pOP == NULL) {
+        return MA_INVALID_ARGS;
     }
 
-    MA_ZERO_OBJECT(&deviceInfo);
+    result = ma_wait_for_operation__pulse(pContext, pOP);
+    ((ma_pa_operation_unref_proc)pContext->pulse.pa_operation_unref)(pOP);
 
-    /* The name from PulseAudio is the ID for miniaudio. */
-    if (pSinkInfo->name != NULL) {
-        ma_strncpy_s(deviceInfo.id.pulse, sizeof(deviceInfo.id.pulse), pSinkInfo->name, (size_t)-1);
-    }
-
-    /* The description from PulseAudio is the name for miniaudio. */
-    if (pSinkInfo->description != NULL) {
-        ma_strncpy_s(deviceInfo.name, sizeof(deviceInfo.name), pSinkInfo->description, (size_t)-1);
-    }
-
-    pData->isTerminated = !pData->callback(pData->pContext, ma_device_type_playback, &deviceInfo, pData->pUserData);
-
-    (void)pPulseContext; /* Unused. */
-}
-
-static void ma_context_enumerate_devices_source_callback__pulse(ma_pa_context* pPulseContext, const ma_pa_source_info* pSinkInfo, int endOfList, void* pUserData)
-{
-    ma_context_enumerate_devices_callback_data__pulse* pData = (ma_context_enumerate_devices_callback_data__pulse*)pUserData;
-    ma_device_info deviceInfo;
-
-    MA_ASSERT(pData != NULL);
-
-    if (endOfList || pData->isTerminated) {
-        return;
-    }
-
-    MA_ZERO_OBJECT(&deviceInfo);
-
-    /* The name from PulseAudio is the ID for miniaudio. */
-    if (pSinkInfo->name != NULL) {
-        ma_strncpy_s(deviceInfo.id.pulse, sizeof(deviceInfo.id.pulse), pSinkInfo->name, (size_t)-1);
-    }
-
-    /* The description from PulseAudio is the name for miniaudio. */
-    if (pSinkInfo->description != NULL) {
-        ma_strncpy_s(deviceInfo.name, sizeof(deviceInfo.name), pSinkInfo->description, (size_t)-1);
-    }
-
-    pData->isTerminated = !pData->callback(pData->pContext, ma_device_type_capture, &deviceInfo, pData->pUserData);
-
-    (void)pPulseContext; /* Unused. */
-}
-
-static ma_result ma_context_enumerate_devices__pulse(ma_context* pContext, ma_enum_devices_callback_proc callback, void* pUserData)
-{
-    ma_result result = MA_SUCCESS;
-    ma_context_enumerate_devices_callback_data__pulse callbackData;
-    ma_pa_operation* pOP = NULL;
-    ma_pa_mainloop* pMainLoop;
-    ma_pa_mainloop_api* pAPI;
-    ma_pa_context* pPulseContext;
-    int error;
-
-    MA_ASSERT(pContext != NULL);
-    MA_ASSERT(callback != NULL);
-
-    callbackData.pContext = pContext;
-    callbackData.callback = callback;
-    callbackData.pUserData = pUserData;
-    callbackData.isTerminated = MA_FALSE;
-
-    pMainLoop = ((ma_pa_mainloop_new_proc)pContext->pulse.pa_mainloop_new)();
-    if (pMainLoop == NULL) {
-        return MA_FAILED_TO_INIT_BACKEND;
-    }
-
-    pAPI = ((ma_pa_mainloop_get_api_proc)pContext->pulse.pa_mainloop_get_api)(pMainLoop);
-    if (pAPI == NULL) {
-        ((ma_pa_mainloop_free_proc)pContext->pulse.pa_mainloop_free)(pMainLoop);
-        return MA_FAILED_TO_INIT_BACKEND;
-    }
-
-    pPulseContext = ((ma_pa_context_new_proc)pContext->pulse.pa_context_new)(pAPI, pContext->pulse.pApplicationName);
-    if (pPulseContext == NULL) {
-        ((ma_pa_mainloop_free_proc)pContext->pulse.pa_mainloop_free)(pMainLoop);
-        return MA_FAILED_TO_INIT_BACKEND;
-    }
-
-    error = ((ma_pa_context_connect_proc)pContext->pulse.pa_context_connect)(pPulseContext, pContext->pulse.pServerName, (pContext->pulse.tryAutoSpawn) ? 0 : MA_PA_CONTEXT_NOAUTOSPAWN, NULL);
-    if (error != MA_PA_OK) {
-        ((ma_pa_context_unref_proc)pContext->pulse.pa_context_unref)(pPulseContext);
-        ((ma_pa_mainloop_free_proc)pContext->pulse.pa_mainloop_free)(pMainLoop);
-        return ma_result_from_pulse(error);
-    }
-
-    for (;;) {
-        ma_pa_context_state_t state = ((ma_pa_context_get_state_proc)pContext->pulse.pa_context_get_state)(pPulseContext);
-        if (state == MA_PA_CONTEXT_READY) {
-            break;  /* Success. */
-        }
-        if (state == MA_PA_CONTEXT_CONNECTING || state == MA_PA_CONTEXT_AUTHORIZING || state == MA_PA_CONTEXT_SETTING_NAME) {
-            error = ((ma_pa_mainloop_iterate_proc)pContext->pulse.pa_mainloop_iterate)(pMainLoop, 1, NULL);
-            if (error < 0) {
-                result = ma_result_from_pulse(error);
-                goto done;
-            }
-
-#ifdef MA_DEBUG_OUTPUT
-            printf("[PulseAudio] pa_context_get_state() returned %d. Waiting.\n", state);
-#endif
-            continue;   /* Keep trying. */
-        }
-        if (state == MA_PA_CONTEXT_UNCONNECTED || state == MA_PA_CONTEXT_FAILED || state == MA_PA_CONTEXT_TERMINATED) {
-#ifdef MA_DEBUG_OUTPUT
-            printf("[PulseAudio] pa_context_get_state() returned %d. Failed.\n", state);
-#endif
-            goto done;  /* Failed. */
-        }
-    }
-
-
-    /* Playback. */
-    if (!callbackData.isTerminated) {
-        pOP = ((ma_pa_context_get_sink_info_list_proc)pContext->pulse.pa_context_get_sink_info_list)(pPulseContext, ma_context_enumerate_devices_sink_callback__pulse, &callbackData);
-        if (pOP == NULL) {
-            result = MA_ERROR;
-            goto done;
-        }
-
-        result = ma_wait_for_operation__pulse(pContext, pMainLoop, pOP);
-        ((ma_pa_operation_unref_proc)pContext->pulse.pa_operation_unref)(pOP);
-        if (result != MA_SUCCESS) {
-            goto done;
-        }
-    }
-
-
-    /* Capture. */
-    if (!callbackData.isTerminated) {
-        pOP = ((ma_pa_context_get_source_info_list_proc)pContext->pulse.pa_context_get_source_info_list)(pPulseContext, ma_context_enumerate_devices_source_callback__pulse, &callbackData);
-        if (pOP == NULL) {
-            result = MA_ERROR;
-            goto done;
-        }
-
-        result = ma_wait_for_operation__pulse(pContext, pMainLoop, pOP);
-        ((ma_pa_operation_unref_proc)pContext->pulse.pa_operation_unref)(pOP);
-        if (result != MA_SUCCESS) {
-            goto done;
-        }
-    }
-
-done:
-    ((ma_pa_context_disconnect_proc)pContext->pulse.pa_context_disconnect)(pPulseContext);
-    ((ma_pa_context_unref_proc)pContext->pulse.pa_context_unref)(pPulseContext);
-    ((ma_pa_mainloop_free_proc)pContext->pulse.pa_mainloop_free)(pMainLoop);
     return result;
 }
 
-
-typedef struct
+static ma_result ma_context_wait_for_pa_context_to_connect__pulse(ma_context* pContext)
 {
-    ma_device_info* pDeviceInfo;
-    ma_bool32 foundDevice;
-} ma_context_get_device_info_callback_data__pulse;
-
-static void ma_context_get_device_info_sink_callback__pulse(ma_pa_context* pPulseContext, const ma_pa_sink_info* pInfo, int endOfList, void* pUserData)
-{
-    ma_context_get_device_info_callback_data__pulse* pData = (ma_context_get_device_info_callback_data__pulse*)pUserData;
-
-    if (endOfList > 0) {
-        return;
-    }
-
-    MA_ASSERT(pData != NULL);
-    pData->foundDevice = MA_TRUE;
-
-    if (pInfo->name != NULL) {
-        ma_strncpy_s(pData->pDeviceInfo->id.pulse, sizeof(pData->pDeviceInfo->id.pulse), pInfo->name, (size_t)-1);
-    }
-
-    if (pInfo->description != NULL) {
-        ma_strncpy_s(pData->pDeviceInfo->name, sizeof(pData->pDeviceInfo->name), pInfo->description, (size_t)-1);
-    }
-
-    pData->pDeviceInfo->minChannels   = pInfo->sample_spec.channels;
-    pData->pDeviceInfo->maxChannels   = pInfo->sample_spec.channels;
-    pData->pDeviceInfo->minSampleRate = pInfo->sample_spec.rate;
-    pData->pDeviceInfo->maxSampleRate = pInfo->sample_spec.rate;
-    pData->pDeviceInfo->formatCount = 1;
-    pData->pDeviceInfo->formats[0] = ma_format_from_pulse(pInfo->sample_spec.format);
-
-    (void)pPulseContext; /* Unused. */
-}
-
-static void ma_context_get_device_info_source_callback__pulse(ma_pa_context* pPulseContext, const ma_pa_source_info* pInfo, int endOfList, void* pUserData)
-{
-    ma_context_get_device_info_callback_data__pulse* pData = (ma_context_get_device_info_callback_data__pulse*)pUserData;
-
-    if (endOfList > 0) {
-        return;
-    }
-
-    MA_ASSERT(pData != NULL);
-    pData->foundDevice = MA_TRUE;
-
-    if (pInfo->name != NULL) {
-        ma_strncpy_s(pData->pDeviceInfo->id.pulse, sizeof(pData->pDeviceInfo->id.pulse), pInfo->name, (size_t)-1);
-    }
-
-    if (pInfo->description != NULL) {
-        ma_strncpy_s(pData->pDeviceInfo->name, sizeof(pData->pDeviceInfo->name), pInfo->description, (size_t)-1);
-    }
-
-    pData->pDeviceInfo->minChannels = pInfo->sample_spec.channels;
-    pData->pDeviceInfo->maxChannels = pInfo->sample_spec.channels;
-    pData->pDeviceInfo->minSampleRate = pInfo->sample_spec.rate;
-    pData->pDeviceInfo->maxSampleRate = pInfo->sample_spec.rate;
-    pData->pDeviceInfo->formatCount = 1;
-    pData->pDeviceInfo->formats[0] = ma_format_from_pulse(pInfo->sample_spec.format);
-
-    (void)pPulseContext; /* Unused. */
-}
-
-static ma_result ma_context_get_device_info__pulse(ma_context* pContext, ma_device_type deviceType, const ma_device_id* pDeviceID, ma_share_mode shareMode, ma_device_info* pDeviceInfo)
-{
-    ma_result result = MA_SUCCESS;
-    ma_context_get_device_info_callback_data__pulse callbackData;
-    ma_pa_operation* pOP = NULL;
-    ma_pa_mainloop* pMainLoop;
-    ma_pa_mainloop_api* pAPI;
-    ma_pa_context* pPulseContext;
-    int error;
-
-    MA_ASSERT(pContext != NULL);
-
-    /* No exclusive mode with the PulseAudio backend. */
-    if (shareMode == ma_share_mode_exclusive) {
-        return MA_SHARE_MODE_NOT_SUPPORTED;
-    }
-
-    callbackData.pDeviceInfo = pDeviceInfo;
-    callbackData.foundDevice = MA_FALSE;
-
-    pMainLoop = ((ma_pa_mainloop_new_proc)pContext->pulse.pa_mainloop_new)();
-    if (pMainLoop == NULL) {
-        return MA_FAILED_TO_INIT_BACKEND;
-    }
-
-    pAPI = ((ma_pa_mainloop_get_api_proc)pContext->pulse.pa_mainloop_get_api)(pMainLoop);
-    if (pAPI == NULL) {
-        ((ma_pa_mainloop_free_proc)pContext->pulse.pa_mainloop_free)(pMainLoop);
-        return MA_FAILED_TO_INIT_BACKEND;
-    }
-
-    pPulseContext = ((ma_pa_context_new_proc)pContext->pulse.pa_context_new)(pAPI, pContext->pulse.pApplicationName);
-    if (pPulseContext == NULL) {
-        ((ma_pa_mainloop_free_proc)pContext->pulse.pa_mainloop_free)(pMainLoop);
-        return MA_FAILED_TO_INIT_BACKEND;
-    }
-
-    error = ((ma_pa_context_connect_proc)pContext->pulse.pa_context_connect)(pPulseContext, pContext->pulse.pServerName, 0, NULL);
-    if (error != MA_PA_OK) {
-        ((ma_pa_context_unref_proc)pContext->pulse.pa_context_unref)(pPulseContext);
-        ((ma_pa_mainloop_free_proc)pContext->pulse.pa_mainloop_free)(pMainLoop);
-        return ma_result_from_pulse(error);
-    }
+    ma_pa_context_state_t state;
 
     for (;;) {
-        ma_pa_context_state_t state = ((ma_pa_context_get_state_proc)pContext->pulse.pa_context_get_state)(pPulseContext);
+        ma_mainloop_lock__pulse(pContext, "ma_context_wait_for_pa_context_to_connect__pulse");
+        {
+            state = ((ma_pa_context_get_state_proc)pContext->pulse.pa_context_get_state)((ma_pa_context*)pContext->pulse.pPulseContext);
+        }
+        ma_mainloop_unlock__pulse(pContext, "ma_context_wait_for_pa_context_to_connect__pulse");
+
         if (state == MA_PA_CONTEXT_READY) {
-            break;  /* Success. */
+            break;  /* Done. */
         }
-        if (state == MA_PA_CONTEXT_CONNECTING || state == MA_PA_CONTEXT_AUTHORIZING || state == MA_PA_CONTEXT_SETTING_NAME) {
-            error = ((ma_pa_mainloop_iterate_proc)pContext->pulse.pa_mainloop_iterate)(pMainLoop, 1, NULL);
-            if (error < 0) {
-                result = ma_result_from_pulse(error);
-                goto done;
-            }
 
-#ifdef MA_DEBUG_OUTPUT
-            printf("[PulseAudio] pa_context_get_state() returned %d. Waiting.\n", state);
-#endif
-            continue;   /* Keep trying. */
+        if (state == MA_PA_CONTEXT_FAILED || state == MA_PA_CONTEXT_TERMINATED) {
+            return ma_context_post_error(pContext, NULL, MA_LOG_LEVEL_ERROR, "[PulseAudio] An error occurred while connecting the PulseAudio context.", MA_ERROR);
         }
-        if (state == MA_PA_CONTEXT_UNCONNECTED || state == MA_PA_CONTEXT_FAILED || state == MA_PA_CONTEXT_TERMINATED) {
-#ifdef MA_DEBUG_OUTPUT
-            printf("[PulseAudio] pa_context_get_state() returned %d. Failed.\n", state);
-#endif
-            goto done;  /* Failed. */
-        }
+
+        ma_yield();
     }
 
-    if (deviceType == ma_device_type_playback) {
-        pOP = ((ma_pa_context_get_sink_info_by_name_proc)pContext->pulse.pa_context_get_sink_info_by_name)(pPulseContext, pDeviceID->pulse, ma_context_get_device_info_sink_callback__pulse, &callbackData);
-    } else {
-        pOP = ((ma_pa_context_get_source_info_by_name_proc)pContext->pulse.pa_context_get_source_info_by_name)(pPulseContext, pDeviceID->pulse, ma_context_get_device_info_source_callback__pulse, &callbackData);
-    }
-
-    if (pOP != NULL) {
-        ma_wait_for_operation__pulse(pContext, pMainLoop, pOP);
-        ((ma_pa_operation_unref_proc)pContext->pulse.pa_operation_unref)(pOP);
-    } else {
-        result = MA_ERROR;
-        goto done;
-    }
-
-    if (!callbackData.foundDevice) {
-        result = MA_NO_DEVICE;
-        goto done;
-    }
-
-
-done:
-    ((ma_pa_context_disconnect_proc)pContext->pulse.pa_context_disconnect)(pPulseContext);
-    ((ma_pa_context_unref_proc)pContext->pulse.pa_context_unref)(pPulseContext);
-    ((ma_pa_mainloop_free_proc)pContext->pulse.pa_mainloop_free)(pMainLoop);
-    return result;
+    /* Should never get here. */
+    return MA_SUCCESS;
 }
 
-
-static void ma_pulse_device_state_callback(ma_pa_context* pPulseContext, void* pUserData)
+static ma_result ma_context_wait_for_pa_stream_to_connect__pulse(ma_context* pContext, ma_pa_stream* pStream)
 {
-    ma_device* pDevice;
-    ma_context* pContext;
+    ma_pa_stream_state_t state;
 
-    pDevice = (ma_device*)pUserData;
-    MA_ASSERT(pDevice != NULL);
+    for (;;) {
+        ma_mainloop_lock__pulse(pContext, "ma_context_wait_for_pa_stream_to_connect__pulse");
+        {
+            state = ((ma_pa_stream_get_state_proc)pContext->pulse.pa_stream_get_state)(pStream);
+        }
+        ma_mainloop_unlock__pulse(pContext, "ma_context_wait_for_pa_stream_to_connect__pulse");
 
-    pContext = pDevice->pContext;
-    MA_ASSERT(pContext != NULL);
+        if (state == MA_PA_STREAM_READY) {
+            break;  /* Done. */
+        }
 
-    pDevice->pulse.pulseContextState = ((ma_pa_context_get_state_proc)pContext->pulse.pa_context_get_state)(pPulseContext);
+        if (state == MA_PA_STREAM_FAILED || state == MA_PA_STREAM_TERMINATED) {
+            return ma_context_post_error(pContext, NULL, MA_LOG_LEVEL_ERROR, "[PulseAudio] An error occurred while connecting the PulseAudio stream.", MA_ERROR);
+        }
+
+        ma_yield();
+    }
+
+    return MA_SUCCESS;
 }
+
 
 static void ma_device_sink_info_callback(ma_pa_context* pPulseContext, const ma_pa_sink_info* pInfo, int endOfList, void* pUserData)
 {
@@ -20689,6 +20897,315 @@ static void ma_device_source_name_callback(ma_pa_context* pPulseContext, const m
     (void)pPulseContext; /* Unused. */
 }
 
+
+static ma_result ma_context_get_sink_info__pulse(ma_context* pContext, const char* pDeviceName, ma_pa_sink_info* pSinkInfo)
+{
+    ma_pa_operation* pOP;
+
+    pOP = ((ma_pa_context_get_sink_info_by_name_proc)pContext->pulse.pa_context_get_sink_info_by_name)((ma_pa_context*)pContext->pulse.pPulseContext, pDeviceName, ma_device_sink_info_callback, pSinkInfo);
+    if (pOP == NULL) {
+        return MA_ERROR;
+    }
+
+    ma_wait_for_operation_and_unref__pulse(pContext, pOP);
+    return MA_SUCCESS;
+}
+
+static ma_result ma_context_get_source_info__pulse(ma_context* pContext, const char* pDeviceName, ma_pa_source_info* pSourceInfo)
+{
+    ma_pa_operation* pOP;
+
+    pOP = ((ma_pa_context_get_source_info_by_name_proc)pContext->pulse.pa_context_get_source_info_by_name)((ma_pa_context*)pContext->pulse.pPulseContext, pDeviceName, ma_device_source_info_callback, pSourceInfo);
+    if (pOP == NULL) {
+        return MA_ERROR;
+    }
+
+    ma_wait_for_operation_and_unref__pulse(pContext, pOP);
+    return MA_SUCCESS;
+}
+
+static ma_result ma_context_get_default_device_index__pulse(ma_context* pContext, ma_device_type deviceType, ma_uint32* pIndex)
+{
+    ma_result result;
+
+    MA_ASSERT(pContext != NULL);
+    MA_ASSERT(pIndex   != NULL);
+
+    if (pIndex != NULL) {
+        *pIndex = (ma_uint32)-1;
+    }
+
+    if (deviceType == ma_device_type_playback) {
+        ma_pa_sink_info sinkInfo;
+        result = ma_context_get_sink_info__pulse(pContext, NULL, &sinkInfo);
+        if (result != MA_SUCCESS) {
+            return result;
+        }
+
+        if (pIndex != NULL) {
+            *pIndex = sinkInfo.index;
+        }
+    }
+
+    if (deviceType == ma_device_type_capture) {
+        ma_pa_source_info sourceInfo;
+        result = ma_context_get_source_info__pulse(pContext, NULL, &sourceInfo);
+        if (result != MA_SUCCESS) {
+            return result;
+        }
+
+        if (pIndex != NULL) {
+            *pIndex = sourceInfo.index;
+        }
+    }
+
+    return MA_SUCCESS;
+}
+
+
+typedef struct
+{
+    ma_context* pContext;
+    ma_enum_devices_callback_proc callback;
+    void* pUserData;
+    ma_bool32 isTerminated;
+    ma_uint32 defaultDeviceIndexPlayback;
+    ma_uint32 defaultDeviceIndexCapture;
+} ma_context_enumerate_devices_callback_data__pulse;
+
+static void ma_context_enumerate_devices_sink_callback__pulse(ma_pa_context* pPulseContext, const ma_pa_sink_info* pSinkInfo, int endOfList, void* pUserData)
+{
+    ma_context_enumerate_devices_callback_data__pulse* pData = (ma_context_enumerate_devices_callback_data__pulse*)pUserData;
+    ma_device_info deviceInfo;
+
+    MA_ASSERT(pData != NULL);
+
+    if (endOfList || pData->isTerminated) {
+        return;
+    }
+
+    MA_ZERO_OBJECT(&deviceInfo);
+
+    /* The name from PulseAudio is the ID for miniaudio. */
+    if (pSinkInfo->name != NULL) {
+        ma_strncpy_s(deviceInfo.id.pulse, sizeof(deviceInfo.id.pulse), pSinkInfo->name, (size_t)-1);
+    }
+
+    /* The description from PulseAudio is the name for miniaudio. */
+    if (pSinkInfo->description != NULL) {
+        ma_strncpy_s(deviceInfo.name, sizeof(deviceInfo.name), pSinkInfo->description, (size_t)-1);
+    }
+
+    if (pSinkInfo->index == pData->defaultDeviceIndexPlayback) {
+        deviceInfo.isDefault = MA_TRUE;
+    }
+
+    pData->isTerminated = !pData->callback(pData->pContext, ma_device_type_playback, &deviceInfo, pData->pUserData);
+
+    (void)pPulseContext; /* Unused. */
+}
+
+static void ma_context_enumerate_devices_source_callback__pulse(ma_pa_context* pPulseContext, const ma_pa_source_info* pSourceInfo, int endOfList, void* pUserData)
+{
+    ma_context_enumerate_devices_callback_data__pulse* pData = (ma_context_enumerate_devices_callback_data__pulse*)pUserData;
+    ma_device_info deviceInfo;
+
+    MA_ASSERT(pData != NULL);
+
+    if (endOfList || pData->isTerminated) {
+        return;
+    }
+
+    MA_ZERO_OBJECT(&deviceInfo);
+
+    /* The name from PulseAudio is the ID for miniaudio. */
+    if (pSourceInfo->name != NULL) {
+        ma_strncpy_s(deviceInfo.id.pulse, sizeof(deviceInfo.id.pulse), pSourceInfo->name, (size_t)-1);
+    }
+
+    /* The description from PulseAudio is the name for miniaudio. */
+    if (pSourceInfo->description != NULL) {
+        ma_strncpy_s(deviceInfo.name, sizeof(deviceInfo.name), pSourceInfo->description, (size_t)-1);
+    }
+
+    if (pSourceInfo->index == pData->defaultDeviceIndexCapture) {
+        deviceInfo.isDefault = MA_TRUE;
+    }
+
+    pData->isTerminated = !pData->callback(pData->pContext, ma_device_type_capture, &deviceInfo, pData->pUserData);
+
+    (void)pPulseContext; /* Unused. */
+}
+
+static ma_result ma_context_enumerate_devices__pulse(ma_context* pContext, ma_enum_devices_callback_proc callback, void* pUserData)
+{
+    ma_result result = MA_SUCCESS;
+    ma_context_enumerate_devices_callback_data__pulse callbackData;
+    ma_pa_operation* pOP = NULL;
+
+    MA_ASSERT(pContext != NULL);
+    MA_ASSERT(callback != NULL);
+
+    callbackData.pContext = pContext;
+    callbackData.callback = callback;
+    callbackData.pUserData = pUserData;
+    callbackData.isTerminated = MA_FALSE;
+    callbackData.defaultDeviceIndexPlayback = (ma_uint32)-1;
+    callbackData.defaultDeviceIndexCapture  = (ma_uint32)-1;
+
+    /* We need to get the index of the default devices. */
+    ma_context_get_default_device_index__pulse(pContext, ma_device_type_playback, &callbackData.defaultDeviceIndexPlayback);
+    ma_context_get_default_device_index__pulse(pContext, ma_device_type_capture,  &callbackData.defaultDeviceIndexCapture);
+
+    /* Playback. */
+    if (!callbackData.isTerminated) {
+        pOP = ((ma_pa_context_get_sink_info_list_proc)pContext->pulse.pa_context_get_sink_info_list)((ma_pa_context*)(pContext->pulse.pPulseContext), ma_context_enumerate_devices_sink_callback__pulse, &callbackData);
+        if (pOP == NULL) {
+            result = MA_ERROR;
+            goto done;
+        }
+
+        result = ma_wait_for_operation__pulse(pContext, pOP);
+        ((ma_pa_operation_unref_proc)pContext->pulse.pa_operation_unref)(pOP);
+        if (result != MA_SUCCESS) {
+            goto done;
+        }
+    }
+
+
+    /* Capture. */
+    if (!callbackData.isTerminated) {
+        pOP = ((ma_pa_context_get_source_info_list_proc)pContext->pulse.pa_context_get_source_info_list)((ma_pa_context*)(pContext->pulse.pPulseContext), ma_context_enumerate_devices_source_callback__pulse, &callbackData);
+        if (pOP == NULL) {
+            result = MA_ERROR;
+            goto done;
+        }
+
+        result = ma_wait_for_operation__pulse(pContext, pOP);
+        ((ma_pa_operation_unref_proc)pContext->pulse.pa_operation_unref)(pOP);
+        if (result != MA_SUCCESS) {
+            goto done;
+        }
+    }
+
+done:
+    return result;
+}
+
+
+typedef struct
+{
+    ma_device_info* pDeviceInfo;
+    ma_uint32 defaultDeviceIndex;
+    ma_bool32 foundDevice;
+} ma_context_get_device_info_callback_data__pulse;
+
+static void ma_context_get_device_info_sink_callback__pulse(ma_pa_context* pPulseContext, const ma_pa_sink_info* pInfo, int endOfList, void* pUserData)
+{
+    ma_context_get_device_info_callback_data__pulse* pData = (ma_context_get_device_info_callback_data__pulse*)pUserData;
+
+    if (endOfList > 0) {
+        return;
+    }
+
+    MA_ASSERT(pData != NULL);
+    pData->foundDevice = MA_TRUE;
+
+    if (pInfo->name != NULL) {
+        ma_strncpy_s(pData->pDeviceInfo->id.pulse, sizeof(pData->pDeviceInfo->id.pulse), pInfo->name, (size_t)-1);
+    }
+
+    if (pInfo->description != NULL) {
+        ma_strncpy_s(pData->pDeviceInfo->name, sizeof(pData->pDeviceInfo->name), pInfo->description, (size_t)-1);
+    }
+
+    pData->pDeviceInfo->minChannels   = pInfo->sample_spec.channels;
+    pData->pDeviceInfo->maxChannels   = pInfo->sample_spec.channels;
+    pData->pDeviceInfo->minSampleRate = pInfo->sample_spec.rate;
+    pData->pDeviceInfo->maxSampleRate = pInfo->sample_spec.rate;
+    pData->pDeviceInfo->formatCount   = 1;
+    pData->pDeviceInfo->formats[0]    = ma_format_from_pulse(pInfo->sample_spec.format);
+
+    if (pData->defaultDeviceIndex == pInfo->index) {
+        pData->pDeviceInfo->isDefault = MA_TRUE;
+    }
+
+    (void)pPulseContext; /* Unused. */
+}
+
+static void ma_context_get_device_info_source_callback__pulse(ma_pa_context* pPulseContext, const ma_pa_source_info* pInfo, int endOfList, void* pUserData)
+{
+    ma_context_get_device_info_callback_data__pulse* pData = (ma_context_get_device_info_callback_data__pulse*)pUserData;
+
+    if (endOfList > 0) {
+        return;
+    }
+
+    MA_ASSERT(pData != NULL);
+    pData->foundDevice = MA_TRUE;
+
+    if (pInfo->name != NULL) {
+        ma_strncpy_s(pData->pDeviceInfo->id.pulse, sizeof(pData->pDeviceInfo->id.pulse), pInfo->name, (size_t)-1);
+    }
+
+    if (pInfo->description != NULL) {
+        ma_strncpy_s(pData->pDeviceInfo->name, sizeof(pData->pDeviceInfo->name), pInfo->description, (size_t)-1);
+    }
+
+    pData->pDeviceInfo->minChannels   = pInfo->sample_spec.channels;
+    pData->pDeviceInfo->maxChannels   = pInfo->sample_spec.channels;
+    pData->pDeviceInfo->minSampleRate = pInfo->sample_spec.rate;
+    pData->pDeviceInfo->maxSampleRate = pInfo->sample_spec.rate;
+    pData->pDeviceInfo->formatCount   = 1;
+    pData->pDeviceInfo->formats[0]    = ma_format_from_pulse(pInfo->sample_spec.format);
+
+    if (pData->defaultDeviceIndex == pInfo->index) {
+        pData->pDeviceInfo->isDefault = MA_TRUE;
+    }
+
+    (void)pPulseContext; /* Unused. */
+}
+
+static ma_result ma_context_get_device_info__pulse(ma_context* pContext, ma_device_type deviceType, const ma_device_id* pDeviceID, ma_share_mode shareMode, ma_device_info* pDeviceInfo)
+{
+    ma_result result = MA_SUCCESS;
+    ma_context_get_device_info_callback_data__pulse callbackData;
+    ma_pa_operation* pOP = NULL;
+
+    MA_ASSERT(pContext != NULL);
+
+    /* No exclusive mode with the PulseAudio backend. */
+    if (shareMode == ma_share_mode_exclusive) {
+        return MA_SHARE_MODE_NOT_SUPPORTED;
+    }
+
+    callbackData.pDeviceInfo = pDeviceInfo;
+    callbackData.foundDevice = MA_FALSE;
+
+    result = ma_context_get_default_device_index__pulse(pContext, deviceType, &callbackData.defaultDeviceIndex);
+
+    if (deviceType == ma_device_type_playback) {
+        pOP = ((ma_pa_context_get_sink_info_by_name_proc)pContext->pulse.pa_context_get_sink_info_by_name)((ma_pa_context*)(pContext->pulse.pPulseContext), pDeviceID->pulse, ma_context_get_device_info_sink_callback__pulse, &callbackData);
+    } else {
+        pOP = ((ma_pa_context_get_source_info_by_name_proc)pContext->pulse.pa_context_get_source_info_by_name)((ma_pa_context*)(pContext->pulse.pPulseContext), pDeviceID->pulse, ma_context_get_device_info_source_callback__pulse, &callbackData);
+    }
+
+    if (pOP != NULL) {
+        ma_wait_for_operation_and_unref__pulse(pContext, pOP);
+    } else {
+        result = MA_ERROR;
+        goto done;
+    }
+
+    if (!callbackData.foundDevice) {
+        result = MA_NO_DEVICE;
+        goto done;
+    }
+
+done:
+    return result;
+}
+
 static void ma_device_uninit__pulse(ma_device* pDevice)
 {
     ma_context* pContext;
@@ -20702,14 +21219,15 @@ static void ma_device_uninit__pulse(ma_device* pDevice)
         ((ma_pa_stream_disconnect_proc)pContext->pulse.pa_stream_disconnect)((ma_pa_stream*)pDevice->pulse.pStreamCapture);
         ((ma_pa_stream_unref_proc)pContext->pulse.pa_stream_unref)((ma_pa_stream*)pDevice->pulse.pStreamCapture);
     }
+
     if (pDevice->type == ma_device_type_playback || pDevice->type == ma_device_type_duplex) {
         ((ma_pa_stream_disconnect_proc)pContext->pulse.pa_stream_disconnect)((ma_pa_stream*)pDevice->pulse.pStreamPlayback);
         ((ma_pa_stream_unref_proc)pContext->pulse.pa_stream_unref)((ma_pa_stream*)pDevice->pulse.pStreamPlayback);
     }
 
-    ((ma_pa_context_disconnect_proc)pContext->pulse.pa_context_disconnect)((ma_pa_context*)pDevice->pulse.pPulseContext);
-    ((ma_pa_context_unref_proc)pContext->pulse.pa_context_unref)((ma_pa_context*)pDevice->pulse.pPulseContext);
-    ((ma_pa_mainloop_free_proc)pContext->pulse.pa_mainloop_free)((ma_pa_mainloop*)pDevice->pulse.pMainLoop);
+    if (pDevice->type == ma_device_type_duplex) {
+        ma_pcm_rb_uninit(&pDevice->pulse.duplexRB);
+    }
 }
 
 static ma_pa_buffer_attr ma_device__pa_buffer_attr_new(ma_uint32 periodSizeInFrames, ma_uint32 periods, const ma_pa_sample_spec* ss)
@@ -20724,7 +21242,7 @@ static ma_pa_buffer_attr ma_device__pa_buffer_attr_new(ma_uint32 periodSizeInFra
     return attr;
 }
 
-static ma_pa_stream* ma_device__pa_stream_new__pulse(ma_device* pDevice, const char* pStreamName, const ma_pa_sample_spec* ss, const ma_pa_channel_map* cmap)
+static ma_pa_stream* ma_context__pa_stream_new__pulse(ma_context* pContext, const char* pStreamName, const ma_pa_sample_spec* ss, const ma_pa_channel_map* cmap)
 {
     static int g_StreamCounter = 0;
     char actualStreamName[256];
@@ -20737,7 +21255,160 @@ static ma_pa_stream* ma_device__pa_stream_new__pulse(ma_device* pDevice, const c
     }
     g_StreamCounter += 1;
 
-    return ((ma_pa_stream_new_proc)pDevice->pContext->pulse.pa_stream_new)((ma_pa_context*)pDevice->pulse.pPulseContext, actualStreamName, ss, cmap);
+    return ((ma_pa_stream_new_proc)pContext->pulse.pa_stream_new)((ma_pa_context*)pContext->pulse.pPulseContext, actualStreamName, ss, cmap);
+}
+
+
+static void ma_device_on_read__pulse(ma_pa_stream* pStream, size_t byteCount, void* pUserData)
+{
+    ma_device* pDevice = (ma_device*)pUserData;
+    ma_uint32 bpf;
+    ma_uint64 frameCount;
+    ma_uint64 framesProcessed;
+
+    MA_ASSERT(pDevice != NULL);
+
+    bpf = ma_get_bytes_per_frame(pDevice->capture.internalFormat, pDevice->capture.internalChannels);
+    MA_ASSERT(bpf > 0);
+
+    frameCount = byteCount / bpf;
+    framesProcessed = 0;
+
+    while (ma_device_get_state(pDevice) == MA_STATE_STARTED && framesProcessed < frameCount) {
+        const void* pMappedPCMFrames;
+        size_t bytesMapped;
+        ma_uint64 framesMapped;
+
+        int pulseResult = ((ma_pa_stream_peek_proc)pDevice->pContext->pulse.pa_stream_peek)(pStream, &pMappedPCMFrames, &bytesMapped);
+        if (pulseResult < 0) {
+            break; /* Failed to map. Abort. */
+        }
+
+        framesMapped = bytesMapped / bpf;
+        if (framesMapped > 0) {
+            if (pMappedPCMFrames != NULL) {
+                if (pDevice->type == ma_device_type_duplex) {
+                    ma_device__handle_duplex_callback_capture(pDevice, framesMapped, pMappedPCMFrames, &pDevice->pulse.duplexRB);
+                } else {
+                    ma_device__send_frames_to_client(pDevice, framesMapped, pMappedPCMFrames);
+                }
+            } else {
+                /* It's a hole. */
+            #if defined(MA_DEBUG_OUTPUT)
+                printf("[PulseAudio] ma_device_on_read__pulse: Hole.\n");
+            #endif
+            }
+
+            pulseResult = ((ma_pa_stream_drop_proc)pDevice->pContext->pulse.pa_stream_drop)(pStream);
+            if (pulseResult < 0) {
+                break;  /* Failed to drop the buffer. */
+            }
+
+            framesProcessed += framesMapped;
+
+        } else {
+            /* Nothing was mapped. Just abort. */
+            break;
+        }
+    }
+}
+
+static ma_result ma_device_write_to_stream__pulse(ma_device* pDevice, ma_pa_stream* pStream, ma_uint64* pFramesProcessed)
+{
+    ma_result result = MA_SUCCESS;
+    ma_uint64 framesProcessed = 0;
+    size_t bytesMapped;
+    ma_uint32 bpf;
+    ma_uint32 deviceState;
+
+    MA_ASSERT(pDevice != NULL);
+    MA_ASSERT(pStream != NULL);
+
+    bpf = ma_get_bytes_per_frame(pDevice->playback.internalFormat, pDevice->playback.internalChannels);
+    MA_ASSERT(bpf > 0);
+
+    deviceState = ma_device_get_state(pDevice);
+
+    bytesMapped = ((ma_pa_stream_writable_size_proc)pDevice->pContext->pulse.pa_stream_writable_size)(pStream);
+    if (bytesMapped != (size_t)-1) {
+        if (bytesMapped > 0) {
+            ma_uint64 framesMapped;
+            void* pMappedPCMFrames;
+            int pulseResult = ((ma_pa_stream_begin_write_proc)pDevice->pContext->pulse.pa_stream_begin_write)(pStream, &pMappedPCMFrames, &bytesMapped);
+            if (pulseResult < 0) {
+                result = ma_result_from_pulse(pulseResult);
+                goto done;
+            }
+
+            framesMapped = bytesMapped / bpf;
+
+            if (deviceState == MA_STATE_STARTED) {
+                if (pDevice->type == ma_device_type_duplex) {
+                    ma_device__handle_duplex_callback_playback(pDevice, framesMapped, pMappedPCMFrames, &pDevice->pulse.duplexRB);
+                } else {
+                    ma_device__read_frames_from_client(pDevice, framesMapped, pMappedPCMFrames);
+                }
+            } else {
+                /* Device is not started. Don't write anything to it. */
+            }
+
+            pulseResult = ((ma_pa_stream_write_proc)pDevice->pContext->pulse.pa_stream_write)(pStream, pMappedPCMFrames, bytesMapped, NULL, 0, MA_PA_SEEK_RELATIVE);
+            if (pulseResult < 0) {
+                result = ma_result_from_pulse(pulseResult);
+                goto done;  /* Failed to write data to stream. */
+            }
+
+            framesProcessed += framesMapped;
+        } else {
+            result = MA_ERROR;  /* No data available. Abort. */
+            goto done;
+        }
+    } else {
+        result = MA_ERROR;  /* Failed to retrieve the writable size. Abort. */
+        goto done;
+    }
+
+done:
+    if (pFramesProcessed != NULL) {
+        *pFramesProcessed = framesProcessed;
+    }
+
+    return result;
+}
+
+static void ma_device_on_write__pulse(ma_pa_stream* pStream, size_t byteCount, void* pUserData)
+{
+    ma_device* pDevice = (ma_device*)pUserData;
+    ma_uint32 bpf;
+    ma_uint64 frameCount;
+    ma_uint64 framesProcessed;
+    ma_result result;
+
+    MA_ASSERT(pDevice != NULL);
+
+    bpf = ma_get_bytes_per_frame(pDevice->playback.internalFormat, pDevice->playback.internalChannels);
+    MA_ASSERT(bpf > 0);
+
+    frameCount = byteCount / bpf;
+    framesProcessed = 0;
+
+    while (framesProcessed < frameCount) {
+        ma_uint64 framesProcessedThisIteration;
+        ma_uint32 deviceState;
+
+        /* Don't keep trying to process frames if the device isn't started. */
+        deviceState = ma_device_get_state(pDevice);
+        if (deviceState != MA_STATE_STARTING && deviceState != MA_STATE_STARTED) {
+            break;
+        }
+
+        result = ma_device_write_to_stream__pulse(pDevice, pStream, &framesProcessedThisIteration);
+        if (result != MA_SUCCESS) {
+            break;
+        }
+
+        framesProcessed += framesProcessedThisIteration;
+    }
 }
 
 static ma_result ma_device_init__pulse(ma_context* pContext, const ma_device_config* pConfig, ma_device* pDevice)
@@ -20749,7 +21420,6 @@ static ma_result ma_device_init__pulse(ma_context* pContext, const ma_device_con
     ma_uint32 periodSizeInMilliseconds;
     ma_pa_sink_info sinkInfo;
     ma_pa_source_info sourceInfo;
-    ma_pa_operation* pOP = NULL;
     ma_pa_sample_spec ss;
     ma_pa_channel_map cmap;
     ma_pa_buffer_attr attr;
@@ -20784,64 +21454,14 @@ static ma_result ma_device_init__pulse(ma_context* pContext, const ma_device_con
         periodSizeInMilliseconds = ma_calculate_buffer_size_in_milliseconds_from_frames(pConfig->periodSizeInFrames, pConfig->sampleRate);
     }
 
-    pDevice->pulse.pMainLoop = ((ma_pa_mainloop_new_proc)pContext->pulse.pa_mainloop_new)();
-    if (pDevice->pulse.pMainLoop == NULL) {
-        result = ma_post_error(pDevice, MA_LOG_LEVEL_ERROR, "[PulseAudio] Failed to create main loop for device.", MA_FAILED_TO_INIT_BACKEND);
-        goto on_error0;
-    }
-
-    pDevice->pulse.pAPI = ((ma_pa_mainloop_get_api_proc)pContext->pulse.pa_mainloop_get_api)((ma_pa_mainloop*)pDevice->pulse.pMainLoop);
-    if (pDevice->pulse.pAPI == NULL) {
-        result = ma_post_error(pDevice, MA_LOG_LEVEL_ERROR, "[PulseAudio] Failed to retrieve PulseAudio main loop.", MA_FAILED_TO_INIT_BACKEND);
-        goto on_error1;
-    }
-
-    pDevice->pulse.pPulseContext = ((ma_pa_context_new_proc)pContext->pulse.pa_context_new)((ma_pa_mainloop_api*)pDevice->pulse.pAPI, pContext->pulse.pApplicationName);
-    if (pDevice->pulse.pPulseContext == NULL) {
-        result = ma_post_error(pDevice, MA_LOG_LEVEL_ERROR, "[PulseAudio] Failed to create PulseAudio context for device.", MA_FAILED_TO_INIT_BACKEND);
-        goto on_error1;
-    }
-
-    error = ((ma_pa_context_connect_proc)pContext->pulse.pa_context_connect)((ma_pa_context*)pDevice->pulse.pPulseContext, pContext->pulse.pServerName, (pContext->pulse.tryAutoSpawn) ? 0 : MA_PA_CONTEXT_NOAUTOSPAWN, NULL);
-    if (error != MA_PA_OK) {
-        result = ma_post_error(pDevice, MA_LOG_LEVEL_ERROR, "[PulseAudio] Failed to connect PulseAudio context.", ma_result_from_pulse(error));
-        goto on_error2;
-    }
-
-
-    pDevice->pulse.pulseContextState = MA_PA_CONTEXT_UNCONNECTED;
-    ((ma_pa_context_set_state_callback_proc)pContext->pulse.pa_context_set_state_callback)((ma_pa_context*)pDevice->pulse.pPulseContext, ma_pulse_device_state_callback, pDevice);
-
-    /* Wait for PulseAudio to get itself ready before returning. */
-    for (;;) {
-        if (pDevice->pulse.pulseContextState == MA_PA_CONTEXT_READY) {
-            break;
-        }
-
-        /* An error may have occurred. */
-        if (pDevice->pulse.pulseContextState == MA_PA_CONTEXT_FAILED || pDevice->pulse.pulseContextState == MA_PA_CONTEXT_TERMINATED) {
-            result = ma_post_error(pDevice, MA_LOG_LEVEL_ERROR, "[PulseAudio] An error occurred while connecting the PulseAudio context.", MA_ERROR);
-            goto on_error3;
-        }
-
-        error = ((ma_pa_mainloop_iterate_proc)pContext->pulse.pa_mainloop_iterate)((ma_pa_mainloop*)pDevice->pulse.pMainLoop, 1, NULL);
-        if (error < 0) {
-            result = ma_post_error(pDevice, MA_LOG_LEVEL_ERROR, "[PulseAudio] The PulseAudio main loop returned an error while connecting the PulseAudio context.", ma_result_from_pulse(error));
-            goto on_error3;
-        }
-    }
-
     if (pConfig->deviceType == ma_device_type_capture || pConfig->deviceType == ma_device_type_duplex) {
-        pOP = ((ma_pa_context_get_source_info_by_name_proc)pContext->pulse.pa_context_get_source_info_by_name)((ma_pa_context*)pDevice->pulse.pPulseContext, devCapture, ma_device_source_info_callback, &sourceInfo);
-        if (pOP != NULL) {
-            ma_device__wait_for_operation__pulse(pDevice, pOP);
-            ((ma_pa_operation_unref_proc)pContext->pulse.pa_operation_unref)(pOP);
-        } else {
-            result = ma_post_error(pDevice, MA_LOG_LEVEL_ERROR, "[PulseAudio] Failed to retrieve source info for capture device.", ma_result_from_pulse(error));
-            goto on_error3;
+        result = ma_context_get_source_info__pulse(pContext, devCapture, &sourceInfo);
+        if (result != MA_SUCCESS) {
+            ma_post_error(pDevice, MA_LOG_LEVEL_ERROR, "[PulseAudio] Failed to retrieve source info for capture device.", result);
+            goto on_error0;
         }
 
-        ss = sourceInfo.sample_spec;
+        ss   = sourceInfo.sample_spec;
         cmap = sourceInfo.channel_map;
 
         pDevice->capture.internalPeriodSizeInFrames = ma_calculate_buffer_size_in_frames_from_milliseconds(periodSizeInMilliseconds, ss.rate);
@@ -20852,13 +21472,19 @@ static ma_result ma_device_init__pulse(ma_context* pContext, const ma_device_con
         printf("[PulseAudio] Capture attr: maxlength=%d, tlength=%d, prebuf=%d, minreq=%d, fragsize=%d; internalPeriodSizeInFrames=%d\n", attr.maxlength, attr.tlength, attr.prebuf, attr.minreq, attr.fragsize, pDevice->capture.internalPeriodSizeInFrames);
     #endif
 
-        pDevice->pulse.pStreamCapture = ma_device__pa_stream_new__pulse(pDevice, pConfig->pulse.pStreamNameCapture, &ss, &cmap);
+        pDevice->pulse.pStreamCapture = ma_context__pa_stream_new__pulse(pContext, pConfig->pulse.pStreamNameCapture, &ss, &cmap);
         if (pDevice->pulse.pStreamCapture == NULL) {
             result = ma_post_error(pDevice, MA_LOG_LEVEL_ERROR, "[PulseAudio] Failed to create PulseAudio capture stream.", MA_FAILED_TO_OPEN_BACKEND_DEVICE);
-            goto on_error3;
+            goto on_error0;
         }
 
-        streamFlags = MA_PA_STREAM_START_CORKED | MA_PA_STREAM_FIX_FORMAT | MA_PA_STREAM_FIX_RATE | MA_PA_STREAM_FIX_CHANNELS;
+
+        /* The callback needs to be set before connecting the stream. */
+        ((ma_pa_stream_set_read_callback_proc)pContext->pulse.pa_stream_set_read_callback)((ma_pa_stream*)pDevice->pulse.pStreamCapture, ma_device_on_read__pulse, pDevice);
+
+
+        /* Connect after we've got all of our internal state set up. */
+        streamFlags = MA_PA_STREAM_START_CORKED | MA_PA_STREAM_ADJUST_LATENCY | MA_PA_STREAM_FIX_FORMAT | MA_PA_STREAM_FIX_RATE | MA_PA_STREAM_FIX_CHANNELS;
         if (devCapture != NULL) {
             streamFlags |= MA_PA_STREAM_DONT_MOVE;
         }
@@ -20866,31 +21492,18 @@ static ma_result ma_device_init__pulse(ma_context* pContext, const ma_device_con
         error = ((ma_pa_stream_connect_record_proc)pContext->pulse.pa_stream_connect_record)((ma_pa_stream*)pDevice->pulse.pStreamCapture, devCapture, &attr, streamFlags);
         if (error != MA_PA_OK) {
             result = ma_post_error(pDevice, MA_LOG_LEVEL_ERROR, "[PulseAudio] Failed to connect PulseAudio capture stream.", ma_result_from_pulse(error));
-            goto on_error4;
+            goto on_error1;
         }
 
-        while (((ma_pa_stream_get_state_proc)pContext->pulse.pa_stream_get_state)((ma_pa_stream*)pDevice->pulse.pStreamCapture) != MA_PA_STREAM_READY) {
-            error = ((ma_pa_mainloop_iterate_proc)pContext->pulse.pa_mainloop_iterate)((ma_pa_mainloop*)pDevice->pulse.pMainLoop, 1, NULL);
-            if (error < 0) {
-                result = ma_post_error(pDevice, MA_LOG_LEVEL_ERROR, "[PulseAudio] The PulseAudio main loop returned an error while connecting the PulseAudio capture stream.", ma_result_from_pulse(error));
-                goto on_error5;
-            }
+        result = ma_context_wait_for_pa_stream_to_connect__pulse(pDevice->pContext, (ma_pa_stream*)pDevice->pulse.pStreamCapture);
+        if (result != MA_SUCCESS) {
+            goto on_error2;
         }
+
 
         /* Internal format. */
         pActualSS = ((ma_pa_stream_get_sample_spec_proc)pContext->pulse.pa_stream_get_sample_spec)((ma_pa_stream*)pDevice->pulse.pStreamCapture);
         if (pActualSS != NULL) {
-            /* If anything has changed between the requested and the actual sample spec, we need to update the buffer. */
-            if (ss.format != pActualSS->format || ss.channels != pActualSS->channels || ss.rate != pActualSS->rate) {
-                attr = ma_device__pa_buffer_attr_new(pDevice->capture.internalPeriodSizeInFrames, pConfig->periods, pActualSS);
-
-                pOP = ((ma_pa_stream_set_buffer_attr_proc)pContext->pulse.pa_stream_set_buffer_attr)((ma_pa_stream*)pDevice->pulse.pStreamCapture, &attr, NULL, NULL);
-                if (pOP != NULL) {
-                    ma_device__wait_for_operation__pulse(pDevice, pOP);
-                    ((ma_pa_operation_unref_proc)pContext->pulse.pa_operation_unref)(pOP);
-                }
-            }
-
             ss = *pActualSS;
         }
 
@@ -20921,25 +21534,18 @@ static ma_result ma_device_init__pulse(ma_context* pContext, const ma_device_con
         /* Name. */
         devCapture = ((ma_pa_stream_get_device_name_proc)pContext->pulse.pa_stream_get_device_name)((ma_pa_stream*)pDevice->pulse.pStreamCapture);
         if (devCapture != NULL) {
-            ma_pa_operation* pOP = ((ma_pa_context_get_source_info_by_name_proc)pContext->pulse.pa_context_get_source_info_by_name)((ma_pa_context*)pDevice->pulse.pPulseContext, devCapture, ma_device_source_name_callback, pDevice);
-            if (pOP != NULL) {
-                ma_device__wait_for_operation__pulse(pDevice, pOP);
-                ((ma_pa_operation_unref_proc)pContext->pulse.pa_operation_unref)(pOP);
-            }
+            ma_wait_for_operation_and_unref__pulse(pContext, ((ma_pa_context_get_source_info_by_name_proc)pContext->pulse.pa_context_get_source_info_by_name)((ma_pa_context*)pContext->pulse.pPulseContext, devCapture, ma_device_source_name_callback, pDevice));
         }
     }
 
     if (pConfig->deviceType == ma_device_type_playback || pConfig->deviceType == ma_device_type_duplex) {
-        pOP = ((ma_pa_context_get_sink_info_by_name_proc)pContext->pulse.pa_context_get_sink_info_by_name)((ma_pa_context*)pDevice->pulse.pPulseContext, devPlayback, ma_device_sink_info_callback, &sinkInfo);
-        if (pOP != NULL) {
-            ma_device__wait_for_operation__pulse(pDevice, pOP);
-            ((ma_pa_operation_unref_proc)pContext->pulse.pa_operation_unref)(pOP);
-        } else {
-            result = ma_post_error(pDevice, MA_LOG_LEVEL_ERROR, "[PulseAudio] Failed to retrieve sink info for playback device.", ma_result_from_pulse(error));
-            goto on_error3;
+        result = ma_context_get_sink_info__pulse(pContext, devPlayback, &sinkInfo);
+        if (result != MA_SUCCESS) {
+            ma_post_error(pDevice, MA_LOG_LEVEL_ERROR, "[PulseAudio] Failed to retrieve sink info for playback device.", result);
+            goto on_error2;
         }
 
-        ss = sinkInfo.sample_spec;
+        ss   = sinkInfo.sample_spec;
         cmap = sinkInfo.channel_map;
 
         pDevice->playback.internalPeriodSizeInFrames = ma_calculate_buffer_size_in_frames_from_milliseconds(periodSizeInMilliseconds, ss.rate);
@@ -20950,13 +21556,22 @@ static ma_result ma_device_init__pulse(ma_context* pContext, const ma_device_con
         printf("[PulseAudio] Playback attr: maxlength=%d, tlength=%d, prebuf=%d, minreq=%d, fragsize=%d; internalPeriodSizeInFrames=%d\n", attr.maxlength, attr.tlength, attr.prebuf, attr.minreq, attr.fragsize, pDevice->playback.internalPeriodSizeInFrames);
     #endif
 
-        pDevice->pulse.pStreamPlayback = ma_device__pa_stream_new__pulse(pDevice, pConfig->pulse.pStreamNamePlayback, &ss, &cmap);
+        pDevice->pulse.pStreamPlayback = ma_context__pa_stream_new__pulse(pContext, pConfig->pulse.pStreamNamePlayback, &ss, &cmap);
         if (pDevice->pulse.pStreamPlayback == NULL) {
             result = ma_post_error(pDevice, MA_LOG_LEVEL_ERROR, "[PulseAudio] Failed to create PulseAudio playback stream.", MA_FAILED_TO_OPEN_BACKEND_DEVICE);
-            goto on_error3;
+            goto on_error2;
         }
 
-        streamFlags = MA_PA_STREAM_START_CORKED | MA_PA_STREAM_FIX_FORMAT | MA_PA_STREAM_FIX_RATE | MA_PA_STREAM_FIX_CHANNELS;
+
+        /*
+        Note that this callback will be fired as soon as the stream is connected, even though it's started as corked. The callback needs to handle a
+        device state of MA_STATE_UNINITIALIZED.
+        */
+        ((ma_pa_stream_set_write_callback_proc)pContext->pulse.pa_stream_set_write_callback)((ma_pa_stream*)pDevice->pulse.pStreamPlayback, ma_device_on_write__pulse, pDevice);
+
+
+        /* Connect after we've got all of our internal state set up. */
+        streamFlags = MA_PA_STREAM_START_CORKED | MA_PA_STREAM_ADJUST_LATENCY | MA_PA_STREAM_FIX_FORMAT | MA_PA_STREAM_FIX_RATE | MA_PA_STREAM_FIX_CHANNELS;
         if (devPlayback != NULL) {
             streamFlags |= MA_PA_STREAM_DONT_MOVE;
         }
@@ -20964,31 +21579,18 @@ static ma_result ma_device_init__pulse(ma_context* pContext, const ma_device_con
         error = ((ma_pa_stream_connect_playback_proc)pContext->pulse.pa_stream_connect_playback)((ma_pa_stream*)pDevice->pulse.pStreamPlayback, devPlayback, &attr, streamFlags, NULL, NULL);
         if (error != MA_PA_OK) {
             result = ma_post_error(pDevice, MA_LOG_LEVEL_ERROR, "[PulseAudio] Failed to connect PulseAudio playback stream.", ma_result_from_pulse(error));
-            goto on_error6;
+            goto on_error3;
         }
 
-        while (((ma_pa_stream_get_state_proc)pContext->pulse.pa_stream_get_state)((ma_pa_stream*)pDevice->pulse.pStreamPlayback) != MA_PA_STREAM_READY) {
-            error = ((ma_pa_mainloop_iterate_proc)pContext->pulse.pa_mainloop_iterate)((ma_pa_mainloop*)pDevice->pulse.pMainLoop, 1, NULL);
-            if (error < 0) {
-                result = ma_post_error(pDevice, MA_LOG_LEVEL_ERROR, "[PulseAudio] The PulseAudio main loop returned an error while connecting the PulseAudio playback stream.", ma_result_from_pulse(error));
-                goto on_error7;
-            }
+        result = ma_context_wait_for_pa_stream_to_connect__pulse(pDevice->pContext, (ma_pa_stream*)pDevice->pulse.pStreamPlayback);
+        if (result != MA_SUCCESS) {
+            goto on_error3;
         }
+
 
         /* Internal format. */
         pActualSS = ((ma_pa_stream_get_sample_spec_proc)pContext->pulse.pa_stream_get_sample_spec)((ma_pa_stream*)pDevice->pulse.pStreamPlayback);
         if (pActualSS != NULL) {
-            /* If anything has changed between the requested and the actual sample spec, we need to update the buffer. */
-            if (ss.format != pActualSS->format || ss.channels != pActualSS->channels || ss.rate != pActualSS->rate) {
-                attr = ma_device__pa_buffer_attr_new(pDevice->playback.internalPeriodSizeInFrames, pConfig->periods, pActualSS);
-
-                pOP = ((ma_pa_stream_set_buffer_attr_proc)pContext->pulse.pa_stream_set_buffer_attr)((ma_pa_stream*)pDevice->pulse.pStreamPlayback, &attr, NULL, NULL);
-                if (pOP != NULL) {
-                    ma_device__wait_for_operation__pulse(pDevice, pOP);
-                    ((ma_pa_operation_unref_proc)pContext->pulse.pa_operation_unref)(pOP);
-                }
-            }
-
             ss = *pActualSS;
         }
 
@@ -21019,36 +21621,51 @@ static ma_result ma_device_init__pulse(ma_context* pContext, const ma_device_con
         /* Name. */
         devPlayback = ((ma_pa_stream_get_device_name_proc)pContext->pulse.pa_stream_get_device_name)((ma_pa_stream*)pDevice->pulse.pStreamPlayback);
         if (devPlayback != NULL) {
-            ma_pa_operation* pOP = ((ma_pa_context_get_sink_info_by_name_proc)pContext->pulse.pa_context_get_sink_info_by_name)((ma_pa_context*)pDevice->pulse.pPulseContext, devPlayback, ma_device_sink_name_callback, pDevice);
-            if (pOP != NULL) {
-                ma_device__wait_for_operation__pulse(pDevice, pOP);
-                ((ma_pa_operation_unref_proc)pContext->pulse.pa_operation_unref)(pOP);
+            ma_wait_for_operation_and_unref__pulse(pContext, ((ma_pa_context_get_sink_info_by_name_proc)pContext->pulse.pa_context_get_sink_info_by_name)((ma_pa_context*)pContext->pulse.pPulseContext, devPlayback, ma_device_sink_name_callback, pDevice));
+        }
+    }
+
+
+    /* We need a ring buffer for handling duplex mode. */
+    if (pConfig->deviceType == ma_device_type_duplex) {
+        ma_uint32 rbSizeInFrames = (ma_uint32)ma_calculate_frame_count_after_resampling(pDevice->sampleRate, pDevice->capture.internalSampleRate, pDevice->capture.internalPeriodSizeInFrames * pDevice->capture.internalPeriods);
+        result = ma_pcm_rb_init(pDevice->capture.format, pDevice->capture.channels, rbSizeInFrames, NULL, &pDevice->pContext->allocationCallbacks, &pDevice->pulse.duplexRB);
+        if (result != MA_SUCCESS) {
+            result = ma_post_error(pDevice, MA_LOG_LEVEL_ERROR, "[PulseAudio] Failed to initialize ring buffer.", result);
+            goto on_error4;
+        }
+
+        /* We need a period to act as a buffer for cases where the playback and capture device's end up desyncing. */
+        {
+            ma_uint32 marginSizeInFrames = rbSizeInFrames / pDevice->capture.internalPeriods;
+            void* pMarginData;
+            ma_pcm_rb_acquire_write(&pDevice->pulse.duplexRB, &marginSizeInFrames, &pMarginData);
+            {
+                MA_ZERO_MEMORY(pMarginData, marginSizeInFrames * ma_get_bytes_per_frame(pDevice->capture.format, pDevice->capture.channels));
             }
+            ma_pcm_rb_commit_write(&pDevice->pulse.duplexRB, marginSizeInFrames, pMarginData);
         }
     }
 
     return MA_SUCCESS;
 
 
-on_error7:
+on_error4:
     if (pConfig->deviceType == ma_device_type_playback || pConfig->deviceType == ma_device_type_duplex) {
         ((ma_pa_stream_disconnect_proc)pContext->pulse.pa_stream_disconnect)((ma_pa_stream*)pDevice->pulse.pStreamPlayback);
     }
-on_error6:
+on_error3:
     if (pConfig->deviceType == ma_device_type_playback || pConfig->deviceType == ma_device_type_duplex) {
         ((ma_pa_stream_unref_proc)pContext->pulse.pa_stream_unref)((ma_pa_stream*)pDevice->pulse.pStreamPlayback);
     }
-on_error5:
+on_error2:
     if (pConfig->deviceType == ma_device_type_capture || pConfig->deviceType == ma_device_type_duplex) {
         ((ma_pa_stream_disconnect_proc)pContext->pulse.pa_stream_disconnect)((ma_pa_stream*)pDevice->pulse.pStreamCapture);
     }
-on_error4:
+on_error1:
     if (pConfig->deviceType == ma_device_type_capture || pConfig->deviceType == ma_device_type_duplex) {
         ((ma_pa_stream_unref_proc)pContext->pulse.pa_stream_unref)((ma_pa_stream*)pDevice->pulse.pStreamCapture);
     }
-on_error3: ((ma_pa_context_disconnect_proc)pContext->pulse.pa_context_disconnect)((ma_pa_context*)pDevice->pulse.pPulseContext);
-on_error2: ((ma_pa_context_unref_proc)pContext->pulse.pa_context_unref)((ma_pa_context*)pDevice->pulse.pPulseContext);
-on_error1: ((ma_pa_mainloop_free_proc)pContext->pulse.pa_mainloop_free)((ma_pa_mainloop*)pDevice->pulse.pMainLoop);
 on_error0:
     return result;
 }
@@ -21087,9 +21704,7 @@ static ma_result ma_device__cork_stream__pulse(ma_device* pDevice, ma_device_typ
         return ma_post_error(pDevice, MA_LOG_LEVEL_ERROR, "[PulseAudio] Failed to cork PulseAudio stream.", (cork == 0) ? MA_FAILED_TO_START_BACKEND_DEVICE : MA_FAILED_TO_STOP_BACKEND_DEVICE);
     }
 
-    result = ma_device__wait_for_operation__pulse(pDevice, pOP);
-    ((ma_pa_operation_unref_proc)pContext->pulse.pa_operation_unref)(pOP);
-
+    result = ma_wait_for_operation_and_unref__pulse(pDevice->pContext, pOP);
     if (result != MA_SUCCESS) {
         return ma_post_error(pDevice, MA_LOG_LEVEL_ERROR, "[PulseAudio] An error occurred while waiting for the PulseAudio stream to cork.", result);
     }
@@ -21105,11 +21720,44 @@ static ma_result ma_device__cork_stream__pulse(ma_device* pDevice, ma_device_typ
     return MA_SUCCESS;
 }
 
+static ma_result ma_device_start__pulse(ma_device* pDevice)
+{
+    ma_result result;
+
+    MA_ASSERT(pDevice != NULL);
+
+    if (pDevice->type == ma_device_type_capture || pDevice->type == ma_device_type_duplex) {
+        result = ma_device__cork_stream__pulse(pDevice, ma_device_type_capture, 0);
+        if (result != MA_SUCCESS) {
+            return result;
+        }
+    }
+
+    if (pDevice->type == ma_device_type_playback || pDevice->type == ma_device_type_duplex) {
+        /* We need to fill some data before uncorking. Not doing this will result in the write callback never getting fired. */
+        ma_mainloop_lock__pulse(pDevice->pContext, "ma_device_start__pulse");
+        {
+            result = ma_device_write_to_stream__pulse(pDevice, (ma_pa_stream*)(pDevice->pulse.pStreamPlayback), NULL);
+        }
+        ma_mainloop_unlock__pulse(pDevice->pContext, "ma_device_start__pulse");
+
+        if (result != MA_SUCCESS) {
+            return result; /* Failed to write data. Not sure what to do here... Just aborting. */
+        }
+
+        result = ma_device__cork_stream__pulse(pDevice, ma_device_type_playback, 0);
+        if (result != MA_SUCCESS) {
+            return result;
+        }
+    }
+
+    return MA_SUCCESS;
+}
+
 static ma_result ma_device_stop__pulse(ma_device* pDevice)
 {
     ma_result result;
     ma_bool32 wasSuccessful;
-    ma_pa_operation* pOP;
 
     MA_ASSERT(pDevice != NULL);
 
@@ -21122,11 +21770,7 @@ static ma_result ma_device_stop__pulse(ma_device* pDevice)
 
     if (pDevice->type == ma_device_type_playback || pDevice->type == ma_device_type_duplex) {
         /* The stream needs to be drained if it's a playback device. */
-        pOP = ((ma_pa_stream_drain_proc)pDevice->pContext->pulse.pa_stream_drain)((ma_pa_stream*)pDevice->pulse.pStreamPlayback, ma_pulse_operation_complete_callback, &wasSuccessful);
-        if (pOP != NULL) {
-            ma_device__wait_for_operation__pulse(pDevice, pOP);
-            ((ma_pa_operation_unref_proc)pDevice->pContext->pulse.pa_operation_unref)(pOP);
-        }
+        ma_wait_for_operation_and_unref__pulse(pDevice->pContext, ((ma_pa_stream_drain_proc)pDevice->pContext->pulse.pa_stream_drain)((ma_pa_stream*)pDevice->pulse.pStreamPlayback, ma_pulse_operation_complete_callback, &wasSuccessful));
 
         result = ma_device__cork_stream__pulse(pDevice, ma_device_type_playback, 1);
         if (result != MA_SUCCESS) {
@@ -21134,446 +21778,24 @@ static ma_result ma_device_stop__pulse(ma_device* pDevice)
         }
     }
 
-    return MA_SUCCESS;
-}
-
-static ma_result ma_device_write__pulse(ma_device* pDevice, const void* pPCMFrames, ma_uint32 frameCount, ma_uint32* pFramesWritten)
-{
-    ma_uint32 totalFramesWritten;
-
-    MA_ASSERT(pDevice != NULL);
-    MA_ASSERT(pPCMFrames != NULL);
-    MA_ASSERT(frameCount > 0);
-
-    if (pFramesWritten != NULL) {
-        *pFramesWritten = 0;
+    if (pDevice->onStop != NULL) {
+        pDevice->onStop(pDevice);
     }
-
-    totalFramesWritten = 0;
-    while (totalFramesWritten < frameCount) {
-        if (ma_device__get_state(pDevice) != MA_STATE_STARTED) {
-            return MA_DEVICE_NOT_STARTED;
-        }
-
-        /* Place the data into the mapped buffer if we have one. */
-        if (pDevice->pulse.pMappedBufferPlayback != NULL && pDevice->pulse.mappedBufferFramesRemainingPlayback > 0) {
-            ma_uint32 bpf = ma_get_bytes_per_frame(pDevice->playback.internalFormat, pDevice->playback.internalChannels);
-            ma_uint32 mappedBufferFramesConsumed = pDevice->pulse.mappedBufferFramesCapacityPlayback - pDevice->pulse.mappedBufferFramesRemainingPlayback;
-
-            void* pDst = (ma_uint8*)pDevice->pulse.pMappedBufferPlayback + (mappedBufferFramesConsumed * bpf);
-            const void* pSrc = (const ma_uint8*)pPCMFrames + (totalFramesWritten * bpf);
-            ma_uint32  framesToCopy = ma_min(pDevice->pulse.mappedBufferFramesRemainingPlayback, (frameCount - totalFramesWritten));
-            MA_COPY_MEMORY(pDst, pSrc, framesToCopy * bpf);
-
-            pDevice->pulse.mappedBufferFramesRemainingPlayback -= framesToCopy;
-            totalFramesWritten += framesToCopy;
-        }
-
-        /*
-        Getting here means we've run out of data in the currently mapped chunk. We need to write this to the device and then try
-        mapping another chunk. If this fails we need to wait for space to become available.
-        */
-        if (pDevice->pulse.mappedBufferFramesCapacityPlayback > 0 && pDevice->pulse.mappedBufferFramesRemainingPlayback == 0) {
-            size_t nbytes = pDevice->pulse.mappedBufferFramesCapacityPlayback * ma_get_bytes_per_frame(pDevice->playback.internalFormat, pDevice->playback.internalChannels);
-
-            int error = ((ma_pa_stream_write_proc)pDevice->pContext->pulse.pa_stream_write)((ma_pa_stream*)pDevice->pulse.pStreamPlayback, pDevice->pulse.pMappedBufferPlayback, nbytes, NULL, 0, MA_PA_SEEK_RELATIVE);
-            if (error < 0) {
-                return ma_post_error(pDevice, MA_LOG_LEVEL_ERROR, "[PulseAudio] Failed to write data to the PulseAudio stream.", ma_result_from_pulse(error));
-            }
-
-            pDevice->pulse.pMappedBufferPlayback = NULL;
-            pDevice->pulse.mappedBufferFramesRemainingPlayback = 0;
-            pDevice->pulse.mappedBufferFramesCapacityPlayback = 0;
-        }
-
-        MA_ASSERT(totalFramesWritten <= frameCount);
-        if (totalFramesWritten == frameCount) {
-            break;
-        }
-
-        /* Getting here means we need to map a new buffer. If we don't have enough space we need to wait for more. */
-        for (;;) {
-            size_t writableSizeInBytes;
-
-            /* If the device has been corked, don't try to continue. */
-            if (((ma_pa_stream_is_corked_proc)pDevice->pContext->pulse.pa_stream_is_corked)((ma_pa_stream*)pDevice->pulse.pStreamPlayback)) {
-                break;
-            }
-
-            writableSizeInBytes = ((ma_pa_stream_writable_size_proc)pDevice->pContext->pulse.pa_stream_writable_size)((ma_pa_stream*)pDevice->pulse.pStreamPlayback);
-            if (writableSizeInBytes != (size_t)-1) {
-                if (writableSizeInBytes > 0) {
-                    /* Data is avaialable. */
-                    size_t bytesToMap = writableSizeInBytes;
-                    int error = ((ma_pa_stream_begin_write_proc)pDevice->pContext->pulse.pa_stream_begin_write)((ma_pa_stream*)pDevice->pulse.pStreamPlayback, &pDevice->pulse.pMappedBufferPlayback, &bytesToMap);
-                    if (error < 0) {
-                        return ma_post_error(pDevice, MA_LOG_LEVEL_ERROR, "[PulseAudio] Failed to map write buffer.", ma_result_from_pulse(error));
-                    }
-
-                    pDevice->pulse.mappedBufferFramesCapacityPlayback  = bytesToMap / ma_get_bytes_per_frame(pDevice->playback.internalFormat, pDevice->playback.internalChannels);
-                    pDevice->pulse.mappedBufferFramesRemainingPlayback = pDevice->pulse.mappedBufferFramesCapacityPlayback;
-
-                    break;
-                } else {
-                    /* No data available. Need to wait for more. */
-                    int error = ((ma_pa_mainloop_iterate_proc)pDevice->pContext->pulse.pa_mainloop_iterate)((ma_pa_mainloop*)pDevice->pulse.pMainLoop, 1, NULL);
-                    if (error < 0) {
-                        return ma_result_from_pulse(error);
-                    }
-
-                    continue;
-                }
-            } else {
-                return ma_post_error(pDevice, MA_LOG_LEVEL_ERROR, "[PulseAudio] Failed to query the stream's writable size.", MA_ERROR);
-            }
-        }
-    }
-
-    if (pFramesWritten != NULL) {
-        *pFramesWritten = totalFramesWritten;
-    }
-
-    return MA_SUCCESS;
-}
-
-static ma_result ma_device_read__pulse(ma_device* pDevice, void* pPCMFrames, ma_uint32 frameCount, ma_uint32* pFramesRead)
-{
-    ma_uint32 totalFramesRead;
-
-    MA_ASSERT(pDevice != NULL);
-    MA_ASSERT(pPCMFrames != NULL);
-    MA_ASSERT(frameCount > 0);
-
-    if (pFramesRead != NULL) {
-        *pFramesRead = 0;
-    }
-
-    totalFramesRead = 0;
-    while (totalFramesRead < frameCount) {
-        if (ma_device__get_state(pDevice) != MA_STATE_STARTED) {
-            return MA_DEVICE_NOT_STARTED;
-        }
-
-        /*
-        If a buffer is mapped we need to read from that first. Once it's consumed we need to drop it. Note that pDevice->pulse.pMappedBufferCapture can be null in which
-        case it could be a hole. In this case we just write zeros into the output buffer.
-        */
-        if (pDevice->pulse.mappedBufferFramesRemainingCapture > 0) {
-            ma_uint32 bpf = ma_get_bytes_per_frame(pDevice->capture.internalFormat, pDevice->capture.internalChannels);
-            ma_uint32 mappedBufferFramesConsumed = pDevice->pulse.mappedBufferFramesCapacityCapture - pDevice->pulse.mappedBufferFramesRemainingCapture;
-
-            ma_uint32  framesToCopy = ma_min(pDevice->pulse.mappedBufferFramesRemainingCapture, (frameCount - totalFramesRead));
-            void* pDst = (ma_uint8*)pPCMFrames + (totalFramesRead * bpf);
-
-            /*
-            This little bit of logic here is specifically for PulseAudio and it's hole management. The buffer pointer will be set to NULL
-            when the current fragment is a hole. For a hole we just output silence.
-            */
-            if (pDevice->pulse.pMappedBufferCapture != NULL) {
-                const void* pSrc = (const ma_uint8*)pDevice->pulse.pMappedBufferCapture + (mappedBufferFramesConsumed * bpf);
-                MA_COPY_MEMORY(pDst, pSrc, framesToCopy * bpf);
-            } else {
-                MA_ZERO_MEMORY(pDst, framesToCopy * bpf);
-            #if defined(MA_DEBUG_OUTPUT)
-                printf("[PulseAudio] ma_device_read__pulse: Filling hole with silence.\n");
-            #endif
-            }
-
-            pDevice->pulse.mappedBufferFramesRemainingCapture -= framesToCopy;
-            totalFramesRead += framesToCopy;
-        }
-
-        /*
-        Getting here means we've run out of data in the currently mapped chunk. We need to drop this from the device and then try
-        mapping another chunk. If this fails we need to wait for data to become available.
-        */
-        if (pDevice->pulse.mappedBufferFramesCapacityCapture > 0 && pDevice->pulse.mappedBufferFramesRemainingCapture == 0) {
-            int error;
-
-        #if defined(MA_DEBUG_OUTPUT)
-            printf("[PulseAudio] ma_device_read__pulse: Call pa_stream_drop()\n");
-        #endif
-
-            error = ((ma_pa_stream_drop_proc)pDevice->pContext->pulse.pa_stream_drop)((ma_pa_stream*)pDevice->pulse.pStreamCapture);
-            if (error != 0) {
-                return ma_post_error(pDevice, MA_LOG_LEVEL_ERROR, "[PulseAudio] Failed to drop fragment.", ma_result_from_pulse(error));
-            }
-
-            pDevice->pulse.pMappedBufferCapture = NULL;
-            pDevice->pulse.mappedBufferFramesRemainingCapture = 0;
-            pDevice->pulse.mappedBufferFramesCapacityCapture = 0;
-        }
-
-        MA_ASSERT(totalFramesRead <= frameCount);
-        if (totalFramesRead == frameCount) {
-            break;
-        }
-
-        /* Getting here means we need to map a new buffer. If we don't have enough data we wait for more. */
-        for (;;) {
-            int error;
-            size_t bytesMapped;
-
-            if (ma_device__get_state(pDevice) != MA_STATE_STARTED) {
-                break;
-            }
-
-            /* If the device has been corked, don't try to continue. */
-            if (((ma_pa_stream_is_corked_proc)pDevice->pContext->pulse.pa_stream_is_corked)((ma_pa_stream*)pDevice->pulse.pStreamCapture)) {
-            #if defined(MA_DEBUG_OUTPUT)
-                printf("[PulseAudio] ma_device_read__pulse: Corked.\n");
-            #endif
-                break;
-            }
-
-            MA_ASSERT(pDevice->pulse.pMappedBufferCapture == NULL); /* <-- We're about to map a buffer which means we shouldn't have an existing mapping. */
-
-            error = ((ma_pa_stream_peek_proc)pDevice->pContext->pulse.pa_stream_peek)((ma_pa_stream*)pDevice->pulse.pStreamCapture, &pDevice->pulse.pMappedBufferCapture, &bytesMapped);
-            if (error < 0) {
-                return ma_post_error(pDevice, MA_LOG_LEVEL_ERROR, "[PulseAudio] Failed to peek capture buffer.", ma_result_from_pulse(error));
-            }
-
-            if (bytesMapped > 0) {
-                pDevice->pulse.mappedBufferFramesCapacityCapture  = bytesMapped / ma_get_bytes_per_frame(pDevice->capture.internalFormat, pDevice->capture.internalChannels);
-                pDevice->pulse.mappedBufferFramesRemainingCapture = pDevice->pulse.mappedBufferFramesCapacityCapture;
-
-                #if defined(MA_DEBUG_OUTPUT)
-                    printf("[PulseAudio] ma_device_read__pulse: Mapped. mappedBufferFramesCapacityCapture=%d, mappedBufferFramesRemainingCapture=%d\n", pDevice->pulse.mappedBufferFramesCapacityCapture, pDevice->pulse.mappedBufferFramesRemainingCapture);
-                #endif
-
-                if (pDevice->pulse.pMappedBufferCapture == NULL) {
-                    /* It's a hole. */
-                    #if defined(MA_DEBUG_OUTPUT)
-                        printf("[PulseAudio] ma_device_read__pulse: Call pa_stream_peek(). Hole.\n");
-                    #endif
-                }
-
-                break;
-            } else {
-                if (pDevice->pulse.pMappedBufferCapture == NULL) {
-                    /* Nothing available yet. Need to wait for more. */
-
-                    /*
-                    I have had reports of a deadlock in this part of the code. I have reproduced this when using the "Built-in Audio Analogue Stereo" device without
-                    an actual microphone connected. I'm experimenting here by not blocking in pa_mainloop_iterate() and instead sleep for a bit when there are no
-                    dispatches.
-                    */
-                    error = ((ma_pa_mainloop_iterate_proc)pDevice->pContext->pulse.pa_mainloop_iterate)((ma_pa_mainloop*)pDevice->pulse.pMainLoop, 0, NULL);
-                    if (error < 0) {
-                        return ma_result_from_pulse(error);
-                    }
-
-                    /* Sleep for a bit if nothing was dispatched. */
-                    if (error == 0) {
-                        ma_sleep(1);
-                    }
-
-                #if defined(MA_DEBUG_OUTPUT)
-                    printf("[PulseAudio] ma_device_read__pulse: No data available. Waiting. mappedBufferFramesCapacityCapture=%d, mappedBufferFramesRemainingCapture=%d\n", pDevice->pulse.mappedBufferFramesCapacityCapture, pDevice->pulse.mappedBufferFramesRemainingCapture);
-                #endif
-                } else {
-                    /* Getting here means we mapped 0 bytes, but have a non-NULL buffer. I don't think this should ever happen. */
-                    MA_ASSERT(MA_FALSE);
-                }
-            }
-        }
-    }
-
-    if (pFramesRead != NULL) {
-        *pFramesRead = totalFramesRead;
-    }
-
-    return MA_SUCCESS;
-}
-
-static ma_result ma_device_main_loop__pulse(ma_device* pDevice)
-{
-    ma_result result = MA_SUCCESS;
-    ma_bool32 exitLoop = MA_FALSE;
-
-    MA_ASSERT(pDevice != NULL);
-
-    /* The stream needs to be uncorked first. We do this at the top for both capture and playback for PulseAudio. */
-    if (pDevice->type == ma_device_type_capture || pDevice->type == ma_device_type_duplex) {
-        result = ma_device__cork_stream__pulse(pDevice, ma_device_type_capture, 0);
-        if (result != MA_SUCCESS) {
-            return result;
-        }
-    }
-    if (pDevice->type == ma_device_type_playback || pDevice->type == ma_device_type_duplex) {
-        result = ma_device__cork_stream__pulse(pDevice, ma_device_type_playback, 0);
-        if (result != MA_SUCCESS) {
-            return result;
-        }
-    }
-
-
-    while (ma_device__get_state(pDevice) == MA_STATE_STARTED && !exitLoop) {
-        switch (pDevice->type)
-        {
-            case ma_device_type_duplex:
-            {
-                /* The process is: device_read -> convert -> callback -> convert -> device_write */
-                ma_uint32 totalCapturedDeviceFramesProcessed = 0;
-                ma_uint32 capturedDevicePeriodSizeInFrames = ma_min(pDevice->capture.internalPeriodSizeInFrames, pDevice->playback.internalPeriodSizeInFrames);
-                    
-                while (totalCapturedDeviceFramesProcessed < capturedDevicePeriodSizeInFrames) {
-                    ma_uint8  capturedDeviceData[MA_DATA_CONVERTER_STACK_BUFFER_SIZE];
-                    ma_uint8  playbackDeviceData[MA_DATA_CONVERTER_STACK_BUFFER_SIZE];
-                    ma_uint32 capturedDeviceDataCapInFrames = sizeof(capturedDeviceData) / ma_get_bytes_per_frame(pDevice->capture.internalFormat,  pDevice->capture.internalChannels);
-                    ma_uint32 playbackDeviceDataCapInFrames = sizeof(playbackDeviceData) / ma_get_bytes_per_frame(pDevice->playback.internalFormat, pDevice->playback.internalChannels);
-                    ma_uint32 capturedDeviceFramesRemaining;
-                    ma_uint32 capturedDeviceFramesProcessed;
-                    ma_uint32 capturedDeviceFramesToProcess;
-                    ma_uint32 capturedDeviceFramesToTryProcessing = capturedDevicePeriodSizeInFrames - totalCapturedDeviceFramesProcessed;
-                    if (capturedDeviceFramesToTryProcessing > capturedDeviceDataCapInFrames) {
-                        capturedDeviceFramesToTryProcessing = capturedDeviceDataCapInFrames;
-                    }
-
-                    result = ma_device_read__pulse(pDevice, capturedDeviceData, capturedDeviceFramesToTryProcessing, &capturedDeviceFramesToProcess);
-                    if (result != MA_SUCCESS) {
-                        exitLoop = MA_TRUE;
-                        break;
-                    }
-
-                    capturedDeviceFramesRemaining = capturedDeviceFramesToProcess;
-                    capturedDeviceFramesProcessed = 0;
-
-                    for (;;) {
-                        ma_uint8  capturedClientData[MA_DATA_CONVERTER_STACK_BUFFER_SIZE];
-                        ma_uint8  playbackClientData[MA_DATA_CONVERTER_STACK_BUFFER_SIZE];
-                        ma_uint32 capturedClientDataCapInFrames = sizeof(capturedClientData) / ma_get_bytes_per_frame(pDevice->capture.format, pDevice->capture.channels);
-                        ma_uint32 playbackClientDataCapInFrames = sizeof(playbackClientData) / ma_get_bytes_per_frame(pDevice->playback.format, pDevice->playback.channels);
-                        ma_uint64 capturedClientFramesToProcessThisIteration = ma_min(capturedClientDataCapInFrames, playbackClientDataCapInFrames);
-                        ma_uint64 capturedDeviceFramesToProcessThisIteration = capturedDeviceFramesRemaining;
-                        ma_uint8* pRunningCapturedDeviceFrames = ma_offset_ptr(capturedDeviceData, capturedDeviceFramesProcessed * ma_get_bytes_per_frame(pDevice->capture.internalFormat, pDevice->capture.internalChannels));
-
-                        /* Convert capture data from device format to client format. */
-                        result = ma_data_converter_process_pcm_frames(&pDevice->capture.converter, pRunningCapturedDeviceFrames, &capturedDeviceFramesToProcessThisIteration, capturedClientData, &capturedClientFramesToProcessThisIteration);
-                        if (result != MA_SUCCESS) {
-                            break;
-                        }
-
-                        /*
-                        If we weren't able to generate any output frames it must mean we've exhaused all of our input. The only time this would not be the case is if capturedClientData was too small
-                        which should never be the case when it's of the size MA_DATA_CONVERTER_STACK_BUFFER_SIZE.
-                        */
-                        if (capturedClientFramesToProcessThisIteration == 0) {
-                            break;
-                        }
-
-                        ma_device__on_data(pDevice, playbackClientData, capturedClientData, (ma_uint32)capturedClientFramesToProcessThisIteration);    /* Safe cast .*/
-
-                        capturedDeviceFramesProcessed += (ma_uint32)capturedDeviceFramesToProcessThisIteration; /* Safe cast. */
-                        capturedDeviceFramesRemaining -= (ma_uint32)capturedDeviceFramesToProcessThisIteration; /* Safe cast. */
-
-                        /* At this point the playbackClientData buffer should be holding data that needs to be written to the device. */
-                        for (;;) {
-                            ma_uint64 convertedClientFrameCount = capturedClientFramesToProcessThisIteration;
-                            ma_uint64 convertedDeviceFrameCount = playbackDeviceDataCapInFrames;
-                            result = ma_data_converter_process_pcm_frames(&pDevice->playback.converter, playbackClientData, &convertedClientFrameCount, playbackDeviceData, &convertedDeviceFrameCount);
-                            if (result != MA_SUCCESS) {
-                                break;
-                            }
-
-                            result = ma_device_write__pulse(pDevice, playbackDeviceData, (ma_uint32)convertedDeviceFrameCount, NULL);   /* Safe cast. */
-                            if (result != MA_SUCCESS) {
-                                exitLoop = MA_TRUE;
-                                break;
-                            }
-
-                            capturedClientFramesToProcessThisIteration -= (ma_uint32)convertedClientFrameCount;  /* Safe cast. */
-                            if (capturedClientFramesToProcessThisIteration == 0) {
-                                break;
-                            }
-                        }
-
-                        /* In case an error happened from ma_device_write__pulse()... */
-                        if (result != MA_SUCCESS) {
-                            exitLoop = MA_TRUE;
-                            break;
-                        }
-                    }
-
-                    totalCapturedDeviceFramesProcessed += capturedDeviceFramesProcessed;
-                }
-            } break;
-
-            case ma_device_type_capture:
-            {
-                ma_uint8 intermediaryBuffer[MA_DATA_CONVERTER_STACK_BUFFER_SIZE];
-                ma_uint32 intermediaryBufferSizeInFrames = sizeof(intermediaryBuffer) / ma_get_bytes_per_frame(pDevice->capture.internalFormat, pDevice->capture.internalChannels);
-                ma_uint32 periodSizeInFrames = pDevice->capture.internalPeriodSizeInFrames;
-                ma_uint32 framesReadThisPeriod = 0;
-                while (framesReadThisPeriod < periodSizeInFrames) {
-                    ma_uint32 framesRemainingInPeriod = periodSizeInFrames - framesReadThisPeriod;
-                    ma_uint32 framesProcessed;
-                    ma_uint32 framesToReadThisIteration = framesRemainingInPeriod;
-                    if (framesToReadThisIteration > intermediaryBufferSizeInFrames) {
-                        framesToReadThisIteration = intermediaryBufferSizeInFrames;
-                    }
-
-                    result = ma_device_read__pulse(pDevice, intermediaryBuffer, framesToReadThisIteration, &framesProcessed);
-                    if (result != MA_SUCCESS) {
-                        exitLoop = MA_TRUE;
-                        break;
-                    }
-
-                    ma_device__send_frames_to_client(pDevice, framesProcessed, intermediaryBuffer);
-
-                    framesReadThisPeriod += framesProcessed;
-                }
-            } break;
-
-            case ma_device_type_playback:
-            {
-                ma_uint8 intermediaryBuffer[MA_DATA_CONVERTER_STACK_BUFFER_SIZE];
-                ma_uint32 intermediaryBufferSizeInFrames = sizeof(intermediaryBuffer) / ma_get_bytes_per_frame(pDevice->playback.internalFormat, pDevice->playback.internalChannels);
-                ma_uint32 periodSizeInFrames = pDevice->playback.internalPeriodSizeInFrames;
-                ma_uint32 framesWrittenThisPeriod = 0;
-                while (framesWrittenThisPeriod < periodSizeInFrames) {
-                    ma_uint32 framesRemainingInPeriod = periodSizeInFrames - framesWrittenThisPeriod;
-                    ma_uint32 framesProcessed;
-                    ma_uint32 framesToWriteThisIteration = framesRemainingInPeriod;
-                    if (framesToWriteThisIteration > intermediaryBufferSizeInFrames) {
-                        framesToWriteThisIteration = intermediaryBufferSizeInFrames;
-                    }
-
-                    ma_device__read_frames_from_client(pDevice, framesToWriteThisIteration, intermediaryBuffer);
-
-                    result = ma_device_write__pulse(pDevice, intermediaryBuffer, framesToWriteThisIteration, &framesProcessed);
-                    if (result != MA_SUCCESS) {
-                        exitLoop = MA_TRUE;
-                        break;
-                    }
-
-                    framesWrittenThisPeriod += framesProcessed;
-                }
-            } break;
-
-            /* To silence a warning. Will never hit this. */
-            case ma_device_type_loopback:
-            default: break;
-        }
-    }
-
-    /* Here is where the device needs to be stopped. */
-    ma_device_stop__pulse(pDevice);
 
     return result;
 }
-
 
 static ma_result ma_context_uninit__pulse(ma_context* pContext)
 {
     MA_ASSERT(pContext != NULL);
     MA_ASSERT(pContext->backend == ma_backend_pulseaudio);
 
-    ma_free(pContext->pulse.pServerName, &pContext->allocationCallbacks);
-    pContext->pulse.pServerName = NULL;
+    ((ma_pa_context_disconnect_proc)pContext->pulse.pa_context_disconnect)((ma_pa_context*)pContext->pulse.pPulseContext);
+    ((ma_pa_context_unref_proc)pContext->pulse.pa_context_unref)((ma_pa_context*)pContext->pulse.pPulseContext);
 
-    ma_free(pContext->pulse.pApplicationName, &pContext->allocationCallbacks);
-    pContext->pulse.pApplicationName = NULL;
+    /* The mainloop needs to be stopped before freeing. */
+    ((ma_pa_threaded_mainloop_stop_proc)pContext->pulse.pa_threaded_mainloop_stop)((ma_pa_threaded_mainloop*)pContext->pulse.pMainLoop);
+    ((ma_pa_threaded_mainloop_free_proc)pContext->pulse.pa_threaded_mainloop_free)((ma_pa_threaded_mainloop*)pContext->pulse.pMainLoop);
 
 #ifndef MA_NO_RUNTIME_LINKING
     ma_dlclose(pContext, pContext->pulse.pulseSO);
@@ -21584,6 +21806,7 @@ static ma_result ma_context_uninit__pulse(ma_context* pContext)
 
 static ma_result ma_context_init__pulse(const ma_context_config* pConfig, ma_context* pContext)
 {
+    ma_result result;
 #ifndef MA_NO_RUNTIME_LINKING
     const char* libpulseNames[] = {
         "libpulse.so",
@@ -21604,9 +21827,23 @@ static ma_result ma_context_init__pulse(const ma_context_config* pConfig, ma_con
 
     pContext->pulse.pa_mainloop_new                    = (ma_proc)ma_dlsym(pContext, pContext->pulse.pulseSO, "pa_mainloop_new");
     pContext->pulse.pa_mainloop_free                   = (ma_proc)ma_dlsym(pContext, pContext->pulse.pulseSO, "pa_mainloop_free");
+    pContext->pulse.pa_mainloop_quit                   = (ma_proc)ma_dlsym(pContext, pContext->pulse.pulseSO, "pa_mainloop_quit");
     pContext->pulse.pa_mainloop_get_api                = (ma_proc)ma_dlsym(pContext, pContext->pulse.pulseSO, "pa_mainloop_get_api");
     pContext->pulse.pa_mainloop_iterate                = (ma_proc)ma_dlsym(pContext, pContext->pulse.pulseSO, "pa_mainloop_iterate");
     pContext->pulse.pa_mainloop_wakeup                 = (ma_proc)ma_dlsym(pContext, pContext->pulse.pulseSO, "pa_mainloop_wakeup");
+    pContext->pulse.pa_threaded_mainloop_new           = (ma_proc)ma_dlsym(pContext, pContext->pulse.pulseSO, "pa_threaded_mainloop_new");
+    pContext->pulse.pa_threaded_mainloop_free          = (ma_proc)ma_dlsym(pContext, pContext->pulse.pulseSO, "pa_threaded_mainloop_free");
+    pContext->pulse.pa_threaded_mainloop_start         = (ma_proc)ma_dlsym(pContext, pContext->pulse.pulseSO, "pa_threaded_mainloop_start");
+    pContext->pulse.pa_threaded_mainloop_stop          = (ma_proc)ma_dlsym(pContext, pContext->pulse.pulseSO, "pa_threaded_mainloop_stop");
+    pContext->pulse.pa_threaded_mainloop_lock          = (ma_proc)ma_dlsym(pContext, pContext->pulse.pulseSO, "pa_threaded_mainloop_lock");
+    pContext->pulse.pa_threaded_mainloop_unlock        = (ma_proc)ma_dlsym(pContext, pContext->pulse.pulseSO, "pa_threaded_mainloop_unlock");
+    pContext->pulse.pa_threaded_mainloop_wait          = (ma_proc)ma_dlsym(pContext, pContext->pulse.pulseSO, "pa_threaded_mainloop_wait");
+    pContext->pulse.pa_threaded_mainloop_signal        = (ma_proc)ma_dlsym(pContext, pContext->pulse.pulseSO, "pa_threaded_mainloop_signal");
+    pContext->pulse.pa_threaded_mainloop_accept        = (ma_proc)ma_dlsym(pContext, pContext->pulse.pulseSO, "pa_threaded_mainloop_accept");
+    pContext->pulse.pa_threaded_mainloop_get_retval    = (ma_proc)ma_dlsym(pContext, pContext->pulse.pulseSO, "pa_threaded_mainloop_get_retval");
+    pContext->pulse.pa_threaded_mainloop_get_api       = (ma_proc)ma_dlsym(pContext, pContext->pulse.pulseSO, "pa_threaded_mainloop_get_api");
+    pContext->pulse.pa_threaded_mainloop_in_thread     = (ma_proc)ma_dlsym(pContext, pContext->pulse.pulseSO, "pa_threaded_mainloop_in_thread");
+    pContext->pulse.pa_threaded_mainloop_set_name      = (ma_proc)ma_dlsym(pContext, pContext->pulse.pulseSO, "pa_threaded_mainloop_set_name");
     pContext->pulse.pa_context_new                     = (ma_proc)ma_dlsym(pContext, pContext->pulse.pulseSO, "pa_context_new");
     pContext->pulse.pa_context_unref                   = (ma_proc)ma_dlsym(pContext, pContext->pulse.pulseSO, "pa_context_unref");
     pContext->pulse.pa_context_connect                 = (ma_proc)ma_dlsym(pContext, pContext->pulse.pulseSO, "pa_context_connect");
@@ -21650,9 +21887,23 @@ static ma_result ma_context_init__pulse(const ma_context_config* pConfig, ma_con
     /* This strange assignment system is just for type safety. */
     ma_pa_mainloop_new_proc                    _pa_mainloop_new                   = pa_mainloop_new;
     ma_pa_mainloop_free_proc                   _pa_mainloop_free                  = pa_mainloop_free;
+    ma_pa_mainloop_quit_proc                   _pa_mainloop_quit                  = pa_mainloop_quit;
     ma_pa_mainloop_get_api_proc                _pa_mainloop_get_api               = pa_mainloop_get_api;
     ma_pa_mainloop_iterate_proc                _pa_mainloop_iterate               = pa_mainloop_iterate;
     ma_pa_mainloop_wakeup_proc                 _pa_mainloop_wakeup                = pa_mainloop_wakeup;
+    ma_pa_threaded_mainloop_new_proc           _pa_threaded_mainloop_new          = pa_threaded_mainloop_new;
+    ma_pa_threaded_mainloop_free_proc          _pa_threaded_mainloop_free         = pa_threaded_mainloop_free;
+    ma_pa_threaded_mainloop_start_proc         _pa_threaded_mainloop_start        = pa_threaded_mainloop_start;
+    ma_pa_threaded_mainloop_stop_proc          _pa_threaded_mainloop_stop         = pa_threaded_mainloop_stop;
+    ma_pa_threaded_mainloop_lock_proc          _pa_threaded_mainloop_lock         = pa_threaded_mainloop_lock;
+    ma_pa_threaded_mainloop_unlock_proc        _pa_threaded_mainloop_unlock       = pa_threaded_mainloop_unlock;
+    ma_pa_threaded_mainloop_wait_proc          _pa_threaded_mainloop_wait         = pa_threaded_mainloop_wait;
+    ma_pa_threaded_mainloop_signal_proc        _pa_threaded_mainloop_signal       = pa_threaded_mainloop_signal;
+    ma_pa_threaded_mainloop_accept_proc        _pa_threaded_mainloop_accept       = pa_threaded_mainloop_accept;
+    ma_pa_threaded_mainloop_get_retval_proc    _pa_threaded_mainloop_get_retval   = pa_threaded_mainloop_get_retval;
+    ma_pa_threaded_mainloop_get_api_proc       _pa_threaded_mainloop_get_api      = pa_threaded_mainloop_get_api;
+    ma_pa_threaded_mainloop_in_thread_proc     _pa_threaded_mainloop_in_thread    = pa_threaded_mainloop_in_thread;
+    ma_pa_threaded_mainloop_set_name_proc      _pa_threaded_mainloop_set_name     = pa_threaded_mainloop_set_name;
     ma_pa_context_new_proc                     _pa_context_new                    = pa_context_new;
     ma_pa_context_unref_proc                   _pa_context_unref                  = pa_context_unref;
     ma_pa_context_connect_proc                 _pa_context_connect                = pa_context_connect;
@@ -21695,9 +21946,23 @@ static ma_result ma_context_init__pulse(const ma_context_config* pConfig, ma_con
 
     pContext->pulse.pa_mainloop_new                    = (ma_proc)_pa_mainloop_new;
     pContext->pulse.pa_mainloop_free                   = (ma_proc)_pa_mainloop_free;
+    pContext->pulse.pa_mainloop_quit                   = (ma_proc)_pa_mainloop_quit;
     pContext->pulse.pa_mainloop_get_api                = (ma_proc)_pa_mainloop_get_api;
     pContext->pulse.pa_mainloop_iterate                = (ma_proc)_pa_mainloop_iterate;
     pContext->pulse.pa_mainloop_wakeup                 = (ma_proc)_pa_mainloop_wakeup;
+    pContext->pulse.pa_threaded_mainloop_new           = (ma_proc)_pa_threaded_mainloop_new;
+    pContext->pulse.pa_threaded_mainloop_free          = (ma_proc)_pa_threaded_mainloop_free;
+    pContext->pulse.pa_threaded_mainloop_start         = (ma_proc)_pa_threaded_mainloop_start;
+    pContext->pulse.pa_threaded_mainloop_stop          = (ma_proc)_pa_threaded_mainloop_stop;
+    pContext->pulse.pa_threaded_mainloop_lock          = (ma_proc)_pa_threaded_mainloop_lock;
+    pContext->pulse.pa_threaded_mainloop_unlock        = (ma_proc)_pa_threaded_mainloop_unlock;
+    pContext->pulse.pa_threaded_mainloop_wait          = (ma_proc)_pa_threaded_mainloop_wait;
+    pContext->pulse.pa_threaded_mainloop_signal        = (ma_proc)_pa_threaded_mainloop_signal;
+    pContext->pulse.pa_threaded_mainloop_accept        = (ma_proc)_pa_threaded_mainloop_accept;
+    pContext->pulse.pa_threaded_mainloop_get_retval    = (ma_proc)_pa_threaded_mainloop_get_retval;
+    pContext->pulse.pa_threaded_mainloop_get_api       = (ma_proc)_pa_threaded_mainloop_get_api;
+    pContext->pulse.pa_threaded_mainloop_in_thread     = (ma_proc)_pa_threaded_mainloop_in_thread;
+    pContext->pulse.pa_threaded_mainloop_set_name      = (ma_proc)_pa_threaded_mainloop_set_name;
     pContext->pulse.pa_context_new                     = (ma_proc)_pa_context_new;
     pContext->pulse.pa_context_unref                   = (ma_proc)_pa_context_unref;
     pContext->pulse.pa_context_connect                 = (ma_proc)_pa_context_connect;
@@ -21739,82 +22004,69 @@ static ma_result ma_context_init__pulse(const ma_context_config* pConfig, ma_con
     pContext->pulse.pa_stream_readable_size            = (ma_proc)_pa_stream_readable_size;
 #endif
 
+    /* The PulseAudio context maps well to miniaudio's notion of a context. The pa_context object will be initialized as part of the ma_context. */
+    pContext->pulse.pMainLoop = ((ma_pa_threaded_mainloop_new_proc)pContext->pulse.pa_threaded_mainloop_new)();
+    if (pContext->pulse.pMainLoop == NULL) {
+        result = ma_context_post_error(pContext, NULL, MA_LOG_LEVEL_ERROR, "[PulseAudio] Failed to create mainloop.", MA_FAILED_TO_INIT_BACKEND);
+    #ifndef MA_NO_RUNTIME_LINKING
+        ma_dlclose(pContext, pContext->pulse.pulseSO);
+    #endif
+        return result;
+    }
+
+    pContext->pulse.pPulseContext = ((ma_pa_context_new_proc)pContext->pulse.pa_context_new)(((ma_pa_threaded_mainloop_get_api_proc)pContext->pulse.pa_threaded_mainloop_get_api)((ma_pa_threaded_mainloop*)pContext->pulse.pMainLoop), pConfig->pulse.pApplicationName);
+    if (pContext->pulse.pPulseContext == NULL) {
+        result = ma_context_post_error(pContext, NULL, MA_LOG_LEVEL_ERROR, "[PulseAudio] Failed to create PulseAudio context.", MA_FAILED_TO_INIT_BACKEND);
+        ((ma_pa_threaded_mainloop_free_proc)pContext->pulse.pa_threaded_mainloop_free)((ma_pa_threaded_mainloop*)(pContext->pulse.pMainLoop));
+    #ifndef MA_NO_RUNTIME_LINKING
+        ma_dlclose(pContext, pContext->pulse.pulseSO);
+    #endif
+        return result;
+    }
+
+    /* Now we need to connect to the context. Everything is asynchronous so we need to wait for it to connect before returning. */
+    result = ma_result_from_pulse(((ma_pa_context_connect_proc)pContext->pulse.pa_context_connect)((ma_pa_context*)pContext->pulse.pPulseContext, pConfig->pulse.pServerName, (pConfig->pulse.tryAutoSpawn) ? 0 : MA_PA_CONTEXT_NOAUTOSPAWN, NULL));
+    if (result != MA_SUCCESS) {
+        ma_context_post_error(pContext, NULL, MA_LOG_LEVEL_ERROR, "[PulseAudio] Failed to connect PulseAudio context.", result);
+        ((ma_pa_threaded_mainloop_free_proc)pContext->pulse.pa_threaded_mainloop_free)((ma_pa_threaded_mainloop*)(pContext->pulse.pMainLoop));
+    #ifndef MA_NO_RUNTIME_LINKING
+        ma_dlclose(pContext, pContext->pulse.pulseSO);
+    #endif
+        return result;
+    }
+
+    /* We now need to start the mainloop. Once the loop has started we can then wait for the PulseAudio context to connect. */
+    result = ma_result_from_pulse(((ma_pa_threaded_mainloop_start_proc)pContext->pulse.pa_threaded_mainloop_start)((ma_pa_threaded_mainloop*)pContext->pulse.pMainLoop));
+    if (result != MA_SUCCESS) {
+        ma_context_post_error(pContext, NULL, MA_LOG_LEVEL_ERROR, "[PulseAudio] Failed to start mainloop.", result);
+        ((ma_pa_context_unref_proc)pContext->pulse.pa_context_unref)((ma_pa_context*)pContext->pulse.pPulseContext);
+        ((ma_pa_threaded_mainloop_free_proc)pContext->pulse.pa_threaded_mainloop_free)((ma_pa_threaded_mainloop*)(pContext->pulse.pMainLoop));
+    #ifndef MA_NO_RUNTIME_LINKING
+        ma_dlclose(pContext, pContext->pulse.pulseSO);
+    #endif
+        return result;
+    }
+
+    result = ma_context_wait_for_pa_context_to_connect__pulse(pContext);
+    if (result != MA_SUCCESS) {
+        ((ma_pa_threaded_mainloop_stop_proc)pContext->pulse.pa_threaded_mainloop_stop)((ma_pa_threaded_mainloop*)(pContext->pulse.pMainLoop));
+        ((ma_pa_threaded_mainloop_free_proc)pContext->pulse.pa_threaded_mainloop_free)((ma_pa_threaded_mainloop*)(pContext->pulse.pMainLoop));
+    #ifndef MA_NO_RUNTIME_LINKING
+        ma_dlclose(pContext, pContext->pulse.pulseSO);
+    #endif
+        return result;
+    }
+
+    pContext->isBackendAsynchronous = MA_TRUE;  /* We are using PulseAudio in asynchronous mode. */
+
     pContext->onUninit         = ma_context_uninit__pulse;
-    pContext->onDeviceIDEqual  = ma_context_is_device_id_equal__pulse;
     pContext->onEnumDevices    = ma_context_enumerate_devices__pulse;
     pContext->onGetDeviceInfo  = ma_context_get_device_info__pulse;
     pContext->onDeviceInit     = ma_device_init__pulse;
     pContext->onDeviceUninit   = ma_device_uninit__pulse;
-    pContext->onDeviceStart    = NULL;
-    pContext->onDeviceStop     = NULL;
-    pContext->onDeviceMainLoop = ma_device_main_loop__pulse;
-
-    if (pConfig->pulse.pApplicationName) {
-        pContext->pulse.pApplicationName = ma_copy_string(pConfig->pulse.pApplicationName, &pContext->allocationCallbacks);
-    }
-    if (pConfig->pulse.pServerName) {
-        pContext->pulse.pServerName = ma_copy_string(pConfig->pulse.pServerName, &pContext->allocationCallbacks);
-    }
-    pContext->pulse.tryAutoSpawn = pConfig->pulse.tryAutoSpawn;
-    
-    /*
-    Although we have found the libpulse library, it doesn't necessarily mean PulseAudio is useable. We need to initialize
-    and connect a dummy PulseAudio context to test PulseAudio's usability.
-    */
-    {
-        ma_pa_mainloop* pMainLoop;
-        ma_pa_mainloop_api* pAPI;
-        ma_pa_context* pPulseContext;
-        int error;
-
-        pMainLoop = ((ma_pa_mainloop_new_proc)pContext->pulse.pa_mainloop_new)();
-        if (pMainLoop == NULL) {
-            ma_free(pContext->pulse.pServerName, &pContext->allocationCallbacks);
-            ma_free(pContext->pulse.pApplicationName, &pContext->allocationCallbacks);
-        #ifndef MA_NO_RUNTIME_LINKING
-            ma_dlclose(pContext, pContext->pulse.pulseSO);
-        #endif
-            return MA_NO_BACKEND;
-        }
-
-        pAPI = ((ma_pa_mainloop_get_api_proc)pContext->pulse.pa_mainloop_get_api)(pMainLoop);
-        if (pAPI == NULL) {
-            ma_free(pContext->pulse.pServerName, &pContext->allocationCallbacks);
-            ma_free(pContext->pulse.pApplicationName, &pContext->allocationCallbacks);
-            ((ma_pa_mainloop_free_proc)pContext->pulse.pa_mainloop_free)(pMainLoop);
-        #ifndef MA_NO_RUNTIME_LINKING
-            ma_dlclose(pContext, pContext->pulse.pulseSO);
-        #endif
-            return MA_NO_BACKEND;
-        }
-
-        pPulseContext = ((ma_pa_context_new_proc)pContext->pulse.pa_context_new)(pAPI, pContext->pulse.pApplicationName);
-        if (pPulseContext == NULL) {
-            ma_free(pContext->pulse.pServerName, &pContext->allocationCallbacks);
-            ma_free(pContext->pulse.pApplicationName, &pContext->allocationCallbacks);
-            ((ma_pa_mainloop_free_proc)pContext->pulse.pa_mainloop_free)(pMainLoop);
-        #ifndef MA_NO_RUNTIME_LINKING
-            ma_dlclose(pContext, pContext->pulse.pulseSO);
-        #endif
-            return MA_NO_BACKEND;
-        }
-
-        error = ((ma_pa_context_connect_proc)pContext->pulse.pa_context_connect)(pPulseContext, pContext->pulse.pServerName, 0, NULL);
-        if (error != MA_PA_OK) {
-            ma_free(pContext->pulse.pServerName, &pContext->allocationCallbacks);
-            ma_free(pContext->pulse.pApplicationName, &pContext->allocationCallbacks);
-            ((ma_pa_context_unref_proc)pContext->pulse.pa_context_unref)(pPulseContext);
-            ((ma_pa_mainloop_free_proc)pContext->pulse.pa_mainloop_free)(pMainLoop);
-        #ifndef MA_NO_RUNTIME_LINKING
-            ma_dlclose(pContext, pContext->pulse.pulseSO);
-        #endif
-            return MA_NO_BACKEND;
-        }
-
-        ((ma_pa_context_disconnect_proc)pContext->pulse.pa_context_disconnect)(pPulseContext);
-        ((ma_pa_context_unref_proc)pContext->pulse.pa_context_unref)(pPulseContext);
-        ((ma_pa_mainloop_free_proc)pContext->pulse.pa_mainloop_free)(pMainLoop);
-    }
+    pContext->onDeviceStart    = ma_device_start__pulse;
+    pContext->onDeviceStop     = ma_device_stop__pulse;
+    pContext->onDeviceMainLoop = NULL; /* Set to null since this backend is asynchronous. */
 
     return MA_SUCCESS;
 }
@@ -21907,15 +22159,6 @@ static ma_result ma_context_open_client__jack(ma_context* pContext, ma_jack_clie
     return MA_SUCCESS;
 }
 
-static ma_bool32 ma_context_is_device_id_equal__jack(ma_context* pContext, const ma_device_id* pID0, const ma_device_id* pID1)
-{
-    MA_ASSERT(pContext != NULL);
-    MA_ASSERT(pID0 != NULL);
-    MA_ASSERT(pID1 != NULL);
-    (void)pContext;
-
-    return pID0->jack == pID1->jack;
-}
 
 static ma_result ma_context_enumerate_devices__jack(ma_context* pContext, ma_enum_devices_callback_proc callback, void* pUserData)
 {
@@ -21929,6 +22172,7 @@ static ma_result ma_context_enumerate_devices__jack(ma_context* pContext, ma_enu
         ma_device_info deviceInfo;
         MA_ZERO_OBJECT(&deviceInfo);
         ma_strncpy_s(deviceInfo.name, sizeof(deviceInfo.name), MA_DEFAULT_PLAYBACK_DEVICE_NAME, (size_t)-1);
+        deviceInfo.isDefault = MA_TRUE;    /* JACK only uses default devices. */
         cbResult = callback(pContext, ma_device_type_playback, &deviceInfo, pUserData);
     }
 
@@ -21937,6 +22181,7 @@ static ma_result ma_context_enumerate_devices__jack(ma_context* pContext, ma_enu
         ma_device_info deviceInfo;
         MA_ZERO_OBJECT(&deviceInfo);
         ma_strncpy_s(deviceInfo.name, sizeof(deviceInfo.name), MA_DEFAULT_CAPTURE_DEVICE_NAME, (size_t)-1);
+        deviceInfo.isDefault = MA_TRUE;    /* JACK only uses default devices. */
         cbResult = callback(pContext, ma_device_type_capture, &deviceInfo, pUserData);
     }
 
@@ -21966,6 +22211,9 @@ static ma_result ma_context_get_device_info__jack(ma_context* pContext, ma_devic
     } else {
         ma_strncpy_s(pDeviceInfo->name, sizeof(pDeviceInfo->name), MA_DEFAULT_CAPTURE_DEVICE_NAME, (size_t)-1);
     }
+
+    /* Jack only uses default devices. */
+    pDeviceInfo->isDefault = MA_TRUE;
 
     /* Jack only supports f32 and has a specific channel count and sample rate. */
     pDeviceInfo->formatCount = 1;
@@ -22178,7 +22426,7 @@ static ma_result ma_device_init__jack(ma_context* pContext, const ma_device_conf
     /* The buffer size in frames can change. */
     periods            = pConfig->periods;
     periodSizeInFrames = ((ma_jack_get_buffer_size_proc)pContext->jack.jack_get_buffer_size)((ma_jack_client_t*)pDevice->jack.pClient);
-    
+
     if (pConfig->deviceType == ma_device_type_capture || pConfig->deviceType == ma_device_type_duplex) {
         const char** ppPorts;
 
@@ -22315,7 +22563,7 @@ static ma_result ma_device_start__jack(ma_device* pDevice)
 
         ((ma_jack_free_proc)pContext->jack.jack_free)((void*)ppServerPorts);
     }
-    
+
     if (pDevice->type == ma_device_type_playback || pDevice->type == ma_device_type_duplex) {
         const char** ppServerPorts = ((ma_jack_get_ports_proc)pContext->jack.jack_get_ports)((ma_jack_client_t*)pDevice->jack.pClient, NULL, MA_JACK_DEFAULT_AUDIO_TYPE, ma_JackPortIsPhysical | ma_JackPortIsInput);
         if (ppServerPorts == NULL) {
@@ -22349,7 +22597,7 @@ static ma_result ma_device_stop__jack(ma_device* pDevice)
     if (((ma_jack_deactivate_proc)pContext->jack.jack_deactivate)((ma_jack_client_t*)pDevice->jack.pClient) != 0) {
         return ma_post_error(pDevice, MA_LOG_LEVEL_ERROR, "[JACK] An error occurred when deactivating the JACK client.", MA_ERROR);
     }
-    
+
     onStop = pDevice->onStop;
     if (onStop) {
         onStop(pDevice);
@@ -22454,17 +22702,6 @@ static ma_result ma_context_init__jack(const ma_context_config* pConfig, ma_cont
     pContext->jack.jack_free                     = (ma_proc)_jack_free;
 #endif
 
-    pContext->isBackendAsynchronous = MA_TRUE;
-
-    pContext->onUninit        = ma_context_uninit__jack;
-    pContext->onDeviceIDEqual = ma_context_is_device_id_equal__jack;
-    pContext->onEnumDevices   = ma_context_enumerate_devices__jack;
-    pContext->onGetDeviceInfo = ma_context_get_device_info__jack;
-    pContext->onDeviceInit    = ma_device_init__jack;
-    pContext->onDeviceUninit  = ma_device_uninit__jack;
-    pContext->onDeviceStart   = ma_device_start__jack;
-    pContext->onDeviceStop    = ma_device_stop__jack;
-
     if (pConfig->jack.pClientName != NULL) {
         pContext->jack.pClientName = ma_copy_string(pConfig->jack.pClientName, &pContext->allocationCallbacks);
     }
@@ -22488,6 +22725,16 @@ static ma_result ma_context_init__jack(const ma_context_config* pConfig, ma_cont
         ((ma_jack_client_close_proc)pContext->jack.jack_client_close)((ma_jack_client_t*)pDummyClient);
     }
 
+    pContext->isBackendAsynchronous = MA_TRUE;
+
+    pContext->onUninit        = ma_context_uninit__jack;
+    pContext->onEnumDevices   = ma_context_enumerate_devices__jack;
+    pContext->onGetDeviceInfo = ma_context_get_device_info__jack;
+    pContext->onDeviceInit    = ma_device_init__jack;
+    pContext->onDeviceUninit  = ma_device_uninit__jack;
+    pContext->onDeviceStart   = ma_device_start__jack;
+    pContext->onDeviceStop    = ma_device_stop__jack;
+
     return MA_SUCCESS;
 }
 #endif  /* JACK */
@@ -22497,6 +22744,11 @@ static ma_result ma_context_init__jack(const ma_context_config* pConfig, ma_cont
 /******************************************************************************
 
 Core Audio Backend
+
+References
+==========
+- Technical Note TN2091: Device input using the HAL Output Audio Unit
+    https://developer.apple.com/library/archive/technotes/tn2091/_index.html
 
 ******************************************************************************/
 #ifdef MA_HAS_COREAUDIO
@@ -22643,14 +22895,14 @@ static ma_result ma_format_from_AudioStreamBasicDescription(const AudioStreamBas
 {
     MA_ASSERT(pDescription != NULL);
     MA_ASSERT(pFormatOut != NULL);
-    
+
     *pFormatOut = ma_format_unknown;   /* Safety. */
-    
+
     /* There's a few things miniaudio doesn't support. */
     if (pDescription->mFormatID != kAudioFormatLinearPCM) {
         return MA_FORMAT_NOT_SUPPORTED;
     }
-    
+
     /* We don't support any non-packed formats that are aligned high. */
     if ((pDescription->mFormatFlags & kLinearPCMFormatFlagIsAlignedHigh) != 0) {
         return MA_FORMAT_NOT_SUPPORTED;
@@ -22660,7 +22912,7 @@ static ma_result ma_format_from_AudioStreamBasicDescription(const AudioStreamBas
     if ((ma_is_little_endian() && (pDescription->mFormatFlags & kAudioFormatFlagIsBigEndian) != 0) || (ma_is_big_endian() && (pDescription->mFormatFlags & kAudioFormatFlagIsBigEndian) == 0)) {
         return MA_FORMAT_NOT_SUPPORTED;
     }
-    
+
     /* We are not currently supporting non-interleaved formats (this will be added in a future version of miniaudio). */
     /*if ((pDescription->mFormatFlags & kAudioFormatFlagIsNonInterleaved) != 0) {
         return MA_FORMAT_NOT_SUPPORTED;
@@ -22699,7 +22951,7 @@ static ma_result ma_format_from_AudioStreamBasicDescription(const AudioStreamBas
             }
         }
     }
-    
+
     /* Getting here means the format is not supported. */
     return MA_FORMAT_NOT_SUPPORTED;
 }
@@ -22773,7 +23025,7 @@ static ma_channel ma_channel_from_AudioChannelLabel(AudioChannelLabel label)
         case kAudioChannelLabel_Discrete_14:          return MA_CHANNEL_AUX_14;
         case kAudioChannelLabel_Discrete_15:          return MA_CHANNEL_AUX_15;
         case kAudioChannelLabel_Discrete_65535:       return MA_CHANNEL_NONE;
-        
+
     #if 0   /* Introduced in a later version of macOS. */
         case kAudioChannelLabel_HOA_ACN:              return MA_CHANNEL_NONE;
         case kAudioChannelLabel_HOA_ACN_0:            return MA_CHANNEL_AUX_0;
@@ -22794,7 +23046,7 @@ static ma_channel ma_channel_from_AudioChannelLabel(AudioChannelLabel label)
         case kAudioChannelLabel_HOA_ACN_15:           return MA_CHANNEL_AUX_15;
         case kAudioChannelLabel_HOA_ACN_65024:        return MA_CHANNEL_NONE;
     #endif
-        
+
         default:                                      return MA_CHANNEL_NONE;
     }
 }
@@ -22802,7 +23054,7 @@ static ma_channel ma_channel_from_AudioChannelLabel(AudioChannelLabel label)
 static ma_result ma_get_channel_map_from_AudioChannelLayout(AudioChannelLayout* pChannelLayout, ma_channel* pChannelMap, size_t channelMapCap)
 {
     MA_ASSERT(pChannelLayout != NULL);
-    
+
     if (pChannelLayout->mChannelLayoutTag == kAudioChannelLayoutTag_UseChannelDescriptions) {
         UInt32 iChannel;
         for (iChannel = 0; iChannel < pChannelLayout->mNumberChannelDescriptions && iChannel < channelMapCap; ++iChannel) {
@@ -22828,7 +23080,14 @@ static ma_result ma_get_channel_map_from_AudioChannelLayout(AudioChannelLayout* 
         Need to use the tag to determine the channel map. For now I'm just assuming a default channel map, but later on this should
         be updated to determine the mapping based on the tag.
         */
-        UInt32 channelCount = ma_min(AudioChannelLayoutTag_GetNumberOfChannels(pChannelLayout->mChannelLayoutTag), channelMapCap);
+        UInt32 channelCount;
+
+        /* Our channel map retrieval APIs below take 32-bit integers, so we'll want to clamp the channel map capacity. */
+        if (channelMapCap > 0xFFFFFFFF) {
+            channelMapCap = 0xFFFFFFFF;
+        }
+
+        channelCount = ma_min(AudioChannelLayoutTag_GetNumberOfChannels(pChannelLayout->mChannelLayoutTag), (UInt32)channelMapCap);
 
         switch (pChannelLayout->mChannelLayoutTag)
         {
@@ -22843,7 +23102,7 @@ static ma_result ma_get_channel_map_from_AudioChannelLayout(AudioChannelLayout* 
             {
                 ma_get_standard_channel_map(ma_standard_channel_map_default, channelCount, pChannelMap);
             } break;
-            
+
             case kAudioChannelLayoutTag_Octagonal:
             {
                 pChannelMap[7] = MA_CHANNEL_SIDE_RIGHT;
@@ -22864,16 +23123,16 @@ static ma_result ma_get_channel_map_from_AudioChannelLayout(AudioChannelLayout* 
                 pChannelMap[1] = MA_CHANNEL_RIGHT;
                 pChannelMap[0] = MA_CHANNEL_LEFT;
             } break;
-            
+
             /* TODO: Add support for more tags here. */
-        
+
             default:
             {
                 ma_get_standard_channel_map(ma_standard_channel_map_default, channelCount, pChannelMap);
             } break;
         }
     }
-    
+
     return MA_SUCCESS;
 }
 
@@ -22891,7 +23150,7 @@ static ma_result ma_get_device_object_ids__coreaudio(ma_context* pContext, UInt3
     /* Safety. */
     *pDeviceCount = 0;
     *ppDeviceObjectIDs = NULL;
-    
+
     propAddressDevices.mSelector = kAudioHardwarePropertyDevices;
     propAddressDevices.mScope    = kAudioObjectPropertyScopeGlobal;
     propAddressDevices.mElement  = kAudioObjectPropertyElementMaster;
@@ -22900,18 +23159,18 @@ static ma_result ma_get_device_object_ids__coreaudio(ma_context* pContext, UInt3
     if (status != noErr) {
         return ma_result_from_OSStatus(status);
     }
-    
+
     pDeviceObjectIDs = (AudioObjectID*)ma_malloc(deviceObjectsDataSize, &pContext->allocationCallbacks);
     if (pDeviceObjectIDs == NULL) {
         return MA_OUT_OF_MEMORY;
     }
-    
+
     status = ((ma_AudioObjectGetPropertyData_proc)pContext->coreaudio.AudioObjectGetPropertyData)(kAudioObjectSystemObject, &propAddressDevices, 0, NULL, &deviceObjectsDataSize, pDeviceObjectIDs);
     if (status != noErr) {
         ma_free(pDeviceObjectIDs, &pContext->allocationCallbacks);
         return ma_result_from_OSStatus(status);
     }
-    
+
     *pDeviceCount = deviceObjectsDataSize / sizeof(AudioObjectID);
     *ppDeviceObjectIDs = pDeviceObjectIDs;
 
@@ -22935,7 +23194,7 @@ static ma_result ma_get_AudioObject_uid_as_CFStringRef(ma_context* pContext, Aud
     if (status != noErr) {
         return ma_result_from_OSStatus(status);
     }
-    
+
     return MA_SUCCESS;
 }
 
@@ -22950,11 +23209,11 @@ static ma_result ma_get_AudioObject_uid(ma_context* pContext, AudioObjectID obje
     if (result != MA_SUCCESS) {
         return result;
     }
-    
+
     if (!((ma_CFStringGetCString_proc)pContext->coreaudio.CFStringGetCString)(uid, bufferOut, bufferSize, kCFStringEncodingUTF8)) {
         return MA_ERROR;
     }
-    
+
     ((ma_CFRelease_proc)pContext->coreaudio.CFRelease)(uid);
     return MA_SUCCESS;
 }
@@ -22977,11 +23236,11 @@ static ma_result ma_get_AudioObject_name(ma_context* pContext, AudioObjectID obj
     if (status != noErr) {
         return ma_result_from_OSStatus(status);
     }
-    
+
     if (!((ma_CFStringGetCString_proc)pContext->coreaudio.CFStringGetCString)(deviceName, bufferOut, bufferSize, kCFStringEncodingUTF8)) {
         return MA_ERROR;
     }
-    
+
     ((ma_CFRelease_proc)pContext->coreaudio.CFRelease)(deviceName);
     return MA_SUCCESS;
 }
@@ -23000,17 +23259,17 @@ static ma_bool32 ma_does_AudioObject_support_scope(ma_context* pContext, AudioOb
     propAddress.mSelector = kAudioDevicePropertyStreamConfiguration;
     propAddress.mScope    = scope;
     propAddress.mElement  = kAudioObjectPropertyElementMaster;
-    
+
     status = ((ma_AudioObjectGetPropertyDataSize_proc)pContext->coreaudio.AudioObjectGetPropertyDataSize)(deviceObjectID, &propAddress, 0, NULL, &dataSize);
     if (status != noErr) {
         return MA_FALSE;
     }
-    
+
     pBufferList = (AudioBufferList*)ma__malloc_from_callbacks(dataSize, &pContext->allocationCallbacks);
     if (pBufferList == NULL) {
         return MA_FALSE;   /* Out of memory. */
     }
-    
+
     status = ((ma_AudioObjectGetPropertyData_proc)pContext->coreaudio.AudioObjectGetPropertyData)(deviceObjectID, &propAddress, 0, NULL, &dataSize, pBufferList);
     if (status != noErr) {
         ma__free_from_callbacks(pBufferList, &pContext->allocationCallbacks);
@@ -23021,7 +23280,7 @@ static ma_bool32 ma_does_AudioObject_support_scope(ma_context* pContext, AudioOb
     if (pBufferList->mNumberBuffers > 0) {
         isSupported = MA_TRUE;
     }
-    
+
     ma__free_from_callbacks(pBufferList, &pContext->allocationCallbacks);
     return isSupported;
 }
@@ -23047,7 +23306,7 @@ static ma_result ma_get_AudioObject_stream_descriptions(ma_context* pContext, Au
     MA_ASSERT(pContext != NULL);
     MA_ASSERT(pDescriptionCount != NULL);
     MA_ASSERT(ppDescriptions != NULL);
-    
+
     /*
     TODO: Experiment with kAudioStreamPropertyAvailablePhysicalFormats instead of (or in addition to) kAudioStreamPropertyAvailableVirtualFormats. My
           MacBook Pro uses s24/32 format, however, which miniaudio does not currently support.
@@ -23055,23 +23314,23 @@ static ma_result ma_get_AudioObject_stream_descriptions(ma_context* pContext, Au
     propAddress.mSelector = kAudioStreamPropertyAvailableVirtualFormats; /*kAudioStreamPropertyAvailablePhysicalFormats;*/
     propAddress.mScope    = (deviceType == ma_device_type_playback) ? kAudioObjectPropertyScopeOutput : kAudioObjectPropertyScopeInput;
     propAddress.mElement  = kAudioObjectPropertyElementMaster;
-    
+
     status = ((ma_AudioObjectGetPropertyDataSize_proc)pContext->coreaudio.AudioObjectGetPropertyDataSize)(deviceObjectID, &propAddress, 0, NULL, &dataSize);
     if (status != noErr) {
         return ma_result_from_OSStatus(status);
     }
-    
+
     pDescriptions = (AudioStreamRangedDescription*)ma_malloc(dataSize, &pContext->allocationCallbacks);
     if (pDescriptions == NULL) {
         return MA_OUT_OF_MEMORY;
     }
-    
+
     status = ((ma_AudioObjectGetPropertyData_proc)pContext->coreaudio.AudioObjectGetPropertyData)(deviceObjectID, &propAddress, 0, NULL, &dataSize, pDescriptions);
     if (status != noErr) {
         ma_free(pDescriptions, &pContext->allocationCallbacks);
         return ma_result_from_OSStatus(status);
     }
-    
+
     *pDescriptionCount = dataSize / sizeof(*pDescriptions);
     *ppDescriptions = pDescriptions;
     return MA_SUCCESS;
@@ -23087,29 +23346,29 @@ static ma_result ma_get_AudioObject_channel_layout(ma_context* pContext, AudioOb
 
     MA_ASSERT(pContext != NULL);
     MA_ASSERT(ppChannelLayout != NULL);
-    
+
     *ppChannelLayout = NULL;    /* Safety. */
-    
+
     propAddress.mSelector = kAudioDevicePropertyPreferredChannelLayout;
     propAddress.mScope    = (deviceType == ma_device_type_playback) ? kAudioObjectPropertyScopeOutput : kAudioObjectPropertyScopeInput;
     propAddress.mElement  = kAudioObjectPropertyElementMaster;
-    
+
     status = ((ma_AudioObjectGetPropertyDataSize_proc)pContext->coreaudio.AudioObjectGetPropertyDataSize)(deviceObjectID, &propAddress, 0, NULL, &dataSize);
     if (status != noErr) {
         return ma_result_from_OSStatus(status);
     }
-    
+
     pChannelLayout = (AudioChannelLayout*)ma_malloc(dataSize, &pContext->allocationCallbacks);
     if (pChannelLayout == NULL) {
         return MA_OUT_OF_MEMORY;
     }
-    
+
     status = ((ma_AudioObjectGetPropertyData_proc)pContext->coreaudio.AudioObjectGetPropertyData)(deviceObjectID, &propAddress, 0, NULL, &dataSize, pChannelLayout);
     if (status != noErr) {
         ma_free(pChannelLayout, &pContext->allocationCallbacks);
         return ma_result_from_OSStatus(status);
     }
-    
+
     *ppChannelLayout = pChannelLayout;
     return MA_SUCCESS;
 }
@@ -23121,14 +23380,14 @@ static ma_result ma_get_AudioObject_channel_count(ma_context* pContext, AudioObj
 
     MA_ASSERT(pContext != NULL);
     MA_ASSERT(pChannelCount != NULL);
-    
+
     *pChannelCount = 0; /* Safety. */
 
     result = ma_get_AudioObject_channel_layout(pContext, deviceObjectID, deviceType, &pChannelLayout);
     if (result != MA_SUCCESS) {
         return result;
     }
-    
+
     if (pChannelLayout->mChannelLayoutTag == kAudioChannelLayoutTag_UseChannelDescriptions) {
         *pChannelCount = pChannelLayout->mNumberChannelDescriptions;
     } else if (pChannelLayout->mChannelLayoutTag == kAudioChannelLayoutTag_UseChannelBitmap) {
@@ -23136,7 +23395,7 @@ static ma_result ma_get_AudioObject_channel_count(ma_context* pContext, AudioObj
     } else {
         *pChannelCount = AudioChannelLayoutTag_GetNumberOfChannels(pChannelLayout->mChannelLayoutTag);
     }
-    
+
     ma_free(pChannelLayout, &pContext->allocationCallbacks);
     return MA_SUCCESS;
 }
@@ -23148,18 +23407,18 @@ static ma_result ma_get_AudioObject_channel_map(ma_context* pContext, AudioObjec
     ma_result result;
 
     MA_ASSERT(pContext != NULL);
-    
+
     result = ma_get_AudioObject_channel_layout(pContext, deviceObjectID, deviceType, &pChannelLayout);
     if (result != MA_SUCCESS) {
         return result;  /* Rather than always failing here, would it be more robust to simply assume a default? */
     }
-    
+
     result = ma_get_channel_map_from_AudioChannelLayout(pChannelLayout, pChannelMap, channelMapCap);
     if (result != MA_SUCCESS) {
         ma_free(pChannelLayout, &pContext->allocationCallbacks);
         return result;
     }
-    
+
     ma_free(pChannelLayout, &pContext->allocationCallbacks);
     return result;
 }
@@ -23175,31 +23434,31 @@ static ma_result ma_get_AudioObject_sample_rates(ma_context* pContext, AudioObje
     MA_ASSERT(pContext != NULL);
     MA_ASSERT(pSampleRateRangesCount != NULL);
     MA_ASSERT(ppSampleRateRanges != NULL);
-  
+
     /* Safety. */
     *pSampleRateRangesCount = 0;
     *ppSampleRateRanges = NULL;
-    
+
     propAddress.mSelector = kAudioDevicePropertyAvailableNominalSampleRates;
     propAddress.mScope    = (deviceType == ma_device_type_playback) ? kAudioObjectPropertyScopeOutput : kAudioObjectPropertyScopeInput;
     propAddress.mElement  = kAudioObjectPropertyElementMaster;
-    
+
     status = ((ma_AudioObjectGetPropertyDataSize_proc)pContext->coreaudio.AudioObjectGetPropertyDataSize)(deviceObjectID, &propAddress, 0, NULL, &dataSize);
     if (status != noErr) {
         return ma_result_from_OSStatus(status);
     }
-    
+
     pSampleRateRanges = (AudioValueRange*)ma_malloc(dataSize, &pContext->allocationCallbacks);
     if (pSampleRateRanges == NULL) {
         return MA_OUT_OF_MEMORY;
     }
-    
+
     status = ((ma_AudioObjectGetPropertyData_proc)pContext->coreaudio.AudioObjectGetPropertyData)(deviceObjectID, &propAddress, 0, NULL, &dataSize, pSampleRateRanges);
     if (status != noErr) {
         ma_free(pSampleRateRanges, &pContext->allocationCallbacks);
         return ma_result_from_OSStatus(status);
     }
-    
+
     *pSampleRateRangesCount = dataSize / sizeof(*pSampleRateRanges);
     *ppSampleRateRanges = pSampleRateRanges;
     return MA_SUCCESS;
@@ -23214,19 +23473,19 @@ static ma_result ma_get_AudioObject_get_closest_sample_rate(ma_context* pContext
 
     MA_ASSERT(pContext != NULL);
     MA_ASSERT(pSampleRateOut != NULL);
-    
+
     *pSampleRateOut = 0;    /* Safety. */
-    
+
     result = ma_get_AudioObject_sample_rates(pContext, deviceObjectID, deviceType, &sampleRateRangeCount, &pSampleRateRanges);
     if (result != MA_SUCCESS) {
         return result;
     }
-    
+
     if (sampleRateRangeCount == 0) {
         ma_free(pSampleRateRanges, &pContext->allocationCallbacks);
         return MA_ERROR;   /* Should never hit this case should we? */
     }
-    
+
     if (sampleRateIn == 0) {
         /* Search in order of miniaudio's preferred priority. */
         UInt32 iMALSampleRate;
@@ -23242,13 +23501,13 @@ static ma_result ma_get_AudioObject_get_closest_sample_rate(ma_context* pContext
                 }
             }
         }
-        
+
         /*
         If we get here it means none of miniaudio's standard sample rates matched any of the supported sample rates from the device. In this
         case we just fall back to the first one reported by Core Audio.
         */
         MA_ASSERT(sampleRateRangeCount > 0);
-        
+
         *pSampleRateOut = pSampleRateRanges[0].mMinimum;
         ma_free(pSampleRateRanges, &pContext->allocationCallbacks);
         return MA_SUCCESS;
@@ -23269,21 +23528,21 @@ static ma_result ma_get_AudioObject_get_closest_sample_rate(ma_context* pContext
                 } else {
                     absoluteDifference = sampleRateIn - pSampleRateRanges[iRange].mMaximum;
                 }
-                
+
                 if (currentAbsoluteDifference > absoluteDifference) {
                     currentAbsoluteDifference = absoluteDifference;
                     iCurrentClosestRange = iRange;
                 }
             }
         }
-        
+
         MA_ASSERT(iCurrentClosestRange != (UInt32)-1);
-        
+
         *pSampleRateOut = pSampleRateRanges[iCurrentClosestRange].mMinimum;
         ma_free(pSampleRateRanges, &pContext->allocationCallbacks);
         return MA_SUCCESS;
     }
-    
+
     /* Should never get here, but it would mean we weren't able to find any suitable sample rates. */
     /*ma_free(pSampleRateRanges, &pContext->allocationCallbacks);*/
     /*return MA_ERROR;*/
@@ -23299,9 +23558,9 @@ static ma_result ma_get_AudioObject_closest_buffer_size_in_frames(ma_context* pC
 
     MA_ASSERT(pContext != NULL);
     MA_ASSERT(pBufferSizeInFramesOut != NULL);
-    
+
     *pBufferSizeInFramesOut = 0;    /* Safety. */
-    
+
     propAddress.mSelector = kAudioDevicePropertyBufferFrameSizeRange;
     propAddress.mScope    = (deviceType == ma_device_type_playback) ? kAudioObjectPropertyScopeOutput : kAudioObjectPropertyScopeInput;
     propAddress.mElement  = kAudioObjectPropertyElementMaster;
@@ -23311,7 +23570,7 @@ static ma_result ma_get_AudioObject_closest_buffer_size_in_frames(ma_context* pC
     if (status != noErr) {
         return ma_result_from_OSStatus(status);
     }
-    
+
     /* This is just a clamp. */
     if (bufferSizeInFramesIn < bufferSizeRange.mMinimum) {
         *pBufferSizeInFramesOut = (ma_uint32)bufferSizeRange.mMinimum;
@@ -23343,20 +23602,51 @@ static ma_result ma_set_AudioObject_buffer_size_in_frames(ma_context* pContext, 
     propAddress.mSelector = kAudioDevicePropertyBufferFrameSize;
     propAddress.mScope    = (deviceType == ma_device_type_playback) ? kAudioObjectPropertyScopeOutput : kAudioObjectPropertyScopeInput;
     propAddress.mElement  = kAudioObjectPropertyElementMaster;
-    
+
     ((ma_AudioObjectSetPropertyData_proc)pContext->coreaudio.AudioObjectSetPropertyData)(deviceObjectID, &propAddress, 0, NULL, sizeof(chosenBufferSizeInFrames), &chosenBufferSizeInFrames);
-    
+
     /* Get the actual size of the buffer. */
     dataSize = sizeof(*pPeriodSizeInOut);
     status = ((ma_AudioObjectGetPropertyData_proc)pContext->coreaudio.AudioObjectGetPropertyData)(deviceObjectID, &propAddress, 0, NULL, &dataSize, &chosenBufferSizeInFrames);
     if (status != noErr) {
         return ma_result_from_OSStatus(status);
     }
-    
+
     *pPeriodSizeInOut = chosenBufferSizeInFrames;
     return MA_SUCCESS;
 }
 
+static ma_result ma_find_default_AudioObjectID(ma_context* pContext, ma_device_type deviceType, AudioObjectID* pDeviceObjectID)
+{
+    AudioObjectPropertyAddress propAddressDefaultDevice;
+    UInt32 defaultDeviceObjectIDSize = sizeof(AudioObjectID);
+    AudioObjectID defaultDeviceObjectID;
+    OSStatus status;
+
+    MA_ASSERT(pContext != NULL);
+    MA_ASSERT(pDeviceObjectID != NULL);
+
+    /* Safety. */
+    *pDeviceObjectID = 0;
+
+    propAddressDefaultDevice.mScope = kAudioObjectPropertyScopeGlobal;
+    propAddressDefaultDevice.mElement = kAudioObjectPropertyElementMaster;
+    if (deviceType == ma_device_type_playback) {
+        propAddressDefaultDevice.mSelector = kAudioHardwarePropertyDefaultOutputDevice;
+    } else {
+        propAddressDefaultDevice.mSelector = kAudioHardwarePropertyDefaultInputDevice;
+    }
+
+    defaultDeviceObjectIDSize = sizeof(AudioObjectID);
+    status = ((ma_AudioObjectGetPropertyData_proc)pContext->coreaudio.AudioObjectGetPropertyData)(kAudioObjectSystemObject, &propAddressDefaultDevice, 0, NULL, &defaultDeviceObjectIDSize, &defaultDeviceObjectID);
+    if (status == noErr) {
+        *pDeviceObjectID = defaultDeviceObjectID;
+        return MA_SUCCESS;
+    }
+
+    /* If we get here it means we couldn't find the device. */
+    return MA_NO_DEVICE;
+}
 
 static ma_result ma_find_AudioObjectID(ma_context* pContext, ma_device_type deviceType, const ma_device_id* pDeviceID, AudioObjectID* pDeviceObjectID)
 {
@@ -23365,28 +23655,10 @@ static ma_result ma_find_AudioObjectID(ma_context* pContext, ma_device_type devi
 
     /* Safety. */
     *pDeviceObjectID = 0;
-    
+
     if (pDeviceID == NULL) {
         /* Default device. */
-        AudioObjectPropertyAddress propAddressDefaultDevice;
-        UInt32 defaultDeviceObjectIDSize = sizeof(AudioObjectID);
-        AudioObjectID defaultDeviceObjectID;
-        OSStatus status;
-
-        propAddressDefaultDevice.mScope = kAudioObjectPropertyScopeGlobal;
-        propAddressDefaultDevice.mElement = kAudioObjectPropertyElementMaster;
-        if (deviceType == ma_device_type_playback) {
-            propAddressDefaultDevice.mSelector = kAudioHardwarePropertyDefaultOutputDevice;
-        } else {
-            propAddressDefaultDevice.mSelector = kAudioHardwarePropertyDefaultInputDevice;
-        }
-        
-        defaultDeviceObjectIDSize = sizeof(AudioObjectID);
-        status = ((ma_AudioObjectGetPropertyData_proc)pContext->coreaudio.AudioObjectGetPropertyData)(kAudioObjectSystemObject, &propAddressDefaultDevice, 0, NULL, &defaultDeviceObjectIDSize, &defaultDeviceObjectID);
-        if (status == noErr) {
-            *pDeviceObjectID = defaultDeviceObjectID;
-            return MA_SUCCESS;
-        }
+        return ma_find_default_AudioObjectID(pContext, deviceType, pDeviceObjectID);
     } else {
         /* Explicit device. */
         UInt32 deviceCount;
@@ -23398,15 +23670,15 @@ static ma_result ma_find_AudioObjectID(ma_context* pContext, ma_device_type devi
         if (result != MA_SUCCESS) {
             return result;
         }
-        
+
         for (iDevice = 0; iDevice < deviceCount; ++iDevice) {
             AudioObjectID deviceObjectID = pDeviceObjectIDs[iDevice];
-            
+
             char uid[256];
             if (ma_get_AudioObject_uid(pContext, deviceObjectID, sizeof(uid), uid) != MA_SUCCESS) {
                 continue;
             }
-            
+
             if (deviceType == ma_device_type_playback) {
                 if (ma_does_AudioObject_support_playback(pContext, deviceObjectID)) {
                     if (strcmp(uid, pDeviceID->coreaudio) == 0) {
@@ -23428,13 +23700,13 @@ static ma_result ma_find_AudioObjectID(ma_context* pContext, ma_device_type devi
 
         ma_free(pDeviceObjectIDs, &pContext->allocationCallbacks);
     }
-    
+
     /* If we get here it means we couldn't find the device. */
     return MA_NO_DEVICE;
 }
 
 
-static ma_result ma_find_best_format__coreaudio(ma_context* pContext, AudioObjectID deviceObjectID, ma_device_type deviceType, ma_format format, ma_uint32 channels, ma_uint32 sampleRate, ma_bool32 usingDefaultFormat, ma_bool32 usingDefaultChannels, ma_bool32 usingDefaultSampleRate, AudioStreamBasicDescription* pFormat)
+static ma_result ma_find_best_format__coreaudio(ma_context* pContext, AudioObjectID deviceObjectID, ma_device_type deviceType, ma_format format, ma_uint32 channels, ma_uint32 sampleRate, ma_bool32 usingDefaultFormat, ma_bool32 usingDefaultChannels, ma_bool32 usingDefaultSampleRate, const AudioStreamBasicDescription* pOrigFormat, AudioStreamBasicDescription* pFormat)
 {
     UInt32 deviceFormatDescriptionCount;
     AudioStreamRangedDescription* pDeviceFormatDescriptions;
@@ -23450,51 +23722,31 @@ static ma_result ma_find_best_format__coreaudio(ma_context* pContext, AudioObjec
     if (result != MA_SUCCESS) {
         return result;
     }
-    
+
     desiredSampleRate = sampleRate;
     if (usingDefaultSampleRate) {
-        /*
-        When using the device's default sample rate, we get the highest priority standard rate supported by the device. Otherwise
-        we just use the pre-set rate.
-        */
-        ma_uint32 iStandardRate;
-        for (iStandardRate = 0; iStandardRate < ma_countof(g_maStandardSampleRatePriorities); ++iStandardRate) {
-            ma_uint32 standardRate = g_maStandardSampleRatePriorities[iStandardRate];
-            ma_bool32 foundRate = MA_FALSE;
-            UInt32 iDeviceRate;
-
-            for (iDeviceRate = 0; iDeviceRate < deviceFormatDescriptionCount; ++iDeviceRate) {
-                ma_uint32 deviceRate = (ma_uint32)pDeviceFormatDescriptions[iDeviceRate].mFormat.mSampleRate;
-                
-                if (deviceRate == standardRate) {
-                    desiredSampleRate = standardRate;
-                    foundRate = MA_TRUE;
-                    break;
-                }
-            }
-            
-            if (foundRate) {
-                break;
-            }
-        }
+        desiredSampleRate = pOrigFormat->mSampleRate;
     }
-    
+
     desiredChannelCount = channels;
     if (usingDefaultChannels) {
-        ma_get_AudioObject_channel_count(pContext, deviceObjectID, deviceType, &desiredChannelCount);    /* <-- Not critical if this fails. */
+        desiredChannelCount = pOrigFormat->mChannelsPerFrame;
     }
-    
+
     desiredFormat = format;
     if (usingDefaultFormat) {
-        desiredFormat = g_maFormatPriorities[0];
+        result = ma_format_from_AudioStreamBasicDescription(pOrigFormat, &desiredFormat);
+        if (result != MA_SUCCESS || desiredFormat == ma_format_unknown) {
+            desiredFormat = g_maFormatPriorities[0];
+        }
     }
-    
+
     /*
     If we get here it means we don't have an exact match to what the client is asking for. We'll need to find the closest one. The next
     loop will check for formats that have the same sample rate to what we're asking for. If there is, we prefer that one in all cases.
     */
     MA_ZERO_OBJECT(&bestDeviceFormatSoFar);
-    
+
     hasSupportedFormat = MA_FALSE;
     for (iFormat = 0; iFormat < deviceFormatDescriptionCount; ++iFormat) {
         ma_format format;
@@ -23505,13 +23757,13 @@ static ma_result ma_find_best_format__coreaudio(ma_context* pContext, AudioObjec
             break;
         }
     }
-    
+
     if (!hasSupportedFormat) {
         ma_free(pDeviceFormatDescriptions, &pContext->allocationCallbacks);
         return MA_FORMAT_NOT_SUPPORTED;
     }
-    
-    
+
+
     for (iFormat = 0; iFormat < deviceFormatDescriptionCount; ++iFormat) {
         AudioStreamBasicDescription thisDeviceFormat = pDeviceFormatDescriptions[iFormat].mFormat;
         ma_format thisSampleFormat;
@@ -23523,9 +23775,9 @@ static ma_result ma_find_best_format__coreaudio(ma_context* pContext, AudioObjec
         if (formatResult != MA_SUCCESS || thisSampleFormat == ma_format_unknown) {
             continue;   /* The format is not supported by miniaudio. Skip. */
         }
-        
+
         ma_format_from_AudioStreamBasicDescription(&bestDeviceFormatSoFar, &bestSampleFormatSoFar);
-        
+
         /* Getting here means the format is supported by miniaudio which makes this format a candidate. */
         if (thisDeviceFormat.mSampleRate != desiredSampleRate) {
             /*
@@ -23627,7 +23879,7 @@ static ma_result ma_find_best_format__coreaudio(ma_context* pContext, AudioObjec
             }
         }
     }
-    
+
     *pFormat = bestDeviceFormatSoFar;
 
     ma_free(pDeviceFormatDescriptions, &pContext->allocationCallbacks);
@@ -23644,31 +23896,31 @@ static ma_result ma_get_AudioUnit_channel_map(ma_context* pContext, AudioUnit au
     ma_result result;
 
     MA_ASSERT(pContext != NULL);
-    
+
     if (deviceType == ma_device_type_playback) {
-        deviceScope = kAudioUnitScope_Output;
+        deviceScope = kAudioUnitScope_Input;
         deviceBus = MA_COREAUDIO_OUTPUT_BUS;
     } else {
-        deviceScope = kAudioUnitScope_Input;
+        deviceScope = kAudioUnitScope_Output;
         deviceBus = MA_COREAUDIO_INPUT_BUS;
     }
-    
+
     status = ((ma_AudioUnitGetPropertyInfo_proc)pContext->coreaudio.AudioUnitGetPropertyInfo)(audioUnit, kAudioUnitProperty_AudioChannelLayout, deviceScope, deviceBus, &channelLayoutSize, NULL);
     if (status != noErr) {
         return ma_result_from_OSStatus(status);
     }
-    
+
     pChannelLayout = (AudioChannelLayout*)ma__malloc_from_callbacks(channelLayoutSize, &pContext->allocationCallbacks);
     if (pChannelLayout == NULL) {
         return MA_OUT_OF_MEMORY;
     }
-    
+
     status = ((ma_AudioUnitGetProperty_proc)pContext->coreaudio.AudioUnitGetProperty)(audioUnit, kAudioUnitProperty_AudioChannelLayout, deviceScope, deviceBus, pChannelLayout, &channelLayoutSize);
     if (status != noErr) {
         ma__free_from_callbacks(pChannelLayout, &pContext->allocationCallbacks);
         return ma_result_from_OSStatus(status);
     }
-    
+
     result = ma_get_channel_map_from_AudioChannelLayout(pChannelLayout, pChannelMap, channelMapCap);
     if (result != MA_SUCCESS) {
         ma__free_from_callbacks(pChannelLayout, &pContext->allocationCallbacks);
@@ -23680,15 +23932,6 @@ static ma_result ma_get_AudioUnit_channel_map(ma_context* pContext, AudioUnit au
 }
 #endif /* MA_APPLE_DESKTOP */
 
-static ma_bool32 ma_context_is_device_id_equal__coreaudio(ma_context* pContext, const ma_device_id* pID0, const ma_device_id* pID1)
-{
-    MA_ASSERT(pContext != NULL);
-    MA_ASSERT(pID0 != NULL);
-    MA_ASSERT(pID1 != NULL);
-    (void)pContext;
-
-    return strcmp(pID0->coreaudio, pID1->coreaudio) == 0;
-}
 
 #if !defined(MA_APPLE_DESKTOP)
 static void ma_AVAudioSessionPortDescription_to_device_info(AVAudioSessionPortDescription* pPortDesc, ma_device_info* pInfo)
@@ -23704,14 +23947,19 @@ static ma_result ma_context_enumerate_devices__coreaudio(ma_context* pContext, m
 #if defined(MA_APPLE_DESKTOP)
     UInt32 deviceCount;
     AudioObjectID* pDeviceObjectIDs;
+    AudioObjectID defaultDeviceObjectIDPlayback;
+    AudioObjectID defaultDeviceObjectIDCapture;
     ma_result result;
     UInt32 iDevice;
+
+    ma_find_default_AudioObjectID(pContext, ma_device_type_playback, &defaultDeviceObjectIDPlayback);   /* OK if this fails. */
+    ma_find_default_AudioObjectID(pContext, ma_device_type_capture,  &defaultDeviceObjectIDCapture);    /* OK if this fails. */
 
     result = ma_get_device_object_ids__coreaudio(pContext, &deviceCount, &pDeviceObjectIDs);
     if (result != MA_SUCCESS) {
         return result;
     }
-  
+
     for (iDevice = 0; iDevice < deviceCount; ++iDevice) {
         AudioObjectID deviceObjectID = pDeviceObjectIDs[iDevice];
         ma_device_info info;
@@ -23725,30 +23973,38 @@ static ma_result ma_context_enumerate_devices__coreaudio(ma_context* pContext, m
         }
 
         if (ma_does_AudioObject_support_playback(pContext, deviceObjectID)) {
+            if (deviceObjectID == defaultDeviceObjectIDPlayback) {
+                info.isDefault = MA_TRUE;
+            }
+
             if (!callback(pContext, ma_device_type_playback, &info, pUserData)) {
                 break;
             }
         }
         if (ma_does_AudioObject_support_capture(pContext, deviceObjectID)) {
+            if (deviceObjectID == defaultDeviceObjectIDCapture) {
+                info.isDefault = MA_TRUE;
+            }
+
             if (!callback(pContext, ma_device_type_capture, &info, pUserData)) {
                 break;
             }
         }
     }
-    
+
     ma_free(pDeviceObjectIDs, &pContext->allocationCallbacks);
 #else
     ma_device_info info;
     NSArray *pInputs  = [[[AVAudioSession sharedInstance] currentRoute] inputs];
     NSArray *pOutputs = [[[AVAudioSession sharedInstance] currentRoute] outputs];
-    
+
     for (AVAudioSessionPortDescription* pPortDesc in pOutputs) {
         ma_AVAudioSessionPortDescription_to_device_info(pPortDesc, &info);
         if (!callback(pContext, ma_device_type_playback, &info, pUserData)) {
             return MA_SUCCESS;
         }
     }
-    
+
     for (AVAudioSessionPortDescription* pPortDesc in pInputs) {
         ma_AVAudioSessionPortDescription_to_device_info(pPortDesc, &info);
         if (!callback(pContext, ma_device_type_capture, &info, pUserData)) {
@@ -23756,7 +24012,7 @@ static ma_result ma_context_enumerate_devices__coreaudio(ma_context* pContext, m
         }
     }
 #endif
-    
+
     return MA_SUCCESS;
 }
 
@@ -23770,38 +24026,45 @@ static ma_result ma_context_get_device_info__coreaudio(ma_context* pContext, ma_
     if (shareMode == ma_share_mode_exclusive) {
         return MA_SHARE_MODE_NOT_SUPPORTED;
     }
-    
+
 #if defined(MA_APPLE_DESKTOP)
     /* Desktop */
     {
         AudioObjectID deviceObjectID;
+        AudioObjectID defaultDeviceObjectID;
         UInt32 streamDescriptionCount;
         AudioStreamRangedDescription* pStreamDescriptions;
         UInt32 iStreamDescription;
         UInt32 sampleRateRangeCount;
         AudioValueRange* pSampleRateRanges;
 
+        ma_find_default_AudioObjectID(pContext, deviceType, &defaultDeviceObjectID);     /* OK if this fails. */
+
         result = ma_find_AudioObjectID(pContext, deviceType, pDeviceID, &deviceObjectID);
         if (result != MA_SUCCESS) {
             return result;
         }
-    
+
         result = ma_get_AudioObject_uid(pContext, deviceObjectID, sizeof(pDeviceInfo->id.coreaudio), pDeviceInfo->id.coreaudio);
         if (result != MA_SUCCESS) {
             return result;
         }
-    
+
         result = ma_get_AudioObject_name(pContext, deviceObjectID, sizeof(pDeviceInfo->name), pDeviceInfo->name);
         if (result != MA_SUCCESS) {
             return result;
         }
-    
+
+        if (deviceObjectID == defaultDeviceObjectID) {
+            pDeviceInfo->isDefault = MA_TRUE;
+        }
+
         /* Formats. */
         result = ma_get_AudioObject_stream_descriptions(pContext, deviceObjectID, deviceType, &streamDescriptionCount, &pStreamDescriptions);
         if (result != MA_SUCCESS) {
             return result;
         }
-    
+
         for (iStreamDescription = 0; iStreamDescription < streamDescriptionCount; ++iStreamDescription) {
             ma_format format;
             ma_bool32 formatExists = MA_FALSE;
@@ -23811,9 +24074,9 @@ static ma_result ma_context_get_device_info__coreaudio(ma_context* pContext, ma_
             if (result != MA_SUCCESS) {
                 continue;
             }
-        
+
             MA_ASSERT(format != ma_format_unknown);
-        
+
             /* Make sure the format isn't already in the output list. */
             for (iOutputFormat = 0; iOutputFormat < pDeviceInfo->formatCount; ++iOutputFormat) {
                 if (pDeviceInfo->formats[iOutputFormat] == format) {
@@ -23821,29 +24084,29 @@ static ma_result ma_context_get_device_info__coreaudio(ma_context* pContext, ma_
                     break;
                 }
             }
-        
+
             if (!formatExists) {
                 pDeviceInfo->formats[pDeviceInfo->formatCount++] = format;
             }
         }
-    
+
         ma_free(pStreamDescriptions, &pContext->allocationCallbacks);
-    
-    
+
+
         /* Channels. */
         result = ma_get_AudioObject_channel_count(pContext, deviceObjectID, deviceType, &pDeviceInfo->minChannels);
         if (result != MA_SUCCESS) {
             return result;
         }
         pDeviceInfo->maxChannels = pDeviceInfo->minChannels;
-    
-    
+
+
         /* Sample rates. */
         result = ma_get_AudioObject_sample_rates(pContext, deviceObjectID, deviceType, &sampleRateRangeCount, &pSampleRateRanges);
         if (result != MA_SUCCESS) {
             return result;
         }
-    
+
         if (sampleRateRangeCount > 0) {
             UInt32 iSampleRate;
             pDeviceInfo->minSampleRate = UINT32_MAX;
@@ -23869,7 +24132,7 @@ static ma_result ma_context_get_device_info__coreaudio(ma_context* pContext, ma_
         AudioUnitElement formatElement;
         AudioStreamBasicDescription bestFormat;
         UInt32 propSize;
-        
+
         /* We want to ensure we use a consistent device name to device enumeration. */
         if (pDeviceID != NULL) {
             ma_bool32 found = MA_FALSE;
@@ -23892,7 +24155,7 @@ static ma_result ma_context_get_device_info__coreaudio(ma_context* pContext, ma_
                     }
                 }
             }
-            
+
             if (!found) {
                 return MA_DOES_NOT_EXIST;
             }
@@ -23903,8 +24166,8 @@ static ma_result ma_context_get_device_info__coreaudio(ma_context* pContext, ma_
                 ma_strncpy_s(pDeviceInfo->name, sizeof(pDeviceInfo->name), MA_DEFAULT_CAPTURE_DEVICE_NAME, (size_t)-1);
             }
         }
-        
-    
+
+
         /*
         Retrieving device information is more annoying on mobile than desktop. For simplicity I'm locking this down to whatever format is
         reported on a temporary I/O unit. The problem, however, is that this doesn't return a value for the sample rate which we need to
@@ -23915,40 +24178,40 @@ static ma_result ma_context_get_device_info__coreaudio(ma_context* pContext, ma_
         desc.componentManufacturer = kAudioUnitManufacturer_Apple;
         desc.componentFlags = 0;
         desc.componentFlagsMask = 0;
-    
+
         component = ((ma_AudioComponentFindNext_proc)pContext->coreaudio.AudioComponentFindNext)(NULL, &desc);
         if (component == NULL) {
             return MA_FAILED_TO_INIT_BACKEND;
         }
-    
+
         status = ((ma_AudioComponentInstanceNew_proc)pContext->coreaudio.AudioComponentInstanceNew)(component, &audioUnit);
         if (status != noErr) {
             return ma_result_from_OSStatus(status);
         }
-    
+
         formatScope   = (deviceType == ma_device_type_playback) ? kAudioUnitScope_Input : kAudioUnitScope_Output;
         formatElement = (deviceType == ma_device_type_playback) ? MA_COREAUDIO_OUTPUT_BUS : MA_COREAUDIO_INPUT_BUS;
-    
+
         propSize = sizeof(bestFormat);
         status = ((ma_AudioUnitGetProperty_proc)pContext->coreaudio.AudioUnitGetProperty)(audioUnit, kAudioUnitProperty_StreamFormat, formatScope, formatElement, &bestFormat, &propSize);
         if (status != noErr) {
             ((ma_AudioComponentInstanceDispose_proc)pContext->coreaudio.AudioComponentInstanceDispose)(audioUnit);
             return ma_result_from_OSStatus(status);
         }
-    
+
         ((ma_AudioComponentInstanceDispose_proc)pContext->coreaudio.AudioComponentInstanceDispose)(audioUnit);
         audioUnit = NULL;
-    
-    
+
+
         pDeviceInfo->minChannels = bestFormat.mChannelsPerFrame;
         pDeviceInfo->maxChannels = bestFormat.mChannelsPerFrame;
-    
+
         pDeviceInfo->formatCount = 1;
         result = ma_format_from_AudioStreamBasicDescription(&bestFormat, &pDeviceInfo->formats[0]);
         if (result != MA_SUCCESS) {
             return result;
         }
-    
+
         /*
         It looks like Apple are wanting to push the whole AVAudioSession thing. Thus, we need to use that to determine device settings. To do
         this we just get the shared instance and inspect.
@@ -23962,8 +24225,79 @@ static ma_result ma_context_get_device_info__coreaudio(ma_context* pContext, ma_
         }
     }
 #endif
-    
+
     (void)pDeviceInfo; /* Unused. */
+    return MA_SUCCESS;
+}
+
+static AudioBufferList* ma_allocate_AudioBufferList__coreaudio(ma_uint32 sizeInFrames, ma_format format, ma_uint32 channels, ma_stream_layout layout, const ma_allocation_callbacks* pAllocationCallbacks)
+{
+    AudioBufferList* pBufferList;
+    UInt32 audioBufferSizeInBytes;
+    size_t allocationSize;
+
+    MA_ASSERT(sizeInFrames > 0);
+    MA_ASSERT(format != ma_format_unknown);
+    MA_ASSERT(channels > 0);
+    
+    allocationSize = sizeof(AudioBufferList) - sizeof(AudioBuffer);  /* Subtract sizeof(AudioBuffer) because that part is dynamically sized. */
+    if (layout == ma_stream_layout_interleaved) {
+        /* Interleaved case. This is the simple case because we just have one buffer. */
+        allocationSize += sizeof(AudioBuffer) * 1;
+    } else {
+        /* Non-interleaved case. This is the more complex case because there's more than one buffer. */
+        allocationSize += sizeof(AudioBuffer) * channels;
+    }
+    
+    allocationSize += sizeInFrames * ma_get_bytes_per_frame(format, channels);
+
+    pBufferList = (AudioBufferList*)ma__malloc_from_callbacks(allocationSize, pAllocationCallbacks);
+    if (pBufferList == NULL) {
+        return NULL;
+    }
+    
+    audioBufferSizeInBytes = (UInt32)(sizeInFrames * ma_get_bytes_per_sample(format));
+
+    if (layout == ma_stream_layout_interleaved) {
+        pBufferList->mNumberBuffers = 1;
+        pBufferList->mBuffers[0].mNumberChannels = channels;
+        pBufferList->mBuffers[0].mDataByteSize   = audioBufferSizeInBytes * channels;
+        pBufferList->mBuffers[0].mData           = (ma_uint8*)pBufferList + sizeof(AudioBufferList);
+    } else {
+        ma_uint32 iBuffer;
+        pBufferList->mNumberBuffers = channels;
+        for (iBuffer = 0; iBuffer < pBufferList->mNumberBuffers; ++iBuffer) {
+            pBufferList->mBuffers[iBuffer].mNumberChannels = 1;
+            pBufferList->mBuffers[iBuffer].mDataByteSize   = audioBufferSizeInBytes;
+            pBufferList->mBuffers[iBuffer].mData           = (ma_uint8*)pBufferList + ((sizeof(AudioBufferList) - sizeof(AudioBuffer)) + (sizeof(AudioBuffer) * channels)) + (audioBufferSizeInBytes * iBuffer);
+        }
+    }
+    
+    return pBufferList;
+}
+
+static ma_result ma_device_realloc_AudioBufferList__coreaudio(ma_device* pDevice, ma_uint32 sizeInFrames, ma_format format, ma_uint32 channels, ma_stream_layout layout)
+{
+    MA_ASSERT(pDevice != NULL);
+    MA_ASSERT(format != ma_format_unknown);
+    MA_ASSERT(channels > 0);
+    
+    /* Only resize the buffer if necessary. */
+    if (pDevice->coreaudio.audioBufferCapInFrames < sizeInFrames) {
+        AudioBufferList* pNewAudioBufferList;
+        
+        pNewAudioBufferList = ma_allocate_AudioBufferList__coreaudio(sizeInFrames, format, channels, layout, &pDevice->pContext->allocationCallbacks);
+        if (pNewAudioBufferList != NULL) {
+            return MA_OUT_OF_MEMORY;
+        }
+    
+        /* At this point we'll have a new AudioBufferList and we can free the old one. */
+        ma__free_from_callbacks(pDevice->coreaudio.pAudioBufferList, &pDevice->pContext->allocationCallbacks);
+        pDevice->coreaudio.pAudioBufferList = pNewAudioBufferList;
+        pDevice->coreaudio.audioBufferCapInFrames = sizeInFrames;
+    }
+    
+    /* Getting here means the capacity of the audio is fine. */
     return MA_SUCCESS;
 }
 
@@ -23984,7 +24318,7 @@ static OSStatus ma_on_output__coreaudio(void* pUserData, AudioUnitRenderActionFl
     if (pBufferList->mBuffers[0].mNumberChannels != pDevice->playback.internalChannels) {
         layout = ma_stream_layout_deinterleaved;
     }
-    
+
     if (layout == ma_stream_layout_interleaved) {
         /* For now we can assume everything is interleaved. */
         UInt32 iBuffer;
@@ -23998,7 +24332,7 @@ static OSStatus ma_on_output__coreaudio(void* pUserData, AudioUnitRenderActionFl
                         ma_device__read_frames_from_client(pDevice, frameCountForThisBuffer, pBufferList->mBuffers[iBuffer].mData);
                     }
                 }
-                
+
             #if defined(MA_DEBUG_OUTPUT)
                 printf("  frameCount=%d, mNumberChannels=%d, mDataByteSize=%d\n", frameCount, pBufferList->mBuffers[iBuffer].mNumberChannels, pBufferList->mBuffers[iBuffer].mDataByteSize);
             #endif
@@ -24018,7 +24352,7 @@ static OSStatus ma_on_output__coreaudio(void* pUserData, AudioUnitRenderActionFl
     } else {
         /* This is the deinterleaved case. We need to update each buffer in groups of internalChannels. This assumes each buffer is the same size. */
         MA_ASSERT(pDevice->playback.internalChannels <= MA_MAX_CHANNELS);   /* This should heve been validated at initialization time. */
-        
+
         /*
         For safety we'll check that the internal channels is a multiple of the buffer count. If it's not it means something
         very strange has happened and we're not going to support it.
@@ -24026,7 +24360,7 @@ static OSStatus ma_on_output__coreaudio(void* pUserData, AudioUnitRenderActionFl
         if ((pBufferList->mNumberBuffers % pDevice->playback.internalChannels) == 0) {
             ma_uint8 tempBuffer[4096];
             UInt32 iBuffer;
-        
+
             for (iBuffer = 0; iBuffer < pBufferList->mNumberBuffers; iBuffer += pDevice->playback.internalChannels) {
                 ma_uint32 frameCountPerBuffer = pBufferList->mBuffers[iBuffer].mDataByteSize / ma_get_bytes_per_sample(pDevice->playback.internalFormat);
                 ma_uint32 framesRemaining = frameCountPerBuffer;
@@ -24038,25 +24372,25 @@ static OSStatus ma_on_output__coreaudio(void* pUserData, AudioUnitRenderActionFl
                     if (framesToRead > framesRemaining) {
                         framesToRead = framesRemaining;
                     }
-                    
+
                     if (pDevice->type == ma_device_type_duplex) {
                         ma_device__handle_duplex_callback_playback(pDevice, framesToRead, tempBuffer, &pDevice->coreaudio.duplexRB);
                     } else {
                         ma_device__read_frames_from_client(pDevice, framesToRead, tempBuffer);
                     }
-                    
+
                     for (iChannel = 0; iChannel < pDevice->playback.internalChannels; ++iChannel) {
                         ppDeinterleavedBuffers[iChannel] = (void*)ma_offset_ptr(pBufferList->mBuffers[iBuffer+iChannel].mData, (frameCountPerBuffer - framesRemaining) * ma_get_bytes_per_sample(pDevice->playback.internalFormat));
                     }
-                    
+
                     ma_deinterleave_pcm_frames(pDevice->playback.internalFormat, pDevice->playback.internalChannels, framesToRead, tempBuffer, ppDeinterleavedBuffers);
-                    
+
                     framesRemaining -= framesToRead;
                 }
             }
         }
     }
-    
+
     (void)pActionFlags;
     (void)pTimeStamp;
     (void)busNumber;
@@ -24069,24 +24403,52 @@ static OSStatus ma_on_input__coreaudio(void* pUserData, AudioUnitRenderActionFla
 {
     ma_device* pDevice = (ma_device*)pUserData;
     AudioBufferList* pRenderedBufferList;
+    ma_result result;
     ma_stream_layout layout;
+    ma_uint32 iBuffer;
     OSStatus status;
 
     MA_ASSERT(pDevice != NULL);
-    
+
     pRenderedBufferList = (AudioBufferList*)pDevice->coreaudio.pAudioBufferList;
     MA_ASSERT(pRenderedBufferList);
-    
+
     /* We need to check whether or not we are outputting interleaved or non-interleaved samples. The way we do this is slightly different for each type. */
     layout = ma_stream_layout_interleaved;
     if (pRenderedBufferList->mBuffers[0].mNumberChannels != pDevice->capture.internalChannels) {
         layout = ma_stream_layout_deinterleaved;
     }
-    
+
 #if defined(MA_DEBUG_OUTPUT)
     printf("INFO: Input Callback: busNumber=%d, frameCount=%d, mNumberBuffers=%d\n", busNumber, frameCount, pRenderedBufferList->mNumberBuffers);
 #endif
-    
+
+    /*
+    There has been a situation reported where frame count passed into this function is greater than the capacity of
+    our capture buffer. There doesn't seem to be a reliable way to determine what the maximum frame count will be,
+    so we need to instead resort to dynamically reallocating our buffer to ensure it's large enough to capture the
+    number of frames requested by this callback.
+    */
+    result = ma_device_realloc_AudioBufferList__coreaudio(pDevice, frameCount, pDevice->capture.internalFormat, pDevice->capture.internalChannels, layout);
+    if (result != MA_SUCCESS) {
+    #if defined(MA_DEBUG_OUTPUT)
+        printf("Failed to allocate AudioBufferList for capture.");
+    #endif
+        return noErr;
+    }
+
+    /*
+    When you call AudioUnitRender(), Core Audio tries to be helpful by setting the mDataByteSize to the number of bytes
+    that were actually rendered. The problem with this is that the next call can fail with -50 due to the size no longer
+    being set to the capacity of the buffer, but instead the size in bytes of the previous render. This will cause a
+    problem when a future call to this callback specifies a larger number of frames.
+
+    To work around this we need to explicitly set the size of each buffer to their respective size in bytes.
+    */
+    for (iBuffer = 0; iBuffer < pRenderedBufferList->mNumberBuffers; ++iBuffer) {
+        pRenderedBufferList->mBuffers[iBuffer].mDataByteSize = pDevice->coreaudio.audioBufferCapInFrames * ma_get_bytes_per_sample(pDevice->capture.internalFormat) * pRenderedBufferList->mBuffers[iBuffer].mNumberChannels;
+    }
+
     status = ((ma_AudioUnitRender_proc)pDevice->pContext->coreaudio.AudioUnitRender)((AudioUnit)pDevice->coreaudio.audioUnitCapture, pActionFlags, pTimeStamp, busNumber, frameCount, pRenderedBufferList);
     if (status != noErr) {
     #if defined(MA_DEBUG_OUTPUT)
@@ -24094,9 +24456,8 @@ static OSStatus ma_on_input__coreaudio(void* pUserData, AudioUnitRenderActionFla
     #endif
         return status;
     }
-    
+
     if (layout == ma_stream_layout_interleaved) {
-        UInt32 iBuffer;
         for (iBuffer = 0; iBuffer < pRenderedBufferList->mNumberBuffers; ++iBuffer) {
             if (pRenderedBufferList->mBuffers[iBuffer].mNumberChannels == pDevice->capture.internalChannels) {
                 if (pDevice->type == ma_device_type_duplex) {
@@ -24114,25 +24475,25 @@ static OSStatus ma_on_input__coreaudio(void* pUserData, AudioUnitRenderActionFla
                 */
                 ma_uint8 silentBuffer[4096];
                 ma_uint32 framesRemaining;
-                
+
                 MA_ZERO_MEMORY(silentBuffer, sizeof(silentBuffer));
-                
+
                 framesRemaining = frameCount;
                 while (framesRemaining > 0) {
                     ma_uint32 framesToSend = sizeof(silentBuffer) / ma_get_bytes_per_frame(pDevice->capture.internalFormat, pDevice->capture.internalChannels);
                     if (framesToSend > framesRemaining) {
                         framesToSend = framesRemaining;
                     }
-                    
+
                     if (pDevice->type == ma_device_type_duplex) {
                         ma_device__handle_duplex_callback_capture(pDevice, framesToSend, silentBuffer, &pDevice->coreaudio.duplexRB);
                     } else {
                         ma_device__send_frames_to_client(pDevice, framesToSend, silentBuffer);
                     }
-                    
+
                     framesRemaining -= framesToSend;
                 }
-                
+
             #if defined(MA_DEBUG_OUTPUT)
                 printf("  WARNING: Outputting silence. frameCount=%d, mNumberChannels=%d, mDataByteSize=%d\n", frameCount, pRenderedBufferList->mBuffers[iBuffer].mNumberChannels, pRenderedBufferList->mBuffers[iBuffer].mDataByteSize);
             #endif
@@ -24141,14 +24502,13 @@ static OSStatus ma_on_input__coreaudio(void* pUserData, AudioUnitRenderActionFla
     } else {
         /* This is the deinterleaved case. We need to interleave the audio data before sending it to the client. This assumes each buffer is the same size. */
         MA_ASSERT(pDevice->capture.internalChannels <= MA_MAX_CHANNELS);    /* This should have been validated at initialization time. */
-        
+
         /*
         For safety we'll check that the internal channels is a multiple of the buffer count. If it's not it means something
         very strange has happened and we're not going to support it.
         */
         if ((pRenderedBufferList->mNumberBuffers % pDevice->capture.internalChannels) == 0) {
             ma_uint8 tempBuffer[4096];
-            UInt32 iBuffer;
             for (iBuffer = 0; iBuffer < pRenderedBufferList->mNumberBuffers; iBuffer += pDevice->capture.internalChannels) {
                 ma_uint32 framesRemaining = frameCount;
                 while (framesRemaining > 0) {
@@ -24158,11 +24518,11 @@ static OSStatus ma_on_input__coreaudio(void* pUserData, AudioUnitRenderActionFla
                     if (framesToSend > framesRemaining) {
                         framesToSend = framesRemaining;
                     }
-                    
+
                     for (iChannel = 0; iChannel < pDevice->capture.internalChannels; ++iChannel) {
                         ppDeinterleavedBuffers[iChannel] = (void*)ma_offset_ptr(pRenderedBufferList->mBuffers[iBuffer+iChannel].mData, (frameCount - framesRemaining) * ma_get_bytes_per_sample(pDevice->capture.internalFormat));
                     }
-                    
+
                     ma_interleave_pcm_frames(pDevice->capture.internalFormat, pDevice->capture.internalChannels, framesToSend, (const void**)ppDeinterleavedBuffers, tempBuffer);
 
                     if (pDevice->type == ma_device_type_duplex) {
@@ -24190,19 +24550,19 @@ static void on_start_stop__coreaudio(void* pUserData, AudioUnit audioUnit, Audio
 {
     ma_device* pDevice = (ma_device*)pUserData;
     MA_ASSERT(pDevice != NULL);
-    
+
     /*
     There's been a report of a deadlock here when triggered by ma_device_uninit(). It looks like
     AudioUnitGetProprty (called below) and AudioComponentInstanceDispose (called in ma_device_uninit)
     can try waiting on the same lock. I'm going to try working around this by not calling any Core
     Audio APIs in the callback when the device has been stopped or uninitialized.
     */
-    if (ma_device__get_state(pDevice) == MA_STATE_UNINITIALIZED || ma_device__get_state(pDevice) == MA_STATE_STOPPING || ma_device__get_state(pDevice) == MA_STATE_STOPPED) {
+    if (ma_device_get_state(pDevice) == MA_STATE_UNINITIALIZED || ma_device_get_state(pDevice) == MA_STATE_STOPPING || ma_device_get_state(pDevice) == MA_STATE_STOPPED) {
         ma_stop_proc onStop = pDevice->onStop;
         if (onStop) {
             onStop(pDevice);
         }
-        
+
         ma_event_signal(&pDevice->coreaudio.stopEvent);
     } else {
         UInt32 isRunning;
@@ -24211,16 +24571,16 @@ static void on_start_stop__coreaudio(void* pUserData, AudioUnit audioUnit, Audio
         if (status != noErr) {
             return; /* Don't really know what to do in this case... just ignore it, I suppose... */
         }
-        
+
         if (!isRunning) {
             ma_stop_proc onStop;
 
             /*
             The stop event is a bit annoying in Core Audio because it will be called when we automatically switch the default device. Some scenarios to consider:
-            
+
             1) When the device is unplugged, this will be called _before_ the default device change notification.
             2) When the device is changed via the default device change notification, this will be called _after_ the switch.
-            
+
             For case #1, we just check if there's a new default device available. If so, we just ignore the stop event. For case #2 we check a flag.
             */
             if (((audioUnit == pDevice->coreaudio.audioUnitPlayback) && pDevice->coreaudio.isDefaultPlaybackDevice) ||
@@ -24235,17 +24595,17 @@ static void on_start_stop__coreaudio(void* pUserData, AudioUnit audioUnit, Audio
                     ((audioUnit == pDevice->coreaudio.audioUnitCapture)  && pDevice->coreaudio.isSwitchingCaptureDevice)) {
                     return;
                 }
-                
+
                 /*
                 Getting here means the device is not reinitializing which means it may have been unplugged. From what I can see, it looks like Core Audio
                 will try switching to the new default device seamlessly. We need to somehow find a way to determine whether or not Core Audio will most
                 likely be successful in switching to the new device.
-                
+
                 TODO: Try to predict if Core Audio will switch devices. If not, the onStop callback needs to be posted.
                 */
                 return;
             }
-            
+
             /* Getting here means we need to stop the device. */
             onStop = pDevice->onStop;
             if (onStop) {
@@ -24268,12 +24628,12 @@ static ma_uint32   g_TrackedDeviceCount_CoreAudio = 0;
 static OSStatus ma_default_device_changed__coreaudio(AudioObjectID objectID, UInt32 addressCount, const AudioObjectPropertyAddress* pAddresses, void* pUserData)
 {
     ma_device_type deviceType;
-    
+
     /* Not sure if I really need to check this, but it makes me feel better. */
     if (addressCount == 0) {
         return noErr;
     }
-    
+
     if (pAddresses[0].mSelector == kAudioHardwarePropertyDefaultOutputDevice) {
         deviceType = ma_device_type_playback;
     } else if (pAddresses[0].mSelector == kAudioHardwarePropertyDefaultInputDevice) {
@@ -24281,14 +24641,14 @@ static OSStatus ma_default_device_changed__coreaudio(AudioObjectID objectID, UIn
     } else {
         return noErr;   /* Should never hit this. */
     }
-    
+
     ma_mutex_lock(&g_DeviceTrackingMutex_CoreAudio);
     {
         ma_uint32 iDevice;
         for (iDevice = 0; iDevice < g_TrackedDeviceCount_CoreAudio; iDevice += 1) {
             ma_result reinitResult;
             ma_device* pDevice;
-            
+
             pDevice = g_ppTrackedDevices_CoreAudio[iDevice];
             if (pDevice->type == deviceType || pDevice->type == ma_device_type_duplex) {
                 if (deviceType == ma_device_type_playback) {
@@ -24300,12 +24660,12 @@ static OSStatus ma_default_device_changed__coreaudio(AudioObjectID objectID, UIn
                     reinitResult = ma_device_reinit_internal__coreaudio(pDevice, deviceType, MA_TRUE);
                     pDevice->coreaudio.isSwitchingCaptureDevice = MA_FALSE;
                 }
-                
+
                 if (reinitResult == MA_SUCCESS) {
                     ma_device__post_init_setup(pDevice, deviceType);
-            
+
                     /* Restart the device if required. If this fails we need to stop the device entirely. */
-                    if (ma_device__get_state(pDevice) == MA_STATE_STARTED) {
+                    if (ma_device_get_state(pDevice) == MA_STATE_STARTED) {
                         OSStatus status;
                         if (deviceType == ma_device_type_playback) {
                             status = ((ma_AudioOutputUnitStart_proc)pDevice->pContext->coreaudio.AudioOutputUnitStart)((AudioUnit)pDevice->coreaudio.audioUnitPlayback);
@@ -24330,7 +24690,7 @@ static OSStatus ma_default_device_changed__coreaudio(AudioObjectID objectID, UIn
         }
     }
     ma_mutex_unlock(&g_DeviceTrackingMutex_CoreAudio);
-    
+
     /* Unused parameters. */
     (void)objectID;
     (void)pUserData;
@@ -24341,20 +24701,25 @@ static OSStatus ma_default_device_changed__coreaudio(AudioObjectID objectID, UIn
 static ma_result ma_context__init_device_tracking__coreaudio(ma_context* pContext)
 {
     MA_ASSERT(pContext != NULL);
-    
+
     ma_spinlock_lock(&g_DeviceTrackingInitLock_CoreAudio);
     {
-        AudioObjectPropertyAddress propAddress;
-        propAddress.mScope    = kAudioObjectPropertyScopeGlobal;
-        propAddress.mElement  = kAudioObjectPropertyElementMaster;
-        
-        ma_mutex_init(&g_DeviceTrackingMutex_CoreAudio);
-        
-        propAddress.mSelector = kAudioHardwarePropertyDefaultInputDevice;
-        ((ma_AudioObjectAddPropertyListener_proc)pContext->coreaudio.AudioObjectAddPropertyListener)(kAudioObjectSystemObject, &propAddress, &ma_default_device_changed__coreaudio, NULL);
-        
-        propAddress.mSelector = kAudioHardwarePropertyDefaultOutputDevice;
-        ((ma_AudioObjectAddPropertyListener_proc)pContext->coreaudio.AudioObjectAddPropertyListener)(kAudioObjectSystemObject, &propAddress, &ma_default_device_changed__coreaudio, NULL);
+        /* Don't do anything if we've already initializd device tracking. */
+        if (g_DeviceTrackingInitCounter_CoreAudio == 0) {
+            AudioObjectPropertyAddress propAddress;
+            propAddress.mScope    = kAudioObjectPropertyScopeGlobal;
+            propAddress.mElement  = kAudioObjectPropertyElementMaster;
+
+            ma_mutex_init(&g_DeviceTrackingMutex_CoreAudio);
+
+            propAddress.mSelector = kAudioHardwarePropertyDefaultInputDevice;
+            ((ma_AudioObjectAddPropertyListener_proc)pContext->coreaudio.AudioObjectAddPropertyListener)(kAudioObjectSystemObject, &propAddress, &ma_default_device_changed__coreaudio, NULL);
+
+            propAddress.mSelector = kAudioHardwarePropertyDefaultOutputDevice;
+            ((ma_AudioObjectAddPropertyListener_proc)pContext->coreaudio.AudioObjectAddPropertyListener)(kAudioObjectSystemObject, &propAddress, &ma_default_device_changed__coreaudio, NULL);
+
+            g_DeviceTrackingInitCounter_CoreAudio += 1;
+        }
     }
     ma_spinlock_unlock(&g_DeviceTrackingInitLock_CoreAudio);
 
@@ -24364,34 +24729,39 @@ static ma_result ma_context__init_device_tracking__coreaudio(ma_context* pContex
 static ma_result ma_context__uninit_device_tracking__coreaudio(ma_context* pContext)
 {
     MA_ASSERT(pContext != NULL);
-    
+
     ma_spinlock_lock(&g_DeviceTrackingInitLock_CoreAudio);
     {
-        AudioObjectPropertyAddress propAddress;
-        propAddress.mScope    = kAudioObjectPropertyScopeGlobal;
-        propAddress.mElement  = kAudioObjectPropertyElementMaster;
-        
-        propAddress.mSelector = kAudioHardwarePropertyDefaultInputDevice;
-        ((ma_AudioObjectRemovePropertyListener_proc)pContext->coreaudio.AudioObjectRemovePropertyListener)(kAudioObjectSystemObject, &propAddress, &ma_default_device_changed__coreaudio, NULL);
-        
-        propAddress.mSelector = kAudioHardwarePropertyDefaultOutputDevice;
-        ((ma_AudioObjectRemovePropertyListener_proc)pContext->coreaudio.AudioObjectRemovePropertyListener)(kAudioObjectSystemObject, &propAddress, &ma_default_device_changed__coreaudio, NULL);
-        
-        /* At this point there should be no tracked devices. If so there's an error somewhere. */
-        MA_ASSERT(g_ppTrackedDevices_CoreAudio == NULL);
-        MA_ASSERT(g_TrackedDeviceCount_CoreAudio == 0);
-        
-        ma_mutex_uninit(&g_DeviceTrackingMutex_CoreAudio);
+        g_DeviceTrackingInitCounter_CoreAudio -= 1;
+
+        if (g_DeviceTrackingInitCounter_CoreAudio == 0) {
+            AudioObjectPropertyAddress propAddress;
+            propAddress.mScope    = kAudioObjectPropertyScopeGlobal;
+            propAddress.mElement  = kAudioObjectPropertyElementMaster;
+
+            propAddress.mSelector = kAudioHardwarePropertyDefaultInputDevice;
+            ((ma_AudioObjectRemovePropertyListener_proc)pContext->coreaudio.AudioObjectRemovePropertyListener)(kAudioObjectSystemObject, &propAddress, &ma_default_device_changed__coreaudio, NULL);
+
+            propAddress.mSelector = kAudioHardwarePropertyDefaultOutputDevice;
+            ((ma_AudioObjectRemovePropertyListener_proc)pContext->coreaudio.AudioObjectRemovePropertyListener)(kAudioObjectSystemObject, &propAddress, &ma_default_device_changed__coreaudio, NULL);
+
+            /* At this point there should be no tracked devices. If not there's an error somewhere. */
+            if (g_ppTrackedDevices_CoreAudio != NULL) {
+                ma_context_post_error(pContext, NULL, MA_LOG_LEVEL_WARNING, "You have uninitialized all contexts while an associated device is still active.", MA_INVALID_OPERATION);
+            }
+
+            ma_mutex_uninit(&g_DeviceTrackingMutex_CoreAudio);
+        }
     }
     ma_spinlock_unlock(&g_DeviceTrackingInitLock_CoreAudio);
-    
+
     return MA_SUCCESS;
 }
 
 static ma_result ma_device__track__coreaudio(ma_device* pDevice)
 {
     MA_ASSERT(pDevice != NULL);
-    
+
     ma_mutex_lock(&g_DeviceTrackingMutex_CoreAudio);
     {
         /* Allocate memory if required. */
@@ -24399,35 +24769,35 @@ static ma_result ma_device__track__coreaudio(ma_device* pDevice)
             ma_uint32 oldCap;
             ma_uint32 newCap;
             ma_device** ppNewDevices;
-            
+
             oldCap = g_TrackedDeviceCap_CoreAudio;
             newCap = g_TrackedDeviceCap_CoreAudio * 2;
             if (newCap == 0) {
                 newCap = 1;
             }
-            
+
             ppNewDevices = (ma_device**)ma__realloc_from_callbacks(g_ppTrackedDevices_CoreAudio, sizeof(*g_ppTrackedDevices_CoreAudio)*newCap, sizeof(*g_ppTrackedDevices_CoreAudio)*oldCap, &pDevice->pContext->allocationCallbacks);
             if (ppNewDevices == NULL) {
                 ma_mutex_unlock(&g_DeviceTrackingMutex_CoreAudio);
                 return MA_OUT_OF_MEMORY;
             }
-            
+
             g_ppTrackedDevices_CoreAudio = ppNewDevices;
             g_TrackedDeviceCap_CoreAudio = newCap;
         }
-        
+
         g_ppTrackedDevices_CoreAudio[g_TrackedDeviceCount_CoreAudio] = pDevice;
         g_TrackedDeviceCount_CoreAudio += 1;
     }
     ma_mutex_unlock(&g_DeviceTrackingMutex_CoreAudio);
-    
+
     return MA_SUCCESS;
 }
 
 static ma_result ma_device__untrack__coreaudio(ma_device* pDevice)
 {
     MA_ASSERT(pDevice != NULL);
-    
+
     ma_mutex_lock(&g_DeviceTrackingMutex_CoreAudio);
     {
         ma_uint32 iDevice;
@@ -24438,16 +24808,16 @@ static ma_result ma_device__untrack__coreaudio(ma_device* pDevice)
                 for (jDevice = iDevice; jDevice < g_TrackedDeviceCount_CoreAudio-1; jDevice += 1) {
                     g_ppTrackedDevices_CoreAudio[jDevice] = g_ppTrackedDevices_CoreAudio[jDevice+1];
                 }
-                
+
                 g_TrackedDeviceCount_CoreAudio -= 1;
-                
+
                 /* If there's nothing else in the list we need to free memory. */
                 if (g_TrackedDeviceCount_CoreAudio == 0) {
                     ma__free_from_callbacks(g_ppTrackedDevices_CoreAudio, &pDevice->pContext->allocationCallbacks);
                     g_ppTrackedDevices_CoreAudio = NULL;
                     g_TrackedDeviceCap_CoreAudio = 0;
                 }
-            
+
                 break;
             }
         }
@@ -24560,8 +24930,8 @@ static ma_result ma_device__untrack__coreaudio(ma_device* pDevice)
 static void ma_device_uninit__coreaudio(ma_device* pDevice)
 {
     MA_ASSERT(pDevice != NULL);
-    MA_ASSERT(ma_device__get_state(pDevice) == MA_STATE_UNINITIALIZED);
-    
+    MA_ASSERT(ma_device_get_state(pDevice) == MA_STATE_UNINITIALIZED);
+
 #if defined(MA_APPLE_DESKTOP)
     /*
     Make sure we're no longer tracking the device. It doesn't matter if we call this for a non-default device because it'll
@@ -24575,14 +24945,14 @@ static void ma_device_uninit__coreaudio(ma_device* pDevice)
         [pRouteChangeHandler remove_handler];
     }
 #endif
-    
+
     if (pDevice->coreaudio.audioUnitCapture != NULL) {
         ((ma_AudioComponentInstanceDispose_proc)pDevice->pContext->coreaudio.AudioComponentInstanceDispose)((AudioUnit)pDevice->coreaudio.audioUnitCapture);
     }
     if (pDevice->coreaudio.audioUnitPlayback != NULL) {
         ((ma_AudioComponentInstanceDispose_proc)pDevice->pContext->coreaudio.AudioComponentInstanceDispose)((AudioUnit)pDevice->coreaudio.audioUnitPlayback);
     }
-    
+
     if (pDevice->coreaudio.pAudioBufferList) {
         ma__free_from_callbacks(pDevice->coreaudio.pAudioBufferList, &pDevice->pContext->allocationCallbacks);
     }
@@ -24594,6 +24964,8 @@ static void ma_device_uninit__coreaudio(ma_device* pDevice)
 
 typedef struct
 {
+    ma_bool32 allowNominalSampleRateChange;
+
     /* Input. */
     ma_format formatIn;
     ma_uint32 channelsIn;
@@ -24635,6 +25007,8 @@ static ma_result ma_device_init_internal__coreaudio(ma_context* pContext, ma_dev
     AURenderCallbackStruct callbackInfo;
 #if defined(MA_APPLE_DESKTOP)
     AudioObjectID deviceObjectID;
+#else
+    ma_uint32 actualPeriodSizeInFramesSize = sizeof(actualPeriodSizeInFrames);
 #endif
 
     /* This API should only be used for a single device type: playback or capture. No full-duplex mode. */
@@ -24651,16 +25025,16 @@ static ma_result ma_device_init_internal__coreaudio(ma_context* pContext, ma_dev
     pData->component = NULL;
     pData->audioUnit = NULL;
     pData->pAudioBufferList = NULL;
-    
+
 #if defined(MA_APPLE_DESKTOP)
     result = ma_find_AudioObjectID(pContext, deviceType, pDeviceID, &deviceObjectID);
     if (result != MA_SUCCESS) {
         return result;
     }
-    
+
     pData->deviceObjectID = deviceObjectID;
 #endif
-    
+
     /* Core audio doesn't really use the notion of a period so we can leave this unmodified, but not too over the top. */
     pData->periodsOut = pData->periodsIn;
     if (pData->periodsOut == 0) {
@@ -24669,38 +25043,38 @@ static ma_result ma_device_init_internal__coreaudio(ma_context* pContext, ma_dev
     if (pData->periodsOut > 16) {
         pData->periodsOut = 16;
     }
-    
-    
+
+
     /* Audio unit. */
     status = ((ma_AudioComponentInstanceNew_proc)pContext->coreaudio.AudioComponentInstanceNew)((AudioComponent)pContext->coreaudio.component, (AudioUnit*)&pData->audioUnit);
     if (status != noErr) {
         return ma_result_from_OSStatus(status);
     }
-    
-    
+
+
     /* The input/output buses need to be explicitly enabled and disabled. We set the flag based on the output unit first, then we just swap it for input. */
     enableIOFlag = 1;
     if (deviceType == ma_device_type_capture) {
         enableIOFlag = 0;
     }
-    
+
     status = ((ma_AudioUnitSetProperty_proc)pContext->coreaudio.AudioUnitSetProperty)(pData->audioUnit, kAudioOutputUnitProperty_EnableIO, kAudioUnitScope_Output, MA_COREAUDIO_OUTPUT_BUS, &enableIOFlag, sizeof(enableIOFlag));
     if (status != noErr) {
         ((ma_AudioComponentInstanceDispose_proc)pContext->coreaudio.AudioComponentInstanceDispose)(pData->audioUnit);
         return ma_result_from_OSStatus(status);
     }
-    
+
     enableIOFlag = (enableIOFlag == 0) ? 1 : 0;
     status = ((ma_AudioUnitSetProperty_proc)pContext->coreaudio.AudioUnitSetProperty)(pData->audioUnit, kAudioOutputUnitProperty_EnableIO, kAudioUnitScope_Input, MA_COREAUDIO_INPUT_BUS, &enableIOFlag, sizeof(enableIOFlag));
     if (status != noErr) {
         ((ma_AudioComponentInstanceDispose_proc)pContext->coreaudio.AudioComponentInstanceDispose)(pData->audioUnit);
         return ma_result_from_OSStatus(status);
     }
-    
-    
+
+
     /* Set the device to use with this audio unit. This is only used on desktop since we are using defaults on mobile. */
 #if defined(MA_APPLE_DESKTOP)
-    status = ((ma_AudioUnitSetProperty_proc)pContext->coreaudio.AudioUnitSetProperty)(pData->audioUnit, kAudioOutputUnitProperty_CurrentDevice, kAudioUnitScope_Global, (deviceType == ma_device_type_playback) ? MA_COREAUDIO_OUTPUT_BUS : MA_COREAUDIO_INPUT_BUS, &deviceObjectID, sizeof(AudioDeviceID));
+    status = ((ma_AudioUnitSetProperty_proc)pContext->coreaudio.AudioUnitSetProperty)(pData->audioUnit, kAudioOutputUnitProperty_CurrentDevice, kAudioUnitScope_Global, 0, &deviceObjectID, sizeof(deviceObjectID));
     if (status != noErr) {
         ((ma_AudioComponentInstanceDispose_proc)pContext->coreaudio.AudioComponentInstanceDispose)(pData->audioUnit);
         return ma_result_from_OSStatus(result);
@@ -24721,68 +25095,103 @@ static ma_result ma_device_init_internal__coreaudio(ma_context* pContext, ma_dev
                     break;
                 }
             }
-            
+
             if (found == MA_FALSE) {
                 return MA_DOES_NOT_EXIST;
             }
         }
     }
 #endif
-    
+
     /*
     Format. This is the hardest part of initialization because there's a few variables to take into account.
       1) The format must be supported by the device.
       2) The format must be supported miniaudio.
       3) There's a priority that miniaudio prefers.
-    
+
     Ideally we would like to use a format that's as close to the hardware as possible so we can get as close to a passthrough as possible. The
     most important property is the sample rate. miniaudio can do format conversion for any sample rate and channel count, but cannot do the same
     for the sample data format. If the sample data format is not supported by miniaudio it must be ignored completely.
-    
+
     On mobile platforms this is a bit different. We just force the use of whatever the audio unit's current format is set to.
     */
     {
+        AudioStreamBasicDescription origFormat;
+        UInt32 origFormatSize = sizeof(origFormat);
         AudioUnitScope   formatScope   = (deviceType == ma_device_type_playback) ? kAudioUnitScope_Input : kAudioUnitScope_Output;
         AudioUnitElement formatElement = (deviceType == ma_device_type_playback) ? MA_COREAUDIO_OUTPUT_BUS : MA_COREAUDIO_INPUT_BUS;
 
-    #if defined(MA_APPLE_DESKTOP)
-        AudioStreamBasicDescription origFormat;
-        UInt32 origFormatSize;
-
-        result = ma_find_best_format__coreaudio(pContext, deviceObjectID, deviceType, pData->formatIn, pData->channelsIn, pData->sampleRateIn, pData->usingDefaultFormat, pData->usingDefaultChannels, pData->usingDefaultSampleRate, &bestFormat);
-        if (result != MA_SUCCESS) {
-            ((ma_AudioComponentInstanceDispose_proc)pContext->coreaudio.AudioComponentInstanceDispose)(pData->audioUnit);
-            return result;
-        }
-        
-        /* From what I can see, Apple's documentation implies that we should keep the sample rate consistent. */
-        origFormatSize = sizeof(origFormat);
         if (deviceType == ma_device_type_playback) {
             status = ((ma_AudioUnitGetProperty_proc)pContext->coreaudio.AudioUnitGetProperty)(pData->audioUnit, kAudioUnitProperty_StreamFormat, kAudioUnitScope_Output, MA_COREAUDIO_OUTPUT_BUS, &origFormat, &origFormatSize);
         } else {
             status = ((ma_AudioUnitGetProperty_proc)pContext->coreaudio.AudioUnitGetProperty)(pData->audioUnit, kAudioUnitProperty_StreamFormat, kAudioUnitScope_Input, MA_COREAUDIO_INPUT_BUS, &origFormat, &origFormatSize);
         }
-        
         if (status != noErr) {
+            ((ma_AudioComponentInstanceDispose_proc)pContext->coreaudio.AudioComponentInstanceDispose)(pData->audioUnit);
+            return ma_result_from_OSStatus(status);
+        }
+
+    #if defined(MA_APPLE_DESKTOP)
+        result = ma_find_best_format__coreaudio(pContext, deviceObjectID, deviceType, pData->formatIn, pData->channelsIn, pData->sampleRateIn, pData->usingDefaultFormat, pData->usingDefaultChannels, pData->usingDefaultSampleRate, &origFormat, &bestFormat);
+        if (result != MA_SUCCESS) {
             ((ma_AudioComponentInstanceDispose_proc)pContext->coreaudio.AudioComponentInstanceDispose)(pData->audioUnit);
             return result;
         }
-        
-        bestFormat.mSampleRate = origFormat.mSampleRate;
-        
+
+        /*
+        Technical Note TN2091: Device input using the HAL Output Audio Unit
+            https://developer.apple.com/library/archive/technotes/tn2091/_index.html
+
+        This documentation says the following:
+
+            The internal AudioConverter can handle any *simple* conversion. Typically, this means that a client can specify ANY
+            variant of the PCM formats. Consequently, the device's sample rate should match the desired sample rate. If sample rate
+            conversion is needed, it can be accomplished by buffering the input and converting the data on a separate thread with
+            another AudioConverter.
+
+        The important part here is the mention that it can handle *simple* conversions, which does *not* include sample rate. We
+        therefore want to ensure the sample rate stays consistent. This document is specifically for input, but I'm going to play it
+        safe and apply the same rule to output as well.
+
+        I have tried going against the documentation by setting the sample rate anyway, but this just results in AudioUnitRender()
+        returning a result code of -10863. I have also tried changing the format directly on the input scope on the input bus, but
+        this just results in `ca_require: IsStreamFormatWritable(inScope, inElement) NotWritable` when trying to set the format.
+
+        Something that does seem to work, however, has been setting the nominal sample rate on the deivce object. The problem with
+        this, however, is that it actually changes the sample rate at the operating system level and not just the application. This
+        could be intrusive to the user, however, so I don't think it's wise to make this the default. Instead I'm making this a
+        configuration option. When the `coreaudio.allowNominalSampleRateChange` config option is set to true, changing the sample
+        rate will be allowed. Otherwise it'll be fixed to the current sample rate. To check the system-defined sample rate, run
+        the Audio MIDI Setup program that comes installed on macOS and observe how the sample rate changes as the sample rate is
+        changed by miniaudio.
+        */
+        if (pData->allowNominalSampleRateChange) {
+            AudioValueRange sampleRateRange;
+            AudioObjectPropertyAddress propAddress;
+
+            sampleRateRange.mMinimum = bestFormat.mSampleRate;
+            sampleRateRange.mMaximum = bestFormat.mSampleRate;
+
+            propAddress.mSelector = kAudioDevicePropertyNominalSampleRate;
+            propAddress.mScope    = (deviceType == ma_device_type_playback) ? kAudioObjectPropertyScopeOutput : kAudioObjectPropertyScopeInput;
+            propAddress.mElement  = kAudioObjectPropertyElementMaster;
+
+            status = ((ma_AudioObjectSetPropertyData_proc)pContext->coreaudio.AudioObjectSetPropertyData)(deviceObjectID, &propAddress, 0, NULL, sizeof(sampleRateRange), &sampleRateRange);
+            if (status != noErr) {
+                bestFormat.mSampleRate = origFormat.mSampleRate;
+            }
+        } else {
+            bestFormat.mSampleRate = origFormat.mSampleRate;
+        }
+
         status = ((ma_AudioUnitSetProperty_proc)pContext->coreaudio.AudioUnitSetProperty)(pData->audioUnit, kAudioUnitProperty_StreamFormat, formatScope, formatElement, &bestFormat, sizeof(bestFormat));
         if (status != noErr) {
             /* We failed to set the format, so fall back to the current format of the audio unit. */
             bestFormat = origFormat;
         }
     #else
-        UInt32 propSize = sizeof(bestFormat);
-        status = ((ma_AudioUnitGetProperty_proc)pContext->coreaudio.AudioUnitGetProperty)(pData->audioUnit, kAudioUnitProperty_StreamFormat, formatScope, formatElement, &bestFormat, &propSize);
-        if (status != noErr) {
-            ((ma_AudioComponentInstanceDispose_proc)pContext->coreaudio.AudioComponentInstanceDispose)(pData->audioUnit);
-            return ma_result_from_OSStatus(status);
-        }
-        
+        bestFormat = origFormat;
+
         /*
         Sample rate is a little different here because for some reason kAudioUnitProperty_StreamFormat returns 0... Oh well. We need to instead try
         setting the sample rate to what the user has requested and then just see the results of it. Need to use some Objective-C here for this since
@@ -24792,7 +25201,7 @@ static ma_result ma_device_init_internal__coreaudio(ma_context* pContext, ma_dev
         @autoreleasepool {
             AVAudioSession* pAudioSession = [AVAudioSession sharedInstance];
             MA_ASSERT(pAudioSession != NULL);
-            
+
             [pAudioSession setPreferredSampleRate:(double)pData->sampleRateIn error:nil];
             bestFormat.mSampleRate = pAudioSession.sampleRate;
 
@@ -24807,26 +25216,26 @@ static ma_result ma_device_init_internal__coreaudio(ma_context* pContext, ma_dev
                 bestFormat.mChannelsPerFrame = (UInt32)pAudioSession.inputNumberOfChannels;
             }
         }
-        
+
         status = ((ma_AudioUnitSetProperty_proc)pContext->coreaudio.AudioUnitSetProperty)(pData->audioUnit, kAudioUnitProperty_StreamFormat, formatScope, formatElement, &bestFormat, sizeof(bestFormat));
         if (status != noErr) {
             ((ma_AudioComponentInstanceDispose_proc)pContext->coreaudio.AudioComponentInstanceDispose)(pData->audioUnit);
             return ma_result_from_OSStatus(status);
         }
     #endif
-        
+
         result = ma_format_from_AudioStreamBasicDescription(&bestFormat, &pData->formatOut);
         if (result != MA_SUCCESS) {
             ((ma_AudioComponentInstanceDispose_proc)pContext->coreaudio.AudioComponentInstanceDispose)(pData->audioUnit);
             return result;
         }
-        
+
         if (pData->formatOut == ma_format_unknown) {
             ((ma_AudioComponentInstanceDispose_proc)pContext->coreaudio.AudioComponentInstanceDispose)(pData->audioUnit);
             return MA_FORMAT_NOT_SUPPORTED;
         }
-        
-        pData->channelsOut = bestFormat.mChannelsPerFrame;
+
+        pData->channelsOut   = bestFormat.mChannelsPerFrame;
         pData->sampleRateOut = bestFormat.mSampleRate;
     }
 
@@ -24834,7 +25243,7 @@ static ma_result ma_device_init_internal__coreaudio(ma_context* pContext, ma_dev
     if (pData->channelsOut > MA_MAX_CHANNELS) {
         pData->channelsOut = MA_MAX_CHANNELS;
     }
-    
+
     /*
     Internal channel map. This is weird in my testing. If I use the AudioObject to get the
     channel map, the channel descriptions are set to "Unknown" for some reason. To work around
@@ -24860,112 +25269,81 @@ static ma_result ma_device_init_internal__coreaudio(ma_context* pContext, ma_dev
     /* TODO: Figure out how to get the channel map using AVAudioSession. */
     ma_get_standard_channel_map(ma_standard_channel_map_default, pData->channelsOut, pData->channelMapOut);
 #endif
-    
+
 
     /* Buffer size. Not allowing this to be configurable on iOS. */
     actualPeriodSizeInFrames = pData->periodSizeInFramesIn;
-    
+
 #if defined(MA_APPLE_DESKTOP)
     if (actualPeriodSizeInFrames == 0) {
         actualPeriodSizeInFrames = ma_calculate_buffer_size_in_frames_from_milliseconds(pData->periodSizeInMillisecondsIn, pData->sampleRateOut);
     }
-    
+
     result = ma_set_AudioObject_buffer_size_in_frames(pContext, deviceObjectID, deviceType, &actualPeriodSizeInFrames);
     if (result != MA_SUCCESS) {
         return result;
     }
-    
-    pData->periodSizeInFramesOut = actualPeriodSizeInFrames;
 #else
-    actualPeriodSizeInFrames = 2048;
-    pData->periodSizeInFramesOut = actualPeriodSizeInFrames;
+    /*
+    I don't know how to configure buffer sizes on iOS so for now we're not allowing it to be configured. Instead we're
+    just going to set it to the value of kAudioUnitProperty_MaximumFramesPerSlice.
+    */
+    status = ((ma_AudioUnitGetProperty_proc)pContext->coreaudio.AudioUnitGetProperty)(pData->audioUnit, kAudioUnitProperty_MaximumFramesPerSlice, kAudioUnitScope_Global, 0, &actualPeriodSizeInFrames, &actualPeriodSizeInFramesSize);
+    if (status != noErr) {
+        ((ma_AudioComponentInstanceDispose_proc)pContext->coreaudio.AudioComponentInstanceDispose)(pData->audioUnit);
+        return ma_result_from_OSStatus(status);
+    }
 #endif
 
 
     /*
     During testing I discovered that the buffer size can be too big. You'll get an error like this:
-    
+
       kAudioUnitErr_TooManyFramesToProcess : inFramesToProcess=4096, mMaxFramesPerSlice=512
-    
+
     Note how inFramesToProcess is smaller than mMaxFramesPerSlice. To fix, we need to set kAudioUnitProperty_MaximumFramesPerSlice to that
     of the size of our buffer, or do it the other way around and set our buffer size to the kAudioUnitProperty_MaximumFramesPerSlice.
     */
-    {
-        /*AudioUnitScope propScope = (deviceType == ma_device_type_playback) ? kAudioUnitScope_Input : kAudioUnitScope_Output;
-        AudioUnitElement propBus = (deviceType == ma_device_type_playback) ? MA_COREAUDIO_OUTPUT_BUS : MA_COREAUDIO_INPUT_BUS;
-    
-        status = ((ma_AudioUnitSetProperty_proc)pContext->coreaudio.AudioUnitSetProperty)(pData->audioUnit, kAudioUnitProperty_MaximumFramesPerSlice, propScope, propBus, &actualBufferSizeInFrames, sizeof(actualBufferSizeInFrames));
-        if (status != noErr) {
-            ((ma_AudioComponentInstanceDispose_proc)pContext->coreaudio.AudioComponentInstanceDispose)(pData->audioUnit);
-            return ma_result_from_OSStatus(status);
-        }*/
-        
-        status = ((ma_AudioUnitSetProperty_proc)pContext->coreaudio.AudioUnitSetProperty)(pData->audioUnit, kAudioUnitProperty_MaximumFramesPerSlice, kAudioUnitScope_Global, 0, &actualPeriodSizeInFrames, sizeof(actualPeriodSizeInFrames));
-        if (status != noErr) {
-            ((ma_AudioComponentInstanceDispose_proc)pContext->coreaudio.AudioComponentInstanceDispose)(pData->audioUnit);
-            return ma_result_from_OSStatus(status);
-        }
+    status = ((ma_AudioUnitSetProperty_proc)pContext->coreaudio.AudioUnitSetProperty)(pData->audioUnit, kAudioUnitProperty_MaximumFramesPerSlice, kAudioUnitScope_Global, 0, &actualPeriodSizeInFrames, sizeof(actualPeriodSizeInFrames));
+    if (status != noErr) {
+        ((ma_AudioComponentInstanceDispose_proc)pContext->coreaudio.AudioComponentInstanceDispose)(pData->audioUnit);
+        return ma_result_from_OSStatus(status);
     }
-    
+
+    pData->periodSizeInFramesOut = actualPeriodSizeInFrames;
+
     /* We need a buffer list if this is an input device. We render into this in the input callback. */
     if (deviceType == ma_device_type_capture) {
         ma_bool32 isInterleaved = (bestFormat.mFormatFlags & kAudioFormatFlagIsNonInterleaved) == 0;
-        size_t allocationSize;
         AudioBufferList* pBufferList;
-
-        allocationSize = sizeof(AudioBufferList) - sizeof(AudioBuffer);  /* Subtract sizeof(AudioBuffer) because that part is dynamically sized. */
-        if (isInterleaved) {
-            /* Interleaved case. This is the simple case because we just have one buffer. */
-            allocationSize += sizeof(AudioBuffer) * 1;
-            allocationSize += actualPeriodSizeInFrames * ma_get_bytes_per_frame(pData->formatOut, pData->channelsOut);
-        } else {
-            /* Non-interleaved case. This is the more complex case because there's more than one buffer. */
-            allocationSize += sizeof(AudioBuffer) * pData->channelsOut;
-            allocationSize += actualPeriodSizeInFrames * ma_get_bytes_per_sample(pData->formatOut) * pData->channelsOut;
-        }
         
-        pBufferList = (AudioBufferList*)ma__malloc_from_callbacks(allocationSize, &pContext->allocationCallbacks);
+        pBufferList = ma_allocate_AudioBufferList__coreaudio(pData->periodSizeInFramesOut, pData->formatOut, pData->channelsOut, (isInterleaved) ? ma_stream_layout_interleaved : ma_stream_layout_deinterleaved, &pContext->allocationCallbacks);
         if (pBufferList == NULL) {
             ((ma_AudioComponentInstanceDispose_proc)pContext->coreaudio.AudioComponentInstanceDispose)(pData->audioUnit);
             return MA_OUT_OF_MEMORY;
         }
-        
-        if (isInterleaved) {
-            pBufferList->mNumberBuffers = 1;
-            pBufferList->mBuffers[0].mNumberChannels = pData->channelsOut;
-            pBufferList->mBuffers[0].mDataByteSize   = actualPeriodSizeInFrames * ma_get_bytes_per_frame(pData->formatOut, pData->channelsOut);
-            pBufferList->mBuffers[0].mData           = (ma_uint8*)pBufferList + sizeof(AudioBufferList);
-        } else {
-            ma_uint32 iBuffer;
-            pBufferList->mNumberBuffers = pData->channelsOut;
-            for (iBuffer = 0; iBuffer < pBufferList->mNumberBuffers; ++iBuffer) {
-                pBufferList->mBuffers[iBuffer].mNumberChannels = 1;
-                pBufferList->mBuffers[iBuffer].mDataByteSize   = actualPeriodSizeInFrames * ma_get_bytes_per_sample(pData->formatOut);
-                pBufferList->mBuffers[iBuffer].mData           = (ma_uint8*)pBufferList + ((sizeof(AudioBufferList) - sizeof(AudioBuffer)) + (sizeof(AudioBuffer) * pData->channelsOut)) + (actualPeriodSizeInFrames * ma_get_bytes_per_sample(pData->formatOut) * iBuffer);
-            }
-        }
-        
+
         pData->pAudioBufferList = pBufferList;
     }
-    
+
     /* Callbacks. */
     callbackInfo.inputProcRefCon = pDevice_DoNotReference;
     if (deviceType == ma_device_type_playback) {
         callbackInfo.inputProc = ma_on_output__coreaudio;
-        status = ((ma_AudioUnitSetProperty_proc)pContext->coreaudio.AudioUnitSetProperty)(pData->audioUnit, kAudioUnitProperty_SetRenderCallback, kAudioUnitScope_Global, MA_COREAUDIO_OUTPUT_BUS, &callbackInfo, sizeof(callbackInfo));
+        status = ((ma_AudioUnitSetProperty_proc)pContext->coreaudio.AudioUnitSetProperty)(pData->audioUnit, kAudioUnitProperty_SetRenderCallback, kAudioUnitScope_Global, 0, &callbackInfo, sizeof(callbackInfo));
         if (status != noErr) {
             ((ma_AudioComponentInstanceDispose_proc)pContext->coreaudio.AudioComponentInstanceDispose)(pData->audioUnit);
             return ma_result_from_OSStatus(status);
         }
     } else {
         callbackInfo.inputProc = ma_on_input__coreaudio;
-        status = ((ma_AudioUnitSetProperty_proc)pContext->coreaudio.AudioUnitSetProperty)(pData->audioUnit, kAudioOutputUnitProperty_SetInputCallback, kAudioUnitScope_Global, MA_COREAUDIO_INPUT_BUS, &callbackInfo, sizeof(callbackInfo));
+        status = ((ma_AudioUnitSetProperty_proc)pContext->coreaudio.AudioUnitSetProperty)(pData->audioUnit, kAudioOutputUnitProperty_SetInputCallback, kAudioUnitScope_Global, 0, &callbackInfo, sizeof(callbackInfo));
         if (status != noErr) {
             ((ma_AudioComponentInstanceDispose_proc)pContext->coreaudio.AudioComponentInstanceDispose)(pData->audioUnit);
             return ma_result_from_OSStatus(status);
         }
     }
-    
+
     /* We need to listen for stop events. */
     if (pData->registerStopEvent) {
         status = ((ma_AudioUnitAddPropertyListener_proc)pContext->coreaudio.AudioUnitAddPropertyListener)(pData->audioUnit, kAudioOutputUnitProperty_IsRunning, on_start_stop__coreaudio, pDevice_DoNotReference);
@@ -24974,7 +25352,7 @@ static ma_result ma_device_init_internal__coreaudio(ma_context* pContext, ma_dev
             return ma_result_from_OSStatus(status);
         }
     }
-    
+
     /* Initialize the audio unit. */
     status = ((ma_AudioUnitInitialize_proc)pContext->coreaudio.AudioUnitInitialize)(pData->audioUnit);
     if (status != noErr) {
@@ -24983,7 +25361,7 @@ static ma_result ma_device_init_internal__coreaudio(ma_context* pContext, ma_dev
         ((ma_AudioComponentInstanceDispose_proc)pContext->coreaudio.AudioComponentInstanceDispose)(pData->audioUnit);
         return ma_result_from_OSStatus(status);
     }
-    
+
     /* Grab the name. */
 #if defined(MA_APPLE_DESKTOP)
     ma_get_AudioObject_name(pContext, deviceObjectID, sizeof(pData->deviceName), pData->deviceName);
@@ -24994,7 +25372,7 @@ static ma_result ma_device_init_internal__coreaudio(ma_context* pContext, ma_dev
         ma_strcpy_s(pData->deviceName, sizeof(pData->deviceName), MA_DEFAULT_CAPTURE_DEVICE_NAME);
     }
 #endif
-    
+
     return result;
 }
 
@@ -25009,6 +25387,8 @@ static ma_result ma_device_reinit_internal__coreaudio(ma_device* pDevice, ma_dev
         return MA_INVALID_ARGS;
     }
 
+    data.allowNominalSampleRateChange = MA_FALSE;   /* Don't change the nominal sample rate when switching devices. */
+
     if (deviceType == ma_device_type_capture) {
         data.formatIn               = pDevice->capture.format;
         data.channelsIn             = pDevice->capture.channels;
@@ -25020,7 +25400,7 @@ static ma_result ma_device_reinit_internal__coreaudio(ma_device* pDevice, ma_dev
         data.usingDefaultChannelMap = pDevice->capture.usingDefaultChannelMap;
         data.shareMode              = pDevice->capture.shareMode;
         data.registerStopEvent      = MA_TRUE;
-        
+
         if (disposePreviousAudioUnit) {
             ((ma_AudioOutputUnitStop_proc)pDevice->pContext->coreaudio.AudioOutputUnitStop)((AudioUnit)pDevice->coreaudio.audioUnitCapture);
             ((ma_AudioComponentInstanceDispose_proc)pDevice->pContext->coreaudio.AudioComponentInstanceDispose)((AudioUnit)pDevice->coreaudio.audioUnitCapture);
@@ -25039,7 +25419,7 @@ static ma_result ma_device_reinit_internal__coreaudio(ma_device* pDevice, ma_dev
         data.usingDefaultChannelMap = pDevice->playback.usingDefaultChannelMap;
         data.shareMode              = pDevice->playback.shareMode;
         data.registerStopEvent      = (pDevice->type != ma_device_type_duplex);
-        
+
         if (disposePreviousAudioUnit) {
             ((ma_AudioOutputUnitStop_proc)pDevice->pContext->coreaudio.AudioOutputUnitStop)((AudioUnit)pDevice->coreaudio.audioUnitPlayback);
             ((ma_AudioComponentInstanceDispose_proc)pDevice->pContext->coreaudio.AudioComponentInstanceDispose)((AudioUnit)pDevice->coreaudio.audioUnitPlayback);
@@ -25058,14 +25438,15 @@ static ma_result ma_device_reinit_internal__coreaudio(ma_device* pDevice, ma_dev
     if (result != MA_SUCCESS) {
         return result;
     }
-    
+
     if (deviceType == ma_device_type_capture) {
     #if defined(MA_APPLE_DESKTOP)
         pDevice->coreaudio.deviceObjectIDCapture     = (ma_uint32)data.deviceObjectID;
     #endif
         pDevice->coreaudio.audioUnitCapture          = (ma_ptr)data.audioUnit;
         pDevice->coreaudio.pAudioBufferList          = (ma_ptr)data.pAudioBufferList;
-        
+        pDevice->coreaudio.audioBufferCapInFrames    = data.periodSizeInFramesOut;
+
         pDevice->capture.internalFormat              = data.formatOut;
         pDevice->capture.internalChannels            = data.channelsOut;
         pDevice->capture.internalSampleRate          = data.sampleRateOut;
@@ -25077,7 +25458,7 @@ static ma_result ma_device_reinit_internal__coreaudio(ma_device* pDevice, ma_dev
         pDevice->coreaudio.deviceObjectIDPlayback    = (ma_uint32)data.deviceObjectID;
     #endif
         pDevice->coreaudio.audioUnitPlayback         = (ma_ptr)data.audioUnit;
-        
+
         pDevice->playback.internalFormat             = data.formatOut;
         pDevice->playback.internalChannels           = data.channelsOut;
         pDevice->playback.internalSampleRate         = data.sampleRateOut;
@@ -25085,7 +25466,7 @@ static ma_result ma_device_reinit_internal__coreaudio(ma_device* pDevice, ma_dev
         pDevice->playback.internalPeriodSizeInFrames = data.periodSizeInFramesOut;
         pDevice->playback.internalPeriods            = data.periodsOut;
     }
-    
+
     return MA_SUCCESS;
 }
 #endif /* MA_APPLE_DESKTOP */
@@ -25107,48 +25488,50 @@ static ma_result ma_device_init__coreaudio(ma_context* pContext, const ma_device
         ((pConfig->deviceType == ma_device_type_playback || pConfig->deviceType == ma_device_type_duplex) && pConfig->playback.shareMode == ma_share_mode_exclusive)) {
         return MA_SHARE_MODE_NOT_SUPPORTED;
     }
-    
+
     /* Capture needs to be initialized first. */
     if (pConfig->deviceType == ma_device_type_capture || pConfig->deviceType == ma_device_type_duplex) {
         ma_device_init_internal_data__coreaudio data;
-        data.formatIn                   = pConfig->capture.format;
-        data.channelsIn                 = pConfig->capture.channels;
-        data.sampleRateIn               = pConfig->sampleRate;
+        data.allowNominalSampleRateChange = pConfig->coreaudio.allowNominalSampleRateChange;
+        data.formatIn                     = pConfig->capture.format;
+        data.channelsIn                   = pConfig->capture.channels;
+        data.sampleRateIn                 = pConfig->sampleRate;
         MA_COPY_MEMORY(data.channelMapIn, pConfig->capture.channelMap, sizeof(pConfig->capture.channelMap));
-        data.usingDefaultFormat         = pDevice->capture.usingDefaultFormat;
-        data.usingDefaultChannels       = pDevice->capture.usingDefaultChannels;
-        data.usingDefaultSampleRate     = pDevice->usingDefaultSampleRate;
-        data.usingDefaultChannelMap     = pDevice->capture.usingDefaultChannelMap;
-        data.shareMode                  = pConfig->capture.shareMode;
-        data.periodSizeInFramesIn       = pConfig->periodSizeInFrames;
-        data.periodSizeInMillisecondsIn = pConfig->periodSizeInMilliseconds;
-        data.periodsIn                  = pConfig->periods;
-        data.registerStopEvent          = MA_TRUE;
+        data.usingDefaultFormat           = pDevice->capture.usingDefaultFormat;
+        data.usingDefaultChannels         = pDevice->capture.usingDefaultChannels;
+        data.usingDefaultSampleRate       = pDevice->usingDefaultSampleRate;
+        data.usingDefaultChannelMap       = pDevice->capture.usingDefaultChannelMap;
+        data.shareMode                    = pConfig->capture.shareMode;
+        data.periodSizeInFramesIn         = pConfig->periodSizeInFrames;
+        data.periodSizeInMillisecondsIn   = pConfig->periodSizeInMilliseconds;
+        data.periodsIn                    = pConfig->periods;
+        data.registerStopEvent            = MA_TRUE;
 
         /* Need at least 3 periods for duplex. */
         if (data.periodsIn < 3 && pConfig->deviceType == ma_device_type_duplex) {
             data.periodsIn = 3;
         }
-        
+
         result = ma_device_init_internal__coreaudio(pDevice->pContext, ma_device_type_capture, pConfig->capture.pDeviceID, &data, (void*)pDevice);
         if (result != MA_SUCCESS) {
             return result;
         }
-        
+
         pDevice->coreaudio.isDefaultCaptureDevice   = (pConfig->capture.pDeviceID == NULL);
     #if defined(MA_APPLE_DESKTOP)
         pDevice->coreaudio.deviceObjectIDCapture    = (ma_uint32)data.deviceObjectID;
     #endif
         pDevice->coreaudio.audioUnitCapture         = (ma_ptr)data.audioUnit;
         pDevice->coreaudio.pAudioBufferList         = (ma_ptr)data.pAudioBufferList;
-        
+        pDevice->coreaudio.audioBufferCapInFrames   = data.periodSizeInFramesOut;
+
         pDevice->capture.internalFormat             = data.formatOut;
         pDevice->capture.internalChannels           = data.channelsOut;
         pDevice->capture.internalSampleRate         = data.sampleRateOut;
         MA_COPY_MEMORY(pDevice->capture.internalChannelMap, data.channelMapOut, sizeof(data.channelMapOut));
         pDevice->capture.internalPeriodSizeInFrames = data.periodSizeInFramesOut;
         pDevice->capture.internalPeriods            = data.periodsOut;
-        
+
     #if defined(MA_APPLE_DESKTOP)
         /*
         If we are using the default device we'll need to listen for changes to the system's default device so we can seemlessly
@@ -25159,20 +25542,21 @@ static ma_result ma_device_init__coreaudio(ma_context* pContext, const ma_device
         }
     #endif
     }
-    
+
     /* Playback. */
     if (pConfig->deviceType == ma_device_type_playback || pConfig->deviceType == ma_device_type_duplex) {
         ma_device_init_internal_data__coreaudio data;
-        data.formatIn                   = pConfig->playback.format;
-        data.channelsIn                 = pConfig->playback.channels;
-        data.sampleRateIn               = pConfig->sampleRate;
+        data.allowNominalSampleRateChange = pConfig->coreaudio.allowNominalSampleRateChange;
+        data.formatIn                     = pConfig->playback.format;
+        data.channelsIn                   = pConfig->playback.channels;
+        data.sampleRateIn                 = pConfig->sampleRate;
         MA_COPY_MEMORY(data.channelMapIn, pConfig->playback.channelMap, sizeof(pConfig->playback.channelMap));
-        data.usingDefaultFormat         = pDevice->playback.usingDefaultFormat;
-        data.usingDefaultChannels       = pDevice->playback.usingDefaultChannels;
-        data.usingDefaultSampleRate     = pDevice->usingDefaultSampleRate;
-        data.usingDefaultChannelMap     = pDevice->playback.usingDefaultChannelMap;
-        data.shareMode                  = pConfig->playback.shareMode;
-        
+        data.usingDefaultFormat           = pDevice->playback.usingDefaultFormat;
+        data.usingDefaultChannels         = pDevice->playback.usingDefaultChannels;
+        data.usingDefaultSampleRate       = pDevice->usingDefaultSampleRate;
+        data.usingDefaultChannelMap       = pDevice->playback.usingDefaultChannelMap;
+        data.shareMode                    = pConfig->playback.shareMode;
+
         /* In full-duplex mode we want the playback buffer to be the same size as the capture buffer. */
         if (pConfig->deviceType == ma_device_type_duplex) {
             data.periodSizeInFramesIn       = pDevice->capture.internalPeriodSizeInFrames;
@@ -25184,7 +25568,7 @@ static ma_result ma_device_init__coreaudio(ma_context* pContext, const ma_device
             data.periodsIn                  = pConfig->periods;
             data.registerStopEvent          = MA_TRUE;
         }
-        
+
         result = ma_device_init_internal__coreaudio(pDevice->pContext, ma_device_type_playback, pConfig->playback.pDeviceID, &data, (void*)pDevice);
         if (result != MA_SUCCESS) {
             if (pConfig->deviceType == ma_device_type_duplex) {
@@ -25195,20 +25579,20 @@ static ma_result ma_device_init__coreaudio(ma_context* pContext, const ma_device
             }
             return result;
         }
-        
+
         pDevice->coreaudio.isDefaultPlaybackDevice   = (pConfig->playback.pDeviceID == NULL);
     #if defined(MA_APPLE_DESKTOP)
         pDevice->coreaudio.deviceObjectIDPlayback    = (ma_uint32)data.deviceObjectID;
     #endif
         pDevice->coreaudio.audioUnitPlayback         = (ma_ptr)data.audioUnit;
-        
+
         pDevice->playback.internalFormat             = data.formatOut;
         pDevice->playback.internalChannels           = data.channelsOut;
         pDevice->playback.internalSampleRate         = data.sampleRateOut;
         MA_COPY_MEMORY(pDevice->playback.internalChannelMap, data.channelMapOut, sizeof(data.channelMapOut));
         pDevice->playback.internalPeriodSizeInFrames = data.periodSizeInFramesOut;
         pDevice->playback.internalPeriods            = data.periodsOut;
-        
+
     #if defined(MA_APPLE_DESKTOP)
         /*
         If we are using the default device we'll need to listen for changes to the system's default device so we can seemlessly
@@ -25219,11 +25603,11 @@ static ma_result ma_device_init__coreaudio(ma_context* pContext, const ma_device
         }
     #endif
     }
-    
+
     pDevice->coreaudio.originalPeriodSizeInFrames       = pConfig->periodSizeInFrames;
     pDevice->coreaudio.originalPeriodSizeInMilliseconds = pConfig->periodSizeInMilliseconds;
     pDevice->coreaudio.originalPeriods                  = pConfig->periods;
-    
+
     /*
     When stopping the device, a callback is called on another thread. We need to wait for this callback
     before returning from ma_device_stop(). This event is used for this.
@@ -25265,14 +25649,14 @@ static ma_result ma_device_init__coreaudio(ma_context* pContext, const ma_device
 static ma_result ma_device_start__coreaudio(ma_device* pDevice)
 {
     MA_ASSERT(pDevice != NULL);
-    
+
     if (pDevice->type == ma_device_type_capture || pDevice->type == ma_device_type_duplex) {
         OSStatus status = ((ma_AudioOutputUnitStart_proc)pDevice->pContext->coreaudio.AudioOutputUnitStart)((AudioUnit)pDevice->coreaudio.audioUnitCapture);
         if (status != noErr) {
             return ma_result_from_OSStatus(status);
         }
     }
-    
+
     if (pDevice->type == ma_device_type_playback || pDevice->type == ma_device_type_duplex) {
         OSStatus status = ((ma_AudioOutputUnitStart_proc)pDevice->pContext->coreaudio.AudioOutputUnitStart)((AudioUnit)pDevice->coreaudio.audioUnitPlayback);
         if (status != noErr) {
@@ -25282,7 +25666,7 @@ static ma_result ma_device_start__coreaudio(ma_device* pDevice)
             return ma_result_from_OSStatus(status);
         }
     }
-    
+
     return MA_SUCCESS;
 }
 
@@ -25298,14 +25682,14 @@ static ma_result ma_device_stop__coreaudio(ma_device* pDevice)
             return ma_result_from_OSStatus(status);
         }
     }
-    
+
     if (pDevice->type == ma_device_type_playback || pDevice->type == ma_device_type_duplex) {
         OSStatus status = ((ma_AudioOutputUnitStop_proc)pDevice->pContext->coreaudio.AudioOutputUnitStop)((AudioUnit)pDevice->coreaudio.audioUnitPlayback);
         if (status != noErr) {
             return ma_result_from_OSStatus(status);
         }
     }
-    
+
     /* We need to wait for the callback to finish before returning. */
     ma_event_wait(&pDevice->coreaudio.stopEvent);
     return MA_SUCCESS;
@@ -25316,7 +25700,7 @@ static ma_result ma_context_uninit__coreaudio(ma_context* pContext)
 {
     MA_ASSERT(pContext != NULL);
     MA_ASSERT(pContext->backend == ma_backend_coreaudio);
-    
+
 #if defined(MA_APPLE_MOBILE)
     if (!pContext->coreaudio.noAudioSessionDeactivate) {
         if (![[AVAudioSession sharedInstance] setActive:false error:nil]) {
@@ -25324,7 +25708,7 @@ static ma_result ma_context_uninit__coreaudio(ma_context* pContext)
         }
     }
 #endif
-    
+
 #if !defined(MA_NO_RUNTIME_LINKING) && !defined(MA_APPLE_MOBILE)
     ma_dlclose(pContext, pContext->coreaudio.hAudioUnit);
     ma_dlclose(pContext, pContext->coreaudio.hCoreAudio);
@@ -25401,7 +25785,7 @@ static ma_result ma_context_init__coreaudio(const ma_context_config* pConfig, ma
                 }
             }
         }
-        
+
         if (!pConfig->coreaudio.noAudioSessionActivate) {
             if (![pAudioSession setActive:true error:nil]) {
                 return ma_context_post_error(pContext, NULL, MA_LOG_LEVEL_ERROR, "Failed to activate audio session.", MA_FAILED_TO_INIT_BACKEND);
@@ -25409,23 +25793,23 @@ static ma_result ma_context_init__coreaudio(const ma_context_config* pConfig, ma
         }
     }
 #endif
-    
+
 #if !defined(MA_NO_RUNTIME_LINKING) && !defined(MA_APPLE_MOBILE)
     pContext->coreaudio.hCoreFoundation = ma_dlopen(pContext, "CoreFoundation.framework/CoreFoundation");
     if (pContext->coreaudio.hCoreFoundation == NULL) {
         return MA_API_NOT_FOUND;
     }
-    
+
     pContext->coreaudio.CFStringGetCString = ma_dlsym(pContext, pContext->coreaudio.hCoreFoundation, "CFStringGetCString");
     pContext->coreaudio.CFRelease          = ma_dlsym(pContext, pContext->coreaudio.hCoreFoundation, "CFRelease");
-    
-    
+
+
     pContext->coreaudio.hCoreAudio = ma_dlopen(pContext, "CoreAudio.framework/CoreAudio");
     if (pContext->coreaudio.hCoreAudio == NULL) {
         ma_dlclose(pContext, pContext->coreaudio.hCoreFoundation);
         return MA_API_NOT_FOUND;
     }
-    
+
     pContext->coreaudio.AudioObjectGetPropertyData        = ma_dlsym(pContext, pContext->coreaudio.hCoreAudio, "AudioObjectGetPropertyData");
     pContext->coreaudio.AudioObjectGetPropertyDataSize    = ma_dlsym(pContext, pContext->coreaudio.hCoreAudio, "AudioObjectGetPropertyDataSize");
     pContext->coreaudio.AudioObjectSetPropertyData        = ma_dlsym(pContext, pContext->coreaudio.hCoreAudio, "AudioObjectSetPropertyData");
@@ -25444,7 +25828,7 @@ static ma_result ma_context_init__coreaudio(const ma_context_config* pConfig, ma
         ma_dlclose(pContext, pContext->coreaudio.hCoreFoundation);
         return MA_API_NOT_FOUND;
     }
-    
+
     if (ma_dlsym(pContext, pContext->coreaudio.hAudioUnit, "AudioComponentFindNext") == NULL) {
         /* Couldn't find the required symbols in AudioUnit, so fall back to AudioToolbox. */
         ma_dlclose(pContext, pContext->coreaudio.hAudioUnit);
@@ -25455,7 +25839,7 @@ static ma_result ma_context_init__coreaudio(const ma_context_config* pConfig, ma
             return MA_API_NOT_FOUND;
         }
     }
-    
+
     pContext->coreaudio.AudioComponentFindNext            = ma_dlsym(pContext, pContext->coreaudio.hAudioUnit, "AudioComponentFindNext");
     pContext->coreaudio.AudioComponentInstanceDispose     = ma_dlsym(pContext, pContext->coreaudio.hAudioUnit, "AudioComponentInstanceDispose");
     pContext->coreaudio.AudioComponentInstanceNew         = ma_dlsym(pContext, pContext->coreaudio.hAudioUnit, "AudioComponentInstanceNew");
@@ -25470,7 +25854,7 @@ static ma_result ma_context_init__coreaudio(const ma_context_config* pConfig, ma
 #else
     pContext->coreaudio.CFStringGetCString                = (ma_proc)CFStringGetCString;
     pContext->coreaudio.CFRelease                         = (ma_proc)CFRelease;
-    
+
     #if defined(MA_APPLE_DESKTOP)
     pContext->coreaudio.AudioObjectGetPropertyData        = (ma_proc)AudioObjectGetPropertyData;
     pContext->coreaudio.AudioObjectGetPropertyDataSize    = (ma_proc)AudioObjectGetPropertyDataSize;
@@ -25478,7 +25862,7 @@ static ma_result ma_context_init__coreaudio(const ma_context_config* pConfig, ma
     pContext->coreaudio.AudioObjectAddPropertyListener    = (ma_proc)AudioObjectAddPropertyListener;
     pContext->coreaudio.AudioObjectRemovePropertyListener = (ma_proc)AudioObjectRemovePropertyListener;
     #endif
-    
+
     pContext->coreaudio.AudioComponentFindNext            = (ma_proc)AudioComponentFindNext;
     pContext->coreaudio.AudioComponentInstanceDispose     = (ma_proc)AudioComponentInstanceDispose;
     pContext->coreaudio.AudioComponentInstanceNew         = (ma_proc)AudioComponentInstanceNew;
@@ -25492,17 +25876,6 @@ static ma_result ma_context_init__coreaudio(const ma_context_config* pConfig, ma
     pContext->coreaudio.AudioUnitRender                   = (ma_proc)AudioUnitRender;
 #endif
 
-    pContext->isBackendAsynchronous = MA_TRUE;
-    
-    pContext->onUninit        = ma_context_uninit__coreaudio;
-    pContext->onDeviceIDEqual = ma_context_is_device_id_equal__coreaudio;
-    pContext->onEnumDevices   = ma_context_enumerate_devices__coreaudio;
-    pContext->onGetDeviceInfo = ma_context_get_device_info__coreaudio;
-    pContext->onDeviceInit    = ma_device_init__coreaudio;
-    pContext->onDeviceUninit  = ma_device_uninit__coreaudio;
-    pContext->onDeviceStart   = ma_device_start__coreaudio;
-    pContext->onDeviceStop    = ma_device_stop__coreaudio;
-    
     /* Audio component. */
     {
         AudioComponentDescription desc;
@@ -25515,7 +25888,7 @@ static ma_result ma_context_init__coreaudio(const ma_context_config* pConfig, ma
         desc.componentManufacturer = kAudioUnitManufacturer_Apple;
         desc.componentFlags        = 0;
         desc.componentFlagsMask    = 0;
-    
+
         pContext->coreaudio.component = ((ma_AudioComponentFindNext_proc)pContext->coreaudio.AudioComponentFindNext)(NULL, &desc);
         if (pContext->coreaudio.component == NULL) {
         #if !defined(MA_NO_RUNTIME_LINKING) && !defined(MA_APPLE_MOBILE)
@@ -25526,7 +25899,7 @@ static ma_result ma_context_init__coreaudio(const ma_context_config* pConfig, ma
             return MA_FAILED_TO_INIT_BACKEND;
         }
     }
-    
+
 #if !defined(MA_APPLE_MOBILE)
     result = ma_context__init_device_tracking__coreaudio(pContext);
     if (result != MA_SUCCESS) {
@@ -25540,6 +25913,16 @@ static ma_result ma_context_init__coreaudio(const ma_context_config* pConfig, ma
 #endif
 
     pContext->coreaudio.noAudioSessionDeactivate = pConfig->coreaudio.noAudioSessionDeactivate;
+
+    pContext->isBackendAsynchronous = MA_TRUE;
+
+    pContext->onUninit        = ma_context_uninit__coreaudio;
+    pContext->onEnumDevices   = ma_context_enumerate_devices__coreaudio;
+    pContext->onGetDeviceInfo = ma_context_get_device_info__coreaudio;
+    pContext->onDeviceInit    = ma_device_init__coreaudio;
+    pContext->onDeviceUninit  = ma_device_uninit__coreaudio;
+    pContext->onDeviceStart   = ma_device_start__coreaudio;
+    pContext->onDeviceStop    = ma_device_stop__coreaudio;
 
     return MA_SUCCESS;
 }
@@ -25655,7 +26038,7 @@ static ma_format ma_format_from_sio_enc__sndio(unsigned int bits, unsigned int b
     if ((ma_is_little_endian() && le == 0) || (ma_is_big_endian() && le == 1)) {
         return ma_format_unknown;
     }
-    
+
     if (bits ==  8 && bps == 1 && sig == 0) {
         return ma_format_u8;
     }
@@ -25671,7 +26054,7 @@ static ma_format ma_format_from_sio_enc__sndio(unsigned int bits, unsigned int b
     if (bits == 32 && bps == 4 && sig == 1) {
         return ma_format_s32;
     }
-    
+
     return ma_format_unknown;
 }
 
@@ -25681,7 +26064,7 @@ static ma_format ma_find_best_format_from_sio_cap__sndio(struct ma_sio_cap* caps
     unsigned int iConfig;
 
     MA_ASSERT(caps != NULL);
-    
+
     bestFormat = ma_format_unknown;
     for (iConfig = 0; iConfig < caps->nconf; iConfig += 1) {
         unsigned int iEncoding;
@@ -25696,7 +26079,7 @@ static ma_format ma_find_best_format_from_sio_cap__sndio(struct ma_sio_cap* caps
             if ((caps->confs[iConfig].enc & (1UL << iEncoding)) == 0) {
                 continue;
             }
-            
+
             bits = caps->enc[iEncoding].bits;
             bps  = caps->enc[iEncoding].bps;
             sig  = caps->enc[iEncoding].sig;
@@ -25706,7 +26089,7 @@ static ma_format ma_find_best_format_from_sio_cap__sndio(struct ma_sio_cap* caps
             if (format == ma_format_unknown) {
                 continue;   /* Format not supported. */
             }
-            
+
             if (bestFormat == ma_format_unknown) {
                 bestFormat = format;
             } else {
@@ -25716,7 +26099,7 @@ static ma_format ma_find_best_format_from_sio_cap__sndio(struct ma_sio_cap* caps
             }
         }
     }
-    
+
     return bestFormat;
 }
 
@@ -25727,7 +26110,7 @@ static ma_uint32 ma_find_best_channels_from_sio_cap__sndio(struct ma_sio_cap* ca
 
     MA_ASSERT(caps != NULL);
     MA_ASSERT(requiredFormat != ma_format_unknown);
-    
+
     /* Just pick whatever configuration has the most channels. */
     maxChannels = 0;
     for (iConfig = 0; iConfig < caps->nconf; iConfig += 1) {
@@ -25745,7 +26128,7 @@ static ma_uint32 ma_find_best_channels_from_sio_cap__sndio(struct ma_sio_cap* ca
             if ((caps->confs[iConfig].enc & (1UL << iEncoding)) == 0) {
                 continue;
             }
-            
+
             bits = caps->enc[iEncoding].bits;
             bps  = caps->enc[iEncoding].bps;
             sig  = caps->enc[iEncoding].sig;
@@ -25755,7 +26138,7 @@ static ma_uint32 ma_find_best_channels_from_sio_cap__sndio(struct ma_sio_cap* ca
             if (format != requiredFormat) {
                 continue;
             }
-            
+
             /* Getting here means the format is supported. Iterate over each channel count and grab the biggest one. */
             for (iChannel = 0; iChannel < MA_SIO_NCHAN; iChannel += 1) {
                 unsigned int chan = 0;
@@ -25766,24 +26149,24 @@ static ma_uint32 ma_find_best_channels_from_sio_cap__sndio(struct ma_sio_cap* ca
                 } else {
                     chan = caps->confs[iConfig].rchan;
                 }
-            
+
                 if ((chan & (1UL << iChannel)) == 0) {
                     continue;
                 }
-                
+
                 if (deviceType == ma_device_type_playback) {
                     channels = caps->pchan[iChannel];
                 } else {
                     channels = caps->rchan[iChannel];
                 }
-                
+
                 if (maxChannels < channels) {
                     maxChannels = channels;
                 }
             }
         }
     }
-    
+
     return maxChannels;
 }
 
@@ -25797,7 +26180,7 @@ static ma_uint32 ma_find_best_sample_rate_from_sio_cap__sndio(struct ma_sio_cap*
     MA_ASSERT(requiredFormat != ma_format_unknown);
     MA_ASSERT(requiredChannels > 0);
     MA_ASSERT(requiredChannels <= MA_MAX_CHANNELS);
-    
+
     firstSampleRate = 0; /* <-- If the device does not support a standard rate we'll fall back to the first one that's found. */
     bestSampleRate  = 0;
 
@@ -25816,7 +26199,7 @@ static ma_uint32 ma_find_best_sample_rate_from_sio_cap__sndio(struct ma_sio_cap*
             if ((caps->confs[iConfig].enc & (1UL << iEncoding)) == 0) {
                 continue;
             }
-            
+
             bits = caps->enc[iEncoding].bits;
             bps  = caps->enc[iEncoding].bps;
             sig  = caps->enc[iEncoding].sig;
@@ -25826,7 +26209,7 @@ static ma_uint32 ma_find_best_sample_rate_from_sio_cap__sndio(struct ma_sio_cap*
             if (format != requiredFormat) {
                 continue;
             }
-            
+
             /* Getting here means the format is supported. Iterate over each channel count and grab the biggest one. */
             for (iChannel = 0; iChannel < MA_SIO_NCHAN; iChannel += 1) {
                 unsigned int chan = 0;
@@ -25838,36 +26221,36 @@ static ma_uint32 ma_find_best_sample_rate_from_sio_cap__sndio(struct ma_sio_cap*
                 } else {
                     chan = caps->confs[iConfig].rchan;
                 }
-            
+
                 if ((chan & (1UL << iChannel)) == 0) {
                     continue;
                 }
-                
+
                 if (deviceType == ma_device_type_playback) {
                     channels = caps->pchan[iChannel];
                 } else {
                     channels = caps->rchan[iChannel];
                 }
-                
+
                 if (channels != requiredChannels) {
                     continue;
                 }
-                
+
                 /* Getting here means we have found a compatible encoding/channel pair. */
                 for (iRate = 0; iRate < MA_SIO_NRATE; iRate += 1) {
                     ma_uint32 rate = (ma_uint32)caps->rate[iRate];
                     ma_uint32 ratePriority;
-                
+
                     if (firstSampleRate == 0) {
                         firstSampleRate = rate;
                     }
-                    
+
                     /* Disregard this rate if it's not a standard one. */
                     ratePriority = ma_get_standard_sample_rate_priority_index__sndio(rate);
                     if (ratePriority == (ma_uint32)-1) {
                         continue;
                     }
-                    
+
                     if (ma_get_standard_sample_rate_priority_index__sndio(bestSampleRate) > ratePriority) {   /* Lower = better. */
                         bestSampleRate = rate;
                     }
@@ -25875,25 +26258,15 @@ static ma_uint32 ma_find_best_sample_rate_from_sio_cap__sndio(struct ma_sio_cap*
             }
         }
     }
-    
+
     /* If a standard sample rate was not found just fall back to the first one that was iterated. */
     if (bestSampleRate == 0) {
         bestSampleRate = firstSampleRate;
     }
-    
+
     return bestSampleRate;
 }
 
-
-static ma_bool32 ma_context_is_device_id_equal__sndio(ma_context* pContext, const ma_device_id* pID0, const ma_device_id* pID1)
-{
-    MA_ASSERT(pContext != NULL);
-    MA_ASSERT(pID0 != NULL);
-    MA_ASSERT(pID1 != NULL);
-    (void)pContext;
-
-    return ma_strcmp(pID0->sndio, pID1->sndio) == 0;
-}
 
 static ma_result ma_context_enumerate_devices__sndio(ma_context* pContext, ma_enum_devices_callback_proc callback, void* pUserData)
 {
@@ -25902,9 +26275,9 @@ static ma_result ma_context_enumerate_devices__sndio(ma_context* pContext, ma_en
 
     MA_ASSERT(pContext != NULL);
     MA_ASSERT(callback != NULL);
-    
+
     /* sndio doesn't seem to have a good device enumeration API, so I'm therefore only enumerating over default devices for now. */
-    
+
     /* Playback. */
     if (!isTerminating) {
         handle = ((ma_sio_open_proc)pContext->sndio.sio_open)(MA_SIO_DEVANY, MA_SIO_PLAY, 0);
@@ -25914,13 +26287,13 @@ static ma_result ma_context_enumerate_devices__sndio(ma_context* pContext, ma_en
             MA_ZERO_OBJECT(&deviceInfo);
             ma_strcpy_s(deviceInfo.id.sndio, sizeof(deviceInfo.id.sndio), MA_SIO_DEVANY);
             ma_strcpy_s(deviceInfo.name, sizeof(deviceInfo.name), MA_DEFAULT_PLAYBACK_DEVICE_NAME);
-            
+
             isTerminating = !callback(pContext, ma_device_type_playback, &deviceInfo, pUserData);
-            
+
             ((ma_sio_close_proc)pContext->sndio.sio_close)(handle);
         }
     }
-    
+
     /* Capture. */
     if (!isTerminating) {
         handle = ((ma_sio_open_proc)pContext->sndio.sio_open)(MA_SIO_DEVANY, MA_SIO_REC, 0);
@@ -25932,11 +26305,11 @@ static ma_result ma_context_enumerate_devices__sndio(ma_context* pContext, ma_en
             ma_strcpy_s(deviceInfo.name, sizeof(deviceInfo.name), MA_DEFAULT_CAPTURE_DEVICE_NAME);
 
             isTerminating = !callback(pContext, ma_device_type_capture, &deviceInfo, pUserData);
-            
+
             ((ma_sio_close_proc)pContext->sndio.sio_close)(handle);
         }
     }
-    
+
     return MA_SUCCESS;
 }
 
@@ -25949,7 +26322,7 @@ static ma_result ma_context_get_device_info__sndio(ma_context* pContext, ma_devi
 
     MA_ASSERT(pContext != NULL);
     (void)shareMode;
-    
+
     /* We need to open the device before we can get information about it. */
     if (pDeviceID == NULL) {
         ma_strcpy_s(devid, sizeof(devid), MA_SIO_DEVANY);
@@ -25958,16 +26331,16 @@ static ma_result ma_context_get_device_info__sndio(ma_context* pContext, ma_devi
         ma_strcpy_s(devid, sizeof(devid), pDeviceID->sndio);
         ma_strcpy_s(pDeviceInfo->name, sizeof(pDeviceInfo->name), devid);
     }
-    
+
     handle = ((ma_sio_open_proc)pContext->sndio.sio_open)(devid, (deviceType == ma_device_type_playback) ? MA_SIO_PLAY : MA_SIO_REC, 0);
     if (handle == NULL) {
         return MA_NO_DEVICE;
     }
-    
+
     if (((ma_sio_getcap_proc)pContext->sndio.sio_getcap)(handle, &caps) == 0) {
         return MA_ERROR;
     }
-    
+
     for (iConfig = 0; iConfig < caps.nconf; iConfig += 1) {
         /*
         The main thing we care about is that the encoding is supported by miniaudio. If it is, we want to give
@@ -25990,7 +26363,7 @@ static ma_result ma_context_get_device_info__sndio(ma_context* pContext, ma_devi
             if ((caps.confs[iConfig].enc & (1UL << iEncoding)) == 0) {
                 continue;
             }
-            
+
             bits = caps.enc[iEncoding].bits;
             bps  = caps.enc[iEncoding].bps;
             sig  = caps.enc[iEncoding].sig;
@@ -26000,7 +26373,7 @@ static ma_result ma_context_get_device_info__sndio(ma_context* pContext, ma_devi
             if (format == ma_format_unknown) {
                 continue;   /* Format not supported. */
             }
-            
+
             /* Add this format if it doesn't already exist. */
             for (iExistingFormat = 0; iExistingFormat < pDeviceInfo->formatCount; iExistingFormat += 1) {
                 if (pDeviceInfo->formats[iExistingFormat] == format) {
@@ -26008,12 +26381,12 @@ static ma_result ma_context_get_device_info__sndio(ma_context* pContext, ma_devi
                     break;
                 }
             }
-            
+
             if (!formatExists) {
                 pDeviceInfo->formats[pDeviceInfo->formatCount++] = format;
             }
         }
-        
+
         /* Channels. */
         for (iChannel = 0; iChannel < MA_SIO_NCHAN; iChannel += 1) {
             unsigned int chan = 0;
@@ -26024,17 +26397,17 @@ static ma_result ma_context_get_device_info__sndio(ma_context* pContext, ma_devi
             } else {
                 chan = caps.confs[iConfig].rchan;
             }
-        
+
             if ((chan & (1UL << iChannel)) == 0) {
                 continue;
             }
-            
+
             if (deviceType == ma_device_type_playback) {
                 channels = caps.pchan[iChannel];
             } else {
                 channels = caps.rchan[iChannel];
             }
-            
+
             if (pDeviceInfo->minChannels > channels) {
                 pDeviceInfo->minChannels = channels;
             }
@@ -26042,7 +26415,7 @@ static ma_result ma_context_get_device_info__sndio(ma_context* pContext, ma_devi
                 pDeviceInfo->maxChannels = channels;
             }
         }
-        
+
         /* Sample rates. */
         for (iRate = 0; iRate < MA_SIO_NRATE; iRate += 1) {
             if ((caps.confs[iConfig].rate & (1UL << iRate)) != 0) {
@@ -26081,7 +26454,7 @@ static ma_result ma_device_init_handle__sndio(ma_context* pContext, const ma_dev
     int openFlags = 0;
     struct ma_sio_cap caps;
     struct ma_sio_par par;
-    ma_device_id* pDeviceID;
+    const ma_device_id* pDeviceID;
     ma_format format;
     ma_uint32 channels;
     ma_uint32 sampleRate;
@@ -26130,7 +26503,7 @@ static ma_result ma_device_init_handle__sndio(ma_context* pContext, const ma_dev
     Note: sndio reports a huge range of available channels. This is inconvenient for us because there's no real
     way, as far as I can tell, to get the _actual_ channel count of the device. I'm therefore restricting this
     to the requested channels, regardless of whether or not the default channel count is requested.
-    
+
     For hardware devices, I'm suspecting only a single channel count will be reported and we can safely use the
     value returned by ma_find_best_channels_from_sio_cap__sndio().
     */
@@ -26153,7 +26526,7 @@ static ma_result ma_device_init_handle__sndio(ma_context* pContext, const ma_dev
             }
         }
     }
-    
+
     if (pDevice->usingDefaultSampleRate) {
         sampleRate = ma_find_best_sample_rate_from_sio_cap__sndio(&caps, pConfig->deviceType, format, channels);
     }
@@ -26162,7 +26535,7 @@ static ma_result ma_device_init_handle__sndio(ma_context* pContext, const ma_dev
     ((ma_sio_initpar_proc)pDevice->pContext->sndio.sio_initpar)(&par);
     par.msb = 0;
     par.le  = ma_is_little_endian();
-    
+
     switch (format) {
         case ma_format_u8:
         {
@@ -26170,21 +26543,21 @@ static ma_result ma_device_init_handle__sndio(ma_context* pContext, const ma_dev
             par.bps  = 1;
             par.sig  = 0;
         } break;
-        
+
         case ma_format_s24:
         {
             par.bits = 24;
             par.bps  = 3;
             par.sig  = 1;
         } break;
-        
+
         case ma_format_s32:
         {
             par.bits = 32;
             par.bps  = 4;
             par.sig  = 1;
         } break;
-        
+
         case ma_format_s16:
         case ma_format_f32:
         default:
@@ -26194,7 +26567,7 @@ static ma_result ma_device_init_handle__sndio(ma_context* pContext, const ma_dev
             par.sig  = 1;
         } break;
     }
-    
+
     if (deviceType == ma_device_type_capture) {
         par.rchan = channels;
     } else {
@@ -26210,7 +26583,7 @@ static ma_result ma_device_init_handle__sndio(ma_context* pContext, const ma_dev
 
     par.round    = internalPeriodSizeInFrames;
     par.appbufsz = par.round * pConfig->periods;
-    
+
     if (((ma_sio_setpar_proc)pContext->sndio.sio_setpar)((struct ma_sio_hdl*)handle, &par) == 0) {
         ((ma_sio_close_proc)pContext->sndio.sio_close)((struct ma_sio_hdl*)handle);
         return ma_post_error(pDevice, MA_LOG_LEVEL_ERROR, "[sndio] Failed to set buffer size.", MA_FORMAT_NOT_SUPPORTED);
@@ -26326,7 +26699,7 @@ static ma_result ma_device_write__sndio(ma_device* pDevice, const void* pPCMFram
     if (pFramesWritten != NULL) {
         *pFramesWritten = frameCount;
     }
-    
+
     return MA_SUCCESS;
 }
 
@@ -26346,7 +26719,7 @@ static ma_result ma_device_read__sndio(ma_device* pDevice, void* pPCMFrames, ma_
     if (pFramesRead != NULL) {
         *pFramesRead = frameCount;
     }
-    
+
     return MA_SUCCESS;
 }
 
@@ -26363,7 +26736,7 @@ static ma_result ma_device_main_loop__sndio(ma_device* pDevice)
         ((ma_sio_start_proc)pDevice->pContext->sndio.sio_start)((struct ma_sio_hdl*)pDevice->sndio.handlePlayback);   /* <-- Doesn't actually playback until data is written. */
     }
 
-    while (ma_device__get_state(pDevice) == MA_STATE_STARTED && !exitLoop) {
+    while (ma_device_get_state(pDevice) == MA_STATE_STARTED && !exitLoop) {
         switch (pDevice->type)
         {
             case ma_device_type_duplex:
@@ -26371,7 +26744,7 @@ static ma_result ma_device_main_loop__sndio(ma_device* pDevice)
                 /* The process is: device_read -> convert -> callback -> convert -> device_write */
                 ma_uint32 totalCapturedDeviceFramesProcessed = 0;
                 ma_uint32 capturedDevicePeriodSizeInFrames = ma_min(pDevice->capture.internalPeriodSizeInFrames, pDevice->playback.internalPeriodSizeInFrames);
-                    
+
                 while (totalCapturedDeviceFramesProcessed < capturedDevicePeriodSizeInFrames) {
                     ma_uint8  capturedDeviceData[MA_DATA_CONVERTER_STACK_BUFFER_SIZE];
                     ma_uint8  playbackDeviceData[MA_DATA_CONVERTER_STACK_BUFFER_SIZE];
@@ -26548,7 +26921,7 @@ static ma_result ma_context_init__sndio(const ma_context_config* pConfig, ma_con
     if (pContext->sndio.sndioSO == NULL) {
         return MA_NO_BACKEND;
     }
-    
+
     pContext->sndio.sio_open    = (ma_proc)ma_dlsym(pContext, pContext->sndio.sndioSO, "sio_open");
     pContext->sndio.sio_close   = (ma_proc)ma_dlsym(pContext, pContext->sndio.sndioSO, "sio_close");
     pContext->sndio.sio_setpar  = (ma_proc)ma_dlsym(pContext, pContext->sndio.sndioSO, "sio_setpar");
@@ -26573,7 +26946,6 @@ static ma_result ma_context_init__sndio(const ma_context_config* pConfig, ma_con
 #endif
 
     pContext->onUninit         = ma_context_uninit__sndio;
-    pContext->onDeviceIDEqual  = ma_context_is_device_id_equal__sndio;
     pContext->onEnumDevices    = ma_context_enumerate_devices__sndio;
     pContext->onGetDeviceInfo  = ma_context_get_device_info__sndio;
     pContext->onDeviceInit     = ma_device_init__sndio;
@@ -26617,10 +26989,10 @@ static void ma_construct_device_id__audio4(char* id, size_t idSize, const char* 
     MA_ASSERT(id != NULL);
     MA_ASSERT(idSize > 0);
     MA_ASSERT(deviceIndex >= 0);
-    
+
     baseLen = strlen(base);
     MA_ASSERT(idSize > baseLen);
-    
+
     ma_strcpy_s(id, idSize, base);
     ma_itoa_s(deviceIndex, id+baseLen, idSize-baseLen, 10);
 }
@@ -26634,38 +27006,29 @@ static ma_result ma_extract_device_index_from_id__audio4(const char* id, const c
     MA_ASSERT(id != NULL);
     MA_ASSERT(base != NULL);
     MA_ASSERT(pIndexOut != NULL);
-    
+
     idLen = strlen(id);
     baseLen = strlen(base);
     if (idLen <= baseLen) {
         return MA_ERROR;   /* Doesn't look like the id starts with the base. */
     }
-    
+
     if (strncmp(id, base, baseLen) != 0) {
         return MA_ERROR;   /* ID does not begin with base. */
     }
-    
+
     deviceIndexStr = id + baseLen;
     if (deviceIndexStr[0] == '\0') {
         return MA_ERROR;   /* No index specified in the ID. */
     }
-    
+
     if (pIndexOut) {
         *pIndexOut = atoi(deviceIndexStr);
     }
-    
+
     return MA_SUCCESS;
 }
 
-static ma_bool32 ma_context_is_device_id_equal__audio4(ma_context* pContext, const ma_device_id* pID0, const ma_device_id* pID1)
-{
-    MA_ASSERT(pContext != NULL);
-    MA_ASSERT(pID0 != NULL);
-    MA_ASSERT(pID1 != NULL);
-    (void)pContext;
-
-    return ma_strcmp(pID0->audio4, pID1->audio4) == 0;
-}
 
 #if !defined(MA_AUDIO4_USE_NEW_API)    /* Old API */
 static ma_format ma_format_from_encoding__audio4(unsigned int encoding, unsigned int precision)
@@ -26770,7 +27133,7 @@ static ma_result ma_context_get_device_info_from_fd__audio4(ma_context* pContext
     MA_ASSERT(pContext != NULL);
     MA_ASSERT(fd >= 0);
     MA_ASSERT(pInfoOut != NULL);
-    
+
     (void)pContext;
     (void)deviceType;
 
@@ -26806,7 +27169,7 @@ static ma_result ma_context_get_device_info_from_fd__audio4(ma_context* pContext
     }
 
     if (deviceType == ma_device_type_playback) {
-        pInfoOut->minChannels = fdInfo.play.channels; 
+        pInfoOut->minChannels = fdInfo.play.channels;
         pInfoOut->maxChannels = fdInfo.play.channels;
         pInfoOut->minSampleRate = fdInfo.play.sample_rate;
         pInfoOut->maxSampleRate = fdInfo.play.sample_rate;
@@ -26820,13 +27183,13 @@ static ma_result ma_context_get_device_info_from_fd__audio4(ma_context* pContext
     if (ioctl(fd, AUDIO_GETPAR, &fdPar) < 0) {
         return MA_ERROR;
     }
-    
+
     format = ma_format_from_swpar__audio4(&fdPar);
     if (format == ma_format_unknown) {
         return MA_FORMAT_NOT_SUPPORTED;
     }
     pInfoOut->formats[pInfoOut->formatCount++] = format;
-    
+
     if (deviceType == ma_device_type_playback) {
         pInfoOut->minChannels = fdPar.pchan;
         pInfoOut->maxChannels = fdPar.pchan;
@@ -26834,11 +27197,11 @@ static ma_result ma_context_get_device_info_from_fd__audio4(ma_context* pContext
         pInfoOut->minChannels = fdPar.rchan;
         pInfoOut->maxChannels = fdPar.rchan;
     }
-    
+
     pInfoOut->minSampleRate = fdPar.rate;
     pInfoOut->maxSampleRate = fdPar.rate;
 #endif
-    
+
     return MA_SUCCESS;
 }
 
@@ -26850,7 +27213,7 @@ static ma_result ma_context_enumerate_devices__audio4(ma_context* pContext, ma_e
 
     MA_ASSERT(pContext != NULL);
     MA_ASSERT(callback != NULL);
-    
+
     /*
     Every device will be named "/dev/audioN", with a "/dev/audioctlN" equivalent. We use the "/dev/audioctlN"
     version here since we can open it even when another process has control of the "/dev/audioN" device.
@@ -26862,13 +27225,13 @@ static ma_result ma_context_enumerate_devices__audio4(ma_context* pContext, ma_e
 
         ma_strcpy_s(devpath, sizeof(devpath), "/dev/audioctl");
         ma_itoa_s(iDevice, devpath+strlen(devpath), sizeof(devpath)-strlen(devpath), 10);
-    
+
         if (stat(devpath, &st) < 0) {
             break;
         }
 
         /* The device exists, but we need to check if it's usable as playback and/or capture. */
-        
+
         /* Playback. */
         if (!isTerminating) {
             fd = open(devpath, O_RDONLY, 0);
@@ -26880,11 +27243,11 @@ static ma_result ma_context_enumerate_devices__audio4(ma_context* pContext, ma_e
                 if (ma_context_get_device_info_from_fd__audio4(pContext, ma_device_type_playback, fd, &deviceInfo) == MA_SUCCESS) {
                     isTerminating = !callback(pContext, ma_device_type_playback, &deviceInfo, pUserData);
                 }
-                
+
                 close(fd);
             }
         }
-        
+
         /* Capture. */
         if (!isTerminating) {
             fd = open(devpath, O_WRONLY, 0);
@@ -26896,16 +27259,16 @@ static ma_result ma_context_enumerate_devices__audio4(ma_context* pContext, ma_e
                 if (ma_context_get_device_info_from_fd__audio4(pContext, ma_device_type_capture, fd, &deviceInfo) == MA_SUCCESS) {
                     isTerminating = !callback(pContext, ma_device_type_capture, &deviceInfo, pUserData);
                 }
-                
+
                 close(fd);
             }
         }
-        
+
         if (isTerminating) {
             break;
         }
     }
-    
+
     return MA_SUCCESS;
 }
 
@@ -26918,7 +27281,7 @@ static ma_result ma_context_get_device_info__audio4(ma_context* pContext, ma_dev
 
     MA_ASSERT(pContext != NULL);
     (void)shareMode;
-    
+
     /*
     We need to open the "/dev/audioctlN" device to get the info. To do this we need to extract the number
     from the device ID which will be in "/dev/audioN" format.
@@ -26932,23 +27295,23 @@ static ma_result ma_context_get_device_info__audio4(ma_context* pContext, ma_dev
         if (result != MA_SUCCESS) {
             return result;
         }
-        
+
         ma_construct_device_id__audio4(ctlid, sizeof(ctlid), "/dev/audioctl", deviceIndex);
     }
-    
+
     fd = open(ctlid, (deviceType == ma_device_type_playback) ? O_WRONLY : O_RDONLY, 0);
     if (fd == -1) {
         return MA_NO_DEVICE;
     }
-    
+
     if (deviceIndex == -1) {
         ma_strcpy_s(pDeviceInfo->id.audio4, sizeof(pDeviceInfo->id.audio4), "/dev/audio");
     } else {
         ma_construct_device_id__audio4(pDeviceInfo->id.audio4, sizeof(pDeviceInfo->id.audio4), "/dev/audio", deviceIndex);
     }
-    
+
     result = ma_context_get_device_info_from_fd__audio4(pContext, deviceType, fd, pDeviceInfo);
-    
+
     close(fd);
     return result;
 }
@@ -27038,7 +27401,7 @@ static ma_result ma_device_init_fd__audio4(ma_context* pContext, const ma_device
         close(fd);
         return ma_post_error(pDevice, MA_LOG_LEVEL_ERROR, "[audio4] Failed to set device format. AUDIO_SETINFO failed.", MA_FORMAT_NOT_SUPPORTED);
     }
-    
+
     if (ioctl(fd, AUDIO_GETINFO, &fdInfo) < 0) {
         close(fd);
         return ma_post_error(pDevice, MA_LOG_LEVEL_ERROR, "[audio4] AUDIO_GETINFO failed.", MA_FORMAT_NOT_SUPPORTED);
@@ -27121,10 +27484,10 @@ static ma_result ma_device_init_fd__audio4(ma_context* pContext, const ma_device
         if (internalPeriodSizeInBytes < 16) {
             internalPeriodSizeInBytes = 16;
         }
-    
+
         fdPar.nblks = pConfig->periods;
         fdPar.round = internalPeriodSizeInBytes;
-    
+
         if (ioctl(fd, AUDIO_SETPAR, &fdPar) < 0) {
             close(fd);
             return ma_post_error(pDevice, MA_LOG_LEVEL_ERROR, "[audio4] Failed to set device parameters.", MA_FORMAT_NOT_SUPPORTED);
@@ -27178,7 +27541,7 @@ static ma_result ma_device_init__audio4(ma_context* pContext, const ma_device_co
     if (pConfig->deviceType == ma_device_type_loopback) {
         return MA_DEVICE_TYPE_NOT_SUPPORTED;
     }
-    
+
     pDevice->audio4.fdCapture  = -1;
     pDevice->audio4.fdPlayback = -1;
 
@@ -27335,7 +27698,7 @@ static ma_result ma_device_main_loop__audio4(ma_device* pDevice)
 
     /* No need to explicitly start the device like the other backends. */
 
-    while (ma_device__get_state(pDevice) == MA_STATE_STARTED && !exitLoop) {
+    while (ma_device_get_state(pDevice) == MA_STATE_STARTED && !exitLoop) {
         switch (pDevice->type)
         {
             case ma_device_type_duplex:
@@ -27343,7 +27706,7 @@ static ma_result ma_device_main_loop__audio4(ma_device* pDevice)
                 /* The process is: device_read -> convert -> callback -> convert -> device_write */
                 ma_uint32 totalCapturedDeviceFramesProcessed = 0;
                 ma_uint32 capturedDevicePeriodSizeInFrames = ma_min(pDevice->capture.internalPeriodSizeInFrames, pDevice->playback.internalPeriodSizeInFrames);
-                    
+
                 while (totalCapturedDeviceFramesProcessed < capturedDevicePeriodSizeInFrames) {
                     ma_uint8  capturedDeviceData[MA_DATA_CONVERTER_STACK_BUFFER_SIZE];
                     ma_uint8  playbackDeviceData[MA_DATA_CONVERTER_STACK_BUFFER_SIZE];
@@ -27509,7 +27872,6 @@ static ma_result ma_context_init__audio4(const ma_context_config* pConfig, ma_co
     (void)pConfig;
 
     pContext->onUninit         = ma_context_uninit__audio4;
-    pContext->onDeviceIDEqual  = ma_context_is_device_id_equal__audio4;
     pContext->onEnumDevices    = ma_context_enumerate_devices__audio4;
     pContext->onGetDeviceInfo  = ma_context_get_device_info__audio4;
     pContext->onDeviceInit     = ma_device_init__audio4;
@@ -27538,6 +27900,8 @@ OSS Backend
 #define SNDCTL_DSP_HALT SNDCTL_DSP_RESET
 #endif
 
+#define MA_OSS_DEFAULT_DEVICE_NAME  "/dev/dsp"
+
 static int ma_open_temp_device__oss()
 {
     /* The OSS sample code uses "/dev/mixer" as the device for getting system properties so I'm going to do the same. */
@@ -27565,7 +27929,7 @@ static ma_result ma_context_open_device__oss(ma_context* pContext, ma_device_typ
         return MA_INVALID_ARGS;
     }
 
-    deviceName = "/dev/dsp";
+    deviceName = MA_OSS_DEFAULT_DEVICE_NAME;
     if (pDeviceID != NULL) {
         deviceName = pDeviceID->oss;
     }
@@ -27581,16 +27945,6 @@ static ma_result ma_context_open_device__oss(ma_context* pContext, ma_device_typ
     }
 
     return MA_SUCCESS;
-}
-
-static ma_bool32 ma_context_is_device_id_equal__oss(ma_context* pContext, const ma_device_id* pID0, const ma_device_id* pID1)
-{
-    MA_ASSERT(pContext != NULL);
-    MA_ASSERT(pID0 != NULL);
-    MA_ASSERT(pID1 != NULL);
-    (void)pContext;
-
-    return ma_strcmp(pID0->oss, pID1->oss) == 0;
 }
 
 static ma_result ma_context_enumerate_devices__oss(ma_context* pContext, ma_enum_devices_callback_proc callback, void* pUserData)
@@ -27766,7 +28120,7 @@ static void ma_device_uninit__oss(ma_device* pDevice)
     if (pDevice->type == ma_device_type_capture || pDevice->type == ma_device_type_duplex) {
         close(pDevice->oss.fdCapture);
     }
-    
+
     if (pDevice->type == ma_device_type_playback || pDevice->type == ma_device_type_duplex) {
         close(pDevice->oss.fdPlayback);
     }
@@ -27881,7 +28235,7 @@ static ma_result ma_device_init_fd__oss(ma_context* pContext, const ma_device_co
 
     The documentation says that the fragment settings should be set as soon as possible, but I'm not sure if
     it should be done before or after format/channels/rate.
-    
+
     OSS wants the fragment size in bytes and a power of 2. When setting, we specify the power, not the actual
     value.
     */
@@ -27889,7 +28243,7 @@ static ma_result ma_device_init_fd__oss(ma_context* pContext, const ma_device_co
         ma_uint32 periodSizeInFrames;
         ma_uint32 periodSizeInBytes;
         ma_uint32 ossFragmentSizePower;
-        
+
         periodSizeInFrames = pConfig->periodSizeInFrames;
         if (periodSizeInFrames == 0) {
             periodSizeInFrames = ma_calculate_buffer_size_in_frames_from_milliseconds(pConfig->periodSizeInMilliseconds, (ma_uint32)ossSampleRate);
@@ -27979,13 +28333,13 @@ static ma_result ma_device_stop__oss(ma_device* pDevice)
 
     /*
     We want to use SNDCTL_DSP_HALT. From the documentation:
-    
+
       In multithreaded applications SNDCTL_DSP_HALT (SNDCTL_DSP_RESET) must only be called by the thread
       that actually reads/writes the audio device. It must not be called by some master thread to kill the
       audio thread. The audio thread will not stop or get any kind of notification that the device was
       stopped by the master thread. The device gets stopped but the next read or write call will silently
       restart the device.
-    
+
     This is actually safe in our case, because this function is only ever called from within our worker
     thread anyway. Just keep this in mind, though...
     */
@@ -28023,7 +28377,7 @@ static ma_result ma_device_write__oss(ma_device* pDevice, const void* pPCMFrames
     if (pFramesWritten != NULL) {
         *pFramesWritten = (ma_uint32)resultOSS / ma_get_bytes_per_frame(pDevice->playback.internalFormat, pDevice->playback.internalChannels);
     }
-    
+
     return MA_SUCCESS;
 }
 
@@ -28039,7 +28393,7 @@ static ma_result ma_device_read__oss(ma_device* pDevice, void* pPCMFrames, ma_ui
     if (resultOSS < 0) {
         return ma_post_error(pDevice, MA_LOG_LEVEL_ERROR, "[OSS] Failed to read data from the device to be sent to the client.", ma_result_from_errno(errno));
     }
-    
+
     if (pFramesRead != NULL) {
         *pFramesRead = (ma_uint32)resultOSS / ma_get_bytes_per_frame(pDevice->capture.internalFormat, pDevice->capture.internalChannels);
     }
@@ -28054,7 +28408,7 @@ static ma_result ma_device_main_loop__oss(ma_device* pDevice)
 
     /* No need to explicitly start the device like the other backends. */
 
-    while (ma_device__get_state(pDevice) == MA_STATE_STARTED && !exitLoop) {
+    while (ma_device_get_state(pDevice) == MA_STATE_STARTED && !exitLoop) {
         switch (pDevice->type)
         {
             case ma_device_type_duplex:
@@ -28062,7 +28416,7 @@ static ma_result ma_device_main_loop__oss(ma_device* pDevice)
                 /* The process is: device_read -> convert -> callback -> convert -> device_write */
                 ma_uint32 totalCapturedDeviceFramesProcessed = 0;
                 ma_uint32 capturedDevicePeriodSizeInFrames = ma_min(pDevice->capture.internalPeriodSizeInFrames, pDevice->playback.internalPeriodSizeInFrames);
-                    
+
                 while (totalCapturedDeviceFramesProcessed < capturedDevicePeriodSizeInFrames) {
                     ma_uint8  capturedDeviceData[MA_DATA_CONVERTER_STACK_BUFFER_SIZE];
                     ma_uint8  playbackDeviceData[MA_DATA_CONVERTER_STACK_BUFFER_SIZE];
@@ -28245,11 +28599,13 @@ static ma_result ma_context_init__oss(const ma_context_config* pConfig, ma_conte
         return ma_context_post_error(pContext, NULL, MA_LOG_LEVEL_ERROR, "[OSS] Failed to retrieve OSS version.", MA_NO_BACKEND);
     }
 
+    /* The file handle to temp device is no longer needed. Close ASAP. */
+    close(fd);
+
     pContext->oss.versionMajor = ((ossVersion & 0xFF0000) >> 16);
     pContext->oss.versionMinor = ((ossVersion & 0x00FF00) >> 8);
 
     pContext->onUninit         = ma_context_uninit__oss;
-    pContext->onDeviceIDEqual  = ma_context_is_device_id_equal__oss;
     pContext->onEnumDevices    = ma_context_enumerate_devices__oss;
     pContext->onGetDeviceInfo  = ma_context_get_device_info__oss;
     pContext->onDeviceInit     = ma_device_init__oss;
@@ -28258,7 +28614,6 @@ static ma_result ma_context_init__oss(const ma_context_config* pConfig, ma_conte
     pContext->onDeviceStop     = NULL; /* Not required for synchronous backends. */
     pContext->onDeviceMainLoop = ma_device_main_loop__oss;
 
-    close(fd);
     return MA_SUCCESS;
 }
 #endif  /* OSS */
@@ -28280,47 +28635,82 @@ typedef int32_t ma_aaudio_sharing_mode_t;
 typedef int32_t ma_aaudio_format_t;
 typedef int32_t ma_aaudio_stream_state_t;
 typedef int32_t ma_aaudio_performance_mode_t;
+typedef int32_t ma_aaudio_usage_t;
+typedef int32_t ma_aaudio_content_type_t;
+typedef int32_t ma_aaudio_input_preset_t;
 typedef int32_t ma_aaudio_data_callback_result_t;
 
 /* Result codes. miniaudio only cares about the success code. */
-#define MA_AAUDIO_OK                               0
+#define MA_AAUDIO_OK                                    0
 
 /* Directions. */
-#define MA_AAUDIO_DIRECTION_OUTPUT                 0
-#define MA_AAUDIO_DIRECTION_INPUT                  1
+#define MA_AAUDIO_DIRECTION_OUTPUT                      0
+#define MA_AAUDIO_DIRECTION_INPUT                       1
 
 /* Sharing modes. */
-#define MA_AAUDIO_SHARING_MODE_EXCLUSIVE           0
-#define MA_AAUDIO_SHARING_MODE_SHARED              1
+#define MA_AAUDIO_SHARING_MODE_EXCLUSIVE                0
+#define MA_AAUDIO_SHARING_MODE_SHARED                   1
 
 /* Formats. */
-#define MA_AAUDIO_FORMAT_PCM_I16                   1
-#define MA_AAUDIO_FORMAT_PCM_FLOAT                 2
+#define MA_AAUDIO_FORMAT_PCM_I16                        1
+#define MA_AAUDIO_FORMAT_PCM_FLOAT                      2
 
 /* Stream states. */
-#define MA_AAUDIO_STREAM_STATE_UNINITIALIZED       0
-#define MA_AAUDIO_STREAM_STATE_UNKNOWN             1
-#define MA_AAUDIO_STREAM_STATE_OPEN                2
-#define MA_AAUDIO_STREAM_STATE_STARTING            3
-#define MA_AAUDIO_STREAM_STATE_STARTED             4
-#define MA_AAUDIO_STREAM_STATE_PAUSING             5
-#define MA_AAUDIO_STREAM_STATE_PAUSED              6
-#define MA_AAUDIO_STREAM_STATE_FLUSHING            7
-#define MA_AAUDIO_STREAM_STATE_FLUSHED             8
-#define MA_AAUDIO_STREAM_STATE_STOPPING            9
-#define MA_AAUDIO_STREAM_STATE_STOPPED             10
-#define MA_AAUDIO_STREAM_STATE_CLOSING             11
-#define MA_AAUDIO_STREAM_STATE_CLOSED              12
-#define MA_AAUDIO_STREAM_STATE_DISCONNECTED        13
+#define MA_AAUDIO_STREAM_STATE_UNINITIALIZED            0
+#define MA_AAUDIO_STREAM_STATE_UNKNOWN                  1
+#define MA_AAUDIO_STREAM_STATE_OPEN                     2
+#define MA_AAUDIO_STREAM_STATE_STARTING                 3
+#define MA_AAUDIO_STREAM_STATE_STARTED                  4
+#define MA_AAUDIO_STREAM_STATE_PAUSING                  5
+#define MA_AAUDIO_STREAM_STATE_PAUSED                   6
+#define MA_AAUDIO_STREAM_STATE_FLUSHING                 7
+#define MA_AAUDIO_STREAM_STATE_FLUSHED                  8
+#define MA_AAUDIO_STREAM_STATE_STOPPING                 9
+#define MA_AAUDIO_STREAM_STATE_STOPPED                  10
+#define MA_AAUDIO_STREAM_STATE_CLOSING                  11
+#define MA_AAUDIO_STREAM_STATE_CLOSED                   12
+#define MA_AAUDIO_STREAM_STATE_DISCONNECTED             13
 
 /* Performance modes. */
-#define MA_AAUDIO_PERFORMANCE_MODE_NONE            10
-#define MA_AAUDIO_PERFORMANCE_MODE_POWER_SAVING    11
-#define MA_AAUDIO_PERFORMANCE_MODE_LOW_LATENCY     12
+#define MA_AAUDIO_PERFORMANCE_MODE_NONE                 10
+#define MA_AAUDIO_PERFORMANCE_MODE_POWER_SAVING         11
+#define MA_AAUDIO_PERFORMANCE_MODE_LOW_LATENCY          12
+
+/* Usage types. */
+#define MA_AAUDIO_USAGE_MEDIA                           1
+#define MA_AAUDIO_USAGE_VOICE_COMMUNICATION             2
+#define MA_AAUDIO_USAGE_VOICE_COMMUNICATION_SIGNALLING  3
+#define MA_AAUDIO_USAGE_ALARM                           4
+#define MA_AAUDIO_USAGE_NOTIFICATION                    5
+#define MA_AAUDIO_USAGE_NOTIFICATION_RINGTONE           6
+#define MA_AAUDIO_USAGE_NOTIFICATION_EVENT              10
+#define MA_AAUDIO_USAGE_ASSISTANCE_ACCESSIBILITY        11
+#define MA_AAUDIO_USAGE_ASSISTANCE_NAVIGATION_GUIDANCE  12
+#define MA_AAUDIO_USAGE_ASSISTANCE_SONIFICATION         13
+#define MA_AAUDIO_USAGE_GAME                            14
+#define MA_AAUDIO_USAGE_ASSISTANT                       16
+#define MA_AAUDIO_SYSTEM_USAGE_EMERGENCY                1000
+#define MA_AAUDIO_SYSTEM_USAGE_SAFETY                   1001
+#define MA_AAUDIO_SYSTEM_USAGE_VEHICLE_STATUS           1002
+#define MA_AAUDIO_SYSTEM_USAGE_ANNOUNCEMENT             1003
+
+/* Content types. */
+#define MA_AAUDIO_CONTENT_TYPE_SPEECH                   1
+#define MA_AAUDIO_CONTENT_TYPE_MUSIC                    2
+#define MA_AAUDIO_CONTENT_TYPE_MOVIE                    3
+#define MA_AAUDIO_CONTENT_TYPE_SONIFICATION             4
+
+/* Input presets. */
+#define MA_AAUDIO_INPUT_PRESET_GENERIC                  1
+#define MA_AAUDIO_INPUT_PRESET_CAMCORDER                5
+#define MA_AAUDIO_INPUT_PRESET_VOICE_RECOGNITION        6
+#define MA_AAUDIO_INPUT_PRESET_VOICE_COMMUNICATION      7
+#define MA_AAUDIO_INPUT_PRESET_UNPROCESSED              9
+#define MA_AAUDIO_INPUT_PRESET_VOICE_PERFORMANCE        10
 
 /* Callback results. */
-#define MA_AAUDIO_CALLBACK_RESULT_CONTINUE         0
-#define MA_AAUDIO_CALLBACK_RESULT_STOP             1
+#define MA_AAUDIO_CALLBACK_RESULT_CONTINUE              0
+#define MA_AAUDIO_CALLBACK_RESULT_STOP                  1
 
 /* Objects. */
 typedef struct ma_AAudioStreamBuilder_t* ma_AAudioStreamBuilder;
@@ -28342,6 +28732,9 @@ typedef void                     (* MA_PFN_AAudioStreamBuilder_setFramesPerDataC
 typedef void                     (* MA_PFN_AAudioStreamBuilder_setDataCallback)          (ma_AAudioStreamBuilder* pBuilder, ma_AAudioStream_dataCallback callback, void* pUserData);
 typedef void                     (* MA_PFN_AAudioStreamBuilder_setErrorCallback)         (ma_AAudioStreamBuilder* pBuilder, ma_AAudioStream_errorCallback callback, void* pUserData);
 typedef void                     (* MA_PFN_AAudioStreamBuilder_setPerformanceMode)       (ma_AAudioStreamBuilder* pBuilder, ma_aaudio_performance_mode_t mode);
+typedef void                     (* MA_PFN_AAudioStreamBuilder_setUsage)                 (ma_AAudioStreamBuilder* pBuilder, ma_aaudio_usage_t contentType);
+typedef void                     (* MA_PFN_AAudioStreamBuilder_setContentType)           (ma_AAudioStreamBuilder* pBuilder, ma_aaudio_content_type_t contentType);
+typedef void                     (* MA_PFN_AAudioStreamBuilder_setInputPreset)           (ma_AAudioStreamBuilder* pBuilder, ma_aaudio_input_preset_t inputPreset);
 typedef ma_aaudio_result_t       (* MA_PFN_AAudioStreamBuilder_openStream)               (ma_AAudioStreamBuilder* pBuilder, ma_AAudioStream** ppStream);
 typedef ma_aaudio_result_t       (* MA_PFN_AAudioStream_close)                           (ma_AAudioStream* pStream);
 typedef ma_aaudio_stream_state_t (* MA_PFN_AAudioStream_getState)                        (ma_AAudioStream* pStream);
@@ -28364,6 +28757,59 @@ static ma_result ma_result_from_aaudio(ma_aaudio_result_t resultAA)
     }
 
     return MA_ERROR;
+}
+
+static ma_aaudio_usage_t ma_to_usage__aaudio(ma_aaudio_usage usage)
+{
+    switch (usage) {
+        case ma_aaudio_usage_announcement:                   return MA_AAUDIO_USAGE_MEDIA;
+        case ma_aaudio_usage_emergency:                      return MA_AAUDIO_USAGE_VOICE_COMMUNICATION;
+        case ma_aaudio_usage_safety:                         return MA_AAUDIO_USAGE_VOICE_COMMUNICATION_SIGNALLING;
+        case ma_aaudio_usage_vehicle_status:                 return MA_AAUDIO_USAGE_ALARM;
+        case ma_aaudio_usage_alarm:                          return MA_AAUDIO_USAGE_NOTIFICATION;
+        case ma_aaudio_usage_assistance_accessibility:       return MA_AAUDIO_USAGE_NOTIFICATION_RINGTONE;
+        case ma_aaudio_usage_assistance_navigation_guidance: return MA_AAUDIO_USAGE_NOTIFICATION_EVENT;
+        case ma_aaudio_usage_assistance_sonification:        return MA_AAUDIO_USAGE_ASSISTANCE_ACCESSIBILITY;
+        case ma_aaudio_usage_assitant:                       return MA_AAUDIO_USAGE_ASSISTANCE_NAVIGATION_GUIDANCE;
+        case ma_aaudio_usage_game:                           return MA_AAUDIO_USAGE_ASSISTANCE_SONIFICATION;
+        case ma_aaudio_usage_media:                          return MA_AAUDIO_USAGE_GAME;
+        case ma_aaudio_usage_notification:                   return MA_AAUDIO_USAGE_ASSISTANT;
+        case ma_aaudio_usage_notification_event:             return MA_AAUDIO_SYSTEM_USAGE_EMERGENCY;
+        case ma_aaudio_usage_notification_ringtone:          return MA_AAUDIO_SYSTEM_USAGE_SAFETY;
+        case ma_aaudio_usage_voice_communication:            return MA_AAUDIO_SYSTEM_USAGE_VEHICLE_STATUS;
+        case ma_aaudio_usage_voice_communication_signalling: return MA_AAUDIO_SYSTEM_USAGE_ANNOUNCEMENT;
+        default: break;
+    }
+
+    return MA_AAUDIO_USAGE_MEDIA;
+}
+
+static ma_aaudio_content_type_t ma_to_content_type__aaudio(ma_aaudio_content_type contentType)
+{
+    switch (contentType) {
+        case ma_aaudio_content_type_movie:        return MA_AAUDIO_CONTENT_TYPE_MOVIE;
+        case ma_aaudio_content_type_music:        return MA_AAUDIO_CONTENT_TYPE_MUSIC;
+        case ma_aaudio_content_type_sonification: return MA_AAUDIO_CONTENT_TYPE_SONIFICATION;
+        case ma_aaudio_content_type_speech:       return MA_AAUDIO_CONTENT_TYPE_SPEECH;
+        default: break;
+    }
+
+    return MA_AAUDIO_CONTENT_TYPE_SPEECH;
+}
+
+static ma_aaudio_input_preset_t ma_to_input_preset__aaudio(ma_aaudio_input_preset inputPreset)
+{
+    switch (inputPreset) {
+        case ma_aaudio_input_preset_generic:             return MA_AAUDIO_INPUT_PRESET_GENERIC;
+        case ma_aaudio_input_preset_camcorder:           return MA_AAUDIO_INPUT_PRESET_CAMCORDER;
+        case ma_aaudio_input_preset_unprocessed:         return MA_AAUDIO_INPUT_PRESET_UNPROCESSED;
+        case ma_aaudio_input_preset_voice_recognition:   return MA_AAUDIO_INPUT_PRESET_VOICE_RECOGNITION;
+        case ma_aaudio_input_preset_voice_communication: return MA_AAUDIO_INPUT_PRESET_VOICE_COMMUNICATION;
+        case ma_aaudio_input_preset_voice_performance:   return MA_AAUDIO_INPUT_PRESET_VOICE_PERFORMANCE;
+        default: break;
+    }
+
+    return MA_AAUDIO_INPUT_PRESET_GENERIC;
 }
 
 static void ma_stream_error_callback__aaudio(ma_AAudioStream* pStream, void* pUserData, ma_aaudio_result_t error)
@@ -28471,8 +28917,20 @@ static ma_result ma_open_stream__aaudio(ma_context* pContext, ma_device_type dev
         ((MA_PFN_AAudioStreamBuilder_setFramesPerDataCallback)pContext->aaudio.AAudioStreamBuilder_setFramesPerDataCallback)(pBuilder, bufferCapacityInFrames / pConfig->periods);
 
         if (deviceType == ma_device_type_capture) {
+            if (pConfig->aaudio.inputPreset != ma_aaudio_input_preset_default && pContext->aaudio.AAudioStreamBuilder_setInputPreset != NULL) {
+                ((MA_PFN_AAudioStreamBuilder_setInputPreset)pContext->aaudio.AAudioStreamBuilder_setInputPreset)(pBuilder, ma_to_input_preset__aaudio(pConfig->aaudio.inputPreset));
+            }
+
             ((MA_PFN_AAudioStreamBuilder_setDataCallback)pContext->aaudio.AAudioStreamBuilder_setDataCallback)(pBuilder, ma_stream_data_callback_capture__aaudio, (void*)pDevice);
         } else {
+            if (pConfig->aaudio.usage != ma_aaudio_usage_default && pContext->aaudio.AAudioStreamBuilder_setUsage != NULL) {
+                ((MA_PFN_AAudioStreamBuilder_setUsage)pContext->aaudio.AAudioStreamBuilder_setUsage)(pBuilder, ma_to_usage__aaudio(pConfig->aaudio.usage));
+            }
+
+            if (pConfig->aaudio.contentType != ma_aaudio_content_type_default && pContext->aaudio.AAudioStreamBuilder_setContentType != NULL) {
+                ((MA_PFN_AAudioStreamBuilder_setContentType)pContext->aaudio.AAudioStreamBuilder_setContentType)(pBuilder, ma_to_content_type__aaudio(pConfig->aaudio.contentType));
+            }
+
             ((MA_PFN_AAudioStreamBuilder_setDataCallback)pContext->aaudio.AAudioStreamBuilder_setDataCallback)(pBuilder, ma_stream_data_callback_playback__aaudio, (void*)pDevice);
         }
 
@@ -28526,16 +28984,6 @@ static ma_result ma_wait_for_simple_state_transition__aaudio(ma_context* pContex
     return MA_SUCCESS;
 }
 
-
-static ma_bool32 ma_context_is_device_id_equal__aaudio(ma_context* pContext, const ma_device_id* pID0, const ma_device_id* pID1)
-{
-    MA_ASSERT(pContext != NULL);
-    MA_ASSERT(pID0 != NULL);
-    MA_ASSERT(pID1 != NULL);
-    (void)pContext;
-
-    return pID0->aaudio == pID1->aaudio;
-}
 
 static ma_result ma_context_enumerate_devices__aaudio(ma_context* pContext, ma_enum_devices_callback_proc callback, void* pUserData)
 {
@@ -28591,7 +29039,7 @@ static ma_result ma_context_get_device_info__aaudio(ma_context* pContext, ma_dev
     } else {
         pDeviceInfo->id.aaudio = MA_AAUDIO_UNSPECIFIED;
     }
-    
+
     /* Name */
     if (deviceType == ma_device_type_playback) {
         ma_strncpy_s(pDeviceInfo->name, sizeof(pDeviceInfo->name), MA_DEFAULT_PLAYBACK_DEVICE_NAME, (size_t)-1);
@@ -28867,7 +29315,7 @@ static ma_result ma_context_uninit__aaudio(ma_context* pContext)
 {
     MA_ASSERT(pContext != NULL);
     MA_ASSERT(pContext->backend == ma_backend_aaudio);
-    
+
     ma_dlclose(pContext, pContext->aaudio.hAAudio);
     pContext->aaudio.hAAudio = NULL;
 
@@ -28905,6 +29353,9 @@ static ma_result ma_context_init__aaudio(const ma_context_config* pConfig, ma_co
     pContext->aaudio.AAudioStreamBuilder_setDataCallback           = (ma_proc)ma_dlsym(pContext, pContext->aaudio.hAAudio, "AAudioStreamBuilder_setDataCallback");
     pContext->aaudio.AAudioStreamBuilder_setErrorCallback          = (ma_proc)ma_dlsym(pContext, pContext->aaudio.hAAudio, "AAudioStreamBuilder_setErrorCallback");
     pContext->aaudio.AAudioStreamBuilder_setPerformanceMode        = (ma_proc)ma_dlsym(pContext, pContext->aaudio.hAAudio, "AAudioStreamBuilder_setPerformanceMode");
+    pContext->aaudio.AAudioStreamBuilder_setUsage                  = (ma_proc)ma_dlsym(pContext, pContext->aaudio.hAAudio, "AAudioStreamBuilder_setUsage");
+    pContext->aaudio.AAudioStreamBuilder_setContentType            = (ma_proc)ma_dlsym(pContext, pContext->aaudio.hAAudio, "AAudioStreamBuilder_setContentType");
+    pContext->aaudio.AAudioStreamBuilder_setInputPreset            = (ma_proc)ma_dlsym(pContext, pContext->aaudio.hAAudio, "AAudioStreamBuilder_setInputPreset");
     pContext->aaudio.AAudioStreamBuilder_openStream                = (ma_proc)ma_dlsym(pContext, pContext->aaudio.hAAudio, "AAudioStreamBuilder_openStream");
     pContext->aaudio.AAudioStream_close                            = (ma_proc)ma_dlsym(pContext, pContext->aaudio.hAAudio, "AAudioStream_close");
     pContext->aaudio.AAudioStream_getState                         = (ma_proc)ma_dlsym(pContext, pContext->aaudio.hAAudio, "AAudioStream_getState");
@@ -28921,7 +29372,6 @@ static ma_result ma_context_init__aaudio(const ma_context_config* pConfig, ma_co
     pContext->isBackendAsynchronous = MA_TRUE;
 
     pContext->onUninit        = ma_context_uninit__aaudio;
-    pContext->onDeviceIDEqual = ma_context_is_device_id_equal__aaudio;
     pContext->onEnumDevices   = ma_context_enumerate_devices__aaudio;
     pContext->onGetDeviceInfo = ma_context_get_device_info__aaudio;
     pContext->onDeviceInit    = ma_device_init__aaudio;
@@ -29134,15 +29584,35 @@ static SLuint32 ma_round_to_standard_sample_rate__opensl(SLuint32 samplesPerSec)
 }
 
 
-static ma_bool32 ma_context_is_device_id_equal__opensl(ma_context* pContext, const ma_device_id* pID0, const ma_device_id* pID1)
+static SLint32 ma_to_stream_type__opensl(ma_opensl_stream_type streamType)
 {
-    MA_ASSERT(pContext != NULL);
-    MA_ASSERT(pID0 != NULL);
-    MA_ASSERT(pID1 != NULL);
-    (void)pContext;
+    switch (streamType) {
+        case ma_opensl_stream_type_voice:        return SL_ANDROID_STREAM_VOICE;
+        case ma_opensl_stream_type_system:       return SL_ANDROID_STREAM_SYSTEM;
+        case ma_opensl_stream_type_ring:         return SL_ANDROID_STREAM_RING;
+        case ma_opensl_stream_type_media:        return SL_ANDROID_STREAM_MEDIA;
+        case ma_opensl_stream_type_alarm:        return SL_ANDROID_STREAM_ALARM;
+        case ma_opensl_stream_type_notification: return SL_ANDROID_STREAM_NOTIFICATION;
+        default: break;
+    }
 
-    return pID0->opensl == pID1->opensl;
+    return SL_ANDROID_STREAM_VOICE;
 }
+
+static SLint32 ma_to_recording_preset__opensl(ma_opensl_recording_preset recordingPreset)
+{
+    switch (recordingPreset) {
+        case ma_opensl_recording_preset_generic:             return SL_ANDROID_RECORDING_PRESET_GENERIC;
+        case ma_opensl_recording_preset_camcorder:           return SL_ANDROID_RECORDING_PRESET_CAMCORDER;
+        case ma_opensl_recording_preset_voice_recognition:   return SL_ANDROID_RECORDING_PRESET_VOICE_RECOGNITION;
+        case ma_opensl_recording_preset_voice_communication: return SL_ANDROID_RECORDING_PRESET_VOICE_COMMUNICATION;
+        case ma_opensl_recording_preset_voice_unprocessed:   return SL_ANDROID_RECORDING_PRESET_UNPROCESSED;
+        default: break;
+    }
+
+    return SL_ANDROID_RECORDING_PRESET_NONE;
+}
+
 
 static ma_result ma_context_enumerate_devices__opensl(ma_context* pContext, ma_enum_devices_callback_proc callback, void* pUserData)
 {
@@ -29158,7 +29628,7 @@ static ma_result ma_context_enumerate_devices__opensl(ma_context* pContext, ma_e
 
     /*
     TODO: Test Me.
-    
+
     This is currently untested, so for now we are just returning default devices.
     */
 #if 0 && !defined(MA_ANDROID)
@@ -29269,7 +29739,7 @@ static ma_result ma_context_get_device_info__opensl(ma_context* pContext, ma_dev
 
     /*
     TODO: Test Me.
-    
+
     This is currently untested, so for now we are just returning default devices.
     */
 #if 0 && !defined(MA_ANDROID)
@@ -29605,6 +30075,7 @@ static ma_result ma_device_init__opensl(ma_context* pContext, const ma_device_co
         SLDataLocator_IODevice locatorDevice;
         SLDataSource source;
         SLDataSink sink;
+        SLAndroidConfigurationItf pRecorderConfig;
 
         ma_SLDataFormat_PCM_init__opensl(pConfig->capture.format, pConfig->capture.channels, pConfig->sampleRate, pConfig->capture.channelMap, &pcm);
 
@@ -29634,6 +30105,19 @@ static ma_result ma_device_init__opensl(ma_context* pContext, const ma_device_co
         if (resultSL != SL_RESULT_SUCCESS) {
             ma_device_uninit__opensl(pDevice);
             return ma_post_error(pDevice, MA_LOG_LEVEL_ERROR, "[OpenSL] Failed to create audio recorder.", ma_result_from_OpenSL(resultSL));
+        }
+
+
+        /* Set the recording preset before realizing the player. */
+        if (pConfig->opensl.recordingPreset != ma_opensl_recording_preset_default) {
+            resultSL = MA_OPENSL_OBJ(pDevice->opensl.pAudioPlayerObj)->GetInterface((SLObjectItf)pDevice->opensl.pAudioPlayerObj, (SLInterfaceID)pContext->opensl.SL_IID_ANDROIDCONFIGURATION, &pRecorderConfig);
+            if (resultSL == SL_RESULT_SUCCESS) {
+                SLint32 recordingPreset = ma_to_recording_preset__opensl(pConfig->opensl.recordingPreset);
+                resultSL = (*pRecorderConfig)->SetConfiguration(pRecorderConfig, SL_ANDROID_KEY_RECORDING_PRESET, &recordingPreset, sizeof(SLint32));
+                if (resultSL != SL_RESULT_SUCCESS) {
+                    /* Failed to set the configuration. Just keep going. */
+                }
+            }
         }
 
         resultSL = MA_OPENSL_OBJ(pDevice->opensl.pAudioRecorderObj)->Realize((SLObjectItf)pDevice->opensl.pAudioRecorderObj, SL_BOOLEAN_FALSE);
@@ -29686,6 +30170,7 @@ static ma_result ma_device_init__opensl(ma_context* pContext, const ma_device_co
         SLDataSource source;
         SLDataLocator_OutputMix outmixLocator;
         SLDataSink sink;
+        SLAndroidConfigurationItf pPlayerConfig;
 
         ma_SLDataFormat_PCM_init__opensl(pConfig->playback.format, pConfig->playback.channels, pConfig->sampleRate, pConfig->playback.channelMap, &pcm);
 
@@ -29712,7 +30197,7 @@ static ma_result ma_device_init__opensl(ma_context* pContext, const ma_device_co
             SLuint32 deviceID_OpenSL = pConfig->playback.pDeviceID->opensl;
             MA_OPENSL_OUTPUTMIX(pDevice->opensl.pOutputMix)->ReRoute((SLOutputMixItf)pDevice->opensl.pOutputMix, 1, &deviceID_OpenSL);
         }
-        
+
         source.pLocator = &queue;
         source.pFormat  = (SLDataFormat_PCM*)&pcm;
 
@@ -29737,6 +30222,19 @@ static ma_result ma_device_init__opensl(ma_context* pContext, const ma_device_co
         if (resultSL != SL_RESULT_SUCCESS) {
             ma_device_uninit__opensl(pDevice);
             return ma_post_error(pDevice, MA_LOG_LEVEL_ERROR, "[OpenSL] Failed to create audio player.", ma_result_from_OpenSL(resultSL));
+        }
+
+
+        /* Set the stream type before realizing the player. */
+        if (pConfig->opensl.streamType != ma_opensl_stream_type_default) {
+            resultSL = MA_OPENSL_OBJ(pDevice->opensl.pAudioPlayerObj)->GetInterface((SLObjectItf)pDevice->opensl.pAudioPlayerObj, (SLInterfaceID)pContext->opensl.SL_IID_ANDROIDCONFIGURATION, &pPlayerConfig);
+            if (resultSL == SL_RESULT_SUCCESS) {
+                SLint32 streamType = ma_to_stream_type__opensl(pConfig->opensl.streamType);
+                resultSL = (*pPlayerConfig)->SetConfiguration(pPlayerConfig, SL_ANDROID_KEY_STREAM_TYPE, &streamType, sizeof(SLint32));
+                if (resultSL != SL_RESULT_SUCCESS) {
+                    /* Failed to set the configuration. Just keep going. */
+                }
+            }
         }
 
         resultSL = MA_OPENSL_OBJ(pDevice->opensl.pAudioPlayerObj)->Realize((SLObjectItf)pDevice->opensl.pAudioPlayerObj, SL_BOOLEAN_FALSE);
@@ -30061,6 +30559,11 @@ static ma_result ma_context_init__opensl(const ma_context_config* pConfig, ma_co
         return result;
     }
 
+    result = ma_dlsym_SLInterfaceID__opensl(pContext, "SL_IID_ANDROIDCONFIGURATION", &pContext->opensl.SL_IID_ANDROIDCONFIGURATION);
+    if (result != MA_SUCCESS) {
+        return result;
+    }
+
     pContext->opensl.slCreateEngine = (ma_proc)ma_dlsym(pContext, pContext->opensl.libOpenSLES, "slCreateEngine");
     if (pContext->opensl.slCreateEngine == NULL) {
         ma_post_log_message(pContext, NULL, MA_LOG_LEVEL_INFO, "[OpenSL|ES] Cannot find symbol slCreateEngine.");
@@ -30083,7 +30586,6 @@ static ma_result ma_context_init__opensl(const ma_context_config* pConfig, ma_co
     pContext->isBackendAsynchronous = MA_TRUE;
 
     pContext->onUninit        = ma_context_uninit__opensl;
-    pContext->onDeviceIDEqual = ma_context_is_device_id_equal__opensl;
     pContext->onEnumDevices   = ma_context_enumerate_devices__opensl;
     pContext->onGetDeviceInfo = ma_context_get_device_info__opensl;
     pContext->onDeviceInit    = ma_device_init__opensl;
@@ -30135,16 +30637,6 @@ void EMSCRIPTEN_KEEPALIVE ma_device_process_pcm_frames_playback__webaudio(ma_dev
 }
 #endif
 
-static ma_bool32 ma_context_is_device_id_equal__webaudio(ma_context* pContext, const ma_device_id* pID0, const ma_device_id* pID1)
-{
-    MA_ASSERT(pContext != NULL);
-    MA_ASSERT(pID0 != NULL);
-    MA_ASSERT(pID1 != NULL);
-    (void)pContext;
-
-    return ma_strcmp(pID0->webaudio, pID1->webaudio) == 0;
-}
-
 static ma_result ma_context_enumerate_devices__webaudio(ma_context* pContext, ma_enum_devices_callback_proc callback, void* pUserData)
 {
     ma_bool32 cbResult = MA_TRUE;
@@ -30159,6 +30651,7 @@ static ma_result ma_context_enumerate_devices__webaudio(ma_context* pContext, ma
         ma_device_info deviceInfo;
         MA_ZERO_OBJECT(&deviceInfo);
         ma_strncpy_s(deviceInfo.name, sizeof(deviceInfo.name), MA_DEFAULT_PLAYBACK_DEVICE_NAME, (size_t)-1);
+        deviceInfo.isDefault = MA_TRUE;    /* Only supporting default devices. */
         cbResult = callback(pContext, ma_device_type_playback, &deviceInfo, pUserData);
     }
 
@@ -30168,6 +30661,7 @@ static ma_result ma_context_enumerate_devices__webaudio(ma_context* pContext, ma
             ma_device_info deviceInfo;
             MA_ZERO_OBJECT(&deviceInfo);
             ma_strncpy_s(deviceInfo.name, sizeof(deviceInfo.name), MA_DEFAULT_CAPTURE_DEVICE_NAME, (size_t)-1);
+            deviceInfo.isDefault = MA_TRUE;    /* Only supporting default devices. */
             cbResult = callback(pContext, ma_device_type_capture, &deviceInfo, pUserData);
         }
     }
@@ -30198,6 +30692,9 @@ static ma_result ma_context_get_device_info__webaudio(ma_context* pContext, ma_d
     } else {
         ma_strncpy_s(pDeviceInfo->name, sizeof(pDeviceInfo->name), MA_DEFAULT_CAPTURE_DEVICE_NAME, (size_t)-1);
     }
+
+    /* Only supporting default devices. */
+    pDeviceInfo->isDefault = MA_TRUE;
 
     /* Web Audio can support any number of channels and sample rates. It only supports f32 formats, however. */
     pDeviceInfo->minChannels = 1;
@@ -30376,6 +30873,11 @@ static ma_result ma_device_init_by_type__webaudio(ma_context* pContext, const ma
                     return; /* This means the device has been uninitialized. */
                 }
 
+                if(device.intermediaryBufferView.length == 0) {
+                    /* Recreate intermediaryBufferView when losing reference to the underlying buffer, probably due to emscripten resizing heap. */
+                    device.intermediaryBufferView = new Float32Array(Module.HEAPF32.buffer, device.intermediaryBuffer, device.intermediaryBufferSizeInBytes);
+                }
+
                 /* Make sure silence it output to the AudioContext destination. Not doing this will cause sound to come out of the speakers! */
                 for (var iChannel = 0; iChannel < e.outputBuffer.numberOfChannels; ++iChannel) {
                     e.outputBuffer.getChannelData(iChannel).fill(0.0);
@@ -30434,6 +30936,11 @@ static ma_result ma_device_init_by_type__webaudio(ma_context* pContext, const ma
             device.scriptNode.onaudioprocess = function(e) {
                 if (device.intermediaryBuffer === undefined) {
                     return; /* This means the device has been uninitialized. */
+                }
+
+                if(device.intermediaryBufferView.length == 0) {
+                    /* Recreate intermediaryBufferView when losing reference to the underlying buffer, probably due to emscripten resizing heap. */
+                    device.intermediaryBufferView = new Float32Array(Module.HEAPF32.buffer, device.intermediaryBuffer, device.intermediaryBufferSizeInBytes);
                 }
 
                 var outputSilence = false;
@@ -30700,14 +31207,13 @@ static ma_result ma_context_init__webaudio(const ma_context_config* pConfig, ma_
 
     pContext->isBackendAsynchronous = MA_TRUE;
 
-    pContext->onUninit              = ma_context_uninit__webaudio;
-    pContext->onDeviceIDEqual       = ma_context_is_device_id_equal__webaudio;
-    pContext->onEnumDevices         = ma_context_enumerate_devices__webaudio;
-    pContext->onGetDeviceInfo       = ma_context_get_device_info__webaudio;
-    pContext->onDeviceInit          = ma_device_init__webaudio;
-    pContext->onDeviceUninit        = ma_device_uninit__webaudio;
-    pContext->onDeviceStart         = ma_device_start__webaudio;
-    pContext->onDeviceStop          = ma_device_stop__webaudio;
+    pContext->onUninit        = ma_context_uninit__webaudio;
+    pContext->onEnumDevices   = ma_context_enumerate_devices__webaudio;
+    pContext->onGetDeviceInfo = ma_context_get_device_info__webaudio;
+    pContext->onDeviceInit    = ma_device_init__webaudio;
+    pContext->onDeviceUninit  = ma_device_uninit__webaudio;
+    pContext->onDeviceStart   = ma_device_start__webaudio;
+    pContext->onDeviceStop    = ma_device_stop__webaudio;
 
     (void)pConfig; /* Unused. */
     return MA_SUCCESS;
@@ -30838,6 +31344,15 @@ static ma_result ma_device__post_init_setup(ma_device* pDevice, ma_device_type d
 }
 
 
+/* TEMP: Helper for determining whether or not a context is using the new callback system. Eventually all backends will be using the new callback system. */
+static ma_bool32 ma_context__is_using_new_callbacks(ma_context* pContext)
+{
+    MA_ASSERT(pContext != NULL);
+
+    return pContext->callbacks.onContextInit != NULL;
+}
+
+
 static ma_thread_result MA_THREADCALL ma_worker_thread(void* pData)
 {
     ma_device* pDevice = (ma_device*)pData;
@@ -30866,7 +31381,7 @@ static ma_thread_result MA_THREADCALL ma_worker_thread(void* pData)
         pDevice->workResult = MA_SUCCESS;
 
         /* If the reason for the wake up is that we are terminating, just break from the loop. */
-        if (ma_device__get_state(pDevice) == MA_STATE_UNINITIALIZED) {
+        if (ma_device_get_state(pDevice) == MA_STATE_UNINITIALIZED) {
             break;
         }
 
@@ -30875,24 +31390,34 @@ static ma_thread_result MA_THREADCALL ma_worker_thread(void* pData)
         be started will be waiting on an event (pDevice->startEvent) which means we need to make sure we signal the event
         in both the success and error case. It's important that the state of the device is set _before_ signaling the event.
         */
-        MA_ASSERT(ma_device__get_state(pDevice) == MA_STATE_STARTING);
+        MA_ASSERT(ma_device_get_state(pDevice) == MA_STATE_STARTING);
 
         /* Make sure the state is set appropriately. */
         ma_device__set_state(pDevice, MA_STATE_STARTED);
         ma_event_signal(&pDevice->startEvent);
 
-        if (pDevice->pContext->onDeviceMainLoop != NULL) {
-            pDevice->pContext->onDeviceMainLoop(pDevice);
+        if (ma_context__is_using_new_callbacks(pDevice->pContext)) {
+            if (pDevice->pContext->callbacks.onDeviceAudioThread != NULL) {
+                pDevice->pContext->callbacks.onDeviceAudioThread(pDevice);
+            } else {
+                /* The backend is not using a custom main loop implementation, so now fall back to the blocking read-write implementation. */
+                ma_device_audio_thread__default_read_write(pDevice, &pDevice->pContext->callbacks);
+            }
         } else {
-            ma_post_error(pDevice, MA_LOG_LEVEL_ERROR, "No main loop implementation.", MA_API_NOT_FOUND);
+            if (pDevice->pContext->onDeviceMainLoop != NULL) {
+                pDevice->pContext->onDeviceMainLoop(pDevice);
+            } else {
+                ma_post_error(pDevice, MA_LOG_LEVEL_ERROR, "No main loop implementation.", MA_API_NOT_FOUND);
+            }
         }
+        
 
         /*
         Getting here means we have broken from the main loop which happens the application has requested that device be stopped. Note that this
         may have actually already happened above if the device was lost and miniaudio has attempted to re-initialize the device. In this case we
         don't want to be doing this a second time.
         */
-        if (ma_device__get_state(pDevice) != MA_STATE_UNINITIALIZED) {
+        if (ma_device_get_state(pDevice) != MA_STATE_UNINITIALIZED) {
             if (pDevice->pContext->onDeviceStop) {
                 pDevice->pContext->onDeviceStop(pDevice);
             }
@@ -30909,7 +31434,7 @@ static ma_thread_result MA_THREADCALL ma_worker_thread(void* pData)
         it's possible that the device has been uninitialized which means we need to _not_ change the status to stopped. We cannot go from an
         uninitialized state to stopped state.
         */
-        if (ma_device__get_state(pDevice) != MA_STATE_UNINITIALIZED) {
+        if (ma_device_get_state(pDevice) != MA_STATE_UNINITIALIZED) {
             ma_device__set_state(pDevice, MA_STATE_STOPPED);
             ma_event_signal(&pDevice->stopEvent);
         }
@@ -30933,7 +31458,7 @@ static ma_bool32 ma_device__is_initialized(ma_device* pDevice)
         return MA_FALSE;
     }
 
-    return ma_device__get_state(pDevice) != MA_STATE_UNINITIALIZED;
+    return ma_device_get_state(pDevice) != MA_STATE_UNINITIALIZED;
 }
 
 
@@ -31089,7 +31614,21 @@ static ma_result ma_context_uninit_backend_apis(ma_context* pContext)
 
 static ma_bool32 ma_context_is_backend_asynchronous(ma_context* pContext)
 {
-    return pContext->isBackendAsynchronous;
+    MA_ASSERT(pContext != NULL);
+
+    if (ma_context__is_using_new_callbacks(pContext)) {
+        if (pContext->callbacks.onDeviceRead == NULL && pContext->callbacks.onDeviceWrite == NULL) {
+            if (pContext->callbacks.onDeviceAudioThread == NULL) {
+                return MA_TRUE;
+            } else {
+                return MA_FALSE;
+            }
+        } else {
+            return MA_FALSE;
+        }
+    } else {
+        return pContext->isBackendAsynchronous;
+    }
 }
 
 
@@ -31104,7 +31643,7 @@ MA_API ma_context_config ma_context_config_init()
 MA_API ma_result ma_context_init(const ma_backend backends[], ma_uint32 backendCount, const ma_context_config* pConfig, ma_context* pContext)
 {
     ma_result result;
-    ma_context_config config;
+    ma_context_config defaultConfig;
     ma_backend defaultBackends[ma_backend_null+1];
     ma_uint32 iBackend;
     ma_backend* pBackendsToIterate;
@@ -31117,18 +31656,17 @@ MA_API ma_result ma_context_init(const ma_backend backends[], ma_uint32 backendC
     MA_ZERO_OBJECT(pContext);
 
     /* Always make sure the config is set first to ensure properties are available as soon as possible. */
-    if (pConfig != NULL) {
-        config = *pConfig;
-    } else {
-        config = ma_context_config_init();
+    if (pConfig == NULL) {
+        defaultConfig = ma_context_config_init();
+        pConfig = &defaultConfig;
     }
 
-    pContext->logCallback     = config.logCallback;
-    pContext->threadPriority  = config.threadPriority;
-    pContext->threadStackSize = config.threadStackSize;
-    pContext->pUserData       = config.pUserData;
+    pContext->logCallback     = pConfig->logCallback;
+    pContext->threadPriority  = pConfig->threadPriority;
+    pContext->threadStackSize = pConfig->threadStackSize;
+    pContext->pUserData       = pConfig->pUserData;
 
-    result = ma_allocation_callbacks_init_copy(&pContext->allocationCallbacks, &config.allocationCallbacks);
+    result = ma_allocation_callbacks_init_copy(&pContext->allocationCallbacks, &pConfig->allocationCallbacks);
     if (result != MA_SUCCESS) {
         return result;
     }
@@ -31155,94 +31693,149 @@ MA_API ma_result ma_context_init(const ma_backend backends[], ma_uint32 backendC
     for (iBackend = 0; iBackend < backendsToIterateCount; ++iBackend) {
         ma_backend backend = pBackendsToIterate[iBackend];
 
-        result = MA_NO_BACKEND;
+        /*
+        I've had a subtle bug where some state is set by the backend's ma_context_init__*() function, but then later failed because
+        a setting in the context that was set in the prior failed attempt was left unchanged in the next attempt which resulted in
+        inconsistent state. Specifically what happened was the PulseAudio backend set the pContext->isBackendAsynchronous flag to true,
+        but since ALSA is not an asynchronous backend (it's a blocking read-write backend) it just left it unmodified with the assumption
+        that it would be initialized to false. This assumption proved to be incorrect because of the fact that the PulseAudio backend set
+        it earlier. For safety I'm going to reset this flag for each iteration.
+
+        TODO: Remove this comment when the isBackendAsynchronous flag is removed.
+        */
+        pContext->isBackendAsynchronous = MA_FALSE;
+
+        /* These backends are using the new callback system. */
         switch (backend) {
         #ifdef MA_HAS_WASAPI
             case ma_backend_wasapi:
             {
-                result = ma_context_init__wasapi(&config, pContext);
+                pContext->callbacks.onContextInit = ma_context_init__wasapi;
             } break;
         #endif
         #ifdef MA_HAS_DSOUND
             case ma_backend_dsound:
             {
-                result = ma_context_init__dsound(&config, pContext);
+                pContext->callbacks.onContextInit = ma_context_init__dsound;
             } break;
         #endif
         #ifdef MA_HAS_WINMM
             case ma_backend_winmm:
             {
-                result = ma_context_init__winmm(&config, pContext);
+                pContext->callbacks.onContextInit = ma_context_init__winmm;
             } break;
         #endif
-        #ifdef MA_HAS_ALSA
-            case ma_backend_alsa:
+        #ifdef MA_HAS_CUSTOM
+            case ma_backend_custom:
             {
-                result = ma_context_init__alsa(&config, pContext);
-            } break;
-        #endif
-        #ifdef MA_HAS_PULSEAUDIO
-            case ma_backend_pulseaudio:
-            {
-                result = ma_context_init__pulse(&config, pContext);
-            } break;
-        #endif
-        #ifdef MA_HAS_JACK
-            case ma_backend_jack:
-            {
-                result = ma_context_init__jack(&config, pContext);
-            } break;
-        #endif
-        #ifdef MA_HAS_COREAUDIO
-            case ma_backend_coreaudio:
-            {
-                result = ma_context_init__coreaudio(&config, pContext);
-            } break;
-        #endif
-        #ifdef MA_HAS_SNDIO
-            case ma_backend_sndio:
-            {
-                result = ma_context_init__sndio(&config, pContext);
-            } break;
-        #endif
-        #ifdef MA_HAS_AUDIO4
-            case ma_backend_audio4:
-            {
-                result = ma_context_init__audio4(&config, pContext);
-            } break;
-        #endif
-        #ifdef MA_HAS_OSS
-            case ma_backend_oss:
-            {
-                result = ma_context_init__oss(&config, pContext);
-            } break;
-        #endif
-        #ifdef MA_HAS_AAUDIO
-            case ma_backend_aaudio:
-            {
-                result = ma_context_init__aaudio(&config, pContext);
-            } break;
-        #endif
-        #ifdef MA_HAS_OPENSL
-            case ma_backend_opensl:
-            {
-                result = ma_context_init__opensl(&config, pContext);
-            } break;
-        #endif
-        #ifdef MA_HAS_WEBAUDIO
-            case ma_backend_webaudio:
-            {
-                result = ma_context_init__webaudio(&config, pContext);
-            } break;
-        #endif
-        #ifdef MA_HAS_NULL
-            case ma_backend_null:
-            {
-                result = ma_context_init__null(&config, pContext);
+                /* Slightly different logic for custom backends. Custom backends can optionally set all of their callbacks in the config. */
+                pContext->callbacks = pConfig->custom;
             } break;
         #endif
 
             default: break;
+        }
+
+        if (pContext->callbacks.onContextInit != NULL) {
+            result = pContext->callbacks.onContextInit(pContext, pConfig, &pContext->callbacks);
+        } else {
+            result = MA_NO_BACKEND;
+
+            /* TEMP. Try falling back to the old callback system. Eventually this switch will be removed completely. */
+            switch (backend) {
+            #ifdef MA_HAS_WASAPI
+                case ma_backend_wasapi:
+                {
+                    /*result = ma_context_init__wasapi(&config, pContext);*/
+                } break;
+            #endif
+            #ifdef MA_HAS_DSOUND
+                case ma_backend_dsound:
+                {
+                    /*result = ma_context_init__dsound(pConfig, pContext);*/
+                } break;
+            #endif
+            #ifdef MA_HAS_WINMM
+                case ma_backend_winmm:
+                {
+                    /*result = ma_context_init__winmm(pConfig, pContext);*/
+                } break;
+            #endif
+            #ifdef MA_HAS_ALSA
+                case ma_backend_alsa:
+                {
+                    result = ma_context_init__alsa(pConfig, pContext);
+                } break;
+            #endif
+            #ifdef MA_HAS_PULSEAUDIO
+                case ma_backend_pulseaudio:
+                {
+                    result = ma_context_init__pulse(pConfig, pContext);
+                } break;
+            #endif
+            #ifdef MA_HAS_JACK
+                case ma_backend_jack:
+                {
+                    result = ma_context_init__jack(pConfig, pContext);
+                } break;
+            #endif
+            #ifdef MA_HAS_COREAUDIO
+                case ma_backend_coreaudio:
+                {
+                    result = ma_context_init__coreaudio(pConfig, pContext);
+                } break;
+            #endif
+            #ifdef MA_HAS_SNDIO
+                case ma_backend_sndio:
+                {
+                    result = ma_context_init__sndio(pConfig, pContext);
+                } break;
+            #endif
+            #ifdef MA_HAS_AUDIO4
+                case ma_backend_audio4:
+                {
+                    result = ma_context_init__audio4(pConfig, pContext);
+                } break;
+            #endif
+            #ifdef MA_HAS_OSS
+                case ma_backend_oss:
+                {
+                    result = ma_context_init__oss(pConfig, pContext);
+                } break;
+            #endif
+            #ifdef MA_HAS_AAUDIO
+                case ma_backend_aaudio:
+                {
+                    result = ma_context_init__aaudio(pConfig, pContext);
+                } break;
+            #endif
+            #ifdef MA_HAS_OPENSL
+                case ma_backend_opensl:
+                {
+                    result = ma_context_init__opensl(pConfig, pContext);
+                } break;
+            #endif
+            #ifdef MA_HAS_WEBAUDIO
+                case ma_backend_webaudio:
+                {
+                    result = ma_context_init__webaudio(pConfig, pContext);
+                } break;
+            #endif
+            #ifdef MA_HAS_CUSTOM
+                case ma_backend_custom:
+                {
+                    /*result = ma_context_init__custom(pConfig, pContext);*/
+                } break;
+            #endif
+            #ifdef MA_HAS_NULL
+                case ma_backend_null:
+                {
+                    result = ma_context_init__null(pConfig, pContext);
+                } break;
+            #endif
+
+                default: break;
+            }
         }
 
         /* If this iteration was successful, return. */
@@ -31280,7 +31873,15 @@ MA_API ma_result ma_context_uninit(ma_context* pContext)
         return MA_INVALID_ARGS;
     }
 
-    pContext->onUninit(pContext);
+    if (ma_context__is_using_new_callbacks(pContext)) {
+        if (pContext->callbacks.onContextUninit != NULL) {
+            pContext->callbacks.onContextUninit(pContext);
+        }
+    } else {
+        if (pContext->onUninit != NULL) {
+            pContext->onUninit(pContext);
+        }
+    }
 
     ma_mutex_uninit(&pContext->deviceEnumLock);
     ma_mutex_uninit(&pContext->deviceInfoLock);
@@ -31300,15 +31901,31 @@ MA_API ma_result ma_context_enumerate_devices(ma_context* pContext, ma_enum_devi
 {
     ma_result result;
 
-    if (pContext == NULL || pContext->onEnumDevices == NULL || callback == NULL) {
+    if (pContext == NULL || callback == NULL) {
         return MA_INVALID_ARGS;
     }
 
-    ma_mutex_lock(&pContext->deviceEnumLock);
-    {
-        result = pContext->onEnumDevices(pContext, callback, pUserData);
+    if (ma_context__is_using_new_callbacks(pContext)) {
+        if (pContext->callbacks.onContextEnumerateDevices == NULL) {
+            return MA_INVALID_OPERATION;
+        }
+
+        ma_mutex_lock(&pContext->deviceEnumLock);
+        {
+            result = pContext->callbacks.onContextEnumerateDevices(pContext, callback, pUserData);
+        }
+        ma_mutex_unlock(&pContext->deviceEnumLock);
+    } else {
+        if (pContext->onEnumDevices == NULL) {
+            return MA_INVALID_OPERATION;
+        }
+
+        ma_mutex_lock(&pContext->deviceEnumLock);
+        {
+            result = pContext->onEnumDevices(pContext, callback, pUserData);
+        }
+        ma_mutex_unlock(&pContext->deviceEnumLock);
     }
-    ma_mutex_unlock(&pContext->deviceEnumLock);
 
     return result;
 }
@@ -31373,8 +31990,18 @@ MA_API ma_result ma_context_get_devices(ma_context* pContext, ma_device_info** p
     if (ppCaptureDeviceInfos  != NULL) *ppCaptureDeviceInfos  = NULL;
     if (pCaptureDeviceCount   != NULL) *pCaptureDeviceCount   = 0;
 
-    if (pContext == NULL || pContext->onEnumDevices == NULL) {
+    if (pContext == NULL) {
         return MA_INVALID_ARGS;
+    }
+
+    if (ma_context__is_using_new_callbacks(pContext)) {
+        if (pContext->callbacks.onContextEnumerateDevices == NULL) {
+            return MA_INVALID_OPERATION;
+        }
+    } else {
+        if (pContext->onEnumDevices == NULL) {
+            return MA_INVALID_OPERATION;
+        }
     }
 
     /* Note that we don't use ma_context_enumerate_devices() here because we want to do locking at a higher level. */
@@ -31385,7 +32012,12 @@ MA_API ma_result ma_context_get_devices(ma_context* pContext, ma_device_info** p
         pContext->captureDeviceInfoCount = 0;
 
         /* Now enumerate over available devices. */
-        result = pContext->onEnumDevices(pContext, ma_context_get_devices__enum_callback, NULL);
+        if (ma_context__is_using_new_callbacks(pContext)) {
+            result = pContext->callbacks.onContextEnumerateDevices(pContext, ma_context_get_devices__enum_callback, NULL);
+        } else {
+            result = pContext->onEnumDevices(pContext, ma_context_get_devices__enum_callback, NULL);
+        }
+        
         if (result == MA_SUCCESS) {
             /* Playback devices. */
             if (ppPlaybackDeviceInfos != NULL) {
@@ -31411,6 +32043,7 @@ MA_API ma_result ma_context_get_devices(ma_context* pContext, ma_device_info** p
 
 MA_API ma_result ma_context_get_device_info(ma_context* pContext, ma_device_type deviceType, const ma_device_id* pDeviceID, ma_share_mode shareMode, ma_device_info* pDeviceInfo)
 {
+    ma_result result;
     ma_device_info deviceInfo;
 
     /* NOTE: Do not clear pDeviceInfo on entry. The reason is the pDeviceID may actually point to pDeviceInfo->id which will break things. */
@@ -31425,27 +32058,103 @@ MA_API ma_result ma_context_get_device_info(ma_context* pContext, ma_device_type
         MA_COPY_MEMORY(&deviceInfo.id, pDeviceID, sizeof(*pDeviceID));
     }
 
-    /* The backend may have an optimized device info retrieval function. If so, try that first. */
-    if (pContext->onGetDeviceInfo != NULL) {
-        ma_result result;
-        ma_mutex_lock(&pContext->deviceInfoLock);
-        {
-            result = pContext->onGetDeviceInfo(pContext, deviceType, pDeviceID, shareMode, &deviceInfo);
+    if (ma_context__is_using_new_callbacks(pContext)) {
+        if (pContext->callbacks.onContextGetDeviceInfo == NULL) {
+            return MA_INVALID_OPERATION;
         }
-        ma_mutex_unlock(&pContext->deviceInfoLock);
-
-        /* Clamp ranges. */
-        deviceInfo.minChannels   = ma_max(deviceInfo.minChannels,   MA_MIN_CHANNELS);
-        deviceInfo.maxChannels   = ma_min(deviceInfo.maxChannels,   MA_MAX_CHANNELS);
-        deviceInfo.minSampleRate = ma_max(deviceInfo.minSampleRate, MA_MIN_SAMPLE_RATE);
-        deviceInfo.maxSampleRate = ma_min(deviceInfo.maxSampleRate, MA_MAX_SAMPLE_RATE);
-
-        *pDeviceInfo = deviceInfo;
-        return result;
+    } else {
+        if (pContext->onGetDeviceInfo == NULL) {
+            return MA_INVALID_OPERATION;
+        }
     }
 
-    /* Getting here means onGetDeviceInfo has not been set. */
-    return MA_ERROR;
+    ma_mutex_lock(&pContext->deviceInfoLock);
+    {
+        if (ma_context__is_using_new_callbacks(pContext)) {
+            result = pContext->callbacks.onContextGetDeviceInfo(pContext, deviceType, pDeviceID, &deviceInfo);
+        } else {
+            result = pContext->onGetDeviceInfo(pContext, deviceType, pDeviceID, shareMode, &deviceInfo);
+        }
+    }
+    ma_mutex_unlock(&pContext->deviceInfoLock);
+
+    /*
+    If the backend is using the new device info system, do a pass to fill out the old settings for backwards compatibility. This will be removed in
+    the future when all backends have implemented the new device info system.
+    */
+    if (deviceInfo.nativeDataFormatCount > 0) {
+        ma_uint32 iNativeFormat;
+        ma_uint32 iSampleFormat;
+
+        deviceInfo.minChannels   = 0xFFFFFFFF;
+        deviceInfo.maxChannels   = 0;
+        deviceInfo.minSampleRate = 0xFFFFFFFF;
+        deviceInfo.maxSampleRate = 0;
+            
+        for (iNativeFormat = 0; iNativeFormat < deviceInfo.nativeDataFormatCount; iNativeFormat += 1) {
+            /* Formats. */
+            if (deviceInfo.nativeDataFormats[iNativeFormat].format == ma_format_unknown) {
+                /* All formats are supported. */
+                deviceInfo.formats[0] = ma_format_u8;
+                deviceInfo.formats[1] = ma_format_s16;
+                deviceInfo.formats[2] = ma_format_s24;
+                deviceInfo.formats[3] = ma_format_s32;
+                deviceInfo.formats[4] = ma_format_f32;
+                deviceInfo.formatCount = 5;
+            } else {
+                /* Make sure the format isn't already in the list. If so, skip. */
+                ma_bool32 alreadyExists = MA_FALSE;
+                for (iSampleFormat = 0; iSampleFormat < deviceInfo.formatCount; iSampleFormat += 1) {
+                    if (deviceInfo.formats[iSampleFormat] == deviceInfo.nativeDataFormats[iNativeFormat].format) {
+                        alreadyExists = MA_TRUE;
+                        break;
+                    }
+                }
+
+                if (!alreadyExists) {
+                    deviceInfo.formats[deviceInfo.formatCount++] = deviceInfo.nativeDataFormats[iNativeFormat].format;
+                }
+            }
+
+            /* Channels. */
+            if (deviceInfo.nativeDataFormats[iNativeFormat].channels == 0) {
+                /* All channels supported. */
+                deviceInfo.minChannels = MA_MIN_CHANNELS;
+                deviceInfo.maxChannels = MA_MAX_CHANNELS;
+            } else {
+                if (deviceInfo.minChannels > deviceInfo.nativeDataFormats[iNativeFormat].channels) {
+                    deviceInfo.minChannels = deviceInfo.nativeDataFormats[iNativeFormat].channels;
+                }
+                if (deviceInfo.maxChannels < deviceInfo.nativeDataFormats[iNativeFormat].channels) {
+                    deviceInfo.maxChannels = deviceInfo.nativeDataFormats[iNativeFormat].channels;
+                }
+            }
+
+            /* Sample rate. */
+            if (deviceInfo.nativeDataFormats[iNativeFormat].sampleRate == 0) {
+                /* All sample rates supported. */
+                deviceInfo.minSampleRate = MA_MIN_SAMPLE_RATE;
+                deviceInfo.maxSampleRate = MA_MAX_SAMPLE_RATE;
+            } else {
+                if (deviceInfo.minSampleRate > deviceInfo.nativeDataFormats[iNativeFormat].sampleRate) {
+                    deviceInfo.minSampleRate = deviceInfo.nativeDataFormats[iNativeFormat].sampleRate;
+                }
+                if (deviceInfo.maxSampleRate < deviceInfo.nativeDataFormats[iNativeFormat].sampleRate) {
+                    deviceInfo.maxSampleRate = deviceInfo.nativeDataFormats[iNativeFormat].sampleRate;
+                }
+            }
+        }
+    }
+
+
+    /* Clamp ranges. */
+    deviceInfo.minChannels   = ma_max(deviceInfo.minChannels,   MA_MIN_CHANNELS);
+    deviceInfo.maxChannels   = ma_min(deviceInfo.maxChannels,   MA_MAX_CHANNELS);
+    deviceInfo.minSampleRate = ma_max(deviceInfo.minSampleRate, MA_MIN_SAMPLE_RATE);
+    deviceInfo.maxSampleRate = ma_min(deviceInfo.maxSampleRate, MA_MAX_SAMPLE_RATE);
+
+    *pDeviceInfo = deviceInfo;
+    return result;
 }
 
 MA_API ma_bool32 ma_context_is_loopback_supported(ma_context* pContext)
@@ -31477,15 +32186,33 @@ MA_API ma_result ma_device_init(ma_context* pContext, const ma_device_config* pC
     ma_result result;
     ma_device_config config;
 
+    /* The context can be null, in which case we self-manage it. */
     if (pContext == NULL) {
         return ma_device_init_ex(NULL, 0, NULL, pConfig, pDevice);
     }
+
     if (pDevice == NULL) {
         return ma_context_post_error(pContext, NULL, MA_LOG_LEVEL_ERROR, "ma_device_init() called with invalid arguments (pDevice == NULL).", MA_INVALID_ARGS);
     }
+
+    MA_ZERO_OBJECT(pDevice);
+
     if (pConfig == NULL) {
         return ma_context_post_error(pContext, NULL, MA_LOG_LEVEL_ERROR, "ma_device_init() called with invalid arguments (pConfig == NULL).", MA_INVALID_ARGS);
     }
+
+
+    /* Check that we have our callbacks defined. */
+    if (ma_context__is_using_new_callbacks(pContext)) {
+        if (pContext->callbacks.onDeviceInit == NULL) {
+            return MA_INVALID_OPERATION;
+        }
+    } else {
+        if (pContext->onDeviceInit == NULL) {
+            return MA_INVALID_OPERATION;
+        }
+    }
+
 
     /* We need to make a copy of the config so we can set default values if they were left unset in the input config. */
     config = *pConfig;
@@ -31513,8 +32240,6 @@ MA_API ma_result ma_device_init(ma_context* pContext, const ma_device_config* pC
         }
     }
 
-
-    MA_ZERO_OBJECT(pDevice);
     pDevice->pContext = pContext;
 
     /* Set the user data and log callback ASAP to ensure it is available for the entire initialization process. */
@@ -31531,6 +32256,7 @@ MA_API ma_result ma_device_init(ma_context* pContext, const ma_device_config* pC
     if (config.playback.pDeviceID != NULL) {
         MA_COPY_MEMORY(&pDevice->playback.id, config.playback.pDeviceID, sizeof(pDevice->playback.id));
     }
+
     if (config.capture.pDeviceID != NULL) {
         MA_COPY_MEMORY(&pDevice->capture.id, config.capture.pDeviceID, sizeof(pDevice->capture.id));
     }
@@ -31596,8 +32322,8 @@ MA_API ma_result ma_device_init(ma_context* pContext, const ma_device_config* pC
     MA_ASSERT(config.capture.channels  <= MA_MAX_CHANNELS);
     MA_ASSERT(config.playback.channels <= MA_MAX_CHANNELS);
 
-    pDevice->type = config.deviceType;
-    pDevice->sampleRate = config.sampleRate;
+    pDevice->type                       = config.deviceType;
+    pDevice->sampleRate                 = config.sampleRate;
     pDevice->resampling.algorithm       = config.resampling.algorithm;
     pDevice->resampling.linear.lpfOrder = config.resampling.linear.lpfOrder;
     pDevice->resampling.speex.quality   = config.resampling.speex.quality;
@@ -31658,29 +32384,146 @@ MA_API ma_result ma_device_init(ma_context* pContext, const ma_device_config* pC
     }
 
 
-    result = pContext->onDeviceInit(pContext, &config, pDevice);
-    if (result != MA_SUCCESS) {
-        return result;
+    if (ma_context__is_using_new_callbacks(pContext)) {
+        ma_device_descriptor descriptorPlayback;
+        ma_device_descriptor descriptorCapture;
+
+        MA_ZERO_OBJECT(&descriptorPlayback);
+        descriptorPlayback.pDeviceID                = pConfig->playback.pDeviceID;
+        descriptorPlayback.shareMode                = pConfig->playback.shareMode;
+        descriptorPlayback.format                   = pConfig->playback.format;
+        descriptorPlayback.channels                 = pConfig->playback.channels;
+        descriptorPlayback.sampleRate               = pConfig->sampleRate;
+        ma_channel_map_copy(descriptorPlayback.channelMap, pConfig->playback.channelMap, pConfig->playback.channels);
+        descriptorPlayback.periodSizeInFrames       = pConfig->periodSizeInFrames;
+        descriptorPlayback.periodSizeInMilliseconds = pConfig->periodSizeInMilliseconds;
+        descriptorPlayback.periodCount              = pConfig->periods;
+
+        if (descriptorPlayback.periodSizeInMilliseconds == 0 && descriptorPlayback.periodSizeInFrames == 0) {
+            descriptorPlayback.periodSizeInMilliseconds = (pConfig->performanceProfile == ma_performance_profile_low_latency) ? MA_DEFAULT_PERIOD_SIZE_IN_MILLISECONDS_LOW_LATENCY : MA_DEFAULT_PERIOD_SIZE_IN_MILLISECONDS_CONSERVATIVE;
+        }
+
+        if (descriptorPlayback.periodCount == 0) {
+            descriptorPlayback.periodCount = MA_DEFAULT_PERIODS;
+        }
+
+
+        MA_ZERO_OBJECT(&descriptorCapture);
+        descriptorCapture.pDeviceID                 = pConfig->capture.pDeviceID;
+        descriptorCapture.shareMode                 = pConfig->capture.shareMode;
+        descriptorCapture.format                    = pConfig->capture.format;
+        descriptorCapture.channels                  = pConfig->capture.channels;
+        descriptorCapture.sampleRate                = pConfig->sampleRate;
+        ma_channel_map_copy(descriptorCapture.channelMap, pConfig->capture.channelMap, pConfig->capture.channels);
+        descriptorCapture.periodSizeInFrames        = pConfig->periodSizeInFrames;
+        descriptorCapture.periodSizeInMilliseconds  = pConfig->periodSizeInMilliseconds;
+        descriptorCapture.periodCount               = pConfig->periods;
+
+        if (descriptorCapture.periodSizeInMilliseconds == 0 && descriptorCapture.periodSizeInFrames == 0) {
+            descriptorCapture.periodSizeInMilliseconds = (pConfig->performanceProfile == ma_performance_profile_low_latency) ? MA_DEFAULT_PERIOD_SIZE_IN_MILLISECONDS_LOW_LATENCY : MA_DEFAULT_PERIOD_SIZE_IN_MILLISECONDS_CONSERVATIVE;
+        }
+
+        if (descriptorCapture.periodCount == 0) {
+            descriptorCapture.periodCount = MA_DEFAULT_PERIODS;
+        }
+
+
+        result = pContext->callbacks.onDeviceInit(pDevice, pConfig, &descriptorPlayback, &descriptorCapture);
+        if (result != MA_SUCCESS) {
+            ma_event_uninit(&pDevice->startEvent);
+            ma_event_uninit(&pDevice->wakeupEvent);
+            ma_mutex_uninit(&pDevice->lock);
+            return result;
+        }
+
+        /*
+        On output the descriptors will contain the *actual* data format of the device. We need this to know how to convert the data between
+        the requested format and the internal format.
+        */
+        if (pConfig->deviceType == ma_device_type_capture || pConfig->deviceType == ma_device_type_duplex || pConfig->deviceType == ma_device_type_loopback) {
+            if (!ma_device_descriptor_is_valid(&descriptorCapture)) {
+                ma_device_uninit(pDevice);
+                return MA_INVALID_ARGS;
+            }
+
+            pDevice->capture.internalFormat             = descriptorCapture.format;
+            pDevice->capture.internalChannels           = descriptorCapture.channels;
+            pDevice->capture.internalSampleRate         = descriptorCapture.sampleRate;
+            ma_channel_map_copy(pDevice->capture.internalChannelMap, descriptorCapture.channelMap, descriptorCapture.channels);
+            pDevice->capture.internalPeriodSizeInFrames = descriptorCapture.periodSizeInFrames;
+            pDevice->capture.internalPeriods            = descriptorCapture.periodCount;
+
+            if (pDevice->capture.internalPeriodSizeInFrames == 0) {
+                pDevice->capture.internalPeriodSizeInFrames = ma_calculate_buffer_size_in_frames_from_milliseconds(descriptorCapture.periodSizeInMilliseconds, descriptorCapture.sampleRate);
+            }
+        }
+
+        if (pConfig->deviceType == ma_device_type_playback || pConfig->deviceType == ma_device_type_duplex) {
+            if (!ma_device_descriptor_is_valid(&descriptorPlayback)) {
+                ma_device_uninit(pDevice);
+                return MA_INVALID_ARGS;
+            }
+
+            pDevice->playback.internalFormat             = descriptorPlayback.format;
+            pDevice->playback.internalChannels           = descriptorPlayback.channels;
+            pDevice->playback.internalSampleRate         = descriptorPlayback.sampleRate;
+            ma_channel_map_copy(pDevice->playback.internalChannelMap, descriptorPlayback.channelMap, descriptorPlayback.channels);
+            pDevice->playback.internalPeriodSizeInFrames = descriptorPlayback.periodSizeInFrames;
+            pDevice->playback.internalPeriods            = descriptorPlayback.periodCount;
+
+            if (pDevice->playback.internalPeriodSizeInFrames == 0) {
+                pDevice->playback.internalPeriodSizeInFrames = ma_calculate_buffer_size_in_frames_from_milliseconds(descriptorPlayback.periodSizeInMilliseconds, descriptorPlayback.sampleRate);
+            }
+        }
+
+
+        /*
+        The name of the device can be retrieved from device info. This may be temporary and replaced with a `ma_device_get_info(pDevice, deviceType)` instead.
+        For loopback devices, we need to retrieve the name of the playback device.
+        */
+        {
+            ma_device_info deviceInfo;
+
+            if (pConfig->deviceType == ma_device_type_capture || pConfig->deviceType == ma_device_type_duplex || pConfig->deviceType == ma_device_type_loopback) {
+                result = ma_context_get_device_info(pContext, (pConfig->deviceType == ma_device_type_loopback) ? ma_device_type_playback : ma_device_type_capture, descriptorCapture.pDeviceID, descriptorCapture.shareMode, &deviceInfo);
+                if (result == MA_SUCCESS) {
+                    ma_strncpy_s(pDevice->capture.name, sizeof(pDevice->capture.name), deviceInfo.name, (size_t)-1);
+                } else {
+                    /* We failed to retrieve the device info. Fall back to a default name. */
+                    if (descriptorCapture.pDeviceID == NULL) {
+                        ma_strncpy_s(pDevice->capture.name, sizeof(pDevice->capture.name), MA_DEFAULT_CAPTURE_DEVICE_NAME, (size_t)-1);
+                    } else {
+                        ma_strncpy_s(pDevice->capture.name, sizeof(pDevice->capture.name), "Capture Device", (size_t)-1);
+                    }
+                }
+            }
+
+            if (pConfig->deviceType == ma_device_type_playback || pConfig->deviceType == ma_device_type_duplex) {
+                result = ma_context_get_device_info(pContext, ma_device_type_playback, descriptorPlayback.pDeviceID, descriptorPlayback.shareMode, &deviceInfo);
+                if (result == MA_SUCCESS) {
+                    ma_strncpy_s(pDevice->playback.name, sizeof(pDevice->playback.name), deviceInfo.name, (size_t)-1);
+                } else {
+                    /* We failed to retrieve the device info. Fall back to a default name. */
+                    if (descriptorPlayback.pDeviceID == NULL) {
+                        ma_strncpy_s(pDevice->playback.name, sizeof(pDevice->playback.name), MA_DEFAULT_PLAYBACK_DEVICE_NAME, (size_t)-1);
+                    } else {
+                        ma_strncpy_s(pDevice->playback.name, sizeof(pDevice->playback.name), "Playback Device", (size_t)-1);
+                    }
+                }
+            }
+        }
+    } else {
+        result = pContext->onDeviceInit(pContext, &config, pDevice);
+        if (result != MA_SUCCESS) {
+            ma_event_uninit(&pDevice->startEvent);
+            ma_event_uninit(&pDevice->wakeupEvent);
+            ma_mutex_uninit(&pDevice->lock);
+            return result;
+        }
     }
+    
 
     ma_device__post_init_setup(pDevice, pConfig->deviceType);
-
-
-    /* If the backend did not fill out a name for the device, try a generic method. */
-    if (pDevice->type == ma_device_type_capture || pDevice->type == ma_device_type_duplex) {
-        if (pDevice->capture.name[0] == '\0') {
-            if (ma_context__try_get_device_name_by_id(pContext, ma_device_type_capture, config.capture.pDeviceID, pDevice->capture.name, sizeof(pDevice->capture.name)) != MA_SUCCESS) {
-                ma_strncpy_s(pDevice->capture.name, sizeof(pDevice->capture.name), (config.capture.pDeviceID == NULL)  ? MA_DEFAULT_CAPTURE_DEVICE_NAME : "Capture Device", (size_t)-1);
-            }
-        }
-    }
-    if (pDevice->type == ma_device_type_playback || pDevice->type == ma_device_type_duplex || pDevice->type == ma_device_type_loopback) {
-        if (pDevice->playback.name[0] == '\0') {
-            if (ma_context__try_get_device_name_by_id(pContext, ma_device_type_playback, config.playback.pDeviceID, pDevice->playback.name, sizeof(pDevice->playback.name)) != MA_SUCCESS) {
-                ma_strncpy_s(pDevice->playback.name, sizeof(pDevice->playback.name), (config.playback.pDeviceID == NULL)  ? MA_DEFAULT_PLAYBACK_DEVICE_NAME : "Playback Device", (size_t)-1);
-            }
-        }
-    }
 
 
     /* Some backends don't require the worker thread. */
@@ -31695,6 +32538,22 @@ MA_API ma_result ma_device_init(ma_context* pContext, const ma_device_config* pC
         /* Wait for the worker thread to put the device into it's stopped state for real. */
         ma_event_wait(&pDevice->stopEvent);
     } else {
+        /*
+        If the backend is asynchronous and the device is duplex, we'll need an intermediary ring buffer. Note that this needs to be done
+        after ma_device__post_init_setup().
+        */
+        if (ma_context__is_using_new_callbacks(pContext)) { /* <-- TEMP: Will be removed once all asynchronous backends have been converted to the new callbacks. */
+            if (ma_context_is_backend_asynchronous(pContext)) {
+                if (pConfig->deviceType == ma_device_type_duplex) {
+                    result = ma_duplex_rb_init(pDevice->sampleRate, pDevice->capture.internalFormat, pDevice->capture.internalChannels, pDevice->capture.internalSampleRate, pDevice->capture.internalPeriodSizeInFrames, &pDevice->pContext->allocationCallbacks, &pDevice->duplexRB);
+                    if (result != MA_SUCCESS) {
+                        ma_device_uninit(pDevice);
+                        return result;
+                    }
+                }
+            }
+        }
+
         ma_device__set_state(pDevice, MA_STATE_STOPPED);
     }
 
@@ -31727,7 +32586,7 @@ MA_API ma_result ma_device_init(ma_context* pContext, const ma_device_config* pC
         ma_post_log_messagef(pContext, pDevice, MA_LOG_LEVEL_INFO, "      Passthrough:              %s", pDevice->playback.converter.isPassthrough           ? "YES" : "NO");
     }
 
-    MA_ASSERT(ma_device__get_state(pDevice) == MA_STATE_STOPPED);
+    MA_ASSERT(ma_device_get_state(pDevice) == MA_STATE_STOPPED);
     return MA_SUCCESS;
 }
 
@@ -31814,7 +32673,16 @@ MA_API void ma_device_uninit(ma_device* pDevice)
         ma_thread_wait(&pDevice->thread);
     }
 
-    pDevice->pContext->onDeviceUninit(pDevice);
+    if (ma_context__is_using_new_callbacks(pDevice->pContext)) {
+        if (pDevice->pContext->callbacks.onDeviceUninit != NULL) {
+            pDevice->pContext->callbacks.onDeviceUninit(pDevice);
+        }
+    } else {
+        if (pDevice->pContext->onDeviceUninit != NULL) {
+            pDevice->pContext->onDeviceUninit(pDevice);
+        }
+    }
+    
 
     ma_event_uninit(&pDevice->stopEvent);
     ma_event_uninit(&pDevice->startEvent);
@@ -31839,11 +32707,11 @@ MA_API ma_result ma_device_start(ma_device* pDevice)
         return ma_post_error(pDevice, MA_LOG_LEVEL_ERROR, "ma_device_start() called with invalid arguments (pDevice == NULL).", MA_INVALID_ARGS);
     }
 
-    if (ma_device__get_state(pDevice) == MA_STATE_UNINITIALIZED) {
+    if (ma_device_get_state(pDevice) == MA_STATE_UNINITIALIZED) {
         return ma_post_error(pDevice, MA_LOG_LEVEL_ERROR, "ma_device_start() called for an uninitialized device.", MA_DEVICE_NOT_INITIALIZED);
     }
 
-    if (ma_device__get_state(pDevice) == MA_STATE_STARTED) {
+    if (ma_device_get_state(pDevice) == MA_STATE_STARTED) {
         return ma_post_error(pDevice, MA_LOG_LEVEL_WARNING, "ma_device_start() called when the device is already started.", MA_INVALID_OPERATION);  /* Already started. Returning an error to let the application know because it probably means they're doing something wrong. */
     }
 
@@ -31851,13 +32719,26 @@ MA_API ma_result ma_device_start(ma_device* pDevice)
     ma_mutex_lock(&pDevice->lock);
     {
         /* Starting and stopping are wrapped in a mutex which means we can assert that the device is in a stopped or paused state. */
-        MA_ASSERT(ma_device__get_state(pDevice) == MA_STATE_STOPPED);
+        MA_ASSERT(ma_device_get_state(pDevice) == MA_STATE_STOPPED);
 
         ma_device__set_state(pDevice, MA_STATE_STARTING);
 
         /* Asynchronous backends need to be handled differently. */
         if (ma_context_is_backend_asynchronous(pDevice->pContext)) {
-            result = pDevice->pContext->onDeviceStart(pDevice);
+            if (ma_context__is_using_new_callbacks(pDevice->pContext)) {
+                if (pDevice->pContext->callbacks.onDeviceStart != NULL) {
+                    result = pDevice->pContext->callbacks.onDeviceStart(pDevice);
+                } else {
+                    result = MA_INVALID_OPERATION;
+                }
+            } else {
+                if (pDevice->pContext->onDeviceStart != NULL) {
+                    result = pDevice->pContext->onDeviceStart(pDevice);
+                } else {
+                    result = MA_INVALID_OPERATION;
+                }
+            }
+            
             if (result == MA_SUCCESS) {
                 ma_device__set_state(pDevice, MA_STATE_STARTED);
             }
@@ -31875,6 +32756,11 @@ MA_API ma_result ma_device_start(ma_device* pDevice)
             ma_event_wait(&pDevice->startEvent);
             result = pDevice->workResult;
         }
+
+        /* We changed the state from stopped to started, so if we failed, make sure we put the state back to stopped. */
+        if (result != MA_SUCCESS) {
+            ma_device__set_state(pDevice, MA_STATE_STOPPED);
+        }
     }
     ma_mutex_unlock(&pDevice->lock);
 
@@ -31889,11 +32775,11 @@ MA_API ma_result ma_device_stop(ma_device* pDevice)
         return ma_post_error(pDevice, MA_LOG_LEVEL_ERROR, "ma_device_stop() called with invalid arguments (pDevice == NULL).", MA_INVALID_ARGS);
     }
 
-    if (ma_device__get_state(pDevice) == MA_STATE_UNINITIALIZED) {
+    if (ma_device_get_state(pDevice) == MA_STATE_UNINITIALIZED) {
         return ma_post_error(pDevice, MA_LOG_LEVEL_ERROR, "ma_device_stop() called for an uninitialized device.", MA_DEVICE_NOT_INITIALIZED);
     }
 
-    if (ma_device__get_state(pDevice) == MA_STATE_STOPPED) {
+    if (ma_device_get_state(pDevice) == MA_STATE_STOPPED) {
         return ma_post_error(pDevice, MA_LOG_LEVEL_WARNING, "ma_device_stop() called when the device is already stopped.", MA_INVALID_OPERATION);   /* Already stopped. Returning an error to let the application know because it probably means they're doing something wrong. */
     }
 
@@ -31901,22 +32787,43 @@ MA_API ma_result ma_device_stop(ma_device* pDevice)
     ma_mutex_lock(&pDevice->lock);
     {
         /* Starting and stopping are wrapped in a mutex which means we can assert that the device is in a started or paused state. */
-        MA_ASSERT(ma_device__get_state(pDevice) == MA_STATE_STARTED);
+        MA_ASSERT(ma_device_get_state(pDevice) == MA_STATE_STARTED);
 
         ma_device__set_state(pDevice, MA_STATE_STOPPING);
 
-        /* There's no need to wake up the thread like we do when starting. */
-        if (pDevice->pContext->onDeviceStop) {
-            result = pDevice->pContext->onDeviceStop(pDevice);
-        } else {
-            result = MA_SUCCESS;
-        }
-
         /* Asynchronous backends need to be handled differently. */
         if (ma_context_is_backend_asynchronous(pDevice->pContext)) {
+            /* Asynchronous backends must have a stop operation. */
+            if (ma_context__is_using_new_callbacks(pDevice->pContext)) {
+                if (pDevice->pContext->callbacks.onDeviceStop != NULL) {
+                    result = pDevice->pContext->callbacks.onDeviceStop(pDevice);
+                } else {
+                    result = MA_INVALID_OPERATION;
+                }
+            } else {
+                if (pDevice->pContext->onDeviceStop != NULL) {
+                    result = pDevice->pContext->onDeviceStop(pDevice);
+                } else {
+                    result = MA_INVALID_OPERATION;
+                }
+            }
+
             ma_device__set_state(pDevice, MA_STATE_STOPPED);
         } else {
-            /* Synchronous backends. */
+            /* Synchronous backends. Devices can optionally have a stop operation here. */
+            if (ma_context__is_using_new_callbacks(pDevice->pContext)) {
+                if (pDevice->pContext->callbacks.onDeviceStop != NULL) {
+                    result = pDevice->pContext->callbacks.onDeviceStop(pDevice);
+                } else {
+                    result = MA_SUCCESS;
+                }
+            } else {
+                if (pDevice->pContext->onDeviceStop != NULL) {
+                    result = pDevice->pContext->onDeviceStop(pDevice);
+                } else {
+                    result = MA_SUCCESS;
+                }
+            }
 
             /*
             We need to wait for the worker thread to become available for work before returning. Note that the worker thread will be
@@ -31931,13 +32838,18 @@ MA_API ma_result ma_device_stop(ma_device* pDevice)
     return result;
 }
 
-MA_API ma_bool32 ma_device_is_started(ma_device* pDevice)
+MA_API ma_bool32 ma_device_is_started(const ma_device* pDevice)
+{
+    return ma_device_get_state(pDevice) == MA_STATE_STARTED;
+}
+
+MA_API ma_uint32 ma_device_get_state(const ma_device* pDevice)
 {
     if (pDevice == NULL) {
-        return MA_FALSE;
+        return MA_STATE_UNINITIALIZED;
     }
 
-    return ma_device__get_state(pDevice) == MA_STATE_STARTED;
+    return pDevice->state;
 }
 
 MA_API ma_result ma_device_set_master_volume(ma_device* pDevice, float volume)
@@ -31996,6 +32908,46 @@ MA_API ma_result ma_device_get_master_gain_db(ma_device* pDevice, float* pGainDB
     }
 
     *pGainDB = ma_factor_to_gain_db(factor);
+
+    return MA_SUCCESS;
+}
+
+
+MA_API ma_result ma_device_handle_backend_data_callback(ma_device* pDevice, void* pOutput, const void* pInput, ma_uint32 frameCount)
+{
+    if (pDevice == NULL) {
+        return MA_INVALID_ARGS;
+    }
+
+    if (pOutput == NULL && pInput == NULL) {
+        return MA_INVALID_ARGS;
+    }
+
+    if (pDevice->type == ma_device_type_duplex) {
+        if (pInput != NULL) {
+            ma_device__handle_duplex_callback_capture(pDevice, frameCount, pInput, &pDevice->duplexRB.rb);
+        }
+
+        if (pOutput != NULL) {
+            ma_device__handle_duplex_callback_playback(pDevice, frameCount, pOutput, &pDevice->duplexRB.rb);
+        }
+    } else {
+        if (pDevice->type == ma_device_type_capture || pDevice->type == ma_device_type_loopback) {
+            if (pInput == NULL) {
+                return MA_INVALID_ARGS;
+            }
+
+            ma_device__send_frames_to_client(pDevice, frameCount, pInput);
+        }
+
+        if (pDevice->type == ma_device_type_playback) {
+            if (pOutput == NULL) {
+                return MA_INVALID_ARGS;
+            }
+
+            ma_device__read_frames_from_client(pDevice, frameCount, pOutput);
+        }
+    }
 
     return MA_SUCCESS;
 }
@@ -37519,7 +38471,7 @@ static ma_result ma_resampler_process_pcm_frames__seek__linear(ma_resampler* pRe
 static ma_result ma_resampler_process_pcm_frames__seek__speex(ma_resampler* pResampler, const void* pFramesIn, ma_uint64* pFrameCountIn, ma_uint64* pFrameCountOut)
 {
     /* The generic seek method is implemented in on top of ma_resampler_process_pcm_frames__read() by just processing into a dummy buffer. */
-    float devnull[8192];
+    float devnull[4096];
     ma_uint64 totalOutputFramesToProcess;
     ma_uint64 totalOutputFramesProcessed;
     ma_uint64 totalInputFramesProcessed;
@@ -37721,13 +38673,13 @@ MA_API ma_uint64 ma_resampler_get_required_input_frame_count(ma_resampler* pResa
         case ma_resample_algorithm_speex:
         {
         #if defined(MA_HAS_SPEEX_RESAMPLER)
-            ma_uint64 count;
+            spx_uint64_t count;
             int speexErr = ma_speex_resampler_get_required_input_frame_count((SpeexResamplerState*)pResampler->state.speex.pSpeexResamplerState, outputFrameCount, &count);
             if (speexErr != RESAMPLER_ERR_SUCCESS) {
                 return 0;
             }
 
-            return count;
+            return (ma_uint64)count;
         #else
             break;
         #endif
@@ -37761,13 +38713,13 @@ MA_API ma_uint64 ma_resampler_get_expected_output_frame_count(ma_resampler* pRes
         case ma_resample_algorithm_speex:
         {
         #if defined(MA_HAS_SPEEX_RESAMPLER)
-            ma_uint64 count;
+            spx_uint64_t count;
             int speexErr = ma_speex_resampler_get_expected_output_frame_count((SpeexResamplerState*)pResampler->state.speex.pSpeexResamplerState, inputFrameCount, &count);
             if (speexErr != RESAMPLER_ERR_SUCCESS) {
                 return 0;
             }
 
-            return count;
+            return (ma_uint64)count;
         #else
             break;
         #endif
@@ -40856,6 +41808,7 @@ MA_API void* ma_rb_get_subbuffer_ptr(ma_rb* pRB, size_t subbufferIndex, void* pB
 }
 
 
+
 static MA_INLINE ma_uint32 ma_pcm_rb_get_bpf(ma_pcm_rb* pRB)
 {
     MA_ASSERT(pRB != NULL);
@@ -41050,6 +42003,35 @@ MA_API void* ma_pcm_rb_get_subbuffer_ptr(ma_pcm_rb* pRB, ma_uint32 subbufferInde
     }
 
     return ma_rb_get_subbuffer_ptr(&pRB->rb, subbufferIndex, pBuffer);
+}
+
+
+
+MA_API ma_result ma_duplex_rb_init(ma_uint32 inputSampleRate, ma_format captureFormat, ma_uint32 captureChannels, ma_uint32 captureSampleRate, ma_uint32 capturePeriodSizeInFrames, const ma_allocation_callbacks* pAllocationCallbacks, ma_duplex_rb* pRB)
+{
+    ma_result result;
+    ma_uint32 sizeInFrames;
+
+    sizeInFrames = (ma_uint32)ma_calculate_frame_count_after_resampling(inputSampleRate, captureSampleRate, capturePeriodSizeInFrames * 5);
+    if (sizeInFrames == 0) {
+        return MA_INVALID_ARGS;
+    }
+
+    result = ma_pcm_rb_init(captureFormat, captureChannels, sizeInFrames, NULL, pAllocationCallbacks, &pRB->rb);
+    if (result != MA_SUCCESS) {
+        return result;
+    }
+
+    /* Seek forward a bit so we have a bit of a buffer in case of desyncs. */
+    ma_pcm_rb_seek_write((ma_pcm_rb*)pRB, capturePeriodSizeInFrames * 2);
+
+    return MA_SUCCESS;
+}
+
+MA_API ma_result ma_duplex_rb_uninit(ma_duplex_rb* pRB)
+{
+    ma_pcm_rb_uninit((ma_pcm_rb*)pRB);
+    return MA_SUCCESS;
 }
 
 
@@ -41854,7 +42836,7 @@ MA_API ma_result ma_vfs_write(ma_vfs* pVFS, ma_vfs_file file, const void* pSrc, 
 {
     ma_vfs_callbacks* pCallbacks = (ma_vfs_callbacks*)pVFS;
 
-    if (pBytesWritten == NULL) {
+    if (pBytesWritten != NULL) {
         *pBytesWritten = 0;
     }
 
@@ -42091,9 +43073,13 @@ static ma_result ma_default_vfs_read__win32(ma_vfs* pVFS, ma_vfs_file file, void
         }
 
         readResult = ReadFile((HANDLE)file, ma_offset_ptr(pDst, totalBytesRead), bytesToRead, &bytesRead, NULL);
+        if (readResult == 1 && bytesRead == 0) {
+            break;  /* EOF */
+        }
+
         totalBytesRead += bytesRead;
 
-        if (bytesRead < bytesToRead || (readResult == 1 && bytesRead == 0)) {
+        if (bytesRead < bytesToRead) {
             break;  /* EOF */
         }
 
@@ -42140,7 +43126,7 @@ static ma_result ma_default_vfs_write__win32(ma_vfs* pVFS, ma_vfs_file file, con
         }
     }
 
-    if (pBytesWritten == NULL) {
+    if (pBytesWritten != NULL) {
         *pBytesWritten = totalBytesWritten;
     }
 
@@ -42406,7 +43392,7 @@ static ma_result ma_default_vfs_tell__stdio(ma_vfs* pVFS, ma_vfs_file file, ma_i
     return MA_SUCCESS;
 }
 
-#if !defined(_MSC_VER) && !((defined(_POSIX_C_SOURCE) && _POSIX_C_SOURCE >= 1) || defined(_XOPEN_SOURCE) || defined(_POSIX_SOURCE))
+#if !defined(_MSC_VER) && !((defined(_POSIX_C_SOURCE) && _POSIX_C_SOURCE >= 1) || defined(_XOPEN_SOURCE) || defined(_POSIX_SOURCE)) && !defined(MA_BSD)
 int fileno(FILE *stream);
 #endif
 
@@ -42586,6 +43572,80 @@ MA_API ma_result ma_default_vfs_init(ma_default_vfs* pVFS, const ma_allocation_c
 }
 
 
+MA_API ma_result ma_vfs_or_default_open(ma_vfs* pVFS, const char* pFilePath, ma_uint32 openMode, ma_vfs_file* pFile)
+{
+    if (pVFS != NULL) {
+        return ma_vfs_open(pVFS, pFilePath, openMode, pFile);
+    } else {
+        return ma_default_vfs_open(pVFS, pFilePath, openMode, pFile);
+    }
+}
+
+MA_API ma_result ma_vfs_or_default_open_w(ma_vfs* pVFS, const wchar_t* pFilePath, ma_uint32 openMode, ma_vfs_file* pFile)
+{
+    if (pVFS != NULL) {
+        return ma_vfs_open_w(pVFS, pFilePath, openMode, pFile);
+    } else {
+        return ma_default_vfs_open_w(pVFS, pFilePath, openMode, pFile);
+    }
+}
+
+MA_API ma_result ma_vfs_or_default_close(ma_vfs* pVFS, ma_vfs_file file)
+{
+    if (pVFS != NULL) {
+        return ma_vfs_close(pVFS, file);
+    } else {
+        return ma_default_vfs_close(pVFS, file);
+    }
+}
+
+MA_API ma_result ma_vfs_or_default_read(ma_vfs* pVFS, ma_vfs_file file, void* pDst, size_t sizeInBytes, size_t* pBytesRead)
+{
+    if (pVFS != NULL) {
+        return ma_vfs_read(pVFS, file, pDst, sizeInBytes, pBytesRead);
+    } else {
+        return ma_default_vfs_read(pVFS, file, pDst, sizeInBytes, pBytesRead);
+    }
+}
+
+MA_API ma_result ma_vfs_or_default_write(ma_vfs* pVFS, ma_vfs_file file, const void* pSrc, size_t sizeInBytes, size_t* pBytesWritten)
+{
+    if (pVFS != NULL) {
+        return ma_vfs_write(pVFS, file, pSrc, sizeInBytes, pBytesWritten);
+    } else {
+        return ma_default_vfs_write(pVFS, file, pSrc, sizeInBytes, pBytesWritten);
+    }
+}
+
+MA_API ma_result ma_vfs_or_default_seek(ma_vfs* pVFS, ma_vfs_file file, ma_int64 offset, ma_seek_origin origin)
+{
+    if (pVFS != NULL) {
+        return ma_vfs_seek(pVFS, file, offset, origin);
+    } else {
+        return ma_default_vfs_seek(pVFS, file, offset, origin);
+    }
+}
+
+MA_API ma_result ma_vfs_or_default_tell(ma_vfs* pVFS, ma_vfs_file file, ma_int64* pCursor)
+{
+    if (pVFS != NULL) {
+        return ma_vfs_tell(pVFS, file, pCursor);
+    } else {
+        return ma_default_vfs_tell(pVFS, file, pCursor);
+    }
+}
+
+MA_API ma_result ma_vfs_or_default_info(ma_vfs* pVFS, ma_vfs_file file, ma_file_info* pInfo)
+{
+    if (pVFS != NULL) {
+        return ma_vfs_info(pVFS, file, pInfo);
+    } else {
+        return ma_default_vfs_info(pVFS, file, pInfo);
+    }
+}
+
+
+
 /**************************************************************************************************************************************************************
 
 Decoding and Encoding Headers. These are auto-generated from a tool.
@@ -42602,7 +43662,7 @@ extern "C" {
 #define DRWAV_XSTRINGIFY(x)     DRWAV_STRINGIFY(x)
 #define DRWAV_VERSION_MAJOR     0
 #define DRWAV_VERSION_MINOR     12
-#define DRWAV_VERSION_REVISION  10
+#define DRWAV_VERSION_REVISION  14
 #define DRWAV_VERSION_STRING    DRWAV_XSTRINGIFY(DRWAV_VERSION_MAJOR) "." DRWAV_XSTRINGIFY(DRWAV_VERSION_MINOR) "." DRWAV_XSTRINGIFY(DRWAV_VERSION_REVISION)
 #include <stddef.h>
 typedef   signed char           drwav_int8;
@@ -42615,7 +43675,7 @@ typedef unsigned int            drwav_uint32;
     typedef   signed __int64    drwav_int64;
     typedef unsigned __int64    drwav_uint64;
 #else
-    #if defined(__GNUC__)
+    #if defined(__clang__) || (defined(__GNUC__) && (__GNUC__ > 4 || (__GNUC__ == 4 && __GNUC_MINOR__ >= 6)))
         #pragma GCC diagnostic push
         #pragma GCC diagnostic ignored "-Wlong-long"
         #if defined(__clang__)
@@ -42624,7 +43684,7 @@ typedef unsigned int            drwav_uint32;
     #endif
     typedef   signed long long  drwav_int64;
     typedef unsigned long long  drwav_uint64;
-    #if defined(__GNUC__)
+    #if defined(__clang__) || (defined(__GNUC__) && (__GNUC__ > 4 || (__GNUC__ == 4 && __GNUC_MINOR__ >= 6)))
         #pragma GCC diagnostic pop
     #endif
 #endif
@@ -42741,7 +43801,8 @@ typedef enum
 typedef enum
 {
     drwav_container_riff,
-    drwav_container_w64
+    drwav_container_w64,
+    drwav_container_rf64
 } drwav_container;
 typedef struct
 {
@@ -42974,7 +44035,7 @@ extern "C" {
 #define DRFLAC_XSTRINGIFY(x)     DRFLAC_STRINGIFY(x)
 #define DRFLAC_VERSION_MAJOR     0
 #define DRFLAC_VERSION_MINOR     12
-#define DRFLAC_VERSION_REVISION  19
+#define DRFLAC_VERSION_REVISION  22
 #define DRFLAC_VERSION_STRING    DRFLAC_XSTRINGIFY(DRFLAC_VERSION_MAJOR) "." DRFLAC_XSTRINGIFY(DRFLAC_VERSION_MINOR) "." DRFLAC_XSTRINGIFY(DRFLAC_VERSION_REVISION)
 #include <stddef.h>
 typedef   signed char           drflac_int8;
@@ -42987,7 +44048,7 @@ typedef unsigned int            drflac_uint32;
     typedef   signed __int64    drflac_int64;
     typedef unsigned __int64    drflac_uint64;
 #else
-    #if defined(__GNUC__)
+    #if defined(__clang__) || (defined(__GNUC__) && (__GNUC__ > 4 || (__GNUC__ == 4 && __GNUC_MINOR__ >= 6)))
         #pragma GCC diagnostic push
         #pragma GCC diagnostic ignored "-Wlong-long"
         #if defined(__clang__)
@@ -42996,7 +44057,7 @@ typedef unsigned int            drflac_uint32;
     #endif
     typedef   signed long long  drflac_int64;
     typedef unsigned long long  drflac_uint64;
-    #if defined(__GNUC__)
+    #if defined(__clang__) || (defined(__GNUC__) && (__GNUC__ > 4 || (__GNUC__ == 4 && __GNUC_MINOR__ >= 6)))
         #pragma GCC diagnostic pop
     #endif
 #endif
@@ -43335,7 +44396,7 @@ extern "C" {
 #define DRMP3_XSTRINGIFY(x)     DRMP3_STRINGIFY(x)
 #define DRMP3_VERSION_MAJOR     0
 #define DRMP3_VERSION_MINOR     6
-#define DRMP3_VERSION_REVISION  16
+#define DRMP3_VERSION_REVISION  19
 #define DRMP3_VERSION_STRING    DRMP3_XSTRINGIFY(DRMP3_VERSION_MAJOR) "." DRMP3_XSTRINGIFY(DRMP3_VERSION_MINOR) "." DRMP3_XSTRINGIFY(DRMP3_VERSION_REVISION)
 #include <stddef.h>
 typedef   signed char           drmp3_int8;
@@ -43348,7 +44409,7 @@ typedef unsigned int            drmp3_uint32;
     typedef   signed __int64    drmp3_int64;
     typedef unsigned __int64    drmp3_uint64;
 #else
-    #if defined(__GNUC__)
+    #if defined(__clang__) || (defined(__GNUC__) && (__GNUC__ > 4 || (__GNUC__ == 4 && __GNUC_MINOR__ >= 6)))
         #pragma GCC diagnostic push
         #pragma GCC diagnostic ignored "-Wlong-long"
         #if defined(__clang__)
@@ -43357,7 +44418,7 @@ typedef unsigned int            drmp3_uint32;
     #endif
     typedef   signed long long  drmp3_int64;
     typedef unsigned long long  drmp3_uint64;
-    #if defined(__GNUC__)
+    #if defined(__clang__) || (defined(__GNUC__) && (__GNUC__ > 4 || (__GNUC__ == 4 && __GNUC_MINOR__ >= 6)))
         #pragma GCC diagnostic pop
     #endif
 #endif
@@ -45247,11 +46308,7 @@ static size_t ma_decoder__on_read_vfs(ma_decoder* pDecoder, void* pBufferOut, si
     MA_ASSERT(pDecoder   != NULL);
     MA_ASSERT(pBufferOut != NULL);
 
-    if (pDecoder->backend.vfs.pVFS == NULL) {
-        ma_default_vfs_read(NULL, pDecoder->backend.vfs.file, pBufferOut, bytesToRead, &bytesRead);
-    } else {
-        ma_vfs_read(pDecoder->backend.vfs.pVFS, pDecoder->backend.vfs.file, pBufferOut, bytesToRead, &bytesRead);
-    }
+    ma_vfs_or_default_read(pDecoder->backend.vfs.pVFS, pDecoder->backend.vfs.file, pBufferOut, bytesToRead, &bytesRead);
     
     return bytesRead;
 }
@@ -45262,12 +46319,7 @@ static ma_bool32 ma_decoder__on_seek_vfs(ma_decoder* pDecoder, int offset, ma_se
 
     MA_ASSERT(pDecoder != NULL);
 
-    if (pDecoder->backend.vfs.pVFS == NULL) {
-        result = ma_default_vfs_seek(NULL, pDecoder->backend.vfs.file, offset, origin);
-    } else {
-        result = ma_vfs_seek(pDecoder->backend.vfs.pVFS, pDecoder->backend.vfs.file, offset, origin);
-    }
-    
+    result = ma_vfs_or_default_seek(pDecoder->backend.vfs.pVFS, pDecoder->backend.vfs.file, offset, origin);
     if (result != MA_SUCCESS) {
         return MA_FALSE;
     }
@@ -45289,12 +46341,7 @@ static ma_result ma_decoder__preinit_vfs(ma_vfs* pVFS, const char* pFilePath, co
         return MA_INVALID_ARGS;
     }
 
-    if (pVFS == NULL) {
-        result = ma_default_vfs_open(NULL, pFilePath, MA_OPEN_MODE_READ, &file);
-    } else {
-        result = ma_vfs_open(pVFS, pFilePath, MA_OPEN_MODE_READ, &file);
-    }
-    
+    result = ma_vfs_or_default_open(pVFS, pFilePath, MA_OPEN_MODE_READ, &file);
     if (result != MA_SUCCESS) {
         return result;
     }
@@ -45351,7 +46398,7 @@ MA_API ma_result ma_decoder_init_vfs(ma_vfs* pVFS, const char* pFilePath, const 
     }
 
     if (result != MA_SUCCESS) {
-        ma_vfs_close(pVFS, pDecoder->backend.vfs.file);
+        ma_vfs_or_default_close(pVFS, pDecoder->backend.vfs.file);
         return result;
     }
 
@@ -45376,7 +46423,7 @@ MA_API ma_result ma_decoder_init_vfs_wav(ma_vfs* pVFS, const char* pFilePath, co
     }
 
     if (result != MA_SUCCESS) {
-        ma_vfs_close(pVFS, pDecoder->backend.vfs.file);
+        ma_vfs_or_default_close(pVFS, pDecoder->backend.vfs.file);
     }
 
     return result;
@@ -45407,7 +46454,7 @@ MA_API ma_result ma_decoder_init_vfs_flac(ma_vfs* pVFS, const char* pFilePath, c
     }
 
     if (result != MA_SUCCESS) {
-        ma_vfs_close(pVFS, pDecoder->backend.vfs.file);
+        ma_vfs_or_default_close(pVFS, pDecoder->backend.vfs.file);
     }
 
     return result;
@@ -45438,7 +46485,7 @@ MA_API ma_result ma_decoder_init_vfs_mp3(ma_vfs* pVFS, const char* pFilePath, co
     }
 
     if (result != MA_SUCCESS) {
-        ma_vfs_close(pVFS, pDecoder->backend.vfs.file);
+        ma_vfs_or_default_close(pVFS, pDecoder->backend.vfs.file);
     }
 
     return result;
@@ -45469,7 +46516,7 @@ MA_API ma_result ma_decoder_init_vfs_vorbis(ma_vfs* pVFS, const char* pFilePath,
     }
 
     if (result != MA_SUCCESS) {
-        ma_vfs_close(pVFS, pDecoder->backend.vfs.file);
+        ma_vfs_or_default_close(pVFS, pDecoder->backend.vfs.file);
     }
 
     return result;
@@ -45498,12 +46545,7 @@ static ma_result ma_decoder__preinit_vfs_w(ma_vfs* pVFS, const wchar_t* pFilePat
         return MA_INVALID_ARGS;
     }
 
-    if (pVFS == NULL) {
-        result = ma_default_vfs_open_w(NULL, pFilePath, MA_OPEN_MODE_READ, &file);
-    } else {
-        result = ma_vfs_open_w(pVFS, pFilePath, MA_OPEN_MODE_READ, &file);
-    }
-    
+    result = ma_vfs_or_default_open_w(pVFS, pFilePath, MA_OPEN_MODE_READ, &file);
     if (result != MA_SUCCESS) {
         return result;
     }
@@ -45560,7 +46602,7 @@ MA_API ma_result ma_decoder_init_vfs_w(ma_vfs* pVFS, const wchar_t* pFilePath, c
     }
 
     if (result != MA_SUCCESS) {
-        ma_vfs_close(pVFS, pDecoder->backend.vfs.file);
+        ma_vfs_or_default_close(pVFS, pDecoder->backend.vfs.file);
         return result;
     }
 
@@ -45585,7 +46627,7 @@ MA_API ma_result ma_decoder_init_vfs_wav_w(ma_vfs* pVFS, const wchar_t* pFilePat
     }
 
     if (result != MA_SUCCESS) {
-        ma_vfs_close(pVFS, pDecoder->backend.vfs.file);
+        ma_vfs_or_default_close(pVFS, pDecoder->backend.vfs.file);
     }
 
     return result;
@@ -45616,7 +46658,7 @@ MA_API ma_result ma_decoder_init_vfs_flac_w(ma_vfs* pVFS, const wchar_t* pFilePa
     }
 
     if (result != MA_SUCCESS) {
-        ma_vfs_close(pVFS, pDecoder->backend.vfs.file);
+        ma_vfs_or_default_close(pVFS, pDecoder->backend.vfs.file);
     }
 
     return result;
@@ -45647,7 +46689,7 @@ MA_API ma_result ma_decoder_init_vfs_mp3_w(ma_vfs* pVFS, const wchar_t* pFilePat
     }
 
     if (result != MA_SUCCESS) {
-        ma_vfs_close(pVFS, pDecoder->backend.vfs.file);
+        ma_vfs_or_default_close(pVFS, pDecoder->backend.vfs.file);
     }
 
     return result;
@@ -45678,7 +46720,7 @@ MA_API ma_result ma_decoder_init_vfs_vorbis_w(ma_vfs* pVFS, const wchar_t* pFile
     }
 
     if (result != MA_SUCCESS) {
-        ma_vfs_close(pVFS, pDecoder->backend.vfs.file);
+        ma_vfs_or_default_close(pVFS, pDecoder->backend.vfs.file);
     }
 
     return result;
@@ -45756,11 +46798,7 @@ MA_API ma_result ma_decoder_uninit(ma_decoder* pDecoder)
     }
 
     if (pDecoder->onRead == ma_decoder__on_read_vfs) {
-        if (pDecoder->backend.vfs.pVFS == NULL) {
-            ma_default_vfs_close(NULL, pDecoder->backend.vfs.file);
-        } else {
-            ma_vfs_close(pDecoder->backend.vfs.pVFS, pDecoder->backend.vfs.file);
-        }
+        ma_vfs_or_default_close(pDecoder->backend.vfs.pVFS, pDecoder->backend.vfs.file);
     }
 
     ma_data_converter_uninit(&pDecoder->converter);
@@ -47376,14 +48414,14 @@ static DRWAV_INLINE drwav_uint64 drwav__bswap64(drwav_uint64 n)
         #error "This compiler does not support the byte swap intrinsic."
     #endif
 #else
-    return ((n & (drwav_uint64)0xFF00000000000000) >> 56) |
-           ((n & (drwav_uint64)0x00FF000000000000) >> 40) |
-           ((n & (drwav_uint64)0x0000FF0000000000) >> 24) |
-           ((n & (drwav_uint64)0x000000FF00000000) >>  8) |
-           ((n & (drwav_uint64)0x00000000FF000000) <<  8) |
-           ((n & (drwav_uint64)0x0000000000FF0000) << 24) |
-           ((n & (drwav_uint64)0x000000000000FF00) << 40) |
-           ((n & (drwav_uint64)0x00000000000000FF) << 56);
+    return ((n & ((drwav_uint64)0xFF000000 << 32)) >> 56) |
+           ((n & ((drwav_uint64)0x00FF0000 << 32)) >> 40) |
+           ((n & ((drwav_uint64)0x0000FF00 << 32)) >> 24) |
+           ((n & ((drwav_uint64)0x000000FF << 32)) >>  8) |
+           ((n & ((drwav_uint64)0xFF000000      )) <<  8) |
+           ((n & ((drwav_uint64)0x00FF0000      )) << 24) |
+           ((n & ((drwav_uint64)0x0000FF00      )) << 40) |
+           ((n & ((drwav_uint64)0x000000FF      )) << 56);
 #endif
 }
 static DRWAV_INLINE drwav_int16 drwav__bswap_s16(drwav_int16 n)
@@ -47619,7 +48657,7 @@ static drwav_uint64 drwav_read_pcm_frames_s16__ima(drwav* pWav, drwav_uint64 sam
 static drwav_bool32 drwav_init_write__internal(drwav* pWav, const drwav_data_format* pFormat, drwav_uint64 totalSampleCount);
 static drwav_result drwav__read_chunk_header(drwav_read_proc onRead, void* pUserData, drwav_container container, drwav_uint64* pRunningBytesReadOut, drwav_chunk_header* pHeaderOut)
 {
-    if (container == drwav_container_riff) {
+    if (container == drwav_container_riff || container == drwav_container_rf64) {
         drwav_uint8 sizeInBytes[4];
         if (onRead(pUserData, pHeaderOut->id.fourcc, 4) != 4) {
             return DRWAV_AT_END;
@@ -47688,7 +48726,7 @@ static drwav_bool32 drwav__read_fmt(drwav_read_proc onRead, drwav_seek_proc onSe
     if (drwav__read_chunk_header(onRead, pUserData, container, pRunningBytesReadOut, &header) != DRWAV_SUCCESS) {
         return DRWAV_FALSE;
     }
-    while ((container == drwav_container_riff && !drwav__fourcc_equal(header.id.fourcc, "fmt ")) || (container == drwav_container_w64 && !drwav__guid_equal(header.id.guid, drwavGUID_W64_FMT))) {
+    while (((container == drwav_container_riff || container == drwav_container_rf64) && !drwav__fourcc_equal(header.id.fourcc, "fmt ")) || (container == drwav_container_w64 && !drwav__guid_equal(header.id.guid, drwavGUID_W64_FMT))) {
         if (!drwav__seek_forward(onSeek, header.sizeInBytes + header.paddingSize, pUserData)) {
             return DRWAV_FALSE;
         }
@@ -47697,7 +48735,7 @@ static drwav_bool32 drwav__read_fmt(drwav_read_proc onRead, drwav_seek_proc onSe
             return DRWAV_FALSE;
         }
     }
-    if (container == drwav_container_riff) {
+    if (container == drwav_container_riff || container == drwav_container_rf64) {
         if (!drwav__fourcc_equal(header.id.fourcc, "fmt ")) {
             return DRWAV_FALSE;
         }
@@ -47830,9 +48868,9 @@ static drwav_bool32 drwav_init__internal(drwav* pWav, drwav_chunk_proc onChunk, 
     drwav_uint8 riff[4];
     drwav_fmt fmt;
     unsigned short translatedFormatTag;
-    drwav_uint64 sampleCountFromFactChunk;
     drwav_bool32 foundDataChunk;
-    drwav_uint64 dataChunkSize;
+    drwav_uint64 dataChunkSize = 0;
+    drwav_uint64 sampleCountFromFactChunk = 0;
     drwav_uint64 chunkSize;
     cursor = 0;
     sequential = (flags & DRWAV_SEQUENTIAL) != 0;
@@ -47853,17 +48891,25 @@ static drwav_bool32 drwav_init__internal(drwav* pWav, drwav_chunk_proc onChunk, 
                 return DRWAV_FALSE;
             }
         }
+    } else if (drwav__fourcc_equal(riff, "RF64")) {
+        pWav->container = drwav_container_rf64;
     } else {
         return DRWAV_FALSE;
     }
-    if (pWav->container == drwav_container_riff) {
+    if (pWav->container == drwav_container_riff || pWav->container == drwav_container_rf64) {
         drwav_uint8 chunkSizeBytes[4];
         drwav_uint8 wave[4];
         if (drwav__on_read(pWav->onRead, pWav->pUserData, chunkSizeBytes, sizeof(chunkSizeBytes), &cursor) != sizeof(chunkSizeBytes)) {
             return DRWAV_FALSE;
         }
-        if (drwav__bytes_to_u32(chunkSizeBytes) < 36) {
-            return DRWAV_FALSE;
+        if (pWav->container == drwav_container_riff) {
+            if (drwav__bytes_to_u32(chunkSizeBytes) < 36) {
+                return DRWAV_FALSE;
+            }
+        } else {
+            if (drwav__bytes_to_u32(chunkSizeBytes) != 0xFFFFFFFF) {
+                return DRWAV_FALSE;
+            }
         }
         if (drwav__on_read(pWav->onRead, pWav->pUserData, wave, sizeof(wave), &cursor) != sizeof(wave)) {
             return DRWAV_FALSE;
@@ -47887,6 +48933,38 @@ static drwav_bool32 drwav_init__internal(drwav* pWav, drwav_chunk_proc onChunk, 
             return DRWAV_FALSE;
         }
     }
+    if (pWav->container == drwav_container_rf64) {
+        drwav_uint8 sizeBytes[8];
+        drwav_uint64 bytesRemainingInChunk;
+        drwav_chunk_header header;
+        drwav_result result = drwav__read_chunk_header(pWav->onRead, pWav->pUserData, pWav->container, &cursor, &header);
+        if (result != DRWAV_SUCCESS) {
+            return DRWAV_FALSE;
+        }
+        if (!drwav__fourcc_equal(header.id.fourcc, "ds64")) {
+            return DRWAV_FALSE;
+        }
+        bytesRemainingInChunk = header.sizeInBytes + header.paddingSize;
+        if (!drwav__seek_forward(pWav->onSeek, 8, pWav->pUserData)) {
+            return DRWAV_FALSE;
+        }
+        bytesRemainingInChunk -= 8;
+        cursor += 8;
+        if (drwav__on_read(pWav->onRead, pWav->pUserData, sizeBytes, sizeof(sizeBytes), &cursor) != sizeof(sizeBytes)) {
+            return DRWAV_FALSE;
+        }
+        bytesRemainingInChunk -= 8;
+        dataChunkSize = drwav__bytes_to_u64(sizeBytes);
+        if (drwav__on_read(pWav->onRead, pWav->pUserData, sizeBytes, sizeof(sizeBytes), &cursor) != sizeof(sizeBytes)) {
+            return DRWAV_FALSE;
+        }
+        bytesRemainingInChunk -= 8;
+        sampleCountFromFactChunk = drwav__bytes_to_u64(sizeBytes);
+        if (!drwav__seek_forward(pWav->onSeek, bytesRemainingInChunk, pWav->pUserData)) {
+            return DRWAV_FALSE;
+        }
+        cursor += bytesRemainingInChunk;
+    }
     if (!drwav__read_fmt(pWav->onRead, pWav->onSeek, pWav->pUserData, pWav->container, &cursor, &fmt)) {
         return DRWAV_FALSE;
     }
@@ -47900,9 +48978,7 @@ static drwav_bool32 drwav_init__internal(drwav* pWav, drwav_chunk_proc onChunk, 
     if (translatedFormatTag == DR_WAVE_FORMAT_EXTENSIBLE) {
         translatedFormatTag = drwav__bytes_to_u16(fmt.subFormat + 0);
     }
-    sampleCountFromFactChunk = 0;
     foundDataChunk = DRWAV_FALSE;
-    dataChunkSize = 0;
     for (;;)
     {
         drwav_chunk_header header;
@@ -47926,10 +49002,12 @@ static drwav_bool32 drwav_init__internal(drwav* pWav, drwav_chunk_proc onChunk, 
             pWav->dataChunkDataPos = cursor;
         }
         chunkSize = header.sizeInBytes;
-        if (pWav->container == drwav_container_riff) {
+        if (pWav->container == drwav_container_riff || pWav->container == drwav_container_rf64) {
             if (drwav__fourcc_equal(header.id.fourcc, "data")) {
                 foundDataChunk = DRWAV_TRUE;
-                dataChunkSize = chunkSize;
+                if (pWav->container != drwav_container_rf64) {
+                    dataChunkSize = chunkSize;
+                }
             }
         } else {
             if (drwav__guid_equal(header.id.guid, drwavGUID_W64_DATA)) {
@@ -47956,7 +49034,7 @@ static drwav_bool32 drwav_init__internal(drwav* pWav, drwav_chunk_proc onChunk, 
                     sampleCountFromFactChunk = 0;
                 }
             }
-        } else {
+        } else if (pWav->container == drwav_container_w64) {
             if (drwav__guid_equal(header.id.guid, drwavGUID_W64_FACT)) {
                 if (drwav__on_read(pWav->onRead, pWav->pUserData, &sampleCountFromFactChunk, 8, &cursor) != 8) {
                     return DRWAV_FALSE;
@@ -47966,8 +49044,9 @@ static drwav_bool32 drwav_init__internal(drwav* pWav, drwav_chunk_proc onChunk, 
                     pWav->dataChunkDataPos = cursor;
                 }
             }
+        } else if (pWav->container == drwav_container_rf64) {
         }
-        if (pWav->container == drwav_container_riff) {
+        if (pWav->container == drwav_container_riff || pWav->container == drwav_container_rf64) {
             if (drwav__fourcc_equal(header.id.fourcc, "smpl")) {
                 drwav_uint8 smplHeaderData[36];
                 if (chunkSize >= sizeof(smplHeaderData)) {
@@ -48086,12 +49165,11 @@ DRWAV_API drwav_bool32 drwav_init_ex(drwav* pWav, drwav_read_proc onRead, drwav_
 }
 static drwav_uint32 drwav__riff_chunk_size_riff(drwav_uint64 dataChunkSize)
 {
-    drwav_uint32 dataSubchunkPaddingSize = drwav__chunk_padding_size_riff(dataChunkSize);
-    if (dataChunkSize <= (0xFFFFFFFFUL - 36 - dataSubchunkPaddingSize)) {
-        return 36 + (drwav_uint32)(dataChunkSize + dataSubchunkPaddingSize);
-    } else {
-        return 0xFFFFFFFF;
+    drwav_uint64 chunkSize = 4 + 24 + dataChunkSize + drwav__chunk_padding_size_riff(dataChunkSize);
+    if (chunkSize > 0xFFFFFFFFUL) {
+        chunkSize = 0xFFFFFFFFUL;
     }
+    return (drwav_uint32)chunkSize;
 }
 static drwav_uint32 drwav__data_chunk_size_riff(drwav_uint64 dataChunkSize)
 {
@@ -48109,6 +49187,18 @@ static drwav_uint64 drwav__riff_chunk_size_w64(drwav_uint64 dataChunkSize)
 static drwav_uint64 drwav__data_chunk_size_w64(drwav_uint64 dataChunkSize)
 {
     return 24 + dataChunkSize;
+}
+static drwav_uint64 drwav__riff_chunk_size_rf64(drwav_uint64 dataChunkSize)
+{
+    drwav_uint64 chunkSize = 4 + 36 + 24 + dataChunkSize + drwav__chunk_padding_size_riff(dataChunkSize);
+    if (chunkSize > 0xFFFFFFFFUL) {
+        chunkSize = 0xFFFFFFFFUL;
+    }
+    return chunkSize;
+}
+static drwav_uint64 drwav__data_chunk_size_rf64(drwav_uint64 dataChunkSize)
+{
+    return dataChunkSize;
 }
 static size_t drwav__write(drwav* pWav, const void* pData, size_t dataSize)
 {
@@ -48190,21 +49280,35 @@ static drwav_bool32 drwav_init_write__internal(drwav* pWav, const drwav_data_for
     }
     pWav->dataChunkDataSizeTargetWrite = initialDataChunkSize;
     if (pFormat->container == drwav_container_riff) {
-        drwav_uint32 chunkSizeRIFF = 36 + (drwav_uint32)initialDataChunkSize;
+        drwav_uint32 chunkSizeRIFF = 28 + (drwav_uint32)initialDataChunkSize;
         runningPos += drwav__write(pWav, "RIFF", 4);
         runningPos += drwav__write_u32ne_to_le(pWav, chunkSizeRIFF);
         runningPos += drwav__write(pWav, "WAVE", 4);
-    } else {
+    } else if (pFormat->container == drwav_container_w64) {
         drwav_uint64 chunkSizeRIFF = 80 + 24 + initialDataChunkSize;
         runningPos += drwav__write(pWav, drwavGUID_W64_RIFF, 16);
         runningPos += drwav__write_u64ne_to_le(pWav, chunkSizeRIFF);
         runningPos += drwav__write(pWav, drwavGUID_W64_WAVE, 16);
+    } else if (pFormat->container == drwav_container_rf64) {
+        runningPos += drwav__write(pWav, "RF64", 4);
+        runningPos += drwav__write_u32ne_to_le(pWav, 0xFFFFFFFF);
+        runningPos += drwav__write(pWav, "WAVE", 4);
     }
-    if (pFormat->container == drwav_container_riff) {
+    if (pFormat->container == drwav_container_rf64) {
+        drwav_uint32 initialds64ChunkSize = 28;
+        drwav_uint64 initialRiffChunkSize = 8 + initialds64ChunkSize + initialDataChunkSize;
+        runningPos += drwav__write(pWav, "ds64", 4);
+        runningPos += drwav__write_u32ne_to_le(pWav, initialds64ChunkSize);
+        runningPos += drwav__write_u64ne_to_le(pWav, initialRiffChunkSize);
+        runningPos += drwav__write_u64ne_to_le(pWav, initialDataChunkSize);
+        runningPos += drwav__write_u64ne_to_le(pWav, totalSampleCount);
+        runningPos += drwav__write_u32ne_to_le(pWav, 0);
+    }
+    if (pFormat->container == drwav_container_riff || pFormat->container == drwav_container_rf64) {
         chunkSizeFMT = 16;
         runningPos += drwav__write(pWav, "fmt ", 4);
         runningPos += drwav__write_u32ne_to_le(pWav, (drwav_uint32)chunkSizeFMT);
-    } else {
+    } else if (pFormat->container == drwav_container_w64) {
         chunkSizeFMT = 40;
         runningPos += drwav__write(pWav, drwavGUID_W64_FMT, 16);
         runningPos += drwav__write_u64ne_to_le(pWav, chunkSizeFMT);
@@ -48220,20 +49324,15 @@ static drwav_bool32 drwav_init_write__internal(drwav* pWav, const drwav_data_for
         drwav_uint32 chunkSizeDATA = (drwav_uint32)initialDataChunkSize;
         runningPos += drwav__write(pWav, "data", 4);
         runningPos += drwav__write_u32ne_to_le(pWav, chunkSizeDATA);
-    } else {
+    } else if (pFormat->container == drwav_container_w64) {
         drwav_uint64 chunkSizeDATA = 24 + initialDataChunkSize;
         runningPos += drwav__write(pWav, drwavGUID_W64_DATA, 16);
         runningPos += drwav__write_u64ne_to_le(pWav, chunkSizeDATA);
+    } else if (pFormat->container == drwav_container_rf64) {
+        runningPos += drwav__write(pWav, "data", 4);
+        runningPos += drwav__write_u32ne_to_le(pWav, 0xFFFFFFFF);
     }
-    if (pFormat->container == drwav_container_riff) {
-        if (runningPos != 20 + chunkSizeFMT + 8) {
-            return DRWAV_FALSE;
-        }
-    } else {
-        if (runningPos != 40 + chunkSizeFMT + 24) {
-            return DRWAV_FALSE;
-        }
-    }
+    (void)runningPos;
     pWav->container = pFormat->container;
     pWav->channels = (drwav_uint16)pFormat->channels;
     pWav->sampleRate = pFormat->sampleRate;
@@ -48266,13 +49365,16 @@ DRWAV_API drwav_uint64 drwav_target_write_size_bytes(const drwav_data_format* pF
 {
     drwav_uint64 targetDataSizeBytes = (drwav_uint64)((drwav_int64)totalSampleCount * pFormat->channels * pFormat->bitsPerSample/8.0);
     drwav_uint64 riffChunkSizeBytes;
-    drwav_uint64 fileSizeBytes;
+    drwav_uint64 fileSizeBytes = 0;
     if (pFormat->container == drwav_container_riff) {
         riffChunkSizeBytes = drwav__riff_chunk_size_riff(targetDataSizeBytes);
         fileSizeBytes = (8 + riffChunkSizeBytes);
-    } else {
+    } else if (pFormat->container == drwav_container_w64) {
         riffChunkSizeBytes = drwav__riff_chunk_size_w64(targetDataSizeBytes);
         fileSizeBytes = riffChunkSizeBytes;
+    } else if (pFormat->container == drwav_container_rf64) {
+        riffChunkSizeBytes = drwav__riff_chunk_size_rf64(targetDataSizeBytes);
+        fileSizeBytes = (8 + riffChunkSizeBytes);
     }
     return fileSizeBytes;
 }
@@ -49044,7 +50146,7 @@ DRWAV_API drwav_result drwav_uninit(drwav* pWav)
     }
     if (pWav->onWrite != NULL) {
         drwav_uint32 paddingSize = 0;
-        if (pWav->container == drwav_container_riff) {
+        if (pWav->container == drwav_container_riff || pWav->container == drwav_container_rf64) {
             paddingSize = drwav__chunk_padding_size_riff(pWav->dataChunkDataSize);
         } else {
             paddingSize = drwav__chunk_padding_size_w64(pWav->dataChunkDataSize);
@@ -49063,13 +50165,23 @@ DRWAV_API drwav_result drwav_uninit(drwav* pWav)
                     drwav_uint32 dataChunkSize = drwav__data_chunk_size_riff(pWav->dataChunkDataSize);
                     drwav__write_u32ne_to_le(pWav, dataChunkSize);
                 }
-            } else {
+            } else if (pWav->container == drwav_container_w64) {
                 if (pWav->onSeek(pWav->pUserData, 16, drwav_seek_origin_start)) {
                     drwav_uint64 riffChunkSize = drwav__riff_chunk_size_w64(pWav->dataChunkDataSize);
                     drwav__write_u64ne_to_le(pWav, riffChunkSize);
                 }
                 if (pWav->onSeek(pWav->pUserData, (int)pWav->dataChunkDataPos + 16, drwav_seek_origin_start)) {
                     drwav_uint64 dataChunkSize = drwav__data_chunk_size_w64(pWav->dataChunkDataSize);
+                    drwav__write_u64ne_to_le(pWav, dataChunkSize);
+                }
+            } else if (pWav->container == drwav_container_rf64) {
+                int ds64BodyPos = 12 + 8;
+                if (pWav->onSeek(pWav->pUserData, ds64BodyPos + 0, drwav_seek_origin_start)) {
+                    drwav_uint64 riffChunkSize = drwav__riff_chunk_size_rf64(pWav->dataChunkDataSize);
+                    drwav__write_u64ne_to_le(pWav, riffChunkSize);
+                }
+                if (pWav->onSeek(pWav->pUserData, ds64BodyPos + 8, drwav_seek_origin_start)) {
+                    drwav_uint64 dataChunkSize = drwav__data_chunk_size_rf64(pWav->dataChunkDataSize);
                     drwav__write_u64ne_to_le(pWav, dataChunkSize);
                 }
             }
@@ -49130,6 +50242,7 @@ DRWAV_API size_t drwav_read_raw(drwav* pWav, size_t bytesToRead, void* pBufferOu
 DRWAV_API drwav_uint64 drwav_read_pcm_frames_le(drwav* pWav, drwav_uint64 framesToRead, void* pBufferOut)
 {
     drwav_uint32 bytesPerFrame;
+    drwav_uint64 bytesToRead;
     if (pWav == NULL || framesToRead == 0) {
         return 0;
     }
@@ -49140,10 +50253,14 @@ DRWAV_API drwav_uint64 drwav_read_pcm_frames_le(drwav* pWav, drwav_uint64 frames
     if (bytesPerFrame == 0) {
         return 0;
     }
-    if (framesToRead * bytesPerFrame > DRWAV_SIZE_MAX) {
+    bytesToRead = framesToRead * bytesPerFrame;
+    if (bytesToRead > DRWAV_SIZE_MAX) {
         framesToRead = DRWAV_SIZE_MAX / bytesPerFrame;
     }
-    return drwav_read_raw(pWav, (size_t)(framesToRead * bytesPerFrame), pBufferOut) / bytesPerFrame;
+    if (bytesToRead == 0) {
+        return 0;
+    }
+    return drwav_read_raw(pWav, (size_t)bytesToRead, pBufferOut) / bytesPerFrame;
 }
 DRWAV_API drwav_uint64 drwav_read_pcm_frames_be(drwav* pWav, drwav_uint64 framesToRead, void* pBufferOut)
 {
@@ -50857,7 +51974,7 @@ DRWAV_API drwav_bool32 drwav_fourcc_equal(const drwav_uint8* a, const char* b)
 /* dr_flac_c begin */
 #ifndef dr_flac_c
 #define dr_flac_c
-#if defined(__GNUC__)
+#if defined(__clang__) || (defined(__GNUC__) && (__GNUC__ > 4 || (__GNUC__ == 4 && __GNUC_MINOR__ >= 6)))
     #pragma GCC diagnostic push
     #if __GNUC__ >= 7
     #pragma GCC diagnostic ignored "-Wimplicit-fallthrough"
@@ -50901,7 +52018,7 @@ DRWAV_API drwav_bool32 drwav_fourcc_equal(const drwav_uint8* a, const char* b)
             #if _MSC_VER >= 1600 && !defined(DRFLAC_NO_SSE41)
                 #define DRFLAC_SUPPORT_SSE41
             #endif
-        #else
+        #elif defined(__clang__) || (defined(__GNUC__) && (__GNUC__ > 4 || (__GNUC__ == 4 && __GNUC_MINOR__ >= 3)))
             #if defined(__SSE2__) && !defined(DRFLAC_NO_SSE2)
                 #define DRFLAC_SUPPORT_SSE2
             #endif
@@ -51284,14 +52401,14 @@ static DRFLAC_INLINE drflac_uint64 drflac__swap_endian_uint64(drflac_uint64 n)
         #error "This compiler does not support the byte swap intrinsic."
     #endif
 #else
-    return ((n & (drflac_uint64)0xFF00000000000000) >> 56) |
-           ((n & (drflac_uint64)0x00FF000000000000) >> 40) |
-           ((n & (drflac_uint64)0x0000FF0000000000) >> 24) |
-           ((n & (drflac_uint64)0x000000FF00000000) >>  8) |
-           ((n & (drflac_uint64)0x00000000FF000000) <<  8) |
-           ((n & (drflac_uint64)0x0000000000FF0000) << 24) |
-           ((n & (drflac_uint64)0x000000000000FF00) << 40) |
-           ((n & (drflac_uint64)0x00000000000000FF) << 56);
+    return ((n & ((drflac_uint64)0xFF000000 << 32)) >> 56) |
+           ((n & ((drflac_uint64)0x00FF0000 << 32)) >> 40) |
+           ((n & ((drflac_uint64)0x0000FF00 << 32)) >> 24) |
+           ((n & ((drflac_uint64)0x000000FF << 32)) >>  8) |
+           ((n & ((drflac_uint64)0xFF000000      )) <<  8) |
+           ((n & ((drflac_uint64)0x00FF0000      )) << 24) |
+           ((n & ((drflac_uint64)0x0000FF00      )) << 40) |
+           ((n & ((drflac_uint64)0x000000FF      )) << 56);
 #endif
 }
 static DRFLAC_INLINE drflac_uint16 drflac__be2host_16(drflac_uint16 n)
@@ -54232,6 +55349,7 @@ static drflac_bool32 drflac__seek_to_approximate_flac_frame_to_byte(drflac* pFla
     DRFLAC_ASSERT(targetByte <= rangeHi);
     *pLastSuccessfulSeekOffset = pFlac->firstFLACFramePosInBytes;
     for (;;) {
+        drflac_uint64 lastTargetByte = targetByte;
         if (!drflac__seek_to_byte(&pFlac->bs, targetByte)) {
             if (targetByte == 0) {
                 drflac__seek_to_first_frame(pFlac);
@@ -54256,6 +55374,9 @@ static drflac_bool32 drflac__seek_to_approximate_flac_frame_to_byte(drflac* pFla
                 break;
             }
 #endif
+        }
+        if(targetByte == lastTargetByte) {
+            return DRFLAC_FALSE;
         }
     }
     drflac__get_pcm_frame_range_of_current_flac_frame(pFlac, &pFlac->currentPCMFrame, NULL);
@@ -58995,7 +60116,7 @@ DRFLAC_API drflac_bool32 drflac_next_cuesheet_track(drflac_cuesheet_track_iterat
     }
     return DRFLAC_TRUE;
 }
-#if defined(__GNUC__)
+#if defined(__clang__) || (defined(__GNUC__) && (__GNUC__ > 4 || (__GNUC__ == 4 && __GNUC_MINOR__ >= 6)))
     #pragma GCC diagnostic pop
 #endif
 #endif
@@ -59175,6 +60296,8 @@ static __inline__ __attribute__((always_inline)) drmp3_int32 drmp3_clip_int16_ar
     __asm__ ("ssat %0, #16, %1" : "=r"(x) : "r"(a));
     return x;
 }
+#else
+#define DRMP3_HAVE_ARMV6 0
 #endif
 typedef struct
 {
@@ -60929,6 +62052,8 @@ static drmp3_uint32 drmp3_decode_next_frame_ex__callbacks(drmp3* pMP3, drmp3d_sa
             pMP3->atEnd = DRMP3_TRUE;
             return 0;
         }
+        DRMP3_ASSERT(pMP3->pData != NULL);
+        DRMP3_ASSERT(pMP3->dataCapacity > 0);
         pcmFramesRead = drmp3dec_decode_frame(&pMP3->decoder, pMP3->pData + pMP3->dataConsumed, (int)pMP3->dataSize, pPCMFrames, &info);
         if (info.frame_bytes > 0) {
             pMP3->dataConsumed += (size_t)info.frame_bytes;
@@ -62554,6 +63679,48 @@ The following miscellaneous changes have also been made.
 /*
 REVISION HISTORY
 ================
+v0.10.25 - 2020-11-15
+  - PulseAudio: Fix a bug where the stop callback isn't fired.
+  - WebAudio: Fix an error that occurs when Emscripten increases the size of it's heap.
+  - Custom Backends: Change the onContextInit and onDeviceInit callbacks to take a parameter which is a pointer to the config that was
+    passed into ma_context_init() and ma_device_init(). This replaces the deviceType parameter of onDeviceInit.
+  - Fix compilation warnings on older versions of GCC.
+
+v0.10.24 - 2020-11-10
+  - Fix a bug where initialization of a backend can fail due to some bad state being set from a prior failed attempt at initializing a
+    lower priority backend.
+
+v0.10.23 - 2020-11-09
+  - AAudio: Add support for configuring a playback stream's usage.
+  - Fix a compilation error when all built-in asynchronous backends are disabled at compile time.
+  - Fix compilation errors when compiling as C++.
+
+v0.10.22 - 2020-11-08
+  - Add support for custom backends.
+  - Add support for detecting default devices during device enumeration and with `ma_context_get_device_info()`.
+  - Refactor to the PulseAudio backend. This simplifies the implementation and fixes a capture bug.
+  - ALSA: Fix a bug in `ma_context_get_device_info()` where the PCM handle is left open in the event of an error.
+  - Core Audio: Further improvements to sample rate selection.
+  - Core Audio: Fix some bugs with capture mode.
+  - OpenSL: Add support for configuring stream types and recording presets.
+  - AAudio: Add support for configuring content types and input presets.
+  - Fix bugs in `ma_decoder_init_file*()` where the file handle is not closed after a decoding error.
+  - Fix some compilation warnings on GCC and Clang relating to the Speex resampler.
+  - Fix a compilation error for the Linux build when the ALSA and JACK backends are both disabled.
+  - Fix a compilation error for the BSD build.
+  - Fix some compilation errors on older versions of GCC.
+  - Add documentation for `MA_NO_RUNTIME_LINKING`.
+
+v0.10.21 - 2020-10-30
+  - Add ma_is_backend_enabled() and ma_get_enabled_backends() for retrieving enabled backends at run-time.
+  - WASAPI: Fix a copy and paste bug relating to loopback mode.
+  - Core Audio: Fix a bug when using multiple contexts.
+  - Core Audio: Fix a compilation warning.
+  - Core Audio: Improvements to sample rate selection.
+  - Core Audio: Improvements to format/channels/rate selection when requesting defaults.
+  - Core Audio: Add notes regarding the Apple notarization process.
+  - Fix some bugs due to null pointer dereferences.
+
 v0.10.20 - 2020-10-06
   - Fix build errors with UWP.
   - Minor documentation updates.

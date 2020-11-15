@@ -2031,12 +2031,12 @@ static Wave LoadMP3(const unsigned char *fileData, unsigned int fileSize)
 
     // Decode the entire MP3 file in one go
     unsigned long long int totalFrameCount = 0;
-    wave.data = drmp3_open_memory_and_read_f32(fileData, fileSize, &config, &totalFrameCount);
+    wave.data = drmp3_open_memory_and_read_pcm_frames_f32(fileData, fileSize, &config, &totalFrameCount, NULL);
 
     if (wave.data != NULL)
     {
-        wave.channels = config.outputChannels;
-        wave.sampleRate = config.outputSampleRate;
+        wave.channels = config.channels;
+        wave.sampleRate = config.sampleRate;
         wave.sampleCount = (int)totalFrameCount*wave.channels;
         wave.sampleSize = 32;
 
