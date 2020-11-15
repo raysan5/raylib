@@ -3753,7 +3753,12 @@ static void SetupFramebuffer(int width, int height)
     {
         // Required screen size is smaller than display size
         TRACELOG(LOG_INFO, "DISPLAY: Upscaling required: Screen size (%ix%i) smaller than display size (%ix%i)", CORE.Window.screen.width, CORE.Window.screen.height, CORE.Window.display.width, CORE.Window.display.height);
-
+        
+        if (CORE.Window.screen.width == 0 || CORE.Window.screen.height == 0) {
+            CORE.Window.screen.width = CORE.Window.display.width;
+            CORE.Window.screen.height = CORE.Window.display.height;
+        }
+        
         // Upscaling to fit display with border-bars
         float displayRatio = (float)CORE.Window.display.width/(float)CORE.Window.display.height;
         float screenRatio = (float)CORE.Window.screen.width/(float)CORE.Window.screen.height;
