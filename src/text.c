@@ -302,6 +302,9 @@ Font LoadFont(const char *fileName)
 #ifndef FONT_TTF_DEFAULT_FIRST_CHAR
     #define FONT_TTF_DEFAULT_FIRST_CHAR     32      // TTF font generation default first char for image sprite font (32-Space)
 #endif
+#ifndef FONT_TTF_DEFAULT_CHARS_PADDING
+    #define FONT_TTF_DEFAULT_CHARS_PADDING   4      // TTF font generation default chars padding
+#endif
 
     Font font = { 0 };
 
@@ -492,7 +495,9 @@ Font LoadFontFromMemory(const char *fileType, const unsigned char *fileData, int
 
         if (font.chars != NULL)
         {
-            Image atlas = GenImageFontAtlas(font.chars, &font.recs, font.charsCount, font.baseSize, 2, 0);
+            font.charsPadding = FONT_TTF_DEFAULT_CHARS_PADDING;
+            
+            Image atlas = GenImageFontAtlas(font.chars, &font.recs, font.charsCount, font.baseSize, FONT_TTF_DEFAULT_CHARS_PADDING, 0);
             font.texture = LoadTextureFromImage(atlas);
 
             // Update chars[i].image to use alpha, required to be used on ImageDrawText()
@@ -875,6 +880,11 @@ void DrawTextEx(Font font, const char *text, Vector2 position, float fontSize, f
                                   position.y + textOffsetY + font.chars[index].offsetY*scaleFactor,
                                   font.recs[index].width*scaleFactor,
                                   font.recs[index].height*scaleFactor };
+
+                // TODO: Consider chars padding 
+                // NOTE: It could be required for outline/glow shader effects
+                //Rectangle charRec = { font.recs[index].x - (float)font.charsPadding, font.recs[index].y - (float)font.charsPadding, 
+                //                      font.recs[index].width + 2.0f*font.charsPadding, font.recs[index].height + 2.0f*font.charsPadding };
 
                 DrawTexturePro(font.texture, font.recs[index], rec, (Vector2){ 0, 0 }, 0.0f, tint);
             }
