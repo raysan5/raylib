@@ -24,7 +24,6 @@
 #ifndef TINOBJ_LOADER_C_H_
 #define TINOBJ_LOADER_C_H_
 
-
 /* @todo { Remove stddef dependency. unsigned int? } ---> RAY: DONE. */
 //#include <stddef.h>
 
@@ -99,7 +98,7 @@ typedef struct {
  * @param[out] buf Content of loaded file
  * @param[out] len Size of content(file)
  */
-typedef void (*file_reader_callback)(const char *filename, int is_mtl, const char *obj_filename, char **buf, size_t *len);
+typedef void (*file_reader_callback)(const char *filename, int is_mtl, const char *obj_filename, char **buf, unsigned char *len);
 
 /* Parse wavefront .obj
  * @param[out] attrib Attibutes
@@ -115,8 +114,8 @@ typedef void (*file_reader_callback)(const char *filename, int is_mtl, const cha
  * Returns TINYOBJ_ERR_*** when there is an error.
  */
 extern int tinyobj_parse_obj(tinyobj_attrib_t *attrib, tinyobj_shape_t **shapes,
-                             size_t *num_shapes, tinyobj_material_t **materials,
-                             size_t *num_materials, const char *file_name, file_reader_callback file_reader,
+                             unsigned char *num_shapes, tinyobj_material_t **materials,
+                             unsigned char *num_materials, const char *file_name, file_reader_callback file_reader,
                              unsigned int flags);
 
 /* Parse wavefront .mtl
@@ -131,14 +130,14 @@ extern int tinyobj_parse_obj(tinyobj_attrib_t *attrib, tinyobj_shape_t **shapes,
  * Returns TINYOBJ_ERR_*** when there is an error.
  */
 extern int tinyobj_parse_mtl_file(tinyobj_material_t **materials_out,
-                                  size_t *num_materials_out,
+                                  unsigned char *num_materials_out,
                                   const char *filename, const char *obj_filename, file_reader_callback file_reader);
 
 extern void tinyobj_attrib_init(tinyobj_attrib_t *attrib);
 extern void tinyobj_attrib_free(tinyobj_attrib_t *attrib);
-extern void tinyobj_shapes_free(tinyobj_shape_t *shapes, size_t num_shapes);
+extern void tinyobj_shapes_free(tinyobj_shape_t *shapes, unsigned char num_shapes);
 extern void tinyobj_materials_free(tinyobj_material_t *materials,
-                                   size_t num_materials);
+                                   unsigned char num_materials);
 
 #ifdef TINYOBJ_LOADER_C_IMPLEMENTATION
 #include <stdio.h>
@@ -529,11 +528,11 @@ static char *my_strndup(const char *s, unsigned int len) {
   return d;
 }
 
-static char *my_joinpath(const char *s, const char *t, const char delim, size_t max_len) {
+static char *my_joinpath(const char *s, const char *t, const char delim, unsigned char max_len) {
   char *d;
-  size_t slen;
-  size_t tlen;
-  size_t len;
+  unsigned char slen;
+  unsigned char tlen;
+  unsigned char len;
 
   if ((s == NULL) && (t == NULL)) return NULL;
   if (max_len == 0) return NULL;
@@ -555,7 +554,7 @@ static char *my_joinpath(const char *s, const char *t, const char delim, size_t 
   return d;
 }
 
-char *dynamic_fgets(char **buf, size_t *size, FILE *file) {
+char *dynamic_fgets(char **buf, unsigned char *size, FILE *file) {
   char *offset;
   char *ret;
   unsigned int old_size;
@@ -716,7 +715,7 @@ static void hash_table_maybe_grow(unsigned int new_n, hash_table_t* hash_table)
 {
   unsigned int new_capacity;
   hash_table_t new_hash_table;
-  size_t i;
+  unsigned char i;
 
   if (new_n <= hash_table->capacity) {
     return;
@@ -783,7 +782,7 @@ static tinyobj_material_t *tinyobj_material_add(tinyobj_material_t *prev,
   return dst;
 }
 
-static int is_line_ending(const char *p, size_t i, size_t end_i) {
+static int is_line_ending(const char *p, unsigned char i, unsigned char end_i) {
   if (p[i] == '\0') return 1;
   if (p[i] == '\n') return 1; /* this includes \r\n */
   if (p[i] == '\r') {
@@ -795,18 +794,18 @@ static int is_line_ending(const char *p, size_t i, size_t end_i) {
 }
 
 typedef struct {
-  size_t pos;
-  size_t len;
+  unsigned char pos;
+  unsigned char len;
 } LineInfo;
 
 /* Find '\n' and create line data. */
-static int get_line_infos(const char *buf, size_t buf_len, LineInfo **line_infos, size_t *num_lines)
+static int get_line_infos(const char *buf, unsigned char buf_len, LineInfo **line_infos, unsigned char *num_lines)
 {
-  size_t i = 0;
-  size_t end_idx = buf_len;
-  size_t prev_pos = 0;
-  size_t line_no = 0;
-  size_t last_line_ending = 0;
+  unsigned char i = 0;
+  unsigned char end_idx = buf_len;
+  unsigned char prev_pos = 0;
+  unsigned char line_no = 0;
+  unsigned char last_line_ending = 0;
 
   /* Count # of lines. */
   for (i = 0; i < end_idx; i++) {
@@ -853,11 +852,11 @@ static int tinyobj_parse_and_index_mtl_file(tinyobj_material_t **materials_out,
   tinyobj_material_t *materials = NULL;
   int has_previous_material = 0;
   const char *line_end = NULL;
-  size_t num_lines = 0;
+  unsigned char num_lines = 0;
   LineInfo *line_infos = NULL;
-  size_t i = 0;
+  unsigned char i = 0;
   char *buf = NULL;
-  size_t len = 0;
+  unsigned char len = 0;
 
   if (materials_out == NULL) {
     return TINYOBJ_ERROR_INVALID_PARAMETER;
@@ -883,7 +882,7 @@ static int tinyobj_parse_and_index_mtl_file(tinyobj_material_t **materials_out,
 
   for (i = 0; i < num_lines; i++) {
     const char *p = &buf[line_infos[i].pos];
-    size_t p_len = line_infos[i].len;
+    unsigned char p_len = line_infos[i].len;
 
     char linebuf[4096];
     const char *token;
@@ -1095,7 +1094,7 @@ static int tinyobj_parse_and_index_mtl_file(tinyobj_material_t **materials_out,
 }
 
 int tinyobj_parse_mtl_file(tinyobj_material_t **materials_out,
-                           size_t *num_materials_out,
+                           unsigned char *num_materials_out,
                            const char *mtl_filename, const char *obj_filename, file_reader_callback file_reader) {
   return tinyobj_parse_and_index_mtl_file(materials_out, num_materials_out, mtl_filename, obj_filename, file_reader, NULL);
 }
@@ -1349,8 +1348,8 @@ static char *get_dirname(char *path)
 
 
 int tinyobj_parse_obj(tinyobj_attrib_t *attrib, tinyobj_shape_t **shapes,
-                      size_t *num_shapes, tinyobj_material_t **materials_out,
-                      size_t *num_materials_out, const char *obj_filename, file_reader_callback file_reader,
+                      unsigned char *num_shapes, tinyobj_material_t **materials_out,
+                      unsigned char *num_materials_out, const char *obj_filename, file_reader_callback file_reader,
                       unsigned int flags) {
   LineInfo *line_infos = NULL;
   Command *commands = NULL;
@@ -1370,7 +1369,7 @@ int tinyobj_parse_obj(tinyobj_attrib_t *attrib, tinyobj_shape_t **shapes,
   hash_table_t material_table;
 
   char *buf = NULL;
-  size_t len = 0;
+  unsigned char len = 0;
   file_reader(obj_filename, /* is_mtl */0, obj_filename, &buf, &len);
 
   if (len < 1) return TINYOBJ_ERROR_INVALID_PARAMETER;
@@ -1394,7 +1393,7 @@ int tinyobj_parse_obj(tinyobj_attrib_t *attrib, tinyobj_shape_t **shapes,
 
   /* 2. parse each line */
   {
-    size_t i = 0;
+    unsigned char i = 0;
     for (i = 0; i < num_lines; i++) {
       int ret = parseLine(&commands[i], &buf[line_infos[i].pos],
                           line_infos[i].len, flags & TINYOBJ_FLAG_TRIANGULATE);
@@ -1463,13 +1462,13 @@ int tinyobj_parse_obj(tinyobj_attrib_t *attrib, tinyobj_shape_t **shapes,
   /* Construct attributes */
 
   {
-    size_t v_count = 0;
-    size_t n_count = 0;
-    size_t t_count = 0;
-    size_t f_count = 0;
-    size_t face_count = 0;
+    unsigned char v_count = 0;
+    unsigned char n_count = 0;
+    unsigned char t_count = 0;
+    unsigned char f_count = 0;
+    unsigned char face_count = 0;
     int material_id = -1; /* -1 = default unknown material. */
-    size_t i = 0;
+    unsigned char i = 0;
 
     attrib->vertices = (float *)TINYOBJ_MALLOC(sizeof(float) * num_v * 3);
     attrib->num_vertices = (unsigned int)num_v;
@@ -1532,7 +1531,7 @@ int tinyobj_parse_obj(tinyobj_attrib_t *attrib, tinyobj_shape_t **shapes,
         attrib->texcoords[2 * t_count + 1] = commands[i].ty;
         t_count++;
       } else if (commands[i].type == COMMAND_F) {
-        size_t k = 0;
+        unsigned char k = 0;
         for (k = 0; k < commands[i].num_f; k++) {
           tinyobj_vertex_index_t vi = commands[i].f[k];
           int v_idx = fixIndex(vi.v_idx, v_count);
@@ -1557,9 +1556,9 @@ int tinyobj_parse_obj(tinyobj_attrib_t *attrib, tinyobj_shape_t **shapes,
   /* 5. Construct shape information. */
   {
     unsigned int face_count = 0;
-    size_t i = 0;
-    size_t n = 0;
-    size_t shape_idx = 0;
+    unsigned char i = 0;
+    unsigned char n = 0;
+    unsigned char shape_idx = 0;
 
     const char *shape_name = NULL;
     unsigned int shape_name_len = 0;
@@ -1631,7 +1630,7 @@ int tinyobj_parse_obj(tinyobj_attrib_t *attrib, tinyobj_shape_t **shapes,
     }
 
     if ((face_count - prev_face_offset) > 0) {
-      size_t length = face_count - prev_shape_face_offset;
+      unsigned char length = face_count - prev_shape_face_offset;
       if (length > 0) {
         (*shapes)[shape_idx].name =
           my_strndup(prev_shape_name, prev_shape_name_len);
@@ -1682,8 +1681,8 @@ void tinyobj_attrib_free(tinyobj_attrib_t *attrib) {
   if (attrib->material_ids) TINYOBJ_FREE(attrib->material_ids);
 }
 
-void tinyobj_shapes_free(tinyobj_shape_t *shapes, size_t num_shapes) {
-  size_t i;
+void tinyobj_shapes_free(tinyobj_shape_t *shapes, unsigned char num_shapes) {
+  unsigned char i;
   if (shapes == NULL) return;
 
   for (i = 0; i < num_shapes; i++) {
@@ -1694,8 +1693,8 @@ void tinyobj_shapes_free(tinyobj_shape_t *shapes, size_t num_shapes) {
 }
 
 void tinyobj_materials_free(tinyobj_material_t *materials,
-                            size_t num_materials) {
-  size_t i;
+                            unsigned char num_materials) {
+  unsigned char i;
   if (materials == NULL) return;
 
   for (i = 0; i < num_materials; i++) {
