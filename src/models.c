@@ -898,10 +898,8 @@ Material *LoadMaterials(const char *fileName, int *materialCount)
     {
         tinyobj_material_t *mats = NULL;
 
-        int result = tinyobj_parse_mtl_file(&mats, &count, fileName);
-        if (result != TINYOBJ_SUCCESS) {
-            TRACELOG(LOG_WARNING, "MATERIAL: [%s] Failed to parse materials file", fileName);
-        }
+        int result = tinyobj_parse_mtl_file(&mats, &count, fileName, NULL, NULL);
+        if (result != TINYOBJ_SUCCESS) TRACELOG(LOG_WARNING, "MATERIAL: [%s] Failed to parse materials file", fileName);
 
         // TODO: Process materials to return
 
@@ -2999,8 +2997,10 @@ static Model LoadOBJ(const char *fileName)
         // count the faces for each material
         int* matFaces = RL_CALLOC(meshCount, sizeof(int));
 
-        for (int mi=0; mi<meshCount; mi++) {
-            for (int fi=0; fi<meshes[mi].length; fi++) {
+        for (int mi=0; mi<meshCount; mi++)
+        {
+            for (int fi=0; fi<meshes[mi].length; fi++)
+            {
                 int idx = attrib.material_ids[meshes[mi].face_offset + fi];
                 if (idx == -1) idx = 0; // for no material face (which could be the whole model)
                 matFaces[idx]++;
@@ -3078,11 +3078,8 @@ static Model LoadOBJ(const char *fileName)
 
             model.materials[m].maps[MAP_DIFFUSE].texture = GetTextureDefault();     // Get default texture, in case no texture is defined
 
-            if (materials[m].diffuse_texname != NULL) {
-                model.materials[m].maps[MAP_DIFFUSE].texture = LoadTexture(materials[m].diffuse_texname);  //char *diffuse_texname; // map_Kd
-            } else {
-                model.materials[m].maps[MAP_DIFFUSE].texture = GetTextureDefault();
-            }
+            if (materials[m].diffuse_texname != NULL) model.materials[m].maps[MAP_DIFFUSE].texture = LoadTexture(materials[m].diffuse_texname);  //char *diffuse_texname; // map_Kd
+            else model.materials[m].maps[MAP_DIFFUSE].texture = GetTextureDefault();
 
             model.materials[m].maps[MAP_DIFFUSE].color = (Color){ (unsigned char)(materials[m].diffuse[0]*255.0f), (unsigned char)(materials[m].diffuse[1]*255.0f), (unsigned char)(materials[m].diffuse[2]*255.0f), 255 }; //float diffuse[3];
             model.materials[m].maps[MAP_DIFFUSE].value = 0.0f;

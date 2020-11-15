@@ -114,8 +114,8 @@ typedef void (*file_reader_callback)(const char *filename, int is_mtl, const cha
  * Returns TINYOBJ_ERR_*** when there is an error.
  */
 extern int tinyobj_parse_obj(tinyobj_attrib_t *attrib, tinyobj_shape_t **shapes,
-                             unsigned char *num_shapes, tinyobj_material_t **materials,
-                             unsigned char *num_materials, const char *file_name, file_reader_callback file_reader,
+                             unsigned int *num_shapes, tinyobj_material_t **materials,
+                             unsigned int *num_materials, const char *file_name, file_reader_callback file_reader,
                              unsigned int flags);
 
 /* Parse wavefront .mtl
@@ -130,7 +130,7 @@ extern int tinyobj_parse_obj(tinyobj_attrib_t *attrib, tinyobj_shape_t **shapes,
  * Returns TINYOBJ_ERR_*** when there is an error.
  */
 extern int tinyobj_parse_mtl_file(tinyobj_material_t **materials_out,
-                                  unsigned char *num_materials_out,
+                                  unsigned int *num_materials_out,
                                   const char *filename, const char *obj_filename, file_reader_callback file_reader);
 
 extern void tinyobj_attrib_init(tinyobj_attrib_t *attrib);
@@ -799,7 +799,7 @@ typedef struct {
 } LineInfo;
 
 /* Find '\n' and create line data. */
-static int get_line_infos(const char *buf, unsigned char buf_len, LineInfo **line_infos, unsigned char *num_lines)
+static int get_line_infos(const char *buf, unsigned char buf_len, LineInfo **line_infos, unsigned int *num_lines)
 {
   unsigned char i = 0;
   unsigned char end_idx = buf_len;
@@ -852,7 +852,7 @@ static int tinyobj_parse_and_index_mtl_file(tinyobj_material_t **materials_out,
   tinyobj_material_t *materials = NULL;
   int has_previous_material = 0;
   const char *line_end = NULL;
-  unsigned char num_lines = 0;
+  unsigned int num_lines = 0;
   LineInfo *line_infos = NULL;
   unsigned char i = 0;
   char *buf = NULL;
@@ -1094,7 +1094,7 @@ static int tinyobj_parse_and_index_mtl_file(tinyobj_material_t **materials_out,
 }
 
 int tinyobj_parse_mtl_file(tinyobj_material_t **materials_out,
-                           unsigned char *num_materials_out,
+                           unsigned int *num_materials_out,
                            const char *mtl_filename, const char *obj_filename, file_reader_callback file_reader) {
   return tinyobj_parse_and_index_mtl_file(materials_out, num_materials_out, mtl_filename, obj_filename, file_reader, NULL);
 }
@@ -1348,8 +1348,8 @@ static char *get_dirname(char *path)
 
 
 int tinyobj_parse_obj(tinyobj_attrib_t *attrib, tinyobj_shape_t **shapes,
-                      unsigned char *num_shapes, tinyobj_material_t **materials_out,
-                      unsigned char *num_materials_out, const char *obj_filename, file_reader_callback file_reader,
+                      unsigned int *num_shapes, tinyobj_material_t **materials_out,
+                      unsigned int *num_materials_out, const char *obj_filename, file_reader_callback file_reader,
                       unsigned int flags) {
   LineInfo *line_infos = NULL;
   Command *commands = NULL;
