@@ -3485,13 +3485,15 @@ static bool InitGraphicsDevice(int width, int height)
     TRACELOG(LOG_TRACE, "DISPLAY: %d EGL configs available", numConfigs);
 
     EGLConfig *configs = calloc(numConfigs, sizeof(*configs));
-    if (!configs) {
+    if (!configs)
+    {
         TRACELOG(LOG_WARNING, "DISPLAY: Failed to get memory for EGL configs");
         return false;
     }
 
     EGLint matchingNumConfigs = 0;
-    if (!eglGetConfigs(CORE.Window.device, configs, numConfigs, &matchingNumConfigs)) {
+    if (!eglGetConfigs(CORE.Window.device, configs, numConfigs, &matchingNumConfigs))
+    {
         TRACELOG(LOG_WARNING, "DISPLAY: Failed to get EGL configs: 0x%x", eglGetError());
         free(configs);
         return false;
@@ -3508,13 +3510,17 @@ static bool InitGraphicsDevice(int width, int height)
 
     // find the EGL config that matches the previously setup GBM format
     int found = 0;
-    for (EGLint i = 0; i < matchingNumConfigs; ++i) {
+    for (EGLint i = 0; i < matchingNumConfigs; ++i)
+    {
         EGLint id = 0;
-        if (!eglGetConfigAttrib(CORE.Window.device, configs[i], EGL_NATIVE_VISUAL_ID, &id)) {
+        if (!eglGetConfigAttrib(CORE.Window.device, configs[i], EGL_NATIVE_VISUAL_ID, &id))
+        {
             TRACELOG(LOG_WARNING, "DISPLAY: Failed to get EGL config attribute: 0x%x", eglGetError());
             continue;
         }
-        if (GBM_FORMAT_ARGB8888 == id) {
+        
+        if (GBM_FORMAT_ARGB8888 == id)
+        {
             TRACELOG(LOG_TRACE, "DISPLAY: using EGL config %d", i);
             CORE.Window.config = configs[i];
             found = 1;
@@ -3615,11 +3621,8 @@ static bool InitGraphicsDevice(int width, int height)
     CORE.Window.surface = eglCreateWindowSurface(CORE.Window.device, CORE.Window.config, &CORE.Window.handle, NULL);
 
     const unsigned char *const renderer = glGetString(GL_RENDERER);
-    if (renderer) {
-        TRACELOG(LOG_INFO, "Renderer is: %s\n", renderer);
-    } else {
-        TRACELOG(LOG_WARNING, "failed to get renderer\n");
-    }
+    if (renderer) TRACELOG(LOG_INFO, "Renderer is: %s\n", renderer);
+    else TRACELOG(LOG_WARNING, "failed to get renderer\n");
     //---------------------------------------------------------------------------------
 #endif  // PLATFORM_RPI
 
@@ -3754,7 +3757,8 @@ static void SetupFramebuffer(int width, int height)
         // Required screen size is smaller than display size
         TRACELOG(LOG_INFO, "DISPLAY: Upscaling required: Screen size (%ix%i) smaller than display size (%ix%i)", CORE.Window.screen.width, CORE.Window.screen.height, CORE.Window.display.width, CORE.Window.display.height);
         
-        if (CORE.Window.screen.width == 0 || CORE.Window.screen.height == 0) {
+        if ((CORE.Window.screen.width == 0) || (CORE.Window.screen.height == 0))
+        {
             CORE.Window.screen.width = CORE.Window.display.width;
             CORE.Window.screen.height = CORE.Window.display.height;
         }
@@ -5824,7 +5828,8 @@ static int FindMatchingConnectorMode(const drmModeConnector *connector, const dr
 }
 
 // Search exactly matching DRM connector mode in connector's list
-static int FindExactConnectorMode(const drmModeConnector *connector, uint width, uint height, uint fps, bool allowInterlaced) {
+static int FindExactConnectorMode(const drmModeConnector *connector, uint width, uint height, uint fps, bool allowInterlaced)
+{
     TRACELOG(LOG_TRACE, "searching exact connector mode for %ux%u@%u, selecting an interlaced mode is allowed: %s", width, height, fps, allowInterlaced ? "yes" : "no");
 
     if (NULL == connector) return -1;
@@ -5853,7 +5858,8 @@ static int FindExactConnectorMode(const drmModeConnector *connector, uint width,
 }
 
 // Search the nearest matching DRM connector mode in connector's list
-static int FindNearestConnectorMode(const drmModeConnector *connector, uint width, uint height, uint fps, bool allowInterlaced) {
+static int FindNearestConnectorMode(const drmModeConnector *connector, uint width, uint height, uint fps, bool allowInterlaced)
+{
     TRACELOG(LOG_TRACE, "searching nearest connector mode for %ux%u@%u, selecting an interlaced mode is allowed: %s", width, height, fps, allowInterlaced ? "yes" : "no");
 
     if (NULL == connector) return -1;
@@ -5908,6 +5914,7 @@ static int FindNearestConnectorMode(const drmModeConnector *connector, uint widt
     }
 
     TRACELOG(LOG_TRACE, "returning nearest mode: %d", nearestIndex);
+
     return nearestIndex;
 }
 #endif
