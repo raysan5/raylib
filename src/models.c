@@ -2961,24 +2961,22 @@ static Model LoadOBJ(const char *fileName)
     tinyobj_material_t *materials = NULL;
     unsigned int materialCount = 0;
 
-    char *fileData = LoadFileText(fileName);
+    //char *fileData = LoadFileText(fileName);
 
-    if (fileData != NULL)
+    //if (fileData != NULL)
     {
-        unsigned int dataSize = (unsigned int)strlen(fileData);
+        //unsigned int dataSize = (unsigned int)strlen(fileData);
         char currentDir[1024] = { 0 };
         strcpy(currentDir, GetWorkingDirectory());
         chdir(GetDirectoryPath(fileName));
 
         unsigned int flags = TINYOBJ_FLAG_TRIANGULATE;
-        int ret = tinyobj_parse_obj(&attrib, &meshes, &meshCount, &materials, &materialCount, fileData, dataSize, flags);
+        int ret = tinyobj_parse_obj(&attrib, &meshes, &meshCount, &materials, &materialCount, fileName, NULL, flags);
 
         if (ret != TINYOBJ_SUCCESS) TRACELOG(LOG_WARNING, "MODEL: [%s] Failed to load OBJ data", fileName);
         else TRACELOG(LOG_INFO, "MODEL: [%s] OBJ data loaded successfully: %i meshes / %i materials", fileName, meshCount, materialCount);
 
-
         model.meshCount = materialCount;
-
 
         // Init model materials array
         if (materialCount > 0)
@@ -2986,7 +2984,9 @@ static Model LoadOBJ(const char *fileName)
             model.materialCount = materialCount;
             model.materials = (Material *)RL_CALLOC(model.materialCount, sizeof(Material));
             TraceLog(LOG_INFO, "MODEL: model has %i material meshes", materialCount);
-        } else {
+        } 
+        else
+        {
             model.meshCount = 1;
             TraceLog(LOG_INFO, "MODEL: No materials, putting all meshes in a default material");
         }
@@ -2995,11 +2995,11 @@ static Model LoadOBJ(const char *fileName)
         model.meshMaterial = (int *)RL_CALLOC(model.meshCount, sizeof(int));
 
         // count the faces for each material
-        int* matFaces = RL_CALLOC(meshCount, sizeof(int));
+        int *matFaces = RL_CALLOC(meshCount, sizeof(int));
 
-        for (int mi=0; mi<meshCount; mi++)
+        for (int mi = 0; mi < meshCount; mi++)
         {
-            for (int fi=0; fi<meshes[mi].length; fi++)
+            for (int fi = 0; fi < meshes[mi].length; fi++)
             {
                 int idx = attrib.material_ids[meshes[mi].face_offset + fi];
                 if (idx == -1) idx = 0; // for no material face (which could be the whole model)
@@ -3012,13 +3012,13 @@ static Model LoadOBJ(const char *fileName)
 
         // running counts / indexes for each material mesh as we are
         // building them at the same time
-        int* vCount = RL_CALLOC(model.meshCount, sizeof(int));
-        int* vtCount = RL_CALLOC(model.meshCount, sizeof(int));
-        int* vnCount = RL_CALLOC(model.meshCount, sizeof(int));
-        int* faceCount = RL_CALLOC(model.meshCount, sizeof(int));
+        int *vCount = RL_CALLOC(model.meshCount, sizeof(int));
+        int *vtCount = RL_CALLOC(model.meshCount, sizeof(int));
+        int *vnCount = RL_CALLOC(model.meshCount, sizeof(int));
+        int *faceCount = RL_CALLOC(model.meshCount, sizeof(int));
 
         // allocate space for each of the material meshes
-        for (int mi=0; mi<model.meshCount; mi++)
+        for (int mi = 0; mi < model.meshCount; mi++)
         {
             model.meshes[mi].vertexCount = matFaces[mi] * 3;
             model.meshes[mi].triangleCount = matFaces[mi];
@@ -3034,6 +3034,7 @@ static Model LoadOBJ(const char *fileName)
         {
             int mm = attrib.material_ids[af];   // mesh material for this face
             if (mm == -1) { mm = 0; }           // no material object..
+            
             // Get indices for the face
             tinyobj_vertex_index_t idx0 = attrib.faces[3 * af + 0];
             tinyobj_vertex_index_t idx1 = attrib.faces[3 * af + 1];
@@ -3071,9 +3072,6 @@ static Model LoadOBJ(const char *fileName)
         {
             // Init material to default
             // NOTE: Uses default shader, which only supports MAP_DIFFUSE
-
-            // (codifies)  TODO my lighting shader should support at least
-            // diffuse AND specular ...
             model.materials[m] = LoadMaterialDefault();
 
             model.materials[m].maps[MAP_DIFFUSE].texture = GetTextureDefault();     // Get default texture, in case no texture is defined
@@ -3101,7 +3099,7 @@ static Model LoadOBJ(const char *fileName)
         tinyobj_shapes_free(meshes, meshCount);
         tinyobj_materials_free(materials, materialCount);
 
-        RL_FREE(fileData);
+        //RL_FREE(fileData);
 
         RL_FREE(vCount);
         RL_FREE(vtCount);
