@@ -1149,7 +1149,7 @@ Music LoadMusicStream(const char *fileName)
 #if defined(SUPPORT_FILEFORMAT_FLAC)
     else if (IsFileExtension(fileName, ".flac"))
     {
-        music.ctxData = drflac_open_file(fileName);
+        music.ctxData = drflac_open_file(fileName, NULL);
 
         if (music.ctxData != NULL)
         {
@@ -1157,7 +1157,7 @@ Music LoadMusicStream(const char *fileName)
             drflac *ctxFlac = (drflac *)music.ctxData;
 
             music.stream = InitAudioStream(ctxFlac->sampleRate, ctxFlac->bitsPerSample, ctxFlac->channels);
-            music.sampleCount = (unsigned int)ctxFlac->totalSampleCount;
+            music.sampleCount = (unsigned int)ctxFlac->totalPCMFrameCount;
             music.looping = true;   // Looping enabled by default
             musicLoaded = true;
         }
@@ -1239,7 +1239,7 @@ Music LoadMusicStream(const char *fileName)
         else if (music.ctxType == MUSIC_AUDIO_OGG) stb_vorbis_close((stb_vorbis *)music.ctxData);
     #endif
     #if defined(SUPPORT_FILEFORMAT_FLAC)
-        else if (music.ctxType == MUSIC_AUDIO_FLAC) drflac_free((drflac *)music.ctxData);
+        else if (music.ctxType == MUSIC_AUDIO_FLAC) drflac_free((drflac *)music.ctxData, NULL);
     #endif
     #if defined(SUPPORT_FILEFORMAT_MP3)
         else if (music.ctxType == MUSIC_AUDIO_MP3) { drmp3_uninit((drmp3 *)music.ctxData); RL_FREE(music.ctxData); }
@@ -1279,7 +1279,7 @@ void UnloadMusicStream(Music music)
     else if (music.ctxType == MUSIC_AUDIO_OGG) stb_vorbis_close((stb_vorbis *)music.ctxData);
 #endif
 #if defined(SUPPORT_FILEFORMAT_FLAC)
-    else if (music.ctxType == MUSIC_AUDIO_FLAC) drflac_free((drflac *)music.ctxData);
+    else if (music.ctxType == MUSIC_AUDIO_FLAC) drflac_free((drflac *)music.ctxData, NULL);
 #endif
 #if defined(SUPPORT_FILEFORMAT_MP3)
     else if (music.ctxType == MUSIC_AUDIO_MP3) { drmp3_uninit((drmp3 *)music.ctxData); RL_FREE(music.ctxData); }
@@ -2006,7 +2006,7 @@ static Wave LoadFLAC(const unsigned char *fileData, unsigned int fileSize)
 
     // Decode the entire FLAC file in one go
     unsigned long long int totalSampleCount = 0;
-    wave.data = drflac_open_memory_and_read_pcm_frames_s16(fileData, fileSize, &wave.channels, &wave.sampleRate, &totalSampleCount);
+    wave.data = drflac_open_memory_and_read_pcm_frames_s16(fileData, fileSize, &wave.channels, &wave.sampleRate, &totalSampleCount, NULL);
 
     if (wave.data != NULL)
     {
