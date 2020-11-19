@@ -1070,7 +1070,7 @@ Image ImageText(const char *text, int fontSize, Color color)
 {
     int defaultFontSize = 10;   // Default Font chars height in pixel
     if (fontSize < defaultFontSize) fontSize = defaultFontSize;
-    int spacing = fontSize / defaultFontSize;
+    int spacing = fontSize/defaultFontSize;
 
     Image imText = ImageTextEx(GetFontDefault(), text, (float)fontSize, (float)spacing, color);
 
@@ -3231,14 +3231,14 @@ void DrawTextureNPatch(Texture2D texture, NPatchInfo nPatchInfo, Rectangle destR
         if (patchWidth <= (leftBorder + rightBorder) && nPatchInfo.type != NPT_3PATCH_VERTICAL)
         {
             drawCenter = false;
-            leftBorder = (leftBorder / (leftBorder + rightBorder)) * patchWidth;
+            leftBorder = (leftBorder/(leftBorder + rightBorder))*patchWidth;
             rightBorder = patchWidth - leftBorder;
         }
         // adjust the lateral (top and bottom) border heights in case patchHeight < texture.height
         if (patchHeight <= (topBorder + bottomBorder) && nPatchInfo.type != NPT_3PATCH_HORIZONTAL)
         {
             drawMiddle = false;
-            topBorder = (topBorder / (topBorder + bottomBorder)) * patchHeight;
+            topBorder = (topBorder/(topBorder + bottomBorder))*patchHeight;
             bottomBorder = patchHeight - topBorder;
         }
 
@@ -3253,14 +3253,14 @@ void DrawTextureNPatch(Texture2D texture, NPatchInfo nPatchInfo, Rectangle destR
         vertD.y = patchHeight;                      // outer bottom
 
         Vector2 coordA, coordB, coordC, coordD;
-        coordA.x = nPatchInfo.sourceRec.x / width;
-        coordA.y = nPatchInfo.sourceRec.y / height;
-        coordB.x = (nPatchInfo.sourceRec.x + leftBorder) / width;
-        coordB.y = (nPatchInfo.sourceRec.y + topBorder) / height;
-        coordC.x = (nPatchInfo.sourceRec.x + nPatchInfo.sourceRec.width  - rightBorder) / width;
-        coordC.y = (nPatchInfo.sourceRec.y + nPatchInfo.sourceRec.height - bottomBorder) / height;
-        coordD.x = (nPatchInfo.sourceRec.x + nPatchInfo.sourceRec.width)  / width;
-        coordD.y = (nPatchInfo.sourceRec.y + nPatchInfo.sourceRec.height) / height;
+        coordA.x = nPatchInfo.sourceRec.x/width;
+        coordA.y = nPatchInfo.sourceRec.y/height;
+        coordB.x = (nPatchInfo.sourceRec.x + leftBorder)/width;
+        coordB.y = (nPatchInfo.sourceRec.y + topBorder)/height;
+        coordC.x = (nPatchInfo.sourceRec.x + nPatchInfo.sourceRec.width  - rightBorder)/width;
+        coordC.y = (nPatchInfo.sourceRec.y + nPatchInfo.sourceRec.height - bottomBorder)/height;
+        coordD.x = (nPatchInfo.sourceRec.x + nPatchInfo.sourceRec.width)/width;
+        coordD.y = (nPatchInfo.sourceRec.y + nPatchInfo.sourceRec.height)/height;
 
         rlEnableTexture(texture.id);
 
@@ -3271,7 +3271,7 @@ void DrawTextureNPatch(Texture2D texture, NPatchInfo nPatchInfo, Rectangle destR
 
             rlBegin(RL_QUADS);
                 rlColor4ub(tint.r, tint.g, tint.b, tint.a);
-                rlNormal3f(0.0f, 0.0f, 1.0f);                          // Normal vector pointing towards viewer
+                rlNormal3f(0.0f, 0.0f, 1.0f);               // Normal vector pointing towards viewer
 
                 if (nPatchInfo.type == NPT_9PATCH)
                 {
