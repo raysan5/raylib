@@ -1,6 +1,6 @@
 /**********************************************************************************************
 *
-*   raudio - A simple and easy-to-use audio library based on miniaudio
+*   raudio v1.0 - A simple and easy-to-use audio library based on miniaudio
 *
 *   FEATURES:
 *       - Manage audio device (init/close)

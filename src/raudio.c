@@ -1,6 +1,6 @@
 /**********************************************************************************************
 *
-*   raudio - A simple and easy-to-use audio library based on miniaudio
+*   raudio v1.0 - A simple and easy-to-use audio library based on miniaudio
 *
 *   FEATURES:
 *       - Manage audio device (init/close)
@@ -824,7 +824,7 @@ void ExportWave(Wave wave, const char *fileName)
     {
         // Export raw sample data (without header)
         // NOTE: It's up to the user to track wave parameters
-        SaveFileData(fileName, wave.data, wave.sampleCount*wave.channels*wave.sampleSize/8);
+        SaveFileData(fileName, wave.data, wave.sampleCount*wave.sampleSize/8);
         success = true;
     }
 
@@ -1007,10 +1007,10 @@ void SetSoundPitch(Sound sound, float pitch)
 // Convert wave data to desired format
 void WaveFormat(Wave *wave, int sampleRate, int sampleSize, int channels)
 {
-    ma_format formatIn  = ((wave->sampleSize == 8)? ma_format_u8 : ((wave->sampleSize == 16)? ma_format_s16 : ma_format_f32));
-    ma_format formatOut = ((      sampleSize == 8)? ma_format_u8 : ((      sampleSize == 16)? ma_format_s16 : ma_format_f32));
+    ma_format formatIn = ((wave->sampleSize == 8)? ma_format_u8 : ((wave->sampleSize == 16)? ma_format_s16 : ma_format_f32));
+    ma_format formatOut = ((sampleSize == 8)? ma_format_u8 : ((sampleSize == 16)? ma_format_s16 : ma_format_f32));
 
-    ma_uint32 frameCountIn = wave->sampleCount;  // Is wave->sampleCount actually the frame count? That terminology needs to change, if so.
+    ma_uint32 frameCountIn = wave->sampleCount/wave->channels;
 
     ma_uint32 frameCount = (ma_uint32)ma_convert_frames(NULL, 0, formatOut, channels, sampleRate, NULL, frameCountIn, formatIn, wave->channels, wave->sampleRate);
     if (frameCount == 0)
@@ -1028,7 +1028,7 @@ void WaveFormat(Wave *wave, int sampleRate, int sampleSize, int channels)
         return;
     }
 
-    wave->sampleCount = frameCount;
+    wave->sampleCount = frameCount*channels;
     wave->sampleSize = sampleSize;
     wave->sampleRate = sampleRate;
     wave->channels = channels;
@@ -1041,12 +1041,12 @@ Wave WaveCopy(Wave wave)
 {
     Wave newWave = { 0 };
 
-    newWave.data = RL_MALLOC(wave.sampleCount*wave.sampleSize/8*wave.channels);
+    newWave.data = RL_MALLOC(wave.sampleCount*wave.sampleSize/8);
 
     if (newWave.data != NULL)
     {
         // NOTE: Size must be provided in bytes
-        memcpy(newWave.data, wave.data, wave.sampleCount*wave.channels*wave.sampleSize/8);
+        memcpy(newWave.data, wave.data, wave.sampleCount*wave.sampleSize/8);
 
         newWave.sampleCount = wave.sampleCount;
         newWave.sampleRate = wave.sampleRate;
@@ -1066,9 +1066,9 @@ void WaveCrop(Wave *wave, int initSample, int finalSample)
     {
         int sampleCount = finalSample - initSample;
 
-        void *data = RL_MALLOC(sampleCount*wave->sampleSize/8*wave->channels);
+        void *data = RL_MALLOC(sampleCount*wave->sampleSize/8);
 
-        memcpy(data, (unsigned char *)wave->data + (initSample*wave->channels*wave->sampleSize/8), sampleCount*wave->channels*wave->sampleSize/8);
+        memcpy(data, (unsigned char *)wave->data + (initSample*wave->channels*wave->sampleSize/8), sampleCount*wave->sampleSize/8);
 
         RL_FREE(wave->data);
         wave->data = data;
@@ -1080,16 +1080,15 @@ void WaveCrop(Wave *wave, int initSample, int finalSample)
 // NOTE: Returned sample values are normalized to range [-1..1]
 float *GetWaveData(Wave wave)
 {
-    float *samples = (float *)RL_MALLOC(wave.sampleCount*wave.channels*sizeof(float));
+    float *samples = (float *)RL_MALLOC(wave.sampleCount*sizeof(float));
 
+    // NOTE: sampleCount is the total number of interlaced samples (including channels)
+    
     for (unsigned int i = 0; i < wave.sampleCount; i++)
     {
-        for (unsigned int j = 0; j < wave.channels; j++)
-        {
-            if (wave.sampleSize == 8) samples[wave.channels*i + j] = (float)(((unsigned char *)wave.data)[wave.channels*i + j] - 127)/256.0f;
-            else if (wave.sampleSize == 16) samples[wave.channels*i + j] = (float)((short *)wave.data)[wave.channels*i + j]/32767.0f;
-            else if (wave.sampleSize == 32) samples[wave.channels*i + j] = ((float *)wave.data)[wave.channels*i + j];
-        }
+            if (wave.sampleSize == 8) samples[i] = (float)(((unsigned char *)wave.data)[i] - 127)/256.0f;
+            else if (wave.sampleSize == 16) samples[i] = (float)(((short *)wave.data)[i])/32767.0f;
+            else if (wave.sampleSize == 32) samples[i] = ((float *)wave.data)[i];
     }
 
     return samples;
@@ -1140,6 +1139,8 @@ Music LoadMusicStream(const char *fileName)
 
             // OGG bit rate defaults to 16 bit, it's enough for compressed format
             music.stream = InitAudioStream(info.sample_rate, 16, info.channels);
+            
+            // WARNING: It seems this function returns length in frames, not samples, so we multiply by channels
             music.sampleCount = (unsigned int)stb_vorbis_stream_length_in_samples((stb_vorbis *)music.ctxData)*info.channels;
             music.looping = true;   // Looping enabled by default
             musicLoaded = true;
@@ -1157,7 +1158,7 @@ Music LoadMusicStream(const char *fileName)
             drflac *ctxFlac = (drflac *)music.ctxData;
 
             music.stream = InitAudioStream(ctxFlac->sampleRate, ctxFlac->bitsPerSample, ctxFlac->channels);
-            music.sampleCount = (unsigned int)ctxFlac->totalPCMFrameCount;
+            music.sampleCount = (unsigned int)ctxFlac->totalPCMFrameCount*ctxFlac->channels;
             music.looping = true;   // Looping enabled by default
             musicLoaded = true;
         }
@@ -1196,7 +1197,7 @@ Music LoadMusicStream(const char *fileName)
 
             // NOTE: Only stereo is supported for XM
             music.stream = InitAudioStream(48000, 16, 2);
-            music.sampleCount = (unsigned int)jar_xm_get_remaining_samples(ctxXm)*2;
+            music.sampleCount = (unsigned int)jar_xm_get_remaining_samples(ctxXm)*2;    // 2 channels
             music.looping = true;   // Looping enabled by default
             jar_xm_reset(ctxXm);   // make sure we start at the beginning of the song
             musicLoaded = true;
@@ -1219,7 +1220,7 @@ Music LoadMusicStream(const char *fileName)
 
             // NOTE: Only stereo is supported for MOD
             music.stream = InitAudioStream(48000, 16, 2);
-            music.sampleCount = (unsigned int)jar_mod_max_samples(ctxMod)*2;
+            music.sampleCount = (unsigned int)jar_mod_max_samples(ctxMod)*2;    // 2 channels
             music.looping = true;   // Looping enabled by default
             musicLoaded = true;
 
@@ -1493,7 +1494,7 @@ float GetMusicTimePlayed(Music music)
     {
         //ma_uint32 frameSizeInBytes = ma_get_bytes_per_sample(music.stream.buffer->dsp.formatConverterIn.config.formatIn)*music.stream.buffer->dsp.formatConverterIn.config.channels;
         unsigned int samplesPlayed = music.stream.buffer->totalFramesProcessed*music.stream.channels;
-        secondsPlayed = (float)samplesPlayed / (music.stream.sampleRate*music.stream.channels);
+        secondsPlayed = (float)samplesPlayed/(music.stream.sampleRate*music.stream.channels);
     }
 
     return secondsPlayed;
@@ -1983,10 +1984,10 @@ static Wave LoadOGG(const unsigned char *fileData, unsigned int fileSize)
         float totalSeconds = stb_vorbis_stream_length_in_seconds(oggData);
         if (totalSeconds > 10) TRACELOG(LOG_WARNING, "WAVE: OGG audio length larger than 10 seconds (%f sec.), that's a big file in memory, consider music streaming", totalSeconds);
 
-        wave.data = (short *)RL_MALLOC(wave.sampleCount*wave.channels*sizeof(short));
+        wave.data = (short *)RL_MALLOC(wave.sampleCount*sizeof(short));
 
         // NOTE: Returns the number of samples to process (be careful! we ask for number of shorts!)
-        stb_vorbis_get_samples_short_interleaved(oggData, info.channels, (short *)wave.data, wave.sampleCount*wave.channels);
+        stb_vorbis_get_samples_short_interleaved(oggData, info.channels, (short *)wave.data, wave.sampleCount);
         TRACELOG(LOG_INFO, "WAVE: OGG data loaded successfully (%i Hz, %i bit, %s)", wave.sampleRate, wave.sampleSize, (wave.channels == 1)? "Mono" : "Stereo");
 
         stb_vorbis_close(oggData);
@@ -2005,12 +2006,12 @@ static Wave LoadFLAC(const unsigned char *fileData, unsigned int fileSize)
     Wave wave = { 0 };
 
     // Decode the entire FLAC file in one go
-    unsigned long long int totalSampleCount = 0;
-    wave.data = drflac_open_memory_and_read_pcm_frames_s16(fileData, fileSize, &wave.channels, &wave.sampleRate, &totalSampleCount, NULL);
+    unsigned long long int totalFrameCount = 0;
+    wave.data = drflac_open_memory_and_read_pcm_frames_s16(fileData, fileSize, &wave.channels, &wave.sampleRate, &totalFrameCount, NULL);
 
     if (wave.data != NULL)
     {
-        wave.sampleCount = (unsigned int)totalSampleCount;
+        wave.sampleCount = (unsigned int)totalFrameCount*wave.channels;
         wave.sampleSize = 16;
 
         TRACELOG(LOG_INFO, "WAVE: FLAC data loaded successfully (%i Hz, %i bit, %s)", wave.sampleRate, wave.sampleSize, (wave.channels == 1)? "Mono" : "Stereo");
