@@ -62,7 +62,7 @@ jobs:
 
     # Setup MSBuild.exe path if required
     - name: Setup MSBuild
-      uses: microsoft/setup-msbuild@v1.0.1
+      uses: microsoft/setup-msbuild@v1.0.2
       if: matrix.compiler == 'msvc16'
 
     - name: Build Library (MinGW-w64)
