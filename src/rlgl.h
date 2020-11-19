@@ -1,6 +1,6 @@
 /**********************************************************************************************
 *
-*   rlgl v3.1.0 - raylib OpenGL abstraction layer
+*   rlgl v3.1 - raylib OpenGL abstraction layer
 *
 *   rlgl is a wrapper for multiple OpenGL versions (1.1, 2.1, 3.3 Core, ES 2.0) to
 *   pseudo-OpenGL 1.1 style functions (rlVertex, rlTranslate, rlRotate...).
