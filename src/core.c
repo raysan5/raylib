@@ -147,11 +147,11 @@
 #endif
 
 #if defined(SUPPORT_GIF_RECORDING)
-    #define RGIF_MALLOC RL_MALLOC
-    #define RGIF_FREE RL_FREE
+    //#define MSF_GIF_MALLOC RL_MALLOC
+    //#define MSF_GIF_FREE RL_FREE
 
-    #define RGIF_IMPLEMENTATION
-    #include "external/rgif.h"      // Support GIF recording
+    #define MSF_GIF_IMPL
+    #include "external/msf_gif.h"   // Support GIF recording
 #endif
 
 #include <stdlib.h>                 // Required for: srand(), rand(), atexit()
@@ -484,6 +484,7 @@ static int screenshotCounter = 0;           // Screenshots counter
 #if defined(SUPPORT_GIF_RECORDING)
 static int gifFramesCounter = 0;            // GIF frames counter
 static bool gifRecording = false;           // GIF recording state
+static MsfGifState gifState = { 0 };        // MSGIF context state
 #endif
 //-----------------------------------------------------------------------------------
 
@@ -788,7 +789,8 @@ void CloseWindow(void)
 #if defined(SUPPORT_GIF_RECORDING)
     if (gifRecording)
     {
-        GifEnd();
+        MsfGifResult result = msf_gif_end(&gifState);
+        msf_gif_free(result);
         gifRecording = false;
     }
 #endif
@@ -1521,9 +1523,9 @@ void EndDrawing(void)
         if ((gifFramesCounter%GIF_RECORD_FRAMERATE) == 0)
         {
             // Get image data for the current frame (from backbuffer)
-            // NOTE: This process is very slow... :(
+            // NOTE: This process is quite slow... :(
             unsigned char *screenData = rlReadScreenPixels(CORE.Window.screen.width, CORE.Window.screen.height);
-            GifWriteFrame(screenData, CORE.Window.screen.width, CORE.Window.screen.height, 10, 8, false);
+            msf_gif_frame(&gifState, screenData, 10, 16, CORE.Window.screen.width*4);
 
             RL_FREE(screenData);   // Free image data
         }
@@ -4225,8 +4227,20 @@ static void KeyCallback(GLFWwindow *window, int key, int scancode, int action, i
         {
             if (gifRecording)
             {
-                GifEnd();
                 gifRecording = false;
+                
+                MsfGifResult result = msf_gif_end(&gifState);
+                
+                char path[512] = { 0 };
+            #if defined(PLATFORM_ANDROID)
+                strcpy(path, CORE.Android.internalDataPath);
+                strcat(path, TextFormat("./screenrec%03i.gif", screenshotCounter));
+            #else
+                strcpy(path, TextFormat("./screenrec%03i.gif", screenshotCounter));
+            #endif
+                
+                SaveFileData(path, result.data, result.dataSize);
+                msf_gif_free(result);
 
             #if defined(PLATFORM_WEB)
                 // Download file from MEMFS (emscripten memory filesystem)
@@ -4241,17 +4255,7 @@ static void KeyCallback(GLFWwindow *window, int key, int scancode, int action, i
                 gifRecording = true;
                 gifFramesCounter = 0;
 
-                char path[512] = { 0 };
-            #if defined(PLATFORM_ANDROID)
-                strcpy(path, CORE.Android.internalDataPath);
-                strcat(path, TextFormat("./screenrec%03i.gif", screenshotCounter));
-            #else
-                strcpy(path, TextFormat("./screenrec%03i.gif", screenshotCounter));
-            #endif
-
-                // NOTE: delay represents the time between frames in the gif, if we capture a gif frame every
-                // 10 game frames and each frame trakes 16.6ms (60fps), delay between gif frames should be ~16.6*10.
-                GifBegin(path, CORE.Window.screen.width, CORE.Window.screen.height, (int)(GetFrameTime()*10.0f), 8, false);
+                msf_gif_begin(&gifState, CORE.Window.screen.width, CORE.Window.screen.height);
                 screenshotCounter++;
 
                 TRACELOG(LOG_INFO, "SYSTEM: Start animated GIF recording: %s", TextFormat("screenrec%03i.gif", screenshotCounter));
@@ -5594,8 +5598,12 @@ void UWPKeyDownEvent(int key, bool down, bool controlKey)
         {
             if (gifRecording)
             {
-                GifEnd();
                 gifRecording = false;
+                
+                MsfGifResult result = msf_gif_end(&gifState);
+
+                SaveFileData(TextFormat("%s/screenrec%03i.gif", CORE.UWP.internalDataPath, screenshotCounter), result.data, result.dataSize);
+                msf_gif_free(result);
 
 #if defined(PLATFORM_WEB)
                 // Download file from MEMFS (emscripten memory filesystem)
@@ -5609,13 +5617,7 @@ void UWPKeyDownEvent(int key, bool down, bool controlKey)
                 gifRecording = true;
                 gifFramesCounter = 0;
 
-                char path[512] = { 0 };
-                strcpy(path, CORE.UWP.internalDataPath);
-                strcat(path, TextFormat("./screenrec%03i.gif", screenshotCounter));
-
-                // NOTE: delay represents the time between frames in the gif, if we capture a gif frame every
-                // 10 game frames and each frame trakes 16.6ms (60fps), delay between gif frames should be ~16.6*10.
-                GifBegin(path, CORE.Window.screen.width, CORE.Window.screen.height, (int)(GetFrameTime() * 10.0f), 8, false);
+                msf_gif_begin(&gifState, CORE.Window.screen.width, CORE.Window.screen.height);
                 screenshotCounter++;
 
                 TRACELOG(LOG_INFO, "SYSTEM: Start animated GIF recording: %s", TextFormat("screenrec%03i.gif", screenshotCounter));
