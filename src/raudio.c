@@ -386,8 +386,8 @@ static Wave LoadMP3(const unsigned char *fileData, unsigned int fileSize);   // 
 #if defined(RAUDIO_STANDALONE)
 static bool IsFileExtension(const char *fileName, const char *ext); // Check file extension
 static unsigned char *LoadFileData(const char *fileName, unsigned int *bytesRead);     // Load file data as byte array (read)
-static void SaveFileData(const char *fileName, void *data, unsigned int bytesToWrite); // Save data to file from byte array (write)
-static void SaveFileText(const char *fileName, char *text);         // Save text data to file (write), string must be '\0' terminated
+static bool SaveFileData(const char *fileName, void *data, unsigned int bytesToWrite); // Save data to file from byte array (write)
+static bool SaveFileText(const char *fileName, char *text);         // Save text data to file (write), string must be '\0' terminated
 #endif
 
 //----------------------------------------------------------------------------------
@@ -812,7 +812,7 @@ void UpdateSound(Sound sound, const void *data, int samplesCount)
 }
 
 // Export wave data to file
-void ExportWave(Wave wave, const char *fileName)
+bool ExportWave(Wave wave, const char *fileName)
 {
     bool success = false;
 
@@ -824,17 +824,20 @@ void ExportWave(Wave wave, const char *fileName)
     {
         // Export raw sample data (without header)
         // NOTE: It's up to the user to track wave parameters
-        SaveFileData(fileName, wave.data, wave.sampleCount*wave.sampleSize/8);
-        success = true;
+        success = SaveFileData(fileName, wave.data, wave.sampleCount*wave.sampleSize/8);
     }
 
     if (success) TRACELOG(LOG_INFO, "FILEIO: [%s] Wave data exported successfully", fileName);
     else TRACELOG(LOG_WARNING, "FILEIO: [%s] Failed to export wave data", fileName);
+    
+    return success;
 }
 
 // Export wave sample data to code (.h)
-void ExportWaveAsCode(Wave wave, const char *fileName)
+bool ExportWaveAsCode(Wave wave, const char *fileName)
 {
+    bool success = false;
+    
 #ifndef TEXT_BYTES_PER_LINE
     #define TEXT_BYTES_PER_LINE     20
 #endif
@@ -878,9 +881,11 @@ void ExportWaveAsCode(Wave wave, const char *fileName)
     bytesCount += sprintf(txtData + bytesCount, "0x%x };\n", ((unsigned char *)wave.data)[waveDataSize - 1]);
 
     // NOTE: Text data length exported is determined by '\0' (NULL) character
-    SaveFileText(fileName, txtData);
+    success = SaveFileText(fileName, txtData);
 
     RL_FREE(txtData);
+    
+    return success;
 }
 
 // Play a sound
@@ -1942,6 +1947,8 @@ static Wave LoadWAV(const unsigned char *fileData, unsigned int fileSize)
 // NOTE: Using dr_wav library
 static int SaveWAV(Wave wave, const char *fileName)
 {
+    int success = false;
+    
     drwav wav = { 0 };
     drwav_data_format format = { 0 };
     format.container = drwav_container_riff;
@@ -1952,14 +1959,15 @@ static int SaveWAV(Wave wave, const char *fileName)
 
     unsigned char *fileData = NULL;
     unsigned int fileDataSize = 0;
-    drwav_init_memory_write(&wav, &fileData, &fileDataSize, &format, NULL);
-    drwav_write_pcm_frames(&wav, wave.sampleCount/wave.channels, wave.data);
-    drwav_uninit(&wav);
-
-    SaveFileData(fileName, fileData, fileDataSize);
+    success = drwav_init_memory_write(&wav, &fileData, &fileDataSize, &format, NULL);
+    if (success) success = drwav_write_pcm_frames(&wav, wave.sampleCount/wave.channels, wave.data);
+    drwav_result result = drwav_uninit(&wav);
+    
+    if (result == DRWAV_SUCCESS) success = SaveFileData(fileName, fileData, fileDataSize);
+    
     drwav_free(fileData, NULL);
 
-    return true;
+    return success;
 }
 #endif
 
@@ -2110,7 +2118,7 @@ static unsigned char *LoadFileData(const char *fileName, unsigned int *bytesRead
 }
 
 // Save data to file from buffer
-static void SaveFileData(const char *fileName, void *data, unsigned int bytesToWrite)
+static bool SaveFileData(const char *fileName, void *data, unsigned int bytesToWrite)
 {
     if (fileName != NULL)
     {
@@ -2132,7 +2140,7 @@ static void SaveFileData(const char *fileName, void *data, unsigned int bytesToW
 }
 
 // Save text data to file (write), string must be '\0' terminated
-static void SaveFileText(const char *fileName, char *text)
+static bool SaveFileText(const char *fileName, char *text)
 {
     if (fileName != NULL)
     {

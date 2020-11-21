@@ -2299,8 +2299,10 @@ unsigned char *DecompressData(unsigned char *compData, int compDataLength, int *
 
 // Save integer value to storage file (to defined position)
 // NOTE: Storage positions is directly related to file memory layout (4 bytes each integer)
-void SaveStorageValue(unsigned int position, int value)
+bool SaveStorageValue(unsigned int position, int value)
 {
+    bool success = false;
+    
 #if defined(SUPPORT_DATA_STORAGE)
     char path[512] = { 0 };
 #if defined(PLATFORM_ANDROID)
@@ -2355,7 +2357,7 @@ void SaveStorageValue(unsigned int position, int value)
             dataPtr[position] = value;
         }
 
-        SaveFileData(path, newFileData, newDataSize);
+        success = SaveFileData(path, newFileData, newDataSize);
         RL_FREE(newFileData);
     }
     else
@@ -2367,10 +2369,12 @@ void SaveStorageValue(unsigned int position, int value)
         int *dataPtr = (int *)fileData;
         dataPtr[position] = value;
 
-        SaveFileData(path, fileData, dataSize);
+        success = SaveFileData(path, fileData, dataSize);
         RL_FREE(fileData);
     }
 #endif
+
+    return success;
 }
 
 // Load integer value from storage file (from defined position)

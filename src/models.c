@@ -823,8 +823,10 @@ void UnloadMesh(Mesh mesh)
 }
 
 // Export mesh data to file
-void ExportMesh(Mesh mesh, const char *fileName)
+bool ExportMesh(Mesh mesh, const char *fileName)
 {
+    bool success = false;
+    
     if (IsFileExtension(fileName, ".obj"))
     {
         // Estimated data size, it should be enough...
@@ -875,7 +877,7 @@ void ExportMesh(Mesh mesh, const char *fileName)
         bytesCount += sprintf(txtData + bytesCount, "\n");
 
         // NOTE: Text data length exported is determined by '\0' (NULL) character
-        SaveFileText(fileName, txtData);
+        success = SaveFileText(fileName, txtData);
 
         RL_FREE(txtData);
     }
@@ -883,6 +885,8 @@ void ExportMesh(Mesh mesh, const char *fileName)
     {
         // TODO: Support additional file formats to export mesh vertex data
     }
+    
+    return success;
 }
 
 // Load materials from model file

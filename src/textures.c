@@ -395,7 +395,7 @@ void UnloadImage(Image image)
 
 // Export image data to file
 // NOTE: File format depends on fileName extension
-void ExportImage(Image image, const char *fileName)
+bool ExportImage(Image image, const char *fileName)
 {
     int success = 0;
 
@@ -436,8 +436,7 @@ void ExportImage(Image image, const char *fileName)
     {
         // Export raw pixel data (without header)
         // NOTE: It's up to the user to track image parameters
-        SaveFileData(fileName, image.data, GetPixelDataSize(image.width, image.height, image.format));
-        success = true;
+        success = SaveFileData(fileName, image.data, GetPixelDataSize(image.width, image.height, image.format));
     }
 
     if (allocatedData) RL_FREE(imgData);
@@ -445,11 +444,15 @@ void ExportImage(Image image, const char *fileName)
 
     if (success != 0) TRACELOG(LOG_INFO, "FILEIO: [%s] Image exported successfully", fileName);
     else TRACELOG(LOG_WARNING, "FILEIO: [%s] Failed to export image", fileName);
+    
+    return success;
 }
 
 // Export image as code file (.h) defining an array of bytes
-void ExportImageAsCode(Image image, const char *fileName)
+bool ExportImageAsCode(Image image, const char *fileName)
 {
+    bool success = false;
+    
 #ifndef TEXT_BYTES_PER_LINE
     #define TEXT_BYTES_PER_LINE     20
 #endif
@@ -488,9 +491,11 @@ void ExportImageAsCode(Image image, const char *fileName)
     bytesCount += sprintf(txtData + bytesCount, "0x%x };\n", ((unsigned char *)image.data)[dataSize - 1]);
 
     // NOTE: Text data length exported is determined by '\0' (NULL) character
-    SaveFileText(fileName, txtData);
+    success = SaveFileText(fileName, txtData);
 
     RL_FREE(txtData);
+    
+    return success;
 }
 
 //------------------------------------------------------------------------------------
@@ -4230,12 +4235,12 @@ static int SaveKTX(Image image, const char *fileName)
         }
     }
 
-    SaveFileData(fileName, fileData, dataSize);
+    int success = SaveFileData(fileName, fileData, dataSize);
 
     RL_FREE(fileData);    // Free file data buffer
 
     // If all data has been written correctly to file, success = 1
-    return true;
+    return success;
 }
 #endif
 
