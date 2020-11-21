@@ -898,7 +898,7 @@ Material *LoadMaterials(const char *fileName, int *materialCount)
     {
         tinyobj_material_t *mats = NULL;
 
-        int result = tinyobj_parse_mtl_file(&mats, &count, fileName, NULL, NULL);
+        int result = tinyobj_parse_mtl_file(&mats, &count, fileName);
         if (result != TINYOBJ_SUCCESS) TRACELOG(LOG_WARNING, "MATERIAL: [%s] Failed to parse materials file", fileName);
 
         // TODO: Process materials to return
@@ -2946,10 +2946,6 @@ RayHitInfo GetCollisionRayGround(Ray ray, float groundHeight)
 
 #if defined(SUPPORT_FILEFORMAT_OBJ)
 // Load OBJ mesh data
-
-// TODO used by loadOBJ, could change to a function that could handle
-// data coming from a file, memory or archive...
-
 static Model LoadOBJ(const char *fileName)
 {
     Model model = { 0 };
@@ -2961,17 +2957,17 @@ static Model LoadOBJ(const char *fileName)
     tinyobj_material_t *materials = NULL;
     unsigned int materialCount = 0;
 
-    //char *fileData = LoadFileText(fileName);
+    char *fileData = LoadFileText(fileName);
 
-    //if (fileData != NULL)
+    if (fileData != NULL)
     {
-        //unsigned int dataSize = (unsigned int)strlen(fileData);
+        unsigned int dataSize = (unsigned int)strlen(fileData);
         char currentDir[1024] = { 0 };
         strcpy(currentDir, GetWorkingDirectory());
         chdir(GetDirectoryPath(fileName));
 
         unsigned int flags = TINYOBJ_FLAG_TRIANGULATE;
-        int ret = tinyobj_parse_obj(&attrib, &meshes, &meshCount, &materials, &materialCount, fileName, NULL, flags);
+        int ret = tinyobj_parse_obj(&attrib, &meshes, &meshCount, &materials, &materialCount, fileData, dataSize, flags);
 
         if (ret != TINYOBJ_SUCCESS) TRACELOG(LOG_WARNING, "MODEL: [%s] Failed to load OBJ data", fileName);
         else TRACELOG(LOG_INFO, "MODEL: [%s] OBJ data loaded successfully: %i meshes / %i materials", fileName, meshCount, materialCount);
