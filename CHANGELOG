@@ -130,6 +130,7 @@ Detailed changes:
 [audio] REDESIGNED: LoadSound(): Use memory loading (WAV, OGG, MP3, FLAC) (#1312)
 [audio] REDESIGNED: ExportWaveAsCode() to use memory buffers
 [utils] REVIEWED: android_fopen() to support SDCard access
+[utils] REDESIGNED: SaveFile*() functions to expose file access results (#1420)
 [rmem] REVIEWED: MemPool and other allocators optimization (#1211) by @assyrianic
 [examples] ADDED: core/core_quat_conversion by @chriscamacho and @codifies
 [examples] ADDED: textures/textures_blend_modes (#1261) by @accidentalrebel
