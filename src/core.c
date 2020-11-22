@@ -74,10 +74,6 @@
 *   #define SUPPORT_GIF_RECORDING
 *       Allow automatic gif recording of current screen pressing CTRL+F12, defined in KeyCallback()
 *
-*   #define SUPPORT_HIGH_DPI
-*       Allow scale all the drawn content to match the high-DPI equivalent size (only PLATFORM_DESKTOP)
-*       NOTE: This flag is forced on macOS, since most displays are high-DPI
-*
 *   #define SUPPORT_COMPRESSION_API
 *       Support CompressData() and DecompressData() functions, those functions use zlib implementation
 *       provided by stb_image and stb_image_write libraries, so, those libraries must be enabled on textures module
@@ -312,6 +308,12 @@
     #endif
 #endif
 
+// Flags operation macros
+#define FLAG_SET(n, f) ((n) |= (f)) 
+#define FLAG_CLEAR(n, f) ((n) &= ~(f)) 
+#define FLAG_TOGGLE(n, f) ((n) ^= (f)) 
+#define FLAG_CHECK(n, f) ((n) & (f))
+
 //----------------------------------------------------------------------------------
 // Types and Structures Definition
 //----------------------------------------------------------------------------------
@@ -364,16 +366,12 @@ typedef struct CoreData {
         EGLContext context;                 // Graphic context, mode in which drawing can be done
         EGLConfig config;                   // Graphic config
 #endif
-        unsigned int flags;                 // Configuration flags (bit based)
         const char *title;                  // Window text title const pointer
-        bool ready;                         // Flag to check if window has been initialized successfully
-        bool minimized;                     // Flag to check if window has been minimized
-        bool maximized;                     // Flag to check if window has been maximized
-        bool focused;                       // Flag to check if window has been focused
-        bool resized;                       // Flag to check if window has been resized
-        bool fullscreen;                    // Flag to check if fullscreen mode required
-        bool alwaysRun;                     // Flag to keep window update/draw running on minimized
-        bool shouldClose;                   // Flag to set window for closing
+        unsigned int flags;                 // Configuration flags (bit based), keeps window state
+        bool ready;                         // Check if window has been initialized successfully
+        bool fullscreen;                    // Check if fullscreen mode is enabled
+        bool shouldClose;                   // Check if window set for closing
+        bool resizedLastFrame;              // Check if window has been resized last frame
 
         Point position;                     // Window position on screen (required on fullscreen toggle)
         Size display;                       // Display width and height (monitor, device-screen, LCD, ...)
@@ -721,13 +719,13 @@ void InitWindow(int width, int height, const char *title)
             //if (CORE.Android.app->destroyRequested != 0) CORE.Window.shouldClose = true;
         }
     }
-#else
+#endif
+#if defined(PLATFORM_DESKTOP) || defined(PLATFORM_WEB) || defined(PLATFORM_RPI) || defined(PLATFORM_UWP) || defined(PLATFORM_DRM)
     // Init graphics device (display device and OpenGL context)
     // NOTE: returns true if window and graphic device has been initialized successfully
     CORE.Window.ready = InitGraphicsDevice(width, height);
 
     if (!CORE.Window.ready) return;
-    else CORE.Window.focused = true;
 
     // Init hi-res timer
     InitTimer();
@@ -740,9 +738,12 @@ void InitWindow(int width, int height, const char *title)
     // NOTE: We setup a 1px padding on char rectangle to avoid pixel bleeding on MSAA filtering
     SetShapesTexture(GetFontDefault().texture, (Rectangle){ rec.x + 1, rec.y + 1, rec.width - 2, rec.height - 2 });
 #endif
-#if defined(PLATFORM_DESKTOP) && defined(SUPPORT_HIGH_DPI)
-    // Set default font texture filter for HighDPI (blurry)
-    SetTextureFilter(GetFontDefault().texture, FILTER_BILINEAR);
+#if defined(PLATFORM_DESKTOP)
+    if ((CORE.Window.flags & FLAG_WINDOW_HIGHDPI) > 0)
+    {
+        // Set default font texture filter for HighDPI (blurry)
+        SetTextureFilter(GetFontDefault().texture, FILTER_BILINEAR);
+    }
 #endif
 
 #if defined(PLATFORM_RPI) || defined(PLATFORM_DRM)
@@ -901,12 +902,6 @@ void CloseWindow(void)
     TRACELOG(LOG_INFO, "Window closed successfully");
 }
 
-// Check if window has been initialized successfully
-bool IsWindowReady(void)
-{
-    return CORE.Window.ready;
-}
-
 // Check if KEY_ESCAPE pressed or Close icon pressed
 bool WindowShouldClose(void)
 {
@@ -924,7 +919,7 @@ bool WindowShouldClose(void)
     if (CORE.Window.ready)
     {
         // While window minimized, stop loop execution
-        while (!CORE.Window.alwaysRun && CORE.Window.minimized) glfwWaitEvents();
+        while (!IsWindowState(FLAG_WINDOW_ALWAYS_RUN) && IsWindowState(FLAG_WINDOW_MINIMIZED)) glfwWaitEvents();
 
         CORE.Window.shouldClose = glfwWindowShouldClose(CORE.Window.handle);
 
@@ -942,11 +937,32 @@ bool WindowShouldClose(void)
 #endif
 }
 
+// Check if window has been initialized successfully
+bool IsWindowReady(void)
+{
+    return CORE.Window.ready;
+}
+
+// Check if window is currently fullscreen
+bool IsWindowFullscreen(void)
+{
+    return CORE.Window.fullscreen;
+}
+
+// Check if window is currently hidden
+bool IsWindowHidden(void)
+{
+#if defined(PLATFORM_DESKTOP)
+    return ((CORE.Window.flags & FLAG_WINDOW_HIDDEN) > 0);
+#endif
+    return false;
+}
+
 // Check if window has been minimized
 bool IsWindowMinimized(void)
 {
 #if defined(PLATFORM_DESKTOP) || defined(PLATFORM_WEB) || defined(PLATFORM_UWP)
-    return CORE.Window.minimized;
+    return ((CORE.Window.flags & FLAG_WINDOW_MINIMIZED) > 0);
 #else
     return false;
 #endif
@@ -956,7 +972,7 @@ bool IsWindowMinimized(void)
 bool IsWindowMaximized(void)
 {
 #if defined(PLATFORM_DESKTOP)
-    return CORE.Window.maximized;
+    return ((CORE.Window.flags & FLAG_WINDOW_MAXIMIZED) > 0);
 #else
     return false;
 #endif
@@ -966,35 +982,26 @@ bool IsWindowMaximized(void)
 bool IsWindowFocused(void)
 {
 #if defined(PLATFORM_DESKTOP) || defined(PLATFORM_WEB) || defined(PLATFORM_UWP)
-    return CORE.Window.focused;
+    return ((CORE.Window.flags & FLAG_WINDOW_UNFOCUSED) == 0);      // TODO!
 #else
-    return false;
+    return true;
 #endif
 }
 
-// Check if window has been resized
+// Check if window has been resizedLastFrame
 bool IsWindowResized(void)
 {
 #if defined(PLATFORM_DESKTOP) || defined(PLATFORM_WEB) || defined(PLATFORM_UWP)
-    return CORE.Window.resized;
+    return CORE.Window.resizedLastFrame;
 #else
     return false;
 #endif
 }
 
-// Check if window is currently hidden
-bool IsWindowHidden(void)
+// Check if one specific window flag is enabled
+bool IsWindowState(unsigned int flag)
 {
-#if defined(PLATFORM_DESKTOP)
-    return (glfwGetWindowAttrib(CORE.Window.handle, GLFW_VISIBLE) == GLFW_FALSE);
-#endif
-    return false;
-}
-
-// Check if window is currently fullscreen
-bool IsWindowFullscreen(void)
-{
-    return CORE.Window.fullscreen;
+    return ((CORE.Window.flags & flag) > 0);
 }
 
 // Toggle fullscreen mode (only PLATFORM_DESKTOP)
@@ -1023,6 +1030,10 @@ void ToggleFullscreen(void)
         if (CORE.Window.flags & FLAG_VSYNC_HINT) glfwSwapInterval(1);
     }
     else glfwSetWindowMonitor(CORE.Window.handle, NULL, CORE.Window.position.x, CORE.Window.position.y, CORE.Window.screen.width, CORE.Window.screen.height, GLFW_DONT_CARE);
+
+    CORE.Window.fullscreen = !CORE.Window.fullscreen;          // Toggle fullscreen flag
+    CORE.Window.flags ^= FLAG_FULLSCREEN_MODE; 
+    
 #endif
 #if defined(PLATFORM_WEB)
     /*
@@ -1057,12 +1068,160 @@ void ToggleFullscreen(void)
         emscripten_exit_fullscreen();
     }
     */
+
+    CORE.Window.fullscreen = !CORE.Window.fullscreen;          // Toggle fullscreen flag
 #endif
 #if defined(PLATFORM_ANDROID) || defined(PLATFORM_RPI) || defined(PLATFORM_DRM)
     TRACELOG(LOG_WARNING, "SYSTEM: Failed to toggle to windowed mode");
 #endif
+}
 
-    CORE.Window.fullscreen = !CORE.Window.fullscreen;          // Toggle fullscreen flag
+// Set window state: hidden (only PLATFORM_DESKTOP)
+void HideWindow(void)
+{
+#if defined(PLATFORM_DESKTOP)
+    glfwHideWindow(CORE.Window.handle);
+    CORE.Window.flags |= FLAG_WINDOW_HIDDEN;
+#endif
+}
+
+// Set window state: visible (only PLATFORM_DESKTOP)
+void UnhideWindow(void)
+{
+#if defined(PLATFORM_DESKTOP)
+    glfwShowWindow(CORE.Window.handle);
+    CORE.Window.flags &= ~FLAG_WINDOW_HIDDEN;
+#endif
+}
+
+// Set window state: decorated (only PLATFORM_DESKTOP)
+void DecorateWindow(void)
+{
+#if defined(PLATFORM_DESKTOP)
+    glfwSetWindowAttrib(CORE.Window.handle, GLFW_DECORATED, GLFW_TRUE);
+    CORE.Window.flags &= ~FLAG_WINDOW_UNDECORATED;
+#endif
+}
+
+// Set window state: undecorated (only PLATFORM_DESKTOP)
+void UndecorateWindow(void)
+{
+#if defined(PLATFORM_DESKTOP)
+    glfwSetWindowAttrib(CORE.Window.handle, GLFW_DECORATED, GLFW_FALSE);
+    CORE.Window.flags |= FLAG_WINDOW_UNDECORATED;
+#endif
+}
+
+// Set window state: maximized, if resizable (only PLATFORM_DESKTOP)
+void MaximizeWindow(void)
+{
+#if defined(PLATFORM_DESKTOP)
+    if (glfwGetWindowAttrib(CORE.Window.handle, GLFW_RESIZABLE) == GLFW_TRUE)
+    {
+        glfwMaximizeWindow(CORE.Window.handle);
+        CORE.Window.flags |= FLAG_WINDOW_MAXIMIZED;
+    }
+#endif
+}
+
+// Set window state: minimized (only PLATFORM_DESKTOP)
+void MinimizeWindow(void)
+{
+#if defined(PLATFORM_DESKTOP)
+    glfwIconifyWindow(CORE.Window.handle);
+    CORE.Window.flags |= FLAG_WINDOW_MINIMIZED;
+#endif
+}
+
+// Set window state: not minimized/maximized (only PLATFORM_DESKTOP)
+void RestoreWindow(void)
+{
+#if defined(PLATFORM_DESKTOP)
+    if (glfwGetWindowAttrib(CORE.Window.handle, GLFW_RESIZABLE) == GLFW_TRUE)
+    {
+        // Restores the specified window if it was previously iconified (minimized) or maximized
+        glfwRestoreWindow(CORE.Window.handle);
+        CORE.Window.flags &= ~FLAG_WINDOW_MINIMIZED;
+        CORE.Window.flags &= ~FLAG_WINDOW_MAXIMIZED;
+    }
+#endif
+}
+
+// Set window configuration state using flags
+void SetWindowState(unsigned int flags)
+{
+    // Check previous state and requested state to apply required changes
+    // NOTE: In most cases the functions already change the flags internally
+
+    // State change: FLAG_FULLSCREEN_MODE
+    if ((CORE.Window.flags & FLAG_FULLSCREEN_MODE) != (flags & FLAG_FULLSCREEN_MODE)) ToggleFullscreen();
+    
+    // State change: FLAG_WINDOW_RESIZABLE
+    if (((CORE.Window.flags & FLAG_WINDOW_RESIZABLE) != (flags & FLAG_WINDOW_RESIZABLE)) && ((flags & FLAG_WINDOW_RESIZABLE) > 0)) 
+    {
+        glfwSetWindowAttrib(CORE.Window.handle, GLFW_RESIZABLE, GLFW_TRUE);
+        CORE.Window.flags |= FLAG_WINDOW_RESIZABLE;
+    }
+    
+    // State change: FLAG_WINDOW_UNDECORATED
+    if (((CORE.Window.flags & FLAG_WINDOW_UNDECORATED) != (flags & FLAG_WINDOW_UNDECORATED)) && (flags & FLAG_WINDOW_UNDECORATED)) UndecorateWindow();
+    
+    // State change: FLAG_WINDOW_TRANSPARENT
+    if (((CORE.Window.flags & FLAG_WINDOW_TRANSPARENT) != (flags & FLAG_WINDOW_TRANSPARENT)) && ((flags & FLAG_WINDOW_TRANSPARENT) > 0))
+    {
+        TRACELOG(LOG_WARNING, "WINDOW: Framebuffer transparency can only by set before window initialization");
+    }
+
+    // State change: FLAG_WINDOW_HIDDEN
+    if (((CORE.Window.flags & FLAG_WINDOW_HIDDEN) != (flags & FLAG_WINDOW_HIDDEN)) && ((flags & FLAG_WINDOW_HIDDEN) > 0)) HideWindow();
+    
+    // State change: FLAG_WINDOW_MINIMIZED
+    if (((CORE.Window.flags & FLAG_WINDOW_MINIMIZED) != (flags & FLAG_WINDOW_MINIMIZED)) && ((flags & FLAG_WINDOW_MINIMIZED) > 0)) MinimizeWindow();
+    
+    // State change: FLAG_WINDOW_MAXIMIZED
+    if (((CORE.Window.flags & FLAG_WINDOW_MAXIMIZED) != (flags & FLAG_WINDOW_MAXIMIZED)) && ((flags & FLAG_WINDOW_MAXIMIZED) > 0)) MaximizeWindow();
+    
+    // State change: FLAG_WINDOW_UNFOCUSED
+    if (((CORE.Window.flags & FLAG_WINDOW_UNFOCUSED) != (flags & FLAG_WINDOW_UNFOCUSED)) && ((flags & FLAG_WINDOW_UNFOCUSED) > 0)) 
+    {
+        glfwSetWindowAttrib(CORE.Window.handle, GLFW_FOCUS_ON_SHOW, GLFW_FALSE);
+        CORE.Window.flags |= FLAG_WINDOW_UNFOCUSED;
+    }
+    
+    // State change: FLAG_WINDOW_TOPMOST
+    if (((CORE.Window.flags & FLAG_WINDOW_TOPMOST) != (flags & FLAG_WINDOW_TOPMOST)) && ((flags & FLAG_WINDOW_TOPMOST) > 0))
+    {
+        glfwSetWindowAttrib(CORE.Window.handle, GLFW_FLOATING, GLFW_TRUE);
+        CORE.Window.flags |= FLAG_WINDOW_TOPMOST;
+    }
+    
+    // State change: FLAG_WINDOW_HIGHDPI
+    if (((CORE.Window.flags & FLAG_WINDOW_HIGHDPI) != (flags & FLAG_WINDOW_HIGHDPI)) && ((flags & FLAG_WINDOW_HIGHDPI) > 0))
+    {
+        TRACELOG(LOG_WARNING, "WINDOW: High DPI can only by set before window initialization");
+    }
+
+    // State change: FLAG_WINDOW_ALWAYS_RUN
+    if (((CORE.Window.flags & FLAG_WINDOW_ALWAYS_RUN) != (flags & FLAG_WINDOW_ALWAYS_RUN)) && ((flags & FLAG_WINDOW_ALWAYS_RUN) > 0)) CORE.Window.flags |= FLAG_WINDOW_ALWAYS_RUN;
+    
+    // State change: FLAG_VSYNC_HINT
+    if (((CORE.Window.flags & FLAG_VSYNC_HINT) != (flags & FLAG_VSYNC_HINT)) && ((flags & FLAG_VSYNC_HINT) > 0))
+    {
+        glfwSwapInterval(1);
+        CORE.Window.flags |= FLAG_VSYNC_HINT;
+    }
+    
+    // State change: FLAG_MSAA_4X_HINT
+    if (((CORE.Window.flags & FLAG_MSAA_4X_HINT) != (flags & FLAG_MSAA_4X_HINT)) && ((flags & FLAG_MSAA_4X_HINT) > 0))
+    {
+        TRACELOG(LOG_WARNING, "WINDOW: MSAA can only by set before window initialization");
+    }
+    
+    // State change: FLAG_INTERLACED_HINT
+    if (((CORE.Window.flags & FLAG_INTERLACED_HINT) != (flags & FLAG_INTERLACED_HINT)) && ((flags & FLAG_INTERLACED_HINT) > 0))
+    {
+        TRACELOG(LOG_WARNING, "RPI: Interlaced mode can only by set before window initialization");
+    }
 }
 
 // Set icon for window (only PLATFORM_DESKTOP)
@@ -1144,60 +1303,6 @@ void SetWindowSize(int width, int height)
     // they do not seem to work properly
     //emscripten_set_canvas_element_size("canvas", width, height);
     //emscripten_set_element_css_size("canvas", width, height);
-#endif
-}
-
-// Show the window
-void UnhideWindow(void)
-{
-#if defined(PLATFORM_DESKTOP)
-    glfwShowWindow(CORE.Window.handle);
-#endif
-}
-
-// Hide the window
-void HideWindow(void)
-{
-#if defined(PLATFORM_DESKTOP)
-    glfwHideWindow(CORE.Window.handle);
-#endif
-}
-
-// Decorate the window (only PLATFORM_DESKTOP)
-void DecorateWindow(void)
-{
-#if defined(PLATFORM_DESKTOP)
-    glfwSetWindowAttrib(CORE.Window.handle, GLFW_DECORATED, GLFW_TRUE);
-#endif
-}
-
-// // Undecorate the window (only PLATFORM_DESKTOP)
-void UndecorateWindow(void)
-{
-#if defined(PLATFORM_DESKTOP)
-    glfwSetWindowAttrib(CORE.Window.handle, GLFW_DECORATED, GLFW_FALSE);
-#endif
-}
-
-// Maximize the window, if resizable (only PLATFORM_DESKTOP)
-void MaximizeWindow(void)
-{
-#if defined(PLATFORM_DESKTOP)
-    if (glfwGetWindowAttrib(CORE.Window.handle, GLFW_RESIZABLE) == GLFW_TRUE)
-    {
-        glfwMaximizeWindow(CORE.Window.handle);
-    }
-#endif
-}
-
-// Restore the window, if resizable (only PLATFORM_DESKTOP)
-void RestoreWindow(void)
-{
-#if defined(PLATFORM_DESKTOP)
-    if (glfwGetWindowAttrib(CORE.Window.handle, GLFW_RESIZABLE) == GLFW_TRUE)
-    {
-        glfwRestoreWindow(CORE.Window.handle);
-    }
 #endif
 }
 
@@ -1924,12 +2029,14 @@ double GetTime(void)
 }
 
 // Setup window configuration flags (view FLAGS)
+// NOTE: This function is expected to be called before window creation,
+// because it setups some flags for the window creation process.
+// To configure window states after creation, just use SetWindowState()
 void SetConfigFlags(unsigned int flags)
 {
-    CORE.Window.flags = flags;
-
-    if (CORE.Window.flags & FLAG_FULLSCREEN_MODE) CORE.Window.fullscreen = true;
-    if (CORE.Window.flags & FLAG_WINDOW_ALWAYS_RUN) CORE.Window.alwaysRun = true;
+    // Selected flags are set but not evaluated at this point,
+    // flag evaluation happens at InitWindow() or SetWindowState()
+    CORE.Window.flags |= flags;
 }
 
 // NOTE TRACELOG() function is located in [utils.h]
@@ -2418,7 +2525,7 @@ int LoadStorageValue(unsigned int position)
 // NOTE: This function is only safe to use if you control the URL given.
 // A user could craft a malicious string performing another action.
 // Only call this function yourself not with user input or make sure to check the string yourself.
-// CHECK: https://github.com/raysan5/raylib/issues/686
+// Ref: https://github.com/raysan5/raylib/issues/686
 void OpenURL(const char *url)
 {
     // Small security check trying to avoid (partially) malicious code...
@@ -2850,7 +2957,6 @@ static bool InitGraphicsDevice(int width, int height)
 {
     CORE.Window.screen.width = width;            // User desired width
     CORE.Window.screen.height = height;          // User desired height
-
     CORE.Window.screenScale = MatrixIdentity();  // No draw scaling required by default
 
     // NOTE: Framebuffer (render area - CORE.Window.render.width, CORE.Window.render.height) could include black bars...
@@ -2893,7 +2999,7 @@ static bool InitGraphicsDevice(int width, int height)
     CORE.Window.display.height = CORE.Window.screen.height;
 #endif  // PLATFORM_WEB
 
-    glfwDefaultWindowHints();                       // Set default windows hints:
+    glfwDefaultWindowHints();                       // Set default windows hints
     //glfwWindowHint(GLFW_RED_BITS, 8);             // Framebuffer red color component bits
     //glfwWindowHint(GLFW_GREEN_BITS, 8);           // Framebuffer green color component bits
     //glfwWindowHint(GLFW_BLUE_BITS, 8);            // Framebuffer blue color component bits
@@ -2902,26 +3008,44 @@ static bool InitGraphicsDevice(int width, int height)
     //glfwWindowHint(GLFW_REFRESH_RATE, 0);         // Refresh rate for fullscreen window
     //glfwWindowHint(GLFW_CLIENT_API, GLFW_OPENGL_API); // OpenGL API to use. Alternative: GLFW_OPENGL_ES_API
     //glfwWindowHint(GLFW_AUX_BUFFERS, 0);          // Number of auxiliar buffers
-#if defined(PLATFORM_DESKTOP) && defined(SUPPORT_HIGH_DPI)
-    // Resize window content area based on the monitor content scale.
-    // NOTE: This hint only has an effect on platforms where screen coordinates and pixels always map 1:1 such as Windows and X11.
-    // On platforms like macOS the resolution of the framebuffer is changed independently of the window size.
-    glfwWindowHint(GLFW_SCALE_TO_MONITOR, GLFW_TRUE);   // Scale content area based on the monitor content scale where window is placed on
-#endif
 
-    // Check some Window creation flags
-    if (CORE.Window.flags & FLAG_WINDOW_HIDDEN) glfwWindowHint(GLFW_VISIBLE, GLFW_FALSE);           // Visible window
+    // Check window creation flags
+    if ((CORE.Window.flags & FLAG_FULLSCREEN_MODE) > 0) CORE.Window.fullscreen = true;
+
+    if ((CORE.Window.flags & FLAG_WINDOW_HIDDEN) > 0) glfwWindowHint(GLFW_VISIBLE, GLFW_FALSE);           // Visible window
     else glfwWindowHint(GLFW_VISIBLE, GLFW_TRUE);     // Window initially hidden
-
-    if (CORE.Window.flags & FLAG_WINDOW_RESIZABLE) glfwWindowHint(GLFW_RESIZABLE, GLFW_TRUE);       // Resizable window
-    else glfwWindowHint(GLFW_RESIZABLE, GLFW_FALSE);  // Avoid window being resizable
-
-    if (CORE.Window.flags & FLAG_WINDOW_UNDECORATED) glfwWindowHint(GLFW_DECORATED, GLFW_FALSE);    // Border and buttons on Window
+    
+    if ((CORE.Window.flags & FLAG_WINDOW_UNDECORATED) > 0) glfwWindowHint(GLFW_DECORATED, GLFW_FALSE);    // Border and buttons on Window
     else glfwWindowHint(GLFW_DECORATED, GLFW_TRUE);   // Decorated window
-    // FLAG_WINDOW_TRANSPARENT not supported on HTML5 and not included in any released GLFW version yet
-#if defined(GLFW_TRANSPARENT_FRAMEBUFFER)
-    if (CORE.Window.flags & FLAG_WINDOW_TRANSPARENT) glfwWindowHint(GLFW_TRANSPARENT_FRAMEBUFFER, GLFW_TRUE);     // Transparent framebuffer
+
+    if ((CORE.Window.flags & FLAG_WINDOW_RESIZABLE) > 0) glfwWindowHint(GLFW_RESIZABLE, GLFW_TRUE);       // Resizable window
+    else glfwWindowHint(GLFW_RESIZABLE, GLFW_FALSE);  // Avoid window being resizable
+    
+    if ((CORE.Window.flags & FLAG_WINDOW_MAXIMIZED) > 0) glfwWindowHint(GLFW_MAXIMIZED, GLFW_TRUE);
+    else glfwWindowHint(GLFW_MAXIMIZED, GLFW_FALSE);
+    
+    if ((CORE.Window.flags & FLAG_WINDOW_UNFOCUSED) > 0) glfwWindowHint(GLFW_FOCUSED, GLFW_FALSE);
+    else glfwWindowHint(GLFW_FOCUSED, GLFW_TRUE);
+    
+    if ((CORE.Window.flags & FLAG_WINDOW_TOPMOST) > 0) glfwWindowHint(GLFW_FLOATING, GLFW_TRUE);
+    else glfwWindowHint(GLFW_FLOATING, GLFW_FALSE);
+
+    // NOTE: Some GLFW flags are not supported on HTML5
+#if defined(PLATFORM_DESKTOP)
+    if ((CORE.Window.flags & FLAG_WINDOW_TRANSPARENT) > 0) glfwWindowHint(GLFW_TRANSPARENT_FRAMEBUFFER, GLFW_TRUE);     // Transparent framebuffer
     else glfwWindowHint(GLFW_TRANSPARENT_FRAMEBUFFER, GLFW_FALSE);  // Opaque framebuffer
+
+    if ((CORE.Window.flags & FLAG_WINDOW_HIGHDPI) > 0)
+    {
+        // Resize window content area based on the monitor content scale.
+        // NOTE: This hint only has an effect on platforms where screen coordinates and pixels always map 1:1 such as Windows and X11.
+        // On platforms like macOS the resolution of the framebuffer is changed independently of the window size.
+        glfwWindowHint(GLFW_SCALE_TO_MONITOR, GLFW_TRUE);   // Scale content area based on the monitor content scale where window is placed on
+    #if !defined(__APPLE__)
+        glfwWindowHint(GLFW_COCOA_RETINA_FRAMEBUFFER, GLFW_TRUE);
+    #endif
+    }
+    else glfwWindowHint(GLFW_SCALE_TO_MONITOR, GLFW_FALSE);
 #endif
 
     if (CORE.Window.flags & FLAG_MSAA_4X_HINT) glfwWindowHint(GLFW_SAMPLES, 4);   // Tries to enable multisampling x4 (MSAA), default is 0
@@ -3091,6 +3215,7 @@ static bool InitGraphicsDevice(int width, int height)
 
 #if defined(PLATFORM_ANDROID) || defined(PLATFORM_RPI) || defined(PLATFORM_DRM) || defined(PLATFORM_UWP)
     CORE.Window.fullscreen = true;
+    CORE.Window.flags &= FLAG_FULLSCREEN_MODE;
 
 #if defined(PLATFORM_RPI)
     bcm_host_init();
@@ -3673,15 +3798,18 @@ static bool InitGraphicsDevice(int width, int height)
     int fbWidth = CORE.Window.render.width;
     int fbHeight = CORE.Window.render.height;
 
-#if defined(PLATFORM_DESKTOP) && defined(SUPPORT_HIGH_DPI)
-    glfwGetFramebufferSize(CORE.Window.handle, &fbWidth, &fbHeight);
+#if defined(PLATFORM_DESKTOP)
+    if ((CORE.Window.flags & FLAG_WINDOW_HIGHDPI) > 0) 
+    {
+        glfwGetFramebufferSize(CORE.Window.handle, &fbWidth, &fbHeight);
 
-    // Screen scaling matrix is required in case desired screen area is different than display area
-    CORE.Window.screenScale = MatrixScale((float)fbWidth/CORE.Window.screen.width, (float)fbHeight/CORE.Window.screen.height, 1.0f);
-#if !defined(__APPLE__)
-    SetMouseScale((float)CORE.Window.screen.width/fbWidth, (float)CORE.Window.screen.height/fbHeight);
+        // Screen scaling matrix is required in case desired screen area is different than display area
+        CORE.Window.screenScale = MatrixScale((float)fbWidth/CORE.Window.screen.width, (float)fbHeight/CORE.Window.screen.height, 1.0f);
+    #if !defined(__APPLE__)
+        SetMouseScale((float)CORE.Window.screen.width/fbWidth, (float)CORE.Window.screen.height/fbHeight);
+    #endif
+    }
 #endif
-#endif  // PLATFORM_DESKTOP && SUPPORT_HIGH_DPI
 
     // Setup default viewport
     SetupViewport(fbWidth, fbHeight);
@@ -4054,7 +4182,7 @@ static void PollInputEvents(void)
         }
     }
 
-    CORE.Window.resized = false;
+    CORE.Window.resizedLastFrame = false;
 
 #if defined(SUPPORT_EVENTS_WAITING)
     glfwWaitEvents();
@@ -4373,7 +4501,7 @@ static void CursorEnterCallback(GLFWwindow *window, int enter)
     else CORE.Input.Mouse.cursorOnScreen = false;
 }
 
-// GLFW3 WindowSize Callback, runs when window is resized
+// GLFW3 WindowSize Callback, runs when window is resizedLastFrame
 // NOTE: Window resizing not allowed by default
 static void WindowSizeCallback(GLFWwindow *window, int width, int height)
 {
@@ -4387,21 +4515,28 @@ static void WindowSizeCallback(GLFWwindow *window, int width, int height)
 
     // NOTE: Postprocessing texture is not scaled to new size
 
-    CORE.Window.resized = true;
+    CORE.Window.resizedLastFrame = true;
 }
 
 // GLFW3 WindowIconify Callback, runs when window is minimized/restored
 static void WindowIconifyCallback(GLFWwindow *window, int iconified)
 {
-    if (iconified) CORE.Window.minimized = true;  // The window was iconified
-    else CORE.Window.minimized = false;           // The window was restored
+    if (iconified) CORE.Window.flags |= FLAG_WINDOW_MINIMIZED;  // The window was iconified
+    else CORE.Window.flags &= ~FLAG_WINDOW_MINIMIZED;           // The window was restored
+}
+
+// GLFW3 WindowMaximize Callback, runs when window is maximized/restored
+static void WindowMaximizeCallback(GLFWwindow *window, int maximized)
+{
+    if (maximized) CORE.Window.flags |= FLAG_WINDOW_MAXIMIZED;  // The window was maximized
+    else CORE.Window.flags &= ~FLAG_WINDOW_MAXIMIZED;           // The window was restored
 }
 
 // GLFW3 WindowFocus Callback, runs when window get/lose focus
 static void WindowFocusCallback(GLFWwindow *window, int focused)
 {
-    if (focused) CORE.Window.focused = true;    // The window was focused
-    else CORE.Window.focused = false;           // The window lost focus
+    if (focused) CORE.Window.flags &= ~FLAG_WINDOW_UNFOCUSED;   // The window was focused
+    else CORE.Window.flags |= FLAG_WINDOW_UNFOCUSED;            // The window lost focus
 }
 
 // GLFW3 Window Drop Callback, runs when drop files into window
@@ -4420,12 +4555,6 @@ static void WindowDropCallback(GLFWwindow *window, int count, const char **paths
     }
 
     CORE.Window.dropFilesCount = count;
-}
-
-static void WindowMaximizeCallback(GLFWwindow *window, int maximized)
-{
-    if (maximized) CORE.Window.maximized = true;  // The window was maximized
-    else CORE.Window.maximized = false;           // The window was restored
 }
 #endif
 
@@ -4702,7 +4831,7 @@ static EM_BOOL EmscriptenKeyboardCallback(int eventType, const EmscriptenKeyboar
 
         emscripten_exit_pointerlock();
         CORE.Window.fullscreen = false;
-        TRACELOG(LOG_INFO, "CORE.Window.fullscreen = %s", CORE.Window.fullscreen? "true" : "false");
+        //TRACELOG(LOG_INFO, "CORE.Window.fullscreen = %s", CORE.Window.fullscreen? "true" : "false");
     }
 
     return 0;
@@ -5726,7 +5855,7 @@ void UWPResizeEvent(int width, int height)
 
     // NOTE: Postprocessing texture is not scaled to new size
 
-    CORE.Window.resized = true;
+    CORE.Window.resizedLastFrame = true;
 }
 
 void UWPActivateGamepadEvent(int gamepad, bool active)
