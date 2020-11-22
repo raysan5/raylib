@@ -76,6 +76,7 @@ Here it is a list with the ones I'm aware of:
 | jaylib             | 3.0 | [Janet](https://janet-lang.org/)          | https://github.com/janet-lang/jaylib      |
 | raykit             | ? | [Kit](https://www.kitlang.org/)           | https://github.com/Gamerfiend/raykit      |
 | vraylib            | 2.5 | [V](https://vlang.io/)                    | https://github.com/MajorHard/vraylib      |
+| hb-raylib          | 3.0 | [Harbour](https://harbour.github.io/)     | https://github.com/rjopek/hb-raylib       |
 | ray.mod            | 3.0 | [BlitzMax](https://blitzmax.org/)         | https://github.com/bmx-ng/ray.mod         |
 | ray-ocaml          | 3.0 | [OCaml](https://ocaml.org/)               | https://github.com/tjammer/raylib-ocaml   |
 | raylib-mosaic      | 3.0 | [Mosaic](https://github.com/sal55/langs/tree/master/Mosaic)     | https://github.com/pluckyporcupine/raylib-mosaic   |
