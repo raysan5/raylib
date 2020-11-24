@@ -15,12 +15,16 @@ KEY CHANGES:
  - [*] ADDED: GitHub Actions CI to support multiple raylib build configurations
  
 Detailed changes:
+[core] Redesigned how window states are managed
+[core] ADDED: SetWindowState() / ClearWindowState() -> New flags added!
 [core] ADDED: IsWindowFocused()
 [core] ADDED: GetWindowScaleDPI()
 [core] ADDED: GetMonitorRefreshRate() (#1289) by @Shylie
 [core] ADDED: IsCursorOnScreen() (#1262) by @ChrisDill
 [core] ADDED: SetMouseCursor() and GetMouseCursor() for standard Desktop cursors (#1407) by @chances
 [core] REMOVED: struct RenderTexture2D: depthTexture variable 
+[core] REMOVED: HideWindow() / UnhideWindow() -> Use SetWindowState()
+[core] REMOVED: DecorateWindow() / UndecorateWindow() -> Use SetWindowState()
 [core] RENAMED: GetExtension() to GetFileExtension()
 [core] REVIEWED: Several structs to reduce size and padding
 [core] REVIEWED: struct Texture maps to Texture2D and TextureCubemap
