@@ -173,7 +173,7 @@ par_shapes_mesh* par_shapes_weld(par_shapes_mesh const*, float epsilon,
 void par_shapes_compute_normals(par_shapes_mesh* m);
 
 #ifndef PAR_PI
-#define PAR_PI (3.14159265359)
+#define PAR_PI (3.14159265359f)
 #define PAR_MIN(a, b) (a > b ? b : a)
 #define PAR_MAX(a, b) (a > b ? a : b)
 #define PAR_CLAMP(v, lo, hi) PAR_MAX(lo, PAR_MIN(hi, v))
@@ -270,7 +270,7 @@ static void par_shapes__scale3(float* result, float a)
 
 static void par_shapes__normalize3(float* v)
 {
-    float lsqr = sqrt(v[0]*v[0] + v[1]*v[1] + v[2]*v[2]);
+    float lsqr = (float)sqrt(v[0]*v[0] + v[1]*v[1] + v[2]*v[2]);
     if (lsqr > 0) {
         par_shapes__scale3(v, 1.0f / lsqr);
     }
@@ -302,7 +302,7 @@ static void par_shapes__compute_welded_normals(par_shapes_mesh* m)
 {
     m->normals = PAR_MALLOC(float, m->npoints * 3);
     PAR_SHAPES_T* weldmap = PAR_MALLOC(PAR_SHAPES_T, m->npoints);
-    par_shapes_mesh* welded = par_shapes_weld(m, 0.01, weldmap);
+    par_shapes_mesh* welded = par_shapes_weld(m, 0.01f, weldmap);
     par_shapes_compute_normals(welded);
     float* pdst = m->normals;
     for (int i = 0; i < m->npoints; i++, pdst += 3) {
@@ -332,7 +332,7 @@ par_shapes_mesh* par_shapes_create_parametric_sphere(int slices, int stacks)
     }
     par_shapes_mesh* m = par_shapes_create_parametric(par_shapes__sphere,
         slices, stacks, 0);
-    par_shapes_remove_degenerate(m, 0.0001);
+    par_shapes_remove_degenerate(m, 0.0001f);
     return m;
 }
 
@@ -343,7 +343,7 @@ par_shapes_mesh* par_shapes_create_hemisphere(int slices, int stacks)
     }
     par_shapes_mesh* m = par_shapes_create_parametric(par_shapes__hemisphere,
         slices, stacks, 0);
-    par_shapes_remove_degenerate(m, 0.0001);
+    par_shapes_remove_degenerate(m, 0.0001f);
     return m;
 }
 
@@ -600,24 +600,24 @@ static void par_shapes__trefoil(float const* uv, float* xyz, void* userdata)
     const float d = minor * 0.1f;
     const float u = (1 - uv[0]) * 4 * PAR_PI;
     const float v = uv[1] * 2 * PAR_PI;
-    const float r = a + b * cos(1.5f * u);
-    const float x = r * cos(u);
-    const float y = r * sin(u);
-    const float z = c * sin(1.5f * u);
+    const float r = a + b * (float)cos(1.5f * u);
+    const float x = r * (float)cos(u);
+    const float y = r * (float)sin(u);
+    const float z = c * (float)sin(1.5f * u);
     float q[3];
-    q[0] =
-        -1.5f * b * sin(1.5f * u) * cos(u) - (a + b * cos(1.5f * u)) * sin(u);
+    q[0] = 
+        (float)(-1.5f * b * sin(1.5f * u) * cos(u) - (a + b * cos(1.5f * u)) * sin(u));
     q[1] =
-        -1.5f * b * sin(1.5f * u) * sin(u) + (a + b * cos(1.5f * u)) * cos(u);
-    q[2] = 1.5f * c * cos(1.5f * u);
+        (float)(-1.5f * b * sin(1.5f * u) * sin(u) + (a + b * cos(1.5f * u)) * cos(u));
+    q[2] = (float)(1.5f * c * cos(1.5f * u));
     par_shapes__normalize3(q);
     float qvn[3] = {q[1], -q[0], 0};
     par_shapes__normalize3(qvn);
     float ww[3];
     par_shapes__cross3(ww, q, qvn);
-    xyz[0] = x + d * (qvn[0] * cos(v) + ww[0] * sin(v));
-    xyz[1] = y + d * (qvn[1] * cos(v) + ww[1] * sin(v));
-    xyz[2] = z + d * ww[2] * sin(v);
+    xyz[0] = x + d * (float)(qvn[0] * cos(v) + ww[0] * sin(v));
+    xyz[1] = y + d * (float)(qvn[1] * cos(v) + ww[1] * sin(v));
+    xyz[2] = z + d * ww[2] * (float)sin(v);
 }
 
 void par_shapes_merge(par_shapes_mesh* dst, par_shapes_mesh const* src)
@@ -667,8 +667,8 @@ par_shapes_mesh* par_shapes_create_disk(float radius, int slices,
     *points++ = 0;
     for (int i = 0; i < slices; i++) {
         float theta = i * PAR_PI * 2 / slices;
-        *points++ = radius * cos(theta);
-        *points++ = radius * sin(theta);
+        *points++ = radius * (float)cos(theta);
+        *points++ = radius * (float)sin(theta);
         *points++ = 0;
     }
     float nnormal[3] = {normal[0], normal[1], normal[2]};
@@ -692,7 +692,7 @@ par_shapes_mesh* par_shapes_create_disk(float radius, int slices,
     float axis[3];
     par_shapes__cross3(axis, nnormal, k);
     par_shapes__normalize3(axis);
-    par_shapes_rotate(mesh, acos(nnormal[2]), axis);
+    par_shapes_rotate(mesh, (float)acos(nnormal[2]), axis);
     par_shapes_translate(mesh, center[0], center[1], center[2]);
     return mesh;
 }
@@ -803,18 +803,18 @@ void par_shapes_invert(par_shapes_mesh* m, int face, int nfaces)
 par_shapes_mesh* par_shapes_create_icosahedron()
 {
     static float verts[] = {
-        0.000,  0.000,  1.000,
-        0.894,  0.000,  0.447,
-        0.276,  0.851,  0.447,
-        -0.724,  0.526,  0.447,
-        -0.724, -0.526,  0.447,
-        0.276, -0.851,  0.447,
-        0.724,  0.526, -0.447,
-        -0.276,  0.851, -0.447,
-        -0.894,  0.000, -0.447,
-        -0.276, -0.851, -0.447,
-        0.724, -0.526, -0.447,
-        0.000,  0.000, -1.000
+        0.000f,  0.000f,  1.000f,
+        0.894f,  0.000f,  0.447f,
+        0.276f,  0.851f,  0.447f,
+        -0.724f,  0.526f,  0.447f,
+        -0.724f, -0.526f,  0.447f,
+        0.276f, -0.851f,  0.447f,
+        0.724f,  0.526f, -0.447f,
+        -0.276f,  0.851f, -0.447f,
+        -0.894f,  0.000f, -0.447f,
+        -0.276f, -0.851f, -0.447f,
+        0.724f, -0.526f, -0.447f,
+        0.000f,  0.000f, -1.000f
     };
     static PAR_SHAPES_T faces[] = {
         0,1,2,
@@ -851,26 +851,26 @@ par_shapes_mesh* par_shapes_create_icosahedron()
 par_shapes_mesh* par_shapes_create_dodecahedron()
 {
     static float verts[20 * 3] = {
-        0.607, 0.000, 0.795,
-        0.188, 0.577, 0.795,
-        -0.491, 0.357, 0.795,
-        -0.491, -0.357, 0.795,
-        0.188, -0.577, 0.795,
-        0.982, 0.000, 0.188,
-        0.304, 0.934, 0.188,
-        -0.795, 0.577, 0.188,
-        -0.795, -0.577, 0.188,
-        0.304, -0.934, 0.188,
-        0.795, 0.577, -0.188,
-        -0.304, 0.934, -0.188,
-        -0.982, 0.000, -0.188,
-        -0.304, -0.934, -0.188,
-        0.795, -0.577, -0.188,
-        0.491, 0.357, -0.795,
-        -0.188, 0.577, -0.795,
-        -0.607, 0.000, -0.795,
-        -0.188, -0.577, -0.795,
-        0.491, -0.357, -0.795,
+        0.607f, 0.000f, 0.795f,
+        0.188f, 0.577f, 0.795f,
+        -0.491f, 0.357f, 0.795f,
+        -0.491f, -0.357f, 0.795f,
+        0.188f, -0.577f, 0.795f,
+        0.982f, 0.000f, 0.188f,
+        0.304f, 0.934f, 0.188f,
+        -0.795f, 0.577f, 0.188f,
+        -0.795f, -0.577f, 0.188f,
+        0.304f, -0.934f, 0.188f,
+        0.795f, 0.577f, -0.188f,
+        -0.304f, 0.934f, -0.188f,
+        -0.982f, 0.000f, -0.188f,
+        -0.304f, -0.934f, -0.188f,
+        0.795f, -0.577f, -0.188f,
+        0.491f, 0.357f, -0.795f,
+        -0.188f, 0.577f, -0.795f,
+        -0.607f, 0.000f, -0.795f,
+        -0.188f, -0.577f, -0.795f,
+        0.491f, -0.357f, -0.795f,
     };
     static PAR_SHAPES_T pentagons[12 * 5] = {
         0,1,2,3,4,
@@ -913,12 +913,12 @@ par_shapes_mesh* par_shapes_create_dodecahedron()
 par_shapes_mesh* par_shapes_create_octahedron()
 {
     static float verts[6 * 3] = {
-        0.000, 0.000, 1.000,
-        1.000, 0.000, 0.000,
-        0.000, 1.000, 0.000,
-        -1.000, 0.000, 0.000,
-        0.000, -1.000, 0.000,
-        0.000, 0.000, -1.000
+        0.000f, 0.000f, 1.000f,
+        1.000f, 0.000f, 0.000f,
+        0.000f, 1.000f, 0.000f,
+        -1.000f, 0.000f, 0.000f,
+        0.000f, -1.000f, 0.000f,
+        0.000f, 0.000f, -1.000
     };
     static PAR_SHAPES_T triangles[8 * 3] = {
         0,1,2,
@@ -951,10 +951,10 @@ par_shapes_mesh* par_shapes_create_octahedron()
 par_shapes_mesh* par_shapes_create_tetrahedron()
 {
     static float verts[4 * 3] = {
-        0.000, 1.333, 0,
-        0.943, 0, 0,
-        -0.471, 0, 0.816,
-        -0.471, 0, -0.816,
+        0.000f, 1.333f, 0,
+        0.943f, 0, 0,
+        -0.471f, 0, 0.816f,
+        -0.471f, 0, -0.816f,
     };
     static PAR_SHAPES_T triangles[4 * 3] = {
         2,1,0,
@@ -1281,13 +1281,13 @@ par_shapes_mesh* par_shapes_create_lsystem(char const* text, int slices,
             par_shapes__copy3(frame->position, position);
             continue;
         } else {
-            value = atof(cmd->arg);
+            value = (float)atof(cmd->arg);
             if (!strcmp(cmd->cmd, "rx")) {
-                par_shapes_rotate(turtle, value * PAR_PI / 180.0, xaxis);
+                par_shapes_rotate(turtle, value * PAR_PI / 180.0f, xaxis);
             } else if (!strcmp(cmd->cmd, "ry")) {
-                par_shapes_rotate(turtle, value * PAR_PI / 180.0, yaxis);
+                par_shapes_rotate(turtle, value * PAR_PI / 180.0f, yaxis);
             } else if (!strcmp(cmd->cmd, "rz")) {
-                par_shapes_rotate(turtle, value * PAR_PI / 180.0, zaxis);
+                par_shapes_rotate(turtle, value * PAR_PI / 180.0f, zaxis);
             } else if (!strcmp(cmd->cmd, "tx")) {
                 float vec[3] = {value, 0, 0};
                 float t[3] = {
@@ -1444,7 +1444,7 @@ par_shapes_mesh* par_shapes_create_subdivided_sphere(int nsubd)
         mesh->triangles[i] = i;
     }
     par_shapes_mesh* tmp = mesh;
-    mesh = par_shapes_weld(mesh, 0.01, 0);
+    mesh = par_shapes_weld(mesh, 0.01f, 0);
     par_shapes_free_mesh(tmp);
     par_shapes_compute_normals(mesh);
     return mesh;
@@ -1461,11 +1461,11 @@ par_shapes_mesh* par_shapes_create_rock(int seed, int subd)
         double n = a * par__simplex_noise2(ctx, f * pt[0], f * pt[2]);
         a *= 0.5; f *= 2;
         n += a * par__simplex_noise2(ctx, f * pt[0], f * pt[2]);
-        pt[0] *= 1 + 2 * n;
-        pt[1] *= 1 + n;
-        pt[2] *= 1 + 2 * n;
+        pt[0] *= 1 + 2 * (float)n;
+        pt[1] *= 1 + (float)n;
+        pt[2] *= 1 + 2 * (float)n;
         if (pt[1] < 0) {
-            pt[1] = -pow(-pt[1], 0.5) / 2;
+            pt[1] = (float)(-pow(-pt[1], 0.5) / 2);
         }
     }
     par__simplex_noise_free(ctx);
@@ -1714,7 +1714,7 @@ par_shapes_mesh* par_shapes_weld(par_shapes_mesh const* mesh, float epsilon,
     par_shapes_mesh* clone = par_shapes_clone(mesh, 0);
     float aabb[6];
     int gridsize = 20;
-    float maxcell = gridsize - 1;
+    float maxcell = (float)(gridsize - 1);
     par_shapes_compute_aabb(clone, aabb);
     float scale[3] = {
         aabb[3] == aabb[0] ? 1.0f : maxcell / (aabb[3] - aabb[0]),
@@ -1745,7 +1745,7 @@ par_shapes_mesh* par_shapes_weld(par_shapes_mesh const* mesh, float epsilon,
         PAR_FREE(newmap);
     }
     PAR_FREE(sortmap);
-    par_shapes_scale(clone, 1.0 / scale[0], 1.0 / scale[1], 1.0 / scale[2]);
+    par_shapes_scale(clone, 1.0f / scale[0], 1.0f / scale[1], 1.0f / scale[2]);
     par_shapes_translate(clone, aabb[0], aabb[1], aabb[2]);
     return clone;
 }

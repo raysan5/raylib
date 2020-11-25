@@ -2511,8 +2511,8 @@ bool SaveStorageValue(unsigned int position, int value)
     strcpy(path, STORAGE_DATA_FILE);
 #endif
 
-    unsigned int dataSize = 0;
-    unsigned int newDataSize = 0;
+    size_t dataSize = 0;
+    size_t newDataSize = 0;
     unsigned char *fileData = LoadFileData(path, &dataSize);
     unsigned char *newFileData = NULL;
 
@@ -2526,7 +2526,7 @@ bool SaveStorageValue(unsigned int position, int value)
 
             if (newFileData != NULL)
             {
-                // RL_REALLOC succeded
+                // RL_REALLOC succeeded
                 int *dataPtr = (int *)newFileData;
                 dataPtr[position] = value;
             }
@@ -2590,7 +2590,7 @@ int LoadStorageValue(unsigned int position)
     strcpy(path, STORAGE_DATA_FILE);
 #endif
 
-    unsigned int dataSize = 0;
+    size_t dataSize = 0;
     unsigned char *fileData = LoadFileData(path, &dataSize);
 
     if (fileData != NULL)

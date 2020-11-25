@@ -370,23 +370,23 @@ static void InitAudioBufferPool(void);                  // Initialise the multic
 static void CloseAudioBufferPool(void);                 // Close the audio buffers pool
 
 #if defined(SUPPORT_FILEFORMAT_WAV)
-static Wave LoadWAV(const unsigned char *fileData, unsigned int fileSize);   // Load WAV file
+static Wave LoadWAV(const unsigned char *fileData, size_t fileSize);   // Load WAV file
 static int SaveWAV(Wave wave, const char *fileName);    // Save wave data as WAV file
 #endif
 #if defined(SUPPORT_FILEFORMAT_OGG)
-static Wave LoadOGG(const unsigned char *fileData, unsigned int fileSize);   // Load OGG file
+static Wave LoadOGG(const unsigned char *fileData, size_t fileSize);   // Load OGG file
 #endif
 #if defined(SUPPORT_FILEFORMAT_FLAC)
-static Wave LoadFLAC(const unsigned char *fileData, unsigned int fileSize);  // Load FLAC file
+static Wave LoadFLAC(const unsigned char *fileData, size_t fileSize);  // Load FLAC file
 #endif
 #if defined(SUPPORT_FILEFORMAT_MP3)
-static Wave LoadMP3(const unsigned char *fileData, unsigned int fileSize);   // Load MP3 file
+static Wave LoadMP3(const unsigned char *fileData, size_t fileSize);   // Load MP3 file
 #endif
 
 #if defined(RAUDIO_STANDALONE)
 static bool IsFileExtension(const char *fileName, const char *ext); // Check file extension
-static unsigned char *LoadFileData(const char *fileName, unsigned int *bytesRead);     // Load file data as byte array (read)
-static bool SaveFileData(const char *fileName, void *data, unsigned int bytesToWrite); // Save data to file from byte array (write)
+static unsigned char *LoadFileData(const char *fileName, size_t *bytesRead);     // Load file data as byte array (read)
+static bool SaveFileData(const char *fileName, void *data, size_t bytesToWrite); // Save data to file from byte array (write)
 static bool SaveFileText(const char *fileName, char *text);         // Save text data to file (write), string must be '\0' terminated
 #endif
 
@@ -691,7 +691,7 @@ Wave LoadWave(const char *fileName)
     Wave wave = { 0 };
 
     // Loading file to memory
-    unsigned int fileSize = 0;
+    size_t fileSize = 0;
     unsigned char *fileData = LoadFileData(fileName, &fileSize);
 
     if (fileData != NULL)
@@ -706,7 +706,7 @@ Wave LoadWave(const char *fileName)
 }
 
 // Load wave from memory buffer, fileType refers to extension: i.e. "wav"
-Wave LoadWaveFromMemory(const char *fileType, const unsigned char *fileData, int dataSize)
+Wave LoadWaveFromMemory(const char *fileType, const unsigned char *fileData, size_t dataSize)
 {
     Wave wave = { 0 };
 
@@ -1920,7 +1920,7 @@ static void CloseAudioBufferPool(void)
 #if defined(SUPPORT_FILEFORMAT_WAV)
 // Load WAV file data into Wave structure
 // NOTE: Using dr_wav library
-static Wave LoadWAV(const unsigned char *fileData, unsigned int fileSize)
+static Wave LoadWAV(const unsigned char *fileData, size_t fileSize)
 {
     Wave wave = { 0 };
     drwav wav = { 0 };
@@ -1929,7 +1929,7 @@ static Wave LoadWAV(const unsigned char *fileData, unsigned int fileSize)
 
     if (success)
     {
-        wave.sampleCount = wav.totalPCMFrameCount*wav.channels;
+        wave.sampleCount = (unsigned int)wav.totalPCMFrameCount*wav.channels;
         wave.sampleRate = wav.sampleRate;
         wave.sampleSize = 16;   // NOTE: We are forcing conversion to 16bit
         wave.channels = wav.channels;
@@ -1958,9 +1958,9 @@ static int SaveWAV(Wave wave, const char *fileName)
     format.bitsPerSample = wave.sampleSize;
 
     unsigned char *fileData = NULL;
-    unsigned int fileDataSize = 0;
+    size_t fileDataSize = 0;
     success = drwav_init_memory_write(&wav, &fileData, &fileDataSize, &format, NULL);
-    if (success) success = drwav_write_pcm_frames(&wav, wave.sampleCount/wave.channels, wave.data);
+    if (success) success = (int)drwav_write_pcm_frames(&wav, wave.sampleCount/wave.channels, wave.data);
     drwav_result result = drwav_uninit(&wav);
     
     if (result == DRWAV_SUCCESS) success = SaveFileData(fileName, fileData, fileDataSize);
@@ -1974,11 +1974,11 @@ static int SaveWAV(Wave wave, const char *fileName)
 #if defined(SUPPORT_FILEFORMAT_OGG)
 // Load OGG file data into Wave structure
 // NOTE: Using stb_vorbis library
-static Wave LoadOGG(const unsigned char *fileData, unsigned int fileSize)
+static Wave LoadOGG(const unsigned char *fileData, size_t fileSize)
 {
     Wave wave = { 0 };
 
-    stb_vorbis *oggData = stb_vorbis_open_memory((unsigned char *)fileData, fileSize, NULL, NULL);
+    stb_vorbis *oggData = stb_vorbis_open_memory((unsigned char *)fileData, (int)fileSize, NULL, NULL);
 
     if (oggData != NULL)
     {
@@ -2009,7 +2009,7 @@ static Wave LoadOGG(const unsigned char *fileData, unsigned int fileSize)
 #if defined(SUPPORT_FILEFORMAT_FLAC)
 // Load FLAC file data into Wave structure
 // NOTE: Using dr_flac library
-static Wave LoadFLAC(const unsigned char *fileData, unsigned int fileSize)
+static Wave LoadFLAC(const unsigned char *fileData, size_t fileSize)
 {
     Wave wave = { 0 };
 
@@ -2033,7 +2033,7 @@ static Wave LoadFLAC(const unsigned char *fileData, unsigned int fileSize)
 #if defined(SUPPORT_FILEFORMAT_MP3)
 // Load MP3 file data into Wave structure
 // NOTE: Using dr_mp3 library
-static Wave LoadMP3(const unsigned char *fileData, unsigned int fileSize)
+static Wave LoadMP3(const unsigned char *fileData, size_t fileSize)
 {
     Wave wave = { 0 };
     drmp3_config config = { 0 };
@@ -2078,7 +2078,7 @@ static bool IsFileExtension(const char *fileName, const char *ext)
 }
 
 // Load data from file into a buffer
-static unsigned char *LoadFileData(const char *fileName, unsigned int *bytesRead)
+static unsigned char *LoadFileData(const char *fileName, size_t *bytesRead)
 {
     unsigned char *data = NULL;
     *bytesRead = 0;
@@ -2118,7 +2118,7 @@ static unsigned char *LoadFileData(const char *fileName, unsigned int *bytesRead
 }
 
 // Save data to file from buffer
-static bool SaveFileData(const char *fileName, void *data, unsigned int bytesToWrite)
+static bool SaveFileData(const char *fileName, void *data, size_t bytesToWrite)
 {
     if (fileName != NULL)
     {

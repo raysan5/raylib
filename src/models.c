@@ -830,7 +830,7 @@ bool ExportMesh(Mesh mesh, const char *fileName)
     if (IsFileExtension(fileName, ".obj"))
     {
         // Estimated data size, it should be enough...
-        int dataSize = mesh.vertexCount/3*strlen("v 0000.00f 0000.00f 0000.00f") +
+        size_t dataSize = mesh.vertexCount/3*strlen("v 0000.00f 0000.00f 0000.00f") +
                        mesh.vertexCount/2*strlen("vt 0.000f 0.00f") +
                        mesh.vertexCount/3*strlen("vn 0.000f 0.00f 0.00f") +
                        mesh.triangleCount/3*strlen("f 00000/00000/00000 00000/00000/00000 00000/00000/00000");
@@ -973,7 +973,7 @@ ModelAnimation *LoadModelAnimations(const char *fileName, int *animCount)
     #define IQM_MAGIC       "INTERQUAKEMODEL"   // IQM file magic number
     #define IQM_VERSION     2                   // only IQM version 2 supported
 
-    unsigned int fileSize = 0;
+    size_t fileSize = 0;
     unsigned char *fileData = LoadFileData(fileName, &fileSize);
     unsigned char *fileDataPtr = fileData;
 
@@ -2997,9 +2997,9 @@ static Model LoadOBJ(const char *fileName)
         // count the faces for each material
         int *matFaces = RL_CALLOC(meshCount, sizeof(int));
 
-        for (int mi = 0; mi < meshCount; mi++)
+        for (unsigned int mi = 0; mi < meshCount; mi++)
         {
-            for (int fi = 0; fi < meshes[mi].length; fi++)
+            for (unsigned int fi = 0; fi < meshes[mi].length; fi++)
             {
                 int idx = attrib.material_ids[meshes[mi].face_offset + fi];
                 if (idx == -1) idx = 0; // for no material face (which could be the whole model)
@@ -3124,7 +3124,7 @@ static Model LoadIQM(const char *fileName)
     #define MESH_NAME_LENGTH    32          // Mesh name string length
     #define MATERIAL_NAME_LENGTH 32         // Material name string length
 
-    unsigned int fileSize = 0;
+    size_t fileSize = 0;
     unsigned char *fileData = LoadFileData(fileName, &fileSize);
     unsigned char *fileDataPtr = fileData;
 
@@ -3663,7 +3663,7 @@ static Model LoadGLTF(const char *fileName)
     Model model = { 0 };
 
     // glTF file loading
-    unsigned int dataSize = 0;
+    size_t dataSize = 0;
     unsigned char *fileData = LoadFileData(fileName, &dataSize);
 
     if (fileData == NULL) return model;

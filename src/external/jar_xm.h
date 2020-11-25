@@ -141,7 +141,7 @@ void jar_xm_generate_samples_16bit(jar_xm_context_t* ctx, short* output, size_t 
     if(output){
         int x;
         for(x=0;x<2*numsamples;x++)
-            output[x] = musicBuffer[x] * SHRT_MAX;
+            output[x] = (short)(musicBuffer[x] * SHRT_MAX);
     }
 
     JARXM_FREE(musicBuffer);
@@ -160,7 +160,7 @@ void jar_xm_generate_samples_8bit(jar_xm_context_t* ctx, char* output, size_t nu
     if(output){
         int x;
         for(x=0;x<2*numsamples;x++)
-            output[x] = musicBuffer[x] * CHAR_MAX;
+            output[x] = (char)(musicBuffer[x] * CHAR_MAX);
     }
 
     JARXM_FREE(musicBuffer);
@@ -1460,7 +1460,7 @@ static float jar_xm_envelope_lerp(jar_xm_envelope_point_t* a, jar_xm_envelope_po
 static void jar_xm_post_pattern_change(jar_xm_context_t* ctx) {
     /* Loop if necessary */
     if(ctx->current_table_index >= ctx->module.length) {
-        ctx->current_table_index = ctx->module.restart_position;
+        ctx->current_table_index = (uint8_t)ctx->module.restart_position;
     }
 }
 
@@ -1473,9 +1473,9 @@ static float jar_xm_linear_frequency(float period) {
 }
 
 static float jar_xm_amiga_period(float note) {
-    unsigned int intnote = note;
+    unsigned int intnote = (unsigned int)note;
     uint8_t a = intnote % 12;
-    int8_t octave = note / 12.f - 2;
+    int8_t octave = (int8_t)(note / 12.f - 2);
     uint16_t p1 = amiga_frequencies[a], p2 = amiga_frequencies[a + 1];
 
     if(octave > 0) {
@@ -1746,7 +1746,7 @@ static void jar_xm_handle_note_and_instrument(jar_xm_context_t* ctx, jar_xm_chan
                 ch->sample_position = -1;
                 break;
             }
-            ch->sample_position = final_offset;
+            ch->sample_position = (float)final_offset;
         }
         break;
 
@@ -1781,14 +1781,14 @@ static void jar_xm_handle_note_and_instrument(jar_xm_context_t* ctx, jar_xm_chan
             if(s->effect_param & 0x0F) {
                 ch->fine_portamento_up_param = s->effect_param & 0x0F;
             }
-            jar_xm_pitch_slide(ctx, ch, -ch->fine_portamento_up_param);
+            jar_xm_pitch_slide(ctx, ch, (float)(-ch->fine_portamento_up_param));
             break;
 
         case 2: /* E2y: Fine portamento down */
             if(s->effect_param & 0x0F) {
                 ch->fine_portamento_down_param = s->effect_param & 0x0F;
             }
-            jar_xm_pitch_slide(ctx, ch, ch->fine_portamento_down_param);
+            jar_xm_pitch_slide(ctx, ch, (float)ch->fine_portamento_down_param);
             break;
 
         case 4: /* E4y: Set vibrato control */
@@ -2234,12 +2234,12 @@ static void jar_xm_tick(jar_xm_context_t* ctx) {
 
         case 1: /* 1xx: Portamento up */
             if(ctx->current_tick == 0) break;
-            jar_xm_pitch_slide(ctx, ch, -ch->portamento_up_param);
+            jar_xm_pitch_slide(ctx, ch, (float)(-ch->portamento_up_param));
             break;
 
         case 2: /* 2xx: Portamento down */
             if(ctx->current_tick == 0) break;
-            jar_xm_pitch_slide(ctx, ch, ch->portamento_down_param);
+            jar_xm_pitch_slide(ctx, ch, (float)ch->portamento_down_param);
             break;
 
         case 3: /* 3xx: Tone portamento */
@@ -2369,7 +2369,7 @@ static void jar_xm_tick(jar_xm_context_t* ctx) {
         float panning, volume;
 
         panning = ch->panning +
-            (ch->panning_envelope_panning - .5f) * (.5f - fabs(ch->panning - .5f)) * 2.0f;
+            (ch->panning_envelope_panning - .5f) * (.5f - (float)fabs(ch->panning - .5f)) * 2.0f;
 
         if(ch->tremor_on) {
                 volume = .0f;
@@ -2566,7 +2566,7 @@ uint64_t jar_xm_get_remaining_samples(jar_xm_context_t* ctx)
 
     while(jar_xm_get_loop_count(ctx) == currentLoopCount)
     {
-        total += ctx->remaining_samples_in_tick;
+        total += (uint64_t)ctx->remaining_samples_in_tick;
         ctx->remaining_samples_in_tick = 0;
         jar_xm_tick(ctx);
     }

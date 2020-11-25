@@ -164,7 +164,7 @@ void TraceLog(int logType, const char *text, ...)
 }
 
 // Load data from file into a buffer
-unsigned char *LoadFileData(const char *fileName, unsigned int *bytesRead)
+unsigned char *LoadFileData(const char *fileName, size_t *bytesRead)
 {
     unsigned char *data = NULL;
     *bytesRead = 0;
@@ -186,7 +186,7 @@ unsigned char *LoadFileData(const char *fileName, unsigned int *bytesRead)
                 data = (unsigned char *)RL_MALLOC(size*sizeof(unsigned char));
 
                 // NOTE: fread() returns number of read elements instead of bytes, so we read [1 byte, size elements]
-                unsigned int count = (unsigned int)fread(data, sizeof(unsigned char), size, file);
+                size_t count = fread(data, sizeof(unsigned char), size, file);
                 *bytesRead = count;
 
                 if (count != size) TRACELOG(LOG_WARNING, "FILEIO: [%s] File partially loaded", fileName);
@@ -204,7 +204,7 @@ unsigned char *LoadFileData(const char *fileName, unsigned int *bytesRead)
 }
 
 // Save data to file from buffer
-bool SaveFileData(const char *fileName, void *data, unsigned int bytesToWrite)
+bool SaveFileData(const char *fileName, void *data, size_t bytesToWrite)
 {
     bool success = false;
     
@@ -214,7 +214,7 @@ bool SaveFileData(const char *fileName, void *data, unsigned int bytesToWrite)
 
         if (file != NULL)
         {
-            unsigned int count = (unsigned int)fwrite(data, sizeof(unsigned char), bytesToWrite, file);
+            size_t count = fwrite(data, sizeof(unsigned char), bytesToWrite, file);
 
             if (count == 0) TRACELOG(LOG_WARNING, "FILEIO: [%s] Failed to write file", fileName);
             else if (count != bytesToWrite) TRACELOG(LOG_WARNING, "FILEIO: [%s] File partially written", fileName);

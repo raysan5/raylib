@@ -171,20 +171,20 @@
 // Module specific Functions Declaration
 //----------------------------------------------------------------------------------
 #if defined(SUPPORT_FILEFORMAT_DDS)
-static Image LoadDDS(const unsigned char *fileData, unsigned int fileSize);   // Load DDS file data
+static Image LoadDDS(const unsigned char *fileData, size_t fileSize);   // Load DDS file data
 #endif
 #if defined(SUPPORT_FILEFORMAT_PKM)
-static Image LoadPKM(const unsigned char *fileData, unsigned int fileSize);   // Load PKM file data
+static Image LoadPKM(const unsigned char *fileData, size_t fileSize);   // Load PKM file data
 #endif
 #if defined(SUPPORT_FILEFORMAT_KTX)
-static Image LoadKTX(const unsigned char *fileData, unsigned int fileSize);   // Load KTX file data
+static Image LoadKTX(const unsigned char *fileData, size_t fileSize);   // Load KTX file data
 static int SaveKTX(Image image, const char *fileName);  // Save image data as KTX file
 #endif
 #if defined(SUPPORT_FILEFORMAT_PVR)
-static Image LoadPVR(const unsigned char *fileData, unsigned int fileSize);   // Load PVR file data
+static Image LoadPVR(const unsigned char *fileData, size_t fileSize);   // Load PVR file data
 #endif
 #if defined(SUPPORT_FILEFORMAT_ASTC)
-static Image LoadASTC(const unsigned char *fileData, unsigned int fileSize);  // Load ASTC file data
+static Image LoadASTC(const unsigned char *fileData, size_t fileSize);  // Load ASTC file data
 #endif
 
 //----------------------------------------------------------------------------------
@@ -208,7 +208,7 @@ Image LoadImage(const char *fileName)
 #endif
 
     // Loading file to memory
-    unsigned int fileSize = 0;
+    size_t fileSize = 0;
     unsigned char *fileData = LoadFileData(fileName, &fileSize);
 
     if (fileData != NULL)
@@ -230,7 +230,7 @@ Image LoadImageRaw(const char *fileName, int width, int height, int format, int 
 {
     Image image = { 0 };
 
-    unsigned int dataSize = 0;
+    size_t dataSize = 0;
     unsigned char *fileData = LoadFileData(fileName, &dataSize);
 
     if (fileData != NULL)
@@ -266,14 +266,14 @@ Image LoadImageAnim(const char *fileName, int *frames)
 #if defined(SUPPORT_FILEFORMAT_GIF)
     if (IsFileExtension(fileName, ".gif"))
     {
-        unsigned int dataSize = 0;
+        size_t dataSize = 0;
         unsigned char *fileData = LoadFileData(fileName, &dataSize);
 
         if (fileData != NULL)
         {
             int comp = 0;
             int **delays = NULL;
-            image.data = stbi_load_gif_from_memory(fileData, dataSize, delays, &image.width, &image.height, &framesCount, &comp, 4);
+            image.data = stbi_load_gif_from_memory(fileData, (int)dataSize, delays, &image.width, &image.height, &framesCount, &comp, 4);
 
             image.mipmaps = 1;
             image.format = UNCOMPRESSED_R8G8B8A8;
@@ -294,7 +294,7 @@ Image LoadImageAnim(const char *fileName, int *frames)
 }
 
 // Load image from memory buffer, fileType refers to extension: i.e. "png"
-Image LoadImageFromMemory(const char *fileType, const unsigned char *fileData, int dataSize)
+Image LoadImageFromMemory(const char *fileType, const unsigned char *fileData, size_t dataSize)
 {
     Image image = { 0 };
 
@@ -333,7 +333,7 @@ Image LoadImageFromMemory(const char *fileType, const unsigned char *fileData, i
         if (fileData != NULL)
         {
             int comp = 0;
-            image.data = stbi_load_from_memory(fileData, dataSize, &image.width, &image.height, &comp, 0);
+            image.data = stbi_load_from_memory(fileData, (int)dataSize, &image.width, &image.height, &comp, 0);
 
             image.mipmaps = 1;
 
@@ -351,7 +351,7 @@ Image LoadImageFromMemory(const char *fileType, const unsigned char *fileData, i
         if (fileData != NULL)
         {
             int comp = 0;
-            image.data = stbi_loadf_from_memory(fileData, dataSize, &image.width, &image.height, &comp, 0);
+            image.data = stbi_loadf_from_memory(fileData, (int)dataSize, &image.width, &image.height, &comp, 0);
 
             image.mipmaps = 1;
 
@@ -811,9 +811,9 @@ Image ImageFromImage(Image image, Rectangle rec)
 
     // TODO: Check rec is valid?
 
-    result.width = rec.width;
-    result.height = rec.height;
-    result.data = RL_CALLOC(rec.width*rec.height*bytesPerPixel, 1);
+    result.width = (int)rec.width;
+    result.height = (int)rec.height;
+    result.data = RL_CALLOC((size_t)(rec.width*rec.height*bytesPerPixel), 1);
     result.format = image.format;
     result.mipmaps = 1;
 
@@ -849,7 +849,7 @@ void ImageCrop(Image *image, Rectangle crop)
     {
         int bytesPerPixel = GetPixelDataSize(1, 1, image->format);
 
-        unsigned char *croppedData = (unsigned char *)RL_MALLOC(crop.width*crop.height*bytesPerPixel);
+        unsigned char *croppedData = (unsigned char *)RL_MALLOC((size_t)(crop.width*crop.height*bytesPerPixel));
 
         // OPTION 1: Move cropped data line-by-line
         for (int y = (int)crop.y, offsetSize = 0; y < (int)(crop.y + crop.height); y++)
@@ -1437,27 +1437,27 @@ void ImageResizeCanvas(Image *image, int newWidth, int newHeight, int offsetX, i
     if (image->format >= COMPRESSED_DXT1_RGB) TRACELOG(LOG_WARNING, "Image manipulation not supported for compressed formats");
     else if ((newWidth != image->width) || (newHeight != image->height))
     {
-        Rectangle srcRec = { 0, 0, image->width, image->height };
-        Vector2 dstPos = { offsetX, offsetY };
+        Rectangle srcRec = { 0, 0, (float)image->width, (float)image->height };
+        Vector2 dstPos = { (float)offsetX, (float)offsetY };
 
         if (offsetX < 0)
         {
-            srcRec.x = -offsetX;
-            srcRec.width += offsetX;
+            srcRec.x = (float)-offsetX;
+            srcRec.width += (float)offsetX;
             dstPos.x = 0;
         }
-        else if ((offsetX + image->width) > newWidth) srcRec.width = newWidth - offsetX;
+        else if ((offsetX + image->width) > newWidth) srcRec.width = (float)(newWidth - offsetX);
 
         if (offsetY < 0)
         {
-            srcRec.y = -offsetY;
-            srcRec.height += offsetY;
+            srcRec.y = (float)-offsetY;
+            srcRec.height += (float)offsetY;
             dstPos.y = 0;
         }
-        else if ((offsetY + image->height) > newHeight) srcRec.height = newHeight - offsetY;
+        else if ((offsetY + image->height) > newHeight) srcRec.height = (float)(newHeight - offsetY);
 
-        if (newWidth < srcRec.width) srcRec.width = newWidth;
-        if (newHeight < srcRec.height) srcRec.height = newHeight;
+        if (newWidth < srcRec.width) srcRec.width = (float)newWidth;
+        if (newHeight < srcRec.height) srcRec.height = (float)newHeight;
 
         int bytesPerPixel = GetPixelDataSize(1, 1, image->format);
         unsigned char *resizedData = (unsigned char *)RL_CALLOC(newWidth*newHeight*bytesPerPixel, 1);
@@ -2569,7 +2569,7 @@ void ImageDraw(Image *dst, Image src, Rectangle srcRec, Rectangle dstRec, Color 
         {
             srcMod = ImageFromImage(src, srcRec);   // Create image from another image
             ImageResize(&srcMod, (int)dstRec.width, (int)dstRec.height);   // Resize to destination rectangle
-            srcRec = (Rectangle){ 0, 0, srcMod.width, srcMod.height };
+            srcRec = (Rectangle){ 0, 0, (float)srcMod.width, (float)srcMod.height };
 
             srcPtr = &srcMod;
             useSrcMod = true;
@@ -2592,8 +2592,8 @@ void ImageDraw(Image *dst, Image src, Rectangle srcRec, Rectangle dstRec, Color 
         }
         else if ((dstRec.y + srcRec.height) > dst->height) srcRec.height = dst->height - dstRec.y;
 
-        if (dst->width < srcRec.width) srcRec.width = dst->width;
-        if (dst->height < srcRec.height) srcRec.height = dst->height;
+        if (dst->width < srcRec.width) srcRec.width = (float)dst->width;
+        if (dst->height < srcRec.height) srcRec.height = (float)dst->height;
 
         // This blitting method is quite fast! The process followed is:
         // for every pixel -> [get_src_format/get_dst_format -> blend -> format_to_dst]
@@ -2627,7 +2627,7 @@ void ImageDraw(Image *dst, Image src, Rectangle srcRec, Rectangle dstRec, Color 
             unsigned char *pDst = pDstBase;
 
             // Fast path: Avoid moving pixel by pixel if no blend required and same format
-            if (!blendRequired && (srcPtr->format == dst->format)) memcpy(pDst, pSrc, srcRec.width*bytesPerPixelSrc);
+            if (!blendRequired && (srcPtr->format == dst->format)) memcpy(pDst, pSrc, (size_t)(srcRec.width*bytesPerPixelSrc));
             else
             {
                 for (int x = 0; x < (int)srcRec.width; x++)
@@ -3079,7 +3079,7 @@ void DrawTextureTiled(Texture2D texture, Rectangle sourceRec, Rectangle destRec,
 {
     if (texture.id <= 0 || scale <= 0.0f) return;  // Wanna see a infinite loop?!...just delete this line!
 
-    int tileWidth = sourceRec.width*scale, tileHeight = sourceRec.height*scale;
+    int tileWidth = (int)(sourceRec.width*scale), tileHeight = (int)(sourceRec.height*scale);
     if (destRec.width < tileWidth && destRec.height < tileHeight)
     {
         // Can fit only one tile
@@ -3092,7 +3092,7 @@ void DrawTextureTiled(Texture2D texture, Rectangle sourceRec, Rectangle destRec,
         int dy = 0;
         for (;dy+tileHeight < destRec.height; dy += tileHeight)
         {
-            DrawTexturePro(texture, (Rectangle){sourceRec.x, sourceRec.y, ((float)destRec.width/tileWidth)*sourceRec.width, sourceRec.height}, (Rectangle){destRec.x, destRec.y + dy, destRec.width, tileHeight}, origin, rotation, tint);
+            DrawTexturePro(texture, (Rectangle){sourceRec.x, sourceRec.y, ((float)destRec.width/tileWidth)*sourceRec.width, sourceRec.height}, (Rectangle){destRec.x, destRec.y + dy, destRec.width, (float)tileHeight}, origin, rotation, tint);
         }
 
         // Fit last tile
@@ -3108,7 +3108,7 @@ void DrawTextureTiled(Texture2D texture, Rectangle sourceRec, Rectangle destRec,
         int dx = 0;
         for (;dx+tileWidth < destRec.width; dx += tileWidth)
         {
-            DrawTexturePro(texture, (Rectangle){sourceRec.x, sourceRec.y, sourceRec.width, ((float)destRec.height/tileHeight)*sourceRec.height}, (Rectangle){destRec.x + dx, destRec.y, tileWidth, destRec.height}, origin, rotation, tint);
+            DrawTexturePro(texture, (Rectangle){sourceRec.x, sourceRec.y, sourceRec.width, (float)(destRec.height/tileHeight)*sourceRec.height}, (Rectangle){destRec.x + dx, destRec.y, (float)tileWidth, destRec.height}, origin, rotation, tint);
         }
 
         // Fit last tile
@@ -3127,13 +3127,13 @@ void DrawTextureTiled(Texture2D texture, Rectangle sourceRec, Rectangle destRec,
             int dy = 0;
             for (;dy+tileHeight < destRec.height; dy += tileHeight)
             {
-                DrawTexturePro(texture, sourceRec, (Rectangle){destRec.x + dx, destRec.y + dy, tileWidth, tileHeight}, origin, rotation, tint);
+                DrawTexturePro(texture, sourceRec, (Rectangle){destRec.x + dx, destRec.y + dy, (float)tileWidth, (float)tileHeight}, origin, rotation, tint);
             }
 
             if (dy < destRec.height)
             {
                 DrawTexturePro(texture, (Rectangle){sourceRec.x, sourceRec.y, sourceRec.width, ((float)(destRec.height - dy)/tileHeight)*sourceRec.height},
-                    (Rectangle){destRec.x + dx, destRec.y + dy, tileWidth, destRec.height - dy}, origin, rotation, tint);
+                    (Rectangle){destRec.x + dx, destRec.y + dy, (float)tileWidth, (float)(destRec.height - dy)}, origin, rotation, tint);
             }
         }
 
@@ -3144,7 +3144,7 @@ void DrawTextureTiled(Texture2D texture, Rectangle sourceRec, Rectangle destRec,
             for (;dy+tileHeight < destRec.height; dy += tileHeight)
             {
                 DrawTexturePro(texture, (Rectangle){sourceRec.x, sourceRec.y, ((float)(destRec.width - dx)/tileWidth)*sourceRec.width, sourceRec.height},
-                        (Rectangle){destRec.x + dx, destRec.y + dy, destRec.width - dx, tileHeight}, origin, rotation, tint);
+                        (Rectangle){destRec.x + dx, destRec.y + dy, destRec.width - dx, (float)tileHeight}, origin, rotation, tint);
             }
 
             // Draw final tile in the bottom right corner
@@ -3787,7 +3787,7 @@ int GetPixelDataSize(int width, int height, int format)
 //----------------------------------------------------------------------------------
 #if defined(SUPPORT_FILEFORMAT_DDS)
 // Loading DDS image data (compressed or uncompressed)
-static Image LoadDDS(const unsigned char *fileData, unsigned int fileSize)
+static Image LoadDDS(const unsigned char *fileData, size_t fileSize)
 {
     unsigned char *fileDataPtr = (unsigned char *)fileData;
 
@@ -3869,7 +3869,7 @@ static Image LoadDDS(const unsigned char *fileData, unsigned int fileSize)
             {
                 if (ddsHeader->ddspf.flags == 0x40)         // no alpha channel
                 {
-                    int dataSize = image.width*image.height*sizeof(unsigned short);
+                    size_t dataSize = image.width*image.height*sizeof(unsigned short);
                     image.data = (unsigned short *)RL_MALLOC(dataSize);
 
                     memcpy(image.data, fileDataPtr, dataSize);
@@ -3880,7 +3880,7 @@ static Image LoadDDS(const unsigned char *fileData, unsigned int fileSize)
                 {
                     if (ddsHeader->ddspf.aBitMask == 0x8000)    // 1bit alpha
                     {
-                        int dataSize = image.width*image.height*sizeof(unsigned short);
+                        size_t dataSize = image.width*image.height*sizeof(unsigned short);
                         image.data = (unsigned short *)RL_MALLOC(dataSize);
 
                         memcpy(image.data, fileDataPtr, dataSize);
@@ -3899,7 +3899,7 @@ static Image LoadDDS(const unsigned char *fileData, unsigned int fileSize)
                     }
                     else if (ddsHeader->ddspf.aBitMask == 0xf000)   // 4bit alpha
                     {
-                        int dataSize = image.width*image.height*sizeof(unsigned short);
+                        size_t dataSize = image.width*image.height*sizeof(unsigned short);
                         image.data = (unsigned short *)RL_MALLOC(dataSize);
 
                         memcpy(image.data, fileDataPtr, dataSize);
@@ -3920,7 +3920,7 @@ static Image LoadDDS(const unsigned char *fileData, unsigned int fileSize)
             }
             else if (ddsHeader->ddspf.flags == 0x40 && ddsHeader->ddspf.rgbBitCount == 24)   // DDS_RGB, no compressed
             {
-                int dataSize = image.width*image.height*3*sizeof(unsigned char);
+                size_t dataSize = image.width*image.height*3*sizeof(unsigned char);
                 image.data = (unsigned short *)RL_MALLOC(dataSize);
 
                 memcpy(image.data, fileDataPtr, dataSize);
@@ -3929,7 +3929,7 @@ static Image LoadDDS(const unsigned char *fileData, unsigned int fileSize)
             }
             else if (ddsHeader->ddspf.flags == 0x41 && ddsHeader->ddspf.rgbBitCount == 32) // DDS_RGBA, no compressed
             {
-                int dataSize = image.width*image.height*4*sizeof(unsigned char);
+                size_t dataSize = image.width*image.height*4*sizeof(unsigned char);
                 image.data = (unsigned short *)RL_MALLOC(dataSize);
 
                 memcpy(image.data, fileDataPtr, dataSize);
@@ -3950,7 +3950,7 @@ static Image LoadDDS(const unsigned char *fileData, unsigned int fileSize)
             }
             else if (((ddsHeader->ddspf.flags == 0x04) || (ddsHeader->ddspf.flags == 0x05)) && (ddsHeader->ddspf.fourCC > 0)) // Compressed
             {
-                int dataSize = 0;
+                size_t dataSize = 0;
 
                 // Calculate data size, including all mipmaps
                 if (ddsHeader->mipmapCount > 1) dataSize = ddsHeader->pitchOrLinearSize*2;
@@ -3983,7 +3983,7 @@ static Image LoadDDS(const unsigned char *fileData, unsigned int fileSize)
 // Loading PKM image data (ETC1/ETC2 compression)
 // NOTE: KTX is the standard Khronos Group compression format (ETC1/ETC2, mipmaps)
 // PKM is a much simpler file format used mainly to contain a single ETC1/ETC2 compressed image (no mipmaps)
-static Image LoadPKM(const unsigned char *fileData, unsigned int fileSize)
+static Image LoadPKM(const unsigned char *fileData, size_t fileSize)
 {
     unsigned char *fileDataPtr = (unsigned char *)fileData;
 
@@ -4045,7 +4045,7 @@ static Image LoadPKM(const unsigned char *fileData, unsigned int fileSize)
             int bpp = 4;
             if (pkmHeader->format == 3) bpp = 8;
 
-            int dataSize = image.width*image.height*bpp/8;  // Total data size in bytes
+            size_t dataSize = image.width*image.height*bpp/8;  // Total data size in bytes
 
             image.data = (unsigned char *)RL_MALLOC(dataSize*sizeof(unsigned char));
 
@@ -4063,7 +4063,7 @@ static Image LoadPKM(const unsigned char *fileData, unsigned int fileSize)
 
 #if defined(SUPPORT_FILEFORMAT_KTX)
 // Load KTX compressed image data (ETC1/ETC2 compression)
-static Image LoadKTX(const unsigned char *fileData, unsigned int fileSize)
+static Image LoadKTX(const unsigned char *fileData, size_t fileSize)
 {
     unsigned char *fileDataPtr = (unsigned char *)fileData;
 
@@ -4127,7 +4127,7 @@ static Image LoadKTX(const unsigned char *fileData, unsigned int fileSize)
 
             fileDataPtr += ktxHeader->keyValueDataSize; // Skip value data size
 
-            int dataSize = ((int *)fileDataPtr)[0];
+            size_t dataSize = ((int *)fileDataPtr)[0];
             fileDataPtr += sizeof(int);
 
             image.data = (unsigned char *)RL_MALLOC(dataSize*sizeof(unsigned char));
@@ -4170,7 +4170,7 @@ static int SaveKTX(Image image, const char *fileName)
     } KTXHeader;
 
     // Calculate file dataSize required
-    int dataSize = sizeof(KTXHeader);
+    size_t dataSize = sizeof(KTXHeader);
 
     for (int i = 0, width = image.width, height = image.height; i < image.mipmaps; i++)
     {
@@ -4218,12 +4218,12 @@ static int SaveKTX(Image image, const char *fileName)
 
         int width = image.width;
         int height = image.height;
-        int dataOffset = 0;
+        size_t dataOffset = 0;
 
         // Save all mipmaps data
         for (int i = 0; i < image.mipmaps; i++)
         {
-            unsigned int dataSize = GetPixelDataSize(width, height, image.format);
+            size_t dataSize = (size_t)GetPixelDataSize(width, height, image.format);
 
             memcpy(fileDataPtr, &dataSize, sizeof(unsigned int));
             memcpy(fileDataPtr + 4, (unsigned char *)image.data + dataOffset, dataSize);
@@ -4247,7 +4247,7 @@ static int SaveKTX(Image image, const char *fileName)
 #if defined(SUPPORT_FILEFORMAT_PVR)
 // Loading PVR image data (uncompressed or PVRT compression)
 // NOTE: PVR v2 not supported, use PVR v3 instead
-static Image LoadPVR(const unsigned char *fileData, unsigned int fileSize)
+static Image LoadPVR(const unsigned char *fileData, size_t fileSize)
 {
     unsigned char *fileDataPtr = (unsigned char *)fileData;
 
@@ -4367,7 +4367,7 @@ static Image LoadPVR(const unsigned char *fileData, unsigned int fileSize)
                     default: break;
                 }
 
-                int dataSize = image.width*image.height*bpp/8;  // Total data size in bytes
+                size_t dataSize = image.width*image.height*bpp/8;  // Total data size in bytes
                 image.data = (unsigned char *)RL_MALLOC(dataSize*sizeof(unsigned char));
 
                 memcpy(image.data, fileDataPtr, dataSize);
@@ -4382,7 +4382,7 @@ static Image LoadPVR(const unsigned char *fileData, unsigned int fileSize)
 
 #if defined(SUPPORT_FILEFORMAT_ASTC)
 // Load ASTC compressed image data (ASTC compression)
-static Image LoadASTC(const unsigned char *fileData, unsigned int fileSize)
+static Image LoadASTC(const unsigned char *fileData, size_t fileSize)
 {
     unsigned char *fileDataPtr = (unsigned char *)fileData;
 
@@ -4436,7 +4436,7 @@ static Image LoadASTC(const unsigned char *fileData, unsigned int fileSize)
             // NOTE: Currently we only support 2 blocks configurations: 4x4 and 8x8
             if ((bpp == 8) || (bpp == 2))
             {
-                int dataSize = image.width*image.height*bpp/8;  // Data size in bytes
+                size_t dataSize = image.width*image.height*bpp/8;  // Data size in bytes
 
                 image.data = (unsigned char *)RL_MALLOC(dataSize*sizeof(unsigned char));
 
