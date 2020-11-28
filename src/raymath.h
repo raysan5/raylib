@@ -1074,26 +1074,23 @@ RMDEF Matrix MatrixLookAt(Vector3 eye, Vector3 target, Vector3 up)
     Vector3 x = Vector3CrossProduct(up, z);
     x = Vector3Normalize(x);
     Vector3 y = Vector3CrossProduct(z, x);
-    y = Vector3Normalize(y);
 
     result.m0 = x.x;
-    result.m1 = x.y;
-    result.m2 = x.z;
+    result.m1 = y.x;
+    result.m2 = z.x;
     result.m3 = 0.0f;
-    result.m4 = y.x;
+    result.m4 = x.y;
     result.m5 = y.y;
-    result.m6 = y.z;
+    result.m6 = z.y;
     result.m7 = 0.0f;
-    result.m8 = z.x;
-    result.m9 = z.y;
+    result.m8 = x.z;
+    result.m9 = y.z;
     result.m10 = z.z;
     result.m11 = 0.0f;
-    result.m12 = eye.x;
-    result.m13 = eye.y;
-    result.m14 = eye.z;
+    result.m12 = -Vector3DotProduct(x, eye);
+    result.m13 = -Vector3DotProduct(y, eye);
+    result.m14 = -Vector3DotProduct(z, eye);
     result.m15 = 1.0f;
-
-    result = MatrixInvert(result);
 
     return result;
 }
