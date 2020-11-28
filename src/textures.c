@@ -811,9 +811,9 @@ Image ImageFromImage(Image image, Rectangle rec)
 
     // TODO: Check rec is valid?
 
-    result.width = rec.width;
-    result.height = rec.height;
-    result.data = RL_CALLOC(rec.width*rec.height*bytesPerPixel, 1);
+    result.width = (int)rec.width;
+    result.height = (int)rec.height;
+    result.data = RL_CALLOC((int)(rec.width*rec.height)*bytesPerPixel, 1);
     result.format = image.format;
     result.mipmaps = 1;
 
@@ -849,7 +849,7 @@ void ImageCrop(Image *image, Rectangle crop)
     {
         int bytesPerPixel = GetPixelDataSize(1, 1, image->format);
 
-        unsigned char *croppedData = (unsigned char *)RL_MALLOC(crop.width*crop.height*bytesPerPixel);
+        unsigned char *croppedData = (unsigned char *)RL_MALLOC((int)(crop.width*crop.height)*bytesPerPixel);
 
         // OPTION 1: Move cropped data line-by-line
         for (int y = (int)crop.y, offsetSize = 0; y < (int)(crop.y + crop.height); y++)
@@ -1437,27 +1437,27 @@ void ImageResizeCanvas(Image *image, int newWidth, int newHeight, int offsetX, i
     if (image->format >= COMPRESSED_DXT1_RGB) TRACELOG(LOG_WARNING, "Image manipulation not supported for compressed formats");
     else if ((newWidth != image->width) || (newHeight != image->height))
     {
-        Rectangle srcRec = { 0, 0, image->width, image->height };
-        Vector2 dstPos = { offsetX, offsetY };
+        Rectangle srcRec = { 0, 0, (float)image->width, (float)image->height };
+        Vector2 dstPos = { (float)offsetX, (float)offsetY };
 
         if (offsetX < 0)
         {
-            srcRec.x = -offsetX;
-            srcRec.width += offsetX;
+            srcRec.x = (float)-offsetX;
+            srcRec.width += (float)offsetX;
             dstPos.x = 0;
         }
-        else if ((offsetX + image->width) > newWidth) srcRec.width = newWidth - offsetX;
+        else if ((offsetX + image->width) > newWidth) srcRec.width = (float)(newWidth - offsetX);
 
         if (offsetY < 0)
         {
-            srcRec.y = -offsetY;
-            srcRec.height += offsetY;
+            srcRec.y = (float)-offsetY;
+            srcRec.height += (float)offsetY;
             dstPos.y = 0;
         }
-        else if ((offsetY + image->height) > newHeight) srcRec.height = newHeight - offsetY;
+        else if ((offsetY + image->height) > newHeight) srcRec.height = (float)(newHeight - offsetY);
 
-        if (newWidth < srcRec.width) srcRec.width = newWidth;
-        if (newHeight < srcRec.height) srcRec.height = newHeight;
+        if (newWidth < srcRec.width) srcRec.width = (float)newWidth;
+        if (newHeight < srcRec.height) srcRec.height = (float)newHeight;
 
         int bytesPerPixel = GetPixelDataSize(1, 1, image->format);
         unsigned char *resizedData = (unsigned char *)RL_CALLOC(newWidth*newHeight*bytesPerPixel, 1);
@@ -2569,7 +2569,7 @@ void ImageDraw(Image *dst, Image src, Rectangle srcRec, Rectangle dstRec, Color 
         {
             srcMod = ImageFromImage(src, srcRec);   // Create image from another image
             ImageResize(&srcMod, (int)dstRec.width, (int)dstRec.height);   // Resize to destination rectangle
-            srcRec = (Rectangle){ 0, 0, srcMod.width, srcMod.height };
+            srcRec = (Rectangle){ 0, 0, (float)srcMod.width, (float)srcMod.height };
 
             srcPtr = &srcMod;
             useSrcMod = true;
@@ -2592,8 +2592,8 @@ void ImageDraw(Image *dst, Image src, Rectangle srcRec, Rectangle dstRec, Color 
         }
         else if ((dstRec.y + srcRec.height) > dst->height) srcRec.height = dst->height - dstRec.y;
 
-        if (dst->width < srcRec.width) srcRec.width = dst->width;
-        if (dst->height < srcRec.height) srcRec.height = dst->height;
+        if (dst->width < srcRec.width) srcRec.width = (float)dst->width;
+        if (dst->height < srcRec.height) srcRec.height = (float)dst->height;
 
         // This blitting method is quite fast! The process followed is:
         // for every pixel -> [get_src_format/get_dst_format -> blend -> format_to_dst]
@@ -2627,7 +2627,7 @@ void ImageDraw(Image *dst, Image src, Rectangle srcRec, Rectangle dstRec, Color 
             unsigned char *pDst = pDstBase;
 
             // Fast path: Avoid moving pixel by pixel if no blend required and same format
-            if (!blendRequired && (srcPtr->format == dst->format)) memcpy(pDst, pSrc, srcRec.width*bytesPerPixelSrc);
+            if (!blendRequired && (srcPtr->format == dst->format)) memcpy(pDst, pSrc, (int)(srcRec.width)*bytesPerPixelSrc);
             else
             {
                 for (int x = 0; x < (int)srcRec.width; x++)
@@ -3079,7 +3079,7 @@ void DrawTextureTiled(Texture2D texture, Rectangle sourceRec, Rectangle destRec,
 {
     if (texture.id <= 0 || scale <= 0.0f) return;  // Wanna see a infinite loop?!...just delete this line!
 
-    int tileWidth = sourceRec.width*scale, tileHeight = sourceRec.height*scale;
+    int tileWidth = (int)(sourceRec.width*scale), tileHeight = (int)(sourceRec.height*scale);
     if (destRec.width < tileWidth && destRec.height < tileHeight)
     {
         // Can fit only one tile
@@ -3092,7 +3092,7 @@ void DrawTextureTiled(Texture2D texture, Rectangle sourceRec, Rectangle destRec,
         int dy = 0;
         for (;dy+tileHeight < destRec.height; dy += tileHeight)
         {
-            DrawTexturePro(texture, (Rectangle){sourceRec.x, sourceRec.y, ((float)destRec.width/tileWidth)*sourceRec.width, sourceRec.height}, (Rectangle){destRec.x, destRec.y + dy, destRec.width, tileHeight}, origin, rotation, tint);
+            DrawTexturePro(texture, (Rectangle){sourceRec.x, sourceRec.y, ((float)destRec.width/tileWidth)*sourceRec.width, sourceRec.height}, (Rectangle){destRec.x, destRec.y + dy, destRec.width, (float)tileHeight}, origin, rotation, tint);
         }
 
         // Fit last tile
@@ -3108,7 +3108,7 @@ void DrawTextureTiled(Texture2D texture, Rectangle sourceRec, Rectangle destRec,
         int dx = 0;
         for (;dx+tileWidth < destRec.width; dx += tileWidth)
         {
-            DrawTexturePro(texture, (Rectangle){sourceRec.x, sourceRec.y, sourceRec.width, ((float)destRec.height/tileHeight)*sourceRec.height}, (Rectangle){destRec.x + dx, destRec.y, tileWidth, destRec.height}, origin, rotation, tint);
+            DrawTexturePro(texture, (Rectangle){sourceRec.x, sourceRec.y, sourceRec.width, ((float)destRec.height/tileHeight)*sourceRec.height}, (Rectangle){destRec.x + dx, destRec.y, (float)tileWidth, destRec.height}, origin, rotation, tint);
         }
 
         // Fit last tile
@@ -3127,13 +3127,13 @@ void DrawTextureTiled(Texture2D texture, Rectangle sourceRec, Rectangle destRec,
             int dy = 0;
             for (;dy+tileHeight < destRec.height; dy += tileHeight)
             {
-                DrawTexturePro(texture, sourceRec, (Rectangle){destRec.x + dx, destRec.y + dy, tileWidth, tileHeight}, origin, rotation, tint);
+                DrawTexturePro(texture, sourceRec, (Rectangle){destRec.x + dx, destRec.y + dy, (float)tileWidth, (float)tileHeight}, origin, rotation, tint);
             }
 
             if (dy < destRec.height)
             {
                 DrawTexturePro(texture, (Rectangle){sourceRec.x, sourceRec.y, sourceRec.width, ((float)(destRec.height - dy)/tileHeight)*sourceRec.height},
-                    (Rectangle){destRec.x + dx, destRec.y + dy, tileWidth, destRec.height - dy}, origin, rotation, tint);
+                    (Rectangle){destRec.x + dx, destRec.y + dy, (float)tileWidth, destRec.height - dy}, origin, rotation, tint);
             }
         }
 
@@ -3144,7 +3144,7 @@ void DrawTextureTiled(Texture2D texture, Rectangle sourceRec, Rectangle destRec,
             for (;dy+tileHeight < destRec.height; dy += tileHeight)
             {
                 DrawTexturePro(texture, (Rectangle){sourceRec.x, sourceRec.y, ((float)(destRec.width - dx)/tileWidth)*sourceRec.width, sourceRec.height},
-                        (Rectangle){destRec.x + dx, destRec.y + dy, destRec.width - dx, tileHeight}, origin, rotation, tint);
+                        (Rectangle){destRec.x + dx, destRec.y + dy, destRec.width - dx, (float)tileHeight}, origin, rotation, tint);
             }
 
             // Draw final tile in the bottom right corner
