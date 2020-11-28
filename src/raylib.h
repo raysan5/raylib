@@ -1247,7 +1247,9 @@ RLAPI Font LoadFontFromImage(Image image, Color key, int firstChar);            
 RLAPI Font LoadFontFromMemory(const char *fileType, const unsigned char *fileData, int dataSize, int fontSize, int *fontChars, int charsCount); // Load font from memory buffer, fileType refers to extension: i.e. "ttf"
 RLAPI CharInfo *LoadFontData(const unsigned char *fileData, int dataSize, int fontSize, int *fontChars, int charsCount, int type);      // Load font data for further use
 RLAPI Image GenImageFontAtlas(const CharInfo *chars, Rectangle **recs, int charsCount, int fontSize, int padding, int packMethod);      // Generate image font atlas using chars info
+RLAPI void UnloadFontData(CharInfo *chars, int charsCount);                                 // Unload font chars info data (RAM)
 RLAPI void UnloadFont(Font font);                                                           // Unload Font from GPU memory (VRAM)
+
 
 // Text drawing functions
 RLAPI void DrawFPS(int posX, int posY);                                                     // Shows current FPS

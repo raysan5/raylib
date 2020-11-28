@@ -788,16 +788,22 @@ Image GenImageFontAtlas(const CharInfo *chars, Rectangle **charRecs, int charsCo
 }
 #endif
 
+// Unload font chars info data (RAM)
+void UnloadFontData(CharInfo *chars, int charsCount)
+{
+    for (int i = 0; i < charsCount; i++) UnloadImage(chars[i].image);
+    
+    RL_FREE(chars);
+}
+
 // Unload Font from GPU memory (VRAM)
 void UnloadFont(Font font)
 {
     // NOTE: Make sure font is not default font (fallback)
     if (font.texture.id != GetFontDefault().texture.id)
     {
-        for (int i = 0; i < font.charsCount; i++) UnloadImage(font.chars[i].image);
-
+        UnloadFontData(font.chars, font.charsCount);
         UnloadTexture(font.texture);
-        RL_FREE(font.chars);
         RL_FREE(font.recs);
 
         TRACELOGD("FONT: Unloaded font data from RAM and VRAM");
