@@ -15,9 +15,14 @@
 *   allows coding in a pseudo-OpenGL 1.1 style while translating calls to multiple
 *   OpenGL versions backends (1.1, 2.1, 3.3, ES 2.0).
 *
-*   COMPILATION:
+*   WINDOWS COMPILATION:
 *       gcc -o rlgl_standalone.exe rlgl_standalone.c -s -Iexternal\include -I..\..\src  \
 *           -L. -Lexternal\lib -lglfw3 -lopengl32 -lgdi32 -Wall -std=c99 -DGRAPHICS_API_OPENGL_33
+*
+*   APPLE COMPILATION:
+*       gcc -o rlgl_standalone rlgl_standalone.c -I../../src -Iexternal/include -Lexternal/lib \
+*           -lglfw3 -std=c99 -framework CoreVideo -framework OpenGL -framework OpenAL \
+*           -framework IOKit -framework Cocoa -Wno-deprecated-declarations
 *
 *   LICENSE: zlib/libpng
 *
