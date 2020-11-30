@@ -1929,7 +1929,7 @@ static Wave LoadWAV(const unsigned char *fileData, unsigned int fileSize)
 
     if (success)
     {
-        wave.sampleCount = wav.totalPCMFrameCount*wav.channels;
+        wave.sampleCount = (unsigned int)wav.totalPCMFrameCount*wav.channels;
         wave.sampleRate = wav.sampleRate;
         wave.sampleSize = 16;   // NOTE: We are forcing conversion to 16bit
         wave.channels = wav.channels;
@@ -1958,12 +1958,12 @@ static int SaveWAV(Wave wave, const char *fileName)
     format.bitsPerSample = wave.sampleSize;
 
     unsigned char *fileData = NULL;
-    unsigned int fileDataSize = 0;
+    size_t fileDataSize = 0;
     success = drwav_init_memory_write(&wav, &fileData, &fileDataSize, &format, NULL);
-    if (success) success = drwav_write_pcm_frames(&wav, wave.sampleCount/wave.channels, wave.data);
+    if (success) success = (int)drwav_write_pcm_frames(&wav, wave.sampleCount/wave.channels, wave.data);
     drwav_result result = drwav_uninit(&wav);
     
-    if (result == DRWAV_SUCCESS) success = SaveFileData(fileName, fileData, fileDataSize);
+    if (result == DRWAV_SUCCESS) success = SaveFileData(fileName, fileData, (unsigned int)fileDataSize);
     
     drwav_free(fileData, NULL);
 

@@ -4461,7 +4461,7 @@ static void KeyCallback(GLFWwindow *window, int key, int scancode, int action, i
                 strcpy(path, TextFormat("./screenrec%03i.gif", screenshotCounter));
             #endif
                 
-                SaveFileData(path, result.data, result.dataSize);
+                SaveFileData(path, result.data, (unsigned int)result.dataSize);
                 msf_gif_free(result);
 
             #if defined(PLATFORM_WEB)

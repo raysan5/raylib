@@ -830,10 +830,10 @@ bool ExportMesh(Mesh mesh, const char *fileName)
     if (IsFileExtension(fileName, ".obj"))
     {
         // Estimated data size, it should be enough...
-        int dataSize = mesh.vertexCount/3*strlen("v 0000.00f 0000.00f 0000.00f") +
-                       mesh.vertexCount/2*strlen("vt 0.000f 0.00f") +
-                       mesh.vertexCount/3*strlen("vn 0.000f 0.00f 0.00f") +
-                       mesh.triangleCount/3*strlen("f 00000/00000/00000 00000/00000/00000 00000/00000/00000");
+        int dataSize = mesh.vertexCount/3* (int)strlen("v 0000.00f 0000.00f 0000.00f") +
+                       mesh.vertexCount/2* (int)strlen("vt 0.000f 0.00f") +
+                       mesh.vertexCount/3* (int)strlen("vn 0.000f 0.00f 0.00f") +
+                       mesh.triangleCount/3* (int)strlen("f 00000/00000/00000 00000/00000/00000 00000/00000/00000");
 
         // NOTE: Text data buffer size is estimated considering mesh data size
         char *txtData = (char *)RL_CALLOC(dataSize + 2000, sizeof(char));
@@ -2997,9 +2997,9 @@ static Model LoadOBJ(const char *fileName)
         // count the faces for each material
         int *matFaces = RL_CALLOC(meshCount, sizeof(int));
 
-        for (int mi = 0; mi < meshCount; mi++)
+        for (unsigned int mi = 0; mi < meshCount; mi++)
         {
-            for (int fi = 0; fi < meshes[mi].length; fi++)
+            for (unsigned int fi = 0; fi < meshes[mi].length; fi++)
             {
                 int idx = attrib.material_ids[meshes[mi].face_offset + fi];
                 if (idx == -1) idx = 0; // for no material face (which could be the whole model)
