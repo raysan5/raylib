@@ -57,9 +57,9 @@
 // Allow automatic gif recording of current screen pressing CTRL+F12, defined in KeyCallback()
 #define SUPPORT_GIF_RECORDING       1
 // Support CompressData() and DecompressData() functions
-#define SUPPORT_COMPRESSION_API       1
+#define SUPPORT_COMPRESSION_API     1
 // Support saving binary data automatically to a generated storage.data file. This file is managed internally.
-#define SUPPORT_DATA_STORAGE          1
+#define SUPPORT_DATA_STORAGE        1
 
 // core: Configuration values
 //------------------------------------------------------------------------------------
@@ -127,17 +127,17 @@
 //------------------------------------------------------------------------------------
 // Selecte desired fileformats to be supported for image data loading
 #define SUPPORT_FILEFORMAT_PNG      1
-#define SUPPORT_FILEFORMAT_BMP      1
-#define SUPPORT_FILEFORMAT_TGA      1
-//#define SUPPORT_FILEFORMAT_JPG    1
+//#define SUPPORT_FILEFORMAT_BMP      1
+//#define SUPPORT_FILEFORMAT_TGA      1
+//#define SUPPORT_FILEFORMAT_JPG      1
 #define SUPPORT_FILEFORMAT_GIF      1
-//#define SUPPORT_FILEFORMAT_PSD    1
+//#define SUPPORT_FILEFORMAT_PSD      1
 #define SUPPORT_FILEFORMAT_DDS      1
 #define SUPPORT_FILEFORMAT_HDR      1
-#define SUPPORT_FILEFORMAT_KTX      1
-#define SUPPORT_FILEFORMAT_ASTC     1
-//#define SUPPORT_FILEFORMAT_PKM    1
-//#define SUPPORT_FILEFORMAT_PVR    1
+//#define SUPPORT_FILEFORMAT_KTX      1
+//#define SUPPORT_FILEFORMAT_ASTC     1
+//#define SUPPORT_FILEFORMAT_PKM      1
+//#define SUPPORT_FILEFORMAT_PVR      1
 
 // Support image export functionality (.png, .bmp, .tga, .jpg)
 #define SUPPORT_IMAGE_EXPORT        1
@@ -190,9 +190,9 @@
 #define SUPPORT_FILEFORMAT_WAV      1
 #define SUPPORT_FILEFORMAT_OGG      1
 #define SUPPORT_FILEFORMAT_XM       1
-#define SUPPORT_FILEFORMAT_MOD      1
-//#define SUPPORT_FILEFORMAT_FLAC     1
+//#define SUPPORT_FILEFORMAT_MOD      1
 #define SUPPORT_FILEFORMAT_MP3      1
+//#define SUPPORT_FILEFORMAT_FLAC     1
 
 // audio: Configuration values
 //------------------------------------------------------------------------------------
