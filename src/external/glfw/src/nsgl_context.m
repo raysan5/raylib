@@ -51,7 +51,7 @@ static void swapBuffersNSGL(_GLFWwindow* window)
 
     // HACK: Simulate vsync with usleep as NSGL swap interval does not apply to
     //       windows with a non-visible occlusion state
-    if (!([window->ns.object occlusionState] & NSWindowOcclusionStateVisible))
+    if (window->ns.occluded)
     {
         int interval = 0;
         [window->context.nsgl.object getValues:&interval

@@ -44,7 +44,3 @@ typedef struct _GLFWjoystickNS
     CFMutableArrayRef   hats;
 } _GLFWjoystickNS;
 
-
-void _glfwInitJoysticksNS(void);
-void _glfwTerminateJoysticksNS(void);
-

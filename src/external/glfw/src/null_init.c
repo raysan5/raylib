@@ -29,6 +29,8 @@
 
 #include "internal.h"
 
+#include <stdlib.h>
+
 
 //////////////////////////////////////////////////////////////////////////
 //////                       GLFW platform API                      //////
@@ -37,11 +39,14 @@
 int _glfwPlatformInit(void)
 {
     _glfwInitTimerPOSIX();
+    _glfwPollMonitorsNull();
+
     return GLFW_TRUE;
 }
 
 void _glfwPlatformTerminate(void)
 {
+    free(_glfw.null.clipboardString);
     _glfwTerminateOSMesa();
 }
 

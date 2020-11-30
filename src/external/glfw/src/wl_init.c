@@ -341,9 +341,9 @@ static void pointerHandleAxis(void* data,
            axis == WL_POINTER_AXIS_VERTICAL_SCROLL);
 
     if (axis == WL_POINTER_AXIS_HORIZONTAL_SCROLL)
-        x = wl_fixed_to_double(value) * scrollFactor;
+        x = -wl_fixed_to_double(value) * scrollFactor;
     else if (axis == WL_POINTER_AXIS_VERTICAL_SCROLL)
-        y = wl_fixed_to_double(value) * scrollFactor;
+        y = -wl_fixed_to_double(value) * scrollFactor;
 
     _glfwInputScroll(window, x, y);
 }
@@ -1038,6 +1038,8 @@ int _glfwPlatformInit(void)
     char *cursorSizeEnd;
     long cursorSizeLong;
     int cursorSize;
+    int i;
+    _GLFWmonitor* monitor;
 
     _glfw.wl.cursor.handle = _glfw_dlopen("libwayland-cursor.so.0");
     if (!_glfw.wl.cursor.handle)
@@ -1146,10 +1148,16 @@ int _glfwPlatformInit(void)
     // Sync so we got all initial output events
     wl_display_roundtrip(_glfw.wl.display);
 
-#ifdef __linux__
-    if (!_glfwInitJoysticksLinux())
-        return GLFW_FALSE;
-#endif
+    for (i = 0; i < _glfw.monitorCount; ++i)
+    {
+        monitor = _glfw.monitors[i];
+        if (monitor->widthMM <= 0 || monitor->heightMM <= 0)
+        {
+            // If Wayland does not provide a physical size, assume the default 96 DPI
+            monitor->widthMM  = (int) (monitor->modes[monitor->wl.currentMode].width * 25.4f / 96.f);
+            monitor->heightMM = (int) (monitor->modes[monitor->wl.currentMode].height * 25.4f / 96.f);
+        }
+    }
 
     _glfwInitTimerPOSIX();
 
@@ -1213,9 +1221,6 @@ int _glfwPlatformInit(void)
 
 void _glfwPlatformTerminate(void)
 {
-#ifdef __linux__
-    _glfwTerminateJoysticksLinux();
-#endif
     _glfwTerminateEGL();
     if (_glfw.wl.egl.handle)
     {
