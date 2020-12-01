@@ -782,16 +782,25 @@ Model LoadModelFromMesh(Mesh mesh)
     return model;
 }
 
-// Unload model from memory (RAM and/or VRAM)
+// Unload model (meshes/materials) from memory (RAM and/or VRAM)
+// NOTE: This function takes care of all model elements, for a detailed control
+// over them, use UnloadMesh() and UnloadMaterial()
 void UnloadModel(Model model)
 {
+    // Unload meshes
     for (int i = 0; i < model.meshCount; i++) UnloadMesh(model.meshes[i]);
 
-    // As the user could be sharing shaders and textures between models,
-    // we don't unload the material but just free it's maps, the user
-    // is responsible for freeing models shaders and textures
-    for (int i = 0; i < model.materialCount; i++) RL_FREE(model.materials[i].maps);
+    // Unload materials maps  and params
+    // NOTE: As the user could be sharing shaders and textures between models,
+    // we don't unload the material but just free it's maps and params, 
+    // the user is responsible for freeing models shaders and textures
+    for (int i = 0; i < model.materialCount; i++) 
+    {
+        RL_FREE(model.materials[i].maps);
+        RL_FREE(model.materials[i].params);
+    }
 
+    // Unload arrays
     RL_FREE(model.meshes);
     RL_FREE(model.materials);
     RL_FREE(model.meshMaterial);
@@ -800,7 +809,32 @@ void UnloadModel(Model model)
     RL_FREE(model.bones);
     RL_FREE(model.bindPose);
 
-    TRACELOG(LOG_INFO, "MODEL: Unloaded model from RAM and VRAM");
+    TRACELOG(LOG_INFO, "MODEL: Unloaded model (and meshes) from RAM and VRAM");
+}
+
+// Unload model (but not meshes) from memory (RAM and/or VRAM)
+void UnloadModelKeepMeshes(Model model)
+{
+    // Unload materials maps  and params
+    // NOTE: As the user could be sharing shaders and textures between models,
+    // we don't unload the material but just free it's maps and params, 
+    // the user is responsible for freeing models shaders and textures
+    for (int i = 0; i < model.materialCount; i++) 
+    {
+        RL_FREE(model.materials[i].maps);
+        RL_FREE(model.materials[i].params);
+    }
+
+    // Unload arrays
+    RL_FREE(model.meshes);
+    RL_FREE(model.materials);
+    RL_FREE(model.meshMaterial);
+
+    // Unload animation data
+    RL_FREE(model.bones);
+    RL_FREE(model.bindPose);
+
+    TRACELOG(LOG_INFO, "MODEL: Unloaded model (but not meshes) from RAM and VRAM");
 }
 
 // Load meshes from model file
@@ -950,6 +984,7 @@ void UnloadMaterial(Material material)
     }
 
     RL_FREE(material.maps);
+    RL_FREE(material.params);
 }
 
 // Set texture for a material map type (MAP_DIFFUSE, MAP_SPECULAR...)
