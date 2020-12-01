@@ -3099,7 +3099,8 @@ static Model LoadOBJ(const char *fileName)
         tinyobj_shapes_free(meshes, meshCount);
         tinyobj_materials_free(materials, materialCount);
 
-        //RL_FREE(fileData);
+        RL_FREE(fileData);
+        RL_FREE(matFaces);
 
         RL_FREE(vCount);
         RL_FREE(vtCount);
