@@ -1092,8 +1092,8 @@ void MaximizeWindow(void)
 void MinimizeWindow(void)
 {
 #if defined(PLATFORM_DESKTOP)
+    // NOTE: Following function launches callback that sets appropiate flag!
     glfwIconifyWindow(CORE.Window.handle);
-    CORE.Window.flags |= FLAG_WINDOW_MINIMIZED;
 #endif
 }
 
@@ -3108,9 +3108,12 @@ static bool InitGraphicsDevice(int width, int height)
     if ((CORE.Window.flags & FLAG_WINDOW_RESIZABLE) > 0) glfwWindowHint(GLFW_RESIZABLE, GLFW_TRUE); // Resizable window
     else glfwWindowHint(GLFW_RESIZABLE, GLFW_FALSE);  // Avoid window being resizable
     
-    if ((CORE.Window.flags & FLAG_WINDOW_MAXIMIZED) > 0) glfwWindowHint(GLFW_SCALE_TO_MONITOR, GLFW_TRUE);
-    else glfwWindowHint(GLFW_SCALE_TO_MONITOR, GLFW_FALSE);
-    
+    // Disable FLAG_WINDOW_MINIMIZED, not supported on initialization
+    if ((CORE.Window.flags & FLAG_WINDOW_MINIMIZED) > 0) CORE.Window.flags &= ~FLAG_WINDOW_MINIMIZED;
+
+    // Disable FLAG_WINDOW_MAXIMIZED, not supported on initialization
+    if ((CORE.Window.flags & FLAG_WINDOW_MAXIMIZED) > 0) CORE.Window.flags &= ~FLAG_WINDOW_MAXIMIZED;
+
     if ((CORE.Window.flags & FLAG_WINDOW_UNFOCUSED) > 0) glfwWindowHint(GLFW_FOCUSED, GLFW_FALSE);
     else glfwWindowHint(GLFW_FOCUSED, GLFW_TRUE);
     
