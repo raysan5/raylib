@@ -1222,7 +1222,7 @@ void ClearWindowState(unsigned int flags)
     if (((CORE.Window.flags & FLAG_VSYNC_HINT) > 0) && ((flags & FLAG_VSYNC_HINT) > 0))
     {
         glfwSwapInterval(0);
-        CORE.Window.flags ^= ~FLAG_VSYNC_HINT;
+        CORE.Window.flags &= ~FLAG_VSYNC_HINT;
     }
     
     // State change: FLAG_FULLSCREEN_MODE

@@ -148,7 +148,7 @@ int main(void)
         DrawText(FormatText("Screen Size: [%i, %i]", GetScreenWidth(), GetScreenHeight()), 10, 40, 10, GREEN);
 
         // Draw window state info
-        DrawText("Following flags can set after window creation:", 10, 60, 10, GRAY);
+        DrawText("Following flags can be set after window creation:", 10, 60, 10, GRAY);
         if (IsWindowState(FLAG_FULLSCREEN_MODE)) DrawText("[F] FLAG_FULLSCREEN_MODE: on", 10, 80, 10, LIME);
         else DrawText("[F] FLAG_FULLSCREEN_MODE: off", 10, 80, 10, MAROON);
         if (IsWindowState(FLAG_WINDOW_RESIZABLE)) DrawText("[R] FLAG_WINDOW_RESIZABLE: on", 10, 100, 10, LIME);
