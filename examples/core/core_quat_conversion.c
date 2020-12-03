@@ -8,9 +8,9 @@
 *   This example has been created using raylib 3.5 (www.raylib.com)
 *   raylib is licensed under an unmodified zlib/libpng license (View raylib.h for details)
 *
-*   Example contributed by @chriscamacho and @codifies, reviewed by Ramon Santamaria (@raysan5)
+*   Example contributed by Chris Camacho (@chriscamacho) and reviewed by Ramon Santamaria (@raysan5)
 *
-*   Copyright (c) 2020 @chriscamacho and @codifies
+*   Copyright (c) 2020 Chris Camacho (@chriscamacho) and Ramon Santamaria (@raysan5)
 *
 ********************************************************************************************/
 

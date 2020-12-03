@@ -10,9 +10,9 @@
 *   This example has been created using raylib 2.5 (www.raylib.com)
 *   raylib is licensed under an unmodified zlib/libpng license (View raylib.h for details)
 *
-*   Example contributed by Chris Camacho (@codifies) and reviewed by Ramon Santamaria (@raysan5)
+*   Example contributed by Chris Camacho (@chriscamacho) and reviewed by Ramon Santamaria (@raysan5)
 *
-*   Chris Camacho (@codifies -  http://bedroomcoders.co.uk/) notes:
+*   Chris Camacho (@chriscamacho -  http://bedroomcoders.co.uk/) notes:
 *
 *   This is based on the PBR lighting example, but greatly simplified to aid learning...
 *   actually there is very little of the PBR example left!
@@ -21,7 +21,7 @@
 *   a testement to the authors of raylib (including rlights.h) that the example
 *   came together fairly quickly.
 *
-*   Copyright (c) 2019 Chris Camacho (@codifies) and Ramon Santamaria (@raysan5)
+*   Copyright (c) 2019 Chris Camacho (@chriscamacho) and Ramon Santamaria (@raysan5)
 *
 ********************************************************************************************/
 
