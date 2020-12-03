@@ -2602,13 +2602,6 @@ void DrawModelEx(Model model, Vector3 position, Vector3 rotationAxis, float rota
 
     for (int i = 0; i < model.meshCount; i++)
     {
-        // TODO: Review color + tint premultiplication mechanism
-
-        // (codifies)  Ray not only does this work as expected but
-        // multiplying *is* definately the way to tint
-        // can we call it reviewed ?
-
-        // would you prefer an extra model.tint, that rlDrawMesh uses ?
         Color color = model.materials[model.meshMaterial[i]].maps[MAP_DIFFUSE].color;
 
         Color colorTint = WHITE;
