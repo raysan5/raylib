@@ -632,7 +632,7 @@ void SetAudioBufferVolume(AudioBuffer *buffer, float volume)
 // Set pitch for an audio buffer
 void SetAudioBufferPitch(AudioBuffer *buffer, float pitch)
 {
-    if (buffer != NULL)
+    if (buffer != NULL && buffer->pitch != pitch)
     {
         float pitchMul = pitch/buffer->pitch;
 
