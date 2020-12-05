@@ -1437,7 +1437,26 @@ int GetMonitorCount(void)
 #endif
 }
 
-// Get primary monitor width
+// Get selected monitor width
+Vector2 GetMonitorPosition(int monitor)
+{
+#if defined(PLATFORM_DESKTOP)
+	int monitorCount;
+	GLFWmonitor** monitors = glfwGetMonitors(&monitorCount);
+
+	if ((monitor >= 0) && (monitor < monitorCount))
+	{
+        int x, y;
+        glfwGetMonitorPos(monitors[monitor], &x, &y);
+		const GLFWvidmode* mode = glfwGetVideoMode(monitors[monitor]);
+		return (Vector2){ (float)x, (float)y };
+	}
+	else TRACELOG(LOG_WARNING, "GLFW: Failed to find selected monitor");
+#endif
+    return (Vector2){ 0, 0 };
+}
+
+// Get selected monitor width
 int GetMonitorWidth(int monitor)
 {
 #if defined(PLATFORM_DESKTOP)
@@ -1454,7 +1473,7 @@ int GetMonitorWidth(int monitor)
     return 0;
 }
 
-// Get primary monitor width
+// Get selected monitor width
 int GetMonitorHeight(int monitor)
 {
 #if defined(PLATFORM_DESKTOP)
@@ -1471,7 +1490,7 @@ int GetMonitorHeight(int monitor)
     return 0;
 }
 
-// Get primary montior physical width in millimetres
+// Get selected monitor physical width in millimetres
 int GetMonitorPhysicalWidth(int monitor)
 {
 #if defined(PLATFORM_DESKTOP)

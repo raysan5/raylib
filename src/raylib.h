@@ -913,11 +913,12 @@ RLAPI void *GetWindowHandle(void);                                // Get native 
 RLAPI int GetScreenWidth(void);                                   // Get current screen width
 RLAPI int GetScreenHeight(void);                                  // Get current screen height
 RLAPI int GetMonitorCount(void);                                  // Get number of connected monitors
-RLAPI int GetMonitorWidth(int monitor);                           // Get primary monitor width
-RLAPI int GetMonitorHeight(int monitor);                          // Get primary monitor height
-RLAPI int GetMonitorPhysicalWidth(int monitor);                   // Get primary monitor physical width in millimetres
-RLAPI int GetMonitorPhysicalHeight(int monitor);                  // Get primary monitor physical height in millimetres
-RLAPI int GetMonitorRefreshRate(int monitor);                     // Get primary monitor refresh rate
+RLAPI Vector2 GetMonitorPosition(int monitor);                    // Get specified monitor position
+RLAPI int GetMonitorWidth(int monitor);                           // Get specified monitor width
+RLAPI int GetMonitorHeight(int monitor);                          // Get specified monitor height
+RLAPI int GetMonitorPhysicalWidth(int monitor);                   // Get specified monitor physical width in millimetres
+RLAPI int GetMonitorPhysicalHeight(int monitor);                  // Get specified monitor physical height in millimetres
+RLAPI int GetMonitorRefreshRate(int monitor);                     // Get specified monitor refresh rate
 RLAPI Vector2 GetWindowPosition(void);                            // Get window position XY on monitor
 RLAPI Vector2 GetWindowScaleDPI(void);                            // Get window scale DPI factor
 RLAPI const char *GetMonitorName(int monitor);                    // Get the human-readable, UTF-8 encoded name of the primary monitor
