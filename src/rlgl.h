@@ -513,6 +513,8 @@ RLAPI void rlEnableFramebuffer(unsigned int id);              // Enable render t
 RLAPI void rlDisableFramebuffer(void);                        // Disable render texture (fbo), return to default framebuffer
 RLAPI void rlEnableDepthTest(void);                           // Enable depth test
 RLAPI void rlDisableDepthTest(void);                          // Disable depth test
+RLAPI void rlEnableDepthMask(void);                           // Enable depth write
+RLAPI void rlDisableDepthMask(void);                          // Disable depth write
 RLAPI void rlEnableBackfaceCulling(void);                     // Enable backface culling
 RLAPI void rlDisableBackfaceCulling(void);                    // Disable backface culling
 RLAPI void rlEnableScissorTest(void);                         // Enable scissor test
@@ -1438,6 +1440,12 @@ void rlEnableDepthTest(void) { glEnable(GL_DEPTH_TEST); }
 
 // Disable depth test
 void rlDisableDepthTest(void) { glDisable(GL_DEPTH_TEST); }
+
+// Enable depth write
+void rlEnableDepthMask(void) { glDepthMask(GL_TRUE); }
+
+// Disable depth write
+void rlDisableDepthMask(void) { glDepthMask(GL_FALSE); }
 
 // Enable backface culling
 void rlEnableBackfaceCulling(void) { glEnable(GL_CULL_FACE); }
