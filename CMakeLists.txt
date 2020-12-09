@@ -7,6 +7,13 @@ option(ENABLE_ASAN  "Enable AddressSanitizer (ASAN) for debugging (degrades perf
 option(ENABLE_UBSAN "Enable UndefinedBehaviorSanitizer (UBSan) for debugging" OFF)
 option(ENABLE_MSAN "Enable MemorySanitizer (MSan) for debugging (not recommended to run with ASAN)" OFF)
 
+# This helps support the case where emsdk toolchain file is used
+# either by setting it with -DCMAKE_TOOLCHAIN_FILE=<path_to_emsdk>/upstream/emscripten/cmake/Modules/Platform/Emscripten.cmake
+# or by using "emcmake cmake -B build -S ." as described in https://emscripten.org/docs/compiling/Building-Projects.html
+if(EMSCRIPTEN)
+  SET(PLATFORM Web CACHE ENUM "Forcing PLATFORM_WEB because EMSCRIPTEN was detected")
+endif()
+
 if(CMAKE_VERSION VERSION_LESS "3.1")
   if(CMAKE_C_COMPILER_ID STREQUAL "GNU")
     set(CMAKE_C_FLAGS "-std=gnu99 ${CMAKE_C_FLAGS}")
