@@ -11,7 +11,7 @@ option(ENABLE_MSAN "Enable MemorySanitizer (MSan) for debugging (not recommended
 # either by setting it with -DCMAKE_TOOLCHAIN_FILE=<path_to_emsdk>/upstream/emscripten/cmake/Modules/Platform/Emscripten.cmake
 # or by using "emcmake cmake -B build -S ." as described in https://emscripten.org/docs/compiling/Building-Projects.html
 if(EMSCRIPTEN)
-  SET(PLATFORM Web CACHE ENUM "Forcing PLATFORM_WEB because EMSCRIPTEN was detected")
+  SET(PLATFORM Web CACHE STRING "Forcing PLATFORM_WEB because EMSCRIPTEN was detected")
 endif()
 
 if(CMAKE_VERSION VERSION_LESS "3.1")
