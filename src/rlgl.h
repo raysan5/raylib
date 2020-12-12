@@ -522,6 +522,10 @@ RLAPI void rlDisableScissorTest(void);                        // Disable scissor
 RLAPI void rlScissor(int x, int y, int width, int height);    // Scissor test
 RLAPI void rlEnableWireMode(void);                            // Enable wire mode
 RLAPI void rlDisableWireMode(void);                           // Disable wire mode
+RLAPI void rlSetLineWidth(float width);                       // Set the line drawing width
+RLAPI float rlGetLineWidth(void);                             // Get the line drawing width
+RLAPI void rlEnableSmoothLines(void);                         // Enable line aliasing
+RLAPI void rlDisableSmoothLines(void);                        // Disable line aliasing
 
 RLAPI void rlClearColor(unsigned char r, unsigned char g, unsigned char b, unsigned char a);  // Clear color buffer with color
 RLAPI void rlClearScreenBuffers(void);                        // Clear used screen buffers (color and depth)
@@ -1478,6 +1482,31 @@ void rlDisableWireMode(void)
     // NOTE: glPolygonMode() not available on OpenGL ES
     glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
 #endif
+}
+// Set the line drawing width
+void rlSetLineWidth(float width)
+{
+    glLineWidth(width);
+}
+
+// Get the line drawing width
+float rlGetLineWidth(void)
+{
+    float width = 0;
+    glGetFloatv(GL_LINE_WIDTH, &width);
+    return width;
+}
+
+// Enable line aliasing
+void rlEnableSmoothLines(void)
+{
+    glEnable(GL_LINE_SMOOTH);
+}
+
+// Disable line aliasing
+void rlDisableSmoothLines(void)
+{
+	glDisable(GL_LINE_SMOOTH);
 }
 
 // Unload framebuffer from GPU memory
