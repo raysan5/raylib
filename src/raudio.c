@@ -634,16 +634,14 @@ void SetAudioBufferPitch(AudioBuffer *buffer, float pitch)
 {
     if (buffer != NULL)
     {
-        float pitchMul = pitch/buffer->pitch;
-
         // Pitching is just an adjustment of the sample rate.
         // Note that this changes the duration of the sound:
         //  - higher pitches will make the sound faster
         //  - lower pitches make it slower
-        ma_uint32 newOutputSampleRate = (ma_uint32)((float)buffer->converter.config.sampleRateOut/pitchMul);
-        buffer->pitch *= (float)buffer->converter.config.sampleRateOut/newOutputSampleRate;
-
-        ma_data_converter_set_rate(&buffer->converter, buffer->converter.config.sampleRateIn, newOutputSampleRate);
+        ma_uint32 outputSampleRate = (ma_uint32)((float)buffer->converter.config.sampleRateOut/pitch);
+        ma_data_converter_set_rate(&buffer->converter, buffer->converter.config.sampleRateIn, outputSampleRate);
+        
+        buffer->pitch = pitch;
     }
 }
 
@@ -1477,7 +1475,7 @@ void SetMusicVolume(Music music, float volume)
 // Set pitch for music
 void SetMusicPitch(Music music, float pitch)
 {
-    SetAudioStreamPitch(music.stream, pitch);
+    SetAudioBufferPitch(music.stream.buffer, pitch);
 }
 
 // Get music time length (in seconds)
