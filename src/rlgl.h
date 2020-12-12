@@ -1500,13 +1500,17 @@ float rlGetLineWidth(void)
 // Enable line aliasing
 void rlEnableSmoothLines(void)
 {
+#if defined(GRAPHICS_API_OPENGL_33) || defined(GRAPHICS_API_OPENGL_21) || defined(GRAPHICS_API_OPENGL_11)
     glEnable(GL_LINE_SMOOTH);
+#endif
 }
 
 // Disable line aliasing
 void rlDisableSmoothLines(void)
 {
+#if defined(GRAPHICS_API_OPENGL_33) || defined(GRAPHICS_API_OPENGL_21) || defined(GRAPHICS_API_OPENGL_11)
 	glDisable(GL_LINE_SMOOTH);
+#endif
 }
 
 // Unload framebuffer from GPU memory
