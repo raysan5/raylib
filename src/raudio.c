@@ -632,7 +632,7 @@ void SetAudioBufferVolume(AudioBuffer *buffer, float volume)
 // Set pitch for an audio buffer
 void SetAudioBufferPitch(AudioBuffer *buffer, float pitch)
 {
-    if (buffer != NULL)
+    if ((buffer != NULL) && (pitch > 0.0f))
     {
         // Pitching is just an adjustment of the sample rate.
         // Note that this changes the duration of the sound:
