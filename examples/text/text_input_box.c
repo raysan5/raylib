@@ -112,3 +112,15 @@ int main(void)
 
     return 0;
 }
+
+// Check if any key is pressed
+// NOTE: We limit keys check to keys between 32 (KEY_SPACE) and 126
+bool IsAnyKeyPressed()
+{
+    bool keyPressed = false;
+    int key = GetKeyPressed();
+
+    if ((key >= 32) && (key <= 126)) keyPressed = true;
+
+    return keyPressed;
+}
