@@ -657,7 +657,7 @@ void DrawGrid(int slices, float spacing)
 {
     int halfSlices = slices/2;
 
-    if (rlCheckBufferLimit(slices*4)) rlglDraw();
+    if (rlCheckBufferLimit((slices + 2)*4)) rlglDraw();
 
     rlBegin(RL_LINES);
         for (int i = -halfSlices; i <= halfSlices; i++)
