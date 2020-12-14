@@ -1377,6 +1377,7 @@ RLAPI bool CheckCollisionBoxSphere(BoundingBox box, Vector3 center, float radius
 RLAPI bool CheckCollisionRaySphere(Ray ray, Vector3 center, float radius);                              // Detect collision between ray and sphere
 RLAPI bool CheckCollisionRaySphereEx(Ray ray, Vector3 center, float radius, Vector3 *collisionPoint);   // Detect collision between ray and sphere, returns collision point
 RLAPI bool CheckCollisionRayBox(Ray ray, BoundingBox box);                                              // Detect collision between ray and box
+RLAPI RayHitInfo GetCollisionRayMesh(Ray ray, Mesh mesh, Matrix transform);                             // Get collision info between ray and mesh
 RLAPI RayHitInfo GetCollisionRayModel(Ray ray, Model model);                                            // Get collision info between ray and model
 RLAPI RayHitInfo GetCollisionRayTriangle(Ray ray, Vector3 p1, Vector3 p2, Vector3 p3);                  // Get collision info between ray and triangle
 RLAPI RayHitInfo GetCollisionRayGround(Ray ray, float groundHeight);                                    // Get collision info between ray and ground plane (Y-normal plane)
