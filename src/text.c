@@ -128,7 +128,8 @@ extern void LoadFontDefault(void)
     // NOTE: Using UTF8 encoding table for Unicode U+0000..U+00FF Basic Latin + Latin-1 Supplement
     // Ref: http://www.utf8-chartable.de/unicode-utf8-table.pl
 
-    defaultFont.charsCount = 224;             // Number of chars included in our default font
+    defaultFont.charsCount = 224;   // Number of chars included in our default font
+    defaultFont.charsPadding = 0;   // Characters padding
 
     // Default font is directly defined here (data generated from a sprite font image)
     // This way, we reconstruct Font without creating large global variables
@@ -448,6 +449,7 @@ Font LoadFontFromImage(Image image, Color key, int firstChar)
 
     font.texture = LoadTextureFromImage(fontClear); // Convert processed image to OpenGL texture
     font.charsCount = index;
+    font.charsPadding = 0;
 
     // We got tempCharValues and tempCharsRecs populated with chars data
     // Now we move temp data to sized charValues and charRecs arrays
@@ -491,6 +493,7 @@ Font LoadFontFromMemory(const char *fileType, const unsigned char *fileData, int
     {
         font.baseSize = fontSize;
         font.charsCount = (charsCount > 0)? charsCount : 95;
+        font.charsPadding = 0;
         font.chars = LoadFontData(fileData, dataSize, font.baseSize, fontChars, font.charsCount, FONT_DEFAULT);
 
         if (font.chars != NULL)
@@ -1823,6 +1826,7 @@ static Font LoadBMFont(const char *fileName)
     // Fill font characters info data
     font.baseSize = fontSize;
     font.charsCount = charsCount;
+    font.charsPadding = 0;
     font.chars = (CharInfo *)RL_MALLOC(charsCount*sizeof(CharInfo));
     font.recs = (Rectangle *)RL_MALLOC(charsCount*sizeof(Rectangle));
 
