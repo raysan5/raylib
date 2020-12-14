@@ -1,8 +1,14 @@
 cmake_minimum_required(VERSION 3.0)
 set(CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/cmake)
 
+if ("${CMAKE_SOURCE_DIR}" STREQUAL "${CMAKE_CURRENT_SOURCE_DIR}")
+  set(RAYLIB_IS_MAIN TRUE)
+else()
+  set(RAYLIB_IS_MAIN FALSE)
+endif()
+
 # Config options
-option(BUILD_EXAMPLES "Build the examples." ON)
+option(BUILD_EXAMPLES "Build the examples." ${RAYLIB_IS_MAIN})
 option(ENABLE_ASAN  "Enable AddressSanitizer (ASAN) for debugging (degrades performance)" OFF)
 option(ENABLE_UBSAN "Enable UndefinedBehaviorSanitizer (UBSan) for debugging" OFF)
 option(ENABLE_MSAN "Enable MemorySanitizer (MSan) for debugging (not recommended to run with ASAN)" OFF)
@@ -48,6 +54,7 @@ endif()
 add_subdirectory(src)
 
 if (${BUILD_EXAMPLES})
+  MESSAGE(STATUS "Building examples is enabled")
   add_subdirectory(examples)
 endif()
 
