@@ -1310,9 +1310,10 @@ bool IsModelAnimationValid(Model model, ModelAnimation anim)
 Mesh GenMeshPoly(int sides, float radius)
 {
     Mesh mesh = { 0 };
-    mesh.vboId = (unsigned int *)RL_CALLOC(DEFAULT_MESH_VERTEX_BUFFERS, sizeof(unsigned int));
-
+    
     if (sides < 3) return mesh;
+    
+    mesh.vboId = (unsigned int *)RL_CALLOC(DEFAULT_MESH_VERTEX_BUFFERS, sizeof(unsigned int));
 
     int vertexCount = sides*3;
 
@@ -1680,37 +1681,42 @@ par_shapes_mesh* par_shapes_create_icosahedron();       // 20 sides polyhedron
 RLAPI Mesh GenMeshSphere(float radius, int rings, int slices)
 {
     Mesh mesh = { 0 };
-    mesh.vboId = (unsigned int *)RL_CALLOC(DEFAULT_MESH_VERTEX_BUFFERS, sizeof(unsigned int));
-
-    par_shapes_mesh *sphere = par_shapes_create_parametric_sphere(slices, rings);
-    par_shapes_scale(sphere, radius, radius, radius);
-    // NOTE: Soft normals are computed internally
-
-    mesh.vertices = (float *)RL_MALLOC(sphere->ntriangles*3*3*sizeof(float));
-    mesh.texcoords = (float *)RL_MALLOC(sphere->ntriangles*3*2*sizeof(float));
-    mesh.normals = (float *)RL_MALLOC(sphere->ntriangles*3*3*sizeof(float));
-
-    mesh.vertexCount = sphere->ntriangles*3;
-    mesh.triangleCount = sphere->ntriangles;
-
-    for (int k = 0; k < mesh.vertexCount; k++)
+    
+    if ((rings >= 3) && (slices >= 3))
     {
-        mesh.vertices[k*3] = sphere->points[sphere->triangles[k]*3];
-        mesh.vertices[k*3 + 1] = sphere->points[sphere->triangles[k]*3 + 1];
-        mesh.vertices[k*3 + 2] = sphere->points[sphere->triangles[k]*3 + 2];
+        mesh.vboId = (unsigned int *)RL_CALLOC(DEFAULT_MESH_VERTEX_BUFFERS, sizeof(unsigned int));
 
-        mesh.normals[k*3] = sphere->normals[sphere->triangles[k]*3];
-        mesh.normals[k*3 + 1] = sphere->normals[sphere->triangles[k]*3 + 1];
-        mesh.normals[k*3 + 2] = sphere->normals[sphere->triangles[k]*3 + 2];
+        par_shapes_mesh *sphere = par_shapes_create_parametric_sphere(slices, rings);
+        par_shapes_scale(sphere, radius, radius, radius);
+        // NOTE: Soft normals are computed internally
 
-        mesh.texcoords[k*2] = sphere->tcoords[sphere->triangles[k]*2];
-        mesh.texcoords[k*2 + 1] = sphere->tcoords[sphere->triangles[k]*2 + 1];
+        mesh.vertices = (float *)RL_MALLOC(sphere->ntriangles*3*3*sizeof(float));
+        mesh.texcoords = (float *)RL_MALLOC(sphere->ntriangles*3*2*sizeof(float));
+        mesh.normals = (float *)RL_MALLOC(sphere->ntriangles*3*3*sizeof(float));
+
+        mesh.vertexCount = sphere->ntriangles*3;
+        mesh.triangleCount = sphere->ntriangles;
+
+        for (int k = 0; k < mesh.vertexCount; k++)
+        {
+            mesh.vertices[k*3] = sphere->points[sphere->triangles[k]*3];
+            mesh.vertices[k*3 + 1] = sphere->points[sphere->triangles[k]*3 + 1];
+            mesh.vertices[k*3 + 2] = sphere->points[sphere->triangles[k]*3 + 2];
+
+            mesh.normals[k*3] = sphere->normals[sphere->triangles[k]*3];
+            mesh.normals[k*3 + 1] = sphere->normals[sphere->triangles[k]*3 + 1];
+            mesh.normals[k*3 + 2] = sphere->normals[sphere->triangles[k]*3 + 2];
+
+            mesh.texcoords[k*2] = sphere->tcoords[sphere->triangles[k]*2];
+            mesh.texcoords[k*2 + 1] = sphere->tcoords[sphere->triangles[k]*2 + 1];
+        }
+
+        par_shapes_free_mesh(sphere);
+
+        // Upload vertex data to GPU (static mesh)
+        rlLoadMesh(&mesh, false);
     }
-
-    par_shapes_free_mesh(sphere);
-
-    // Upload vertex data to GPU (static mesh)
-    rlLoadMesh(&mesh, false);
+    else TRACELOG(LOG_WARNING, "MESH: Failed to generate mesh: sphere");
 
     return mesh;
 }
@@ -1719,37 +1725,44 @@ RLAPI Mesh GenMeshSphere(float radius, int rings, int slices)
 RLAPI Mesh GenMeshHemiSphere(float radius, int rings, int slices)
 {
     Mesh mesh = { 0 };
-    mesh.vboId = (unsigned int *)RL_CALLOC(DEFAULT_MESH_VERTEX_BUFFERS, sizeof(unsigned int));
-
-    par_shapes_mesh *sphere = par_shapes_create_hemisphere(slices, rings);
-    par_shapes_scale(sphere, radius, radius, radius);
-    // NOTE: Soft normals are computed internally
-
-    mesh.vertices = (float *)RL_MALLOC(sphere->ntriangles*3*3*sizeof(float));
-    mesh.texcoords = (float *)RL_MALLOC(sphere->ntriangles*3*2*sizeof(float));
-    mesh.normals = (float *)RL_MALLOC(sphere->ntriangles*3*3*sizeof(float));
-
-    mesh.vertexCount = sphere->ntriangles*3;
-    mesh.triangleCount = sphere->ntriangles;
-
-    for (int k = 0; k < mesh.vertexCount; k++)
+    
+    if ((rings >= 3) && (slices >= 3))
     {
-        mesh.vertices[k*3] = sphere->points[sphere->triangles[k]*3];
-        mesh.vertices[k*3 + 1] = sphere->points[sphere->triangles[k]*3 + 1];
-        mesh.vertices[k*3 + 2] = sphere->points[sphere->triangles[k]*3 + 2];
+        if (radius < 0.0f) radius = 0.0f;
+        
+        mesh.vboId = (unsigned int *)RL_CALLOC(DEFAULT_MESH_VERTEX_BUFFERS, sizeof(unsigned int));
 
-        mesh.normals[k*3] = sphere->normals[sphere->triangles[k]*3];
-        mesh.normals[k*3 + 1] = sphere->normals[sphere->triangles[k]*3 + 1];
-        mesh.normals[k*3 + 2] = sphere->normals[sphere->triangles[k]*3 + 2];
+        par_shapes_mesh *sphere = par_shapes_create_hemisphere(slices, rings);
+        par_shapes_scale(sphere, radius, radius, radius);
+        // NOTE: Soft normals are computed internally
 
-        mesh.texcoords[k*2] = sphere->tcoords[sphere->triangles[k]*2];
-        mesh.texcoords[k*2 + 1] = sphere->tcoords[sphere->triangles[k]*2 + 1];
+        mesh.vertices = (float *)RL_MALLOC(sphere->ntriangles*3*3*sizeof(float));
+        mesh.texcoords = (float *)RL_MALLOC(sphere->ntriangles*3*2*sizeof(float));
+        mesh.normals = (float *)RL_MALLOC(sphere->ntriangles*3*3*sizeof(float));
+
+        mesh.vertexCount = sphere->ntriangles*3;
+        mesh.triangleCount = sphere->ntriangles;
+
+        for (int k = 0; k < mesh.vertexCount; k++)
+        {
+            mesh.vertices[k*3] = sphere->points[sphere->triangles[k]*3];
+            mesh.vertices[k*3 + 1] = sphere->points[sphere->triangles[k]*3 + 1];
+            mesh.vertices[k*3 + 2] = sphere->points[sphere->triangles[k]*3 + 2];
+
+            mesh.normals[k*3] = sphere->normals[sphere->triangles[k]*3];
+            mesh.normals[k*3 + 1] = sphere->normals[sphere->triangles[k]*3 + 1];
+            mesh.normals[k*3 + 2] = sphere->normals[sphere->triangles[k]*3 + 2];
+
+            mesh.texcoords[k*2] = sphere->tcoords[sphere->triangles[k]*2];
+            mesh.texcoords[k*2 + 1] = sphere->tcoords[sphere->triangles[k]*2 + 1];
+        }
+
+        par_shapes_free_mesh(sphere);
+
+        // Upload vertex data to GPU (static mesh)
+        rlLoadMesh(&mesh, false);
     }
-
-    par_shapes_free_mesh(sphere);
-
-    // Upload vertex data to GPU (static mesh)
-    rlLoadMesh(&mesh, false);
+    else TRACELOG(LOG_WARNING, "MESH: Failed to generate mesh: hemisphere");
 
     return mesh;
 }
@@ -1758,58 +1771,63 @@ RLAPI Mesh GenMeshHemiSphere(float radius, int rings, int slices)
 Mesh GenMeshCylinder(float radius, float height, int slices)
 {
     Mesh mesh = { 0 };
-    mesh.vboId = (unsigned int *)RL_CALLOC(DEFAULT_MESH_VERTEX_BUFFERS, sizeof(unsigned int));
-
-    // Instance a cylinder that sits on the Z=0 plane using the given tessellation
-    // levels across the UV domain.  Think of "slices" like a number of pizza
-    // slices, and "stacks" like a number of stacked rings.
-    // Height and radius are both 1.0, but they can easily be changed with par_shapes_scale
-    par_shapes_mesh *cylinder = par_shapes_create_cylinder(slices, 8);
-    par_shapes_scale(cylinder, radius, radius, height);
-    par_shapes_rotate(cylinder, -PI/2.0f, (float[]){ 1, 0, 0 });
-    par_shapes_rotate(cylinder, PI/2.0f, (float[]){ 0, 1, 0 });
-
-    // Generate an orientable disk shape (top cap)
-    par_shapes_mesh *capTop = par_shapes_create_disk(radius, slices, (float[]){ 0, 0, 0 }, (float[]){ 0, 0, 1 });
-    capTop->tcoords = PAR_MALLOC(float, 2*capTop->npoints);
-    for (int i = 0; i < 2*capTop->npoints; i++) capTop->tcoords[i] = 0.0f;
-    par_shapes_rotate(capTop, -PI/2.0f, (float[]){ 1, 0, 0 });
-    par_shapes_translate(capTop, 0, height, 0);
-
-    // Generate an orientable disk shape (bottom cap)
-    par_shapes_mesh *capBottom = par_shapes_create_disk(radius, slices, (float[]){ 0, 0, 0 }, (float[]){ 0, 0, -1 });
-    capBottom->tcoords = PAR_MALLOC(float, 2*capBottom->npoints);
-    for (int i = 0; i < 2*capBottom->npoints; i++) capBottom->tcoords[i] = 0.95f;
-    par_shapes_rotate(capBottom, PI/2.0f, (float[]){ 1, 0, 0 });
-
-    par_shapes_merge_and_free(cylinder, capTop);
-    par_shapes_merge_and_free(cylinder, capBottom);
-
-    mesh.vertices = (float *)RL_MALLOC(cylinder->ntriangles*3*3*sizeof(float));
-    mesh.texcoords = (float *)RL_MALLOC(cylinder->ntriangles*3*2*sizeof(float));
-    mesh.normals = (float *)RL_MALLOC(cylinder->ntriangles*3*3*sizeof(float));
-
-    mesh.vertexCount = cylinder->ntriangles*3;
-    mesh.triangleCount = cylinder->ntriangles;
-
-    for (int k = 0; k < mesh.vertexCount; k++)
+    
+    if (slices >= 3)
     {
-        mesh.vertices[k*3] = cylinder->points[cylinder->triangles[k]*3];
-        mesh.vertices[k*3 + 1] = cylinder->points[cylinder->triangles[k]*3 + 1];
-        mesh.vertices[k*3 + 2] = cylinder->points[cylinder->triangles[k]*3 + 2];
+        mesh.vboId = (unsigned int *)RL_CALLOC(DEFAULT_MESH_VERTEX_BUFFERS, sizeof(unsigned int));
 
-        mesh.normals[k*3] = cylinder->normals[cylinder->triangles[k]*3];
-        mesh.normals[k*3 + 1] = cylinder->normals[cylinder->triangles[k]*3 + 1];
-        mesh.normals[k*3 + 2] = cylinder->normals[cylinder->triangles[k]*3 + 2];
+        // Instance a cylinder that sits on the Z=0 plane using the given tessellation
+        // levels across the UV domain.  Think of "slices" like a number of pizza
+        // slices, and "stacks" like a number of stacked rings.
+        // Height and radius are both 1.0, but they can easily be changed with par_shapes_scale
+        par_shapes_mesh *cylinder = par_shapes_create_cylinder(slices, 8);
+        par_shapes_scale(cylinder, radius, radius, height);
+        par_shapes_rotate(cylinder, -PI/2.0f, (float[]){ 1, 0, 0 });
+        par_shapes_rotate(cylinder, PI/2.0f, (float[]){ 0, 1, 0 });
 
-        mesh.texcoords[k*2] = cylinder->tcoords[cylinder->triangles[k]*2];
-        mesh.texcoords[k*2 + 1] = cylinder->tcoords[cylinder->triangles[k]*2 + 1];
+        // Generate an orientable disk shape (top cap)
+        par_shapes_mesh *capTop = par_shapes_create_disk(radius, slices, (float[]){ 0, 0, 0 }, (float[]){ 0, 0, 1 });
+        capTop->tcoords = PAR_MALLOC(float, 2*capTop->npoints);
+        for (int i = 0; i < 2*capTop->npoints; i++) capTop->tcoords[i] = 0.0f;
+        par_shapes_rotate(capTop, -PI/2.0f, (float[]){ 1, 0, 0 });
+        par_shapes_translate(capTop, 0, height, 0);
+
+        // Generate an orientable disk shape (bottom cap)
+        par_shapes_mesh *capBottom = par_shapes_create_disk(radius, slices, (float[]){ 0, 0, 0 }, (float[]){ 0, 0, -1 });
+        capBottom->tcoords = PAR_MALLOC(float, 2*capBottom->npoints);
+        for (int i = 0; i < 2*capBottom->npoints; i++) capBottom->tcoords[i] = 0.95f;
+        par_shapes_rotate(capBottom, PI/2.0f, (float[]){ 1, 0, 0 });
+
+        par_shapes_merge_and_free(cylinder, capTop);
+        par_shapes_merge_and_free(cylinder, capBottom);
+
+        mesh.vertices = (float *)RL_MALLOC(cylinder->ntriangles*3*3*sizeof(float));
+        mesh.texcoords = (float *)RL_MALLOC(cylinder->ntriangles*3*2*sizeof(float));
+        mesh.normals = (float *)RL_MALLOC(cylinder->ntriangles*3*3*sizeof(float));
+
+        mesh.vertexCount = cylinder->ntriangles*3;
+        mesh.triangleCount = cylinder->ntriangles;
+
+        for (int k = 0; k < mesh.vertexCount; k++)
+        {
+            mesh.vertices[k*3] = cylinder->points[cylinder->triangles[k]*3];
+            mesh.vertices[k*3 + 1] = cylinder->points[cylinder->triangles[k]*3 + 1];
+            mesh.vertices[k*3 + 2] = cylinder->points[cylinder->triangles[k]*3 + 2];
+
+            mesh.normals[k*3] = cylinder->normals[cylinder->triangles[k]*3];
+            mesh.normals[k*3 + 1] = cylinder->normals[cylinder->triangles[k]*3 + 1];
+            mesh.normals[k*3 + 2] = cylinder->normals[cylinder->triangles[k]*3 + 2];
+
+            mesh.texcoords[k*2] = cylinder->tcoords[cylinder->triangles[k]*2];
+            mesh.texcoords[k*2 + 1] = cylinder->tcoords[cylinder->triangles[k]*2 + 1];
+        }
+
+        par_shapes_free_mesh(cylinder);
+
+        // Upload vertex data to GPU (static mesh)
+        rlLoadMesh(&mesh, false);
     }
-
-    par_shapes_free_mesh(cylinder);
-
-    // Upload vertex data to GPU (static mesh)
-    rlLoadMesh(&mesh, false);
+    else TRACELOG(LOG_WARNING, "MESH: Failed to generate mesh: cylinder");
 
     return mesh;
 }
@@ -1818,41 +1836,46 @@ Mesh GenMeshCylinder(float radius, float height, int slices)
 Mesh GenMeshTorus(float radius, float size, int radSeg, int sides)
 {
     Mesh mesh = { 0 };
-    mesh.vboId = (unsigned int *)RL_CALLOC(DEFAULT_MESH_VERTEX_BUFFERS, sizeof(unsigned int));
-
-    if (radius > 1.0f) radius = 1.0f;
-    else if (radius < 0.1f) radius = 0.1f;
-
-    // Create a donut that sits on the Z=0 plane with the specified inner radius
-    // The outer radius can be controlled with par_shapes_scale
-    par_shapes_mesh *torus = par_shapes_create_torus(radSeg, sides, radius);
-    par_shapes_scale(torus, size/2, size/2, size/2);
-
-    mesh.vertices = (float *)RL_MALLOC(torus->ntriangles*3*3*sizeof(float));
-    mesh.texcoords = (float *)RL_MALLOC(torus->ntriangles*3*2*sizeof(float));
-    mesh.normals = (float *)RL_MALLOC(torus->ntriangles*3*3*sizeof(float));
-
-    mesh.vertexCount = torus->ntriangles*3;
-    mesh.triangleCount = torus->ntriangles;
-
-    for (int k = 0; k < mesh.vertexCount; k++)
+    
+    if ((sides >= 3) && (radSeg >= 3))
     {
-        mesh.vertices[k*3] = torus->points[torus->triangles[k]*3];
-        mesh.vertices[k*3 + 1] = torus->points[torus->triangles[k]*3 + 1];
-        mesh.vertices[k*3 + 2] = torus->points[torus->triangles[k]*3 + 2];
+        mesh.vboId = (unsigned int *)RL_CALLOC(DEFAULT_MESH_VERTEX_BUFFERS, sizeof(unsigned int));
 
-        mesh.normals[k*3] = torus->normals[torus->triangles[k]*3];
-        mesh.normals[k*3 + 1] = torus->normals[torus->triangles[k]*3 + 1];
-        mesh.normals[k*3 + 2] = torus->normals[torus->triangles[k]*3 + 2];
+        if (radius > 1.0f) radius = 1.0f;
+        else if (radius < 0.1f) radius = 0.1f;
 
-        mesh.texcoords[k*2] = torus->tcoords[torus->triangles[k]*2];
-        mesh.texcoords[k*2 + 1] = torus->tcoords[torus->triangles[k]*2 + 1];
+        // Create a donut that sits on the Z=0 plane with the specified inner radius
+        // The outer radius can be controlled with par_shapes_scale
+        par_shapes_mesh *torus = par_shapes_create_torus(radSeg, sides, radius);
+        par_shapes_scale(torus, size/2, size/2, size/2);
+
+        mesh.vertices = (float *)RL_MALLOC(torus->ntriangles*3*3*sizeof(float));
+        mesh.texcoords = (float *)RL_MALLOC(torus->ntriangles*3*2*sizeof(float));
+        mesh.normals = (float *)RL_MALLOC(torus->ntriangles*3*3*sizeof(float));
+
+        mesh.vertexCount = torus->ntriangles*3;
+        mesh.triangleCount = torus->ntriangles;
+
+        for (int k = 0; k < mesh.vertexCount; k++)
+        {
+            mesh.vertices[k*3] = torus->points[torus->triangles[k]*3];
+            mesh.vertices[k*3 + 1] = torus->points[torus->triangles[k]*3 + 1];
+            mesh.vertices[k*3 + 2] = torus->points[torus->triangles[k]*3 + 2];
+
+            mesh.normals[k*3] = torus->normals[torus->triangles[k]*3];
+            mesh.normals[k*3 + 1] = torus->normals[torus->triangles[k]*3 + 1];
+            mesh.normals[k*3 + 2] = torus->normals[torus->triangles[k]*3 + 2];
+
+            mesh.texcoords[k*2] = torus->tcoords[torus->triangles[k]*2];
+            mesh.texcoords[k*2 + 1] = torus->tcoords[torus->triangles[k]*2 + 1];
+        }
+
+        par_shapes_free_mesh(torus);
+
+        // Upload vertex data to GPU (static mesh)
+        rlLoadMesh(&mesh, false);
     }
-
-    par_shapes_free_mesh(torus);
-
-    // Upload vertex data to GPU (static mesh)
-    rlLoadMesh(&mesh, false);
+    else TRACELOG(LOG_WARNING, "MESH: Failed to generate mesh: torus");
 
     return mesh;
 }
@@ -1861,39 +1884,44 @@ Mesh GenMeshTorus(float radius, float size, int radSeg, int sides)
 Mesh GenMeshKnot(float radius, float size, int radSeg, int sides)
 {
     Mesh mesh = { 0 };
-    mesh.vboId = (unsigned int *)RL_CALLOC(DEFAULT_MESH_VERTEX_BUFFERS, sizeof(unsigned int));
-
-    if (radius > 3.0f) radius = 3.0f;
-    else if (radius < 0.5f) radius = 0.5f;
-
-    par_shapes_mesh *knot = par_shapes_create_trefoil_knot(radSeg, sides, radius);
-    par_shapes_scale(knot, size, size, size);
-
-    mesh.vertices = (float *)RL_MALLOC(knot->ntriangles*3*3*sizeof(float));
-    mesh.texcoords = (float *)RL_MALLOC(knot->ntriangles*3*2*sizeof(float));
-    mesh.normals = (float *)RL_MALLOC(knot->ntriangles*3*3*sizeof(float));
-
-    mesh.vertexCount = knot->ntriangles*3;
-    mesh.triangleCount = knot->ntriangles;
-
-    for (int k = 0; k < mesh.vertexCount; k++)
+    
+    if ((sides >= 3) && (radSeg >= 3))
     {
-        mesh.vertices[k*3] = knot->points[knot->triangles[k]*3];
-        mesh.vertices[k*3 + 1] = knot->points[knot->triangles[k]*3 + 1];
-        mesh.vertices[k*3 + 2] = knot->points[knot->triangles[k]*3 + 2];
+        mesh.vboId = (unsigned int *)RL_CALLOC(DEFAULT_MESH_VERTEX_BUFFERS, sizeof(unsigned int));
 
-        mesh.normals[k*3] = knot->normals[knot->triangles[k]*3];
-        mesh.normals[k*3 + 1] = knot->normals[knot->triangles[k]*3 + 1];
-        mesh.normals[k*3 + 2] = knot->normals[knot->triangles[k]*3 + 2];
+        if (radius > 3.0f) radius = 3.0f;
+        else if (radius < 0.5f) radius = 0.5f;
 
-        mesh.texcoords[k*2] = knot->tcoords[knot->triangles[k]*2];
-        mesh.texcoords[k*2 + 1] = knot->tcoords[knot->triangles[k]*2 + 1];
+        par_shapes_mesh *knot = par_shapes_create_trefoil_knot(radSeg, sides, radius);
+        par_shapes_scale(knot, size, size, size);
+
+        mesh.vertices = (float *)RL_MALLOC(knot->ntriangles*3*3*sizeof(float));
+        mesh.texcoords = (float *)RL_MALLOC(knot->ntriangles*3*2*sizeof(float));
+        mesh.normals = (float *)RL_MALLOC(knot->ntriangles*3*3*sizeof(float));
+
+        mesh.vertexCount = knot->ntriangles*3;
+        mesh.triangleCount = knot->ntriangles;
+
+        for (int k = 0; k < mesh.vertexCount; k++)
+        {
+            mesh.vertices[k*3] = knot->points[knot->triangles[k]*3];
+            mesh.vertices[k*3 + 1] = knot->points[knot->triangles[k]*3 + 1];
+            mesh.vertices[k*3 + 2] = knot->points[knot->triangles[k]*3 + 2];
+
+            mesh.normals[k*3] = knot->normals[knot->triangles[k]*3];
+            mesh.normals[k*3 + 1] = knot->normals[knot->triangles[k]*3 + 1];
+            mesh.normals[k*3 + 2] = knot->normals[knot->triangles[k]*3 + 2];
+
+            mesh.texcoords[k*2] = knot->tcoords[knot->triangles[k]*2];
+            mesh.texcoords[k*2 + 1] = knot->tcoords[knot->triangles[k]*2 + 1];
+        }
+
+        par_shapes_free_mesh(knot);
+
+        // Upload vertex data to GPU (static mesh)
+        rlLoadMesh(&mesh, false);
     }
-
-    par_shapes_free_mesh(knot);
-
-    // Upload vertex data to GPU (static mesh)
-    rlLoadMesh(&mesh, false);
+    else TRACELOG(LOG_WARNING, "MESH: Failed to generate mesh: knot");
 
     return mesh;
 }
