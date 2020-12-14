@@ -203,6 +203,12 @@ unsigned char *LoadFileData(const char *fileName, unsigned int *bytesRead)
     return data;
 }
 
+// Unload file data allocated by LoadFileData()
+void UnloadFileData(unsigned char *data)
+{
+    RL_FREE(data);
+}
+
 // Save data to file from buffer
 bool SaveFileData(const char *fileName, void *data, unsigned int bytesToWrite)
 {
@@ -272,6 +278,12 @@ char *LoadFileText(const char *fileName)
     else TRACELOG(LOG_WARNING, "FILEIO: File name provided is not valid");
 
     return text;
+}
+
+// Unload file text data allocated by LoadFileText()
+void UnloadFileText(unsigned char *text)
+{
+    RL_FREE(text);
 }
 
 // Save text data to file (write), string must be '\0' terminated
