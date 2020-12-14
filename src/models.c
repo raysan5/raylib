@@ -2838,6 +2838,51 @@ bool CheckCollisionRayBox(Ray ray, BoundingBox box)
 
     return collision;
 }
+// Get collision info between ray and mesh
+RayHitInfo GetCollisionRayMesh(Ray ray, Mesh mesh, Matrix transform)
+{
+    RayHitInfo result = { 0 };
+
+	// Check if mesh vertex data on CPU for testing
+	if (mesh.vertices != NULL)
+	{
+		// model->mesh.triangleCount may not be set, vertexCount is more reliable
+		int triangleCount = mesh.vertexCount / 3;
+
+		// Test against all triangles in mesh
+		for (int i = 0; i < triangleCount; i++)
+		{
+			Vector3 a, b, c;
+			Vector3* vertdata = (Vector3*)mesh.vertices;
+
+			if (mesh.indices)
+			{
+				a = vertdata[mesh.indices[i * 3 + 0]];
+				b = vertdata[mesh.indices[i * 3 + 1]];
+				c = vertdata[mesh.indices[i * 3 + 2]];
+			}
+			else
+			{
+				a = vertdata[i * 3 + 0];
+				b = vertdata[i * 3 + 1];
+				c = vertdata[i * 3 + 2];
+			}
+
+			a = Vector3Transform(a, transform);
+			b = Vector3Transform(b, transform);
+			c = Vector3Transform(c, transform);
+
+			RayHitInfo triHitInfo = GetCollisionRayTriangle(ray, a, b, c);
+
+			if (triHitInfo.hit)
+			{
+				// Save the closest hit triangle
+				if ((!result.hit) || (result.distance > triHitInfo.distance)) result = triHitInfo;
+			}
+		}
+	}
+    return result;
+}
 
 // Get collision info between ray and model
 RayHitInfo GetCollisionRayModel(Ray ray, Model model)
@@ -2846,43 +2891,12 @@ RayHitInfo GetCollisionRayModel(Ray ray, Model model)
 
     for (int m = 0; m < model.meshCount; m++)
     {
-        // Check if meshhas vertex data on CPU for testing
-        if (model.meshes[m].vertices != NULL)
+        RayHitInfo meshHitInfo = GetCollisionRayMesh(ray, model.meshes[m], model.transform);
+
+        if (meshHitInfo.hit)
         {
-            // model->mesh.triangleCount may not be set, vertexCount is more reliable
-            int triangleCount = model.meshes[m].vertexCount/3;
-
-            // Test against all triangles in mesh
-            for (int i = 0; i < triangleCount; i++)
-            {
-                Vector3 a, b, c;
-                Vector3 *vertdata = (Vector3 *)model.meshes[m].vertices;
-
-                if (model.meshes[m].indices)
-                {
-                    a = vertdata[model.meshes[m].indices[i*3 + 0]];
-                    b = vertdata[model.meshes[m].indices[i*3 + 1]];
-                    c = vertdata[model.meshes[m].indices[i*3 + 2]];
-                }
-                else
-                {
-                    a = vertdata[i*3 + 0];
-                    b = vertdata[i*3 + 1];
-                    c = vertdata[i*3 + 2];
-                }
-
-                a = Vector3Transform(a, model.transform);
-                b = Vector3Transform(b, model.transform);
-                c = Vector3Transform(c, model.transform);
-
-                RayHitInfo triHitInfo = GetCollisionRayTriangle(ray, a, b, c);
-
-                if (triHitInfo.hit)
-                {
-                    // Save the closest hit triangle
-                    if ((!result.hit) || (result.distance > triHitInfo.distance)) result = triHitInfo;
-                }
-            }
+            // Save the closest hit mesh
+            if ((!result.hit) || (result.distance > meshHitInfo.distance)) result = meshHitInfo;
         }
     }
 
