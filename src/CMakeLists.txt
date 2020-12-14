@@ -173,7 +173,7 @@ library_path_to_linker_flags(__PKG_CONFIG_LIBS_PRIVATE "${LIBS_PRIVATE}")
 if(STATIC)
   MESSAGE(STATUS "Building raylib static library")
   if(${PLATFORM} MATCHES "Web")
-    set(CMAKE_STATIC_LIBRARY_SUFFIX ".bc")
+    set(CMAKE_STATIC_LIBRARY_SUFFIX ".a")
   endif()
 
   add_library(raylib_static STATIC ${sources})
