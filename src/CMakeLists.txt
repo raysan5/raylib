@@ -207,7 +207,7 @@ if(STATIC)
       ARCHIVE DESTINATION "${CMAKE_INSTALL_LIBDIR}"
       PUBLIC_HEADER DESTINATION "${CMAKE_INSTALL_INCLUDEDIR}"
   )
-set_target_properties(raylib_static PROPERTIES INTERFACE_INCLUDE_DIRECTORIES "${CMAKE_CURRENT_BINARY_DIR}")
+  set_target_properties(raylib_static PROPERTIES INTERFACE_INCLUDE_DIRECTORIES "${CMAKE_CURRENT_BINARY_DIR}")
 
   add_test("pkg-config--static" ${PROJECT_SOURCE_DIR}/../cmake/test-pkgconfig.sh --static)
 endif(STATIC)
@@ -291,6 +291,13 @@ file(COPY "rlgl.h" DESTINATION ".")
 file(COPY "physac.h" DESTINATION ".")
 file(COPY "raymath.h" DESTINATION ".")
 file(COPY "raudio.h" DESTINATION ".")
+
+# Also install them
+install(FILES "raylib.h" DESTINATION "${CMAKE_INSTALL_INCLUDEDIR}")
+install(FILES "rlgl.h" DESTINATION "${CMAKE_INSTALL_INCLUDEDIR}")
+install(FILES "physac.h" DESTINATION "${CMAKE_INSTALL_INCLUDEDIR}")
+install(FILES "raymath.h" DESTINATION "${CMAKE_INSTALL_INCLUDEDIR}")
+install(FILES "raudio.h" DESTINATION "${CMAKE_INSTALL_INCLUDEDIR}")
 
 # Print the flags for the user
 if (DEFINED CMAKE_BUILD_TYPE)
