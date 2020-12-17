@@ -2421,8 +2421,11 @@ char **GetDirectoryFiles(const char *dirPath, int *fileCount)
 
         while ((entity = readdir(dir)) != NULL)
         {
-            strcpy(dirFilesPath[counter], entity->d_name);
-            counter++;
+            if (entity->d_name != NULL && entity->d_name[0] != '.')
+            {
+                strcpy(dirFilesPath[counter], entity->d_name);
+                counter++;
+            }
         }
 
         closedir(dir);
