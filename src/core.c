@@ -519,7 +519,9 @@ static void PollInputEvents(void);                      // Register user events
 static void ErrorCallback(int error, const char *description);                             // GLFW3 Error Callback, runs on GLFW3 error
 // Window callbacks events
 static void WindowSizeCallback(GLFWwindow *window, int width, int height);                 // GLFW3 WindowSize Callback, runs when window is resized
+#if !defined(PLATFORM_WEB)
 static void WindowMaximizeCallback(GLFWwindow* window, int maximized);                     // GLFW3 Window Maximize Callback, runs when window is maximized
+#endif
 static void WindowIconifyCallback(GLFWwindow *window, int iconified);                      // GLFW3 WindowIconify Callback, runs when window is minimized/restored
 static void WindowFocusCallback(GLFWwindow *window, int focused);                          // GLFW3 WindowFocus Callback, runs when window get/lose focus
 static void WindowDropCallback(GLFWwindow *window, int count, const char **paths);         // GLFW3 Window Drop Callback, runs when drop files into window
@@ -1409,7 +1411,7 @@ void SetWindowSize(int width, int height)
     glfwSetWindowSize(CORE.Window.handle, width, height);
 #endif
 #if defined(PLATFORM_WEB)
-    emscripten_set_canvas_size(width, height);  // DEPRECATED!
+    //emscripten_set_canvas_size(width, height);  // DEPRECATED!
 
     // TODO: Below functions should be used to replace previous one but
     // they do not seem to work properly
@@ -4525,12 +4527,14 @@ static void WindowIconifyCallback(GLFWwindow *window, int iconified)
     else CORE.Window.flags &= ~FLAG_WINDOW_MINIMIZED;           // The window was restored
 }
 
+#if !defined(PLATFORM_WEB)
 // GLFW3 WindowMaximize Callback, runs when window is maximized/restored
 static void WindowMaximizeCallback(GLFWwindow *window, int maximized)
 {
     if (maximized) CORE.Window.flags |= FLAG_WINDOW_MAXIMIZED;  // The window was maximized
     else CORE.Window.flags &= ~FLAG_WINDOW_MAXIMIZED;           // The window was restored
 }
+#endif
 
 // GLFW3 WindowFocus Callback, runs when window get/lose focus
 static void WindowFocusCallback(GLFWwindow *window, int focused)
