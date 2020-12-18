@@ -57,9 +57,10 @@ int main(void)
     int currentProcess = NONE;
     bool textureReload = false;
 
-    Rectangle selectRecs[NUM_PROCESSES] = { 0 };
+    Rectangle toggleRecs[NUM_PROCESSES] = { 0 };
+    int mouseHoverRec = -1;
 
-    for (int i = 0; i < NUM_PROCESSES; i++) selectRecs[i] = (Rectangle){ 40.0f, (float)(50 + 32*i), 150.0f, 30.0f };
+    for (int i = 0; i < NUM_PROCESSES; i++) toggleRecs[i] = (Rectangle){ 40.0f, (float)(50 + 32*i), 150.0f, 30.0f };
 
     SetTargetFPS(60);
     //---------------------------------------------------------------------------------------
@@ -69,6 +70,25 @@ int main(void)
     {
         // Update
         //----------------------------------------------------------------------------------
+        
+        // Mouse toggle group logic
+        for (int i = 0; i < NUM_PROCESSES; i++)
+        {
+            if (CheckCollisionPointRec(GetMousePosition(), toggleRecs[i]))
+            {
+                mouseHoverRec = i;
+
+                if (IsMouseButtonReleased(MOUSE_LEFT_BUTTON))
+                {
+                    currentProcess = i;
+                    textureReload = true;
+                }
+                break;
+            }
+            else mouseHoverRec = -1;
+        }
+        
+        // Keyboard toggle group logic
         if (IsKeyPressed(KEY_DOWN))
         {
             currentProcess++;
@@ -82,6 +102,7 @@ int main(void)
             textureReload = true;
         }
 
+        // Reload texture when required
         if (textureReload)
         {
             UnloadImage(image);                         // Unload current image data
@@ -121,9 +142,9 @@ int main(void)
             // Draw rectangles
             for (int i = 0; i < NUM_PROCESSES; i++)
             {
-                DrawRectangleRec(selectRecs[i], (i == currentProcess) ? SKYBLUE : LIGHTGRAY);
-                DrawRectangleLines((int)selectRecs[i].x, (int) selectRecs[i].y, (int) selectRecs[i].width, (int) selectRecs[i].height, (i == currentProcess) ? BLUE : GRAY);
-                DrawText( processText[i], (int)( selectRecs[i].x + selectRecs[i].width/2 - MeasureText(processText[i], 10)/2), (int) selectRecs[i].y + 11, 10, (i == currentProcess) ? DARKBLUE : DARKGRAY);
+                DrawRectangleRec(toggleRecs[i], ((i == currentProcess) || (i == mouseHoverRec)) ? SKYBLUE : LIGHTGRAY);
+                DrawRectangleLines((int)toggleRecs[i].x, (int) toggleRecs[i].y, (int) toggleRecs[i].width, (int) toggleRecs[i].height, ((i == currentProcess) || (i == mouseHoverRec)) ? BLUE : GRAY);
+                DrawText( processText[i], (int)( toggleRecs[i].x + toggleRecs[i].width/2 - MeasureText(processText[i], 10)/2), (int) toggleRecs[i].y + 11, 10, ((i == currentProcess) || (i == mouseHoverRec)) ? DARKBLUE : DARKGRAY);
             }
 
             DrawTexture(texture, screenWidth - texture.width - 60, screenHeight/2 - texture.height/2, WHITE);
