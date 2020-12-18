@@ -492,7 +492,9 @@ typedef enum {
     LOG_NONE            // Disable logging
 } TraceLogType;
 
-// Keyboard keys
+// Keyboard keys (US keyboard layout)
+// NOTE: Use GetKeyPressed() to allow redefining
+// required keys for alternative layouts
 typedef enum {
     // Alphanumeric keys
     KEY_APOSTROPHE      = 39,
@@ -1015,7 +1017,8 @@ RLAPI bool IsKeyDown(int key);                                // Detect if a key
 RLAPI bool IsKeyReleased(int key);                            // Detect if a key has been released once
 RLAPI bool IsKeyUp(int key);                                  // Detect if a key is NOT being pressed
 RLAPI void SetExitKey(int key);                               // Set a custom key to exit program (default is ESC)
-RLAPI int GetKeyPressed(void);                                // Get key pressed, call it multiple times for chars queued
+RLAPI int GetKeyPressed(void);                                // Get key pressed (keycode), call it multiple times for keys queued
+RLAPI int GetCharPressed(void);                               // Get char pressed (unicode), call it multiple times for chars queued 
 
 // Input-related functions: gamepads
 RLAPI bool IsGamepadAvailable(int gamepad);                   // Detect if a gamepad is available
