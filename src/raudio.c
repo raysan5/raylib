@@ -1079,9 +1079,10 @@ void WaveCrop(Wave *wave, int initSample, int finalSample)
     else TRACELOG(LOG_WARNING, "WAVE: Crop range out of bounds");
 }
 
-// Get samples data from wave as a floats array
-// NOTE: Returned sample values are normalized to range [-1..1]
-float *GetWaveData(Wave wave)
+// Load samples data from wave as a floats array
+// NOTE 1: Returned sample values are normalized to range [-1..1]
+// NOTE 2: Sample data allocated should be freed with UnloadWaveSamples()
+float *LoadWaveSamples(Wave wave)
 {
     float *samples = (float *)RL_MALLOC(wave.sampleCount*sizeof(float));
 
@@ -1095,6 +1096,12 @@ float *GetWaveData(Wave wave)
     }
 
     return samples;
+}
+
+// Unload samples data loaded with LoadWaveSamples()
+void UnloadWaveSamples(float *samples)
+{
+    RL_FREE(samples);
 }
 
 //----------------------------------------------------------------------------------

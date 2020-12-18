@@ -376,7 +376,7 @@ Font LoadFontFromImage(Image image, Color key, int firstChar)
     int tempCharValues[MAX_GLYPHS_FROM_IMAGE];
     Rectangle tempCharRecs[MAX_GLYPHS_FROM_IMAGE];
 
-    Color *pixels = GetImageData(image);
+    Color *pixels = LoadImageColors(image);
 
     // Parse image data to get charSpacing and lineSpacing
     for (y = 0; y < image.height; y++)

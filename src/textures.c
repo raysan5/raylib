@@ -186,7 +186,7 @@ static Image LoadPVR(const unsigned char *fileData, unsigned int fileSize);   //
 #if defined(SUPPORT_FILEFORMAT_ASTC)
 static Image LoadASTC(const unsigned char *fileData, unsigned int fileSize);  // Load ASTC file data
 #endif
-static Vector4 *GetImageDataNormalized(Image image);    // Get pixel data from image as Vector4 array (float normalized)
+static Vector4 *LoadImageDataNormalized(Image image);    // Load pixel data from image as Vector4 array (float normalized)
 
 //----------------------------------------------------------------------------------
 // Module Functions Definition
@@ -412,7 +412,7 @@ bool ExportImage(Image image, const char *fileName)
     else
     {
         // NOTE: Getting Color array as RGBA unsigned char values
-        imgData = (unsigned char *)GetImageData(image);
+        imgData = (unsigned char *)LoadImageColors(image);
         allocatedData = true;
     }
 
@@ -888,7 +888,7 @@ void ImageFormat(Image *image, int newFormat)
     {
         if ((image->format < COMPRESSED_DXT1_RGB) && (newFormat < COMPRESSED_DXT1_RGB))
         {
-            Vector4 *pixels = GetImageDataNormalized(*image);     // Supports 8 to 32 bit per channel
+            Vector4 *pixels = LoadImageDataNormalized(*image);     // Supports 8 to 32 bit per channel
 
             RL_FREE(image->data);      // WARNING! We loose mipmaps data --> Regenerated at the end...
             image->data = NULL;
@@ -1306,7 +1306,7 @@ void ImageAlphaPremultiply(Image *image)
     if ((image->data == NULL) || (image->width == 0) || (image->height == 0)) return;
 
     float alpha = 0.0f;
-    Color *pixels = GetImageData(*image);
+    Color *pixels = LoadImageColors(*image);
 
     for (int i = 0; i < image->width*image->height; i++)
     {
@@ -1368,7 +1368,7 @@ void ImageResize(Image *image, int newWidth, int newHeight)
     else
     {
         // Get data as Color pixels array to work with it
-        Color *pixels = GetImageData(*image);
+        Color *pixels = LoadImageColors(*image);
         Color *output = (Color *)RL_MALLOC(newWidth*newHeight*sizeof(Color));
 
         // NOTE: Color data is casted to (unsigned char *), there shouldn't been any problem...
@@ -1376,7 +1376,7 @@ void ImageResize(Image *image, int newWidth, int newHeight)
 
         int format = image->format;
 
-        RL_FREE(pixels);
+        UnloadImageColors(pixels);
         RL_FREE(image->data);
 
         image->data = output;
@@ -1394,7 +1394,7 @@ void ImageResizeNN(Image *image,int newWidth,int newHeight)
     // Security check to avoid program crash
     if ((image->data == NULL) || (image->width == 0) || (image->height == 0)) return;
 
-    Color *pixels = GetImageData(*image);
+    Color *pixels = LoadImageColors(*image);
     Color *output = (Color *)RL_MALLOC(newWidth*newHeight*sizeof(Color));
 
     // EDIT: added +1 to account for an early rounding problem
@@ -1424,7 +1424,7 @@ void ImageResizeNN(Image *image,int newWidth,int newHeight)
 
     ImageFormat(image, format);  // Reformat 32bit RGBA image to original format
 
-    RL_FREE(pixels);
+    UnloadImageColors(pixels);
 }
 
 // Resize canvas and fill with color
@@ -1570,7 +1570,7 @@ void ImageDither(Image *image, int rBpp, int gBpp, int bBpp, int aBpp)
     }
     else
     {
-        Color *pixels = GetImageData(*image);
+        Color *pixels = LoadImageColors(*image);
 
         RL_FREE(image->data);      // free old image data
 
@@ -1658,7 +1658,7 @@ void ImageDither(Image *image, int rBpp, int gBpp, int bBpp, int aBpp)
             }
         }
 
-        RL_FREE(pixels);
+        UnloadImageColors(pixels);
     }
 }
 
@@ -1801,7 +1801,7 @@ void ImageColorTint(Image *image, Color color)
     // Security check to avoid program crash
     if ((image->data == NULL) || (image->width == 0) || (image->height == 0)) return;
 
-    Color *pixels = GetImageData(*image);
+    Color *pixels = LoadImageColors(*image);
 
     float cR = (float)color.r/255;
     float cG = (float)color.g/255;
@@ -1840,7 +1840,7 @@ void ImageColorInvert(Image *image)
     // Security check to avoid program crash
     if ((image->data == NULL) || (image->width == 0) || (image->height == 0)) return;
 
-    Color *pixels = GetImageData(*image);
+    Color *pixels = LoadImageColors(*image);
 
     for (int y = 0; y < image->height; y++)
     {
@@ -1880,7 +1880,7 @@ void ImageColorContrast(Image *image, float contrast)
     contrast = (100.0f + contrast)/100.0f;
     contrast *= contrast;
 
-    Color *pixels = GetImageData(*image);
+    Color *pixels = LoadImageColors(*image);
 
     for (int y = 0; y < image->height; y++)
     {
@@ -1935,7 +1935,7 @@ void ImageColorBrightness(Image *image, int brightness)
     if (brightness < -255) brightness = -255;
     if (brightness > 255) brightness = 255;
 
-    Color *pixels = GetImageData(*image);
+    Color *pixels = LoadImageColors(*image);
 
     for (int y = 0; y < image->height; y++)
     {
@@ -1975,7 +1975,7 @@ void ImageColorReplace(Image *image, Color color, Color replace)
     // Security check to avoid program crash
     if ((image->data == NULL) || (image->width == 0) || (image->height == 0)) return;
 
-    Color *pixels = GetImageData(*image);
+    Color *pixels = LoadImageColors(*image);
 
     for (int y = 0; y < image->height; y++)
     {
@@ -2004,8 +2004,9 @@ void ImageColorReplace(Image *image, Color color, Color replace)
 }
 #endif      // SUPPORT_IMAGE_MANIPULATION
 
-// Get pixel data from image in the form of Color struct array
-Color *GetImageData(Image image)
+// Load color data from image as a Color array (RGBA - 32bit)
+// NOTE: Memory allocated should be freed using UnloadImageColors();
+Color *LoadImageColors(Image image)
 {
     if ((image.width == 0) || (image.height == 0)) return NULL;
 
@@ -2121,59 +2122,76 @@ Color *GetImageData(Image image)
     return pixels;
 }
 
-// Get color palette from image to maximum size
-// NOTE: Memory allocated should be freed manually!
-Color *GetImagePalette(Image image, int maxPaletteSize, int *extractCount)
+// Load colors palette from image as a Color array (RGBA - 32bit)
+// NOTE: Memory allocated should be freed using UnloadImagePalette()
+Color *LoadImagePalette(Image image, int maxPaletteSize, int *colorsCount)
 {
     #define COLOR_EQUAL(col1, col2) ((col1.r == col2.r)&&(col1.g == col2.g)&&(col1.b == col2.b)&&(col1.a == col2.a))
 
-    Color *pixels = GetImageData(image);
-    Color *palette = (Color *)RL_MALLOC(maxPaletteSize*sizeof(Color));
-
     int palCount = 0;
-    for (int i = 0; i < maxPaletteSize; i++) palette[i] = BLANK;   // Set all colors to BLANK
+    Color *palette = NULL;
+    Color *pixels = LoadImageColors(image);
 
-    for (int i = 0; i < image.width*image.height; i++)
+    if (pixels != NULL)
     {
-        if (pixels[i].a > 0)
+        palette = (Color *)RL_MALLOC(maxPaletteSize*sizeof(Color));
+
+        for (int i = 0; i < maxPaletteSize; i++) palette[i] = BLANK;   // Set all colors to BLANK
+
+        for (int i = 0; i < image.width*image.height; i++)
         {
-            bool colorInPalette = false;
-
-            // Check if the color is already on palette
-            for (int j = 0; j < maxPaletteSize; j++)
+            if (pixels[i].a > 0)
             {
-                if (COLOR_EQUAL(pixels[i], palette[j]))
+                bool colorInPalette = false;
+
+                // Check if the color is already on palette
+                for (int j = 0; j < maxPaletteSize; j++)
                 {
-                    colorInPalette = true;
-                    break;
+                    if (COLOR_EQUAL(pixels[i], palette[j]))
+                    {
+                        colorInPalette = true;
+                        break;
+                    }
                 }
-            }
 
-            // Store color if not on the palette
-            if (!colorInPalette)
-            {
-                palette[palCount] = pixels[i];      // Add pixels[i] to palette
-                palCount++;
-
-                // We reached the limit of colors supported by palette
-                if (palCount >= maxPaletteSize)
+                // Store color if not on the palette
+                if (!colorInPalette)
                 {
-                    i = image.width*image.height;   // Finish palette get
-                    TRACELOG(LOG_WARNING, "IMAGE: Palette is greater than %i colors", maxPaletteSize);
+                    palette[palCount] = pixels[i];      // Add pixels[i] to palette
+                    palCount++;
+
+                    // We reached the limit of colors supported by palette
+                    if (palCount >= maxPaletteSize)
+                    {
+                        i = image.width*image.height;   // Finish palette get
+                        TRACELOG(LOG_WARNING, "IMAGE: Palette is greater than %i colors", maxPaletteSize);
+                    }
                 }
             }
         }
+
+        UnloadImagePixels(pixels);
     }
-
-    RL_FREE(pixels);
-
-    *extractCount = palCount;
+    
+    *colorsCount = palCount;
 
     return palette;
 }
 
+// Unload color data loaded with LoadImageColors()
+void UnloadImageColors(Color *colors)
+{
+    RL_FREE(colors);
+}
+
+// Unload colors palette loaded with LoadImagePalette()
+void UnloadImagePalette(Color *colors)
+{
+    RL_FREE(palette);
+}
+
 // Get pixel data from image as Vector4 array (float normalized)
-static Vector4 *GetImageDataNormalized(Image image)
+static Vector4 *LoadImageDataNormalized(Image image)
 {
     Vector4 *pixels = (Vector4 *)RL_MALLOC(image.width*image.height*sizeof(Vector4));
 
@@ -2289,7 +2307,7 @@ Rectangle GetImageAlphaBorder(Image image, float threshold)
 {
     Rectangle crop = { 0 };
 
-    Color *pixels = GetImageData(image);
+    Color *pixels = LoadImageColors(image);
 
     if (pixels != NULL)
     {
@@ -2318,7 +2336,7 @@ Rectangle GetImageAlphaBorder(Image image, float threshold)
             crop = (Rectangle){ (float)xMin, (float)yMin, (float)((xMax + 1) - xMin), (float)((yMax + 1) - yMin) };
         }
 
-        RL_FREE(pixels);
+        UnloadImageColors(pixels);
     }
 
     return crop;
