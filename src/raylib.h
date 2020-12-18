@@ -1475,7 +1475,6 @@ RLAPI void SetSoundPitch(Sound sound, float pitch);                   // Set pit
 RLAPI void WaveFormat(Wave *wave, int sampleRate, int sampleSize, int channels);  // Convert wave data to desired format
 RLAPI Wave WaveCopy(Wave wave);                                       // Copy a wave to a new wave
 RLAPI void WaveCrop(Wave *wave, int initSample, int finalSample);     // Crop a wave to defined samples range
-//RLAPI float *GetWaveData(Wave wave);                                  // Get samples data from wave as a floats array
 RLAPI float *LoadWaveSamples(Wave wave);                              // Load samples data from wave as a floats array
 RLAPI void UnloadWaveSamples(float *samples);                         // Unload samples data loaded with LoadWaveSamples()
 
