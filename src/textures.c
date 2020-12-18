@@ -2170,7 +2170,7 @@ Color *LoadImagePalette(Image image, int maxPaletteSize, int *colorsCount)
             }
         }
 
-        UnloadImagePixels(pixels);
+        UnloadImageColors(pixels);
     }
     
     *colorsCount = palCount;
@@ -2187,7 +2187,7 @@ void UnloadImageColors(Color *colors)
 // Unload colors palette loaded with LoadImagePalette()
 void UnloadImagePalette(Color *colors)
 {
-    RL_FREE(palette);
+    RL_FREE(colors);
 }
 
 // Get pixel data from image as Vector4 array (float normalized)
