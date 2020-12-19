@@ -498,9 +498,9 @@ Font LoadFontFromMemory(const char *fileType, const unsigned char *fileData, int
 
         if (font.chars != NULL)
         {
-            //font.charsPadding = FONT_TTF_DEFAULT_CHARS_PADDING;
+            font.charsPadding = FONT_TTF_DEFAULT_CHARS_PADDING;
             
-            Image atlas = GenImageFontAtlas(font.chars, &font.recs, font.charsCount, font.baseSize, FONT_TTF_DEFAULT_CHARS_PADDING, 0);
+            Image atlas = GenImageFontAtlas(font.chars, &font.recs, font.charsCount, font.baseSize, font.charsPadding, 0);
             font.texture = LoadTextureFromImage(atlas);
 
             // Update chars[i].image to use alpha, required to be used on ImageDrawText()
@@ -839,17 +839,27 @@ void DrawText(const char *text, int posX, int posY, int fontSize, Color color)
 }
 
 // Draw one character (codepoint)
-void DrawTextCodepoint(Font font, int codepoint, Vector2 position, float scale, Color tint)
+void DrawTextCodepoint(Font font, int codepoint, Vector2 position, float fontSize, Color tint)
 {
     // Character index position in sprite font
     // NOTE: In case a codepoint is not available in the font, index returned points to '?'
     int index = GetGlyphIndex(font, codepoint);
+    float scaleFactor = fontSize/font.baseSize;     // Character quad scaling factor
 
-    // Character rectangle on screen
-    // NOTE: Quad is scaled proportionally to base character width-height
-    Rectangle rec = { position.x, position.y, font.recs[index].width*scale, font.recs[index].height*scale };
+    // Character destination rectangle on screen
+    // NOTE: We consider charsPadding on drawing 
+    Rectangle dstRec = { position.x + font.chars[index].offsetX*scaleFactor - (float)font.charsPadding*scaleFactor,
+                      position.y + font.chars[index].offsetY*scaleFactor - (float)font.charsPadding*scaleFactor,
+                      (font.recs[index].width + 2.0f*font.charsPadding)*scaleFactor,
+                      (font.recs[index].height + 2.0f*font.charsPadding)*scaleFactor };
 
-    DrawTexturePro(font.texture, font.recs[index], rec, (Vector2){ 0, 0 }, 0.0f, tint);
+    // Character source rectangle from font texture atlas
+    // NOTE: We consider chars padding when drawing, it could be required for outline/glow shader effects
+    Rectangle srcRec = { font.recs[index].x - (float)font.charsPadding, font.recs[index].y - (float)font.charsPadding, 
+                         font.recs[index].width + 2.0f*font.charsPadding, font.recs[index].height + 2.0f*font.charsPadding };
+    
+    // Draw the character texture on the screen
+    DrawTexturePro(font.texture, srcRec, dstRec, (Vector2){ 0, 0 }, 0.0f, tint);
 }
 
 // Draw text using Font
@@ -885,17 +895,7 @@ void DrawTextEx(Font font, const char *text, Vector2 position, float fontSize, f
         {
             if ((codepoint != ' ') && (codepoint != '\t'))
             {
-                Rectangle rec = { position.x + textOffsetX + font.chars[index].offsetX*scaleFactor,
-                                  position.y + textOffsetY + font.chars[index].offsetY*scaleFactor,
-                                  font.recs[index].width*scaleFactor,
-                                  font.recs[index].height*scaleFactor };
-
-                // TODO: Consider chars padding 
-                // NOTE: It could be required for outline/glow shader effects
-                //Rectangle charRec = { font.recs[index].x - (float)font.charsPadding, font.recs[index].y - (float)font.charsPadding, 
-                //                      font.recs[index].width + 2.0f*font.charsPadding, font.recs[index].height + 2.0f*font.charsPadding };
-
-                DrawTexturePro(font.texture, font.recs[index], rec, (Vector2){ 0, 0 }, 0.0f, tint);
+                DrawTextCodepoint(font, codepoint, (Vector2){ position.x + textOffsetX, position.y + textOffsetY }, fontSize, tint);
             }
 
             if (font.chars[index].advanceX == 0) textOffsetX += ((float)font.recs[index].width*scaleFactor + spacing);
@@ -1018,14 +1018,10 @@ void DrawTextRecEx(Font font, const char *text, Rectangle rec, float fontSize, f
                     isGlyphSelected = true;
                 }
 
-                // Draw current chracter glyph
+                // Draw current character glyph
                 if ((codepoint != ' ') && (codepoint != '\t'))
                 {
-                    DrawTexturePro(font.texture, font.recs[index],
-                                   (Rectangle){ rec.x + textOffsetX + font.chars[index].offsetX*scaleFactor,
-                                                rec.y + textOffsetY + font.chars[index].offsetY*scaleFactor,
-                                                font.recs[index].width*scaleFactor, font.recs[index].height*scaleFactor },
-                                   (Vector2){ 0, 0 }, 0.0f, (!isGlyphSelected)? tint : selectTint);
+                    DrawTextCodepoint(font, codepoint, (Vector2){ position.x + textOffsetX, position.y + textOffsetY }, fontSize, isGlyphSelected? selectTint : tint);
                 }
             }
 
