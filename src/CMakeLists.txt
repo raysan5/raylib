@@ -4,8 +4,8 @@ include(GNUInstallDirs)
 include(JoinPaths)
 list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/../cmake")
 
-set(PROJECT_VERSION 3.0.0)
-set(API_VERSION 301)
+set(PROJECT_VERSION 3.5.0)
+set(API_VERSION 351)
 
 include("CMakeOptions.txt")
 include(BuildType)
