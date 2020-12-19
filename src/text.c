@@ -1021,7 +1021,7 @@ void DrawTextRecEx(Font font, const char *text, Rectangle rec, float fontSize, f
                 // Draw current character glyph
                 if ((codepoint != ' ') && (codepoint != '\t'))
                 {
-                    DrawTextCodepoint(font, codepoint, (Vector2){ position.x + textOffsetX, position.y + textOffsetY }, fontSize, isGlyphSelected? selectTint : tint);
+                    DrawTextCodepoint(font, codepoint, (Vector2){ rec.x + textOffsetX, rec.y + textOffsetY }, fontSize, isGlyphSelected? selectTint : tint);
                 }
             }
 
