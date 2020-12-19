@@ -110,12 +110,12 @@ extern "C" {            // Prevents name mangling of functions
 void SetCameraMode(Camera camera, int mode);                // Set camera mode (multiple camera modes available)
 void UpdateCamera(Camera *camera);                          // Update camera position for selected mode
 
-void SetCameraPanControl(int panKey);                       // Set camera pan key to combine with mouse movement (free camera)
-void SetCameraAltControl(int altKey);                       // Set camera alt key to combine with mouse movement (free camera)
+void SetCameraPanControl(int keyPan);                       // Set camera pan key to combine with mouse movement (free camera)
+void SetCameraAltControl(int keyAlt);                       // Set camera alt key to combine with mouse movement (free camera)
 void SetCameraSmoothZoomControl(int szoomKey);              // Set camera smooth zoom key to combine with mouse (free camera)
-void SetCameraMoveControls(int frontKey, int backKey,
-                           int rightKey, int leftKey,
-                           int upKey, int downKey);         // Set camera move controls (1st person and 3rd person cameras)
+void SetCameraMoveControls(int keyFront, int keyBack,
+                           int keyRight, int keyLeft,
+                           int keyUp, int keyDown);         // Set camera move controls (1st person and 3rd person cameras)
 #endif
 
 #ifdef __cplusplus
@@ -289,8 +289,8 @@ void UpdateCamera(Camera *camera)
 
     // Keys input detection
     // TODO: Input detection is raylib-dependant, it could be moved outside the module
-    bool panKey = IsMouseButtonDown(CAMERA.panControl);
-    bool altKey = IsKeyDown(CAMERA.altControl);
+    bool keyPan = IsMouseButtonDown(CAMERA.panControl);
+    bool keyAlt = IsKeyDown(CAMERA.altControl);
     bool szoomKey = IsKeyDown(CAMERA.smoothZoomControl);
     bool direction[6] = { IsKeyDown(CAMERA.moveControl[MOVE_FRONT]),
                           IsKeyDown(CAMERA.moveControl[MOVE_BACK]),
@@ -362,9 +362,9 @@ void UpdateCamera(Camera *camera)
             }
 
             // Input keys checks
-            if (panKey)
+            if (keyPan)
             {
-                if (altKey)     // Alternative key behaviour
+                if (keyAlt)     // Alternative key behaviour
                 {
                     if (szoomKey)
                     {
@@ -500,23 +500,23 @@ void UpdateCamera(Camera *camera)
 }
 
 // Set camera pan key to combine with mouse movement (free camera)
-void SetCameraPanControl(int panKey) { CAMERA.panControl = panKey; }
+void SetCameraPanControl(int keyPan) { CAMERA.panControl = keyPan; }
 
 // Set camera alt key to combine with mouse movement (free camera)
-void SetCameraAltControl(int altKey) { CAMERA.altControl = altKey; }
+void SetCameraAltControl(int keyAlt) { CAMERA.altControl = keyAlt; }
 
 // Set camera smooth zoom key to combine with mouse (free camera)
 void SetCameraSmoothZoomControl(int szoomKey) { CAMERA.smoothZoomControl = szoomKey; }
 
 // Set camera move controls (1st person and 3rd person cameras)
-void SetCameraMoveControls(int frontKey, int backKey, int rightKey, int leftKey, int upKey, int downKey)
+void SetCameraMoveControls(int keyFront, int keyBack, int keyRight, int keyLeft, int keyUp, int keyDown)
 {
-    CAMERA.moveControl[MOVE_FRONT] = frontKey;
-    CAMERA.moveControl[MOVE_BACK] = backKey;
-    CAMERA.moveControl[MOVE_RIGHT] = rightKey;
-    CAMERA.moveControl[MOVE_LEFT] = leftKey;
-    CAMERA.moveControl[MOVE_UP] = upKey;
-    CAMERA.moveControl[MOVE_DOWN] = downKey;
+    CAMERA.moveControl[MOVE_FRONT] = keyFront;
+    CAMERA.moveControl[MOVE_BACK] = keyBack;
+    CAMERA.moveControl[MOVE_RIGHT] = keyRight;
+    CAMERA.moveControl[MOVE_LEFT] = keyLeft;
+    CAMERA.moveControl[MOVE_UP] = keyUp;
+    CAMERA.moveControl[MOVE_DOWN] = keyDown;
 }
 
 #endif // CAMERA_IMPLEMENTATION
