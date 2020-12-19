@@ -3890,7 +3890,7 @@ static bool InitGraphicsDevice(int width, int height)
     srcRect.width = CORE.Window.render.width << 16;
     srcRect.height = CORE.Window.render.height << 16;
 
-    // NOTE: RPI dispmanx windowing system takes care of srcRec scaling to dstRec by hardware (no cost)
+    // NOTE: RPI dispmanx windowing system takes care of source rectangle scaling to destination rectangle by hardware (no cost)
     // Take care that renderWidth/renderHeight fit on displayWidth/displayHeight aspect ratio
 
     VC_DISPMANX_ALPHA_T alpha;

@@ -3065,20 +3065,20 @@ void DrawTextureV(Texture2D texture, Vector2 position, Color tint)
 // Draw a Texture2D with extended parameters
 void DrawTextureEx(Texture2D texture, Vector2 position, float rotation, float scale, Color tint)
 {
-    Rectangle sourceRec = { 0.0f, 0.0f, (float)texture.width, (float)texture.height };
-    Rectangle destRec = { position.x, position.y, (float)texture.width*scale, (float)texture.height*scale };
+    Rectangle source = { 0.0f, 0.0f, (float)texture.width, (float)texture.height };
+    Rectangle dest = { position.x, position.y, (float)texture.width*scale, (float)texture.height*scale };
     Vector2 origin = { 0.0f, 0.0f };
 
-    DrawTexturePro(texture, sourceRec, destRec, origin, rotation, tint);
+    DrawTexturePro(texture, source, dest, origin, rotation, tint);
 }
 
 // Draw a part of a texture (defined by a rectangle)
-void DrawTextureRec(Texture2D texture, Rectangle sourceRec, Vector2 position, Color tint)
+void DrawTextureRec(Texture2D texture, Rectangle source, Vector2 position, Color tint)
 {
-    Rectangle destRec = { position.x, position.y, fabsf(sourceRec.width), fabsf(sourceRec.height) };
+    Rectangle dest = { position.x, position.y, fabsf(source.width), fabsf(source.height) };
     Vector2 origin = { 0.0f, 0.0f };
 
-    DrawTexturePro(texture, sourceRec, destRec, origin, 0.0f, tint);
+    DrawTexturePro(texture, source, dest, origin, 0.0f, tint);
 }
 
 // Draw texture quad with tiling and offset parameters
@@ -3092,85 +3092,85 @@ void DrawTextureQuad(Texture2D texture, Vector2 tiling, Vector2 offset, Rectangl
     DrawTexturePro(texture, source, quad, origin, 0.0f, tint);
 }
 
-// Draw part of a texture (defined by a rectangle) with rotation and scale tiled into destRec.
+// Draw part of a texture (defined by a rectangle) with rotation and scale tiled into dest.
 // NOTE: For tilling a whole texture DrawTextureQuad() is better
-void DrawTextureTiled(Texture2D texture, Rectangle sourceRec, Rectangle destRec, Vector2 origin, float rotation, float scale, Color tint)
+void DrawTextureTiled(Texture2D texture, Rectangle source, Rectangle dest, Vector2 origin, float rotation, float scale, Color tint)
 {
     if (texture.id <= 0 || scale <= 0.0f) return;  // Wanna see a infinite loop?!...just delete this line!
 
-    int tileWidth = (int)(sourceRec.width*scale), tileHeight = (int)(sourceRec.height*scale);
-    if (destRec.width < tileWidth && destRec.height < tileHeight)
+    int tileWidth = (int)(source.width*scale), tileHeight = (int)(source.height*scale);
+    if (dest.width < tileWidth && dest.height < tileHeight)
     {
         // Can fit only one tile
-        DrawTexturePro(texture, (Rectangle){sourceRec.x, sourceRec.y, ((float)destRec.width/tileWidth)*sourceRec.width, ((float)destRec.height/tileHeight)*sourceRec.height},
-                    (Rectangle){destRec.x, destRec.y, destRec.width, destRec.height}, origin, rotation, tint);
+        DrawTexturePro(texture, (Rectangle){source.x, source.y, ((float)dest.width/tileWidth)*source.width, ((float)dest.height/tileHeight)*source.height},
+                    (Rectangle){dest.x, dest.y, dest.width, dest.height}, origin, rotation, tint);
     }
-    else if (destRec.width <= tileWidth)
+    else if (dest.width <= tileWidth)
     {
         // Tiled vertically (one column)
         int dy = 0;
-        for (;dy+tileHeight < destRec.height; dy += tileHeight)
+        for (;dy+tileHeight < dest.height; dy += tileHeight)
         {
-            DrawTexturePro(texture, (Rectangle){sourceRec.x, sourceRec.y, ((float)destRec.width/tileWidth)*sourceRec.width, sourceRec.height}, (Rectangle){destRec.x, destRec.y + dy, destRec.width, (float)tileHeight}, origin, rotation, tint);
+            DrawTexturePro(texture, (Rectangle){source.x, source.y, ((float)dest.width/tileWidth)*source.width, source.height}, (Rectangle){dest.x, dest.y + dy, dest.width, (float)tileHeight}, origin, rotation, tint);
         }
 
         // Fit last tile
-        if (dy < destRec.height)
+        if (dy < dest.height)
         {
-            DrawTexturePro(texture, (Rectangle){sourceRec.x, sourceRec.y, ((float)destRec.width/tileWidth)*sourceRec.width, ((float)(destRec.height - dy)/tileHeight)*sourceRec.height},
-                        (Rectangle){destRec.x, destRec.y + dy, destRec.width, destRec.height - dy}, origin, rotation, tint);
+            DrawTexturePro(texture, (Rectangle){source.x, source.y, ((float)dest.width/tileWidth)*source.width, ((float)(dest.height - dy)/tileHeight)*source.height},
+                        (Rectangle){dest.x, dest.y + dy, dest.width, dest.height - dy}, origin, rotation, tint);
         }
     }
-    else if (destRec.height <= tileHeight)
+    else if (dest.height <= tileHeight)
     {
         // Tiled horizontally (one row)
         int dx = 0;
-        for (;dx+tileWidth < destRec.width; dx += tileWidth)
+        for (;dx+tileWidth < dest.width; dx += tileWidth)
         {
-            DrawTexturePro(texture, (Rectangle){sourceRec.x, sourceRec.y, sourceRec.width, ((float)destRec.height/tileHeight)*sourceRec.height}, (Rectangle){destRec.x + dx, destRec.y, (float)tileWidth, destRec.height}, origin, rotation, tint);
+            DrawTexturePro(texture, (Rectangle){source.x, source.y, source.width, ((float)dest.height/tileHeight)*source.height}, (Rectangle){dest.x + dx, dest.y, (float)tileWidth, dest.height}, origin, rotation, tint);
         }
 
         // Fit last tile
-        if (dx < destRec.width)
+        if (dx < dest.width)
         {
-            DrawTexturePro(texture, (Rectangle){sourceRec.x, sourceRec.y, ((float)(destRec.width - dx)/tileWidth)*sourceRec.width, ((float)destRec.height/tileHeight)*sourceRec.height},
-                        (Rectangle){destRec.x + dx, destRec.y, destRec.width - dx, destRec.height}, origin, rotation, tint);
+            DrawTexturePro(texture, (Rectangle){source.x, source.y, ((float)(dest.width - dx)/tileWidth)*source.width, ((float)dest.height/tileHeight)*source.height},
+                        (Rectangle){dest.x + dx, dest.y, dest.width - dx, dest.height}, origin, rotation, tint);
         }
     }
     else
     {
         // Tiled both horizontally and vertically (rows and columns)
         int dx = 0;
-        for (;dx+tileWidth < destRec.width; dx += tileWidth)
+        for (;dx+tileWidth < dest.width; dx += tileWidth)
         {
             int dy = 0;
-            for (;dy+tileHeight < destRec.height; dy += tileHeight)
+            for (;dy+tileHeight < dest.height; dy += tileHeight)
             {
-                DrawTexturePro(texture, sourceRec, (Rectangle){destRec.x + dx, destRec.y + dy, (float)tileWidth, (float)tileHeight}, origin, rotation, tint);
+                DrawTexturePro(texture, source, (Rectangle){dest.x + dx, dest.y + dy, (float)tileWidth, (float)tileHeight}, origin, rotation, tint);
             }
 
-            if (dy < destRec.height)
+            if (dy < dest.height)
             {
-                DrawTexturePro(texture, (Rectangle){sourceRec.x, sourceRec.y, sourceRec.width, ((float)(destRec.height - dy)/tileHeight)*sourceRec.height},
-                    (Rectangle){destRec.x + dx, destRec.y + dy, (float)tileWidth, destRec.height - dy}, origin, rotation, tint);
+                DrawTexturePro(texture, (Rectangle){source.x, source.y, source.width, ((float)(dest.height - dy)/tileHeight)*source.height},
+                    (Rectangle){dest.x + dx, dest.y + dy, (float)tileWidth, dest.height - dy}, origin, rotation, tint);
             }
         }
 
         // Fit last column of tiles
-        if (dx < destRec.width)
+        if (dx < dest.width)
         {
             int dy = 0;
-            for (;dy+tileHeight < destRec.height; dy += tileHeight)
+            for (;dy+tileHeight < dest.height; dy += tileHeight)
             {
-                DrawTexturePro(texture, (Rectangle){sourceRec.x, sourceRec.y, ((float)(destRec.width - dx)/tileWidth)*sourceRec.width, sourceRec.height},
-                        (Rectangle){destRec.x + dx, destRec.y + dy, destRec.width - dx, (float)tileHeight}, origin, rotation, tint);
+                DrawTexturePro(texture, (Rectangle){source.x, source.y, ((float)(dest.width - dx)/tileWidth)*source.width, source.height},
+                        (Rectangle){dest.x + dx, dest.y + dy, dest.width - dx, (float)tileHeight}, origin, rotation, tint);
             }
 
             // Draw final tile in the bottom right corner
-            if (dy < destRec.height)
+            if (dy < dest.height)
             {
-                DrawTexturePro(texture, (Rectangle){sourceRec.x, sourceRec.y, ((float)(destRec.width - dx)/tileWidth)*sourceRec.width, ((float)(destRec.height - dy)/tileHeight)*sourceRec.height},
-                    (Rectangle){destRec.x + dx, destRec.y + dy, destRec.width - dx, destRec.height - dy}, origin, rotation, tint);
+                DrawTexturePro(texture, (Rectangle){source.x, source.y, ((float)(dest.width - dx)/tileWidth)*source.width, ((float)(dest.height - dy)/tileHeight)*source.height},
+                    (Rectangle){dest.x + dx, dest.y + dy, dest.width - dx, dest.height - dy}, origin, rotation, tint);
             }
         }
     }
@@ -3178,7 +3178,7 @@ void DrawTextureTiled(Texture2D texture, Rectangle sourceRec, Rectangle destRec,
 
 // Draw a part of a texture (defined by a rectangle) with 'pro' parameters
 // NOTE: origin is relative to destination rectangle size
-void DrawTexturePro(Texture2D texture, Rectangle sourceRec, Rectangle destRec, Vector2 origin, float rotation, Color tint)
+void DrawTexturePro(Texture2D texture, Rectangle source, Rectangle dest, Vector2 origin, float rotation, Color tint)
 {
     // Check if texture is valid
     if (texture.id > 0)
@@ -3188,13 +3188,13 @@ void DrawTexturePro(Texture2D texture, Rectangle sourceRec, Rectangle destRec, V
 
         bool flipX = false;
 
-        if (sourceRec.width < 0) { flipX = true; sourceRec.width *= -1; }
-        if (sourceRec.height < 0) sourceRec.y -= sourceRec.height;
+        if (source.width < 0) { flipX = true; source.width *= -1; }
+        if (source.height < 0) source.y -= source.height;
 
         rlEnableTexture(texture.id);
 
         rlPushMatrix();
-            rlTranslatef(destRec.x, destRec.y, 0.0f);
+            rlTranslatef(dest.x, dest.y, 0.0f);
             rlRotatef(rotation, 0.0f, 0.0f, 1.0f);
             rlTranslatef(-origin.x, -origin.y, 0.0f);
 
@@ -3203,24 +3203,24 @@ void DrawTexturePro(Texture2D texture, Rectangle sourceRec, Rectangle destRec, V
                 rlNormal3f(0.0f, 0.0f, 1.0f);                          // Normal vector pointing towards viewer
 
                 // Bottom-left corner for texture and quad
-                if (flipX) rlTexCoord2f((sourceRec.x + sourceRec.width)/width, sourceRec.y/height);
-                else rlTexCoord2f(sourceRec.x/width, sourceRec.y/height);
+                if (flipX) rlTexCoord2f((source.x + source.width)/width, source.y/height);
+                else rlTexCoord2f(source.x/width, source.y/height);
                 rlVertex2f(0.0f, 0.0f);
 
                 // Bottom-right corner for texture and quad
-                if (flipX) rlTexCoord2f((sourceRec.x + sourceRec.width)/width, (sourceRec.y + sourceRec.height)/height);
-                else rlTexCoord2f(sourceRec.x/width, (sourceRec.y + sourceRec.height)/height);
-                rlVertex2f(0.0f, destRec.height);
+                if (flipX) rlTexCoord2f((source.x + source.width)/width, (source.y + source.height)/height);
+                else rlTexCoord2f(source.x/width, (source.y + source.height)/height);
+                rlVertex2f(0.0f, dest.height);
 
                 // Top-right corner for texture and quad
-                if (flipX) rlTexCoord2f(sourceRec.x/width, (sourceRec.y + sourceRec.height)/height);
-                else rlTexCoord2f((sourceRec.x + sourceRec.width)/width, (sourceRec.y + sourceRec.height)/height);
-                rlVertex2f(destRec.width, destRec.height);
+                if (flipX) rlTexCoord2f(source.x/width, (source.y + source.height)/height);
+                else rlTexCoord2f((source.x + source.width)/width, (source.y + source.height)/height);
+                rlVertex2f(dest.width, dest.height);
 
                 // Top-left corner for texture and quad
-                if (flipX) rlTexCoord2f(sourceRec.x/width, sourceRec.y/height);
-                else rlTexCoord2f((sourceRec.x + sourceRec.width)/width, sourceRec.y/height);
-                rlVertex2f(destRec.width, 0.0f);
+                if (flipX) rlTexCoord2f(source.x/width, source.y/height);
+                else rlTexCoord2f((source.x + source.width)/width, source.y/height);
+                rlVertex2f(dest.width, 0.0f);
             rlEnd();
         rlPopMatrix();
 
@@ -3229,20 +3229,20 @@ void DrawTexturePro(Texture2D texture, Rectangle sourceRec, Rectangle destRec, V
 }
 
 // Draws a texture (or part of it) that stretches or shrinks nicely using n-patch info
-void DrawTextureNPatch(Texture2D texture, NPatchInfo nPatchInfo, Rectangle destRec, Vector2 origin, float rotation, Color tint)
+void DrawTextureNPatch(Texture2D texture, NPatchInfo nPatchInfo, Rectangle dest, Vector2 origin, float rotation, Color tint)
 {
     if (texture.id > 0)
     {
         float width = (float)texture.width;
         float height = (float)texture.height;
 
-        float patchWidth = (destRec.width <= 0.0f)? 0.0f : destRec.width;
-        float patchHeight = (destRec.height <= 0.0f)? 0.0f : destRec.height;
+        float patchWidth = (dest.width <= 0.0f)? 0.0f : dest.width;
+        float patchHeight = (dest.height <= 0.0f)? 0.0f : dest.height;
 
-        if (nPatchInfo.sourceRec.width < 0) nPatchInfo.sourceRec.x -= nPatchInfo.sourceRec.width;
-        if (nPatchInfo.sourceRec.height < 0) nPatchInfo.sourceRec.y -= nPatchInfo.sourceRec.height;
-        if (nPatchInfo.type == NPT_3PATCH_HORIZONTAL) patchHeight = nPatchInfo.sourceRec.height;
-        if (nPatchInfo.type == NPT_3PATCH_VERTICAL) patchWidth = nPatchInfo.sourceRec.width;
+        if (nPatchInfo.source.width < 0) nPatchInfo.source.x -= nPatchInfo.source.width;
+        if (nPatchInfo.source.height < 0) nPatchInfo.source.y -= nPatchInfo.source.height;
+        if (nPatchInfo.type == NPT_3PATCH_HORIZONTAL) patchHeight = nPatchInfo.source.height;
+        if (nPatchInfo.type == NPT_3PATCH_VERTICAL) patchWidth = nPatchInfo.source.width;
 
         bool drawCenter = true;
         bool drawMiddle = true;
@@ -3277,19 +3277,19 @@ void DrawTextureNPatch(Texture2D texture, NPatchInfo nPatchInfo, Rectangle destR
         vertD.y = patchHeight;                      // outer bottom
 
         Vector2 coordA, coordB, coordC, coordD;
-        coordA.x = nPatchInfo.sourceRec.x/width;
-        coordA.y = nPatchInfo.sourceRec.y/height;
-        coordB.x = (nPatchInfo.sourceRec.x + leftBorder)/width;
-        coordB.y = (nPatchInfo.sourceRec.y + topBorder)/height;
-        coordC.x = (nPatchInfo.sourceRec.x + nPatchInfo.sourceRec.width  - rightBorder)/width;
-        coordC.y = (nPatchInfo.sourceRec.y + nPatchInfo.sourceRec.height - bottomBorder)/height;
-        coordD.x = (nPatchInfo.sourceRec.x + nPatchInfo.sourceRec.width)/width;
-        coordD.y = (nPatchInfo.sourceRec.y + nPatchInfo.sourceRec.height)/height;
+        coordA.x = nPatchInfo.source.x/width;
+        coordA.y = nPatchInfo.source.y/height;
+        coordB.x = (nPatchInfo.source.x + leftBorder)/width;
+        coordB.y = (nPatchInfo.source.y + topBorder)/height;
+        coordC.x = (nPatchInfo.source.x + nPatchInfo.source.width  - rightBorder)/width;
+        coordC.y = (nPatchInfo.source.y + nPatchInfo.source.height - bottomBorder)/height;
+        coordD.x = (nPatchInfo.source.x + nPatchInfo.source.width)/width;
+        coordD.y = (nPatchInfo.source.y + nPatchInfo.source.height)/height;
 
         rlEnableTexture(texture.id);
 
         rlPushMatrix();
-            rlTranslatef(destRec.x, destRec.y, 0.0f);
+            rlTranslatef(dest.x, dest.y, 0.0f);
             rlRotatef(rotation, 0.0f, 0.0f, 1.0f);
             rlTranslatef(-origin.x, -origin.y, 0.0f);
 

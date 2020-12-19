@@ -2667,16 +2667,16 @@ void DrawModelWiresEx(Model model, Vector3 position, Vector3 rotationAxis, float
 // Draw a billboard
 void DrawBillboard(Camera camera, Texture2D texture, Vector3 center, float size, Color tint)
 {
-    Rectangle sourceRec = { 0.0f, 0.0f, (float)texture.width, (float)texture.height };
+    Rectangle source = { 0.0f, 0.0f, (float)texture.width, (float)texture.height };
 
-    DrawBillboardRec(camera, texture, sourceRec, center, size, tint);
+    DrawBillboardRec(camera, texture, source, center, size, tint);
 }
 
 // Draw a billboard (part of a texture defined by a rectangle)
-void DrawBillboardRec(Camera camera, Texture2D texture, Rectangle sourceRec, Vector3 center, float size, Color tint)
+void DrawBillboardRec(Camera camera, Texture2D texture, Rectangle source, Vector3 center, float size, Color tint)
 {
-    // NOTE: Billboard size will maintain sourceRec aspect ratio, size will represent billboard width
-    Vector2 sizeRatio = { size, size*(float)sourceRec.height/sourceRec.width };
+    // NOTE: Billboard size will maintain source rectangle aspect ratio, size will represent billboard width
+    Vector2 sizeRatio = { size, size*(float)source.height/source.width };
 
     Matrix matView = MatrixLookAt(camera.position, camera.target, camera.up);
 
@@ -2711,19 +2711,19 @@ void DrawBillboardRec(Camera camera, Texture2D texture, Rectangle sourceRec, Vec
         rlColor4ub(tint.r, tint.g, tint.b, tint.a);
 
         // Bottom-left corner for texture and quad
-        rlTexCoord2f((float)sourceRec.x/texture.width, (float)sourceRec.y/texture.height);
+        rlTexCoord2f((float)source.x/texture.width, (float)source.y/texture.height);
         rlVertex3f(a.x, a.y, a.z);
 
         // Top-left corner for texture and quad
-        rlTexCoord2f((float)sourceRec.x/texture.width, (float)(sourceRec.y + sourceRec.height)/texture.height);
+        rlTexCoord2f((float)source.x/texture.width, (float)(source.y + source.height)/texture.height);
         rlVertex3f(d.x, d.y, d.z);
 
         // Top-right corner for texture and quad
-        rlTexCoord2f((float)(sourceRec.x + sourceRec.width)/texture.width, (float)(sourceRec.y + sourceRec.height)/texture.height);
+        rlTexCoord2f((float)(source.x + source.width)/texture.width, (float)(source.y + source.height)/texture.height);
         rlVertex3f(c.x, c.y, c.z);
 
         // Bottom-right corner for texture and quad
-        rlTexCoord2f((float)(sourceRec.x + sourceRec.width)/texture.width, (float)sourceRec.y/texture.height);
+        rlTexCoord2f((float)(source.x + source.width)/texture.width, (float)source.y/texture.height);
         rlVertex3f(b.x, b.y, b.z);
     rlEnd();
 

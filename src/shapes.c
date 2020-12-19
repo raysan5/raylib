@@ -1474,7 +1474,7 @@ bool CheckCollisionCircleRec(Vector2 center, float radius, Rectangle rec)
 // Get collision rectangle for two rectangles collision
 Rectangle GetCollisionRec(Rectangle rec1, Rectangle rec2)
 {
-    Rectangle retRec = { 0, 0, 0, 0 };
+    Rectangle rec = { 0, 0, 0, 0 };
 
     if (CheckCollisionRecs(rec1, rec2))
     {
@@ -1485,57 +1485,57 @@ Rectangle GetCollisionRec(Rectangle rec1, Rectangle rec2)
         {
             if (rec1.y <= rec2.y)
             {
-                retRec.x = rec2.x;
-                retRec.y = rec2.y;
-                retRec.width = rec1.width - dxx;
-                retRec.height = rec1.height - dyy;
+                rec.x = rec2.x;
+                rec.y = rec2.y;
+                rec.width = rec1.width - dxx;
+                rec.height = rec1.height - dyy;
             }
             else
             {
-                retRec.x = rec2.x;
-                retRec.y = rec1.y;
-                retRec.width = rec1.width - dxx;
-                retRec.height = rec2.height - dyy;
+                rec.x = rec2.x;
+                rec.y = rec1.y;
+                rec.width = rec1.width - dxx;
+                rec.height = rec2.height - dyy;
             }
         }
         else
         {
             if (rec1.y <= rec2.y)
             {
-                retRec.x = rec1.x;
-                retRec.y = rec2.y;
-                retRec.width = rec2.width - dxx;
-                retRec.height = rec1.height - dyy;
+                rec.x = rec1.x;
+                rec.y = rec2.y;
+                rec.width = rec2.width - dxx;
+                rec.height = rec1.height - dyy;
             }
             else
             {
-                retRec.x = rec1.x;
-                retRec.y = rec1.y;
-                retRec.width = rec2.width - dxx;
-                retRec.height = rec2.height - dyy;
+                rec.x = rec1.x;
+                rec.y = rec1.y;
+                rec.width = rec2.width - dxx;
+                rec.height = rec2.height - dyy;
             }
         }
 
         if (rec1.width > rec2.width)
         {
-            if (retRec.width >= rec2.width) retRec.width = rec2.width;
+            if (rec.width >= rec2.width) rec.width = rec2.width;
         }
         else
         {
-            if (retRec.width >= rec1.width) retRec.width = rec1.width;
+            if (rec.width >= rec1.width) rec.width = rec1.width;
         }
 
         if (rec1.height > rec2.height)
         {
-            if (retRec.height >= rec2.height) retRec.height = rec2.height;
+            if (rec.height >= rec2.height) rec.height = rec2.height;
         }
         else
         {
-           if (retRec.height >= rec1.height) retRec.height = rec1.height;
+           if (rec.height >= rec1.height) rec.height = rec1.height;
         }
     }
 
-    return retRec;
+    return rec;
 }
 
 //----------------------------------------------------------------------------------
