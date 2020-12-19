@@ -972,6 +972,8 @@ RLAPI void SetTraceLogExit(int logType);                          // Set the exi
 RLAPI void SetTraceLogCallback(TraceLogCallback callback);        // Set a trace log callback to enable custom logging
 RLAPI void TraceLog(int logType, const char *text, ...);          // Show trace log messages (LOG_DEBUG, LOG_INFO, LOG_WARNING, LOG_ERROR)
 
+RLAPI void *MemAlloc(int size);                                   // Internal memory allocator
+RLAPI void MemFree(void *ptr);                                    // Internal memory free
 RLAPI void TakeScreenshot(const char *fileName);                  // Takes a screenshot of current screen (saved a .png)
 RLAPI int GetRandomValue(int min, int max);                       // Returns a random value between min and max (both included)
 

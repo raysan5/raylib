@@ -163,6 +163,18 @@ void TraceLog(int logType, const char *text, ...)
 #endif  // SUPPORT_TRACELOG
 }
 
+// Internal memory allocator
+void *MemAlloc(int size)
+{
+    return RL_MALLOC(size);
+}
+
+// Internal memory free
+void MemFree(void *ptr)
+{
+    RL_FREE(ptr);
+}
+
 // Load data from file into a buffer
 unsigned char *LoadFileData(const char *fileName, unsigned int *bytesRead)
 {
