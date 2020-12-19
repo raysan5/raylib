@@ -2745,24 +2745,24 @@ void DrawBoundingBox(BoundingBox box, Color color)
 }
 
 // Detect collision between two spheres
-bool CheckCollisionSpheres(Vector3 centerA, float radiusA, Vector3 centerB, float radiusB)
+bool CheckCollisionSpheres(Vector3 center1, float radius1, Vector3 center2, float radius2)
 {
     bool collision = false;
 
     // Simple way to check for collision, just checking distance between two points
     // Unfortunately, sqrtf() is a costly operation, so we avoid it with following solution
     /*
-    float dx = centerA.x - centerB.x;      // X distance between centers
-    float dy = centerA.y - centerB.y;      // Y distance between centers
-    float dz = centerA.z - centerB.z;      // Z distance between centers
+    float dx = center1.x - center2.x;      // X distance between centers
+    float dy = center1.y - center2.y;      // Y distance between centers
+    float dz = center1.z - center2.z;      // Z distance between centers
 
     float distance = sqrtf(dx*dx + dy*dy + dz*dz);  // Distance between centers
 
-    if (distance <= (radiusA + radiusB)) collision = true;
+    if (distance <= (radius1 + radius2)) collision = true;
     */
 
     // Check for distances squared to avoid sqrtf()
-    if (Vector3DotProduct(Vector3Subtract(centerB, centerA), Vector3Subtract(centerB, centerA)) <= (radiusA + radiusB)*(radiusA + radiusB)) collision = true;
+    if (Vector3DotProduct(Vector3Subtract(center2, center1), Vector3Subtract(center2, center1)) <= (radius1 + radius2)*(radius1 + radius2)) collision = true;
 
     return collision;
 }
