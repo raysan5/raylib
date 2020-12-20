@@ -15,7 +15,6 @@ KEY CHANGES:
  - [*] ADDED: GitHub Actions CI to support multiple raylib build configurations
  
 Detailed changes:
-[core] Redesigned how window states are managed
 [core] ADDED: SetWindowState() / ClearWindowState() -> New flags added!
 [core] ADDED: IsWindowFocused()
 [core] ADDED: GetWindowScaleDPI()
@@ -33,7 +32,9 @@ Detailed changes:
 [core] REVIEWED: RPI: Mouse movements are bound to the screen resolution (#1392) (#1410) by @kernelkinetic
 [core] REVIEWED: GetPrevDirectoryPath() fixes on Unix-like systems (#1246) by @ivan-cx
 [core] REPLACED: rgif.h by msf_gif.h for automatic gif recording
+[core] REDESIGNED: Window states management system
 [core] REDESIGNED: GetMouseWheelMove() to return float movement for precise scrolling (#1397) by @Doy-lee
+[core] REDESIGNED: GetKeyPressed(), and added GetCharPressed() (#1336) 
 [core] UWP rework with improvements (#1231) by @Rover656
 [core] Gamepad axis bug fixes and improvement (#1228) by @mmalecot
 [core] Updated joystick mappings with latest version of gamecontrollerdb (#1381) by @coderoth
@@ -41,6 +42,7 @@ Detailed changes:
 [rlgl] ADDED: rlDrawMeshInstanced() (#1318) by @seanpringle
 [rlgl] ADDED: rlCheckErrors (#1321) by @seanpringle
 [rlgl] ADDED: BLEND_SET blending mode (#1251) by @RandomErrorMessage
+[rlgl] ADDED: rlSetLineWidth(), rlGetLineWidth(), rlEnableSmoothLines(), rlDisableSmoothLines() (#1457) by @JeffM2501
 [rlgl] RENAMED: rlUnproject() to Vector3Unproject() [raymath]
 [rlgl] REVIEWED: Replace rlglDraw() calls by DrawRenderBatch() internal calls
 [rlgl] REVIEWED: GenTextureCubemap(), use rlgl functionality only
@@ -55,10 +57,13 @@ Detailed changes:
 [raymath] ADDED: Vector2MoveTowards() function (#1233) by @anatagawa
 [raymath] REVIEWED: Some functions consistency (#1197) by @Not-Nik
 [raymath] REVIEWED: QuaternionFromVector3ToVector3() (#1263) by @jvocaturo 
+[raymath] REVIEWED: MatrixLookAt(), optimized (#1442) by @RandomErrorMessage
 [text] Avoid [textures] functions dependencies
 [text] ADDED: Config flag: SUPPORT_TEXT_MANIPULATION
 [text] ADDED: LoadFontFromMemory() (TTF only) (#1327)
+[text] ADDED: UnloadFontData() 
 [text] RENAMED: FormatText() -> TextFormat() 
+[text] REVIEWED: Font struct, added charsPadding (#1432)
 [text] REVIEWED: TextJoin()
 [text] REVIEWED: TextReplace() (#1172)
 [text] REVIEWED: LoadBMFont() to load data from memory (#1232)
@@ -76,11 +81,16 @@ Detailed changes:
 [textures] ADDED: LoadImageAnim() to load animated sequence of images
 [textures] ADDED: DrawTextureTiled() (#1291) - @Demizdor
 [textures] ADDED: UpdateTextureRec()
+[textures] ADDED: UnloadImageColors(), UnloadImagePalette(), UnloadWaveSamples()
 [textures] REMOVED: Config flag: SUPPORT_IMAGE_DRAWING 
 [textures] REMOVED: LoadImageEx()
 [textures] REMOVED: LoadImagePro() 
+[textures] REMOVED: GetImageDataNormalized(), not exposed in the API 
 [textures] RENAMED: ImageExtractPalette() to GetImagePalette()
 [textures] RENAMED: Fade() to ColorAlpha(), added #define for compatibility
+[textures] RENAMED: GetImageData() -> LoadImageColors()
+[textures] RENAMED: GetImagePalette() -> LoadImagePalette()
+[textures] RENAMED: GetWaveData() -> LoadWaveSamples()
 [textures] REVIEWED: GetPixelDataSize() to consider compressed data properly
 [textures] REVIEWED: GetTextureData(), allow retrieving 32bit float data
 [textures] REVIEWED: ImageDrawText*() params order
@@ -113,6 +123,7 @@ Detailed changes:
 [textures] REDESIGNED: ExportImageAsCode() to use memory buffer (#1232)
 [textures] REDESIGNED: ColorFromHSV() 
 [models] ADDED: DrawTriangle3D() and DrawTriangleStrip3D()
+[models] ADDED: UnloadModelKeepMeshes() 
 [models] REVIEWED: LoadModel(), avoid loading texcoords and normals from model if not existent
 [models] REVIEWED: GenMeshCubicmap(), added comments and simplification
 [models] REVIEWED: GenMeshCubicmap(), fixed generated normals (#1244) by @GoldenThumbs
@@ -122,6 +133,7 @@ Detailed changes:
 [models] REVIEWED: LoadGLTF() to read from memory buffer
 [models] REVIEWED: UpdateMesh(), fix extra memory allocated when updating color buffer (#1271) by @4yn
 [models] REVIEWED: MeshNormalsSmooth() (#1317) by @seanpringle
+[models] REVIEWED: DrawGrid() (#1417)
 [models] REDESIGNED: ExportMesh() to use memory buffer (#1232) 
 [models] REDESIGNED: LoadIQM() and LoadModelAnimations() to use memory buffers
 [audio] ADDED: LoadWaveFromMemory() (#1327)
@@ -130,9 +142,12 @@ Detailed changes:
 [audio] REVIEWED: SaveWAV() to use memory write insted of file
 [audio] REVIEWED: LoadMusicStream(), support WAV music streaming (#1198) 
 [audio] REVIEWED: Support multiple WAV sampleSize for MusicStream (#1340) 
+[audio] REVIEWED: SetAudioBufferPitch()
 [audio] REDESIGNED: Audio looping system
 [audio] REDESIGNED: LoadSound(): Use memory loading (WAV, OGG, MP3, FLAC) (#1312)
 [audio] REDESIGNED: ExportWaveAsCode() to use memory buffers
+[utils] ADDED: MemAlloc() / MemFree() (#1440)
+[utils] ADDED: UnloadFileData() / UnloadFileText()
 [utils] REVIEWED: android_fopen() to support SDCard access
 [utils] REDESIGNED: SaveFile*() functions to expose file access results (#1420)
 [rmem] REVIEWED: MemPool and other allocators optimization (#1211) by @assyrianic
