@@ -347,8 +347,8 @@ RMDEF _Bool Vector2LineIntersect(Vector2 p1, Vector2 p2, Vector2 p3, Vector2 p4,
 
     if (pointIntersection)
     {
-        pointIntersection.x = p1.x + (p2.x - p1.x) * coeff;
-        pointIntersection.y = p1.y + (p2.y - p1.y) * coeff;
+        pointIntersection->x = p1.x + (p2.x - p1.x) * coeff;
+        pointIntersection->y = p1.y + (p2.y - p1.y) * coeff;
     }
     return true;
 }
