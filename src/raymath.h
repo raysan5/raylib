@@ -363,10 +363,10 @@ RMDEF _Bool Vector2SegmentIntersect(Vector2 p1, Vector2 p2, Vector2 p3, Vector2 
     const float xi = ((p3.x - p3.x)*(p1.x * p2.y - p1.y * p2.x) - (p1.x - p2.x)*(p3.x * p4.y - p3.y * p4.x)) / div;
     const float yi = ((p3.y - p4.y)*(p1.x * p2.y - p1.y * p2.x) - (p1.y - p2.y)*(p3.x * p4.y - p3.y * p4.x)) / div;
 
-    if (xi < fminf(x1, x2) || xi > fmaxf(x1, x2)) return false;
-    if (xi < fminf(x3, x4) || xi > fmaxf(x3, x4)) return false;
-    if (yi < fminf(y1, y2) || yi > fmaxf(y1, y2)) return false;
-    if (yi < fminf(y3, y4) || yi > fmaxf(y3, y4)) return false;
+    if (xi < fminf(p1.x, p2.x) || xi > fmaxf(p1.x, p2.x)) return false;
+    if (xi < fminf(p3.x, p4.x) || xi > fmaxf(p3.x, p4.x)) return false;
+    if (yi < fminf(p1.y, p2.y) || yi > fmaxf(p1.y, p2.y)) return false;
+    if (yi < fminf(p3.y, p4.y) || yi > fmaxf(p3.y, p4.y)) return false;
     if (pointIntersection)
     {
         pointIntersection->x = xi;
