@@ -337,7 +337,7 @@ RMDEF Vector2 Vector2MoveTowards(Vector2 v, Vector2 target, float maxDistance)
 }
 
 // Get the intersection point of two lines A and B defined by A(p1, p2) and B(p3, p4), return true if it exists, else false
-RMDEF _Bool Vector2LineIntersect(Vector2 p1, Vector2 p2, Vector2 p3, Vector2 p4, Vector2* pointIntersection)
+RMDEF bool Vector2LineIntersect(Vector2 p1, Vector2 p2, Vector2 p3, Vector2 p4, Vector2* pointIntersection)
 {
     const float div = (p4.y - p3.y)*(p2.x - p1.x) - (p4.x -p3.x)*(p2.y - p1.y);
 
@@ -354,7 +354,7 @@ RMDEF _Bool Vector2LineIntersect(Vector2 p1, Vector2 p2, Vector2 p3, Vector2 p4,
 }
 
 // Get the intersection point of two segments A and B defined by A(p1, p2) and B(P3, p4), return true if it exists, else false
-RMDEF _Bool Vector2SegmentIntersect(Vector2 p1, Vector2 p2, Vector2 p3, Vector2 p4, Vector2* pointIntersection)
+RMDEF bool Vector2SegmentIntersect(Vector2 p1, Vector2 p2, Vector2 p3, Vector2 p4, Vector2* pointIntersection)
 {
     const float div = (p4.y - p3.y)*(p2.x - p1.x) - (p4.x -p3.x)*(p2.y - p1.y);
 
