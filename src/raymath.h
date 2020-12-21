@@ -336,6 +336,45 @@ RMDEF Vector2 Vector2MoveTowards(Vector2 v, Vector2 target, float maxDistance)
     return result;
 }
 
+// Get the intersection point of two lines A and B defined by A(p1, p2) and B(p3, p4), return true if it exists, else false
+RMDEF bool Vector2LineIntersect(Vector2 p1, Vector2 p2, Vector2 p3, Vector2 p4, Vector2* pointIntersection)
+{
+    const float div = (p4.y - p3.y)*(p2.x - p1.x) - (p4.x -p3.x)*(p2.y - p1.y);
+
+    if (div == 0.f) return false;
+
+    const float coeff = ((p4.x - p3.x)*(p1.y - p3.y) - (p4.y - p3.y)*(p1.x - p3.x)) / div;
+
+    if (pointIntersection)
+    {
+        pointIntersection->x = p1.x + (p2.x - p1.x) * coeff;
+        pointIntersection->y = p1.y + (p2.y - p1.y) * coeff;
+    }
+    return true;
+}
+
+// Get the intersection point of two segments A and B defined by A(p1, p2) and B(P3, p4), return true if it exists, else false
+RMDEF bool Vector2SegmentIntersect(Vector2 p1, Vector2 p2, Vector2 p3, Vector2 p4, Vector2* pointIntersection)
+{
+    const float div = (p4.y - p3.y)*(p2.x - p1.x) - (p4.x -p3.x)*(p2.y - p1.y);
+
+    if (div == 0.f) return false;
+
+    const float xi = ((p3.x - p3.x)*(p1.x * p2.y - p1.y * p2.x) - (p1.x - p2.x)*(p3.x * p4.y - p3.y * p4.x)) / div;
+    const float yi = ((p3.y - p4.y)*(p1.x * p2.y - p1.y * p2.x) - (p1.y - p2.y)*(p3.x * p4.y - p3.y * p4.x)) / div;
+
+    if (xi < fminf(p1.x, p2.x) || xi > fmaxf(p1.x, p2.x)) return false;
+    if (xi < fminf(p3.x, p4.x) || xi > fmaxf(p3.x, p4.x)) return false;
+    if (yi < fminf(p1.y, p2.y) || yi > fmaxf(p1.y, p2.y)) return false;
+    if (yi < fminf(p3.y, p4.y) || yi > fmaxf(p3.y, p4.y)) return false;
+    if (pointIntersection)
+    {
+        pointIntersection->x = xi;
+        pointIntersection->y = yi;
+    }
+    return true;
+}
+
 //----------------------------------------------------------------------------------
 // Module Functions Definition - Vector3 math
 //----------------------------------------------------------------------------------
