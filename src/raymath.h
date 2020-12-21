@@ -342,13 +342,13 @@ RMDEF Vector2 Vector2LineIntersect(Vector2 p1, Vector2 p2, Vector2 p3, Vector2 p
     Vector2 result = { 0 };
     const float div = (p4.y - p3.y)*(p2.x - p1.x) - (p4.x -p3.x)*(p2.y - p1.y);
 
-	if (div == 0.f) return result;
+    if (div == 0.f) return result;
 
-	const float coeff = ((p4.x - p3.x)*(p1.y - p3.y) - (p4.y - p3.y)*(p1.x - p3.x)) / div;
+    const float coeff = ((p4.x - p3.x)*(p1.y - p3.y) - (p4.y - p3.y)*(p1.x - p3.x)) / div;
 
-	result.x = p1.x + (p2.x - p1.x) * coeff;
+    result.x = p1.x + (p2.x - p1.x) * coeff;
     result.y = p1.y + (p2.y - p1.y) * coeff; 
-	return result;
+    return result;
 }
 
 //----------------------------------------------------------------------------------
