@@ -47,6 +47,8 @@
 
 #ifndef RAYMATH_STANDALONE
     #include "raylib.h"           // Required for structs: Vector3, Matrix
+#else
+    #include <stdbool.h>
 #endif
 
 #if defined(RAYMATH_IMPLEMENTATION) && defined(RAYMATH_HEADER_ONLY)
