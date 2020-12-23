@@ -1475,7 +1475,7 @@ Vector2 GetMonitorPosition(int monitor)
     {
         int x, y;
         glfwGetMonitorPos(monitors[monitor], &x, &y);
-        const GLFWvidmode* mode = glfwGetVideoMode(monitors[monitor]);
+        
         return (Vector2){ (float)x, (float)y };
     }
     else TRACELOG(LOG_WARNING, "GLFW: Failed to find selected monitor");
