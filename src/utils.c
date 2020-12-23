@@ -225,7 +225,7 @@ void UnloadFileData(unsigned char *data)
 bool SaveFileData(const char *fileName, void *data, unsigned int bytesToWrite)
 {
     bool success = false;
-    
+
     if (fileName != NULL)
     {
         FILE *file = fopen(fileName, "wb");
@@ -244,7 +244,7 @@ bool SaveFileData(const char *fileName, void *data, unsigned int bytesToWrite)
         else TRACELOG(LOG_WARNING, "FILEIO: [%s] Failed to open file", fileName);
     }
     else TRACELOG(LOG_WARNING, "FILEIO: File name provided is not valid");
-    
+
     return success;
 }
 
@@ -302,7 +302,7 @@ void UnloadFileText(unsigned char *text)
 bool SaveFileText(const char *fileName, char *text)
 {
     bool success = false;
-    
+
     if (fileName != NULL)
     {
         FILE *file = fopen(fileName, "wt");
@@ -320,7 +320,7 @@ bool SaveFileText(const char *fileName, char *text)
         else TRACELOG(LOG_WARNING, "FILEIO: [%s] Failed to open text file", fileName);
     }
     else TRACELOG(LOG_WARNING, "FILEIO: File name provided is not valid");
-    
+
     return success;
 }
 

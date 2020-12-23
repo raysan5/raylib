@@ -445,7 +445,7 @@ bool ExportImage(Image image, const char *fileName)
 
     if (success != 0) TRACELOG(LOG_INFO, "FILEIO: [%s] Image exported successfully", fileName);
     else TRACELOG(LOG_WARNING, "FILEIO: [%s] Failed to export image", fileName);
-    
+
     return success;
 }
 
@@ -453,7 +453,7 @@ bool ExportImage(Image image, const char *fileName)
 bool ExportImageAsCode(Image image, const char *fileName)
 {
     bool success = false;
-    
+
 #ifndef TEXT_BYTES_PER_LINE
     #define TEXT_BYTES_PER_LINE     20
 #endif
@@ -495,7 +495,7 @@ bool ExportImageAsCode(Image image, const char *fileName)
     success = SaveFileText(fileName, txtData);
 
     RL_FREE(txtData);
-    
+
     return success;
 }
 
@@ -2172,7 +2172,7 @@ Color *LoadImagePalette(Image image, int maxPaletteSize, int *colorsCount)
 
         UnloadImageColors(pixels);
     }
-    
+
     *colorsCount = palCount;
 
     return palette;

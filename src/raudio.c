@@ -640,7 +640,7 @@ void SetAudioBufferPitch(AudioBuffer *buffer, float pitch)
         //  - lower pitches make it slower
         ma_uint32 outputSampleRate = (ma_uint32)((float)buffer->converter.config.sampleRateOut/pitch);
         ma_data_converter_set_rate(&buffer->converter, buffer->converter.config.sampleRateIn, outputSampleRate);
-        
+
         buffer->pitch = pitch;
     }
 }
@@ -827,7 +827,7 @@ bool ExportWave(Wave wave, const char *fileName)
 
     if (success) TRACELOG(LOG_INFO, "FILEIO: [%s] Wave data exported successfully", fileName);
     else TRACELOG(LOG_WARNING, "FILEIO: [%s] Failed to export wave data", fileName);
-    
+
     return success;
 }
 
@@ -835,7 +835,7 @@ bool ExportWave(Wave wave, const char *fileName)
 bool ExportWaveAsCode(Wave wave, const char *fileName)
 {
     bool success = false;
-    
+
 #ifndef TEXT_BYTES_PER_LINE
     #define TEXT_BYTES_PER_LINE     20
 #endif
@@ -882,7 +882,7 @@ bool ExportWaveAsCode(Wave wave, const char *fileName)
     success = SaveFileText(fileName, txtData);
 
     RL_FREE(txtData);
-    
+
     return success;
 }
 
@@ -1087,7 +1087,7 @@ float *LoadWaveSamples(Wave wave)
     float *samples = (float *)RL_MALLOC(wave.sampleCount*sizeof(float));
 
     // NOTE: sampleCount is the total number of interlaced samples (including channels)
-    
+
     for (unsigned int i = 0; i < wave.sampleCount; i++)
     {
             if (wave.sampleSize == 8) samples[i] = (float)(((unsigned char *)wave.data)[i] - 127)/256.0f;
@@ -1149,7 +1149,7 @@ Music LoadMusicStream(const char *fileName)
 
             // OGG bit rate defaults to 16 bit, it's enough for compressed format
             music.stream = InitAudioStream(info.sample_rate, 16, info.channels);
-            
+
             // WARNING: It seems this function returns length in frames, not samples, so we multiply by channels
             music.sampleCount = (unsigned int)stb_vorbis_stream_length_in_samples((stb_vorbis *)music.ctxData)*info.channels;
             music.looping = true;   // Looping enabled by default
@@ -1953,7 +1953,7 @@ static Wave LoadWAV(const unsigned char *fileData, unsigned int fileSize)
 static int SaveWAV(Wave wave, const char *fileName)
 {
     int success = false;
-    
+
     drwav wav = { 0 };
     drwav_data_format format = { 0 };
     format.container = drwav_container_riff;
@@ -1967,9 +1967,9 @@ static int SaveWAV(Wave wave, const char *fileName)
     success = drwav_init_memory_write(&wav, &fileData, &fileDataSize, &format, NULL);
     if (success) success = (int)drwav_write_pcm_frames(&wav, wave.sampleCount/wave.channels, wave.data);
     drwav_result result = drwav_uninit(&wav);
-    
+
     if (result == DRWAV_SUCCESS) success = SaveFileData(fileName, fileData, (unsigned int)fileDataSize);
-    
+
     drwav_free(fileData, NULL);
 
     return success;

@@ -792,9 +792,9 @@ void UnloadModel(Model model)
 
     // Unload materials maps  and params
     // NOTE: As the user could be sharing shaders and textures between models,
-    // we don't unload the material but just free it's maps and params, 
+    // we don't unload the material but just free it's maps and params,
     // the user is responsible for freeing models shaders and textures
-    for (int i = 0; i < model.materialCount; i++) 
+    for (int i = 0; i < model.materialCount; i++)
     {
         RL_FREE(model.materials[i].maps);
         RL_FREE(model.materials[i].params);
@@ -817,9 +817,9 @@ void UnloadModelKeepMeshes(Model model)
 {
     // Unload materials maps  and params
     // NOTE: As the user could be sharing shaders and textures between models,
-    // we don't unload the material but just free it's maps and params, 
+    // we don't unload the material but just free it's maps and params,
     // the user is responsible for freeing models shaders and textures
-    for (int i = 0; i < model.materialCount; i++) 
+    for (int i = 0; i < model.materialCount; i++)
     {
         RL_FREE(model.materials[i].maps);
         RL_FREE(model.materials[i].params);
@@ -860,7 +860,7 @@ void UnloadMesh(Mesh mesh)
 bool ExportMesh(Mesh mesh, const char *fileName)
 {
     bool success = false;
-    
+
     if (IsFileExtension(fileName, ".obj"))
     {
         // Estimated data size, it should be enough...
@@ -919,7 +919,7 @@ bool ExportMesh(Mesh mesh, const char *fileName)
     {
         // TODO: Support additional file formats to export mesh vertex data
     }
-    
+
     return success;
 }
 
@@ -1310,9 +1310,9 @@ bool IsModelAnimationValid(Model model, ModelAnimation anim)
 Mesh GenMeshPoly(int sides, float radius)
 {
     Mesh mesh = { 0 };
-    
+
     if (sides < 3) return mesh;
-    
+
     mesh.vboId = (unsigned int *)RL_CALLOC(DEFAULT_MESH_VERTEX_BUFFERS, sizeof(unsigned int));
 
     int vertexCount = sides*3;
@@ -1681,7 +1681,7 @@ par_shapes_mesh* par_shapes_create_icosahedron();       // 20 sides polyhedron
 RLAPI Mesh GenMeshSphere(float radius, int rings, int slices)
 {
     Mesh mesh = { 0 };
-    
+
     if ((rings >= 3) && (slices >= 3))
     {
         mesh.vboId = (unsigned int *)RL_CALLOC(DEFAULT_MESH_VERTEX_BUFFERS, sizeof(unsigned int));
@@ -1725,11 +1725,11 @@ RLAPI Mesh GenMeshSphere(float radius, int rings, int slices)
 RLAPI Mesh GenMeshHemiSphere(float radius, int rings, int slices)
 {
     Mesh mesh = { 0 };
-    
+
     if ((rings >= 3) && (slices >= 3))
     {
         if (radius < 0.0f) radius = 0.0f;
-        
+
         mesh.vboId = (unsigned int *)RL_CALLOC(DEFAULT_MESH_VERTEX_BUFFERS, sizeof(unsigned int));
 
         par_shapes_mesh *sphere = par_shapes_create_hemisphere(slices, rings);
@@ -1771,7 +1771,7 @@ RLAPI Mesh GenMeshHemiSphere(float radius, int rings, int slices)
 Mesh GenMeshCylinder(float radius, float height, int slices)
 {
     Mesh mesh = { 0 };
-    
+
     if (slices >= 3)
     {
         mesh.vboId = (unsigned int *)RL_CALLOC(DEFAULT_MESH_VERTEX_BUFFERS, sizeof(unsigned int));
@@ -1836,7 +1836,7 @@ Mesh GenMeshCylinder(float radius, float height, int slices)
 Mesh GenMeshTorus(float radius, float size, int radSeg, int sides)
 {
     Mesh mesh = { 0 };
-    
+
     if ((sides >= 3) && (radSeg >= 3))
     {
         mesh.vboId = (unsigned int *)RL_CALLOC(DEFAULT_MESH_VERTEX_BUFFERS, sizeof(unsigned int));
@@ -1884,7 +1884,7 @@ Mesh GenMeshTorus(float radius, float size, int radSeg, int sides)
 Mesh GenMeshKnot(float radius, float size, int radSeg, int sides)
 {
     Mesh mesh = { 0 };
-    
+
     if ((sides >= 3) && (radSeg >= 3))
     {
         mesh.vboId = (unsigned int *)RL_CALLOC(DEFAULT_MESH_VERTEX_BUFFERS, sizeof(unsigned int));
@@ -3054,7 +3054,7 @@ static Model LoadOBJ(const char *fileName)
             model.materialCount = materialCount;
             model.materials = (Material *)RL_CALLOC(model.materialCount, sizeof(Material));
             TraceLog(LOG_INFO, "MODEL: model has %i material meshes", materialCount);
-        } 
+        }
         else
         {
             model.meshCount = 1;
@@ -3104,7 +3104,7 @@ static Model LoadOBJ(const char *fileName)
         {
             int mm = attrib.material_ids[af];   // mesh material for this face
             if (mm == -1) { mm = 0; }           // no material object..
-            
+
             // Get indices for the face
             tinyobj_vertex_index_t idx0 = attrib.faces[3 * af + 0];
             tinyobj_vertex_index_t idx1 = attrib.faces[3 * af + 1];

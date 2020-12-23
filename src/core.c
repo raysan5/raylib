@@ -312,9 +312,9 @@
 #endif
 
 // Flags operation macros
-#define FLAG_SET(n, f) ((n) |= (f)) 
-#define FLAG_CLEAR(n, f) ((n) &= ~(f)) 
-#define FLAG_TOGGLE(n, f) ((n) ^= (f)) 
+#define FLAG_SET(n, f) ((n) |= (f))
+#define FLAG_CLEAR(n, f) ((n) &= ~(f))
+#define FLAG_TOGGLE(n, f) ((n) ^= (f))
 #define FLAG_CHECK(n, f) ((n) & (f))
 
 //----------------------------------------------------------------------------------
@@ -410,13 +410,13 @@ typedef struct CoreData {
             int exitKey;                    // Default exit key
             char currentKeyState[512];      // Registers current frame key state
             char previousKeyState[512];     // Registers previous frame key state
-            
+
             int keyPressedQueue[MAX_KEY_PRESSED_QUEUE];     // Input keys queue
             int keyPressedQueueCount;       // Input keys queue count
 
             int charPressedQueue[MAX_CHAR_PRESSED_QUEUE];   // Input characters queue
             int charPressedQueueCount;      // Input characters queue count
-            
+
 #if defined(PLATFORM_RPI) || defined(PLATFORM_DRM)
             int defaultMode;                // Default keyboard mode
             struct termios defaultSettings; // Default keyboard settings
@@ -1043,8 +1043,8 @@ void ToggleFullscreen(void)
     else glfwSetWindowMonitor(CORE.Window.handle, NULL, CORE.Window.position.x, CORE.Window.position.y, CORE.Window.screen.width, CORE.Window.screen.height, GLFW_DONT_CARE);
 
     CORE.Window.fullscreen = !CORE.Window.fullscreen;          // Toggle fullscreen flag
-    CORE.Window.flags ^= FLAG_FULLSCREEN_MODE; 
-    
+    CORE.Window.flags ^= FLAG_FULLSCREEN_MODE;
+
 #endif
 #if defined(PLATFORM_WEB)
     /*
@@ -1134,24 +1134,24 @@ void SetWindowState(unsigned int flags)
         glfwSwapInterval(1);
         CORE.Window.flags |= FLAG_VSYNC_HINT;
     }
-    
+
     // State change: FLAG_FULLSCREEN_MODE
     if ((CORE.Window.flags & FLAG_FULLSCREEN_MODE) != (flags & FLAG_FULLSCREEN_MODE))
     {
         ToggleFullscreen();     // NOTE: Window state flag updated inside function
     }
-    
+
     // State change: FLAG_WINDOW_RESIZABLE
-    if (((CORE.Window.flags & FLAG_WINDOW_RESIZABLE) != (flags & FLAG_WINDOW_RESIZABLE)) && ((flags & FLAG_WINDOW_RESIZABLE) > 0)) 
+    if (((CORE.Window.flags & FLAG_WINDOW_RESIZABLE) != (flags & FLAG_WINDOW_RESIZABLE)) && ((flags & FLAG_WINDOW_RESIZABLE) > 0))
     {
 #if defined(PLATFORM_DESKTOP)
         glfwSetWindowAttrib(CORE.Window.handle, GLFW_RESIZABLE, GLFW_TRUE);
         CORE.Window.flags |= FLAG_WINDOW_RESIZABLE;
 #endif
     }
-    
+
     // State change: FLAG_WINDOW_UNDECORATED
-    if (((CORE.Window.flags & FLAG_WINDOW_UNDECORATED) != (flags & FLAG_WINDOW_UNDECORATED)) && (flags & FLAG_WINDOW_UNDECORATED)) 
+    if (((CORE.Window.flags & FLAG_WINDOW_UNDECORATED) != (flags & FLAG_WINDOW_UNDECORATED)) && (flags & FLAG_WINDOW_UNDECORATED))
     {
 #if defined(PLATFORM_DESKTOP)
         glfwSetWindowAttrib(CORE.Window.handle, GLFW_DECORATED, GLFW_FALSE);
@@ -1160,35 +1160,35 @@ void SetWindowState(unsigned int flags)
     }
 
     // State change: FLAG_WINDOW_HIDDEN
-    if (((CORE.Window.flags & FLAG_WINDOW_HIDDEN) != (flags & FLAG_WINDOW_HIDDEN)) && ((flags & FLAG_WINDOW_HIDDEN) > 0)) 
+    if (((CORE.Window.flags & FLAG_WINDOW_HIDDEN) != (flags & FLAG_WINDOW_HIDDEN)) && ((flags & FLAG_WINDOW_HIDDEN) > 0))
     {
         glfwHideWindow(CORE.Window.handle);
         CORE.Window.flags |= FLAG_WINDOW_HIDDEN;
     }
-    
+
     // State change: FLAG_WINDOW_MINIMIZED
     if (((CORE.Window.flags & FLAG_WINDOW_MINIMIZED) != (flags & FLAG_WINDOW_MINIMIZED)) && ((flags & FLAG_WINDOW_MINIMIZED) > 0))
     {
-        //GLFW_ICONIFIED 
+        //GLFW_ICONIFIED
         MinimizeWindow();       // NOTE: Window state flag updated inside function
     }
-    
+
     // State change: FLAG_WINDOW_MAXIMIZED
     if (((CORE.Window.flags & FLAG_WINDOW_MAXIMIZED) != (flags & FLAG_WINDOW_MAXIMIZED)) && ((flags & FLAG_WINDOW_MAXIMIZED) > 0))
     {
         //GLFW_MAXIMIZED
         MaximizeWindow();       // NOTE: Window state flag updated inside function
     }
-    
+
     // State change: FLAG_WINDOW_UNFOCUSED
-    if (((CORE.Window.flags & FLAG_WINDOW_UNFOCUSED) != (flags & FLAG_WINDOW_UNFOCUSED)) && ((flags & FLAG_WINDOW_UNFOCUSED) > 0)) 
+    if (((CORE.Window.flags & FLAG_WINDOW_UNFOCUSED) != (flags & FLAG_WINDOW_UNFOCUSED)) && ((flags & FLAG_WINDOW_UNFOCUSED) > 0))
     {
 #if defined(PLATFORM_DESKTOP)
         glfwSetWindowAttrib(CORE.Window.handle, GLFW_FOCUS_ON_SHOW, GLFW_FALSE);
         CORE.Window.flags |= FLAG_WINDOW_UNFOCUSED;
 #endif
     }
-    
+
     // State change: FLAG_WINDOW_TOPMOST
     if (((CORE.Window.flags & FLAG_WINDOW_TOPMOST) != (flags & FLAG_WINDOW_TOPMOST)) && ((flags & FLAG_WINDOW_TOPMOST) > 0))
     {
@@ -1197,33 +1197,33 @@ void SetWindowState(unsigned int flags)
         CORE.Window.flags |= FLAG_WINDOW_TOPMOST;
 #endif
     }
-    
+
     // State change: FLAG_WINDOW_ALWAYS_RUN
-    if (((CORE.Window.flags & FLAG_WINDOW_ALWAYS_RUN) != (flags & FLAG_WINDOW_ALWAYS_RUN)) && ((flags & FLAG_WINDOW_ALWAYS_RUN) > 0)) 
+    if (((CORE.Window.flags & FLAG_WINDOW_ALWAYS_RUN) != (flags & FLAG_WINDOW_ALWAYS_RUN)) && ((flags & FLAG_WINDOW_ALWAYS_RUN) > 0))
     {
         CORE.Window.flags |= FLAG_WINDOW_ALWAYS_RUN;
     }
-    
+
     // The following states can not be changed after window creation
-    
+
     // State change: FLAG_WINDOW_TRANSPARENT
     if (((CORE.Window.flags & FLAG_WINDOW_TRANSPARENT) != (flags & FLAG_WINDOW_TRANSPARENT)) && ((flags & FLAG_WINDOW_TRANSPARENT) > 0))
     {
         TRACELOG(LOG_WARNING, "WINDOW: Framebuffer transparency can only by configured before window initialization");
     }
-    
+
     // State change: FLAG_WINDOW_HIGHDPI
     if (((CORE.Window.flags & FLAG_WINDOW_HIGHDPI) != (flags & FLAG_WINDOW_HIGHDPI)) && ((flags & FLAG_WINDOW_HIGHDPI) > 0))
     {
         TRACELOG(LOG_WARNING, "WINDOW: High DPI can only by configured before window initialization");
     }
-    
+
     // State change: FLAG_MSAA_4X_HINT
     if (((CORE.Window.flags & FLAG_MSAA_4X_HINT) != (flags & FLAG_MSAA_4X_HINT)) && ((flags & FLAG_MSAA_4X_HINT) > 0))
     {
         TRACELOG(LOG_WARNING, "WINDOW: MSAA can only by configured before window initialization");
     }
-    
+
     // State change: FLAG_INTERLACED_HINT
     if (((CORE.Window.flags & FLAG_INTERLACED_HINT) != (flags & FLAG_INTERLACED_HINT)) && ((flags & FLAG_INTERLACED_HINT) > 0))
     {
@@ -1243,13 +1243,13 @@ void ClearWindowState(unsigned int flags)
         glfwSwapInterval(0);
         CORE.Window.flags &= ~FLAG_VSYNC_HINT;
     }
-    
+
     // State change: FLAG_FULLSCREEN_MODE
     if (((CORE.Window.flags & FLAG_FULLSCREEN_MODE) > 0) && ((flags & FLAG_FULLSCREEN_MODE) > 0))
     {
         ToggleFullscreen();     // NOTE: Window state flag updated inside function
     }
-    
+
     // State change: FLAG_WINDOW_RESIZABLE
     if (((CORE.Window.flags & FLAG_WINDOW_RESIZABLE) > 0) && ((flags & FLAG_WINDOW_RESIZABLE) > 0))
     {
@@ -1258,9 +1258,9 @@ void ClearWindowState(unsigned int flags)
         CORE.Window.flags &= ~FLAG_WINDOW_RESIZABLE;
 #endif
     }
-    
+
     // State change: FLAG_WINDOW_UNDECORATED
-    if (((CORE.Window.flags & FLAG_WINDOW_UNDECORATED) > 0) && ((flags & FLAG_WINDOW_UNDECORATED) > 0)) 
+    if (((CORE.Window.flags & FLAG_WINDOW_UNDECORATED) > 0) && ((flags & FLAG_WINDOW_UNDECORATED) > 0))
     {
 #if defined(PLATFORM_DESKTOP)
         glfwSetWindowAttrib(CORE.Window.handle, GLFW_DECORATED, GLFW_TRUE);
@@ -1269,33 +1269,33 @@ void ClearWindowState(unsigned int flags)
     }
 
     // State change: FLAG_WINDOW_HIDDEN
-    if (((CORE.Window.flags & FLAG_WINDOW_HIDDEN) > 0) && ((flags & FLAG_WINDOW_HIDDEN) > 0)) 
+    if (((CORE.Window.flags & FLAG_WINDOW_HIDDEN) > 0) && ((flags & FLAG_WINDOW_HIDDEN) > 0))
     {
         glfwShowWindow(CORE.Window.handle);
         CORE.Window.flags &= ~FLAG_WINDOW_HIDDEN;
     }
-    
+
     // State change: FLAG_WINDOW_MINIMIZED
     if (((CORE.Window.flags & FLAG_WINDOW_MINIMIZED) > 0) && ((flags & FLAG_WINDOW_MINIMIZED) > 0))
     {
         RestoreWindow();       // NOTE: Window state flag updated inside function
     }
-    
+
     // State change: FLAG_WINDOW_MAXIMIZED
     if (((CORE.Window.flags & FLAG_WINDOW_MAXIMIZED) > 0) && ((flags & FLAG_WINDOW_MAXIMIZED) > 0))
     {
         RestoreWindow();       // NOTE: Window state flag updated inside function
     }
-    
+
     // State change: FLAG_WINDOW_UNFOCUSED
-    if (((CORE.Window.flags & FLAG_WINDOW_UNFOCUSED) > 0) && ((flags & FLAG_WINDOW_UNFOCUSED) > 0)) 
+    if (((CORE.Window.flags & FLAG_WINDOW_UNFOCUSED) > 0) && ((flags & FLAG_WINDOW_UNFOCUSED) > 0))
     {
 #if defined(PLATFORM_DESKTOP)
         glfwSetWindowAttrib(CORE.Window.handle, GLFW_FOCUS_ON_SHOW, GLFW_TRUE);
         CORE.Window.flags &= ~FLAG_WINDOW_UNFOCUSED;
 #endif
     }
-    
+
     // State change: FLAG_WINDOW_TOPMOST
     if (((CORE.Window.flags & FLAG_WINDOW_TOPMOST) > 0) && ((flags & FLAG_WINDOW_TOPMOST) > 0))
     {
@@ -1304,33 +1304,33 @@ void ClearWindowState(unsigned int flags)
         CORE.Window.flags &= ~FLAG_WINDOW_TOPMOST;
 #endif
     }
-    
+
     // State change: FLAG_WINDOW_ALWAYS_RUN
-    if (((CORE.Window.flags & FLAG_WINDOW_ALWAYS_RUN) > 0) && ((flags & FLAG_WINDOW_ALWAYS_RUN) > 0)) 
+    if (((CORE.Window.flags & FLAG_WINDOW_ALWAYS_RUN) > 0) && ((flags & FLAG_WINDOW_ALWAYS_RUN) > 0))
     {
         CORE.Window.flags &= ~FLAG_WINDOW_ALWAYS_RUN;
     }
-    
+
     // The following states can not be changed after window creation
-    
+
     // State change: FLAG_WINDOW_TRANSPARENT
     if (((CORE.Window.flags & FLAG_WINDOW_TRANSPARENT) > 0) && ((flags & FLAG_WINDOW_TRANSPARENT) > 0))
     {
         TRACELOG(LOG_WARNING, "WINDOW: Framebuffer transparency can only by configured before window initialization");
     }
-    
+
     // State change: FLAG_WINDOW_HIGHDPI
     if (((CORE.Window.flags & FLAG_WINDOW_HIGHDPI) > 0) && ((flags & FLAG_WINDOW_HIGHDPI) > 0))
     {
         TRACELOG(LOG_WARNING, "WINDOW: High DPI can only by configured before window initialization");
     }
-    
+
     // State change: FLAG_MSAA_4X_HINT
     if (((CORE.Window.flags & FLAG_MSAA_4X_HINT) > 0) && ((flags & FLAG_MSAA_4X_HINT) > 0))
     {
         TRACELOG(LOG_WARNING, "WINDOW: MSAA can only by configured before window initialization");
     }
-    
+
     // State change: FLAG_INTERLACED_HINT
     if (((CORE.Window.flags & FLAG_INTERLACED_HINT) > 0) && ((flags & FLAG_INTERLACED_HINT) > 0))
     {
@@ -1475,7 +1475,7 @@ Vector2 GetMonitorPosition(int monitor)
     {
         int x, y;
         glfwGetMonitorPos(monitors[monitor], &x, &y);
-        
+
         return (Vector2){ (float)x, (float)y };
     }
     else TRACELOG(LOG_WARNING, "GLFW: Failed to find selected monitor");
@@ -2542,7 +2542,7 @@ unsigned char *DecompressData(unsigned char *compData, int compDataLength, int *
 bool SaveStorageValue(unsigned int position, int value)
 {
     bool success = false;
-    
+
 #if defined(SUPPORT_DATA_STORAGE)
     char path[512] = { 0 };
 #if defined(PLATFORM_ANDROID)
@@ -2737,7 +2737,7 @@ int GetKeyPressed(void)
         value = CORE.Input.Keyboard.keyPressedQueue[0];
 
         // Shift elements 1 step toward the head.
-        for (int i = 0; i < (CORE.Input.Keyboard.keyPressedQueueCount - 1); i++) 
+        for (int i = 0; i < (CORE.Input.Keyboard.keyPressedQueueCount - 1); i++)
             CORE.Input.Keyboard.keyPressedQueue[i] = CORE.Input.Keyboard.keyPressedQueue[i + 1];
 
         // Reset last character in the queue
@@ -2759,7 +2759,7 @@ int GetCharPressed(void)
         value = CORE.Input.Keyboard.charPressedQueue[0];
 
         // Shift elements 1 step toward the head.
-        for (int i = 0; i < (CORE.Input.Keyboard.charPressedQueueCount - 1); i++) 
+        for (int i = 0; i < (CORE.Input.Keyboard.charPressedQueueCount - 1); i++)
             CORE.Input.Keyboard.charPressedQueue[i] = CORE.Input.Keyboard.charPressedQueue[i + 1];
 
         // Reset last character in the queue
@@ -3170,13 +3170,13 @@ static bool InitGraphicsDevice(int width, int height)
 
     if ((CORE.Window.flags & FLAG_WINDOW_HIDDEN) > 0) glfwWindowHint(GLFW_VISIBLE, GLFW_FALSE); // Visible window
     else glfwWindowHint(GLFW_VISIBLE, GLFW_TRUE);     // Window initially hidden
-    
+
     if ((CORE.Window.flags & FLAG_WINDOW_UNDECORATED) > 0) glfwWindowHint(GLFW_DECORATED, GLFW_FALSE); // Border and buttons on Window
     else glfwWindowHint(GLFW_DECORATED, GLFW_TRUE);   // Decorated window
 
     if ((CORE.Window.flags & FLAG_WINDOW_RESIZABLE) > 0) glfwWindowHint(GLFW_RESIZABLE, GLFW_TRUE); // Resizable window
     else glfwWindowHint(GLFW_RESIZABLE, GLFW_FALSE);  // Avoid window being resizable
-    
+
     // Disable FLAG_WINDOW_MINIMIZED, not supported on initialization
     if ((CORE.Window.flags & FLAG_WINDOW_MINIMIZED) > 0) CORE.Window.flags &= ~FLAG_WINDOW_MINIMIZED;
 
@@ -3185,7 +3185,7 @@ static bool InitGraphicsDevice(int width, int height)
 
     if ((CORE.Window.flags & FLAG_WINDOW_UNFOCUSED) > 0) glfwWindowHint(GLFW_FOCUSED, GLFW_FALSE);
     else glfwWindowHint(GLFW_FOCUSED, GLFW_TRUE);
-    
+
     if ((CORE.Window.flags & FLAG_WINDOW_TOPMOST) > 0) glfwWindowHint(GLFW_FLOATING, GLFW_TRUE);
     else glfwWindowHint(GLFW_FLOATING, GLFW_FALSE);
 
@@ -3335,7 +3335,7 @@ static bool InitGraphicsDevice(int width, int height)
         TRACELOG(LOG_INFO, "    > Screen size:  %i x %i", CORE.Window.screen.width, CORE.Window.screen.height);
         TRACELOG(LOG_INFO, "    > Viewport offsets: %i, %i", CORE.Window.renderOffset.x, CORE.Window.renderOffset.y);
     }
-    
+
     // Set window callback events
     glfwSetWindowSizeCallback(CORE.Window.handle, WindowSizeCallback);      // NOTE: Resizing not allowed by default!
 #if !defined(PLATFORM_WEB)
@@ -3810,7 +3810,7 @@ static bool InitGraphicsDevice(int width, int height)
             TRACELOG(LOG_WARNING, "DISPLAY: Failed to get EGL config attribute: 0x%x", eglGetError());
             continue;
         }
-        
+
         if (GBM_FORMAT_ARGB8888 == id)
         {
             TRACELOG(LOG_TRACE, "DISPLAY: using EGL config %d", i);
@@ -3960,7 +3960,7 @@ static bool InitGraphicsDevice(int width, int height)
     int fbHeight = CORE.Window.render.height;
 
 #if defined(PLATFORM_DESKTOP)
-    if ((CORE.Window.flags & FLAG_WINDOW_HIGHDPI) > 0) 
+    if ((CORE.Window.flags & FLAG_WINDOW_HIGHDPI) > 0)
     {
         glfwGetFramebufferSize(CORE.Window.handle, &fbWidth, &fbHeight);
 
@@ -4054,13 +4054,13 @@ static void SetupFramebuffer(int width, int height)
     {
         // Required screen size is smaller than display size
         TRACELOG(LOG_INFO, "DISPLAY: Upscaling required: Screen size (%ix%i) smaller than display size (%ix%i)", CORE.Window.screen.width, CORE.Window.screen.height, CORE.Window.display.width, CORE.Window.display.height);
-        
+
         if ((CORE.Window.screen.width == 0) || (CORE.Window.screen.height == 0))
         {
             CORE.Window.screen.width = CORE.Window.display.width;
             CORE.Window.screen.height = CORE.Window.display.height;
         }
-        
+
         // Upscaling to fit display with border-bars
         float displayRatio = (float)CORE.Window.display.width/(float)CORE.Window.display.height;
         float screenRatio = (float)CORE.Window.screen.width/(float)CORE.Window.screen.height;
@@ -4562,9 +4562,9 @@ static void KeyCallback(GLFWwindow *window, int key, int scancode, int action, i
             if (gifRecording)
             {
                 gifRecording = false;
-                
+
                 MsfGifResult result = msf_gif_end(&gifState);
-                
+
                 char path[512] = { 0 };
             #if defined(PLATFORM_ANDROID)
                 strcpy(path, CORE.Android.internalDataPath);
@@ -4572,7 +4572,7 @@ static void KeyCallback(GLFWwindow *window, int key, int scancode, int action, i
             #else
                 strcpy(path, TextFormat("./screenrec%03i.gif", screenshotCounter));
             #endif
-                
+
                 SaveFileData(path, result.data, (unsigned int)result.dataSize);
                 msf_gif_free(result);
 
@@ -4610,7 +4610,7 @@ static void KeyCallback(GLFWwindow *window, int key, int scancode, int action, i
         // to work properly with our implementation (IsKeyDown/IsKeyUp checks)
         if (action == GLFW_RELEASE) CORE.Input.Keyboard.currentKeyState[key] = 0;
         else CORE.Input.Keyboard.currentKeyState[key] = 1;
-        
+
         // Check if there is space available in the key queue
         if ((CORE.Input.Keyboard.keyPressedQueueCount < MAX_KEY_PRESSED_QUEUE) && (action == GLFW_RELEASE))
         {
@@ -5912,7 +5912,7 @@ void UWPKeyDownEvent(int key, bool down, bool controlKey)
             if (gifRecording)
             {
                 gifRecording = false;
-                
+
                 MsfGifResult result = msf_gif_end(&gifState);
 
                 SaveFileData(TextFormat("%s/screenrec%03i.gif", CORE.UWP.internalDataPath, screenshotCounter), result.data, result.dataSize);

@@ -293,7 +293,7 @@ LDFLAGS = -L. -L$(RAYLIB_RELEASE_PATH) -L$(RAYLIB_PATH)/src
 ifeq ($(PLATFORM),PLATFORM_DESKTOP)
     ifeq ($(PLATFORM_OS),WINDOWS)
         # resource file contains windows executable icon and properties
-        LDFLAGS += $(RAYLIB_PATH)/src/raylib.rc.data 
+        LDFLAGS += $(RAYLIB_PATH)/src/raylib.rc.data
         # -Wl,--subsystem,windows hides the console window
         ifeq ($(BUILD_MODE), RELEASE)
             LDFLAGS += -Wl,--subsystem,windows
@@ -350,7 +350,7 @@ ifeq ($(PLATFORM),PLATFORM_DESKTOP)
     ifeq ($(PLATFORM_OS),OSX)
         # Libraries for OSX 10.9 desktop compiling
         # NOTE: Required packages: libopenal-dev libegl1-mesa-dev
-        LDLIBS = -lraylib -framework OpenGL -framework Cocoa -framework IOKit -framework CoreAudio -framework CoreVideo 
+        LDLIBS = -lraylib -framework OpenGL -framework Cocoa -framework IOKit -framework CoreAudio -framework CoreVideo
     endif
     ifeq ($(PLATFORM_OS),BSD)
         # Libraries for FreeBSD, OpenBSD, NetBSD, DragonFly desktop compiling
@@ -423,7 +423,7 @@ SHAPES = \
     shapes/shapes_draw_ring \
     shapes/shapes_draw_circle_sector \
     shapes/shapes_draw_rectangle_rounded
-    
+
 TEXTURES = \
     textures/textures_logo_raylib \
     textures/textures_mouse_painting \
@@ -444,7 +444,7 @@ TEXTURES = \
     textures/textures_bunnymark \
     textures/textures_blend_modes \
     textures/textures_draw_tiled
-    
+
 TEXT = \
     text/text_raylib_fonts \
     text/text_font_spritefont \
@@ -456,7 +456,7 @@ TEXT = \
     text/text_writing_anim \
     text/text_rectangle_bounds \
     text/text_unicode
-    
+
 MODELS = \
     models/models_animation \
     models/models_billboard \
@@ -474,7 +474,7 @@ MODELS = \
     models/models_yaw_pitch_roll \
     models/models_heightmap \
     models/models_waving_cubes
-    
+
 SHADERS = \
     shaders/shaders_model_shader \
     shaders/shaders_shapes_textures \
@@ -493,14 +493,14 @@ SHADERS = \
     shaders/shaders_rlgl_mesh_instanced \
     shaders/shaders_multi_sample2d \
     shaders/shaders_rlgl_mesh_instanced
-    
+
 AUDIO = \
     audio/audio_module_playing \
     audio/audio_music_stream \
     audio/audio_raw_stream \
     audio/audio_sound_loading \
     audio/audio_multichannel_sound
-    
+
 PHYSICS = \
     physics/physics_demo \
     physics/physics_friction \

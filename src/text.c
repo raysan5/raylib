@@ -499,7 +499,7 @@ Font LoadFontFromMemory(const char *fileType, const unsigned char *fileData, int
         if (font.chars != NULL)
         {
             font.charsPadding = FONT_TTF_DEFAULT_CHARS_PADDING;
-            
+
             Image atlas = GenImageFontAtlas(font.chars, &font.recs, font.charsCount, font.baseSize, font.charsPadding, 0);
             font.texture = LoadTextureFromImage(atlas);
 
@@ -795,7 +795,7 @@ Image GenImageFontAtlas(const CharInfo *chars, Rectangle **charRecs, int charsCo
 void UnloadFontData(CharInfo *chars, int charsCount)
 {
     for (int i = 0; i < charsCount; i++) UnloadImage(chars[i].image);
-    
+
     RL_FREE(chars);
 }
 
@@ -847,7 +847,7 @@ void DrawTextCodepoint(Font font, int codepoint, Vector2 position, float fontSiz
     float scaleFactor = fontSize/font.baseSize;     // Character quad scaling factor
 
     // Character destination rectangle on screen
-    // NOTE: We consider charsPadding on drawing 
+    // NOTE: We consider charsPadding on drawing
     Rectangle dstRec = { position.x + font.chars[index].offsetX*scaleFactor - (float)font.charsPadding*scaleFactor,
                       position.y + font.chars[index].offsetY*scaleFactor - (float)font.charsPadding*scaleFactor,
                       (font.recs[index].width + 2.0f*font.charsPadding)*scaleFactor,
@@ -855,9 +855,9 @@ void DrawTextCodepoint(Font font, int codepoint, Vector2 position, float fontSiz
 
     // Character source rectangle from font texture atlas
     // NOTE: We consider chars padding when drawing, it could be required for outline/glow shader effects
-    Rectangle srcRec = { font.recs[index].x - (float)font.charsPadding, font.recs[index].y - (float)font.charsPadding, 
+    Rectangle srcRec = { font.recs[index].x - (float)font.charsPadding, font.recs[index].y - (float)font.charsPadding,
                          font.recs[index].width + 2.0f*font.charsPadding, font.recs[index].height + 2.0f*font.charsPadding };
-    
+
     // Draw the character texture on the screen
     DrawTexturePro(font.texture, srcRec, dstRec, (Vector2){ 0, 0 }, 0.0f, tint);
 }
