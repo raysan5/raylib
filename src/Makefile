@@ -43,8 +43,8 @@
 .PHONY: all clean install uninstall
 
 # Define required raylib variables
-RAYLIB_VERSION        = 3.1.0
-RAYLIB_API_VERSION    = 310
+RAYLIB_VERSION        = 3.5.0
+RAYLIB_API_VERSION    = 350
 
 # Define raylib source code path
 RAYLIB_SRC_PATH      ?= ../src
@@ -168,9 +168,9 @@ endif
 ifeq ($(PLATFORM),PLATFORM_ANDROID)
     # Android architecture
     # Starting at 2019 using arm64 is mandatory for published apps,
-    # and minimum required target API is Android 9 (API level 28)
-    ANDROID_ARCH ?= arm
-    ANDROID_API_VERSION ?= 28
+    # Starting on August 2020, minimum required target API is Android 10 (API level 29)
+    ANDROID_ARCH ?= arm64
+    ANDROID_API_VERSION ?= 29
     
     # Android required path variables
     # NOTE: Starting with Android NDK r21, no more toolchain generation is required, NDK is the toolchain on itself
