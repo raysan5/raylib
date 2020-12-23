@@ -1509,7 +1509,7 @@ void rlEnableSmoothLines(void)
 void rlDisableSmoothLines(void)
 {
 #if defined(GRAPHICS_API_OPENGL_33) || defined(GRAPHICS_API_OPENGL_21) || defined(GRAPHICS_API_OPENGL_11)
-	glDisable(GL_LINE_SMOOTH);
+    glDisable(GL_LINE_SMOOTH);
 #endif
 }
 
