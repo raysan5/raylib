@@ -20,7 +20,6 @@ Ready to learn? Jump to [code examples!](http://www.raylib.com/examples.html)
 [![Twitter Follow](https://img.shields.io/twitter/follow/raysan5?style=social)](https://twitter.com/raysan5)
 [![Subreddit subscribers](https://img.shields.io/reddit/subreddit-subscribers/raylib?style=social)](https://www.reddit.com/r/raylib/)
 
-[![Travis (.org)](https://img.shields.io/travis/raysan5/raylib?label=Linux,%20OSX,%20Windows)](https://travis-ci.org/raysan5/raylib)
 [![Windows](https://github.com/raysan5/raylib/workflows/Windows/badge.svg)](https://github.com/raysan5/raylib/actions?query=workflow%3AWindows)
 [![Linux](https://github.com/raysan5/raylib/workflows/Linux/badge.svg)](https://github.com/raysan5/raylib/actions?query=workflow%3ALinux)
 [![macOS](https://github.com/raysan5/raylib/workflows/macOS/badge.svg)](https://github.com/raysan5/raylib/actions?query=workflow%3AmacOS)
