@@ -8,10 +8,10 @@ Release:     raylib 3.5 - 7th Anniversary Edition (25 December 2020)
 -------------------------------------------------------------------------
 KEY CHANGES:
  - [core] ADDED: PLATFORM_DRM to support RPI4 and other devices (#1388) by @kernelkinetic
- - [rlgl] ADDED: RenderBatch type and related functions to allow custom batching
+ - [rlgl] ADDED: RenderBatch type and related functions to allow custom batching (internal only)
  - [rlgl] REDESIGNED: Framebuffers API to support multiple attachment types (#721) 
  - [textures] REDESIGNED: Image*() functions, big performance improvements (software rendering)
- - [*] REVIEWED: multiple functions to replace file accesses by memory accesses
+ - [*] REVIEWED: Multiple functions to replace file accesses by memory accesses
  - [*] ADDED: GitHub Actions CI to support multiple raylib build configurations
  
 Detailed changes:
