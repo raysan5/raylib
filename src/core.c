@@ -1125,6 +1125,7 @@ void RestoreWindow(void)
 // Set window configuration state using flags
 void SetWindowState(unsigned int flags)
 {
+#if defined(PLATFORM_DESKTOP)
     // Check previous state and requested state to apply required changes
     // NOTE: In most cases the functions already change the flags internally
 
@@ -1144,19 +1145,15 @@ void SetWindowState(unsigned int flags)
     // State change: FLAG_WINDOW_RESIZABLE
     if (((CORE.Window.flags & FLAG_WINDOW_RESIZABLE) != (flags & FLAG_WINDOW_RESIZABLE)) && ((flags & FLAG_WINDOW_RESIZABLE) > 0))
     {
-#if defined(PLATFORM_DESKTOP)
         glfwSetWindowAttrib(CORE.Window.handle, GLFW_RESIZABLE, GLFW_TRUE);
         CORE.Window.flags |= FLAG_WINDOW_RESIZABLE;
-#endif
     }
 
     // State change: FLAG_WINDOW_UNDECORATED
     if (((CORE.Window.flags & FLAG_WINDOW_UNDECORATED) != (flags & FLAG_WINDOW_UNDECORATED)) && (flags & FLAG_WINDOW_UNDECORATED))
     {
-#if defined(PLATFORM_DESKTOP)
         glfwSetWindowAttrib(CORE.Window.handle, GLFW_DECORATED, GLFW_FALSE);
         CORE.Window.flags |= FLAG_WINDOW_UNDECORATED;
-#endif
     }
 
     // State change: FLAG_WINDOW_HIDDEN
@@ -1183,19 +1180,15 @@ void SetWindowState(unsigned int flags)
     // State change: FLAG_WINDOW_UNFOCUSED
     if (((CORE.Window.flags & FLAG_WINDOW_UNFOCUSED) != (flags & FLAG_WINDOW_UNFOCUSED)) && ((flags & FLAG_WINDOW_UNFOCUSED) > 0))
     {
-#if defined(PLATFORM_DESKTOP)
         glfwSetWindowAttrib(CORE.Window.handle, GLFW_FOCUS_ON_SHOW, GLFW_FALSE);
         CORE.Window.flags |= FLAG_WINDOW_UNFOCUSED;
-#endif
     }
 
     // State change: FLAG_WINDOW_TOPMOST
     if (((CORE.Window.flags & FLAG_WINDOW_TOPMOST) != (flags & FLAG_WINDOW_TOPMOST)) && ((flags & FLAG_WINDOW_TOPMOST) > 0))
     {
-#if defined(PLATFORM_DESKTOP)
         glfwSetWindowAttrib(CORE.Window.handle, GLFW_FLOATING, GLFW_TRUE);
         CORE.Window.flags |= FLAG_WINDOW_TOPMOST;
-#endif
     }
 
     // State change: FLAG_WINDOW_ALWAYS_RUN
@@ -1229,11 +1222,13 @@ void SetWindowState(unsigned int flags)
     {
         TRACELOG(LOG_WARNING, "RPI: Interlaced mode can only by configured before window initialization");
     }
+#endif
 }
 
 // Clear window configuration state flags
 void ClearWindowState(unsigned int flags)
 {
+#if defined(PLATFORM_DESKTOP)
     // Check previous state and requested state to apply required changes
     // NOTE: In most cases the functions already change the flags internally
 
@@ -1253,19 +1248,15 @@ void ClearWindowState(unsigned int flags)
     // State change: FLAG_WINDOW_RESIZABLE
     if (((CORE.Window.flags & FLAG_WINDOW_RESIZABLE) > 0) && ((flags & FLAG_WINDOW_RESIZABLE) > 0))
     {
-#if defined(PLATFORM_DESKTOP)
         glfwSetWindowAttrib(CORE.Window.handle, GLFW_RESIZABLE, GLFW_FALSE);
         CORE.Window.flags &= ~FLAG_WINDOW_RESIZABLE;
-#endif
     }
 
     // State change: FLAG_WINDOW_UNDECORATED
     if (((CORE.Window.flags & FLAG_WINDOW_UNDECORATED) > 0) && ((flags & FLAG_WINDOW_UNDECORATED) > 0))
     {
-#if defined(PLATFORM_DESKTOP)
         glfwSetWindowAttrib(CORE.Window.handle, GLFW_DECORATED, GLFW_TRUE);
         CORE.Window.flags &= ~FLAG_WINDOW_UNDECORATED;
-#endif
     }
 
     // State change: FLAG_WINDOW_HIDDEN
@@ -1290,19 +1281,15 @@ void ClearWindowState(unsigned int flags)
     // State change: FLAG_WINDOW_UNFOCUSED
     if (((CORE.Window.flags & FLAG_WINDOW_UNFOCUSED) > 0) && ((flags & FLAG_WINDOW_UNFOCUSED) > 0))
     {
-#if defined(PLATFORM_DESKTOP)
         glfwSetWindowAttrib(CORE.Window.handle, GLFW_FOCUS_ON_SHOW, GLFW_TRUE);
         CORE.Window.flags &= ~FLAG_WINDOW_UNFOCUSED;
-#endif
     }
 
     // State change: FLAG_WINDOW_TOPMOST
     if (((CORE.Window.flags & FLAG_WINDOW_TOPMOST) > 0) && ((flags & FLAG_WINDOW_TOPMOST) > 0))
     {
-#if defined(PLATFORM_DESKTOP)
         glfwSetWindowAttrib(CORE.Window.handle, GLFW_FLOATING, GLFW_FALSE);
         CORE.Window.flags &= ~FLAG_WINDOW_TOPMOST;
-#endif
     }
 
     // State change: FLAG_WINDOW_ALWAYS_RUN
@@ -1336,6 +1323,7 @@ void ClearWindowState(unsigned int flags)
     {
         TRACELOG(LOG_WARNING, "RPI: Interlaced mode can only by configured before window initialization");
     }
+#endif
 }
 
 // Set icon for window (only PLATFORM_DESKTOP)
