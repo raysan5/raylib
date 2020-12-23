@@ -1486,7 +1486,7 @@ bool CheckCollisionLines(Vector2 startPos1, Vector2 endPos1, Vector2 startPos2, 
     if (yi < fminf(startPos1.y, endPos1.y) || yi > fmaxf(startPos1.y, endPos1.y)) return false;
     if (yi < fminf(startPos2.y, endPos2.y) || yi > fmaxf(startPos2.y, endPos2.y)) return false;
     
-    if (collisionPoint != NULL)
+    if (collisionPoint != 0)
     {
         collisionPoint->x = xi;
         collisionPoint->y = yi;
