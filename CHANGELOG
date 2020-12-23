@@ -8,10 +8,10 @@ Release:     raylib 3.5 - 7th Anniversary Edition (25 December 2020)
 -------------------------------------------------------------------------
 KEY CHANGES:
  - [core] ADDED: PLATFORM_DRM to support RPI4 and other devices (#1388) by @kernelkinetic
- - [rlgl] ADDED: RenderBatch type and related functions to allow custom batching
+ - [rlgl] ADDED: RenderBatch type and related functions to allow custom batching (internal only)
  - [rlgl] REDESIGNED: Framebuffers API to support multiple attachment types (#721) 
  - [textures] REDESIGNED: Image*() functions, big performance improvements (software rendering)
- - [*] REVIEWED: multiple functions to replace file accesses by memory accesses
+ - [*] REVIEWED: Multiple functions to replace file accesses by memory accesses
  - [*] ADDED: GitHub Actions CI to support multiple raylib build configurations
  
 Detailed changes:
@@ -160,22 +160,24 @@ Detailed changes:
 [examples] ADDED: shaders/shaders_rlgl_mesh_instanced (#1318) by @seanpringle
 [examples] ADDED: shaders/shaders_multi_sampler2d
 [examples] ADDED: others/embedded_files_loading
-[examples] REVIEWED: models/models_skybox to work on OpenGL ES 2.0
 [examples] REVIEWED: textures/textures_raw_data (#1286)
-[examples] REVIEWED: others/raudio_standalone.c
-[examples] REVIEWED: audio/resources, use open license resources
 [examples] REVIEWED: textures/textures_sprite_explosion, replace resources
 [examples] REVIEWED: textures/textures_particles_blending, replace resources
+[examples] REVIEWED: textures/textures_image_processing, support mouse
+[examples] REVIEWED: models/models_skybox to work on OpenGL ES 2.0
+[examples] REVIEWED: audio/resources, use open license resources
+[examples] REVIEWED: others/raudio_standalone.c
+[build] ADDED: New config.h configuration options exposing multiple #define values
 [build] REMOVED: ANGLE VS2017 template project
-[build] Avoided all MSVC compile warnings
-[build] Additional config.h configuration options exposing multiple #define values
+[build] REVIEWED: All MSVC compile warnings
 [build] Updated Makefile for web (#1332) by @rfaile313
-[build] Updated build pipelines to use latest emscripten and android ndk
+[build] Updated build pipelines to use latest emscripten and Android NDK
 [build] Updated emscriptem build script to generate .a on WebAssembly
 [build] Updated Android build for Linux, supporting ANDROID_NDK at compile time by @branlix3000
 [build] Updated VSCode project template tasks
 [build] Updated VS2017.UWP project template by @Rover656
 [build] Updated Android build pipeline 
+[build] REMOVED: AppVeyor and Travis CI build systems
 [*] Moved raysan5/raylib/games to independent repo: raysan5/raylib-games 
 [*] Replaced several examples resources with more open licensed alternatives
 [*] Updated BINDINGS.md with NEW bindings and added raylib version binding!
