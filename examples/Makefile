@@ -115,10 +115,10 @@ endif
 # This is not currently used by src/Makefile. Not sure of its origin or usage. Refer to wiki.
 # TODO: update install: target in src/Makefile for RPI, consider relation to LINUX.
 ifeq ($(PLATFORM),PLATFORM_RPI)
-    RAYLIB_PATH       ?= /home/pi/raylib
+    RAYLIB_PATH        ?= /home/pi/raylib
 endif
 ifeq ($(PLATFORM),PLATFORM_DRM)
-    RAYLIB_PATH       ?= /home/pi/raylib
+    RAYLIB_PATH        ?= /home/pi/raylib
 endif
 
 ifeq ($(PLATFORM),PLATFORM_WEB)
@@ -240,16 +240,16 @@ ifeq ($(PLATFORM),PLATFORM_WEB)
     # -s TOTAL_MEMORY=16777216   # to specify heap memory size (default = 16MB)
     # -s USE_PTHREADS=1          # multithreading support
     # -s WASM=0                  # disable Web Assembly, emitted by default
-    # -s EMTERPRETIFY=1          # enable emscripten code interpreter (very slow)
-    # -s EMTERPRETIFY_ASYNC=1    # support synchronous loops by emterpreter
+    # -s ASYNCIFY                # lets synchronous C/C++ code interact with asynchronous JS
     # -s FORCE_FILESYSTEM=1      # force filesystem to load/save files data
     # -s ASSERTIONS=1            # enable runtime checks for common memory allocation errors (-O1 and above turn it off)
     # --profiling                # include information for code profiling
     # --memory-init-file 0       # to avoid an external memory initialization code file (.mem)
     # --preload-file resources   # specify a resources folder for data compilation
-    CFLAGS += -s USE_GLFW=3 -s FORCE_FILESYSTEM=1 -s ASYNCIFY -s TOTAL_MEMORY=67108864 $(dir $<)resources@resources
+    # --source-map-base          # allow debugging in browser with source map
+    CFLAGS += -s USE_GLFW=3 -s ASYNCIFY -s TOTAL_MEMORY=67108864 -s FORCE_FILESYSTEM=1 $(dir $<)resources@resources
 
-    # NOTE: Simple raylib examples are compiled to be interpreter by emterpreter, that way,
+    # NOTE: Simple raylib examples are compiled to be interpreter with asyncify, that way,
     # we can compile same code for ALL platforms with no change required, but, working on bigger
     # projects, code needs to be refactored to avoid a blocking while() loop, moving Update and Draw
     # logic to a self contained function: UpdateDrawFrame(), check core_basic_window_web.c for reference.
@@ -280,10 +280,7 @@ ifeq ($(PLATFORM),PLATFORM_DESKTOP)
         INCLUDE_PATHS += -I/usr/local/include
     endif
     ifeq ($(PLATFORM_OS),LINUX)
-        # Reset everything.
-        # Precedence: immediately local, installed version, raysan5 provided libs -I$(RAYLIB_H_INSTALL_PATH) -I$(RAYLIB_PATH)/release/include
-        #INCLUDE_PATHS = -I$(RAYLIB_H_INSTALL_PATH) -isystem. -isystem$(RAYLIB_PATH)/src -isystem$(RAYLIB_PATH)/release/include -isystem$(RAYLIB_PATH)/src/external
-        INCLUDE_PATHS = -I$(RAYLIB_H_INSTALL_PATH) -I. -I$(RAYLIB_PATH)/src -I$(RAYLIB_PATH)/release/include -I$(RAYLIB_PATH)/src/external
+        INCLUDE_PATHS = -I$(RAYLIB_H_INSTALL_PATH) -I. -I$(RAYLIB_PATH)/src -I$(RAYLIB_PATH)/src/external
     endif
 endif
 
@@ -516,8 +513,8 @@ all: $(CORE) $(SHAPES) $(TEXT) $(TEXTURES) $(MODELS) $(SHADERS) $(AUDIO) $(PHYSI
 
 core: $(CORE)
 shapes: $(SHAPES)
-text: $(TEXT)
 textures: $(TEXTURES)
+text: $(TEXT)
 models: $(MODELS)
 shaders: $(SHADERS)
 audio: $(AUDIO)
