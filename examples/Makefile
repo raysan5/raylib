@@ -488,8 +488,7 @@ SHADERS = \
     shaders/shaders_simple_mask \
     shaders/shaders_spotlight \
     shaders/shaders_rlgl_mesh_instanced \
-    shaders/shaders_multi_sample2d \
-    shaders/shaders_rlgl_mesh_instanced
+    shaders/shaders_multi_sample2d
 
 AUDIO = \
     audio/audio_module_playing \
