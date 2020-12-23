@@ -4,7 +4,7 @@ changelog
 Current Release:    raylib 3.0.0 (01 April 2020)
 
 -------------------------------------------------------------------------
-Release:     raylib 3.5 - 7th Anniversary Edition (November 2020) -WIP-
+Release:     raylib 3.5 - 7th Anniversary Edition (25 December 2020)
 -------------------------------------------------------------------------
 KEY CHANGES:
  - [core] ADDED: PLATFORM_DRM to support RPI4 and other devices (#1388) by @kernelkinetic
@@ -58,6 +58,7 @@ Detailed changes:
 [raymath] REVIEWED: Some functions consistency (#1197) by @Not-Nik
 [raymath] REVIEWED: QuaternionFromVector3ToVector3() (#1263) by @jvocaturo 
 [raymath] REVIEWED: MatrixLookAt(), optimized (#1442) by @RandomErrorMessage
+[shapes] ADDED: CheckCollisionLines(), by @Elkantor
 [text] Avoid [textures] functions dependencies
 [text] ADDED: Config flag: SUPPORT_TEXT_MANIPULATION
 [text] ADDED: LoadFontFromMemory() (TTF only) (#1327)
