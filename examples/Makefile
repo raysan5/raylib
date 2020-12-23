@@ -25,8 +25,7 @@
 
 # Define required raylib variables
 PROJECT_NAME       ?= raylib_examples
-RAYLIB_VERSION     ?= 3.0.0
-RAYLIB_API_VERSION ?= 3
+RAYLIB_VERSION     ?= 3.5.0
 RAYLIB_PATH        ?= ..
 
 # Define default options
@@ -405,7 +404,8 @@ CORE = \
     core/core_storage_values \
     core/core_vr_simulator \
     core/core_loading_thread \
-    core/core_quat_conversion 
+    core/core_quat_conversion \
+    core/core_window_flags
 
 SHAPES = \
     shapes/shapes_basic_shapes \
@@ -442,7 +442,8 @@ TEXTURES = \
     textures/textures_sprite_button \
     textures/textures_sprite_explosion \
     textures/textures_bunnymark \
-    textures/textures_blend_modes
+    textures/textures_blend_modes \
+    textures/textures_draw_tiled
     
 TEXT = \
     text/text_raylib_fonts \
@@ -489,6 +490,8 @@ SHADERS = \
     shaders/shaders_fog \
     shaders/shaders_simple_mask \
     shaders/shaders_spotlight \
+    shaders/shaders_rlgl_mesh_instanced \
+    shaders/shaders_multi_sample2d \
     shaders/shaders_rlgl_mesh_instanced
     
 AUDIO = \
