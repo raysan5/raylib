@@ -3616,7 +3616,7 @@ static bool InitGraphicsDevice(int width, int height)
     PFNEGLGETPLATFORMDISPLAYEXTPROC eglGetPlatformDisplayEXT = (PFNEGLGETPLATFORMDISPLAYEXTPROC)(eglGetProcAddress("eglGetPlatformDisplayEXT"));
     if (!eglGetPlatformDisplayEXT)
     {
-        TRACELOG(LOG_WARNING, "DISPLAY: Failed to get function eglGetPlatformDisplayEXT");
+        TRACELOG(LOG_WARNING, "DISPLAY: Failed to get function pointer: eglGetPlatformDisplayEXT()");
         return false;
     }
 
@@ -3762,7 +3762,7 @@ static bool InitGraphicsDevice(int width, int height)
         return false;
     }
 
-    TRACELOG(LOG_TRACE, "DISPLAY: %d EGL configs available", numConfigs);
+    TRACELOG(LOG_TRACE, "DISPLAY: EGL configs available: %d", numConfigs);
 
     EGLConfig *configs = calloc(numConfigs, sizeof(*configs));
     if (!configs)
@@ -3779,7 +3779,7 @@ static bool InitGraphicsDevice(int width, int height)
         return false;
     }
 
-    TRACELOG(LOG_TRACE, "DISPLAY: %d matching EGL configs available", matchingNumConfigs);
+    TRACELOG(LOG_TRACE, "DISPLAY: EGL matching configs available: %d", matchingNumConfigs);
 
     if (!eglChooseConfig(CORE.Window.device, framebufferAttribs, configs, numConfigs, &matchingNumConfigs))
     {
@@ -3801,7 +3801,7 @@ static bool InitGraphicsDevice(int width, int height)
 
         if (GBM_FORMAT_ARGB8888 == id)
         {
-            TRACELOG(LOG_TRACE, "DISPLAY: using EGL config %d", i);
+            TRACELOG(LOG_TRACE, "DISPLAY: Using EGL config: %d", i);
             CORE.Window.config = configs[i];
             found = 1;
             break;
@@ -4435,14 +4435,14 @@ static void SwapBuffers(void)
 #if defined(PLATFORM_DRM)
     if (!CORE.Window.gbmSurface || (-1 == CORE.Window.fd) || !CORE.Window.connector || !CORE.Window.crtc)
     {
-        TRACELOG(LOG_ERROR, "DRM initialization failed, can't swap");
+        TRACELOG(LOG_ERROR, "DISPLAY: DRM initialization failed to swap");
         abort();
     }
 
     struct gbm_bo *bo = gbm_surface_lock_front_buffer(CORE.Window.gbmSurface);
     if (!bo)
     {
-        TRACELOG(LOG_ERROR, "GBM failed to lock front buffer");
+        TRACELOG(LOG_ERROR, "DISPLAY: Failed GBM to lock front buffer");
         abort();
     }
 
@@ -4451,7 +4451,7 @@ static void SwapBuffers(void)
         CORE.Window.connector->modes[CORE.Window.modeIndex].vdisplay, 24, 32, gbm_bo_get_stride(bo), gbm_bo_get_handle(bo).u32, &fb);
     if (0 != result)
     {
-        TRACELOG(LOG_ERROR, "drmModeAddFB failed with %d", result);
+        TRACELOG(LOG_ERROR, "DISPLAY: drmModeAddFB() failed with result: %d", result);
         abort();
     }
 
@@ -4459,7 +4459,7 @@ static void SwapBuffers(void)
         &CORE.Window.connector->connector_id, 1, &CORE.Window.connector->modes[CORE.Window.modeIndex]);
     if (0 != result)
     {
-        TRACELOG(LOG_ERROR, "drmModeSetCrtc failed with %d", result);
+        TRACELOG(LOG_ERROR, "DISPLAY: drmModeSetCrtc() failed with result: %d", result);
         abort();
     }
 
@@ -4468,7 +4468,7 @@ static void SwapBuffers(void)
         result = drmModeRmFB(CORE.Window.fd, CORE.Window.prevFB);
         if (0 != result)
         {
-            TRACELOG(LOG_ERROR, "drmModeRmFB failed with %d", result);
+            TRACELOG(LOG_ERROR, "DISPLAY: drmModeRmFB() failed with result: %d", result);
             abort();
         }
     }
@@ -6115,14 +6115,10 @@ static int FindMatchingConnectorMode(const drmModeConnector *connector, const dr
 
     for (size_t i = 0; i < connector->count_modes; i++)
     {
-        TRACELOG(LOG_TRACE, "mode %d %ux%u@%u %s", i, connector->modes[i].hdisplay, connector->modes[i].vdisplay,
+        TRACELOG(LOG_TRACE, "DISPLAY: DRM mode: %d %ux%u@%u %s", i, connector->modes[i].hdisplay, connector->modes[i].vdisplay,
             connector->modes[i].vrefresh, (connector->modes[i].flags & DRM_MODE_FLAG_INTERLACE) ? "interlaced" : "progressive");
 
-        if (0 == BINCMP(&CORE.Window.crtc->mode, &CORE.Window.connector->modes[i]))
-        {
-            TRACELOG(LOG_TRACE, "above mode selected");
-            return i;
-        }
+        if (0 == BINCMP(&CORE.Window.crtc->mode, &CORE.Window.connector->modes[i])) return i;
     }
 
     return -1;
@@ -6133,7 +6129,7 @@ static int FindMatchingConnectorMode(const drmModeConnector *connector, const dr
 // Search exactly matching DRM connector mode in connector's list
 static int FindExactConnectorMode(const drmModeConnector *connector, uint width, uint height, uint fps, bool allowInterlaced)
 {
-    TRACELOG(LOG_TRACE, "searching exact connector mode for %ux%u@%u, selecting an interlaced mode is allowed: %s", width, height, fps, allowInterlaced ? "yes" : "no");
+    TRACELOG(LOG_TRACE, "DISPLAY: Searching exact connector mode for %ux%u@%u, selecting an interlaced mode is allowed: %s", width, height, fps, allowInterlaced ? "yes" : "no");
 
     if (NULL == connector) return -1;
 
@@ -6141,29 +6137,21 @@ static int FindExactConnectorMode(const drmModeConnector *connector, uint width,
     {
         const drmModeModeInfo *const mode = &CORE.Window.connector->modes[i];
 
-        TRACELOG(LOG_TRACE, "mode %d %ux%u@%u %s", i, mode->hdisplay, mode->vdisplay, mode->vrefresh, (mode->flags & DRM_MODE_FLAG_INTERLACE) ? "interlaced" : "progressive");
+        TRACELOG(LOG_TRACE, "DISPLAY: DRM Mode %d %ux%u@%u %s", i, mode->hdisplay, mode->vdisplay, mode->vrefresh, (mode->flags & DRM_MODE_FLAG_INTERLACE) ? "interlaced" : "progressive");
 
-        if ((mode->flags & DRM_MODE_FLAG_INTERLACE) && (!allowInterlaced))
-        {
-            TRACELOG(LOG_TRACE, "but shouldn't choose an interlaced mode");
-            continue;
-        }
+        if ((mode->flags & DRM_MODE_FLAG_INTERLACE) && (!allowInterlaced)) continue;
 
-        if ((mode->hdisplay == width) && (mode->vdisplay == height) && (mode->vrefresh == fps))
-        {
-            TRACELOG(LOG_TRACE, "mode selected");
-            return i;
-        }
+        if ((mode->hdisplay == width) && (mode->vdisplay == height) && (mode->vrefresh == fps)) return i;
     }
 
-    TRACELOG(LOG_TRACE, "no exact matching mode found");
+    TRACELOG(LOG_TRACE, "DISPLAY: No DRM exact matching mode found");
     return -1;
 }
 
 // Search the nearest matching DRM connector mode in connector's list
 static int FindNearestConnectorMode(const drmModeConnector *connector, uint width, uint height, uint fps, bool allowInterlaced)
 {
-    TRACELOG(LOG_TRACE, "searching nearest connector mode for %ux%u@%u, selecting an interlaced mode is allowed: %s", width, height, fps, allowInterlaced ? "yes" : "no");
+    TRACELOG(LOG_TRACE, "DISPLAY: Searching nearest connector mode for %ux%u@%u, selecting an interlaced mode is allowed: %s", width, height, fps, allowInterlaced ? "yes" : "no");
 
     if (NULL == connector) return -1;
 
@@ -6172,18 +6160,18 @@ static int FindNearestConnectorMode(const drmModeConnector *connector, uint widt
     {
         const drmModeModeInfo *const mode = &CORE.Window.connector->modes[i];
 
-        TRACELOG(LOG_TRACE, "mode %d %ux%u@%u %s", i, mode->hdisplay, mode->vdisplay, mode->vrefresh,
+        TRACELOG(LOG_TRACE, "DISPLAY: DRM mode: %d %ux%u@%u %s", i, mode->hdisplay, mode->vdisplay, mode->vrefresh,
             (mode->flags & DRM_MODE_FLAG_INTERLACE) ? "interlaced" : "progressive");
 
         if ((mode->hdisplay < width) || (mode->vdisplay < height) | (mode->vrefresh < fps))
         {
-            TRACELOG(LOG_TRACE, "mode is too small");
+            TRACELOG(LOG_TRACE, "DISPLAY: DRM mode is too small");
             continue;
         }
 
         if ((mode->flags & DRM_MODE_FLAG_INTERLACE) && (!allowInterlaced))
         {
-            TRACELOG(LOG_TRACE, "shouldn't choose an interlaced mode");
+            TRACELOG(LOG_TRACE, "DISPLAY: DRM shouldn't choose an interlaced mode");
             continue;
         }
 
@@ -6195,7 +6183,6 @@ static int FindNearestConnectorMode(const drmModeConnector *connector, uint widt
 
             if (nearestIndex < 0)
             {
-                TRACELOG(LOG_TRACE, "first suitable mode");
                 nearestIndex = i;
                 continue;
             }
@@ -6204,19 +6191,9 @@ static int FindNearestConnectorMode(const drmModeConnector *connector, uint widt
             const int nearestHeightDiff = CORE.Window.connector->modes[nearestIndex].vdisplay - height;
             const int nearestFpsDiff = CORE.Window.connector->modes[nearestIndex].vrefresh - fps;
 
-            if ((widthDiff < nearestWidthDiff) || (heightDiff < nearestHeightDiff) || (fpsDiff < nearestFpsDiff))
-            {
-                TRACELOG(LOG_TRACE, "mode is nearer than the previous one");
-                nearestIndex = i;
-            }
-            else
-            {
-                TRACELOG(LOG_TRACE, "mode is not nearer");
-            }
+            if ((widthDiff < nearestWidthDiff) || (heightDiff < nearestHeightDiff) || (fpsDiff < nearestFpsDiff)) nearestIndex = i;
         }
     }
-
-    TRACELOG(LOG_TRACE, "returning nearest mode: %d", nearestIndex);
 
     return nearestIndex;
 }
