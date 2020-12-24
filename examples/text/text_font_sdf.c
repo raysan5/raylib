@@ -60,7 +60,7 @@ int main(void)
     fontSDF.texture = LoadTextureFromImage(atlas);
     UnloadImage(atlas);
     
-    RL_FREE(fileData);      // Free memory from loaded file
+    UnloadFileData(fileData);      // Free memory from loaded file
 
     // Load SDF required shader (we use default vertex shader)
     Shader shader = LoadShader(0, TextFormat("resources/shaders/glsl%i/sdf.fs", GLSL_VERSION));

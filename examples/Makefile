@@ -487,6 +487,7 @@ SHADERS = \
     shaders/shaders_fog \
     shaders/shaders_simple_mask \
     shaders/shaders_spotlight \
+    shaders/shaders_hot_reloading \
     shaders/shaders_rlgl_mesh_instanced \
     shaders/shaders_multi_sample2d
 
