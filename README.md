@@ -29,7 +29,7 @@ Ready to learn? Jump to [code examples!](http://www.raylib.com/examples.html)
 features
 --------
   - **NO external dependencies**, all required libraries are bundled into raylib
-  - Multiple platforms supported: **Windows, Linux, MacOS, Android, HTML5... and more!**
+  - Multiple platforms supported: **Windows, Linux, MacOS, RPI, Android, HTML5... and more!**
   - Written in plain C code (C99) in PascalCase/camelCase notation
   - Hardware accelerated with OpenGL (**1.1, 2.1, 3.3 or ES 2.0**)
   - **Unique OpenGL abstraction layer** (usable as standalone module): [rlgl](https://github.com/raysan5/raylib/blob/master/src/rlgl.h)
@@ -42,8 +42,8 @@ features
   - **Powerful math module** for Vector, Matrix and Quaternion operations: [raymath](https://github.com/raysan5/raylib/blob/master/src/raymath.h)
   - Audio loading and playing with streaming support (WAV, OGG, MP3, FLAC, XM, MOD)
   - **VR stereo rendering** support with configurable HMD device parameters
-  - Huge examples collection with [+115 code examples](https://github.com/raysan5/raylib/tree/master/examples)!
-  - Bindings to [+40 programming languages](https://github.com/raysan5/raylib/blob/master/BINDINGS.md)!
+  - Huge examples collection with [+120 code examples](https://github.com/raysan5/raylib/tree/master/examples)!
+  - Bindings to [+50 programming languages](https://github.com/raysan5/raylib/blob/master/BINDINGS.md)!
   - Free and open source.
 
 raylib uses on its [core](https://github.com/raysan5/raylib/blob/master/src/core.c) module the outstanding [GLFW3](http://www.glfw.org/) library, embedded in the form of [rglfw](https://github.com/raysan5/raylib/blob/master/src/rglfw.c) module, to avoid external dependencies.
