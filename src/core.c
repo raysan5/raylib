@@ -3390,48 +3390,48 @@ static bool InitGraphicsDevice(int width, int height)
 #if defined(DEFAULT_GRAPHIC_DEVICE_DRM)
     CORE.Window.fd = open(DEFAULT_GRAPHIC_DEVICE_DRM, O_RDWR);
 #else
-    TRACELOG(LOG_INFO, "DISPLAY: no graphic card set, trying card1");
+    TRACELOG(LOG_INFO, "DISPLAY: No graphic card set, trying card1");
     CORE.Window.fd = open("/dev/dri/card1", O_RDWR); // VideoCore VI (Raspberry Pi 4)
     if (-1 == CORE.Window.fd)
     {
-        TRACELOG(LOG_INFO, "DISPLAY: failed to open graphic card1, trying card0");
+        TRACELOG(LOG_INFO, "DISPLAY: Failed to open graphic card1, trying card0");
         CORE.Window.fd = open("/dev/dri/card0", O_RDWR); // VideoCore IV (Raspberry Pi 1-3)
     }
 #endif
     if (-1 == CORE.Window.fd)
     {
-        TRACELOG(LOG_WARNING, "DISPLAY: failed to open graphic card");
+        TRACELOG(LOG_WARNING, "DISPLAY: Failed to open graphic card");
         return false;
     }
 
     drmModeRes *res = drmModeGetResources(CORE.Window.fd);
     if (!res)
     {
-        TRACELOG(LOG_WARNING, "DISPLAY: failed get DRM resources");
+        TRACELOG(LOG_WARNING, "DISPLAY: Failed get DRM resources");
         return false;
     }
 
-    TRACELOG(LOG_TRACE, "DISPLAY: %i connectors found", res->count_connectors);
+    TRACELOG(LOG_TRACE, "DISPLAY: Connectors found: %i", res->count_connectors);
     for (size_t i = 0; i < res->count_connectors; i++)
     {
-        TRACELOG(LOG_TRACE, "DISPLAY: connector index %i", i);
+        TRACELOG(LOG_TRACE, "DISPLAY: Connector index %i", i);
         drmModeConnector *con = drmModeGetConnector(CORE.Window.fd, res->connectors[i]);
-        TRACELOG(LOG_TRACE, "DISPLAY: there are %i connector modes", con->count_modes);
+        TRACELOG(LOG_TRACE, "DISPLAY: Connector modes detected: %i", con->count_modes);
         if ((con->connection == DRM_MODE_CONNECTED) && (con->encoder_id))
         {
-            TRACELOG(LOG_TRACE, "DRM mode connected");
+            TRACELOG(LOG_TRACE, "DISPLAY: DRM mode connected");
             CORE.Window.connector = con;
             break;
         }
         else
         {
-            TRACELOG(LOG_TRACE, "DRM mode NOT connected (deleting)");
+            TRACELOG(LOG_TRACE, "DISPLAY: DRM mode NOT connected (deleting)");
             drmModeFreeConnector(con);
         }
     }
     if (!CORE.Window.connector)
     {
-        TRACELOG(LOG_WARNING, "no suitable DRM connector found");
+        TRACELOG(LOG_WARNING, "DISPLAY: No suitable DRM connector found");
         drmModeFreeResources(res);
         return false;
     }
@@ -3439,7 +3439,7 @@ static bool InitGraphicsDevice(int width, int height)
     drmModeEncoder *enc = drmModeGetEncoder(CORE.Window.fd, CORE.Window.connector->encoder_id);
     if (!enc)
     {
-        TRACELOG(LOG_WARNING, "failed to get DRM mode encoder");
+        TRACELOG(LOG_WARNING, "DISPLAY: Failed to get DRM mode encoder");
         drmModeFreeResources(res);
         return false;
     }
@@ -3447,7 +3447,7 @@ static bool InitGraphicsDevice(int width, int height)
     CORE.Window.crtc = drmModeGetCrtc(CORE.Window.fd, enc->crtc_id);
     if (!CORE.Window.crtc)
     {
-        TRACELOG(LOG_WARNING, "failed to get DRM mode crtc");
+        TRACELOG(LOG_WARNING, "DISPLAY: Failed to get DRM mode crtc");
         drmModeFreeEncoder(enc);
         drmModeFreeResources(res);
         return false;
@@ -3456,13 +3456,13 @@ static bool InitGraphicsDevice(int width, int height)
     // If InitWindow should use the current mode find it in the connector's mode list
     if ((CORE.Window.screen.width <= 0) || (CORE.Window.screen.height <= 0))
     {
-        TRACELOG(LOG_TRACE, "selecting DRM connector mode for current used mode");
+        TRACELOG(LOG_TRACE, "DISPLAY: Selecting DRM connector mode for current used mode...");
 
         CORE.Window.modeIndex = FindMatchingConnectorMode(CORE.Window.connector, &CORE.Window.crtc->mode);
 
         if (CORE.Window.modeIndex < 0)
         {
-            TRACELOG(LOG_WARNING, "no matching DRM connector mode found");
+            TRACELOG(LOG_WARNING, "DISPLAY: No matching DRM connector mode found");
             drmModeFreeEncoder(enc);
             drmModeFreeResources(res);
             return false;
@@ -3488,7 +3488,7 @@ static bool InitGraphicsDevice(int width, int height)
     // if nothing found, there is no suitable mode
     if (CORE.Window.modeIndex < 0)
     {
-        TRACELOG(LOG_WARNING, "no suitable DRM connector mode found");
+        TRACELOG(LOG_WARNING, "DISPLAY: Failed to find a suitable DRM connector mode");
         drmModeFreeEncoder(enc);
         drmModeFreeResources(res);
         return false;
@@ -3497,7 +3497,7 @@ static bool InitGraphicsDevice(int width, int height)
     CORE.Window.display.width = CORE.Window.connector->modes[CORE.Window.modeIndex].hdisplay;
     CORE.Window.display.height = CORE.Window.connector->modes[CORE.Window.modeIndex].vdisplay;
 
-    TRACELOG(LOG_INFO, "DRM: choosen mode %s (%ux%u%c@%u)", CORE.Window.connector->modes[CORE.Window.modeIndex].name,
+    TRACELOG(LOG_INFO, "DISPLAY: Selected DRM connector mode %s (%ux%u%c@%u)", CORE.Window.connector->modes[CORE.Window.modeIndex].name,
         CORE.Window.connector->modes[CORE.Window.modeIndex].hdisplay, CORE.Window.connector->modes[CORE.Window.modeIndex].vdisplay,
         (CORE.Window.connector->modes[CORE.Window.modeIndex].flags & DRM_MODE_FLAG_INTERLACE) ? 'i' : 'p',
         CORE.Window.connector->modes[CORE.Window.modeIndex].vrefresh);
@@ -3515,7 +3515,7 @@ static bool InitGraphicsDevice(int width, int height)
     CORE.Window.gbmDevice = gbm_create_device(CORE.Window.fd);
     if (!CORE.Window.gbmDevice)
     {
-        TRACELOG(LOG_WARNING, "failed to create GBM device");
+        TRACELOG(LOG_WARNING, "DISPLAY: Failed to create GBM device");
         return false;
     }
 
@@ -3523,7 +3523,7 @@ static bool InitGraphicsDevice(int width, int height)
         CORE.Window.connector->modes[CORE.Window.modeIndex].vdisplay, GBM_FORMAT_ARGB8888, GBM_BO_USE_SCANOUT | GBM_BO_USE_RENDERING);
     if (!CORE.Window.gbmSurface)
     {
-        TRACELOG(LOG_WARNING, "failed to create GBM surface");
+        TRACELOG(LOG_WARNING, "DISPLAY: Failed to create GBM surface");
         return false;
     }
 #endif
@@ -3901,8 +3901,8 @@ static bool InitGraphicsDevice(int width, int height)
     CORE.Window.surface = eglCreateWindowSurface(CORE.Window.device, CORE.Window.config, &CORE.Window.handle, NULL);
 
     const unsigned char *const renderer = glGetString(GL_RENDERER);
-    if (renderer) TRACELOG(LOG_INFO, "Renderer is: %s\n", renderer);
-    else TRACELOG(LOG_WARNING, "failed to get renderer\n");
+    if (renderer) TRACELOG(LOG_INFO, "DISPLAY: Renderer name is: %s", renderer);
+    else TRACELOG(LOG_WARNING, "DISPLAY: Failed to get renderer name");
     //---------------------------------------------------------------------------------
 #endif  // PLATFORM_RPI
 
