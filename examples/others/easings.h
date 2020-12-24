@@ -135,7 +135,7 @@ EASEDEF float EaseQuadOut(float t, float b, float c, float d) { t /= d; return (
 EASEDEF float EaseQuadInOut(float t, float b, float c, float d)
 {
     if ((t/=d/2) < 1) return (((c/2)*(t*t)) + b);
-	return (-c/2.0f*(((t - 1.0f)*(t - 3.0f)) - 1.0f) + b);
+    return (-c/2.0f*(((t - 1.0f)*(t - 3.0f)) - 1.0f) + b);
 }
 
 // Exponential Easing functions
@@ -147,7 +147,7 @@ EASEDEF float EaseExpoInOut(float t, float b, float c, float d)
     if (t == d) return (b + c);
     if ((t/=d/2.0f) < 1.0f) return (c/2.0f*pow(2.0f, 10.0f*(t - 1.0f)) + b);
 
-	return (c/2.0f*(-pow(2.0f, -10.0f*(t - 1.0f)) + 2.0f) + b);
+    return (c/2.0f*(-pow(2.0f, -10.0f*(t - 1.0f)) + 2.0f) + b);
 }
 
 // Back Easing functions

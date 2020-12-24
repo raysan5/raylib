@@ -2871,44 +2871,44 @@ RayHitInfo GetCollisionRayMesh(Ray ray, Mesh mesh, Matrix transform)
 {
     RayHitInfo result = { 0 };
 
-	// Check if mesh vertex data on CPU for testing
-	if (mesh.vertices != NULL)
-	{
-		// model->mesh.triangleCount may not be set, vertexCount is more reliable
-		int triangleCount = mesh.vertexCount / 3;
+    // Check if mesh vertex data on CPU for testing
+    if (mesh.vertices != NULL)
+    {
+        // model->mesh.triangleCount may not be set, vertexCount is more reliable
+        int triangleCount = mesh.vertexCount / 3;
 
-		// Test against all triangles in mesh
-		for (int i = 0; i < triangleCount; i++)
-		{
-			Vector3 a, b, c;
-			Vector3* vertdata = (Vector3*)mesh.vertices;
+        // Test against all triangles in mesh
+        for (int i = 0; i < triangleCount; i++)
+        {
+            Vector3 a, b, c;
+            Vector3* vertdata = (Vector3*)mesh.vertices;
 
-			if (mesh.indices)
-			{
-				a = vertdata[mesh.indices[i * 3 + 0]];
-				b = vertdata[mesh.indices[i * 3 + 1]];
-				c = vertdata[mesh.indices[i * 3 + 2]];
-			}
-			else
-			{
-				a = vertdata[i * 3 + 0];
-				b = vertdata[i * 3 + 1];
-				c = vertdata[i * 3 + 2];
-			}
+            if (mesh.indices)
+            {
+                a = vertdata[mesh.indices[i * 3 + 0]];
+                b = vertdata[mesh.indices[i * 3 + 1]];
+                c = vertdata[mesh.indices[i * 3 + 2]];
+            }
+            else
+            {
+                a = vertdata[i * 3 + 0];
+                b = vertdata[i * 3 + 1];
+                c = vertdata[i * 3 + 2];
+            }
 
-			a = Vector3Transform(a, transform);
-			b = Vector3Transform(b, transform);
-			c = Vector3Transform(c, transform);
+            a = Vector3Transform(a, transform);
+            b = Vector3Transform(b, transform);
+            c = Vector3Transform(c, transform);
 
-			RayHitInfo triHitInfo = GetCollisionRayTriangle(ray, a, b, c);
+            RayHitInfo triHitInfo = GetCollisionRayTriangle(ray, a, b, c);
 
-			if (triHitInfo.hit)
-			{
-				// Save the closest hit triangle
-				if ((!result.hit) || (result.distance > triHitInfo.distance)) result = triHitInfo;
-			}
-		}
-	}
+            if (triHitInfo.hit)
+            {
+                // Save the closest hit triangle
+                if ((!result.hit) || (result.distance > triHitInfo.distance)) result = triHitInfo;
+            }
+        }
+    }
     return result;
 }
 
