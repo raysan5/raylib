@@ -258,7 +258,7 @@ Welcome to **raylib 3.0**.
 notes on raylib 3.5
 -------------------
 
-December 25th... this crazy 2020 is about to finish and finally the holidays gave me some time to put a new version of raylib. It's been **9 months since last release** and last November raylib become 7 years old... I was not able to release this new version back then but here it is. Many changes and improvements have happened in those months and, even, last August, raylib was awarded with an [Epic Megagrant](https://www.unrealengine.com/en-US/blog/epic-megagrants-fall-2020-update)! [Bindings list](BINDINGS.md) kept growing to +50 programming languages and some new platforms have been supported. 
+It's December 25th... this crazy 2020 is about to finish and finally the holidays gave me some time to put a new version of raylib. It's been **9 months since last release** and last November raylib become 7 years old... I was not able to release this new version back then but here it is. Many changes and improvements have happened in those months and, even, last August, raylib was awarded with an [Epic Megagrant](https://www.unrealengine.com/en-US/blog/epic-megagrants-fall-2020-update)! Bindings list kept growing to [+50 programming languages](BINDINGS.md) and some new platforms have been supported. Let's see this new version details:
 
 First, some general numbers of this new update:
 
