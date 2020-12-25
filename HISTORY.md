@@ -262,11 +262,11 @@ December 25th... this crazy 2020 is about to finish and finally the holidays gav
 
 First, some general numbers of this new update:
 
- - +650 commits since previous RELEASE
- - +30 functions ADDED (for a TOTAL of **475**!)
- - +90 functions REVIEWED/REDESIGNED
- - +30 contributors (for a TOTAL of **170**!)
- - +8 new examples (for a TOTAL of **+120**!)
+ - **+650** commits since previous RELEASE
+ - **+30** functions ADDED (for a TOTAL of **475**!)
+ - **+90** functions REVIEWED/REDESIGNED
+ - **+30** contributors (for a TOTAL of **170**!)
+ - **+8** new examples (for a TOTAL of **+120**!)
  
 Here the list with some highlights for `raylib 3.5`.
  
