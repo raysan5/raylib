@@ -25,7 +25,7 @@ jobs:
         
     - name: Setup Release Version
       run: |
-        echo "::set-env name=RELEASE_NAME::raylib-${{ github.event.release.tag_name }}_webassembly"
+        echo "RELEASE_NAME=raylib-${{ github.event.release.tag_name }}_webassembly" >> $GITHUB_ENV
       shell: bash
       if: github.event_name == 'release' && github.event.action == 'published'
 
