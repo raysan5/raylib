@@ -64,13 +64,13 @@ int main(void)
 
             // Draw GUI controls
             //------------------------------------------------------------------------------
-            startAngle = GuiSliderBar((Rectangle){ 600, 40, 120, 20 }, "StartAngle", startAngle, -450, 450, true);
-            endAngle = GuiSliderBar((Rectangle){ 600, 70, 120, 20 }, "EndAngle", endAngle, -450, 450, true);
+            startAngle = GuiSliderBar((Rectangle){ 600, 40, 120, 20 }, "StartAngle", NULL, startAngle, -450, 450);
+            endAngle = GuiSliderBar((Rectangle){ 600, 70, 120, 20 }, "EndAngle", NULL, endAngle, -450, 450);
 
-            innerRadius = GuiSliderBar((Rectangle){ 600, 140, 120, 20 }, "InnerRadius", innerRadius, 0, 100, true);
-            outerRadius = GuiSliderBar((Rectangle){ 600, 170, 120, 20 }, "OuterRadius", outerRadius, 0, 200, true);
+            innerRadius = GuiSliderBar((Rectangle){ 600, 140, 120, 20 }, "InnerRadius", NULL, innerRadius, 0, 100);
+            outerRadius = GuiSliderBar((Rectangle){ 600, 170, 120, 20 }, "OuterRadius", NULL, outerRadius, 0, 200);
 
-            segments = GuiSliderBar((Rectangle){ 600, 240, 120, 20 }, "Segments", segments, 0, 100, true);
+            segments = GuiSliderBar((Rectangle){ 600, 240, 120, 20 }, "Segments", NULL, segments, 0, 100);
 
             drawRing = GuiCheckBox((Rectangle){ 600, 320, 20, 20 }, "Draw Ring", drawRing);
             drawRingLines = GuiCheckBox((Rectangle){ 600, 350, 20, 20 }, "Draw RingLines", drawRingLines);
