@@ -45,7 +45,7 @@ jobs:
     
     - name: Setup Release Version
       run: |
-        echo "::set-env name=RELEASE_NAME::raylib-${{ github.event.release.tag_name }}_win${{ matrix.bits }}_${{ matrix.compiler }}"
+        echo "RELEASE_NAME=raylib-${{ github.event.release.tag_name }}_win${{ matrix.bits }}_${{ matrix.compiler }}" >> $GITHUB_ENV
       shell: bash
       if: github.event_name == 'release' && github.event.action == 'published'
 
