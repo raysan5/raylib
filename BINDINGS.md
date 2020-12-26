@@ -29,27 +29,27 @@ Here it is a list with the ones I'm aware of:
 | raylua             | 3.0 | [Lua](http://www.lua.org/)            | https://github.com/Rabios/raylua          |
 | LuaJIT-Raylib      | 2.6 | [Lua](http://www.lua.org/)            | https://github.com/Bambofy/LuaJIT-Raylib    |
 | raylib-nelua       | 3.0 | [Nelua](https://nelua.io/)            | https://github.com/Andre-LA/raylib-nelua     |
-| raylib-Nim         | ? | [Nim](https://nim-lang.org/)          | https://gitlab.com/define-private-public/raylib-Nim     |
+| raylib-Nim         | 1.7 | [Nim](https://nim-lang.org/)          | https://gitlab.com/define-private-public/raylib-Nim     |
 | raylib-nim         | 2.0 | [Nim](https://nim-lang.org/)          | https://github.com/Skrylar/raylib-nim                  |
 | raylib-Forever     | 3.1-dev | [Nim](https://nim-lang.org/)          | https://github.com/Guevara-chan/Raylib-Forever    |
 | nim-raylib         | 3.1-dev | [Nim](https://nim-lang.org/)          | https://github.com/tomc1998/nim-raylib            |
 | raylib-haskell     | 2.0 | [Haskell](https://www.haskell.org/)   | https://github.com/DevJac/raylib-haskell |
-| raylib-cr          | ? | [Crystal](https://crystal-lang.org/)  | https://github.com/AregevDev/raylib-cr      |
+| raylib-cr          | 2.5-dev | [Crystal](https://crystal-lang.org/)  | https://github.com/AregevDev/raylib-cr      |
 | cray               | 1.8 | [Crystal](https://crystal-lang.org/)  | https://gitlab.com/Zatherz/cray           |
-| raylib.cr          | ? | [Crystal](https://crystal-lang.org/)  | https://github.com/sam0x17/raylib.cr     |
+| raylib.cr          | 2.0 | [Crystal](https://crystal-lang.org/)  | https://github.com/sam0x17/raylib.cr     |
 | raylib-pascal      | 2.0 | [Pascal](https://en.wikipedia.org/wiki/Pascal_(programming_language))         | https://github.com/drezgames/raylib-pascal    |
 | raylib-pas         | 3.0 | [Pascal](https://en.wikipedia.org/wiki/Pascal_(programming_language))         | https://github.com/tazdij/raylib-pas      |
 | Ray4Laz            | 3.5 | [Pascal](https://en.wikipedia.org/wiki/Pascal_(programming_language))         | https://github.com/GuvaCode/Ray4Laz      | 
-| Graphics-Raylib    | ? | [Perl](https://www.perl.org/)            | https://github.com/athreef/Graphics-Raylib      |
-| raylib-ruby-ffi    | ? | [Ruby](https://www.ruby-lang.org/en/)    | https://github.com/D3nX/raylib-ruby-ffi      |
+| Graphics-Raylib    | 1.4 | [Perl](https://www.perl.org/)            | https://github.com/athreef/Graphics-Raylib      |
+| raylib-ruby-ffi    | 2.0 | [Ruby](https://www.ruby-lang.org/en/)    | https://github.com/D3nX/raylib-ruby-ffi      |
 | raylib-ruby        | 2.6 | [Ruby](https://www.ruby-lang.org/en/)    | https://github.com/a0/raylib-ruby        |
-| raylib-mruby       | ? | [mruby](https://github.com/mruby/mruby)  | https://github.com/lihaochen910/raylib-mruby    |
+| raylib-mruby       | 2.4 | [mruby](https://github.com/mruby/mruby)  | https://github.com/lihaochen910/raylib-mruby    |
 | raylib-py          | 2.0 | [Python](https://www.python.org/)        | https://github.com/overdev/raylib-py       |
 | raylib-python-cffi | 3.1-dev | [Python](https://www.python.org/)        | https://github.com/electronstudio/raylib-python-cffi    |
 | raylib-py-ctbg     | 2.6 | [Python](https://www.python.org/)        | https://github.com/overdev/raylib-py-ctbg                 |
 | jaylib             | 3.0 | [Java](https://en.wikipedia.org/wiki/Java_(programming_language))           | https://github.com/electronstudio/jaylib/   |
 | raylib-java        | 2.0 | [Java](https://en.wikipedia.org/wiki/Java_(programming_language))           | https://github.com/XoanaIO/raylib-java   |
-| clj-raylib         | ? | [Clojure](https://clojure.org/)          | https://github.com/lsevero/clj-raylib       |
+| clj-raylib         | 3.0 | [Clojure](https://clojure.org/)          | https://github.com/lsevero/clj-raylib       |
 | node-raylib        | 3.0 | [Node.js](https://nodejs.org/en/)        | https://github.com/RobLoach/node-raylib     |
 | QuickJS-raylib     | 3.0 | [QuickJS](https://bellard.org/quickjs/)  | https://github.com/sntg-p/QuickJS-raylib    |
 | raylib-js          | 2.6 | [JavaScript](https://en.wikipedia.org/wiki/JavaScript)     | https://github.com/RobLoach/raylib-js    |
@@ -65,7 +65,7 @@ Here it is a list with the ones I'm aware of:
 | ringraylib         | 2.6 | [Ring](http://ring-lang.sourceforge.net/)  | https://github.com/ringpackages/ringraylib     |
 | cl-raylib          | 3.0 | [Common Lisp](https://common-lisp.net/)    | https://github.com/longlene/cl-raylib    |
 | raylib-scm         | 2.5 | [Chicken Scheme](https://www.call-cc.org/) | https://github.com/yashrk/raylib-scm     |
-| raylib-chibi       | ? | [Chibi-Scheme](https://github.com/ashinn/chibi-scheme)   | https://github.com/VincentToups/raylib-chibi  |
+| raylib-chibi       | 2.5 | [Chibi-Scheme](https://github.com/ashinn/chibi-scheme)   | https://github.com/VincentToups/raylib-chibi  |
 | raylib-gambit-scheme | 3.1-dev | [Gambit Scheme](https://github.com/gambit/gambit)   | https://github.com/georgjz/raylib-gambit-scheme  |
 | Euraylib           | 3.0 | [Euphoria](https://openeuphoria.org/)  | https://github.com/gAndy50/Euraylib          |
 | raylib-wren        | 3.0 | [Wren](http://wren.io/)           | https://github.com/TSnake41/raylib-wren           |
@@ -86,10 +86,10 @@ Here it is a list with the ones I'm aware of:
 | raylib-fb          | 3.0 | [FreeBasic](https://www.freebasic.net/)    | https://github.com/IchMagBier/raylib-fb  |
 | raylib-purebasic   | 3.0 | [PureBasic](https://www.purebasic.com/)    | https://github.com/D-a-n-i-l-o/raylib-purebasic   |
 | raylib-smallBasic  | 3.1-dev | [SmallBASIC](https://github.com/smallbasic/SmallBASIC) | https://github.com/smallbasic/smallbasic.plugins/tree/master/raylib |
-| raylib-ats2        | ? | [ATS2](http://www.ats-lang.org/)           | https://github.com/mephistopheles-8/raylib-ats2      |
+| raylib-ats2        | 3.0 | [ATS2](http://www.ats-lang.org/)           | https://github.com/mephistopheles-8/raylib-ats2      |
 | raylib-beef        | 3.0 | [Beef](https://www.beeflang.org/)          | https://github.com/M0n7y5/raylib-beef    |
 | raylib-never       | 3.0 | [Never](https://github.com/never-lang/never) | https://github.com/never-lang/raylib-never |
-| raylib.cbl         | ? | [COBOL](https://en.wikipedia.org/wiki/COBOL)        | *[code examples](https://github.com/Martinfx/Cobol/tree/master/OpenCobol/Games/raylib)* |
+| raylib.cbl         | 2.0 | [COBOL](https://en.wikipedia.org/wiki/COBOL)        | *[code examples](https://github.com/Martinfx/Cobol/tree/master/OpenCobol/Games/raylib)* |
 
  
 Missing some language? Feel free to create a new binding! :)
