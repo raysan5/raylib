@@ -26,7 +26,7 @@ Here it is a list with the ones I'm aware of:
 | raylib-lua-sol     | 2.5 | [Lua](http://www.lua.org/)          | https://github.com/RobLoach/raylib-lua-sol     |
 | raylib-lua         | 3.0 | [Lua](http://www.lua.org/)            | https://github.com/TSnake41/raylib-lua       |
 | raylib-luamore     | 3.0 | [Lua](http://www.lua.org/)            | https://github.com/HDPLocust/raylib-luamore    |
-| raylua             | 3.0 | [Lua](http://www.lua.org/)            | https://github.com/Rabios/raylua          |
+| raylua             | 3.5 | [Lua](http://www.lua.org/)            | https://github.com/Rabios/raylua          |
 | LuaJIT-Raylib      | 2.6 | [Lua](http://www.lua.org/)            | https://github.com/Bambofy/LuaJIT-Raylib    |
 | raylib-nelua       | 3.0 | [Nelua](https://nelua.io/)            | https://github.com/Andre-LA/raylib-nelua     |
 | raylib-Nim         | 1.7 | [Nim](https://nim-lang.org/)          | https://gitlab.com/define-private-public/raylib-Nim     |
