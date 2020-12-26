@@ -7,7 +7,7 @@ Here it is a list with the ones I'm aware of:
 |  name              | raylib version | language  | repo                                                                 |
 |:------------------:|:-------------: | :--------:|----------------------------------------------------------------------|
 | raylib             | **3.1-dev** | [C](https://en.wikipedia.org/wiki/C_(programming_language))    | https://github.com/raysan5/raylib    |
-| raylib-cpp         | 3.1-dev | [C++](https://en.wikipedia.org/wiki/C%2B%2B)                       | https://github.com/robloach/raylib-cpp      |
+| raylib-cpp         | 3.5 | [C++](https://en.wikipedia.org/wiki/C%2B%2B)                             | https://github.com/robloach/raylib-cpp      |
 | Raylib-cs          | 3.0 | [C#](https://en.wikipedia.org/wiki/C_Sharp_(programming_language))       | https://github.com/ChrisDill/Raylib-cs      |
 | raylib-cppsharp    | 2.5 | [C#](https://en.wikipedia.org/wiki/C_Sharp_(programming_language))       | https://github.com/phxvyper/raylib-cppsharp |
 | raylib-boo         | 3.5 | [Boo](http://boo-language.github.io/) | https://github.com/Rabios/raylib-boo          |
