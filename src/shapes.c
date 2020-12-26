@@ -179,29 +179,33 @@ void DrawLineBezier(Vector2 startPos, Vector2 endPos, float thick, Color color)
         previous = current;
     }
 }
+
 // Draw line using quadratic bezier curves with a control point
-void DrawLineBezierQuad(Vector2 startPos, Vector2 controlPos, Vector2 endPos,float thick,Color color)
+void DrawLineBezierQuad(Vector2 startPos, Vector2 endPos, Vector2 controlPos, float thick, Color color)
 {
-    Vector2 previous = startPos;
-    Vector2 current;
-    float t=0;
     const float step = 1.0f/BEZIER_LINE_DIVISIONS;
+    
+    Vector2 previous = startPos;
+    Vector2 current = { 0 };
+    float t = 0.0f;
+    
     for (int i = 0; i <= BEZIER_LINE_DIVISIONS; i++)
     {
-        t=step*i;
-        float a = powf(1-t,2);
-        float b = 2*(1-t)*t;
-        float c = powf(t,2);
-        //The easing functions aren't suitable here because they don't take a control point
-        current.y=a*startPos.y+b*controlPos.y+c*endPos.y;
-        current.x=a*startPos.x+b*controlPos.x+c*endPos.x;
+        t = step*i;
+        float a = powf(1 - t, 2);
+        float b = 2*(1 - t)*t;
+        float c = powf(t, 2);
+        
+        // NOTE: The easing functions aren't suitable here because they don't take a control point
+        current.y = a*startPos.y + b*controlPos.y + c*endPos.y;
+        current.x = a*startPos.x + b*controlPos.x + c*endPos.x;
         
         DrawLineEx(previous,current,thick,color);
         
-        previous=current;
-        
+        previous = current;
     }
 }
+
 // Draw lines sequence
 void DrawLineStrip(Vector2 *points, int pointsCount, Color color)
 {
