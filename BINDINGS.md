@@ -43,7 +43,7 @@ Here it is a list with the ones I'm aware of:
 | Graphics-Raylib    | 1.4 | [Perl](https://www.perl.org/)            | https://github.com/athreef/Graphics-Raylib      |
 | raylib-ruby-ffi    | 2.0 | [Ruby](https://www.ruby-lang.org/en/)    | https://github.com/D3nX/raylib-ruby-ffi      |
 | raylib-ruby        | 2.6 | [Ruby](https://www.ruby-lang.org/en/)    | https://github.com/a0/raylib-ruby        |
-| raylib-mruby       | 2.4 | [mruby](https://github.com/mruby/mruby)  | https://github.com/lihaochen910/raylib-mruby    |
+| raylib-mruby       | 2.4-dev | [mruby](https://github.com/mruby/mruby)  | https://github.com/lihaochen910/raylib-mruby    |
 | raylib-py          | 2.0 | [Python](https://www.python.org/)        | https://github.com/overdev/raylib-py       |
 | raylib-python-cffi | 3.1-dev | [Python](https://www.python.org/)        | https://github.com/electronstudio/raylib-python-cffi    |
 | raylib-py-ctbg     | 2.6 | [Python](https://www.python.org/)        | https://github.com/overdev/raylib-py-ctbg                 |
