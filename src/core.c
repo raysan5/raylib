@@ -1029,18 +1029,27 @@ void ToggleFullscreen(void)
         if (!monitor)
         {
             TRACELOG(LOG_WARNING, "GLFW: Failed to get monitor");
+            glfwSetWindowSizeCallback(CORE.Window.handle, NULL);
             glfwSetWindowMonitor(CORE.Window.handle, glfwGetPrimaryMonitor(), 0, 0, CORE.Window.screen.width, CORE.Window.screen.height, GLFW_DONT_CARE);
+            glfwSetWindowSizeCallback(CORE.Window.handle, WindowSizeCallback);
             return;
         }
-
+    
         const GLFWvidmode *mode = glfwGetVideoMode(monitor);
+        glfwSetWindowSizeCallback(CORE.Window.handle, NULL);
         glfwSetWindowMonitor(CORE.Window.handle, glfwGetPrimaryMonitor(), 0, 0, CORE.Window.screen.width, CORE.Window.screen.height, mode->refreshRate);
+        glfwSetWindowSizeCallback(CORE.Window.handle, WindowSizeCallback);
 
         // Try to enable GPU V-Sync, so frames are limited to screen refresh rate (60Hz -> 60 FPS)
         // NOTE: V-Sync can be enabled by graphic driver configuration
         if (CORE.Window.flags & FLAG_VSYNC_HINT) glfwSwapInterval(1);
     }
-    else glfwSetWindowMonitor(CORE.Window.handle, NULL, CORE.Window.position.x, CORE.Window.position.y, CORE.Window.screen.width, CORE.Window.screen.height, GLFW_DONT_CARE);
+    else
+    {
+        glfwSetWindowSizeCallback(CORE.Window.handle, NULL);
+        glfwSetWindowMonitor(CORE.Window.handle, NULL, CORE.Window.position.x, CORE.Window.position.y, CORE.Window.screen.width, CORE.Window.screen.height, GLFW_DONT_CARE);
+        glfwSetWindowSizeCallback(CORE.Window.handle, WindowSizeCallback);
+    }
 
     CORE.Window.fullscreen = !CORE.Window.fullscreen;          // Toggle fullscreen flag
     CORE.Window.flags ^= FLAG_FULLSCREEN_MODE;
