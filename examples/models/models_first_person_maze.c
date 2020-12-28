@@ -117,6 +117,7 @@ int main(void)
 
     UnloadTexture(cubicmap);    // Unload cubicmap texture
     UnloadTexture(texture);     // Unload map texture
+    UnloadMesh(mesh);           // Unload mesh
     UnloadModel(model);         // Unload map model
 
     CloseWindow();              // Close window and OpenGL context
