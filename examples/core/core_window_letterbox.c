@@ -72,10 +72,9 @@ int main(void)
         virtualMouse.y = (mouse.y - (GetScreenHeight() - (gameScreenHeight*scale))*0.5f)/scale;
         virtualMouse = ClampValue(virtualMouse, (Vector2){ 0, 0 }, (Vector2){ gameScreenWidth, gameScreenHeight }); 
 
-        // Apply the same transformation as the virtual mouse to the real mouse, to work with raygui.
-        // SetMouseOffset(-(GetScreenWidth() - (gameScreenWidth * scale)) * 0.5f, -(GetScreenHeight() - (gameScreenHeight * scale)) * 0.5f);
-        // SetMouseScale(1 / scale, 1 / scale);
-
+        // Apply the same transformation as the virtual mouse to the real mouse (i.e. to work with raygui)
+        //SetMouseOffset(-(GetScreenWidth() - (gameScreenWidth*scale))*0.5f, -(GetScreenHeight() - (gameScreenHeight*scale))*0.5f);
+        //SetMouseScale(1/scale, 1/scale);
         //----------------------------------------------------------------------------------
 
         // Draw
