@@ -1456,7 +1456,16 @@ int GetMonitorCount(void)
 int GetCurrentMonitor(void)
 {
 #if defined(PLATFORM_DESKTOP)
-    return glfwGetWindowMonitor(CORE.Window.handle);
+    int monitorCount;
+    GLFWmonitor** monitors = glfwGetMonitors(&monitorCount);
+
+    GLFWmonitor* monitor = glfwGetWindowMonitor(CORE.Window.handle);
+    for (int i = 0; i < monitorCount; i++)
+    {
+        if (monitors[i] == monitor)
+            return i;
+    }
+    return 0;
 #else
     return 0;
 #endif
