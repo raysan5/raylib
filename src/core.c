@@ -1452,6 +1452,16 @@ int GetMonitorCount(void)
 #endif
 }
 
+// Get number of monitors
+int GetCurrentMonitor(void)
+{
+#if defined(PLATFORM_DESKTOP)
+    return glfwGetWindowMonitor(CORE.Window.handle);
+#else
+    return 0;
+#endif
+}
+
 // Get selected monitor width
 Vector2 GetMonitorPosition(int monitor)
 {
