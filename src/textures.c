@@ -2348,7 +2348,8 @@ Rectangle GetImageAlphaBorder(Image image, float threshold)
 // Clear image background with given color
 void ImageClearBackground(Image *dst, Color color)
 {
-    ImageDrawRectangle(dst, 0, 0, dst->width, dst->height, color);
+    for (int i = 0; i < dst->width * dst->height; ++i)
+        ImageDrawPixel(dst, i % dst->width, i / dst->height, color);
 }
 
 // Draw pixel within an image
