@@ -1458,12 +1458,41 @@ int GetCurrentMonitor(void)
 #if defined(PLATFORM_DESKTOP)
     int monitorCount;
     GLFWmonitor** monitors = glfwGetMonitors(&monitorCount);
+    GLFWmonitor* monitor = NULL;
 
-    GLFWmonitor* monitor = glfwGetWindowMonitor(CORE.Window.handle);
-    for (int i = 0; i < monitorCount; i++)
+    if (monitorCount == 1) // easy out
+        return 0;
+
+    if (IsWindowFullscreen())
     {
-        if (monitors[i] == monitor)
-            return i;
+        monitor = glfwGetWindowMonitor(CORE.Window.handle);
+        for (int i = 0; i < monitorCount; i++)
+        {
+            if (monitors[i] == monitor)
+                return i;
+        }
+        return 0;
+    }
+    else
+    {
+        int x = 0;
+        int y = 0;
+
+        glfwGetWindowPos(CORE.Window.handle, &x, &y);
+        
+        for (int i = 0; i < monitorCount; i++)
+        {
+            int mx = 0;
+            int my = 0;
+
+            int width = 0;
+            int height = 0;
+
+            monitor = monitors[i];
+            glfwGetMonitorWorkarea(monitor, &mx, &my, &width, &height);
+            if (x >= mx && x <= (mx + width) && y >= my && y <= (my + height))
+                return i;
+        }
     }
     return 0;
 #else
