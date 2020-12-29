@@ -410,7 +410,9 @@ typedef struct CoreData {
             int exitKey;                    // Default exit key
             char currentKeyState[512];      // Registers current frame key state
             char previousKeyState[512];     // Registers previous frame key state
-
+#if defined(PLATFORM_RPI) || defined(PLATFORM_DRM)
+            char changedKeyState[512];      // Registers keys whose state changed between frames
+#endif
             int keyPressedQueue[MAX_KEY_PRESSED_QUEUE];     // Input keys queue
             int keyPressedQueueCount;       // Input keys queue count
 
@@ -2681,12 +2683,16 @@ void OpenURL(const char *url)
 // Detect if a key has been pressed once
 bool IsKeyPressed(int key)
 {
+#if defined(PLATFORM_RPI) || defined(PLATFORM_DRM)
+    return CORE.Input.Keyboard.changedKeyState[key] != 0 && CORE.Input.Keyboard.previousKeyState[key] == 1;
+#else
     bool pressed = false;
 
     if ((CORE.Input.Keyboard.previousKeyState[key] == 0) && (CORE.Input.Keyboard.currentKeyState[key] == 1)) pressed = true;
     else pressed = false;
 
     return pressed;
+#endif
 }
 
 // Detect if a key is being pressed (key held down)
@@ -2699,12 +2705,16 @@ bool IsKeyDown(int key)
 // Detect if a key has been released once
 bool IsKeyReleased(int key)
 {
+#if defined(PLATFORM_RPI) || defined(PLATFORM_DRM)
+    return CORE.Input.Keyboard.changedKeyState[key] != 0 && CORE.Input.Keyboard.previousKeyState[key] == 0;
+#else
     bool released = false;
 
     if ((CORE.Input.Keyboard.previousKeyState[key] == 1) && (CORE.Input.Keyboard.currentKeyState[key] == 0)) released = true;
     else released = false;
 
     return released;
+#endif
 }
 
 // Detect if a key is NOT being pressed (key not held down)
@@ -4224,8 +4234,12 @@ static void PollInputEvents(void)
 #endif
 
 #if defined(PLATFORM_RPI) || defined(PLATFORM_DRM)
-    // Register previous keys states
-    for (int i = 0; i < 512; i++) CORE.Input.Keyboard.previousKeyState[i] = CORE.Input.Keyboard.currentKeyState[i];
+    // Register previous keys states and detect changes.
+    for (int i = 0; i < 512; i++)
+    {
+        CORE.Input.Keyboard.changedKeyState[i] = CORE.Input.Keyboard.previousKeyState[i] ^ CORE.Input.Keyboard.currentKeyState[i];
+        CORE.Input.Keyboard.previousKeyState[i] = CORE.Input.Keyboard.currentKeyState[i];
+    }
 
     // Grab a keypress from the evdev fifo if avalable
     if (CORE.Input.Keyboard.lastKeyPressed.head != CORE.Input.Keyboard.lastKeyPressed.tail)
