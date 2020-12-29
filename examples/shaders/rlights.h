@@ -11,7 +11,7 @@
 *
 *   LICENSE: zlib/libpng
 *
-*   Copyright (c) 2017-2019 Victor Fisac (@victorfisac) and Ramon Santamaria (@raysan5)
+*   Copyright (c) 2017-2020 Victor Fisac (@victorfisac) and Ramon Santamaria (@raysan5)
 *
 *   This software is provided "as-is", without any express or implied warranty. In no event
 *   will the authors be held liable for any damages arising from the use of this software.
@@ -69,11 +69,6 @@ extern "C" {            // Prevents name mangling of functions
 #endif
 
 //----------------------------------------------------------------------------------
-// Global Variables Definition
-//----------------------------------------------------------------------------------
-int lightsCount = 0;    // Current amount of created lights
-
-//----------------------------------------------------------------------------------
 // Module Functions Declaration
 //----------------------------------------------------------------------------------
 Light CreateLight(int type, Vector3 position, Vector3 target, Color color, Shader shader);   // Create a light and get shader locations
@@ -109,7 +104,7 @@ void UpdateLightValues(Shader shader, Light light);         // Send light proper
 //----------------------------------------------------------------------------------
 // Global Variables Definition
 //----------------------------------------------------------------------------------
-// ...
+static int lightsCount = 0;    // Current amount of created lights
 
 //----------------------------------------------------------------------------------
 // Module specific Functions Declaration
