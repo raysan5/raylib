@@ -1025,7 +1025,7 @@ void ToggleFullscreen(void)
         // Store previous window position (in case we exit fullscreen)
         glfwGetWindowPos(CORE.Window.handle, &CORE.Window.position.x, &CORE.Window.position.y);
 
-        GLFWmonitor *monitor = glfwGetPrimaryMonitor();
+        GLFWmonitor *monitor = glfwGetWindowMonitor(CORE.Window.handle);
         if (!monitor)
         {
             TRACELOG(LOG_WARNING, "GLFW: Failed to get monitor");
@@ -1035,9 +1035,10 @@ void ToggleFullscreen(void)
             return;
         }
     
-        const GLFWvidmode *mode = glfwGetVideoMode(monitor);
+        const GLFWvidmode *mode = glfwGetVideoMode(monitor)
+
         glfwSetWindowSizeCallback(CORE.Window.handle, NULL);
-        glfwSetWindowMonitor(CORE.Window.handle, glfwGetPrimaryMonitor(), 0, 0, CORE.Window.screen.width, CORE.Window.screen.height, mode->refreshRate);
+        glfwSetWindowMonitor(CORE.Window.handle, monitor, 0, 0, CORE.Window.screen.width, CORE.Window.screen.height, mode->refreshRate);
         glfwSetWindowSizeCallback(CORE.Window.handle, WindowSizeCallback);
 
         // Try to enable GPU V-Sync, so frames are limited to screen refresh rate (60Hz -> 60 FPS)
@@ -1458,6 +1459,16 @@ int GetMonitorCount(void)
     return monitorCount;
 #else
     return 1;
+#endif
+}
+
+// Get number of monitors
+int GetCurrentMonitor(void)
+{
+#if defined(PLATFORM_DESKTOP)
+    return glfwGetWindowMonitor(CORE.Window.handle);
+#else
+    return 0;
 #endif
 }
 
