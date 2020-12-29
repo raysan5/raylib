@@ -2348,7 +2348,8 @@ Rectangle GetImageAlphaBorder(Image image, float threshold)
 // Clear image background with given color
 void ImageClearBackground(Image *dst, Color color)
 {
-    ImageDrawRectangle(dst, 0, 0, dst->width, dst->height, color);
+    for (int i = 0; i < dst->width * dst->height; ++i)
+        ImageDrawPixel(dst, i % dst->width, i / dst->height, color);
 }
 
 // Draw pixel within an image
@@ -2546,9 +2547,19 @@ void ImageDrawRectangleRec(Image *dst, Rectangle rec, Color color)
     // Security check to avoid program crash
     if ((dst->data == NULL) || (dst->width == 0) || (dst->height == 0)) return;
 
-    Image imRec = GenImageColor((int)rec.width, (int)rec.height, color);
-    ImageDraw(dst, imRec, (Rectangle){ 0, 0, rec.width, rec.height }, rec, WHITE);
-    UnloadImage(imRec);
+    int sy = (int)rec.y;
+    int ey = sy + (int)rec.height;
+
+    int sx = (int)rec.x;
+    int ex = sx + (int)rec.width;
+
+    for (int y = sy; y < ey; y++)
+    {
+        for (int x = sx; x < ex; x++)
+        {
+            ImageDrawPixel(dst, x, y, color);
+        }
+    }
 }
 
 // Draw rectangle lines within an image
