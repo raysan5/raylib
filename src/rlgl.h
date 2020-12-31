@@ -4788,8 +4788,8 @@ static int GenerateMipmaps(unsigned char *data, int baseWidth, int baseHeight)
     // Count mipmap levels required
     while ((width != 1) && (height != 1))
     {
-        if (width != 1) width /= 2;
-        if (height != 1) height /= 2;
+        width /= 2;
+        height /= 2;
 
         TRACELOGD("TEXTURE: Next mipmap size: %i x %i", width, height);
 
