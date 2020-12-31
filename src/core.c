@@ -2595,7 +2595,7 @@ bool SaveStorageValue(unsigned int position, int value)
 
     unsigned int dataSize = 0;
     unsigned int newDataSize = 0;
-    unsigned char *fileData = LoadFileData(path, &dataSize);
+    unsigned char *fileData = RLLoadFileData(path, &dataSize);
     unsigned char *newFileData = NULL;
 
     if (fileData != NULL)
@@ -2673,7 +2673,7 @@ int LoadStorageValue(unsigned int position)
 #endif
 
     unsigned int dataSize = 0;
-    unsigned char *fileData = LoadFileData(path, &dataSize);
+    unsigned char *fileData = RLLoadFileData(path, &dataSize);
 
     if (fileData != NULL)
     {

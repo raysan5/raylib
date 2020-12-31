@@ -342,7 +342,7 @@ Font LoadFontEx(const char *fileName, int fontSize, int *fontChars, int charsCou
 
     // Loading file to memory
     unsigned int fileSize = 0;
-    unsigned char *fileData = LoadFileData(fileName, &fileSize);
+    unsigned char *fileData = RLLoadFileData(fileName, &fileSize);
 
     if (fileData != NULL)
     {
@@ -1740,7 +1740,7 @@ static Font LoadBMFont(const char *fileName)
 
     int base = 0;   // Useless data
 
-    char *fileText = LoadFileText(fileName);
+    char *fileText = RLLoadFileText(fileName);
 
     if (fileText == NULL) return font;
 

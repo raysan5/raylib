@@ -979,6 +979,14 @@ RLAPI void TakeScreenshot(const char *fileName);                  // Takes a scr
 RLAPI int GetRandomValue(int min, int max);                       // Returns a random value between min and max (both included)
 
 // Files management functions
+
+// Virtual file system override functions
+typedef unsigned char* (*LoadFileBinFunction)(const char* fileName, unsigned int* bytesRead);       // Load file data as byte array (read)
+typedef char* (*LoadFileTextFunction)(const char* fileName);                                        // Load text data from file (read), returns a '\0' terminated string
+
+RLAPI void SetFileSystemFunctions(LoadFileBinFunction loadBin, LoadFileTextFunction loadText);            // override default file access functions
+
+// Native File Management
 RLAPI unsigned char *LoadFileData(const char *fileName, unsigned int *bytesRead);     // Load file data as byte array (read)
 RLAPI void UnloadFileData(unsigned char *data);                   // Unload file data allocated by LoadFileData()
 RLAPI bool SaveFileData(const char *fileName, void *data, unsigned int bytesToWrite); // Save data to file from byte array (write), returns true on success
@@ -1332,6 +1340,7 @@ RLAPI void DrawGizmo(Vector3 position);                                         
 
 // Model loading/unloading functions
 RLAPI Model LoadModel(const char *fileName);                                                            // Load model from files (meshes and materials)
+RLAPI Model LoadModelFromMemory(const char* fileType, const unsigned char* fileData, int dataSize);     // Load model from memory (meshes and materials)
 RLAPI Model LoadModelFromMesh(Mesh mesh);                                                               // Load model from generated mesh (default material)
 RLAPI void UnloadModel(Model model);                                                                    // Unload model (including meshes) from memory (RAM and/or VRAM)
 RLAPI void UnloadModelKeepMeshes(Model model);                                                          // Unload model (but not meshes) from memory (RAM and/or VRAM)

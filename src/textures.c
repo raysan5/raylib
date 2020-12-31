@@ -210,7 +210,7 @@ Image LoadImage(const char *fileName)
 
     // Loading file to memory
     unsigned int fileSize = 0;
-    unsigned char *fileData = LoadFileData(fileName, &fileSize);
+    unsigned char *fileData = RLLoadFileData(fileName, &fileSize);
 
     if (fileData != NULL)
     {
@@ -232,7 +232,7 @@ Image LoadImageRaw(const char *fileName, int width, int height, int format, int 
     Image image = { 0 };
 
     unsigned int dataSize = 0;
-    unsigned char *fileData = LoadFileData(fileName, &dataSize);
+    unsigned char *fileData = RLLoadFileData(fileName, &dataSize);
 
     if (fileData != NULL)
     {
@@ -268,7 +268,7 @@ Image LoadImageAnim(const char *fileName, int *frames)
     if (IsFileExtension(fileName, ".gif"))
     {
         unsigned int dataSize = 0;
-        unsigned char *fileData = LoadFileData(fileName, &dataSize);
+        unsigned char *fileData = RLLoadFileData(fileName, &dataSize);
 
         if (fileData != NULL)
         {

@@ -175,6 +175,32 @@ void MemFree(void *ptr)
     RL_FREE(ptr);
 }
 
+LoadFileBinFunction LoadBinCallback = NULL;
+LoadFileTextFunction LoadFileTextCallback = NULL;
+
+// virtual file systems functions
+void SetFileSystemFunctions(LoadFileBinFunction loadBin, LoadFileTextFunction loadText)
+{
+    LoadBinCallback = loadBin;
+    LoadFileTextCallback = loadText;
+}
+
+unsigned char* RLLoadFileData(const char* fileName, unsigned int* bytesRead)
+{
+    if (LoadBinCallback != NULL)
+        return LoadBinCallback(fileName, bytesRead);
+    
+    return LoadFileData(fileName, bytesRead);
+}
+
+char* RLLoadFileText(const char* fileName)
+{
+    if (LoadFileTextCallback != NULL)
+        return LoadFileTextCallback(fileName);
+
+    return LoadFileText(fileName);
+}
+
 // Load data from file into a buffer
 unsigned char *LoadFileData(const char *fileName, unsigned int *bytesRead)
 {

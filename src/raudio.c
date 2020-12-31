@@ -385,7 +385,7 @@ static Wave LoadMP3(const unsigned char *fileData, unsigned int fileSize);   // 
 
 #if defined(RAUDIO_STANDALONE)
 static bool IsFileExtension(const char *fileName, const char *ext); // Check file extension
-static unsigned char *LoadFileData(const char *fileName, unsigned int *bytesRead);     // Load file data as byte array (read)
+static unsigned char *RLLoadFileData(const char *fileName, unsigned int *bytesRead);     // Load file data as byte array (read)
 static bool SaveFileData(const char *fileName, void *data, unsigned int bytesToWrite); // Save data to file from byte array (write)
 static bool SaveFileText(const char *fileName, char *text);         // Save text data to file (write), string must be '\0' terminated
 #endif
@@ -690,7 +690,7 @@ Wave LoadWave(const char *fileName)
 
     // Loading file to memory
     unsigned int fileSize = 0;
-    unsigned char *fileData = LoadFileData(fileName, &fileSize);
+    unsigned char *fileData = RLLoadFileData(fileName, &fileSize);
 
     if (fileData != NULL)
     {
@@ -2087,7 +2087,7 @@ static bool IsFileExtension(const char *fileName, const char *ext)
 }
 
 // Load data from file into a buffer
-static unsigned char *LoadFileData(const char *fileName, unsigned int *bytesRead)
+static unsigned char *RLLoadFileData(const char *fileName, unsigned int *bytesRead)
 {
     unsigned char *data = NULL;
     *bytesRead = 0;

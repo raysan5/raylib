@@ -1012,7 +1012,7 @@ ModelAnimation *LoadModelAnimations(const char *fileName, int *animCount)
     #define IQM_VERSION     2                   // only IQM version 2 supported
 
     unsigned int fileSize = 0;
-    unsigned char *fileData = LoadFileData(fileName, &fileSize);
+    unsigned char *fileData = RLLoadFileData(fileName, &fileSize);
     unsigned char *fileDataPtr = fileData;
 
     typedef struct IQMHeader {
@@ -3034,7 +3034,7 @@ static Model LoadOBJ(const char *fileName)
     tinyobj_material_t *materials = NULL;
     unsigned int materialCount = 0;
 
-    char *fileData = LoadFileText(fileName);
+    char *fileData = RLLoadFileText(fileName);
 
     if (fileData != NULL)
     {
@@ -3199,7 +3199,7 @@ static Model LoadIQM(const char *fileName)
     #define MATERIAL_NAME_LENGTH 32         // Material name string length
 
     unsigned int fileSize = 0;
-    unsigned char *fileData = LoadFileData(fileName, &fileSize);
+    unsigned char *fileData = RLLoadFileData(fileName, &fileSize);
     unsigned char *fileDataPtr = fileData;
 
     // IQM file structs
@@ -3738,7 +3738,7 @@ static Model LoadGLTF(const char *fileName)
 
     // glTF file loading
     unsigned int dataSize = 0;
-    unsigned char *fileData = LoadFileData(fileName, &dataSize);
+    unsigned char *fileData = RLLoadFileData(fileName, &dataSize);
 
     if (fileData == NULL) return model;
 
