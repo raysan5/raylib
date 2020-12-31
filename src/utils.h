@@ -29,9 +29,7 @@
 
 // internal loader functions that may or may not call the virtual file system
 unsigned char* RLLoadFileData(const char* fileName, unsigned int* bytesRead);
-void RLUnloadFileData(unsigned char* data);
 char* RLLoadFileText(const char* fileName);
-void RLUnloadFileText(unsigned char* text);
 
 #if defined(PLATFORM_ANDROID)
     #include <stdio.h>                      // Required for: FILE
