@@ -948,7 +948,10 @@ Material *LoadMaterials(const char *fileName, int *materialCount)
 #endif
 
     // Set materials shader to default (DIFFUSE, SPECULAR, NORMAL)
-    for (unsigned int i = 0; i < count; i++) materials[i].shader = GetShaderDefault();
+    if (materials != NULL)
+    {
+        for (unsigned int i = 0; i < count; i++) materials[i].shader = GetShaderDefault();
+    }
 
     *materialCount = count;
     return materials;
