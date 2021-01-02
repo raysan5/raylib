@@ -42,7 +42,7 @@ command_list = {
  { .name = "run",
    .out = "*run*", .footer_panel = true, .save_dirty_files = false, .cursor_at_end = true,
    .cmd = {
-          {"./game.exe", .os = "win"},
+          {".\game.exe", .os = "win"},
           {"./game", .os = "linux"},
           {"./game", .os = "mac"},          
    },
