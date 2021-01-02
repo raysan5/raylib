@@ -19,7 +19,9 @@
 *
 ********************************************************************************************/
 
+#include "TPOrbitCamera.h"
 #include "raylib.h"
+
 
 int main(void)
 {
@@ -27,6 +29,11 @@ int main(void)
     //--------------------------------------------------------------------------------------
     const int screenWidth = 800;
     const int screenHeight = 450;
+
+    TPOrbitCamera cam;
+    InitTPOrbitCamera(&cam, 45, (Vector3) { 0, 0, 0 });
+
+    SetConfigFlags(FLAG_WINDOW_HIGHDPI)
 
     InitWindow(screenWidth, screenHeight, "raylib [core] example - basic window");
 
