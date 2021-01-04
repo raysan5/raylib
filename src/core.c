@@ -378,12 +378,15 @@ typedef struct CoreData {
 
         Point position;                     // Window position on screen (required on fullscreen toggle)
         Size display;                       // Display width and height (monitor, device-screen, LCD, ...)
+        Size defaultScreen;                 // Default screen width and height (used render area)
         Size screen;                        // Screen width and height (used render area)
         Size currentFbo;                    // Current render width and height, it could change on BeginTextureMode()
         Size render;                        // Framebuffer width and height (render area, including black bars if required)
         Point renderOffset;                 // Offset from render area (must be divided by 2)
         Matrix screenScale;                 // Matrix to scale screen (framebuffer rendering)
 
+        float screenScaleX;                 // Scale of X axis for frambuffer rendering
+        float screenScaleY;                 // Scale of Y axis for frambuffer rendering
         char **dropFilesPath;               // Store dropped files paths as strings
         int dropFilesCount;                 // Count dropped files strings
 
@@ -507,6 +510,7 @@ extern void UnloadFontDefault(void);        // [Module: text] Unloads default fo
 static bool InitGraphicsDevice(int width, int height);  // Initialize graphics device
 static void SetupFramebuffer(int width, int height);    // Setup main framebuffer
 static void SetupViewport(int width, int height);       // Set viewport for a provided width and height
+static void SetupWindowContentScale(int width, int height);              // Set window content scale for standard and high DPI displays
 static void SwapBuffers(void);                          // Copy back buffer to front buffers
 
 static void InitTimer(void);                            // Initialize timer
@@ -519,6 +523,7 @@ static void PollInputEvents(void);                      // Register user events
 static void ErrorCallback(int error, const char *description);                             // GLFW3 Error Callback, runs on GLFW3 error
 // Window callbacks events
 static void WindowSizeCallback(GLFWwindow *window, int width, int height);                 // GLFW3 WindowSize Callback, runs when window is resized
+static void WindowContentScaleCallback(GLFWwindow *window, float xscale, float yscale);
 #if !defined(PLATFORM_WEB)
 static void WindowMaximizeCallback(GLFWwindow* window, int maximized);                     // GLFW3 Window Maximize Callback, runs when window is maximized
 #endif
@@ -1628,6 +1633,10 @@ Vector2 GetWindowScaleDPI(void)
     Vector2 scale = { 1.0f, 1.0f };
 
 #if defined(PLATFORM_DESKTOP)
+#if !defined(__APPLE__)
+    scale.x = CORE.Window.screenScaleX;
+    scale.y = CORE.Window.screenScaleY;
+#else
     float xdpi = 1.0;
     float ydpi = 1.0;
     Vector2 windowPos = GetWindowPosition();
@@ -1651,6 +1660,7 @@ Vector2 GetWindowScaleDPI(void)
             break;
         }
     }
+#endif
 #endif
 
     return scale;
@@ -2149,13 +2159,12 @@ int GetFPS(void)
     #define FPS_CAPTURE_FRAMES_COUNT    30      // 30 captures
     #define FPS_AVERAGE_TIME_SECONDS   0.5f     // 500 millisecondes
     #define FPS_STEP (FPS_AVERAGE_TIME_SECONDS/FPS_CAPTURE_FRAMES_COUNT)
-
     static int index = 0;
     static float history[FPS_CAPTURE_FRAMES_COUNT] = { 0 };
     static float average = 0, last = 0;
     float fpsFrame = GetFrameTime();
 
-    if (fpsFrame == 0) return 0;
+    if (fpsFrame == 0 || CORE.Window.resizedLastFrame == true) return 0;
 
     if ((GetTime() - last) > FPS_STEP)
     {
@@ -3150,6 +3159,8 @@ static bool InitGraphicsDevice(int width, int height)
     CORE.Window.screen.width = width;            // User desired width
     CORE.Window.screen.height = height;          // User desired height
     CORE.Window.screenScale = MatrixIdentity();  // No draw scaling required by default
+    CORE.Window.defaultScreen.width = width;
+    CORE.Window.defaultScreen.height = height;
 
     // NOTE: Framebuffer (render area - CORE.Window.render.width, CORE.Window.render.height) could include black bars...
     // ...in top-down or left-right to match display aspect ratio (no weird scalings)
@@ -3350,8 +3361,14 @@ static bool InitGraphicsDevice(int width, int height)
 
             glfwSetWindowPos(CORE.Window.handle, windowPosX, windowPosY);
 #endif
+#if defined(PLATFORM_DESKTOP)
+#if !defined(__APPLE__)
+            SetupWindowContentScale(0, 0);
+#else
             CORE.Window.render.width = CORE.Window.screen.width;
             CORE.Window.render.height = CORE.Window.screen.height;
+#endif
+#endif
         }
     }
 
@@ -3374,6 +3391,7 @@ static bool InitGraphicsDevice(int width, int height)
 
     // Set window callback events
     glfwSetWindowSizeCallback(CORE.Window.handle, WindowSizeCallback);      // NOTE: Resizing not allowed by default!
+    glfwSetWindowContentScaleCallback(CORE.Window.handle, WindowContentScaleCallback);
 #if !defined(PLATFORM_WEB)
     glfwSetWindowMaximizeCallback(CORE.Window.handle, WindowMaximizeCallback);
 #endif
@@ -4025,11 +4043,70 @@ static bool InitGraphicsDevice(int width, int height)
     return true;
 }
 
+// Set window content scale for standard and high DPI displays
+static void SetupWindowContentScale(int width, int height)
+{
+#if defined(PLATFORM_DESKTOP)
+#if !defined(__APPLE__)
+    if ((CORE.Window.flags & FLAG_WINDOW_HIGHDPI) > 0)
+    {
+        if (!CORE.Window.fullscreen)
+        {
+            float* screenScaleX = &(CORE.Window.screenScaleX);
+            float* screenScaleY = &(CORE.Window.screenScaleY);
+            glfwGetWindowContentScale(CORE.Window.handle, screenScaleX, screenScaleY);
+            CORE.Window.screenScale = MatrixScale(CORE.Window.screenScaleX, CORE.Window.screenScaleY, 1.0f);
+        } else {
+            CORE.Window.screenScaleX = 1.0f;
+            CORE.Window.screenScaleY = 1.0f;
+            CORE.Window.screenScale = MatrixIdentity();
+        }
+    }
+    else
+    {
+        CORE.Window.screenScaleX = 1.0f;
+        CORE.Window.screenScaleY = 1.0f;
+        CORE.Window.screenScale = MatrixIdentity();
+    }
+    if (width == 0) {
+        width = (int)((float)CORE.Window.defaultScreen.width/CORE.Window.screenScaleX);
+    } else {
+        if (!CORE.Window.fullscreen) 
+        {
+            CORE.Window.screen.width = (int)((float)width/CORE.Window.screenScaleX);
+        } else {
+            CORE.Window.screen.width = width;
+        }
+    }
+    if (height == 0) {
+        height = (int)((float)CORE.Window.defaultScreen.height/CORE.Window.screenScaleY);
+    } else {
+        if (!CORE.Window.fullscreen) 
+        {
+            CORE.Window.screen.height = (int)((float)height/CORE.Window.screenScaleY);
+        } else {
+            CORE.Window.screen.height = height;
+        }
+    }
+    SetMouseScale(1.0f/CORE.Window.screenScaleX, 1.0f/CORE.Window.screenScaleY);
+#else
+#endif
+#endif
+    CORE.Window.render.width = width;
+    CORE.Window.render.height = height;
+}
+
 // Set viewport for a provided width and height
 static void SetupViewport(int width, int height)
 {
+#if defined(PLATFORM_DESKTOP)
+#if !defined(__APPLE__)
+    SetupWindowContentScale(width, height);
+#else
     CORE.Window.render.width = width;
     CORE.Window.render.height = height;
+#endif
+#endif
 
     // Set viewport width and height
     // NOTE: We consider render size and offset in case black bars are required and
@@ -4538,6 +4615,17 @@ static void ErrorCallback(int error, const char *description)
     TRACELOG(LOG_WARNING, "GLFW: Error: %i Description: %s", error, description);
 }
 
+static void WindowContentScaleCallback(GLFWwindow *window, float xscale, float yscale)
+{
+#if defined(PLATFORM_DESKTOP)
+#if defined(_WIN32)
+    CORE.Window.screenScaleX = xscale;
+    CORE.Window.screenScaleY = yscale;
+    SetMouseScale(1.0f/CORE.Window.screenScaleX, 1.0f/CORE.Window.screenScaleY);
+    SetupWindowContentScale(0, 0);
+#endif
+#endif
+}
 
 // GLFW3 WindowSize Callback, runs when window is resizedLastFrame
 // NOTE: Window resizing not allowed by default
@@ -4545,11 +4633,16 @@ static void WindowSizeCallback(GLFWwindow *window, int width, int height)
 {
     SetupViewport(width, height);    // Reset viewport and projection matrix for new size
 
+#if defined(PLATFORM_DESKTOP)
+#if !defined(__APPLE__)
+#else
     // Set current screen size
     CORE.Window.screen.width = width;
     CORE.Window.screen.height = height;
     CORE.Window.currentFbo.width = width;
     CORE.Window.currentFbo.height = height;
+#endif
+#endif
 
     // NOTE: Postprocessing texture is not scaled to new size
 
