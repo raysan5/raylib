@@ -378,12 +378,17 @@ typedef struct CoreData {
 
         Point position;                     // Window position on screen (required on fullscreen toggle)
         Size display;                       // Display width and height (monitor, device-screen, LCD, ...)
-        Size defaultScreen;                 // Default screen width and height (used render area)
         Size screen;                        // Screen width and height (used render area)
         Size currentFbo;                    // Current render width and height, it could change on BeginTextureMode()
         Size render;                        // Framebuffer width and height (render area, including black bars if required)
         Point renderOffset;                 // Offset from render area (must be divided by 2)
         Matrix screenScale;                 // Matrix to scale screen (framebuffer rendering)
+
+        Size defaultScreen;                 // Default screen width and height (used render area)
+        Size defaultRender;                 // Default framebuffer width and height (render area, including black bars if required)
+        float defaultScreenScaleX;          // Default scale of X axis for frambuffer rendering
+        float defaultScreenScaleY;          // Default scale of Y axis for frambuffer rendering
+        Matrix defaultScreenScale;          // Defaukt matrix to scale screen (framebuffer rendering)
 
         float screenScaleX;                 // Scale of X axis for frambuffer rendering
         float screenScaleY;                 // Scale of Y axis for frambuffer rendering
@@ -510,7 +515,6 @@ extern void UnloadFontDefault(void);        // [Module: text] Unloads default fo
 static bool InitGraphicsDevice(int width, int height);  // Initialize graphics device
 static void SetupFramebuffer(int width, int height);    // Setup main framebuffer
 static void SetupViewport(int width, int height);       // Set viewport for a provided width and height
-static void SetupWindowContentScale(int width, int height);              // Set window content scale for standard and high DPI displays
 static void SwapBuffers(void);                          // Copy back buffer to front buffers
 
 static void InitTimer(void);                            // Initialize timer
@@ -518,6 +522,8 @@ static void Wait(float ms);                             // Wait for some millise
 
 static int GetGamepadButton(int button);                // Get gamepad button generic to all platforms
 static void PollInputEvents(void);                      // Register user events
+
+static void SetupWindowContentScale(int width, int height);  // Set window content scale for standard and high DPI displays
 
 #if defined(PLATFORM_DESKTOP) || defined(PLATFORM_WEB)
 static void ErrorCallback(int error, const char *description);                             // GLFW3 Error Callback, runs on GLFW3 error
@@ -1025,8 +1031,15 @@ void ToggleFullscreen(void)
 {
 #if defined(PLATFORM_DESKTOP)
     // NOTE: glfwSetWindowMonitor() doesn't work properly (bugs)
-    if (!CORE.Window.fullscreen)
+    CORE.Window.fullscreen = !CORE.Window.fullscreen;          // Toggle fullscreen flag
+    CORE.Window.flags ^= FLAG_FULLSCREEN_MODE;
+    if (CORE.Window.fullscreen)
     {
+        CORE.Window.defaultScreenScaleX = CORE.Window.screenScaleX;
+        CORE.Window.defaultScreenScaleY = CORE.Window.screenScaleY;
+        CORE.Window.defaultScreen = CORE.Window.screen;
+        CORE.Window.defaultRender = CORE.Window.render;
+        CORE.Window.defaultScreenScale = CORE.Window.screenScale;
         // Store previous window position (in case we exit fullscreen)
         glfwGetWindowPos(CORE.Window.handle, &CORE.Window.position.x, &CORE.Window.position.y);
 
@@ -1034,21 +1047,46 @@ void ToggleFullscreen(void)
         if (!monitor)
         {
             TRACELOG(LOG_WARNING, "GLFW: Failed to get monitor");
-            glfwSetWindowMonitor(CORE.Window.handle, glfwGetPrimaryMonitor(), 0, 0, CORE.Window.screen.width, CORE.Window.screen.height, GLFW_DONT_CARE);
-            return;
+            monitor = glfwGetPrimaryMonitor();
+
+            Vector2 windowPos = GetWindowPosition();
+
+            int monitorCount = 0;
+            GLFWmonitor **monitors = glfwGetMonitors(&monitorCount);
+
+            // Check window monitor
+            for (int i = 0; i < monitorCount; i++)
+            {
+                int xpos, ypos, width, height;
+                glfwGetMonitorWorkarea(monitors[i], &xpos, &ypos, &width, &height);
+
+                if ((windowPos.x >= xpos) && (windowPos.x < xpos + width) &&
+                    (windowPos.y >= ypos) && (windowPos.y < ypos + height))
+                {
+                    monitor = monitors[i];
+                    break;
+                }
+            }
         }
 
         const GLFWvidmode *mode = glfwGetVideoMode(monitor);
+        CORE.Window.screenScaleX = 1.0f;
+        CORE.Window.screenScaleY = 1.0f;
+        CORE.Window.screenScale = MatrixIdentity();
         glfwSetWindowMonitor(CORE.Window.handle, monitor, 0, 0, CORE.Window.screen.width, CORE.Window.screen.height, mode->refreshRate);
 
         // Try to enable GPU V-Sync, so frames are limited to screen refresh rate (60Hz -> 60 FPS)
         // NOTE: V-Sync can be enabled by graphic driver configuration
         if (CORE.Window.flags & FLAG_VSYNC_HINT) glfwSwapInterval(1);
     }
-    else glfwSetWindowMonitor(CORE.Window.handle, NULL, CORE.Window.position.x, CORE.Window.position.y, CORE.Window.screen.width, CORE.Window.screen.height, GLFW_DONT_CARE);
-
-    CORE.Window.fullscreen = !CORE.Window.fullscreen;          // Toggle fullscreen flag
-    CORE.Window.flags ^= FLAG_FULLSCREEN_MODE;
+    else {
+        CORE.Window.screenScaleX = CORE.Window.defaultScreenScaleX;
+        CORE.Window.screenScaleY = CORE.Window.defaultScreenScaleY;
+        CORE.Window.screen = CORE.Window.defaultScreen;
+        CORE.Window.render = CORE.Window.defaultRender;
+        CORE.Window.screenScale = CORE.Window.defaultScreenScale;
+        glfwSetWindowMonitor(CORE.Window.handle, NULL, CORE.Window.position.x, CORE.Window.position.y, (int)((float)CORE.Window.screen.width * CORE.Window.screenScaleX), (int)((float)CORE.Window.screen.height * CORE.Window.screenScaleY), GLFW_DONT_CARE);
+    }
 
 #endif
 #if defined(PLATFORM_WEB)
@@ -4069,7 +4107,7 @@ static void SetupWindowContentScale(int width, int height)
         CORE.Window.screenScale = MatrixIdentity();
     }
     if (width == 0) {
-        width = (int)((float)CORE.Window.defaultScreen.width/CORE.Window.screenScaleX);
+        width = (int)(((float)CORE.Window.defaultScreen.width)/CORE.Window.screenScaleX);
     } else {
         if (!CORE.Window.fullscreen) 
         {
@@ -4079,7 +4117,7 @@ static void SetupWindowContentScale(int width, int height)
         }
     }
     if (height == 0) {
-        height = (int)((float)CORE.Window.defaultScreen.height/CORE.Window.screenScaleY);
+        height = (int)(((float)CORE.Window.defaultScreen.height)/CORE.Window.screenScaleY);
     } else {
         if (!CORE.Window.fullscreen) 
         {
@@ -4140,13 +4178,13 @@ static void SetupFramebuffer(int width, int height)
         if (widthRatio <= heightRatio)
         {
             CORE.Window.render.width = CORE.Window.display.width;
-            CORE.Window.render.height = (int)round((float)CORE.Window.screen.height*widthRatio);
+            CORE.Window.render.height = (int)((float)CORE.Window.screen.height*widthRatio);
             CORE.Window.renderOffset.x = 0;
             CORE.Window.renderOffset.y = (CORE.Window.display.height - CORE.Window.render.height);
         }
         else
         {
-            CORE.Window.render.width = (int)round((float)CORE.Window.screen.width*heightRatio);
+            CORE.Window.render.width = (int)((float)CORE.Window.screen.width*heightRatio);
             CORE.Window.render.height = CORE.Window.display.height;
             CORE.Window.renderOffset.x = (CORE.Window.display.width - CORE.Window.render.width);
             CORE.Window.renderOffset.y = 0;
@@ -4195,6 +4233,7 @@ static void SetupFramebuffer(int width, int height)
     }
     else
     {
+        // SetupWindowContentScale(width, height); or SetupViewport(width, height); 
         CORE.Window.render.width = CORE.Window.screen.width;
         CORE.Window.render.height = CORE.Window.screen.height;
         CORE.Window.renderOffset.x = 0;
@@ -4619,10 +4658,13 @@ static void WindowContentScaleCallback(GLFWwindow *window, float xscale, float y
 {
 #if defined(PLATFORM_DESKTOP)
 #if defined(_WIN32)
-    CORE.Window.screenScaleX = xscale;
-    CORE.Window.screenScaleY = yscale;
-    SetMouseScale(1.0f/CORE.Window.screenScaleX, 1.0f/CORE.Window.screenScaleY);
-    SetupWindowContentScale(0, 0);
+    if (!CORE.Window.fullscreen)
+    {
+        CORE.Window.screenScaleX = xscale;
+        CORE.Window.screenScaleY = yscale;
+        SetMouseScale(1.0f/CORE.Window.screenScaleX, 1.0f/CORE.Window.screenScaleY);
+        SetupWindowContentScale(0, 0);
+    }
 #endif
 #endif
 }
@@ -4631,7 +4673,7 @@ static void WindowContentScaleCallback(GLFWwindow *window, float xscale, float y
 // NOTE: Window resizing not allowed by default
 static void WindowSizeCallback(GLFWwindow *window, int width, int height)
 {
-    SetupViewport(width, height);    // Reset viewport and projection matrix for new size
+    SetupViewport(width, height);
 
 #if defined(PLATFORM_DESKTOP)
 #if !defined(__APPLE__)
