@@ -1035,11 +1035,7 @@ void ToggleFullscreen(void)
     CORE.Window.flags ^= FLAG_FULLSCREEN_MODE;
     if (CORE.Window.fullscreen)
     {
-        CORE.Window.defaultScreenScaleX = CORE.Window.screenScaleX;
-        CORE.Window.defaultScreenScaleY = CORE.Window.screenScaleY;
-        CORE.Window.defaultScreen = CORE.Window.screen;
-        CORE.Window.defaultRender = CORE.Window.render;
-        CORE.Window.defaultScreenScale = CORE.Window.screenScale;
+        SaveWindowScale();
         // Store previous window position (in case we exit fullscreen)
         glfwGetWindowPos(CORE.Window.handle, &CORE.Window.position.x, &CORE.Window.position.y);
 
@@ -1070,9 +1066,7 @@ void ToggleFullscreen(void)
         }
 
         const GLFWvidmode *mode = glfwGetVideoMode(monitor);
-        CORE.Window.screenScaleX = 1.0f;
-        CORE.Window.screenScaleY = 1.0f;
-        CORE.Window.screenScale = MatrixIdentity();
+        SetWindowScale(1.0f);
         glfwSetWindowMonitor(CORE.Window.handle, monitor, 0, 0, CORE.Window.screen.width, CORE.Window.screen.height, mode->refreshRate);
 
         // Try to enable GPU V-Sync, so frames are limited to screen refresh rate (60Hz -> 60 FPS)
@@ -1080,11 +1074,7 @@ void ToggleFullscreen(void)
         if (CORE.Window.flags & FLAG_VSYNC_HINT) glfwSwapInterval(1);
     }
     else {
-        CORE.Window.screenScaleX = CORE.Window.defaultScreenScaleX;
-        CORE.Window.screenScaleY = CORE.Window.defaultScreenScaleY;
-        CORE.Window.screen = CORE.Window.defaultScreen;
-        CORE.Window.render = CORE.Window.defaultRender;
-        CORE.Window.screenScale = CORE.Window.defaultScreenScale;
+        RestoreWindowScale();
         glfwSetWindowMonitor(CORE.Window.handle, NULL, CORE.Window.position.x, CORE.Window.position.y, (int)((float)CORE.Window.screen.width * CORE.Window.screenScaleX), (int)((float)CORE.Window.screen.height * CORE.Window.screenScaleY), GLFW_DONT_CARE);
     }
 
@@ -1127,6 +1117,39 @@ void ToggleFullscreen(void)
 #endif
 #if defined(PLATFORM_ANDROID) || defined(PLATFORM_RPI) || defined(PLATFORM_DRM)
     TRACELOG(LOG_WARNING, "SYSTEM: Failed to toggle to windowed mode");
+#endif
+}
+
+// Set window scale factor
+void SetWindowScale(float scaleFactor)
+{
+#if defined(PLATFORM_DESKTOP)
+    CORE.Window.screenScaleX = scaleFactor;
+    CORE.Window.screenScaleY = scaleFactor;
+    CORE.Window.screenScale = (scaleFactor == 1.0f) ? MatrixIdentity(): MatrixScale(scaleFactor, scaleFactor, 1.0f);
+#endif
+}
+
+// Save window scale to defaults
+void SaveWindowScale()
+{
+#if defined(PLATFORM_DESKTOP)
+    CORE.Window.defaultScreenScaleX = CORE.Window.screenScaleX;
+    CORE.Window.defaultScreenScaleY = CORE.Window.screenScaleY;
+    CORE.Window.defaultScreen = CORE.Window.screen;
+    CORE.Window.defaultRender = CORE.Window.render;
+    CORE.Window.defaultScreenScale = CORE.Window.screenScale;
+#endif
+}
+
+// Load window scale from defaults
+void RestoreWindowScale() {
+#if defined(PLATFORM_DESKTOP)
+    CORE.Window.screenScaleX = CORE.Window.defaultScreenScaleX;
+    CORE.Window.screenScaleY = CORE.Window.defaultScreenScaleY;
+    CORE.Window.screen = CORE.Window.defaultScreen;
+    CORE.Window.render = CORE.Window.defaultRender;
+    CORE.Window.screenScale = CORE.Window.defaultScreenScale;
 #endif
 }
 
@@ -4095,16 +4118,12 @@ static void SetupWindowContentScale(int width, int height)
             glfwGetWindowContentScale(CORE.Window.handle, screenScaleX, screenScaleY);
             CORE.Window.screenScale = MatrixScale(CORE.Window.screenScaleX, CORE.Window.screenScaleY, 1.0f);
         } else {
-            CORE.Window.screenScaleX = 1.0f;
-            CORE.Window.screenScaleY = 1.0f;
-            CORE.Window.screenScale = MatrixIdentity();
+            SetWindowScale(1.0f);
         }
     }
     else
     {
-        CORE.Window.screenScaleX = 1.0f;
-        CORE.Window.screenScaleY = 1.0f;
-        CORE.Window.screenScale = MatrixIdentity();
+        SetWindowScale(1.0f);
     }
     if (width == 0) {
         width = (int)(((float)CORE.Window.defaultScreen.width)/CORE.Window.screenScaleX);
