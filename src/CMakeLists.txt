@@ -18,9 +18,6 @@ if(NOT CMAKE_BUILD_TYPE AND NOT CMAKE_CONFIGURATION_TYPES)
     set_property(CACHE CMAKE_BUILD_TYPE PROPERTY STRINGS "Debug" "Release" "MinSizeRel" "RelWithDebInfo")
 endif()
 
-
-include(GlfwImport)
-
 # Get the sources together
 set(raylib_public_headers
     raylib.h
@@ -39,6 +36,9 @@ set(raylib_sources
     utils.c
     )
 
+include(GlfwImport)
+
+
 if (USE_AUDIO)
     MESSAGE(STATUS "Audio Backend: miniaudio")
     list(APPEND raylib_sources ${CMAKE_CURRENT_SOURCE_DIR}/raudio.c)
@@ -53,7 +53,7 @@ set(LIBS_PRIVATE ${LIBS_PRIVATE} ${OPENAL_LIBRARY})
 if (STATIC)
     MESSAGE(STATUS "Building raylib static library")
     
-    add_library(raylib STATIC ${raylib_sources})
+    add_library(raylib STATIC ${raylib_sources} ${raylib_public_headers})
     add_library(raylib_static ALIAS raylib)
     
     add_test("pkg-config--static" ${PROJECT_SOURCE_DIR}/../cmake/test-pkgconfig.sh --static)
@@ -62,7 +62,7 @@ endif (STATIC)
 
 if (SHARED)
     MESSAGE(STATUS "Building raylib shared library")
-    add_library(raylib SHARED ${raylib_sources})
+    add_library(raylib SHARED ${raylib_sources} ${raylib_public_headers})
     
     if (MSVC)
         target_compile_definitions(raylib
@@ -100,7 +100,7 @@ target_compile_definitions(raylib
 # Registering include directories
 target_include_directories(raylib
                            PUBLIC
-                           $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>
+                           $<INSTALL_INTERFACE:include>
                            $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}>
                            PRIVATE
                            ${CMAKE_CURRENT_SOURCE_DIR}
@@ -111,7 +111,9 @@ target_include_directories(raylib
                            )
 
 # Copy the header files to the build directory
-file(COPY ${raylib_public_headers} DESTINATION ".")
+#file(COPY ${raylib_public_headers} DESTINATION ".")
+
+include(InstallConfigurations)
 
 # Print the flags for the user
 if (DEFINED CMAKE_BUILD_TYPE)
