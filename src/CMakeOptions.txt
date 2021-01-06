@@ -32,6 +32,7 @@ option(SUPPORT_GIF_RECORDING "Allow automatic gif recording of current screen pr
 option(SUPPORT_BUSY_WAIT_LOOP "Use busy wait loop for timing sync instead of a high-resolution timer" OFF)
 option(SUPPORT_EVENTS_WAITING "Wait for events passively (sleeping while no events) instead of polling them actively every frame" OFF)
 option(SUPPORT_HIGH_DPI "Support high DPI displays" OFF)
+option(SUPPORT_DATA_STORAGE "Support for persistent data storage" ON)
 
 # rlgl.h
 option(SUPPORT_VR_SIMULATOR "Support VR simulation functionality (stereo rendering)" ON)
