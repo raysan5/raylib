@@ -6,6 +6,19 @@ enum_option(PLATFORM "Desktop;Web;Android;Raspberry Pi;DRM" "Platform to build f
 
 enum_option(OPENGL_VERSION "OFF;3.3;2.1;1.1;ES 2.0" "Force a specific OpenGL Version?")
 
+# This helps support the case where emsdk toolchain file is used
+# either by setting it with -DCMAKE_TOOLCHAIN_FILE=<path_to_emsdk>/upstream/emscripten/cmake/Modules/Platform/Emscripten.cmake
+# or by using "emcmake cmake -B build -S ." as described in https://emscripten.org/docs/compiling/Building-Projects.html
+if(EMSCRIPTEN)
+    SET(PLATFORM Web CACHE STRING "Forcing PLATFORM_WEB because EMSCRIPTEN was detected")
+endif()
+
+# Configuration options
+option(BUILD_EXAMPLES "Build the examples." ${RAYLIB_IS_MAIN})
+option(ENABLE_ASAN  "Enable AddressSanitizer (ASAN) for debugging (degrades performance)" OFF)
+option(ENABLE_UBSAN "Enable UndefinedBehaviorSanitizer (UBSan) for debugging" OFF)
+option(ENABLE_MSAN "Enable MemorySanitizer (MSan) for debugging (not recommended to run with ASAN)" OFF)
+
 # Shared library is always PIC. Static library should be PIC too if linked into a shared library
 option(WITH_PIC "Compile static library as position-independent code" OFF)
 option(SHARED "Build raylib as a dynamic library" OFF)

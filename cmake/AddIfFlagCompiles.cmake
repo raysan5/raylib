@@ -1,4 +1,7 @@
 include(CheckCCompilerFlag)
+
+MESSAGE(STATUS "Pass")
+
 function(add_if_flag_compiles flag)
   CHECK_C_COMPILER_FLAG("${flag}" COMPILER_HAS_THOSE_TOGGLES)
   set(outcome "Failed")
