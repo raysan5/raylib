@@ -414,7 +414,7 @@ typedef struct CoreData {
 #if defined(PLATFORM_RPI) || defined(PLATFORM_DRM)
             int defaultMode;                // Default keyboard mode
             struct termios defaultSettings; // Default keyboard settings
-			int fd;            				// File descriptor for the evdev keyboard
+            int fd;                         // File descriptor for the evdev keyboard
 #endif
         } Keyboard;
         struct {
