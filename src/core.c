@@ -1044,27 +1044,8 @@ void ToggleFullscreen(void)
         {
             TRACELOG(LOG_WARNING, "GLFW: Failed to get monitor");
             monitor = glfwGetPrimaryMonitor();
-
-            Vector2 windowPos = GetWindowPosition();
-
-            int monitorCount = 0;
-            GLFWmonitor **monitors = glfwGetMonitors(&monitorCount);
-
-            // Check window monitor
-            for (int i = 0; i < monitorCount; i++)
-            {
-                int xpos, ypos, width, height;
-                glfwGetMonitorWorkarea(monitors[i], &xpos, &ypos, &width, &height);
-
-                if ((windowPos.x >= xpos) && (windowPos.x < xpos + width) &&
-                    (windowPos.y >= ypos) && (windowPos.y < ypos + height))
-                {
-                    monitor = monitors[i];
-                    break;
-                }
-            }
         }
-
+        
         const GLFWvidmode *mode = glfwGetVideoMode(monitor);
         SetWindowScale(1.0f);
         glfwSetWindowMonitor(CORE.Window.handle, monitor, 0, 0, CORE.Window.screen.width, CORE.Window.screen.height, mode->refreshRate);
@@ -1073,9 +1054,10 @@ void ToggleFullscreen(void)
         // NOTE: V-Sync can be enabled by graphic driver configuration
         if (CORE.Window.flags & FLAG_VSYNC_HINT) glfwSwapInterval(1);
     }
-    else {
+    else
+    {
         RestoreWindowScale();
-        glfwSetWindowMonitor(CORE.Window.handle, NULL, CORE.Window.position.x, CORE.Window.position.y, (int)((float)CORE.Window.screen.width * CORE.Window.screenScaleX), (int)((float)CORE.Window.screen.height * CORE.Window.screenScaleY), GLFW_DONT_CARE);
+        glfwSetWindowMonitor(CORE.Window.handle, NULL, CORE.Window.position.x, CORE.Window.position.y, (int)(((float)CORE.Window.screen.width) * CORE.Window.screenScaleX), (int)(((float)CORE.Window.screen.height) * CORE.Window.screenScaleY), GLFW_DONT_CARE);
     }
 
 #endif
@@ -1124,9 +1106,11 @@ void ToggleFullscreen(void)
 void SetWindowScale(float scaleFactor)
 {
 #if defined(PLATFORM_DESKTOP)
+#if !defined(__APPLE__)
     CORE.Window.screenScaleX = scaleFactor;
     CORE.Window.screenScaleY = scaleFactor;
     CORE.Window.screenScale = (scaleFactor == 1.0f) ? MatrixIdentity(): MatrixScale(scaleFactor, scaleFactor, 1.0f);
+#endif
 #endif
 }
 
@@ -1134,22 +1118,26 @@ void SetWindowScale(float scaleFactor)
 void SaveWindowScale()
 {
 #if defined(PLATFORM_DESKTOP)
+#if !defined(__APPLE__)
     CORE.Window.defaultScreenScaleX = CORE.Window.screenScaleX;
     CORE.Window.defaultScreenScaleY = CORE.Window.screenScaleY;
     CORE.Window.defaultScreen = CORE.Window.screen;
     CORE.Window.defaultRender = CORE.Window.render;
     CORE.Window.defaultScreenScale = CORE.Window.screenScale;
 #endif
+#endif
 }
 
 // Load window scale from defaults
 void RestoreWindowScale() {
 #if defined(PLATFORM_DESKTOP)
+#if !defined(__APPLE__)
     CORE.Window.screenScaleX = CORE.Window.defaultScreenScaleX;
     CORE.Window.screenScaleY = CORE.Window.defaultScreenScaleY;
     CORE.Window.screen = CORE.Window.defaultScreen;
     CORE.Window.render = CORE.Window.defaultRender;
     CORE.Window.screenScale = CORE.Window.defaultScreenScale;
+#endif
 #endif
 }
 
@@ -4117,7 +4105,9 @@ static void SetupWindowContentScale(int width, int height)
             float* screenScaleY = &(CORE.Window.screenScaleY);
             glfwGetWindowContentScale(CORE.Window.handle, screenScaleX, screenScaleY);
             CORE.Window.screenScale = MatrixScale(CORE.Window.screenScaleX, CORE.Window.screenScaleY, 1.0f);
-        } else {
+        }
+        else
+        {
             SetWindowScale(1.0f);
         }
     }
@@ -4125,23 +4115,33 @@ static void SetupWindowContentScale(int width, int height)
     {
         SetWindowScale(1.0f);
     }
-    if (width == 0) {
+    if (width == 0)
+    {
         width = (int)(((float)CORE.Window.defaultScreen.width)/CORE.Window.screenScaleX);
-    } else {
+    }
+    else
+    {
         if (!CORE.Window.fullscreen) 
         {
-            CORE.Window.screen.width = (int)((float)width/CORE.Window.screenScaleX);
-        } else {
+            CORE.Window.screen.width = (int)(((float)width)/CORE.Window.screenScaleX);
+        }
+        else
+        {
             CORE.Window.screen.width = width;
         }
     }
-    if (height == 0) {
+    if (height == 0)
+    {
         height = (int)(((float)CORE.Window.defaultScreen.height)/CORE.Window.screenScaleY);
-    } else {
+    }
+    else
+    {
         if (!CORE.Window.fullscreen) 
         {
-            CORE.Window.screen.height = (int)((float)height/CORE.Window.screenScaleY);
-        } else {
+            CORE.Window.screen.height = (int)(((float)height)/CORE.Window.screenScaleY);
+        }
+        else
+        {
             CORE.Window.screen.height = height;
         }
     }
@@ -4149,21 +4149,13 @@ static void SetupWindowContentScale(int width, int height)
 #else
 #endif
 #endif
-    CORE.Window.render.width = width;
-    CORE.Window.render.height = height;
 }
 
 // Set viewport for a provided width and height
 static void SetupViewport(int width, int height)
 {
-#if defined(PLATFORM_DESKTOP)
-#if !defined(__APPLE__)
-    SetupWindowContentScale(width, height);
-#else
     CORE.Window.render.width = width;
     CORE.Window.render.height = height;
-#endif
-#endif
 
     // Set viewport width and height
     // NOTE: We consider render size and offset in case black bars are required and
@@ -4252,7 +4244,6 @@ static void SetupFramebuffer(int width, int height)
     }
     else
     {
-        // SetupWindowContentScale(width, height); or SetupViewport(width, height); 
         CORE.Window.render.width = CORE.Window.screen.width;
         CORE.Window.render.height = CORE.Window.screen.height;
         CORE.Window.renderOffset.x = 0;
@@ -4676,13 +4667,15 @@ static void ErrorCallback(int error, const char *description)
 static void WindowContentScaleCallback(GLFWwindow *window, float xscale, float yscale)
 {
 #if defined(PLATFORM_DESKTOP)
-#if defined(_WIN32)
+#if !defined(__APPLE__)
     if (!CORE.Window.fullscreen)
     {
         CORE.Window.screenScaleX = xscale;
         CORE.Window.screenScaleY = yscale;
+        CORE.Window.screenScale = MatrixScale(CORE.Window.screenScaleX, CORE.Window.screenScaleY, 1.0f);
+        CORE.Window.render.width = (int)((float)CORE.Window.defaultScreen.width * CORE.Window.screenScaleX);
+        CORE.Window.render.height = (int)((float)CORE.Window.defaultScreen.height * CORE.Window.screenScaleY);
         SetMouseScale(1.0f/CORE.Window.screenScaleX, 1.0f/CORE.Window.screenScaleY);
-        SetupWindowContentScale(0, 0);
     }
 #endif
 #endif
@@ -4692,6 +4685,7 @@ static void WindowContentScaleCallback(GLFWwindow *window, float xscale, float y
 // NOTE: Window resizing not allowed by default
 static void WindowSizeCallback(GLFWwindow *window, int width, int height)
 {
+    SetupWindowContentScale(width, height);
     SetupViewport(width, height);
 
 #if defined(PLATFORM_DESKTOP)
