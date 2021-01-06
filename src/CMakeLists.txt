@@ -110,8 +110,8 @@ target_include_directories(raylib
                            ${OPENAL_INCLUDE_DIR}
                            )
 
-# Copy the header files to the build directory
-#file(COPY ${raylib_public_headers} DESTINATION ".")
+# Copy the header files to the build directory for convenience
+file(COPY ${raylib_public_headers} DESTINATION "include")
 
 include(InstallConfigurations)
 
