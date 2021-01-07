@@ -15,9 +15,12 @@ endif()
 include(CompilerFlags)
 
 # Registers build options that are exposed to cmake
+include(CMakeOptions.txt)
+
+# Checks a few environment and compiler configurations
 include(BuildOptions)
 
-# Main sources directory
+# Main sources directory (the second parameter sets the output directory name to raylib)
 add_subdirectory(src raylib)
 
 if (${BUILD_EXAMPLES})

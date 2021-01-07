@@ -36,12 +36,13 @@ set(raylib_sources
     utils.c
     )
 
+# cmake/GlfwImport.cmake handles the details around the inclusion of glfw
 include(GlfwImport)
 
 
 if (USE_AUDIO)
     MESSAGE(STATUS "Audio Backend: miniaudio")
-    list(APPEND raylib_sources ${CMAKE_CURRENT_SOURCE_DIR}/raudio.c)
+    list(APPEND raylib_sources raudio.c)
 else ()
     MESSAGE(STATUS "Audio Backend: None (-DUSE_AUDIO=OFF)")
 endif ()
