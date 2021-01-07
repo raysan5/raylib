@@ -4,7 +4,7 @@ project(raylib)
 # Directory for easier includes
 set(CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/cmake)
 
-# TRUE if this project is build as a main project and not as a dependency
+# RAYLIB_IS_MAIN determines whether the project is being used from root, or as a dependency.
 if ("${CMAKE_SOURCE_DIR}" STREQUAL "${CMAKE_CURRENT_SOURCE_DIR}")
   set(RAYLIB_IS_MAIN TRUE)
 else()
