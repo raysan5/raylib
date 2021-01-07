@@ -21,6 +21,8 @@
 #cmakedefine SUPPORT_HIGH_DPI 1
 // Support CompressData() and DecompressData() functions
 #cmakedefine SUPPORT_COMPRESSION_API 1
+// Support for persistent data storage
+#cmakedefine SUPPORT_DATA_STORAGE 1
 
 // rlgl.h
 // Support VR simulation functionality (stereo rendering)
