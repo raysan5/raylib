@@ -150,6 +150,14 @@
     #include "external/msf_gif.h"   // Support GIF recording
 #endif
 
+#if defined(SUPPORT_COMPRESSION_API)
+    #define SINFL_IMPLEMENTATION
+    #include "external/sinfl.h"
+    
+    #define SDEFL_IMPLEMENTATION
+    #include "external/sdefl.h"
+#endif
+
 #include <stdlib.h>                 // Required for: srand(), rand(), atexit()
 #include <stdio.h>                  // Required for: sprintf() [Used in OpenURL()]
 #include <string.h>                 // Required for: strrchr(), strcmp(), strlen()
@@ -2558,8 +2566,13 @@ unsigned char *CompressData(unsigned char *data, int dataLength, int *compDataLe
     unsigned char *compData = NULL;
 
 #if defined(SUPPORT_COMPRESSION_API)
-    // TODO: WARNING: This function actually codes (and compresses) a valid zlib stream
-    compData = stbi_zlib_compress(data, dataLength, compDataLength, COMPRESSION_QUALITY_DEFLATE);
+    // Compress data and generate a valid DEFLATE stream
+    struct sdefl sdefl = { 0 };
+    int bounds = sdefl_bound(dataLength);
+    compData = (unsigned char *)RL_CALLOC(bounds, 1);
+    *compDataLength = sdeflate(&sdefl, compData, data, dataLength, COMPRESSION_QUALITY_DEFLATE);   // Compression level 8, same as stbwi
+    
+    TraceLog(LOG_INFO, "SYSTEM: Data compressed: Original size: %i -> Comp. size: %i\n", dataLength, compDataLength);
 #endif
 
     return compData;
@@ -2571,8 +2584,13 @@ unsigned char *DecompressData(unsigned char *compData, int compDataLength, int *
     char *data = NULL;
 
 #if defined(SUPPORT_COMPRESSION_API)
-    // TODO: WARNING: This function actually decodes (and decompresses) a valid zlib stream
-    data = stbi_zlib_decode_malloc((char *)compData, compDataLength, dataLength);
+    // Decompress data from a valid DEFLATE stream
+    data = RL_CALLOC(MAX_DECOMPRESSION_SIZE*1024*1024, 0);
+    int length = sinflate(data, compData, compDataLength);
+    RL_REALLOC(data, length);
+    *dataLength = length;
+
+    TraceLog(LOG_INFO, "SYSTEM: Data compressed: Original size: %i -> Comp. size: %i\n", dataLength, compDataLength);
 #endif
 
     return (unsigned char *)data;

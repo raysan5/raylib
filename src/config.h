@@ -77,6 +77,8 @@
 
 #define STORAGE_DATA_FILE  "storage.data"       // Automatic storage filename
 
+#define MAX_DECOMPRESSION_SIZE        64        // Max size allocated for decompression in MB
+
 
 //------------------------------------------------------------------------------------
 // Module: rlgl - Configuration Flags
