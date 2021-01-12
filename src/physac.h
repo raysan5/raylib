@@ -125,10 +125,71 @@
     } Vector2;
 #endif
 
+//----------------------------------------------------------------------------------
+// Data Types Structure Definition
+//----------------------------------------------------------------------------------
+
 typedef enum PhysicsShapeType { PHYSICS_CIRCLE, PHYSICS_POLYGON } PhysicsShapeType;
 
 // Previously defined to be used in PhysicsShape struct as circular dependencies
 typedef struct PhysicsBodyData *PhysicsBody;
+
+// Matrix2x2 type (used for polygon shape rotation matrix)
+typedef struct Matrix2x2 {
+    float m00;
+    float m01;
+    float m10;
+    float m11;
+} Matrix2x2;
+
+typedef struct PolygonData {
+    unsigned int vertexCount;                   // Current used vertex and normals count
+    Vector2 positions[PHYSAC_MAX_VERTICES];     // Polygon vertex positions vectors
+    Vector2 normals[PHYSAC_MAX_VERTICES];       // Polygon vertex normals vectors
+} PolygonData;
+
+typedef struct PhysicsShape {
+    PhysicsShapeType type;                      // Physics shape type (circle or polygon)
+    PhysicsBody body;                           // Shape physics body reference
+    float radius;                               // Circle shape radius (used for circle shapes)
+    Matrix2x2 transform;                        // Vertices transform matrix 2x2
+    PolygonData vertexData;                     // Polygon shape vertices position and normals data (just used for polygon shapes)
+} PhysicsShape;
+
+typedef struct PhysicsBodyData {
+    unsigned int id;                            // Reference unique identifier
+    bool enabled;                               // Enabled dynamics state (collisions are calculated anyway)
+    Vector2 position;                           // Physics body shape pivot
+    Vector2 velocity;                           // Current linear velocity applied to position
+    Vector2 force;                              // Current linear force (reset to 0 every step)
+    float angularVelocity;                      // Current angular velocity applied to orient
+    float torque;                               // Current angular force (reset to 0 every step)
+    float orient;                               // Rotation in radians
+    float inertia;                              // Moment of inertia
+    float inverseInertia;                       // Inverse value of inertia
+    float mass;                                 // Physics body mass
+    float inverseMass;                          // Inverse value of mass
+    float staticFriction;                       // Friction when the body has not movement (0 to 1)
+    float dynamicFriction;                      // Friction when the body has movement (0 to 1)
+    float restitution;                          // Restitution coefficient of the body (0 to 1)
+    bool useGravity;                            // Apply gravity force to dynamics
+    bool isGrounded;                            // Physics grounded on other body state
+    bool freezeOrient;                          // Physics rotation constraint
+    PhysicsShape shape;                         // Physics body shape information (type, radius, vertices, normals)
+} PhysicsBodyData;
+
+typedef struct PhysicsManifoldData {
+    unsigned int id;                            // Reference unique identifier
+    PhysicsBody bodyA;                          // Manifold first physics body reference
+    PhysicsBody bodyB;                          // Manifold second physics body reference
+    float penetration;                          // Depth of penetration from collision
+    Vector2 normal;                             // Normal direction vector from 'a' to 'b'
+    Vector2 contacts[2];                        // Points of contact during collision
+    unsigned int contactsCount;                 // Current collision number of contacts
+    float restitution;                          // Mixed restitution during collision
+    float dynamicFriction;                      // Mixed dynamic friction during collision
+    float staticFriction;                       // Mixed static friction during collision
+} PhysicsManifoldData, *PhysicsManifold;
 
 #if defined(__cplusplus)
 extern "C" {                                    // Prevents name mangling of functions
@@ -220,67 +281,6 @@ PHYSACDEF void ClosePhysics(void);                                              
 #define PHYSAC_EPSILON      0.000001f
 #define PHYSAC_K            1.0f/3.0f
 #define PHYSAC_VECTOR_ZERO  (Vector2){ 0.0f, 0.0f }
-
-//----------------------------------------------------------------------------------
-// Data Types Structure Definition
-//----------------------------------------------------------------------------------
-
-// Matrix2x2 type (used for polygon shape rotation matrix)
-typedef struct Matrix2x2 {
-    float m00;
-    float m01;
-    float m10;
-    float m11;
-} Matrix2x2;
-
-typedef struct PolygonData {
-    unsigned int vertexCount;                   // Current used vertex and normals count
-    Vector2 positions[PHYSAC_MAX_VERTICES];     // Polygon vertex positions vectors
-    Vector2 normals[PHYSAC_MAX_VERTICES];       // Polygon vertex normals vectors
-} PolygonData;
-
-typedef struct PhysicsShape {
-    PhysicsShapeType type;                      // Physics shape type (circle or polygon)
-    PhysicsBody body;                           // Shape physics body reference
-    float radius;                               // Circle shape radius (used for circle shapes)
-    Matrix2x2 transform;                        // Vertices transform matrix 2x2
-    PolygonData vertexData;                     // Polygon shape vertices position and normals data (just used for polygon shapes)
-} PhysicsShape;
-
-typedef struct PhysicsBodyData {
-    unsigned int id;                            // Reference unique identifier
-    bool enabled;                               // Enabled dynamics state (collisions are calculated anyway)
-    Vector2 position;                           // Physics body shape pivot
-    Vector2 velocity;                           // Current linear velocity applied to position
-    Vector2 force;                              // Current linear force (reset to 0 every step)
-    float angularVelocity;                      // Current angular velocity applied to orient
-    float torque;                               // Current angular force (reset to 0 every step)
-    float orient;                               // Rotation in radians
-    float inertia;                              // Moment of inertia
-    float inverseInertia;                       // Inverse value of inertia
-    float mass;                                 // Physics body mass
-    float inverseMass;                          // Inverse value of mass
-    float staticFriction;                       // Friction when the body has not movement (0 to 1)
-    float dynamicFriction;                      // Friction when the body has movement (0 to 1)
-    float restitution;                          // Restitution coefficient of the body (0 to 1)
-    bool useGravity;                            // Apply gravity force to dynamics
-    bool isGrounded;                            // Physics grounded on other body state
-    bool freezeOrient;                          // Physics rotation constraint
-    PhysicsShape shape;                         // Physics body shape information (type, radius, vertices, normals)
-} PhysicsBodyData;
-
-typedef struct PhysicsManifoldData {
-    unsigned int id;                            // Reference unique identifier
-    PhysicsBody bodyA;                          // Manifold first physics body reference
-    PhysicsBody bodyB;                          // Manifold second physics body reference
-    float penetration;                          // Depth of penetration from collision
-    Vector2 normal;                             // Normal direction vector from 'a' to 'b'
-    Vector2 contacts[2];                        // Points of contact during collision
-    unsigned int contactsCount;                 // Current collision number of contacts
-    float restitution;                          // Mixed restitution during collision
-    float dynamicFriction;                      // Mixed dynamic friction during collision
-    float staticFriction;                       // Mixed static friction during collision
-} PhysicsManifoldData, *PhysicsManifold;
 
 //----------------------------------------------------------------------------------
 // Global Variables Definition
