@@ -2558,6 +2558,7 @@ unsigned char *CompressData(unsigned char *data, int dataLength, int *compDataLe
     unsigned char *compData = NULL;
 
 #if defined(SUPPORT_COMPRESSION_API)
+    // TODO: WARNING: This function actually codes (and compresses) a valid zlib stream
     compData = stbi_zlib_compress(data, dataLength, compDataLength, COMPRESSION_QUALITY_DEFLATE);
 #endif
 
@@ -2570,6 +2571,7 @@ unsigned char *DecompressData(unsigned char *compData, int compDataLength, int *
     char *data = NULL;
 
 #if defined(SUPPORT_COMPRESSION_API)
+    // TODO: WARNING: This function actually decodes (and decompresses) a valid zlib stream
     data = stbi_zlib_decode_malloc((char *)compData, compDataLength, dataLength);
 #endif
 
