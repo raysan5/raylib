@@ -101,6 +101,15 @@ ifeq ($(PLATFORM),PLATFORM_DRM)
         PLATFORM_OS=LINUX
     endif
 endif
+ifeq ($(PLATFORM),PLATFORM_ANDROID)
+    UNAMEOS=$(shell uname)
+    ifeq ($(UNAMEOS),Linux)
+        PLATFORM_OS=LINUX
+    endif
+    ifeq ($(UNAMEOS),Darwin)
+        PLATFORM_OS=OSX
+    endif
+endif
 
 # RAYLIB_PATH adjustment for different platforms.
 # If using GNU make, we can get the full path to the top of the tree. Windows? BSD?
@@ -388,6 +397,15 @@ OBJS = $(patsubst %.c, %.o, $(PROJECT_SOURCE_FILES))
 # For Android platform we call a custom Makefile.Android
 ifeq ($(PLATFORM),PLATFORM_ANDROID)
     MAKEFILE_PARAMS = -f Makefile.Android 
+    # For Linux and macOS set make and makefile
+    ifeq ($(PLATFORM_OS),LINUX)
+        MAKE = make
+        MAKEFILE_PARAMS = -f Makefile.Android.linux
+    endif
+    ifeq ($(PLATFORM_OS),OSX)
+        MAKE = make
+        MAKEFILE_PARAMS = -f Makefile.Android.macos
+    endif
     export PROJECT_NAME
     export PROJECT_SOURCE_FILES
 else
