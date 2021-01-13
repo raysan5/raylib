@@ -28,7 +28,7 @@
 
 # Define required raylib variables
 PLATFORM               ?= PLATFORM_ANDROID
-RAYLIB_PATH            ?= $(HOME)/raylib_sources.ln
+RAYLIB_PATH            ?= ../../
 
 # Define Android architecture (armeabi-v7a, arm64-v8a, x86, x86-64) and API version
 ANDROID_ARCH           ?= ARM64
@@ -48,9 +48,9 @@ endif
 # no need to define JAVA_HOME , JAVA_BIN in linux environment (binaries are in $PATH)
 #JAVA_HOME              ?= C:/JavaJDK/
 #JAVA_BIN		?= $(JAVA_HOME)/bin/
-ANDROID_HOME            = /opt/android-sdk
+ANDROID_HOME            ?= /opt/android-sdk
 #ANDROID_TOOLCHAIN       = C:/android_toolchain_$(ANDROID_ARCH)_API$(ANDROID_API_VERSION)
-ANDROID_TOOLCHAIN = /opt/android-ndk/toolchains/llvm/prebuilt/linux-x86_64/
+ANDROID_TOOLCHAIN ?= /opt/android-ndk/toolchains/llvm/prebuilt/linux-x86_64/
 
 # find the highest version available of build tools
 ANDROID_BUILD_TOOLS = $(shell ls -1d $(ANDROID_HOME)/build-tools/* | tail -n 1)/
@@ -94,11 +94,10 @@ APP_SCREEN_ORIENTATION ?= landscape
 APP_KEYSTORE_PASS ?= raylib
 
 # Library type used for raylib: STATIC (.a) or SHARED (.so/.dll)
-# attention, ne fonctionne pas avec STATIC (manque la libm quelque part)
-RAYLIB_LIBTYPE ?= SHARED
+RAYLIB_LIBTYPE ?= STATIC
 
 # Library path for libraylib.a/libraylib.so
-RAYLIB_LIB_PATH = $(RAYLIB_PATH)/src/android/
+RAYLIB_LIB_PATH = $(RAYLIB_PATH)/src/
 
 # Shared libs must be added to APK if required
 # NOTE: Generated NativeLoader.java automatically load those libraries
@@ -141,7 +140,7 @@ LDFLAGS += -Wl,--build-id -Wl,--no-undefined -Wl,-z,noexecstack -Wl,-z,relro -Wl
 # Force linking of library module to define symbol
 LDFLAGS += -u ANativeActivity_onCreate
 # Library paths containing required libs
-LDFLAGS += -L. -L$(PROJECT_BUILD_PATH)/obj -L$(PROJECT_BUILD_PATH)/lib/$(ANDROID_ARCH_NAME) -L$(ANDROID_TOOLCHAIN)/sysroot/usr/lib/$(ANDROID_TOOLCHAIN_LIBS)
+LDFLAGS += -L. -L$(PROJECT_BUILD_PATH)/obj -L$(PROJECT_BUILD_PATH)/lib/$(ANDROID_ARCH_NAME)
 
 # Define any libraries to link into executable
 # if you want to link libraries (libname.so or libname.a), use the -lname
