@@ -29,7 +29,7 @@
 
 // Edit to control what features Makefile'd raylib is compiled with
 #if defined(RAYLIB_CMAKE)
-    // Edit CMakeOptions.txt for CMake instead
+    // Edit cmake/RaylibOptions.cmake for CMake instead
     #include "cmake/config.h"
 #else
 
