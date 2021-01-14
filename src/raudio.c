@@ -1966,13 +1966,13 @@ static int SaveWAV(Wave wave, const char *fileName)
     format.sampleRate = wave.sampleRate;
     format.bitsPerSample = wave.sampleSize;
 
-    unsigned char *fileData = NULL;
+    void *fileData = NULL;
     size_t fileDataSize = 0;
     success = drwav_init_memory_write(&wav, &fileData, &fileDataSize, &format, NULL);
     if (success) success = (int)drwav_write_pcm_frames(&wav, wave.sampleCount/wave.channels, wave.data);
     drwav_result result = drwav_uninit(&wav);
 
-    if (result == DRWAV_SUCCESS) success = SaveFileData(fileName, fileData, (unsigned int)fileDataSize);
+    if (result == DRWAV_SUCCESS) success = SaveFileData(fileName, (unsigned char *)fileData, (unsigned int)fileDataSize);
 
     drwav_free(fileData, NULL);
 
