@@ -2585,7 +2585,7 @@ unsigned char *DecompressData(unsigned char *compData, int compDataLength, int *
 
 #if defined(SUPPORT_COMPRESSION_API)
     // Decompress data from a valid DEFLATE stream
-    data = RL_CALLOC(MAX_DECOMPRESSION_SIZE*1024*1024, 0);
+    data = RL_CALLOC(MAX_DECOMPRESSION_SIZE*1024*1024, 1);
     int length = sinflate(data, compData, compDataLength);
     RL_REALLOC(data, length);
     *dataLength = length;
