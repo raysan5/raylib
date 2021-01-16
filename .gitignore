@@ -82,7 +82,7 @@ DerivedData/
 
 # Jetbrains project
 .idea/
-cmake-build-debug/
+cmake-build-*/
 
 # CMake stuff
 CMakeCache.txt
