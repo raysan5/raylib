@@ -28,7 +28,6 @@ if (APPLE AND NOT CMAKE_SYSTEM STRLESS "Darwin-18.0.0")
   add_definitions(-DGL_SILENCE_DEPRECATION)
   MESSAGE(AUTHOR_WARNING "OpenGL is deprecated starting with macOS 10.14 (Mojave)!")
 endif()
-list(REMOVE_ITEM example_sources ${CMAKE_CURRENT_SOURCE_DIR}/others/rlgl_standalone.c)
 
 include(CheckIncludeFile)
 CHECK_INCLUDE_FILE("stdatomic.h" HAVE_STDATOMIC_H)
@@ -118,20 +117,6 @@ foreach(example_source ${example_sources})
     set_target_properties(${example_name} PROPERTIES LINK_FLAGS "--preload-file ${resources_dir}")
   endif()
 endforeach()
-
-if (${PLATFORM} MATCHES "Desktop")
-  # rlgl_standalone can't be linked with raylib because of duplicate rlgl symbols
-  foreach (example_source "others/rlgl_standalone.c")
-    # Create the basename for the example
-    get_filename_component(example_name ${example_source} NAME)
-    string(REPLACE ".c" "" example_name ${example_name})
-    add_executable(${example_name} ${example_source})
-    add_dependencies(${example_name} raylib)
-    target_link_libraries(${example_name} ${raylib_LDFLAGS})
-    target_include_directories(${example_name} PRIVATE ${raylib_INCLUDE_DIRS})
-
-  endforeach()
-endif()
 
 # Copy all of the resource files to the destination
 file(COPY ${example_resources} DESTINATION "resources/")

@@ -6,6 +6,12 @@ enum_option(PLATFORM "Desktop;Web;Android;Raspberry Pi;DRM" "Platform to build f
 
 enum_option(OPENGL_VERSION "OFF;3.3;2.1;1.1;ES 2.0" "Force a specific OpenGL Version?")
 
+# Configuration options
+option(BUILD_EXAMPLES "Build the examples." ${RAYLIB_IS_MAIN})
+option(ENABLE_ASAN  "Enable AddressSanitizer (ASAN) for debugging (degrades performance)" OFF)
+option(ENABLE_UBSAN "Enable UndefinedBehaviorSanitizer (UBSan) for debugging" OFF)
+option(ENABLE_MSAN "Enable MemorySanitizer (MSan) for debugging (not recommended to run with ASAN)" OFF)
+
 # Shared library is always PIC. Static library should be PIC too if linked into a shared library
 option(WITH_PIC "Compile static library as position-independent code" OFF)
 option(SHARED "Build raylib as a dynamic library" OFF)
@@ -80,36 +86,3 @@ option(SUPPORT_FILEFORMAT_FLAC "Support loading FLAC for sound" ${OFF})
 
 # utils.c
 option(SUPPORT_TRACELOG "Show TraceLog() output messages. NOTE: By default LOG_DEBUG traces not shown" ON)
-
-if(NOT (STATIC OR SHARED))
-  message(FATAL_ERROR "Nothing to do if both -DSHARED=OFF and -DSTATIC=OFF...")
-endif()
-
-if (DEFINED BUILD_SHARED_LIBS)
-  set(SHARED ${BUILD_SHARED_LIBS})
-  if (${BUILD_SHARED_LIBS})
-    set(STATIC OFF)
-  else()
-    set(STATIC ON)
-  endif()
-endif()
-if(DEFINED SHARED_RAYLIB)
-  set(SHARED ${SHARED_RAYLIB})
-  message(DEPRECATION "-DSHARED_RAYLIB is deprecated. Please use -DSHARED instead.")
-endif()
-if(DEFINED STATIC_RAYLIB)
-  set(STATIC ${STATIC_RAYLIB})
-  message(DEPRECATION "-DSTATIC_RAYLIB is deprecated. Please use -DSTATIC instead.")
-endif()
-
-if(${PLATFORM} MATCHES "Desktop" AND APPLE)
-  if(MACOS_FATLIB)
-      if (CMAKE_OSX_ARCHITECTURES)
-          message(FATAL_ERROR "User supplied -DCMAKE_OSX_ARCHITECTURES overrides -DMACOS_FATLIB=ON")
-      else()
-          set(CMAKE_OSX_ARCHITECTURES "x86_64;i386")
-      endif()
-  endif()
-endif()
-
-# vim: ft=cmake

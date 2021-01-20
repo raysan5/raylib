@@ -838,30 +838,6 @@ void DrawText(const char *text, int posX, int posY, int fontSize, Color color)
     }
 }
 
-// Draw one character (codepoint)
-void DrawTextCodepoint(Font font, int codepoint, Vector2 position, float fontSize, Color tint)
-{
-    // Character index position in sprite font
-    // NOTE: In case a codepoint is not available in the font, index returned points to '?'
-    int index = GetGlyphIndex(font, codepoint);
-    float scaleFactor = fontSize/font.baseSize;     // Character quad scaling factor
-
-    // Character destination rectangle on screen
-    // NOTE: We consider charsPadding on drawing
-    Rectangle dstRec = { position.x + font.chars[index].offsetX*scaleFactor - (float)font.charsPadding*scaleFactor,
-                      position.y + font.chars[index].offsetY*scaleFactor - (float)font.charsPadding*scaleFactor,
-                      (font.recs[index].width + 2.0f*font.charsPadding)*scaleFactor,
-                      (font.recs[index].height + 2.0f*font.charsPadding)*scaleFactor };
-
-    // Character source rectangle from font texture atlas
-    // NOTE: We consider chars padding when drawing, it could be required for outline/glow shader effects
-    Rectangle srcRec = { font.recs[index].x - (float)font.charsPadding, font.recs[index].y - (float)font.charsPadding,
-                         font.recs[index].width + 2.0f*font.charsPadding, font.recs[index].height + 2.0f*font.charsPadding };
-
-    // Draw the character texture on the screen
-    DrawTexturePro(font.texture, srcRec, dstRec, (Vector2){ 0, 0 }, 0.0f, tint);
-}
-
 // Draw text using Font
 // NOTE: chars spacing is NOT proportional to fontSize
 void DrawTextEx(Font font, const char *text, Vector2 position, float fontSize, float spacing, Color tint)
@@ -915,7 +891,7 @@ void DrawTextRec(Font font, const char *text, Rectangle rec, float fontSize, flo
 // Draw text using font inside rectangle limits with support for text selection
 void DrawTextRecEx(Font font, const char *text, Rectangle rec, float fontSize, float spacing, bool wordWrap, Color tint, int selectStart, int selectLength, Color selectTint, Color selectBackTint)
 {
-    int length = TextLength(text);      // Total length in bytes of the text, scanned by codepoints in loop
+    int length = TextLength(text);  // Total length in bytes of the text, scanned by codepoints in loop
 
     int textOffsetY = 0;            // Offset between lines (on line break '\n')
     float textOffsetX = 0.0f;       // Offset X to next character to draw
@@ -1041,6 +1017,30 @@ void DrawTextRecEx(Font font, const char *text, Rectangle rec, float fontSize, f
 
         textOffsetX += glyphWidth;
     }
+}
+
+// Draw one character (codepoint)
+void DrawTextCodepoint(Font font, int codepoint, Vector2 position, float fontSize, Color tint)
+{
+    // Character index position in sprite font
+    // NOTE: In case a codepoint is not available in the font, index returned points to '?'
+    int index = GetGlyphIndex(font, codepoint);
+    float scaleFactor = fontSize/font.baseSize;     // Character quad scaling factor
+
+    // Character destination rectangle on screen
+    // NOTE: We consider charsPadding on drawing
+    Rectangle dstRec = { position.x + font.chars[index].offsetX*scaleFactor - (float)font.charsPadding*scaleFactor,
+                      position.y + font.chars[index].offsetY*scaleFactor - (float)font.charsPadding*scaleFactor,
+                      (font.recs[index].width + 2.0f*font.charsPadding)*scaleFactor,
+                      (font.recs[index].height + 2.0f*font.charsPadding)*scaleFactor };
+
+    // Character source rectangle from font texture atlas
+    // NOTE: We consider chars padding when drawing, it could be required for outline/glow shader effects
+    Rectangle srcRec = { font.recs[index].x - (float)font.charsPadding, font.recs[index].y - (float)font.charsPadding,
+                         font.recs[index].width + 2.0f*font.charsPadding, font.recs[index].height + 2.0f*font.charsPadding };
+
+    // Draw the character texture on the screen
+    DrawTexturePro(font.texture, srcRec, dstRec, (Vector2){ 0, 0 }, 0.0f, tint);
 }
 
 // Measure string width for default font
