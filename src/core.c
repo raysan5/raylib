@@ -2353,7 +2353,7 @@ const char *GetFileName(const char *filePath)
     const char *fileName = NULL;
     if (filePath != NULL) fileName = strprbrk(filePath, "\\/");
 
-    if (!fileName || (fileName == filePath)) return filePath;
+    if (!fileName) return filePath;
 
     return fileName + 1;
 }
@@ -2399,9 +2399,9 @@ const char *GetDirectoryPath(const char *filePath)
     static char dirPath[MAX_FILEPATH_LENGTH];
     memset(dirPath, 0, MAX_FILEPATH_LENGTH);
 
-    // In case provided path does not contains a root drive letter (C:\, D:\),
+    // In case provided path does not contain a root drive letter (C:\, D:\) nor leading path separator (\, /),
     // we add the current directory path to dirPath
-    if (filePath[1] != ':')
+    if (filePath[1] != ':' && filePath[0] != '\\' && filePath[0] != '/')
     {
         // For security, we set starting path to current directory,
         // obtained path will be concated to this
@@ -2412,9 +2412,18 @@ const char *GetDirectoryPath(const char *filePath)
     lastSlash = strprbrk(filePath, "\\/");
     if (lastSlash)
     {
-        // NOTE: Be careful, strncpy() is not safe, it does not care about '\0'
-        memcpy(dirPath + ((filePath[1] != ':')? 2 : 0), filePath, strlen(filePath) - (strlen(lastSlash) - 1));
-        dirPath[strlen(filePath) - strlen(lastSlash) + ((filePath[1] != ':')? 2 : 0)] = '\0';  // Add '\0' manually
+        if (lastSlash == filePath)
+        {
+            // The last and only slash is the leading one: path is in a root directory
+            dirPath[0] = filePath[0];
+            dirPath[1] = '\0';
+        }
+        else
+        {
+            // NOTE: Be careful, strncpy() is not safe, it does not care about '\0'
+            memcpy(dirPath + (filePath[1] != ':' && filePath[0] != '\\' && filePath[0] != '/' ? 2 : 0), filePath, strlen(filePath) - (strlen(lastSlash) - 1));
+            dirPath[strlen(filePath) - strlen(lastSlash) + (filePath[1] != ':' && filePath[0] != '\\' && filePath[0] != '/' ? 2 : 0)] = '\0';  // Add '\0' manually
+        }
     }
 
     return dirPath;
