@@ -29,7 +29,7 @@
 
 // Edit to control what features Makefile'd raylib is compiled with
 #if defined(RAYLIB_CMAKE)
-    // Edit CMakeOptions.txt for CMake instead
+    // Edit cmake/RaylibOptions.cmake for CMake instead
     #include "cmake/config.h"
 #else
 
@@ -76,6 +76,8 @@
 #define MAX_KEY_PRESSED_QUEUE         16        // Max number of characters in the key input queue
 
 #define STORAGE_DATA_FILE  "storage.data"       // Automatic storage filename
+
+#define MAX_DECOMPRESSION_SIZE        64        // Max size allocated for decompression in MB
 
 
 //------------------------------------------------------------------------------------

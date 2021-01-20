@@ -831,7 +831,7 @@ typedef enum {
     BLEND_MULTIPLIED,       // Blend textures multiplying colors
     BLEND_ADD_COLORS,       // Blend textures adding colors (alternative)
     BLEND_SUBTRACT_COLORS,  // Blend textures subtracting colors (alternative)
-    BLEND_CUSTOM            // Belnd textures using custom src/dst factors (use SetBlendModeCustom())
+    BLEND_CUSTOM            // Belnd textures using custom src/dst factors (use rlSetBlendMode())
 } BlendMode;
 
 // Gestures type
