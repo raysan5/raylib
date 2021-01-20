@@ -4606,6 +4606,7 @@ static void KeyCallback(GLFWwindow *window, int key, int scancode, int action, i
 
         // NOTE: Before closing window, while loop must be left!
     }
+#if defined(SUPPORT_SCREEN_CAPTURE)
     else if (key == GLFW_KEY_F12 && action == GLFW_PRESS)
     {
 #if defined(SUPPORT_GIF_RECORDING)
@@ -4648,14 +4649,13 @@ static void KeyCallback(GLFWwindow *window, int key, int scancode, int action, i
             }
         }
         else
-#endif  // SUPPORT_GIF_RECORDING
-#if defined(SUPPORT_SCREEN_CAPTURE)
+#endif  // SUPPORT_GIF_RECORDING   
         {
             TakeScreenshot(TextFormat("screenshot%03i.png", screenshotCounter));
             screenshotCounter++;
         }
-#endif  // SUPPORT_SCREEN_CAPTURE
     }
+#endif  // SUPPORT_SCREEN_CAPTURE
     else
     {
         // WARNING: GLFW could return GLFW_REPEAT, we need to consider it as 1
@@ -5978,6 +5978,7 @@ void UWPKeyDownEvent(int key, bool down, bool controlKey)
         // Time to close the window.
         CORE.Window.shouldClose = true;
     }
+#if defined(SUPPORT_SCREEN_CAPTURE)
     else if (key == KEY_F12 && down)
     {
 #if defined(SUPPORT_GIF_RECORDING)
@@ -6011,14 +6012,13 @@ void UWPKeyDownEvent(int key, bool down, bool controlKey)
             }
         }
         else
-#endif  // SUPPORT_GIF_RECORDING
-#if defined(SUPPORT_SCREEN_CAPTURE)
+#endif  // SUPPORT_GIF_RECORDING   
         {
             TakeScreenshot(TextFormat("screenshot%03i.png", screenshotCounter));
             screenshotCounter++;
         }
-#endif  // SUPPORT_SCREEN_CAPTURE
     }
+#endif  // SUPPORT_SCREEN_CAPTURE
     else
     {
         CORE.Input.Keyboard.currentKeyState[key] = down;
