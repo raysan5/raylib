@@ -51,29 +51,23 @@ include(LibraryConfigurations)
 
 set(LIBS_PRIVATE ${LIBS_PRIVATE} ${OPENAL_LIBRARY})
 
-if (STATIC)
+add_library(raylib ${raylib_sources} ${raylib_public_headers})
+
+if (NOT BUILD_SHARED_LIBS)
     MESSAGE(STATUS "Building raylib static library")
-    
-    add_library(raylib STATIC ${raylib_sources} ${raylib_public_headers})
     add_library(raylib_static ALIAS raylib)
-    
     add_test("pkg-config--static" ${PROJECT_SOURCE_DIR}/../cmake/test-pkgconfig.sh --static)
-endif (STATIC)
-
-
-if (SHARED)
+else()
     MESSAGE(STATUS "Building raylib shared library")
-    add_library(raylib SHARED ${raylib_sources} ${raylib_public_headers})
-    
     if (MSVC)
         target_compile_definitions(raylib
                                    PRIVATE $<BUILD_INTERFACE:BUILD_LIBTYPE_SHARED>
                                    INTERFACE $<INSTALL_INTERFACE:USE_LIBTYPE_SHARED>
                                    )
     endif ()
-    
+
     add_test("pkg-config" ${PROJECT_SOURCE_DIR}/../cmake/test-pkgconfig.sh)
-endif ()
+endif()
 
 # Setting target properties
 set_target_properties(raylib PROPERTIES
@@ -82,7 +76,7 @@ set_target_properties(raylib PROPERTIES
                       SOVERSION ${API_VERSION}
                       )
 
-if (WITH_PIC OR SHARED)
+if (WITH_PIC OR BUILD_SHARED_LIBS)
     set_property(TARGET raylib PROPERTY POSITION_INDEPENDENT_CODE ON)
 endif ()
 
