@@ -1738,6 +1738,9 @@ void EnableCursor(void)
 #if defined(PLATFORM_DESKTOP)
     glfwSetInputMode(CORE.Window.handle, GLFW_CURSOR, GLFW_CURSOR_NORMAL);
 #endif
+#if defined(PLATFORM_WEB)
+    emscripten_exit_pointerlock();
+#endif
 #if defined(PLATFORM_UWP)
     UWPGetMouseUnlockFunc()();
 #endif
@@ -1749,6 +1752,9 @@ void DisableCursor(void)
 {
 #if defined(PLATFORM_DESKTOP)
     glfwSetInputMode(CORE.Window.handle, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
+#endif
+#if defined(PLATFORM_WEB)
+    emscripten_request_pointerlock("#canvas", 1);
 #endif
 #if defined(PLATFORM_UWP)
     UWPGetMouseLockFunc()();
@@ -5092,17 +5098,7 @@ static EM_BOOL EmscriptenMouseCallback(int eventType, const EmscriptenMouseEvent
     // Lock mouse pointer when click on screen
     if (eventType == EMSCRIPTEN_EVENT_CLICK)
     {
-        EmscriptenPointerlockChangeEvent plce;
-        emscripten_get_pointerlock_status(&plce);
-
-        int result = emscripten_request_pointerlock("#canvas", 1);   // TODO: It does not work!
-
-        // result -> EMSCRIPTEN_RESULT_DEFERRED
-        // The requested operation cannot be completed now for web security reasons,
-        // and has been deferred for completion in the next event handler. --> but it never happens!
-
-        //if (!plce.isActive) emscripten_request_pointerlock(0, 1);
-        //else emscripten_exit_pointerlock();
+        // TODO: Manage mouse events if required (note that GLFW JS wrapper manages it now)
     }
 
     return 0;
