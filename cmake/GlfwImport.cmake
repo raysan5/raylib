@@ -23,7 +23,7 @@ if(NOT glfw3_FOUND AND NOT USE_EXTERNAL_GLFW STREQUAL "ON" AND "${PLATFORM}" MAT
 
     add_subdirectory(external/glfw)
 
-    set(BUILD_SHARED_LIBS WAS_SHARED CACHE BOOL " " FORCE)
+    set(BUILD_SHARED_LIBS ${WAS_SHARED} CACHE BOOL " " FORCE)
     unset(WAS_SHARED)
     
     list(APPEND raylib_sources $<TARGET_OBJECTS:glfw_objlib>)
