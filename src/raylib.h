@@ -1339,6 +1339,7 @@ RLAPI void UnloadModelKeepMeshes(Model model);                                  
 
 // Mesh loading/unloading functions
 RLAPI Mesh *LoadMeshes(const char *fileName, int *meshCount);                                           // Load meshes from model file
+RLAPI void UploadMesh(Mesh *mesh);                                                                      // Upload mesh vertex data to GPU (VRAM)
 RLAPI void UnloadMesh(Mesh mesh);                                                                       // Unload mesh from memory (RAM and/or VRAM)
 RLAPI bool ExportMesh(Mesh mesh, const char *fileName);                                                 // Export mesh data to file, returns true on success
 

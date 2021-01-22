@@ -849,6 +849,12 @@ Mesh *LoadMeshes(const char *fileName, int *meshCount)
     return meshes;
 }
 
+// Upload mesh vertex data to GPU
+void UploadMesh(Mesh *mesh)
+{
+    rlLoadMesh(&mesh, false);   // Static mesh by default
+}
+
 // Unload mesh from memory (RAM and/or VRAM)
 void UnloadMesh(Mesh mesh)
 {
