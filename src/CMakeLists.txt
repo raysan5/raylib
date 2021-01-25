@@ -56,7 +56,6 @@ add_library(raylib ${raylib_sources} ${raylib_public_headers})
 if (NOT BUILD_SHARED_LIBS)
     MESSAGE(STATUS "Building raylib static library")
     add_library(raylib_static ALIAS raylib)
-    add_test("pkg-config--static" ${PROJECT_SOURCE_DIR}/../cmake/test-pkgconfig.sh --static)
 else()
     MESSAGE(STATUS "Building raylib shared library")
     if (MSVC)
@@ -65,8 +64,6 @@ else()
                                    INTERFACE $<INSTALL_INTERFACE:USE_LIBTYPE_SHARED>
                                    )
     endif ()
-
-    add_test("pkg-config" ${PROJECT_SOURCE_DIR}/../cmake/test-pkgconfig.sh)
 endif()
 
 # Setting target properties
