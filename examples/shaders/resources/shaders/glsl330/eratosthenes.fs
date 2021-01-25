@@ -38,9 +38,9 @@ vec4 Colorizer(float counter, float maxSize)
 
 void main()
 {
-	vec4 color = vec4(1.0);
-	float scale = 1000.0; // Makes 100x100 square grid. Change this variable to make a smaller or larger grid.
-	int value = int(scale*floor(fragTexCoord.y*scale)+floor(fragTexCoord.x*scale));  // Group pixels into boxes representing integer values
+    vec4 color = vec4(1.0);
+    float scale = 1000.0; // Makes 100x100 square grid. Change this variable to make a smaller or larger grid.
+    int value = int(scale*floor(fragTexCoord.y*scale)+floor(fragTexCoord.x*scale));  // Group pixels into boxes representing integer values
 
     if ((value == 0) || (value == 1) || (value == 2)) finalColor = vec4(1.0);
     else
