@@ -1,8 +1,3 @@
-
-### Config options ###
-# Translate the config options to what raylib wants
-configure_file(config.h.in ${CMAKE_BINARY_DIR}/cmake/config.h)
-
 if(${PLATFORM} MATCHES "Desktop")
     set(PLATFORM_CPP "PLATFORM_DESKTOP")
     

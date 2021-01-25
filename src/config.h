@@ -27,12 +27,6 @@
 
 #define RAYLIB_VERSION  "3.5"
 
-// Edit to control what features Makefile'd raylib is compiled with
-#if defined(RAYLIB_CMAKE)
-    // Edit cmake/RaylibOptions.cmake for CMake instead
-    #include "cmake/config.h"
-#else
-
 //------------------------------------------------------------------------------------
 // Module: core - Configuration Flags
 //------------------------------------------------------------------------------------
@@ -217,6 +211,3 @@
 //------------------------------------------------------------------------------------
 #define MAX_TRACELOG_MSG_LENGTH          128    // Max length of one trace-log message
 #define MAX_UWP_MESSAGES                 512    // Max UWP messages to process
-
-
-#endif  //defined(RAYLIB_CMAKE)

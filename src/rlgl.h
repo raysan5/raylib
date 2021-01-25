@@ -840,7 +840,7 @@ typedef struct RenderBatch {
     float currentDepth;         // Current depth value for next draw
 } RenderBatch;
 
-#if defined(SUPPORT_VR_SIMULATOR)
+#if defined(SUPPORT_VR_SIMULATOR) && !defined(RLGL_STANDALONE)
 // VR Stereo rendering configuration for simulator
 typedef struct VrStereoConfig {
     Shader distortionShader;        // VR stereo rendering distortion shader
