@@ -83,11 +83,7 @@ if (${PLATFORM} MATCHES "Desktop")
     target_link_libraries(raylib glfw)
 endif ()
 
-# Adding compile definitions
-target_compile_definitions(raylib
-                           PUBLIC "${PLATFORM_CPP}"
-                           PUBLIC "${GRAPHICS}"
-                           )
+include(CompileDefinitions)
 
 # Registering include directories
 target_include_directories(raylib
@@ -96,7 +92,6 @@ target_include_directories(raylib
                            $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}>
                            PRIVATE
                            ${CMAKE_CURRENT_SOURCE_DIR}
-                           ${CMAKE_BINARY_DIR} # For cmake/config.h
                            ${OPENGL_INCLUDE_DIR}
                            ${OPENAL_INCLUDE_DIR}
                            )
