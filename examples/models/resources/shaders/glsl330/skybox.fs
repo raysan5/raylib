@@ -4,7 +4,7 @@
 *
 *   Copyright (c) 2017 Victor Fisac
 *
-*	19-Jun-2020 - modified by Giuseppe Mastrangelo (@peppemas) - VFlip Support
+*    19-Jun-2020 - modified by Giuseppe Mastrangelo (@peppemas) - VFlip Support
 *
 **********************************************************************************************/
 

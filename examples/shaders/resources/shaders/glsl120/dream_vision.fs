@@ -32,4 +32,4 @@ void main()
     color = color/9.5;
 
     gl_FragColor = color;
-}			
+}            

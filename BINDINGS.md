@@ -6,9 +6,9 @@ Here it is a list with the ones I'm aware of:
 
 |  name              | raylib version | language  | repo                                                                 |
 |:------------------:|:-------------: | :--------:|----------------------------------------------------------------------|
-| raylib             | **3.1-dev** | [C](https://en.wikipedia.org/wiki/C_(programming_language))    | https://github.com/raysan5/raylib    |
+| raylib             | **3.5** | [C](https://en.wikipedia.org/wiki/C_(programming_language))    | https://github.com/raysan5/raylib    |
 | raylib-cpp         | 3.5 | [C++](https://en.wikipedia.org/wiki/C%2B%2B)                             | https://github.com/robloach/raylib-cpp      |
-| Raylib-cs          | 3.0 | [C#](https://en.wikipedia.org/wiki/C_Sharp_(programming_language))       | https://github.com/ChrisDill/Raylib-cs      |
+| Raylib-cs          | 3.5 | [C#](https://en.wikipedia.org/wiki/C_Sharp_(programming_language))       | https://github.com/ChrisDill/Raylib-cs      |
 | raylib-cppsharp    | 2.5 | [C#](https://en.wikipedia.org/wiki/C_Sharp_(programming_language))       | https://github.com/phxvyper/raylib-cppsharp |
 | raylib-boo         | 3.5 | [Boo](http://boo-language.github.io/) | https://github.com/Rabios/raylib-boo          |
 | RaylibFS           | 2.5 | [F#](https://fsharp.org/)             | https://github.com/dallinbeutler/RaylibFS     |
@@ -19,7 +19,7 @@ Here it is a list with the ones I'm aware of:
 | raylib-go          | 3.0 | [Go](https://golang.org/)             | https://github.com/gen2brain/raylib-go  |
 | raylib-goplus      | 2.6-dev | [Go](https://golang.org/)             | https://github.com/Lachee/raylib-goplus         |
 | ray-go             | 2.6-dev | [Go](https://golang.org/)             | https://github.com/hecate-tech/ray-go     |
-| go-raylib          | 3.1-dev | [Go](https://golang.org/)       | https://github.com/chunqian/go-raylib  |
+| go-raylib          | 3.5 | [Go](https://golang.org/)       | https://github.com/chunqian/go-raylib  |
 | raylib-rs          | 3.0 | [Rust](https://www.rust-lang.org/)    | https://github.com/deltaphc/raylib-rs     |
 | raylib-lua         | 1.7 | [Lua](http://www.lua.org/)            | https://github.com/raysan5/raylib-lua       |
 | raylib-lua-ffi     | 2.0 | [Lua](http://www.lua.org/)            | https://github.com/raysan5/raylib/issues/693    |
@@ -33,6 +33,7 @@ Here it is a list with the ones I'm aware of:
 | raylib-nim         | 2.0 | [Nim](https://nim-lang.org/)          | https://github.com/Skrylar/raylib-nim                  |
 | raylib-Forever     | 3.1-dev | [Nim](https://nim-lang.org/)          | https://github.com/Guevara-chan/Raylib-Forever    |
 | nim-raylib         | 3.1-dev | [Nim](https://nim-lang.org/)          | https://github.com/tomc1998/nim-raylib            |
+| NimraylibNow!      | 3.5-dev | [Nim](https://nim-lang.org/)          | https://github.com/greenfork/nimraylib_now        |
 | raylib-haskell     | 2.0 | [Haskell](https://www.haskell.org/)   | https://github.com/DevJac/raylib-haskell |
 | raylib-cr          | 2.5-dev | [Crystal](https://crystal-lang.org/)  | https://github.com/AregevDev/raylib-cr      |
 | cray               | 1.8 | [Crystal](https://crystal-lang.org/)  | https://gitlab.com/Zatherz/cray           |
@@ -45,12 +46,12 @@ Here it is a list with the ones I'm aware of:
 | raylib-ruby        | 2.6 | [Ruby](https://www.ruby-lang.org/en/)    | https://github.com/a0/raylib-ruby        |
 | raylib-mruby       | 2.5-dev | [mruby](https://github.com/mruby/mruby)  | https://github.com/lihaochen910/raylib-mruby    |
 | raylib-py          | 2.0 | [Python](https://www.python.org/)        | https://github.com/overdev/raylib-py       |
-| raylib-python-cffi | 3.1-dev | [Python](https://www.python.org/)        | https://github.com/electronstudio/raylib-python-cffi    |
+| raylib-python-cffi | 3.5 | [Python](https://www.python.org/)        | https://github.com/electronstudio/raylib-python-cffi    |
 | raylib-py-ctbg     | 2.6 | [Python](https://www.python.org/)        | https://github.com/overdev/raylib-py-ctbg                 |
 | jaylib             | 3.0 | [Java](https://en.wikipedia.org/wiki/Java_(programming_language))           | https://github.com/electronstudio/jaylib/   |
 | raylib-java        | 2.0 | [Java](https://en.wikipedia.org/wiki/Java_(programming_language))           | https://github.com/XoanaIO/raylib-java   |
 | clj-raylib         | 3.0 | [Clojure](https://clojure.org/)          | https://github.com/lsevero/clj-raylib       |
-| node-raylib        | 3.0 | [Node.js](https://nodejs.org/en/)        | https://github.com/RobLoach/node-raylib     |
+| node-raylib        | 3.5 | [Node.js](https://nodejs.org/en/)        | https://github.com/RobLoach/node-raylib     |
 | QuickJS-raylib     | 3.0 | [QuickJS](https://bellard.org/quickjs/)  | https://github.com/sntg-p/QuickJS-raylib    |
 | raylib-js          | 2.6 | [JavaScript](https://en.wikipedia.org/wiki/JavaScript)     | https://github.com/RobLoach/raylib-js    |
 | raylib-chaiscript  | 2.6 | [ChaiScript](http://chaiscript.com/)     | https://github.com/RobLoach/raylib-chaiscript        |

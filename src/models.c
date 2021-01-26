@@ -851,6 +851,12 @@ Mesh *LoadMeshes(const char *fileName, int *meshCount)
     return meshes;
 }
 
+// Upload mesh vertex data to GPU
+void UploadMesh(Mesh *mesh)
+{
+    rlLoadMesh(&mesh, false);   // Static mesh by default
+}
+
 // Unload mesh from memory (RAM and/or VRAM)
 void UnloadMesh(Mesh mesh)
 {
@@ -1292,7 +1298,6 @@ Mesh GenMeshPlane(float width, float length, int resX, int resZ)
     mesh.vertices = (float *)RL_MALLOC(plane->ntriangles*3*3*sizeof(float));
     mesh.texcoords = (float *)RL_MALLOC(plane->ntriangles*3*2*sizeof(float));
     mesh.normals = (float *)RL_MALLOC(plane->ntriangles*3*3*sizeof(float));
-    mesh.vboId = (unsigned int *)RL_CALLOC(DEFAULT_MESH_VERTEX_BUFFERS, sizeof(unsigned int));
 
     mesh.vertexCount = plane->ntriangles*3;
     mesh.triangleCount = plane->ntriangles;

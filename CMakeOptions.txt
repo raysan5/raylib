@@ -1,0 +1,89 @@
+### Config options ###
+include(CMakeDependentOption)
+include(EnumOption)
+
+enum_option(PLATFORM "Desktop;Web;Android;Raspberry Pi;DRM" "Platform to build for.")
+
+enum_option(OPENGL_VERSION "OFF;3.3;2.1;1.1;ES 2.0" "Force a specific OpenGL Version?")
+
+# Configuration options
+option(BUILD_EXAMPLES "Build the examples." ${RAYLIB_IS_MAIN})
+option(CUSTOMIZE_BUILD "Show options for customizing your Raylib library build." OFF)
+option(ENABLE_ASAN  "Enable AddressSanitizer (ASAN) for debugging (degrades performance)" OFF)
+option(ENABLE_UBSAN "Enable UndefinedBehaviorSanitizer (UBSan) for debugging" OFF)
+option(ENABLE_MSAN "Enable MemorySanitizer (MSan) for debugging (not recommended to run with ASAN)" OFF)
+
+# Shared library is always PIC. Static library should be PIC too if linked into a shared library
+option(WITH_PIC "Compile static library as position-independent code" OFF)
+option(BUILD_SHARED_LIBS "Build raylib as a shared library" OFF)
+option(MACOS_FATLIB  "Build fat library for both i386 and x86_64 on macOS" OFF)
+cmake_dependent_option(USE_AUDIO "Build raylib with audio module" ON CUSTOMIZE_BUILD ON)
+
+enum_option(USE_EXTERNAL_GLFW "OFF;IF_POSSIBLE;ON" "Link raylib against system GLFW instead of embedded one")
+if(UNIX AND NOT APPLE)
+  option(USE_WAYLAND "Use Wayland for window creation" OFF)
+endif()
+
+option(INCLUDE_EVERYTHING "Include everything disabled by default (for CI usage" OFF)
+set(OFF ${INCLUDE_EVERYTHING} CACHE INTERNAL "Replace any OFF by default with \${OFF} to have it covered by this option")
+
+# core.c
+cmake_dependent_option(SUPPORT_CAMERA_SYSTEM "Provide camera module (camera.h) with multiple predefined cameras: free, 1st/3rd person, orbital" ON CUSTOMIZE_BUILD ON)
+cmake_dependent_option(SUPPORT_GESTURES_SYSTEM "Gestures module is included (gestures.h) to support gestures detection: tap, hold, swipe, drag" ON CUSTOMIZE_BUILD ON)
+cmake_dependent_option(SUPPORT_MOUSE_GESTURES "Mouse gestures are directly mapped like touches and processed by gestures system" ON CUSTOMIZE_BUILD ON)
+cmake_dependent_option(SUPPORT_SSH_KEYBOARD_RPI "Reconfigure standard input to receive key inputs, works with SSH connection" OFF CUSTOMIZE_BUILD OFF)
+cmake_dependent_option(SUPPORT_DEFAULT_FONT "Default font is loaded on window initialization to be available for the user to render simple text. If enabled, uses external module functions to load default raylib font (module: text)" ON CUSTOMIZE_BUILD ON)
+cmake_dependent_option(SUPPORT_SCREEN_CAPTURE "Allow automatic screen capture of current screen pressing F12, defined in KeyCallback()" ON CUSTOMIZE_BUILD ON)
+cmake_dependent_option(SUPPORT_GIF_RECORDING "Allow automatic gif recording of current screen pressing CTRL+F12, defined in KeyCallback()" ON CUSTOMIZE_BUILD ON)
+cmake_dependent_option(SUPPORT_BUSY_WAIT_LOOP "Use busy wait loop for timing sync instead of a high-resolution timer" OFF CUSTOMIZE_BUILD OFF)
+cmake_dependent_option(SUPPORT_EVENTS_WAITING "Wait for events passively (sleeping while no events) instead of polling them actively every frame" OFF CUSTOMIZE_BUILD OFF)
+cmake_dependent_option(SUPPORT_HIGH_DPI "Support high DPI displays" OFF CUSTOMIZE_BUILD OFF)
+cmake_dependent_option(SUPPORT_DATA_STORAGE "Support for persistent data storage" ON CUSTOMIZE_BUILD ON)
+cmake_dependent_option(SUPPORT_COMPRESSION_API "Support for compression API" ON CUSTOMIZE_BUILD ON)
+
+# rlgl.h
+cmake_dependent_option(SUPPORT_VR_SIMULATOR "Support VR simulation functionality (stereo rendering)" ON CUSTOMIZE_BUILD ON)
+
+# shapes.c
+cmake_dependent_option(SUPPORT_FONT_TEXTURE "Draw rectangle shapes using font texture white character instead of default white texture. Allows drawing rectangles and text with a single draw call, very useful for GUI systems!" ON CUSTOMIZE_BUILD ON)
+cmake_dependent_option(SUPPORT_QUADS_DRAW_MODE "Use QUADS instead of TRIANGLES for drawing when possible. Some lines-based shapes could still use lines" ON CUSTOMIZE_BUILD ON)
+
+# textures.c
+cmake_dependent_option(SUPPORT_IMAGE_EXPORT "Support image exporting to file" ON CUSTOMIZE_BUILD ON)
+cmake_dependent_option(SUPPORT_IMAGE_GENERATION "Support procedural image generation functionality (gradient, spot, perlin-noise, cellular)" ON CUSTOMIZE_BUILD ON)
+cmake_dependent_option(SUPPORT_IMAGE_MANIPULATION "Support multiple image editing functions to scale, adjust colors, flip, draw on images, crop... If not defined only three image editing functions supported: ImageFormat(), ImageAlphaMask(), ImageToPOT()" ON CUSTOMIZE_BUILD ON)
+cmake_dependent_option(SUPPORT_FILEFORMAT_PNG "Support loading PNG as textures" ON CUSTOMIZE_BUILD ON)
+cmake_dependent_option(SUPPORT_FILEFORMAT_DDS "Support loading DDS as textures" ON CUSTOMIZE_BUILD ON)
+cmake_dependent_option(SUPPORT_FILEFORMAT_HDR "Support loading HDR as textures" ON CUSTOMIZE_BUILD ON)
+cmake_dependent_option(SUPPORT_FILEFORMAT_KTX "Support loading KTX as textures" ON CUSTOMIZE_BUILD ON)
+cmake_dependent_option(SUPPORT_FILEFORMAT_ASTC "Support loading ASTC as textures" ON CUSTOMIZE_BUILD ON)
+cmake_dependent_option(SUPPORT_FILEFORMAT_BMP "Support loading BMP as textures" ${OFF} CUSTOMIZE_BUILD OFF)
+cmake_dependent_option(SUPPORT_FILEFORMAT_TGA "Support loading TGA as textures" ${OFF} CUSTOMIZE_BUILD OFF)
+cmake_dependent_option(SUPPORT_FILEFORMAT_JPG "Support loading JPG as textures" ${OFF} CUSTOMIZE_BUILD OFF)
+cmake_dependent_option(SUPPORT_FILEFORMAT_GIF "Support loading GIF as textures" ${OFF} CUSTOMIZE_BUILD OFF)
+cmake_dependent_option(SUPPORT_FILEFORMAT_PSD "Support loading PSD as textures" ${OFF} CUSTOMIZE_BUILD OFF)
+cmake_dependent_option(SUPPORT_FILEFORMAT_PKM "Support loading PKM as textures" ${OFF} CUSTOMIZE_BUILD OFF)
+cmake_dependent_option(SUPPORT_FILEFORMAT_PVR "Support loading PVR as textures" ${OFF} CUSTOMIZE_BUILD OFF)
+
+# text.c
+cmake_dependent_option(SUPPORT_FILEFORMAT_FNT "Support loading fonts in FNT format" ON CUSTOMIZE_BUILD ON)
+cmake_dependent_option(SUPPORT_FILEFORMAT_TTF "Support loading font in TTF/OTF format" ON CUSTOMIZE_BUILD ON)
+cmake_dependent_option(SUPPORT_TEXT_MANIPULATION "Support text manipulation functions" ON CUSTOMIZE_BUILD ON)
+
+# models.c
+cmake_dependent_option(SUPPORT_MESH_GENERATION "Support procedural mesh generation functions, uses external par_shapes.h library. NOTE: Some generated meshes DO NOT include generated texture coordinates" ON CUSTOMIZE_BUILD ON)
+cmake_dependent_option(SUPPORT_FILEFORMAT_OBJ "Support loading OBJ file format" ON CUSTOMIZE_BUILD ON)
+cmake_dependent_option(SUPPORT_FILEFORMAT_MTL "Support loading MTL file format" ON CUSTOMIZE_BUILD ON)
+cmake_dependent_option(SUPPORT_FILEFORMAT_IQM "Support loading IQM file format" ON CUSTOMIZE_BUILD ON)
+cmake_dependent_option(SUPPORT_FILEFORMAT_GLTF "Support loading GLTF file format" ON CUSTOMIZE_BUILD ON)
+
+# raudio.c
+cmake_dependent_option(SUPPORT_FILEFORMAT_WAV  "Support loading WAV for sound" ON CUSTOMIZE_BUILD ON)
+cmake_dependent_option(SUPPORT_FILEFORMAT_OGG  "Support loading OGG for sound" ON CUSTOMIZE_BUILD ON)
+cmake_dependent_option(SUPPORT_FILEFORMAT_XM   "Support loading XM for sound" ON CUSTOMIZE_BUILD ON)
+cmake_dependent_option(SUPPORT_FILEFORMAT_MOD  "Support loading MOD for sound" ON CUSTOMIZE_BUILD ON)
+cmake_dependent_option(SUPPORT_FILEFORMAT_MP3  "Support loading MP3 for sound" ON CUSTOMIZE_BUILD ON)
+cmake_dependent_option(SUPPORT_FILEFORMAT_FLAC "Support loading FLAC for sound" ${OFF} CUSTOMIZE_BUILD OFF)
+
+# utils.c
+cmake_dependent_option(SUPPORT_TRACELOG "Show TraceLog() output messages. NOTE: By default LOG_DEBUG traces not shown" ON CUSTOMIZE_BUILD ON)

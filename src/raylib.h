@@ -113,7 +113,7 @@
     #define RL_FREE(ptr)        free(ptr)
 #endif
 
-// NOTE: MSC C++ compiler does not support compound literals (C99 feature)
+// NOTE: MSVC C++ compiler does not support compound literals (C99 feature)
 // Plain structures in C++ (without constructors) can be initialized from { } initializers.
 #if defined(__cplusplus)
     #define CLITERAL(type)      type
@@ -831,7 +831,7 @@ typedef enum {
     BLEND_MULTIPLIED,       // Blend textures multiplying colors
     BLEND_ADD_COLORS,       // Blend textures adding colors (alternative)
     BLEND_SUBTRACT_COLORS,  // Blend textures subtracting colors (alternative)
-    BLEND_CUSTOM            // Belnd textures using custom src/dst factors (use SetBlendModeCustom())
+    BLEND_CUSTOM            // Belnd textures using custom src/dst factors (use rlSetBlendMode())
 } BlendMode;
 
 // Gestures type
@@ -1035,6 +1035,7 @@ RLAPI bool IsGamepadButtonUp(int gamepad, int button);        // Detect if a gam
 RLAPI int GetGamepadButtonPressed(void);                      // Get the last gamepad button pressed
 RLAPI int GetGamepadAxisCount(int gamepad);                   // Return gamepad axis count for a gamepad
 RLAPI float GetGamepadAxisMovement(int gamepad, int axis);    // Return axis movement value for a gamepad axis
+RLAPI int SetGamepadMappings(const char *mappings);           // Set internal gamepad mappings (SDL_GameControllerDB)
 
 // Input-related functions: mouse
 RLAPI bool IsMouseButtonPressed(int button);                  // Detect if a mouse button has been pressed once
@@ -1338,6 +1339,7 @@ RLAPI void UnloadModelKeepMeshes(Model model);                                  
 
 // Mesh loading/unloading functions
 RLAPI Mesh *LoadMeshes(const char *fileName, int *meshCount);                                           // Load meshes from model file
+RLAPI void UploadMesh(Mesh *mesh);                                                                      // Upload mesh vertex data to GPU (VRAM)
 RLAPI void UnloadMesh(Mesh mesh);                                                                       // Unload mesh from memory (RAM and/or VRAM)
 RLAPI bool ExportMesh(Mesh mesh, const char *fileName);                                                 // Export mesh data to file, returns true on success
 

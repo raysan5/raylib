@@ -31,4 +31,4 @@ void main()
     color = color/9.5;
 
     fragColor = color;
-}			
+}            
