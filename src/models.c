@@ -854,7 +854,7 @@ Mesh *LoadMeshes(const char *fileName, int *meshCount)
 // Upload mesh vertex data to GPU
 void UploadMesh(Mesh *mesh)
 {
-    rlLoadMesh(&mesh, false);   // Static mesh by default
+    rlLoadMesh(mesh, false);   // Static mesh by default
 }
 
 // Unload mesh from memory (RAM and/or VRAM)
@@ -3885,7 +3885,6 @@ static Model LoadGLTF(const char *fileName)
                         model.meshes[primitiveIndex].animVertices = RL_MALLOC(model.meshes[primitiveIndex].vertexCount*3*sizeof(float));
 	
 						LOAD_ACCESSOR(float, 3, acc, model.meshes[primitiveIndex].vertices)
-						memcpy(model.meshes[primitiveIndex].animVertices, model.meshes[primitiveIndex].vertices, model.meshes[primitiveIndex].vertexCount*3*sizeof(float));
                     }
                     else if (data->meshes[i].primitives[p].attributes[j].type == cgltf_attribute_type_normal)
                     {
@@ -3894,7 +3893,6 @@ static Model LoadGLTF(const char *fileName)
                         model.meshes[primitiveIndex].animNormals = RL_MALLOC(acc->count*3*sizeof(float));
 	
 						LOAD_ACCESSOR(float, 3, acc, model.meshes[primitiveIndex].normals)
-						memcpy(model.meshes[primitiveIndex].animNormals, model.meshes[primitiveIndex].normals, acc->count*3*sizeof(float));
 					}
                     else if (data->meshes[i].primitives[p].attributes[j].type == cgltf_attribute_type_texcoord)
                     {
@@ -3995,7 +3993,6 @@ static ModelAnimation* LoadGLTFModelAnimations(const char *fileName, int *animCo
           - ...
 
     *************************************************************************************/
-    
     // glTF file loading
     unsigned int dataSize = 0;
     unsigned char *fileData = LoadFileData(fileName, &dataSize);
@@ -4022,7 +4019,7 @@ static ModelAnimation* LoadGLTFModelAnimations(const char *fileName, int *animCo
     
             ModelAnimation *output = animations + a;
     
-            output->frameCount = animation->channels_count;
+            output->frameCount = animation->channels->sampler->input->count;
             output->boneCount = data->nodes_count;
             output->bones = RL_MALLOC(output->boneCount*sizeof(BoneInfo));
             output->framePoses = RL_MALLOC(output->frameCount*sizeof(Transform *));
@@ -4030,51 +4027,72 @@ static ModelAnimation* LoadGLTFModelAnimations(const char *fileName, int *animCo
             for (unsigned int j = 0; j < data->nodes_count; j++)
             {
                 strcpy(output->bones[j].name, data->nodes[j].name == 0 ? "ANIMJOINT" : data->nodes[j].name);
-                output->bones[j].parent = j != 0 ? data->nodes[j].parent - data->nodes : 0;
+                output->bones[j].parent = j != 0 ? (int)(data->nodes[j].parent - data->nodes) : 0;
             }
     
             for (unsigned int j = 0; j < output->frameCount; j++)
-            	output->framePoses[j] = RL_MALLOC(output->frameCount*sizeof(Transform));
+            	output->framePoses[j] = RL_MALLOC(output->frameCount*data->nodes_count*sizeof(Transform));
             
             for (unsigned int frame = 0; frame < output->frameCount; frame++)
             {
-				cgltf_animation_channel* channel = animation->channels + frame;
-				cgltf_animation_sampler* sampler = channel->sampler;
-
 				for (unsigned int i = 0; i < data->nodes_count; i++)
 				{
-					cgltf_node* node = channel->target_node + i;
-					
-					if (node->has_translation)
-					{
-						memcpy(&output->framePoses[frame][i].translation, node->translation, sizeof(float) * 3);
-					}
-					else
-					{
-						output->framePoses[frame][i].translation = Vector3Zero();
-					}
-					
-					if (node->has_rotation)
-					{
-						memcpy(&output->framePoses[frame][i].rotation, node->rotation, sizeof(float)*4);
-					}
-					else
-					{
-						output->framePoses[frame][i].rotation = QuaternionIdentity();
-					}
-					
-					if (node->has_scale)
-					{
-						memcpy(&output->framePoses[frame][i].scale, node->scale, sizeof(float)*3);
-					}
-					else
-					{
-						output->framePoses[frame][i].scale = Vector3One();
-					}
-					
+				   	output->framePoses[frame][i].translation = Vector3Zero();
+					output->framePoses[frame][i].rotation = QuaternionIdentity();
 					output->framePoses[frame][i].rotation = QuaternionNormalize(output->framePoses[frame][i].rotation);
+					output->framePoses[frame][i].scale = Vector3One();
 				}
             }
+	
+            for(int channelId = 0; channelId < animation->channels_count; channelId++)
+			{
+				cgltf_animation_channel* channel = animation->channels + channelId;
+				cgltf_animation_sampler* sampler = channel->sampler;
+				
+				int boneId = channel->target_node - data->nodes;
+				
+				for(int frame = 0; frame < output->frameCount; frame++)
+				{
+					if(channel->target_path == cgltf_animation_path_type_translation) {
+						Vector3 translation;
+						if(cgltf_accessor_read_float(sampler->output, frame, (float*)&translation, 3))
+						{
+							output->framePoses[frame][boneId].translation = translation;
+						}
+						else if (output->frameCount == 2)
+						{
+							memcpy(&translation, frame == 0 ? &(sampler->output->min) : &(sampler->output->max), 3 * sizeof(float));
+							output->framePoses[frame][boneId].translation = translation;
+						}
+					}
+					if(channel->target_path == cgltf_animation_path_type_rotation) {
+						Quaternion rotation;
+						if(cgltf_accessor_read_float(sampler->output, frame, (float*)&rotation, 4))
+						{
+							output->framePoses[frame][boneId].rotation = rotation;
+							output->framePoses[frame][boneId].rotation = QuaternionNormalize(output->framePoses[frame][boneId].rotation);
+						}
+						else if (output->frameCount == 2)
+						{
+							memcpy(&rotation, frame == 0 ? &(sampler->output->min) : &(sampler->output->max), 4 * sizeof(float));
+							output->framePoses[frame][boneId].rotation = rotation;
+							output->framePoses[frame][boneId].rotation = QuaternionNormalize(output->framePoses[frame][boneId].rotation);
+						}
+					}
+					if(channel->target_path == cgltf_animation_path_type_scale) {
+						Vector3 scale;
+						if(cgltf_accessor_read_float(sampler->output, frame, (float*)&scale, 4))
+						{
+							output->framePoses[frame][boneId].scale = scale;
+						}
+						else if (output->frameCount == 2)
+						{
+							memcpy(&scale, frame == 0 ? &(sampler->output->min) : &(sampler->output->max), 3 * sizeof(float));
+							output->framePoses[frame][boneId].scale = scale;
+						}
+					}
+				}
+			}
     
             // Build frameposes
             for (unsigned int frame = 0; frame < output->frameCount; frame++)
@@ -4090,7 +4108,7 @@ static ModelAnimation* LoadGLTFModelAnimations(const char *fileName, int *animCo
                     }
                 }
             }
-            
+
         }
         
         cgltf_free(data);
