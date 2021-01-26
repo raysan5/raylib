@@ -76,7 +76,7 @@ int main(void)
         //----------------------------------------------------------------------------------
         BeginDrawing();
 
-            ClearBackground(RAYWHITE);
+             ClearBackground(RAYWHITE);
 
             BeginMode3D(camera);
 
@@ -84,7 +84,7 @@ int main(void)
 
                 for (int i = 0; i < model.boneCount; i++)
                 {
-                    DrawCube(anims[0].framePoses[animFrameCounter][i].translation, 0.2f, 0.2f, 0.2f, RED);
+                    DrawSphere(anims[0].framePoses[animFrameCounter][i].translation, 0.01f, RED);
                 }
 
                 DrawGrid(10, 1.0f);         // Draw a grid
