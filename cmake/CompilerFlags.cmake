@@ -55,3 +55,25 @@ if(CMAKE_VERSION VERSION_LESS "3.1")
 else()
     set (CMAKE_C_STANDARD 99)
 endif()
+
+if(${PLATFORM} MATCHES "Android")
+    
+    # If enabled will remove dead code during the linking process
+    # https://gcc.gnu.org/onlinedocs/gnat_ugn/Compilation-options.html
+    add_if_flag_compiles(-ffunction-sections CMAKE_C_FLAGS)
+    
+    # If enabled will generate some exception data (usually disabled for C programs)
+    # https://gcc.gnu.org/onlinedocs/gcc-4.2.4/gcc/Code-Gen-Options.html
+    add_if_flag_compiles(-funwind-tables CMAKE_C_FLAGS)
+    
+    # If enabled adds stack protection guards around functions that allocate memory
+    # https://www.keil.com/support/man/docs/armclang_ref/armclang_ref_cjh1548250046139.htm
+    add_if_flag_compiles(-fstack-protector-strong CMAKE_C_FLAGS)
+    
+    # Marks that the library will not be compiled with an executable stack
+    add_if_flag_compiles(-Wa,--noexecstack CMAKE_C_FLAGS)
+    
+    # Do not expand symbolic links or resolve paths like "/./" or "/../", etc.
+    # https://gcc.gnu.org/onlinedocs/gcc/Directory-Options.html
+    add_if_flag_compiles(-no-canonical-prefixes CMAKE_C_FLAGS)
+endif()
