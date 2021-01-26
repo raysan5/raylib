@@ -2,9 +2,11 @@ cmake_minimum_required(VERSION 3.0)
 project(raylib)
 
 # Directory for easier includes
+# Anywhere you see include(...) you can check <root>/cmake for that file
 set(CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/cmake)
 
-# RAYLIB_IS_MAIN determines whether the project is being used from root, or as a dependency.
+# RAYLIB_IS_MAIN determines whether the project is being used from root
+# or if it is added as a dependency (through add_subdirectory for example).
 if ("${CMAKE_SOURCE_DIR}" STREQUAL "${CMAKE_CURRENT_SOURCE_DIR}")
   set(RAYLIB_IS_MAIN TRUE)
 else()
@@ -17,7 +19,7 @@ include(CompilerFlags)
 # Registers build options that are exposed to cmake
 include(CMakeOptions.txt)
 
-# Checks a few environment and compiler configurations
+# Enforces a few environment and compiler configurations
 include(BuildOptions)
 
 # Main sources directory (the second parameter sets the output directory name to raylib)
