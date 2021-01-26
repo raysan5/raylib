@@ -10,6 +10,8 @@ include(JoinPaths)
 if(NOT CMAKE_BUILD_TYPE AND NOT CMAKE_CONFIGURATION_TYPES)
     if(RAYLIB_IS_MAIN)
         set(default_build_type Debug)
+    else()
+        message(WARNING "Default build type is not set (CMAKE_BUILD_TYPE)")
     endif()
 
     message(STATUS "Setting build type to '${default_build_type}' as none was specified.")
@@ -18,7 +20,7 @@ if(NOT CMAKE_BUILD_TYPE AND NOT CMAKE_CONFIGURATION_TYPES)
     set_property(CACHE CMAKE_BUILD_TYPE PROPERTY STRINGS "Debug" "Release" "MinSizeRel" "RelWithDebInfo")
 endif()
 
-# Get the sources together
+# Used as public API to be included into other projects
 set(raylib_public_headers
     raylib.h
     rlgl.h
@@ -27,6 +29,7 @@ set(raylib_public_headers
     raudio.h
     )
 
+# Sources to be compiled
 set(raylib_sources
     core.c
     models.c
@@ -36,7 +39,7 @@ set(raylib_sources
     utils.c
     )
 
-# cmake/GlfwImport.cmake handles the details around the inclusion of glfw
+# <root>/cmake/GlfwImport.cmake handles the details around the inclusion of glfw
 include(GlfwImport)
 
 
@@ -47,9 +50,10 @@ else ()
     MESSAGE(STATUS "Audio Backend: None (-DUSE_AUDIO=OFF)")
 endif ()
 
+# Sets additional platform options and link libraries for each platform
+# also selects the proper graphics API and version for that platform
+# Produces a variable LIBS_PRIVATE that will be used later
 include(LibraryConfigurations)
-
-set(LIBS_PRIVATE ${LIBS_PRIVATE} ${OPENAL_LIBRARY})
 
 add_library(raylib ${raylib_sources} ${raylib_public_headers})
 
@@ -66,7 +70,6 @@ else()
     endif ()
 endif()
 
-# Setting target properties
 set_target_properties(raylib PROPERTIES
                       PUBLIC_HEADER "${raylib_public_headers}"
                       VERSION ${PROJECT_VERSION}
@@ -77,12 +80,11 @@ if (WITH_PIC OR BUILD_SHARED_LIBS)
     set_property(TARGET raylib PROPERTY POSITION_INDEPENDENT_CODE ON)
 endif ()
 
-# Linking libraries
 target_link_libraries(raylib "${LIBS_PRIVATE}")
-if (${PLATFORM} MATCHES "Desktop")
-    target_link_libraries(raylib glfw)
-endif ()
 
+# Sets some compile time definitions for the pre-processor
+# If CUSTOMIZE_BUILD option is on you will not use config.h by default
+# and you will be able to select more build options
 include(CompileDefinitions)
 
 # Registering include directories
@@ -99,6 +101,8 @@ target_include_directories(raylib
 # Copy the header files to the build directory for convenience
 file(COPY ${raylib_public_headers} DESTINATION "include")
 
+# Includes information on how the library will be installed on the system
+# when cmake --install is run
 include(InstallConfigurations)
 
 # Print the flags for the user
@@ -112,6 +116,7 @@ message(STATUS "Compiling with the flags:")
 message(STATUS "  PLATFORM=" ${PLATFORM_CPP})
 message(STATUS "  GRAPHICS=" ${GRAPHICS})
 
+# Options if you want to create an installer using CPack
 include(PackConfigurations)
 
 enable_testing()

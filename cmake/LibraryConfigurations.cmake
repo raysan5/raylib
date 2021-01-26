@@ -97,3 +97,9 @@ endif ()
 if (NOT GRAPHICS)
     set(GRAPHICS "GRAPHICS_API_OPENGL_33")
 endif ()
+
+set(LIBS_PRIVATE ${LIBS_PRIVATE} ${OPENAL_LIBRARY})
+
+if (${PLATFORM} MATCHES "Desktop")
+    set(LIBS_PRIVATE ${LIBS_PRIVATE} glfw)
+endif ()
