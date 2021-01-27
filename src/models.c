@@ -3932,20 +3932,20 @@ static Model LoadGLTF(const char *fileName)
                         int bufferSize = model.meshes[primitiveIndex].vertexCount * 3 * sizeof(float);
                         model.meshes[primitiveIndex].vertices = RL_MALLOC(bufferSize);
                         model.meshes[primitiveIndex].animVertices = RL_MALLOC(bufferSize);
-	
-						LOAD_ACCESSOR(float, 3, acc, model.meshes[primitiveIndex].vertices);
-						memcpy(model.meshes[primitiveIndex].animVertices, model.meshes[primitiveIndex].vertices, bufferSize);
+
+                        LOAD_ACCESSOR(float, 3, acc, model.meshes[primitiveIndex].vertices);
+                        memcpy(model.meshes[primitiveIndex].animVertices, model.meshes[primitiveIndex].vertices, bufferSize);
                     }
                     else if (data->meshes[i].primitives[p].attributes[j].type == cgltf_attribute_type_normal)
                     {
                         cgltf_accessor *acc = data->meshes[i].primitives[p].attributes[j].data;
-						int bufferSize = acc->count*3*sizeof(float);
-						model.meshes[primitiveIndex].normals = RL_MALLOC(bufferSize);
+                        int bufferSize = acc->count*3*sizeof(float);
+                        model.meshes[primitiveIndex].normals = RL_MALLOC(bufferSize);
                         model.meshes[primitiveIndex].animNormals = RL_MALLOC(bufferSize);
-	
-						LOAD_ACCESSOR(float, 3, acc, model.meshes[primitiveIndex].normals);
-						memcpy(model.meshes[primitiveIndex].animNormals, model.meshes[primitiveIndex].normals, bufferSize);
-					}
+
+                        LOAD_ACCESSOR(float, 3, acc, model.meshes[primitiveIndex].normals);
+                        memcpy(model.meshes[primitiveIndex].animNormals, model.meshes[primitiveIndex].normals, bufferSize);
+                    }
                     else if (data->meshes[i].primitives[p].attributes[j].type == cgltf_attribute_type_texcoord)
                     {
                         cgltf_accessor *acc = data->meshes[i].primitives[p].attributes[j].data;
@@ -3966,33 +3966,31 @@ static Model LoadGLTF(const char *fileName)
                         cgltf_accessor *acc = data->meshes[i].primitives[p].attributes[j].data;
     
                         if(acc->component_type == cgltf_component_type_r_16u)
-						{
-							model.meshes[primitiveIndex].boneIds = RL_MALLOC(sizeof(int) * acc->count * 4);
-							short* bones = RL_MALLOC(sizeof(short) * acc->count * 4);
-							
-							LOAD_ACCESSOR(short, 4, acc, bones);
-							for(int a = 0; a < acc->count * 4; a ++)
-							{
-								cgltf_node* skinJoint = data->skins->joints[bones[a]];
-								
-								for(int k = 0; k < data->nodes_count; k++)
-								{
-									if(&(data->nodes[k]) == skinJoint)
-									{
-										model.meshes[primitiveIndex].boneIds[a] = k;
-										break;
-									}
-								}
-//								model.meshes[primitiveIndex].boneIds[a] = (int)bones[a];
-							}
-							
-							RL_FREE(bones);
-						}
+                        {
+                            model.meshes[primitiveIndex].boneIds = RL_MALLOC(sizeof(int) * acc->count * 4);
+                            short* bones = RL_MALLOC(sizeof(short) * acc->count * 4);
+                            
+                            LOAD_ACCESSOR(short, 4, acc, bones);
+                            for(int a = 0; a < acc->count * 4; a ++)
+                            {
+                                cgltf_node* skinJoint = data->skins->joints[bones[a]];
+                                
+                                for(int k = 0; k < data->nodes_count; k++)
+                                {
+                                    if(&(data->nodes[k]) == skinJoint)
+                                    {
+                                        model.meshes[primitiveIndex].boneIds[a] = k;
+                                        break;
+                                    }
+                                }
+                            }
+                            RL_FREE(bones);
+                        }
                         else
-						{
-							// TODO: Support other size of bone index?
-							TRACELOG(LOG_WARNING, "MODEL: [%s] glTF bones in unexpected format", fileName);
-						}
+                        {
+                            // TODO: Support other size of bone index?
+                            TRACELOG(LOG_WARNING, "MODEL: [%s] glTF bones in unexpected format", fileName);
+                        }
                     
                     }
                     else if (data->meshes[i].primitives[p].attributes[j].type == cgltf_attribute_type_weights)
@@ -4104,68 +4102,68 @@ static ModelAnimation* LoadGLTFModelAnimations(const char *fileName, int *animCo
             }
     
             for (unsigned int j = 0; j < output->frameCount; j++)
-            	output->framePoses[j] = RL_MALLOC(output->frameCount*data->nodes_count*sizeof(Transform));
+                output->framePoses[j] = RL_MALLOC(output->frameCount*data->nodes_count*sizeof(Transform));
             
             for (unsigned int frame = 0; frame < output->frameCount; frame++)
             {
-				for (unsigned int i = 0; i < data->nodes_count; i++)
-				{
-				   	output->framePoses[frame][i].translation = Vector3Zero();
-					output->framePoses[frame][i].rotation = QuaternionIdentity();
-					output->framePoses[frame][i].rotation = QuaternionNormalize(output->framePoses[frame][i].rotation);
-					output->framePoses[frame][i].scale = Vector3One();
-				}
+                for (unsigned int i = 0; i < data->nodes_count; i++)
+                {
+                    output->framePoses[frame][i].translation = Vector3Zero();
+                    output->framePoses[frame][i].rotation = QuaternionIdentity();
+                    output->framePoses[frame][i].rotation = QuaternionNormalize(output->framePoses[frame][i].rotation);
+                    output->framePoses[frame][i].scale = Vector3One();
+                }
             }
-	
+            
             for(int channelId = 0; channelId < animation->channels_count; channelId++)
-			{
-				cgltf_animation_channel* channel = animation->channels + channelId;
-				cgltf_animation_sampler* sampler = channel->sampler;
-				
-				int boneId = channel->target_node - data->nodes;
-				
-				for(int frame = 0; frame < output->frameCount; frame++)
-				{
-					if(channel->target_path == cgltf_animation_path_type_translation) {
-						Vector3 translation;
-						if(cgltf_accessor_read_float(sampler->output, frame, (float*)&translation, 3))
-						{
-							output->framePoses[frame][boneId].translation = translation;
-						}
-						else if (output->frameCount == 2)
-						{
-							memcpy(&translation, frame == 0 ? &(sampler->output->min) : &(sampler->output->max), 3 * sizeof(float));
-							output->framePoses[frame][boneId].translation = translation;
-						}
-					}
-					if(channel->target_path == cgltf_animation_path_type_rotation) {
-						Quaternion rotation;
-						if(cgltf_accessor_read_float(sampler->output, frame, (float*)&rotation, 4))
-						{
-							output->framePoses[frame][boneId].rotation = rotation;
-							output->framePoses[frame][boneId].rotation = QuaternionNormalize(output->framePoses[frame][boneId].rotation);
-						}
-						else if (output->frameCount == 2)
-						{
-							memcpy(&rotation, frame == 0 ? &(sampler->output->min) : &(sampler->output->max), 4 * sizeof(float));
-							output->framePoses[frame][boneId].rotation = rotation;
-							output->framePoses[frame][boneId].rotation = QuaternionNormalize(output->framePoses[frame][boneId].rotation);
-						}
-					}
-					if(channel->target_path == cgltf_animation_path_type_scale) {
-						Vector3 scale;
-						if(cgltf_accessor_read_float(sampler->output, frame, (float*)&scale, 4))
-						{
-							output->framePoses[frame][boneId].scale = scale;
-						}
-						else if (output->frameCount == 2)
-						{
-							memcpy(&scale, frame == 0 ? &(sampler->output->min) : &(sampler->output->max), 3 * sizeof(float));
-							output->framePoses[frame][boneId].scale = scale;
-						}
-					}
-				}
-			}
+            {
+                cgltf_animation_channel* channel = animation->channels + channelId;
+                cgltf_animation_sampler* sampler = channel->sampler;
+                
+                int boneId = channel->target_node - data->nodes;
+                
+                for(int frame = 0; frame < output->frameCount; frame++)
+                {
+                    if(channel->target_path == cgltf_animation_path_type_translation) {
+                        Vector3 translation;
+                        if(cgltf_accessor_read_float(sampler->output, frame, (float*)&translation, 3))
+                        {
+                            output->framePoses[frame][boneId].translation = translation;
+                        }
+                        else if (output->frameCount == 2)
+                        {
+                            memcpy(&translation, frame == 0 ? &(sampler->output->min) : &(sampler->output->max), 3 * sizeof(float));
+                            output->framePoses[frame][boneId].translation = translation;
+                        }
+                    }
+                    if(channel->target_path == cgltf_animation_path_type_rotation) {
+                        Quaternion rotation;
+                        if(cgltf_accessor_read_float(sampler->output, frame, (float*)&rotation, 4))
+                        {
+                            output->framePoses[frame][boneId].rotation = rotation;
+                            output->framePoses[frame][boneId].rotation = QuaternionNormalize(output->framePoses[frame][boneId].rotation);
+                        }
+                        else if (output->frameCount == 2)
+                        {
+                            memcpy(&rotation, frame == 0 ? &(sampler->output->min) : &(sampler->output->max), 4 * sizeof(float));
+                            output->framePoses[frame][boneId].rotation = rotation;
+                            output->framePoses[frame][boneId].rotation = QuaternionNormalize(output->framePoses[frame][boneId].rotation);
+                        }
+                    }
+                    if(channel->target_path == cgltf_animation_path_type_scale) {
+                        Vector3 scale;
+                        if(cgltf_accessor_read_float(sampler->output, frame, (float*)&scale, 4))
+                        {
+                            output->framePoses[frame][boneId].scale = scale;
+                        }
+                        else if (output->frameCount == 2)
+                        {
+                            memcpy(&scale, frame == 0 ? &(sampler->output->min) : &(sampler->output->max), 3 * sizeof(float));
+                            output->framePoses[frame][boneId].scale = scale;
+                        }
+                    }
+                }
+            }
     
             // Build frameposes
             for (unsigned int frame = 0; frame < output->frameCount; frame++)
