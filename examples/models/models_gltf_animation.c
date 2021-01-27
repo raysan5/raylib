@@ -39,7 +39,7 @@ int main(void)
     camera.fovy = 45.0f;                                // Camera field-of-view Y
     camera.type = CAMERA_PERSPECTIVE;                   // Camera mode type
 
-    Model model = LoadModel("resources/rigged_figure/rigged_figure.glb");               // Load the animated model mesh and
+    Model model = LoadModel("resources/gltf/rigged_figure.glb");               // Load the animated model mesh and
     // basic data
 //    Texture2D texture = LoadTexture("resources/guy/guytex.png");    // Load model texture and set material
 //    SetMaterialTexture(&model.materials[0], MAP_DIFFUSE, texture);  // Set model material map texture
@@ -48,7 +48,7 @@ int main(void)
 
     // Load animation data
     int animsCount = 0;
-    ModelAnimation *anims = LoadModelAnimations("resources/rigged_figure/rigged_figure.glb", &animsCount);
+    ModelAnimation *anims = LoadModelAnimations("resources/gltf/rigged_figure.glb", &animsCount);
     int animFrameCounter = 0;
 
     SetCameraMode(camera, CAMERA_FREE); // Set free camera mode
