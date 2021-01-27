@@ -3781,8 +3781,9 @@ static Model LoadGLTF(const char *fileName)
 
         int primitivesCount = 0;
 
-        for (unsigned int i = 0; i < data->meshes_count; i++) primitivesCount += (int)data->meshes[i].primitives_count;
-
+        for (unsigned int i = 0; i < data->meshes_count; i++)
+        	primitivesCount += (int)data->meshes[i].primitives_count;
+	
         // Process glTF data and map to model
         model.meshCount = primitivesCount;
         model.meshes = RL_CALLOC(model.meshCount, sizeof(Mesh));
@@ -3793,13 +3794,60 @@ static Model LoadGLTF(const char *fileName)
         model.bones = RL_CALLOC(model.boneCount, sizeof(BoneInfo));
         model.bindPose = RL_CALLOC(model.boneCount, sizeof(Transform));
 
-        for (int i = 0; i < model.meshCount; i++) model.meshes[i].vboId = (unsigned int *)RL_CALLOC(DEFAULT_MESH_VERTEX_BUFFERS, sizeof(unsigned int));
+        for (int i = 0; i < model.meshCount; i++)
+        	model.meshes[i].vboId = (unsigned int *)RL_CALLOC(DEFAULT_MESH_VERTEX_BUFFERS, sizeof(unsigned int));
     
         for (unsigned int j = 0; j < data->nodes_count; j++)
         {
             strcpy(model.bones[j].name, data->nodes[j].name == 0 ? "ANIMJOINT" : data->nodes[j].name);
             model.bones[j].parent = j != 0 ? data->nodes[j].parent - data->nodes : 0;
         }
+	
+		for (unsigned int i = 0; i < data->nodes_count; i++)
+		{
+			if(data->nodes[i].has_translation)
+			{
+				memcpy(&model.bindPose[i].translation, data->nodes[i].translation, 3 * sizeof(float));
+			}
+			else
+			{
+				model.bindPose[i].translation = Vector3Zero();
+			}
+			
+			if(data->nodes[i].has_rotation)
+			{
+				memcpy(&model.bindPose[i].rotation, data->nodes[i].rotation, 4 * sizeof(float));
+			}
+			else
+			{
+				model.bindPose[i].rotation = QuaternionIdentity();
+			}
+			model.bindPose[i].rotation = QuaternionNormalize(model.bindPose[i].rotation);
+			
+			if(data->nodes[i].has_scale)
+			{
+				memcpy(&model.bindPose[i].scale, data->nodes[i].scale, 3 * sizeof(float));
+			}
+			else
+			{
+				model.bindPose[i].scale = Vector3One();
+			}
+		}
+	
+		for (int i = 0; i < model.boneCount; i++)
+		{
+			Transform* currentTransform = model.bindPose + i;
+			BoneInfo* currentBone = model.bones + i;
+			Transform* parentTransform = model.bindPose + currentBone->parent;
+			
+			if (currentBone->parent >= 0)
+			{
+				currentTransform->rotation = QuaternionMultiply(parentTransform->rotation, currentTransform->rotation);
+				currentTransform->translation = Vector3RotateByQuaternion(currentTransform->translation, parentTransform->rotation);
+				currentTransform->translation = Vector3Add(currentTransform->translation, parentTransform->translation);
+				currentTransform->scale = Vector3Multiply(parentTransform->scale, parentTransform->scale);
+			}
+		}
         
         for (int i = 0; i < model.materialCount - 1; i++)
         {
@@ -3881,18 +3929,22 @@ static Model LoadGLTF(const char *fileName)
                     {
                         cgltf_accessor *acc = data->meshes[i].primitives[p].attributes[j].data;
                         model.meshes[primitiveIndex].vertexCount = (int)acc->count;
-                        model.meshes[primitiveIndex].vertices = RL_MALLOC(model.meshes[primitiveIndex].vertexCount*3*sizeof(float));
-                        model.meshes[primitiveIndex].animVertices = RL_MALLOC(model.meshes[primitiveIndex].vertexCount*3*sizeof(float));
+                        int bufferSize = model.meshes[primitiveIndex].vertexCount * 3 * sizeof(float);
+                        model.meshes[primitiveIndex].vertices = RL_MALLOC(bufferSize);
+                        model.meshes[primitiveIndex].animVertices = RL_MALLOC(bufferSize);
 	
-						LOAD_ACCESSOR(float, 3, acc, model.meshes[primitiveIndex].vertices)
+						LOAD_ACCESSOR(float, 3, acc, model.meshes[primitiveIndex].vertices);
+						memcpy(model.meshes[primitiveIndex].animVertices, model.meshes[primitiveIndex].vertices, bufferSize);
                     }
                     else if (data->meshes[i].primitives[p].attributes[j].type == cgltf_attribute_type_normal)
                     {
                         cgltf_accessor *acc = data->meshes[i].primitives[p].attributes[j].data;
-                        model.meshes[primitiveIndex].normals = RL_MALLOC(acc->count*3*sizeof(float));
-                        model.meshes[primitiveIndex].animNormals = RL_MALLOC(acc->count*3*sizeof(float));
+						int bufferSize = acc->count*3*sizeof(float);
+						model.meshes[primitiveIndex].normals = RL_MALLOC(bufferSize);
+                        model.meshes[primitiveIndex].animNormals = RL_MALLOC(bufferSize);
 	
-						LOAD_ACCESSOR(float, 3, acc, model.meshes[primitiveIndex].normals)
+						LOAD_ACCESSOR(float, 3, acc, model.meshes[primitiveIndex].normals);
+						memcpy(model.meshes[primitiveIndex].animNormals, model.meshes[primitiveIndex].normals, bufferSize);
 					}
                     else if (data->meshes[i].primitives[p].attributes[j].type == cgltf_attribute_type_texcoord)
                     {
