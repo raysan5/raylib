@@ -3913,14 +3913,35 @@ static Model LoadGLTF(const char *fileName)
                     {
                         cgltf_accessor *acc = data->meshes[i].primitives[p].attributes[j].data;
     
-                        model.meshes[primitiveIndex].boneIds = RL_MALLOC(sizeof(int) * acc->count * 4);
-						short* bones = RL_MALLOC(sizeof(short) * acc->count * 4);
-                        LOAD_ACCESSOR(short, 4, acc, bones);
-                        
-                        for(int a = 0; a < acc->count * 4; a ++)
-                        {
-                            model.meshes[primitiveIndex].boneIds[a] = (int)bones[a];
-                        }
+                        if(acc->component_type == cgltf_component_type_r_16u)
+						{
+							model.meshes[primitiveIndex].boneIds = RL_MALLOC(sizeof(int) * acc->count * 4);
+							short* bones = RL_MALLOC(sizeof(short) * acc->count * 4);
+							
+							LOAD_ACCESSOR(short, 4, acc, bones);
+							for(int a = 0; a < acc->count * 4; a ++)
+							{
+								cgltf_node* skinJoint = data->skins->joints[bones[a]];
+								
+								for(int k = 0; k < data->nodes_count; k++)
+								{
+									if(&(data->nodes[k]) == skinJoint)
+									{
+										model.meshes[primitiveIndex].boneIds[a] = k;
+										break;
+									}
+								}
+//								model.meshes[primitiveIndex].boneIds[a] = (int)bones[a];
+							}
+							
+							RL_FREE(bones);
+						}
+                        else
+						{
+							// TODO: Support other size of bone index?
+							TRACELOG(LOG_WARNING, "MODEL: [%s] glTF bones in unexpected format", fileName);
+						}
+                    
                     }
                     else if (data->meshes[i].primitives[p].attributes[j].type == cgltf_attribute_type_weights)
                     {
