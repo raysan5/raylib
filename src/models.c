@@ -1056,7 +1056,7 @@ void UpdateModelAnimation(Model model, ModelAnimation anim, int frame)
             for (int i = 0; i < model.meshes[m].vertexCount; i++)
             {
                 boneId = model.meshes[m].boneIds[boneCounter];
-				inTranslation = model.bindPose[boneId].translation;
+                inTranslation = model.bindPose[boneId].translation;
                 inRotation = model.bindPose[boneId].rotation;
                 //inScale = model.bindPose[boneId].scale;
                 outTranslation = anim.framePoses[frame][boneId].translation;
@@ -3802,7 +3802,7 @@ static Model LoadGLTF(const char *fileName)
             strcpy(model.bones[j].name, data->nodes[j].name == 0 ? "ANIMJOINT" : data->nodes[j].name);
             model.bones[j].parent = j != 0 ? data->nodes[j].parent - data->nodes : 0;
         }
-    	
+        
         for (unsigned int i = 0; i < data->nodes_count; i++)
         {
             if(data->nodes[i].has_translation)
