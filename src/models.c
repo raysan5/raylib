@@ -114,9 +114,11 @@ static Model LoadOBJ(const char *fileName);     // Load OBJ mesh data
 #endif
 #if defined(SUPPORT_FILEFORMAT_IQM)
 static Model LoadIQM(const char *fileName);     // Load IQM mesh data
+static ModelAnimation *LoadIQMModelAnimations(const char *fileName, int *animCount);    // Load IQM animation data
 #endif
 #if defined(SUPPORT_FILEFORMAT_GLTF)
 static Model LoadGLTF(const char *fileName);    // Load GLTF mesh data
+static ModelAnimation *LoadGLTFModelAnimations(const char *fileName, int *animCount);    // Load GLTF animation data
 #endif
 
 //----------------------------------------------------------------------------------
@@ -852,7 +854,7 @@ Mesh *LoadMeshes(const char *fileName, int *meshCount)
 // Upload mesh vertex data to GPU
 void UploadMesh(Mesh *mesh)
 {
-    rlLoadMesh(&mesh, false);   // Static mesh by default
+    rlLoadMesh(mesh, false);   // Static mesh by default
 }
 
 // Unload mesh from memory (RAM and/or VRAM)
@@ -1014,211 +1016,15 @@ void SetModelMeshMaterial(Model *model, int meshId, int materialId)
 // Load model animations from file
 ModelAnimation *LoadModelAnimations(const char *fileName, int *animCount)
 {
-    #define IQM_MAGIC       "INTERQUAKEMODEL"   // IQM file magic number
-    #define IQM_VERSION     2                   // only IQM version 2 supported
+    ModelAnimation *animations = NULL;
 
-    unsigned int fileSize = 0;
-    unsigned char *fileData = LoadFileData(fileName, &fileSize);
-    unsigned char *fileDataPtr = fileData;
-
-    typedef struct IQMHeader {
-        char magic[16];
-        unsigned int version;
-        unsigned int filesize;
-        unsigned int flags;
-        unsigned int num_text, ofs_text;
-        unsigned int num_meshes, ofs_meshes;
-        unsigned int num_vertexarrays, num_vertexes, ofs_vertexarrays;
-        unsigned int num_triangles, ofs_triangles, ofs_adjacency;
-        unsigned int num_joints, ofs_joints;
-        unsigned int num_poses, ofs_poses;
-        unsigned int num_anims, ofs_anims;
-        unsigned int num_frames, num_framechannels, ofs_frames, ofs_bounds;
-        unsigned int num_comment, ofs_comment;
-        unsigned int num_extensions, ofs_extensions;
-    } IQMHeader;
-
-    typedef struct IQMPose {
-        int parent;
-        unsigned int mask;
-        float channeloffset[10];
-        float channelscale[10];
-    } IQMPose;
-
-    typedef struct IQMAnim {
-        unsigned int name;
-        unsigned int first_frame, num_frames;
-        float framerate;
-        unsigned int flags;
-    } IQMAnim;
-
-    // In case file can not be read, return an empty model
-    if (fileDataPtr == NULL) return NULL;
-
-    // Read IQM header
-    IQMHeader *iqmHeader = (IQMHeader *)fileDataPtr;
-
-    if (memcmp(iqmHeader->magic, IQM_MAGIC, sizeof(IQM_MAGIC)) != 0)
-    {
-        TRACELOG(LOG_WARNING, "MODEL: [%s] IQM file is not a valid model", fileName);
-        return NULL;
-    }
-
-    if (iqmHeader->version != IQM_VERSION)
-    {
-        TRACELOG(LOG_WARNING, "MODEL: [%s] IQM file version not supported (%i)", fileName, iqmHeader->version);
-        return NULL;
-    }
-
-    // Get bones data
-    IQMPose *poses = RL_MALLOC(iqmHeader->num_poses*sizeof(IQMPose));
-    //fseek(iqmFile, iqmHeader->ofs_poses, SEEK_SET);
-    //fread(poses, iqmHeader->num_poses*sizeof(IQMPose), 1, iqmFile);
-    memcpy(poses, fileDataPtr + iqmHeader->ofs_poses, iqmHeader->num_poses*sizeof(IQMPose));
-
-    // Get animations data
-    *animCount = iqmHeader->num_anims;
-    IQMAnim *anim = RL_MALLOC(iqmHeader->num_anims*sizeof(IQMAnim));
-    //fseek(iqmFile, iqmHeader->ofs_anims, SEEK_SET);
-    //fread(anim, iqmHeader->num_anims*sizeof(IQMAnim), 1, iqmFile);
-    memcpy(anim, fileDataPtr + iqmHeader->ofs_anims, iqmHeader->num_anims*sizeof(IQMAnim));
-
-    ModelAnimation *animations = RL_MALLOC(iqmHeader->num_anims*sizeof(ModelAnimation));
-
-    // frameposes
-    unsigned short *framedata = RL_MALLOC(iqmHeader->num_frames*iqmHeader->num_framechannels*sizeof(unsigned short));
-    //fseek(iqmFile, iqmHeader->ofs_frames, SEEK_SET);
-    //fread(framedata, iqmHeader->num_frames*iqmHeader->num_framechannels*sizeof(unsigned short), 1, iqmFile);
-    memcpy(framedata, fileDataPtr + iqmHeader->ofs_frames, iqmHeader->num_frames*iqmHeader->num_framechannels*sizeof(unsigned short));
-
-    for (unsigned int a = 0; a < iqmHeader->num_anims; a++)
-    {
-        animations[a].frameCount = anim[a].num_frames;
-        animations[a].boneCount = iqmHeader->num_poses;
-        animations[a].bones = RL_MALLOC(iqmHeader->num_poses*sizeof(BoneInfo));
-        animations[a].framePoses = RL_MALLOC(anim[a].num_frames*sizeof(Transform *));
-        //animations[a].framerate = anim.framerate;     // TODO: Use framerate?
-
-        for (unsigned int j = 0; j < iqmHeader->num_poses; j++)
-        {
-            strcpy(animations[a].bones[j].name, "ANIMJOINTNAME");
-            animations[a].bones[j].parent = poses[j].parent;
-        }
-
-        for (unsigned int j = 0; j < anim[a].num_frames; j++) animations[a].framePoses[j] = RL_MALLOC(iqmHeader->num_poses*sizeof(Transform));
-
-        int dcounter = anim[a].first_frame*iqmHeader->num_framechannels;
-
-        for (unsigned int frame = 0; frame < anim[a].num_frames; frame++)
-        {
-            for (unsigned int i = 0; i < iqmHeader->num_poses; i++)
-            {
-                animations[a].framePoses[frame][i].translation.x = poses[i].channeloffset[0];
-
-                if (poses[i].mask & 0x01)
-                {
-                    animations[a].framePoses[frame][i].translation.x += framedata[dcounter]*poses[i].channelscale[0];
-                    dcounter++;
-                }
-
-                animations[a].framePoses[frame][i].translation.y = poses[i].channeloffset[1];
-
-                if (poses[i].mask & 0x02)
-                {
-                    animations[a].framePoses[frame][i].translation.y += framedata[dcounter]*poses[i].channelscale[1];
-                    dcounter++;
-                }
-
-                animations[a].framePoses[frame][i].translation.z = poses[i].channeloffset[2];
-
-                if (poses[i].mask & 0x04)
-                {
-                    animations[a].framePoses[frame][i].translation.z += framedata[dcounter]*poses[i].channelscale[2];
-                    dcounter++;
-                }
-
-                animations[a].framePoses[frame][i].rotation.x = poses[i].channeloffset[3];
-
-                if (poses[i].mask & 0x08)
-                {
-                    animations[a].framePoses[frame][i].rotation.x += framedata[dcounter]*poses[i].channelscale[3];
-                    dcounter++;
-                }
-
-                animations[a].framePoses[frame][i].rotation.y = poses[i].channeloffset[4];
-
-                if (poses[i].mask & 0x10)
-                {
-                    animations[a].framePoses[frame][i].rotation.y += framedata[dcounter]*poses[i].channelscale[4];
-                    dcounter++;
-                }
-
-                animations[a].framePoses[frame][i].rotation.z = poses[i].channeloffset[5];
-
-                if (poses[i].mask & 0x20)
-                {
-                    animations[a].framePoses[frame][i].rotation.z += framedata[dcounter]*poses[i].channelscale[5];
-                    dcounter++;
-                }
-
-                animations[a].framePoses[frame][i].rotation.w = poses[i].channeloffset[6];
-
-                if (poses[i].mask & 0x40)
-                {
-                    animations[a].framePoses[frame][i].rotation.w += framedata[dcounter]*poses[i].channelscale[6];
-                    dcounter++;
-                }
-
-                animations[a].framePoses[frame][i].scale.x = poses[i].channeloffset[7];
-
-                if (poses[i].mask & 0x80)
-                {
-                    animations[a].framePoses[frame][i].scale.x += framedata[dcounter]*poses[i].channelscale[7];
-                    dcounter++;
-                }
-
-                animations[a].framePoses[frame][i].scale.y = poses[i].channeloffset[8];
-
-                if (poses[i].mask & 0x100)
-                {
-                    animations[a].framePoses[frame][i].scale.y += framedata[dcounter]*poses[i].channelscale[8];
-                    dcounter++;
-                }
-
-                animations[a].framePoses[frame][i].scale.z = poses[i].channeloffset[9];
-
-                if (poses[i].mask & 0x200)
-                {
-                    animations[a].framePoses[frame][i].scale.z += framedata[dcounter]*poses[i].channelscale[9];
-                    dcounter++;
-                }
-
-                animations[a].framePoses[frame][i].rotation = QuaternionNormalize(animations[a].framePoses[frame][i].rotation);
-            }
-        }
-
-        // Build frameposes
-        for (unsigned int frame = 0; frame < anim[a].num_frames; frame++)
-        {
-            for (int i = 0; i < animations[a].boneCount; i++)
-            {
-                if (animations[a].bones[i].parent >= 0)
-                {
-                    animations[a].framePoses[frame][i].rotation = QuaternionMultiply(animations[a].framePoses[frame][animations[a].bones[i].parent].rotation, animations[a].framePoses[frame][i].rotation);
-                    animations[a].framePoses[frame][i].translation = Vector3RotateByQuaternion(animations[a].framePoses[frame][i].translation, animations[a].framePoses[frame][animations[a].bones[i].parent].rotation);
-                    animations[a].framePoses[frame][i].translation = Vector3Add(animations[a].framePoses[frame][i].translation, animations[a].framePoses[frame][animations[a].bones[i].parent].translation);
-                    animations[a].framePoses[frame][i].scale = Vector3Multiply(animations[a].framePoses[frame][i].scale, animations[a].framePoses[frame][animations[a].bones[i].parent].scale);
-                }
-            }
-        }
-    }
-
-    RL_FREE(fileData);
-
-    RL_FREE(framedata);
-    RL_FREE(poses);
-    RL_FREE(anim);
-
+#if defined(SUPPORT_FILEFORMAT_IQM)
+    if (IsFileExtension(fileName, ".iqm")) animations = LoadIQMModelAnimations(fileName, animCount);
+#endif
+#if defined(SUPPORT_FILEFORMAT_GLTF)
+    if (IsFileExtension(fileName, ".gltf;.glb")) animations = LoadGLTFModelAnimations(fileName, animCount);
+#endif
+    
     return animations;
 }
 
@@ -3554,6 +3360,218 @@ static Model LoadIQM(const char *fileName)
 
     return model;
 }
+
+// Load IQM animation data
+static ModelAnimation* LoadIQMModelAnimations(const char* fileName, int* animCount)
+{
+#define IQM_MAGIC       "INTERQUAKEMODEL"   // IQM file magic number
+#define IQM_VERSION     2                   // only IQM version 2 supported
+    
+    unsigned int fileSize = 0;
+    unsigned char *fileData = LoadFileData(fileName, &fileSize);
+    unsigned char *fileDataPtr = fileData;
+    
+    typedef struct IQMHeader {
+        char magic[16];
+        unsigned int version;
+        unsigned int filesize;
+        unsigned int flags;
+        unsigned int num_text, ofs_text;
+        unsigned int num_meshes, ofs_meshes;
+        unsigned int num_vertexarrays, num_vertexes, ofs_vertexarrays;
+        unsigned int num_triangles, ofs_triangles, ofs_adjacency;
+        unsigned int num_joints, ofs_joints;
+        unsigned int num_poses, ofs_poses;
+        unsigned int num_anims, ofs_anims;
+        unsigned int num_frames, num_framechannels, ofs_frames, ofs_bounds;
+        unsigned int num_comment, ofs_comment;
+        unsigned int num_extensions, ofs_extensions;
+    } IQMHeader;
+    
+    typedef struct IQMPose {
+        int parent;
+        unsigned int mask;
+        float channeloffset[10];
+        float channelscale[10];
+    } IQMPose;
+    
+    typedef struct IQMAnim {
+        unsigned int name;
+        unsigned int first_frame, num_frames;
+        float framerate;
+        unsigned int flags;
+    } IQMAnim;
+    
+    // In case file can not be read, return an empty model
+    if (fileDataPtr == NULL) return NULL;
+    
+    // Read IQM header
+    IQMHeader *iqmHeader = (IQMHeader *)fileDataPtr;
+    
+    if (memcmp(iqmHeader->magic, IQM_MAGIC, sizeof(IQM_MAGIC)) != 0)
+    {
+        TRACELOG(LOG_WARNING, "MODEL: [%s] IQM file is not a valid model", fileName);
+        return NULL;
+    }
+    
+    if (iqmHeader->version != IQM_VERSION)
+    {
+        TRACELOG(LOG_WARNING, "MODEL: [%s] IQM file version not supported (%i)", fileName, iqmHeader->version);
+        return NULL;
+    }
+    
+    // Get bones data
+    IQMPose *poses = RL_MALLOC(iqmHeader->num_poses*sizeof(IQMPose));
+    //fseek(iqmFile, iqmHeader->ofs_poses, SEEK_SET);
+    //fread(poses, iqmHeader->num_poses*sizeof(IQMPose), 1, iqmFile);
+    memcpy(poses, fileDataPtr + iqmHeader->ofs_poses, iqmHeader->num_poses*sizeof(IQMPose));
+    
+    // Get animations data
+    *animCount = iqmHeader->num_anims;
+    IQMAnim *anim = RL_MALLOC(iqmHeader->num_anims*sizeof(IQMAnim));
+    //fseek(iqmFile, iqmHeader->ofs_anims, SEEK_SET);
+    //fread(anim, iqmHeader->num_anims*sizeof(IQMAnim), 1, iqmFile);
+    memcpy(anim, fileDataPtr + iqmHeader->ofs_anims, iqmHeader->num_anims*sizeof(IQMAnim));
+    
+    ModelAnimation *animations = RL_MALLOC(iqmHeader->num_anims*sizeof(ModelAnimation));
+    
+    // frameposes
+    unsigned short *framedata = RL_MALLOC(iqmHeader->num_frames*iqmHeader->num_framechannels*sizeof(unsigned short));
+    //fseek(iqmFile, iqmHeader->ofs_frames, SEEK_SET);
+    //fread(framedata, iqmHeader->num_frames*iqmHeader->num_framechannels*sizeof(unsigned short), 1, iqmFile);
+    memcpy(framedata, fileDataPtr + iqmHeader->ofs_frames, iqmHeader->num_frames*iqmHeader->num_framechannels*sizeof(unsigned short));
+    
+    for (unsigned int a = 0; a < iqmHeader->num_anims; a++)
+    {
+        animations[a].frameCount = anim[a].num_frames;
+        animations[a].boneCount = iqmHeader->num_poses;
+        animations[a].bones = RL_MALLOC(iqmHeader->num_poses*sizeof(BoneInfo));
+        animations[a].framePoses = RL_MALLOC(anim[a].num_frames*sizeof(Transform *));
+        //animations[a].framerate = anim.framerate;     // TODO: Use framerate?
+        
+        for (unsigned int j = 0; j < iqmHeader->num_poses; j++)
+        {
+            strcpy(animations[a].bones[j].name, "ANIMJOINTNAME");
+            animations[a].bones[j].parent = poses[j].parent;
+        }
+        
+        for (unsigned int j = 0; j < anim[a].num_frames; j++) animations[a].framePoses[j] = RL_MALLOC(iqmHeader->num_poses*sizeof(Transform));
+        
+        int dcounter = anim[a].first_frame*iqmHeader->num_framechannels;
+        
+        for (unsigned int frame = 0; frame < anim[a].num_frames; frame++)
+        {
+            for (unsigned int i = 0; i < iqmHeader->num_poses; i++)
+            {
+                animations[a].framePoses[frame][i].translation.x = poses[i].channeloffset[0];
+                
+                if (poses[i].mask & 0x01)
+                {
+                    animations[a].framePoses[frame][i].translation.x += framedata[dcounter]*poses[i].channelscale[0];
+                    dcounter++;
+                }
+                
+                animations[a].framePoses[frame][i].translation.y = poses[i].channeloffset[1];
+                
+                if (poses[i].mask & 0x02)
+                {
+                    animations[a].framePoses[frame][i].translation.y += framedata[dcounter]*poses[i].channelscale[1];
+                    dcounter++;
+                }
+                
+                animations[a].framePoses[frame][i].translation.z = poses[i].channeloffset[2];
+                
+                if (poses[i].mask & 0x04)
+                {
+                    animations[a].framePoses[frame][i].translation.z += framedata[dcounter]*poses[i].channelscale[2];
+                    dcounter++;
+                }
+                
+                animations[a].framePoses[frame][i].rotation.x = poses[i].channeloffset[3];
+                
+                if (poses[i].mask & 0x08)
+                {
+                    animations[a].framePoses[frame][i].rotation.x += framedata[dcounter]*poses[i].channelscale[3];
+                    dcounter++;
+                }
+                
+                animations[a].framePoses[frame][i].rotation.y = poses[i].channeloffset[4];
+                
+                if (poses[i].mask & 0x10)
+                {
+                    animations[a].framePoses[frame][i].rotation.y += framedata[dcounter]*poses[i].channelscale[4];
+                    dcounter++;
+                }
+                
+                animations[a].framePoses[frame][i].rotation.z = poses[i].channeloffset[5];
+                
+                if (poses[i].mask & 0x20)
+                {
+                    animations[a].framePoses[frame][i].rotation.z += framedata[dcounter]*poses[i].channelscale[5];
+                    dcounter++;
+                }
+                
+                animations[a].framePoses[frame][i].rotation.w = poses[i].channeloffset[6];
+                
+                if (poses[i].mask & 0x40)
+                {
+                    animations[a].framePoses[frame][i].rotation.w += framedata[dcounter]*poses[i].channelscale[6];
+                    dcounter++;
+                }
+                
+                animations[a].framePoses[frame][i].scale.x = poses[i].channeloffset[7];
+                
+                if (poses[i].mask & 0x80)
+                {
+                    animations[a].framePoses[frame][i].scale.x += framedata[dcounter]*poses[i].channelscale[7];
+                    dcounter++;
+                }
+                
+                animations[a].framePoses[frame][i].scale.y = poses[i].channeloffset[8];
+                
+                if (poses[i].mask & 0x100)
+                {
+                    animations[a].framePoses[frame][i].scale.y += framedata[dcounter]*poses[i].channelscale[8];
+                    dcounter++;
+                }
+                
+                animations[a].framePoses[frame][i].scale.z = poses[i].channeloffset[9];
+                
+                if (poses[i].mask & 0x200)
+                {
+                    animations[a].framePoses[frame][i].scale.z += framedata[dcounter]*poses[i].channelscale[9];
+                    dcounter++;
+                }
+                
+                animations[a].framePoses[frame][i].rotation = QuaternionNormalize(animations[a].framePoses[frame][i].rotation);
+            }
+        }
+        
+        // Build frameposes
+        for (unsigned int frame = 0; frame < anim[a].num_frames; frame++)
+        {
+            for (int i = 0; i < animations[a].boneCount; i++)
+            {
+                if (animations[a].bones[i].parent >= 0)
+                {
+                    animations[a].framePoses[frame][i].rotation = QuaternionMultiply(animations[a].framePoses[frame][animations[a].bones[i].parent].rotation, animations[a].framePoses[frame][i].rotation);
+                    animations[a].framePoses[frame][i].translation = Vector3RotateByQuaternion(animations[a].framePoses[frame][i].translation, animations[a].framePoses[frame][animations[a].bones[i].parent].rotation);
+                    animations[a].framePoses[frame][i].translation = Vector3Add(animations[a].framePoses[frame][i].translation, animations[a].framePoses[frame][animations[a].bones[i].parent].translation);
+                    animations[a].framePoses[frame][i].scale = Vector3Multiply(animations[a].framePoses[frame][i].scale, animations[a].framePoses[frame][animations[a].bones[i].parent].scale);
+                }
+            }
+        }
+    }
+    
+    RL_FREE(fileData);
+    
+    RL_FREE(framedata);
+    RL_FREE(poses);
+    RL_FREE(anim);
+    
+    return animations;
+}
+
 #endif
 
 #if defined(SUPPORT_FILEFORMAT_GLTF)
@@ -3763,7 +3781,8 @@ static Model LoadGLTF(const char *fileName)
 
         int primitivesCount = 0;
 
-        for (unsigned int i = 0; i < data->meshes_count; i++) primitivesCount += (int)data->meshes[i].primitives_count;
+        for (unsigned int i = 0; i < data->meshes_count; i++)
+            primitivesCount += (int)data->meshes[i].primitives_count;
 
         // Process glTF data and map to model
         model.meshCount = primitivesCount;
@@ -3771,9 +3790,65 @@ static Model LoadGLTF(const char *fileName)
         model.materialCount = (int)data->materials_count + 1;
         model.materials = RL_MALLOC(model.materialCount*sizeof(Material));
         model.meshMaterial = RL_MALLOC(model.meshCount*sizeof(int));
+        model.boneCount = data->nodes_count;
+        model.bones = RL_CALLOC(model.boneCount, sizeof(BoneInfo));
+        model.bindPose = RL_CALLOC(model.boneCount, sizeof(Transform));
 
-        for (int i = 0; i < model.meshCount; i++) model.meshes[i].vboId = (unsigned int *)RL_CALLOC(DEFAULT_MESH_VERTEX_BUFFERS, sizeof(unsigned int));
-
+        for (int i = 0; i < model.meshCount; i++)
+            model.meshes[i].vboId = (unsigned int *)RL_CALLOC(DEFAULT_MESH_VERTEX_BUFFERS, sizeof(unsigned int));
+    
+        for (unsigned int j = 0; j < data->nodes_count; j++)
+        {
+            strcpy(model.bones[j].name, data->nodes[j].name == 0 ? "ANIMJOINT" : data->nodes[j].name);
+            model.bones[j].parent = j != 0 ? data->nodes[j].parent - data->nodes : 0;
+        }
+        
+        for (unsigned int i = 0; i < data->nodes_count; i++)
+        {
+            if(data->nodes[i].has_translation)
+            {
+                memcpy(&model.bindPose[i].translation, data->nodes[i].translation, 3 * sizeof(float));
+            }
+            else
+            {
+                model.bindPose[i].translation = Vector3Zero();
+            }
+            
+            if(data->nodes[i].has_rotation)
+            {
+                memcpy(&model.bindPose[i].rotation, data->nodes[i].rotation, 4 * sizeof(float));
+            }
+            else
+            {
+                model.bindPose[i].rotation = QuaternionIdentity();
+            }
+            model.bindPose[i].rotation = QuaternionNormalize(model.bindPose[i].rotation);
+            
+            if(data->nodes[i].has_scale)
+            {
+                memcpy(&model.bindPose[i].scale, data->nodes[i].scale, 3 * sizeof(float));
+            }
+            else
+            {
+                model.bindPose[i].scale = Vector3One();
+            }
+        }
+    
+        for (int i = 0; i < model.boneCount; i++)
+        {
+            Transform* currentTransform = model.bindPose + i;
+            BoneInfo* currentBone = model.bones + i;
+            Transform* parentTransform = model.bindPose + currentBone->parent;
+            
+            if (currentBone->parent >= 0)
+            {
+                currentTransform->rotation = QuaternionMultiply(parentTransform->rotation, currentTransform->rotation);
+                currentTransform->translation = Vector3RotateByQuaternion(currentTransform->translation, parentTransform->rotation);
+                currentTransform->translation = Vector3Add(currentTransform->translation, parentTransform->translation);
+                currentTransform->scale = Vector3Multiply(parentTransform->scale, parentTransform->scale);
+            }
+        }
+        
         for (int i = 0; i < model.materialCount - 1; i++)
         {
             model.materials[i] = LoadMaterialDefault();
@@ -3854,16 +3929,22 @@ static Model LoadGLTF(const char *fileName)
                     {
                         cgltf_accessor *acc = data->meshes[i].primitives[p].attributes[j].data;
                         model.meshes[primitiveIndex].vertexCount = (int)acc->count;
-                        model.meshes[primitiveIndex].vertices = RL_MALLOC(model.meshes[primitiveIndex].vertexCount*3*sizeof(float));
+                        int bufferSize = model.meshes[primitiveIndex].vertexCount * 3 * sizeof(float);
+                        model.meshes[primitiveIndex].vertices = RL_MALLOC(bufferSize);
+                        model.meshes[primitiveIndex].animVertices = RL_MALLOC(bufferSize);
 
-                        LOAD_ACCESSOR(float, 3, acc, model.meshes[primitiveIndex].vertices)
+                        LOAD_ACCESSOR(float, 3, acc, model.meshes[primitiveIndex].vertices);
+                        memcpy(model.meshes[primitiveIndex].animVertices, model.meshes[primitiveIndex].vertices, bufferSize);
                     }
                     else if (data->meshes[i].primitives[p].attributes[j].type == cgltf_attribute_type_normal)
                     {
                         cgltf_accessor *acc = data->meshes[i].primitives[p].attributes[j].data;
-                        model.meshes[primitiveIndex].normals = RL_MALLOC(acc->count*3*sizeof(float));
+                        int bufferSize = acc->count*3*sizeof(float);
+                        model.meshes[primitiveIndex].normals = RL_MALLOC(bufferSize);
+                        model.meshes[primitiveIndex].animNormals = RL_MALLOC(bufferSize);
 
-                        LOAD_ACCESSOR(float, 3, acc, model.meshes[primitiveIndex].normals)
+                        LOAD_ACCESSOR(float, 3, acc, model.meshes[primitiveIndex].normals);
+                        memcpy(model.meshes[primitiveIndex].animNormals, model.meshes[primitiveIndex].normals, bufferSize);
                     }
                     else if (data->meshes[i].primitives[p].attributes[j].type == cgltf_attribute_type_texcoord)
                     {
@@ -3879,6 +3960,45 @@ static Model LoadGLTF(const char *fileName)
                             // TODO: Support normalized unsigned byte/unsigned short texture coordinates
                             TRACELOG(LOG_WARNING, "MODEL: [%s] glTF texture coordinates must be float", fileName);
                         }
+                    }
+                    else if (data->meshes[i].primitives[p].attributes[j].type == cgltf_attribute_type_joints)
+                    {
+                        cgltf_accessor *acc = data->meshes[i].primitives[p].attributes[j].data;
+    
+                        if(acc->component_type == cgltf_component_type_r_16u)
+                        {
+                            model.meshes[primitiveIndex].boneIds = RL_MALLOC(sizeof(int) * acc->count * 4);
+                            short* bones = RL_MALLOC(sizeof(short) * acc->count * 4);
+                            
+                            LOAD_ACCESSOR(short, 4, acc, bones);
+                            for(int a = 0; a < acc->count * 4; a ++)
+                            {
+                                cgltf_node* skinJoint = data->skins->joints[bones[a]];
+                                
+                                for(int k = 0; k < data->nodes_count; k++)
+                                {
+                                    if(&(data->nodes[k]) == skinJoint)
+                                    {
+                                        model.meshes[primitiveIndex].boneIds[a] = k;
+                                        break;
+                                    }
+                                }
+                            }
+                            RL_FREE(bones);
+                        }
+                        else
+                        {
+                            // TODO: Support other size of bone index?
+                            TRACELOG(LOG_WARNING, "MODEL: [%s] glTF bones in unexpected format", fileName);
+                        }
+                    
+                    }
+                    else if (data->meshes[i].primitives[p].attributes[j].type == cgltf_attribute_type_weights)
+                    {
+                        cgltf_accessor *acc = data->meshes[i].primitives[p].attributes[j].data;
+    
+                        model.meshes[primitiveIndex].boneWeights = RL_MALLOC(acc->count*4*sizeof(float));
+                        LOAD_ACCESSOR(float, 4, acc, model.meshes[primitiveIndex].boneWeights)
                     }
                 }
 
@@ -3913,9 +4033,12 @@ static Model LoadGLTF(const char *fileName)
                 {
                     model.meshMaterial[primitiveIndex] = model.materialCount - 1;;
                 }
-
+                
+//                if(data->meshes[i].)
+                
                 primitiveIndex++;
             }
+    
         }
 
         cgltf_free(data);
@@ -3926,4 +4049,146 @@ static Model LoadGLTF(const char *fileName)
 
     return model;
 }
+
+// LoadGLTF loads in animation data from given filename
+static ModelAnimation* LoadGLTFModelAnimations(const char *fileName, int *animCount)
+{
+    /***********************************************************************************
+
+        Function implemented by Hristo Stamenov (@object71)
+
+        Features:
+          - Supports .gltf and .glb files
+
+        Some restrictions (not exhaustive):
+          - ...
+
+    *************************************************************************************/
+    // glTF file loading
+    unsigned int dataSize = 0;
+    unsigned char *fileData = LoadFileData(fileName, &dataSize);
+    
+    ModelAnimation *animations = NULL;
+    
+    if (fileData == NULL) return animations;
+    
+    // glTF data loading
+    cgltf_options options = { 0 };
+    cgltf_data *data = NULL;
+    cgltf_result result = cgltf_parse(&options, fileData, dataSize, &data);
+    
+    if (result == cgltf_result_success)
+    {
+        TRACELOG(LOG_INFO, "MODEL: [%s] glTF animations (%s) count: %i", fileName, (data->file_type == 2)? "glb" :
+        "gltf", data->animations_count);
+        
+        animations = RL_MALLOC(data->animations_count*sizeof(ModelAnimation));
+    
+        for (unsigned int a = 0; a < data->animations_count; a++)
+        {
+            cgltf_animation *animation = data->animations + a;
+    
+            ModelAnimation *output = animations + a;
+    
+            output->frameCount = animation->channels->sampler->input->count;
+            output->boneCount = data->nodes_count;
+            output->bones = RL_MALLOC(output->boneCount*sizeof(BoneInfo));
+            output->framePoses = RL_MALLOC(output->frameCount*sizeof(Transform *));
+    
+            for (unsigned int j = 0; j < data->nodes_count; j++)
+            {
+                strcpy(output->bones[j].name, data->nodes[j].name == 0 ? "ANIMJOINT" : data->nodes[j].name);
+                output->bones[j].parent = j != 0 ? (int)(data->nodes[j].parent - data->nodes) : 0;
+            }
+    
+            for (unsigned int j = 0; j < output->frameCount; j++)
+                output->framePoses[j] = RL_MALLOC(output->frameCount*data->nodes_count*sizeof(Transform));
+            
+            for (unsigned int frame = 0; frame < output->frameCount; frame++)
+            {
+                for (unsigned int i = 0; i < data->nodes_count; i++)
+                {
+                    output->framePoses[frame][i].translation = Vector3Zero();
+                    output->framePoses[frame][i].rotation = QuaternionIdentity();
+                    output->framePoses[frame][i].rotation = QuaternionNormalize(output->framePoses[frame][i].rotation);
+                    output->framePoses[frame][i].scale = Vector3One();
+                }
+            }
+            
+            for(int channelId = 0; channelId < animation->channels_count; channelId++)
+            {
+                cgltf_animation_channel* channel = animation->channels + channelId;
+                cgltf_animation_sampler* sampler = channel->sampler;
+                
+                int boneId = channel->target_node - data->nodes;
+                
+                for(int frame = 0; frame < output->frameCount; frame++)
+                {
+                    if(channel->target_path == cgltf_animation_path_type_translation) {
+                        Vector3 translation;
+                        if(cgltf_accessor_read_float(sampler->output, frame, (float*)&translation, 3))
+                        {
+                            output->framePoses[frame][boneId].translation = translation;
+                        }
+                        else if (output->frameCount == 2)
+                        {
+                            memcpy(&translation, frame == 0 ? &(sampler->output->min) : &(sampler->output->max), 3 * sizeof(float));
+                            output->framePoses[frame][boneId].translation = translation;
+                        }
+                    }
+                    if(channel->target_path == cgltf_animation_path_type_rotation) {
+                        Quaternion rotation;
+                        if(cgltf_accessor_read_float(sampler->output, frame, (float*)&rotation, 4))
+                        {
+                            output->framePoses[frame][boneId].rotation = rotation;
+                            output->framePoses[frame][boneId].rotation = QuaternionNormalize(output->framePoses[frame][boneId].rotation);
+                        }
+                        else if (output->frameCount == 2)
+                        {
+                            memcpy(&rotation, frame == 0 ? &(sampler->output->min) : &(sampler->output->max), 4 * sizeof(float));
+                            output->framePoses[frame][boneId].rotation = rotation;
+                            output->framePoses[frame][boneId].rotation = QuaternionNormalize(output->framePoses[frame][boneId].rotation);
+                        }
+                    }
+                    if(channel->target_path == cgltf_animation_path_type_scale) {
+                        Vector3 scale;
+                        if(cgltf_accessor_read_float(sampler->output, frame, (float*)&scale, 4))
+                        {
+                            output->framePoses[frame][boneId].scale = scale;
+                        }
+                        else if (output->frameCount == 2)
+                        {
+                            memcpy(&scale, frame == 0 ? &(sampler->output->min) : &(sampler->output->max), 3 * sizeof(float));
+                            output->framePoses[frame][boneId].scale = scale;
+                        }
+                    }
+                }
+            }
+    
+            // Build frameposes
+            for (unsigned int frame = 0; frame < output->frameCount; frame++)
+            {
+                for (int i = 0; i < output->boneCount; i++)
+                {
+                    if (output->bones[i].parent >= 0)
+                    {
+                        output->framePoses[frame][i].rotation = QuaternionMultiply(output->framePoses[frame][output->bones[i].parent].rotation, output->framePoses[frame][i].rotation);
+                        output->framePoses[frame][i].translation = Vector3RotateByQuaternion(output->framePoses[frame][i].translation, output->framePoses[frame][output->bones[i].parent].rotation);
+                        output->framePoses[frame][i].translation = Vector3Add(output->framePoses[frame][i].translation, output->framePoses[frame][output->bones[i].parent].translation);
+                        output->framePoses[frame][i].scale = Vector3Multiply(output->framePoses[frame][i].scale, output->framePoses[frame][output->bones[i].parent].scale);
+                    }
+                }
+            }
+
+        }
+        
+        cgltf_free(data);
+    }
+    else TRACELOG(LOG_WARNING, ": [%s] Failed to load glTF data", fileName);
+    
+    RL_FREE(fileData);
+    
+    return animations;
+}
+
 #endif
