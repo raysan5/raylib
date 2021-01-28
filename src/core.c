@@ -2985,9 +2985,13 @@ int GetGamepadButtonPressed(void)
 // Set internal gamepad mappings
 int SetGamepadMappings(const char *mappings)
 {
+    int result = 0;
+
 #if defined(PLATFORM_DESKTOP)
-    return glfwUpdateGamepadMappings(mappings);
+    result = glfwUpdateGamepadMappings(mappings);
 #endif
+
+    return result;
 }
 
 // Detect if a mouse button has been pressed once
