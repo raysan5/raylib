@@ -23,15 +23,15 @@ uniform float speedX;
 uniform float speedY;
 
 void main() {
-	float pixelWidth = 1.0 / size.x;
-	float pixelHeight = 1.0 / size.y;
-	float aspect = pixelHeight / pixelWidth;
-	float boxLeft = 0.0;
-	float boxTop = 0.0;
+    float pixelWidth = 1.0 / size.x;
+    float pixelHeight = 1.0 / size.y;
+    float aspect = pixelHeight / pixelWidth;
+    float boxLeft = 0.0;
+    float boxTop = 0.0;
 
-	vec2 p = fragTexCoord;
-	p.x += cos((fragTexCoord.y - boxTop) * freqX / ( pixelWidth * 750.0) + (secondes * speedX)) * ampX * pixelWidth;
-	p.y += sin((fragTexCoord.x - boxLeft) * freqY * aspect / ( pixelHeight * 750.0) + (secondes * speedY)) * ampY * pixelHeight;
+    vec2 p = fragTexCoord;
+    p.x += cos((fragTexCoord.y - boxTop) * freqX / ( pixelWidth * 750.0) + (secondes * speedX)) * ampX * pixelWidth;
+    p.y += sin((fragTexCoord.x - boxLeft) * freqY * aspect / ( pixelHeight * 750.0) + (secondes * speedY)) * ampY * pixelHeight;
 
-	finalColor = texture(texture0, p)*colDiffuse*fragColor;
+    finalColor = texture(texture0, p)*colDiffuse*fragColor;
 }

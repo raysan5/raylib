@@ -189,13 +189,13 @@
 #if defined(PLATFORM_DESKTOP)
     #define GLFW_INCLUDE_NONE       // Disable the standard OpenGL header inclusion on GLFW3
                                     // NOTE: Already provided by rlgl implementation (on glad.h)
-    #include <GLFW/glfw3.h>         // GLFW3 library: Windows, OpenGL context and Input management
+    #include "GLFW/glfw3.h"         // GLFW3 library: Windows, OpenGL context and Input management
                                     // NOTE: GLFW3 already includes gl.h (OpenGL) headers
 
     // Support retrieving native window handlers
     #if defined(_WIN32)
         #define GLFW_EXPOSE_NATIVE_WIN32
-        #include <GLFW/glfw3native.h>       // WARNING: It requires customization to avoid windows.h inclusion!
+        #include "GLFW/glfw3native.h"       // WARNING: It requires customization to avoid windows.h inclusion!
 
         #if !defined(SUPPORT_BUSY_WAIT_LOOP)
             // NOTE: Those functions require linking with winmm library
@@ -209,12 +209,12 @@
         //#define GLFW_EXPOSE_NATIVE_X11      // WARNING: Exposing Xlib.h > X.h results in dup symbols for Font type
         //#define GLFW_EXPOSE_NATIVE_WAYLAND
         //#define GLFW_EXPOSE_NATIVE_MIR
-        #include <GLFW/glfw3native.h>       // Required for: glfwGetX11Window()
+        #include "GLFW/glfw3native.h"       // Required for: glfwGetX11Window()
     #elif defined(__APPLE__)
         #include <unistd.h>                 // Required for: usleep()
 
         //#define GLFW_EXPOSE_NATIVE_COCOA    // WARNING: Fails due to type redefinition
-        #include <GLFW/glfw3native.h>       // Required for: glfwGetCocoaWindow()
+        #include "GLFW/glfw3native.h"       // Required for: glfwGetCocoaWindow()
     #endif
 #endif
 
@@ -263,7 +263,7 @@
 
 #if defined(PLATFORM_WEB)
     #define GLFW_INCLUDE_ES2            // GLFW3: Enable OpenGL ES 2.0 (translated to WebGL)
-    #include <GLFW/glfw3.h>             // GLFW3 library: Windows, OpenGL context and Input management
+    #include "GLFW/glfw3.h"             // GLFW3 library: Windows, OpenGL context and Input management
     #include <sys/time.h>               // Required for: timespec, nanosleep(), select() - POSIX
 
     #include <emscripten/emscripten.h>  // Emscripten library - LLVM to JavaScript compiler
@@ -1738,6 +1738,9 @@ void EnableCursor(void)
 #if defined(PLATFORM_DESKTOP)
     glfwSetInputMode(CORE.Window.handle, GLFW_CURSOR, GLFW_CURSOR_NORMAL);
 #endif
+#if defined(PLATFORM_WEB)
+    emscripten_exit_pointerlock();
+#endif
 #if defined(PLATFORM_UWP)
     UWPGetMouseUnlockFunc()();
 #endif
@@ -1749,6 +1752,9 @@ void DisableCursor(void)
 {
 #if defined(PLATFORM_DESKTOP)
     glfwSetInputMode(CORE.Window.handle, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
+#endif
+#if defined(PLATFORM_WEB)
+    emscripten_request_pointerlock("#canvas", 1);
 #endif
 #if defined(PLATFORM_UWP)
     UWPGetMouseLockFunc()();
@@ -2854,9 +2860,7 @@ bool IsGamepadAvailable(int gamepad)
 {
     bool result = false;
 
-#if !defined(PLATFORM_ANDROID)
     if ((gamepad < MAX_GAMEPADS) && CORE.Input.Gamepad.ready[gamepad]) result = true;
-#endif
 
     return result;
 }
@@ -2865,13 +2869,10 @@ bool IsGamepadAvailable(int gamepad)
 bool IsGamepadName(int gamepad, const char *name)
 {
     bool result = false;
-
-#if !defined(PLATFORM_ANDROID)
     const char *currentName = NULL;
 
     if (CORE.Input.Gamepad.ready[gamepad]) currentName = GetGamepadName(gamepad);
     if ((name != NULL) && (currentName != NULL)) result = (strcmp(name, currentName) == 0);
-#endif
 
     return result;
 }
@@ -2899,6 +2900,7 @@ int GetGamepadAxisCount(int gamepad)
     if (CORE.Input.Gamepad.ready[gamepad]) ioctl(CORE.Input.Gamepad.streamId[gamepad], JSIOCGAXES, &axisCount);
     CORE.Input.Gamepad.axisCount = axisCount;
 #endif
+
     return CORE.Input.Gamepad.axisCount;
 }
 
@@ -2907,11 +2909,8 @@ float GetGamepadAxisMovement(int gamepad, int axis)
 {
     float value = 0;
 
-#if !defined(PLATFORM_ANDROID)
     if ((gamepad < MAX_GAMEPADS) && CORE.Input.Gamepad.ready[gamepad] && (axis < MAX_GAMEPAD_AXIS) &&
-        ((axis == GAMEPAD_AXIS_LEFT_TRIGGER) || (axis == GAMEPAD_AXIS_RIGHT_TRIGGER) ||
-         (fabsf(CORE.Input.Gamepad.axisState[gamepad][axis]) >= 0.2f))) value = CORE.Input.Gamepad.axisState[gamepad][axis];
-#endif
+        (fabsf(CORE.Input.Gamepad.axisState[gamepad][axis]) > 0.1f)) value = CORE.Input.Gamepad.axisState[gamepad][axis];      // 0.1f = GAMEPAD_AXIS_MINIMUM_DRIFT/DELTA
 
     return value;
 }
@@ -2921,11 +2920,9 @@ bool IsGamepadButtonPressed(int gamepad, int button)
 {
     bool pressed = false;
 
-#if !defined(PLATFORM_ANDROID)
     if ((gamepad < MAX_GAMEPADS) && CORE.Input.Gamepad.ready[gamepad] && (button < MAX_GAMEPAD_BUTTONS) &&
-        (CORE.Input.Gamepad.currentState[gamepad][button] != CORE.Input.Gamepad.previousState[gamepad][button]) &&
-        (CORE.Input.Gamepad.currentState[gamepad][button] == 1)) pressed = true;
-#endif
+        (CORE.Input.Gamepad.previousState[gamepad][button] == 0) && (CORE.Input.Gamepad.currentState[gamepad][button] == 1)) pressed = true;
+    else pressed = false;
 
     return pressed;
 }
@@ -2935,10 +2932,8 @@ bool IsGamepadButtonDown(int gamepad, int button)
 {
     bool result = false;
 
-#if !defined(PLATFORM_ANDROID)
     if ((gamepad < MAX_GAMEPADS) && CORE.Input.Gamepad.ready[gamepad] && (button < MAX_GAMEPAD_BUTTONS) &&
         (CORE.Input.Gamepad.currentState[gamepad][button] == 1)) result = true;
-#endif
 
     return result;
 }
@@ -2948,11 +2943,9 @@ bool IsGamepadButtonReleased(int gamepad, int button)
 {
     bool released = false;
 
-#if !defined(PLATFORM_ANDROID)
     if ((gamepad < MAX_GAMEPADS) && CORE.Input.Gamepad.ready[gamepad] && (button < MAX_GAMEPAD_BUTTONS) &&
-        (CORE.Input.Gamepad.currentState[gamepad][button] != CORE.Input.Gamepad.previousState[gamepad][button]) &&
-        (CORE.Input.Gamepad.currentState[gamepad][button] == 0)) released = true;
-#endif
+        (CORE.Input.Gamepad.previousState[gamepad][button] == 1) && (CORE.Input.Gamepad.currentState[gamepad][button] == 0)) released = true;
+    else released = false;
 
     return released;
 }
@@ -2962,10 +2955,8 @@ bool IsGamepadButtonUp(int gamepad, int button)
 {
     bool result = false;
 
-#if !defined(PLATFORM_ANDROID)
     if ((gamepad < MAX_GAMEPADS) && CORE.Input.Gamepad.ready[gamepad] && (button < MAX_GAMEPAD_BUTTONS) &&
         (CORE.Input.Gamepad.currentState[gamepad][button] == 0)) result = true;
-#endif
 
     return result;
 }
@@ -2974,6 +2965,18 @@ bool IsGamepadButtonUp(int gamepad, int button)
 int GetGamepadButtonPressed(void)
 {
     return CORE.Input.Gamepad.lastButtonPressed;
+}
+
+// Set internal gamepad mappings
+int SetGamepadMappings(const char *mappings)
+{
+    int result = 0;
+
+#if defined(PLATFORM_DESKTOP)
+    result = glfwUpdateGamepadMappings(mappings);
+#endif
+
+    return result;
 }
 
 // Detect if a mouse button has been pressed once
@@ -3275,7 +3278,11 @@ static bool InitGraphicsDevice(int width, int height)
     else glfwWindowHint(GLFW_SCALE_TO_MONITOR, GLFW_FALSE);
 #endif
 
-    if (CORE.Window.flags & FLAG_MSAA_4X_HINT) glfwWindowHint(GLFW_SAMPLES, 4);   // Tries to enable multisampling x4 (MSAA), default is 0
+    if (CORE.Window.flags & FLAG_MSAA_4X_HINT) 
+    {
+        TRACELOG(LOG_INFO, "DISPLAY: Trying to enable MSAA x4");
+        glfwWindowHint(GLFW_SAMPLES, 4);   // Tries to enable multisampling x4 (MSAA), default is 0
+    }
 
     // NOTE: When asking for an OpenGL context version, most drivers provide highest supported version
     // with forward compatibility to older OpenGL versions.
@@ -4228,7 +4235,8 @@ static void Wait(float ms)
 // Get gamepad button generic to all platforms
 static int GetGamepadButton(int button)
 {
-    int btn = GAMEPAD_BUTTON_UNKNOWN;
+    int btn = -1;
+
 #if defined(PLATFORM_DESKTOP)
     switch (button)
     {
@@ -4316,6 +4324,16 @@ static void PollInputEvents(void)
     {
         CORE.Input.Mouse.previousButtonState[i] = CORE.Input.Mouse.currentButtonState[i];
         CORE.Input.Mouse.currentButtonState[i] = CORE.Input.Mouse.currentButtonStateEvdev[i];
+    }
+    
+    // Register gamepads buttons events
+    for (int i = 0; i < MAX_GAMEPADS; i++)
+    {
+        if (CORE.Input.Gamepad.ready[i])     // Check if gamepad is available
+        {
+            // Register previous gamepad states
+            for (int k = 0; k < MAX_GAMEPAD_BUTTONS; k++) CORE.Input.Gamepad.previousState[i][k] = CORE.Input.Gamepad.currentState[i][k];
+        }
     }
 #endif
 
@@ -4615,6 +4633,7 @@ static void KeyCallback(GLFWwindow *window, int key, int scancode, int action, i
 
         // NOTE: Before closing window, while loop must be left!
     }
+#if defined(SUPPORT_SCREEN_CAPTURE)
     else if (key == GLFW_KEY_F12 && action == GLFW_PRESS)
     {
 #if defined(SUPPORT_GIF_RECORDING)
@@ -4657,14 +4676,13 @@ static void KeyCallback(GLFWwindow *window, int key, int scancode, int action, i
             }
         }
         else
-#endif  // SUPPORT_GIF_RECORDING
-#if defined(SUPPORT_SCREEN_CAPTURE)
+#endif  // SUPPORT_GIF_RECORDING   
         {
             TakeScreenshot(TextFormat("screenshot%03i.png", screenshotCounter));
             screenshotCounter++;
         }
-#endif  // SUPPORT_SCREEN_CAPTURE
     }
+#endif  // SUPPORT_SCREEN_CAPTURE
     else
     {
         // WARNING: GLFW could return GLFW_REPEAT, we need to consider it as 1
@@ -5084,17 +5102,7 @@ static EM_BOOL EmscriptenMouseCallback(int eventType, const EmscriptenMouseEvent
     // Lock mouse pointer when click on screen
     if (eventType == EMSCRIPTEN_EVENT_CLICK)
     {
-        EmscriptenPointerlockChangeEvent plce;
-        emscripten_get_pointerlock_status(&plce);
-
-        int result = emscripten_request_pointerlock("#canvas", 1);   // TODO: It does not work!
-
-        // result -> EMSCRIPTEN_RESULT_DEFERRED
-        // The requested operation cannot be completed now for web security reasons,
-        // and has been deferred for completion in the next event handler. --> but it never happens!
-
-        //if (!plce.isActive) emscripten_request_pointerlock(0, 1);
-        //else emscripten_exit_pointerlock();
+        // TODO: Manage mouse events if required (note that GLFW JS wrapper manages it now)
     }
 
     return 0;
@@ -5896,7 +5904,7 @@ static void *GamepadThread(void *arg)
                 // Process gamepad events by type
                 if (gamepadEvent.type == JS_EVENT_BUTTON)
                 {
-                    TRACELOGD("RPI: Gamepad button: %i, value: %i", gamepadEvent.number, gamepadEvent.value);
+                    //TRACELOG(LOG_WARNING, "RPI: Gamepad button: %i, value: %i", gamepadEvent.number, gamepadEvent.value);
 
                     if (gamepadEvent.number < MAX_GAMEPAD_BUTTONS)
                     {
@@ -5909,7 +5917,7 @@ static void *GamepadThread(void *arg)
                 }
                 else if (gamepadEvent.type == JS_EVENT_AXIS)
                 {
-                    TRACELOGD("RPI: Gamepad axis: %i, value: %i", gamepadEvent.number, gamepadEvent.value);
+                    //TRACELOG(LOG_WARNING, "RPI: Gamepad axis: %i, value: %i", gamepadEvent.number, gamepadEvent.value);
 
                     if (gamepadEvent.number < MAX_GAMEPAD_AXIS)
                     {
@@ -5987,6 +5995,7 @@ void UWPKeyDownEvent(int key, bool down, bool controlKey)
         // Time to close the window.
         CORE.Window.shouldClose = true;
     }
+#if defined(SUPPORT_SCREEN_CAPTURE)
     else if (key == KEY_F12 && down)
     {
 #if defined(SUPPORT_GIF_RECORDING)
@@ -6020,14 +6029,13 @@ void UWPKeyDownEvent(int key, bool down, bool controlKey)
             }
         }
         else
-#endif  // SUPPORT_GIF_RECORDING
-#if defined(SUPPORT_SCREEN_CAPTURE)
+#endif  // SUPPORT_GIF_RECORDING   
         {
             TakeScreenshot(TextFormat("screenshot%03i.png", screenshotCounter));
             screenshotCounter++;
         }
-#endif  // SUPPORT_SCREEN_CAPTURE
     }
+#endif  // SUPPORT_SCREEN_CAPTURE
     else
     {
         CORE.Input.Keyboard.currentKeyState[key] = down;

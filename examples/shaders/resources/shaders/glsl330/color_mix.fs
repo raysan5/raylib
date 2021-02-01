@@ -19,7 +19,7 @@ void main()
     vec4 texelColor1 = texture(texture1, fragTexCoord);
 
     float x = fract(fragTexCoord.s);
-    float out = smoothstep(0.4, 0.6, x);
+    float outVal = smoothstep(0.4, 0.6, x);
     
-    finalColor = mix(texelColor0, texelColor1, out);
+    finalColor = mix(texelColor0, texelColor1, outVal);
 }

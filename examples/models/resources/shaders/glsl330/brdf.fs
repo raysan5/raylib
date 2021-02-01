@@ -41,27 +41,27 @@ float RadicalInverseVdC(uint bits)
 // Compute Hammersley coordinates
 vec2 Hammersley(uint i, uint N)
 {
-	return vec2(float(i)/float(N), RadicalInverseVdC(i));
+    return vec2(float(i)/float(N), RadicalInverseVdC(i));
 }
 
 // Integrate number of importance samples for (roughness and NoV)
 vec3 ImportanceSampleGGX(vec2 Xi, vec3 N, float roughness)
 {
-	float a = roughness*roughness;
-	float phi = 2.0 * PI * Xi.x;
-	float cosTheta = sqrt((1.0 - Xi.y)/(1.0 + (a*a - 1.0)*Xi.y));
-	float sinTheta = sqrt(1.0 - cosTheta*cosTheta);
+    float a = roughness*roughness;
+    float phi = 2.0 * PI * Xi.x;
+    float cosTheta = sqrt((1.0 - Xi.y)/(1.0 + (a*a - 1.0)*Xi.y));
+    float sinTheta = sqrt(1.0 - cosTheta*cosTheta);
 
-	// Transform from spherical coordinates to cartesian coordinates (halfway vector)
-	vec3 H = vec3(cos(phi)*sinTheta, sin(phi)*sinTheta, cosTheta);
+    // Transform from spherical coordinates to cartesian coordinates (halfway vector)
+    vec3 H = vec3(cos(phi)*sinTheta, sin(phi)*sinTheta, cosTheta);
 
-	// Transform from tangent space H vector to world space sample vector
-	vec3 up = ((abs(N.z) < 0.999) ? vec3(0.0, 0.0, 1.0) : vec3(1.0, 0.0, 0.0));
-	vec3 tangent = normalize(cross(up, N));
-	vec3 bitangent = cross(N, tangent);
-	vec3 sampleVec = tangent*H.x + bitangent*H.y + N*H.z;
+    // Transform from tangent space H vector to world space sample vector
+    vec3 up = ((abs(N.z) < 0.999) ? vec3(0.0, 0.0, 1.0) : vec3(1.0, 0.0, 0.0));
+    vec3 tangent = normalize(cross(up, N));
+    vec3 bitangent = cross(N, tangent);
+    vec3 sampleVec = tangent*H.x + bitangent*H.y + N*H.z;
 
-	return normalize(sampleVec);
+    return normalize(sampleVec);
 }
 
 float GeometrySchlickGGX(float NdotV, float roughness)
