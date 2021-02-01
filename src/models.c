@@ -3447,7 +3447,7 @@ static ModelAnimation* LoadIQMModelAnimations(const char* fileName, int* animCou
         animations[a].boneCount = iqmHeader->num_poses;
         animations[a].bones = RL_MALLOC(iqmHeader->num_poses*sizeof(BoneInfo));
         animations[a].framePoses = RL_MALLOC(anim[a].num_frames*sizeof(Transform *));
-        //animations[a].framerate = anim.framerate;     // TODO: Use framerate?
+        // animations[a].framerate = anim.framerate;     // TODO: Use framerate?
         
         for (unsigned int j = 0; j < iqmHeader->num_poses; j++)
         {
@@ -4050,6 +4050,26 @@ static Model LoadGLTF(const char *fileName)
     return model;
 }
 
+static bool GltfReadFloat(cgltf_accessor* acc, unsigned int index, float* variable, unsigned int elements)
+{
+    if(acc->count == 2)
+    {
+        if(index > 1)
+        {
+            return false;
+        }
+        
+        memcpy(variable, index == 0 ? acc->min : acc->max, elements * sizeof(float));
+        return true;
+    }
+    else if (cgltf_accessor_read_float(acc, index, variable, elements))
+    {
+        return true;
+    }
+    
+    return false;
+}
+
 // LoadGLTF loads in animation data from given filename
 static ModelAnimation* LoadGLTFModelAnimations(const char *fileName, int *animCount)
 {
@@ -4086,26 +4106,55 @@ static ModelAnimation* LoadGLTFModelAnimations(const char *fileName, int *animCo
     
         for (unsigned int a = 0; a < data->animations_count; a++)
         {
+            // gltf animation consists of the following structures:
+            // - nodes - bones
+            // - channels - single transformation type on a single bone
+            //     - node - bone
+            //     - transformation type (path) - translation, rotation, scale
+            //     - sampler - animation samples
+            //         - input - points in time this transformation happens
+            //         - output - the transformation amount at the given input points in time
+            //         - interpolation - the type of interpolation to use between the frames
+            
             cgltf_animation *animation = data->animations + a;
     
             ModelAnimation *output = animations + a;
+            
+            // 30 frames sampled per second
+            const float TIMESTEP = (1.0f / 30.0f);
+            float animationDuration = 0.0f;
     
-            output->frameCount = animation->channels->sampler->input->count;
+            // Getting the max animation time to consider for animation duration
+            for (int i = 0; i < animation->channels_count; i++)
+            {
+                cgltf_animation_channel* channel = animation->channels + i;
+                int frameCounts = channel->sampler->input->count;
+                float lastFrameTime = 0.0f;
+                if(GltfReadFloat(channel->sampler->input, frameCounts - 1, &lastFrameTime, 1))
+                {
+                    animationDuration = fmaxf(lastFrameTime, animationDuration);
+                }
+            }
+    
+            output->frameCount = animationDuration / TIMESTEP;
             output->boneCount = data->nodes_count;
             output->bones = RL_MALLOC(output->boneCount*sizeof(BoneInfo));
             output->framePoses = RL_MALLOC(output->frameCount*sizeof(Transform *));
+            // output->framerate = // TODO: Use framerate instead of const timestep
     
+            // Name and parent bones
             for (unsigned int j = 0; j < data->nodes_count; j++)
             {
                 strcpy(output->bones[j].name, data->nodes[j].name == 0 ? "ANIMJOINT" : data->nodes[j].name);
                 output->bones[j].parent = j != 0 ? (int)(data->nodes[j].parent - data->nodes) : 0;
             }
-    
-            for (unsigned int j = 0; j < output->frameCount; j++)
-                output->framePoses[j] = RL_MALLOC(output->frameCount*data->nodes_count*sizeof(Transform));
-            
+
+            // Allocate data for frames
+            // Initiate with zero bone translations
             for (unsigned int frame = 0; frame < output->frameCount; frame++)
             {
+                output->framePoses[frame] = RL_MALLOC(output->frameCount*data->nodes_count*sizeof(Transform));
+    
                 for (unsigned int i = 0; i < data->nodes_count; i++)
                 {
                     output->framePoses[frame][i].translation = Vector3Zero();
@@ -4115,6 +4164,7 @@ static ModelAnimation* LoadGLTFModelAnimations(const char *fileName, int *animCo
                 }
             }
             
+            // for each single transformation type on single bone
             for(int channelId = 0; channelId < animation->channels_count; channelId++)
             {
                 cgltf_animation_channel* channel = animation->channels + channelId;
@@ -4124,42 +4174,79 @@ static ModelAnimation* LoadGLTFModelAnimations(const char *fileName, int *animCo
                 
                 for(int frame = 0; frame < output->frameCount; frame++)
                 {
-                    if(channel->target_path == cgltf_animation_path_type_translation) {
-                        Vector3 translation;
-                        if(cgltf_accessor_read_float(sampler->output, frame, (float*)&translation, 3))
+                    bool shouldSkipFurtherTransformation = true;
+                    int outputMin = 0;
+                    int outputMax = 0;
+                    float frameTime = frame * TIMESTEP;
+                    float lerpPercent = 0.0f;
+                    
+                    // For this transformation:
+                    // getting between which input values the current frame time position
+                    // and also what is the percent to use in the linear interpolation later
+                    for(int j = 0; j < sampler->input->count; j++)
+                    {
+                        float inputFrameTime;
+                        if(GltfReadFloat(sampler->input, j, (float*)&inputFrameTime, 1))
                         {
-                            output->framePoses[frame][boneId].translation = translation;
+                            if(frameTime < inputFrameTime)
+                            {
+                                shouldSkipFurtherTransformation = false;
+                                outputMin = j - 1;
+                                outputMax = j;
+        
+                                float previousInputTime = 0.0f;
+                                if(GltfReadFloat(sampler->input, j - 1, (float*)&previousInputTime, 1))
+                                {
+                                    lerpPercent = (frameTime - previousInputTime) / (inputFrameTime - previousInputTime);
+                                }
+                                break;
+                            }
+                        } else {
+                            break;
                         }
-                        else if (output->frameCount == 2)
+                    }
+                    
+                    // If the current transformation has no information for the current frame time point
+                    if(shouldSkipFurtherTransformation) {
+                        continue;
+                    }
+
+                    if(channel->target_path == cgltf_animation_path_type_translation) {
+                        Vector3 translationStart;
+                        Vector3 translationEnd;
+                        
+                        bool success = GltfReadFloat(sampler->output, outputMin, (float*)&translationStart, 3);
+                        success = GltfReadFloat(sampler->output, outputMax, (float*)&translationEnd, 3) || success;
+                        
+                        if(success)
                         {
-                            memcpy(&translation, frame == 0 ? &(sampler->output->min) : &(sampler->output->max), 3 * sizeof(float));
-                            output->framePoses[frame][boneId].translation = translation;
+                            output->framePoses[frame][boneId].translation = Vector3Lerp(translationStart, translationEnd, lerpPercent);
                         }
                     }
                     if(channel->target_path == cgltf_animation_path_type_rotation) {
-                        Quaternion rotation;
-                        if(cgltf_accessor_read_float(sampler->output, frame, (float*)&rotation, 4))
+                        Quaternion rotationStart;
+                        Quaternion rotationEnd;
+    
+                        bool success = GltfReadFloat(sampler->output, outputMin, (float*)&rotationStart, 4);
+                        success = GltfReadFloat(sampler->output, outputMax, (float*)&rotationEnd, 4) || success;
+    
+                        if(success)
                         {
-                            output->framePoses[frame][boneId].rotation = rotation;
+                            output->framePoses[frame][boneId].rotation = QuaternionLerp(rotationStart, rotationEnd, lerpPercent);
                             output->framePoses[frame][boneId].rotation = QuaternionNormalize(output->framePoses[frame][boneId].rotation);
-                        }
-                        else if (output->frameCount == 2)
-                        {
-                            memcpy(&rotation, frame == 0 ? &(sampler->output->min) : &(sampler->output->max), 4 * sizeof(float));
-                            output->framePoses[frame][boneId].rotation = rotation;
-                            output->framePoses[frame][boneId].rotation = QuaternionNormalize(output->framePoses[frame][boneId].rotation);
+    
                         }
                     }
                     if(channel->target_path == cgltf_animation_path_type_scale) {
-                        Vector3 scale;
-                        if(cgltf_accessor_read_float(sampler->output, frame, (float*)&scale, 4))
+                        Vector3 scaleStart;
+                        Vector3 scaleEnd;
+    
+                        bool success = GltfReadFloat(sampler->output, outputMin, (float*)&scaleStart, 3);
+                        success = GltfReadFloat(sampler->output, outputMax, (float*)&scaleEnd, 3) || success;
+    
+                        if(success)
                         {
-                            output->framePoses[frame][boneId].scale = scale;
-                        }
-                        else if (output->frameCount == 2)
-                        {
-                            memcpy(&scale, frame == 0 ? &(sampler->output->min) : &(sampler->output->max), 3 * sizeof(float));
-                            output->framePoses[frame][boneId].scale = scale;
+                            output->framePoses[frame][boneId].scale = Vector3Lerp(scaleStart, scaleEnd, lerpPercent);
                         }
                     }
                 }
