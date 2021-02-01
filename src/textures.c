@@ -2922,7 +2922,7 @@ void DrawTexturePro(Texture2D texture, Rectangle sourceRec, Rectangle destRec, V
                 else rlTexCoord2f(sourceRec.x/width, sourceRec.y/height);
                 rlVertex2f(0.0f, 0.0f);
 
-                // Bottom-right corner for texture and quad
+                // Top-left corner for texture and quad
                 if (flipX) rlTexCoord2f((sourceRec.x + sourceRec.width)/width, (sourceRec.y + sourceRec.height)/height);
                 else rlTexCoord2f(sourceRec.x/width, (sourceRec.y + sourceRec.height)/height);
                 rlVertex2f(0.0f, destRec.height);
@@ -2932,7 +2932,7 @@ void DrawTexturePro(Texture2D texture, Rectangle sourceRec, Rectangle destRec, V
                 else rlTexCoord2f((sourceRec.x + sourceRec.width)/width, (sourceRec.y + sourceRec.height)/height);
                 rlVertex2f(destRec.width, destRec.height);
 
-                // Top-left corner for texture and quad
+                // Bottom-right corner for texture and quad
                 if (flipX) rlTexCoord2f(sourceRec.x/width, sourceRec.y/height);
                 else rlTexCoord2f((sourceRec.x + sourceRec.width)/width, sourceRec.y/height);
                 rlVertex2f(destRec.width, 0.0f);
