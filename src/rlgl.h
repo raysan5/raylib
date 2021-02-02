@@ -167,11 +167,11 @@
 #endif
 
 // Projection matrix culling
-#ifndef RL_CULL_DISTANCE_NEAR
-    #define RL_CULL_DISTANCE_NEAR         0.01      // Default near cull distance
+#ifndef RL_DEFAULT_CULL_DISTANCE_NEAR
+    #define RL_DEFAULT_CULL_DISTANCE_NEAR         0.01      // Default near cull distance
 #endif
-#ifndef RL_CULL_DISTANCE_FAR
-    #define RL_CULL_DISTANCE_FAR        1000.0      // Default far cull distance
+#ifndef RL_DEFAULT_CULL_DISTANCE_FAR
+    #define RL_DEFAULT_CULL_DISTANCE_FAR        1000.0      // Default far cull distance
 #endif
 
 // Texture parameters (equivalent to OpenGL defines)
@@ -3483,7 +3483,7 @@ TextureCubemap GenTextureCubemap(Shader shader, Texture2D panorama, int size, in
     // NOTE: Shader is used to convert HDR equirectangular environment map to cubemap equivalent (6 faces)
 
     // Define projection matrix and send it to shader
-    Matrix fboProjection = MatrixPerspective(90.0*DEG2RAD, 1.0, RL_CULL_DISTANCE_NEAR, RL_CULL_DISTANCE_FAR);
+    Matrix fboProjection = MatrixPerspective(90.0*DEG2RAD, 1.0, RL_DEFAULT_CULL_DISTANCE_NEAR, RL_DEFAULT_CULL_DISTANCE_FAR);
     SetShaderValueMatrix(shader, shader.locs[LOC_MATRIX_PROJECTION], fboProjection);
 
     // Define view matrix for every side of the cubemap
@@ -3568,7 +3568,7 @@ TextureCubemap GenTextureIrradiance(Shader shader, TextureCubemap cubemap, int s
     // NOTE: Shader is used to solve diffuse integral by convolution to create an irradiance cubemap
 
     // Define projection matrix and send it to shader
-    Matrix fboProjection = MatrixPerspective(90.0*DEG2RAD, 1.0, RL_CULL_DISTANCE_NEAR, RL_CULL_DISTANCE_FAR);
+    Matrix fboProjection = MatrixPerspective(90.0*DEG2RAD, 1.0, RL_DEFAULT_CULL_DISTANCE_NEAR, RL_DEFAULT_CULL_DISTANCE_FAR);
     SetShaderValueMatrix(shader, shader.locs[LOC_MATRIX_PROJECTION], fboProjection);
 
     // Define view matrix for every side of the cubemap
@@ -3645,7 +3645,7 @@ TextureCubemap GenTexturePrefilter(Shader shader, TextureCubemap cubemap, int si
     // NOTE: Shader is used to prefilter HDR and store data into mipmap levels
 
     // Define projection matrix and send it to shader
-    Matrix fboProjection = MatrixPerspective(90.0*DEG2RAD, 1.0, RL_CULL_DISTANCE_NEAR, RL_CULL_DISTANCE_FAR);
+    Matrix fboProjection = MatrixPerspective(90.0*DEG2RAD, 1.0, RL_DEFAULT_CULL_DISTANCE_NEAR, RL_DEFAULT_CULL_DISTANCE_FAR);
     SetShaderValueMatrix(shader, shader.locs[LOC_MATRIX_PROJECTION], fboProjection);
 
     // Define view matrix for every side of the cubemap
@@ -3887,7 +3887,7 @@ void SetVrConfiguration(VrDeviceInfo hmd, Shader distortion)
 
     // Compute camera projection matrices
     float projOffset = 4.0f*lensShift;      // Scaled to projection space coordinates [-1..1]
-    Matrix proj = MatrixPerspective(fovy, aspect, RL_CULL_DISTANCE_NEAR, RL_CULL_DISTANCE_FAR);
+    Matrix proj = MatrixPerspective(fovy, aspect, RL_DEFAULT_CULL_DISTANCE_NEAR, RL_DEFAULT_CULL_DISTANCE_FAR);
     RLGL.Vr.config.eyesProjection[0] = MatrixMultiply(proj, MatrixTranslate(projOffset, 0.0f, 0.0f));
     RLGL.Vr.config.eyesProjection[1] = MatrixMultiply(proj, MatrixTranslate(-projOffset, 0.0f, 0.0f));
 

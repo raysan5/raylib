@@ -484,6 +484,9 @@ static CoreData CORE = { 0 };               // Global CORE state context
 static char **dirFilesPath = NULL;          // Store directory files paths as strings
 static int dirFilesCount = 0;               // Count directory files strings
 
+static double cullDistanceNear = RL_DEFAULT_CULL_DISTANCE_NEAR;     // Default projection matrix near cull distance
+static double cullDistanceFar = RL_DEFAULT_CULL_DISTANCE_FAR;       // Default projection matrix far cull distance
+
 #if defined(SUPPORT_SCREEN_CAPTURE)
 static int screenshotCounter = 0;           // Screenshots counter
 #endif
@@ -1891,10 +1894,10 @@ void BeginMode3D(Camera3D camera)
     if (camera.type == CAMERA_PERSPECTIVE)
     {
         // Setup perspective projection
-        double top = RL_CULL_DISTANCE_NEAR*tan(camera.fovy*0.5*DEG2RAD);
+        double top = cullDistanceNear*tan(camera.fovy*0.5*DEG2RAD);
         double right = top*aspect;
 
-        rlFrustum(-right, right, -top, top, RL_CULL_DISTANCE_NEAR, RL_CULL_DISTANCE_FAR);
+        rlFrustum(-right, right, -top, top, cullDistanceNear, cullDistanceFar);
     }
     else if (camera.type == CAMERA_ORTHOGRAPHIC)
     {
@@ -1902,7 +1905,7 @@ void BeginMode3D(Camera3D camera)
         double top = camera.fovy/2.0;
         double right = top*aspect;
 
-        rlOrtho(-right, right, -top,top, RL_CULL_DISTANCE_NEAR, RL_CULL_DISTANCE_FAR);
+        rlOrtho(-right, right, -top,top, cullDistanceNear, cullDistanceFar);
     }
 
     // NOTE: zNear and zFar values are important when computing depth buffer values
@@ -2015,7 +2018,7 @@ Ray GetMouseRay(Vector2 mouse, Camera camera)
     if (camera.type == CAMERA_PERSPECTIVE)
     {
         // Calculate projection matrix from perspective
-        matProj = MatrixPerspective(camera.fovy*DEG2RAD, ((double)GetScreenWidth()/(double)GetScreenHeight()), RL_CULL_DISTANCE_NEAR, RL_CULL_DISTANCE_FAR);
+        matProj = MatrixPerspective(camera.fovy*DEG2RAD, ((double)GetScreenWidth()/(double)GetScreenHeight()), cullDistanceNear, cullDistanceFar);
     }
     else if (camera.type == CAMERA_ORTHOGRAPHIC)
     {
@@ -2099,7 +2102,7 @@ Vector2 GetWorldToScreenEx(Vector3 position, Camera camera, int width, int heigh
     if (camera.type == CAMERA_PERSPECTIVE)
     {
         // Calculate projection matrix from perspective
-        matProj = MatrixPerspective(camera.fovy * DEG2RAD, ((double)width/(double)height), RL_CULL_DISTANCE_NEAR, RL_CULL_DISTANCE_FAR);
+        matProj = MatrixPerspective(camera.fovy * DEG2RAD, ((double)width/(double)height), cullDistanceNear, cullDistanceFar);
     }
     else if (camera.type == CAMERA_ORTHOGRAPHIC)
     {
@@ -2108,7 +2111,7 @@ Vector2 GetWorldToScreenEx(Vector3 position, Camera camera, int width, int heigh
         double right = top*aspect;
 
         // Calculate projection matrix from orthographic
-        matProj = MatrixOrtho(-right, right, -top, top, RL_CULL_DISTANCE_NEAR, RL_CULL_DISTANCE_FAR);
+        matProj = MatrixOrtho(-right, right, -top, top, cullDistanceNear, cullDistanceFar);
     }
 
     // Calculate view matrix from camera look at (and transpose it)
@@ -2148,6 +2151,12 @@ Vector2 GetScreenToWorld2D(Vector2 position, Camera2D camera)
     Vector3 transform = Vector3Transform((Vector3){ position.x, position.y, 0 }, invMatCamera);
 
     return (Vector2){ transform.x, transform.y };
+}
+
+void SetCullingPlanes(double near, double far)
+{
+    cullDistanceFar = far;
+    cullDistanceNear = near;
 }
 
 // Set target FPS (maximum)

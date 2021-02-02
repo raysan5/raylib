@@ -95,8 +95,8 @@
 #define MAX_SHADER_LOCATIONS            32      // Maximum number of shader locations supported
 #define MAX_MATERIAL_MAPS               12      // Maximum number of shader maps supported
 
-#define RL_CULL_DISTANCE_NEAR         0.01      // Default projection matrix near cull distance
-#define RL_CULL_DISTANCE_FAR        1000.0      // Default projection matrix far cull distance
+#define RL_DEFAULT_CULL_DISTANCE_NEAR         0.01      // Default projection matrix near cull distance
+#define RL_DEFAULT_CULL_DISTANCE_FAR        1000.0      // Default projection matrix far cull distance
 
 // Default shader vertex attribute names to set location points
 #define DEFAULT_SHADER_ATTRIB_NAME_POSITION    "vertexPosition"    // Binded by default to shader location: 0
