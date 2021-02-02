@@ -163,6 +163,7 @@ typedef struct tagBITMAPINFOHEADER {
 #define MA_NO_FLAC
 #define MA_NO_MP3
 #define MINIAUDIO_IMPLEMENTATION
+//#define MA_DEBUG_OUTPUT
 #include "external/miniaudio.h"         // miniaudio library
 #undef PlaySound                        // Win32 API: windows.h > mmsystem.h defines PlaySound macro
 
