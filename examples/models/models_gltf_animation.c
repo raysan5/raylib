@@ -50,10 +50,11 @@ int main(void)
     int animsCount = 0;
     ModelAnimation *anims = LoadModelAnimations("resources/gltf/rigged_figure.glb", &animsCount);
     int animFrameCounter = 0;
+    int animationDirection = 1;
 
     SetCameraMode(camera, CAMERA_FREE); // Set free camera mode
 
-    SetTargetFPS(60);                   // Set our game to run at 60 frames-per-second
+    SetTargetFPS(30);                   // Set our game to run at 60 frames-per-second
     //--------------------------------------------------------------------------------------
 
     // Main game loop
@@ -66,9 +67,15 @@ int main(void)
         // Play animation when spacebar is held down
         if (IsKeyDown(KEY_SPACE))
         {
-            animFrameCounter++;
+            animFrameCounter += animationDirection;
+            
+            if (animFrameCounter >= anims[0].frameCount || animFrameCounter <= 0)
+            {
+                animationDirection *= -1;
+                animFrameCounter += animationDirection;
+            }
+            
             UpdateModelAnimation(model, anims[0], animFrameCounter);
-            if (animFrameCounter >= anims[0].frameCount) animFrameCounter = 0;
         }
         //----------------------------------------------------------------------------------
 
