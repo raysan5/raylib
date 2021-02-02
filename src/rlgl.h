@@ -3639,7 +3639,6 @@ TextureCubemap GenTexturePrefilter(Shader shader, TextureCubemap cubemap, int si
 
     // Generate mipmaps for the prefiltered HDR texture
     glGenerateMipmap(GL_TEXTURE_CUBE_MAP);
-    //rlGenerateMipmaps(Texture2D *texture); // Only GL_TEXTURE_2D
 
     // STEP 2: Draw to framebuffer
     //------------------------------------------------------------------------------------------
@@ -4113,22 +4112,17 @@ static unsigned int LoadShaderProgram(unsigned int vShaderId, unsigned int fShad
         TRACELOG(LOG_WARNING, "SHADER: [ID %i] Failed to link shader program", program);
 
         int maxLength = 0;
-        int length;
-
         glGetProgramiv(program, GL_INFO_LOG_LENGTH, &maxLength);
+        
+        if (maxLength > 0) 
+        {
+            int length;
+            char *log = RL_CALLOC(maxLength, sizeof(char));
+            glGetProgramInfoLog(program, maxLength, &length, log);
+            TRACELOG(LOG_WARNING, "SHADER: [ID %i] Link error: %s", program, log);
+            RL_FREE(log);
+        }
 
-#if defined(_MSC_VER)
-        char *log = RL_MALLOC(maxLength);
-#else
-        char log[maxLength];
-#endif
-        glGetProgramInfoLog(program, maxLength, &length, log);
-
-        TRACELOG(LOG_WARNING, "SHADER: [ID %i] Link error: %s", program, log);
-
-#if defined(_MSC_VER)
-        RL_FREE(log);
-#endif
         glDeleteProgram(program);
 
         program = 0;
