@@ -2594,7 +2594,7 @@ unsigned char *CompressData(unsigned char *data, int dataLength, int *compDataLe
 // Decompress data (DEFLATE algorythm)
 unsigned char *DecompressData(unsigned char *compData, int compDataLength, int *dataLength)
 {
-    char *data = NULL;
+    unsigned char *data = NULL;
 
 #if defined(SUPPORT_COMPRESSION_API)
     // Decompress data from a valid DEFLATE stream
@@ -2610,7 +2610,7 @@ unsigned char *DecompressData(unsigned char *compData, int compDataLength, int *
     TraceLog(LOG_INFO, "SYSTEM: Data compressed: Original size: %i -> Comp. size: %i\n", dataLength, compDataLength);
 #endif
 
-    return (unsigned char *)data;
+    return data;
 }
 
 // Save integer value to storage file (to defined position)
