@@ -1130,7 +1130,7 @@ RLAPI bool CheckCollisionPointRec(Vector2 point, Rectangle rec);                
 RLAPI bool CheckCollisionPointCircle(Vector2 point, Vector2 center, float radius);                       // Check if point is inside circle
 RLAPI bool CheckCollisionPointTriangle(Vector2 point, Vector2 p1, Vector2 p2, Vector2 p3);               // Check if point is inside a triangle
 RLAPI bool CheckCollisionLines(Vector2 startPos1, Vector2 endPos1, Vector2 startPos2, Vector2 endPos2, Vector2 *collisionPoint); // Check the collision between two lines defined by two points each, returns collision point by reference
-RLAPI bool CheckCollisionPointPolygon(Vector2 polygon[], int vertexCount, Vector2 point);                // Check if point is inside a polygon
+RLAPI bool CheckCollisionPointPolygon(Vector2 point, Vector2 *polygon, int vertexCount);                 // Check if point is inside a polygon
 RLAPI Rectangle GetCollisionRec(Rectangle rec1, Rectangle rec2);                                         // Get collision rectangle for two rectangles collision
 
 //------------------------------------------------------------------------------------

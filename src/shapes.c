@@ -1526,7 +1526,7 @@ bool CheckCollisionLines(Vector2 startPos1, Vector2 endPos1, Vector2 startPos2, 
 
 // Another function from GeeksForGeeks
 // Returns true if the point p lies inside the polygon[] with n vertices 
-bool CheckCollisionPointPolygon(Vector2 polygon[], int vertexCount, Vector2 point) 
+bool CheckCollisionPointPoly(Vector2 point, Vector2 *polygon, int vertexCount) 
 { 
     // There must be at least 3 vertices in polygon[] 
     if (vertexCount < 3) return false; 
@@ -1643,7 +1643,6 @@ static float EaseCubicInOut(float t, float b, float c, float d)
 // Point inside polygon checking code
 // Credit to https://www.geeksforgeeks.org/how-to-check-if-a-given-point-lies-inside-a-polygon/
 
-#define INF 10000 
 // Given three colinear points p, q, r, the function checks if 
 // point q lies on line segment 'pr' 
 static bool OnSegment(Vector2 p, Vector2 q, Vector2 r) 
