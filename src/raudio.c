@@ -423,7 +423,7 @@ void InitAudioDevice(void)
     ma_result result = ma_context_init(NULL, 0, &ctxConfig, &AUDIO.System.context);
     if (result != MA_SUCCESS)
     {
-        TRACELOG(LOG_ERROR, "AUDIO: Failed to initialize context");
+        TRACELOG(LOG_WARNING, "AUDIO: Failed to initialize context");
         return;
     }
 
@@ -443,7 +443,7 @@ void InitAudioDevice(void)
     result = ma_device_init(&AUDIO.System.context, &config, &AUDIO.System.device);
     if (result != MA_SUCCESS)
     {
-        TRACELOG(LOG_ERROR, "AUDIO: Failed to initialize playback device");
+        TRACELOG(LOG_WARNING, "AUDIO: Failed to initialize playback device");
         ma_context_uninit(&AUDIO.System.context);
         return;
     }
@@ -453,7 +453,7 @@ void InitAudioDevice(void)
     result = ma_device_start(&AUDIO.System.device);
     if (result != MA_SUCCESS)
     {
-        TRACELOG(LOG_ERROR, "AUDIO: Failed to start playback device");
+        TRACELOG(LOG_WARNING, "AUDIO: Failed to start playback device");
         ma_device_uninit(&AUDIO.System.device);
         ma_context_uninit(&AUDIO.System.context);
         return;
@@ -463,7 +463,7 @@ void InitAudioDevice(void)
     // want to look at something a bit smarter later on to keep everything real-time, if that's necessary.
     if (ma_mutex_init(&AUDIO.System.lock) != MA_SUCCESS)
     {
-        TRACELOG(LOG_ERROR, "AUDIO: Failed to create mutex for mixing");
+        TRACELOG(LOG_WARNING, "AUDIO: Failed to create mutex for mixing");
         ma_device_uninit(&AUDIO.System.device);
         ma_context_uninit(&AUDIO.System.context);
         return;
@@ -520,7 +520,7 @@ AudioBuffer *LoadAudioBuffer(ma_format format, ma_uint32 channels, ma_uint32 sam
 
     if (audioBuffer == NULL)
     {
-        TRACELOG(LOG_ERROR, "AUDIO: Failed to allocate memory for buffer");
+        TRACELOG(LOG_WARNING, "AUDIO: Failed to allocate memory for buffer");
         return NULL;
     }
 
@@ -534,7 +534,7 @@ AudioBuffer *LoadAudioBuffer(ma_format format, ma_uint32 channels, ma_uint32 sam
 
     if (result != MA_SUCCESS)
     {
-        TRACELOG(LOG_ERROR, "AUDIO: Failed to create data conversion pipeline");
+        TRACELOG(LOG_WARNING, "AUDIO: Failed to create data conversion pipeline");
         RL_FREE(audioBuffer);
         return NULL;
     }
@@ -1673,7 +1673,7 @@ static void OnLog(ma_context *pContext, ma_device *pDevice, ma_uint32 logLevel, 
     (void)pContext;
     (void)pDevice;
 
-    TRACELOG(LOG_ERROR, "miniaudio: %s", message);   // All log messages from miniaudio are errors
+    TRACELOG(LOG_WARNING, "miniaudio: %s", message);   // All log messages from miniaudio are errors
 }
 
 // Reads audio data from an AudioBuffer object in internal format.

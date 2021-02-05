@@ -3000,7 +3000,7 @@ void rlDrawMeshInstanced(Mesh mesh, Material material, Matrix *transforms, int c
     glUseProgram(0);
 
 #else
-    TRACELOG(LOG_ERROR, "VAO: Instanced rendering requires GRAPHICS_API_OPENGL_33");
+    TRACELOG(LOG_WARNING, "VAO: Instanced rendering requires GRAPHICS_API_OPENGL_33");
 #endif
 }
 
