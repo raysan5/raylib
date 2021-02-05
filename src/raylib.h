@@ -874,6 +874,9 @@ typedef enum {
 
 // Callbacks to be implemented by users
 typedef void (*TraceLogCallback)(int logType, const char *text, va_list args);
+typedef void *(*MemAllocCallback)(int size);
+typedef void *(*MemReallocCallback)(int size);
+typedef void (*MemFreeCallback)(void *ptr);
 
 #if defined(__cplusplus)
 extern "C" {            // Prevents name mangling of functions
@@ -975,6 +978,10 @@ RLAPI void TraceLog(int logType, const char *text, ...);          // Show trace 
 
 RLAPI void *MemAlloc(int size);                                   // Internal memory allocator
 RLAPI void MemFree(void *ptr);                                    // Internal memory free
+RLAPI void SetMemAllocCallback(MemAllocCallback callback);        // Set custom memory allocator
+RLAPI void SetMemReallocCallback(MemReallocCallback callback);    // Set custom memory reallocator
+RLAPI void SetMemFreeCallback(MemFreeCallback callback);          // Set custom memory free
+
 RLAPI void TakeScreenshot(const char *fileName);                  // Takes a screenshot of current screen (saved a .png)
 RLAPI int GetRandomValue(int min, int max);                       // Returns a random value between min and max (both included)
 
