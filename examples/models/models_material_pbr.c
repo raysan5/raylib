@@ -24,6 +24,8 @@
 #define IRRADIANCE_SIZE       32        // Irradiance texture size
 #define PREFILTERED_SIZE     256        // Prefiltered HDR environment texture size
 #define BRDF_SIZE            512        // BRDF LUT texture size
+#define LIGHT_DISTANCE 1000.0f
+#define LIGHT_HEIGHT 1.0f
 
 // PBR material loading
 static Material LoadMaterialPBR(Color albedo, float metalness, float roughness);

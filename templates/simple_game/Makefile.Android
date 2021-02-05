@@ -2,7 +2,7 @@
 #
 #   raylib makefile for Android project (APK building)
 #
-#   Copyright (c) 2017 Ramon Santamaria (@raysan5)
+#   Copyright (c) 2017-2021 Ramon Santamaria (@raysan5)
 #
 #   This software is provided "as-is", without any express or implied warranty. In no event
 #   will the authors be held liable for any damages arising from the use of this software.
@@ -27,21 +27,38 @@ RAYLIB_PATH            ?= ..\..
 
 # Define Android architecture (armeabi-v7a, arm64-v8a, x86, x86-64) and API version
 # Starting in 2019 using ARM64 is mandatory for published apps,
-# and minimum required target API is Android 9 (API level 28)
-ANDROID_ARCH           ?= ARM
-ANDROID_API_VERSION     = 28
+# Starting on August 2020, minimum required target API is Android 10 (API level 29)
+ANDROID_ARCH           ?= ARM64
+ANDROID_API_VERSION     = 29
+
+# Android required path variables
+# NOTE: Starting with Android NDK r21, no more toolchain generation is required, NDK is the toolchain on itself
+ifeq ($(OS),Windows_NT)
+    ANDROID_NDK = C:/android-ndk
+    ANDROID_TOOLCHAIN = $(ANDROID_NDK)/toolchains/llvm/prebuilt/windows-x86_64
+else
+    ANDROID_NDK ?= /usr/lib/android/ndk
+    ANDROID_TOOLCHAIN = $(ANDROID_NDK)/toolchains/llvm/prebuilt/linux-x86_64
+endif
+
 ifeq ($(ANDROID_ARCH),ARM)
-    ANDROID_ARCH_NAME   = armeabi-v7a
+    ANDROID_ARCH_NAME = armeabi-v7a
 endif
 ifeq ($(ANDROID_ARCH),ARM64)
-    ANDROID_ARCH_NAME   = arm64-v8a
+    ANDROID_ARCH_NAME = arm64-v8a
+endif
+ifeq ($(ANDROID_ARCH),x86)
+    ANDROID_ARCH_NAME = i686
+endif
+ifeq ($(ANDROID_ARCH),x86_64)
+    ANDROID_ARCH_NAME = x86_64
 endif
 
 # Required path variables
 # NOTE: JAVA_HOME must be set to JDK (using OpenJDK 13)
 JAVA_HOME              ?= C:/open-jdk
 ANDROID_HOME            = C:/android-sdk
-ANDROID_TOOLCHAIN       = C:/android-ndk-r21/toolchains/llvm/prebuilt/windows-x86_64
+ANDROID_TOOLCHAIN       = C:/android-ndk/toolchains/llvm/prebuilt/windows-x86_64
 ANDROID_BUILD_TOOLS     = $(ANDROID_HOME)/build-tools/29.0.3
 ANDROID_PLATFORM_TOOLS  = $(ANDROID_HOME)/platform-tools
 
@@ -288,7 +305,7 @@ logcat:
     
 # Install and monitorize $(PROJECT_NAME).apk to default emulator/device
 deploy:
-	$(ANDROID_PLATFORM_TOOLS)/adb install -r $(PROJECT_NAME).apk
+	$(ANDROID_PLATFORM_TOOLS)/adb install $(PROJECT_NAME).apk
 	$(ANDROID_PLATFORM_TOOLS)/adb logcat -c
 	$(ANDROID_PLATFORM_TOOLS)/adb logcat raylib:V *:S
 

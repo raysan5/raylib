@@ -61,11 +61,11 @@ int main(void)
 
             // Draw GUI controls
             //------------------------------------------------------------------------------
-            width = GuiSliderBar((Rectangle){ 640, 40, 105, 20 }, "Width", width, 0, GetScreenWidth() - 300, true );
-            height = GuiSliderBar((Rectangle){ 640, 70, 105, 20 }, "Height", height, 0, GetScreenHeight() - 50, true);
-            roundness = GuiSliderBar((Rectangle){ 640, 140, 105, 20 }, "Roundness", roundness, 0.0f, 1.0f, true);
-            lineThick = GuiSliderBar((Rectangle){ 640, 170, 105, 20 }, "Thickness", lineThick, 0, 20, true);
-            segments = GuiSliderBar((Rectangle){ 640, 240, 105, 20}, "Segments", segments, 0, 60, true);
+            width = GuiSliderBar((Rectangle){ 640, 40, 105, 20 }, "Width", NULL, width, 0, GetScreenWidth() - 300);
+            height = GuiSliderBar((Rectangle){ 640, 70, 105, 20 }, "Height", NULL, height, 0, GetScreenHeight() - 50);
+            roundness = GuiSliderBar((Rectangle){ 640, 140, 105, 20 }, "Roundness", NULL, roundness, 0.0f, 1.0f);
+            lineThick = GuiSliderBar((Rectangle){ 640, 170, 105, 20 }, "Thickness", NULL, lineThick, 0, 20);
+            segments = GuiSliderBar((Rectangle){ 640, 240, 105, 20}, "Segments", NULL, segments, 0, 60);
 
             drawRoundedRect = GuiCheckBox((Rectangle){ 640, 320, 20, 20 }, "DrawRoundedRect", drawRoundedRect);
             drawRoundedLines = GuiCheckBox((Rectangle){ 640, 350, 20, 20 }, "DrawRoundedLines", drawRoundedLines);

@@ -447,7 +447,6 @@ static GLFWbool initializeTIS(void)
 
 - (void)applicationDidFinishLaunching:(NSNotification *)notification
 {
-    _glfw.ns.finishedLaunching = GLFW_TRUE;
     _glfwPlatformPostEmptyEvent();
     [NSApp stop:nil];
 }
@@ -503,9 +502,6 @@ int _glfwPlatformInit(void)
                              toTarget:_glfw.ns.helper
                            withObject:nil];
 
-    if (NSApp)
-        _glfw.ns.finishedLaunching = GLFW_TRUE;
-
     [NSApplication sharedApplication];
 
     _glfw.ns.delegate = [[GLFWApplicationDelegate alloc] init];
@@ -555,9 +551,12 @@ int _glfwPlatformInit(void)
         return GLFW_FALSE;
 
     _glfwInitTimerNS();
-    _glfwInitJoysticksNS();
 
     _glfwPollMonitorsNS();
+
+    if (![[NSRunningApplication currentApplication] isFinishedLaunching])
+        [NSApp run];
+
     return GLFW_TRUE;
 
     } // autoreleasepool
@@ -605,7 +604,6 @@ void _glfwPlatformTerminate(void)
     free(_glfw.ns.clipboardString);
 
     _glfwTerminateNSGL();
-    _glfwTerminateJoysticksNS();
 
     } // autoreleasepool
 }

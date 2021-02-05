@@ -2,7 +2,7 @@
 #
 #   raylib makefile for Desktop platforms, Raspberry Pi, Android and HTML5
 #
-#   Copyright (c) 2013-2020 Ramon Santamaria (@raysan5)
+#   Copyright (c) 2013-2021 Ramon Santamaria (@raysan5)
 #
 #   This software is provided "as-is", without any express or implied warranty. In no event
 #   will the authors be held liable for any damages arising from the use of this software.
@@ -25,8 +25,7 @@
 
 # Define required raylib variables
 PROJECT_NAME       ?= raylib_examples
-RAYLIB_VERSION     ?= 3.0.0
-RAYLIB_API_VERSION ?= 3
+RAYLIB_VERSION     ?= 3.5.0
 RAYLIB_PATH        ?= ..
 
 # Define default options
@@ -116,10 +115,10 @@ endif
 # This is not currently used by src/Makefile. Not sure of its origin or usage. Refer to wiki.
 # TODO: update install: target in src/Makefile for RPI, consider relation to LINUX.
 ifeq ($(PLATFORM),PLATFORM_RPI)
-    RAYLIB_PATH       ?= /home/pi/raylib
+    RAYLIB_PATH        ?= /home/pi/raylib
 endif
 ifeq ($(PLATFORM),PLATFORM_DRM)
-    RAYLIB_PATH       ?= /home/pi/raylib
+    RAYLIB_PATH        ?= /home/pi/raylib
 endif
 
 ifeq ($(PLATFORM),PLATFORM_WEB)
@@ -241,16 +240,16 @@ ifeq ($(PLATFORM),PLATFORM_WEB)
     # -s TOTAL_MEMORY=16777216   # to specify heap memory size (default = 16MB)
     # -s USE_PTHREADS=1          # multithreading support
     # -s WASM=0                  # disable Web Assembly, emitted by default
-    # -s EMTERPRETIFY=1          # enable emscripten code interpreter (very slow)
-    # -s EMTERPRETIFY_ASYNC=1    # support synchronous loops by emterpreter
+    # -s ASYNCIFY                # lets synchronous C/C++ code interact with asynchronous JS
     # -s FORCE_FILESYSTEM=1      # force filesystem to load/save files data
     # -s ASSERTIONS=1            # enable runtime checks for common memory allocation errors (-O1 and above turn it off)
     # --profiling                # include information for code profiling
     # --memory-init-file 0       # to avoid an external memory initialization code file (.mem)
     # --preload-file resources   # specify a resources folder for data compilation
-    CFLAGS += -s USE_GLFW=3 -s FORCE_FILESYSTEM=1 -s ASYNCIFY -s TOTAL_MEMORY=67108864 $(dir $<)resources@resources
+    # --source-map-base          # allow debugging in browser with source map
+    CFLAGS += -s USE_GLFW=3 -s ASYNCIFY -s TOTAL_MEMORY=67108864 -s FORCE_FILESYSTEM=1 $(dir $<)resources@resources
 
-    # NOTE: Simple raylib examples are compiled to be interpreter by emterpreter, that way,
+    # NOTE: Simple raylib examples are compiled to be interpreter with asyncify, that way,
     # we can compile same code for ALL platforms with no change required, but, working on bigger
     # projects, code needs to be refactored to avoid a blocking while() loop, moving Update and Draw
     # logic to a self contained function: UpdateDrawFrame(), check core_basic_window_web.c for reference.
@@ -281,10 +280,7 @@ ifeq ($(PLATFORM),PLATFORM_DESKTOP)
         INCLUDE_PATHS += -I/usr/local/include
     endif
     ifeq ($(PLATFORM_OS),LINUX)
-        # Reset everything.
-        # Precedence: immediately local, installed version, raysan5 provided libs -I$(RAYLIB_H_INSTALL_PATH) -I$(RAYLIB_PATH)/release/include
-        #INCLUDE_PATHS = -I$(RAYLIB_H_INSTALL_PATH) -isystem. -isystem$(RAYLIB_PATH)/src -isystem$(RAYLIB_PATH)/release/include -isystem$(RAYLIB_PATH)/src/external
-        INCLUDE_PATHS = -I$(RAYLIB_H_INSTALL_PATH) -I. -I$(RAYLIB_PATH)/src -I$(RAYLIB_PATH)/release/include -I$(RAYLIB_PATH)/src/external
+        INCLUDE_PATHS = -I$(RAYLIB_H_INSTALL_PATH) -I. -I$(RAYLIB_PATH)/src -I$(RAYLIB_PATH)/src/external
     endif
 endif
 
@@ -294,7 +290,7 @@ LDFLAGS = -L. -L$(RAYLIB_RELEASE_PATH) -L$(RAYLIB_PATH)/src
 ifeq ($(PLATFORM),PLATFORM_DESKTOP)
     ifeq ($(PLATFORM_OS),WINDOWS)
         # resource file contains windows executable icon and properties
-        LDFLAGS += $(RAYLIB_PATH)/src/raylib.rc.data 
+        LDFLAGS += $(RAYLIB_PATH)/src/raylib.rc.data
         # -Wl,--subsystem,windows hides the console window
         ifeq ($(BUILD_MODE), RELEASE)
             LDFLAGS += -Wl,--subsystem,windows
@@ -351,7 +347,7 @@ ifeq ($(PLATFORM),PLATFORM_DESKTOP)
     ifeq ($(PLATFORM_OS),OSX)
         # Libraries for OSX 10.9 desktop compiling
         # NOTE: Required packages: libopenal-dev libegl1-mesa-dev
-        LDLIBS = -lraylib -framework OpenGL -framework Cocoa -framework IOKit -framework CoreAudio -framework CoreVideo 
+        LDLIBS = -lraylib -framework OpenGL -framework Cocoa -framework IOKit -framework CoreAudio -framework CoreVideo
     endif
     ifeq ($(PLATFORM_OS),BSD)
         # Libraries for FreeBSD, OpenBSD, NetBSD, DragonFly desktop compiling
@@ -405,7 +401,8 @@ CORE = \
     core/core_storage_values \
     core/core_vr_simulator \
     core/core_loading_thread \
-    core/core_quat_conversion 
+    core/core_quat_conversion \
+    core/core_window_flags
 
 SHAPES = \
     shapes/shapes_basic_shapes \
@@ -423,7 +420,7 @@ SHAPES = \
     shapes/shapes_draw_ring \
     shapes/shapes_draw_circle_sector \
     shapes/shapes_draw_rectangle_rounded
-    
+
 TEXTURES = \
     textures/textures_logo_raylib \
     textures/textures_mouse_painting \
@@ -442,8 +439,9 @@ TEXTURES = \
     textures/textures_sprite_button \
     textures/textures_sprite_explosion \
     textures/textures_bunnymark \
-    textures/textures_blend_modes
-    
+    textures/textures_blend_modes \
+    textures/textures_draw_tiled
+
 TEXT = \
     text/text_raylib_fonts \
     text/text_font_spritefont \
@@ -455,7 +453,7 @@ TEXT = \
     text/text_writing_anim \
     text/text_rectangle_bounds \
     text/text_unicode
-    
+
 MODELS = \
     models/models_animation \
     models/models_billboard \
@@ -473,7 +471,7 @@ MODELS = \
     models/models_yaw_pitch_roll \
     models/models_heightmap \
     models/models_waving_cubes
-    
+
 SHADERS = \
     shaders/shaders_model_shader \
     shaders/shaders_shapes_textures \
@@ -489,15 +487,17 @@ SHADERS = \
     shaders/shaders_fog \
     shaders/shaders_simple_mask \
     shaders/shaders_spotlight \
-    shaders/shaders_rlgl_mesh_instanced
-    
+    shaders/shaders_hot_reloading \
+    shaders/shaders_rlgl_mesh_instanced \
+    shaders/shaders_multi_sample2d
+
 AUDIO = \
     audio/audio_module_playing \
     audio/audio_music_stream \
     audio/audio_raw_stream \
     audio/audio_sound_loading \
     audio/audio_multichannel_sound
-    
+
 PHYSICS = \
     physics/physics_demo \
     physics/physics_friction \
@@ -513,8 +513,8 @@ all: $(CORE) $(SHAPES) $(TEXT) $(TEXTURES) $(MODELS) $(SHADERS) $(AUDIO) $(PHYSI
 
 core: $(CORE)
 shapes: $(SHAPES)
-text: $(TEXT)
 textures: $(TEXTURES)
+text: $(TEXT)
 models: $(MODELS)
 shaders: $(SHADERS)
 audio: $(AUDIO)

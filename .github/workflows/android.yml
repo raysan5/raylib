@@ -16,7 +16,7 @@ jobs:
         ARCH: ["arm64", "x86_64"]
           
     env:
-      RELEASE_NAME: raylib-dev_android_api28_${{ matrix.ARCH }}
+      RELEASE_NAME: raylib-dev_android_api29_${{ matrix.ARCH }}
     
     steps:
     - name: Checkout
@@ -24,7 +24,7 @@ jobs:
     
     - name: Setup Release Version
       run: |
-        echo "::set-env name=RELEASE_NAME::raylib-${{ github.event.release.tag_name }}_android_api28_${{ matrix.ARCH }}"
+        echo "RELEASE_NAME=raylib-${{ github.event.release.tag_name }}_android_api29_${{ matrix.ARCH }}" >> $GITHUB_ENV
       shell: bash
       if: github.event_name == 'release' && github.event.action == 'published'
 
@@ -38,12 +38,12 @@ jobs:
         mkdir lib
         cd ../..
    
-    # Generating static + shared library for 64bit arquitectures and API version 28
+    # Generating static + shared library for 64bit arquitectures and API version 29
     - name: Build Library
       run: |
         cd src
-        make PLATFORM=PLATFORM_ANDROID ANDROID_ARCH=${{ matrix.ARCH }} ANDROID_API_VERSION=28 ANDROID_NDK="C:\PROGRA~2\Android\android-sdk\ndk-bundle" RAYLIB_LIBTYPE=STATIC RAYLIB_RELEASE_PATH="../build/${{ env.RELEASE_NAME }}/lib"
-        make PLATFORM=PLATFORM_ANDROID ANDROID_ARCH=${{ matrix.ARCH }} ANDROID_API_VERSION=28 ANDROID_NDK="C:\PROGRA~2\Android\android-sdk\ndk-bundle" RAYLIB_LIBTYPE=SHARED RAYLIB_RELEASE_PATH="../build/${{ env.RELEASE_NAME }}/lib" -B
+        make PLATFORM=PLATFORM_ANDROID ANDROID_ARCH=${{ matrix.ARCH }} ANDROID_API_VERSION=29 ANDROID_NDK="C:\PROGRA~2\Android\android-sdk\ndk-bundle" RAYLIB_LIBTYPE=STATIC RAYLIB_RELEASE_PATH="../build/${{ env.RELEASE_NAME }}/lib"
+        make PLATFORM=PLATFORM_ANDROID ANDROID_ARCH=${{ matrix.ARCH }} ANDROID_API_VERSION=29 ANDROID_NDK="C:\PROGRA~2\Android\android-sdk\ndk-bundle" RAYLIB_LIBTYPE=SHARED RAYLIB_RELEASE_PATH="../build/${{ env.RELEASE_NAME }}/lib" -B
         cd ..
       shell: cmd
   

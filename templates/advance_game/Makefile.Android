@@ -2,7 +2,7 @@
 #
 #   raylib makefile for Android project (APK building)
 #
-#   Copyright (c) 2017 Ramon Santamaria (@raysan5)
+#   Copyright (c) 2017-2021 Ramon Santamaria (@raysan5)
 #
 #   This software is provided "as-is", without any express or implied warranty. In no event
 #   will the authors be held liable for any damages arising from the use of this software.
@@ -26,10 +26,10 @@ PLATFORM               ?= PLATFORM_ANDROID
 RAYLIB_PATH            ?= ..\..
 
 # Define Android architecture (armeabi-v7a, arm64-v8a, x86, x86-64) and API version
-# Starting at 2019 using ARM64 is mandatory for published apps,
-# and minimum required target API is Android 9 (API level 28)
-ANDROID_ARCH ?= ARM
-ANDROID_API_VERSION ?= 28
+# Starting in 2019 using ARM64 is mandatory for published apps,
+# Starting on August 2020, minimum required target API is Android 10 (API level 29)
+ANDROID_ARCH           ?= ARM64
+ANDROID_API_VERSION     = 29
 
 # Android required path variables
 # NOTE: Starting with Android NDK r21, no more toolchain generation is required, NDK is the toolchain on itself

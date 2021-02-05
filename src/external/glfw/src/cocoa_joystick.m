@@ -304,12 +304,10 @@ static void removeCallback(void* context,
 
 
 //////////////////////////////////////////////////////////////////////////
-//////                       GLFW internal API                      //////
+//////                       GLFW platform API                      //////
 //////////////////////////////////////////////////////////////////////////
 
-// Initialize joystick interface
-//
-void _glfwInitJoysticksNS(void)
+GLFWbool _glfwPlatformInitJoysticks(void)
 {
     CFMutableArrayRef matching;
     const long usages[] =
@@ -328,7 +326,7 @@ void _glfwInitJoysticksNS(void)
     if (!matching)
     {
         _glfwInputError(GLFW_PLATFORM_ERROR, "Cocoa: Failed to create array");
-        return;
+        return GLFW_FALSE;
     }
 
     for (size_t i = 0;  i < sizeof(usages) / sizeof(long);  i++)
@@ -383,25 +381,23 @@ void _glfwInitJoysticksNS(void)
     // Execute the run loop once in order to register any initially-attached
     // joysticks
     CFRunLoopRunInMode(kCFRunLoopDefaultMode, 0, false);
+    return GLFW_TRUE;
 }
 
-// Close all opened joystick handles
-//
-void _glfwTerminateJoysticksNS(void)
+void _glfwPlatformTerminateJoysticks(void)
 {
     int jid;
 
     for (jid = 0;  jid <= GLFW_JOYSTICK_LAST;  jid++)
         closeJoystick(_glfw.joysticks + jid);
 
-    CFRelease(_glfw.ns.hidManager);
-    _glfw.ns.hidManager = NULL;
+    if (_glfw.ns.hidManager)
+    {
+        CFRelease(_glfw.ns.hidManager);
+        _glfw.ns.hidManager = NULL;
+    }
 }
 
-
-//////////////////////////////////////////////////////////////////////////
-//////                       GLFW platform API                      //////
-//////////////////////////////////////////////////////////////////////////
 
 int _glfwPlatformPollJoystick(_GLFWjoystick* js, int mode)
 {

@@ -5,9 +5,9 @@
 *   This example has been created using raylib 2.5 (www.raylib.com)
 *   raylib is licensed under an unmodified zlib/libpng license (View raylib.h for details)
 *
-*   Example contributed by Chris Camacho (@codifies) and reviewed by Ramon Santamaria (@raysan5)
+*   Example contributed by Chris Camacho (@chriscamacho) and reviewed by Ramon Santamaria (@raysan5)
 *
-*   Copyright (c) 2019 Chris Camacho (@codifies) and Ramon Santamaria (@raysan5)
+*   Copyright (c) 2019 Chris Camacho (@chriscamacho) and Ramon Santamaria (@raysan5)
 *
 ********************************************************************************************
 *
@@ -64,8 +64,7 @@ int main(void)
     model2.materials[0].maps[MAP_DIFFUSE].texture = texDiffuse;
 
     // Using MAP_EMISSION as a spare slot to use for 2nd texture
-    // NOTE: Don't use MAP_IRRADIANCE, MAP_PREFILTER or  MAP_CUBEMAP
-    // as they are bound as cube maps
+    // NOTE: Don't use MAP_IRRADIANCE, MAP_PREFILTER or  MAP_CUBEMAP as they are bound as cube maps
     Texture texMask = LoadTexture("resources/mask.png");
     model1.materials[0].maps[MAP_EMISSION].texture = texMask;
     model2.materials[0].maps[MAP_EMISSION].texture = texMask;

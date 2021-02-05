@@ -1,4 +1,4 @@
-/* stb_image_write - v1.14 - public domain - http://nothings.org/stb
+/* stb_image_write - v1.15 - public domain - http://nothings.org/stb
    writes out PNG/BMP/TGA/JPEG/HDR images to C stdio - Sean Barrett 2010-2015
                                      no warranty implied; use at your own risk
 
@@ -267,6 +267,8 @@ typedef struct
 {
    stbi_write_func *func;
    void *context;
+   unsigned char buffer[64];
+   int buf_used;
 } stbi__write_context;
 
 // initialize a callback-based context
@@ -380,16 +382,36 @@ static void stbiw__writef(stbi__write_context *s, const char *fmt, ...)
    va_end(v);
 }
 
+static void stbiw__write_flush(stbi__write_context *s)
+{
+   if (s->buf_used) {
+      s->func(s->context, &s->buffer, s->buf_used);
+      s->buf_used = 0;
+   }
+}
+
 static void stbiw__putc(stbi__write_context *s, unsigned char c)
 {
    s->func(s->context, &c, 1);
 }
 
+static void stbiw__write1(stbi__write_context *s, unsigned char a)
+{
+   if (s->buf_used + 1 > sizeof(s->buffer))
+      stbiw__write_flush(s);
+   s->buffer[s->buf_used++] = a;
+}
+
 static void stbiw__write3(stbi__write_context *s, unsigned char a, unsigned char b, unsigned char c)
 {
-   unsigned char arr[3];
-   arr[0] = a; arr[1] = b; arr[2] = c;
-   s->func(s->context, arr, 3);
+   int n;
+   if (s->buf_used + 3 > sizeof(s->buffer))
+      stbiw__write_flush(s);
+   n = s->buf_used;
+   s->buf_used = n+3;
+   s->buffer[n+0] = a;
+   s->buffer[n+1] = b;
+   s->buffer[n+2] = c;
 }
 
 static void stbiw__write_pixel(stbi__write_context *s, int rgb_dir, int comp, int write_alpha, int expand_mono, unsigned char *d)
@@ -398,7 +420,7 @@ static void stbiw__write_pixel(stbi__write_context *s, int rgb_dir, int comp, in
    int k;
 
    if (write_alpha < 0)
-      s->func(s->context, &d[comp - 1], 1);
+      stbiw__write1(s, d[comp - 1]);
 
    switch (comp) {
       case 2: // 2 pixels = mono + alpha, alpha is written separately, so same as 1-channel case
@@ -406,7 +428,7 @@ static void stbiw__write_pixel(stbi__write_context *s, int rgb_dir, int comp, in
          if (expand_mono)
             stbiw__write3(s, d[0], d[0], d[0]); // monochrome bmp
          else
-            s->func(s->context, d, 1);  // monochrome TGA
+            stbiw__write1(s, d[0]);  // monochrome TGA
          break;
       case 4:
          if (!write_alpha) {
@@ -422,7 +444,7 @@ static void stbiw__write_pixel(stbi__write_context *s, int rgb_dir, int comp, in
          break;
    }
    if (write_alpha > 0)
-      s->func(s->context, &d[comp - 1], 1);
+      stbiw__write1(s, d[comp - 1]);
 }
 
 static void stbiw__write_pixels(stbi__write_context *s, int rgb_dir, int vdir, int x, int y, int comp, void *data, int write_alpha, int scanline_pad, int expand_mono)
@@ -447,6 +469,7 @@ static void stbiw__write_pixels(stbi__write_context *s, int rgb_dir, int vdir, i
          unsigned char *d = (unsigned char *) data + (j*x+i)*comp;
          stbiw__write_pixel(s, rgb_dir, comp, write_alpha, expand_mono, d);
       }
+      stbiw__write_flush(s);
       s->func(s->context, &zero, scanline_pad);
    }
 }
@@ -476,7 +499,7 @@ static int stbi_write_bmp_core(stbi__write_context *s, int x, int y, int comp, c
 
 STBIWDEF int stbi_write_bmp_to_func(stbi_write_func *func, void *context, int x, int y, int comp, const void *data)
 {
-   stbi__write_context s;
+   stbi__write_context s = { 0 };
    stbi__start_write_callbacks(&s, func, context);
    return stbi_write_bmp_core(&s, x, y, comp, data);
 }
@@ -484,7 +507,7 @@ STBIWDEF int stbi_write_bmp_to_func(stbi_write_func *func, void *context, int x,
 #ifndef STBI_WRITE_NO_STDIO
 STBIWDEF int stbi_write_bmp(char const *filename, int x, int y, int comp, const void *data)
 {
-   stbi__write_context s;
+   stbi__write_context s = { 0 };
    if (stbi__start_write_file(&s,filename)) {
       int r = stbi_write_bmp_core(&s, x, y, comp, data);
       stbi__end_write_file(&s);
@@ -557,24 +580,25 @@ static int stbi_write_tga_core(stbi__write_context *s, int x, int y, int comp, v
 
             if (diff) {
                unsigned char header = STBIW_UCHAR(len - 1);
-               s->func(s->context, &header, 1);
+               stbiw__write1(s, header);
                for (k = 0; k < len; ++k) {
                   stbiw__write_pixel(s, -1, comp, has_alpha, 0, begin + k * comp);
                }
             } else {
                unsigned char header = STBIW_UCHAR(len - 129);
-               s->func(s->context, &header, 1);
+               stbiw__write1(s, header);
                stbiw__write_pixel(s, -1, comp, has_alpha, 0, begin);
             }
          }
       }
+      stbiw__write_flush(s);
    }
    return 1;
 }
 
 STBIWDEF int stbi_write_tga_to_func(stbi_write_func *func, void *context, int x, int y, int comp, const void *data)
 {
-   stbi__write_context s;
+   stbi__write_context s = { 0 };
    stbi__start_write_callbacks(&s, func, context);
    return stbi_write_tga_core(&s, x, y, comp, (void *) data);
 }
@@ -582,7 +606,7 @@ STBIWDEF int stbi_write_tga_to_func(stbi_write_func *func, void *context, int x,
 #ifndef STBI_WRITE_NO_STDIO
 STBIWDEF int stbi_write_tga(char const *filename, int x, int y, int comp, const void *data)
 {
-   stbi__write_context s;
+   stbi__write_context s = { 0 };
    if (stbi__start_write_file(&s,filename)) {
       int r = stbi_write_tga_core(&s, x, y, comp, (void *) data);
       stbi__end_write_file(&s);
@@ -748,7 +772,7 @@ static int stbi_write_hdr_core(stbi__write_context *s, int x, int y, int comp, f
 
 STBIWDEF int stbi_write_hdr_to_func(stbi_write_func *func, void *context, int x, int y, int comp, const float *data)
 {
-   stbi__write_context s;
+   stbi__write_context s = { 0 };
    stbi__start_write_callbacks(&s, func, context);
    return stbi_write_hdr_core(&s, x, y, comp, (float *) data);
 }
@@ -756,7 +780,7 @@ STBIWDEF int stbi_write_hdr_to_func(stbi_write_func *func, void *context, int x,
 #ifndef STBI_WRITE_NO_STDIO
 STBIWDEF int stbi_write_hdr(char const *filename, int x, int y, int comp, const float *data)
 {
-   stbi__write_context s;
+   stbi__write_context s = { 0 };
    if (stbi__start_write_file(&s,filename)) {
       int r = stbi_write_hdr_core(&s, x, y, comp, (float *) data);
       stbi__end_write_file(&s);
@@ -1552,7 +1576,7 @@ static int stbi_write_jpg_core(stbi__write_context *s, int width, int height, in
 
 STBIWDEF int stbi_write_jpg_to_func(stbi_write_func *func, void *context, int x, int y, int comp, const void *data, int quality)
 {
-   stbi__write_context s;
+   stbi__write_context s = { 0 };
    stbi__start_write_callbacks(&s, func, context);
    return stbi_write_jpg_core(&s, x, y, comp, (void *) data, quality);
 }
@@ -1561,7 +1585,7 @@ STBIWDEF int stbi_write_jpg_to_func(stbi_write_func *func, void *context, int x,
 #ifndef STBI_WRITE_NO_STDIO
 STBIWDEF int stbi_write_jpg(char const *filename, int x, int y, int comp, const void *data, int quality)
 {
-   stbi__write_context s;
+   stbi__write_context s = { 0 };
    if (stbi__start_write_file(&s,filename)) {
       int r = stbi_write_jpg_core(&s, x, y, comp, data, quality);
       stbi__end_write_file(&s);

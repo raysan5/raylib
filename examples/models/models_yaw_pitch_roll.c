@@ -114,23 +114,23 @@ int main(void)
             // Draw framebuffer texture (Ahrs Display)
             int centerX = framebuffer.texture.width/2;
             int centerY = framebuffer.texture.height/2;
-            float scaleFactor = 0.5f;
 
             BeginTextureMode(framebuffer);
-
+            
+                ClearBackground(RAYWHITE);
                 BeginBlendMode(BLEND_ALPHA);
 
                 DrawTexturePro(texBackground, (Rectangle){ 0, 0, texBackground.width, texBackground.height },
-                               (Rectangle){ centerX, centerY, texBackground.width*scaleFactor, texBackground.height*scaleFactor},
-                               (Vector2){ texBackground.width/2*scaleFactor, texBackground.height/2*scaleFactor + pitchOffset*scaleFactor }, roll, WHITE);
+                               (Rectangle){ centerX, centerY, texBackground.width, texBackground.height},
+                               (Vector2){ texBackground.width/2, texBackground.height/2 + pitchOffset }, roll, WHITE);
 
                 DrawTexturePro(texPitch, (Rectangle){ 0, 0, texPitch.width, texPitch.height },
-                               (Rectangle){ centerX, centerY, texPitch.width*scaleFactor, texPitch.height*scaleFactor },
-                               (Vector2){ texPitch.width/2*scaleFactor, texPitch.height/2*scaleFactor + pitchOffset*scaleFactor }, roll, WHITE);
+                               (Rectangle){ centerX, centerY, texPitch.width, texPitch.height },
+                               (Vector2){ texPitch.width/2, texPitch.height/2 + pitchOffset }, roll, WHITE);
 
                 DrawTexturePro(texPlane, (Rectangle){ 0, 0, texPlane.width, texPlane.height },
-                               (Rectangle){ centerX, centerY, texPlane.width*scaleFactor, texPlane.height*scaleFactor },
-                               (Vector2){ texPlane.width/2*scaleFactor, texPlane.height/2*scaleFactor }, 0, WHITE);
+                               (Rectangle){ centerX, centerY, texPlane.width, texPlane.height },
+                               (Vector2){ texPlane.width/2, texPlane.height/2 }, 0, WHITE);
 
                 EndBlendMode();
 

@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.1)
+cmake_minimum_required(VERSION 3.1...3.17 FATAL_ERROR)
 
 project(GLFW VERSION 3.4.0 LANGUAGES C)
 
@@ -6,6 +6,10 @@ set(CMAKE_LEGACY_CYGWIN_WIN32 OFF)
 
 if (POLICY CMP0054)
     cmake_policy(SET CMP0054 NEW)
+endif()
+
+if (POLICY CMP0069)
+    cmake_policy(SET CMP0069 NEW)
 endif()
 
 if (POLICY CMP0077)
@@ -207,27 +211,32 @@ if (_GLFW_X11)
 
     # Check for XRandR (modern resolution switching and gamma control)
     if (NOT X11_Xrandr_INCLUDE_PATH)
-        message(FATAL_ERROR "The RandR headers were not found")
+        message(FATAL_ERROR "RandR headers not found; install libxrandr development package")
     endif()
 
     # Check for Xinerama (legacy multi-monitor support)
     if (NOT X11_Xinerama_INCLUDE_PATH)
-        message(FATAL_ERROR "The Xinerama headers were not found")
+        message(FATAL_ERROR "Xinerama headers not found; install libxinerama development package")
     endif()
 
     # Check for Xkb (X keyboard extension)
     if (NOT X11_Xkb_INCLUDE_PATH)
-        message(FATAL_ERROR "The X keyboard extension headers were not found")
+        message(FATAL_ERROR "XKB headers not found; install X11 development package")
     endif()
 
     # Check for Xcursor (cursor creation from RGBA images)
     if (NOT X11_Xcursor_INCLUDE_PATH)
-        message(FATAL_ERROR "The Xcursor headers were not found")
+        message(FATAL_ERROR "Xcursor headers not found; install libxcursor development package")
     endif()
 
     # Check for XInput (modern HID input)
     if (NOT X11_Xi_INCLUDE_PATH)
-        message(FATAL_ERROR "The XInput headers were not found")
+        message(FATAL_ERROR "XInput headers not found; install libxi development package")
+    endif()
+    
+    # Check for X Shape (custom window input shape)
+    if (NOT X11_Xshape_INCLUDE_PATH)
+        message(FATAL_ERROR "X Shape headers not found; install libxext development package")
     endif()
 
     list(APPEND glfw_INCLUDE_DIRS "${X11_Xrandr_INCLUDE_PATH}"
@@ -286,11 +295,10 @@ if (_GLFW_COCOA)
     list(APPEND glfw_LIBRARIES
         "-framework Cocoa"
         "-framework IOKit"
-        "-framework CoreFoundation"
-        "-framework CoreVideo")
+        "-framework CoreFoundation")
 
     set(glfw_PKG_DEPS "")
-    set(glfw_PKG_LIBS "-framework Cocoa -framework IOKit -framework CoreFoundation -framework CoreVideo")
+    set(glfw_PKG_LIBS "-framework Cocoa -framework IOKit -framework CoreFoundation")
 endif()
 
 #--------------------------------------------------------------------
@@ -319,7 +327,7 @@ include(CMakePackageConfigHelpers)
 
 set(GLFW_CONFIG_PATH "${CMAKE_INSTALL_LIBDIR}/cmake/glfw3")
 
-configure_package_config_file(src/glfw3Config.cmake.in
+configure_package_config_file(CMake/glfw3Config.cmake.in
                               src/glfw3Config.cmake
                               INSTALL_DESTINATION "${GLFW_CONFIG_PATH}"
                               NO_CHECK_REQUIRED_COMPONENTS_MACRO)
@@ -330,7 +338,7 @@ write_basic_package_version_file(src/glfw3ConfigVersion.cmake
 
 configure_file(src/glfw_config.h.in src/glfw_config.h @ONLY)
 
-configure_file(src/glfw3.pc.in src/glfw3.pc @ONLY)
+configure_file(CMake/glfw3.pc.in CMake/glfw3.pc @ONLY)
 
 #--------------------------------------------------------------------
 # Add subdirectories
@@ -366,6 +374,11 @@ if (GLFW_INSTALL)
             DESTINATION "${GLFW_CONFIG_PATH}")
     install(FILES "${GLFW_BINARY_DIR}/src/glfw3.pc"
             DESTINATION "${CMAKE_INSTALL_LIBDIR}/pkgconfig")
+
+    if (DOXYGEN_FOUND AND GLFW_BUILD_DOCS)
+        install(DIRECTORY "${GLFW_BINARY_DIR}/docs/html"
+                DESTINATION "${CMAKE_INSTALL_DOCDIR}")
+    endif()
 
     # Only generate this target if no higher-level project already has
     if (NOT TARGET uninstall)

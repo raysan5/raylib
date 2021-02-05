@@ -11,6 +11,7 @@ The following people has contributed with a generous donation to the raylib proj
  - Rudy Faile ([@rfaile313](https://github.com/rfaile313)) - https://rudyfaile.com/
  - devdad ([@devdad](https://github.com/devdad))
  - frithrah ([@frithrah](https://github.com/frithrah))
+ - Zach Geis ([@zacgeis](https://github.com/zacgeis))
 
 ## 🥉 Bronze Contributors
 
@@ -39,4 +40,8 @@ The following people has contributed with a generous donation to the raylib proj
  - Samuel Batista ([@gamedevsam](https://github.com/gamedevsam))
  - Alexandre Chêne ([@kooparse](https://github.com/kooparse))
  - daddio69 ([@daddio69](https://github.com/daddio69))
+ - James Ghawaly ([@jghawaly](https://github.com/jghawaly))
+ - jack ([@Jack-Ji](https://github.com/Jack-Ji))
+ - Merlyn Morgan-Graham ([@kavika13](https://github.com/kavika13))
+ 
  

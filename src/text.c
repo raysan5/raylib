@@ -27,7 +27,7 @@
 *
 *   LICENSE: zlib/libpng
 *
-*   Copyright (c) 2013-2020 Ramon Santamaria (@raysan5)
+*   Copyright (c) 2013-2021 Ramon Santamaria (@raysan5)
 *
 *   This software is provided "as-is", without any express or implied warranty. In no event
 *   will the authors be held liable for any damages arising from the use of this software.
@@ -128,7 +128,8 @@ extern void LoadFontDefault(void)
     // NOTE: Using UTF8 encoding table for Unicode U+0000..U+00FF Basic Latin + Latin-1 Supplement
     // Ref: http://www.utf8-chartable.de/unicode-utf8-table.pl
 
-    defaultFont.charsCount = 224;             // Number of chars included in our default font
+    defaultFont.charsCount = 224;   // Number of chars included in our default font
+    defaultFont.charsPadding = 0;   // Characters padding
 
     // Default font is directly defined here (data generated from a sprite font image)
     // This way, we reconstruct Font without creating large global variables
@@ -193,7 +194,7 @@ extern void LoadFontDefault(void)
     //----------------------------------------------------------------------
     Image imFont = {
         .data = calloc(128*128, 2),  // 2 bytes per pixel (gray + alpha)
-        .width = 128, 
+        .width = 128,
         .height = 128,
         .format = UNCOMPRESSED_GRAY_ALPHA,
         .mipmaps = 1
@@ -302,6 +303,9 @@ Font LoadFont(const char *fileName)
 #ifndef FONT_TTF_DEFAULT_FIRST_CHAR
     #define FONT_TTF_DEFAULT_FIRST_CHAR     32      // TTF font generation default first char for image sprite font (32-Space)
 #endif
+#ifndef FONT_TTF_DEFAULT_CHARS_PADDING
+    #define FONT_TTF_DEFAULT_CHARS_PADDING   4      // TTF font generation default chars padding
+#endif
 
     Font font = { 0 };
 
@@ -335,16 +339,16 @@ Font LoadFont(const char *fileName)
 Font LoadFontEx(const char *fileName, int fontSize, int *fontChars, int charsCount)
 {
     Font font = { 0 };
-    
+
     // Loading file to memory
     unsigned int fileSize = 0;
     unsigned char *fileData = LoadFileData(fileName, &fileSize);
-    
+
     if (fileData != NULL)
     {
         // Loading font from memory data
         font = LoadFontFromMemory(GetFileExtension(fileName), fileData, fileSize, fontSize, fontChars, charsCount);
-        
+
         RL_FREE(fileData);
     }
     else font = GetFontDefault();
@@ -358,7 +362,7 @@ Font LoadFontFromImage(Image image, Color key, int firstChar)
 #ifndef MAX_GLYPHS_FROM_IMAGE
     #define MAX_GLYPHS_FROM_IMAGE   256     // Maximum number of glyphs supported on image scan
 #endif
-    
+
     #define COLOR_EQUAL(col1, col2) ((col1.r == col2.r)&&(col1.g == col2.g)&&(col1.b == col2.b)&&(col1.a == col2.a))
 
     int charSpacing = 0;
@@ -372,7 +376,7 @@ Font LoadFontFromImage(Image image, Color key, int firstChar)
     int tempCharValues[MAX_GLYPHS_FROM_IMAGE];
     Rectangle tempCharRecs[MAX_GLYPHS_FROM_IMAGE];
 
-    Color *pixels = GetImageData(image);
+    Color *pixels = LoadImageColors(image);
 
     // Parse image data to get charSpacing and lineSpacing
     for (y = 0; y < image.height; y++)
@@ -445,6 +449,7 @@ Font LoadFontFromImage(Image image, Color key, int firstChar)
 
     font.texture = LoadTextureFromImage(fontClear); // Convert processed image to OpenGL texture
     font.charsCount = index;
+    font.charsPadding = 0;
 
     // We got tempCharValues and tempCharsRecs populated with chars data
     // Now we move temp data to sized charValues and charRecs arrays
@@ -478,7 +483,7 @@ Font LoadFontFromImage(Image image, Color key, int firstChar)
 Font LoadFontFromMemory(const char *fileType, const unsigned char *fileData, int dataSize, int fontSize, int *fontChars, int charsCount)
 {
     Font font = { 0 };
-    
+
     char fileExtLower[16] = { 0 };
     strcpy(fileExtLower, TextToLower(fileType));
 
@@ -488,11 +493,14 @@ Font LoadFontFromMemory(const char *fileType, const unsigned char *fileData, int
     {
         font.baseSize = fontSize;
         font.charsCount = (charsCount > 0)? charsCount : 95;
+        font.charsPadding = 0;
         font.chars = LoadFontData(fileData, dataSize, font.baseSize, fontChars, font.charsCount, FONT_DEFAULT);
 
         if (font.chars != NULL)
         {
-            Image atlas = GenImageFontAtlas(font.chars, &font.recs, font.charsCount, font.baseSize, 2, 0);
+            font.charsPadding = FONT_TTF_DEFAULT_CHARS_PADDING;
+
+            Image atlas = GenImageFontAtlas(font.chars, &font.recs, font.charsCount, font.baseSize, font.charsPadding, 0);
             font.texture = LoadTextureFromImage(atlas);
 
             // Update chars[i].image to use alpha, required to be used on ImageDrawText()
@@ -604,7 +612,7 @@ CharInfo *LoadFontData(const unsigned char *fileData, int dataSize, int fontSize
                         .format = UNCOMPRESSED_GRAYSCALE,
                         .mipmaps = 1
                     };
-                    
+
                     chars[i].image = imSpace;
                 }
 
@@ -783,16 +791,22 @@ Image GenImageFontAtlas(const CharInfo *chars, Rectangle **charRecs, int charsCo
 }
 #endif
 
+// Unload font chars info data (RAM)
+void UnloadFontData(CharInfo *chars, int charsCount)
+{
+    for (int i = 0; i < charsCount; i++) UnloadImage(chars[i].image);
+
+    RL_FREE(chars);
+}
+
 // Unload Font from GPU memory (VRAM)
 void UnloadFont(Font font)
 {
     // NOTE: Make sure font is not default font (fallback)
     if (font.texture.id != GetFontDefault().texture.id)
     {
-        for (int i = 0; i < font.charsCount; i++) UnloadImage(font.chars[i].image);
-
+        UnloadFontData(font.chars, font.charsCount);
         UnloadTexture(font.texture);
-        RL_FREE(font.chars);
         RL_FREE(font.recs);
 
         TRACELOGD("FONT: Unloaded font data from RAM and VRAM");
@@ -822,20 +836,6 @@ void DrawText(const char *text, int posX, int posY, int fontSize, Color color)
 
         DrawTextEx(GetFontDefault(), text, position, (float)fontSize, (float)spacing, color);
     }
-}
-
-// Draw one character (codepoint)
-void DrawTextCodepoint(Font font, int codepoint, Vector2 position, float scale, Color tint)
-{
-    // Character index position in sprite font
-    // NOTE: In case a codepoint is not available in the font, index returned points to '?'
-    int index = GetGlyphIndex(font, codepoint);
-
-    // Character rectangle on screen
-    // NOTE: Quad is scaled proportionally to base character width-height
-    Rectangle rec = { position.x, position.y, font.recs[index].width*scale, font.recs[index].height*scale };
-
-    DrawTexturePro(font.texture, font.recs[index], rec, (Vector2){ 0, 0 }, 0.0f, tint);
 }
 
 // Draw text using Font
@@ -871,12 +871,7 @@ void DrawTextEx(Font font, const char *text, Vector2 position, float fontSize, f
         {
             if ((codepoint != ' ') && (codepoint != '\t'))
             {
-                Rectangle rec = { position.x + textOffsetX + font.chars[index].offsetX*scaleFactor,
-                                  position.y + textOffsetY + font.chars[index].offsetY*scaleFactor,
-                                  font.recs[index].width*scaleFactor,
-                                  font.recs[index].height*scaleFactor };
-
-                DrawTexturePro(font.texture, font.recs[index], rec, (Vector2){ 0, 0 }, 0.0f, tint);
+                DrawTextCodepoint(font, codepoint, (Vector2){ position.x + textOffsetX, position.y + textOffsetY }, fontSize, tint);
             }
 
             if (font.chars[index].advanceX == 0) textOffsetX += ((float)font.recs[index].width*scaleFactor + spacing);
@@ -896,7 +891,7 @@ void DrawTextRec(Font font, const char *text, Rectangle rec, float fontSize, flo
 // Draw text using font inside rectangle limits with support for text selection
 void DrawTextRecEx(Font font, const char *text, Rectangle rec, float fontSize, float spacing, bool wordWrap, Color tint, int selectStart, int selectLength, Color selectTint, Color selectBackTint)
 {
-    int length = TextLength(text);      // Total length in bytes of the text, scanned by codepoints in loop
+    int length = TextLength(text);  // Total length in bytes of the text, scanned by codepoints in loop
 
     int textOffsetY = 0;            // Offset between lines (on line break '\n')
     float textOffsetX = 0.0f;       // Offset X to next character to draw
@@ -999,14 +994,10 @@ void DrawTextRecEx(Font font, const char *text, Rectangle rec, float fontSize, f
                     isGlyphSelected = true;
                 }
 
-                // Draw current chracter glyph
+                // Draw current character glyph
                 if ((codepoint != ' ') && (codepoint != '\t'))
                 {
-                    DrawTexturePro(font.texture, font.recs[index],
-                                   (Rectangle){ rec.x + textOffsetX + font.chars[index].offsetX*scaleFactor,
-                                                rec.y + textOffsetY + font.chars[index].offsetY*scaleFactor,
-                                                font.recs[index].width*scaleFactor, font.recs[index].height*scaleFactor },
-                                   (Vector2){ 0, 0 }, 0.0f, (!isGlyphSelected)? tint : selectTint);
+                    DrawTextCodepoint(font, codepoint, (Vector2){ rec.x + textOffsetX, rec.y + textOffsetY }, fontSize, isGlyphSelected? selectTint : tint);
                 }
             }
 
@@ -1026,6 +1017,30 @@ void DrawTextRecEx(Font font, const char *text, Rectangle rec, float fontSize, f
 
         textOffsetX += glyphWidth;
     }
+}
+
+// Draw one character (codepoint)
+void DrawTextCodepoint(Font font, int codepoint, Vector2 position, float fontSize, Color tint)
+{
+    // Character index position in sprite font
+    // NOTE: In case a codepoint is not available in the font, index returned points to '?'
+    int index = GetGlyphIndex(font, codepoint);
+    float scaleFactor = fontSize/font.baseSize;     // Character quad scaling factor
+
+    // Character destination rectangle on screen
+    // NOTE: We consider charsPadding on drawing
+    Rectangle dstRec = { position.x + font.chars[index].offsetX*scaleFactor - (float)font.charsPadding*scaleFactor,
+                      position.y + font.chars[index].offsetY*scaleFactor - (float)font.charsPadding*scaleFactor,
+                      (font.recs[index].width + 2.0f*font.charsPadding)*scaleFactor,
+                      (font.recs[index].height + 2.0f*font.charsPadding)*scaleFactor };
+
+    // Character source rectangle from font texture atlas
+    // NOTE: We consider chars padding when drawing, it could be required for outline/glow shader effects
+    Rectangle srcRec = { font.recs[index].x - (float)font.charsPadding, font.recs[index].y - (float)font.charsPadding,
+                         font.recs[index].width + 2.0f*font.charsPadding, font.recs[index].height + 2.0f*font.charsPadding };
+
+    // Draw the character texture on the screen
+    DrawTexturePro(font.texture, srcRec, dstRec, (Vector2){ 0, 0 }, 0.0f, tint);
 }
 
 // Measure string width for default font
@@ -1103,7 +1118,7 @@ Vector2 MeasureTextEx(Font font, const char *text, float fontSize, float spacing
 // Returns index position for a unicode character on spritefont
 int GetGlyphIndex(Font font, int codepoint)
 {
-#ifndef GLYPH_NOTFOUND_CHAR_FALLBACK    
+#ifndef GLYPH_NOTFOUND_CHAR_FALLBACK
     #define GLYPH_NOTFOUND_CHAR_FALLBACK     63      // Character used if requested codepoint is not found: '?'
 #endif
 
@@ -1150,7 +1165,7 @@ const char *TextFormat(const char *text, ...)
 #ifndef MAX_TEXTFORMAT_BUFFERS
     #define MAX_TEXTFORMAT_BUFFERS 4        // Maximum number of static buffers for text formatting
 #endif
-    
+
     // We create an array of buffers so strings don't expire until MAX_TEXTFORMAT_BUFFERS invocations
     static char buffers[MAX_TEXTFORMAT_BUFFERS][MAX_TEXT_BUFFER_LENGTH] = { 0 };
     static int  index = 0;
@@ -1254,7 +1269,7 @@ char *TextReplace(char *text, const char *replace, const char *by)
 {
     // Sanity checks and initialization
     if (!text || !replace || !by) return NULL;
-    
+
     char *result;
 
     char *insertPoint;      // Next insert point
@@ -1718,7 +1733,7 @@ static Font LoadBMFont(const char *fileName)
 
     int fontSize = 0;
     int charsCount = 0;
-    
+
     int imWidth = 0;
     int imHeight = 0;
     char imFileName[129];
@@ -1730,7 +1745,7 @@ static Font LoadBMFont(const char *fileName)
     if (fileText == NULL) return font;
 
     char *fileTextPtr = fileText;
-    
+
     // NOTE: We skip first line, it contains no useful information
     int lineBytes = GetLine(fileTextPtr, buffer, MAX_BUFFER_SIZE);
     fileTextPtr += (lineBytes + 1);
@@ -1795,7 +1810,7 @@ static Font LoadBMFont(const char *fileName)
             ((unsigned char *)(imFontAlpha.data))[p] = 0xff;
             ((unsigned char *)(imFontAlpha.data))[p + 1] = ((unsigned char *)imFont.data)[i];
         }
-        
+
         UnloadImage(imFont);
         imFont = imFontAlpha;
     }
@@ -1807,6 +1822,7 @@ static Font LoadBMFont(const char *fileName)
     // Fill font characters info data
     font.baseSize = fontSize;
     font.charsCount = charsCount;
+    font.charsPadding = 0;
     font.chars = (CharInfo *)RL_MALLOC(charsCount*sizeof(CharInfo));
     font.recs = (Rectangle *)RL_MALLOC(charsCount*sizeof(Rectangle));
 

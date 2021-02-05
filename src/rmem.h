@@ -236,7 +236,7 @@ static MemNode *__RemoveMemNode(AllocList *const list, MemNode *const node)
         if (list->head != NULL) list->head->prev = NULL;
         else list->tail = NULL;
     }
-    
+
     if (node->next != NULL) node->next->prev = node->prev;
     else
     {
@@ -534,7 +534,7 @@ ObjPool CreateObjPool(const size_t objsize, const size_t len)
         objpool.objSize = aligned_size;
         objpool.memSize = objpool.freeBlocks = len;
         objpool.mem = ( uintptr_t )buf;
-        
+
         for (size_t i=0; i<objpool.freeBlocks; i++)
         {
             size_t *const restrict index = ( size_t* )(objpool.mem + (i*aligned_size));
@@ -633,7 +633,7 @@ BiStack CreateBiStack(const size_t len)
 {
     BiStack destack = { 0 };
     if (len == 0) return destack;
-    
+
     uint8_t *const buf = malloc(len*sizeof *buf);
     if (buf==NULL) return destack;
     destack.size = len;

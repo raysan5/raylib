@@ -12,7 +12,7 @@ Ready to learn? Jump to [code examples!](http://www.raylib.com/examples.html)
 
 [![GitHub contributors](https://img.shields.io/github/contributors/raysan5/raylib)](https://github.com/raysan5/raylib/graphs/contributors)
 [![GitHub All Releases](https://img.shields.io/github/downloads/raysan5/raylib/total)](https://github.com/raysan5/raylib/releases)
-[![GitHub commits since tagged version](https://img.shields.io/github/commits-since/raysan5/raylib/3.0.0)](https://github.com/raysan5/raylib/commits/master)
+[![GitHub commits since tagged version](https://img.shields.io/github/commits-since/raysan5/raylib/3.5.0)](https://github.com/raysan5/raylib/commits/master)
 [![License](https://img.shields.io/badge/license-zlib%2Flibpng-blue.svg)](LICENSE)
 
 [![Chat on Discord](https://img.shields.io/discord/426912293134270465.svg?logo=discord)](https://discord.gg/VkzNHUE)
@@ -20,7 +20,6 @@ Ready to learn? Jump to [code examples!](http://www.raylib.com/examples.html)
 [![Twitter Follow](https://img.shields.io/twitter/follow/raysan5?style=social)](https://twitter.com/raysan5)
 [![Subreddit subscribers](https://img.shields.io/reddit/subreddit-subscribers/raylib?style=social)](https://www.reddit.com/r/raylib/)
 
-[![Travis (.org)](https://img.shields.io/travis/raysan5/raylib?label=Linux,%20OSX,%20Windows)](https://travis-ci.org/raysan5/raylib)
 [![Windows](https://github.com/raysan5/raylib/workflows/Windows/badge.svg)](https://github.com/raysan5/raylib/actions?query=workflow%3AWindows)
 [![Linux](https://github.com/raysan5/raylib/workflows/Linux/badge.svg)](https://github.com/raysan5/raylib/actions?query=workflow%3ALinux)
 [![macOS](https://github.com/raysan5/raylib/workflows/macOS/badge.svg)](https://github.com/raysan5/raylib/actions?query=workflow%3AmacOS)
@@ -30,7 +29,7 @@ Ready to learn? Jump to [code examples!](http://www.raylib.com/examples.html)
 features
 --------
   - **NO external dependencies**, all required libraries are bundled into raylib
-  - Multiple platforms supported: **Windows, Linux, MacOS, Android, HTML5... and more!**
+  - Multiple platforms supported: **Windows, Linux, MacOS, RPI, Android, HTML5... and more!**
   - Written in plain C code (C99) in PascalCase/camelCase notation
   - Hardware accelerated with OpenGL (**1.1, 2.1, 3.3 or ES 2.0**)
   - **Unique OpenGL abstraction layer** (usable as standalone module): [rlgl](https://github.com/raysan5/raylib/blob/master/src/rlgl.h)
@@ -43,8 +42,8 @@ features
   - **Powerful math module** for Vector, Matrix and Quaternion operations: [raymath](https://github.com/raysan5/raylib/blob/master/src/raymath.h)
   - Audio loading and playing with streaming support (WAV, OGG, MP3, FLAC, XM, MOD)
   - **VR stereo rendering** support with configurable HMD device parameters
-  - Huge examples collection with [+115 code examples](https://github.com/raysan5/raylib/tree/master/examples)!
-  - Bindings to [+40 programming languages](https://github.com/raysan5/raylib/blob/master/BINDINGS.md)!
+  - Huge examples collection with [+120 code examples](https://github.com/raysan5/raylib/tree/master/examples)!
+  - Bindings to [+50 programming languages](https://github.com/raysan5/raylib/blob/master/BINDINGS.md)!
   - Free and open source.
 
 raylib uses on its [core](https://github.com/raysan5/raylib/blob/master/src/core.c) module the outstanding [GLFW3](http://www.glfw.org/) library, embedded in the form of [rglfw](https://github.com/raysan5/raylib/blob/master/src/rglfw.c) module, to avoid external dependencies.
@@ -55,7 +54,9 @@ raylib uses internally several single-file header-only libraries to support diff
 
 *On Android platform, `native_app_glue` module (provided by Android NDK) and native Android libraries are used to manage window/context, inputs and activity life cycle.*
 
-*On Raspberry Pi platform (native mode), `Videocore API` and `EGL` libraries are used for window/context management. Inputs are processed using `evdev` Linux libraries*
+*On Raspberry Pi 0,1,2,3 platform (native mode), `Videocore API` and `EGL` libraries are used for window/context management. Inputs are processed using `evdev` Linux libraries*
+
+*On Raspberry Pi 4 platform (native mode), `DRM subsystem` and `GBM API` libraries are used for window/context management. Inputs are processed using `evdev` Linux libraries*
 
 *On Web platform, raylib uses `emscripten` provided libraries for several input events management, specially noticeable the touch events support.*
 
@@ -77,6 +78,14 @@ You can download and install raylib using the [vcpkg](https://github.com/Microso
       vcpkg install raylib
 
 *The raylib port in vcpkg is kept up to date by Microsoft team members and community contributors. If the version is out of date, please [create an issue or pull request](https://github.com/Microsoft/vcpkg) on the vcpkg repository.*
+
+#### Installing and building raylib via conan
+
+You can download and install raylib using the [conan](https://conan.io) dependency manager:
+
+      https://docs.conan.io/en/latest/getting_started.html
+
+*The raylib recipe in conan is kept up to date by conan team members and community contributors. If the version is out of date, please [create an issue or pull request](https://github.com/conan-io/conan-center-index) on the conan-center-index repository.*
 
 #### Building raylib on multiple platforms
 

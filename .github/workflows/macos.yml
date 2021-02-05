@@ -19,7 +19,7 @@ jobs:
     
     - name: Setup Release Version
       run: |
-        echo "::set-env name=RELEASE_NAME::raylib-${{ github.event.release.tag_name }}_macos"
+        echo "RELEASE_NAME=raylib-${{ github.event.release.tag_name }}_macos" >> $GITHUB_ENV
       shell: bash
       if: github.event_name == 'release' && github.event.action == 'published'
 

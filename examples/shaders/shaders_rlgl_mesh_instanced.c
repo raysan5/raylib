@@ -4,23 +4,26 @@
 *
 *   This example uses [rlgl] module funtionality (pseudo-OpenGL 1.1 style coding)
 *
-*   This example has been created using raylib 3.0 (www.raylib.com)
+*   This example has been created using raylib 3.5 (www.raylib.com)
 *   raylib is licensed under an unmodified zlib/libpng license (View raylib.h for details)
 *
-*   Copyright (c) 2018 Ramon Santamaria (@raysan5)
+*   Example contributed by @seanpringle and reviewed by Ramon Santamaria (@raysan5)
+*
+*   Copyright (c) 2020 @seanpringle
 *
 ********************************************************************************************/
 
-#define GRAPHICS_API_OPENGL_33
-#define GLSL_VERSION 330
 
-#include <stdlib.h>
 #include "raylib.h"
 #include "raymath.h"
 #include "rlgl.h"
 
 #define RLIGHTS_IMPLEMENTATION
 #include "rlights.h"
+
+#include <stdlib.h>
+
+#define GLSL_VERSION 330
 
 //------------------------------------------------------------------------------------
 // Program main entry point
@@ -29,11 +32,11 @@ int main(void)
 {
     // Initialization
     //--------------------------------------------------------------------------------------
-    const int screenWidth = 1024;
-    const int screenHeight = 768;
+    const int screenWidth = 800;
+    const int screenHeight = 450;
 
     SetConfigFlags(FLAG_MSAA_4X_HINT);  // Enable Multi Sampling Anti Aliasing 4x (if available)
-    InitWindow(screenWidth, screenHeight, "raylib [shaders] example - rlgl module usage for instanced meshes");
+    InitWindow(screenWidth, screenHeight, "raylib [shaders] example - rlgl mesh instanced");
 
     // Define the camera to look into our 3d world
     Camera camera = { 0 };
@@ -43,14 +46,12 @@ int main(void)
     camera.fovy = 45.0f;
     camera.type = CAMERA_PERSPECTIVE;
 
-    SetCameraMode(camera, CAMERA_FREE);
-
     const int count = 10000;                                 // Number of instances to display 
     Mesh cube = GenMeshCube(1.0f, 1.0f, 1.0f);
 
-    Matrix* rotations = RL_MALLOC(count * sizeof(Matrix));    // Rotation state of instances
-    Matrix* rotationsInc = RL_MALLOC(count * sizeof(Matrix)); // Per-frame rotation animation of instances
-    Matrix* translations = RL_MALLOC(count * sizeof(Matrix)); // Locations of instances
+    Matrix *rotations = RL_MALLOC(count*sizeof(Matrix));    // Rotation state of instances
+    Matrix *rotationsInc = RL_MALLOC(count*sizeof(Matrix)); // Per-frame rotation animation of instances
+    Matrix *translations = RL_MALLOC(count*sizeof(Matrix)); // Locations of instances
 
     // Scatter random cubes around
     for (int i = 0; i < count; i++)
@@ -67,11 +68,10 @@ int main(void)
         float angle = (float)GetRandomValue(0, 10) * DEG2RAD;
 
         rotationsInc[i] = MatrixRotate(axis, angle);
-
         rotations[i] = MatrixIdentity();
     }
 
-    Matrix* transforms = RL_MALLOC(count * sizeof(Matrix));   // Pre-multiplied transformations passed to rlgl
+    Matrix *transforms = RL_MALLOC(count*sizeof(Matrix));   // Pre-multiplied transformations passed to rlgl
 
     Shader shader = LoadShader(FormatText("resources/shaders/glsl%i/base_lighting_instanced.vs", GLSL_VERSION), 
                                FormatText("resources/shaders/glsl%i/lighting.fs", GLSL_VERSION));
@@ -81,7 +81,7 @@ int main(void)
     shader.locs[LOC_VECTOR_VIEW] = GetShaderLocation(shader, "viewPos");
     shader.locs[LOC_MATRIX_MODEL] = GetShaderLocationAttrib(shader, "instance");
 
-    // ambient light level
+    // Ambient light level
     int ambientLoc = GetShaderLocation(shader, "ambient");
     SetShaderValue(shader, ambientLoc, (float[4]){ 0.2f, 0.2f, 0.2f, 1.0f }, UNIFORM_VEC4);
 
@@ -90,6 +90,8 @@ int main(void)
     Material material = LoadMaterialDefault();
     material.shader = shader;
     material.maps[MAP_DIFFUSE].color = RED;
+    
+    SetCameraMode(camera, CAMERA_FREE); // Set a free camera mode
 
     SetTargetFPS(60);                   // Set our game to run at 60 frames-per-second
     //--------------------------------------------------------------------------------------
@@ -111,7 +113,6 @@ int main(void)
             rotations[i] = MatrixMultiply(rotations[i], rotationsInc[i]);
             transforms[i] = MatrixMultiply(rotations[i], translations[i]);
         }
-
         //----------------------------------------------------------------------------------
 
         // Draw
@@ -124,7 +125,8 @@ int main(void)
                 rlDrawMeshInstanced(cube, material, transforms, count);
             EndMode3D();
 
-            DrawText("A CUBE OF DANCING CUBES!", 400, 10, 20, MAROON);
+            DrawText("A CUBE OF DANCING CUBES!", 490, 10, 20, MAROON);
+            
             DrawFPS(10, 10);
 
         EndDrawing();

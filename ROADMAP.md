@@ -9,7 +9,7 @@ Here it is a wish-list with features and ideas to improve the library. Note that
  - [ ] Network module (UDP): `rnet` ([info](https://github.com/raysan5/raylib/issues/753))
  - [ ] Custom raylib resource packer: `rres` ([info](https://github.com/raysan5/rres))
  - [ ] Basic CPU/GPU stats system (memory, draws, time...)
- - [ ] Continuous Deployment using GitHub Actions
+ - [x] Continuous Deployment using GitHub Actions
  
  **raylib 3.0**
  - [x] Custom memory allocators support

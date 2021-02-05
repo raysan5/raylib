@@ -14,7 +14,7 @@
 *
 *   LICENSE: zlib/libpng
 *
-*   Copyright (c) 2013-2020 Ramon Santamaria (@raysan5)
+*   Copyright (c) 2013-2021 Ramon Santamaria (@raysan5)
 *
 *   This software is provided "as-is", without any express or implied warranty. In no event
 *   will the authors be held liable for any damages arising from the use of this software.
@@ -176,6 +176,32 @@ void DrawLineBezier(Vector2 startPos, Vector2 endPos, float thick, Color color)
 
         DrawLineEx(previous, current, thick, color);
 
+        previous = current;
+    }
+}
+
+// Draw line using quadratic bezier curves with a control point
+void DrawLineBezierQuad(Vector2 startPos, Vector2 endPos, Vector2 controlPos, float thick, Color color)
+{
+    const float step = 1.0f/BEZIER_LINE_DIVISIONS;
+    
+    Vector2 previous = startPos;
+    Vector2 current = { 0 };
+    float t = 0.0f;
+    
+    for (int i = 0; i <= BEZIER_LINE_DIVISIONS; i++)
+    {
+        t = step*i;
+        float a = powf(1 - t, 2);
+        float b = 2*(1 - t)*t;
+        float c = powf(t, 2);
+        
+        // NOTE: The easing functions aren't suitable here because they don't take a control point
+        current.y = a*startPos.y + b*controlPos.y + c*endPos.y;
+        current.x = a*startPos.x + b*controlPos.x + c*endPos.x;
+        
+        DrawLineEx(previous,current,thick,color);
+        
         previous = current;
     }
 }
@@ -619,7 +645,7 @@ void DrawRectangleRec(Rectangle rec, Color color)
 void DrawRectanglePro(Rectangle rec, Vector2 origin, float rotation, Color color)
 {
     if (rlCheckBufferLimit(4)) rlglDraw();
-    
+
     rlEnableTexture(GetShapesTexture().id);
 
     rlPushMatrix();
@@ -1178,13 +1204,15 @@ void DrawRectangleRoundedLines(Rectangle rec, float roundness, int segments, int
                     angle += stepLength;
                 }
             }
+
             // And now the remaining 4 lines
-            for(int i = 0; i < 8; i += 2)
+            for (int i = 0; i < 8; i += 2)
             {
                 rlColor4ub(color.r, color.g, color.b, color.a);
                 rlVertex2f(point[i].x, point[i].y);
                 rlVertex2f(point[i + 1].x, point[i + 1].y);
             }
+
         rlEnd();
     }
 }
@@ -1469,10 +1497,34 @@ bool CheckCollisionCircleRec(Vector2 center, float radius, Rectangle rec)
     return (cornerDistanceSq <= (radius*radius));
 }
 
+// Check the collision between two lines defined by two points each, returns collision point by reference
+bool CheckCollisionLines(Vector2 startPos1, Vector2 endPos1, Vector2 startPos2, Vector2 endPos2, Vector2 *collisionPoint)
+{
+    const float div = (endPos2.y - startPos2.y)*(endPos1.x - startPos1.x) - (endPos2.x - startPos2.x)*(endPos1.y - startPos1.y);
+
+    if (div == 0.0f) return false;      // WARNING: This check could not work due to float precision rounding issues...
+
+    const float xi = ((startPos2.x - startPos2.x)*(startPos1.x*endPos1.y - startPos1.y*endPos1.x) - (startPos1.x - endPos1.x)*(startPos2.x*endPos2.y - startPos2.y*endPos2.x))/div;
+    const float yi = ((startPos2.y - endPos2.y)*(startPos1.x*endPos1.y - startPos1.y*endPos1.x) - (startPos1.y - endPos1.y)*(startPos2.x*endPos2.y - startPos2.y*endPos2.x))/div;
+
+    if (xi < fminf(startPos1.x, endPos1.x) || xi > fmaxf(startPos1.x, endPos1.x)) return false;
+    if (xi < fminf(startPos2.x, endPos2.x) || xi > fmaxf(startPos2.x, endPos2.x)) return false;
+    if (yi < fminf(startPos1.y, endPos1.y) || yi > fmaxf(startPos1.y, endPos1.y)) return false;
+    if (yi < fminf(startPos2.y, endPos2.y) || yi > fmaxf(startPos2.y, endPos2.y)) return false;
+
+    if (collisionPoint != 0)
+    {
+        collisionPoint->x = xi;
+        collisionPoint->y = yi;
+    }
+
+    return true;
+}
+
 // Get collision rectangle for two rectangles collision
 Rectangle GetCollisionRec(Rectangle rec1, Rectangle rec2)
 {
-    Rectangle retRec = { 0, 0, 0, 0 };
+    Rectangle rec = { 0, 0, 0, 0 };
 
     if (CheckCollisionRecs(rec1, rec2))
     {
@@ -1483,57 +1535,57 @@ Rectangle GetCollisionRec(Rectangle rec1, Rectangle rec2)
         {
             if (rec1.y <= rec2.y)
             {
-                retRec.x = rec2.x;
-                retRec.y = rec2.y;
-                retRec.width = rec1.width - dxx;
-                retRec.height = rec1.height - dyy;
+                rec.x = rec2.x;
+                rec.y = rec2.y;
+                rec.width = rec1.width - dxx;
+                rec.height = rec1.height - dyy;
             }
             else
             {
-                retRec.x = rec2.x;
-                retRec.y = rec1.y;
-                retRec.width = rec1.width - dxx;
-                retRec.height = rec2.height - dyy;
+                rec.x = rec2.x;
+                rec.y = rec1.y;
+                rec.width = rec1.width - dxx;
+                rec.height = rec2.height - dyy;
             }
         }
         else
         {
             if (rec1.y <= rec2.y)
             {
-                retRec.x = rec1.x;
-                retRec.y = rec2.y;
-                retRec.width = rec2.width - dxx;
-                retRec.height = rec1.height - dyy;
+                rec.x = rec1.x;
+                rec.y = rec2.y;
+                rec.width = rec2.width - dxx;
+                rec.height = rec1.height - dyy;
             }
             else
             {
-                retRec.x = rec1.x;
-                retRec.y = rec1.y;
-                retRec.width = rec2.width - dxx;
-                retRec.height = rec2.height - dyy;
+                rec.x = rec1.x;
+                rec.y = rec1.y;
+                rec.width = rec2.width - dxx;
+                rec.height = rec2.height - dyy;
             }
         }
 
         if (rec1.width > rec2.width)
         {
-            if (retRec.width >= rec2.width) retRec.width = rec2.width;
+            if (rec.width >= rec2.width) rec.width = rec2.width;
         }
         else
         {
-            if (retRec.width >= rec1.width) retRec.width = rec1.width;
+            if (rec.width >= rec1.width) rec.width = rec1.width;
         }
 
         if (rec1.height > rec2.height)
         {
-            if (retRec.height >= rec2.height) retRec.height = rec2.height;
+            if (rec.height >= rec2.height) rec.height = rec2.height;
         }
         else
         {
-           if (retRec.height >= rec1.height) retRec.height = rec1.height;
+           if (rec.height >= rec1.height) rec.height = rec1.height;
         }
     }
 
-    return retRec;
+    return rec;
 }
 
 //----------------------------------------------------------------------------------

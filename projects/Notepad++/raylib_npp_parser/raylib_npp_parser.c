@@ -67,8 +67,8 @@ int main(int argc, char *argv[])
                 char funcDesc[256];
                 
                 char params[128];
-                char paramType[8][16];
-                char paramName[8][32];
+                char paramType[16][16];
+                char paramName[16][32];
                 
                 int index = 0;
                 char *ptr = NULL;
