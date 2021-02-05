@@ -2602,7 +2602,11 @@ unsigned char *DecompressData(unsigned char *compData, int compDataLength, int *
     // Decompress data from a valid DEFLATE stream
     data = RL_CALLOC(MAX_DECOMPRESSION_SIZE*1024*1024, 1);
     int length = sinflate(data, compData, compDataLength);
-    RL_REALLOC(data, length);
+    unsigned char *temp = RL_REALLOC(data, length);
+    
+    if (temp != NULL) data = temp;
+    else TRACELOG(LOG_WARNING, "SYSTEM: Failed to re-allocate required decompression memory");
+    
     *dataLength = length;
 
     TraceLog(LOG_INFO, "SYSTEM: Data compressed: Original size: %i -> Comp. size: %i\n", dataLength, compDataLength);

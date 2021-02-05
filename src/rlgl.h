@@ -4800,7 +4800,7 @@ static int GenerateMipmaps(unsigned char *data, int baseWidth, int baseHeight)
     unsigned char *temp = RL_REALLOC(data, size);
 
     if (temp != NULL) data = temp;
-    else TRACELOG(LOG_WARNING, "TEXTURE: Failed to allocate required mipmaps memory");
+    else TRACELOG(LOG_WARNING, "TEXTURE: Failed to re-allocate required mipmaps memory");
 
     width = baseWidth;
     height = baseHeight;
