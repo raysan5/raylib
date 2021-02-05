@@ -491,6 +491,8 @@ void CloseAudioDevice(void)
         ma_context_uninit(&AUDIO.System.context);
 
         CloseAudioBufferPool();
+        
+        AUDIO.System.isReady = false;
 
         TRACELOG(LOG_INFO, "AUDIO: Device closed successfully");
     }
@@ -1924,7 +1926,7 @@ static void InitAudioBufferPool(void)
 // Close the audio buffers pool
 static void CloseAudioBufferPool(void)
 {
-    for (int i = 0; i < MAX_AUDIO_BUFFER_POOL_CHANNELS; i++) RL_FREE(AUDIO.MultiChannel.pool[i]);
+    for (int i = 0; i < MAX_AUDIO_BUFFER_POOL_CHANNELS; i++) UnloadAudioBuffer(AUDIO.MultiChannel.pool[i]);
 }
 
 #if defined(SUPPORT_FILEFORMAT_WAV)
