@@ -1429,6 +1429,12 @@ int GetScreenHeight(void)
     return CORE.Window.screen.height;
 }
 
+// Get width and height of the current rendering context (screen or texture)
+Vector2 GetCurrentFrameBuffertSize()
+{
+    return (Vector2) { (float)CORE.Window.currentFbo.width, (float)CORE.Window.currentFbo.height };
+}
+
 // Get native window handle
 void *GetWindowHandle(void)
 {
