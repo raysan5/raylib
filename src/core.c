@@ -3330,18 +3330,12 @@ static bool InitGraphicsDevice(int width, int height)
     }
 
 #if defined(PLATFORM_DESKTOP)
-    // NOTE: GLFW 3.4+ defers initialization of the Joystick subsystem on the
-    // first call to any Joystick related functions. Forcing this
-    // initialization here avoids doing it on `PollInputEvents` called by
-    // `EndDrawing` after first frame has been just drawn. The initialization
-    // will still happen and possible delays still occur, but before the window
-    // is shown, which is a nicer experience.
-    // Ref: https://github.com/raysan5/raylib/issues/1554
-    if (MAX_GAMEPADS > 0)
-    {
-        glfwSetJoystickCallback(NULL);
-    }
-#endif  // PLATFORM_DESKTOP
+    // NOTE: GLFW 3.4+ defers initialization of the Joystick subsystem on the first call to any Joystick related functions. 
+    // Forcing this initialization here avoids doing it on `PollInputEvents` called by `EndDrawing` after first frame has been just drawn.
+    // The initialization will still happen and possible delays still occur, but before the window is shown, which is a nicer experience.
+    // REF: https://github.com/raysan5/raylib/issues/1554
+    if (MAX_GAMEPADS > 0) glfwSetJoystickCallback(NULL);
+#endif
 
     if (CORE.Window.fullscreen)
     {
