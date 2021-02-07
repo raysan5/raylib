@@ -1528,7 +1528,7 @@ Vector2 GetMonitorPosition(int monitor)
     return (Vector2){ 0, 0 };
 }
 
-// Get selected monitor width
+// Get selected monitor width (max available by monitor)
 int GetMonitorWidth(int monitor)
 {
 #if defined(PLATFORM_DESKTOP)
@@ -1540,17 +1540,16 @@ int GetMonitorWidth(int monitor)
         int count = 0;
         const GLFWvidmode *modes = glfwGetVideoModes(monitors[monitor], &count);
     
-        if(count > 0)
-        {
-            return modes[count - 1].width;
-        } else TRACELOG(LOG_WARNING, "GLFW: Failed to find video mode for selected monitor");
+        // We return the maximum resolution available, the last one in the modes array
+        if (count > 0) return modes[count - 1].width;
+        else TRACELOG(LOG_WARNING, "GLFW: Failed to find video mode for selected monitor");
     }
     else TRACELOG(LOG_WARNING, "GLFW: Failed to find selected monitor");
 #endif
     return 0;
 }
 
-// Get selected monitor width
+// Get selected monitor width (max available by monitor)
 int GetMonitorHeight(int monitor)
 {
 #if defined(PLATFORM_DESKTOP)
@@ -1562,10 +1561,9 @@ int GetMonitorHeight(int monitor)
         int count = 0;
         const GLFWvidmode *modes = glfwGetVideoModes(monitors[monitor], &count);
         
-        if(count > 0)
-        {
-            return modes[count - 1].height;
-        } else TRACELOG(LOG_WARNING, "GLFW: Failed to find video mode for selected monitor");
+        // We return the maximum resolution available, the last one in the modes array
+        if (count > 0) return modes[count - 1].height;
+        else TRACELOG(LOG_WARNING, "GLFW: Failed to find video mode for selected monitor");
     }
     else TRACELOG(LOG_WARNING, "GLFW: Failed to find selected monitor");
 #endif

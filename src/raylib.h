@@ -921,8 +921,8 @@ RLAPI int GetScreenHeight(void);                                  // Get current
 RLAPI int GetMonitorCount(void);                                  // Get number of connected monitors
 RLAPI int GetCurrentMonitor(void);                                // Get current connected monitor
 RLAPI Vector2 GetMonitorPosition(int monitor);                    // Get specified monitor position
-RLAPI int GetMonitorWidth(int monitor);                           // Get specified monitor width
-RLAPI int GetMonitorHeight(int monitor);                          // Get specified monitor height
+RLAPI int GetMonitorWidth(int monitor);                           // Get specified monitor width (max available by monitor)
+RLAPI int GetMonitorHeight(int monitor);                          // Get specified monitor height (max available by monitor)
 RLAPI int GetMonitorPhysicalWidth(int monitor);                   // Get specified monitor physical width in millimetres
 RLAPI int GetMonitorPhysicalHeight(int monitor);                  // Get specified monitor physical height in millimetres
 RLAPI int GetMonitorRefreshRate(int monitor);                     // Get specified monitor refresh rate
