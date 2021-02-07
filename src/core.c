@@ -1041,7 +1041,7 @@ void ToggleFullscreen(void)
             glfwSetWindowMonitor(CORE.Window.handle, glfwGetPrimaryMonitor(), 0, 0, CORE.Window.screen.width, CORE.Window.screen.height, GLFW_DONT_CARE);
             return;
         }
-
+    
         const GLFWvidmode *mode = glfwGetVideoMode(monitor);
         glfwSetWindowMonitor(CORE.Window.handle, monitor, 0, 0, CORE.Window.screen.width, CORE.Window.screen.height, mode->refreshRate);
 
@@ -1537,8 +1537,13 @@ int GetMonitorWidth(int monitor)
 
     if ((monitor >= 0) && (monitor < monitorCount))
     {
-        const GLFWvidmode *mode = glfwGetVideoMode(monitors[monitor]);
-        return mode->width;
+        int count = 0;
+        const GLFWvidmode *modes = glfwGetVideoModes(monitors[monitor], &count);
+    
+        if(count > 0)
+        {
+            return modes[count - 1].width;
+        } else TRACELOG(LOG_WARNING, "GLFW: Failed to find video mode for selected monitor");
     }
     else TRACELOG(LOG_WARNING, "GLFW: Failed to find selected monitor");
 #endif
@@ -1554,8 +1559,13 @@ int GetMonitorHeight(int monitor)
 
     if ((monitor >= 0) && (monitor < monitorCount))
     {
-        const GLFWvidmode *mode = glfwGetVideoMode(monitors[monitor]);
-        return mode->height;
+        int count = 0;
+        const GLFWvidmode *modes = glfwGetVideoModes(monitors[monitor], &count);
+        
+        if(count > 0)
+        {
+            return modes[count - 1].height;
+        } else TRACELOG(LOG_WARNING, "GLFW: Failed to find video mode for selected monitor");
     }
     else TRACELOG(LOG_WARNING, "GLFW: Failed to find selected monitor");
 #endif
