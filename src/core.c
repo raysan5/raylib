@@ -1847,7 +1847,6 @@ void EndDrawing(void)
 #endif
 
     SwapBuffers();                  // Copy back buffer to front buffer
-    PollInputEvents();              // Poll user events
 
     // Frame time control system
     CORE.Time.current = GetTime();
@@ -1867,6 +1866,8 @@ void EndDrawing(void)
 
         CORE.Time.frame += waitTime;      // Total frame time: update + draw + wait
     }
+
+    PollInputEvents();              // Poll user events
 }
 
 // Initialize 2D mode with custom camera (2D)
