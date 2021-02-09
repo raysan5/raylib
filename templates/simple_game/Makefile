@@ -186,15 +186,12 @@ ifeq ($(PLATFORM),PLATFORM_WEB)
     CC = emcc
 endif
 
-# Define default make program: Mingw32-make
-MAKE = mingw32-make
+# Define default make program
+MAKE = make
 
 ifeq ($(PLATFORM),PLATFORM_DESKTOP)
-    ifeq ($(PLATFORM_OS),LINUX)
-        MAKE = make
-    endif
-    ifeq ($(PLATFORM_OS),OSX)
-        MAKE = make
+    ifeq ($(PLATFORM_OS),WINDOWS)
+        MAKE = mingw32-make
     endif
 endif
 
@@ -399,11 +396,9 @@ ifeq ($(PLATFORM),PLATFORM_ANDROID)
     MAKEFILE_PARAMS = -f Makefile.Android 
     # For Linux and macOS set make and makefile
     ifeq ($(PLATFORM_OS),LINUX)
-        MAKE = make
         MAKEFILE_PARAMS = -f Makefile.Android.linux
     endif
     ifeq ($(PLATFORM_OS),OSX)
-        MAKE = make
         MAKEFILE_PARAMS = -f Makefile.Android.macos
     endif
     export PROJECT_NAME
