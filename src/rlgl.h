@@ -7,7 +7,7 @@
 *
 *   When chosing an OpenGL version greater than OpenGL 1.1, rlgl stores vertex data on internal
 *   VBO buffers (and VAOs if available). It requires calling 3 functions:
-*       rlglInit()  - Initialize internal buffers and auxiliar resources
+*       rlglInit()  - Initialize internal buffers and auxiliary resources
 *       rlglDraw()  - Process internal buffers and send required draw calls
 *       rlglClose() - De-initialize internal buffers data and other auxiliar resources
 *
