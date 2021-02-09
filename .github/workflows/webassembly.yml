@@ -49,6 +49,8 @@ jobs:
     - name: Generate Artifacts
       run: |
         copy /Y .\src\raylib.h .\build\${{ env.RELEASE_NAME }}\include\raylib.h
+        copy /Y .\README.md .\build\${{ env.RELEASE_NAME }}\README.md
+        copy /Y .\LICENSE .\build\${{ env.RELEASE_NAME }}\LICENSE
         cd build
         7z a ./${{ env.RELEASE_NAME }}.zip ./${{ env.RELEASE_NAME }}
         dir
