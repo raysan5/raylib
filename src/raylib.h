@@ -872,6 +872,15 @@ typedef enum {
     NPT_3PATCH_HORIZONTAL   // Npatch defined by 3x1 tiles
 } NPatchType;
 
+// VR Output Transformations
+typedef enum {
+    VR_OUTPUT_ROTATE_90     = 0x00000001,   // Set to rotate the output stereo view by 90 degrees (clockwise)
+    VR_OUTPUT_ROTATE_180    = 0x00000002,   // Set to rotate the output stereo view by 180 degrees (clockwise)
+    VR_OUTPUT_ROTATE_270    = 0x00000003,   // Set to rotate the output stereo view by 270 degrees (clockwise)
+    VR_OUTPUT_FLIP_H        = 0x00000004,   // Set to horizontally flip the stereo view before applying all rotations
+    VR_OUTPUT_FLIP_V        = 0x00000008    // Set to vertically flip the stereo view before applying all rotations
+} VrOutputTransform;
+
 // Callbacks to be implemented by users
 typedef void (*TraceLogCallback)(int logType, const char *text, va_list args);
 typedef void *(*MemAllocCallback)(int size);
@@ -1446,6 +1455,7 @@ RLAPI void InitVrSimulator(void);                       // Init VR simulator for
 RLAPI void CloseVrSimulator(void);                      // Close VR simulator for current device
 RLAPI void UpdateVrTracking(Camera *camera);            // Update VR tracking (position and orientation) and camera
 RLAPI void SetVrConfiguration(VrDeviceInfo info, Shader distortion);      // Set stereo rendering configuration parameters
+RLAPI void SetVrOutputTransform(unsigned int transform);// Set the VR simulator output transform flags
 RLAPI bool IsVrSimulatorReady(void);                    // Detect if VR simulator is ready
 RLAPI void ToggleVrMode(void);                          // Enable/Disable VR experience
 RLAPI void BeginVrDrawing(void);                        // Begin VR simulator stereo rendering

@@ -618,6 +618,7 @@ RLAPI void InitVrSimulator(void);                       // Init VR simulator for
 RLAPI void CloseVrSimulator(void);                      // Close VR simulator for current device
 RLAPI void UpdateVrTracking(Camera *camera);            // Update VR tracking (position and orientation) and camera
 RLAPI void SetVrConfiguration(VrDeviceInfo info, Shader distortion);      // Set stereo rendering configuration parameters
+RLAPI void SetVrOutputTransform(unsigned int transform);// Set the VR simulator output transform flags
 RLAPI bool IsVrSimulatorReady(void);                    // Detect if VR simulator is ready
 RLAPI void ToggleVrMode(void);                          // Enable/Disable VR experience
 RLAPI void BeginVrDrawing(void);                        // Begin VR simulator stereo rendering
@@ -907,6 +908,7 @@ typedef struct rlglData {
         VrStereoConfig config;              // VR stereo configuration for simulator
         unsigned int stereoFboId;           // VR stereo rendering framebuffer id
         unsigned int stereoTexId;           // VR stereo color texture (attached to framebuffer)
+        unsigned int outputTransformFlags;  // VR stereo rendering output transform flags.
         bool simulatorReady;                // VR simulator ready flag
         bool stereoRender;                  // VR stereo rendering enabled/disabled flag
     } Vr;
@@ -3923,6 +3925,12 @@ void SetVrConfiguration(VrDeviceInfo hmd, Shader distortion)
 #endif
 }
 
+void SetVrOutputTransform(unsigned int transform) {
+#if defined(GRAPHICS_API_OPENGL_33) || defined(GRAPHICS_API_OPENGL_ES2)
+    RLGL.Vr.outputTransformFlags = transform;
+#endif
+}
+
 // Detect if VR simulator is running
 bool IsVrSimulatorReady(void)
 {
@@ -3997,25 +4005,41 @@ void EndVrDrawing(void)
 
         rlEnableTexture(RLGL.Vr.stereoTexId);
 
+        bool shouldFlipH = RLGL.Vr.outputTransformFlags & VR_OUTPUT_FLIP_H;
+        bool shouldFlipV = RLGL.Vr.outputTransformFlags & VR_OUTPUT_FLIP_V;
+
+        int point = RLGL.Vr.outputTransformFlags & 0b11; // Extract lower bits from transform flags
+
+        float uvPoints[][2] = {
+            { (float)(shouldFlipH ^ 0), (float)(shouldFlipV ^ 1) },
+            { (float)(shouldFlipH ^ 0), (float)(shouldFlipV ^ 0) },
+            { (float)(shouldFlipH ^ 1), (float)(shouldFlipV ^ 0) },
+            { (float)(shouldFlipH ^ 1), (float)(shouldFlipV ^ 1) }
+        };
+
         rlPushMatrix();
             rlBegin(RL_QUADS);
                 rlColor4ub(255, 255, 255, 255);
                 rlNormal3f(0.0f, 0.0f, 1.0f);
 
                 // Bottom-left corner for texture and quad
-                rlTexCoord2f(0.0f, 1.0f);
+                rlTexCoord2f(uvPoints[point][0], uvPoints[point][1]);
+                point = (point + 1) % 4;
                 rlVertex2f(0.0f, 0.0f);
 
                 // Bottom-right corner for texture and quad
-                rlTexCoord2f(0.0f, 0.0f);
+                rlTexCoord2f(uvPoints[point][0], uvPoints[point][1]);
+                point = (point + 1) % 4;
                 rlVertex2f(0.0f, (float)RLGL.State.framebufferHeight);
 
                 // Top-right corner for texture and quad
-                rlTexCoord2f(1.0f, 0.0f);
+                rlTexCoord2f(uvPoints[point][0], uvPoints[point][1]);
+                point = (point + 1) % 4;
                 rlVertex2f((float)RLGL.State.framebufferWidth, (float)RLGL.State.framebufferHeight);
 
                 // Top-left corner for texture and quad
-                rlTexCoord2f(1.0f, 1.0f);
+                rlTexCoord2f(uvPoints[point][0], uvPoints[point][1]);
+                point = (point + 1) % 4;
                 rlVertex2f((float)RLGL.State.framebufferWidth, 0.0f);
             rlEnd();
         rlPopMatrix();
