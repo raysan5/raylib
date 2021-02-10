@@ -72,6 +72,8 @@ int main(void)
 
     SetCameraMode(camera, CAMERA_FIRST_PERSON);         // Set first person camera mode
 
+    SetVrOutputTransform(VR_OUTPUT_ROTATE_NONE);        // Do not rotate the VR output
+
     SetTargetFPS(90);                   // Set our game to run at 90 frames-per-second
     //--------------------------------------------------------------------------------------
 
