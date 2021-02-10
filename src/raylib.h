@@ -874,6 +874,7 @@ typedef enum {
 
 // VR Output Transformations
 typedef enum {
+    VR_OUTPUT_ROTATE_NONE   = 0x00000000,   // Set to apply no rotation transform
     VR_OUTPUT_ROTATE_90     = 0x00000001,   // Set to rotate the output stereo view by 90 degrees (clockwise)
     VR_OUTPUT_ROTATE_180    = 0x00000002,   // Set to rotate the output stereo view by 180 degrees (clockwise)
     VR_OUTPUT_ROTATE_270    = 0x00000003,   // Set to rotate the output stereo view by 270 degrees (clockwise)

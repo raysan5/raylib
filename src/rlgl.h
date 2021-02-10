@@ -4005,41 +4005,44 @@ void EndVrDrawing(void)
 
         rlEnableTexture(RLGL.Vr.stereoTexId);
 
+        // Extract transform flags
         bool shouldFlipH = RLGL.Vr.outputTransformFlags & VR_OUTPUT_FLIP_H;
         bool shouldFlipV = RLGL.Vr.outputTransformFlags & VR_OUTPUT_FLIP_V;
 
-        int point = RLGL.Vr.outputTransformFlags & 0b11; // Extract lower bits from transform flags
-
+        // Declare four UV coordinates with vertical and horizontal flips according to the flags
         float uvPoints[][2] = {
-            { (float)(shouldFlipH ^ 0), (float)(shouldFlipV ^ 1) },
-            { (float)(shouldFlipH ^ 0), (float)(shouldFlipV ^ 0) },
-            { (float)(shouldFlipH ^ 1), (float)(shouldFlipV ^ 0) },
-            { (float)(shouldFlipH ^ 1), (float)(shouldFlipV ^ 1) }
+            { (float)(shouldFlipH ^ 0), (float)(shouldFlipV ^ 1) }, // Bottom-left corner for texture 
+            { (float)(shouldFlipH ^ 0), (float)(shouldFlipV ^ 0) }, // Bottom-right corner for texture
+            { (float)(shouldFlipH ^ 1), (float)(shouldFlipV ^ 0) }, // Top-right corner for texture
+            { (float)(shouldFlipH ^ 1), (float)(shouldFlipV ^ 1) }  // Top-left corner for texture
         };
+
+        int pointOffset = RLGL.Vr.outputTransformFlags & 0b11;      // Extract lower bits from transform flags
+        int point = 0;
 
         rlPushMatrix();
             rlBegin(RL_QUADS);
                 rlColor4ub(255, 255, 255, 255);
                 rlNormal3f(0.0f, 0.0f, 1.0f);
 
-                // Bottom-left corner for texture and quad
+                // Bottom-left corner for quad
+                point = (pointOffset + 0) % 4;
                 rlTexCoord2f(uvPoints[point][0], uvPoints[point][1]);
-                point = (point + 1) % 4;
                 rlVertex2f(0.0f, 0.0f);
 
-                // Bottom-right corner for texture and quad
+                // Bottom-right corner for quad
+                point = (pointOffset + 1) % 4;
                 rlTexCoord2f(uvPoints[point][0], uvPoints[point][1]);
-                point = (point + 1) % 4;
                 rlVertex2f(0.0f, (float)RLGL.State.framebufferHeight);
 
-                // Top-right corner for texture and quad
+                // Top-right corner for quad
+                point = (pointOffset + 2) % 4;
                 rlTexCoord2f(uvPoints[point][0], uvPoints[point][1]);
-                point = (point + 1) % 4;
                 rlVertex2f((float)RLGL.State.framebufferWidth, (float)RLGL.State.framebufferHeight);
 
-                // Top-left corner for texture and quad
+                // Top-left corner for quad
+                point = (pointOffset + 3) % 4;
                 rlTexCoord2f(uvPoints[point][0], uvPoints[point][1]);
-                point = (point + 1) % 4;
                 rlVertex2f((float)RLGL.State.framebufferWidth, 0.0f);
             rlEnd();
         rlPopMatrix();
