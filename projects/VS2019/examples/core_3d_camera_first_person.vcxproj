@@ -35,11 +35,11 @@
     </ProjectConfiguration>
   </ItemGroup>
   <PropertyGroup Label="Globals">
-    <ProjectGuid>{0981CA98-E4A5-4DF1-987F-A41D09131EFC}</ProjectGuid>
+    <ProjectGuid>{557138B0-7BE2-4392-B2E2-B45734031A62}</ProjectGuid>
     <Keyword>Win32Proj</Keyword>
-    <RootNamespace>core_basic_window</RootNamespace>
+    <RootNamespace>core_3d_camera_first_person</RootNamespace>
     <WindowsTargetPlatformVersion>10.0</WindowsTargetPlatformVersion>
-    <ProjectName>core_basic_window</ProjectName>
+    <ProjectName>core_3d_camera_first_person</ProjectName>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">
@@ -374,7 +374,7 @@
     </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="..\..\..\examples\core\core_basic_window.c" />
+    <ClCompile Include="..\..\..\examples\core\core_3d_camera_first_person.c" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\raylib\raylib.vcxproj">
