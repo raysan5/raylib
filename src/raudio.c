@@ -275,7 +275,8 @@ typedef struct tagBITMAPINFOHEADER {
 // NOTE: Depends on data structure provided by the library
 // in charge of reading the different file types
 typedef enum {
-    MUSIC_AUDIO_WAV = 0,
+    MUSIC_AUDIO_NONE = 0,
+    MUSIC_AUDIO_WAV,
     MUSIC_AUDIO_OGG,
     MUSIC_AUDIO_FLAC,
     MUSIC_AUDIO_MP3,
@@ -465,7 +466,7 @@ void InitAudioDevice(void)
         ma_context_uninit(&AUDIO.System.context);
         return;
     }
-    
+
     // Init dummy audio buffers pool for multichannel sound playing
     for (int i = 0; i < MAX_AUDIO_BUFFER_POOL_CHANNELS; i++)
     {
@@ -502,7 +503,7 @@ void CloseAudioDevice(void)
                 RL_FREE(AUDIO.MultiChannel.pool[i]);
             }
         }
-        
+
         ma_mutex_uninit(&AUDIO.System.lock);
         ma_device_uninit(&AUDIO.System.device);
         ma_context_uninit(&AUDIO.System.context);
@@ -1112,9 +1113,9 @@ float *LoadWaveSamples(Wave wave)
 
     for (unsigned int i = 0; i < wave.sampleCount; i++)
     {
-            if (wave.sampleSize == 8) samples[i] = (float)(((unsigned char *)wave.data)[i] - 127)/256.0f;
-            else if (wave.sampleSize == 16) samples[i] = (float)(((short *)wave.data)[i])/32767.0f;
-            else if (wave.sampleSize == 32) samples[i] = ((float *)wave.data)[i];
+        if (wave.sampleSize == 8) samples[i] = (float)(((unsigned char *)wave.data)[i] - 127)/256.0f;
+        else if (wave.sampleSize == 16) samples[i] = (float)(((short *)wave.data)[i])/32767.0f;
+        else if (wave.sampleSize == 32) samples[i] = ((float *)wave.data)[i];
     }
 
     return samples;
