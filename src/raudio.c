@@ -492,7 +492,7 @@ void CloseAudioDevice(void)
     {
         // Unload dummy audio buffers pool
         // WARNING: They can be pointing to already unloaded data
-        for (int i = 0; i < MAX_AUDIO_BUFFER_POOL_CHANNELS; i++) 
+        for (int i = 0; i < MAX_AUDIO_BUFFER_POOL_CHANNELS; i++)
         {
             //UnloadAudioBuffer(AUDIO.MultiChannel.pool[i]);
             if (AUDIO.MultiChannel.pool[i] != NULL)
@@ -1141,14 +1141,14 @@ Music LoadMusicStream(const char *fileName)
 #if defined(SUPPORT_FILEFORMAT_WAV)
     else if (IsFileExtension(fileName, ".wav"))
     {
-        drwav *ctxWav = RL_MALLOC(sizeof(drwav));
+        drwav *ctxWav = RL_CALLOC(1, sizeof(drwav));
         bool success = drwav_init_file(ctxWav, fileName, NULL);
+
+        music.ctxType = MUSIC_AUDIO_WAV;
+        music.ctxData = ctxWav;
 
         if (success)
         {
-            music.ctxType = MUSIC_AUDIO_WAV;
-            music.ctxData = ctxWav;
-
             int sampleSize = ctxWav->bitsPerSample;
             if (ctxWav->bitsPerSample == 24) sampleSize = 16;   // Forcing conversion to s16 on UpdateMusicStream()
 
@@ -1163,11 +1163,11 @@ Music LoadMusicStream(const char *fileName)
     else if (IsFileExtension(fileName, ".ogg"))
     {
         // Open ogg audio stream
+        music.ctxType = MUSIC_AUDIO_OGG;
         music.ctxData = stb_vorbis_open_filename(fileName, NULL, NULL);
 
         if (music.ctxData != NULL)
         {
-            music.ctxType = MUSIC_AUDIO_OGG;
             stb_vorbis_info info = stb_vorbis_get_info((stb_vorbis *)music.ctxData);  // Get Ogg file info
 
             // OGG bit rate defaults to 16 bit, it's enough for compressed format
@@ -1183,11 +1183,11 @@ Music LoadMusicStream(const char *fileName)
 #if defined(SUPPORT_FILEFORMAT_FLAC)
     else if (IsFileExtension(fileName, ".flac"))
     {
+        music.ctxType = MUSIC_AUDIO_FLAC;
         music.ctxData = drflac_open_file(fileName, NULL);
 
         if (music.ctxData != NULL)
         {
-            music.ctxType = MUSIC_AUDIO_FLAC;
             drflac *ctxFlac = (drflac *)music.ctxData;
 
             music.stream = InitAudioStream(ctxFlac->sampleRate, ctxFlac->bitsPerSample, ctxFlac->channels);
@@ -1200,15 +1200,14 @@ Music LoadMusicStream(const char *fileName)
 #if defined(SUPPORT_FILEFORMAT_MP3)
     else if (IsFileExtension(fileName, ".mp3"))
     {
-        drmp3 *ctxMp3 = RL_MALLOC(sizeof(drmp3));
-        music.ctxData = ctxMp3;
-
+        drmp3 *ctxMp3 = RL_CALLOC(1, sizeof(drmp3));
         int result = drmp3_init_file(ctxMp3, fileName, NULL);
+
+        music.ctxType = MUSIC_AUDIO_MP3;
+        music.ctxData = ctxMp3;
 
         if (result > 0)
         {
-            music.ctxType = MUSIC_AUDIO_MP3;
-
             music.stream = InitAudioStream(ctxMp3->sampleRate, 32, ctxMp3->channels);
             music.sampleCount = (unsigned int)drmp3_get_pcm_frame_count(ctxMp3)*ctxMp3->channels;
             music.looping = true;   // Looping enabled by default
@@ -1220,12 +1219,13 @@ Music LoadMusicStream(const char *fileName)
     else if (IsFileExtension(fileName, ".xm"))
     {
         jar_xm_context_t *ctxXm = NULL;
-
         int result = jar_xm_create_context_from_file(&ctxXm, 48000, fileName);
+
+        music.ctxType = MUSIC_MODULE_XM;
+        music.ctxData = ctxXm;
 
         if (result == 0)    // XM AUDIO.System.context created successfully
         {
-            music.ctxType = MUSIC_MODULE_XM;
             jar_xm_set_max_loop_count(ctxXm, 0);    // Set infinite number of loops
 
             // NOTE: Only stereo is supported for XM
@@ -1234,30 +1234,26 @@ Music LoadMusicStream(const char *fileName)
             music.looping = true;   // Looping enabled by default
             jar_xm_reset(ctxXm);   // make sure we start at the beginning of the song
             musicLoaded = true;
-
-            music.ctxData = ctxXm;
         }
     }
 #endif
 #if defined(SUPPORT_FILEFORMAT_MOD)
     else if (IsFileExtension(fileName, ".mod"))
     {
-        jar_mod_context_t *ctxMod = RL_MALLOC(sizeof(jar_mod_context_t));
-
+        jar_mod_context_t *ctxMod = RL_CALLOC(1, sizeof(jar_mod_context_t));
         jar_mod_init(ctxMod);
         int result = jar_mod_load_file(ctxMod, fileName);
 
+        music.ctxType = MUSIC_MODULE_MOD;
+        music.ctxData = ctxMod;
+
         if (result > 0)
         {
-            music.ctxType = MUSIC_MODULE_MOD;
-
             // NOTE: Only stereo is supported for MOD
             music.stream = InitAudioStream(48000, 16, 2);
             music.sampleCount = (unsigned int)jar_mod_max_samples(ctxMod)*2;    // 2 channels
             music.looping = true;   // Looping enabled by default
             musicLoaded = true;
-
-            music.ctxData = ctxMod;
         }
     }
 #endif
@@ -1285,6 +1281,7 @@ Music LoadMusicStream(const char *fileName)
         else if (music.ctxType == MUSIC_MODULE_MOD) { jar_mod_unload((jar_mod_context_t *)music.ctxData); RL_FREE(music.ctxData); }
     #endif
 
+        music.ctxData = NULL;
         TRACELOG(LOG_WARNING, "FILEIO: [%s] Music file could not be opened", fileName);
     }
     else
@@ -1305,25 +1302,28 @@ void UnloadMusicStream(Music music)
 {
     CloseAudioStream(music.stream);
 
-    if (false) { }
+    if (music.ctxData != NULL)
+    {
+        if (false) { }
 #if defined(SUPPORT_FILEFORMAT_WAV)
-    else if (music.ctxType == MUSIC_AUDIO_WAV) drwav_uninit((drwav *)music.ctxData);
+        else if (music.ctxType == MUSIC_AUDIO_WAV) drwav_uninit((drwav *)music.ctxData);
 #endif
 #if defined(SUPPORT_FILEFORMAT_OGG)
-    else if (music.ctxType == MUSIC_AUDIO_OGG) stb_vorbis_close((stb_vorbis *)music.ctxData);
+        else if (music.ctxType == MUSIC_AUDIO_OGG) stb_vorbis_close((stb_vorbis *)music.ctxData);
 #endif
 #if defined(SUPPORT_FILEFORMAT_FLAC)
-    else if (music.ctxType == MUSIC_AUDIO_FLAC) drflac_free((drflac *)music.ctxData, NULL);
+        else if (music.ctxType == MUSIC_AUDIO_FLAC) drflac_free((drflac *)music.ctxData, NULL);
 #endif
 #if defined(SUPPORT_FILEFORMAT_MP3)
     else if (music.ctxType == MUSIC_AUDIO_MP3) { drmp3_uninit((drmp3 *)music.ctxData); RL_FREE(music.ctxData); }
 #endif
 #if defined(SUPPORT_FILEFORMAT_XM)
-    else if (music.ctxType == MUSIC_MODULE_XM) jar_xm_free_context((jar_xm_context_t *)music.ctxData);
+        else if (music.ctxType == MUSIC_MODULE_XM) jar_xm_free_context((jar_xm_context_t *)music.ctxData);
 #endif
 #if defined(SUPPORT_FILEFORMAT_MOD)
-    else if (music.ctxType == MUSIC_MODULE_MOD) { jar_mod_unload((jar_mod_context_t *)music.ctxData); RL_FREE(music.ctxData); }
+        else if (music.ctxType == MUSIC_MODULE_MOD) { jar_mod_unload((jar_mod_context_t *)music.ctxData); RL_FREE(music.ctxData); }
 #endif
+    }
 }
 
 // Start music playing (open stream)
