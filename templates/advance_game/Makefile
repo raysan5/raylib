@@ -185,6 +185,9 @@ ifeq ($(PLATFORM),PLATFORM_DESKTOP)
         MAKE = mingw32-make
     endif
 endif
+ifeq ($(PLATFORM),PLATFORM_ANDROID)
+    MAKE = mingw32-make
+endif
 
 # Define compiler flags:
 #  -O1                  defines optimization level
