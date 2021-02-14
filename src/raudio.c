@@ -367,9 +367,6 @@ static void OnLog(ma_context *pContext, ma_device *pDevice, ma_uint32 logLevel, 
 static void OnSendAudioDataToDevice(ma_device *pDevice, void *pFramesOut, const void *pFramesInput, ma_uint32 frameCount);
 static void MixAudioFrames(float *framesOut, const float *framesIn, ma_uint32 frameCount, float localVolume);
 
-static void InitAudioBufferPool(void);                  // Initialise the multichannel buffer pool
-static void CloseAudioBufferPool(void);                 // Close the audio buffers pool
-
 #if defined(SUPPORT_FILEFORMAT_WAV)
 static Wave LoadWAV(const unsigned char *fileData, unsigned int fileSize);   // Load WAV file
 static int SaveWAV(Wave wave, const char *fileName);    // Save wave data as WAV file
@@ -423,7 +420,7 @@ void InitAudioDevice(void)
     ma_result result = ma_context_init(NULL, 0, &ctxConfig, &AUDIO.System.context);
     if (result != MA_SUCCESS)
     {
-        TRACELOG(LOG_ERROR, "AUDIO: Failed to initialize context");
+        TRACELOG(LOG_WARNING, "AUDIO: Failed to initialize context");
         return;
     }
 
@@ -443,7 +440,7 @@ void InitAudioDevice(void)
     result = ma_device_init(&AUDIO.System.context, &config, &AUDIO.System.device);
     if (result != MA_SUCCESS)
     {
-        TRACELOG(LOG_ERROR, "AUDIO: Failed to initialize playback device");
+        TRACELOG(LOG_WARNING, "AUDIO: Failed to initialize playback device");
         ma_context_uninit(&AUDIO.System.context);
         return;
     }
@@ -453,7 +450,7 @@ void InitAudioDevice(void)
     result = ma_device_start(&AUDIO.System.device);
     if (result != MA_SUCCESS)
     {
-        TRACELOG(LOG_ERROR, "AUDIO: Failed to start playback device");
+        TRACELOG(LOG_WARNING, "AUDIO: Failed to start playback device");
         ma_device_uninit(&AUDIO.System.device);
         ma_context_uninit(&AUDIO.System.context);
         return;
@@ -463,10 +460,18 @@ void InitAudioDevice(void)
     // want to look at something a bit smarter later on to keep everything real-time, if that's necessary.
     if (ma_mutex_init(&AUDIO.System.lock) != MA_SUCCESS)
     {
-        TRACELOG(LOG_ERROR, "AUDIO: Failed to create mutex for mixing");
+        TRACELOG(LOG_WARNING, "AUDIO: Failed to create mutex for mixing");
         ma_device_uninit(&AUDIO.System.device);
         ma_context_uninit(&AUDIO.System.context);
         return;
+    }
+    
+    // Init dummy audio buffers pool for multichannel sound playing
+    for (int i = 0; i < MAX_AUDIO_BUFFER_POOL_CHANNELS; i++)
+    {
+        // WARNING: An empty audioBuffer is created (data = 0)
+        // AudioBuffer data just points to loaded sound data
+        AUDIO.MultiChannel.pool[i] = LoadAudioBuffer(AUDIO_DEVICE_FORMAT, AUDIO_DEVICE_CHANNELS, AUDIO_DEVICE_SAMPLE_RATE, 0, AUDIO_BUFFER_USAGE_STATIC);
     }
 
     TRACELOG(LOG_INFO, "AUDIO: Device initialized successfully");
@@ -476,8 +481,6 @@ void InitAudioDevice(void)
     TRACELOG(LOG_INFO, "    > Sample rate:   %d -> %d", AUDIO.System.device.sampleRate, AUDIO.System.device.playback.internalSampleRate);
     TRACELOG(LOG_INFO, "    > Periods size:  %d", AUDIO.System.device.playback.internalPeriodSizeInFrames*AUDIO.System.device.playback.internalPeriods);
 
-    InitAudioBufferPool();
-
     AUDIO.System.isReady = true;
 }
 
@@ -486,11 +489,25 @@ void CloseAudioDevice(void)
 {
     if (AUDIO.System.isReady)
     {
+        // Unload dummy audio buffers pool
+        // WARNING: They can be pointing to already unloaded data
+        for (int i = 0; i < MAX_AUDIO_BUFFER_POOL_CHANNELS; i++) 
+        {
+            //UnloadAudioBuffer(AUDIO.MultiChannel.pool[i]);
+            if (AUDIO.MultiChannel.pool[i] != NULL)
+            {
+                ma_data_converter_uninit(&AUDIO.MultiChannel.pool[i]->converter);
+                UntrackAudioBuffer(AUDIO.MultiChannel.pool[i]);
+                //RL_FREE(buffer->data);    // Already unloaded by UnloadSound()
+                RL_FREE(AUDIO.MultiChannel.pool[i]);
+            }
+        }
+        
         ma_mutex_uninit(&AUDIO.System.lock);
         ma_device_uninit(&AUDIO.System.device);
         ma_context_uninit(&AUDIO.System.context);
 
-        CloseAudioBufferPool();
+        AUDIO.System.isReady = false;
 
         TRACELOG(LOG_INFO, "AUDIO: Device closed successfully");
     }
@@ -520,7 +537,7 @@ AudioBuffer *LoadAudioBuffer(ma_format format, ma_uint32 channels, ma_uint32 sam
 
     if (audioBuffer == NULL)
     {
-        TRACELOG(LOG_ERROR, "AUDIO: Failed to allocate memory for buffer");
+        TRACELOG(LOG_WARNING, "AUDIO: Failed to allocate memory for buffer");
         return NULL;
     }
 
@@ -534,7 +551,7 @@ AudioBuffer *LoadAudioBuffer(ma_format format, ma_uint32 channels, ma_uint32 sam
 
     if (result != MA_SUCCESS)
     {
-        TRACELOG(LOG_ERROR, "AUDIO: Failed to create data conversion pipeline");
+        TRACELOG(LOG_WARNING, "AUDIO: Failed to create data conversion pipeline");
         RL_FREE(audioBuffer);
         return NULL;
     }
@@ -1673,7 +1690,7 @@ static void OnLog(ma_context *pContext, ma_device *pDevice, ma_uint32 logLevel, 
     (void)pContext;
     (void)pDevice;
 
-    TRACELOG(LOG_ERROR, "miniaudio: %s", message);   // All log messages from miniaudio are errors
+    TRACELOG(LOG_WARNING, "miniaudio: %s", message);   // All log messages from miniaudio are errors
 }
 
 // Reads audio data from an AudioBuffer object in internal format.
@@ -1905,26 +1922,6 @@ static void MixAudioFrames(float *framesOut, const float *framesIn, ma_uint32 fr
             frameOut[iChannel] += (frameIn[iChannel]*localVolume);
         }
     }
-}
-
-// Initialise the multichannel buffer pool
-static void InitAudioBufferPool(void)
-{
-    // Dummy buffers
-    for (int i = 0; i < MAX_AUDIO_BUFFER_POOL_CHANNELS; i++)
-    {
-        // WARNING: An empty audioBuffer is created (data = 0)
-        AUDIO.MultiChannel.pool[i] = LoadAudioBuffer(AUDIO_DEVICE_FORMAT, AUDIO_DEVICE_CHANNELS, AUDIO_DEVICE_SAMPLE_RATE, 0, AUDIO_BUFFER_USAGE_STATIC);
-    }
-
-    // TODO: Verification required for log
-    TRACELOG(LOG_INFO, "AUDIO: Multichannel pool size: %i", MAX_AUDIO_BUFFER_POOL_CHANNELS);
-}
-
-// Close the audio buffers pool
-static void CloseAudioBufferPool(void)
-{
-    for (int i = 0; i < MAX_AUDIO_BUFFER_POOL_CHANNELS; i++) RL_FREE(AUDIO.MultiChannel.pool[i]);
 }
 
 #if defined(SUPPORT_FILEFORMAT_WAV)

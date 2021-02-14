@@ -97,12 +97,6 @@ void SetTraceLogLevel(int logType)
     logTypeLevel = logType;
 }
 
-// Set the exit threshold (minimum) log level
-void SetTraceLogExit(int logType)
-{
-    logTypeExit = logType;
-}
-
 // Set a trace log callback to enable custom logging
 void SetTraceLogCallback(TraceLogCallback callback)
 {

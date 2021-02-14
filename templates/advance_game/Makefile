@@ -177,16 +177,16 @@ ifeq ($(PLATFORM),PLATFORM_WEB)
     CC = emcc
 endif
 
-# Define default make program: Mingw32-make
-MAKE = mingw32-make
+# Define default make program
+MAKE = make
 
 ifeq ($(PLATFORM),PLATFORM_DESKTOP)
-    ifeq ($(PLATFORM_OS),LINUX)
-        MAKE = make
+    ifeq ($(PLATFORM_OS),WINDOWS)
+        MAKE = mingw32-make
     endif
-    ifeq ($(PLATFORM_OS),OSX)
-        MAKE = make
-    endif
+endif
+ifeq ($(PLATFORM),PLATFORM_ANDROID)
+    MAKE = mingw32-make
 endif
 
 # Define compiler flags:

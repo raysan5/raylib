@@ -874,6 +874,11 @@ typedef enum {
 
 // Callbacks to be implemented by users
 typedef void (*TraceLogCallback)(int logType, const char *text, va_list args);
+typedef void *(*MemAllocCallback)(int size);
+typedef void *(*MemReallocCallback)(int size);
+typedef void (*MemFreeCallback)(void *ptr);
+typedef unsigned char* (*LoadFileDataCallback)(const char* fileName, unsigned int* bytesRead);       // Load file data as byte array (read)
+typedef char* (*LoadFileTextCallback)(const char* fileName);                                        // Load text data from file (read), returns a '\0' terminated string
 
 #if defined(__cplusplus)
 extern "C" {            // Prevents name mangling of functions
@@ -918,8 +923,8 @@ RLAPI int GetScreenHeight(void);                                  // Get current
 RLAPI int GetMonitorCount(void);                                  // Get number of connected monitors
 RLAPI int GetCurrentMonitor(void);                                // Get current connected monitor
 RLAPI Vector2 GetMonitorPosition(int monitor);                    // Get specified monitor position
-RLAPI int GetMonitorWidth(int monitor);                           // Get specified monitor width
-RLAPI int GetMonitorHeight(int monitor);                          // Get specified monitor height
+RLAPI int GetMonitorWidth(int monitor);                           // Get specified monitor width (max available by monitor)
+RLAPI int GetMonitorHeight(int monitor);                          // Get specified monitor height (max available by monitor)
 RLAPI int GetMonitorPhysicalWidth(int monitor);                   // Get specified monitor physical width in millimetres
 RLAPI int GetMonitorPhysicalHeight(int monitor);                  // Get specified monitor physical height in millimetres
 RLAPI int GetMonitorRefreshRate(int monitor);                     // Get specified monitor refresh rate
@@ -966,17 +971,22 @@ RLAPI float GetFrameTime(void);                                   // Returns tim
 RLAPI double GetTime(void);                                       // Returns elapsed time in seconds since InitWindow()
 
 // Misc. functions
+RLAPI int GetRandomValue(int min, int max);                       // Returns a random value between min and max (both included)
+RLAPI void TakeScreenshot(const char *fileName);                  // Takes a screenshot of current screen (filename extension defines format)
 RLAPI void SetConfigFlags(unsigned int flags);                    // Setup init configuration flags (view FLAGS)
 
-RLAPI void SetTraceLogLevel(int logType);                         // Set the current threshold (minimum) log level
-RLAPI void SetTraceLogExit(int logType);                          // Set the exit threshold (minimum) log level
-RLAPI void SetTraceLogCallback(TraceLogCallback callback);        // Set a trace log callback to enable custom logging
 RLAPI void TraceLog(int logType, const char *text, ...);          // Show trace log messages (LOG_DEBUG, LOG_INFO, LOG_WARNING, LOG_ERROR)
-
+RLAPI void SetTraceLogLevel(int logType);                         // Set the current threshold (minimum) log level
 RLAPI void *MemAlloc(int size);                                   // Internal memory allocator
 RLAPI void MemFree(void *ptr);                                    // Internal memory free
-RLAPI void TakeScreenshot(const char *fileName);                  // Takes a screenshot of current screen (saved a .png)
-RLAPI int GetRandomValue(int min, int max);                       // Returns a random value between min and max (both included)
+
+// Set system callbacks
+RLAPI void SetTraceLogCallback(TraceLogCallback callback);        // Set a trace log callback to enable custom logging
+RLAPI void SetMemAllocCallback(MemAllocCallback callback);        // Set custom memory allocator
+RLAPI void SetMemReallocCallback(MemReallocCallback callback);    // Set custom memory reallocator
+RLAPI void SetMemFreeCallback(MemFreeCallback callback);          // Set custom memory free
+RLAPI void SetLoadFileDataCallback(LoadFileDataCallback callback);  // override default file access functions
+RLAPI void SetLoadFileTextCallback(LoadFileDataCallback callback);  // override default file access functions
 
 // Files management functions
 RLAPI unsigned char *LoadFileData(const char *fileName, unsigned int *bytesRead);     // Load file data as byte array (read)
@@ -1372,7 +1382,6 @@ RLAPI Mesh GenMeshCubicmap(Image cubicmap, Vector3 cubeSize);                   
 RLAPI BoundingBox MeshBoundingBox(Mesh mesh);                                                           // Compute mesh bounding box limits
 RLAPI void MeshTangents(Mesh *mesh);                                                                    // Compute mesh tangents
 RLAPI void MeshBinormals(Mesh *mesh);                                                                   // Compute mesh binormals
-RLAPI void MeshNormalsSmooth(Mesh *mesh);                                                               // Smooth (average) vertex normals
 
 // Model drawing functions
 RLAPI void DrawModel(Model model, Vector3 position, float scale, Color tint);                           // Draw a model (with texture if set)

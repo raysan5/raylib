@@ -120,8 +120,6 @@
 //----------------------------------------------------------------------------------
 #if defined(__STDC__) && __STDC_VERSION__ >= 199901L
     #include <stdbool.h>
-#elif !defined(__cplusplus) && !defined(bool)
-    typedef enum { false, true } bool;
 #endif
 
 typedef enum PhysicsShapeType { PHYSICS_CIRCLE = 0, PHYSICS_POLYGON } PhysicsShapeType;

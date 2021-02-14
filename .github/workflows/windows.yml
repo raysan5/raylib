@@ -29,11 +29,11 @@ jobs:
         - compiler: msvc16
           bits: 32
           ARCH: "x86"
-          VSBINPATH: "Win32" 
+          VSARCHPATH: "Win32" 
         - compiler: msvc16
           bits: 64
           ARCH: "x64" 
-          VSBINPATH: "x64"
+          VSARCHPATH: "x64"
 
     env:
       RELEASE_NAME: raylib-dev_win${{ matrix.bits }}_${{ matrix.compiler }}
@@ -80,12 +80,12 @@ jobs:
 
     - name: Build Library (MSVC16)
       run: |
-        cd projects/VS2017
+        cd projects/VS2019
         msbuild.exe raylib.sln /target:raylib /property:Configuration=Release /property:Platform=${{ matrix.ARCH }}
-        copy /Y .\bin\${{ matrix.VSBINPATH }}\Release\raylib.lib .\..\..\build\${{ env.RELEASE_NAME }}\lib\raylib.lib
+        copy /Y .\build\raylib\bin\${{ matrix.VSARCHPATH }}\Release\raylib.lib .\..\..\build\${{ env.RELEASE_NAME }}\lib\raylib.lib
         msbuild.exe raylib.sln /target:raylib /property:Configuration=Release.DLL /property:Platform=${{ matrix.ARCH }}
-        copy /Y .\bin\${{ matrix.VSBINPATH }}\Release.DLL\raylib.dll .\..\..\build\${{ env.RELEASE_NAME }}\lib\raylib.dll
-        copy /Y .\bin\${{ matrix.VSBINPATH }}\Release.DLL\raylib.lib .\..\..\build\${{ env.RELEASE_NAME }}\lib\raylibdll.lib
+        copy /Y .\build\raylib\bin\${{ matrix.VSARCHPATH }}\Release.DLL\raylib.dll .\..\..\build\${{ env.RELEASE_NAME }}\lib\raylib.dll
+        copy /Y .\build\raylib\bin\${{ matrix.VSARCHPATH }}\Release.DLL\raylib.lib .\..\..\build\${{ env.RELEASE_NAME }}\lib\raylibdll.lib
         cd ../..
       shell: cmd
       if: matrix.compiler == 'msvc16'
@@ -93,6 +93,8 @@ jobs:
     - name: Generate Artifacts
       run: |
         copy /Y .\src\raylib.h .\build\${{ env.RELEASE_NAME }}\include\raylib.h
+        copy /Y .\README.md .\build\${{ env.RELEASE_NAME }}\README.md
+        copy /Y .\LICENSE .\build\${{ env.RELEASE_NAME }}\LICENSE
         cd build
         7z a ./${{ env.RELEASE_NAME }}.zip ./${{ env.RELEASE_NAME }}
         dir

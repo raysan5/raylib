@@ -450,12 +450,10 @@ typedef struct CoreData {
         struct {
             int lastButtonPressed;          // Register last gamepad button pressed
             int axisCount;                  // Register number of available gamepad axis
-#if defined(PLATFORM_DESKTOP) || defined(PLATFORM_RPI) || defined(PLATFORM_DRM) || defined(PLATFORM_WEB) || defined(PLATFORM_UWP)
             bool ready[MAX_GAMEPADS];       // Flag to know if gamepad is ready
             float axisState[MAX_GAMEPADS][MAX_GAMEPAD_AXIS];        // Gamepad axis state
             char currentState[MAX_GAMEPADS][MAX_GAMEPAD_BUTTONS];   // Current gamepad buttons state
             char previousState[MAX_GAMEPADS][MAX_GAMEPAD_BUTTONS];  // Previous gamepad buttons state
-#endif
 #if defined(PLATFORM_RPI) || defined(PLATFORM_DRM)
             pthread_t threadId;             // Gamepad reading thread id
             int streamId[MAX_GAMEPADS];     // Gamepad device file descriptor
@@ -514,7 +512,6 @@ static void SwapBuffers(void);                          // Copy back buffer to f
 static void InitTimer(void);                            // Initialize timer
 static void Wait(float ms);                             // Wait for some milliseconds (stop program execution)
 
-static int GetGamepadButton(int button);                // Get gamepad button generic to all platforms
 static void PollInputEvents(void);                      // Register user events
 
 #if defined(PLATFORM_DESKTOP) || defined(PLATFORM_WEB)
@@ -1040,18 +1037,27 @@ void ToggleFullscreen(void)
         if (!monitor)
         {
             TRACELOG(LOG_WARNING, "GLFW: Failed to get monitor");
+            glfwSetWindowSizeCallback(CORE.Window.handle, NULL);
             glfwSetWindowMonitor(CORE.Window.handle, glfwGetPrimaryMonitor(), 0, 0, CORE.Window.screen.width, CORE.Window.screen.height, GLFW_DONT_CARE);
+            glfwSetWindowSizeCallback(CORE.Window.handle, WindowSizeCallback);
             return;
         }
-
+    
         const GLFWvidmode *mode = glfwGetVideoMode(monitor);
-        glfwSetWindowMonitor(CORE.Window.handle, monitor, 0, 0, CORE.Window.screen.width, CORE.Window.screen.height, mode->refreshRate);
+        glfwSetWindowSizeCallback(CORE.Window.handle, NULL);
+        glfwSetWindowMonitor(CORE.Window.handle, monitor, 0, 0, CORE.Window.screen.width, CORE.Window.screen.height, GLFW_DONT_CARE);
+        glfwSetWindowSizeCallback(CORE.Window.handle, WindowSizeCallback);
 
         // Try to enable GPU V-Sync, so frames are limited to screen refresh rate (60Hz -> 60 FPS)
         // NOTE: V-Sync can be enabled by graphic driver configuration
         if (CORE.Window.flags & FLAG_VSYNC_HINT) glfwSwapInterval(1);
     }
-    else glfwSetWindowMonitor(CORE.Window.handle, NULL, CORE.Window.position.x, CORE.Window.position.y, CORE.Window.screen.width, CORE.Window.screen.height, GLFW_DONT_CARE);
+    else
+    {
+        glfwSetWindowSizeCallback(CORE.Window.handle, NULL);
+        glfwSetWindowMonitor(CORE.Window.handle, NULL, CORE.Window.position.x, CORE.Window.position.y, CORE.Window.screen.width, CORE.Window.screen.height, GLFW_DONT_CARE);
+        glfwSetWindowSizeCallback(CORE.Window.handle, WindowSizeCallback);
+    }
 
     CORE.Window.fullscreen = !CORE.Window.fullscreen;          // Toggle fullscreen flag
     CORE.Window.flags ^= FLAG_FULLSCREEN_MODE;
@@ -1092,6 +1098,7 @@ void ToggleFullscreen(void)
     */
 
     CORE.Window.fullscreen = !CORE.Window.fullscreen;          // Toggle fullscreen flag
+    CORE.Window.flags ^= FLAG_FULLSCREEN_MODE;
 #endif
 #if defined(PLATFORM_ANDROID) || defined(PLATFORM_RPI) || defined(PLATFORM_DRM)
     TRACELOG(LOG_WARNING, "SYSTEM: Failed to toggle to windowed mode");
@@ -1530,7 +1537,7 @@ Vector2 GetMonitorPosition(int monitor)
     return (Vector2){ 0, 0 };
 }
 
-// Get selected monitor width
+// Get selected monitor width (max available by monitor)
 int GetMonitorWidth(int monitor)
 {
 #if defined(PLATFORM_DESKTOP)
@@ -1539,15 +1546,19 @@ int GetMonitorWidth(int monitor)
 
     if ((monitor >= 0) && (monitor < monitorCount))
     {
-        const GLFWvidmode *mode = glfwGetVideoMode(monitors[monitor]);
-        return mode->width;
+        int count = 0;
+        const GLFWvidmode *modes = glfwGetVideoModes(monitors[monitor], &count);
+    
+        // We return the maximum resolution available, the last one in the modes array
+        if (count > 0) return modes[count - 1].width;
+        else TRACELOG(LOG_WARNING, "GLFW: Failed to find video mode for selected monitor");
     }
     else TRACELOG(LOG_WARNING, "GLFW: Failed to find selected monitor");
 #endif
     return 0;
 }
 
-// Get selected monitor width
+// Get selected monitor width (max available by monitor)
 int GetMonitorHeight(int monitor)
 {
 #if defined(PLATFORM_DESKTOP)
@@ -1556,8 +1567,12 @@ int GetMonitorHeight(int monitor)
 
     if ((monitor >= 0) && (monitor < monitorCount))
     {
-        const GLFWvidmode *mode = glfwGetVideoMode(monitors[monitor]);
-        return mode->height;
+        int count = 0;
+        const GLFWvidmode *modes = glfwGetVideoModes(monitors[monitor], &count);
+        
+        // We return the maximum resolution available, the last one in the modes array
+        if (count > 0) return modes[count - 1].height;
+        else TRACELOG(LOG_WARNING, "GLFW: Failed to find video mode for selected monitor");
     }
     else TRACELOG(LOG_WARNING, "GLFW: Failed to find selected monitor");
 #endif
@@ -1832,7 +1847,6 @@ void EndDrawing(void)
 #endif
 
     SwapBuffers();                  // Copy back buffer to front buffer
-    PollInputEvents();              // Poll user events
 
     // Frame time control system
     CORE.Time.current = GetTime();
@@ -1852,6 +1866,8 @@ void EndDrawing(void)
 
         CORE.Time.frame += waitTime;      // Total frame time: update + draw + wait
     }
+
+    PollInputEvents();              // Poll user events
 }
 
 // Initialize 2D mode with custom camera (2D)
@@ -2596,19 +2612,23 @@ unsigned char *CompressData(unsigned char *data, int dataLength, int *compDataLe
 // Decompress data (DEFLATE algorythm)
 unsigned char *DecompressData(unsigned char *compData, int compDataLength, int *dataLength)
 {
-    char *data = NULL;
+    unsigned char *data = NULL;
 
 #if defined(SUPPORT_COMPRESSION_API)
     // Decompress data from a valid DEFLATE stream
     data = RL_CALLOC(MAX_DECOMPRESSION_SIZE*1024*1024, 1);
     int length = sinflate(data, compData, compDataLength);
-    RL_REALLOC(data, length);
+    unsigned char *temp = RL_REALLOC(data, length);
+    
+    if (temp != NULL) data = temp;
+    else TRACELOG(LOG_WARNING, "SYSTEM: Failed to re-allocate required decompression memory");
+    
     *dataLength = length;
 
     TraceLog(LOG_INFO, "SYSTEM: Data compressed: Original size: %i -> Comp. size: %i\n", dataLength, compDataLength);
 #endif
 
-    return (unsigned char *)data;
+    return data;
 }
 
 // Save integer value to storage file (to defined position)
@@ -3319,6 +3339,14 @@ static bool InitGraphicsDevice(int width, int height)
 #endif
     }
 
+#if defined(PLATFORM_DESKTOP)
+    // NOTE: GLFW 3.4+ defers initialization of the Joystick subsystem on the first call to any Joystick related functions. 
+    // Forcing this initialization here avoids doing it on `PollInputEvents` called by `EndDrawing` after first frame has been just drawn.
+    // The initialization will still happen and possible delays still occur, but before the window is shown, which is a nicer experience.
+    // REF: https://github.com/raysan5/raylib/issues/1554
+    if (MAX_GAMEPADS > 0) glfwSetJoystickCallback(NULL);
+#endif
+
     if (CORE.Window.fullscreen)
     {
         // remember center for switchinging from fullscreen to window
@@ -3843,7 +3871,7 @@ static bool InitGraphicsDevice(int width, int height)
     }
 
 #if defined(PLATFORM_DRM)
-    if (!eglGetConfigs(CORE.Window.device, NULL, 0, &numConfigs))
+    if (!eglChooseConfig(CORE.Window.device, NULL, NULL, 0, &numConfigs))
     {
         TRACELOG(LOG_WARNING, "DISPLAY: Failed to get EGL config count: 0x%x", eglGetError());
         return false;
@@ -3859,21 +3887,14 @@ static bool InitGraphicsDevice(int width, int height)
     }
 
     EGLint matchingNumConfigs = 0;
-    if (!eglGetConfigs(CORE.Window.device, configs, numConfigs, &matchingNumConfigs))
-    {
-        TRACELOG(LOG_WARNING, "DISPLAY: Failed to get EGL configs: 0x%x", eglGetError());
-        free(configs);
-        return false;
-    }
-
-    TRACELOG(LOG_TRACE, "DISPLAY: EGL matching configs available: %d", matchingNumConfigs);
-
     if (!eglChooseConfig(CORE.Window.device, framebufferAttribs, configs, numConfigs, &matchingNumConfigs))
     {
         TRACELOG(LOG_WARNING, "DISPLAY: Failed to choose EGL config: 0x%x", eglGetError());
         free(configs);
         return false;
     }
+
+    TRACELOG(LOG_TRACE, "DISPLAY: EGL matching configs available: %d", matchingNumConfigs);
 
     // find the EGL config that matches the previously setup GBM format
     int found = 0;
@@ -4232,66 +4253,6 @@ static void Wait(float ms)
 #endif
 }
 
-// Get gamepad button generic to all platforms
-static int GetGamepadButton(int button)
-{
-    int btn = -1;
-
-#if defined(PLATFORM_DESKTOP)
-    switch (button)
-    {
-        case GLFW_GAMEPAD_BUTTON_Y: btn = GAMEPAD_BUTTON_RIGHT_FACE_UP; break;
-        case GLFW_GAMEPAD_BUTTON_B: btn = GAMEPAD_BUTTON_RIGHT_FACE_RIGHT; break;
-        case GLFW_GAMEPAD_BUTTON_A: btn = GAMEPAD_BUTTON_RIGHT_FACE_DOWN; break;
-        case GLFW_GAMEPAD_BUTTON_X: btn = GAMEPAD_BUTTON_RIGHT_FACE_LEFT; break;
-
-        case GLFW_GAMEPAD_BUTTON_LEFT_BUMPER: btn = GAMEPAD_BUTTON_LEFT_TRIGGER_1; break;
-        case GLFW_GAMEPAD_BUTTON_RIGHT_BUMPER: btn = GAMEPAD_BUTTON_RIGHT_TRIGGER_1; break;
-
-        case GLFW_GAMEPAD_BUTTON_BACK: btn = GAMEPAD_BUTTON_MIDDLE_LEFT; break;
-        case GLFW_GAMEPAD_BUTTON_GUIDE: btn = GAMEPAD_BUTTON_MIDDLE; break;
-        case GLFW_GAMEPAD_BUTTON_START: btn = GAMEPAD_BUTTON_MIDDLE_RIGHT; break;
-
-        case GLFW_GAMEPAD_BUTTON_DPAD_UP: btn = GAMEPAD_BUTTON_LEFT_FACE_UP; break;
-        case GLFW_GAMEPAD_BUTTON_DPAD_RIGHT: btn = GAMEPAD_BUTTON_LEFT_FACE_RIGHT; break;
-        case GLFW_GAMEPAD_BUTTON_DPAD_DOWN: btn = GAMEPAD_BUTTON_LEFT_FACE_DOWN; break;
-        case GLFW_GAMEPAD_BUTTON_DPAD_LEFT: btn = GAMEPAD_BUTTON_LEFT_FACE_LEFT; break;
-
-        case GLFW_GAMEPAD_BUTTON_LEFT_THUMB: btn = GAMEPAD_BUTTON_LEFT_THUMB; break;
-        case GLFW_GAMEPAD_BUTTON_RIGHT_THUMB: btn = GAMEPAD_BUTTON_RIGHT_THUMB; break;
-    }
-#endif
-
-#if defined(PLATFORM_UWP)
-    btn = button;   // UWP will provide the correct button
-#endif
-
-#if defined(PLATFORM_WEB)
-    // Gamepad Buttons reference: https://www.w3.org/TR/gamepad/#gamepad-interface
-    switch (button)
-    {
-        case 0: btn = GAMEPAD_BUTTON_RIGHT_FACE_DOWN; break;
-        case 1: btn = GAMEPAD_BUTTON_RIGHT_FACE_RIGHT; break;
-        case 2: btn = GAMEPAD_BUTTON_RIGHT_FACE_LEFT; break;
-        case 3: btn = GAMEPAD_BUTTON_RIGHT_FACE_UP; break;
-        case 4: btn = GAMEPAD_BUTTON_LEFT_TRIGGER_1; break;
-        case 5: btn = GAMEPAD_BUTTON_RIGHT_TRIGGER_1; break;
-        case 6: btn = GAMEPAD_BUTTON_LEFT_TRIGGER_2; break;
-        case 7: btn = GAMEPAD_BUTTON_RIGHT_TRIGGER_2; break;
-        case 8: btn = GAMEPAD_BUTTON_MIDDLE_LEFT; break;
-        case 9: btn = GAMEPAD_BUTTON_MIDDLE_RIGHT; break;
-        case 10: btn = GAMEPAD_BUTTON_LEFT_THUMB; break;
-        case 11: btn = GAMEPAD_BUTTON_RIGHT_THUMB; break;
-        case 12: btn = GAMEPAD_BUTTON_LEFT_FACE_UP; break;
-        case 13: btn = GAMEPAD_BUTTON_LEFT_FACE_DOWN; break;
-        case 14: btn = GAMEPAD_BUTTON_LEFT_FACE_LEFT; break;
-        case 15: btn = GAMEPAD_BUTTON_LEFT_FACE_RIGHT; break;
-    }
-#endif
-
-    return btn;
-}
-
 // Poll (store) all input events
 static void PollInputEvents(void)
 {
@@ -4400,14 +4361,41 @@ static void PollInputEvents(void)
 
             for (int k = 0; (buttons != NULL) && (k < GLFW_GAMEPAD_BUTTON_DPAD_LEFT + 1) && (k < MAX_GAMEPAD_BUTTONS); k++)
             {
-                const GamepadButton button = GetGamepadButton(k);
-
-                if (buttons[k] == GLFW_PRESS)
+                GamepadButton button = -1; 
+                
+                switch (k)
                 {
-                    CORE.Input.Gamepad.currentState[i][button] = 1;
-                    CORE.Input.Gamepad.lastButtonPressed = button;
+                    case GLFW_GAMEPAD_BUTTON_Y: button = GAMEPAD_BUTTON_RIGHT_FACE_UP; break;
+                    case GLFW_GAMEPAD_BUTTON_B: button = GAMEPAD_BUTTON_RIGHT_FACE_RIGHT; break;
+                    case GLFW_GAMEPAD_BUTTON_A: button = GAMEPAD_BUTTON_RIGHT_FACE_DOWN; break;
+                    case GLFW_GAMEPAD_BUTTON_X: button = GAMEPAD_BUTTON_RIGHT_FACE_LEFT; break;
+
+                    case GLFW_GAMEPAD_BUTTON_LEFT_BUMPER: button = GAMEPAD_BUTTON_LEFT_TRIGGER_1; break;
+                    case GLFW_GAMEPAD_BUTTON_RIGHT_BUMPER: button = GAMEPAD_BUTTON_RIGHT_TRIGGER_1; break;
+
+                    case GLFW_GAMEPAD_BUTTON_BACK: button = GAMEPAD_BUTTON_MIDDLE_LEFT; break;
+                    case GLFW_GAMEPAD_BUTTON_GUIDE: button = GAMEPAD_BUTTON_MIDDLE; break;
+                    case GLFW_GAMEPAD_BUTTON_START: button = GAMEPAD_BUTTON_MIDDLE_RIGHT; break;
+
+                    case GLFW_GAMEPAD_BUTTON_DPAD_UP: button = GAMEPAD_BUTTON_LEFT_FACE_UP; break;
+                    case GLFW_GAMEPAD_BUTTON_DPAD_RIGHT: button = GAMEPAD_BUTTON_LEFT_FACE_RIGHT; break;
+                    case GLFW_GAMEPAD_BUTTON_DPAD_DOWN: button = GAMEPAD_BUTTON_LEFT_FACE_DOWN; break;
+                    case GLFW_GAMEPAD_BUTTON_DPAD_LEFT: button = GAMEPAD_BUTTON_LEFT_FACE_LEFT; break;
+
+                    case GLFW_GAMEPAD_BUTTON_LEFT_THUMB: button = GAMEPAD_BUTTON_LEFT_THUMB; break;
+                    case GLFW_GAMEPAD_BUTTON_RIGHT_THUMB: button = GAMEPAD_BUTTON_RIGHT_THUMB; break;
+                    default: break;
                 }
-                else CORE.Input.Gamepad.currentState[i][button] = 0;
+                
+                if (button != -1)   // Check for valid button
+                {
+                    if (buttons[k] == GLFW_PRESS)
+                    {
+                        CORE.Input.Gamepad.currentState[i][button] = 1;
+                        CORE.Input.Gamepad.lastButtonPressed = button;
+                    }
+                    else CORE.Input.Gamepad.currentState[i][button] = 0;
+                }
             }
 
             // Get current axis state
@@ -4456,13 +4444,39 @@ static void PollInputEvents(void)
             // Register buttons data for every connected gamepad
             for (int j = 0; (j < gamepadState.numButtons) && (j < MAX_GAMEPAD_BUTTONS); j++)
             {
-                const GamepadButton button = GetGamepadButton(j);
-                if (gamepadState.digitalButton[j] == 1)
+                GamepadButton button = -1;
+                
+                // Gamepad Buttons reference: https://www.w3.org/TR/gamepad/#gamepad-interface
+                switch (j)
                 {
-                    CORE.Input.Gamepad.currentState[i][button] = 1;
-                    CORE.Input.Gamepad.lastButtonPressed = button;
+                    case 0: button = GAMEPAD_BUTTON_RIGHT_FACE_DOWN; break;
+                    case 1: button = GAMEPAD_BUTTON_RIGHT_FACE_RIGHT; break;
+                    case 2: button = GAMEPAD_BUTTON_RIGHT_FACE_LEFT; break;
+                    case 3: button = GAMEPAD_BUTTON_RIGHT_FACE_UP; break;
+                    case 4: button = GAMEPAD_BUTTON_LEFT_TRIGGER_1; break;
+                    case 5: button = GAMEPAD_BUTTON_RIGHT_TRIGGER_1; break;
+                    case 6: button = GAMEPAD_BUTTON_LEFT_TRIGGER_2; break;
+                    case 7: button = GAMEPAD_BUTTON_RIGHT_TRIGGER_2; break;
+                    case 8: button = GAMEPAD_BUTTON_MIDDLE_LEFT; break;
+                    case 9: button = GAMEPAD_BUTTON_MIDDLE_RIGHT; break;
+                    case 10: button = GAMEPAD_BUTTON_LEFT_THUMB; break;
+                    case 11: button = GAMEPAD_BUTTON_RIGHT_THUMB; break;
+                    case 12: button = GAMEPAD_BUTTON_LEFT_FACE_UP; break;
+                    case 13: button = GAMEPAD_BUTTON_LEFT_FACE_DOWN; break;
+                    case 14: button = GAMEPAD_BUTTON_LEFT_FACE_LEFT; break;
+                    case 15: button = GAMEPAD_BUTTON_LEFT_FACE_RIGHT; break;
+                    default: break;
                 }
-                else CORE.Input.Gamepad.currentState[i][button] = 0;
+                
+                if (button != -1)   // Check for valid button
+                {
+                    if (gamepadState.digitalButton[j] == 1)
+                    {
+                        CORE.Input.Gamepad.currentState[i][button] = 1;
+                        CORE.Input.Gamepad.lastButtonPressed = button;
+                    }
+                    else CORE.Input.Gamepad.currentState[i][button] = 0;
+                }
 
                 //TRACELOGD("INPUT: Gamepad %d, button %d: Digital: %d, Analog: %g", gamepadState.index, j, gamepadState.digitalButton[j], gamepadState.analogButton[j]);
             }

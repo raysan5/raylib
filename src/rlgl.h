@@ -7,7 +7,7 @@
 *
 *   When chosing an OpenGL version greater than OpenGL 1.1, rlgl stores vertex data on internal
 *   VBO buffers (and VAOs if available). It requires calling 3 functions:
-*       rlglInit()  - Initialize internal buffers and auxiliar resources
+*       rlglInit()  - Initialize internal buffers and auxiliary resources
 *       rlglDraw()  - Process internal buffers and send required draw calls
 *       rlglClose() - De-initialize internal buffers data and other auxiliar resources
 *
@@ -602,10 +602,10 @@ RLAPI Matrix GetMatrixModelview(void);                                    // Get
 
 // Texture maps generation (PBR)
 // NOTE: Required shaders should be provided
-RLAPI TextureCubemap GenTextureCubemap(Shader shader, Texture2D panorama, int size, int format); // Generate cubemap texture from 2D panorama texture
-RLAPI TextureCubemap GenTextureIrradiance(Shader shader, TextureCubemap cubemap, int size);      // Generate irradiance texture using cubemap data
-RLAPI TextureCubemap GenTexturePrefilter(Shader shader, TextureCubemap cubemap, int size);       // Generate prefilter texture using cubemap data
-RLAPI Texture2D GenTextureBRDF(Shader shader, int size);                  // Generate BRDF texture using cubemap data
+RLAPI TextureCubemap GenTextureCubemap(Shader shader, Texture2D panorama, int size, int format); // Generate cubemap (6 faces) from equirectangular (panorama) texture
+RLAPI TextureCubemap GenTextureIrradiance(Shader shader, TextureCubemap cubemap, int size);      // Generate irradiance cubemap using cubemap texture
+RLAPI TextureCubemap GenTexturePrefilter(Shader shader, TextureCubemap cubemap, int size);       // Generate prefilter cubemap using cubemap texture
+RLAPI Texture2D GenTextureBRDF(Shader shader, int size);                  // Generate a generic BRDF texture
 
 // Shading begin/end functions
 RLAPI void BeginShaderMode(Shader shader);              // Begin custom shader drawing
@@ -883,7 +883,7 @@ typedef struct rlglData {
         int framebufferWidth;               // Default framebuffer width
         int framebufferHeight;              // Default framebuffer height
 
-    } State;
+    } State;            // Renderer state
     struct {
         bool vao;                           // VAO support (OpenGL ES2 could not support VAO extension)
         bool texNPOT;                       // NPOT textures full support
@@ -909,7 +909,7 @@ typedef struct rlglData {
         unsigned int stereoTexId;           // VR stereo color texture (attached to framebuffer)
         bool simulatorReady;                // VR simulator ready flag
         bool stereoRender;                  // VR stereo rendering enabled/disabled flag
-    } Vr;
+    } Vr;               // VR simulator data
 #endif  // SUPPORT_VR_SIMULATOR
 } rlglData;
 #endif  // GRAPHICS_API_OPENGL_33 || GRAPHICS_API_OPENGL_ES2
@@ -3000,7 +3000,7 @@ void rlDrawMeshInstanced(Mesh mesh, Material material, Matrix *transforms, int c
     glUseProgram(0);
 
 #else
-    TRACELOG(LOG_ERROR, "VAO: Instanced rendering requires GRAPHICS_API_OPENGL_33");
+    TRACELOG(LOG_WARNING, "VAO: Instanced rendering requires GRAPHICS_API_OPENGL_33");
 #endif
 }
 
@@ -4800,7 +4800,7 @@ static int GenerateMipmaps(unsigned char *data, int baseWidth, int baseHeight)
     unsigned char *temp = RL_REALLOC(data, size);
 
     if (temp != NULL) data = temp;
-    else TRACELOG(LOG_WARNING, "TEXTURE: Failed to allocate required mipmaps memory");
+    else TRACELOG(LOG_WARNING, "TEXTURE: Failed to re-allocate required mipmaps memory");
 
     width = baseWidth;
     height = baseHeight;

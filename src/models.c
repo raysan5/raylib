@@ -1752,7 +1752,7 @@ Mesh GenMeshHeightmap(Image heightmap, Vector3 size)
     int mapX = heightmap.width;
     int mapZ = heightmap.height;
 
-    Color *pixels = GetImageData(heightmap);
+    Color *pixels = LoadImageColors(heightmap);
 
     // NOTE: One vertex per pixel
     mesh.triangleCount = (mapX-1)*(mapZ-1)*2;    // One quad every four pixels
@@ -1868,7 +1868,7 @@ Mesh GenMeshHeightmap(Image heightmap, Vector3 size)
         }
     }
 
-    RL_FREE(pixels);
+    UnloadImageColors(pixels);  // Unload pixels color data
 
     // Upload vertex data to GPU (static mesh)
     rlLoadMesh(&mesh, false);
@@ -1885,7 +1885,7 @@ Mesh GenMeshCubicmap(Image cubicmap, Vector3 cubeSize)
     Mesh mesh = { 0 };
     mesh.vboId = (unsigned int *)RL_CALLOC(DEFAULT_MESH_VERTEX_BUFFERS, sizeof(unsigned int));
 
-    Color *cubicmapPixels = GetImageData(cubicmap);
+    Color *pixels = LoadImageColors(cubicmap);
 
     int mapWidth = cubicmap.width;
     int mapHeight = cubicmap.height;
@@ -1943,7 +1943,7 @@ Mesh GenMeshCubicmap(Image cubicmap, Vector3 cubeSize)
             Vector3 v8 = { w*(x + 0.5f), 0, h*(z + 0.5f) };
 
             // We check pixel color to be WHITE -> draw full cube
-            if (COLOR_EQUAL(cubicmapPixels[z*cubicmap.width + x], WHITE))
+            if (COLOR_EQUAL(pixels[z*cubicmap.width + x], WHITE))
             {
                 // Define triangles and checking collateral cubes
                 //------------------------------------------------
@@ -2000,7 +2000,7 @@ Mesh GenMeshCubicmap(Image cubicmap, Vector3 cubeSize)
                 tcCounter += 6;
 
                 // Checking cube on bottom of current cube
-                if (((z < cubicmap.height - 1) && COLOR_EQUAL(cubicmapPixels[(z + 1)*cubicmap.width + x], BLACK)) || (z == cubicmap.height - 1))
+                if (((z < cubicmap.height - 1) && COLOR_EQUAL(pixels[(z + 1)*cubicmap.width + x], BLACK)) || (z == cubicmap.height - 1))
                 {
                     // Define front triangles (2 tris, 6 vertex) --> v2 v7 v3, v3 v7 v8
                     // NOTE: Collateral occluded faces are not generated
@@ -2030,7 +2030,7 @@ Mesh GenMeshCubicmap(Image cubicmap, Vector3 cubeSize)
                 }
 
                 // Checking cube on top of current cube
-                if (((z > 0) && COLOR_EQUAL(cubicmapPixels[(z - 1)*cubicmap.width + x], BLACK)) || (z == 0))
+                if (((z > 0) && COLOR_EQUAL(pixels[(z - 1)*cubicmap.width + x], BLACK)) || (z == 0))
                 {
                     // Define back triangles (2 tris, 6 vertex) --> v1 v5 v6, v1 v4 v5
                     // NOTE: Collateral occluded faces are not generated
@@ -2060,7 +2060,7 @@ Mesh GenMeshCubicmap(Image cubicmap, Vector3 cubeSize)
                 }
 
                 // Checking cube on right of current cube
-                if (((x < cubicmap.width - 1) && COLOR_EQUAL(cubicmapPixels[z*cubicmap.width + (x + 1)], BLACK)) || (x == cubicmap.width - 1))
+                if (((x < cubicmap.width - 1) && COLOR_EQUAL(pixels[z*cubicmap.width + (x + 1)], BLACK)) || (x == cubicmap.width - 1))
                 {
                     // Define right triangles (2 tris, 6 vertex) --> v3 v8 v4, v4 v8 v5
                     // NOTE: Collateral occluded faces are not generated
@@ -2090,7 +2090,7 @@ Mesh GenMeshCubicmap(Image cubicmap, Vector3 cubeSize)
                 }
 
                 // Checking cube on left of current cube
-                if (((x > 0) && COLOR_EQUAL(cubicmapPixels[z*cubicmap.width + (x - 1)], BLACK)) || (x == 0))
+                if (((x > 0) && COLOR_EQUAL(pixels[z*cubicmap.width + (x - 1)], BLACK)) || (x == 0))
                 {
                     // Define left triangles (2 tris, 6 vertex) --> v1 v7 v2, v1 v6 v7
                     // NOTE: Collateral occluded faces are not generated
@@ -2120,7 +2120,7 @@ Mesh GenMeshCubicmap(Image cubicmap, Vector3 cubeSize)
                 }
             }
             // We check pixel color to be BLACK, we will only draw floor and roof
-            else if (COLOR_EQUAL(cubicmapPixels[z*cubicmap.width + x], BLACK))
+            else if (COLOR_EQUAL(pixels[z*cubicmap.width + x], BLACK))
             {
                 // Define top triangles (2 tris, 6 vertex --> v1-v2-v3, v1-v3-v4)
                 mapVertices[vCounter] = v1;
@@ -2220,7 +2220,7 @@ Mesh GenMeshCubicmap(Image cubicmap, Vector3 cubeSize)
     RL_FREE(mapNormals);
     RL_FREE(mapTexcoords);
 
-    RL_FREE(cubicmapPixels);   // Free image pixel data
+    UnloadImageColors(pixels);   // Unload pixels color data
 
     // Upload vertex data to GPU (static mesh)
     rlLoadMesh(&mesh, false);
@@ -2350,73 +2350,6 @@ void MeshBinormals(Mesh *mesh)
 
         // TODO: Register computed binormal in mesh->binormal?
     }
-}
-
-// Smooth (average) vertex normals
-void MeshNormalsSmooth(Mesh *mesh)
-{
-    #define EPSILON 0.000001 // A small number
-
-    int uvCounter = 0;
-    Vector3 *uniqueVertices = (Vector3 *)RL_CALLOC(mesh->vertexCount, sizeof(Vector3));
-    Vector3 *summedNormals = (Vector3 *)RL_CALLOC(mesh->vertexCount, sizeof(Vector3));
-
-    int *uniqueIndices = (int *)RL_CALLOC(mesh->vertexCount, sizeof(int));
-
-    // Sum normals grouped by vertex
-    for (int i = 0; i < mesh->vertexCount; i++)
-    {
-        Vector3 v = { mesh->vertices[(i + 0)*3 + 0], mesh->vertices[(i + 0)*3 + 1], mesh->vertices[(i + 0)*3 + 2] };
-        Vector3 n = { mesh->normals[(i + 0)*3 + 0], mesh->normals[(i + 0)*3 + 1], mesh->normals[(i + 0)*3 + 2] };
-
-        bool matched = false;
-
-        // TODO: Matching vertices is brute force O(N^2). Do it more efficiently?
-        for (int j = 0; j < uvCounter; j++)
-        {
-            Vector3 uv = uniqueVertices[j];
-
-            bool match = true;
-            match = match && fabs(uv.x - v.x) < EPSILON;
-            match = match && fabs(uv.y - v.y) < EPSILON;
-            match = match && fabs(uv.z - v.z) < EPSILON;
-
-            if (match)
-            {
-                matched = true;
-                summedNormals[j] = Vector3Add(summedNormals[j], n);
-                uniqueIndices[i] = j;
-                break;
-            }
-        }
-
-        if (!matched)
-        {
-            int j = uvCounter++;
-            uniqueVertices[j] = v;
-            summedNormals[j] = n;
-            uniqueIndices[i] = j;
-        }
-    }
-
-    // Average and update normals
-    for (int i = 0; i < mesh->vertexCount; i++)
-    {
-        int j = uniqueIndices[i];
-        Vector3 n = Vector3Normalize(summedNormals[j]);
-        mesh->normals[(i + 0)*3 + 0] = n.x;
-        mesh->normals[(i + 0)*3 + 1] = n.y;
-        mesh->normals[(i + 0)*3 + 2] = n.z;
-    }
-
-    // 2=normals, see rlUpdateMeshAt()
-    rlUpdateMesh(*mesh, 2, mesh->vertexCount);
-
-    RL_FREE(uniqueVertices);
-    RL_FREE(summedNormals);
-    RL_FREE(uniqueIndices);
-
-    TRACELOG(LOG_INFO, "MESH: Normals smoothed (%d vertices, %d unique)", mesh->vertexCount, uvCounter);
 }
 
 // Draw a model (with texture if set)
@@ -3805,7 +3738,7 @@ static Model LoadGLTF(const char *fileName)
         
         for (unsigned int i = 0; i < data->nodes_count; i++)
         {
-            if(data->nodes[i].has_translation)
+            if (data->nodes[i].has_translation)
             {
                 memcpy(&model.bindPose[i].translation, data->nodes[i].translation, 3 * sizeof(float));
             }
@@ -3814,7 +3747,7 @@ static Model LoadGLTF(const char *fileName)
                 model.bindPose[i].translation = Vector3Zero();
             }
             
-            if(data->nodes[i].has_rotation)
+            if (data->nodes[i].has_rotation)
             {
                 memcpy(&model.bindPose[i].rotation, data->nodes[i].rotation, 4 * sizeof(float));
             }
@@ -3824,7 +3757,7 @@ static Model LoadGLTF(const char *fileName)
             }
             model.bindPose[i].rotation = QuaternionNormalize(model.bindPose[i].rotation);
             
-            if(data->nodes[i].has_scale)
+            if (data->nodes[i].has_scale)
             {
                 memcpy(&model.bindPose[i].scale, data->nodes[i].scale, 3 * sizeof(float));
             }
@@ -3965,19 +3898,19 @@ static Model LoadGLTF(const char *fileName)
                     {
                         cgltf_accessor *acc = data->meshes[i].primitives[p].attributes[j].data;
     
-                        if(acc->component_type == cgltf_component_type_r_16u)
+                        if (acc->component_type == cgltf_component_type_r_16u)
                         {
                             model.meshes[primitiveIndex].boneIds = RL_MALLOC(sizeof(int) * acc->count * 4);
                             short* bones = RL_MALLOC(sizeof(short) * acc->count * 4);
                             
                             LOAD_ACCESSOR(short, 4, acc, bones);
-                            for(int a = 0; a < acc->count * 4; a ++)
+                            for (unsigned int a = 0; a < acc->count * 4; a ++)
                             {
                                 cgltf_node* skinJoint = data->skins->joints[bones[a]];
                                 
-                                for(int k = 0; k < data->nodes_count; k++)
+                                for (unsigned int k = 0; k < data->nodes_count; k++)
                                 {
-                                    if(&(data->nodes[k]) == skinJoint)
+                                    if (&(data->nodes[k]) == skinJoint)
                                     {
                                         model.meshes[primitiveIndex].boneIds[a] = k;
                                         break;
@@ -4034,7 +3967,7 @@ static Model LoadGLTF(const char *fileName)
                     model.meshMaterial[primitiveIndex] = model.materialCount - 1;;
                 }
                 
-//                if(data->meshes[i].)
+//                if (data->meshes[i].)
                 
                 primitiveIndex++;
             }
@@ -4052,9 +3985,9 @@ static Model LoadGLTF(const char *fileName)
 
 static bool GltfReadFloat(cgltf_accessor* acc, unsigned int index, float* variable, unsigned int elements)
 {
-    if(acc->count == 2)
+    if (acc->count == 2)
     {
-        if(index > 1)
+        if (index > 1)
         {
             return false;
         }
@@ -4125,18 +4058,18 @@ static ModelAnimation* LoadGLTFModelAnimations(const char *fileName, int *animCo
             float animationDuration = 0.0f;
     
             // Getting the max animation time to consider for animation duration
-            for (int i = 0; i < animation->channels_count; i++)
+            for (unsigned int i = 0; i < animation->channels_count; i++)
             {
                 cgltf_animation_channel* channel = animation->channels + i;
                 int frameCounts = channel->sampler->input->count;
                 float lastFrameTime = 0.0f;
-                if(GltfReadFloat(channel->sampler->input, frameCounts - 1, &lastFrameTime, 1))
+                if (GltfReadFloat(channel->sampler->input, frameCounts - 1, &lastFrameTime, 1))
                 {
                     animationDuration = fmaxf(lastFrameTime, animationDuration);
                 }
             }
     
-            output->frameCount = animationDuration / TIMESTEP;
+            output->frameCount = (int)(animationDuration / TIMESTEP);
             output->boneCount = data->nodes_count;
             output->bones = RL_MALLOC(output->boneCount*sizeof(BoneInfo));
             output->framePoses = RL_MALLOC(output->frameCount*sizeof(Transform *));
@@ -4151,7 +4084,7 @@ static ModelAnimation* LoadGLTFModelAnimations(const char *fileName, int *animCo
 
             // Allocate data for frames
             // Initiate with zero bone translations
-            for (unsigned int frame = 0; frame < output->frameCount; frame++)
+            for (int frame = 0; frame < output->frameCount; frame++)
             {
                 output->framePoses[frame] = RL_MALLOC(output->frameCount*data->nodes_count*sizeof(Transform));
     
@@ -4165,14 +4098,14 @@ static ModelAnimation* LoadGLTFModelAnimations(const char *fileName, int *animCo
             }
             
             // for each single transformation type on single bone
-            for(int channelId = 0; channelId < animation->channels_count; channelId++)
+            for (unsigned int channelId = 0; channelId < animation->channels_count; channelId++)
             {
                 cgltf_animation_channel* channel = animation->channels + channelId;
                 cgltf_animation_sampler* sampler = channel->sampler;
                 
                 int boneId = channel->target_node - data->nodes;
                 
-                for(int frame = 0; frame < output->frameCount; frame++)
+                for (int frame = 0; frame < output->frameCount; frame++)
                 {
                     bool shouldSkipFurtherTransformation = true;
                     int outputMin = 0;
@@ -4183,19 +4116,19 @@ static ModelAnimation* LoadGLTFModelAnimations(const char *fileName, int *animCo
                     // For this transformation:
                     // getting between which input values the current frame time position
                     // and also what is the percent to use in the linear interpolation later
-                    for(int j = 0; j < sampler->input->count; j++)
+                    for (unsigned int j = 0; j < sampler->input->count; j++)
                     {
                         float inputFrameTime;
-                        if(GltfReadFloat(sampler->input, j, (float*)&inputFrameTime, 1))
+                        if (GltfReadFloat(sampler->input, j, (float*)&inputFrameTime, 1))
                         {
-                            if(frameTime < inputFrameTime)
+                            if (frameTime < inputFrameTime)
                             {
                                 shouldSkipFurtherTransformation = false;
                                 outputMin = j - 1;
                                 outputMax = j;
         
                                 float previousInputTime = 0.0f;
-                                if(GltfReadFloat(sampler->input, j - 1, (float*)&previousInputTime, 1))
+                                if (GltfReadFloat(sampler->input, j - 1, (float*)&previousInputTime, 1))
                                 {
                                     lerpPercent = (frameTime - previousInputTime) / (inputFrameTime - previousInputTime);
                                 }
@@ -4207,44 +4140,44 @@ static ModelAnimation* LoadGLTFModelAnimations(const char *fileName, int *animCo
                     }
                     
                     // If the current transformation has no information for the current frame time point
-                    if(shouldSkipFurtherTransformation) {
+                    if (shouldSkipFurtherTransformation) {
                         continue;
                     }
 
-                    if(channel->target_path == cgltf_animation_path_type_translation) {
+                    if (channel->target_path == cgltf_animation_path_type_translation) {
                         Vector3 translationStart;
                         Vector3 translationEnd;
                         
                         bool success = GltfReadFloat(sampler->output, outputMin, (float*)&translationStart, 3);
                         success = GltfReadFloat(sampler->output, outputMax, (float*)&translationEnd, 3) || success;
                         
-                        if(success)
+                        if (success)
                         {
                             output->framePoses[frame][boneId].translation = Vector3Lerp(translationStart, translationEnd, lerpPercent);
                         }
                     }
-                    if(channel->target_path == cgltf_animation_path_type_rotation) {
+                    if (channel->target_path == cgltf_animation_path_type_rotation) {
                         Quaternion rotationStart;
                         Quaternion rotationEnd;
     
                         bool success = GltfReadFloat(sampler->output, outputMin, (float*)&rotationStart, 4);
                         success = GltfReadFloat(sampler->output, outputMax, (float*)&rotationEnd, 4) || success;
     
-                        if(success)
+                        if (success)
                         {
                             output->framePoses[frame][boneId].rotation = QuaternionLerp(rotationStart, rotationEnd, lerpPercent);
                             output->framePoses[frame][boneId].rotation = QuaternionNormalize(output->framePoses[frame][boneId].rotation);
     
                         }
                     }
-                    if(channel->target_path == cgltf_animation_path_type_scale) {
+                    if (channel->target_path == cgltf_animation_path_type_scale) {
                         Vector3 scaleStart;
                         Vector3 scaleEnd;
     
                         bool success = GltfReadFloat(sampler->output, outputMin, (float*)&scaleStart, 3);
                         success = GltfReadFloat(sampler->output, outputMax, (float*)&scaleEnd, 3) || success;
     
-                        if(success)
+                        if (success)
                         {
                             output->framePoses[frame][boneId].scale = Vector3Lerp(scaleStart, scaleEnd, lerpPercent);
                         }
@@ -4253,7 +4186,7 @@ static ModelAnimation* LoadGLTFModelAnimations(const char *fileName, int *animCo
             }
     
             // Build frameposes
-            for (unsigned int frame = 0; frame < output->frameCount; frame++)
+            for (int frame = 0; frame < output->frameCount; frame++)
             {
                 for (int i = 0; i < output->boneCount; i++)
                 {
