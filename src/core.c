@@ -5752,8 +5752,9 @@ static void *EventThread(void *arg)
                 // Basic movement
                 if (event.code == ABS_X)
                 {
-                    CORE.Input.Mouse.position.x = (event.value - worker->absRange.x)*CORE.Window.screen.width/worker->absRange.width;   // Scale acording to absRange
-
+                    CORE.Input.Mouse.position.x    = (event.value - worker->absRange.x)*CORE.Window.screen.width/worker->absRange.width;   // Scale acording to absRange
+                    CORE.Input.Touch.position[0].x = (event.value - worker->absRange.x)*CORE.Window.screen.width/worker->absRange.width;   // Scale acording to absRange
+                    
                     #if defined(SUPPORT_GESTURES_SYSTEM)
                         touchAction = TOUCH_MOVE;
                         gestureUpdate = true;
@@ -5762,7 +5763,8 @@ static void *EventThread(void *arg)
 
                 if (event.code == ABS_Y)
                 {
-                    CORE.Input.Mouse.position.y = (event.value - worker->absRange.y)*CORE.Window.screen.height/worker->absRange.height; // Scale acording to absRange
+                    CORE.Input.Mouse.position.y    = (event.value - worker->absRange.y)*CORE.Window.screen.height/worker->absRange.height; // Scale acording to absRange
+                    CORE.Input.Touch.position[0].y = (event.value - worker->absRange.y)*CORE.Window.screen.height/worker->absRange.height; // Scale acording to absRange
 
                     #if defined(SUPPORT_GESTURES_SYSTEM)
                         touchAction = TOUCH_MOVE;
@@ -5771,7 +5773,7 @@ static void *EventThread(void *arg)
                 }
 
                 // Multitouch movement
-                if (event.code == ABS_MT_SLOT) worker->touchSlot = event.value;   // Remeber the slot number for the folowing events
+                if (event.code == ABS_MT_SLOT) worker->touchSlot = event.value;   // Remember the slot number for the folowing events
 
                 if (event.code == ABS_MT_POSITION_X)
                 {
@@ -5792,6 +5794,33 @@ static void *EventThread(void *arg)
                         CORE.Input.Touch.position[worker->touchSlot].y = -1;
                     }
                 }
+
+                // Touchscreen tap
+                if(event.code == ABS_PRESSURE)
+                {
+                    int previousMouseLeftButtonState = CORE.Input.Mouse.currentButtonStateEvdev[MOUSE_LEFT_BUTTON];
+                    
+                    if(!event.value && previousMouseLeftButtonState)
+                    {
+                        CORE.Input.Mouse.currentButtonStateEvdev[MOUSE_LEFT_BUTTON] = 0;
+
+                        #if defined(SUPPORT_GESTURES_SYSTEM)
+                            touchAction = TOUCH_UP;
+                            gestureUpdate = true;
+                        #endif
+                    }
+                    
+                    if(event.value && !previousMouseLeftButtonState)
+                    {
+                        CORE.Input.Mouse.currentButtonStateEvdev[MOUSE_LEFT_BUTTON] = 1;
+
+                        #if defined(SUPPORT_GESTURES_SYSTEM)
+                            touchAction = TOUCH_DOWN;
+                            gestureUpdate = true;
+                        #endif
+                    }
+                }
+
             }
 
             // Button parsing
