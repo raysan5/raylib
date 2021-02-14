@@ -1045,7 +1045,7 @@ void ToggleFullscreen(void)
     
         const GLFWvidmode *mode = glfwGetVideoMode(monitor);
         glfwSetWindowSizeCallback(CORE.Window.handle, NULL);
-        glfwSetWindowMonitor(CORE.Window.handle, monitor, 0, 0, CORE.Window.screen.width, CORE.Window.screen.height, mode->refreshRate);
+        glfwSetWindowMonitor(CORE.Window.handle, monitor, 0, 0, CORE.Window.screen.width, CORE.Window.screen.height, GLFW_DONT_CARE);
         glfwSetWindowSizeCallback(CORE.Window.handle, WindowSizeCallback);
 
         // Try to enable GPU V-Sync, so frames are limited to screen refresh rate (60Hz -> 60 FPS)
@@ -1098,6 +1098,7 @@ void ToggleFullscreen(void)
     */
 
     CORE.Window.fullscreen = !CORE.Window.fullscreen;          // Toggle fullscreen flag
+    CORE.Window.flags ^= FLAG_FULLSCREEN_MODE;
 #endif
 #if defined(PLATFORM_ANDROID) || defined(PLATFORM_RPI) || defined(PLATFORM_DRM)
     TRACELOG(LOG_WARNING, "SYSTEM: Failed to toggle to windowed mode");
