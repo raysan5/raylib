@@ -3733,7 +3733,7 @@ static Model LoadGLTF(const char *fileName)
         for (unsigned int j = 0; j < data->nodes_count; j++)
         {
             strcpy(model.bones[j].name, data->nodes[j].name == 0 ? "ANIMJOINT" : data->nodes[j].name);
-            model.bones[j].parent = j != 0 ? data->nodes[j].parent - data->nodes : 0;
+            model.bones[j].parent = (j != 0 && data->nodes[j].parent != NULL) ? data->nodes[j].parent - data->nodes : 0;
         }
         
         for (unsigned int i = 0; i < data->nodes_count; i++)
@@ -3771,7 +3771,10 @@ static Model LoadGLTF(const char *fileName)
         {
             Transform* currentTransform = model.bindPose + i;
             BoneInfo* currentBone = model.bones + i;
-            Transform* parentTransform = model.bindPose + currentBone->parent;
+            int root = currentBone->parent;
+            if (root >= model.boneCount)
+                root = 0;
+            Transform* parentTransform = model.bindPose + root;
             
             if (currentBone->parent >= 0)
             {
