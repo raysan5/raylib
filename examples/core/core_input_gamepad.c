@@ -19,11 +19,12 @@
 
 // NOTE: Gamepad name ID depends on drivers and OS
 #if defined(PLATFORM_RPI)
-    #define XBOX360_NAME_ID     "Microsoft X-Box 360 pad"
-    #define PS3_NAME_ID         "PLAYSTATION(R)3 Controller"
+    #define XBOX360_NAME_ID            "Microsoft X-Box 360 pad"
+    #define PS3_NAME_ID                "PLAYSTATION(R)3 Controller"
 #else
-    #define XBOX360_NAME_ID     "Xbox 360 Controller"
-    #define PS3_NAME_ID         "PLAYSTATION(R)3 Controller"
+    #define XBOX360_NAME_ID            "Xbox 360 Controller"
+    #define XBOX360_LEGACY_NAME_ID     "Xbox Controller"
+    #define PS3_NAME_ID                "PLAYSTATION(R)3 Controller"
 #endif
 
 int main(void)
@@ -61,7 +62,7 @@ int main(void)
             {
                 DrawText(TextFormat("GP1: %s", GetGamepadName(GAMEPAD_PLAYER1)), 10, 10, 10, BLACK);
 
-                if (IsGamepadName(GAMEPAD_PLAYER1, XBOX360_NAME_ID))
+                if (IsGamepadName(GAMEPAD_PLAYER1, XBOX360_NAME_ID) || IsGamepadName(GAMEPAD_PLAYER1, XBOX360_LEGACY_NAME_ID))
                 {
                     DrawTexture(texXboxPad, 0, 0, DARKGRAY);
 
