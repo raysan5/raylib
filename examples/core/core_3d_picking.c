@@ -90,7 +90,7 @@ int main(void)
 
             DrawText("Try selecting the box with mouse!", 240, 10, 20, DARKGRAY);
 
-            if(collision) DrawText("BOX SELECTED", (screenWidth - MeasureText("BOX SELECTED", 30)) / 2, screenHeight * 0.1f, 30, GREEN);
+            if(collision) DrawText("BOX SELECTED", (screenWidth - MeasureText("BOX SELECTED", 30)) / 2, (int)(screenHeight * 0.1f), 30, GREEN);
 
             DrawFPS(10, 10);
 
