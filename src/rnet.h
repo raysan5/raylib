@@ -231,10 +231,14 @@ typedef int socklen_t;
 //----------------------------------------------------------------------------------
 
 // Boolean type
+#ifdef _WIN32
+    #include <stdbool.h>
+#else
 #if defined(__STDC__) && __STDC_VERSION__ >= 199901L
     #include <stdbool.h>
 #elif !defined(__cplusplus) && !defined(bool)
     typedef enum { false, true } bool;
+#endif
 #endif
 
 typedef enum {
@@ -347,7 +351,7 @@ int GetAddressFamily(AddressInformation address);
 int GetAddressSocketType(AddressInformation address);
 int GetAddressProtocol(AddressInformation address);
 char *GetAddressCanonName(AddressInformation address);
-char *GetAddressHostAndPort(AddressInformation address, char *outhost, int *outport);
+char *GetAddressHostAndPort(AddressInformation address, char *outhost, unsigned short *outport);
 
 // Address Memory API
 AddressInformation LoadAddress(void);
@@ -365,7 +369,7 @@ Socket *SocketAccept(Socket *server, SocketConfig *config);
 int SocketSend(Socket *sock, const void *datap, int len);
 int SocketReceive(Socket *sock, void *data, int maxlen);
 SocketAddressStorage SocketGetPeerAddress(Socket *sock);
-char *GetSocketAddressHost(SocketAddressStorage storage);
+const char *GetSocketAddressHost(SocketAddressStorage storage);
 short GetSocketAddressPort(SocketAddressStorage storage);
 void SocketClose(Socket *sock);
 
@@ -1340,7 +1344,7 @@ bool SocketConnect(SocketConfig *config, SocketResult *result)
             ip4addr.sin_family = AF_INET;
             unsigned long hport;
             hport = strtoul(config->port, NULL, 0);
-            ip4addr.sin_port = htons(hport);
+            ip4addr.sin_port = (unsigned short)(hport);
 
             // TODO: Changed the code to avoid the usage of inet_pton and inet_ntop replacing them with getnameinfo (that should have a better support on windows).
 
@@ -1376,7 +1380,7 @@ bool SocketConnect(SocketConfig *config, SocketResult *result)
                 ip6addr.sin6_family = AF_INET6;
                 unsigned long hport;
                 hport = strtoul(config->port, NULL, 0);
-                ip6addr.sin6_port = htons(hport);
+                ip6addr.sin6_port = htons((unsigned short)hport);
                 //inet_pton(AF_INET6, config->host, &ip6addr.sin6_addr);    // TODO.
                 int connect_result = connect(result->socket->channel, (struct sockaddr *)&ip6addr, sizeof(ip6addr));
 
@@ -1439,7 +1443,7 @@ SocketAddressStorage SocketGetPeerAddress(Socket *sock)
 }
 
 // Return the address-type appropriate host portion of a socket address
-char *GetSocketAddressHost(SocketAddressStorage storage)
+const char *GetSocketAddressHost(SocketAddressStorage storage)
 {
     assert(storage->address.ss_family == AF_INET || storage->address.ss_family == AF_INET6);
     return SocketAddressToString((struct sockaddr_storage *)storage);
@@ -2117,7 +2121,7 @@ char *GetAddressCanonName(AddressInformation address)
 }
 
 // Opaque datatype accessor addrinfo->ai_addr
-char *GetAddressHostAndPort(AddressInformation address, char *outhost, int *outport)
+char *GetAddressHostAndPort(AddressInformation address, char *outhost, unsigned short *outport)
 {
     //char *ip[INET6_ADDRSTRLEN];
     char *result = NULL;
