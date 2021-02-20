@@ -116,14 +116,15 @@ void DrawLineV(Vector2 startPos, Vector2 endPos, Color color)
 // Draw a line defining thickness
 void DrawLineEx(Vector2 startPos, Vector2 endPos, float thick, Color color)
 {
-    Vector2 delta = Vector2Subtract(endPos, startPos);
-    float   length = Vector2Length(delta);
+    Vector2 delta = {endPos.x-startPos.x, endPos.y-startPos.y};
+    float   length = sqrtf(delta.x*delta.x + delta.y*delta.y);
 
     if (length > 0  &&  thick > 0) 
     {
         float   scale = thick/(2*length);
         Vector2 radius = {-scale*delta.y, scale*delta.x};
-        Vector2 strip[] = {Vector2Subtract(startPos, radius), Vector2Add(startPos, radius), Vector2Subtract(endPos, radius), Vector2Add(endPos, radius)};
+        Vector2 strip[] = {{startPos.x-radius.x, startPos.y-radius.y}, {startPos.x+radius.x, startPos.y+radius.y}, 
+                           {endPos.x-radius.x, endPos.y-radius.y}, {endPos.x+radius.x, endPos.y+radius.y}};
 
         DrawTriangleStrip(strip, 4, color);
     }
