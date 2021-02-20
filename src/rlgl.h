@@ -4922,7 +4922,7 @@ char *LoadFileText(const char *fileName)
             if (size > 0)
             {
                 text = (char *)RL_MALLOC((size + 1)*sizeof(char));
-                int count = fread(text, sizeof(char), size, textFile);
+                int count = (int)fread(text, sizeof(char), size, textFile);
 
                 // WARNING: \r\n is converted to \n on reading, so,
                 // read bytes count gets reduced by the number of lines

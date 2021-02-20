@@ -27,7 +27,7 @@ int main(void)
     Sound fxWav = LoadSound("resources/sound.wav");         // Load WAV audio file
     Sound fxOgg = LoadSound("resources/target.ogg");        // Load OGG audio file
     
-    SetSoundVolume(fxWav, 0.2);
+    SetSoundVolume(fxWav, 0.2f);
 
     SetTargetFPS(60);       // Set our game to run at 60 frames-per-second
     //--------------------------------------------------------------------------------------

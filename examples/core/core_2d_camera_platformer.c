@@ -65,7 +65,7 @@ int main(void)
 
     Camera2D camera = { 0 };
     camera.target = player.position;
-    camera.offset = (Vector2){ screenWidth/2, screenHeight/2 };
+    camera.offset = (Vector2){ screenWidth/2.0f, screenHeight/2.0f };
     camera.rotation = 0.0f;
     camera.zoom = 1.0f;
 
@@ -191,14 +191,14 @@ void UpdatePlayer(Player *player, EnvItem *envItems, int envItemsLength, float d
 
 void UpdateCameraCenter(Camera2D *camera, Player *player, EnvItem *envItems, int envItemsLength, float delta, int width, int height)
 {
-    camera->offset = (Vector2){ width/2, height/2 };
+    camera->offset = (Vector2){ width/2.0f, height/2.0f };
     camera->target = player->position;
 }
 
 void UpdateCameraCenterInsideMap(Camera2D *camera, Player *player, EnvItem *envItems, int envItemsLength, float delta, int width, int height)
 {
     camera->target = player->position;
-    camera->offset = (Vector2){ width/2, height/2 };
+    camera->offset = (Vector2){ width/2.0f, height/2.0f };
     float minX = 1000, minY = 1000, maxX = -1000, maxY = -1000;
     
     for (int i = 0; i < envItemsLength; i++)
@@ -225,7 +225,7 @@ void UpdateCameraCenterSmoothFollow(Camera2D *camera, Player *player, EnvItem *e
     static float minEffectLength = 10;
     static float fractionSpeed = 0.8f;
     
-    camera->offset = (Vector2){ width/2, height/2 };
+    camera->offset = (Vector2){ width/2.0f, height/2.0f };
     Vector2 diff = Vector2Subtract(player->position, camera->target);
     float length = Vector2Length(diff);
     
@@ -242,7 +242,7 @@ void UpdateCameraEvenOutOnLanding(Camera2D *camera, Player *player, EnvItem *env
     static int eveningOut = false;
     static float evenOutTarget;
     
-    camera->offset = (Vector2){ width/2, height/2 };
+    camera->offset = (Vector2){ width/2.0f, height/2.0f };
     camera->target.x = player->position.x;
     
     if (eveningOut)
