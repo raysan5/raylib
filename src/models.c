@@ -3723,7 +3723,7 @@ static Model LoadGLTF(const char *fileName)
         model.materialCount = (int)data->materials_count + 1;
         model.materials = RL_MALLOC(model.materialCount*sizeof(Material));
         model.meshMaterial = RL_MALLOC(model.meshCount*sizeof(int));
-        model.boneCount = data->nodes_count;
+        model.boneCount = (int)data->nodes_count;
         model.bones = RL_CALLOC(model.boneCount, sizeof(BoneInfo));
         model.bindPose = RL_CALLOC(model.boneCount, sizeof(Transform));
 
@@ -3733,7 +3733,7 @@ static Model LoadGLTF(const char *fileName)
         for (unsigned int j = 0; j < data->nodes_count; j++)
         {
             strcpy(model.bones[j].name, data->nodes[j].name == 0 ? "ANIMJOINT" : data->nodes[j].name);
-            model.bones[j].parent = (j != 0 && data->nodes[j].parent != NULL) ? data->nodes[j].parent - data->nodes : 0;
+            model.bones[j].parent = (int)((j != 0 && data->nodes[j].parent != NULL) ? data->nodes[j].parent - data->nodes : 0);
         }
         
         for (unsigned int i = 0; i < data->nodes_count; i++)
@@ -3875,7 +3875,7 @@ static Model LoadGLTF(const char *fileName)
                     else if (data->meshes[i].primitives[p].attributes[j].type == cgltf_attribute_type_normal)
                     {
                         cgltf_accessor *acc = data->meshes[i].primitives[p].attributes[j].data;
-                        int bufferSize = acc->count*3*sizeof(float);
+                        int bufferSize = (int)(acc->count*3*sizeof(float));
                         model.meshes[primitiveIndex].normals = RL_MALLOC(bufferSize);
                         model.meshes[primitiveIndex].animNormals = RL_MALLOC(bufferSize);
 
@@ -4064,7 +4064,7 @@ static ModelAnimation* LoadGLTFModelAnimations(const char *fileName, int *animCo
             for (unsigned int i = 0; i < animation->channels_count; i++)
             {
                 cgltf_animation_channel* channel = animation->channels + i;
-                int frameCounts = channel->sampler->input->count;
+                int frameCounts = (int)channel->sampler->input->count;
                 float lastFrameTime = 0.0f;
                 if (GltfReadFloat(channel->sampler->input, frameCounts - 1, &lastFrameTime, 1))
                 {
@@ -4073,7 +4073,7 @@ static ModelAnimation* LoadGLTFModelAnimations(const char *fileName, int *animCo
             }
     
             output->frameCount = (int)(animationDuration / TIMESTEP);
-            output->boneCount = data->nodes_count;
+            output->boneCount = (int)data->nodes_count;
             output->bones = RL_MALLOC(output->boneCount*sizeof(BoneInfo));
             output->framePoses = RL_MALLOC(output->frameCount*sizeof(Transform *));
             // output->framerate = // TODO: Use framerate instead of const timestep
@@ -4106,7 +4106,7 @@ static ModelAnimation* LoadGLTFModelAnimations(const char *fileName, int *animCo
                 cgltf_animation_channel* channel = animation->channels + channelId;
                 cgltf_animation_sampler* sampler = channel->sampler;
                 
-                int boneId = channel->target_node - data->nodes;
+                int boneId = (int)(channel->target_node - data->nodes);
                 
                 for (int frame = 0; frame < output->frameCount; frame++)
                 {
